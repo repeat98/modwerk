@@ -19,7 +19,7 @@
     "label": "QUICK MOD ASSIGN",
     "family": "Performance",
     "summary": "Link a parameter to velocity or aftertouch by holding FIX or SAMPLER and turning its knob.",
-    "overview": "Hold FIX and turn any knob on a sound page: that parameter is linked to velocity, and the turn sets how much. Hold SAMPLER and turn to link it to aftertouch instead. While either key is held, every linked knob shows its amount the way stock shows a performance lock, with a V or an A in the top-left corner. It fills stock's own four velocity and four aftertouch slots of the selected sound, so the links save with the kit, show in SOUND SETTINGS as usual and keep playing on a unit without the mod.",
+    "overview": "Hold FIX and turn any knob on a sound page: that parameter is linked to velocity, and the turn sets how much. Hold SAMPLER and turn to link it to aftertouch instead. While either key is held, every linked knob shows its amount the way stock shows a performance or scene lock. It fills stock's own four velocity and four aftertouch slots of the selected sound, so the links save with the kit, show in SOUND SETTINGS as usual and keep playing on a unit without the mod.",
     "highlights": [
       "Velocity or aftertouch to any parameter in one gesture",
       "Stays on the page you are playing",
@@ -34,8 +34,8 @@
     "location": "The FIX and SAMPLER keys, on a sound track's pages and in PERF, SCNE, MUTE and CHRO.",
     "steps": [
       "Select a sound track and open its SYNTH, SAMPLE, FILTER, AMP or LFO page.",
-      "Hold FIX: linked knobs show their velocity amounts and a V sits in the top-left corner. Turn a knob to link it or change its amount.",
-      "Hold SAMPLER for aftertouch: an A, and the aftertouch amounts.",
+      "Hold FIX: linked knobs show their velocity amounts. Turn a knob to link it or change its amount.",
+      "Hold SAMPLER for aftertouch: the aftertouch amounts.",
       "Turn back to 0 to free the slot. Tap FIX alone to toggle fixed velocity, tap SAMPLER alone to open the recorder, as before."
     ],
     "screenshots": []
@@ -48,7 +48,7 @@
     "requires": [],
     "conflicts": [],
     "limitations": [
-      "Each sound has four velocity and four aftertouch slots; with all four in use a popup says SLOTS FULL.",
+      "Each sound has four velocity and four aftertouch mods; with all four in use a popup says VELOCITY MODS FULL or AFTERTOUCH MODS FULL.",
       "A FIX tap toggles fixed velocity on the release instead of the press.",
       "While FIX or SAMPLER is held, the TRIG page's knobs, knobs turned with a trig held and FUNC + a knob do nothing.",
       "FUNC + FIX, the FX track and a performance, scene or trig lock edit keep stock's behaviour."
@@ -61,14 +61,12 @@
     "events": [
       "ev_key",
       "ev_enc",
-      "ev_tick",
-      "ev_draw"
+      "ev_tick"
     ],
     "claims": [
       "ui:FIX + knob on the sound pages",
       "ui:SAMPLER + knob on the sound pages",
-      "ui:FIX tap toggles fixed velocity on the release",
-      "ui:the screen's top-left corner while FIX or SAMPLER is held"
+      "ui:FIX tap toggles fixed velocity on the release"
     ]
   },
   "resources": {
@@ -90,7 +88,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu on build QM09: links, lock-style display, SAMPLER recorder, FIX toggle, PERF and SCNE. Author's unit report on QM06: FIX links, slots full, FIX key, save and power cycle pass."
+    "summary": "rytm-emu on QM11: links, lock-style display, MODS FULL popups, SAMPLER recorder, FIX toggle, PERF and SCNE. Author's unit report on RC18 (QM10): aftertouch and velocity links, display, kit save, reload and power cycle pass."
   },
   "license": {
     "spdx": "GPL-3.0-or-later",

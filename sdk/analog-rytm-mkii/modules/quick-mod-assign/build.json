@@ -23,11 +23,6 @@
       "event": "ev_tick",
       "fn": "quick_mod_assign_tick",
       "order": 50
-    },
-    {
-      "event": "ev_draw",
-      "fn": "quick_mod_assign_draw",
-      "order": 50
     }
   ],
   "contribute": [
@@ -51,8 +46,7 @@
   "claims": [
     "ui:FIX + knob on the sound pages",
     "ui:SAMPLER + knob on the sound pages",
-    "ui:FIX tap toggles fixed velocity on the release",
-    "ui:the screen's top-left corner while FIX or SAMPLER is held"
+    "ui:FIX tap toggles fixed velocity on the release"
   ],
   "requires": [],
   "derive": null,

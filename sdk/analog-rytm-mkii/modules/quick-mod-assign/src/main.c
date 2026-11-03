@@ -6,9 +6,8 @@
 //                           amount (-128..127), continuing from the slot's amount.
 //   SAMPLER + turn a knob   the same for aftertouch.
 //
-// While either key is held, stock draws every knob already linked inverted with
-// its amount, as it does for a held performance pad, and a V or an A sits in
-// the screen's top-left corner. The module puts its own locker into stock's
+// While either key is held, stock draws every knob already linked with its
+// amount, as it does for a held performance or scene pad. The module puts its own locker into stock's
 // parameter UI for that (as QPERF does), and stock's lock edit turns the knobs
 // through it, so the parameter's own value never moves. A core_params entry
 // covers a turn that reaches stock's parameter edit instead.
@@ -16,7 +15,7 @@
 // Each sound has stock's four velocity and four aftertouch slots (SOUND
 // SETTINGS, VELOCITY MOD and AFTERTOUCH). A parameter already in a slot keeps
 // it; otherwise it takes the first slot with no destination or an amount of 0.
-// With all four in use a popup says SLOTS FULL and nothing changes. The module
+// With all four in use a popup says MODS FULL and nothing changes. The module
 // writes stock's slots through stock's own writers and stores nothing itself.
 //
 // FIX pressed and released with no turn toggles fixed velocity as stock does,
@@ -49,7 +48,6 @@ typedef void (*show_popup_t)(void *views, void *shared, int flag);
 typedef void (*set_locker_t)(word_t ui, void *locker);
 typedef void (*lock_edit_t)(word_t ui, int on);
 typedef void (*end_lock_edit_t)(word_t ui);
-typedef void (*fillrect_t)(void *bmp, int x0, int y0, int x1, int y1, int colour);
 
 #define PROJECT ((word0_t)PROJECT_SINGLETON_AT)
 #define PROJECT_KIT ((word1_t)PROJECT_KIT_AT)
@@ -75,7 +73,6 @@ typedef void (*fillrect_t)(void *bmp, int x0, int y0, int x1, int y1, int colour
 #define GET_LOCKER ((word1_t)GET_LOCKER_AT)
 #define LOCK_EDIT ((lock_edit_t)LOCK_EDIT_AT)
 #define END_LOCK_EDIT ((end_lock_edit_t)END_LOCK_EDIT_AT)
-#define FILLRECT ((fillrect_t)FILLRECT_AT)
 
 #define KEY_FIX 0xb3
 #define KEY_SAMPLER 0xb4
@@ -113,7 +110,7 @@ struct hold {
 static struct hold holds[2] = { { KEY_FIX, 0, 0, 0 }, { KEY_SAMPLER, 0, 0, 0 } };
 
 static void *views;
-static char message[24];
+static char message[28];
 static int pending;                 // a popup for ev_tick
 static int wait;                    // ticks until the next popup may open
 static int redraw;                  // ev_tick asks for a redraw
@@ -260,7 +257,7 @@ static int dest_id(int track, int index)
 
 static void not_a_destination(int kind)
 {
-    show(kind == VEL ? "NOT A VEL DESTINATION" : "NOT AN AT DESTINATION");
+    show(kind == VEL ? "NOT A VELOCITY TARGET" : "NOT AN AFTERTOUCH TARGET");
 }
 
 // Changes the amount (8.8) of the destination logical on track by change, in
@@ -275,7 +272,7 @@ static void nudge(int kind, int track, int logical, int change)
         return;                         // no slots on this sound
     slot = find_slot(set, index);
     if (slot < 0) {
-        show(kind == VEL ? "VEL SLOTS FULL" : "AT SLOTS FULL");
+        show(kind == VEL ? "VELOCITY MODS FULL" : "AFTERTOUCH MODS FULL");
         return;
     }
     if (SET_DEST(set, slot) != index) {
@@ -556,26 +553,4 @@ void quick_mod_assign_tick(void *ctrl)
     SHOW_POPUP(views, &shared, 0);
     SHARED_PTR_RELEASE(&shared.counts);
     STRING_DTOR(&string);
-}
-
-// 5 x 7 glyphs, the top row first, bit 4 the left pixel.
-static const unsigned char glyph_v[7] = { 0x11, 0x11, 0x11, 0x11, 0x0a, 0x0a, 0x04 };
-static const unsigned char glyph_a[7] = { 0x0e, 0x11, 0x11, 0x1f, 0x11, 0x11, 0x11 };
-
-// ev_draw: while our locker is the UI's on a page of ours, a V or an A in the
-// screen's top-left corner, lit on a dark box, so it stands out of the
-// header's lit bar. y counts up from the bottom row (0); the top row is 63.
-void quick_mod_assign_draw(void *bmp, void *ctrl)
-{
-    const unsigned char *g;
-    int r, c;
-    (void)ctrl;
-    if (shown == NONE || !ours() || !on_pages())
-        return;
-    g = shown == VEL ? glyph_v : glyph_a;
-    FILLRECT(bmp, 0, 54, 7, 63, 0);
-    for (r = 0; r < 7; r++)
-        for (c = 0; c < 5; c++)
-            if (g[r] & (0x10 >> c))
-                FILLRECT(bmp, 1 + c, 62 - r, 1 + c, 62 - r, 1);
 }

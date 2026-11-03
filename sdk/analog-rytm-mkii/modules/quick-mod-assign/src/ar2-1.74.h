@@ -58,7 +58,6 @@
 #define END_LOCK_EDIT_AT 0x40036622
 #define LOCKER_RELATIVE_AT 0x40199202     // PerformanceParamLocker: relative values
 #define LOCKER_LOCKABLE_AT 0x400acca8     // PerformanceParamLocker: lockable(id)
-#define FILLRECT_AT 0x40070726            // bitmap, x0, y0, x1, y1, colour
 
 #define POPUP_VTABLE 0x401d70c8
 #define PAGES_TOP_VTABLE 0x4023502c

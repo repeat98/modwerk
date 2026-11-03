@@ -9,25 +9,25 @@ Linking velocity or aftertouch to a parameter on stock takes a trip through SOUN
 - **Hold FIX and turn a knob**: that parameter is linked to velocity, and the turn sets the amount.
 - **Hold SAMPLER and turn a knob**: the same for aftertouch.
 
-While either key is held, every knob already linked shows its amount the way stock shows a performance lock (an inverted box with +n), and a V or an A sits in the screen's top-left corner. Envelope graphics follow the amount as they do for a lock. The mod fills stock's own four velocity and four aftertouch slots of the selected sound, so the links save with the kit, show in SOUND SETTINGS as usual and keep playing on a unit without the mod.
+While either key is held, every knob already linked shows its amount the way stock shows a performance or scene lock (an inverted box with +n), since an amount is an offset as theirs are. Envelope graphics follow the amount as they do for a lock. The mod fills stock's own four velocity and four aftertouch slots of the selected sound, so the links save with the kit, show in SOUND SETTINGS as usual and keep playing on a unit without the mod.
 
 ## Controls
 
 | Control | Where | What it does |
 | --- | --- | --- |
-| FIX held | SYNTH, SAMPLE, FILTER, AMP and LFO pages of a sound track, also in PERF, SCNE, MUTE and CHRO | Shows the velocity links: a V in the corner, each linked knob inverted with its amount. Turning a knob links it, or changes its amount, -128 to +127. The parameter's own value does not move. |
-| SAMPLER held | as above | The same for aftertouch, with an A. |
+| FIX held | SYNTH, SAMPLE, FILTER, AMP and LFO pages of a sound track, also in PERF, SCNE, MUTE and CHRO | Shows the velocity links: each linked knob as a box with its amount. Turning a knob links it, or changes its amount, -128 to +127. The parameter's own value does not move. |
+| SAMPLER held | as above | The same for aftertouch. A new kit links aftertouch to FILT FRQ at +16, so that box shows on the FILTER page. |
 | FIX tap | anywhere stock takes it | Toggles fixed velocity as on stock, on the release instead of the press. |
 | SAMPLER tap | anywhere | Opens the recorder, as on stock. After a hold with a turn it does not. |
 
-A parameter already linked keeps its slot. A new one takes the first slot with no destination or an amount of 0; turning a slot back to 0 frees it. A slot at 0 still shows as +0 while the key is held (a new kit links FILT FRQ and FILT RES to velocity at 0). With all four slots holding other parameters a popup says `VEL SLOTS FULL` (`AT SLOTS FULL`) and nothing changes. A parameter that is not in stock's destination list gives a popup and no change. Each knob event moves the amount at least one step, more when turned fast, whatever the parameter's own resolution.
+A parameter already linked keeps its mod slot. A new one takes the first slot, left to right, with no destination or an amount of 0; turning a link back to 0 frees its slot. A link at 0 still shows as 0 while the key is held (a new kit links FILT FRQ and FILT RES to velocity at 0, so those are the first taken). With all four slots holding other parameters a popup says `VELOCITY MODS FULL` (`AFTERTOUCH MODS FULL`) and nothing changes. A parameter that is not in stock's destination list says `NOT A VELOCITY TARGET` (`NOT AN AFTERTOUCH TARGET`) and nothing changes. Each knob event moves the amount at least one step, more when turned fast, whatever the parameter's own resolution.
 
-FUNC + FIX (stock's FIXED VELOCITY), the FX track, and a performance or scene pad or a trig that holds stock's lock edit keep stock's behaviour: a pad pressed in PERF or SCNE during a hold makes a performance or scene lock as usual, and the V or A comes back when it is let go. During a hold the other key does nothing.
+FUNC + FIX (stock's FIXED VELOCITY), the FX track, and a performance or scene pad or a trig that holds stock's lock edit keep stock's behaviour: a pad pressed in PERF or SCNE during a hold makes a performance or scene lock as usual, and the links show again when it is let go. During a hold the other key does nothing.
 
 ## Usage
 
 1. Select a sound track, press FLTR.
-2. Hold FIX and turn FRQ to the right: FRQ's knob turns into a box reading +20 and a V shows in the corner. Harder hits now open the filter.
+2. Hold FIX and turn FRQ to the right: FRQ's knob turns into a box reading +20. Harder hits now open the filter.
 3. Hold SAMPLER and turn DEC on the AMP page: pad pressure now lengthens the decay.
 4. FUNC + FLTR, SOUND SETTINGS, VELOCITY MOD shows the same links, ready to fine-tune.
 
@@ -42,14 +42,14 @@ FUNC + FIX (stock's FIXED VELOCITY), the FX track, and a performance or scene pa
 ## Compatibility and limitations
 
 - OS 1.74 only, with core-ar2 0.7. No other module is needed.
-- It patches no stock site. It sets its own locker in stock's parameter UI while a key is held, as QPERF does with QPER, and adds a `core_params` entry for every parameter id with only a turn function (order 5) for a turn that reaches stock's parameter edit. It subscribes to `ev_key`, `ev_enc`, `ev_tick` and `ev_draw`. No storage.
-- A performance or scene pad, or a trig, that holds stock's locker when FIX or SAMPLER goes down or during the hold keeps it; the mod shows its V or A and its amounts again within a tick of it letting go.
+- It patches no stock site. It sets its own locker in stock's parameter UI while a key is held, as QPERF does with QPER, and adds a `core_params` entry for every parameter id with only a turn function (order 5) for a turn that reaches stock's parameter edit. It subscribes to `ev_key`, `ev_enc` and `ev_tick`. No storage.
+- A performance or scene pad, or a trig, that holds stock's locker when FIX or SAMPLER goes down or during the hold keeps it; the mod shows its amounts again within a tick of it letting go.
 - Stock's LFO DST knob opens its list rather than turning, so FIX + DST does nothing.
-- On a unit, build QM06 (FIX + knob, slots full, the FIX key, save and power cycle) passed by the author's report; SAMPLER and the lock-style display (QM07 on) are emulator-only so far: see [TESTING.md](TESTING.md).
+- On a unit, by the author's report: QM06 (FIX + knob, the FIX key, save and power cycle) and RC18's QM10 (SAMPLER aftertouch links, the lock-style display, envelopes following, mods full, kit save and reload, power cycle) pass: see [TESTING.md](TESTING.md).
 
 ## Tests and measurements
 
-rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)), and the author's unit on an earlier build. Memory (build QM10's link map, compiled with `-Os`): 2,968 bytes of code and initialised data and 40 bytes of `.bss` in the 128 KiB shared mod area. Load: UI only, on key events, knob turns and the screen's draw; nothing runs in the audio path.
+rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)), and the author's unit on an earlier build. Memory (build QM11's link map, compiled with `-Os`): 2,800 bytes of code and initialised data and 44 bytes of `.bss` in the 128 KiB shared mod area. Load: UI only, on key events, knob turns and the screen's draw; nothing runs in the audio path.
 
 ## Authorship and licences
 

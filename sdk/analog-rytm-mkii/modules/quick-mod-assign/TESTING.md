@@ -9,9 +9,10 @@ The rytm-emu runs below were observed on the named build; the emulator is not ha
 - Build QM06 (one pad scan per knob event): `.syx` `14eb5448616b9fc2622591f653f994260713396f442ba57570e5fe0bb6511606`. In combo RC17 (`b1179a85…`).
 - Build QM09 (SAMPLER replaces RTRG for aftertouch; stock's lock-style display with a V or A marker instead of the amount popup; PERF and SCNE edit screens; the other key ignored during a hold; the locker kept with the hold by the tick): `.syx` `c94a8b7b160764343861aec67fc08f65a631cf4f200f3b79d5ce93fe184921f4`.
 - Build QM10 (QM09 compiled with `-Os`, so the full set fits the shared mod RAM): `.syx` `a66959671562940659007d03adfd0f1f37345c9012b33c98a25994baaefe2059`. The links, display, SAMPLER, SLOTS FULL, PERF and FIX-key checks below rerun on it with the same results.
+- Build QM11 (QM10 without the V/A marker; popups read VELOCITY MODS FULL, AFTERTOUCH MODS FULL, NOT A VELOCITY TARGET, NOT AN AFTERTOUCH TARGET): `.syx` `7ef00e24371b1d572da3ec60ca21be4d059b32decfe15f3a334c75486788e3f9`.
 - Emulator: rytm-emu `2ac0f1f`, headless `dtboot`, a fresh card, the default kit (BD PLASTIC on track 1), the SYNTH page unless named. Events off the `--every` grid. Slots read on stock's MODULATION SETUP screen; fixed velocity read from stock's flag in RAM.
 
-## rytm-emu (QM09, rerun on QM10)
+## rytm-emu (QM09, rerun on QM10; QM11 rows marked)
 
 | Check | Result |
 | --- | --- |
@@ -21,7 +22,11 @@ The rytm-emu runs below were observed on the named build; the emulator is not ha
 | SAMPLER held, SWD turned | A at the top left; SWD `+8`; aftertouch slot written |
 | FIX + TUN, 6 detents (a fine parameter) | TUN `+5` |
 | AMP page, FIX + ATK, 12 detents | ATK `+10`; the envelope graphic draws the longer attack |
-| FIX + SWT, SWD, DEC, TUN, then MOD | four boxes `+2`; MOD gives `VEL SLOTS FULL` and changes nothing |
+| FIX + SWT, SWD, DEC, TUN, then MOD | four boxes `+2`; MOD gives `VELOCITY MODS FULL` (QM11) and changes nothing |
+| SAMPLER + SWT, SWD, DEC, then TUN (QM11) | three boxes; the new kit's FRQ +16 holds the fourth slot, so TUN gives `AFTERTOUCH MODS FULL` |
+| FILTER page, SAMPLER held (QM11) | FRQ `+16`: the new kit's aftertouch link |
+| FILTER TYPE with SAMPLER (QM11) | `NOT AN AFTERTOUCH TARGET`, fits the popup |
+| No marker (QM11) | nothing drawn in the corner |
 | SAMPLER tap | stock's recorder opens |
 | SAMPLER held with a turn, released | no recorder; a later tap opens it |
 | SAMPLER held 3 s with turns (key repeat) | no recorder during or after |
@@ -51,11 +56,20 @@ Not tested: kit save, reload and power cycle on QM07 or later; SOUND MANAGER; th
 - FIX on the FX track: edits as normal.
 - Kit save and power cycle: the links were kept. Sound normal.
 
-QM07 and later (SAMPLER, the lock-style display) have not run on a unit. Steps for the author's unit, on QM10 or a combined image with it:
+**RC18 (QM10 inside), reported by the author, 3 Nov 2026:**
+- Envelope graphics follow the amount while assigning.
+- New links take the slots of the new kit's FRQ and RES at 0, left to right.
+- FIX shows the velocity links, SAMPLER the aftertouch links; FRQ and RES at 0 shown as `0`.
+- SAMPLER tap opens the recorder. `VEL SLOTS FULL` and `AT SLOTS FULL` shown. FUNC + FIX: stock's popup.
+- Aftertouch modulates the sound as linked.
+- Power cycle, kit save and kit reload: the links are kept.
+- Asked for: no V/A marker, MODS instead of SLOTS in the popups (both in QM11), and the performance-lock box kept as the display.
 
-1. FILTER page, hold FIX: a V at the top left, FRQ and RES shown as `0` boxes. Turn FRQ: its box counts up, FRQ itself does not move. Soft and hard pad hits differ. SOUND SETTINGS, VELOCITY MOD shows FILT FRQ.
-2. AMP page, hold SAMPLER: an A. Turn DEC: pad pressure changes the decay. Tap SAMPLER alone: the recorder opens; hold it with a turn: it does not.
-3. Fill four slots, try a fifth: SLOTS FULL. Turn one back to 0, the fifth now fits.
+QM11's changes (marker gone, popup wording) have not run on a unit. Steps for the author's unit, on QM11 or a combined image with it:
+
+1. FILTER page, hold FIX: FRQ and RES shown as `0` boxes, nothing in the corner. Turn FRQ: its box counts up, FRQ itself does not move. Soft and hard pad hits differ. SOUND SETTINGS, VELOCITY MOD shows FILT FRQ.
+2. AMP page, hold SAMPLER, turn DEC: pad pressure changes the decay. Tap SAMPLER alone: the recorder opens; hold it with a turn: it does not.
+3. Fill four slots, try a fifth: VELOCITY MODS FULL (AFTERTOUCH MODS FULL for SAMPLER). Turn one back to 0, the fifth now fits.
 4. FIX tap: fixed velocity toggles on the release. FUNC + FIX: stock's popup. Hold SAMPLER and tap FIX: nothing.
-5. PERF mode: hold FIX and turn a knob (a V and the box), then with FIX still held press a pad and turn (a performance lock, as stock).
+5. PERF mode: hold FIX and turn a knob (the box), then with FIX still held press a pad and turn (a performance lock, as stock).
 6. Save the kit, power cycle: the links are kept.
