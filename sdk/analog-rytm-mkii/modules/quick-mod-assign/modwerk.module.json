@@ -50,8 +50,8 @@
     "limitations": [
       "Each sound has four velocity and four aftertouch slots; with all four in use a popup says SLOTS FULL.",
       "A FIX tap toggles fixed velocity on the release instead of the press.",
-      "While FIX or SAMPLER is held, the TRIG page's knobs and knobs turned with a trig held do nothing.",
-      "FUNC + FIX, the FX track and a pad held in PERF or SCNE keep stock's behaviour."
+      "While FIX or SAMPLER is held, the TRIG page's knobs, knobs turned with a trig held and FUNC + a knob do nothing.",
+      "FUNC + FIX, the FX track and a performance, scene or trig lock edit keep stock's behaviour."
     ]
   },
   "platform": {
@@ -90,7 +90,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Not tested yet."
+    "summary": "rytm-emu on build QM09: links, lock-style display, SAMPLER recorder, FIX toggle, PERF and SCNE. Author's unit report on QM06: FIX links, slots full, FIX key, save and power cycle pass."
   },
   "license": {
     "spdx": "GPL-3.0-or-later",

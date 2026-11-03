@@ -22,7 +22,7 @@ While either key is held, every knob already linked shows its amount the way sto
 
 A parameter already linked keeps its slot. A new one takes the first slot with no destination or an amount of 0; turning a slot back to 0 frees it. A slot at 0 still shows as +0 while the key is held (a new kit links FILT FRQ and FILT RES to velocity at 0). With all four slots holding other parameters a popup says `VEL SLOTS FULL` (`AT SLOTS FULL`) and nothing changes. A parameter that is not in stock's destination list gives a popup and no change. Each knob event moves the amount at least one step, more when turned fast, whatever the parameter's own resolution.
 
-FUNC + FIX (stock's FIXED VELOCITY), the FX track and a pad held in PERF or SCNE keep stock's behaviour. While FIX or SAMPLER is held, the TRIG page's knobs and knobs turned with a trig held do nothing.
+FUNC + FIX (stock's FIXED VELOCITY), the FX track, and a performance or scene pad or a trig that holds stock's lock edit keep stock's behaviour: a pad pressed in PERF or SCNE during a hold makes a performance or scene lock as usual, and the V or A comes back when it is let go. During a hold the other key does nothing.
 
 ## Usage
 
@@ -35,19 +35,21 @@ FUNC + FIX (stock's FIXED VELOCITY), the FX track and a pad held in PERF or SCNE
 
 - **FIX's toggle moves to the release.** What changes: on the pages and pad screens, a FIX press is held back until the release, so a hold with a turn leaves fixed velocity as it was. Why: the press cannot know whether a turn follows; stock toggles at the press. What you see: the FIX state changes when you let go. Elsewhere, and with FUNC held, FIX is stock's. Checked: a tap, two taps, a hold past key repeat, a hold with a turn, FUNC + FIX, in rytm-emu.
 - **SAMPLER held with a turn does not open the recorder.** Stock opens it on SAMPLER's release, also after a knob turn; with this mod a turn during the hold makes it an assignment instead. A tap opens the recorder as before. Checked in rytm-emu.
-- **FIX or SAMPLER held changes what a knob turn does.** What changes: on a sound page, a turn sets a mod slot instead of the parameter, drawn as a performance lock. Why: that is the mod. Stock does nothing special with FIX or SAMPLER held and a knob turned (checked in rytm-emu: the knob edits as normal).
+- **FIX or SAMPLER held changes what a knob turn does.** What changes: on a sound page, a turn sets a mod slot instead of the parameter, drawn as a performance lock. Why: that is the mod. Stock does nothing special with FIX or SAMPLER held and a knob turned (checked in rytm-emu: the knob edits as normal). It applies while the key is held only.
+- **During a hold, some knobs do nothing.** What changes: with FIX or SAMPLER held, the TRIG page's knobs, a knob turned with a trig held, and FUNC + a knob no longer edit (stock's lock edit, which the hold switches on, refuses TRIG parameters, and the mod refuses a link with a trig held so none is made by accident). Why: the hold is for links; a trig edit or a fine FUNC edit can wait until the key is let go. What you see: the knob does not move. Considered: passing these turns to stock, which stock's lock edit does not allow without a patch of its own. Checked in rytm-emu: TRIG page, a trig held, both key orders.
+- **The other key does nothing during a hold.** What changes: FIX pressed during a SAMPLER hold does not toggle fixed velocity, and SAMPLER pressed during a FIX hold does not open the recorder. Why: a key brushed mid-assignment should not change the sound or leave the page. Checked in rytm-emu.
 
 ## Compatibility and limitations
 
 - OS 1.74 only, with core-ar2 0.7. No other module is needed.
 - It patches no stock site. It sets its own locker in stock's parameter UI while a key is held, as QPERF does with QPER, and adds a `core_params` entry for every parameter id with only a turn function (order 5) for a turn that reaches stock's parameter edit. It subscribes to `ev_key`, `ev_enc`, `ev_tick` and `ev_draw`. No storage.
-- A performance or scene pad, or a trig, that already holds stock's locker when FIX or SAMPLER goes down keeps it: the mod then shows nothing.
+- A performance or scene pad, or a trig, that holds stock's locker when FIX or SAMPLER goes down or during the hold keeps it; the mod shows its V or A and its amounts again within a tick of it letting go.
 - Stock's LFO DST knob opens its list rather than turning, so FIX + DST does nothing.
-- Not tested on a unit beyond build QM06's FIX, slot, FIX key and save checks: see [TESTING.md](TESTING.md).
+- On a unit, build QM06 (FIX + knob, slots full, the FIX key, save and power cycle) passed by the author's report; SAMPLER and the lock-style display (QM07 on) are emulator-only so far: see [TESTING.md](TESTING.md).
 
 ## Tests and measurements
 
-rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)), and the author's unit on an earlier build. Memory: about 2.5 KB of code and 60 bytes of data in the 128 KiB shared mod area. Load: UI only, on key events, knob turns and the screen's draw; nothing runs in the audio path.
+rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)), and the author's unit on an earlier build. Memory (build QM09's link map): 3,704 bytes of code and initialised data and 40 bytes of `.bss` in the 128 KiB shared mod area. Load: UI only, on key events, knob turns and the screen's draw; nothing runs in the audio path.
 
 ## Authorship and licences
 

@@ -9,9 +9,9 @@
 // While either key is held, stock draws every knob already linked inverted with
 // its amount, as it does for a held performance pad, and a V or an A sits in
 // the screen's top-left corner. The module puts its own locker into stock's
-// parameter UI for that (as QPERF does); the turns themselves come through
-// core-ar2's core_params table, ahead of stock's edit, so the parameter's own
-// value never moves.
+// parameter UI for that (as QPERF does), and stock's lock edit turns the knobs
+// through it, so the parameter's own value never moves. A core_params entry
+// covers a turn that reaches stock's parameter edit instead.
 //
 // Each sound has stock's four velocity and four aftertouch slots (SOUND
 // SETTINGS, VELOCITY MOD and AFTERTOUCH). A parameter already in a slot keeps
@@ -21,8 +21,9 @@
 //
 // FIX pressed and released with no turn toggles fixed velocity as stock does,
 // on the release. SAMPLER released with no turn opens the recorder as stock
-// does; after a turn its release is the module's. FUNC (+ FIX: stock's FIXED
-// VELOCITY), a held trig, the TRIG page and the FX track stay stock.
+// does; after a turn its release is the module's. During a hold the other key
+// does nothing. FUNC + FIX (stock's FIXED VELOCITY), the FX track, and a
+// performance or scene pad or a trig that holds stock's locker stay stock.
 //
 // Firmware routines are reached at fixed addresses given for each OS release
 // by ar2-1.74.h. Stock returns pointers in d0, while m68k-linux GCC expects
@@ -107,8 +108,9 @@ struct hold {
     int key;
     int held;                       // the press was ours and the key is down
     int turned;                     // an encoder turned during the hold
+    int ignored;                    // pressed during the other key's hold: its release is ours
 };
-static struct hold holds[2] = { { KEY_FIX, 0, 0 }, { KEY_SAMPLER, 0, 0 } };
+static struct hold holds[2] = { { KEY_FIX, 0, 0, 0 }, { KEY_SAMPLER, 0, 0, 0 } };
 
 static void *views;
 static char message[24];
@@ -131,13 +133,19 @@ static word_t top_view(void)
     return 0;                           // only popups: no page of ours
 }
 
+static int pad_screen(word_t top)
+{
+    return top == PERF_VTABLE || top == PERF_EDIT_VTABLE
+        || top == SCENE_VTABLE || top == SCENE_EDIT_VTABLE;
+}
+
 static int on_pages(void)
 {
     word_t top;
     if (!views)
         return 0;
     top = top_view();
-    return top == PAGES_TOP_VTABLE || top == PERF_VTABLE || top == SCENE_VTABLE
+    return top == PAGES_TOP_VTABLE || pad_screen(top)
         || top == MUTE_VTABLE || top == CHROMATIC_VTABLE;
 }
 
@@ -163,23 +171,17 @@ static word_t vcall(word_t object, int slot)
 #define SET_WRITE_AMOUNT(s, i, v) ((void (*)(word_t, int, int))vcall(s, SLOTS_SET_AMOUNT))(s, i, v)
 #define SOUND_ID_OF(s, i) ((int (*)(word_t, int))vcall(s, SOUND_SET_ID_OF))(s, i)
 
-static int any_trig_held(void)
+static int any_held(int first, int last)
 {
     int k;
-    for (k = 0; k < TRIG_KEYS; k++)
+    for (k = first; k <= last; k++)
         if (IS_KEY_HELD(k))
             return 1;
     return 0;
 }
 
-static int any_pad_held(void)
-{
-    int k;
-    for (k = KEY_PAD_FIRST; k <= KEY_PAD_LAST; k++)
-        if (IS_KEY_HELD(k))
-            return 1;
-    return 0;
-}
+#define ANY_TRIG_HELD() any_held(0, TRIG_KEYS - 1)
+#define ANY_PAD_HELD() any_held(KEY_PAD_FIRST, KEY_PAD_LAST)
 
 static void show(const char *text)
 {
@@ -188,6 +190,16 @@ static void show(const char *text)
         *p++ = *text++;
     *p = 0;
     pending = 1;
+}
+
+static int selected_track(void)
+{
+    return SELECTED_TRACK(PROJECT_SEQ(PROJECT()));
+}
+
+static int sound_track(int track)
+{
+    return track >= 0 && track < FX_TRACK;
 }
 
 // The kind held now, NONE without one. A release that never reached ev_key
@@ -234,29 +246,30 @@ static int find_slot(word_t set, int index)
 }
 
 // The logical id stock's destination list gives a sound parameter's index on
-// this track, 0 when it is no destination.
+// this track, 0 when it is no destination or outside stock's id table.
 static int dest_id(int track, int index)
 {
     int logical;
     if (index <= 0)
         return 0;
     logical = SOUND_ID_OF(KIT_PARAM_SET(PROJECT_KIT(PROJECT()), track), index);
-    return logical > 0 && (PARAM_FLAGS(logical) & FLAG_MOD_DEST) ? logical : 0;
+    if (logical <= 0 || logical >= PARAM_ROWS)
+        return 0;
+    return PARAM_FLAGS(logical) & FLAG_MOD_DEST ? logical : 0;
 }
 
-// index's amount on track (8.8), 0 when it has no slot.
-static int amount_of(int kind, int track, int index)
+static void not_a_destination(int kind)
 {
-    word_t set = slots_of(track, kind);
-    int slot = slot_of(set, index);
-    return slot < 0 ? 0 : SET_AMOUNT(set, slot);
+    show(kind == VEL ? "NOT A VEL DESTINATION" : "NOT AN AT DESTINATION");
 }
 
-// Sets the amount (8.8, whole steps) of the destination logical on track,
-// taking a slot if it has none. A popup says why when it cannot.
-static void assign(int kind, int track, int logical, int amount)
+// Changes the amount (8.8) of the destination logical on track by change, in
+// the parameter's own resolution; 0 only makes sure it has a slot. A fine knob
+// such as TUN turns in fractions, so a change is at least one step, and a fast
+// turn as many as the parameter would move. A popup says why when it cannot.
+static void nudge(int kind, int track, int logical, int change)
 {
-    int index = row_word(logical, ROW_INDEX), slot;   // the byte stock stores for it
+    int index = row_word(logical, ROW_INDEX), slot, amount, steps;   // the byte stock stores
     word_t set = slots_of(track, kind);
     if (SET_COUNT(set) <= 0)
         return;                         // no slots on this sound
@@ -269,6 +282,12 @@ static void assign(int kind, int track, int logical, int amount)
         SET_WRITE_AMOUNT(set, slot, 0);
         SET_WRITE_DEST(set, slot, logical);
     }
+    steps = (change < 0 ? -change : change) / STEP;
+    if (change && !steps)
+        steps = 1;
+    if (change < 0)
+        steps = -steps;
+    amount = SET_AMOUNT(set, slot) + steps * STEP;
     if (amount < AMOUNT_MIN)
         amount = AMOUNT_MIN;
     if (amount > AMOUNT_MAX)
@@ -276,22 +295,24 @@ static void assign(int kind, int track, int logical, int amount)
     SET_WRITE_AMOUNT(set, slot, amount);
 }
 
-static void not_a_destination(int kind)
-{
-    show(kind == VEL ? "NOT A VEL DESTINATION" : "NOT AN AT DESTINATION");
-}
-
-// ---- The locker stock draws through while FIX or SAMPLER is held ----------
+// ---- The locker stock draws and edits through while FIX or SAMPLER is held --
 // Its "param" is a sound parameter's index, as the slots store it.
+
+// shown's slot set on track, 0 when our locker has nothing to say there.
+static word_t shown_slots(int track)
+{
+    if (shown == NONE || !sound_track(track))
+        return 0;
+    return slots_of(track, shown);
+}
 
 static int locker_has_any(void *self)
 {
-    int track = SELECTED_TRACK(PROJECT_SEQ(PROJECT())), i, n;
-    word_t set;
+    word_t set = shown_slots(selected_track());
+    int i, n;
     (void)self;
-    if (shown == NONE || track < 0 || track >= FX_TRACK)
+    if (!set)
         return 0;
-    set = slots_of(track, shown);
     n = SET_COUNT(set);
     for (i = 0; i < n; i++)
         if (SET_DEST(set, i) > 0)
@@ -300,57 +321,49 @@ static int locker_has_any(void *self)
 }
 
 // A parameter with a slot, whatever its amount: stock's lock edit makes a new
-// lock at 0 on the first turn and adds each turn to what get returns, so a
+// lock (set 0) on the first turn and adds each turn to what get returns, so a
 // link at 0 must read as one.
 static int locker_has(void *self, int track, int param)
 {
+    word_t set = shown_slots(track);
     (void)self;
-    return shown != NONE && track >= 0 && track < FX_TRACK && param > 0
-        && slot_of(slots_of(track, shown), param) >= 0;
+    return set && param > 0 && slot_of(set, param) >= 0;
 }
 
 static int locker_get(void *self, int track, int param)
 {
-    return locker_has(self, track, param) ? amount_of(shown, track, param) : 0;
+    word_t set = shown_slots(track);
+    int slot = set && param > 0 ? slot_of(set, param) : -1;
+    (void)self;
+    return slot < 0 ? 0 : SET_AMOUNT(set, slot);
 }
 
-// Stock's lock edit turns a knob through here while our locker is set: value
-// is what get returned plus the turn, in the parameter's own resolution, or 0
-// to make the lock. A fine knob such as TUN turns in fractions, so each change
-// is at least one step, and a fast turn as many as the parameter would move.
+// Stock's lock edit turns a knob through here: value is what get returned plus
+// the turn, or 0 to make the lock when has said no.
 static void locker_set(void *self, int track, int param, int value)
 {
-    int logical, current, diff, steps;
+    word_t set = shown_slots(track);
+    int logical, slot;
     (void)self;
-    if (shown == NONE || track < 0 || track >= FX_TRACK)
-        return;
+    if (!set || !IS_KEY_HELD(holds[shown].key))
+        return;                         // a lost release: the tick takes the locker away
     holds[shown].turned = 1;
-    if (any_trig_held())
+    if (ANY_TRIG_HELD())
         return;                         // a trig held too: no link by accident
     logical = dest_id(track, param);
     if (!logical) {
         not_a_destination(shown);
         return;
     }
-    current = amount_of(shown, track, row_word(logical, ROW_INDEX));
-    diff = value - current;
-    steps = (diff < 0 ? -diff : diff) / STEP;
-    if (diff && !steps)
-        steps = 1;
-    if (diff < 0)
-        steps = -steps;
-    assign(shown, track, logical, current + steps * STEP);
+    slot = slot_of(set, param);
+    nudge(shown, track, logical, slot < 0 ? 0 : value - SET_AMOUNT(set, slot));
 }
 
 static void locker_clear(void *self, int track, int param)
 {
-    word_t set;
-    int slot;
+    word_t set = shown_slots(track);
+    int slot = set && param > 0 ? slot_of(set, param) : -1;
     (void)self;
-    if (shown == NONE || track < 0 || track >= FX_TRACK)
-        return;
-    set = slots_of(track, shown);
-    slot = slot_of(set, param);
     if (slot >= 0)
         SET_WRITE_AMOUNT(set, slot, 0);
 }
@@ -365,7 +378,9 @@ static void locker_never(void *self)
     (void)self;                         // the object is static: never destroyed
 }
 
-// PerformanceParamLocker's slots, its last two kept: relative, and lockable(id).
+// PerformanceParamLocker's slots, its last two kept: relative (returns 1), and
+// lockable(id) (the id's category); neither reads the object. Stock calls the
+// slots at +8 to +36 only.
 static const void *const locker_vtable[] = {
     locker_never, locker_never, locker_has_any, locker_clear, locker_clear_all,
     locker_set, locker_get, locker_has,
@@ -373,14 +388,18 @@ static const void *const locker_vtable[] = {
 };
 static struct { const void *const *vtable; } locker = { locker_vtable };
 
+static int ours(void)
+{
+    return GET_LOCKER(PARAM_UI()) == (word_t)&locker;
+}
+
+// Sets our locker for kind if the UI's is free (or already ours), on a sound
+// track. A performance or scene pad, or a trig, that holds it keeps it.
 static void locker_install(int kind)
 {
-    word_t ui = PARAM_UI();
-    int track = SELECTED_TRACK(PROJECT_SEQ(PROJECT()));
-    if (track < 0 || track >= FX_TRACK)
-        return;                         // the FX track has no slots: its knobs stay stock's
-    if (GET_LOCKER(ui))
-        return;                         // a performance or scene pad, or a trig, holds it: stock's
+    word_t ui = PARAM_UI(), current = GET_LOCKER(ui);
+    if (!sound_track(selected_track()) || (current && current != (word_t)&locker))
+        return;
     shown = kind;
     SET_LOCKER(ui, &locker);
     LOCK_EDIT(ui, 1);
@@ -390,49 +409,38 @@ static void locker_install(int kind)
 static void locker_remove(void)
 {
     word_t ui = PARAM_UI();
-    if (shown != NONE && GET_LOCKER(ui) == (word_t)&locker)
+    if (GET_LOCKER(ui) == (word_t)&locker)
         END_LOCK_EDIT(ui);
     shown = NONE;
     redraw = 1;
 }
 
-// ---- The turn ----------------------------------------------------------------
+// ---- A turn that reaches stock's parameter edit --------------------------------
 
-// core_params' delta: 1 takes the turn (no stock edit, no lock), 0 passes.
+// core_params' delta: 1 takes the turn (no stock edit, no lock), 0 passes. With
+// our locker set, stock's lock edit takes the turns before this; this covers a
+// hold whose locker the tick has not set yet.
 static int qma_delta(void *view, int32_t id, int32_t delta, int32_t func)
 {
-    int kind = held_kind(), track, logical, steps;
+    int kind = held_kind(), track, logical;
     (void)view;
     if (kind == NONE)
         return 0;
     holds[kind].turned = 1;             // any turn makes the hold a hold, not a tap
-    if (func || !delta || id < 0 || id >= PARAM_ROWS || any_trig_held()
+    if (func || !delta || id < 0 || id >= PARAM_ROWS || ANY_TRIG_HELD()
         || row_word(id, ROW_CATEGORY) == CATEGORY_TRIG)
         return 0;
-    // A pad held in PERF or SCNE edits its performance or scene: stock's.
-    if (views) {
-        word_t top = top_view();
-        if ((top == PERF_VTABLE || top == SCENE_VTABLE) && any_pad_held())
-            return 0;
-    }
-    track = SELECTED_TRACK(PROJECT_SEQ(PROJECT()));
-    if (track < 0 || track >= FX_TRACK)
+    if (views && pad_screen(top_view()) && ANY_PAD_HELD())
+        return 0;                       // a pad held in PERF or SCNE edits its own locks
+    track = selected_track();
+    if (!sound_track(track))
         return 0;
     logical = dest_id(track, row_word(id, ROW_INDEX));
     if (!logical) {
         not_a_destination(kind);
         return 1;
     }
-    // The delta comes scaled to the parameter's own resolution (a fine knob
-    // such as TUN turns in fractions), so each event is at least one step,
-    // and a fast turn as many as the parameter would move.
-    steps = (delta < 0 ? -delta : delta) / STEP;
-    if (!steps)
-        steps = 1;
-    if (delta < 0)
-        steps = -steps;
-    assign(kind, track, logical,
-           amount_of(kind, track, row_word(logical, ROW_INDEX)) + steps * STEP);
+    nudge(kind, track, logical, delta);
     return 1;
 }
 
@@ -461,6 +469,10 @@ int quick_mod_assign_key(void *brain, void *event)
     h = &holds[k];
     if (!down) {
         int turned = h->turned;
+        if (h->ignored) {
+            h->ignored = 0;
+            return 1;
+        }
         if (!h->held)
             return 0;
         h->held = 0;
@@ -476,13 +488,18 @@ int quick_mod_assign_key(void *brain, void *event)
         return turned;                  // SAMPLER: a tap's release opens stock's recorder
     }
     if (flags & REPEAT)
-        return k == VEL && h->held;     // FIX's repeats are ours; SAMPLER's stock's
+        return h->ignored || (k == VEL && h->held);   // SAMPLER's own repeats are stock's
     // A fresh press starts a new hold, even if a lost release left one set.
     if (h->held && shown == k)
         locker_remove();
     h->held = 0;
-    if (IS_KEY_HELD(KEY_FUNC) || !on_pages() || held_kind() != NONE)
-        return 0;                       // FUNC, another screen, or the other key's hold
+    h->ignored = 0;
+    if (held_kind() != NONE) {
+        h->ignored = 1;                 // during the other key's hold: nothing
+        return 1;
+    }
+    if (IS_KEY_HELD(KEY_FUNC) || !on_pages())
+        return 0;                       // FUNC (+ FIX: FIXED VELOCITY), or another screen
     h->held = 1;
     h->turned = 0;
     locker_install(k);
@@ -502,6 +519,17 @@ int quick_mod_assign_enc(void *brain, void *event)
     return 0;
 }
 
+// ev_tick: keeps our locker with the hold. A lost release takes it away; a
+// locker stock set over ours (a pad or a trig) and then cleared gives it back.
+static void keep_locker(void)
+{
+    int kind = held_kind();
+    if (shown != NONE && shown != kind)
+        locker_remove();
+    if (kind != NONE && !ours() && !GET_LOCKER(PARAM_UI()) && on_pages())
+        locker_install(kind);
+}
+
 // Stock's popup for the module's messages, opened from ev_tick so repeats open
 // one, not dozens.
 void quick_mod_assign_tick(void *ctrl)
@@ -510,6 +538,7 @@ void quick_mod_assign_tick(void *ctrl)
     char allocator;
     struct { void *object; void *counts; } shared;
     void *popup;
+    keep_locker();
     if (redraw) {
         redraw = 0;
         ((char *)ctrl)[CTRL_REDRAW] = 1;
@@ -533,15 +562,15 @@ void quick_mod_assign_tick(void *ctrl)
 static const unsigned char glyph_v[7] = { 0x11, 0x11, 0x11, 0x11, 0x0a, 0x0a, 0x04 };
 static const unsigned char glyph_a[7] = { 0x0e, 0x11, 0x11, 0x1f, 0x11, 0x11, 0x11 };
 
-// ev_draw: while our locker shows, a V or an A in the screen's top-left corner,
-// lit on a dark box with a dark edge, so it stands out of the header's lit bar.
-// y counts up from the bottom row (0); the top row is 63.
+// ev_draw: while our locker is the UI's on a page of ours, a V or an A in the
+// screen's top-left corner, lit on a dark box, so it stands out of the
+// header's lit bar. y counts up from the bottom row (0); the top row is 63.
 void quick_mod_assign_draw(void *bmp, void *ctrl)
 {
     const unsigned char *g;
     int r, c;
     (void)ctrl;
-    if (shown == NONE)
+    if (shown == NONE || !ours() || !on_pages())
         return;
     g = shown == VEL ? glyph_v : glyph_a;
     FILLRECT(bmp, 0, 54, 7, 63, 0);

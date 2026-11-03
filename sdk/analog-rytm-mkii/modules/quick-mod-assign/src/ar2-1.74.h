@@ -22,13 +22,12 @@
 
 // The parameter id table: 469 rows of 52 bytes. Row + 0 the category (61 the
 // TRIG page), + 4 the parameter's index in the sound (the mod slots' stored
-// destination), + 48 the knob's short name.
+// destination).
 #define PARAM_TABLE 0x401bfbc8
 #define PARAM_ROWS 469
 #define PARAM_ROW_BYTES 52
 #define ROW_CATEGORY 0
 #define ROW_INDEX 4
-#define ROW_SHORT 48
 #define CATEGORY_TRIG 61
 
 // A mod slot set (the velocity or aftertouch ParameterSet). Four slots, each
@@ -63,7 +62,9 @@
 
 #define POPUP_VTABLE 0x401d70c8
 #define PAGES_TOP_VTABLE 0x4023502c
-#define PERF_VTABLE 0x401e26c4
-#define SCENE_VTABLE 0x401e305c
+#define PERF_VTABLE 0x401e26c4           // PerformanceView
+#define PERF_EDIT_VTABLE 0x401e2a54      // PerformanceEditView: what the PERF key opens
+#define SCENE_VTABLE 0x401e305c          // SceneSelectView
+#define SCENE_EDIT_VTABLE 0x401e2ee8     // SceneEditView: what the SCNE key opens
 #define MUTE_VTABLE 0x401e2bbc
 #define CHROMATIC_VTABLE 0x401e1394
