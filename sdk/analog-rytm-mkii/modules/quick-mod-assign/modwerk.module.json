@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 3,
+  "id": "quick-mod-assign",
+  "name": "Quick Mod Assign",
+  "version": "0.1.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "system",
+  "exclusive": false,
+  "author": { "github": "npp1993", "credits": ["Nathaniel Pavel"] },
+  "maintainers": ["npp1993"],
+  "presentation": {
+    "label": "QUICK MOD ASSIGN",
+    "family": "Performance",
+    "summary": "Link a parameter to velocity or aftertouch by holding FIX or RTRG and turning its knob.",
+    "overview": "Hold FIX and turn any knob on a sound page: that parameter is linked to velocity, and the turn sets how much. Hold RTRG and turn to link it to aftertouch instead. It fills stock's own four velocity and four aftertouch slots of the sound, so the links save with the kit and show in SOUND SETTINGS as usual.",
+    "highlights": [
+      "Velocity or aftertouch to any parameter in one gesture",
+      "Stays on the page you are playing",
+      "Uses stock's slots, saved with the kit"
+    ],
+    "usage": [
+      "Hold FIX and turn FILTER FRQ to make harder hits open the filter.",
+      "Hold RTRG and turn AMP DEC to let pad pressure lengthen the decay."
+    ]
+  },
+  "access": {
+    "location": "The FIX and RTRG keys, on the sound pages and in PERF, SCNE, MUTE and CHRO.",
+    "steps": [
+      "Select a sound track and open its SYNTH, SAMPLE, FILTER, AMP or LFO page.",
+      "Hold FIX and turn a knob: a popup shows VEL, the parameter and the amount.",
+      "Hold RTRG and turn a knob for aftertouch; once a pad is played during that hold, the knobs work as stock.",
+      "Turn back to 0 to free the slot. Tap FIX alone to toggle fixed velocity as before."
+    ],
+    "screenshots": []
+  },
+  "controls": [],
+  "compatibility": {
+    "releases": ["1.74"],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Each sound has four velocity and four aftertouch slots; with all four in use a popup says SLOTS FULL.",
+      "A FIX tap toggles fixed velocity on the release instead of the press.",
+      "FUNC, a held trig, the TRIG page and the FX track keep stock's turn."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": ["ev_key", "ev_tick"],
+    "claims": [
+      "ui:FIX + knob on the sound pages",
+      "ui:RTRG + knob on the sound pages, until a pad is played in the hold",
+      "ui:FIX tap toggles fixed velocity on the release"
+    ]
+  },
+  "resources": {
+    "memoryBytes": null,
+    "fastBytes": null,
+    "load": { "display": "Not measured yet", "method": "unmeasured", "conditions": "UI only: runs on key events and knob turns, never in the audio path." }
+  },
+  "evidence": { "tier": "none", "moduleVersion": "0.1.0-experimental", "sourceSha256": null, "reports": [], "hardware": null, "verifiedBy": null },
+  "tests": { "report": "TESTING.md", "summary": "Not tested yet." },
+  "license": { "spdx": "GPL-3.0-or-later", "file": "LICENSE", "declaration": "Original work by Nathaniel Pavel." },
+  "media": [
+    { "path": "media/thumbnail.svg", "kind": "thumbnail", "caption": "Quick Mod Assign thumbnail", "alt": "Placeholder thumbnail for Quick Mod Assign", "credit": "npp1993", "license": "GPL-3.0-or-later", "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork." }
+  ]
+}

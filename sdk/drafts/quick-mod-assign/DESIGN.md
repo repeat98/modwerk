@@ -1,6 +1,6 @@
 # Quick Mod Assign (Analog Rytm MKII, OS 1.74): design
 
-Design agreed with Nathaniel Pavel (@npp1993) on 2 Nov 2026. Nothing is built yet.
+Design agreed with Nathaniel Pavel (@npp1993) on 2 Nov 2026. The module is in `sdk/analog-rytm-mkii/modules/quick-mod-assign/` (build QM03, rytm-emu only).
 
 Hold a key and turn a knob to link that parameter to velocity or aftertouch, in the
 way QPERF links a performance: hold QPER and turn. It is meant to be fast enough to
@@ -77,39 +77,13 @@ with no key held.
 
 - **UI claims:** `FIX + knob on sound pages`; `RTRG + knob on sound pages when no
   pad was played during the hold`.
-- **Code site.** Stock's knob turn, param_apply_delta (0x400378a6), already has
-  Velocity Humanise at 0x400378ae (8 bytes) and Ctrl All at 0x400378c2 (6 bytes).
-  The track lookup call between them, at 0x400378bc (6 bytes), is unclaimed. Each
-  gate acts only on its own key, so the three can run together. QPERF takes its turn
-  at a different site (0x400a4994).
-- **A base hook first.** This module would be the third to patch param_apply_delta.
-  The module guide's rule for the elemod machines is that a stock site several mods
-  need becomes a core hook before a module uses it, and the module ships once the
-  base carries it. The plan:
-  1. Build and test privately with the site patched directly. This is a local build
-     and is never pushed.
-  2. Propose `ev_param_turn` (view, parameter id, delta, track; nonzero takes the
-     turn) to the Rytm base in its own owner-reviewed pull request, naming Ctrl All
-     and Velocity Humanise as the mods that would subscribe.
-  3. Move the module onto the hook before its pull request.
-- **The second and tenth module.** Four modules now hold a key and turn a knob, and
-  the free momentary keys are nearly used up. The same base pull request could
-  record which mod holds which modifier key. The module does not depend on any other
-  module.
+- **No new site.** core-ar2 already owns the knob turn (param_apply_delta) and asks its `core_params` table first. One entry covering every id, with only a delta function, takes the turn while FIX or RTRG is held and passes otherwise. Ctrl All and Velocity Humanise hook deeper in the same routine, so a taken turn never reaches them: FIX + TRK + turn links velocity, not every track.
 
-## Read before building
+## Read from the code (2 Nov 2026)
 
-None of these have been read from the code yet:
-
-1. Where the sound keeps the four velocity and four aftertouch slots (destination
-   and signed amount), and stock's setter and change notice for them (the knob
-   handler of ModSetupView).
-2. How a parameter id maps to a destination code. LFO DST (id 67) uses the same
-   list.
-3. Whether FIX toggles on the press or on the release, so a hold with a turn can
-   leave it alone.
-4. Whether `ev_key` sees pad presses for the pad guard, or whether a pad site is
-   needed (QPERF uses 0x40122fde).
+- Slots: the sound object (`0x400a67ca(kit, track)`) holds the velocity config at +44 and the aftertouch config at +176; their sets (+36, +44) have count (+8), dest (+36), amount (+44), set amount (+40, clamped, change notice) and set dest (+32, takes the logical id, stores its row +4 index). Each slot is a 16-bit 8.8 amount and a destination byte, 0 for none.
+- Destinations: stock's list keeps a sound's parameter index p when the sound set's +76 maps p to a logical id with flag 0x200 (0x40007234).
+- FIX: stock toggles at the press, through 0x400b7724 (a C++ bool) and 0x400b7702 on project + 48.
 
 ## Cost (estimate)
 
