@@ -8,9 +8,10 @@ The rytm-emu runs below were observed on the named build; the emulator is not ha
 - Build QM05 (after a second review: a fresh press always starts a new hold; slot matching uses the stored index; top_view stops at the list's end): `.syx` `1091da0e3fb555d566bf8ae0c8f50d8a8e1bb6f1f7768fe469e1010e12e692bf`.
 - Build QM06 (one pad scan per knob event): `.syx` `14eb5448616b9fc2622591f653f994260713396f442ba57570e5fe0bb6511606`. In combo RC17 (`b1179a85…`).
 - Build QM09 (SAMPLER replaces RTRG for aftertouch; stock's lock-style display with a V or A marker instead of the amount popup; PERF and SCNE edit screens; the other key ignored during a hold; the locker kept with the hold by the tick): `.syx` `c94a8b7b160764343861aec67fc08f65a631cf4f200f3b79d5ce93fe184921f4`.
+- Build QM10 (QM09 compiled with `-Os`, so the full set fits the shared mod RAM): `.syx` `a66959671562940659007d03adfd0f1f37345c9012b33c98a25994baaefe2059`. The links, display, SAMPLER, SLOTS FULL, PERF and FIX-key checks below rerun on it with the same results.
 - Emulator: rytm-emu `2ac0f1f`, headless `dtboot`, a fresh card, the default kit (BD PLASTIC on track 1), the SYNTH page unless named. Events off the `--every` grid. Slots read on stock's MODULATION SETUP screen; fixed velocity read from stock's flag in RAM.
 
-## rytm-emu (QM09)
+## rytm-emu (QM09, rerun on QM10)
 
 | Check | Result |
 | --- | --- |
@@ -50,7 +51,7 @@ Not tested: kit save, reload and power cycle on QM07 or later; SOUND MANAGER; th
 - FIX on the FX track: edits as normal.
 - Kit save and power cycle: the links were kept. Sound normal.
 
-QM07 and later (SAMPLER, the lock-style display) have not run on a unit. Steps for the author's unit, on QM09 or a combined image with it:
+QM07 and later (SAMPLER, the lock-style display) have not run on a unit. Steps for the author's unit, on QM10 or a combined image with it:
 
 1. FILTER page, hold FIX: a V at the top left, FRQ and RES shown as `0` boxes. Turn FRQ: its box counts up, FRQ itself does not move. Soft and hard pad hits differ. SOUND SETTINGS, VELOCITY MOD shows FILT FRQ.
 2. AMP page, hold SAMPLER: an A. Turn DEC: pad pressure changes the decay. Tap SAMPLER alone: the recorder opens; hold it with a turn: it does not.

@@ -4,7 +4,9 @@
     "src/main.c"
   ],
   "defsym": {},
-  "cflags": [],
+  "cflags": [
+    "-Os"
+  ],
   "weak": [],
   "subscribe": [
     {

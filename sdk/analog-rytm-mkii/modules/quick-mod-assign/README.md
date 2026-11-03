@@ -49,7 +49,7 @@ FUNC + FIX (stock's FIXED VELOCITY), the FX track, and a performance or scene pa
 
 ## Tests and measurements
 
-rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)), and the author's unit on an earlier build. Memory (build QM09's link map): 3,704 bytes of code and initialised data and 40 bytes of `.bss` in the 128 KiB shared mod area. Load: UI only, on key events, knob turns and the screen's draw; nothing runs in the audio path.
+rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)), and the author's unit on an earlier build. Memory (build QM10's link map, compiled with `-Os`): 2,968 bytes of code and initialised data and 40 bytes of `.bss` in the 128 KiB shared mod area. Load: UI only, on key events, knob turns and the screen's draw; nothing runs in the audio path.
 
 ## Authorship and licences
 
