@@ -64,8 +64,9 @@ Layouts shifted before playing, BD, pressure 20 30:
 | DOWN pressed five times | `9d 0c 7f ad 24 10 ad 24 18 8d 0c 00` | `9d 0c 7f ad 0c 10 ad 0c 18 8d 0c 00` |
 | UP pressed ten times | `9d 30 7f ad 48 10 ad 48 18 8d 30 00` | `9d 30 7f ad 30 10 ad 30 18 8d 30 00` |
 
-Leaving CHROMATIC (CHRO pressed) while BD is held: the pressure and the note off still come from
-ChromPadsView on `24`, and SD played after re-entering sends `25` throughout.
+CHRO pressed while BD is held, and again after its release, then SD held: `9d 24 7f ad 24 10 ad
+24 18 8d 24 00 9d 25 7f ad 25 20 8d 25 00`. Whether that CHRO press left CHROMATIC mode was not
+checked; no stale note went out.
 
 Not reached in rytm-emu: a layout entry of -1 during a hold (BD stopped at 0x48), and a note
 outside 0 to 127. With Silent Pad+Trig's MUTE ALL SOUND checked and the track muted, its gate at
