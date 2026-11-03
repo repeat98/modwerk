@@ -1,0 +1,605 @@
+{
+  "date": "2026-10-30",
+  "hardware": false,
+  "scope": "Single DSP-enabled emulator run; elapsed instructions include interrupts; no hardware timing or audible qualification",
+  "metadataCorrection": "Executed helper reported performanceBaselineAfterRemoval although phase mode omitted cached-meter sampling. Relabelled removal completion; no unloaded meter baseline claimed. Executed helper hash is retained.",
+  "identity": {
+    "base": "2e1a612832625e268492a06623c3cac5ebfb0ea324889d9e8f30509bbbffc248",
+    "packageSha256": "28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d",
+    "emulatorSha256": "b087c97f3031f075551b3336afcd75a407ca4d3476e04a9d5cfaa059b1d40363",
+    "cardInputSha256": "d64abdaf0f7f957da796f458114396e7df9ef626eb52a89079c922cf98861ab8",
+    "cardOutputSha256": "520af096483fae0725d0f832e80336a298ed90a0cf9a1743907c9b27235f0c2a",
+    "profileSymbols": {
+      "psl_open": 7760,
+      "begin": 58,
+      "ends": [
+        136
+      ],
+      "savedSrHitField": 12,
+      "publicationMaskFromAssembly": 7,
+      "symbols": {
+        "psl_open": 7760,
+        "psl_guard_max": 8752,
+        "psl_guard_spans": 8748,
+        "__image_end": 8748,
+        "__bss_end": 10076,
+        "phase": 10048,
+        "cursor": 10044,
+        "selected": 10040,
+        "replace": 10036,
+        "select_all": 10052,
+        "preferences": 10064,
+        "last_action": 10060,
+        "remembered": 10056
+      },
+      "performanceFunctions": {
+        "psl_native_commit": {
+          "begin": 5826,
+          "ends": [
+            5966
+          ]
+        },
+        "psl_prepare": {
+          "begin": 342,
+          "ends": [
+            728
+          ]
+        },
+        "module_key": {
+          "begin": 6728,
+          "ends": [
+            6848
+          ]
+        }
+      },
+      "monitorPoints": [
+        1074404876
+      ],
+      "objectSha256": "899275c53287ba33b3ea732735e5dfa2aa17e2f9fdb21f0ba99e53eb6edab795",
+      "packageSha256": "28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d",
+      "applyPhases": {
+        "followup": 6688,
+        "index": 5968,
+        "publish": 6510,
+        "restore": 5950,
+        "revalidate": 6278
+      },
+      "phaseAssemblySha256": "837e44f48fa137444e14755d96011731c8fde29a73fa877ffc35edac3510473f",
+      "phaseImageUnchanged": true
+    },
+    "sources": {
+      "capture_emulator.py": "bf73e0aee9a34a43b9f840f783edc117328a00e2e8651be85d1637b482bed44e",
+      "attestation_emulator.py": "24856c4ca80551313dd78fa4d7ef7d342aa39d2a27c71e6ea78c3952525f34d5",
+      "prepare_fixture_emulator.py": "7cc2bfd126fc9ed2380f21653e0b96c34e4104afe1783184c1934a8abc04dd72",
+      "profile_symbols.py": "972462022bd9534dc574a0a706976febdd448147079d7c20ca906ca65155f4dc",
+      "live_emulator.py": "ba26261794b953152641fc16b53e1dced6ccbd88a7443ba8e99a0bf58102416a",
+      "performance_emulator.py": "309dbe15f9ee7a91cc65849c37e61081d382c88cadb9f9974cb4ed4d2668d051",
+      "profile_emulator.py": "20152342d1dd859b152d3781245783c2dc2c409162b077b5a1d6098832a5944d",
+      "stress_emulator.py": "65ad5a1d951cfba71513468855d9e79ea602c8a74226eeea5c52e90cbc693aad",
+      "exercise_emulator.py": "fabef3812487f64a9fa59fa25cb44b5b5b214b7dd3898e49569b34791c4a2b30",
+      "unit.s": "837e44f48fa137444e14755d96011731c8fde29a73fa877ffc35edac3510473f",
+      "engine.c": "a41ace651c2ff9f72d43e783d6121c64f51fe6d21e49bc60cf3b26a97ebdaa38",
+      "engine.h": "d1c067250f8bc555944303fb526cd9ec22c281c0f4773c95ed6fbdd332925ca1",
+      "ui.c": "3d452769338be043c327ab6bf0a8db9b09c0c7504f62710c46d32d205a75f4c7",
+      "ui.h": "514cbdcfd88777769e4883d020d7fe6a2b5301a5d04c136eb67f7b7bb54f45bd",
+      "native.c": "a5d11e7320a91b00457fbe1f89453e8a432e65877e92af0aa64705f6b2a6050e",
+      "font.c": "63104792b675f7cce15582b554eaf4b05e008a63c2433db7fecb71210e115079",
+      "font.h": "a94a3103633a0084e11d53fbe46d0590812011062aa01d2c28de35b60ef8ea99",
+      "runtime.json": "710371710bd6c2522067c62f36c6ffbf211232b88c75a71a3dab2ac913e9742e",
+      "manifest.py": "ff0d9749fa181a8dabadddc711295a987d58c0d7f3516556aadbae97b6e7d7ab"
+    }
+  },
+  "checks": {
+    "performanceOperationsVerified": true,
+    "performanceHelperSha256": "309dbe15f9ee7a91cc65849c37e61081d382c88cadb9f9974cb4ed4d2668d051",
+    "runtimeImageMatchesPackage": true,
+    "runtimeSitesMatchPackage": true,
+    "runtimeInitializedBytesCompared": 8748,
+    "runtimeSitesCompared": 3,
+    "performanceRemovalCompleted": true
+  },
+  "dspRuntimeBefore": {
+    "dl_frames": 42798,
+    "dl_errors": 0,
+    "modwerk_dsp_stalls": 0
+  },
+  "dspRuntimeAfter": {
+    "dl_frames": 97219,
+    "dl_errors": 0,
+    "modwerk_dsp_stalls": 0
+  },
+  "usbRemoval": true,
+  "guardTimerMaxScope": "Cumulative run maximum, partial interval; not full masked duration",
+  "measurements": {
+    "smallEmpty": {
+      "changedLocks": 2,
+      "operations": {
+        "lock": {
+          "psl_native_commit": {
+            "instructionSpans": [
+              9978
+            ],
+            "totalInstructions": 9978,
+            "modelMilliseconds": 0.05670639182991492
+          },
+          "psl_prepare": {
+            "instructionSpans": [
+              2701
+            ],
+            "totalInstructions": 2701,
+            "modelMilliseconds": 0.015350166800220506
+          },
+          "module_key": {
+            "instructionSpans": [
+              29,
+              29,
+              25,
+              25,
+              6455,
+              30,
+              3251,
+              30,
+              10171,
+              30
+            ],
+            "totalInstructions": 20075,
+            "modelMilliseconds": 0.11408907756920646
+          },
+          "writeGuards": {
+            "count": 2,
+            "maxInstructions": 23,
+            "maxModelMicroseconds": 0.13071226819884177
+          },
+          "applyPhaseInstructions": {
+            "preflightAndValidation": 1448,
+            "indexPlanning": 1722,
+            "finalRevalidation": 1022,
+            "publication": 5561,
+            "nativeFollowup": 219,
+            "epilogue": 5
+          },
+          "guardTimerMax": 15
+        },
+        "clear": {
+          "psl_native_commit": {
+            "instructionSpans": [
+              10483
+            ],
+            "totalInstructions": 10483,
+            "modelMilliseconds": 0.05957637858819384
+          },
+          "psl_prepare": {
+            "instructionSpans": [
+              1862
+            ],
+            "totalInstructions": 1862,
+            "modelMilliseconds": 0.010582010582010581
+          },
+          "module_key": {
+            "instructionSpans": [
+              29,
+              29,
+              25,
+              25,
+              6456,
+              30,
+              2412,
+              30,
+              10672,
+              30
+            ],
+            "totalInstructions": 19738,
+            "modelMilliseconds": 0.11217385868298865
+          },
+          "writeGuards": {
+            "count": 2,
+            "maxInstructions": 23,
+            "maxModelMicroseconds": 0.13071226819884177
+          },
+          "applyPhaseInstructions": {
+            "preflightAndValidation": 1448,
+            "indexPlanning": 2228,
+            "finalRevalidation": 1022,
+            "publication": 5560,
+            "nativeFollowup": 219,
+            "epilogue": 5
+          },
+          "guardTimerMax": 15
+        }
+      }
+    },
+    "oneTrackEmpty": {
+      "changedLocks": 64,
+      "operations": {
+        "lock": {
+          "psl_native_commit": {
+            "instructionSpans": [
+              13697
+            ],
+            "totalInstructions": 13697,
+            "modelMilliseconds": 0.07784199728345807
+          },
+          "psl_prepare": {
+            "instructionSpans": [
+              2825
+            ],
+            "totalInstructions": 2825,
+            "modelMilliseconds": 0.01605487642007513
+          },
+          "module_key": {
+            "instructionSpans": [
+              29,
+              29,
+              25,
+              25,
+              6467,
+              30,
+              3375,
+              30,
+              13890,
+              30
+            ],
+            "totalInstructions": 23930,
+            "modelMilliseconds": 0.13599759034775147
+          },
+          "writeGuards": {
+            "count": 64,
+            "maxInstructions": 23,
+            "maxModelMicroseconds": 0.13071226819884177
+          },
+          "applyPhaseInstructions": {
+            "preflightAndValidation": 1448,
+            "indexPlanning": 2094,
+            "finalRevalidation": 1022,
+            "publication": 8908,
+            "nativeFollowup": 219,
+            "epilogue": 5
+          },
+          "guardTimerMax": 15
+        },
+        "clear": {
+          "psl_native_commit": {
+            "instructionSpans": [
+              29890
+            ],
+            "totalInstructions": 29890,
+            "modelMilliseconds": 0.16986911723753828
+          },
+          "psl_prepare": {
+            "instructionSpans": [
+              1862
+            ],
+            "totalInstructions": 1862,
+            "modelMilliseconds": 0.010582010582010581
+          },
+          "module_key": {
+            "instructionSpans": [
+              29,
+              29,
+              25,
+              25,
+              6466,
+              30,
+              2412,
+              30,
+              30079,
+              30
+            ],
+            "totalInstructions": 39155,
+            "modelMilliseconds": 0.22252342875328912
+          },
+          "writeGuards": {
+            "count": 64,
+            "maxInstructions": 23,
+            "maxModelMicroseconds": 0.13071226819884177
+          },
+          "applyPhaseInstructions": {
+            "preflightAndValidation": 1448,
+            "indexPlanning": 18286,
+            "finalRevalidation": 1022,
+            "publication": 8909,
+            "nativeFollowup": 219,
+            "epilogue": 5
+          },
+          "guardTimerMax": 16
+        }
+      }
+    },
+    "maximumEmpty": {
+      "changedLocks": 512,
+      "operations": {
+        "lock": {
+          "psl_native_commit": {
+            "instructionSpans": [
+              98996
+            ],
+            "totalInstructions": 98996,
+            "modelMilliseconds": 0.5626083348961974
+          },
+          "psl_prepare": {
+            "instructionSpans": [
+              19891
+            ],
+            "totalInstructions": 19891,
+            "modelMilliseconds": 0.11304337942361573
+          },
+          "module_key": {
+            "instructionSpans": [
+              29,
+              29,
+              25,
+              25,
+              6467,
+              30,
+              20441,
+              30,
+              99189,
+              30
+            ],
+            "totalInstructions": 126295,
+            "modelMilliseconds": 0.7177524309640314
+          },
+          "writeGuards": {
+            "count": 64,
+            "maxInstructions": 86,
+            "maxModelMicroseconds": 0.4887502202217562
+          },
+          "applyPhaseInstructions": {
+            "preflightAndValidation": 6040,
+            "indexPlanning": 38166,
+            "finalRevalidation": 6741,
+            "publication": 46704,
+            "nativeFollowup": 1339,
+            "epilogue": 5
+          },
+          "guardTimerMax": 63
+        },
+        "clear": {
+          "psl_native_commit": {
+            "instructionSpans": [
+              307630
+            ],
+            "totalInstructions": 307630,
+            "modelMilliseconds": 1.7483050028699867
+          },
+          "psl_prepare": {
+            "instructionSpans": [
+              38477
+            ],
+            "totalInstructions": 38477,
+            "modelMilliseconds": 0.2186702584124711
+          },
+          "module_key": {
+            "instructionSpans": [
+              29,
+              29,
+              25,
+              25,
+              6466,
+              30,
+              39027,
+              30,
+              307819,
+              30
+            ],
+            "totalInstructions": 353510,
+            "modelMilliseconds": 2.0090475622161983
+          },
+          "writeGuards": {
+            "count": 64,
+            "maxInstructions": 86,
+            "maxModelMicroseconds": 0.4887502202217562
+          },
+          "applyPhaseInstructions": {
+            "preflightAndValidation": 6040,
+            "indexPlanning": 246660,
+            "finalRevalidation": 6741,
+            "publication": 46844,
+            "nativeFollowup": 1339,
+            "epilogue": 5
+          },
+          "guardTimerMax": 63
+        }
+      }
+    },
+    "maximumFirstOtherLock": {
+      "changedLocks": 512,
+      "operations": {
+        "lock": {
+          "psl_native_commit": {
+            "instructionSpans": [
+              72748
+            ],
+            "totalInstructions": 72748,
+            "modelMilliseconds": 0.4134372211708409
+          },
+          "psl_prepare": {
+            "instructionSpans": [
+              19891
+            ],
+            "totalInstructions": 19891,
+            "modelMilliseconds": 0.11304337942361573
+          },
+          "module_key": {
+            "instructionSpans": [
+              29,
+              29,
+              25,
+              25,
+              6466,
+              30,
+              20441,
+              30,
+              72941,
+              30
+            ],
+            "totalInstructions": 100046,
+            "modelMilliseconds": 0.5685756340965793
+          },
+          "writeGuards": {
+            "count": 64,
+            "maxInstructions": 86,
+            "maxModelMicroseconds": 0.4887502202217562
+          },
+          "applyPhaseInstructions": {
+            "preflightAndValidation": 6040,
+            "indexPlanning": 12020,
+            "finalRevalidation": 6741,
+            "publication": 46583,
+            "nativeFollowup": 1339,
+            "epilogue": 24
+          },
+          "guardTimerMax": 63
+        },
+        "clear": {
+          "psl_native_commit": {
+            "instructionSpans": [
+              77046
+            ],
+            "totalInstructions": 77046,
+            "modelMilliseconds": 0.43786336589773756
+          },
+          "psl_prepare": {
+            "instructionSpans": [
+              12187
+            ],
+            "totalInstructions": 12187,
+            "modelMilliseconds": 0.06926045271909934
+          },
+          "module_key": {
+            "instructionSpans": [
+              29,
+              29,
+              25,
+              25,
+              6465,
+              30,
+              12737,
+              30,
+              77235,
+              30
+            ],
+            "totalInstructions": 96635,
+            "modelMilliseconds": 0.5491904364084815
+          },
+          "writeGuards": {
+            "count": 64,
+            "maxInstructions": 86,
+            "maxModelMicroseconds": 0.4887502202217562
+          },
+          "applyPhaseInstructions": {
+            "preflightAndValidation": 6040,
+            "indexPlanning": 16116,
+            "finalRevalidation": 32989,
+            "publication": 20556,
+            "nativeFollowup": 1339,
+            "epilogue": 5
+          },
+          "guardTimerMax": 63
+        }
+      }
+    },
+    "maximumLastOtherLock": {
+      "changedLocks": 512,
+      "operations": {
+        "lock": {
+          "psl_native_commit": {
+            "instructionSpans": [
+              72848
+            ],
+            "totalInstructions": 72848,
+            "modelMilliseconds": 0.41400553538040114
+          },
+          "psl_prepare": {
+            "instructionSpans": [
+              19891
+            ],
+            "totalInstructions": 19891,
+            "modelMilliseconds": 0.11304337942361573
+          },
+          "module_key": {
+            "instructionSpans": [
+              29,
+              29,
+              25,
+              25,
+              6466,
+              30,
+              20441,
+              30,
+              73041,
+              30
+            ],
+            "totalInstructions": 100146,
+            "modelMilliseconds": 0.5691439483061395
+          },
+          "writeGuards": {
+            "count": 64,
+            "maxInstructions": 86,
+            "maxModelMicroseconds": 0.4887502202217562
+          },
+          "applyPhaseInstructions": {
+            "preflightAndValidation": 6040,
+            "indexPlanning": 38166,
+            "finalRevalidation": 6741,
+            "publication": 20556,
+            "nativeFollowup": 1339,
+            "epilogue": 5
+          },
+          "guardTimerMax": 63
+        },
+        "clear": {
+          "psl_native_commit": {
+            "instructionSpans": [
+              278686
+            ],
+            "totalInstructions": 278686,
+            "modelMilliseconds": 1.5838121380548877
+          },
+          "psl_prepare": {
+            "instructionSpans": [
+              38477
+            ],
+            "totalInstructions": 38477,
+            "modelMilliseconds": 0.2186702584124711
+          },
+          "module_key": {
+            "instructionSpans": [
+              29,
+              29,
+              25,
+              25,
+              6465,
+              30,
+              39027,
+              30,
+              278875,
+              30
+            ],
+            "totalInstructions": 324565,
+            "modelMilliseconds": 1.8445490142590035
+          },
+          "writeGuards": {
+            "count": 64,
+            "maxInstructions": 86,
+            "maxModelMicroseconds": 0.4887502202217562
+          },
+          "applyPhaseInstructions": {
+            "preflightAndValidation": 6040,
+            "indexPlanning": 244004,
+            "finalRevalidation": 6741,
+            "publication": 20556,
+            "nativeFollowup": 1339,
+            "epilogue": 5
+          },
+          "guardTimerMax": 63
+        }
+      }
+    },
+    "model": {
+      "instructionsPerMillisecond": 175959.0,
+      "hardware": false,
+      "scope": "Playing disposable MKII emulator fixture; elapsed instructions include interrupts; no hardware cycle or audio qualification"
+    }
+  }
+}
