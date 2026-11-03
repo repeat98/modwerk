@@ -94,18 +94,36 @@ Example (shape only):
 
 ## Effect IDs
 
-An effect ID must be unique, on a pedal and across collections: two effects
-with the same ID make one of them unreachable, and swapping one for the other
-froze an MS-70CDR at boot until its ROM was reprogrammed (Spool.ZDL and
-TEcho4.ZDL, both 409 in group 8; they are now 914 and 946). A pedal can't say
-what it had before, so the pedal page refuses a known clash
-(`CLASHING_EFFECT_IDS` in `zoom-protocol.ts`) as well as an ID already on it. Modwerk keeps a ledger of author ranges, as Stomphacks
-does for the ZD2 pedals, plus the IDs of Zoom's stock effects (metadata only,
-no stock files). ZoomMultistompZDL already reserves 403-499 for its effects,
-500-699 for NAM slots, 700-899 for cab slots and 900-957 for templates; other
-authors ask for a range in a pull request. One clash is already known
-(Matujuice Sweep and stock ANA234Cho, both 496); its author will move it.
-Matujuice GRDLOOP, MIDISTOMP 2.0's looper, is 497 in group 8.
+An effect is identified by its group and ID together: Zoom's own effects reuse
+IDs across groups (DELAY, COMP, LINESEL and TREMOLO are all 8), so Matujuice
+Sweep (Delay 496) and stock ANA234Cho (Modulation 496) don't clash. Two effects
+with the same group and ID on one pedal do: one becomes unreachable, and
+swapping one for the other froze an MS-70CDR at boot until its ROM was
+reprogrammed (Spool.ZDL and TEcho4.ZDL, both Delay 409; they are now 914 and
+946). A pedal can't say what it had before, so the pedal page refuses that
+known clash (`CLASHING_EFFECT_IDS` in `zoom-protocol.ts`).
+
+Collections can't be kept apart by asking every author to move, so the pedal
+page settles a clash on the pedal it happens on. An added effect may use Delay
+403-1023 (a patch stores 10 bits of ID). **Delay 958-1023 are local IDs**: no
+collection ships there. When another effect on the pedal already has a new
+effect's ID, the page moves the new one to a free local ID before writing it:
+the ID is only in the file header (group at 0x3C and 0x43, ID at 0x40-0x41,
+no checksum), so nothing is rebuilt. An MS-70CDR 2.10 ran Scorch moved to 917,
+1000 and 1023, and stored and recalled a patch with two of them through a power
+cycle (2 November 2026). The same file name gets the same local ID where there
+is room, so patches move between pedals; an update of a moved effect keeps its
+local ID; and the browser remembers the local IDs it gave out and never gives
+one to another effect, so a patch stored with a removed effect doesn't find a
+different one on its ID (only in that browser). Patches made on another pedal
+with a moved effect may not find it.
+
+Modwerk keeps a ledger of author ranges, as Stomphacks does for the ZD2
+pedals, plus the IDs of Zoom's stock effects (metadata only, no stock files),
+to keep moves rare. ZoomMultistompZDL reserves Delay 403-499 for its effects,
+500-699 for NAM slots, 700-899 for cab slots and 900-957 for templates;
+Matujuice ships Delay 480, 481, 485-497 (GRDLOOP, MIDISTOMP 2.0's looper, is
+497), 501 and 502. Other authors ask for a range in a pull request.
 
 ## Combinations
 
