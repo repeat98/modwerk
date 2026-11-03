@@ -3,7 +3,7 @@ import { readCoreLogger, loggerExternals, LOGGER_RESERVE_BYTES, LOGGER_RETAINED_
 import { readBetaStartup, BETA_STARTUP_ACTIVE_ADDRESS } from './beta-startup.ts'
 import { readRequestedObject, requestedFacts, selectedRequestedGroups, requestedObjectSelected, requestedObjectDram } from './requested-modules.ts'
 import { resolveSelection } from '../catalog/modules.ts'
-import { readColdFirePackage, PLATFORM_UNITS } from './coldfire-package.ts'
+import { readColdFirePackage, joiningUnits, PLATFORM_UNITS } from './coldfire-package.ts'
 import { linkColdFireRuntime, runtimeCatalogObject } from './coldfire-link.ts'
 import { createDynamicRuntimeCatalog } from './runtime-catalog.ts'
 import type { StockDspCore } from './stock-dsp.ts'
@@ -15,6 +15,9 @@ export const PLATFORM_RUNTIME_BASE = 0x40a955e0
 export async function createStaticColdFireRuntime(ids: readonly string[], original?: Uint8Array, base = PLATFORM_RUNTIME_BASE, usbAudio?: UsbAudioConfiguration, betaAccess = false, startupRomAddress = BETA_STARTUP_ACTIVE_ADDRESS - 76) {
   const units = []
   const selected = selectedRequestedGroups(ids)
+  // A unit that joins (native remix.machine_composition.join_runtime) links at its module's place
+  // in the selection, and only when another module's units already make a runtime.
+  const joins: { at: number; label: string }[] = []
   for (const module of resolveSelection(ids)) {
     if (usbAudio && module.id === USB_AUDIO_MODULE) {
       if (!original) throw new Error('USB Audio needs verified local firmware.')
@@ -22,9 +25,11 @@ export async function createStaticColdFireRuntime(ids: readonly string[], origin
     }
     if (['tapeecho', 'euclid', 'bbd'].includes(module.id)) units.push(await readColdFirePackage(module.id))
     for (const pkg of requestedFacts.objects.filter(pkg => pkg.moduleId === module.id && requestedObjectDram(pkg, ids) && requestedObjectSelected(pkg, ids) && selected.some(g => g.moduleId === pkg.moduleId))) units.push(await readRequestedObject(pkg.label, original, ids))
+    for (const label of joiningUnits(module.id)) joins.push({ at: units.length, label })
   }
   if (usbAudio && !ids.includes(USB_AUDIO_MODULE)) throw new Error('USB Audio settings require the USB Audio module.')
   if (!usbAudio && selected.some(g => g.moduleId === 'usb-midi')) for (const pkg of requestedFacts.objects.filter(pkg => pkg.moduleId === 'usb-midi')) units.push(await readRequestedObject(pkg.label, original, ids))
+  if (units.length) for (const [i, join] of joins.entries()) units.splice(join.at + i, 0, await readColdFirePackage(join.label))
   const reserveBytes = (units.length ? 1707 * 6144 : 0) + LOGGER_RESERVE_BYTES
   const regions = placeDramRegions(selectedDramRegions(ids), base, base + reserveBytes - LOGGER_RETAINED_BYTES)
   units.push(await readCoreLogger())
