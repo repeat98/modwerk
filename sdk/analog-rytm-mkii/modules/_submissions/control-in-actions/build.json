@@ -4,7 +4,7 @@
     "src/main.c"
   ],
   "defsym": {},
-  "cflags": [],
+  "cflags": ["-Os"],
   "weak": [],
   "subscribe": [
     {
@@ -18,8 +18,8 @@
   "copied": [],
   "regions": [],
   "claims": [
-    "ui:GLOBAL > CONTROL > CONTROL INPUT 1 and 2: MODE FSW and the FOOTSW DEST list",
-    "input:EXP/CV IN 1 and 2 in FSW mode"
+    "ui:GLOBAL > CONTROL > CONTROL INPUT 1 and 2: MODE ACTION and its ACTION list",
+    "input:EXP/CV IN 1 and 2 in ACTION mode"
   ],
   "requires": [],
   "derive": null,
@@ -48,7 +48,7 @@
           "addr": "0x401309bc",
           "op": "bytes",
           "len": 8,
-          "new": "7203b2806c027003",
+          "new": "7204b2806c027004",
           "kind": "code",
           "stockSha256": "d749208f2ebf1e144a87c325281e533ef582759f54549234fcc92c90dc89a595"
         },
@@ -76,8 +76,44 @@
           "len": 6,
           "new": "487900000000",
           "kind": "code",
-          "relocs": [{ "at": 2, "target": "control_in_actions_live" }],
+          "relocs": [{ "at": 2, "target": "control_in_actions_rec_hold" }],
           "stockSha256": "d3e1c9525479740e113878e35ae90c5fde5f5446eeff6f47a3bf9fe7c017ec92"
+        },
+        {
+          "addr": "0x40131422",
+          "op": "bytes",
+          "len": 6,
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [{ "at": 2, "target": "control_in_actions_rec_toggle" }],
+          "stockSha256": "e20db88e1993c87ed4bce5ed340e5cd03452f6484c0ff0b1af62bffaf83e2451"
+        },
+        {
+          "addr": "0x40131332",
+          "op": "bytes",
+          "len": 6,
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [{ "at": 2, "target": "control_in_actions_mode" }],
+          "stockSha256": "c10104bed020a9504b2f87a09c9ecedf89a3d93eb276ad272ff0bae4a9a5ba00"
+        },
+        {
+          "addr": "0x401304f2",
+          "op": "bytes",
+          "len": 6,
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [{ "at": 2, "target": "control_in_actions_dest" }],
+          "stockSha256": "39437af394b9ddd978b260d49f9032f41198c42511d17558e1659e45aae6f436"
+        },
+        {
+          "addr": "0x40131aba",
+          "op": "bytes",
+          "len": 6,
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [{ "at": 2, "target": "control_in_actions_learn" }],
+          "stockSha256": "4fe8fb09a697d0a988b4dc594c4926439aa5517ad2aaa0fde1794449cddd506b"
         }
       ]
     }

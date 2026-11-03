@@ -9,9 +9,9 @@
 
 // The settings record 0x400fa7e4 fills, 32 bytes, each field a long.
 #define REC_MODE 0                  // 0 OFF, 1 CV, 2 EXPR, 3 FSW (stock's menu stops at 2)
-#define REC_FSW_LOW 20              // FOOTSWITCH LEARN's lowest level, mV (REVERSE swaps)
+#define REC_FSW_LOW 20              // LEARN LEVELS' (stock FOOTSWITCH LEARN) lowest level, mV (REVERSE swaps)
 #define REC_FSW_HIGH 24             // and its highest, mV; the pressed level
-#define REC_DEST 28                 // FOOTSW DEST, 0..5 in stock's list
+#define REC_DEST 28                 // the ACTION row (stock FOOTSW DEST), 0..4 with the module
 #define REC_BYTES 32
 #define MODE_FSW 3
 

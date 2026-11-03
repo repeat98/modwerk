@@ -4,11 +4,12 @@
 //
 // Stock's GLOBAL > CONTROL > CONTROL INPUT menus already hold a fourth MODE,
 // FSW, with FOOTSW DEST and FOOTSWITCH LEARN rows, but stop MODE at EXPR. This
-// module's sites let MODE reach FSW and give FOOTSW DEST its own four choices;
-// stock keeps storing all of it with its other control-input settings.
+// module's sites let MODE reach it, name the three ACTION, ACTION and LEARN
+// LEVELS, and give the ACTION row its own five choices; stock keeps storing all
+// of it with its other control-input settings.
 //
 // Each UI tick reads the jack's smoothed level and compares it with the middle
-// of the two levels FOOTSWITCH LEARN found (0 V and 5 V until learned). Past
+// of the two levels LEARN LEVELS found (0 V and 5 V until learned). Past
 // it toward the higher level is pressed; REVERSE DIRECTION swaps the two, for a
 // switch that pulls the tip low. An action is a key press played through
 // stock's own key path, so the MUTE screen and live recording behave exactly
@@ -28,7 +29,8 @@
 #define DEST_OFF 0
 #define DEST_MUTE_HOLD 1
 #define DEST_MUTE_TOGGLE 2
-#define DEST_LIVE_REC 3
+#define DEST_REC_HOLD 3
+#define DEST_REC_TOGGLE 4
 
 #define HYSTERESIS_MIN 200          // mV
 #define UNSEEN 2                    // a port's state before its first reading
@@ -50,11 +52,17 @@ typedef unsigned char (*live_rec_t)(void *app);
 #define APP_SINGLETON ((singleton_t)APP_SINGLETON_AT)
 #define LIVE_REC ((live_rec_t)LIVE_REC_AT)
 
-// FOOTSW DEST's names, in place of stock's TEMPO, ACTIVE and PRESET +; the
-// row has room for 8 characters, as stock's PRESET +.
+// The ACTION row's names, in place of stock's TEMPO, ACTIVE, PRESET + and
+// PRESET -; the row has room for 8 characters, as stock's PRESET +.
 const char control_in_actions_hold[] = "MUTE HLD";
 const char control_in_actions_toggle[] = "MUTE TGL";
-const char control_in_actions_live[] = "LIVE REC";
+const char control_in_actions_rec_hold[] = "REC HLD";
+const char control_in_actions_rec_toggle[] = "REC TGL";
+
+// In place of stock's FSW, FOOTSW DEST and FOOTSWITCH LEARN.
+const char control_in_actions_mode[] = "ACTION";
+const char control_in_actions_dest[] = "ACTION";
+const char control_in_actions_learn[] = "LEARN LEVELS";
 
 #ifdef CIA_EMU
 // rytm-emu has no ADC: a test build reads these words, poked from outside.
@@ -69,6 +77,7 @@ static unsigned char state[CI_PORTS] = { UNSEEN, UNSEEN };
 static unsigned char last_dest[CI_PORTS];
 static unsigned char hold_active[CI_PORTS]; // MUTE HOLD opened the screen
 static unsigned char hold_back[CI_PORTS];   // the mode key to go back to, 0 for none
+static unsigned char rec_active[CI_PORTS];  // REC HOLD turned live recording on
 
 static void *brain(void)
 {
@@ -133,6 +142,26 @@ static void record_play(void)
         bits[index >> 3] &= ~bit;
 }
 
+static int live_rec(void)
+{
+    return LIVE_REC((void *)APP_SINGLETON());
+}
+
+// Live recording on, from RECORD + PLAY: a stopped sequencer starts too.
+static void rec_on(void)
+{
+    if (!live_rec())
+        record_play();
+}
+
+// Live recording off, from PLAY, which stock reads in live recording as
+// leaving it: the sequencer plays on.
+static void rec_off(void)
+{
+    if (live_rec())
+        tap(KEY_PLAY);
+}
+
 static void pedal(int port, int dest, int down)
 {
     switch (dest) {
@@ -153,16 +182,34 @@ static void pedal(int port, int dest, int down)
         if (down)
             tap(KEY_MUTE);
         break;
-    case DEST_LIVE_REC:
+    case DEST_REC_HOLD:
         if (down) {
-            void *app = (void *)APP_SINGLETON();
-            if (LIVE_REC(app))
-                tap(KEY_PLAY);      // stock: PLAY leaves live recording, the sequencer plays on
+            rec_active[port] = !live_rec();
+            rec_on();
+        } else if (rec_active[port]) {
+            rec_active[port] = 0;
+            rec_off();
+        }
+        break;
+    case DEST_REC_TOGGLE:
+        if (down) {
+            if (live_rec())
+                rec_off();
             else
-                record_play();
+                rec_on();
         }
         break;
     }
+}
+
+// A hold in progress ends when its jack leaves ACTION mode or the choice
+// changes, as on release.
+static void end_holds(int port)
+{
+    if (hold_active[port])
+        pedal(port, DEST_MUTE_HOLD, 0);
+    if (rec_active[port])
+        pedal(port, DEST_REC_HOLD, 0);
 }
 
 void control_in_actions_tick(void *ctrl)
@@ -171,14 +218,13 @@ void control_in_actions_tick(void *ctrl)
     int port;
     (void)ctrl;
 #ifdef CIA_EMU
-    control_in_actions_emu_mode = mode_key() | LIVE_REC((void *)APP_SINGLETON()) << 8;
+    control_in_actions_emu_mode = mode_key() | live_rec() << 8;
 #endif
     for (port = 0; port < CI_PORTS; port++) {
         int low, high, middle, band, level, down, dest;
         SETTINGS(port, record);
         if (record[REC_MODE / 4] != MODE_FSW) {
-            if (hold_active[port])
-                pedal(port, DEST_MUTE_HOLD, 0);
+            end_holds(port);
             state[port] = UNSEEN;
             continue;
         }
@@ -204,8 +250,7 @@ void control_in_actions_tick(void *ctrl)
         else
             down = level > middle + band;
         if (dest != last_dest[port]) {
-            if (hold_active[port])
-                pedal(port, DEST_MUTE_HOLD, 0);
+            end_holds(port);
             last_dest[port] = dest;
             state[port] = down;     // a new choice waits for the next press
             continue;
