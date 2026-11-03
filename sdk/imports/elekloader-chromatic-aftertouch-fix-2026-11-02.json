@@ -7,7 +7,7 @@
   "mods": [
     {
       "file": "chromatic-aftertouch-fix-0.1.0-experimental-os1.74.elemod",
-      "sha256": "5f680f86a864e7280627289d21825b120136e03622bcea40c05b585f32f0f688",
+      "sha256": "38a69a81c1f3e7f35513ad34d2cb7e2c3a2337e4d678f4fdf5279df5ed86899b",
       "id": "chromatic-aftertouch-fix",
       "version": "0.1.0-experimental",
       "device": "analog-rytm-mk2",
