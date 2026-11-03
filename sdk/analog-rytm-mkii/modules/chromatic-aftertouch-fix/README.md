@@ -32,8 +32,10 @@ There is nothing to set. To get stock's bytes back, build without the module.
 
 ## Quick tutorial
 
-1. In GLOBAL > MIDI CONFIG > PORT CONFIG, set PAD DEST and PRESSURE DST to INT+EXT so the pads reach
-   MIDI out. Connect a MIDI monitor to MIDI OUT or USB.
+1. In GLOBAL > MIDI CONFIG > PORT CONFIG, check that PAD DEST and PRESSURE DST are INT+EXT (the
+   default) so the pads reach MIDI out. Connect a MIDI monitor to MIDI OUT or USB.
+
+   ![PORT CONFIG with PAD DEST and PRESSURE DST at INT+EXT](media/port-config.png)
 2. Press CHRO. Strike the BD pad and hold it: the monitor shows a note on for note 36.
 3. Press harder while holding: poly pressure for note 36 follows, then the note off for note 36 on
    release. Stock sent that pressure for note 60.

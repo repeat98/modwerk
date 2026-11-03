@@ -27,8 +27,10 @@
       "One patched call, no menu, no stored setting."
     ],
     "usage": [
-      "Let the pads reach MIDI out: in GLOBAL > MIDI CONFIG > PORT CONFIG, PAD DEST and PRESSURE DST set to INT+EXT or EXT. Press CHRO and play into a synth whose patch uses poly aftertouch: holding a pad harder now opens it.",
-      "Watch a MIDI monitor: hold a CHROMATIC pad and you see note on, poly pressure and note off with the same note number."
+      "In GLOBAL > MIDI CONFIG > PORT CONFIG, check that PAD DEST and PRESSURE DST are INT+EXT (the default) so the pads reach MIDI out. Connect a MIDI monitor to MIDI OUT or USB.",
+      "Press CHRO. Strike the BD pad and hold it: the monitor shows a note on for note 36.",
+      "Press harder while holding: poly pressure for note 36 follows, then the note off for note 36 on release. Stock sent that pressure for note 60.",
+      "Press DOWN or UP to change the octave and repeat: note on and pressure stay on one note."
     ]
   },
   "access": {
@@ -37,7 +39,9 @@
       "Install a build that contains Chromatic Aftertouch Fix.",
       "Press CHRO and hold a pad: its poly pressure goes out on the note the pad sent."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/port-config.png"
+    ]
   },
   "controls": [
     {
@@ -93,12 +97,16 @@
       "tutorial": {
         "title": "Quick tutorial",
         "steps": [
-          "In GLOBAL > MIDI CONFIG > PORT CONFIG, set PAD DEST and PRESSURE DST to INT+EXT so the pads reach MIDI out. Connect a MIDI monitor to MIDI OUT or USB.",
+          "In GLOBAL > MIDI CONFIG > PORT CONFIG, check that PAD DEST and PRESSURE DST are INT+EXT (the default) so the pads reach MIDI out. Connect a MIDI monitor to MIDI OUT or USB.",
           "Press CHRO. Strike the BD pad and hold it: the monitor shows a note on for note 36.",
           "Press harder while holding: poly pressure for note 36 follows, then the note off for note 36 on release. Stock sent that pressure for note 60.",
           "Press DOWN or UP to change the octave and repeat: note on and pressure stay on one note."
         ]
-      }
+      },
+      "screenshots": [
+        "media/port-config.png"
+      ],
+      "captureRecord": "media/capture.json"
     }
   },
   "license": {
@@ -115,6 +123,22 @@
       "credit": "Nathaniel Pavel (npp1993)",
       "license": "GPL-3.0-or-later",
       "source": "Original conceptual illustration in the shared signal-art style; not a device screenshot."
+    },
+    {
+      "path": "media/port-config.png",
+      "kind": "screenshot",
+      "caption": "GLOBAL > MIDI CONFIG > PORT CONFIG: PAD DEST and PRESSURE DST at INT+EXT, the default, send the pads and their pressure to MIDI out.",
+      "alt": "PORTS menu list with PRESSURE DST INT+EXT highlighted, PAD DEST INT+EXT above it.",
+      "credit": "Nathaniel Pavel (npp1993) documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "8d83b97a39ea50ee94b3eb6ace07cb22a453fde9e23e6e2ee9813533ce101def",
+        "setup": "Headless rytm-emu (dtboot) running CA01: core-ar2 0.7 and this folder's Chromatic Aftertouch Fix 0.1.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
     }
   ]
 }
