@@ -5,7 +5,7 @@
     "src/draw.S"
   ],
   "defsym": {},
-  "cflags": ["-Os"],
+  "cflags": [],
   "weak": [],
   "subscribe": [
     {
