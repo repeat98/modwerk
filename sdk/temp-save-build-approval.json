@@ -1,0 +1,13 @@
+{
+  "kind": "owner-approved-update",
+  "id": "temp-save",
+  "version": "0.1.0-experimental",
+  "approvedBy": "repeat98",
+  "approvedOn": "2026-11-02",
+  "waived": [
+    "chip-worst-case-cycles"
+  ],
+  "sourceSha256": "4a001efefd61e0c0351a3e69bc4f899da6d61c863337ab73f520b006dd6538da",
+  "ownerStatement": "Release Temp Save 0.1.0-experimental. I waive the static cycle bound for this version.",
+  "reason": "Temp Save works once per FUNC + YES or FUNC + NO press, in the UI task and outside the audio frame. The dearest event, a reload while playing, measured 640,923 executed instructions in the emulator (at most 635,604 under a 1,000 message/s MIDI flood), against a 26,600,000 budget; no static count was made. The contributor's MKII runs cover the timed trial, Keep, a kept power cycle and Undo through the site's flow on the published package. Every other qualification stays required."
+}
