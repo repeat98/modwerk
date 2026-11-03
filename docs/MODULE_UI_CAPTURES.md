@@ -323,6 +323,11 @@ plan; keep it in `capture.json` with the PNG hashes and the built `.syx` hash.
   only past a certain size. The pinned revision runs such an event a few
   instructions late instead; plans still place events 3M off the boundaries,
   so they replay on older revisions too.
+- Keep key presses short. From rytm-emu `e914f46` the PIT divides the bus
+  clock as the unit does, so the firmware's timers run twice as fast for the
+  same instructions as on older revisions. A 40M press of FX now reads as a
+  hold and leaves the track unchanged, while 12M selects the FX track.
+  Replay a capture on the revision its `capture.json` names.
 - Without the unit's analog calibration the OS opens with notices. Clear them
   with held NO presses before the first real step, for example
   `--press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M`
