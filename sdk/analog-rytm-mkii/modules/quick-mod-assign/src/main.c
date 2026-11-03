@@ -72,6 +72,7 @@ typedef void (*show_popup_t)(void *views, void *shared, int flag);
 #define PRESSED 1
 #define REPEAT 8
 #define BRAIN_VIEWS 32              // brain + 32: the view manager
+#define MANAGER_LIST 20             // view manager + 20: its list's sentinel node
 #define MANAGER_LAST 24             // view manager + 24: the top view's list node
 #define NODE_PREV 4
 #define NODE_VIEW 8
@@ -96,13 +97,15 @@ static int wait;                    // ticks until the next popup may open
 // What is on screen: the top view's class, past the popups, which pass keys on.
 static word_t top_view(void)
 {
+    char *sentinel = (char *)views + MANAGER_LIST;
     char *node = *(char **)((char *)views + MANAGER_LAST);
-    for (;;) {
+    while (node && node != sentinel) {
         word_t vtable = **(word_t **)(node + NODE_VIEW);
         if (vtable != POPUP_VTABLE)
             return vtable;
         node = *(char **)(node + NODE_PREV);
     }
+    return 0;                           // only popups: no page of ours
 }
 
 static int on_pages(void)
@@ -245,6 +248,9 @@ static int qma_delta(void *view, int32_t id, int32_t delta, int32_t func)
         show(kind == VEL ? "NOT A VEL DESTINATION" : "NOT AN AT DESTINATION");
         return 1;
     }
+    // The slot stores the destination's own index (stock's writer takes the
+    // logical id and stores its row + 4), so match against that.
+    index = row_word(logical, ROW_INDEX);
     sound = KIT_TRACK(kit, track);
     if (kind == VEL) {
         conf = TRACK_VEL_CONF(sound);
@@ -253,6 +259,8 @@ static int qma_delta(void *view, int32_t id, int32_t delta, int32_t func)
         conf = TRACK_AT_CONF(sound);
         set = conf + AT_SET;
     }
+    if (SET_COUNT(set) <= 0)
+        return 1;                       // no slots on this sound: nothing to do
     slot = find_slot(set, index);
     if (slot < 0) {
         show(kind == VEL ? "VEL SLOTS FULL" : "AT SLOTS FULL");
@@ -275,8 +283,7 @@ static int qma_delta(void *view, int32_t id, int32_t delta, int32_t func)
         amount = AMOUNT_MIN;
     if (amount > AMOUNT_MAX)
         amount = AMOUNT_MAX;
-    if (steps)
-        SET_WRITE_AMOUNT(set, slot, amount);
+    SET_WRITE_AMOUNT(set, slot, amount);
     show_amount(kind, id, SET_AMOUNT(set, slot));
     return 1;
 }
@@ -305,9 +312,12 @@ int quick_mod_assign_key(void *brain, void *event)
             }
             return 1;
         }
-        if (fix_held)
-            return 1;                   // its repeats
-        if ((flags & REPEAT) || IS_KEY_HELD(KEY_FUNC) || !on_pages())
+        if (flags & REPEAT)
+            return fix_held;            // our hold's repeats are ours, stock's are stock's
+        // A fresh press starts a new hold, even if a lost release left
+        // fix_held set.
+        fix_held = 0;
+        if (IS_KEY_HELD(KEY_FUNC) || !on_pages())
             return 0;
         fix_held = 1;
         turned = 0;
@@ -316,7 +326,7 @@ int quick_mod_assign_key(void *brain, void *event)
     if (key == KEY_RTRG) {
         if (!down) {
             rtrg_held = 0;
-        } else if (!(flags & REPEAT) && !rtrg_held) {
+        } else if (!(flags & REPEAT)) {     // a fresh press: a new hold
             rtrg_held = 1;
             rtrg_pads = 0;
         }
