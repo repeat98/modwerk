@@ -43,6 +43,14 @@ Build CI05 alone (sha256 2704a16d, -O2), 3 November 2026, with a footswitch, as 
 
 Cause, reproduced in rytm-emu with CE12 (CI05's code): the module read the saved settings, and stock saves a changed ACTION only on leaving the menu, REVERSE DIRECTION or LEARN's YES, so a choice changed and tried without leaving the menu ran the one before it. CI06 follows the open menu's copy (CE13: REC TGL changed to REC HLD in the menu then acts as REC HLD; CE12 in the same steps acted as REC TGL).
 
+Build CI06 alone (sha256 5d325777, -O2), 3 November 2026, with a footswitch, as the tester reported it: all the checks pass.
+
+| Check | Result |
+| --- | --- |
+| MUTE HLD from no mode, SCNE, PERF | MUTE mode while held, then back to the screen it came from |
+| MUTE TGL from SCNE | MUTE mode, then the play screen on the next press, as the tester expects of stock's MUTE key |
+| REC HLD, REC TGL, FILL HLD, FILL LAT | Pass |
+
 Nothing else has run on a unit yet. What follows ran in rytm-emu (`~/dev/rytm-emu` at c5732f0), which only approximates the instrument and has no model of the EXP/CV IN converters.
 
 ## Emulator
