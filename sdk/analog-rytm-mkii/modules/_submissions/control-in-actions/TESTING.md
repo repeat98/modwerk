@@ -51,7 +51,14 @@ Build CI06 alone (sha256 5d325777, -O2), 3 November 2026, with a footswitch, as 
 | MUTE TGL from SCNE | MUTE mode, then the play screen on the next press, as the tester expects of stock's MUTE key |
 | REC HLD, REC TGL, FILL HLD, FILL LAT | Pass |
 
-Not yet on a unit: CI07 (sha256 69e82c16), which makes NO cancel in EXPRESSION LEARN too.
+Build CI07 alone (sha256 69e82c16, -O2), 3 November 2026, with an expression pedal, as the tester reported it:
+
+| Check | Result |
+| --- | --- |
+| EXPR mode, EXPRESSION LEARN, move the pedal, NO | The range drawn in the left bar during learning goes away |
+| Leave the menu and come back | The bar is as before the test |
+| EXPRESSION LEARN again, YES | The new range stays |
+| Leave the menu and come back | The bar is as left: the new range |
 
 Nothing else has run on a unit yet. What follows ran in rytm-emu (`~/dev/rytm-emu` at c5732f0), which only approximates the instrument and has no model of the EXP/CV IN converters.
 
