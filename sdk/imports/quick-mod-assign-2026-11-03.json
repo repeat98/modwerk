@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/quick-mod-assign",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-03",
+  "changes": [
+    "First library release for Analog Rytm MKII OS 1.74, on core-ar2 0.7. Hold FIX and turn a knob to link that parameter to velocity, or SAMPLER for aftertouch, in the sound's own four velocity and four aftertouch mod slots; linked knobs show their amounts as performance locks do while the key is held."
+  ],
+  "runtimeSourceSha256": "b6298fc374c745ef156dbae0eefcd79fbe6137706515c53f3b7994246b511fcb",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/quick-mod-assign/quick-mod-assign-0.1.0-experimental-os1.74.elemod",
+      "sha256": "137f56f056809321aeb0d1cda8295bed594d756b25562d9ec22f0c1d0a80bbda"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/quick-mod-assign/TESTING.md",
+  "requires": []
+}
