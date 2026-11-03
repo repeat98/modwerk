@@ -94,9 +94,9 @@ describe('the vendored elekloader catalog', () => {
     })
   })
   it('keeps download approval specific to each device', () => {
-    expect(DIGI_DOWNLOADS_ENABLED).toEqual({ digitakt: true, 'digitakt-ii': false, digitone: true, 'analog-rytm-mkii': false })
+    expect(DIGI_DOWNLOADS_ENABLED).toEqual({ digitakt: true, 'digitakt-ii': false, digitone: true, 'analog-rytm-mkii': true })
     expect(digiDownloadsEnabled('digitakt-ii')).toBe(false)
-    expect(digiDownloadsEnabled('analog-rytm-mkii')).toBe(false)
+    expect(digiDownloadsEnabled('analog-rytm-mkii')).toBe(true)
     expect(digiDownloadsEnabled('unknown-device')).toBe(false)
     expect(digiDownloadsEnabled('constructor')).toBe(false)
   })
