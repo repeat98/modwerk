@@ -9,5 +9,10 @@
   "elekloader": {
     "repository": "https://github.com/irpina/elekloader.git",
     "commitFrom": "vendor/elekloader/kit/kit.json"
+  },
+  "rytm-emu": {
+    "repository": "https://github.com/trigcondition/rytm-emu.git",
+    "commit": "2ac0f1f09e0c126d314b87de494f8da2848cfa8b",
+    "updated": "2026-11-02"
   }
 }
