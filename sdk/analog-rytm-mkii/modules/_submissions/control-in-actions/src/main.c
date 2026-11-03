@@ -9,7 +9,7 @@
 // of it with its other control-input settings.
 //
 // Each UI tick reads the jack's smoothed level and compares it with the middle
-// of the two levels LEARN LEVELS found (0 V and 5 V until learned). Past
+// of the two levels ACTION LEARN found (0 V and 5 V until learned). Past
 // it toward the higher level is pressed; REVERSE DIRECTION swaps the two, for a
 // switch that pulls the tip low. An action is a key press played through
 // stock's own key path, so the MUTE screen and live recording behave exactly
@@ -81,9 +81,9 @@ const char *const control_in_actions_dests[] = {
 // In place of stock's FSW, FOOTSW DEST and FOOTSWITCH LEARN.
 const char control_in_actions_mode[] = "ACTION";
 const char control_in_actions_dest[] = "ACTION";
-const char control_in_actions_learn[] = "LEARN LEVELS";
+const char control_in_actions_learn[] = "ACTION LEARN";
 
-// LEARN LEVELS' first line, in place of stock's "PUSH THE SWITCH SOME TIMES.";
+// ACTION LEARN's first line, in place of stock's "PUSH THE SWITCH SOME TIMES.";
 // the second stays stock's "PRESS YES/NO WHEN DONE.".
 const char control_in_actions_learn_1[] = "PRESS OR SEND A FEW GATES.";
 
@@ -315,7 +315,7 @@ static void redraw(int port)
 
 // A learn has closed. Stock saves the menu's copy on YES, and on NO leaves
 // the new levels in it unsaved, where leaving the menu saves them: NO puts
-// the saved ones back, in EXPRESSION LEARN as in LEARN LEVELS. After YES the
+// the saved ones back, in EXPRESSION LEARN as in ACTION LEARN. After YES the
 // copy is what was saved, so this changes nothing.
 static void learned(int port, char *view, int learn)
 {
@@ -352,7 +352,7 @@ void control_in_actions_expr(char *view)
 }
 
 // ACTION's bars, from the view's draw (draw.S), laid out as stock's EXPR
-// bars: the input's level against the two learned levels, which LEARN LEVELS
+// bars: the input's level against the two learned levels, which ACTION LEARN
 // moves as it runs, then a line at the box's far end while the input counts
 // as pressed, as EXPR's output line.
 void control_in_actions_draw(char *view, void *screen, int mv)
@@ -413,7 +413,7 @@ void control_in_actions_tick(void *ctrl)
         // Stock's input routine leaves the macro's level as it was for this
         // mode; nothing in the kit should keep playing it.
         ((volatile long *)CI_SOURCE)[port] = 0;
-        // While LEARN LEVELS runs the input moves on purpose, and the levels
+        // While ACTION LEARN runs the input moves on purpose, and the levels
         // in force are the old ones: no action, and a fresh start after.
         if (learning[port] == LEARN_FSW) {
             end_holds(port);

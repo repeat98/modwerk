@@ -2,6 +2,8 @@
 
 ## Unit
 
+Builds up to CI07 named the learn row LEARN LEVELS; CI08 names it ACTION LEARN, after stock's EXPRESSION LEARN, and changes nothing else.
+
 Analog Rytm MKII, OS 1.74, build CI02 alone (sha256 43aab368, core-ar2 0.7 and this module), 3 November 2026, as the tester reported it:
 
 | Check | Result |
@@ -100,5 +102,5 @@ Test builds FE02 to FE04, CE02, CE06, CE07, CE10, CE12 and CE13: the module buil
 - EXP/CV IN 2 (same code as port 1, not run).
 - Settings after a power cycle, and a unit without the module reading ACTION settings.
 - The CONTROL IN MOD macro of a jack switched from EXPR to ACTION mid-sweep.
-- Beside other modules. CI07 (sha256 69e82c16, -O2, booted with no fault) is 3220 bytes of code and data; CI06 (sha256 5d325777) is 3016; CI05 (sha256 2704a16d) is 2976 bytes of code and data; CI04 is CI03 built at the default -O2: 2622 bytes (CI03 at `-Os`: 1840; CI02: 1005 at `-Os`; CI01: 805 at `-Os`, 1203 at -O2). Combined image RC20 (sha256 953ae59b, CI02 with twelve other Rytm modules) links with 1,508 B of module RAM spare and boots in rytm-emu with no fault; not on a unit.
+- Beside other modules. CI08 (sha256 735b28c4, -O2, booted with no fault; CI07 renamed) is about the same; CI07 (sha256 69e82c16) is 3220 bytes of code and data; CI06 (sha256 5d325777) is 3016; CI05 (sha256 2704a16d) is 2976 bytes of code and data; CI04 is CI03 built at the default -O2: 2622 bytes (CI03 at `-Os`: 1840; CI02: 1005 at `-Os`; CI01: 805 at `-Os`, 1203 at -O2). Combined image RC20 (sha256 953ae59b, CI02 with twelve other Rytm modules) links with 1,508 B of module RAM spare and boots in rytm-emu with no fault; not on a unit.
 - CPU and memory: UI only, two readings per UI tick; the module's code is about 1 KB. Not measured.

@@ -11,7 +11,7 @@
 #define REC_MODE 0                  // 0 OFF, 1 CV, 2 EXPR, 3 FSW (stock's menu stops at 2)
 #define REC_EXPR_MIN 12             // EXPRESSION LEARN's levels, mV
 #define REC_EXPR_MAX 16
-#define REC_FSW_LOW 20              // LEARN LEVELS' (stock FOOTSWITCH LEARN) lowest level, mV (REVERSE swaps)
+#define REC_FSW_LOW 20              // ACTION LEARN's (stock FOOTSWITCH LEARN) lowest level, mV (REVERSE swaps)
 #define REC_FSW_HIGH 24             // and its highest, mV; the pressed level
 #define REC_DEST 28                 // the ACTION row (stock FOOTSW DEST), a byte, 0..6 with the module
 #define REC_BYTES 32
