@@ -15,6 +15,10 @@ Read [the module guides index](README.md) first.
 - [ ] **No effect slot and no new knob** unless the feature genuinely needs one. The README says so.
 - [ ] **Timing-related settings** follow [sequencing.md](sequencing.md).
 
+Playback fixtures need staged sample files, valid slots/trim/routing and an
+explicit output level. Verify native output or captured track stems before
+interpreting edit timing; trig masks and advancing DSP frames do not prove audio.
+
 ## Sample-editor actions
 
 - Match the machine’s native popup and encoder-field layout. Composite inside the popup rectangle, preserve stock content outside it, and keep unassigned controls inert while the modal owns input.

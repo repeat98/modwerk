@@ -1,25 +1,26 @@
 {
   "schemaVersion": 3,
   "id": "pipo-loop",
-  "name": "Pipo Loop",
+  "name": "Ping Pong Loop",
   "version": "0.1.1-experimental",
   "machine": "analog-rytm-mkii",
   "category": "playback",
   "exclusive": false,
   "author": {
     "github": "npp1993",
+    "name": "Nathaniel Pavel",
     "credits": [
-      "npp1993 (Nathaniel Pavel) — the mod, its design and code, and this Modwerk module."
+      "Nathaniel Pavel (@npp1993) — the mod, its design and code, and this Modwerk module."
     ]
   },
   "maintainers": [
     "npp1993"
   ],
   "presentation": {
-    "label": "PIPO LOOP",
+    "label": "PING PONG LOOP",
     "family": "Sample playback",
     "summary": "LOP gets a third value, PIPO: the sample's loop plays forward, then backward (ping-pong). FUNC + turn on STA or END steps to the next zero crossing.",
-    "overview": "Pipo Loop adds PIPO to the SAMPLE page's LOP parameter, after OFF and ON. A sample whose LOP is PIPO plays from STA to END, then back to STA, then forward again, for as long as the note lasts, with no jump at the turns. LOP's switch becomes a three-position switch like BD CLASSIC's WAV: OFF on the left, ON in the middle, PIPO on the right. PIPO is an ordinary LOP value: it saves with the sound and kit, takes parameter locks and scene locks, and comes back after a power cycle. A sound saved with PIPO plays as a normal forward loop (ON) on an OS without the mod. Each turn lands exactly on STA or END, at every pitch. On the SAMPLE page, FUNC + turn on STA or END now moves that point to the next zero crossing of the sample in the direction you turn, stepping as LOP steps through its values, instead of stock's whole-number step; plain turns stay stock.",
+    "overview": "Ping Pong Loop adds PIPO to the SAMPLE page's LOP parameter, after OFF and ON. A sample whose LOP is PIPO plays from STA to END, then back to STA, then forward again, for as long as the note lasts, with no jump at the turns. LOP's switch becomes a three-position switch like BD CLASSIC's WAV: OFF on the left, ON in the middle, PIPO on the right. PIPO is an ordinary LOP value: it saves with the sound and kit, takes parameter locks and scene locks, and comes back after a power cycle. A sound saved with PIPO plays as a normal forward loop (ON) on an OS without the mod. Each turn lands exactly on STA or END, at every pitch. On the SAMPLE page, FUNC + turn on STA or END now moves that point to the next zero crossing of the sample in the direction you turn, stepping as LOP steps through its values, instead of stock's whole-number step; plain turns stay stock.",
     "highlights": [
       "Ping-pong loops for any sample, from the SAMPLE page's own LOP knob.",
       "Lock PIPO on a step, or put it in a scene, like any LOP value.",
@@ -163,15 +164,15 @@
   "license": {
     "spdx": "GPL-3.0-or-later",
     "file": "LICENSE",
-    "declaration": "npp1993's original code under GPL-3.0-or-later. Each patch precondition is an address, a length and a SHA-256; no stock bytes are included."
+    "declaration": "Nathaniel Pavel's (@npp1993) original code under GPL-3.0-or-later. Each patch precondition is an address, a length and a SHA-256; no stock bytes are included."
   },
   "media": [
     {
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
-      "caption": "Pipo Loop",
+      "caption": "Ping Pong Loop",
       "alt": "Two traces between S and E: with LOP ON the position climbs and jumps back to S; with LOP PIPO it climbs and comes back down, a triangle.",
-      "credit": "npp1993",
+      "credit": "Nathaniel Pavel",
       "license": "GPL-3.0-or-later",
       "source": "Original conceptual illustration in the shared signal-art style; not a device screenshot."
     },
@@ -180,7 +181,7 @@
       "kind": "screenshot",
       "caption": "LOP OFF: the switch's knob sits on the left, as stock.",
       "alt": "SAMPLE page with LOP's three-position switch at the left and the value shown as OFF.",
-      "credit": "npp1993 documentation capture; Elektron interface",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
       "capture": {
@@ -196,7 +197,7 @@
       "kind": "screenshot",
       "caption": "LOP ON: the switch's knob sits in the middle; the loop plays forward as stock.",
       "alt": "SAMPLE page with LOP's three-position switch in the middle, LOP label shown.",
-      "credit": "npp1993 documentation capture; Elektron interface",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
       "capture": {
@@ -212,7 +213,7 @@
       "kind": "screenshot",
       "caption": "Turn LOP to PIPO: the switch moves right and the value reads PIPO; the sample's loop plays back and forth.",
       "alt": "SAMPLE page with LOP's three-position switch at the right and the value shown as PIPO.",
-      "credit": "npp1993 documentation capture; Elektron interface",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
       "capture": {
@@ -228,7 +229,7 @@
       "kind": "screenshot",
       "caption": "In GRID RECORDING, hold a trig and turn LOP to PIPO to lock it on that step.",
       "alt": "SAMPLE page in GRID RECORDING with the LOP knob highlighted as a lock reading PIPO.",
-      "credit": "npp1993 documentation capture; Elektron interface",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
       "capture": {
@@ -244,7 +245,7 @@
       "kind": "screenshot",
       "caption": "In SCENE mode, hold a pad and turn LOP to PIPO to put it in that scene.",
       "alt": "SAMPLE page with LOP locked to PIPO and the footer reading SCENE: 1 and LOCKS.",
-      "credit": "npp1993 documentation capture; Elektron interface",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
       "capture": {
@@ -260,7 +261,7 @@
       "kind": "screenshot",
       "caption": "FUNC + STA and END step to zero crossings; on SMPL WAVEFORM a boxed S marks STA's line and a boxed E END's.",
       "alt": "SMPL WAVEFORM view of a slow sine with the STA line on a zero crossing labelled S at its bottom and the END line on a later crossing labelled E at its top.",
-      "credit": "npp1993 documentation capture; Elektron interface",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
       "capture": {
@@ -276,7 +277,7 @@
       "kind": "screenshot",
       "caption": "Hold a trig and FUNC + turn STA: the trig's lock steps to a zero crossing and its value shows while the trig is held.",
       "alt": "SMPL WAVEFORM view with a trig held: STA highlighted at 9.08 below the waveform and its line, labelled S, on the first zero crossing.",
-      "credit": "npp1993 documentation capture; Elektron interface",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
       "capture": {
@@ -292,7 +293,7 @@
       "kind": "screenshot",
       "caption": "STA and END can share a crossing: stock draws one line, and both labels show.",
       "alt": "SMPL WAVEFORM view with one dotted line carrying an S box at its bottom and an E box at its top.",
-      "credit": "npp1993 documentation capture; Elektron interface",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
       "capture": {
@@ -308,7 +309,7 @@
       "kind": "screenshot",
       "caption": "END can sit before STA (the sample plays backward between them, as stock).",
       "alt": "SMPL WAVEFORM view with the E-labelled line to the left of the S-labelled line.",
-      "credit": "npp1993 documentation capture; Elektron interface",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
       "capture": {
@@ -324,7 +325,7 @@
       "kind": "screenshot",
       "caption": "While the sound plays, the playhead runs under the labels.",
       "alt": "SMPL WAVEFORM view with the S and E labelled lines and a solid playhead line between them.",
-      "credit": "npp1993 documentation capture; Elektron interface",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
       "capture": {

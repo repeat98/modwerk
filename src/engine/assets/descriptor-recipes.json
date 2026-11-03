@@ -4439,7 +4439,7 @@
       ]
     }
   ],
-  "sourceCommit": "3536e58d444331783e31cf797e386edb91d9f6f8",
+  "sourceCommit": null,
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -4464,7 +4464,7 @@
     "sidechain-compressor": "0.2.0-experimental",
     "vector": "0.2.5-experimental",
     "playmodes": "0.2.0-experimental",
-    "mute-modes": "0.2.2-experimental",
+    "mute-modes": "0.2.1-experimental",
     "recorder-loop-fix": "0.1.0-experimental",
     "poly8": "0.3.2-experimental",
     "output-matrix": "0.1.1-experimental",
