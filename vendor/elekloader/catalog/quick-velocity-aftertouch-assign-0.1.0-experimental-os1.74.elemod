@@ -2,7 +2,7 @@
  "elemod": 2,
  "id": "quick-velocity-aftertouch-assign",
  "version": "0.1.0-experimental",
- "title": "Quick Velocity & Aftertouch Assign",
+ "title": "Quick Velocity+Aftertouch Assign",
  "description": "Link a parameter to velocity or aftertouch by holding FIX or SAMPLER and turning its knob.",
  "category": "system",
  "author": "npp1993",
