@@ -105,7 +105,7 @@ typedef void (*show_header_t)(void *page_state, void *string);
 
 static int gain[KNOBS];                 // Q11, as the last block ended
 static int asked, page_up, redraw;      // the page was asked for; it is on screen; a jump wants a redraw
-static volatile int mono;               // the input summed, on all three paths
+static volatile int mono;               // the input summed, on both paths
 static int tap_ticks = -1, tap_turns;   // UI ticks since D's press, -1 with no tap open; turns in the press
 static unsigned ui_ticks = 100, jump_tick[KNOBS];   // ev_tick's count; each knob's last FUNC jump
 

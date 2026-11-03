@@ -18,8 +18,8 @@
   "presentation": {
     "label": "AUDIO IN FX",
     "family": "Routing",
-    "summary": "Three knobs on the FX track's DISTORTION page send the AUDIO IN jacks into the master distortion and compressor, the delay and the reverb.",
-    "overview": "On stock the AUDIO IN jacks reach the sampler, its monitor and USB, and EXT IN joins after the distortion. Audio In FX plays AUDIO IN through the Rytm's own effects: IN puts it in the analog mix before DIST and COMP, and two send knobs feed the delay and the reverb. All three at 0 leave the Rytm as stock.",
+    "summary": "Two knobs on the FX track's DISTORTION page send the AUDIO IN jacks into the master distortion and compressor, and into the delay and the reverb.",
+    "overview": "On stock the AUDIO IN jacks reach the sampler, its monitor and USB, and EXT IN joins after the distortion. Audio In FX plays AUDIO IN through the Rytm's own effects: D (STE) puts it in the analog mix before DIST and COMP, and E (IFX) feeds the delay and the reverb at once. Both at 0, with nothing locked, leave the Rytm as stock.",
     "highlights": [
       "Run a synth or a guitar pedal through the master distortion and compressor.",
       "Send AUDIO IN to the delay and the reverb on their own levels.",
@@ -36,7 +36,7 @@
     ]
   },
   "access": {
-    "location": "FX track, DISTORTION page (FX, then FLTR): knobs D, E and F.",
+    "location": "FX track, DISTORTION page (FX, then FLTR): knobs D and E.",
     "steps": [
       "Press FX, then FLTR.",
       "Turn D (STE) for the level into DIST and COMP.",

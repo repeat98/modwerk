@@ -30,7 +30,7 @@ Stock's DEL and REV on the same page still route the returns: PRE runs a return 
 
 ## Usage
 
-Patch into AUDIO IN L and R, not EXT IN. For the closest to a dry signal, raise bar D with AMT at 0: the signal still passes DIST and COMP.
+Patch into AUDIO IN L and R, not EXT IN. For the closest to a dry signal, raise D with AMT at 0: the signal still passes DIST and COMP.
 
 ### Quick tutorial
 
