@@ -35,10 +35,12 @@ describe('what a branch needs claimed', () => {
       'sdk/analog-rytm-mkii/modules/_submissions/temp-save/src/main.c': '', 'sdk/analog-rytm-mkii/modules/_submissions/chorus/README.md': '',
       'sdk/digitakt/modules/poly/modwerk.module.json': manifest(6, 9), 'sdk/digitakt/modules/kick/modwerk.module.json': manifest(10),
       'sdk/drafts/slicer/octamod.module.json': JSON.stringify({ presentation: { summary: 'Slices a loop across the pads.' } }),
+      // A machine without a line in the board's code: the Digitakt II, whose submissions sit in modules/_submissions/<id> too.
+      'sdk/digitakt-ii/modules/_submissions/mute-latch/modwerk.module.json': manifest(),
     })
     expect(board.neededClaims({ root, base: 'HEAD~1' }).map(item => item.kind + ' ' + item.key).sort()).toEqual([
       'hook digitakt/events/1', 'hook digitakt/tables/0', 'hook octatrack/37', 'machine-id digitakt/10', 'machine-id digitakt/9', 'migration 0084',
-      'module analog-rytm-mkii/temp-save', 'module digitakt/kick', 'module digitone/swarm', 'module octatrack/slicer', 'module octatrack/tape-echo',
+      'module analog-rytm-mkii/temp-save', 'module digitakt-ii/mute-latch', 'module digitakt/kick', 'module digitone/swarm', 'module octatrack/slicer', 'module octatrack/tape-echo',
     ])
     expect(board.neededClaims({ root, base: 'HEAD~1' }).find(item => item.key === 'octatrack/slicer').note).toBe('Slices a loop across the pads.')
   })

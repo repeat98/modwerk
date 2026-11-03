@@ -21,6 +21,11 @@
       "sym": "silent_live_rec_on",
       "scope": "global",
       "bits": 1
+    },
+    {
+      "sym": "silent_mute_on",
+      "scope": "global",
+      "bits": 1
     }
   ],
   "claims": [
@@ -70,6 +75,41 @@
           "stockSha256": "b9d637ba37819e52358bd00b1e0fdb85a22551d2d24fb88addf774fec4a17a5b",
           "op": "jmp",
           "target": "silent_pad_trig_menu_add"
+        },
+        {
+          "addr": "0x40084114",
+          "len": 6,
+          "stockSha256": "d68988d57b8e7e3f57a196c74ae79f4a1df1cffb1aa5279682851d23796c950c",
+          "op": "jsr",
+          "target": "silent_pad_trig_hit_gate"
+        },
+        {
+          "addr": "0x400c75f2",
+          "len": 6,
+          "stockSha256": "eb8c3b4455860d7a405903deb4a71d861baed698a9ab2fbb8c1166d596dffcd1",
+          "op": "jsr",
+          "target": "silent_pad_trig_at_key_gate"
+        },
+        {
+          "addr": "0x400c626e",
+          "len": 8,
+          "stockSha256": "4bf784d3a0dc7db68c02227b44a2e2151ff4dc7be2da68566be2847eba9c9741",
+          "op": "jmp",
+          "target": "silent_pad_trig_at_chro_gate"
+        },
+        {
+          "addr": "0x400c6fb0",
+          "len": 6,
+          "stockSha256": "8b2ff1313c2715f1820d66eaf627a9cd77d6fa05e71bf755e169b313c3e91acf",
+          "op": "jmp",
+          "target": "silent_pad_trig_on_key_gate"
+        },
+        {
+          "addr": "0x400c58f0",
+          "len": 8,
+          "stockSha256": "5e6d3d67283ab1d4d3dc3e4b139e7f9f0a4fa7c6d0965061a2e4bc32c2de575a",
+          "op": "jmp",
+          "target": "silent_pad_trig_on_chro_gate"
         }
       ]
     }

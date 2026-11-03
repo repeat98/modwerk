@@ -6,7 +6,7 @@ the storage field (`silent_pad_trig_on`), with no change in behaviour. 0.5.1 ren
 second row, SILENT LIVE REC, to SILENT PAD LIVEREC (its storage field stays `silent_live_rec_on`).
 After 0.5.1 the module's display name becomes Silent Pad+Trig Settings (the id, rows and fields stay). The sections below use the new names, also for the earlier builds.
 
-- Module: `silent-pad-trig` 0.5.1-experimental, for Analog Rytm MKII OS 1.74 on core-ar2 0.3.
+- Module: `silent-pad-trig` 0.6.0-experimental, for Analog Rytm MKII OS 1.74 on core-ar2 0.3.
 - Source: npp1993's own mod, first written as `pad-select` 0.2 in a local rytm2_mods checkout
   (commit `35ea2f0`, branch `claude/pad-select`), never published there; this folder is now the
   source, so the manifest names no upstream revision. 0.2.0-experimental here was that file byte for byte
@@ -22,8 +22,19 @@ After 0.5.1 the module's display name becomes Silent Pad+Trig Settings (the id, 
   `src/silent-pad-trig.s` `ed52848f…5f8b`, fingerprint `9cbf3b3f…2a90` (`evidence.sourceSha256`).
   Modwerk's builder compiles it to the same module bytes, sites and relocations as before; only
   the provenance hashes differ, so the PS07/PS08 results stand.
+- 0.6.0's `src/silent-pad-trig.s` is `54402bee…d71f`, fingerprint `cb882beb…5193`
+  (`evidence.sourceSha256`).
 - Stock OS 1.74: `.syx` `cb0f99d6…e123`, main OS `34cd0c4d…1f3b`, the owner's file.
 - Core: elekloader core-ar2 0.3 (`core-ar2-v0.3`, `core-ar2-0.3.elemod` `6b97dfb3…3e58`, as vendored).
+- Build PS12 (as PS11, with the MIDI note on stopped where the track is known): `.syx`
+  `abf3f40c989d3502d71c1097601e2af7a97f67edc83973e21a3c12bf9f0a2702`. Tested in rytm-emu 2026-11-01 ([0.6.0](#060-mute-all-sound-2026-11-01)). Combined image `82f9a398a62751cd…`. Ran on an Analog Rytm MKII on 2026-11-01, as reported.
+- Build PS11 (Modwerk base `0c92aa45`, core-ar2 0.7, + 0.6.0, Modwerk's linker, `--version PS11`):
+  `.syx` `5b66ba22f6d6c3f4583aa1d615b3eded36bbb489d3ae144e6edcb1dc85b5a3ce`. Tested in rytm-emu 2026-11-01 ([0.6.0](#060-mute-all-sound-2026-11-01)). Combined image
+  `a262b32b51cf8f39…`. Ran on an Analog Rytm MKII on 2026-11-01
+  ([below](#ps11-on-an-analog-rytm-mkii-2026-11-01-as-reported)).
+- Build PS10 (as PS11, before the aftertouch gates): `.syx` `85c95b25ebe417fa0162a29fd9b70d17d08f6e443863a6fda3fef61065bbffc3`, combined image
+  `39615303bb075958f628950f0563f1fc74ffa58913b7fe4c927a832b240c00e8`. Ran on an Analog Rytm MKII on
+  2026-11-01 ([below](#ps10-on-an-analog-rytm-mkii-2026-11-01-as-reported)).
 - Build PS08 (core-ar2 0.3 + 0.5.1, Modwerk's linker, `--version PS08`): `.syx`
   `ff7c4cf3ca61f3c461a16a416cb4515e0d44727216f688ab965785bdbd5343d4`, main OS `9b9ec176…9132`.
   Tested in rytm-emu 2026-10-27 ([0.5.1](#051-row-renamed-2026-10-27)). Ran on an Analog Rytm MKII
@@ -43,6 +54,117 @@ After 0.5.1 the module's display name becomes Silent Pad+Trig Settings (the id, 
 - Build PS03 (0.3.0 before the review fixes): `.syx` `f0ac2210…7a85`, main OS `2884ff5a…5879`.
 - Build PS74 (core-ar2 0.3 + 0.2.0): `.syx` `4b2e6567…ad21`, main OS `7ea05528…033f`. The
   emulator sections below marked 0.2.0 ran on it.
+
+## 0.6.0: MUTE ALL SOUND (2026-11-01)
+
+A third row. Read from OS 1.74: stock's mute test (`0x4011ffde`) drops sequencer trigs and leaves
+pads and MIDI playing. A pad, TRIG key or MIDI note reaches the voice through the play routine
+`0x40083f40`, whose call to the voice trigger (`0x40084114`) comes after its record code. The new
+gate returns from that call for a muted track, with the masks read as the engine reads them. One
+A pad's or TRIG key's MIDI note on comes after that routine returns, from one block in each pad
+view, reached with or without the routine depending on PAD DEST; MIDI in reaches neither. Poly
+pressure comes from each view's aftertouch handler. One gate each, the pressure still reaching the
+sound. Five new sites, a 1172-byte `.run`, no new event.
+
+**Alternatives measured and dropped.** Zeroing the amp block's VOL x level (`0x401099de`) cut the
+main output but left the FX return identical to an unmuted hit: track level does not reach the
+sends, so a second site in `fx_generate` was needed, and a muted pad still took a shared voice.
+Removing stock's exemption in the mute test itself (`0x4011fff4`) left muted pads, rolls and MIDI
+audible, so that test is not where those hits pass. The hit gate alone gave the same silence as
+level and send together, with one site outside the audio block.
+
+**Emulator** (rytm-emu, headless `dtboot`, PS12, cold boots on one card image; BD's DEL and REV
+raised so its FX return shows; snapshots with the row checked and unchecked). `--analog-wav` for
+the modelled mix, `--wav` channels 12-15 for the FX returns. These are not hardware results.
+
+| Test | Checked | Unchecked |
+| --- | --- | --- |
+| Muted BD, pad | digital zero, main and FX | plays as an unmuted pad, peak 11794, FX 3230 |
+| Muted BD, RTRG + pad | digital zero, main and FX | rolls, peak 12661, FX 4618 |
+| Muted BD, MIDI note | digital zero, main and FX | plays, peak 11544, FX 3284 |
+| SD soloed by CC 93, BD pad | digital zero, main and FX | plays, peak 11794 |
+| Mute, pad, unmute, pad | first silent, second plays at 11794 | not run |
+| A hit, then mute by CC 94 | rings on; same peaks as an unmuted hit in every window | not run |
+| CP muted, RS pad then CP pad | voice 7 stays with RS | voice 7 goes to CP |
+| LIVE REC, muted BD, pad | no sample differs from the run with no press until playback, where the recorded trig shows on the FX return (3325 against 126) | first difference is at the press |
+
+**MIDI out** (`--midi-out`, bytes as sent, on the AUTO channel; `b0 5e 01` is the mute itself):
+
+| Test | Checked | Unchecked |
+| --- | --- | --- |
+| Muted BD, two pad taps | `8d 00 00` twice | `9d 00 7f 8d 00 00` twice |
+| Pad, not muted | `9d 00 7f 8d 00 00` | not run |
+| Muted tap, CC 94 unmute, tap | `8d 00 00`, then `9d 00 7f 8d 00 00` | not run |
+| Muted BD, CHRO, BD and SD pads | `8d 24 00`, `8d 25 00` | not run |
+| Muted BD, MIDI note in | nothing sent | not run |
+
+Pressure, sent as raw panel events on a held pad: with the row checked and BD muted, keyboard and
+CHRO, no `ad` message goes out; unmuted, or unchecked, `ad 00 20`, `ad 00 30`, `ad 00 28` (keyboard)
+and `ad 3c …` (CHRO) go out as before.
+
+With PAD DEST and its aftertouch partner poked to 2 (MIDI only): muted BD, keyboard and CHRO, `8d 00 00`
+or `8d 24 00` only; unmuted, or unchecked, note on and pressure as stock. A muted MIDI note in, then
+an SD pad with PAD DEST at 2: `9d 01 7f 8d 01 00`, so nothing carries over between hits.
+
+**Review (2026-11-01).** An independent read of the 0.6.0 gates found that PS10 and PS11's note-on
+gate relied on a flag set in the play routine, which PAD DEST can skip, so a muted pad's note on got
+through and a flag left by a muted MIDI note could swallow the next note on. PS12 removes the flag.
+Its claim that `0x40084328` starts a voice was checked and is wrong: `0x4008420a` is the release.
+
+The bare note off stays: a receiver ignores it, and a note held across a mute cannot stick.
+
+The playback in the LIVE REC run unmuted BD first. The test kit's own pattern ran throughout.
+
+**Persistence** (run on PS11; storage and the menu are unchanged in PS12). PS11 with the row checked, then `--power-off`: a cold boot shows it checked, and
+stock 1.74 boots that card without a fault. 0.5.1 on the same base with SILENT PAD+TRIG checked, then
+`--power-off`: PS11 on that card shows all rows unchecked, the layout change the README lists.
+Linked against RC12's storage lock, the combined image moves no field and keeps a checked row: RC12
+with SILENT PAD LIVEREC checked, then `--power-off`, boots the combined image with it checked and
+MUTE ALL SOUND unchecked. On that image a muted pad and MIDI note gave digital zero, main and FX.
+
+### PS10 on an Analog Rytm MKII, 2026-11-01, as reported
+
+npp1993 ran PS10's combined image (RC12's modules on RC12's storage lock). The reported results:
+
+| Step | Result |
+| --- | --- |
+| Muted BD: pad, TRIG keys, with delay and reverb sends up | silent |
+| Unmuted | plays |
+| Note muted while ringing | carries on through delay and reverb |
+| RS on every 16th, CP muted, CP tapped | passes |
+| Sequencer running with a muted track | passes |
+| Row unchecked | passes |
+| Saved by leaving the menu, power cycle | row still checked |
+| Other modules | seemed fine |
+| LIVE REC on a muted track | no result reported; run on PS11 |
+| MIDI notes in on a muted track | not tested, no setup |
+
+MIDI out, read over USB by a read-only monitor while BD was muted and unmuted: no note on from a
+muted track, 44 note offs, and 111 poly pressure messages, which PS11 removes.
+
+### PS11 on an Analog Rytm MKII, 2026-11-01, as reported
+
+npp1993 ran PS11's combined image and checked what PS10 left open, watching a MIDI monitor in
+Ableton:
+
+| Step | Result |
+| --- | --- |
+| LIVE REC, muted BD, then unmuted and played | passes |
+| Held pad, unmuted | pressure shows in the monitor |
+| Muted, pad tapped | nothing shows in the monitor |
+
+PS12's combined image then passed the same checks, as reported: a muted pad silent with no note on
+or pressure in the monitor; unmuted, it plays with note on and pressure; both again on CHRO pads,
+except that the reporter saw no aftertouch in CHROMATIC mode. rytm-emu shows why, and that it is
+stock's: stock 1.74 and PS12 send identical bytes for a held CHRO pad, `9d 24 7f`, `ad 3c 20`, …,
+`8d 24 00`, the pressure 24 semitones above the note on. ChromPadsView subtracts 24 from the note on
+(`0x400c5924`) and not from the pressure.
+
+The report says nothing shows on a muted tap; the emulator's bytes show a note off on release, so
+the monitor's display of a bare note off is not settled. The rest of PS10's run was not repeated.
+
+**Not tested on a unit:** PAD DEST at MIDI only, MIDI notes in. **Not tested at all:** click or sound quality, the SOUND BROWSER, TRIG keys and
+STEP RECORDING with the row checked, SILENT rows combined with it, GLOBAL slot 2.
 
 ## 0.5.1: row renamed (2026-10-27)
 
@@ -548,3 +670,7 @@ sequencer or tick paths. Static reading, not a measurement.
 On a unit (0.5.x): MIDI out, STEP REC, RTRG, the SOUND BROWSER, AUTO TRK SWITCH off, and a
 project saved with the rows checked loaded on stock. In the emulator: sound and timing, the flows listed above as not
 compared, other modules beside it at run time, and loading a saved project.
+
+## Library release (2 November 2026)
+
+The owner approved the first library release of 0.6.0-experimental on 2 November 2026, on the results above. The library's package is compiled from this source in Modwerk's source-only container; that exact package has not run on a unit.

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/pipo-loop",
+  "version": "0.1.1-experimental",
+  "date": "2026-11-02",
+  "changes": [
+    "First library release for Analog Rytm MKII OS 1.74, on core-ar2 0.7, approved by the owner on 2 November 2026. LOP gets a third value, PIPO, a ping-pong loop, and FUNC + STA or END steps to the next zero crossing."
+  ],
+  "runtimeSourceSha256": "709f762064218f38e5b3f86dae008688c4b25d7450d4a772afcfd29944f25075",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/pipo-loop/pipo-loop-0.1.1-experimental-os1.74.elemod",
+      "sha256": "5cfc4e1600ff729e212895f21d2b5b661850661f7ff31d427bdbeb161bcbbb55"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/pipo-loop/TESTING.md",
+  "requires": []
+}

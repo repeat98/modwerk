@@ -1,18 +1,23 @@
         | SPDX-License-Identifier: GPL-2.0-only
-        | silent-pad-trig - two SEQUENCER CONFIG checkboxes:
+        | silent-pad-trig - three SEQUENCER CONFIG checkboxes:
         |   SILENT PAD+TRIG     stopped, playing, GRID REC and every mode but
         |                       LIVE and STEP REC: a pad or TRIG key 1-12 press
         |                       selects its track, silent; FUNC + pad plays it
         |   SILENT PAD LIVEREC  LIVE REC: a pad press selects its track, silent,
         |                       and records nothing; FUNC + pad plays and records.
         |                       TRIG keys play and record there, as stock.
-        | STEP REC is stock. Aftertouch is untouched, so a held pad modulates
+        |   MUTE ALL SOUND      a pad, TRIG key or MIDI note starts no voice on
+        |                       a muted track, and a pad or TRIG key sends no
+        |                       MIDI note on or poly pressure; recording is
+        |                       untouched, so trigs still go down.
+        | The first two: STEP REC is stock, and aftertouch is untouched, so a held pad modulates
         | its track without sounding.
         |
         | A new mod, not a port, first written as pad-select (PAD+TRIG SEL
         | TRK) in an unpublished rytm2_mods checkout. Each setting is a
         | core-ar2 0.3 mod storage field (silent_pad_trig_on,
-        | silent_live_rec_on: global scope, one bit per globals slot), saved
+        | silent_live_rec_on, silent_mute_on: global scope, one bit per globals
+        | slot), saved
         | with the project's globals; a slot saved without one loads it
         | unchecked. The slot lookup follows voice-dac 1.2's DAC SUM
         | (MrScruff's mod, the elemod port's dac_gslot).
@@ -33,7 +38,20 @@
         |               0x400c7e90  on for a silent press, so it selects its track
         |   func_gate   0x400c7950  the pad handler's FUNC test reads off, so
         |                           FUNC + pad plays at the pad's velocity, not VEL
-        | and for the switches, two SEQUENCER CONFIG items after AUTO TRK SWITCH:
+        | MUTE ALL SOUND acts on a muted track: its own mute, or another track's
+        | solo, the two masks of the engine's test at 0x4011ffde, which drops
+        | only sequencer trigs. (That test also ORs in a word from 0x8000fc90,
+        | apparently SONG rows; left out.) The play routine (0x40083f40) starts
+        | the voice past its record code; both pad views then send MIDI, also
+        | when PAD DEST skips the play routine:
+        |   hit_gate    0x40084114  the voice trigger returns at once, so a muted
+        |                           hit takes no voice from a shared track
+        |   on_key_gate 0x400c6fb0  KeyboardView's and ChromPadsView's MIDI note
+        |   on_chro_gate 0x400c58f0 on, skipped
+        |   at_key_gate 0x400c75f2  and their MIDI poly pressure, skipped; the
+        |   at_chro_gate 0x400c626e pressure still reaches the sound
+        |
+        | and for the switches, three SEQUENCER CONFIG items after AUTO TRK SWITCH:
         |   menu_add    0x400ec184  SeqSettingsMenuView's constructor, between
         |                           AUTO TRK SWITCH's item and SAMPLE POS RES's
         |
@@ -53,7 +71,8 @@
         | core_store_set(field, item, index, value) clobber d0-d1/a0-a1. A
         | global field's index is the globals slot, 0..3: the live records sit
         | at GLOBAL_LIVE + 228 k (core-ar2's GLOBAL_LIVE, as voice-dac has it).
-        .extern core_store_get, core_store_set, silent_pad_trig_on, silent_live_rec_on
+        .extern core_store_get, core_store_set
+        .extern silent_pad_trig_on, silent_live_rec_on, silent_mute_on
         .equ    GLOBAL_LIVE,    0x413192ff
         .equ    GLOBAL_STRIDE,  228
         .equ    PROJ_GLOBALS,   236               | the project's ProjectGlobals
@@ -78,6 +97,20 @@
         .equ    CHECK_GLYPHS,   0x419f0910        | RAM: -> the checkbox glyphs, 28 B each
         .equ    VIEW_INVALIDATE, 0x40078580       | (view + 56)
         .equ    MENU_ITEM_SIZE, 0x54
+
+        .equ    VOICE_TRIG,     0x4011e1b4        | (event): the play routine's call
+        .equ    ON_KEY_RESUME,  0x400c6fb6        | KeyboardView, past three pushes
+        .equ    ON_KEY_SKIP,    0x400c6fe4        | and its way out
+        .equ    ON_CHRO_RESUME, 0x400c58f8        | ChromPadsView, past `0x400b53a2`
+        .equ    ON_CHRO_SKIP,   0x400c593a        | and its way out
+        .equ    PORT_GET,       0x400b53a2        | (globals), the displaced call
+        .equ    PRESSURE_OUT,   0x400850f4        | (slot, channel, note, value)
+        .equ    CHANNEL_OF,     0x40085672        | (track): its MIDI channel
+        .equ    CHRO_RESUME,    0x400c6276        | ChromPadsView, past that call
+        .equ    CHRO_SKIP,      0x400c6298        | and past its MIDI block
+        .equ    ENGINE_MUTES,   0x8000ed98        | the engine's copy of the mutes
+        .equ    ENGINE_SOLOS,   0x8000ed9c        | and solos, bit t for track t
+        .equ    FX_TRACK_BIT,   12
 
         .text
 
@@ -183,6 +216,101 @@ active:
         rts
 
         | ------------------------------------------------------------------
+        | hit_gate: the play routine's call to the voice trigger, whose event
+        | is on the stack for the jmp, and nothing reads a result. d2 is the
+        | track.
+        | ------------------------------------------------------------------
+        .align  2
+        .globl  silent_pad_trig_hit_gate
+silent_pad_trig_hit_gate:
+        move.l  %d2,%d1
+        bsr.s   muted
+        tst.l   %d0
+        beq.s   1f
+        rts
+1:      jmp     VOICE_TRIG
+
+        | ------------------------------------------------------------------
+        | at_key_gate: KeyboardView's call to the MIDI poly pressure queue,
+        | (track, channel, note, value), its arguments on the stack for the
+        | jmp; nothing reads a result. at_chro_gate: ChromPadsView's, whose
+        | first argument is the pad, so the gate sits where d3 is still the
+        | track, over `movel %d3,%sp@-; jsr 0x40085672`, and skips to the end
+        | of its MIDI block.
+        | ------------------------------------------------------------------
+        .align  2
+        .globl  silent_pad_trig_at_key_gate
+silent_pad_trig_at_key_gate:
+        move.l  4(%sp),%d1
+        bsr.s   muted
+        tst.l   %d0
+        bne.s   1f
+        jmp     PRESSURE_OUT
+1:      rts
+
+        .align  2
+        .globl  silent_pad_trig_at_chro_gate
+silent_pad_trig_at_chro_gate:
+        move.l  %d3,%d1
+        bsr.s   muted
+        tst.l   %d0
+        bne.s   1f
+        move.l  %d3,-(%sp)                        | displaced
+        jsr     CHANNEL_OF                        | displaced
+        jmp     CHRO_RESUME
+1:      jmp     CHRO_SKIP
+
+        | muted(d1 = track) -> d0 = 1 when the track is muted, by the masks as
+        | the engine reads them, and MUTE ALL SOUND is checked; the setting is
+        | looked up only for a muted track. Clobbers d1/a0/a1.
+        .align  2
+muted:
+        move.l  ENGINE_SOLOS,%d0
+        beq.s   1f
+        not.l   %d0
+        bclr    #FX_TRACK_BIT,%d0
+        bra.s   2f
+1:      move.l  ENGINE_MUTES,%d0
+2:      btst    %d1,%d0
+        beq.s   3f
+        movea.l #silent_mute_on,%a1
+        bra.w   flag_get
+3:      moveq   #0,%d0
+        rts
+
+        | ------------------------------------------------------------------
+        | on_key_gate: KeyboardView's MIDI block, jumped to over `movel %d4,
+        | %sp@-; movel %d2,%sp@-; movel %a2,%sp@-`, re-emitted; d2 is the track.
+        | on_chro_gate: ChromPadsView's, over `movel %d2,%sp@-; jsr 0x400b53a2`,
+        | re-emitted; the track is the function's second argument, in its
+        | frame. Both are reached with or without the play routine.
+        | ------------------------------------------------------------------
+        .align  2
+        .globl  silent_pad_trig_on_key_gate
+silent_pad_trig_on_key_gate:
+        move.l  %d2,%d1
+        bsr.w   muted
+        tst.l   %d0
+        bne.s   1f
+        move.l  %d4,-(%sp)                        | displaced
+        move.l  %d2,-(%sp)                        | displaced
+        move.l  %a2,-(%sp)                        | displaced
+        jmp     ON_KEY_RESUME
+1:      jmp     ON_KEY_SKIP
+
+        .align  2
+        .globl  silent_pad_trig_on_chro_gate
+silent_pad_trig_on_chro_gate:
+        move.l  44(%sp),%d1
+        bsr.w   muted
+        tst.l   %d0
+        bne.s   1f
+        move.l  %d2,-(%sp)                        | displaced
+        jsr     PORT_GET                          | displaced
+        jmp     ON_CHRO_RESUME
+1:      jmp     ON_CHRO_SKIP
+
+        | ------------------------------------------------------------------
         | The flags: a field's value for the active globals slot.
         |   flag_get(a1 = field) -> d0 = 0 or 1; 0 while the project is being
         |                   built (boot), or when the active record is none
@@ -284,7 +412,7 @@ rec_active:
         | re-emitted after. a3 is the view; a2 (mem_new), d2..d5 and the stack
         | are as SAMPLE POS RES's item expects them, so the registers used
         | here are saved, and each item's four functions live in a frame of
-        | item_add's own. SILENT PAD+TRIG first, then SILENT PAD LIVEREC.
+        | item_add's own. SILENT PAD+TRIG, SILENT PAD LIVEREC, MUTE ALL SOUND.
         | ------------------------------------------------------------------
         .align  2
         .globl  silent_pad_trig_menu_add
@@ -295,6 +423,9 @@ silent_pad_trig_menu_add:
         move.l  %a0,%d4
         bsr.w   item_add
         lea     items_live,%a0
+        move.l  %a0,%d4
+        bsr.w   item_add
+        lea     items_mute,%a0
         move.l  %a0,%d4
         bsr.w   item_add
         movem.l (%sp),%d2-%d4/%a2
@@ -396,6 +527,8 @@ items_main:
         .long   lbl_main, act_main, drw_main, chg_main
 items_live:
         .long   lbl_live, act_live, drw_live, chg_live
+items_mute:
+        .long   lbl_mute, act_mute, drw_mute, chg_mute
 
         | lbl_*(a0 = the std::string to construct) -> d0 = a0, as stock's
         | label invokers (AUTO TRK SWITCH's, OS 1.74 0x400eb710).
@@ -405,6 +538,9 @@ lbl_main:
         bra.s   lbl_invoke
 lbl_live:
         lea     txt_live,%a1
+        bra.s   lbl_invoke
+lbl_mute:
+        lea     txt_mute,%a1
 lbl_invoke:
         link.w  %fp,#-4
         move.l  %d2,-(%sp)
@@ -429,6 +565,9 @@ act_main:
         bra.s   act_invoke
 act_live:
         movea.l #silent_live_rec_on,%a1
+        bra.s   act_invoke
+act_mute:
+        movea.l #silent_mute_on,%a1
 act_invoke:
         move.l  4(%sp),%a0
         move.l  %a2,-(%sp)
@@ -446,6 +585,9 @@ chg_main:
         bra.s   chg_invoke
 chg_live:
         movea.l #silent_live_rec_on,%a1
+        bra.s   chg_invoke
+chg_mute:
+        movea.l #silent_mute_on,%a1
 chg_invoke:
         move.l  12(%sp),%d1
         bne.s   1f
@@ -477,6 +619,9 @@ drw_main:
         bra.s   drw_invoke
 drw_live:
         movea.l #silent_live_rec_on,%a1
+        bra.s   drw_invoke
+drw_mute:
+        movea.l #silent_mute_on,%a1
 drw_invoke:
         bsr.w   flag_get
         move.l  %d0,%d1
@@ -501,6 +646,8 @@ txt_main:
         .asciz  "SILENT PAD+TRIG"
 txt_live:
         .asciz  "SILENT PAD LIVEREC"
+txt_mute:
+        .asciz  "MUTE ALL SOUND"
 
         | Written at run time: whether the press in hand is silent.
         .align  2

@@ -40,7 +40,7 @@ export function BetaInvitationPage({ campaign }: { campaign: string }) {
       {discordInvitation}
       <a className="text-button" href="#octatrack/setup">Set up your Octatrack</a>
     </> : <>
-      <p>Beta testers send modules from this page to their Octatrack over USB and try new modules first. You need an Octatrack MKII, your OS 1.40C file, a USB cable and Chrome or Edge on a computer.</p>
+      <p>Beta testers send modules from this page to their Octatrack over USB and try new modules first. You need an Octatrack (MKI or MKII), your OS 1.40C file, a USB cable and Chrome or Edge on a computer.</p>
       {invitation?.limit !== null && <p>The tester pool is limited to <strong>{BETA_TESTER_LIMIT} people</strong>. Places are first come, first served when you accept.{invitation && ` ${invitation.testers} of ${invitation.limit} places are currently taken.`}</p>}
       <div className="beta-invitation-risks"><h2>Before you join</h2><p>Beta features are experimental. Expect bugs and unfinished behavior.</p><p>{FLASHING_RISKS}</p><p><strong>{BETA_RECOVERY_NOTICE}</strong></p><p><strong>{BETA_REPORTING_NOTICE}</strong></p><p>Back up your projects and samples before trying custom firmware. {INDEPENDENCE_NOTICE}</p></div>
       {valid && discordInvitation}

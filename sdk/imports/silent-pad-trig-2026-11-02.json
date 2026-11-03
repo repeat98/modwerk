@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/silent-pad-trig",
+  "version": "0.6.0-experimental",
+  "date": "2026-11-02",
+  "changes": [
+    "First library release for Analog Rytm MKII OS 1.74, on core-ar2 0.7, approved by the owner on 2 November 2026. Three SEQUENCER CONFIG checkboxes: pads and TRIG keys select silently, pads stay silent in LIVE RECORDING, and MUTE ALL SOUND keeps a muted track silent."
+  ],
+  "runtimeSourceSha256": "cb882beb98cf5a7aa29392aa7dad4551cf4cf6a32fd4831e96073ffc69555193",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/silent-pad-trig/silent-pad-trig-0.6.0-experimental-os1.74.elemod",
+      "sha256": "1cbe2c4a0893f4b1a6e4a9f8c60617cb8776b3aab58824145d54bca3c07930e5"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/silent-pad-trig/TESTING.md",
+  "requires": []
+}
