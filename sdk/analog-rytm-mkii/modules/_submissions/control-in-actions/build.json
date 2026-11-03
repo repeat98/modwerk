@@ -46,50 +46,6 @@
           "stockSha256": "15e2fcf86577ce3b1dacdfdf8a69a8989d63ba82701c01a4a0187eb2b4981ee0"
         },
         {
-          "addr": "0x401309bc",
-          "op": "bytes",
-          "len": 8,
-          "new": "7204b2806c027004",
-          "kind": "code",
-          "stockSha256": "d749208f2ebf1e144a87c325281e533ef582759f54549234fcc92c90dc89a595"
-        },
-        {
-          "addr": "0x401313ee",
-          "op": "bytes",
-          "len": 6,
-          "new": "487900000000",
-          "kind": "code",
-          "relocs": [{ "at": 2, "target": "control_in_actions_hold" }],
-          "stockSha256": "bb464c7f6c745d3375031d5575fb41e3fff8e787d2dd07cc4e79a2366e99d765"
-        },
-        {
-          "addr": "0x401313fe",
-          "op": "bytes",
-          "len": 6,
-          "new": "487900000000",
-          "kind": "code",
-          "relocs": [{ "at": 2, "target": "control_in_actions_toggle" }],
-          "stockSha256": "7d304eca370b09c0f7cae1e36efea536ee8722ab6ac31ce0e097fbc95403ad02"
-        },
-        {
-          "addr": "0x40131412",
-          "op": "bytes",
-          "len": 6,
-          "new": "487900000000",
-          "kind": "code",
-          "relocs": [{ "at": 2, "target": "control_in_actions_rec_hold" }],
-          "stockSha256": "d3e1c9525479740e113878e35ae90c5fde5f5446eeff6f47a3bf9fe7c017ec92"
-        },
-        {
-          "addr": "0x40131422",
-          "op": "bytes",
-          "len": 6,
-          "new": "487900000000",
-          "kind": "code",
-          "relocs": [{ "at": 2, "target": "control_in_actions_rec_toggle" }],
-          "stockSha256": "e20db88e1993c87ed4bce5ed340e5cd03452f6484c0ff0b1af62bffaf83e2451"
-        },
-        {
           "addr": "0x40131332",
           "op": "bytes",
           "len": 6,
@@ -135,13 +91,21 @@
           "stockSha256": "86d0d25f424ed2b621166d1a1a4fbf04de9914a8e34c13582fcd23d48aa193f5"
         },
         {
-          "addr": "0x40131e4c",
+          "addr": "0x401309bc",
+          "op": "bytes",
+          "len": 8,
+          "new": "7206b2806c027006",
+          "kind": "code",
+          "stockSha256": "d749208f2ebf1e144a87c325281e533ef582759f54549234fcc92c90dc89a595"
+        },
+        {
+          "addr": "0x40131462",
           "op": "bytes",
           "len": 6,
-          "new": "487900000000",
+          "new": "41f900000000",
           "kind": "code",
-          "relocs": [{ "at": 2, "target": "control_in_actions_learn_2" }],
-          "stockSha256": "4290253a17d61a688491aa65909c230ddb013ceaf196fe59719627e0133f4ed7"
+          "relocs": [{ "at": 2, "target": "control_in_actions_dests" }],
+          "stockSha256": "c3a9fd08f1a83aff82f1ef8380f8a0b802f527526e2de78bfc30896ad0585666"
         }
       ]
     }

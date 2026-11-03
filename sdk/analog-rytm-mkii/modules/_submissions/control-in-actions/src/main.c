@@ -23,6 +23,7 @@
 #define KEY_PERF 0x14
 #define KEY_REC 0x50
 #define KEY_PLAY 0x51
+#define KEY_FILL 0xb2
 #define FLAG_DOWN 1
 #define FLAG_UP 0x10
 
@@ -31,6 +32,8 @@
 #define DEST_MUTE_TOGGLE 2
 #define DEST_REC_HOLD 3
 #define DEST_REC_TOGGLE 4
+#define DEST_FILL_HOLD 5
+#define DEST_FILL_LATCH 6
 
 #define HYSTERESIS_MIN 200          // mV
 #define UNSEEN 2                    // a port's state before its first reading
@@ -61,22 +64,28 @@ typedef void (*invalidate_t)(void *view);
 #define VLINE ((vline_t)DRAW_VLINE_AT)
 #define INVALIDATE ((invalidate_t)VIEW_INVALIDATE_AT)
 
-// The ACTION row's names, in place of stock's TEMPO, ACTIVE, PRESET + and
-// PRESET -; the row has room for 8 characters, as stock's PRESET +.
+// The ACTION row's names, in place of stock's list (OFF, TEMPO, ACTIVE,
+// PRESET +, PRESET -, ENV TRIG); the row has room for 8 characters.
 const char control_in_actions_hold[] = "MUTE HLD";
 const char control_in_actions_toggle[] = "MUTE TGL";
 const char control_in_actions_rec_hold[] = "REC HLD";
 const char control_in_actions_rec_toggle[] = "REC TGL";
+const char control_in_actions_fill_hold[] = "FILL HLD";
+const char control_in_actions_fill_latch[] = "FILL LAT";
+const char *const control_in_actions_dests[] = {
+    (const char *)OFF_TEXT, control_in_actions_hold, control_in_actions_toggle,
+    control_in_actions_rec_hold, control_in_actions_rec_toggle,
+    control_in_actions_fill_hold, control_in_actions_fill_latch,
+};
 
 // In place of stock's FSW, FOOTSW DEST and FOOTSWITCH LEARN.
 const char control_in_actions_mode[] = "ACTION";
 const char control_in_actions_dest[] = "ACTION";
 const char control_in_actions_learn[] = "LEARN LEVELS";
 
-// LEARN LEVELS' two lines, in place of stock's "PUSH THE SWITCH SOME TIMES."
-// and "PRESS YES/NO WHEN DONE." (which EXPRESSION LEARN keeps); YES saves.
+// LEARN LEVELS' first line, in place of stock's "PUSH THE SWITCH SOME TIMES.";
+// the second stays stock's "PRESS YES/NO WHEN DONE.".
 const char control_in_actions_learn_1[] = "PRESS OR SEND A FEW GATES.";
-const char control_in_actions_learn_2[] = "THEN PRESS YES TO SAVE.";
 
 #ifdef CIA_EMU
 // rytm-emu has no ADC: a test build reads these words, poked from outside.
@@ -92,9 +101,11 @@ static unsigned char last_dest[CI_PORTS];
 static unsigned char hold_active[CI_PORTS]; // MUTE HOLD opened the screen
 static unsigned char hold_back[CI_PORTS];   // the mode key to go back to, 0 for none
 static unsigned char rec_active[CI_PORTS];  // REC HOLD turned live recording on
+static unsigned char fill_active[CI_PORTS]; // FILL HOLD holds FILL down
 static unsigned char learning[CI_PORTS];    // LEARN LEVELS is open, as the view last drew
 static char *shown[CI_PORTS];               // the CONTROL INPUT view that last drew ACTION's bars
-static unsigned char lit[CI_PORTS];         // the bars' box: pressed by the menu's own levels
+static unsigned char lit[CI_PORTS];         // the bars' state: pressed by the menu's own levels
+static unsigned char finished[CI_PORTS];    // LEARN LEVELS has just closed
 
 static void *brain(void)
 {
@@ -215,6 +226,22 @@ static void pedal(int port, int dest, int down)
             rec_off();
         }
         break;
+    case DEST_FILL_HOLD:            // FILL down and up, as from the panel: fill while held
+        if (down) {
+            fill_active[port] = 1;
+            press(KEY_FILL, FLAG_DOWN);
+        } else if (fill_active[port]) {
+            fill_active[port] = 0;
+            press(KEY_FILL, FLAG_UP);
+        }
+        break;
+    case DEST_FILL_LATCH:           // FUNC + FILL FILL latches, and FILL ends a latch
+        if (down) {
+            int func = *(volatile unsigned char *)FILL_ON ? 0 : FLAG_FUNC;
+            press(KEY_FILL, FLAG_DOWN | func | (func ? FLAG_DOUBLE : 0));
+            press(KEY_FILL, FLAG_UP | func);
+        }
+        break;
     case DEST_REC_TOGGLE:
         if (down) {
             if (live_rec())
@@ -234,6 +261,8 @@ static void end_holds(int port)
         pedal(port, DEST_MUTE_HOLD, 0);
     if (rec_active[port])
         pedal(port, DEST_REC_HOLD, 0);
+    if (fill_active[port])
+        pedal(port, DEST_FILL_HOLD, 0);
 }
 
 // Whether the input counts as pressed, from the two learned levels and
@@ -284,20 +313,35 @@ static void redraw(int port)
     learning[port] = 0;
 }
 
+// LEARN LEVELS has closed. Stock saves the menu's levels on YES and leaves
+// them in the menu unsaved on NO, where leaving the menu would save them: NO
+// puts the saved ones back. As stock, YES keeps the higher level as pressed.
+static void learned(int port, char *view)
+{
+    long saved[REC_BYTES / 4];
+    SETTINGS(port, saved);
+    *(long *)(view + VIEW_FSW_LOW) = saved[REC_FSW_LOW / 4];
+    *(long *)(view + VIEW_FSW_HIGH) = saved[REC_FSW_HIGH / 4];
+}
+
 // ACTION's bars, from the view's draw (draw.S), laid out as stock's EXPR
 // bars: the input's level against the two learned levels, which LEARN LEVELS
-// moves as it runs, then a box that fills while the input counts as pressed.
+// moves as it runs, then a line at the box's far end while the input counts
+// as pressed, as EXPR's output line.
 void control_in_actions_draw(char *view, void *screen, int mv)
 {
     int port = *(long *)(view + VIEW_PORT);
-    int low, high;
+    int low, high, now;
     if (port < 0 || port >= CI_PORTS)
         return;
-    shown[port] = view;
-    learning[port] = *(long *)(view + VIEW_LEARN) == LEARN_FSW;
 #ifdef CIA_EMU
     mv = LEVEL(port);
 #endif
+    shown[port] = view;
+    now = *(long *)(view + VIEW_LEARN) == LEARN_FSW;
+    if (!now && learning[port])
+        finished[port] = 1;
+    learning[port] = now;
     low = *(long *)(view + VIEW_FSW_LOW);
     high = *(long *)(view + VIEW_FSW_HIGH);
     lit[port] = pressed(low, high, mv, lit[port]);
@@ -313,8 +357,7 @@ void control_in_actions_draw(char *view, void *screen, int mv)
     mark(screen, low, 3);
     mark(screen, high, 48);
     FRAME(screen, 23, 3, 36, 48, 1);
-    if (lit[port])
-        FILL(screen, 24, 4, 35, 47, 1);
+    HLINE(screen, 24, lit[port] ? 45 : 6, 35, 1);
 }
 
 void control_in_actions_tick(void *ctrl)
@@ -329,6 +372,11 @@ void control_in_actions_tick(void *ctrl)
         int down, dest;
         SETTINGS(port, record);
         redraw(port);
+        if (finished[port]) {
+            finished[port] = 0;
+            if (shown[port])
+                learned(port, shown[port]);
+        }
         if (record[REC_MODE / 4] != MODE_FSW) {
             end_holds(port);
             state[port] = UNSEEN;

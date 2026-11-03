@@ -13,11 +13,27 @@ Analog Rytm MKII, OS 1.74, build CI02 alone (sha256 43aab368, core-ar2 0.7 and t
 | LEARN LEVELS' message | Stock's wording, PUSH THE SWITCH SOME TIMES. / PRESS YES/NO WHEN DONE. (CI03 rewords it) |
 | REVERSE DIRECTION | No message; stock shows none in EXPR mode either |
 
+Build CI04 alone (sha256 66c4104d, CI03 at -O2), 3 November 2026, with a footswitch, as the tester reported it:
+
+| Check | Result |
+| --- | --- |
+| Bars | Shown; the right one is shaded where stock EXPR's is a moving line (CI05 draws a line) |
+| LEARN LEVELS' message | Shown as built; the tester wants stock's YES/NO line back (CI05 does) |
+| REVERSE DIRECTION | Flips the right box's resting state |
+| LEARN LEVELS, then NO | Unclear to the tester |
+| MUTE TGL | Works as expected |
+| MUTE HLD | Acts on the pedal's release: press does nothing, release opens MUTE mode, the next press closes it. Not observed but inferred: the pedal read as pressed at rest, likely because a NO in LEARN LEVELS left unreversed levels that leaving the menu saved (CI05's NO restores them) |
+| REC HLD | Live recording starts at the release; a tap does not leave it. Inferred: the same reversed reading |
+| REC TGL | From stopped, starts the sequencer with live recording on; the next tap leaves it, the pattern playing on |
+| EXP/CV IN 2 | A brief look: it reads the CV |
+| Power cycle | Settings kept |
+| Timing | A little delay noticed, with the actions on the pedal's release |
+
 Nothing else has run on a unit yet. What follows ran in rytm-emu (`~/dev/rytm-emu` at c5732f0), which only approximates the instrument and has no model of the EXP/CV IN converters.
 
 ## Emulator
 
-Test builds FE02 to FE04, CE02 and CE06: the module built with `-DCIA_EMU`, which reads the jack's level from a word poked from outside (`dtboot --poke`) instead of stock's converter, and publishes the open mode screen and the live recording flag for `DTBOOT_PEEK`. Everything else is the module as committed. FE02 to FE04 ran the module before the rename and REC HLD; CE02 (sha256 cca7ea49) ran the rename and REC HLD, CE06 the bars and LEARN LEVELS' guard. Build CI03 (sha256 0ec0b5aa) booted and ran 2 G instructions with the same CPU exception count as CI01 and no fault. Build CI02 (sha256 43aab368, core-ar2 0.7 and this module, `-Os`) booted and ran 2 G instructions with the same CPU exception count as CI01 and no fault.
+Test builds FE02 to FE04, CE02, CE06, CE07, CE10 and CE12: the module built with `-DCIA_EMU`, which reads the jack's level from a word poked from outside (`dtboot --poke`) instead of stock's converter, and publishes the open mode screen and the live recording flag for `DTBOOT_PEEK`. Everything else is the module as committed. FE02 to FE04 ran the module before the rename and REC HLD; CE02 (sha256 cca7ea49) ran the rename and REC HLD, CE06 the bars and LEARN LEVELS' guard. Build CI03 (sha256 0ec0b5aa) booted and ran 2 G instructions with the same CPU exception count as CI01 and no fault. Build CI02 (sha256 43aab368, core-ar2 0.7 and this module, `-Os`) booted and ran 2 G instructions with the same CPU exception count as CI01 and no fault.
 
 | Check | Result |
 | --- | --- |
@@ -28,6 +44,10 @@ Test builds FE02 to FE04, CE02 and CE06: the module built with `-DCIA_EMU`, whic
 | REC HLD, input high, STOP on the panel, input low (CE02) | STOP ends live recording; the release does nothing, the sequencer stays stopped |
 | REC TGL, sequencer stopped, three presses (CE02) | Live recording on and playing; off and still playing; on again. Releases do nothing |
 | ACTION mode's screen (CE06) | Bars at the left laid out as EXPR's: the level line follows the poked input, and the box fills at 5 V, stays filled at 2.2 V and empties at 0 V |
+| ACTION row turned right (CE10, CE12) | Adds FILL HLD, then FILL LAT, and stops there |
+| FILL HLD, sequencer playing (CE10, CE12) | Stock's fill flag on while the input is high, off after |
+| FILL LAT, sequencer playing (CE12) | First press latches fill, the release keeps it, the next press ends it; a panel FILL also ends it |
+| LEARN LEVELS, then NO (CE07) | The bars' learned levels return to the saved ones |
 | LEARN LEVELS (CE06) | Message PRESS OR SEND A FEW GATES. / THEN PRESS YES TO SAVE. fits; the module counts LEARN as open and acts on nothing until YES; the bars keep drawing behind the message. The levels learned are stock's converter reading, 0 V in rytm-emu, so learning itself is for the unit |
 | MUTE HLD, input high then low, from no mode | MUTE mode on, then off |
 | Same from CHRO, SCNE, PERF | MUTE mode, then back to CHRO, SCNE, PERF |
@@ -46,5 +66,5 @@ Test builds FE02 to FE04, CE02 and CE06: the module built with `-DCIA_EMU`, whic
 - EXP/CV IN 2 (same code as port 1, not run).
 - Settings after a power cycle, and a unit without the module reading ACTION settings.
 - The CONTROL IN MOD macro of a jack switched from EXPR to ACTION mid-sweep.
-- Beside other modules. CI04 is CI03 built at the default -O2: 2622 bytes of code and data (CI03 at `-Os`: 1840; CI02: 1005 at `-Os`; CI01: 805 at `-Os`, 1203 at -O2). Combined image RC20 (sha256 953ae59b, CI02 with twelve other Rytm modules) links with 1,508 B of module RAM spare and boots in rytm-emu with no fault; not on a unit.
+- Beside other modules. CI05 (sha256 2704a16d, -O2, booted with no fault) is 2976 bytes of code and data; CI04 is CI03 built at the default -O2: 2622 bytes (CI03 at `-Os`: 1840; CI02: 1005 at `-Os`; CI01: 805 at `-Os`, 1203 at -O2). Combined image RC20 (sha256 953ae59b, CI02 with twelve other Rytm modules) links with 1,508 B of module RAM spare and boots in rytm-emu with no fault; not on a unit.
 - CPU and memory: UI only, two readings per UI tick; the module's code is about 1 KB. Not measured.
