@@ -74,7 +74,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 40,
+    "memoryBytes": 44,
     "fastBytes": 0,
     "load": {
       "display": "Thirteen instructions per CHROMATIC poly pressure message",

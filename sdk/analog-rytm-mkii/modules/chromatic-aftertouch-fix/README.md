@@ -87,7 +87,7 @@ rytm-emu on OS 1.74, MIDI out bytes: a held CHROMATIC pad sends note on, poly pr
 on one note across the UP and DOWN layouts, with UP pressed during the hold, with two pads held,
 and sends no pressure after its note off; alone and beside Silent Pad+Trig. core-ar2 alone keeps
 stock's bytes, and pads outside CHROMATIC are as stock. Details, builds and the unit steps are in
-[TESTING.md](TESTING.md). Memory: 40 bytes of the shared mod area. Load: at most thirteen
+[TESTING.md](TESTING.md). Memory: 44 bytes of the shared mod area. Load: at most thirteen
 instructions per poly pressure message from a held CHROMATIC pad, nothing otherwise (static count,
 not measured).
 
