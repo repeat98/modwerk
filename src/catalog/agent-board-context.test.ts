@@ -8,6 +8,8 @@ describe('the agent board stays in the context agents read and the commands they
   it('is named where an agent plans, claims and pushes', () => {
     expect(read('AGENTS.md')).toContain('the [agent board](docs/AGENT_BOARD.md)')
     expect(read('AGENTS.md')).toContain('never work around a claim')
+    // Agents run their developer's side of the board themselves (docs/AGENT_BOARD.md, "Agents talk for themselves").
+    expect(read('AGENTS.md')).toContain('docs/AGENT_BOARD.md#agents-talk-for-themselves')
     for (const folder of ['.claude/skills', '.agents/skills']) {
       expect(read(folder + '/modwerk-new-module/SKILL.md')).toContain('npm run board -- list module')
       expect(read(folder + '/modwerk-new-module/SKILL.md')).toContain('Never work around a claim')
@@ -20,6 +22,7 @@ describe('the agent board stays in the context agents read and the commands they
       expect(read(folder + '/modwerk-review-prs/SKILL.md')).toContain('the agent board')
       expect(read(folder + '/modwerk-fix-issue/SKILL.md')).toContain('npm run board -- list module')
       expect(read(folder + '/modwerk-triage-issues/SKILL.md')).toContain('npm run board -- list module')
+      for (const skill of ['modwerk-new-module', 'modwerk-start', 'modwerk-pr-ready', 'modwerk-update-module', 'modwerk-fix-issue']) expect(read(folder + '/' + skill + '/SKILL.md')).not.toMatch(/only with (?:their words|what the developer says)|show them to the developer/)
     }
     expect(read('docs/DEVELOPER_WORKFLOW.md')).toContain('npm run board -- list module')
     expect(read('docs/DEVELOPER_WORKFLOW.md')).toContain('npm run board -- finding')
