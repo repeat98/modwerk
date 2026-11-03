@@ -2,7 +2,7 @@
 
 Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which to read first for a task.
 
-**Keep them short.** `AGENTS.md` and every document here may grow to 32 KB, and one already longer may shrink but not grow: `npm run check` refuses an edit that only adds to it. Make room by cutting what is stale or said elsewhere; Git keeps the history. A new document gets a line here (a test checks).
+**Keep them short.** `AGENTS.md` and every document here may grow to 40 KB, and one already longer may shrink but not grow: `npm run check` refuses an edit that only adds to it. Make room by cutting what is stale or said elsewhere; Git keeps the history. A new document gets a line here (a test checks).
 
 **History goes in dated records, not in a guide.**
 
