@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/chromatic-aftertouch-fix.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "midi:CHROMATIC pad poly pressure note on MIDI out"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x400c628e",
+          "len": 6,
+          "stockSha256": "eb8c3b4455860d7a405903deb4a71d861baed698a9ab2fbb8c1166d596dffcd1",
+          "op": "jsr",
+          "target": "chromatic_aftertouch_fix_pressure_out"
+        }
+      ]
+    }
+  }
+}
