@@ -1,0 +1,1 @@
+- Docs: `npm run module:new` now says to move a new Octatrack module to `sdk/drafts/` and check it with `module:doctor -- --draft`. The guides add how to build a private USB package of a draft and how to see that a unit has no Modwerk base on USB.

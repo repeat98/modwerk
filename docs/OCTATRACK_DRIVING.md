@@ -57,6 +57,8 @@ before reporting success.
 
 **One Elektron device on the Mac's USB.** The bridge opens the first device with Elektron's vendor id that offers the Modwerk interface; before 27 October 2026 it opened the first Elektron device of any kind, so an Analog Rytm on Overbridge plugged in beside the Octatrack made every request fail ("unit went away", "no unit running the test base"). Unplug other Elektron devices before a RAM boot or a flash all the same: on that day a RAM boot staged with a Rytm attached failed part-way and hung at the logo, and the retry with the Rytm unplugged came back.
 
+**The unit must run a Modwerk base.** A unit on the stock OS or an octabam card remix offers only USB mass storage (interface class 8), so `serve` says "No unit running the test base (Modwerk vendor interface) on USB" whatever the cable, hub or other devices. Check before debugging cables: `ioreg -r -c IOUSBHostInterface -l -w0 | grep -E '"(USB Product Name|bInterfaceClass)" ='` shows the Octatrack with class 255 (the Modwerk interface) only under a base; class 8 alone means no base.
+
 Keep emulator socket paths short, including the host path behind a container bind mount. A long host output path can fail with `usb: cannot listen` even when its container alias is short.
 
 ```sh

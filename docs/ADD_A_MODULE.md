@@ -1,6 +1,6 @@
 # Add or port a module
 
-This page is for contributors and for the coding agents they point at this repository. Read it, then the section for your machine. The other module documents are field references; open one only when a step links to it.
+For contributors and their coding agents: read this, then your machine's section. Open the other module documents, field references, only when a step links to one.
 
 Start with the [developer workflow and distribution context](DEVELOPER_WORKFLOW.md) for submission, release verification, report handling and catalogue boundaries. Instruments without an SDK follow [Add a machine](ADD_A_MACHINE.md) before module scaffolding.
 
@@ -22,7 +22,7 @@ Every module follows [the guide for its category](module-guides/README.md): effe
 ## Rules that always apply
 
 - Never commit firmware, extracted stock code or tables, memory dumps, emulator cards or built images. Firmware stays on your computer. Stock code is referenced by address, length and SHA-256 and copied from each user's own OS file when they build.
-- Keep every author's credit and full licence text. Pin ported source to an exact commit. Both module contracts accept an optional `author.contributors` array of `{ "github": "handle", "name": "Display name" }` entries (`name` is optional). Each contributor appears on a separate line below the primary author in library cards, page headers and module information; describe their contribution in `author.credits` and the README. List only people whose work is in the module; thank others, such as someone who investigated a port, in the README or the release notes. This attribution does not grant module ownership, report access or release authority; those continue to use the primary author and declared maintainers.
+- Keep every author's credit and full licence text. Pin ported source to an exact commit. Both module contracts accept an optional `author.contributors` array of `{ "github": "handle", "name": "Display name" }` entries (`name` is optional). Each appears on its own line below the primary author; describe their contribution in `author.credits` and the README. List only people whose work is in the module; thank others, such as someone who investigated a port, in the README or the release notes. This attribution does not grant module ownership, report access or release authority; those continue to use the primary author and declared maintainers.
 - Ask the author first. Before you change the code, behaviour or wording of a module that names someone else as its author, get their OK on GitHub or Discord and link it in the pull request ([Ask the author first](DEVELOPER_WORKFLOW.md#ask-the-author-first)). When you import someone's module, @mention them on the pull request (or open an issue on their repository) before it merges. Say what was imported or changed and give them a chance to review: Modwerk lists them as the author, and users bring their problems to them. The licence may not require it; do it anyway.
 - Code or behaviour changes inside a module folder need a higher semantic `version` in its manifest, and the same version in `sdk/catalog.json` once listed. Documentation/media/prose-only edits need a version bump only when requesting automatic author publication.
 - No module depends on another. Each builds, installs and works when it is the only module chosen: no `requires`, no hooks into another module's code, no "needs X" selection rule, no pull request stacked on another module's. Shared code goes into the base or the shared SDK first, or the features ship as one module. Review refuses a dependent module, with no exception ([cross-compatibility](module-guides/README.md#cross-compatibility)).
@@ -30,11 +30,11 @@ Every module follows [the guide for its category](module-guides/README.md): effe
 
 ## Persistence and multiple instances
 
-For every stateful module, project saving and reload/reboot survival are
+For every stateful module, saving and reload/reboot survival are
 essential acceptance checks. Always exercise multiple simultaneous instances
 with different settings: different tracks, both FX slots when supported and
 both DSP cores when applicable. Verify that editing, replacing or resetting one
-instance does not change another. Single-instance operation is insufficient.
+instance does not change another.
 
 Check Part save/reload, project save/load/reload and a restart with volatile RAM
 discarded, retaining only the card and battery-backed RAM. After each operation,
@@ -54,17 +54,19 @@ separately; failures or unavailable paths remain explicit qualification gaps.
 
 Keep unqualified Octatrack work under `sdk/drafts/<id>/`, with its draft
 release notes in `CHANGELOG.json`. Every folder in `sdk/octabam/modules/` is
-validated for publication even when absent from `sdk/catalog.json`; placing
-a draft there blocks catalogue generation for everyone. Move it into that
-directory and move its notes into `src/community/module-changelogs/` only
-when the publication requirements are met.
+validated for publication even when absent from `sdk/catalog.json`, so a
+draft there blocks catalogue generation for everyone; `npm run module:new`
+scaffolds there, so move the new folder to `sdk/drafts/<id>/` at once. Move
+it back, and its notes into `src/community/module-changelogs/`, only when
+the publication requirements are met.
 
 Run this after every edit: about 15 seconds, no firmware, no module code run.
 
 ```sh
 npm run modules:generate                      # regenerate the catalog from the module folders
 npm run check -- --base origin/main            # scopes docs to metadata/provenance; code runs the full app suite
-npm run module:doctor -- <id>                 # fits every workflow? each gap and its fix (a draft: --draft <id>)
+npm run module:doctor -- <id>                 # fits every workflow? each gap and its fix
+npm run module:doctor -- --draft <id>         # the same for sdk/drafts/<id>/ (plain <id> says "No module named")
 npm run modules:check -- --base origin/main   # version and publication rules for the folders you changed
 npm run modules:compat -- <id>                # Octatrack: installs beside every other active module and the base? each clash and its fix (unlisted or a draft: --with <id>)
 ```
@@ -108,15 +110,15 @@ Use the exact catalog/manifest version and the source-update date (`YYYY-MM-DD`)
 
 `npm run check -- --base origin/main` and `npm run build` reject missing current-version notes, duplicate/invalid versions, malformed dates, unknown module IDs and entries over five lines or with a line over 200 characters. Notes live outside module source folders so adding them does not invalidate retained qualification records or trigger native compilation.
 
-The published release inventory includes these notes. A published version notifies the module's followers, eligible prior downloaders included, through the daily module digest, on by default; members can unfollow a module or opt out of update email. No opt-in is needed, and legacy `announce` flags do not suppress it. Equal-version media or documentation edits and superseded inventories announce nothing. Before pushing a module update, the coding agent tells the maintainer in chat that publication will notify followers, by email as their preferences say; a push alone sends no mail. The email carries the change list and limitations, in HTML and plain text, and links the Changelog tab.
+The published release inventory includes these notes. A published version notifies the module's followers, eligible prior downloaders included, through the daily module digest, on by default; members can unfollow a module or opt out of update email. Legacy `announce` flags do not suppress it. Equal-version media or documentation edits and superseded inventories announce nothing. Before pushing a module update, the coding agent tells the maintainer in chat that publication will email followers as their preferences say; a push alone sends no mail. The email carries the change list and limitations, in HTML and plain text, and links the Changelog tab.
 
-Documentation/media-only fixes do not need a version bump unless requesting automatic author publication, but must add a clearly marked documentation-only or media-only note to the current entry in the same PR. A new version, including a metadata-only version when deliberately published, must always have its own entry.
+Documentation/media-only fixes add a clearly marked documentation-only or media-only note to the current entry in the same PR. Every new version, a deliberately published metadata-only one included, has its own entry.
 
 ## Documentation-only updates
 
 Local module `README.md`, `TESTING.md` and `CPU.md` can be edited without updating import checksums. Their recorded hashes remain import history. Code, licences, archived snapshots and preserved `upstream/` documentation retain exact checksums. The lightweight `npm run sdk:imports:check` uses Node alone and runs on documentation PRs; the full SDK check at publication uses the same policy.
 
-Fixing a README, a tutorial, a caption or a screenshot of a module that already has its qualification record needs none of the heavy steps: no version bump, rebuilt packages, fresh approval or Docker compile in CI when only README, Markdown, `media/`, `presentation/` or `evidence/` files change. Compiled packages bind to the module’s code fingerprint (`moduleSourceFingerprint` in `scripts/module-source.mjs`), which ignores those files and the manifest’s prose; older native evidence can also bind the thumbnail, so replace it through the [shared preview artwork path](#module-thumbnail-style). Open a normal pull request and run `npm run check -- --base origin/main`. In PR checks and deployment, prose and media skip native compilation; source, build inputs and compiler changes keep it. The frozen baseline modules, `cc-map`, `previewvol` and MIDI Scenes keep their older exact-folder rules (see [retained evidence](MODULE_QUALIFICATION.md#risk-based-update-checks--3-october-2026)).
+Fixing the README, tutorial, captions or screenshots of a module that has its qualification record needs none of the heavy steps: no version bump, rebuilt packages, fresh approval or Docker compile in CI when only README, Markdown, `media/`, `presentation/` or `evidence/` files change. Compiled packages bind to the module’s code fingerprint (`moduleSourceFingerprint` in `scripts/module-source.mjs`), which ignores those files and the manifest’s prose; older native evidence can also bind the thumbnail, so replace it through the [shared preview artwork path](#module-thumbnail-style). Open a normal pull request and run `npm run check -- --base origin/main`. In PR checks and deployment, prose and media skip native compilation; source, build inputs and compiler changes keep it. The frozen baseline modules, `cc-map`, `previewvol` and MIDI Scenes keep their older exact-folder rules (see [retained evidence](MODULE_QUALIFICATION.md#risk-based-update-checks--3-october-2026)).
 
 For imported files outside the three editable local guides, refresh affected `vendoredSha256` records in `sdk/imports/` after reviewed media or attribution edits, and record the local update while preserving upstream source fingerprints. Instrument capture checks must select `otUi` media; audio previews share the media list.
 
@@ -188,6 +190,13 @@ fallback and distinct instances through Part/project reload and physical
 reboot where applicable. Give hardware steps and record actual results;
 emulator/host tests do not fill missing hardware qualification. Preserve the
 previous approved download while preparing candidates.
+
+**A private USB package of a draft.** Its `Gate` must be
+`modules/<id>/verify.py` (the schema takes only `tools/` or `modules/`
+paths), and `build.py --octabam <id>` looks only in `sdk/octabam/modules/`.
+Link it there for the build, never commit the link, and remove it before
+`module:doctor -- --draft`, which refuses it:
+`ln -s ../../drafts/<id> sdk/octabam/modules/<id>`.
 
 **Growing a stock table over USB.** A runtime package carries no `TableGrow`
 (`sdk/runtime/loader/build.py --octabam` refuses `tables`). Keep the grown

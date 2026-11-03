@@ -24,6 +24,7 @@ Follow `docs/ADD_A_MODULE.md` and the rules in `AGENTS.md`, in this order.
    - for a new FX, one effect per module (`docs/module-guides/effects.md#one-effect-per-module`): a set of different effects becomes one module each, and a stock site they share a hook first;
    - for a new FX, a DSP budget measured against SPRING REV.
 6. **Scaffold and build.** Use `npm run module:new` (the guide's "Choose your path"), work in its fast loop, and run `npm run module:doctor -- <id>` until it is green.
+   - An Octatrack module scaffolds into `sdk/octabam/modules/<id>/`: move it to `sdk/drafts/<id>/` until it is qualified, and check it there with `npm run module:doctor -- --draft <id>` (plain `<id>` finds no draft).
    - `module:new` claims the module on the agent board for the signed-in developer (`npm run board -- login` once) and refuses one someone else holds; the doctor's `board claim` line stays red until the claim is theirs.
    - A new hook, table or migration number gets its claim as soon as you pick it: `npm run board -- claim hook <machine>/<index>` or `claim migration <number>` (`docs/AGENT_BOARD.md`).
 7. **Test** on their unit (`/modwerk-try-on-unit`) or in the emulator. Record only what was observed, on the named build.
