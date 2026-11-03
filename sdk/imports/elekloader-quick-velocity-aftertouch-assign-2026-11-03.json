@@ -18,7 +18,7 @@
         "commit": "dde0ea93d2cfa244b409691d445183d7bd544b8b",
         "path": "sdk/imports/packages/quick-velocity-aftertouch-assign/quick-velocity-aftertouch-assign-0.1.0-experimental-os1.74.elemod"
       },
-      "title": "Quick Velocity & Aftertouch Assign",
+      "title": "Quick Velocity+Aftertouch Assign",
       "requires": [
         "core"
       ],

@@ -84,7 +84,7 @@ describe('the vendored elekloader catalog', () => {
       missing: [],
     })
   })
-  it('plans Quick Velocity & Aftertouch Assign beside Sample RATE and Silent Pad+Trig from its pinned source-only package with core-ar2 0.7', () => {
+  it('plans Quick Velocity+Aftertouch Assign beside Sample RATE and Silent Pad+Trig from its pinned source-only package with core-ar2 0.7', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['quick-velocity-aftertouch-assign', 'sample-rate', 'silent-pad-trig'])).toMatchObject({
       core: { file: 'core-ar2-0.7.elemod', version: '0.7' },
       mods: [

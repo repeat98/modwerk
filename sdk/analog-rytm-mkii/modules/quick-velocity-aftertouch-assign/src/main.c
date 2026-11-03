@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Quick Velocity & Aftertouch Assign for the Analog Rytm MKII: link a
+// Quick Velocity+Aftertouch Assign for the Analog Rytm MKII: link a
 // parameter to velocity or aftertouch by holding a key and turning its knob.
 //
 //   FIX + turn a knob       links that parameter to velocity; the turn sets the
