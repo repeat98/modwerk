@@ -1,6 +1,23 @@
 # Sidechain Compressor verification
 
-Version **0.2.1-experimental**, recorded **30 October 2026** (0.2.0: 25 October 2026). Built by Modwerk's shared firmware builder, beside any other module that fits, and over USB part of the beta base. The DSP figures are emulator measurements, not chip timing; the hardware record is below. The 0.1.2 and 0.1.1 records follow as history.
+Version **0.2.2-experimental**, recorded **3 November 2026** (0.2.1: 30 October 2026; 0.2.0: 25 October 2026). Built by Modwerk's shared firmware builder, beside any other module that fits, and over USB part of the beta base. The DSP figures are emulator measurements, not chip timing; the hardware record is below. The 0.1.2 and 0.1.1 records follow as history.
+
+## 0.2.2-experimental
+
+### What changed
+
+`placement.json` names the module's two ColdFire units, `sc_cf` and `sc_ui` (1,314 B). Modwerk's builder links them into the DRAM runtime when another selected module already carries one, and into the menu cave otherwise ([#1175](https://github.com/repeat98/modwerk/issues/1175): FM Synth, this module and Mute Modes with the stock FX2 effects kept ran 8 bytes short of cave, and the build fell back to an FX2 chooser with this module only). The runtime is a fixed reservation of sample memory, so the module never starts one: on its own or beside modules without DRAM code it builds as 0.2.1 did. The DSP and ColdFire sources are 0.2.1's, byte for byte; both units assemble to the same code for the cave's and the runtime's ISA.
+
+The builders follow one rule for this (owner review): native `remix.machine_composition.join_runtime` sets the units' `dram` in `compose_map`, and the raw descriptor words resolve after the platform runtime link; the browser links them at the module's place in native order (this module first while the stock FX2 effects stay, as it replaces COMPRESSOR in place) and resolves its formatters, widgets and detours from the runtime.
+
+### Results
+
+- **Module alone:** the composed image is 0.2.1's, byte for byte (the cave placement is unchanged).
+- **Screenshots:** the 30 October captures of that image (MAIN OS `fb7c5e31…`), unchanged; only their version label moves to 0.2.2.
+- **`npm run module:verify -- sidechain-compressor`:** 162 selections, 64 native module-owned images match, 98 matching refusals, 0 mismatches. Two selections that 0.2.1 refused for cave space now build; none newly refused.
+- **The #1175 set** (FM Synth, Play Modes, Mute Modes, Apply Scene, Direct Jump and this module, stock FX2 kept): builds with all 13 FX2 rows; the cave ends at 0x400d7674, 1,352 B before the long chooser list.
+- **Emulator** (`scripts/capture-module-ui.py`, MKI panel): that image and the module alone show the same pixels on the FX1 chooser, COMPRESSOR's main page and page 2 with KEY selected; the FX2 chooser lists the stock effects.
+- **Hardware:** below and in [evidence/hardware.md](evidence/hardware.md): beside Direct Jump and in the #1175 set, both with the units in the DRAM runtime, on the author's MKI, 3 November 2026.
 
 ## 0.2.1-experimental
 

@@ -1,5 +1,30 @@
 # Sidechain Compressor author-reported hardware operation
 
+## 0.2.2-experimental
+
+Tester: **Zac Kyoti** (the module's author), 3 November 2026, on an
+**Octatrack MKI**. Images: composed by Modwerk's builder from this source with
+the stock FX2 effects kept, the module's ColdFire units in the DRAM runtime,
+flashed from `.bin` card updates:
+
+- with Direct Jump, MAIN OS
+  `e77ec14bd2f8f4d1586a3d2366207835485521cc6ce3ee941dc353a66963548a`
+  (version field `MWSCDJ`, `.bin` SHA-256
+  `abd1c2c95377e45071048780d44caf2c8cc2b2001dbf65fa1b75fd9c8548353a`);
+- with the six modules of #1175 (FM Synth, Play Modes, Mute Modes, Apply
+  Scene, Direct Jump and this module), MAIN OS
+  `ebaf5116177e57028b16f177094fdc28849ca9ed977ed75eba417062aadfd2df`
+  (`MW1175`, `.bin` SHA-256
+  `b4eaa7700f76989f1b7c5c543b3aa0cc9b7099479446b561e0ae923cfe64fded`).
+
+Reported: all tests pass. Checklist: the FX2 chooser lists every stock FX2
+effect; COMPRESSOR on FX1 and FX2 draws page 2 (MON, KEY, KGN, KBAS, KWID); a
+same-core and a cross-core key duck; MON's switch, KEY's pressed turn, KBAS
+and KWID; a direct jump; project reload and a power cycle keep the settings.
+In the #1175 image: the FX2 chooser and a keyed compressor.
+
+The module alone builds 0.2.1's image (below) byte for byte.
+
 ## 0.2.1-experimental
 
 Tester: **Zac Kyoti** (the module's author), 30 October 2026, on an
