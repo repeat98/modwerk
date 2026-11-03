@@ -60,6 +60,7 @@
 // update (0x4013092e) read it; the record at +436 is the menu's own copy,
 // saved by 0x401314fc.
 #define VIEW_PORT 432
+#define VIEW_RECORD 436             // the menu's copy of the settings record
 #define VIEW_FSW_LOW 456            // the menu's copy of REC_FSW_LOW
 #define VIEW_FSW_HIGH 460
 #define VIEW_LEARN 468              // 2 EXPRESSION LEARN, 3 FOOTSWITCH LEARN open, else 0

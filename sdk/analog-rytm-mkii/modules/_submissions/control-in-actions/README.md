@@ -26,6 +26,8 @@ The switch point is halfway between the two learned levels (2.5 V until you lear
 
 While MODE is ACTION, the left of the screen shows bars laid out as EXPR's: the input's level against the two learned levels, which move as LEARN LEVELS runs, and beside it a line, as EXPR's output line, that moves to the box's far end while the input counts as pressed, so you can see REVERSE DIRECTION and the learned levels take effect. REVERSE DIRECTION shows no message, as in EXPR mode; the line shows it.
 
+While the CONTROL INPUT screen is open, the jack follows what it shows, so a new ACTION choice works at once; stock saves the menu when you leave it.
+
 Each jack has its own MODE, so one can switch while the other still plays the kit's CONTROL IN MOD macro as CV or an expression pedal. MODE, ACTION and the learned levels are stock's control-input settings, stored where stock stores them.
 
 ## How it works

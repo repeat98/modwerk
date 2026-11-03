@@ -369,9 +369,15 @@ void control_in_actions_tick(void *ctrl)
     control_in_actions_emu_mode = mode_key() | live_rec() << 8 | state[0] << 16 | learning[0] << 24;
 #endif
     for (port = 0; port < CI_PORTS; port++) {
-        int down, dest;
-        SETTINGS(port, record);
+        int down, dest, i;
         redraw(port);
+        // With its CONTROL INPUT screen open, a port follows the menu's own
+        // copy, which stock saves only on leaving it, REVERSE or LEARN's YES.
+        if (shown[port])
+            for (i = 0; i < REC_BYTES / 4; i++)
+                record[i] = ((long *)(shown[port] + VIEW_RECORD))[i];
+        else
+            SETTINGS(port, record);
         if (finished[port]) {
             finished[port] = 0;
             if (shown[port])

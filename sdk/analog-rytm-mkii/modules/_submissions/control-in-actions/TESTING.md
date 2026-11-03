@@ -29,11 +29,25 @@ Build CI04 alone (sha256 66c4104d, CI03 at -O2), 3 November 2026, with a footswi
 | Power cycle | Settings kept |
 | Timing | A little delay noticed, with the actions on the pedal's release |
 
+Build CI05 alone (sha256 2704a16d, -O2), 3 November 2026, with a footswitch, as the tester reported it:
+
+| Check | Result |
+| --- | --- |
+| LEARN LEVELS, YES, then REVERSE DIRECTION | Good |
+| LEARN LEVELS, then NO | The marks return to where they were |
+| REC TGL, MUTE TGL, FILL HLD | Work |
+| REC HLD, MUTE HLD | Act as REC TGL and MUTE TGL |
+| FILL LAT | Acts as FILL HLD |
+| A changed setting | Seemed to need REVERSE DIRECTION again |
+| Power cycle | Settings kept |
+
+Cause, reproduced in rytm-emu with CE12 (CI05's code): the module read the saved settings, and stock saves a changed ACTION only on leaving the menu, REVERSE DIRECTION or LEARN's YES, so a choice changed and tried without leaving the menu ran the one before it. CI06 follows the open menu's copy (CE13: REC TGL changed to REC HLD in the menu then acts as REC HLD; CE12 in the same steps acted as REC TGL).
+
 Nothing else has run on a unit yet. What follows ran in rytm-emu (`~/dev/rytm-emu` at c5732f0), which only approximates the instrument and has no model of the EXP/CV IN converters.
 
 ## Emulator
 
-Test builds FE02 to FE04, CE02, CE06, CE07, CE10 and CE12: the module built with `-DCIA_EMU`, which reads the jack's level from a word poked from outside (`dtboot --poke`) instead of stock's converter, and publishes the open mode screen and the live recording flag for `DTBOOT_PEEK`. Everything else is the module as committed. FE02 to FE04 ran the module before the rename and REC HLD; CE02 (sha256 cca7ea49) ran the rename and REC HLD, CE06 the bars and LEARN LEVELS' guard. Build CI03 (sha256 0ec0b5aa) booted and ran 2 G instructions with the same CPU exception count as CI01 and no fault. Build CI02 (sha256 43aab368, core-ar2 0.7 and this module, `-Os`) booted and ran 2 G instructions with the same CPU exception count as CI01 and no fault.
+Test builds FE02 to FE04, CE02, CE06, CE07, CE10, CE12 and CE13: the module built with `-DCIA_EMU`, which reads the jack's level from a word poked from outside (`dtboot --poke`) instead of stock's converter, and publishes the open mode screen and the live recording flag for `DTBOOT_PEEK`. Everything else is the module as committed. FE02 to FE04 ran the module before the rename and REC HLD; CE02 (sha256 cca7ea49) ran the rename and REC HLD, CE06 the bars and LEARN LEVELS' guard. Build CI03 (sha256 0ec0b5aa) booted and ran 2 G instructions with the same CPU exception count as CI01 and no fault. Build CI02 (sha256 43aab368, core-ar2 0.7 and this module, `-Os`) booted and ran 2 G instructions with the same CPU exception count as CI01 and no fault.
 
 | Check | Result |
 | --- | --- |
@@ -66,5 +80,5 @@ Test builds FE02 to FE04, CE02, CE06, CE07, CE10 and CE12: the module built with
 - EXP/CV IN 2 (same code as port 1, not run).
 - Settings after a power cycle, and a unit without the module reading ACTION settings.
 - The CONTROL IN MOD macro of a jack switched from EXPR to ACTION mid-sweep.
-- Beside other modules. CI05 (sha256 2704a16d, -O2, booted with no fault) is 2976 bytes of code and data; CI04 is CI03 built at the default -O2: 2622 bytes (CI03 at `-Os`: 1840; CI02: 1005 at `-Os`; CI01: 805 at `-Os`, 1203 at -O2). Combined image RC20 (sha256 953ae59b, CI02 with twelve other Rytm modules) links with 1,508 B of module RAM spare and boots in rytm-emu with no fault; not on a unit.
+- Beside other modules. CI06 (sha256 5d325777, -O2, booted with no fault) is 3016 bytes of code and data; CI05 (sha256 2704a16d) is 2976 bytes of code and data; CI04 is CI03 built at the default -O2: 2622 bytes (CI03 at `-Os`: 1840; CI02: 1005 at `-Os`; CI01: 805 at `-Os`, 1203 at -O2). Combined image RC20 (sha256 953ae59b, CI02 with twelve other Rytm modules) links with 1,508 B of module RAM spare and boots in rytm-emu with no fault; not on a unit.
 - CPU and memory: UI only, two readings per UI tick; the module's code is about 1 KB. Not measured.
