@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Foot Switch Control for the Analog Rytm MKII: a footswitch or a gate on
+// Control In Actions for the Analog Rytm MKII: a gate or a footswitch on
 // EXP/CV IN 1 or 2 opens the MUTE screen or switches live recording.
 //
 // Stock's GLOBAL > CONTROL > CONTROL INPUT menus already hold a fourth MODE,
@@ -52,15 +52,15 @@ typedef unsigned char (*live_rec_t)(void *app);
 
 // FOOTSW DEST's names, in place of stock's TEMPO, ACTIVE and PRESET +; the
 // row has room for 8 characters, as stock's PRESET +.
-const char foot_switch_control_hold[] = "MUTE HLD";
-const char foot_switch_control_toggle[] = "MUTE TGL";
-const char foot_switch_control_live[] = "LIVE REC";
+const char control_in_actions_hold[] = "MUTE HLD";
+const char control_in_actions_toggle[] = "MUTE TGL";
+const char control_in_actions_live[] = "LIVE REC";
 
-#ifdef FSC_EMU
+#ifdef CIA_EMU
 // rytm-emu has no ADC: a test build reads these words, poked from outside.
-volatile int foot_switch_control_emu_mv[CI_PORTS];
-volatile int foot_switch_control_emu_mode;  // the open mode screen's key, for DTBOOT_PEEK
-#define LEVEL(port) foot_switch_control_emu_mv[port]
+volatile int control_in_actions_emu_mv[CI_PORTS];
+volatile int control_in_actions_emu_mode;  // the open mode screen's key, for DTBOOT_PEEK
+#define LEVEL(port) control_in_actions_emu_mv[port]
 #else
 #define LEVEL(port) MILLIVOLTS(port)
 #endif
@@ -165,13 +165,13 @@ static void pedal(int port, int dest, int down)
     }
 }
 
-void foot_switch_control_tick(void *ctrl)
+void control_in_actions_tick(void *ctrl)
 {
     long record[REC_BYTES / 4];
     int port;
     (void)ctrl;
-#ifdef FSC_EMU
-    foot_switch_control_emu_mode = mode_key() | LIVE_REC((void *)APP_SINGLETON()) << 8;
+#ifdef CIA_EMU
+    control_in_actions_emu_mode = mode_key() | LIVE_REC((void *)APP_SINGLETON()) << 8;
 #endif
     for (port = 0; port < CI_PORTS; port++) {
         int low, high, middle, band, level, down, dest;

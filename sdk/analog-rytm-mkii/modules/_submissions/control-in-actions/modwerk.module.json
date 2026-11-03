@@ -1,7 +1,7 @@
 {
  "schemaVersion": 3,
- "id": "foot-switch-control",
- "name": "Foot Switch Control",
+ "id": "control-in-actions",
+ "name": "Control In Actions",
  "version": "0.1.0-experimental",
  "machine": "analog-rytm-mkii",
  "category": "system",
@@ -17,26 +17,26 @@
   "npp1993"
  ],
  "presentation": {
-  "label": "FOOT SWITCH",
+  "label": "CONTROL IN ACTIONS",
   "family": "Workflow",
-  "summary": "A footswitch or gate on EXP/CV IN 1 or 2 holds or toggles the MUTE screen, or switches live recording.",
-  "overview": "Stock's CONTROL INPUT menus get a fourth MODE, FSW. Pick what the pedal does in FOOTSW DEST: MUTE HOLD shows the MUTE screen while the pedal is down and goes back to the mode you were in when you let go, MUTE TOGGLE opens and closes it, LIVE REC turns live recording on and off. FOOTSWITCH LEARN reads your pedal's two levels; a 0 to 5 V gate works without it. Each jack has its own MODE, so one can switch while the other still plays the kit's CV or expression macro.",
+  "summary": "A switch mode for EXP/CV IN 1 and 2: a gate or footswitch holds or toggles the MUTE screen, or switches live recording.",
+  "overview": "Stock's CONTROL INPUT menus get a fourth MODE, FSW. Pick what the input does in FOOTSW DEST: MUTE HLD shows the MUTE screen while the input is high and goes back to the mode you were in when it drops, MUTE TGL opens and closes it, LIVE REC turns live recording on and off. A 0 to 5 V gate works as it is; for a footswitch, FOOTSWITCH LEARN reads its two levels. Each jack has its own MODE, so one can switch while the other still plays the kit's CV or expression macro.",
   "highlights": [
    "Hands-free mutes with both hands on the pads",
    "Set up in stock's own CONTROL INPUT menus, saved with them",
-   "Works with a footswitch or a 0 to 5 V gate"
+   "Works with a 0 to 5 V gate or a footswitch"
   ],
   "usage": [
-   "Hold the pedal, punch mutes on the pads, release to go back to playing.",
-   "Tap the pedal to drop into live recording and again to leave it while the pattern plays on."
+   "Hold a footswitch (or send a gate), punch mutes on the pads, release to go back to playing.",
+   "Tap it to drop into live recording and again to leave it while the pattern plays on."
   ]
  },
  "access": {
   "location": "GLOBAL > CONTROL > CONTROL INPUT 1 or 2.",
   "steps": [
-   "Connect the footswitch or gate to EXP/CV IN 1 or 2.",
+   "Connect a gate or footswitch to EXP/CV IN 1 or 2.",
    "Open GLOBAL > CONTROL > CONTROL INPUT 1 (or 2) and set MODE to FSW.",
-   "Set FOOTSW DEST to MUTE HOLD, MUTE TOGGLE or LIVE REC.",
+   "Set FOOTSW DEST to MUTE HLD, MUTE TGL or LIVE REC.",
    "For a footswitch, run FOOTSWITCH LEARN and press it a few times; if pressing does the opposite, set REVERSE DIRECTION."
   ],
   "screenshots": []
@@ -50,7 +50,7 @@
   "conflicts": [],
   "limitations": [
    "Stay within the jack's -5 V to +5 V.",
-   "The pedal is read about 20 times a second, so an action can come up to about 50 ms after it.",
+   "The input is read about 20 times a second, so an action can come up to about 50 ms after it.",
    "A jack in FSW mode plays no CONTROL IN MOD macro. Without the module, a unit left in FSW mode reads that jack as nothing."
   ]
  },
@@ -96,8 +96,8 @@
   {
    "path": "media/thumbnail.svg",
    "kind": "thumbnail",
-   "caption": "Foot Switch Control thumbnail",
-   "alt": "Placeholder thumbnail for Foot Switch Control",
+   "caption": "Control In Actions thumbnail",
+   "alt": "Placeholder thumbnail for Control In Actions",
    "credit": "npp1993",
    "license": "GPL-3.0-or-later",
    "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."

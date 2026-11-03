@@ -1,16 +1,16 @@
-# Foot Switch Control
+# Control In Actions
 
 An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.1.0-experimental. See [TESTING.md](TESTING.md) for what has run.
 
-A footswitch or a gate on EXP/CV IN 1 or 2 holds or toggles the MUTE screen, or switches live recording, with both hands free for the pads.
+Adds a switch mode to the CONTROL INPUT menus: a gate or a footswitch on EXP/CV IN 1 or 2 then holds or toggles the MUTE screen, or switches live recording, with both hands free for the pads.
 
 ## Setup
 
-1. Connect a footswitch or a gate (0 to +5 V; the jack takes -5 V to +5 V) to EXP/CV IN 1 or 2.
+1. Connect a gate or a footswitch (0 to +5 V; the jack takes -5 V to +5 V) to EXP/CV IN 1 or 2.
 2. Open GLOBAL > CONTROL > CONTROL INPUT 1 (or 2) and turn MODE past EXPR to **FSW**.
 3. Set **FOOTSW DEST**:
 
-| FOOTSW DEST | Pedal down | Pedal up |
+| FOOTSW DEST | Input goes high (pressed) | Input goes low (released) |
 | --- | --- | --- |
 | OFF | Nothing | Nothing |
 | MUTE HLD | Opens MUTE mode | Goes back to the mode you were in: CHRO, SCNE, PERF, or none |
@@ -19,7 +19,7 @@ A footswitch or a gate on EXP/CV IN 1 or 2 holds or toggles the MUTE screen, or 
 
 4. For a footswitch, run **FOOTSWITCH LEARN** and press the switch a few times, then YES. If pressing does the opposite, choose **REVERSE DIRECTION**. A 0 to +5 V gate works without learning: until you learn, 5 V is pressed and 0 V released.
 
-Each jack has its own MODE, so one can be a footswitch while the other still plays the kit's CONTROL IN MOD macro as CV or an expression pedal. MODE, FOOTSW DEST and the learned levels are stock's control-input settings, stored where stock stores them.
+Each jack has its own MODE, so one can switch while the other still plays the kit's CONTROL IN MOD macro as CV or an expression pedal. MODE, FOOTSW DEST and the learned levels are stock's control-input settings, stored where stock stores them.
 
 ## How it works
 
@@ -39,7 +39,7 @@ It changes six stock instructions: the two MODE limits, the FOOTSW DEST limit an
 
 ## Limits
 
-- The pedal is read about 20 times a second, so an action can come up to about 50 ms after it: fine for the MUTE screen, but a sequencer started from LIVE REC can start that late.
+- The input is read about 20 times a second, so an action can come up to about 50 ms after it: fine for the MUTE screen, but a sequencer started from LIVE REC can start that late.
 - Without the module, a unit left in FSW mode reads that jack as nothing, and the menu turns MODE back no further than EXPR.
 
 ## Credits

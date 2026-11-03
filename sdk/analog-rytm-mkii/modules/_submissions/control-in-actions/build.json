@@ -9,7 +9,7 @@
   "subscribe": [
     {
       "event": "ev_tick",
-      "fn": "foot_switch_control_tick",
+      "fn": "control_in_actions_tick",
       "order": 50
     }
   ],
@@ -58,7 +58,7 @@
           "len": 6,
           "new": "487900000000",
           "kind": "code",
-          "relocs": [{ "at": 2, "target": "foot_switch_control_hold" }],
+          "relocs": [{ "at": 2, "target": "control_in_actions_hold" }],
           "stockSha256": "bb464c7f6c745d3375031d5575fb41e3fff8e787d2dd07cc4e79a2366e99d765"
         },
         {
@@ -67,7 +67,7 @@
           "len": 6,
           "new": "487900000000",
           "kind": "code",
-          "relocs": [{ "at": 2, "target": "foot_switch_control_toggle" }],
+          "relocs": [{ "at": 2, "target": "control_in_actions_toggle" }],
           "stockSha256": "7d304eca370b09c0f7cae1e36efea536ee8722ab6ac31ce0e097fbc95403ad02"
         },
         {
@@ -76,7 +76,7 @@
           "len": 6,
           "new": "487900000000",
           "kind": "code",
-          "relocs": [{ "at": 2, "target": "foot_switch_control_live" }],
+          "relocs": [{ "at": 2, "target": "control_in_actions_live" }],
           "stockSha256": "d3e1c9525479740e113878e35ae90c5fde5f5446eeff6f47a3bf9fe7c017ec92"
         }
       ]
