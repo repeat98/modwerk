@@ -10,9 +10,17 @@ Recorded 7 October 2026 for `0.1.0-experimental`; 0.2.0, 0.2.1 and 0.2.2 below, 
 - **Port.** In the author's octabam emulator, the native image below in DT-T with T1 COMPRESSOR, T7 muted and resting as KEY, then KEY moved mid-pattern: T7 stays silent until it is unmuted (the 0.2.1-era unit plays it at full level).
 - **Tested image.** A static native octabam build of Sidechain Compressor and Mute Modes with every stock effect kept (`scripts/export-composition-proofs.py --select sidechain-compressor+mute-modes:true --image-dir`, in the `modwerk-source-tools` container): MAIN OS SHA-256 `2dfce546cb1eb5e854ab69c7089c87e169355510f888baf9637a18e5f12b0e40`, `mm_softmute` (SC_KEY) at 0x400d7280. Wrapped with Elektron's firmware tool, OS VERSION `MW_MMKH1`: card file `d5d658d4…`, syx `ea08ce11…`.
 
-### Hardware report
+### Hardware report (MKI, 3 November 2026)
 
-Pending.
+The author flashed MW_MMKH1 (above) on his Octatrack MKI. He reported every step passing:
+
+- In DT-T, with T1 COMPRESSOR and T7 muted, KEY resting on T7 past step 1 and then turned to T6 or T8: T7 stays silent.
+- With KEY on the muted T7, T1 still ducks to it.
+- Unmuting T7 brings it back normally.
+- A non-KEY track muted while its sample plays still plays to its end (DT-T as before).
+- MUTE MODE sits after PREVIEW WITHOUT FX and survives a power cycle.
+
+The same `mm_softmute` source passed the same KEYHOLD checks on that unit in an octabam image (OCTABAM37) and in KYOTI V1.7.
 
 ## 0.2.2: SHADOW out of the stock timestretch task's SRAM (27 October 2026)
 
@@ -35,7 +43,7 @@ The author flashed the card image above on his Octatrack MKI and used it for abo
 
 ### Not tested in 0.2.2
 
-- An MKII; the USB package on a unit; Mute Modes beside Sidechain Compressor or other modules on a unit.
+- An MKII; the USB package on a unit; Mute Modes beside modules other than Sidechain Compressor on a unit (beside Sidechain Compressor: MW_MMKH1, above).
 - Chip timing, frame-interrupt load or a stress run. The cycle figures in `tests.qualification` are conservative V4 core-path bounds from the probe, not wall-clock measurements.
 - `sdk/machines/octatrack/module-adapters/loader_mute_keep_fixture.cpp` still seeds and reads SHADOW at `0x80006c66`; its test runs only with a private stock image and the native emulator archives, and was not run for this version.
 
