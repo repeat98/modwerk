@@ -21,6 +21,7 @@ Not hardware evidence: the port runs the firmware's arithmetic, not the audio.
 | Unit preloaded (`verify.py`); track 1's LFO 1 MULT set in its lane | the LFO's phase value over frames 100..2100 | 1X 760,990; 2X 1,521,980 (stock); 1/2X 380,995 (0.5007); 1/4X 190,997 (0.2510); 1/8X 94,984 (0.1248). **PASS** (within 1 %). |
 | Stock, the same lane set to 7 | as above | 4,291,710,720: stock reads 7 as a shift count and runs the LFO about 5,600 times faster than 1X. |
 | Unit preloaded; the MULT formatter called directly | its output | 0 → 1X, 3 → 8X, 6 → 64X, 7 → 1/2X, 8 → 1/4X, 9 → 1/8X, 10 → 128X (stock's clamp). **PASS.** |
+| Built into the developer's private octabam remix `home-base` 7 (native card build, beside Bar LED and Deja Vu), nothing preloaded | track 1's LFO 1 phase over frames 100..2100 | 1X 760,990; 1/2X 380,995; 1/8X 94,984: the same as preloaded. `make check` on that remix passes. |
 | Cost: 2,756 frames, stock against the unit preloaded | ColdFire instructions the port counts | 23,082 a frame stock, 23,298 with the module: +216 for 24 audio LFOs at MULT 1X. |
 
 Not run in the port: the MIDI engine, the page as drawn (the knob range on screen), turning MULT with the encoder, a tempo change, external MIDI clock, saving and reloading a Part with 1/2X.
