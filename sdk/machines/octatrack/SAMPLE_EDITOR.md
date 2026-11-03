@@ -200,3 +200,25 @@ SNAP result in the Beat Slicer draft covers one mono16 Static fixture on a
 separately instrumented measurement base; it does not qualify this beta base.
 See the draft's dated hardware record for exact boundaries, timing scope and
 remaining cases.
+
+## Exact beta-base whole-set trial — 3 November 2026
+
+On the owner's Octatrack running OS 1.40C, the exact beta base RAM-booted from
+this PR had identity `efab14e51c4c4a3816cc81f76a15b538940066ae1c4a35e763273abd8fe066d5`.
+The frontend reviewed and trialled the observed 17-module set plus published
+Beat Slicer 0.1.66 (`6650ef77a837a61a570a300c3bd0b2d4dfd4c9bed6e52bb355034d39bf5ff90d`,
+5,780 bytes). The base self-test passed: 18/18 intact, seven DSP modules and
+7/7 exercised, zero failures; peak CPU was 53.4%, track groups peaked at 67.0%
+and 71.1%, and the longest frame gap was 417 microseconds.
+
+The first whole-set rollback returned `needs-recovery`. Bounded retries kept the
+same transaction in recovery; retry 17 returned `ok`. The base then confirmed
+normal phase and the original `efab14e5…` active digest. A fresh frontend status
+read independently confirmed the exact base active, an empty inventory and the
+passing 18-module self-test record. The reason for the initial recovery refusal
+is unknown.
+
+No Keep, flash, project/sample save or power cycle occurred. The hardware panel
+was not operated during this trial: the second FUNC+AED result with the 0.1.66
+popup open remains unobserved. 0.1.66 has no SNAP control, so this run supplies
+no SNAP OFF/ON result.
