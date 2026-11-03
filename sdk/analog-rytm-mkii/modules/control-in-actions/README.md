@@ -32,7 +32,7 @@ Each jack has its own MODE, so one can switch while the other still plays the ki
 
 ## How it works
 
-Stock OS 1.74 already holds a footswitch mode (FSW), its FOOTSW DEST row and FOOTSWITCH LEARN in the CONTROL INPUT menus, left over from Elektron's other machines, but stops MODE at EXPR, and its own destinations do nothing on the Rytm. The module lets MODE and the setting reach that mode, shows the three as ACTION, ACTION and ACTION LEARN, gives the ACTION row its four choices, and reads the jack's smoothed, calibrated level on each UI tick (about 20 times a second). The switch point is halfway between the two learned levels, with hysteresis. An action is the key press stock already handles (MUTE, CHRO, SCNE, PERF, PLAY), played through stock's own key path, so the pads, LEDs and modes behave as from the panel. REC HLD and REC TGL hold RECORD as stock reads it only for their one PLAY press.
+Stock OS 1.74 already holds a footswitch mode (FSW), its FOOTSW DEST row and FOOTSWITCH LEARN in the CONTROL INPUT menus, left over from Elektron's other machines, but stops MODE at EXPR, and its own destinations do nothing on the Rytm. The module lets MODE and the setting reach that mode, shows the three as ACTION, ACTION and ACTION LEARN, gives the ACTION row its six actions besides OFF, and reads the jack's smoothed, calibrated level on each UI tick (about 20 times a second). The switch point is halfway between the two learned levels, with hysteresis. An action is the key press stock already handles (MUTE, CHRO, SCNE, PERF, PLAY), played through stock's own key path, so the pads, LEDs and modes behave as from the panel. REC HLD and REC TGL hold RECORD as stock reads it only for their one PLAY press.
 
 ## Changes to stock flows
 

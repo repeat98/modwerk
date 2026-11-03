@@ -103,7 +103,8 @@ static unsigned char hold_back[CI_PORTS];   // the mode key to go back to, 0 for
 static unsigned char rec_active[CI_PORTS];  // REC HOLD turned live recording on
 static unsigned char fill_active[CI_PORTS]; // FILL HOLD holds FILL down
 static unsigned char learning[CI_PORTS];    // the learn open as the view last drew: LEARN_EXPR, LEARN_FSW or 0
-static char *shown[CI_PORTS];               // the CONTROL INPUT view that last drew ACTION's bars
+static char *shown[CI_PORTS];               // the CONTROL INPUT view that last drew
+static word_t shown_class[CI_PORTS];        // its vtable, so a new object at that address is not it
 static unsigned char lit[CI_PORTS];         // the bars' state: pressed by the menu's own levels
 static unsigned char finished[CI_PORTS];    // the learn that has just closed
 
@@ -299,18 +300,26 @@ static void mark(void *screen, int row, int end)
     HLINE(screen, 19, end, 21, 1);
 }
 
-// Draw the CONTROL INPUT view again on every tick while it is still open, as
-// stock's update does for EXPR's bars when the converter reports.
-static void redraw(int port)
+// Whether the CONTROL INPUT view that last drew is still open; forgets it
+// when not.
+static int still_shown(int port)
 {
     char *node = 0, *view;
     while (shown[port] && (view = next_view(&node)))
-        if (view == shown[port] || view == shown[port] + VIEW_BASE) {
-            INVALIDATE(shown[port] + VIEW_BASE);
-            return;
-        }
+        if ((view == shown[port] || view == shown[port] + VIEW_BASE) && *(word_t *)shown[port] == shown_class[port])
+            return 1;
     shown[port] = 0;
     learning[port] = 0;
+    return 0;
+}
+
+// Draw the view again on every tick while it shows ACTION or a learn, as
+// stock's update does for EXPR's bars only when the converter reports: the
+// bars then follow the module, and the draw sees a learn close.
+static void redraw(int port)
+{
+    if (still_shown(port) && (*(long *)(shown[port] + VIEW_RECORD + REC_MODE) == MODE_FSW || learning[port]))
+        INVALIDATE(shown[port] + VIEW_BASE);
 }
 
 // A learn has closed. Stock saves the menu's copy on YES, and on NO leaves
@@ -342,6 +351,7 @@ static int watch(char *view)
         finished[port] = learning[port];
     learning[port] = learn;
     shown[port] = view;
+    shown_class[port] = *(word_t *)view;
     return port;
 }
 
@@ -393,6 +403,11 @@ void control_in_actions_tick(void *ctrl)
     for (port = 0; port < CI_PORTS; port++) {
         int down, dest, i;
         redraw(port);
+        if (finished[port]) {
+            if (shown[port])
+                learned(port, shown[port], finished[port]);
+            finished[port] = 0;
+        }
         // With its CONTROL INPUT screen open, a port follows the menu's own
         // copy, which stock saves only on leaving it, REVERSE or LEARN's YES.
         if (shown[port])
@@ -400,11 +415,6 @@ void control_in_actions_tick(void *ctrl)
                 record[i] = ((long *)(shown[port] + VIEW_RECORD))[i];
         else
             SETTINGS(port, record);
-        if (finished[port]) {
-            if (shown[port])
-                learned(port, shown[port], finished[port]);
-            finished[port] = 0;
-        }
         if (record[REC_MODE / 4] != MODE_FSW) {
             end_holds(port);
             state[port] = UNSEEN;
