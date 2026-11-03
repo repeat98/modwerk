@@ -84,11 +84,11 @@ describe('the vendored elekloader catalog', () => {
       missing: [],
     })
   })
-  it('plans Audio In FX beside Pipo Loop, Sample RATE and Silent Pad+Trig from their pinned source-only packages with core-ar2 0.7', () => {
-    expect(planBuild('analog-rytm-mkii', '1.74', ['audio-in-fx', 'pipo-loop', 'sample-rate', 'silent-pad-trig'])).toMatchObject({
+  it('plans Audio In Routing beside Pipo Loop, Sample RATE and Silent Pad+Trig from their pinned source-only packages with core-ar2 0.7', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['audio-in-routing', 'pipo-loop', 'sample-rate', 'silent-pad-trig'])).toMatchObject({
       core: { file: 'core-ar2-0.7.elemod', version: '0.7' },
       mods: expect.arrayContaining([
-        expect.objectContaining({ id: 'audio-in-fx', file: 'audio-in-fx-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' }),
+        expect.objectContaining({ id: 'audio-in-routing', file: 'audio-in-routing-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' }),
       ]),
       missing: [],
     })

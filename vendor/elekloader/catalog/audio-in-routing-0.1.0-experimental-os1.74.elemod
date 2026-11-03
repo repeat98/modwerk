@@ -1,8 +1,8 @@
 {
  "elemod": 2,
- "id": "audio-in-fx",
+ "id": "audio-in-routing",
  "version": "0.1.0-experimental",
- "title": "Audio In FX",
+ "title": "Audio In Routing",
  "description": "Two knobs on the FX track's DISTORTION page send the AUDIO IN jacks into the master distortion and compressor, and into the delay and the reverb.",
  "category": "system",
  "author": "npp1993",
@@ -112,82 +112,82 @@
    ".run",
    2785
   ],
-  "audio_in_fx_resume": [
+  "audio_in_routing_resume": [
    "abs",
    1074846252
   ],
-  "audio_in_fx_short_in": [
-   ".run",
-   2781
-  ],
-  "audio_in_fx_params": [
-   ".run",
-   2684
-  ],
-  "audio_in_fx_key": [
-   ".run",
-   2264
-  ],
-  "audio_in_fx_enc": [
-   ".run",
-   2194
-  ],
-  "audio_in_fx_block": [
-   ".run",
-   1282
-  ],
-  "audio_in_fx_short_fx": [
-   ".run",
-   2777
-  ],
-  "audio_in_fx_long_in": [
-   ".run",
-   2764
-  ],
-  "audio_in_fx_view_lock_delta": [
-   ".run",
-   1942
-  ],
-  "audio_in_fx_gate": [
-   ".run",
-   2656
-  ],
-  "audio_in_fx_project": [
-   ".run",
-   1134
-  ],
-  "audio_in_fx_page": [
+  "audio_in_routing_page": [
    ".run",
    2704
   ],
-  "audio_in_fx_tick": [
+  "audio_in_routing_key": [
+   ".run",
+   2264
+  ],
+  "audio_in_routing_draw": [
+   ".run",
+   2112
+  ],
+  "audio_in_routing_block": [
+   ".run",
+   1282
+  ],
+  "audio_in_routing_gate": [
+   ".run",
+   2656
+  ],
+  "audio_in_routing_tick": [
    ".run",
    2136
   ],
-  "audio_in_fx_long_fx": [
+  "audio_in_routing_long_in": [
+   ".run",
+   2764
+  ],
+  "audio_in_routing_short_fx": [
+   ".run",
+   2777
+  ],
+  "audio_in_routing_view_lock_delta": [
+   ".run",
+   1942
+  ],
+  "audio_in_routing_project": [
+   ".run",
+   1134
+  ],
+  "audio_in_routing_long_fx": [
    ".run",
    2752
   ],
-  "audio_in_fx_draw": [
+  "audio_in_routing_enc": [
    ".run",
-   2112
+   2194
+  ],
+  "audio_in_routing_params": [
+   ".run",
+   2684
+  ],
+  "audio_in_routing_short_in": [
+   ".run",
+   2781
   ]
  },
  "exports": [
-  "audio_in_fx_block",
-  "audio_in_fx_draw",
-  "audio_in_fx_enc",
-  "audio_in_fx_gate",
-  "audio_in_fx_key",
-  "audio_in_fx_long_fx",
-  "audio_in_fx_long_in",
-  "audio_in_fx_page",
-  "audio_in_fx_params",
-  "audio_in_fx_project",
-  "audio_in_fx_short_fx",
-  "audio_in_fx_short_in",
-  "audio_in_fx_tick",
-  "audio_in_fx_view_lock_delta"
+  "audio_in_routing_block",
+  "audio_in_routing_draw",
+  "audio_in_routing_enc",
+  "audio_in_routing_gate",
+  "audio_in_routing_key",
+  "audio_in_routing_long_fx",
+  "audio_in_routing_long_in",
+  "audio_in_routing_page",
+  "audio_in_routing_params",
+  "audio_in_routing_project",
+  "audio_in_routing_short_fx",
+  "audio_in_routing_short_in",
+  "audio_in_routing_tick",
+  "audio_in_routing_view_lock_delta"
  ],
  "imports": [],
  "weak": [],
@@ -631,7 +631,7 @@
     [
      2,
      "abs32",
-     "sym:audio_in_fx_gate",
+     "sym:audio_in_routing_gate",
      0
     ]
    ]
@@ -662,7 +662,7 @@
     [
      0,
      "abs32",
-     "sym:audio_in_fx_long_in",
+     "sym:audio_in_routing_long_in",
      0
     ]
    ]
@@ -677,7 +677,7 @@
     [
      0,
      "abs32",
-     "sym:audio_in_fx_short_in",
+     "sym:audio_in_routing_short_in",
      0
     ]
    ]
@@ -716,7 +716,7 @@
     [
      0,
      "abs32",
-     "sym:audio_in_fx_long_fx",
+     "sym:audio_in_routing_long_fx",
      0
     ]
    ]
@@ -731,7 +731,7 @@
     [
      0,
      "abs32",
-     "sym:audio_in_fx_short_fx",
+     "sym:audio_in_routing_short_fx",
      0
     ]
    ]
@@ -746,7 +746,7 @@
     [
      0,
      "abs32",
-     "sym:audio_in_fx_view_lock_delta",
+     "sym:audio_in_routing_view_lock_delta",
      0
     ]
    ]
@@ -762,7 +762,7 @@
     [
      0,
      "abs32",
-     "sym:audio_in_fx_project",
+     "sym:audio_in_routing_project",
      0
     ]
    ],
@@ -776,7 +776,7 @@
     [
      0,
      "abs32",
-     "sym:audio_in_fx_draw",
+     "sym:audio_in_routing_draw",
      0
     ]
    ],
@@ -790,7 +790,7 @@
     [
      0,
      "abs32",
-     "sym:audio_in_fx_tick",
+     "sym:audio_in_routing_tick",
      0
     ]
    ],
@@ -804,7 +804,7 @@
     [
      0,
      "abs32",
-     "sym:audio_in_fx_enc",
+     "sym:audio_in_routing_enc",
      0
     ]
    ],
@@ -818,7 +818,7 @@
     [
      0,
      "abs32",
-     "sym:audio_in_fx_key",
+     "sym:audio_in_routing_key",
      0
     ]
    ],
@@ -832,7 +832,7 @@
     [
      0,
      "abs32",
-     "sym:audio_in_fx_page",
+     "sym:audio_in_routing_page",
      0
     ]
    ],
@@ -846,7 +846,7 @@
     [
      0,
      "abs32",
-     "sym:audio_in_fx_params",
+     "sym:audio_in_routing_params",
      0
     ]
    ],
