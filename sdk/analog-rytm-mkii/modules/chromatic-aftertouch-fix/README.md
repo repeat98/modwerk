@@ -79,7 +79,7 @@ receives is set per track, with no note, and is not touched.
   Rytm's own aftertouch modulation are untouched.
 - A receiver set up around stock's bytes, listening for pressure 24 semitones above the note, sees
   it move to the played note.
-- Not yet run on a unit.
+- Ran on a unit as test build CA02, alone on core-ar2 0.7, as reported by the author ([TESTING.md](TESTING.md)); beside Silent Pad+Trig only in rytm-emu.
 
 ## Tests and measurements
 
@@ -87,7 +87,7 @@ rytm-emu on OS 1.74, MIDI out bytes: a held CHROMATIC pad sends note on, poly pr
 on one note across the UP and DOWN layouts, with UP pressed during the hold, with two pads held,
 and sends no pressure after its note off; alone and beside Silent Pad+Trig. core-ar2 alone keeps
 stock's bytes, and pads outside CHROMATIC are as stock. Details, builds and the unit steps are in
-[TESTING.md](TESTING.md). Memory: 44 bytes of the shared mod area. Load: at most thirteen
+[TESTING.md](TESTING.md). The author ran build CA02 on a unit and every step passed, as reported. Memory: 44 bytes of the shared mod area. Load: at most thirteen
 instructions per poly pressure message from a held CHROMATIC pad, nothing otherwise (static count,
 not measured).
 

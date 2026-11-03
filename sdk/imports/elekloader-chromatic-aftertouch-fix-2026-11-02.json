@@ -28,7 +28,7 @@
       "category": "MIDI",
       "author": "npp1993",
       "needs_core": "0.7",
-      "on_unit": "Not yet run on a unit; rytm-emu only (TESTING.md)."
+      "on_unit": "The author's build CA02 ran on an Analog Rytm MKII on OS 1.74 and passed every step, as reported; this package has not run on a unit."
     }
   ]
 }

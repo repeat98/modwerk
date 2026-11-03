@@ -6,7 +6,7 @@
       "First release, for Analog Rytm MKII OS 1.74: CHROMATIC pads send their aftertouch on the note they played.",
       "Stock sent the poly pressure 24 semitones above the note on, so a synth following the held note saw no aftertouch.",
       "The pressure stays on the held note when UP or DOWN shift the pads, and stops at the note off.",
-      "Nothing else changes, and there is nothing to set. Not yet tested on a unit."
+      "Nothing else changes, and there is nothing to set."
     ]
   }
 ]

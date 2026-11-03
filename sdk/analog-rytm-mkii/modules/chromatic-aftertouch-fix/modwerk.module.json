@@ -59,7 +59,7 @@
     "conflicts": [],
     "limitations": [
       "Built for OS 1.74 only, with core-ar2 0.7.",
-      "Run in rytm-emu only; not yet run on a unit.",
+      "Ran on a unit as test build CA02, alone on core-ar2 0.7 (TESTING.md); beside Silent Pad+Trig only in rytm-emu.",
       "Changes only what CHROMATIC pads send to MIDI out. Pads outside CHROMATIC mode, MIDI in and the Rytm's own aftertouch modulation are untouched.",
       "A receiver that relied on stock's poly pressure 24 semitones above the note sees it move to the played note."
     ]
@@ -83,16 +83,29 @@
     }
   },
   "evidence": {
-    "tier": "none",
+    "tier": "author-hardware",
     "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": null,
-    "reports": [],
-    "hardware": null,
+    "sourceSha256": "928e3d61cc86486352f5a9d1f6335b2ae44c5884982d5586f9e544e963106f74",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-02",
+      "tester": "npp1993",
+      "durationMinutes": null,
+      "summary": "npp1993 (the author) flashed test build CA02 (core-ar2 0.7 and this module, sha256 820cfaec) on an Analog Rytm MKII, OS 1.74, and watched a MIDI monitor. Reported passing: CHROMATIC BD and SD held send note on, poly pressure and note off on one note; two pads held together, each on its own note; UP pressed during a hold keeps the pressure on the held note until the note off; layouts shifted with UP or DOWN before playing; a synth's poly aftertouch follows the held note; the Rytm's own AFTERTOUCH modulation as stock; pads outside CHROMATIC as stock; OUTPUT CH at TRK CH sends the same notes on the selected track's channel.",
+      "limitations": [
+        "Results are as reported by the author, not itemized byte logs; duration not recorded.",
+        "Run with this module alone on core-ar2 0.7; beside Silent Pad+Trig only in rytm-emu."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu on OS 1.74, MIDI out bytes: a held CHROMATIC pad sends note on, poly pressure and note off on one note (stock: pressure 24 above), across UP and DOWN layouts, with UP during the hold, two pads held, and none after the note off; alone and beside Silent Pad+Trig; pads outside CHROMATIC as stock. Not run on a unit.",
+    "summary": "rytm-emu on OS 1.74, MIDI out bytes: a held CHROMATIC pad sends note on, poly pressure and note off on one note (stock: pressure 24 above), across UP and DOWN layouts, with UP during the hold, two pads held, and none after the note off; alone and beside Silent Pad+Trig; pads outside CHROMATIC as stock. Hardware, as reported by the author: CA02 passed every unit step (TESTING.md).",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",

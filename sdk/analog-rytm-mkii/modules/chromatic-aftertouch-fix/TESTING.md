@@ -81,10 +81,10 @@ Build: `node scripts/link-image.mjs --stock Analog-Rytm_MKII_OS1.74.syx --versio
 ## On a unit
 
 CA02 (`820cfaec…2c9a`) on the author's Analog Rytm MKII, OS 1.74, 2 November 2026, watching a MIDI
-monitor, as reported by npp1993: every step below passed. The per-track channel step was run by
-turning the AUTO channel off and recording a sequence with SEND MIDI, which exercises the
-sequencer's MIDI out, not the pads'; that step is to be rerun with OUTPUT CH at TRK CH as the
-table says.
+monitor, as reported by npp1993: every step below passed. The per-track channel step was first
+run by turning the AUTO channel off and recording a sequence with SEND MIDI, which exercises the
+sequencer's MIDI out, not the pads'; rerun with OUTPUT CH at TRK CH as the table says, it passed.
+The module ran alone on core-ar2 0.7; beside Silent Pad+Trig it ran only in rytm-emu.
 
 The steps, with a MIDI monitor on MIDI OUT or USB, PAD DEST and PRESSURE DST at
 INT+EXT (GLOBAL > MIDI CONFIG > PORT CONFIG, the default); `n` is the channel the pads send on:
