@@ -8,8 +8,9 @@
   "exclusive": false,
   "author": {
     "github": "npp1993",
+    "name": "Nathaniel Pavel",
     "credits": [
-      "Nathaniel Pavel"
+      "Nathaniel Pavel (@npp1993) — the mod, its design and code, and this Modwerk module."
     ]
   },
   "maintainers": [
@@ -93,7 +94,7 @@
   "license": {
     "spdx": "GPL-3.0-or-later",
     "file": "LICENSE",
-    "declaration": "Original work by Nathaniel Pavel."
+    "declaration": "Nathaniel Pavel's (@npp1993) original code under GPL-3.0-or-later. Each stock routine is reached at an address read from the author's own OS 1.74; no stock bytes are included."
   },
   "media": [
     {
@@ -101,7 +102,7 @@
       "kind": "thumbnail",
       "caption": "Quick Mod Assign thumbnail",
       "alt": "Placeholder thumbnail for Quick Mod Assign",
-      "credit": "npp1993",
+      "credit": "Nathaniel Pavel",
       "license": "GPL-3.0-or-later",
       "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
     }

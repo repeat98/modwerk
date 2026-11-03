@@ -84,6 +84,17 @@ describe('the vendored elekloader catalog', () => {
       missing: [],
     })
   })
+  it('plans Quick Mod Assign beside Sample RATE and Silent Pad+Trig from its pinned source-only package with core-ar2 0.7', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['quick-mod-assign', 'sample-rate', 'silent-pad-trig'])).toMatchObject({
+      core: { file: 'core-ar2-0.7.elemod', version: '0.7' },
+      mods: [
+        { id: 'quick-mod-assign', file: 'quick-mod-assign-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
+        { id: 'sample-rate', file: 'sample-rate-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
+        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.6.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.6.0-experimental' },
+      ],
+      missing: [],
+    })
+  })
   it('plans Audio In FX beside Pipo Loop, Sample RATE and Silent Pad+Trig from their pinned source-only packages with core-ar2 0.7', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['audio-in-fx', 'pipo-loop', 'sample-rate', 'silent-pad-trig'])).toMatchObject({
       core: { file: 'core-ar2-0.7.elemod', version: '0.7' },
