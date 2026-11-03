@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/midi-engine",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-03",
+  "changes": [
+    "First library release for Analog Rytm MKII OS 1.74, on core-ar2 0.7. MIDI, a machine on hidden slot 42, plays an external synth from a Rytm track: notes, chords, pitch bend, mod wheel, pressure and six CC lanes, all lockable.",
+    "Source-only export compiled from sdk/analog-rytm-mkii/modules/midi-engine in Modwerk's pinned toolchain (m68k-elf GCC 16.2.0, binutils 2.47). Not byte-identical to the author's unit-tested ME17 build (GCC 12.2); since ME17 the source changed only by the machine:42 claim in build.json."
+  ],
+  "runtimeSourceSha256": "fdd54854dc62ea1431b6582c15f1b10d94c9f7f6f04196a0052c899c67c9388c",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/midi-engine/midi-engine-0.1.0-experimental-os1.74.elemod",
+      "sha256": "8797a97142e1457fbccd3df687e7068759a9aa476b0c759f0e6c4949d40f3911"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/midi-engine/TESTING.md",
+  "requires": []
+}

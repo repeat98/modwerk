@@ -103,6 +103,10 @@ Headless (dtboot): a sound switched to MIDI ENGINE drops VOL from 110 to 0 at th
 
 BD and SD on stock machines with TRK SEND MIDI on (channels 1 and 2), trigs on steps 1, 5, 9 and 13 of both, a parameter lock on BD's step 9, 120 BPM, DIN into the same interface and monitor: the first note of a step leaves on the step and the second 6 to 15 ms after it; on the locked step BD's note comes about 26 ms after SD's, and its off 26 ms after SD's too. So stock's own MIDI notes leave late in the same way, and the delays seen with MIDI Engine (5 to 35 ms after a step's first message) are stock's sending, not the engine's.
 
+## Released package
+
+`midi-engine-0.1.0-experimental-os1.74.elemod` (sha256 8797a971…3f911) is compiled from this folder in Modwerk's pinned toolchain (m68k-elf GCC 16.2.0) by `scripts/build-elemod-isolated.sh`, and `package-elemod-recipe.mjs --check` reproduces it. The unit runs above used local builds with GCC 12.2, so the package is not byte-identical to ME17. Since ME17 the source changed only by adding `machine:42` to `build.json`'s claims; the C and assembly are unchanged.
+
 ## Not tested
 
 - Several MIDI tracks at once, shared voices (CH/OH, RS/CP, MT/HT, CY/CB), scenes and performances, conditions, pattern and song changes, the load under a flood (`perf:audit`).
