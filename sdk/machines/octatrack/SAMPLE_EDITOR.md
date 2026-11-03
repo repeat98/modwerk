@@ -175,19 +175,28 @@ power cycle; no post-test power-cycle result is claimed here. The earlier
 power-off/interrupted-run outcomes and later event-36 build qualification
 remain separate.
 
-## Optional confirmed boundary analysis proposal
+## Confirmed grid actions and SNAP alignment
 
-The private Beat Slicer 0.1.68 proposal extends the ABI-1 API with an optional,
-size-checked tail for SNAP alignment. Existing ABI-1 clients keep the same
-prefix and `replace` behavior. SNAP copies a normal grid proposal and uses the
-existing CREATE/REPLACE confirmation; PCM analysis starts only after YES. The
-base reads bounded native sample-frame pairs on engine work, using the opening's
+The beta base exposes an optional, size-checked ABI-1 API tail for SNAP
+alignment. Existing ABI-1 clients retain the original prefix and `replace`
+behavior. SNAP copies a normal grid proposal and uses the native
+CREATE/REPLACE confirmation; PCM analysis starts only after YES. The base reads
+bounded native sample-frame pairs on engine work, using the opening's
 LEFT/RIGHT/BOTH selection, and publishes the complete table only after the
 source and owner still match. Cancelled, stale, failed or over-limit work leaves
 the old marker table intact. No module PCM pointer or callback crosses the API.
 
-This remains a private proposal pending owner review and broader qualification.
-The 2 November MKII result in the Beat Slicer draft covers one mono16 Static
-fixture on a separately instrumented measurement base; it is not evidence for
-the ordinary beta base or a release build. See the draft's dated hardware
-record for exact boundaries, timing scope and remaining cases.
+From stock SLICE GRID, FUNC+AED selects the first registered action. Further
+FUNC+AED presses advance through actions in registration order; from the last
+action the chord returns to stock SLICE GRID. With no registered action, the
+chord remains stock. The base handles the chord only for that grid/action cycle
+and leaves unrelated dialogs alone. An action joining the cycle must retire its
+sample-editor token on FUNC/AED before passing the key through to stock, so the
+base can safely advance or return to the grid. The base does not guess an
+action's private modal state or dismiss it on the action's behalf.
+
+Hardware evidence must name the exact complete base build. The 2 November MKII
+SNAP result in the Beat Slicer draft covers one mono16 Static fixture on a
+separately instrumented measurement base; it does not qualify this beta base.
+See the draft's dated hardware record for exact boundaries, timing scope and
+remaining cases.
