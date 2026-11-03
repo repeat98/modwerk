@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "machine": "analog-rytm-mkii",
-  "moduleId": "quick-mod-assign",
+  "moduleId": "quick-velocity-aftertouch-assign",
   "moduleVersion": "0.1.0-experimental",
   "firmware": "1.74",
   "capturedAt": "2026-11-03T16:20:00Z",
   "imageSha256": "7ef00e24371b1d572da3ec60ca21be4d059b32decfe15f3a334c75486788e3f9",
-  "build": "Modwerk's linker: Modwerk base for core-ar2 0.7 + this folder's Quick Mod Assign 0.1.0-experimental, materialised against stock OS 1.74, --version QM11",
+  "build": "Modwerk's linker: Modwerk base for core-ar2 0.7 + this folder's Quick Velocity & Aftertouch Assign 0.1.0-experimental, materialised against stock OS 1.74, --version QM11",
   "emulator": {
     "name": "rytm-emu",
     "repository": "https://github.com/trigcondition/rytm-emu",

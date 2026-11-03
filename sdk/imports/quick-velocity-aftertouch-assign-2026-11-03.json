@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "module": "analog-rytm-mkii/quick-mod-assign",
+  "module": "analog-rytm-mkii/quick-velocity-aftertouch-assign",
   "version": "0.1.0-experimental",
   "date": "2026-11-03",
   "changes": [
@@ -10,11 +10,11 @@
   "packages": [
     {
       "os": "1.74",
-      "path": "sdk/imports/packages/quick-mod-assign/quick-mod-assign-0.1.0-experimental-os1.74.elemod",
+      "path": "sdk/imports/packages/quick-velocity-aftertouch-assign/quick-velocity-aftertouch-assign-0.1.0-experimental-os1.74.elemod",
       "sha256": "137f56f056809321aeb0d1cda8295bed594d756b25562d9ec22f0c1d0a80bbda"
     }
   ],
   "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
-  "evidence": "sdk/analog-rytm-mkii/modules/quick-mod-assign/TESTING.md",
+  "evidence": "sdk/analog-rytm-mkii/modules/quick-velocity-aftertouch-assign/TESTING.md",
   "requires": []
 }

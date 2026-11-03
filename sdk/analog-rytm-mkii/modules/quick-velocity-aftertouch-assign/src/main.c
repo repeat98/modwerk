@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Quick Mod Assign for the Analog Rytm MKII: link a parameter to velocity or
-// aftertouch by holding a key and turning its knob.
+// Quick Velocity & Aftertouch Assign for the Analog Rytm MKII: link a
+// parameter to velocity or aftertouch by holding a key and turning its knob.
 //
 //   FIX + turn a knob       links that parameter to velocity; the turn sets the
 //                           amount (-128..127), continuing from the slot's amount.
@@ -447,11 +447,11 @@ const struct {
     void *get;
     int (*delta)(void *view, int32_t id, int32_t delta, int32_t func);
     void *text;
-} quick_mod_assign_params = { 0, PARAM_ROWS - 1, 0, qma_delta, 0 };
+} quick_velocity_aftertouch_assign_params = { 0, PARAM_ROWS - 1, 0, qma_delta, 0 };
 
 // ---- Keys, encoders, the tick and the draw -------------------------------------
 
-int quick_mod_assign_key(void *brain, void *event)
+int quick_velocity_aftertouch_assign_key(void *brain, void *event)
 {
     int key = *(int *)((char *)event + EV_KEY);
     unsigned flags = *(unsigned *)((char *)event + EV_FLAGS);
@@ -506,7 +506,7 @@ int quick_mod_assign_key(void *brain, void *event)
 
 // ev_enc: any encoder turned during a hold (LEVEL, or a knob stock takes before
 // the parameter's turn, such as LFO DST) also makes it a hold, not a tap.
-int quick_mod_assign_enc(void *brain, void *event)
+int quick_velocity_aftertouch_assign_enc(void *brain, void *event)
 {
     int k;
     (void)brain;
@@ -530,7 +530,7 @@ static void keep_locker(void)
 
 // Stock's popup for the module's messages, opened from ev_tick so repeats open
 // one, not dozens.
-void quick_mod_assign_tick(void *ctrl)
+void quick_velocity_aftertouch_assign_tick(void *ctrl)
 {
     word_t string;
     char allocator;

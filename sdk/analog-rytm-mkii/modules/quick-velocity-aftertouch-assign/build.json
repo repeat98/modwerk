@@ -11,17 +11,17 @@
   "subscribe": [
     {
       "event": "ev_key",
-      "fn": "quick_mod_assign_key",
+      "fn": "quick_velocity_aftertouch_assign_key",
       "order": 30
     },
     {
       "event": "ev_enc",
-      "fn": "quick_mod_assign_enc",
+      "fn": "quick_velocity_aftertouch_assign_enc",
       "order": 30
     },
     {
       "event": "ev_tick",
-      "fn": "quick_mod_assign_tick",
+      "fn": "quick_velocity_aftertouch_assign_tick",
       "order": 50
     }
   ],
@@ -34,7 +34,7 @@
         [
           0,
           "abs32",
-          "sym:quick_mod_assign_params",
+          "sym:quick_velocity_aftertouch_assign_params",
           0
         ]
       ]

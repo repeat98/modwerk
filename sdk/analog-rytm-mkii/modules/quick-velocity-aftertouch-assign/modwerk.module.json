@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
-  "id": "quick-mod-assign",
-  "name": "Quick Mod Assign",
+  "id": "quick-velocity-aftertouch-assign",
+  "name": "Quick Velocity & Aftertouch Assign",
   "version": "0.1.0-experimental",
   "machine": "analog-rytm-mkii",
   "category": "system",
@@ -17,7 +17,7 @@
     "npp1993"
   ],
   "presentation": {
-    "label": "QUICK MOD ASSIGN",
+    "label": "QUICK VELOCITY & AFTERTOUCH ASSIGN",
     "family": "Performance",
     "summary": "Link a parameter to velocity or aftertouch by holding FIX or SAMPLER and turning its knob.",
     "overview": "Hold FIX and turn any knob on a sound page: that parameter is linked to velocity, and the turn sets how much. Hold SAMPLER and turn to link it to aftertouch instead. While either key is held, every linked knob shows its amount the way stock shows a performance or scene lock. It fills stock's own four velocity and four aftertouch slots of the selected sound, so the links save with the kit, show in SOUND SETTINGS as usual and keep playing on a unit without the mod.",
@@ -94,7 +94,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu on QM11: links, lock-style display, MODS FULL popups, SAMPLER recorder, FIX toggle, PERF and SCNE. Author's unit report on RC18 (QM10): aftertouch and velocity links, display, kit save, reload and power cycle pass.",
+    "summary": "rytm-emu on QM11: links, lock-style display, MODS FULL popups, SAMPLER recorder, FIX toggle, PERF and SCNE. Author's unit reports on RC18 (QM10: aftertouch and velocity links, display, kit save, reload and power cycle) and RC19 (QM11): pass.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -123,8 +123,8 @@
     {
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
-      "caption": "Quick Mod Assign thumbnail",
-      "alt": "Placeholder thumbnail for Quick Mod Assign",
+      "caption": "Quick Velocity & Aftertouch Assign thumbnail",
+      "alt": "Placeholder thumbnail for Quick Velocity & Aftertouch Assign",
       "credit": "Nathaniel Pavel",
       "license": "GPL-3.0-or-later",
       "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
@@ -142,7 +142,7 @@
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
         "imageSha256": "7ef00e24371b1d572da3ec60ca21be4d059b32decfe15f3a334c75486788e3f9",
-        "setup": "Headless rytm-emu (dtboot) running QM11: the Modwerk base for core-ar2 0.7 and this folder's Quick Mod Assign 0.1.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "setup": "Headless rytm-emu (dtboot) running QM11: the Modwerk base for core-ar2 0.7 and this folder's Quick Velocity & Aftertouch Assign 0.1.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -158,7 +158,7 @@
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
         "imageSha256": "7ef00e24371b1d572da3ec60ca21be4d059b32decfe15f3a334c75486788e3f9",
-        "setup": "Headless rytm-emu (dtboot) running QM11: the Modwerk base for core-ar2 0.7 and this folder's Quick Mod Assign 0.1.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "setup": "Headless rytm-emu (dtboot) running QM11: the Modwerk base for core-ar2 0.7 and this folder's Quick Velocity & Aftertouch Assign 0.1.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -174,7 +174,7 @@
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
         "imageSha256": "7ef00e24371b1d572da3ec60ca21be4d059b32decfe15f3a334c75486788e3f9",
-        "setup": "Headless rytm-emu (dtboot) running QM11: the Modwerk base for core-ar2 0.7 and this folder's Quick Mod Assign 0.1.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "setup": "Headless rytm-emu (dtboot) running QM11: the Modwerk base for core-ar2 0.7 and this folder's Quick Velocity & Aftertouch Assign 0.1.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -190,7 +190,7 @@
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
         "imageSha256": "7ef00e24371b1d572da3ec60ca21be4d059b32decfe15f3a334c75486788e3f9",
-        "setup": "Headless rytm-emu (dtboot) running QM11: the Modwerk base for core-ar2 0.7 and this folder's Quick Mod Assign 0.1.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "setup": "Headless rytm-emu (dtboot) running QM11: the Modwerk base for core-ar2 0.7 and this folder's Quick Velocity & Aftertouch Assign 0.1.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]

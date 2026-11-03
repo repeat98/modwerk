@@ -1,14 +1,14 @@
 {
   "schema": 1,
   "kind": "elekloader-catalog",
-  "revision": "quick-mod-assign-2026-11-03",
-  "about": "Modwerk source-only quick-mod-assign package for Analog Rytm MKII OS 1.74, compiled from sdk/analog-rytm-mkii/modules/quick-mod-assign.",
+  "revision": "quick-velocity-aftertouch-assign-2026-11-03",
+  "about": "Modwerk source-only quick-velocity-aftertouch-assign package for Analog Rytm MKII OS 1.74, compiled from sdk/analog-rytm-mkii/modules/quick-velocity-aftertouch-assign.",
   "cores": [],
   "mods": [
     {
-      "file": "quick-mod-assign-0.1.0-experimental-os1.74.elemod",
+      "file": "quick-velocity-aftertouch-assign-0.1.0-experimental-os1.74.elemod",
       "sha256": "137f56f056809321aeb0d1cda8295bed594d756b25562d9ec22f0c1d0a80bbda",
-      "id": "quick-mod-assign",
+      "id": "quick-velocity-aftertouch-assign",
       "version": "0.1.0-experimental",
       "device": "analog-rytm-mk2",
       "os": "1.74",
@@ -16,9 +16,9 @@
       "source": {
         "repo": "repeat98/modwerk",
         "commit": "25fb94539e760d0ae3ef209a20b15d7821934756",
-        "path": "sdk/imports/packages/quick-mod-assign/quick-mod-assign-0.1.0-experimental-os1.74.elemod"
+        "path": "sdk/imports/packages/quick-velocity-aftertouch-assign/quick-velocity-aftertouch-assign-0.1.0-experimental-os1.74.elemod"
       },
-      "title": "Quick Mod Assign",
+      "title": "Quick Velocity & Aftertouch Assign",
       "requires": [
         "core"
       ],
@@ -28,7 +28,7 @@
       "category": "Performance",
       "author": "npp1993",
       "needs_core": "0.7",
-      "on_unit": "The author's combined image RC18 (core-ar2 0.7, this module's build QM10 and twelve other modules) ran on an Analog Rytm MKII on OS 1.74, as reported: links, display, kit save, reload and power cycle passed. This package has not run on a unit."
+      "on_unit": "The author's combined images RC18 and RC19 (core-ar2 0.7, this module's builds QM10 and QM11 and twelve other modules) ran on an Analog Rytm MKII on OS 1.74, as reported: links, display, kit save, reload and power cycle passed. This package has not run on a unit."
     }
   ]
 }
