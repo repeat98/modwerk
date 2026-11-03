@@ -1,25 +1,26 @@
 {
   "schemaVersion": 3,
-  "id": "audio-in-fx",
-  "name": "Audio In FX",
+  "id": "audio-in-routing",
+  "name": "Audio In Routing",
   "version": "0.1.0-experimental",
   "machine": "analog-rytm-mkii",
   "category": "system",
   "exclusive": false,
   "author": {
     "github": "npp1993",
+    "name": "Nathaniel Pavel",
     "credits": [
-      "npp1993 (Nathaniel Pavel) — the mod, its design and code, and this Modwerk module."
+      "Nathaniel Pavel (@npp1993) — the mod, its design and code, and this Modwerk module."
     ]
   },
   "maintainers": [
     "npp1993"
   ],
   "presentation": {
-    "label": "AUDIO IN FX",
+    "label": "AUDIO IN ROUTING",
     "family": "Routing",
     "summary": "Two knobs on the FX track's DISTORTION page send the AUDIO IN jacks into the master distortion and compressor, and into the delay and the reverb.",
-    "overview": "On stock the AUDIO IN jacks reach the sampler, its monitor and USB, and EXT IN joins after the distortion. Audio In FX plays AUDIO IN through the Rytm's own effects: D (STE) puts it in the analog mix before DIST and COMP, and E (IFX) feeds the delay and the reverb at once. Both at 0, with nothing locked, leave the Rytm as stock.",
+    "overview": "On stock the AUDIO IN jacks reach the sampler, its monitor and USB, and EXT IN joins after the distortion. Audio In Routing plays AUDIO IN through the Rytm's own effects: D (STE) puts it in the analog mix before DIST and COMP, and E (IFX) feeds the delay and the reverb at once. Both at 0, with nothing locked, leave the Rytm as stock.",
     "highlights": [
       "Run a synth or a guitar pedal through the master distortion and compressor.",
       "Send AUDIO IN to the delay and the reverb on their own levels.",
@@ -141,15 +142,15 @@
   "license": {
     "spdx": "GPL-3.0-or-later",
     "file": "LICENSE",
-    "declaration": "npp1993's original code under GPL-3.0-or-later. Each patch precondition is an address, a length and a SHA-256; no stock bytes are included."
+    "declaration": "Nathaniel Pavel's (@npp1993) original code under GPL-3.0-or-later. Each patch precondition is an address, a length and a SHA-256; no stock bytes are included."
   },
   "media": [
     {
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
-      "caption": "Audio In FX",
-      "alt": "AUDIO IN splits into DIST, delay and reverb.",
-      "credit": "npp1993",
+      "caption": "Audio In Routing",
+      "alt": "AUDIO IN takes two paths: D (STE) into the mix before DIST and COMP, E (IFX) into the delay and the reverb together, whose returns go PRE or POST.",
+      "credit": "Nathaniel Pavel",
       "license": "GPL-3.0-or-later",
       "source": "Original conceptual illustration in the shared signal-art style; not a device screenshot."
     },
@@ -158,7 +159,7 @@
       "kind": "screenshot",
       "caption": "The FX track's DISTORTION page: D (STE) raised and E (IFX) just turned.",
       "alt": "DISTORTION page: AMT, SYM, DOV, STE, IFX, DEL, REV; header INPUT TO FX.",
-      "credit": "npp1993",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
       "capture": {
@@ -166,7 +167,7 @@
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
         "imageSha256": "dd1c4b63ac789fd26de8ba73f4126f9ab77e35bb1a3cdf8e0441bbb95d55f96b",
-        "setup": "Headless rytm-emu (dtboot, c5732f0) running AF22: core-ar2 0.7 and this folder's Audio In FX 0.1.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
+        "setup": "Headless rytm-emu (dtboot, c5732f0) running AF22: core-ar2 0.7 and this folder's source (then named Audio In FX) 0.1.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
       }
     },
     {
@@ -174,7 +175,7 @@
       "kind": "screenshot",
       "caption": "After a tap of encoder D: the input summed to mono, the knob reads MNO.",
       "alt": "DISTORTION page: header INPUT MONO, knob D reads MNO.",
-      "credit": "npp1993",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
       "capture": {
@@ -182,7 +183,7 @@
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
         "imageSha256": "dd1c4b63ac789fd26de8ba73f4126f9ab77e35bb1a3cdf8e0441bbb95d55f96b",
-        "setup": "Headless rytm-emu (dtboot, c5732f0) running AF22: core-ar2 0.7 and this folder's Audio In FX 0.1.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
+        "setup": "Headless rytm-emu (dtboot, c5732f0) running AF22: core-ar2 0.7 and this folder's source (then named Audio In FX) 0.1.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
       }
     }
   ]

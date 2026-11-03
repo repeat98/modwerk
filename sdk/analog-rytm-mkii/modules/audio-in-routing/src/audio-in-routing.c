@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Audio In FX: the AUDIO IN jacks into the analog mix before the distortion, and into the delay and the reverb.
+// Audio In Routing: the AUDIO IN jacks into the analog mix before the distortion, and into the delay and the reverb.
 //
 // On stock AUDIO IN's two words in the receive buffer go to the sampler, its monitor and USB. This mod adds
 // them to the words stock's own paths use: the PRE return's DAC words, which join the analog mix before DIST and
@@ -127,7 +127,7 @@ __attribute__((noinline)) static void copy_word(volatile int *to, const volatile
     *to = *from;
 }
 
-extern const char audio_in_fx_short_in[], audio_in_fx_long_in[];
+extern const char audio_in_routing_short_in[], audio_in_routing_long_in[];
 static const char short_mono[] = "MNO";
 static const char long_mono[] = "Input Mono";
 
@@ -136,12 +136,12 @@ static void set_mono(int on)
 {
     char *row = (char *)ID_TABLE + ID_IN * ID_STRIDE;
     mono = on;
-    *(const char **)(row + ID_SHORT) = on ? short_mono : audio_in_fx_short_in;
-    *(const char **)(row + ID_LONG) = on ? long_mono : audio_in_fx_long_in;
+    *(const char **)(row + ID_SHORT) = on ? short_mono : audio_in_routing_short_in;
+    *(const char **)(row + ID_LONG) = on ? long_mono : audio_in_routing_long_in;
 }
 
 // ev_project: a project loaded or made, at boot too: stereo, and both knobs drawn as stock's VOL bar.
-void audio_in_fx_project(int how, unsigned dropped)
+void audio_in_routing_project(int how, unsigned dropped)
 {
     int k, w;
     (void)how;
@@ -235,7 +235,7 @@ static void add_sends(int *g, int to)
 
 // From the gate at the delay's entry: stock has mixed the voices into both sends and read this block's input, and
 // neither effect has run.
-void audio_in_fx_block(void)
+void audio_in_routing_block(void)
 {
     int to_in = gain_of(engine_value(IN)), to_fx = gain_of(engine_value(FX));
 
@@ -247,10 +247,10 @@ void audio_in_fx_block(void)
 
 // ---------------------------------------------------------------- the page
 
-const char audio_in_fx_short_in[] = "STE";
-const char audio_in_fx_short_fx[] = "IFX";
-const char audio_in_fx_long_in[] = "Input Stereo";
-const char audio_in_fx_long_fx[] = "Input To FX";
+const char audio_in_routing_short_in[] = "STE";
+const char audio_in_routing_short_fx[] = "IFX";
+const char audio_in_routing_long_in[] = "Input Stereo";
+const char audio_in_routing_long_fx[] = "Input To FX";
 
 static const struct core_page dist_page = {
     PAGE_DIST, "DISTORTION", { 90, 91, 80, ID_IN, ID_FX, 0, 81, 89 }
@@ -264,7 +264,7 @@ static const struct core_page *dist_info(int32_t page)
     return &dist_page;
 }
 
-const struct core_page_fn audio_in_fx_page = { PAGE_DIST, dist_info };
+const struct core_page_fn audio_in_routing_page = { PAGE_DIST, dist_info };
 
 static void *fx_pattern(void)
 {
@@ -354,11 +354,11 @@ static int text(struct core_text *t)
     return CORE_TEXT_STOCK;
 }
 
-const struct core_param audio_in_fx_params = { ID_IN, ID_FX, 0, delta, text };
+const struct core_param audio_in_routing_params = { ID_IN, ID_FX, 0, delta, text };
 
 // Stock's parameter page view hands a held trig's turn to this slot of its vtable (build.json points it here). A
 // FUNC turn on D or E jumps the held steps' locks between the stops; everything else is stock's.
-int audio_in_fx_view_lock_delta(void *view, int id, int d)
+int audio_in_routing_view_lock_delta(void *view, int id, int d)
 {
     int k = id - ID_IN;
 
@@ -372,7 +372,7 @@ int audio_in_fx_view_lock_delta(void *view, int id, int d)
 // ev_draw, after a compose: stock asks for the page only while it draws or uses it. A compose that does not ask
 // says nothing, as a knob's press redraws the header alone; ev_key takes page_up down, and the next compose brings
 // it back.
-void audio_in_fx_draw(void *bmp, void *ctrl)
+void audio_in_routing_draw(void *bmp, void *ctrl)
 {
     (void)bmp;
     (void)ctrl;
@@ -382,7 +382,7 @@ void audio_in_fx_draw(void *bmp, void *ctrl)
 }
 
 // ev_tick, about 20 Hz.
-void audio_in_fx_tick(char *ctrl)
+void audio_in_routing_tick(char *ctrl)
 {
     ui_ticks++;
     if (tap_ticks >= 0 && ++tap_ticks > TAP_TICKS)
@@ -394,7 +394,7 @@ void audio_in_fx_tick(char *ctrl)
 }
 
 // ev_enc: a click of D's tap nudges the encoder, so the first turns of a press are not a turn. Every other turn goes on.
-int audio_in_fx_enc(void *brain, char *event)
+int audio_in_routing_enc(void *brain, char *event)
 {
     int k = *(int *)(event + ENC_INDEX) - KNOB_D;
 
@@ -452,7 +452,7 @@ static void show_name(void)
     uint32_t string[2];
     char allocator;
 
-    ((string_from_cstr_t)STRING_FROM_CSTR_AT)(string, mono ? long_mono : audio_in_fx_long_in, &allocator);
+    ((string_from_cstr_t)STRING_FROM_CSTR_AT)(string, mono ? long_mono : audio_in_routing_long_in, &allocator);
     ((show_header_t)SHOW_HEADER_AT)((void *)((singleton_t)REC_STATE_AT)(), string);
     ((string_dtor_t)STRING_DTOR_AT)(string);
 }
@@ -460,7 +460,7 @@ static void show_name(void)
 // ev_key: a tap of D, pressed and let go inside TAP_TICKS as a plain press, turns mono over. Stock's press only
 // shows the parameter, so it goes on as ever. Any other key may leave the page, at its press or its release: a
 // redraw says if it did not.
-int audio_in_fx_key(void *brain, char *event)
+int audio_in_routing_key(void *brain, char *event)
 {
     int key = *(int *)(event + KEY_INDEX), flags = *(int *)(event + KEY_FLAGS);
 

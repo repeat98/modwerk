@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "sources": [
-    "src/audio-in-fx.c",
+    "src/audio-in-routing.c",
     "src/gate.s"
   ],
   "defsym": {},
@@ -10,27 +10,27 @@
   "subscribe": [
     {
       "event": "ev_project",
-      "fn": "audio_in_fx_project",
+      "fn": "audio_in_routing_project",
       "order": 50
     },
     {
       "event": "ev_draw",
-      "fn": "audio_in_fx_draw",
+      "fn": "audio_in_routing_draw",
       "order": 50
     },
     {
       "event": "ev_tick",
-      "fn": "audio_in_fx_tick",
+      "fn": "audio_in_routing_tick",
       "order": 50
     },
     {
       "event": "ev_enc",
-      "fn": "audio_in_fx_enc",
+      "fn": "audio_in_routing_enc",
       "order": 50
     },
     {
       "event": "ev_key",
-      "fn": "audio_in_fx_key",
+      "fn": "audio_in_routing_key",
       "order": 50
     }
   ],
@@ -43,7 +43,7 @@
         [
           0,
           "abs32",
-          "sym:audio_in_fx_page",
+          "sym:audio_in_routing_page",
           0
         ]
       ]
@@ -56,7 +56,7 @@
         [
           0,
           "abs32",
-          "sym:audio_in_fx_params",
+          "sym:audio_in_routing_params",
           0
         ]
       ]
@@ -76,7 +76,7 @@
   "releases": {
     "1.74": {
       "defsym": {
-        "audio_in_fx_resume": "0x4010da2c"
+        "audio_in_routing_resume": "0x4010da2c"
       },
       "cflags": [],
       "sites": [
@@ -85,7 +85,7 @@
           "len": 8,
           "stockSha256": "3e7c95b32f444fd280cb96b2a6ea90525fe223d6e6b9352086d2cf41941ae854",
           "op": "jmp",
-          "target": "audio_in_fx_gate"
+          "target": "audio_in_routing_gate"
         },
         {
           "addr": "0x401c562c",
@@ -108,14 +108,14 @@
           "len": 4,
           "stockSha256": "0e6f7d4359c597fbbc30c6c55f96055f695cbcbdd7ce5a17508edd763c7962e3",
           "op": "ptr",
-          "target": "audio_in_fx_long_in"
+          "target": "audio_in_routing_long_in"
         },
         {
           "addr": "0x401c565c",
           "len": 4,
           "stockSha256": "22be147347612fa8b29916cbf8fb1a978d19836984255a4d93ac062d1505f476",
           "op": "ptr",
-          "target": "audio_in_fx_short_in"
+          "target": "audio_in_routing_short_in"
         },
         {
           "addr": "0x401c5660",
@@ -146,21 +146,21 @@
           "len": 4,
           "stockSha256": "4cda4b796bc0a05981ff710c47d3760b572547fc2b4b078e1e6a9d5f4b073da3",
           "op": "ptr",
-          "target": "audio_in_fx_long_fx"
+          "target": "audio_in_routing_long_fx"
         },
         {
           "addr": "0x401c5690",
           "len": 4,
           "stockSha256": "3017adae335e242402ac97061bbbd83d18b3137b2872e5b6ae36029d961bc69c",
           "op": "ptr",
-          "target": "audio_in_fx_short_fx"
+          "target": "audio_in_routing_short_fx"
         },
         {
           "addr": "0x401cc3ec",
           "len": 4,
           "stockSha256": "fdf12e96caa21c2bac267344c6fb62d1c46341eca4588870b56a8abd71e04014",
           "op": "ptr",
-          "target": "audio_in_fx_view_lock_delta"
+          "target": "audio_in_routing_view_lock_delta"
         }
       ]
     }

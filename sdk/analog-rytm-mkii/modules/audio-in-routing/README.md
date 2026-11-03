@@ -1,10 +1,10 @@
-# Audio In FX
+# Audio In Routing
 
-An Analog Rytm MKII mod by npp1993 (Nathaniel Pavel). Version 0.1.0-experimental, OS 1.74 with core-ar2 0.7.
+An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.1.0-experimental, OS 1.74 with core-ar2 0.7.
 
 ## Overview
 
-On stock the AUDIO IN jacks reach the sampler, its monitor and USB, and EXT IN joins after the distortion. Audio In FX plays AUDIO IN through the Rytm's own effects.
+On stock the AUDIO IN jacks reach the sampler, its monitor and USB, and EXT IN joins after the distortion. Audio In Routing plays AUDIO IN through the Rytm's own effects.
 
 Two knobs on the FX track's DISTORTION page set where it goes. D (STE, or MNO in mono) puts it in the analog mix before DIST and COMP, beside the drums. E (IFX) sends it to the delay and the reverb at once. They are parallel: what goes to DIST does not reach the effects unless E is up. F stays empty, as on stock.
 
@@ -63,7 +63,7 @@ On the author's Analog Rytm MKII (AC20, AC21) and in rytm-emu, on the builds nam
 
 ## Authorship and licences
 
-Original code by npp1993 (Nathaniel Pavel), GPL-3.0-or-later ([LICENSE](LICENSE)). No stock code is included: patch preconditions are an address, a length and a SHA-256.
+Original code by Nathaniel Pavel (@npp1993), GPL-3.0-or-later ([LICENSE](LICENSE)). No stock code is included: patch preconditions are an address, a length and a SHA-256.
 
 ## Screens and audio
 

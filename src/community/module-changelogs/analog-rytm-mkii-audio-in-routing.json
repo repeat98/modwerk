@@ -6,7 +6,8 @@
       "First library release, for Analog Rytm MKII OS 1.74: AUDIO IN through the Rytm's own DIST, COMP, delay and reverb.",
       "On the FX track's DISTORTION page, D (STE) sets the input into the mix before DIST and COMP, and E (IFX) sends it to the delay and the reverb.",
       "Both knobs save with the kit and take parameter, scene and performance locks. Tap D to sum the input to mono.",
-      "Level, noise and latency are not measured; this exact package has not run on a unit."
+      "Level, noise and latency are not measured; this exact package has not run on a unit.",
+      "Renamed Audio In Routing (was Audio In FX, id audio-in-fx), and the module page now credits the author as Nathaniel Pavel (@npp1993). No change on the unit: the knobs still read STE and IFX."
     ]
   }
 ]

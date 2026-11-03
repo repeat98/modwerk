@@ -1,4 +1,6 @@
-# Audio In FX — test report
+# Audio In Routing — test report
+
+Named Audio In FX (id `audio-in-fx`) until 3 Nov 2026; the builds below carry that name.
 
 Version 0.1.0-experimental, OS 1.74, core-ar2 0.7. Two knobs on the FX track's DISTORTION page: D (STE, or MNO in mono) on FX word 29 and E (IFX) on FX word 0. F stays empty, as on stock.
 

@@ -3,10 +3,10 @@
 | sends. The block adds AUDIO IN, then stock's two displaced instructions run.
 | d0-d1/a0-a1 are free at this entry, as the C code expects.
         .text
-        .globl  audio_in_fx_gate
-        .extern audio_in_fx_block
-audio_in_fx_gate:
-        jsr     audio_in_fx_block
+        .globl  audio_in_routing_gate
+        .extern audio_in_routing_block
+audio_in_routing_gate:
+        jsr     audio_in_routing_block
         lea     -68(%sp),%sp
         movem.l %d2-%d7/%a2-%a6,(%sp)
-        jmp     audio_in_fx_resume
+        jmp     audio_in_routing_resume
