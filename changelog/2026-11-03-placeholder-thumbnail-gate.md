@@ -1,0 +1,1 @@
+Development: `npm run modules:check` (and so `module:doctor` and `pr:ready`) now refuses a Digitakt, Digitone, Digitakt II, Analog Rytm or Analog Four library module that still carries the SDK template's placeholder thumbnail, which the library card would show as it is. Submissions and private draft builds are not checked.
