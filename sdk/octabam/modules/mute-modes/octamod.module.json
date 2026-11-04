@@ -149,7 +149,7 @@
     },
     "qualification": {
       "moduleVersion": "0.2.2-experimental",
-      "sourceSha256": "10071fb8e33d75b56f19870024fa17c07c80adb980ff0f93463a1cd1775c9c31",
+      "sourceSha256": "b325aa0e49bccc9d47d8a0cfb3a221bea7a4320b1dd8abd60f2409fc3eeba325",
       "imageSha256": "2dfce546cb1eb5e854ab69c7089c87e169355510f888baf9637a18e5f12b0e40",
       "cycles": [
         {

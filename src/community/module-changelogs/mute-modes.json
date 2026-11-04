@@ -6,6 +6,7 @@
       "Fixes OTFX sometimes ignoring a mute while timestretched tracks are playing.",
       "Mute Modes no longer writes into memory that the Octatrack's timestretch uses, in any mode, OT included.",
       "Fixes a muted Sidechain KEY track becoming audible after KEY moves to another track: in DT-T its note played out (a looping sample kept going), and OTFX-T and OTFX let a click through.",
+      "Fixes a track that was still muted when MUTE MODE was switched away from OT becoming audible: in DT-T its note played out (a looping sample kept going), and OTFX-T and OTFX let a click through. It now stays cut until it is unmuted.",
       "Tested on an MKI: all four modes, Part and project reload, a power cycle, and beside Sidechain Compressor."
     ]
   },
