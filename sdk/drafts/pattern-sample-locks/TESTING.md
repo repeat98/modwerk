@@ -1,6 +1,6 @@
 # Testing: Pattern Sample Locks 0.1.8-experimental
 
-30 October 2026 (Taipei) · twwwy · prototype hardware follow-up; no release approval.
+31 October 2026 (Taipei) · twwwy · prototype hardware follow-up; no release approval.
 
 ## Current scope
 
@@ -9,6 +9,306 @@ Apply leaves playback in its current state. The native writer validates its sour
 Portable planner, UI and production native-writer sanitizer tests pass. The full exact-build DSP-enabled emulator run passed, including CPU monitoring, native save/reload, live edits and preference reset on module reload. Current MKII results include a verified kept restart and removal/Undo on the named flashed base. Full publication and cost qualification remain incomplete; reported physical/UI/listening results are labelled below.
 
 Retired reports and obsolete captures are consolidated in [PROTOTYPE_HISTORY.md](PROTOTYPE_HISTORY.md); they do not qualify this version.
+
+## PR #1088 reconstruction maintenance review — 31 October 2026
+
+Reconstruction recipes now live in the SDK machine adapters. Shared-input
+updates refresh them in the SDK/base PR, without editing module folders. The
+reviewed module inputs exclude scanner/test files; all eleven native/provenance
+inputs remain byte-identical to `d803af33`. No module version or runtime changed.
+
+Eight focused host regressions pass, including SDK-only pin refresh, test-only
+edits and stale committed pins. The ordinary public wrapper build and `--check`
+reproduce the same 10,048-byte `3e13c46f…` package with both stock scans and all
+five negative CLI probes. Editing all three excluded diagnostic/test sources
+also leaves the real build identical. USB-only library/card/source checks,
+seven public-base add/removal preflights and all 29 package preflights pass.
+The isolated Octatrack build passes the normal importer’s committed-artifact
+comparison; all 28 current elemod release exports reproduce. Node 24
+`pr:ready` reports Ready. See the [stock-free receipt](evidence/review-response-20261031.json).
+
+The two draft qualification/audio application changelog entries were removed;
+results remain here and in the linked reports, while draft release notes remain
+in `CHANGELOG.json`. The no-module input fault is tracked in
+[base issue #1110](https://github.com/repeat98/modwerk/issues/1110), with emulator
+reproduction and separately scoped hardware observations. No new hardware test,
+input-helper fix, catalogue admission or release approval is claimed.
+
+## MKII exact-package public-base lifecycle — 31 October 2026
+
+Candidate `3e13c46f…` passed scoped native-selector Undo, explicit Keep/reboot,
+removal/reboot and original-file restoration on public base `2aa35c39…`.
+The author opened the selector physically; no remote panel events were sent.
+Undo restored the prior active/set identities and empty inventory. The kept
+singleton restored after power cycle with the same whole-set identity; removal
+also survived reboot. Card readback independently verified the exact package
+and a newer empty set. All 60 fixture files and both original saved-set files
+were preserved byte-for-byte. A final restart verified the original public
+base, normal empty inventory and advancing DSP frames; USB was released.
+
+Selector opening and the normal screen after the sequence were author-reported.
+The public base supplied no direct selector-phase-after-ENTER or site/BSS/held-key
+readback. This was a stopped lifecycle test, not a new audio/load test or total
+stack qualification. The earlier failed remote-key attempt remains a failure;
+its helper is unfixed. See [method and limits](MKII_PUBLIC_LIFECYCLE.md) and the
+[stock-free receipt](evidence/mkii-public-lifecycle-20261031.json).
+
+## MKII companion-load follow-up — 31 October 2026
+
+The later [final qualification attempt](FINAL_QUALIFICATION.md) reproduces the
+exact public package and authored stack audit after merging current upstream.
+Repository checks pass. The open-selector lifecycle test stopped before reaching
+its selector when a remote key was not acknowledged; rollback was confirmed.
+A no-module input probe also failed. This attempt supplies no open-selector
+removal pass. At that point, exact-package Keep/reboot/removal was deferred for foreign saved
+files; the later run above preserved those files and completed the scoped test.
+No Keep or flash occurred in the failed remote-key attempt.
+
+The latest fresh-boot rerun held the physical panel still and used USB recording
+for added load. All 32 maximum 512-field edits, full pattern/index/Part comparisons
+and input-state checks passed. Four minutes of USB PCM passed the stated continuity
+checks; sampled main CPU reached 93.7%, with no DSP errors/stalls or frame shedding.
+STOP worked. Initial Undo hit a protocol fault; subsequent recovery and complete
+restoration were verified. See the separate
+[rerun receipt](evidence/mkii-usb-recording-rerun-20261031.json) for final restart status.
+Following the author's power cycle, the original flashed base, normal state,
+empty inventory, original set identity and advancing DSP frames were verified;
+USB was released. Nothing was pushed.
+
+The unchanged candidate ran beside TapeHead, E-Verb and Air Chorus with real FX
+assignments. The initial 32 maximum edits passed data, transport and USB-audio
+checks; sampler recording refused Apply without writes. Earlier higher-load qualification
+**failed**: after 24 individually verified USB-recorded edits across interrupted
+attempts, physical STOP behaved as a paste gesture and A02 had six missing SAMPLE
+fields. The input/modifier fault and unintended edits remain unattributed. Recovery
+restored all four patterns, cleared held keys, stopped playback and verified Undo.
+After the author's restart, the original public base and empty inventory were
+verified and USB released. See [method and limits](MKII_HIGH_LOAD.md) and the
+[receipt](evidence/mkii-companion-load-20261031.json). No push occurred.
+
+The subsequent no-module emulator baseline reproduced TRIG5–7 held and lost
+FUNC release by interleaving a USB development key with a split physical fader
+report. This confirms an independent development input-path bug and strongly
+explains the hardware signature; it does not qualify a fix or attribute every
+unintended edit. See the [isolation receipt](evidence/input-isolation-emulator-20261031.json) and
+[base issue #1110](https://github.com/repeat98/modwerk/issues/1110).
+
+## MKII automated audio/timing follow-up — 31 October 2026
+
+Unchanged candidate `3e13c46f…` passed 43 native operations on RAM development
+base `20ed7910…`: forty maximum 512-field edits, two selected-track 64-field
+edits and one preserve-existing no-op, including ten maximum Lock/Clear pairs
+and 300 BPM checks. Complete pattern bytes, working Parts and active lock-index
+flags matched; transport stayed as it was. Live-sequencer recording refusal,
+cancellation and armed pattern-change cancellation passed in a separate edge run.
+Direct battery-mirror readback, sampler recording and broader stress remain open.
+
+A separately identified timing probe `7ecf9700…` ran 46 operations. Five A01
+pairs without USB recording gave Clear median/maximum 4.43/4.80 ms; with recording,
+7.66/8.36 ms. These are elapsed instrumented native commit-body intervals including
+interrupts and probe overhead, not unchanged-package or universal CPU bounds.
+The unchanged candidate's inner publication timer peaked at 573 counts (about
+4.34 microseconds), excluding interrupt-mask boundary instructions.
+
+Forty USB captures covered about 232 seconds. All 188 complete 120 BPM one-second
+windows verified eight track tones plus Main; 300 BPM captures matched their own
+unloaded spectral baseline. Whole-capture held/zero/repeated-block and adjacent
+sample-change checks matched the baselines. DSP errors/stalls stayed zero; some
+frame lateness occurred both with edits and in unloaded recording baselines.
+Sampled probe stack use was 612 of 8,192 bytes; stock/interrupt minima and full
+stack qualification are not established.
+
+All four automated trials verified Undo, original sites and empty inventory.
+The fixture's four patterns and 120 BPM were restored. The author power-cycled;
+original public base `2aa35c39…`, empty inventory and advancing DSP frames were
+verified. No project Save, Keep, flash or push occurred. The initial runner's
+recording assertion used the wrong status field; its Undo passed and the native
+live-flag follow-up passed. See [full method, corrections and limits](MKII_AUDIO_TIMING.md)
+and the [stock-free receipt](evidence/mkii-audio-timing-20261031.json).
+
+## Sample-inclusive audio fixture — 31 October 2026
+
+The private fixture now contains eight original generated stereo WAVs, four
+Flex/four Static assignments and four saved 512-trig patterns. All sample files
+are explicitly staged in its FAT image and verified by hash, with valid trim
+markers and saved bank checksums. Fresh repeated generation is byte-identical.
+
+An independent emulator process/card/socket ran package `3e13c46f…` on named base
+`2e1a6128…`, with main level explicitly set to 64. Ten PCM windows passed the
+main-mix and eight per-track expected-tone checks: with the module closed,
+through maximum Lock/Clear on A01, before/through Clear on A02–A04, and after
+native removal. Working/mirror records, lock-index flags and playback state
+matched expectations. All 80 track-tone checks passed; native DSP errors/stalls
+stayed zero. See [method, results and limits](AUDIO_FIXTURE.md) and the
+[stock-free receipt](evidence/audio-fixture-20261031.json).
+
+The older harness's `--main-level off` means its phase/DSP-counter runs establish
+no main-output audio result. This follow-up supplies native emulator PCM evidence;
+no physical listening, continuity/dropout, CPU or complete stack qualification
+is inferred. One incomplete audio run hit the loader's stopped-transport rule
+during teardown; it remains recorded separately from the completed run.
+
+## Physical fixture preparation — 31 October 2026
+
+On the author’s MKII, public base `2aa35c39…`, the new disposable set
+`PSLTEST_261031` / project `PSL AUDIO TEST` was copied to the mounted card:
+60 files / 23,780,482 bytes, including eight samples, all read back by SHA-256.
+Existing module-set files were preserved and the card was safely ejected.
+The author confirmed the fixture loaded on A01. No module was installed,
+no Keep or flash was performed, and no owner project was saved.
+
+Initially the author reported stalled playback and silent previews. Read-only
+load queries confirmed frozen DSP frames while UI ticks advanced. After an
+author-performed power cycle, DSP frames advanced on the same base. The initial
+“Playing and audible” reply was later corrected: PLAY had not been pressed for
+the first post-restart captures. Those recordings contain constant values via
+both Swift HAL and FFmpeg AVFoundation, but do not establish a USB audio fault
+or playback result. The author subsequently explicitly pressed PLAY and
+confirmed advancing, audible playback. A new three-second USB capture then
+passed: all eight expected tones were verified in the track stems and all
+eight were present in Main. Expected-frequency energy fractions were
+99.83–99.99% in the analysed one-second window. The earlier USB-fault inference
+was retracted; the unconfirmed-transport captures remain in the receipt.
+
+Four synthetic analyser checks accepted PCM16/PCM32 tones and rejected loud
+constant channels, muted Main with active stems, and swapped tracks. This
+validates the measurement path, not edit continuity. No Apply/Clear, dropout,
+CPU or stack qualification is claimed. Inventory remained empty. See the
+[stock-free preparation receipt](evidence/device-fixture-20261031.json).
+
+## Normal public package builder — 31 October 2026
+
+The local host-wrapper integration builds and checks the reconstructed candidate
+through the normal CLI in a disposable catalogue fixture. Both strict scanners
+pass; its complete package equals the emulator-tested `3e13c46f…` candidate.
+Five negative CLI probes are refused. This changes packaging only, preserving
+the initialized runtime, BSS, relocations, callbacks and sites. The real
+catalogue remains unchanged; no physical device was accessed. See
+[method and reproduction](RECONSTRUCTION.md#normal-package-path--31-october-2026).
+
+The author then selected a USB-only first beta. The candidate declares
+`usbOnly: true`; production components refuse card downloads, block classic
+library additions without USB access and permit beta USB selection. Card
+compiler source/version scope stays unchanged. Normal USB build/check and five
+rejection probes pass with the exact emulator-tested package; add/removal Undo
+preflight passes on all seven public base identities and preflight accepts all
+29 packages. These are private fixtures, not publication or concurrent runtime
+qualification. See [scope and method](USB_BETA.md) and the
+[stock-free receipt](evidence/usb-beta-scope-20261031.json).
+
+## Apply phase profiling — 30 October 2026
+
+An independent DSP-enabled MKII emulator process used its own copied card and
+socket, with shared inputs mounted read-only. The unchanged package
+`28766a01…` ran on base `2e1a6128…`; this is a separate named emulator base,
+not qualification of current public main. Symbol-only assembly annotations
+reproduced the linked package image byte-for-byte. See
+[reproduction and phase definitions](APPLY_PROFILING.md) and the
+[stock-free receipt](evidence/apply-profile-20261030.json).
+
+All ten native panel operations passed (Lock and Clear for five fixtures).
+Complete track-byte comparisons preserved every non-SAMPLE byte; canonical
+battery mirrors and every audio lock-index byte matched. Transport remained
+running during Apply. Removal restored the declared stock sites and image
+attestation matched all 8,748 initialized bytes and three opener sites. DSP
+frames advanced from 42,798 to 97,219; errors and stalls stayed zero. No listening
+or physical hardware result is inferred.
+
+| Clear fixture | Changed fields | Total elapsed emulator instructions | Index-planning interval |
+| --- | ---: | ---: | ---: |
+| Two steps, no other locks | 2 | 10,483 | 2,228 |
+| One full track, no other locks | 64 | 29,890 | 18,286 |
+| Eight full tracks, no other locks | 512 | 307,630 | 246,660 |
+| Eight full tracks, other lock in first slot | 512 | 77,046 | 16,116 |
+| Eight full tracks, other lock in last other slot | 512 | 278,686 | 244,004 |
+
+Each row is one operation. Index planning includes mirror checks and mask
+preparation, not only scanning. All phase intervals include any intervening
+interrupt execution: the first-slot case includes 32,989 instructions in final
+revalidation, versus 6,741 in the other maximum Clear cases. These observations
+are not isolated chip cycles, repeat-run maxima or universal bounds. The
+no-other-lock maximum spent 80.2% of its observed interval in index planning;
+the first/last-slot comparison supports investigating the scan before changing
+transaction semantics. Full-pattern Lock totals ranged from 72,748 to 98,996
+elapsed instructions. Maximum publication-mask spans were 86 instructions,
+with 64 short guards per full operation; guard timer maxima are cumulative and
+exclude some boundary instructions.
+
+The phase run deliberately omitted the legacy cached-meter baseline experiment.
+Its raw completion metadata inherited a `performanceBaselineAfterRemoval` label;
+that label does not establish a measured unloaded baseline. The helper now
+reports removal completion instead. The receipt preserves the actual executed
+helper hash and explains this metadata-only correction. An earlier private
+startup was stopped before measurements to freeze the helper revision; it is
+not a module failure or a completed timing run.
+
+No native C/assembly or transaction behavior changed. Deferred flag cleanup and
+cooperative batches remain unimplemented. A subsequent local
+[scheduling test](SCHEDULING_TEST.md) observed task exclusion and resumption on
+the unchanged emulator package. Physical phase timing, complete interrupt/stack
+bounds and release qualification remain unqualified.
+
+## Local beta preparation — 30 October 2026
+
+Fresh C compilation matches the committed assembly and exact tested package.
+The unchanged public wrapper also builds and rebuilds that package byte-for-byte,
+but both stock-byte scans reject it; this remains a publication blocker.
+Authored stack paths sum to at most 500 bytes, excluding stock callees, the caller
+and interrupts. Full system stack safety and physical worst-case cycles remain
+unqualified.
+
+The production browser USB preflight passes standalone addition/removal/Undo
+for all seven current base identities, all 29 candidate-plus-published packages,
+and corruption/capability rejection. GNU/browser object-link bytes, exports and
+BSS end match at three addresses. These private component fixtures do not prove
+full card integration: its native UI subscriptions remain unfinished. Portable
+and production native-writer sanitizer tests pass; 91 existing package/linker
+tests pass. No physical device was accessed and no new work was pushed.
+
+See [methods, limits and blockers](BETA_PREPARATION.md), the
+[stock-free receipt](evidence/beta-preparation-local-20261030.json) and the
+[future supervised MKII checklist](MKII_BETA_CHECKLIST.md). Publication gates
+remain active and this module stays a draft.
+
+The [stock-scan investigation](SCANNER_INVESTIGATION.md) subsequently reproduced
+the encoder prologue and signed-remainder matches with a 60-byte independent
+compiler probe. A separate compilation container had no private stock or
+reference package mounted. All 15 rejecting seed starts are classified into
+eight groups of compiler output, font calls and authored action labels. The
+unchanged scans still reject the original reference; the subsequent private
+reconstruction candidate below evaluates the existing guarded packaging route.
+No scanner, runtime or public package changed during that investigation.
+
+## Private reconstruction candidate — 30 October 2026
+
+Candidate `3e13c46f…` is 10,048 bytes, with nine hash-guarded copies restoring
+107 bytes. Both unchanged strict stock scans pass. Fresh C/assembly and complete
+reconstruction preserve the original 8,748-byte image, 1,328-byte BSS allocation
+and 167 relocations. Twelve malformed recipe cases are refused. All copy source
+hashes match in seven actual public-base builds; production browser preflight
+and source comparisons against 541 declared patch spans pass.
+
+On named emulator base `2e1a6128…`, the real loader refused six malformed
+packages without changing active identity/generation or the opener sites, then
+installed the valid package in the same session. Four complete live-image/site
+attestations passed, including all nine source guards. Live 512-field Lock/Clear,
+non-SAMPLE bytes and canonical mirrors, pattern switching, recording refusal,
+stopped-state preservation, native project save/reload, RAM preference retention,
+removal, reinstallation/default reset and Undo passed. DSP frames advanced
+44,149 → 276,660; errors and stalls stayed zero. The unloaded baseline's cached
+CPU meter also saturated, so it provides no isolated CPU estimate.
+
+An initial eight-copy package was refused for a source in protected bootloader
+storage. Splitting that source into two permitted eight-byte copies corrected
+the candidate without changing loader rules or runtime bytes. Two intermediate
+attempts stopped on harness transaction-number errors; only the final complete
+run qualifies this local lifecycle result. No physical device was accessed.
+
+See [reproduction and limitations](RECONSTRUCTION.md), the
+[candidate declaration](evidence/reconstruction-candidate-recipe-20261030.json)
+and [combined receipt](evidence/reconstruction-local-20261030.json). Public adapter
+admission/short-title support, card UI integration, physical cost/complete stack
+bounds and first-release qualification remain pending. Nothing has been pushed.
 
 ## Exact local build
 

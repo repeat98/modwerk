@@ -1,0 +1,21 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* Addresses on OS 1.74. */
+#define RX_AT 0x80007440
+#define TX_RING_AT 0x80000000
+#define TX_SLOT_AT 0x42f92124
+#define DELAY_SEND_AT 0x80007a44
+#define REVERB_SEND_AT 0x80007b44
+#define IS_KEY_HELD_AT 0x40081c28
+#define PROJECT_AT 0x4017fa0a
+#define REC_STATE_AT 0x401816f4
+#define IS_LIVE_REC_AT 0x40036370
+#define PATTERN_OF_AT 0x400af0ac
+#define TRACK_PATTERN_AT 0x400ab29e
+#define SET_LOCK_AT 0x400c058c
+#define KIT_TRACK_SOUND_AT 0x400a67ca
+#define PARAM_TARGET_AT 0x400af51a
+#define PARAM_SET_AT 0x400a906c
+#define VIEW_LOCK_DELTA_AT 0x400385f8
+#define STRING_FROM_CSTR_AT 0x401bcff0
+#define STRING_DTOR_AT 0x401bb540
+#define SHOW_HEADER_AT 0x40035fe8

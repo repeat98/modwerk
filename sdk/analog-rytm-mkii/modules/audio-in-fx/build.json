@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/audio-in-fx.c",
+    "src/gate.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_project",
+      "fn": "audio_in_fx_project",
+      "order": 50
+    },
+    {
+      "event": "ev_draw",
+      "fn": "audio_in_fx_draw",
+      "order": 50
+    },
+    {
+      "event": "ev_tick",
+      "fn": "audio_in_fx_tick",
+      "order": 50
+    },
+    {
+      "event": "ev_enc",
+      "fn": "audio_in_fx_enc",
+      "order": 50
+    },
+    {
+      "event": "ev_key",
+      "fn": "audio_in_fx_key",
+      "order": 50
+    }
+  ],
+  "contribute": [
+    {
+      "to": "core_page_fns",
+      "order": 40,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:audio_in_fx_page",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "core_params",
+      "order": 40,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:audio_in_fx_params",
+          0
+        ]
+      ]
+    }
+  ],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:FX track DISTORTION page knobs D and E",
+    "ui:FUNC + turn of D and E on the DISTORTION page",
+    "ui:a tap of encoder D on the DISTORTION page",
+    "param:FX track words 0 and 29"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {
+        "audio_in_fx_resume": "0x4010da2c"
+      },
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x4010da24",
+          "len": 8,
+          "stockSha256": "3e7c95b32f444fd280cb96b2a6ea90525fe223d6e6b9352086d2cf41941ae854",
+          "op": "jmp",
+          "target": "audio_in_fx_gate"
+        },
+        {
+          "addr": "0x401c562c",
+          "op": "bytes",
+          "len": 4,
+          "new": "0000003b",
+          "kind": "data",
+          "stockSha256": "1fc244af2b96d0169a177e2559af29e0484744e4b8501d1044d76c9f7b3cf307"
+        },
+        {
+          "addr": "0x401c5630",
+          "op": "bytes",
+          "len": 4,
+          "new": "0000001d",
+          "kind": "data",
+          "stockSha256": "390b36a09502b05d4f8c27aea2636c6b7fd05b27d742ed32074ffea1f888ebe4"
+        },
+        {
+          "addr": "0x401c5654",
+          "len": 4,
+          "stockSha256": "0e6f7d4359c597fbbc30c6c55f96055f695cbcbdd7ce5a17508edd763c7962e3",
+          "op": "ptr",
+          "target": "audio_in_fx_long_in"
+        },
+        {
+          "addr": "0x401c565c",
+          "len": 4,
+          "stockSha256": "22be147347612fa8b29916cbf8fb1a978d19836984255a4d93ac062d1505f476",
+          "op": "ptr",
+          "target": "audio_in_fx_short_in"
+        },
+        {
+          "addr": "0x401c5660",
+          "op": "bytes",
+          "len": 4,
+          "new": "0000003b",
+          "kind": "data",
+          "stockSha256": "1fc244af2b96d0169a177e2559af29e0484744e4b8501d1044d76c9f7b3cf307"
+        },
+        {
+          "addr": "0x401c5664",
+          "op": "bytes",
+          "len": 4,
+          "new": "00000000",
+          "kind": "data",
+          "stockSha256": "5085cb99dbe1e374ccd321e5b58182d2c42cf4840c68cfab17b0618a8285e7d6"
+        },
+        {
+          "addr": "0x401c5670",
+          "op": "bytes",
+          "len": 4,
+          "new": "00000000",
+          "kind": "data",
+          "stockSha256": "6e90b5d2b8ce7b775b3f74bafd0a28d18344b287eff41d0cf938f18344ea8fa2"
+        },
+        {
+          "addr": "0x401c5688",
+          "len": 4,
+          "stockSha256": "4cda4b796bc0a05981ff710c47d3760b572547fc2b4b078e1e6a9d5f4b073da3",
+          "op": "ptr",
+          "target": "audio_in_fx_long_fx"
+        },
+        {
+          "addr": "0x401c5690",
+          "len": 4,
+          "stockSha256": "3017adae335e242402ac97061bbbd83d18b3137b2872e5b6ae36029d961bc69c",
+          "op": "ptr",
+          "target": "audio_in_fx_short_fx"
+        },
+        {
+          "addr": "0x401cc3ec",
+          "len": 4,
+          "stockSha256": "fdf12e96caa21c2bac267344c6fb62d1c46341eca4588870b56a8abd71e04014",
+          "op": "ptr",
+          "target": "audio_in_fx_view_lock_delta"
+        }
+      ]
+    }
+  }
+}
