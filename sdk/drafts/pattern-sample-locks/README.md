@@ -64,7 +64,7 @@ Clear removes all SAMPLE locks across all 64 stored steps on selected eligible t
 
 There is **no ownership bookkeeping**: no battery-RAM reservation, CF metadata, ownership snapshot, clipboard companion or edit-history hook. Native copy/paste, clear, Undo, bank and project operations retain ordinary behavior. Saved projects contain ordinary SAMPLE locks and need no metadata to load without this module.
 
-## Compatibility and CPU cost
+## Compatibility and limitations
 
 - Three guarded Part Edit opener sites and four standard UI hooks. No lifecycle-table contribution or custom base extension.
 - No effect slot, DSP code, audio-frame callback, private retained storage or module dependency.
@@ -100,13 +100,38 @@ Original source and UI by twwwy, MIT. Small lettering is reused from twwwy's ori
 
 ## Screens and audio
 
-All images below capture exact version 0.1.8. Physical MKII and DSP-enabled emulator captures are labelled separately in the manifest. [TESTING.md](TESTING.md) records their build identities and limits; [PROTOTYPE_HISTORY.md](PROTOTYPE_HISTORY.md) consolidates retired versions. Generated test tones and emulator audio captures remain private fixture artifacts; no physical audio recording is supplied.
+All images capture exact version 0.1.8; the manifest records whether each image is from the MKII or emulator and binds its build identity. The first five images form the usage walkthrough. [TESTING.md](TESTING.md) records capture limits; [PROTOTYPE_HISTORY.md](PROTOTYPE_HISTORY.md) consolidates retired versions. Generated test tones and emulator audio captures remain private fixture artifacts; no physical audio recording is supplied.
+
+Press FUNC + PART, then choose Lock Samples to Pattern or Clear Sample Locks with YES. Both actions appear below the four stock Part Edit rows.
 
 ![Part Edit, actual MKII](media/mkii-part-menu.png)
+
+Use the arrows to move among eligible tracks. Turn A clockwise to select all and counterclockwise to clear them; B clockwise selects the highlighted track and counterclockwise clears it. This actual MKII screen shows C: Replace existing ON; turn it OFF to keep every existing SAMPLE lock.
+
 ![Lock selection and replacement, actual MKII](media/mkii-lock-replace-on.png)
+
+Turn A clockwise to select all eligible tracks or counterclockwise to clear them; turn B clockwise/counterclockwise to select/clear the highlighted track. Arrows skip non-Flex/Static tracks; Clear has no replacement setting and includes manual SAMPLE locks. This is an emulator capture.
+
 ![Clear selection, 0.1.8 emulator](media/live-removal-open-tracks.png)
-![T1 Lock confirmation, 0.1.8 emulator](media/live-lock-confirm.png)
-![T1 Clear confirmation, 0.1.8 emulator](media/live-clear-confirm.png)
+
+After selecting tracks, press YES to review planned Lock changes. This actual MKII screen lists 64 per track with existing locks kept; press YES to apply or NO to return. It is a pre-apply confirmation, not an edit result.
+
 ![Maximum Lock confirmation, actual MKII](media/v018-mkii-live512-confirm.png)
-![Maximum replacement confirmation, 0.1.8 emulator](media/live-512-lock-confirm.png)
+
+Clear's confirmation lists 64 planned removals per track and warns that manual locks are included. Press YES to apply or NO to return; this screenshot is from the emulator.
+
 ![Maximum Clear confirmation, 0.1.8 emulator](media/live-512-clear-confirm.png)
+
+### More screenshots
+
+On the Lock confirmation, press YES to apply 63 planned changes on T1 or NO to return to selection. Existing locks are kept in this emulator example.
+
+![T1 Lock confirmation, 0.1.8 emulator](media/live-lock-confirm.png)
+
+On the Clear confirmation, the 64 T1 count includes manual locks; press YES to remove them or NO to return. This emulator screen shows the plan, not a completed edit.
+
+![T1 Clear confirmation, 0.1.8 emulator](media/live-clear-confirm.png)
+
+The Lock confirmation lists 64 planned changes per track with Replace existing: Yes. Press YES to apply or NO to return; this is an emulator pre-apply screen.
+
+![Maximum replacement confirmation, 0.1.8 emulator](media/live-512-lock-confirm.png)
