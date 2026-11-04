@@ -49,14 +49,14 @@
     "effectId": null
   },
   "resources": {
-    "recorded": "Exact linked allocation; isolated hardware cost unqualified",
+    "recorded": "Exact source-derived runtime-pool allocation; complete stack demand unqualified",
     "storage": {
       "label": "Storage",
-      "display": "8,748 bytes code/data; 1,328 bytes BSS",
-      "value": 10076,
+      "display": "10,832 bytes per installed package; 21,664 bytes for two copies",
+      "value": 10832,
       "unit": "bytes",
       "method": "static",
-      "conditions": "Linked emulator package; no ownership metadata storage. See exact-build hashes in TESTING.md.",
+      "conditions": "Exact extent in the Octatrack base's shared 768 KiB runtime pool: one active copy per module ID. Replacement can retain both old and new extents; 21,664 bytes assumes both are this candidate. Reclamation depends on reachability. Excludes complete shared sys-task stack demand. See TESTING.md.",
       "source": "TESTING.md"
     },
     "processing": {
@@ -71,14 +71,14 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Exact 0.1.8 public candidate passed scoped MKII selector Undo, Keep/reboot and removal/reboot; original files restored. Companion/USB-recording run passed 32 maximum edits and four minutes of stated audio checks, sampled CPU 93.7%. Remote development input failed separately without modules; helper remains unfixed. Complete system stack/cost qualification and first-release approval remain open.",
-    "hardwareStatus": "untested",
+    "summary": "On the exact current base identity, the author-reported MKII RAM trial of 0.1.8 passed: Replace OFF preserved an existing SAMPLE lock and filled an empty field; Clear removed selected manual SAMPLE locks while preserving non-SAMPLE locks and unselected data. Rollback restored the active digest and all 17 live modules; no Keep, project save, flash or power cycle. The 10,832-byte runtime-pool extent and the 21,664-byte total for two copies are documented. Prior lifecycle/audio/load reports retain their stated limits. Worst-case cycle bounds, complete memory accounting including shared stack demand, and first-release owner review remain open.",
+    "hardwareStatus": "reported",
     "gates": [
       "Worst-case cycles under parameter modulation and maximum load",
-      "Exact memory region and maximum-instance totals",
+      "Complete memory accounting including shared stack demand; runtime-pool extent and two-copy example documented",
       "Owner-reviewed real-hardware evidence with actual coverage and limitations"
     ],
-    "evidenceRevision": "1d54c0ae0381cb2d50f3a5c5beba4d221912593b"
+    "evidenceRevision": "5a15ac390dac2475df3fb3b2ef64154e174b4182"
   },
   "license": {
     "spdx": "MIT",

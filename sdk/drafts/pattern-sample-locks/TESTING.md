@@ -10,6 +10,113 @@ Portable planner, UI and production native-writer sanitizer tests pass. The full
 
 Retired reports and obsolete captures are consolidated in [PROTOTYPE_HISTORY.md](PROTOTYPE_HISTORY.md); they do not qualify this version.
 
+## MKII exact-current-base RAM functional trial — 3 November 2026
+
+The author (`twwwy`) reports that both physical actions passed on the
+Octatrack MKII, OS 1.40C, using the exact public candidate package
+`3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79` from
+source revision `5a15ac390dac2475df3fb3b2ef64154e174b4182`. With Replace OFF,
+Lock preserved an existing manual SAMPLE lock and filled an empty SAMPLE field
+on a trig. Clear removed selected manual SAMPLE locks while preserving a
+non-SAMPLE lock and unselected data. The author reported both checks passed,
+with no mismatch or action refusal.
+
+The trial ran against base identity
+`9680e9ac861ff9313ce4f7a710a37ad2aa8e9b50b2cf8c043dafa2a0b78cdffc`, matching
+the checked-in base binding. An offline current-beta-base build reproduced
+that identity (`NOT_FLASH_CANDIDATE.bin` SHA-256
+`9ae4d63a36f113f3cae563650cd44476ced0bc950bf4382f3185ec3f68728e66`); that
+artifact was not loaded or flashed. The exact 300-second RAM trial ended after
+203 seconds through the runner's rollback path. After rollback, the active
+digest returned to prefix `951766ebfe1ef23a`, and the complete 17-module live
+inventory matched the pre-trial inventory. Slot generations 6 and 7 were
+unchanged. The public base does not support saved-file export, so this verifies
+slot metadata and live restoration, not saved-set file contents. The working
+pattern is disposable; unsaved RAM edits may remain there until it is reloaded.
+
+There was no Keep, project save, flash or power cycle. Action counts, track
+counts and per-action timing were not reported. The public base refuses the
+development-only UI, transport and memory reads, so no stack watermark or
+device memory measurement was obtained. Its diagnostics refusal counter rose
+during the run because the USB bridge periodically sends unsupported
+development request 6; this is not evidence of a Lock/Clear action refusal.
+The trial establishes these two reported functional checks on the exact current
+base only. It does not measure audio, maximum-load behavior, worst-case cycles
+or complete memory, and does not close first-release owner review.
+
+## Exact package image and current-base pool extent — 3 November 2026
+
+A source-only build in pinned toolchain image
+`sha256:da70d46e10b243277fa3ae2e015f7258d56b3ee08ca4be47e61899958872e792`
+(GCC 16.2.0), at source revision `5a15ac390dac2475df3fb3b2ef64154e174b4182`,
+compiled `translation.c` and assembled `unit.s`. Linking both at origin zero
+produced identical images: 8,748 initialized bytes, SHA-256
+`54efd2166b30b836401d02f8d0d785e12aebc5b40196deb1a9b6e4530e6f95d5`, 1,328
+BSS bytes and 167 relocations. The exact candidate package SHA-256 is
+`3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79`; its
+header records four hooks and three sites.
+
+For the checked-in current base source, `RUNTIME_SITE_EVENTS` is 34 and
+`RUNTIME_POOL_BYTES` is 768 KiB. The pinned 54455 layout gives
+`sizeof(struct runtime_module) = 528` and one site record 72 bytes. Three sites
+make a 752-byte aligned module header; the image and BSS align to 10,080 bytes.
+With no DSP tail, the loader reserves exactly 10,832 bytes in its shared runtime
+pool for one installed copy of this package. The module ID maps to one live
+position, so at most one copy is active. During replacement, the loader can
+retain the old extent while it stages or holds the candidate for rollback. Two
+extents of this exact package occupy 21,664 bytes together; a different old
+version may have a different extent, and reclamation depends on reachability.
+The 10,076-byte image-plus-BSS figure above excludes the runtime header and
+alignment. These are source-derived pool allocations for the
+checked-in base and exact package, not a device memory readback. The separately
+shared `sys` task stack is not part of the pool extent; complete stack demand
+remains unbounded, so the overall memory gate stays open.
+
+The current base source places module hooks on the `sys` task, with an 8,192-
+byte stack span. On 4 November, a network-disabled pinned GCC 16.2.0 build with
+`-fstack-usage -fcallgraph-info=su` reproduced the candidate's reconstructed
+image, 1,328-byte BSS and 167 relocations. Its 33 authored frames are static or
+compiler-bounded. Adding four bytes per internal return word gives the same
+authored-only path bounds as the earlier audit: key 500 bytes, draw 296,
+encoder 44, opener 40 and tick 16. The [stock-free compiler report](evidence/stack-audit-20261104.json)
+records the source hashes, flags, frames, paths and seven indirect call edges.
+Stock font, refresh, popup and close callees, the base dispatcher/caller and
+interrupt nesting are not included; no stack high-water or canary was measured.
+Full stack demand is still unbounded.
+
+On 4 November, offline disassembly of the reproduced current base, verified
+against its build proof and event tables, accounted for the base's event bus
+and runtime dispatcher while the module callback runs. From the event entry,
+the authored-only subtotals are key 548 bytes, draw 328, encoder 92 and tick 56;
+these exclude the incoming event return word and stock caller. Three stock
+leaf routines were also bounded on the matching, unmodified base code: font
+drawing uses 64 local bytes, font measuring eight, and global refresh zero,
+excluding their return words. Including the two font callees does not increase
+the draw subtotal above 328 bytes. These findings assume no other module has
+patched those stock ranges. Track refresh, popup opening and closing, stock
+callers, interrupt nesting and other contexts remain unbounded. See the
+[base dispatcher](evidence/base-dispatch-stack-20261104.json) and
+[stock leaf](evidence/stock-leaf-stack-20261104.json) reports. No device was
+accessed, and neither the complete memory nor cycle gate is closed.
+
+Static source inspection establishes finite loop limits for the authored commit
+path: eight tracks and 64 steps; up to 31 remaining parameter-lock slots scanned
+for each cleared SAMPLE field when recomputing the index; and at most 64
+per-step publications, each writing up to eight selected tracks. These control-
+flow limits are not a cycle bound. The candidate targets MCF54455 ColdFire V4,
+not MCF5206E. A separately identified MCF54455 timing probe recorded 1,103,227
+DTIM3 counts (8.35778 ms at its assumed 132 counts/µs scale) for the maximum
+Clear commit body among five recorded runs. That interval includes interrupts,
+validation, scanning, publication, native follow-up, probe overhead and stack
+samples; it excludes the caller and function prologue/epilogue. It is neither
+exclusive core cycles nor a universal worst-case bound. The [NXP MCF54455
+Reference Manual, §3.3.5.1](https://www.nxp.com/docs/en/reference-manual/MCF54455RM.pdf)
+lists instruction timings under the assumptions that instruction fetches are
+ready, there are no sequence-related pipeline stalls, and memory is zero-wait.
+This evidence does not bound those conditions, stock callees or interrupt nesting,
+so no defensible worst-case core-cycle bound is established. The stack and cycle
+gates remain open.
+
 ## PR #1088 reconstruction maintenance review — 31 October 2026
 
 Reconstruction recipes now live in the SDK machine adapters. Shared-input

@@ -1,0 +1,50 @@
+{
+  "baseIdentity": "9680e9ac861ff9313ce4f7a710a37ad2aa8e9b50b2cf8c043dafa2a0b78cdffc",
+  "stockMainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "baseMainSha256": "877a8d6884cb05508a59b312a0e95498c33ce4a1e2f1fe452423b0edc74fb69e",
+  "toolchainImage": "sha256:da70d46e10b243277fa3ae2e015f7258d56b3ee08ca4be47e61899958872e792",
+  "method": "Linear MCF54455 disassembly from each entry through its return; every branch target must be a decoded instruction within the range, no calls or indirect jumps, and all stack-pointer changes must match the audited prologue and epilogue. Full range must match stock and the reproduced base.",
+  "functions": [
+    {
+      "function": "fontDraw",
+      "start": "0x40012bd8",
+      "endExclusive": "0x40012db6",
+      "codeBytes": 478,
+      "stockAndBaseMatch": true,
+      "codeSha256": "c67733c0d4e2be16885d7b71df4890f6e295107c61573736d808cf4e41ded7b5",
+      "instructions": 168,
+      "localBranches": 28,
+      "directAndIndirectCalls": 0,
+      "localStackBytes": 64,
+      "returnAddressExcluded": true
+    },
+    {
+      "function": "fontMeasure",
+      "start": "0x40012f30",
+      "endExclusive": "0x40012f88",
+      "codeBytes": 88,
+      "stockAndBaseMatch": true,
+      "codeSha256": "a30c2f017acd2217e8462050bef0f78eaec994143c6f84d80b7c8111472b86d7",
+      "instructions": 36,
+      "localBranches": 10,
+      "directAndIndirectCalls": 0,
+      "localStackBytes": 8,
+      "returnAddressExcluded": true
+    },
+    {
+      "function": "refreshGlobal",
+      "start": "0x40027e00",
+      "endExclusive": "0x40027e1c",
+      "codeBytes": 28,
+      "stockAndBaseMatch": true,
+      "codeSha256": "512af4e13792c62d2498443953eb8ab994c5d606be7c165a934542ae403dc6c0",
+      "instructions": 9,
+      "localBranches": 2,
+      "directAndIndirectCalls": 0,
+      "localStackBytes": 0,
+      "returnAddressExcluded": true
+    }
+  ],
+  "limitations": "Local function storage only; excludes the caller, return address, interrupt nesting, unknown memory faults and live patches by other modules. Remaining stock callees, stock caller, dispatcher context and total stack are not bounded.",
+  "hardwareAccess": false
+}
