@@ -65,7 +65,7 @@
       "value": null,
       "unit": "unknown",
       "method": "unmeasured",
-      "conditions": "Unchanged candidate has scoped MKII audio/data/load evidence. A distinct probe observed maximum Clear commit-body elapsed time of 8.36 ms with USB recording, including interrupts and probe overhead; this is not an uninstrumented worst-case bound. Cached whole-instrument CPU reached 93.7%. Authored key-path stack audit is 500 bytes, excluding stock calls, caller context and interrupts. Isolated module cost and complete system bounds remain unqualified; see TESTING.md.",
+      "conditions": "Unchanged candidate has scoped MKII audio/data/load evidence. A distinct probe observed maximum Clear commit-body elapsed time of 8.36 ms with USB recording, including interrupts and probe overhead; this is not an uninstrumented worst-case bound. Cached whole-instrument CPU reached 93.7%. The source-derived key-path stack subtotal is 916 bytes from system-task entry, including traced stock callees but excluding the incoming task return word and interrupts. Isolated module cost and complete system bounds remain unqualified; see TESTING.md.",
       "source": "TESTING.md"
     }
   },

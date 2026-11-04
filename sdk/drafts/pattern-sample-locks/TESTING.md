@@ -44,6 +44,49 @@ The trial establishes these two reported functional checks on the exact current
 base only. It does not measure audio, maximum-load behavior, worst-case cycles
 or complete memory, and does not close first-release owner review.
 
+## Temp Save interaction on the emulator — 4 November 2026
+
+On current base identity `9680e9ac…`, the exact Sample Locks candidate
+`3e13c46f…` and published Temp Save package `00b8d5ab…` were installed
+together on a copied emulator card. After opening FUNC+PART, releasing FUNC and
+pressing FUNC+YES, Sample Locks retired its overlay and Temp Save saved a
+deliberately changed SAMPLE byte. FUNC+NO restored that value after another
+labelled emulator-only mutation. The same check passed after Sample Locks was
+removed, with Temp Save still installed. Both packages were then removed from
+the emulator copy.
+
+Holding FUNC continuously from the initial FUNC+PART through YES on the
+Sample Locks row opened its track selector; Temp Save's previous snapshot was
+unchanged. The held-through control after removing Sample Locks also retained
+the previous Temp Save snapshot. The first socket setup failed before boot; the
+successful runs used the emulator's local filesystem. The [stock-free receipt](evidence/qualification-progress-20261104.md#temp-save-emulator-comparison)
+names the packages, base, fixture, method and limits. This is one no-DSP
+emulator scenario, not hardware, audio or complete companion qualification.
+
+After refreshing to main `5ceb89bd…`, draft `module:doctor` reports that
+the declared stock sites and UI claims pass its static cross-compatibility
+check against the active catalogue, including Temp Save. It still refuses
+publication: the qualification record, catalogue, packages and native
+comparison are incomplete. A static claim check does not prove live behavior.
+
+The normal public package wrapper on that main built and checked the exact
+`3e13c46f…` candidate in a private catalogue fixture; both stock scans and five
+negative CLI checks passed. A private USB-only scope check preflighted add
+and removal on seven public base identities and all 30 packages, including
+Temp Save. It also verified the card-build refusal and beta-library path.
+These are [software preflights](evidence/qualification-progress-20261104.md#current-main-package-and-usb-preflight),
+not real catalogue admission or complete combined-runtime evidence.
+
+On the same reproduced base, a DSP-enabled MKII emulator ran the exact package
+through five playback-active Lock/Clear fixtures: two changes, one full track,
+and 512 changes with no other lock, a first-slot lock or a last-slot lock.
+Every resulting pattern, mirror and lock index matched; the module image and
+sites were attested, and removal passed. The highest observed Clear callback
+interval was 314,314 emulator instructions in the 512-change no-other-lock
+case. DSP frames advanced without reported errors or stalls. Main audio was
+disabled; the count includes intervening interrupts and is not chip cycles,
+a universal bound or audio evidence. See the [edit matrix](evidence/qualification-progress-20261104.md#current-base-emulator-edit-matrix).
+
 ## Exact package image and current-base pool extent — 3 November 2026
 
 A source-only build in pinned toolchain image
@@ -55,6 +98,14 @@ produced identical images: 8,748 initialized bytes, SHA-256
 BSS bytes and 167 relocations. The exact candidate package SHA-256 is
 `3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79`; its
 header records four hooks and three sites.
+
+After refreshing to main on 4 November, the current qualification fingerprint
+of the draft's native-source inventory is
+`7ea0fbdf317bfdab6a82b22869c7029ba23901cd27a3337a4bdaf8f8beeb7e69`.
+The current fingerprinting code produces the same value for the draft archived
+at the tested revision `5a15ac39…`. Both calculations used the unqualified
+draft manifests; recompute it against the final qualification record because
+declared report paths affect the inventory.
 
 For the checked-in current base source, `RUNTIME_SITE_EVENTS` is 34 and
 `RUNTIME_POOL_BYTES` is 768 KiB. The pinned 54455 layout gives
@@ -72,13 +123,16 @@ checked-in base and exact package, not a device memory readback. The separately
 shared `sys` task stack is not part of the pool extent; complete stack demand
 remains unbounded, so the overall memory gate stays open.
 
-The current base source places module hooks on the `sys` task, with an 8,192-
-byte stack span. On 4 November, a network-disabled pinned GCC 16.2.0 build with
+The current base source places key, encoder and tick hooks on the `sys` task,
+with an 8,192-byte stack span. It says draw runs there nearly always, so that
+span is not established for every draw context. The stock task inventory also
+lists a separate 2,048-byte UI-task stack; whether each draw path can run there
+remains to be established. On 4 November, a network-disabled pinned GCC 16.2.0 build with
 `-fstack-usage -fcallgraph-info=su` reproduced the candidate's reconstructed
 image, 1,328-byte BSS and 167 relocations. Its 33 authored frames are static or
 compiler-bounded. Adding four bytes per internal return word gives the same
 authored-only path bounds as the earlier audit: key 500 bytes, draw 296,
-encoder 44, opener 40 and tick 16. The [stock-free compiler report](evidence/stack-audit-20261104.json)
+encoder 44, opener 40 and tick 16. The [stock-free compiler report](evidence/qualification-progress-20261104.md#uninstrumented-compiler-stack-audit)
 records the source hashes, flags, frames, paths and seven indirect call edges.
 Stock font, refresh, popup and close callees, the base dispatcher/caller and
 interrupt nesting are not included; no stack high-water or canary was measured.
@@ -92,12 +146,22 @@ these exclude the incoming event return word and stock caller. Three stock
 leaf routines were also bounded on the matching, unmodified base code: font
 drawing uses 64 local bytes, font measuring eight, and global refresh zero,
 excluding their return words. Including the two font callees does not increase
-the draw subtotal above 328 bytes. These findings assume no other module has
-patched those stock ranges. Track refresh, popup opening and closing, stock
-callers, interrupt nesting and other contexts remain unbounded. See the
-[base dispatcher](evidence/base-dispatch-stack-20261104.json) and
-[stock leaf](evidence/stock-leaf-stack-20261104.json) reports. No device was
-accessed, and neither the complete memory nor cycle gate is closed.
+the draw subtotal above 328 bytes. Further stock-code call-path audits bound
+the popup close subtree to 36 bytes and the track refresh subtree to 304 bytes,
+each excluding its incoming return word. Including those paths, the key-event
+subtotal is 808 bytes from the base event entry; draw remains 328, encoder 92
+and tick 56. These are conservative stack subtotals for the exact candidate and
+reproduced base, assuming no other module patches the audited stock ranges.
+The reproduced base's system-task initialization and message-loop audit adds
+the task frame and event-call arguments: from task entry the key subtotal is
+916 bytes, encoder 200 and tick 156. This assumes called functions preserve
+their ABI stack pointer. The incoming task-entry return word, popup opening,
+interrupt nesting and other contexts remain unbounded. The stock popup opener can invoke close
+callbacks from up to five live window slots; their targets depend on window
+state and were not bounded here. The [stack evidence](evidence/qualification-progress-20261104.md)
+records the base dispatcher, stock leaves, popup close, bounded switch, track
+refresh and unresolved opener analyses. No device was accessed, and neither
+the complete memory nor cycle gate is closed.
 
 Static source inspection establishes finite loop limits for the authored commit
 path: eight tracks and 64 steps; up to 31 remaining parameter-lock slots scanned
