@@ -6,7 +6,7 @@
   "changes": [
     "Retrig Grid by stigmagit folded in, for Analog Rytm MKII OS 1.74 on core-ar2 0.7: pad retrigs fall on the sequencer's swung grid while it plays, with a QUANT RTRG TO SEQ row in SEQUENCER CONFIG. The RTRG key glows dim red while the selected track is ALWAYS ON."
   ],
-  "runtimeSourceSha256": "3e2d8e6e169b3d883058478dad909d4eea18ab40af6d34900744751d96d42ef8",
+  "runtimeSourceSha256": "2ee5861de876c10d76efbf010b64c64833692193172b3646c5f4fba2511d608c",
   "packages": [
     {
       "os": "1.74",
