@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.1.1-experimental",
+    "date": "2026-11-02",
+    "changes": [
+      "First library release, for Analog Rytm MKII OS 1.74: LOP gets a third value, PIPO, which plays the sample's loop forward, then backward.",
+      "Hold FUNC and turn STA or END to step to the next zero crossing, for loops without clicks.",
+      "Not yet tested on a unit: this exact build, several voices in PIPO, LOP locks and scenes, MIDI CC 30 and samples over 0.64 s.",
+      "Renamed Ping Pong Loop, and the module page now credits the author as Nathaniel Pavel (@npp1993). No change on the unit: LOP still reads PIPO."
+    ]
+  }
+]

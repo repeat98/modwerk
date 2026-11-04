@@ -57,7 +57,9 @@ Build MB04 (`OS-MB04-groupe-1.syx`, sha256 3ad6fd307df28d1fd23e5b9090fe4ba871848
 - The author: "le swing Suit sur rtrg grid" (the retrigs follow the swing).
 - Later that evening, after also playing MB05 and MB06 (same object), the author: "Swing Validé" (swing validated).
 
-That is the whole report: the sheet's other checks (1/4 on the beats, 1/32 and 1/12 at 66 %, micro timing, OFF) were not reported one by one. Informal listening; the swing values used were not recorded; no timings measured on the unit; the firmware was not read back. The same object is in MB07-MB09.
+That is the whole report: the sheet's other checks (1/4 on the beats, 1/32 and 1/12 at 66 %, micro timing, OFF) were not reported one by one. Informal listening; asked afterwards, the author said he tried every swing setting; no timings measured on the unit; the firmware was not read back. The same object is in MB07-MB09.
+
+Evidence: tier author-hardware for 0.2.0-experimental, source sha256 c8bba02dc715373b592fda423bb134da8938dceef19764dcf6225af82a275152 (sha256 over `build.json` then each `src/` file in name order, each as its path, a NUL, its bytes and a NUL, as Loop Sync's).
 
 ## 0.1.0
 

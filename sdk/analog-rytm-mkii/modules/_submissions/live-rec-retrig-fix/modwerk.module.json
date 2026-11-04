@@ -67,6 +67,7 @@
       "Micro timing has 24 units a step.",
       "A roll started before LIVE RECORDING can miss hits.",
       "This merged build has run on one unit, on the builds TESTING.md names.",
+      "rytm-emu's pad pressure was scripted; the unit results are the author's own, from playing.",
       "External MIDI clock not tested.",
       "The press sounds where it was played; only its recorded trig moves to the grid, and not when the grid point is more than a step away."
     ]
@@ -108,7 +109,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu c5732f0: every rate, ALWAYS ON, a press during a roll, rate changes, swing 50 to 66, quantize on and off. One MKII unit, RC07: rates, quantize, the row, a project save and reload. See TESTING.md."
+    "summary": "rytm-emu c5732f0, scripted pressure: every rate, ALWAYS ON, a press during a roll, rate changes, swing 50 to 66, quantize on and off, the RTRG key's light; on 0.1.0 also RETRIG menu YES on every row against stock and beside Silent Pad+Trig with SILENT PAD LIVEREC checked. On the author's Analog Rytm MKII (OS 1.74), reported from playing: 0.1.0 RR09 to RR16 pass; this merged build RC07 to RC11 (rates, quantize, short rolls, re-press, the row, a project save and reload) and LD01 (the key's light). See TESTING.md."
   },
   "license": {
     "spdx": "GPL-3.0-or-later",

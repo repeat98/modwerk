@@ -32,4 +32,17 @@ describe('build next-step guidance', () => {
     expect(container.querySelector('#engine-status')?.textContent).toContain('awaiting verification')
     expect(container.querySelector('#engine-status')?.textContent).not.toContain('Accept the flashing risks')
   })
+  it('asks before building a selection that fits only with the compact FX2 menu', async () => {
+    const build = { key: 'selection', state: 'valid', report: { compactFx2: true }, build: vi.fn() } as unknown as ReturnType<typeof useFirmwareBuild>
+    const props = { build, available: true, downloadsEnabled: true, firmwareReady: true, moduleCount: 3, riskAccepted: true, configurationName: 'Live', onExport: noop, exported: false, results: null }
+    await act(() => root.render(createElement(FirmwareBuildPanel, props)))
+    expect(container.textContent).toContain('No stock FX2 effects')
+    expect(container.querySelector('#engine-status')?.textContent).toContain('fits only without the stock FX2 effects')
+    expect(buttonNamed('Build firmware').disabled).toBe(true)
+    await click(container.querySelector('input[type="checkbox"]')!)
+    expect(buttonNamed('Build firmware').disabled).toBe(false)
+    // Another selection asks again.
+    await act(() => root.render(createElement(FirmwareBuildPanel, { ...props, build: { ...build, key: 'other' } })))
+    expect(buttonNamed('Build firmware').disabled).toBe(true)
+  })
 })

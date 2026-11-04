@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.1.1-experimental",
+    "date": "2026-10-31",
+    "changes": [
+      "At most three SYNTIZ tracks in a Part: choosing SYNTIZ for a fourth track is refused, so the unit never crackles from too many SYNTIZ notes at once.",
+      "A Part saved with more SYNTIZ tracks still plays as it was.",
+      "The sound is unchanged."
+    ]
+  },
+  {
     "version": "0.1.0-experimental",
     "date": "2026-10-28",
     "changes": [

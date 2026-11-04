@@ -94,29 +94,29 @@
   },
   "evidence": {
     "tier": "author-hardware",
-    "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": "102f3a46e4de21e7c4ac1fb89d375b9751e5c28420969fe4f098df36feca7aca",
+    "moduleVersion": "0.2.0-experimental",
+    "sourceSha256": "c8bba02dc715373b592fda423bb134da8938dceef19764dcf6225af82a275152",
     "reports": [
       "TESTING.md"
     ],
     "hardware": {
       "model": "Analog Rytm MKII",
       "release": "1.74",
-      "testedOn": "2026-10-26",
+      "testedOn": "2026-10-29",
       "tester": "stigmagit",
       "durationMinutes": null,
-      "summary": "Build MD06 (a core-ar2 0.7 draft + loop-sync 0.3.1 + send-fx + this source's retrig-grid object fdec6df5) on the author's unit: while playing, a tempo change and a speed change from 1x to 2x left the pad retrigs on the grid, as the author reported. The earlier source (RG04, in LF18 on core-ar2 0.3) passed the five checks of its sheet.",
+      "summary": "Builds MB04 and MB06 (the Modwerk base with the send bus and effects clock, its send effects, loop-sync 0.3.2 and this source's retrig-grid object fdfcd4a8) on the author's unit: the retrigs follow the pattern's swing at every swing setting, as the author reported (\"Swing Validé\"). 0.1.0 (build MD06) was reported on the grid through tempo and speed changes.",
       "limitations": [
-        "Informal listening test; no timing measured on the unit; duration not recorded; firmware not read back. MD06.syx sha256 ea02c82aaed14bac7dd04f1e6a677277507a793569607aeec34f06dfd30e55b8.",
-        "This source was heard with a core-ar2 0.7 draft and other modules, not with the released core-ar2 0.3 alone.",
-        "External MIDI clock, a pattern change while playing, per-step sequencer retrigs and SAVE/LOAD PROJECT of the switch not reported."
+        "Informal listening test; no timing measured on the unit; duration not recorded; firmware not read back. MB04.syx sha256 3ad6fd307df28d1fd23e5b9090fe4ba8718480b7ea5cae79073abaeb9cba1202.",
+        "1/4 on the beats, 1/32 and 1/12 with swing, micro timing and the OFF switch were not reported one by one on the unit; they were checked in rytm-emu.",
+        "External MIDI clock, a pattern change while a roll plays, and SAVE/LOAD PROJECT of the switch not reported."
       ]
     },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu 3c4c42c, build RG08, 127 BPM, factory project: with BD trigs poked on every step, a 1/16 roll on BD falls on the same audio frames as the pattern's own BD trigs at swing 50, 58 and 66 %, and at 66 % with micro timing on four trigs, in NORMAL scale and at 100 BPM; also 1/32 with the track at 2x, 1/12 at 3/4x from PLAY, and 1/4 on BD trigs on the beats. On an empty BD track, every retrig is within 19 samples of the swung grid at 1/16, 1/32, 1/12, 1/4 and 1/80, four press positions, swing 50/58/66 %. Stopped and OFF behave as stock. 0.1.0 put 1/8 and slower rates one step early (fixed). The same set with the author's MD07 modules (RGS1) checked at 66 %. Unit: 0.1.0 reported good by ear; with 0.2.0 in build MB04, the author reports that the retrigs follow the swing (other checks not reported). See TESTING.md.",
+    "summary": "rytm-emu 3c4c42c, build RG08: a 1/16 roll on BD falls on the same audio frames as the pattern's own BD trigs at swing 50, 58 and 66 %, with micro timing, NORMAL and ADVANCED scale, 2x and 3/4x tracks, and 1/4 on the beats; on an empty track, within 19 samples of the swung grid at five rates. Stopped and OFF behave as stock. On the author's unit (builds MB04 and MB06, with the Modwerk base and send effects), the retrigs follow the swing at every swing setting. See TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",

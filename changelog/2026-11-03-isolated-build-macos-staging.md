@@ -1,0 +1,1 @@
+Development: the isolated package builds (`scripts/build-elemod-isolated.sh` and `scripts/build-modules-isolated.sh`) now run on a Mac with Colima. They stage the source next to the output folder instead of in the macOS temp folder, which Colima's Docker can't mount.

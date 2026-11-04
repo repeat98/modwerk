@@ -272,7 +272,7 @@ measure it with DTCN3 (`0xfc07c00c`, 132 MHz, about 47,900 counts a frame); POLY
 **One long frame does not stop the DSP; a frame interrupt that keeps the CPU does.** Measured on the owner's MKII
 (24 October 2026, development twins of the frame guard's branch, timing the interrupt from its entry `0x4000aad0` to
 its exit `0x4000d9a6`), in a bank of eight tracks trigged on every step:
-- **Each track renders about twice a frame:** the interrupt calls each track's renderer twice in most frames.
+- **Each track renders twice in most frames.**
 - **Long frames pass.** Stock tracks alone ran frames up to 96 % of a frame; with POLY8 0.3.1 up to 107 %; with FM Synth
   and USB recording up to 148 %, starting up to 69 % of a frame late. None of these stopped anything by itself.
 - **The share stops it.** POLY8 0.3.1 on T1, FM Synth 0.1.2 on T2 and six busy stock tracks kept the interrupt at 86.5 %
@@ -290,7 +290,7 @@ its exit `0x4000d9a6`), in a bank of eight tracks trigged on every step:
 
 **Uncached module code is slow in the interrupt, and so is its data.** Without `--cached-modules` every instruction
 and every load or store of a module goes to SDRAM. POLY8 0.3.0 cost about 13 points of CPU per voice there and about
-3.5 with cached module code (same day, same twin pair). Running only its tight loops from the cached alias barely
+3.5 with cached module code. Running only its tight loops from the cached alias barely
 helped: the buffers' uncached reads dominated. A module can run its own hot path from the cached alias (its address
 minus `0x08000000`) only if all of these hold, as POLY8 0.3.1's `polyphony.s` does:
 - its state that other code also touches stays on uncached addresses: absolute `SYM:l`, never PC-relative from code
@@ -310,8 +310,8 @@ works in the interrupt notice when the UI stops ticking.
 
 **A switch's masked span grows with the module's stock-code sites.** The loader used to check, write and read back
 every site byte through the uncached alias inside the mask, about 6.5 µs a site: Play Modes (35 sites) held frames
-229 µs, FM Synth (24) 203 µs, Euclid (3) 25 µs (development twins of `99336d35`, 16 October 2026). With both in a set,
-a sync's self-test and a power-on restore each stopped the DSPs once ([finding 46](OCTATRACK_BETA_TEST_PLAN.md#findings-log)).
+229 µs, FM Synth (24) 203 µs, Euclid (3) 25 µs (development twins of `99336d35`, 16 October 2026). Both in one set
+stopped the DSPs ([finding 46](OCTATRACK_BETA_TEST_PLAN.md#findings-log)).
 Now only the writes are masked, a word at a time, and the checks run under the lock: 69 µs for the same set. To
 measure, read `modwerk_masked_max` with `mem` on a development base (the outermost masked span since boot, in
 132 MHz counts); recording `__builtin_return_address(0)` in `modwerk_machine_unmask` beside it names the caller.
@@ -511,8 +511,10 @@ register save without a reserved frame overwrites the return address and
 whatever lies above it, and the restore reads it back. The ColdFire has no
 predecrement `movem`, so reserve first: `lea -N(%sp),%sp`, `movem.l
 …,(%sp)`, and the reverse on the way out, as `hooks.s` and `rom_gate.s` do.
-GCC's own output always reserves; hand-written saves are the risk. Reported
-from a USB module's control-transfer handler, 19 October 2026.
+GCC's own output always reserves; hand-written saves are the risk. N is 4 a
+register: 28 for eight returned into data ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-cf-frame)).
+The port does not catch a missing reserve. Reported from a USB module's control-transfer
+handler, 19 October 2026.
 
 **A non-zero popup pointer does not mean FX SETUP is open.** `0x460d175c`
 points at a popup object shared by MIXER, TEMPO and other dialogs. Check its
@@ -571,14 +573,11 @@ RAM boot stock restores the current bank from its battery-backed Part copies
 reinstalls modules only about 3 s later. One value the validator has to fix
 refuses the whole restore: the bank is never copied in or applied, every Part
 reads STATIC with stock defaults, no track is ever bound (renderer slots stay
-`0x400047f0`) and the unit is silent, while the fix is already written into
-the battery copy. A module whose Part bytes stock would reject must be kept
+`0x400047f0`) and the unit is silent. A module whose Part bytes stock would reject must be kept
 from the validator by the base itself, before the module is installed (beta
-finding 24: Analog BD; reproduced on `ot_emu` with `--cs1-in --no-post`, twin
-`43fe3fc4`). That includes a module that gives a stock effect's slots new
+finding 24: Analog BD). That includes a module that gives a stock effect's slots new
 meanings: Sidechain Compressor's KEY, KFLT and KGN in COMPRESSOR's page-2 slots
-8-11 wiped testers' current banks at every power-on (finding 47; a RAM boot of
-the owner's MKII twin of `a1471aeb` did the same). The restore also runs a
+8-11 wiped testers' current banks at every power-on (finding 47). The restore also runs a
 pattern validator (`0x4009a670`, not hooked) on all 16 patterns, so pattern
 bytes a module writes need the same care. To test a module for this, set it up
 in a scratch project's current bank and RAM-boot: the restore and both
@@ -726,21 +725,23 @@ card latency.
 
 ## Octabam's register
 
-Octabam's trap register left `AGENTS.md` for `docs/contributing/TRAPS.md` on 14 October 2026. Both are vendored unchanged: [sdk/octabam/AGENTS.md](../sdk/octabam/AGENTS.md) (to 30 September 2026) and [sdk/octabam/docs/TRAPS.md](../sdk/octabam/docs/TRAPS.md) (to 28 October 2026, with anchors), with [FAILURE_MODES.md](../sdk/octabam/docs/FAILURE_MODES.md) (failures on units and how each was found), [HARDWARE_MATRIX.md](../sdk/octabam/docs/HARDWARE_MATRIX.md) (a one-cable USB test procedure, per-slot DSP costs of the fourteen stock effects) and [MIDI_TRACKS.md](../sdk/octabam/docs/MIDI_TRACKS.md) (a MIDI track's setup in the Part, read from the image, not run); `sdk/imports/octabam-docs-*.json` pins each. Entries that reach Modwerk (`brclr`, descriptor names, label prefixes and `rep` are above or in the effects guide):
+Octabam's register is vendored unchanged: [sdk/octabam/AGENTS.md](../sdk/octabam/AGENTS.md) (to 30 September 2026), then [sdk/octabam/docs/TRAPS.md](../sdk/octabam/docs/TRAPS.md) (to 1 November 2026, with anchors), with [FAILURE_MODES.md](../sdk/octabam/docs/FAILURE_MODES.md) (failures on units), [HARDWARE_MATRIX.md](../sdk/octabam/docs/HARDWARE_MATRIX.md) (a one-cable USB test, per-slot DSP costs of the stock effects) and [MIDI_TRACKS.md](../sdk/octabam/docs/MIDI_TRACKS.md) (a MIDI track's setup in the Part, read from the image); `sdk/imports/octabam-docs-*.json` pins each. Entries that reach Modwerk (`brclr`, descriptor names, label prefixes and `rep` are above or in the effects guide):
 
 - **A DSP counter past $7fffff saturates in `move a,nN`** (TRAPS.md, "A frame count past $7fffff"): A2 keeps its sign through `and`, so a frame-counter index stopped the frame engine after 50.7 minutes. Mask the count to 23 bits, or move it through `a1` as the load meter does.
 - **A zero CS1 with a valid settings tail boots stock's settings as zeros** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-cs1-zero)): a base variant reading run-time settings from the CS1 early block treats an all-zero block as none.
-- **Same-named labels across DRAM units bind by nm table order**: keep local labels unique across one runtime's units. **`moveml %sp@` stores at sp and leaves sp unchanged**: push with the predecrement form; the port does not catch it.
+- **Same-named labels across DRAM units bind by nm table order**: keep local labels unique across one runtime's units.
 - **A card-write completion that runs before its bookkeeping** is the race under "Cold starts and card writes"; a hook that writes to the card keeps the first sector and its pointer update atomic, as octabam's ATA WRITE GUARD does.
 - **A persistent slot that init does not clear holds the previous effect's words**: init zeroes every slot the sample loop reads. `dsp_host -dirty` reproduces it, `-pword` a knob under an LFO (bits 8-15 set).
 - **Window code costs 2x and is zeroed at boot** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-window-zero), [record](OCTATRACK_DSP_WINDOW.md)): the base copies the receiver's packet operations to `P:0x37e00`/`0x3fe00` at the first frame; FX2 block 3 takes no buffer past `0x3e00`.
 - **A host write at the frame interrupt's entry is lost every other frame** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-host-mask); under the port, open on a unit): payload B rewrites the host handlers' masks each frame. Stream to core B on ping-0 frames, or check every word arrived.
 - **`dsp_asm` does not assemble a backward `bra`, or a `jmp` to a window address** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-bra-back)): put a trampoline before the code it enters, or `jmp (rN)`; dispatch entries keep `init < proc <= init + 256`.
 - **A module's id is the remix's, not the manifest's** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-module-id)): a tool reading the preferred `fx2_id`, a literal id or `0x400d5fdc` is right only for the stock layout, which [more than 32 effect ids](OCTATRACK_MORE_EFFECT_IDS.md) change.
-- **Payload B's frame routine writes `x:$3f7f..$3fbf` every frame** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-stock-x-scratch)): state there is overwritten. No Modwerk DSP source names that range; read what stock writes before keeping state in X.
+- **Payload B's frame routine writes `x:$3f7f..$3fbf` every frame** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-stock-x-scratch)): state there is overwritten; read what stock writes before keeping state in X.
 - **A stock effect as the fallback stalls the sequencer** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-stock-fallback)): id 0 is also FX1 NONE, so it runs on every empty FX1 slot. Every Modwerk build passes `fallback='NONE'`.
 - **The Part validator clamps stored FX ids to 31, and the machine list's key handlers clamp its cursor to 5** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-id-clamp), [machine list](../sdk/octabam/docs/TRAPS.md#trap-machine-clamp)): load a newly legal id or row from a project, never poke it. The base rewrites the four id clamps (`VALIDATOR_CLAMPS`, `build_core.py`) and `machine_registry.c` the ten cursor clamps.
 - **A floating cave rounded past the clone window** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-cave-round)): test where a cave ends, as `floating_cave_at` does.
+- **Audio and MIDI keep separate playing-Part latches** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-part-engine-context)): a MIDI-side module reads the MIDI engine's; test with the engines on different Parts.
+- **A byte zero in every project can still be the OS's** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-unused-bytes)): before keeping state there, write a marker, save, reload and diff.
 - **Generated test projects** (FAILURE_MODES.md, "A generated test project plays a sample wrongly"): a FLEX slot needs its `markers.work` trim record (the harness's `set_markers` writes it); the EMPTY template has MIDI transport receive off.
 
 ## The emulator and the tools
@@ -753,7 +754,8 @@ What `ot_emu` does not show:
 - It never restarts from RAM, so the park-and-upload path is not covered.
 - `--dsp` dies with a bus error in Docker unless `--shm-size=128m`;
   `--frame` is needed for the audio producer (USB audio) to run.
-- It honours one `--watch-mem`: given several, it reports only the last.
+- It honours one `--watch-mem`: given several, it reports only the last;
+  upstream's `--scenario` child logs none ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-scenario-watch)).
 - It boots as an MKI unless given `--mkii`, and the MKI panel has no PROJ,
   PART, AED or ARR key: remote PROJ does nothing. Card writes stay in memory
   unless given `--card-rw`. Hold remote keys for unit ticks, not wall time:
@@ -770,7 +772,6 @@ Tools that work on this Mac:
   `probe`, plus USB audio (MAIN and CUE).
 - Recording: the repaired `rec.swift` (`sdk/machines/octatrack/hw/prepare_tools.py`,
   then `swiftc -O rec.swift -o rec; rec SECONDS OUT.wav Octatrack`).
-  Homebrew's ffmpeg was broken (missing libx265).
 - `dsp_asm` for `--dsp-loader` builds: build `source/dsp_host/dsp_asm` from
   Octabam's vendored `dsp56300` with CMake and set `ELEKLOADER_DSP_ASM`.
 

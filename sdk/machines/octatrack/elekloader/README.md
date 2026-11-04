@@ -330,7 +330,12 @@ MIDI and USB Audio are base-owned features in the beta composite configuration
 shared MIDI receiver lives in [`usbmidi_rx.s`](usbmidi_rx.s), beside its upstream MIT licence.
 Both reset/session-end paths retire its old session before continuing to the
 audio/stock handler, and SET_CONFIGURATION flushes EP2 before rewriting its
-queue heads. The legacy card module retains its own earlier source until its
+queue heads. The file stays as imported: `receiver_source` in
+`base_usb_functions.py` adds, at two guarded seams, the one change the base
+makes to it: while DIN clock runs (the UART's last `0xF8` stamp is under the
+clock handler's 167 ms resync gap old), USB clock, transport and song position
+are dropped, so the two clocks never add up to double the tempo.
+The legacy card module retains its own earlier source until its
 separate, versioned update; a base fix does not update that card download.
 
 The private builder also accepts `--usb-audio 'USB AUDIO OUT TRACKS POST'`.

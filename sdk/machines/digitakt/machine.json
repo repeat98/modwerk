@@ -77,8 +77,8 @@
       {
         "name": "SRC machine slots",
         "unit": "slots",
-        "value": 4,
-        "note": "Machine ids 4–7, added by the core for new SRC machines."
+        "value": 124,
+        "note": "Machine ids 4–127, added by the core for new SRC machines."
       }
     ]
   },

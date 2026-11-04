@@ -8,7 +8,7 @@ import { throttle } from './auth'
 import { digest, HttpError, jsonBody, response } from './security'
 import { githubConfig } from './github'
 
-export const CLAIM_KINDS = ['module', 'hook', 'migration', 'dsp-region'] as const
+export const CLAIM_KINDS = ['module', 'hook', 'migration', 'dsp-region', 'machine-id'] as const
 export type ClaimKind = typeof CLAIM_KINDS[number]
 const NAME = '[a-z0-9]+(?:-[a-z0-9]+)*'
 /** What a key looks like for each kind: the machine first, except for D1 migrations, which are one sequence. */
@@ -17,6 +17,8 @@ export const CLAIM_KEYS: Record<ClaimKind, RegExp> = {
   hook: new RegExp(`^${NAME}/(?:(?:events|tables)/)?\\d{1,4}$`),
   migration: /^\d{4}$/,
   'dsp-region': new RegExp(`^${NAME}/[a-z0-9_-]{1,64}$`),
+  // A machine id a module's manifest takes (machine:<id> in platform.claims): kits store it, so it is never renumbered.
+  'machine-id': new RegExp(`^${NAME}/\\d{1,3}$`),
 }
 export const CLAIM_DAYS = 14, CLAIM_LIMIT = 10, CLAIM_WRITES_PER_HOUR = 30, NOTE_LIMIT = 120, RELEASED_KEPT_DAYS = 90
 const DAY = 86400000
@@ -56,7 +58,7 @@ function claimKind(value: unknown): ClaimKind {
   return value as ClaimKind
 }
 function claimKey(kind: ClaimKind, value: unknown): string {
-  if (typeof value !== 'string' || value.length > 120 || !CLAIM_KEYS[kind].test(value)) throw new HttpError(400, `That is not a ${kind} key (for example ${{ module: 'octatrack/tape-echo', hook: 'octatrack/39', migration: '0085', 'dsp-region': 'octatrack/fx2-delay-line' }[kind]}).`)
+  if (typeof value !== 'string' || value.length > 120 || !CLAIM_KEYS[kind].test(value)) throw new HttpError(400, `That is not a ${kind} key (for example ${{ module: 'octatrack/tape-echo', hook: 'octatrack/39', migration: '0085', 'dsp-region': 'octatrack/fx2-delay-line', 'machine-id': 'digitakt/10' }[kind]}).`)
   return value
 }
 function topicOf(kind: unknown, key: unknown): { kind: TopicKind; key: string } {

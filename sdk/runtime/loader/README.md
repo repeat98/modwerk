@@ -162,7 +162,9 @@ than four hook words. `build.py` writes them from a module's `runtime.json`
 (`{"schema": 1, "subscribe": [{"event", "fn", "order", "replaces"}]}`; `replaces` names the
 detour its native octabam build keeps at that site, and its units assemble with
 `MODWERK_EVENTS`), from an elemod's `subscribe`, or from `--subscribe HOOK:FN:ORDER` for C
-sources. `contribute` is refused.
+sources. A raised event (no site, such as `ev_trig_muted`) comes from `runtime.json`'s `raise` or, for C
+sources, `--raise EVENT` (a `raise` list in the module's package row): the module defines its zero word
+`raise_EVENT` in initialized data, and the loader points it at the base's entry. `contribute` is refused.
 
 The loader keeps one row per hook: every live module's handler, by (order, module id), then 0.
 A switch that changes a row builds it under the stable lock and writes it masked with the

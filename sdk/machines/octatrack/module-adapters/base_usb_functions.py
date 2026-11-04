@@ -163,6 +163,60 @@ def midi_source(text):
     return text.replace(before, '    jmp     modwerk_ep0_poll_shim')
 
 
+# The UART0 ISR (0x400106ec) stamps each DIN 0xF8 into CLK_T and the delta into CLK_DT, as the receiver stamps a USB
+# one, and both feed one FIFO, framer and clock handler (0x40005a48): with a clock on each the handler reads double the
+# tempo, the project saves it, and the sequencer steps on both. mw_usb_clk_stamp is the receiver's last stamp, so a
+# CLK_T that differs from it is DIN's. DIN owns the clock while its last tick is younger than the handler's resync gap
+# (1,881,600 DTCN0 counts, 167 ms: cmpil at 0x40005a96); a longer gap restarts the handler's ring, so the first USB
+# tick taken after DIN stops starts a fresh tempo.
+CLOCK_GUARD = '''
+| ---- USB clock gives way to DIN clock (Modwerk, base_usb_functions.py) -----
+| mw_usb_clock_yields: a2 = the event, at SR 0x2700. Z clear (d0 = 1) when it
+| is clock, start, continue, stop or song position and DIN is clocking: the
+| event is then dropped and counted. Uses d0-d1.
+.set MW_CLOCK_GAP,  1881600         | DTCN0 counts: the clock handler's resync gap
+.set MW_CLOCK_SYNC, 0x1d04          | bit (status - 0xF0) for F2, F8, FA, FB, FC
+    .global mw_usb_clock_dropped
+mw_usb_clock_yields:
+    mvzb    %a2@(1),%d1
+    subil   #0xf0,%d1
+    bcss    9f                      | below 0xF0: not a system message
+    movel   #MW_CLOCK_SYNC,%d0
+    btst    %d1,%d0
+    beqs    9f
+    movel   CLK_T,%d0
+    cmpl    mw_usb_clk_stamp,%d0
+    beqs    9f                      | the last tick stamped was USB's (or none)
+    movel   DTCN0,%d1
+    subl    %d0,%d1                 | age of DIN's last tick, modulo 2^32
+    cmpil   #MW_CLOCK_GAP,%d1
+    bcss    8f
+    movel   %d0,mw_usb_clk_stamp    | DIN stopped: a DTCN0 wrap must not make its old tick young again
+9:  moveq   #0,%d0
+    rts
+8:  addql   #1,mw_usb_clock_dropped
+    moveq   #1,%d0
+    rts
+    .balign 4
+mw_usb_clk_stamp:     .long 0       | DTCN0 at the last 0xF8 the receiver stamped
+mw_usb_clock_dropped: .long 0       | USB events dropped while DIN clocked
+'''
+
+
+def receiver_source(text):
+    """The shared USB MIDI receiver, with USB clock and transport giving way while DIN clocks. The import stays exact."""
+    stamp, fits = '    movel   %d1,CLK_T\n', '6:  moveq   #0,%d2\n'
+    if text.count(stamp) != 1 or text.count(fits) != 1 or 'mw_usb_' in text:
+        raise ValueError('The authored USB MIDI receiver changed; review the DIN clock guard.')
+    text = text.replace(stamp, stamp + '    movel   %d1,mw_usb_clk_stamp\n')
+    return text.replace(fits, '''6:  bsrw    mw_usb_clock_yields
+    beqs    10f
+    movew   %d5,%sr                 | DIN is clocking: drop the event
+    bras    5f
+10: moveq   #0,%d2
+''') + CLOCK_GUARD
+
+
 def audio_include(key):
     if key not in AUDIO_LAYOUTS:
         raise ValueError('Choose an explicit supported USB output layout.')

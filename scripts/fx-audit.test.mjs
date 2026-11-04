@@ -11,21 +11,22 @@ const audit = (...args) => spawnSync(process.execPath, ['scripts/fx-audit.mjs', 
 const scratch = mkdtempSync(join(tmpdir(), 'fx-audit-'))
 afterAll(() => rmSync(scratch, { recursive: true, force: true }))
 
-// What dsp_host does: mono raw in, the effect applied to each sample, interleaved L R int32 words out.
-function render(planDir, outDir, effect) {
+// What dsp_host does: mono raw in, the effect applied to each sample, interleaved L R int32 words out. `right` is the R side's effect.
+function render(planDir, outDir, effect, right = effect) {
   for (const name of readdirSync(planDir).filter(file => file.endsWith('.raw'))) {
     const bytes = readFileSync(join(planDir, name)), input = new Int32Array(bytes.buffer, bytes.byteOffset, bytes.byteLength >> 2)
     const out = new Int32Array(input.length * 2)
-    input.forEach((word, n) => { out[2 * n] = out[2 * n + 1] = Math.round(Math.max(-1, Math.min(1, effect(word / FULL_SCALE))) * FULL_SCALE) })
+    const word24 = (fn, word) => Math.round(Math.max(-1, Math.min(1, fn(word / FULL_SCALE))) * FULL_SCALE)
+    input.forEach((word, n) => { out[2 * n] = word24(effect, word); out[2 * n + 1] = word24(right, word) })
     writeFileSync(join(outDir, name), Buffer.from(out.buffer))
   }
 }
-const run = (name, effect) => {
+const run = (name, effect, right) => {
   const plan = join(scratch, name + '-plan'), out = join(scratch, name + '-out')
   expect(audit('plan', plan).status).toBe(0)
   rmSync(out, { recursive: true, force: true })
   spawnSync('mkdir', ['-p', out])
-  render(plan, out, effect)
+  render(plan, out, effect, right)
   return audit('check', plan, out)
 }
 
@@ -58,7 +59,15 @@ describe('fx audit', () => {
     expect(drive.stdout).toContain('check(s) failed')
     const gain = run('gain', x => 0.5 * x)
     expect(gain.stdout + gain.stderr).not.toContain('FAIL')
+    expect(gain.stdout).not.toContain('mono:')
     expect(gain.status).toBe(0)
+  })
+
+  it('notes a stereo render whose sides cancel in mono, without failing it', () => {
+    const flipped = run('flipped', x => 0.5 * x, x => -0.5 * x)
+    expect(flipped.stdout).toMatch(/tone-5301hz-1db +.* note/)
+    expect(flipped.stdout).toContain('tone-5301hz-1db mono: the sides cancel completely summed to mono')
+    expect(flipped.status).toBe(0)
   })
 
   it('writes each signal twice, as the raw words dsp_host reads and as a WAV rig_render reads, with the same samples', () => {
@@ -79,6 +88,25 @@ describe('fx audit', () => {
     const result = audit('check', plan, out)
     expect(result.status).toBe(2)
     expect(result.stderr).toContain('tone-1100hz-12db')
+  })
+
+  it('compares renders of the noise signal: a dead knob is identical, a live one differs, silence proves nothing', () => {
+    const plan = join(scratch, 'compare-plan')
+    audit('plan', plan)
+    const renderNoise = (name, effect) => {
+      const bytes = readFileSync(join(plan, 'noise.raw')), input = new Int32Array(bytes.buffer, bytes.byteOffset, bytes.byteLength >> 2)
+      let state = 0
+      writeFileSync(join(scratch, name + '.raw'), Buffer.from(Int32Array.from(input, word => Math.round(effect(word, state = 0.1 * word + 0.9 * state))).buffer))
+      return join(scratch, name + '.raw')
+    }
+    const low = renderNoise('knob-low', word => word / 2), high = renderNoise('knob-high', word => word / 2), cutoff = renderNoise('cutoff', (_, lowpass) => lowpass)
+    const result = audit('compare', low, high, cutoff, '--mono')
+    expect(result.status).toBe(0)
+    expect(result.stdout).toMatch(/knob-low\.raw +knob-high\.raw .* identical/)
+    expect(result.stdout).toMatch(/knob-high\.raw +cutoff\.raw .* differs/)
+    const silent = renderNoise('silent', () => 0)
+    expect(audit('compare', silent, silent, '--mono').stdout).toContain('1 silent pair(s)')
+    expect(audit('compare', low, join(scratch, 'none.raw')).status).toBe(2)
   })
 
   it('reads 16, 24 and 32-bit PCM and float WAV renders and rejects another sample rate', () => {

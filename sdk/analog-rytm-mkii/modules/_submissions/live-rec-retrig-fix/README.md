@@ -1,6 +1,6 @@
 # Live Rec Retrig Fix
 
-An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.1.0-experimental, for OS 1.74 with core-ar2 0.7. Tested in rytm-emu only; it has not run on a unit.
+An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.1.0-experimental, for OS 1.74 with core-ar2 0.7. Tested in rytm-emu and, by the author, on an Analog Rytm MKII (OS 1.74) on builds RR09, RR11, RR14 and RR16; RF17 is the same code under the module's final name.
 
 ## Overview
 
@@ -67,7 +67,7 @@ The recorder's press site asks the grid for that skipped or passed point and wri
 
 - **LIVE RECORDING with pad retrigs** (RTRG held, or ALWAYS ON): real trigs replace the trigless locks. That is the mod's job. To get stock's behaviour, leave the mod out.
 - **RETRIG menu in LIVE RECORDING**: turning RETRIG or pressing a pad no longer writes the rate or a lock to the current step. The RETRIG menu's values still apply to what you play.
-- **YES in the RETRIG menu**: turns ALWAYS ON over on every row, in place of the lit row's own YES action (on stock the ALWAYS ON row's YES does the same; the other rows' YES is not used by the module's author). LEFT, RIGHT, UP, DOWN and the TRIG keys are as stock. Needed so a roll can be armed without taking a hand off the pads; considered a new page, which would not be reachable with RTRG held.
+- **YES in the RETRIG menu**: turns ALWAYS ON over on every row. On stock, YES does nothing on the RETRIG, LENGTH and VEL.CUR rows (their menu items carry no YES action, so the menu's item runner returns at once) and turns ALWAYS ON over on its own row. With the module the three value rows gain that action; the ALWAYS ON row behaves as stock. Compared in rytm-emu on every row with and without the module (TESTING.md). LEFT, RIGHT, UP, DOWN and the TRIG keys are as stock. Needed so a roll can be armed without taking a hand off the pads; considered a new page, which would not be reachable with RTRG held.
 - **Quantize live rec**: applies to retrig hits as to any note. Plain pad hits and TRIG keys are as stock.
 - **Pad retrigs while the sequencer plays**, QUANT RTRG TO SEQ checked: the retrigs after the first hit move to the swung grid. Uncheck the row for stock's timing.
 - **SEQUENCER CONFIG**: one row added at the end, through a sixth stock site, 0x400ec244, the constructor's exit. Silent Pad+Trig's rows use another site. The row is here because it sits with QUANTIZE LIVE REC, the setting it works with; GLOBAL's own rows, the other place a module can add one, are far from it.
@@ -75,24 +75,25 @@ The recorder's press site asks the grid for that skipped or passed point and wri
 
 ## Compatibility and limitations
 
-- Analog Rytm MKII, OS 1.74, core-ar2 0.7. Events: `ev_render_out`, `ev_project`. One project storage bit (`retrig_grid_off`). Six stock sites, 0x400e29ac, 0x400e2b3e, 0x400b4692, 0x400b470e, 0x400b43d8 and 0x400ec244, which no other module patches. Key gesture: RTRG + YES.
+- Analog Rytm MKII, OS 1.74, core-ar2 0.7. Events: `ev_render_out`, `ev_project`, `ev_tick` (the RTRG key's light). One project storage bit (`retrig_grid_off`). Six stock sites, 0x400e29ac, 0x400e2b3e, 0x400b4692, 0x400b470e, 0x400b43d8 and 0x400ec244, which no other module patches. Key gesture: RTRG + YES.
 - With QUANT RTRG TO SEQ checked, the press still sounds where you played it. Only its recorded trig moves, to the grid point nearest the press, so playback has that hit on the grid and the live take does not. At rates that record a step retrig that point is the nearest step that starts a trig. With quantize live rec on it then rounds to its step like any note. A press more than a step from that point stays where you played it.
 - A roll that records follows the swing alone, to its end, even if recording stops during it. Micro timing on the pad's track moves other rolls only, or a long roll would move itself by the trigs it had just written.
 - With swing above 50, rates that record a step retrig (1/20 and faster) play back a little unlike the live roll: the live hits follow the swing, a step retrig's hits run evenly from their trig, and on a swung step one more can fit before the next trig. At 1/32 and swing 57 that is an extra hit 0.14 step before the swung trig. At swing 50 the two match.
 - A grid point more than a step from the press leaves the trig as played: at 1/2 and 1/1 that would be another beat.
 - A press with the sequencer stopped, and QUANT RTRG TO SEQ unchecked, record as played.
 - Do not install this beside the separate Retrig Grid module: both would drive the same series.
+- Beside Silent Pad+Trig Settings with SILENT PAD LIVEREC checked, that setting wins: its gate returns from the pad's play routine before the voice fires and before the retrig series starts, so an RTRG + pad hold or an ALWAYS ON pad stays silent and records nothing, as without this module. Checked in rytm-emu with both modules on 0.1.0 (TESTING.md). The grid runs after that gate, so nothing changes there. FUNC + pad with a retrig was not tried.
 - Rates faster than a step: the hits of a trig share its velocity, or follow VEL.CUR. Pressure changes land once a trig.
 - A rate change during a roll starts a new trig at the next hit.
 - Micro timing has 24 units a step, so a hit can land up to 1/48 of a step from where it sounded.
 - A roll over a step that already has a retrig keeps that step's retrig.
 - A roll started before LIVE RECORDING records from the first hit after it starts, with no press trig. Stock records nothing there.
 - If the sequencer task falls more than 30 events behind, hits are dropped rather than recorded wrongly.
-- Not tested: a unit, external MIDI clock, and what lands in the next pattern when the pattern changes during a roll.
+- Not tested: external MIDI clock, what lands in the next pattern when the pattern changes during a roll, and load.
 
 ## Tests and measurements
 
-In rytm-emu only, with scripted pad pressure: [TESTING.md](TESTING.md). A real pad's pressure stream decides how closely velocity follows on a unit, so hardware results may differ.
+In rytm-emu with scripted pad pressure, and on the author's MKII on RR09, RR11, RR14 and RR16, reported from playing: [TESTING.md](TESTING.md). On the unit, velocities followed the pad's pressure stream as played.
 
 ## Screens and audio
 

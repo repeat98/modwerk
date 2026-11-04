@@ -40,13 +40,19 @@ export function isDocumentationChange({ path, before, after, regular = true }) {
   return false
 }
 
-/** Whether a change needs no new module version. A Digitakt/Digitone manifest edit that changes only documentation or
- * compatibility.conflicts needs none, as on the Octatrack, whose version rule compares build fields only: flags are
- * compatibility metadata that a newer module's arrival can change. It still runs every check. */
+/** Whether a change needs no new module version. A Digitakt/Digitone manifest edit that changes only documentation,
+ * compatibility.conflicts or how the module and its author are credited (the display name, author.name and
+ * author.credits, license.declaration) needs none, as on the Octatrack, whose version rule compares build fields only:
+ * flags are compatibility metadata that a newer module's arrival can change, and credits are displayed text. The
+ * author's GitHub login, maintainers and licence stay versioned. It still runs every check. */
 export function isVersionNeutralChange(change) {
   const { path, before, after } = change
   if (!digiManifest.test(path) || before === null || after === null) return isDocumentationChange(change)
-  const strip = text => { const document = withoutDocumentation(json(text)); return { ...document, compatibility: { ...document.compatibility, conflicts: null } } }
+  const strip = text => {
+    const document = withoutDocumentation(json(text))
+    return { ...document, name: null, author: { ...document.author, name: null, credits: null },
+      license: document.license && { ...document.license, declaration: null }, compatibility: { ...document.compatibility, conflicts: null } }
+  }
   return canonical(strip(before)) === canonical(strip(after))
 }
 

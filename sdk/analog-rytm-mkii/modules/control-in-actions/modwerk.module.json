@@ -1,0 +1,176 @@
+{
+ "schemaVersion": 3,
+ "id": "control-in-actions",
+ "name": "Control In Actions",
+ "version": "0.1.0-experimental",
+ "machine": "analog-rytm-mkii",
+ "category": "system",
+ "exclusive": false,
+ "author": {
+  "github": "npp1993",
+  "name": "Nathaniel Pavel",
+  "credits": [
+   "Nathaniel Pavel"
+  ]
+ },
+ "maintainers": [
+  "npp1993"
+ ],
+ "presentation": {
+  "label": "CONTROL IN ACTIONS",
+  "family": "Workflow",
+  "summary": "An ACTION mode for EXP/CV IN 1 and 2: a gate or footswitch holds or toggles the MUTE screen or live recording, or holds or latches FILL.",
+  "overview": "Stock's CONTROL INPUT menus get a fourth MODE, ACTION. Pick what the input does in the ACTION row: MUTE HLD shows the MUTE screen while the input is high and goes back to the mode you were in when it drops, MUTE TGL opens and closes it, REC HLD records live while the input is high, REC TGL turns live recording on and off, FILL HLD holds FILL, FILL LAT latches and unlatches it. Live recording starts a stopped sequencer and never stops it. A 0 to 5 V gate works as it is; for a footswitch, ACTION LEARN reads its two levels. Bars beside the menu show the input against the learned levels and whether it counts as pressed. Each jack has its own MODE, so one can switch while the other still plays the kit's CV or expression macro.",
+  "highlights": [
+   "Hands-free mutes with both hands on the pads",
+   "Set up in stock's own CONTROL INPUT menus, saved with them",
+   "Works with a 0 to 5 V gate or a footswitch"
+  ],
+  "usage": [
+   "Plug a footswitch or a 0 to 5 V gate into EXP/CV IN 1, then open GLOBAL > CONTROL > CONTROL INPUT 1 and turn MODE past EXPR to ACTION.",
+   "Choose ACTION LEARN, press the switch a few times and press YES. If the bars' right-hand line drops with your foot off the switch, choose REVERSE DIRECTION.",
+   "Set the ACTION row to MUTE HLD, leave the menu and play: hold the switch and tap pads to mute them, let go to go back to playing.",
+   "Set it to REC TGL: a tap starts live recording, even from stop, and the next tap leaves it while the pattern plays on."
+  ]
+ },
+ "access": {
+  "location": "GLOBAL > CONTROL > CONTROL INPUT 1 or 2.",
+  "steps": [
+   "Connect a gate or footswitch to EXP/CV IN 1 or 2.",
+   "Open GLOBAL > CONTROL > CONTROL INPUT 1 (or 2) and set MODE to ACTION.",
+   "Set ACTION to MUTE HLD, MUTE TGL, REC HLD, REC TGL, FILL HLD or FILL LAT.",
+   "For a footswitch, run ACTION LEARN, press it a few times and YES; if the bars' line drops with your foot off it, set REVERSE DIRECTION."
+  ],
+  "screenshots": [
+   "media/action-menu.png",
+   "media/fill-latch.png"
+  ]
+ },
+ "controls": [],
+ "compatibility": {
+  "releases": [
+   "1.74"
+  ],
+  "requires": [],
+  "conflicts": [],
+  "limitations": [
+   "Stay within the jack's -5 V to +5 V.",
+   "The input is read about 20 times a second, so an action can come up to about 50 ms after it.",
+   "A jack in ACTION mode plays no CONTROL IN MOD macro. Without the module, a unit left in ACTION mode reads that jack as nothing."
+  ]
+ },
+ "platform": {
+  "kind": "elemod",
+  "core": "0.7",
+  "build": "build.json",
+  "events": [
+   "ev_tick"
+  ],
+  "claims": [
+   "ui:GLOBAL > CONTROL > CONTROL INPUT 1 and 2: MODE ACTION and its ACTION list",
+   "input:EXP/CV IN 1 and 2 in ACTION mode"
+  ]
+ },
+ "resources": {
+  "memoryBytes": 3292,
+  "fastBytes": null,
+  "load": {
+   "display": "Not measured yet",
+   "method": "unmeasured",
+   "conditions": "UI only: two readings each UI tick, never in the audio path."
+  }
+ },
+ "evidence": {
+  "tier": "none",
+  "moduleVersion": "0.1.0-experimental",
+  "sourceSha256": null,
+  "reports": [],
+  "hardware": null,
+  "verifiedBy": null
+ },
+ "tests": {
+  "report": "TESTING.md",
+  "summary": "Author's unit reports on an Analog Rytm MKII, builds alone: CI06 and CI07 passed every action, ACTION LEARN with YES and NO, REVERSE DIRECTION, EXPRESSION LEARN's NO and a power cycle; CI09 (this package's source, with the ACTION LEARN name and a code review's fixes) passed the bars, both learns' NO and a hold action. rytm-emu on CE02 to CE14, CI08 and CI09. Not run beside other modules.",
+  "documentation": {
+   "tutorial": {
+    "title": "Quick tutorial",
+    "steps": [
+     "Plug a footswitch or a 0 to 5 V gate into EXP/CV IN 1, then open GLOBAL > CONTROL > CONTROL INPUT 1 and turn MODE past EXPR to ACTION.",
+     "Choose ACTION LEARN, press the switch a few times and press YES. If the bars' right-hand line drops with your foot off the switch, choose REVERSE DIRECTION.",
+     "Set the ACTION row to MUTE HLD, leave the menu and play: hold the switch and tap pads to mute them, let go to go back to playing.",
+     "Set it to REC TGL: a tap starts live recording, even from stop, and the next tap leaves it while the pattern plays on."
+    ]
+   },
+   "screenshots": [
+    "media/action-menu.png",
+    "media/action-learn.png",
+    "media/fill-latch.png"
+   ],
+   "captureRecord": "media/capture.json"
+  }
+ },
+ "license": {
+  "spdx": "GPL-3.0-or-later",
+  "file": "LICENSE",
+  "declaration": "Original work by Nathaniel Pavel (@npp1993)."
+ },
+ "media": [
+  {
+   "path": "media/thumbnail.svg",
+   "kind": "thumbnail",
+   "caption": "Control In Actions thumbnail",
+   "alt": "Placeholder thumbnail for Control In Actions",
+   "credit": "Nathaniel Pavel",
+   "license": "GPL-3.0-or-later",
+   "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+  },
+  {
+   "path": "media/action-menu.png",
+   "kind": "screenshot",
+   "caption": "GLOBAL > CONTROL > CONTROL INPUT 1 in ACTION mode, ACTION set to MUTE HLD, with the module's bars at the left.",
+   "alt": "CONTROL INPUT 1 menu: MODE ACTION, the ACTION row inverted reading MUTE HLD, then ACTION LEARN and REVERSE DIRECTION; at the left a shaded level bar with brackets and an empty box.",
+   "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+   "license": "LicenseRef-Rytm-UI-Documentation",
+   "source": "original",
+   "capture": {
+    "type": "emulator",
+    "release": "1.74",
+    "moduleVersion": "0.1.0-experimental",
+    "imageSha256": "1b4bc2dd242d350afce51e42ece6944ebe7504f03b29abf8b80d3b617e7dae06",
+    "setup": "Headless rytm-emu (dtboot) running CI09: core-ar2 0.7 and this folder's Control In Actions 0.1.0-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+   }
+  },
+  {
+   "path": "media/action-learn.png",
+   "kind": "screenshot",
+   "caption": "ACTION LEARN's message: PRESS OR SEND A FEW GATES. / PRESS YES/NO WHEN DONE.",
+   "alt": "A boxed two-line message over the CONTROL INPUT menu.",
+   "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+   "license": "LicenseRef-Rytm-UI-Documentation",
+   "source": "original",
+   "capture": {
+    "type": "emulator",
+    "release": "1.74",
+    "moduleVersion": "0.1.0-experimental",
+    "imageSha256": "1b4bc2dd242d350afce51e42ece6944ebe7504f03b29abf8b80d3b617e7dae06",
+    "setup": "Headless rytm-emu (dtboot) running CI09: core-ar2 0.7 and this folder's Control In Actions 0.1.0-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+   }
+  },
+  {
+   "path": "media/fill-latch.png",
+   "kind": "screenshot",
+   "caption": "The ACTION row at its last choice, FILL LAT.",
+   "alt": "CONTROL INPUT 1 menu with the ACTION row inverted, reading FILL LAT.",
+   "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+   "license": "LicenseRef-Rytm-UI-Documentation",
+   "source": "original",
+   "capture": {
+    "type": "emulator",
+    "release": "1.74",
+    "moduleVersion": "0.1.0-experimental",
+    "imageSha256": "1b4bc2dd242d350afce51e42ece6944ebe7504f03b29abf8b80d3b617e7dae06",
+    "setup": "Headless rytm-emu (dtboot) running CI09: core-ar2 0.7 and this folder's Control In Actions 0.1.0-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+   }
+  }
+ ]
+}
