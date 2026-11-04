@@ -4,9 +4,9 @@ Until 0.4.0 this module was Pad Select (`pad-select`) and its row PAD+TRIG SEL T
 rytm2_mods; 0.4.1 renames the module, the row (SILENT PAD+TRIG), the source file, the symbols and
 the storage field (`silent_pad_trig_on`), with no change in behaviour. 0.5.1 renames 0.5.0's
 second row, SILENT LIVE REC, to SILENT PAD LIVEREC (its storage field stays `silent_live_rec_on`).
-After 0.5.1 the module's display name becomes Silent Pad+Trig Settings (the id, rows and fields stay). The sections below use the new names, also for the earlier builds.
+After 0.5.1 the module's display name becomes Silent Pad+Trig Settings (the id, rows and fields stay). The sections below use the new names, also for the earlier builds. 0.7.0 renames the second row SILENT P+T LIVEREC; sections before 0.7.0 keep SILENT PAD LIVEREC.
 
-- Module: `silent-pad-trig` 0.6.0-experimental, for Analog Rytm MKII OS 1.74 on core-ar2 0.3.
+- Module: `silent-pad-trig` 0.7.0-experimental, for Analog Rytm MKII OS 1.74 on core-ar2 0.3.
 - Source: npp1993's own mod, first written as `pad-select` 0.2 in a local rytm2_mods checkout
   (commit `35ea2f0`, branch `claude/pad-select`), never published there; this folder is now the
   source, so the manifest names no upstream revision. 0.2.0-experimental here was that file byte for byte
@@ -24,8 +24,24 @@ After 0.5.1 the module's display name becomes Silent Pad+Trig Settings (the id, 
   the provenance hashes differ, so the PS07/PS08 results stand.
 - 0.6.0's `src/silent-pad-trig.s` is `54402bee…d71f`, fingerprint `cb882beb…5193`
   (`evidence.sourceSha256`).
+- 0.7.0's `src/silent-pad-trig.s` is `a98f7e1e…1a8e`, fingerprint `4e0e6f07…5680`
+  (`evidence.sourceSha256`).
 - Stock OS 1.74: `.syx` `cb0f99d6…e123`, main OS `34cd0c4d…1f3b`, the owner's file.
 - Core: elekloader core-ar2 0.3 (`core-ar2-v0.3`, `core-ar2-0.3.elemod` `6b97dfb3…3e58`, as vendored).
+- Build PS16 (as PS15, with the LIVE REC row's storage field renamed `silent_pt_live_rec_on`,
+  `--version PS16`): `.syx` `0b76d7322f5f19415c6c3eacf2201b96e4ff09bd73f2c497cfbde254c861afa9`, main OS
+  `40a8221f…0e3d`. Checked in rytm-emu 2026-11-04. Ran on an Analog Rytm MKII on 2026-11-04: flashed,
+  and "all good", as reported. PS14's itemized results carry over (the same code apart from the label
+  and the field's name).
+- Build PS15 (as PS14, with the second row renamed SILENT P+T LIVEREC, `--version PS15`): `.syx`
+  `35bd04354075702068122a9fbd2653a75e5988210f697a944f5ca244da483d80`, main OS `7b5b44d6…9006`. Label
+  checked in rytm-emu 2026-11-04; not run on a unit. PS14's results carry over (the same code apart
+  from the label).
+- Build PS14 (vendored core-ar2 0.7 `core-ar2-0.7.elemod` `f1e9cb2c…`, + 0.7.0, Modwerk's linker,
+  `--version PS14`): `.syx` `629fa15c9203f7a82350535e1e50c5b13065283248884b5267e7acba296bf736`, main OS
+  `73fb5eda…0122`. Tested in rytm-emu 2026-11-04 ([0.7.0](#070-func--trig-plays-trig-keys-in-live-rec-row-renamed-2026-11-04)).
+  Ran on an Analog Rytm MKII on 2026-11-04 ([below](#ps14-on-an-analog-rytm-mkii-2026-11-04-as-reported)). PS13 (`cf990894…`), the same without the LIVE REC change, was an
+  intermediate build.
 - Build PS12 (as PS11, with the MIDI note on stopped where the track is known): `.syx`
   `abf3f40c989d3502d71c1097601e2af7a97f67edc83973e21a3c12bf9f0a2702`. Tested in rytm-emu 2026-11-01 ([0.6.0](#060-mute-all-sound-2026-11-01)). Combined image `82f9a398a62751cd…`. Ran on an Analog Rytm MKII on 2026-11-01, as reported.
 - Build PS11 (Modwerk base `0c92aa45`, core-ar2 0.7, + 0.6.0, Modwerk's linker, `--version PS11`):
@@ -54,6 +70,83 @@ After 0.5.1 the module's display name becomes Silent Pad+Trig Settings (the id, 
 - Build PS03 (0.3.0 before the review fixes): `.syx` `f0ac2210…7a85`, main OS `2884ff5a…5879`.
 - Build PS74 (core-ar2 0.3 + 0.2.0): `.syx` `4b2e6567…ad21`, main OS `7ea05528…033f`. The
   emulator sections below marked 0.2.0 ran on it.
+
+## 0.7.0: FUNC + TRIG plays, TRIG keys in LIVE REC, row renamed (2026-11-04)
+
+Read from OS 1.74: KeyboardView's TRIG handler (`0x400c7b84`) declines FUNC + TRIG outside STEP
+RECORDING (`0x400c7cec`), after testing STEP REC at `0x400c7ce0`, so stock's FUNC + TRIG plays
+nothing there; the sequencer view's TRIG case (`0x4003cf3c`) does nothing with it when not
+recording. With plain TRIG presses silent, FUNC + TRIG was free to play them. The new `func_trig`
+replaces that STEP REC test: true in STEP REC, as stock, and true for TRIG 1-13 while `active()`
+holds, sending the press down the plain press's path (`0x400c7cf2`), which plays at the sound's
+VEL (byte 705, `0x400c7d30`); `play_gate` already lets FUNC through. GRID REC and the handler's
+other declines are tested before the site, so stay stock.
+
+`active()` no longer takes the press's source: in LIVE REC, SILENT P+T LIVEREC now gates TRIG keys
+as it gates pads. The plain press stops in `play_gate`, before the play routine and its record code,
+as a silent pad does. The row is renamed SILENT P+T LIVEREC (it was SILENT PAD LIVEREC) and its storage field
+`silent_pt_live_rec_on` (it was `silent_live_rec_on`), with no migration: the module is experimental. One new site, `.run` 1172 to 1196 bytes, no
+new storage.
+
+**Emulator** (rytm-emu 2ac0f1f, headless `dtboot`, PS14). Cold boots on a card image with the rows
+checked through the menu (AUTO TRK SWITCH checked on that card): A, SILENT PAD+TRIG and SILENT PAD
+LIVEREC; B, SILENT PAD+TRIG only. Then a snapshot per mode. Counters on the handler's decline
+(`0x400c7cec`), the play path (`0x400c7cf2`), the play routine (`0x400c772e`) and the voice start
+(`0x40083f40`); `--midi-out` bytes. VEL was 100 (`0x64`).
+
+| Mode (A) | TRIG 5, TRIG 13 | FUNC + TRIG 5 | FUNC + TRIG 13 | FUNC + SD |
+| --- | --- | --- | --- | --- |
+| Stopped, playing, CHAIN, SONG, menu open | silent, no MIDI | plays, `9d 04 64 8d 04 00` | plays, `9d 0c 64 8d 0c 00` | plays, `9d 01 7f` |
+| PERF, SCENE | silent | plays, `9d 04 64` | plays, `9d 0c 64` | as stock (no voice) |
+| MUTE | silent | plays, `9d 04 64` | plays, `9d 0c 64` | as stock (mute CC) |
+| CHROMATIC | silent | plays, `9d 04 64` | plays, `9d 0c 64` | chromatic note, as stock |
+| GRID REC | declined (place trigs, as stock) | declined; FUNC trig placed (`0x4003d71c`), as stock | the same | plays |
+| LIVE REC | silent, no MIDI | plays, `9d 04 64` | plays, `9d 0c 64` | plays |
+| STEP REC | declined, as stock | plays, as stock | plays, as stock | plays |
+
+On PS13 FUNC + TRIG 14 was declined in every mode but STEP REC, as stock; PS14 changes nothing on
+that path.
+
+LIVE REC, recording. Counted inside the play routine: for A's plain TRIG 5, `0x40083ec4`,
+`0x40083f14` and the voice trigger `0x4011e1b4` ran 0 times, as with no press, and `--analog-wav`
+was sample-identical to the run with no press. A's FUNC + TRIG 5 ran them 2, 1 and 2 times, the
+same as B's plain TRIG 5, which is stock. Playback of the recorded trig was not checked: the
+`--analog-wav` capture came back one second long, short of a pattern loop.
+
+B (SILENT P+T LIVEREC unchecked), LIVE REC: TRIG 5 and 13 play (`9d 04 64`, `9d 0c 64`), FUNC +
+TRIG is declined with no voice or MIDI, FUNC + SD plays at VEL, all as stock. Stopped: as A.
+
+With both rows unchecked (PS13, same code path outside LIVE REC), stopped: TRIG 5 plays, FUNC + TRIG
+5 and 13 are declined with no voice or MIDI, as stock.
+
+**Field rename (PS16).** PS15 with both SILENT rows checked, then `--power-off` on a copy of the
+card: a cold boot of PS15 on that card shows both still checked; a cold boot of PS16 shows SILENT
+PAD+TRIG and SILENT P+T LIVEREC unchecked, the reset the README lists. On a fresh PS16 boot with both
+rows checked, LIVE REC: TRIG 5 silent with no voice or MIDI, FUNC + TRIG 5 `9d 04 64 8d 04 00`, SD
+silent.
+
+The four documentation captures, rerun on PS16 with the same plan (byte-identical to PS15's): CONTROL and the silent press
+are byte-identical to PS12's frames; both SEQUENCER CONFIG frames show the new label, whole, ending
+before the box, also highlighted (step 21).
+
+### PS14 on an Analog Rytm MKII, 2026-11-04, as reported
+
+npp1993 ran PS14 with both SILENT rows checked and reported that everything worked as expected,
+following these steps:
+
+| Step | Result |
+| --- | --- |
+| LIVE REC: TRIG 5 | silent, as reported |
+| LIVE REC: FUNC + TRIG 5 | plays, as reported |
+| Stop, play the pattern | only the FUNC + TRIG hit recorded, as reported |
+| Stopped: FUNC + TRIG | plays at VEL; changing VEL changes its level, as reported |
+
+Not itemized on a unit: GRID REC and STEP REC with FUNC + TRIG, TRIG 13, AUTO TRK SWITCH off.
+PS16 was then flashed and reported all good, with no steps itemized.
+
+**Not tested in the emulator:** VEL other than 100 for FUNC + TRIG, playback of a FUNC + TRIG trig
+recorded in LIVE REC (both passed on the unit, below), AUTO TRK SWITCH unchecked, FUNC + TRIG
+with MUTE ALL SOUND on a muted track, the SOUND BROWSER, a unit.
 
 ## 0.6.0: MUTE ALL SOUND (2026-11-01)
 

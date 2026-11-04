@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "silent-pad-trig",
   "name": "Silent Pad+Trig Settings",
-  "version": "0.6.0-experimental",
+  "version": "0.7.0-experimental",
   "machine": "analog-rytm-mkii",
   "category": "system",
   "exclusive": false,
@@ -22,26 +22,26 @@
   "presentation": {
     "label": "SILENT PAD+TRIG",
     "family": "Workflow",
-    "summary": "Three checkboxes: pads and TRIG keys select silently outside recording; pads stay silent in LIVE RECORDING; MUTE ALL SOUND keeps a muted track silent from pads, TRIG keys and MIDI, while trigs still record.",
-    "overview": "Silent Pad+Trig Settings adds three checkboxes to GLOBAL > CONTROL > SEQUENCER CONFIG, after AUTO TRK SWITCH. SILENT PAD+TRIG covers every state but LIVE and STEP RECORDING: a pad or TRIG key 1-12 press selects its track and stays silent, with no MIDI note. SILENT PAD LIVEREC covers LIVE RECORDING: a pad press selects its track silently and records nothing, while TRIG keys play and record as stock. With either, hold FUNC and press a pad to play it at the pad's own velocity, which in LIVE RECORDING also records. MUTE ALL SOUND extends a mute: on stock a muted track skips its sequencer trigs but still plays from pads, TRIG keys and MIDI; checked, those start no voice and send no MIDI note on either, in any state, and LIVE RECORDING still lays down the trig. Aftertouch is untouched. All three default to unchecked, are kept per GLOBAL slot and are saved with the project.",
+    "summary": "Three checkboxes: pads and TRIG keys select silently outside recording; pads and TRIG keys stay silent in LIVE RECORDING; MUTE ALL SOUND keeps a muted track silent from pads, TRIG keys and MIDI, while trigs still record.",
+    "overview": "Silent Pad+Trig Settings adds three checkboxes to GLOBAL > CONTROL > SEQUENCER CONFIG, after AUTO TRK SWITCH. SILENT PAD+TRIG covers every state but LIVE and STEP RECORDING: a pad or TRIG key 1-12 press selects its track and stays silent, with no MIDI note. SILENT P+T LIVEREC covers LIVE RECORDING: a pad or TRIG key press selects its track silently and records nothing. With either, hold FUNC and press a pad to play it at the pad's own velocity, or a TRIG key to play its track at the TRIG page's VEL; in LIVE RECORDING both also record. MUTE ALL SOUND extends a mute: on stock a muted track skips its sequencer trigs but still plays from pads, TRIG keys and MIDI; checked, those start no voice and send no MIDI note on either, in any state, and LIVE RECORDING still lays down the trig. Aftertouch is untouched. All three default to unchecked, are kept per GLOBAL slot and are saved with the project.",
     "highlights": [
       "Tap pads to pick tracks without hearing them, while editing or while live recording, each switched on its own.",
       "Mute a track and record into it in silence: pads, TRIG keys and MIDI make no sound, and the trigs still go down.",
-      "FUNC + pad plays and records, at the pad's own velocity.",
+      "FUNC + pad plays and records, at the pad's own velocity; FUNC + TRIG plays at the TRIG page's VEL.",
       "Three checkboxes per GLOBAL slot, kept through a power cycle; unchecked is stock."
     ],
     "usage": [
-      "Use a build containing Silent Pad+Trig Settings. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG. After AUTO TRK SWITCH are SILENT PAD+TRIG, SILENT PAD LIVEREC and MUTE ALL SOUND; check any with YES or LEFT/RIGHT.",
-      "With SILENT PAD+TRIG checked and the sequencer stopped, tap the SD pad: it makes no sound and the SD track is selected. Hold FUNC and tap SD to hear it at the pad's own velocity. TRIG 5 selects track 5 silently.",
-      "With SILENT PAD LIVEREC checked, press RECORD + PLAY for LIVE RECORDING: plain pad taps stay silent and record nothing; hold FUNC and tap a pad to play and record it. Uncheck both to get stock behaviour everywhere.",
+      "Use a build containing Silent Pad+Trig Settings. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG. After AUTO TRK SWITCH are SILENT PAD+TRIG, SILENT P+T LIVEREC and MUTE ALL SOUND; check any with YES or LEFT/RIGHT.",
+      "With SILENT PAD+TRIG checked and the sequencer stopped, tap the SD pad: it makes no sound and the SD track is selected. Hold FUNC and tap SD to hear it at the pad's own velocity. TRIG 5 selects track 5 silently; FUNC + TRIG 5 plays it at VEL.",
+      "With SILENT P+T LIVEREC checked, press RECORD + PLAY for LIVE RECORDING: plain pad and TRIG key taps stay silent and record nothing; hold FUNC and tap a pad or TRIG key to play and record it. Uncheck both to get stock behaviour everywhere.",
       "With MUTE ALL SOUND checked, mute BD in MUTE mode, press RECORD + PLAY and tap BD: you hear nothing. Stop, unmute BD and play: the trigs you tapped are there."
     ]
   },
   "access": {
-    "location": "GLOBAL > CONTROL > SEQUENCER CONFIG: SILENT PAD+TRIG, SILENT PAD LIVEREC and MUTE ALL SOUND, after AUTO TRK SWITCH.",
+    "location": "GLOBAL > CONTROL > SEQUENCER CONFIG: SILENT PAD+TRIG, SILENT P+T LIVEREC and MUTE ALL SOUND, after AUTO TRK SWITCH.",
     "steps": [
       "Open the GLOBAL menu and choose CONTROL, then SEQUENCER CONFIG.",
-      "Move to SILENT PAD+TRIG, SILENT PAD LIVEREC or MUTE ALL SOUND, just after AUTO TRK SWITCH, and press YES (or RIGHT) to check it."
+      "Move to SILENT PAD+TRIG, SILENT P+T LIVEREC or MUTE ALL SOUND, just after AUTO TRK SWITCH, and press YES (or RIGHT) to check it."
     ],
     "screenshots": [
       "media/control-menu.png",
@@ -59,9 +59,9 @@
       ]
     },
     {
-      "name": "SILENT PAD LIVEREC",
+      "name": "SILENT P+T LIVEREC",
       "default": 0,
-      "doc": "Checkbox after SILENT PAD+TRIG. YES toggles it, RIGHT checks, LEFT unchecks. Checked: in LIVE RECORDING, pads select their track silently and record nothing; TRIG keys still play and record. Kept per GLOBAL slot.",
+      "doc": "Checkbox after SILENT PAD+TRIG. YES toggles it, RIGHT checks, LEFT unchecks. Checked: in LIVE RECORDING, pads and TRIG keys 1-13 are silent and record nothing; pads and TRIG 1-12 select their track. Kept per GLOBAL slot.",
       "labels": [
         "Unchecked",
         "Checked"
@@ -70,7 +70,7 @@
     {
       "name": "MUTE ALL SOUND",
       "default": 0,
-      "doc": "Checkbox after SILENT PAD LIVEREC. YES toggles it, RIGHT checks, LEFT unchecks. Checked: a pad, TRIG key or MIDI note starts no voice on a muted track, or on one silenced by another track's solo, and a pad or TRIG key sends no MIDI note on. Recording is untouched. Kept per GLOBAL slot.",
+      "doc": "Checkbox after SILENT P+T LIVEREC. YES toggles it, RIGHT checks, LEFT unchecks. Checked: a pad, TRIG key or MIDI note starts no voice on a muted track, or on one silenced by another track's solo, and a pad or TRIG key sends no MIDI note on. Recording is untouched. Kept per GLOBAL slot.",
       "labels": [
         "Unchecked",
         "Checked"
@@ -80,6 +80,12 @@
       "name": "FUNC + pad",
       "default": null,
       "doc": "Where a checked setting applies, plays the pad's track at the strike's velocity, or the fixed velocity with FIX on (stock FUNC + pad uses the TRIG page's VEL); records it in LIVE RECORDING; selects the track only if AUTO TRK SWITCH is checked, as stock.",
+      "labels": null
+    },
+    {
+      "name": "FUNC + TRIG 1-13",
+      "default": null,
+      "doc": "Where SILENT PAD+TRIG or SILENT P+T LIVEREC applies, plays the track at the TRIG page's VEL, as a plain TRIG press does on stock, and records it in LIVE RECORDING; selects the track only if AUTO TRK SWITCH is checked, as stock. Stock plays nothing there. GRID and STEP RECORDING keep stock's FUNC + TRIG.",
       "labels": null
     },
     {
@@ -97,14 +103,14 @@
     "conflicts": [],
     "limitations": [
       "Built for OS 1.74 only, with core-ar2 0.3.",
-      "0.5.0 (PS07) and 0.5.1 (PS08) ran on a unit: both settings worked as intended and the renamed row fits, as reported. MIDI out and STEP REC not yet tested on a unit. 0.6.0 with MUTE ALL SOUND ran on a unit as PS10, PS11 and PS12, as reported. MIDI notes in on a unit not tested.",
+      "0.5.0 (PS07) and 0.5.1 (PS08) ran on a unit: both settings worked as intended and the renamed row fits, as reported. MIDI out and STEP REC not yet tested on a unit. 0.6.0 with MUTE ALL SOUND ran on a unit as PS10, PS11 and PS12, as reported. MIDI notes in on a unit not tested. 0.7.0's FUNC + TRIG and LIVE REC TRIG keys ran on a unit as PS14, as reported.",
       "A note already ringing when you mute keeps ringing, as stock: MUTE ALL SOUND stops new hits and does not cut the voice or the delay and reverb tails.",
       "The SOUND BROWSER's audition reaches the voice by another path, so it still plays on a muted track, on purpose (read in the code, not tested). A muted hit runs no envelope or LFO trig. MIDI out gets no note on or poly pressure from a muted pad, but its release still sends a note off, which a receiver ignores.",
-      "FUNC + TRIG 1-12 plays nothing, as on stock: use FUNC + pad to hear a track. On stock it acts only while recording, placing a trig in GRID RECORDING and playing the track in STEP RECORDING; the module leaves both as they are.",
+      "FUNC + TRIG is stock in GRID and STEP RECORDING: it places a trig in GRID RECORDING and plays and selects in STEP RECORDING. Elsewhere stock's FUNC + TRIG plays nothing, and the module makes it play where TRIG keys are silent. 0.7.0 renames the row from SILENT PAD LIVEREC to SILENT P+T LIVEREC.",
       "With the SILENT rows, a silent press passes its aftertouch on, so MIDI out can carry poly pressure with no note-on before it. MUTE ALL SOUND stops poly pressure on a muted track; the pressure still reaches the sound, so it can modulate a ringing note.",
-      "TRIG 13 (the FX track), the SOUND BROWSER's pad audition and pads with a menu open are silent too; FUNC + pad plays.",
+      "TRIG 13 (the FX track), the SOUND BROWSER's pad audition and pads with a menu open are silent too; FUNC + pad and FUNC + TRIG play.",
       "RTRG + pad selects silently; FUNC + RTRG also toggles the metronome click, as on stock, so it is not a clean way to roll.",
-      "A unit that ran 0.5.x starts 0.6.0 with its rows unchecked when linked alone: the storage layout changed, so check them again once (seen in rytm-emu from 0.5.1). The same held from 0.4.x to 0.5.x; 0.5.0's settings carry over to 0.5.1.",
+      "A unit that ran 0.6.x starts 0.7.0 with its rows unchecked when linked alone: the LIVE REC row's storage field is renamed, which changes the storage layout, so check the rows again once. The same held from 0.5.x to 0.6.0 and from 0.4.x to 0.5.x.",
       "A GLOBAL slot saved without a setting, or received as Global SysEx, loads it unchecked.",
       "LIVE RECORDING counts only while the sequencer runs; a paused LIVE REC follows SILENT PAD+TRIG.",
       "Like stock's SEQUENCER CONFIG rows, a changed row is saved when you leave the menu: power off straight from SEQUENCER CONFIG and the change is lost (seen on a unit, with KIT RELOAD ON CHG behaving the same)."
@@ -117,13 +123,14 @@
     "events": [],
     "claims": [
       "ui:pad press outside CHROMATIC mode",
-      "ui:TRIG 1-12 press",
+      "ui:TRIG 1-13 press",
       "ui:FUNC + pad",
+      "ui:FUNC + TRIG 1-13",
       "ui:GLOBAL > CONTROL > SEQUENCER CONFIG row after AUTO TRK SWITCH"
     ]
   },
   "resources": {
-    "memoryBytes": 1172,
+    "memoryBytes": 1196,
     "fastBytes": 0,
     "load": {
       "display": "None in the audio path: a few compares per pad, TRIG key or MIDI note",
@@ -133,21 +140,22 @@
   },
   "evidence": {
     "tier": "author-hardware",
-    "moduleVersion": "0.6.0-experimental",
-    "sourceSha256": "cb882beb98cf5a7aa29392aa7dad4551cf4cf6a32fd4831e96073ffc69555193",
+    "moduleVersion": "0.7.0-experimental",
+    "sourceSha256": "4e0e6f073b8032f3521167b3a376791c70e590638800950b84e17a6adfcb5680",
     "reports": [
       "TESTING.md"
     ],
     "hardware": {
       "model": "Analog Rytm MKII",
       "release": "1.74",
-      "testedOn": "2026-11-01",
+      "testedOn": "2026-11-04",
       "tester": "npp1993",
       "durationMinutes": null,
-      "summary": "npp1993 (the author) ran it on an Analog Rytm MKII, OS 1.74. 0.5.x (PS07, PS08): both rows work, the label fits, a changed row saves on leaving the menu. 0.6.0, combined images PS10 to PS12, 1 Nov 2026: muted pads and TRIG keys silent with sends up; a ringing note carries through delay and reverb; RS plays on under a muted CP; LIVE REC records in silence; no note on or pressure from a muted pad in a MIDI monitor; row survives a power cycle. Details in TESTING.md.",
+      "summary": "npp1993 (the author) ran it on an Analog Rytm MKII, OS 1.74. 0.7.0 (PS14, then PS16), 4 Nov 2026: FUNC + TRIG plays at VEL and follows VEL; in LIVE REC plain TRIG keys stay silent and record nothing while FUNC + TRIG plays and records. 0.6.0 (PS10 to PS12), 1 Nov 2026: muted pads and TRIG keys silent with sends up; LIVE REC records in silence; no note on or pressure from a muted pad; row survives a power cycle. 0.5.x (PS07, PS08): both rows work and save. Details in TESTING.md.",
       "limitations": [
         "MUTE ALL SOUND on a unit: PS10 for the full run; PS11 for LIVE REC and aftertouch only; PS12 for muted pads and aftertouch, keyboard and CHRO. MIDI notes in were not tested on a unit.",
         "Results are as reported by the author, not itemized measurements; duration not recorded.",
+        "0.7.0 ran on a unit as PS14, which still showed the row as SILENT PAD LIVEREC; PS15 renames that label and PS16 its storage field; PS16 ran on a unit on 4 Nov 2026 and worked, as reported.",
         "PS07 carried the functional tests; PS08 (0.5.1, the same code with the second row relabelled) was checked for the label and saving.",
         "MIDI out, STEP REC, RTRG + pad, the SOUND BROWSER, AUTO TRK SWITCH off, per-slot settings on 0.5.x and loading a checked project on stock 1.74 were not tested on a unit.",
         "Tested SysEx: PS07 eae28e8ff6ae9f29a9d608c0fbe3985804779b42fd96d33d1e4c1d97934cae99, PS08 ff7c4cf3ca61f3c461a16a416cb4515e0d44727216f688ab965785bdbd5343d4; firmware was not read back from the device."
@@ -157,14 +165,14 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Emulator (rytm-emu, OS 1.74). 0.6.0 (PS12): with MUTE ALL SOUND checked, pads, rolls and MIDI on a muted or solo-silenced track output digital zero, with no MIDI note on or pressure, a shared partner keeps its voice, LIVE REC stays sample-identical to no press and still records the trig, and the row survives power-off. Unchecked plays as stock. 0.5.x: both rows tested against stock; 0.5.0, 0.5.1 and 0.6.0 (PS10 to PS12) ran on a unit, as reported.",
+    "summary": "Emulator (rytm-emu, OS 1.74). 0.7.0 (PS14): FUNC + TRIG plays its track at VEL wherever plain TRIG is silent; with SILENT P+T LIVEREC, plain TRIG in LIVE REC is silent and runs no record code, and FUNC + TRIG runs it as stock's press does; GRID and STEP REC and unchecked rows stay stock. 0.6.0 (PS12): MUTE ALL SOUND gives a muted track digital zero and no MIDI note on or pressure, LIVE REC still records, the row survives power-off. 0.5.0, 0.5.1 and 0.6.0 ran on a unit, as reported.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
         "steps": [
-          "Use a build containing Silent Pad+Trig Settings. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG. After AUTO TRK SWITCH are SILENT PAD+TRIG, SILENT PAD LIVEREC and MUTE ALL SOUND; check any with YES or LEFT/RIGHT.",
-          "With SILENT PAD+TRIG checked and the sequencer stopped, tap the SD pad: it makes no sound and the SD track is selected. Hold FUNC and tap SD to hear it at the pad's own velocity. TRIG 5 selects track 5 silently.",
-          "With SILENT PAD LIVEREC checked, press RECORD + PLAY for LIVE RECORDING: plain pad taps stay silent and record nothing; hold FUNC and tap a pad to play and record it. Uncheck both to get stock behaviour everywhere.",
+          "Use a build containing Silent Pad+Trig Settings. Open the GLOBAL menu, then CONTROL > SEQUENCER CONFIG. After AUTO TRK SWITCH are SILENT PAD+TRIG, SILENT P+T LIVEREC and MUTE ALL SOUND; check any with YES or LEFT/RIGHT.",
+          "With SILENT PAD+TRIG checked and the sequencer stopped, tap the SD pad: it makes no sound and the SD track is selected. Hold FUNC and tap SD to hear it at the pad's own velocity. TRIG 5 selects track 5 silently; FUNC + TRIG 5 plays it at VEL.",
+          "With SILENT P+T LIVEREC checked, press RECORD + PLAY for LIVE RECORDING: plain pad and TRIG key taps stay silent and record nothing; hold FUNC and tap a pad or TRIG key to play and record it. Uncheck both to get stock behaviour everywhere.",
           "With MUTE ALL SOUND checked, mute BD in MUTE mode, press RECORD + PLAY and tap BD: you hear nothing. Stop, unmute BD and play: the trigs you tapped are there."
         ]
       },
@@ -203,41 +211,41 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.6.0-experimental",
-        "imageSha256": "abf3f40c989d3502d71c1097601e2af7a97f67edc83973e21a3c12bf9f0a2702",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS12: Modwerk base 0c92aa45 (core-ar2 0.7) and this folder's Silent Pad+Trig 0.6.0, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.7.0-experimental",
+        "imageSha256": "0b76d7322f5f19415c6c3eacf2201b96e4ff09bd73f2c497cfbde254c861afa9",
+        "setup": "Headless rytm-emu 2ac0f1f (dtboot) cold-booting PS16: the vendored core-ar2 0.7 (f1e9cb2c) and this folder's Silent Pad+Trig 0.7.0, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
       "path": "media/seq-config.png",
       "kind": "screenshot",
       "caption": "SEQUENCER CONFIG gains three rows after AUTO TRK SWITCH, all unchecked by default; MUTE ALL SOUND is the last.",
-      "alt": "SEQUENCER CONFIG list with SILENT PAD+TRIG, SILENT PAD LIVEREC and MUTE ALL SOUND after AUTO TRK SWITCH, boxes empty, MUTE ALL SOUND highlighted.",
+      "alt": "SEQUENCER CONFIG list with SILENT PAD+TRIG, SILENT P+T LIVEREC and MUTE ALL SOUND after AUTO TRK SWITCH, boxes empty, MUTE ALL SOUND highlighted.",
       "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.6.0-experimental",
-        "imageSha256": "abf3f40c989d3502d71c1097601e2af7a97f67edc83973e21a3c12bf9f0a2702",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS12: Modwerk base 0c92aa45 (core-ar2 0.7) and this folder's Silent Pad+Trig 0.6.0, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.7.0-experimental",
+        "imageSha256": "0b76d7322f5f19415c6c3eacf2201b96e4ff09bd73f2c497cfbde254c861afa9",
+        "setup": "Headless rytm-emu 2ac0f1f (dtboot) cold-booting PS16: the vendored core-ar2 0.7 (f1e9cb2c) and this folder's Silent Pad+Trig 0.7.0, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
       "path": "media/seq-config-checked.png",
       "kind": "screenshot",
       "caption": "Press YES (or RIGHT) on a row to check it; each is set on its own and the GLOBAL slot keeps all three.",
-      "alt": "SEQUENCER CONFIG list with SILENT PAD+TRIG and MUTE ALL SOUND checked, SILENT PAD LIVEREC empty, MUTE ALL SOUND highlighted.",
+      "alt": "SEQUENCER CONFIG list with SILENT PAD+TRIG and MUTE ALL SOUND checked, SILENT P+T LIVEREC empty, MUTE ALL SOUND highlighted.",
       "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.6.0-experimental",
-        "imageSha256": "abf3f40c989d3502d71c1097601e2af7a97f67edc83973e21a3c12bf9f0a2702",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS12: Modwerk base 0c92aa45 (core-ar2 0.7) and this folder's Silent Pad+Trig 0.6.0, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.7.0-experimental",
+        "imageSha256": "0b76d7322f5f19415c6c3eacf2201b96e4ff09bd73f2c497cfbde254c861afa9",
+        "setup": "Headless rytm-emu 2ac0f1f (dtboot) cold-booting PS16: the vendored core-ar2 0.7 (f1e9cb2c) and this folder's Silent Pad+Trig 0.7.0, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -251,9 +259,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.6.0-experimental",
-        "imageSha256": "abf3f40c989d3502d71c1097601e2af7a97f67edc83973e21a3c12bf9f0a2702",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) cold-booting PS12: Modwerk base 0c92aa45 (core-ar2 0.7) and this folder's Silent Pad+Trig 0.6.0, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.7.0-experimental",
+        "imageSha256": "0b76d7322f5f19415c6c3eacf2201b96e4ff09bd73f2c497cfbde254c861afa9",
+        "setup": "Headless rytm-emu 2ac0f1f (dtboot) cold-booting PS16: the vendored core-ar2 0.7 (f1e9cb2c) and this folder's Silent Pad+Trig 0.7.0, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]
