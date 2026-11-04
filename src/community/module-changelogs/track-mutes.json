@@ -1,0 +1,11 @@
+[
+  {
+    "version": "0.1.33-experimental",
+    "date": "2026-11-02",
+    "changes": [
+      "Tick TRACK MUTES in PERSONALIZE and T1-T8 mute or unmute, including several at once. FUNC+T selects that track. An empty box is stock.",
+      "The checkbox is stored in this module, not in Mute Modes' battery word, so it returns to empty after power-off until a base settings store exists.",
+      "FUNC+REC1/2 on the MIDI page opens recorder buffers only while the box is ticked. USB install, self-test, Keep/Undo and removal are not tested. The 0.1.32 card's AED follow was reported for that card only."
+    ]
+  }
+]
