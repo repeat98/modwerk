@@ -1,8 +1,9 @@
-# Pattern Sample Locks 0.1.8 candidate instruction envelope
+# Pattern Sample Locks 0.1.8 candidate transaction-core instruction envelope
 
-This is a static, stock-free instruction-count analysis for one maximum-size
-successful Lock/Clear transaction. It is not a qualification result, a cycle
-count, a latency bound or a claim about execution time on an Octatrack.
+This is a source-bound, stock-free instruction-count analysis for the bounded
+core segment of a maximum-size successful Lock/Clear transaction. The total is
+not a whole-operation or whole-callback count, and is not a qualification
+result, cycle count, latency bound or execution-time claim for an Octatrack.
 
 ## Exact candidate and source binding
 
@@ -32,15 +33,34 @@ matches the value above. Relevant individual source pins are `engine.c`
 `translation.c` `307d7f0d95a8eef8746c069472123555eebd40635e9401c3946e7d51e69113a5`,
 and `unit.s` `837e44f48fa137444e14755d96011731c8fde29a73fa877ffc35edac3510473f`.
 
+The package contains nine guarded stock-copy placeholders and no fill records.
+Two copy destinations overlap counted machine-code function ranges, so
+disjointness alone would be the wrong validation criterion. The first review
+helper stopped on that overlap; the assertion was overstrict, not evidence of
+a package mismatch. The corrected private audit checks each guarded-copy digest
+against the same-offset bytes in the cached
+linked image, checks that copy ranges do not intersect relocation words, then
+reconstructs the initialized image and requires byte-for-byte equality with
+the linked ELF image. All nine guards match; the reconstructed 8,748-byte
+image has SHA-256
+`54efd2166b30b836401d02f8d0d785e12aebc5b40196deb1a9b6e4530e6f95d5` and is
+identical to the compiler report's image. Thus the counted instruction stream
+is the stream produced by the compiler after the package's valid guarded-copy
+records are resolved. A rejected stock guard prevents this candidate image
+from loading; this conclusion does not substitute for the package/base guard
+checks.
+
 ## Counted path and workload
 
 The summed path begins at entry to `psl_prepare`, with its source snapshot
 already supplied by the UI, and ends when candidate refresh dispatch returns
-from `psl_native_commit`. It includes preparation, commit revalidation,
-companion-slot scans, per-step publication, the candidate-side task guard and
-candidate dispatch to refresh. In the real UI those phases are separated by
-input events; user think time and instructions in the surrounding UI callbacks
-are outside this count.
+from `psl_native_commit`. It includes each listed function's prologue and
+epilogue, candidate call instructions, preparation, commit revalidation,
+companion-slot scans, per-step publication and the candidate-side task guard.
+In the real UI the preparation and commit phases are separate input events;
+the `module_key` event wrapper, earlier UI source captures, UI-state work,
+dispatcher setup, user think time, later redraw and other callbacks are outside
+this count.
 
 The stress workload clears all 512 SAMPLE fields: eight selected tracks times
 64 steps, every field initially locked, all 64 steps changed, and all eight
@@ -76,12 +96,46 @@ track/trig/SAMPLE scans, the 15,872 empty-slot checks, final revalidation,
 dispatches. `psl_native_transport` has two 16-entry scans and is called twice
 on the normal commit path.
 
-For each C-compiled function except the separately expanded writer loop, the
-deliberately loose envelope is `static instructions × (1 + total maximum
-source-loop trips)`. The added one pays for the base execution of every static
-instruction; charging every static instruction for every source-loop trip
-overcounts loop setup/exit and mutually exclusive paths. `psl_write_step` has
-a 9-instruction loop body, so its complete maximum is
+The nested trip accounting used by the helper is explicit here; products count
+inner loop activations across every selected track, and sequential loops are
+added:
+
+| Function | Maximum dynamic source-loop trips per call |
+| --- | ---: |
+| `source_valid` | `8` track checks |
+| `psl_prepare` | `8 + 8 + 8×8 + 8×64 = 592` |
+| `psl_validate` | `8 + 8×8 + 8×64 = 584` |
+| `psl_native_source` | `8` tracks |
+| `psl_native_transport` | `16 + 16 = 32` |
+| `psl_native_context` | `0` |
+| `psl_native_commit` | `64 + 8 + 8×8 + 8×64 + 8×64×31 + 8 + 8×8 + 8×64 + 64 + 64×8 + 8 = 17,688` |
+| `psl_write_step` | `8` edits maximum per call |
+
+For the commit root the terms are, in order: 64 index bytes; an eight-track
+scan; 8 trig bytes and 64 SAMPLE steps per selected track; up to 31 companion
+slots per changed SAMPLE field; the final eight-track, trig and SAMPLE
+revalidation scans; 64 publication steps with up to eight selected tracks at
+each step; and eight possible track-refresh dispatches. The successful stress
+fixture selects all eight tracks and changes every field, so these terms
+simultaneously upper-bound that path. The 31-slot scan is the empty-companion
+Clear case; nonempty Lock replacement does not scan those slots.
+
+For a function with `N` static instructions, the helper maps every loop latch
+to the cached ELF and source bound, then verifies that removing all mapped
+latch edges leaves an acyclic instruction CFG. A path with `R` taken latch
+edges splits into at most `R + 1` acyclic fragments, each containing at most
+`N` instruction visits. Each loop's maximum body trips bounds its taken latch
+edges; nested body trips include the product of the parent activation count
+and the inner limit, while sequential trips are added. Therefore
+`N × (1 + sum of dynamic loop trips)` is a conservative upper bound for the
+function, including loop tests and exit branches. The checked candidate call
+graph is acyclic and is bounded separately by its exact call multiplicities;
+this prevents the per-function argument from silently dropping callee work.
+The proof assumes the pinned source-to-CFG map, valid plan state, no memory
+corruption and one transaction without asynchronous candidate re-entry.
+
+`psl_write_step` is handled more tightly: its single loop body is 9
+instructions, with 34 static instructions total. At most eight edits yield
 `34 + 7 × 9 = 97` instructions per call.
 
 | Candidate-owned component | Envelope instructions |
@@ -107,25 +161,85 @@ successful workload and exact linked image. The function-wide multiplication
 is intentionally very pessimistic, not a tight executed-instruction prediction
 or an estimator for other tasks and UI paths.
 
-## Branches, helper checks and reproduction
+## Multiplicity, refresh dispatch and relocation conditions
+
+The checked candidate call graph for these functions is acyclic: `psl_prepare`
+calls `source_valid` once; `psl_validate` calls it once; and the inlined commit
+root calls `psl_native_transport` twice, `psl_native_source` once,
+`psl_validate` once, `psl_native_context` once, and the single `psl_write_step`
+call site at most 64 times. The helper checks every direct call target, rejects
+indirect calls, DBcc loops, jumps and exceptional transfers, and fails if any
+unmapped CFG cycle remains. The 303-instruction `psl_native_commit` count
+includes its prologue/epilogue, inlined task guard and commit body, plus every
+candidate-side call instruction; separate candidate callees are charged in
+the table above. No recursive edge exists in this counted candidate call
+graph.
+
+On a successful changed operation, the candidate calls the fixed global
+refresh target at most once, then the fixed track-refresh call site at most
+eight times (once per changed selected track); a no-op/refusal takes neither
+refresh path. Existing exact-base evidence for base identity
+`9680e9ac861ff9313ce4f7a710a37ad2aa8e9b50b2cf8c043dafa2a0b78cdffc` audits the
+global refresh leaf and the track-refresh direct-call closure plus its bounded
+stock switch ([stock leaves](qualification-progress-20261104.md#stock-leaf-routines),
+[track refresh](qualification-progress-20261104.md#track-refresh-call-path),
+[bounded switch](qualification-progress-20261104.md#bounded-stock-switch)).
+Under that exact base and the audit's condition that no other module patches
+those ranges, the traced refresh closure has no unresolved callback transfer
+that re-enters the candidate transaction core synchronously. The stock
+callee's own instructions are still excluded. This does not resolve interrupt
+or scheduler re-entry, callbacks later dispatched by redraw, or different
+bases/companion patch sets.
+
+The compiler report binds this count to the exact package image. It records
+167 relocations; the cached object has 167 fixed-width `R_68K_32` entries. The
+module loader's relocation path adds the chosen module base to declared
+32-bit address words and does not insert or relax instructions. Thus valid
+uniform relocation changes address operands, not the number or boundaries of
+candidate instructions. This assumes a valid supported placement, the exact
+package and loader behavior, and no live patch changing counted code; it does
+not imply identical data-dependent branch outcomes or memory timing.
+The relocation-type check is reproducible with
+`/opt/homebrew/bin/m68k-elf-readelf -r /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/stack-audit-20261104/translation.o`:
+161 `.rela.text` and 6 `.rela.rodata` entries, all `R_68K_32`.
+
+## Adversarial checks, emulator sanity and reproduction
 
 The private helper pins package, compiler report, object, ELF, candidate-only
-disassembly and relevant source hashes; checks the linked instruction counts,
-source-mapped loop latch addresses and limits, cyclic instruction-CFG component
-ranges, and direct call targets; rejects indirect calls or jumps; and verifies
-that every counted branch has a direct target. The normal candidate call graph
-includes `source_valid`, `psl_native_source`, `psl_native_transport`, `psl_validate`,
-`psl_native_context` and `psl_write_step`; only the two fixed refresh callees
-are stock. Synthetic arithmetic fixtures independently exercise maximum Clear,
-full Lock replacement, no-op Lock, recording refusal and stale-before-publish
-cases, as well as single and nested loop envelopes.
+disassembly and relevant source hashes; validates guarded copy reconstruction;
+checks linked instruction counts, source-mapped loop latch addresses/limits,
+cyclic instruction-CFG component ranges, direct call targets, direct branch
+destinations and an acyclic candidate call graph. Removing every
+source-mapped loop latch must also leave each counted function's instruction
+CFG acyclic. Synthetic tests reject a bad copy digest, overlapping copy
+placeholders, indirect calls, DBcc, jumps and exception transfers.
+Beyond the workload fixtures, adversarial instruction-frequency models cover
+two sequential loops (24 modeled instructions versus a 56-instruction bound),
+three nested loops (138 versus 410, including repeated inner exit tests), and
+nested loops followed by a sequential loop (41 versus 130). A deliberately
+wrong sum of lexical loop limits gives 100 for the three-level nested case and
+fails; dynamic trip products pass. These test the envelope arithmetic, not the
+firmware's execution.
+Synthetic fixtures exercise maximum Clear, full Lock replacement, no-op Lock,
+recording refusal and stale-before-publish cases.
+
+The current exact-candidate emulator traces in
+[TESTING.md](../TESTING.md#dsp-enabled-native-emulator-results) and the
+[qualification receipt](qualification-progress-20261104.md#current-base-emulator-edit-matrix)
+record 314,314 emulator instructions for the maximum 512-field
+empty-companion-slot Clear callback. That observed callback interval is lower
+than this conservative 5,502,242 candidate-core envelope, but the scopes differ:
+the trace includes interrupt/dispatcher work while the static count sums selected candidate
+functions across preparation and commit. It is only a plausibility check; it
+does not establish the static bound, a repeatable maximum or a hardware result.
+No emulator or container was launched for this review.
 
 The private helper and result remain outside Git at:
 
 - `/Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/operation-bound-20261105/audit_candidate_operation.py`
-  (SHA-256 `ae8d91bd9a8e7913c9f5a33afcd2a32c07241bc785e183b1bccd019bcbd93af4`)
+  (SHA-256 `f635abe5d62730079759831f47f9a7da09d0964af7e9f0f1fddee0dc1d730f07`)
 - `/Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/operation-bound-20261105/operation-bound-result.json`
-  (SHA-256 `7434e2b5acbe8b41e10ada349e9d6ef56095751fa93efaf9e915a53b06b114b0`)
+  (SHA-256 `d766533583d356880973075fda3f80a44ee8f4c9e7cbe81335265e075febb3c0`)
 
 Re-run the source-bound checks against the already cached exact candidate inputs
 with:
@@ -151,20 +265,21 @@ JS
 
 ## Limits and path conditions
 
-- The count starts inside `psl_prepare`; it excludes the UI's earlier source
-  capture, event-dispatch instructions, arbitrary user input/think time, UI
-  rendering and post-commit redraw. It sums candidate instruction work across
-  the preparation and later confirmation callbacks, not contiguous elapsed
-  time.
+- This is a transaction-core segment bound, not a complete bound for all
+  candidate instructions in the key callbacks. It excludes the `module_key`
+  wrapper, UI's earlier source captures, dispatch setup, arbitrary user
+  input/think time and later redraw; the phases also are not contiguous in
+  elapsed time.
 - A no-op Lock returns before commit scans/publication. Active recording is
   refused before `psl_native_commit`; stale input may be rejected during
   validation or final revalidation before the first write. These branches have
   different work and zero publication spans when refused; this successful
   maximum workload does not represent them as equal-cost paths.
-- The bound assumes the fixed stock refresh callouts return normally and do not
-  synchronously re-enter candidate code. Stock refresh implementation work,
-  interrupts and scheduler work are not counted; interrupt nesting and the
-  edge-sensitive level-7 preemption question remain separate unresolved gates.
+- The exact-base refresh audits resolve candidate re-entry only for the
+  inspected stock paths and no-other-module-patches condition. Stock refresh
+  instructions are excluded; interrupts and scheduler work are not counted,
+  and their possible candidate re-entry, interrupt nesting and edge-sensitive
+  level-7 preemption remain separate unresolved gates.
 - Instruction totals are not MCF54455 core cycles. They do not price SDRAM
   access, cache state, bus arbitration, memory wait states, PLL/core clock,
   instruction sequencing stalls, or interrupt-controller delivery. No cycle,
