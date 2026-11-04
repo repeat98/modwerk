@@ -2,7 +2,25 @@
 
 ## Hardware
 
-Build FC09 (0.2.0-experimental, UP and DOWN ratios; sha256 4f5839df): not tested on a unit yet. The results below are for 0.1.0.
+Analog Rytm MKII, OS 1.74, build FC09 (0.2.0-experimental, sha256 4f5839df) alone, reported by the tester, 4 Nov 2026. GRID RECORDING, TRIG page, trigs on steps 1, 3 and 5.
+
+| Check | Result |
+| --- | --- |
+| T1 held, DOWN three times | 1:4 |
+| T1 held, UP four times | 2:4, 3:4, 4:4, back to 1:4 |
+| T3 held, DOWN eight times | 1:2 to 1:8, then the lock clears |
+| T5 + FILL, then T5 held + UP | Fill, then 1:2 |
+| Then FILL, FILL, DOWN, UP | Fill, overlined Fill, 1:2, 2:2 |
+| TRC knob turned to clear | Lock clears |
+| T1 and T3 held, DOWN, T1 with no lock | Both 1:2. With T1 on 1:4 first, both went 1:5: the lowest sets the step |
+| T1 held, RTRG | RETRIG menu opens. With retrig off, the first UP or DOWN there switches retrig on, the next ones change RATE: stock does the same (rytm-emu, stock OS) |
+| T1 held, UP held | One step, no menu |
+| T1 + FILL three times | Fill, overlined Fill, lock gone |
+| Pattern with ratio trigs played | Each plays on its loops |
+| Pattern save, pattern reload | Conditions come back. The TRIG page's SYN and SMP switches come back too: they are pattern data (track + 708), as on stock |
+| Project save, power cycle | Passes |
+
+The results below are for 0.1.0.
 
 Analog Rytm MKII, OS 1.74, build FC04, reported by the tester, 1 Nov 2026. The tester was pointed at the combined image; which one they flashed was not recorded.
 

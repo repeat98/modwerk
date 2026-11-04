@@ -84,7 +84,7 @@
  },
  "tests": {
   "report": "TESTING.md",
-  "summary": "0.1.0: functional pass on an Analog Rytm MKII and rytm-emu. 0.2.0 (UP and DOWN ratios): rytm-emu only so far; see TESTING.md."
+  "summary": "Functional pass on an Analog Rytm MKII for 0.1.0 (FC07) and 0.2.0 (FC09, UP and DOWN ratios), and in rytm-emu; see TESTING.md."
  },
  "license": {
   "spdx": "GPL-3.0-or-later",
