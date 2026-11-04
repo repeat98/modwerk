@@ -20,23 +20,23 @@
     },
     "frame-mode-1": {
       "cases": 131072,
-      "maxInstructions": 118,
-      "maxModelCycles": 210,
-      "maxCoreCycleUpperBound": 1888,
+      "maxInstructions": 127,
+      "maxModelCycles": 222,
+      "maxCoreCycleUpperBound": 2032,
       "maxAdditionalStackBytes": 24
     },
     "frame-mode-2": {
       "cases": 131072,
-      "maxInstructions": 30,
-      "maxModelCycles": 52,
-      "maxCoreCycleUpperBound": 480,
+      "maxInstructions": 39,
+      "maxModelCycles": 64,
+      "maxCoreCycleUpperBound": 624,
       "maxAdditionalStackBytes": 16
     },
     "frame-mode-3": {
       "cases": 131072,
-      "maxInstructions": 127,
-      "maxModelCycles": 170,
-      "maxCoreCycleUpperBound": 2032,
+      "maxInstructions": 136,
+      "maxModelCycles": 182,
+      "maxCoreCycleUpperBound": 2176,
       "maxAdditionalStackBytes": 24
     },
     "fresh-bind": {
@@ -45,6 +45,55 @@
       "maxModelCycles": 33,
       "maxCoreCycleUpperBound": 352,
       "maxAdditionalStackBytes": 8
+    },
+    "hold-frame-mode-1": {
+      "cases": 512,
+      "maxInstructions": 124,
+      "maxModelCycles": 218,
+      "maxCoreCycleUpperBound": 1984,
+      "maxAdditionalStackBytes": 24
+    },
+    "hold-frame-mode-2": {
+      "cases": 512,
+      "maxInstructions": 36,
+      "maxModelCycles": 60,
+      "maxCoreCycleUpperBound": 576,
+      "maxAdditionalStackBytes": 16
+    },
+    "hold-frame-mode-3": {
+      "cases": 512,
+      "maxInstructions": 133,
+      "maxModelCycles": 178,
+      "maxCoreCycleUpperBound": 2128,
+      "maxAdditionalStackBytes": 24
+    },
+    "hold-ot-frame": {
+      "cases": 768,
+      "maxInstructions": 13,
+      "maxModelCycles": 26,
+      "maxCoreCycleUpperBound": 208,
+      "maxAdditionalStackBytes": 16
+    },
+    "hold-release-frame-mode-1": {
+      "cases": 256,
+      "maxInstructions": 36,
+      "maxModelCycles": 65,
+      "maxCoreCycleUpperBound": 576,
+      "maxAdditionalStackBytes": 16
+    },
+    "hold-release-frame-mode-2": {
+      "cases": 256,
+      "maxInstructions": 36,
+      "maxModelCycles": 60,
+      "maxCoreCycleUpperBound": 576,
+      "maxAdditionalStackBytes": 16
+    },
+    "hold-release-frame-mode-3": {
+      "cases": 256,
+      "maxInstructions": 37,
+      "maxModelCycles": 64,
+      "maxCoreCycleUpperBound": 592,
+      "maxAdditionalStackBytes": 16
     },
     "menu-get": {
       "cases": 54,
@@ -83,23 +132,23 @@
     },
     "sidechain-frame-mode-1": {
       "cases": 65536,
-      "maxInstructions": 203,
-      "maxModelCycles": 387,
-      "maxCoreCycleUpperBound": 3248,
+      "maxInstructions": 206,
+      "maxModelCycles": 390,
+      "maxCoreCycleUpperBound": 3296,
       "maxAdditionalStackBytes": 24
     },
     "sidechain-frame-mode-2": {
       "cases": 65536,
-      "maxInstructions": 139,
-      "maxModelCycles": 237,
-      "maxCoreCycleUpperBound": 2224,
+      "maxInstructions": 142,
+      "maxModelCycles": 240,
+      "maxCoreCycleUpperBound": 2272,
       "maxAdditionalStackBytes": 20
     },
     "sidechain-frame-mode-3": {
       "cases": 65536,
-      "maxInstructions": 212,
-      "maxModelCycles": 347,
-      "maxCoreCycleUpperBound": 3392,
+      "maxInstructions": 215,
+      "maxModelCycles": 350,
+      "maxCoreCycleUpperBound": 3440,
       "maxAdditionalStackBytes": 24
     },
     "sidechain-fresh-bind": {
@@ -111,44 +160,93 @@
     },
     "sidechain-hold-frame-mode-1": {
       "cases": 65536,
-      "maxInstructions": 203,
-      "maxModelCycles": 387,
-      "maxCoreCycleUpperBound": 3248,
+      "maxInstructions": 206,
+      "maxModelCycles": 390,
+      "maxCoreCycleUpperBound": 3296,
       "maxAdditionalStackBytes": 24
     },
     "sidechain-hold-frame-mode-2": {
       "cases": 65536,
-      "maxInstructions": 115,
-      "maxModelCycles": 229,
-      "maxCoreCycleUpperBound": 1840,
+      "maxInstructions": 118,
+      "maxModelCycles": 232,
+      "maxCoreCycleUpperBound": 1888,
       "maxAdditionalStackBytes": 20
     },
     "sidechain-hold-frame-mode-3": {
       "cases": 65536,
-      "maxInstructions": 212,
-      "maxModelCycles": 347,
-      "maxCoreCycleUpperBound": 3392,
+      "maxInstructions": 215,
+      "maxModelCycles": 350,
+      "maxCoreCycleUpperBound": 3440,
       "maxAdditionalStackBytes": 24
+    },
+    "sidechain-hold-ot-frame": {
+      "cases": 196608,
+      "maxInstructions": 13,
+      "maxModelCycles": 26,
+      "maxCoreCycleUpperBound": 208,
+      "maxAdditionalStackBytes": 16
+    },
+    "sidechain-ot-exit-frame-mode-1": {
+      "cases": 131072,
+      "maxInstructions": 206,
+      "maxModelCycles": 390,
+      "maxCoreCycleUpperBound": 3296,
+      "maxAdditionalStackBytes": 24
+    },
+    "sidechain-ot-exit-frame-mode-2": {
+      "cases": 131072,
+      "maxInstructions": 142,
+      "maxModelCycles": 240,
+      "maxCoreCycleUpperBound": 2272,
+      "maxAdditionalStackBytes": 20
+    },
+    "sidechain-ot-exit-frame-mode-3": {
+      "cases": 131072,
+      "maxInstructions": 215,
+      "maxModelCycles": 350,
+      "maxCoreCycleUpperBound": 3440,
+      "maxAdditionalStackBytes": 24
+    },
+    "sidechain-ot-exit-release-mode-1": {
+      "cases": 65536,
+      "maxInstructions": 142,
+      "maxModelCycles": 245,
+      "maxCoreCycleUpperBound": 2272,
+      "maxAdditionalStackBytes": 20
+    },
+    "sidechain-ot-exit-release-mode-2": {
+      "cases": 65536,
+      "maxInstructions": 142,
+      "maxModelCycles": 240,
+      "maxCoreCycleUpperBound": 2272,
+      "maxAdditionalStackBytes": 20
+    },
+    "sidechain-ot-exit-release-mode-3": {
+      "cases": 65536,
+      "maxInstructions": 143,
+      "maxModelCycles": 244,
+      "maxCoreCycleUpperBound": 2288,
+      "maxAdditionalStackBytes": 20
     },
     "sidechain-release-frame-mode-1": {
       "cases": 65536,
-      "maxInstructions": 115,
-      "maxModelCycles": 234,
-      "maxCoreCycleUpperBound": 1840,
+      "maxInstructions": 118,
+      "maxModelCycles": 237,
+      "maxCoreCycleUpperBound": 1888,
       "maxAdditionalStackBytes": 20
     },
     "sidechain-release-frame-mode-2": {
       "cases": 65536,
-      "maxInstructions": 115,
-      "maxModelCycles": 229,
-      "maxCoreCycleUpperBound": 1840,
+      "maxInstructions": 118,
+      "maxModelCycles": 232,
+      "maxCoreCycleUpperBound": 1888,
       "maxAdditionalStackBytes": 20
     },
     "sidechain-release-frame-mode-3": {
       "cases": 65536,
-      "maxInstructions": 116,
-      "maxModelCycles": 233,
-      "maxCoreCycleUpperBound": 1856,
+      "maxInstructions": 119,
+      "maxModelCycles": 236,
+      "maxCoreCycleUpperBound": 1904,
       "maxAdditionalStackBytes": 20
     },
     "trig-flag": {
