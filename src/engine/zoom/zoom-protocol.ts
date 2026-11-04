@@ -139,9 +139,37 @@ export function listWithout(list: number[], name: string): number[] | undefined 
 /** A name the pedal accepts: at most 8 letters, digits or underscores, then .ZDL (it shortens longer ones, and two that shorten alike freeze it). */
 export const validEffectName = (name: string) => /^[A-Z0-9_]{1,8}\.ZDL$/.test(name)
 
-/** Effects this page may install or remove: added ones (group 8, IDs 403-957, the ranges in the ID ledger,
- * docs/ZDL_MODULE_CONTRACT.md) until modules settle it. Zoom's own effects are never offered for removal. */
-export const isAddedEffect = (effect?: { gid: number; fxid: number }) => !!effect && effect.gid === 8 && effect.fxid >= 403 && effect.fxid <= 957
+/** Effects this page may install or remove: added ones (group 8, IDs 403-1023; a patch stores 10 bits of ID, and an
+ * MS-70CDR 2.10 ran, saved and recalled effects at 917, 1000 and 1023). Zoom's own effects are never offered for removal. */
+export const isAddedEffect = (effect?: { gid: number; fxid: number }) => !!effect && effect.gid === 8 && effect.fxid >= 403 && effect.fxid <= 1023
+
+/** Group 8 IDs no collection ships on (docs/ZDL_MODULE_CONTRACT.md): an effect whose ID is already taken on the pedal
+ * is moved here when it is installed. The ID is only in the header (group at 0x3C and 0x43, ID at 0x40), with no
+ * checksum over it, so moving it rebuilds nothing. */
+export const LOCAL_IDS = { gid: 8, first: 958, last: 1023 }
+export const isLocalId = (effect?: { gid: number; fxid: number }) => !!effect && effect.gid === LOCAL_IDS.gid && effect.fxid >= LOCAL_IDS.first && effect.fxid <= LOCAL_IDS.last
+
+/** The effect file with its ID changed; nothing else in it. */
+export function withEffectId(data: ArrayLike<number>, fxid: number): number[] {
+  const out = Array.from(data)
+  out[0x40] = fxid & 0xff
+  out[0x41] = fxid >> 8
+  return out
+}
+
+/** A free local ID for `name`: the same one for the same file name wherever there's room, so a patch made on one
+ * pedal finds the effect on another, then the next free one. `taken` is every ID in use on the pedal, `avoid` the ones
+ * this browser has given other effects before (a stored patch may still point at one). */
+export function localIdFor(name: string, taken: Set<number>, avoid: Set<number> = new Set()): number | undefined {
+  const size = LOCAL_IDS.last - LOCAL_IDS.first + 1
+  let hash = 0
+  for (const c of name.toUpperCase()) hash = (hash * 31 + c.charCodeAt(0)) >>> 0
+  for (let i = 0; i < size; i++) {
+    const fxid = LOCAL_IDS.first + (hash + i) % size
+    if (!taken.has(fxid) && !avoid.has(fxid)) return fxid
+  }
+  return undefined
+}
 
 /** Effect IDs two collections shipped for different effects. Swapping one for the other froze an MS-70CDR at boot
  * until its ROM was reprogrammed (repeat98/ZoomMultistompZDL issue 8), and a pedal can't say what it had before,
@@ -153,7 +181,7 @@ export function installRefusal(name: string, data: ArrayLike<number>): string | 
   const info = effectInfo(data), id = info && info.gid + '/' + info.fxid
   if (!validEffectName(name.toUpperCase())) return name + ': the pedal needs a name of at most 8 letters, digits or underscores, then .ZDL.'
   if (!info) return name + ' is not an effect file.'
-  if (!isAddedEffect(info)) return name + ' has effect ID ' + id + ': only added effects (group 8, IDs 403 to 957) are installed. Zoom’s own effects stay as they are.'
+  if (!isAddedEffect(info)) return name + ' has effect ID ' + id + ': only added effects (group 8, IDs 403 to 1023) are installed. Zoom’s own effects stay as they are.'
   const clash = CLASHING_EFFECT_IDS.find(c => c.gid === info.gid && c.fxid === info.fxid)
   if (clash) return name + ' uses effect ID ' + id + ', which older builds of ' + clash.files + ' both used. Swapping one for the other has frozen a pedal at boot, so it isn’t installed. ' + clash.moved + ': get the current file.'
 }

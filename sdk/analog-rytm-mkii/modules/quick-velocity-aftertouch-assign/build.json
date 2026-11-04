@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/main.c"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_key",
+      "fn": "quick_velocity_aftertouch_assign_key",
+      "order": 30
+    },
+    {
+      "event": "ev_enc",
+      "fn": "quick_velocity_aftertouch_assign_enc",
+      "order": 30
+    },
+    {
+      "event": "ev_tick",
+      "fn": "quick_velocity_aftertouch_assign_tick",
+      "order": 50
+    }
+  ],
+  "contribute": [
+    {
+      "to": "core_params",
+      "order": 5,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:quick_velocity_aftertouch_assign_params",
+          0
+        ]
+      ]
+    }
+  ],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:FIX + knob on the sound pages",
+    "ui:SAMPLER + knob on the sound pages",
+    "ui:FIX tap toggles fixed velocity on the release"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [],
+      "sites": []
+    }
+  }
+}
