@@ -2,7 +2,7 @@
 
 These stock-free records contain source and image hashes, calculated bounds and emulator observations. They contain no firmware, extracted instruction bytes, stock tables or memory dumps. Hardware was not accessed during these analyses.
 
-## Popup opener: remaining callback boundary
+## Popup opener and window-close callback boundary
 
 The candidate's opener calls the stock popup routine before inspecting the
 menu arguments. In the reproduced base, the inspected popup routine range
@@ -11,10 +11,17 @@ menu arguments. In the reproduced base, the inspected popup routine range
 It calls the window manager whose inspected range `0x4005829c–0x4005838e`
 also matches stock and hashes to
 `47a83b2ab28f9f0badd741af517ada3f4cdc9ea45e1a0d0eadbaeabed669487b`.
-That manager checks five window slots and can call a nonzero close callback
-from each slot. The callback targets depend on live window state. This audit
-has not bounded those targets or the opener's complete stack and timing.
-The statement covers the reproduced base code before other modules patch it.
+That manager checks five window slots and conditionally calls each nonzero
+close callback before continuing. Five other initial callback entries are
+confirmed from cached registration callers; two callback bodies have complete
+32-byte local bounds, while three retain unbounded callees. A whole-image
+opcode-pattern scan found 50 candidate direct calls to the manager, of which
+44 caller bodies are not in the private cache, so the five observed entries
+are not an exhaustive runtime target set. The [popup callback evidence](popup-callback-stack-20261104.md)
+records the verified code hashes, finite stack paths, unresolved callees,
+assumptions and exclusions. It does not bound the opener's separate window
+creation path, total stack high-water, or timing. These results apply to the
+reproduced base before companion modules patch the audited ranges.
 
 ## Uninstrumented compiler stack audit
 

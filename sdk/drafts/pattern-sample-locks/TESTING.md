@@ -166,12 +166,19 @@ The reproduced base's system-task initialization and message-loop audit adds
 the task frame and event-call arguments: from task entry the key subtotal is
 916 bytes, encoder 200 and tick 156. This assumes called functions preserve
 their ABI stack pointer. The incoming task-entry return word, popup opening,
-interrupt nesting and other contexts remain unbounded. The stock popup opener can invoke close
-callbacks from up to five live window slots; their targets depend on window
-state and were not bounded here. The [stack evidence](evidence/qualification-progress-20261104.md)
-records the base dispatcher, stock leaves, popup close, bounded switch, track
-refresh and unresolved opener analyses. No device was accessed, and neither
-the complete memory nor cycle gate is closed.
+interrupt nesting and other contexts remain unbounded. The popup audit now
+confirms five other initial callback entries from cached stock callers; two
+have complete 32-byte callback-local bounds, while three have unresolved
+callees. The candidate's own close subtree retains its prior 36-byte bound.
+Known paths consume 160 bytes from the popup routine's entry, or 164 for the
+`0x40055ec0` and candidate-owned close callbacks, under the recorded ABI
+assumption. These are not a complete opener bound: 44 candidate direct
+manager-call encodings lack cached caller bodies, runtime callback state may
+vary, and the manager's new window path is not bounded. The [popup callback evidence](evidence/popup-callback-stack-20261104.md)
+records the hashes, path arithmetic, and limits; the [stack evidence](evidence/qualification-progress-20261104.md)
+also records the base dispatcher, stock leaves, popup close, bounded switch
+and track refresh. No device was accessed, and neither the complete memory
+nor cycle gate is closed.
 
 Static source inspection establishes finite loop limits for the authored commit
 path: eight tracks and 64 steps; up to 31 remaining parameter-lock slots scanned
