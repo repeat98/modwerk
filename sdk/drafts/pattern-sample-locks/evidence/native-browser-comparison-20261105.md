@@ -12,8 +12,10 @@ changed; no hardware was accessed.
   (62 included files; documentation and evidence paths are excluded).
 - Candidate USB package: 10,048 bytes, SHA-256
   `3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79`.
-- Recorded current base identity: `9680e9ac861ff9313ce4f7a710a37ad2aa8e9b50b2cf8c043dafa2a0b78cdffc`;
-  base MAIN SHA-256 `877a8d6884cb05508a59b312a0e95498c33ce4a1e2f1fe452423b0edc74fb69e`.
+- Reproduced base configuration SHA-256: `9680e9ac861ff9313ce4f7a710a37ad2aa8e9b50b2cf8c043dafa2a0b78cdffc`;
+  private reconstructed `MAIN.raw` SHA-256 `877a8d6884cb05508a59b312a0e95498c33ce4a1e2f1fe452423b0edc74fb69e`.
+  The author-reported hardware trial includes only an IDENTIFY configuration SHA;
+  no physical MAIN hash is available for equality comparison.
 - Matching stock OS 1.40C MAIN SHA-256:
   `164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e`.
 

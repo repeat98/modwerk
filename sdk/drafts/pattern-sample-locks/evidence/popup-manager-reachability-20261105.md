@@ -14,13 +14,15 @@ the native-source inventory fingerprint is
 `7ea0fbdf317bfdab6a82b22869c7029ba23901cd27a3337a4bdaf8f8beeb7e69`, and
 `unit.s` is `837e44f48fa137444e14755d96011731c8fde29a73fa877ffc35edac3510473f`.
 
-The reproduced base identity is
-`9680e9ac861ff9313ce4f7a710a37ad2aa8e9b50b2cf8c043dafa2a0b78cdffc`;
-base `MAIN.raw` SHA-256 is
+The private reconstruction configuration SHA-256 is
+`9680e9ac861ff9313ce4f7a710a37ad2aa8e9b50b2cf8c043dafa2a0b78cdffc`; its
+`MAIN.raw` SHA-256 is
 `877a8d6884cb05508a59b312a0e95498c33ce4a1e2f1fe452423b0edc74fb69e` and
-Octatrack 1.40C stock main SHA-256 is
-`164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e`.
-The hash-verified base proof has no companion modules. Its `proofs.json` and
+Octatrack 1.40C stock `MAIN.raw` SHA-256 is
+`164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e`. The
+the 3 November author-reported hardware trial records configuration SHA `9680…` from IDENTIFY, but
+no physical MAIN hash; equality is unknown. The hash-verified private proof has
+no companion modules. Its `proofs.json` and
 `symbols.json` hashes are, respectively,
 `6a24032c96f8fa8df51cb9187f09145ab7669d5fbdc08c2891086c55f806327c` and
 `9625f77fdfbc23f85a1d3a740cedb0e9693d324ec0c8b8c1bcd697ab3c6dcd64`.

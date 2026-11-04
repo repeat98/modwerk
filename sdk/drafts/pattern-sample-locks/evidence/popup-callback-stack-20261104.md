@@ -7,12 +7,14 @@ dump are copied here. No hardware was accessed.
 
 ## Exact inputs and checks
 
-The reproduced current base identity is
+The private reconstruction's base configuration SHA-256 is
 `9680e9ac861ff9313ce4f7a710a37ad2aa8e9b50b2cf8c043dafa2a0b78cdffc`; its
-main-image SHA-256 is
+`MAIN.raw` SHA-256 is
 `877a8d6884cb05508a59b312a0e95498c33ce4a1e2f1fe452423b0edc74fb69e` and the
-matching Octatrack 1.40C stock main-image SHA-256 is
+matching Octatrack 1.40C stock `MAIN.raw` SHA-256 is
 `164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e`. The
+the 3 November author-reported hardware trial records the same configuration value from IDENTIFY,
+but no physical MAIN hash; equality with the private reconstruction is unknown. The
 exact candidate profile is source revision
 `5a15ac390dac2475df3fb3b2ef64154e174b4182`, package SHA-256
 `3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79`; every

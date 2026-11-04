@@ -10,7 +10,9 @@ Portable planner, UI and production native-writer sanitizer tests pass. The full
 
 Retired reports and obsolete captures are consolidated in [PROTOTYPE_HISTORY.md](PROTOTYPE_HISTORY.md); they do not qualify this version.
 
-## MKII exact-current-base RAM functional trial — 3 November 2026
+Offline stack, memory, callback and instruction-count analyses below use the private reconstruction for configuration SHA `9680e9ac861ff9313ce4f7a710a37ad2aa8e9b50b2cf8c043dafa2a0b78cdffc` (`MAIN.raw` SHA-256 `877a8d6884cb05508a59b312a0e95498c33ce4a1e2f1fe452423b0edc74fb69e`). The 3 November author-reported hardware trial gives only the IDENTIFY configuration SHA; no physical MAIN hash is available, so those offline analyses do not prove equality with the device image.
+
+## MKII RAM functional trial — 3 November 2026 (reported configuration identity)
 
 The author (`twwwy`) reports that both physical actions passed on the
 Octatrack MKII, OS 1.40C, using the exact public candidate package
@@ -21,18 +23,25 @@ on a trig. Clear removed selected manual SAMPLE locks while preserving a
 non-SAMPLE lock and unselected data. The author reported both checks passed,
 with no mismatch or action refusal.
 
-The trial ran against base identity
+The author reports that device IDENTIFY returned configuration SHA-256
 `9680e9ac861ff9313ce4f7a710a37ad2aa8e9b50b2cf8c043dafa2a0b78cdffc`, matching
-the checked-in base binding. An offline current-beta-base build reproduced
-that identity (`NOT_FLASH_CANDIDATE.bin` SHA-256
-`9ae4d63a36f113f3cae563650cd44476ced0bc950bf4382f3185ec3f68728e66`); that
-artifact was not loaded or flashed. The exact 300-second RAM trial ended after
-203 seconds through the runner's rollback path. After rollback, the active
-digest returned to prefix `951766ebfe1ef23a`, and the complete 17-module live
-inventory matched the pre-trial inventory. Slot generations 6 and 7 were
-unchanged. The public base does not support saved-file export, so this verifies
-slot metadata and live restoration, not saved-set file contents. The working
-pattern is disposable; unsaved RAM edits may remain there until it is reloaded.
+the checked-in base binding. This is a canonical configuration hash, not a MAIN
+image hash. The private offline reconstruction for that configuration has
+`MAIN.raw` SHA-256
+`877a8d6884cb05508a59b312a0e95498c33ce4a1e2f1fe452423b0edc74fb69e`; its outer
+`NOT_FLASH_CANDIDATE.bin` SHA-256 is
+`9ae4d63a36f113f3cae563650cd44476ced0bc950bf4382f3185ec3f68728e66`. Neither
+private artifact was loaded or flashed, and no physical MAIN hash/readback was
+recorded, so physical image equality is unverified. The proof's prototype and
+`productionReady: false` metadata describe that offline artifact; they do not
+show that hardware ran a different configuration or image. The exact 300-second
+RAM trial ended after 203 seconds through the runner's rollback path. After
+rollback, the active digest returned to prefix `951766ebfe1ef23a`, and the
+complete 17-module live inventory matched the pre-trial inventory. Slot
+generations 6 and 7 were unchanged. The base used in the trial does not support
+saved-file export, so this verifies slot metadata and live restoration, not
+saved-set file contents. The working pattern is disposable; unsaved RAM edits
+may remain there until it is reloaded.
 
 There was no Keep, project save, flash or power cycle. Action counts, track
 counts and per-action timing were not reported. The public base refuses the
@@ -40,13 +49,16 @@ development-only UI, transport and memory reads, so no stack watermark or
 device memory measurement was obtained. Its diagnostics refusal counter rose
 during the run because the USB bridge periodically sends unsupported
 development request 6; this is not evidence of a Lock/Clear action refusal.
-The trial establishes these two reported functional checks on the exact current
-base only. It does not measure audio, maximum-load behavior, worst-case cycles
-or complete memory, and does not close first-release owner review.
+The trial establishes only the author's reported functional checks on a unit
+reporting configuration SHA `9680…`; without a physical MAIN hash, they are not
+bound to the private reconstructed image. It does not measure audio,
+maximum-load behavior, worst-case cycles or complete memory, and does not close
+first-release owner review.
 
 ## Temp Save interaction on the emulator — 4 November 2026
 
-On current base identity `9680e9ac…`, the exact Sample Locks candidate
+On emulator configuration identity `9680e9ac…` using the private reconstructed
+base (`MAIN.raw` SHA-256 `877a8d68…`), the exact Sample Locks candidate
 `3e13c46f…` and published Temp Save package `00b8d5ab…` were installed
 together on a copied emulator card. After opening FUNC+PART, releasing FUNC and
 pressing FUNC+YES, Sample Locks retired its overlay and Temp Save saved a
@@ -77,7 +89,8 @@ Temp Save. It also verified the card-build refusal and beta-library path.
 These are [software preflights](evidence/qualification-progress-20261104.md#current-main-package-and-usb-preflight),
 not real catalogue admission or complete combined-runtime evidence.
 
-On the same reproduced base, a DSP-enabled MKII emulator ran the exact package
+On the same private reconstructed emulator base, a DSP-enabled MKII emulator ran
+the exact package
 through five playback-active Lock/Clear fixtures: two changes, one full track,
 and 512 changes with no other lock, a first-slot lock or a last-slot lock.
 Every resulting pattern, mirror and lock index matched; the module image and
@@ -85,9 +98,9 @@ sites were attested, and removal passed. The highest observed Clear callback
 interval was 314,314 emulator instructions in the 512-change no-other-lock
 case. DSP frames advanced without reported errors or stalls. Main audio was
 disabled; the count includes intervening interrupts and is not chip cycles,
-a universal bound or audio evidence. See the [edit matrix](evidence/qualification-progress-20261104.md#current-base-emulator-edit-matrix).
+a universal bound or audio evidence. See the [edit matrix](evidence/qualification-progress-20261104.md#private-reconstruction-emulator-edit-matrix).
 
-## Exact package image and current-base pool extent — 3 November 2026
+## Exact package image and private reconstructed-base pool extent — 3 November 2026
 
 A source-only build in pinned toolchain image
 `sha256:da70d46e10b243277fa3ae2e015f7258d56b3ee08ca4be47e61899958872e792`
@@ -153,7 +166,7 @@ Stock font, refresh, popup and close callees, the base dispatcher/caller and
 interrupt nesting are not included; no stack high-water or canary was measured.
 Full stack demand is still unbounded.
 
-On 4 November, offline disassembly of the reproduced current base, verified
+On 4 November, offline disassembly of the private reconstructed base, verified
 against its build proof and event tables, accounted for the base's event bus
 and runtime dispatcher while the module callback runs. From the event entry,
 the authored-only subtotals are key 548 bytes, draw 328, encoder 92 and tick 56;
@@ -166,8 +179,8 @@ the popup close subtree to 36 bytes and the track refresh subtree to 304 bytes,
 each excluding its incoming return word. Including those paths, the key-event
 subtotal is 808 bytes from the base event entry; draw remains 328, encoder 92
 and tick 56. These are conservative stack subtotals for the exact candidate and
-reproduced base, assuming no other module patches the audited stock ranges.
-The reproduced base's system-task initialization and message-loop audit adds
+private reconstructed base, assuming no other module patches the audited stock ranges.
+The private reconstruction's system-task initialization and message-loop audit adds
 the task frame and event-call arguments: from task entry the key subtotal is
 916 bytes, encoder 200 and tick 156. This assumes called functions preserve
 their ABI stack pointer. The incoming task-entry return word, popup opening,

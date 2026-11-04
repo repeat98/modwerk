@@ -1,8 +1,8 @@
 # Pattern Sample Locks FUNC+PART popup entry context
 
 This stock-free note checks the supported FUNC+PART Part Edit entry against
-the exact candidate and reproduced base. It does not establish a complete
-popup or system stack bound.
+the exact candidate and private reconstructed base. It does not establish a complete
+popup or system stack bound, and it does not prove equality with a physical image.
 
 ## Binding and rooted path
 
@@ -12,11 +12,12 @@ popup or system stack bound.
   `7ea0fbdf317bfdab6a82b22869c7029ba23901cd27a3337a4bdaf8f8beeb7e69`.
 - Cached candidate ELF SHA-256:
   `4c1bb41454863f61eb4cd047d11b3f6905a1c1e7d4e391967ace95f8406fd679`.
-- Exact base identity `9680e9ac861ff9313ce4f7a710a37ad2aa8e9b50b2cf8c043dafa2a0b78cdffc`,
-  MAIN SHA-256 `877a8d6884cb05508a59b312a0e95498c33ce4a1e2f1fe452423b0edc74fb69e`.
+- Private reconstruction configuration SHA-256 `9680e9ac861ff9313ce4f7a710a37ad2aa8e9b50b2cf8c043dafa2a0b78cdffc`,
+  `MAIN.raw` SHA-256 `877a8d6884cb05508a59b312a0e95498c33ce4a1e2f1fe452423b0edc74fb69e`. The
+  the 3 November author-reported hardware trial gives the config value only; no physical MAIN hash is available.
 
 The candidate declares three guarded Part Edit opener call-site hooks. At each
-site the reproduced base calls the stock popup opener with a four-row argument.
+site the private reconstructed base calls the stock popup opener with a four-row argument.
 The exact candidate `psl_open` body has no conditional branch before its first
 call, which invokes that stock opener. The stock popup routine then calls the
 window manager before returning to `psl_open`. The previously recorded exact

@@ -178,13 +178,14 @@ graph.
 On a successful changed operation, the candidate calls the fixed global
 refresh target at most once, then the fixed track-refresh call site at most
 eight times (once per changed selected track); a no-op/refusal takes neither
-refresh path. Existing exact-base evidence for base identity
-`9680e9ac861ff9313ce4f7a710a37ad2aa8e9b50b2cf8c043dafa2a0b78cdffc` audits the
+refresh path. Existing offline evidence for the private reconstruction with configuration SHA
+`9680e9ac861ff9313ce4f7a710a37ad2aa8e9b50b2cf8c043dafa2a0b78cdffc` and `MAIN.raw`
+SHA-256 `877a8d6884cb05508a59b312a0e95498c33ce4a1e2f1fe452423b0edc74fb69e` audits the
 global refresh leaf and the track-refresh direct-call closure plus its bounded
 stock switch ([stock leaves](qualification-progress-20261104.md#stock-leaf-routines),
 [track refresh](qualification-progress-20261104.md#track-refresh-call-path),
 [bounded switch](qualification-progress-20261104.md#bounded-stock-switch)).
-Under that exact base and the audit's condition that no other module patches
+Under that exact private reconstruction and the audit's condition that no other module patches
 those ranges, the traced refresh closure has no unresolved callback transfer
 that re-enters the candidate transaction core synchronously. The stock
 callee's own instructions are still excluded. This does not resolve interrupt

@@ -1,6 +1,6 @@
 # Pattern Sample Locks qualification evidence — 4 November 2026
 
-These stock-free records contain source and image hashes, calculated bounds and emulator observations. They contain no firmware, extracted instruction bytes, stock tables or memory dumps. Hardware was not accessed during these analyses.
+These stock-free records contain source and image hashes, calculated bounds and emulator observations. They contain no firmware, extracted instruction bytes, stock tables or memory dumps. Hardware was not accessed during these analyses. Here `baseIdentity` means the base configuration SHA-256 embedded for IDENTIFY; `baseMainSha256` is the private reconstructed `MAIN.raw` SHA-256, and `baseRunSha256` is its unpacked runtime segment. They are separate identifiers: the 3 November author report says physical IDENTIFY returned `9680…`, but no physical MAIN hash was captured, and the private proof metadata do not establish physical image equality or a different physical configuration.
 
 ## Popup opener and window-close callback boundary
 
@@ -647,8 +647,8 @@ completeness of the stock disassembly or the system stack bound.
     }
   ],
   "knownBoundedSwitchReport": "qualification-progress-20261104.md#bounded-stock-switch",
-  "method": "Explore both sides of every decoded conditional branch, tracking exact stack-pointer deltas per path. Resolve every direct call to a separately analyzed callee; account for a four-byte return word. Reject unrecognized instructions, unresolved transfers, unbalanced returns and increasing-depth loops. The bounded switch leaf is audited separately. Every full reachable address range must match stock and the reproduced current base.",
-  "conditions": "On the exact current base and candidate with no live patch from another module in the inspected ranges; stock call paths are conservatively combined regardless of input reachability.",
+  "method": "Explore both sides of every decoded conditional branch, tracking exact stack-pointer deltas per path. Resolve every direct call to a separately analyzed callee; account for a four-byte return word. Reject unrecognized instructions, unresolved transfers, unbalanced returns and increasing-depth loops. The bounded switch leaf is audited separately. Every full reachable address range must match stock and the private reconstructed base.",
+  "conditions": "On the exact private reconstruction and candidate, with no companion patch in the inspected ranges; stock call paths are conservatively combined regardless of input reachability.",
   "limitations": "Excludes the event caller, module and dispatcher frames, interrupts, hardware faults and code patched by other active modules. Stack only; no cycle bound or hardware observation.",
   "hardwareAccess": false
 }
@@ -817,7 +817,7 @@ On main `5ceb89bd…`, the normal wrapper and private USB-only catalogue fixture
 }
 ```
 
-## Current-base emulator edit matrix
+## Private-reconstruction emulator edit matrix
 
 ```json
 {
@@ -1037,7 +1037,7 @@ On main `5ceb89bd…`, the normal wrapper and private USB-only catalogue fixture
 }
 ```
 
-## Current-base shared memory layout
+## Private-reconstruction shared memory layout
 
 ```json
 {
