@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-01",
+    "changes": [
+      "TRACK TRIG EDIT gains MICRO T under TRIGS. The window still shows four rows, so REC.TRG scrolls into view.",
+      "Turn LEVEL on that row and every step on the selected track takes that micro timing, in the stock fraction.",
+      "MIDI button off writes the audio track. MIDI button on writes the MIDI track and leaves the audio track alone.",
+      "The footer shows the fraction. The lane keeps dashes, a centre 0, and a cursor. The remembered number lasts until power-off.",
+      "Still a draft. Headless TRACK TRIG EDIT captures show MICRO T on grid and REC.TRG scrolled in. Listing still needs qualification."
+    ]
+  }
+]

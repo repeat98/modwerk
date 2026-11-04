@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "module": "temp-save",
+  "version": "0.1.0-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": 640923,
+    "budget": 26600000,
+    "method": "Measured under ot_emu --mkii (the ColdFire port; emulator, not hardware), executed ColdFire instructions per key event, not chip cycles, interrupts landing in the window included. Worst event: FUNC + NO's reload while playing, 640,923 from the hook's entry to the end of its screen refresh (verify.py's cost step, frame engine on, after panel edits; stopped 637,251); FUNC + YES's save is 16,287 to its toast. Under the MIDI flood below (--dsp, transport playing, nothing edited between presses) the reload took 605,222 to 635,604 (16 reloads in the load and stress runs) and the save 16,287 to 39,151 (17 saves; the dearer ones had interrupts in the window), all under 640,923. No static bound: almost all of the reload is stock's pattern writer 0x4002b9b0, Part Reload 0x4004aab4 (eight machine transitions) and the screen refresh calls, which nothing in this repository bounds; the module's own code is two copies (0x8ed8 + 0x18b2 bytes through stock's memcpy 0x40020898) and a few dozen instructions. Budget: 100 ms at 266 MHz, a key-press responsiveness target, not a measured limit."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": 144.9,
+    "moduleLongestUs": 145.2,
+    "stockIdlePercent": 61.89,
+    "moduleIdlePercent": 61.73,
+    "method": "Emulator, not hardware: ot_emu --mkii --dsp (the ColdFire port of the upstream Octabam checkout 063a4262), 28 Oct 2026. Two native static-stock images from this source: CF METER + CF METER IDLE + the stock effects less DARK REV (upstream Octabam's probe, private, not in Modwerk), and the same plus TEMP SAVE; verify.py's fixture project with T8 FX2 = CF METER (all knobs 0) in every Part; transport playing, pattern screen. 14 s of the same MIDI flood on both (one three-byte message per emulated ms, paced to whole frames: in 8 ms groups note on, three CCs, the note off, three CCs, on channels 1-8 and 11 in turn, chromatic notes 72-96, CCs 16-39, about 1,000 a second, plus clock at 240 BPM) and the same panel presses on both: FUNC + YES and FUNC + NO alternating every 0.65 s (21 presses; on the TEMP SAVE image 11 saves and 10 reloads, on the stock image they reach stock's own FUNC + YES / FUNC + NO). Longest frame interrupt: the largest per-cycle 'isr max' that tools/harness/cfmeter.py --dump (upstream Octabam's decoder) reads from the five 2 s cycles of the flood's last 12 s, in the port's own time (it prices each instruction at one step, so these microseconds are not the unit's). Idle: CF METER IDLE reads 0 % on both images because the port fast-forwards main's idle park, so idle is the port's own share instead: 100 x (1 - executed instructions / (3,990 instructions per sample x elapsed samples)) over the 14 s flood. The same flood without presses: longest 144.9 us and idle 62.21 % on both images (the module costs nothing between presses). With the presses the longest interrupt is 145.2 us (stock with the same presses: 144.9 us) and idle 0.16 points lower than stock's. The fixture leaves AUDIO NOTE IN and AUDIO CC IN off, so the notes and CCs reach the MIDI thread's handlers but play and change nothing."
+  },
+  "stress": {
+    "floodMessagesPerSecond": 1000,
+    "clockBpm": 240,
+    "seconds": 62,
+    "stuckNotes": 0,
+    "hangs": 0,
+    "dropped": 0,
+    "droppedExplanation": "Emulator, not hardware: ot_emu --mkii --dsp, the TEMP SAVE image and project above, 62 s of the flood (62,008 three-byte messages including the held notes, 5,952 clocks, 62.09 emulated s), transport playing; at 7, 22, 37 and 52 s a note held on channel 1, STOP, PART + DOWN + YES (the Part changed from 1 to 3), PLAY, PART + UP + YES (back to Part 1, read from 0x80000003 each time), then the held note's note off; FUNC + YES and FUNC + NO alternating every 5 s (6 saves of 16,287 to 39,151 instructions, 6 reloads of 626,240 to 629,503). The same run on the stock image for comparison. Dropped: counted at the MIDI thread's handlers (note on 0x4000e018, note off 0x4000db98, CC 0x4000e79c, clock 0x40005a48, start, stop; docs/firmware/MIDI.md): each type's handler entries equal the messages sent (7,754 / 7,754 / 46,500 / 5,952), on both images. Stuck notes: every note on had its note off dispatched; at the end no track holds a note (held-note bytes 0xFF, gate mask 0) and the firmware's per-channel note bookkeeping (held-note counts, on-timestamps) is identical to the stock image's under the same input; stock's MIDI send routine 0x40010bc8 was not entered on the TEMP SAVE image (on the stock image only by stock's own FUNC + YES / FUNC + NO); no samples are loaded and AUDIO NOTE IN is off in this project, so audible stuck notes could not occur here. Hangs: frames advanced to the end (7,202 frames in the closing check) and a FUNC + YES after a final STOP was answered with its toast. Bypass and MIDI channel changes do not apply: the module has no bypass and no MIDI path."
+  }
+}
