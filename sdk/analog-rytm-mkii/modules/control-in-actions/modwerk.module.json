@@ -118,11 +118,11 @@
   {
    "path": "media/thumbnail.svg",
    "kind": "thumbnail",
-   "caption": "Control In Actions thumbnail",
-   "alt": "Placeholder thumbnail for Control In Actions",
+   "caption": "Control In Actions",
+   "alt": "A footswitch or gate on EXP/CV IN 1, in MODE ACTION, rises and falls through two switch levels and plays MUTE (hold or toggle), REC (hold or toggle) or FILL (hold or latch).",
    "credit": "Nathaniel Pavel",
    "license": "GPL-3.0-or-later",
-   "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+   "source": "Original conceptual illustration in the shared signal-art style; not a device screenshot."
   },
   {
    "path": "media/action-menu.png",
