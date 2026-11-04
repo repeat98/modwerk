@@ -123,6 +123,16 @@ checked-in base and exact package, not a device memory readback. The separately
 shared `sys` task stack is not part of the pool extent; complete stack demand
 remains unbounded, so the overall memory gate stays open.
 
+The [current-base memory layout](evidence/qualification-progress-20261104.md#current-base-shared-memory-layout)
+also accounts for the base's fixed, shared upload stage and loader ledgers.
+The stage includes a 1,310,720-byte image buffer; the candidate's 10,048-byte
+package occupies part of that existing buffer while staged. The base separately
+reserves the 786,432-byte runtime pool, 256 owner records and pointer slots,
+and 128 live-position pointers. These fixed allocations exist independently of
+this module and must not be added again as per-module dynamic allocations.
+Whole-set staging, concurrent extents, reclamation and stack demand remain
+separate peak-accounting questions.
+
 The current base source places key, encoder and tick hooks on the `sys` task,
 with an 8,192-byte stack span. It says draw runs there nearly always, so that
 span is not established for every draw context. The stock task inventory also

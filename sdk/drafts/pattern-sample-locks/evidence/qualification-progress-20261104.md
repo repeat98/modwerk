@@ -1017,3 +1017,53 @@ On main `5ceb89bd…`, the normal wrapper and private USB-only catalogue fixture
   "limitations": "Observed elapsed emulator instruction counts include intervening interrupts and depend on the fixture and schedule. They are not ColdFire cycles, hardware timings, a universal upper bound, audio evidence or an isolated CPU benchmark."
 }
 ```
+
+## Current-base shared memory layout
+
+```json
+{
+  "baseIdentity": "9680e9ac861ff9313ce4f7a710a37ad2aa8e9b50b2cf8c043dafa2a0b78cdffc",
+  "baseMainSha256": "877a8d6884cb05508a59b312a0e95498c33ce4a1e2f1fe452423b0edc74fb69e",
+  "toolchainImage": "sha256:da70d46e10b243277fa3ae2e015f7258d56b3ee08ca4be47e61899958872e792",
+  "layoutHelperSha256": "60eb624d6164221186ea416151a9526e89a7c08a56431cadf0759b502f9c72ae",
+  "pointerBytes": 4,
+  "ownerRecordBytes": 88,
+  "candidatePackageBytes": 10048,
+  "runtimeExtentComponentsBytes": {
+    "initializedCodeAndData": 8748,
+    "bss": 1328,
+    "runtimeHeader": 528,
+    "threeSiteRecords": 216,
+    "headerAlignment": 8,
+    "imageAlignment": 4
+  },
+  "oneCandidatePoolExtentBytes": 10832,
+  "twoIdenticalCandidateExtentsBytes": 21664,
+  "baseRuntimePool": {
+    "linkedStart": "0x40d2abf0",
+    "linkedEndExclusive": "0x40deabf0",
+    "capacityBytes": 786432
+  },
+  "baseUploadStage": {
+    "structStart": "0x40ae3cf0",
+    "structEndExclusive": "0x40c23e30",
+    "mailboxBytes": 64,
+    "stubBytes": 256,
+    "imageCapacityBytes": 1310720,
+    "volatileFrameReserveBytes": 4096,
+    "volatilePayloadCapacityBytes": 1306624
+  },
+  "baseFixedLedgers": {
+    "ownerRecords": 256,
+    "ownerRecordsBytes": 22528,
+    "ownerPointers": 256,
+    "ownerPointersBytes": 1024,
+    "livePointers": 128,
+    "livePointersBytes": 512
+  },
+  "method": "Pinned ColdFire compiler measures struct runtime_owner, pointer and boot-stage sizes; exact base symbol map verifies owner-array and pointer-array spacing and identifies pool/stage extents. Loader source supplies alignment and staging formulas.",
+  "accounting": "The boot stage and ledger arrays are fixed shared base allocations. The serialized candidate occupies part of the existing shared stage during upload, and its live extent occupies the existing runtime pool; do not add package bytes or the pool twice. Other modules, whole-set staging, stack demand, fragmentation and delayed reclamation determine system-wide peak usage.",
+  "limitations": "Source/build layout only; not a device memory readback or complete system memory or stack qualification.",
+  "hardwareAccess": false
+}
+```
