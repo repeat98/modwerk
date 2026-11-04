@@ -15,8 +15,15 @@ import { compareModuleVersions } from '../src/catalog/versions.ts'
 import { requireFlaggedOverlaps, requireKnownConflicts } from './conflict-ids.mjs'
 const json=async path=>JSON.parse(await readFile(path,'utf8'))
 async function walk(folder){const paths=[];for(const entry of await readdir(folder,{withFileTypes:true})){if(entry.name==='__pycache__')continue;if(entry.isSymbolicLink())throw new Error('Module symlinks are not allowed: '+entry.name);if(entry.isDirectory())paths.push(...(await walk(resolve(folder,entry.name))).map(p=>entry.name+'/'+p));else paths.push(entry.name)}return paths.sort()}
+// Nothing in _submissions/ reaches the library, so a merged submission never goes live: a pull request may only move one out.
+export function requireNoSubmissions(root,baseCommit){
+ const git=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8',maxBuffer:4*1024*1024}),spec=':(glob)sdk/*/modules/_submissions/**'
+ const paths=(git('diff','--name-only','--diff-filter=d',baseCommit,'--',spec)+git('ls-files','--others','--exclude-standard','--',spec)).trim().split('\n').filter(Boolean)
+ if(paths.length)throw new Error(paths[0]+': _submissions/ takes no new modules or changes, because nothing there goes live. Put the module in modules/<id> with its pinned .elemod package and release notes, and it is live once merged (sdk/machines/analog-rytm-mkii/README.md#create-a-mod; npm run module:doctor -- <id> names what is missing).')
+}
 export async function machineModules({root,write=false,baseCommit=null,includeDrafts=false}) {
 if(includeDrafts&&write)throw new Error('Draft validation cannot publish generated library metadata')
+if(baseCommit)requireNoSubmissions(root,baseCommit)
 const git=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8',maxBuffer:4*1024*1024})
 // Machines on module contract v3 (elemod): the same folder rules, checked against each machine profile.
 const machineProfiles=[]

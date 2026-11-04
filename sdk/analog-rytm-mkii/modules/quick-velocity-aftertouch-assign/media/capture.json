@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "quick-velocity-aftertouch-assign",
+  "moduleVersion": "0.1.0-experimental",
+  "firmware": "1.74",
+  "capturedAt": "2026-11-03T16:20:00Z",
+  "imageSha256": "7ef00e24371b1d572da3ec60ca21be4d059b32decfe15f3a334c75486788e3f9",
+  "build": "Modwerk's linker: Modwerk base for core-ar2 0.7 + this folder's Quick Velocity+Aftertouch Assign 0.1.0-experimental, materialised against stock OS 1.74, --version QM11",
+  "emulator": {
+    "name": "rytm-emu",
+    "repository": "https://github.com/trigcondition/rytm-emu",
+    "binary": "dtboot",
+    "settings": "revision 2ac0f1f; a fresh card; JIT on; DTBOOT_END_PNG at the end of each run"
+  },
+  "conditions": "SETUP: boot QM11 on a fresh card for 8000M, NO eight times to close the calibration notices, snapshot. Each capture loads that snapshot (the default kit, BD PLASTIC on track 1, SYNTH page) and runs the listed --press and --nudge events, off the --every grid.",
+  "captures": [
+    {
+      "path": "media/fix-filter.png",
+      "frame": "end.png",
+      "plan": "--press FLTR, --press FIX held, --nudge 4:1 x20",
+      "sha256": "856e0e3c8236669df5fe7147a457d63ed655714df1fea3146889ec5e88615407"
+    },
+    {
+      "path": "media/sampler-amp.png",
+      "frame": "end.png",
+      "plan": "--press AMP, --press SAMPLER held, --nudge 2:1 x12",
+      "sha256": "46ecb14e9a45167f569820f0f1d1e38c97b28270a0d411c266d0538d0f3e542f"
+    },
+    {
+      "path": "media/mods-full.png",
+      "frame": "end.png",
+      "plan": "--press FIX held, --nudge 1, 2, 3, 0, then 5, three clicks each",
+      "sha256": "9d7e1954c18ac7766dcb9c032490441aa00c4aad154d1d0cac04da08c6a22247"
+    },
+    {
+      "path": "media/mod-setup.png",
+      "frame": "end.png",
+      "plan": "--press FIX held, --nudge 1:1 x10; release; FUNC + FLTR, DOWN x2, YES",
+      "sha256": "1128c35de350ea465ba0cd4d389d3804cc4e839bd7d7644c753f591c1b127476"
+    }
+  ]
+}

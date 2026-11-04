@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-02",
+    "changes": [
+      "First library release, for Analog Rytm MKII OS 1.74: FIN's knob becomes RATE, sound by sound.",
+      "RATE is pure sample speed, down to a stop and into reverse. Tap the knob, or check SMP RATE in SOUND SETTINGS, to switch.",
+      "Not yet tested on a unit: this exact build, two voices together, sound, scene and performance locks, and SOUND MANAGER.",
+      "Renamed Sample Playback Rate (was Sample RATE), and the module page now credits the author as Nathaniel Pavel (@npp1993). No change on the unit."
+    ]
+  }
+]

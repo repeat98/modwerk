@@ -63,7 +63,7 @@ catalogue's pinned Core 2.1. Machine Pages supplies `ev_render_voices`. Only
 explicitly required providers can supply a module's tables/events, on every
 declared OS.
 
-Unpublished module folders live in `modules/_submissions/`. Compile them with
+Older unpublished module folders wait in `modules/_submissions/`, which takes no new modules or changes. Compile them with
 `--drafts --module digitakt:<id>` (repeat `--module` for every required dependency),
 and validate their manifests and documentation with
 `node scripts/machine-modules.mjs --drafts --base origin/main`. Draft validation

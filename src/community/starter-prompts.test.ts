@@ -140,6 +140,24 @@ describe('starter prompts', () => {
     expect(starterPrompt('octatrack', startersFor('octatrack')[0])).not.toContain('Modwerk stack section')
   })
 
+  it('sends the Zoom pedals down their own road: the ZDL docs and plan, MIDISTOMP where it runs, Ziddle only for development, no stock code', () => {
+    const zoom = DEVICES.filter(device => device.family === 'zoom')
+    expect(zoom.length).toBeGreaterThan(0)
+    for (const device of zoom) {
+      const prompt = starterPrompt(device.id, startersFor(device.id)[0])
+      expect(prompt).toContain('- docs/ZOOM_MULTISTOMP.md')
+      expect(prompt).toContain('- docs/ZDL_MODULE_CONTRACT.md')
+      expect(prompt).toContain('docs/ZOOM_MULTISTOMP.md#plan')
+      expect(prompt).toContain('no stock Zoom code')
+      expect(prompt).toContain('never hardware evidence, and the site never offers it to musicians')
+      expect(prompt).toContain('load ZD2 effects and are not covered here')
+      expect(prompt).not.toContain('exact rebuild, recovery/boot, hooks/core')
+      expect(prompt).toContain(device.id === 'zoom-g1on' ? 'does not run on this pedal' : 'The base is Luca Matturro\'s MIDISTOMP')
+    }
+    expect(readFileSync('docs/ZOOM_MULTISTOMP.md', 'utf8')).toContain('## Plan')
+    expect(starterPrompt('lxr-02', startersFor('lxr-02')[0])).not.toContain('Ziddle')
+  })
+
   it('names the module, the change, the report and the login in the update prompt', () => {
     const prompt = updatePrompt('digitakt', 'sdk/digitakt/modules/digi-eq', 'Fix a filter click', 'https://github.com/repeat98/modwerk/issues/123')
     expect(prompt).toContain('Fix issue https://github.com/repeat98/modwerk/issues/123')

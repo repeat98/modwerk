@@ -8,7 +8,7 @@ describe('machine attribution coverage', () => {
   it('covers every local builder without changing its download approval', () => {
     expect([...USAGE_DEVICES].sort()).toEqual(['octatrack', ...Object.keys(DIGI_DOWNLOADS_ENABLED)].sort())
     expect(DIGI_DOWNLOADS_ENABLED['digitakt-ii']).toBe(false)
-    expect(DIGI_DOWNLOADS_ENABLED['analog-rytm-mkii']).toBe(false)
+    expect(DIGI_DOWNLOADS_ENABLED['analog-rytm-mkii']).toBe(true)
   })
   it('preserves legacy rows while expanding the SQLite constraint', () => {
     const { db } = testDatabase()

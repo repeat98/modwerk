@@ -163,6 +163,11 @@
       "addedAt": "2026-10-26T12:00:00Z"
     },
     {
+      "id": "temp-save",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-10-28T12:00:00Z"
+    },
+    {
       "id": "beat-slicer",
       "version": "0.1.66-experimental",
       "addedAt": "2026-10-27T20:00:00Z"
