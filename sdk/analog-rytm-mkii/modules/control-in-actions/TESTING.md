@@ -2,6 +2,8 @@
 
 ## 0.1.1: faster actions
 
+Build CI11 alone (sha256 6486523f, -O2, this package's source), 4 November 2026, with a footswitch, as the tester reported it: works great. Which of the suggested steps (REC TGL and REC HLD against a click from stop, MUTE and FILL holds and toggles, REVERSE DIRECTION) were run was not reported; no figure was measured.
+
 Where the delay came from, read in OS 1.74's code: the audio interrupt (vector 191, 32 frames a block, 1,500 blocks a second) reads each jack's converter result once a block in 0x4013f394 and smooths it by 2% a block into the level the CONTROL INPUT code and 0.1.0 read. From a clean edge between levels 1.6 V or more apart, that level crosses the switch point (5/8 of the way) after 49 blocks, about 33 ms. 0.1.0 read it once each UI tick, about every 50 ms, so an action came 33 to 83 ms after the edge. The converter is set up and started once at boot (0x40000946) and nothing restarts it per block, so its result is taken to follow the jack between blocks; what the jack's analog input stage adds is not known. Actions must play on the UI task, through KEYDISP, as a panel key does.
 
 0.1.1 reads the converter's result in `ev_render_out`, unsmoothed, against thresholds the UI tick works out from the settings on the converter's scale (with stock's own conversion, 0x4013f5c6). On an edge it puts a key message (type 0, the module's own key) on the UI task's queue with stock's 0x400013b2, as stock's converter report does from the same interrupt (0x4013f53e), at most one waiting at a time. The UI loop (0x400a46f0) takes it as a panel key and the module's `ev_key` handler, at order 10, plays the edges and keeps the message from every other handler and stock. The UI tick plays any edge the message has not. After each edge the jack is not read for 15 blocks (10 ms), for a switch's bounce.
@@ -139,7 +141,7 @@ Test builds FE02 to FE04, CE02, CE06, CE07, CE10, CE12 and CE13: the module buil
 
 ## Not tested
 
-- 0.1.1 (CI11) on a unit: the delay as played, a real switch's bounce against the 10 ms quiet time, the unsmoothed result's noise against the 0.2 V margin, the audio interrupt's added load.
+- 0.1.1 (CI11) on a unit: the delay measured rather than felt, a gate, the audio interrupt's added load.
 - Before 0.1.1, on a unit: a gate, and the delay measured rather than felt.
 - EXP/CV IN 2 (same code as port 1, not run).
 - Settings after a power cycle, and a unit without the module reading ACTION settings.

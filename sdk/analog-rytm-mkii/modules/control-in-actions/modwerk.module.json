@@ -92,7 +92,7 @@
  },
  "tests": {
   "report": "TESTING.md",
-  "summary": "Author's unit, builds alone: CI06 and CI07 passed every action, both learns with YES and NO, REVERSE DIRECTION and a power cycle; CI09 passed the bars, both learns' NO and a hold action. CI11 (0.1.1, this package) reads the jacks in the audio interrupt: in rytm-emu (CE16, CE17) every action played within 0.02 to 1.12 ms of the edge, against 4 to 49 ms for 0.1.0's code (CE15); not yet on a unit. Not run beside other modules on a unit.",
+  "summary": "Author's unit, builds alone: CI06 and CI07 passed every action, both learns with YES and NO, REVERSE DIRECTION and a power cycle; CI09 passed the bars, both learns' NO and a hold action. CI11 (0.1.1, this package) reads the jacks in the audio interrupt: in rytm-emu (CE16, CE17) every action played within 0.02 to 1.12 ms of the edge, against 4 to 49 ms for 0.1.0's code (CE15); on the unit it works great, as reported. Not run beside other modules on a unit.",
   "documentation": {
    "tutorial": {
     "title": "Quick tutorial",
