@@ -125,6 +125,13 @@ describe('the vendored elekloader catalog', () => {
       missing: [],
     })
   })
+  it('plans CHORUS, a send effect, from its pinned source-only package', () => {
+    // the core is the Modwerk base's send-bus variant once the site builds on it (rytm-base.test.ts)
+    expect(planBuild('analog-rytm-mkii', '1.74', ['chorus'])).toMatchObject({
+      mods: [{ id: 'chorus', file: 'chorus-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental', needs_core: '0.7' }],
+      missing: [],
+    })
+  })
   it('keeps download approval specific to each device', () => {
     expect(DIGI_DOWNLOADS_ENABLED).toEqual({ digitakt: true, 'digitakt-ii': false, digitone: true, 'analog-rytm-mkii': true })
     expect(digiDownloadsEnabled('digitakt-ii')).toBe(false)
