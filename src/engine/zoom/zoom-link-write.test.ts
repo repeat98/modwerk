@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { fakeEffect, fakeEffectList, fakeZoomPedal, type FakePedalFile } from '../../dev/zoom-pedal-fake'
 import { ZoomLink } from './zoom-link'
-import { listRecords, listWith, listWithout } from './zoom-protocol'
+import { LOCAL_IDS, effectInfo, listRecords, listWith, listWithout, localIdFor, withEffectId } from './zoom-protocol'
 
 const pedal = (options: Parameters<typeof fakeZoomPedal>[0] = {}) => {
   const files: FakePedalFile[] = [fakeEffect('DELAY.ZDL', 7, 16, '1.00'), fakeEffect('LOOP.ZDL', 8, 480, '0.03'), fakeEffectList({ 7: ['DELAY.ZDL'], 8: ['LOOP.ZDL'] })]
@@ -33,15 +33,54 @@ describe('installing and removing over the link', () => {
     expect(writes).toEqual(['NAM1SMOK.ZDL', 'FLST_SEQ.ZDT'])
     expect(link.getState().status).toBe('ready')
   })
-  it('refuses a clashing effect ID, a bad name, a non-effect, a full pedal, Zoom’s own effects and a known clash, and writes nothing then', async () => {
+  it('refuses a bad name, a non-effect, a full pedal, Zoom’s own effects and a known clash, and writes nothing then', async () => {
     const fake = pedal({ free: 3000 }), link = await connect(fake)
-    await expect(link.installFile('LOOP2.ZDL', fakeEffect('LOOP2.ZDL', 8, 480, '0.04').data)).rejects.toThrow(/LOOP\.ZDL on the pedal already uses this effect ID/)
     await expect(link.installFile('NAMLITE-SMOKEY.ZDL', fakeEffect('X', 8, 901, '0.26').data)).rejects.toThrow(/at most 8/)
     await expect(link.installFile('JUNK.ZDL', Array(2000).fill(1))).rejects.toThrow(/not an effect file/)
     await expect(link.installFile('BIG.ZDL', fakeEffect('BIG.ZDL', 8, 902, '0.26', 4000).data)).rejects.toThrow(/Not enough space/)
     await expect(link.installFile('DLY2.ZDL', fakeEffect('DLY2.ZDL', 7, 17, '1.00').data)).rejects.toThrow(/only added effects/)
     await expect(link.installFile('SPOOL.ZDL', fakeEffect('SPOOL.ZDL', 8, 409, '1.00').data)).rejects.toThrow(/409.*frozen a pedal at boot/)
     expect(fake.sent.some(m => m[4] === 0x60 && (m[5] === 0x23 || (m[5] === 0x20 && m[6] === 0x01)))).toBe(false)
+  })
+  it('moves an effect whose ID another effect on the pedal has to a local ID, changing only that', async () => {
+    const fake = pedal(), link = await connect(fake), effect = fakeEffect('GOOEY.ZDL', 8, 480, '2.00')
+    const result = await link.installFile('GOOEY.ZDL', effect.data)
+    const to = localIdFor('GOOEY.ZDL', new Set([480]))!
+    expect(result.moved).toEqual({ from: 480, to, clash: 'LOOP.ZDL' })
+    expect(to).toBeGreaterThanOrEqual(LOCAL_IDS.first)
+    expect(to).toBeLessThanOrEqual(LOCAL_IDS.last)
+    const written = fake.files.find(f => f.name === 'GOOEY.ZDL')!.data
+    expect(effectInfo(written)).toEqual({ gid: 8, fxid: to, version: '2.00' })
+    expect(written.flatMap((b, i) => b === effect.data[i] ? [] : [i])).toEqual([0x40, 0x41].filter(i => written[i] !== effect.data[i]))
+    expect(list(fake)).toEqual(['7:DELAY.ZDL', '8:LOOP.ZDL', '8:GOOEY.ZDL'])
+  })
+  it('gives the same file name the same local ID, skips IDs in use or given out before, and stops when none is left', () => {
+    const first = localIdFor('GOOEY.ZDL', new Set())!
+    expect(localIdFor('gooey.zdl', new Set([480]))).toBe(first)
+    const next = localIdFor('GOOEY.ZDL', new Set([first]))!
+    expect(next).not.toBe(first)
+    expect(localIdFor('GOOEY.ZDL', new Set(), new Set([first]))).toBe(next)
+    const all = new Set(Array.from({ length: LOCAL_IDS.last - LOCAL_IDS.first + 1 }, (_, i) => LOCAL_IDS.first + i))
+    expect(localIdFor('GOOEY.ZDL', all)).toBeUndefined()
+    expect(effectInfo(withEffectId(fakeEffect('X.ZDL', 8, 480, '1.00').data, 1023))).toMatchObject({ gid: 8, fxid: 1023 })
+  })
+  it('says so when the local IDs are all taken too, and writes nothing', async () => {
+    const fake = pedal(), link = await connect(fake), avoid = new Set(Array.from({ length: LOCAL_IDS.last - LOCAL_IDS.first + 1 }, (_, i) => LOCAL_IDS.first + i))
+    await expect(link.installFile('GOOEY.ZDL', fakeEffect('GOOEY.ZDL', 8, 480, '2.00').data, { avoid })).rejects.toThrow(/LOOP\.ZDL on the pedal already uses effect ID 8\/480, and every local ID from 958 to 1023 is taken too/)
+    expect(fake.sent.some(m => m[4] === 0x60 && m[5] === 0x20 && m[6] === 0x01)).toBe(false)
+  })
+  it('updates an effect that was moved to a local ID and keeps that ID, so patches still find it', async () => {
+    const fake = pedal(), link = await connect(fake)
+    const { moved } = await link.installFile('GOOEY.ZDL', fakeEffect('GOOEY.ZDL', 8, 480, '2.00').data)
+    const newer = fakeEffect('GOOEY.ZDL', 8, 480, '2.01', 1300)
+    expect(await link.installFile('GOOEY.ZDL', newer.data)).toMatchObject({ unchanged: false, moved: { from: 480, to: moved!.to } })
+    expect(effectInfo(fake.files.find(f => f.name === 'GOOEY.ZDL')!.data)).toEqual({ gid: 8, fxid: moved!.to, version: '2.01' })
+    expect(await link.installFile('GOOEY.ZDL', newer.data)).toMatchObject({ unchanged: true })
+  })
+  it('installs IDs up to 1023, the most a patch stores', async () => {
+    const fake = pedal(), link = await connect(fake)
+    await link.installFile('SCR1023.ZDL', fakeEffect('SCR1023.ZDL', 8, 1023, '2.00').data)
+    expect(list(fake)).toContain('8:SCR1023.ZDL')
   })
   it('replaces an installed effect only with the same effect, and leaves identical bytes alone', async () => {
     const fake = pedal(), link = await connect(fake)

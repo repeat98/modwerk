@@ -1,7 +1,7 @@
 // The site's link to a Zoom MultiStomp over Web MIDI: identify the pedal, list its files, read them (the backup),
 // and install or remove one effect file the way the project's editor proved safe on the MS-70CDR 2.10.
 // The commands are in zoom-protocol.ts.
-import { EFFECT_LIST, EFFECT_LIST_SIZE, FILE, IDENTITY_REQUEST, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity } from './zoom-protocol'
+import { EFFECT_LIST, EFFECT_LIST_SIZE, FILE, IDENTITY_REQUEST, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, isLocalId, localIdFor, withEffectId, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity } from './zoom-protocol'
 import { storedZip } from './zip'
 
 export type ZoomLinkStatus = 'unsupported' | 'idle' | 'connecting' | 'ready' | 'reading' | 'writing'
@@ -215,30 +215,44 @@ export class ZoomLink {
   }
 
   /**
-   * Install one added effect file (installRefusal: never Zoom's own, nor a known ID clash). A new one: its ID must be free, there must be room, and the file is written before
-   * it goes into the effect list (whose original is written back if that fails). An installed one of the same
-   * name: only the same effect (group and ID), and only when the bytes differ. Every write is read back.
-   * Returns the effect list from before, for the caller to offer for saving. Power-cycle the pedal to load it.
+   * Install one added effect file (installRefusal: never Zoom's own, nor a known ID clash). A new one: there must be
+   * room, and the file is written before it goes into the effect list (whose original is written back if that fails).
+   * When another effect on the pedal has its ID, it is moved to a free local ID (958-1023) first, the same one for the
+   * same file name where there's room; `avoid` are local IDs not to hand out (given to other effects before). An
+   * installed one of the same name: only the same effect (group and ID, or the local ID it was moved to, which it
+   * keeps so patches still find it), and only when the bytes differ. Every write is read back. Returns the effect
+   * list from before, for the caller to offer for saving, and any move. Power-cycle the pedal to load it.
    */
-  readonly installFile = (name: string, data: ArrayLike<number>) => this.exclusive('Installing ' + name, async () => {
-    const file = name.toUpperCase(), bytes = Array.from(data), refused = installRefusal(name, bytes)
+  readonly installFile = (name: string, data: ArrayLike<number>, { avoid = new Set<number>() }: { avoid?: Set<number> } = {}) => this.exclusive('Installing ' + name, async () => {
+    const file = name.toUpperCase(), refused = installRefusal(name, data)
     if (refused) throw new Error(refused)
+    let bytes = Array.from(data)
     const info = effectInfo(bytes)!
     const files = await this.list(), existing = files.find(f => f.name.toUpperCase() === file)
     if (existing) {
-      const head = await this.head(existing)
-      if (!head || head.gid !== info.gid || head.fxid !== info.fxid) throw new Error('The pedal’s ' + existing.name + ' is a different effect; not replacing it.')
+      const head = await this.head(existing), kept = head && isLocalId(head) && head.gid === info.gid && head.fxid !== info.fxid
+      if (kept) bytes = withEffectId(bytes, head.fxid)
+      else if (!head || head.gid !== info.gid || head.fxid !== info.fxid) throw new Error('The pedal’s ' + existing.name + ' is a different effect; not replacing it.')
+      const moved = kept ? { from: info.fxid, to: head.fxid } : undefined
       const current = await this.read(existing.name)
-      if (current.length === bytes.length && current.every((b, i) => b === bytes[i])) return { previousList: undefined, unchanged: true }
+      if (current.length === bytes.length && current.every((b, i) => b === bytes[i])) return { previousList: undefined, unchanged: true, moved }
       this.progress('Writing ' + existing.name, 0, 0)
       await this.write(existing.name, bytes)
-      return { previousList: undefined, unchanged: false }
+      return { previousList: undefined, unchanged: false, moved }
     }
-    const effects = files.filter(f => /\.zdl$/i.test(f.name))
+    const effects = files.filter(f => /\.zdl$/i.test(f.name)), taken = new Map<number, string>()
     for (const [i, f] of effects.entries()) {
       this.progress('Checking effect IDs on the pedal', i + 1, effects.length)
       const head = await this.head(f)
-      if (head && head.gid === info.gid && head.fxid === info.fxid) throw new Error(f.name + ' on the pedal already uses this effect ID (' + info.gid + '/' + info.fxid + '); not installing.')
+      if (head && head.gid === info.gid) taken.set(head.fxid, f.name)
+    }
+    let moved: { from: number; to: number; clash: string } | undefined
+    const clash = taken.get(info.fxid)
+    if (clash) {
+      const fxid = localIdFor(file, new Set(taken.keys()), avoid)
+      if (fxid === undefined) throw new Error(clash + ' on the pedal already uses effect ID ' + info.gid + '/' + info.fxid + ', and every local ID from 958 to 1023 is taken too; not installing.')
+      bytes = withEffectId(bytes, fxid)
+      moved = { from: info.fxid, to: fxid, clash }
     }
     const free = parseUsage(await this.ask(FILE.usage()))
     if (free !== undefined && free < bytes.length + 8192) throw new Error('Not enough space on the pedal (' + Math.round(free / 1024) + ' KB free).')
@@ -253,7 +267,7 @@ export class ZoomLink {
       try { await this.write(EFFECT_LIST, list) } catch (again) { throw new Error((error as Error).message + ' Writing the original effect list back also failed (' + (again as Error).message + '): restore it from your backup before power-cycling.', { cause: again }) }
       throw new Error((error as Error).message + ' The original effect list was written back.', { cause: error })
     }
-    return { previousList: list, unchanged: false }
+    return { previousList: list, unchanged: false, moved }
   }, 'writing')
 
   /** Remove one added effect file: out of the effect list first, then the file, then list to check it went. Returns the effect list from before. */
@@ -261,7 +275,7 @@ export class ZoomLink {
     const files = await this.list(), file = files.find(f => f.name.toUpperCase() === name.toUpperCase())
     if (!file || !/\.zdl$/i.test(file.name)) throw new Error(name + ' is not an effect on the pedal.')
     const head = await this.head(file)
-    if (!isAddedEffect(head)) throw new Error(file.name + (head ? ' has effect ID ' + head.gid + '/' + head.fxid : ' has no effect header') + ': only added effects (group 8, IDs 403 to 957) are removed. Zoom’s own effects stay as they are.')
+    if (!isAddedEffect(head)) throw new Error(file.name + (head ? ' has effect ID ' + head.gid + '/' + head.fxid : ' has no effect header') + ': only added effects (group 8, IDs 403 to 1023) are removed. Zoom’s own effects stay as they are.')
     const list = await this.effectList(), updated = listWithout(list, file.name)
     if (updated) await this.write(EFFECT_LIST, updated)
     await this.remove(file.name)
