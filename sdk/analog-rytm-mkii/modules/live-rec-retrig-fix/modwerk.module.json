@@ -38,9 +38,10 @@
       "The RTRG key glows dim red while the selected track is ALWAYS ON."
     ],
     "usage": [
-      "Hold RECORD and press PLAY, hold RTRG and hold a pad, varying the pressure.",
-      "Let go and leave LIVE RECORDING: the roll plays back as played.",
-      "In GRID RECORDING, edit the roll's trigs one by one."
+      "Hold RTRG and press YES: ALWAYS ON turns on for the selected track. Let go of RTRG: its key glows dim red.",
+      "Hold RECORD and press PLAY, then play that track's pad, varying the pressure.",
+      "Leave LIVE RECORDING: the roll plays back hit for hit, on the sequencer's grid.",
+      "To keep rolls where you play them, uncheck QUANT RTRG TO SEQ in GLOBAL > CONTROL > SEQUENCER CONFIG."
     ]
   },
   "access": {
