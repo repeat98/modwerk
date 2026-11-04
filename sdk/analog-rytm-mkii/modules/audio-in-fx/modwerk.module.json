@@ -1,6 +1,6 @@
 {
   "schemaVersion": 3,
-  "id": "audio-in-routing",
+  "id": "audio-in-fx",
   "name": "Audio In Routing",
   "version": "0.1.0-experimental",
   "machine": "analog-rytm-mkii",

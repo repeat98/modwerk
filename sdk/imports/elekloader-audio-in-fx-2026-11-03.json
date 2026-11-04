@@ -1,24 +1,24 @@
 {
   "schema": 1,
   "kind": "elekloader-catalog",
-  "revision": "audio-in-routing-2026-11-03",
-  "about": "Modwerk source-only audio-in-routing package for Analog Rytm MKII OS 1.74, compiled from sdk/analog-rytm-mkii/modules/audio-in-routing.",
+  "revision": "audio-in-fx-2026-11-03",
+  "about": "Modwerk source-only audio-in-fx package for Analog Rytm MKII OS 1.74, compiled from sdk/analog-rytm-mkii/modules/audio-in-fx.",
   "cores": [],
   "mods": [
     {
-      "file": "audio-in-routing-0.1.0-experimental-os1.74.elemod",
-      "sha256": "5b73803ece0a36f981b5d10791bce1f9d266acee392a2a61444c7dca540ff85c",
-      "id": "audio-in-routing",
+      "file": "audio-in-fx-0.1.0-experimental-os1.74.elemod",
+      "sha256": "53d8e674042c2c84519c0ffc41c031b56ffb0556ffa01b1ed78c07fe2dbfcc83",
+      "id": "audio-in-fx",
       "version": "0.1.0-experimental",
       "device": "analog-rytm-mk2",
       "os": "1.74",
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "ff09c1f6694df730fdd58ff3d368c52354c8315d",
-        "path": "sdk/imports/packages/audio-in-routing/audio-in-routing-0.1.0-experimental-os1.74.elemod"
+        "commit": "d6cd478adbfe29cd7a7516c4848295a7d845a5d4",
+        "path": "sdk/imports/packages/audio-in-fx/audio-in-fx-0.1.0-experimental-os1.74.elemod"
       },
-      "title": "Audio In Routing",
+      "title": "Audio In FX",
       "requires": [
         "core"
       ],
