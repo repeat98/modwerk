@@ -182,10 +182,17 @@ no cached caller body. The `0x40055ff8` path has a known 32-byte path to its
 unresolved indirect call; `0x400565ac` reaches unresolved dispatches through
 `0x40048f18` and `0x40049738`. At `0x40037d80`, index zero selects a dispatch
 table address outside both hashed main images. These findings do not establish
-an exhaustive callback set or rule out manager re-entry. The exact base proof
+an exhaustive callback set or rule out manager re-entry. A new address-seeded,
+instruction-boundary-aware pass reaches three of the 42 remaining candidate
+sites from the exact system-task dispatch roots; their initial argument-six
+targets are `0x40056644`, `0x40056bec` and `0x4007f67c`. The other 39 remain
+unrooted byte patterns, and none is proved to be a false positive. The pass
+still has unresolved indirect transfers and one undecoded core-up tail, so the
+remaining callback set and re-entry question stay open. The exact base proof
 contains no companion modules; one later `0x4004d948` code window differs from
 stock, so results stay bound to this base image. The [popup callback evidence](evidence/popup-callback-stack-20261104.md)
-records the hashes, methods and limits; the [stack evidence](evidence/qualification-progress-20261104.md)
+records the earlier hashes, methods and limits; the [rooted-reachability evidence](evidence/popup-manager-reachability-20261105.md)
+records the systematic classification and its scope. The [stack evidence](evidence/qualification-progress-20261104.md)
 also records the base dispatcher, stock leaves, popup close, bounded switch
 and track refresh. No device was accessed, and neither the complete memory
 nor cycle gate is closed.
