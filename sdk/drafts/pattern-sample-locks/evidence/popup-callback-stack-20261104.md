@@ -52,9 +52,12 @@ argument expressions resolve to initial code pointers (48 distinct addresses),
 while one reads a runtime-derived pointer from an `A2`-relative object field.
 These are local instruction-context checks, not rooted caller proofs. The
 linear sweep can decode embedded data as instructions, so no candidate was
-excluded as data-like and the 44 uncached sites remain unverified as reachable
-callers. Computed or indirect manager calls are not enumerated, pointer cells
-may change at runtime, and the live five-slot contents are unknown.
+excluded as data-like. The follow-up decoded two of the 44 formerly uncached
+sites from assumed local entries; neither entry has an established external
+root, so all 44 remain unverified as reachable callers. The other 42 still
+have no cached caller body. Computed or indirect manager calls are not
+enumerated, pointer cells may change at runtime, and the live five-slot
+contents are unknown.
 
 ## Stack paths
 
@@ -136,11 +139,51 @@ stock and base at `0x4004e1ea–0x4004e1f4`, so later callback paths remain tied
 to the exact base image.
 
 The rooted `0x400131c8` leaf contains one return and no calls or indirect
-transfers, so that leaf cannot itself re-enter the manager. The apparent
-`0x40048afc` self-call at `0x40048fd6` in the larger decode is not reachable
-from the `0x40048ff8` callback root and is not counted as callback recursion.
+transfers, so that leaf cannot itself re-enter the manager. The rooted
+`0x40048afc` body returns at `0x40048f14`; `0x40048fd6` is outside it and is not
+self-recursion. The separate `0x40048f18` entry reaches that instruction as a
+direct call to `0x40048afc`, and the additional initial target `0x400565ac`
+reaches `0x40048f18`. That path therefore reaches the eight unresolved `%a3@`
+calls in `0x40048afc`, while the `0x40048ff8` root alone does not reach it.
 The other unresolved indirect targets mean manager re-entry is neither proved
 nor ruled out for the full callback set.
+
+## Targeted caller and callback follow-up — 5 November 2026
+
+Two formerly uncached manager-call patterns now have short, entry-address
+disassemblies and a locally rooted path to the call. From assumed local entry
+`0x40058abc`, the path reaches `0x40058aea`, pushes six stack arguments, and
+has a returning branch at `0x40058b34`; argument six is the initial pointer
+at `0x400c0b60`, whose exact-image value is `0x40055ff8`. This body has unresolved
+indirects at `0x40058aca` and `0x40058b1a`. From assumed entry `0x40058c18`, the
+path reaches manager call `0x40058c4c`; argument six is the initial value at
+`0x400c0b94`, `0x400565ac`. Its inspected body also reaches unresolved
+register-indirect calls at `0x40058cd0` and `0x40058d72`. Both call/setup
+ranges match stock and base. The local paths do not prove that either assumed
+entry is invoked; 42 other candidate sites still have no cached caller body,
+and no data-like pattern was excluded.
+
+The rooted `0x40055ff8` body has a normal-return path ending at the RTS at
+`0x4005603a`; that path calls the verified common helper and leaf before the
+unresolved `jsr %a0@` at `0x4005602c`. It peaks at 32 bytes from this callback
+entry before that indirect target;
+the target starts four bytes below the entry SP. This is not a full callback
+bound. The other initial target, `0x400565ac`, has an RTS at `0x400565e0` and a
+path that tail-transfers to `0x40048ff8`; it also calls `0x4005646c` and
+`0x400562d4`, each of which can tail-transfer to `0x40049738`. The inspected
+`0x40049738` prefix has
+three unresolved indirect calls and no observed return. Its `0x40048f18`
+prelude can call `0x40048afc`, which returns locally but still contains eight
+unresolved `%a3@` calls. These branches and initial pointer values do not prove
+that runtime slots keep the same targets.
+
+The `0x4007e998` dispatch used from `0x40037d80` computes its table address as
+`0x460e762c + 14 × index`; the rooted call passes index zero. Address
+`0x460e762c` is outside both hash-verified main-image ranges, so its target
+requires the mapped runtime memory contents or an exact owner-supplied table
+contract. The exact base has no companion modules; any conclusion for an
+installed companion profile also requires its exact patch set and callback
+state.
 
 Selected range hashes below cover only the stated entry ranges; they do not
 turn an unresolved routine prefix into a complete function bound.
@@ -158,6 +201,13 @@ turn an unresolved routine prefix into a complete function bound.
 | `0x40048afc–0x40049300` | `25a1009c50eea08588eabd0791e49625bb02ec4292e78a6836764852cbadb7f2` | Rooted callback window with unresolved indirects |
 | `0x40055ff8–0x4005603c` | `2743f5e362f356062a2f918742017ce017bb34d2a26334c20e44a988680e7920` | Initial trampoline target window |
 | `0x400565ac–0x400565e2` | `a6449d67c4e8309cd48eb296dfba13606e39ccb018f3fb1ed6e29265609c8fa9` | Initial trampoline target window |
+| `0x40058abc–0x40058b36` | `5d35db8811a0a15e9da8465129bc0d8d5e30fc1c7aa713731ea9dc7aa84781e4` | Candidate body from assumed entry through return |
+| `0x40058c18–0x40058c50` | `7590bc4c1deea5076f9e9f92e416a6fa664721a5fdd87206eabcb08a71a85767` | Candidate entry through manager call |
+| `0x4005646c–0x400564a2` | `59ddbd53dbaf7f616f8c3656938d20f0deeb64c01b5809d6db802d9b044853a0` | Callback child with tail path to `0x40049738` |
+| `0x400562d4–0x400562fc` | `867e29e2bc6a435d0c2cd06b8b1b0e5c96dacd88a5ef4f0533cfbff3f9c90596` | Callback child with tail path to `0x40049738` |
+| `0x40048f18–0x40048ff6` | `b1c34cee98bb1289f8d42d33a8b3c8bc89b72880f3af42f970bc36a6b76e9822` | Prelude reaches `0x40048afc` and returns |
+| `0x40048afc–0x40048f16` | `c3f329f7e97d703a055b00e58fd3d2ee3b8774a5d4bd9fa64ddd9126a08e307b` | Rooted body through return; indirects remain |
+| `0x40049738–0x40049840` | `83b1f663b1ce4d888ed8af348a6faf098c2962718051f3187940fd68d59e74a6` | Inspected prefix only; no return observed |
 
 ## Next offline closure step
 
@@ -177,6 +227,26 @@ documented code ranges, direct-call encodings, rooted callback paths and finite
 stack arithmetic, while writing only aggregate metadata:
 
 ```sh
+PSL_CACHE=/Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/stock-bound-20261104
+decode_private_range() {
+  docker run --rm --network none --read-only --cap-drop ALL \
+    --security-opt no-new-privileges --user "$(id -u):$(id -g)" \
+    -e HOME=/tmp --tmpfs /tmp:rw,noexec,nosuid,size=128m \
+    -v "$PSL_CACHE/stock-main.private.bin:/cache/stock-main.private.bin:ro" \
+    sha256:da70d46e10b243277fa3ae2e015f7258d56b3ee08ca4be47e61899958872e792 \
+    m68k-elf-objdump -D -b binary -m m68k --adjust-vma=0x40000400 -M cf \
+    --start-address="$2" --stop-address="$3" /cache/stock-main.private.bin \
+    > "$PSL_CACHE/$1"
+}
+decode_private_range manager-candidate-0x40058abc.private.dis 0x40058abc 0x40058b36
+decode_private_range manager-candidate-0x40058c18.private.dis 0x40058c18 0x40058d80
+decode_private_range callback-target-0x40055ff8-followup.private.dis 0x40055ff8 0x40056100
+decode_private_range callback-target-0x400565ac-followup.private.dis 0x400565ac 0x40056680
+decode_private_range callback-target-0x4005646c-followup.private.dis 0x4005646c 0x40056540
+decode_private_range callback-target-0x400562d4-followup.private.dis 0x400562d4 0x40056380
+decode_private_range callback-target-0x40048f18-extended.private.dis 0x40048f18 0x40049040
+decode_private_range callback-target-0x40049738.private.dis 0x40049738 0x40049840
+
 python3 /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/stock-bound-20261104/popup_callback_audit.private.py --self-test
 python3 /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/stock-bound-20261104/popup_callback_audit.private.py
 python3 -B /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/stock-bound-20261104/popup_boundary_callee_audit.private.py --self-test

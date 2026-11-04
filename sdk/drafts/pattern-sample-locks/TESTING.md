@@ -175,17 +175,28 @@ rooted follow-up closes the `0x400131c8` leaf at four local bytes and finds a
 routine's entry; this is a path total, not an opener bound. The separate
 window-creation path remains unbounded. A ColdFire whole-image sweep gives all
 50 manager-call patterns a six-write argument setup and immediate `D0` use,
-but the 44 uncached callers still lack rooted code/data-boundary proof. Their
-initial argument-six values suggest 48 distinct code
-addresses plus one runtime-derived target, not a closed callback set. The
-`0x40037d80` path reaches a runtime table dispatch, and the `0x40055ec0` path
-retains dynamic object and register-indirect targets. The exact base proof
+but the 44 previously uncached callers still lack external root proof. Two
+now have local candidate-entry paths reaching manager calls: initial
+argument-six cells point to `0x40055ff8` and `0x400565ac`; 42 sites still have
+no cached caller body. The `0x40055ff8` path has a known 32-byte path to its
+unresolved indirect call; `0x400565ac` reaches unresolved dispatches through
+`0x40048f18` and `0x40049738`. At `0x40037d80`, index zero selects a dispatch
+table address outside both hashed main images. These findings do not establish
+an exhaustive callback set or rule out manager re-entry. The exact base proof
 contains no companion modules; one later `0x4004d948` code window differs from
 stock, so results stay bound to this base image. The [popup callback evidence](evidence/popup-callback-stack-20261104.md)
 records the hashes, methods and limits; the [stack evidence](evidence/qualification-progress-20261104.md)
 also records the base dispatcher, stock leaves, popup close, bounded switch
 and track refresh. No device was accessed, and neither the complete memory
 nor cycle gate is closed.
+
+The source-bound [IPL-7 span evidence](evidence/ipl7-span-static-20261104.md)
+counts 24–87 module instructions per nonempty span, at most 64 spans and 5,568
+instructions in IPL-7 spans per full operation, and up to 1,088 SAMPLE-field
+and index byte stores. IPL 7 masks ordinary levels 1–6; edge-sensitive level-7
+requests can still preempt. Handler work, the longer IPL-2 guard, and exact
+timer, clock and bus state are outside these counts. This does not establish chip cycles, worst-case
+latency or a complete interrupt-stack bound.
 
 Static source inspection establishes finite loop limits for the authored commit
 path: eight tracks and 64 steps; up to 31 remaining parameter-lock slots scanned

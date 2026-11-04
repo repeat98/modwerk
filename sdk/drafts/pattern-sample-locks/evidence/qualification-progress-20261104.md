@@ -19,14 +19,21 @@ local bytes and finds a 408-byte finite path through the early `0x4004d948`
 helper chain from popup-routine entry, but later callback paths still have
 unresolved indirect targets. A pinned ColdFire whole-image sweep decodes all
 50 aligned manager-call patterns with six stack argument writes and immediate
-`D0` use; 44 uncached sites still lack rooted caller and code/data-boundary
-proof. Initial argument-six expressions yield 48 distinct code addresses and
-one runtime-derived pointer, so these patterns do not establish an exhaustive
-callback set. The [popup callback evidence](popup-callback-stack-20261104.md)
-records the source and image hashes, path arithmetic, assumptions and open
-edges. It does not bound the opener's separate window creation path, total
-stack high-water, or timing. The exact reproduced base proof has no companion
-modules; results for the changed `0x4004d948` range remain bound to that base.
+`D0` use; 44 previously uncached sites lacked rooted caller and code/data-
+boundary proof. Follow-up windows reach two of those candidate sites from
+assumed local entries and recover their initial argument-six targets
+(`0x40055ff8` and `0x400565ac`), but neither entry has an established external root; 42 other
+sites still have no cached caller body, and all 44 remain unconfirmed as
+reachable callers. Initial argument-six expressions yield 48 distinct code
+addresses and one runtime-derived pointer, so these patterns do not establish
+an exhaustive callback set. Rooted descendants also identify a 32-byte known
+path from `0x40055ff8` to an unresolved indirect call and an index-zero table
+address outside the main images at `0x460e762c`. The
+[popup callback evidence](popup-callback-stack-20261104.md) records the source
+and image hashes, path arithmetic, assumptions and open edges. It does not
+bound the opener's separate window creation path, total stack high-water, or
+timing. The exact reproduced base proof has no companion modules; results for
+the changed `0x4004d948` range remain bound to that base.
 
 ## Uninstrumented compiler stack audit
 
