@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Quick Fill Trig Condition for the Analog Rytm MKII: hold a trig and press FILL
+// Quick Trig Conditions for the Analog Rytm MKII: hold a trig and press FILL
 // to lock the trig's condition: FILL, then NOT FILL, then no lock. UP and DOWN
 // with a trig held set a ratio: UP steps the first number, DOWN the second.
 //

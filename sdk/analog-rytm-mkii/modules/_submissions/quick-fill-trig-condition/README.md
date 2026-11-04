@@ -1,6 +1,6 @@
-# Quick Fill Trig Condition
+# Quick Trig Conditions
 
-An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.2.0-experimental. See [TESTING.md](TESTING.md) for what ran on a unit.
+An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.2.0-experimental. See [TESTING.md](TESTING.md) for what ran on a unit. Called Quick Fill Trig Condition before 0.2.0; its id, `quick-fill-trig-condition`, stays.
 
 Lock a trig to FILL, NOT FILL or a ratio such as 3:8 without turning the TRC knob.
 
@@ -22,7 +22,7 @@ In Euclidean mode a held trig writes the pulse its key maps to, as stock's own t
 
 The gesture works in PERF, SCNE, MUTE and CHRO, where the page stays on screen. With QPER held, a menu open or any other screen on top, TRC is covered, so FILL, UP and DOWN stay stock's and write nothing. With the trig's RETRIG menu open (trig + RTRG), UP and DOWN stay the menu's. A message on screen does not get in the way.
 
-A trig counts on the page and track where its key is down. PAGE moves the page on its release, so the gesture still works with PAGE held. Once the page moves, stock ends every hold, so a trig still held no longer counts, even back on its own page: press it again. Change track and FILL writes only if that track has a trig on the step. Stock places no trig past the pattern's length, so FILL plays a fill there too.
+A trig counts on the page and track where its key is down. PAGE moves the page on its release, so the gesture still works with PAGE held. Once the page moves, stock ends every hold, so a trig still held no longer counts, even back on its own page: press it again. Change track and FILL, UP and DOWN write only if that track has a trig on the step; otherwise FILL plays a fill and UP or DOWN opens the RETRIG menu, as on stock. Stock places no trig past the pattern's length, so FILL plays a fill there too.
 
 ## Changes to stock flows
 

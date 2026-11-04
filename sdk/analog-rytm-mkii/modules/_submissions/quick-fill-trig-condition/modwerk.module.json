@@ -1,7 +1,7 @@
 {
  "schemaVersion": 3,
  "id": "quick-fill-trig-condition",
- "name": "Quick Fill Trig Condition",
+ "name": "Quick Trig Conditions",
  "version": "0.2.0-experimental",
  "machine": "analog-rytm-mkii",
  "category": "system",
@@ -16,7 +16,7 @@
   "npp1993"
  ],
  "presentation": {
-  "label": "QUICK FILL COND",
+  "label": "QUICK TRIG COND",
   "family": "Workflow",
   "summary": "Hold a trig in GRID RECORDING: FILL locks FILL, NOT FILL, then no lock; UP and DOWN set a ratio such as 3:8.",
   "overview": "Set a trig condition without going to the TRC knob. In GRID RECORDING, hold one or more trigs and press FILL: the trigs get a FILL condition lock. Press again for NOT FILL, and again to remove the lock. UP and DOWN set a ratio: UP steps the first number, DOWN the second, from 1:2 to 8:8. FILL does not engage fill, and a fill latched with FUNC + FILL plays out its loop.",
@@ -76,7 +76,7 @@
  },
  "evidence": {
   "tier": "none",
-  "moduleVersion": "0.1.0-experimental",
+  "moduleVersion": "0.2.0-experimental",
   "sourceSha256": null,
   "reports": [],
   "hardware": null,
@@ -84,7 +84,7 @@
  },
  "tests": {
   "report": "TESTING.md",
-  "summary": "Functional pass on an Analog Rytm MKII and rytm-emu; see TESTING.md."
+  "summary": "0.1.0: functional pass on an Analog Rytm MKII and rytm-emu. 0.2.0 (UP and DOWN ratios): rytm-emu only so far; see TESTING.md."
  },
  "license": {
   "spdx": "GPL-3.0-or-later",
@@ -95,8 +95,8 @@
   {
    "path": "media/thumbnail.svg",
    "kind": "thumbnail",
-   "caption": "Quick Fill Trig Condition thumbnail",
-   "alt": "Quick Fill Trig Condition thumbnail: a step line with one trig marked FILL",
+   "caption": "Quick Trig Conditions thumbnail",
+   "alt": "Quick Trig Conditions thumbnail: a step line with one trig marked FILL and one marked 3:8",
    "credit": "npp1993",
    "license": "GPL-3.0-or-later",
    "source": "Original artwork by the author."

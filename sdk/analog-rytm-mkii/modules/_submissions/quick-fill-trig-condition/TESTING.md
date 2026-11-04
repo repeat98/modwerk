@@ -1,4 +1,4 @@
-# Quick Fill Trig Condition testing
+# Quick Trig Conditions testing
 
 ## Hardware
 
@@ -90,10 +90,17 @@ Stock OS 1.74, Modwerk base core-0.7 (0c92aa45), build FC08 (sha256 26d9dba2) al
 | T1 held, DOWN, then RTRG | 2:6 written, then the RETRIG menu opens |
 | T3 held, FUNC held, UP | No write |
 | GRID RECORDING off, T3 held, UP | No write; T3 selects its track, stock |
+| T1 + FILL three times | FILL, NOT FILL, no lock |
+| T1 held, QPER held, FILL held | No write, stock fill flag set |
+| FILL held alone | Stock fill flag set |
+| T1 held, RTRG, FILL | No write, RETRIG menu stays |
+| CHRO on, T1 held, DOWN | 1:2, TRC shows it; the BD pad then plays the same note as before (MIDI 0x24), as on stock, where DOWN alone moves it to 0x20 |
+| PERF on, T1 held, DOWN | 1:2, TRC shows it |
+| T1 held, SD pad tapped (no SD trig on step 1), DOWN | No write; the RETRIG menu opens on SD, as stock |
 
 Stock OS 1.74 alone, same emulator and steps, for comparison: T1 held + UP opens the RETRIG menu, the same one T1 held + RTRG opens, and UP inside it steps RATE (1/16 to 1/20 in two presses). No condition is written.
 
-Not tested in FC08: Euclidean mode, page 2 and PAGE held, PERF, SCNE, MUTE and CHRO, QPER held, a pad changing track, the combined image. They share FILL's code path, which FC07 tested.
+Not tested in FC08: Euclidean mode, page 2 and PAGE held, SCNE and MUTE, QPER held with UP or DOWN, the combined image. They share FILL's code path, which FC07 tested.
 
 ## rytm-emu, 0.1.0
 
