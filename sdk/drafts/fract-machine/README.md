@@ -57,9 +57,8 @@ intentional private prototype limit, not eight simultaneous instances.
 
 START dispatch from #1029 is merged. The inherited native-FLEX reader fix is
 included with the source and media in #926; #1108 is to be superseded after
-consolidation. Current public main still lacks FR:1 boot preservation. The
-private builder therefore refuses that base rather than emit a public package
-with unqualified missing-module behavior. No catalogue entry, public USB/card
+consolidation. The base now keeps FR:1 at boot (`known[]`, added in #926);
+that base has not yet run on a unit. No catalogue entry, public USB/card
 package, compatibility pair proof or exact-public hardware qualification exists.
 
 Part/project reload, cold boot, Keep/Undo, replacement/removal, missing-module
@@ -89,7 +88,7 @@ hide them. Record all other failures before release.
 `build_private.py --help` lists the separate private paired build inputs: exact
 base source/build proofs/package, an Elekloader checkout and the user's own
 original OS 1.40C. It verifies FR:1 preservation, START ABI, source/base identities
-and stock-free output. Current public main is rejected. Outputs and stock files
+and stock-free output; a base without them is rejected. Outputs and stock files
 stay outside Git; no device writes are part of source validation.
 
 ## Authorship and licences

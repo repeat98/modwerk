@@ -12,7 +12,7 @@
   },
   "build": {
     "status": "pending",
-    "reason": "Private source baseline plus accepted centered-SIZE/UI and consolidation edits; see README. Public main lacks FR:1 boot preservation. No listed USB/card package or exact-public hardware qualification; the private paired builder refuses unsupported bases."
+    "reason": "Private source baseline plus accepted centered-SIZE/UI and consolidation edits; see README. No listed USB/card package or exact-public hardware qualification; the private paired builder refuses unsupported bases."
   },
   "author": {
     "github": "ex1010",
@@ -113,14 +113,11 @@
     "effectId": null,
     "location": "Track machine",
     "conflicts": [],
-    "uiClaims": [
-      "screen:SRC MAIN",
-      "screen:SRC SETUP"
-    ],
+    "uiClaims": [],
     "limitations": [
       "Unlisted source draft; not offered by the public configurator.",
       "Eight registry slots exist; FRACT admits only one owner on T1\u2013T4.",
-      "Public main lacks FR:1 boot preservation; private build requires an exact compatible paired base.",
+      "Private build requires an exact compatible paired base with FR:1 boot preservation.",
       "No public lifecycle, stress, companion or exact-build hardware qualification."
     ]
   },

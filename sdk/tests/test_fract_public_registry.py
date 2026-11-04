@@ -1,7 +1,6 @@
-"""FRACT START integration with explicit proposed FR:1 boot preservation.
+"""FRACT START integration and FR:1 boot preservation (known[] in machine_registry.c).
 
-Public main lacks FR:1 in known[]. This fixture opts in locally, without
-claiming that the committed public base supports FRACT persistence.
+The live case leaves the boot validation out; the boot case runs it.
 """
 from pathlib import Path
 import shutil

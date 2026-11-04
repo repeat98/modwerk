@@ -13,8 +13,8 @@ and draft-doctor commands. `verify.py` invokes `check_source.py`; its synthetic
 imports and temporary base identity validate compile/link behavior only. Tests
 using `OG_FRACT_CURRENT_ENGINE` exercise the current engine; the explicitly
 host-only `fixtures/fract_reference/` files are a historical differential oracle.
-A proposed FR:1 preservation fixture is not evidence that public main implements
-that policy. Session-wide command results belong in the consolidation record/PR;
+The FR:1 boot-preservation fixture runs on the host only; it is not hardware
+evidence. Session-wide command results belong in the consolidation record/PR;
 this report does not invent results before those runs finish.
 
 ## Hardware and audio quality
@@ -54,9 +54,8 @@ heads; do not extrapolate to more instances or companions.
 
 Exact-public build cold boot, USB install, self-test, Keep/Undo, replacement,
 removal, missing-module reload, Part/project persistence and physical reboot:
-not tested. Physical live-trigger deletion and long stress: not tested. Public
-main lacks FR:1 boot preservation, and `build_private.py` deliberately refuses
-it. Resolve shared-base integration with owner review before qualification.
+not tested. Physical live-trigger deletion and long stress: not tested. The
+base keeps FR:1 at boot since #926 (`known[]`); that base has not run on a unit.
 
 ## OT UI capture evidence
 

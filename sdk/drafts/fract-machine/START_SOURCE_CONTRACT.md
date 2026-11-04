@@ -36,10 +36,10 @@ owners must fail closed. Existing shared START selection, voice protection and
 retained-image lifetime belong to the base, not to module-owned replacement
 patches. Finite AMP envelopes must silence the voice; INF sustains.
 
-Current public main does not include FR:1 in its boot-preserved signature list.
-A host fixture for a proposed FR:1 entry is not implementation or approval of
-that change. `build_private.py` requires a compatible exact paired base with
-FR:1 preservation and START ABI 1 and refuses current public main. Shared-base
+The base keeps FR:1 among its boot-preserved signatures (`known[]` in
+`machine_registry.c`, added in #926); that base has not yet run on a unit.
+`build_private.py` requires a compatible exact paired base with FR:1
+preservation and START ABI 1 and refuses any other. Shared-base
 integration and generated package rebuilding need owner review before this can
 become a listed release. Do not remove that check to obtain a build.
 
