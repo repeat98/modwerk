@@ -21,13 +21,13 @@ The existing exact-base system-task report binds the same base identity and cand
 
 `runtime.c`'s stack table and paused-task checks describe configured task ranges and validate saved SPs against those ranges when the loader runs. They do not establish the current task, live SR/SP, an interrupt-stack switch, or historical high-water. The task subtotals above are not stack minima or complete demand.
 
-The only operation-bounded ISR segment is the exact base's empty-table frame dispatcher: it peaks four bytes above the stock call-site stack pointer, makes no callback call or other stack adjustment, then returns with the call-site stack pointer restored. This ends at the return into the stock handler; it does not trace the hardware vector entry through the handler's own normal return. No complete interrupt-entry-to-return path is proved, so no full interrupt stack subtotal can be added to the task bounds. The stock vector-to-handler call graph, exception-frame transition, interrupt-stack/task-stack switch and nested handler paths remain open; a level-7 edge may interrupt an IPL-7 publisher, and its source, handler, deassert/retrigger behavior, possible re-entry and maximum nesting are unknown. The source-visible crash handler is non-returning and does not bound that operational case.
+The exact base's empty-table frame dispatcher remains bounded: it adds a four-byte call word, makes no callback call or other stack adjustment, and returns with the call-site stack pointer restored. A follow-up rooted audit now traces the frame vector's patched entry through the stock handler body, base exit wrapper and one normal exception return when indirect callees return. This is not a complete ISR bound: the stock body and directly called routines contain unresolved dynamic calls, the current SSP/task relationship is not known, and possible level-6/7 nesting remains unbounded. The pinned stock study identifies the level-7 vector's handler as a non-returning halt path, but live source routing, edge/pending state and possible re-entry are not established; the base crash handler also remains non-returning.
 
 ## Static configuration versus missing live evidence
 
 The build proof's configuration binds a base build, not a running module set or live register snapshot. Static source does not establish the active VBR/vector table, INTC0/1 ICR priorities, IMR/IPRL pending/enabled state, EPORT edge routing/flags, current SR, current TCB/SP, task-to-interrupt stack switching, or the effect of other installed modules on callback and stock-patch paths. A base configuration with no additional build-time modules does not prove which runtime companions are selected. These live and companion-dependent inputs prevent a complete interrupt nesting or task high-water bound.
 
-Closing the static bound still requires a complete rooted vector-to-return/callback and stack-transition audit for every possible enabled source, the exact companion set, and a conservative determination of controller/edge/task context, using static configuration where it is bounded and readback where it is not. The repository's [exact-memory gate](../../../../docs/MODULE_QUALIFICATION.md#exact-memory) requires stack/heap upper bounds and applicable guard evidence, and explicitly asks reports to say when hardware canaries were not measured; it does not mandate an additional canary when a complete defensible static bound exists. Separately, a new Octatrack module still needs the repository's real-unit functional or detailed hardware report under [hardware evidence](../../../../docs/MODULE_QUALIFICATION.md#hardware-evidence), with no minimum duration or track count. This candidate still lacks a complete bound, so that gate remains open; a canary would add evidence but would not replace the missing source/companion analysis. No hardware or live registers were accessed for this audit.
+Closing the static bound still requires contracts for every dynamic callback reachable from this frame path, the exact runtime companion set, a proven current task/SSP relationship, and bounded nesting for the enabled level-6/7 sources. Static configuration can establish what the linked base and pinned OS report; it cannot establish active VBR, ICR/IMR/IPRL or EPORT edge/pending state, current SR/SP/TCB, or runtime-selected callback targets. The repository's [exact-memory gate](../../../../docs/MODULE_QUALIFICATION.md#exact-memory) requires stack/heap upper bounds and applicable guard evidence, and explicitly asks reports to say when hardware canaries were not measured; it does not mandate an additional canary when a complete defensible static bound exists. Separately, a new Octatrack module still needs the repository's real-unit functional or detailed hardware report under [hardware evidence](../../../../docs/MODULE_QUALIFICATION.md#hardware-evidence), with no minimum duration or track count. This candidate still lacks a complete bound, so that gate remains open; a canary would add evidence but would not replace the missing source/companion analysis. No hardware or live registers were accessed for this audit.
 
 ## Reproduction and self-checks
 
@@ -56,3 +56,60 @@ shasum -a 256 /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/interr
 ```
 
 The deeper check reported `emptyHookPathPeakAddedStackBytes=4`, `emptyHookPathNetAddedStackBytesAtReturn=0`, and `syntheticMutationSelfTests=4/4 passed`; it prints no source excerpts or image bytes. This bounds the inserted dispatcher on the exact empty-table base only, not the surrounding stock ISR or a runtime set with other callbacks.
+
+## Follow-up: exact frame vector entry, return and unresolved stack paths
+
+This follow-up is bound to the same candidate package SHA-256 `3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79` and native-source fingerprint `7ea0fbdf317bfdab6a82b22869c7029ba23901cd27a3337a4bdaf8f8beeb7e69`; the exact private base identity is `9680e9ac861ff9313ce4f7a710a37ad2aa8e9b50b2cf8c043dafa2a0b78cdffc`, with `MAIN.raw` SHA-256 `877a8d6884cb05508a59b312a0e95498c33ce4a1e2f1fe452423b0edc74fb69e`. The base proof's unpacked runtime image is 320,540 bytes with SHA-256 `fbd83ae4faebd915bbecab9b1af5b635e4092493a1f63ca2a7e82d4f374f15d8`, loaded at `0x40a955e0`; it was reconstructed from the exact private `MAIN.raw`, `symbols.json`, `proofs.json` and repository `run_pack.unpack`, then checked against `proofs.json`'s `runPack` hash and size. The native-source preflight still matched all 233/233 proof inputs, and the linked frame callback table remained empty.
+
+The vector report in the pinned Octabam `KERNEL.md` identifies vector `0x41` (INTC0 source 1, level 5) and handler `0x4000aad0`; its upstream commit is `5f8e779fa9e8dcf5f36b2b62f7f80c7309daced4`, and the committed document SHA-256 is `d9f17b4f6380dced9f5bb7385339d7870d095fe72c15be05903a8359b5753727`. The exact base patches this handler entry to its `mw_frame_entry` runtime wrapper, which relocates the original entry save, allocates 252 bytes on the current A7/stack and records the frame start before rejoining the handler body. At the tail, the base redirects through `mw_frame_leave`, calls `mw_frame_exit`, restores the saved registers and 252-byte frame, then executes one normal exception return. The rooted control-flow walk reached that return on the modeled paths where every indirect call returns; it does not prove that any unresolved callback returns.
+
+The MCF54455 Reference Manual states that a normal ColdFire interrupt creates the fixed two-longword exception frame on the supervisor stack, sets supervisor mode and the interrupt mask, and clears the M bit; its alignment rules give an 8-byte frame plus 0–3 alignment bytes. Thus the processor contribution is 8–11 bytes on SSP, while whether that SSP is the interrupted task's stack depends on the incoming S mode: supervisor tasks continue on SSP, whereas a user-mode task switches from USP to SSP. The base source does not establish the live mode or stack pointers. See [MCF54455 Reference Manual §§3.3.3–3.3.3.1 and 4.3.3.2](https://www.nxp.com/docs/en/reference-manual/MCF54455RM.pdf).
+
+The base-side stack contributions are scoped facts, not additive whole-handler maxima: the CPU exception frame plus entry wrapper consumes 260–263 bytes on the ISR's SSP before the handler body; the `core_frame` call contributes four bytes and zero net stack on the exact empty-table path; and the exit call adds a four-byte return word plus the callee's 12-byte local/save area (16 bytes above the SP at that call site), after which the entry frame is restored. No hardware, cycle or latency bound follows from these byte counts. The exact-base rooted walk covers 3,604 instruction starts in the vector-to-return path, 22 direct call sites and 11 indirect call sites; its direct-call closure covers 29 entries and 24 direct call sites, with four more indirect call sites after the empty `ev_frame` dispatch is excluded. It reaches one normal exception-return site, but dynamic callees and non-returning paths keep that path conditional.
+
+The unresolved vector-to-return indirect call sites are at `0x4000ab12`, `0x4000b1d8`, `0x4000d022`, `0x4000d340`, `0x4000d35a`, `0x4000d36c`, `0x4000d43e`, `0x4000d45a`, `0x4000d49c`, `0x4000d52c` and `0x4000d784`. The directly called base routines add unresolved indirect call sites at `0x40ab400a`, `0x40ab403e`, `0x40ab409e` and `0x40acf73c`. These are transfer addresses only; no stock instruction bytes, instruction listing, disassembly or dump is included. The empty `ev_frame` proof removes only that one dispatch family: it does not constrain stock state-selected targets or other runtime/companion callbacks. To close the stack path, each reachable target set needs an exact runtime source/companion binding, a bounded callback stack/return contract, and proof that its indirect calls cannot re-enter or recurse without a finite limit.
+
+The pinned stock interrupt report assigns level 6 to eDMA frame channels and UART0/UART1, level 5 to the DSP frame handler, and vector `0x47` at level 7 to a halt path. Rooted base control flow contains reachable IPL-5 and IPL-7 writes: level 6 can therefore preempt during IPL-5 portions and is masked during the IPL-7 portion, while the edge-sensitive level-7 request is not masked by IPL 7 ([MCF54455 Reference Manual §3.2.9](https://www.nxp.com/docs/en/reference-manual/MCF54455RM.pdf)). The active source enables, pending bits, EPORT edge flags, and retrigger behavior remain live-state inputs; complete nested stack accounting also needs the eDMA/UART handlers and the possible level-7 entry. The exact base source contains no VBR install, and no current SR/SP/SSP/TCB or companion inventory was read. SDRAM/cache/arbitration/core timing inputs also remain absent, so this is not a chip-cycle or latency proof.
+
+The private analysis used GNU `m68k-elf-objdump` 2.47.20260726, rooted at the vector entry and restarted at otherwise missing call targets to validate instruction boundaries. The private helper `/Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105/audit_frame_isr_root.py` has SHA-256 `d1ee6a56cc2c95ba33111af6672011a9ed1ef05d6d625efd3962066d9ebb4996`; it emitted only counts and transfer addresses and passed five synthetic self-checks (branch reachability, unresolved indirect call, rejection of missing boundary, exact empty-table exception, and non-trapping TPF classification). All raw images and decoded listings remained in the private cache, outside Git.
+
+Reconstruct the private runtime bytes from the proof-bound base and generate the listings with:
+
+```sh
+PSL_ROOT="$PWD"
+PSL_BASE=/Users/weiyun.wang/.cache/psl-current-base-workspace/current
+PSL_AUDIT=/Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105
+python3 - "$PSL_ROOT" "$PSL_BASE" "$PSL_AUDIT" <<'PY'
+import hashlib, importlib.util, json, pathlib, sys
+root, base, audit = map(pathlib.Path, sys.argv[1:])
+proof = json.loads((base / 'proofs.json').read_text())
+symbols = json.loads((base / 'symbols.json').read_text())
+spec = importlib.util.spec_from_file_location('private_run_pack', root / 'sdk/machines/octatrack/elekloader/run_pack.py')
+run_pack = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(run_pack)
+main = (base / 'MAIN.raw').read_bytes()
+start, words = symbols['__run_start'], symbols['__run_words']
+layout = {'run_load': symbols['__run_load'], 'ddr': [start, start + 4 * words]}
+unpacked = run_pack.unpack(main, layout, symbols, 0x40000400)
+meta = proof['runPack']
+plain = unpacked[len(main) - meta['packedBytes']:]
+assert len(plain) == meta['plainBytes'] and hashlib.sha256(plain).hexdigest() == meta['plainSha256']
+out = audit / 'base-run-private.raw'
+out.write_bytes(plain)
+out.chmod(0o600)
+print('verifiedPrivateRunBytes=', len(plain), 'sha256=', meta['plainSha256'])
+PY
+/opt/homebrew/bin/m68k-elf-objdump -D -b binary -m m68k --adjust-vma=0x40000400 "$PSL_BASE/MAIN.raw" > "$PSL_AUDIT/base-MAIN-private.objdump"
+/opt/homebrew/bin/m68k-elf-objdump -D -b binary -m m68k --adjust-vma=0x40a955e0 "$PSL_AUDIT/base-run-private.raw" > "$PSL_AUDIT/base-run-private.objdump"
+/opt/homebrew/bin/m68k-elf-objdump -D -b binary -m m68k --adjust-vma=0x40000400 --start-address=0x4000aad0 --stop-address=0x4000d9c0 "$PSL_BASE/MAIN.raw" > "$PSL_AUDIT/frame-handler-rooted-private.objdump"
+chmod 600 "$PSL_AUDIT"/*.objdump "$PSL_AUDIT/base-run-private.raw"
+```
+
+```sh
+python3 /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105/audit_frame_isr_root.py \
+  /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105/base-MAIN-private.objdump \
+  /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105/base-run-private.objdump \
+  /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105/frame-handler-rooted-private.objdump \
+  /Users/weiyun.wang/.cache/psl-current-base-workspace/current/MAIN.raw \
+  /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105/base-run-private.raw
+```
