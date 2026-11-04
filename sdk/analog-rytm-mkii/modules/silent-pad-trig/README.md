@@ -28,7 +28,7 @@ default, and unchecked, everything is stock.
 | Pad held down (aftertouch) | modulates its track, as stock | the same | stock |
 | TRIG 1-12 | selects track n, silent (in GRID REC they place trigs, as stock) | stock: plays and records | stock |
 | TRIG 13 (the FX track) | silent | stock | stock |
-| FUNC + TRIG 1-12 | stock: plays nothing | stock | stock |
+| FUNC + TRIG 1-12 | stock: plays nothing (in GRID REC it places a trig, as stock) | stock: plays nothing | stock: plays the track and selects it |
 | RTRG + pad | selects, silent (FUNC + RTRG toggles the click, as stock) | the same | stock |
 
 Each column follows only its own checkbox: with SILENT PAD LIVEREC unchecked, pads play and record in
@@ -73,7 +73,7 @@ All three settings are kept per GLOBAL slot, in core-ar2's mod storage (one bit 
 
 Check the boxes once per GLOBAL slot you want them in. AUTO TRK SWITCH keeps its own setting: a silent
 press always selects its track; a press that plays follows AUTO TRK SWITCH, as stock. To hear a
-track, use FUNC + pad: FUNC + TRIG plays nothing, on stock too. With an AFTERTOUCH destination set
+track, use FUNC + pad: FUNC + TRIG plays nothing, on stock too, outside STEP RECORDING. With an AFTERTOUCH destination set
 on a sound, tap its pad and keep pressing to modulate the track without playing it.
 
 ### Quick tutorial
@@ -147,7 +147,9 @@ Requires core-ar2 0.3 on OS 1.74. Use your own original stock OS 1.74 file.
 - Like stock's SEQUENCER CONFIG rows, a changed row is saved when you leave the menu: power off
   straight from SEQUENCER CONFIG and the change is lost. On a unit, KIT RELOAD ON CHG behaved the
   same.
-- FUNC + TRIG 1-12 plays nothing, as on stock.
+- FUNC + TRIG 1-12 plays nothing, as on stock. Stock's FUNC + TRIG does something only while
+  recording: in GRID RECORDING it places a trig, and in STEP RECORDING it plays the track and selects
+  it (read in the code and seen in rytm-emu on stock OS 1.74); the module leaves both as they are.
 - With the SILENT rows, a silent press passes its aftertouch on, so MIDI out can carry poly pressure with no note-on
   before it.
 - A GLOBAL slot saved without a setting, or received as Global SysEx, loads it unchecked. In

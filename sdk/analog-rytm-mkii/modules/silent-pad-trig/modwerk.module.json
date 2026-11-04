@@ -100,7 +100,7 @@
       "0.5.0 (PS07) and 0.5.1 (PS08) ran on a unit: both settings worked as intended and the renamed row fits, as reported. MIDI out and STEP REC not yet tested on a unit. 0.6.0 with MUTE ALL SOUND ran on a unit as PS10, PS11 and PS12, as reported. MIDI notes in on a unit not tested.",
       "A note already ringing when you mute keeps ringing, as stock: MUTE ALL SOUND stops new hits and does not cut the voice or the delay and reverb tails.",
       "The SOUND BROWSER's audition reaches the voice by another path, so it still plays on a muted track, on purpose (read in the code, not tested). A muted hit runs no envelope or LFO trig. MIDI out gets no note on or poly pressure from a muted pad, but its release still sends a note off, which a receiver ignores.",
-      "FUNC + TRIG 1-12 plays nothing, as on stock: use FUNC + pad to hear a track.",
+      "FUNC + TRIG 1-12 plays nothing, as on stock: use FUNC + pad to hear a track. On stock it acts only while recording, placing a trig in GRID RECORDING and playing the track in STEP RECORDING; the module leaves both as they are.",
       "With the SILENT rows, a silent press passes its aftertouch on, so MIDI out can carry poly pressure with no note-on before it. MUTE ALL SOUND stops poly pressure on a muted track; the pressure still reaches the sound, so it can modulate a ringing note.",
       "TRIG 13 (the FX track), the SOUND BROWSER's pad audition and pads with a menu open are silent too; FUNC + pad plays.",
       "RTRG + pad selects silently; FUNC + RTRG also toggles the metronome click, as on stock, so it is not a clean way to roll.",
