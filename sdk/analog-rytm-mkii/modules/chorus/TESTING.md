@@ -8,6 +8,8 @@
 
 Test build MB02 (OS 1.74, sha256 c693e8c1…): the Modwerk base with the send bus, this module, the two other send effects, Loop Sync 0.3.2 and Retrig Grid. It boots and the interface runs. The SEND and SEND FX pages could not be reached in rytm-emu 3c4c42c (MD07 behaves the same), so nothing on them was seen.
 
+In rytm-emu 2ac0f1f (4 November 2026), build CH01 (the base's send-bus variant and this module's library package, sha256 `12521aec…`): the SEND page opens behind AMP on BD, and on the FX track the SRC key (DELAY there) switches between DELAY and SEND FX, which shows CHORUS chosen with its controls ([media/capture.json](media/capture.json)). The sound is not modelled there.
+
 ## Unit
 
 Evidence tier **author-hardware** for 0.1.0-experimental, source sha256 `6d8a81554c1b18c4384eb84b74f4621509d27e9b745ebd5b27e828dc46c7be8e` (sha256 over `build.json` then each `src/` file in name order, each as its path, a NUL, its bytes and a NUL).
@@ -25,3 +27,7 @@ Not tested.
 ## Stock flows
 
 Not tested.
+
+## Library release (proposed, 4 November 2026)
+
+The library's package is compiled from this source in Modwerk's source-only container. That exact package has not run on a unit; MB02 carried the same source built locally. The site builds a set holding CHORUS on the Modwerk base's send-bus variant, once repeat98/modwerk#1085 is merged.
