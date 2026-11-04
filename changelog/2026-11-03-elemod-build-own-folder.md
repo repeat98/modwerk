@@ -1,0 +1,1 @@
+Development: each module package build now compiles in its own temporary folder and removes it when done. Before, every build used one shared folder, so two builds running at the same time could overwrite each other's files and produce wrong packages without an error. A single build's output is unchanged.
