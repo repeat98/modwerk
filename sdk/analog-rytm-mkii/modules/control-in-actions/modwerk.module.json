@@ -74,7 +74,7 @@
   ]
  },
  "resources": {
-  "memoryBytes": 4030,
+  "memoryBytes": 4182,
   "fastBytes": null,
   "load": {
    "display": "Not measured yet",
@@ -92,7 +92,7 @@
  },
  "tests": {
   "report": "TESTING.md",
-  "summary": "Author's unit, builds alone: CI06 and CI07 passed every action, both learns with YES and NO, REVERSE DIRECTION and a power cycle; CI09 passed the bars, both learns' NO and a hold action. CI10 (0.1.1, this package) reads the jacks in the audio interrupt: in rytm-emu (CE16) every action played within 0.02 to 1.12 ms of the edge, against 4 to 49 ms for 0.1.0's code (CE15); not yet on a unit. Not run beside other modules on a unit.",
+  "summary": "Author's unit, builds alone: CI06 and CI07 passed every action, both learns with YES and NO, REVERSE DIRECTION and a power cycle; CI09 passed the bars, both learns' NO and a hold action. CI11 (0.1.1, this package) reads the jacks in the audio interrupt: in rytm-emu (CE16, CE17) every action played within 0.02 to 1.12 ms of the edge, against 4 to 49 ms for 0.1.0's code (CE15); not yet on a unit. Not run beside other modules on a unit.",
   "documentation": {
    "tutorial": {
     "title": "Quick tutorial",
@@ -138,8 +138,8 @@
     "type": "emulator",
     "release": "1.74",
     "moduleVersion": "0.1.1-experimental",
-    "imageSha256": "78bfe9e1a5ddb95aa176aaaf83ea8d6835712dee70f3587b694d7155ce3073c7",
-    "setup": "Headless rytm-emu (dtboot) running CI10: core-ar2 0.7 and this folder's Control In Actions 0.1.1-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+    "imageSha256": "6486523fe7cd765f9d81f1a5224ba9d30ee7f8f3a50b5a900212c42e10428678",
+    "setup": "Headless rytm-emu (dtboot) running CI11: core-ar2 0.7 and this folder's Control In Actions 0.1.1-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
    }
   },
   {
@@ -154,8 +154,8 @@
     "type": "emulator",
     "release": "1.74",
     "moduleVersion": "0.1.1-experimental",
-    "imageSha256": "78bfe9e1a5ddb95aa176aaaf83ea8d6835712dee70f3587b694d7155ce3073c7",
-    "setup": "Headless rytm-emu (dtboot) running CI10: core-ar2 0.7 and this folder's Control In Actions 0.1.1-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+    "imageSha256": "6486523fe7cd765f9d81f1a5224ba9d30ee7f8f3a50b5a900212c42e10428678",
+    "setup": "Headless rytm-emu (dtboot) running CI11: core-ar2 0.7 and this folder's Control In Actions 0.1.1-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
    }
   },
   {
@@ -170,8 +170,8 @@
     "type": "emulator",
     "release": "1.74",
     "moduleVersion": "0.1.1-experimental",
-    "imageSha256": "78bfe9e1a5ddb95aa176aaaf83ea8d6835712dee70f3587b694d7155ce3073c7",
-    "setup": "Headless rytm-emu (dtboot) running CI10: core-ar2 0.7 and this folder's Control In Actions 0.1.1-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+    "imageSha256": "6486523fe7cd765f9d81f1a5224ba9d30ee7f8f3a50b5a900212c42e10428678",
+    "setup": "Headless rytm-emu (dtboot) running CI11: core-ar2 0.7 and this folder's Control In Actions 0.1.1-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
    }
   }
  ]

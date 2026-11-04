@@ -33,7 +33,7 @@ Everything is set up in stock's own CONTROL INPUT menus and saved with stock's c
 
 The switch point is halfway between the two learned levels, with a margin of an eighth of their range, at least 0.2 V, either side of it, so a noisy or slow edge switches once. After each switch the input is not read again for 10 ms, so a footswitch's bounce plays one action. An action plays within about a millisecond of the edge, through the same queue as a panel key. Until you learn, the levels are stock's 0 V and 5 V: a gate counts as pressed above about 3.1 V and as released below about 1.9 V. As stock's, a learn takes the higher level as pressed. If the bars' right-hand line drops to the far end with your foot off the switch, choose REVERSE DIRECTION after learning.
 
-The bars: at the left a level line against the two learned levels, shaded beyond them and bracketed, which move as ACTION LEARN runs; beside it a line, as EXPR's output line, that moves to the box's far end while the input counts as pressed. While the CONTROL INPUT screen is open, the jack follows what it shows, so a new ACTION choice works at once; stock saves the menu when you leave it.
+The bars: at the left a level line against the two learned levels, shaded beyond them and bracketed, which move as ACTION LEARN runs; beside it a line, as EXPR's output line, that moves to the box's far end while the input counts as pressed, as the actions read it. While the CONTROL INPUT screen is open, the jack follows what it shows, so a new ACTION choice works at once; stock saves the menu when you leave it.
 
 ## Usage
 
@@ -67,7 +67,7 @@ Plug the switch or gate in, set MODE to ACTION, learn the levels if it is a foot
 
 ## Tests and measurements
 
-The author's unit, builds alone: CI06 passed every action, ACTION LEARN with YES and NO, REVERSE DIRECTION and a power cycle; CI07 passed EXPRESSION LEARN's NO and YES. CI09 added the ACTION LEARN name and a code review's fixes; on the unit its bars, both learns' NO and a hold action passed. CI10, this package (0.1.1), reads the jacks in the audio interrupt: in rytm-emu every action played within 0.02 to 1.12 ms of the edge, against 4 to 49 ms for 0.1.0's code there; not yet on a unit ([TESTING.md](TESTING.md)). Memory (CI10, -O2): 3,946 bytes of code and initialised data and 84 bytes of `.bss` in the 128 KiB shared mod area. Load: each audio block, a comparison of each jack in ACTION mode with its thresholds, a few instructions (not measured on a unit); each UI tick, the thresholds from the settings.
+The author's unit, builds alone: CI06 passed every action, ACTION LEARN with YES and NO, REVERSE DIRECTION and a power cycle; CI07 passed EXPRESSION LEARN's NO and YES. CI09 added the ACTION LEARN name and a code review's fixes; on the unit its bars, both learns' NO and a hold action passed. CI11, this package (0.1.1), reads the jacks in the audio interrupt: in rytm-emu every action played within 0.02 to 1.12 ms of the edge, against 4 to 49 ms for 0.1.0's code there; not yet on a unit ([TESTING.md](TESTING.md)). Memory (CI11, -O2): 4,098 bytes of code and initialised data and 84 bytes of `.bss` in the 128 KiB shared mod area. Load: each audio block, a comparison of each jack in ACTION mode with its thresholds, a few instructions (not measured on a unit); each UI tick, the thresholds from the settings.
 
 ## Authorship and licences
 
@@ -75,7 +75,7 @@ Original code by Nathaniel Pavel (@npp1993), GPL-3.0-or-later ([LICENSE](LICENSE
 
 ## Screens and audio
 
-Screenshots are rytm-emu captures of build CI10, pixel for pixel CI09's ([media/capture.json](media/capture.json)). No audio preview.
+Screenshots are rytm-emu captures of build CI11, pixel for pixel CI09's ([media/capture.json](media/capture.json)). No audio preview.
 
 ![CONTROL INPUT 1 in ACTION mode with MUTE HLD and the bars](media/action-menu.png) ![ACTION LEARN's message](media/action-learn.png)
 

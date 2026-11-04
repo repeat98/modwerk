@@ -3,7 +3,6 @@
 
 // The control inputs (EXP/CV IN 1 and 2), ports 0 and 1.
 #define CI_SETTINGS_AT 0x400fa7e4   // (port, record*): the port's settings, below
-#define CI_MILLIVOLTS_AT 0x4013f5ac // (port) -> the smoothed level, calibrated, in mV
 #define CI_SOURCE 0x8000fcf8        // + 4 * port: the level the kit's macro plays
 #define CI_PORTS 2
 

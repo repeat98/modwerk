@@ -48,7 +48,6 @@
 
 typedef unsigned word_t;
 typedef void (*settings_t)(int port, void *record);
-typedef int (*millivolts_t)(int port);
 typedef void (*event_ctor_t)(void *event, int key, int flags, int when, int velocity);
 typedef void (*event_dtor_t)(void *event);
 typedef int (*dispatch_t)(void *brain, void *event);
@@ -63,7 +62,6 @@ typedef void *(*queue_t)(void);
 typedef void (*post_t)(void *queue, const void *message);
 
 #define SETTINGS ((settings_t)CI_SETTINGS_AT)
-#define MILLIVOLTS ((millivolts_t)CI_MILLIVOLTS_AT)
 #define EVENT_CTOR ((event_ctor_t)KEY_EVENT_CTOR_AT)
 #define EVENT_DTOR ((event_dtor_t)KEY_EVENT_DTOR_AT)
 #define DISPATCH ((dispatch_t)KEY_DISPATCH_AT)
@@ -108,7 +106,6 @@ volatile int control_in_actions_emu_mode;  // the open mode screen's key, for DT
 #define RESULT(port) control_in_actions_emu_mv[port]
 #define TO_RESULT(port, mv) (mv)
 #else
-#define LEVEL(port) MILLIVOLTS(port)
 #define RESULT(port) ((volatile short *)CI_RESULT)[port]
 #define TO_RESULT(port, mv) ((to_result_t)CI_TO_RESULT_AT)(port, mv)
 #endif
@@ -411,7 +408,12 @@ void control_in_actions_draw(char *view, void *screen, int mv)
 #endif
     low = *(long *)(view + VIEW_FSW_LOW);
     high = *(long *)(view + VIEW_FSW_HIGH);
-    lit[port] = pressed(low, high, mv, lit[port]);
+    // Armed, the line shows what the actions follow; while ACTION LEARN
+    // runs, stock's smoothed level against the menu's levels.
+    if (jacks[port].on && jacks[port].seen)
+        lit[port] = jacks[port].word & 1;
+    else
+        lit[port] = pressed(low, high, mv, lit[port]);
     low = bar_row(low);
     high = bar_row(high);
     if (low > high) {
@@ -432,6 +434,7 @@ void control_in_actions_draw(char *view, void *screen, int mv)
 static void disarm(int port)
 {
     jacks[port].on = 0;
+    __asm__ volatile ("" ::: "memory"); // off before anything else is written
     end_holds(port);
 }
 
@@ -504,7 +507,7 @@ void control_in_actions_audio(void)
             v = -v;
         word = j->word;
         if (!j->seen) {
-            j->word = (word & ~1UL) | (v > j->middle);
+            j->word = v > j->middle;  // no edge yet
             j->seen = 1;
             continue;
         }
@@ -560,6 +563,8 @@ void control_in_actions_tick(void *ctrl)
                 record[i] = ((long *)(shown[port] + VIEW_RECORD))[i];
         else
             SETTINGS(port, record);
+        // What the interrupt saw plays first, under the choice it was seen with.
+        play(port);
         if (record[REC_MODE / 4] != MODE_FSW) {
             disarm(port);
             continue;
@@ -573,15 +578,16 @@ void control_in_actions_tick(void *ctrl)
             disarm(port);
             continue;
         }
-        // Whatever the interrupt saw under the old choice plays first.
-        play(port);
         dest = record[REC_DEST / 4];
         if (dest != last_dest[port]) {
             disarm(port);
             last_dest[port] = dest;
         }
         arm(port, record[REC_FSW_LOW / 4], record[REC_FSW_HIGH / 4]);
-        // The key message's work, should it come late.
+        // The key message's work, should it come late; and a message the UI
+        // took without the key handler (another loop reading the queue) no
+        // longer stops the next one. A spare message plays nothing.
         play(port);
     }
+    posted = 0;
 }

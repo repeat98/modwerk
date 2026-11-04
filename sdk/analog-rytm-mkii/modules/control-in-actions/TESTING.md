@@ -14,10 +14,11 @@ rytm-emu (`~/.cache/modwerk-upstream/rytm-emu`, 2ac0f1f, 200 M instructions an e
 | --- | --- | --- |
 | CE15 (0.1.0) | 0.84 M to 9.80 M, mean 5.35 M | 4.2 to 49.0, mean 26.8 |
 | CE16 (0.1.1) | 4 k to 224 k, mean 83 k | 0.02 to 1.12, mean 0.42 |
+| CE17 (0.1.1 after review) | 5 k to 224 k, mean 83 k | 0.02 to 1.12, mean 0.42 |
 
 CE15's figures leave out stock's smoothing, as its level is poked; on a unit 0.1.0 adds about 33 ms to each.
 
-### rytm-emu, CE16 behaviour
+### rytm-emu, CE16 behaviour (CE17: the first five rows, the bounce row and REVERSE again, same results)
 
 | Check | Result |
 | --- | --- |
@@ -32,7 +33,9 @@ CE15's figures leave out stock's smoothing, as its level is poked; on a unit 0.1
 | MUTE HLD, press and release 0.3 ms apart | Ends with MUTE mode closed (only the end state was read) |
 | REVERSE DIRECTION with the input at 0 V, MUTE TGL | CE16: reads as pressed, no action; CE15 (0.1.0): MUTE mode opened |
 
-CI10 (sha256 78bfe9e1, -O2, this package) alone booted and ran 2 G instructions with the same CPU exception count as core-ar2 0.7 alone (1,661, all TRAP #0) and no fault; its three screens are byte for byte CI09's. Beside the author's 13-module set RC24 (base 441d96f7, RC24's store lock, unchanged layout), CI10 links (combined test image CC10, sha256 8281aa34) and boots in rytm-emu with only TRAP #0 exceptions.
+CI10 (sha256 78bfe9e1, -O2) alone booted and ran 2 G instructions with the same CPU exception count as core-ar2 0.7 alone (1,661, all TRAP #0) and no fault; its three screens are byte for byte CI09's. Beside the author's 13-module set RC24 (base 441d96f7, RC24's store lock, unchanged layout), CI10 links (combined test image CC10, sha256 8281aa34) and boots in rytm-emu with only TRAP #0 exceptions.
+
+CI11 (sha256 6486523f, -O2, this package) is CI10 after a code review: the tick clears the key message's flag, so a message another queue reader takes cannot leave later actions on the tick; a compiler barrier keeps the interrupt off while thresholds change; edges seen before MODE leaves ACTION or a learn starts still play; and the bars' right-hand line shows the state the actions follow. CI11 alone boots with the same 1,661 TRAP #0 exceptions and no fault, and its three screens are byte for byte CI09's; with the input poked to 5 V in CE17 the bars' line moves to the box's far end.
 
 ## Unit
 
@@ -136,10 +139,10 @@ Test builds FE02 to FE04, CE02, CE06, CE07, CE10, CE12 and CE13: the module buil
 
 ## Not tested
 
-- 0.1.1 (CI10) on a unit: the delay as played, a real switch's bounce against the 10 ms quiet time, the unsmoothed result's noise against the 0.2 V margin, the audio interrupt's added load.
+- 0.1.1 (CI11) on a unit: the delay as played, a real switch's bounce against the 10 ms quiet time, the unsmoothed result's noise against the 0.2 V margin, the audio interrupt's added load.
 - Before 0.1.1, on a unit: a gate, and the delay measured rather than felt.
 - EXP/CV IN 2 (same code as port 1, not run).
 - Settings after a power cycle, and a unit without the module reading ACTION settings.
 - The CONTROL IN MOD macro of a jack switched from EXPR to ACTION mid-sweep.
-- Beside other modules on a unit: not run with CI10; linked and booted only (above).
-- CPU: each audio block, a comparison of each jack in ACTION mode with its thresholds; the core's load figure was not read. Memory (CI10, -O2): 3,946 bytes of code and data and 84 of `.bss`.
+- Beside other modules on a unit: not run. CI10 linked and booted beside RC24 (above); CI11, 152 bytes larger, was not linked there again.
+- CPU: each audio block, a comparison of each jack in ACTION mode with its thresholds; the core's load figure was not read. Memory (CI10, -O2): 3,946 bytes of code and data and 84 of `.bss`; CI11 4,098 and 84.
