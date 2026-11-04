@@ -212,6 +212,17 @@ and advancing DSP frames. USB was released. Transport after restart was not
 independently read on the public base; the last device read was stopped before
 the power cycle. No Keep, flash, project Save or push occurred.
 
+## Specific input/paste reproduction audit — 5 November 2026
+
+The existing no-module emulator result reproduces the TRIG5–7 held-row
+signature and a lost FUNC release, but not the reported STOP-as-paste behavior
+or the six A02 SAMPLE-field changes. No paired replay was run: the incident's
+physical/USB event order and a complete pre-recovery damaged A02 snapshot were
+not retained. See the stock-free [reproduction-readiness note](evidence/high-load-input-reproduction-20261105.md)
+for the exact missing inputs and a safe paired protocol. The hardware data
+changes remain unattributed; the framing bug is a plausible route to wrong
+input, not a reproduced cause of those edits.
+
 ## Limits
 
 This does not establish safe operation at arbitrary CPU saturation, complete
