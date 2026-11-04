@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 3,
+  "id": "chromatic-aftertouch-fix",
+  "name": "Chromatic Aftertouch Fix",
+  "version": "0.1.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "midi-usb",
+  "exclusive": false,
+  "author": {
+    "name": "Nathaniel Pavel",
+    "github": "npp1993",
+    "credits": [
+      "Nathaniel Pavel (@npp1993) — the fix, its design and code, and this Modwerk module."
+    ]
+  },
+  "maintainers": [
+    "npp1993"
+  ],
+  "presentation": {
+    "label": "CHRO AFTERTOUCH FIX",
+    "family": "MIDI",
+    "summary": "In CHROMATIC mode a held pad's MIDI aftertouch goes out on the note the pad played, not 24 semitones above it, so a receiver sees it.",
+    "overview": "On stock OS 1.74, a CHROMATIC pad sends its note on and note off 24 semitones below the note it keeps for the pad, but sends the poly pressure for the kept note. So a held pad sends note on 36 and then aftertouch for note 60, and a synth or a MIDI monitor watching note 36 sees no aftertouch. Chromatic Aftertouch Fix sends the poly pressure on the note the pad played, the same note its note off uses, also when UP or DOWN shift the pads during the hold. The aftertouch the Rytm's own sound gets is unchanged, as are note on, note off, the channel and the pressure values, and pads outside CHROMATIC mode, which were already right. It has no menu row: installed, it is on.",
+    "highlights": [
+      "Play CHROMATIC pads into a synth and its aftertouch follows the held note.",
+      "Only the poly pressure's note changes: note on, note off, channel and values are as stock.",
+      "One patched call, no menu, no stored setting."
+    ],
+    "usage": [
+      "In GLOBAL > MIDI CONFIG > PORT CONFIG, check that PAD DEST and PRESSURE DST are INT+EXT (the default) so the pads reach MIDI out. Connect a MIDI monitor to MIDI OUT or USB.",
+      "Press CHRO. Strike the BD pad and hold it: the monitor shows a note on for note 36.",
+      "Press harder while holding: poly pressure for note 36 follows, then the note off for note 36 on release. Stock sent that pressure for note 60.",
+      "Hold BD and press UP or DOWN: the pads shift to other notes, and the held note's pressure stays on its note until you let go."
+    ]
+  },
+  "access": {
+    "location": "Nowhere to switch: installed, it acts on CHROMATIC pads' MIDI out.",
+    "steps": [
+      "Install a build that contains Chromatic Aftertouch Fix.",
+      "Press CHRO and hold a pad: its poly pressure goes out on the note the pad sent."
+    ],
+    "screenshots": [
+      "media/port-config.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "Pad held in CHROMATIC mode",
+      "default": null,
+      "doc": "Sends MIDI poly pressure on the note the pad's note on sent, until its note off; stock sends it 24 semitones higher and follows UP and DOWN during the hold. The pressure to the sound is unchanged.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for OS 1.74 only, with core-ar2 0.7.",
+      "Ran on a unit as test build CA02, alone on core-ar2 0.7 (TESTING.md); beside Silent Pad+Trig only in rytm-emu.",
+      "Changes only what CHROMATIC pads send to MIDI out. Pads outside CHROMATIC mode, MIDI in and the Rytm's own aftertouch modulation are untouched.",
+      "A receiver that relied on stock's poly pressure 24 semitones above the note sees it move to the played note."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [],
+    "claims": [
+      "midi:CHROMATIC pad poly pressure note on MIDI out"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 44,
+    "fastBytes": 0,
+    "load": {
+      "display": "Thirteen instructions per CHROMATIC poly pressure message",
+      "method": "static",
+      "conditions": "Static count from the assembled code: one call per poly pressure message a held CHROMATIC pad sends (stock queues at most one a pad), at most thirteen instructions before stock's sender. Nothing runs otherwise. Not measured on a unit."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": "928e3d61cc86486352f5a9d1f6335b2ae44c5884982d5586f9e544e963106f74",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-02",
+      "tester": "npp1993",
+      "durationMinutes": null,
+      "summary": "npp1993 (the author) flashed test build CA02 (core-ar2 0.7 and this module, sha256 820cfaec) on an Analog Rytm MKII, OS 1.74, and watched a MIDI monitor. Reported passing: CHROMATIC BD and SD held send note on, poly pressure and note off on one note; two pads held together, each on its own note; UP pressed during a hold keeps the pressure on the held note until the note off; layouts shifted with UP or DOWN before playing; a synth's poly aftertouch follows the held note; the Rytm's own AFTERTOUCH modulation as stock; pads outside CHROMATIC as stock; OUTPUT CH at TRK CH sends the same notes on the selected track's channel.",
+      "limitations": [
+        "Results are as reported by the author, not itemized byte logs; duration not recorded.",
+        "Run with this module alone on core-ar2 0.7; beside Silent Pad+Trig only in rytm-emu."
+      ]
+    },
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "rytm-emu on OS 1.74, MIDI out bytes: a held CHROMATIC pad sends note on, poly pressure and note off on one note (stock: pressure 24 above), across UP and DOWN layouts, with UP during the hold, two pads held, and none after the note off; alone and beside Silent Pad+Trig; pads outside CHROMATIC as stock. Hardware, as reported by the author: CA02 passed every unit step (TESTING.md).",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "In GLOBAL > MIDI CONFIG > PORT CONFIG, check that PAD DEST and PRESSURE DST are INT+EXT (the default) so the pads reach MIDI out. Connect a MIDI monitor to MIDI OUT or USB.",
+          "Press CHRO. Strike the BD pad and hold it: the monitor shows a note on for note 36.",
+          "Press harder while holding: poly pressure for note 36 follows, then the note off for note 36 on release. Stock sent that pressure for note 60.",
+          "Hold BD and press UP or DOWN: the pads shift to other notes, and the held note's pressure stays on its note until you let go."
+        ]
+      },
+      "screenshots": [
+        "media/port-config.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Nathaniel Pavel's (@npp1993) original code under GPL-3.0-or-later. The patch precondition is an address, a length and a SHA-256; no stock bytes are included."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Chromatic Aftertouch Fix",
+      "alt": "A held pad's note on and its aftertouch curve drawn on one note line; a faded copy of the curve two octaves above is crossed out.",
+      "credit": "Nathaniel Pavel (npp1993)",
+      "license": "GPL-3.0-or-later",
+      "source": "Original conceptual illustration in the shared signal-art style; not a device screenshot."
+    },
+    {
+      "path": "media/port-config.png",
+      "kind": "screenshot",
+      "caption": "GLOBAL > MIDI CONFIG > PORT CONFIG: PAD DEST and PRESSURE DST at INT+EXT, the default, send the pads and their pressure to MIDI out.",
+      "alt": "PORTS menu list with PRESSURE DST INT+EXT highlighted, PAD DEST INT+EXT above it.",
+      "credit": "Nathaniel Pavel (npp1993) documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "820cfaec54e5aa823f980ce80a4e85dbb64669fffa497a31680a4045ef0e2c9a",
+        "setup": "Headless rytm-emu (dtboot) running CA02: core-ar2 0.7 and this folder's Chromatic Aftertouch Fix 0.1.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    }
+  ]
+}

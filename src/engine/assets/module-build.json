@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "kind": "source-packages",
-  "sourceCommit": "4fcc9bced28e4c1ae2955fe566cee4153a1b0b4b",
+  "sourceCommit": "d6159f66060d4ad8d69cadeeee3b1da9acfe09f0",
   "nativeRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceTreeSha256": "41be17d8d62353b96cb49a1ebfc9e2afab1b70b777ddf435c1fc12e5ac192e24",
-  "compilerSha256": "2a8fd3899b135918b01f612be983eb0648bdcddf32e04681a34c29cdf725088a",
+  "sourceTreeSha256": "be753ffdd758064aac596a99baf4abe65ea0b4c05654a0cafacf87aa6e340de7",
+  "compilerSha256": "94b57fa0e6a1437ed6b0bc0a3d4378b4418fc490e8742bfd58586f4dffcafd63",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -29,7 +29,7 @@
     "sidechain-compressor": "0.2.0-experimental",
     "vector": "0.2.5-experimental",
     "playmodes": "0.2.0-experimental",
-    "mute-modes": "0.2.2-experimental",
+    "mute-modes": "0.2.1-experimental",
     "recorder-loop-fix": "0.1.0-experimental",
     "poly8": "0.3.2-experimental",
     "output-matrix": "0.1.1-experimental",
@@ -37,52 +37,53 @@
     "apply-scene": "0.2.0-experimental",
     "direct-jump-kyoti": "0.1.2-experimental",
     "dejavu": "0.1.0-experimental",
-    "arp-key-locks": "0.1.0-experimental"
+    "arp-key-locks": "0.1.0-experimental",
+    "temp-save": "0.1.0-experimental"
   },
   "files": {
     "dsp-packages.json": {
-      "bytes": 91853,
-      "sha256": "eb46b53a283229b2211e421ff711c6a02d36666691ff1b6fc94c81e84aaf413d"
+      "bytes": 91892,
+      "sha256": "ea3b475fb91fc3b52ff84b0b45e0dde8eb91d6c3da0e27c93c2ed80d01cbc0d5"
     },
     "resident-dsp.json": {
-      "bytes": 25258,
-      "sha256": "02190ddd87f2ee377c1d4ef683c7526c7aedc435da0aefecf38a80c11e3e30c2"
+      "bytes": 25297,
+      "sha256": "415b6d3a9e0db22ca3f0ca4283c165438f86dc5a4ec996f44ecb5f58c2c53e36"
     },
     "coldfire-packages.json": {
-      "bytes": 353789,
-      "sha256": "e07ea953e23011134f120939ac44d5e35549414ae5fe1abfb67a8cef7dfa6404"
+      "bytes": 353828,
+      "sha256": "35e442c959693ee5bb7b9401f67b688ea77cd6451f7dbe28eacc4824ae352861"
     },
     "rom-packages.json": {
-      "bytes": 33409,
-      "sha256": "b0b47daecef551a516176312450f8b17a55e1e9b95c74467e1d5944b1bbeec70"
+      "bytes": 33448,
+      "sha256": "e30b969f6530194ea79a4f8ffd14a8c07e32ffaa596ee0c618288bf6d0f9cb9e"
     },
     "bootstrap-package.json": {
-      "bytes": 3992,
-      "sha256": "e0bcf00070316099e88d3f23b2e633d36b2bdebc022f4b082132eaf04aede31d"
+      "bytes": 4031,
+      "sha256": "ca89e75f122ceceafb652b3dde26c1920b9e568b6970755b2f5f289bd3c0cd73"
     },
     "menu-recipes.json": {
-      "bytes": 37651,
-      "sha256": "655f9262b97560213823b5d17f9a528b34422178a58d1d1a0b32baa1a6023a28"
+      "bytes": 37690,
+      "sha256": "c9260e3d5d8a6f3ec87d271440a1d100bcf91e6eddaca3924a4fffd8773ef8c6"
     },
     "descriptor-recipes.json": {
-      "bytes": 85276,
-      "sha256": "1486db29cc1f9064bf831106844dbd7b2b8be9043dc74567c8c52fef68962e05"
+      "bytes": 85315,
+      "sha256": "02a629cbe0e146393dbb5adad4c4da93c9dbd74ef95ccf3920dc0b67df33f57b"
     },
     "platform-writes.json": {
-      "bytes": 17735,
-      "sha256": "3a5802f9be3563deef8b5c019e06c04c865fce160e1165161e670fc09f8bb38b"
+      "bytes": 17774,
+      "sha256": "b6ae0d63b956b3b92e31520bf7472521a8e51ece169a4402c2b7aab2c94cd000"
     },
     "requested-packages.json": {
-      "bytes": 1147266,
-      "sha256": "bb24d0240c3f8c569d138d25c89a85761d00adfb865fb6caaedc6c06b2dac9ac"
+      "bytes": 1153304,
+      "sha256": "6da03b10392957c62103a620ee853d938a695f84d8ecb9db60597caf7071fe52"
     },
     "utility-packages.json": {
-      "bytes": 13120,
-      "sha256": "76c5f5388f4e97ab0a16e547817c9705ab4bf8d3fcd5b959469687f58d7f1456"
+      "bytes": 13159,
+      "sha256": "2823191da3c10b84d64dd5c3a05cdcf14536d0d987057b1f620f8a4231062067"
     },
     "usb-audio-packages.json": {
-      "bytes": 737762,
-      "sha256": "ff992142fde716d49c313223ac29fee3181a70e7e1ac8bad3accdc9086d1fec9"
+      "bytes": 737801,
+      "sha256": "849b3ff90d583e5f181e140119646c7473434939e92a73d8b8cd83199bd82903"
     }
   },
   "approval": null,
