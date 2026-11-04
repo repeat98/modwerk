@@ -1,0 +1,1135 @@
+{
+  "schema": 1,
+  "date": "2026-10-31",
+  "sourceCheckpoint": "a438e7a3",
+  "hardware": false,
+  "pushed": false,
+  "published": false,
+  "fixture": {
+    "hardware": false,
+    "seedCardSha256": "d64abdaf0f7f957da796f458114396e7df9ef626eb52a89079c922cf98861ab8",
+    "cardSha256": "b2ff46a32404855fae8c56c7070c6863ec81ff0d2f4af409cf7c80ac84b3f0c7",
+    "originalGeneratedSamples": [
+      {
+        "track": 1,
+        "machine": "FLEX",
+        "slot": 1,
+        "path": "../AUDIO/PSL_T1.wav",
+        "frequencyHz": 256,
+        "frames": 88200,
+        "sha256": "1c979b04ff5f0585115005e1aee1ba413c629a0d34e3f575117af9e1721eb27e"
+      },
+      {
+        "track": 2,
+        "machine": "FLEX",
+        "slot": 2,
+        "path": "../AUDIO/PSL_T2.wav",
+        "frequencyHz": 384,
+        "frames": 88200,
+        "sha256": "fe7b50ae1936e7ba370f5e7e71cf8a54ecd7974943ee906ab203278e14e34886"
+      },
+      {
+        "track": 3,
+        "machine": "FLEX",
+        "slot": 3,
+        "path": "../AUDIO/PSL_T3.wav",
+        "frequencyHz": 512,
+        "frames": 88200,
+        "sha256": "c7490606096a818050726f5fc5f011890882a0dfb78068b6d09d1133a11e4f8e"
+      },
+      {
+        "track": 4,
+        "machine": "FLEX",
+        "slot": 4,
+        "path": "../AUDIO/PSL_T4.wav",
+        "frequencyHz": 640,
+        "frames": 88200,
+        "sha256": "ebd3056a366b2efd4a32053de6746ed69640f6f9859297e595d222fe89e22fef"
+      },
+      {
+        "track": 5,
+        "machine": "STATIC",
+        "slot": 5,
+        "path": "../AUDIO/PSL_T5.wav",
+        "frequencyHz": 768,
+        "frames": 88200,
+        "sha256": "34b533d4767a8fd59fb9bad670e4c7762fd6e5d3e37dc51fbfeec21bd451ebcd"
+      },
+      {
+        "track": 6,
+        "machine": "STATIC",
+        "slot": 6,
+        "path": "../AUDIO/PSL_T6.wav",
+        "frequencyHz": 896,
+        "frames": 88200,
+        "sha256": "f7dd9a58b8651a3683169d72db98f529f862cbf8545a7e8ecaa475fde617f437"
+      },
+      {
+        "track": 7,
+        "machine": "STATIC",
+        "slot": 7,
+        "path": "../AUDIO/PSL_T7.wav",
+        "frequencyHz": 1024,
+        "frames": 88200,
+        "sha256": "c135617200cc40adb77791ccfba876aa4031ed440a1aa5c4fe7e778f167cff94"
+      },
+      {
+        "track": 8,
+        "machine": "STATIC",
+        "slot": 8,
+        "path": "../AUDIO/PSL_T8.wav",
+        "frequencyHz": 1152,
+        "frames": 88200,
+        "sha256": "edcf7404ea6760afd42e6fe72ec900823a587bbe336c689fcf9f4b886d058b20"
+      }
+    ],
+    "patterns": [
+      "A01 empty SAMPLE locks",
+      "A02 all SAMPLE locks, no others",
+      "A03 first other lock",
+      "A04 last other lock"
+    ],
+    "sampleTrigsPerPattern": 512,
+    "bankChecksumAndStoredCopyVerified": true,
+    "sampleFilesVerifiedInsideCard": true,
+    "nativePlaybackVerified": false,
+    "audioCaptureVerified": false,
+    "helperSha256": "279c255b564fd8a6f1993804d3bfe43b34734533671196276f1bbbaf0e125fa3"
+  },
+  "freshSameSourceFixtureGenerationsByteIdentical": true,
+  "emulatorCapture": {
+    "hardware": false,
+    "explicitMainLevel": 64,
+    "originalGeneratedSamples": true,
+    "captures": {
+      "module-closed": {
+        "frames": 44602,
+        "sampleRate": 44100,
+        "channels": 24,
+        "ringDroppedFrames": 0,
+        "mainRms": [
+          187.62365039303484,
+          187.62365039303484
+        ],
+        "mainPeak": [
+          622,
+          622
+        ],
+        "stems": [
+          {
+            "track": 1,
+            "machine": "FLEX",
+            "rms": 66.25493120968783,
+            "peak": 94,
+            "expectedToneHz": 256,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 2,
+            "machine": "FLEX",
+            "rms": 66.25832762079101,
+            "peak": 94,
+            "expectedToneHz": 384,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 3,
+            "machine": "FLEX",
+            "rms": 66.27367393247998,
+            "peak": 94,
+            "expectedToneHz": 512,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 4,
+            "machine": "FLEX",
+            "rms": 66.27872306727917,
+            "peak": 94,
+            "expectedToneHz": 640,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 5,
+            "machine": "STATIC",
+            "rms": 66.27138324976225,
+            "peak": 94,
+            "expectedToneHz": 768,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 6,
+            "machine": "STATIC",
+            "rms": 66.27299867816299,
+            "peak": 94,
+            "expectedToneHz": 896,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 7,
+            "machine": "STATIC",
+            "rms": 66.27652778706515,
+            "peak": 94,
+            "expectedToneHz": 1024,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 8,
+            "machine": "STATIC",
+            "rms": 66.27414586214907,
+            "peak": 94,
+            "expectedToneHz": 1152,
+            "expectedToneDominant": true
+          }
+        ],
+        "pcmSha256": "48d93e1a9f8a6db2006b9bfd9b7eddd0f3f71b3f8430e21a30b55aa2f7857af2"
+      },
+      "after-512-lock": {
+        "frames": 56532,
+        "sampleRate": 44100,
+        "channels": 24,
+        "ringDroppedFrames": 0,
+        "mainRms": [
+          187.2630340133236,
+          187.2630340133236
+        ],
+        "mainPeak": [
+          622,
+          622
+        ],
+        "stems": [
+          {
+            "track": 1,
+            "machine": "FLEX",
+            "rms": 66.2617418160787,
+            "peak": 94,
+            "expectedToneHz": 256,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 2,
+            "machine": "FLEX",
+            "rms": 66.2854447742455,
+            "peak": 94,
+            "expectedToneHz": 384,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 3,
+            "machine": "FLEX",
+            "rms": 66.26896690509982,
+            "peak": 94,
+            "expectedToneHz": 512,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 4,
+            "machine": "FLEX",
+            "rms": 66.28402932067803,
+            "peak": 94,
+            "expectedToneHz": 640,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 5,
+            "machine": "STATIC",
+            "rms": 66.2735129471894,
+            "peak": 94,
+            "expectedToneHz": 768,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 6,
+            "machine": "STATIC",
+            "rms": 66.27849998223617,
+            "peak": 94,
+            "expectedToneHz": 896,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 7,
+            "machine": "STATIC",
+            "rms": 66.28023448035485,
+            "peak": 94,
+            "expectedToneHz": 1024,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 8,
+            "machine": "STATIC",
+            "rms": 66.2790258877147,
+            "peak": 94,
+            "expectedToneHz": 1152,
+            "expectedToneDominant": true
+          }
+        ],
+        "pcmSha256": "3cb3a14b353dcc2974a01a53d8ee6ec87f3b00a40951da84c801a9a98e52878e"
+      },
+      "after-512-clear": {
+        "frames": 56529,
+        "sampleRate": 44100,
+        "channels": 24,
+        "ringDroppedFrames": 0,
+        "mainRms": [
+          187.25240495251774,
+          187.25240495251774
+        ],
+        "mainPeak": [
+          622,
+          622
+        ],
+        "stems": [
+          {
+            "track": 1,
+            "machine": "FLEX",
+            "rms": 66.26727976770445,
+            "peak": 94,
+            "expectedToneHz": 256,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 2,
+            "machine": "FLEX",
+            "rms": 66.27378608203469,
+            "peak": 94,
+            "expectedToneHz": 384,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 3,
+            "machine": "FLEX",
+            "rms": 66.27945302740608,
+            "peak": 94,
+            "expectedToneHz": 512,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 4,
+            "machine": "FLEX",
+            "rms": 66.28329908896146,
+            "peak": 94,
+            "expectedToneHz": 640,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 5,
+            "machine": "STATIC",
+            "rms": 66.28075482299168,
+            "peak": 94,
+            "expectedToneHz": 768,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 6,
+            "machine": "STATIC",
+            "rms": 66.27928701493654,
+            "peak": 94,
+            "expectedToneHz": 896,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 7,
+            "machine": "STATIC",
+            "rms": 66.27955605101248,
+            "peak": 94,
+            "expectedToneHz": 1024,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 8,
+            "machine": "STATIC",
+            "rms": 66.28055812071626,
+            "peak": 94,
+            "expectedToneHz": 1152,
+            "expectedToneDominant": true
+          }
+        ],
+        "pcmSha256": "906f787700a40c53e85832d2f336d89d26386e57d4c07d983c63ff83a68c9ece"
+      },
+      "A02-before-clear": {
+        "frames": 45056,
+        "sampleRate": 44100,
+        "channels": 24,
+        "ringDroppedFrames": 0,
+        "mainRms": [
+          187.45844692256665,
+          187.45844692256665
+        ],
+        "mainPeak": [
+          622,
+          622
+        ],
+        "stems": [
+          {
+            "track": 1,
+            "machine": "FLEX",
+            "rms": 66.27481695748831,
+            "peak": 94,
+            "expectedToneHz": 256,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 2,
+            "machine": "FLEX",
+            "rms": 66.26889454378576,
+            "peak": 94,
+            "expectedToneHz": 384,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 3,
+            "machine": "FLEX",
+            "rms": 66.27596360208535,
+            "peak": 94,
+            "expectedToneHz": 512,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 4,
+            "machine": "FLEX",
+            "rms": 66.2772056663873,
+            "peak": 94,
+            "expectedToneHz": 640,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 5,
+            "machine": "STATIC",
+            "rms": 66.27523355612588,
+            "peak": 94,
+            "expectedToneHz": 768,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 6,
+            "machine": "STATIC",
+            "rms": 66.28093423106387,
+            "peak": 94,
+            "expectedToneHz": 896,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 7,
+            "machine": "STATIC",
+            "rms": 66.2814577771485,
+            "peak": 94,
+            "expectedToneHz": 1024,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 8,
+            "machine": "STATIC",
+            "rms": 66.27689272463635,
+            "peak": 94,
+            "expectedToneHz": 1152,
+            "expectedToneDominant": true
+          }
+        ],
+        "pcmSha256": "4864feaca1ee024d92481ba30e685a794eb1d8fb190f368b2543f9c15002e16b"
+      },
+      "A02-through-clear": {
+        "frames": 56529,
+        "sampleRate": 44100,
+        "channels": 24,
+        "ringDroppedFrames": 0,
+        "mainRms": [
+          187.26742892489065,
+          187.26742892489065
+        ],
+        "mainPeak": [
+          622,
+          622
+        ],
+        "stems": [
+          {
+            "track": 1,
+            "machine": "FLEX",
+            "rms": 66.26337177476357,
+            "peak": 94,
+            "expectedToneHz": 256,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 2,
+            "machine": "FLEX",
+            "rms": 66.28628440020064,
+            "peak": 94,
+            "expectedToneHz": 384,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 3,
+            "machine": "FLEX",
+            "rms": 66.2703067755053,
+            "peak": 94,
+            "expectedToneHz": 512,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 4,
+            "machine": "FLEX",
+            "rms": 66.28524158482921,
+            "peak": 94,
+            "expectedToneHz": 640,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 5,
+            "machine": "STATIC",
+            "rms": 66.2744595267659,
+            "peak": 94,
+            "expectedToneHz": 768,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 6,
+            "machine": "STATIC",
+            "rms": 66.28005568654197,
+            "peak": 94,
+            "expectedToneHz": 896,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 7,
+            "machine": "STATIC",
+            "rms": 66.28091229114968,
+            "peak": 94,
+            "expectedToneHz": 1024,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 8,
+            "machine": "STATIC",
+            "rms": 66.28077377256947,
+            "peak": 94,
+            "expectedToneHz": 1152,
+            "expectedToneDominant": true
+          }
+        ],
+        "pcmSha256": "28b17f56f329abf7c3b2648c96a299445097da1e0538bac88f9400c22e0eab96"
+      },
+      "A03-before-clear": {
+        "frames": 44609,
+        "sampleRate": 44100,
+        "channels": 24,
+        "ringDroppedFrames": 0,
+        "mainRms": [
+          187.33022319459502,
+          187.33022319459502
+        ],
+        "mainPeak": [
+          622,
+          622
+        ],
+        "stems": [
+          {
+            "track": 1,
+            "machine": "FLEX",
+            "rms": 66.28052119227829,
+            "peak": 94,
+            "expectedToneHz": 256,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 2,
+            "machine": "FLEX",
+            "rms": 66.28018010256856,
+            "peak": 94,
+            "expectedToneHz": 384,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 3,
+            "machine": "FLEX",
+            "rms": 66.27831955159496,
+            "peak": 94,
+            "expectedToneHz": 512,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 4,
+            "machine": "FLEX",
+            "rms": 66.2785544486133,
+            "peak": 94,
+            "expectedToneHz": 640,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 5,
+            "machine": "STATIC",
+            "rms": 66.27405574697214,
+            "peak": 94,
+            "expectedToneHz": 768,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 6,
+            "machine": "STATIC",
+            "rms": 66.2736495110707,
+            "peak": 94,
+            "expectedToneHz": 896,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 7,
+            "machine": "STATIC",
+            "rms": 66.27544626583388,
+            "peak": 94,
+            "expectedToneHz": 1024,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 8,
+            "machine": "STATIC",
+            "rms": 66.2775135559287,
+            "peak": 94,
+            "expectedToneHz": 1152,
+            "expectedToneDominant": true
+          }
+        ],
+        "pcmSha256": "0aeeb5be3bb76ca2d2e28dfc71d04894d04ea4caca14997064137b5a0fa2c615"
+      },
+      "A03-through-clear": {
+        "frames": 56533,
+        "sampleRate": 44100,
+        "channels": 24,
+        "ringDroppedFrames": 0,
+        "mainRms": [
+          187.26575091293404,
+          187.26575091293404
+        ],
+        "mainPeak": [
+          622,
+          622
+        ],
+        "stems": [
+          {
+            "track": 1,
+            "machine": "FLEX",
+            "rms": 66.26962692821141,
+            "peak": 94,
+            "expectedToneHz": 256,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 2,
+            "machine": "FLEX",
+            "rms": 66.26984353459733,
+            "peak": 94,
+            "expectedToneHz": 384,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 3,
+            "machine": "FLEX",
+            "rms": 66.28294790483514,
+            "peak": 94,
+            "expectedToneHz": 512,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 4,
+            "machine": "FLEX",
+            "rms": 66.2720885653739,
+            "peak": 94,
+            "expectedToneHz": 640,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 5,
+            "machine": "STATIC",
+            "rms": 66.2773706672055,
+            "peak": 94,
+            "expectedToneHz": 768,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 6,
+            "machine": "STATIC",
+            "rms": 66.27611867325182,
+            "peak": 94,
+            "expectedToneHz": 896,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 7,
+            "machine": "STATIC",
+            "rms": 66.27853710074699,
+            "peak": 94,
+            "expectedToneHz": 1024,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 8,
+            "machine": "STATIC",
+            "rms": 66.27829957218569,
+            "peak": 94,
+            "expectedToneHz": 1152,
+            "expectedToneDominant": true
+          }
+        ],
+        "pcmSha256": "5f62bf22693690fc0ada142c7445fca39eb9f8e52125bbc533374eb3ddc357fa"
+      },
+      "A04-before-clear": {
+        "frames": 45057,
+        "sampleRate": 44100,
+        "channels": 24,
+        "ringDroppedFrames": 0,
+        "mainRms": [
+          187.4132443868492,
+          187.4132443868492
+        ],
+        "mainPeak": [
+          622,
+          622
+        ],
+        "stems": [
+          {
+            "track": 1,
+            "machine": "FLEX",
+            "rms": 66.27417375852454,
+            "peak": 94,
+            "expectedToneHz": 256,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 2,
+            "machine": "FLEX",
+            "rms": 66.26450062012947,
+            "peak": 94,
+            "expectedToneHz": 384,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 3,
+            "machine": "FLEX",
+            "rms": 66.28142475598392,
+            "peak": 94,
+            "expectedToneHz": 512,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 4,
+            "machine": "FLEX",
+            "rms": 66.28087476816255,
+            "peak": 94,
+            "expectedToneHz": 640,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 5,
+            "machine": "STATIC",
+            "rms": 66.28127759074009,
+            "peak": 94,
+            "expectedToneHz": 768,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 6,
+            "machine": "STATIC",
+            "rms": 66.28215371302231,
+            "peak": 94,
+            "expectedToneHz": 896,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 7,
+            "machine": "STATIC",
+            "rms": 66.27883818295746,
+            "peak": 94,
+            "expectedToneHz": 1024,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 8,
+            "machine": "STATIC",
+            "rms": 66.28308071915512,
+            "peak": 94,
+            "expectedToneHz": 1152,
+            "expectedToneDominant": true
+          }
+        ],
+        "pcmSha256": "d79f5ad25746a3350c4af565c3c4cefb39f5ea50f9462fe66ec1db42c0fd1edb"
+      },
+      "A04-through-clear": {
+        "frames": 56532,
+        "sampleRate": 44100,
+        "channels": 24,
+        "ringDroppedFrames": 0,
+        "mainRms": [
+          187.2630340133236,
+          187.2630340133236
+        ],
+        "mainPeak": [
+          622,
+          622
+        ],
+        "stems": [
+          {
+            "track": 1,
+            "machine": "FLEX",
+            "rms": 66.2617418160787,
+            "peak": 94,
+            "expectedToneHz": 256,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 2,
+            "machine": "FLEX",
+            "rms": 66.2854447742455,
+            "peak": 94,
+            "expectedToneHz": 384,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 3,
+            "machine": "FLEX",
+            "rms": 66.26896690509982,
+            "peak": 94,
+            "expectedToneHz": 512,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 4,
+            "machine": "FLEX",
+            "rms": 66.28402932067803,
+            "peak": 94,
+            "expectedToneHz": 640,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 5,
+            "machine": "STATIC",
+            "rms": 66.2735129471894,
+            "peak": 94,
+            "expectedToneHz": 768,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 6,
+            "machine": "STATIC",
+            "rms": 66.27849998223617,
+            "peak": 94,
+            "expectedToneHz": 896,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 7,
+            "machine": "STATIC",
+            "rms": 66.28023448035485,
+            "peak": 94,
+            "expectedToneHz": 1024,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 8,
+            "machine": "STATIC",
+            "rms": 66.2790258877147,
+            "peak": 94,
+            "expectedToneHz": 1152,
+            "expectedToneDominant": true
+          }
+        ],
+        "pcmSha256": "3cb3a14b353dcc2974a01a53d8ee6ec87f3b00a40951da84c801a9a98e52878e"
+      },
+      "without-module": {
+        "frames": 45041,
+        "sampleRate": 44100,
+        "channels": 24,
+        "ringDroppedFrames": 0,
+        "mainRms": [
+          187.06744752587812,
+          187.06744752587812
+        ],
+        "mainPeak": [
+          622,
+          622
+        ],
+        "stems": [
+          {
+            "track": 1,
+            "machine": "FLEX",
+            "rms": 66.28198592746699,
+            "peak": 94,
+            "expectedToneHz": 256,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 2,
+            "machine": "FLEX",
+            "rms": 66.28332626720558,
+            "peak": 94,
+            "expectedToneHz": 384,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 3,
+            "machine": "FLEX",
+            "rms": 66.28208725360982,
+            "peak": 94,
+            "expectedToneHz": 512,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 4,
+            "machine": "FLEX",
+            "rms": 66.28492432272276,
+            "peak": 94,
+            "expectedToneHz": 640,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 5,
+            "machine": "STATIC",
+            "rms": 66.28028396007788,
+            "peak": 94,
+            "expectedToneHz": 768,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 6,
+            "machine": "STATIC",
+            "rms": 66.28074940108294,
+            "peak": 94,
+            "expectedToneHz": 896,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 7,
+            "machine": "STATIC",
+            "rms": 66.28021143874895,
+            "peak": 94,
+            "expectedToneHz": 1024,
+            "expectedToneDominant": true
+          },
+          {
+            "track": 8,
+            "machine": "STATIC",
+            "rms": 66.28203349215498,
+            "peak": 94,
+            "expectedToneHz": 1152,
+            "expectedToneDominant": true
+          }
+        ],
+        "pcmSha256": "4000d1b6de2035333636bbdb1cdae34e9240941ce4072be5a0edb1d9faf2ff5f"
+      }
+    },
+    "fixtureCardSha256": "b2ff46a32404855fae8c56c7070c6863ec81ff0d2f4af409cf7c80ac84b3f0c7",
+    "allEightExpectedTonesVerified": true,
+    "listeningVerdict": null,
+    "audioDuringCommitNotYetCompared": true,
+    "limitations": "Native emulator PCM, not physical playback or dropout/CPU/stack qualification."
+  },
+  "execution": {
+    "base": "2e1a612832625e268492a06623c3cac5ebfb0ea324889d9e8f30509bbbffc248",
+    "packageSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+    "emulatorSha256": "b087c97f3031f075551b3336afcd75a407ca4d3476e04a9d5cfaa059b1d40363",
+    "cardInputSha256": "b2ff46a32404855fae8c56c7070c6863ec81ff0d2f4af409cf7c80ac84b3f0c7",
+    "cardOutputSha256": "2c77ec94b86c5df8359959da31f098d63184b002f829886e5d82cc08ccf76d41",
+    "dspRuntimeBefore": {
+      "dl_frames": 47582,
+      "dl_errors": 0,
+      "modwerk_dsp_stalls": 0
+    },
+    "dspRuntimeAfter": {
+      "dl_frames": 106873,
+      "dl_errors": 0,
+      "modwerk_dsp_stalls": 0
+    },
+    "checks": {
+      "allEightTrackAssignmentsVerified": true,
+      "allEightTracksHave64SampleTrigs": true,
+      "maximumLiveLocksWritten": 512,
+      "maximumLiveLocksCleared": 512,
+      "nativePlaybackPcmVerified": true,
+      "allFourSavedPatternsExercised": true,
+      "lockIndexCompared": true,
+      "patternAndMirrorCompared": true,
+      "audibleHardwareVerified": false,
+      "runtimeImageMatchesPackage": true,
+      "runtimeSitesMatchPackage": true,
+      "runtimeInitializedBytesCompared": 8748,
+      "runtimeSitesCompared": 3,
+      "reconstructedImageMatchesOriginal": true,
+      "liveCopySourcesVerified": 9,
+      "audioVerifiedWithoutModule": true,
+      "allDeclaredSitesRestored": true
+    },
+    "disposableEmulatorKeep": true,
+    "usbRemoval": true
+  },
+  "attestation": {
+    "hardware": false,
+    "referencePackageSha256": "28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d",
+    "fullImageAttestations": 6,
+    "nineLiveCopySourceGuardsVerifiedEachTime": true,
+    "helperSha256": "548189473b0caed0a966d106d7815322821d5cdfe2c13ea533228a11fbe0d4dd"
+  },
+  "loaderRefusals": {
+    "hardware": false,
+    "base": "2e1a612832625e268492a06623c3cac5ebfb0ea324889d9e8f30509bbbffc248",
+    "checks": [
+      {
+        "case": "wrong-stock-hash",
+        "uploadResult": 9,
+        "runtimeRefusal": 8,
+        "generationAndActiveIdentityUnchanged": true,
+        "openerSitesUnchanged": true
+      },
+      {
+        "case": "nonzero-placeholder",
+        "uploadResult": 9,
+        "runtimeRefusal": 1,
+        "generationAndActiveIdentityUnchanged": true,
+        "openerSitesUnchanged": true
+      },
+      {
+        "case": "overlapping-copy",
+        "uploadResult": 9,
+        "runtimeRefusal": 1,
+        "generationAndActiveIdentityUnchanged": true,
+        "openerSitesUnchanged": true
+      },
+      {
+        "case": "relocation-overlap",
+        "uploadResult": 9,
+        "runtimeRefusal": 1,
+        "generationAndActiveIdentityUnchanged": true,
+        "openerSitesUnchanged": true
+      },
+      {
+        "case": "invalid-stock-address",
+        "uploadResult": 9,
+        "runtimeRefusal": 1,
+        "generationAndActiveIdentityUnchanged": true,
+        "openerSitesUnchanged": true
+      },
+      {
+        "case": "zero-copy-length",
+        "uploadResult": 9,
+        "runtimeRefusal": 1,
+        "generationAndActiveIdentityUnchanged": true,
+        "openerSitesUnchanged": true
+      }
+    ],
+    "helperSha256": "548189473b0caed0a966d106d7815322821d5cdfe2c13ea533228a11fbe0d4dd"
+  },
+  "toneSummary": {
+    "hardware": false,
+    "nativeEmulatorPcmVerified": true,
+    "allFourPatternsExercised": true,
+    "mainAndEightExpectedTrackTonesPassedInAllTenCaptures": true,
+    "packageSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+    "base": "2e1a612832625e268492a06623c3cac5ebfb0ea324889d9e8f30509bbbffc248",
+    "cardSha256": "b2ff46a32404855fae8c56c7070c6863ec81ff0d2f4af409cf7c80ac84b3f0c7",
+    "sourceSamples": [
+      {
+        "track": 1,
+        "machine": "FLEX",
+        "slot": 1,
+        "path": "../AUDIO/PSL_T1.wav",
+        "frequencyHz": 256,
+        "frames": 88200,
+        "sha256": "1c979b04ff5f0585115005e1aee1ba413c629a0d34e3f575117af9e1721eb27e"
+      },
+      {
+        "track": 2,
+        "machine": "FLEX",
+        "slot": 2,
+        "path": "../AUDIO/PSL_T2.wav",
+        "frequencyHz": 384,
+        "frames": 88200,
+        "sha256": "fe7b50ae1936e7ba370f5e7e71cf8a54ecd7974943ee906ab203278e14e34886"
+      },
+      {
+        "track": 3,
+        "machine": "FLEX",
+        "slot": 3,
+        "path": "../AUDIO/PSL_T3.wav",
+        "frequencyHz": 512,
+        "frames": 88200,
+        "sha256": "c7490606096a818050726f5fc5f011890882a0dfb78068b6d09d1133a11e4f8e"
+      },
+      {
+        "track": 4,
+        "machine": "FLEX",
+        "slot": 4,
+        "path": "../AUDIO/PSL_T4.wav",
+        "frequencyHz": 640,
+        "frames": 88200,
+        "sha256": "ebd3056a366b2efd4a32053de6746ed69640f6f9859297e595d222fe89e22fef"
+      },
+      {
+        "track": 5,
+        "machine": "STATIC",
+        "slot": 5,
+        "path": "../AUDIO/PSL_T5.wav",
+        "frequencyHz": 768,
+        "frames": 88200,
+        "sha256": "34b533d4767a8fd59fb9bad670e4c7762fd6e5d3e37dc51fbfeec21bd451ebcd"
+      },
+      {
+        "track": 6,
+        "machine": "STATIC",
+        "slot": 6,
+        "path": "../AUDIO/PSL_T6.wav",
+        "frequencyHz": 896,
+        "frames": 88200,
+        "sha256": "f7dd9a58b8651a3683169d72db98f529f862cbf8545a7e8ecaa475fde617f437"
+      },
+      {
+        "track": 7,
+        "machine": "STATIC",
+        "slot": 7,
+        "path": "../AUDIO/PSL_T7.wav",
+        "frequencyHz": 1024,
+        "frames": 88200,
+        "sha256": "c135617200cc40adb77791ccfba876aa4031ed440a1aa5c4fe7e778f167cff94"
+      },
+      {
+        "track": 8,
+        "machine": "STATIC",
+        "slot": 8,
+        "path": "../AUDIO/PSL_T8.wav",
+        "frequencyHz": 1152,
+        "frames": 88200,
+        "sha256": "edcf7404ea6760afd42e6fe72ec900823a587bbe336c689fcf9f4b886d058b20"
+      }
+    ],
+    "explicitMainLevel": 64,
+    "minStemRms": 66.25493120968783,
+    "expectedFrequencyEnergyFraction": [
+      0.9979216283848741,
+      0.9999444615663586
+    ],
+    "dropoutOrHardwareQualification": false,
+    "maximumMainPeak": 622
+  },
+  "detectorSanity": {
+    "syntheticOnly": true,
+    "tests": 3,
+    "correctTonesAccepted": true,
+    "silenceRefused": true,
+    "swappedTracksRefused": true
+  },
+  "sourceHashes": {
+    "prepare_audio_fixture.py": "279c255b564fd8a6f1993804d3bfe43b34734533671196276f1bbbaf0e125fa3",
+    "audio_fixture_emulator.py": "2036ce422afeddd8362af94d8a086135fbe8d9cf862ffe5eb7043bd564f5bafe",
+    "test_audio_fixture.py": "9ce9c99359aa2da888332bbdfd5971364894a168db9518c0eff002d370f34ae6"
+  },
+  "bundle": {
+    "file": "sample-locks-audio-fixture.zip",
+    "bytes": 692566,
+    "sha256": "86a3af953d28ec1f539ba368759c9d1d7bca7fc4cb298e87f390c79998eeeb08",
+    "includesProjectAndEightOriginalWavs": true
+  },
+  "correction": {
+    "firstRun": "Three PCM windows passed; teardown stopped at MU_UNSAFE (2) because the runner entered the loader while playback was running.",
+    "fix": "Runner now explicitly stops before loader teardown and restarts afterward for the comparison without the module. No loader/module acceptance rule changed."
+  },
+  "limitations": [
+    "Native emulator PCM only; no physical device was accessed.",
+    "PCM non-silence and expected-tone identity do not prove absence of edit-related glitches or physical CPU/stack safety.",
+    "Earlier main-level-off runs remain data/DSP execution evidence, not audio-output qualification.",
+    "Private project/card/PCM/zip remain outside Git; no firmware or built package is included in the fixture zip."
+  ]
+}

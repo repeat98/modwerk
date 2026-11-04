@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-03",
+    "changes": [
+      "First library release, for Analog Rytm MKII OS 1.74: AUDIO IN through the Rytm's own DIST, COMP, delay and reverb.",
+      "On the FX track's DISTORTION page, D (STE) sets the input into the mix before DIST and COMP, and E (IFX) sends it to the delay and the reverb.",
+      "Both knobs save with the kit and take parameter, scene and performance locks. Tap D to sum the input to mono.",
+      "Level, noise and latency are not measured; this exact package has not run on a unit."
+    ]
+  }
+]
