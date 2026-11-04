@@ -219,6 +219,25 @@ passing 18-module self-test record. The reason for the initial recovery refusal
 is unknown.
 
 No Keep, flash, project/sample save or power cycle occurred. The hardware panel
-was not operated during this trial: the second FUNC+AED result with the 0.1.66
-popup open remains unobserved. 0.1.66 has no SNAP control, so this run supplies
-no SNAP OFF/ON result.
+was not operated during this trial. 0.1.66 has no SNAP control, so this run
+supplies no SNAP OFF/ON result. The separate panel trials below cover both
+review questions.
+
+## Exact beta-base panel trials — 4 November 2026
+
+The same beta base `efab14e51c4c4a3816cc81f76a15b538940066ae1c4a35e763273abd8fe066d5`
+was RAM-booted on the owner's OS 1.40C Octatrack. Before the boot, the flashed
+base reported 17 live and saved modules. The owner confirmed stopped transport
+and recording and a disposable project. Each trial contained Beat Slicer only.
+
+- Published 0.1.66, package SHA-256 `6650ef77a837a61a570a300c3bd0b2d4dfd4c9bed6e52bb355034d39bf5ff90d`:
+  the owner reported that FUNC+AED while CREATE BEAT GRID was open brought up
+  stock CREATE SLICE GRID. Undo returned the beta base to its empty baseline.
+- Private 0.1.68 candidate, package SHA-256 `195d2b46e2620bd15118478aa02d626d6d803692e02c40db4f45a67f6927b643`:
+  the owner reported creating a grid with SNAP OFF and another with SNAP ON,
+  both completing normally. Undo and a fresh status read returned the beta base
+  to its empty baseline.
+
+These are owner-reported panel outcomes, not measured boundary or audio results.
+No Keep, flash, project/sample save or power cycle occurred in these trials;
+the temporary beta base was still running after Undo.
