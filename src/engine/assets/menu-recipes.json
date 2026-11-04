@@ -1425,7 +1425,7 @@
       "caveLimit": 1074625596
     }
   ],
-  "sourceCommit": "d6159f66060d4ad8d69cadeeee3b1da9acfe09f0",
+  "sourceCommit": "ab77ea105c50a353f0471939ae5937ed57242526",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -1459,6 +1459,7 @@
     "direct-jump-kyoti": "0.1.2-experimental",
     "dejavu": "0.1.0-experimental",
     "arp-key-locks": "0.1.0-experimental",
-    "temp-save": "0.1.0-experimental"
+    "temp-save": "0.1.0-experimental",
+    "tuner": "0.1.0-experimental"
   }
 }
