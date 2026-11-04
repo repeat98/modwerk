@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "live-rec-retrig-fix",
+  "moduleVersion": "0.2.0-experimental",
+  "firmware": "1.74",
+  "capturedAt": "2026-11-04T15:40:00Z",
+  "imageSha256": "52de03f6dec4f3457c6de72d839c4f4304eca90d352548d8b942e173f72041e9",
+  "build": "Modwerk's linker: core-ar2 0.7 + this folder's Live Rec Retrig Fix 0.2.0-experimental, materialised against stock OS 1.74, --version LR22",
+  "emulator": {
+    "name": "rytm-emu",
+    "repository": "https://github.com/trigcondition/rytm-emu",
+    "binary": "dtboot",
+    "settings": "no card image (the card starts formatted); JIT on; --every 1000M, every event off it",
+    "revision": "c5732f0"
+  },
+  "conditions": "Cold boot; six NO presses clear the notices. First capture: GLOBAL, six DOWNs and YES open CONTROL, two DOWNs and YES open SEQUENCER CONFIG, eight DOWNs reach its last row, QUANT RTRG TO SEQ, checked by default. Second: RTRG held from the kit screen, YES on the RETRIG row turns ALWAYS ON over (the same run without YES shows it unchecked); the frame is taken with RTRG still held. Frames are dtboot's firmware-rendered 128x64 screen at 3x, unmodified.",
+  "captures": [
+    {
+      "path": "media/seq-config.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out dtboot lr22.syx --instr 12500M --every 1000M --press NO@3200M --press NO@3500M --press NO@3800M --press NO@4100M --press NO@4400M --press NO@4700M --press GLOBAL@5100M --press DOWN@5800M --press DOWN@6050M --press DOWN@6300M --press DOWN@6550M --press DOWN@6800M --press DOWN@7050M --press YES@7600M --press DOWN@7900M --press DOWN@8150M --press YES@8400M --press DOWN@8700M --press DOWN@8950M --press DOWN@9200M --press DOWN@9450M --press DOWN@9700M --press DOWN@9950M --press DOWN@10200M --press DOWN@10450M (frame after the last DOWN)",
+      "sha256": "d836b28528491aebfe3864c404636d4e88c95a385d75d875a3b5b7d571efd36e"
+    },
+    {
+      "path": "media/retrig-always-on.png",
+      "plan": "DTBOOT_END_PNG=retrig-always-on.png dtboot lr22.syx --instr 5703M --every 1000M --press NO@3200M --press NO@3500M --press NO@3800M --press NO@4100M --press NO@4400M --press NO@4700M --press RTRG@5103M:800M --press YES@5403M:12M",
+      "sha256": "eb55057726ca833a855653a7cc2e193ebe2fece62f09511863cbf8f7eeaf456e"
+    }
+  ]
+}

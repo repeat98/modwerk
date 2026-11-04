@@ -49,7 +49,10 @@
       "Hold RECORD and press PLAY.",
       "Hold RTRG, then hold a pad and vary the pressure."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/retrig-always-on.png",
+      "media/seq-config.png"
+    ]
   },
   "controls": [
     {
@@ -115,7 +118,23 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu c5732f0, scripted pressure: every rate, ALWAYS ON, a press during a roll, rate changes, swing 50 to 66, quantize on and off, the RTRG key's light; on 0.1.0 also RETRIG menu YES on every row against stock and beside Silent Pad+Trig with SILENT PAD LIVEREC checked. On the author's Analog Rytm MKII (OS 1.74), reported from playing: 0.1.0 RR09 to RR16 pass; this merged build RC07 to RC11 (rates, quantize, short rolls, re-press, the row, a project save and reload) and LD01 (the key's light). See TESTING.md."
+    "summary": "rytm-emu c5732f0, scripted pressure: every rate, ALWAYS ON, a press during a roll, rate changes, swing 50 to 66, quantize on and off, the RTRG key's light; on 0.1.0 also RETRIG menu YES on every row against stock and beside Silent Pad+Trig with SILENT PAD LIVEREC checked. On the author's Analog Rytm MKII (OS 1.74), reported from playing: 0.1.0 RR09 to RR16 pass; this merged build RC07 to RC11 (rates, quantize, short rolls, re-press, the row, a project save and reload) and LD01 (the key's light). See TESTING.md.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Hold RTRG and press YES: ALWAYS ON turns on for the selected track. Let go of RTRG: its key glows dim red.",
+          "Hold RECORD and press PLAY, then play that track's pad, varying the pressure.",
+          "Leave LIVE RECORDING: the roll plays back hit for hit, on the sequencer's grid.",
+          "To keep rolls where you play them, uncheck QUANT RTRG TO SEQ in GLOBAL > CONTROL > SEQUENCER CONFIG."
+        ]
+      },
+      "screenshots": [
+        "media/retrig-always-on.png",
+        "media/seq-config.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
   },
   "license": {
     "spdx": "GPL-3.0-or-later",
@@ -131,6 +150,38 @@
       "credit": "npp1993",
       "license": "GPL-3.0-or-later",
       "source": "Original illustration in the shared signal-art style."
+    },
+    {
+      "path": "media/seq-config.png",
+      "kind": "screenshot",
+      "caption": "GLOBAL > CONTROL > SEQUENCER CONFIG: the QUANT RTRG TO SEQ row, last, checked.",
+      "alt": "SEQUENCER CONFIG rows QUANTIZE LIVE REC, KIT RELOAD ON CHG, AUTO TRK SWITCH, SAMPLE POS RES and QUANT RTRG TO SEQ, the last one selected and checked.",
+      "credit": "npp1993",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "52de03f6dec4f3457c6de72d839c4f4304eca90d352548d8b942e173f72041e9",
+        "setup": "Headless rytm-emu (dtboot, c5732f0) running LR22: core-ar2 0.7 and this folder's Live Rec Retrig Fix 0.2.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
+      }
+    },
+    {
+      "path": "media/retrig-always-on.png",
+      "kind": "screenshot",
+      "caption": "RTRG held: YES on the RETRIG row turns ALWAYS ON over.",
+      "alt": "RETRIG menu over the kit screen: RETRIG 1/16, LENGTH 1/4, VEL.CUR OFF, ALWAYS ON checked.",
+      "credit": "npp1993",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "52de03f6dec4f3457c6de72d839c4f4304eca90d352548d8b942e173f72041e9",
+        "setup": "Headless rytm-emu (dtboot, c5732f0) running LR22: core-ar2 0.7 and this folder's Live Rec Retrig Fix 0.2.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
+      }
     }
   ]
 }

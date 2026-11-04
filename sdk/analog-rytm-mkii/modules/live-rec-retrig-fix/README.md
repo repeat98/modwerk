@@ -97,7 +97,11 @@ In rytm-emu with scripted pad pressure, and on the author's MKII on RR09, RR11, 
 
 ## Screens and audio
 
-The module draws no screens. No audio recording.
+The module adds one row to a stock menu and draws no screens of its own. Captured in rytm-emu ([capture record](media/capture.json)); no audio recording.
+
+![RTRG held: YES on the RETRIG row turns ALWAYS ON over](media/retrig-always-on.png)
+
+![SEQUENCER CONFIG with the QUANT RTRG TO SEQ row](media/seq-config.png)
 
 ## Authorship and licences
 
