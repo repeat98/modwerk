@@ -1,5 +1,6 @@
 """Private measurement must preserve the native source/audio contracts."""
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -7,6 +8,7 @@ from host_flags import SANITIZE
 
 ROOT=Path(__file__).resolve().parents[2]
 
+@unittest.skipUnless(shutil.which('cc'), 'no host C compiler')
 class FractCpuProfileTests(unittest.TestCase):
     def test_timer_windows_and_native_audio_contracts(self):
         with tempfile.TemporaryDirectory(prefix='fract-profile-') as temp:

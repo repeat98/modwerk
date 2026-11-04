@@ -1,7 +1,7 @@
 """Focused host checks for the FRACT SRC-page presentation contract."""
 import ctypes
 import json
-import os
+import sys
 from pathlib import Path
 import shutil
 import subprocess
@@ -15,9 +15,11 @@ DRAFT = ROOT / "sdk/drafts/fract-machine"
 class FractUiContract(unittest.TestCase):
     PROFILE_FLAGS = []
     def test_variant_d_layout_bounds_size_bars_readers_and_pitch_values(self):
+        if not shutil.which("cc"):
+            self.skipTest("no host C compiler")
         with tempfile.TemporaryDirectory(prefix="fract-overview-") as temp:
             binary = Path(temp) / "overview"
-            linker_gc = "-Wl,-dead_strip" if os.uname().sysname == "Darwin" else "-Wl,--gc-sections"
+            linker_gc = "-Wl,-dead_strip" if sys.platform == "darwin" else "-Wl,--gc-sections"
             result = subprocess.run([
                 "cc", *self.PROFILE_FLAGS, "-std=c11", "-Wall", "-Wextra", "-Werror", "-O1",
                 "-ffunction-sections", "-fdata-sections", linker_gc,
@@ -35,7 +37,7 @@ class FractUiContract(unittest.TestCase):
             self.skipTest("no host C compiler")
         with tempfile.TemporaryDirectory(prefix="fract-ui-tick-") as temp:
             binary = Path(temp) / "ui-tick"
-            linker_gc = "-Wl,-dead_strip" if os.uname().sysname == "Darwin" else "-Wl,--gc-sections"
+            linker_gc = "-Wl,-dead_strip" if sys.platform == "darwin" else "-Wl,--gc-sections"
             result = subprocess.run([
                 cc, *self.PROFILE_FLAGS, "-std=c11", "-Wall", "-Wextra", "-Werror", "-O1",
                 "-ffunction-sections", "-fdata-sections", linker_gc,
@@ -101,7 +103,7 @@ class FractUiContract(unittest.TestCase):
                 ('  assert(!strcmp(fract_ui_main_labels[4],\"SHPE\") && !strcmp(fract_ui_main_labels[5],\"PTCH\"));\n  assert(!strcmp(fract_ui_setup_labels[0],\"PAN\") && !strcmp(fract_ui_setup_labels[2],\"SRNG\"));\n' if self.PROFILE_FLAGS else '') +
                 '  return 0;\n}\n')
             binary = temp / "ui"
-            linker_gc = "-Wl,-dead_strip" if os.uname().sysname == "Darwin" else "-Wl,--gc-sections"
+            linker_gc = "-Wl,-dead_strip" if sys.platform == "darwin" else "-Wl,--gc-sections"
             result = subprocess.run([
                 cc, *self.PROFILE_FLAGS, "-std=c11", "-Wall", "-Wextra", "-Werror", "-O1",
                 "-ffunction-sections", "-fdata-sections", linker_gc,

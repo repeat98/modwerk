@@ -4,6 +4,7 @@ Public main lacks FR:1 in known[]. This fixture opts in locally, without
 claiming that the committed public base supports FRACT persistence.
 """
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -14,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 LOADER = ROOT / 'sdk/machines/octatrack/elekloader'
 
 
+@unittest.skipUnless(shutil.which('cc'), 'no host C compiler')
 class FractPublicRegistry(unittest.TestCase):
     def test_public_live_start_render_and_pool(self):
         self.check_registry(proposed_boot=False)

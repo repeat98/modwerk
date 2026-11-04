@@ -82,6 +82,14 @@ All four preview images were inspected; the sample-browser caption was corrected
 to describe its actual contents without claiming it displays SAMPLE001.WAV.
 The module claim is held by ex1010 and linked to #926.
 
+The Windows SDK job runs the same host suite. FRACT fixtures now select linker
+flags through `sys.platform` instead of Unix-only `os.uname()` and follow the
+SDK's existing skip behavior when no host C compiler is installed. With the
+compiler present all 47 tests still run (four historical transport skips).
+A simulated missing-compiler run also succeeds with 22 skips and two executed
+tests; this checks test discovery/fallback, not Windows execution. Actual
+Windows results must come from exact-head CI.
+
 Draft doctor remains red for absent catalogue/release qualification, USB package,
 native comparison, pair declarations and package fingerprint. These are release
 integration gaps, not successful device qualification. Its category, thumbnail,
@@ -99,6 +107,14 @@ the ledger still contains 16 uncertainties, 478 unreviewed parsed chunks and
 The summary omitted 482 attention entries and 21 exclusion entries; the full
 location ledger was inspected selectively. This is partial review, not a pass
 or complete coverage; deferred fragments have not all been manually audited.
+
+After the portability edits, another bounded recheck passed both deterministic
+checks and made no new API requests. The current ledger retains 16 cached
+classified fragments among 534 parsed chunks, zero flags and 16 uncertainties;
+518 parsed chunks plus the same 10 file blockers are deferred (528 total),
+with 24 static-only exclusions. Its summary omits 522 attention entries and
+22 exclusion entries. The added portability scaffolding is outside the API
+sample and was checked locally; this does not close the deferred coverage.
 
 All 16 classified locations were investigated with their callers and fixtures:
 

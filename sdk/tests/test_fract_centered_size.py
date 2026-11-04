@@ -1,6 +1,7 @@
 """Source-coordinate and LCD properties for the private centred-SIZE engine."""
 from pathlib import Path
-import os
+import shutil
+import sys
 import subprocess
 import tempfile
 import unittest
@@ -9,6 +10,7 @@ from host_flags import SANITIZE
 ROOT = Path(__file__).resolve().parents[2]
 
 
+@unittest.skipUnless(shutil.which('cc'), 'no host C compiler')
 class CenteredSizeContract(unittest.TestCase):
     def compile_run(self, source, native=False):
         with tempfile.TemporaryDirectory(prefix='fract-centred-size-') as directory:
@@ -19,7 +21,7 @@ class CenteredSizeContract(unittest.TestCase):
                 command += ['-DOG_FRACT_CURRENT_ENGINE', '-DOG_NATIVE_STAGE_ONE', '-DOG_MACHINE_START_EXTENSION']
             else:
                 command += ['-ffunction-sections', '-fdata-sections',
-                            '-Wl,-dead_strip' if os.uname().sysname == 'Darwin' else '-Wl,--gc-sections']
+                            '-Wl,-dead_strip' if sys.platform == 'darwin' else '-Wl,--gc-sections']
             for path in ('sdk/drafts/fract-machine/engine', 'sdk/drafts/fract-machine/support',
                          'sdk/drafts/fract-machine', 'sdk/machines/octatrack/include',
                          'sdk/tests/fixtures'):

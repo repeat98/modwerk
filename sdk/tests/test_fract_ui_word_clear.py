@@ -1,6 +1,7 @@
 """Compare all framebuffer words with the frozen scalar renderer."""
 from pathlib import Path
-import os
+import shutil
+import sys
 import subprocess
 import tempfile
 import unittest
@@ -8,11 +9,12 @@ from host_flags import SANITIZE
 
 ROOT=Path(__file__).resolve().parents[2]
 
+@unittest.skipUnless(shutil.which('cc'), 'no host C compiler')
 class FractWordClearTests(unittest.TestCase):
     def test_complete_frames_match_scalar_reference(self):
         with tempfile.TemporaryDirectory(prefix='fract-word-clear-') as tmp:
             binary=Path(tmp)/'frames'
-            gc='-Wl,-dead_strip' if os.uname().sysname=='Darwin' else '-Wl,--gc-sections'
+            gc='-Wl,-dead_strip' if sys.platform=='darwin' else '-Wl,--gc-sections'
             flags=['cc','-std=c11','-O1','-Wall','-Wextra','-Werror',*SANITIZE,
                    '-fno-sanitize-recover=all','-DOG_MACHINE_GRAIN_ONLY',
                    '-ffunction-sections','-fdata-sections',gc]

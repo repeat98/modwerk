@@ -2,7 +2,8 @@
 from pathlib import Path
 import hashlib
 import importlib.util
-import os
+import shutil
+import sys
 import subprocess
 import tempfile
 import unittest
@@ -14,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 FLAGS = ['-DOG_MACHINE_GRAIN_ONLY']
 
 
+@unittest.skipUnless(shutil.which('cc'), 'no host C compiler')
 class CpuMachineContract(unittest.TestCase):
     PROFILE_FLAGS = FLAGS
 
@@ -148,10 +150,11 @@ int main(void) {
 class CpuUiContract(ui.FractUiContract):
     PROFILE_FLAGS = FLAGS
 
+    @unittest.skipUnless(shutil.which('cc'), 'no host C compiler')
     def test_cached_waveform_peaks_remain_exact_and_reduce_page_resolutions(self):
         with tempfile.TemporaryDirectory(prefix='fract-ui-peak-') as directory:
             binary = Path(directory) / 'fixture'
-            gc = '-Wl,-dead_strip' if os.uname().sysname == 'Darwin' else '-Wl,--gc-sections'
+            gc = '-Wl,-dead_strip' if sys.platform == 'darwin' else '-Wl,--gc-sections'
             command = ['cc', '-std=c11', '-Wall', '-Wextra', '-Werror', '-O1',
                        *SANITIZE, '-fno-sanitize-recover=all', *FLAGS,
                        '-ffunction-sections', '-fdata-sections', gc,
