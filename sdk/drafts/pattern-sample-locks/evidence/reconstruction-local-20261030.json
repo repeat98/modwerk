@@ -1,0 +1,472 @@
+{
+  "schema": 1,
+  "date": "2026-10-30",
+  "hardware": false,
+  "published": false,
+  "pushed": false,
+  "sourceCheckpoint": "bc11ad94",
+  "preparation": {
+    "hardware": false,
+    "published": false,
+    "admittedToPublicBuilder": false,
+    "referencePackageSha256": "28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d",
+    "candidatePackageSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+    "packageBytes": 10048,
+    "initializedBytes": 8748,
+    "bssBytes": 1328,
+    "reconstructedBytes": 107,
+    "copyCount": 9,
+    "nativeCopySourceBounds": {
+      "start": 1073742848,
+      "endExclusive": 1074651616
+    },
+    "cAndAssemblyMatchReference": true,
+    "exactImageReconstruction": true,
+    "relocationCases": 3,
+    "weightedScan": {
+      "longest": 11,
+      "failAt": 12,
+      "passed": true
+    },
+    "sixteenByteScanPassed": true,
+    "recipeRejections": [
+      {
+        "case": "changed source inputs",
+        "reason": "The standalone recipe does not name the exact source/image inputs."
+      },
+      {
+        "case": "changed compiled image",
+        "reason": "The standalone recipe does not name the exact source/image inputs."
+      },
+      {
+        "case": "wrong span hash",
+        "reason": "Standalone compiled and original-stock spans differ."
+      },
+      {
+        "case": "changed stock bytes",
+        "reason": "Standalone compiled and original-stock spans differ."
+      },
+      {
+        "case": "overlapping copies",
+        "reason": "A reconstruction span overlaps another span or relocation word."
+      },
+      {
+        "case": "relocation overlap",
+        "reason": "A reconstruction span overlaps another span or relocation word."
+      },
+      {
+        "case": "copy outside image",
+        "reason": "A standalone copy needs bounded image and stock spans."
+      },
+      {
+        "case": "oversized copy",
+        "reason": "A standalone copy needs bounded image and stock spans."
+      },
+      {
+        "case": "invalid source address",
+        "reason": "A standalone copy needs bounded image and stock spans."
+      },
+      {
+        "case": "missing authored provenance",
+        "reason": "A standalone copy needs its reviewed authored source, lines, symbol and method."
+      },
+      {
+        "case": "undeclared initializer fill",
+        "reason": "Standalone instruction recipes have no reviewed constant fills."
+      },
+      {
+        "case": "authored file hash mismatch",
+        "reason": "Standalone authored provenance changed."
+      }
+    ],
+    "negativePackages": [
+      {
+        "case": "wrong-stock-hash",
+        "file": "wrong-stock-hash.private.mwrm",
+        "runtimeRefusal": 8,
+        "sha256": "e8a4bd0764ff08242359f37f5b1943bfc59ad9d3cd6f3e9e5784d1e40c82a5c0"
+      },
+      {
+        "case": "nonzero-placeholder",
+        "file": "nonzero-placeholder.private.mwrm",
+        "runtimeRefusal": 1,
+        "sha256": "cbd3100e07c78e3e25a120d16f74075dbf94fa4992ee3c5b000dfea4bbfdc989"
+      },
+      {
+        "case": "overlapping-copy",
+        "file": "overlapping-copy.private.mwrm",
+        "runtimeRefusal": 1,
+        "sha256": "d16b562d92272dbad31f779bbb09723b9a2fd4afa4b2ed912c4257c0cf5d6d74"
+      },
+      {
+        "case": "relocation-overlap",
+        "file": "relocation-overlap.private.mwrm",
+        "runtimeRefusal": 1,
+        "sha256": "210f5166189f2b9b4a8a14e1891ecc8057127715430f4fafc26c4de441a48f85"
+      },
+      {
+        "case": "invalid-stock-address",
+        "file": "invalid-stock-address.private.mwrm",
+        "runtimeRefusal": 1,
+        "sha256": "3786fd255a616db6e091e2cb8d739028c93c03a3118b2bfba6a0f1de96ffb4b9"
+      },
+      {
+        "case": "zero-copy-length",
+        "file": "zero-copy-length.private.mwrm",
+        "runtimeRefusal": 1,
+        "sha256": "f6cae46fd82d006221b1d84a1762279b1bf937316d8bb49a839cbfc796035bd2"
+      }
+    ],
+    "helperSha256": "197a824349c2f2547392add15fc0035ff6ca628658dbf9083f31e59b8c825f00",
+    "sourceHashes": {
+      "sdk/drafts/pattern-sample-locks/translation.c": "307d7f0d95a8eef8746c069472123555eebd40635e9401c3946e7d51e69113a5",
+      "sdk/drafts/pattern-sample-locks/native.c": "a5d11e7320a91b00457fbe1f89453e8a432e65877e92af0aa64705f6b2a6050e",
+      "sdk/drafts/pattern-sample-locks/engine.c": "a41ace651c2ff9f72d43e783d6121c64f51fe6d21e49bc60cf3b26a97ebdaa38",
+      "sdk/drafts/pattern-sample-locks/engine.h": "d1c067250f8bc555944303fb526cd9ec22c281c0f4773c95ed6fbdd332925ca1",
+      "sdk/drafts/pattern-sample-locks/ui.c": "3d452769338be043c327ab6bf0a8db9b09c0c7504f62710c46d32d205a75f4c7",
+      "sdk/drafts/pattern-sample-locks/ui.h": "514cbdcfd88777769e4883d020d7fe6a2b5301a5d04c136eb67f7b7bb54f45bd",
+      "sdk/drafts/pattern-sample-locks/font.c": "63104792b675f7cce15582b554eaf4b05e008a63c2433db7fecb71210e115079",
+      "sdk/drafts/pattern-sample-locks/font.h": "a94a3103633a0084e11d53fbe46d0590812011062aa01d2c28de35b60ef8ea99",
+      "sdk/drafts/pattern-sample-locks/unit.s": "837e44f48fa137444e14755d96011731c8fde29a73fa877ffc35edac3510473f",
+      "sdk/drafts/pattern-sample-locks/manifest.py": "ff0d9749fa181a8dabadddc711295a987d58c0d7f3516556aadbae97b6e7d7ab",
+      "sdk/drafts/pattern-sample-locks/runtime.json": "710371710bd6c2522067c62f36c6ffbf211232b88c75a71a3dab2ac913e9742e",
+      "sdk/runtime/loader/build.py": "e8d2b83d2da6964fd5c48ff5b58fbcf2edd67d377404a1d96c497586b51a6c43",
+      "sdk/runtime/loader/modwerk_module.h": "55f39232ec7eb2fe8a497f946f559a9f4e78f90e637ea5475cca686bc5c56218",
+      "sdk/runtime/m68k_codegen.py": "2ba57326583cbb0f9ada1d7c2b09fe4577a1ce35693b78dffaa4af7617dedfab",
+      "sdk/machines/octatrack/module-adapters/standalone_runtime.py": "3a7559a330ae4f031c7c47b7cb67f679cd7fb4e4f2aa69f2e3971940be4c46ae",
+      "sdk/machines/octatrack/module-adapters/stock_recipe.py": "662b79d9dc612845cf85e5051fa2d711cad4f98244194357fdaaabca092d5ca5",
+      "sdk/machines/octatrack/elekloader/runtime.c": "78c66d9de28701274d38f83dccedad5ea75c8dd0cb5fc8068c5dc3a550ab64eb"
+    },
+    "sourceCheckpoint": "bc11ad94",
+    "limitations": "Private direct use of unchanged adapter and package APIs. No production admission, card integration, hardware timing or total-stack qualification."
+  },
+  "browser": {
+    "hardware": false,
+    "published": false,
+    "privateCatalogueFixtureOnly": true,
+    "candidatePackageSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+    "preflight": [
+      {
+        "layout": "tracks-main-cue",
+        "base": "18902326cb138804e330a133355281a703bd2ef999deae1919b1046b03efe33f",
+        "addAndRemovalUndo": true
+      },
+      {
+        "layout": "tracks",
+        "base": "b4bd202cf777bf5d54f1d57d8265be450ab5cd03b6ccfa070838c1f9013f4525",
+        "addAndRemovalUndo": true
+      },
+      {
+        "layout": "tracks-post",
+        "base": "2d4e2743df9568b24b432d05256a864044ec9015c5fda0a374b6305d0ce7bae4",
+        "addAndRemovalUndo": true
+      },
+      {
+        "layout": "main-cue",
+        "base": "fc5901e98b48fe81b9dd728b02b3cdae99a55107eb7c2fa1fa81eb276a0c66a2",
+        "addAndRemovalUndo": true
+      },
+      {
+        "layout": "main",
+        "base": "b6fa9cafa42252d294149480a3e04c730c984453c9ccc7f7f1f4a205439d39d5",
+        "addAndRemovalUndo": true
+      },
+      {
+        "layout": "master",
+        "base": "0ebb20991b3340bf820d155ceccf71018e409987880ca6b1b2478007638d6dd1",
+        "addAndRemovalUndo": true
+      },
+      {
+        "layout": "off",
+        "base": "f4c1667e0d1a52248a1adb590e1ccfae0d3e27988c24bfe21ad71372ee8942cd",
+        "addAndRemovalUndo": true
+      }
+    ],
+    "allPackagesPreflight": 29,
+    "stockCopyCapacityRequiredBeforeFetch": 9,
+    "malformedPackages": [
+      {
+        "case": "wrong-stock-hash",
+        "browserStructuralRejection": false,
+        "nativeGuardRequired": true
+      },
+      {
+        "case": "nonzero-placeholder",
+        "browserStructuralRejection": true,
+        "nativeGuardRequired": false
+      },
+      {
+        "case": "overlapping-copy",
+        "browserStructuralRejection": true,
+        "nativeGuardRequired": false
+      },
+      {
+        "case": "relocation-overlap",
+        "browserStructuralRejection": true,
+        "nativeGuardRequired": false
+      },
+      {
+        "case": "invalid-stock-address",
+        "browserStructuralRejection": false,
+        "nativeGuardRequired": true
+      },
+      {
+        "case": "zero-copy-length",
+        "browserStructuralRejection": true,
+        "nativeGuardRequired": false
+      }
+    ],
+    "builtPublicBases": [
+      {
+        "layout": "tracks-main-cue",
+        "identity": "18902326cb138804e330a133355281a703bd2ef999deae1919b1046b03efe33f",
+        "downloadSha256": "f021197393dcf65aa62385905406f802ae56db3860d0c8691b3cf789545be61e",
+        "allCopySourceHashesMatch": true
+      },
+      {
+        "layout": "tracks",
+        "identity": "b4bd202cf777bf5d54f1d57d8265be450ab5cd03b6ccfa070838c1f9013f4525",
+        "downloadSha256": "dced74f4adcc179183700bbd562e1d5f1f5044057329b95ca1950874ed2b519c",
+        "allCopySourceHashesMatch": true
+      },
+      {
+        "layout": "tracks-post",
+        "identity": "2d4e2743df9568b24b432d05256a864044ec9015c5fda0a374b6305d0ce7bae4",
+        "downloadSha256": "0e7fc4d85a970fde4329d9533d3aff63d532e17379d51af91ab708ebb77b601d",
+        "allCopySourceHashesMatch": true
+      },
+      {
+        "layout": "main-cue",
+        "identity": "fc5901e98b48fe81b9dd728b02b3cdae99a55107eb7c2fa1fa81eb276a0c66a2",
+        "downloadSha256": "45fdf152fa0685380de39389fc1f70d9b7c5e87cc0a2dd43a989226527813239",
+        "allCopySourceHashesMatch": true
+      },
+      {
+        "layout": "main",
+        "identity": "b6fa9cafa42252d294149480a3e04c730c984453c9ccc7f7f1f4a205439d39d5",
+        "downloadSha256": "c0d8bd5dc9c92700f8998c8daefe81ca8160682156b9856aa7d4337480aa6fc0",
+        "allCopySourceHashesMatch": true
+      },
+      {
+        "layout": "master",
+        "identity": "0ebb20991b3340bf820d155ceccf71018e409987880ca6b1b2478007638d6dd1",
+        "downloadSha256": "ed61ec7c702acf790095efbb83a898356dc1846c93d5caf2fa3cba9f64ee3a8a",
+        "allCopySourceHashesMatch": true
+      },
+      {
+        "layout": "off",
+        "identity": "f4c1667e0d1a52248a1adb590e1ccfae0d3e27988c24bfe21ad71372ee8942cd",
+        "downloadSha256": "36b5140ea0beb648dc617ca6c5de78bc777744b4c14fd5bb1c45537c52de6321",
+        "allCopySourceHashesMatch": true
+      }
+    ],
+    "limitations": "Source-byte and preflight checks; no physical playback, card UI, complete stack or simultaneous companion runtime qualification."
+  },
+  "sourceDeclarations": {
+    "hardware": false,
+    "packageCount": 28,
+    "nativeDeclaredGroups": 17,
+    "patchSpansCompared": 541,
+    "copySourcesCompared": 9,
+    "overlaps": [],
+    "scope": "Committed runtime sites and native requested detours/references/pokes/table references; not simultaneous runtime qualification.",
+    "inputHashes": {
+      "src/engine/assets/octatrack-module-packages.json": "18e07c33ed22c9c5cab23962f8d1d8d609b3960c56f905b59a158fd8a48b8127",
+      "src/engine/assets/requested-packages.json": "b9ce385797fd446031d3a488d3f767abba7cfb3f475eea3f134dc1394680fa57"
+    },
+    "packageHashes": {
+      "everb": "5f81e72fbba43ea827ec3996509b50c036b458d4baa87d801e57d4b4ce1695ca",
+      "miniverb": "eea25e6cf8ac0a39ab300d8ba543b0d5829b789a03e0081c8d136c64f2eed518",
+      "tapehead": "980fb1ceda23837b3cb121e42372ccc21e5068ce03cacb1f371c7d53f5150554",
+      "airwindows-chorus": "e0f05d53b4259e0c3b50f5dde05ed1a1ec5d7c5b80bf5efd5ce4e5ab7d6d7ff8",
+      "lofi2": "a2ab27325404c06197ccf2737b64b480121c6799b439798440b8c73e7884c92c",
+      "ring-sc": "5c4e7fcfdc2ec212ae2bd551fe959fe2a2c8a798e8ad24baee08b44093c6304a",
+      "previewvol": "9fd95d9a9a5a1c5932892ab1af36b39994650a51161df3903f36fa8afa6cb1c2",
+      "apply-scene": "236231aaaf2914ed4a4932eda74c455f834d9e0791c0833addd5589b31d23869",
+      "repitch": "052d27edf6cfac091d126beebac18e2b2d0ecaad470d00581a2a08e215bb47c3",
+      "poly8": "dc2ce372af73b93ef9e34a1c05c8ad18269631e0f20ed4f94e461310990466b9",
+      "vector": "45c962ca3a202ac697e3d33d97e4b3b94052706a390189e5baf923fa829de577",
+      "synth": "6e5716540d78b652b272c364ddf398f688eb9dff7e2b926b2895e250341aaca7",
+      "quantizer": "4bd0e586aa5c2d47e77f554734868651207f3caa57f5b7798608fda3f4efad51",
+      "tapeecho": "921e7a60c3418e7ece96f24c254802b44fee2082713f25e7b964b37f233bbe9e",
+      "euclid": "649f26704bda30f0bb3be0dc1b5ad863ff7a3a4064256b051af07e9fd575e7ce",
+      "bbd": "614bf23b7d8e6811d096d1d3f5934ace9829cef7a2c1026b1bcbccbe59b6a5c9",
+      "playmodes": "abf1cda888e617408b4d088bb9afd536f9ea96c1bdb90339e56a3932d300bced",
+      "mute-modes": "c35b154d7a6ff4d9affc339387d68bde87554aec82a87b60059b6307f5b2b848",
+      "sidechain-compressor": "eadf2382bc71fc75a4e911c405f394ac505cc94932a1fa2ea9ce159e658b6447",
+      "output-matrix": "65a311c38c64652e1730426e62bed9e7c97c390d378e535a2848e660ae85dcca",
+      "cc-map": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
+      "quantize-live-rec-toggle": "297f79efa4259486a6df7ce95efa29947b457597cb8f2d2794a214699d7f87fe",
+      "direct-jump-kyoti": "89a38e18728bb2039a0f5e3f39305fcb7be75e0db260acd6b33bd46d7e281cef",
+      "dejavu": "95079643d3e11914a9fcea21c3417bd95fe7083333660470147d7e89a1f53260",
+      "arp-key-locks": "907a03cf980996b30b0c3ba89ea0e80b889727ba4d407d04e2f95ceb30b44e8c",
+      "recorder-loop-fix": "180b52c68018f34a0fbadb0ad518972c4dc70dc621e3ab730beab33b7a081137",
+      "analog-bassdrum": "6272600408466c3e3d313e943fc3f57beb06a55c61aab25720fce4b833eb53b0",
+      "beat-slicer": "6650ef77a837a61a570a300c3bd0b2d4dfd4c9bed6e52bb355034d39bf5ff90d"
+    },
+    "helperSha256": "d50ec4281feabdc45ae9674562bc4e72e3ba4a8955de6a8675201006ef9f4818"
+  },
+  "emulator": {
+    "base": "2e1a612832625e268492a06623c3cac5ebfb0ea324889d9e8f30509bbbffc248",
+    "packageSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+    "emulatorSha256": "b087c97f3031f075551b3336afcd75a407ca4d3476e04a9d5cfaa059b1d40363",
+    "cardInputSha256": "d64abdaf0f7f957da796f458114396e7df9ef626eb52a89079c922cf98861ab8",
+    "cardOutputSha256": "00e8b8fb7bcefc765cdcb7eabf48b35d62256afb3dbb915829e6b493b71643b0",
+    "checks": {
+      "livePlaybackVerified": true,
+      "ramPreferencesVerified": true,
+      "cpuMonitorRecorded": true,
+      "nativeSaveReloadPassed": true,
+      "maximumLiveLocksWritten": 512,
+      "maximumLiveLocksCleared": 512,
+      "runtimeImageMatchesPackage": true,
+      "runtimeSitesMatchPackage": true,
+      "runtimeInitializedBytesCompared": 8748,
+      "runtimeSitesCompared": 3,
+      "reconstructedImageMatchesOriginal": true,
+      "liveCopySourcesVerified": 9,
+      "allDeclaredSitesRestored": true,
+      "onlyThreePartOpenersPatched": true
+    },
+    "liveChecks": {
+      "freshSessionSafeDefaults": true,
+      "independentRamProfiles": true,
+      "cancelledAndRefusedDraftsIgnored": true,
+      "lastActionAndCursorRecalled": true,
+      "patternChangeRetiresConfirmation": true,
+      "settingsFollowToNewPattern": true,
+      "onlyConfirmedPatternEdited": true,
+      "liveRecordingRefusedWithoutStopping": true,
+      "stoppedStatePreserved": true,
+      "maximum512LockAndClear": true,
+      "nonSampleBytesAndMirrorsPreserved": true,
+      "nativeProjectSaveReloadPassed": true,
+      "preferencesRemainRamOnlyAcrossReload": true,
+      "playbackPreserved": true,
+      "noImplicitTransportCommands": true,
+      "preferencesResetOnModuleReload": true,
+      "moduleRemovedWithOverlayOpen": true,
+      "stockSitesRestored": true
+    },
+    "refusals": {
+      "hardware": false,
+      "base": "2e1a612832625e268492a06623c3cac5ebfb0ea324889d9e8f30509bbbffc248",
+      "checks": [
+        {
+          "case": "wrong-stock-hash",
+          "uploadResult": 9,
+          "runtimeRefusal": 8,
+          "generationAndActiveIdentityUnchanged": true,
+          "openerSitesUnchanged": true
+        },
+        {
+          "case": "nonzero-placeholder",
+          "uploadResult": 9,
+          "runtimeRefusal": 1,
+          "generationAndActiveIdentityUnchanged": true,
+          "openerSitesUnchanged": true
+        },
+        {
+          "case": "overlapping-copy",
+          "uploadResult": 9,
+          "runtimeRefusal": 1,
+          "generationAndActiveIdentityUnchanged": true,
+          "openerSitesUnchanged": true
+        },
+        {
+          "case": "relocation-overlap",
+          "uploadResult": 9,
+          "runtimeRefusal": 1,
+          "generationAndActiveIdentityUnchanged": true,
+          "openerSitesUnchanged": true
+        },
+        {
+          "case": "invalid-stock-address",
+          "uploadResult": 9,
+          "runtimeRefusal": 1,
+          "generationAndActiveIdentityUnchanged": true,
+          "openerSitesUnchanged": true
+        },
+        {
+          "case": "zero-copy-length",
+          "uploadResult": 9,
+          "runtimeRefusal": 1,
+          "generationAndActiveIdentityUnchanged": true,
+          "openerSitesUnchanged": true
+        }
+      ],
+      "helperSha256": "548189473b0caed0a966d106d7815322821d5cdfe2c13ea533228a11fbe0d4dd"
+    },
+    "attestation": {
+      "hardware": false,
+      "referencePackageSha256": "28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d",
+      "fullImageAttestations": 4,
+      "nineLiveCopySourceGuardsVerifiedEachTime": true,
+      "helperSha256": "548189473b0caed0a966d106d7815322821d5cdfe2c13ea533228a11fbe0d4dd"
+    },
+    "dspBefore": {
+      "dl_frames": 44149,
+      "dl_errors": 0,
+      "modwerk_dsp_stalls": 0
+    },
+    "dspAfter": {
+      "dl_frames": 276660,
+      "dl_errors": 0,
+      "modwerk_dsp_stalls": 0
+    },
+    "disposableEmulatorKeep": true,
+    "keptModuleRemovalCompleted": true,
+    "reinstalledTrialUndoCompleted": true,
+    "nativePlaybackFrameAdvance": 82892,
+    "cpuInterpretation": "Cached CPU meter saturated on the unloaded baseline; no module load percentage can be resolved.",
+    "sources": {
+      "capture_emulator.py": "bf73e0aee9a34a43b9f840f783edc117328a00e2e8651be85d1637b482bed44e",
+      "attestation_emulator.py": "24856c4ca80551313dd78fa4d7ef7d342aa39d2a27c71e6ea78c3952525f34d5",
+      "prepare_fixture_emulator.py": "7cc2bfd126fc9ed2380f21653e0b96c34e4104afe1783184c1934a8abc04dd72",
+      "profile_symbols.py": "972462022bd9534dc574a0a706976febdd448147079d7c20ca906ca65155f4dc",
+      "live_emulator.py": "ba26261794b953152641fc16b53e1dced6ccbd88a7443ba8e99a0bf58102416a",
+      "performance_emulator.py": "abf2f0094b48cf021b6c2edb18ecbf8077f38b5be9f9e1324b5e9c65ba38ea9e",
+      "profile_emulator.py": "20152342d1dd859b152d3781245783c2dc2c409162b077b5a1d6098832a5944d",
+      "stress_emulator.py": "65ad5a1d951cfba71513468855d9e79ea602c8a74226eeea5c52e90cbc693aad",
+      "exercise_emulator.py": "fabef3812487f64a9fa59fa25cb44b5b5b214b7dd3898e49569b34791c4a2b30",
+      "unit.s": "837e44f48fa137444e14755d96011731c8fde29a73fa877ffc35edac3510473f",
+      "engine.c": "a41ace651c2ff9f72d43e783d6121c64f51fe6d21e49bc60cf3b26a97ebdaa38",
+      "engine.h": "d1c067250f8bc555944303fb526cd9ec22c281c0f4773c95ed6fbdd332925ca1",
+      "ui.c": "3d452769338be043c327ab6bf0a8db9b09c0c7504f62710c46d32d205a75f4c7",
+      "ui.h": "514cbdcfd88777769e4883d020d7fe6a2b5301a5d04c136eb67f7b7bb54f45bd",
+      "native.c": "a5d11e7320a91b00457fbe1f89453e8a432e65877e92af0aa64705f6b2a6050e",
+      "font.c": "63104792b675f7cce15582b554eaf4b05e008a63c2433db7fecb71210e115079",
+      "font.h": "a94a3103633a0084e11d53fbe46d0590812011062aa01d2c28de35b60ef8ea99",
+      "runtime.json": "710371710bd6c2522067c62f36c6ffbf211232b88c75a71a3dab2ac913e9742e",
+      "manifest.py": "ff0d9749fa181a8dabadddc711295a987d58c0d7f3516556aadbae97b6e7d7ab"
+    },
+    "rawReceiptHashes": {
+      "capture.json": "0fa9c84019b0d2c4018caba993538432592c4397866ca166fd614bf0d75f1e98",
+      "live-performance.json": "8d4279462b2cdea088966b662cceb0ff2ed0a85c58b1ed85d1554e4ecad9995b",
+      "reconstruction-refusals.json": "aacf227acc923ab365aeb6b2c5044f212976fe163fc9ed6a837eea2ccab4ab41",
+      "reconstruction-attestation.json": "49e07b66a4315432d4f03c613f80fd08163fea28a0a254c2d781c6f8f58bdff3"
+    }
+  },
+  "earlierAttempts": [
+    {
+      "candidateSha256": "8c05806da508e23457731e50c755742304aa76cb0bda7766eed81efb629ba5fd",
+      "outcome": "Real loader refused protected bootloader copy source as malformed before publication. Replaced that source with two permitted eight-byte copies."
+    },
+    {
+      "candidateSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+      "outcome": "Six native refusals passed; harness LEAVE used transaction zero and stopped on the expected stale refusal. Corrected to the last probe transaction."
+    },
+    {
+      "candidateSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+      "outcome": "Six native refusals and LEAVE passed; following logical transaction 1 was stale after probes 100..105. Reserved a higher range for lifecycle offers. No valid module was published in that attempt."
+    }
+  ],
+  "guideCorrection": "docs/ADD_A_MODULE.md now states stock-copy sources obey the machine patchable bounds, including protected bootloader exclusion; private preparation enforces those bounds.",
+  "limitations": [
+    "No physical USB, audible continuity or physical cycle/total-stack qualification.",
+    "Runtime emulator coverage belongs to base 2e1a6128\u2026; seven current public bases were built for source-byte/preflight checks, not booted for runtime stress.",
+    "No complete stock-only card UI integration or simultaneous companion runtime qualification.",
+    "Private lower-level adapter APIs only; reviewed public admission and short-title integration still pending."
+  ],
+  "browserHelperSha256": "dce2447a6ea3270fb283014647b6322360c19f46fd4f66b31b2c9d30d3911177"
+}

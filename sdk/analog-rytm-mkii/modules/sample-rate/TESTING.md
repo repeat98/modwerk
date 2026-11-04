@@ -144,7 +144,28 @@ A diagnostic build (not kept) logged two of those jumps block by block. The voic
 
 ## Playhead (SP03, SMPL WAVEFORM, LOP ON)
 
-The line moves about 37 columns in 30 M at RATE 127, 19 at RATE 96, and stays put at RATE 64: it follows fixed RATE values. Not run with RATE moving.
+The line moves about 37 columns in 30 M at RATE 127, 19 at RATE 96, and stays put at RATE 64: it follows fixed RATE values.
+
+## Playhead with RATE moving (2 November 2026, PH01)
+
+The unit report (SP04, SP12) says the playhead looks linear under an LFO on RATE. It is not: stock's line is the voice's own position, and this module needs no change for it.
+
+How stock draws it, read on OS 1.74: SamplePageView's tick (vtable +48, 0x400d1ef6) takes the selected track's voice and calls the widget's setter (0x4006ca8a) with the voice's position as a fraction of the sample, `0x4011cfb8(voice)`: record + 4 (the position the prefetch advances by the step this module scales) over record + 20 (the sample's frames) >> 8. The line shows only while the voice still belongs to the track and its active byte (record + 40) is set. The column is that fraction of 123, over the whole sample, not STA to END. No start time and no nominal speed are involved, so whatever moves the voice (RATE, an LFO, a lock, PIPO, the swap below 0) moves the line.
+
+rytm-emu c5732f0, build PH01 (core-ar2 0.7 + Sample RATE 0.1.0 + Pipo Loop 0.1.1, emulator only), the 24,000-frame RAMP on BD, LOP ON, SMPL WAVEFORM, RATE on. Read every 2 M: the widget's column (+20 of the widget at view + 400) against the column the voice's record gives at that moment.
+
+| Check | Result |
+| --- | --- |
+| Refresh | the setter runs 20 times a second, the draw about 15: one update every 50 ms |
+| RATE 127 | the line lags the voice by up to one tick: 9 to 12 columns at 1x on this 0.5 s sample |
+| RATE swept +63 to -64 and back over 1 s (MIDI CC 25) | the line slows, stops, runs back, wraps from STA to END going down and turns again, always within one tick of the voice |
+| LFO 1 to SAMP:Fine Tune (triangle, FREE, x16, full depth; FIN swings 127 to about 30, so briefly into reverse) | 200 samples: the line 4 columns behind on average, at most 12 (one tick at 1x); each dip into reverse moves it back 1 to 4 columns |
+
+Why it looks linear on a unit: the line moves by how far the voice moves, and a speed LFO moves the voice by little. For a sine of depth D (in x) at f Hz the position swings about 2 x D x 48,000 / (2 pi f) frames peak to peak, about 39 x D / (f x L) columns on a sample of L seconds. Here (0.5 s sample, a short dip) that is 1 to 4 columns; a 4 s sample under a 1 Hz LFO of depth 0.5 gives about 5, at 4 Hz about 1. On a sample of a few seconds that is a pixel or two, updated at 20 Hz, over a line that keeps advancing: it reads as linear. With LOP PIPO the voice also turns at STA and END, which Pipo Loop's TESTING.md already found the line follows.
+
+What a change could buy, not built: a faster refresh (stock's view tick, not this module's) or a line drawn over STA to END instead of the whole sample (a change to a stock screen, needing the owner's agreement). Neither follows the voice more truly than stock does now.
+
+On a unit, 2 November 2026, as reported by npp1993 on looking again: the playhead does follow the LFO.
 
 ## Not tested
 
