@@ -38,12 +38,12 @@ To restore stock play/pause, clear the box, or leave the module out of the build
 - **Why.** A live global restart on the same key. A new page would cost more presses than PERSONALIZE.
 - **What you see and do differently.** With the box ticked, a second [PLAY] restarts; [STOP] is the only stop. With the box empty, [PLAY] behaves as on stock.
 - **Turning it off.** PERSONALIZE → PLAY START → empty box, or omit the module. Empty is the default.
-- **Neighbouring flows.** [REC] + [PLAY] is left to stock (and to Quant Live Rec if that module is also installed). MIDI transport is not taken. Mute Modes cannot be chosen together: both grow the PERSONALIZE tables.
+- **Neighbouring flows.** [REC] + [PLAY] is left to stock (and to Quant Live Rec if that module is also installed). MIDI transport is not taken. Mute Modes and Track Mutes cannot be chosen together: each grows the PERSONALIZE tables.
 
 ## Compatibility and limitations
 
 - OS 1.40C. `0.1.11` is not flashed. Hardware: `0.1.9` card (`PS 0.1.9`) on one unit: with X, [PLAY] starts from step 1, but the PERSONALIZE box began ticked and needed two YES to clear. Earlier cards failed as in [TESTING.md](TESTING.md).
-- **Conflicts with Mute Modes** (`mute-modes`): both still grow the same PERSONALIZE tables until the base table in #1023. The checkbox does not use Mute Modes' battery word. The configurator will not offer both until that table exists.
+- **Conflicts with Mute Modes** (`mute-modes`) and **Track Mutes** (`track-mutes`): each still grows the same PERSONALIZE tables. This module is meant to land after Track Mutes. The base table in #1023 has not landed, so the rows are still this module's own growth. The checkbox does not use Mute Modes' battery word.
 - Quant Live Rec can sit beside it: that module detours [PLAY] at `0x40061778`; this one detours after the [REC]-held branch (`0x40061822` and the SEQ pause/start at `0x4006187c` / `0x4006188a`).
 - MIDI START does not follow PLAY START. Not tested: pickup machines, chained patterns, live recording while PLAY START is ticked, an MKI panel, USB Keep/Undo.
 - An OS upgrade resets PERSONALIZE, including this row.

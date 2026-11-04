@@ -5,7 +5,8 @@
     "changes": [
       "Tick PLAY START in PERSONALIZE and [PLAY] starts the pattern from the beginning instead of pausing. An empty box is stock play and pause.",
       "The checkbox is stored in this module, not in Mute Modes' battery word, so it returns to empty after power-off until a base settings store exists.",
-      "USB install, self-test, Keep/Undo and removal are not tested. The photographed card reads PS 0.1.9."
+      "USB install, self-test, Keep/Undo and removal are not tested. The photographed card reads PS 0.1.9.",
+      "Names Track Mutes in conflicts, because both modules grow PERSONALIZE. This stays behind Track Mutes. The base table (#1023) has not landed."
     ]
   }
 ]

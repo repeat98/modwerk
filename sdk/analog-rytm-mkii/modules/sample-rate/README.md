@@ -1,10 +1,10 @@
-# Sample RATE
+# Sample Playback Rate
 
-An Analog Rytm MKII mod by npp1993 (Nathaniel Pavel). Version 0.1.0-experimental, OS 1.74 with core-ar2 0.7.
+An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.1.0-experimental, OS 1.74 with core-ar2 0.7.
 
 ## Overview
 
-Sample RATE gives a sample a pure speed control, the Octatrack's RATE with its setting on PTCH: no time stretch, just the sample played faster or slower, down to a stop and on into reverse. Stock's pitch stops at a quarter of the speed. RATE carries on to zero.
+Sample Playback Rate gives a sample a pure speed control, the Octatrack's RATE with its setting on PTCH: no time stretch, just the sample played faster or slower, down to a stop and on into reverse. Stock's pitch stops at a quarter of the speed. RATE carries on to zero.
 
 Switch it on for a sound with SMP RATE in SOUND SETTINGS, or by tapping FIN's knob on the SAMPLE page. The knob then reads RATE, +63 to -64. +63 plays at normal speed, 0 stops the sample, -64 plays it backward at normal speed, and the speed scales in a straight line between them. TUN stays as it is and multiplies RATE, up to stock's 4x.
 
@@ -73,7 +73,7 @@ rytm-emu on OS 1.74, on a 23,777-frame ramp: the step word is exact at every RAT
 
 ## Authorship and licences
 
-Original code by npp1993 (Nathaniel Pavel), GPL-3.0-or-later ([LICENSE](LICENSE)). The speed formula follows the Octatrack's published behaviour of RATE on PTCH. The OS 1.74 addresses were read by the author from their own stock firmware; the build carries addresses, lengths and SHA-256 guards only, no stock bytes. Screens show Elektron's interface solely to document the modification ([media/LICENSE.md](media/LICENSE.md)). No Elektron firmware is included.
+Original code by Nathaniel Pavel (@npp1993), GPL-3.0-or-later ([LICENSE](LICENSE)). The speed formula follows the Octatrack's published behaviour of RATE on PTCH. The OS 1.74 addresses were read by the author from their own stock firmware; the build carries addresses, lengths and SHA-256 guards only, no stock bytes. Screens show Elektron's interface solely to document the modification ([media/LICENSE.md](media/LICENSE.md)). No Elektron firmware is included.
 
 ## Screens and audio
 

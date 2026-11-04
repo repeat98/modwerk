@@ -58,14 +58,15 @@
     "effectId": null,
     "location": "Project sequencer",
     "conflicts": [
-      "mute-modes"
+      "mute-modes",
+      "track-mutes"
     ],
     "uiClaims": [
       "key:PLAY"
     ],
     "limitations": [
       "OS 1.40C. 0.1.11 has not been flashed. The 0.1.9 card (PS 0.1.9): with X, [PLAY] starts from step 1, but PERSONALIZE began ticked. USB Keep/Undo and ot_emu untested.",
-      "Conflicts with Mute Modes: both still grow the same PERSONALIZE tables until #1023. The checkbox is not Mute Modes' battery word.",
+      "Conflicts with Mute Modes and Track Mutes: all three still grow the same PERSONALIZE tables. This module stays behind Track Mutes. The checkbox is not Mute Modes' battery word. The base table in #1023 has not landed.",
       "MIDI START / CONTINUE / STOP do not follow this setting.",
       "An OS upgrade resets PERSONALIZE."
     ]
