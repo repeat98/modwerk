@@ -12,6 +12,8 @@
 //
 // Needs the cross toolchain (MODWERK_CROSS, default m68k-elf-). Your firmware is read and the result written where you
 // say; neither enters Git. The result is a local test image: whether it is safe on a unit is for hardware to show.
+// It prints the image's sha256, the flash left (flashHeadroom) and the shared mod RAM and fast RAM the set leaves free
+// (ramSpare, fastSpare), in bytes.
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
@@ -59,4 +61,4 @@ if (lockOut) await writeFile(resolve(lockOut), JSON.stringify(linked.store, null
 const built = writeEle3Syx(stock, packMain(linked.image), device, version)
 const facts = verifyEle3Build(built, stock, linked.image, device, version)
 await writeFile(resolve(out), built)
-console.log(JSON.stringify({ out: resolve(out), sha256: createHash('sha256').update(built).digest('hex'), order: linked.order, flashHeadroom: facts.flashHeadroom }, null, 1))
+console.log(JSON.stringify({ out: resolve(out), sha256: createHash('sha256').update(built).digest('hex'), order: linked.order, flashHeadroom: facts.flashHeadroom, ramSpare: linked.layout.ddrSpare, fastSpare: linked.layout.fastSpare }, null, 1))
