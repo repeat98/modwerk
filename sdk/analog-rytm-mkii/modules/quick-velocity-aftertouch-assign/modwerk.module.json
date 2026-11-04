@@ -123,11 +123,11 @@
     {
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
-      "caption": "Quick Velocity+Aftertouch Assign thumbnail",
-      "alt": "Placeholder thumbnail for Quick Velocity+Aftertouch Assign",
+      "caption": "Quick Velocity+Aftertouch Assign",
+      "alt": "FIX plus a knob turn fills the first of four velocity mod slots with +20; SAMPLER plus a knob turn fills the first of four aftertouch slots with +10. A knob press sets a link to 0, and the links save with the kit.",
       "credit": "Nathaniel Pavel",
       "license": "GPL-3.0-or-later",
-      "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+      "source": "Original conceptual illustration in the shared signal-art style; not a device screenshot."
     },
     {
       "path": "media/fix-filter.png",
