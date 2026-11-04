@@ -205,6 +205,13 @@ requests can still preempt. Handler work, the longer IPL-2 guard, and exact
 timer, clock and bus state are outside these counts. This does not establish chip cycles, worst-case
 latency or a complete interrupt-stack bound.
 
+The separate [interrupt audit](evidence/interrupt-context-20261104.md) bounds
+the empty-table frame-dispatch call to a temporary four-byte return word and
+traces the pinned frame path to one exception-return site only when unresolved
+indirect calls return. Stock ISR demand, SSP/task context, callback contracts
+and level-6/7 nesting remain open; see also the [offline facts and read-only
+follow-up plan](evidence/interrupt-offline-facts-and-read-plan-20261105.md).
+
 Static source inspection establishes finite loop limits for the authored commit
 path: eight tracks and 64 steps; up to 31 remaining parameter-lock slots scanned
 for each cleared SAMPLE field when recomputing the index; and at most 64
