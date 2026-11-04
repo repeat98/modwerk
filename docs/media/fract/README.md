@@ -25,10 +25,12 @@ rsvg-convert -w 320 -h 192 thumbnail.svg -o thumbnail.png
 rsvg-convert -w 960 -h 576 thumbnail.svg -o thumbnail@3x.png
 ```
 
-The artwork is ready to use as `presentation/thumbnail.svg` when the current
-track machine is integrated into Modwerk. Publishing these files does not
-publish or qualify the machine package, or replace the earlier FX2/SPACE
-implementation in [draft PR #926](https://github.com/repeat98/modwerk/pull/926).
+The artwork accompanies the three-grain source draft in
+[draft PR #926](https://github.com/repeat98/modwerk/pull/926), together with the
+native FLEX fix and the emulator previews. That consolidation replaces the
+earlier FX2/SPACE proposal; #1108 is to be superseded after its changes are
+included. The machine remains unlisted and unqualified for release. The artwork
+is available as `presentation/thumbnail.svg` for later integration.
 
 Copyright © 2026 ex1010. These original SVG and PNG files are available under
 the [MIT licence](LICENSE.md), for reuse and modification with its notice.
