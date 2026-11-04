@@ -2,20 +2,27 @@
   "schemaVersion": 3,
   "id": "live-rec-retrig-fix",
   "name": "Live Rec Retrig Fix",
-  "version": "0.1.0-experimental",
+  "version": "0.2.0-experimental",
   "machine": "analog-rytm-mkii",
   "category": "machines",
   "exclusive": false,
   "author": {
     "github": "npp1993",
+    "name": "Nathaniel Pavel",
     "credits": [
-      "npp1993 (Nathaniel Pavel) — the recording fix, the merge, its design and code.",
-      "stigmagit — Retrig Grid, its design and code.",
+      "Nathaniel Pavel (@npp1993) — the recording fix, the merge, its design and code.",
+      "stigmagit — Retrig Grid, its design and code, folded in from Retrig Grid 0.2.0.",
       "irpina — Elekloader and core-ar2, the core it links with."
+    ],
+    "contributors": [
+      {
+        "github": "stigmagit"
+      }
     ]
   },
   "maintainers": [
-    "npp1993"
+    "npp1993",
+    "stigmagit"
   ],
   "presentation": {
     "label": "LIVE REC RETRIG FIX",
@@ -59,9 +66,7 @@
       "1.74"
     ],
     "requires": [],
-    "conflicts": [
-      "retrig-grid"
-    ],
+    "conflicts": [],
     "limitations": [
       "Rates faster than a step record one velocity for each trig's hits, or VEL.CUR's fade.",
       "Micro timing has 24 units a step.",
@@ -101,7 +106,7 @@
   },
   "evidence": {
     "tier": "none",
-    "moduleVersion": "0.1.0-experimental",
+    "moduleVersion": "0.2.0-experimental",
     "sourceSha256": null,
     "reports": [],
     "hardware": null,

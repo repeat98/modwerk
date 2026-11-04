@@ -1,6 +1,6 @@
 # Live Rec Retrig Fix
 
-An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.1.0-experimental, for OS 1.74 with core-ar2 0.7. Tested in rytm-emu and, by the author, on an Analog Rytm MKII (OS 1.74) on builds RR09, RR11, RR14 and RR16; RF17 is the same code under the module's final name.
+An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Retrig Grid by stigmagit (@stigmagit) is folded in. Version 0.2.0-experimental, for OS 1.74 with core-ar2 0.7. Tested in rytm-emu and, by the author, on an Analog Rytm MKII (OS 1.74): 0.1.0 on builds RR09 to RR16, this version on RC07 to RC11 and LD01.
 
 ## Overview
 
@@ -8,7 +8,7 @@ Hold RTRG and a pad in LIVE RECORDING, or play a pad set to ALWAYS ON, and vary 
 
 With Live Rec Retrig Fix, every retrig hit records a real trig, with the velocity it sounded at and the timing it sounded at. Stop recording and the pattern plays the roll back as you played it.
 
-This build also holds Retrig Grid by @stigmagit: while the sequencer plays, pad retrigs fall on the sequencer's swung grid, and a recorded roll starts on that grid too. It is a local merge of the two modules, not agreed with stigmagit or submitted yet.
+Since 0.2.0 it also holds Retrig Grid by @stigmagit, from Retrig Grid 0.2.0: while the sequencer plays, pad retrigs fall on the sequencer's swung grid, and a recorded roll starts on that grid too. One change from Grid 0.2.0: while a roll records, the grid follows swing only, not micro timing. Both modules drive the same retrig series, and every fault seen running them side by side was at the seam between them.
 
 ## Controls
 

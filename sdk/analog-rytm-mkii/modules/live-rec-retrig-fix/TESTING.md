@@ -1,5 +1,7 @@
 # Live Rec Retrig Fix testing
 
+The sections from "Retrig Grid merged in" up to 0.1.0-experimental cover 0.2.0-experimental, the merged module; its source is the RC11 code plus the RTRG key's light (LD01).
+
 ## Retrig Grid merged in (rytm-emu, 31 October 2026)
 
 A local merge, not agreed with stigmagit. rytm-emu c5732f0, factory project, 127 BPM, swing 57 %, RETRIG set in the RTRG menu, BD empty, each roll about 14 steps, press stepped across about two steps. Emulator only; no pad pressure stream; nothing below ran on a unit.
