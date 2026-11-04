@@ -40,7 +40,18 @@ Not run in the port: STOP then PLAY again, pause and continue, a tempo change wh
 | Several PLAY MODES (the remix's sequencer play modes) | Green only on the pattern's first step in each. |
 | A non-standard master length, 17 steps | Green on the right step on every pass. |
 
-Not tested on a unit: the USB package (the unit runs no Modwerk base, so the USB link has nothing to talk to), Keep, Undo and removal, a tempo change while playing, pause and continue, a pattern change, external MIDI clock, pattern scales other than 1x, MKII.
+**USB, MKI, 4 November 2026.** The tester's MKI on the flashed Modwerk beta base `9680e9ac861ff931…` (built with `npm run octatrack:base -- --beta` from the tester's own 1.40C; it reproduced the committed base), USB straight into the Mac (through a USB 2.0 hub every package upload was refused at EP0 before the loader saw it; small requests worked). Package `bar-led.mwrm` (196 bytes, SHA-256 `bce3b4d6906c5368cb0c129dfa82a215b986d9cbe221c5178053ea8eed1a72a4`) built as above from commit `faa39c79`, sent with `npm run device`. What the unit answered was read over USB; what the LED did is the tester's report.
+
+| Step | The unit answered | The tester reported |
+|---|---|---|
+| Before: `status`, `do inventory` | base `9680e9ac…`, generation 0, nothing installed | |
+| Trial: `try bar-led.mwrm --seconds 120` | staged, trial running, then rolled back; generation 2, active the bare base, nothing installed | Playing: green on the pattern's 1, red on the other beats. Stopped: red only. After the trial ended: red only, as stock (Undo) |
+| Keep: `try bar-led.mwrm --seconds 3 --accept` | accepted, card set written; inventory `BAR LED` (module `9b41cd3d`) | Green on the 1 |
+| Power cycle (the tester), transport stopped through the boot | inventory `BAR LED` after the boot's restore | Green on the 1 after the reboot |
+| Remove: `remove bar-led.mwrm --seconds 3 --accept` | accepted; nothing installed | Red only, as stock |
+| Kept again, then `do selftest` (transport stopped), then removed | SELF TEST passed: 1/1 modules intact, 0 with DSP effects, longest frame 391 us, card set saved (1/1); removal accepted, nothing installed | |
+
+Not tested on a unit: a tempo change while playing, pause and continue, a pattern change, external MIDI clock, pattern scales other than 1x, MKII, the site's own install dialog (the same package and base protocol, sent from the command line).
 
 ## Stock flows
 

@@ -47,7 +47,7 @@
     "limitations": [
       "OS 1.40C. The tempo LED only flashes on whole beats: when the pattern's 1 falls mid-beat (say 14 steps at 1x), the green comes on the first flash after it.",
       "Green is LED id 39, the pair of stock's red 38; seen green on an MKI (reported, card build), MKII not tested.",
-      "Not yet tested: pausing and continuing, a pattern change while playing, external MIDI clock, the USB package."
+      "Not yet tested: pausing and continuing, a pattern change while playing, external MIDI clock."
     ]
   },
   "resources": {
@@ -94,7 +94,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Reported by the tester on an MKI (2 November 2026), as a native card build in their private octabam remix home-base 5 booted through REMIX SWITCH: red while stopped; green on the pattern's first beat while playing, in several play modes and with a 17-step master length. ot_emu on stock 1.40C: every beat flash on master step 0 asks for id 39 and every other for stock's 38 at 12, 16 and 20 steps (verify.py). The USB package has not run on a unit.",
+    "summary": "Reported by the tester on an MKI: as a native card build in their private octabam remix home-base 5 (2 November 2026), red while stopped and green on the pattern's first beat while playing, in several play modes and with a 17-step master length; over USB on the Modwerk beta base 9680e9ac (4 November 2026), the same LED behaviour in a trial, after Keep and a power cycle, and stock again after the trial's Undo and after removal, with the unit's inventory read at each step; the base's SELF TEST passed with it kept (1/1 intact, longest frame 391 us). ot_emu on stock 1.40C: every beat flash on master step 0 asks for id 39 and every other for stock's 38 at 12, 16 and 20 steps (verify.py).",
     "hardwareStatus": "reported",
     "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
     "gates": [
