@@ -160,7 +160,8 @@ if not (BUILD_TAG.isdigit() and 1 <= len(BUILD_TAG) <= 2):
 # bare synonyms for "no effect". 0x06 is the exact id tools/build/build_dspprobe.py
 # proved runs custom DSP code on real hardware. schema.py enforces the range.
 from remix.machine_composition import compose_map
-_MODS = compose_map(remix_modules(), REMIX.modules)
+from runtime_join import join_map
+_MODS = join_map(compose_map(remix_modules(), REMIX.modules), REMIX.modules)
 remix_modules = lambda: _MODS
 _SEL = [_MODS[k] for k in CARRIED]
 # A STOCK row (tools/remix/stock.py) gets no clone, no code and no words:

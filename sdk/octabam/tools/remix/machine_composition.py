@@ -69,28 +69,6 @@ def module_signature(m):
  value['units']=[dict(label=u.label,source="modules/"+u.source.split("modules/",1)[1],dram=u.dram,cave=u.cave_addr) for u in m.linked]
  return hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':')).encode()).hexdigest()
 
-# A module may list linked units that join the DRAM runtime whenever another selected module
-# already carries one (modules/<id>/placement.json): they take no reservation of their own,
-# and free their cave space where sets are most crowded. Elsewhere they stay where declared.
-JOIN={}
-for _p in sorted((ROOT/'modules').glob('*/placement.json')):
- _rule=json.loads(_p.read_text())
- if _rule.get('schema')!=1 or _rule.get('moduleId')!=_p.parent.name or not _rule.get('joinRuntime'):raise ValueError(f'Invalid placement rule: {_p}')
- JOIN[_rule['moduleId']]=tuple(_rule['joinRuntime'])
-
-def join_runtime(selected):
- selected=list(selected)
- if not any(u.dram for m in selected for u in getattr(m,'linked',())):return selected
- out=[]
- for m in selected:
-  units=JOIN.get(m.name,())
-  if not units:out.append(m);continue
-  if set(units)-{u.label for u in m.linked}:raise ValueError(f'{m.name}: placement rule names a unit the module does not link')
-  # The browser resolves a joined unit through the descriptor's raw words and detours (src/engine/module-menus.ts).
-  if not (m.menu and m.menu.stock_dsp):raise ValueError(f'{m.name}: only a stock-DSP effect\'s descriptor units can join the runtime')
-  out.append(replace(m,linked=tuple(replace(u,dram=True) if u.label in units else u for u in m.linked)))
- return out
-
 def compose_map(known,keys):
- changed={m.key:m for m in join_runtime(effective_modules(known[k] for k in keys))}
+ changed={m.key:m for m in effective_modules(known[k] for k in keys)}
  return {**known,**changed}

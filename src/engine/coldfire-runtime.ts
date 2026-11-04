@@ -17,7 +17,7 @@ export const PLATFORM_RUNTIME_BASE = 0x40a955e0
 export async function createStaticColdFireRuntime(ids: readonly string[], original?: Uint8Array, base = PLATFORM_RUNTIME_BASE, usbAudio?: UsbAudioConfiguration, betaAccess = false, startupRomAddress = BETA_STARTUP_ACTIVE_ADDRESS - 76, leading: readonly string[] = []) {
   const units = []
   const selected = selectedRequestedGroups(ids)
-  // A unit that joins (native remix.machine_composition.join_runtime) links at its module's place
+  // A unit that joins (native tools/build/runtime_join.py) links at its module's place
   // in the selection, and only when another module's units already make a runtime.
   const joins: { at: number; label: string }[] = []
   for (const module of placementOrder(resolveSelection(ids), leading)) {

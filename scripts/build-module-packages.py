@@ -462,7 +462,7 @@ def main():
                     'sources': hashes(unit.source, manifest), 'bytes': len(data), 'code': data.hex(), 'sha256': HASH(data)})
         # Units a module lets join the DRAM runtime when another module carries one
         # (modules/<id>/placement.json): the same source, assembled for the runtime's ISA.
-        from remix.machine_composition import JOIN
+        from runtime_join import JOIN
         for name, labels in JOIN.items():
             module = byid[name]
             manifest, rule = f'modules/{name}/manifest.py', f'modules/{name}/placement.json'

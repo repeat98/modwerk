@@ -8,7 +8,7 @@ Version **0.2.2-experimental**, recorded **3 November 2026** (0.2.1: 30 October 
 
 `placement.json` names the module's two ColdFire units, `sc_cf` and `sc_ui` (1,314 B). Modwerk's builder links them into the DRAM runtime when another selected module already carries one, and into the menu cave otherwise ([#1175](https://github.com/repeat98/modwerk/issues/1175): FM Synth, this module and Mute Modes with the stock FX2 effects kept ran 8 bytes short of cave, and the build fell back to an FX2 chooser with this module only). The runtime is a fixed reservation of sample memory, so the module never starts one: on its own or beside modules without DRAM code it builds as 0.2.1 did. The DSP and ColdFire sources are 0.2.1's, byte for byte; both units assemble to the same code for the cave's and the runtime's ISA.
 
-The builders follow one rule for this (owner review): native `remix.machine_composition.join_runtime` sets the units' `dram` in `compose_map`, and the raw descriptor words resolve after the platform runtime link; the browser links them at the module's place in native order (this module first while the stock FX2 effects stay, as it replaces COMPRESSOR in place) and resolves its formatters, widgets and detours from the runtime.
+The builders follow one rule for this (owner review): native `tools/build/runtime_join.py` sets the units' `dram` right after `compose_map` (outside `tools/remix`, so the reviewed pins over it do not move), and the raw descriptor words resolve after the platform runtime link; the browser links them at the module's place in native order (this module first while the stock FX2 effects stay, as it replaces COMPRESSOR in place) and resolves its formatters, widgets and detours from the runtime.
 
 ### Results
 

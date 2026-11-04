@@ -14,9 +14,10 @@ class RuntimeJoinTests(unittest.TestCase):
     def setUpClass(cls):
         cls._cwd = os.getcwd()
         os.chdir(OCTABAM)  # manifests name their sources relative to the octabam root
-        sys.path.insert(0, str(OCTABAM / 'tools'))
+        sys.path[:0] = [str(OCTABAM / 'tools'), str(OCTABAM / 'tools/build')]
         from remix import machine_composition, registry
-        cls.mc, cls.known = machine_composition, registry.modules()
+        import runtime_join
+        cls.mc, cls.join, cls.known = machine_composition, runtime_join, registry.modules()
         cls.keys = {m.name: k for k, m in cls.known.items()}
 
     @classmethod
@@ -24,13 +25,14 @@ class RuntimeJoinTests(unittest.TestCase):
         os.chdir(cls._cwd)
 
     def placement(self, ids):
-        composed = self.mc.compose_map(self.known, [self.keys[i] for i in ids])
+        keys = [self.keys[i] for i in ids]
+        composed = self.join.join_map(self.mc.compose_map(self.known, keys), keys)
         return {u.label: u.dram for u in composed[self.keys['sidechain-compressor']].linked}
 
     def test_rules_name_linked_units(self):
         for path in sorted((OCTABAM / 'modules').glob('*/placement.json')):
             rule = json.loads(path.read_text())
-            self.assertEqual(self.mc.JOIN[path.parent.name], tuple(rule['joinRuntime']))
+            self.assertEqual(self.join.JOIN[path.parent.name], tuple(rule['joinRuntime']))
             linked = {u.label for u in self.known[self.keys[path.parent.name]].linked}
             self.assertLessEqual(set(rule['joinRuntime']), linked)
 
