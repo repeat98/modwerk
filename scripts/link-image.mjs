@@ -6,6 +6,10 @@
 //   node scripts/link-image.mjs --stock Analog-Rytm_MKII_OS1.74.syx --version XX01 --out my-build.syx \
 //     --elemod vendor/elekloader/catalog/core-ar2-0.7.elemod --module analog-rytm-mkii:pipo-loop
 //
+// A core with mod storage lays every module's saved fields out afresh unless you pass the lockfile of the build the unit
+// runs now (--lock-in): with it, every field stays where that build's projects keep it. --lock-out writes this build's
+// lockfile for the next one.
+//
 // Needs the cross toolchain (MODWERK_CROSS, default m68k-elf-). Your firmware is read and the result written where you
 // say; neither enters Git. The result is a local test image: whether it is safe on a unit is for hardware to show.
 import { execFileSync } from 'node:child_process'
@@ -22,9 +26,9 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const args = process.argv.slice(2)
 const values = flag => args.flatMap((arg, i) => arg === flag ? [args[i + 1]] : [])
 const [stockPath] = values('--stock'), [out] = values('--out'), [version] = values('--version')
-const prebuilt = values('--elemod'), modules = values('--module')
+const prebuilt = values('--elemod'), modules = values('--module'), [lockIn] = values('--lock-in'), [lockOut] = values('--lock-out')
 if (!stockPath || !out || !version || !prebuilt.length || modules.some(id => !/^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$/.test(id)))
-  throw new Error('Usage: link-image.mjs --stock STOCK.syx --version XX01 --out OUT.syx --elemod CORE.elemod [--elemod MORE.elemod] [--module machine:id ...]')
+  throw new Error('Usage: link-image.mjs --stock STOCK.syx --version XX01 --out OUT.syx --elemod CORE.elemod [--elemod MORE.elemod] [--module machine:id ...] [--lock-in OLD.lock.json] [--lock-out NEW.lock.json]')
 
 const json = async path => JSON.parse(await readFile(resolve(path), 'utf8'))
 const stock = readEle3Syx(new Uint8Array(await readFile(resolve(stockPath))))
@@ -48,7 +52,10 @@ if (modules.length) {
   } finally { await rm(tmp, { recursive: true, force: true }) }
 }
 
-const linked = await linkMods(mods, image)
+const linked = await linkMods(mods, image, lockIn ? await json(lockIn) : null)
+if (linked.storeNotes.length) console.error(linked.storeNotes.join('\n'))
+if (lockOut && !linked.store) throw new Error('--lock-out: this set has no mod storage, so there is no lockfile to write')
+if (lockOut) await writeFile(resolve(lockOut), JSON.stringify(linked.store, null, 1) + '\n')
 const built = writeEle3Syx(stock, packMain(linked.image), device, version)
 const facts = verifyEle3Build(built, stock, linked.image, device, version)
 await writeFile(resolve(out), built)
