@@ -33,11 +33,10 @@ Set a retrig rate, record, hold a pad and lean on it. Slower rolls and ones on t
 
 ### Quick tutorial
 
-1. Hold RECORD and press PLAY to enter LIVE RECORDING.
-2. Hold RTRG and hold the BD pad for a bar, pressing harder and softer.
-3. Let go, and press PLAY to leave LIVE RECORDING with the sequencer running.
-4. The roll plays back at the velocities you played.
-5. Press RECORD: BD now has a trig on each step of the roll.
+1. Hold RTRG and press YES: ALWAYS ON turns on for the selected track. Let go of RTRG: its key glows dim red.
+2. Hold RECORD and press PLAY, then play that track's pad, varying the pressure.
+3. Leave LIVE RECORDING: the roll plays back hit for hit, on the sequencer's grid.
+4. To keep rolls where you play them, uncheck QUANT RTRG TO SEQ in GLOBAL > CONTROL > SEQUENCER CONFIG.
 
 ## How it works
 
