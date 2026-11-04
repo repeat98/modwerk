@@ -132,7 +132,7 @@ Its folder, `sdk/<platform>/modules/<id>/`, holds:
 - `TESTING.md` with the commands, the exact source revision and every result;
 - `LICENSE` with every author's terms;
 - `media/` with real black-and-white screenshots of where the module is selected and of its control pages, and their provenance in `capture.json`;
-- an original 320×192 SVG thumbnail: `presentation/thumbnail.svg` on the Octatrack, `media/thumbnail.svg` on the elemod machines, where `npm run modules:check` refuses the template's placeholder.
+- an original 320×192 SVG thumbnail: `presentation/thumbnail.svg` on the Octatrack, `media/thumbnail.svg` on the elemod machines, where `npm run pr:ready` refuses the template's placeholder.
 
 The checks reject missing sections, coloured screenshots and a version that did not increase. They cannot tell whether the documentation is true; the owner reviews first releases and registered authors verify their scoped updates.
 
