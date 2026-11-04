@@ -79,7 +79,7 @@ describe('the vendored elekloader catalog', () => {
       mods: [
         { id: 'pipo-loop', file: 'pipo-loop-0.1.1-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.1-experimental' },
         { id: 'sample-rate', file: 'sample-rate-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
-        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.6.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.6.0-experimental' },
+        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
       ],
       missing: [],
     })
@@ -89,7 +89,7 @@ describe('the vendored elekloader catalog', () => {
       core: { file: 'core-ar2-0.7.elemod', version: '0.7' },
       mods: [
         { id: 'chromatic-aftertouch-fix', file: 'chromatic-aftertouch-fix-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
-        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.6.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.6.0-experimental' },
+        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
       ],
       missing: [],
     })
@@ -100,7 +100,7 @@ describe('the vendored elekloader catalog', () => {
       mods: [
         { id: 'quick-velocity-aftertouch-assign', file: 'quick-velocity-aftertouch-assign-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
         { id: 'sample-rate', file: 'sample-rate-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
-        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.6.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.6.0-experimental' },
+        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
       ],
       missing: [],
     })
@@ -111,7 +111,7 @@ describe('the vendored elekloader catalog', () => {
       mods: [
         { id: 'control-in-actions', file: 'control-in-actions-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
         { id: 'sample-rate', file: 'sample-rate-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
-        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.6.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.6.0-experimental' },
+        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
       ],
       missing: [],
     })
