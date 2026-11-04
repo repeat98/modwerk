@@ -45,12 +45,16 @@ and the corresponding initial pointer values in both exact main images:
   `4efdb19f83e8ecad56f1e9f159ebf35f6fdff961863337df9e632b8cd178ccb0`.
 
 These are five observed initial callback entries, not an exhaustive set of
-runtime targets. An aligned whole-image scan found 50 candidate direct-call
-opcode patterns to the manager; six caller bodies are present in the private
-disassembly cache, and 44 candidates remain unverified. The scan can include
-data that resembles instructions and cannot find computed or indirect calls.
-The five pointer cells may also be changed at runtime. The live five-slot
-contents and any companion-module patches are outside this result.
+runtime targets. A pinned ColdFire whole-image sweep decodes all 50 aligned
+manager-call patterns as direct `JSR`s. In that sweep, each has six stack
+argument writes before it and the next instruction consumes `D0`; 49 first
+argument expressions resolve to initial code pointers (48 distinct addresses),
+while one reads a runtime-derived pointer from an `A2`-relative object field.
+These are local instruction-context checks, not rooted caller proofs. The
+linear sweep can decode embedded data as instructions, so no candidate was
+excluded as data-like and the 44 uncached sites remain unverified as reachable
+callers. Computed or indirect manager calls are not enumerated, pointer cells
+may change at runtime, and the live five-slot contents are unknown.
 
 ## Stack paths
 
@@ -68,27 +72,42 @@ the verified helper and leaf callees.
 The other three callbacks have only these known finite paths, not complete
 upper bounds:
 
-- `0x40055de0`: 32 bytes through the verified leaf path; conditional callee
-  `0x40037d80` remains unbounded.
-- `0x40055e18`: 32 bytes through the verified leaf path; conditional callee
-  `0x4004d948` remains unbounded.
-- `0x40055ec0`: 36 bytes through the verified leaf path, including its saved
-  register; direct callees `0x40048ff8` and `0x400131c8` remain unbounded. Its
-  two register-indirect calls resolve to `0x4003385c`, whose body is not in the
-  audited cache.
+- `0x40055de0`: the rooted `0x40037d80` body returns at `0x40037da2`; the prior
+  512-byte linear window continued past that return into adjacent routines.
+  Its direct children are `0x4003146c`, `0x4007e81c`, and `0x4007e998`.
+  `0x4007e81c` has a complete 16-byte local bound. `0x4007e998` reserves at
+  most eight local bytes before calling a runtime table entry at index zero;
+  the indirect target's stack and whether it can re-enter the manager remain
+  unknown. That call target is 32 bytes below the `0x40055de0` callback-entry
+  SP, or 160 bytes below popup-routine entry under the prior ABI assumptions.
+- `0x40055e18`: its branch to `0x4004d948` reaches a 156-byte entry frame. The
+  first five register calls through `A2` resolve to `0x40012bd8`; that helper
+  has a complete 64-byte local bound, and its preceding `0x40012254` helper has
+  a complete 40-byte local bound. This gives a finite 272-byte path from
+  `0x4004d948` entry, 280 bytes from `0x40055e18` callback entry, or 408 bytes
+  from popup-routine entry. Later paths in `0x4004d948` contain unresolved
+  indirect calls, so 408 bytes is a known path, not a callback upper bound.
+- `0x40055ec0`: its direct callee `0x400131c8` is now closed at four local
+  bytes and has no nested call. The other direct callee `0x40048ff8` reaches
+  eight unresolved `%a3@` calls in its rooted path. The two calls to
+  `0x4003385c` tail-transfer through object fields; their initial image values
+  point to `0x40055ff8` and `0x400565ac`, but runtime mutation is not ruled out.
+  The first target has another unresolved indirect call and the second reaches
+  `0x40048ff8`; neither path is fully bounded.
 
 Before calling the manager, the opener leaves 12 bytes for one earlier call
 and 8 for the next on the stack; there is no caller cleanup before the manager
 call. Assuming those stock callees preserve the ABI stack pointer, those 20
 bytes remain live during callback execution. From the popup routine's entry
-SP, each known callback path is therefore 160 bytes, or 164 for
+SP, the previously reported callback paths are 160 bytes, or 164 for
 `0x40055ec0`: 36 bytes for the opener frame, 20 earlier argument bytes, 24
 for the manager's six arguments, 4 for the manager return, 40 for the manager
-frame, 4 for the callback return, then the callback-local path above. This
-excludes the opener's incoming return and arguments, the caller frame,
-interrupts and exceptions, and all unresolved callees. These path totals are
-complete only for the callback-local subtrees at `0x40055e70` and
-`0x40055e98`; they are finite known paths for the other three.
+frame, 4 for the callback return, then the callback-local path above. The
+follow-up adds a 408-byte known path through `0x40055e18` and the first
+`0x40012bd8` call path. These are finite paths, not a complete opener bound.
+All totals exclude the opener's incoming return and arguments, the caller
+frame, interrupts and exceptions, and all unresolved callees. The callback-
+local subtrees are complete only for `0x40055e70` and `0x40055e98`.
 The previously bounded `0x4006d754` close subtree also reaches a finite
 164-byte path from popup-routine entry under the same assumptions.
 
@@ -102,29 +121,73 @@ base ranges above; companion patches can invalidate them. Interrupt/exception
 stack use, chip cycles, and complete pool memory remain unmeasured by this
 analysis.
 
+## Boundary and callback follow-up — 4 November 2026
+
+The new private audit binds the whole-image decode to the exact stock and base
+main hashes above, candidate source revision `5a15ac390dac2475df3fb3b2ef64154e174b4182`,
+package `3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79`,
+and unchanged `native.c` hash `a5d11e7320a91b00457fbe1f89453e8a432e65877e92af0aa64705f6b2a6050e`.
+The six-write setup and manager-call bytes for all 50 patterns match between
+stock and reproduced base. The neighboring window for `0x40079206` differs at
+`0x400791e6–0x400791ec`, though its setup and call bytes match. The exact base
+proof lists no configured modules; this run therefore covers no companion
+module patches. A separate range in the `0x4004d948` routine differs between
+stock and base at `0x4004e1ea–0x4004e1f4`, so later callback paths remain tied
+to the exact base image.
+
+The rooted `0x400131c8` leaf contains one return and no calls or indirect
+transfers, so that leaf cannot itself re-enter the manager. The apparent
+`0x40048afc` self-call at `0x40048fd6` in the larger decode is not reachable
+from the `0x40048ff8` callback root and is not counted as callback recursion.
+The other unresolved indirect targets mean manager re-entry is neither proved
+nor ruled out for the full callback set.
+
+Selected range hashes below cover only the stated entry ranges; they do not
+turn an unresolved routine prefix into a complete function bound.
+
+| Range | SHA-256 | Scope |
+| --- | --- | --- |
+| `0x40037d80–0x40037da4` | `dfab14c3fbac7be1ed1a2990a04b312d539feecc18bd19f96a13f74c5b374fa9` | Rooted callback body through return |
+| `0x4007e81c–0x4007e8d8` | `277024d31e86ccbf34e3740f834e0ef1e06fafe382a308cf4204a9e0926a657a` | Complete local helper |
+| `0x4007e998–0x4007e9c2` | `1847af0526038ff8b7eb2989980aeba8361b2e96eec2ef20fa6a5e8b28731015` | Runtime-dispatch prefix through tail transfer |
+| `0x4004d948–0x4004db2a` | `9c3fe9431b2dd2816ff75afe62c2ff1360a4ed793afdaef362f443d58af26ed0` | Entry and first five `A2` dispatches; stock/base equal |
+| `0x40012254–0x40012368` | `e5183b8aa2ab4f2e36f337ba536da668b498e8e5650ca019eb16623d6fce7fdf` | Complete local helper |
+| `0x40012bd8–0x40012db6` | `c67733c0d4e2be16885d7b71df4890f6e295107c61573736d808cf4e41ded7b5` | Complete local helper |
+| `0x400131c8–0x400131f2` | `f587906cf593ec5aa990a82e49d5708ed25b4142b93ed8f2fadd84e9d1edd039` | Complete leaf |
+| `0x4003385c–0x40033872` | `ea34b0d7e7c2564423ab8b5a2cc99053dd308c9097e11c5dcb388d8b800b8bab` | Indirect tail trampoline |
+| `0x40048afc–0x40049300` | `25a1009c50eea08588eabd0791e49625bb02ec4292e78a6836764852cbadb7f2` | Rooted callback window with unresolved indirects |
+| `0x40055ff8–0x4005603c` | `2743f5e362f356062a2f918742017ce017bb34d2a26334c20e44a988680e7920` | Initial trampoline target window |
+| `0x400565ac–0x400565e2` | `a6449d67c4e8309cd48eb296dfba13606e39ccb018f3fb1ed6e29265609c8fa9` | Initial trampoline target window |
+
 ## Next offline closure step
 
-Use an instruction-boundary-aware disassembler against the same hash-verified
-main image to validate the 44 uncached candidate call patterns, find computed
-references to the manager, and recover argument six at each real callsite.
-Then locate writes to those callback cells, range-hash each reachable target,
-and bound every direct or register-indirect callee through return. A closed
-stack bound also needs a proof that the callbacks cannot re-enter the manager,
-plus separate interrupt and exception stack accounting.
+The local ColdFire sweep is not a caller-root proof. Reaching publication-grade
+closure requires recovered entry roots that establish instruction boundaries
+through mixed code and data, all computed manager references, writes and aliases
+for callback storage, and bounded callees on the exact companion-patched base.
+Then prove whether the callback graph can re-enter the manager and account for
+interrupt and exception stack use. The separate new-window creation path,
+complete task stack, chip cycles and full memory remain open.
 
 ## Reproduction
 
-The analysis helper and its JSON output stay in the private stock-bound cache.
-It checks the exact image hashes, candidate source hashes, documented code
-hashes, callback call targets, and full-image direct-call opcode scan, while
-writing only aggregate metadata:
+Both analysis helpers and their JSON output stay in the private stock-bound
+cache. Together they check the exact image and candidate source hashes,
+documented code ranges, direct-call encodings, rooted callback paths and finite
+stack arithmetic, while writing only aggregate metadata:
 
 ```sh
 python3 /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/stock-bound-20261104/popup_callback_audit.private.py --self-test
 python3 /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/stock-bound-20261104/popup_callback_audit.private.py
+python3 -B /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/stock-bound-20261104/popup_boundary_callee_audit.private.py --self-test
+python3 -B /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/stock-bound-20261104/popup_boundary_callee_audit.private.py
 ```
 
-The self-check passed for both call encodings, rejection of a mismatched range,
-the five callback bodies, and the finite-path arithmetic. The second command
-also passed all exact-image and cached-range assertions and wrote
-`popup-callback-audit.private.json` beside the private helper.
+Both self-checks passed; the follow-up synthetic case verifies that a rooted
+branch skips a data-like JSR pattern. The original normal run passed its exact-
+image, source, range and callback inventory assertions; the follow-up normal
+run passed exact-image, candidate-source, instruction-context, rooted-range
+and stack assertions. Both wrote private JSON summaries beside the helpers.
+The disassembly inputs were generated offline with the pinned ColdFire toolchain image
+`sha256:da70d46e10b243277fa3ae2e015f7258d56b3ee08ca4be47e61899958872e792`;
+all firmware and disassembly stay in the private cache.

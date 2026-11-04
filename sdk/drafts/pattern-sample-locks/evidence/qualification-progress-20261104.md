@@ -14,14 +14,19 @@ also matches stock and hashes to
 That manager checks five window slots and conditionally calls each nonzero
 close callback before continuing. Five other initial callback entries are
 confirmed from cached registration callers; two callback bodies have complete
-32-byte local bounds, while three retain unbounded callees. A whole-image
-opcode-pattern scan found 50 candidate direct calls to the manager, of which
-44 caller bodies are not in the private cache, so the five observed entries
-are not an exhaustive runtime target set. The [popup callback evidence](popup-callback-stack-20261104.md)
-records the verified code hashes, finite stack paths, unresolved callees,
-assumptions and exclusions. It does not bound the opener's separate window
-creation path, total stack high-water, or timing. These results apply to the
-reproduced base before companion modules patch the audited ranges.
+32-byte local bounds. Rooted follow-up closes the `0x400131c8` leaf at four
+local bytes and finds a 408-byte finite path through the early `0x4004d948`
+helper chain from popup-routine entry, but later callback paths still have
+unresolved indirect targets. A pinned ColdFire whole-image sweep decodes all
+50 aligned manager-call patterns with six stack argument writes and immediate
+`D0` use; 44 uncached sites still lack rooted caller and code/data-boundary
+proof. Initial argument-six expressions yield 48 distinct code addresses and
+one runtime-derived pointer, so these patterns do not establish an exhaustive
+callback set. The [popup callback evidence](popup-callback-stack-20261104.md)
+records the source and image hashes, path arithmetic, assumptions and open
+edges. It does not bound the opener's separate window creation path, total
+stack high-water, or timing. The exact reproduced base proof has no companion
+modules; results for the changed `0x4004d948` range remain bound to that base.
 
 ## Uninstrumented compiler stack audit
 

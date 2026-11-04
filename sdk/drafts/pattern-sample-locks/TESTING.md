@@ -168,14 +168,21 @@ the task frame and event-call arguments: from task entry the key subtotal is
 their ABI stack pointer. The incoming task-entry return word, popup opening,
 interrupt nesting and other contexts remain unbounded. The popup audit now
 confirms five other initial callback entries from cached stock callers; two
-have complete 32-byte callback-local bounds, while three have unresolved
-callees. The candidate's own close subtree retains its prior 36-byte bound.
-Known paths consume 160 bytes from the popup routine's entry, or 164 for the
-`0x40055ec0` and candidate-owned close callbacks, under the recorded ABI
-assumption. These are not a complete opener bound: 44 candidate direct
-manager-call encodings lack cached caller bodies, runtime callback state may
-vary, and the manager's new window path is not bounded. The [popup callback evidence](evidence/popup-callback-stack-20261104.md)
-records the hashes, path arithmetic, and limits; the [stack evidence](evidence/qualification-progress-20261104.md)
+have complete 32-byte callback-local bounds, while three still have unresolved
+paths. The candidate's own close subtree retains its prior 36-byte bound. The
+rooted follow-up closes the `0x400131c8` leaf at four local bytes and finds a
+408-byte finite path through the early `0x4004d948` helper chain from the popup
+routine's entry; this is a path total, not an opener bound. The separate
+window-creation path remains unbounded. A ColdFire whole-image sweep gives all
+50 manager-call patterns a six-write argument setup and immediate `D0` use,
+but the 44 uncached callers still lack rooted code/data-boundary proof. Their
+initial argument-six values suggest 48 distinct code
+addresses plus one runtime-derived target, not a closed callback set. The
+`0x40037d80` path reaches a runtime table dispatch, and the `0x40055ec0` path
+retains dynamic object and register-indirect targets. The exact base proof
+contains no companion modules; one later `0x4004d948` code window differs from
+stock, so results stay bound to this base image. The [popup callback evidence](evidence/popup-callback-stack-20261104.md)
+records the hashes, methods and limits; the [stack evidence](evidence/qualification-progress-20261104.md)
 also records the base dispatcher, stock leaves, popup close, bounded switch
 and track refresh. No device was accessed, and neither the complete memory
 nor cycle gate is closed.
