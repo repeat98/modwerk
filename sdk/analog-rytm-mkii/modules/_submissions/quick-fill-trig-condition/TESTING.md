@@ -2,7 +2,7 @@
 
 ## Hardware
 
-Build FC08 (0.2.0-experimental, UP and DOWN ratios): not tested on a unit yet. The results below are for 0.1.0.
+Build FC09 (0.2.0-experimental, UP and DOWN ratios; sha256 4f5839df): not tested on a unit yet. The results below are for 0.1.0.
 
 Analog Rytm MKII, OS 1.74, build FC04, reported by the tester, 1 Nov 2026. The tester was pointed at the combined image; which one they flashed was not recorded.
 
@@ -97,6 +97,8 @@ Stock OS 1.74, Modwerk base core-0.7 (0c92aa45), build FC08 (sha256 26d9dba2) al
 | CHRO on, T1 held, DOWN | 1:2, TRC shows it; the BD pad then plays the same note as before (MIDI 0x24), as on stock, where DOWN alone moves it to 0x20 |
 | PERF on, T1 held, DOWN | 1:2, TRC shows it |
 | T1 held, SD pad tapped (no SD trig on step 1), DOWN | No write; the RETRIG menu opens on SD, as stock |
+
+Build FC09 (sha256 4f5839df) is FC08 with the docs renamed: the images differ only in their version bytes. It boots, and T1 held + DOWN, DOWN, UP gives 2:3.
 
 Stock OS 1.74 alone, same emulator and steps, for comparison: T1 held + UP opens the RETRIG menu, the same one T1 held + RTRG opens, and UP inside it steps RATE (1/16 to 1/20 in two presses). No condition is written.
 
