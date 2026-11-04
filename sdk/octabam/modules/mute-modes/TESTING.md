@@ -9,9 +9,16 @@ Recorded 7 October 2026 for `0.1.0-experimental`; 0.2.0, 0.2.1 and 0.2.2 below, 
 - **Native probe.** `probe.cpp` takes every unit address from the new units' symbol tables, and frame cases start with UNHELD = 0xff (nothing held). New checks in both units, for each soft mode and mute mask: an OT frame clears UNHELD and SHADOW; the next soft-mode frame keeps the post-FX cut for every track that was muted; unmuting some tracks while muting others keeps the hold only on held tracks that are still muted, and the new mutes follow MUTE MODE (or stay cut as a KEY); unmuting all releases it. Changing any of the new expectations makes the probe fail. 4,353,132 cases pass. The hold adds three instructions to the SC_KEY frame path (worst bound 3,392 to 3,440, in OTFX) and nine to the plain one (2,032 to 2,176); the per-trig paths are unchanged. The opt-in emulator test `sdk/tests/test_mute_modes_runtime.py` passes with this source.
 - **Tested image.** A static native octabam build of Sidechain Compressor and Mute Modes with every stock effect kept, made the same way as MW_MMKH1 below: MAIN OS SHA-256 `d8267756d27485d51032e4b231538c397afc227d38664a788b258572063dcbeb`, `mm_softmute` (SC_KEY, 1106 bytes) at 0x400d7280. Wrapped with Elektron's firmware tool, OS VERSION `MW_MMOH1`: card file `2e55f106…`, syx `ef1077cd…`.
 
-### Hardware report
+### Hardware report (MKI, 3 November 2026)
 
-Pending: MW_MMOH1 has not been run on a unit yet. The same source passed on the author's MKI on 3 November 2026 as his standalone image, KYOTI V1.7 and the octabam form (OCTABAM39).
+The author flashed MW_MMOH1 (above) on his Octatrack MKI. He reported every step passing:
+
+- A track muted in OT stays silent when MUTE MODE is switched to DT-T, and plays normally when unmuted.
+- An ordinary DT-T mute of a sounding track still lets the note play out.
+- In DT-T, a muted track resting as a COMPRESSOR's KEY stays silent when KEY moves to another track.
+- MUTE MODE survives a power cycle.
+
+The same `mm_softmute` source passed the same checks on that unit as his standalone image, its Bugbuild, KYOTI V1.7 and the octabam form (OCTABAM39).
 
 ## 0.2.2: KEYHOLD, a muted side-chain KEY track stays cut (2 November 2026)
 
