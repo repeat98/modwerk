@@ -2,7 +2,7 @@
  "schemaVersion": 3,
  "id": "quick-fill-trig-condition",
  "name": "Quick Fill Trig Condition",
- "version": "0.1.0-experimental",
+ "version": "0.2.0-experimental",
  "machine": "analog-rytm-mkii",
  "category": "system",
  "exclusive": false,
@@ -18,24 +18,26 @@
  "presentation": {
   "label": "QUICK FILL COND",
   "family": "Workflow",
-  "summary": "Hold a trig in GRID RECORDING and press FILL to lock its trig condition: FILL, NOT FILL, then no lock.",
-  "overview": "Set a fill trig without going to the TRC knob. In GRID RECORDING, hold one or more trigs and press FILL: the trigs get a FILL condition lock. Press again for NOT FILL, and again to remove the lock. The press does not engage fill, and a fill latched with FUNC + FILL plays out its loop.",
+  "summary": "Hold a trig in GRID RECORDING: FILL locks FILL, NOT FILL, then no lock; UP and DOWN set a ratio such as 3:8.",
+  "overview": "Set a trig condition without going to the TRC knob. In GRID RECORDING, hold one or more trigs and press FILL: the trigs get a FILL condition lock. Press again for NOT FILL, and again to remove the lock. UP and DOWN set a ratio: UP steps the first number, DOWN the second, from 1:2 to 8:8. FILL does not engage fill, and a fill latched with FUNC + FILL plays out its loop.",
   "highlights": [
    "One press for FILL, a second for NOT FILL, a third to clear",
+   "UP and DOWN reach any ratio from 1:2 to 8:8",
    "Works on every held trig at once",
-   "FILL keeps its stock job when no trig is held"
+   "FILL, UP and DOWN keep their stock jobs when no trig is held"
   ],
   "usage": [
    "Mark a trig as a fill-only hit while the pattern plays.",
+   "Hold a hi-hat trig and press DOWN three times for a 1:4 variation.",
    "Hold two trigs to swap them between FILL and NOT FILL together."
   ]
  },
  "access": {
-  "location": "Any trig key held in GRID RECORDING, then FILL.",
+  "location": "Any trig key held in GRID RECORDING, then FILL, UP or DOWN.",
   "steps": [
    "Turn on GRID RECORDING.",
-   "Hold a trig and press FILL: the trig plays only in fill.",
-   "Press FILL again for NOT FILL, a third time to clear it."
+   "Hold a trig and press FILL: the trig plays only in fill. Press FILL again for NOT FILL, a third time to clear it.",
+   "Hold a trig and press DOWN for 1:2, again for 1:3; UP steps the first number, 2:3, 3:3."
   ],
   "screenshots": []
  },
@@ -47,7 +49,8 @@
   "requires": [],
   "conflicts": [],
   "limitations": [
-   "Works in GRID RECORDING only: outside it, LIVE RECORDING included, and with QPER held or a menu open, FILL stays stock's.",
+   "Works in GRID RECORDING only: outside it, LIVE RECORDING included, and with QPER held or a menu open, FILL, UP and DOWN stay stock's.",
+   "Trig + UP or DOWN no longer opens the trig's RETRIG menu; trig + RTRG still does.",
    "Any other condition on the trig is replaced, and stock has no undo for it."
   ]
  },
@@ -57,7 +60,9 @@
   "build": "build.json",
   "events": [],
   "claims": [
-   "ui:TRIG + FILL"
+   "ui:TRIG + FILL",
+   "ui:TRIG + UP",
+   "ui:TRIG + DOWN"
   ]
  },
  "resources": {

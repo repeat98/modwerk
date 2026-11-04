@@ -2,6 +2,8 @@
 
 ## Hardware
 
+Build FC08 (0.2.0-experimental, UP and DOWN ratios): not tested on a unit yet. The results below are for 0.1.0.
+
 Analog Rytm MKII, OS 1.74, build FC04, reported by the tester, 1 Nov 2026. The tester was pointed at the combined image; which one they flashed was not recorded.
 
 | Check | Result |
@@ -69,6 +71,31 @@ The solo image has not been flashed. It ran in rytm-emu only.
 ## rytm-emu
 
 The rest ran in rytm-emu, which only approximates the instrument.
+
+Stock OS 1.74, Modwerk base core-0.7 (0c92aa45), build FC08 (sha256 26d9dba2) alone, rytm-emu 2ac0f1f, 4 Nov 2026. GRID RECORDING on the TRIG page, trigs placed on steps 1, 3 and 5 of the BD track. Results read from the pattern's condition bytes and trig words, and from screen captures.
+
+| Check | Result |
+| --- | --- |
+| T1 held, DOWN three times | 1:4 |
+| T1 held, UP; then UP three times | 2:4; 3:4, 4:4, back to 1:4 |
+| T3 held, DOWN seven times; DOWN again | 1:2 to 1:8; then no lock |
+| T5 + FILL, then T5 held + UP | FILL, then 1:2 |
+| T1 and T3 held, DOWN | Both 1:5: T1 was 1:4, so the lowest sets the step and T3 follows |
+| T1 held, UP held 400M (key repeat) | One step only, no RETRIG menu |
+| T1 held, UP, screen while still held | TRC shows 3:5 |
+| UP alone, no trig held | No write |
+| Locked trig tapped off, tapped back | Condition byte kept, then cleared by stock, as in FC07 |
+| T1 held, RTRG | Stock RETRIG menu opens |
+| T1 held, RTRG, then UP twice | No condition write; the menu's RATE moves, as on stock |
+| T1 held, DOWN, then RTRG | 2:6 written, then the RETRIG menu opens |
+| T3 held, FUNC held, UP | No write |
+| GRID RECORDING off, T3 held, UP | No write; T3 selects its track, stock |
+
+Stock OS 1.74 alone, same emulator and steps, for comparison: T1 held + UP opens the RETRIG menu, the same one T1 held + RTRG opens, and UP inside it steps RATE (1/16 to 1/20 in two presses). No condition is written.
+
+Not tested in FC08: Euclidean mode, page 2 and PAGE held, PERF, SCNE, MUTE and CHRO, QPER held, a pad changing track, the combined image. They share FILL's code path, which FC07 tested.
+
+## rytm-emu, 0.1.0
 
 Stock OS 1.74, Modwerk base core-0.7 (0c92aa45), build FC07 (sha256 546d69b8) alone, 1 Nov 2026. Results read from the pattern's condition bytes, the sequencer's trig words and stock's fill flags.
 

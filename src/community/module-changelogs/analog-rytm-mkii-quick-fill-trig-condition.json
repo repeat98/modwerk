@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.2.0-experimental",
+    "date": "2026-11-04",
+    "changes": [
+      "Hold a trig in GRID RECORDING and press UP or DOWN to set a ratio condition: UP steps the first number, DOWN the second.",
+      "The first press gives 1:2. From 1:4, UP goes 2:4, 3:4, 4:4 and back to 1:4. DOWN goes 1:2, 1:3 up to 1:8, keeping the first number; past 8 the lock goes.",
+      "Trig + UP or DOWN no longer opens the trig's RETRIG menu: trig + RTRG still does.",
+      "TRIG + FILL is unchanged."
+    ]
+  }
+]
