@@ -58,10 +58,10 @@ describe('Digitakt II research preview', () => {
 })
 
 describe('Analog Rytm MKII library', () => {
-  it('lists Filter Hz and Loop Sync and leaves the core build preview once a module is in the library', () => {
+  it('lists Audio In FX, Chromatic Aftertouch Fix, Control In Actions, Filter Hz, Loop Sync, Pipo Loop, Quick Velocity+Aftertouch Assign, Sample RATE and Silent Pad+Trig and leaves the core build preview once a module is in the library', () => {
     expect(DEVICES_BY_ID['analog-rytm-mkii'].status).toBe('preview')
     expect(isCoreBuildPreview('analog-rytm-mkii')).toBe(false)
-    expect(DIGI_MODS.filter(mod => mod.device === 'analog-rytm-mkii').map(mod => [mod.id, mod.version, mod.releases])).toEqual([['filter-hz', '1.2.0', ['1.74']], ['loop-sync', '0.3.2', ['1.74']]])
+    expect(DIGI_MODS.filter(mod => mod.device === 'analog-rytm-mkii').map(mod => [mod.id, mod.version, mod.releases])).toEqual([['audio-in-fx', '0.1.0', ['1.74']], ['chromatic-aftertouch-fix', '0.1.0', ['1.74']], ['control-in-actions', '0.1.0', ['1.74']], ['filter-hz', '1.2.0', ['1.74']], ['loop-sync', '0.3.2', ['1.74']], ['pipo-loop', '0.1.1', ['1.74']], ['quick-velocity-aftertouch-assign', '0.1.0', ['1.74']], ['sample-rate', '0.1.0', ['1.74']], ['silent-pad-trig', '0.6.0', ['1.74']]])
   })
 })
 

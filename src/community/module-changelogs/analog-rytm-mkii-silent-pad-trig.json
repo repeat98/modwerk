@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.6.0-experimental",
+    "date": "2026-11-02",
+    "changes": [
+      "First library release, for Analog Rytm MKII OS 1.74: three checkboxes in GLOBAL > CONTROL > SEQUENCER CONFIG, after AUTO TRK SWITCH.",
+      "SILENT PAD+TRIG: pads and TRIG keys select their track without playing it. FUNC + pad still plays.",
+      "SILENT PAD LIVEREC: pads stay silent in LIVE RECORDING too.",
+      "MUTE ALL SOUND: a muted track stays silent from pads, TRIG keys and MIDI, while its trigs still record.",
+      "Not yet tested on a unit: this exact build, MIDI out and STEP REC. The module page now credits Nathaniel Pavel (@npp1993)."
+    ]
+  }
+]

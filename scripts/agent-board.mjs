@@ -132,7 +132,8 @@ export async function claim(item, options = {}) {
 
 const git = (root, ...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trimEnd()
 const show = (root, ref, path) => { try { return git(root, 'show', ref + ':' + path) } catch { return null } }
-const MODULE_FOLDERS = /^sdk\/(octabam|digitakt|digitone|analog-rytm-mkii|analog-four-mkii)\/modules\/(?:_submissions\/)?([a-z0-9]+(?:-[a-z0-9]+)*)\/|^sdk\/(drafts)\/([a-z0-9]+(?:-[a-z0-9]+)*)\//
+// Any SDK folder that holds modules (sdk/octabam is the Octatrack's), so a newly unlocked machine needs no edit here.
+const MODULE_FOLDERS = /^sdk\/((?!drafts\/)[a-z0-9]+(?:-[a-z0-9]+)*)\/modules\/(?:_submissions\/)?([a-z0-9]+(?:-[a-z0-9]+)*)\/|^sdk\/(drafts)\/([a-z0-9]+(?:-[a-z0-9]+)*)\//
 const INTERFACES = /^sdk\/([a-z0-9-]+)\/(?:core|core-profile)\/interface\.json$/
 
 /** A module claim's note: its manifest's one-line summary, cut to the note's 120 characters, so other agents see what the
@@ -152,14 +153,18 @@ export function neededClaims({ root, base, head = 'HEAD' }) {
   const changed = git(root, 'diff', '--name-only', base + '...' + head).split('\n').filter(Boolean)
   const needed = new Map(), add = (kind, key, why, extra) => needed.set(kind + ' ' + key, { kind, key, why, ...extra })
   const mergeBase = git(root, 'merge-base', base, head)
+  // Every git call is a process: list the folders that existed once, and read a new module's manifest once, not per file.
+  const existed = new Set(git(root, 'ls-tree', '-r', '-d', '--name-only', mergeBase, '--', 'sdk').split('\n'))
   for (const path of added) {
     const match = path.match(MODULE_FOLDERS)
     if (match) {
-      // A machine's modules sit in modules/<id> or, on the Analog Rytm, modules/_submissions/<id>; a move between them is not new.
+      // A machine's modules sit in modules/<id> or, until catalogued, modules/_submissions/<id>; a move between them is not new.
       const folders = match[1] ? ['', '_submissions/'].map(sub => 'sdk/' + match[1] + '/modules/' + sub + match[2]) : ['sdk/drafts/' + match[4]]
       const machine = match[1] === 'octabam' || match[3] === 'drafts' ? 'octatrack' : match[1], id = match[2] ?? match[4]
-      const manifest = ['modwerk', 'octamod'].map(name => show(root, head, match[0] + name + '.module.json')).find(Boolean)
-      if (folders.every(folder => show(root, mergeBase, folder) === null)) add('module', machine + '/' + id, 'new module folder ' + match[0].slice(0, -1), { note: summaryNote(manifest) })
+      if (!needed.has('module ' + machine + '/' + id) && folders.every(folder => !existed.has(folder))) {
+        const manifest = show(root, head, match[0] + 'modwerk.module.json') ?? show(root, head, match[0] + 'octamod.module.json')
+        add('module', machine + '/' + id, 'new module folder ' + match[0].slice(0, -1), { note: summaryNote(manifest) })
+      }
     }
     const migration = path.match(/^migrations\/(\d{4})_[^/]+\.sql$/)
     if (migration) add('migration', migration[1], 'new migration ' + path)
