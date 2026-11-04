@@ -118,11 +118,11 @@
   {
    "path": "media/thumbnail.svg",
    "kind": "thumbnail",
-   "caption": "Control In Actions thumbnail",
-   "alt": "Placeholder thumbnail for Control In Actions",
+   "caption": "A footswitch on EXP/CV IN 1 picks one of six actions.",
+   "alt": "A footswitch cabled into a jack labelled IN 1, with an arrow to a list of six actions: MUTE HLD (selected), MUTE TGL, REC HLD, REC TGL, FILL HLD and FILL LAT.",
    "credit": "Nathaniel Pavel",
    "license": "GPL-3.0-or-later",
-   "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+   "source": "Original illustration in the shared signal-art style."
   },
   {
    "path": "media/action-menu.png",

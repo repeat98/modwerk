@@ -6,7 +6,8 @@
       "First release, for Analog Rytm MKII OS 1.74: a new ACTION mode in GLOBAL > CONTROL > CONTROL INPUT 1 and 2.",
       "A footswitch or a 0 to 5 V gate holds or toggles the MUTE screen or live recording, or holds or latches FILL.",
       "Bars beside the menu show the input and when it counts as pressed; ACTION LEARN reads a footswitch's levels.",
-      "NO in EXPRESSION LEARN and ACTION LEARN now keeps the levels you had."
+      "NO in EXPRESSION LEARN and ACTION LEARN now keeps the levels you had.",
+      "Media only: the library card now shows this module (a footswitch and its six actions), not another module's picture."
     ]
   }
 ]
