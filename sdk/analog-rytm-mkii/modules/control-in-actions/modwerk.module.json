@@ -90,7 +90,7 @@
  },
  "tests": {
   "report": "TESTING.md",
-  "summary": "Author's unit reports on an Analog Rytm MKII, builds alone: CI02 to CI07 with a footswitch and a gate, ending with every action, ACTION LEARN with YES and NO, REVERSE DIRECTION, EXPRESSION LEARN's NO, EXP/CV IN 2 at a glance and a power cycle passing. rytm-emu on CE02 to CE14, CI08 (the ACTION LEARN name) and CI09 (review fixes: redraw scope, order at a learn's close, the view check). Not run beside other modules.",
+  "summary": "Author's unit reports on an Analog Rytm MKII, builds alone: CI06 and CI07 passed every action, ACTION LEARN with YES and NO, REVERSE DIRECTION, EXPRESSION LEARN's NO and a power cycle; CI09 (this package's source, with the ACTION LEARN name and a code review's fixes) passed the bars, both learns' NO and a hold action. rytm-emu on CE02 to CE14, CI08 and CI09. Not run beside other modules.",
   "documentation": {
    "tutorial": {
     "title": "Quick tutorial",

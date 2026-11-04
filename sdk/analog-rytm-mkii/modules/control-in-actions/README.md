@@ -67,7 +67,7 @@ Plug the switch or gate in, set MODE to ACTION, learn the levels if it is a foot
 
 ## Tests and measurements
 
-The author's unit, builds alone: CI06 passed every action, ACTION LEARN with YES and NO, REVERSE DIRECTION and a power cycle; CI07 passed EXPRESSION LEARN's NO and YES. CI09, this package, adds the ACTION LEARN name and a code review's fixes and ran in rytm-emu only ([TESTING.md](TESTING.md)). Memory (CI09, -O2): 3,260 bytes of code and initialised data and 32 bytes of `.bss` in the 128 KiB shared mod area. Load: UI only, two readings each UI tick; nothing runs in the audio path.
+The author's unit, builds alone: CI06 passed every action, ACTION LEARN with YES and NO, REVERSE DIRECTION and a power cycle; CI07 passed EXPRESSION LEARN's NO and YES. CI09, this package, adds the ACTION LEARN name and a code review's fixes; on the unit its bars, both learns' NO and a hold action passed ([TESTING.md](TESTING.md)). Memory (CI09, -O2): 3,260 bytes of code and initialised data and 32 bytes of `.bss` in the 128 KiB shared mod area. Load: UI only, two readings each UI tick; nothing runs in the audio path.
 
 ## Authorship and licences
 

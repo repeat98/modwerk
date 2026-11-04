@@ -28,7 +28,7 @@
       "category": "Workflow",
       "author": "npp1993",
       "needs_core": "0.7",
-      "on_unit": "On an Analog Rytm MKII on OS 1.74, as reported by the author, builds alone: CI06 and CI07 (this module's source before the ACTION LEARN name and the code review's fixes) passed every action, ACTION LEARN with YES and NO, REVERSE DIRECTION, EXPRESSION LEARN's NO and a power cycle. This package, CI09's source, has not run on a unit, nor beside other modules."
+      "on_unit": "On an Analog Rytm MKII on OS 1.74, as reported by the author, builds alone: CI06 and CI07 (this module's source before the ACTION LEARN name and the code review's fixes) passed every action, ACTION LEARN with YES and NO, REVERSE DIRECTION, EXPRESSION LEARN's NO and a power cycle. CI09 (this package's source, built locally) then passed the bars, ACTION LEARN's and EXPRESSION LEARN's NO and a hold action. Not run beside other modules."
     }
   ]
 }

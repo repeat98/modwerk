@@ -2,9 +2,11 @@
 
 ## Unit
 
+Build CI09 alone (sha256 1b4bc2dd, -O2), 3 November 2026, as the tester reported it: the ACTION bars move with the pedal and the right-hand line moves when pressed; ACTION LEARN with NO returns the marks; EXPRESSION LEARN with NO keeps the old range after leaving the menu and coming back; a hold action works from inside the menu and after leaving it. All pass.
+
 Builds up to CI07 named the learn row LEARN LEVELS; CI08 names it ACTION LEARN, after stock's EXPRESSION LEARN, and changes nothing else.
 
-CI09 (sha256 1b4bc2dd) adds the code review's fixes and has not run on a unit: the view is redrawn every tick only in ACTION mode or while a learn is open, a learn's NO puts the levels back before that tick's reading, and the view is recognised by its class as well as its address. In rytm-emu (CI09 and its CE14 test build) EXPRESSION LEARN and ACTION LEARN with NO keep the saved levels and YES saves the new ones, the bars follow the input, REC HLD chosen in the open menu acts as REC HLD, FILL LAT latches and unlatches, MUTE HLD opens and closes MUTE mode, and its screens are pixel for pixel CI08's.
+CI09 (sha256 1b4bc2dd, this package's source) adds the code review's fixes: the view is redrawn every tick only in ACTION mode or while a learn is open, a learn's NO puts the levels back before that tick's reading, and the view is recognised by its class as well as its address. In rytm-emu (CI09 and its CE14 test build) EXPRESSION LEARN and ACTION LEARN with NO keep the saved levels and YES saves the new ones, the bars follow the input, REC HLD chosen in the open menu acts as REC HLD, FILL LAT latches and unlatches, MUTE HLD opens and closes MUTE mode, and its screens are pixel for pixel CI08's.
 
 Analog Rytm MKII, OS 1.74, build CI02 alone (sha256 43aab368, core-ar2 0.7 and this module), 3 November 2026, as the tester reported it:
 
