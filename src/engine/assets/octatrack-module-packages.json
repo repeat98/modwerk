@@ -340,6 +340,8 @@
       "bytes": 2636,
       "sha256": "fd275bf2f8eb1340228d12224b3b84560584038c6637e6ed9775e50c60914f09",
       "path": "octatrack-modules/sidechain-compressor/0.2.1-experimental.mwrm",
+      "lagsBehind": "0.2.2-experimental",
+      "lagReason": "0.2.2 changes only the card build's placement: its ColdFire units join the DRAM runtime when another module in the set carries one (#1175). The USB package and its controller are 0.2.1's, so 0.2.1 stays the USB package.",
       "requiredBase": "672d9ffccc8771492b13d3076361920eb6e7fd79414de697b25ae3ad1a2379d9"
     },
     {
