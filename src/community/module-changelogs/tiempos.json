@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-30",
+    "changes": [
+      "New: hold CUE and press MIDI to see the time left on all eight audio tracks on one screen.",
+      "The time left is real time: it follows timestretch, repitch and tempo changes, and flashes in the last 30 seconds.",
+      "Close it with NO or CUE + MIDI; a track key pressed twice closes it and opens that track's QUICK ASSIGN, as on stock. LEFT and RIGHT switch the right column between total and time played.",
+      "Needs the Modwerk base loaded over USB, which is in the beta. Card firmware cannot include it. While installed, CUE + MIDI no longer switches to the MIDI tracks; MIDI alone still does.",
+      "Known issues: a track shows as empty until it has played once since the project loaded; a looping track shows the time to the end of the sample."
+    ]
+  }
+]
