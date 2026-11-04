@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "control-in-actions",
+  "moduleVersion": "0.1.0-experimental",
+  "firmware": "1.74",
+  "capturedAt": "2026-11-03T22:00:00Z",
+  "imageSha256": "1b4bc2dd242d350afce51e42ece6944ebe7504f03b29abf8b80d3b617e7dae06",
+  "build": "Modwerk's linker: core-ar2 0.7 + this folder's Control In Actions 0.1.0-experimental, materialised against stock OS 1.74, --version CI09",
+  "emulator": {
+    "name": "rytm-emu",
+    "repository": "https://github.com/trigcondition/rytm-emu",
+    "binary": "dtboot",
+    "settings": "revision c5732f0; a fresh card; DTBOOT_END_PNG at the end of each run"
+  },
+  "conditions": "SETUP: boot CI09 on a fresh card for 4000M with NO six times to close the calibration notices, snapshot. Each capture loads that snapshot and runs the listed --press events, off the --every grid.",
+  "captures": [
+    {
+      "path": "media/action-menu.png",
+      "frame": "end.png",
+      "plan": "GLOBAL, DOWN x6, YES, YES, RIGHT x3 (MODE ACTION), DOWN, RIGHT x1",
+      "sha256": "f955b87fe8a0acb6199ff2988cf1771083bc48f17df19986c82cbbca8433173e"
+    },
+    {
+      "path": "media/action-learn.png",
+      "frame": "end.png",
+      "plan": "as action-menu.png, then DOWN, YES (ACTION LEARN)",
+      "sha256": "ac3c9ab78bf5ac0d797886890749ab0fd99e76c158d460481664dba8c52ed8c6"
+    },
+    {
+      "path": "media/fill-latch.png",
+      "frame": "end.png",
+      "plan": "as action-menu.png with RIGHT x6 on the ACTION row",
+      "sha256": "b92d8dab499ca1b63ce57ea1a3ee328331b62cfc9249c321be2b89611c368e7a"
+    }
+  ]
+}
