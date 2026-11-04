@@ -109,14 +109,14 @@ location ledger was inspected selectively. This is partial review, not a pass
 or complete coverage; deferred fragments have not all been manually audited.
 
 After the portability edits, another bounded recheck passed both deterministic
-checks and made no new API requests. The current ledger retains 16 cached
+checks and made no new API requests. That ledger retained 16 cached
 classified fragments among 534 parsed chunks, zero flags and 16 uncertainties;
 518 parsed chunks plus the same 10 file blockers are deferred (528 total),
 with 24 static-only exclusions. Its summary omits 522 attention entries and
 22 exclusion entries. The added portability scaffolding is outside the API
 sample and was checked locally; this does not close the deferred coverage.
 
-All 16 classified locations were investigated with their callers and fixtures:
+All 16 initially classified locations were investigated with their callers and fixtures:
 
 - Native-reader test helpers and main: the registry and renderer share the
   actual modeled voice byte. Both frame halves retain an opted-in voice;
@@ -143,3 +143,25 @@ assembler were compared with retained authored sources and compiled normally.
 Generated header/base/variant data require supported generator and package
 reproduction checks, not Jev. Documentation/licences and approved media were
 inspected separately. No exact-public hardware claim follows from this.
+
+## Windows link repair
+
+Exact-head Ubuntu contract and Octatrack source CI passed at `08cbbffa`, while
+Windows reported nine link failures in isolated UI fixtures: unresolved
+`og_locate`, `og_describe`, `og_size`, `og_state` and `og_owner`. The Windows
+linker retained references that the local dead-section link discarded.
+
+Render-only fixtures now link `fixtures/fract_ui_runtime.c` explicitly. Its
+runtime functions assert on unexpected calls; the waveform-peak fixture keeps
+its own real modeled `og_locate`. No assertion, pixel comparison, case count or
+production runtime source was removed or changed. The source-check image is
+unchanged. All 15 affected UI tests pass on Linux/GCC with section collection
+disabled, so their dependencies must resolve even when unused code is retained.
+
+The bounded Jev recheck passed both deterministic checks, made two API requests
+and reused eight cached classifications. Its latest ledger covers 10/499 parsed
+chunks, zero flags and 10 uncertainties; 489 parsed chunks plus 10 file blockers
+are deferred (499 total), with 24 static-only exclusions. It omits 487 attention
+entries and 22 exclusion entries. The current uncertain locations and the new
+small fail-fast helper were investigated against their callers and fixtures;
+the review remains partial and deferred code is not claimed audited.

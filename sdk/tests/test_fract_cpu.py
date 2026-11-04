@@ -156,11 +156,12 @@ class CpuUiContract(ui.FractUiContract):
             binary = Path(directory) / 'fixture'
             gc = '-Wl,-dead_strip' if sys.platform == 'darwin' else '-Wl,--gc-sections'
             command = ['cc', '-std=c11', '-Wall', '-Wextra', '-Werror', '-O1',
-                       *SANITIZE, '-fno-sanitize-recover=all', *FLAGS,
+                       *SANITIZE, '-fno-sanitize-recover=all', *FLAGS, '-DFRACT_UI_HAS_LOCATE',
                        '-ffunction-sections', '-fdata-sections', gc,
                        '-I', str(ROOT / 'sdk/drafts/fract-machine'),
                        '-I', str(ROOT / 'sdk/drafts/fract-machine/support'),
-                       str(ROOT / 'sdk/tests/fixtures/fract_ui_peak.c'), '-o', str(binary)]
+                       str(ROOT / 'sdk/tests/fixtures/fract_ui_peak.c'),
+                       str(ROOT / 'sdk/tests/fixtures/fract_ui_runtime.c'), '-o', str(binary)]
             result = subprocess.run(command, capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             result = subprocess.run([str(binary)], capture_output=True, text=True)

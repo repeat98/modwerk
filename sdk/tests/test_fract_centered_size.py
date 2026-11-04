@@ -26,7 +26,8 @@ class CenteredSizeContract(unittest.TestCase):
                          'sdk/drafts/fract-machine', 'sdk/machines/octatrack/include',
                          'sdk/tests/fixtures'):
                 command += ['-I', str(ROOT / path)]
-            r = subprocess.run([*command, str(source), '-o', str(binary)], capture_output=True, text=True)
+            runtime = [] if native else [str(ROOT / 'sdk/tests/fixtures/fract_ui_runtime.c')]
+            r = subprocess.run([*command, str(source), *runtime, '-o', str(binary)], capture_output=True, text=True)
             self.assertEqual(r.returncode, 0, r.stderr)
             r = subprocess.run([str(binary)], capture_output=True, text=True)
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)

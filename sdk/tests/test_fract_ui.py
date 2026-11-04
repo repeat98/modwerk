@@ -25,6 +25,7 @@ class FractUiContract(unittest.TestCase):
                 "-ffunction-sections", "-fdata-sections", linker_gc,
                 "-I", str(DRAFT), "-I", str(ROOT / "sdk/drafts/fract-machine/support"),
                 str(ROOT / "sdk/tests/fixtures/fract_overview.c"), str(DRAFT / "fract_ui.c"),
+                str(ROOT / "sdk/tests/fixtures/fract_ui_runtime.c"),
                 "-o", str(binary),
             ], capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
@@ -109,6 +110,7 @@ class FractUiContract(unittest.TestCase):
                 "-ffunction-sections", "-fdata-sections", linker_gc,
                 "-I", str(DRAFT), "-I", str(ROOT / "sdk/drafts/fract-machine/support"),
                 str(harness), str(DRAFT / "fract_ui.c"), "-o", str(binary),
+                str(ROOT / "sdk/tests/fixtures/fract_ui_runtime.c"),
             ], capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             result = subprocess.run([str(binary)], capture_output=True, text=True)

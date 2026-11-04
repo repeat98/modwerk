@@ -20,7 +20,8 @@ class FractWordClearTests(unittest.TestCase):
                    '-ffunction-sections','-fdata-sections',gc]
             for folder in ['sdk/drafts/fract-machine','sdk/drafts/fract-machine/support']:
                 flags+=['-I',str(ROOT/folder)]
-            r=subprocess.run([*flags,str(ROOT/'sdk/tests/fixtures/fract_ui_word_clear.c'),'-o',str(binary)],capture_output=True,text=True)
+            r=subprocess.run([*flags,str(ROOT/'sdk/tests/fixtures/fract_ui_word_clear.c'),
+                              str(ROOT/'sdk/tests/fixtures/fract_ui_runtime.c'),'-o',str(binary)],capture_output=True,text=True)
             self.assertEqual(r.returncode,0,r.stderr)
             r=subprocess.run([str(binary)],capture_output=True,text=True)
             self.assertEqual(r.returncode,0,r.stdout+r.stderr)
