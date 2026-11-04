@@ -11,21 +11,22 @@ const audit = (...args) => spawnSync(process.execPath, ['scripts/fx-audit.mjs', 
 const scratch = mkdtempSync(join(tmpdir(), 'fx-audit-'))
 afterAll(() => rmSync(scratch, { recursive: true, force: true }))
 
-// What dsp_host does: mono raw in, the effect applied to each sample, interleaved L R int32 words out.
-function render(planDir, outDir, effect) {
+// What dsp_host does: mono raw in, the effect applied to each sample, interleaved L R int32 words out. `right` is the R side's effect.
+function render(planDir, outDir, effect, right = effect) {
   for (const name of readdirSync(planDir).filter(file => file.endsWith('.raw'))) {
     const bytes = readFileSync(join(planDir, name)), input = new Int32Array(bytes.buffer, bytes.byteOffset, bytes.byteLength >> 2)
     const out = new Int32Array(input.length * 2)
-    input.forEach((word, n) => { out[2 * n] = out[2 * n + 1] = Math.round(Math.max(-1, Math.min(1, effect(word / FULL_SCALE))) * FULL_SCALE) })
+    const word24 = (fn, word) => Math.round(Math.max(-1, Math.min(1, fn(word / FULL_SCALE))) * FULL_SCALE)
+    input.forEach((word, n) => { out[2 * n] = word24(effect, word); out[2 * n + 1] = word24(right, word) })
     writeFileSync(join(outDir, name), Buffer.from(out.buffer))
   }
 }
-const run = (name, effect) => {
+const run = (name, effect, right) => {
   const plan = join(scratch, name + '-plan'), out = join(scratch, name + '-out')
   expect(audit('plan', plan).status).toBe(0)
   rmSync(out, { recursive: true, force: true })
   spawnSync('mkdir', ['-p', out])
-  render(plan, out, effect)
+  render(plan, out, effect, right)
   return audit('check', plan, out)
 }
 
@@ -58,7 +59,15 @@ describe('fx audit', () => {
     expect(drive.stdout).toContain('check(s) failed')
     const gain = run('gain', x => 0.5 * x)
     expect(gain.stdout + gain.stderr).not.toContain('FAIL')
+    expect(gain.stdout).not.toContain('mono:')
     expect(gain.status).toBe(0)
+  })
+
+  it('notes a stereo render whose sides cancel in mono, without failing it', () => {
+    const flipped = run('flipped', x => 0.5 * x, x => -0.5 * x)
+    expect(flipped.stdout).toMatch(/tone-5301hz-1db +.* note/)
+    expect(flipped.stdout).toContain('tone-5301hz-1db mono: the sides cancel completely summed to mono')
+    expect(flipped.status).toBe(0)
   })
 
   it('writes each signal twice, as the raw words dsp_host reads and as a WAV rig_render reads, with the same samples', () => {

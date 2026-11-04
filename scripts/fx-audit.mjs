@@ -1,4 +1,5 @@
-// Sound-quality audit for an effect: aliasing, DC, clipping, what it does after the input stops, and dead knobs or duplicate presets.
+// Sound-quality audit for an effect: aliasing, DC, clipping, sides that cancel in mono, what it does after the input stops, and dead knobs
+// or duplicate presets.
 // Offline: no firmware, no module code.
 //
 //   npm run fx:audit -- plan <dir> [--tail <seconds>]        write the test signals and plan.json
@@ -15,23 +16,23 @@
 // For compare, render `noise` once per setting: each knob at both ends with the rest fixed, or each preset, or one setting before and
 // after a code change. A pair that is `same` is a knob that does nothing to the signal, or two presets that are one sound.
 //
-// options: --mono (raw renders are one channel)  --alias-limit <dBc>  --dc-limit <dBFS>  --idle-limit <dBFS>  --same-limit <dB>
+// options: --mono (raw renders are one channel)  --alias-limit <dBc>  --dc-limit <dBFS>  --idle-limit <dBFS>  --mono-limit <dB>  --same-limit <dB>
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { basename, resolve } from 'node:path'
-import { LIMITS, SAME_LIMIT, SAMPLE_RATE, analyzeIdle, analyzeTone, buildPlan, compareRenders, idleSamples, judgeIdle, judgeTone, noiseSamples, readAudio, selfTest, toneSamples, wavFile } from './fx-audit-analysis.mjs'
+import { LIMITS, SAME_LIMIT, SAMPLE_RATE, analyzeIdle, analyzeTone, buildPlan, compareRenders, idleSamples, judgeIdle, judgeTone, monoFoldDb, noiseSamples, readAudio, selfTest, toneSamples, wavFile } from './fx-audit-analysis.mjs'
 
 const args = process.argv.slice(2), positional = []
 const options = {}
 for (let i = 0; i < args.length; i++) {
   if (!args[i].startsWith('--')) positional.push(args[i])
   else if (['--mono'].includes(args[i])) options[args[i].slice(2)] = true
-  else if (['--tail', '--alias-limit', '--dc-limit', '--idle-limit', '--same-limit'].includes(args[i]) && args[i + 1] !== undefined && Number.isFinite(Number(args[i + 1]))) options[args[i].slice(2)] = Number(args[++i])
+  else if (['--tail', '--alias-limit', '--dc-limit', '--idle-limit', '--mono-limit', '--same-limit'].includes(args[i]) && args[i + 1] !== undefined && Number.isFinite(Number(args[i + 1]))) options[args[i].slice(2)] = Number(args[++i])
   else usage(args[i] + ' is not an option, or lacks its number')
 }
 const [command, ...paths] = positional
 
 function usage(problem) {
-  console.error((problem ? problem + '\n' : '') + 'Usage: npm run fx:audit -- plan <dir> [--tail <seconds>]\n       npm run fx:audit -- check <dir> <renders> [--mono] [--alias-limit <dBc>] [--dc-limit <dBFS>] [--idle-limit <dBFS>]\n       npm run fx:audit -- compare <render> <render>... [--mono] [--same-limit <dB>]\n       npm run fx:audit -- selftest')
+  console.error((problem ? problem + '\n' : '') + 'Usage: npm run fx:audit -- plan <dir> [--tail <seconds>]\n       npm run fx:audit -- check <dir> <renders> [--mono] [--alias-limit <dBc>] [--dc-limit <dBFS>] [--idle-limit <dBFS>] [--mono-limit <dB>]\n       npm run fx:audit -- compare <render> <render>... [--mono] [--same-limit <dB>]\n       npm run fx:audit -- selftest')
   process.exit(2)
 }
 
@@ -52,7 +53,7 @@ if (command === 'plan' && paths.length === 1) {
   console.log('  ' + plan.noise.file + '  1 s of noise, then ' + plan.noise.tailSeconds + ' s of silence: for compare, one render per knob end or preset')
   console.log('\nRender each through the effect (knobs at their dearest, modulation off), keep the file name, then:\n  npm run fx:audit -- check ' + paths[0] + ' <renders>')
 } else if (command === 'check' && paths.length === 2) {
-  const dir = resolve(paths[0]), renders = resolve(paths[1]), limits = { alias: options['alias-limit'] ?? LIMITS.alias, dc: options['dc-limit'] ?? LIMITS.dc, idle: options['idle-limit'] ?? LIMITS.idle }
+  const dir = resolve(paths[0]), renders = resolve(paths[1]), limits = { alias: options['alias-limit'] ?? LIMITS.alias, dc: options['dc-limit'] ?? LIMITS.dc, idle: options['idle-limit'] ?? LIMITS.idle, mono: options['mono-limit'] ?? LIMITS.mono }
   if (!existsSync(resolve(dir, 'plan.json'))) usage('No plan.json in ' + dir + ': run plan first')
   const plan = JSON.parse(readFileSync(resolve(dir, 'plan.json'), 'utf8'))
   const find = name => ['.raw', '.wav'].map(extension => resolve(renders, name + extension)).find(path => existsSync(path))
@@ -63,8 +64,9 @@ if (command === 'plan' && paths.length === 1) {
   const notes = []
   console.log('signal'.padEnd(22) + 'out dBFS'.padStart(10) + 'harmonics'.padStart(11) + 'aliasing'.padStart(10) + 'residual'.padStart(10) + 'DC dBFS'.padStart(10) + 'rails'.padStart(8) + '  verdict')
   for (const tone of plan.tones) {
-    const results = read(tone).map(channel => analyzeTone(channel, tone)), worst = results.reduce((a, b) => b.aliasDbc > a.aliasDbc ? b : a)
-    const lines = judgeTone({ ...worst, dcDbfs: Math.max(...results.map(r => r.dcDbfs)), rails: Math.max(...results.map(r => r.rails)) }, limits)
+    const channels = read(tone), results = channels.map(channel => analyzeTone(channel, tone)), worst = results.reduce((a, b) => b.aliasDbc > a.aliasDbc ? b : a)
+    const monoDb = channels.length === 2 ? monoFoldDb(...channels) : undefined
+    const lines = judgeTone({ ...worst, dcDbfs: Math.max(...results.map(r => r.dcDbfs)), rails: Math.max(...results.map(r => r.rails)), monoDb }, limits)
     const state = lines.some(line => line.state === 'fail') ? 'FAIL' : lines.some(line => line.state === 'note') ? 'note' : 'ok'
     if (state === 'FAIL') failed++
     console.log(tone.file.padEnd(22) + fixed(worst.levelDbfs, 10) + fixed(worst.harmonicsDbc, 11) + fixed(worst.aliasDbc, 10) + fixed(worst.residualDbc, 10) + fixed(Math.max(...results.map(r => r.dcDbfs)), 10) + String(Math.max(...results.map(r => r.rails))).padStart(8) + '  ' + state)
