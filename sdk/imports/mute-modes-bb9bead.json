@@ -11,17 +11,17 @@
     {
       "path": "patch_softmute.s",
       "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
-      "revision": "826d23e16334285edee9c073426bfe76fcca463c",
+      "revision": "bb9beada9248fdae13bee32684a7f2564e586f6c",
       "sourcePath": "modwerk-modules/mute-modes/patch_softmute.s",
-      "sourceBytes": 87189,
-      "sourceGitBlob": "009b2a48c94db2345c73d91f919fb337a60b0885",
-      "sourceSha256": "058165ef686365e9ae702be4446cd8e2d2eae948c82bcb5e37f2360ad84cf47c",
-      "vendoredSha256": "058165ef686365e9ae702be4446cd8e2d2eae948c82bcb5e37f2360ad84cf47c"
+      "sourceBytes": 89378,
+      "sourceGitBlob": "53dc570405ba693e7f7edb355d0d3e579aaf9d31",
+      "sourceSha256": "4fb8d84a6f848299d3de611e20237901110e77041fc46c2620bd149f44ccb2c1",
+      "vendoredSha256": "4fb8d84a6f848299d3de611e20237901110e77041fc46c2620bd149f44ccb2c1"
     },
     {
       "path": "patch_mutemode.s",
       "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
-      "revision": "826d23e16334285edee9c073426bfe76fcca463c",
+      "revision": "bb9beada9248fdae13bee32684a7f2564e586f6c",
       "sourcePath": "modwerk-modules/mute-modes/patch_mutemode.s",
       "sourceBytes": 10222,
       "sourceGitBlob": "132712bf4a68879c6a0433ad08a44703523885a2",
@@ -31,17 +31,17 @@
     {
       "path": "manifest.py",
       "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
-      "revision": "826d23e16334285edee9c073426bfe76fcca463c",
+      "revision": "bb9beada9248fdae13bee32684a7f2564e586f6c",
       "sourcePath": "modwerk-modules/mute-modes/manifest.py",
-      "sourceBytes": 7591,
-      "sourceGitBlob": "c8402b3cc75e8a6b7a6feb79fadd8067726ecadb",
-      "sourceSha256": "81f362584ffba6f93824a0fa5407cc9dc9eaeb28a9606c9f7d3c93d2c2353baa",
-      "vendoredSha256": "81f362584ffba6f93824a0fa5407cc9dc9eaeb28a9606c9f7d3c93d2c2353baa"
+      "sourceBytes": 8503,
+      "sourceGitBlob": "fc9fcfc41ddceab6b166ad865bc216103a546041",
+      "sourceSha256": "33e06de61d255800107843c44583c6487280ef452c703e79fa07179051d4e1bd",
+      "vendoredSha256": "33e06de61d255800107843c44583c6487280ef452c703e79fa07179051d4e1bd"
     },
     {
       "path": "runtime.json",
       "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
-      "revision": "826d23e16334285edee9c073426bfe76fcca463c",
+      "revision": "bb9beada9248fdae13bee32684a7f2564e586f6c",
       "sourcePath": "modwerk-modules/mute-modes/runtime.json",
       "sourceBytes": 204,
       "sourceGitBlob": "56c66cc1f50412b2c2397737a8801a859efa6f34",
@@ -129,12 +129,12 @@
   "notes": [
     "patch_softmute.s, patch_mutemode.s, manifest.py and runtime.json are the author's files byte for byte at the pinned commit, from modwerk-modules/mute-modes/, the author's own Modwerk copy (the 0.2.1 sources with Modwerk's MODWERK_EVENTS blocks, plus this version's changes). upstream/README.md, LICENSE and upstream/OCTABAM_LICENSE are unchanged from 0.1.0's record.",
     "0.2.2 moves SHADOW, hook 1's per-frame silenced set, from SRAM 0x80006c66 into the unit after KEYMASK; sambanks/octabam pins that change at a1e0288 (PR #928, merged as the revision above).",
-    "0.2.2 also adds KEYHOLD (SC_KEY only, so always with MODWERK_EVENTS): a muted track that has been a side-chain KEY (ev_mute_keep's answer) keeps the post-FX cut until it is unmuted. sambanks/octabam pins the same change at 826d23e (PR #1013). The octabam-form units equal the author's references (plain 970 B, unchanged; SC_KEY 1100 B).",
+    "0.2.2 also adds the hold: a muted track keeps stock's post-FX cut until it is unmuted when it has been a side-chain KEY (ev_mute_keep's answer, SC_KEY units) or when it was still muted as MUTE MODE left OT (every unit). In OT, `pre` clears the inverted hold byte UNHELD and SHADOW with one clr.w; the plain unit gets the hold as p1_hold. The question came from sambanks/octabam#1013. The units equal the author's references (plain 996 B at 0x400d7400, was 970; SC_KEY 1106 B at 0x400d6e54, was 1100).",
     "The stock guard digests are 0.1.0's; no hook site changed."
   ],
   "status": "Listed; author update. Hardware: see TESTING.md.",
   "authorPin": {
     "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
-    "revision": "826d23e16334285edee9c073426bfe76fcca463c"
+    "revision": "bb9beada9248fdae13bee32684a7f2564e586f6c"
   }
 }
