@@ -3,7 +3,7 @@
 """Build a machine's Modwerk base from its source with Elekloader's SDK and check it against its binding.
 
     npm run machine:base -- analog-rytm-mkii --stock /private/Analog-Rytm_MKII_OS1.74.syx
-    npm run machine:base -- analog-rytm-mkii --stock ... --out /private/NEW-DIR   # keep the .elemod
+    npm run machine:base -- analog-rytm-mkii --stock ... --out /private/NEW-DIR   # keep each .elemod
     npm run machine:base -- analog-rytm-mkii --stock ... --write                  # record a new identity
 
 sdk/machines/<id>/elekloader/base.json names the core folder beside it (mod.json and its sources), the SDK
@@ -16,6 +16,9 @@ temporary tree outside Git and checked against the upstream release it started f
 the fields base.json lists under reference.keeps. It is identified by the SHA-256 of its package, recorded
 in sdk/machines/<id>/base-binding.json; without --write a different identity fails. The stock OS is read where it
 lies and never copied into the repository.
+base.json's variants name the layouts the base comes in, the first the default: a variant with "add": false is the
+imported recipe alone, so a build that needs none of add's parts does not pay for them. Each variant is built and
+checked the same way, and the binding records every variant's identity under variants, the default's as identity.
 """
 import argparse
 import hashlib
@@ -124,10 +127,16 @@ def stock_sites(sites, stock):
     return resolved
 
 
-def stage(machine, config, root, sites=None):
+def variants(config):
+    """[(name, with add)] in base.json's order, the default first; a base without variants is one layout with add."""
+    return [(name, bool(variant['add'])) for name, variant in config.get('variants', {'base': {'add': True}}).items()]
+
+
+def stage(machine, config, root, sites=None, add=True):
     """The core folder and its sibling sources as mod.json expects them, with the SDK headers beside mod.json
     (the SDK compiles with -I on the mod's own folder first), and base.json's additions merged into the staged
-    mod.json, so the imported files stay exact. Without `sites` (no stock OS at hand) the sites are left out."""
+    mod.json, so the imported files stay exact. Without `sites` (no stock OS at hand) the sites are left out;
+    without `add` (a variant that leaves them out) the imported recipe is staged alone."""
     source = APP / 'sdk/machines' / machine / 'elekloader'
     mods = root / 'mods'
     for item in source.iterdir():
@@ -136,7 +145,7 @@ def stage(machine, config, root, sites=None):
     core = mods / config['core']
     for item in (APP / config['include']).iterdir():
         shutil.copytree(item, core / item.name)
-    add = dict(config.get('add', {}))
+    add = dict(config.get('add', {})) if add else {}
     if sites is None:
         add.pop('sites', None)
     if add:
@@ -184,33 +193,43 @@ def build(machine, stock, upstream, out):
     from elekloader.sdk import build as sdk
     os.environ['ELEKLOADER_CROSS'] = config['toolchain']['cross']
     sites = stock_sites(config.get('add', {}).get('sites', []), stock)
-    with tempfile.TemporaryDirectory(prefix='modwerk-base-') as work:
-        root = Path(work)
-        core = stage(machine, config, root, sites)
-        try:
-            sdk.build(str(core), str(stock), str(root / 'out'))
-        except sdk.BuildError as error:
-            raise ValueError('The SDK did not build the base: %s' % error)
-        packages = sorted((root / 'out').glob('*.elemod'))
-        if len(packages) != 1:
-            raise ValueError('The SDK wrote %d packages, not one.' % len(packages))
-        data = packages[0].read_bytes()
+    built = []
+    if out:
+        out.mkdir(parents=True)
+    for name, add in variants(config):
+        with tempfile.TemporaryDirectory(prefix='modwerk-base-') as work:
+            root = Path(work)
+            core = stage(machine, config, root, sites, add)
+            try:
+                sdk.build(str(core), str(stock), str(root / 'out'))
+            except sdk.BuildError as error:
+                raise ValueError('The SDK did not build the base (%s): %s' % (name, error))
+            packages = sorted((root / 'out').glob('*.elemod'))
+            if len(packages) != 1:
+                raise ValueError('The SDK wrote %d packages, not one.' % len(packages))
+            data = packages[0].read_bytes()
+        package = json.loads(data)
+        missing = keeps(package, json.loads(reference_bytes), reference['keeps'])
+        if missing:
+            raise ValueError('The base (%s) no longer keeps all of %s in %s, as base.json says it must.'
+                             % (name, reference['file'], ', '.join(missing)))
         if out:
-            out.mkdir(parents=True)
-            shutil.copyfile(packages[0], out / packages[0].name)
-    package = json.loads(data)
-    missing = keeps(package, json.loads(reference_bytes), reference['keeps'])
-    if missing:
-        raise ValueError('The base no longer keeps all of %s in %s, as base.json says it must.'
-                         % (reference['file'], ', '.join(missing)))
-    return {
+            # the name the site's catalog serves it under: one file per variant, told apart by its identity
+            (out / ('modwerk-base-%s-%s.elemod' % (machine, sha(data)[:8]))).write_bytes(data)
+        built.append((name, sha(data), packages[0].name, package))
+    _, identity, file, package = built[0]
+    binding = {
         'schema': 1,
-        'identity': sha(data),
-        'package': packages[0].name,
+        'identity': identity,
+        'package': file,
         'sections': sizes(package),
         'sites': len(package['sites']),
         'built': {'kit': kit, 'toolchain': config['toolchain'], 'stock': stock_sha(machine, config['os'])},
-    }, sizes(json.loads(reference_bytes))
+    }
+    if 'variants' in config:
+        binding['variants'] = {name: identity for name, identity, _, _ in built}
+    return binding, sizes(json.loads(reference_bytes)), [(name, identity, sizes(package), len(package['sites']))
+                                                          for name, identity, _, package in built]
 
 
 def main():
@@ -218,26 +237,26 @@ def main():
     parser.add_argument('machine', help='the machine id, as in sdk/machines/')
     parser.add_argument('--stock', type=Path, required=True, help='your original stock OS file')
     parser.add_argument('--upstream', type=Path, default=DEFAULT_UPSTREAM, help='the kit-pinned Elekloader checkout')
-    parser.add_argument('--out', type=Path, help='a new folder outside Git to keep the built .elemod in')
+    parser.add_argument('--out', type=Path, help='a new folder outside Git to keep each built .elemod in')
     parser.add_argument('--write', action='store_true', help='record the built identity in base-binding.json')
     args = parser.parse_args()
     binding_path = APP / 'sdk/machines' / args.machine / 'base-binding.json'
     if args.out and (args.out.exists() or inside_git(args.out)):
         parser.error('--out must be a new folder outside every Git work tree: %s' % args.out)
     try:
-        binding, reference = build(args.machine, args.stock.expanduser().resolve(), args.upstream.expanduser().resolve(),
+        binding, reference, layouts = build(args.machine, args.stock.expanduser().resolve(), args.upstream.expanduser().resolve(),
                                    args.out.expanduser().resolve() if args.out else None)
     except (ValueError, OSError, KeyError) as error:
         parser.error(str(error))
-    print('%s base %s: %s' % (args.machine, binding['package'], binding['identity']))
-    print('  sections %s, %d sites (the release it started from: %s)'
-          % (binding['sections'], binding['sites'], reference))
+    for name, identity, sections, sites in layouts:
+        print('%s base %s (%s): %s' % (args.machine, binding['package'], name, identity))
+        print('  sections %s, %d sites (the release it started from: %s)' % (sections, sites, reference))
     if args.write:
         binding_path.write_text(json.dumps(binding, indent=2) + '\n')
         print('Recorded in ' + str(binding_path.relative_to(APP)))
         return
     recorded = json.loads(binding_path.read_text()) if binding_path.exists() else {}
-    if recorded.get('identity') != binding['identity']:
+    if recorded.get('identity') != binding['identity'] or recorded.get('variants') != binding.get('variants'):
         sys.exit('This build differs from %s (%s). Rebuild with the reviewed toolchain, or record a deliberate '
                  'change with --write.' % (binding_path.relative_to(APP), recorded.get('identity', 'none')))
     print('Matches ' + str(binding_path.relative_to(APP)))
