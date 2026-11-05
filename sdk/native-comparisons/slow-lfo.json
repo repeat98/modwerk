@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "moduleId": "slow-lfo",
   "moduleVersion": "0.1.0-experimental",
-  "moduleSourceSha256": "a5a4e723939077548365eb227964a7832f17d45d1d7ebdd6242158e07bdb5d90",
+  "moduleSourceSha256": "bbd906ca9eaa1b07e349c8639655232761dc14fe4b696b4b08087d36e7289684",
   "revision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
   "originalOsSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
   "pool": [
@@ -1524,8 +1524,8 @@
       },
       "native": {
         "bytes": 1112944,
-        "osSha256": "c5667ccfa915b175dcb0583d8dc93e411c1e9179ee4b3d2af987b8f0d1397080",
-        "maskedOsSha256": "4a806a217271c3e609c4a134a972723245d074c02803c54dfb7b151a46a53111"
+        "osSha256": "e0c152df7b034ef606f74a49f3144d9005592470aa9a97cb30c9b318e3538833",
+        "maskedOsSha256": "9ca8cc673324bb7933dc6aed78825081337ce8d38b46afe8f685cfe9a16bdf68"
       },
       "result": "masked"
     },
@@ -1552,8 +1552,8 @@
       },
       "native": {
         "bytes": 1112944,
-        "osSha256": "ad8cddb5a5bb0be40ef785e18753344394ae8a155c987de620f8480f858cbaf8",
-        "maskedOsSha256": "5de9c8ba403d4f5f4178c52586e159d64cba5fd1e91b94537605ae42c9d9175d"
+        "osSha256": "fa2056b9c9f73e54a677f4b9179d293e0776ae061d60c667a3ec02c9cfe2189e",
+        "maskedOsSha256": "47bf6a6a52a4c7b6b43a94cf6d7096649bb82a0cb8bc2c26eb196f64d079aa5f"
       },
       "result": "masked"
     },
