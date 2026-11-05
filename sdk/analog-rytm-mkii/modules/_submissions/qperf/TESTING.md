@@ -1,6 +1,6 @@
 # QPERF testing
 
-Nothing here proves reboot persistence or the QPER knob itself. Hardware results below are the author's, each on the build named. QC13 is the 0.1.0 code; 0.2.0-experimental (the performance lane) has run only in rytm-emu, on QL02 and QL05 below. The code here is QL07 below. QL06 (sha256 21fb67304cf99fed7ea792376e7d904e276bb65cb366b4a54c069d88e16d9e40) added PerformanceEditView, the FX track's PERF view, back to the held-pad check.
+Nothing here proves reboot persistence or the QPER knob itself. Hardware results below are the author's, each on the build named. QC13 is the 0.1.0 code; 0.2.0-experimental (the performance lane) has run only in rytm-emu, on QL02 and QL05 below. The code here is QL09 below. QL06 (sha256 21fb67304cf99fed7ea792376e7d904e276bb65cb366b4a54c069d88e16d9e40) added PerformanceEditView, the FX track's PERF view, back to the held-pad check.
 
 ## Hardware
 
@@ -247,6 +247,16 @@ Build QL07 (sha256 cb589aa0ecba7cf9fc43fff2b4493e5083ee5757ed60b7ca40d2fef882e23
 | BD moves on steps 10 and 13, LIVE RECORDING off | Replayed on master steps 10, 26, 42, 58 and 13, 29, 45, 61: every 16 steps, on BD's step 10 and 13 |
 | QPER + YES | Tracks 5 and 9 (16 steps) and track 7 (64 steps) moved on steps 10 and 13 of every 16 and came back after |
 | The knob's wobble | Not tested: rytm-emu has no pot input |
+
+Build QL09 (sha256 a861699f3b70a7aa009576e9e8371fe00a74b2805b016b203e4f0f99e947ebe0): the lane loops on the master length again (64 for INF or longer), as the author chose; QPER + YES lengthens tracks shorter than the lane and rewrites their loop-counting conditions; the QPER knob starts a turn only past 2 steps from rest, then counts every value until it stops. rytm-emu, same setup, master length poked to 32 (pattern + 0x14eb3):
+
+| Check | Result |
+| --- | --- |
+| Master length 32, 18-step track 10 | Every track's step went to 0 when the master step wrapped, track 10 from its step 13. Its loop count rose at its step 18 and not at the wrap |
+| BD moves on steps 10 and 20, QPER + YES | PERF MOVES APPLIED. Tracks 2, 5 and 9 (16 steps) and 10 (18) became 32 steps; tracks 7 (64) and the rest kept theirs. The locked words of tracks 5, 7, 9 and 10 moved on steps 10 and 20 of every 32-step cycle |
+| Track 2's conditions (5:5 on 11, NEI on 12, 6:6 on 7, 13, 14, 15) | 11 became 3:5 and its copy 27 5:5; the 6:6 trigs lost their trig on steps 7 and 13 to 15 and became 3:3 on 23 and 29 to 31; NEI stayed; steps 4 and 5 were copied to 20 and 21 |
+| Track 5 (4:4 on 5, 3:3 on 10) | 5 lost its trig and 21 became 2:2; 10 became 2:3 and 26 3:3 |
+| The knob's turn gate | Not tested: rytm-emu has no pot input |
 
 An earlier run with pressure bytes and no held pad recorded only the 0.1 s after each byte, as designed: a pad counts as moving while it is held or its amount changes.
 

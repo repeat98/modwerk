@@ -149,6 +149,10 @@ int qperf_pot;                      // the QPER knob + 1, 0 until it first moves
 
 // ---- The lane -------------------------------------------------------------
 
+// The lane's longest loop. A choice, not a stock limit: 64 is the longest a
+// track can be, so a baked lane always fits one track; it also bounds the RAM
+// (12 x 64 x 8 points). A master length above 64 (up to 1024) loops the lane
+// every 64 steps inside it. To revisit, raise this and the bake's lengthening.
 #define STEPS 64
 #define POINTS 8                        // a step's points
 #define LANE (STEPS * POINTS)
@@ -172,6 +176,18 @@ int qperf_pot;                      // the QPER knob + 1, 0 until it first moves
 #define ID_MIN 8                        // id table row: range, in the words' units
 #define ID_MAX 12
 #define ID_ROW 52
+#define TRACK_INDEX 64                  // pattern track + 64: its index
+#define VT_NOTICE 16                    // a track's or the locks' change notice
+#define STEP_FIELDS 9                   // the byte rows a step keeps, as stock's page copy
+#define COND_ROW 576                    // a step's condition; the track's default at + 713
+#define COND_DEFAULT 713
+#define TRIG_ON 1                       // a step's flag: it has a trig
+#define COND_NONE (-1)
+#define COND_NEVER (-3)                 // ours: the copy never plays, so it has no trig
+#define COND_FIRST 28                   // 1ST, !1ST: the track's first loop or not
+#define COND_NOT_FIRST 29
+#define COND_RATIO_LO 30                // N:M is 28 + M(M-1)/2 + N, 1:2 to 8:8
+#define COND_RATIO_HI 64
 
 #define U8(a) (*(volatile signed char *)(a))
 #define U16(a) (*(volatile unsigned short *)(a))
@@ -184,6 +200,23 @@ typedef int (*step_lock_get_t)(void *track, int step, int word, int unused);
 typedef unsigned char (*step_test_t)(void *track, int step);   // stock sets the low byte only
 typedef void (*step_make_t)(void *track, int step, int on);
 typedef int (*id_word_t)(int id);
+typedef void (*track_length_set_t)(void *track, int steps);
+typedef void (*euclid_refresh_t)(void *track, int on);
+typedef int (*track_test_t)(void *track);
+typedef void (*step_clear_t)(void *track, int step);
+typedef void (*memcpy_t)(void *to, const void *from, unsigned bytes);
+typedef void (*step_cond_set_t)(void *track, int step, int condition);
+typedef void (*step_flag_set_t)(void *track, int step, int mask, int on);
+typedef int (*pad_track_t)(int index);
+typedef void (*notice_t)(void *self, void *info);
+#define TRACK_LENGTH_SET ((track_length_set_t)TRACK_LENGTH_SET_AT)
+#define EUCLID_REFRESH ((euclid_refresh_t)EUCLID_REFRESH_AT)
+#define EUCLID_MODE ((track_test_t)EUCLID_MODE_AT)
+#define STEP_LOCKS_CLEAR ((step_clear_t)STEP_LOCKS_CLEAR_AT)
+#define MEMCPY ((memcpy_t)MEMCPY_AT)
+#define STEP_COND_SET ((step_cond_set_t)STEP_COND_SET_AT)
+#define STEP_FLAG_SET ((step_flag_set_t)STEP_FLAG_SET_AT)
+#define PAD_TRACK ((pad_track_t)PAD_TRACK_AT)
 #define PATTERN_OF ((pattern_of_t)PATTERN_OF_AT)
 #define PATTERN_TRACK ((pattern_track_t)PATTERN_TRACK_AT)
 #define STEP_LOCK_SET ((step_lock_set_t)STEP_LOCK_SET_AT)
@@ -206,14 +239,10 @@ static unsigned driven;                 // performances the lane plays now
 static int last_pos = -1;               // the position last block
 static int rec_pos[PERFS];              // each one's last recorded point, -1 none
 static volatile unsigned pads_held;     // PERF pads held, seen from the tick
-static volatile int lane_track;         // the selected track, seen from the tick
-typedef word_t (*track_selection_t)(word_t project);
-typedef int (*selected_track_t)(word_t selection);
-#define TRACK_SELECTION ((track_selection_t)TRACK_SELECTION_AT)
-#define SELECTED_TRACK ((selected_track_t)SELECTED_TRACK_AT)
-static int pot_anchor;                  // the QPER knob where it last counted as a move
-static unsigned short knob_touched;     // audio blocks left of the knob's last move
-#define POT_DEAD 2                      // knob steps a turn must pass: a resting pot wobbles
+static int pot_rest;                    // the QPER knob where it last came to rest
+static int pot_last, pot_before;        // its last two values, a wobble's pair
+static unsigned short knob_touched;     // audio blocks left of the knob's turn
+#define POT_DEAD 2                      // steps a turn must pass to start: a resting pot wobbles
 #define KEY_PAD_FIRST 0x90              // pads BD .. CB: performances 1 .. 12
 
 // Stock's message for one pot: this replaces the 6-byte lea at its start.
@@ -628,17 +657,11 @@ static int track_speed(word_t pattern, int track)
     return *(volatile unsigned char *)(pattern + (word_t)TRACK_BYTES * track + TRACK_SPEED);
 }
 
-// The lane's loop: the pattern's length, or with a length per track the
-// selected track's, so the moves repeat with what you play. 64 steps at most,
-// and when the pattern has none (INF, shown as 1).
+// The lane's loop: the pattern's length, which with a length per track is the
+// master length. INF (shown as 1) and anything above 64 loop every 64 steps.
 static int lane_steps(word_t pattern)
 {
-    int steps;
-    if (!pattern)
-        return STEPS;
-    if (per_track(pattern))
-        return track_length(pattern, lane_track);
-    steps = (short)U16(pattern + PATTERN_LENGTH);
+    int steps = pattern ? (short)U16(pattern + PATTERN_LENGTH) : 0;
     return steps <= 1 || steps > STEPS ? STEPS : steps;
 }
 
@@ -646,19 +669,9 @@ static int lane_steps(word_t pattern)
 // have gone into it, timed between pulses on the music clock.
 static int position(void)
 {
-    word_t pattern = live_pattern_data();
     int pps = *(const signed char *)(PULSES_TABLE_AT + U8(SEQ_SPEED_AT));
-    int pulse = U8(SEQ_PULSE_AT), steps = lane_steps(pattern), step, pos;
+    int pulse = U8(SEQ_PULSE_AT), step = U16(SEQ_STEP_AT) % lane_steps(live_pattern_data()), pos;
     long elapsed = PULSE_UNITS - (long)(U32(NEXT_PULSE_AT) - U32(MUSIC_CLOCK_AT));
-    if (pattern && per_track(pattern)) {
-        // The selected track's own step. Its place within the step comes from
-        // the pattern's pulses, which only match it at the pattern's speed.
-        step = U8(TRACK_STEPS_AT + lane_track) % steps;
-        if (U8(TRACK_SPEEDS_AT + lane_track) != U8(SEQ_SPEED_AT))
-            pulse = 0, elapsed = 0;
-    } else {
-        step = U16(SEQ_STEP_AT) % steps;
-    }
     if (pps <= 0)
         pps = 6;
     if (pulse < 0 || pulse >= pps)
@@ -729,13 +742,23 @@ void qperf_render(void)
         wipe();
         lane_pattern = pattern;
     }
-    // The QPER knob counts as moving only past a small turn: a resting pot
-    // wobbles a step, and stock writes each wobble to the linked performance.
-    if (qperf_pot && (qperf_pot - pot_anchor > POT_DEAD || pot_anchor - qperf_pot > POT_DEAD)) {
-        pot_anchor = qperf_pot;
-        knob_touched = TOUCH_BLOCKS;
-    } else if (knob_touched) {
-        knob_touched--;
+    // The QPER knob: a resting pot wobbles a step, and stock writes each wobble
+    // to the linked performance. So a turn starts only once the knob has left
+    // its rest by more than POT_DEAD; from then every new value counts, until
+    // it stops. Going back and forth between the same two values is a wobble.
+    {
+        int pot = qperf_pot;
+        if (pot && pot != pot_last) {
+            int travel = pot != pot_before;
+            if (knob_touched ? travel : pot - pot_rest > POT_DEAD || pot_rest - pot > POT_DEAD)
+                knob_touched = TOUCH_BLOCKS;
+            pot_before = pot_last;
+            pot_last = pot;
+        } else if (knob_touched && !--knob_touched) {
+            pot_rest = pot;             // stopped: this is where it rests
+        }
+        if (!knob_touched && !pot_rest)
+            pot_rest = pot;
     }
     // A move anyone else makes: the pads, the QPER knob, MIDI. A pad held still
     // sends nothing new, so a held pad counts as moving.
@@ -826,12 +849,12 @@ static int matrix_rows(const char *data)
 }
 
 // How many steps a track takes the lane on: its own length with a length per
-// track, as long as it runs at the selected track's speed (0: none).
+// track, as long as it runs at the pattern's speed (0: none).
 static int track_steps(word_t pattern, int track, int steps)
 {
     if (!per_track(pattern))
         return steps;
-    if (track_speed(pattern, track) != track_speed(pattern, lane_track))
+    if (track_speed(pattern, track) != *(volatile unsigned char *)(pattern + PATTERN_SPEED))
         return 0;
     return track_length(pattern, track);
 }
@@ -908,6 +931,117 @@ static int bake_target(void *kit, const unsigned char *table, word_t pattern, wo
     return n;
 }
 
+static void *track_data(void *trk)
+{
+    return (void *)(*(word_t (**)(void *))(*(word_t *)trk + LOCKS_DATA))(trk);
+}
+
+static void notice(void *object)
+{
+    (*(notice_t *)(*(word_t *)object + VT_NOTICE))(object, 0);
+}
+
+// One step's contents onto another, as stock's page copy moves a page's.
+static void copy_step(void *trk, char *locks, int from, int to)
+{
+    static const short rows[STEP_FIELDS] = { 128, 192, 256, 320, 576, 384, 448, 512, 640 };
+    unsigned char *d = (unsigned char *)track_data(trk);
+    int i, index = *(int *)((char *)trk + TRACK_INDEX);
+    ((unsigned short *)d)[to] = ((unsigned short *)d)[from];
+    for (i = 0; i < STEP_FIELDS - 1; i++)
+        d[rows[i] + to] = d[rows[i] + from];
+    d[640 + to] = PAD_TRACK(index) == 1 ? d[640 + from] : 0xff;
+    STEP_LOCKS_CLEAR(trk, to);
+    locks += MATRIX_TRACK * index;
+    MEMCPY(locks + MATRIX_STEP * to, locks + MATRIX_STEP * from, MATRIX_STEP);
+}
+
+static int gcd(int a, int b)
+{
+    while (b) {
+        int r = a % b;
+        a = b;
+        b = r;
+    }
+    return a;
+}
+
+// A step's condition for its copy c, when the track went from loops counted k
+// times a cycle to one loop a cycle: stock counts a loop each time a track
+// ends, so copy c of cycle m ran in loop k * m + c. The copy keeps the passes
+// it played on: a new N:M, none, or COND_NEVER.
+static int copy_condition(int condition, int k, int c)
+{
+    int n, m, r, g, mm, kk, inv, m0;
+    if (condition == COND_FIRST)
+        return c ? COND_NEVER : condition;
+    if (condition == COND_NOT_FIRST)
+        return c ? COND_NONE : condition;
+    if (condition < COND_RATIO_LO || condition > COND_RATIO_HI)
+        return condition;
+    for (m = 2; condition > 28 + m * (m + 1) / 2; m++)
+        ;
+    n = condition - 28 - m * (m - 1) / 2;
+    r = ((n - 1 - c) % m + m) % m;
+    g = gcd(k % m ? k % m : m, m);
+    if (r % g)
+        return COND_NEVER;
+    mm = m / g;
+    if (mm == 1)
+        return COND_NONE;
+    kk = (k / g) % mm;
+    for (inv = 0; inv < mm && kk * inv % mm != 1; inv++)
+        ;
+    m0 = r / g * inv % mm;
+    return 28 + mm * (mm - 1) / 2 + m0 + 1;
+}
+
+// Whether a track can take the lane's length exactly: with a master length up
+// to 64 every track restarts with it, so repeating a track's steps out to it
+// plays the same. Without one (INF) or past 64, only a length that divides 64
+// repeats the same way.
+static int can_lengthen(word_t pattern, void *trk, int length, int steps)
+{
+    int master = (short)U16(pattern + PATTERN_LENGTH);
+    signed char fallback = ((signed char *)track_data(trk))[COND_DEFAULT];
+    // A track whose default condition counts loops: a step that takes it
+    // could need "always", which a step can't say over a default.
+    if (fallback == COND_FIRST || fallback == COND_NOT_FIRST
+        || (fallback >= COND_RATIO_LO && fallback <= COND_RATIO_HI))
+        return 0;
+    if (EUCLID_MODE(trk) == 1)
+        return 0;
+    if (master > 1 && master <= STEPS)
+        return 1;
+    return STEPS % length == 0 && (master <= 1 || master % STEPS == 0);
+}
+
+// Repeat a track's steps out to the lane's length and rewrite its conditions
+// so every copy plays on the passes the original did.
+static void lengthen(void *trk, char *locks, int length, int steps)
+{
+    unsigned char *d;
+    int k = steps / length, j;
+    TRACK_LENGTH_SET(trk, steps);
+    EUCLID_REFRESH(trk, 1);
+    for (j = length; j < steps; j++)
+        copy_step(trk, locks, j % length, j);
+    d = (unsigned char *)track_data(trk);
+    for (j = 0; j < steps; j++) {
+        signed char own = (signed char)d[COND_ROW + j];
+        int was = own >= 0 ? own : (signed char)d[COND_DEFAULT];
+        int now = copy_condition(was, k, j / length);
+        if (!(((unsigned short *)d)[j] & TRIG_ON))
+            continue;
+        if (now == COND_NEVER)
+            STEP_FLAG_SET(trk, j, TRIG_ON, 0);
+        else if (now != was)
+            STEP_COND_SET(trk, j, now);
+    }
+    notice(*(void **)((char *)trk + PATTERN_LOCKS));
+    notice(trk);
+}
+
 // QPER + YES with LIVE RECORDING on.
 static void bake_lane(void)
 {
@@ -917,20 +1051,42 @@ static void bake_lane(void)
     word_t steps_pattern = live_pattern_data();
     void *any_track = (void *)PATTERN_TRACK(pattern, 0);
     void *locks = *(void **)((char *)any_track + PATTERN_LOCKS);
-    const char *data;
-    int i, need = 0, wrote = 0, steps;
+    char *data;
+    unsigned tracks = 0, longer = 0, skipped = 0;
+    int i, need = 0, wrote = 0, steps, track;
     if (!lane_used || lane_hidden || !steps_pattern || !locks) {
         show("NOTHING TO APPLY");
         return;
     }
-    data = (const char *)(*(word_t (**)(void *))(*(word_t *)locks + LOCKS_DATA))(locks);
+    data = (char *)(*(word_t (**)(void *))(*(word_t *)locks + LOCKS_DATA))(locks);
     steps = lane_steps(steps_pattern);
+    // Which tracks the moves reach, and with a length per track which of them
+    // must first take the lane's length, or can't and are left out.
+    for (i = 0; i < SLOTS; i++)
+        if (lane_target(table, i))
+            tracks |= 1u << table[SLOT_BYTES * i + 2];
+    if (per_track(steps_pattern))
+        for (track = 0; track <= FX_TRACK; track++) {
+            void *trk = (void *)PATTERN_TRACK(pattern, track);
+            int length = track_length(steps_pattern, track);
+            if (!(tracks >> track & 1))
+                continue;
+            if (track_speed(steps_pattern, track) != *(volatile unsigned char *)(steps_pattern + PATTERN_SPEED))
+                skipped |= 1u << track;
+            else if (length < steps) {
+                if (can_lengthen(steps_pattern, trk, length, steps))
+                    longer |= 1u << track;
+                else
+                    skipped |= 1u << track;
+            }
+        }
+    tracks &= ~skipped;
     // Like stock's own lock writes, a new row needs room in the 71 stock keeps:
     // all of them or none.
     for (i = 0; i < SLOTS; i++) {
         const unsigned char *t = table + SLOT_BYTES * i;
         int id;
-        if (!lane_target(table, i) || row_used(data, t[2], t[3])
+        if (!lane_target(table, i) || !(tracks >> t[2] & 1) || row_used(data, t[2], t[3])
             || !bake_target(kit, table, pattern, steps_pattern, t[2], t[3], steps, 0))
             continue;
         id = param_id((void *)KIT_PARAM_SET(kit, t[2]), t[2], t[3]);
@@ -940,14 +1096,34 @@ static void bake_lane(void)
         show("LOCK MEM FULL!");
         return;
     }
+    for (track = 0; track <= FX_TRACK; track++)
+        if (longer >> track & 1)
+            lengthen((void *)PATTERN_TRACK(pattern, track), data,
+                     track_length(steps_pattern, track), steps);
     for (i = 0; i < SLOTS; i++) {
         const unsigned char *t = table + SLOT_BYTES * i;
-        if (lane_target(table, i))
+        if (lane_target(table, i) && (tracks >> t[2] & 1))
             wrote += bake_target(kit, table, pattern, steps_pattern, t[2], t[3], steps, 1);
     }
     release_driven();
     wipe();
-    show(wrote ? "PERF MOVES APPLIED" : "NOTHING TO APPLY");
+    if (skipped) {
+        // Moves written where they fit: say how many tracks could not take them.
+        const char *tail;
+        char *out = message;
+        int n = 0;
+        for (track = 0; track <= FX_TRACK; track++)
+            n += skipped >> track & 1;
+        if (n > 9)
+            *out++ = (char)('0' + n / 10);
+        *out++ = (char)('0' + n % 10);
+        for (tail = n == 1 ? " TRACK LEFT OUT" : " TRACKS LEFT OUT"; *tail; )
+            *out++ = *tail++;
+        *out = 0;
+        show(message);
+    } else {
+        show(wrote ? "PERF MOVES APPLIED" : "NOTHING TO APPLY");
+    }
 }
 
 // QPER + NO: empty the lane, and bring it back on the next press.
@@ -1055,10 +1231,6 @@ void qperf_tick(void *ctrl)
     struct { void *object; void *counts; } shared;
     void *popup;
     (void)ctrl;
-    if (ready) {
-        int track = SELECTED_TRACK(TRACK_SELECTION(PROJECT_SINGLETON()));
-        lane_track = track < 0 ? 0 : track > FX_TRACK ? FX_TRACK : track;
-    }
     if (views) {
         unsigned pads = 0;
         word_t top = held ? 0 : top_view();

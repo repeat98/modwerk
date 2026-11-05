@@ -51,10 +51,6 @@
 #define SEQ_STEP_AT 0x405c8c94          // u16, the pattern's step
 #define SEQ_PULSE_AT 0x405c8c96         // s8, pulse within the step
 #define SEQ_SPEED_AT 0x405c8d24         // s8, index into the pulses table
-#define TRACK_STEPS_AT 0x405c8cd0       // s8 a track, its own step
-#define TRACK_SPEEDS_AT 0x405c8d25      // s8 a track, its speed index
-#define TRACK_SELECTION_AT 0x400ae492   // project -> the track selection
-#define SELECTED_TRACK_AT 0x400b693e    // track selection -> the selected track, 12 the FX track
 #define PULSES_TABLE_AT 0x401db6f8      // pulses a step: 3, 4, 6, 8, 12, 24, 48
 #define NEXT_PULSE_AT 0x405c8b20        // u32, the clock of the next pulse
 #define MUSIC_CLOCK_AT 0x8000fe54       // u32, 900000 a pulse
@@ -70,3 +66,11 @@
 #define STEP_MAKE_LOCK_TRIG_AT 0x400c2698
 #define ID_FINE_AT 0x400071a6
 #define ID_TABLE_AT 0x401bfbc8
+#define TRACK_LENGTH_SET_AT 0x400c0ba2  // (track, steps): SCALE's per-track length, with its notice
+#define EUCLID_REFRESH_AT 0x400c1a04    // (track, 1): after a length change
+#define EUCLID_MODE_AT 0x400c0e6e
+#define STEP_LOCKS_CLEAR_AT 0x400c0624  // (track, step)
+#define MEMCPY_AT 0x40098bc0            // (to, from, bytes)
+#define STEP_COND_SET_AT 0x400c03d6     // (track, step, condition), with its notice
+#define STEP_FLAG_SET_AT 0x400c2482     // (track, step, mask, on)
+#define PAD_TRACK_AT 0x400aefa2         // (track index): 1 for a pad track
