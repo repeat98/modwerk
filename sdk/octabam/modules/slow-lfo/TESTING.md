@@ -61,7 +61,27 @@ Not run on a unit. Values 1X..64X run stock's displaced instructions unchanged. 
 
 ## Performance
 
-From the emulator: +216 ColdFire instructions a frame (362.8 µs) with 24 audio LFOs; about 9 per LFO. MIDI LFOs add at most as much again while MIDI tracks run. No DSP code. Worst case, counted from `unit.s`: 16 instructions an LFO a frame at MULT 1/2X..1/8X (9 at the rate step, 7 at the MULT load, detour jumps included; stock runs 4 there), 768 for all 24 audio and 24 MIDI LFOs, against a frame of 95,778 cycles at 264 MHz. The MULT label code runs only while the page draws.
+From the emulator: +216 ColdFire instructions a frame (362.8 µs) with 24 audio LFOs; about 9 per LFO. MIDI LFOs add at most as much again while MIDI tracks run (not measured: the project plays no MIDI track). No DSP code. Worst case, counted from `unit.s`: 16 instructions an LFO a frame at MULT 1/2X..1/8X (9 at the rate step, 7 at the MULT load, detour jumps included; stock runs 4 there), 768 for all 24 audio and 24 MIDI LFOs, against a frame of 95,778 cycles at 264 MHz. The MULT label code runs only while the page draws.
+
+### Load and stress (ot_emu, 5 November 2026)
+
+[evidence/performance.json](evidence/performance.json) has the full method. Emulator, not hardware: `ot_emu --mkii --dsp --frame`, 62 s playing on `verify.py`'s staged project, the octabam test remix `slow-lfo` built with `make bus` against the same remix without the module, all 24 audio LFOs poked to 1/8X on the module image, one MIDI message a millisecond plus clock at 250 BPM and four STOP/START pairs on both. PC watches on the frame handler (`0x4000aad4` to `0x4000d9a6`) and the MIDI handlers.
+
+| | stock effects | with Slow LFO |
+|---|---|---|
+| longest frame interrupt | 25,388 instructions (144.3 µs in the port's time) | 25,574 (145.3 µs) |
+| idle | 53.46 % | 53.14 % |
+| instructions a frame, average | | +207 |
+| MIDI handler entries (note on / off / CC / clock) | 20,667 / 20,666 / 20,667 / 6,200 | 20,667 / 20,666 / 20,668 / 6,200 |
+
+Sent: 20,667 / 20,666 / 20,667 / 6,200. The one extra CC entry on the module image is unexplained (the module touches no MIDI path). `npm run perf:audit -- check sdk/octabam/modules/slow-lfo/evidence/performance.json`:
+
+```
+✓ record          coldfire record for slow-lfo@0.1.0-experimental
+✓ cycles          worst event 207 of 95778 cycles (0%)
+✓ stock benchmark under the same flood the longest frame interrupt grows by 1.0 us (0.3% of the 362.8 us frame) and idle time falls by 0.3 points vs stock
+✓ stress          1000 messages/s at 250 BPM for 62 s, no stuck note, no hang, 0 dropped
+```
 
 ## Resources
 
