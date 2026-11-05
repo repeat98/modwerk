@@ -15,7 +15,7 @@
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "0e2e9bc48f23a448140e536b5819c463f15f6a00",
+        "commit": "1607e84749e5be928b0d6a427173fd315cb51c45",
         "path": "sdk/imports/packages/live-rec-retrig-fix/live-rec-retrig-fix-0.2.0-experimental-os1.74.elemod"
       },
       "title": "Live Rec Retrig Fix",

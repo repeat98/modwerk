@@ -3,7 +3,7 @@
  "id": "live-rec-retrig-fix",
  "version": "0.2.0-experimental",
  "title": "Live Rec Retrig Fix",
- "description": "LIVE RECORDING records every pad retrig hit as a real trig, with the velocity and timing you played.",
+ "description": "LIVE RECORDING records every pad retrig hit as a real trig, with the velocity and timing you played. While the sequencer plays, every pad retrig falls on its swung grid (Retrig Grid).",
  "category": "machines",
  "author": "npp1993",
  "license": "GPL-3.0-or-later",
