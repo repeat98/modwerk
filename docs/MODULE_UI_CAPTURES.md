@@ -105,16 +105,16 @@ record the source-file hashes and publication-version binding. Do not relabel
 old UI after a native source or control change. The reviewer checks this
 binding as well as the current access steps.
 
-An automatic USB module with no OT controls or dedicated OT page must explain
-that fact in `access.noUiReason`, keep `screenshots` empty and document its
-actual host/device access steps. Owner review verifies this narrow exception;
-do not invent a menu or use unrelated stock pages as evidence.
-
-A module that only changes how stock controls behave, with no page and
-nothing drawn (Butter Fingers drops knob turns while a lock is edited), is not
-covered by `access.noUiReason`, which the contract allows only for automatic
-USB modules. Until the owner sets a rule, keep its `screenshots` empty in the
-draft, describe the gesture in `access.steps`, and say so in the pull request.
+A module that changes stock behaviour and draws nothing of its own (an
+automatic USB output, a tempo LED that turns green on the pattern's 1, knob
+turns dropped while a lock is edited) gives `access.noUiReason` in place of
+screenshots, whatever its location: one sentence naming what it changes
+instead. It keeps both `screenshots` lists empty, describes the gestures or
+host steps in `access.steps`, and still has its README tutorial of at least
+three steps. The contract accepts the reason only with no `controls`, no
+`effectId` and no `screen:` claim in `compatibility.uiClaims`; key claims are
+fine. Owner review checks that it really draws nothing; do not invent a menu
+or use unrelated stock pages, or a photo of an LED, as evidence.
 
 ## Headless capture workflow
 
