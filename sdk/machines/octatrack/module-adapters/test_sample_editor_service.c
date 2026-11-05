@@ -37,7 +37,7 @@ static unsigned publish(void *context,const struct mw_sample_capture *before,con
     }
     return publish_reply;
 }
-static const struct mw_sample_backend backend={&editor,lock,unlock,available,published,capture,publish};
+static const struct mw_sample_backend backend={&editor,lock,unlock,available,published,capture,publish,0};
 static void reset(uint32_t kind,uint32_t slot,uint32_t count)
 {
     uint8_t *p=(uint8_t *)&editor;
