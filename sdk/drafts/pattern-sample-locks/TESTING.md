@@ -10,6 +10,8 @@ Portable planner, UI and production native-writer sanitizer tests pass. The full
 
 Retired reports and obsolete captures are consolidated in [PROTOTYPE_HISTORY.md](PROTOTYPE_HISTORY.md); they do not qualify this version.
 
+The current public-wrapper package build/check and private USB integration fixture are recorded in the [production package and USB fixture report](evidence/production-package-usb-integration-20261105.md). That report binds the host result to its exact source commit and tested upstream base; it is software integration evidence, not physical-hardware or release qualification.
+
 Offline stack, memory, callback and instruction-count analyses below use the private reconstruction for configuration SHA `9680e9ac861ff9313ce4f7a710a37ad2aa8e9b50b2cf8c043dafa2a0b78cdffc` (`MAIN.raw` SHA-256 `877a8d6884cb05508a59b312a0e95498c33ce4a1e2f1fe452423b0edc74fb69e`). The 3 November author-reported hardware trial gives only the IDENTIFY configuration SHA; no physical MAIN hash is available, so those offline analyses do not prove equality with the device image.
 
 The [clock, timer, SDRAM and arbitration inventory](evidence/clock-memory-static-facts-20261105.md) reviews startup configuration facts for that exact candidate and private reconstruction. The reported physical IDENTIFY matched the canonical configuration hash, but no physical MAIN hash was recorded; the inventory therefore proves neither device-image equality nor live timing state, a cycle/latency bound or release qualification.

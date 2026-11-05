@@ -73,8 +73,8 @@ docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:$PWD" -w "$PWD"
 | Ubuntu 24.04 m68k-linux-gnu GCC 13.3.0 | 10,320 | 94 | sources, sites, interface |
 | Debian 13 m68k-linux-gnu GCC 14.2.0 | 10,168 | 93 | sources, sites, interface |
 
-The send-bus variant (`0c92aa45`) has 27,007 bytes of `.run` and 68,164 of `.bss`, 65,536 of them the effects' work
-area, and 62 of the kit's 64 storage bits: about 36 KB of the 128 KiB mod area stays for modules, against about
+The send-bus variant (`0cdf0343`) has 28,358 bytes of `.run` and 35,476 of `.bss`, 32,768 of them the effects' work
+area, and 62 of the kit's 64 storage bits: about 67 KB of the 128 KiB mod area stays for modules, against about
 119 KB on plain.
 
 The release records its sources but not its compiler, and none of these reproduces its compiled code byte for byte.

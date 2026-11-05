@@ -201,7 +201,7 @@ candidate instructions. This assumes a valid supported placement, the exact
 package and loader behavior, and no live patch changing counted code; it does
 not imply identical data-dependent branch outcomes or memory timing.
 The relocation-type check is reproducible with
-`/opt/homebrew/bin/m68k-elf-readelf -r /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/stack-audit-20261104/translation.o`:
+`/opt/homebrew/bin/m68k-elf-readelf -r ~/.cache/psl-source-bound-profile-20261103/stack-audit-20261104/translation.o`:
 161 `.rela.text` and 6 `.rela.rodata` entries, all `R_68K_32`.
 
 ## Adversarial checks, emulator sanity and reproduction
@@ -237,23 +237,23 @@ No emulator or container was launched for this review.
 
 The private helper and result remain outside Git at:
 
-- `/Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/operation-bound-20261105/audit_candidate_operation.py`
+- `~/.cache/psl-source-bound-profile-20261103/operation-bound-20261105/audit_candidate_operation.py`
   (SHA-256 `f635abe5d62730079759831f47f9a7da09d0964af7e9f0f1fddee0dc1d730f07`)
-- `/Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/operation-bound-20261105/operation-bound-result.json`
+- `~/.cache/psl-source-bound-profile-20261103/operation-bound-20261105/operation-bound-result.json`
   (SHA-256 `d766533583d356880973075fda3f80a44ee8f4c9e7cbe81335265e075febb3c0`)
 
 Re-run the source-bound checks against the already cached exact candidate inputs
 with:
 
 ```sh
-python3 /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/operation-bound-20261105/audit_candidate_operation.py > /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/operation-bound-20261105/operation-bound-result.json
+python3 "$HOME/.cache/psl-source-bound-profile-20261103/operation-bound-20261105/audit_candidate_operation.py" > "$HOME/.cache/psl-source-bound-profile-20261103/operation-bound-20261105/operation-bound-result.json"
 ```
 
 No new container or emulator was launched. The source fingerprint can be
 recomputed with Node 24 from the repository root:
 
 ```sh
-/Users/weiyun.wang/.nvm/versions/node/v24.22.1/bin/node --input-type=module - <<'JS'
+"$HOME/.nvm/versions/node/v24.22.1/bin/node" --input-type=module - <<'JS'
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { parseModuleDocument } from './src/catalog/module-contract.ts'

@@ -101,8 +101,8 @@ run completed without hitting the 10,000-block budget. With those hash-verified
 cache inputs present:
 
 ```sh
-CACHE=/Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/stock-bound-20261104
-BASE=/Users/weiyun.wang/.cache/psl-current-base-workspace/current
+CACHE="$HOME/.cache/psl-source-bound-profile-20261103/stock-bound-20261104"
+BASE="$HOME/.cache/psl-current-base-workspace/current"
 docker run --rm --network none --read-only --cap-drop ALL \
   --security-opt no-new-privileges --user "$(id -u):$(id -g)" \
   -e HOME=/tmp --tmpfs /tmp:rw,noexec,nosuid,size=128m \

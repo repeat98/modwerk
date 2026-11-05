@@ -229,7 +229,7 @@ documented code ranges, direct-call encodings, rooted callback paths and finite
 stack arithmetic, while writing only aggregate metadata:
 
 ```sh
-PSL_CACHE=/Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/stock-bound-20261104
+PSL_CACHE="$HOME/.cache/psl-source-bound-profile-20261103/stock-bound-20261104"
 decode_private_range() {
   docker run --rm --network none --read-only --cap-drop ALL \
     --security-opt no-new-privileges --user "$(id -u):$(id -g)" \
@@ -249,10 +249,10 @@ decode_private_range callback-target-0x400562d4-followup.private.dis 0x400562d4 
 decode_private_range callback-target-0x40048f18-extended.private.dis 0x40048f18 0x40049040
 decode_private_range callback-target-0x40049738.private.dis 0x40049738 0x40049840
 
-python3 /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/stock-bound-20261104/popup_callback_audit.private.py --self-test
-python3 /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/stock-bound-20261104/popup_callback_audit.private.py
-python3 -B /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/stock-bound-20261104/popup_boundary_callee_audit.private.py --self-test
-python3 -B /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/stock-bound-20261104/popup_boundary_callee_audit.private.py
+python3 "$HOME/.cache/psl-source-bound-profile-20261103/stock-bound-20261104/popup_callback_audit.private.py" --self-test
+python3 "$HOME/.cache/psl-source-bound-profile-20261103/stock-bound-20261104/popup_callback_audit.private.py"
+python3 -B "$HOME/.cache/psl-source-bound-profile-20261103/stock-bound-20261104/popup_boundary_callee_audit.private.py" --self-test
+python3 -B "$HOME/.cache/psl-source-bound-profile-20261103/stock-bound-20261104/popup_boundary_callee_audit.private.py"
 ```
 
 Both self-checks passed; the follow-up synthetic case verifies that a rooted
