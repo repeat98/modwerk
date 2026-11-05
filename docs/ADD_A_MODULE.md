@@ -131,8 +131,8 @@ Its folder, `sdk/<platform>/modules/<id>/`, holds:
 - `README.md` with the sections Overview, Controls, Usage, Compatibility and limitations, Tests and measurements, Authorship and licences, and Screens and audio. It also has a tutorial of at least three steps (set it up and select it, use one control, hear the result and stop or bypass it), which must match the manifest;
 - `TESTING.md` with the commands, the exact source revision and every result;
 - `LICENSE` with every author's terms;
-- `media/` with real black-and-white screenshots of where the module is selected and of its control pages, and their provenance in `capture.json`;
-- an original 320×192 SVG thumbnail: `presentation/thumbnail.svg` on the Octatrack, `media/thumbnail.svg` on Digitakt and Digitone.
+- `media/` with real black-and-white screenshots of where the module is selected and of its control pages, and their provenance in `capture.json`. A module that draws nothing of its own gives `access.noUiReason` instead ([rule](MODULE_UI_CAPTURES.md#manifest-contract));
+- an original 320×192 SVG thumbnail: `presentation/thumbnail.svg` on the Octatrack, `media/thumbnail.svg` on the elemod machines, where `npm run pr:ready` refuses the template's placeholder.
 
 The checks reject missing sections, coloured screenshots and a version that did not increase. They cannot tell whether the documentation is true; the owner reviews first releases and registered authors verify their scoped updates.
 
@@ -231,12 +231,17 @@ the package is rebuilt. The standalone and table recipes in
 asset JSON, the remix tools, `module_packages.py`, the Elekloader checkout),
 so any import of rebuilt packages can stop the full run on them. Re-pin only
 the asset hashes that moved; `--check` must then call every package identical.
+`sdk/runtime/loader/build.py` and `module_packages.py` are base inputs too
+(`src/engine/assets/octatrack-base-sources.json`): a change to how packages are
+published goes in the host wrapper `scripts/octatrack-module-packages.py`.
 In the toolchain image set `ELEKLOADER_DSP_ASM`; restore old versions it deletes.
 
 A newly developed module selectable in beta module sets must have a working
 USB path, not a card-only fallback; existing card-only modules need a reviewed
 migration before USB rollout. An unavoidable compatibility limit needs its
-actual resource/ownership reason and explicit owner review. This does not
+actual resource/ownership reason and explicit owner review; the owner's
+card-only OK for one exact version goes in `sdk/usb-card-only.json` with its
+reason and the issue that ends it, and `module:doctor` accepts only that version. This does not
 assert that pending loader ABI work (ABI 7), shared machine registration,
 table support or hooked DSP work is released: those adapters and new bases
 remain private staging until their checks and qualification are complete. See
@@ -284,6 +289,8 @@ the [loader compatibility guide](../sdk/machines/octatrack/elekloader/README.md#
 ## Digitakt and Digitone
 
 Firmware for these machines is built by elekloader's builder, vendored unchanged and run in the browser ([vendor/elekloader](../vendor/elekloader/README.md)). It decides which mods combine, so there is no comparison with a native builder to run.
+
+Modwerk imports released `.elemod` files; it does not package mods for elekloader. To list a mod in elekloader's shop, including one Modwerk's library does not take, follow elekloader's [shop guide](https://github.com/elekloader/elekloader/blob/main/docs/SHOP.md) ([elekloader mods and cores](../CONTRIBUTING.md#elekloader-mods-and-cores)).
 
 **Porting an elekloader mod:**
 

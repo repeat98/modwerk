@@ -1,9 +1,9 @@
 {
  "elemod": 2,
  "id": "silent-pad-trig",
- "version": "0.6.0-experimental",
+ "version": "0.7.0-experimental",
  "title": "Silent Pad+Trig Settings",
- "description": "Three checkboxes: pads and TRIG keys select silently outside recording; pads stay silent in LIVE RECORDING; MUTE ALL SOUND keeps a muted track silent from pads, TRIG keys and MIDI, while trigs still record.",
+ "description": "Three checkboxes: pads and TRIG keys select silently outside recording; pads and TRIG keys stay silent in LIVE RECORDING; MUTE ALL SOUND keeps a muted track silent from pads, TRIG keys and MIDI, while trigs still record.",
  "category": "system",
  "author": "npp1993",
  "license": "GPL-2.0-only",
@@ -18,11 +18,11 @@
  "sections": {
   ".run": {
    "align": 4,
-   "len": 1172,
+   "len": 1196,
    "parts": [
     [
      "hex",
-     "206f0004222f0008610000604a80671a487800804eb940081c28588f4a80660a700123c0000000004e7542b9000000004e56ffc0707f4ef9400c77344aba0450670470014e754ef9400b606c487800804e934a80670e204a72016100000e0a80000000014ef9400c79562f022f0a244824012f2a008c4eb9400363bc588f4a0066282f2a008c4eb940036370588f4a00670c4a826714227c000000006006227c00000000610000ae60027000245f241f4e752202613a4a8067024e754ef94011e1b4222f000461284a8066064ef9400850f44e75220361184a80660e2f034eb9400856724ef9400c62764ef9400c629820398000ed9c670846800880000c600620398000ed980300670a227c000000006000004270004e7522026100ffd44a80660c2f042f022f0a4ef9400c6fb64ef9400c6fe4222f002c6100ffb64a80660e2f024eb9400b53a24ef9400c58f84ef9400c593a4ab9419f28a867222f09610000a461000076225f4a806b122f0042a72f094eb9000000004fef000c4e7570004e754feffff848d70404240024494ab9419f28a8673a6100006c6100003e4a806b2e2f022f0042a72f0a4eb9000000004fef00104eb94017fa0a0680000000ec204042a72f082050206800504e90508f4cd704044fef00084e7520080480413192ff651872004a8067160480000000e4650a52810c81000000046dea70ff4e7520014e754eb94017fa0a0680000000ec20402f082050206800344e90588f20404e754feffff048d7041c41fa010828086100002c41fa010e28086100002241fa01142808610000184cd7041c4fef001042af0048487800014ef9400ec18c4fefffc0204f720f429853816afa2044740024506100008620447410246800046100008e20447420246800086100006e204474302468000c61000076487800544eb940082a40588f240041ef003043ef002045ef0010260f487800084878ffff2f082f092f0a2f032f024eb940072fbc4fef001c2f022f0b4eb9400727f2508f743041f728002f084eb940170b92588f721094816aec4fef00404e75487800014eb940082a40588f223c400ebb3c6016487800044eb940082a40588f2040208b223c400ebb8e41f72804208021410008214a000c4e7500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000043fa00f6600a43fa0100600443fa010d4e56fffc2f02486effff2f0924082f084eb9401bcff04fef000c2002242efff84e5e4e75227c00000000600e227c000000006006227c00000000206f00042f0a2f09205024506100fd987201b3806032227c00000000600e227c000000006006227c00000000222f000c66024e75206f00042f0a2f092050245070004a816b027001225f6100fd88486a00384eb940078580588f245f4e75227c00000000600e227c000000006006227c000000006100fd302200e589eb889081d0b9419f0910206f000c222f001006810000000b226f001442a72f092f012f002f084eb9400716e04fef00144e7553494c454e54205041442b545249470053494c454e5420504144204c495645524543004d55544520414c4c20534f554e4400000000000000"
+     "206f0004610000884a80671a487800804eb940081c28588f4a80660a700123c0000000004e7542b9000000004e56ffc0707f4ef9400c77344aba046e670470014e754ef9400b606c487800804e934a80670c204a610000380a80000000014ef9400c79562f2f00044eb9400363bc588f4a0066182f034eb940071efc588f720cb2806506204a6000000670004e752f0a24482f2a008c4eb9400363bc588f4a0066242f2a008c4eb940036370588f4a006708227c000000006006227c00000000610000ac60027000245f4e752202613a4a8067024e754ef94011e1b4222f000461284a8066064ef9400850f44e75220361184a80660e2f034eb9400856724ef9400c62764ef9400c629820398000ed9c670846800880000c600620398000ed980300670a227c000000006000004270004e7522026100ffd44a80660c2f042f022f0a4ef9400c6fb64ef9400c6fe4222f002c6100ffb64a80660e2f024eb9400b53a24ef9400c58f84ef9400c593a4ab9419f28a867222f09610000a461000076225f4a806b122f0042a72f094eb9000000004fef000c4e7570004e754feffff848d70404240024494ab9419f28a8673a6100006c6100003e4a806b2e2f022f0042a72f0a4eb9000000004fef00104eb94017fa0a0680000000ec204042a72f082050206800504e90508f4cd704044fef00084e7520080480413192ff651872004a8067160480000000e4650a52810c81000000046dea70ff4e7520014e754eb94017fa0a0680000000ec20402f082050206800344e90588f20404e754feffff048d7041c41fa010828086100002c41fa010e28086100002241fa01142808610000184cd7041c4fef001042af0048487800014ef9400ec18c4fefffc0204f720f429853816afa2044740024506100008620447410246800046100008e20447420246800086100006e204474302468000c61000076487800544eb940082a40588f240041ef003043ef002045ef0010260f487800084878ffff2f082f092f0a2f032f024eb940072fbc4fef001c2f022f0b4eb9400727f2508f743041f728002f084eb940170b92588f721094816aec4fef00404e75487800014eb940082a40588f223c400ebb3c6016487800044eb940082a40588f2040208b223c400ebb8e41f72804208021410008214a000c4e7500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000043fa00f6600a43fa0100600443fa010d4e56fffc2f02486effff2f0924082f084eb9401bcff04fef000c2002242efff84e5e4e75227c00000000600e227c000000006006227c00000000206f00042f0a2f09205024506100fd987201b3806032227c00000000600e227c000000006006227c00000000222f000c66024e75206f00042f0a2f092050245070004a816b027001225f6100fd88486a00384eb940078580588f245f4e75227c00000000600e227c000000006006227c000000006100fd302200e589eb889081d0b9419f0910206f000c222f001006810000000b226f001442a72f092f012f002f084eb9400716e04fef00144e7553494c454e54205041442b545249470053494c454e5420502b54204c495645524543004d55544520414c4c20534f554e440000000000"
     ]
    ]
   }
@@ -1152,6 +1152,10 @@
    "abs",
    1074559318
   ],
+  "KEY_ID": [
+   "abs",
+   1074208508
+  ],
   "VIEW_SEQ": [
    "abs",
    140
@@ -1282,151 +1286,151 @@
   ],
   "active": [
    ".run",
-   106
+   142
   ],
   "pl_last": [
    ".run",
-   1166
+   1192
   ],
   "flag_get": [
    ".run",
-   340
+   366
   ],
   "muted": [
    ".run",
-   240
+   266
   ],
   "rec_active": [
    ".run",
-   516
+   542
   ],
   "gslot": [
    ".run",
-   474
+   500
   ],
   "flag_set": [
    ".run",
-   386
+   412
   ],
   "items_main": [
    ".run",
-   820
+   846
   ],
   "item_add": [
    ".run",
-   606
+   632
   ],
   "items_live": [
    ".run",
-   836
+   862
   ],
   "items_mute": [
    ".run",
-   852
+   878
   ],
   "fn_empty": [
    ".run",
-   762
+   788
   ],
   "fn_view": [
    ".run",
-   782
+   808
   ],
   "fn_fill": [
    ".run",
-   804
+   830
   ],
   "lbl_main": [
    ".run",
-   868
+   894
   ],
   "act_main": [
    ".run",
-   920
+   946
   ],
   "drw_main": [
    ".run",
-   1036
+   1062
   ],
   "chg_main": [
    ".run",
-   964
+   990
   ],
   "lbl_live": [
    ".run",
-   874
+   900
   ],
   "act_live": [
    ".run",
-   928
+   954
   ],
   "drw_live": [
    ".run",
-   1044
+   1070
   ],
   "chg_live": [
    ".run",
-   972
+   998
   ],
   "lbl_mute": [
    ".run",
-   880
+   906
   ],
   "act_mute": [
    ".run",
-   936
+   962
   ],
   "drw_mute": [
    ".run",
-   1052
+   1078
   ],
   "chg_mute": [
    ".run",
-   980
+   1006
   ],
   "txt_main": [
    ".run",
-   1116
+   1142
   ],
   "lbl_invoke": [
    ".run",
-   884
+   910
   ],
   "txt_live": [
    ".run",
-   1132
+   1158
   ],
   "txt_mute": [
    ".run",
-   1151
+   1177
   ],
   "act_invoke": [
    ".run",
-   942
+   968
   ],
   "set_redraw": [
    ".run",
-   1014
+   1040
   ],
   "chg_invoke": [
    ".run",
-   986
+   1012
   ],
   "drw_invoke": [
    ".run",
-   1058
+   1084
   ],
   "silent_pad_trig_func_gate": [
    ".run",
-   76
+   72
   ],
   "silent_pad_trig_autotrk": [
    ".run",
-   60
+   56
   ],
   "silent_pad_trig_menu_add": [
    ".run",
-   546
+   572
   ],
   "silent_pad_trig_play_gate": [
    ".run",
@@ -1434,23 +1438,27 @@
   ],
   "silent_pad_trig_hit_gate": [
    ".run",
-   178
+   204
   ],
   "silent_pad_trig_at_chro_gate": [
    ".run",
-   212
+   238
+  ],
+  "silent_pad_trig_func_trig": [
+   ".run",
+   100
   ],
   "silent_pad_trig_at_key_gate": [
    ".run",
-   194
+   220
   ],
   "silent_pad_trig_on_key_gate": [
    ".run",
-   280
+   306
   ],
   "silent_pad_trig_on_chro_gate": [
    ".run",
-   308
+   334
   ]
  },
  "exports": [
@@ -1458,6 +1466,7 @@
   "silent_pad_trig_at_key_gate",
   "silent_pad_trig_autotrk",
   "silent_pad_trig_func_gate",
+  "silent_pad_trig_func_trig",
   "silent_pad_trig_hit_gate",
   "silent_pad_trig_menu_add",
   "silent_pad_trig_on_chro_gate",
@@ -1467,204 +1476,204 @@
  "imports": [
   "core_store_get",
   "core_store_set",
-  "silent_live_rec_on",
   "silent_mute_on",
-  "silent_pad_trig_on"
+  "silent_pad_trig_on",
+  "silent_pt_live_rec_on"
  ],
  "weak": [],
  "relocs": [
   [
    ".run",
-   36,
+   32,
    "abs32",
    "sec:.run",
-   1166
+   1192
   ],
   [
    ".run",
-   44,
+   40,
    "abs32",
    "sec:.run",
-   1166
+   1192
   ],
   [
    ".run",
-   152,
+   180,
    "abs32",
-   "sym:silent_live_rec_on",
+   "sym:silent_pt_live_rec_on",
    0
   ],
   [
    ".run",
-   160,
+   188,
    "abs32",
    "sym:silent_pad_trig_on",
    0
   ],
   [
    ".run",
-   268,
+   294,
    "abs32",
    "sym:silent_mute_on",
    0
   ],
   [
    ".run",
-   372,
+   398,
    "abs32",
    "sym:core_store_get",
    0
   ],
   [
    ".run",
-   428,
+   454,
    "abs32",
    "sym:core_store_set",
    0
   ],
   [
    ".run",
-   820,
+   846,
    "abs32",
    "sec:.run",
-   868
+   894
   ],
   [
    ".run",
-   824,
+   850,
    "abs32",
    "sec:.run",
-   920
+   946
   ],
   [
    ".run",
-   828,
+   854,
    "abs32",
    "sec:.run",
-   1036
+   1062
   ],
   [
    ".run",
-   832,
+   858,
    "abs32",
    "sec:.run",
-   964
+   990
   ],
   [
    ".run",
-   836,
+   862,
    "abs32",
    "sec:.run",
-   874
+   900
   ],
   [
    ".run",
-   840,
+   866,
    "abs32",
    "sec:.run",
-   928
+   954
   ],
   [
    ".run",
-   844,
+   870,
    "abs32",
    "sec:.run",
-   1044
+   1070
   ],
   [
    ".run",
-   848,
+   874,
    "abs32",
    "sec:.run",
-   972
+   998
   ],
   [
    ".run",
-   852,
+   878,
    "abs32",
    "sec:.run",
-   880
+   906
   ],
   [
    ".run",
-   856,
+   882,
    "abs32",
    "sec:.run",
-   936
+   962
   ],
   [
    ".run",
-   860,
+   886,
    "abs32",
    "sec:.run",
-   1052
+   1078
   ],
   [
    ".run",
-   864,
+   890,
    "abs32",
    "sec:.run",
-   980
+   1006
   ],
   [
    ".run",
-   922,
+   948,
    "abs32",
    "sym:silent_pad_trig_on",
    0
   ],
   [
    ".run",
-   930,
+   956,
    "abs32",
-   "sym:silent_live_rec_on",
+   "sym:silent_pt_live_rec_on",
    0
   ],
   [
    ".run",
-   938,
+   964,
    "abs32",
    "sym:silent_mute_on",
    0
   ],
   [
    ".run",
-   966,
+   992,
    "abs32",
    "sym:silent_pad_trig_on",
    0
   ],
   [
    ".run",
-   974,
+   1000,
    "abs32",
-   "sym:silent_live_rec_on",
+   "sym:silent_pt_live_rec_on",
    0
   ],
   [
    ".run",
-   982,
+   1008,
    "abs32",
    "sym:silent_mute_on",
    0
   ],
   [
    ".run",
-   1038,
+   1064,
    "abs32",
    "sym:silent_pad_trig_on",
    0
   ],
   [
    ".run",
-   1046,
+   1072,
    "abs32",
-   "sym:silent_live_rec_on",
+   "sym:silent_pt_live_rec_on",
    0
   ],
   [
    ".run",
-   1054,
+   1080,
    "abs32",
    "sym:silent_mute_on",
    0
@@ -1727,6 +1736,21 @@
      2,
      "abs32",
      "sym:silent_pad_trig_func_gate",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400c7ce0",
+   "len": 6,
+   "stock_sha256": "e6dd4b00e0c56b1f25a799131c72a5869b004fa867e8eabb950c76180e620646",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:silent_pad_trig_func_trig",
      0
     ]
    ]
@@ -1832,7 +1856,7 @@
    "bits": 1
   },
   {
-   "sym": "silent_live_rec_on",
+   "sym": "silent_pt_live_rec_on",
    "scope": "global",
    "bits": 1
   },
@@ -1846,8 +1870,9 @@
   "regions": [],
   "names": [
    "ui:pad press outside CHROMATIC mode",
-   "ui:TRIG 1-12 press",
+   "ui:TRIG 1-13 press",
    "ui:FUNC + pad",
+   "ui:FUNC + TRIG 1-13",
    "ui:GLOBAL > CONTROL > SEQUENCER CONFIG row after AUTO TRK SWITCH"
   ],
   "core": "0.3"
