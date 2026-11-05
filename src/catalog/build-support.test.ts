@@ -77,7 +77,7 @@ describe('reviewed imports with verified loader-free composition', () => {
       expect(getModuleSource(module)).toBe(
         'https://github.com/sambanks/octabam/tree/' + (module.id === 'usb-audio-out-tracks-main-cue' ? '6f9e5bc9db0ae9fa99fa2f2a0f4de1fdb8e9a136' : '363861e31ee963c478fab2b190a0fabe1d7ce37b') + '/modules/' + module.id,
       )
-      expect(MODULE_DOCUMENTS_BY_ID[module.id].tests.hardwareStatus).toBe(['usb-audio-out-tracks-main-cue', 'quantizer'].includes(module.id) ? 'untested' : module.id === 'analog-bassdrum' ? 'reported' : 'historical')
+      expect(MODULE_DOCUMENTS_BY_ID[module.id].tests.hardwareStatus).toBe(module.id === 'usb-audio-out-tracks-main-cue' ? 'untested' : ['analog-bassdrum', 'quantizer'].includes(module.id) ? 'reported' : 'historical')
     }
     expect(getModuleSource(resolveSelection(['midi-scenes'])[0])).toBe('https://github.com/bkkbrls-del/midisc/tree/4f9a89453fdcdd39a3cd57f010ffa489cac721cd/tools/midisc')
     expect(MODULE_DOCUMENTS_BY_ID['midi-scenes'].tests.hardwareStatus).toBe('reported')
