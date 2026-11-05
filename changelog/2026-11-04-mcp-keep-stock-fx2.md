@@ -1,0 +1,1 @@
+Development: the developer MCP's `site_selection` now counts Keep stock FX2 only when the DSP loader is on, as the site does. It no longer reports that Analog BD or a custom effect needs Keep stock FX2 turned off when the site raises no such conflict.
