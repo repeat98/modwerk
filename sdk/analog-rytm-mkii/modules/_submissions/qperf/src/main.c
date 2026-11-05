@@ -925,7 +925,7 @@ static int apply_target(void *kit, const unsigned char *table, word_t pattern, i
         const unsigned char *row = (const unsigned char *)ID_TABLE_AT + ID_ROW * id;
         kit_value = param_read(set, id);
         lo = *(const int *)(row + ID_MIN);
-        hi = *(const int *)(row + ID_MAX) + 0xff;
+        hi = *(const int *)(row + ID_MAX);  // stock shows ERR for a lock past it
         lo = lo < 0 ? 0 : lo;
         hi = hi > 0x7fff ? 0x7fff : hi;
         trk = (void *)PATTERN_TRACK(pattern, track);
@@ -952,6 +952,8 @@ static int apply_target(void *kit, const unsigned char *table, word_t pattern, i
         if (!offset && lock >= 0)
             continue;                   // its own lock is the sound to return to
         value = (lock >= 0 ? lock : kit_value) + offset;
+        if (!ID_FINE(id))
+            value = (value + 0x80) & ~0xff;     // a whole step: it has no fine part
         value = value < lo ? lo : value > hi ? hi : value;
         if (!STEP_AUDIBLE(trk, at) && !STEP_LOCK_TRIG(trk, at))
             STEP_MAKE_LOCK_TRIG(trk, at, 1);
