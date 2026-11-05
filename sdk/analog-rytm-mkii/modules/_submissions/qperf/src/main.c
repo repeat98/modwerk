@@ -1233,6 +1233,50 @@ void qperf_project(int how, unsigned dropped)
     lane_pattern = -2;                  // a new project: the next block empties the lane
 }
 
+#ifdef QPERF_TRACE
+// Debug only: the lane's state as a SysEx on USB MIDI each tick, for a host
+// to log. Stock's sender waits while USB is full, so only with a host reading.
+typedef void (*midi_send_t)(int len, const unsigned char *buf, int port);
+#define MIDI_SEND ((midi_send_t)0x400857caUL)
+#define MIDI_USB 2
+
+static unsigned char *put14(unsigned char *o, unsigned v)
+{
+    *o++ = v & 0x7f;
+    *o++ = v >> 7 & 0x7f;
+    return o;
+}
+
+static void trace(void)
+{
+    unsigned char buf[64], *o = buf;
+    unsigned mask = 0;
+    int p, pos = last_pos;
+    *o++ = 0xf0;
+    *o++ = 0x7d;
+    *o++ = 0x51;
+    o = put14(o, U16(SEQ_STEP_AT));
+    o = put14(o, (unsigned)(pos + 1));
+    *o++ = (unsigned char)(playing() | live_rec() << 1 | lane_hidden << 2 | lane_busy << 3
+                           | (knob_touched != 0) << 4 | (held != 0) << 5);
+    o = put14(o, known);
+    for (p = 0; p < PERFS; p++)
+        mask |= (unsigned)(touched[p] != 0) << p;
+    o = put14(o, mask);
+    o = put14(o, driven);
+    o = put14(o, lane_used);
+    o = put14(o, pads_held);
+    o = put14(o, (unsigned)qperf_pot);
+    o = put14(o, (unsigned)pot_rest);
+    for (p = 0; p < PERFS; p++)
+        *o++ = PERF_AMOUNT(p) >> 8;
+    for (p = 0; p < PERFS; p++)
+        *o++ = pos >= 0 && has_point(p, pos) ? lane[p][pos] >> 1 : 0x7f;
+    *o++ = 0xf7;
+    MIDI_SEND((int)(o - buf), buf, MIDI_USB);
+}
+#endif
+
 void qperf_tick(void *ctrl)
 {
     word_t string;
@@ -1240,6 +1284,10 @@ void qperf_tick(void *ctrl)
     struct { void *object; void *counts; } shared;
     void *popup;
     (void)ctrl;
+#ifdef QPERF_TRACE
+    if (ready)
+        trace();
+#endif
     if (views) {
         unsigned pads = 0;
         word_t top = held ? 0 : top_view();
