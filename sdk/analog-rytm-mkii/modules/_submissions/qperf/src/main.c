@@ -16,13 +16,13 @@
 //
 // FUNC + QPER (stock's mute) is untouched.
 //
-// The lane: stock records no performance moves, and no lock can hold an amount.
-// So while LIVE RECORDING plays, every performance someone moves (its pad, the
-// QPER knob on the linked one, MIDI) is kept here, 8 points a step, and played
-// back through the amounts while the pattern plays and nobody moves it. With
-// LIVE RECORDING on, QPER + YES writes the lane into the pattern as trigless
-// locks, a step at a time, and empties it; QPER + NO empties it, NO again
-// brings it back. It lives in RAM only, so a pattern change drops it.
+// The quick perf rec: stock records no performance moves, and no lock can
+// hold an amount. So while LIVE RECORDING plays, every performance someone
+// moves (its pad, the QPER knob on the linked one, MIDI) is kept here, 8 points
+// a step, and played back through the amounts while the pattern plays and
+// nobody moves it. With LIVE RECORDING on, QPER + YES applies it to the pattern
+// as trigless locks, a step at a time, and empties it; QPER + NO empties it, NO
+// again brings it back. It lives in RAM only, so a pattern change drops it.
 //
 // The gestures work on the pages and the pad screens over them. A menu or dialog
 // keeps its keys, though some let stock's QPER view open above them. There a pad
@@ -147,15 +147,16 @@ static int ready;                   // a project is loaded
 static int kit_changed;             // stock changed the whole kit
 int qperf_pot;                      // the QPER knob + 1, 0 until it first moves
 
-// ---- The lane -------------------------------------------------------------
+// ---- The quick perf rec --------------------------------------------------
 
-// The lane's longest loop. A choice, not a stock limit: 64 is the longest a
-// track can be, so a baked lane always fits one track; it also bounds the RAM
-// (12 x 64 x 8 points). A master length above 64 (up to 1024) loops the lane
-// every 64 steps inside it. To revisit, raise this and the bake's lengthening.
+// The quick perf rec's longest loop. A choice, not a stock limit: 64 is the
+// longest a track can be, so an applied quick perf rec always fits one track;
+// it also bounds the RAM (12 x 64 x 8 points). A master length above 64 (up to
+// 1024) loops it every 64 steps inside it. To revisit, raise this and the
+// track lengthening in apply_perf_rec.
 #define STEPS 64
 #define POINTS 8                        // a step's points
-#define LANE (STEPS * POINTS)
+#define REC_POINTS (STEPS * POINTS)
 #define PULSE_UNITS 900000              // the music clock's units a pulse
 #define TOUCH_BLOCKS 150                // 0.1 s of audio blocks: a move holds this long
 #define LIVE_REC 361                    // record state + 361: LIVE RECORDING on
@@ -226,22 +227,23 @@ typedef void (*notice_t)(void *self, void *info);
 #define STEP_MAKE_LOCK_TRIG ((step_make_t)STEP_MAKE_LOCK_TRIG_AT)
 #define ID_FINE ((id_word_t)ID_FINE_AT)
 
-static unsigned char lane[PERFS][LANE];     // amount >> 7 at each point
-static unsigned char lane_has[PERFS][STEPS]; // a bit for each recorded point
-static unsigned lane_used;              // performances with any point
-static int lane_hidden;                 // emptied by QPER + NO, NO again brings it back
-static volatile int lane_busy;          // the UI is reading or emptying it
-static int lane_pattern = -1;           // the pattern it was recorded in
+static unsigned char perf_rec[PERFS][REC_POINTS];     // amount >> 7 at each point
+static unsigned char perf_rec_has[PERFS][STEPS]; // a bit for each recorded point
+static unsigned perf_rec_used;              // performances with any point
+static int perf_rec_hidden;                 // emptied by QPER + NO, NO again brings it back
+static volatile int perf_rec_busy;          // the UI is reading or emptying it
+static int perf_rec_pattern = -1;           // the pattern it was recorded in
 static unsigned short seen[PERFS];      // each amount as we last wrote or saw it
 static unsigned short rest[PERFS];      // each driven amount before we drove it
 static unsigned short touched[PERFS];   // audio blocks left of the last move
-static unsigned driven;                 // performances the lane plays now
+static unsigned driven;                 // performances the quick perf rec plays now
 static int last_pos = -1;               // the position last block
 static int rec_pos[PERFS];              // each one's last recorded point, -1 none
 static unsigned pads_held;              // performances a pad or MIDI holds above zero
 static int pot_rest;                    // the QPER knob where it last came to rest
 static int pot_last, pot_before;        // its last two values, a wobble's pair
 static unsigned short knob_touched;     // audio blocks left of the knob's turn
+static int knob_armed;                  // the knob or the linked pad moved in this LIVE RECORDING run
 #define POT_DEAD 2                      // steps a turn must pass to start: a resting pot wobbles
 
 // Stock's message for one pot: this replaces the 6-byte lea at its start.
@@ -523,7 +525,7 @@ static void link_moved(unsigned mask)
     word_t project = PROJECT_SINGLETON();
     unsigned old = known;
     int i, amount = qperf_pot ? (qperf_pot - 1) << 7 : old ? (int)PERF_AMOUNT(lowest_linked(old)) : 0;
-    lane_busy = 1;
+    perf_rec_busy = 1;
     for (i = 0; i < PERFS; i++) {
         if ((old & ~mask) >> i & 1)
             AMOUNT_SET(project, i, 0, 1, 1);
@@ -531,8 +533,8 @@ static void link_moved(unsigned mask)
             AMOUNT_SET(project, i, amount, 1, 1);
     }
     known = mask;
-    seen_now();                         // our own writes are no move for the lane
-    lane_busy = 0;
+    seen_now();                         // our own writes are no move for the quick perf rec
+    perf_rec_busy = 0;
 }
 
 static void apply_linked(void *kit)
@@ -588,7 +590,7 @@ static void paste_linked(void *perf, int index)
 }
 
 static int live_rec(void);
-static void lane_action(int key);
+static void perf_rec_action(int key);
 
 static void perf_action(int key)
 {
@@ -597,7 +599,7 @@ static void perf_action(int key)
     unsigned mask = linked(kit);
     int index;
     if (key == KEY_NO || (key == KEY_YES && live_rec())) {
-        lane_action(key);               // the lane needs no link
+        perf_rec_action(key);           // the quick perf rec needs no link
         return;
     }
     if (several(mask)) {
@@ -656,9 +658,9 @@ static int track_speed(word_t pattern, int track)
     return *(volatile unsigned char *)(pattern + (word_t)TRACK_BYTES * track + TRACK_SPEED);
 }
 
-// The lane's loop: the pattern's length, which with a length per track is the
+// The quick perf rec's loop: the pattern's length, which with a length per track is the
 // master length. INF (shown as 1) and anything above 64 loop every 64 steps.
-static int lane_steps(word_t pattern)
+static int perf_rec_steps(word_t pattern)
 {
     int steps = pattern ? (short)U16(pattern + PATTERN_LENGTH) : 0;
     return steps <= 1 || steps > STEPS ? STEPS : steps;
@@ -669,7 +671,7 @@ static int lane_steps(word_t pattern)
 static int position(void)
 {
     int pps = *(const signed char *)(PULSES_TABLE_AT + U8(SEQ_SPEED_AT));
-    int pulse = U8(SEQ_PULSE_AT), step = U16(SEQ_STEP_AT) % lane_steps(live_pattern_data()), pos;
+    int pulse = U8(SEQ_PULSE_AT), step = U16(SEQ_STEP_AT) % perf_rec_steps(live_pattern_data()), pos;
     long elapsed = PULSE_UNITS - (long)(U32(NEXT_PULSE_AT) - U32(MUSIC_CLOCK_AT));
     if (pps <= 0)
         pps = 6;
@@ -690,7 +692,7 @@ static int position(void)
 
 static int has_point(int p, int pos)
 {
-    return lane_has[p][pos / POINTS] >> (pos % POINTS) & 1;
+    return perf_rec_has[p][pos / POINTS] >> (pos % POINTS) & 1;
 }
 
 static void record(int p, int pos, unsigned amount)
@@ -700,11 +702,11 @@ static void record(int p, int pos, unsigned amount)
     if (from < 0 || pos <= from || pos - from > POINTS)
         from = pos - 1;
     for (i = from + 1; i <= pos; i++) {
-        lane[p][i] = (unsigned char)(amount >> 7);
-        lane_has[p][i / POINTS] |= (unsigned char)(1 << (i % POINTS));
+        perf_rec[p][i] = (unsigned char)(amount >> 7);
+        perf_rec_has[p][i / POINTS] |= (unsigned char)(1 << (i % POINTS));
     }
     rec_pos[p] = pos;
-    lane_used |= 1u << p;
+    perf_rec_used |= 1u << p;
 }
 
 static void wipe(void)
@@ -712,14 +714,14 @@ static void wipe(void)
     int p, s;
     for (p = 0; p < PERFS; p++) {
         for (s = 0; s < STEPS; s++)
-            lane_has[p][s] = 0;
+            perf_rec_has[p][s] = 0;
         rec_pos[p] = -1;
     }
-    lane_used = 0;
-    lane_hidden = 0;
+    perf_rec_used = 0;
+    perf_rec_hidden = 0;
 }
 
-// Hand each driven performance back to what it was before the lane took it.
+// Hand each driven performance back to what it was before the quick perf rec took it.
 static void release_driven(void)
 {
     int p;
@@ -734,12 +736,12 @@ static void release_driven(void)
 void qperf_render(void)
 {
     int p, pos, rec, pattern = U8(LIVE_PATTERN_AT);
-    if (!ready || lane_busy)
+    if (!ready || perf_rec_busy)
         return;
-    if (pattern != lane_pattern) {
+    if (pattern != perf_rec_pattern) {
         release_driven();
         wipe();
-        lane_pattern = pattern;
+        perf_rec_pattern = pattern;
     }
     // The QPER knob: a resting pot wobbles a step, and stock writes each wobble
     // to the linked performance. So a turn starts only once the knob has left
@@ -761,20 +763,26 @@ void qperf_render(void)
     }
     // A move anyone else makes: the pads, the QPER knob, MIDI. A pad sends its
     // pressure only when it changes and a 0 when let go, so a performance a pad
-    // left above zero is still held. While LIVE RECORDING plays, the linked
-    // performances record whatever the knob plays, moving or not; otherwise the
-    // knob takes one over only once it turns.
+    // left above zero is still held. On the linked performance the pad drives
+    // the knob's value too, so both count as the knob. Once the knob moves in a
+    // LIVE RECORDING run, the linked performances record what it plays, moving
+    // or not, until the run ends; before that, and with LIVE RECORDING off, the
+    // knob takes one over only while it turns.
     rec = playing() && live_rec();
+    if (!rec)
+        knob_armed = 0;
+    else if (knob_touched)
+        knob_armed = 1;
     for (p = 0; p < PERFS; p++) {
         unsigned short now = PERF_AMOUNT(p);
         int knob = known >> p & 1, wobble = knob && qperf_pot && now == (unsigned short)((qperf_pot - 1) << 7);
-        if (now != seen[p] && !wobble) {
+        if (now != seen[p] && (!wobble || !now)) {
             if (now)
                 pads_held |= 1u << p;
             else
-                pads_held &= ~(1u << p);
+                pads_held &= ~(1u << p);   // let go, whoever wrote the 0
         }
-        if ((now != seen[p] && !wobble) || (pads_held >> p & 1) || (knob && (rec || knob_touched))) {
+        if ((now != seen[p] && !wobble) || (pads_held >> p & 1) || (knob && (knob_armed || knob_touched))) {
             seen[p] = now;
             touched[p] = TOUCH_BLOCKS;
             driven &= ~(1u << p);       // it is theirs now
@@ -800,7 +808,7 @@ void qperf_render(void)
         unsigned bit = 1u << p;
         if (touched[p]) {
             if (rec) {
-                if (lane_hidden) {
+                if (perf_rec_hidden) {
                     wipe();             // a new take replaces the cleared one
                 }
                 record(p, pos, PERF_AMOUNT(p));
@@ -808,8 +816,8 @@ void qperf_render(void)
             continue;
         }
         rec_pos[p] = -1;
-        if (!lane_hidden && (lane_used & bit) && has_point(p, pos)) {
-            unsigned short amount = (unsigned short)(lane[p][pos] << 7);
+        if (!perf_rec_hidden && (perf_rec_used & bit) && has_point(p, pos)) {
+            unsigned short amount = (unsigned short)(perf_rec[p][pos] << 7);
             if (!(driven & bit)) {
                 rest[p] = PERF_AMOUNT(p);
                 driven |= bit;
@@ -824,17 +832,17 @@ void qperf_render(void)
     }
 }
 
-// A step's value in one performance's lane: its first recorded point, so a
+// A step's value in one performance's quick perf rec: its first recorded point, so a
 // move shorter than a step still lands. -1 for none.
 static int step_amount(int p, int step)
 {
-    unsigned bits = lane_has[p][step];
+    unsigned bits = perf_rec_has[p][step];
     int q = 0;
     if (!bits)
         return -1;
     while (!(bits >> q & 1))
         q++;
-    return lane[p][step * POINTS + q] << 7;
+    return perf_rec[p][step * POINTS + q] << 7;
 }
 
 static int row_used(const char *data, int track, int word)
@@ -856,7 +864,7 @@ static int matrix_rows(const char *data)
     return rows;
 }
 
-// How many steps a track takes the lane on: its own length with a length per
+// How many steps a track takes the quick perf rec on: its own length with a length per
 // track, as long as it runs at the pattern's speed (0: none).
 static int track_steps(word_t pattern, int track, int steps)
 {
@@ -867,23 +875,23 @@ static int track_steps(word_t pattern, int track, int steps)
     return track_length(pattern, track);
 }
 
-// Each (track, word) a performance in the lane locks, once.
-static int lane_target(const unsigned char *table, int i)
+// Each (track, word) a performance in the quick perf rec locks, once.
+static int perf_rec_target(const unsigned char *table, int i)
 {
     const unsigned char *t = table + SLOT_BYTES * i, *u = table;
     int j;
-    if (t[2] > TRACK_NONE || t[4] >= PERFS || !(lane_used >> t[4] & 1) || t[3] >= WORDS)
+    if (t[2] > TRACK_NONE || t[4] >= PERFS || !(perf_rec_used >> t[4] & 1) || t[3] >= WORDS)
         return 0;
     for (j = 0; j < i; j++, u += SLOT_BYTES)
-        if (u[2] == t[2] && u[3] == t[3] && u[4] < PERFS && (lane_used >> u[4] & 1))
+        if (u[2] == t[2] && u[3] == t[3] && u[4] < PERFS && (perf_rec_used >> u[4] & 1))
             return 0;
     return 1;
 }
 
-// One (track, word): each step a lane move reaches gets the step's own lock or
+// One (track, word): each step a quick perf rec move reaches gets the step's own lock or
 // the kit's value plus the moves, and the step after a move gets that value
 // back. Returns how many steps it writes, and writes only with write set.
-static int bake_target(void *kit, const unsigned char *table, word_t pattern, int track, int word,
+static int apply_target(void *kit, const unsigned char *table, word_t pattern, int track, int word,
                        int length, int steps, int write)
 {
     void *set = (void *)KIT_PARAM_SET(kit, track);
@@ -894,7 +902,7 @@ static int bake_target(void *kit, const unsigned char *table, word_t pattern, in
         return 0;
     for (i = 0; i < SLOTS && count < PERFS; i++) {
         const unsigned char *t = table + SLOT_BYTES * i;
-        if (t[2] == track && t[3] == word && t[4] < PERFS && (lane_used >> t[4] & 1)) {
+        if (t[2] == track && t[3] == word && t[4] < PERFS && (perf_rec_used >> t[4] & 1)) {
             locks[count] = (short)(t[0] << 8 | t[1]);
             perfs[count++] = t[4];
         }
@@ -908,9 +916,9 @@ static int bake_target(void *kit, const unsigned char *table, word_t pattern, in
         hi = hi > 0x7fff ? 0x7fff : hi;
         trk = (void *)PATTERN_TRACK(pattern, track);
     }
-    // Each of the track's steps takes the lane where it plays: a shorter track
+    // Each of the track's steps takes the quick perf rec where it plays: a shorter track
     // wraps it, a longer one repeats it. The counters run a step ahead of what
-    // plays, so step at's lock comes from the lane one step on.
+    // plays, so step at's lock comes from the quick perf rec one step on.
     for (at = 0; at < length; at++) {
         int step = (at + 1) % steps, offset = 0, lock, value;
         for (i = 0; i < count; i++) {
@@ -1003,7 +1011,7 @@ static int copy_condition(int condition, int k, int c)
     return 28 + mm * (mm - 1) / 2 + m0 + 1;
 }
 
-// Whether a track can take the lane's length exactly: with a master length up
+// Whether a track can take the quick perf rec's length exactly: with a master length up
 // to 64 every track restarts with it, so repeating a track's steps out to it
 // plays the same. Without one (INF) or past 64, only a length that divides 64
 // repeats the same way.
@@ -1023,7 +1031,7 @@ static int can_lengthen(word_t pattern, void *trk, int length, int steps)
     return STEPS % length == 0 && (master <= 1 || master % STEPS == 0);
 }
 
-// Repeat a track's steps out to the lane's length and rewrite its conditions
+// Repeat a track's steps out to the quick perf rec's length and rewrite its conditions
 // so every copy plays on the passes the original did.
 static void lengthen(void *trk, char *locks, int length, int steps)
 {
@@ -1052,7 +1060,7 @@ static void lengthen(void *trk, char *locks, int length, int steps)
 }
 
 // QPER + YES with LIVE RECORDING on.
-static void bake_lane(void)
+static void apply_perf_rec(void)
 {
     void *kit = active_kit();
     const unsigned char *table = lock_table((void *)KIT_PERF(kit));
@@ -1063,17 +1071,17 @@ static void bake_lane(void)
     char *data;
     unsigned tracks = 0, longer = 0, skipped = 0;
     int i, need = 0, wrote = 0, steps, track, length[FX_TRACK + 1];
-    if (!lane_used || lane_hidden || !steps_pattern || !locks) {
+    if (!perf_rec_used || perf_rec_hidden || !steps_pattern || !locks) {
         show("NOTHING TO APPLY");
         return;
     }
     data = (char *)(*(word_t (**)(void *))(*(word_t *)locks + LOCKS_DATA))(locks);
-    steps = lane_steps(steps_pattern);
+    steps = perf_rec_steps(steps_pattern);
     // Which tracks the moves reach, and how many steps each takes them on: a
-    // track shorter than the lane takes its length first if it can, and one
+    // track shorter than the quick perf rec takes its length first if it can, and one
     // that can't, or runs at its own speed, is left out.
     for (i = 0; i < SLOTS; i++)
-        if (lane_target(table, i))
+        if (perf_rec_target(table, i))
             tracks |= 1u << table[SLOT_BYTES * i + 2];
     for (track = 0; track <= FX_TRACK; track++) {
         length[track] = track_steps(steps_pattern, track, steps);
@@ -1097,8 +1105,8 @@ static void bake_lane(void)
         for (i = 0; i < SLOTS; i++) {
             const unsigned char *t = table + SLOT_BYTES * i;
             int at = longer >> t[2] & 1 ? steps : length[t[2]], id;
-            if (!lane_target(table, i) || !(tracks >> t[2] & 1)
-                || !bake_target(kit, table, pattern, t[2], t[3], at, steps, 0))
+            if (!perf_rec_target(table, i) || !(tracks >> t[2] & 1)
+                || !apply_target(kit, table, pattern, t[2], t[3], at, steps, 0))
                 continue;
             writes |= 1u << t[2];
             if (row_used(data, t[2], t[3]))
@@ -1119,8 +1127,8 @@ static void bake_lane(void)
         }
     for (i = 0; i < SLOTS; i++) {
         const unsigned char *t = table + SLOT_BYTES * i;
-        if (lane_target(table, i) && (tracks >> t[2] & 1))
-            wrote += bake_target(kit, table, pattern, t[2], t[3], length[t[2]], steps, 1);
+        if (perf_rec_target(table, i) && (tracks >> t[2] & 1))
+            wrote += apply_target(kit, table, pattern, t[2], t[3], length[t[2]], steps, 1);
     }
     release_driven();
     wipe();
@@ -1139,33 +1147,33 @@ static void bake_lane(void)
         *out = 0;
         show(message);
     } else {
-        show(wrote ? "PERF MOVES APPLIED" : "NOTHING TO APPLY");
+        show(wrote ? "APPLY QUICK PERF REC" : "NOTHING TO APPLY");
     }
 }
 
-// QPER + NO: empty the lane, and bring it back on the next press.
-static void clear_lane(void)
+// QPER + NO: empty the quick perf rec, and bring it back on the next press.
+static void clear_perf_rec(void)
 {
-    if (lane_hidden) {
-        lane_hidden = 0;
+    if (perf_rec_hidden) {
+        perf_rec_hidden = 0;
         show("UNDO CLEAR");
-    } else if (lane_used) {
+    } else if (perf_rec_used) {
         release_driven();
-        lane_hidden = 1;
-        show("PERF MOVES CLEARED");
+        perf_rec_hidden = 1;
+        show("CLEAR QUICK PERF REC");
     } else {
         show("NOTHING TO CLEAR");
     }
 }
 
-static void lane_action(int key)
+static void perf_rec_action(int key)
 {
-    lane_busy = 1;
+    perf_rec_busy = 1;
     if (key == KEY_YES)
-        bake_lane();
+        apply_perf_rec();
     else
-        clear_lane();
-    lane_busy = 0;
+        clear_perf_rec();
+    perf_rec_busy = 0;
 }
 
 void qperf_pad(void *event, int perf)
@@ -1238,11 +1246,11 @@ void qperf_project(int how, unsigned dropped)
     (void)dropped;
     ready = 1;
     kit_changed = 1;
-    lane_pattern = -2;                  // a new project: the next block empties the lane
+    perf_rec_pattern = -2;              // a new project: the next block empties it
 }
 
 #ifdef QPERF_TRACE
-// Debug only: the lane's state as a SysEx on USB MIDI each tick, for a host
+// Debug only: the quick perf rec's state as a SysEx on USB MIDI each tick, for a host
 // to log. Stock's sender waits while USB is full, so only with a host reading.
 typedef void (*midi_send_t)(int len, const unsigned char *buf, int port);
 #define MIDI_SEND ((midi_send_t)0x400857caUL)
@@ -1265,21 +1273,21 @@ static void trace(void)
     *o++ = 0x51;
     o = put14(o, U16(SEQ_STEP_AT));
     o = put14(o, (unsigned)(pos + 1));
-    *o++ = (unsigned char)(playing() | live_rec() << 1 | lane_hidden << 2 | lane_busy << 3
+    *o++ = (unsigned char)(playing() | live_rec() << 1 | perf_rec_hidden << 2 | perf_rec_busy << 3
                            | (knob_touched != 0) << 4 | (held != 0) << 5);
     o = put14(o, known);
     for (p = 0; p < PERFS; p++)
         mask |= (unsigned)(touched[p] != 0) << p;
     o = put14(o, mask);
     o = put14(o, driven);
-    o = put14(o, lane_used);
+    o = put14(o, perf_rec_used);
     o = put14(o, pads_held);
     o = put14(o, (unsigned)qperf_pot);
     o = put14(o, (unsigned)pot_rest);
     for (p = 0; p < PERFS; p++)
         *o++ = PERF_AMOUNT(p) >> 8;
     for (p = 0; p < PERFS; p++)
-        *o++ = pos >= 0 && has_point(p, pos) ? lane[p][pos] >> 1 : 0x7f;
+        *o++ = pos >= 0 && has_point(p, pos) ? perf_rec[p][pos] >> 1 : 0x7f;
     *o++ = 0xf7;
     MIDI_SEND((int)(o - buf), buf, MIDI_USB);
 }
