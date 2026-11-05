@@ -66,12 +66,12 @@
   ]
  },
  "resources": {
-  "memoryBytes": null,
-  "fastBytes": null,
+  "memoryBytes": 1100,
+  "fastBytes": 0,
   "load": {
    "display": "Not measured yet",
    "method": "unmeasured",
-   "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+   "conditions": "UI only: runs on FUNC + YES, FUNC + NO and the project event, never in the audio path."
   }
  },
  "evidence": {
