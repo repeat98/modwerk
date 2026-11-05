@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/qperf",
+  "version": "0.2.0-experimental",
+  "date": "2026-11-05",
+  "changes": [
+    "First library release, for Analog Rytm MKII OS 1.74 on core-ar2 0.7: QPER + knob locks the linked performance and QPER + YES writes it into the kit; in LIVE RECORDING the quick perf rec keeps performance moves, RECORD + YES writes them into the pattern as locks and RECORD + NO clears them."
+  ],
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/qperf/qperf-0.2.0-experimental-os1.74.elemod",
+      "sha256": "b6254d36fdb2483870c8dc083bf84e8d47cc1424228fa8d245eb4ae611e8fa2d"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/qperf/TESTING.md",
+  "requires": []
+}
