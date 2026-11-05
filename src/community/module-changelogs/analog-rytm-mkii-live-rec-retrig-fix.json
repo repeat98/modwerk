@@ -3,11 +3,11 @@
     "version": "0.2.0-experimental",
     "date": "2026-11-04",
     "changes": [
-      "Retrig Grid by stigmagit is now part of this module: while the sequencer plays, pad retrigs fall on its swung grid. Turn it off with QUANT RTRG TO SEQ in GLOBAL > CONTROL > SEQUENCER CONFIG.",
-      "A recorded roll's first trig moves to the grid too; the press still sounds where you played it.",
-      "While a roll records, the grid follows swing only, so a long roll no longer shifts by the trigs it just wrote.",
-      "The RTRG key glows dim red while the selected track is ALWAYS ON.",
-      "Do not install the separate Retrig Grid module beside this one. Not yet tested: external MIDI clock."
+      "First release, for Analog Rytm MKII OS 1.74: LIVE RECORDING records every pad retrig hit, from RTRG + pad or an ALWAYS ON pad, as a real trig with the velocity and timing you played.",
+      "While the sequencer plays, pad retrigs fall on its swung grid (Retrig Grid by stigmagit), and a recorded roll starts on it. QUANT RTRG TO SEQ in GLOBAL > CONTROL > SEQUENCER CONFIG turns this off.",
+      "Rates faster than a step record one trig with a step retrig.",
+      "In the RETRIG menu, YES turns ALWAYS ON over on every row, and the RTRG key glows dim red while the selected track is ALWAYS ON.",
+      "Known issue: above swing 50, rates of 1/20 and faster play back a little unlike the live roll. Not yet tested with external MIDI clock."
     ]
   }
 ]
