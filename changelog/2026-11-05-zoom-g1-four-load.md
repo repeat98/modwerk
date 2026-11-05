@@ -1,0 +1,1 @@
+Site: the Zoom G1 FOUR's first two steps are done. A clean-room effect with no Zoom bytes at all, built with Stomphacks' pipeline and one header change, loads on firmware 2.00, plays and is removed again on the developer's own pedal. Its machine page, research report and starter prompt now say so; Modwerk still lists no ZD2 effects until a module contract exists.
