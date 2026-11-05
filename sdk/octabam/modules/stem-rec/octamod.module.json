@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 2,
+  "id": "stem-rec",
+  "key": "STEM REC",
+  "name": "Stem Rec",
+  "version": "0.1.0-experimental",
+  "category": "system",
+  "source": {
+    "repository": "https://github.com/yvesrosius/octabam",
+    "revision": "00a23502a9e3ce8264888026a2b6764e7f52a3be",
+    "path": "modules/stems"
+  },
+  "author": {
+    "github": "yvesrosius",
+    "name": "Yves Rosius",
+    "credits": [
+      "Yves Rosius: STEM REC's design, ColdFire implementation and upstream documentation in octabam; MIT.",
+      "Octabam (Sam Banks and contributors) supplies the native module platform STEM REC was written for. This card-build adapter keeps the upstream source unchanged."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "Multitrack stems to the card",
+    "family": "Recording",
+    "summary": "Hold UP and press REC to open STEMS, then record each track, MAIN, CUE and the inputs to their own WAV files while the sequencer plays.",
+    "overview": "Stem Rec writes a take to the card while the sequencer plays: every track after its fader, the main mix, the cue mix and the four inputs, each as its own 44,100 Hz WAV file in 16 or 24 bits, for up to 60 minutes. Each take gets a folder in AUDIO/!STEMS. It uses no effect slot. This draft offers card builds only.",
+    "highlights": [
+      "UP then REC opens and closes STEMS; REC alone stays stock.",
+      "T1 to T8, MAIN, CUE and the input pairs AB and CD, each on or off; a pair records as one stereo file or two mono ones.",
+      "16 or 24 bits; each track's file is its share of MAIN, so levels, scenes and the crossfader are in it.",
+      "The take starts with the sequencer and stops with it, on YES, after 60 minutes, or when the card falls behind."
+    ],
+    "usage": [
+      "Include Stem Rec in a card build. Hold UP first, then press REC: STEMS opens.",
+      "Choose the sources with UP, DOWN and YES: T1 alone is on at boot, at 24 bits.",
+      "Press YES on STEM REC: it arms, and the take starts when the sequencer plays (at once if it already does). Stop the sequencer to end it.",
+      "Wait until STEM REC reads DONE before you pull the card or power off. The files are in AUDIO/!STEMS/<take>/."
+    ]
+  },
+  "access": {
+    "location": "Front panel: hold UP first, then press REC.",
+    "steps": [
+      "Include Stem Rec in a card build. Hold UP first, then press REC: STEMS opens.",
+      "Choose the sources with UP, DOWN and YES: T1 alone is on at boot, at 24 bits.",
+      "Press YES on STEM REC: it arms, and the take starts when the sequencer plays (at once if it already does). Stop the sequencer to end it.",
+      "Wait until STEM REC reads DONE before you pull the card or power off. The files are in AUDIO/!STEMS/<take>/."
+    ],
+    "screenshots": []
+  },
+  "controls": [
+    {"name": "STEM REC", "default": 0, "count": 1, "doc": "The take's state: READY, ARMED, the time, SAVING, DONE or NO CARD, or a failed take's error. YES arms a take, cancels an armed one or stops a running one.", "labels": null},
+    {"name": "T1", "default": 1, "count": 2, "doc": "Records track 1 after its fader. With MASTER TRACK on, T8 reads MASTER and is left out.", "labels": ["OFF", "ON"]},
+    {"name": "T2", "default": 0, "count": 2, "doc": "Records track 2 after its fader.", "labels": ["OFF", "ON"]},
+    {"name": "T3", "default": 0, "count": 2, "doc": "Records track 3 after its fader.", "labels": ["OFF", "ON"]},
+    {"name": "T4", "default": 0, "count": 2, "doc": "Records track 4 after its fader.", "labels": ["OFF", "ON"]},
+    {"name": "T5", "default": 0, "count": 2, "doc": "Records track 5 after its fader.", "labels": ["OFF", "ON"]},
+    {"name": "T6", "default": 0, "count": 2, "doc": "Records track 6 after its fader.", "labels": ["OFF", "ON"]},
+    {"name": "T7", "default": 0, "count": 2, "doc": "Records track 7 after its fader.", "labels": ["OFF", "ON"]},
+    {"name": "T8", "default": 0, "count": 2, "doc": "Records track 8 after its fader; reads MASTER, and is left out, while MASTER TRACK is on.", "labels": ["OFF", "ON"]},
+    {"name": "MAIN", "default": 0, "count": 2, "doc": "Records the main mix as it is mixed.", "labels": ["OFF", "ON"]},
+    {"name": "CUE", "default": 0, "count": 2, "doc": "Records the cue mix as it is mixed.", "labels": ["OFF", "ON"]},
+    {"name": "AB", "default": 0, "count": 2, "doc": "Records inputs A and B as they arrive. LEFT and RIGHT pick the row's checkbox. With STEREO off the row reads A and B, each with its own checkbox, and each input that is on records as a mono file.", "labels": ["OFF", "ON"]},
+    {"name": "AB STEREO", "default": 1, "count": 2, "doc": "On: inputs A and B record as one stereo file. Off: as one mono file each.", "labels": ["OFF", "ON"]},
+    {"name": "CD", "default": 0, "count": 2, "doc": "Records inputs C and D, as AB does.", "labels": ["OFF", "ON"]},
+    {"name": "CD STEREO", "default": 1, "count": 2, "doc": "On: inputs C and D record as one stereo file. Off: as one mono file each.", "labels": ["OFF", "ON"]},
+    {"name": "24 BIT", "default": 1, "count": 2, "doc": "On: 24-bit files. Off: 16-bit files, half the card's writing.", "labels": ["OFF", "ON"]}
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": null,
+    "location": "Front panel (UP + REC), every track and input",
+    "conflicts": [],
+    "uiClaims": [
+      "key:UP+REC"
+    ],
+    "limitations": [
+      "Card builds only: over USB a module lives in the base's 768 KiB ColdFire pool, and Stem Rec needs an 8 MiB ring and runs a writer task of its own for each take.",
+      "No YES double tap on the main page in this version: in octabam a second YES within 0.5 s arms a take, but APPLY SCENE patches that stock site and a card build has no key bus. UP + REC and the YES on STEM REC's own row work as upstream.",
+      "Nothing is saved: at every boot T1 alone is on, at 24 bits, both pairs stereo. Stem Rec writes nothing into projects.",
+      "A power cut or a card pull before DONE leaves the take's files at 0 bytes: each file's length is set only at the end.",
+      "The card must keep up: a 24-bit stereo file needs 264,600 bytes a second. When the card falls behind the ring fills and the take stops with RING FULL; its files still play.",
+      "With MASTER TRACK on, T1 to T7 and CUE are 32 samples (0.73 ms) early against MAIN, and the track files do not sum to MAIN.",
+      "Sample memory: a card build with Stem Rec gives up the 10,487,808-byte DRAM platform reserve from Flex sample RAM, shared with any other DRAM module; its 8 MiB ring sits inside it."
+    ]
+  },
+  "resources": {
+    "recorded": "Pending: exact inventory from the card build's link map and layout, and hardware timing from STATS.TXT",
+    "storage": {
+      "label": "ColdFire code, data, rings and stack",
+      "display": "8,403,968 B of DRAM regions plus its unit (exact inventory pending)",
+      "value": null,
+      "unit": "bytes",
+      "method": "unmeasured",
+      "conditions": "The ring (8,388,608 B), the writer's stack (8,192 B) and fourteen sector-0 copies (7,168 B) are DramRegions at the top of the platform reserve; the unit's code and state and the alignment padding are to be counted from the build.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "ColdFire, per audio block",
+      "display": "Pending: worst case from a fourteen-file take on hardware",
+      "value": null,
+      "unit": "cycles/block",
+      "method": "unmeasured",
+      "conditions": "The frame hook mirrors the gains every block and, while a take runs, packs each source into its ring; the writer task streams the rings to the card. To be measured on the tested image.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "One take with every source on at 24 bits. Estimates describe source structure, not measured hardware headroom.",
+      "cpu": {
+        "level": "moderate",
+        "basis": "source-estimate",
+        "rationale": "The frame hook runs every audio block, a few hundred instructions while idle and a few thousand while every source records; the writer task waits on the card.",
+        "source": "upstream/stems.s"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP program, effect slot or DSP state is added: the hook reads the audio read-back blocks the stock code already has.",
+        "source": "upstream/manifest.py"
+      },
+      "memory": {
+        "level": "high",
+        "basis": "source-estimate",
+        "rationale": "An 8 MiB ring in DRAM, inside the platform reserve every DRAM module shares.",
+        "source": "manifest.py"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Draft: built natively and booted under ot_emu (verify.py). Native/browser comparison, packages, worst-case cycles, exact memory and hardware evidence on the tested image are pending.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "00a23502a9e3ce8264888026a2b6764e7f52a3be",
+    "gates": [
+      "verify.py: the card build boots under ot_emu, its DRAM runtime reads back equal to the link, its gain table holds the OS's 774 bytes, and it builds beside APPLY SCENE, TUNER and USB AUDIO OUT"
+    ]
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "The exact upstream source and octabam's MIT terms are retained. The licence covers authored source and documentation; it grants no rights to Elektron firmware and asserts no hardware qualification."
+  },
+  "media": []
+}

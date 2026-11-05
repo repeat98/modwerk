@@ -3,7 +3,7 @@
   "repository": "https://github.com/yvesrosius/octabam",
   "revision": "00a23502a9e3ce8264888026a2b6764e7f52a3be",
   "moduleVersion": "0.1.0-experimental",
-  "root": "sdk/drafts/stem-rec",
+  "root": "sdk/octabam/modules/stem-rec",
   "modules": [
     "stem-rec"
   ],

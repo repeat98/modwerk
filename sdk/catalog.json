@@ -176,6 +176,11 @@
       "id": "tuner",
       "version": "0.1.0-experimental",
       "addedAt": "2026-10-26T02:02:14Z"
+    },
+    {
+      "id": "stem-rec",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-05T15:55:00Z"
     }
   ]
 }
