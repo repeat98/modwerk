@@ -22,7 +22,7 @@ MODULE = Module(
     kind=Kind.CF_PATCH,
     doc="The tempo LED flashes green on the pattern's 1 while playing; the other beats stay red.",
     category=Category.MACHINES, author="nathangroth", author_url="https://github.com/nathangroth",
-    proof=Proof.UNTESTED, proof_note="ot_emu, stock 1.40C with the unit preloaded, 2 Nov 2026 (verify.py); not yet run on a unit.",
+    proof=Proof.HARDWARE, proof_note="MKI, OS 1.40C: card build 2 Nov 2026 and over USB on the Modwerk beta base 4 Nov 2026 (reported, before the pause fix); gate: verify.py under ot_emu.",
     linked=(Linked("bar_led", os.path.join(_HERE, "unit.s"), dram=True),),
     detours=(
         Detour(0x40056F24, stock_guard(0x40056f24, 6, "2a8577452c3c276db1f0313a52ea148d53399396c3e003b4260e58a6ea89dec1"),

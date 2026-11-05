@@ -2,8 +2,6 @@
 
 Version: 0.1.0-experimental · author: @nathangroth
 
-**Draft: not in the configurator until qualified on a unit and reviewed by the owner.**
-
 ![Bar LED thumbnail: a pattern's beat flashes, the first of each pass green](presentation/thumbnail.svg)
 
 ## Overview
@@ -30,16 +28,16 @@ Install it, press [PLAY] and watch the tempo LED.
 
 Stock flashes the tempo LED from its clock-message loop: every 24 clock ticks (one beat) it calls `set_led(38, 3)`, which lights LED id 38, the red half of the tempo LED, for three 120 Hz ticks. The panel numbers each two-colour LED as a red id and the green id after it, as the trig and track LEDs do, so 39 is the green half.
 
-Bar LED takes that one call (`0x40056f24`). While the transport plays it reads the sequencer's master step (`0x800065b4`, the step now playing, which wraps at the pattern's length). A flash that sees a lower step than the flash before is the first since the pattern came round: it passes 39 instead of 38. So does the first flash after [PLAY]. Then it calls stock's `set_led` with the same duration. Every other call, stopped included, reaches `set_led` unchanged.
+Bar LED takes that one call (`0x40056f24`). While the transport plays it reads the sequencer's master step (`0x800065b4`, the step now playing, which wraps at the pattern's length). A flash that sees a lower step than the flash before is the first since the pattern came round: it passes 39 instead of 38. So does the first flash after [PLAY] from the top; continuing from a pause compares with the step it paused on. Then it calls stock's `set_led` with the same duration. Every other call, stopped included, reaches `set_led` unchanged.
 
-It keeps no clock or count of its own ([sequencing](../../../docs/module-guides/sequencing.md)): the flash is stock's, so it follows the project tempo, external MIDI clock and tempo changes, and the step is the sequencer's.
+It keeps no clock or count of its own ([sequencing](../../../../docs/module-guides/sequencing.md)): the flash is stock's, so it follows the project tempo, external MIDI clock and tempo changes, and the step is the sequencer's.
 
 ## Compatibility and limitations
 
 - OS 1.40C, MKI and MKII.
 - The tempo LED only flashes on whole beats. When the pattern's 1 falls between beats (say 14 steps at 1x), the green comes on the first flash after it.
 - Changing the stock flow: the tempo LED is green instead of red on the pattern's 1 while playing. That is the module's whole job; remove it to get the stock LED back.
-- Reported on an MKI (card build, 2 November 2026): green on the pattern's 1 in several play modes and with a 17-step master length. Not yet tested: pausing with [PLAY] and continuing, a pattern change while playing, external MIDI clock, and MASTER LENGTH INF (which would leave only the green after [PLAY]).
+- Reported on an MKI (card build, 2 November 2026): green on the pattern's 1 in several play modes and with a 17-step master length. Pausing and continuing is checked in the emulator only. Not yet tested on a unit: pausing and continuing, a pattern change while playing, external MIDI clock, and MASTER LENGTH INF (which would leave only the green after [PLAY]).
 - Takes no key, screen or shared site: no other module or the base patches the beat-flash call.
 - Stores nothing: projects, Parts and settings are untouched and load the same without it.
 

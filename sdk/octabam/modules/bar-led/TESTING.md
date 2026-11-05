@@ -2,12 +2,12 @@
 
 ## Commands and exact revision
 
-Source: `sdk/drafts/bar-led` on branch `module/bar-led`. OS: stock 1.40C (the owner's own `OCTATRACK_OS1.40C.bin`, decoded MAIN OS kept outside the repository). Port: `ot_emu` from octabam.
+Source: `sdk/octabam/modules/bar-led` (drafted in `sdk/drafts/bar-led`). OS: stock 1.40C (the owner's own `OCTATRACK_OS1.40C.bin`, decoded MAIN OS kept outside the repository). Port: `ot_emu` from octabam.
 
 ```sh
 # the gate (from an octabam root holding out/emu/ot_emu and out/raw/section_3_MAIN_OS.bin)
 python3 tools/emu/ot_emu/stage_card.py out/test-project OCTABAM BARLED --out <card.img>
-BAR_CARD=<card.img> BAR_PROJECT=BARLED python3 <modwerk>/sdk/drafts/bar-led/verify.py
+BAR_CARD=<card.img> BAR_PROJECT=BARLED python3 <modwerk>/sdk/octabam/modules/bar-led/verify.py
 # the USB package
 python3 -B sdk/runtime/loader/build.py --octabam bar-led --name "Bar LED" \
   --upstream ~/.cache/modwerk-upstream/elekloader -o bar-led.mwrm

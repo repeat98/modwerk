@@ -171,6 +171,11 @@
       "id": "beat-slicer",
       "version": "0.1.66-experimental",
       "addedAt": "2026-10-27T20:00:00Z"
+    },
+    {
+      "id": "bar-led",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-11-05T13:00:00Z"
     }
   ]
 }

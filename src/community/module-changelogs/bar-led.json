@@ -1,7 +1,7 @@
 [
   {
     "version": "0.1.0-experimental",
-    "date": "2026-11-02",
+    "date": "2026-11-05",
     "changes": [
       "First version: the tempo LED flashes green on the pattern's 1 while playing.",
       "Every other beat stays red, and stopped it is stock.",
