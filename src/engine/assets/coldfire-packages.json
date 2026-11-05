@@ -208,7 +208,7 @@
       "sha256": "ccffbf72d45358bde585760b9230c668bf38ebf412ab23efc73732cf96024dca"
     }
   ],
-  "sourceCommit": "ede8f2d61e0b9963eae91d34974235b2dd434341",
+  "sourceCommit": "be64a4ed8ce2fcce671c6e019ea29c250c12defe",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -243,7 +243,6 @@
     "dejavu": "0.1.0-experimental",
     "arp-key-locks": "0.1.0-experimental",
     "temp-save": "0.1.0-experimental",
-    "tuner": "0.1.0-experimental",
-    "bar-led": "0.1.0-experimental"
+    "tuner": "0.1.0-experimental"
   }
 }

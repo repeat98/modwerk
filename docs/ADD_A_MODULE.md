@@ -266,7 +266,7 @@ the [loader compatibility guide](../sdk/machines/octatrack/elekloader/README.md#
    bash scripts/build-modules-isolated.sh . ../module-packages "$image"
    npm run modules:import -- ../module-packages/packages --development
    ```
-   Commit what the import changes. CI compiles the same packages again and fails if they differ. Every import also needs Analog BD's proofs re-exported (`scripts/export-composition-proofs.py --suite analog-bd --static-stock --vendored-sdk`) and Tape Echo's and Euclid's standalone recipes re-pinned to the new asset files; `npm run check` fails until both are.
+   Commit what the import changes. CI compiles the same packages again and fails if they differ. Every import also needs Analog BD's proofs re-exported (`scripts/export-composition-proofs.py --suite analog-bd --static-stock --vendored-sdk`) and Tape Echo's and Euclid's standalone recipes re-pinned to the new asset files; `npm run check` fails until both are. Any change under `sdk/octabam/tools`, the emulator included, moves the packages' source fingerprint and needs the same three steps.
    On macOS with colima, mount `/var/folders` as [elemod source builds](ELEMOD_SOURCE_BUILDS.md) says: the script stages there.
    A new ColdFire USB module also needs its id in `REQUESTED` in `scripts/build-module-packages.py` and in the id lists of `scripts/module-release-scope.test.mjs`, `scripts/module-source.test.mjs` and `src/engine/elekloader/module-set.test.ts`; unit labels no other module links (two `unit`s clash); an entry in `src/engine/assets/octatrack-module-packages.json` with `id`, `version` and `path`, which `octatrack:module-packages` completes.
 5. **Compare with native octabam** on your own 1.40C update file:
