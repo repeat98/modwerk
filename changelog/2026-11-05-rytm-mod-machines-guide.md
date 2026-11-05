@@ -1,0 +1,1 @@
+Developer docs: the Rytm SDK guide has a section on mod machines: each slot's knob positions, where knob pictures, FUNC jumps and title names come from, why added machines sort first in the machine list, and measured facts for driving a dual-oscillator voice.
