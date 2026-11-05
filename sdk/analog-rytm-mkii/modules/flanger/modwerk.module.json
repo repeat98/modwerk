@@ -126,7 +126,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host: the same samples as Send FX's FLANGER over 20,000 blocks of random settings. Unit: test build MB02 reported working by the author (29 Oct 2026). rytm-emu 2ac0f1f: the SEND and SEND FX pages with FLANGER (FL01).",
+    "summary": "Host: the same samples as Send FX's FLANGER over 20,000 blocks of random settings. Unit: test build MB02 reported working by the author (29 Oct 2026). rytm-emu 2ac0f1f: the SEND and SEND FX pages with FLANGER (FL02).",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -171,8 +171,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "41e6b3661d5d19dd69c43ee04bd12b7546b6c093da871a06261f66d979c2b15a",
-        "setup": "Headless rytm-emu (dtboot) running FL01: the Modwerk base's send-bus variant and this folder's FLANGER 0.1.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "207a315c65a222c4c58faef60942813fd0bbcb7ac1ba6cf516dcd8adda121b5e",
+        "setup": "Headless rytm-emu (dtboot) running FL02: the Modwerk base's send-bus variant and this folder's FLANGER 0.1.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -187,8 +187,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "41e6b3661d5d19dd69c43ee04bd12b7546b6c093da871a06261f66d979c2b15a",
-        "setup": "Headless rytm-emu (dtboot) running FL01: the Modwerk base's send-bus variant and this folder's FLANGER 0.1.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "207a315c65a222c4c58faef60942813fd0bbcb7ac1ba6cf516dcd8adda121b5e",
+        "setup": "Headless rytm-emu (dtboot) running FL02: the Modwerk base's send-bus variant and this folder's FLANGER 0.1.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]

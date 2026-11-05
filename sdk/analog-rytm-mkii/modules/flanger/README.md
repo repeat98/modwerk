@@ -52,7 +52,7 @@ See [TESTING.md](TESTING.md).
 
 ## Screens and audio
 
-Screenshots are rytm-emu captures of build FL01 ([media/capture.json](media/capture.json)). No audio preview yet.
+Screenshots are rytm-emu captures of build FL02 ([media/capture.json](media/capture.json)). No audio preview yet.
 
 ![SEND FX with FLANGER](media/send-fx-flanger.png) ![SEND on a sound track](media/send-page.png)
 
