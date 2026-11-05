@@ -1,6 +1,6 @@
 # Vendored elekloader kit
 
-Modwerk builds Digitakt mk1 and Digitone mk1/Keys firmware with [elekloader](https://github.com/irpina/elekloader)'s kit, by irpina, under GPL-3.0-or-later. Digitakt II OS 1.17 and Analog Rytm MKII OS 1.74 have experimental local-build previews using the same kit and site-owned package overlays (the Rytm's is core-ar2 0.3 alone); downloads remain disabled and no Modwerk module is published for either. The kit is elekloader's builder packaged for any website: its TypeScript engine, a builder worker, a client for the page, and a catalog format ([decisions](../../docs/DECISIONS.md); the kit's own guide is `kit/README.md`). Modwerk's own builder is frozen and resumes later.
+Modwerk builds Digitakt mk1 and Digitone mk1/Keys firmware with [elekloader](https://github.com/irpina/elekloader)'s kit, by irpina, under GPL-3.0-or-later. Digitakt II OS 1.17 and Analog Rytm MKII OS 1.74 have experimental local-build previews using the same kit and site-owned package overlays (the Rytm's are Modwerk's base in two variants); downloads remain disabled and no Modwerk module is published for either. The kit is elekloader's builder packaged for any website: its TypeScript engine, a builder worker, a client for the page, and a catalog format ([decisions](../../docs/DECISIONS.md); the kit's own guide is `kit/README.md`). Modwerk's own builder is frozen and resumes later.
 
 | Path | What | From |
 | --- | --- | --- |
