@@ -16,6 +16,14 @@
 //
 // FUNC + QPER (stock's mute) is untouched.
 //
+// The lane: stock records no performance moves, and no lock can hold an amount.
+// So while LIVE RECORDING plays, every performance someone moves (its pad, the
+// QPER knob on the linked one, MIDI) is kept here, 8 points a step, and played
+// back through the amounts while the pattern plays and nobody moves it. With
+// LIVE RECORDING on, QPER + YES writes the lane into the pattern as trigless
+// locks, a step at a time, and empties it; QPER + NO empties it, NO again
+// brings it back. It lives in RAM only, so a pattern change drops it.
+//
 // The gestures work on the pages and the pad screens over them. A menu or dialog
 // keeps its keys, though some let stock's QPER view open above them. There a pad
 // still moves the link, so only a kit can bring several.
@@ -104,6 +112,7 @@ typedef void (*end_lock_edit_t)(void *ui);
 #define KEY_REC 0x50
 #define KEY_STOP 0x52
 #define KEY_FUNC 0x80
+#define KEY_NO 0x45
 #define EV_KEY 12                   // event + 12: the key
 #define EV_FLAGS 16                 // event + 16: bit 0 down (clear on release), 8 repeat
 #define PRESSED 1
@@ -137,6 +146,67 @@ static unsigned known;              // the link as we last set or saw it
 static int ready;                   // a project is loaded
 static int kit_changed;             // stock changed the whole kit
 int qperf_pot;                      // the QPER knob + 1, 0 until it first moves
+
+// ---- The lane -------------------------------------------------------------
+
+#define STEPS 64
+#define POINTS 8                        // a step's points
+#define LANE (STEPS * POINTS)
+#define PULSE_UNITS 900000              // the music clock's units a pulse
+#define TOUCH_BLOCKS 150                // 0.1 s of audio blocks: a move holds this long
+#define LIVE_REC 361                    // record state + 361: LIVE RECORDING on
+#define PATTERN_BYTES 85760
+#define PATTERN_LENGTH 0x14eb3          // s16, the pattern's steps
+#define PATTERN_PER_TRACK 0x14eb9       // 1: each track has its own length and speed
+#define PATTERN_SPEED 0x14eba
+#define TRACK_BYTES 917
+#define TRACK_LENGTH 709
+#define TRACK_SPEED 711
+#define PATTERN_LOCKS 44                // pattern track + 44: the pattern's locks
+#define LOCKS_DATA 0x28                 // locks: their live matrix
+#define MATRIX_TRACK 5674               // bytes a track, 88 a step, 2 a word
+#define MATRIX_STEP 88
+#define MATRIX_FINE 5632                // + word: the row has fine bits
+#define WORDS 42
+#define ROWS 71                         // stock stores 72 rows and uses 71
+#define ID_MIN 8                        // id table row: range, in the words' units
+#define ID_MAX 12
+#define ID_ROW 52
+
+#define U8(a) (*(volatile signed char *)(a))
+#define U16(a) (*(volatile unsigned short *)(a))
+#define U32(a) (*(volatile unsigned long *)(a))
+
+typedef word_t (*pattern_of_t)(word_t project);
+typedef word_t (*pattern_track_t)(word_t pattern, int track);
+typedef int (*step_lock_set_t)(void *track, int step, int word, int value, int fine);
+typedef int (*step_lock_get_t)(void *track, int step, int word, int unused);
+typedef unsigned char (*step_test_t)(void *track, int step);   // stock sets the low byte only
+typedef void (*step_make_t)(void *track, int step, int on);
+typedef int (*id_word_t)(int id);
+#define PATTERN_OF ((pattern_of_t)PATTERN_OF_AT)
+#define PATTERN_TRACK ((pattern_track_t)PATTERN_TRACK_AT)
+#define STEP_LOCK_SET ((step_lock_set_t)STEP_LOCK_SET_AT)
+#define STEP_LOCK_GET ((step_lock_get_t)STEP_LOCK_GET_AT)
+#define STEP_AUDIBLE ((step_test_t)STEP_AUDIBLE_AT)
+#define STEP_LOCK_TRIG ((step_test_t)STEP_LOCK_TRIG_AT)
+#define STEP_MAKE_LOCK_TRIG ((step_make_t)STEP_MAKE_LOCK_TRIG_AT)
+#define ID_FINE ((id_word_t)ID_FINE_AT)
+
+static unsigned char lane[PERFS][LANE];     // amount >> 7 at each point
+static unsigned char lane_has[PERFS][STEPS]; // a bit for each recorded point
+static unsigned lane_used;              // performances with any point
+static int lane_hidden;                 // emptied by QPER + NO, NO again brings it back
+static volatile int lane_busy;          // the UI is reading or emptying it
+static int lane_pattern = -1;           // the pattern it was recorded in
+static unsigned short seen[PERFS];      // each amount as we last wrote or saw it
+static unsigned short rest[PERFS];      // each driven amount before we drove it
+static unsigned short touched[PERFS];   // audio blocks left of the last move
+static unsigned driven;                 // performances the lane plays now
+static int last_pos = -1;               // the position last block
+static int rec_pos[PERFS];              // each one's last recorded point, -1 none
+static volatile unsigned pads_held;     // PERF pads held, seen from the tick
+#define KEY_PAD_FIRST 0x90              // pads BD .. CB: performances 1 .. 12
 
 // Stock's message for one pot: this replaces the 6-byte lea at its start.
 #define TEXT(x) #x
@@ -403,6 +473,13 @@ static void show_numbered(const char *before, unsigned mask, const char *after)
     show(message);
 }
 
+static void seen_now(void)
+{
+    int i;
+    for (i = 0; i < PERFS; i++)
+        seen[i] = PERF_AMOUNT(i);
+}
+
 // An unlinked performance stops adding, and a new one takes over at the knob's
 // position.
 static void link_moved(unsigned mask)
@@ -410,6 +487,7 @@ static void link_moved(unsigned mask)
     word_t project = PROJECT_SINGLETON();
     unsigned old = known;
     int i, amount = qperf_pot ? (qperf_pot - 1) << 7 : old ? (int)PERF_AMOUNT(lowest_linked(old)) : 0;
+    lane_busy = 1;
     for (i = 0; i < PERFS; i++) {
         if ((old & ~mask) >> i & 1)
             AMOUNT_SET(project, i, 0, 1, 1);
@@ -417,6 +495,8 @@ static void link_moved(unsigned mask)
             AMOUNT_SET(project, i, amount, 1, 1);
     }
     known = mask;
+    seen_now();                         // our own writes are no move for the lane
+    lane_busy = 0;
 }
 
 static void apply_linked(void *kit)
@@ -471,12 +551,19 @@ static void paste_linked(void *perf, int index)
         show("NOTHING TO PASTE");
 }
 
+static int live_rec(void);
+static void lane_action(int key);
+
 static void perf_action(int key)
 {
     void *kit = active_kit();
     void *perf = (void *)KIT_PERF(kit);
     unsigned mask = linked(kit);
     int index;
+    if (key == KEY_NO || (key == KEY_YES && live_rec())) {
+        lane_action(key);               // the lane needs no link
+        return;
+    }
     if (several(mask)) {
         show(SEVERAL);
         return;
@@ -498,6 +585,342 @@ static void perf_action(int key)
         show_numbered("COPY PERFORMANCE ", mask, "");
     else
         show("NOTHING TO COPY");
+}
+
+static int playing(void)
+{
+    return U32(PLAYING_A_AT) && U32(PLAYING_B_AT);
+}
+
+static int live_rec(void)
+{
+    word_t rec = U32(REC_UI_AT);
+    return rec && *(volatile unsigned char *)(rec + LIVE_REC);
+}
+
+static word_t live_pattern_data(void)
+{
+    int index = U8(LIVE_PATTERN_AT);
+    return index < 0 ? 0 : PATTERNS_AT + (word_t)PATTERN_BYTES * index;
+}
+
+// The lane's loop: the pattern's length, or 64 steps when it has none (INF,
+// shown as 1) or a longer one.
+static int pattern_steps(word_t pattern)
+{
+    int steps = pattern ? (short)U16(pattern + PATTERN_LENGTH) : 0;
+    return steps <= 1 || steps > STEPS ? STEPS : steps;
+}
+
+// The pattern's place in points: its step and how far the sequencer's pulses
+// have gone into it, timed between pulses on the music clock.
+static int position(void)
+{
+    int pps = *(const signed char *)(PULSES_TABLE_AT + U8(SEQ_SPEED_AT));
+    int pulse = U8(SEQ_PULSE_AT);
+    long elapsed = PULSE_UNITS - (long)(U32(NEXT_PULSE_AT) - U32(MUSIC_CLOCK_AT));
+    int step = U16(SEQ_STEP_AT) % pattern_steps(live_pattern_data()), pos;
+    if (pps <= 0)
+        pps = 6;
+    if (pulse < 0 || pulse >= pps)
+        pulse = 0;
+    if (elapsed < 0)
+        elapsed = 0;
+    else if (elapsed >= PULSE_UNITS)
+        elapsed = PULSE_UNITS - 1;
+    pos = step * POINTS
+        + (int)(((long)pulse * PULSE_UNITS + elapsed) * POINTS / ((long)pps * PULSE_UNITS));
+    // The pulse handler can be cut between its pulse reset and its step count,
+    // which reads as a step back: hold the last place then.
+    if (last_pos >= 0 && pos < last_pos && last_pos - pos < POINTS)
+        pos = last_pos;
+    return pos;
+}
+
+static int has_point(int p, int pos)
+{
+    return lane_has[p][pos / POINTS] >> (pos % POINTS) & 1;
+}
+
+static void record(int p, int pos, unsigned amount)
+{
+    int from = rec_pos[p], i;
+    // Fill the points passed since the last block, so a fast tempo leaves no gap.
+    if (from < 0 || pos <= from || pos - from > POINTS)
+        from = pos - 1;
+    for (i = from + 1; i <= pos; i++) {
+        lane[p][i] = (unsigned char)(amount >> 7);
+        lane_has[p][i / POINTS] |= (unsigned char)(1 << (i % POINTS));
+    }
+    rec_pos[p] = pos;
+    lane_used |= 1u << p;
+}
+
+static void wipe(void)
+{
+    int p, s;
+    for (p = 0; p < PERFS; p++) {
+        for (s = 0; s < STEPS; s++)
+            lane_has[p][s] = 0;
+        rec_pos[p] = -1;
+    }
+    lane_used = 0;
+    lane_hidden = 0;
+}
+
+// Hand each driven performance back to what it was before the lane took it.
+static void release_driven(void)
+{
+    int p;
+    for (p = 0; p < PERFS; p++)
+        if (driven >> p & 1) {
+            PERF_AMOUNT(p) = rest[p];
+            seen[p] = rest[p];
+        }
+    driven = 0;
+}
+
+void qperf_render(void)
+{
+    int p, pos, rec, pattern = U8(LIVE_PATTERN_AT);
+    if (!ready || lane_busy)
+        return;
+    if (pattern != lane_pattern) {
+        release_driven();
+        wipe();
+        lane_pattern = pattern;
+    }
+    // A move anyone else makes: the pads, the QPER knob, MIDI. A pad held still
+    // sends nothing new, so a held pad counts as moving.
+    for (p = 0; p < PERFS; p++) {
+        unsigned short now = PERF_AMOUNT(p);
+        if (now != seen[p] || (pads_held >> p & 1)) {
+            seen[p] = now;
+            touched[p] = TOUCH_BLOCKS;
+            driven &= ~(1u << p);       // it is theirs now
+        } else if (touched[p]) {
+            touched[p]--;
+        }
+    }
+    if (!playing()) {
+        release_driven();
+        last_pos = -1;
+        for (p = 0; p < PERFS; p++)
+            rec_pos[p] = -1;
+        return;
+    }
+    pos = position();
+    last_pos = pos;
+    rec = live_rec();
+    for (p = 0; p < PERFS; p++) {
+        unsigned bit = 1u << p;
+        if (touched[p]) {
+            if (rec) {
+                if (lane_hidden) {
+                    wipe();             // a new take replaces the cleared one
+                }
+                record(p, pos, PERF_AMOUNT(p));
+            }
+            continue;
+        }
+        rec_pos[p] = -1;
+        if (!lane_hidden && (lane_used & bit) && has_point(p, pos)) {
+            unsigned short amount = (unsigned short)(lane[p][pos] << 7);
+            if (!(driven & bit)) {
+                rest[p] = PERF_AMOUNT(p);
+                driven |= bit;
+            }
+            PERF_AMOUNT(p) = amount;
+            seen[p] = amount;
+        } else if (driven & bit) {
+            PERF_AMOUNT(p) = rest[p];
+            seen[p] = rest[p];
+            driven &= ~bit;
+        }
+    }
+}
+
+// A step's value in one performance's lane: its first recorded point, so a
+// move shorter than a step still lands. -1 for none.
+static int step_amount(int p, int step)
+{
+    unsigned bits = lane_has[p][step];
+    int q = 0;
+    if (!bits)
+        return -1;
+    while (!(bits >> q & 1))
+        q++;
+    return lane[p][step * POINTS + q] << 7;
+}
+
+static int row_used(const char *data, int track, int word)
+{
+    int step;
+    for (step = 0; step < STEPS; step++)
+        if (*(const short *)(data + MATRIX_TRACK * track + MATRIX_STEP * step + 2 * word) >= 0)
+            return 1;
+    return 0;
+}
+
+static int matrix_rows(const char *data)
+{
+    int track, word, rows = 0;
+    for (track = 0; track <= FX_TRACK; track++)
+        for (word = 0; word < WORDS; word++)
+            if (row_used(data, track, word))
+                rows += 1 + (data[MATRIX_TRACK * track + MATRIX_FINE + word] != 0);
+    return rows;
+}
+
+// The track's step for the pattern's: the same while the track keeps the
+// pattern's speed, and none when it runs at its own.
+static int track_step(word_t pattern, int track, int step)
+{
+    word_t t = pattern + (word_t)TRACK_BYTES * track;
+    int length;
+    if (*(volatile unsigned char *)(pattern + PATTERN_PER_TRACK) != 1)
+        return step;
+    if (*(volatile unsigned char *)(t + TRACK_SPEED) != *(volatile unsigned char *)(pattern + PATTERN_SPEED))
+        return -1;
+    length = *(volatile unsigned char *)(t + TRACK_LENGTH);
+    return length > 0 ? step % length : step;
+}
+
+// Each (track, word) a performance in the lane locks, once.
+static int lane_target(const unsigned char *table, int i)
+{
+    const unsigned char *t = table + SLOT_BYTES * i, *u = table;
+    int j;
+    if (t[2] > TRACK_NONE || t[4] >= PERFS || !(lane_used >> t[4] & 1) || t[3] >= WORDS)
+        return 0;
+    for (j = 0; j < i; j++, u += SLOT_BYTES)
+        if (u[2] == t[2] && u[3] == t[3] && u[4] < PERFS && (lane_used >> u[4] & 1))
+            return 0;
+    return 1;
+}
+
+// One (track, word): each step a lane move reaches gets the step's own lock or
+// the kit's value plus the moves, and the step after a move gets that value
+// back. Returns how many steps it writes, and writes only with write set.
+static int bake_target(void *kit, const unsigned char *table, word_t pattern, word_t steps_pattern,
+                       int track, int word, int steps, int write)
+{
+    void *set = (void *)KIT_PARAM_SET(kit, track);
+    int id = param_id(set, track, word), kit_value = 0, lo = 0, hi = 0, step, was = 0, n = 0, i;
+    int locks[PERFS], perfs[PERFS], count = 0;
+    void *trk = 0;
+    if (!id)
+        return 0;
+    for (i = 0; i < SLOTS && count < PERFS; i++) {
+        const unsigned char *t = table + SLOT_BYTES * i;
+        if (t[2] == track && t[3] == word && t[4] < PERFS && (lane_used >> t[4] & 1)) {
+            locks[count] = (short)(t[0] << 8 | t[1]);
+            perfs[count++] = t[4];
+        }
+    }
+    if (write) {
+        const unsigned char *row = (const unsigned char *)ID_TABLE_AT + ID_ROW * id;
+        kit_value = param_read(set, id);
+        lo = *(const int *)(row + ID_MIN);
+        hi = *(const int *)(row + ID_MAX) + 0xff;
+        lo = lo < 0 ? 0 : lo;
+        hi = hi > 0x7fff ? 0x7fff : hi;
+        trk = (void *)PATTERN_TRACK(pattern, track);
+    }
+    for (step = 0; step < steps; step++) {
+        // The pattern's counters run a step ahead of what plays: the lane takes
+        // a move at the counter's step, and its lock belongs on the one before.
+        int at = track_step(steps_pattern, track, (step + steps - 1) % steps), offset = 0, lock, value;
+        for (i = 0; i < count; i++) {
+            int amount = step_amount(perfs[i], step);
+            if (amount >= 0)
+                offset += locks[i] * amount >> AMOUNT_SCALE;
+        }
+        if (at < 0 || (!offset && !was)) {
+            was = 0;
+            continue;                   // nothing to add, and nothing to return from
+        }
+        was = offset != 0;
+        n++;
+        if (!write)
+            continue;
+        lock = STEP_LOCK_GET(trk, at, word, 0);
+        if (!offset && lock >= 0)
+            continue;                   // its own lock is the sound to return to
+        value = (lock >= 0 ? lock : kit_value) + offset;
+        value = value < lo ? lo : value > hi ? hi : value;
+        if (!STEP_AUDIBLE(trk, at) && !STEP_LOCK_TRIG(trk, at))
+            STEP_MAKE_LOCK_TRIG(trk, at, 1);
+        STEP_LOCK_SET(trk, at, word, value, ID_FINE(id) != 0);
+    }
+    return n;
+}
+
+// QPER + YES with LIVE RECORDING on.
+static void bake_lane(void)
+{
+    void *kit = active_kit();
+    const unsigned char *table = lock_table((void *)KIT_PERF(kit));
+    word_t project = PROJECT_SINGLETON(), pattern = PATTERN_OF(project);
+    word_t steps_pattern = live_pattern_data();
+    void *any_track = (void *)PATTERN_TRACK(pattern, 0);
+    void *locks = *(void **)((char *)any_track + PATTERN_LOCKS);
+    const char *data;
+    int i, need = 0, wrote = 0, steps;
+    if (!lane_used || lane_hidden || !steps_pattern || !locks) {
+        show("NOTHING TO APPLY");
+        return;
+    }
+    data = (const char *)(*(word_t (**)(void *))(*(word_t *)locks + LOCKS_DATA))(locks);
+    steps = pattern_steps(steps_pattern);
+    // Like stock's own lock writes, a new row needs room in the 71 stock keeps:
+    // all of them or none.
+    for (i = 0; i < SLOTS; i++) {
+        const unsigned char *t = table + SLOT_BYTES * i;
+        int id;
+        if (!lane_target(table, i) || row_used(data, t[2], t[3])
+            || !bake_target(kit, table, pattern, steps_pattern, t[2], t[3], steps, 0))
+            continue;
+        id = param_id((void *)KIT_PARAM_SET(kit, t[2]), t[2], t[3]);
+        need += 1 + (ID_FINE(id) != 0);
+    }
+    if (matrix_rows(data) + need > ROWS) {
+        show("LOCK MEM FULL!");
+        return;
+    }
+    for (i = 0; i < SLOTS; i++) {
+        const unsigned char *t = table + SLOT_BYTES * i;
+        if (lane_target(table, i))
+            wrote += bake_target(kit, table, pattern, steps_pattern, t[2], t[3], steps, 1);
+    }
+    release_driven();
+    wipe();
+    show(wrote ? "PERF MOVES APPLIED" : "NOTHING TO APPLY");
+}
+
+// QPER + NO: empty the lane, and bring it back on the next press.
+static void clear_lane(void)
+{
+    if (lane_hidden) {
+        lane_hidden = 0;
+        show("UNDO CLEAR");
+    } else if (lane_used) {
+        release_driven();
+        lane_hidden = 1;
+        show("PERF MOVES CLEARED");
+    } else {
+        show("NOTHING TO CLEAR");
+    }
+}
+
+static void lane_action(int key)
+{
+    lane_busy = 1;
+    if (key == KEY_YES)
+        bake_lane();
+    else
+        clear_lane();
+    lane_busy = 0;
 }
 
 void qperf_pad(void *event, int perf)
@@ -536,6 +959,8 @@ int qperf_key(void *brain, void *event)
         bit = 4;
     else if (key == KEY_STOP)
         bit = 8;
+    else if (key == KEY_NO)
+        bit = 16;
     else
         return 0;
     if (!(flags & PRESSED)) {
@@ -568,6 +993,7 @@ void qperf_project(int how, unsigned dropped)
     (void)dropped;
     ready = 1;
     kit_changed = 1;
+    lane_pattern = -2;                  // a new project: the next block empties the lane
 }
 
 void qperf_tick(void *ctrl)
@@ -577,6 +1003,16 @@ void qperf_tick(void *ctrl)
     struct { void *object; void *counts; } shared;
     void *popup;
     (void)ctrl;
+    if (views) {
+        unsigned pads = 0;
+        word_t top = held ? 0 : top_view();
+        int p;
+        if (top == PERF_VTABLE)
+            for (p = 0; p < PERFS; p++)
+                if (IS_KEY_HELD(KEY_PAD_FIRST + p))
+                    pads |= 1u << p;
+        pads_held = pads;
+    }
     if (ready && kit_changed) {
         unsigned mask;
         kit_changed = 0;                // first, so a change after this asks again

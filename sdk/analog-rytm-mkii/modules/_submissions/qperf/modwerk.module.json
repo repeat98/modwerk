@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "qperf",
   "name": "QPERF",
-  "version": "0.1.0-experimental",
+  "version": "0.2.0-experimental",
   "machine": "analog-rytm-mkii",
   "category": "scenes",
   "exclusive": false,
@@ -23,11 +23,13 @@
     "highlights": [
       "Sets a lock in the linked performance with one turn",
       "QPER + PLAY clears the linked performance",
-      "QPER + YES moves them into the kit"
+      "QPER + YES moves them into the kit",
+      "Records pad and QPER knob moves in LIVE RECORDING and plays them back, 8 points a step"
     ],
     "usage": [
       "Link a performance with QPER + a pad, hold QPER and turn knobs to shape one macro on the QPER knob.",
-      "Sweep the QPER knob, then QPER + YES when a sound is worth keeping."
+      "Sweep the QPER knob, then QPER + YES when a sound is worth keeping.",
+      "In LIVE RECORDING, squeeze performance pads while the pattern plays; QPER + YES writes the moves into the pattern as locks."
     ]
   },
   "access": {
@@ -36,7 +38,8 @@
       "Hold QPER and press a pad to link that one performance.",
       "Keep QPER held and turn a knob to set its offset.",
       "QPER + PLAY clears the linked performance; press PLAY again to undo. QPER + RECORD copies it, QPER + STOP pastes.",
-      "QPER + YES moves them into the kit."
+      "QPER + YES moves them into the kit.",
+      "In PERF mode, hold RECORD and press PLAY, then play the pads: the moves loop. With LIVE RECORDING on, QPER + YES writes them into the pattern; QPER + NO empties them, NO again undoes."
     ],
     "screenshots": []
   },
@@ -51,7 +54,9 @@
       "A press with QPER held leaves one link, unlike stock. A kit with several keeps them until then, and shows MORE THAN ONE LINKED.",
       "The gestures work on the sound pages and in PERF, SCNE, MUTE and CHRO, not in menus.",
       "Until the QPER knob moves after power on, QPER + YES uses the amounts stock holds.",
-      "Replaces stock's QPER + PLAY, which starts the sequencer."
+      "Replaces stock's QPER + PLAY, which starts the sequencer.",
+      "Recorded performance moves live in RAM until QPER + YES writes them: a pattern change, project load or power off drops them.",
+      "The move lane holds 64 steps; a track at its own speed gets no locks from it."
     ]
   },
   "platform": {
@@ -61,7 +66,8 @@
     "events": [
       "ev_key",
       "ev_tick",
-      "ev_project"
+      "ev_project",
+      "ev_render_out"
     ],
     "claims": [
       "ui:QPER + knob",
@@ -69,7 +75,9 @@
       "ui:QPER + PLAY",
       "ui:QPER + YES",
       "ui:QPER + RECORD",
-      "ui:QPER + STOP"
+      "ui:QPER + STOP",
+      "ui:QPER + NO",
+      "ui:live recording of performance moves"
     ]
   },
   "resources": {
@@ -83,7 +91,7 @@
   },
   "evidence": {
     "tier": "none",
-    "moduleVersion": "0.1.0-experimental",
+    "moduleVersion": "0.2.0-experimental",
     "sourceSha256": null,
     "reports": [],
     "hardware": null,

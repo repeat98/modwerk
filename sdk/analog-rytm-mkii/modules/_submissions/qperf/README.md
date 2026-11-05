@@ -1,6 +1,6 @@
 # QPERF
 
-An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.1.0-experimental. See [TESTING.md](TESTING.md) for what ran on a unit.
+An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.2.0-experimental. See [TESTING.md](TESTING.md) for what ran on a unit.
 
 Set performance locks from the QPER key, much faster than one performance at a time.
 
@@ -17,6 +17,26 @@ QPER links one performance at a time. Hold QPER and press a pad or trig key: the
 | STOP | PASTE PERFORMANCE onto the linked one. STOP again: UNDO PASTE. |
 
 FUNC + QPER (mute) is stock's.
+
+## Recording performance moves
+
+Stock's LIVE RECORDING records knob turns but no performance moves. With this mod, while LIVE RECORDING plays, every performance you move goes into a lane: the pads in PERF mode (several at once), the QPER knob on the linked performance while it turns, and performance CCs from MIDI. The lane plays back on every pass, 8 points a step, and you hear it through the performances themselves, so a lock you change later changes the recorded move too.
+
+A pass records only the performances you touch. The others keep playing what they recorded. Letting go of a pad records its return to zero.
+
+| Gesture | What it does |
+| --- | --- |
+| QPER + YES, LIVE RECORDING on | Writes the lane into the pattern as trigless parameter locks, one per step, and empties the lane. Shows PERF MOVES APPLIED. |
+| QPER + NO | Empties the lane: PERF MOVES CLEARED. NO again: UNDO CLEAR. |
+
+With LIVE RECORDING off, QPER + YES writes the linked performance into the kit, as above.
+
+- **The lane lives in RAM.** Changing pattern, loading a project or powering off drops it. Only QPER + YES keeps the moves, in the pattern.
+- **A move held still.** A pad held down counts as moving, so it records and overrides the lane. The QPER knob counts as moving only while it turns.
+- **Up to 64 steps.** The lane loops with the pattern's length, or every 64 steps when the length is INF or longer.
+- **The written locks.** Each step gets the lane's first recorded value in that step, added to the step's own lock or the kit's value, so a move shorter than a step still lands. The step after a move ends gets the parameter's own value back. A step with no trig becomes a lock trig, as stock's live recording does. A step whose trig has a condition takes the move only on the passes where the trig plays, as any lock on it does.
+- **Tracks with their own length.** In per-track mode a track shorter than the lane takes the moves wrapped onto its own steps, the later ones winning, as stock's live recording wraps knob locks. A track at another speed than the pattern gets none.
+- **72 lock rows a pattern.** Stock keeps one row for each locked parameter of each track, two for a fine one, and uses 71. If the moves need more, QPER + YES shows LOCK MEM FULL! and writes nothing.
 
 These work on the sound pages and in PERF, SCNE, MUTE and CHRO. Press QPER in a menu, dialog, list, the SAMPLER or TEMPO and everything stays stock's, for as long as you hold it. A menu opened with QPER held keeps its keys too. The one exception is linking: where stock lets a pad or trig link over a screen, such as the GLOBAL menu, it moves the one link here too.
 
@@ -38,7 +58,9 @@ Stock draws every message. YES shows PERFORMANCE n APPLIED, or NOTHING TO APPLY 
 - **QPER + PLAY** starts the sequencer on stock. With this mod it clears instead. PLAY alone still starts it.
 - **QPER + STOP and QPER + RECORD** act as STOP and RECORD on stock. With this mod they paste and copy.
 - **QPER + knob** changes the parameter on stock. With this mod it edits locks and leaves the parameter alone.
-- **QPER + YES** did nothing visible on stock (rytm-emu, OS 1.74).
+- **QPER + YES** did nothing visible on stock (rytm-emu, OS 1.74). With LIVE RECORDING on it writes the lane instead of the kit.
+- **QPER + NO** empties the lane. What stock does with it was not checked.
+- **Performance moves during LIVE RECORDING** are kept and played back by this mod. Stock keeps none.
 
 Kits are not changed by loading them: only a pad or trig press with QPER held changes a kit's links. Remove the mod to get these back.
 
@@ -49,3 +71,5 @@ Kits are not changed by loading them: only a pad or trig press with QPER held ch
 3. Sweep the QPER knob. Both moves come in together.
 4. When a position sounds right, hold QPER and press YES to keep it in the kit.
 5. Hold QPER and press RECORD, press pad 2, then STOP to start another performance from this one.
+6. Press PERF, hold RECORD and press PLAY. While the pattern plays, press and squeeze pads 1 and 2. Let go and listen to the next pass.
+7. With LIVE RECORDING still on, hold QPER and press YES to write the moves into the pattern.

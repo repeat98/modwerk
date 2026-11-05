@@ -43,3 +43,25 @@
 #define SCENE_VTABLE 0x401e305c
 #define MUTE_VTABLE 0x401e2bbc
 #define CHROMATIC_VTABLE 0x401e1394
+
+// The sequencer, for the performance lane.
+#define PLAYING_A_AT 0x405c8cf8         // both nonzero while it plays
+#define PLAYING_B_AT 0x405c8c90
+#define SEQ_STEP_AT 0x405c8c94          // u16, the pattern's step
+#define SEQ_PULSE_AT 0x405c8c96         // s8, pulse within the step
+#define SEQ_SPEED_AT 0x405c8d24         // s8, index into the pulses table
+#define PULSES_TABLE_AT 0x401db6f8      // pulses a step: 3, 4, 6, 8, 12, 24, 48
+#define NEXT_PULSE_AT 0x405c8b20        // u32, the clock of the next pulse
+#define MUSIC_CLOCK_AT 0x8000fe54       // u32, 900000 a pulse
+#define LIVE_PATTERN_AT 0x405c8d04      // s8, the pattern playing
+#define REC_UI_AT 0x419f28d8            // the record state's object, + 361 LIVE REC
+#define PATTERNS_AT 0x407dd8e3          // 85760 bytes a pattern
+#define PATTERN_OF_AT 0x400af0ac
+#define PATTERN_TRACK_AT 0x400ab29e
+#define STEP_LOCK_SET_AT 0x400c058c
+#define STEP_LOCK_GET_AT 0x400bfbbe
+#define STEP_AUDIBLE_AT 0x400bff7e
+#define STEP_LOCK_TRIG_AT 0x400c000e
+#define STEP_MAKE_LOCK_TRIG_AT 0x400c2698
+#define ID_FINE_AT 0x400071a6
+#define ID_TABLE_AT 0x401bfbc8

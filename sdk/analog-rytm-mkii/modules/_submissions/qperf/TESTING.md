@@ -1,6 +1,6 @@
 # QPERF testing
 
-Nothing here proves reboot persistence or the QPER knob itself. Hardware results below are the author's, each on the build named. QC13 is the code here.
+Nothing here proves reboot persistence or the QPER knob itself. Hardware results below are the author's, each on the build named. QC13 is the 0.1.0 code; 0.2.0-experimental (the performance lane) has run only in rytm-emu, on QL02 and QL05 below; QL05 is the code here.
 
 ## Hardware
 
@@ -215,7 +215,38 @@ Reported by the author on QC13, Analog Rytm MKII: QPER + pad linked, QPER + knob
 
 Also reported on QC13, reflashed: QPER + YES at about half showed PERFORMANCE 1 APPLIED. RECORD showed COPY PERFORMANCE 1, and after moving to a second pad, paste and undo paste worked. A kit with two links showed MORE THAN ONE LINKED on YES, QPER + pad left one link, and a kit reload brought both back.
 
+### Performance lane, 0.2.0-experimental
+
+Build QL02 (sha256 8463a7fef6aa8b81a1e843a77b3e3fa8eb6da2c7ff8375bb48abaf04a6a476d6): core 0.7 on Modwerk base e558ad22 with QPERF alone, rytm-emu 2ac0f1f (`~/.cache/modwerk-upstream/rytm-emu`), stock OS 1.74, factory project K001 RYTMLINJE on a card image, boot popups closed with NO. That pattern runs per track with master length INF, so the lane loops every 64 steps. Pad pressure was sent as raw panel bytes (`--raw 90vv`, pad BD) with BD held by `--press`; amounts and engine words were read with `DTBOOT_PEEK` every 20M, screens with `DTBOOT_STEPS`.
+
+| Check | Result |
+| --- | --- |
+| PERF, RECORD held + PLAY, BD held with pressure 0x10, 0x30, 0x50, 0x70, 0x7f, 0x40, 0x00 over steps 11 to 23 | Performance 1's amount followed: 0x0800, 0x1800, 0x2800, 0x3800, 0x3f80, 0x2000, 0 |
+| RECORD (LIVE RECORDING off), next pass | Steps 75 to 88 (lane steps 11 to 24) replayed the same amounts, and the locked engine words matched the recorded pass (track 2 word 41: 0x066f, 0x114f, 0x1c30, 0x270f, 0x2c26, 0x16c1 against 0x066d, 0x1150, 0x1c2f, 0x2710, 0x2c29, 0x16c0) |
+| RECORD held + PLAY, QPER + YES | PERF MOVES APPLIED; the amount stayed 0 from then on, and the same words followed the step locks on the next pass (0x0670, 0x1c30, 0x2710, 0x2c29, 0x16c0). Track 2 is 16 steps long, so the moves past step 15 landed on its steps 0 to 7 |
+| QPER + NO after a take, next pass | PERF MOVES CLEARED, no playback |
+| QPER + NO again, next pass | UNDO CLEAR, playback back |
+| RECORD alone while playing | Not LIVE RECORDING: it toggles the byte before it (grid recording, by its behaviour); QPER + YES then acted on the kit (MORE THAN ONE LINKED with this kit) |
+
+Build QL05 (sha256 e4af066b66cccc1b5763d8f0b225b87408847d4b068de798338960744fe4acd2), same setup, after a code review: the written lock is the step's first recorded value, the step after a move gets its value back even with no recorded zero, the row check counts only parameters the moves change, and the trig tests read stock's byte answer. Two one-step moves on BD, 0x7f on step 10 and 0x40 on step 13, then QPER + YES in LIVE RECORDING:
+
+| Check | Result |
+| --- | --- |
+| Lane, next pass | Tracks 5, 7 and 9's locked words moved during counter steps 74 and 77 (lane steps 10 and 13) |
+| Baked, the pass after | The same words moved during counter steps 138 and 141, and came back the step after each move |
+| Track 2 (SD), whose steps 11 to 15 hold trigs with conditions | The step-10 lock (an empty step, so a lock trig) played; the return on step 11 and the step-13 lock did not on that pass, as stock plays a conditional trig's locks only when the trig plays |
+
+Before QL05 the locks landed a step late: the pattern's step counter runs one step ahead of what plays (a lock on step 4 acted while the counter read 5). The lane takes moves at the counter's step, so the bake now writes each step's moves on the step before.
+
+An earlier run with pressure bytes and no held pad recorded only the 0.1 s after each byte, as designed: a pad counts as moving while it is held or its amount changes.
+
 ## Not tested
+
+- Anything of 0.2.0-experimental on a unit, including how the panel reports a held pad's pressure and its release.
+- Recording the QPER knob or MIDI performance CCs into the lane (rytm-emu has no pot input here).
+- A pattern change or project load dropping the lane, LOCK MEM FULL! from the lane, a track at another speed, and a pattern with a master length.
+- The one-step lead at other track speeds, swing, or with a master length; QL05 measured it at 1x with master length INF only.
+- QPER + NO on stock.
 
 - SysEx kit receive.
 - Menus and dialogs other than those above: they count as not ours because their class is not on the list.

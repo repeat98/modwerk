@@ -21,6 +21,11 @@
       "event": "ev_project",
       "fn": "qperf_project",
       "order": 50
+    },
+    {
+      "event": "ev_render_out",
+      "fn": "qperf_render",
+      "order": 50
     }
   ],
   "contribute": [],
@@ -33,7 +38,9 @@
     "ui:QPER + PLAY",
     "ui:QPER + YES",
     "ui:QPER + RECORD",
-    "ui:QPER + STOP"
+    "ui:QPER + STOP",
+    "ui:QPER + NO",
+    "ui:live recording of performance moves"
   ],
   "requires": [],
   "derive": null,
