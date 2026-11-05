@@ -1,0 +1,1 @@
+Fix: `npm run pr:ready` checks the Python it will run first and says when it is older than 3.10, the version `npm run check` needs. Before, macOS's own Python 3.9 crashed with a traceback inside `scripts/module-pairs.py` while it loaded the Octatrack manifests, with no word on why.
