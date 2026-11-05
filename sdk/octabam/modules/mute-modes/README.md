@@ -4,7 +4,7 @@
 
 Choose a stock cut, FX tails, trig suppression or amp-envelope completion for muted and soloed-out audio tracks.
 
-Version `0.1.0-experimental`. Select it in the Modwerk configurator. The owner approved release where current hardware evidence is missing; credited historical reports remain available in TESTING.md.
+Version `0.2.2-experimental`. Select it in the Modwerk configurator. The author ran this version's card image on his MKI (TESTING.md); credited historical reports remain available there.
 
 ## Controls
 

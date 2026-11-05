@@ -17,7 +17,7 @@ import { communityModule, moduleThreadId } from '../src/community/modules'
 import { ensureDiscussionThread, ensureModuleThreadsOnce } from './module-threads'
 import { validateDigiIssueContext } from '../src/community/digi-issue-context'
 import { recordAnonymousCount, recordUsage, recordModuleDownload, usageStatistics } from './usage'
-import { moduleStatistics } from './module-statistics'
+import { sharedModuleStatistics } from './module-statistics'
 import { worksReportCount } from './hardware-reports'
 import { workingReportRoute } from './working-reports'
 import { membersOnline, sitePresenceRoute } from './presence'
@@ -83,7 +83,7 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     if (path === '/api/usage/module-downloads' && request.method === 'POST') return await recordModuleDownload(request,env,db)
     if (path === '/api/usage/count' && request.method === 'POST') return await recordAnonymousCount(request,env,db)
     if (path === '/api/catalog' && request.method === 'GET') return response((await db.prepare("SELECT s.module_id,s.title,s.repository_url,s.description,s.usage,s.resource_notes,s.test_report_url,s.reviewed_at,strftime('%Y-%m-%dT%H:%M:%SZ',s.reviewed_at) AS updated_at,(SELECT strftime('%Y-%m-%dT%H:%M:%SZ', MIN(first.reviewed_at)) FROM submissions first WHERE first.module_id=s.module_id AND first.status='approved') AS added_at,u.github_login AS author FROM module_publications p JOIN submissions s ON s.id=p.submission_id JOIN users u ON u.id=s.owner_id ORDER BY s.reviewed_at DESC").all()).results)
-    if(path==='/api/community/summary'&&request.method==='GET')return response(await moduleStatistics(db))
+    if(path==='/api/community/summary'&&request.method==='GET')return response(await sharedModuleStatistics(db,url.searchParams.get('fresh')==='1'))
     if(path==='/api/community/online'&&request.method==='GET')return response(await membersOnline(db))
     if (path === '/api/announcements' && request.method === 'GET') return response({ items: await publicAnnouncementItems(db) })
     const developerAuth = await developerAuthentication(request,env,db)

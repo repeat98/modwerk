@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.2.0-experimental",
+    "date": "2026-11-04",
+    "changes": [
+      "First release, for Analog Rytm MKII OS 1.74: hold a trig in GRID RECORDING to set its trig condition without the TRC knob.",
+      "FILL steps the held trigs through FILL, NOT FILL and no lock.",
+      "UP steps a ratio's first number and DOWN its second, from 1:2 to 8:8. The first press gives 1:2; DOWN past 8 clears the lock.",
+      "Trig + UP or DOWN no longer opens the trig's RETRIG menu: trig + RTRG still does."
+    ]
+  }
+]

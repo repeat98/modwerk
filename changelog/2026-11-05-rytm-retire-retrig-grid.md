@@ -1,0 +1,1 @@
+Analog Rytm MKII: the separate Retrig Grid submission is removed from `_submissions/`. stigmagit's Retrig Grid lives on inside Live Rec Retrig Fix 0.2.0-experimental (#1215), with stigmagit's agreement on #1114, so the two never install side by side.

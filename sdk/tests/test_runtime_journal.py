@@ -102,6 +102,63 @@ int main(void) {
             with self.subTest(defines=defines):
                 self.compile_run(source, defines + sanitizers)
 
+    def test_a_save_torn_inside_its_header_never_wedges_the_saved_set(self):
+        # A power cut inside a save's first sector leaves the new header's first bytes and the slot's old bytes after
+        # them. The next start restores the other slot or nothing, and the next save restores again. The case lives
+        # here, on test_modset.c's pretend card, because a file in the base's folders changes the base.
+        fixture = (ELEK / 'test_modset.c').read_text()
+        source = fixture[:fixture.index('int main(void)')] + r'''
+/* The save just written to `which`, torn: its bytes up to `at`, what the slot held before after them. */
+static void tear(unsigned which, unsigned at, const uint8_t *before)
+{
+    static uint8_t now[SET_BYTES];
+    memcpy(now, card[which], SET_BYTES); memcpy(card[which], before, SET_BYTES); memcpy(card[which], now, at);
+}
+static void fresh(void)
+{
+    memset(card, 0, sizeof card); memset(card_bytes, 0, sizeof card_bytes);
+    boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == NONE_SAVED);
+}
+static int nothing_restored(void)
+{
+    return !installed && (modwerk_modset_result == FOREIGN || modwerk_modset_result == DAMAGED || modwerk_modset_result == NONE_SAVED);
+}
+int main(void)
+{
+    static uint8_t was[SET_BYTES];
+    static const unsigned at[] = {2, 6, 10, 14, 18, 30, 60, 83}; /* magic, version, generation, count, length, base, SHA-256 */
+    make(0, 0x873d83ccu, 0); make(1, 0x3cbedc9cu, 0); make(2, 0x873d83ccu, 1);
+    for (unsigned i = 0; i < sizeof at / sizeof *at; ++i) {
+        /* A fresh card's first save. */
+        fresh(); memcpy(was, card[1], SET_BYTES);
+        accept(0, 48); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVED); tear(1, at[i], was);
+        boot(); modwerk_modset_service(); CHECK(nothing_restored());
+        accept(0, 48); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVED);
+        boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 1);
+        /* The first save after a base change: both slots hold another base's sets. */
+        fresh(); accept(0, 48); accept(1, 40); modwerk_modset_service(); accept(2, 36); modwerk_modset_service();
+        card[0][20] ^= 1; card[1][20] ^= 1;
+        boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == FOREIGN && !installed);
+        memcpy(was, card[1], SET_BYTES);
+        accept(0, 48); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVED); tear(1, at[i], was);
+        boot(); modwerk_modset_service(); CHECK(nothing_restored());
+        accept(0, 48); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVED);
+        boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 1);
+        /* This base's whole set in the other slot: the torn one is passed over, and the next save goes over it. */
+        fresh(); accept(0, 48); modwerk_modset_service(); accept(1, 40); modwerk_modset_service();
+        boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 2);
+        memcpy(was, card[1], SET_BYTES);
+        accept(2, 36); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVED); tear(1, at[i], was);
+        boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 2 && modwerk_modset_generation == 2);
+        accept(2, 36); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVED);
+        boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 1 && modwerk_modset_generation == 3);
+        if (failures) { fprintf(stderr, "torn %u bytes into the header\n", at[i]); return 1; }
+    }
+    return 0;
+}
+'''
+        self.compile_run(source, ('-DMODWERK_HOST', '-Wno-unused-function', '-g', *SANITIZE, '-fno-sanitize-recover=all'))
+
     def test_missing_production_journal_backend_does_not_open_a_service(self):
         # Keep the real legacy loader suite and remove only the synthetic
         # journal adapter and its enabled-path fixture. Its weak production

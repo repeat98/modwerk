@@ -1,0 +1,1 @@
+Docs: the Analog Rytm MKII guide's Control inputs notes now say why a jack read from `ev_tick` acts 33 to 83 ms late (stock smooths it by 2% an audio block) and how Control In Actions 0.1.1 acts within about a block: the converter's result in `ev_render_out`, and a key message posted to the UI task's queue and taken back in `ev_key`.

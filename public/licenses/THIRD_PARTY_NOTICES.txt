@@ -3264,6 +3264,115 @@ targets.
 
 ========================================================================
 
+Tim Hastie Tuner
+SPDX: MIT
+Used in: modules/tuner
+Notice source: https://github.com/timhastie/octatrick-modules/blob/fd18f5530989be348e6aa4c6e38f93beba555e6d/LICENSE
+
+MIT License
+
+Copyright (c) 2026 Tim Hastie
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+This licence covers this repository's own source code and documentation:
+the three modules' ColdFire sources, their manifests and their READMEs. It
+does not extend to any Elektron Music Machines firmware, which is not
+distributed here and remains the property of its copyright holder; every
+image is built by the user from their own copy of the official OS with
+octabam (https://github.com/sambanks/octabam, MIT, Sam Banks), whose build
+system these manifests are written for. The displaced stock instructions a
+hook site replays (a few bytes per site) are carried the way every octabam
+ColdFire module carries them. Nothing in this project is endorsed by,
+supported by or affiliated with Elektron. Octatrack and Elektron are
+trademarks of Elektron Music Machines MAV AB, used only to identify the
+hardware this project targets.
+
+---
+
+The FM SYNTH machine-list chooser -- synth/machine.s and the chooser's parts of
+synth/poly.s, synth/page.s and quantizer/quantizer.s -- is adapted from
+Modwerk's FM Synth module (https://github.com/repeat98/modwerk,
+sdk/octabam/modules/synth, commit 1c1d938), whose chooser is derived from
+Modwerk's Analog BD chooser hooks. Since 2.13 the quantizer's CHROMATIC drawer
+hook at the drawer's common push (quantizer/quantizer.s qz_octnum at 0x400449be,
+Modwerk #264) takes the form of the quantizer that module bundles. Their
+notices, as that module's LICENSE carries them:
+
+Dedicated chooser, Part validation, sample-free transport and original presentation:
+
+MIT License
+
+Copyright (c) 2026 Modwerk contributors
+
+Portions of the firmware analysis tooling originate from the octamax project
+(https://github.com/mxldyn/octamax), Copyright (c) 2025-2026 Maxolydian,
+also under the MIT License.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+MIT License
+
+Copyright (c) 2026 Sam Banks
+
+Portions of the firmware analysis tooling originate from the octamax project
+(https://github.com/mxldyn/octamax), Copyright (c) 2025-2026 Maxolydian,
+also under the MIT License.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+========================================================================
+
 elekloader's kit (vendored Digitakt/Digitone builder)
 SPDX: GPL-3.0-or-later
 Used in: vendor/elekloader/kit; Digitakt/Digitone browser builder
@@ -3271,7 +3380,7 @@ Notice source: vendor/elekloader/kit/NOTICE
 Notice source: vendor/elekloader/kit/LICENSE
 Notice source: https://github.com/irpina/elekloader/tree/3b31ef3c0e43c810e3acd0be6257e2484b20fc40/js
 
-Modwerk ships this kit with src/codec/aplib.ts, src/codec/elz.ts, src/codec/transport.ts, src/isa/coldfire.ts replaced by Modwerk's own implementation (vendor/elekloader/README.md).
+Modwerk ships this kit with src/codec/aplib.ts, src/codec/elz.ts, src/codec/transport.ts, src/isa/coldfire.ts replaced by Modwerk's own implementation (vendor/elekloader/README.md). They keep the formats of the code credited under "Code from other projects" below and were checked against outputs recorded from it, so that credit stays.
 
 elekloader
 Copyright (C) 2026 irpina and contributors
@@ -3285,6 +3394,18 @@ elekloader is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
 more details.
+
+Code from other projects
+------------------------
+These files come from digikit (https://github.com/m-dwyer/digikit),
+under the GNU GPL version 2 or (at your option) any later version. Each file names its origin in its header.
+
+  elekloader/codec/elz.py        dt2/elz.py, by Em D
+  elekloader/codec/aplib.py      dt2/aplib.py, by Em D; the match-finder and
+                                 compressed output by irpina
+  elekloader/codec/transport.py  the transport encoders and checksums from
+                                 dt2/build.py, by Em D; changes by irpina
+  elekloader/isa/coldfire.py     emu/cfisa.py, by irpina
 
 The TypeScript engine
 ---------------------
