@@ -23,7 +23,7 @@
     "label": "Multitrack stems to the card",
     "family": "Recording",
     "summary": "Hold UP and press REC to open STEMS, then record each track, MAIN, CUE and the inputs to their own WAV files while the sequencer plays.",
-    "overview": "Stem Rec writes a take to the card while the sequencer plays: every track after its fader, the main mix, the cue mix and the four inputs, each as its own 44,100 Hz WAV file in 16 or 24 bits, for up to 60 minutes. Each take gets a folder in AUDIO/!STEMS. It uses no effect slot. This draft offers card builds only.",
+    "overview": "Stem Rec writes a take to the card while the sequencer plays: every track after its fader, the main mix, the cue mix and the four inputs, each as its own 44,100 Hz WAV file in 16 or 24 bits, for up to 60 minutes. Each take gets a folder in AUDIO/!STEMS. It uses no effect slot. Card builds only.",
     "highlights": [
       "UP then REC opens and closes STEMS; REC alone stays stock.",
       "T1 to T8, MAIN, CUE and the input pairs AB and CD, each on or off; a pair records as one stereo file or two mono ones.",
@@ -45,7 +45,12 @@
       "Press YES on STEM REC: it arms, and the take starts when the sequencer plays (at once if it already does). Stop the sequencer to end it.",
       "Wait until STEM REC reads DONE before you pull the card or power off. The files are in AUDIO/!STEMS/<take>/."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/01-main.png",
+      "media/02-stems-open.png",
+      "media/04-stems-sources.png",
+      "media/05-stems-armed.png"
+    ]
   },
   "controls": [
     {
@@ -225,23 +230,23 @@
     ]
   },
   "resources": {
-    "recorded": "Pending: the link-map inventory and STATS.TXT timing on the tested image",
+    "recorded": "5 November 2026; STEMMW1 on an MKII, emulator counts and the link map",
     "storage": {
       "label": "ColdFire code, data, rings and stack",
-      "display": "8,403,968 B of DRAM regions plus its unit (exact inventory pending)",
-      "value": null,
+      "display": "8,436,254 B of its own, inside the 10.49 MB DRAM platform reserve",
+      "value": 8436254,
       "unit": "bytes",
-      "method": "unmeasured",
-      "conditions": "The ring (8,388,608 B), the writer's stack (8,192 B) and fourteen sector-0 copies (7,168 B) are DramRegions at the top of the platform reserve; the unit's code and state and the alignment padding are to be counted from the build.",
+      "method": "static",
+      "conditions": "The 8 MiB ring, the writer's 8 KiB stack, 7 KiB of sector copies with 480 bytes of padding, the 23,210-byte unit, the 8,568-byte loader appendix and 28 bytes of hook sites; any DRAM module also creates the 10,487,808-byte platform reserve taken from Flex sample RAM, which holds them. See TESTING.md.",
       "source": "TESTING.md"
     },
     "processing": {
       "label": "ColdFire, per audio block",
-      "display": "Pending: worst case from a fourteen-file take on hardware",
-      "value": null,
+      "display": "13,992 of 95,782 cycles a block at 11 files (measured); about 15,505 with every source",
+      "value": 15505,
       "unit": "cycles/block",
-      "method": "unmeasured",
-      "conditions": "The frame hook mirrors the gains every block and, while a take runs, packs each source into its ring; the writer task streams the rings to the card. To be measured on the tested image.",
+      "method": "hardware",
+      "conditions": "The frame hook's longest frame on the unit, 53 us at eleven 24-bit files, at 264 MHz; every source at 24 bits scaled from it by the emulator's instruction counts (4,468 / 4,032). The writer task runs outside the audio interrupt. See TESTING.md.",
       "source": "TESTING.md"
     },
     "impact": {
@@ -268,17 +273,235 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Draft: built natively and booted under ot_emu (verify.py). Native/browser comparison, packages, worst-case cycles, exact memory and hardware evidence on the tested image are pending.",
-    "hardwareStatus": "untested",
+    "summary": "On Yves's MKII (5 November 2026, image STEMMW1): two takes of eleven 24-bit files, both OK, every file whole, the frame hook 53 us at most (13,992 of 95,782 cycles a block). Under the emulator the card builds alone and beside APPLY SCENE, TUNER and USB AUDIO OUT, boots, and fills its gain table from the OS (verify.py).",
+    "hardwareStatus": "reported",
     "evidenceRevision": "00a23502a9e3ce8264888026a2b6764e7f52a3be",
     "gates": [
-      "verify.py: the card build boots under ot_emu, its DRAM runtime reads back equal to the link, its gain table holds the OS's 774 bytes, and it builds beside APPLY SCENE, TUNER and USB AUDIO OUT"
-    ]
+      "verify.py: the card build boots under ot_emu, its DRAM runtime reads back equal to the link, its gain table holds the OS's 774 bytes, its regions lie in the reserve, and it builds beside APPLY SCENE, TUNER and USB AUDIO OUT",
+      "Hardware report for this source and image (STEMMW1, 6618b451...): yvesrosius, MKII, 2026-11-05 (reported; TESTING.md)"
+    ],
+    "qualification": {
+      "moduleVersion": "0.1.0-experimental",
+      "sourceSha256": "4bbf4e76da4c741866070161f51cbdf8d6a8a5caf93b94662bf05bfdf428e0f4",
+      "imageSha256": "6618b45173de86d012fda10d1868aaec1001c281a5c93fc18024a504f56e4caa",
+      "cycles": [
+        {
+          "processor": "coldfire",
+          "worstCase": 13992,
+          "maxConfiguration": 15505,
+          "maxInstances": 1,
+          "budget": 95782,
+          "unit": "cycles/block",
+          "method": "hardware",
+          "conditions": {
+            "parameterExtremes": "16 and 24 bits, every source on or off, the input pairs stereo or mono, MASTER TRACK on and off: the emulator counts the hook at 396 instructions a frame idle, 937 with T1 alone, 4,032 with the eleven files measured on the unit and 4,468 with every source at 24 bits, the most (octabam's cost gate, 400 frames each). The unit measured eleven files at 24 bits: 53 us at most.",
+            "parameterModulation": "Levels, MAIN LEVEL, scenes, the crossfader, LFOs and p-locks reach Stem Rec only through each track's gain: a track whose gain moves on a frame takes the ramp path, about 100 instructions more on that frame, otherwise the flat path. The unit's takes ran the project with its own levels. No MIDI CC or other control path.",
+            "modeSwitching": "Arm, start on the first frame the sequencer plays (the files' layout is latched once, on that frame, inside the frames measured), stop on the sequencer, on YES, after 60 minutes or on RING FULL. The take's end and the card writes run in the writer task, outside the audio interrupt.",
+            "maxLoad": "One instance. Every source at 24 bits (fourteen files) is the most: estimated from the unit's 53 us at eleven files scaled by the emulator's 4,468 / 4,032 instructions, 58.7 us, 15,505 cycles of the 95,782-cycle block at 264 MHz. The unit's takes ran with the project's Static tracks streaming from the card; the hook and the stock frame routine together took 104 us at most.",
+            "inputConditions": "The hook's instructions depend on the source mask and the fader moves, not on the audio, except the limiter: a track whose gain can exceed unity takes the limited loop, one compare a sample on the common path; octabam's units drive every loop form with rail samples. Measured with the project's audio; no silence or full-scale take on the unit."
+          },
+          "report": "TESTING.md"
+        }
+      ],
+      "memory": {
+        "regions": [
+          {
+            "name": "The DRAM unit: code, state, gain queue and gain table (.text; no BSS)",
+            "space": "sdram",
+            "words": 23210,
+            "wordBits": 8,
+            "bytes": 23210,
+            "scope": "shared"
+          },
+          {
+            "name": "stems_ring: the take's per-file rings (DramRegion)",
+            "space": "sdram",
+            "words": 8388608,
+            "wordBits": 8,
+            "bytes": 8388608,
+            "scope": "shared"
+          },
+          {
+            "name": "stems_stack: the writer task's stack (DramRegion)",
+            "space": "sdram",
+            "words": 8192,
+            "wordBits": 8,
+            "bytes": 8192,
+            "scope": "shared"
+          },
+          {
+            "name": "stems_buf: fourteen 512-byte sector-0 copies (DramRegion, 512-aligned)",
+            "space": "sdram",
+            "words": 7168,
+            "wordBits": 8,
+            "bytes": 7168,
+            "scope": "shared"
+          },
+          {
+            "name": "Padding between stems_buf and stems_stack",
+            "space": "sdram",
+            "words": 480,
+            "wordBits": 8,
+            "bytes": 480,
+            "scope": "shared"
+          },
+          {
+            "name": "The platform loader and packed unit appended to the image",
+            "space": "sdram",
+            "words": 8568,
+            "wordBits": 8,
+            "bytes": 8568,
+            "scope": "shared"
+          },
+          {
+            "name": "The four rewritten hook sites in stock code",
+            "space": "sdram",
+            "words": 28,
+            "wordBits": 8,
+            "bytes": 28,
+            "scope": "shared"
+          },
+          {
+            "name": "The rest of the platform reserve, given up from Flex sample RAM",
+            "space": "sdram",
+            "words": 2060150,
+            "wordBits": 8,
+            "bytes": 2060150,
+            "scope": "shared"
+          }
+        ],
+        "perInstanceBytes": 0,
+        "sharedBytes": 10496404,
+        "maxInstances": 1,
+        "totalBytes": 10496404,
+        "conditions": "Exact layout of the card build (STEMMW1's MAIN OS): the unit at 0x40a955e0..0x40a9b08a with no BSS, the three DramRegions from layout.json, the 10,487,808-byte platform reserve 0x40a955e0..0x41495de0 that any DRAM module creates and shares, its unused 2,060,150 bytes counted here; the boot stage (8,336 bytes at 0x40a9c000) is temporary inside that unused part. No heap. The writer stack's peak, 1,560 of 8,192 bytes, is from octabam's port runs; no canary was measured on hardware.",
+        "report": "TESTING.md"
+      },
+      "hardware": {
+        "kind": "functional",
+        "status": "reported",
+        "model": "MKII",
+        "testedOn": "2026-11-05",
+        "tester": "yvesrosius",
+        "sourceRevision": "00a23502a9e3ce8264888026a2b6764e7f52a3be",
+        "imageSha256": "6618b45173de86d012fda10d1868aaec1001c281a5c93fc18024a504f56e4caa",
+        "summary": "Yves flashed OCTATRACK_STEMMW1.bin (454,608 B, SHA-256 6618b451...) on his MKII on 5 November 2026 and recorded two takes of eleven files at 24 bits (T1 to T7, MAIN, CUE, AB, CD), 11.8 s and 3.1 s, both ended by the sequencer: both status OK, every WAV whole with its .ot and the take's STATS.TXT, the ring at most 32% full, the frame hook 28 and 29 us on average and 53 us at most. STEMS opened with UP + REC, YES armed, and a double YES on the main page did stock's ARM ALL only.",
+        "limitations": [
+          "Two short takes; the fourteen-file maximum configuration, a take of T1 alone and a reboot were not run on the unit.",
+          "The track files were not checked against MAIN: the project leaves T8 out of every take, as with MASTER TRACK on, when MAIN is T8's output (inferred).",
+          "MKII only; not run on an MKI."
+        ],
+        "report": "TESTING.md"
+      },
+      "documentation": {
+        "tutorial": {
+          "title": "Quick tutorial: record your tracks as stems",
+          "steps": [
+            "Include Stem Rec in a card build. Hold UP first, then press REC: STEMS opens.",
+            "Choose the sources with UP, DOWN and YES: T1 alone is on at boot, at 24 bits.",
+            "Press YES on STEM REC: it arms, and the take starts when the sequencer plays (at once if it already does). Stop the sequencer to end it.",
+            "Wait until STEM REC reads DONE before you pull the card or power off. The files are in AUDIO/!STEMS/<take>/."
+          ]
+        },
+        "screenshots": [
+          "media/02-stems-open.png",
+          "media/04-stems-sources.png",
+          "media/05-stems-armed.png"
+        ],
+        "screenshotStyle": "black-and-white"
+      }
+    }
   },
   "license": {
     "spdx": "MIT",
     "file": "LICENSE",
     "declaration": "The exact upstream source and octabam's MIT terms are retained. The licence covers authored source and documentation; it grants no rights to Elektron firmware and asserts no hardware qualification."
   },
-  "media": []
+  "media": [
+    {
+      "path": "media/01-main.png",
+      "captureType": "emulator",
+      "caption": "The track page, the starting point: hold UP first, then press REC to open STEMS.",
+      "alt": "Octatrack track page with the SRC parameters of a Static machine.",
+      "credit": "Stem Rec by Yves Rosius; documentary emulator capture; underlying interface by Elektron Music Machines.",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "Track page",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "9a7e1784f9613a66d4957b01911bcc89f24d6a6638a6e29765a90adc923045b2",
+        "setup": "Stem Rec alone on the original OS 1.40C, built natively from this source (the STEMMW1 MAIN OS); emulator from npm run upstream:tools (octabam 5f8e779); MKII panel; empty scratch card; transport stopped; actual 128x64 LCD at integer scale 6."
+      }
+    },
+    {
+      "path": "media/02-stems-open.png",
+      "captureType": "emulator",
+      "caption": "STEMS just opened: STEM REC reads READY, PEAK 0%, and T1 alone is on, as at every boot.",
+      "alt": "STEMS window listing STEM REC READY, PEAK 0%, T1 checked, T2 and T3 unchecked.",
+      "credit": "Stem Rec by Yves Rosius; documentary emulator capture; underlying interface by Elektron Music Machines.",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "STEMS window",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "9a7e1784f9613a66d4957b01911bcc89f24d6a6638a6e29765a90adc923045b2",
+        "setup": "Stem Rec alone on the original OS 1.40C, built natively from this source (the STEMMW1 MAIN OS); emulator from npm run upstream:tools (octabam 5f8e779); MKII panel; empty scratch card; transport stopped; actual 128x64 LCD at integer scale 6."
+      }
+    },
+    {
+      "path": "media/03-stems-tracks.png",
+      "captureType": "emulator",
+      "caption": "Further down: the track rows T3 to T7, each with its checkbox.",
+      "alt": "STEMS window listing T3 to T7, all unchecked, the cursor on T7.",
+      "credit": "Stem Rec by Yves Rosius; documentary emulator capture; underlying interface by Elektron Music Machines.",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "STEMS window",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "9a7e1784f9613a66d4957b01911bcc89f24d6a6638a6e29765a90adc923045b2",
+        "setup": "Stem Rec alone on the original OS 1.40C, built natively from this source (the STEMMW1 MAIN OS); emulator from npm run upstream:tools (octabam 5f8e779); MKII panel; empty scratch card; transport stopped; actual 128x64 LCD at integer scale 6."
+      }
+    },
+    {
+      "path": "media/04-stems-sources.png",
+      "captureType": "emulator",
+      "caption": "The last rows: MAIN, CUE, the input pairs AB and CD with STEREO on, and 24 BIT on.",
+      "alt": "STEMS window listing MAIN, CUE, AB with STEREO checked, CD with STEREO checked, and 24 BIT checked.",
+      "credit": "Stem Rec by Yves Rosius; documentary emulator capture; underlying interface by Elektron Music Machines.",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "STEMS window",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "9a7e1784f9613a66d4957b01911bcc89f24d6a6638a6e29765a90adc923045b2",
+        "setup": "Stem Rec alone on the original OS 1.40C, built natively from this source (the STEMMW1 MAIN OS); emulator from npm run upstream:tools (octabam 5f8e779); MKII panel; empty scratch card; transport stopped; actual 128x64 LCD at integer scale 6."
+      }
+    },
+    {
+      "path": "media/05-stems-armed.png",
+      "captureType": "emulator",
+      "caption": "YES on STEM REC with the sequencer stopped: the take is armed and starts when the sequencer plays.",
+      "alt": "STEMS window with STEM REC ARMED.",
+      "credit": "Stem Rec by Yves Rosius; documentary emulator capture; underlying interface by Elektron Music Machines.",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "STEMS window",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "9a7e1784f9613a66d4957b01911bcc89f24d6a6638a6e29765a90adc923045b2",
+        "setup": "Stem Rec alone on the original OS 1.40C, built natively from this source (the STEMMW1 MAIN OS); emulator from npm run upstream:tools (octabam 5f8e779); MKII panel; empty scratch card; transport stopped; actual 128x64 LCD at integer scale 6."
+      }
+    }
+  ]
 }
