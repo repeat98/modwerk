@@ -61,6 +61,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 ## Other machines and research
 
 - [SYNTAKT_OS_RESEARCH.md](SYNTAKT_OS_RESEARCH.md), [TONVERK_OS_RESEARCH.md](TONVERK_OS_RESEARCH.md), [DIGITONE_II_OS_RESEARCH.md](DIGITONE_II_OS_RESEARCH.md): what each stock OS has shown so far.
+- [DIGITAKT_II.md](DIGITAKT_II.md): the Digitakt II, from research to a base, a library, downloads and USB loading: the plan and its open decisions.
 - [LXR_02.md](LXR_02.md): the Erica Synths LXR-02, in research.
 - [ZOOM_MULTISTOMP.md](ZOOM_MULTISTOMP.md) and [ZDL_MODULE_CONTRACT.md](ZDL_MODULE_CONTRACT.md): proposals for Zoom MultiStomp pedals and their effect files.
 - [MACHINE_IMAGES.md](MACHINE_IMAGES.md): where each machine photo comes from, and its terms.

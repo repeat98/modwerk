@@ -1,0 +1,1 @@
+Docs: a plan for the Digitakt II, from research to a Modwerk base on core 1.1, the first library modules, downloads, the USB link and loading without a reflash, with the decisions each step needs from the owner (the source pin, what the base is checked against, the per-kit room, card sectors and the copy hook's cost). Nothing changes for players yet.
