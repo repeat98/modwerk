@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { SubmissionPage } from './SubmissionPage'
 import { cloneCommands, skillHandoff, STARTER_MACHINES, starterPrompt, starterReading, startersFor, updatePrompt } from './starter-prompts'
-import { DEVICES } from '../devices/registry'
+import { DEVICES, isZd2Pedal } from '../devices/registry'
 
 const all = STARTER_MACHINES.flatMap(machine => startersFor(machine.id).map(starter => ({ machine: machine.id, starter })))
 
@@ -141,7 +141,7 @@ describe('starter prompts', () => {
   })
 
   it('sends the Zoom pedals down their own road: the ZDL docs and plan, MIDISTOMP where it runs, Ziddle only for development, no stock code', () => {
-    const zoom = DEVICES.filter(device => device.family === 'zoom')
+    const zoom = DEVICES.filter(device => device.family === 'zoom' && !isZd2Pedal(device))
     expect(zoom.length).toBeGreaterThan(0)
     for (const device of zoom) {
       const prompt = starterPrompt(device.id, startersFor(device.id)[0])
@@ -155,6 +155,14 @@ describe('starter prompts', () => {
       expect(prompt).toContain(device.id === 'zoom-g1on' ? 'does not run on this pedal' : 'The base is Luca Matturro\'s MIDISTOMP')
     }
     expect(readFileSync('docs/ZOOM_MULTISTOMP.md', 'utf8')).toContain('## Plan')
+    // A ZD2 pedal reads its own report, not the ZDL plan, base or contract.
+    const zd2 = starterPrompt('zoom-g1-four', startersFor('zoom-g1-four')[0])
+    expect(zd2).toContain('- docs/ZOOM_ZD2.md')
+    expect(zd2).not.toContain('docs/ZOOM_MULTISTOMP.md')
+    expect(zd2).not.toContain('docs/ZDL_MODULE_CONTRACT.md')
+    expect(zd2).not.toContain('MIDISTOMP (MIT)')
+    expect(zd2).toContain('no stock Zoom code')
+    expect(readFileSync('docs/ZOOM_ZD2.md', 'utf8')).toContain('## Next steps')
     expect(starterPrompt('lxr-02', startersFor('lxr-02')[0])).not.toContain('Ziddle')
   })
 

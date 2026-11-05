@@ -1,6 +1,6 @@
 /** Copyable prompts that start a coding agent on a new module in a contributor's fork. */
 import { INSTRUMENT_STEPS } from './developer-guidance'
-import { DEVICES, DEVICES_BY_ID, deviceTitle, type DeviceProfile } from '../devices/registry'
+import { DEVICES, DEVICES_BY_ID, deviceTitle, isZd2Pedal, type DeviceProfile } from '../devices/registry'
 
 export type StarterMachine = DeviceProfile['id']
 
@@ -119,13 +119,15 @@ const GENERAL_READING = ['AGENTS.md', 'docs/DEVELOPER_WORKFLOW.md', 'docs/ADD_A_
 
 /** The Zoom ZDL pedals' own reading: where the work stands and the proposed module contract. */
 const ZOOM_READING = ['docs/ZOOM_MULTISTOMP.md', 'docs/ZDL_MODULE_CONTRACT.md']
+/** The ZD2 pedals' own reading: their research report, which says what of the ZDL work does not carry over. */
+const ZD2_READING = ['docs/ZOOM_ZD2.md']
 
 /** The files a module starter needs read, relative to the repository root. */
 export function starterReading(machine: StarterMachine, starter: Starter) {
   const files = [...GENERAL_READING, ...starter.guides.map(guide => 'docs/module-guides/' + guide)]
   return machine === 'octatrack' ? [...files, 'sdk/octabam/AGENTS.md'] : DEVICES_BY_ID[machine]?.sdk
     ? [...files, DEVICES_BY_ID[machine].sdk!]
-    : [...files, 'docs/ADD_A_MACHINE.md', 'sdk/machines/README.md', ...(DEVICES_BY_ID[machine]?.family === 'zoom' ? ZOOM_READING : []), 'sdk/machines/' + machine + '/machine.json']
+    : [...files, 'docs/ADD_A_MACHINE.md', 'sdk/machines/README.md', ...(DEVICES_BY_ID[machine]?.family === 'zoom' ? isZd2Pedal(DEVICES_BY_ID[machine]) ? ZD2_READING : ZOOM_READING : []), 'sdk/machines/' + machine + '/machine.json']
 }
 
 /** The pedals MIDISTOMP, the Zoom base, runs on; the G1on series has none yet. */
@@ -133,6 +135,7 @@ const MIDISTOMP_PEDALS: StarterMachine[] = ['zoom-ms-70cdr', 'zoom-ms-50g', 'zoo
 
 /** Zoom pedals take effect files on their own firmware, so the Elektron road (OS rebuild, boot, core) does not apply; this says what does. */
 function zoomGuidance(machine: StarterMachine) {
+  if (isZd2Pedal(DEVICES_BY_ID[machine])) return zd2Guidance()
   return [
     'Where the Zoom work stands: effects are .ZDL files the stock firmware loads, and the beta pedal page installs, removes and backs up effects over USB. What is missing is the `zdl` module contract (docs/ZDL_MODULE_CONTRACT.md, with its open questions) and the next open step of the plan in docs/ZOOM_MULTISTOMP.md#plan. Pick that step up rather than starting a parallel one, and check the agent board and open pull requests first.',
     MIDISTOMP_PEDALS.includes(machine)
@@ -142,6 +145,15 @@ function zoomGuidance(machine: StarterMachine) {
     'Test on my own pedal over USB through the pedal page and its link (src/engine/zoom/); Zoom Effect Manager stays the fallback install. Every write is persistent, so back the pedal up first and keep the recovery from its profile at hand.',
     'For fast iteration without a pedal, use Ziddle (https://berbasoft.com/ziddle/), Berbasoft\'s Rust emulator and CLI for Zoom pedals. It is a developer tool: its results are never hardware evidence, and the site never offers it to musicians.',
     'The Plus and Four pedals (MS-70CDR+, G1 FOUR and others) load ZD2 effects and are not covered here.',
+  ]
+}
+
+/** The ZD2 pedals (docs/ZOOM_ZD2.md): effect files on the stock firmware, but none of the ZDL family's pedal page, base or contract. */
+function zd2Guidance() {
+  return [
+    'Where the ZD2 work stands: this pedal loads .ZD2 effects, not the ZDL family\'s .ZDL files, so the pedal page, its link, MIDISTOMP and the proposed `zdl` module contract do not apply. docs/ZOOM_ZD2.md separates hardware results, firmware readings and unknowns and ends with the open steps; pick up the next one rather than starting a parallel one, and check the agent board and open pull requests first.',
+    'Anything Modwerk lists carries no stock Zoom code: no effect grafted onto, patched into or built from a stock one, and no knob handlers taken from a stock effect. An effect built from original source alone is the next step, and it has not run on this pedal yet.',
+    'Install over USB MIDI with the pedal\'s own file commands (zoom-zt2); Zoom\'s Guitar Lab stays the fallback. Every write is persistent: back the pedal up first, keep autosave off, keep custom effects out of saved patches and keep the recovery from its profile at hand.',
   ]
 }
 
