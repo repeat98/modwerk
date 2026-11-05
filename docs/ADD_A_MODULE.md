@@ -132,7 +132,7 @@ Its folder, `sdk/<platform>/modules/<id>/`, holds:
 - `TESTING.md` with the commands, the exact source revision and every result;
 - `LICENSE` with every author's terms;
 - `media/` with real black-and-white screenshots of where the module is selected and of its control pages, and their provenance in `capture.json`;
-- an original 320×192 SVG thumbnail: `presentation/thumbnail.svg` on the Octatrack, `media/thumbnail.svg` on Digitakt and Digitone.
+- an original 320×192 SVG thumbnail: `presentation/thumbnail.svg` on the Octatrack, `media/thumbnail.svg` on the elemod machines, where `npm run pr:ready` refuses the template's placeholder.
 
 The checks reject missing sections, coloured screenshots and a version that did not increase. They cannot tell whether the documentation is true; the owner reviews first releases and registered authors verify their scoped updates.
 
@@ -236,7 +236,9 @@ In the toolchain image set `ELEKLOADER_DSP_ASM`; restore old versions it deletes
 A newly developed module selectable in beta module sets must have a working
 USB path, not a card-only fallback; existing card-only modules need a reviewed
 migration before USB rollout. An unavoidable compatibility limit needs its
-actual resource/ownership reason and explicit owner review. This does not
+actual resource/ownership reason and explicit owner review; the owner's
+card-only OK for one exact version goes in `sdk/usb-card-only.json` with its
+reason and the issue that ends it, and `module:doctor` accepts only that version. This does not
 assert that pending loader ABI work (ABI 7), shared machine registration,
 table support or hooked DSP work is released: those adapters and new bases
 remain private staging until their checks and qualification are complete. See
@@ -284,6 +286,8 @@ the [loader compatibility guide](../sdk/machines/octatrack/elekloader/README.md#
 ## Digitakt and Digitone
 
 Firmware for these machines is built by elekloader's builder, vendored unchanged and run in the browser ([vendor/elekloader](../vendor/elekloader/README.md)). It decides which mods combine, so there is no comparison with a native builder to run.
+
+Modwerk imports released `.elemod` files; it does not package mods for elekloader. To list a mod in elekloader's shop, including one Modwerk's library does not take, follow elekloader's [shop guide](https://github.com/elekloader/elekloader/blob/main/docs/SHOP.md) ([elekloader mods and cores](../CONTRIBUTING.md#elekloader-mods-and-cores)).
 
 **Porting an elekloader mod:**
 
