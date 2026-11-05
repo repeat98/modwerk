@@ -40,6 +40,17 @@ The owner's review found that the first source rearmed on every flash while the 
 
 The poke leaves the beat ticks running, so after it the flashes fall on steps 7, 11, … and the first after the wrap on step 2; the stock pause path may realign them. The three runs at 12, 16 and 20 steps still pass. Not run in the port: a pattern change while playing.
 
+## ot_emu: load and stress (5 November 2026)
+
+[evidence/performance.json](evidence/performance.json) has the full method. Emulator, not hardware: `ot_emu --mkii --dsp --frame`, 62 s playing, a native build of octabam's test remix `bar-led` against the same remix without it, the same MIDI flood on both (one message a millisecond, clock at 250 BPM, four STOP/START pairs). PC watches on the frame handler, the MIDI handlers, the beat-flash call and `set_led`.
+
+| | stock effects | with Bar LED |
+|---|---|---|
+| longest frame interrupt | 25,388 instructions (144.3 µs in the port's time) | 25,388 |
+| idle | 53.46 % | 53.46 % |
+| MIDI handler entries (note on / off / CC / clock) | 20,667 / 20,666 / 20,667 / 6,200 | the same |
+| beat flashes; instructions from the call to `set_led` | 154; 1 | 154; 8 to 12 |
+
 ## Hardware
 
 **Reported by the tester (@nathangroth), MKI, 2 November 2026.** Build: the tester's private octabam remix `home-base` 5 (octabam-home commit `404ef7bd`), a native card build carrying this unit's source, booted from the card through REMIX SWITCH (`/BRAIN/REMIXES/HOMEBAS5.RMX`, SHA-256 `72a711492805c7ef331d8be69617f9bd77e41f858d1481da3779a14dbe4126eb`), not flashed. Before it, the tester's MKI in TEST mode lit the tempo LED red, green and amber.
