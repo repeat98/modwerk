@@ -680,3 +680,9 @@ The offline package check is complete, while resource qualification and first-re
 ## Host-compiled native Clear companion-slot fixture — 5 November 2026
 
 A private sanitizer harness passed 32 fresh 512-field Clear cases: each of the 31 companion lock positions as the sole surviving lock, plus a dense case with all 31 occupied. It verified all selected SAMPLE bytes, companion and other track bytes, mirrors and lock-index bytes; this is host evidence for data-path logic, not emulator/hardware evidence or a cause for the earlier input failure. See the [stock-free fixture record](evidence/companion-slot-integrity-20261105.md) for inputs, hashes, command and limits.
+
+## Host-only no-op mirror/index observation — 5 November 2026
+
+A focused host harness compiled the production native commit body and `engine.c` from the exact native-source fingerprint `7ea0fbdf317bfdab6a82b22869c7029ba23901cd27a3337a4bdaf8f8beeb7e69`; the associated 10,048-byte candidate package is SHA-256 `3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79`. With host-only address and guard shims, it reproduced a no-change Clear returning `PSL_OK` when synthetic working SAMPLE fields were already clear but the mirror SAMPLE byte or active lock-index bit differed; the no-op left those values unchanged. The harness exercised source code, not the package or an instrument.
+
+This synthetic preexisting mismatch is not evidence that stock normally leaves mirror/index state transiently divergent at the commit boundary. No evidence connects it to the A02 high-load loss; the separate no-module input-framing reproduction remains independent, and the origin of every unintended edit is unresolved. See the [high-load report](MKII_HIGH_LOAD.md#input-path-isolation-follow-up) for its scope and limits.
