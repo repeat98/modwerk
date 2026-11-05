@@ -335,7 +335,7 @@
       ]
     }
   ],
-  "sourceCommit": "e3a91ffccbc0320745a9a165fc52a34cce1ade2b",
+  "sourceCommit": "5b379ba8c8f63d03f85dc5fc6f8756d02969f87a",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -369,6 +369,7 @@
     "direct-jump-kyoti": "0.1.2-experimental",
     "dejavu": "0.1.0-experimental",
     "arp-key-locks": "0.1.0-experimental",
-    "temp-save": "0.1.0-experimental"
+    "temp-save": "0.1.0-experimental",
+    "slow-lfo": "0.1.0-experimental"
   }
 }
