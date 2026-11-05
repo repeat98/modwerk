@@ -138,7 +138,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host: the same samples as Send FX's CHORUS over 20,000 blocks of random settings. Unit: test build MB02 reported working by the author (29 Oct 2026). rytm-emu 2ac0f1f: the SEND and SEND FX pages with CHORUS (CH01).",
+    "summary": "Host: the same samples as Send FX's CHORUS over 20,000 blocks of random settings. Unit: test build MB02 reported working by the author (29 Oct 2026). rytm-emu 2ac0f1f: the SEND and SEND FX pages with CHORUS (CH02).",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -183,8 +183,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "12521aec8913d8fe4e6fe860459181c7e495a5638e2d356686680d4e9bd6dee0",
-        "setup": "Headless rytm-emu (dtboot) running CH01: the Modwerk base's send-bus variant and this folder's CHORUS 0.1.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "43a8037a759aa7efd315cd0ac717d2cec669c9db8573b5f22acd27e4e4a55a0b",
+        "setup": "Headless rytm-emu (dtboot) running CH02: the Modwerk base's send-bus variant and this folder's CHORUS 0.1.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -199,8 +199,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "12521aec8913d8fe4e6fe860459181c7e495a5638e2d356686680d4e9bd6dee0",
-        "setup": "Headless rytm-emu (dtboot) running CH01: the Modwerk base's send-bus variant and this folder's CHORUS 0.1.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "43a8037a759aa7efd315cd0ac717d2cec669c9db8573b5f22acd27e4e4a55a0b",
+        "setup": "Headless rytm-emu (dtboot) running CH02: the Modwerk base's send-bus variant and this folder's CHORUS 0.1.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]

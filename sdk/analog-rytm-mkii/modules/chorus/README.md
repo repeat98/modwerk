@@ -54,7 +54,7 @@ See [TESTING.md](TESTING.md).
 
 ## Screens and audio
 
-Screenshots are rytm-emu captures of build CH01 ([media/capture.json](media/capture.json)). No audio preview yet.
+Screenshots are rytm-emu captures of build CH02 ([media/capture.json](media/capture.json)). No audio preview yet.
 
 ![SEND FX with CHORUS](media/send-fx-chorus.png) ![SEND on a sound track](media/send-page.png)
 
