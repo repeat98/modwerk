@@ -5,7 +5,8 @@
  * complete set this base wrote is installed through the runtime loader, with the same checks as a USB install.
  * Writing and reading use the logger's stock file calls and gate (engine task, card ready, nothing playing or
  * recording, not in USB disk mode). Holding FUNC at boot skips the restore, so a module that breaks the unit
- * cannot lock it out; so does another base's set (its configuration hash differs) or a damaged file.
+ * cannot lock it out; so does another base's set (its configuration hash differs) or a damaged file. The boot
+ * guard below does it without FUNC when the last start crashed or stopped while its restore ran.
  * A volatile Keep (volatile_service.c) adds its fresh installs to this set only when the set and they are exactly
  * the trial's whole-set identity (journal.h), and is refused otherwise; the set is then saved the same way.
  *
@@ -46,6 +47,8 @@ const char *modwerk_test_said; /* the last notice */
 int modwerk_test_settling;
 #define SAY(text) (modwerk_test_said = (text))
 #define SETTLING() (modwerk_test_settling)
+int modwerk_test_dialog;
+#define DIALOG() (modwerk_test_dialog)
 #ifdef MODWERK_HOST_CARD
 extern uint8_t modwerk_test_card_io[512]; /* the fixture's stock file calls under the real store and load below */
 #define octamod_log_io modwerk_test_card_io
@@ -64,6 +67,8 @@ extern volatile uint32_t modwerk_runtime_ticks;
 #define SAY(text) ((void (*)(const char *, unsigned))0x4005a2b8u)(text, 0xa0)
 __attribute__((weak)) int modwerk_controller_settling(void) { return 0; } /* controller_board.c, on a resident base */
 #define SETTLING() modwerk_controller_settling()
+__attribute__((weak)) int modwerk_status_dialog(void) { return 0; } /* status.c: one of its dialogs shows */
+#define DIALOG() modwerk_status_dialog()
 #endif
 #if !defined MODWERK_HOST || defined MODWERK_HOST_CARD
 extern int olog_stock_open(struct file_object *, const char *, const char *, void *, unsigned);
@@ -85,7 +90,39 @@ static uint32_t retry_at;
 static const char *volatile notice;
 static volatile uint32_t notice_at;
 volatile uint32_t modwerk_modset_generation, modwerk_modset_count, modwerk_modset_result; /* for the report */
-enum { RESTORED = 1, NONE_SAVED, SKIPPED, FOREIGN, DAMAGED, REFUSED, SAVED, SAVE_FAILED, TOO_BIG };
+enum { RESTORED = 1, NONE_SAVED, SKIPPED, FOREIGN, DAMAGED, REFUSED, SAVED, SAVE_FAILED, TOO_BIG, LEFT_OUT, HELD };
+
+/* The boot guard (30 October 2026). A crash restarts the unit at once (crash.c) and a stopped DSP needs a power
+ * cycle; either one while the restore installs, or in the ten seconds after it, would come back at every start,
+ * since the set is on the card and a sync keeps a set before anyone plays it. Battery RAM keeps, across both,
+ * whether this start's restore has settled and which package it was installing. A start that never settled: with
+ * a crash or a stall recorded meanwhile, the package it was installing is left out at every start until the card's
+ * set changes (LEFT_OUT); with none to name, or the second start in a row that never settled with nothing recorded
+ * (a hang, or switched off early), nothing loads this once (HELD), and the next start tries the whole set again. */
+#define GUARD_OUT 4u
+struct guard { uint32_t magic, base, armed, loading, crashes, stalls, fails, generation, out[GUARD_OUT]; };
+#define GUARD_MAGIC 0x4d574247u /* "MWBG" */
+#define GUARD_SETTLE 600u       /* ticks after the restore with frames moving and nothing recorded: settled */
+#define GUARD_NOTICE 480u       /* ticks from the start: after crash.c's CRASH RECOVERED, which would cover it */
+enum { GUARD_LEFT = 0x100u, GUARD_HELD = 0x101u }; /* diag.c's refusal for the guard's, past the loader's codes */
+#ifdef MODWERK_HOST
+struct guard modwerk_test_guard;
+uint32_t modwerk_test_crashes, modwerk_test_stalls, modwerk_test_frames;
+#define GUARD (&modwerk_test_guard)
+#define CRASHES modwerk_test_crashes
+#define STALLS modwerk_test_stalls
+#define FRAMES modwerk_test_frames
+#else
+/* Battery RAM after dsp.c's stall record, below 0x100fff00 (fxmap.c: stock references nothing up to there). */
+#define GUARD ((volatile struct guard *)0x100ffb00u)
+typedef char guard_fits_battery_ram[0x100ff900u + 456u <= 0x100ffb00u && 0x100ffb00u + sizeof(struct guard) <= 0x100fff00u ? 1 : -1];
+#define COUNT_OF(at, magic) (((const volatile uint32_t *)(at))[0] == (magic) ? ((const volatile uint32_t *)(at))[1] : 0u)
+#define CRASHES COUNT_OF(0x100ff800u, 0x4d574352u) /* crash.c: "MWCR", count */
+#define STALLS COUNT_OF(0x100ff900u, 0x4d575354u)  /* dsp.c: "MWST", count */
+extern volatile uint32_t dl_frames;
+#define FRAMES dl_frames
+#endif
+static uint32_t notice_after; /* the earliest tick a notice shows */
 
 static uint32_t be32(const uint8_t *p) { return (uint32_t)p[0] << 24 | (uint32_t)p[1] << 16 | (uint32_t)p[2] << 8 | p[3]; }
 static void put32(uint8_t *p, uint32_t v) { p[0] = (uint8_t)(v >> 24), p[1] = (uint8_t)(v >> 16), p[2] = (uint8_t)(v >> 8), p[3] = (uint8_t)v; }
@@ -282,14 +319,65 @@ static int whole(int n)
 static uint8_t restore_outcome[RUNTIME_MODULES]; /* per package of set[]: 0 to try, 1 installed, 2 left out */
 static unsigned restore_tries;
 static uint32_t left_out, left_why; /* the first package left out and the loader's refusal, for the log */
+static char guard_text[24]; /* "<NAME> LEFT OUT": at most 20 characters, as long as a stock popup's line */
+/* At the restore, before anything installs: what the last start left in the guard. 1: hold every module this start. */
+static int guard_check(uint32_t newest)
+{
+    volatile struct guard *g = GUARD;
+    uint32_t base = be32(modwerk_base_digest);
+    if (g->magic != GUARD_MAGIC || g->base != base) { /* the first start, or another base's: nothing to go by */
+        g->armed = g->loading = g->fails = g->generation = 0;
+        for (unsigned i = 0; i < GUARD_OUT; ++i) g->out[i] = 0;
+        g->base = base, g->magic = GUARD_MAGIC;
+    }
+    if (g->generation != newest) { /* a sync changed the set: try every module again */
+        for (unsigned i = 0; i < GUARD_OUT; ++i) g->out[i] = 0;
+        g->generation = newest;
+    }
+    int hold = 0;
+    if (g->armed) {
+        int recorded = CRASHES != g->crashes || STALLS != g->stalls;
+        unsigned room = GUARD_OUT;
+        for (unsigned i = 0; i < GUARD_OUT; ++i) if (!g->out[i] && room == GUARD_OUT) room = i;
+        if (recorded && g->loading && room < GUARD_OUT) g->out[room] = g->loading, g->fails = 0;
+        else if (recorded || ++g->fails >= 2u) hold = 1, g->fails = 0;
+    }
+    g->armed = g->loading = 0;
+    return hold;
+}
+static int guard_left(uint32_t id)
+{
+    for (unsigned i = 0; id && i < GUARD_OUT; ++i) if (GUARD->out[i] == id) return 1;
+    return 0;
+}
+/* The popup for a package the guard left out: its name as the chooser shows it (ABI 6 on, loader.c), in capitals
+ * (the font has no others), cut to 11; "MODULE LEFT OUT" without one. */
+static void guard_name(const uint8_t *p, uint32_t n)
+{
+    unsigned k = 0;
+    if (n >= 65u && ((uint32_t)p[4] << 8 | p[5]) >= 6u)
+        for (; k < 11u && p[50 + k]; ++k) guard_text[k] = p[50 + k] >= 'a' && p[50 + k] <= 'z' ? (char)(p[50 + k] - 32) : (char)p[50 + k];
+    for (const char *t = k ? " LEFT OUT" : "MODULE LEFT OUT"; *t; ) guard_text[k++] = *t++;
+    guard_text[k] = 0;
+}
 static void restore_pass(void)
 {
     const struct mu_backend *b6 = &modwerk_runtime_backend;
+    volatile struct guard *g = GUARD;
+    if (!g->armed) g->crashes = CRASHES, g->stalls = STALLS, g->armed = 1;
     int open = b6->enter(b6->user), last = ++restore_tries >= RESTORE_TRIES;
-    uint32_t n = used(), count = 0, installed = 0, waiting = 0, end = HEADER;
+    uint32_t n = used(), count = 0, installed = 0, waiting = 0, end = HEADER, guarded = 0;
     for (uint32_t at = HEADER; at < n; at += 8u + ((be32(set + at + 4) + 3u) & ~3u), ++count) {
         if (count >= RUNTIME_MODULES || restore_outcome[count]) continue; /* past the loader's rows: never live */
-        uint32_t length = be32(set + at + 4);
+        uint32_t length = be32(set + at + 4), id = module_of(set + at + 8, length);
+        if (guard_left(id)) {
+            restore_outcome[count] = 2, ++guarded;
+            if (guarded == 1u) guard_name(set + at + 8, length);
+            if (!left_out) left_out = id, left_why = GUARD_LEFT;
+            continue;
+        }
+        /* The package a crash or a stall would blame: after a stall the loader is shut off and refuses the rest. */
+        if (STALLS == g->stalls) g->loading = id;
         if (open && b6->prepare(b6->user, set + at + 8, length) && b6->publish(b6->user) == MU_APPLIED && b6->retire(b6->user)) {
             restore_outcome[count] = 1;
             continue;
@@ -299,8 +387,9 @@ static void restore_pass(void)
         if (open) (void)b6->discard(b6->user);
         if (why == RUNTIME_BUSY && !last) { ++waiting; continue; }
         restore_outcome[count] = 2;
-        if (!left_out) left_out = module_of(set + at + 8, length), left_why = why;
+        if (!left_out) left_out = id, left_why = why;
     }
+    if (STALLS == g->stalls) g->loading = 0; /* between installs, nothing to blame */
     if (open) (void)b6->leave(b6->user);
     if (waiting) { retry_at = TICKS + RESTORE_RETRY; return; }
     restored = 1, restore_tries = 0;
@@ -318,8 +407,9 @@ static void restore_pass(void)
     if (left_out) modwerk_diag_refused(left_out, left_why);
     if (installed != count) seal(installed, end);
     modwerk_modset_generation = be32(set + 8), modwerk_modset_count = installed;
-    modwerk_modset_result = installed == count ? RESTORED : REFUSED;
-    if (installed && installed == count) notice_at = TICKS, notice = "MODULES LOADED";
+    modwerk_modset_result = installed == count ? RESTORED : guarded ? LEFT_OUT : REFUSED;
+    if (guarded) notice_at = TICKS, notice_after = GUARD_NOTICE, notice = guarded == 1u ? guard_text : "MODULES LEFT OUT";
+    else if (installed && installed == count) notice_at = TICKS, notice = "MODULES LOADED";
     else SAY(installed ? "SOME MODULES FAILED" : "MODULES NOT LOADED"); /* no engine changes what these say */
     modwerk_diag_set(); /* diag.c: the set this boot runs, in the unit's log */
 }
@@ -332,12 +422,17 @@ static void restore(void)
     uint32_t ga = wa ? be32(set + 8) : 0;
     int b = load(1), wb = whole(b);
     uint32_t gb = wb ? be32(set + 8) : 0;
-    /* FUNC held: nothing installed, but the card's newest generation and slot are kept, so a later save wins over it. */
-    if (held) {
+    int hold = guard_check(ga > gb ? ga : gb);
+    /* FUNC held, or the guard holds: nothing installed, but the card's newest generation and slot are kept, so a
+     * later save wins over it. */
+    if (held || (hold && (wa || wb))) {
         slot = wb && (!wa || gb > ga) ? 1u : 0u;
         for (unsigned i = 0; i < HEADER; ++i) set[i] = 0;
         put32(set + 8, ga > gb ? ga : gb);
-        modwerk_modset_result = SKIPPED; SAY("MODULES SKIPPED"); return;
+        if (held) { modwerk_modset_result = SKIPPED; SAY("MODULES SKIPPED"); return; }
+        modwerk_modset_result = HELD, notice_at = TICKS, notice_after = GUARD_NOTICE, notice = "MODULES HELD";
+        modwerk_diag_refused(0, GUARD_HELD), modwerk_diag_set();
+        return;
     }
     if (!wa && !wb) {
         if (modwerk_modset_result != FOREIGN) modwerk_modset_result = a || b ? DAMAGED : NONE_SAVED;
@@ -351,15 +446,33 @@ static void restore(void)
     restored = 0, left_out = left_why = 0;
     restore_pass();
 }
-/* ep0.c's tick (sys task, as the board's): the restore's notice, once its engines run or its time is up. */
+/* ep0.c's tick (sys task, as the board's): the restore's notice, once its engines run or its time is up and no dialog of
+ * status.c's shows (MISSING opens after a restore that left out a module the bank names); and the
+ * guard's settling, once the restore has run ten seconds with frames moving and no crash or stall recorded. */
 void modwerk_modset_notice_tick(void)
 {
+    static uint32_t frames, since;
+    volatile struct guard *g = GUARD;
+    uint32_t now = FRAMES;
+    if (!restored || !g->armed || now == frames || CRASHES != g->crashes || STALLS != g->stalls) since = TICKS;
+    else if (TICKS - since >= GUARD_SETTLE) g->armed = g->loading = g->fails = 0;
+    frames = now;
     const char *text = notice;
     uint32_t waited = TICKS - notice_at;
-    if (!text || waited < NOTICE_FIRST || (waited < NOTICE_LAST && SETTLING())) return;
+    if (!text || TICKS < notice_after || DIALOG() || waited < NOTICE_FIRST || (waited < NOTICE_LAST && SETTLING())) return;
     notice = 0;
     SAY(text);
 }
+#ifdef MODWERK_DEV
+/* dev.c's GUARD TEST: the guard as a crash in this start's restore leaves it, blaming its first package (1) or none
+ * (0), so the next start, a RAM boot included, shows what a tester's would. */
+void modwerk_modset_guard_test(unsigned blame);
+void modwerk_modset_guard_test(unsigned blame)
+{
+    volatile struct guard *g = GUARD;
+    g->crashes = CRASHES - 1u, g->stalls = STALLS, g->loading = blame && used() > HEADER ? be32(set + HEADER) : 0, g->armed = 1;
+}
+#endif
 /* ep0.c holds host frames until the restore has run: an install before it would race it, and the restore would undo it. */
 int modwerk_modset_restored(void) { return (int)restored; }
 #ifdef MODWERK_SAMPLE_EDITOR

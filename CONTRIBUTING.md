@@ -18,6 +18,15 @@ What review expects for a new module, or for a change to how a module runs:
 
 A change to a module's documentation or media alone can keep its existing test evidence ([retained evidence](docs/MODULE_QUALIFICATION.md#risk-based-update-checks--3-october-2026)).
 
+## Elekloader mods and cores
+
+Modwerk and [elekloader](https://github.com/elekloader/elekloader) are separate projects. Send elekloader work there:
+
+- **A mod for elekloader's shop**, including one Modwerk's library does not take: publish its `.elemod` files in a release and fill in elekloader's [Submit a mod](https://github.com/elekloader/elekloader/issues/new?template=submit-mod.yml) form ([the shop](https://github.com/elekloader/elekloader/blob/main/docs/SHOP.md)).
+- **A change to an elekloader core**, such as core-ot, core-ar2, core-a4, core-dt2 or core-dn2: elekloader's [core contributing guide](https://github.com/elekloader/elekloader/blob/main/docs/CORE-CONTRIBUTING.md).
+
+The Octatrack, Analog Rytm MKII and Digitakt II bases in `sdk/machines/` are Modwerk's own. Each started from an elekloader core's source, but none of them is that core, and an elekloader mod is not built for them. A hook a Modwerk module needs on one of those three machines goes into its base here ([propose a hook](docs/module-guides/README.md#propose-a-hook)). The Digitakt and Digitone cores (`sdk/digitakt/core`, `sdk/digitone/core`) are Modwerk's own as well, and their hooks go there. Modwerk has no Digitone II base, so Digitone II core work goes to elekloader.
+
 ## Versions
 
 Any change to a module's code needs a strictly higher semantic `version` than on `main`. Code is what a compiler reads: source files, `manifest.py`, licences and the manifest's build fields (`version`, `key`, `author.github`, `source`, `compatibility.effectId` and `build.status`). Documentation and media do not: README and other Markdown, `media/`, `presentation/`, `evidence/` and the rest of the manifest's text can change under the same version, and need no rebuilt packages or fresh approval. (The eleven frozen baseline modules, `cc-map`, `previewvol` and MIDI Scenes keep their exact-folder exemptions, so a documentation edit to them still uses the retained-evidence path.) Update the module's entry in `sdk/catalog.json` to match when it is listed. Never reuse a released version for different code. Explain parameter-layout or ID changes and what happens to existing projects. `npm run modules:check -- --base origin/main` checks this after you rebase onto current `main`.

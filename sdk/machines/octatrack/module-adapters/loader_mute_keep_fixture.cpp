@@ -23,7 +23,7 @@
 static constexpr uint32_t sp0 = 0x46c7f920, packet = 0x47010000, stop = 0x47300000, base = 0x47400000;
 static constexpr uint32_t PRE_SITE = 0x40004dc6, PRE_BACK = 0x40004dcc, BIND_SITE = 0x40006820, NOTEOFF = 0x40008f84;
 static constexpr uint32_t GATE = 0x800000dc, SH_GATE = 0x100fff6c, MUTE_STATE = 0x80000008, SOLO_FLAG = 0x80000037;
-static constexpr uint32_t REL_STATE = 0x8000184a, SHADOW = 0x80006c66, RECORDS = 0x80000110, NOTE_STUB = 0x47300200, NOTED = 0x47300300;
+static constexpr uint32_t REL_STATE = 0x8000184a, RECORDS = 0x80000110, NOTE_STUB = 0x47300200, NOTED = 0x47300300;
 static std::vector<uint8_t> load(const char *path) { std::ifstream f(path, std::ios::binary); assert(f.good()); return {(std::istreambuf_iterator<char>(f)), {}}; }
 static std::map<std::string, uint32_t> names(const char *path) // nm's "address type name" lines
 {
@@ -93,18 +93,20 @@ struct Frame { uint32_t gate, muted, soloed, flag; uint8_t fx[8][4]; };
 
 int main(int argc, char **argv)
 {
-    // stock, events image + symbols, legacy image + symbols, new package + symbols, raw plain, raw SC_KEY + symbols, provider
-    assert(argc == 12);
+    // stock, events image + symbols, legacy image + symbols, new package + symbols, raw plain + symbols, raw SC_KEY + symbols, provider
+    assert(argc == 13);
     auto stock = load(argv[1]);
     auto ev_code = load(argv[2]); auto ev_sym = names(argv[3]); auto old_code = load(argv[4]); auto old_sym = names(argv[5]);
-    Pkt mmNew{load(argv[6]), names(argv[7])}, mmPlain{load(argv[8])}, mmKey{load(argv[9]), names(argv[10])}, keep{load(argv[11])};
+    Pkt mmNew{load(argv[6]), names(argv[7])}, mmPlain{load(argv[8]), names(argv[9])}, mmKey{load(argv[10]), names(argv[11])}, keep{load(argv[12])};
     unsigned scenarios = 0;
 
     // The frame: hook 1 from its site to its return, then every track's fresh-voice bind (and the all-tracks call).
     auto frame = [&](Probe& p, const Pkt *mm, const Frame& f) {
         std::vector<uint32_t> out;
+        // SHADOW (hook 1's last silenced set) is a byte inside the installed unit since 0.2.2, not SRAM.
+        const uint32_t shadow = p.call("fixture_image", {mm->id()}) + mm->sym.at("SHADOW");
         p.m.write32(GATE, f.gate); p.m.write32(MUTE_STATE, f.muted << 8 | f.soloed); p.m.write8(SOLO_FLAG, f.flag);
-        p.m.write8(SHADOW, 0x0f); p.m.write8(REL_STATE, 0x40); p.m.write8(NOTED, 0);
+        p.m.write8(shadow, 0x0f); p.m.write8(REL_STATE, 0x40); p.m.write8(NOTED, 0);
         for (unsigned half = 0; half < 2; half++)
             for (unsigned t = 0; t < 8; t++) {
                 const uint32_t r = RECORDS + 0x200 * half + 64 * t;
@@ -115,7 +117,7 @@ int main(int argc, char **argv)
         CHECK(r[0] == 0xd0d0d0d0 && r[1] == 0xd1d1d1d1 && r[2] == 0xd2d2d2d2 && r[3] == 0xd3d3d3d3); // hook 1 keeps them
         CHECK(r[8] == 0xa0a0a0a0 && r[9] == 0xa1a1a1a1 && r[15] == sp0);                          // and a0/a1, the stack
         out.push_back(r[5]);                                                // the frame word stock builds the levels from
-        out.push_back(p.m.read8(SHADOW)); out.push_back(p.m.read8(REL_STATE)); out.push_back(p.m.read8(NOTED));
+        out.push_back(p.m.read8(shadow)); out.push_back(p.m.read8(REL_STATE)); out.push_back(p.m.read8(NOTED));
         for (unsigned half = 0; half < 2; half++)
             for (unsigned t = 0; t < 8; t++) out.push_back(p.m.read16(RECORDS + 0x200 * half + 64 * t + 6) << 16 | p.m.read16(RECORDS + 0x200 * half + 64 * t + 10));
         out.push_back(mm && mm->sym.count("KEYMASK") ? p.m.read8(p.call("fixture_image", {mm->id()}) + mm->sym.at("KEYMASK")) : 0);
@@ -142,7 +144,7 @@ int main(int argc, char **argv)
             for (unsigned k = 0; k < 4; ++k) {
                 Frame f = layouts[k]; f.gate = gate; f.muted = s[0]; f.soloed = s[1]; f.flag = s[2];
                 std::vector<uint32_t> plain, key, none, with[2];
-                { Probe p(stock, old_code, old_sym, false); CHECK(p.install(mmPlain.b) == 1); plain = frame(p, nullptr, f); }
+                { Probe p(stock, old_code, old_sym, false); CHECK(p.install(mmPlain.b) == 1); plain = frame(p, &mmPlain, f); }
                 { Probe p(stock, old_code, old_sym, false); CHECK(p.install(mmKey.b) == 1); key = frame(p, &mmKey, f); }
                 { Probe p(stock, ev_code, ev_sym, true); CHECK(p.install(mmNew.b) == 1); none = frame(p, &mmNew, f); }
                 for (unsigned order = 0; order < 2; ++order) {

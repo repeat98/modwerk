@@ -3,7 +3,7 @@
  * owner ledger and a single-use board receipt. No firmware donor is included. */
 #define MODWERK_JOURNAL_FACT_EXTERNAL
 #include "sha256.c"
-volatile uint32_t modwerk_flash_refusal; /* flash.c, not linked here */
+volatile uint32_t modwerk_flash_refusal, modwerk_flash_quiesced; /* flash.c, not linked here */
 #include "dsp.c"
 int modwerk_runtime_restoring(void) { return 0; } /* loader.c's: no restore here */
 volatile uint32_t dl_residency_words[2]; /* manager.c: each core's resident code words (dsp.c's budget box) */

@@ -25,6 +25,13 @@ image is modified. The project provides:
 - tests against the Ziddle C674x emulator (TI build vs a host build of the
   same C), which is not hardware evidence.
 
+[Ziddle](https://berbasoft.com/ziddle/) is Berbasoft's emulator and CLI
+toolkit for Zoom pedals, in Rust; its author lets anyone use its code without
+asking or crediting (Discord, 1 November 2026). Use it to iterate on effects
+without a pedal. It is a developer tool: never hardware evidence, and the site
+never bundles it or offers it to musicians, so it cannot stand in for a pedal
+(owner, 31 October 2026).
+
 ## Devices
 
 | Device | Firmware | Status (from the project's reports) |
@@ -37,8 +44,12 @@ image is modified. The project provides:
 
 Related: [MIDISTOMP](https://github.com/matujuice/zoom-ms-midistomp) (Luca
 Matturro, MIT) is custom firmware for these pedals, installed with a modified
-Zoom updater: the one place Modwerk's OS-image steps could apply. Its
-upcoming v2.0 reportedly raises the patch DSP limit to about 300.
+Zoom updater: the one place Modwerk's OS-image steps could apply. Its v2.0
+(2 November 2026) raises the patch DSP limit from 225 to 300 and adds parallel
+routing, a perform mode, a tempo-synced looper and MIDI clock sync; every pedal
+it runs on reports as an MS-70CDR over USB. The G1on series is not covered.
+Luca's [ZDL effects pack](https://github.com/matujuice/zoom-ms-zdl-effects-pack)
+(MIT, 17 effects) came with it.
 
 Out of scope: the ZD2 pedals (MS-50G+, MS-60B+, MS-70CDR+ and the Four
 series). For those, see Stomphacks and nam2zoom, which already have their
@@ -65,10 +76,11 @@ own pipelines.
 asked, over its own Web MIDI link ([`zoom-link.ts`](../src/engine/zoom/zoom-link.ts),
 [`zoom-protocol.ts`](../src/engine/zoom/zoom-protocol.ts)). It identifies the pedal (model, firmware), lists
 its files and backs every file up into a zip, and installs or removes one added effect file (group 8, IDs
-403-957) the way the project's editor does it safely: the file before the effect list on install and after it
+403-1023) the way the project's editor does it safely: the file before the effect list on install and after it
 on removal, every write read back, the list from before offered for saving and written back if the new one
 fails. The link itself refuses to install or remove anything but an added effect, and an effect ID known
-to clash across collections; after removing, it lists the files again to check the file went. Status, Backups and Setup are its unit
+to clash across collections; an effect whose ID another effect on the pedal has gets a local ID
+([Effect IDs](ZDL_MODULE_CONTRACT.md#effect-ids)); after removing, it lists the files again to check the file went. Status, Backups and Setup are its unit
 pages; NAM / Cab (in the Samples slot), Patches and module sets follow. Tests run against
 a fake pedal (`src/dev/zoom-pedal-fake.ts`) in the pedal's reply formats. On an MS-70CDR 2.10 (27 October
 2026) it identified the pedal, listed its 162 files and backed them up: every file byte-identical to the
@@ -201,6 +213,7 @@ mod selection and to his transport block as the shared tempo contract.
   Mac updater (27 October 2026) it builds `hello` and MIDISTOMP V1.2 byte for
   byte as zoomms does: `ZOOM_MS70CDR_APP='…/ZOOM MS-70CDR v2.10 Updater.app'
   npx vitest run src/engine/zoom`. Firmware never enters CI.
+- MIDISTOMP 2.0 is out; the pin above is still the earlier revision.
 - A new MIDISTOMP revision: run the import on a clean checkout with
   `--app '<stock Mac updater>.app'`, then refresh the zoomms hashes in
   `zoom-base.test.ts` (`zoomms build-mac` at that revision).

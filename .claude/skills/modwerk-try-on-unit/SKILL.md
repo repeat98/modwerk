@@ -5,7 +5,7 @@ description: Load and test a Modwerk build on the developer's instrument over US
 
 # /modwerk-try-on-unit
 
-1. **One session at a time.** Every session on a computer shares its one connected unit and its one emulator. Ask before using either, and stop if another session holds it.
+1. **One session at a time on the unit.** Every session on a computer shares its one connected unit. Ask before using it, and stop if another session holds it. Emulators need no turn: each session may run its own, with its own socket path, card copy and MCP (`--data-dir`, `--device-socket`); never attach to one another session started. On the owner's computer, sessions share one emulator (`docs/OWNER_OPERATIONS.md`).
 2. **On the Octatrack:** use the developer MCP's device tools with the Modwerk base (`docs/FRONTEND_MCP.md#then-test-the-connected-device`), or the USB session in `docs/OCTATRACK_DRIVING.md` (read its rules first).
    - Loads go to RAM, and a power cycle restores the stock state.
    - The order is review, trial, then an explicit Keep or Undo, bound to the exact version. No self-test runs at install; SELF TEST (PROJ > MODWERK, or Status on the site) checks the running set.

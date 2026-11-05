@@ -17,10 +17,13 @@ const when = (at: string) => new Date(at).toLocaleString(undefined, { dateStyle:
 const OUTCOME: Record<SyncRecord['outcome'], [string, string]> = { kept: ['Kept', 'on'], undone: ['Undone', 'off'], failed: ['Failed', 'leaving'] }
 
 /** What the card holds, from the self-test record (modset.c: 7 saved and read back, 1 restored at startup, 6 some refused
- * at startup, 3 FUNC held, 5 damaged, 8 and 9 save failed, 4 another base's, 2 nothing saved). */
+ * at startup, 10 some left out and 11 all held because the last start crashed or froze while loading them, 3 FUNC held,
+ * 5 damaged, 8 and 9 save failed, 4 another base's, 2 nothing saved). */
 function cardLine(health: DiagnosticReading) {
   return health.saved === 7 ? { text: `Saved and checked · ${modules(health.savedCount)}`, led: 'on' } : health.saved === 1 ? { text: `Restored at startup · ${modules(health.savedCount)}`, led: 'on' }
     : health.saved === 6 ? { text: `Not all loaded at startup · ${modules(health.savedCount)} running. Sync your modules to put the rest back.`, led: 'leaving' }
+    : health.saved === 10 ? { text: `Not all loaded at startup: the last start crashed or froze while loading one, so it was left out · ${modules(health.savedCount)} running. Sync your modules to try it again.`, led: 'leaving' }
+    : health.saved === 11 ? { text: 'Held at startup: the last start crashed or froze while loading your modules. They load at the next start.', led: 'leaving' }
     : health.saved === 3 ? { text: 'Skipped at startup (FUNC held). The saved modules load at the next start.', led: 'off' }
     : health.saved === 5 ? { text: 'The saved modules couldn’t be read, so none loaded. Sync your modules again.', led: 'leaving' }
     : health.saved === 8 || health.saved === 9 ? { text: 'Saving failed. The modules run until you switch the Octatrack off.', led: 'leaving' }

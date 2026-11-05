@@ -240,7 +240,12 @@ async function main(root: string, argv: string[]) {
     const upstreamText = JSON.stringify(upstream, null, 1) + '\n'
     const site = assembleCatalog(path => path === UPSTREAM_CATALOG ? upstreamText : repo(path), records), newCatalog = site.catalog
     writeFileSync(join(scratch, 'site.json'), site.text)
-    run([tool, 'sync', join(scratch, 'site.json'), catalogNext, ...devices], { cwd: root })
+    try { run([tool, 'sync', join(scratch, 'site.json'), catalogNext, ...devices], { cwd: root }) }
+    catch (error) {
+      // raw.githubusercontent.com serves repeat98/modwerk's commits, and a fork's only once a pull request names them
+      if (!overlayPath) throw error
+      throw new Error((error as Error).message + '\nA package pinned at a commit on your fork answers 404 until its pull request to repeat98/modwerk is open: push, open the PR, then run --overlay again.', { cause: error })
+    }
     writeFileSync(join(catalogNext, 'catalog.json'), site.text)
     const named = new Set([...newCatalog.cores, ...newCatalog.mods].map(p => p.file))
     for (const name of readdirSync(catalogNext)) if (name !== 'catalog.json' && !named.has(name)) rmSync(join(catalogNext, name))

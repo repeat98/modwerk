@@ -185,13 +185,14 @@ describe('news mail campaigns', () => {
     expect((await act(id, 'queue')).status).toBe(409)
   })
 
-  it('suggests a digest from recent releases, busy discussions and showcase posts, linking to the site', async () => {
+  it('suggests a weekly digest: new modules as picture cards, updates as rows, then busy discussions and showcase posts', async () => {
     const { call, member, admin, db } = await fixture()
     const author = await member('authorone'), fan = await member('fanone')
     db.prepare("INSERT INTO module_release_inventory(singleton,initialized_at) VALUES(1,datetime('now','-40 days'))").run()
     db.prepare("INSERT INTO module_releases(module_id,version,name,href,detected_at) VALUES('oldmodule','1.0','Old Module','#module/oldmodule',datetime('now','-45 days'))").run()
     db.prepare("INSERT INTO module_releases(module_id,version,name,href,detected_at) VALUES('miniverb','1.0','Mini Verb','#module/miniverb',datetime('now','-20 days'))").run()
-    db.prepare("INSERT INTO module_releases(module_id,version,name,href,detected_at) VALUES('miniverb','1.1','Mini Verb','#module/miniverb',datetime('now','-2 days'))").run()
+    db.prepare(`INSERT INTO module_releases(module_id,version,name,href,notes,detected_at) VALUES('miniverb','1.1','Mini Verb','#module/miniverb','{"version":"1.1","date":"2026-10-28","changes":["Shorter *tails*.","Second line."]}',datetime('now','-2 days'))`).run()
+    db.prepare("INSERT INTO module_releases(module_id,version,name,href,detected_at) VALUES('analog-rytm-mkii-filter-hz','1.2.0','Filter Hz','#analog-rytm-mkii/module/filter-hz',datetime('now','-3 days'))").run()
     db.prepare("INSERT INTO module_releases(module_id,version,name,href,detected_at) VALUES('newcomer','0.9','New [Comer]','#module/newcomer',datetime('now','-1 days'))").run()
     const { id } = await (await call('/forum/threads', 'POST', { title: 'How do you use Mini Verb?', body: 'Share your settings.', category: 'modules', moduleId: 'miniverb' }, author.session)).json()
     expect((await call('/forum/threads/' + id + '/replies', 'POST', { body: 'Short decay, long predelay.' }, fan.session)).status).toBe(201)
@@ -202,14 +203,20 @@ describe('news mail campaigns', () => {
     const showcasePost = (await (await call('/forum/threads/' + showcase)).json()).posts[0].id
     db.prepare("INSERT INTO forum_media(id,user_id,post_id,kind,mime,bytes,object_key) VALUES('media1',?,?,'audio','audio/mpeg',1000,'key1')").run(author.id, showcasePost)
     const suggestion = await (await call('/admin/news/suggest', 'GET', undefined, '', admin)).json() as { subject: string; body: string }
-    expect(suggestion.subject).toMatch(/^What landed on Modwerk in [A-Z][a-z]+ \d{4}$/)
-    expect(suggestion.body).toContain('- [Mini Verb](https://octamod.test/#module/miniverb) — updated to 1.1')
-    expect(suggestion.body).toContain('- [New \\[Comer\\]](https://octamod.test/#module/newcomer) — new, version 0.9')
+    expect(suggestion.subject).toMatch(/^This week on Modwerk · (\d{1,2}–\d{1,2} [A-Z][a-z]+|\d{1,2} [A-Z][a-z]+ – \d{1,2} [A-Z][a-z]+)$/)
+    expect(suggestion.body).toContain('- ![](/module-thumbnails/miniverb.jpg) **[Mini Verb](https://octamod.test/#module/miniverb)** Octatrack · 1.1\\\n  Shorter \\*tails\\*.\n')
+    expect(suggestion.body).toContain('- ![](/module-thumbnails/newcomer.jpg)\n\n  **[New \\[Comer\\]](https://octamod.test/#module/newcomer)**\n')
+    expect(suggestion.body).toContain('- ![](/module-thumbnails/analog-rytm-mkii-filter-hz.jpg)\n\n  **[Filter Hz](https://octamod.test/#analog-rytm-mkii/module/filter-hz)** Analog Rytm · by Iced-Cream\\\n  The FILTER page')
+    expect(suggestion.body).not.toContain('Second line')
+    // The suggestion is what the template turns into cards: two grid cards and one compact row.
+    const rendered = renderNewsEmail(suggestion, { app: 'https://modwerk.app/', settings: 'https://modwerk.app/#account/notifications' })
+    expect(rendered.html.match(/max-width:234px/g)).toHaveLength(2)
+    expect(rendered.html).toContain('<img src="https://modwerk.app/module-thumbnails/miniverb.jpg" alt="" width="96"')
     expect(suggestion.body).not.toContain('Old Module')
     expect(suggestion.body).toContain(`- [How do you use Mini Verb?](https://octamod.test/#forum/thread/${id}) — 1 reply, 1 like`)
     expect(suggestion.body).not.toContain(quiet)
     expect(suggestion.body).toContain(`- [My live set](https://octamod.test/#forum/thread/${showcase}?post=${showcasePost}&page=0) by @authorone`)
-    expect(suggestion.body.split('\n').filter(line => line.startsWith('## '))).toEqual(['## New and updated modules', '## Busiest discussions', '## Fresh from the showcase'])
+    expect(suggestion.body.split('\n').filter(line => line.startsWith('## '))).toEqual(['## New modules', '## Updated', '## Busiest discussions', '## Fresh from the showcase'])
     expect((await call('/admin/news/suggest', 'GET', undefined, author.session)).status).toBe(403)
   })
 
@@ -226,5 +233,23 @@ describe('news mail campaigns', () => {
     expect(rendered.html).toContain('raw &lt; text')
     expect(rendered.html).toContain('<h2 style=')
     expect(rendered.text).toContain('TITLE\n\nPlain bold code <script>alert(1)</script>\n\nsafe (https://modwerk.app/) unsafe\n\n> quoted\n\n1. one\n2. two\n\n---\n\n    raw < text')
+  })
+
+  it('turns lists that open with the site\'s pictures into module cards, and leaves every other picture out', () => {
+    const body = 'Hey guys,\\\nnew modules.\n\n- ![](/news/a.png)\n\n  **[Wide](https://modwerk.app/#module/a/)** Octatrack · by one\\\n  Wide copy.\n- ![](/news/b.png)\n\n  **[Second](https://modwerk.app/#module/b/)** Digitakt\n\n'
+      + '## More\n\n- ![](/news/c.png) **[Row](https://modwerk.app/#module/c/)** by two\\\n  Row copy.\n\nBetween.\n\n- ![](https://elsewhere.example/x.png) **Offsite**\n\n![](/news/d.png)'
+    const rendered = renderNewsEmail({ subject: 'Cards', body }, { app: 'https://modwerk.app/', settings: 'https://modwerk.app/#account/notifications' })
+    expect(NEWS_EMAIL_VERSION).toBe('modwerk-news-002')
+    expect(rendered.html.match(/<img [^>]*>/g)?.map(tag => tag.match(/src="([^"]+)"/)![1])).toEqual(['a', 'b', 'c', 'd'].map(name => `https://modwerk.app/news/${name}.png`))
+    // Two grid cards and one compact row, each picture linking to its module like the title does.
+    expect(rendered.html.match(/max-width:234px/g)).toHaveLength(2)
+    expect(rendered.html).toContain('<a href="https://modwerk.app/#module/c/" style="display:block;text-decoration:none;"><img src="https://modwerk.app/news/c.png"')
+    expect(rendered.html).toContain('<a href="https://modwerk.app/#module/a/" style="color:#f4f4f8;text-decoration:none;">Wide</a></span><span style="color:#90909e;font-size:13px;line-height:20px;">Octatrack · by one</span>')
+    expect(rendered.html).toContain('Wide copy.</p>')
+    expect(rendered.html).not.toContain('elsewhere.example')
+    expect(rendered.html).toContain('<li style="margin:0 0 8px;"> <strong style="color:#f4f4f8;">Offsite</strong></li>')
+    expect(rendered.html).toContain('padding:12px 16px 14px 14px;"><span style="color:#f4f4f8;font-size:16px;line-height:22px;font-weight:bold;"><a href="https://modwerk.app/#module/c/"')
+    expect(rendered.html).toContain('>Hey guys, new modules.</div>')
+    expect(rendered.text).toContain('- Wide (https://modwerk.app/#module/a/) Octatrack · by one\n  Wide copy.\n- Second (https://modwerk.app/#module/b/) Digitakt\n\nMORE\n\n- Row (https://modwerk.app/#module/c/) by two\n  Row copy.')
   })
 })

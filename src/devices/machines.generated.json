@@ -144,8 +144,8 @@
         {
           "name": "SRC machine slots",
           "unit": "slots",
-          "value": 4,
-          "note": "Machine ids 4–7, added by the core for new SRC machines."
+          "value": 124,
+          "note": "Machine ids 4–127, added by the core for new SRC machines."
         }
       ]
     }
@@ -387,7 +387,7 @@
     "name": "Syntakt",
     "family": "elektron",
     "status": "research",
-    "summary": "OS 1.40, 1.40A and 1.42 documented; 1.40A and 1.42 rebuilt byte-identical; modified builds boot on a unit. Core started: a boot probe links and verifies locally; no SDRAM for mods yet.",
+    "summary": "OS 1.40, 1.40A and 1.42 documented; 1.40A and 1.42 rebuilt byte-identical. Core started: the boot probe runs on a unit (1.42) and DIN recovery works; no SDRAM for mods yet.",
     "steps": {
       "format": "done",
       "rebuild": "done",
@@ -432,7 +432,7 @@
         }
       ],
       "flash": "Elektron Transfer over USB: set MIDI IN and OUT to the device, drop the .syx on and confirm on the device.",
-      "recovery": "Hold FUNC while powering on to open the STARTUP menu, choose TRIG 4 (OS UPGRADE), then send the owner's stock .syx from Transfer's SysEx Transfer / OS Upgrade via device startup menu over MIDI DIN; USB does not work there. Documented by Synthack-OS; this startup-menu path is not yet tested on our unit."
+      "recovery": "Hold FUNC while powering on to open the STARTUP menu, choose TRIG 4 (OS UPGRADE), then send the owner's stock .syx from Transfer's SysEx Transfer / OS Upgrade via device startup menu over MIDI DIN; USB does not work there. Documented by Synthack-OS; tested on a unit with OS 1.42 and a generic USB-to-MIDI cable (4 November 2026)."
     },
     "research": [
       {
@@ -982,6 +982,16 @@
         "label": "repeat98/ZoomMultistompZDL",
         "url": "https://github.com/repeat98/ZoomMultistompZDL",
         "note": "The upstream reverse-engineered toolchain the project builds on."
+      },
+      {
+        "label": "MIDISTOMP",
+        "url": "https://github.com/matujuice/zoom-ms-midistomp",
+        "note": "MIT, by Luca Matturro, and Modwerk's planned base. Custom firmware built from Zoom's MS-70CDR 2.10 for the MS-70CDR, MS-50G and MS-60B; v2.0 (November 2026) raises the patch DSP limit from 225 to 300 and adds parallel routing, a perform mode, a looper and MIDI clock sync."
+      },
+      {
+        "label": "Matujuice ZDL effects pack",
+        "url": "https://github.com/matujuice/zoom-ms-zdl-effects-pack",
+        "note": "MIT. 17 effects for synths and drum machines, built with ZoomMultistompZDL's linker; tested on an MS-60B running MS-50G firmware. The tempo-synced ones need MIDISTOMP."
       }
     ]
   },
@@ -1029,6 +1039,16 @@
         "label": "Issue #5",
         "url": "https://github.com/themanro/ZoomMultistompZDL/issues/5",
         "note": "MS-50G 3.10: NAM full rate and Eco, CabIR and patch editor writes reported working."
+      },
+      {
+        "label": "MIDISTOMP",
+        "url": "https://github.com/matujuice/zoom-ms-midistomp",
+        "note": "MIT, by Luca Matturro, and Modwerk's planned base. Custom firmware built from Zoom's MS-70CDR 2.10 for the MS-70CDR, MS-50G and MS-60B; v2.0 (November 2026) raises the patch DSP limit from 225 to 300 and adds parallel routing, a perform mode, a looper and MIDI clock sync."
+      },
+      {
+        "label": "Matujuice ZDL effects pack",
+        "url": "https://github.com/matujuice/zoom-ms-zdl-effects-pack",
+        "note": "MIT. 17 effects for synths and drum machines, built with ZoomMultistompZDL's linker; tested on an MS-60B running MS-50G firmware. The tempo-synced ones need MIDISTOMP."
       }
     ]
   },
@@ -1061,6 +1081,16 @@
         "label": "repeat98/ZoomMultistompZDL",
         "url": "https://github.com/repeat98/ZoomMultistompZDL",
         "note": "The upstream reverse-engineered toolchain the project builds on."
+      },
+      {
+        "label": "MIDISTOMP",
+        "url": "https://github.com/matujuice/zoom-ms-midistomp",
+        "note": "MIT, by Luca Matturro, and Modwerk's planned base. Custom firmware built from Zoom's MS-70CDR 2.10 for the MS-70CDR, MS-50G and MS-60B; v2.0 (November 2026) raises the patch DSP limit from 225 to 300 and adds parallel routing, a perform mode, a looper and MIDI clock sync."
+      },
+      {
+        "label": "Matujuice ZDL effects pack",
+        "url": "https://github.com/matujuice/zoom-ms-zdl-effects-pack",
+        "note": "MIT. 17 effects for synths and drum machines, built with ZoomMultistompZDL's linker; tested on an MS-60B running MS-50G firmware. The tempo-synced ones need MIDISTOMP."
       }
     ]
   },

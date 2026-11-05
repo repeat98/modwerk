@@ -1,0 +1,1 @@
+- Site: a card build that runs out of menu space with every stock FX2 effect no longer drops them without a word. The build panel now says FX2 will list only the modules' effects, and Build firmware waits until you tick that you want it anyway or remove a module. Such a build also tries the classic startup before giving up the stock FX2 effects (#1175).

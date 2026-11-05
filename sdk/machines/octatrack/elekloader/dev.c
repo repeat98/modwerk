@@ -96,6 +96,14 @@ uint32_t modwerk_dev_request(const uint8_t *s, const uint8_t **reply, uint8_t *o
         *reply = out;
         return 1;
     }
+    if (s[1] == 40 && want == 1 && s[2] <= 1u && !s[3]) { /* GUARD TEST: modset.c's boot guard as a crash in the restore
+                                                            * leaves it, blaming its first package (1) or none (0) */
+        void modwerk_modset_guard_test(unsigned blame);
+        modwerk_modset_guard_test(s[2]);
+        out[0] = 1;
+        *reply = out;
+        return 1;
+    }
     if (s[1] == 19 && want == 1 && s[2] <= 1u && !s[3]) { /* PEEK STORM on (1) or off (0): build_core.py's transfer.c edit */
         extern volatile uint32_t dl_storm;
         dl_storm = s[2];

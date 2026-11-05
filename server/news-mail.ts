@@ -10,6 +10,9 @@ import betaInvitationDraft from '../docs/news/008-beta-invitation.draft.json'
 import { BETA_INVITATION_PLACEHOLDER } from '../src/config/beta-invitation'
 import { adminText } from './announcements'
 import { unsubscribeRoute, unsubscribeToken } from './unsubscribe'
+import { communityModule } from '../src/community/modules'
+import MACHINES from '../src/devices/machines.generated.json'
+import { DEVELOPMENT_DISCORD_URL } from '../src/config/development-discord'
 
 export function newsMailLimit(env: Env) { return mailLimits(env, 'news').daily }
 const MESSAGES_PER_RUN = 20, RETRY_SECONDS = 300, MAX_ATTEMPTS = 3, LISTED = 50
@@ -91,16 +94,17 @@ export async function sendNewsMail(env: Env, db: Database, now = new Date()) {
 
 /** Markdown link text and list lines from member-written titles: punctuation that could open markup is escaped. */
 const markdownText = (value: string) => value.replace(/\s+/g, ' ').trim().replace(/[\\`*_[\]<>~|]/g, '\\$&')
-/** A proposed "what landed" body from the last 30 days, every item linking to the site. Nothing private is read. */
+/** A proposed weekly digest from the last 7 days, every item linking to the site. Nothing private is read. New modules become picture cards and
+ * updates compact rows, each with the card thumbnail the site build saves for the module's page (scripts/module-pages.ts). */
 export async function suggestNewsDigest(db: Database, env: Env, now = new Date()) {
   const app = new URL(env.APP_URL ?? 'https://modwerk.app/'); app.search = ''; app.hash = ''
   const link = (hash: string) => { const url = new URL(app); url.hash = hash.replace(/^#/, ''); return url.href }
-  const since = new Date(now.getTime() - 30 * 86400000).toISOString().replace('T', ' ').slice(0, 19)
+  const since = new Date(now.getTime() - 7 * 86400000).toISOString().replace('T', ' ').slice(0, 19)
   const [modules, threads, showcase] = await Promise.all([
     // Releases detected after the first inventory, newest version per module; the baseline is not news.
-    db.prepare(`SELECT r.module_id,r.name,r.version,r.href,EXISTS(SELECT 1 FROM module_releases o WHERE o.module_id=r.module_id AND o.detected_at<r.detected_at) AS updated
+    db.prepare(`SELECT r.module_id,r.name,r.version,r.href,r.notes,EXISTS(SELECT 1 FROM module_releases o WHERE o.module_id=r.module_id AND o.detected_at<r.detected_at) AS updated
       FROM module_releases r WHERE r.detected_at>=? AND r.detected_at>(SELECT COALESCE(MAX(initialized_at),'') FROM module_release_inventory)
-      AND r.detected_at=(SELECT MAX(l.detected_at) FROM module_releases l WHERE l.module_id=r.module_id) ORDER BY r.detected_at DESC,r.rowid DESC LIMIT 20`).bind(since).all<{ module_id: string; name: string; version: string; href: string; updated: number }>(),
+      AND r.detected_at=(SELECT MAX(l.detected_at) FROM module_releases l WHERE l.module_id=r.module_id) ORDER BY r.detected_at DESC,r.rowid DESC LIMIT 20`).bind(since).all<{ module_id: string; name: string; version: string; href: string; notes: string | null; updated: number }>(),
     db.prepare(`SELECT t.id,t.title,
       (SELECT COUNT(*) FROM forum_posts p WHERE p.thread_id=t.id AND p.hidden=0 AND p.created_at>=? AND p.id<>(SELECT first.id FROM forum_posts first WHERE first.thread_id=t.id ORDER BY first.created_at,first.rowid LIMIT 1)) AS replies,
       (SELECT COUNT(*) FROM forum_reactions r JOIN forum_posts p ON p.id=r.post_id WHERE p.thread_id=t.id AND p.hidden=0 AND p.created_at>=?) AS likes
@@ -111,16 +115,26 @@ export async function suggestNewsDigest(db: Database, env: Env, now = new Date()
       WHERE p.id IN (SELECT m.post_id FROM forum_media m WHERE m.removed=0 AND m.post_id IS NOT NULL) AND p.hidden=0 AND t.hidden=0 AND t.category<>'issues' AND p.created_at>=?
       ORDER BY p.created_at DESC,p.rowid DESC LIMIT 5`).bind(since).all<{ id: string; thread_id: string; title: string; username: string | null; page: number }>(),
   ])
-  const month = now.toLocaleString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+  const day = (date: Date, month = true) => date.toLocaleString('en-GB', { day: 'numeric', ...(month ? { month: 'long' } : {}), timeZone: 'UTC' })
+  const first = new Date(now.getTime() - 7 * 86400000), week = first.getUTCMonth() === now.getUTCMonth() ? `${day(first, false)}–${day(now)}` : `${day(first)} – ${day(now)}`
   const count = (total: number, one: string, many: string) => `${total} ${total === 1 ? one : many}`
+  const module = (item: typeof modules.results[number]) => {
+    const known = communityModule(item.module_id), machine = MACHINES.find(entry => entry.id === known?.machine)?.name
+    const change = (() => { try { return (JSON.parse(item.notes ?? 'null') as { changes?: string[] } | null)?.changes?.[0] } catch { return undefined } })()
+    return { picture: `![](/module-thumbnails/${item.module_id}.jpg)`, title: `**[${markdownText(item.name)}](${link(item.href)})**`, machine: machine ? markdownText(machine) : '', author: known ? markdownText(known.authorName) : '', summary: markdownText((item.updated ? change : known?.summary) ?? ''), version: markdownText(item.version), updated: !!item.updated }
+  }
+  const listed = modules.results.map(module), fresh = listed.filter(item => !item.updated), updated = listed.filter(item => item.updated)
+  const card = (title: string, meta: string[], summary: string) => [title, meta.filter(Boolean).join(' · ')].filter(Boolean).join(' ') + (summary ? '\\\n  ' + summary : '')
+  // Lists that open with a site picture render as cards (server/news-email-template.ts): alone on its line a grid card, before the title a compact row.
   const sections = [
-    modules.results.length ? ['## New and updated modules', ...modules.results.map(item => `- [${markdownText(item.name)}](${link(item.href)}) — ${item.updated ? 'updated to' : 'new, version'} ${markdownText(item.version)}`)] : [],
+    fresh.length ? ['## New modules', ...fresh.map(item => `- ${item.picture}\n\n  ` + card(item.title, [item.machine, item.author && 'by ' + item.author], item.summary))] : [],
+    updated.length ? ['## Updated', ...updated.map(item => `- ${item.picture} ` + card(item.title, [item.machine, item.version], item.summary))] : [],
     threads.results.length ? ['## Busiest discussions', ...threads.results.map(item => `- [${markdownText(item.title)}](${link('#forum/thread/' + item.id)}) — ${count(item.replies, 'reply', 'replies')}, ${count(item.likes, 'like', 'likes')}`)] : [],
     showcase.results.length ? ['## Fresh from the showcase', ...showcase.results.map(item => `- [${markdownText(item.title)}](${link('#forum/thread/' + item.thread_id + '?post=' + item.id + '&page=' + item.page)})${item.username ? ' by @' + markdownText(item.username) : ''}`)] : [],
   ].filter(section => section.length)
-  const body = ['Hi,', '', sections.length ? 'Here’s what landed on Modwerk in the last 30 days.' : 'It has been a quiet month on Modwerk, but more modules are on their way.',
-    ...sections.flatMap(section => ['', ...section]), '', `Browse everything at ${link('#library')} and say hi on the forum at ${link('#forum')}.`, '', 'See you around,', 'Jannik'].join('\n')
-  return { subject: `What landed on Modwerk in ${month}`, body }
+  const body = ['Hey guys,\\', sections.length ? 'here’s what happened on Modwerk this week.' : 'it was a quiet week on Modwerk, but more modules are on their way.',
+    ...sections.flatMap(section => ['', ...section]), '', `You’ll find everything at [modwerk.app](${link('#all')}). Let me know what you think in the [development Discord](${DEVELOPMENT_DISCORD_URL})!`, '', 'Thank you,\\', 'Jannik'].join('\n')
+  return { subject: `This week on Modwerk · ${week}`, body }
 }
 
 const campaignRow = 'SELECT c.id,c.subject,c.body,c.status,c.beta_invitation,c.template_version,c.created_by,c.created_at,c.scheduled_at,c.recipient_count,' +
