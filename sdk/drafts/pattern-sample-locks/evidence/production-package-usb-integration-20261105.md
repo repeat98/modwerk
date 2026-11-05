@@ -101,6 +101,18 @@ follow-up branch merges that base, but this evidence remains bound to the
 original tested checkout `91d8d493` and base `3ae8c38d`, not a rebuilt package
 at `0da26a6d`.
 
+The next upstream move was PR #1215, now at
+`3a7ef107ecc7780279469dd925d959cfb40f97b2`. It published the separate Analog
+Rytm Live Rec Retrig Fix module and its Elekloader package/catalog row; it did
+not change the Octatrack candidate source or manifest, reconstruction recipe,
+package builder, loader/runtime, or pinned Elekloader kit/tool source. After
+merging it, `npm run prepare` and `node scripts/elekloader-vendor.ts` checked
+the current separate site catalog at revision `5022776` (8 cores, 58 mods, 67
+assets). The fixture's 30-package preflight enumerates only the Octatrack
+package manifest plus the candidate, so this Rytm catalog addition is outside
+that count. This report remains bound to checkout `91d8d493` and tested base
+`3ae8c38d`; it is not a package rebuild at current `upstream/main` `3a7ef107`.
+
 This closes only the production package-path and USB software-integration
 check. It adds no hardware result, simultaneous-companion result, cycle bound,
 complete stack/memory bound, measured CPU budget, or edited-pattern persistence
