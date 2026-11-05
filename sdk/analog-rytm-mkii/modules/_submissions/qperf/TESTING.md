@@ -1,6 +1,6 @@
 # QPERF testing
 
-Nothing here proves reboot persistence or the QPER knob itself. Hardware results below are the author's, each on the build named. QC13 is the 0.1.0 code; 0.2.0-experimental (the performance lane) has run only in rytm-emu, on QL02 and QL05 below. The code here is QL09 below. QL06 (sha256 21fb67304cf99fed7ea792376e7d904e276bb65cb366b4a54c069d88e16d9e40) added PerformanceEditView, the FX track's PERF view, back to the held-pad check.
+Nothing here proves reboot persistence or the QPER knob itself. Hardware results below are the author's, each on the build named. QC13 is the 0.1.0 code; 0.2.0-experimental (the performance lane) has run only in rytm-emu, on QL02 and QL05 below. The code here is QL10 (sha256 1e6e06ce6529e74b0370621ae1798c203241a8915705102b491667b8fede3ca5), QL09 below after a second code review: the lock-row check counts the steps a track will have once lengthened, only tracks a move reaches are lengthened, and a copy that loses its trig loses its condition too. Rerun of the QL09 table on QL10: the same lengths, conditions and baked steps, and steps 7 and 13 to 15 of track 2 and 5 of track 5 kept no condition. QL06 (sha256 21fb67304cf99fed7ea792376e7d904e276bb65cb366b4a54c069d88e16d9e40) added PerformanceEditView, the FX track's PERF view, back to the held-pad check.
 
 ## Hardware
 

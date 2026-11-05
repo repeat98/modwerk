@@ -875,12 +875,11 @@ static int lane_target(const unsigned char *table, int i)
 // One (track, word): each step a lane move reaches gets the step's own lock or
 // the kit's value plus the moves, and the step after a move gets that value
 // back. Returns how many steps it writes, and writes only with write set.
-static int bake_target(void *kit, const unsigned char *table, word_t pattern, word_t steps_pattern,
-                       int track, int word, int steps, int write)
+static int bake_target(void *kit, const unsigned char *table, word_t pattern, int track, int word,
+                       int length, int steps, int write)
 {
     void *set = (void *)KIT_PARAM_SET(kit, track);
     int id = param_id(set, track, word), kit_value = 0, lo = 0, hi = 0, at, was = 0, n = 0, i;
-    int length = track_steps(steps_pattern, track, steps);
     int locks[PERFS], perfs[PERFS], count = 0;
     void *trk = 0;
     if (!id)
@@ -1033,8 +1032,10 @@ static void lengthen(void *trk, char *locks, int length, int steps)
         int now = copy_condition(was, k, j / length);
         if (!(((unsigned short *)d)[j] & TRIG_ON))
             continue;
-        if (now == COND_NEVER)
+        if (now == COND_NEVER) {
             STEP_FLAG_SET(trk, j, TRIG_ON, 0);
+            STEP_COND_SET(trk, j, COND_NONE);   // a lock trig placed here later plays every pass
+        }
         else if (now != was)
             STEP_COND_SET(trk, j, now);
     }
@@ -1053,57 +1054,65 @@ static void bake_lane(void)
     void *locks = *(void **)((char *)any_track + PATTERN_LOCKS);
     char *data;
     unsigned tracks = 0, longer = 0, skipped = 0;
-    int i, need = 0, wrote = 0, steps, track;
+    int i, need = 0, wrote = 0, steps, track, length[FX_TRACK + 1];
     if (!lane_used || lane_hidden || !steps_pattern || !locks) {
         show("NOTHING TO APPLY");
         return;
     }
     data = (char *)(*(word_t (**)(void *))(*(word_t *)locks + LOCKS_DATA))(locks);
     steps = lane_steps(steps_pattern);
-    // Which tracks the moves reach, and with a length per track which of them
-    // must first take the lane's length, or can't and are left out.
+    // Which tracks the moves reach, and how many steps each takes them on: a
+    // track shorter than the lane takes its length first if it can, and one
+    // that can't, or runs at its own speed, is left out.
     for (i = 0; i < SLOTS; i++)
         if (lane_target(table, i))
             tracks |= 1u << table[SLOT_BYTES * i + 2];
-    if (per_track(steps_pattern))
-        for (track = 0; track <= FX_TRACK; track++) {
-            void *trk = (void *)PATTERN_TRACK(pattern, track);
-            int length = track_length(steps_pattern, track);
-            if (!(tracks >> track & 1))
-                continue;
-            if (track_speed(steps_pattern, track) != *(volatile unsigned char *)(steps_pattern + PATTERN_SPEED))
-                skipped |= 1u << track;
-            else if (length < steps) {
-                if (can_lengthen(steps_pattern, trk, length, steps))
-                    longer |= 1u << track;
-                else
-                    skipped |= 1u << track;
-            }
-        }
-    tracks &= ~skipped;
-    // Like stock's own lock writes, a new row needs room in the 71 stock keeps:
-    // all of them or none.
-    for (i = 0; i < SLOTS; i++) {
-        const unsigned char *t = table + SLOT_BYTES * i;
-        int id;
-        if (!lane_target(table, i) || !(tracks >> t[2] & 1) || row_used(data, t[2], t[3])
-            || !bake_target(kit, table, pattern, steps_pattern, t[2], t[3], steps, 0))
+    for (track = 0; track <= FX_TRACK; track++) {
+        length[track] = track_steps(steps_pattern, track, steps);
+        if (!(tracks >> track & 1))
             continue;
-        id = param_id((void *)KIT_PARAM_SET(kit, t[2]), t[2], t[3]);
-        need += 1 + (ID_FINE(id) != 0);
+        if (!length[track])
+            skipped |= 1u << track;
+        else if (length[track] < steps) {
+            if (can_lengthen(steps_pattern, (void *)PATTERN_TRACK(pattern, track), length[track], steps))
+                longer |= 1u << track;
+            else
+                skipped |= 1u << track;
+        }
+    }
+    tracks &= ~skipped;
+    // A dry run at the length each track will have: only tracks a move
+    // reaches are lengthened, and like stock's own lock writes, a new row
+    // needs room in the 71 stock keeps, all of them or none.
+    {
+        unsigned writes = 0;
+        for (i = 0; i < SLOTS; i++) {
+            const unsigned char *t = table + SLOT_BYTES * i;
+            int at = longer >> t[2] & 1 ? steps : length[t[2]], id;
+            if (!lane_target(table, i) || !(tracks >> t[2] & 1)
+                || !bake_target(kit, table, pattern, t[2], t[3], at, steps, 0))
+                continue;
+            writes |= 1u << t[2];
+            if (row_used(data, t[2], t[3]))
+                continue;
+            id = param_id((void *)KIT_PARAM_SET(kit, t[2]), t[2], t[3]);
+            need += 1 + (ID_FINE(id) != 0);
+        }
+        longer &= writes;
     }
     if (matrix_rows(data) + need > ROWS) {
         show("LOCK MEM FULL!");
         return;
     }
     for (track = 0; track <= FX_TRACK; track++)
-        if (longer >> track & 1)
-            lengthen((void *)PATTERN_TRACK(pattern, track), data,
-                     track_length(steps_pattern, track), steps);
+        if (longer >> track & 1) {
+            lengthen((void *)PATTERN_TRACK(pattern, track), data, length[track], steps);
+            length[track] = steps;
+        }
     for (i = 0; i < SLOTS; i++) {
         const unsigned char *t = table + SLOT_BYTES * i;
         if (lane_target(table, i) && (tracks >> t[2] & 1))
-            wrote += bake_target(kit, table, pattern, steps_pattern, t[2], t[3], steps, 1);
+            wrote += bake_target(kit, table, pattern, t[2], t[3], length[t[2]], steps, 1);
     }
     release_driven();
     wipe();
