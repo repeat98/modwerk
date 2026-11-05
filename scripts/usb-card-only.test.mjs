@@ -12,7 +12,7 @@ describe('owner card-only records', () => {
   })
   it('refuses a record without the owner, a reason or an until pointer, an extra field, or a duplicate', () => {
     expect(parseUsbCardOnly(file([record]))).toEqual([record])
-    for (const bad of [{ ...record, approval: 'timhastie, 2 Nov 2026: fine' }, { ...record, reason: ' ' }, { ...record, until: 'later' }, { ...record, versions: ['*'] }, (({ until, ...rest }) => rest)(record)])
+    for (const bad of [{ ...record, approval: 'timhastie, 2 Nov 2026: fine' }, { ...record, reason: ' ' }, { ...record, until: 'later' }, { ...record, versions: ['*'] }, Object.fromEntries(Object.entries(record).filter(([key]) => key !== 'until'))])
       expect(() => parseUsbCardOnly(file([bad]))).toThrow('malformed')
     expect(() => parseUsbCardOnly(file([record, record]))).toThrow('duplicate')
     expect(() => parseUsbCardOnly({ ...file([record]), waivers: [] })).toThrow('malformed')
