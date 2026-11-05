@@ -2,12 +2,12 @@
 
 ## Commands and exact revision
 
-Source: `sdk/drafts/slow-lfo` on branch `module/slow-lfo`. OS: stock 1.40C (the developer's own `OCTATRACK_OS1.40C.bin`, decoded MAIN OS kept outside the repository). Port: `ot_emu` from octabam.
+Source: `sdk/octabam/modules/slow-lfo` (drafted in `sdk/drafts/slow-lfo`). OS: stock 1.40C (the developer's own `OCTATRACK_OS1.40C.bin`, decoded MAIN OS kept outside the repository). Port: `ot_emu` from octabam.
 
 ```sh
 # the gate (from an octabam root holding out/emu/ot_emu and out/raw/section_3_MAIN_OS.bin)
 python3 tools/emu/ot_emu/stage_card.py out/test-project OCTABAM SLOW --out <card.img>
-SLOW_CARD=<card.img> SLOW_PROJECT=SLOW python3 <modwerk>/sdk/drafts/slow-lfo/verify.py
+SLOW_CARD=<card.img> SLOW_PROJECT=SLOW python3 <modwerk>/sdk/octabam/modules/slow-lfo/verify.py
 ```
 
 ## ot_emu (2 November 2026)
@@ -24,7 +24,18 @@ Not hardware evidence: the port runs the firmware's arithmetic, not the audio.
 | Built into the developer's private octabam remix `home-base` 7 (native card build, beside Bar LED and Deja Vu), nothing preloaded | track 1's LFO 1 phase over frames 100..2100 | 1X 760,990; 1/2X 380,995; 1/8X 94,984: the same as preloaded. `make check` on that remix passes. |
 | Cost: 2,756 frames, stock against the unit preloaded | ColdFire instructions the port counts | 23,082 a frame stock, 23,298 with the module: +216 for 24 audio LFOs at MULT 1X. |
 
-Not run in the port: the MIDI engine, the page as drawn (the knob range on screen), turning MULT with the encoder, a tempo change, external MIDI clock, saving and reloading a Part with 1/2X.
+## ot_emu: tempo change while playing (5 November 2026)
+
+`verify.py` part 3, the same preloaded unit and card. At frame 1100 the tempo word `0x80001814` (BPM × 24) is set from 120 to 210 BPM; the LFO's distance over frames 100..1100 and 1100..2100 is compared.
+
+| MULT | 100..1100 | 1100..2100 | ratio (want ×1.75) |
+|---|---|---|---|
+| 1X | 380,495 | 665,497 | ×1.7490 **PASS** |
+| 1/2X | 190,498 | 332,493 | ×1.7454 **PASS** |
+
+After the change 1/2X moves 0.4996 of 1X (want 0.5): **PASS**. The slow values follow a tempo change as stock's do, because the step is still stock's SPD × tempo.
+
+Not run in the port: the MIDI engine, external MIDI clock, saving and reloading a Part with 1/2X.
 
 ## Hardware
 
@@ -48,7 +59,7 @@ Not run on a unit. Values 1X..64X run stock's displaced instructions unchanged. 
 
 ## Performance
 
-From the emulator: +216 ColdFire instructions a frame (362.8 µs) with 24 audio LFOs; about 9 per LFO. MIDI LFOs add at most as much again while MIDI tracks run. No DSP code. No `evidence/performance.json` yet.
+From the emulator: +216 ColdFire instructions a frame (362.8 µs) with 24 audio LFOs; about 9 per LFO. MIDI LFOs add at most as much again while MIDI tracks run. No DSP code. Worst case, counted from `unit.s`: 16 instructions an LFO a frame at MULT 1/2X..1/8X (9 at the rate step, 7 at the MULT load, detour jumps included; stock runs 4 there), 768 for all 24 audio and 24 MIDI LFOs, against a frame of 95,778 cycles at 264 MHz. The MULT label code runs only while the page draws.
 
 ## Resources
 
@@ -56,4 +67,9 @@ ColdFire: one linked unit of 184 bytes, five detours (6 to 10 bytes each), two f
 
 ## OT UI capture evidence
 
-None yet.
+5 November 2026. `scripts/capture-module-ui.py` with the octabam port's `ot_emu` (SHA-256 `28391993…`), MKII panel, empty scratch card, stopped transport, on a MAIN OS build of the octabam test remix `slow-lfo` (Slow LFO and the stock effects; `make bus`, image SHA-256 `bdd9d88e58516c66192b7966307505fa51b4367df851a40a375ae746df0ee059`, kept local). Plan: dismiss the date prompt, [FUNC]+[LFO], seven turns of C (+4 each) to 1/2X, capture; two more to 1/8X, capture. Each +4 turn moves MULT one value; two further turns stayed on 1/8X (the end of the knob). `media/capture.json` holds the hashes.
+
+| File | Shows |
+|---|---|
+| `media/slow_lfo_mult_half.png` | LFO SETUP, LFO 1, MULT 1/2X |
+| `media/slow_lfo_mult_eighth.png` | LFO SETUP, LFO 1, MULT 1/8X |

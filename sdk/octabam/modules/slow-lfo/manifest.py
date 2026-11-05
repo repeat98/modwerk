@@ -25,7 +25,7 @@ MODULE = Module(
     kind=Kind.CF_PATCH,
     doc="LFO MULT gains 1/2X, 1/4X and 1/8X on audio and MIDI tracks: LFOs up to eight times slower.",
     category=Category.MACHINES, author="nathangroth", author_url="https://github.com/nathangroth",
-    proof=Proof.UNTESTED, proof_note="ot_emu, stock 1.40C with the unit preloaded, 2 Nov 2026 (verify.py); not yet run on a unit.",
+    proof=Proof.HARDWARE, proof_note="MKI, OS 1.40C, Modwerk beta base over USB, 4 Nov 2026 (audio and MIDI LFOs, Keep, power cycle, self-test); gate: verify.py under ot_emu.",
     linked=(Linked("slow_lfo", os.path.join(_HERE, "unit.s"), dram=True),),
     detours=(
         Detour(0x4000CFB0, stock_guard(0x4000cfb0, 10, RATE), "slow_lfo", "sl_rate_audio",

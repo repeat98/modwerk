@@ -10,12 +10,16 @@ each detour site and the two MULT counts poked to 10. Then:
      MULT 0 (1X), 7, 8 and 9 must be 1/2, 1/4 and 1/8 of 1X, within 1 %.
   2. Labels: the MULT formatter (0x4003bda4) called with 0, 6, 7, 8, 9 must
      write 1X, 64X, 1/2X, 1/4X, 1/8X.
+  3. Tempo change while playing: at frame 1100 the tempo (0x80001814, BPM x 24)
+     is set to 210 BPM. At 1X and at 1/2X the LFO's distance over frames
+     1100..2100 against 100..1100 must follow the tempo ratio within 1 %, and
+     1/2X must stay half of 1X after the change.
 
 Reads, and SKIPs without any of them: the port (out/emu/ot_emu, OT_EMU), the
 stock MAIN OS (out/raw/section_3_MAIN_OS.bin, SLOW_IMAGE) and a card holding a
 project (SLOW_CARD, SLOW_SET, SLOW_PROJECT; tools/emu/ot_emu/stage_card.py
 makes one). Not covered: the MIDI engine (the staged project plays no MIDI
-track), the LFO's audible output, the page as drawn.
+track), the LFO's audible output, the page as drawn, external MIDI clock.
 """
 import os
 import pathlib
@@ -35,6 +39,7 @@ DETOURS = ((0x4000cfb0, "sl_rate_audio", 10), (0x4000cfd6, "sl_mult_audio", 6), 
            (0x40003c3c, "sl_mult_midi", 6), (0x4003bda4, "sl_format", 6))
 COUNTS = (0x400d38b0, 0x400d421c)
 LANE_MULT, STATE = 0x80000810 + 0x3e, 0x800010e8
+TEMPO, NEW_TEMPO = 0x80001814, 210 * 24
 
 
 def skip(why):
@@ -79,6 +84,36 @@ def main():
             failed |= not ok
             print("[%s] slow-lfo: MULT %d moves %d phase units, %.4f of 1X's %d (want %g)"
                   % ("PASS" if ok else "FAIL", mult, moved[mult], got, moved[0], want))
+
+        def word(path):
+            return struct.unpack(">I", path.read_bytes())[0]
+
+        split = {}
+        poke = ";".join("%#x=%d" % (TEMPO + i, b) for i, b in enumerate(struct.pack(">I", NEW_TEMPO)))
+        for mult in (0, 7):
+            a, m, b, t0, t1 = (tmp / ("t%s%d" % (n, mult)) for n in "ambxy")
+            emu(preload, "--frames", "2200", "--step", "-:poke:%#x=%d" % (LANE_MULT, mult),
+                "--step", "100:dump:%#x,4=%s;%#x,4=%s" % (STATE, a, TEMPO, t0),
+                "--step", "1100:dump:%#x,4=%s" % (STATE, m), "--step", "1100:poke:" + poke,
+                "--step", "2100:dump:%#x,4=%s;%#x,4=%s" % (STATE, b, TEMPO, t1))
+            split[mult] = ((word(m) - word(a)) & 0xffffffff, (word(b) - word(m)) & 0xffffffff, word(t0), word(t1))
+        old, held = split[0][2], split[0][3]
+        if old == NEW_TEMPO or held != NEW_TEMPO:
+            failed = True
+            print("[FAIL] slow-lfo: tempo %d before, %d after the change (want a change to %d)" % (old, held, NEW_TEMPO))
+        else:
+            want = NEW_TEMPO / old
+            for mult in (0, 7):
+                before, after = split[mult][:2]
+                got = after / before
+                ok = abs(got - want) <= 0.01 * want
+                failed |= not ok
+                print("[%s] slow-lfo: MULT %d at %g -> %g BPM moves %d then %d, x%.4f (want x%.4f)"
+                      % ("PASS" if ok else "FAIL", mult, old / 24, NEW_TEMPO / 24, before, after, got, want))
+            got = split[7][1] / split[0][1]
+            ok = abs(got - 0.5) <= 0.005
+            failed |= not ok
+            print("[%s] slow-lfo: after the change MULT 7 moves %.4f of 1X (want 0.5)" % ("PASS" if ok else "FAIL", got))
 
         steps = []
         for v in (0, 6, 7, 8, 9):

@@ -2,8 +2,6 @@
 
 Version: 0.1.0-experimental · author: @nathangroth
 
-**Draft: not in the configurator until qualified on a unit and reviewed by the owner.**
-
 ![Slow LFO thumbnail: one LFO cycle at 1X beside the same LFO at 1/2X, 1/4X and 1/8X](presentation/thumbnail.svg)
 
 ## Overview
@@ -17,6 +15,8 @@ Stock LFO MULT runs from 1X to 64X, so the slowest an LFO can go is SPD 1 at 1X.
 | LFO SETUP | MULT | 1X, 2X … 64X, **1/2X, 1/4X, 1/8X** | stock's rate multiplier; the last three run at a half, a quarter and an eighth of 1X |
 
 ## Usage
+
+Slow LFO has no page or setting of its own: it adds three values to MULT on LFO SETUP, the page stock already has for every audio and MIDI track. Pick one for a sweep that lasts several bars, such as a slow filter or volume swell. It is stored in the Part like any other MULT value.
 
 ### Quick tutorial
 
@@ -40,7 +40,7 @@ It keeps no clock of its own ([sequencing](https://github.com/repeat98/modwerk/b
 - A project saved with 1/2X, 1/4X or 1/8X opened without the module shows 128X and runs that LFO very fast (stock reads 7 to 9 as shift counts).
 - On Deja Vu's waves (DJV, DJQ, DJC) MULT is the loop length; Deja Vu reads 1/2X to 1/8X as 64.
 - No other module or the base patches these sites. Takes no key or screen.
-- Tested on an MKI over USB on audio and MIDI tracks. Not yet tested: a tempo change while playing, external MIDI clock, saving and reloading a Part with the slow values.
+- Tested on an MKI over USB on audio and MIDI tracks; a tempo change while playing is checked in the emulator. Not yet tested: external MIDI clock, MKII.
 
 ## Tests and measurements
 
@@ -52,4 +52,12 @@ Original module by @nathangroth, MIT ([LICENSE](LICENSE)). No firmware, extracte
 
 ## Screens and audio
 
-Not captured yet: LFO SETUP with MULT at 1/2X needs a capture from the emulator or a unit.
+![LFO SETUP with MULT at 1/2X](media/slow_lfo_mult_half.png)
+
+LFO SETUP ([FUNC]+[LFO]) with MULT turned one step past 64X to 1/2X.
+
+![LFO SETUP with MULT at 1/8X](media/slow_lfo_mult_eighth.png)
+
+MULT at 1/8X, the last value: the knob stops here.
+
+Headless `ot_emu` captures of a build with Slow LFO; the record is in [media/capture.json](media/capture.json). No audio preview.
