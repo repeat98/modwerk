@@ -29,6 +29,8 @@ Every v2 checkpoint has the exact module ids/versions, OS, ordered FX1/FX2 choos
 
 `src/engine/core-logger.ts` installs the complete resolved composition identity in every static or dynamic runtime. The native `build_local.py` probe contains only stock plus the core logger; its module list is deliberately empty. It is not evidence of DSP or module runtime behavior. `package.py` compiles only original source with zero stock-replay placeholders; the firmware-free test checks the full source inventory and those placeholders. Regenerate `src/engine/assets/core-logger.json` after a source change using the reviewed m68k-elf GCC toolchain. No firmware is needed or permitted for that command.
 
+The job site is shared. On a base with site events it belongs to `ev_engine_job` (`sdk/machines/octatrack/events.json`): its head calls `olog_job_hook`, which `build_core.py` ends with `rts` there, and the subscribed modules run after it. A card build has no base, so a module that subscribes keeps its own `jmp` detour on the site. `chainedDetour` in `core-logger.ts` then replays that `jmp` from the logger's hook, so the logger records the job first on both kinds of build.
+
 Events contain numeric state and codes, not firmware bytes, paths, project/set names, sample names, audio, MIDI payloads or screen/RAM dumps. A checksum establishes completeness, not authenticity. The report form makes the public contents visible before submission.
 
 ## Crashes

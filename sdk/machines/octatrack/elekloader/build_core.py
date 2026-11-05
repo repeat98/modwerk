@@ -2034,6 +2034,12 @@ def main():
         hook_source = hook_source.replace(idle_seam, 'jsr mw_sample_engine_idle\n' + idle_seam)
         hook_source = hook_source.replace(job_seam, job_seam +
             'move.l %a2,-(%sp)\njsr mw_sample_engine_job\naddq.l #4,%sp\n')
+    logged = [key for key in ('idle', 'job', 'transport', 'open', 'read', 'write', 'close') if key != 'job' or not args.site_events]
+    if args.site_events:  # ev_engine_job owns the job site; its head calls the logger's job hook, which returns (events.json)
+        job = guards['job']; replay = '.global olog_replay_job\nolog_replay_job:\n.space %d\njmp 0x%x\n' % (job['length'], job['address'] + job['length'])
+        if hook_source.count(replay) != 1:
+            raise ValueError('The logger job hook changed; review ev_engine_job.')
+        hook_source = hook_source.replace(replay, 'rts\n')
     (source/'hooks.s').write_text(hook_source)
     (source/'retained.s').write_text('''.section .bss
 .balign 512
@@ -2111,7 +2117,7 @@ modwerk_retained_end:
         if args.dsp_loader and args.resident_stock_hooks:  # the board journal adapter needs the manager journal
             shutil.copyfile(HERE / 'journal_board.c', source / 'journal_board.c')
             recipe['sources'].append('journal_board.c')
-    for key in ('idle', 'job', 'transport', 'open', 'read', 'write', 'close'):
+    for key in logged:
         guard = guards[key]; n = guard.get('patchLength', guard['length'])
         at = guard['address'] - device.main_load
         # The USB transport is serviced on the engine before the logger's idle hook.
@@ -2209,7 +2215,7 @@ modwerk_retained_end:
     if not CODEGEN.check_mcf54455(sorted((out/'package').glob('*.work/*.c.o')), args.cross + 'objdump'):
         raise ValueError('The base build left no C objects to check.')
     document = json.loads(Path(path).read_text())
-    for key in ('idle', 'job', 'transport', 'open', 'read', 'write', 'close'):
+    for key in logged:
         section, offset = document['symbols']['olog_replay_' + key]
         guard = guards[key]; n = guard.get('patchLength', guard['length'])
         document['sections'][section]['parts'] = stock_reference(

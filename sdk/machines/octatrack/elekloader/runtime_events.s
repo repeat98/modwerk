@@ -762,6 +762,39 @@ modwerk_stock_4007a2ec_8:
         .space  8 | the site's own stock bytes
         jmp 0x4007a2f4
 
+| ---- 0x4008485e: ev_engine_job
+        .globl  modwerk_site_4008485e
+modwerk_site_4008485e:
+        jsr olog_job_hook | the core logger's job record (and the sample editor's job seam), every register kept; with site events build_core.py ends it with rts
+        lea     -20(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_engine_job: int f(const uint8_t *job)
+        movea.l modwerk_runtime_event_row+136,%a2
+.L4008485e_ev_engine_job:
+        move.l  (%a2)+,%d0
+        beq     .L4008485e_ev_engine_job_end
+        move.l  16(%sp),-(%sp)
+        movea.l %d0,%a0
+        jsr     (%a0)
+        lea     4(%sp),%sp
+        tst.l   %d0
+        beq     .L4008485e_ev_engine_job
+        cmpi.l  #1,%d0
+        beq     .L4008485e_done
+        bra     .L4008485e_tail
+.L4008485e_ev_engine_job_end:
+.L4008485e_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     20(%sp),%sp
+        .globl  modwerk_stock_4008485e_6
+modwerk_stock_4008485e_6:
+        .space  6 | the site's own stock bytes
+        jmp 0x40084864
+.L4008485e_done:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     20(%sp),%sp
+        jmp 0x4008484e | back to the engine loop's top: the idle hook, then the next receive
+
 | ---- 0x400866cc: ev_project_load
         .globl  modwerk_site_400866cc
 modwerk_site_400866cc:
