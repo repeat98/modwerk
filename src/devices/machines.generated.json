@@ -612,8 +612,8 @@
         {
           "name": "Core image with the send bus",
           "unit": "bytes",
-          "value": 95171,
-          "note": "The base's send-bus variant (0c92aa45), for a set with a send effect: 27,007 bytes .run plus 68,164 bytes .bss, 65,536 of them the effects' work area, leaving about 36 KB of the shared area for modules."
+          "value": 63834,
+          "note": "The base's send-bus variant (0cdf0343), for a set with a send effect: 28,358 bytes .run plus 35,476 bytes .bss, 32,768 of them the effects' work area, leaving about 67 KB of the shared area for modules."
         }
       ]
     }
