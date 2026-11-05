@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "quick-fill-trig-condition",
+  "moduleVersion": "0.2.0-experimental",
+  "firmware": "1.74",
+  "capturedAt": "2026-11-04T20:00:00Z",
+  "imageSha256": "4f5839dfd6aa2a7f68d7b723bff5b64ef007d57455e5b5d2c8882fdefa81aa18",
+  "build": "Modwerk's linker: Modwerk base for core-ar2 0.7 + this folder's Quick Trig Conditions 0.2.0-experimental, materialised against stock OS 1.74, --version FC09",
+  "emulator": {
+    "name": "rytm-emu",
+    "repository": "https://github.com/trigcondition/rytm-emu",
+    "binary": "dtboot",
+    "settings": "revision 2ac0f1f; no card; JIT on; DTBOOT_END_PNG at the end of each run"
+  },
+  "conditions": "SETUP: boot FC09 for 11000M with NO pressed eight times from 7000M to close the notices, snapshot; then TRIG, RECORD (GRID RECORDING) and T1, T3 and T5 tapped to place trigs on BD's steps 1, 3 and 5, snapshot. Each capture loads that snapshot and runs the listed --press events for 900M, off the --every grid, with the trig key still held at the end.",
+  "captures": [
+    {
+      "path": "media/trc-ratio.png",
+      "frame": "end.png",
+      "plan": "T1 held to the end; DOWN, DOWN, UP, UP, then DOWN x5",
+      "sha256": "bcfae8ab94d073250efdc2e20202d00459fd1b3d7913f9a9410c9cdf0879a62b"
+    },
+    {
+      "path": "media/trc-fill.png",
+      "frame": "end.png",
+      "plan": "T3 held to the end; FILL",
+      "sha256": "c118993cf343e0ea8138406aa597bbc3289209611f0bfbbf6355ed1361a202a5"
+    },
+    {
+      "path": "media/trc-not-fill.png",
+      "frame": "end.png",
+      "plan": "T5 held to the end; FILL, FILL",
+      "sha256": "4c629f5e41148871a5e1fd3865be144a442565b568c76833dcc0890de1526490"
+    }
+  ]
+}
