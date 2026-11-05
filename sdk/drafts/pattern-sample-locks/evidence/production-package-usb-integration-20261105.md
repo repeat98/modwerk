@@ -92,6 +92,15 @@ Octatrack candidate-only fixture and its 30-package preflight. This report
 remains bound to checkout `91d8d493` and tested base `3ae8c38d`; it is not
 represented as a new build at current `upstream/main` `8a547f4a`.
 
+Before this documentation follow-up's readiness check, `upstream/main` moved
+again to `0da26a6d1a04c6b746262b24e68aaf6693e4c507` through PR #1238. The
+change is limited to FX-audit scripts/tests, effect and machine guides, and a
+changelog entry; no Octatrack candidate source or manifest, reconstruction
+recipe, package builder, loader/runtime, or Elekloader input changed. The
+follow-up branch merges that base, but this evidence remains bound to the
+original tested checkout `91d8d493` and base `3ae8c38d`, not a rebuilt package
+at `0da26a6d`.
+
 This closes only the production package-path and USB software-integration
 check. It adds no hardware result, simultaneous-companion result, cycle bound,
 complete stack/memory bound, measured CPU budget, or edited-pattern persistence
