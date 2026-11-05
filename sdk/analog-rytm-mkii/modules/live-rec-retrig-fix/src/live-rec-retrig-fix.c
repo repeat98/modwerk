@@ -22,15 +22,13 @@
 // rec applies to every note, retrig hits included, as stock has it.
 
 #include <stdint.h>
+#include "retrig-shared.h"
+#include "grid-1.74.h"
 
-#define TRACKS 12
 #define WHOLE 960               // ticks in a whole note: the counter's span
 #define EV_NOTE 0x0d
 
 // OS 1.74 locations (build.json release cflags)
-#define RT_ACTIVE ((volatile uint8_t *)RT_ACTIVE_AT)        // [t] 1: a pad's series
-#define RT_COUNT ((volatile int32_t *)RT_COUNT_AT)          // [t] 960..1
-#define RT_RATE(t) (*(volatile int32_t *)(RT_TEMPLATE_AT + 56 * (t) + 36))  // RETRIG 0..16
 #define RT_LENGTHS ((const int32_t *)RT_LENGTHS_AT)        // [length + 1] the curve's speed
 #define LENGTH_INF 127                                      // the last length: speed 0
 #define KIT_RETRIG(t) (4 * (610 + (t)))                     // kit data: a track's RETRIG menu
@@ -46,20 +44,10 @@
 #define WIPE_SKIP 251756        // recorder + track: 1 skips the next held-note wipe
 #define HELD 251236             // recorder + 40 * track: its held notes, begin at +8, end at +24
 #define REC_TRACK 64            // recorder: the track whose step the wipe runs on (index at +8)
-#define SEQ_PATTERN (*(volatile int8_t *)SEQ_PATTERN_AT)
-#define SPEED_PULSES ((const int32_t *)SPEED_PULSES_AT)     // 3, 4, 6, 8, 12, 24, 48
 
-// The pattern in memory (85760 bytes), and a track in it (917 bytes)
-#define PATTERN(p) ((const volatile int8_t *)PATTERNS_AT + 85760 * (p))
-#define PAT_SCALE 85689         // 1: ADVANCED, each track its own length and speed
-#define PAT_SPEED 85690         // 0..6, as SPEED_PULSES
-#define TRK_SPEED 711
 #define STEP_VELOCITY 192       // a track's data: velocity byte per step
-#define PULSE_TICKS 10
 
 // Stock routines (build.json defsym). They return pointers in d0, so these return integers.
-extern uint32_t STOCK_APP(void);
-extern uint32_t STOCK_LIVE_REC(uint32_t app);
 extern void STOCK_QUEUE_POST(uint32_t queue, void *event);
 extern void STOCK_STEP_PLACE(uint32_t clock, int32_t track, uint8_t *place);
 extern void STOCK_STEP_SET_RATE(uint32_t track, int32_t step, int32_t rate);
@@ -74,18 +62,24 @@ extern int32_t STOCK_KEY_DOWN(uint32_t event);                   // a byte: the 
 extern int32_t STOCK_ALWAYS_ON(uint32_t kit, int32_t track);
 extern void STOCK_SET_ALWAYS_ON(uint32_t kit, int32_t track, int32_t on);
 extern void STOCK_VIEW_REDRAW(uint32_t view);
+extern void STOCK_LED_SET(int32_t led, int32_t colour);
+extern int32_t STOCK_SELECTED_TRACK(uint32_t pattern_view);
+extern int retrig_grid_driving(int t);
+extern int retrig_grid_on_gap(int t, int ticks);
+extern int retrig_grid_arming(int t);
+extern void retrig_grid_snap(int t, int gap, int each_hit, int32_t *step, int32_t *micro);
 
 // RETRIG 1/1 .. 1/80, in ticks
-static const int16_t period[17] = { 960, 480, 320, 240, 192, 160, 120, 96, 80, 60, 48, 40, 30, 24, 20, 15, 12 };
+const int16_t retrig_period[17] = { 960, 480, 320, 240, 192, 160, 120, 96, 80, 60, 48, 40, 30, 24, 20, 15, 12 };
 
 static int32_t seen[TRACKS];
 static uint8_t press[TRACKS][32];   // the track's latest press: its note event
 static uint8_t have[TRACKS];
 static uint8_t open_note[TRACKS];   // the recorder holds a note of this track
-static uint8_t rearmed[TRACKS];     // pressed again: the next 960 is not a hit
 static uint8_t ahead[TRACKS];       // step + 1 of a hit the wipe's step has not reached
 static int8_t rate_seen[TRACKS];    // -1: none yet this press
 static uint16_t hits[TRACKS];
+static uint8_t phased[TRACKS];      // the block count is on the grid's steps
 static uint32_t started[TRACKS];    // this hit's time, clock / 2
 static uint8_t ring_seen;
 static uint8_t running;             // a series has run since the last idle pass
@@ -122,9 +116,9 @@ static void watch_presses(void)
             press[t][i] = e[i];
         started[t] = NOTE_START[(t << 7) + press[t][16]];
         open_note[t] = STOCK_LIVE_REC(STOCK_APP()) != 0;
-        rearmed[t] = RT_ACTIVE[t];
         rate_seen[t] = -1;
         hits[t] = 0;
+        phased[t] = 0;
         last_velocity[t] = 0;
         have[t] = 1;
     }
@@ -179,11 +173,20 @@ static void hit(int t)
     if (!have[t] || rate < 0 || rate > 16)
         return;
     step = step_ticks(t);
-    block = hits_in_block(period[rate], step);
+    block = hits_in_block(retrig_period[rate], step);
     if (rate != rate_seen[t]) {
-        if (rate_seen[t] >= 0)
+        if (rate_seen[t] >= 0) {
             hits[t] = block - 1;        // a new rate starts a block at this hit
+            phased[t] = 0;
+        }
         rate_seen[t] = rate;
+    }
+    // On the grid a block starts on a step: the press can come anywhere between two.
+    if (block > 1 && !phased[t] && retrig_grid_driving(t)) {
+        if (!retrig_grid_on_gap(t, step))
+            return;                     // the press's note stays open and takes these hits
+        phased[t] = 1;
+        hits[t] = block - 1;
     }
     if (++hits[t] % block)
         return;
@@ -219,7 +222,7 @@ static void hit(int t)
     for (i = 0; i < 32; i++)
         on[i] = press[t][i];
     on[17] = velocity;
-    on[20] = period[rate] < step ? rate : 0xff;
+    on[20] = retrig_period[rate] < step ? rate : 0xff;
     on[28] = 0;
     on[29] = place[0];
     on[30] = micro < 0 ? 0xff : 0;
@@ -289,10 +292,9 @@ void retrig_fix_render(void)
             continue;
         }
         c = RT_COUNT[t];
-        if (c == WHOLE && rearmed[t]) {
-            rearmed[t] = 0;
-        } else if (seen[t] >= 0 && c != seen[t]) {
-            int fired = c == WHOLE && seen[t] == 1;
+        if (seen[t] >= 0 && c != seen[t]) {
+            // a 960 from a press, first or again, is not a hit, whatever count it follows
+            int fired = c == WHOLE && seen[t] == 1 && !retrig_grid_arming(t);
             int rate = RT_RATE(t);
 
             // a count that did not step down was set by another module
@@ -315,9 +317,56 @@ void retrig_fix_render(void)
 // each hit gets its own trig, so the press is a plain one too.
 int retrig_fix_press_rate(int rate, int t)
 {
-    if (rate > 16 || period[rate] >= step_ticks(t))
+    if (rate > 16 || retrig_period[rate] >= step_ticks(t))
         return -1;
     return rate;
+}
+
+// The recorder, for a retrig press (live-rec-retrig-fix.s): the trig goes on the retrig
+// grid, and at a rate that records blocks on the start of one, where the others sit.
+// This module's own hits come here too at those rates, already on it, once phased.
+// Moved on past the wipe's step it is the held note before its step, as an early hit is;
+// moved back it is behind the wipe, as any held note. The snap moves a press under
+// two steps, so a longer way round is the pattern's wrap.
+void retrig_fix_press_place(int t, int rate, int32_t *step, int32_t *micro)
+{
+    int32_t was = *step, moved;
+    int block;
+
+    if (rate > 16 || (phased[t] && ring_seen == (NOTE_RING_NEXT & 15)))
+        return;
+    block = hits_in_block(retrig_period[rate], step_ticks(t));
+    retrig_grid_snap(t, retrig_period[rate] * block, block == 1, step, micro);
+    moved = *step - was;
+    if ((moved > 2 || moved < 0 ? moved < -2 : moved > 0) && *step != wipe_step()) {
+        ahead[t] = *step + 1;
+        guarding = 1;
+    }
+}
+
+// The RTRG key: stock leaves it dark, and lights it while RTRG is held. Dim while the
+// selected track's pad is ALWAYS ON. Stock's own colours are left alone, so holding RTRG
+// shows as stock has it, and the key comes back dim once stock has put it out.
+#define LED_RTRG 0xba           // stock's id for the key
+#define LED_DARK 0              // palette: stock's dark
+#define LED_DIM 4               // palette: stock's lowest level
+#define LED_INDEX ((const volatile int32_t *)LED_INDEX_AT)    // [id] the LED
+#define LED_SELECT ((const volatile uint8_t *)LED_SELECT_AT)  // [LED / 4] the slot, 2 bits each
+#define LED_SLOTS ((const volatile uint8_t *)LED_SLOTS_AT)    // [id * 4 + slot] a palette colour
+#define PATTERN_VIEW 48         // recorder: what holds the selected track
+
+void retrig_fix_tick(void *ctrl)
+{
+    uint32_t recorder = STOCK_RECORDER();
+    int led = LED_INDEX[LED_RTRG];
+    int slot = (LED_SELECT[led >> 2] >> ((led & 3) * 2)) & 3;
+    int shown = LED_SLOTS[LED_RTRG * 4 + slot];
+    int t = STOCK_SELECTED_TRACK(recorder + PATTERN_VIEW);
+    int want = t >= 0 && t < TRACKS && (STOCK_ALWAYS_ON(STOCK_KIT(recorder), t) & 1) ? LED_DIM : LED_DARK;
+
+    (void)ctrl;
+    if (shown != want && (shown == LED_DARK || shown == LED_DIM))
+        STOCK_LED_SET(LED_RTRG, want);
 }
 
 // The RETRIG menu's YES (live-rec-retrig-fix.s): ALWAYS ON turned over for the menu's track, as

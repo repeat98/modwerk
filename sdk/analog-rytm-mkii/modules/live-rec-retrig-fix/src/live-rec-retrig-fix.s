@@ -12,12 +12,27 @@ retrig_fix_menu:
         jmp     MENU_NO_STEP
 
         | The recorder drops a note's micro timing with quantize on. Over `tstb d0;
-        | seq d0; mvsb d0,d0; andl d0,d5`: d0 the quantize, d5 the micro timing, d7 the
-        | step retrig rate or -1. Every note follows the quantize as stock has it, and a
-        | retrig press may lose its rate here.
+        | seq d0; mvsb d0,d0; andl d0,d5`: d0 the quantize, d2 the step, d5 the micro
+        | timing, d7 the step retrig rate or -1. A retrig press goes on the retrig grid
+        | first, then every note follows the quantize as stock has it, and a retrig
+        | press may lose its rate here.
         .globl  retrig_fix_timing
 retrig_fix_timing:
-        tst.b   %d0
+        tst.l   %d7
+        blt.s   2f
+        move.l  %d0,-(%sp)
+        move.l  %d5,-(%sp)
+        move.l  %d2,-(%sp)
+        pea     4(%sp)
+        pea     4(%sp)
+        move.l  %d7,-(%sp)
+        move.l  %d4,-(%sp)
+        jsr     retrig_fix_press_place
+        lea     16(%sp),%sp
+        move.l  (%sp)+,%d2
+        move.l  (%sp)+,%d5
+        move.l  (%sp)+,%d0
+2:      tst.b   %d0
         seq     %d0
         extb.l  %d0
         and.l   %d0,%d5
@@ -63,4 +78,17 @@ retrig_fix_length:
         move.l  16(%sp),-(%sp)
         jsr     retrig_fix_step_length
         lea     16(%sp),%sp
+        rts
+
+        | SeqSettingsMenuView's constructor, after its last row, over its `moveml` and
+        | return: the RETRIG GRID row. a3 is the view. core_additem keeps the registers
+        | the exit restores anyway.
+        .globl  retrig_grid_menu_add
+retrig_grid_menu_add:
+        pea     retrig_grid_row
+        move.l  %a3,-(%sp)
+        jsr     core_additem
+        addq.l  #8,%sp
+        movem.l 24(%sp),%d2-%d6/%a2-%fp
+        lea     128(%sp),%sp
         rts
