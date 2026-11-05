@@ -181,7 +181,7 @@ class ToolSyntax(unittest.TestCase):
 
 # Builder extensions after the Poly8 record, oldest first. Each proves its own exact before/after transition.
 EXTENSIONS = ['air-chorus-split-builder.json', 'plain-formatter-builder.json', 'floating-cave-overflow-builder.json', 'octabam-emulator-gates-5c71bc8c.json',
-              'ptable2-builder.json']
+              'ptable2-builder.json', 'octabam-emulator-parent-exit-54200264.json']
 # Documentation-only imports, oldest first: upstream files byte for byte, no build input.
 DOC_IMPORTS = ['octabam-docs-30fbb8e4.json', 'octabam-docs-dcf93d37.json', 'octabam-docs-6328143e.json', 'octabam-docs-bc144523.json',
                'octabam-docs-5f8e779f.json', 'octabam-docs-54200264.json']
@@ -292,8 +292,9 @@ class SelectiveImport(unittest.TestCase):
         imported = json.loads((sdk / record['importRecord']).read_text(encoding='utf-8'))
         self.assertEqual(imported['revision'], record['upstreamRevision'])
         self.assertEqual(imported['modules'], [])
-        # A later docs import pins its newer copy of a file this one also brought.
+        # A later docs or infrastructure import pins its newer copy of a file this one also brought.
         later = {f['path'] for name in DOC_IMPORTS for f in json.loads((sdk / 'imports' / name).read_text(encoding='utf-8'))['files']}
+        later |= {f['path'] for f in json.loads((sdk / 'imports/octabam-infrastructure-54200264.json').read_text(encoding='utf-8'))['files']}
         for file in imported['files']:
             with self.subTest(path=file['path']):
                 self.assertFalse(file['path'].startswith('modules/'))
@@ -302,6 +303,26 @@ class SelectiveImport(unittest.TestCase):
         # Every vendored copy that is not a recorded local adaptation is upstream's file byte for byte.
         adapted = {f['path'] for f in imported['files'] if f['sourceSha256'] != f['vendoredSha256']}
         self.assertEqual(adapted, {'Makefile', 'tools/emu/ot_emu/main.cpp', 'tools/emu/ot_emu/test_periph.cpp'})
+
+    def test_emulator_parent_exit_extension_changes_only_main_cpp(self):
+        import hashlib, json
+        sdk = ROOT.parent
+        record = json.loads((sdk / 'infrastructure-verification/octabam-emulator-parent-exit-54200264.json').read_text(encoding='utf-8'))
+        self.assertEqual(record['kind'], 'emulator-extension')
+        self.assertEqual(set(record['builderAdaptations']), {'tools/emu/ot_emu/main.cpp'})
+        for path, change in record['builderAdaptations'].items():
+            self.assert_extension_holds('octabam-emulator-parent-exit-54200264.json', path, change['after'])
+        for path, digest in record['builderSourcesUnchanged'].items():
+            self.assert_extension_holds('octabam-emulator-parent-exit-54200264.json', path, digest)
+        imported = json.loads((sdk / record['importRecord']).read_text(encoding='utf-8'))
+        self.assertEqual((imported['kind'], imported['modules'], imported['revision']), ('infrastructure-backport', [], record['upstreamRevision']))
+        self.assertEqual([f['path'] for f in imported['files']], ['tools/emu/ot_emu/main.cpp'])
+        self.assertEqual(imported['files'][0]['vendoredSha256'], record['builderAdaptations']['tools/emu/ot_emu/main.cpp']['after'])
+        source = (ROOT / 'tools/emu/ot_emu/main.cpp').read_text(encoding='utf-8')
+        # The watcher sits in the --interactive server only, and nothing else of upstream's newer main.cpp came with it.
+        self.assertEqual(source.count('::getppid()'), 2)
+        self.assertLess(source.index('int serveInteractive('), source.index('::getppid()'))
+        self.assertNotIn('OT_STALL_CPU', source)
 
     def test_docs_imports_are_upstream_files_byte_for_byte(self):
         import hashlib, json
