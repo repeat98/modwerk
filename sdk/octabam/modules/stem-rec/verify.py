@@ -27,7 +27,7 @@ What it checks:
   7. STEM REC beside USB AUDIO OUT builds and boots as in 1.
 
 What it cannot see: a take. Recording, the menu and the card writer are
-proven by octabam's STEM REC gates (verify_stems, verify_stems_units,
+proven by the pinned source's own gates (verify_stems, verify_stems_units,
 verify_stems_menu) on the pinned source, and on a unit.
 """
 import hashlib

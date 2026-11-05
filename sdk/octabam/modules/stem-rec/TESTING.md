@@ -23,7 +23,7 @@ Two takes, eleven files each at 24 bits (T1 to T7, MAIN, CUE, AB and CD, both pa
 
 - Every WAV's header is right and its length is the log's frame count (16 samples a frame); each has its `.ot`, and each take its `STATS.TXT` log.
 - STEMS opened with UP + REC, and YES on STEM REC armed the take. A double YES on the main page did stock's ARM ALL only.
-- The track files weren't checked against MAIN. Every take of this project leaves T8 out, which STEM REC does when MASTER TRACK is on; then MAIN is T8's output and the tracks can't sum to it (inferred, not confirmed). octabam's STEMS13 take of the same sources differs from MAIN the same way.
+- The track files weren't checked against MAIN. Every take of this project leaves T8 out, which STEM REC does when MASTER TRACK is on; then MAIN is T8's output and the tracks can't sum to it (inferred, not confirmed). A take of the same sources on the upstream build (STEMS13) differs from MAIN the same way.
 
 Limitations: two short takes; the maximum configuration (fourteen files), a take of T1 alone and a reboot were not run on the unit; MKII only.
 
@@ -45,16 +45,16 @@ Limitations: two short takes; the maximum configuration (fourteen files), a take
 
 Run once with the stock copies removed from the manifest, the gain-table check alone failed (the table read zero, SHA-256 `c12a5472cf30…`): the builder doesn't refuse an unfilled placeholder, so this check guards it.
 
-What the emulator can't see: a take. It has no cache, no memory timing and no card speed. Recording, the menu and the card writer are covered by octabam's STEM REC gates on the pinned source (`verify_stems`, `verify_stems_units`, `verify_stems_menu`) and by section 1.
+What the emulator can't see: a take. It has no cache, no memory timing and no card speed. Recording, the menu and the card writer are covered by the pinned source's own gates (`verify_stems`, `verify_stems_units`, `verify_stems_menu`) and by section 1.
 
 ## 3. Worst-case ColdFire cycles
 
 Per audio block: 16 samples at 44,100 Hz, 362.8 µs, 95,782 cycles of the 264 MHz core. One instance.
 
 - **Measured (section 1), eleven files at 24 bits:** the frame hook's longest frame was 53 µs, **13,992 cycles**. With the stock frame routine that follows it in the same interrupt, 104 µs (27,456 cycles) at most.
-- **The maximum configuration, every source at 24 bits (fourteen files), estimated:** the emulator counts the hook at 4,468 instructions a frame there and 4,032 for the eleven measured files (octabam's cost gate, `verify_stems.py` `hook_cost`, at `00a23502`, 400 frames each, faders at rest). Scaled by that ratio, 58.7 µs, **15,505 cycles**, 16% of the block; with the stock frame routine, about 110 µs. This is an estimate from the measured case, not a measurement.
+- **The maximum configuration, every source at 24 bits (fourteen files), estimated:** the emulator counts the hook at 4,468 instructions a frame there and 4,032 for the eleven measured files (the source's cost gate, `verify_stems.py` `hook_cost`, at `00a23502`, 400 frames each, faders at rest). Scaled by that ratio, 58.7 µs, **15,505 cycles**, 16% of the block; with the stock frame routine, about 110 µs. This is an estimate from the measured case, not a measurement.
 - **The idle hook** (STEM REC loaded, not recording): 396 instructions a frame (the gain mirror).
-- **Branches:** a fader that moves takes its track's ramp path, about 100 instructions more on that frame; a track whose gain can exceed unity takes the limited loop (one compare a sample on the common path). octabam's units drive every loop form, rails included (`verify_stems_units`).
+- **Branches:** a fader that moves takes its track's ramp path, about 100 instructions more on that frame; a track whose gain can exceed unity takes the limited loop (one compare a sample on the common path). the source's unit tests drive every loop form, rails included (`verify_stems_units`).
 - **Not in the block:** the writer task streams the rings to the card outside the interrupt, waiting on the card; its sleeps and writes are in each take's log.
 
 ## 4. Exact memory
@@ -74,7 +74,7 @@ From the card build's `layout.json` and the runtime's link (`m68k-elf-size`, `m6
 | The rest of the platform reserve, given up from Flex sample RAM | 2,060,150 | `0x40a9b08a`..`0x40c92000` |
 | **In all** | **10,496,404** | |
 
-The platform reserve is 10,487,808 bytes (`0x40a955e0`..`0x41495de0`), created by any DRAM module and shared with the others. During boot the packed stage (8,336 bytes at `0x40a9c000`) sits in its unused part and is freed after depacking. No heap. The stack peak is from octabam's port runs (8 October 2026); no canary was measured on hardware.
+The platform reserve is 10,487,808 bytes (`0x40a955e0`..`0x41495de0`), created by any DRAM module and shared with the others. During boot the packed stage (8,336 bytes at `0x40a9c000`) sits in its unused part and is freed after depacking. No heap. The stack peak is from emulator runs of the source (8 October 2026); no canary was measured on hardware.
 
 ## 5. Native and browser builds compared (`npm run module:verify`)
 

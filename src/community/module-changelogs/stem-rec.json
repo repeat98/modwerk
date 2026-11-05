@@ -5,7 +5,7 @@
     "changes": [
       "Records each track after its fader, MAIN, CUE and the inputs as their own WAV files on the card while the sequencer plays, in 16 or 24 bits.",
       "Hold UP and press REC to open STEMS; YES on STEM REC arms the take.",
-      "Packages octabam's STEM REC for card builds; the main page's YES double tap is left out.",
+      "The main page's YES double tap isn't in this version: arm from STEMS.",
       "Known issue: card builds only; not available over USB.",
       "Known issue: a power cut or a card pull before STEM REC reads DONE leaves the take's files empty."
     ]

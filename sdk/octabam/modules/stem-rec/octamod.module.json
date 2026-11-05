@@ -14,8 +14,8 @@
     "github": "yvesrosius",
     "name": "Yves Rosius",
     "credits": [
-      "Yves Rosius: STEM REC's design, ColdFire implementation and upstream documentation in octabam; MIT.",
-      "Octabam (Sam Banks and contributors) supplies the native module platform STEM REC was written for. This card-build adapter keeps the upstream source unchanged."
+      "Yves Rosius: design, ColdFire implementation and documentation; MIT.",
+      "Thanks to OctaBam (Sam Banks and contributors) for the toolchain that made it possible."
     ]
   },
   "nativeManifest": "manifest.py",
@@ -282,7 +282,7 @@
     ],
     "qualification": {
       "moduleVersion": "0.1.0-experimental",
-      "sourceSha256": "316315bc6f22ab307b4bbca597b8453eb22431a5b3cb69037cc96d21ae294086",
+      "sourceSha256": "caa5d4355c9e3ae0eb8e4d0b4c11117693ebaf837fdde50e0d74bc484a9d7b1e",
       "imageSha256": "6618b45173de86d012fda10d1868aaec1001c281a5c93fc18024a504f56e4caa",
       "cycles": [
         {
@@ -294,11 +294,11 @@
           "unit": "cycles/block",
           "method": "hardware",
           "conditions": {
-            "parameterExtremes": "16 and 24 bits, every source on or off, the input pairs stereo or mono, MASTER TRACK on and off: the emulator counts the hook at 396 instructions a frame idle, 937 with T1 alone, 4,032 with the eleven files measured on the unit and 4,468 with every source at 24 bits, the most (octabam's cost gate, 400 frames each). The unit measured eleven files at 24 bits: 53 us at most.",
+            "parameterExtremes": "16 and 24 bits, every source on or off, the input pairs stereo or mono, MASTER TRACK on and off: the emulator counts the hook at 396 instructions a frame idle, 937 with T1 alone, 4,032 with the eleven files measured on the unit and 4,468 with every source at 24 bits, the most (the source's cost gate, 400 frames each). The unit measured eleven files at 24 bits: 53 us at most.",
             "parameterModulation": "Levels, MAIN LEVEL, scenes, the crossfader, LFOs and p-locks reach Stem Rec only through each track's gain: a track whose gain moves on a frame takes the ramp path, about 100 instructions more on that frame, otherwise the flat path. The unit's takes ran the project with its own levels. No MIDI CC or other control path.",
             "modeSwitching": "Arm, start on the first frame the sequencer plays (the files' layout is latched once, on that frame, inside the frames measured), stop on the sequencer, on YES, after 60 minutes or on RING FULL. The take's end and the card writes run in the writer task, outside the audio interrupt.",
             "maxLoad": "One instance. Every source at 24 bits (fourteen files) is the most: estimated from the unit's 53 us at eleven files scaled by the emulator's 4,468 / 4,032 instructions, 58.7 us, 15,505 cycles of the 95,782-cycle block at 264 MHz. The unit's takes ran with the project's Static tracks streaming from the card; the hook and the stock frame routine together took 104 us at most.",
-            "inputConditions": "The hook's instructions depend on the source mask and the fader moves, not on the audio, except the limiter: a track whose gain can exceed unity takes the limited loop, one compare a sample on the common path; octabam's units drive every loop form with rail samples. Measured with the project's audio; no silence or full-scale take on the unit."
+            "inputConditions": "The hook's instructions depend on the source mask and the fader moves, not on the audio, except the limiter: a track whose gain can exceed unity takes the limited loop, one compare a sample on the common path; the source's unit tests drive every loop form with rail samples. Measured with the project's audio; no silence or full-scale take on the unit."
           },
           "report": "TESTING.md"
         }
@@ -374,7 +374,7 @@
         "sharedBytes": 10496404,
         "maxInstances": 1,
         "totalBytes": 10496404,
-        "conditions": "Exact layout of the card build (STEMMW1's MAIN OS): the unit at 0x40a955e0..0x40a9b08a with no BSS, the three DramRegions from layout.json, the 10,487,808-byte platform reserve 0x40a955e0..0x41495de0 that any DRAM module creates and shares, its unused 2,060,150 bytes counted here; the boot stage (8,336 bytes at 0x40a9c000) is temporary inside that unused part. No heap. The writer stack's peak, 1,560 of 8,192 bytes, is from octabam's port runs; no canary was measured on hardware.",
+        "conditions": "Exact layout of the card build (STEMMW1's MAIN OS): the unit at 0x40a955e0..0x40a9b08a with no BSS, the three DramRegions from layout.json, the 10,487,808-byte platform reserve 0x40a955e0..0x41495de0 that any DRAM module creates and shares, its unused 2,060,150 bytes counted here; the boot stage (8,336 bytes at 0x40a9c000) is temporary inside that unused part. No heap. The writer stack's peak, 1,560 of 8,192 bytes, is from emulator runs of the source; no canary was measured on hardware.",
         "report": "TESTING.md"
       },
       "hardware": {

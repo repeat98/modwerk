@@ -1,6 +1,6 @@
 # Stem Rec
 
-Version 0.1.0-experimental. Yves Rosius's STEM REC from octabam (`yvesrosius/octabam`, commit `00a23502`), packaged for Modwerk as a card build. Reported working on Yves's MKII on 5 November 2026 (image STEMMW1, [TESTING.md](TESTING.md)).
+Version 0.1.0-experimental, a card build. Reported working on Yves's MKII on 5 November 2026 (image STEMMW1, [TESTING.md](TESTING.md)).
 
 ## Overview
 
@@ -62,7 +62,7 @@ No audio examples.
 
 ## Compatibility and limitations
 
-- **No YES double tap.** In octabam, a second YES within 0.5 s on the main page arms a take. APPLY SCENE patches that stock site and a card build has no key bus, so this version leaves it out. UP + REC and the YES on STEM REC's own row work as upstream.
+- **No YES double tap.** A second YES within 0.5 s on the main page doesn't arm a take in this version: APPLY SCENE patches that stock site, and a card build has no key bus. Arm from STEMS: UP + REC, then YES on STEM REC.
 - **Nothing is saved.** The sources and the format reset at every boot. Stem Rec writes nothing into projects.
 - **Pull the card or power off only when the status reads `DONE`.** A power cut or a card pull before then leaves the take's files at 0 bytes: each file's length is set only at the end. The folder appears when the take starts, so it is not a signal.
 - **The card must keep up.** A 24-bit stereo file needs 264,600 bytes a second, a mono file half that. When the card falls behind, the ring fills and the take stops with `RING FULL`. On Yves's MKII, eleven 24-bit stereo files kept up, the ring at most 32% full.
@@ -81,4 +81,4 @@ No audio examples.
 
 ## Authorship and licences
 
-Stem Rec is Yves Rosius's STEM REC from octabam, where it was written against octabam's module platform and its firmware notes (Sam Banks and contributors). `upstream/` holds its manifest, source and README unchanged from `yvesrosius/octabam` at `00a23502`. `manifest.py` is Modwerk's card-build adapter, changed four ways, each named in `sdk/imports/stem-rec-00a2350.json`. MIT, as octabam ([LICENSE](LICENSE)). The licence grants no rights to Elektron firmware.
+Stem Rec is by Yves Rosius. `upstream/` holds its manifest, source and README unchanged from `yvesrosius/octabam` at `00a23502`; `manifest.py` is Modwerk's card-build adapter, changed four ways, each named in `sdk/imports/stem-rec-00a2350.json`. MIT ([LICENSE](LICENSE)); the licence grants no rights to Elektron firmware. Thanks to OctaBam for the toolchain that made it possible.

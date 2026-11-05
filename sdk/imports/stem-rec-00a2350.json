@@ -17,7 +17,7 @@
     "manifest.py is Modwerk's card-build adapter of upstream/manifest.py, changed four ways: no requires (Modwerk's builder places DramRegions at the top of its fixed reserve, where octabam's MEMORY sizes one); no YES detour at 0x4005e4c8 (APPLY SCENE patches that site and a card build has no key bus, so the main page's YES double tap is left out); the gain table as 25 stock copies of the user's OS (0x400ea18a, 774 bytes, each declared under stockGuards) instead of an .incbin of the OS slice; and the displaced stock instructions named by stock guards instead of written out.",
     "Card build only: a USB package would need an 8 MiB DRAM grant and a lifecycle for the module's own writer task, which the base does not offer (Discord, 5 Nov 2026)."
   ],
-  "status": "Draft card-only port. Built natively and booted under ot_emu; parity, packages, qualification and hardware evidence pending.",
+  "status": "Draft card build. Built natively and booted under ot_emu; parity, packages, qualification and hardware evidence pending.",
   "authorPin": {
     "repository": "https://github.com/yvesrosius/octabam",
     "revision": "00a23502a9e3ce8264888026a2b6764e7f52a3be"

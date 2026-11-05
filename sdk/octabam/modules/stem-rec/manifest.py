@@ -1,8 +1,7 @@
 """STEM REC -- tracks to the card while the sequencer plays, streamed.
 
-Modwerk's card build of octabam's STEM REC (Yves Rosius), from
-https://github.com/yvesrosius/octabam modules/stems; upstream/manifest.py is
-the original. This copy differs in four ways, each named in
+Modwerk's card build of STEM REC (https://github.com/yvesrosius/octabam,
+modules/stems); upstream/manifest.py is the original. This copy differs in four ways, each named in
 sdk/imports/stem-rec-*.json:
 
   1. No `requires`: Modwerk's builder places DramRegions at the top of its
@@ -107,8 +106,8 @@ MODULE = Module(
     key="STEM REC",
     kind=Kind.CF_PATCH,
     category=Category.MACHINES, author="yvesrosius", author_url="https://github.com/yvesrosius",
-    proof=Proof.PORT, proof_note="Modwerk's card build: built and booted under ot_emu (verify.py); "
-        "octabam's STEM REC on Yves's MKII up to STEMS13 (5 Nov 2026)",
+    proof=Proof.HARDWARE, proof_note="Yves's MKII: this card build as STEMMW1 (5 Nov 2026), two takes of eleven "
+        "24-bit files; built and booted under ot_emu (verify.py)",
     doc="Multitrack recording to the card: each track (after its fader), MAIN, CUE and the "
         "inputs as separate WAV files, 16 or 24 bits, up to 60 minutes. UP + REC opens STEMS.",
     linked=(Linked("stems", "modules/stem-rec/stems.s", dram=True, include=gtab_inc,
