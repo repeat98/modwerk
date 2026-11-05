@@ -4,6 +4,18 @@ import recipes from '../src/catalog/module-sets.json'
 import type { ModuleStatistics } from '../src/community/module-statistics'
 import { WORKING_REPORT_JOINS, WORKING_REPORT_VISIBLE } from './hardware-reports'
 import { backfillWorkingReports } from './working-reports'
+const SHARED_SECONDS = 60
+/** Every visitor gets the same answer, and recounting it was 74% of all rows read, so it is worked out at most once a
+ * minute. `fresh` (the member's own like, report or edit just changed it) works it out now and stores that. */
+export async function sharedModuleStatistics(db: Database, fresh: boolean, now = Date.now()): Promise<ModuleStatistics[]> {
+  if (!fresh) {
+    const saved = await db.prepare("SELECT body FROM shared_read_cache WHERE key='module-statistics' AND computed_at>?").bind(now - SHARED_SECONDS * 1000).first<{body:string}>()
+    if (saved) return JSON.parse(saved.body) as ModuleStatistics[]
+  }
+  const statistics = await moduleStatistics(db)
+  await db.prepare("INSERT INTO shared_read_cache(key,body,computed_at) VALUES('module-statistics',?,?) ON CONFLICT(key) DO UPDATE SET body=excluded.body,computed_at=excluded.computed_at").bind(JSON.stringify(statistics), now).run()
+  return statistics
+}
 // Issue reports enter only as counts and dates for the stability grade, private or public alike; nothing else about
 // a report leaves the inbox. A whole-configuration report is not attributable to one module and does not count here.
 export async function moduleStatistics(db: Database): Promise<ModuleStatistics[]> {
