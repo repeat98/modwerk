@@ -32,6 +32,7 @@ The entries are proposed in [core-profile/interface.json](../../../digitakt-ii/c
 - **Not elekloader's release yet.** `0df8409` is elekloader#221's branch, not merged. If it lands changed,
   elekloader's core-dt2 1.1 and this source differ: take the source again from its merged release before the base
   ships. Changes to core-dt2 itself go to elekloader ([contributing](../../../../CONTRIBUTING.md#elekloader-mods-and-cores)).
-- **Hardware.** By their author's report, an earlier, larger version of core 1.1 (`2b0616e`) ran in digikit's
-  emulator and on a unit with macro mode, and a unit has run core 1.0 with a mod on its key events. This copy has not
-  run anywhere yet. Modwerk has qualified none of it on hardware.
+- **Hardware.** This copy's source (`0df8409`), built by elekloader with macro mode, passed digi_macro's digikit
+  emulator scenarios (5 November 2026) and, by toonst's report, works on a Digitakt II on OS 1.17; a unit has run core
+  1.0 with a mod on its key events. Modwerk's own base build has not run anywhere yet, and Modwerk has qualified none
+  of it on hardware.

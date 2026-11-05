@@ -43,7 +43,7 @@ Each step is one pull request with its own changelog entry and, where something 
 
 ### 1. The base builds (core 1.1 ships)
 
-Payoff: every module the musician sees on this machine needs it. Macro mode and Mute Latch's LEDs wait for it. Confidence: high for the build, since the Rytm's route already exists. Medium for hardware: core 1.0 has run on a unit with a mod on its key events, and core 1.1's additions have run in digikit's emulator only, by their author's report.
+Payoff: every module the musician sees on this machine needs it. Macro mode and Mute Latch's LEDs wait for it. Confidence: high for the build, since the Rytm's route already exists. Medium to high for hardware: core 1.0 has run on a unit with a mod on its key events, and core 1.1 (`0df8409`, built by elekloader) with macro mode passed digikit's emulator scenarios and, by its author's report, works on a Digitakt II (5 November). The base's own build has not run yet.
 
 - `sdk/machines/digitakt-ii/elekloader/base.json`: `core: "core-dt2"`, `include: sdk/machines/digitakt-ii/include`, `os: "1.17"`, the reviewed toolchain (m68k-elf GCC 16.2.0, binutils 2.47), the reference and keeps from open item 2, and the variants from item 5. No `add` yet: the first base is core 1.1 as copied.
 - `base-binding.json`, written by `npm run machine:base -- digitakt-ii --stock …/Digitakt_II_OS1.17.syx --write` from the developer's own OS file, in the toolchain image. The packages go to `sdk/imports/packages/modwerk-base-digitakt-ii/` and `vendor/elekloader/catalog/`, pinned in `sdk/imports/elekloader-modwerk-base-digitakt-ii-<date>.json`, as the Rytm's base is.
@@ -58,7 +58,7 @@ Payoff: every module the musician sees on this machine needs it. Macro mode and 
 Each module ships alone, from its author, after this base:
 
 - **Mute Latch** (crisp909, #1160): already asked to move into `modules/`. With the base in, it can light the armed tracks through `ev_key_leds` (owner on #1160) in a later version.
-- **Macro mode** (toonst): eight macro knobs on PAGE + MOD, each moving up to four parameters on chosen tracks, applied per frame on top of the kit through `ev_frame_params`, with its LEDs through `ev_key_leds`, its setup in `core_projdata` and, per item 3, `core_kitdata`. Source: [toonst/digi_macro](https://github.com/toonst/digi_macro) (GPL-2.0-or-later). Ported as a contract v3 module in its own pull request. By its author's report it has run on a Digitakt II unit, and its Digitone II build has run in the emulator only. That pull request waits for this step.
+- **Macro mode** (toonst): eight macro knobs on PAGE + MOD, each moving up to four parameters on chosen tracks, applied per frame on top of the kit through `ev_frame_params`, with its LEDs through `ev_key_leds`, its setup in `core_projdata` and, per item 3, `core_kitdata`. Source: [toonst/digi_macro](https://github.com/toonst/digi_macro) (GPL-2.0-or-later). Ported as a contract v3 module in its own pull request. On core 1.1 (`0df8409`) it passed its digikit scenarios (94 + 32 + 12 checks) and, by its author's report, works on a Digitakt II; its Digitone II build waits for a Digitone II core. That pull request waits for this step.
 - **Perform Direct and Perform Levels** (toonst, core 1.0 records today): move into `modules/` as contract v3 modules when their author wants them in the library. Until then they stay builder-only records.
 
 What the first module also needs from the tools:
@@ -91,7 +91,7 @@ The Digitakt II's audio runs on its SHARC DSP, and core 1.1 has no audio hook: `
 
 ## Risks
 
-- **Emulator-only claims.** Core 1.1's additions, kit data across copies and undo, and macro mode's per-kit setups are emulator results. Each step's record keeps "emulator" and "unit" apart, and no step claims hardware it did not see.
+- **Emulator-only claims.** Kit data across PASTE KIT and undo has run nowhere yet, and the base's own build has not run; core 1.1 with macro mode has run on a unit only by its author's report. Each step's record keeps "emulator" and "unit" apart, and no step claims hardware it did not see.
 - **Later OS releases.** Every address and guard is OS 1.17's. Elektron's next OS moves them, and the stock bytes guarded in the kit and pattern records may be used by it. Supporting a new OS means re-deriving each site, and the guards refuse a stock file that differs.
 - **Sealed firmware.** OS 1.17 images are sealed (HMAC). The kit rebuilds and reseals them, and elekloader's tests check the seal. A build the kit cannot seal is refused, never sent. Modwerk's own writer (`src/engine/elektron/ele3.ts`, used by `scripts/link-image.mjs`) refuses a sealed OS, so a local Digitakt II test image comes from the site's builder path (the kit) or from elekloader until that writer seals too. That fix belongs in a `Fix:` pull request of its own, with a test against elekloader's output.
 - **One-module claims.** PAGE + MOD (macro mode), PREP MUTES with PERFORM (Mute Latch) and the perform keys (Perform Direct) are each one module's gesture. Before a second performance page arrives, agree with the owner whether the base offers a list of pages behind one key, as the Rytm base's `core_view_pages` does, rather than a key combination per module ([choose how a module hooks in](module-guides/README.md#choose-how-a-module-hooks-in)).

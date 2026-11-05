@@ -41,7 +41,7 @@
     {
       "label": "core-dt2 1.1 source (elekloader#221)",
       "url": "https://github.com/toonst/elekloader/tree/0df84098c8e29472208c9629e70d24012fe82555/mods/core-dt2",
-      "note": "Adds frame values, key LEDs, project and kit data and value rows to core 1.0's events. Its author reports emulator and unit runs on an earlier version. Copied unchanged into sdk/machines/digitakt-ii/elekloader/ as the base's start; the site builds core 1.0 until the base ships."
+      "note": "Adds frame values, key LEDs, project and kit data and value rows to core 1.0's events. Emulator scenarios pass, and its author reports it working on a unit with macro mode. Copied unchanged into sdk/machines/digitakt-ii/elekloader/ as the base's start; the site builds core 1.0 until the base ships."
     }
   ],
   "sdk": {
