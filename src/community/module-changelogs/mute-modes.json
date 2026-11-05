@@ -1,7 +1,7 @@
 [
   {
     "version": "0.2.2-experimental",
-    "date": "2026-11-04",
+    "date": "2026-11-05",
     "changes": [
       "Fixes OTFX sometimes ignoring a mute while timestretched tracks are playing.",
       "Mute Modes no longer writes into memory that the Octatrack's timestretch uses, in any mode, OT included.",
