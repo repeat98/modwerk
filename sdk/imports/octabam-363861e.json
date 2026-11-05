@@ -26,8 +26,8 @@
     },
     "quantizer": {
       "repository": "https://github.com/timhastie/octatrick-modules",
-      "revision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
-      "version": "v2.9"
+      "revision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
+      "version": "2.21 + TRACK/FOLLOW, released with Octatrick 2.22 (v2.22 = 73686de)"
     }
   },
   "status": "verified loader-free browser/native integration; owner merge required for publication",
@@ -501,7 +501,13 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/quantizer/manifest.py",
       "sourceSha256": "0cb4a79f7cd68e1881cd1076a0f6ba2e132b1c199da3a2d4923906b443797602",
-      "vendoredSha256": "0cb4a79f7cd68e1881cd1076a0f6ba2e132b1c199da3a2d4923906b443797602"
+      "vendoredSha256": "e0841437a471b000b448ce8417c8fd25cba1cf155aec488d08d2888f4c249394",
+      "localReleaseUpdate": {
+        "moduleVersion": "0.1.4-experimental",
+        "previousVendoredSha256": "0cb4a79f7cd68e1881cd1076a0f6ba2e132b1c199da3a2d4923906b443797602",
+        "record": "octabam/modules/quantizer/TESTING.md",
+        "reason": "Re-export the author's manifest (8f6f564: 2.21 + TRACK / FOLLOW) byte for byte; declare every detour and poke guard in Modwerk's stock_guard(address, length, sha256) form, matched to his declaration by site (stockGuards below): 28 detours (2.21 adds qz_panel_stage and qz_panel_commit) and the row-count poke. The wrapper also assembles quantizer.s as a selection without FM Synth (his 2.21 panel transaction is for FM's engine; FM Synth bundles its own copy and conflicts with this module)."
+      }
     },
     {
       "path": "platform/usb-midi/README.md",
@@ -668,78 +674,145 @@
     {
       "path": "modules/quantizer/upstream/README.md",
       "repository": "https://github.com/timhastie/octatrick-modules",
-      "revision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+      "revision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
       "sourcePath": "README.md",
-      "sourceSha256": "d97fb507a8eb6ecbf2c549ff088a4628d816bb42a6485eb13e88bf0d60f016f2",
-      "vendoredSha256": "d97fb507a8eb6ecbf2c549ff088a4628d816bb42a6485eb13e88bf0d60f016f2"
+      "sourceBytes": 38138,
+      "sourceSha256": "ca7520645850710f6f41dd861e47c74cdcd7fc01a7e0fed3595948e9f561d280",
+      "sourceGitBlob": "3faca120fc7331fe5a71bed17f71b34e71bd0885",
+      "vendoredSha256": "ca7520645850710f6f41dd861e47c74cdcd7fc01a7e0fed3595948e9f561d280",
+      "authorUpdate": {
+        "moduleVersion": "0.1.4-experimental",
+        "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+        "previousVendoredSha256": "d97fb507a8eb6ecbf2c549ff088a4628d816bb42a6485eb13e88bf0d60f016f2",
+        "reason": "The author's file at 8f6f564 (2.21 + TRACK / FOLLOW, released with Octatrick 2.22) byte for byte."
+      }
     },
     {
       "path": "modules/quantizer/upstream/LICENSE",
       "repository": "https://github.com/timhastie/octatrick-modules",
-      "revision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+      "revision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
       "sourcePath": "LICENSE",
-      "sourceSha256": "a8fe424c82a030f34f2e3f88df1f2585f97ae61710e1b799f2e6e818120396a0",
-      "vendoredSha256": "a8fe424c82a030f34f2e3f88df1f2585f97ae61710e1b799f2e6e818120396a0"
+      "sourceBytes": 5068,
+      "sourceSha256": "9895a0c9da98720fec21e348456c9716ca81ca6438b7f046eca1fb2f456b24a7",
+      "sourceGitBlob": "abff1c76e215ecd0c0b20e46a9e71913c77942cc",
+      "vendoredSha256": "9895a0c9da98720fec21e348456c9716ca81ca6438b7f046eca1fb2f456b24a7",
+      "authorUpdate": {
+        "moduleVersion": "0.1.4-experimental",
+        "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+        "previousVendoredSha256": "a8fe424c82a030f34f2e3f88df1f2585f97ae61710e1b799f2e6e818120396a0",
+        "reason": "The author's file at 8f6f564 (2.21 + TRACK / FOLLOW, released with Octatrick 2.22) byte for byte (unchanged since v2.20)."
+      }
     },
     {
       "path": "modules/quantizer/upstream/quantizer/README.md",
       "repository": "https://github.com/timhastie/octatrick-modules",
-      "revision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+      "revision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
       "sourcePath": "quantizer/README.md",
-      "sourceSha256": "25b9e9a1d1fb4be217514727374922e60010fc0067fe8c5c3f17ced909c8d94e",
-      "vendoredSha256": "25b9e9a1d1fb4be217514727374922e60010fc0067fe8c5c3f17ced909c8d94e"
+      "sourceBytes": 110211,
+      "sourceSha256": "f04a9795b2a956ad6d667f159b4f59b01b28cab861e154a093b7eba9bc9b3338",
+      "sourceGitBlob": "c549a14e84765fa8059affa5b734bac60648285d",
+      "vendoredSha256": "f04a9795b2a956ad6d667f159b4f59b01b28cab861e154a093b7eba9bc9b3338",
+      "authorUpdate": {
+        "moduleVersion": "0.1.4-experimental",
+        "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+        "previousVendoredSha256": "25b9e9a1d1fb4be217514727374922e60010fc0067fe8c5c3f17ced909c8d94e",
+        "reason": "The author's file at 8f6f564 (2.21 + TRACK / FOLLOW, released with Octatrick 2.22) byte for byte."
+      }
     },
     {
       "path": "modules/quantizer/upstream/quantizer/core.s",
       "repository": "https://github.com/timhastie/octatrick-modules",
-      "revision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+      "revision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
       "sourcePath": "quantizer/core.s",
-      "sourceSha256": "2992b6c85cff440de03ae84eb22dee8b8a83a84f23e94b699404d28940b6f958",
-      "vendoredSha256": "2992b6c85cff440de03ae84eb22dee8b8a83a84f23e94b699404d28940b6f958"
+      "sourceBytes": 6385,
+      "sourceSha256": "655bf8cb893ecbe8ec167633322491ae89fdf498c818e172ad6ba34c3fc992c8",
+      "sourceGitBlob": "4b04c2483124a3d148acf528baeb5f8a4ec45998",
+      "vendoredSha256": "655bf8cb893ecbe8ec167633322491ae89fdf498c818e172ad6ba34c3fc992c8",
+      "authorUpdate": {
+        "moduleVersion": "0.1.4-experimental",
+        "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+        "previousVendoredSha256": "2992b6c85cff440de03ae84eb22dee8b8a83a84f23e94b699404d28940b6f958",
+        "reason": "The author's file at 8f6f564 (2.21 + TRACK / FOLLOW, released with Octatrick 2.22) byte for byte (unchanged since v2.20)."
+      }
     },
     {
       "path": "modules/quantizer/upstream/quantizer/keys.s",
       "repository": "https://github.com/timhastie/octatrick-modules",
-      "revision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+      "revision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
       "sourcePath": "quantizer/keys.s",
+      "sourceBytes": 1765,
       "sourceSha256": "e2ffdbfae34b0828794a4eb4cc229e3efcaed25dc953bf7c05c13f6e37f65587",
-      "vendoredSha256": "e2ffdbfae34b0828794a4eb4cc229e3efcaed25dc953bf7c05c13f6e37f65587"
+      "sourceGitBlob": "2e459942658c81ae34dc8275318d23d09f52f060",
+      "vendoredSha256": "e2ffdbfae34b0828794a4eb4cc229e3efcaed25dc953bf7c05c13f6e37f65587",
+      "authorUpdate": {
+        "moduleVersion": "0.1.4-experimental",
+        "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+        "previousVendoredSha256": "e2ffdbfae34b0828794a4eb4cc229e3efcaed25dc953bf7c05c13f6e37f65587",
+        "reason": "The author's file at 8f6f564 (2.21 + TRACK / FOLLOW, released with Octatrick 2.22) byte for byte (unchanged since v2.20)."
+      }
     },
     {
       "path": "modules/quantizer/upstream/quantizer/manifest.py",
       "repository": "https://github.com/timhastie/octatrick-modules",
-      "revision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+      "revision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
       "sourcePath": "quantizer/manifest.py",
-      "sourceSha256": "b28a9a120e3e6e5e4a5719404f8ff56667c22b582a0fd4595315b4d20ac7d9a4",
-      "vendoredSha256": "e637e3718e4b65320b847ef0758e0d46800f8be6b8020290f89192c798c535ef",
-      "localReleaseUpdate": {
-        "moduleVersion": "0.1.3-experimental",
-        "previousVendoredSha256": "3a8ba2d366320ce702b02129386e3d384f0e9d6ae7df64e4811b32f3e08e4011",
-        "record": "octabam/modules/quantizer/TESTING.md",
-        "reason": "Repair standalone MIDI trig-mode drawer stack corruption (#181), synchronize current-version tutorial and exact software evidence. Original author/source fingerprints and prior adaptations are preserved."
+      "sourceBytes": 29184,
+      "sourceSha256": "9550382938153ec1c6fe5a262612c5a4daad1d71aca68da7c0b6a4c55e801aa8",
+      "sourceGitBlob": "66d4c41ee470d2612b77758be534fa65a0378957",
+      "vendoredSha256": "9550382938153ec1c6fe5a262612c5a4daad1d71aca68da7c0b6a4c55e801aa8",
+      "authorUpdate": {
+        "moduleVersion": "0.1.4-experimental",
+        "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+        "previousVendoredSha256": "e637e3718e4b65320b847ef0758e0d46800f8be6b8020290f89192c798c535ef",
+        "reason": "The author's manifest at 8f6f564 (released with Octatrick 2.22) byte for byte: tables 3 + 5 (SCALE, ROOT, GLIDE, TRACK, FOLLOW), row-count poke 3 -> 8, the 2.21 detours qz_panel_stage (0x4004fc84) and qz_panel_commit (0x40005162), the two-pass remix.inc; every guard still read as stock_guard(site, length)."
+      }
+    },
+    {
+      "path": "modules/quantizer/upstream/quantizer/panel_transaction.inc.s",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
+      "sourcePath": "quantizer/panel_transaction.inc.s",
+      "sourceBytes": 7275,
+      "sourceSha256": "e51d5d035e8561b27671ac751957756831988786b5b25163688cc066c36b9c79",
+      "sourceGitBlob": "509811714d74532204b72b955c85221a0bb3100d",
+      "vendoredSha256": "e51d5d035e8561b27671ac751957756831988786b5b25163688cc066c36b9c79",
+      "authorUpdate": {
+        "moduleVersion": "0.1.4-experimental",
+        "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+        "reason": "New in the author's 2.21 line (32827c4, byte for byte at 8f6f564): the panel publication adapters quantizer.s includes as remix.inc's second pass; with FM Synth absent (HAVE_PANEL_TRANSACTION 0) they assemble to their replays."
       }
     },
     {
       "path": "modules/quantizer/upstream/quantizer/quantizer.s",
       "repository": "https://github.com/timhastie/octatrick-modules",
-      "revision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+      "revision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
       "sourcePath": "quantizer/quantizer.s",
-      "sourceSha256": "91f34be65891fdc61988a3d3a7736b55457572355ffc42d0f423df688e1698fb",
-      "vendoredSha256": "b14f214cc8236c19b8881d1113ea42359052a6d7ef0e9e0f02aaa88279da64a9",
-      "localReleaseUpdate": {
-        "moduleVersion": "0.1.3-experimental",
-        "previousVendoredSha256": "91f34be65891fdc61988a3d3a7736b55457572355ffc42d0f423df688e1698fb",
-        "record": "octabam/modules/quantizer/TESTING.md",
-        "reason": "Repair standalone MIDI trig-mode drawer stack corruption (#181), synchronize current-version tutorial and exact software evidence. Original author/source fingerprints and prior adaptations are preserved."
+      "sourceBytes": 112223,
+      "sourceSha256": "6883dce6058cfc42eca1cb4c51a1d7d2318579a5adb5e84ae4202d7570c26abb",
+      "sourceGitBlob": "5d19f93a864df1d6044d3c856c9e737f5d8e4d55",
+      "vendoredSha256": "6883dce6058cfc42eca1cb4c51a1d7d2318579a5adb5e84ae4202d7570c26abb",
+      "authorUpdate": {
+        "moduleVersion": "0.1.4-experimental",
+        "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+        "previousVendoredSha256": "b14f214cc8236c19b8881d1113ea42359052a6d7ef0e9e0f02aaa88279da64a9",
+        "reason": "The author's 2.21 quantizer plus the TRACK / FOLLOW rows (8f6f564, byte for byte; released with Octatrick 2.22): the sixteen MIDI n / AUDIO n SCALE rows are two, TRACK (AUDIO 1..8, MIDI 1..8; picks the track, RAM, not saved) and FOLLOW (that track's ON / OFF on the same bits); the project-file lines and battery bytes are 2.21's. 2.21 also brings the panel publication transaction (qz_panel_stage / qz_panel_commit)."
       }
     },
     {
       "path": "modules/quantizer/upstream/quantizer/scale.s",
       "repository": "https://github.com/timhastie/octatrick-modules",
-      "revision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+      "revision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
       "sourcePath": "quantizer/scale.s",
+      "sourceBytes": 695,
       "sourceSha256": "82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64",
-      "vendoredSha256": "82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64"
+      "sourceGitBlob": "fa6d69d5132ddec7fe99982c5255948151590c40",
+      "vendoredSha256": "82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64",
+      "authorUpdate": {
+        "moduleVersion": "0.1.4-experimental",
+        "previousRevision": "525f4b19b04dc3ba3f3bae3b25abbf48df34a10a",
+        "previousVendoredSha256": "82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64",
+        "reason": "The author's file at 8f6f564 (2.21 + TRACK / FOLLOW, released with Octatrick 2.22) byte for byte (unchanged since v2.20)."
+      }
     }
   ],
   "stockGuards": [
@@ -1188,126 +1261,6 @@
       "sha256": "ce8e3c8561e797040ed32749c3daacef88676d43c50fe2b7d0e65139e39ef86a"
     },
     {
-      "path": "modules/quantizer/upstream/quantizer/manifest.py",
-      "address": 1074090352,
-      "bytes": 6,
-      "sha256": "dc6543d672cdf223fc2ec7cc3c04b8a584dbd6e7bb1e3590b91cd3e469e0b324"
-    },
-    {
-      "path": "modules/quantizer/upstream/quantizer/manifest.py",
-      "address": 1074073184,
-      "bytes": 10,
-      "sha256": "ccf689e403ebd88a651c829b4ae191d609c85baa2a99409bd0a2870d20aaa73e"
-    },
-    {
-      "path": "modules/quantizer/upstream/quantizer/manifest.py",
-      "address": 1074068568,
-      "bytes": 10,
-      "sha256": "ddfca03eed59b4f4fffffc9061b138ce3e2a33c30712b5e377d94d054fa7b0f0"
-    },
-    {
-      "path": "modules/quantizer/upstream/quantizer/manifest.py",
-      "address": 1074068446,
-      "bytes": 6,
-      "sha256": "7daba4e508057c5320565e7ccc62d4e55d0fa501b0c2586445df51ff9503b3de"
-    },
-    {
-      "path": "modules/quantizer/upstream/quantizer/manifest.py",
-      "address": 1074068478,
-      "bytes": 8,
-      "sha256": "f974dcd132df96148fe8c38e662bf638aba29290a8ca4467402e8ac707eba123"
-    },
-    {
-      "path": "modules/quantizer/upstream/quantizer/manifest.py",
-      "address": 1074068628,
-      "bytes": 8,
-      "sha256": "617ecbc4d5386f7ed57bfdc6e37dd7a1e1cc60850934d5c635ead626999e847e"
-    },
-    {
-      "path": "modules/quantizer/upstream/quantizer/manifest.py",
-      "address": 1074068704,
-      "bytes": 8,
-      "sha256": "e31f7bb195174d49c320879317409c3d2187cc42f337ac0845f41acaebf509bf"
-    },
-    {
-      "path": "modules/quantizer/upstream/quantizer/manifest.py",
-      "address": 1074068742,
-      "bytes": 6,
-      "sha256": "c8e4de3e3a3d28c808f812c9316fd22097f36ec2afb558ef6b81b2a8d66cebe7"
-    },
-    {
-      "path": "modules/quantizer/upstream/quantizer/manifest.py",
-      "address": 1074068768,
-      "bytes": 6,
-      "sha256": "902ec18f60fbd1fe19c6a380f31a74290976edd45422b224a3905d550636c94f"
-    },
-    {
-      "path": "modules/quantizer/upstream/quantizer/manifest.py",
-      "address": 1074070100,
-      "bytes": 8,
-      "sha256": "cee8c24bcad796ec96a96aad2d0073265ca9900179292d7c1c942604aeafd8c3"
-    },
-    {
-      "path": "modules/quantizer/upstream/quantizer/manifest.py",
-      "address": 1074026776,
-      "bytes": 8,
-      "sha256": "112b7d2434bae65950506429fa2e8d01b20316d7ab6d1848ba91f10c451e11ac"
-    },
-    {
-      "path": "modules/quantizer/upstream/quantizer/manifest.py",
-      "address": 1074022760,
-      "bytes": 8,
-      "sha256": "d6d1c7b3caf3215f6590e479a282b5c09d27c1d52c221d596ba9c7fa293896e9"
-    },
-    {
-      "path": "modules/quantizer/upstream/quantizer/manifest.py",
-      "address": 1074022846,
-      "bytes": 8,
-      "sha256": "494435e3f72313a14453f642bdba5b064022c657c63c015752fe23092eabd19f"
-    },
-    {
-      "path": "modules/quantizer/upstream/quantizer/manifest.py",
-      "address": 1074158538,
-      "bytes": 6,
-      "sha256": "484a241b3cea4a13c5b18550e3ab44eaffc021673bd5677a424bb05cc6486a37"
-    },
-    {
-      "path": "modules/quantizer/upstream/quantizer/manifest.py",
-      "address": 1074292428,
-      "bytes": 8,
-      "sha256": "de4845a149f0373201be2e55cd61ae41f52a03afd7c4cb717b70d9c6bd64c5ad"
-    },
-    {
-      "path": "modules/quantizer/upstream/quantizer/manifest.py",
-      "address": 1074292642,
-      "bytes": 8,
-      "sha256": "51d1dc3c3bf8d2441df47bad2355b22c942d333b44557d35171c891cb573f3fb"
-    },
-    {
-      "path": "modules/quantizer/upstream/quantizer/manifest.py",
-      "address": 1074301098,
-      "bytes": 8,
-      "sha256": "ef2b6bc9ba56b8cd1d05117b22c2fafc71e1aa07952c0999da4d4eb54e0489e6"
-    },
-    {
-      "path": "modules/quantizer/upstream/quantizer/manifest.py",
-      "address": 1073807890,
-      "bytes": 6,
-      "sha256": "8728078b48ce7f9e9ac9b2d41c454e293ecc0dc4af302ea1885264064442c9e4"
-    },
-    {
-      "path": "modules/quantizer/upstream/quantizer/manifest.py",
-      "address": 1073896130,
-      "bytes": 6,
-      "sha256": "46484a409ff4c92ca7811222b2a050a935c53122a69184d8a18db71d69820ca9"
-    },
-    {
-      "path": "modules/quantizer/upstream/quantizer/manifest.py",
-      "address": 1074158716,
-      "bytes": 4,
-      "sha256": "a3e547e08c1f288e512f2e52ac9becc3502ccd0dcfcf55e5ab9863859f34e2bc"
-    },
-    {
       "path": "modules/usb-audio-out-tracks-main-cue/manifest.py",
       "address": 1073863940,
       "bytes": 6,
@@ -1360,6 +1313,180 @@
       "address": 1074667524,
       "bytes": 3,
       "sha256": "709e80c88487a2411e1ee4dfb9f22a861492d20c4765150c0c794abd70f8147c"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1074068612,
+      "bytes": 16,
+      "sha256": "567a08a47bfcfcbfa686446f812f7d8047929e38330c65d76598eb47e2c4c511"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1073762658,
+      "bytes": 8,
+      "sha256": "71fcb998fdf55a8ba0425d107c73e4e5b843fc1b8d75baba2a081207d1306e73"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1074090352,
+      "bytes": 6,
+      "sha256": "dc6543d672cdf223fc2ec7cc3c04b8a584dbd6e7bb1e3590b91cd3e469e0b324"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1074073184,
+      "bytes": 10,
+      "sha256": "ccf689e403ebd88a651c829b4ae191d609c85baa2a99409bd0a2870d20aaa73e"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1074090882,
+      "bytes": 8,
+      "sha256": "03bcaf390b2fd396821abc005afa9853b59e2fcaf10ddc223c001b3a9d276e08"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1074072472,
+      "bytes": 10,
+      "sha256": "9cb4af08e685b7a46a08340cfec555868a0568533c1fb6fc2ec37159dfd980d9"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1074017960,
+      "bytes": 10,
+      "sha256": "2ab0a5529e7748a00dea86e66bc4fbb6105ec7f36e73e481bb840f6570da98cc"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1074396032,
+      "bytes": 6,
+      "sha256": "f444ba9960a8167cb9947f3acfc4a0fd2520327d61c57726ec33c7704307d59c"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1073792532,
+      "bytes": 6,
+      "sha256": "e6abfb8463d2d93e458a247a07c80f477d3f2f616b85cf98f6cd828a433ae057"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1074018774,
+      "bytes": 8,
+      "sha256": "53d90093082490eb3a630e3e0afba99946d22a720a84bae7194f11e091224777"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1074068568,
+      "bytes": 10,
+      "sha256": "ddfca03eed59b4f4fffffc9061b138ce3e2a33c30712b5e377d94d054fa7b0f0"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1074068446,
+      "bytes": 6,
+      "sha256": "7daba4e508057c5320565e7ccc62d4e55d0fa501b0c2586445df51ff9503b3de"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1074068478,
+      "bytes": 8,
+      "sha256": "f974dcd132df96148fe8c38e662bf638aba29290a8ca4467402e8ac707eba123"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1074068628,
+      "bytes": 8,
+      "sha256": "617ecbc4d5386f7ed57bfdc6e37dd7a1e1cc60850934d5c635ead626999e847e"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1074068704,
+      "bytes": 8,
+      "sha256": "e31f7bb195174d49c320879317409c3d2187cc42f337ac0845f41acaebf509bf"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1074068742,
+      "bytes": 6,
+      "sha256": "c8e4de3e3a3d28c808f812c9316fd22097f36ec2afb558ef6b81b2a8d66cebe7"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1074068768,
+      "bytes": 6,
+      "sha256": "902ec18f60fbd1fe19c6a380f31a74290976edd45422b224a3905d550636c94f"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1074070100,
+      "bytes": 8,
+      "sha256": "cee8c24bcad796ec96a96aad2d0073265ca9900179292d7c1c942604aeafd8c3"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1074026776,
+      "bytes": 8,
+      "sha256": "112b7d2434bae65950506429fa2e8d01b20316d7ab6d1848ba91f10c451e11ac"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1074022760,
+      "bytes": 8,
+      "sha256": "d6d1c7b3caf3215f6590e479a282b5c09d27c1d52c221d596ba9c7fa293896e9"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1074022846,
+      "bytes": 8,
+      "sha256": "494435e3f72313a14453f642bdba5b064022c657c63c015752fe23092eabd19f"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1074023100,
+      "bytes": 8,
+      "sha256": "d789a426f2ed177607e8d6f5ecbf4618283211fa07df645bb7a2848ef7187ef0"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1074158538,
+      "bytes": 6,
+      "sha256": "484a241b3cea4a13c5b18550e3ab44eaffc021673bd5677a424bb05cc6486a37"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1074292428,
+      "bytes": 8,
+      "sha256": "de4845a149f0373201be2e55cd61ae41f52a03afd7c4cb717b70d9c6bd64c5ad"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1074292642,
+      "bytes": 8,
+      "sha256": "51d1dc3c3bf8d2441df47bad2355b22c942d333b44557d35171c891cb573f3fb"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1074301098,
+      "bytes": 8,
+      "sha256": "ef2b6bc9ba56b8cd1d05117b22c2fafc71e1aa07952c0999da4d4eb54e0489e6"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1073807890,
+      "bytes": 6,
+      "sha256": "8728078b48ce7f9e9ac9b2d41c454e293ecc0dc4af302ea1885264064442c9e4"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1073896130,
+      "bytes": 6,
+      "sha256": "46484a409ff4c92ca7811222b2a050a935c53122a69184d8a18db71d69820ca9"
+    },
+    {
+      "path": "modules/quantizer/manifest.py",
+      "address": 1074158716,
+      "bytes": 4,
+      "sha256": "a3e547e08c1f288e512f2e52ac9becc3502ccd0dcfcf55e5ab9863859f34e2bc"
     }
   ],
   "archivedModules": {

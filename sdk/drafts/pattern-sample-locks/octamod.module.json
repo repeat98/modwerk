@@ -49,14 +49,14 @@
     "effectId": null
   },
   "resources": {
-    "recorded": "Exact linked allocation; isolated hardware cost unqualified",
+    "recorded": "Exact source-derived runtime-pool allocation; complete stack demand unqualified",
     "storage": {
       "label": "Storage",
-      "display": "8,748 bytes code/data; 1,328 bytes BSS",
-      "value": 10076,
+      "display": "10,832 bytes per installed package; 21,664 bytes for two copies",
+      "value": 10832,
       "unit": "bytes",
       "method": "static",
-      "conditions": "Linked emulator package; no ownership metadata storage. See exact-build hashes in TESTING.md.",
+      "conditions": "Exact extent in the Octatrack base's shared 768 KiB runtime pool: one active copy per module ID. Replacement can retain both old and new extents; 21,664 bytes assumes both are this candidate. Reclamation depends on reachability. Excludes complete shared sys-task stack demand. See TESTING.md.",
       "source": "TESTING.md"
     },
     "processing": {
@@ -65,20 +65,60 @@
       "value": null,
       "unit": "unknown",
       "method": "unmeasured",
-      "conditions": "Unchanged candidate has scoped MKII audio/data/load evidence. A distinct probe observed maximum Clear commit-body elapsed time of 8.36 ms with USB recording, including interrupts and probe overhead; this is not an uninstrumented worst-case bound. Cached whole-instrument CPU reached 93.7%. Authored key-path stack audit is 500 bytes, excluding stock calls, caller context and interrupts. Isolated module cost and complete system bounds remain unqualified; see TESTING.md.",
+      "conditions": "Unchanged candidate has scoped MKII audio/data/load evidence. A distinct probe observed maximum Clear commit-body elapsed time of 8.36 ms with USB recording, including interrupts and probe overhead; this is not an uninstrumented worst-case bound. Cached whole-instrument CPU reached 93.7%. The source-derived key-path stack subtotal is 916 bytes from system-task entry, including traced stock callees but excluding the incoming task return word and interrupts. Isolated module cost and complete system bounds remain unqualified; see TESTING.md.",
       "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "One USB-installed MKII 1.40C instance per module ID. Normal dispatch includes module_tick at 60/s and module_draw on each composed frame: while CLOSED, key checks code/consumed bits then normally returns, encoder exits at its phase check, tick writes api->value, and draw exits. In an open Part Edit popup, ticks check popup/source, draws paint the menu/overlay each composed frame, and key/encoder events update bounded state and request redraw. Also includes one maximum explicit Lock or Clear at a time over up to eight selected Flex/Static tracks × 64 steps (512 SAMPLE fields), stopped or playing; live/sampler recording refuses. Playback is stock; no DSP/frame callback is added. Candidate occupies the shared pool; 21,664 bytes assumes an equally sized old extent. Upload stage, base ledgers and task stack are shared; other combinations, MKI, card and high-load extremes are outside scope. Complete memory/stack qualification remains open.",
+      "cpu": {
+        "level": "low",
+        "basis": "source-estimate",
+        "rationale": "Low remains a relative source estimate for this mixed workload, not an exclusively one-shot or zero-idle-cost rating. With the popup closed, key/encoder hooks do brief input/phase checks, tick makes one api->value update at 60/s, and draw exits each composed frame. While open, ticks check popup/source state and each composed frame paints a fixed-size menu/track overlay; key/encoder paths update bounded UI state. These hooks persist but add no audio-frame processing. For maximum 8×64 Clear, a source-mapped, path-conditional envelope counts 5,502,242 candidate ColdFire instructions in the transaction core but excludes the ui.c wrapper/state-capture/redraw work, stock callees, interrupts and scheduler; it is not a full callback bound, cycle count, latency or hardware measurement. Apply Scene's Low tier covers a measured one-press path up to 11.1 million emulator instructions with nothing between presses, so it is only a coarse ordinal reference and does not include these persistent hooks. See ui.c, TESTING.md and the instruction-envelope report.",
+        "source": "evidence/candidate-instruction-envelope-20261105.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "The package adds no DSP program or audio-frame callback. Lock/Clear writes ordinary SAMPLE fields that the instrument's existing playback path consumes. Minimal describes the absent added DSP path, not zero whole-instrument DSP load; playback continuity and full-load qualification remain separate.",
+        "source": "TESTING.md"
+      },
+      "memory": {
+        "level": "low",
+        "basis": "source-estimate",
+        "rationale": "One active copy occupies an exact 10,832-byte extent in the shared runtime pool: 8,748 initialized bytes, 1,328 BSS bytes, 528-byte runtime header and 216 site-record bytes plus alignment. Apply Scene's 2,062-byte code/state is a minimal-tier reference; Temp Save's 42,892-byte buffer is moderate. The 10,048-byte package occupies existing shared upload staging, not another module allocation. The complete shared-task/interrupt stack remains unresolved, so this is not a total-memory qualification; the 21,664-byte overlap assumes two equal candidate extents.",
+        "source": "evidence/memory-lifetimes-20261105.md"
+      }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Exact 0.1.8 public candidate passed scoped MKII selector Undo, Keep/reboot and removal/reboot; original files restored. Companion/USB-recording run passed 32 maximum edits and four minutes of stated audio checks, sampled CPU 93.7%. Remote development input failed separately without modules; helper remains unfixed. Complete system stack/cost qualification and first-release approval remain open.",
-    "hardwareStatus": "untested",
+    "summary": "On the exact current base identity, the author-reported MKII RAM trial of 0.1.8 passed: Replace OFF preserved an existing SAMPLE lock and filled an empty field; Clear removed selected manual SAMPLE locks while preserving non-SAMPLE locks and unselected data. Rollback restored the active digest and all 17 live modules; no Keep, project save, flash or power cycle. The 10,832-byte runtime-pool extent and the 21,664-byte total for two copies are documented. Prior lifecycle/audio/load reports retain their stated limits. Worst-case cycle bounds, complete memory accounting including shared stack demand, and first-release owner review remain open.",
+    "hardwareStatus": "reported",
     "gates": [
       "Worst-case cycles under parameter modulation and maximum load",
-      "Exact memory region and maximum-instance totals",
+      "Complete memory accounting including shared stack demand; runtime-pool extent and two-copy example documented",
       "Owner-reviewed real-hardware evidence with actual coverage and limitations"
     ],
-    "evidenceRevision": "1d54c0ae0381cb2d50f3a5c5beba4d221912593b"
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Create a disposable pattern with sample trigs and an existing SAMPLE lock.",
+          "Open Lock, select a track and leave Replace existing OFF. Confirm: empty SAMPLE fields on sample trigs receive the Part assignment; existing locks remain unchanged.",
+          "Open Clear and select tracks. Review **INCLUDES MANUAL LOCKS** and the counts. Confirm to remove every selected SAMPLE lock. Other parameter locks remain.",
+          "Use ordinary Save Project to save the pattern. Nothing saves implicitly."
+        ]
+      },
+      "screenshots": [
+        "media/mkii-part-menu.png",
+        "media/mkii-lock-replace-on.png",
+        "media/live-removal-open-tracks.png",
+        "media/v018-mkii-live512-confirm.png",
+        "media/live-512-clear-confirm.png"
+      ],
+      "screenshotStyle": "black-and-white"
+    },
+    "evidenceRevision": "5a15ac390dac2475df3fb3b2ef64154e174b4182"
   },
   "license": {
     "spdx": "MIT",
@@ -89,7 +129,7 @@
     {
       "path": "media/v018-mkii-live512-confirm.png",
       "captureType": "hardware",
-      "caption": "Actual MKII during playback: 64 planned changes on each of eight tracks; existing locks are kept.",
+      "caption": "After selecting tracks, press YES to review planned Lock changes. This actual MKII screen lists 64 per track with existing locks kept; press YES to apply or NO to return. It is a pre-apply confirmation, not an edit result.",
       "alt": "Physical Octatrack Lock confirmation with 64 planned changes on each of eight tracks and existing locks kept.",
       "credit": "twwwy; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
@@ -106,7 +146,7 @@
     {
       "path": "media/mkii-part-menu.png",
       "captureType": "hardware",
-      "caption": "Actual MKII Part Edit: four stock rows followed by Lock and Clear.",
+      "caption": "Press FUNC + PART, then choose Lock Samples to Pattern or Clear Sample Locks with YES. Both actions appear below the four stock Part Edit rows.",
       "alt": "Physical Octatrack Part Edit menu with Lock Samples to Pattern and Clear Sample Locks.",
       "credit": "twwwy; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
@@ -123,7 +163,7 @@
     {
       "path": "media/mkii-lock-replace-on.png",
       "captureType": "hardware",
-      "caption": "Actual MKII: T1 selected and Replace existing ON recalled after cancellation.",
+      "caption": "Use arrows to move among eligible tracks. Turn A clockwise to select all and counterclockwise to clear them; B clockwise selects the highlighted track and counterclockwise clears it. This actual MKII screen shows C: Replace existing ON; turn it OFF to keep every existing SAMPLE lock.",
       "alt": "Lock track selector with T1 selected and C: Replace existing ON.",
       "credit": "twwwy; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
@@ -140,7 +180,7 @@
     {
       "path": "media/live-removal-open-tracks.png",
       "captureType": "emulator",
-      "caption": "Exact 0.1.8 emulator: all eight eligible tracks selected; Clear has no replacement control.",
+      "caption": "Turn A clockwise to select all eligible tracks or counterclockwise to clear them; turn B clockwise/counterclockwise to select/clear the highlighted track. Arrows skip non-Flex/Static tracks; Clear has no replacement setting and includes manual SAMPLE locks. This is an emulator capture.",
       "alt": "Clear track selector, all eight tracks selected, A: All and B: Track.",
       "credit": "twwwy; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
@@ -157,7 +197,7 @@
     {
       "path": "media/live-lock-confirm.png",
       "captureType": "emulator",
-      "caption": "Exact 0.1.8 emulator: T1 has 63 planned changes with existing locks kept.",
+      "caption": "On the Lock confirmation, press YES to apply 63 planned changes on T1 or NO to return to selection. Existing locks are kept in this emulator example.",
       "alt": "Lock confirmation with 63 changes on T1 and Existing locks: Keep.",
       "credit": "twwwy; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
@@ -174,7 +214,7 @@
     {
       "path": "media/live-clear-confirm.png",
       "captureType": "emulator",
-      "caption": "Exact 0.1.8 emulator: Clear confirms all 64 T1 locks, including manual locks.",
+      "caption": "On the Clear confirmation, the 64 T1 count includes manual locks; press YES to remove them or NO to return. This emulator screen shows the plan, not a completed edit.",
       "alt": "Clear confirmation with 64 changes on T1 and Includes manual locks.",
       "credit": "twwwy; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
@@ -191,7 +231,7 @@
     {
       "path": "media/live-512-lock-confirm.png",
       "captureType": "emulator",
-      "caption": "Exact 0.1.8 emulator: 64 planned changes on each of eight tracks with explicit replacement.",
+      "caption": "The Lock confirmation lists 64 planned changes per track with Replace existing: Yes. Press YES to apply or NO to return; this is an emulator pre-apply screen.",
       "alt": "Lock confirmation with 64 changes on each track and Replace existing: Yes.",
       "credit": "twwwy; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
@@ -208,7 +248,7 @@
     {
       "path": "media/live-512-clear-confirm.png",
       "captureType": "emulator",
-      "caption": "Exact 0.1.8 emulator: 64 planned removals on each of eight tracks, including manual locks.",
+      "caption": "Clear's confirmation lists 64 planned removals per track and warns that manual locks are included. Press YES to apply or NO to return; this screenshot is from the emulator.",
       "alt": "Clear confirmation with 64 removals on each track and Includes manual locks.",
       "credit": "twwwy; Elektron Octatrack UI",
       "license": "LicenseRef-OT-UI-Documentation",
