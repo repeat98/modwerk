@@ -15,6 +15,18 @@ bytes it replaces by length and SHA-256 only; the build fills them from your OS.
 Until the site moves to this base (studied on [#878](https://github.com/repeat98/modwerk/pull/878)), it builds with
 irpina's released `core-ar2-0.7.elemod`. The full OS file sent with Transfer stays the fallback afterwards.
 
+## Beside elekloader's core-ar2
+
+This base is Modwerk's, not elekloader's core-ar2, and a change to core-ar2 goes to elekloader
+([contributing](../../../../CONTRIBUTING.md#elekloader-mods-and-cores)). It stays on 0.7's source:
+
+- **No core-ar2 0.8 or later.** core-ar2 0.8 (elekloader v0.9.0) jumps from the same two lock sites the lock words
+  use, `0x40008f98` (row load) and `0x40009216` (lock rebuild). This base cannot take it, an elekloader mod that needs
+  0.8 or later does not run on it, and a mod that uses the send bus does not run on core-ar2.
+- **Projects moved between the two.** The lock words are saved as FX-track lanes 64-71 (`0x40`-`0x47`, `locks.c`).
+  core-ar2 0.8 and later read lanes 42-127 on tracks below 13 as its own mod locks, so a project saved on one
+  firmware and opened on the other can lose or misread those locks. Not tested.
+
 ## Build it
 
 `base.json` names the core folder, the SDK headers (`../include`, the same bytes as elekloader's), the OS and the
