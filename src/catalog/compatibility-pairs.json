@@ -28,6 +28,7 @@
   "repitch",
   "ring-sc",
   "sidechain-compressor",
+  "slow-lfo",
   "spectrum",
   "synth",
   "tapeecho",
