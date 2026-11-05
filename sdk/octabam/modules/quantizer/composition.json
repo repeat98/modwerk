@@ -29,6 +29,12 @@
   "runtimeUnits": [],
   "suppliedBy": "synth",
   "supplied": {
-    "signature": "f9b186d868c4a78c91f40c856b39811b7c93276bebbe5b807bec17138e283313"
+    "signature": "687ed9a89369f80a795ebb020c6ea0eb47fb7c3cdc010e17ffba3e2f052c57f1",
+    "units": {
+      "qzk": "fm_qzk",
+      "qzc": "fm_qzc",
+      "qzs": "fm_qzs",
+      "qz": "fm_qz"
+    }
   }
 }
