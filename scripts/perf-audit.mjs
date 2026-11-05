@@ -1,6 +1,6 @@
 // Performance audit for a module: worst-case cycles, a benchmark against stock, and a stress run. Offline: no firmware, no module code.
 //
-//   npm run perf:audit -- template dsp|coldfire     print the skeleton of evidence/performance.json
+//   npm run perf:audit -- template dsp|coldfire|key print the skeleton of evidence/performance.json (key: ColdFire code that runs only on a key press)
 //   npm run perf:audit -- check <record.json> [options]
 //   npm run perf:audit -- selftest                  prove the judgement on known-good and known-bad records
 //
@@ -22,12 +22,12 @@ for (let i = 0; i < args.length; i++) {
 const [command, ...paths] = positional
 
 function usage(problem) {
-  console.error((problem ? problem + '\n' : '') + 'Usage: npm run perf:audit -- template dsp|coldfire\n       npm run perf:audit -- check <record.json> [--usable <cycles>] [--ratio-note <x>] [--ratio-fail <x>] [--load-fail <share>]\n       npm run perf:audit -- selftest')
+  console.error((problem ? problem + '\n' : '') + 'Usage: npm run perf:audit -- template dsp|coldfire|key\n       npm run perf:audit -- check <record.json> [--usable <cycles>] [--ratio-note <x>] [--ratio-fail <x>] [--load-fail <share>]\n       npm run perf:audit -- selftest')
   process.exit(2)
 }
 
 const symbol = { ok: '✓', note: '·', fail: '✗' }
-if (command === 'template' && ['dsp', 'coldfire'].includes(paths[0]) && paths.length === 1) console.log(JSON.stringify(templateRecord(paths[0]), null, 2))
+if (command === 'template' && ['dsp', 'coldfire', 'key'].includes(paths[0]) && paths.length === 1) console.log(JSON.stringify(templateRecord(paths[0]), null, 2))
 else if (command === 'check' && paths.length === 1) {
   const rows = judgeRecord(JSON.parse(readFileSync(resolve(paths[0]), 'utf8')), options)
   for (const line of rows) {
