@@ -1,8 +1,8 @@
 # Zoom G1 FOUR (ZD2 effects): research report
 
 Status: **research, started with the owner's go-ahead on Discord (November 2026).** The G1 FOUR has a profile
-in `sdk/machines/zoom-g1-four/` (family `zoom`, steps `format` and `load` started). Modwerk lists no ZD2 effects,
-and nothing here is a module contract. The ZDL family (MS-70CDR, MS-50G, MS-60B, G1on) is in
+in `sdk/machines/zoom-g1-four/` (family `zoom`, steps `format` and `load` done since 5 November 2026, `mods` open).
+Modwerk lists no ZD2 effects, and nothing here is a module contract. The ZDL family (MS-70CDR, MS-50G, MS-60B, G1on) is in
 [ZOOM_MULTISTOMP.md](ZOOM_MULTISTOMP.md); its pedal page, link, MIDISTOMP base and proposed
 [`zdl` contract](ZDL_MODULE_CONTRACT.md) do not apply to the ZD2 pedals ([what does not carry over](#what-does-not-carry-over)).
 
@@ -91,6 +91,7 @@ All on one G1 FOUR, firmware 2.00, autosave off; every crash recovered with a po
 | A stock effect disassembled and reassembled unchanged, then with `.const` alignment, stripped symbols and exported profiling symbols matching stock | **crashes** in every variant (freeze or a loud high tone); the cause is [UNK] |
 | A stock effect with a 32-byte, then a 96-byte compiled kernel patched over its audio function | runs: passthrough, then a clean −6 dB, so compiled code runs on the pedal |
 | Tape Chorus: original code (Airwindows ToTape9 flutter, MIT) appended to a stock effect, with a trampoline at its entry | runs in stereo and mono, declared loads 10.6 % and 6.0 % |
+| **CR Gain** (5 November 2026): Stomphacks' gain kernel and generated scaffold, no Zoom bytes at all, with only the header target changed from the MS Plus bit `0x0090` to `0x0002` | **runs**: plays, survives browsing past it, the Level sweep, bypass and a chain edit; removed cleanly, and the pedal boots normally afterwards |
 
 Installing over USB with zoom-zt2's file commands (the effect file, then its record in the live effect list,
 then a power cycle) and removing again work [HW]. A stall leaves the pedal powered; closing the file session
@@ -98,12 +99,23 @@ first and never power-cycling mid-transfer kept the file system whole [HW].
 
 ## Where the steps stand
 
-- **`format`: started.** Container, ELF, entry struct, callbacks and host context are documented. The knob
-  (edit) handlers every build so far uses are a stock effect's, so the knob calling convention is not.
-- **`load`: started.** Compiled code runs, but every working build carries stock bytes. The step needs an effect
-  built from original source alone, and every attempt without stock bytes has crashed.
-- **`mods`: open.** Modwerk lists nothing grafted onto, patched into or built from a stock effect, so none of the
-  builds above can be listed.
+- **`format`: done.** Container, ELF, entry struct, callbacks and host context are documented, and CR Gain's
+  generated init, bypass and edit handler, written from Stomphacks' published ABI, work on the pedal [HW]. Only a
+  one-knob effect has been tried: selectors, footswitch modes and the delay buffer are not.
+- **`load`: done.** CR Gain, built from original source alone, loads on the stock 2.00 firmware, plays and is
+  removed again [HW]. The reassembled stock effects still crash for reasons unknown, and no longer matter.
+- **`mods`: open.** No module contract yet. The grafted builds above stay unlistable; clean-room builds like CR
+  Gain are the kind Modwerk could list.
+
+### The clean-room route
+
+Stomphacks' pipeline (MIT) generates everything around a C kernel from its documented ABI, and the G1 FOUR takes
+the result after one header change: the target bitfield, which needs bit `0x2`. Where G1 stock effects differ and
+CR Gain ran anyway: one picture record in the image info instead of three, Stomphacks' own `ICON` frame, all
+undecoded header fields zero, `DT_BIND_NOW` set, and no copy through the `ctx[7]`/`ctx[8]` shuttle [HW]. The
+entry struct, bus layout, instance slots, coefficient slots and host-service words Stomphacks documents for the
+MS-70CDR+ match the G1 FOUR's [FW][HW]. Stomphacks' ID policy and its 270 raw DSP budget are the MS Plus pedals';
+the G1 FOUR shows declared load as raw/2.5 %, and its budget is [UNK].
 
 ## What does not carry over
 
@@ -117,14 +129,17 @@ first and never power-cycling mid-transfer kept the file system whole [HW].
 
 ## Public research
 
-- [Blindsmyth/Zoom-G1Four-Custom-Fx](https://github.com/Blindsmyth/Zoom-G1Four-Custom-Fx) (MIT): Tape Chorus,
-  its ABI notes, safety rules and the hardware test log. It ships no Zoom file: the user fetches the stock effect
+- [Blindsmyth/Zoom-G1Four-Custom-Fx](https://github.com/Blindsmyth/Zoom-G1Four-Custom-Fx) (MIT): CR Gain and its
+  clean-room build (`cleanroom/`, `scripts/build_cleanroom.sh`), Tape Chorus, ABI notes, safety rules and the
+  hardware test log. It ships no Zoom file: the user fetches the stock effect
   from Zoom's server and builds locally.
 - [mungewell/zoom-zt2](https://github.com/mungewell/zoom-zt2) (MIT): SysEx file and effect-list tools for the ZD2
   pedals; its README reports G1 FOUR testing.
-- [thammer/stomphacks](https://github.com/thammer/stomphacks) (MIT): ZD2 effects from C for the MS Plus series,
-  hardware-tested on an MS-70CDR+, with safety rules and an effect-author ID ledger. Its rules were written for
-  the MS Plus pedals; check each one on the G1 FOUR.
+- [thammer/stomphacks](https://github.com/thammer/stomphacks) (MIT): ZD2 effects from C with no Zoom bytes, for
+  the MS Plus series, hardware-tested on an MS-70CDR+, with safety rules and an effect-author ID ledger. Its
+  pipeline builds for the G1 FOUR too (above); its other rules were written for the MS Plus pedals, so check each.
+- [freelender/nam-to-zoom](https://github.com/freelender/nam-to-zoom) (MIT): NAM A2 Lite captures as ZD2 effects
+  for the MS Plus pedals, on Stomphacks' pipeline.
 - [Barsik-Barbosik/Zoom-Firmware-Editor](https://github.com/Barsik-Barbosik/Zoom-Firmware-Editor): extracts
   effects from Zoom updaters; its README says repacking did not work on the G1 FOUR.
 
@@ -132,11 +147,10 @@ first and never power-cycling mid-transfer kept the file system whole [HW].
 
 In order. Guitar Lab stays the fallback install, and every write to the pedal is persistent.
 
-1. **An effect from original source alone runs.** Find why reassembled effects crash, or build the image from
-   the project's own C and assembly with no stock bytes (Stomphacks' route on the MS Plus pedals), then bisect on
-   the pedal. This finishes `load`.
-2. **Knob handlers of its own**, written from the documented calling convention and tested on the pedal. This
-   finishes `format`.
+1. ~~An effect from original source alone runs~~ and ~~knob handlers of its own~~: done with CR Gain
+   (5 November 2026).
+2. **First real effects on the clean-room route:** a NAM player from nam2zoom's A2 Lite host (MIT, built on the
+   same pipeline) is being worked on in Blindsmyth/Zoom-G1Four-Custom-Fx; its CPU cost is the open question.
 3. **Measure the budgets:** per-block cycles on the pedal (timer counter around the audio call), the patch DSP
    limit, the state area and what an oversize image does.
 4. **A ZD2 module contract** (with the `zdl` proposal or beside it), an effect-ID ledger and a recovery path
