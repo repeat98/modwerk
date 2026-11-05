@@ -1,6 +1,6 @@
 # QPERF testing
 
-Nothing here proves reboot persistence or the QPER knob itself. Hardware results below are the author's, each on the build named. QC13 is the 0.1.0 code; 0.2.0-experimental (the performance lane) has run only in rytm-emu, on QL02 and QL05 below; QL05 is the code here.
+Nothing here proves reboot persistence or the QPER knob itself. Hardware results below are the author's, each on the build named. QC13 is the 0.1.0 code; 0.2.0-experimental (the performance lane) has run only in rytm-emu, on QL02 and QL05 below. The code here is QL06 (sha256 21fb67304cf99fed7ea792376e7d904e276bb65cb366b4a54c069d88e16d9e40): QL05 plus PerformanceEditView, the FX track's PERF view, back in the held-pad check; QL06 was only booted in rytm-emu.
 
 ## Hardware
 

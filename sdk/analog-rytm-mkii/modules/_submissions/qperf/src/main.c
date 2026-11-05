@@ -1007,7 +1007,7 @@ void qperf_tick(void *ctrl)
         unsigned pads = 0;
         word_t top = held ? 0 : top_view();
         int p;
-        if (top == PERF_VTABLE)
+        if (top == PERF_VTABLE || top == PERF_EDIT_VTABLE)    // both play pad pressure
             for (p = 0; p < PERFS; p++)
                 if (IS_KEY_HELD(KEY_PAD_FIRST + p))
                     pads |= 1u << p;
