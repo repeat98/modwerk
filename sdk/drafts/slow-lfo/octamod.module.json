@@ -60,7 +60,7 @@
   "compatibility": {
     "firmware": "1.40C",
     "effectId": null,
-    "location": "Audio and MIDI tracks",
+    "location": "Audio tracks",
     "conflicts": [],
     "uiClaims": [],
     "limitations": [
