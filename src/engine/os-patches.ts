@@ -1,10 +1,10 @@
 export const OS_LOAD_ADDRESS = 0x40000400
 export type OsWrite = { address: number; guardLength: number; guardSha256: string; bytes: Uint8Array; note: string }
-// The stock DELAY reads 0x400d1ce0 + 4 * (x >> 6) from a 508-entry table that ends at 0x400d24d0. At a slow tempo with a
-// long TIME the index runs up to 16 bytes past the end, which are zero on a stock unit (measured in an emulator,
-// docs/OCTATRACK_HARDWARE_TRAPS.md). No cave, overflow placement or patch may write them.
-export const DELAY_TABLE_TAIL = 0x400d24d0, DELAY_TABLE_TAIL_END = 0x400d24e0
-export const DELAY_TABLE_TAIL_REFUSAL = 'the stock DELAY reads 0x400d24d0..0x400d24df past its table, so those 16 bytes stay stock'
+// The zero run 0x400d24d0..0x400d2ce0 is entries 508..1023 of the stock DELAY's filter table (0x400d1ce0): the defaults read
+// entry 508, higher BASE + WDTH up to 1016, the boot init 1023 (docs/OCTATRACK_HARDWARE_TRAPS.md; build_bus.py). No cave,
+// overflow placement or patch may write 0x400d24d0..0x400d2ca7; the last 56 bytes are Scale Quantizer's pinned units.
+export const DELAY_TABLE_TAIL = 0x400d24d0, DELAY_TABLE_TAIL_END = 0x400d2ca8
+export const DELAY_TABLE_TAIL_REFUSAL = 'the stock DELAY reads 0x400d24d0..0x400d2ca7 as its filter table, so those bytes stay stock'
 export function writesDelayTableTail(address: number, length: number) {
   return address < DELAY_TABLE_TAIL_END && DELAY_TABLE_TAIL < address + length
 }

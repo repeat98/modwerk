@@ -613,14 +613,18 @@ enumerated on the Mac: no Elektron device at all, not a dead bridge handle.
 Only a power cycle brought USB back. The same image had RAM-booted cleanly
 before and did again after.
 
-**The first 16 bytes of the zero run at `0x400d24d0` are not free.** The stock
-DELAY reads `0x400d1ce0 + 4 * (x >> 6)` from a 508-entry table that ends at
-`0x400d24d0`. At a slow tempo with a long TIME the index runs up to 16 bytes
-past the end, which hold zeros on a stock unit; code placed there becomes a
-DELAY coefficient. Card builds start the overflow run at `0x400d24e0`, and the
-card builder (`build_bus.py`, the browser composer) and `npm run modules:compat`
-refuse any cave, unit or patch in `0x400d24d0..0x400d24df`. Measured in an
-emulator only (upstream octabam #771, 51 BPM); not heard on a unit.
+**The zero run at `0x400d24d0..0x400d2ce0` is the stock DELAY's filter table.**
+It holds entries 508..1023 of the table at `0x400d1ce0`. DELAY's low-pass
+index is (BASE + WDTH) × 4, so the defaults (BASE 0, WDTH 127) read entry 508
+on every run, other settings reach entry 1016, and the boot init reads entry
+1023. Code placed there becomes a coefficient: darker or thinner repeats at
+ordinary settings. Card builds have no overflow run there any more, and the card
+builder (`build_bus.py`, the browser composer) and `npm run modules:compat`
+refuse any cave, unit or patch in `0x400d24d0..0x400d2ca7`. The last 56 bytes
+are Scale Quantizer's pinned `qzs`/`qzk`, which its synth engine finds at those
+fixed addresses; DELAY reaches them only at BASE + WDTH 253/254 while CHROMATIC
+keys are held, and at boot (inferred). Read from the routine and measured with
+an emulator read hook (upstream octabam #1007/#1023); not heard on a unit.
 
 **An unused setup slot is not free storage.** MIDI NOTE SETUP shows four values, but its window binds all six
 encoders: D and F edit the two `----` slots (setup record +0x03 and +0x05) unseen, and YES commits all six staged

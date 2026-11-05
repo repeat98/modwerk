@@ -150,27 +150,24 @@ class FloatingCavePlacement(unittest.TestCase):
         self.ns = {}
         exec(compile(ast.Module(body=body, type_ignores=[]), 'floating_cave_fixture', 'exec'), self.ns)
 
-    def test_window_first_then_overflow_then_refusal(self):
+    def test_window_first_then_refusal(self):
         at, run, end, limit = self.ns['floating_cave_at'], self.ns['OVERFLOW_RUN'], self.ns['OVERFLOW_RUN_END'], 0x400d7c3c
+        self.assertEqual(run, end)                                              # no overflow run is left
         self.assertEqual(at(0x400d7001, run, 0x80, limit), 0x400d7080)        # next 128-byte boundary
         self.assertEqual(at(0x400d7b00, run, 0x13c, limit), 0x400d7b00)       # ends exactly at the limit
-        self.assertEqual(at(0x400d7b00, run + 2, 0x13d, limit), run + 4)      # one byte over: overflow, 4-aligned
-        self.assertEqual(at(0x400d7c80, run, 4, limit), run)                  # window cursor already past the limit
-        self.assertEqual(at(0x400d7c01, end - 0x10, 0x10, limit), end - 0x10)  # the overflow's last bytes
-        self.assertIsNone(at(0x400d7b00, end - 0x10, 0x200, limit))           # fits neither: the build refuses
+        self.assertIsNone(at(0x400d7b00, run, 0x13d, limit))                  # one byte over: the build refuses
+        self.assertIsNone(at(0x400d7c80, run, 4, limit))                      # window cursor already past the limit
 
-    def test_the_overflow_run_starts_past_the_bytes_the_stock_delay_reads(self):
-        # The stock DELAY reads 0x400d1ce0 + 4 * (x >> 6); its 508-entry table ends at 0x400d24d0 and the index runs
-        # up to 16 bytes past it (docs/OCTATRACK_HARDWARE_TRAPS.md).
-        self.assertEqual((self.ns['DELAY_TABLE_TAIL'], self.ns['DELAY_TABLE_TAIL_END']), (0x400d1ce0 + 4 * 508, 0x400d24e0))
-        self.assertEqual(self.ns['OVERFLOW_RUN'], self.ns['DELAY_TABLE_TAIL_END'])
-        at, run = self.ns['floating_cave_at'], self.ns['OVERFLOW_RUN']
-        self.assertEqual(at(0x400d7c80, run, 4, 0x400d7c3c), 0x400d24e0)       # the first overflow placement
+    def test_the_zero_run_is_the_stock_delay_table(self):
+        # The run is entries 508..1023 of the stock DELAY's filter table at 0x400d1ce0; the defaults read entry 508.
+        # Its last 56 bytes are Scale Quantizer's pinned qzs/qzk, the one exception (docs/OCTATRACK_HARDWARE_TRAPS.md).
+        self.assertEqual((self.ns['DELAY_TABLE_TAIL'], self.ns['DELAY_TABLE_TAIL_END']), (0x400d1ce0 + 4 * 508, 0x400d2ca8))
+        self.assertEqual(self.ns['OVERFLOW_RUN'], 0x400d1ce0 + 4 * 1024)
         clash = self.ns['delay_tail_clash']
-        for start, length in ((0x400d24d0, 6), (0x400d24c0, 0x11), (0x400d24df, 1), (0x400d24d8, 0x100)):
+        for start, length in ((0x400d24d0, 6), (0x400d24c0, 0x11), (0x400d24df, 1), (0x400d24e0, 0x100), (0x400d2ca7, 1)):
             with self.subTest(start=hex(start), length=length):
-                self.assertIn('stock DELAY reads past its table', clash(start, length, 'fixture'))
-        for start, length in ((0x400d24e0, 0x100), (0x400d24c0, 0x10), (0x400d7000, 0x80)):
+                self.assertIn('stock DELAY reads as its filter table', clash(start, length, 'fixture'))
+        for start, length in ((0x400d2ca8, 6), (0x400d2cb0, 0x2e), (0x400d24c0, 0x10), (0x400d7000, 0x80)):
             with self.subTest(start=hex(start), length=length):
                 self.assertIsNone(clash(start, length, 'fixture'))
 
@@ -291,7 +288,7 @@ class SelectiveImport(unittest.TestCase):
             self.assertIsNotNone(row['after'])
             self.assertEqual(row['before'], row['after'])
 
-    def test_delay_table_tail_builder_moves_only_images_that_wrote_the_tail(self):
+    def test_delay_table_builder_refuses_only_images_that_wrote_the_table(self):
         import json
         record = json.loads((ROOT.parent / 'infrastructure-verification/delay-table-tail-builder.json').read_text())
         self.assertEqual(record['kind'], 'delay-table-tail-builder-regression')
@@ -299,30 +296,26 @@ class SelectiveImport(unittest.TestCase):
         for path, change in record['builderAdaptations'].items():
             self.assert_extension_holds('delay-table-tail-builder.json', path, change['after'])
         self.assertGreaterEqual(len(record['selections']), 128)
-        moved = refused = 0
+        # A refusal for the table itself (FM Synth 0.1.2's page) or for the overflow room it leaves empty (the wide dial's
+        # hook names no run).
+        table = ('which the stock DELAY reads as its filter table', 'overflow run', 'wide dial hook')
+        refused = 0
         for row in record['selections']:
             before, after = row['before'], row['after']
             with self.subTest(modules=row['moduleIds'], keep=row['keepStockFx2']):
                 if 'refused' in before:
-                    # Every earlier refusal holds; with FM Synth 0.1.2 the build may now stop earlier, at its page.
+                    # Every earlier refusal holds; the build may now stop earlier, at the table.
                     self.assertIn('refused', after)
                     if after != before:
-                        self.assertIn('synth', row['moduleIds'])
-                        self.assertIn('which the stock DELAY reads past its table', after['refused'])
+                        self.assertTrue(any(text in after['refused'] for text in table), after['refused'])
                 elif 'refused' in after:
-                    # Newly refused: only FM Synth 0.1.2, whose SRC page is pinned at 0x400d24d0.
+                    # Newly refused: only images that wrote the table.
                     refused += 1
-                    self.assertIn('synth', row['moduleIds'])
                     self.assertEqual(before['delayTableTail'], 'written')
-                    self.assertIn('which the stock DELAY reads past its table', after['refused'])
+                    self.assertTrue(any(text in after['refused'] for text in table), after['refused'])
                 else:
-                    self.assertEqual(after['delayTableTail'], 'stock')   # no image writes the 16 bytes now
-                    if before['delayTableTail'] == 'stock':
-                        self.assertEqual(after, before)                  # nothing else moves
-                    else:
-                        moved += 1
-                        self.assertNotEqual(after['osSha256'], before['osSha256'])
-        self.assertGreater(moved, 0)
+                    self.assertEqual(after, before)                      # nothing that builds moves
+                    self.assertEqual(after['delayTableTail'], 'stock')
         self.assertGreater(refused, 0)
 
     def test_poly8_builder_preserves_current_main_without_poly8(self):

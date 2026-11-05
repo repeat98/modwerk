@@ -13,10 +13,10 @@ describe('native refusal equivalence', () => {
     expect(refusalClass('conflicting native declarations', 'browser')).toBe('declaration collision')
     for (const error of ['The OS write plan has an invalid guarded range.', 'The original OS does not match the guard for polyui.', 'unresolved replay']) expect(refusalClass(error, 'browser')).toBe('unclassified')
   })
-  it('matches the two builders\' refusal of the bytes the stock DELAY reads past its table', () => {
-    expect(refusalClass('SYNTH MACHINE fmpage at 0x400d24d0..0x400d2653 reaches 0x400d24d0..0x400d24df, which the stock DELAY reads past its table: those 16 bytes stay stock', 'native')).toBe('stock DELAY table tail')
-    expect(refusalClass('build changed 0x400d24d0..0x400d24df, which the stock DELAY reads past its table: those 16 bytes stay stock', 'native')).toBe('stock DELAY table tail')
-    expect(refusalClass('synth fmpage ROM unit is placed at 0x400d24d0, but the stock DELAY reads 0x400d24d0..0x400d24df past its table, so those 16 bytes stay stock.', 'browser')).toBe('stock DELAY table tail')
-    expect(refusalClass('Repitch ROM unit would change the stock DELAY reads 0x400d24d0..0x400d24df past its table, so those 16 bytes stay stock.', 'browser')).toBe('stock DELAY table tail')
+  it('matches the two builders\' refusal of the bytes the stock DELAY reads as its filter table', () => {
+    expect(refusalClass('SYNTH MACHINE fmpage at 0x400d24d0..0x400d2c17 reaches 0x400d24d0..0x400d2ca7, which the stock DELAY reads as its filter table: those bytes stay stock', 'native')).toBe('stock DELAY table tail')
+    expect(refusalClass('build changed 0x400d24d0..0x400d2ca7, which the stock DELAY reads as its filter table: those bytes stay stock', 'native')).toBe('stock DELAY table tail')
+    expect(refusalClass('synth fmpage ROM unit is placed at 0x400d24d0, but the stock DELAY reads 0x400d24d0..0x400d2ca7 as its filter table, so those bytes stay stock.', 'browser')).toBe('stock DELAY table tail')
+    expect(refusalClass('Repitch ROM unit would change the stock DELAY reads 0x400d24d0..0x400d2ca7 as its filter table, so those bytes stay stock.', 'browser')).toBe('stock DELAY table tail')
   })
 })

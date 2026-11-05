@@ -158,14 +158,14 @@ class GateTests(unittest.TestCase):
         self.assertIn('ot_x, which has room for 2 modules', problems[0]['text'])
         self.assertEqual(gate.check(modules, hooks=hooks, rooms={'ot_x': 3, 'ev_y': 2}), [])
 
-    def test_nothing_writes_the_16_bytes_the_stock_delay_reads_past_its_table(self):
+    def test_nothing_writes_the_stock_delay_table_run(self):
         from remix.schema import Linked, Poke
         def pinned(name, at):
             return Module(name=name, key=name.upper(), kind=Kind.CF_PATCH, doc='synthetic',
                           linked=(Linked(name + 'page', 'synthetic.s', cave_addr=at),))
         problems = gate.check([pinned('a', 0x400d24d0)])
         self.assertEqual(self.routes(problems), [(('a',), 'cave')])
-        self.assertIn('0x400d24d0..0x400d24df', problems[0]['text'])
+        self.assertIn('0x400d24d0..0x400d2ca7', problems[0]['text'])
         self.assertIn('stock DELAY', problems[0]['text'])
         # A poke that ends on the last kept byte, and a detour that starts on it, are refused too.
         poke = Module(name='b', key='B', kind=Kind.CF_PATCH, doc='synthetic', pokes=(Poke(0x400d24cc, bytes(4), b'\1\2\3\4'),))
@@ -173,10 +173,11 @@ class GateTests(unittest.TestCase):
         poke = Module(name='b', key='B', kind=Kind.CF_PATCH, doc='synthetic', pokes=(Poke(0x400d24ce, bytes(4), b'\1\2\3\4'),))
         self.assertEqual(self.routes(gate.check([poke])), [(('b',), 'cave')])
         self.assertEqual(self.routes(gate.check([module('c', 0x400d24de)])), [(('c',), 'cave')])
-        # The overflow run's new start, just past them, is free.
-        self.assertEqual(gate.check([pinned('a', 0x400d24e0)]), [])
+        self.assertEqual(self.routes(gate.check([pinned('d', 0x400d2ca0)])), [(('d',), 'cave')])
+        # Scale Quantizer's pinned units, the run's last 56 bytes, are the one place left there.
+        self.assertEqual(gate.check([pinned('a', 0x400d2ca8)]), [])
         # The card build's form counts, not only the runtime package's.
-        self.assertEqual(self.routes(gate.check([pinned('a', 0x400d24e0)], natives={'a': pinned('a', 0x400d24d0)})),
+        self.assertEqual(self.routes(gate.check([pinned('a', 0x400d2ca8)], natives={'a': pinned('a', 0x400d24e0)})),
                          [(('a',), 'cave')])
 
     def test_repository_passes(self):

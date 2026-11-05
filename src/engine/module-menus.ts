@@ -10,8 +10,9 @@ import { readRomPackage, linkRomText, createWideDial } from './rom-package.ts'
 import { applyGuardedOsWrites, writesDelayTableTail, DELAY_TABLE_TAIL_REFUSAL, type OsWrite } from './os-patches.ts'
 import { MenuSpaceError } from './placement-error.ts'
 export const MENU_CAVE_END = 0x400d7c3c, MENU_LONG_LIST = 0x400d7bbc
-// The overflow run starts 16 bytes into the zero run: the stock DELAY reads 0x400d24d0..0x400d24df (os-patches.ts).
-export const OVERFLOW_START = 0x400d24e0, OVERFLOW_END = 0x400d2ce0
+// No overflow run: the zero run after the clone window is the stock DELAY's filter table (os-patches.ts). Kept as an empty
+// range so the native layout (build_bus.py OVERFLOW_RUN) and the browser stay one rule.
+export const OVERFLOW_START = 0x400d2ce0, OVERFLOW_END = 0x400d2ce0
 /** The end of the free region a menu cave at `address` may fill: the clone window from the descriptor cursor, the overflow run
  *  or the SHPE gap; `address` itself when it is in none. A cave reaching the bytes the stock DELAY reads is refused outright. */
 export function menuCaveEnd(address: number, length: number, caveCursor: number, caveLimit: number, note: string) {

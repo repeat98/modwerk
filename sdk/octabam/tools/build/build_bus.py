@@ -85,19 +85,23 @@ ID2POS = 0x400d6150
 LIST_REFS = [0x400375f4, 0x40052496, 0x40059a42]
 DESC_LEN = 0x192
 NEW_LIST = 0x400d6b00
-# The other unclaimed zero run docs/firmware/MAINMENU.md section 5 names -- 2,064 bytes
-# at 0x400d24d0. Label formatters and floating caves overflow into it when the
-# clone window is full (the character station's BUS-mode renames tipped the
-# rig over by 56 bytes). Its first 16 bytes are not free: the stock DELAY reads
-# 0x400d1ce0 + 4 * (x >> 6) from a 508-entry table ending at 0x400d24d0, and at
-# a slow tempo with a long TIME the index runs up to 16 bytes past the end,
-# which are zero on a stock unit (measured in an emulator; upstream octabam
-# #771, docs/OCTATRACK_HARDWARE_TRAPS.md). So the run starts past them, and
-# nothing -- a pinned cave or unit, an overflow placement, a poke -- may write
-# them: delay_tail_clash() refuses at placement, the finished image is checked.
+# The other zero run docs/firmware/MAINMENU.md section 5 names -- 2,064 bytes at
+# 0x400d24d0 -- is not free: it is entries 508..1023 of the stock DELAY's filter
+# table at 0x400d1ce0. The LP pole's index is (BASE + WDTH) * 4, so the defaults
+# (BASE 0, WDTH 127) read entry 508 on every run and higher settings reach entry
+# 1016; the boot init reads entry 1023 (upstream octabam #1007/#1023, read from
+# the routine; docs/OCTATRACK_HARDWARE_TRAPS.md). Whatever sits there becomes a
+# coefficient. So 0x400d24d0..0x400d2ca7 stays stock: delay_tail_clash() refuses
+# a pinned cave or unit there at placement, and the finished image is checked.
+# The one exception is the run's last 56 bytes, where SCALE QUANTIZER pins qzs
+# (0x400d2ca8) and qzk (0x400d2cb0..0x400d2cdd): its synth engine finds them at
+# those fixed addresses. DELAY reaches them only at BASE + WDTH 253/254, while
+# CHROMATIC keys are held on a synth track, and at boot (qz_oct, entry 1023):
+# inferred, not rendered. Nothing overflows there: the overflow run is empty, so
+# label formatters and floating caves that miss the clone window are refused.
 DELAY_TABLE_TAIL = 0x400d24d0
-DELAY_TABLE_TAIL_END = 0x400d24e0
-OVERFLOW_RUN = 0x400d24e0
+DELAY_TABLE_TAIL_END = 0x400d2ca8
+OVERFLOW_RUN = 0x400d2ce0
 OVERFLOW_RUN_END = 0x400d2ce0
 SAFE_CAVE_CEIL = 0x400d8000
 CLONE_BASE = 0x400d6b20
@@ -254,12 +258,12 @@ def plain_slots(m) -> tuple[int, ...]:
 
 
 def delay_tail_clash(at: int, length: int, what: str) -> str | None:
-    """A refusal when `length` bytes at `at` reach the 16 bytes the stock DELAY
-    reads past its table (DELAY_TABLE_TAIL), else None."""
+    """A refusal when `length` bytes at `at` reach the part of the stock DELAY's
+    filter table that stays stock (DELAY_TABLE_TAIL), else None."""
     if at < DELAY_TABLE_TAIL_END and DELAY_TABLE_TAIL < at + length:
         return (f"{what} at 0x{at:08x}..0x{at + length - 1:08x} reaches "
                 f"0x{DELAY_TABLE_TAIL:08x}..0x{DELAY_TABLE_TAIL_END - 1:08x}, which the "
-                f"stock DELAY reads past its table: those 16 bytes stay stock")
+                f"stock DELAY reads as its filter table: those bytes stay stock")
     return None
 
 
@@ -3515,7 +3519,7 @@ hostquit:
     _tail = slice(DELAY_TABLE_TAIL - BASE, DELAY_TABLE_TAIL_END - BASE)
     if img[_tail] != IMG.read_bytes()[_tail]:
         sys.exit(f"build changed 0x{DELAY_TABLE_TAIL:08x}..0x{DELAY_TABLE_TAIL_END - 1:08x}, "
-                 f"which the stock DELAY reads past its table: those 16 bytes stay stock")
+                 f"which the stock DELAY reads as its filter table: those bytes stay stock")
 
     _grown = ""
     for _aname, _append in _appends:

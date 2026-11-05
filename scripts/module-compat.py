@@ -74,9 +74,9 @@ SPAN_FINDINGS = ('ColdFire cave', 'hook site', 'poke site', 'kept bytes', 'grown
 LISTED_UI_CLAIMS = {'playmodes': ['key:TRACK+UP', 'key:TRACK+DOWN'], 'output-matrix': ['key:CUE+LEVEL']}
 HOOKS = ('detour', 'hook', 'base code')  # code sites: behaviour hooks
 NOT_WRITES = ('keep', 'copy')
-# The stock DELAY reads up to 16 bytes past its 508-entry table (0x400d1ce0 + 4 * (x >> 6), the table ends here); they
-# are zero on a stock unit and stay stock (docs/OCTATRACK_HARDWARE_TRAPS.md; build_bus.py DELAY_TABLE_TAIL refuses the same).
-DELAY_TABLE_TAIL, DELAY_TABLE_TAIL_BYTES = 0x400d24d0, 16
+# 0x400d24d0..0x400d2ca7 is the stock DELAY's filter table (entries 508..1009 of 0x400d1ce0; the defaults read entry 508), so
+# it stays stock (docs/OCTATRACK_HARDWARE_TRAPS.md; build_bus.py DELAY_TABLE_TAIL refuses the same).
+DELAY_TABLE_TAIL, DELAY_TABLE_TAIL_BYTES = 0x400d24d0, 0x400d2ca8 - 0x400d24d0
 
 
 def claims(m):
@@ -286,8 +286,8 @@ def check(modules, base_sites=(), events=(), copies=None, relations=(), base_own
         for c in sorted(set(items), key=lambda c: (c[1], c[0], c[2], c[3])):
             if c[0] not in NOT_WRITES and c[1] < DELAY_TABLE_TAIL + DELAY_TABLE_TAIL_BYTES and DELAY_TABLE_TAIL < c[1] + c[2]:
                 problem((name,), f'{name} writes {span(c[1], c[2])} ({c[0]} {c[3]}), which reaches '
-                                 f'{span(DELAY_TABLE_TAIL, DELAY_TABLE_TAIL_BYTES)}: the stock DELAY reads those 16 bytes '
-                                 f'past its table, so they stay stock', 'cave')
+                                 f'{span(DELAY_TABLE_TAIL, DELAY_TABLE_TAIL_BYTES)}: the stock DELAY reads those bytes as its filter table, '
+                                 f'so they stay stock', 'cave')
     for a, b in itertools.combinations(native, 2):
         for text in ledger_findings([a, b], platform or {}):
             problem((a.name, b.name), text, 'row' if text.startswith('fx2 id') else 'other')

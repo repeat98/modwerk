@@ -18,16 +18,17 @@ describe('local module menu composition guards', () => {
       expect(patch).not.toHaveProperty('expect')
       expect(patch).not.toHaveProperty('stockBytes')
     }
+    // Retained proofs from before the stock DELAY's table was known to fill the zero run: their overflow cursor ran into it.
     expect(recipes.proofs.some(proof => proof.overflowCursor > 0x400d24d0)).toBe(true)
     expect(recipes.proofs.some(proof => proof.regions.some(region => region.note === 'SHPE formatter' && region.bytes > 0))).toBe(true)
   })
-  it('starts the overflow run past the 16 bytes the stock DELAY reads and refuses a cave there', () => {
-    expect(OVERFLOW_START).toBe(DELAY_TABLE_TAIL_END)
+  it('has no overflow run left and refuses a cave in the stock DELAY\'s table', () => {
+    expect([OVERFLOW_START, OVERFLOW_END]).toEqual([0x400d2ce0, 0x400d2ce0])
+    expect(DELAY_TABLE_TAIL_END).toBe(0x400d2ca8)
     const cursor = 0x400d6b20
-    expect(menuCaveEnd(OVERFLOW_START, 16, cursor, MENU_CAVE_END, 'overflow cave')).toBe(OVERFLOW_END)
     expect(menuCaveEnd(cursor, 16, cursor, MENU_CAVE_END, 'window cave')).toBe(MENU_CAVE_END)
-    for (const [address, length] of [[DELAY_TABLE_TAIL, 4740], [DELAY_TABLE_TAIL + 8, 4], [DELAY_TABLE_TAIL - 0x20, 0x22]]) {
-      expect(() => menuCaveEnd(address, length, cursor, MENU_CAVE_END, 'pinned unit')).toThrow('pinned unit is placed at 0x' + address.toString(16) + ', but the stock DELAY reads 0x400d24d0..0x400d24df')
+    for (const [address, length] of [[DELAY_TABLE_TAIL, 4740], [DELAY_TABLE_TAIL + 8, 4], [DELAY_TABLE_TAIL - 0x20, 0x22], [0x400d24e0, 16], [DELAY_TABLE_TAIL_END - 2, 2]]) {
+      expect(() => menuCaveEnd(address, length, cursor, MENU_CAVE_END, 'pinned unit')).toThrow('pinned unit is placed at 0x' + address.toString(16) + ', but the stock DELAY reads 0x400d24d0..0x400d2ca7')
     }
     // Before the run, outside every region: no room, not a DELAY refusal.
     expect(menuCaveEnd(DELAY_TABLE_TAIL - 0x20, 0x20, cursor, MENU_CAVE_END, 'gap')).toBe(DELAY_TABLE_TAIL - 0x20)

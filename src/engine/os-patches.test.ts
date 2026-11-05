@@ -25,18 +25,18 @@ describe('transactional guarded OS writes', () => {
     expect(original).toEqual(before)
     result[0] = 0; expect(original[0]).toBe(1)
   })
-  it('refuses any write into the 16 bytes the stock DELAY reads past its table', async () => {
-    // 0x400d1ce0 + 4 * (x >> 6): 508 entries end at 0x400d24d0, and the index runs up to 16 bytes past them.
-    expect([DELAY_TABLE_TAIL, DELAY_TABLE_TAIL_END]).toEqual([0x400d1ce0 + 4 * 508, 0x400d24e0])
+  it('refuses any write into the part of the stock DELAY\'s filter table that stays stock', async () => {
+    // Entries 508..1009 of the table at 0x400d1ce0; the defaults read entry 508. Scale Quantizer's units follow.
+    expect([DELAY_TABLE_TAIL, DELAY_TABLE_TAIL_END]).toEqual([0x400d1ce0 + 4 * 508, 0x400d1ce0 + 4 * 1010])
     const original = new Uint8Array(DELAY_TABLE_TAIL_END + 0x40 - OS_LOAD_ADDRESS)
     const write = async (address: number, length: number): Promise<OsWrite> => ({ address, guardLength: length, guardSha256: await hash(new Uint8Array(length)), bytes: new Uint8Array(length).fill(0x4e), note: 'synthetic cave' })
     for (const [address, length] of [[DELAY_TABLE_TAIL, 2], [DELAY_TABLE_TAIL - 4, 6], [DELAY_TABLE_TAIL_END - 2, 2], [DELAY_TABLE_TAIL - 0x10, 0x40]]) {
-      await expect(applyGuardedOsWrites(original, [await write(address, length)])).rejects.toThrow('synthetic cave would change the stock DELAY reads 0x400d24d0..0x400d24df past its table')
+      await expect(applyGuardedOsWrites(original, [await write(address, length)])).rejects.toThrow('synthetic cave would change the stock DELAY reads 0x400d24d0..0x400d2ca7 as its filter table')
     }
     // Bytes either side of them are free, and a refusal leaves the input as it was.
     const result = await applyGuardedOsWrites(original, [await write(DELAY_TABLE_TAIL - 4, 4), await write(DELAY_TABLE_TAIL_END, 0x40)])
     expect(result.subarray(DELAY_TABLE_TAIL - 4 - OS_LOAD_ADDRESS, DELAY_TABLE_TAIL - OS_LOAD_ADDRESS)).toEqual(new Uint8Array(4).fill(0x4e))
-    expect(result.subarray(DELAY_TABLE_TAIL - OS_LOAD_ADDRESS, DELAY_TABLE_TAIL_END - OS_LOAD_ADDRESS)).toEqual(new Uint8Array(16))
+    expect(result.subarray(DELAY_TABLE_TAIL - OS_LOAD_ADDRESS, DELAY_TABLE_TAIL_END - OS_LOAD_ADDRESS)).toEqual(new Uint8Array(DELAY_TABLE_TAIL_END - DELAY_TABLE_TAIL))
     expect(original.every(byte => byte === 0)).toBe(true)
   })
   it('refuses missing, odd or non-code runtime hook targets before installation', () => {

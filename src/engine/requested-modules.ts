@@ -5,6 +5,8 @@ import { validateStockCopies } from './stock-copy.ts'
 import { parseColdFireObject } from './coldfire-elf.ts'
 import { linkRomText } from './rom-package.ts'
 import { OS_LOAD_ADDRESS, type OsWrite } from './os-patches.ts'
+// Read at call time only, so the cycle with module-menus.ts (which imports this file) is safe.
+import { OVERFLOW_START, OVERFLOW_END } from './module-menus.ts'
 import type { CfRuntimeLink } from './coldfire-link.ts'
 export { facts as requestedFacts }
 type Group = typeof facts.groups[number]
@@ -104,7 +106,7 @@ export async function requestedRom(ids: readonly string[], cursor: number, overf
     await cave(address, linked.bytes, group.moduleId + ' ' + pkg.label + ' ROM unit')
     for (const [name, at] of linked.symbols) symbols.set(name, at)
     if (address >= 0x400d6b20 && address < caveLimit) cursor = Math.max(cursor, address + linked.bytes.length)
-    else if (address >= 0x400d24e0 && address < 0x400d2ce0) overflow = Math.max(overflow, Math.ceil((address + linked.bytes.length) / 4) * 4)
+    else if (address >= OVERFLOW_START && address < OVERFLOW_END) overflow = Math.max(overflow, Math.ceil((address + linked.bytes.length) / 4) * 4)
   }
   return { cursor, overflow, symbols }
 }
