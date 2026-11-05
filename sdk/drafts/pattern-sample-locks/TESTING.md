@@ -10,6 +10,261 @@ Portable planner, UI and production native-writer sanitizer tests pass. The full
 
 Retired reports and obsolete captures are consolidated in [PROTOTYPE_HISTORY.md](PROTOTYPE_HISTORY.md); they do not qualify this version.
 
+Offline stack, memory, callback and instruction-count analyses below use the private reconstruction for configuration SHA `9680e9ac861ff9313ce4f7a710a37ad2aa8e9b50b2cf8c043dafa2a0b78cdffc` (`MAIN.raw` SHA-256 `877a8d6884cb05508a59b312a0e95498c33ce4a1e2f1fe452423b0edc74fb69e`). The 3 November author-reported hardware trial gives only the IDENTIFY configuration SHA; no physical MAIN hash is available, so those offline analyses do not prove equality with the device image.
+
+The [clock, timer, SDRAM and arbitration inventory](evidence/clock-memory-static-facts-20261105.md) reviews startup configuration facts for that exact candidate and private reconstruction. The reported physical IDENTIFY matched the canonical configuration hash, but no physical MAIN hash was recorded; the inventory therefore proves neither device-image equality nor live timing state, a cycle/latency bound or release qualification.
+
+## MKII RAM functional trial — 3 November 2026 (reported configuration identity)
+
+The author (`twwwy`) reports that both physical actions passed on the
+Octatrack MKII, OS 1.40C, using the exact public candidate package
+`3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79` from
+source revision `5a15ac390dac2475df3fb3b2ef64154e174b4182`. With Replace OFF,
+Lock preserved an existing manual SAMPLE lock and filled an empty SAMPLE field
+on a trig. Clear removed selected manual SAMPLE locks while preserving a
+non-SAMPLE lock and unselected data. The author reported both checks passed,
+with no mismatch or action refusal.
+
+The author reports that device IDENTIFY returned configuration SHA-256
+`9680e9ac861ff9313ce4f7a710a37ad2aa8e9b50b2cf8c043dafa2a0b78cdffc`, matching
+the checked-in base binding. This is a canonical configuration hash, not a MAIN
+image hash. The private offline reconstruction for that configuration has
+`MAIN.raw` SHA-256
+`877a8d6884cb05508a59b312a0e95498c33ce4a1e2f1fe452423b0edc74fb69e`; its outer
+`NOT_FLASH_CANDIDATE.bin` SHA-256 is
+`9ae4d63a36f113f3cae563650cd44476ced0bc950bf4382f3185ec3f68728e66`. Neither
+private artifact was loaded or flashed, and no physical MAIN hash/readback was
+recorded, so physical image equality is unverified. The proof's prototype and
+`productionReady: false` metadata describe that offline artifact; they do not
+show that hardware ran a different configuration or image. The exact 300-second
+RAM trial ended after 203 seconds through the runner's rollback path. After
+rollback, the active digest returned to prefix `951766ebfe1ef23a`, and the
+complete 17-module live inventory matched the pre-trial inventory. Slot
+generations 6 and 7 were unchanged. The base used in the trial does not support
+saved-file export, so this verifies slot metadata and live restoration, not
+saved-set file contents. The working pattern is disposable; unsaved RAM edits
+may remain there until it is reloaded.
+
+There was no Keep, project save, flash or power cycle. Action counts, track
+counts and per-action timing were not reported. The public base refuses the
+development-only UI, transport and memory reads, so no stack watermark or
+device memory measurement was obtained. Its diagnostics refusal counter rose
+during the run because the USB bridge periodically sends unsupported
+development request 6; this is not evidence of a Lock/Clear action refusal.
+The trial establishes only the author's reported functional checks on a unit
+reporting configuration SHA `9680…`; without a physical MAIN hash, they are not
+bound to the private reconstructed image. It does not measure audio,
+maximum-load behavior, worst-case cycles or complete memory, and does not close
+first-release owner review.
+
+## Temp Save interaction on the emulator — 4 November 2026
+
+On emulator configuration identity `9680e9ac…` using the private reconstructed
+base (`MAIN.raw` SHA-256 `877a8d68…`), the exact Sample Locks candidate
+`3e13c46f…` and published Temp Save package `00b8d5ab…` were installed
+together on a copied emulator card. After opening FUNC+PART, releasing FUNC and
+pressing FUNC+YES, Sample Locks retired its overlay and Temp Save saved a
+deliberately changed SAMPLE byte. FUNC+NO restored that value after another
+labelled emulator-only mutation. The same check passed after Sample Locks was
+removed, with Temp Save still installed. Both packages were then removed from
+the emulator copy.
+
+Holding FUNC continuously from the initial FUNC+PART through YES on the
+Sample Locks row opened its track selector; Temp Save's previous snapshot was
+unchanged. The held-through control after removing Sample Locks also retained
+the previous Temp Save snapshot. The first socket setup failed before boot; the
+successful runs used the emulator's local filesystem. The [stock-free receipt](evidence/qualification-progress-20261104.md#temp-save-emulator-comparison)
+names the packages, base, fixture, method and limits. This is one no-DSP
+emulator scenario, not hardware, audio or complete companion qualification.
+
+After refreshing to main `5ceb89bd…`, draft `module:doctor` reports that
+the declared stock sites and UI claims pass its static cross-compatibility
+check against the active catalogue, including Temp Save. It still refuses
+publication: the qualification record, catalogue, packages and native
+comparison are incomplete. A static claim check does not prove live behavior.
+
+The normal public package wrapper on that main built and checked the exact
+`3e13c46f…` candidate in a private catalogue fixture; both stock scans and five
+negative CLI checks passed. A private USB-only scope check preflighted add
+and removal on seven public base identities and all 30 packages, including
+Temp Save. It also verified the card-build refusal and beta-library path.
+These are [software preflights](evidence/qualification-progress-20261104.md#current-main-package-and-usb-preflight),
+not real catalogue admission or complete combined-runtime evidence.
+
+On the same private reconstructed emulator base, a DSP-enabled MKII emulator ran
+the exact package
+through five playback-active Lock/Clear fixtures: two changes, one full track,
+and 512 changes with no other lock, a first-slot lock or a last-slot lock.
+Every resulting pattern, mirror and lock index matched; the module image and
+sites were attested, and removal passed. The highest observed Clear callback
+interval was 314,314 emulator instructions in the 512-change no-other-lock
+case. DSP frames advanced without reported errors or stalls. Main audio was
+disabled; the count includes intervening interrupts and is not chip cycles,
+a universal bound or audio evidence. See the [edit matrix](evidence/qualification-progress-20261104.md#private-reconstruction-emulator-edit-matrix).
+
+## Exact package image and private reconstructed-base pool extent — 3 November 2026
+
+A source-only build in pinned toolchain image
+`sha256:da70d46e10b243277fa3ae2e015f7258d56b3ee08ca4be47e61899958872e792`
+(GCC 16.2.0), at source revision `5a15ac390dac2475df3fb3b2ef64154e174b4182`,
+compiled `translation.c` and assembled `unit.s`. Linking both at origin zero
+produced identical images: 8,748 initialized bytes, SHA-256
+`54efd2166b30b836401d02f8d0d785e12aebc5b40196deb1a9b6e4530e6f95d5`, 1,328
+BSS bytes and 167 relocations. The exact candidate package SHA-256 is
+`3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79`; its
+header records four hooks and three sites.
+
+After refreshing to main on 4 November, the current qualification fingerprint
+of the draft's native-source inventory is
+`7ea0fbdf317bfdab6a82b22869c7029ba23901cd27a3337a4bdaf8f8beeb7e69`.
+The current fingerprinting code produces the same value for the draft archived
+at the tested revision `5a15ac39…`. Both calculations used the unqualified
+draft manifests; recompute it against the final qualification record because
+declared report paths affect the inventory.
+
+For the checked-in current base source, `RUNTIME_SITE_EVENTS` is 34 and
+`RUNTIME_POOL_BYTES` is 768 KiB. The pinned 54455 layout gives
+`sizeof(struct runtime_module) = 528` and one site record 72 bytes. Three sites
+make a 752-byte aligned module header; the image and BSS align to 10,080 bytes.
+With no DSP tail, the loader reserves exactly 10,832 bytes in its shared runtime
+pool for one installed copy of this package. The module ID maps to one live
+position, so at most one copy is active. During replacement, the loader can
+retain the old extent while it stages or holds the candidate for rollback. Two
+extents of this exact package occupy 21,664 bytes together; a different old
+version may have a different extent, and reclamation depends on reachability.
+The 10,076-byte image-plus-BSS figure above excludes the runtime header and
+alignment. These are source-derived pool allocations for the
+checked-in base and exact package, not a device memory readback. The separately
+shared `sys` task stack is not part of the pool extent; complete stack demand
+remains unbounded, so the overall memory gate stays open.
+
+The [memory-lifetime audit](evidence/memory-lifetimes-20261105.md) traces the
+candidate extent and USB/whole-set overlap against fixed base reservations. It
+reconfirms the exact 10,832-byte extent, but does not close total memory,
+replacement admission for an arbitrary inventory, or stack demand.
+
+The [current-base memory layout](evidence/qualification-progress-20261104.md#current-base-shared-memory-layout)
+also accounts for the base's fixed, shared upload stage and loader ledgers.
+The stage includes a 1,310,720-byte image buffer; the candidate's 10,048-byte
+package occupies part of that existing buffer while staged. The base separately
+reserves the 786,432-byte runtime pool, 256 owner records and pointer slots,
+and 128 live-position pointers. These fixed allocations exist independently of
+this module and must not be added again as per-module dynamic allocations.
+Whole-set staging, concurrent extents, reclamation and stack demand remain
+separate peak-accounting questions.
+
+The current base source places key, encoder and tick hooks on the `sys` task,
+with an 8,192-byte stack span. It says draw runs there nearly always, so that
+span is not established for every draw context. The stock task inventory also
+lists a separate 2,048-byte UI-task stack; whether each draw path can run there
+remains to be established. On 4 November, a network-disabled pinned GCC 16.2.0 build with
+`-fstack-usage -fcallgraph-info=su` reproduced the candidate's reconstructed
+image, 1,328-byte BSS and 167 relocations. Its 33 authored frames are static or
+compiler-bounded. Adding four bytes per internal return word gives the same
+authored-only path bounds as the earlier audit: key 500 bytes, draw 296,
+encoder 44, opener 40 and tick 16. The [stock-free compiler report](evidence/qualification-progress-20261104.md#uninstrumented-compiler-stack-audit)
+records the source hashes, flags, frames, paths and seven indirect call edges.
+Stock font, refresh, popup and close callees, the base dispatcher/caller and
+interrupt nesting are not included; no stack high-water or canary was measured.
+Full stack demand is still unbounded.
+
+On 4 November, offline disassembly of the private reconstructed base, verified
+against its build proof and event tables, accounted for the base's event bus
+and runtime dispatcher while the module callback runs. From the event entry,
+the authored-only subtotals are key 548 bytes, draw 328, encoder 92 and tick 56;
+these exclude the incoming event return word and stock caller. Three stock
+leaf routines were also bounded on the matching, unmodified base code: font
+drawing uses 64 local bytes, font measuring eight, and global refresh zero,
+excluding their return words. Including the two font callees does not increase
+the draw subtotal above 328 bytes. Further stock-code call-path audits bound
+the popup close subtree to 36 bytes and the track refresh subtree to 304 bytes,
+each excluding its incoming return word. Including those paths, the key-event
+subtotal is 808 bytes from the base event entry; draw remains 328, encoder 92
+and tick 56. These are conservative stack subtotals for the exact candidate and
+private reconstructed base, assuming no other module patches the audited stock ranges.
+The private reconstruction's system-task initialization and message-loop audit adds
+the task frame and event-call arguments: from task entry the key subtotal is
+916 bytes, encoder 200 and tick 156. This assumes called functions preserve
+their ABI stack pointer. The incoming task-entry return word, popup opening,
+interrupt nesting and other contexts remain unbounded. The popup audit now
+confirms five other initial callback entries from cached stock callers; two
+have complete 32-byte callback-local bounds, while three still have unresolved
+paths. The candidate's own close subtree retains its prior 36-byte bound. The
+rooted follow-up closes the `0x400131c8` leaf at four local bytes and finds a
+408-byte finite path through the early `0x4004d948` helper chain from the popup
+routine's entry; this is a path total, not an opener bound. The separate
+window-creation path remains unbounded. A ColdFire whole-image sweep gives all
+50 manager-call patterns a six-write argument setup and immediate `D0` use,
+but the 44 previously uncached callers still lack external root proof. Two
+now have local candidate-entry paths reaching manager calls: initial
+argument-six cells point to `0x40055ff8` and `0x400565ac`; 42 sites still have
+no cached caller body. The `0x40055ff8` path has a known 32-byte path to its
+unresolved indirect call; `0x400565ac` reaches unresolved dispatches through
+`0x40048f18` and `0x40049738`. At `0x40037d80`, index zero selects a dispatch
+table address outside both hashed main images. These findings do not establish
+an exhaustive callback set or rule out manager re-entry. A new address-seeded,
+instruction-boundary-aware pass reaches three of the 42 remaining candidate
+sites from the exact system-task dispatch roots; their initial argument-six
+targets are `0x40056644`, `0x40056bec` and `0x4007f67c`. The other 39 remain
+unrooted byte patterns, and none is proved to be a false positive. The pass
+still has unresolved indirect transfers and one undecoded core-up tail, so the
+remaining callback set and re-entry question stay open. The exact base proof
+contains no companion modules; one later `0x4004d948` code window differs from
+stock, so results stay bound to this base image. The [popup callback evidence](evidence/popup-callback-stack-20261104.md)
+records the earlier hashes, methods and limits; the [rooted-reachability evidence](evidence/popup-manager-reachability-20261105.md)
+records the systematic classification and its scope. The [stack evidence](evidence/qualification-progress-20261104.md)
+also records the base dispatcher, stock leaves, popup close, bounded switch
+and track refresh. No device was accessed, and neither the complete memory
+nor cycle gate is closed.
+
+The source-bound [IPL-7 span evidence](evidence/ipl7-span-static-20261104.md)
+counts 24–87 module instructions per nonempty span, at most 64 spans and 5,568
+instructions in IPL-7 spans per full operation, and up to 1,088 SAMPLE-field
+and index byte stores. IPL 7 masks ordinary levels 1–6; edge-sensitive level-7
+requests can still preempt. Handler work, the longer IPL-2 guard, and exact
+timer, clock and bus state are outside these counts. This does not establish chip cycles, worst-case
+latency or a complete interrupt-stack bound.
+
+The [candidate transaction-core instruction envelope](evidence/candidate-instruction-envelope-20261105.md)
+gives a conditional 5,502,242-instruction upper envelope for the stated
+successful 8×64 Clear core phases across preparation and later commit callbacks.
+It excludes the `module_key` wrapper, earlier UI capture, popup opening, stock
+callee instructions, interrupts, scheduler work and memory/timing effects; it is
+neither a full callback or whole-operation bound nor a chip-cycle or latency
+result.
+
+The [FUNC+PART popup-entry audit](evidence/popup-entry-context-20261105.md)
+binds the three candidate hook sites and confirms the stock opener precedes
+candidate predicates. The manager has five live close slots; two initial
+callback paths have local bounds and three retain unresolved callees. Candidate
+popup and eligibility predicates do not constrain those slots, so complete
+popup and system-stack closure remains open.
+
+The separate [interrupt audit](evidence/interrupt-context-20261104.md) bounds
+the empty-table frame-dispatch call to a temporary four-byte return word and
+traces the pinned frame path to one exception-return site only when unresolved
+indirect calls return. Stock ISR demand, SSP/task context, callback contracts
+and level-6/7 nesting remain open; see also the [offline facts and read-only
+follow-up plan](evidence/interrupt-offline-facts-and-read-plan-20261105.md).
+
+Static source inspection establishes finite loop limits for the authored commit
+path: eight tracks and 64 steps; up to 31 remaining parameter-lock slots scanned
+for each cleared SAMPLE field when recomputing the index; and at most 64
+per-step publications, each writing up to eight selected tracks. These control-
+flow limits are not a cycle bound. The candidate targets MCF54455 ColdFire V4,
+not MCF5206E. A separately identified MCF54455 timing probe recorded 1,103,227
+DTIM3 counts (8.35778 ms at its assumed 132 counts/µs scale) for the maximum
+Clear commit body among five recorded runs. That interval includes interrupts,
+validation, scanning, publication, native follow-up, probe overhead and stack
+samples; it excludes the caller and function prologue/epilogue. It is neither
+exclusive core cycles nor a universal worst-case bound. The [NXP MCF54455
+Reference Manual, §3.3.5.1](https://www.nxp.com/docs/en/reference-manual/MCF54455RM.pdf)
+lists instruction timings under the assumptions that instruction fetches are
+ready, there are no sequence-related pipeline stalls, and memory is zero-wait.
+This evidence does not bound those conditions, stock callees or interrupt nesting,
+so no defensible worst-case core-cycle bound is established. The stack and cycle
+gates remain open.
+
 ## PR #1088 reconstruction maintenance review — 31 October 2026
 
 Reconstruction recipes now live in the SDK machine adapters. Shared-input
@@ -89,9 +344,19 @@ verified and USB released. See [method and limits](MKII_HIGH_LOAD.md) and the
 The subsequent no-module emulator baseline reproduced TRIG5–7 held and lost
 FUNC release by interleaving a USB development key with a split physical fader
 report. This confirms an independent development input-path bug and strongly
-explains the hardware signature; it does not qualify a fix or attribute every
+explains the held-key signature; it does not qualify a fix or attribute every
 unintended edit. See the [isolation receipt](evidence/input-isolation-emulator-20261031.json) and
 [base issue #1110](https://github.com/repeat98/modwerk/issues/1110).
+
+A later limited paired-input/paste comparison completed three emulator arms,
+one with the exact candidate and two without it. Each arm ran ordinary STOP
+and the same split-input sequence: STOP stopped transport with no A02 change;
+the split sequence left FUNC active and changed the same 64 A02 SAMPLE fields
+in both candidate and no-module arms, while mirrors matched and Parts stayed
+unchanged. The fourth planned candidate repeat timed out during boot, so this
+was not a complete four-arm suite and does not reproduce or explain the
+historical six-field hardware incident. See the stock-free
+[limited comparison](evidence/paired-input-paste-limited-comparison-20261105.md).
 
 ## MKII automated audio/timing follow-up — 31 October 2026
 
@@ -388,7 +653,7 @@ The frame-gap read covering this repeat run and intervening menu/host work was 4
 
 An initial run completed seven verified operations before a separate status query interleaved with a MEM high/low read. The read was refused and the runner stopped playback; no failed firmware edit was observed. The twenty-operation run above used one memory reader. Its receipt retains the interruption and harness corrections rather than treating them as module failures or hiding them.
 
-See the stock-free [hardware receipt](media/v018-mkii-qualification.json) and [actual MKII confirmation](media/v018-mkii-live512-confirm.png). Source/package/base identities, individual timing samples and exact observed scope are recorded there. **No Keep or flash occurred during this singleton trial.** The later flashed-base Keep/restart result is separate below. Hardware module-reload preference reset without a restart, MKI, heavy streaming/USB/MIDI loads, tempo/speed extremes, companion runtime combinations, native stock-only card/browser parity and full cost bounds remain unqualified. The RAM base sees the flashed saved set as foreign; this trial makes no saved-set recovery or Keep attestation. Keep this PR in draft.
+See the stock-free [hardware receipt](media/v018-mkii-qualification.json) and [actual MKII confirmation](media/v018-mkii-live512-confirm.png). Source/package/base identities, individual timing samples and exact observed scope are recorded there. **No Keep or flash occurred during this singleton trial.** The later flashed-base Keep/restart result is separate below. Hardware module-reload preference reset without a restart, MKI, heavy streaming/USB/MIDI loads, tempo/speed extremes, companion runtime combinations and full cost bounds remain unqualified. Native stock-only card/browser composition is outside the declared USB-only scope; the applicable package check is recorded below. The RAM base sees the flashed saved set as foreign; this trial makes no saved-set recovery or Keep attestation. Keep this PR in draft.
 
 ## Flashed-base companion trial — 30 October 2026 (Taipei)
 
@@ -410,4 +675,24 @@ The author reported **“Both actions return; defaults reset”** after checking
 
 With that selector open and playback reported stopped, a removal-only trial temporarily left the exact original eighteen live records while the saved nineteen-module set remained unchanged. Undo restored all nineteen exact records, normal/known status and the same kept canonical identity; saved/live counts both read nineteen. The removal was not kept. USB was then released, leaving **nineteen modules kept**, including exact Sample Locks 0.1.8. No flash was performed.
 
-See the stock-free [Keep/restart/removal receipt](media/v018-mkii-kept-reboot.json). No new listening or audio-recording result is claimed for this companion cycle. Full runtime companion coverage, heavy streaming/USB/MIDI loads, tempo/speed extremes, MKI, complete stack/interrupt bounds and native stock-only card/browser parity remain unqualified. A newer public base was merged into this source branch afterward; the hardware result remains bound to `a542a515…`, not that untested base. This PR remains draft.
+See the stock-free [Keep/restart/removal receipt](media/v018-mkii-kept-reboot.json). No new listening or audio-recording result is claimed for this companion cycle. Full runtime companion coverage, heavy streaming/USB/MIDI loads, tempo/speed extremes, MKI and complete stack/interrupt bounds remain unqualified. Native stock-only card/browser composition is outside the declared USB-only scope; the applicable package check is recorded below. A newer public base was merged into this source branch afterward; the hardware result remains bound to `a542a515…`, not that untested base. This PR remains draft.
+
+## Native/browser comparison scope — 5 November 2026
+
+The standard Octatrack `module:verify` comparison is for native card composition: it builds module selections with octabam and checks that the browser card composer reproduces the same builds and refusals. This draft is intentionally USB-only because the card compiler lacks its four shared UI callbacks ([scope record](USB_BETA.md)). For an offered module classified as cardless, the native-comparison suite skips card composition and directs it to `npm run octatrack:module-packages -- --check`, which rebuilds the USB package.
+
+The exact 10,048-byte private package already passed the normal public build and `--check`, both stock scans and five negative CLI probes using the pinned source-tools image. The browser fixture also passed library/card refusal, source-inventory parity, add/removal Undo preflights on seven public base identities and preflight of all 29 packages. The [package receipt](evidence/public-package-path-20261031.json) and [USB scope receipt](evidence/usb-beta-scope-20261031.json) bind those results to package SHA-256 `3e13c46f…`, byte-identical to the emulator-tested artifact. Those wrapper and USB preflights were not repeated; they do not claim simultaneous companion runtime coverage, card composer parity or public catalogue admission.
+
+The exact `module:verify` command, run with Node 24.22.1 and the private original OS 1.40C file, stopped before Docker or native builds with `pattern-sample-locks is not in sdk/catalog.json. List it there first (docs/ADD_A_MODULE.md, step 4).` The draft has no `sdk/catalog.json` entry or `sdk/octabam/modules/pattern-sample-locks` source folder. The later generic “is paused; it is not offered” guard is not reached; this module is not listed in `PAUSED_MODULE_IDS`, so “paused” is not its current state. Adding generated catalogue data or a temporary native module solely to reach that guard would misstate eligibility. See the stock-free [comparison-scope investigation](evidence/native-browser-comparison-20261105.md) for exact identities and the refusal result.
+
+The offline package check is complete, while resource qualification and first-release owner review remain open. Keep the draft unlisted until those release prerequisites are complete. If card support is added later, the native card/browser comparison becomes applicable after normal module admission and qualification.
+
+## Host-compiled native Clear companion-slot fixture — 5 November 2026
+
+A private sanitizer harness passed 32 fresh 512-field Clear cases: each of the 31 companion lock positions as the sole surviving lock, plus a dense case with all 31 occupied. It verified all selected SAMPLE bytes, companion and other track bytes, mirrors and lock-index bytes; this is host evidence for data-path logic, not emulator/hardware evidence or a cause for the earlier input failure. See the [stock-free fixture record](evidence/companion-slot-integrity-20261105.md) for inputs, hashes, command and limits.
+
+## Host-only no-op mirror/index observation — 5 November 2026
+
+A focused host harness compiled the production native commit body and `engine.c` from the exact native-source fingerprint `7ea0fbdf317bfdab6a82b22869c7029ba23901cd27a3337a4bdaf8f8beeb7e69`; the associated 10,048-byte candidate package is SHA-256 `3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79`. With host-only address and guard shims, it reproduced a no-change Clear returning `PSL_OK` when synthetic working SAMPLE fields were already clear but the mirror SAMPLE byte or active lock-index bit differed; the no-op left those values unchanged. The harness exercised source code, not the package or an instrument.
+
+This synthetic preexisting mismatch is not evidence that stock normally leaves mirror/index state transiently divergent at the commit boundary. No evidence connects it to the A02 high-load loss; the separate no-module input-framing reproduction remains independent, and the origin of every unintended edit is unresolved. See the [high-load report](MKII_HIGH_LOAD.md#input-path-isolation-follow-up) for its scope and limits.

@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "about": "Modwerk's Analog Rytm MKII base, built by npm run machine:base -- analog-rytm-mkii: core-ar2 0.7's source unchanged (sdk/imports/core-ar2-source-fb58292.json), with Modwerk's own sources in base/ added on top (add): the FX track's lock words, and the send bus with its return, its pages and the FX list (mw_fx) send effects contribute to. A site names the stock bytes it replaces by length and SHA-256; the build fills them from the user's OS.",
+  "about": "Modwerk's Analog Rytm MKII base, built by npm run machine:base -- analog-rytm-mkii: core-ar2 0.7's source unchanged (sdk/imports/core-ar2-source-fb58292.json), with Modwerk's own sources in base/ added on top (add): the FX track's lock words, and the send bus with its return, its pages and the FX list (mw_fx) send effects contribute to. A site names the stock bytes it replaces by length and SHA-256; the build fills them from the user's OS. It comes in two variants: send-bus (the default, with add) and plain (core-ar2 0.7's source alone, for a build with no send effect, which then pays none of add's cost).",
   "core": "core-ar2",
   "include": "sdk/machines/analog-rytm-mkii/include",
   "os": "1.74",
@@ -8,6 +8,14 @@
     "cross": "m68k-elf-",
     "gcc": "16.2.0",
     "binutils": "2.47"
+  },
+  "variants": {
+    "send-bus": {
+      "add": true
+    },
+    "plain": {
+      "add": false
+    }
   },
   "reference": {
     "file": "vendor/elekloader/catalog/core-ar2-0.7.elemod",

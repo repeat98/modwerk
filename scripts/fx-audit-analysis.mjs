@@ -204,11 +204,11 @@ export function judgeIdle(result, limits = LIMITS) {
 export const SAME_LIMIT = -60     // dB of the difference to the louder render; at or below it two renders count as the same (audit default)
 const SILENT_DBFS = -100
 
-/** Two renders (channel arrays) sample for sample over their common length, worst channel. `same` for two settings of one knob means the
+/** Two renders (channel arrays) sample for sample over their common length, worst channel, and b's level against a's over all channels. `same` for two settings of one knob means the
  *  knob does nothing to this signal; for two presets, that they are one sound. Two silent renders prove nothing, so they are `silent`. */
 export function compareRenders(a, b, sameLimit = SAME_LIMIT) {
   const frames = Math.min(...a.map(c => c.length), ...b.map(c => c.length))
-  let ratio = 0, loudest = 0, peak = 0, first = -1
+  let ratio = 0, loudest = 0, peak = 0, first = -1, energyA = 0, energyB = 0
   for (let c = 0; c < Math.min(a.length, b.length); c++) {
     let sa = 0, sb = 0, sd = 0
     for (let n = 0; n < frames; n++) {
@@ -216,6 +216,7 @@ export function compareRenders(a, b, sameLimit = SAME_LIMIT) {
       sa += x * x; sb += y * y; sd += d * d
       if (d) { peak = Math.max(peak, Math.abs(d)); if (first < 0 || n < first) first = n }
     }
+    energyA += sa; energyB += sb
     const louder = Math.max(sa, sb)
     loudest = Math.max(loudest, louder)
     if (louder) ratio = Math.max(ratio, sd / louder)
@@ -223,7 +224,8 @@ export function compareRenders(a, b, sameLimit = SAME_LIMIT) {
   const identical = first < 0 && a.length === b.length && a.every((c, i) => c.length === b[i].length)
   const differenceDb = first < 0 ? -Infinity : db(ratio)
   const verdict = dbfs(Math.sqrt(loudest / Math.max(frames, 1))) < SILENT_DBFS ? 'silent' : identical ? 'identical' : differenceDb <= sameLimit ? 'same' : 'differs'
-  return { verdict, differenceDb, peakDbfs: peak ? dbfs(peak) : -Infinity, firstSeconds: first < 0 ? null : first / SAMPLE_RATE, frames: [a[0].length, b[0].length] }
+  const levelDb = energyA && energyB ? db(energyB / energyA) : null // b's level against a's; null when either is silent
+  return { verdict, differenceDb, levelDb, peakDbfs: peak ? dbfs(peak) : -Infinity, firstSeconds: first < 0 ? null : first / SAMPLE_RATE, frames: [a[0].length, b[0].length] }
 }
 
 // ---- writing and reading files -------------------------------------------------
@@ -328,6 +330,8 @@ export function selfTest() {
   compared('the same render twice is identical', [noise[0].slice()], 'identical')
   compared('a one-LSB rounding difference is the same', [noise[0].map((v, n) => n % 2 ? v + 1 / FULL_SCALE : v)], 'same')
   compared('a 1 dB level change differs', [noise[0].map(v => v * 10 ** (-1 / 20))], 'differs')
+  const halved = compareRenders(noise, [noise[0].map(v => v / 2)]).levelDb
+  row('half the amplitude reads -6.0 dB of level', Math.abs(halved + 6.02) < 0.01, halved.toFixed(2) + ' dB')
   let state = 0
   compared('a low-pass differs', [noise[0].map(v => (state += 0.2 * (v - state)))], 'differs')
   const quiet = [new Float64Array(noise[0].length)]

@@ -2,12 +2,21 @@
 
 Lock preserves existing SAMPLE locks by default. Clear removes **all selected SAMPLE locks**, including manual locks. There is no ownership storage or special persistence requirement.
 
-Package SHA-256: 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d.
+Candidate source revision: `5a15ac390dac2475df3fb3b2ef64154e174b4182`.
+Package SHA-256: `3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79`.
+Required base configuration SHA (read from IDENTIFY):
+`9680e9ac861ff9313ce4f7a710a37ad2aa8e9b50b2cf8c043dafa2a0b78cdffc`. This is
+a configuration hash, not a MAIN image hash. The 3 November author-reported
+trial records this IDENTIFY value; no physical MAIN hash was captured. The
+private reconstruction's `MAIN.raw` SHA-256
+`877a8d6884cb05508a59b312a0e95498c33ce4a1e2f1fe452423b0edc74fb69e` is not a
+device readback and does not prove image equality. Re-read IDENTIFY for each
+session.
 
 ## Before loading
 
 1. Back up the CF card. Prepare a disposable project with Flex/Static tracks, trigs, a manual SAMPLE lock and a non-SAMPLE parameter lock. Save the disposable Part first (FUNC+PART > SAVE), so its working and saved copies match before project reload comparisons.
-2. Connect the powered MKII outside USB disk mode. Use one client. Read base identity, capabilities, active digest, inventory and diagnostics before changes.
+2. Connect the powered MKII outside USB disk mode. Use one client. Read the IDENTIFY configuration SHA, capabilities, active digest, inventory and diagnostics before changes.
 3. Review compatibility and confirm that base supports the three-site, four-standard-hook package. A custom lifecycle extension is unnecessary; consider a RAM base change only if actual capabilities require it.
 4. Review the exact package, current set and intended change before each trial. The tested singleton path and an addition-only companion trial have separate receipts in TESTING.md. Keep one serialized USB owner and state any host deadline; no Keep is automatic. Use the acknowledged offer identity during a retained trial: the base deliberately withholds whole-set identity until Keep or Undo ends its journal. Stop playback before ending a trial, then verify inventory and identities. The frontend MCP catalogue excludes this unpublished draft; never use the serving session’s immediate-Keep shortcut.
 

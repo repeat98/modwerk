@@ -1,0 +1,1 @@
+Developer docs: the module guide said `ot_machines` holds 4 subscribers; the base has given it 8 since 29 October, and two other tables hold 4. The guide now points to each hook's `room` in the hook registry instead of repeating numbers that go stale.

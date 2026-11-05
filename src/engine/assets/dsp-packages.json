@@ -2,7 +2,7 @@
   "schema": 1,
   "revision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
   "license": "/licenses/octabam.txt",
-  "sourceCommit": "08cd3db02ba2966defbd96c599234c77507ffd47",
+  "sourceCommit": "be64a4ed8ce2fcce671c6e019ea29c250c12defe",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -37,8 +37,7 @@
     "dejavu": "0.1.0-experimental",
     "arp-key-locks": "0.1.0-experimental",
     "temp-save": "0.1.0-experimental",
-    "tuner": "0.1.0-experimental",
-    "slow-lfo": "0.1.0-experimental"
+    "tuner": "0.1.0-experimental"
   },
   "packages": [
     {
