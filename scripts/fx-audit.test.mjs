@@ -104,6 +104,8 @@ describe('fx audit', () => {
     expect(result.status).toBe(0)
     expect(result.stdout).toMatch(/knob-low\.raw +knob-high\.raw .* identical/)
     expect(result.stdout).toMatch(/knob-high\.raw +cutoff\.raw .* differs/)
+    const quieter = renderNoise('quieter', word => word / 4)
+    expect(audit('compare', low, quieter, '--mono').stdout).toMatch(/knob-low\.raw +quieter\.raw .* -6\.02 dB .* differs/)
     const silent = renderNoise('silent', () => 0)
     expect(audit('compare', silent, silent, '--mono').stdout).toContain('1 silent pair(s)')
     expect(audit('compare', low, join(scratch, 'none.raw')).status).toBe(2)
