@@ -12,7 +12,9 @@
   "copied": [],
   "regions": [],
   "claims": [
-    "ui:TRIG + FILL"
+    "ui:TRIG + FILL",
+    "ui:TRIG + UP",
+    "ui:TRIG + DOWN"
   ],
   "requires": [],
   "derive": null,
@@ -27,6 +29,13 @@
           "stockSha256": "87161bd9e197c8b40b6a38327205fcf078fb26e4a93a371f5df2a80ccd8a1cf8",
           "op": "jsr",
           "target": "quick_fill_gate"
+        },
+        {
+          "addr": "0x4003d36c",
+          "len": 6,
+          "stockSha256": "82a9f344a8c9fa7db51fba9431657af1ba35b66376fba9f54a0e1fd42725f73f",
+          "op": "jsr",
+          "target": "quick_ratio_gate"
         }
       ]
     }
