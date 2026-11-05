@@ -206,6 +206,14 @@ static unsigned driven;                 // performances the lane plays now
 static int last_pos = -1;               // the position last block
 static int rec_pos[PERFS];              // each one's last recorded point, -1 none
 static volatile unsigned pads_held;     // PERF pads held, seen from the tick
+static volatile int lane_track;         // the selected track, seen from the tick
+typedef word_t (*track_selection_t)(word_t project);
+typedef int (*selected_track_t)(word_t selection);
+#define TRACK_SELECTION ((track_selection_t)TRACK_SELECTION_AT)
+#define SELECTED_TRACK ((selected_track_t)SELECTED_TRACK_AT)
+static int pot_anchor;                  // the QPER knob where it last counted as a move
+static unsigned short knob_touched;     // audio blocks left of the knob's last move
+#define POT_DEAD 2                      // knob steps a turn must pass: a resting pot wobbles
 #define KEY_PAD_FIRST 0x90              // pads BD .. CB: performances 1 .. 12
 
 // Stock's message for one pot: this replaces the 6-byte lea at its start.
@@ -604,11 +612,33 @@ static word_t live_pattern_data(void)
     return index < 0 ? 0 : PATTERNS_AT + (word_t)PATTERN_BYTES * index;
 }
 
-// The lane's loop: the pattern's length, or 64 steps when it has none (INF,
-// shown as 1) or a longer one.
-static int pattern_steps(word_t pattern)
+static int per_track(word_t pattern)
 {
-    int steps = pattern ? (short)U16(pattern + PATTERN_LENGTH) : 0;
+    return *(volatile unsigned char *)(pattern + PATTERN_PER_TRACK) == 1;
+}
+
+static int track_length(word_t pattern, int track)
+{
+    int steps = *(volatile unsigned char *)(pattern + (word_t)TRACK_BYTES * track + TRACK_LENGTH);
+    return steps < 1 || steps > STEPS ? STEPS : steps;
+}
+
+static int track_speed(word_t pattern, int track)
+{
+    return *(volatile unsigned char *)(pattern + (word_t)TRACK_BYTES * track + TRACK_SPEED);
+}
+
+// The lane's loop: the pattern's length, or with a length per track the
+// selected track's, so the moves repeat with what you play. 64 steps at most,
+// and when the pattern has none (INF, shown as 1).
+static int lane_steps(word_t pattern)
+{
+    int steps;
+    if (!pattern)
+        return STEPS;
+    if (per_track(pattern))
+        return track_length(pattern, lane_track);
+    steps = (short)U16(pattern + PATTERN_LENGTH);
     return steps <= 1 || steps > STEPS ? STEPS : steps;
 }
 
@@ -616,10 +646,19 @@ static int pattern_steps(word_t pattern)
 // have gone into it, timed between pulses on the music clock.
 static int position(void)
 {
+    word_t pattern = live_pattern_data();
     int pps = *(const signed char *)(PULSES_TABLE_AT + U8(SEQ_SPEED_AT));
-    int pulse = U8(SEQ_PULSE_AT);
+    int pulse = U8(SEQ_PULSE_AT), steps = lane_steps(pattern), step, pos;
     long elapsed = PULSE_UNITS - (long)(U32(NEXT_PULSE_AT) - U32(MUSIC_CLOCK_AT));
-    int step = U16(SEQ_STEP_AT) % pattern_steps(live_pattern_data()), pos;
+    if (pattern && per_track(pattern)) {
+        // The selected track's own step. Its place within the step comes from
+        // the pattern's pulses, which only match it at the pattern's speed.
+        step = U8(TRACK_STEPS_AT + lane_track) % steps;
+        if (U8(TRACK_SPEEDS_AT + lane_track) != U8(SEQ_SPEED_AT))
+            pulse = 0, elapsed = 0;
+    } else {
+        step = U16(SEQ_STEP_AT) % steps;
+    }
     if (pps <= 0)
         pps = 6;
     if (pulse < 0 || pulse >= pps)
@@ -690,16 +729,30 @@ void qperf_render(void)
         wipe();
         lane_pattern = pattern;
     }
+    // The QPER knob counts as moving only past a small turn: a resting pot
+    // wobbles a step, and stock writes each wobble to the linked performance.
+    if (qperf_pot && (qperf_pot - pot_anchor > POT_DEAD || pot_anchor - qperf_pot > POT_DEAD)) {
+        pot_anchor = qperf_pot;
+        knob_touched = TOUCH_BLOCKS;
+    } else if (knob_touched) {
+        knob_touched--;
+    }
     // A move anyone else makes: the pads, the QPER knob, MIDI. A pad held still
     // sends nothing new, so a held pad counts as moving.
     for (p = 0; p < PERFS; p++) {
         unsigned short now = PERF_AMOUNT(p);
-        if (now != seen[p] || (pads_held >> p & 1)) {
+        int knob = known >> p & 1, wobble = knob && qperf_pot && now == (unsigned short)((qperf_pot - 1) << 7);
+        if ((now != seen[p] && !wobble) || (pads_held >> p & 1) || (knob && knob_touched)) {
             seen[p] = now;
             touched[p] = TOUCH_BLOCKS;
             driven &= ~(1u << p);       // it is theirs now
-        } else if (touched[p]) {
-            touched[p]--;
+        } else {
+            if (now != seen[p]) {
+                seen[p] = now;          // the knob resting: its amount, but no move
+                driven &= ~(1u << p);
+            }
+            if (touched[p])
+                touched[p]--;
         }
     }
     if (!playing()) {
@@ -772,18 +825,15 @@ static int matrix_rows(const char *data)
     return rows;
 }
 
-// The track's step for the pattern's: the same while the track keeps the
-// pattern's speed, and none when it runs at its own.
-static int track_step(word_t pattern, int track, int step)
+// How many steps a track takes the lane on: its own length with a length per
+// track, as long as it runs at the selected track's speed (0: none).
+static int track_steps(word_t pattern, int track, int steps)
 {
-    word_t t = pattern + (word_t)TRACK_BYTES * track;
-    int length;
-    if (*(volatile unsigned char *)(pattern + PATTERN_PER_TRACK) != 1)
-        return step;
-    if (*(volatile unsigned char *)(t + TRACK_SPEED) != *(volatile unsigned char *)(pattern + PATTERN_SPEED))
-        return -1;
-    length = *(volatile unsigned char *)(t + TRACK_LENGTH);
-    return length > 0 ? step % length : step;
+    if (!per_track(pattern))
+        return steps;
+    if (track_speed(pattern, track) != track_speed(pattern, lane_track))
+        return 0;
+    return track_length(pattern, track);
 }
 
 // Each (track, word) a performance in the lane locks, once.
@@ -806,7 +856,8 @@ static int bake_target(void *kit, const unsigned char *table, word_t pattern, wo
                        int track, int word, int steps, int write)
 {
     void *set = (void *)KIT_PARAM_SET(kit, track);
-    int id = param_id(set, track, word), kit_value = 0, lo = 0, hi = 0, step, was = 0, n = 0, i;
+    int id = param_id(set, track, word), kit_value = 0, lo = 0, hi = 0, at, was = 0, n = 0, i;
+    int length = track_steps(steps_pattern, track, steps);
     int locks[PERFS], perfs[PERFS], count = 0;
     void *trk = 0;
     if (!id)
@@ -827,16 +878,17 @@ static int bake_target(void *kit, const unsigned char *table, word_t pattern, wo
         hi = hi > 0x7fff ? 0x7fff : hi;
         trk = (void *)PATTERN_TRACK(pattern, track);
     }
-    for (step = 0; step < steps; step++) {
-        // The pattern's counters run a step ahead of what plays: the lane takes
-        // a move at the counter's step, and its lock belongs on the one before.
-        int at = track_step(steps_pattern, track, (step + steps - 1) % steps), offset = 0, lock, value;
+    // Each of the track's steps takes the lane where it plays: a shorter track
+    // wraps it, a longer one repeats it. The counters run a step ahead of what
+    // plays, so step at's lock comes from the lane one step on.
+    for (at = 0; at < length; at++) {
+        int step = (at + 1) % steps, offset = 0, lock, value;
         for (i = 0; i < count; i++) {
             int amount = step_amount(perfs[i], step);
             if (amount >= 0)
                 offset += locks[i] * amount >> AMOUNT_SCALE;
         }
-        if (at < 0 || (!offset && !was)) {
+        if (!offset && !was) {
             was = 0;
             continue;                   // nothing to add, and nothing to return from
         }
@@ -872,7 +924,7 @@ static void bake_lane(void)
         return;
     }
     data = (const char *)(*(word_t (**)(void *))(*(word_t *)locks + LOCKS_DATA))(locks);
-    steps = pattern_steps(steps_pattern);
+    steps = lane_steps(steps_pattern);
     // Like stock's own lock writes, a new row needs room in the 71 stock keeps:
     // all of them or none.
     for (i = 0; i < SLOTS; i++) {
@@ -1003,6 +1055,10 @@ void qperf_tick(void *ctrl)
     struct { void *object; void *counts; } shared;
     void *popup;
     (void)ctrl;
+    if (ready) {
+        int track = SELECTED_TRACK(TRACK_SELECTION(PROJECT_SINGLETON()));
+        lane_track = track < 0 ? 0 : track > FX_TRACK ? FX_TRACK : track;
+    }
     if (views) {
         unsigned pads = 0;
         word_t top = held ? 0 : top_view();

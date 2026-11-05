@@ -1,6 +1,6 @@
 # QPERF testing
 
-Nothing here proves reboot persistence or the QPER knob itself. Hardware results below are the author's, each on the build named. QC13 is the 0.1.0 code; 0.2.0-experimental (the performance lane) has run only in rytm-emu, on QL02 and QL05 below. The code here is QL06 (sha256 21fb67304cf99fed7ea792376e7d904e276bb65cb366b4a54c069d88e16d9e40): QL05 plus PerformanceEditView, the FX track's PERF view, back in the held-pad check; QL06 was only booted in rytm-emu.
+Nothing here proves reboot persistence or the QPER knob itself. Hardware results below are the author's, each on the build named. QC13 is the 0.1.0 code; 0.2.0-experimental (the performance lane) has run only in rytm-emu, on QL02 and QL05 below. The code here is QL07 below. QL06 (sha256 21fb67304cf99fed7ea792376e7d904e276bb65cb366b4a54c069d88e16d9e40) added PerformanceEditView, the FX track's PERF view, back to the held-pad check.
 
 ## Hardware
 
@@ -237,6 +237,16 @@ Build QL05 (sha256 e4af066b66cccc1b5763d8f0b225b87408847d4b068de798338960744fe4a
 | Track 2 (SD), whose steps 11 to 15 hold trigs with conditions | The step-10 lock (an empty step, so a lock trig) played; the return on step 11 and the step-13 lock did not on that pass, as stock plays a conditional trig's locks only when the trig plays |
 
 Before QL05 the locks landed a step late: the pattern's step counter runs one step ahead of what plays (a lock on step 4 acted while the counter read 5). The lane takes moves at the counter's step, so the bake now writes each step's moves on the step before.
+
+Reported by the author on QL06, Analog Rytm MKII, a pattern with SCALE per track and a master length set: pad moves recorded, but the lane did not loop with the track's length. With QPER linked to a pad and LIVE RECORDING left on, that performance kept recording over itself while its pad was not touched.
+
+Build QL07 (sha256 cb589aa0ecba7cf9fc43fff2b4493e5083ee5757ed60b7ca40d2fef882e23e63) answers both: with a length per track the lane loops on the selected track's length and position, the bake gives each track the lane where it plays, and the QPER knob counts as moving only past 2 knob steps from where it last moved, so its wobble writes no move. rytm-emu, same setup as QL05 (BD selected, 16 steps; master INF):
+
+| Check | Result |
+| --- | --- |
+| BD moves on steps 10 and 13, LIVE RECORDING off | Replayed on master steps 10, 26, 42, 58 and 13, 29, 45, 61: every 16 steps, on BD's step 10 and 13 |
+| QPER + YES | Tracks 5 and 9 (16 steps) and track 7 (64 steps) moved on steps 10 and 13 of every 16 and came back after |
+| The knob's wobble | Not tested: rytm-emu has no pot input |
 
 An earlier run with pressure bytes and no held pad recorded only the 0.1 s after each byte, as designed: a pad counts as moving while it is held or its amount changes.
 

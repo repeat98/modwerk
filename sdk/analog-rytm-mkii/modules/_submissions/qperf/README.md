@@ -32,10 +32,10 @@ A pass records only the performances you touch. The others keep playing what the
 With LIVE RECORDING off, QPER + YES writes the linked performance into the kit, as above.
 
 - **The lane lives in RAM.** Changing pattern, loading a project or powering off drops it. Only QPER + YES keeps the moves, in the pattern.
-- **A move held still.** A pad held down counts as moving, so it records and overrides the lane. The QPER knob counts as moving only while it turns.
-- **Up to 64 steps.** The lane loops with the pattern's length, or every 64 steps when the length is INF or longer.
+- **A move held still.** A pad held down counts as moving, so it records and overrides the lane. The QPER knob counts as moving only while it turns past a couple of steps: a resting knob wobbles, and that alone records nothing.
+- **It loops with the track.** The lane loops with the pattern's length, and with a length per track (SCALE per track) with the selected track's length, whatever the master length. 64 steps at most, also when the length is INF.
 - **The written locks.** Each step gets the lane's first recorded value in that step, added to the step's own lock or the kit's value, so a move shorter than a step still lands. The step after a move ends gets the parameter's own value back. A step with no trig becomes a lock trig, as stock's live recording does. A step whose trig has a condition takes the move only on the passes where the trig plays, as any lock on it does.
-- **Tracks with their own length.** In per-track mode a track shorter than the lane takes the moves wrapped onto its own steps, the later ones winning, as stock's live recording wraps knob locks. A track at another speed than the pattern gets none.
+- **Tracks with their own length.** With a length per track, QPER + YES gives each track the lane where it plays: a shorter track takes it wrapped onto its own steps, the later ones winning, as stock's live recording wraps knob locks, and a longer one takes it repeated. A track at another speed than the selected track gets none.
 - **72 lock rows a pattern.** Stock keeps one row for each locked parameter of each track, two for a fine one, and uses 71. If the moves need more, QPER + YES shows LOCK MEM FULL! and writes nothing.
 
 These work on the sound pages and in PERF, SCNE, MUTE and CHRO. Press QPER in a menu, dialog, list, the SAMPLER or TEMPO and everything stays stock's, for as long as you hold it. A menu opened with QPER held keeps its keys too. The one exception is linking: where stock lets a pad or trig link over a screen, such as the GLOBAL menu, it moves the one link here too.

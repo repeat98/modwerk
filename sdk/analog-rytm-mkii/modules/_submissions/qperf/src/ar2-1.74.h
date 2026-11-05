@@ -51,6 +51,10 @@
 #define SEQ_STEP_AT 0x405c8c94          // u16, the pattern's step
 #define SEQ_PULSE_AT 0x405c8c96         // s8, pulse within the step
 #define SEQ_SPEED_AT 0x405c8d24         // s8, index into the pulses table
+#define TRACK_STEPS_AT 0x405c8cd0       // s8 a track, its own step
+#define TRACK_SPEEDS_AT 0x405c8d25      // s8 a track, its speed index
+#define TRACK_SELECTION_AT 0x400ae492   // project -> the track selection
+#define SELECTED_TRACK_AT 0x400b693e    // track selection -> the selected track, 12 the FX track
 #define PULSES_TABLE_AT 0x401db6f8      // pulses a step: 3, 4, 6, 8, 12, 24, 48
 #define NEXT_PULSE_AT 0x405c8b20        // u32, the clock of the next pulse
 #define MUSIC_CLOCK_AT 0x8000fe54       // u32, 900000 a pulse
