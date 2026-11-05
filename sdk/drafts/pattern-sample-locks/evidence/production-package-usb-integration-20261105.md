@@ -15,7 +15,7 @@ first release.
 - Candidate package: SHA-256 `3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79`, 10,048 bytes.
 - Private original Octatrack OS 1.40C input: SHA-256 `34695b606eb00e1b4dded5fd0c4b66f3a460522a632e47d7416dbd220599e1ad`; no firmware bytes or extracted data are in this repository.
 - Octabam developer checkout: `5f8e779fa9e8dcf5f36b2b62f7f80c7309daced4`, matching the SDK tool pin. Its only tracked checkout edits matched the reviewed local host-tool repairs.
-- Actual `--upstream` input: Elekloader checkout `3b31ef3c0e43c810e3acd0be6257e2484b20fc40`, matching the vendored kit pin. The vendored kit check passed at version 0.7.0/protocol 1 and catalog revision `ca38e91` (65 site assets).
+- Actual `--upstream` input: Elekloader checkout `3b31ef3c0e43c810e3acd0be6257e2484b20fc40`, matching the vendored kit pin. At the verification commit, the vendored kit check passed at version 0.7.0/protocol 1 and catalog revision `ca38e91` (56 mods, 65 site assets).
 - Host tools: Node `v24.22.1`; Python `3.15.0`; native Mach-O arm64 `m68k-elf-gcc` 16.2.0, SHA-256 `18f7e56184cf3d1b14822fbbd56a2a67e7840f499a3cf615290661f7da08275c`; GNU `m68k-elf-as` 2.47.20260726, SHA-256 `b8ec136401ac83b6b7196d49188d1d6fac115cb83be85d336b15d0d3be17b61a`; patched `dsp_asm`, SHA-256 `cc3230fd10a9294cfe24c172bd755334995dc7542a8830f0294552e10f6209d4`.
 - Package inputs: `scripts/octatrack-module-packages.py` SHA-256 `fe7e191621b16b31ce997b6c5d8b60af467206138d758c47e7d4662a8a9ad78b`; `scripts/octatrack-reconstruction.py` SHA-256 `8718956033e620cfc22d3047b8adbc5708e687133a67ff94e09c5a807fbff3a9`; `sdk/machines/octatrack/module-adapters/reconstruction-recipes.json` SHA-256 `e4fd34d65e2b8e88695ab7fe2da38d1905773cfe57ee391264c3c8b70a7f8559`.
 
@@ -79,15 +79,18 @@ The private files remain outside Git at `~/.cache/psl-source-bound-profile-20261
 
 After the check, `upstream/main` advanced from the tested base `3ae8c38d` to
 `884aca3a2a2d75d095ea388bd84a78e251dde8ee` by merging PR #1235, then to
-`4c8566b8c963be6401910f19de636137101cafee` before this follow-up was prepared.
-The first diff changed the draft manifest, documentation and evidence only. The
-later diff added the Analog Rytm Quick Fill Trig Conditions Elekloader overlay
-and its import record; it did not change the Octatrack package manifest,
+`4c8566b8c963be6401910f19de636137101cafee` and
+`8a547f4ac1f114260a5b598a52084a8287d960bd` before readiness validation. PR
+#1222's intervening change added the Analog Rytm Quick Fill Trig Conditions
+Elekloader overlay and import record; PR #1237 changed only the hook-registry
+guide and its changelog. Across these updates, the Octatrack package manifest,
 candidate native source, reconstruction recipe, loader/runtime, package
-builder, or Elekloader kit/tool source. The added Rytm overlay is outside the
-Octatrack candidate-only fixture and its 30-package preflight. The report stays
-bound to checkout `91d8d493` and tested base `3ae8c38d`; it is not represented
-as a new build at `4c8566b8`.
+builder and Elekloader kit/tool source did not change. The new Rytm overlay
+updates the separate Elekloader site catalog, regenerated on the follow-up
+branch as revision `568b623` (57 mods, 66 assets); that overlay is outside the
+Octatrack candidate-only fixture and its 30-package preflight. This report
+remains bound to checkout `91d8d493` and tested base `3ae8c38d`; it is not
+represented as a new build at current `upstream/main` `8a547f4a`.
 
 This closes only the production package-path and USB software-integration
 check. It adds no hardware result, simultaneous-companion result, cycle bound,
