@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/main.c"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_tick",
+      "fn": "temp_save_tick",
+      "order": 50
+    },
+    {
+      "event": "ev_project",
+      "fn": "temp_save_project",
+      "order": 50
+    }
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:FUNC + YES",
+    "ui:FUNC + NO"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x400cca76",
+          "len": 6,
+          "stockSha256": "87161bd9e197c8b40b6a38327205fcf078fb26e4a93a371f5df2a80ccd8a1cf8",
+          "op": "jsr",
+          "target": "temp_save_yes"
+        },
+        {
+          "addr": "0x400cca98",
+          "len": 6,
+          "stockSha256": "87161bd9e197c8b40b6a38327205fcf078fb26e4a93a371f5df2a80ccd8a1cf8",
+          "op": "jsr",
+          "target": "temp_save_no"
+        },
+        {
+          "addr": "0x4003a7ca",
+          "len": 6,
+          "stockSha256": "6114097ca96797415c564b8e666873886797a3284aad2dada36d188ad4857702",
+          "op": "jsr",
+          "target": "temp_save_page_no"
+        }
+      ]
+    }
+  }
+}

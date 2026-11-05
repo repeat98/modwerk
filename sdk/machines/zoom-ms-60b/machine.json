@@ -21,6 +21,16 @@
       "label": "repeat98/ZoomMultistompZDL",
       "url": "https://github.com/repeat98/ZoomMultistompZDL",
       "note": "The upstream reverse-engineered toolchain the project builds on."
+    },
+    {
+      "label": "MIDISTOMP",
+      "url": "https://github.com/matujuice/zoom-ms-midistomp",
+      "note": "MIT, by Luca Matturro, and Modwerk's planned base. Custom firmware built from Zoom's MS-70CDR 2.10 for the MS-70CDR, MS-50G and MS-60B; v2.0 (November 2026) raises the patch DSP limit from 225 to 300 and adds parallel routing, a perform mode, a looper and MIDI clock sync."
+    },
+    {
+      "label": "Matujuice ZDL effects pack",
+      "url": "https://github.com/matujuice/zoom-ms-zdl-effects-pack",
+      "note": "MIT. 17 effects for synths and drum machines, built with ZoomMultistompZDL's linker; tested on an MS-60B running MS-50G firmware. The tempo-synced ones need MIDISTOMP."
     }
   ],
   "art": {

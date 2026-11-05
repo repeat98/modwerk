@@ -1,0 +1,1 @@
+- Site: when a module's USB package is kept at an older version than its card build, the module page and the sync dialog now say which version USB installs and why. Until now nothing told you that USB installs Play Modes 0.1.1 although the library lists 0.2.0 (#764).

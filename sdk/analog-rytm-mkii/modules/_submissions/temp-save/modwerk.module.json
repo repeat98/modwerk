@@ -1,0 +1,105 @@
+{
+ "schemaVersion": 3,
+ "id": "temp-save",
+ "name": "Temp Save",
+ "version": "0.1.0-experimental",
+ "machine": "analog-rytm-mkii",
+ "category": "system",
+ "exclusive": false,
+ "author": {
+  "github": "npp1993",
+  "credits": [
+   "Nathaniel Pavel"
+  ]
+ },
+ "maintainers": [
+  "npp1993"
+ ],
+ "presentation": {
+  "label": "TEMP SAVE",
+  "family": "Workflow",
+  "summary": "FUNC + YES overwrites the pattern's and kit's saved copies, the ones stock's reloads go back to; FUNC + NO brings both back.",
+  "overview": "Try something on the Rytm and get back to where you were. FUNC + YES saves the active pattern and its kit, performance and scene locks included, over their saved copies, with stock's own save. FUNC + NO reloads both. A save belongs to its pattern and kit: change either or load a project and FUNC + NO shows NO TEMP SAVE.",
+  "highlights": [
+   "One gesture for the pattern and its kit",
+   "Performance and scene locks come back with the kit",
+   "Screens that use YES or NO keep them"
+  ],
+  "usage": [
+   "Save with FUNC + YES before a risky edit, then FUNC + NO if it does not work out.",
+   "Save a good state mid-jam, tweak freely, and jump back while the pattern plays."
+  ]
+ },
+ "access": {
+  "location": "FUNC + YES and FUNC + NO on the main screen and the sound pages.",
+  "steps": [
+   "Hold FUNC and press YES: TEMP SAVED.",
+   "Change the pattern's trigs, or the sound.",
+   "Hold FUNC and press NO: RELOADED."
+  ],
+  "screenshots": []
+ },
+ "controls": [],
+ "compatibility": {
+  "releases": [
+   "1.74"
+  ],
+  "requires": [],
+  "conflicts": [],
+  "limitations": [
+   "FUNC + YES overwrites the pattern's and the kit's saved copies, the ones stock's reloads return to. A project save keeps both, apart from the edits; a power cycle keeps the kit's only.",
+   "A save lasts until the pattern or kit changes, a project loads or the power goes off.",
+   "With a trig held, both keys stay stock's. In running LIVE RECORDING, FUNC + NO erases locks as in stock."
+  ]
+ },
+ "platform": {
+  "kind": "elemod",
+  "core": "0.7",
+  "build": "build.json",
+  "events": [
+   "ev_tick",
+   "ev_project"
+  ],
+  "claims": [
+   "ui:FUNC + YES",
+   "ui:FUNC + NO"
+  ]
+ },
+ "resources": {
+  "memoryBytes": null,
+  "fastBytes": null,
+  "load": {
+   "display": "Not measured yet",
+   "method": "unmeasured",
+   "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+  }
+ },
+ "evidence": {
+  "tier": "none",
+  "moduleVersion": "0.1.0-experimental",
+  "sourceSha256": null,
+  "reports": [],
+  "hardware": null,
+  "verifiedBy": null
+ },
+ "tests": {
+  "report": "TESTING.md",
+  "summary": "Emulator and a functional pass on an Analog Rytm MKII."
+ },
+ "license": {
+  "spdx": "GPL-3.0-or-later",
+  "file": "LICENSE",
+  "declaration": "Original work by the author."
+ },
+ "media": [
+  {
+   "path": "media/thumbnail.svg",
+   "kind": "thumbnail",
+   "caption": "Temp Save thumbnail",
+   "alt": "Temp Save thumbnail: a pattern line with a saved point and a return arrow",
+   "credit": "npp1993",
+   "license": "GPL-3.0-or-later",
+   "source": "Original artwork by the author."
+  }
+ ]
+}

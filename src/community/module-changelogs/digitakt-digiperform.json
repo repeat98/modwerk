@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.1.2-experimental",
+    "date": "2026-11-02",
+    "changes": [
+      "Fixed the Perform page staying on screen when the Digitakt's screen saver turns the display off. The screen now goes fully dark, and a key press wakes it.",
+      "On OS 1.53 the unit may show the normal TRIG page after waking instead of the Perform page; tap TRIG again to come back."
+    ]
+  },
+  {
     "version": "0.1.1-experimental",
     "date": "2026-10-30",
     "changes": [

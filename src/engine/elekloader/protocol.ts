@@ -7,13 +7,13 @@ export type {
 } from '../../../vendor/elekloader/kit/src/kit/protocol.ts'
 export type BuilderMachine = 'digitakt' | 'digitakt-ii' | 'digitone' | 'analog-rytm-mkii'
 
-// Digitakt/Digitone mk1 downloads retain their owner-approved parity gate. Digitakt II (OS 1.17) and Analog Rytm MKII (OS 1.74) are separate
-// research previews: their builder is wired for local checks, but downloads remain disabled pending qualification/review.
+// Digitakt/Digitone mk1 downloads retain their owner-approved parity gate; Analog Rytm MKII (OS 1.74) downloads are owner-approved too.
+// Digitakt II (OS 1.17) is a research preview: its builder is wired for local checks, but downloads remain disabled pending qualification/review.
 export const DIGI_DOWNLOADS_ENABLED: Readonly<Record<BuilderMachine, boolean>> = {
   digitakt: true,
   'digitakt-ii': false,
   digitone: true,
-  'analog-rytm-mkii': false,
+  'analog-rytm-mkii': true,
 }
 
 export function digiDownloadsEnabled(machine: string): boolean {

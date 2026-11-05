@@ -40,8 +40,8 @@ const OCTATRACK: Starter[] = [
 ]
 
 const DIGI: Starter[] = [
-  { id: 'machine', title: 'A new machine', summary: 'A new SRC machine in one of the free machine slots.', guides: ['machines.md'], example: 'Digitakt: Digi Poly, Digi Mono, SOPHIE',
-    task: 'Build a new SRC machine in one of the free machine slots (core_machines, slots 4–7): {idea}\nClaim the slot in platform.claims and keep the stock machines untouched.' },
+  { id: 'machine', title: 'A new machine', summary: 'A new SRC machine under a free machine id.', guides: ['machines.md'], example: 'Digitakt: Digi Poly, Digi Mono, SOPHIE',
+    task: 'Build a new SRC machine under a free machine id (core_machines, ids 4–127): {idea}\nClaim the id in platform.claims and keep the stock machines untouched.' },
   { id: 'effect', title: 'An effect', summary: 'Process the audio at the render hooks, such as an EQ or a saturator.', guides: ['effects.md'], example: 'Digitakt: Digi EQ',
     task: 'Build an audio effect on the render hooks (ev_render_in / ev_render_out): {idea}\nStay inside the shared memory and fast SRAM budgets and say how much of each it uses.' },
   { id: 'sequencer', title: 'A sequencer tool', summary: 'Ratchets, generative steps or anything else that acts in time.', guides: ['sequencing.md'], example: '',
@@ -117,12 +117,32 @@ const PORT_PLACEHOLDER = '<name the module and link its source>'
 /** The shared guides every module skill reads; prompts add only the files for their starter. */
 const GENERAL_READING = ['AGENTS.md', 'docs/DEVELOPER_WORKFLOW.md', 'docs/ADD_A_MODULE.md', 'docs/module-guides/README.md']
 
+/** The Zoom ZDL pedals' own reading: where the work stands and the proposed module contract. */
+const ZOOM_READING = ['docs/ZOOM_MULTISTOMP.md', 'docs/ZDL_MODULE_CONTRACT.md']
+
 /** The files a module starter needs read, relative to the repository root. */
 export function starterReading(machine: StarterMachine, starter: Starter) {
   const files = [...GENERAL_READING, ...starter.guides.map(guide => 'docs/module-guides/' + guide)]
   return machine === 'octatrack' ? [...files, 'sdk/octabam/AGENTS.md'] : DEVICES_BY_ID[machine]?.sdk
     ? [...files, DEVICES_BY_ID[machine].sdk!]
-    : [...files, 'docs/ADD_A_MACHINE.md', 'sdk/machines/README.md', 'sdk/machines/' + machine + '/machine.json']
+    : [...files, 'docs/ADD_A_MACHINE.md', 'sdk/machines/README.md', ...(DEVICES_BY_ID[machine]?.family === 'zoom' ? ZOOM_READING : []), 'sdk/machines/' + machine + '/machine.json']
+}
+
+/** The pedals MIDISTOMP, the Zoom base, runs on; the G1on series has none yet. */
+const MIDISTOMP_PEDALS: StarterMachine[] = ['zoom-ms-70cdr', 'zoom-ms-50g', 'zoom-ms-60b']
+
+/** Zoom pedals take effect files on their own firmware, so the Elektron road (OS rebuild, boot, core) does not apply; this says what does. */
+function zoomGuidance(machine: StarterMachine) {
+  return [
+    'Where the Zoom work stands: effects are .ZDL files the stock firmware loads, and the beta pedal page installs, removes and backs up effects over USB. What is missing is the `zdl` module contract (docs/ZDL_MODULE_CONTRACT.md, with its open questions) and the next open step of the plan in docs/ZOOM_MULTISTOMP.md#plan. Pick that step up rather than starting a parallel one, and check the agent board and open pull requests first.',
+    MIDISTOMP_PEDALS.includes(machine)
+      ? 'The base is Luca Matturro\'s MIDISTOMP (MIT). Its v2.0 is out (DSP limit 300, parallel routing, a shared transport), while Modwerk still pins an older revision in sdk/imports/. Moving the pin needs the stock updater on my computer, never in the repository or CI.'
+      : 'MIDISTOMP, the base of the MultiStomp pedals, does not run on this pedal, so its effects install on the stock firmware.',
+    'Anything Modwerk lists carries no stock Zoom code: not the knob handlers the project\'s linker still copies from stock effects, and no effect grafted onto or built from a stock one.',
+    'Test on my own pedal over USB through the pedal page and its link (src/engine/zoom/); Zoom Effect Manager stays the fallback install. Every write is persistent, so back the pedal up first and keep the recovery from its profile at hand.',
+    'For fast iteration without a pedal, use Ziddle (https://berbasoft.com/ziddle/), Berbasoft\'s Rust emulator and CLI for Zoom pedals. It is a developer tool: its results are never hardware evidence, and the site never offers it to musicians.',
+    'The Plus and Four pedals (MS-70CDR+, G1 FOUR and others) load ZD2 effects and are not covered here.',
+  ]
 }
 
 export function starterPrompt(machine: StarterMachine, starter: Starter, idea = '', login = '', repository = REPOSITORY) {
@@ -163,6 +183,7 @@ export function updatePrompt(machine: StarterMachine, module = '', idea = '', is
 function integrationPrompt(machine: StarterMachine, idea = '', login = '', module = '', issue = '', repository = REPOSITORY) {
   const device = DEVICES_BY_ID[machine]
   const name = deviceTitle(device)
+  const zoom = device.family === 'zoom'
   return withSetup([
     'I am working in my Modwerk fork. Help me research and prepare instrument support for the ' + name + '.',
     'Goal: ' + (idea.trim() || '<describe the module or instrument support you want>'),
@@ -177,7 +198,8 @@ function integrationPrompt(machine: StarterMachine, idea = '', login = '', modul
     '',
     'Instrument integration workflow:', ...INSTRUMENT_STEPS.map((step, index) => `${index + 1}. ${step.title}: ${step.summary}`),
     '',
-    'Use Node 24 and npm ci. Establish what is known about the stock format, exact rebuild, recovery/boot, hooks/core and module support. Separate confirmed evidence, public research and unknowns. Propose a scoped integration plan and wait for my approval before implementation. Shared SDK/builder changes need owner review; the automatic author-update path does not apply to instrument integration.',
+    ...(zoom ? [...zoomGuidance(machine), ''] : []),
+    'Use Node 24 and npm ci. Establish what is known about ' + (zoom ? 'the effect format, loading on the stock firmware, recovery, the base' : 'the stock format, exact rebuild, recovery/boot, hooks/core') + ' and module support. Separate confirmed evidence, public research and unknowns. Propose a scoped integration plan and wait for my approval before implementation. Shared SDK/builder changes need owner review; the automatic author-update path does not apply to instrument integration.',
     'Follow docs/ADD_A_MACHINE.md for profile, platform, toolchain, compatibility and browser integration. Keep stock firmware and extracted bytes private; do not mark unsupported milestones done or invent hardware results. Regenerate the machine registry through npm run machines:generate; never edit generated files by hand.',
     'Only after the platform is integrated and qualified may we scaffold, build or publish a module; the module workflow in docs/DEVELOPER_WORKFLOW.md applies from then on. It does not establish present support.',
   ], repository, login)

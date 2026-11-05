@@ -28,7 +28,7 @@ Handlers use the C calling convention: arguments on the stack, d0–d1/a0–a1 f
 | `ev_enc` | an encoder event | `int f(brain, EncoderEvent*)`; nonzero takes it |
 | `ev_settings` | building the SETTINGS menu | `void f(menu)`; add rows with `core_additem(menu, row)` |
 | `ev_render_in` / `ev_render_out` | entry and exit of the audio render | `void f(void)` |
-| SRC machines | the table `core_machines`: new SRC machines in slots 4–7, treated by the OS like the stock machine they stand in for | — |
+| SRC machines | the table `core_machines`: new SRC machines take ids 4–127, treated by the OS like the stock machine they stand in for | — |
 
 A site the core does not expose is proposed as a core hook before the mod, never patched by it ([propose a hook](../../../docs/module-guides/README.md#propose-a-hook-on-the-digitakt-digitone-or-digitakt-ii)).
 
@@ -36,7 +36,7 @@ A site the core does not expose is proposed as a core hook before the mod, never
 
 - **Shared mod memory:** 128 KiB of DDR (0x47BE0000–0x47C00000) for the core and every mod's code and data.
 - **Fast SRAM:** 2,304 bytes (0x8000F700–0x80010000) for time-critical code.
-- **SRC machine slots:** 4–7, one per new machine.
+- **SRC machine ids:** 4–127, one per new machine, claimed as `machine:<id>` (STRING uses 8, Digi Mono 20–26, RAM Machines 120–121). Kits store the id, so keep it once released.
 
 Claim named resources (a machine slot, a SETTINGS row, a SysEx id, a +Drive path) in `platform.claims`; two mods may never claim the same one. Save a mod's state only in a record it owns (a tagged kit tail, pattern padding), never in bytes another mod saves ([a module owns what it saves](../../../docs/module-guides/README.md#cross-compatibility)).
 

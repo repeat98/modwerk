@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "module": "digitakt/euclidean",
+  "version": "1.1.6",
+  "date": "2026-11-04",
+  "upstream": {
+    "repository": "https://github.com/sumedho/digirequests",
+    "revision": "46e19aa75835ab22213758ce0653c66e519a76e0",
+    "path": "modules/euclidean",
+    "license": "GPL-2.0-or-later"
+  },
+  "changes": [
+    "Fixes #1158: FUNC + turning D off (conversion to ordinary trigs) no longer clicks the audio outputs. The Euclidean lock raises the interrupt mask to level 4 instead of 7, so the level-5 audio render keeps running; only the lock function (src/release-*/euclidean.c) changes.",
+    "Source-only exports compiled with the pinned GCC 16.2 toolchain; every one of the 63 feature selections per OS links with Core 2.1 to the native Elekloader MAIN byte for byte."
+  ],
+  "runtimeSourceSha256": "88c5e2181d06853f435766194219fda9eca8a229fbe6202a6e1183f9a5c19a7f",
+  "packages": [
+    {
+      "os": "1.53",
+      "path": "sdk/imports/packages/euclidean/euclidean-1.1.6-os1.53.elemod",
+      "sha256": "98888434af4c54c851758de61a775672e02dceca62e6b66f93c041df8effd8f1"
+    },
+    {
+      "os": "1.54",
+      "path": "sdk/imports/packages/euclidean/euclidean-1.1.6-os1.54.elemod",
+      "sha256": "78427e214f70528cdbaecb60d8860ec7c9a9559594b894f6c693968082744856"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/digitakt/modules/euclidean/evidence/modwerk-source-parity.json",
+  "requires": [
+    "dt-support"
+  ]
+}

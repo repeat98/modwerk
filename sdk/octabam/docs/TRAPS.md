@@ -949,6 +949,24 @@ into a register and `jmp (rN)`. Dispatch entries must keep `init < proc <= init 
 
 ## Traps on the ColdFire / DRAM side (the platform work, 9–10 Sep 2026)
 
+<a name="trap-part-engine-context"></a>
+### Audio and MIDI have independent playing-Part latches
+
+**Symptom:** a MIDI consumer reads the wrong Part while the audio and MIDI
+engines are on different track contexts. Fixtures that put both engines on
+one Part conceal the error.
+
+**Cost:** the native Part service migration exposed an audio-latch lookup in
+the old shared MIDI helper; Loopback had separately implemented the MIDI lookup.
+
+**Fix:** STORE exposes separate `store_part_audio_context` and
+`store_part_midi_context` readers. MIDI clients use the latter. Each falls back
+to the applied bank/Part only while its own track is unlatched.
+
+**Gate:** `verify_store_part.py` seeds different audio and MIDI contexts,
+checks all eight tracks and tests each fallback independently.
+
+
 <a name="trap-watch-alias"></a>
 
 ### A write-watch on cached addresses is blind to a clear through the uncached alias
@@ -1165,6 +1183,21 @@ interrupt-mask restore that precedes the data it protects is a window;
 before blaming names or parsers, ask what the IRQ handler reads while the
 producer is mid-update.
 
+**Seen again, 1–4 Nov 2026:** `hooks-free-loop` (FREE LOOP beside
+REC_TRIG_MUTE and REC THRESHOLD, no ATA WRITE GUARD) hung REC THRESHOLD's
+`high` and `low` port scenarios at 3.1 s, deterministically, while the same
+image with two `nop`s in the icon drawer chain passed. Bisecting the bridges,
+a byte diff, a write watch and the DSP frame trace all pointed at timing
+before the CPU's state did: frames stopped because the ColdFire took no
+interrupt at all, SR `0x2510`, looping at `0x4001551e/24/26`. The test remix
+now carries ATA WRITE GUARD. Rule: a test remix whose gates write the card
+carries ATA WRITE GUARD, or a timing shift anywhere can land in this window;
+`hooks`, `free-loop` and `rec-threshold` carry it since 4 Nov 2026. When a port run's
+frames stop, read the ColdFire's PC and SR at that point first (the reading
+that ended this hunt): the port prints them as `stall cpu  :` when a live
+script stops early, and `OT_STALL_CPU=1` adds the next 64 PCs (PR #1024). A
+loop at `0x4001551e` with the mask at 5 is this trap.
+
 
 <a name="trap-id-clamp"></a>
 
@@ -1206,6 +1239,22 @@ LCD pixels with normal-value references, exercises reholding without a
 knob turn, and checks the other windows. A lock-byte assertion alone
 cannot establish that a user can see the edit.
 
+<a id="trap-page-plane"></a>
+### The page plane `0x46c7e0ea` is not the screen
+
+SCREEN copied the plane every drawer writes and passed its gate,
+which compared the reply with that same plane. On Sam's MKII (4 Nov
+2026) it showed the SRC, AMP, LFO, FX1 and FX2 pages and none of MIXER,
+the PROJECT menu, a SETUP window, a popup, BRAIN or the REC MATRIX
+editor. The plane is the page layer only: the flush `0x40013abc` ORs it
+and every window layer (list at `[0x460babf0]`) into the back buffer
+`[0x400b9710]`, sends the diff, and swaps it with `[0x400b970c]`, which
+then holds the frame on the LCD (`docs/firmware/PANEL.md` section 9).
+Read the screen from `[0x400b970c]`, and check it against the panel
+UART stream decoded by `tools/panel/panel_link.py`, not against the
+plane. `verify_screen` does this with the boot popup and MIXER up,
+on an empty card.
+
 <a name="trap-movem-sp"></a>
 
 ### `moveml %sp@` is the mode-2 form: it stores at sp and leaves sp unchanged
@@ -1219,7 +1268,7 @@ the restore reads the same wrong place. The four cfgsel responder stubs
 (usbaudio.s) saved registers this way across the cfgsel re-run
 (usb_cfg_ready 0: brain, block not valid yet) and corrupted the
 control-transfer handler's frame. The fix is the module's lea-framed
-idiom (usbmidi_rx.s): `lea %sp@(-44),%sp` before the moveml pair and
+idiom (usbmidi.s): `lea %sp@(-44),%sp` before the moveml pair and
 `lea %sp@(44),%sp` after — the movem writes into the reserved space and
 sp round-trips. verify_usb's runtime rows exercise cfgsel with the block
 invalid (the brain rows) and valid. Rule: a register-save movem through
@@ -1347,8 +1396,10 @@ is the measurement, and a 64-id build is the case to watch: its
 `idspace.CAVE` limit sits below zero bytes the id tables fill only at the
 end). Gate: none of its own; the refusal names both regions.
 
-The run's own first bytes are not free either: the stock DELAY reads the 16
-past its coefficient table (`stock.DELAY_TABLE_END`, issue #771), and the
+The run's own bytes are not free either: the stock DELAY reads the whole run
+as entries 508..1023 of its coefficient table (`stock.DELAY_TABLE_END`, issues
+#771 and #1007; the 16 bytes past the curve until 4 Nov 2026; all but SCALE
+QUANTIZER's pinned tail at `0x400d2ca8` is kept now), and the
 first form of this fix put the cave on them in a selection listing DELAY (the
 kept-bytes check refused it: `DELAY keeps 0x400d24d0`). The overflow cursor
 now starts past every byte a selected module keeps stock in the run.
@@ -1372,6 +1423,25 @@ address from `_exports` with one from the runtime, ask whether the staging
 repoint has run yet. Gate: the comparison itself, now that both sides are the
 runtime's.
 
+<a name="trap-staging-coincidence"></a>
+
+### A runtime's own bytes can spell the clones' staging range
+
+**THE FINAL SCAN FOR STAGING ADDRESSES READS EVERY EVEN OFFSET, SO TWO
+UNRELATED HALFWORDS CAN MAKE ONE.** PR #989 grew CC MAP by 14 bytes and
+octabam's build refused with `the DRAM runtime still holds a staging
+address`. Nothing was stale: OCTA303's `o3_over` table is `.long o3_names`
+then `.short 0x05f`, the shift put `o3_names` at an address with low half
+`0x4011`, and the scan read `0x4011005f` against staging
+`0x40110000..0x40110820`. The refusal named no word, so a CI cycle went to
+adding the names. Fix: the refusal prints each word, its runtime address and
+the symbol under it; on a hit the build runs again with staging 64 KiB
+higher (`OCTABAM_STAGE_SHIFT`, twice at most). A stale pointer comes from
+the link and moves with staging; a coincidence does not. The image does not
+depend on where staging was. Rule: a scan of raw bytes for a value range
+needs a second reading before it refuses. Gate: the scan itself, now
+re-run against a moved range.
+
 <a name="trap-machine-clamp"></a>
 
 ### The machine list's key handlers clamp the cursor to 5
@@ -1394,3 +1464,143 @@ the list (a byte search for the clamp found all five), and in a port script
 hold a key only as long as you mean it to repeat. Gate: `verify_hooks`
 (installed: the ten pokes) and `verify_analog_bassdrum_ui` on
 `hooks-machines` (row 5 reached from the bottom of seven).
+
+<a id="trap-resident-import-exports"></a>
+### Resident relinking must not publish imported staging symbols
+
+A remix combining MIDI Part State and EUCLID failed the linked label-formatter
+byte check: EUCLID's final descriptor address was replaced by its earlier
+staging address. The resident unit's second link included imported `--defsym`
+symbols in its global `nm` output. Publishing those as its own exports overwrote
+the runtime provider's final `CLONE_*` addresses.
+
+Keep imported symbols available to the resident link, but exclude them when
+publishing its exports. `make check REMIX=midi-follow-events` exercises the
+combination, including the build's formatter-byte and installed-image checks.
+
+<a name="trap-dma-arm"></a>
+
+### Narrowing the port's DMA arm rule broke a gate whose image never moved
+
+**A CHANGE TO THE PORT CAN FAIL A GATE THAT CI THEN REPORTS AS A CACHED PASS.**
+`716e682` (28 Oct 2026) narrowed `dsp56300.patch`'s arm rule: a DMA channel
+armed with its request already raised fired at once only for the two host
+interface sources, where `ot_emu` had set `setDmaTriggerOnArm` for every source
+(the Octatrack arms its ESAI channels long after the ESAI raised the request).
+`verify_remix_switch` passed with both rules; `verify_rec_threshold`'s `late`
+scenario did not: the recorder took the input from a stale page, and the take
+held no numbered sample within the detection frame (first sample `None`;
+10 with the old port, the same image and script). Nothing showed it for a day:
+the gate's image and inputs had not moved, so CI reported the gate cached, and
+it surfaced only when REC THRESHOLD joined `octabam` (#964). Found by building
+the port at `8ccdd843`, at `9490cce` and at main against one image. Fix: the
+revert of `716e682`. Rule: a change to `tools/patches/` or `tools/emu/` is a
+change to every port gate's instrument -- run the port gates of the modules
+whose behaviour leans on the changed rule (here, anything reading the ESAI's
+input pages), not only the one the change was made for. Gate:
+`verify_rec_threshold` and `verify_remix_switch`, both under the reverted port.
+
+<a name="trap-cf-frame"></a>
+
+### A ColdFire save frame sized for the wrong register count overwrites the return address
+
+**A COLDFIRE SAVE FRAME SIZED FOR THE WRONG REGISTER COUNT OVERWRITES THE
+RETURN ADDRESS.** ColdFire `movem` has no pre-decrement or post-increment
+form, so a stub opens `lea -N(%sp),%sp / movem.l regs,(%sp)` and closes the
+same way, and N is 4 per register. PATTERN MUTE's first build used 28 for
+eight registers and 32 for nine: the stub's `rts` returned into data and the
+port stopped with `unimplemented opcode 00ff at 401715c1` (odd PC) during
+LOAD PROJECT, caught by `verify_set`, not by the stub's own gate. The same
+build hit three more ISA-C restrictions the assembler reports as `operands
+mismatch`: `eor.l <mem>,Dn` (eor takes Dn as the source), `st <mem>` (Scc
+takes Dn) and `move.b #imm,<abs.l>`. Rule: count registers, then multiply by
+four, once, in a comment next to the frame.
+
+<a name="trap-unused-bytes"></a>
+
+### An unused-looking project byte can be rewritten on save
+
+**AN UNUSED-LOOKING PROJECT BYTE CAN BE REWRITTEN ON SAVE.** In the test
+project the four bytes after the pattern chunk's flag byte were zero in all
+256 patterns, and offsets 95, 2150 and 2200 of every audio track record were
+zero in all 2,048 records. A SAVE PROJECT round trip with marker bytes there
+returned `0xff 0x00 0x00` for the first three (the OS writes them from its own
+fields) and `0xff` / `0xe9` / `0xe9` for the others. Offsets 18, 40 and 85 of
+the audio track record came back unchanged in all 128 records of the bank.
+Rule: zero everywhere is not proof a byte is spare; write a marker into the
+file, load, save, and diff (`tools/verify/verify_pattern_mute.py` does it for
+byte 40).
+
+<a name="trap-scenario-watch"></a>
+
+### `--watch-mem` given to a `--scenario` child logs nothing
+
+**`--WATCH-MEM` GIVEN TO A `--SCENARIO` CHILD LOGS NOTHING.** A forked scenario
+accepted `--watch-mem 0x80000008,4` and reported `0 write(s)` while the same
+script run directly logged the writes with their PCs. Measure writer PCs with a
+direct run (one script, one process); use scenarios for `--mem-dump` end
+states.
+
+<a id="trap-strcat-bound"></a>
+
+### A shared string helper's bound cut the load's path
+
+**A SHARED STRING HELPER'S BOUND CUT THE LOAD'S PATH.** REMIX SWITCH's
+`strcat` stops a result at 30 bytes, sized for the dialog's line, and
+`load_file` built the open path with it: `"/BRAIN/REMIXES/"` (15) plus a file
+name over 14 characters lost its tail, and the open of the cut name returned
+an error (`IO ERROR`). Under the port, `STOCK 1.40C.RMX` and a plain
+`ABCDEFGHIJK.RMX` (15 characters) both failed with the same 13 checks, while
+`STOCK 14.RMX` (a space), `STOCK1.40C.RMX` (a second dot) and
+`ABCDEFGHIJ.RMX` (14 characters) loaded; the dump of `path` read
+`/BRAIN/REMIXES/ABCDEFGHIJK.RM`. The gates missed it because every fixture
+name was 12 characters or fewer. Rule: a bound written for one caller is not a
+bound for the others; size each buffer's bound at the buffer, and give a
+gate fixture a name at the longest the build writes (`make image` writes up to
+19 characters).
+
+<a id="trap-midi-only-frame-fixture"></a>
+### A MIDI-only fixture can leave audio frame checks with no playing Part
+
+A short Scenes P2 frame probe on a MIDI-only project read unchanged knob values:
+all audio tracks' native playing-Part pointers were `0xff`, so the scene pass
+correctly skipped them. The probe ended before its injected step-2 trig. In an
+EUCLID composition the old MODE/TIME assumptions also did not describe the
+selected effect's page-two controls.
+
+`verify_scenes_p2.py` prepares the disposable EUCLID fixture with T1 active on
+step 1 and checks RATE/MIX as its discrete/continuous pair. Knob values are kept
+away from the edit clamp. The supplied project is unchanged. Check the playing
+Part and the selected module's real parameter layout before interpreting a
+constant frame value as a failure of event dispatch or scene interpolation.
+
+The same MIDI-only input exposed an unstated BRAIN fixture dependency: its
+save/menu probes expected T1 FX2 to be DELAY SERVER, but only seeded T2 FX1.
+Saving T1's actual effect correctly produced no BusDelay record. `verify_brain.py`
+now seeds both required effects in its disposable copy. Prepare every effect
+whose identity a later assertion assumes, rather than inheriting it from the
+operator's project.
+Its MIDI logging probe also explicitly enables program-change reception on
+channel 1 in a separate copy before asserting that the message queues a pattern.
+
+BRAIN's gate builds its own `octabam-bus` image, so it belongs to the shared
+isolated stage. Running it as an image gate replaced the selected Follow image
+and made later Scales/Loopback gates fail on missing symbols. Declare gates that
+build another image as isolated; `verify-remix` then restores the selected image
+before its image gates run.
+
+<a id="trap-file-buffer"></a>
+
+### A file opened through the stock layer keeps unwritten bytes in the buffer you gave it
+
+**A FILE OPENED THROUGH THE STOCK FILE LAYER KEEPS UNWRITTEN BYTES IN THE
+BUFFER YOU GAVE IT.** `F_OPEN(fo, path, mode, buf, len)` takes the caller's
+buffer as the file's own. PLOCKS P2's empty-file copy wrote its 16-byte header,
+then filled that same buffer with 0xff for the body, and the header reached the
+card as 0xff (measured under the port, 2 Nov 2026): so a write smaller than the
+buffer waits there (when the stock layer flushes it is inferred, not traced).
+Every empty `p2lkNN` file on a unit's card had no header, the next load refused
+them all, and STORE's prompt came up at every load. Rule: while a file is open, its buffer belongs to the
+file layer; write from anything else. **Gate:** `verify_plocks_p2`'s save
+case stages a bank with no `p2lkNN.work` and checks the header SAVE PROJECT
+gives its `.strd`.

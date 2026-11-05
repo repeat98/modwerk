@@ -1,0 +1,1 @@
+Development: `npm run fx:audit -- check` now notes a stereo effect whose two sides cancel when summed to mono, such as one side with its polarity flipped or a delay between the sides. It compares each tone's mono sum with its sides, notes a loss below -6 dB (`--mono-limit`), and the effects guide says what to do about it.
