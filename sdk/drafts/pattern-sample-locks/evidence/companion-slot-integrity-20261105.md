@@ -8,13 +8,13 @@ This is a deterministic host regression over the production native commit body. 
 - Candidate native-source inventory fingerprint: `7ea0fbdf317bfdab6a82b22869c7029ba23901cd27a3337a4bdaf8f8beeb7e69` (Node 24 repository helper).
 - `native.c` SHA-256: `a5d11e7320a91b00457fbe1f89453e8a432e65877e92af0aa64705f6b2a6050e`; `engine.c`: `a41ace651c2ff9f72d43e783d6121c64f51fe6d21e49bc60cf3b26a97ebdaa38`; `engine.h`: `d1c067250f8bc555944303fb526cd9ec22c281c0f4773c95ed6fbdd332925ca1`.
 - Existing address-mapped commit test template SHA-256: `ce5518562a966e72f054562f2325e107dfd68da4215b6d438e8401e039a39d04`.
-- Private fixture helper: `/Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/companion-integrity-20261105/all31_dense_clear.py`, SHA-256 `1b5a19803a5e2718798cc250200212a495652d19eec1fbf77d760e7bb6f2d1f7`.
+- Private fixture helper: `~/.cache/psl-source-bound-profile-20261103/companion-integrity-20261105/all31_dense_clear.py`, SHA-256 `1b5a19803a5e2718798cc250200212a495652d19eec1fbf77d760e7bb6f2d1f7`.
 - Host compiler: Apple clang 17.0.0. The existing test template extracted the production `psl_write_step` and `psl_commit_locked` bodies, translated only target addresses to isolated arrays, and compiled them with `engine.c`, `-Wall -Wextra -Werror`, AddressSanitizer and UndefinedBehaviorSanitizer. The helper substituted a fixture-only C `main`; module source and tests were not edited.
 
 Reproduction command:
 
 ```sh
-python3 -B /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/companion-integrity-20261105/all31_dense_clear.py
+python3 -B "$HOME/.cache/psl-source-bound-profile-20261103/companion-integrity-20261105/all31_dense_clear.py"
 ```
 
 The helper verifies the bound package, native files and test-template hashes before each run; its compiled executable and arrays live only in a temporary directory.

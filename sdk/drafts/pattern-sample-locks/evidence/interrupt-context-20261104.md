@@ -9,7 +9,7 @@ This is a stock-free, offline source/build audit, not a complete stack bound or 
 - Base `crash.c` declares the vector table at `0x40000000` and, on its first `sys` tick, writes exception slots `2, 3, 4, 8, 11, 14, 61` to its crash handler. This is a fatal exception-recovery path, not evidence for the ordinary asynchronous interrupt-vector table. `crash.s` raises IPL 7 and soft-resets rather than returning to the interrupted task.
 - Other base sources name INTC0 source 37 for the panel parser (`boot.c`) and source 36 for the USB-MIDI framer (`usbmidi_rx.s`), which the source places at the USB interrupt's level 4. `dsp.c` can mask the DSP frame source through INTC0 CIMR. These are source-level declarations and control paths, not a proof of the live vector-to-handler mapping or current interrupt-controller configuration.
 
-The five source entries missing from the earlier local audit are in the existing external Elekloader checkout `/Users/weiyun.wang/.cache/modwerk-upstream/elekloader`, at the exact proof-pinned commit `3b31ef3c0e43c810e3acd0be6257e2484b20fc40`; the remote is the pinned upstream and its tracked tree is clean. Each body matched its `proofs.json` digest before inspection: `elekloader/README.md` maps to `mods/core-ot/README.md` (`bbce124b221ac9db9124e78f4a3b5c5c9af01a26bf75d19809b0d3cd22bd94d6`); `elekloader/bus.s` to `mods/core-ot/bus.s` (`43bbaa2a5949fe2ab1f0e7fae03b8706fc94c65b39c2c3b3bf0b66feea55f0f2`); `elekloader/core-ot.s` to `mods/core-ot/core-ot.s` (`a7344fd97d97dcbf5472f7615aa311f09e62c400342fac7f646949e423e8de3d`); `elekloader/gate.s` to `mods/core-ot/gate.s` (`d2981fef0b8132eabe21893e85fc62ef704b188378dc5b72e9caed88c29def50`); and `elekloader/mod.json` to `mods/core-ot/mod.json` (`d08358f2e39e02b1e8bfaf17db2b86d5ca97d15a4fd681ce44df25f5c3bea43c`). No upstream source was copied into Git.
+The five source entries missing from the earlier local audit are in the existing external Elekloader checkout `~/.cache/modwerk-upstream/elekloader`, at the exact proof-pinned commit `3b31ef3c0e43c810e3acd0be6257e2484b20fc40`; the remote is the pinned upstream and its tracked tree is clean. Each body matched its `proofs.json` digest before inspection: `elekloader/README.md` maps to `mods/core-ot/README.md` (`bbce124b221ac9db9124e78f4a3b5c5c9af01a26bf75d19809b0d3cd22bd94d6`); `elekloader/bus.s` to `mods/core-ot/bus.s` (`43bbaa2a5949fe2ab1f0e7fae03b8706fc94c65b39c2c3b3bf0b66feea55f0f2`); `elekloader/core-ot.s` to `mods/core-ot/core-ot.s` (`a7344fd97d97dcbf5472f7615aa311f09e62c400342fac7f646949e423e8de3d`); `elekloader/gate.s` to `mods/core-ot/gate.s` (`d2981fef0b8132eabe21893e85fc62ef704b188378dc5b72e9caed88c29def50`); and `elekloader/mod.json` to `mods/core-ot/mod.json` (`d08358f2e39e02b1e8bfaf17db2b86d5ca97d15a4fd681ce44df25f5c3bea43c`). No upstream source was copied into Git.
 
 With all 233 proof source hashes now matched, the exact upstream core files show that `core-ot.s` is a boot copier and does not install VBR or interrupt vectors. `mod.json` contributes one `jsr core_frame` call in the stock frame-interrupt tail, and `bus.s` identifies the interrupt as vector `0x41`, level 5. The proof records zero linked `ev_frame` callback entries (four bytes per entry), corroborated by the zero `ev_frame_n` symbol. For this empty table, the dispatcher takes its empty-table path, executes no indirect callback, recomputes the tail-test condition, and returns to the stock tail. The call adds a **four-byte temporary return-address contribution** above the stack pointer at that call site; the normal return consumes it, leaving the same stack pointer for the resumed stock code. This finite segment does not bound the interrupt as a whole: stock vector entry and exception-frame use, any task-to-interrupt stack transition, stock ISR prologue/body/epilogue and callees, companion-provided callbacks, and higher-priority nesting remain outside it. The base source scan finds one explicit vector-table assignment (the crash exception patch) and no VBR install reference; it cannot establish the stock firmware's live VBR.
 
@@ -31,28 +31,28 @@ Closing the static bound still requires contracts for every dynamic callback rea
 
 ## Reproduction and self-checks
 
-A private helper checks the current base `MAIN.raw` hash, all 233 proof-listed source hashes, the clean pinned external checkout, the bounded empty-table frame dispatcher, RTOS model source hashes, and the exact private package and native-source fingerprint. It prints no image bytes or source excerpts. The helper is outside Git at `/Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261104/audit_interrupt_context.py`, SHA-256 `fda28ceafb823ee69e267648ff0375962c00cec098f03fd3e4bcb451c1048668`.
+A private helper checks the current base `MAIN.raw` hash, all 233 proof-listed source hashes, the clean pinned external checkout, the bounded empty-table frame dispatcher, RTOS model source hashes, and the exact private package and native-source fingerprint. It prints no image bytes or source excerpts. The helper is outside Git at `~/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261104/audit_interrupt_context.py`, SHA-256 `fda28ceafb823ee69e267648ff0375962c00cec098f03fd3e4bcb451c1048668`.
 
 ```sh
-python3 /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261104/audit_interrupt_context.py \
+python3 "$HOME/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261104/audit_interrupt_context.py" \
   "$PWD" \
-  /Users/weiyun.wang/.cache/psl-current-base-workspace/current \
-  /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/stock-bound-20261104/public-integration-80f442d5-container/pattern-sample-locks-0.1.8-public-path.mwrm \
-  /Users/weiyun.wang/.cache/modwerk-upstream/elekloader
-shasum -a 256 /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261104/audit_interrupt_context.py
+  "$HOME/.cache/psl-current-base-workspace/current" \
+  "$HOME/.cache/psl-source-bound-profile-20261103/stock-bound-20261104/public-integration-80f442d5-container/pattern-sample-locks-0.1.8-public-path.mwrm" \
+  "$HOME/.cache/modwerk-upstream/elekloader"
+shasum -a 256 "$HOME/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261104/audit_interrupt_context.py"
 ```
 
-The helper passed: the main-image hash and all 233 source hashes matched (228 repository files, five external upstream files); the upstream checkout was clean at the pinned commit; one vector-table assignment remained (the seven crash exception slots); no VBR install reference was found in the base proof sources; and the exact package/source fingerprints remained unchanged. A second private helper at `/Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105/audit_frame_hook.py`, SHA-256 `65acf6bb5e30bbf384033b58b3c86116779758476ba48314d9fcbfb0f3879f6`, reruns that preflight, verifies the pinned frame source/recipe and zero-entry linked table, and proves the four-byte peak with zero net stack change at return. Its four self-check cases passed: the exact path, rejection of a stack-push mutation, rejection of a missing return, and refusal to bound a nonempty callback table. No firmware, extracted bytes, upstream code, disassembly, memory dump, or helper artifact is committed.
+The helper passed: the main-image hash and all 233 source hashes matched (228 repository files, five external upstream files); the upstream checkout was clean at the pinned commit; one vector-table assignment remained (the seven crash exception slots); no VBR install reference was found in the base proof sources; and the exact package/source fingerprints remained unchanged. A second private helper at `~/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105/audit_frame_hook.py`, SHA-256 `65acf6bb5e30bbf384033b58b3c86116779758476ba48314d9fcbfb0f3879f6`, reruns that preflight, verifies the pinned frame source/recipe and zero-entry linked table, and proves the four-byte peak with zero net stack change at return. Its four self-check cases passed: the exact path, rejection of a stack-push mutation, rejection of a missing return, and refusal to bound a nonempty callback table. No firmware, extracted bytes, upstream code, disassembly, memory dump, or helper artifact is committed.
 
 Run the deeper check with the same bound inputs:
 
 ```sh
-python3 /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105/audit_frame_hook.py \
+python3 "$HOME/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105/audit_frame_hook.py" \
   "$PWD" \
-  /Users/weiyun.wang/.cache/psl-current-base-workspace/current \
-  /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/stock-bound-20261104/public-integration-80f442d5-container/pattern-sample-locks-0.1.8-public-path.mwrm \
-  /Users/weiyun.wang/.cache/modwerk-upstream/elekloader
-shasum -a 256 /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105/audit_frame_hook.py
+  "$HOME/.cache/psl-current-base-workspace/current" \
+  "$HOME/.cache/psl-source-bound-profile-20261103/stock-bound-20261104/public-integration-80f442d5-container/pattern-sample-locks-0.1.8-public-path.mwrm" \
+  "$HOME/.cache/modwerk-upstream/elekloader"
+shasum -a 256 "$HOME/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105/audit_frame_hook.py"
 ```
 
 The deeper check reported `emptyHookPathPeakAddedStackBytes=4`, `emptyHookPathNetAddedStackBytesAtReturn=0`, and `syntheticMutationSelfTests=4/4 passed`; it prints no source excerpts or image bytes. This bounds the inserted dispatcher on the exact empty-table base only, not the surrounding stock ISR or a runtime set with other callbacks.
@@ -71,14 +71,14 @@ The unresolved vector-to-return indirect call sites are at `0x4000ab12`, `0x4000
 
 The pinned stock interrupt report assigns level 6 to eDMA frame channels and UART0/UART1, level 5 to the DSP frame handler, and vector `0x47` at level 7 to a halt path. Rooted base control flow contains reachable IPL-5 and IPL-7 writes: level 6 can therefore preempt during IPL-5 portions and is masked during the IPL-7 portion, while the edge-sensitive level-7 request is not masked by IPL 7 ([MCF54455 Reference Manual §3.2.9](https://www.nxp.com/docs/en/reference-manual/MCF54455RM.pdf)). The active source enables, pending bits, EPORT edge flags, and retrigger behavior remain live-state inputs; complete nested stack accounting also needs the eDMA/UART handlers and the possible level-7 entry. The exact base source contains no VBR install, and no current SR/SP/SSP/TCB or companion inventory was read. SDRAM/cache/arbitration/core timing inputs also remain absent, so this is not a chip-cycle or latency proof.
 
-The private analysis used GNU `m68k-elf-objdump` 2.47.20260726, rooted at the vector entry and restarted at otherwise missing call targets to validate instruction boundaries. The private helper `/Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105/audit_frame_isr_root.py` has SHA-256 `d1ee6a56cc2c95ba33111af6672011a9ed1ef05d6d625efd3962066d9ebb4996`; it emitted only counts and transfer addresses and passed five synthetic self-checks (branch reachability, unresolved indirect call, rejection of missing boundary, exact empty-table exception, and non-trapping TPF classification). All raw images and decoded listings remained in the private cache, outside Git.
+The private analysis used GNU `m68k-elf-objdump` 2.47.20260726, rooted at the vector entry and restarted at otherwise missing call targets to validate instruction boundaries. The private helper `~/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105/audit_frame_isr_root.py` has SHA-256 `d1ee6a56cc2c95ba33111af6672011a9ed1ef05d6d625efd3962066d9ebb4996`; it emitted only counts and transfer addresses and passed five synthetic self-checks (branch reachability, unresolved indirect call, rejection of missing boundary, exact empty-table exception, and non-trapping TPF classification). All raw images and decoded listings remained in the private cache, outside Git.
 
 Reconstruct the private runtime bytes from the proof-bound base and generate the listings with:
 
 ```sh
 PSL_ROOT="$PWD"
-PSL_BASE=/Users/weiyun.wang/.cache/psl-current-base-workspace/current
-PSL_AUDIT=/Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105
+PSL_BASE="$HOME/.cache/psl-current-base-workspace/current"
+PSL_AUDIT="$HOME/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105"
 python3 - "$PSL_ROOT" "$PSL_BASE" "$PSL_AUDIT" <<'PY'
 import hashlib, importlib.util, json, pathlib, sys
 root, base, audit = map(pathlib.Path, sys.argv[1:])
@@ -106,10 +106,10 @@ chmod 600 "$PSL_AUDIT"/*.objdump "$PSL_AUDIT/base-run-private.raw"
 ```
 
 ```sh
-python3 /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105/audit_frame_isr_root.py \
-  /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105/base-MAIN-private.objdump \
-  /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105/base-run-private.objdump \
-  /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105/frame-handler-rooted-private.objdump \
-  /Users/weiyun.wang/.cache/psl-current-base-workspace/current/MAIN.raw \
-  /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105/base-run-private.raw
+python3 "$HOME/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105/audit_frame_isr_root.py" \
+  "$HOME/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105/base-MAIN-private.objdump" \
+  "$HOME/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105/base-run-private.objdump" \
+  "$HOME/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105/frame-handler-rooted-private.objdump" \
+  "$HOME/.cache/psl-current-base-workspace/current/MAIN.raw" \
+  "$HOME/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261105/base-run-private.raw"
 ```

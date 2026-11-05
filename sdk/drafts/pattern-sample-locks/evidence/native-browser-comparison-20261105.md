@@ -79,7 +79,7 @@ Using Node 24.22.1, the ordinary command was run with the private original OS
 file:
 
 ```sh
-npm run module:verify -- pattern-sample-locks --os /Users/weiyun.wang/.cache/modwerk-pattern-sample-locks/stock/original-1.40C.bin
+npm run module:verify -- pattern-sample-locks --os "$HOME/.cache/modwerk-pattern-sample-locks/stock/original-1.40C.bin"
 ```
 
 It exited 1 at the first catalogue guard with:
