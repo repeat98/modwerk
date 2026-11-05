@@ -2,6 +2,9 @@
 // Stock routines on Analog Rytm MKII OS 1.74.
 
 #define PRESSED_ONCE_AT 0x40071fa0
+#define KEY_ID_AT 0x40071efc
+#define VIEW_SHOWN_AT 0x40078662
+#define TRIG_HELD_AT 0x400367c6
 #define FUNC_FLAG_AT 0x40071f90
 #define EVENT_TAKEN_AT 0x40071eac
 #define GRID_EDIT_AT 0x4003625c
