@@ -243,7 +243,9 @@ static unsigned pads_held;              // performances a pad or MIDI holds abov
 static int pot_rest;                    // the QPER knob where it last came to rest
 static int pot_last, pot_before;        // its last two values, a wobble's pair
 static unsigned short knob_touched;     // audio blocks left of the knob's turn
-static int knob_armed;                  // the knob or the linked pad moved in this LIVE RECORDING run
+static int knob_armed;                  // points left of the knob's one-pass take, 0 none
+static int knob_armed_pos;              // where the take had got to last block
+#define KNOB_BLOCKS 75                  // 0.05 s of audio blocks: a knob turn holds this long
 #define POT_DEAD 2                      // steps a turn must pass to start: a resting pot wobbles
 
 // Stock's message for one pot: this replaces the 6-byte lea at its start.
@@ -752,7 +754,7 @@ void qperf_render(void)
         if (pot && pot != pot_last) {
             int travel = pot != pot_before;
             if (knob_touched ? travel : pot - pot_rest > POT_DEAD || pot_rest - pot > POT_DEAD)
-                knob_touched = TOUCH_BLOCKS;
+                knob_touched = KNOB_BLOCKS;
             pot_before = pot_last;
             pot_last = pot;
         } else if (knob_touched && !--knob_touched) {
@@ -764,27 +766,39 @@ void qperf_render(void)
     // A move anyone else makes: the pads, the QPER knob, MIDI. A pad sends its
     // pressure only when it changes and a 0 when let go, so a performance a pad
     // left above zero is still held. On the linked performance the pad drives
-    // the knob's value too, so both count as the knob. Once the knob moves in a
-    // LIVE RECORDING run, the linked performances record what it plays, moving
-    // or not, until the run ends; before that, and with LIVE RECORDING off, the
-    // knob takes one over only while it turns.
+    // the knob's value too, so both count as the knob. A knob touch in LIVE
+    // RECORDING takes one pass: the linked performances record what the knob
+    // plays, moving or not, for one loop from the touch, then play it back;
+    // another touch starts another pass. Otherwise the knob takes one over only
+    // while it turns, and lets go as soon as it stops.
     rec = playing() && live_rec();
-    if (!rec)
+    pos = playing() ? position() : -1;
+    if (!rec || pos < 0) {
         knob_armed = 0;
-    else if (knob_touched)
-        knob_armed = 1;
+    } else if (knob_touched) {
+        knob_armed = perf_rec_steps(live_pattern_data()) * POINTS;
+        knob_armed_pos = pos;
+    } else if (knob_armed) {
+        int loop = perf_rec_steps(live_pattern_data()) * POINTS;
+        knob_armed -= ((pos - knob_armed_pos) % loop + loop) % loop;
+        knob_armed_pos = pos;
+        if (knob_armed < 0)
+            knob_armed = 0;
+    }
     for (p = 0; p < PERFS; p++) {
         unsigned short now = PERF_AMOUNT(p);
         int knob = known >> p & 1, wobble = knob && qperf_pot && now == (unsigned short)((qperf_pot - 1) << 7);
+        int moved = now != seen[p] && !wobble, held_now;
         if (now != seen[p] && (!wobble || !now)) {
             if (now)
                 pads_held |= 1u << p;
             else
                 pads_held &= ~(1u << p);   // let go, whoever wrote the 0
         }
-        if ((now != seen[p] && !wobble) || (pads_held >> p & 1) || (knob && (knob_armed || knob_touched))) {
+        held_now = pads_held >> p & 1;
+        if (moved || held_now || (knob && (knob_armed || knob_touched))) {
             seen[p] = now;
-            touched[p] = TOUCH_BLOCKS;
+            touched[p] = moved || held_now ? TOUCH_BLOCKS : 1;   // the knob lets go at once
             driven &= ~(1u << p);       // it is theirs now
         } else {
             if (now != seen[p]) {
@@ -795,14 +809,13 @@ void qperf_render(void)
                 touched[p]--;
         }
     }
-    if (!playing()) {
+    if (pos < 0) {
         release_driven();
         last_pos = -1;
         for (p = 0; p < PERFS; p++)
             rec_pos[p] = -1;
         return;
     }
-    pos = position();
     last_pos = pos;
     for (p = 0; p < PERFS; p++) {
         unsigned bit = 1u << p;
