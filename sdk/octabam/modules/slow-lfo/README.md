@@ -37,10 +37,10 @@ It keeps no clock of its own ([sequencing](https://github.com/repeat98/modwerk/b
 - OS 1.40C, MKI and MKII.
 - Changing a stock flow: MULT on LFO SETUP (audio and MIDI tracks) has three more values after 64X. Nothing else changes; values 1X to 64X behave as stock. Remove the module to get stock's seven values back.
 - The new values sit after 64X on the knob, not below 1X: keeping stock's stored values for 1X to 64X keeps every saved project the same.
-- A project saved with 1/2X, 1/4X or 1/8X opened without the module shows 128X and runs that LFO very fast (stock reads 7 to 9 as shift counts).
+- A project saved with 1/2X, 1/4X or 1/8X opened without the module shows 64X on MULT and runs that LFO much faster (stock reads 7 to 9 as shift counts). Turning MULT down brings back stock's values.
 - On Deja Vu's waves (DJV, DJQ, DJC) MULT is the loop length; Deja Vu reads 1/2X to 1/8X as 64.
 - No other module or the base patches these sites. Takes no key or screen.
-- Tested on an MKI over USB on audio and MIDI tracks: all three LFOs of a track at different slow values, several tracks, a tempo change while playing, external MIDI clock and a power cycle. MULT cannot be locked or reached by scenes or the crossfader, as on stock. Not yet tested: a project with a slow value opened without the module, Deja Vu's waves, MKII.
+- Tested on an MKI over USB on audio and MIDI tracks: all three LFOs of a track at different slow values, several tracks, a tempo change while playing, external MIDI clock and a power cycle. MULT cannot be locked or reached by scenes or the crossfader, as on stock. Not yet tested: Deja Vu's waves (they load and play, but the loop lengths were not judged), MKII.
 
 ## Tests and measurements
 

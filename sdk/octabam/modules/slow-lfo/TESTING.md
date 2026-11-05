@@ -64,9 +64,12 @@ The committed package `octatrack-modules/slow-lfo/0.1.0-experimental.mwrm` (SHA-
 | A tempo change while playing | | The slow values follow it |
 | External MIDI clock | | The slow values follow it |
 | Power cycle | | The slow values are still set afterwards |
+| Remove Slow LFO (`remove`), then reload a project saved with a slow value | accepted; inventory `Bar LED`, `Deja Vu` | MULT reads 64X and the LFO runs much faster (judged by ear, perhaps 128X); turning MULT down gives stock's values again |
+| Slow LFO kept again, then `selftest` with Bar LED and Deja Vu | inventory all three; SELF TEST passed, 3/3 intact, longest frame 389 us | |
+| Deja Vu 0.1.0 (`95079643…`) kept beside it; DJV, DJQ, DJC with MULT at the slow values | | The waves load and play; the loop lengths were not judged, so not tested |
 | Parameter locks, scenes, crossfader | | Not possible: no LFO SETUP parameter can be locked or reached by the crossfader, so nothing to test |
 
-The rates were judged by ear and eye, not measured; the emulator measured them within 1 % (above). Not tested on a unit: saving and reloading a Part with 1/2X on its own, a project with 1/2X opened without the module (expected to read 128X), Deja Vu's waves together with the slow values, MKII, the site's own install dialog (the same package and base protocol, sent from the command line).
+The rates were judged by ear and eye, not measured; the emulator measured them within 1 % (above). Not tested on a unit: saving and reloading a Part with 1/2X on its own, Deja Vu's loop length at the slow values, MKII, the site's own install dialog (the same package and base protocol, sent from the command line).
 
 ## Stock flows
 
