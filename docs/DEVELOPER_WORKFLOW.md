@@ -124,7 +124,7 @@ Verify GitHub status, Modwerk synchronization and reporter notification. Publish
 | --- | --- |
 | Octabam | Octatrack source modules and native firmware remixer |
 | Modwerk | Reviewed catalogue and browser firmware builder |
-| Elekloader | Its own loader/shop/frontends and reusable builder kit |
+| Elekloader | Its own loader/shop/frontends, its cores and the reusable builder kit. Mods for its shop and changes to its cores go there ([CONTRIBUTING](../CONTRIBUTING.md#elekloader-mods-and-cores)) |
 
 Publishing in one catalogue does not automatically list the module in another. Submit or port directly to Modwerk through a PR; an Elekloader shop listing is optional. Authors can keep research/source in their own repository and submit a pinned release to Modwerk when ready. Users of published modules just select modules, build locally from their own stock OS, save the firmware and flash their unit; they need not develop modules.
 
