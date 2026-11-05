@@ -104,7 +104,7 @@
       "dsp": {
         "level": "minimal",
         "basis": "source-estimate",
-        "rationale": "No DSP code.",
+        "rationale": "No DSP code: the module runs only on the ColdFire, inside the LFO engine's own pass.",
         "source": "manifest.py"
       },
       "memory": {
