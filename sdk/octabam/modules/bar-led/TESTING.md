@@ -73,7 +73,21 @@ The poke leaves the beat ticks running, so after it the flashes fall on steps 7,
 | Remove: `remove bar-led.mwrm --seconds 3 --accept` | accepted; nothing installed | Red only, as stock |
 | Kept again, then `do selftest` (transport stopped), then removed | SELF TEST passed: 1/1 modules intact, 0 with DSP effects, longest frame 391 us, card set saved (1/1); removal accepted, nothing installed | |
 
-Not tested on a unit: a tempo change while playing, pause and continue, a pattern change, external MIDI clock, pattern scales other than 1x, MKII, the site's own install dialog (the same package and base protocol, sent from the command line).
+**The committed package beside Slow LFO, MKI, 5 November 2026.** The same unit and flashed base `9680e9ac…`, empty inventory before. The committed `0.1.0-experimental.mwrm` (SHA-256 `de7f9caed60bffecc47a33144a223125500c4c8bcbd76e5022d1dc2ee9393600`) and Slow LFO's committed package (`3505194e…`), each sent with the USB session's `try` (accepted at once). What the unit answered was read over USB; the LED is the tester's report.
+
+| Step | The unit answered | The tester reported |
+|---|---|---|
+| Keep Bar LED, then Slow LFO | generation 1, then 2; inventory `Bar LED` (`9b41cd3d`), `Slow LFO` (`cd8a0e36`) | |
+| `selftest` (transport stopped) | SELF TEST passed: 2/2 modules intact, 0 with DSP effects, longest frame 371 us, card set 7, 2/2 | |
+| External MIDI clock | | Green on the pattern's 1, red on the other beats |
+| A tempo change while playing, internal and external clock | | Shown correctly on both |
+| Pattern scale 3/4 and 3/2 | | Green on the pattern's 1 |
+| Pattern scale 2X | | The pattern plays through twice before the green; the tester expected this |
+| Per-track mode | | Follows the master length, not the selected track's length, as intended |
+| STOP, then PLAY | | Starts again from the top, green on the 1 |
+| Pause (PLAY while playing), then PLAY to continue | | The green still falls on the pattern's 1; no green on continuing |
+
+Not tested on a unit: a pattern change while playing, MKII, the site's own install dialog (the same package and base protocol, sent from the command line).
 
 ## Stock flows
 

@@ -37,7 +37,7 @@ It keeps no clock or count of its own ([sequencing](../../../../docs/module-guid
 - OS 1.40C, MKI and MKII.
 - The tempo LED only flashes on whole beats. When the pattern's 1 falls between beats (say 14 steps at 1x), the green comes on the first flash after it.
 - Changing the stock flow: the tempo LED is green instead of red on the pattern's 1 while playing. That is the module's whole job; remove it to get the stock LED back.
-- Reported on an MKI (card build, 2 November 2026): green on the pattern's 1 in several play modes and with a 17-step master length. Pausing and continuing is checked in the emulator only. Not yet tested on a unit: pausing and continuing, a pattern change while playing, pattern scales other than 1x, a tempo change while playing, external MIDI clock, and MASTER LENGTH INF (which would leave only the green after [PLAY]).
+- Reported on an MKI (card build, 2 November 2026; USB, 4 and 5 November 2026): green on the pattern's 1 in several play modes, with a 17-step master length, on external MIDI clock, through tempo changes while playing, and at pattern scales 3/4, 3/2 and 2X (at 2X the green comes once every two passes). In per-track mode it follows the master length. Continuing from a pause keeps the green on the pattern's 1. Not yet tested on a unit: a pattern change while playing, MKII, and MASTER LENGTH INF (which would leave only the green after [PLAY]).
 - Takes no key, screen or shared site: no other module or the base patches the beat-flash call.
 - Stores nothing: projects, Parts and settings are untouched and load the same without it.
 
