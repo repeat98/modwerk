@@ -245,6 +245,7 @@ static int pot_last, pot_before;        // its last two values, a wobble's pair
 static unsigned short knob_touched;     // audio blocks left of the knob's turn
 static int knob_armed;                  // points left of the knob's one-pass take, 0 none
 static int knob_armed_pos;              // where the take had got to last block
+static int knob_was;                    // the knob was turning last block
 #define KNOB_BLOCKS 75                  // 0.05 s of audio blocks: a knob turn holds this long
 #define POT_DEAD 2                      // steps a turn must pass to start: a resting pot wobbles
 
@@ -768,14 +769,16 @@ void qperf_render(void)
     // left above zero is still held. On the linked performance the pad drives
     // the knob's value too, so both count as the knob. A knob touch in LIVE
     // RECORDING takes one pass: the linked performances record what the knob
-    // plays, moving or not, for one loop from the touch, then play it back;
-    // another touch starts another pass. Otherwise the knob takes one over only
-    // while it turns, and lets go as soon as it stops.
+    // plays, moving or not, for one loop from where the turn started, then play
+    // it back. Turning on doesn't stretch the pass, which would record the
+    // landing level over the turn's start; a new turn after the knob rested
+    // starts another. Otherwise the knob takes one over only while it turns,
+    // and lets go as soon as it stops.
     rec = playing() && live_rec();
     pos = playing() ? position() : -1;
     if (!rec || pos < 0) {
         knob_armed = 0;
-    } else if (knob_touched) {
+    } else if (knob_touched && !knob_was && !knob_armed) {
         knob_armed = perf_rec_steps(live_pattern_data()) * POINTS;
         knob_armed_pos = pos;
     } else if (knob_armed) {
@@ -785,6 +788,7 @@ void qperf_render(void)
         if (knob_armed < 0)
             knob_armed = 0;
     }
+    knob_was = knob_touched != 0;
     for (p = 0; p < PERFS; p++) {
         unsigned short now = PERF_AMOUNT(p);
         int knob = known >> p & 1, wobble = knob && qperf_pot && now == (unsigned short)((qperf_pot - 1) << 7);
