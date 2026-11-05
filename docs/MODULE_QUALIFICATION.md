@@ -133,7 +133,7 @@ console.log(await moduleNativeSourceSha256(folder, document))
 JS
 ```
 
-For this command, fill all fields with actual results first, including a valid temporary source hash, then replace that hash with the output. The fingerprint is SHA-256 of a sorted JSON object mapping relative source paths to file SHA-256 values. It excludes the website manifest, Markdown documentation, licence files, `media/`, the incomplete `qualification.example.json` template, declared text evidence reports and OS/Python cache files. All other regular files, including native manifests, native verification code and text runtime data, contribute. The complete-folder legacy fingerprint includes documentation, reports, metadata and media too. Symlinks and special files are rejected.
+For this command, fill all fields with actual results first, including a valid temporary source hash, then replace that hash with the output. The fingerprint is SHA-256 of a sorted JSON object mapping relative source paths to file SHA-256 values. It excludes the website manifest, Markdown documentation, licence files, `media/`, the incomplete `qualification.example.json` template, declared text evidence reports and OS/Python cache files. All other regular files, including native manifests, native verification code and text runtime data, contribute: a change to the module's own probe (`qualification/probe.cpp`, its runner) alone moves the fingerprint and needs the evidence re-pinned like any source change. The complete-folder legacy fingerprint includes documentation, reports, metadata and media too. Symlinks and special files are rejected.
 
 ## Worst-case cycle counts
 
@@ -152,6 +152,8 @@ The five required condition fields, separately for cycle measurements and hardwa
 For inapplicable mechanisms, explain why they cannot affect this module and which equivalent control path was exercised. Blank strings fail. The reviewer checks substantive coverage: writing “N/A” or copying a stock benchmark is insufficient.
 
 The local report must include commands/tool versions, the measured maximum and where it occurred, the parameter/mode matrix, branch coverage, sample/block/event basis, budget derivation and limitations. `static` counts need a defensible upper bound; emulator instruction counts without contention are not chip wall-clock cycles. State that limitation, account for contention/overhead and retain the actual hardware operation report. Average or nominal load does not meet this requirement. ColdFire code that runs only on a key press needs no static bound: its dearest press, measured in `ot_emu` or on the unit, is its worst case ([Performance](module-guides/README.md#performance)).
+
+A probe that compiles and runs native code in the toolchain container (Mute Modes' `qualification/run.py`) needs the emulator build's vendor directory with mc68k mounted (the image lacks mc68k; `npm run upstream:tools` checks it out) and an exec-enabled temporary directory, `--tmpfs /tmp:rw,exec,nosuid,nodev,size=128m`: Docker mounts a tmpfs `noexec` by default, and the compiled probe cannot start. The module's TESTING.md gives its exact command.
 
 ## Exact memory
 
