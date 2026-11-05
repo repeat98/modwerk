@@ -274,13 +274,6 @@
       "fxId": null,
       "fx1": false,
       "fx1Only": false
-    },
-    {
-      "id": "stem-rec",
-      "key": "STEM REC",
-      "fxId": null,
-      "fx1": false,
-      "fx1Only": false
     }
   ],
   "customIds": [
