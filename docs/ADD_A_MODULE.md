@@ -231,6 +231,9 @@ the package is rebuilt. The standalone and table recipes in
 asset JSON, the remix tools, `module_packages.py`, the Elekloader checkout),
 so any import of rebuilt packages can stop the full run on them. Re-pin only
 the asset hashes that moved; `--check` must then call every package identical.
+`sdk/runtime/loader/build.py` and `module_packages.py` are base inputs too
+(`src/engine/assets/octatrack-base-sources.json`): a change to how packages are
+published goes in the host wrapper `scripts/octatrack-module-packages.py`.
 In the toolchain image set `ELEKLOADER_DSP_ASM`; restore old versions it deletes.
 
 A newly developed module selectable in beta module sets must have a working

@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "identity": "9996065b9cfe13c4cf703bbb65142cfa6870f23a3e24f11b06ce2ca932d101ec",
+ "identity": "9b3ba41715140d5fae07868a8b2adc6d89c3ec0272d8ab34c332461cf990a14c",
  "arena": 1089508832,
  "pool": 1087548400,
  "symbols": {
@@ -15,12 +15,12 @@
   "analog-bassdrum": "579b9b5e76b000a8b9c95f6131a547fbb5117f497d4bc3ee0f98385edc96e5a3"
  },
  "variants": {
-  "tracks-main-cue": "9996065b9cfe13c4cf703bbb65142cfa6870f23a3e24f11b06ce2ca932d101ec",
-  "tracks": "c60702f8868f93d76d36c67159a6ef1257821533d4f0418be40e8fb05711daeb",
-  "tracks-post": "843b6e7076da6e6ea9901cb5ce18d2a82119753eb502c68cf9b3ce8f85db50d8",
-  "main-cue": "8abc15ed6018eb17572c19f0050bb0142fd1bcd7448e1bd3314a265eecfa7f23",
-  "main": "8fd36d9533c35b15fa5673989d3de3c8606f8ff411100804b2f2d4258f40a1b4",
-  "master": "efdae40b1f372c27fbdc7b661dfff1d7668b1d51b61ead96ad2193ed8cf5309b",
-  "off": "e9f70ab8823c2a5513b5e837673cca3a4ebe04a0d5bae2d2f4ec1889255dbae6"
+  "tracks-main-cue": "9b3ba41715140d5fae07868a8b2adc6d89c3ec0272d8ab34c332461cf990a14c",
+  "tracks": "810c7051a4049e8df8a9c9b9e86258ab2eae083a71afd3a29b75ec9295d6bef8",
+  "tracks-post": "9edadde680c9212d37e7db6ed9944a9b48e867beded71f94c8e1a94d8500edd3",
+  "main-cue": "19b38199cb83e72c518cab74f8ee021ec0c2d82cd8675cb0a66e8273fc5d16cc",
+  "main": "fe9de90eb189e553c7a4ef6be13e8c40a60bbe805a7078adf947a62e73e6a4b8",
+  "master": "23c62390d969045fcc248cb75c98c335abc51fec488d6b53d39d71cb64e4491c",
+  "off": "cdbbde238cdd77e1ba92bc8728a8450fa63364c0305654c4cdf1448f25496f2d"
  }
 }
