@@ -4422,7 +4422,7 @@
       "id": "quantizer",
       "key": "SCALE QUANTIZER",
       "name": "Scale Quantizer",
-      "version": "0.1.3-experimental",
+      "version": "0.1.4-experimental",
       "category": "machines",
       "source": {
         "repository": "https://github.com/sambanks/octabam",
@@ -4430,44 +4430,46 @@
         "path": "modules/quantizer"
       },
       "access": {
-        "location": "PROJECT > CONTROL > SEQUENCER: SCALE, ROOT and GLIDE rows.",
+        "location": "PROJECT > CONTROL > SEQUENCER: SCALE, ROOT, GLIDE, TRACK and FOLLOW rows.",
         "steps": [
           "On the MKII panel, press PROJ to open the project menu.",
           "Use UP/DOWN to select CONTROL, then press RIGHT to enter its list.",
           "Select SEQUENCER with UP/DOWN and press YES.",
           "Scroll DOWN to SCALE and turn LEVEL to choose a scale. OFF restores stock pitch behavior.",
-          "Scroll to ROOT and turn LEVEL to select the key. GLIDE is the next row; its effect depends on the track’s LEG setting."
+          "Scroll to ROOT and turn LEVEL to select the key. GLIDE is the next row; its effect depends on the track’s LEG setting. TRACK and FOLLOW follow (TRACK picks a track, FOLLOW is its ON / OFF)."
         ],
         "screenshots": [
           "media/ot-location.png",
           "media/ot-scale.png",
           "media/ot-root.png",
-          "media/ot-glide.png"
+          "media/ot-glide.png",
+          "media/ot-track-rows.png"
         ]
       },
       "author": {
         "github": "timhastie",
         "name": "Tim Hastie",
         "credits": [
-          "Tim Hastie: octatrick-modules Scale Quantizer, v2.9",
-          "Sam Banks: octabam wrapper and port evidence"
+          "Tim Hastie: octatrick-modules Scale Quantizer, 2.21 + TRACK / FOLLOW (MIDI tracks, per-track FOLLOW switches, audio tracks play the scale)",
+          "Sam Banks: octabam wrapper (to 0.1.3) and port evidence"
         ]
       },
       "nativeManifest": "manifest.py",
       "presentation": {
         "label": "SCALE / ROOT",
         "family": "Sequencer",
-        "summary": "Keep pitch edits and chromatic trig keys in one of 24 scales with a selectable root.",
-        "overview": "Scale Quantizer adds SCALE, ROOT and GLIDE to PROJECT > CONTROL > SEQUENCER. Pitch turns and parameter locks move through scale degrees, and chromatic trig keys snap to the chosen scale. ROOT transposes the scale and keyboard. SCALE OFF restores stock pitch behavior.",
+        "summary": "Keep audio and MIDI tracks in one of 24 scales with a selectable root, and take single tracks out of it.",
+        "overview": "Scale Quantizer adds SCALE, ROOT, GLIDE, TRACK and FOLLOW to PROJECT > CONTROL > SEQUENCER. Pitch turns, parameter locks and chromatic trig keys move through scale degrees, and what audio and MIDI tracks play follows the scale, so recorded notes follow a scale change. ROOT transposes the scale and keyboard. TRACK picks an audio or MIDI track and FOLLOW OFF keeps that track stock; SCALE OFF restores stock pitch behavior.",
         "highlights": [
-          "24 scales plus OFF",
-          "Selectable root C–B",
-          "Pitch knob, parameter locks and chromatic keys follow the scale"
+          "24 scales plus OFF, selectable root C–B",
+          "Recorded notes follow a scale change on audio and MIDI tracks",
+          "TRACK and FOLLOW take single audio or MIDI tracks out of the scale"
         ],
         "usage": [
           "Open PROJECT > CONTROL > SEQUENCER and set SCALE. OFF preserves stock pitch behavior; choose a scale to constrain notes.",
-          "Set ROOT to the key you want. Pitch edits step by scale degree; chromatic keys snap to a degree and key 1 plays the root.",
-          "SCALE, ROOT and GLIDE persist through project save/reload and battery RAM. Synth polyphony and synth glide features require SYNTH MACHINE, which is outside this import."
+          "Set ROOT to the key you want. Pitch edits step by scale degree; chromatic keys snap to a degree and key 1 plays the root. Notes already recorded play in the new scale.",
+          "Set TRACK to a track (AUDIO 1..8, MIDI 1..8) and FOLLOW to OFF for a track that should stay chromatic (drums, samples with fixed pitch). TRACK only chooses what FOLLOW shows and is not saved; it starts at AUDIO 1.",
+          "SCALE, ROOT, GLIDE and the track switches are saved with the project and kept in battery RAM. Synth polyphony and synth glide features require FM Synth, which carries its own copy of this quantizer."
         ]
       },
       "controls": [
@@ -4530,6 +4532,40 @@
           "count": 128,
           "doc": "OFF or 1–127 slide time; the track LEG setting controls legato. Synth features require the separate SYNTH MACHINE module.",
           "labels": null
+        },
+        {
+          "name": "TRACK",
+          "default": 0,
+          "count": 16,
+          "doc": "Picks the track FOLLOW shows: AUDIO 1..8, then MIDI 1..8. Changes no sound; not saved (AUDIO 1 at power-on).",
+          "labels": [
+            "AUDIO 1",
+            "AUDIO 2",
+            "AUDIO 3",
+            "AUDIO 4",
+            "AUDIO 5",
+            "AUDIO 6",
+            "AUDIO 7",
+            "AUDIO 8",
+            "MIDI 1",
+            "MIDI 2",
+            "MIDI 3",
+            "MIDI 4",
+            "MIDI 5",
+            "MIDI 6",
+            "MIDI 7",
+            "MIDI 8"
+          ]
+        },
+        {
+          "name": "FOLLOW",
+          "default": 0,
+          "count": 2,
+          "doc": "The switch of the track TRACK shows: ON (default) follows SCALE and ROOT; OFF keeps that track stock in every path. Saved per track with the project.",
+          "labels": [
+            "ON",
+            "OFF"
+          ]
         }
       ],
       "compatibility": {
@@ -4539,22 +4575,22 @@
         "conflicts": [],
         "limitations": [
           "Sample pitch quantization works on Flex, Static and Pickup; RATE is not a semitone control.",
-          "SCALE, ROOT and GLIDE are shared project settings, not independent per-track scale selectors.",
-          "Synth polyphony and synth-specific tuning/glide require FM Synth and are outside the standalone Quantizer.",
-          "POLY8 configurations use the existing POLY8 keyboard hooks; this update does not change POLY8 or FM Synth runtime code.",
-          "Current-version physical hardware, reboot, audio, chip timing and complete memory bounds remain untested."
+          "SCALE, ROOT and GLIDE are shared project settings; TRACK and FOLLOW switch single tracks off.",
+          "The module adds five SEQUENCER rows (SCALE, ROOT, GLIDE, TRACK, FOLLOW), within the eight the Modwerk base gives over USB; card builds show the same five.",
+          "FM Synth carries its own copy of this quantizer (the same source) and declares a conflict with this module: both would patch the same sites, and a module may not hook into another module's code, rows, tables or files (the owner, #555, 31 October 2026). Synth polyphony and synth-specific tuning and glide need FM Synth.",
+          "Reported working by the author on his MKI twice, on the same bytes: TEST2 on 30 October 2026 and TEST3 (the module rebuilt on current main, byte-identical) on 1 November 2026 (TESTING.md): the rows, FOLLOW acting at play, save and power-cycle; the optional 2.21-saved-project step not stated. Play time and readings were not recorded. Audio measurements, chip timing and complete memory bounds remain unmeasured."
         ]
       },
       "resources": {
-        "recorded": "v2.9 upstream record (pinned source)",
+        "recorded": "Card build and USB package of this version (25 Oct 2026)",
         "storage": {
           "label": "ROM footprint",
-          "display": "243 bytes",
-          "value": 243,
+          "display": "255 bytes",
+          "value": 255,
           "unit": "bytes",
           "method": "static",
-          "conditions": "Upstream v2.9 record: 192-byte core, 45-byte key stub and 6-byte scale trampoline. DRAM code, grown menus and loader overhead are additional; this is not a new local assembly measurement.",
-          "source": "README.md"
+          "conditions": "Card build of 0.1.4: a 204-byte core, the 45-byte key stub and the 6-byte scale trampoline in ROM. The DRAM quantizer unit (6,084 bytes of code and data in the USB package, with its glue), the grown menus and loader overhead are additional.",
+          "source": "TESTING.md"
         },
         "processing": {
           "label": "CPU load",
@@ -4582,25 +4618,28 @@
           "memory": {
             "level": "minimal",
             "basis": "source-estimate",
-            "rationale": "The upstream record lists a 243-byte ROM core/stub/trampoline footprint plus small settings. DRAM code, menus and loader overhead are additional. Minimal is a relative source estimate, not a claim that total memory is only 243 bytes.",
-            "source": "README.md"
+            "rationale": "The card build has a 255-byte ROM core/stub/trampoline footprint plus small settings. DRAM code, menus and loader overhead are additional. Minimal is a relative source estimate, not a claim that total memory is only 255 bytes.",
+            "source": "TESTING.md"
           }
         }
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "MIDI trig-mode stack corruption reproduced on the old standalone build; the repaired popup passes on MKI/MKII emulated panels. Native/browser comparison: 53 matching module-owned images, 73 matching refusals, zero mismatches. The owner approved this exact experimental source with hardware, chip timing and complete memory bounds untested.",
-        "hardwareStatus": "untested",
+        "summary": "0.1.4 imports Tim Hastie's 2.21 quantizer with the TRACK / FOLLOW rows byte for byte. Card-build and USB packages built on this Mac from the user's own 1.40C; the emulator gates are recorded in TESTING.md. The author reports this cut's image working on his MKI twice, its test sheet passing each time (the optional step not stated; TESTING.md): TEST2 (MAIN 22541cd6..., upgrade file ec4b811f...) on 30 October 2026 and TEST3, the same bytes rebuilt on current main, on 1 November 2026 (TESTING.md); his TEST1 report (26 October 2026) covered the v2.20 cut. Chip timing and complete memory bounds remain unmeasured.",
+        "hardwareStatus": "reported",
         "evidenceRevision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
-        "gates": [],
+        "gates": [
+          "Hardware report for this source and image: timhastie, MKI, 2026-10-30 (reported; TESTING.md)",
+          "Hardware report for this source and image, repeated on the byte-identical TEST3 rebuild (upgrade file ec4b811f..., 449,848 B): timhastie, MKI, 2026-11-01 (reported; TESTING.md)"
+        ],
         "documentation": {
           "tutorial": {
             "title": "Quick tutorial: choose a scale",
             "steps": [
               "Open PROJECT > CONTROL > SEQUENCER and scroll to SCALE. Turn LEVEL to select MAJOR; OFF restores stock pitch behavior.",
               "Scroll to ROOT and turn LEVEL to choose C. ROOT transposes the selected scale and the audio chromatic keyboard.",
-              "Close the project menu, select a Flex or Static audio track with a sample assigned, and turn PTCH or play the chromatic trig keys. Notes follow the selected scale.",
-              "Switch to MIDI mode. Hold FUNC and press DOWN or UP to change trig mode; release FUNC to leave the popup. MIDI octave numbers retain the stock format."
+              "Close the project menu, select a Flex or Static audio track with a sample assigned, and turn PTCH or play the chromatic trig keys. Notes follow the selected scale; recorded notes play in it too.",
+              "Back in SEQUENCER, set TRACK to AUDIO 1 (or MIDI 1) and FOLLOW to OFF: that track plays unquantized while the others follow the scale."
             ]
           },
           "screenshots": [
@@ -4608,6 +4647,7 @@
             "media/ot-scale.png",
             "media/ot-root.png",
             "media/ot-glide.png",
+            "media/ot-track-rows.png",
             "media/ot-midi-trig-mode.png"
           ],
           "screenshotStyle": "black-and-white"
@@ -4631,8 +4671,8 @@
             "page": "PROJECT > CONTROL",
             "shows": "location",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.3-experimental",
-            "imageSha256": "1ceba9f613dcf0d6bb6c32b0ae18e82a399e42644a89b2f76d9088c18c255c15",
+            "moduleVersion": "0.1.4-experimental",
+            "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
             "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware."
           }
         },
@@ -4648,8 +4688,8 @@
             "page": "CONTROL SEQUENCER: SCALE",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.3-experimental",
-            "imageSha256": "1ceba9f613dcf0d6bb6c32b0ae18e82a399e42644a89b2f76d9088c18c255c15",
+            "moduleVersion": "0.1.4-experimental",
+            "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
             "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware."
           }
         },
@@ -4665,8 +4705,8 @@
             "page": "CONTROL SEQUENCER: ROOT",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.3-experimental",
-            "imageSha256": "1ceba9f613dcf0d6bb6c32b0ae18e82a399e42644a89b2f76d9088c18c255c15",
+            "moduleVersion": "0.1.4-experimental",
+            "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
             "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware."
           }
         },
@@ -4682,8 +4722,25 @@
             "page": "CONTROL SEQUENCER: GLIDE",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.3-experimental",
-            "imageSha256": "1ceba9f613dcf0d6bb6c32b0ae18e82a399e42644a89b2f76d9088c18c255c15",
+            "moduleVersion": "0.1.4-experimental",
+            "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
+            "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware."
+          }
+        },
+        {
+          "path": "media/ot-track-rows.png",
+          "captureType": "emulator",
+          "caption": "Below GLIDE, TRACK set to AUDIO 8 and FOLLOW set to OFF with LEVEL: that track plays unquantized while the others follow the scale.",
+          "alt": "CONTROL SEQUENCER showing GLIDE OFF, TRACK AUDIO 8 and FOLLOW OFF selected.",
+          "credit": "Tim Hastie (headless capture)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "CONTROL SEQUENCER: FOLLOW",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.4-experimental",
+            "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
             "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware."
           }
         },
@@ -4699,8 +4756,8 @@
             "page": "MIDI trig mode",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.3-experimental",
-            "imageSha256": "1ceba9f613dcf0d6bb6c32b0ae18e82a399e42644a89b2f76d9088c18c255c15",
+            "moduleVersion": "0.1.4-experimental",
+            "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
             "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware."
           }
         }
@@ -6881,11 +6938,11 @@
       "id": "mute-modes",
       "key": "MUTE_MODES",
       "name": "Mute Modes",
-      "version": "0.2.1-experimental",
+      "version": "0.2.2-experimental",
       "category": "system",
       "source": {
         "repository": "https://github.com/sambanks/octabam",
-        "revision": "6f9e5bc9db0ae9fa99fa2f2a0f4de1fdb8e9a136",
+        "revision": "08bffd529c0f301708bcb2d48759e54e11f59858",
         "path": "modules/mute-modes"
       },
       "access": {
@@ -6957,20 +7014,20 @@
         ]
       },
       "resources": {
-        "recorded": "7 October 2026; authored-source assembly and isolated native-code probes",
+        "recorded": "3 November 2026; authored-source assembly and isolated native-code probes of 0.2.2",
         "storage": {
           "label": "Authored code and relocated menu tables",
-          "display": "1380 bytes before placement padding",
-          "value": 1380,
+          "display": "1408 bytes before placement padding",
+          "value": 1408,
           "unit": "bytes",
           "method": "static",
-          "conditions": "Program bytes 1176, tables 204. This is a standalone source footprint, not a complete common-builder or stock memory inventory. Actual probe stack peaks and model timing are recorded separately.",
+          "conditions": "Program bytes 1204 (mm_softmute 996, mm_menu 208; mm_softmute is 1106 beside Sidechain Compressor), tables 204. UNHELD, SHADOW and KEYMASK live inside mm_softmute. This is a standalone source footprint, not a complete common-builder or stock memory inventory. Actual probe stack peaks and model timing are recorded separately.",
           "source": "evidence/source-identity.json"
         },
         "processing": {
           "label": "ColdFire native paths",
           "display": "Measured model cycles; chip wall-clock pending",
-          "value": 382,
+          "value": 390,
           "unit": "model cycles/event",
           "method": "emulator",
           "conditions": "MCF5206E core-cycle model, cache-hit zero-wait; not MCF54455 chip timing. Synthetic stock callbacks exclude their actual work. Conservative V4 code-cycle path bounds exclude cache, bus and interrupt contention; see TESTING.md.",
@@ -7000,9 +7057,9 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "All three author SHA-256 references match. Native mask/mode/menu/sidechain probes passed with measured instruction counts, model cycles and stack peaks. Actual LCD menu/mode captures were reviewed. Full audio, complete callback timing and current-image hardware remain pending. Published with owner approval for missing hardware evidence; historical author reports are retained. Software integration is checked separately.",
-        "hardwareStatus": "historical",
-        "evidenceRevision": "6f9e5bc9db0ae9fa99fa2f2a0f4de1fdb8e9a136",
+        "summary": "All three author references match (plain 996 B, SC_KEY 1106 B, menu 208 B). The native probe of this version passes 4,353,132 cases, including the hold after KEY moves away and after MUTE MODE leaves OT; stack peaks are as in 0.2.1. On his MKI (3 November 2026) the author flashed the native card image of Sidechain Compressor and this module (MW_MMOH1) and reported the OT-exit hold, the KEYHOLD checks, an ordinary DT-T mute and a power cycle working; on 27 October the image of this module alone passed every mode, Part and project reload and the timestretch mute check.",
+        "hardwareStatus": "reported",
+        "evidenceRevision": "a2d9882bdda2aef9d11a5728daa7db24ec9aed3a",
         "gates": [
           "qualification/probe.cpp"
         ],
@@ -7024,6 +7081,124 @@
             "media/ot-mute-dt-t.png"
           ],
           "screenshotStyle": "black-and-white"
+        },
+        "qualification": {
+          "documentation": {
+            "tutorial": {
+              "title": "Quick tutorial: keep FX tails when muting",
+              "steps": [
+                "Open PROJECT > SYSTEM > PERSONALIZE and select MUTE MODE.",
+                "Choose OTFX to cut the dry signal while delay and reverb tails continue; trigs keep firing underneath.",
+                "Mute and unmute an audio track with a long delay or reverb tail, then try OTFX-T to suppress new trigs.",
+                "Choose DT-T to let the current voice finish its amp envelope, or OT to restore the stock cut."
+              ]
+            },
+            "screenshots": [
+              "media/ot-system.png",
+              "media/ot-mute-ot.png",
+              "media/ot-mute-otfx.png",
+              "media/ot-mute-otfx-t.png",
+              "media/ot-mute-dt-t.png"
+            ],
+            "screenshotStyle": "black-and-white"
+          },
+          "moduleVersion": "0.2.2-experimental",
+          "sourceSha256": "bdfceea33319bc21db121e142573a8c2f9b675b457a3de3e3a3b3b7b251ba7b9",
+          "imageSha256": "d8267756d27485d51032e4b231538c397afc227d38664a788b258572063dcbeb",
+          "cycles": [
+            {
+              "processor": "coldfire",
+              "worstCase": 3440,
+              "maxConfiguration": 16624,
+              "maxInstances": 1,
+              "budget": 95778,
+              "unit": "cycles/block",
+              "method": "emulator",
+              "conditions": {
+                "parameterExtremes": "All four MUTE MODE values and every eight-bit mute and solo mask with SOLO_FLAG set and clear, plain and SC_KEY variants, and the hold from an OT frame into each soft mode (evidence/probes.json, 4,353,132 executed cases).",
+                "parameterModulation": "Not applicable: MUTE MODE is one global PERSONALIZE setting; mute and solo change from the panel or MIDI and are read once per frame.",
+                "modeSwitching": "MUTE MODE changed between frames in every order; mutes and solos set and cleared between frames, including the 0->1 edge that issues each track's note-off.",
+                "maxLoad": "One instance (a global setting). Per 16-sample block: the frame hook once (at most 3,440, SC_KEY variant in OTFX; 2,176 plain) plus the per-trig hooks for all eight tracks in the same block, 8 x (336 + 336 + 352 + 320 + 304) = 13,184.",
+                "inputConditions": "Independent of audio content. Conservative V4 core-path bounds from the actual assembled instructions of this version (16 cycles per ordinary instruction), not chip wall-clock timing; stock callbacks (the note-off and voice routines) are stock cost and excluded."
+              },
+              "report": "TESTING.md"
+            }
+          ],
+          "memory": {
+            "regions": [
+              {
+                "name": "Authored ColdFire code and its RAM bytes, unit mm_softmute (plain; 1,106 bytes beside Sidechain Compressor)",
+                "space": "cpu-flash",
+                "words": 996,
+                "wordBits": 8,
+                "bytes": 996,
+                "scope": "shared"
+              },
+              {
+                "name": "PERSONALIZE menu row code, unit mm_menu",
+                "space": "cpu-flash",
+                "words": 208,
+                "wordBits": 8,
+                "bytes": 208,
+                "scope": "shared"
+              },
+              {
+                "name": "Three PERSONALIZE pointer tables grown from 16 to 17 entries",
+                "space": "cpu-flash",
+                "words": 204,
+                "wordBits": 8,
+                "bytes": 204,
+                "scope": "shared"
+              },
+              {
+                "name": "Six jmp detours written over stock instructions in place",
+                "space": "cpu-flash",
+                "words": 40,
+                "wordBits": 8,
+                "bytes": 40,
+                "scope": "shared"
+              },
+              {
+                "name": "Row-count poke and three ANDY restore length pokes",
+                "space": "cpu-flash",
+                "words": 14,
+                "wordBits": 8,
+                "bytes": 14,
+                "scope": "shared"
+              },
+              {
+                "name": "MUTE MODE setting word (a free PERSONALIZE word) and its battery copy",
+                "space": "cpu-ram",
+                "words": 8,
+                "wordBits": 8,
+                "bytes": 8,
+                "scope": "shared"
+              }
+            ],
+            "perInstanceBytes": 0,
+            "sharedBytes": 1470,
+            "maxInstances": 1,
+            "totalBytes": 1470,
+            "conditions": "From the linked units and the manifest's detours, tables and pokes. UNHELD, SHADOW and KEYMASK are bytes inside mm_softmute (counted there); since 0.2.2 the module keeps no state in stock-owned SRAM. No heap; at most 24 bytes of stack beyond the stock frame routine (evidence/probes.json).",
+            "report": "TESTING.md"
+          },
+          "hardware": {
+            "kind": "functional",
+            "status": "reported",
+            "model": "MKI",
+            "testedOn": "2026-11-03",
+            "tester": "Zac Kyoti",
+            "sourceRevision": "a2d9882bdda2aef9d11a5728daa7db24ec9aed3a",
+            "imageSha256": "d8267756d27485d51032e4b231538c397afc227d38664a788b258572063dcbeb",
+            "summary": "The author flashed the native card image of Sidechain Compressor and this module with every stock effect kept (MAIN OS d8267756, OS VERSION MW_MMOH1) on his MKI. All passed: a track muted in OT stays silent when MUTE MODE is switched to DT-T, and plays normally when unmuted; an ordinary DT-T mute of a sounding track still lets the note play out; in DT-T, a muted track that rested as a COMPRESSOR's KEY stays silent when KEY moves to another track; MUTE MODE survives a power cycle. The same source passed on that unit as the author's standalone image, its Bugbuild, KYOTI V1.7 and the octabam form (OCTABAM39). Earlier: MW_MMKH1 (KEYHOLD, 3 November) and the image of this module alone (MW_MM022, 27 October) passed every mode, solo, timestretched mutes in OTFX, Part and project reload and a power cycle.",
+            "limitations": [
+              "MKI only; not run on an MKII.",
+              "The card image only; the USB package was not run on a unit.",
+              "Functional checks; no stress run, frame-interrupt load or chip timing capture.",
+              "Beside Sidechain Compressor on the card image; not run beside other modules in this version."
+            ],
+            "report": "TESTING.md"
+          }
         }
       },
       "license": {
@@ -7044,9 +7219,9 @@
             "page": "PROJECT / SYSTEM",
             "shows": "location",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "601ba3bd042129aacecbeeee0b0e1ab928cee1f5cf9fe7577b060b81b044fb37",
-            "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. ColdFire UI execution with DSP host stub; no audio claim. Local standalone composition, not shared-builder parity. Empty private OCTAMOD/MEASURE SET was requested; missing-project prompts dismissed with three NO presses. Native initialized UI state, no valid saved project or recorder-slot assignment claimed."
+            "moduleVersion": "0.2.2-experimental",
+            "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
+            "setup": "Headless ot_emu (octabam port); MKII panel; stopped transport; 128×64 LCD at integer scale 6. Native card image of this module alone (scripts/export-composition-proofs.py --select mute-modes:true), the image flashed for the hardware report. Empty scratch card; missing-project prompts dismissed with three NO presses; no project loaded."
           }
         },
         {
@@ -7061,9 +7236,9 @@
             "page": "PERSONALIZE",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "601ba3bd042129aacecbeeee0b0e1ab928cee1f5cf9fe7577b060b81b044fb37",
-            "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. ColdFire UI execution with DSP host stub; no audio claim. Local standalone composition, not shared-builder parity. Empty private OCTAMOD/MEASURE SET was requested; missing-project prompts dismissed with three NO presses. Native initialized UI state, no valid saved project or recorder-slot assignment claimed."
+            "moduleVersion": "0.2.2-experimental",
+            "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
+            "setup": "Headless ot_emu (octabam port); MKII panel; stopped transport; 128×64 LCD at integer scale 6. Native card image of this module alone (scripts/export-composition-proofs.py --select mute-modes:true), the image flashed for the hardware report. Empty scratch card; missing-project prompts dismissed with three NO presses; no project loaded."
           }
         },
         {
@@ -7078,9 +7253,9 @@
             "page": "PERSONALIZE",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "601ba3bd042129aacecbeeee0b0e1ab928cee1f5cf9fe7577b060b81b044fb37",
-            "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. ColdFire UI execution with DSP host stub; no audio claim. Local standalone composition, not shared-builder parity. Empty private OCTAMOD/MEASURE SET was requested; missing-project prompts dismissed with three NO presses. Native initialized UI state, no valid saved project or recorder-slot assignment claimed."
+            "moduleVersion": "0.2.2-experimental",
+            "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
+            "setup": "Headless ot_emu (octabam port); MKII panel; stopped transport; 128×64 LCD at integer scale 6. Native card image of this module alone (scripts/export-composition-proofs.py --select mute-modes:true), the image flashed for the hardware report. Empty scratch card; missing-project prompts dismissed with three NO presses; no project loaded."
           }
         },
         {
@@ -7095,9 +7270,9 @@
             "page": "PERSONALIZE",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "601ba3bd042129aacecbeeee0b0e1ab928cee1f5cf9fe7577b060b81b044fb37",
-            "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. ColdFire UI execution with DSP host stub; no audio claim. Local standalone composition, not shared-builder parity. Empty private OCTAMOD/MEASURE SET was requested; missing-project prompts dismissed with three NO presses. Native initialized UI state, no valid saved project or recorder-slot assignment claimed."
+            "moduleVersion": "0.2.2-experimental",
+            "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
+            "setup": "Headless ot_emu (octabam port); MKII panel; stopped transport; 128×64 LCD at integer scale 6. Native card image of this module alone (scripts/export-composition-proofs.py --select mute-modes:true), the image flashed for the hardware report. Empty scratch card; missing-project prompts dismissed with three NO presses; no project loaded."
           }
         },
         {
@@ -7112,9 +7287,9 @@
             "page": "PERSONALIZE",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "601ba3bd042129aacecbeeee0b0e1ab928cee1f5cf9fe7577b060b81b044fb37",
-            "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. ColdFire UI execution with DSP host stub; no audio claim. Local standalone composition, not shared-builder parity. Empty private OCTAMOD/MEASURE SET was requested; missing-project prompts dismissed with three NO presses. Native initialized UI state, no valid saved project or recorder-slot assignment claimed."
+            "moduleVersion": "0.2.2-experimental",
+            "imageSha256": "446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573",
+            "setup": "Headless ot_emu (octabam port); MKII panel; stopped transport; 128×64 LCD at integer scale 6. Native card image of this module alone (scripts/export-composition-proofs.py --select mute-modes:true), the image flashed for the hardware report. Empty scratch card; missing-project prompts dismissed with three NO presses; no project loaded."
           }
         }
       ]
@@ -10228,6 +10403,404 @@
             "moduleVersion": "0.1.66-experimental",
             "imageSha256": "a0753aece880813aaacd0708a0f754bc78ff81a81e3cb39c91a13f65dd4b638f",
             "setup": "Headless adapted ot_emu with DSP/frame enabled, MKII panel, disposable BEATLAB project and Flex PULSE sample. Actual pixels after normal boot and USB module-set load; stopped transport. UI capture only, without functional-suite or Undo qualification."
+          }
+        }
+      ]
+    },
+    {
+      "schemaVersion": 2,
+      "id": "tuner",
+      "key": "TUNER",
+      "name": "Tuner",
+      "version": "0.1.0-experimental",
+      "category": "system",
+      "source": {
+        "repository": "https://github.com/timhastie/octatrick-modules",
+        "revision": "ef6cbc71623abcee584ff59a217cf2c2ba9d5c41",
+        "path": "tuner"
+      },
+      "access": {
+        "location": "Front panel: hold UP first, then press TEMPO.",
+        "steps": [
+          "Include Tuner in a reviewed build and select an audio track with a steady pitched sound. No effect slot is required.",
+          "Hold UP first, then press TEMPO. The tuner window shows the selected track, note, octave, cents and frequency.",
+          "Adjust the sound at its source while watching the needle. Near the centre the measured pitch approaches the displayed note, with A4 fixed at 440 Hz.",
+          "Press TEMPO, YES or NO to close the window. Hold UP and press TEMPO again to toggle it back on."
+        ],
+        "screenshots": [
+          "media/01-track-page.png",
+          "media/02-tuner-open.png",
+          "media/08-tuner-a4-440.png",
+          "media/05-closed-tempo.png"
+        ]
+      },
+      "author": {
+        "github": "timhastie",
+        "name": "Tim Hastie",
+        "credits": [
+          "Tim Hastie: Tuner design, ColdFire implementation and upstream documentation; MIT.",
+          "Octabam supplies the native module platform. Local packaging and documentation retain the upstream source unchanged."
+        ]
+      },
+      "nativeManifest": "manifest.py",
+      "presentation": {
+        "label": "Pitch readout on UP + TEMPO",
+        "family": "Track utilities",
+        "summary": "Hold UP and press TEMPO to read the selected audio track’s note, octave, cents and frequency in a tuner window.",
+        "overview": "Tuner reads the selected audio track after its effects and before its fader. Its note, octave, cents, frequency and needle are designed to help tune a steady pitched sound. It uses no effect slot. This draft offers card builds only; emulator captures of the card build of this source show live readings of a tone on the input; hardware qualification is pending.",
+        "highlights": [
+          "UP then TEMPO opens and closes the tuner window.",
+          "Follows the selected audio track; no effect slot or parameter assignment.",
+          "Fixed A4 = 440 Hz, with a cents needle and frequency readout.",
+          "Source behavior retains the last reading when the signal is too quiet or uncertain."
+        ],
+        "usage": [
+          "Include Tuner in a reviewed build and select an audio track with a steady pitched sound. No effect slot is required.",
+          "Hold UP first, then press TEMPO. The tuner window shows the selected track, note, octave, cents and frequency.",
+          "Adjust the sound at its source while watching the needle. Near the centre the measured pitch approaches the displayed note, with A4 fixed at 440 Hz.",
+          "Press TEMPO, YES or NO to close the window. Hold UP and press TEMPO again to toggle it back on."
+        ]
+      },
+      "controls": [],
+      "compatibility": {
+        "firmware": "1.40C",
+        "effectId": null,
+        "location": "Audio tracks",
+        "conflicts": [],
+        "uiClaims": [
+          "key:UP+TEMPO"
+        ],
+        "limitations": [
+          "Built and emulator-measured on 30 Oct 2026 (card d4452bbb, bus da2375cf) from Tim's v2.21 source plus his DC-removal commit (03202050 that day; ef6cbc7 in his released 2.22 line, the same tuner/ files); the seven older UI screenshots belong to the earlier v2.19/card-sdk image.",
+          "The signal is taken after track effects and before the track fader. It is a monophonic pitch estimate; complex, noisy or inharmonic sounds can wander or select an octave.",
+          "Below the signal or confidence threshold, the last valid reading is held. A held reading does not indicate the current pitch.",
+          "A4 is fixed at 440 Hz. No calibration control, parameter locks, LFO destination or saved project setting is added.",
+          "Hold UP before TEMPO. Pressing TEMPO first follows the ordinary tempo-window path.",
+          "Card builds only: the base has no removal refusal for ordinary modules.",
+          "Sample memory: on a card build without another DRAM module, choosing the Tuner gives up 10,487,808 bytes (about 10.5 MB) of Flex sample RAM. Its own unit is 33 KB, but it is the module that creates the DRAM platform reserve, and the unit sits inside it. Alongside another DRAM module the reserve is shared and the Tuner takes no further sample RAM.",
+          "The retained older emulator fault is in its DSP write callback; the triggering image property remains unresolved.",
+          "Emulator readings (29 and 30 October 2026) for the figures; on hardware the author reports the TEST3 card (d4452bbb, byte-identical to TEST2) working on his MKI on 1 November 2026, every item of its test sheet, readings not recorded. No hardware timing is measured. The standalone 2.19 reference exited before capture, so paired visual equivalence with it is unavailable.",
+          "The reading follows the last 93 ms of the track after its effects, so an effect tail can pull it just after a note changes (on the emulator: E2 +25c 2.4 s after 440 Hz gave way to 82.41 Hz on T8, +0c at 12 s; the same with and without the DC removal)."
+        ]
+      },
+      "resources": {
+        "recorded": "30 October 2026; emulator counts and link map; hardware pending",
+        "storage": {
+          "label": "ColdFire code, data and stack",
+          "display": "33,130 B of its own (+ the 10.46 MB DRAM platform reserve)",
+          "value": 33130,
+          "unit": "bytes",
+          "method": "static",
+          "conditions": "Exact layout of the card build d4452bbb: 2,894 B code and tables (a local link of upstream/tuner.s compared equal to emulated RAM), 19,500 B state, ring and detector workspace, an 8,194 B unused gap the link leaves between them (.data at 0x40a98130), 2,288 B platform loader and packed unit appended to the image, 18 B of rewritten hook sites and a measured 236 B UI-task stack peak. Any DRAM module also creates the platform reserve taken from Flex sample RAM (10,457,220 B beyond the unit); see TESTING.md.",
+          "source": "TESTING.md"
+        },
+        "processing": {
+          "label": "ColdFire, per audio block (amortised)",
+          "display": "7,018 of 9,577 cycles per block worst case",
+          "value": 7018,
+          "unit": "cycles/block",
+          "method": "emulator",
+          "conditions": "Window open on a pitched tone with the tuner-load8 fixture playing: 195 instructions in the frame interrupt every block, plus one analysis and redraw in the UI task every 400 blocks (1,048,251 instructions at most, 9.9 ms at 9.44 ns per instruction, including the DC-removal pass), amortised over those 400 blocks; window closed: 4 instructions per block. Instruction-count model at 264 MHz, not chip timing; see TESTING.md.",
+          "source": "TESTING.md"
+        },
+        "impact": {
+          "conditions": "One open tuner on the selected audio track. Estimates describe source structure, not measured hardware headroom.",
+          "cpu": {
+            "level": "moderate",
+            "basis": "source-estimate",
+            "rationale": "A bounded sample-copy hook runs each audio block while open; the UI task periodically performs autocorrelation and pitch refinement. Current worst-case cycles and scheduling impact are unmeasured.",
+            "source": "upstream/tuner.s"
+          },
+          "dsp": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "No DSP program, effect slot or DSP state is added. The tuner reads the existing audio read-back arena.",
+            "source": "upstream/manifest.py"
+          },
+          "memory": {
+            "level": "low",
+            "basis": "source-estimate",
+            "rationale": "One global sample ring and detector workspace; no per-track allocation or new sample storage. Current linked allocation, loader overhead and stack maximum are unmeasured.",
+            "source": "upstream/tuner.s"
+          }
+        }
+      },
+      "tests": {
+        "report": "TESTING.md",
+        "summary": "Emulator qualification of the card build of this source (card d4452bbb, bus da2375cf) on 30 October 2026: a sine on the input reaches the tap and reads A4 +0c 440.0Hz, E2 +0c 82.4Hz, A4 +19c 445.0Hz and A2 -1c 109.9Hz live, the same as the 29 October build; a fixture track whose signal sits on a DC offset larger than its swing, which held before, now reads (F4, 343-345 Hz, matching an off-line analysis of the same samples); worst-case ColdFire cost 195 instructions per block in the frame interrupt and 1,048,251 per analysis in the UI task (7,018 of 9,577 cycles per block amortised); exact memory with a measured stack peak. The author reports the TEST3 card (the same bytes, rebuilt on current main) working on his MKI on 1 November 2026, every item of its test sheet; readings were not recorded (TESTING.md).",
+        "hardwareStatus": "reported",
+        "evidenceRevision": "ef6cbc71623abcee584ff59a217cf2c2ba9d5c41",
+        "gates": [
+          "Emulator: tone on the input reaches the read-back tap; 440, 82.41, 445 and 110 Hz read within one cent (LCD captures), unchanged from the build without DC removal",
+          "Emulator: a track with a DC offset larger than its AC level reads instead of holding (LCD capture, off-line reference)",
+          "Emulator: instruction counts per block (frame hook) and per analysis (UI task) under the tuner-load8 fixture, window open and closed",
+          "Unit layout of the card build compared with emulated RAM, and measured UI-task stack peak (exact memory)",
+          "Hardware report for this source and image (TEST3 = TEST2, d4452bbb...): timhastie, MKI, 2026-11-01 (reported; TESTING.md)"
+        ],
+        "qualification": {
+          "documentation": {
+            "tutorial": {
+              "title": "Quick tutorial: tune a sound on a track",
+              "steps": [
+                "Select the audio track to tune with its track key. Tuner reads the track after its effects and before its fader, so a quiet or faded track still reads.",
+                "Hold UP first, then press TEMPO. The window shows the track, the note and octave, a +-50 cent needle, the cents and the frequency.",
+                "Play a steady pitched sound on that track (a THRU track with an instrument on input A, or a sample) and adjust it until the needle is centred and the cents read +0c.",
+                "Below the signal gate or without a clear pitch the last reading stays with HOLD in the header. Press TEMPO, YES or NO, or UP + TEMPO again, to close the window."
+              ]
+            },
+            "screenshots": [
+              "media/08-tuner-a4-440.png",
+              "media/09-tuner-e2-82.png",
+              "media/10-tuner-a4-445.png"
+            ],
+            "screenshotStyle": "black-and-white"
+          },
+          "moduleVersion": "0.1.0-experimental",
+          "sourceSha256": "ed128fd36044c02b72c8bb2bade6290d1858fbe765a7b3d3738c2d7bf2151314",
+          "imageSha256": "d4452bbb41d859deb71a159afa085e8b20c9f034818013fb531193a260d416f5",
+          "cycles": [
+            {
+              "processor": "coldfire",
+              "worstCase": 7018,
+              "maxConfiguration": 7018,
+              "maxInstances": 1,
+              "budget": 9577,
+              "unit": "cycles/block",
+              "method": "emulator",
+              "conditions": {
+                "parameterExtremes": "The Tuner has no parameters. Its branches were all driven: closed window (4 instructions per hook), open window not due (7), analysis rejected at the input gate (silence, max 106,443 per update: the snapshot and the DC-removal pass run before the gate), rejected at the clarity gate (white noise, 972,901), and accepted readings at 82.41, 110, 440 and 445 Hz and on a DC-offset track (max 1,048,251 per update at 440 Hz). Instruction counts on ot_emu c81d13dc for the card image d4452bbb, converted at 9.44 ns per instruction at 264 MHz (2.49216 cycles per instruction); see TESTING.md.",
+                "parameterModulation": "No parameter, lock, LFO, scene or MIDI CC path: the module reads only the selected-track byte and the read-back arena. Changing the track while open (T8 -> T2 -> T8) was exercised; the frame hook cost is constant (195 instructions, min = max over 104,872 blocks).",
+                "modeSwitching": "Opening (UP + TEMPO to the first draw, 13,749 instructions in the key task from tu_tempo) and closing (TEMPO, 5,968) are one-off events outside the frame path; open, close and reopen were repeated with the fixture playing. Transport start/stop does not change the module's cost (stopped: 195 per block, 1,046,788 per update).",
+                "maxLoad": "One global instance. The tuner-load8 fixture playing: seven FLEX tracks with stock FX1 and FX2 on all eight tracks, trigs and retrigs on every track at 120 BPM, T8 THRU on input A. Per block: 195 instructions in the frame interrupt plus the UI-task analysis and redraw (1,048,251 instructions at most, every 400 blocks, preempted by the frame interrupt) amortised over 400 blocks plus 108 not-due visits a second at 7: 2,816 instructions = 7,018 cycles, against Modwerk's 9,577-cycle ColdFire allowance (10 % of a 362.8 us block at 264 MHz). The frame-interrupt share alone is 486 cycles. UI-task counts exclude nested frame-interrupt bodies and include any other interrupt (upper bound). No USB or MIDI traffic was driven in this run; evidence/performance.json (3 Nov 2026, the same card bytes) adds a static bound of 7,070 cycles a block counted from the code and 6,936 measured as the Tuner's own instructions under a MIDI flood of 1,000 messages a second.",
+                "inputConditions": "Sines at 0.5 FS on the input (82.41, 110, 440, 445 Hz), white noise and silence through T8 THRU and the track's effects to the read-back tap; a FLEX track whose signal after its effects sits on a DC offset larger than its swing (reads F4, 343-345 Hz). The pitched path is the most expensive (YIN refinement runs only on an accepted lobe); the noise path stops after the lag loop and the silent path after the DC-removal pass."
+              },
+              "report": "evidence/performance.json"
+            }
+          ],
+          "memory": {
+            "regions": [
+              {
+                "name": "Tuner DRAM unit code and tables (.text)",
+                "space": "sdram",
+                "words": 2894,
+                "wordBits": 8,
+                "bytes": 2894,
+                "scope": "shared"
+              },
+              {
+                "name": "Tuner state, sample ring, snapshot and detector workspace (.data)",
+                "space": "sdram",
+                "words": 19500,
+                "wordBits": 8,
+                "bytes": 19500,
+                "scope": "shared"
+              },
+              {
+                "name": "Unused link gap between .text and .data inside the unit span",
+                "space": "sdram",
+                "words": 8194,
+                "wordBits": 8,
+                "bytes": 8194,
+                "scope": "shared"
+              },
+              {
+                "name": "Platform loader and packed Tuner unit appended to the image",
+                "space": "cpu-flash",
+                "words": 2288,
+                "wordBits": 8,
+                "bytes": 2288,
+                "scope": "shared"
+              },
+              {
+                "name": "Three hook sites rewritten in place (3 x 6-byte detours)",
+                "space": "cpu-flash",
+                "words": 18,
+                "wordBits": 8,
+                "bytes": 18,
+                "scope": "shared"
+              },
+              {
+                "name": "UI-task caller stack below the loop head (measured peak, tu_tick + tu_draw + stock text routine)",
+                "space": "sdram",
+                "words": 236,
+                "wordBits": 8,
+                "bytes": 236,
+                "scope": "shared"
+              },
+              {
+                "name": "Platform reserve: Flex sample RAM given up to the DRAM platform, less the unit span",
+                "space": "sdram",
+                "words": 10457220,
+                "wordBits": 8,
+                "bytes": 10457220,
+                "scope": "shared"
+              }
+            ],
+            "perInstanceBytes": 0,
+            "sharedBytes": 10490350,
+            "maxInstances": 1,
+            "totalBytes": 10490350,
+            "conditions": "Exact layout of the card build d4452bbb (bus da2375cf): the unit's 2,894-byte .text compared equal to a local link of upstream/tuner.s at 0x40a955e0 with .data at 0x40a98130; the 2,288 bytes appended to the bus. The Tuner's own bytes are 33,130: 2,894 code and tables, 19,500 data (state 44, ring 8,192, snapshot 8,192, decimated 2,048, NSDF 740, lobes 256, YIN 28), the 8,194-byte gap the link leaves between them, 2,288 appended loader and packed unit, 18 bytes of hook sites, and a 236-byte UI-task stack peak measured on the emulator (own frames 172 B static; the DC-removal pass uses registers only). The frame hook uses no stack. The 10,457,220-byte platform reserve is Flex sample RAM given up to the DRAM platform (10,487,808 B less the unit span); any DRAM module creates it. No heap, SRAM, battery-RAM or DSP allocation; the window is the stock TEMPO window object. No hardware canary was measured.",
+            "report": "TESTING.md"
+          },
+          "hardware": {
+            "kind": "functional",
+            "status": "reported",
+            "model": "MKI",
+            "testedOn": "2026-11-01",
+            "tester": "timhastie",
+            "sourceRevision": "ef6cbc71623abcee584ff59a217cf2c2ba9d5c41",
+            "imageSha256": "d4452bbb41d859deb71a159afa085e8b20c9f034818013fb531193a260d416f5",
+            "summary": "The author flashed OCTATRACK_MODWERK_TUNER_TEST3.bin (448,084 B, sha256 d4452bbb..., byte-identical to TEST2) on his Octatrack MKI on 1 November 2026 and reported the TEST3 sheet passing (his words, one line for three sheets: 'tuner ... pass'). The sheet's checks: a pitched source on the selected track (a THRU track on input A, or a pitched sample); UP held first then TEMPO opens the TUNER window with the track number, TEMPO first opens the stock tempo window; a steady note reads its note, octave, cents and frequency with the needle centred in tune; a sharp note moves the needle right with +cents and a flat note left with -cents, the reading updating about seven times a second and still on a steady note; when the signal stops the last reading stays with HOLD in the header and HOLD goes away on playing; the DC case (EQ and CHORUS on a track playing a sustained pitched sample) reads a note instead of HOLD; the header follows the track keys; TEMPO, YES, NO or UP + TEMPO close the window and TEMPO alone and FUNC + TEMPO keep their stock behaviour; no clicks or dropouts while it is open.",
+            "limitations": [
+              "The readings seen, what was fed in, the DC case's figures and the play time were not recorded; the report is the sheet's pass line, reported by the author and not independently repeated.",
+              "A functional check of the sheet's items, not a load or stress run; no hardware timing, stack canary or audio measurement. The cycle figures beside this report are the emulator's instruction-count model.",
+              "The MKI only; not run on an MKII."
+            ],
+            "report": "TESTING.md"
+          }
+        }
+      },
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE",
+        "declaration": "The exact upstream source and its MIT terms are retained. The licence covers authored source and documentation; it grants no rights to Elektron firmware and asserts no hardware qualification."
+      },
+      "media": [
+        {
+          "path": "media/01-track-page.png",
+          "captureType": "emulator",
+          "caption": "Select an audio track before opening Tuner. This page is the starting point; hold UP first and then press TEMPO to open the tuner window.",
+          "alt": "Track source-parameter page with six dial graphics and no modal window.",
+          "credit": "Tuner by Tim Hastie; documentary emulator capture; underlying interface by Elektron Music Machines.",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "Track source page",
+            "shows": "location",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "91bf159ee5a25c1d6b9356fe3eb0f43d8985f569bbfdeee3a7f85ba0da3770b3",
+            "setup": "Original candidate built from native SDK baseline 916ce01b; source-built emulator 5581c685 substituted for the retained binary. MKII panel; transport stopped; main output off; actual 128x64 LCD at integer scale 6. Historical v2.19/card-sdk capture; not rebuilt from current v2.20 source or main 4e2226f1. No live pitch/audio qualification."
+          }
+        },
+        {
+          "path": "media/02-tuner-open.png",
+          "captureType": "emulator",
+          "caption": "Hold UP first, then press TEMPO to open Tuner for the selected track. This stopped capture has no populated pitch reading; use a steady pitched sound for the hardware check, whose result remains pending.",
+          "alt": "Tuner overlay with a pitch ruler and center mark; the pitch readout is unpopulated.",
+          "credit": "Tuner by Tim Hastie; documentary emulator capture; underlying interface by Elektron Music Machines.",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "Tuner window",
+            "shows": "location-and-controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "91bf159ee5a25c1d6b9356fe3eb0f43d8985f569bbfdeee3a7f85ba0da3770b3",
+            "setup": "Original candidate built from native SDK baseline 916ce01b; source-built emulator 5581c685 substituted for the retained binary. MKII panel; transport stopped; main output off; actual 128x64 LCD at integer scale 6. Historical v2.19/card-sdk capture; not rebuilt from current v2.20 source or main 4e2226f1. No live pitch/audio qualification."
+          }
+        },
+        {
+          "path": "media/05-closed-tempo.png",
+          "captureType": "emulator",
+          "caption": "Press TEMPO while Tuner is open to return to the track page. YES and NO provide alternate close paths, recorded in the supplementary captures.",
+          "alt": "Track source-parameter page with the tuner overlay absent.",
+          "credit": "Tuner by Tim Hastie; documentary emulator capture; underlying interface by Elektron Music Machines.",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "Track source page after closure",
+            "shows": "location",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "91bf159ee5a25c1d6b9356fe3eb0f43d8985f569bbfdeee3a7f85ba0da3770b3",
+            "setup": "Original candidate built from native SDK baseline 916ce01b; source-built emulator 5581c685 substituted for the retained binary. MKII panel; transport stopped; main output off; actual 128x64 LCD at integer scale 6. Historical v2.19/card-sdk capture; not rebuilt from current v2.20 source or main 4e2226f1. No live pitch/audio qualification."
+          }
+        },
+        {
+          "path": "media/06-normal-tempo.png",
+          "captureType": "emulator",
+          "caption": "With Tuner closed and UP released, press TEMPO alone. The ordinary tempo dialog remains available; this picture does not test timing or audio.",
+          "alt": "Ordinary tempo popup over the track page, without a tuner overlay.",
+          "credit": "Tuner by Tim Hastie; documentary emulator capture; underlying interface by Elektron Music Machines.",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "Ordinary tempo dialog",
+            "shows": "location",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "91bf159ee5a25c1d6b9356fe3eb0f43d8985f569bbfdeee3a7f85ba0da3770b3",
+            "setup": "Original candidate built from native SDK baseline 916ce01b; source-built emulator 5581c685 substituted for the retained binary. MKII panel; transport stopped; main output off; actual 128x64 LCD at integer scale 6. Historical v2.19/card-sdk capture; not rebuilt from current v2.20 source or main 4e2226f1. No live pitch/audio qualification."
+          }
+        },
+        {
+          "path": "media/07-func-tempo.png",
+          "captureType": "emulator",
+          "caption": "With Tuner closed, use FUNC + TEMPO for the ordinary tapping gesture. Record the tempo before and after a hardware check because tapping can change it.",
+          "alt": "Centered tempo-tapping dialog with four beat-indicator boxes over the track page.",
+          "credit": "Tuner by Tim Hastie; documentary emulator capture; underlying interface by Elektron Music Machines.",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "Tempo tapping dialog",
+            "shows": "location",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "91bf159ee5a25c1d6b9356fe3eb0f43d8985f569bbfdeee3a7f85ba0da3770b3",
+            "setup": "Original candidate built from native SDK baseline 916ce01b; source-built emulator 5581c685 substituted for the retained binary. MKII panel; transport stopped; main output off; actual 128x64 LCD at integer scale 6. Historical v2.19/card-sdk capture; not rebuilt from current v2.20 source or main 4e2226f1. No live pitch/audio qualification."
+          }
+        },
+        {
+          "path": "media/08-tuner-a4-440.png",
+          "captureType": "emulator",
+          "caption": "The tuner on T8 reading a 440 Hz sine on input A: A4, the needle centred, +0c, 440.0Hz.",
+          "alt": "Tuner window titled TUNER T8 showing A4, a centred needle, +0c and 440.0Hz.",
+          "credit": "Tuner by Tim Hastie; documentary emulator capture; underlying interface by Elektron Music Machines.",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "Tuner window",
+            "shows": "location-and-controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "da2375cfbcee92129aad89b93ca202fff4b441f615fed2d22d2d8b8830055d74",
+            "setup": "Emulator measurement 30 Oct 2026: ot_emu c81d13dc (--dsp, MKII panel) on bus da2375cf (card OCTATRACK_MODWERK_TUNER_TEST2.bin d4452bbb), tuner-load8 fixture playing (seven FLEX tracks with stock FX, T8 THRU), a 0.5 FS sine on the input fed by --audio-in, T8 selected; actual 128x64 LCD at integer scale 6, rendered black and white."
+          }
+        },
+        {
+          "path": "media/09-tuner-e2-82.png",
+          "captureType": "emulator",
+          "caption": "An 82.41 Hz sine (the low E string) reads E2 +0c 82.4Hz.",
+          "alt": "Tuner window showing E2, a centred needle, +0c and 82.4Hz.",
+          "credit": "Tuner by Tim Hastie; documentary emulator capture; underlying interface by Elektron Music Machines.",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "Tuner window",
+            "shows": "location-and-controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "da2375cfbcee92129aad89b93ca202fff4b441f615fed2d22d2d8b8830055d74",
+            "setup": "Emulator measurement 30 Oct 2026: ot_emu c81d13dc (--dsp, MKII panel) on bus da2375cf (card OCTATRACK_MODWERK_TUNER_TEST2.bin d4452bbb), tuner-load8 fixture playing (seven FLEX tracks with stock FX, T8 THRU), a 0.5 FS sine on the input fed by --audio-in, T8 selected; actual 128x64 LCD at integer scale 6, rendered black and white."
+          }
+        },
+        {
+          "path": "media/10-tuner-a4-445.png",
+          "captureType": "emulator",
+          "caption": "A 445 Hz sine (about 20 cents sharp of A4) reads A4 +19c 445.0Hz with the needle right of centre.",
+          "alt": "Tuner window showing A4, the needle right of centre, +19c and 445.0Hz.",
+          "credit": "Tuner by Tim Hastie; documentary emulator capture; underlying interface by Elektron Music Machines.",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "Tuner window",
+            "shows": "location-and-controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "da2375cfbcee92129aad89b93ca202fff4b441f615fed2d22d2d8b8830055d74",
+            "setup": "Emulator measurement 30 Oct 2026: ot_emu c81d13dc (--dsp, MKII panel) on bus da2375cf (card OCTATRACK_MODWERK_TUNER_TEST2.bin d4452bbb), tuner-load8 fixture playing (seven FLEX tracks with stock FX, T8 THRU), a 0.5 FS sine on the input fed by --audio-in, T8 selected; actual 128x64 LCD at integer scale 6, rendered black and white."
           }
         }
       ]

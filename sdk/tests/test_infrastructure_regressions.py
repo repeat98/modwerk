@@ -184,7 +184,7 @@ EXTENSIONS = ['air-chorus-split-builder.json', 'plain-formatter-builder.json', '
               'ptable2-builder.json']
 # Documentation-only imports, oldest first: upstream files byte for byte, no build input.
 DOC_IMPORTS = ['octabam-docs-30fbb8e4.json', 'octabam-docs-dcf93d37.json', 'octabam-docs-6328143e.json', 'octabam-docs-bc144523.json',
-               'octabam-docs-5f8e779f.json']
+               'octabam-docs-5f8e779f.json', 'octabam-docs-54200264.json']
 
 class SelectiveImport(unittest.TestCase):
     def assert_current_builder_identity(self, path, historical):
