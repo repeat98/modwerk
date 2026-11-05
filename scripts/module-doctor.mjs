@@ -18,6 +18,7 @@ import { COMPARED_BEFORE_RECORDS, NOT_COMPOSED } from './module-coverage.mjs'
 import { moduleSourceFingerprint } from './module-source.mjs'
 import { ANALOG_BD_DSP_COMPANIONS } from '../src/engine/analog-bd-layout.ts'
 import { moduleNativeSourceSha256 } from './module-qualification.mjs'
+import { USB_CARD_ONLY_PATH, parseUsbCardOnly } from './retained-evidence.mjs'
 import { judgeRecord, ownerWaivedPerformanceRow } from './perf-audit-analysis.mjs'
 import { LINK_DEVICES } from '../src/engine/elektron/elemod.ts'
 
@@ -43,6 +44,8 @@ if (draft) {
   process.on('exit', () => rmSync(copy, { recursive: true, force: true }))
   for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => process.exit(signal === 'SIGINT' ? 130 : 143))
 }
+// The owner's card-only OKs, each for one exact version of a module that would otherwise need a USB package.
+const cardOnly = exists(USB_CARD_ONLY_PATH) ? parseUsbCardOnly(json(USB_CARD_ONLY_PATH)) : []
 const catalog = json('sdk/catalog.json'), machineModules = ['digitakt', 'digitone', 'analog-rytm-mkii', 'analog-four-mkii'].flatMap(machine => exists('sdk/' + machine + '/modules') ? readdirSync(resolve(root, 'sdk', machine, 'modules'), { withFileTypes: true }).filter(entry => entry.isDirectory() && !entry.name.startsWith('_')).map(entry => ({ id: entry.name, machine })) : [])
 
 // An unknown id is answered before any check runs: the rules below take seconds on a large catalogue.
@@ -100,6 +103,8 @@ function octatrack(id) {
   if (exists(folder + '/evidence/performance.json')) {
     const record = json(folder + '/evidence/performance.json'), rows = judgeRecord(record)
     // An ot_emu stress run stands in for dsp_host only where there is no dispatched instance: code reached through stock hooks.
+    // A key-press record has no flood, so a module with a MIDI path or ColdFire sound work cannot take it.
+    if (record.trigger === 'key' && ['midi-usb', 'machines'].includes(document.category)) fail('performance', "a key-press record (trigger: 'key') is for a module with no MIDI path and no frame-interrupt work, not a " + document.category + ' module', 'npm run perf:audit -- template coldfire, and measure under the flood')
     if (record.stress?.harness === 'ot_emu' && document.compatibility?.effectId != null) fail('performance', 'stress: an ot_emu run is for code reached only through stock hooks; an effect with id ' + document.compatibility.effectId + ' renders under dsp_host -guard -dirty', 'python3 tools/harness/stress_project.py, then tools/harness/pressure.py render')
     if (record.module !== id || record.version !== document.version) fail('performance', 'evidence/performance.json is for ' + record.module + '@' + record.version + ', not ' + id + '@' + document.version, 'measure again for this version, then npm run perf:audit -- check ' + folder + '/evidence/performance.json')
     else for (const row of rows.filter(item => item.state === 'fail')) {
@@ -137,9 +142,11 @@ function octatrack(id) {
   // The USB package beside the card build: required of every module listed from USB_PACKAGE_REQUIRED_FROM (Track Mutes and Play Start were sent back for it, #931, #947).
   if (!cOnly) {
     const usbRequired = !entry || (entry.addedAt ?? '').slice(0, 10) >= USB_PACKAGE_REQUIRED_FROM
+    const cardOnlyOk = cardOnly.find(item => item.module === id && item.version === document.version)
     if (usbRow?.version === document.version) ok('usb package', 'at ' + document.version + ' (npm run octatrack:module-packages -- --check)')
     else if (usbRow?.lagsBehind === document.version) info('usb package', 'kept at ' + usbRow.version + ' by a declared lag: ' + usbRow.lagReason)
     else if (usbRow) fail('usb package', 'the USB package is ' + usbRow.version + ', not ' + document.version, 'npm run octatrack:module-packages, then -- --check')
+    else if (usbRequired && cardOnlyOk) info('usb package', 'none: card-only at ' + document.version + ' by the owner\'s record in ' + USB_CARD_ONLY_PATH + ' until ' + cardOnlyOk.until + ': ' + cardOnlyOk.reason)
     else if (usbRequired) fail('usb package', 'none. A new Octatrack module ships its USB package beside the card build: install, Keep/Undo and removal, tested on a unit', 'build it as docs/ADD_A_MODULE.md#octatrack-base-and-usb-lifecycle describes, then npm run octatrack:module-packages')
     else info('usb package', 'none: card-only, listed before ' + USB_PACKAGE_REQUIRED_FROM + '; a reviewed migration comes before USB rollout')
   }

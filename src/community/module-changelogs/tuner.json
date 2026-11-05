@@ -1,0 +1,11 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-30",
+    "changes": [
+      "Repackages Tim Hastie\u2019s v2.21 Tuner source plus his DC-offset fix, with the original pitch detector and UP + TEMPO gesture.",
+      "Read the selected audio track\u2019s note, cents and frequency without using an effect slot.",
+      "Card builds only for this first draft."
+    ]
+  }
+]

@@ -7,7 +7,7 @@
 | a DRAM unit of octabam's platform runtime since 2.9 (depacked by the
 | loader at the boot redirect 0x4000050c, before main 0x40000db0 runs).
 |
-| Three battery-RAM bytes (CS1, 0x10000000..; the padding 0x100b14e2..ef
+| Four battery-RAM bytes (CS1, 0x10000000..; the padding 0x100b14e2..ef
 | between the settings block's last long 0x100b14de..e1 and the 16-byte-
 | aligned project record 0x100b14f0 -- no absolute reference to any of
 | 0x100b14e2..ef in the OS, outside the two blocks the boot memcpy's:
@@ -15,15 +15,19 @@
 |   NV_SCALE  0x100b14ec  0 = OFF, 1..24 = index into qz_masks
 |   NV_GLIDE  0x100b14ed  0 = OFF, 1..127 (modules/synth reads it as GLIDE_AT)
 |   NV_ROOT   0x100b14ee  0..11 = C .. B, the root the scale is built on (2.9)
+|   NV_MOFF   0x100b14ef  bit t = MIDI track t+1 has the scale OFF, 0 = every
+|                         MIDI track follows (2.15; any value is valid, so the
+|                         boot leaves it as it is)
 |
 |   qz_boot       jsr detour at 0x40010212, inside stock's boot sanitiser of
 |                 the block (0x4000fec8, from 0x40025770: a warm boot with a
 |                 project): out of range -> OFF / C, as stock does for its
-|                 own bytes; ends with the displaced tst.b so the caller's
-|                 bge sees its flags.
+|                 own bytes; ends with the displaced byte test so the caller's
+|                 signed branch sees its flags.
 |   qz_defaults   jsr detour at 0x40025ac2, inside the project defaults
 |                 (0x40025848: a cold boot, a boot with no project, the
-|                 loader before its storing pass, a new project): OFF / C.
+|                 loader before its storing pass, a new project): OFF / C,
+|                 every MIDI track following (2.15).
 |   qz_scale_mask d0 := the scale's pitch-class mask TRANSPOSED BY ROOT (bit
 |                 k = pitch class k, C = 0, is in the scale), 0 = OFF.
 |                 Reached by the synth's DRAM engine through the pinned
@@ -39,6 +43,8 @@
         .set    NV_SCALE, 0x100b14ec
         .set    NV_GLIDE, 0x100b14ed
         .set    NV_ROOT,  0x100b14ee
+        .set    NV_MOFF,  0x100b14ef
+        .set    NV_AOFF,  0x100b14eb      | (2.19) bit t: audio track t+1 has the scale OFF
 
 qz_boot:
         mvz.b   NV_SCALE,%d0
@@ -63,6 +69,8 @@ qz_defaults:
         clr.b   NV_SCALE
         clr.b   NV_GLIDE
         clr.b   NV_ROOT
+        clr.b   NV_MOFF
+        clr.b   NV_AOFF                 | (2.19) every audio track follows
         clr.l   0x100b14d4              | displaced
         rts
 

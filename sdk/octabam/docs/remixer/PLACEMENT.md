@@ -25,8 +25,14 @@ run at `0x401087e4` and the unit raised `VEC:03` in the menu draw loop
 (octalab, 13 Sep 2026).
 
 ```
-0x400c45b0..0x400c4702     338 B
-0x400d24d0..0x400d2ce0   2,064 B
+0x400c45b0..0x400c4702     338 B   (the zero tail of the 1,024-byte glyph block at
+                                    0x400c4302 the font descriptor points to;
+                                    whether a character reads it is not known)
+0x400d24d0..0x400d2ce0   2,064 B   (NOT free: the stock DELAY reads all of it as
+                                    entries 508..1023 of its coefficient table, at
+                                    default settings and at boot; code there changes
+                                    the DELAY's sound. ../FAILURE_MODES.md, "A cave
+                                    at 0x400d24d0 changes the stock DELAY")
 0x400d2ee6..0x400d3020     314 B   (refused at placement by the build, 25 Sep 2026:
                                     a live descriptor, modules/midi-scenes' CAVE2 note)
 0x400d64da..0x400d7c3c   5,986 B   (the FX2 chooser's NONE row + terminator sit at
