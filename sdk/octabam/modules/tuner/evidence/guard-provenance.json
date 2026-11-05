@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "purpose": "Modwerk native card guard declarations; no USB lifecycle implementation",
+  "app_revision": "4e2226f1be6347f74d51a0d5b99ee572ba3a82bb",
+  "upstream_revision": "fd18f5530989be348e6aa4c6e38f93beba555e6d",
+  "stock_input": {
+    "path": "/Users/timothyhastie/Documents/Codex/2026-09-30/thi/work/hostemu/private/p2-g/ob/out/raw/section_3_MAIN_OS.bin",
+    "format": "extracted original OS 1.40C MAIN section",
+    "bytes": 1112560,
+    "sha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+    "whole_file_identity_verified": true,
+    "expected_identity_source": "sdk/octabam/tools/remix/stock_guard.py:12",
+    "address_base": 1073742848
+  },
+  "guard_api": {
+    "path": "sdk/octabam/tools/remix/stock_guard.py",
+    "sha256": "b05e115afaa11d1507273bdcd26e05c25e7a6424d3e0fb4eb21d797194e508b3",
+    "declaration_function_line": 111,
+    "whole_input_verification_lines": [
+      16,
+      25
+    ],
+    "span_verification_lines": [
+      29,
+      39
+    ]
+  },
+  "guards": [
+    {
+      "address": 1074110192,
+      "address_hex": "0x40059ef0",
+      "length": 6,
+      "symbol": "tu_tempo",
+      "upstream_source": "upstream/manifest.py",
+      "upstream_line": 43,
+      "wrapper_source": "manifest.py",
+      "wrapper_line": 22,
+      "upstream_declaration_matches_guard_span": true
+    },
+    {
+      "address": 1073797530,
+      "address_hex": "0x4000d99a",
+      "length": 6,
+      "symbol": "tu_frame",
+      "upstream_source": "upstream/manifest.py",
+      "upstream_line": 45,
+      "wrapper_source": "manifest.py",
+      "wrapper_line": 23,
+      "upstream_declaration_matches_guard_span": true
+    },
+    {
+      "address": 1074097266,
+      "address_hex": "0x40056c72",
+      "length": 6,
+      "symbol": "tu_tick",
+      "upstream_source": "upstream/manifest.py",
+      "upstream_line": 47,
+      "wrapper_source": "manifest.py",
+      "wrapper_line": 24,
+      "upstream_declaration_matches_guard_span": true
+    }
+  ],
+  "guard_count": 3,
+  "guard_bytes_total": 18,
+  "wrapper": {
+    "path": "manifest.py",
+    "bytes": 1873,
+    "sha256": "934abe77152731afb918d6a4c05ee6b690a776c1411758d04af803e1a2ccb6be",
+    "prior_sha256": "481b9e29831df2159f0c540b3ed46591a424217becd72bf79e482d9e9a9d0527"
+  },
+  "unmodified_upstream_files": [
+    {
+      "path": "upstream/README.md",
+      "bytes": 8791,
+      "sha256": "4db778ea5cf4ecea2677fd54e97f648f4ed4bb622639c6ade8d125780470794a"
+    },
+    {
+      "path": "upstream/manifest.py",
+      "bytes": 2848,
+      "sha256": "b09bf9776197b92d1e511076a6ed3b13d501568b38e6d9ceeeaf4992997534cc"
+    },
+    {
+      "path": "upstream/stock_guard.py",
+      "bytes": 1111,
+      "sha256": "5f1fe08ef5a4eb05cd772c9b65ee9f54c2371914a8360c8589109a9ce4308c2d"
+    },
+    {
+      "path": "upstream/tuner.s",
+      "bytes": 30833,
+      "sha256": "45be936153c27dc7582cf3d01af7b599349df269af8445d5a0a3b0b2ca5bee3a"
+    }
+  ],
+  "construction_checks": [
+    "Complete source files were copied from immutable git blobs at the declared v2.20 commit.",
+    "Static upstream declaration inspection found the same three address/length/symbol tuples as the prior verified Modwerk guards.",
+    "Modwerk guard digests were carried forward unchanged; no manifest import or new stock-read check was performed."
+  ],
+  "behavior_preservation": "Detour addresses, targets and linked source resolution are retained; upstream reader now loads expectations from the local MAIN section during import, before the wrapper substitutes the unchanged Modwerk guards. Proof remains UNTESTED.",
+  "limits": [
+    "No current-source build, manifest import, runtime, test, module doctor or catalogue generation performed.",
+    "Historical stock-input verification above belongs to the original guard derivation and was not rerun.",
+    "All four upstream files are unchanged copies, including their reader behavior; no claim of import without local firmware.",
+    "No current hardware or resource qualification; USB loading unsupported."
+  ],
+  "historical_derivation": {
+    "upstream_revision": "243bcc89be87c1ad5be4ad3c6f75407ec033c1ce",
+    "app_revision": "98f17ed6e19ca6a81f12372b9ea3b435c736443d",
+    "wrapper_sha256": "481b9e29831df2159f0c540b3ed46591a424217becd72bf79e482d9e9a9d0527",
+    "source": "Original guard derivation retained in the pre-revendor branch; current spans and Modwerk digest declarations are unchanged. No new stock read or runtime comparison was made."
+  }
+}
