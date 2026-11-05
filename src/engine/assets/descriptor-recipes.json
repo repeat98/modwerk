@@ -4439,7 +4439,7 @@
       ]
     }
   ],
-  "sourceCommit": "1c81f145252ec099ffdf6248700f21ef1bbd7432",
+  "sourceCommit": "08cd3db02ba2966defbd96c599234c77507ffd47",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -4474,6 +4474,7 @@
     "dejavu": "0.1.0-experimental",
     "arp-key-locks": "0.1.0-experimental",
     "temp-save": "0.1.0-experimental",
-    "tuner": "0.1.0-experimental"
+    "tuner": "0.1.0-experimental",
+    "slow-lfo": "0.1.0-experimental"
   }
 }
