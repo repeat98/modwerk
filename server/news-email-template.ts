@@ -7,7 +7,7 @@ import { forumLink } from '../src/community/forum-links'
 import { betaInvitationRoute, BETA_INVITATION_PLACEHOLDER } from '../src/config/beta-invitation'
 
 /** Bump when the layout changes; a campaign keeps the version it was written with. */
-export const NEWS_EMAIL_VERSION = 'modwerk-news-001'
+export const NEWS_EMAIL_VERSION = 'modwerk-news-002'
 export const BETA_NEWS_EMAIL_VERSION = 'modwerk-news-beta-001'
 
 type Node = { type: string; value?: string; url?: string; alt?: string | null; depth?: number; ordered?: boolean; start?: number | null; children?: Node[] }
@@ -18,7 +18,7 @@ const CODE = 'font-family:Consolas,Menlo,monospace;font-size:14px;'
 /** The same GFM parser as the forum preview, so what the operator sees in the admin workspace is what members read. */
 export function parseNews(markdown: string): Node { return unified().use(remarkParse).use(remarkGfm).parse(markdown) as Node }
 
-const plain = (node: Node): string => node.value ?? (node.children ?? []).map(plain).join('')
+const plain = (node: Node): string => node.type === 'break' ? ' ' : node.value ?? (node.children ?? []).map(plain).join('')
 /** Inline HTML: everything is escaped; only web links become links, as in the forum. Raw HTML in the markdown stays text. */
 function inline(node: Node): string {
   const inner = () => (node.children ?? []).map(inline).join('')
@@ -44,15 +44,16 @@ function inlineText(node: Node): string {
     default: return inner()
   }
 }
-function block(node: Node, last: boolean, cta?: string): string {
+function block(node: Node, last: boolean, cta?: string, app?: string): string {
   const gap = last ? '0' : '18px'
+  if (app && node.type === 'list' && !node.ordered && node.children?.length && node.children.every(item => item.children?.[0]?.type === 'paragraph' && sitePicture(item.children[0].children?.[0]))) return cards(node, gap, app)
   if (cta && node.type === 'paragraph' && node.children?.length === 1 && node.children[0].type === 'link' && node.children[0].url === cta) {
     return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 24px;"><tr><td bgcolor="#5f6ac7" style="border-radius:7px;"><a href="${escape(cta)}" style="display:inline-block;padding:15px 22px;border:1px solid #727dde;border-radius:7px;color:#ffffff;font-size:15px;font-weight:bold;line-height:20px;text-decoration:none;">Join the beta</a></td></tr></table>`
   }
   if (cta && node.type === 'list' && !node.ordered) return features(node, gap)
   // One picture from the site's own files, the same URL for every recipient: no third-party or per-recipient loads.
-  const image = node.type === 'paragraph' && node.children?.length === 1 && node.children[0].type === 'image' ? node.children[0] : undefined
-  if (cta && image && /^\/[\w-]/.test(image.url ?? '')) return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 ${gap === '0' ? '0' : '24px'};"><tr><td><img src="${escape(new URL(image.url!, cta).href)}" alt="${escape(image.alt ?? '')}" width="502" style="display:block;width:100%;max-width:502px;height:auto;border:1px solid #36363e;border-radius:8px;"></td></tr></table>`
+  const image = node.type === 'paragraph' && node.children?.length === 1 ? sitePicture(node.children[0]) : undefined
+  if (app && image) return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 ${gap === '0' ? '0' : '24px'};"><tr><td><img src="${escape(new URL(image.url!, app).href)}" alt="${escape(image.alt ?? '')}" width="502" style="display:block;width:100%;max-width:502px;height:auto;border:1px solid #36363e;border-radius:8px;"></td></tr></table>`
   switch (node.type) {
     case 'paragraph': return `<p style="margin:0 0 ${gap};${TEXT}">${(node.children ?? []).map(inline).join('')}</p>`
     case 'heading': return node.depth === 1 || node.depth === 2
@@ -78,19 +79,59 @@ function features(node: Node, gap: string): string {
   })
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#1c1c1f" style="margin:4px 0 ${gap === '0' ? '0' : '24px'};border:1px solid #36363e;border-radius:10px;">${rows.join('')}</table>`
 }
+const PANEL = 'role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#1c1c1f"', CARD = 'border:1px solid #36363e;border-radius:10px;border-collapse:separate;'
+const sitePicture = (node?: Node) => node?.type === 'image' && /^\/[\w-]/.test(node.url ?? '') ? node : undefined
+const firstLink = (nodes: Node[]): string | undefined => nodes.reduce<string | undefined>((found, node) => found ?? (node.type === 'link' ? forumLink(node.url ?? '') : firstLink(node.children ?? [])), undefined)
+const titleInline = (node: Node): string => { const href = node.type === 'link' ? forumLink(node.url ?? '') : undefined; return href ? `<a href="${escape(href)}" style="color:#f4f4f8;text-decoration:none;">${(node.children ?? []).map(inline).join('')}</a>` : inline(node) }
+const cardCopy = (children: Node[]) => `<p style="margin:6px 0 0;color:#a8a8b8;font-size:14px;line-height:22px;">${children.map(inline).join('').trim()}</p>`
+/** A list whose items each open with one of the site's pictures becomes module cards: pictures alone on their line make a grid of library cards,
+ * a picture before text a compact row. A bold title and the words after it, up to the first line break, are the heading; the rest is the description. */
+function cards(node: Node, gap: string, app: string): string {
+  const out: string[] = []
+  let rows: string[] = [], tiles: string[] = []
+  const flush = () => {
+    if (rows.length) out.push(`<table ${PANEL} style="margin:0 0 16px;${CARD}">${rows.join('')}</table>`)
+    // Two cards side by side in the 502 px column, one under the other on a phone; Outlook for Windows ignores max-width and stacks them too.
+    if (tiles.length) out.push(`<div style="font-size:0;line-height:0;text-align:center;">${tiles.join('')}</div>`)
+    rows = []; tiles = []
+  }
+  for (const item of node.children ?? []) {
+    const [first, ...more] = item.children ?? [], [picture, ...after] = first.children ?? []
+    const wide = after.every(part => part.type === 'text' && !part.value?.trim())
+    const [lead, ...rest] = wide ? more : [{ ...first, children: after.slice(after[0]?.type === 'text' && !after[0].value?.trim() ? 1 : 0) }, ...more]
+    const parts = lead?.type === 'paragraph' ? lead.children ?? [] : [], cut = parts.findIndex(part => part.type === 'break')
+    const head = cut < 0 ? parts : parts.slice(0, cut), body = cut < 0 ? [] : parts.slice(cut + 1), href = firstLink(head)
+    const title = head.map(part => part.type === 'strong' ? `<span style="${wide ? 'display:block;' : ''}color:#f4f4f8;font-size:16px;line-height:22px;font-weight:bold;">${(part.children ?? []).map(titleInline).join('')}</span>` : `<span style="color:#90909e;font-size:13px;line-height:20px;">${wide ? inline(part).trimStart() : inline(part)}</span>`).join('')
+    const copy = (body.length ? cardCopy(body) : '') + (lead && lead.type !== 'paragraph' ? blocks([lead]) : '') + rest.map(part => part.type === 'paragraph' ? cardCopy(part.children ?? []) : blocks([part])).join('')
+    const img = (width: number, style: string) => `<img src="${escape(new URL(picture.url!, app).href)}" alt="${escape(picture.alt ?? '')}" width="${width}" style="display:block;height:auto;${style}">`
+    const linked = (html: string) => href ? `<a href="${escape(href)}" style="display:block;text-decoration:none;">${html}</a>` : html
+    if (wide) {
+      if (rows.length) flush()
+      tiles.push(`<div style="display:inline-block;width:100%;max-width:234px;margin:0 8px 16px;vertical-align:top;text-align:left;"><table ${PANEL} style="${CARD}"><tr><td style="padding:0;">${linked(img(232, 'width:100%;border:0;border-radius:10px 10px 0 0;'))}</td></tr><tr><td style="padding:12px 14px 14px;">${title}${copy}</td></tr></table></div>`)
+    } else {
+      if (tiles.length) flush()
+      const line = rows.length ? 'border-top:1px solid #36363e;' : ''
+      rows.push(`<tr><td valign="top" width="96" style="width:96px;padding:14px 0 14px 14px;${line}">${linked(img(96, 'width:96px;border:1px solid #36363e;border-radius:6px;'))}</td><td valign="top" style="padding:12px 16px 14px 14px;${line}">${title}${copy}</td></tr>`)
+    }
+  }
+  flush()
+  out.push(out.pop()!.replace('margin:0 0 16px;', `margin:0 0 ${gap === '0' ? '0' : '24px'};`))
+  return out.join('\n')
+}
 /** Inside a list item a single paragraph is unwrapped, so bullets read as one line. */
-function blocks(nodes: Node[], tight = false, cta?: string): string {
+function blocks(nodes: Node[], tight = false, cta?: string, app?: string): string {
   if (tight && nodes.length === 1 && nodes[0].type === 'paragraph') return (nodes[0].children ?? []).map(inline).join('')
-  return nodes.map((node, index) => block(node, index === nodes.length - 1, cta)).join('\n')
+  return nodes.map((node, index) => block(node, index === nodes.length - 1, cta, app)).join('\n')
 }
 function blockText(node: Node, indent = ''): string {
-  const line = (children: Node[]) => children.map(inlineText).join('').split('\n').map(text => indent + text).join('\n')
+  // A card's picture has no text of its own, so its line starts with the title.
+  const line = (children: Node[]) => children.map(inlineText).join('').trimStart().split('\n').map(text => indent + text).join('\n')
   switch (node.type) {
     case 'paragraph': return line(node.children ?? [])
     case 'heading': return indent + plain(node).toUpperCase()
     case 'list': return (node.children ?? []).map((item, index) => {
       const marker = node.ordered ? `${(node.start ?? 1) + index}. ` : '- '
-      const body = (item.children ?? []).map(child => blockText(child, indent + ' '.repeat(marker.length))).join('\n')
+      const body = (item.children ?? []).map(child => blockText(child, indent + ' '.repeat(marker.length))).filter(text => text.trim()).join('\n')
       return indent + marker + body.slice(indent.length + marker.length)
     }).join('\n')
     case 'blockquote': return (node.children ?? []).map(child => blockText(child, indent + '> ')).join('\n')
@@ -103,7 +144,7 @@ function blockText(node: Node, indent = ''): string {
   }
 }
 
-/** Same scriptless, image-free shell as the welcome news and account emails. */
+/** Same scriptless shell as the welcome news and account emails; pictures only from the site's own files. */
 export function renderNewsEmail(campaign: { subject: string; body: string }, urls: { app: string; settings: string; unsubscribe?: string }, cta?: string) {
   const tree = parseNews(campaign.body), children = tree.children ?? []
   const subject = campaign.subject.replace(/[\r\n]+/g, ' ').trim().slice(0, 150)
@@ -128,7 +169,7 @@ export function renderNewsEmail(campaign: { subject: string; body: string }, url
 <tr><td bgcolor="#232327" style="padding:32px 28px;border:1px solid #36363e;border-top:0;border-radius:0 0 12px 12px;">
 <p style="margin:0 0 16px;color:#c7a16c;font-size:11px;line-height:18px;font-weight:bold;letter-spacing:1.8px;text-transform:uppercase;">Modwerk news</p>
 <h1 style="margin:0 0 22px;color:#f4f4f8;font-size:28px;line-height:36px;font-weight:bold;letter-spacing:-0.5px;">${escape(subject)}</h1>
-${blocks(children, false, cta)}
+${blocks(children, false, cta, urls.app)}
 </td></tr>
 <tr><td style="padding:24px 8px 8px;color:#90909e;font-size:12px;line-height:21px;">
 <p style="margin:0 0 8px;">${footerHtml}</p>

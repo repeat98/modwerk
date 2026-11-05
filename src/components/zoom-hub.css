@@ -10,3 +10,5 @@
 .zoom-firmware caption { text-align: left; color: var(--muted); padding-bottom: 6px; }
 .zoom-firmware th, .zoom-firmware td { text-align: left; vertical-align: top; padding: 8px 10px 8px 0; border-top: 1px solid var(--line); }
 .zoom-firmware thead th { color: var(--muted); font-weight: 500; border-top: 0; }
+.zoom-files button { margin-left: 6px; font-size: 12px; }
+.zoom-pick { cursor: pointer; }

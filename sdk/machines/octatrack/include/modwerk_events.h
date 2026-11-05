@@ -134,6 +134,7 @@ struct modwerk_machine_setup {
     uint32_t (*page)(uint32_t stock);   /* the page the drawer shows instead of stock's */
     unsigned (*knob)(unsigned index, int delta); /* encoder A-F (0-5) turned: nonzero takes it, 0 lets stock edit the pool's slot */
 };
+#define MODWERK_MACHINE_START 256u       /* requires its separate versioned START record */
 
 /* ot_sequencer_rows (table, contribute {"to": "ot_sequencer_rows", "order", "data"}): PROJECT > CONTROL > SEQUENCER lists stock's three rows, then one per contributed label. The UI task. Contribute one struct modwerk_sequencer_rows: its rows, in order. The window shows stock's three rows and up to eight more; a row with a label an earlier row has is not shown; the getter and setter follow stock's rows' convention (CHAIN AFTER's 0x400659ec). */
 #define MODWERK_OT_SEQUENCER_ROWS 29
@@ -180,5 +181,14 @@ typedef unsigned modwerk_ev_trig_muted(void);
 /* ot_sample_editor_actions (table, contribute {"to": "ot_sample_editor_actions", "order", "data"}): the shared AED SLICE action menu lists admitted sample-editor contributions; selection opens the package with a fresh base-owned source token. The UI task; entry is nonblocking and receives copied settings through the base API. Contribute one 64-byte struct modwerk_sample_action, ABI 1, flags/reserved zero and inline printable label. A nonzero action key is globally unique. The base validates the whole initialized record and entry against its exact published owner, copies its label into resident menus, and retains no module pointer in stock UI. Source capture, stock confirmation and marker publication belong to the base; owner/source/writer changes retire or refuse access before mutation. Actual waveform-read dispatch remains blocked until idle and complete metadata revalidation. Flex and Static file slots and inactive recorder buffers are supported during pattern playback. Recording blocks only the recorder buffer being edited, not unrelated files or buffers. No PCM access, automatic sample/project save or slice Undo. Older bases refuse the longer hook list. */
 #define MODWERK_OT_SAMPLE_EDITOR_ACTIONS 36
 #include "modwerk_sample_editor.h"
+
+/* ot_machine_starts (table, contribute {"to": "ot_machine_starts", "order", "data"}): the source START handler is selected in the frame interrupt, before native arguments and the optional trig gate. Frame interrupt only: bounded, no blocking, preserve d2-d7/a2-a6 using the C ABI. Requires a base advertising ot_machine_starts. ABI 1 machine descriptors keep their 80-byte extent. A machine with MODWERK_MACHINE_START must contribute exactly one version-1 record naming its descriptor; malformed, absent, duplicate or DSP-unpaid ownership refuses START and silences its previous voice until an accepted START. All legacy machines and unowned tracks retain the selected stock/module fallback, including FM Synth. Absent known PROTECT machines never receive stock START with custom controls. Tables publish masked, and the frame interrupt plus existing paused-context retention holds descriptors, callbacks and the selected fallback through the call. This is not a task-call lease. Module removal follows the existing machine/Part/UI and paused-stack rules. No changes to FM Synth or its FLEX START table cell. */
+#define MODWERK_OT_MACHINE_STARTS 37
+struct modwerk_machine_start {
+    uint32_t abi, bytes;               /* MODWERK_MACHINE_START_ABI, sizeof this record (16 on target) */
+    const struct modwerk_machine *machine; /* identity of the same package's ot_machines descriptor */
+    int (*start)(unsigned track, unsigned sample, unsigned flags);
+};
+#define MODWERK_MACHINE_START_ABI 1u
 
 #endif

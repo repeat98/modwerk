@@ -1,0 +1,76 @@
+{
+ "schemaVersion": 1,
+ "recorded": "2026-10-29",
+ "decision": "The source of the Digitakt II core 1.1 (OS 1.17) and the header that describes its additions to mods, copied unchanged from toonst's elekloader fork as the starting point of Modwerk's own Digitakt II base (owner decision for every machine, 28 October 2026: docs/MACHINE_RECIPE.md). Core 1.1 adds ev_frame_params, ev_key_leds, the mods' project and kit data (core_projdata, core_kitdata), value rows and firmware locations to the six events of core 1.0, which stays what the site builds with until the base ships. mods/core-dt2/mod.json is the recipe: it builds mods/core/core.s, settings.s and fast.s with the Digitakt II's addresses, and the files beside it. GPL-2.0-or-later, each source keeps its SPDX line; the core is irpina's, the 1.1 additions toonst's. Not built or run by this record; the build and its identity come with the machine's base.",
+ "repository": "https://github.com/toonst/elekloader",
+ "branch": "claude/zen-rubin-g8jh03",
+ "revision": "3d7c2e3c955a73ad8c8cc9ad6daf83c1a5993f08",
+ "license": "GPL-2.0-or-later",
+ "files": [
+  {
+   "from": "mods/core-dt2/mod.json",
+   "to": "sdk/machines/digitakt-ii/elekloader/core-dt2/mod.json",
+   "sha256": "9e1c2e56781b2b5e627176bbc07bd42742bc4a85a77a4027751f67d318a88b9e"
+  },
+  {
+   "from": "mods/core-dt2/frame.s",
+   "to": "sdk/machines/digitakt-ii/elekloader/core-dt2/frame.s",
+   "sha256": "2d0a08a4ab462a1794c6c79267252349d05996cb19cd2bb21ff052721f9d210b"
+  },
+  {
+   "from": "mods/core-dt2/fw.s",
+   "to": "sdk/machines/digitakt-ii/elekloader/core-dt2/fw.s",
+   "sha256": "29554cf50bfffaa4153344ad5d2c70b02634cd4a732a1ad089e2f0d90b138077"
+  },
+  {
+   "from": "mods/core-dt2/leds.s",
+   "to": "sdk/machines/digitakt-ii/elekloader/core-dt2/leds.s",
+   "sha256": "5e88ab3339ff271a1d39d3e17e5c7987c53a239c523832c10b57898a4841ee79"
+  },
+  {
+   "from": "mods/core-dt2/personalize.s",
+   "to": "sdk/machines/digitakt-ii/elekloader/core-dt2/personalize.s",
+   "sha256": "10372f64d233a1cc3c5abcb202084c3a8707e17e8d656038754c44a3e7554111"
+  },
+  {
+   "from": "mods/core-dt2/rows.c",
+   "to": "sdk/machines/digitakt-ii/elekloader/core-dt2/rows.c",
+   "sha256": "0a7386b32e4e61e6cf7a58d144845c0c1e439cf5459d3c3a7be02e9f9c6e122f"
+  },
+  {
+   "from": "mods/core-dt2/rows.s",
+   "to": "sdk/machines/digitakt-ii/elekloader/core-dt2/rows.s",
+   "sha256": "3b1d7af70cc579ffb9bb65cad5a5bc8cac7e948efbae1f329c0737316a26048c"
+  },
+  {
+   "from": "mods/core-dt2/store.c",
+   "to": "sdk/machines/digitakt-ii/elekloader/core-dt2/store.c",
+   "sha256": "27675a5a7546c654eb48fdebaa9de0e05b227d93f2c2000deeedefda05ce45d9"
+  },
+  {
+   "from": "mods/core-dt2/store.s",
+   "to": "sdk/machines/digitakt-ii/elekloader/core-dt2/store.s",
+   "sha256": "8e93d7edf5cd99e4b7f12b4efdf2ac4e6420b803db76346a6a1df11710d73b2c"
+  },
+  {
+   "from": "mods/core/core.s",
+   "to": "sdk/machines/digitakt-ii/elekloader/core/core.s",
+   "sha256": "dd0074e9b08a254838feae6215404e775ba7ef7aa2afbcce1e5c24794eebddc5"
+  },
+  {
+   "from": "mods/core/settings.s",
+   "to": "sdk/machines/digitakt-ii/elekloader/core/settings.s",
+   "sha256": "8fa715d46d6dbe239bed6d8d0ea4a0c3100c068b39869c938b402f2d6a15a380"
+  },
+  {
+   "from": "mods/core/fast.s",
+   "to": "sdk/machines/digitakt-ii/elekloader/core/fast.s",
+   "sha256": "96fc437340b63289ad269bf03d66540cd500987be2d0611b37748accb0621f18"
+  },
+  {
+   "from": "elekloader/sdk/include/mk2/core.h",
+   "to": "sdk/machines/digitakt-ii/include/mk2/core.h",
+   "sha256": "46c778c090305d9d171308d37f04852b8ef9b6a9dec7f58a746faba2753579bb"
+  }
+ ]
+}

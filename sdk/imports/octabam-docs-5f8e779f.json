@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/sambanks/octabam",
+  "revision": "5f8e779fa9e8dcf5f36b2b62f7f80c7309daced4",
+  "kind": "docs-backport",
+  "modules": [],
+  "files": [
+    {
+      "path": "docs/TRAPS.md",
+      "sourcePath": "docs/contributing/TRAPS.md",
+      "sourceSha256": "4f4bf35ae67833dcf00f1976937a03d05b26651c12f0c4284f6ad29057983afe",
+      "vendoredSha256": "4f4bf35ae67833dcf00f1976937a03d05b26651c12f0c4284f6ad29057983afe"
+    }
+  ],
+  "localAdaptations": [
+    "None: the file is upstream byte for byte, replacing the copy the bc144523 record pinned. FAILURE_MODES.md, HARDWARE_MATRIX.md and MIDI_TRACKS.md are unchanged upstream and stay pinned by the bc144523, dcf93d37 and 30fbb8e4 records. CHIP.md is not taken."
+  ],
+  "review": [
+    "Stock-free scan against the original 1.40C MAIN image (MAIN.raw, sha 164f3122..., local, nothing written): TRAPS.md has no hex string of 8 bytes or more, so no 8-byte window of one occurs in stock. The scanner found planted stock bytes in a probe file.",
+    "No objdump listing; TRAPS.md's one code block is the single assembler line the 30fbb8e4 record already carried. The eight new entries name addresses, project offsets and instructions by mnemonic (ColdFire ISA-C forms a stub cannot use, upstream module data), no stock bytes."
+  ],
+  "limitations": [
+    "Documentation only: no code, build input or module source changes. The tool pin in sdk/upstream-tools.json moves to 5f8e779 in its own pull request, not by this record. Three of the eight new TRAPS.md entries concern upstream code Modwerk does not carry (the DRAM runtime's staging scan, the resident unit's export publishing, a module's shared string helper), and one an emulator port rule upstream narrowed and reverted, which Modwerk's vendored port never took; the stock and tool facts behind the other four are listed against Modwerk's code in docs/OCTATRACK_HARDWARE_TRAPS.md."
+  ]
+}

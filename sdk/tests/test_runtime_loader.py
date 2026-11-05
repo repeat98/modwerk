@@ -258,6 +258,29 @@ class SiteEventTests(unittest.TestCase):
             with tempfile.TemporaryDirectory() as temp, self.subTest(args), self.assertRaises(ValueError):
                 Path(temp, 'events.json').write_text(json.dumps(bad)); events.load(Path(temp, 'events.json'))
 
+    @unittest.skipUnless(shutil.which('m68k-elf-gcc'), 'ColdFire compiler unavailable')
+    def test_c_sources_raise_an_event_as_a_runtime_json_does(self):
+        # A C runtime package raises a site-less event with --raise, as an octabam module lists it under "raise" in its
+        # runtime.json: its zero word raise_<event> (initialized data) takes RAISE and its offset in the event's word.
+        reg = events.load()
+        with tempfile.TemporaryDirectory() as folder:
+            source, package = Path(folder) / 'raiser.c', Path(folder) / 'raiser.mwrm'
+            source.write_text('#include "%s"\n' % (EVENTS_DIR / 'include/modwerk_events.h') +
+                              'modwerk_ev_trig_muted *raise_ev_trig_muted __attribute__((section(".data"))) = 0;\n'
+                              'unsigned muted;\nvoid module_tick(void) { muted = raise_ev_trig_muted ? raise_ev_trig_muted() : 0; }\n')
+            run = lambda *extra: subprocess.run([sys.executable, '-B', str(LOADER / 'build.py'), str(source), *extra,
+                                                 '-o', str(package)], capture_output=True, text=True)
+            self.assertEqual(run('--raise', 'ev_trig_muted').returncode, 0)
+            data = package.read_bytes()
+            self.assertNotEqual(run('--raise', 'ev_voice_bind').returncode, 0)  # a site event is subscribed, never raised
+        index = events.index('ev_trig_muted', reg)
+        image_bytes, _, _, hooks = struct.unpack_from('>4I', data, 8)
+        self.assertEqual(hooks, index + 1)
+        word = struct.unpack_from('>I', data, 76 + index * 4)[0]
+        self.assertEqual(word >> 24, build.RAISE)
+        image = data[76 + hooks * 4:76 + hooks * 4 + image_bytes]
+        self.assertEqual(image[word & 0xffffff:(word & 0xffffff) + 4], bytes(4))
+
     def test_raised_events_have_a_base_entry_and_no_site(self):
         reg = events.load()
         raised = events.raised(reg)
@@ -328,6 +351,85 @@ class SiteEventTests(unittest.TestCase):
             self.assertIn('modwerk_site_%08x' % at, names)
             windows = {hashlib.sha256(code[i:i + site['length']]).hexdigest() for i in range(0, len(code) - site['length'] + 1, 2)}
             self.assertNotIn(site['guard'], windows)  # no displaced stock run is carried whole
+
+    def test_start_callback_is_a_linked_code_function(self):
+        cross = 'm68k-elf-'
+        if not all(shutil.which(cross + tool) for tool in ('as', 'ld', 'nm', 'objcopy', 'readelf')):
+            self.skipTest('no ColdFire binutils')
+        entry = dict(event='ot_machine_starts', fn='start_record', order=0)
+        assembly = '''
+.text
+.global callback
+.type callback,@function
+callback: nop
+          rts
+.size callback,.-callback
+.type text_data,@object
+text_data: .word 0x4e75
+.size text_data,.-text_data
+.section .rodata
+.balign 2
+rodata: .long 0x4e714e75
+.data
+.balign 2
+.type data_function,@function
+data_function: nop
+               rts
+.size data_function,.-data_function
+.global start_record
+start_record: .long 1,16,machine,TARGET
+machine: .space 80
+.bss
+.balign 4
+bss_data: .space 4
+'''
+        with tempfile.TemporaryDirectory() as temp:
+            temp = Path(temp)
+            for target in ('callback', 'callback+2', 'text_data', 'rodata', 'data_function', 'bss_data',
+                           '__image_end', 'callback+1', '0', '0x40000000'):
+                with self.subTest(target=target):
+                    source, obj = temp / 'test.s', temp / 'test.o'
+                    source.write_text(assembly.replace('TARGET', target))
+                    subprocess.run([cross + 'as', '-mcpu=54455', source, '-o', obj], check=True, capture_output=True)
+                    image, symbols, _, _ = build.link_units([obj], cross, 0, temp)
+                    self.assertEqual(image[:4], bytes.fromhex('4e714e75'))
+                    if target == 'callback':  # offset zero is a valid relocated function, not a null pointer
+                        hooks = build.subscribe([build.NONE] * 4, [entry], symbols)
+                        self.assertEqual(hooks[37], symbols['start_record'])
+                        with self.assertRaisesRegex(ValueError, 'ELF'):
+                            build.subscribe([build.NONE] * 4, [entry], dict(symbols))
+                        with self.assertRaisesRegex(ValueError, 'START.*function'):
+                            build.subscribe([build.NONE] * 4, [dict(entry, fn='__image_end')], symbols)
+                    else:
+                        with self.assertRaisesRegex(ValueError, 'START.*function'):
+                            build.subscribe([build.NONE] * 4, [entry], symbols)
+
+    def test_start_callback_check_is_used_by_the_c_builder(self):
+        if not shutil.which('m68k-elf-gcc'):
+            self.skipTest('no ColdFire compiler')
+        source = '''#include <stdint.h>
+int callback(unsigned t, unsigned s, unsigned f) { return t + s + f; }
+static const uint8_t data[] = {0x4e,0x71,0x4e,0x75};
+static const uint8_t machine[80] = {0};
+typedef int Fn(unsigned, unsigned, unsigned);
+const struct { uint32_t abi, bytes; const void *machine; Fn *start; }
+start_record = {1,16,machine,TARGET};
+'''
+        with tempfile.TemporaryDirectory() as temp:
+            file = Path(temp, 'test.c')
+            for target in ('callback', '(Fn *)data'):
+                with self.subTest(target=target):
+                    text = source.replace('TARGET', target)
+                    if target == 'callback':
+                        text = text.replace('static const uint8_t data[] = {0x4e,0x71,0x4e,0x75};', '')
+                    file.write_text(text)
+                    if target == 'callback':
+                        packet = build.build_c([file], 'm68k-elf-', 'start-check', subscriptions=[dict(event='ot_machine_starts', fn='start_record', order=0)])
+                        self.assertEqual(packet[:4], b'MWRM')
+                        self.assertEqual(struct.unpack_from('>H', packet, 4)[0], 8)  # unchanged package format
+                    else:
+                        with self.assertRaisesRegex(ValueError, 'START.*function'):
+                            build.build_c([file], 'm68k-elf-', 'start-check', subscriptions=[dict(event='ot_machine_starts', fn='start_record', order=0)])
 
     def test_builder_subscriptions(self):
         reg = events.load()

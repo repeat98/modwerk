@@ -36,6 +36,10 @@
 #define SECTORS 37u                  /* stock's table of sector starts, 0x4000 to 0x1f0000 */
 
 volatile uint32_t modwerk_flash_refusal;
+/* Set before OS UPGRADE's quiesce, which stops the frames on purpose: dsp.c's stall watchdog then stays out (its recovery
+ * let the frame interrupt back in mid-write; the unit froze there or hung at the restart, MKII, 30 October 2026). Only
+ * the restart clears it. */
+volatile uint32_t modwerk_flash_quiesced;
 /* No libc in the base: its own byte loops, as upload.c and loader.c keep. */
 static void copy(uint8_t *d, const uint8_t *s, uint32_t n) { while (n--) *d++ = *s++; }
 static int differ(const uint8_t *a, const uint8_t *b, uint32_t n) { while (n--) if (*a++ != *b++) return 1; return 0; }
@@ -477,7 +481,7 @@ static enum mu_publication f_publish(void *u)
      * the next start is from the new slot. */
     int restart = base != 2;
     f_owned = 1; busy = 1; quiet = restart;
-    if (restart) modwerk_boot_quiesce();
+    if (restart) modwerk_flash_quiesced = 1, modwerk_boot_quiesce();
     int ok = two ? update(base == 2) : convert(old);
     slots_refresh(); busy = 0;
     if (!ok) { modwerk_flash_refusal = FLASH_WRITE; return MU_UNCERTAIN; }

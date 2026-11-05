@@ -127,6 +127,7 @@ int dl_engine_claim(unsigned c,unsigned r,int k) { (void)c;(void)r;(void)k;retur
 void dl_engine_release(unsigned c,unsigned r) { (void)c;(void)r; }
 unsigned dl_engine_reserved(unsigned c) { (void)c;return 0; }
 int mw_engines_test_quiet(void) { return 1; }
+int mw_engines_test_queued(void) { return 0; }
 int mw_engines_test_settled(void) { return 1; }
 volatile uint8_t dl_engine_why[2];
 ''')

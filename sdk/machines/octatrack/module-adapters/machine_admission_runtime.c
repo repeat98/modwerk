@@ -5,6 +5,11 @@
 #include "table_admission.h"
 #include "machine_contributors.h"
 #include "sample_editor_actions.h"
+int modwerk_machine_image_validate(const struct runtime_dsp *d)
+{
+    /* Pure format/address validation. Do not run SWITCH admission here: it can retire saved Part signatures. */
+    return machine_contributor_validate(d,RUNTIME_METADATA_SWITCH);
+}
 static int board_read(void *context,uint32_t address,void *out,uint32_t length)
 {
     (void)context;
@@ -33,6 +38,12 @@ int modwerk_machine_metadata_admit(const struct runtime_dsp *from,struct runtime
 #endif
     {
         int why=mw_sample_action_admission(from,to,operation);
+        if(why) return why;
+    }
+    /* Also examines START-only and truncated declarations: they must not bypass admission just because they have
+     * no complete ot_machines record. No stock roots/MMIO are read for this format and same-package check. */
+    {
+        int why=machine_contributor_validate(to,operation);
         if(why) return why;
     }
     /* No root reads for ordinary modules, including the default empty base. */

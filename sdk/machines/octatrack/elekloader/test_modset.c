@@ -2,7 +2,8 @@
  * Host check of modset.c with a pretend card: accepted packages are saved to the two files in turn, a
  * removal drops its module, the newest whole set is installed after a boot, a damaged newer file leaves the
  * older one, and another base's set or a held FUNC installs nothing. A Keep joins the set only as exactly the
- * trial's whole-set identity, and its save reports unsaved and failed until the card has it. */
+ * trial's whole-set identity, and its save reports unsaved and failed until the card has it. A start that crashed,
+ * stopped or hung while its restore ran leaves the package it was installing out, or holds the set once. */
 #define MODWERK_RUNTIME_VOLATILE_JOURNAL
 #include "sha256.c"
 #include "modset.c"
@@ -15,6 +16,7 @@ void modwerk_diag_refused(uint32_t module, uint32_t refusal) { refused_m = modul
 enum runtime_refusal modwerk_runtime_refusal(void) { return refusal_now; }
 static enum runtime_refusal noted = RUNTIME_MALFORMED; /* what modset.c told the loader a refusal was */
 void modwerk_runtime_refused(enum runtime_refusal why) { noted = why; }
+#include <setjmp.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -37,12 +39,16 @@ int modwerk_test_file(int op, const char *path, uint8_t *data, unsigned n)
 }
 static unsigned prepared, installed, entered;
 static uint32_t ids[8];
+static uint32_t crash_id, stall_id; /* the package whose install crashes the unit (crash.c restarts it) or stops a DSP */
+static jmp_buf crashed;
 static int enter(void *u) { (void)u; ++entered; return 1; }
 static int safe(void *u) { (void)u; return 1; }
 static int leave(void *u) { (void)u; return 1; }
 static int prepare(void *u, const uint8_t *d, uint32_t n)
 {
     (void)u; ids[prepared++ % 8] = be32(d + 28);
+    if (crash_id && be32(d + 28) == crash_id) { ++modwerk_test_crashes; longjmp(crashed, 1); }
+    if (stall_id && be32(d + 28) == stall_id) { ++modwerk_test_stalls; return 0; } /* dsp.c shuts the loader off */
     int ok = n > 32u && be32(d + 28) != refuse_id;
     if (!ok && busy_left && !--busy_left) refuse_id = 0; /* the last refusal: it installs next */
     return ok;
@@ -61,11 +67,22 @@ static void make(unsigned k, uint32_t id, int removal)
     put32(package[k] + 8, removal ? 0 : 4); put32(package[k] + 28, id);
 }
 static void accept(unsigned k, uint32_t n) { modwerk_modset_candidate(package[k], n); modwerk_modset_accepted(); }
-static void boot(void) /* RAM gone, the card kept */
+static void cut(void) /* RAM gone, the card and battery RAM kept: a crash restart or a power cycle */
 {
-    memset(set, 0, sizeof set); restored = 0; pending = 0; slot = 0; keep_bytes = 0; prepared = installed = entered = 0;
-    modwerk_modset_result = 0; modwerk_test_ticks = 200;
+    memset(set, 0, sizeof set); restored = 0; pending = 0; slot = 0; keep_bytes = 0; prepared = installed = entered = 0; restore_tries = 0;
+    modwerk_modset_result = 0; notice = 0; notice_after = 0; modwerk_test_ticks = 200;
+    modwerk_modset_notice_tick(); /* the ticks before the restore */
 }
+static void boot(void) { modwerk_test_guard.armed = 0; cut(); } /* after a start that ran and settled */
+static void run(unsigned ticks) { while (ticks--) ++modwerk_test_ticks, ++modwerk_test_frames, modwerk_modset_notice_tick(); }
+static void stand(unsigned ticks) { while (ticks--) ++modwerk_test_ticks, modwerk_modset_notice_tick(); } /* frames stopped */
+static uint8_t named[2][72];
+static void make_named(unsigned k, uint32_t id, const char *name) /* ABI 6: its name at 50 */
+{
+    memset(named[k], 0, 72); memcpy(named[k], "MWRM", 4); named[k][5] = 6;
+    put32(named[k] + 8, 4); put32(named[k] + 28, id); memcpy(named[k] + 50, name, strlen(name) < 15 ? strlen(name) : 15);
+}
+static int said(const char *text) { return modwerk_test_said && !strcmp(modwerk_test_said, text); }
 
 /* The whole-set identity a journal reports for these live packages (journal.h). */
 static int identity(const uint8_t *const p[], const uint32_t b[], unsigned n, uint8_t out[32])
@@ -193,8 +210,83 @@ int main(void)
     modwerk_test_held = 1; boot(); modwerk_modset_service(); modwerk_test_held = 0;
     accept(0, 48); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVED && modwerk_modset_generation == newest + 2);
     boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 1);
+    /* "MODULES LOADED" waits for the engines the bank uses: half a second at least, ten seconds at most, once. */
+    boot(); modwerk_test_said = 0; modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && !modwerk_test_said);
+    modwerk_test_settling = 1;
+    for (unsigned t = 0; t < 600u; ++t, ++modwerk_test_ticks) modwerk_modset_notice_tick();
+    CHECK(!modwerk_test_said);
+    modwerk_modset_notice_tick(); CHECK(modwerk_test_said && !strcmp(modwerk_test_said, "MODULES LOADED"));
+    modwerk_test_said = 0; modwerk_modset_notice_tick(); CHECK(!modwerk_test_said);
+    boot(); modwerk_modset_service(); modwerk_test_settling = 0;
+    for (unsigned t = 0; t < 30u; ++t, ++modwerk_test_ticks) modwerk_modset_notice_tick();
+    CHECK(!modwerk_test_said);
+    modwerk_modset_notice_tick(); CHECK(modwerk_test_said && !strcmp(modwerk_test_said, "MODULES LOADED"));
+    /* The host changing the set drops a held notice; a partial restore says so at once (no engine changes that). */
+    modwerk_test_said = 0; boot(); modwerk_modset_service(); modwerk_test_settling = 1;
+    modwerk_modset_candidate(0, 0);
+    for (unsigned t = 0; t < 700u; ++t, ++modwerk_test_ticks) modwerk_modset_notice_tick();
+    CHECK(!modwerk_test_said); modwerk_test_settling = 0;
+    accept(1, 48); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVED && modwerk_modset_count == 2);
+    refuse_id = be32(package[1] + 28); refusal_now = RUNTIME_FULL; /* not BUSY: left out at once, no retries */
+    boot(); modwerk_modset_service(); refuse_id = 0; refusal_now = RUNTIME_BUSY;
+    CHECK(modwerk_modset_result == REFUSED && installed == 1 && modwerk_test_said && !strcmp(modwerk_test_said, "SOME MODULES FAILED"));
+    modwerk_test_said = 0;
+    for (unsigned t = 0; t < 700u; ++t, ++modwerk_test_ticks) modwerk_modset_notice_tick();
+    CHECK(!modwerk_test_said);
+
+    /* The boot guard, on a fresh card: Tape Echo, Supercalifragilistic (both named), 0x103. */
+    memset(card_bytes, 0, sizeof card_bytes); memset(&modwerk_test_guard, 0, sizeof modwerk_test_guard);
+    boot(); restored = 1; make_named(0, 0x101u, "Tape Echo"); make_named(1, 0x102u, "Supercalifragilistic"); make(0, 0x103u, 0);
+    modwerk_modset_candidate(named[0], 72); modwerk_modset_accepted(); modwerk_modset_candidate(named[1], 72); modwerk_modset_accepted();
+    accept(0, 48); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVED && modwerk_modset_count == 3);
+    /* A start settles after ten seconds with frames moving; ticks alone (a DSP stopped) never settle it. */
+    boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 3 && modwerk_test_guard.armed);
+    stand(700); CHECK(modwerk_test_guard.armed && !modwerk_test_guard.loading);
+    run(GUARD_SETTLE - 1u); CHECK(modwerk_test_guard.armed); run(1); CHECK(!modwerk_test_guard.armed);
+    /* A crash while Supercalifragilistic installs restarts the unit: the next start leaves it out, names it after
+     * crash.c's popup and logs why, and so does every start until the card's set changes. */
+    crash_id = 0x102u; boot(); if (!setjmp(crashed)) { modwerk_modset_service(); CHECK(0); } crash_id = 0;
+    CHECK(modwerk_test_guard.armed && modwerk_test_guard.loading == 0x102u);
+    written = writes; refused_m = refused_c = 0;
+    cut(); modwerk_test_said = 0; modwerk_modset_service();
+    CHECK(modwerk_modset_result == LEFT_OUT && installed == 2 && ids[1] == 0x103u && refused_m == 0x102u && refused_c == GUARD_LEFT);
+    run(GUARD_NOTICE - 1u - modwerk_test_ticks); CHECK(!modwerk_test_said);
+    modwerk_test_dialog = 1; run(700); CHECK(!modwerk_test_said); /* MISSING shows: the notice waits for it */
+    modwerk_test_dialog = 0; run(1); CHECK(said("SUPERCALIFR LEFT OUT"));
+    run(GUARD_SETTLE + 1u); CHECK(!modwerk_test_guard.armed);
+    boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == LEFT_OUT && installed == 2 && writes == written);
+    /* A stall while Tape Echo installs: the loader refuses the rest, frames stop, and the power cycle leaves both out. */
+    stall_id = 0x101u; refusal_now = RUNTIME_CONFLICT; boot(); modwerk_modset_service(); stall_id = 0; refusal_now = RUNTIME_BUSY;
+    CHECK(modwerk_test_guard.loading == 0x101u); stand(700); CHECK(modwerk_test_guard.armed);
+    cut(); modwerk_test_said = 0; modwerk_modset_service(); run(GUARD_NOTICE);
+    CHECK(modwerk_modset_result == LEFT_OUT && installed == 1 && ids[0] == 0x103u && said("MODULES LEFT OUT"));
+    /* A sync that changes the set (here it puts both back) tries every module again. */
+    run(GUARD_SETTLE + 1u);
+    modwerk_modset_candidate(named[0], 72); modwerk_modset_accepted(); modwerk_modset_candidate(named[1], 72); modwerk_modset_accepted();
+    modwerk_modset_service(); CHECK(modwerk_modset_result == SAVED && modwerk_modset_count == 3);
+    boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 3);
+    /* A crash in the ten seconds after the restore names no package: nothing loads this once, the card unchanged,
+     * then the whole set again. */
+    run(100); ++modwerk_test_crashes; written = writes; refused_m = 1, refused_c = 0;
+    cut(); modwerk_test_said = 0; modwerk_modset_service();
+    CHECK(modwerk_modset_result == HELD && !installed && used() == HEADER && writes == written && !refused_m && refused_c == GUARD_HELD);
+    run(GUARD_NOTICE - 1u - modwerk_test_ticks); CHECK(!modwerk_test_said); run(1); CHECK(said("MODULES HELD"));
+    cut(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 3);
+    /* A start that never settled with nothing recorded (a hang, or switched off early) is tried again once; the
+     * second in a row is held. */
+    cut(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 3);
+    cut(); modwerk_modset_service(); CHECK(modwerk_modset_result == HELD && !installed);
+    cut(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 3);
+    /* Another base's guard says nothing about this one. */
+    modwerk_test_guard.loading = 0x101u, ++modwerk_test_crashes, modwerk_test_guard.base ^= 1u;
+    cut(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 3);
+    /* FUNC held after a crash skips everything, and the guard still remembers the package for the next start. */
+    crash_id = 0x103u; boot(); if (!setjmp(crashed)) { modwerk_modset_service(); CHECK(0); } crash_id = 0;
+    modwerk_test_held = 1; cut(); modwerk_modset_service(); modwerk_test_held = 0;
+    CHECK(modwerk_modset_result == SKIPPED && !installed);
+    boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == LEFT_OUT && installed == 2);
     if (failures) { fprintf(stderr, "%u module set checks failed\n", failures); return 1; }
     puts("Octatrack module set: saved in turn, removals dropped, the newest whole set restored, damaged and foreign sets and a held FUNC refused, "
-         "a Keep joined only as the trial's identity and reported unsaved until saved.");
+         "a Keep joined only as the trial's identity and reported unsaved until saved, a start that crashed or stopped while restoring guarded.");
     return 0;
 }

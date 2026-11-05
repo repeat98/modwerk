@@ -8,6 +8,7 @@ import { USB_AUDIO_MODULE } from '../config/usb-audio'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
 import { MODULES } from '../catalog/modules'
 import { isModuleAvailable } from '../catalog/availability'
+import { usbLagNote } from '../catalog/usb-only'
 import { StateChip } from './ModuleGrid'
 import { ModulePreview } from './ModulePreview'
 import { Icon } from './Icon'
@@ -118,7 +119,7 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
             const module = MODULES.find(item => item.id === id)
             return <li key={id} className={'load-change is-' + state}>
               {module ? <ModulePreview id={id} compact /> : <span className="compact-preview" />}
-              <span className="load-change-name"><strong>{module?.name ?? id}</strong>{state === 'card' && <small>Can’t be loaded over USB yet.</small>}{label === 'Base' && audio && <small>{layoutName(audio)}: installed with the base, over USB.</small>}</span>
+              <span className="load-change-name"><strong>{module?.name ?? id}</strong>{state === 'card' && <small>Can’t be loaded over USB yet.</small>}{label === 'Base' && audio && <small>{layoutName(audio)}: installed with the base, over USB.</small>}{(label === 'Adds' || label === 'Updates') && usbLagNote(id) && <small>{usbLagNote(id)}</small>}</span>
               <StateChip state={state}>{label}</StateChip>
             </li>
           }))}</ul>

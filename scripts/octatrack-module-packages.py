@@ -42,11 +42,32 @@ def lag_guard(builder, check):
 
 def run(builder):
     try:
-        builder.main()
+        if '--check' in sys.argv[1:] or '--prepare-ports' in sys.argv[1:]:
+            builder.main()
+        else:
+            keep_published(builder, builder.main)
     except subprocess.CalledProcessError as error:
         print(error.stdout or '', end='', file=sys.stderr)
         print(error.stderr or '', end='', file=sys.stderr)
         raise SystemExit(error.returncode) from error
+
+
+def keep_published(builder, action):
+    """Run a write, then put back every published package it did not rewrite.
+
+    The builder clears public/octatrack-modules before its first write, so a rebuild dropped every earlier
+    version's .mwrm that main still publishes, and a run that stopped part way left the folder half empty.
+    A file the run writes stays as written; one it removed comes back byte for byte, whether the run
+    finished or not. Kept here, not in the builder, whose source the base pins."""
+    folder = Path(builder.PUBLIC) / 'octatrack-modules'
+    before = {path: path.read_bytes() for path in sorted(folder.rglob('*.mwrm'))} if folder.is_dir() else {}
+    try:
+        return action()
+    finally:
+        for path, data in before.items():
+            if not path.exists():
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(data)
 
 
 def only_key_bus(capabilities):
@@ -124,7 +145,7 @@ def main():
             builder.subprocess = importlib.import_module('subprocess')
     if build:
         builder.build = named_build
-    # A C runtime module: its row's "sources" and "subscribe" go to build.py as they are. It has no card form
+    # A C runtime module: its row's "sources", "subscribe" and "raise" go to build.py as they are. It has no card form
     # (src/catalog/usb-only.ts). build.py takes its id and unit name from the output's stem, so build at <id>.mwrm.
     # Here, not in the builder, whose source the base pins.
     sourced, tools = getattr(builder, 'build', None), getattr(builder, 'tools', None)
@@ -133,13 +154,32 @@ def main():
             return sourced(entry, out, *args, **kwargs)
         named = out.parent / (entry['id'] + '.mwrm')
         subprocess.run([sys.executable, '-B', str(builder.BUILD), *entry['sources'],
-                        *[arg for hook in entry.get('subscribe', []) for arg in ('--subscribe', hook)], '-o', str(named)],
+                        *[arg for hook in entry.get('subscribe', []) for arg in ('--subscribe', hook)],
+                        *[arg for event in entry.get('raise', []) for arg in ('--raise', event)], '-o', str(named)],
                        check=True, capture_output=True, text=True, cwd=APP)
         out.write_bytes(named.read_bytes())
         return out.read_bytes()
     if sourced and tools:
         builder.build = c_build
         builder.tools = lambda entry, upstream: bool(shutil.which('m68k-elf-gcc')) if entry.get('sources') else tools(entry, upstream)
+    # An SDK-owned recipe preserves an ordinary CF runtime's exact tested
+    # image while shipping guarded stock copies. This host layer keeps the
+    # base's pinned builder and existing standalone declarations unchanged;
+    # shared-input refreshes belong to the SDK change, outside module folders.
+    ordinary = getattr(builder, 'build', None)
+    def reconstructed_build(entry, out, *args, **kwargs):
+        if 'reconstruction' not in entry:
+            return ordinary(entry, out, *args, **kwargs)
+        spec = importlib.util.spec_from_file_location('octatrack_host_reconstruction', APP / 'scripts/octatrack-reconstruction.py')
+        reconstruction = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(reconstruction)
+        reconstruction.module_folder(APP, entry)
+        data = ordinary(entry, out, *args, **kwargs)
+        data = reconstruction.reconstruct(APP, entry, data, stock_at=kwargs.get('stock_at'))
+        out.write_bytes(data)
+        return data
+    if ordinary:
+        builder.build = reconstructed_build
     # The qualified builder's JSON:KEY syntax predates Windows drive letters.
     # Use its documented relative-path form, without altering any base input.
     builder.DSP = builder.DSP.relative_to(APP)

@@ -2,6 +2,10 @@
 
 Version `0.1.2-experimental`, recorded 25 October 2026. The 0.1.2 and 0.1.1 changes and results come first; the 0.1.0-experimental record (24 October 2026) follows, and what it measured of the Direct Jump unit still holds, because that unit is byte-identical in 0.1.1 and 0.1.2.
 
+## The full name again (29 October 2026, no version change)
+
+The catalogue name is Direct Jump Kyoti again. Since #946 a package entry's `unitName` gives the unit a shorter title without touching the pinned builder or the base, so the unit's module list still shows DirectJmp Kyoti and the 0.1.2 package is unchanged (same SHA-256 as below). No source changed.
+
 ## 0.1.2-experimental: the name ([#881](https://github.com/repeat98/modwerk/issues/881))
 
 - **What changed.** The name is DirectJmp Kyoti, short for Direct Jump Kyoti, which the author asked for. A USB package's title is the catalogue name and holds 15 characters (`build.py`), and giving the package a shorter title than the catalogue would change the base's build inputs, so the catalogue uses the short form too. uvbproject's contributor line and credit came out; the README thanks him for the investigation. No source changed.

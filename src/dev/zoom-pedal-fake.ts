@@ -1,14 +1,14 @@
 // A pretend Zoom MultiStomp for tests: answers the identity request and the file commands the link sends,
 // in the pedal's reply formats (zoom-protocol.ts), over a fake Web MIDI access.
-import { crc32, pack7 } from '../engine/zoom/zoom-protocol'
+import { crc32, pack7, unpack7 } from '../engine/zoom/zoom-protocol'
 import type { MidiAccessLike, MidiIn, MidiOut } from '../engine/zoom/zoom-link'
 
 export type FakePedalFile = { name: string; data: number[] }
 const BLOCK = 512
 
-export function fakeZoomPedal({ deviceId = 0x61, firmware = '2.10', files = [] as FakePedalFile[], free = 400_000, portName = 'ZOOM MS Series', silent = false, slow = undefined as { cmd: number; nth: number; ms: number | null } | undefined, latency = 0 } = {}) {
+export function fakeZoomPedal({ deviceId = 0x61, firmware = '2.10', files = [] as FakePedalFile[], free = 400_000, portName = 'ZOOM MS Series', silent = false, slow = undefined as { cmd: number; nth: number; ms: number | null } | undefined, latency = 0, failWriteOf = '', keepOnDelete = '' } = {}) {
   const sent: number[][] = []
-  let listAt = 0, reading: FakePedalFile | undefined, readAt = 0, step = 0
+  let listAt = 0, reading: FakePedalFile | undefined, readAt = 0, step = 0, writing: FakePedalFile | undefined, failing = !!failWriteOf
   const input: MidiIn = { id: 'in', name: portName, state: 'connected', onmidimessage: null }
   // Every reply takes `latency` ms; with `slow`, the nth reply to file command `cmd` comes `ms` later still, or never (null).
   let seen = 0, current = -1
@@ -44,14 +44,24 @@ export function fakeZoomPedal({ deviceId = 0x61, firmware = '2.10', files = [] a
       const cmd = m[5], name = cmd === 0x20 ? String.fromCharCode(...m.slice(16, m.indexOf(0, 16))) : ''   // read: 9 zero bytes, then the name
       if (cmd === 0x25) { listAt = 0; return files[0] ? entry(files[listAt++]) : nope() }
       if (cmd === 0x26) return listAt < files.length ? entry(files[listAt++]) : nope()
+      if (cmd === 0x20 && m[6] === 0x01) { writing = { name, data: [] }; return ack() }
       if (cmd === 0x20) { reading = files.find(f => f.name === name); readAt = 0; step = 0; return ack() }
+      if (cmd === 0x23) {   // one written block: length at 11-12, packed data from 16, checksum in the last 5
+        if (writing && failing && writing.name === failWriteOf) { failing = false; return }   // stops answering once
+        const length = m[11] | (m[12] << 7), data = unpack7(m.slice(16, -6)).slice(0, length), t = m.slice(-6, -1)
+        const crc = (t[0] + (t[1] << 7) + (t[2] << 14) + (t[3] << 21) + ((t[4] & 0x0f) << 28)) >>> 0
+        if (writing && ((crc ^ 0xffffffff) >>> 0) === crc32(data)) writing.data.push(...data)
+        return ack()
+      }
+      if (cmd === 0x21 && writing) { const done = writing; writing = undefined; const i = files.findIndex(f => f.name === done.name); if (i >= 0) files[i] = done; else files.push(done); return ack() }
+      if (cmd === 0x24) { const gone = String.fromCharCode(...m.slice(6, m.indexOf(0, 6))), i = files.findIndex(f => f.name === gone); if (i >= 0 && gone !== keepOnDelete) files.splice(i, 1); return ack() }   // keepOnDelete: answers but keeps it
       if (cmd === 0x05 || cmd === 0x22) { step++; return step % 3 === 0 ? block() : ack() }
       if (cmd === 0x29) { const m = [...head, ...Array(15).fill(0), 0xf7]; size5(free).forEach((b, i) => { m[16 + i] = b }); return reply(m) }
       return ack()
     },
   }
   const access: MidiAccessLike = { inputs: new Map([['in', input]]), outputs: new Map([['out', output]]), onstatechange: null }
-  return { access, sent, input, output }
+  return { access, sent, input, output, files }
 }
 
 /** A stand-in effect file: Zoom's header (SIZE, group, effect id, version) before an ELF signature. */
@@ -62,4 +72,15 @@ export function fakeEffect(name: string, gid: number, fxid: number, version: str
   Array.from(version).forEach((c, i) => { data[0x44 + i] = c.charCodeAt(0) })
   data[0x4c] = 0x7f; Array.from('ELF').forEach((c, i) => { data[0x4d + i] = c.charCodeAt(0) })
   return { name, data }
+}
+
+/** A stand-in effect list: one section per group, the given names in them, zero padding to 4108 bytes. */
+export function fakeEffectList(groups: Record<number, string[]>): FakePedalFile {
+  const data: number[] = []
+  for (const [gid, names] of Object.entries(groups)) {
+    data.push(0x3e, 0x3e, 0x3e, 0, Number(gid), ...Array(8).fill(0))
+    for (const name of names) data.push(...Array.from(name, c => c.charCodeAt(0)), ...Array(13 - name.length).fill(0))
+    data.push(0x3c, 0x3c, 0x3c, 0, Number(gid), ...Array(8).fill(0))
+  }
+  return { name: 'FLST_SEQ.ZDT', data: [...data, ...Array(4108 - data.length).fill(0)] }
 }

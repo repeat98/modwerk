@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/main.c"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:TRIG + FILL"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x4003cfa0",
+          "len": 6,
+          "stockSha256": "87161bd9e197c8b40b6a38327205fcf078fb26e4a93a371f5df2a80ccd8a1cf8",
+          "op": "jsr",
+          "target": "quick_fill_gate"
+        }
+      ]
+    }
+  }
+}

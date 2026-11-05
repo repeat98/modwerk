@@ -66,6 +66,7 @@ int main(void)
     owner_epoch += 2; modwerk_runtime_tick(); CHECK(modwerk_test_redraws == 4);
     /* The controller board wrote or put back a stock effect's page (#882): one redraw on the next tick, set unchanged. */
     modwerk_runtime_redraw_wanted = 1; modwerk_runtime_tick(); CHECK(modwerk_test_redraws == 5 && !modwerk_runtime_redraw_wanted);
+    CHECK(modwerk_test_headers == modwerk_test_redraws); /* every redraw draws the header too (SRC's machine name) */
     modwerk_runtime_tick(); CHECK(modwerk_test_redraws == 5);
     /* Activation only while nothing plays or records; stock code only, below the bootloader copy. */
     modwerk_test_stopped = 0;

@@ -1,0 +1,1 @@
+Developer docs: the module guides now say how a list, browser or menu a module opens should behave. It opens on the current choice, YES on the final choice applies it and returns to the starting page in one press, NO goes back one level, and errors show where the musician is looking. A module asks for confirmation only where stock does.

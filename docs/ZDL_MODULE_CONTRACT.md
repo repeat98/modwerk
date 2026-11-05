@@ -5,9 +5,10 @@ contract code, the module folder and the first modules follow once the open
 questions at the end are answered. Background:
 [ZOOM_MULTISTOMP.md](ZOOM_MULTISTOMP.md).
 
-Goal: list the first Zoom effects on Modwerk safely and documented. They
-install through Zoom Effect Manager for now; a browser install comes later
-([Installing on stock firmware](ZOOM_MULTISTOMP.md#installing-on-stock-firmware)).
+Goal: list the first Zoom effects on Modwerk safely and documented. On Zoom's
+firmware they install over USB with the pedal's own file commands; with
+MIDISTOMP as the base they become modules like the Octatrack's
+([the base](ZOOM_MULTISTOMP.md#the-base-midistomp)).
 
 ## What a module is
 
@@ -93,14 +94,36 @@ Example (shape only):
 
 ## Effect IDs
 
-An effect ID must be unique on a pedal: two effects with the same ID make one
-of them unreachable. Modwerk keeps a ledger of author ranges, as Stomphacks
-does for the ZD2 pedals, plus the IDs of Zoom's stock effects (metadata only,
-no stock files). ZoomMultistompZDL already reserves 403-499 for its effects,
-500-699 for NAM slots, 700-899 for cab slots and 900-957 for templates; other
-authors ask for a range in a pull request. One clash is already known
-(Matujuice Sweep and stock ANA234Cho, both 496); its author will move it.
-Matujuice GRDLOOP, MIDISTOMP 2.0's looper, is 497 in group 8.
+An effect is identified by its group and ID together: Zoom's own effects reuse
+IDs across groups (DELAY, COMP, LINESEL and TREMOLO are all 8), so Matujuice
+Sweep (Delay 496) and stock ANA234Cho (Modulation 496) don't clash. Two effects
+with the same group and ID on one pedal do: one becomes unreachable, and
+swapping one for the other froze an MS-70CDR at boot until its ROM was
+reprogrammed (Spool.ZDL and TEcho4.ZDL, both Delay 409; they are now 914 and
+946). A pedal can't say what it had before, so the pedal page refuses that
+known clash (`CLASHING_EFFECT_IDS` in `zoom-protocol.ts`).
+
+Collections can't be kept apart by asking every author to move, so the pedal
+page settles a clash on the pedal it happens on. An added effect may use Delay
+403-1023 (a patch stores 10 bits of ID). **Delay 958-1023 are local IDs**: no
+collection ships there. When another effect on the pedal already has a new
+effect's ID, the page moves the new one to a free local ID before writing it:
+the ID is only in the file header (group at 0x3C and 0x43, ID at 0x40-0x41,
+no checksum), so nothing is rebuilt. An MS-70CDR 2.10 ran Scorch moved to 917,
+1000 and 1023, and stored and recalled a patch with two of them through a power
+cycle (2 November 2026). The same file name gets the same local ID where there
+is room, so patches move between pedals; an update of a moved effect keeps its
+local ID; and the browser remembers the local IDs it gave out and never gives
+one to another effect, so a patch stored with a removed effect doesn't find a
+different one on its ID (only in that browser). Patches made on another pedal
+with a moved effect may not find it.
+
+Modwerk keeps a ledger of author ranges, as Stomphacks does for the ZD2
+pedals, plus the IDs of Zoom's stock effects (metadata only, no stock files),
+to keep moves rare. ZoomMultistompZDL reserves Delay 403-499 for its effects,
+500-699 for NAM slots, 700-899 for cab slots and 900-957 for templates;
+Matujuice ships Delay 480, 481, 485-497 (GRDLOOP, MIDISTOMP 2.0's looper, is
+497), 501 and 502. Other authors ask for a range in a pull request.
 
 ## Combinations
 
@@ -118,12 +141,15 @@ listed for a pedal only with hardware evidence for that pedal.
 
 ## Install
 
-For now: download the `.ZDL` and add it to the pedal with Zoom Effect Manager
-2.3.3 or later, with a step-by-step guide and the recovery steps (remove the
-effect in Effect Manager; for a boot freeze, All Initialize, then remove it).
-The browser install is planned separately: from the user's own Zoom updater,
-or as a per-effect install over the pedal's own file commands, which write
-single files (tested on the MS-70CDR 2.10 with a test file, replacement of an installed effect, and adding/removing a new effect) ([Installing on stock firmware](ZOOM_MULTISTOMP.md#installing-on-stock-firmware)).
+On Zoom's firmware, over USB from the browser in normal mode (the pedal page,
+#989): the pedal's own file commands write the effect file and add it to the
+effect list (the list from before is offered for saving), every write is read
+back, then the pedal is power-cycled; removing is the reverse. Tested on the
+MS-70CDR 2.10 with a test file, replacing an installed effect, and adding and
+removing a new one, also from the pedal page. Recovery: remove the effect again;
+for a boot freeze, All Initialize, then remove it. Zoom Effect Manager 2.3.3 or
+later stays a fallback. With MIDISTOMP as the base, installing follows the
+Octatrack's sync ([the base](ZOOM_MULTISTOMP.md#the-base-midistomp)).
 
 ## Machine profiles
 

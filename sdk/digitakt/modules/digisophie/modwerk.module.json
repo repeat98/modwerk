@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "digisophie",
   "name": "SOPHIE",
-  "version": "1.1.13-experimental.2",
+  "version": "1.1.13-experimental.3",
   "machine": "digitakt",
   "category": "machines",
   "exclusive": false,
@@ -19,14 +19,14 @@
   ],
   "source": {
     "repository": "https://github.com/soejrd/digisophie",
-    "revision": "961c39cec699e8f8940391634aaba9fad7120792",
+    "revision": "ce17b9e4868027bafe8684054b45f28ea368bd7c",
     "path": "."
   },
   "presentation": {
     "label": "SOPHIE",
     "family": "Synthesis",
     "summary": "A metallic percussion machine with four models: FUSE, BOOM, PIPE and SHARD.",
-    "overview": "SOPHIE is a metallic percussion synth SRC machine for the original Digitakt on OS 1.53. Sjoerd (Soejrd) adapted Matt Estela\u2019s Sophie for Schwung into four models: FUSE\u2019s bright clang, BOOM\u2019s rounded low body, PIPE\u2019s inharmonic ring and SHARD\u2019s grainy tone/noise attack. TUNE and trig notes set pitch; SWEEP shapes the pitch attack, METAL and COLOR set the metallic character, FBK adds oscillator feedback and FOLD folds the output. The synth feeds the normal AMP, filter, mixer and sends without needing a sample. AMP controls note duration, and custom SRC controls accept parameter locks. Start with one SOPHIE track; the author\u2019s earlier hardware test found two practical with FAST AUDIO, without claiming eight-track operation.",
+    "overview": "SOPHIE is a metallic percussion synth SRC machine for the original Digitakt on OS 1.53 and 1.54. Sjoerd (Soejrd) adapted Matt Estela\u2019s Sophie for Schwung into four models: FUSE\u2019s bright clang, BOOM\u2019s rounded low body, PIPE\u2019s inharmonic ring and SHARD\u2019s grainy tone/noise attack. TUNE and trig notes set pitch; SWEEP shapes the pitch attack, METAL and COLOR set the metallic character, FBK adds oscillator feedback and FOLD folds the output. The synth feeds the normal AMP, filter, mixer and sends without needing a sample. AMP controls note duration, and custom SRC controls accept parameter locks. Start with one SOPHIE track; the author\u2019s earlier hardware test found two practical with FAST AUDIO, without claiming eight-track operation.",
     "highlights": [
       "Four source models: FUSE, BOOM, PIPE and SHARD, with lockable synthesis controls.",
       "Bipolar SWEEP starts above or below the played pitch; zero removes the pitch sweep.",
@@ -44,7 +44,7 @@
   "access": {
     "location": "SRC machine list",
     "steps": [
-      "Use a build containing SOPHIE for the original Digitakt on OS 1.53; digihealth is optional.",
+      "Use a build containing SOPHIE for the original Digitakt on OS 1.53 or 1.54; digihealth is optional.",
       "Select an audio track, press FUNC + SRC and choose SOPHIE from the machine list.",
       "Adjust TUNE through COLOR on the SRC page. Set note duration and release on AMP, then trigger the track from the sequencer or keyboard."
     ],
@@ -104,7 +104,8 @@
   ],
   "compatibility": {
     "releases": [
-      "1.53"
+      "1.53",
+      "1.54"
     ],
     "requires": [],
     "conflicts": [
@@ -113,7 +114,7 @@
     ],
     "limitations": [
       "One instance runs without FAST AUDIO; the author found two practical with FAST AUDIO on. Eight tracks are not claimed.",
-      "Built for OS 1.53 only."
+      "Built for OS 1.53 and 1.54. The OS 1.54 package is the author\u2019s port of the same 1.1.13; it has not been tested on a unit yet."
     ]
   },
   "platform": {
@@ -144,7 +145,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Imported from the author\u2019s v1.1.13 source; Modwerk linked and verified the pinned catalog release for the UI documentation run. Documentation captures verify the listed UI pages on OS 1.53; audio, timing and hardware remain unqualified.",
+    "summary": "Imported from the author\u2019s v1.1.13 source with its OS 1.54 port (ce17b9e); Modwerk serves the author\u2019s own packages for both releases. Emulator documentation captures of 1.1.13-experimental.3 on OS 1.54 show the machine chooser, SRC page, all four models and AMP page; audio, timing and hardware remain unqualified.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial: sequence a metallic percussion voice",
@@ -168,7 +169,7 @@
   "license": {
     "spdx": "MIT",
     "file": "LICENSE",
-    "declaration": "The author\u2019s source, imported unchanged from github.com/soejrd/digisophie at v1.1.13 (commit 961c39cec699) under its MIT licence. Stock firmware bytes in the upstream build manifest were replaced with length and SHA-256 guards."
+    "declaration": "The author\u2019s source, imported unchanged from github.com/soejrd/digisophie at ce17b9e (v1.1.13 with its OS 1.54 port) under its MIT licence. Stock firmware bytes in the upstream build manifest were replaced with length and SHA-256 guards."
   },
   "media": [
     {
@@ -190,9 +191,9 @@
       "source": "original",
       "capture": {
         "type": "emulator",
-        "release": "1.53",
-        "moduleVersion": "1.1.13-experimental.2",
-        "imageSha256": "54799123bedb06852bc925340e4edbb0dd8496070b188df4c0d3cc900e5040a1",
+        "release": "1.54",
+        "moduleVersion": "1.1.13-experimental.3",
+        "imageSha256": "7c71c84a8937f639090b0849b72d7972d89eb28c2be9f97acecfd91600fdd1d4",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     },
@@ -206,9 +207,9 @@
       "source": "original",
       "capture": {
         "type": "emulator",
-        "release": "1.53",
-        "moduleVersion": "1.1.13-experimental.2",
-        "imageSha256": "54799123bedb06852bc925340e4edbb0dd8496070b188df4c0d3cc900e5040a1",
+        "release": "1.54",
+        "moduleVersion": "1.1.13-experimental.3",
+        "imageSha256": "7c71c84a8937f639090b0849b72d7972d89eb28c2be9f97acecfd91600fdd1d4",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     },
@@ -222,9 +223,9 @@
       "source": "original",
       "capture": {
         "type": "emulator",
-        "release": "1.53",
-        "moduleVersion": "1.1.13-experimental.2",
-        "imageSha256": "54799123bedb06852bc925340e4edbb0dd8496070b188df4c0d3cc900e5040a1",
+        "release": "1.54",
+        "moduleVersion": "1.1.13-experimental.3",
+        "imageSha256": "7c71c84a8937f639090b0849b72d7972d89eb28c2be9f97acecfd91600fdd1d4",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     },
@@ -238,9 +239,9 @@
       "source": "original",
       "capture": {
         "type": "emulator",
-        "release": "1.53",
-        "moduleVersion": "1.1.13-experimental.2",
-        "imageSha256": "54799123bedb06852bc925340e4edbb0dd8496070b188df4c0d3cc900e5040a1",
+        "release": "1.54",
+        "moduleVersion": "1.1.13-experimental.3",
+        "imageSha256": "7c71c84a8937f639090b0849b72d7972d89eb28c2be9f97acecfd91600fdd1d4",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     }

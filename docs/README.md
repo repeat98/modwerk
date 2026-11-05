@@ -2,7 +2,7 @@
 
 Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which to read first for a task.
 
-**Keep them short.** `AGENTS.md` and every document here may grow to 32 KB, and one already longer may shrink but not grow: `npm run check` refuses an edit that only adds to it. Make room by cutting what is stale or said elsewhere; Git keeps the history. A new document gets a line here (a test checks).
+**Keep them short.** `AGENTS.md` and every document here may grow to 40 KB, and one already longer may shrink but not grow: `npm run check` refuses an edit that only adds to it. Make room by cutting what is stale or said elsewhere; Git keeps the history. A new document gets a line here (a test checks).
 
 **History goes in dated records, not in a guide.**
 
@@ -49,6 +49,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [OCTATRACK_MODULE_EDGE_CASES.md](OCTATRACK_MODULE_EDGE_CASES.md): what can go wrong across projects, Parts and power cycles.
 - [OCTATRACK_MORE_EFFECT_IDS.md](OCTATRACK_MORE_EFFECT_IDS.md): more than 32 effect ids.
 - [OCTATRACK_PACKAGE_DSP_HOOKS.md](OCTATRACK_PACKAGE_DSP_HOOKS.md): design: stock-DSP hooks and DSP memory claims that packages carry.
+- [OCTATRACK_RECONSTRUCTION.md](OCTATRACK_RECONSTRUCTION.md): source-bound USB packaging and explicit USB-only distribution.
 - [OCTATRACK_RESIDENT_ENGINES_ON_DEMAND.md](OCTATRACK_RESIDENT_ENGINES_ON_DEMAND.md): design: resident engines loaded on demand.
 - [OCTATRACK_DSP_WINDOW.md](OCTATRACK_DSP_WINDOW.md): record: the DSP receiver's packet operations in the shared window, FX2 swaps keeping their block (28 October 2026).
 - [OCTATRACK_ELEKLOADER_MIGRATION.md](OCTATRACK_ELEKLOADER_MIGRATION.md): the move to one Elekloader builder and USB loading, as dated plans and checkpoints from 9 October.
@@ -72,6 +73,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [FORUM.md](FORUM.md): the forum, accounts and transactional email.
 - [SINGLE_SIGN_ON.md](SINGLE_SIGN_ON.md): accounts and single sign-on.
 - [DEVELOPER_WORKSPACE.md](DEVELOPER_WORKSPACE.md): creator settings and private report details.
+- [AGENT_BOARD.md](AGENT_BOARD.md): the agent board: claims every developer's agent sees and makes (module ports, hook, table and migration numbers), the questions and findings agents leave each other, and the commands that check them.
 - [STATISTICS.md](STATISTICS.md): the admin statistics.
 - [WEB_PUSH.md](WEB_PUSH.md): device push notifications.
 - [FIRMWARE_DOWNLOAD_API.md](FIRMWARE_DOWNLOAD_API.md): building and saving firmware without a browser.

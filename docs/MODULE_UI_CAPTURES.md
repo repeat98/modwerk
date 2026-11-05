@@ -215,7 +215,7 @@ and framebuffer data are removed by the script.
 - `peek` answers `peek HEX`, not `ok`. `audio start tracks` adds each track's stem to the capture (T1 L is the
   ninth of 24 words a frame).
 - Without `--dsp` a session runs about ten times faster, for screens only (the firmware then shows DSP LOAD
-  FAILED). Card samples do not play faithfully under the port, so compare levels against a sample on a unit.
+  FAILED), and a package that carries a DSP engine (Analog BD) is refused at verify with loader refusal 3. Card samples do not play faithfully under the port, so compare levels against a sample on a unit.
 
 ## Rights and release review
 
@@ -266,9 +266,15 @@ hardware timing or save/reboot persistence.
 
 For local emulator captures, use digiemu revision
 `c1b5735835923e328f8b4950d6ba927875e5b669` with its six pinned Unicorn patches.
-Build the author's pinned catalog release with the unchanged vendored elekloader
-kit and your own supported stock OS file, then run the capture script in an
-isolated sandbox with network and user credentials denied:
+Install them with digiemu's `tools/install-patched-unicorn.sh`, then run
+`.venv/bin/python -m emu.unicorn_compat` from the digiemu folder; the script's
+own final check fails when started from elsewhere. Run the capture with that
+`.venv/bin/python`. Build the author's pinned catalog release with the unchanged
+vendored elekloader kit and your own supported stock OS file: the site's builder,
+or `build(stock, mods, 'D001')` from `vendor/elekloader/kit/src/patch.ts` with the
+core and module packages in `vendor/elekloader/catalog/`, under Node 24. Then run the
+capture script in an isolated sandbox with network and user credentials denied
+(on macOS, `sandbox-exec` with a `(deny network*)` profile):
 
 ```sh
 python3 scripts/capture-digi-module-ui.py \
@@ -295,22 +301,33 @@ separately from Elektron's underlying interface rights, as for the OT captures.
 
 Rytm modules use the same manifest fields and `media/capture.json` as the
 Digitakt and Digitone. Capture them in
-[rytm-emu](https://github.com/trigcondition/rytm-emu) (MIT) at revision
-`3c4c42c`, built with `cargo build --release --bin dtboot`. Its headless
+[rytm-emu](https://github.com/trigcondition/rytm-emu) (MIT), from the
+checkout `npm run upstream:tools` keeps at the commit `sdk/upstream-tools.json`
+pins (`-- --update` moves it to upstream main), built there with
+`cargo build --release --bin dtboot`; a hand-made clone falls behind its fixes.
+Record the revision in `capture.json`. Its headless
 `dtboot` runs your own build of stock OS 1.74 with core-ar2 and the module, and
 writes the firmware-rendered 128×64 screen as a PNG at 3× without
 interpolation: `DTBOOT_STEPS=1` with `DTBOOT_PNG_DIR` after each key release,
 `DTBOOT_TURN_PNG` after each encoder turn. The command line is the panel-input
 plan; keep it in `capture.json` with the PNG hashes and the built `.syx` hash.
 
-- Never put an event on a multiple of 10M. dtboot runs in chunks of
-  `--every` instructions (10M by default) and silently drops a press,
-  release or turn whose clock the CPU has already passed when its chunk
-  starts. An event exactly on a boundary is lost whenever the CPU is busy
-  there (in an interrupt, not stopped): Send FX's boot plan lost its NO
-  presses, the notices stayed up and the run was silent
-  ([repeat98/modwerk#878](https://github.com/repeat98/modwerk/pull/878)).
-  Place every event 3M off the boundaries.
+- Keep events off the `--every` grid. dtboot runs in chunks of `--every`
+  instructions (10M by default). Before rytm-emu `951dcbc`
+  ([trigcondition/rytm-emu#3](https://github.com/trigcondition/rytm-emu/pull/3))
+  it silently dropped a press, release or turn on a chunk boundary whenever
+  the CPU had run a few instructions past it, which depends on code layout:
+  Send FX's boot plan lost its NO presses
+  ([repeat98/modwerk#878](https://github.com/repeat98/modwerk/pull/878)), and a
+  FLTR press at 11900M with `--every 100M` looked like a build that failed
+  only past a certain size. The pinned revision runs such an event a few
+  instructions late instead; plans still place events 3M off the boundaries,
+  so they replay on older revisions too.
+- Keep key presses short. From rytm-emu `e914f46` the PIT divides the bus
+  clock as the unit does, so the firmware's timers run twice as fast for the
+  same instructions as on older revisions. A 40M press of FX now reads as a
+  hold and leaves the track unchanged, while 12M selects the FX track.
+  Replay a capture on the revision its `capture.json` names.
 - Without the unit's analog calibration the OS opens with notices. Clear them
   with held NO presses before the first real step, for example
   `--press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M`

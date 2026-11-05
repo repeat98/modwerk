@@ -1,0 +1,1 @@
+Development: `/modwerk-discord` now reproduces a tester's report before replying, in an emulator or on the connected Octatrack once the owner has OKed that setup for the session, and each draft says whether a result came from the emulator or hardware. Loads stay trials that roll back; SAVE, Keep, flashing and power cycles stay with the owner.

@@ -30,7 +30,7 @@ describe('the vendored elekloader catalog', () => {
     expect(planBuild('digitakt-ii', '1.16', ['perform-direct']).missing).toEqual(['perform-direct'])
   })
   it('reports modules without a file for the chosen release', () => {
-    expect(planBuild('digitakt', '1.54', ['digisophie', 'digihealth'])).toMatchObject({ missing: ['digisophie'], mods: [{ id: 'digihealth', os: '1.54' }] })
+    expect(planBuild('digitakt', '1.53', ['fx-track', 'digihealth'])).toMatchObject({ missing: ['fx-track'], mods: [{ id: 'digihealth', os: '1.53' }] })
   })
   it('plans Digitakt II OS 1.17 using its own core and mod pins', () => {
     const catalog: Catalog = {
@@ -73,10 +73,62 @@ describe('the vendored elekloader catalog', () => {
       missing: [],
     })
   })
+  it('plans Pipo Loop, Sample RATE and Silent Pad+Trig together from their pinned source-only packages with core-ar2 0.7', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['pipo-loop', 'sample-rate', 'silent-pad-trig'])).toMatchObject({
+      core: { file: 'core-ar2-0.7.elemod', version: '0.7' },
+      mods: [
+        { id: 'pipo-loop', file: 'pipo-loop-0.1.1-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.1-experimental' },
+        { id: 'sample-rate', file: 'sample-rate-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
+        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
+      ],
+      missing: [],
+    })
+  })
+  it('plans Chromatic Aftertouch Fix beside the other Rytm library modules from its pinned source-only package with core-ar2 0.7', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['chromatic-aftertouch-fix', 'silent-pad-trig'])).toMatchObject({
+      core: { file: 'core-ar2-0.7.elemod', version: '0.7' },
+      mods: [
+        { id: 'chromatic-aftertouch-fix', file: 'chromatic-aftertouch-fix-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
+        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
+      ],
+      missing: [],
+    })
+  })
+  it('plans Quick Velocity+Aftertouch Assign beside Sample RATE and Silent Pad+Trig from its pinned source-only package with core-ar2 0.7', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['quick-velocity-aftertouch-assign', 'sample-rate', 'silent-pad-trig'])).toMatchObject({
+      core: { file: 'core-ar2-0.7.elemod', version: '0.7' },
+      mods: [
+        { id: 'quick-velocity-aftertouch-assign', file: 'quick-velocity-aftertouch-assign-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
+        { id: 'sample-rate', file: 'sample-rate-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
+        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
+      ],
+      missing: [],
+    })
+  })
+  it('plans Control In Actions beside Sample RATE and Silent Pad+Trig from its pinned source-only package with core-ar2 0.7', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['control-in-actions', 'sample-rate', 'silent-pad-trig'])).toMatchObject({
+      core: { file: 'core-ar2-0.7.elemod', version: '0.7' },
+      mods: [
+        { id: 'control-in-actions', file: 'control-in-actions-0.1.1-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.1-experimental' },
+        { id: 'sample-rate', file: 'sample-rate-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
+        { id: 'silent-pad-trig', file: 'silent-pad-trig-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
+      ],
+      missing: [],
+    })
+  })
+  it('plans Audio In FX beside Pipo Loop, Sample RATE and Silent Pad+Trig from their pinned source-only packages with core-ar2 0.7', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['audio-in-fx', 'pipo-loop', 'sample-rate', 'silent-pad-trig'])).toMatchObject({
+      core: { file: 'core-ar2-0.7.elemod', version: '0.7' },
+      mods: expect.arrayContaining([
+        expect.objectContaining({ id: 'audio-in-fx', file: 'audio-in-fx-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' }),
+      ]),
+      missing: [],
+    })
+  })
   it('keeps download approval specific to each device', () => {
-    expect(DIGI_DOWNLOADS_ENABLED).toEqual({ digitakt: true, 'digitakt-ii': false, digitone: true, 'analog-rytm-mkii': false })
+    expect(DIGI_DOWNLOADS_ENABLED).toEqual({ digitakt: true, 'digitakt-ii': false, digitone: true, 'analog-rytm-mkii': true })
     expect(digiDownloadsEnabled('digitakt-ii')).toBe(false)
-    expect(digiDownloadsEnabled('analog-rytm-mkii')).toBe(false)
+    expect(digiDownloadsEnabled('analog-rytm-mkii')).toBe(true)
     expect(digiDownloadsEnabled('unknown-device')).toBe(false)
     expect(digiDownloadsEnabled('constructor')).toBe(false)
   })
@@ -120,7 +172,7 @@ describe('preparing a build', () => {
     const otherOs = fakeClient()
     expect(await prepareBuild(otherOs.client, { machine: 'digitakt', release: '1.54', stock, moduleIds: [] })).toMatchObject({ ok: false, error: 'This OS file is Digitakt mk1 1.53, not the digitakt-mk1 OS 1.54 chosen.' })
     const missing = fakeClient()
-    expect(await prepareBuild(missing.client, { machine: 'digitakt', release: '1.54', stock, moduleIds: ['digisophie'] })).toMatchObject({ ok: false })
+    expect(await prepareBuild(missing.client, { machine: 'digitakt', release: '1.53', stock, moduleIds: ['fx-track'] })).toMatchObject({ ok: false })
     expect(missing.raw.load).not.toHaveBeenCalled()
   })
 })
