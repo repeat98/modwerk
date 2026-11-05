@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/sambanks/octabam",
+  "revision": "08bffd529c0f301708bcb2d48759e54e11f59858",
+  "moduleVersion": "0.2.2-experimental",
+  "root": "sdk/octabam/modules/mute-modes",
+  "modules": [
+    "mute-modes"
+  ],
+  "files": [
+    {
+      "path": "patch_softmute.s",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "bb9beada9248fdae13bee32684a7f2564e586f6c",
+      "sourcePath": "modwerk-modules/mute-modes/patch_softmute.s",
+      "sourceBytes": 89378,
+      "sourceGitBlob": "53dc570405ba693e7f7edb355d0d3e579aaf9d31",
+      "sourceSha256": "4fb8d84a6f848299d3de611e20237901110e77041fc46c2620bd149f44ccb2c1",
+      "vendoredSha256": "4fb8d84a6f848299d3de611e20237901110e77041fc46c2620bd149f44ccb2c1"
+    },
+    {
+      "path": "patch_mutemode.s",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "bb9beada9248fdae13bee32684a7f2564e586f6c",
+      "sourcePath": "modwerk-modules/mute-modes/patch_mutemode.s",
+      "sourceBytes": 10222,
+      "sourceGitBlob": "132712bf4a68879c6a0433ad08a44703523885a2",
+      "sourceSha256": "85b0be45d2ec5540a89d97d8e87884590cc1feb1b6719087acff686e83aba100",
+      "vendoredSha256": "85b0be45d2ec5540a89d97d8e87884590cc1feb1b6719087acff686e83aba100"
+    },
+    {
+      "path": "manifest.py",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "bb9beada9248fdae13bee32684a7f2564e586f6c",
+      "sourcePath": "modwerk-modules/mute-modes/manifest.py",
+      "sourceBytes": 8503,
+      "sourceGitBlob": "fc9fcfc41ddceab6b166ad865bc216103a546041",
+      "sourceSha256": "33e06de61d255800107843c44583c6487280ef452c703e79fa07179051d4e1bd",
+      "vendoredSha256": "33e06de61d255800107843c44583c6487280ef452c703e79fa07179051d4e1bd"
+    },
+    {
+      "path": "runtime.json",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "bb9beada9248fdae13bee32684a7f2564e586f6c",
+      "sourcePath": "modwerk-modules/mute-modes/runtime.json",
+      "sourceBytes": 204,
+      "sourceGitBlob": "56c66cc1f50412b2c2397737a8801a859efa6f34",
+      "sourceSha256": "848cf42bed75ec3fd101f4d5869185ffb33967a29e1e55eae737c829a9d83a86",
+      "vendoredSha256": "848cf42bed75ec3fd101f4d5869185ffb33967a29e1e55eae737c829a9d83a86"
+    },
+    {
+      "path": "upstream/README.md",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "d3e0801a5f666abc04bc05fc1cb37969d7fb38d0",
+      "sourcePath": "octabam-modules/mute-modes/README.md",
+      "sourceBytes": 3390,
+      "sourceGitBlob": "a575ed3a5ca04f647bdbf6f23cead2447d577fc2",
+      "sourceSha256": "1b6cdac7e69b416026b995b73fc48ccec9b5a05c7e097ade87dd3a7e7ee5d54a",
+      "vendoredSha256": "1b6cdac7e69b416026b995b73fc48ccec9b5a05c7e097ade87dd3a7e7ee5d54a"
+    },
+    {
+      "path": "LICENSE",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "d3e0801a5f666abc04bc05fc1cb37969d7fb38d0",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 4451,
+      "sourceGitBlob": "3e76489f7da43570add4342b27fd9e1aff949672",
+      "sourceSha256": "0d3f46fdaa57dcf513b0d62975eb019334f4eb9cc8ea0b973ce191dd661741f5",
+      "vendoredSha256": "0d3f46fdaa57dcf513b0d62975eb019334f4eb9cc8ea0b973ce191dd661741f5"
+    },
+    {
+      "path": "upstream/OCTABAM_LICENSE",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "6f9e5bc9db0ae9fa99fa2f2a0f4de1fdb8e9a136",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 2112,
+      "sourceGitBlob": "112114d5d319dc4a789dacf1e84b867420a03614",
+      "sourceSha256": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113",
+      "vendoredSha256": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113"
+    }
+  ],
+  "stockGuards": [
+    {
+      "address": "0x40004dc6",
+      "bytes": 6,
+      "sha256": "0759b4a7055beab59cdc9d7b8f51bcc27fc8e6b07d38842260ceef916dc33d53"
+    },
+    {
+      "address": "0x40006844",
+      "bytes": 6,
+      "sha256": "27f17790db914b0847a6bd64cfef8523d1910193c6c550577e389ea506a68b94"
+    },
+    {
+      "address": "0x4000f4dc",
+      "bytes": 8,
+      "sha256": "c605d386cc7bbf132d9a1bc10d655c3f8f550c75e0cf51715ac2966015b40068"
+    },
+    {
+      "address": "0x4000d498",
+      "bytes": 6,
+      "sha256": "00dfac25f63401293b216e5ec256e32776a875e1f4d10cf27f31694e95f70308"
+    },
+    {
+      "address": "0x40006820",
+      "bytes": 8,
+      "sha256": "87faf47c9893d1a9506259f68551bf06eb1ce723ac12cfae49a5b10b8b169fb6"
+    },
+    {
+      "address": "0x40004c72",
+      "bytes": 6,
+      "sha256": "6314eb6bf2fc2b8a735ece556af833c4937e3c2added6668f6015e33455866d0"
+    },
+    {
+      "address": "COUNT_AT",
+      "bytes": 2,
+      "sha256": "5dd82fd23ac20130aebe3391a4c9a9fda6ca01bd143223a558ec253b65083dfd"
+    },
+    {
+      "address": "site",
+      "bytes": 4,
+      "sha256": "8c4c50dbddad08d1ae644a694665e608f2bbdb90d7a321fc640e844ae4c149fa"
+    }
+  ],
+  "excluded": [
+    "Firmware and stock expectation bytes",
+    "Generated firmware, runtime images and memory dumps",
+    "Unrelated modules and author repository tooling"
+  ],
+  "notes": [
+    "patch_softmute.s, patch_mutemode.s, manifest.py and runtime.json are the author's files byte for byte at the pinned commit, from modwerk-modules/mute-modes/, the author's own Modwerk copy (the 0.2.1 sources with Modwerk's MODWERK_EVENTS blocks, plus this version's changes). upstream/README.md, LICENSE and upstream/OCTABAM_LICENSE are unchanged from 0.1.0's record.",
+    "0.2.2 moves SHADOW, hook 1's per-frame silenced set, from SRAM 0x80006c66 into the unit after KEYMASK; sambanks/octabam pins that change at a1e0288 (PR #928, merged as the revision above).",
+    "0.2.2 also adds the hold: a muted track keeps stock's post-FX cut until it is unmuted when it has been a side-chain KEY (ev_mute_keep's answer, SC_KEY units) or when it was still muted as MUTE MODE left OT (every unit). In OT, `pre` clears the inverted hold byte UNHELD and SHADOW with one clr.w; the plain unit gets the hold as p1_hold. The question came from sambanks/octabam#1013. The units equal the author's references (plain 996 B at 0x400d7400, was 970; SC_KEY 1106 B at 0x400d6e54, was 1100).",
+    "The stock guard digests are 0.1.0's; no hook site changed."
+  ],
+  "status": "Listed; author update. Hardware: see TESTING.md.",
+  "authorPin": {
+    "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+    "revision": "bb9beada9248fdae13bee32684a7f2564e586f6c"
+  }
+}

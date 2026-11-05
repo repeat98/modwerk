@@ -146,6 +146,14 @@
       "modules": [],
       "internalDependencies": [],
       "status": "emulator bench and scripting update, dsp_host -pword, the two DSP source gates, the trap register, the emulator README and the Linux toolchain script; no module source or version imports; exact file identities and firmware-free emulator tests recorded separately"
+    },
+    {
+      "record": "imports/octabam-infrastructure-54200264.json",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "54200264209d44303e150cdb946ca96ef1062c30",
+      "modules": [],
+      "internalDependencies": [],
+      "status": "one emulator change: --interactive exits when its parent process dies; no module source or version imports; exact file identity and the before/after orphan check recorded separately"
     }
   ]
 }

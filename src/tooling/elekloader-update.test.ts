@@ -129,12 +129,11 @@ describe('the elekloader update', () => {
     expect(cut.leftOut).toEqual(['digitakt/digislicer'])
     expect(DEVICES['digitakt-mk2']).toBe('digitakt-ii')
   })
-  it('ships the kit NOTICE without its section on the replaced files, and refuses one that credits another file', () => {
+  it('ships the kit NOTICE whole, keeping its credit for the code the replaced files stand in for', () => {
     const notice = readFileSync(join(ROOT, 'vendor/elekloader/kit/NOTICE'), 'utf8'), shipped = kitNotice(notice)
-    expect(shipped).not.toContain('Code from other projects')
-    expect(shipped).toContain('The TypeScript engine')
+    expect(shipped.endsWith(notice)).toBe(true)
+    expect(shipped).toContain('Code from other projects')
     expect(shipped).toContain("replaced by Modwerk's own implementation")
-    expect(() => kitNotice(notice.replace('  elekloader/isa/coldfire.py', '  elekloader/other.py  elsewhere\n  elekloader/isa/coldfire.py'))).toThrow('not exactly the files Modwerk replaces')
   })
   it('adds pinned site packages to the existing catalog without replacement and fingerprints the result', () => {
     const pin = (id: string, device: string, file: string, sha256: string) => ({

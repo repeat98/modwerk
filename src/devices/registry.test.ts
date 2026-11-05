@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { DEVICES, DEVICES_BY_ID, deviceSteps, readyForMods } from './registry'
+import { DEVICES, DEVICES_BY_ID, deviceSteps, isZd2Pedal, readyForMods } from './registry'
+import { parseZoomHubRoute } from './zoom-hub-route'
 import { FAMILY_STEP_IDS } from './machine-contract'
 import { DIGI_MODS, estimateCombination } from './digi-mods'
 import { readFileSync } from 'node:fs'
@@ -14,7 +15,11 @@ describe('device registry', () => {
   it('gives each family its own road, matching the contract', () => {
     for (const device of DEVICES) expect(deviceSteps(device).map(step => step.id)).toEqual(FAMILY_STEP_IDS[device.family])
     const zoom = DEVICES.filter(device => device.family === 'zoom')
-    expect(zoom.map(device => device.id)).toEqual(['zoom-ms-70cdr', 'zoom-ms-50g', 'zoom-ms-60b', 'zoom-g1on'])
+    expect(zoom.map(device => device.id)).toEqual(['zoom-ms-70cdr', 'zoom-ms-50g', 'zoom-ms-60b', 'zoom-g1on', 'zoom-g1-four'])
+    // The ZD2 pedals are Zoom pedals of their own kind: no ZDL pedal page.
+    expect(zoom.filter(isZd2Pedal).map(device => device.id)).toEqual(['zoom-g1-four'])
+    expect(parseZoomHubRoute('zoom-g1-four/pedal')).toBeUndefined()
+    expect(parseZoomHubRoute('zoom-g1on/pedal')?.device.id).toBe('zoom-g1on')
     for (const device of zoom) {
       expect(device.steps.core).toBeUndefined()
       expect(device.firmware?.file).toBeUndefined()

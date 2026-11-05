@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/temp-save",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-05",
+  "changes": [
+    "First library release, for Analog Rytm MKII OS 1.74 on core-ar2 0.7: FUNC + YES temp-saves the active pattern and its kit with stock's own save, FUNC + NO reloads both."
+  ],
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/temp-save/temp-save-0.1.0-experimental-os1.74.elemod",
+      "sha256": "b7ce860c8b2350c6606f633a6a8aeab6ba9cb2822589e73deaa0253ce2367e86"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/temp-save/TESTING.md",
+  "requires": []
+}

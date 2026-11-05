@@ -287,7 +287,9 @@ export default function App() {
   function closeSearch() { setQuery(''); flushSync(() => setSearchOpen(false)); searchToggleRef.current?.focus() }
   const [family,setFamily]=useState(initialBrowse?.family ?? 'all'),[sort,setSort]=useState(initialBrowse?.sort ?? DEFAULT_MODULE_SORT),[comparison,setComparison]=useState<string[]>([]),[compareOpen,setCompareOpen]=useState(false)
   const [statistics,setStatistics]=useState<ModuleStatistics[]|null>(null)
-  useEffect(()=>{let cancelled=false,latest=0;function load(){if(!session.available)return;const request=++latest;void api<ModuleStatistics[]>('/community/summary').then(value=>{if(!cancelled&&request===latest)setStatistics(value)}).catch(()=>{if(!cancelled&&request===latest)setStatistics(null)})}load();window.addEventListener(MODULE_STATISTICS_CHANGED,load);const reconnected=onCommunityReconnect(load);return()=>{cancelled=true;reconnected();window.removeEventListener(MODULE_STATISTICS_CHANGED,load)}},[session.available,onLibrary])
+  useEffect(()=>{let cancelled=false,latest=0;function read(path:string){if(!session.available)return;const request=++latest;void api<ModuleStatistics[]>(path).then(value=>{if(!cancelled&&request===latest)setStatistics(value)}).catch(()=>{if(!cancelled&&request===latest)setStatistics(null)})}
+  // The server keeps one shared answer for a minute; after the member's own change, ask it to work the answer out again.
+  const load=()=>read('/community/summary'),changed=()=>read('/community/summary?fresh=1');load();window.addEventListener(MODULE_STATISTICS_CHANGED,changed);const reconnected=onCommunityReconnect(load);return()=>{cancelled=true;reconnected();window.removeEventListener(MODULE_STATISTICS_CHANGED,changed)}},[session.available,onLibrary])
   const [dragging, setDragging] = useState(false)
   const [saved, setSaved] = useState(false)
   const [riskAccepted, setRiskAccepted] = useState<{key:string;accepted:boolean}>({key:'',accepted:false})
