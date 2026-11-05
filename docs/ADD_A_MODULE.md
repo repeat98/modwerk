@@ -287,6 +287,8 @@ the [loader compatibility guide](../sdk/machines/octatrack/elekloader/README.md#
 
 Firmware for these machines is built by elekloader's builder, vendored unchanged and run in the browser ([vendor/elekloader](../vendor/elekloader/README.md)). It decides which mods combine, so there is no comparison with a native builder to run.
 
+Modwerk imports released `.elemod` files; it does not package mods for elekloader. To list a mod in elekloader's shop, including one Modwerk's library does not take, follow elekloader's [shop guide](https://github.com/elekloader/elekloader/blob/main/docs/SHOP.md) ([elekloader mods and cores](../CONTRIBUTING.md#elekloader-mods-and-cores)).
+
 **Porting an elekloader mod:**
 
 1. Take `elekloader-catalog.json` (and the kit zip when the kit changes) from an elekloader release, then run `npm run elekloader:update -- [elekloader-kit-<version>.zip --sha256 <hash>] elekloader-catalog.json [--library]`. It downloads each mod from its author's release, checks every hash, writes `vendor/elekloader/catalog/` and the lock, and prints what is left by hand. Details: [vendor/elekloader/README.md](../vendor/elekloader/README.md#updating). A module's id is its catalog id.
