@@ -43,7 +43,6 @@
 #define SCENE_VTABLE 0x401e305c
 #define MUTE_VTABLE 0x401e2bbc
 #define CHROMATIC_VTABLE 0x401e1394
-#define PERF_EDIT_VTABLE 0x401e2a54     // PerformanceEditView: PERF mode on the FX track
 
 // The sequencer, for the performance lane.
 #define PLAYING_A_AT 0x405c8cf8         // both nonzero while it plays

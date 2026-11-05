@@ -238,12 +238,11 @@ static unsigned short touched[PERFS];   // audio blocks left of the last move
 static unsigned driven;                 // performances the lane plays now
 static int last_pos = -1;               // the position last block
 static int rec_pos[PERFS];              // each one's last recorded point, -1 none
-static volatile unsigned pads_held;     // PERF pads held, seen from the tick
+static unsigned pads_held;              // performances a pad or MIDI holds above zero
 static int pot_rest;                    // the QPER knob where it last came to rest
 static int pot_last, pot_before;        // its last two values, a wobble's pair
 static unsigned short knob_touched;     // audio blocks left of the knob's turn
 #define POT_DEAD 2                      // steps a turn must pass to start: a resting pot wobbles
-#define KEY_PAD_FIRST 0x90              // pads BD .. CB: performances 1 .. 12
 
 // Stock's message for one pot: this replaces the 6-byte lea at its start.
 #define TEXT(x) #x
@@ -760,12 +759,22 @@ void qperf_render(void)
         if (!knob_touched && !pot_rest)
             pot_rest = pot;
     }
-    // A move anyone else makes: the pads, the QPER knob, MIDI. A pad held still
-    // sends nothing new, so a held pad counts as moving.
+    // A move anyone else makes: the pads, the QPER knob, MIDI. A pad sends its
+    // pressure only when it changes and a 0 when let go, so a performance a pad
+    // left above zero is still held. While LIVE RECORDING plays, the linked
+    // performances record whatever the knob plays, moving or not; otherwise the
+    // knob takes one over only once it turns.
+    rec = playing() && live_rec();
     for (p = 0; p < PERFS; p++) {
         unsigned short now = PERF_AMOUNT(p);
         int knob = known >> p & 1, wobble = knob && qperf_pot && now == (unsigned short)((qperf_pot - 1) << 7);
-        if ((now != seen[p] && !wobble) || (pads_held >> p & 1) || (knob && knob_touched)) {
+        if (now != seen[p] && !wobble) {
+            if (now)
+                pads_held |= 1u << p;
+            else
+                pads_held &= ~(1u << p);
+        }
+        if ((now != seen[p] && !wobble) || (pads_held >> p & 1) || (knob && (rec || knob_touched))) {
             seen[p] = now;
             touched[p] = TOUCH_BLOCKS;
             driven &= ~(1u << p);       // it is theirs now
@@ -787,7 +796,6 @@ void qperf_render(void)
     }
     pos = position();
     last_pos = pos;
-    rec = live_rec();
     for (p = 0; p < PERFS; p++) {
         unsigned bit = 1u << p;
         if (touched[p]) {
@@ -1288,16 +1296,6 @@ void qperf_tick(void *ctrl)
     if (ready)
         trace();
 #endif
-    if (views) {
-        unsigned pads = 0;
-        word_t top = held ? 0 : top_view();
-        int p;
-        if (top == PERF_VTABLE || top == PERF_EDIT_VTABLE)    // both play pad pressure
-            for (p = 0; p < PERFS; p++)
-                if (IS_KEY_HELD(KEY_PAD_FIRST + p))
-                    pads |= 1u << p;
-        pads_held = pads;
-    }
     if (ready && kit_changed) {
         unsigned mask;
         kit_changed = 0;                // first, so a change after this asks again
