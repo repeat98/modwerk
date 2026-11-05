@@ -494,7 +494,7 @@
       "sha256": "fdba0ffd31b7932ceb1ded3bde9a976b6f148ae96fc73a4efc4fedf6fb692341"
     }
   ],
-  "sourceCommit": "1c81f145252ec099ffdf6248700f21ef1bbd7432",
+  "sourceCommit": "be64a4ed8ce2fcce671c6e019ea29c250c12defe",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
