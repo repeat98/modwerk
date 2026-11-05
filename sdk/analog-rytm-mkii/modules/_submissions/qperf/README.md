@@ -26,18 +26,18 @@ A pass records only the performances you touch. The others keep playing what the
 
 | Gesture | What it does |
 | --- | --- |
-| QPER + YES, LIVE RECORDING on | Applies the quick perf rec to the pattern as trigless parameter locks, one per step, and empties it. Shows APPLY QUICK PERF REC. |
-| QPER + NO | Empties the quick perf rec: CLEAR QUICK PERF REC. NO again: UNDO CLEAR. |
+| RECORD + YES | Applies the quick perf rec to the pattern as trigless parameter locks, one per step, and empties it, in any recording mode. Shows APPLY QUICK PERF REC. |
+| RECORD + NO | Empties the quick perf rec: CLEAR QUICK PERF REC. NO again: UNDO CLEAR. |
 
-With LIVE RECORDING off, QPER + YES writes the linked performance into the kit, as above.
+QPER + YES still writes the linked performance into the kit, as above. RECORD + YES and RECORD + NO leave the recording mode as it was: with none on, stock switches GRID RECORDING at RECORD's press, and the chord switches it back, as stock's RECORD + PLAY does, so the RECORD light may flick.
 
-- **It lives in RAM.** Changing pattern, loading a project or powering off drops it. Only QPER + YES keeps the moves, in the pattern.
+- **It lives in RAM.** Changing pattern, loading a project or powering off drops it. Only RECORD + YES keeps the moves, in the pattern.
 - **A move held still.** A pad sends its pressure only when it changes, and a 0 when you let go, so a pad counts as held from its first pressure until that 0: held still, it keeps recording and overrides the quick perf rec.
 - **The QPER knob records to the loop's end.** In LIVE RECORDING, touching the knob makes the performance QPER is linked to record what the knob plays, moving or not, from where the turn started to the end of the loop (its last step); then it plays back, even with LIVE RECORDING still on, so an earlier take before the turn is kept. Turning on does not stretch it. After the knob has rested, turn it again to record another take. Until you touch it, its take is left alone. With LIVE RECORDING off it plays back, and the knob takes over only while it turns past 2 steps from where it rests (a resting knob wobbles), letting go about 0.05 s after it stops. Pads, the linked one included, record while held.
 - **It loops with the pattern, 64 steps at most.** The quick perf rec loops on the pattern's length, which with a length per track (SCALE per track) is the master length, so a move can run longer than a short track's loop. When the length is INF, or longer than 64 steps (the master length goes up to 1024), the quick perf rec loops every 64 steps instead, and drifts against a longer master cycle. 64 is a choice, not a limit of the Rytm: it is the longest a track can be, so a applied quick perf rec always fits one track, and it keeps the quick perf rec's RAM small. Raising it would mean a coarser quick perf rec or more RAM, and moves a track could not hold when applied.
 - **The written locks.** Each step gets the quick perf rec's first recorded value in that step, added to the step's own lock or the kit's value, so a move shorter than a step still lands. The step after a move ends gets the parameter's own value back. A step with no trig becomes a lock trig, as stock's live recording does. A step whose trig has a condition takes the move only on the passes where the trig plays, as any lock on it does.
 - **Tracks shorter than the quick perf rec.** With a length per track, the Rytm restarts every track when the master length comes round, so a 16- or 24-step track under a 32-step master already repeats its steps until the master restarts it. QPER + YES makes such a track as long as the quick perf rec and fills the new steps with that repetition, so it plays exactly as before, then writes the moves on every step. Conditions that count loops are rewritten so each copy plays on the same passes: a 1:2 copied twice becomes no condition on the first copy and no trig on the second, 1ST stays only on the first copy. This changes the track's length in the pattern: reload the pattern to get the old one back.
-- **When a track is left out.** A track at another speed than the pattern, in Euclidean mode, or with a track-wide condition that counts loops keeps its length and gets no locks. So does one whose length does not divide 64 when the master length is INF or longer than 64, since the Rytm does not restart it every 64 steps then. QPER + YES then shows how many tracks were left out.
+- **When a track is left out.** A track at another speed than the pattern, in Euclidean mode, or with a track-wide condition that counts loops keeps its length and gets no locks. So does one whose length does not divide 64 when the master length is INF or longer than 64, since the Rytm does not restart it every 64 steps then. RECORD + YES then shows how many tracks were left out.
 - **72 lock rows a pattern.** Stock keeps one row for each locked parameter of each track, two for a fine one, and uses 71. If the moves need more, QPER + YES shows LOCK MEM FULL! and writes nothing.
 
 These work on the sound pages and in PERF, SCNE, MUTE and CHRO. Press QPER in a menu, dialog, list, the SAMPLER or TEMPO and everything stays stock's, for as long as you hold it. A menu opened with QPER held keeps its keys too. The one exception is linking: where stock lets a pad or trig link over a screen, such as the GLOBAL menu, it moves the one link here too.
@@ -60,8 +60,8 @@ Stock draws every message. YES shows PERFORMANCE n APPLIED, or NOTHING TO APPLY 
 - **QPER + PLAY** starts the sequencer on stock. With this mod it clears instead. PLAY alone still starts it.
 - **QPER + STOP and QPER + RECORD** act as STOP and RECORD on stock. With this mod they paste and copy.
 - **QPER + knob** changes the parameter on stock. With this mod it edits locks and leaves the parameter alone.
-- **QPER + YES** did nothing visible on stock (rytm-emu, OS 1.74). With LIVE RECORDING on it applies the quick perf rec instead of the kit.
-- **QPER + NO** empties the quick perf rec. What stock does with it was not checked.
+- **QPER + YES** did nothing visible on stock (rytm-emu, OS 1.74).
+- **RECORD + YES and RECORD + NO** have no stock meaning (read from the code: TransportView 0x40041734). With no recording mode on, stock switches GRID RECORDING at RECORD's press; the chord puts it back.
 - **Performance moves during LIVE RECORDING** are kept and played back by this mod. Stock keeps none.
 
 Kits are not changed by loading them: only a pad or trig press with QPER held changes a kit's links. Remove the mod to get these back.
@@ -74,4 +74,4 @@ Kits are not changed by loading them: only a pad or trig press with QPER held ch
 4. When a position sounds right, hold QPER and press YES to keep it in the kit.
 5. Hold QPER and press RECORD, press pad 2, then STOP to start another performance from this one.
 6. Press PERF, hold RECORD and press PLAY. While the pattern plays, press and squeeze pads 1 and 2. Let go and listen to the next pass.
-7. With LIVE RECORDING still on, hold QPER and press YES to write the moves into the pattern.
+7. Hold RECORD and press YES to write the moves into the pattern.

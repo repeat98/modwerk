@@ -160,6 +160,7 @@ int qperf_pot;                      // the QPER knob + 1, 0 until it first moves
 #define PULSE_UNITS 900000              // the music clock's units a pulse
 #define TOUCH_BLOCKS 150                // 0.1 s of audio blocks: a move holds this long
 #define LIVE_REC 361                    // record state + 361: LIVE RECORDING on
+#define GRID_REC 360                    // record state + 360: GRID RECORDING on
 #define PATTERN_BYTES 85760
 #define PATTERN_LENGTH 0x14eb3          // s16, the pattern's steps
 #define PATTERN_PER_TRACK 0x14eb9       // 1: each track has its own length and speed
@@ -601,10 +602,6 @@ static void perf_action(int key)
     void *perf = (void *)KIT_PERF(kit);
     unsigned mask = linked(kit);
     int index;
-    if (key == KEY_NO || (key == KEY_YES && live_rec())) {
-        perf_rec_action(key);           // the quick perf rec needs no link
-        return;
-    }
     if (several(mask)) {
         show(SEVERAL);
         return;
@@ -1203,6 +1200,36 @@ void qperf_pad(void *event, int perf)
     }
 }
 
+// RECORD + YES and RECORD + NO. With no recording mode on, stock toggles grid
+// recording at RECORD's press, before a second key; as stock's RECORD + PLAY
+// does, the chord puts the record state back as it was at the press. With
+// LIVE or STEP RECORDING on stock acts at RECORD's release only if no other
+// key came between, so nothing changes there.
+typedef void (*rec_set_t)(word_t rec, int on);
+#define GRID_REC_SET ((rec_set_t)GRID_REC_SET_AT)
+#define LIVE_REC_SET ((rec_set_t)LIVE_REC_SET_AT)
+static unsigned char grid_at_press, live_at_press;
+
+static void record_press(void)
+{
+    word_t rec = U32(REC_UI_AT);
+    if (rec) {
+        grid_at_press = *(volatile unsigned char *)(rec + GRID_REC);
+        live_at_press = *(volatile unsigned char *)(rec + LIVE_REC);
+    }
+}
+
+static void record_restore(void)
+{
+    word_t rec = U32(REC_UI_AT);
+    if (!rec)
+        return;
+    if (*(volatile unsigned char *)(rec + GRID_REC) != grid_at_press)
+        GRID_REC_SET(rec, grid_at_press);
+    if (*(volatile unsigned char *)(rec + LIVE_REC) != live_at_press)
+        LIVE_REC_SET(rec, live_at_press);
+}
+
 int qperf_key(void *brain, void *event)
 {
     int key = *(int *)((char *)event + EV_KEY);
@@ -1242,6 +1269,17 @@ int qperf_key(void *brain, void *event)
     }
     if (swallowed & bit)
         return 1;                       // its repeats
+    if (key == KEY_REC && !held && !(flags & REPEAT))
+        record_press();
+    if ((key == KEY_YES || key == KEY_NO) && !held && !(flags & REPEAT)
+        && IS_KEY_HELD(KEY_REC) && !IS_KEY_HELD(KEY_FUNC) && on_pages()) {
+        swallowed |= bit;
+        record_restore();
+        perf_rec_action(key);
+        return 1;
+    }
+    if (key == KEY_NO)
+        return 0;                       // QPER + NO stays stock's
     if (!held || (flags & REPEAT) || IS_KEY_HELD(KEY_FUNC) || top_view() != QPER_VTABLE)
         return 0;
     swallowed |= bit;

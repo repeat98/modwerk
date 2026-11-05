@@ -39,7 +39,8 @@
     "ui:QPER + YES",
     "ui:QPER + RECORD",
     "ui:QPER + STOP",
-    "ui:QPER + NO",
+    "ui:RECORD + YES",
+    "ui:RECORD + NO",
     "ui:live recording of performance moves"
   ],
   "requires": [],

@@ -55,6 +55,8 @@
 #define MUSIC_CLOCK_AT 0x8000fe54       // u32, 900000 a pulse
 #define LIVE_PATTERN_AT 0x405c8d04      // s8, the pattern playing
 #define REC_UI_AT 0x419f28d8            // the record state's object, + 361 LIVE REC
+#define GRID_REC_SET_AT 0x400362da      // (record state, on): grid recording
+#define LIVE_REC_SET_AT 0x4003638a      // (record state, on): LIVE RECORDING
 #define PATTERNS_AT 0x407dd8e3          // 85760 bytes a pattern
 #define PATTERN_OF_AT 0x400af0ac
 #define PATTERN_TRACK_AT 0x400ab29e
