@@ -4422,7 +4422,7 @@
       "id": "quantizer",
       "key": "SCALE QUANTIZER",
       "name": "Scale Quantizer",
-      "version": "0.1.3-experimental",
+      "version": "0.1.4-experimental",
       "category": "machines",
       "source": {
         "repository": "https://github.com/sambanks/octabam",
@@ -4430,44 +4430,46 @@
         "path": "modules/quantizer"
       },
       "access": {
-        "location": "PROJECT > CONTROL > SEQUENCER: SCALE, ROOT and GLIDE rows.",
+        "location": "PROJECT > CONTROL > SEQUENCER: SCALE, ROOT, GLIDE, TRACK and FOLLOW rows.",
         "steps": [
           "On the MKII panel, press PROJ to open the project menu.",
           "Use UP/DOWN to select CONTROL, then press RIGHT to enter its list.",
           "Select SEQUENCER with UP/DOWN and press YES.",
           "Scroll DOWN to SCALE and turn LEVEL to choose a scale. OFF restores stock pitch behavior.",
-          "Scroll to ROOT and turn LEVEL to select the key. GLIDE is the next row; its effect depends on the track’s LEG setting."
+          "Scroll to ROOT and turn LEVEL to select the key. GLIDE is the next row; its effect depends on the track’s LEG setting. TRACK and FOLLOW follow (TRACK picks a track, FOLLOW is its ON / OFF)."
         ],
         "screenshots": [
           "media/ot-location.png",
           "media/ot-scale.png",
           "media/ot-root.png",
-          "media/ot-glide.png"
+          "media/ot-glide.png",
+          "media/ot-track-rows.png"
         ]
       },
       "author": {
         "github": "timhastie",
         "name": "Tim Hastie",
         "credits": [
-          "Tim Hastie: octatrick-modules Scale Quantizer, v2.9",
-          "Sam Banks: octabam wrapper and port evidence"
+          "Tim Hastie: octatrick-modules Scale Quantizer, 2.21 + TRACK / FOLLOW (MIDI tracks, per-track FOLLOW switches, audio tracks play the scale)",
+          "Sam Banks: octabam wrapper (to 0.1.3) and port evidence"
         ]
       },
       "nativeManifest": "manifest.py",
       "presentation": {
         "label": "SCALE / ROOT",
         "family": "Sequencer",
-        "summary": "Keep pitch edits and chromatic trig keys in one of 24 scales with a selectable root.",
-        "overview": "Scale Quantizer adds SCALE, ROOT and GLIDE to PROJECT > CONTROL > SEQUENCER. Pitch turns and parameter locks move through scale degrees, and chromatic trig keys snap to the chosen scale. ROOT transposes the scale and keyboard. SCALE OFF restores stock pitch behavior.",
+        "summary": "Keep audio and MIDI tracks in one of 24 scales with a selectable root, and take single tracks out of it.",
+        "overview": "Scale Quantizer adds SCALE, ROOT, GLIDE, TRACK and FOLLOW to PROJECT > CONTROL > SEQUENCER. Pitch turns, parameter locks and chromatic trig keys move through scale degrees, and what audio and MIDI tracks play follows the scale, so recorded notes follow a scale change. ROOT transposes the scale and keyboard. TRACK picks an audio or MIDI track and FOLLOW OFF keeps that track stock; SCALE OFF restores stock pitch behavior.",
         "highlights": [
-          "24 scales plus OFF",
-          "Selectable root C–B",
-          "Pitch knob, parameter locks and chromatic keys follow the scale"
+          "24 scales plus OFF, selectable root C–B",
+          "Recorded notes follow a scale change on audio and MIDI tracks",
+          "TRACK and FOLLOW take single audio or MIDI tracks out of the scale"
         ],
         "usage": [
           "Open PROJECT > CONTROL > SEQUENCER and set SCALE. OFF preserves stock pitch behavior; choose a scale to constrain notes.",
-          "Set ROOT to the key you want. Pitch edits step by scale degree; chromatic keys snap to a degree and key 1 plays the root.",
-          "SCALE, ROOT and GLIDE persist through project save/reload and battery RAM. Synth polyphony and synth glide features require SYNTH MACHINE, which is outside this import."
+          "Set ROOT to the key you want. Pitch edits step by scale degree; chromatic keys snap to a degree and key 1 plays the root. Notes already recorded play in the new scale.",
+          "Set TRACK to a track (AUDIO 1..8, MIDI 1..8) and FOLLOW to OFF for a track that should stay chromatic (drums, samples with fixed pitch). TRACK only chooses what FOLLOW shows and is not saved; it starts at AUDIO 1.",
+          "SCALE, ROOT, GLIDE and the track switches are saved with the project and kept in battery RAM. Synth polyphony and synth glide features require FM Synth, which carries its own copy of this quantizer."
         ]
       },
       "controls": [
@@ -4530,6 +4532,40 @@
           "count": 128,
           "doc": "OFF or 1–127 slide time; the track LEG setting controls legato. Synth features require the separate SYNTH MACHINE module.",
           "labels": null
+        },
+        {
+          "name": "TRACK",
+          "default": 0,
+          "count": 16,
+          "doc": "Picks the track FOLLOW shows: AUDIO 1..8, then MIDI 1..8. Changes no sound; not saved (AUDIO 1 at power-on).",
+          "labels": [
+            "AUDIO 1",
+            "AUDIO 2",
+            "AUDIO 3",
+            "AUDIO 4",
+            "AUDIO 5",
+            "AUDIO 6",
+            "AUDIO 7",
+            "AUDIO 8",
+            "MIDI 1",
+            "MIDI 2",
+            "MIDI 3",
+            "MIDI 4",
+            "MIDI 5",
+            "MIDI 6",
+            "MIDI 7",
+            "MIDI 8"
+          ]
+        },
+        {
+          "name": "FOLLOW",
+          "default": 0,
+          "count": 2,
+          "doc": "The switch of the track TRACK shows: ON (default) follows SCALE and ROOT; OFF keeps that track stock in every path. Saved per track with the project.",
+          "labels": [
+            "ON",
+            "OFF"
+          ]
         }
       ],
       "compatibility": {
@@ -4539,22 +4575,22 @@
         "conflicts": [],
         "limitations": [
           "Sample pitch quantization works on Flex, Static and Pickup; RATE is not a semitone control.",
-          "SCALE, ROOT and GLIDE are shared project settings, not independent per-track scale selectors.",
-          "Synth polyphony and synth-specific tuning/glide require FM Synth and are outside the standalone Quantizer.",
-          "POLY8 configurations use the existing POLY8 keyboard hooks; this update does not change POLY8 or FM Synth runtime code.",
-          "Current-version physical hardware, reboot, audio, chip timing and complete memory bounds remain untested."
+          "SCALE, ROOT and GLIDE are shared project settings; TRACK and FOLLOW switch single tracks off.",
+          "The module adds five SEQUENCER rows (SCALE, ROOT, GLIDE, TRACK, FOLLOW), within the eight the Modwerk base gives over USB; card builds show the same five.",
+          "FM Synth carries its own copy of this quantizer (the same source) and declares a conflict with this module: both would patch the same sites, and a module may not hook into another module's code, rows, tables or files (the owner, #555, 31 October 2026). Synth polyphony and synth-specific tuning and glide need FM Synth.",
+          "Reported working by the author on his MKI twice, on the same bytes: TEST2 on 30 October 2026 and TEST3 (the module rebuilt on current main, byte-identical) on 1 November 2026 (TESTING.md): the rows, FOLLOW acting at play, save and power-cycle; the optional 2.21-saved-project step not stated. Play time and readings were not recorded. Audio measurements, chip timing and complete memory bounds remain unmeasured."
         ]
       },
       "resources": {
-        "recorded": "v2.9 upstream record (pinned source)",
+        "recorded": "Card build and USB package of this version (25 Oct 2026)",
         "storage": {
           "label": "ROM footprint",
-          "display": "243 bytes",
-          "value": 243,
+          "display": "255 bytes",
+          "value": 255,
           "unit": "bytes",
           "method": "static",
-          "conditions": "Upstream v2.9 record: 192-byte core, 45-byte key stub and 6-byte scale trampoline. DRAM code, grown menus and loader overhead are additional; this is not a new local assembly measurement.",
-          "source": "README.md"
+          "conditions": "Card build of 0.1.4: a 204-byte core, the 45-byte key stub and the 6-byte scale trampoline in ROM. The DRAM quantizer unit (6,084 bytes of code and data in the USB package, with its glue), the grown menus and loader overhead are additional.",
+          "source": "TESTING.md"
         },
         "processing": {
           "label": "CPU load",
@@ -4582,25 +4618,28 @@
           "memory": {
             "level": "minimal",
             "basis": "source-estimate",
-            "rationale": "The upstream record lists a 243-byte ROM core/stub/trampoline footprint plus small settings. DRAM code, menus and loader overhead are additional. Minimal is a relative source estimate, not a claim that total memory is only 243 bytes.",
-            "source": "README.md"
+            "rationale": "The card build has a 255-byte ROM core/stub/trampoline footprint plus small settings. DRAM code, menus and loader overhead are additional. Minimal is a relative source estimate, not a claim that total memory is only 255 bytes.",
+            "source": "TESTING.md"
           }
         }
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "MIDI trig-mode stack corruption reproduced on the old standalone build; the repaired popup passes on MKI/MKII emulated panels. Native/browser comparison: 53 matching module-owned images, 73 matching refusals, zero mismatches. The owner approved this exact experimental source with hardware, chip timing and complete memory bounds untested.",
-        "hardwareStatus": "untested",
+        "summary": "0.1.4 imports Tim Hastie's 2.21 quantizer with the TRACK / FOLLOW rows byte for byte. Card-build and USB packages built on this Mac from the user's own 1.40C; the emulator gates are recorded in TESTING.md. The author reports this cut's image working on his MKI twice, its test sheet passing each time (the optional step not stated; TESTING.md): TEST2 (MAIN 22541cd6..., upgrade file ec4b811f...) on 30 October 2026 and TEST3, the same bytes rebuilt on current main, on 1 November 2026 (TESTING.md); his TEST1 report (26 October 2026) covered the v2.20 cut. Chip timing and complete memory bounds remain unmeasured.",
+        "hardwareStatus": "reported",
         "evidenceRevision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
-        "gates": [],
+        "gates": [
+          "Hardware report for this source and image: timhastie, MKI, 2026-10-30 (reported; TESTING.md)",
+          "Hardware report for this source and image, repeated on the byte-identical TEST3 rebuild (upgrade file ec4b811f..., 449,848 B): timhastie, MKI, 2026-11-01 (reported; TESTING.md)"
+        ],
         "documentation": {
           "tutorial": {
             "title": "Quick tutorial: choose a scale",
             "steps": [
               "Open PROJECT > CONTROL > SEQUENCER and scroll to SCALE. Turn LEVEL to select MAJOR; OFF restores stock pitch behavior.",
               "Scroll to ROOT and turn LEVEL to choose C. ROOT transposes the selected scale and the audio chromatic keyboard.",
-              "Close the project menu, select a Flex or Static audio track with a sample assigned, and turn PTCH or play the chromatic trig keys. Notes follow the selected scale.",
-              "Switch to MIDI mode. Hold FUNC and press DOWN or UP to change trig mode; release FUNC to leave the popup. MIDI octave numbers retain the stock format."
+              "Close the project menu, select a Flex or Static audio track with a sample assigned, and turn PTCH or play the chromatic trig keys. Notes follow the selected scale; recorded notes play in it too.",
+              "Back in SEQUENCER, set TRACK to AUDIO 1 (or MIDI 1) and FOLLOW to OFF: that track plays unquantized while the others follow the scale."
             ]
           },
           "screenshots": [
@@ -4608,6 +4647,7 @@
             "media/ot-scale.png",
             "media/ot-root.png",
             "media/ot-glide.png",
+            "media/ot-track-rows.png",
             "media/ot-midi-trig-mode.png"
           ],
           "screenshotStyle": "black-and-white"
@@ -4631,8 +4671,8 @@
             "page": "PROJECT > CONTROL",
             "shows": "location",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.3-experimental",
-            "imageSha256": "1ceba9f613dcf0d6bb6c32b0ae18e82a399e42644a89b2f76d9088c18c255c15",
+            "moduleVersion": "0.1.4-experimental",
+            "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
             "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware."
           }
         },
@@ -4648,8 +4688,8 @@
             "page": "CONTROL SEQUENCER: SCALE",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.3-experimental",
-            "imageSha256": "1ceba9f613dcf0d6bb6c32b0ae18e82a399e42644a89b2f76d9088c18c255c15",
+            "moduleVersion": "0.1.4-experimental",
+            "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
             "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware."
           }
         },
@@ -4665,8 +4705,8 @@
             "page": "CONTROL SEQUENCER: ROOT",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.3-experimental",
-            "imageSha256": "1ceba9f613dcf0d6bb6c32b0ae18e82a399e42644a89b2f76d9088c18c255c15",
+            "moduleVersion": "0.1.4-experimental",
+            "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
             "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware."
           }
         },
@@ -4682,8 +4722,25 @@
             "page": "CONTROL SEQUENCER: GLIDE",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.3-experimental",
-            "imageSha256": "1ceba9f613dcf0d6bb6c32b0ae18e82a399e42644a89b2f76d9088c18c255c15",
+            "moduleVersion": "0.1.4-experimental",
+            "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
+            "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware."
+          }
+        },
+        {
+          "path": "media/ot-track-rows.png",
+          "captureType": "emulator",
+          "caption": "Below GLIDE, TRACK set to AUDIO 8 and FOLLOW set to OFF with LEVEL: that track plays unquantized while the others follow the scale.",
+          "alt": "CONTROL SEQUENCER showing GLIDE OFF, TRACK AUDIO 8 and FOLLOW OFF selected.",
+          "credit": "Tim Hastie (headless capture)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "CONTROL SEQUENCER: FOLLOW",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.4-experimental",
+            "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
             "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware."
           }
         },
@@ -4699,8 +4756,8 @@
             "page": "MIDI trig mode",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.3-experimental",
-            "imageSha256": "1ceba9f613dcf0d6bb6c32b0ae18e82a399e42644a89b2f76d9088c18c255c15",
+            "moduleVersion": "0.1.4-experimental",
+            "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
             "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware."
           }
         }
