@@ -26,8 +26,10 @@
    "Screens that use YES or NO keep them"
   ],
   "usage": [
-   "Save with FUNC + YES before a risky edit, then FUNC + NO if it does not work out.",
-   "Save a good state mid-jam, tweak freely, and jump back while the pattern plays."
+   "On the main screen, hold FUNC and press YES: TEMP SAVED. The pattern and its kit are saved.",
+   "Change the pattern's trigs, or turn a sound knob. Play the pattern if you like.",
+   "Hold FUNC and press NO: RELOADED. Trigs, kit and performance and scene locks are back as they were at the save.",
+   "FUNC + NO shows NO TEMP SAVE once you change pattern or kit, or load a project: save again with FUNC + YES."
   ]
  },
  "access": {
