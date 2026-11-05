@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 2,
+  "id": "micro-timing",
+  "key": "MICRO T",
+  "name": "Micro Timing per track",
+  "version": "0.1.0-experimental",
+  "category": "system",
+  "author": {
+    "github": "jonathanwardle1992-beep",
+    "credits": [
+      "jonathanwardle1992-beep: MICRO T row, per-track LEVEL rewrite, documentation and thumbnail."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "Micro timing for the whole track",
+    "family": "Sequencer",
+    "summary": "TRACK TRIG EDIT row MICRO T. LEVEL sets every step on the selected audio or MIDI track to that micro timing.",
+    "overview": "FUNC+BANK TRACK TRIG EDIT gains MICRO T under TRIGS. LEVEL rewrites every step of the selected track through the stock micro-timing writer. MIDI button off writes the audio track. MIDI button on writes the MIDI track only.",
+    "highlights": [
+      "The window stays four rows. REC.TRG scrolls in below SWING.",
+      "LEVEL applies as it turns. There is no YES to confirm.",
+      "Audio and MIDI keep separate trigs. The footer uses the stock fraction."
+    ],
+    "usage": [
+      "Grid record, then FUNC+BANK (FUNCTION on MKI). Highlight MICRO T, under TRIGS.",
+      "Turn LEVEL. The footer fraction moves, and every step on this track takes that micro timing.",
+      "Press the MIDI button and turn LEVEL again to set the MIDI track. The audio track keeps the value it already had."
+    ]
+  },
+  "access": {
+    "location": "FUNC+BANK > TRACK TRIG EDIT > MICRO T",
+    "steps": [
+      "Grid record, then FUNC+BANK (FUNCTION on MKI). Highlight MICRO T, under TRIGS.",
+      "Turn LEVEL. The footer fraction moves, and every step on this track takes that micro timing.",
+      "Press the MIDI button and turn LEVEL again to set the MIDI track. The audio track keeps the value it already had."
+    ],
+    "screenshots": [
+      "media/ot-micro-t.png",
+      "media/ot-rec-trg.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "MICRO T",
+      "default": 23,
+      "count": 47,
+      "labels": null,
+      "doc": "Index 23 is on grid (0). 0 is -23 and 46 is +23, in stock micro-timing steps. LEVEL writes that absolute value to every step of the side on screen."
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": null,
+    "location": "Project sequencer",
+    "conflicts": [],
+    "uiClaims": [],
+    "limitations": [
+      "OS 1.40C. The reported pass is a private MICRO T9 card, not a build of this package. USB Keep/Undo is untested. Headless ot_emu captured TRACK TRIG EDIT only, from a private image built before commit 13d33940.",
+      "The remembered number is battery RAM. Power-off clears it. It is not stored in the project. Rewritten trigs stay in the pattern.",
+      "The next LEVEL turn sets all 64 steps, including empty ones. An individual trig edit does not move the row."
+    ]
+  },
+  "resources": {
+    "recorded": "1 November 2026; source only, unmeasured",
+    "storage": {
+      "label": "ROM unit, menu detours and row-index pokes",
+      "display": "Unmeasured",
+      "value": null,
+      "unit": "bytes",
+      "method": "unmeasured",
+      "conditions": "One ColdFire unit, thirteen detours, one LEVEL pointer and the TRACK TRIG EDIT index pokes. No DSP memory.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "ColdFire, while LEVEL turns on MICRO T",
+      "display": "Unmeasured",
+      "value": null,
+      "unit": "instructions/event",
+      "method": "unmeasured",
+      "conditions": "Runs in the TRACK TRIG EDIT LEVEL handler when MICRO T is selected, then calls the stock per-trig writer for 64 steps. Nothing per sample.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "LEVEL on the MICRO T row writes 64 trigs through the stock setter. Other rows jump back to stock.",
+      "cpu": {
+        "level": "low",
+        "basis": "source-estimate",
+        "rationale": "One pot turn walks all 64 steps through the stock writer. No per-audio-frame work.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code. Playback uses the trig words the stock writer stored.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "One ColdFire unit plus 512 battery bytes for the remembered number, cleared at power-off.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Author reported the private MICRO T9 card working for audio and MIDI separately. Headless ot_emu captured TRACK TRIG EDIT: MICRO T on grid, and REC.TRG scrolled into the four-row window. This package has not been flashed or tried over USB.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "3220ad034c7c55a356ee8ab1d7118495d85ec279",
+    "gates": [
+      "modules/micro-timing/verify.py"
+    ]
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original module by jonathanwardle1992-beep, MIT. No firmware, extracted stock code or built images are included."
+  },
+  "media": [
+    {
+      "path": "media/ot-micro-t.png",
+      "captureType": "emulator",
+      "caption": "While grid recording, press FUNC+BANK (FUNCTION on MKI) and highlight MICRO T under TRIGS. The pictured row is still on grid: the cursor sits on the centre 0 and the footer reads MT1:ON GRID. Turn LEVEL on this row to write that fraction to every step.",
+      "alt": "TRACK TRIG EDIT with MICRO T highlighted under TRIGS, a dashed lane and a cursor on the centre mark, footer MT1:ON GRID.",
+      "credit": "jonathanwardle1992-beep; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "TRACK TRIG EDIT",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "2388ec30162fa38aae071704c6f65f6312b96c879e3175003a1ba17276b884cf",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card; date prompt dismissed. Grid record, then FUNC+BANK, then DOWN onto MICRO T. Private MAIN OS 2388ec30162fa38aae071704c6f65f6312b96c879e3175003a1ba17276b884cf built 2026-11-03T00:21:03Z, before commit 13d33940. Monochrome pixels. Not a hardware or USB result."
+      }
+    },
+    {
+      "path": "media/ot-rec-trg.png",
+      "captureType": "emulator",
+      "caption": "From MICRO T, press DOWN until the list scrolls. TRIGS leaves the top and REC.TRG appears on the bottom row of the same four-row window. MICRO T, SLIDE and SWING stay above it.",
+      "alt": "TRACK TRIG EDIT scrolled so MICRO T, SLIDE and SWING sit above a highlighted REC.TRG row. TRIGS is off the top.",
+      "credit": "jonathanwardle1992-beep; Elektron Octatrack UI",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "TRACK TRIG EDIT",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "2388ec30162fa38aae071704c6f65f6312b96c879e3175003a1ba17276b884cf",
+        "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6; DSP cores running; empty scratch card; date prompt dismissed. Three DOWN presses after the MICRO T capture. Private MAIN OS 2388ec30162fa38aae071704c6f65f6312b96c879e3175003a1ba17276b884cf built 2026-11-03T00:21:03Z, before commit 13d33940. Monochrome pixels. Not a hardware or USB result."
+      }
+    }
+  ]
+}
