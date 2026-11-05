@@ -1,0 +1,1 @@
+Fix: `npm run lint` no longer lints other agents' worktrees nested under `.claude/worktrees` in the checkout. ESLint ignored only `dist`, `node_modules`, `.wrangler` and `vendor`, so every nested checkout was linted again and its own tsconfig could fail the run in the main checkout. `.claude/` holds no source of this repository's own.
