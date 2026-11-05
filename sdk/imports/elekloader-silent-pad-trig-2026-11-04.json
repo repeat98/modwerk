@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "silent-pad-trig-2026-11-04",
+  "about": "Modwerk source-only silent-pad-trig package for Analog Rytm MKII OS 1.74, compiled from sdk/analog-rytm-mkii/modules/silent-pad-trig.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "silent-pad-trig-0.7.0-experimental-os1.74.elemod",
+      "sha256": "5d6d3785dccad53d383080b90391b10044dc08b32a04acb960705588b340fcbd",
+      "id": "silent-pad-trig",
+      "version": "0.7.0-experimental",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-2.0-only",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "dc69c943275945e174158473174ec671b281e655",
+        "path": "sdk/imports/packages/silent-pad-trig/silent-pad-trig-0.7.0-experimental-os1.74.elemod"
+      },
+      "title": "Silent Pad+Trig Settings",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [],
+      "summary": "Three checkboxes: pads and TRIG keys select silently outside recording; pads and TRIG keys stay silent in LIVE RECORDING; MUTE ALL SOUND keeps a muted track silent from pads, TRIG keys and MIDI, while trigs still record.",
+      "description": "Three checkboxes: pads and TRIG keys select silently outside recording; pads and TRIG keys stay silent in LIVE RECORDING; MUTE ALL SOUND keeps a muted track silent from pads, TRIG keys and MIDI, while trigs still record.",
+      "category": "System",
+      "author": "npp1993",
+      "needs_core": "0.3",
+      "on_unit": "0.7.0 ran on an Analog Rytm MKII on OS 1.74 with core-ar2 0.7 as the author's builds PS14 and PS16, as reported; this package has not run on a unit."
+    }
+  ]
+}
