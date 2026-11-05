@@ -78,11 +78,16 @@ The private files remain outside Git at `~/.cache/psl-source-bound-profile-20261
 ## Base movement and limits
 
 After the check, `upstream/main` advanced from the tested base `3ae8c38d` to
-`884aca3a2a2d75d095ea388bd84a78e251dde8ee` by merging PR #1235. The intervening
-diff changed the draft manifest, documentation and evidence only; no candidate
-native source, reconstruction recipe, loader/runtime, package builder or
-Elekloader input changed. This result remains bound to checkout `91d8d493` and
-base `3ae8c38d`; it is not represented as a new build at `884aca3a`.
+`884aca3a2a2d75d095ea388bd84a78e251dde8ee` by merging PR #1235, then to
+`4c8566b8c963be6401910f19de636137101cafee` before this follow-up was prepared.
+The first diff changed the draft manifest, documentation and evidence only. The
+later diff added the Analog Rytm Quick Fill Trig Conditions Elekloader overlay
+and its import record; it did not change the Octatrack package manifest,
+candidate native source, reconstruction recipe, loader/runtime, package
+builder, or Elekloader kit/tool source. The added Rytm overlay is outside the
+Octatrack candidate-only fixture and its 30-package preflight. The report stays
+bound to checkout `91d8d493` and tested base `3ae8c38d`; it is not represented
+as a new build at `4c8566b8`.
 
 This closes only the production package-path and USB software-integration
 check. It adds no hardware result, simultaneous-companion result, cycle bound,
