@@ -21,6 +21,11 @@ export function requireNoSubmissions(root,baseCommit){
  const paths=(git('diff','--name-only','--diff-filter=d',baseCommit,'--',spec)+git('ls-files','--others','--exclude-standard','--',spec)).trim().split('\n').filter(Boolean)
  if(paths.length)throw new Error(paths[0]+': _submissions/ takes no new modules or changes, because nothing there goes live. Put the module in modules/<id> with its pinned .elemod package and release notes, and it is live once merged (sdk/machines/analog-rytm-mkii/README.md#create-a-mod; npm run module:doctor -- <id> names what is missing).')
 }
+// The template's thumbnail is scaffolding, and the library card shows whatever the folder holds, so a library module must replace it.
+export const PLACEHOLDER_THUMBNAIL=/REPLACE THIS THUMBNAIL|Original placeholder from the Modwerk SDK template/
+export function requireOriginalThumbnail(label,item,svg){
+ if(PLACEHOLDER_THUMBNAIL.test(svg)||PLACEHOLDER_THUMBNAIL.test(item.source))throw new Error(label+': '+item.path+' is still the SDK template\'s placeholder thumbnail. Draw an original 320x192 one in the shared signal-art style, and give its media entry a real alt and source (docs/ADD_A_MODULE.md#module-thumbnail-style).')
+}
 export async function machineModules({root,write=false,baseCommit=null,includeDrafts=false}) {
 if(includeDrafts&&write)throw new Error('Draft validation cannot publish generated library metadata')
 if(baseCommit)requireNoSubmissions(root,baseCommit)
@@ -71,6 +76,8 @@ for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='el
   const media=document.media.map(item=>item.path),reports=document.evidence.reports
   for(const path of ['README.md',document.tests.report,document.license.file,...build.sources,...media,...reports])await readFile(await file(folder,path)).catch(()=>{throw new Error(label+': missing '+path)})
   await requireModwerkDocumentation(folder,document)
+  // Only the pull-request check (--base) refuses it: a newly scaffolded module must still pass npm ci's prepare while its developer draws one.
+  if(baseCommit&&dir===folderRoot)for(const item of document.media)if(item.kind==='thumbnail')requireOriginalThumbnail(label,item,await readFile(await file(folder,item.path),'utf8'))
   for(const path of await walk(folder))if(/\.(bin|syx|elemod|exe|dll|so|dylib|zip|img|hex)$/i.test(path))throw new Error('Prohibited firmware/binary file: '+label+'/'+path)
   if(published.some(item=>item.id===document.id)){try{requireModwerkPublication(document)}catch(error){throw new Error(label+': '+error.message,{cause:error})}}
   if(write)for(const item of document.media){const destination=resolve(root,'public/module-media',machine.id+'-'+document.id,document.version,item.path);await mkdir(dirname(destination),{recursive:true});await copyFile(await file(folder,item.path),destination)}

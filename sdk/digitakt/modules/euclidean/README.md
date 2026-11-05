@@ -4,7 +4,7 @@
 
 Generate rhythms from two pulse generators on each audio or MIDI track. Rotate either generator, rotate the whole result and combine them with OR, XOR, AND or SUB.
 
-Version **1.1.5** for Digitakt I OS **1.53 and 1.54**, with separate packages
+Version **1.1.6** for Digitakt I OS **1.53 and 1.54**, with separate packages
 for each OS. Do not use a 1.53 package on 1.54. Hardware testing is recorded in the
 [hardware report](evidence/hardware-testing.json) and [TESTING.md](TESTING.md).
 

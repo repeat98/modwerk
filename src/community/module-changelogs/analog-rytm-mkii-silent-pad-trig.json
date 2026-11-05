@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.7.0-experimental",
+    "date": "2026-11-04",
+    "changes": [
+      "FUNC + TRIG now plays the track at the TRIG page's VEL wherever TRIG keys are silent, the way a plain TRIG press plays on stock.",
+      "The LIVE REC row now covers TRIG keys too, and is renamed SILENT P+T LIVEREC: a TRIG key selects silently and records nothing, and FUNC + TRIG plays and records.",
+      "GRID and STEP RECORDING keep stock's FUNC + TRIG.",
+      "After updating, all three rows start unchecked: check the ones you use again once."
+    ]
+  },
+  {
     "version": "0.6.0-experimental",
     "date": "2026-11-02",
     "changes": [
