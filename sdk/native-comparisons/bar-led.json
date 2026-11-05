@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "moduleId": "bar-led",
   "moduleVersion": "0.1.0-experimental",
-  "moduleSourceSha256": "fff2ca8fcdf407585482b52d5f1f166b436c49ad737cd0193e5d9f759081b0e6",
+  "moduleSourceSha256": "e652600649442b392f49d17bb90c0c231e9adc762ad1efadd7068ad32c2d710f",
   "revision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
   "originalOsSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
   "pool": [
