@@ -211,7 +211,9 @@
     "effectId": null,
     "location": "Audio tracks",
     "conflicts": [],
-    "uiClaims": [],
+    "uiClaims": [
+      "key:UP+REC"
+    ],
     "limitations": [
       "Card builds only: over USB a module lives in the base's 768 KiB ColdFire pool, and Stem Rec needs an 8 MiB ring and runs a writer task of its own for each take.",
       "No YES double tap on the main page in this version: in octabam a second YES within 0.5 s arms a take, but APPLY SCENE patches that stock site and a card build has no key bus. UP + REC and the YES on STEM REC's own row work as upstream.",
