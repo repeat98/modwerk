@@ -344,9 +344,19 @@ verified and USB released. See [method and limits](MKII_HIGH_LOAD.md) and the
 The subsequent no-module emulator baseline reproduced TRIG5–7 held and lost
 FUNC release by interleaving a USB development key with a split physical fader
 report. This confirms an independent development input-path bug and strongly
-explains the hardware signature; it does not qualify a fix or attribute every
+explains the held-key signature; it does not qualify a fix or attribute every
 unintended edit. See the [isolation receipt](evidence/input-isolation-emulator-20261031.json) and
 [base issue #1110](https://github.com/repeat98/modwerk/issues/1110).
+
+A later limited paired-input/paste comparison completed three emulator arms,
+one with the exact candidate and two without it. Each arm ran ordinary STOP
+and the same split-input sequence: STOP stopped transport with no A02 change;
+the split sequence left FUNC active and changed the same 64 A02 SAMPLE fields
+in both candidate and no-module arms, while mirrors matched and Parts stayed
+unchanged. The fourth planned candidate repeat timed out during boot, so this
+was not a complete four-arm suite and does not reproduce or explain the
+historical six-field hardware incident. See the stock-free
+[limited comparison](evidence/paired-input-paste-limited-comparison-20261105.md).
 
 ## MKII automated audio/timing follow-up — 31 October 2026
 

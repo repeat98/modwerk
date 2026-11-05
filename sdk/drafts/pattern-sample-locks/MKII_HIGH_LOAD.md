@@ -214,14 +214,20 @@ the power cycle. No Keep, flash, project Save or push occurred.
 
 ## Specific input/paste reproduction audit — 5 November 2026
 
-The existing no-module emulator result reproduces the TRIG5–7 held-row
-signature and a lost FUNC release, but not the reported STOP-as-paste behavior
-or the six A02 SAMPLE-field changes. No paired replay was run: the incident's
-physical/USB event order and a complete pre-recovery damaged A02 snapshot were
-not retained. See the stock-free [reproduction-readiness note](evidence/high-load-input-reproduction-20261105.md)
-for the exact missing inputs and a safe paired protocol. The hardware data
-changes remain unattributed; the framing bug is a plausible route to wrong
-input, not a reproduced cause of those edits.
+The exact historical event still cannot be replayed: its physical/USB event
+order and complete pre-recovery damaged A02 snapshot were not retained. A later
+limited software-only comparison completed three of four planned arms. Every
+completed arm ran both ordinary STOP and the same split-input sequence; arm
+labels are repetitions, not different input cases. Ordinary STOP stopped
+transport without pattern changes. After split input, FUNC remained active
+despite acknowledged remote release and the same 64 SAMPLE-only A02 changes
+appeared with and without the candidate, with matching mirrors and unchanged
+Parts. The fourth candidate repeat timed out during boot without a receipt, so
+the four-arm suite is incomplete. This does not reproduce the historical six
+fields or STOP-as-paste event, nor attribute that hardware incident. See the
+stock-free [limited comparison](evidence/paired-input-paste-limited-comparison-20261105.md)
+and the earlier [reproduction-readiness note](evidence/high-load-input-reproduction-20261105.md).
+The historical data changes remain unattributed.
 
 ## Limits
 

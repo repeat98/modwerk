@@ -1,9 +1,13 @@
 # High-load input/paste reproduction audit — 5 November 2026
 
 This stock-free audit compares the exact hardware report with the earlier
-no-module emulator reproduction. No emulator was run and no physical hardware
-was accessed; replaying the old split-report case would only repeat the held-key
-signature, not test the STOP/paste or pattern-data claim.
+no-module emulator reproduction. At the time of this audit, no emulator was
+run and no physical hardware was accessed; replaying the old split-report case
+would only repeat the held-key signature, not test the STOP/paste or
+pattern-data claim. A later constructed, limited comparison is summarized in
+the [5 November follow-up](paired-input-paste-limited-comparison-20261105.md);
+it did not reproduce the historical event or supply its missing transcript and
+damaged-state snapshot.
 
 ## Exact bindings and existing results
 
