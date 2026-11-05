@@ -20,9 +20,9 @@
 // hold an amount. So while LIVE RECORDING plays, every performance someone
 // moves (its pad, the QPER knob on the linked one, MIDI) is kept here, 8 points
 // a step, and played back through the amounts while the pattern plays and
-// nobody moves it. With LIVE RECORDING on, QPER + YES applies it to the pattern
-// as trigless locks, a step at a time, and empties it; QPER + NO empties it, NO
-// again brings it back. It lives in RAM only, so a pattern change drops it.
+// nobody moves it. RECORD + YES applies it to the pattern as trigless locks, a
+// step at a time, and empties it; RECORD + NO empties it, NO again brings it
+// back. It lives in RAM only, so a pattern change drops it.
 //
 // The gestures work on the pages and the pad screens over them. A menu or dialog
 // keeps its keys, though some let stock's QPER view open above them. There a pad
@@ -228,12 +228,12 @@ typedef void (*notice_t)(void *self, void *info);
 #define STEP_MAKE_LOCK_TRIG ((step_make_t)STEP_MAKE_LOCK_TRIG_AT)
 #define ID_FINE ((id_word_t)ID_FINE_AT)
 
-static unsigned char perf_rec[PERFS][REC_POINTS];     // amount >> 7 at each point
-static unsigned char perf_rec_has[PERFS][STEPS]; // a bit for each recorded point
-static unsigned perf_rec_used;              // performances with any point
-static int perf_rec_hidden;                 // emptied by QPER + NO, NO again brings it back
-static volatile int perf_rec_busy;          // the UI is reading or emptying it
-static int perf_rec_pattern = -1;           // the pattern it was recorded in
+static unsigned char perf_rec[PERFS][REC_POINTS]; // amount >> 7 at each point
+static unsigned char perf_rec_has[PERFS][STEPS];  // a bit for each recorded point
+static unsigned perf_rec_used;          // performances with any point
+static int perf_rec_hidden;             // emptied by RECORD + NO, NO again brings it back
+static volatile int perf_rec_busy;      // the UI is reading or emptying it
+static int perf_rec_pattern = -1;       // the pattern it was recorded in
 static unsigned short seen[PERFS];      // each amount as we last wrote or saw it
 static unsigned short rest[PERFS];      // each driven amount before we drove it
 static unsigned short touched[PERFS];   // audio blocks left of the last move
@@ -1211,6 +1211,7 @@ typedef void (*rec_set_t)(word_t rec, int on);
 #define GRID_REC_SET ((rec_set_t)GRID_REC_SET_AT)
 #define LIVE_REC_SET ((rec_set_t)LIVE_REC_SET_AT)
 static unsigned char grid_at_press, live_at_press;
+static int record_held;                 // RECORD down, from its own events: stock's key table can stick
 
 static void record_press(void)
 {
@@ -1263,6 +1264,8 @@ int qperf_key(void *brain, void *event)
     else
         return 0;
     if (!(flags & PRESSED)) {
+        if (key == KEY_REC)
+            record_held = 0;
         if (swallowed & bit) {
             swallowed &= ~bit;
             return 1;
@@ -1271,10 +1274,12 @@ int qperf_key(void *brain, void *event)
     }
     if (swallowed & bit)
         return 1;                       // its repeats
-    if (key == KEY_REC && !held && !(flags & REPEAT))
+    if (key == KEY_REC && !(flags & REPEAT)) {
+        record_held = 1;
         record_press();
+    }
     if ((key == KEY_YES || key == KEY_NO) && !held && !(flags & REPEAT)
-        && IS_KEY_HELD(KEY_REC) && !IS_KEY_HELD(KEY_FUNC) && on_pages()) {
+        && record_held && !IS_KEY_HELD(KEY_FUNC) && on_pages()) {
         swallowed |= bit;
         record_restore();
         perf_rec_action(key);
