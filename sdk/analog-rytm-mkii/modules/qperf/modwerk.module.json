@@ -111,11 +111,11 @@
     {
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
-      "caption": "QPERF thumbnail",
-      "alt": "Placeholder thumbnail for QPERF",
+      "caption": "QPERF: a QPER knob move recorded and written onto the steps",
+      "alt": "The QPER knob draws a curve that loops; RECORD + YES turns it into lock bars on the steps",
       "credit": "npp1993",
       "license": "GPL-3.0-or-later",
-      "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+      "source": "Original signal-art illustration in the library style."
     }
   ]
 }
