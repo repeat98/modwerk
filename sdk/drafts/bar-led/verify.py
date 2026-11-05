@@ -10,6 +10,12 @@ project with pattern A01's length poked to 12, 16 and 20 steps (bank RAM
 0x800065b4 and every set_led (0x40013784) call returning to 0x40056f2a, and
 passes when each beat flash on step 0 asks for id 39 (green) and every other
 flash for stock's 38 (red), each for 3 ticks, over at least three patterns.
+A fourth run at 16 steps pauses and continues mid-pattern: at frames 7003 and
+13003 the transport word 0x800065b8 is written 2 (stopped, position kept, as
+the STOP key writes it) and back to 1. The beat ticks run on through that
+poke, so the flashes no longer land on step 0; there the rule is the module's
+own: green on the first flash after the pattern wraps (a lower step than the
+flash before), red on every other, the flashes during the pause included.
 
 Reads, and SKIPs without any of them: the port (out/emu/ot_emu, OT_EMU), the
 stock MAIN OS (out/raw/section_3_MAIN_OS.bin, BAR_IMAGE) and a card holding a
@@ -64,23 +70,29 @@ def main():
         subprocess.run(["m68k-elf-ld", "-e", "bl_flash", "-Ttext=%#x" % CAVE, "-o", tmp / "u.elf", tmp / "u.o"], check=True)
         subprocess.run(["m68k-elf-objcopy", "-O", "binary", tmp / "u.elf", tmp / "u.bin"], check=True)
         (tmp / "jsr.bin").write_bytes(b"\x4e\xb9" + struct.pack(">I", CAVE))
-        for length in (12, 16, 20):
+        pause = "0x800065b8=0;0x800065b9=0;0x800065ba=0;0x800065bb=%d"
+        for length, paused in ((12, False), (16, False), (20, False), (16, True)):
+            steps = [x for f, v in ((7003, 2), (10003, 1), (13003, 2), (16003, 1)) for x in ("--step", "%d:poke:%s" % (f, pause % v))] if paused else []
             log = subprocess.run([str(EMU), "--image", str(IMAGE),
                                   "--preload", "%#x=%s;%#x=%s" % (CAVE, tmp / "u.bin", SITE, tmp / "jsr.bin"),
                                   "--card", CARD, "--set", SET, "--project", PROJECT, "--load-ms", "20000",
                                   "--sequencer", "--internal-clock", "--frames", "20000",
-                                  "--step", "-:poke:%#x=%d" % (PATTERN_LENGTH, length),
+                                  "--step", "-:poke:%#x=%d" % (PATTERN_LENGTH, length), *steps,
                                   "--watch-mem", "0x800065b4,2", "--watch-pc", "0x40013784"],
                                  capture_output=True, text=True, timeout=600).stdout
             seen = flashes(log)
-            wrong = [f for f in seen if f[1:] != ((39 if f[0] == 0 else 38), 3)]
+            if paused:
+                wrong = [f for i, f in enumerate(seen) if f[1:] != ((39 if i == 0 or f[0] < seen[i - 1][0] else 38), 3)]
+            else:
+                wrong = [f for f in seen if f[1:] != ((39 if f[0] == 0 else 38), 3)]
             greens = sum(1 for f in seen if f[1] == 39)
+            name = "%d steps%s" % (length, ", paused twice" if paused else "")
             text = " ".join(("G" if led == 39 else "r") + "@%s" % step for step, led, _ in seen)
             if wrong or greens < 3:
-                print("[FAIL] bar-led: %d steps: %s" % (length, text))
+                print("[FAIL] bar-led: %s: %s" % (name, text))
                 failed = True
             else:
-                print("[PASS] bar-led: %d steps: %s" % (length, text))
+                print("[PASS] bar-led: %s: %s" % (name, text))
     sys.exit(1 if failed else 0)
 
 

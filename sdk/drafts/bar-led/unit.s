@@ -19,13 +19,16 @@
 | before that step's beat flash) runs 0.. and wraps at the pattern's length.
 | A flash that sees a lower step than the flash before is the first since
 | the wrap: green. So it follows pattern length, scale, pattern changes,
-| tempo and external MIDI clock. Stopped, every flash is stock's and the
-| last step is rearmed (-1), so the first flash after PLAY is green.
+| tempo and external MIDI clock. Not playing, every flash is stock's. The
+| transport word has three states (docs/firmware/STEM_REC.md): 1 plays, 0 is
+| stopped and rewound, 2 is stopped with the position kept (a pause). Only 0
+| rearms the last step (-1), so the first flash after PLAY from the top is
+| green, while continuing from a pause compares with the step it paused on.
         .text
         .global bl_flash
 
         .equ    SET_LED, 0x40013784
-        .equ    TRANSPORT, 0x800065b8   | 1 while the sequencer plays (Euclid's EU_TRANSPORT)
+        .equ    TRANSPORT, 0x800065b8   | 0 rewound, 1 playing, 2 paused (Euclid's EU_TRANSPORT)
         .equ    MASTER_STEP, 0x800065b4 | u16: the master step now playing
         .equ    LED_GREEN, 39           | the tempo LED's green half (stock flashes 38, red)
 
@@ -33,8 +36,10 @@ bl_flash:
         move.l  (TRANSPORT).l,%d0
         subq.l  #1,%d0
         beq.s   .playing
-        moveq   #-1,%d0                 | stopped: the next PLAY's first flash is the 1
+        bpl.s   .stock                  | 2, paused: keep the step it paused on
+        moveq   #-1,%d0                 | 0, rewound: the next PLAY's first flash is the 1
         move.l  %d0,(bl_last).l
+.stock:
         jmp     (SET_LED).l
 .playing:
         mvz.w   (MASTER_STEP).l,%d0

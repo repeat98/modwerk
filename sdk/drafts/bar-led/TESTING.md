@@ -29,6 +29,17 @@ Not hardware evidence: the port shows which LED ids the firmware asks for, not w
 
 Not run in the port: STOP then PLAY again, pause and continue, a tempo change while playing, external MIDI clock, a pattern change, per-track mode with a MASTER LENGTH, pattern scales other than 1x.
 
+## ot_emu: pause and continue (5 November 2026)
+
+The owner's review found that the first source rearmed on every flash while the transport word `0x800065b8` was not 1, and that word is 2 while paused (stopped with the position kept, `docs/firmware/STEM_REC.md` in octabam), so the first flash after continuing would have been green wherever the pattern was. `unit.s` now rearms only on 0 (stopped and rewound). `verify.py`'s fourth run pauses and continues twice in a 16-step pattern by writing the word:
+
+| Source | Flashes (G green, r red, @ master step) | Result |
+|---|---|---|
+| before the fix | G@0 r@4 r@8 r@12 G@0 r@4 r@4 r@4 **G@7** r@11 r@13 r@13 **G@14** G@2 r@6 | FAIL: green after each continue |
+| this source | G@0 r@4 r@8 r@12 G@0 r@4 r@4 r@4 r@7 r@11 r@13 r@13 r@14 G@2 r@6 | PASS |
+
+The poke leaves the beat ticks running, so after it the flashes fall on steps 7, 11, … and the first after the wrap on step 2; the stock pause path may realign them. The three runs at 12, 16 and 20 steps still pass. Not run in the port: a pattern change while playing.
+
 ## Hardware
 
 **Reported by the tester (@nathangroth), MKI, 2 November 2026.** Build: the tester's private octabam remix `home-base` 5 (octabam-home commit `404ef7bd`), a native card build carrying this unit's source, booted from the card through REMIX SWITCH (`/BRAIN/REMIXES/HOMEBAS5.RMX`, SHA-256 `72a711492805c7ef331d8be69617f9bd77e41f858d1481da3779a14dbe4126eb`), not flashed. Before it, the tester's MKI in TEST mode lit the tempo LED red, green and amber.
