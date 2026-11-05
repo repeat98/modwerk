@@ -1149,6 +1149,52 @@
   },
   {
     "schemaVersion": 1,
+    "id": "zoom-g1-four",
+    "order": 240,
+    "name": "G1 FOUR",
+    "family": "zoom",
+    "status": "research",
+    "summary": "A ZD2 pedal, not the ZDL family. A clean-room effect with no Zoom bytes runs on firmware 2.00 and is removed again. Modwerk lists no ZD2 effects yet.",
+    "steps": {
+      "format": "done",
+      "load": "done",
+      "mods": "open"
+    },
+    "art": {
+      "body": "floor",
+      "encoders": 0,
+      "trigs": 0
+    },
+    "firmware": {
+      "releases": [
+        {
+          "version": "2.00",
+          "files": []
+        }
+      ],
+      "flash": "Effects (.ZD2) are installed over USB MIDI with the pedal's own file commands (zoom-zt2) or with Zoom's Guitar Lab; the OS is not modified.",
+      "recovery": "Turn autosave off and keep custom effects out of saved patches. A crashing effect is cleared by a power cycle, which loads the last saved patch; then remove its file and effect-list record. Never power-cycle during a file transfer."
+    },
+    "research": [
+      {
+        "label": "Zoom-G1Four-Custom-Fx",
+        "url": "https://github.com/Blindsmyth/Zoom-G1Four-Custom-Fx",
+        "note": "MIT, by Blindsmyth. A clean-room gain built with Stomphacks' pipeline, Tape Chorus grafted onto a stock effect, G1 FOUR ABI notes, safety rules and a dated hardware test log on firmware 2.00."
+      },
+      {
+        "label": "zoom-zt2",
+        "url": "https://github.com/mungewell/zoom-zt2",
+        "note": "MIT, by mungewell. SysEx file and effect-list tools for the ZD2 pedals; its README reports G1 FOUR testing."
+      },
+      {
+        "label": "Stomphacks",
+        "url": "https://github.com/thammer/stomphacks",
+        "note": "MIT, by Thomas Hammer. ZD2 effects from C with no Zoom bytes, for the MS Plus series; its pipeline and gain kernel also run on the G1 FOUR. Safety rules and an effect-author ID ledger."
+      }
+    ]
+  },
+  {
+    "schemaVersion": 1,
     "id": "lxr-02",
     "order": 300,
     "name": "LXR-02",

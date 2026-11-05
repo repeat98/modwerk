@@ -51,9 +51,10 @@ it runs on reports as an MS-70CDR over USB. The G1on series is not covered.
 Luca's [ZDL effects pack](https://github.com/matujuice/zoom-ms-zdl-effects-pack)
 (MIT, 17 effects) came with it.
 
-Out of scope: the ZD2 pedals (MS-50G+, MS-60B+, MS-70CDR+ and the Four
-series). For those, see Stomphacks and nam2zoom, which already have their
-own pipelines.
+Not covered here: the ZD2 pedals (MS-50G+, MS-60B+, MS-70CDR+ and the Four
+series), whose pedal page, base and contract this plan does not apply to.
+The G1 FOUR is in research in [ZOOM_ZD2.md](ZOOM_ZD2.md); for the MS Plus
+pedals, see Stomphacks and nam2zoom, which already have their own pipelines.
 
 ## How it maps onto Modwerk
 

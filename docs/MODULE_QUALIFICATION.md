@@ -9,7 +9,7 @@ Existing published module authors may use the [automatic author-update workflow]
 - a hardware report: a functional report that gives the model, date, tester, summary and limitations is enough, with no minimum duration or track count;
 - its tutorial and screenshot paths.
 
-All of it is bound to the module version, its native-source SHA-256 and the SHA-256 of the local image it was tested with. A change to documentation or media alone uses `tests.retainedEvidence` instead. The steps are in [Add or port a module](ADD_A_MODULE.md). The rest of this page is the field reference and the record of owner exceptions.
+All of it is bound to the module version, its native-source SHA-256 and the SHA-256 of the local image it was tested with. A change to documentation or media alone uses `tests.retainedEvidence` instead. Bound only the module's own code and memory: when a number would need analysis of stock firmware, record it as not measured and ask the owner the same day ([Performance](module-guides/README.md#performance)). The steps are in [Add or port a module](ADD_A_MODULE.md). The rest of this page is the field reference and the record of owner exceptions.
 
 From 2 October 2026, new modules and updates affecting runtime behavior, stability, cycles, memory or load must provide **worst-case cycle counts, exact memory accounting, attributed real-hardware test evidence and complete documentation**. These are publication requirements. Missing measurements, nominal/average CPU percentages, emulator-only evidence, historical evidence for another source and failed detailed hardware checks cannot qualify a submission. On 2 October 2026 the owner removed the mandatory 60-minute, eight-track stress run. A clearly labelled functional hardware report is accepted alongside the cycle, memory, source, UI and integration evidence below.
 
@@ -133,7 +133,7 @@ console.log(await moduleNativeSourceSha256(folder, document))
 JS
 ```
 
-For this command, fill all fields with actual results first, including a valid temporary source hash, then replace that hash with the output. The fingerprint is SHA-256 of a sorted JSON object mapping relative source paths to file SHA-256 values. It excludes the website manifest, Markdown documentation, licence files, `media/`, the incomplete `qualification.example.json` template, declared text evidence reports and OS/Python cache files. All other regular files, including native manifests, native verification code and text runtime data, contribute. The complete-folder legacy fingerprint includes documentation, reports, metadata and media too. Symlinks and special files are rejected.
+For this command, fill all fields with actual results first, including a valid temporary source hash, then replace that hash with the output. The fingerprint is SHA-256 of a sorted JSON object mapping relative source paths to file SHA-256 values. It excludes the website manifest, Markdown documentation, licence files, `media/`, the incomplete `qualification.example.json` template, declared text evidence reports and OS/Python cache files. All other regular files, including native manifests, native verification code and text runtime data, contribute: a change to the module's own probe (`qualification/probe.cpp`, its runner) alone moves the fingerprint and needs the evidence re-pinned like any source change. The complete-folder legacy fingerprint includes documentation, reports, metadata and media too. Symlinks and special files are rejected.
 
 ## Worst-case cycle counts
 
@@ -151,7 +151,9 @@ The five required condition fields, separately for cycle measurements and hardwa
 
 For inapplicable mechanisms, explain why they cannot affect this module and which equivalent control path was exercised. Blank strings fail. The reviewer checks substantive coverage: writing “N/A” or copying a stock benchmark is insufficient.
 
-The local report must include commands/tool versions, the measured maximum and where it occurred, the parameter/mode matrix, branch coverage, sample/block/event basis, budget derivation and limitations. `static` counts need a defensible upper bound; emulator instruction counts without contention are not chip wall-clock cycles. State that limitation, account for contention/overhead and retain the actual hardware operation report. Average or nominal load does not meet this requirement.
+The local report must include commands/tool versions, the measured maximum and where it occurred, the parameter/mode matrix, branch coverage, sample/block/event basis, budget derivation and limitations. `static` counts need a defensible upper bound; emulator instruction counts without contention are not chip wall-clock cycles. State that limitation, account for contention/overhead and retain the actual hardware operation report. Average or nominal load does not meet this requirement. ColdFire code that runs only on a key press needs no static bound: its dearest press, measured in `ot_emu` or on the unit, is its worst case ([Performance](module-guides/README.md#performance)).
+
+A probe that compiles and runs native code in the toolchain container (Mute Modes' `qualification/run.py`) needs the emulator build's vendor directory with mc68k mounted (the image lacks mc68k; `npm run upstream:tools` checks it out) and an exec-enabled temporary directory, `--tmpfs /tmp:rw,exec,nosuid,nodev,size=128m`: Docker mounts a tmpfs `noexec` by default, and the compiled probe cannot start. The module's TESTING.md gives its exact command.
 
 ## Exact memory
 
