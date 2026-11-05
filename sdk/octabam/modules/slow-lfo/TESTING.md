@@ -53,7 +53,20 @@ Not run in the port: the MIDI engine, external MIDI clock, saving and reloading 
 
 The committed package `octatrack-modules/slow-lfo/0.1.0-experimental.mwrm` (SHA-256 `3505194ebe34509b765bb71d38ab6a62ab5f4f5ba18cdfd829c741fec472aeb4`, built by `npm run octatrack:module-packages` after the move out of drafts) differs from the tested `7392526b…` in three bytes only, the package name at offsets 0x33..0x35 (`Slow LFO` against the `SLOW LFO` the tester's build passed with `--name`); code, sites and relocations are the same bytes.
 
-The rates were judged by ear and eye, not measured; the emulator measured them within 1 % (above). Not tested on a unit: a tempo change while playing, external MIDI clock, saving and reloading a Part with 1/2X, a project with 1/2X opened without the module (expected to read 128X), Deja Vu's waves together with the slow values, MKII, the site's own install dialog (the same package and base protocol, sent from the command line).
+**The committed package beside Bar LED, MKI, 5 November 2026.** The same unit and flashed base `9680e9ac…`, empty inventory before. Bar LED's committed package (`de7f9cae…`) and this one (`3505194e…`), each sent with the USB session's `try` (accepted at once). What the unit answered was read over USB; the LFOs are the tester's report.
+
+| Step | The unit answered | The tester reported |
+|---|---|---|
+| Keep Bar LED, then Slow LFO | generation 1, then 2; inventory `Bar LED` (`9b41cd3d`), `Slow LFO` (`cd8a0e36`) | |
+| `selftest` (transport stopped) | SELF TEST passed: 2/2 modules intact, 0 with DSP effects, longest frame 371 us, card set 7, 2/2 | |
+| All three LFOs of one track at 1/2X, 1/4X and 1/8X, each on a different parameter | | Each runs at its own slow rate, as expected |
+| Slow values on LFOs of several tracks | | As expected |
+| A tempo change while playing | | The slow values follow it |
+| External MIDI clock | | The slow values follow it |
+| Power cycle | | The slow values are still set afterwards |
+| Parameter locks, scenes, crossfader | | Not possible: no LFO SETUP parameter can be locked or reached by the crossfader, so nothing to test |
+
+The rates were judged by ear and eye, not measured; the emulator measured them within 1 % (above). Not tested on a unit: saving and reloading a Part with 1/2X on its own, a project with 1/2X opened without the module (expected to read 128X), Deja Vu's waves together with the slow values, MKII, the site's own install dialog (the same package and base protocol, sent from the command line).
 
 ## Stock flows
 

@@ -117,7 +117,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "USB on an MKI (4 November 2026, Modwerk beta base, package 7392526b): trial, Keep, power cycle, SELF TEST (1/1 intact, longest frame 420 us) and removal; the tester reports 1/2X, 1/4X and 1/8X on audio and MIDI tracks' LFO SETUP, LFOs slowing to the expected rates and stock's 1X..64X after removal. ot_emu on stock 1.40C (verify.py): 1/2X, 1/4X and 1/8X move 0.5007, 0.2510 and 0.1248 of 1X; a tempo change from 120 to 210 BPM while playing scales 1X and 1/2X alike (x1.749, x1.745); the labels print as on the page.",
+    "summary": "USB on an MKI (4 November 2026, Modwerk beta base, package 7392526b): trial, Keep, power cycle, SELF TEST (1/1 intact, longest frame 420 us) and removal; the tester reports 1/2X, 1/4X and 1/8X on audio and MIDI tracks' LFO SETUP, LFOs slowing to the expected rates and stock's 1X..64X after removal. ot_emu on stock 1.40C (verify.py): 1/2X, 1/4X and 1/8X move 0.5007, 0.2510 and 0.1248 of 1X; a tempo change from 120 to 210 BPM while playing scales 1X and 1/2X alike (x1.749, x1.745); the labels print as on the page. The committed package kept beside Bar LED (5 November 2026): SELF TEST passed, 2/2 intact, longest frame 371 us; the tester reports three LFOs of one track at 1/2X, 1/4X and 1/8X on different parameters, several tracks, a tempo change while playing and external MIDI clock all as expected, and the values still set after a power cycle.",
     "hardwareStatus": "reported",
     "evidenceRevision": "79e96c8729341c43cd0f3a324eaa5690b6ef1f36",
     "gates": [
@@ -138,7 +138,7 @@
           "method": "static",
           "conditions": {
             "parameterExtremes": "MULT 1X..64X run 4 added instructions at the rate step and 4 at the MULT load (9 an LFO with the jumps, measured +216 a frame for 24 audio LFOs); 1/2X..1/8X the longest path, 16 an LFO. SPD, DEP, WAVE and TRIG are stock's and untouched.",
-            "parameterModulation": "A p-lock, scene or crossfader change of MULT reaches the hooks as that frame's stored value; each LFO still takes one pass of each hook a frame, so modulation adds nothing.",
+            "parameterModulation": "MULT cannot be locked or reached by scenes or the crossfader (LFO SETUP, as on stock; the tester confirmed it on an MKI). A Part change or reload changes only the stored MULT; each LFO still takes one pass of each hook a frame.",
             "modeSwitching": "No mode of its own. A Part change or reload changes only the stored MULT the hooks read.",
             "maxLoad": "8 audio and 8 MIDI tracks, three LFOs each, all at 1/2X..1/8X: 48 LFOs x 16 = 768 instructions in one frame interrupt (budget one frame, 95,778 cycles at 264 MHz, 362.8 us).",
             "inputConditions": "Static count of unit.s per LFO: detour jmp, muls, mvz, subq, bmi, addq, asr, move, jmp at the rate step (9) and detour jmp, mvz, cmpi, bls, moveq, cmp, jmp at the MULT load (7). Instructions, not cycles: the 32-bit multiply is stock's. The MULT label code runs only when the page draws (one sprintf)."
