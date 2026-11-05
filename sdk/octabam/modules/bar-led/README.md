@@ -8,7 +8,7 @@ Version: 0.1.0-experimental · author: @nathangroth
 
 While the sequencer plays, the tempo LED flashes **green on the pattern's 1** and red on every other beat, as stock does. It is a visual downbeat for players who can't use the click track: when the cue outputs feed external effects, the click would go with them.
 
-It reads the sequencer's own step, so the green follows the pattern's length and scale and a pattern change. Stopped, the LED is stock. There is nothing to set.
+It reads the sequencer's own step, so the green follows the pattern's length. Stopped, the LED is stock. There is nothing to set.
 
 ## Controls
 
@@ -30,14 +30,14 @@ Stock flashes the tempo LED from its clock-message loop: every 24 clock ticks (o
 
 Bar LED takes that one call (`0x40056f24`). While the transport plays it reads the sequencer's master step (`0x800065b4`, the step now playing, which wraps at the pattern's length). A flash that sees a lower step than the flash before is the first since the pattern came round: it passes 39 instead of 38. So does the first flash after [PLAY] from the top; continuing from a pause compares with the step it paused on. Then it calls stock's `set_led` with the same duration. Every other call, stopped included, reaches `set_led` unchanged.
 
-It keeps no clock or count of its own ([sequencing](../../../../docs/module-guides/sequencing.md)): the flash is stock's, so it follows the project tempo, external MIDI clock and tempo changes, and the step is the sequencer's.
+It keeps no clock or count of its own ([sequencing](../../../../docs/module-guides/sequencing.md)): the flash is stock's, so it keeps the project tempo, and the step is the sequencer's.
 
 ## Compatibility and limitations
 
 - OS 1.40C, MKI and MKII.
 - The tempo LED only flashes on whole beats. When the pattern's 1 falls between beats (say 14 steps at 1x), the green comes on the first flash after it.
 - Changing the stock flow: the tempo LED is green instead of red on the pattern's 1 while playing. That is the module's whole job; remove it to get the stock LED back.
-- Reported on an MKI (card build, 2 November 2026): green on the pattern's 1 in several play modes and with a 17-step master length. Pausing and continuing is checked in the emulator only. Not yet tested on a unit: pausing and continuing, a pattern change while playing, external MIDI clock, and MASTER LENGTH INF (which would leave only the green after [PLAY]).
+- Reported on an MKI (card build, 2 November 2026): green on the pattern's 1 in several play modes and with a 17-step master length. Pausing and continuing is checked in the emulator only. Not yet tested on a unit: pausing and continuing, a pattern change while playing, pattern scales other than 1x, a tempo change while playing, external MIDI clock, and MASTER LENGTH INF (which would leave only the green after [PLAY]).
 - Takes no key, screen or shared site: no other module or the base patches the beat-flash call.
 - Stores nothing: projects, Parts and settings are untouched and load the same without it.
 

@@ -81,7 +81,7 @@ Not run on a unit. The module changes one call: the beat flash. Stopped, and on 
 
 ## Performance
 
-From the source: at most 11 ColdFire instructions before stock's `set_led`, once per beat, in stock's clock-message loop. No per-sample or per-frame work, no DSP code. No `evidence/performance.json` yet: `perf:audit` asks for a ColdFire flood run, not yet made.
+From the source: at most 11 ColdFire instructions before stock's `set_led`, once per beat, in stock's clock-message loop. No per-sample or per-frame work, no DSP code. Measured in the emulator: see the load and stress run above and [evidence/performance.json](evidence/performance.json).
 
 ## Resources
 
