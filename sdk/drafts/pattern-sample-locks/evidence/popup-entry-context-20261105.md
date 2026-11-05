@@ -67,15 +67,15 @@ avoids arbitrary live close callbacks.
 
 The private exact-input audit and summary remain outside Git at:
 
-- `/Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/popup-entry-20261105/audit_popup_entry.py`
+- `~/.cache/psl-source-bound-profile-20261103/popup-entry-20261105/audit_popup_entry.py`
   (SHA-256 `bdd69822219e052f7473f7eff7b6e2d1a6ec03386056abea551de95f34ae70b7`).
-- `/Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/popup-entry-20261105/popup-entry-result.json`
+- `~/.cache/psl-source-bound-profile-20261103/popup-entry-20261105/popup-entry-result.json`
   (SHA-256 `c7e99c5a57fc2fed1a567cb979eb9c44b665fa7e9efaf3c906b5c5cac69d753c`).
 
 Re-run the private audit with:
 
 ```sh
-python3 /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/popup-entry-20261105/audit_popup_entry.py > /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/popup-entry-20261105/popup-entry-result.json
+python3 "$HOME/.cache/psl-source-bound-profile-20261103/popup-entry-20261105/audit_popup_entry.py" > "$HOME/.cache/psl-source-bound-profile-20261103/popup-entry-20261105/popup-entry-result.json"
 ```
 
 It checks candidate and base pins, the three hook sites, call ordering, source

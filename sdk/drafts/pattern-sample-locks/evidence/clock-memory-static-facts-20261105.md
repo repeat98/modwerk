@@ -46,16 +46,16 @@ Smallest inputs to close the static-to-time gap are: (1) authoritative board-spe
 The private helper checks exact package/base/private-stock identities, verifies the startup ranges agree, decodes detailed PLL/timer/SDRAM fields, checks PLL LIMP bracketing and lock polls, checks the timer reset gate and peripheral-gate reference scan, computes the average refresh target, and enumerates 448 round-robin port-order combinations. It explicitly marks that the arbitration model does not account for transfer length, request duration or service time. Detailed register literals, source/disassembly inputs and JSON output stay in private cache; the committed note contains no firmware bytes, instruction listing, extracted stock table or memory dump.
 
 ```sh
-python3 /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261104/audit_interrupt_context.py \
+python3 "$HOME/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261104/audit_interrupt_context.py" \
   "$PWD" \
-  /Users/weiyun.wang/.cache/psl-current-base-workspace/current \
-  /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/stock-bound-20261104/public-integration-80f442d5-container/pattern-sample-locks-0.1.8-public-path.mwrm \
-  /Users/weiyun.wang/.cache/modwerk-upstream/elekloader
+  "$HOME/.cache/psl-current-base-workspace/current" \
+  "$HOME/.cache/psl-source-bound-profile-20261103/stock-bound-20261104/public-integration-80f442d5-container/pattern-sample-locks-0.1.8-public-path.mwrm" \
+  "$HOME/.cache/modwerk-upstream/elekloader"
 
-python3 /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/clock-memory-20261105/audit_clock_memory.py \
+python3 "$HOME/.cache/psl-source-bound-profile-20261103/clock-memory-20261105/audit_clock_memory.py" \
   > /tmp/psl-clock-memory-result-v2.json
 
-/Users/weiyun.wang/.nvm/versions/node/v24.22.1/bin/node --input-type=module -e 'import { moduleNativeSourceSha256 } from "./scripts/module-qualification.mjs"; import { readFile } from "node:fs/promises"; const d=JSON.parse(await readFile("sdk/drafts/pattern-sample-locks/octamod.module.json","utf8")); console.log(await moduleNativeSourceSha256("sdk/drafts/pattern-sample-locks", d));'
+"$HOME/.nvm/versions/node/v24.22.1/bin/node" --input-type=module -e 'import { moduleNativeSourceSha256 } from "./scripts/module-qualification.mjs"; import { readFile } from "node:fs/promises"; const d=JSON.parse(await readFile("sdk/drafts/pattern-sample-locks/octamod.module.json","utf8")); console.log(await moduleNativeSourceSha256("sdk/drafts/pattern-sample-locks", d));'
 ```
 
 The helper SHA-256 for this run is `f5fc1390cd7cf34782943ac898e375c083dec864134c6b89db3d39d76a1163c7`; the private JSON output SHA-256 is `2b499664c34ec9fff7939032a15b5941631c6a4e1bb4cffaf74a442cd9abacba`. It passed with candidate/base/private-stock identities matched, four PLL lock-poll and LIMP-bracketing checks true, timer decode and reset gate checks passed, no literal peripheral-gate address references in either image sweep, average refresh target `960` clocks, and at most six active non-core master-port identifiers ahead of the core across `448` order combinations; transfer length is not modeled. The Node command printed native fingerprint `7ea0fbdf317bfdab6a82b22869c7029ba23901cd27a3337a4bdaf8f8beeb7e69`. No Docker, emulator, hardware or runtime measurement was used; no release qualification claim is made.

@@ -38,11 +38,11 @@ Repeated profile, guard, timer or status samples can report maxima observed duri
 The existing private preflight was rerun against the exact candidate package, base proof directory and pinned Elekloader checkout:
 
 ```sh
-python3 /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261104/audit_interrupt_context.py \
+python3 "$HOME/.cache/psl-source-bound-profile-20261103/interrupt-audit-20261104/audit_interrupt_context.py" \
   "$PWD" \
-  /Users/weiyun.wang/.cache/psl-current-base-workspace/current \
-  /Users/weiyun.wang/.cache/psl-source-bound-profile-20261103/stock-bound-20261104/public-integration-80f442d5-container/pattern-sample-locks-0.1.8-public-path.mwrm \
-  /Users/weiyun.wang/.cache/modwerk-upstream/elekloader
+  "$HOME/.cache/psl-current-base-workspace/current" \
+  "$HOME/.cache/psl-source-bound-profile-20261103/stock-bound-20261104/public-integration-80f442d5-container/pattern-sample-locks-0.1.8-public-path.mwrm" \
+  "$HOME/.cache/modwerk-upstream/elekloader"
 ```
 
 It passed with 233/233 proof-listed sources matched (228 repository, five pinned upstream), clean upstream commit `3b31ef3c0e43c810e3acd0be6257e2484b20fc40`, base identity/main hash above, and candidate package/source fingerprints above. It also reported no authored VBR install reference and no hardware access; it prints no bytes or source excerpts. The private upstream checkout, base/package artifacts, helper, raw images and disassembly remain outside Git. No hardware was connected, no runtime or checks changed, and no qualification claim is made.
