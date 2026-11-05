@@ -1425,7 +1425,7 @@
       "caveLimit": 1074625596
     }
   ],
-  "sourceCommit": "5b379ba8c8f63d03f85dc5fc6f8756d02969f87a",
+  "sourceCommit": "f9eff67d428aaca0bba332f788d20624cde5b333",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -1460,6 +1460,6 @@
     "dejavu": "0.1.0-experimental",
     "arp-key-locks": "0.1.0-experimental",
     "temp-save": "0.1.0-experimental",
-    "slow-lfo": "0.1.0-experimental"
+    "tuner": "0.1.0-experimental"
   }
 }
