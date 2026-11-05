@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/yvesrosius/octabam",
+  "revision": "00a23502a9e3ce8264888026a2b6764e7f52a3be",
+  "moduleVersion": "0.1.0-experimental",
+  "root": "sdk/drafts/stem-rec",
+  "modules": [
+    "stem-rec"
+  ],
+  "excluded": [
+    "octabam's other modules, tools and gates",
+    "STEM REC's working records in octabam (FLASH.md, CLEANUP.md, TODO.md)",
+    "Firmware images, card data and generated packages"
+  ],
+  "notes": [
+    "upstream/ holds STEM REC's manifest, source and README copied byte for byte from 00a23502a9e3ce8264888026a2b6764e7f52a3be; stems.s at the module root is the same file, and LICENSE is octabam's, unchanged.",
+    "manifest.py is Modwerk's card-build adapter of upstream/manifest.py, changed four ways: no requires (Modwerk's builder places DramRegions at the top of its fixed reserve, where octabam's MEMORY sizes one); no YES detour at 0x4005e4c8 (APPLY SCENE patches that site and a card build has no key bus, so the main page's YES double tap is left out); the gain table as 25 stock copies of the user's OS (0x400ea18a, 774 bytes) instead of an .incbin of the OS slice; and the displaced stock instructions named by stock guards instead of written out.",
+    "Card build only: a USB package would need an 8 MiB DRAM grant and a lifecycle for the module's own writer task, which the base does not offer (Discord, 5 Nov 2026)."
+  ],
+  "status": "Draft card-only port. Built natively and booted under ot_emu; parity, packages, qualification and hardware evidence pending.",
+  "authorPin": {
+    "repository": "https://github.com/yvesrosius/octabam",
+    "revision": "00a23502a9e3ce8264888026a2b6764e7f52a3be"
+  },
+  "files": [
+    {
+      "path": "upstream/manifest.py",
+      "repository": "https://github.com/yvesrosius/octabam",
+      "revision": "00a23502a9e3ce8264888026a2b6764e7f52a3be",
+      "sourcePath": "modules/stems/manifest.py",
+      "sourceBytes": 7728,
+      "sourceGitBlob": "282c89c72a0b75af4bc94e2862a1c089be734f2e",
+      "sourceSha256": "317a95bf29d4306cef92ab544819790621c8cf4a4da3b1e3d817969722c7ca9d",
+      "vendoredSha256": "317a95bf29d4306cef92ab544819790621c8cf4a4da3b1e3d817969722c7ca9d"
+    },
+    {
+      "path": "upstream/stems.s",
+      "repository": "https://github.com/yvesrosius/octabam",
+      "revision": "00a23502a9e3ce8264888026a2b6764e7f52a3be",
+      "sourcePath": "modules/stems/stems.s",
+      "sourceBytes": 161011,
+      "sourceGitBlob": "7f1866cd8191d1ad5558a32bd59ac8a9a6ee323c",
+      "sourceSha256": "bacf8e962a53bff95c6380f9bac4a4769301d517c320179a735641578d762e8b",
+      "vendoredSha256": "bacf8e962a53bff95c6380f9bac4a4769301d517c320179a735641578d762e8b"
+    },
+    {
+      "path": "upstream/README.md",
+      "repository": "https://github.com/yvesrosius/octabam",
+      "revision": "00a23502a9e3ce8264888026a2b6764e7f52a3be",
+      "sourcePath": "modules/stems/README.md",
+      "sourceBytes": 33873,
+      "sourceGitBlob": "b30709b737cd1a3863696974725351d72189598f",
+      "sourceSha256": "638481526c0c48fb92cda2bfbd6c4c773ee9ba5bbbc4896faeecec227e2eebf0",
+      "vendoredSha256": "638481526c0c48fb92cda2bfbd6c4c773ee9ba5bbbc4896faeecec227e2eebf0"
+    },
+    {
+      "path": "stems.s",
+      "repository": "https://github.com/yvesrosius/octabam",
+      "revision": "00a23502a9e3ce8264888026a2b6764e7f52a3be",
+      "sourcePath": "modules/stems/stems.s",
+      "sourceBytes": 161011,
+      "sourceGitBlob": "7f1866cd8191d1ad5558a32bd59ac8a9a6ee323c",
+      "sourceSha256": "bacf8e962a53bff95c6380f9bac4a4769301d517c320179a735641578d762e8b",
+      "vendoredSha256": "bacf8e962a53bff95c6380f9bac4a4769301d517c320179a735641578d762e8b"
+    },
+    {
+      "path": "LICENSE",
+      "repository": "https://github.com/yvesrosius/octabam",
+      "revision": "00a23502a9e3ce8264888026a2b6764e7f52a3be",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 2112,
+      "sourceGitBlob": "112114d5d319dc4a789dacf1e84b867420a03614",
+      "sourceSha256": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113",
+      "vendoredSha256": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113"
+    }
+  ]
+}
