@@ -243,7 +243,7 @@ static unsigned pads_held;              // performances a pad or MIDI holds abov
 static int pot_rest;                    // the QPER knob where it last came to rest
 static int pot_last, pot_before;        // its last two values, a wobble's pair
 static unsigned short knob_touched;     // audio blocks left of the knob's turn
-static int knob_armed;                  // points left of the knob's one-pass take, 0 none
+static int knob_armed;                  // points left of the knob's take, to the loop's end, 0 none
 static int knob_armed_pos;              // where the take had got to last block
 static int knob_was;                    // the knob was turning last block
 #define KNOB_BLOCKS 75                  // 0.05 s of audio blocks: a knob turn holds this long
@@ -768,18 +768,18 @@ void qperf_render(void)
     // pressure only when it changes and a 0 when let go, so a performance a pad
     // left above zero is still held. On the linked performance the pad drives
     // the knob's value too, so both count as the knob. A knob touch in LIVE
-    // RECORDING takes one pass: the linked performances record what the knob
-    // plays, moving or not, for one loop from where the turn started, then play
-    // it back. Turning on doesn't stretch the pass, which would record the
-    // landing level over the turn's start; a new turn after the knob rested
-    // starts another. Otherwise the knob takes one over only while it turns,
-    // and lets go as soon as it stops.
+    // RECORDING takes the rest of the loop: the linked performances record what
+    // the knob plays, moving or not, from where the turn started to the loop's
+    // end, then play it back, so an earlier take before the turn is kept.
+    // Turning on doesn't stretch it; a new turn after the knob rested starts
+    // another. Otherwise the knob takes one over only while it turns, and lets
+    // go as soon as it stops.
     rec = playing() && live_rec();
     pos = playing() ? position() : -1;
     if (!rec || pos < 0) {
         knob_armed = 0;
     } else if (knob_touched && !knob_was && !knob_armed) {
-        knob_armed = perf_rec_steps(live_pattern_data()) * POINTS;
+        knob_armed = perf_rec_steps(live_pattern_data()) * POINTS - pos;
         knob_armed_pos = pos;
     } else if (knob_armed) {
         int loop = perf_rec_steps(live_pattern_data()) * POINTS;
