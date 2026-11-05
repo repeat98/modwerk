@@ -84,7 +84,23 @@
  },
  "tests": {
   "report": "TESTING.md",
-  "summary": "Emulator and a functional pass on an Analog Rytm MKII."
+  "summary": "Emulator and a functional pass on an Analog Rytm MKII.",
+  "documentation": {
+   "tutorial": {
+    "title": "Quick tutorial",
+    "steps": [
+     "On the main screen, hold FUNC and press YES: TEMP SAVED. The pattern and its kit are saved.",
+     "Change the pattern's trigs, or turn a sound knob. Play the pattern if you like.",
+     "Hold FUNC and press NO: RELOADED. Trigs, kit and performance and scene locks are back as they were at the save.",
+     "FUNC + NO shows NO TEMP SAVE once you change pattern or kit, or load a project: save again with FUNC + YES."
+    ]
+   },
+   "screenshots": [
+    "media/temp-saved.png",
+    "media/reloaded.png"
+   ],
+   "captureRecord": "media/capture.json"
+  }
  },
  "license": {
   "spdx": "GPL-3.0-or-later",
@@ -95,11 +111,43 @@
   {
    "path": "media/thumbnail.svg",
    "kind": "thumbnail",
-   "caption": "Temp Save thumbnail",
+   "caption": "Temp Save",
    "alt": "Temp Save thumbnail: a pattern line with a saved point and a return arrow",
    "credit": "npp1993",
    "license": "GPL-3.0-or-later",
-   "source": "Original artwork by the author."
+   "source": "Original conceptual illustration in the shared signal-art style; not a device screenshot."
+  },
+  {
+   "path": "media/temp-saved.png",
+   "kind": "screenshot",
+   "caption": "Main screen after FUNC + YES: the TEMP SAVED message.",
+   "alt": "Main screen of kit K001 RYTMLINJE with a TEMP SAVED message box over the parameter page.",
+   "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+   "license": "LicenseRef-Rytm-UI-Documentation",
+   "source": "original",
+   "capture": {
+    "type": "emulator",
+    "release": "1.74",
+    "moduleVersion": "0.1.0-experimental",
+    "imageSha256": "e0127560783e6e4a9dacb41ccab81222fe2d208c924fb0a764697cad24b6a329",
+    "setup": "Headless rytm-emu (dtboot) running TS10: core-ar2 0.7 and this folder's Temp Save 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit K001 and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+   }
+  },
+  {
+   "path": "media/reloaded.png",
+   "kind": "screenshot",
+   "caption": "Main screen after FUNC + NO: the RELOADED message.",
+   "alt": "Main screen of kit K001 RYTMLINJE with a RELOADED message box over the parameter page.",
+   "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+   "license": "LicenseRef-Rytm-UI-Documentation",
+   "source": "original",
+   "capture": {
+    "type": "emulator",
+    "release": "1.74",
+    "moduleVersion": "0.1.0-experimental",
+    "imageSha256": "e0127560783e6e4a9dacb41ccab81222fe2d208c924fb0a764697cad24b6a329",
+    "setup": "Headless rytm-emu (dtboot) running TS10: core-ar2 0.7 and this folder's Temp Save 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit K001 and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+   }
   }
  ]
 }
