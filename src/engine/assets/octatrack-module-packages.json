@@ -510,8 +510,18 @@
     },
     {
       "id": "slow-lfo",
+      "octabam": true,
       "version": "0.1.0-experimental",
-      "path": "octatrack-modules/slow-lfo/0.1.0-experimental.mwrm"
+      "path": "octatrack-modules/slow-lfo/0.1.0-experimental.mwrm",
+      "abi": 7,
+      "features": 1,
+      "sites": 7,
+      "copies": 0,
+      "fills": 0,
+      "name": "Slow LFO",
+      "module": "cd8a0e36",
+      "bytes": 608,
+      "sha256": "3505194ebe34509b765bb71d38ab6a62ab5f4f5ba18cdfd829c741fec472aeb4"
     }
   ]
 }

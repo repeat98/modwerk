@@ -51,6 +51,8 @@ Not run in the port: the MIDI engine, external MIDI clock, saving and reloading 
 | `do selftest` | SELF TEST passed: 1/1 modules intact, 0 with DSP effects, longest frame 420 us, card set 1, 1/1 | |
 | Remove: `remove slow-lfo.mwrm --accept` | accepted; generation 1, nothing installed | MULT stops at 64X, as stock |
 
+The committed package `octatrack-modules/slow-lfo/0.1.0-experimental.mwrm` (SHA-256 `3505194ebe34509b765bb71d38ab6a62ab5f4f5ba18cdfd829c741fec472aeb4`, built by `npm run octatrack:module-packages` after the move out of drafts) differs from the tested `7392526b…` in three bytes only, the package name at offsets 0x33..0x35 (`Slow LFO` against the `SLOW LFO` the tester's build passed with `--name`); code, sites and relocations are the same bytes.
+
 The rates were judged by ear and eye, not measured; the emulator measured them within 1 % (above). Not tested on a unit: a tempo change while playing, external MIDI clock, saving and reloading a Part with 1/2X, a project with 1/2X opened without the module (expected to read 128X), Deja Vu's waves together with the slow values, MKII, the site's own install dialog (the same package and base protocol, sent from the command line).
 
 ## Stock flows

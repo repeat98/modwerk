@@ -208,7 +208,7 @@
       "sha256": "ccffbf72d45358bde585760b9230c668bf38ebf412ab23efc73732cf96024dca"
     }
   ],
-  "sourceCommit": "d6159f66060d4ad8d69cadeeee3b1da9acfe09f0",
+  "sourceCommit": "c49ab76dd33c57e8681621e63ad958ce9eb38c7c",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -242,6 +242,7 @@
     "direct-jump-kyoti": "0.1.2-experimental",
     "dejavu": "0.1.0-experimental",
     "arp-key-locks": "0.1.0-experimental",
-    "temp-save": "0.1.0-experimental"
+    "temp-save": "0.1.0-experimental",
+    "slow-lfo": "0.1.0-experimental"
   }
 }
