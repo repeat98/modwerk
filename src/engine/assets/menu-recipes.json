@@ -1425,7 +1425,7 @@
       "caveLimit": 1074625596
     }
   ],
-  "sourceCommit": "c49ab76dd33c57e8681621e63ad958ce9eb38c7c",
+  "sourceCommit": "e3a91ffccbc0320745a9a165fc52a34cce1ade2b",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -1450,7 +1450,7 @@
     "sidechain-compressor": "0.2.0-experimental",
     "vector": "0.2.5-experimental",
     "playmodes": "0.2.0-experimental",
-    "mute-modes": "0.2.1-experimental",
+    "mute-modes": "0.2.2-experimental",
     "recorder-loop-fix": "0.1.0-experimental",
     "poly8": "0.3.2-experimental",
     "output-matrix": "0.1.1-experimental",
@@ -1459,7 +1459,6 @@
     "direct-jump-kyoti": "0.1.2-experimental",
     "dejavu": "0.1.0-experimental",
     "arp-key-locks": "0.1.0-experimental",
-    "temp-save": "0.1.0-experimental",
-    "slow-lfo": "0.1.0-experimental"
+    "temp-save": "0.1.0-experimental"
   }
 }
