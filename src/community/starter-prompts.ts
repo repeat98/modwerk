@@ -152,7 +152,7 @@ function zoomGuidance(machine: StarterMachine) {
 function zd2Guidance() {
   return [
     'Where the ZD2 work stands: this pedal loads .ZD2 effects, not the ZDL family\'s .ZDL files, so the pedal page, its link, MIDISTOMP and the proposed `zdl` module contract do not apply. docs/ZOOM_ZD2.md separates hardware results, firmware readings and unknowns and ends with the open steps; pick up the next one rather than starting a parallel one, and check the agent board and open pull requests first.',
-    'Anything Modwerk lists carries no stock Zoom code: no effect grafted onto, patched into or built from a stock one, and no knob handlers taken from a stock effect. An effect built from original source alone is the next step, and it has not run on this pedal yet.',
+    'Anything Modwerk lists carries no stock Zoom code: no effect grafted onto, patched into or built from a stock one, and no knob handlers taken from a stock effect. Build on the clean-room route the report describes (Stomphacks\' pipeline plus one header change), which runs on this pedal.',
     'Install over USB MIDI with the pedal\'s own file commands (zoom-zt2); Zoom\'s Guitar Lab stays the fallback. Every write is persistent: back the pedal up first, keep autosave off, keep custom effects out of saved patches and keep the recovery from its profile at hand.',
   ]
 }
