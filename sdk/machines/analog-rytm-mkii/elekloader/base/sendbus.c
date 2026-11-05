@@ -1451,6 +1451,7 @@ typedef void (*unlock_guard_t)(void *guard);
 #define VC_MUTEX 4                 // the view controller: its windows' lock
 #define VC_WINDOWS 20              // and their ring's head
 #define WIN_DRAW 16                // a window's vtable: draw(win, bmp)
+#define WIN_COVERED 23             // a window: 1 while a full-screen menu (KIT ...) covers it, and drawAll skips it
 
 static void __attribute__((noinline)) draw_popups(char *ctrl, void *bmp)
 {
@@ -1473,6 +1474,10 @@ void mw_send_draw(void *bmp, void *ctrl)
     if (d & 1 << PAGE_SHOWN_FX) page = PAGE_SHOWN_FX;
     else if (d & 1 << PAGE_SHOWN_SEND) page = PAGE_SHOWN_SEND;
     if (page && !page_up(page))
+        page = 0;
+    // A full-screen menu over the page's view (the KIT menu, OS UPGRADE): stock's
+    // alone, as its own pages are (the page was drawn under it, mixed with it).
+    if (page && page_view[page] && page_view[page][WIN_COVERED])
         page = 0;
     if (!page)
         return;
