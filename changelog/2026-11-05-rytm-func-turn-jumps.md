@@ -1,0 +1,1 @@
+Developer docs: the Rytm SDK guide said a FUNC + turn on a sound page never reaches the parameter path; stock only drops the first detent after FUNC goes down, then each parameter's own jump function sets the value, which the guide now describes with how a mod machine gives its knobs jumps.

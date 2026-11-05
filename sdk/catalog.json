@@ -84,7 +84,7 @@
     },
     {
       "id": "quantizer",
-      "version": "0.1.3-experimental",
+      "version": "0.1.4-experimental",
       "addedAt": "2026-10-01T09:19:37Z"
     },
     {
@@ -119,7 +119,7 @@
     },
     {
       "id": "mute-modes",
-      "version": "0.2.1-experimental",
+      "version": "0.2.2-experimental",
       "addedAt": "2026-10-07T20:00:00Z"
     },
     {
@@ -171,6 +171,11 @@
       "id": "beat-slicer",
       "version": "0.1.66-experimental",
       "addedAt": "2026-10-27T20:00:00Z"
+    },
+    {
+      "id": "tuner",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-10-26T02:02:14Z"
     }
   ]
 }

@@ -1,22 +1,22 @@
 {
   "schema": 1,
   "kind": "elekloader-catalog",
-  "revision": "euclidean-2026-10-16",
+  "revision": "euclidean-2026-11-04",
   "about": "Modwerk source-only euclidean packages for Digitakt I OS 1.53 and 1.54, compiled from sdk/digitakt/modules/euclidean.",
   "cores": [],
   "mods": [
     {
-      "file": "euclidean-1.1.5-os1.53.elemod",
-      "sha256": "1fce621ede91db064b0d1c6c8c337d962fa08dda31eef1248052fd5b5ffe4dfa",
+      "file": "euclidean-1.1.6-os1.53.elemod",
+      "sha256": "98888434af4c54c851758de61a775672e02dceca62e6b66f93c041df8effd8f1",
       "id": "euclidean",
-      "version": "1.1.5",
+      "version": "1.1.6",
       "device": "digitakt-mk1",
       "os": "1.53",
       "license": "GPL-2.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "08097aa2c7497e45e15780376339ad295d8d0ee0",
-        "path": "sdk/imports/packages/euclidean/euclidean-1.1.5-os1.53.elemod"
+        "commit": "ade20a4e728de7fbf43ab1eb86ffd69c7a5a20bd",
+        "path": "sdk/imports/packages/euclidean/euclidean-1.1.6-os1.53.elemod"
       },
       "title": "Euclidean Sequencing",
       "requires": [
@@ -29,20 +29,20 @@
       "category": "Sequencer",
       "author": "sumedho",
       "needs_core": "2.1",
-      "on_unit": "The author tested 1.1.5 on a Digitakt 1, OS 1.53 and 1.54, with all six mods and alone, including project save/reload and a power cycle (2026-10-16): the page keys and FUNC shortcuts leave Euclidean and it reopens with FUNC + AMP."
+      "on_unit": "The author tested 1.1.6 on a Digitakt 1, OS 1.53 and 1.54, with all six mods and alone, including project save/reload and a power cycle (2026-11-04): holding FUNC while turning D off no longer clicks the audio, and converts the rhythm to ordinary trigs."
     },
     {
-      "file": "euclidean-1.1.5-os1.54.elemod",
-      "sha256": "b8315446ecd011d3798ed70692dd4762301458c930209465c2bd58bc52568bd9",
+      "file": "euclidean-1.1.6-os1.54.elemod",
+      "sha256": "78427e214f70528cdbaecb60d8860ec7c9a9559594b894f6c693968082744856",
       "id": "euclidean",
-      "version": "1.1.5",
+      "version": "1.1.6",
       "device": "digitakt-mk1",
       "os": "1.54",
       "license": "GPL-2.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "08097aa2c7497e45e15780376339ad295d8d0ee0",
-        "path": "sdk/imports/packages/euclidean/euclidean-1.1.5-os1.54.elemod"
+        "commit": "ade20a4e728de7fbf43ab1eb86ffd69c7a5a20bd",
+        "path": "sdk/imports/packages/euclidean/euclidean-1.1.6-os1.54.elemod"
       },
       "title": "Euclidean Sequencing",
       "requires": [
@@ -55,7 +55,7 @@
       "category": "Sequencer",
       "author": "sumedho",
       "needs_core": "2.1",
-      "on_unit": "The author tested 1.1.5 on a Digitakt 1, OS 1.53 and 1.54, with all six mods and alone, including project save/reload and a power cycle (2026-10-16): the page keys and FUNC shortcuts leave Euclidean and it reopens with FUNC + AMP."
+      "on_unit": "The author tested 1.1.6 on a Digitakt 1, OS 1.53 and 1.54, with all six mods and alone, including project save/reload and a power cycle (2026-11-04): holding FUNC while turning D off no longer clicks the audio, and converts the rhythm to ordinary trigs."
     }
   ]
 }
