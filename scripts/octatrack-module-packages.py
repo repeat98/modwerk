@@ -127,7 +127,7 @@ def engines(capabilities, dsp_words):
 def titled(data, name):
     """A C package that subscribes to no event: build.py makes it ABI 4, with no name, and the site publishes only ABI 6
     and later. Repacked as the ABI 8 package build.py makes for a subscribing one (build_c: its trailing empty hook
-    words dropped, its stem as its unit name), which every base's loader reads, so the unit's inventory names it too.
+    words dropped, its stem as its unit name), which the base's loader reads, so the unit's inventory names it too.
     Any other package comes back as it is. Here, not in the builder, whose source the base pins."""
     if struct.unpack_from('>H', data, 4)[0] != 4:
         return data
