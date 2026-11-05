@@ -231,12 +231,17 @@ the package is rebuilt. The standalone and table recipes in
 asset JSON, the remix tools, `module_packages.py`, the Elekloader checkout),
 so any import of rebuilt packages can stop the full run on them. Re-pin only
 the asset hashes that moved; `--check` must then call every package identical.
+`sdk/runtime/loader/build.py` and `module_packages.py` are base inputs too
+(`src/engine/assets/octatrack-base-sources.json`): a change to how packages are
+published goes in the host wrapper `scripts/octatrack-module-packages.py`.
 In the toolchain image set `ELEKLOADER_DSP_ASM`; restore old versions it deletes.
 
 A newly developed module selectable in beta module sets must have a working
 USB path, not a card-only fallback; existing card-only modules need a reviewed
 migration before USB rollout. An unavoidable compatibility limit needs its
-actual resource/ownership reason and explicit owner review. This does not
+actual resource/ownership reason and explicit owner review; the owner's
+card-only OK for one exact version goes in `sdk/usb-card-only.json` with its
+reason and the issue that ends it, and `module:doctor` accepts only that version. This does not
 assert that pending loader ABI work (ABI 7), shared machine registration,
 table support or hooked DSP work is released: those adapters and new bases
 remain private staging until their checks and qualification are complete. See
