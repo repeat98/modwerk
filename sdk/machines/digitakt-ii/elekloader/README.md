@@ -28,5 +28,9 @@ The entries are proposed in [core-profile/interface.json](../../../digitakt-ii/c
   with: the release `core-1.0.elemod` has no 1.1 to match. Nothing here was assembled or run by Modwerk.
 - **The site still builds with core 1.0.** The machine's core version stays 1.0 until the base ships, so a module that
   needs a 1.1 entry cannot validate yet (`module.platform.core`).
+- **Not elekloader's 1.1.** `3d7c2e3` is the first commit of toonst's
+  [elekloader#221](https://github.com/elekloader/elekloader/pull/221), still a draft that has moved since. If it lands
+  changed, elekloader's core-dt2 1.1 and this source differ: take the source again from its merged release before the
+  base ships. Changes to core-dt2 itself go to elekloader ([contributing](../../../../CONTRIBUTING.md#elekloader-mods-and-cores)).
 - **Hardware.** By their author's report, core 1.1's additions have run in digikit's emulator only, and a unit has
   run core 1.0 with a mod on its key events. Modwerk has qualified none of it on hardware.
