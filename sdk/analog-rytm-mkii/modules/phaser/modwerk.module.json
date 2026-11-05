@@ -144,7 +144,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host: the same samples as Send FX's PHASER over 20,000 blocks of random settings. Unit: test build MB02 reported working by the author (29 Oct 2026). rytm-emu 2ac0f1f: the SEND and SEND FX pages with PHASER (PH01).",
+    "summary": "Host: the same samples as Send FX's PHASER over 20,000 blocks of random settings. Unit: test build MB02 reported working by the author (29 Oct 2026). rytm-emu 2ac0f1f: the SEND and SEND FX pages with PHASER (PH02).",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -189,8 +189,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "2ba2cb8dbb68791a847141b795fac7526f91813220f58056596ea8c1e00f78f6",
-        "setup": "Headless rytm-emu (dtboot) running PH01: the Modwerk base's send-bus variant and this folder's PHASER 0.1.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "60c41c3306493db1b80f078e814b869bbe2b94faa6547327d9517cf6835d35ed",
+        "setup": "Headless rytm-emu (dtboot) running PH02: the Modwerk base's send-bus variant and this folder's PHASER 0.1.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -205,8 +205,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "2ba2cb8dbb68791a847141b795fac7526f91813220f58056596ea8c1e00f78f6",
-        "setup": "Headless rytm-emu (dtboot) running PH01: the Modwerk base's send-bus variant and this folder's PHASER 0.1.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "60c41c3306493db1b80f078e814b869bbe2b94faa6547327d9517cf6835d35ed",
+        "setup": "Headless rytm-emu (dtboot) running PH02: the Modwerk base's send-bus variant and this folder's PHASER 0.1.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]

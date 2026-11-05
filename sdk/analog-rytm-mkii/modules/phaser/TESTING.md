@@ -8,7 +8,7 @@
 
 Test build MB02 (OS 1.74, sha256 c693e8c1…): the Modwerk base with the send bus, this module, the two other send effects, Loop Sync 0.3.2 and Retrig Grid. It boots and the interface runs. The SEND and SEND FX pages could not be reached in rytm-emu 3c4c42c (MD07 behaves the same), so nothing on them was seen.
 
-In rytm-emu 2ac0f1f (4 November 2026), build PH01 (the base's send-bus variant and this module's library package, sha256 `2ba2cb8d…`): the SEND page opens behind AMP on BD, and on the FX track the SRC key (DELAY there) switches between DELAY and SEND FX, which shows PHASER chosen with its controls ([media/capture.json](media/capture.json)). The sound is not modelled there.
+In rytm-emu 2ac0f1f (5 November 2026), build PH02 (the base's send-bus variant and this module's library package, sha256 `60c41c33…`): the SEND page opens behind AMP on BD, and on the FX track the SRC key (DELAY there) switches between DELAY and SEND FX, which shows PHASER chosen with its controls ([media/capture.json](media/capture.json)). The sound is not modelled there.
 
 ## Unit
 
