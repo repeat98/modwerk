@@ -3,9 +3,24 @@
 
 // The control inputs (EXP/CV IN 1 and 2), ports 0 and 1.
 #define CI_SETTINGS_AT 0x400fa7e4   // (port, record*): the port's settings, below
-#define CI_MILLIVOLTS_AT 0x4013f5ac // (port) -> the smoothed level, calibrated, in mV
 #define CI_SOURCE 0x8000fcf8        // + 4 * port: the level the kit's macro plays
 #define CI_PORTS 2
+
+// The converter, as the audio interrupt's 0x4013f394 reads it once a block
+// (1,500 a second): the result word at 0xfc094012 + 2 * port, signed, which it
+// smooths by 2% a block into 0x419f0310 + 4 * port, the word 0x4013f5ac reads.
+// 0x4013f5c6 is 0x4013f5ac's conversion turned round.
+#define CI_RESULT 0xfc094012        // + 2 * port: the converter's latest result
+#define CI_TO_RESULT_AT 0x4013f5c6  // (port, mV) -> the result that reads as it
+
+// The UI task's queue, as the audio interrupt reports to it (0x4013f53e):
+// 0x4011fb56 returns it, 0x400013b2 (queue, message) adds a message from an
+// interrupt, and the UI loop (0x400a46f0) takes each message by its first
+// byte. Type 0 is a key: the key at +4, its flags at +8, its time at +12, played
+// through KEYDISP at 0x400a4838, the core's ev_key site.
+#define UI_QUEUE_AT 0x4011fb56
+#define QUEUE_POST_AT 0x400013b2
+#define MESSAGE_KEY 0
 
 // The settings record 0x400fa7e4 fills, 32 bytes, each field a long.
 #define REC_MODE 0                  // 0 OFF, 1 CV, 2 EXPR, 3 FSW (stock's menu stops at 2)

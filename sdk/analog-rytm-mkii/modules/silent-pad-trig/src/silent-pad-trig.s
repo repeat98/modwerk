@@ -1,11 +1,14 @@
         | SPDX-License-Identifier: GPL-2.0-only
         | silent-pad-trig - three SEQUENCER CONFIG checkboxes:
-        |   SILENT PAD+TRIG     stopped, playing, GRID REC and every mode but
-        |                       LIVE and STEP REC: a pad or TRIG key 1-12 press
-        |                       selects its track, silent; FUNC + pad plays it
-        |   SILENT PAD LIVEREC  LIVE REC: a pad press selects its track, silent,
-        |                       and records nothing; FUNC + pad plays and records.
-        |                       TRIG keys play and record there, as stock.
+        |   SILENT PAD+TRIG     stopped, playing and every mode but LIVE and
+        |                       STEP REC: a pad or TRIG key 1-13 press is
+        |                       silent (pads and TRIG 1-12 select their
+        |                       track); FUNC + pad and FUNC + TRIG 1-13 play
+        |                       it. In GRID REC only pads: TRIG keys place
+        |                       trigs, as stock
+        |   SILENT P+T LIVEREC  LIVE REC: the same, and the silent press
+        |                       records nothing; FUNC + pad and FUNC + TRIG
+        |                       play and record.
         |   MUTE ALL SOUND      a pad, TRIG key or MIDI note starts no voice on
         |                       a muted track, and a pad or TRIG key sends no
         |                       MIDI note on or poly pressure; recording is
@@ -16,7 +19,7 @@
         | A new mod, not a port, first written as pad-select (PAD+TRIG SEL
         | TRK) in an unpublished rytm2_mods checkout. Each setting is a
         | core-ar2 0.3 mod storage field (silent_pad_trig_on,
-        | silent_live_rec_on, silent_mute_on: global scope, one bit per globals
+        | silent_pt_live_rec_on, silent_mute_on: global scope, one bit per globals
         | slot), saved
         | with the project's globals; a slot saved without one loads it
         | unchecked. The slot lookup follows voice-dac 1.2's DAC SUM
@@ -38,6 +41,9 @@
         |               0x400c7e90  on for a silent press, so it selects its track
         |   func_gate   0x400c7950  the pad handler's FUNC test reads off, so
         |                           FUNC + pad plays at the pad's velocity, not VEL
+        |   func_trig   0x400c7ce0  the TRIG handler's STEP REC test for FUNC +
+        |                           TRIG reads true, so FUNC + TRIG 1-13 plays at
+        |                           VEL, as a plain press does on stock
         | MUTE ALL SOUND acts on a muted track: its own mute, or another track's
         | solo, the two masks of the engine's test at 0x4011ffde, which drops
         | only sequencer trigs. (That test also ORs in a word from 0x8000fc90,
@@ -62,6 +68,7 @@
         .equ    PLAY_RESUME,    0x400c7734        | the play routine past `linkw; moveq`
         .equ    AUTOTRK_GET,    0x400b606c        | AUTO TRK SWITCH's getter (globals)
         .equ    FUNC_RESUME,    0x400c7956        | the pad handler's `addql #4,%sp`
+        .equ    KEY_ID,         0x40071efc        | (event): its key, TRIG 1-16 0..15
         .equ    VIEW_SEQ,       0x8c              | KeyboardView: the sequencer state
         .equ    LIVE_GET,       0x40036370        | state: LIVE REC (+0x169, while playing)
         .equ    STEP_GET,       0x400363bc        | state: STEP REC (+0x16a)
@@ -72,7 +79,7 @@
         | global field's index is the globals slot, 0..3: the live records sit
         | at GLOBAL_LIVE + 228 k (core-ar2's GLOBAL_LIVE, as voice-dac has it).
         .extern core_store_get, core_store_set
-        .extern silent_pad_trig_on, silent_live_rec_on, silent_mute_on
+        .extern silent_pad_trig_on, silent_pt_live_rec_on, silent_mute_on
         .equ    GLOBAL_LIVE,    0x413192ff
         .equ    GLOBAL_STRIDE,  228
         .equ    PROJ_GLOBALS,   236               | the project's ProjectGlobals
@@ -117,8 +124,8 @@
         | ------------------------------------------------------------------
         | play_gate: the play routine's entry, over `linkw %fp,#-64; moveq
         | #127,%d0`, both re-emitted. The arguments are on the stack: the view
-        | at %sp@(4), src at %sp@(8) (1 a pad, 0 a TRIG key); d0/d1/a0/a1 are
-        | free, as at any call. Whether this press is silent is kept in
+        | at %sp@(4); d0/d1/a0/a1 are free, as at any call. Whether this press
+        | is silent is kept in
         | pl_last for autotrk, which both handlers reach after this call with
         | nothing branching in between.
         | ------------------------------------------------------------------
@@ -126,7 +133,6 @@
         .globl  silent_pad_trig_play_gate
 silent_pad_trig_play_gate:
         move.l  4(%sp),%a0
-        move.l  8(%sp),%d1                        | src: a pad stays gated in LIVE REC
         bsr.w   active
         tst.l   %d0
         beq.s   1f
@@ -148,8 +154,8 @@ silent_pad_trig_play_gate:
         | autotrk(globals): in place of AUTO TRK SWITCH's getter at both
         | handlers' calls. On for a silent press - as play_gate found it for
         | this press - so the handler selects the pressed track as with AUTO
-        | TRK SWITCH checked; for a press that plays (FUNC + pad, a TRIG key
-        | in LIVE REC, STEP REC, the setting off), the getter itself, with the
+        | TRK SWITCH checked; for a press that plays (FUNC + pad or TRIG, STEP
+        | REC, the setting off), the getter itself, with the
         | same argument.
         | ------------------------------------------------------------------
         .align  2
@@ -176,23 +182,49 @@ silent_pad_trig_func_gate:
         tst.l   %d0
         beq.s   1f
         move.l  %a2,%a0
-        moveq   #1,%d1                            | a pad
         bsr.w   active
         eori.l  #1,%d0                            | held, and reported only when off
 1:      jmp     FUNC_RESUME
 
         | ------------------------------------------------------------------
-        | active(a0 = KeyboardView, d1 = 1 a pad, 0 a TRIG key) -> d0 = 1
-        | when the press is gated: in STEP REC never; in LIVE REC a pad while
-        | SILENT PAD LIVEREC is checked, a TRIG key never; otherwise while SILENT
-        | PAD+TRIG is checked. Else 0. Clobbers d1/a0/a1.
+        | func_trig: the TRIG handler's test, for FUNC + TRIG, of STEP REC
+        | (0x400363bc, the sequencer state on the stack), in its place. Stock
+        | declines FUNC + TRIG outside STEP REC, so it plays nothing; true here
+        | sends it on to the plain press's path (0x400c7cf2), which plays at
+        | VEL, where play_gate lets FUNC through, and in LIVE REC records. True
+        | in STEP REC, as stock, and while active() for TRIG 1-13. GRID REC and
+        | the handler's other declines are tested before, so stay stock. a2 is
+        | the view, d3 the event; d0/d1/a0/a1 are free.
+        | ------------------------------------------------------------------
+        .align  2
+        .globl  silent_pad_trig_func_trig
+silent_pad_trig_func_trig:
+        move.l  4(%sp),-(%sp)
+        jsr     STEP_GET                          | displaced
+        addq.l  #4,%sp
+        tst.b   %d0
+        bne.s   9f                                | STEP REC: stock
+        move.l  %d3,-(%sp)
+        jsr     KEY_ID
+        addq.l  #4,%sp
+        moveq   #12,%d1
+        cmp.l   %d0,%d1
+        bcs.s   8f                                | TRIG 14-16: stock
+        move.l  %a2,%a0
+        bra.w   active
+8:      moveq   #0,%d0
+9:      rts
+
+        | ------------------------------------------------------------------
+        | active(a0 = KeyboardView) -> d0 = 1 when a pad or TRIG key press is
+        | gated: in STEP REC never; in LIVE REC while SILENT P+T LIVEREC is
+        | checked; otherwise while SILENT PAD+TRIG is checked. Else 0.
+        | Clobbers d1/a0/a1.
         | ------------------------------------------------------------------
         .align  2
 active:
-        move.l  %d2,-(%sp)
         move.l  %a2,-(%sp)
         move.l  %a0,%a2
-        move.l  %d1,%d2
         move.l  VIEW_SEQ(%a2),-(%sp)
         jsr     STEP_GET
         addq.l  #4,%sp
@@ -203,16 +235,13 @@ active:
         addq.l  #4,%sp
         tst.b   %d0
         beq.s   6f
-        tst.l   %d2
-        beq.s   8f                                | LIVE REC, a TRIG key: stock
-        movea.l #silent_live_rec_on,%a1           | LIVE REC, a pad
+        movea.l #silent_pt_live_rec_on,%a1           | LIVE REC
         bra.s   7f
 6:      movea.l #silent_pad_trig_on,%a1           | every other state
 7:      bsr.w   flag_get
         bra.s   9f
 8:      moveq   #0,%d0
 9:      move.l  (%sp)+,%a2
-        move.l  (%sp)+,%d2
         rts
 
         | ------------------------------------------------------------------
@@ -412,7 +441,7 @@ rec_active:
         | re-emitted after. a3 is the view; a2 (mem_new), d2..d5 and the stack
         | are as SAMPLE POS RES's item expects them, so the registers used
         | here are saved, and each item's four functions live in a frame of
-        | item_add's own. SILENT PAD+TRIG, SILENT PAD LIVEREC, MUTE ALL SOUND.
+        | item_add's own. SILENT PAD+TRIG, SILENT P+T LIVEREC, MUTE ALL SOUND.
         | ------------------------------------------------------------------
         .align  2
         .globl  silent_pad_trig_menu_add
@@ -564,7 +593,7 @@ act_main:
         movea.l #silent_pad_trig_on,%a1
         bra.s   act_invoke
 act_live:
-        movea.l #silent_live_rec_on,%a1
+        movea.l #silent_pt_live_rec_on,%a1
         bra.s   act_invoke
 act_mute:
         movea.l #silent_mute_on,%a1
@@ -584,7 +613,7 @@ chg_main:
         movea.l #silent_pad_trig_on,%a1
         bra.s   chg_invoke
 chg_live:
-        movea.l #silent_live_rec_on,%a1
+        movea.l #silent_pt_live_rec_on,%a1
         bra.s   chg_invoke
 chg_mute:
         movea.l #silent_mute_on,%a1
@@ -618,7 +647,7 @@ drw_main:
         movea.l #silent_pad_trig_on,%a1
         bra.s   drw_invoke
 drw_live:
-        movea.l #silent_live_rec_on,%a1
+        movea.l #silent_pt_live_rec_on,%a1
         bra.s   drw_invoke
 drw_mute:
         movea.l #silent_mute_on,%a1
@@ -645,7 +674,7 @@ drw_invoke:
 txt_main:
         .asciz  "SILENT PAD+TRIG"
 txt_live:
-        .asciz  "SILENT PAD LIVEREC"
+        .asciz  "SILENT P+T LIVEREC"
 txt_mute:
         .asciz  "MUTE ALL SOUND"
 

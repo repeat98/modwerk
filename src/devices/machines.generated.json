@@ -387,7 +387,7 @@
     "name": "Syntakt",
     "family": "elektron",
     "status": "research",
-    "summary": "OS 1.40, 1.40A and 1.42 documented; 1.40A and 1.42 rebuilt byte-identical; modified builds boot on a unit. Core started: a boot probe links and verifies locally; no SDRAM for mods yet.",
+    "summary": "OS 1.40, 1.40A and 1.42 documented; 1.40A and 1.42 rebuilt byte-identical. Core started: the boot probe runs on a unit (1.42) and DIN recovery works; no SDRAM for mods yet.",
     "steps": {
       "format": "done",
       "rebuild": "done",
@@ -432,7 +432,7 @@
         }
       ],
       "flash": "Elektron Transfer over USB: set MIDI IN and OUT to the device, drop the .syx on and confirm on the device.",
-      "recovery": "Hold FUNC while powering on to open the STARTUP menu, choose TRIG 4 (OS UPGRADE), then send the owner's stock .syx from Transfer's SysEx Transfer / OS Upgrade via device startup menu over MIDI DIN; USB does not work there. Documented by Synthack-OS; this startup-menu path is not yet tested on our unit."
+      "recovery": "Hold FUNC while powering on to open the STARTUP menu, choose TRIG 4 (OS UPGRADE), then send the owner's stock .syx from Transfer's SysEx Transfer / OS Upgrade via device startup menu over MIDI DIN; USB does not work there. Documented by Synthack-OS; tested on a unit with OS 1.42 and a generic USB-to-MIDI cable (4 November 2026)."
     },
     "research": [
       {
