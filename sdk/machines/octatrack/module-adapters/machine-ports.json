@@ -224,17 +224,24 @@
   },
   "synth": {
    "sources": {
-    "sdk/octabam/modules/synth/machine.s": "de9d849bf0b6e5d5ad747df32ae5806e7f9516674a14ac74b1c15d73d30d280a",
-    "sdk/octabam/modules/synth/manifest.py": "7854330aca001d2841de2fb384f0ca8adb7497db49dacc56da2815c1f444c0e6",
-    "sdk/octabam/modules/synth/registration.s": "d04e47d6d21287ea969e4d39d0fea8c90b262a577081ba8376915f96cd2d9d2d",
-    "sdk/octabam/modules/synth/upstream/quantizer/core.s": "2992b6c85cff440de03ae84eb22dee8b8a83a84f23e94b699404d28940b6f958",
+    "sdk/octabam/modules/synth/manifest.py": "bfd2cd03df1ce5397d2daa8d1977eacfc6c9b119ca9a79fdb472a6b98a3a4fe5",
+    "sdk/octabam/modules/synth/port.s": "0b88bc18a6ec5bc9f150558dc88c89f89e8e142d2d7175a0183bb861f4134b86",
+    "sdk/octabam/modules/synth/upstream/quantizer/core.s": "655bf8cb893ecbe8ec167633322491ae89fdf498c818e172ad6ba34c3fc992c8",
     "sdk/octabam/modules/synth/upstream/quantizer/keys.s": "e2ffdbfae34b0828794a4eb4cc229e3efcaed25dc953bf7c05c13f6e37f65587",
-    "sdk/octabam/modules/synth/upstream/quantizer/manifest.py": "e637e3718e4b65320b847ef0758e0d46800f8be6b8020290f89192c798c535ef",
-    "sdk/octabam/modules/synth/upstream/quantizer/quantizer.s": "d1737168a1750f540b3dfbefdd2a64b11084013b9f7b71b31aa4f189d33a24c5",
+    "sdk/octabam/modules/synth/upstream/quantizer/manifest.py": "9550382938153ec1c6fe5a262612c5a4daad1d71aca68da7c0b6a4c55e801aa8",
+    "sdk/octabam/modules/synth/upstream/quantizer/panel_transaction.inc.s": "e51d5d035e8561b27671ac751957756831988786b5b25163688cc066c36b9c79",
+    "sdk/octabam/modules/synth/upstream/quantizer/quantizer.s": "6883dce6058cfc42eca1cb4c51a1d7d2318579a5adb5e84ae4202d7570c26abb",
     "sdk/octabam/modules/synth/upstream/quantizer/scale.s": "82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64",
-    "sdk/octabam/modules/synth/upstream/synth/manifest.py": "58c7acd5684fe0b59c42501f7fdbfd1b288b3bfb71938dcadf43bc1774b3e5e8",
-    "sdk/octabam/modules/synth/upstream/synth/page.s": "25e2a0624fcc30ee3a8db5966954113119fb5942855042f765e664a2f8544a70",
-    "sdk/octabam/modules/synth/upstream/synth/poly.s": "ce21f5f7cddcd7268d27e25c500f1403cc59a9dff28044b1832cf2b45592d34c"
+    "sdk/octabam/modules/synth/upstream/quantizer/stock_guard.py": "5f1fe08ef5a4eb05cd772c9b65ee9f54c2371914a8360c8589109a9ce4308c2d",
+    "sdk/octabam/modules/synth/upstream/synth/engine_abi.inc": "054d38e1b9fa52a54a2280fb243aa0a3feec9c796cc991d3a4d74eaffdff2587",
+    "sdk/octabam/modules/synth/upstream/synth/hook_map.py": "8c1ff74641d31e6f15c769a124b7fe53d8878d86db51e93f7e81e9a6292b7666",
+    "sdk/octabam/modules/synth/upstream/synth/machine.s": "320a89cf2fc1aa43d0d6453c37b24a5cfe57d0bb061080cd133eb62ece6734bd",
+    "sdk/octabam/modules/synth/upstream/synth/machine_limits.inc": "f413c93236b8283c6cfb2906af59051983c72e82a872f51d1126c3e389496970",
+    "sdk/octabam/modules/synth/upstream/synth/manifest.py": "5839bf0f19ca0a0a731aceb6eba7c6206316bcdee8d886080ac80cde296c50ed",
+    "sdk/octabam/modules/synth/upstream/synth/page.s": "efe74f16cc8a9b5dda7de3cbaefa37eece25ebe25e9beb42f1d8a329d5f06938",
+    "sdk/octabam/modules/synth/upstream/synth/panel_transaction.inc.s": "cda0a6d554ebdbc5d274f6388fe9223557fac5cf15436979bbb390784a1efc17",
+    "sdk/octabam/modules/synth/upstream/synth/poly.s": "585220d4c98bcd9a1d849948205039d58f56a90486d397b491ff29b6e855a185",
+    "sdk/octabam/modules/synth/upstream/synth/stock_guard.py": "5f1fe08ef5a4eb05cd772c9b65ee9f54c2371914a8360c8589109a9ce4308c2d"
    },
    "subscribe": [
     {
@@ -364,38 +371,33 @@
      "order": 40,
      "data": "mw_machine",
      "replaces": [
+      "fm_validate",
       "fm_machine_name",
+      "fm_setup_edit6",
       "fm_src_names",
-      "fm_name_a",
-      "fm_name_b",
+      "ml_name_bound",
       "fm_setup_row",
-      "fm_chooser_row",
+      "fm_setup_draw6",
+      "fm_name_a",
+      "fm_tick",
       "fm_setup_open",
-      "fm_tick_hook",
-      "fm_chooser_open",
-      "fm_resolve_pb",
-      "fm_main_commit",
+      "ml_src_count",
       "fm_src_commit",
       "fm_src_commit2",
-      "fm_setup_edit6",
-      "fm_setup_draw6",
-      "fm_validate",
-      "0x40079248",
-      "0x400585fa",
-      "0x4003c950",
-      "0x40078678",
-      "0x400786ce",
-      "0x40079904",
+      "ml_draw_bound",
+      "fm_chooser_row",
+      "ml_hi_bound",
+      "fm_chooser_open",
+      "fm_chooser_col",
+      "ml_win_count",
+      "ml_cur_bound",
+      "ml_clamp1",
+      "ml_clamp2",
+      "ml_clamp3",
+      "ml_clamp4",
+      "ml_clamp5",
+      "po_lfdname",
       "0x400d6438"
-     ]
-    },
-    {
-     "to": "ot_sequencer_rows",
-     "order": 40,
-     "data": "mw_sequencer_rows",
-     "replaces": [
-      "qz_draw",
-      "0x40065c7c"
      ]
     }
    ],
@@ -488,14 +490,16 @@
     "label": "FM SYNTH",
     "flags": [
      "PROTECT",
-     "RENDER_FLEX"
+     "RENDER_FLEX",
+     "LIST"
     ],
     "fields": {
-     "defaults": "fm_defaults",
-     "admit_track": "fm_admit_track",
-     "track_page": "fm_track_page",
-     "ui_tick": "fm_ui_tick",
-     "render": "sy_render"
+     "defaults": "fm_port_defaults",
+     "assign": "fm_port_assign",
+     "admit_track": "fm_port_admit",
+     "track_page": "fm_port_page",
+     "ui_tick": "fm_port_tick",
+     "render": "fm_port_render"
     }
    },
    "sequencer": {
@@ -527,7 +531,18 @@
     "SEQUENCER getters",
     "SEQUENCER setters"
    ],
-   "why": "FM's fm_* chooser hooks are unreachable in the package; FM keeps its bundled quantizer complete and reaches every shared quantizer site through take events at order 40, before standalone Scale Quantizer"
+   "dropDetours": {
+    "fm_main_commit": {
+     "table": "ot_machines",
+     "fields": [
+      "admit_track",
+      "assign",
+      "ui_tick"
+     ],
+     "why": "The author's machine-window commit hook (0x40079816, 8 B) starts 6 bytes before the base's chooser commit (0x4007981c), which calls the record's admit_track and assign: fm_port_admit runs his selection guard on the Part the base names and shows its popup, fm_port_assign his row choice and machine-change init (fm_choose, ml_reset), fm_port_tick the init of a stock machine other than FLEX once the commit has stored it. A card build keeps the hook; po_machwin's FINE rule it chains to acts only on a marker slot, and since 2.15 no slot is one."
+    }
+   },
+   "why": "FM Synth 2.21 (the author's octatrick 2.21 line): its machine list's hooks on sites the base owns are replaced by one ot_machines record (port.s: the author's FM defaults; admit_track = his selection guard ml_guard_p on the Part the base names, with its popup; assign = his row choice and machine-change init, fm_choose and ml_reset; ui_tick = the init of a stock machine other than FLEX the commit stored; track_page = the DRAM page's fm_descriptor; render = fm_port_render), and the machine-window commit hook fm_main_commit, which starts before the base's chooser commit, stays out of the package (dropDetours). Flags: PROTECT (stock's validator never sees an FM track's twelve FLEX bytes, which hold FM's patch); RENDER_FLEX (sy_render is also the renderer of FLEX tracks no machine owns, as the author's kind table makes it); LIST (the author's 2.18 fm_chooser_col: the track key pressed twice on an FM SYNTH track opens SELECT MACHINE TYPE, as on THRU / NEIGHBOR / PICKUP, not the empty slot list; the base's 0x400788c4 does it for a LIST machine). Not set: SETUP_ALL (FM's SRC SETUP uses encoders A and B, VOIC and CHRD; slots 8-11 have no boxes, so encoder E stays read-only as it should); SETUP_PAGE (FM's VOIC and CHRD rows need it over USB, a setup_page / setup_knob pair over the author's fm_setup_draw6 / po_setup_edit, but 0.1.4 has no USB package to run it in: the loader refuses its DRAM regions, so the pair is left for the package that can carry it). Its bundled quantizer reaches every shared quantizer site through take events at order 40, before standalone Scale Quantizer; the seven quantizer hooks on MIDI and sample tracks (qz_mknob, qz_mplock, qz_mkey, qz_mnote, qz_mprev, qz_atrig, qz_heldmark) are not in the module (manifest.py _DROPPED; #555); the LFO SETUP names hook po_lfdname (0x4003bff2, 8 B) stays in the card build and is listed under replaces: since #1080 ot_machines owns that whole site and asks mw_page first, so a package drops the detour for the table (the owner's 30 October 2026 note on #555); SEQUENCER contributes SCALE, ROOT and GLIDE (runtime.json). Open: the card-I/O dispatch hook fl_io_dispatch (0x4008485e) meets a base code site with no event. ev_trig_muted (#912, hook index 35): runtime.json raises it, so the loader points raise_ev_trig_muted at the base's entry at install; render is fm_port_render (port.s), which asks it before sy_render and hands the answer to the author's trig-mute rule: no new START on the tracks it returns, a sounding note finishes. Without the event, or with no module answering it, the word stays 0 and every trig plays."
   },
   "quantizer": {
    "sources": {

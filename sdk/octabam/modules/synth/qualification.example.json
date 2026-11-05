@@ -75,14 +75,13 @@
       "steps": [
         "Open a disposable project with FM Synth firmware. Select an audio track, hold FUNC and press SRC, select FM SYNTH with UP/DOWN and press YES. No sample is required.",
         "Press SRC. Set RATO to 1 and turn INDX from 0 upwards to hear a sine tone acquire FM harmonics. PTCH transposes it; FINE tunes it in cents; FDBK adds feedback; DEC shortens the modulation envelope.",
-        "Place a trig and press PLAY. Press LFO to set VOIC to 2–4 and CHRD to a chord if wanted. AMP ATK/HOLD/REL shape the gain envelope; FUNC+AMP exposes LEG.",
+        "Place a trig and press PLAY. In SRC SETUP (FUNC+SRC) set VOIC to 2–4 and CHRD to a chord if wanted. AMP ATK/HOLD/REL shape the gain envelope; FUNC+AMP exposes LEG.",
         "Press STOP twice to silence the voice. To return to a sample machine, hold FUNC and press SRC, select FLEX or STATIC and press YES; assign the desired sample in the normal way."
       ]
     },
     "screenshots": [
       "media/ot-location.png",
       "media/ot-controls.png",
-      "media/ot-voices.png",
       "media/ot-legato.png",
       "media/ot-scale.png",
       "media/ot-root.png",

@@ -1,13 +1,15 @@
-| SYNTH MACHINE -- ColdFire code cave, phase 3: the page (22 Sep 2026). GNU as,
-| -mcpu=5475. PINNED at 0x400d24d0 (the second zero run): the override list
-| below (pg_over) carries absolute pointers to the formatters and widgets, so
-| the bytes depend on the address.
+| SYNTH MACHINE -- the page, linked into the platform runtime in DRAM. GNU as.
+| The override list carries symbolic pointers to this unit's formatters and
+| widgets; the runtime link relocates them together. The manifest retains the
+| authored-page digest at its historical oracle origin, not as image placement.
 |
-| WHAT: when the current track's FLEX slot holds an FMSYNTH*- (or SYNTH*-) named sample, the
-| PLAYBACK page presents the FM voice instead of a sample player -- the slot
+| WHAT: when FM SYNTH is chosen in the track's machine list (2.10: FLEX with the Part's
+| "FM", 1, machine.s; until 2.14 also when the current track's FLEX slot held an FMSYNTH*-
+| or SYNTH*-named sample: that marker selects nothing since 2.15), the PLAYBACK page
+| presents the FM voice instead of a sample player -- the slot
 | names read PTCH RATO INDX FINE FDBK DEC (four characters: the boxes are 19 px), the values format as the voice
 | understands them (RATIO from the ratio table "0.25".."16", INDEX and FDBK
-| 0..127, DECAY as "HOLD" / the milliseconds alone / "1.1s" -- four characters
+| 0..127, DECAY as the milliseconds alone / "1.1s" / "HOLD" at 127 -- four characters
 | at most, the width of the value field), the four synth slots show their
 | value all the time (Digitone style) and draw an icon where the sample dial
 | was: two operator boxes, the modulator feeding the carrier (RATIO), a
@@ -30,8 +32,8 @@
 | as stock.
 |
 | HOW: the page descriptor resolver 0x40031da4(track, page kind) returns
-| tbl[machine] for the PLAYBACK page at 0x40031ece (`movel %a0@(0,%d0:l:4),%d0;
-| bras 0x40031ed6`, 6 bytes -> `jmp pg_resolve`). Everything that draws or edits
+| tbl[machine] for the PLAYBACK page at 0x40031ece (the long at a0 + 4 * d0 loaded
+| into d0 and a short branch to 0x40031ed6, 6 bytes -> `jmp pg_resolve`). Everything that draws or edits
 | the page -- the generic parameter-page renderer 0x4004e0xx, the footer
 | 0x4003d5xx, the knob handler 0x40055008 -- reaches the descriptor through it
 | (0x40031ee0 / 0x40031f28 tail-call it). The stub replays the lookup and, for
@@ -41,8 +43,8 @@
 | synth's descriptor: a RUNTIME CLONE of the stock FLEX record (P..P+0x192),
 | built on first use by poly.s's po_pgdesc (the DRAM unit: the copy of the
 | stock record from the image and the 402 B of RAM it needs live there; this
-| cave has no room for them and, pinned at a fixed address, no way to name the
-| unit -- so it takes the builder's address from the long before sy_render,
+| page uses the established engine interface: the builder's address is the
+| long before sy_render,
 | whose own address the kind table's FLEX entry 0x400d6438 holds) with only
 | the fields pg_over lists changed: the names, the title, the six A
 | formatters (P+0xca), the four B widgets (P+0xfa), the enable nibbles
@@ -70,25 +72,30 @@
 
         .text
         .global fm_descriptor, pg_resolve
-fm_descriptor:
-        moveal  KIND_FLEX,%a0
-        moveal  %a0@(-4),%a0
-        lea     pg_over(%pc),%a1
-        jmp     %a0@
         .set    RESOLVER_RET, 0x40031ed6
         .set    FLEX_P, 0x400d31ae       | the stock FLEX PLAYBACK descriptor (P form)
         .set    KIND_FLEX, 0x400d6438    | the kind table's FLEX entry: sy_render's address (the manifest's SymbolRef)
-        .set    SLOT_OFF, 0x8f04b        | Part: 0x8f04a + track*5 + machine (1 = FLEX)
-        .set    SETTINGS_BASE, 0x100b14f0
-        .set    SETTINGS_STRIDE, 0x448
+        .set    SIG_OFF, 0x8edbc         | Part: 0x8ed80 + 0x3c + track*30: the NEIGHBOR column, "FM", 1 (machine.s)
         .set    STOCK_WIDGET, 0x400479b4
         .set    BLIT, 0x400128a8
         .set    SPRINTF, 0x40013a08
         .set    FMT_D, 0x400b465d        | "%d"
         .set    FMT_PLAIN, 0x4003c178    | the stock formatter fmt(buf, value) -> sprintf(buf, "%d", value)
 
+| ---- the FM SYNTH machine's exported descriptor entry -------------------------
+| fm_descriptor() -> d0 = the FM SYNTH PLAYBACK descriptor (po_pgdesc with this unit's
+| list; built on first use). machine.s names this exported symbol: the UI tick
+| publishes it as the machine table's sixth entry for SRC SETUP's FM SYNTH row (after
+| Modwerk's dedicated chooser, MIT). d0/d1/a0/a1 clobbered (C scratch).
+fm_descriptor:
+        moveal  KIND_FLEX,%a0            | sy_render
+        moveal  %a0@(-4),%a0             | po_pgdesc
+        lea     pg_over(%pc),%a1
+        jmp     %a0@
+
 | ---- the resolver detour ------------------------------------------------------
-| 0x40031ece: `movel %a0@(0,%d0:l:4),%d0; bras 0x40031ed6` -> `jmp pg_resolve`.
+| 0x40031ece: the long at a0 + 4 * d0 loaded into d0 and a short branch to 0x40031ed6 -> `jmp pg_resolve` (the
+| exported resolver entry; the manifest detour resolves its symbol).
 | d0 = machine type, a0 = the table 0x400d5f38, d3 = track, d1 = part index,
 | a1 = the bank blob; d2-d5 are restored by the resolver's epilogue, d1/a0/a1
 | are C scratch, d6/d7/a2-a6 are left alone.
@@ -99,75 +106,28 @@ pg_resolve:
         movel   #6322,%d2
         mulsl   %d1,%d2                  | part * 6322
         addl    %a1,%d2                  | + the bank blob
-        moveal  %d2,%a0
-        movel   %d3,%d4
-        muluw   #30,%d4
+        moveal  %d2,%a0                  | FM SYNTH chosen in the machine list (machine.s): FLEX
+        movel   %d3,%d4                  | (the descriptor said so) with "FM", 1 in the track's
+        muluw   #30,%d4                  | NEIGHBOR column
         addal   %d4,%a0
-        addal   #0x8edbc,%a0
+        addal   #SIG_OFF,%a0
         mvzw    %a0@,%d5
-        cmpiw   #0x464d,%d5
-        bne     1f
-        mvzb    %a0@(2),%d5
-        cmpib   #1,%d5
-        beq     fm_pg_clone
-1:
-        movel   %d3,%d4
-        lsll    #2,%d4
-        addl    %d3,%d4                  | track * 5
-        addl    %d4,%d2
-        moveal  %d2,%a0
-        addal   #SLOT_OFF,%a0
-        mvzb    %a0@,%d2                 | the track's FLEX slot, 0-based
-        cmpil   #127,%d2
-        bhi     pg_r_done                | 0xff = none; 128.. = the recorder buffers
-        movel   #SETTINGS_STRIDE,%d4
-        mulsl   %d2,%d4
-        addil   #SETTINGS_BASE,%d4
-        moveal  %d4,%a0                  | the slot's settings record; its path at +0
-        | (nothing else is tested: the byte at +0x129 the first build gated on as
-        | a "loaded" flag is the sample's QUANTIZED TRIG attribute, -1 = OFF for
-        | a sample loaded through the file browser -- the trig routine 0x40005102
-        | only chooses between an immediate and a quantized manual trig on it; an
-        | empty slot has an empty path and fails the name compare below)
-        moveal  %a0,%a1                  | a1 = the file name (after the last '/')
-        movel   #255,%d4
-pg_scan:
-        mvzb    %a0@+,%d5
-        beq     pg_scanned
-        cmpil   #'/',%d5
-        bne     pg_scan1
-        moveal  %a0,%a1
-pg_scan1:
-        subql   #1,%d4
-        bne     pg_scan
-pg_scanned:
-        movew   #0x464d,%d5              | "FM": FMSYNTH* is the marker name too
-        cmpw    %a1@,%d5
-        bne     pg_fm
-        addql   #2,%a1
-pg_fm:
-        lea     pg_name(%pc),%a0
-        moveq   #5,%d4
-pg_cmp:
-        mvzb    %a0@+,%d5
-        mvzb    %a1@+,%d2
-        cmpl    %d2,%d5
+        cmpil   #0x464d,%d5
+        bne     pg_r_done                | (2.15) not chosen in the list: the FLEX page -- an
+        mvzb    %a0@(2),%d5              | FMSYNTH* / SYNTH* sample file selects nothing (the
+        cmpil   #1,%d5                   | marker path is off; poly.s po_slot_marker)
         bne     pg_r_done
-        subql   #1,%d4
-        bne     pg_cmp
-fm_pg_clone:
+pg_synth:
         moveal  KIND_FLEX,%a0            | the kind table's FLEX entry: poly.s's sy_render
         moveal  %a0@(-4),%a0             | the long before it: po_pgdesc
         lea     pg_over(%pc),%a1         | this cave's fields
         jsr     %a0@                     | d0 = the synth's descriptor (a1: the list; d0/d1/a0/a1 clobbered)
 pg_r_done:
         jmp     RESOLVER_RET
-pg_name:
-        .ascii  "SYNTH"
         .align  4
 | ---- what the clone changes: {offset.w, length.w, source.l} into the stock FLEX
 | record, applied by po_pgdesc over its copy; a negative offset ends the list.
-| Absolute pointers throughout: the cave is pinned.
+| Symbolic absolute pointers throughout: the runtime link relocates this unit.
 pg_over:
         .short  0x009, 9
         .long   pg_title                 | P+0x009: the title, "FM SYNTH" (the footer reads FM SYNTH>FLEX)
@@ -288,10 +248,12 @@ pg_fr_out:
         movel   %sp@+,%d2
         rts
 
-pg_fmt_decay:                            | tau = 2 s * (raw/127)^2: "HOLD", "32", "286", "1.1s", "2.0s"
+pg_fmt_decay:                            | tau = 2 s * (raw/127)^2: "0", "32", "286", "1.1s", "1.9s", 127 "HOLD"
         movel   %d2,%sp@-
         movel   %sp@(12),%d0             | raw
-        beq     pg_fd_hold
+        moveq   #127,%d1                 | 127 (the last position): HOLD; 0 = the shortest, prints "0"
+        cmpl    %d1,%d0                  | (5 Oct 2026: HOLD moved from 0 to 127; the short
+        bccs    pg_fd_hold               | branches keep the cave at 1,812 B)
         movel   %d0,%d1
         mulul   %d0,%d1                  | raw^2
         movel   #2000,%d0
@@ -300,7 +262,7 @@ pg_fmt_decay:                            | tau = 2 s * (raw/127)^2: "HOLD", "32"
         movel   #16129,%d1
         divul   %d1,%d0                  | / 127^2, rounded: ms
         cmpil   #1000,%d0
-        bcc     pg_fd_sec
+        bccs    pg_fd_sec
         movel   %d0,%sp@-
         pea     FMT_D                    | "%d": the milliseconds alone -- the value field
         movel   %sp@(16),%sp@-           | fits four characters and "598ms" ran into the divider
@@ -449,7 +411,8 @@ pg_ic_fdbk:
 
 | DECAY: the index envelope -- an instant rise at column 1, then pg_env's
 | exponential fall stretched over L = 2 + value * 13 / 127 columns to the
-| floor (row 1 = I/16), columns 2..15; value 0 holds, a flat top
+| floor (row 1 = I/16), columns 2..15; value 127 holds, a flat top (0 = the
+| shortest fall, L = 2)
 pg_ic_decay:
         lea     pg_img_base(%pc),%a0
         bsr     pg_copy
@@ -457,9 +420,10 @@ pg_ic_decay:
         moveq   #1,%d1
         moveq   #11,%d2
         bsr     pg_vline                 | the attack edge
-        movel   #0x7fff,%d5              | value 0: i stays 0, h stays 11
-        tstl    %d6
-        beq     pg_dc_go
+        movel   #0x7fff,%d5              | value 127 (HOLD): i stays 0, h stays 11
+        moveq   #127,%d0
+        cmpl    %d0,%d6
+        bccs    pg_dc_go
         movel   %d6,%d5
         moveq   #13,%d0
         mulul   %d0,%d5

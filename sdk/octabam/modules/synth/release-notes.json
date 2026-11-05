@@ -1,9 +1,11 @@
 {
-  "version": "0.1.2-experimental",
-  "date": "2026-10-08",
+  "version": "0.1.4-experimental",
+  "date": "2026-10-30",
   "changes": [
-    "correct the MIDI chromatic drawer’s argument stack so changing MIDI trig mode keeps the instrument responsive (#264).",
-    "add 18.06 dB of source headroom before mono output and paraphonic summing, preserving envelopes and relative voice levels (#273). Sounds are quieter at unchanged mixer settings; effect and multi-track mix clipping remains possible.",
-    "Owner-approved experimental release without current hardware validation. Chip timing and complete memory bounds remain unmeasured; the original static symptom is not hardware-confirmed."
+    "Updates to the author's Octatrick 2.21: chords on the chromatic keys keep their notes with a scale, and the first chord after power-on in a saved project plays as a chord.",
+    "Step and scene locks on every FM control, a selection guard and voice cap per Part; fixes #557 (click), #710 (first-trig envelope) and #751 (CHRD scene).",
+    "LFOs and scene locks on AMP ATK, HOLD and REL shape the sound; an LFO on PTCH moves the pitch as on FLEX (Jan Kolkmeier's #883 / #884). The SRC page is out of the DELAY's table tail (#895).",
+    "The bundled scale quantizer follows the scale on FM tracks; MIDI tracks are Scale Quantizer's (#555). SEQUENCER shows SCALE, ROOT and GLIDE. About 12 dB louder than 0.1.2.",
+    "Compatibility: Scale Quantizer is a declared conflict (FM Synth bundles its own quantizer). An FM track's level no longer follows its slot's GAIN attribute. LFO SETUP shows FM's names (#589)"
   ]
 }

@@ -7,7 +7,9 @@ ot_sequencer_rows tables in sdk/machines/octatrack/events.json), and each subscr
 machine-ports.json holds each module's runtime.json-equivalent; this file applies it to the module's
 octabam manifest without changing its sources:
 
-    ported(module)            the claims a package keeps (the gate and the base's overlap check)
+    ported(module)            the claims a package keeps (the gate and the base's overlap check);
+                              dropDetours: a card build's hook whose job the table's site and the machine
+                              record's fields do in a package
     declaration(name)         its subscribe/contribute entries (the module's runtime.json, then the port's)
     effective(module, ...)    the package's units: the runtime source ports, minus what the base owns,
                               plus a generated glue unit (take records, the machine descriptor, SEQUENCER rows)
@@ -96,6 +98,7 @@ def ported(module, registry=None, path=PORTS):
         r = entry.get('retarget', {}).get(d.symbol)
         detours.append(replace(d, unit=r['unit'], symbol=r['symbol'],
                                 expect=stock_guard(d.site, r['guardLength'], r['guardSha256'])) if r else d)
+    detours = dropped(module, entry, detours, reg)
     kept, pokes, refs = builder.replaced(detours, builder.entries(declared), reg, pokes=module.pokes, refs=module.symbol_refs)
     owned = {(o['table'], o['site']) for o in reg['owned']}
     tables = []
@@ -112,6 +115,27 @@ def ported(module, registry=None, path=PORTS):
     if named - {u.label for u in units}:
         raise ValueError('%s: a kept site names a dropped unit: %s' % (module.name, ', '.join(sorted(named - {u.label for u in units}))))
     return replace(module, detours=tuple(kept), pokes=tuple(pokes), symbol_refs=tuple(refs), tables=tuple(tables), linked=units)
+
+
+def dropped(module, entry, detours, reg):
+    """The detours without the ones the port's dropDetours leaves to the base: {symbol: {table, fields, why}}. A
+    card build keeps such a hook (it has no base); in a package the table's own site does its job through the
+    machine record's named fields. Each must be one detour of the module that meets a site the named table owns,
+    a table the port contributes to, and every field it names must be one the port's machine record declares."""
+    drops = entry.get('dropDetours', {})
+    if not drops:
+        return detours
+    contributed = {c['to'] for c in entry.get('contribute', [])}
+    fields = set(((entry.get('machine') or {}).get('fields') or {}))
+    for symbol, why in drops.items():
+        table, named = why.get('table'), why.get('fields') or []
+        ds = [d for d in detours if d.symbol == symbol]
+        spans = [(o['site'], o['length']) for o in reg['owned'] if o['table'] == table]
+        if (len(ds) != 1 or table not in contributed or not named or not set(named) <= fields or not why.get('why')
+                or not any(o < ds[0].site + max(ds[0].pad_to or 6, len(ds[0].expect)) and ds[0].site < o + n for o, n in spans)):
+            raise ValueError('%s: dropDetours %s names one of its detours that meets a site of a table it contributes '
+                             'to, the machine fields that do its job there, and why' % (module.name, symbol))
+    return [d for d in detours if d.symbol not in drops]
 
 
 def glue(name, entry):

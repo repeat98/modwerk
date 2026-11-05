@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "contribute": [
+    {
+      "to": "ot_sequencer_rows",
+      "order": 40,
+      "data": "mw_sequencer_rows",
+      "replaces": [
+        "qz_draw",
+        "0x40065c7c"
+      ]
+    }
+  ],
+  "raise": [
+    "ev_trig_muted"
+  ]
+}

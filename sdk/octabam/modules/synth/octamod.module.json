@@ -3,20 +3,22 @@
   "id": "synth",
   "key": "SYNTH MACHINE",
   "name": "FM Synth",
-  "version": "0.1.2-experimental",
+  "version": "0.1.4-experimental",
   "category": "machines",
   "source": {
-    "repository": "https://github.com/sambanks/octabam",
-    "revision": "949f3be15eae5d3d16a7682b9e3218d42f6c1284",
-    "path": "modules/synth"
+    "repository": "https://github.com/timhastie/octatrick-modules",
+    "revision": "bb784c413d86cc6ef2a895f7291af46cb851065f",
+    "path": "synth"
   },
   "author": {
     "github": "timhastie",
     "name": "Tim Hastie",
     "credits": [
-      "Tim Hastie (@timhastie): octatrick v2.9 two-operator FM engine, voices, chords, MIDI, legato and quantizer, MIT.",
+      "Tim Hastie (@timhastie): octatrick 2.21 two-operator FM engine, machine list, PLAYBACK page, step and scene locks, voices, chords, MIDI, legato and the bundled scale quantizer, MIT.",
+      "Jan Kolkmeier: the report and fix of the AMP envelope under LFOs and scenes and of the LFO PTCH depth (Modwerk #883 / #884), folded into octatrick 2.20 and carried in 2.21.",
+      "Jannik Aßfalg (@repeat98): the SRC page as a DRAM unit in card builds, out of the 16 bytes the stock DELAY reads past its table (Modwerk #895, for 0.1.3), which octatrick 2.21 adopted.",
       "Sam Banks (@sambanks): octabam wrapper and native platform, MIT.",
-      "Modwerk contributors: dedicated FM SYNTH chooser, Part signature, sample-free source transport, validation and documentation; MIT."
+      "Modwerk contributors: the FM SYNTH chooser the author's machine list is adapted from, Part signature, sample-free source transport, validation and documentation; MIT."
     ]
   },
   "nativeManifest": "manifest.py",
@@ -24,33 +26,32 @@
     "label": "Two-operator FM",
     "family": "Synth machines",
     "summary": "Two-operator FM with a dedicated track machine, one to four voices, chords and glide.",
-    "overview": "FM SYNTH provides one to four paraphonic FM voices through the stock AMP and effects. Version 0.1.2 preserves the MIDI chromatic drawer stack and adds 18.06 dB source headroom. Software regression and native/browser composition checks pass. The owner approved release without current hardware validation; chip timing and complete memory bounds remain unknown. The original static symptom remains unconfirmed on hardware.",
+    "overview": "FM SYNTH provides one to four paraphonic FM voices through the stock AMP and effects. Version 0.1.4 is the author's Octatrick 2.21 line: step and scene locks on every FM control, LFOs and scenes on the AMP envelope, LFO pitch depth as on FLEX, a selection guard and voice cap per Part, chords on the chromatic keys that keep their notes with a scale, and the first chord after power-on kept as a chord. Its bundled scale quantizer follows the scale on FM SYNTH tracks; MIDI tracks are Scale Quantizer's. Emulator checks pass; the author reports the TEST7 image (before the LFO SETUP names hook came back) working on his MKI (30 October 2026) and this cut's image is not yet reported; it installs with a card build only.",
     "highlights": [
       "Dedicated machine chooser entry; no sample required.",
       "Pitch, ratio, index, fine tuning, feedback and index decay on SRC.",
       "One to four paraphonic voices, chord shapes and inversions.",
-      "Chromatic playing, MIDI, legato and privately bundled scale/glide controls."
+      "Chromatic playing, MIDI, legato and privately bundled scale/glide controls for FM tracks."
     ],
     "usage": [
       "Open a disposable project with FM Synth firmware. Select an audio track, hold FUNC and press SRC, select FM SYNTH with UP/DOWN and press YES. No sample is required.",
       "Press SRC. Set RATO to 1 and turn INDX from 0 upwards to hear a sine tone acquire FM harmonics. PTCH transposes it; FINE tunes it in cents; FDBK adds feedback; DEC shortens the modulation envelope.",
-      "Place a trig and press PLAY. Press LFO to set VOIC to 2–4 and CHRD to a chord if wanted. AMP ATK/HOLD/REL shape the gain envelope; FUNC+AMP exposes LEG.",
+      "Place a trig and press PLAY. In SRC SETUP (FUNC+SRC) set VOIC to 2–4 and CHRD to a chord if wanted. AMP ATK/HOLD/REL shape the gain envelope; FUNC+AMP exposes LEG.",
       "Press STOP twice to silence the voice. To return to a sample machine, hold FUNC and press SRC, select FLEX or STATIC and press YES; assign the desired sample in the normal way."
     ]
   },
   "access": {
-    "location": "Audio track > FUNC+SRC > FM SYNTH; SRC for tone, LFO for voices/chords, FUNC+AMP for LEG.",
+    "location": "Audio track > FUNC+SRC > FM SYNTH (VOIC and CHRD in SRC SETUP); SRC for tone, FUNC+AMP for LEG; PROJECT > CONTROL > SEQUENCER for the scale.",
     "steps": [
       "Open a disposable project with FM Synth firmware. Select an audio track, hold FUNC and press SRC, select FM SYNTH with UP/DOWN and press YES. No sample is required.",
       "Press SRC. Set RATO to 1 and turn INDX from 0 upwards to hear a sine tone acquire FM harmonics. PTCH transposes it; FINE tunes it in cents; FDBK adds feedback; DEC shortens the modulation envelope.",
-      "Place a trig and press PLAY. Press LFO to set VOIC to 2–4 and CHRD to a chord if wanted. AMP ATK/HOLD/REL shape the gain envelope; FUNC+AMP exposes LEG.",
+      "Place a trig and press PLAY. In SRC SETUP (FUNC+SRC) set VOIC to 2–4 and CHRD to a chord if wanted. AMP ATK/HOLD/REL shape the gain envelope; FUNC+AMP exposes LEG.",
       "Press STOP twice to silence the voice. To return to a sample machine, hold FUNC and press SRC, select FLEX or STATIC and press YES; assign the desired sample in the normal way.",
       "For scales and glide, open PROJECT > CONTROL > SEQUENCER. Select SCALE, ROOT or GLIDE with UP/DOWN and turn LEVEL. SCALE OFF restores unquantized pitch."
     ],
     "screenshots": [
       "media/ot-location.png",
       "media/ot-controls.png",
-      "media/ot-voices.png",
       "media/ot-legato.png",
       "media/ot-scale.png",
       "media/ot-root.png",
@@ -129,7 +130,7 @@
       "name": "SCALE",
       "default": 0,
       "count": 25,
-      "doc": "OFF restores stock pitch behavior; select a scale to constrain PTCH edits, locks and chromatic keys.",
+      "doc": "OFF restores stock pitch behavior; select a scale to constrain an FM SYNTH track's PTCH edits, locks and chromatic keys.",
       "labels": [
         "OFF",
         "MAJOR",
@@ -196,14 +197,15 @@
     ],
     "limitations": [
       "Parts store stock FLEX kind 1 plus FM/1 in unused NEIGHBOR control bytes. A stock build reads the track as FLEX; it does not synthesize FM. Choose stock explicitly before downgrading.",
-      "LFO3 speed/depth become VOIC/CHRD; LFO3 depth is muted. ATK/HOLD/REL remain inherited stock AMP controls and drive the synth’s own envelope.",
-      "ATK 0 with a short HOLD or REL starts and stops each voice abruptly and can click; raise ATK a few steps or lengthen REL (#557).",
-      "LFO1/LFO2 destinations keep FLEX's names: STRT is RATO, LEN is INDX, RATE is FINE, RTRG is FDBK, RTIM is DEC (#589). Whether LFOs on them change the FM sound is not tested.",
-      "The matching quantizer is bundled privately because the engine shares its mailbox and fixed scale accessor. Do not also select the public Scale Quantizer.",
-      "Cannot combine with Analog BD or the public Scale Quantizer because their native hooks overlap. Compatible mixed builds have native/browser byte-parity evidence; mixed audio loads have not been stress-tested.",
-      "MIDI selector recovery and one-track mono/four-voice playback are emulator-tested. External MIDI note/CC traffic, saved project/Part reloads, legato, modulation, maximum simultaneous tracks and hardware timing remain unqualified.",
-      "Historical upstream marker-FLEX activation remains for compatibility; the verified route is the dedicated FM SYNTH chooser.",
-      "Source output is 18.06 dB quieter at identical mixer settings. Added headroom mitigates gain clipping; effects, resonant filtering and summed tracks can still clip. The hardware static report has not been reproduced."
+      "VOIC and CHRD sit in the PLAYBACK SETUP page's LOOP and SLIC boxes; LFOs and scenes reach them (PMTR VOIC / CHRD), and they are latched at a note's START.",
+      "A Part holds at most two FM SYNTH tracks; the voices are capped so the Part stays within the CPU budget (the VOIC shown is the Part's). A choice past the limit is refused with a message.",
+      "An LFO on PTCH moves the pitch 0.2 semitone per unit of depth, as on FLEX. FLEX's PTCH stops at +-12.8 semitones; an FM SYNTH track's range goes further.",
+      "The matching quantizer is bundled privately because the engine shares its mailbox and fixed scale accessor. With FM Synth alone, MIDI tracks are not quantized, and on STATIC / FLEX tracks the PTCH knob, PTCH locks and chromatic keys step through the scale but a trig's PTCH is not snapped as it plays, and the chromatic keyboard marks the key pressed, not the note sounded: those are Scale Quantizer's, which is a declared conflict with FM Synth (both carry the same quantizer source and would patch the same sites).",
+      "A project saved with Scale Quantizer or Octatrick (#SEQUENCER_AUDIO_SCALE_OFF) keeps those tracks out of the scale under FM Synth, FM SYNTH tracks included; FM Synth has no per-track rows to change it.",
+      "Cannot combine with Analog BD, whose native hooks overlap this module's, or with Scale Quantizer: both carry the same quantizer source and would patch the same sites, and a module may not hook into another module's code, rows, tables or files (the owner, #555, 31 October 2026).",
+      "About 12 dB louder than 0.1.2 at identical mixer settings (6 dB of headroom instead of 18); AMP VOL 0 is the reference and VOL above it can clip a full-scale voice.",
+      "Card builds only: the Octatrack base's USB package for this version cannot be built yet (DRAM regions and generated includes; TESTING.md).",
+      "Emulator-checked (boot, the machine list, chords at VOIC 4 with a scale, the first chord after power-on, SEQUENCER rows, LFO SETUP names, the level of an FM SYNTH track unchanged by a sample loaded into its slot). The author reports this cut's image (TEST9) working on his MKI on 1 November 2026, its test sheet passing (the optional step not confirmed; TESTING.md), and the TEST7 image (this cut before the LFO SETUP names hook came back and before the slot GAIN fix) on 30 October 2026 (TESTING.md). Play time and readings were not recorded; external MIDI traffic, maximum loads and hardware timing are not measured."
     ]
   },
   "resources": {
@@ -250,13 +252,14 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Owner-approved experimental 0.1.2: MIDI selector regression passes; mono and four-voice output have 18.06 dB more headroom. Current hardware remains untested; chip timing and complete memory bounds remain unmeasured. See TESTING.md and evidence/regressions.json.",
-    "hardwareStatus": "untested",
+    "summary": "Experimental 0.1.4 (the author's octatrick 2.21): the native card build boots and plays in the emulator; chords on the chromatic keys at VOIC 4 with a scale keep their notes on every repeat, the first chord after power-on in a saved project is a chord, and an FM SYNTH track's level is unchanged by a sample loaded into its slot. The author reports this cut's image (TEST9, upgrade file 296f9c0e..., MAIN cd7c72c8...) working on his MKI on 1 November 2026, its test sheet passing (the optional step not confirmed; TESTING.md), and the TEST7 image (MAIN 265308da..., this cut before the LFO SETUP names hook came back and before the slot GAIN fix) on 30 October 2026 (TESTING.md); the TEST4 report (26 October 2026) was for the 2.20 cut. See TESTING.md.",
+    "hardwareStatus": "reported",
     "evidenceRevision": "73490ef77f36bf523bc28f2b385d62e331ec7c5c",
     "gates": [
       "verify.py",
       "verify-audio.py",
-      "verify-regressions.py"
+      "verify-regressions.py",
+      "Hardware report for this cut's image (TEST9, upgrade file 296f9c0e..., 483,768 B): timhastie, MKI, 2026-11-01 (reported; TESTING.md)"
     ],
     "documentation": {
       "tutorial": {
@@ -264,14 +267,13 @@
         "steps": [
           "Open a disposable project with FM Synth firmware. Select an audio track, hold FUNC and press SRC, select FM SYNTH with UP/DOWN and press YES. No sample is required.",
           "Press SRC. Set RATO to 1 and turn INDX from 0 upwards to hear a sine tone acquire FM harmonics. PTCH transposes it; FINE tunes it in cents; FDBK adds feedback; DEC shortens the modulation envelope.",
-          "Place a trig and press PLAY. Press LFO to set VOIC to 2–4 and CHRD to a chord if wanted. AMP ATK/HOLD/REL shape the gain envelope; FUNC+AMP exposes LEG.",
+          "Place a trig and press PLAY. In SRC SETUP (FUNC+SRC) set VOIC to 2–4 and CHRD to a chord if wanted. AMP ATK/HOLD/REL shape the gain envelope; FUNC+AMP exposes LEG.",
           "Press STOP twice to silence the voice. To return to a sample machine, hold FUNC and press SRC, select FLEX or STATIC and press YES; assign the desired sample in the normal way."
         ]
       },
       "screenshots": [
         "media/ot-location.png",
         "media/ot-controls.png",
-        "media/ot-voices.png",
         "media/ot-legato.png",
         "media/ot-scale.png",
         "media/ot-root.png",
@@ -283,23 +285,23 @@
   "license": {
     "spdx": "MIT",
     "file": "LICENSE",
-    "declaration": "Tim Hastie and Sam Banks full MIT notices retained with exact source pins; local dedicated-machine adaptations and SVG are MIT. Stock dependencies use lazy address/length/SHA-256 guards. No firmware, extracted stock byte blobs, cards, RAM or generated binaries are included. Actual LCD captures use media/LICENSE.md; underlying Elektron rights remain reserved. Review is not legal clearance."
+    "declaration": "Tim Hastie, Sam Banks and Modwerk contributors' full MIT notices retained with exact source pins; local adaptations are MIT. Stock dependencies use lazy address/length guards resolved from the developer's own verified image. No firmware, extracted stock byte blobs, stock-window hashes, cards, RAM or generated binaries are included. Actual LCD captures use media/LICENSE.md; underlying Elektron rights remain reserved. Review is not legal clearance."
   },
   "media": [
     {
       "path": "media/ot-location.png",
       "captureType": "emulator",
-      "caption": "FM SYNTH is the dedicated sixth machine row in SRC SETUP.",
-      "alt": "Actual Octatrack LCD: FM SYNTH is the dedicated sixth machine row in SRC SETUP.",
+      "caption": "Hold FUNC and press SRC: FM SYNTH is the sixth row of SRC SETUP. With it chosen, VOIC sets one to four voices and CHRD a chord, right in SETUP.",
+      "alt": "Actual Octatrack LCD: SRC SETUP with FM SYNTH highlighted in the machine list and the VOIC (1) and CHRD controls beside it.",
       "credit": "Modwerk contributors",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
       "otUi": {
         "page": "SRC SETUP",
-        "shows": "location",
+        "shows": "location-and-controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
-        "imageSha256": "d5464195fac0033852546fbbc8f809b64d16646309c21ab25e2f203fbf123157",
+        "moduleVersion": "0.1.4-experimental",
+        "imageSha256": "cd7c72c82229ffa1f4089cb11337cea30563ec3a83fea0094bce1d265fb7f9d0",
         "setup": "Headless ot_emu; MKII panel; empty 32 MiB disposable card; stopped transport; actual 128×64 LCD pixels at integer scale 6."
       }
     },
@@ -315,25 +317,8 @@
         "page": "FM SYNTH SRC",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
-        "imageSha256": "d5464195fac0033852546fbbc8f809b64d16646309c21ab25e2f203fbf123157",
-        "setup": "Headless ot_emu; MKII panel; empty 32 MiB disposable card; stopped transport; actual 128×64 LCD pixels at integer scale 6."
-      }
-    },
-    {
-      "path": "media/ot-voices.png",
-      "captureType": "emulator",
-      "caption": "VOIC and CHRD occupy the third LFO speed and depth controls.",
-      "alt": "Actual Octatrack LCD: VOIC and CHRD occupy the third LFO speed and depth controls.",
-      "credit": "Modwerk contributors",
-      "license": "LicenseRef-OT-UI-Documentation",
-      "source": "original",
-      "otUi": {
-        "page": "FM SYNTH LFO",
-        "shows": "controls",
-        "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
-        "imageSha256": "d5464195fac0033852546fbbc8f809b64d16646309c21ab25e2f203fbf123157",
+        "moduleVersion": "0.1.4-experimental",
+        "imageSha256": "cd7c72c82229ffa1f4089cb11337cea30563ec3a83fea0094bce1d265fb7f9d0",
         "setup": "Headless ot_emu; MKII panel; empty 32 MiB disposable card; stopped transport; actual 128×64 LCD pixels at integer scale 6."
       }
     },
@@ -349,8 +334,8 @@
         "page": "AMP SETUP",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
-        "imageSha256": "d5464195fac0033852546fbbc8f809b64d16646309c21ab25e2f203fbf123157",
+        "moduleVersion": "0.1.4-experimental",
+        "imageSha256": "cd7c72c82229ffa1f4089cb11337cea30563ec3a83fea0094bce1d265fb7f9d0",
         "setup": "Headless ot_emu; MKII panel; empty 32 MiB disposable card; stopped transport; actual 128×64 LCD pixels at integer scale 6."
       }
     },
@@ -366,8 +351,8 @@
         "page": "CONTROL SEQUENCER: SCALE",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
-        "imageSha256": "d5464195fac0033852546fbbc8f809b64d16646309c21ab25e2f203fbf123157",
+        "moduleVersion": "0.1.4-experimental",
+        "imageSha256": "cd7c72c82229ffa1f4089cb11337cea30563ec3a83fea0094bce1d265fb7f9d0",
         "setup": "Headless ot_emu; MKII panel; empty 32 MiB disposable card; stopped transport; actual 128×64 LCD pixels at integer scale 6."
       }
     },
@@ -383,8 +368,8 @@
         "page": "CONTROL SEQUENCER: ROOT",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
-        "imageSha256": "d5464195fac0033852546fbbc8f809b64d16646309c21ab25e2f203fbf123157",
+        "moduleVersion": "0.1.4-experimental",
+        "imageSha256": "cd7c72c82229ffa1f4089cb11337cea30563ec3a83fea0094bce1d265fb7f9d0",
         "setup": "Headless ot_emu; MKII panel; empty 32 MiB disposable card; stopped transport; actual 128×64 LCD pixels at integer scale 6."
       }
     },
@@ -400,8 +385,8 @@
         "page": "CONTROL SEQUENCER: GLIDE",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
-        "imageSha256": "d5464195fac0033852546fbbc8f809b64d16646309c21ab25e2f203fbf123157",
+        "moduleVersion": "0.1.4-experimental",
+        "imageSha256": "cd7c72c82229ffa1f4089cb11337cea30563ec3a83fea0094bce1d265fb7f9d0",
         "setup": "Headless ot_emu; MKII panel; empty 32 MiB disposable card; stopped transport; actual 128×64 LCD pixels at integer scale 6."
       }
     },

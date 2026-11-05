@@ -155,6 +155,21 @@ class MachineEventTests(unittest.TestCase):
                 self.assertFalse(any(at < a + n and a < at + length for a, n in spans),
                                  '%s writes at %#x overlap source START selection' % (module.name, at))
 
+    def test_drop_detours_leave_a_card_hook_whose_job_the_record_does(self):
+        """A port's dropDetours keeps a card build's hook out of the package only on a table's site, with the fields."""
+        from remix import registry
+        synth = {m.name: m for m in registry.modules().values()}['synth']
+        entry = machine_ports.port('synth')
+        self.assertIn('fm_main_commit', {d.symbol for d in synth.detours})
+        self.assertNotIn('fm_main_commit', {d.symbol for d in machine_ports.ported(synth).detours})
+        reg = machine_ports._builder().site_events()
+        good = entry['dropDetours']['fm_main_commit']
+        for bad in (dict(good, fields=['pool_open']), dict(good, table='ot_sequencer_rows'), dict(good, why=''),
+                    {'po_mon': good}, {'no_such_detour': good}):
+            drops = bad if 'po_mon' in bad or 'no_such_detour' in bad else {'fm_main_commit': bad}
+            with self.subTest(bad=bad), self.assertRaises(ValueError):
+                machine_ports.dropped(synth, dict(entry, dropDetours=drops), list(synth.detours), reg)
+
 
 if __name__ == '__main__':
     unittest.main()

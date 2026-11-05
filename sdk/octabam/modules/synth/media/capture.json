@@ -1,7 +1,7 @@
 {
   "firmware": "1.40C",
-  "imageSha256": "d5464195fac0033852546fbbc8f809b64d16646309c21ab25e2f203fbf123157",
-  "emulatorSha256": "f521565f3866947788d7c45507576a4ed386d2e4ef57e9683ab65fa0acc6a166",
+  "imageSha256": "cd7c72c82229ffa1f4089cb11337cea30563ec3a83fea0094bce1d265fb7f9d0",
+  "emulatorSha256": "07a7c08e3d4562f7b51ee5985bd2595cced383f1b8090995f1dfecfb404f092d",
   "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6.",
   "palette": {
     "on": [
@@ -79,14 +79,6 @@
     },
     {
       "capture": "ot-controls.png"
-    },
-    {
-      "press": [
-        "LFO"
-      ]
-    },
-    {
-      "capture": "ot-voices.png"
     },
     {
       "press": [
@@ -179,9 +171,8 @@
     }
   ],
   "screenshots": {
-    "ot-location.png": "4e1d84898790433813720c437d2e767cb3225c7770ea15be9115f76e70b82270",
+    "ot-location.png": "d4f9602ff68c48b059d3330ac2ba15ab0abcc4c61f50d505935e94caedfae680",
     "ot-controls.png": "2eb52e9b732308891e289aa23d92556a87dd8820b12a37cbe73f66e720a162f0",
-    "ot-voices.png": "0e99bbc3cdecc61bb66920b5648f517198b191ad3dc04a78af14e2256e1cdf3c",
     "ot-legato.png": "e5cd86583126a834f8a9351a8f2b51bca9f76c101023e37db4c933be957d5bc8",
     "ot-scale.png": "71ffe8fe7413a1e2eb0605ad7119159bba95db7f7734dc47ae13468f68a74d13",
     "ot-root.png": "53f0f6dacf09665f41629428569d9fbfac5847698c20f35a6cbe6b78a88f99e4",
@@ -189,8 +180,8 @@
   },
   "schemaVersion": 1,
   "moduleId": "synth",
-  "moduleVersion": "0.1.2-experimental",
-  "captured": "2026-10-08",
+  "moduleVersion": "0.1.4-experimental",
+  "captured": "2026-10-30",
   "imageProfile": {
     "modules": [
       "SYNTH MACHINE"
@@ -198,6 +189,6 @@
     "keepStockFx2": true,
     "staticStock": true
   },
-  "releaseProvenance": "Fresh 8 October captures from the native Synth 0.1.2 executable. Promotion must reproduce the exact emitted MAIN image fingerprint; existing software captures confer no hardware verification.",
-  "sourceSha256": "8fa263bfcd30dca9aff4f83dbcb001d4ccf06286e31839c8e0afd61100a9315c"
+  "releaseProvenance": "Captures from the native card build of FM Synth 0.1.4 on the author's bb784c4 (released with Octatrick 2.22; the slot GAIN fix: an FM SYNTH track's level is the engine's) with the LFO SETUP names hook po_lfdname in the card build, on Modwerk main 00ecaf52 (Modwerk exporter, Synth alone, stock FX2 kept; MAIN cd7c72c8, TEST9), taken on 31 October 2026 with the plan of the 2.21 cut: all six are byte-identical to the captures from MAIN d2d250a6 (TEST8), MAIN 265308da (TEST7), MAIN c5039cff (4d25490) and MAIN 8d89d596 (v2.21). The native source these captures are bound to (sourceSha256) is this version's. Software captures confer no hardware verification.",
+  "sourceSha256": "79dbb62826b9afc7cb4852273af2af7ad7e4f058e5770132bb6aad4e53bfc3df"
 }

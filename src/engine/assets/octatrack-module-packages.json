@@ -213,7 +213,9 @@
       "module": "e8c3e4fa",
       "bytes": 29810,
       "sha256": "6e5716540d78b652b272c364ddf398f688eb9dff7e2b926b2895e250341aaca7",
-      "path": "octatrack-modules/synth/0.1.2-experimental.mwrm"
+      "path": "octatrack-modules/synth/0.1.2-experimental.mwrm",
+      "lagsBehind": "0.1.4-experimental",
+      "lagReason": "0.1.4's engine needs more memory than a USB package can be given today, so 0.1.4 comes as a card build; USB installs 0.1.2, without 0.1.4's step and scene locks, chord and envelope fixes and level change (#777)"
     },
     {
       "id": "quantizer",

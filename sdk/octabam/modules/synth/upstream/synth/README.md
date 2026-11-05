@@ -1,4 +1,322 @@
-# Synth machine (phase 5: paraphonic chords, the engine in DRAM; phase 4: glide; phase 3: the page; phase 2: the FM voice; phase 1: the hollow voice)
+# FM SYNTH
+
+**Since 2.17: LFO 3 is back, with VOIC and CHRD on PLAYBACK SETUP.**
+Hold **FUNC + PLAYBACK** on an FM SYNTH track. The two leftmost boxes, formerly LOOP and SLIC,
+are **VOIC** and **CHRD**. VOIC selects **1..4 voices**, starting at **1**; CHRD selects the
+**32 shapes with 4 inversions**, with `----` for no chord. CHRD changes one value a knob click. VOIC steps like the stock
+few-valued boxes (LOOP, SLIC): one step per stock threshold of knob travel, and its dial spreads
+1..4 evenly over the arc (2.18; the same stepping for its step and scene locks).
+The other four setup boxes (LEN, RATE, TSTR, TSNS) are not on an FM SYNTH track's page (2.18):
+no frame, name or icon, and knobs C-F edit nothing there. The LFO page again has **SPD3 / DEP3**, and LFO SETUP
+again has the stock **LFO 1 / LFO 2 / LFO 3 / DESIGN** rows. LFO 3 can modulate a destination
+such as INDX while the chord plays, and SPD3 / DEP3 are available in the destination list.
+The design values in this section are not runtime measurements.
+
+## LFOs and scenes on AMP ATK / HOLD / REL, and the PTCH LFO depth (2.20)
+
+Following Jan Kolkmeier's report and fix in Modwerk #883 / #884:
+
+- **The AMP envelope follows LFOs and scene locks on ATK, HOLD and REL**, as on a FLEX track.
+  Until 2.19 the engine read only the knob value and a trig's lock: an LFO or a scene on those
+  three changed nothing on an FM SYNTH track.
+- **An LFO on PTCH moves the pitch as far as on FLEX**: 0.2 semitone per unit of depth, as on FLEX
+  (DEP 16 = about +-3.2 semitones); FLEX's PTCH stops at +-12.8, an FM SYNTH track's goes further.
+  (The 2.20 commit message, efbb192, still says "DEP 127 sweeps about +-12.8 semitones"; history is
+  not rewritten, this line is the correct statement.)
+  Until 2.19 it moved five times as far, because a synth's PTCH unit is a semitone and a sample
+  track's is a fifth of one. The PTCH knob, its trig locks and its scene locks stay in whole
+  semitones, as before. A project saved with a PTCH LFO on an FM SYNTH track now swings a fifth
+  as far as it did.
+
+VOIC, CHRD and RATO keep their scene behaviour: the crossfader sweeps through the values in
+between (VOIC and CHRD since 2.18; RATO as the stock morph does). SY DRUM's envelope and its
+LFOs are unchanged.
+
+How: the frame builder writes the effective ATK / HOLD / REL (the Part's value or the trig's lock,
+then the scene morph, then the LFOs) into the DSP voice record, the three words `sy_ison` then
+overrides so that the engine runs the envelope itself. `po_amp_snap` keeps those values per track
+while they are still the frame builder's (at a START in `sy_cold`, every frame in `sy_ison` before
+the override), and `po_amp_at` gives them to the envelope's readers (`sy_cold`'s HOLD timer,
+`po_mono_env`, `po_frame`, a paraphonic note's HOLD gate in `po_st_env`). The live lane, which has
+the locks only, is still read before a track's first snapshot and on a SY DRUM track. The PTCH
+depth: `lf_apply`, which both stock LFO depth reads already pass through, gives a fifth of the
+depth for PMTR 0 (PTCH) on an FM SYNTH track; full DEP counts as 0x8000 first, as the stock
+arithmetic's own full-depth correction makes it. Every other track and destination keeps the
+stock depth. The emulator measurements are in the 2.20 release record.
+
+## Mute Modes' trig mutes (2.19)
+
+With Mute Modes (octabam's `mute-modes`, PERSONALIZE > MUTE MODE) in the image, an FM SYNTH or
+SY DRUM track obeys its trig-mute modes as a sample track does (Modwerk #777, the Mute Modes
+author's analysis):
+
+| MUTE MODE | a muted (or soloed-out) FM SYNTH / SY DRUM track |
+|---|---|
+| OT, OTFX | as before: the trigs play, Mute Modes cuts the sound |
+| DT-T | new trigs make no note; the note already sounding plays out on its own envelope |
+| OTFX-T | new trigs make no note; a note already sounding at the mute is cut at once, as OTFX cuts it |
+
+Every START is dropped on such a track, whatever posted it (a sequencer trig, a CHROMATIC key,
+a MIDI note-on), because Mute Modes' own trig gates test the track's mute and solo state and not
+where the trig came from (read from its source; a live key on a muted stock track was not
+measured). STOP ends the voices of a muted track in DT-T and OTFX-T too (Mute Modes skips the
+stock voice kill for such a track, and with it the engine's), so a HOLD INF note does not ring on
+after STOP. Beside SIDECHAIN COMPRESSOR, a track a COMPRESSOR uses as its KEY keeps its trigs in
+every mode, as Mute Modes lets a KEY track's trigs through.
+
+How: `synth/manifest.py` sees Mute Modes in the remix (`MUTE_MODES`) and reads the two words it
+consults from its source (the MUTE MODE word and the per-track solo / mute long, `patch_softmute.s`
+`GATE` / `MUTE_STATE`) into `remix.inc` (`HAVE_MUTE_MODES`, `MM_MODE`, `MM_STATE`, and
+`HAVE_MM_KEY` from Mute Modes' SC_KEY). `poly.s` asks `po_mm_silenced` at the two places the
+engine acts on a START (`sy_render`'s resolve, before `sy_cold`; `po_frame`, before `po_start`):
+MUTE MODE 1 (OTFX-T) or 2 (DT-T), and the track muted, or not soloed while another track is.
+`po_mm_tick` (from `po_tick`, once a frame) ends those tracks' engine voices at the frame the
+sequencer stops, as `po_kill` would have, and in OTFX-T also at the frame a track becomes
+silenced (muted, or soloed out, or a muted track whose mode becomes OTFX-T): Mute Modes' own
+edge, which it answers with a stock note-off that does not end a note of this engine. Without Mute Modes none of it is assembled: the engine
+is byte for byte 2.18's.
+
+### Measured (24 Oct 2026, octabam's emulator `ot_emu`, a bench image = the 2.19 modules + Mute Modes; emulator results, not the unit)
+
+T1 FM SYNTH (a sine, trigs 1/5/9/13, ATK 0 / HOLD 20 / REL 20) muted after four trigs, T2 a second
+FM SYNTH track unmuted, T3 a FLEX sine muted with T1; MUTE MODE set per run:
+
+| MUTE MODE | T1 after each of its 9 muted trigs | T1 notes started | T2 (unmuted) |
+|---|---|---|---|
+| none muted | -27.3 dBFS every trig | 13 of 13 | -27.2 dBFS |
+| OT, OTFX | at most -97.9 dBFS | 13 of 13 (the trigs run, the sound is cut) | -27.2 dBFS |
+| DT-T, OTFX-T | at most -98.0 dBFS | 4 (the unmuted ones) | -27.2 dBFS |
+
+A paraphonic T1 (VOIC 3) gives the same in DT-T and OTFX-T (no chord after a muted trig). STOP on
+a muted HOLD INF note in DT-T or OTFX-T ends the tone 68 / 83 samples after the STOP press, in one
+step, as the stock voice kill cuts. On the emulator the stock kill of an UNMUTED HOLD INF note comes
+about 0.7 s after the press (BUILD 33 above), so a muted synth track goes quiet before the others.
+In OTFX-T a note already sounding when the track is muted read -27.3 dBFS until STOP before the
+cut at the silenced edge was added (OTFX cuts the same note to -77.8 dBFS); the measurement with
+the cut is in the 2.19 release record. The live-key rule and the SIDECHAIN COMPRESSOR
+KEY exemption follow Mute Modes' source and were not run.
+
+## VOIC and CHRD on PLAYBACK SETUP (2.17)
+
+**Step locks.** In GRID RECORDING, hold a trig and turn VOIC or CHRD. The held step's locked
+value is drawn inverted. In LIVE RECORDING, the fingered-chord recogniser records CHRD and
+VOIC in the synth's own step-lock table; PTCH remains a stock pitch lock. Step copy, paste,
+clear and undo carry the FM locks, and a full track copy or paste carries that track's scene
+assignments to the destination Part. A machine change keeps locks, as before.
+
+**Scene locks.** Hold SCENE A or SCENE B and turn either knob to assign it to the scene
+selected on that side. Its assigned value is drawn inverted while the scene key is held (since 2.19
+the page redraws on the SCENE press and release, as stock pages do, without a knob turn).
+To remove an existing assignment, keep the scene key held and press and release that knob
+without turning it. Pressing an unassigned knob assigns its Part value. A held trig takes
+precedence over a held scene key.
+
+At every note START, each control takes its **step lock first**, otherwise the **selected
+scene's lock**, otherwise its **Part value**. The crossfader morphs between the sides as it
+does for stock parameters (2.18; 2.17 switched at the midpoint): the value is the two sides'
+values weighted by the crossfader position and rounded to the control's step, so a sweep from
+a CHRD minimum on A to a maximum on B passes every shape between, and VOIC passes 1..4.
+A side without an assignment, or a disabled scene side, uses the Part value.
+The load cap is applied after the locks are resolved.
+
+**Cap display (23 October fix).** If the Part's existing load budget permits fewer voices than the
+resolved VOIC value, the box prefixes the effective count with two dashes: **`--1`**
+when VOIC is set to **4** but the cap is **1**. CHRD reads **`----`** whenever the effective
+voice count is **1**, and its chord type when two or more voices can play. The same display
+applies to inverted scene values. The stored value and its locks stay
+intact, so removing the limiting SY DRUM track restores the stored voice count and shape.
+An allowed SY DRUM choice beside another FM track shows
+`FM SYNTH -> MONO`. The budget weights and refusal rules remain those of **2.16**.
+
+**Module LFO destinations (2.17).** On an FM track, the PMTR list appends
+`VOIC` and `CHRD` as native destination bytes **30** and **31**. All three LFO speeds and
+depths keep their stock slots. For either new destination, the stock depth calculation
+writes a private module word rather than an out-of-range stock parameter. At the next
+note START, the module adds the resulting offset after step/scene/Part resolution:
+VOIC is clamped to **1..4**, then limited by the existing budget; CHRD moves across shapes
+**0..31**, retaining its inversion. The offset is bipolar, as for every stock destination:
+the LFO's signed output, scaled by DEP, lowers or raises the resolved value (VOIC by up to
+three voices, CHRD by up to 31 shapes), and the sum is clamped, never wrapped. Multiple LFO
+contributions add. The stored VOIC stays **1..4**. A sounding note keeps its latched result
+until another START.
+
+PMTR retains its native Part-byte storage and cannot be locked on a trig. Per-step
+variation comes from VOIC/CHRD step locks, with the LFO offset applied on top. SAVE, a
+power cycle and a reload keep PMTR bytes 30/31 and the modulation (emulator-checked).
+[Community PR 3](https://github.com/timhastie/octatrick-modules/pull/3) was read as prior art;
+its SPD3/DEP3 storage and 0..127 VOIC representation are not used here.
+
+**Saved values and files.** The Part's PLAYBACK SETUP bytes hold the ordinary VOIC and CHRD
+values. The synth keeps its step locks and scene assignments in **`fmlock01.work` /
+`fmlock01.strd` through `fmlock16.work` / `fmlock16.strd`**, beside the project's bank files.
+Each FM bank file includes its step locks, its working and saved Part scene assignments,
+and the migration checkpoint. Keep these companion files with a project when copying or
+backing it up. They are independent of SY DRUM's `sylock` files. Working locks use the
+inherited **1.2 s** write-while-playing rule; SAVE also updates the stored files, and RELOAD
+restores them. The PORT power-cycle checks below cover both without-SAVE and SAVE paths.
+
+**Older projects.** On loading a **2.15 / 2.16** project without the migration marker, each
+FM SYNTH track's old SPD3 becomes VOIC when it is **1..4**, otherwise VOIC becomes **1**;
+old DEP3 becomes CHRD. Its SPD3 and DEP3 step locks move to VOIC and CHRD step locks, and
+its corresponding scene assignments move to the synth's scene table. The old native lock
+entries are cleared, and SPD3 / DEP3 return to the stock LFO defaults, so an old chord lock
+cannot become pitch modulation from LFO 3. Non-FM tracks, including SY DRUM, keep their data.
+A project with no FM SYNTH tracks is left alone on load.
+
+The project comment **`#SYNTH_VC_SETUP=1`** marks completion. Per-bank checkpoints make normal
+repeated loads idempotent and distinguish an old saved bank restored later from a migrated
+one. A newly chosen FM track uses the new setup bytes from the outset. No musical data loss
+is intended: the existing voice choice, chord shape, step locks and scene locks move to the
+new locations. Older releases do not read these FM companion files; the migration does not
+maintain a second copy in the old SPD3 / DEP3 locations. The migration is not a filesystem
+transaction, and interruption during a save has not been qualified. A project text file
+larger than the migration scratch capacity produces an error instead of being rewritten.
+
+### Measured (2.17, octabam's emulator; 2.17 ran on the author's MKI on 24 Oct 2026)
+
+On the emulator: VOIC moves through **1..4** one click at a time and CHRD one entry at a
+time; the rendered **MA7** shape adds its notes in the stored voice order as VOIC rises; the
+LFO SETUP window matches FLEX's; GRID locks, copy / clear / paste, a step delete and a power
+cycle with and without SAVE keep and play the independent locks; 2.15 / 2.16 projects
+migrate (defaults, step locks, scene locks) and a project without FM SYNTH is unchanged; the
+budget and chooser checks pass. A garbled CHRD label in the first 2.17 build was fixed
+before release (the formatter's callback context). Not established on the emulator: live
+recording of a fingered chord, and a physical crossfader sweep.
+
+## Earlier release notes and measurements
+
+The dated sections below preserve the implementation history and its measurements. Their
+LFO-page VOIC / CHRD storage, muted LFO 3, and V/C setup column describe releases **before
+2.17**; the PLAYBACK SETUP section above describes the controls since 2.17. The
+**2.16 load budget** remains in use, with the cap display described above.
+
+
+**Historical Octatrick 2.16: the load budget, and the LFO SETUP page's V/C column.** 2.16 replaces 2.15's three counting rules with one load budget per Part, so two FM SYNTH tracks fit (the FM voices capped to the budget beside SY DRUM tracks); and on an FM SYNTH track the LFO SETUP page's third column now reads V/C with VOIC / CHRD boxes instead of LFO 3 with SPD / DEP. Details: "The load budget (2.16)" and "The LFO SETUP page's V/C column (2.16)" below.
+
+**Historical Octatrick 2.15: a selection guard.** FM SYNTH and SY DRUM run on the unit's
+main processor, and too many tracks of them freeze the unit. Both machine lists (SELECT MACHINE TYPE
+and SRC SETUP) now refuse a choice that would put more than **2 SY DRUM tracks**, more than **1 FM
+SYNTH track**, or **FM SYNTH together with more than 1 SY DRUM track** into the active Part; the track
+keeps its machine and the screen says why (`SY DRUM: 2 MAX`, `FM SYNTH: 1 MAX`, `FM+SY DRUM: LIMIT`).
+The limits are final, set from PROCESSOR LOAD readings on the author's MKI. Copy / paste follows them
+(PASTE TRACK, the SRC page's paste, a Part paste and their undo are refused the same way when they would
+pass a limit), and **the `FMSYNTH*` / `SYNTH*` marker file no longer makes a FLEX track an FM voice**: it
+plays as a sample; choose FM SYNTH in the machine list instead. A project saved by an older build with
+more such tracks loads and plays as saved. Details: "The selection guard (2.15)" below.
+
+**Octatrick 2.12 (tag `v2.12`; 10 - 11 Oct 2026): the metronome no longer
+releases a held note.** With the metronome on and the sequencer playing, a held
+CHROMATIC key or chord on a synth track was released at the next click as if it
+had been let go (at REL INF: cut within 5 ms), and every sequencer note was
+released at the next click too. The engine had hooked the metronome's click
+word, taking it for the sequencer's STOP word (2.9's `po_stop`); the hook is
+gone, and STOP still ends the voices at the stock voice kill. Details: "The
+metronome no longer releases a held note (2.12)" below. Grid steps and played
+notes were measured at the same level (a grid trig, a held key and a
+live-recorded trig of the same note at the same VOIC); what makes steps sound
+softer -- HOLD, VOIC, the same pitch repeated at VOIC 2..4 -- is in "Grid steps
+and live keys: the same level (2.12)" under "6 dB of headroom"; no level
+changed. **And a machine change resets the track's machine parameters to
+init:** a machine change to or from FM SYNTH / SY DRUM (either list, or a
+marker file) resets the track's PLAYBACK, PLAYBACK SETUP, AMP, LFO and their
+SETUP pages to the new machine's init; step and scene locks are kept, as in
+the stock firmware; FX slots are kept. Details: "A machine change resets the
+track's machine parameters (2.12)" below.
+
+**Octatrick 2.10 (tag `v2.10`; 5 - 8 Oct 2026).** **FM SYNTH is in the
+machine list** (8 Oct): the sixth row of SRC SETUP (FUNC + SRC) and of SELECT
+MACHINE TYPE on every track, playing with no sample and no marker file -- see
+"Selecting FM SYNTH from the machine list (2.10)" below (adapted from
+Modwerk's FM Synth module, MIT, Modwerk contributors). Four changes on the
+synth: DEC puts HOLD at 127 (5 Oct); the note-start click is gone (attacks of
+at least one carrier period, S-shaped); the LFO destination list speaks FM;
+a held CHROMATIC key is the gate (HOLD is for sequencer trigs). And three
+fixes after the author's test of the first 2.10 build on his MKI (7 Oct): a
+note restarted while it still sounds no longer clicks at a short DEC; a fast
+run at VOIC 2..4 no longer loses notes; a live-recorded legato phrase no
+longer goes silent on playback. And the engine leaves 6 dB of headroom (8
+Oct): VOL 0 is the reference, VOL up to about +6 stays clean. Each below.
+
+**2.10: DEC puts HOLD at 127 (5 Oct 2026).** The
+PLAYBACK page's DEC knob read `HOLD` at raw 0, then the shortest decay at 1
+up to `2.0s` at 127; HOLD (the index envelope holds: the maximum sustain of
+the decay) is now the LAST position on the right. **127 = `HOLD`** (the
+index holds for the whole note; the paraphonic k `T_DK` is 0), **0 = the
+shortest** (k = `K_MAX`, the instant decay; the page prints `0`), and **1..126
+are unchanged** -- the same k (`K_NUM / raw²`, capped at `K_MAX`) and the same
+milliseconds as before, so a saved DEC other than 0 or 127 sounds the same; a
+saved 0 (was HOLD) now decays at once and a saved 127 (was `2.0s`) now holds.
+The icon follows: a flat top at 127, the shortest fall (L = 2 columns) at 0.
+Sites: `poly.s` `sy_env_k` (the mono voice) and the paraphonic frame's RTIM
+-> `T_DK` (`po_fr_hold`); `page.s` `pg_fmt_decay` and `pg_ic_decay`. The page
+cave stays **1,812 B** (two short branches pay for the compare; `PINNED_PAGE`
+re-ratified); the DRAM unit grows 18,452 -> 18,472 B. FUNC + detent from 0
+now steps 0 16 32 .. 112 127 = HOLD at the end. The measured records below
+predate this and keep the old law (DEC 0 = HOLD).
+
+**2.10 also (6 Oct 2026): the note-start click is gone.** Tim heard a click
+at the start of FM notes ("noticeable if you turn ratio all the way down, and
+play lower octaves"). The cause (measured on the emulator): the 16-frame linear attack
+(5.8 ms) is a fraction of one carrier period below about C3 and ends at an
+arbitrary phase, so the onset and the corner at its end put 17..35 dB more
+energy at 100 Hz..1 kHz than a dark low note (RATO 0.25) carries. Every attack
+now lasts at least one carrier period and is S-shaped; a warm START's index
+ramp lasts at least a period; a START at another pitch on a sounding mono note
+crossfades; a stolen voice fades over a period, and a chord-memory or stolen
+voice that must jump UP in pitch fades out first and starts its new note cold.
+**What you hear differently:** attacks below C3 are slower -- C1 reaches -3 dB
+in 20 ms and full level in 31 ms, C2 in 10 / 16 ms, C3 (F2..F3) in 26 frames
+= 9.4 ms, from F3 up as before (ATK 0: 6.2 ms, was 5.8) -- and every attack is
+S-shaped (the same total time, within 6 %, for every ATK); at VOIC 2..4 a
+chord whose voices must move UP while all of them sound starts each such note
+one period of the note it replaces late (from a C1: up to 31 ms; from a C3:
+7.6 ms). Details and numbers: "The note-start click (2.10)" below.
+
+**2.10 also (6 Oct 2026): the LFO destination list speaks FM.** On a synth
+track LFO SETUP's PMTR lists the FM SYNTH page's own names -- `PTCH RATO INDX
+FINE FDBK DEC`, then AMP, then `SPD1 SPD2 DEP1 DEP2`, then FX1 and FX2 -- where
+it printed the Flex names (`STRT LEN RATE RTRG RTIM`) and offered `SPD3` /
+`DEP3`, which are VOIC and CHRD on a synth track: the knob steps over those
+two. Every other track's list is unchanged. Details: "The LFO destination list
+(2.10)" below.
+
+**2.10 also (6 Oct 2026): a held key is the gate.** A CHROMATIC key held on a
+synth track sustains for as long as it is held and starts the release (REL)
+when it goes up; HOLD now gates sequencer trigs only (and MIDI notes, as
+before). Until now a live key's note ended at HOLD even with the key still
+down (HOLD 32 at 120 BPM: 282 ms). LEG MONO / POLY behave as before, STOP
+still ends everything, and the live recorder still records the played length.
+Details: "A held key is the gate (2.10)" below.
+
+**2.10 also (7 Oct 2026): three fixes from the author's test of the first
+2.10 build.** Four things were heard on the MKI; the emulator showed three
+causes, and all three are fixed:
+- **A click at the start of a note restarted while it still sounds**
+  (a quick re-press of a CHROMATIC key, the same note again in a fast run, a
+  sequencer trig on its own tail, a recorded legato phrase played back) at
+  DEC 0, louder the higher INDX, gone with DEC turned up a little. Such a
+  START ramped the index back to full and DEC 0 then dropped it to its floor
+  within one 16-sample frame. Now the index envelope restarts as a fresh
+  note's and the index itself ramps over at least one carrier period: at DEC
+  0 a restarted note sounds like a fresh one.
+- **Notes that did not sound** in a fast run at VOIC 2..4 over a long REL: a
+  second key pressed while a voice faded for the first key took that same
+  voice and dropped the first key's note. A voice holding a waiting note is
+  now taken last.
+- **A live-recorded legato phrase went silent on playback** at its first
+  legato step (LEG MONO at VOIC 1, LEG POLY at VOIC 2..4): the recorded
+  trigless step made the stock renderer walk the synth's marker sample to its
+  end, which ended the voice. The step now keeps the voice.
+Not reproduced on the emulator: notes not sounding at REL 0 with the
+sequencer running, and notes jumping up an octave. Details: "The author's
+test of the first 2.10 build (2.10)" below.
+
+**2.10 also (8 Oct 2026): 6 dB of headroom.** The engine's output is 6.02 dB
+lower than before, on the mono voice and on every paraphonic voice alike (one
+arithmetic shift right before the sum): VOL 0 is the reference, VOL up to
+about +6 stays clean, and a VOIC 4 chord's coincident peaks reach full scale
+instead of twice it. The relations between VOIC 1..4, the envelopes and the
+attacks are unchanged. Details: "6 dB of headroom (2.10)" below.
 
 **OCTATRICK2.9 (28 Sep 2026, later): FINE defaults to 0c when a track
 becomes a synth track.** A track that is made a synth track -- a FLEX track
@@ -65,7 +383,8 @@ MONO is the trigless key legato of 2.6 -- instant pitch, no retrigger),
 everywhere (it no longer switches legato on for a sample track), and **LEG
 OFF = no glide at all on a synth track** (sequenced trigless trigs step
 too). POLY at VOIC 2..4 slides the sounding chord to a new key -- **"LEG"**
-below.
+below. The F knob steps LEG as the stock few-valued boxes step (2.18: one value
+a stock threshold of knob travel, no longer one a raw unit).
 **The marker (30 Sep 2026)**: the marker file is `FMSYNTH.wav` -- a FLEX
 slot whose file name (after the last `/`) starts with `FMSYNTH` or `SYNTH`
 makes its track a synth (`sy_scanned` / `po_lp_scanned` in `poly.s`, the
@@ -87,7 +406,9 @@ power** -- every shape but `----` plays 2 / 3 / 4 notes at VOIC 2 / 3 / 4
 (its own notes first, then octave doublings), a start with a shape is chord
 memory (the previous chord goes), a voice is `1 / sqrt(VOIC)` of the mono
 voice (-3 / -4.8 / -6 dB) and a soft limiter takes the in-phase excess --
-**"VOIC, CHRD, and the mono voice"** below.
+**"VOIC, CHRD, and the mono voice"** below. (2.10, 8 Oct 2026: every level
+the engine puts out is 6.02 dB lower, the relations unchanged -- "6 dB of
+headroom (2.10)".)
 Phase 5 (24 Sep 2026) moves the FM voice engine into a DRAM unit (`poly.s`,
 the ROM cave `synth.s` kept for the record) and makes the synth paraphonic:
 the LFO page's VOIC slot (1..4) gives a synth track that many voices playing
@@ -105,11 +426,817 @@ FM voice"** below has the design, the parameter map and the numbers. Phase
 1's text follows it as written (its record-layout guess is corrected in the
 phase-2 section and marked in place).
 
+The measurement sections below name the scripts, logs, renders and shots
+they came from; those files are in the author's workspace, not in this
+repository. Each section states its method (the build, the emulator mode,
+the card and the settings) and its numbers.
+
+---
+
+## The metronome no longer releases a held note (2.12, 10 Oct 2026)
+
+**What the author heard** (his MKI, the 2.11 engine as Modwerk's FM Synth
+0.1.4): with the metronome playing, a held note or chord was cut as if it had
+been released while the keys were still down.
+
+**The cause.** BUILD 32 (2.9) added `po_stop`, a detour at the frame
+builder's clear of the word 0x46c80350 (0x4000b2c8), on the reading that the global
+mailbox word 0x46c80350 was the sequencer's STOP / restart word and the byte
+the builder posts from it (0x46104d14) the DSP's all-off. Both are the
+METRONOME's. While the sequencer plays, the beat code writes the word -- 3 on
+the first beat of each bar (0x4009c3a0 at PLAY, 0x400a4d8c), 1 on the other
+beats (0x400a4d96); 0x4009bbb8 / 0x4009c3aa are the transport-start forms --
+and every writer sits behind a test of the byte 0x80000060, the project's
+METRONOME_ENABLED (parsed at 0x40087c20, edited in PROJECT > CONTROL >
+METRONOME). The frame builder turns a nonzero word into the DSP-wide command
+byte 0x46104d14 = 0x10 | [0x80001810] (0x30 | .. on the accent) -- the click --
+and clears the word at 0x4000b2c8. So `po_stop` ran at every click and at
+nothing else (BUILD 33 measured that it never ran at a STOP: the metronome was
+off on that rig). At every click it set S_ON bit 1 (released) and bit 2
+(STOPPED: REL INF takes the 1 ms floor) on every synth track, moved every
+sounding paraphonic voice to its release and dropped the notes waiting for a
+fading voice -- with the keys still held. A held key or chord was released at
+the next beat through the lane's REL (at REL INF cut within 5 ms), and every
+sequencer note was released at the first beat after it. SY DRUM tracks (the
+same engine record) were released the same way.
+
+**The fix.** `po_stop` and its detour are removed: 0x4000b2c8 is stock again
+and the engine no longer touches the metronome's word (`GLOBAL_WORD` in
+`poly.s` is documented as the click word). STOP, a pattern change and the
+loaders end the engine's voices where they have since BUILD 33, at the stock
+VOICE KILL (`po_kill`, which also drops the waiting notes). Nothing sets S_ON
+bit 2 any more, so its two readers (`po_mono_env`'s and `po_frame`'s REL INF
+floor) never fire; they are left in place. The DRAM unit shrinks 20,980 ->
+20,860 B; every other instruction is unchanged (the two disassemblies differ
+only in addresses).
+
+**Measured** (the pinned ot_emu, DSP lockstep, the stream in TRACKS mode so
+track 1's own stem is measured without the click; the v2.11 FM-only octabam
+image against the same build of this change; T1 = FM SYNTH, C4, RATO 2.00
+INDX 60 DEC HOLD; 120 BPM, the sequencer playing; the CHROMATIC key C4, or C3
+E3 G3 C4, held 9.1 s = 18 beats; the metronome on (MAIN 64, CUE 64) or off):
+
+| held, AMP | 2.11, metronome on | 2.12, metronome on |
+|---|---|---|
+| key, VOIC 1, ATK 0 HOLD 14 REL 98 | released at the first click (S_ON 1 -> 7, `po_stop` 24 times in the session): -30.0 dBFS in the first 0.5 s, -47.0 at 2 s, silent from 4 s with the key down | S_ON 1 and S_GAIN full throughout, -29.45 dBFS to the key-up; the stem identical sample for sample to the metronome-off render |
+| key, VOIC 1, HOLD INF REL INF | cut to silence at the first click | identical to metronome off |
+| chord, VOIC 4, HOLD 14 REL 98 | all four voices released at the first click, silent from 4 s | four voices sounding throughout; identical to metronome off |
+
+The click still sounds: the main mix minus the metronome-off render holds one
+click per beat (18 in the 9.1 s, -12.0 dBFS peak); the frame builder posted
+the click command at each of the session's 24 beats (0x10 | n at 0x4000b2ac;
+on the 6 accents 0x30 | n at 0x4000b2c2) and its stock clear at 0x4000b2c8 ran
+24 times.
+Grid notes with the metronome on (HOLD INF REL INF): 2.11 released each at the
+next click (-2.6 dB at +500 ms, silent at +1 s); 2.12 holds them at 0 dB for
+the whole 2 s loop, as with the metronome off. STOP, with the metronome on and
+off: a held REL INF key, or a HOLD INF grid note, sounds until the stock voice
+kill 0.74 s after the press (the rig's stop timing, 0.75 s on 2.11); at the
+kill S_ON, S_GAIN and S_GPREV are 0, the stem stays below -69 dBFS after it,
+and the next key starts cold (S_GPREV 0 before its START).
+
+Unchanged: Modwerk's synth harnesses (`gate.cpp`, `lfo_regression.cpp`) pass
+with the PCM and state identical to 2.11's and the same cost; the note-start
+click cards of 2.10 (the onset splatter per note, nine cards) read the same on
+both images within 0.1 dB, and the 2.10 author's-test cards (taps, runs,
+sequencer and live-recorded phrases at VOIC 1 and 4) find no onset at +10 dB
+or more on either; five SY DRUM renders (the DEC, LFO, PTCH and lock cards)
+are identical sample for sample; the machine-list walks (FM SYNTH alone, FM
+SYNTH and SY DRUM, the chooser) and a Part save / reload walk are
+pixel-identical with every peeked byte equal.
+
+## Selecting FM SYNTH from the machine list (2.10, 8 Oct 2026)
+
+FM SYNTH is a machine of its own now: the sixth row of the track's machine
+lists, under STATIC FLEX THRU NEIGHBOR PICKUP. **No marker file and no sample
+are needed.** The `FMSYNTH*.wav` / `SYNTH*.wav` marker files still worked exactly
+as before until 2.14 (since 2.15 a marker file is a sample like any other: "The
+selection guard (2.15)"); the machine list is the way in.
+
+**To select it** (any track, T1..T8):
+
+- **SRC SETUP:** hold FUNC and press SRC (the PLAYBACK page key). The machine
+  list is on the left; go DOWN to `FM SYNTH` (the row after PICKUP) and press YES. The
+  right-hand side then shows the FLEX setup values the track keeps (LOOP, SLIC,
+  LEN, RATE, TSTR, TSNS -- all OFF on a fresh FM SYNTH track).
+- **SELECT MACHINE TYPE:** press the track key twice quickly (the QUICK ASSIGN
+  slot list), press LEFT on `<< MACHINE`, go DOWN to `FM SYNTH`, press YES.
+  Since 2.18 the track key pressed twice on an FM SYNTH or SY DRUM track opens
+  this list directly (as on THRU, NEIGHBOR and PICKUP), not the slot list.
+
+The PLAYBACK page then reads `PTCH RATO INDX FINE FDBK DEC`, the footer
+`FM SYNTH>FM SYNTH`, and both lists open on the `FM SYNTH` row for that
+track. A track that was not playing the FM voice before starts from PTCH 0,
+RATO 1, INDX 32, FINE 0c, FDBK 0, DEC 40 (199 ms). Choosing FM SYNTH again
+keeps your patch, and (until 2.14) so did choosing it over a track that played FM
+through a marker file (its patch and its setup values were kept; only the
+machine-list mark was added).
+
+**To go back** choose FLEX or STATIC (or any other machine) in either list.
+The mark is removed and the track is the plain machine again, at that
+machine's init (since 2.12: "A machine change resets the track's machine
+parameters", below; the locks stay). Until 2.14, if
+the FLEX slot held a marker file, the track still played FM through it.
+
+**What is stored.** The machine byte is FLEX (1), so every stock FLEX path --
+the PLAYBACK lanes, locks, LFOs, scenes, the DSP voice -- stays valid; the
+mark is the three bytes `F`, `M`, 1 at the start of the track's NEIGHBOR
+PLAYBACK column (the Part + 0x3c + 30 * track; the bank blob + part * 6322 +
+0x8edbc + 30 * track), written into the Part and its battery-RAM shadow. A
+FLEX track never uses those bytes and the stock Part validator's NEIGHBOR
+range is 0..127, so the mark survives SAVE, RELOAD, Part COPY / PASTE and a
+project load like any other Part byte. Part CLEAR clears it with the rest.
+The quantizer (`quantizer/`, the same tag) knows the mark too: CHROMATIC keys,
+the tuning system, LEG and the live recorder treat a chosen track as a synth
+track. Build both modules from this tag together; an older quantizer treats a
+chosen track as a sample track.
+
+**On a stock OS, or a build without this change,** such a track is a plain
+FLEX track: with an empty slot it is silent; with a sample in its slot it
+plays that sample with the FM values as STRT / LEN / RATE / RTRG / RTIM (RATE
+64 is half speed); the mark is ignored. **Before downgrading, choose FLEX (or
+STATIC) on every FM SYNTH track and SAVE**, or keep a marker file in the slot
+if you want those tracks to stay FM on an older Octatrick build.
+
+### How it works
+
+The chooser is adapted from Modwerk's FM Synth module ([repeat98/modwerk](https://github.com/repeat98/modwerk),
+`sdk/octabam/modules/synth`, commit 1c1d938; MIT, Modwerk contributors), whose
+chooser is derived from Modwerk's Analog BD chooser hooks. That module's
+LICENSE states its own terms, separate from the repository root's licence; its
+attribution lines, carried in this repository's [LICENSE](../LICENSE):
+
+> Dedicated chooser, Part validation, sample-free transport and original presentation:
+>
+> MIT License
+>
+> Copyright (c) 2026 Modwerk contributors
+>
+> Portions of the firmware analysis tooling originate from the octamax project
+> (https://github.com/mxldyn/octamax), Copyright (c) 2025-2026 Maxolydian,
+> also under the MIT License.
+
+and, for the Analog BD chooser it derives from, `Copyright (c) 2026 Sam Banks`
+(MIT, the same octamax sentence).
+
+`synth/machine.s` (a DRAM unit, 956 B) holds the chooser: Modwerk's
+`machine.s` and its `registration.c` helpers written out in assembly. The
+lists grow from five rows to six (six pokes: the pushed row count 5 -> 6 at `0x40079248` and
+`0x400585fa`, the last-row index 4 -> 5 at `0x4003c950`, `0x40078678`, `0x400786ce`,
+`0x40079904`); row 5 prints `FM SYNTH` (`0x400334d8`; SRC SETUP's name table,
+`0x4003c928`, copied from the stock one at run time); a chosen track's row is
+highlighted and the lists open on it (`0x4003c980`, `0x400786c8`,
+`0x400585dc`, `0x40078886`); SRC SETUP's editor and drawer address row 5 as
+FLEX (`0x4003a52e`, `0x4003cd98`); a track's machine name reads FM SYNTH
+(`0x4003d718`); the UI tick (`0x4005221e`) puts the FM SYNTH page into the
+PLAYBACK descriptor table's spare slot 5 for SRC SETUP. The commits: the
+machine window's machine-byte write shares the FINE-0c detour at
+`0x40079816` (`fm_main_commit`, then `po_machwin`); SRC SETUP's two writes
+`0x4005a616` / `0x4005a850` (the second follows `po_machlist`'s detour, which
+returns to it). Row 5 is stored as FLEX plus the mark; any other row clears
+the mark. The first choice's seed is written where stock's reload of a track
+from its Part (`0x40001f18`) writes: the Part and its shadow, the live lane's
+six PLAYBACK bytes and its SETUP bytes (lane + 32), the six PLAYBACK value
+words the frame builder hands the DSP and the engine (`0x80000a50 + 64 *
+track`, byte << 8), and the slew counters of those bytes cleared
+(`0x80000db4 + 32 * track`). The frame builder refreshes the words from the
+Part only at a trig from another bank or Part (`0x4000c0b4`), so without them
+a track that had already played in this Part kept its sample's words: FM
+SYNTH chosen after a sample at RATE 127, STRT 0 played C4 as 67.8 Hz (FINE
++63c, RATO 0.25) under a page reading FINE 0c, RATO 1 (fixed 8 Oct 2026, see
+Measured). The Part validator (`0x40002318`) clamps FLEX's PTCH into 4..124,
+where FM SYNTH's PTCH is 0..127 (-64..+63 semitones): for a chosen track the
+twelve FLEX bytes sit the validation out (the stock defaults in their place,
+read from the descriptor, the FM bytes back afterwards). A marker track keeps
+the stock clamp, as before.
+
+Playing without a sample (in `poly.s`): the kind table's FLEX START callback
+(`0x400d6458`, a SymbolRef) is `po_fmstart`, which starts a chosen track's
+voice without consulting a sample (the CF voice marked active, so the stock
+STOP and kill end it; 0x100, a cold start, for the DSP) and calls the stock
+callback for every other FLEX track; the frame builder's second supplier call
+(`0x4000d514`, `po_fmsource`) gives a chosen track `sy_render` where an empty
+FLEX voice would get stock's silent supplier; and `sy_call` writes the source
+header stock would have written (count, ring position, rate 1.0, read
+position) with silent pairs for the engine to fill, instead of calling the
+stock renderer. `po_fmstart` answers as the stock callback does: 0x100 (a cold
+start) for a voice that was not running, 0 for one that runs on. Modwerk's
+transport answered 0x100 to every START; on this engine that restarted the
+DSP's stream under every warm note (a retrigger or a new key on a sounding
+note: +40..57 dB of onset splatter in the note-start click table, where a
+marker track measures -2..+28 dB), so the port answers 0 there, as stock does
+for a START that continues its voice. `po_is_synth`, the page's `pg_resolve`, the VOIC/CHRD page
+(`po_lfopage`) and the voice start test the mark ahead of the marker scan.
+The page cave gained `fm_descriptor` (16 B, first; `pg_resolve` moved to +16)
+and the mark test: 1,868 B (was 1,812), `PINNED_PAGE` re-ratified, inside the
+same zero run (`0x400d24d0..0x400d2ce0`).
+
+Changed from Modwerk's module: one detour at `0x40079816` does both the FINE
+rule and the commit (Modwerk dropped the FINE-0c detour); `pg_resolve` is the
+only PLAYBACK route (their second resolver detour at `0x40031e74` is not
+needed); their name hook at `0x4004c36a` is left out (`a0` is not a machine
+byte there, so it never changed a name); no refusal path of theirs (2.15 adds its own, "The selection guard"); the voice start
+tests the mark only and keeps this engine's own scan of the starting voice's
+sample (a sample lock to a real file on a marker track stays a sample); a
+marker track keeps its patch when FM SYNTH is chosen over it; the START
+callback answers 0 for a voice that runs on (above); the six-row name table is
+copied from the stock one at run time instead of carrying its five addresses.
+
+### Measured (8 Oct 2026, ot_emu, the quantizer + synth image built from this change through the panel; T1 on the 2.10 click and gate cards)
+
+- **Selection.** SRC SETUP and SELECT MACHINE TYPE list FM SYNTH as the sixth
+  row on T1..T8. Chosen on T1 with an empty FLEX slot: the Part's machine byte
+  01, the mark `46 4d 01` in the Part, the FLEX PLAYBACK bytes `40 0c 20 40 00
+  28`, the SETUP bytes 0; the page reads PTCH RATO INDX FINE FDBK DEC and the
+  footer FM SYNTH>FM SYNTH; the pattern's trigs sound at C4 (spectral peak
+  262.5 Hz, 2.5 Hz bins) with no sample anywhere in the slot. Both lists then
+  open on FM SYNTH; FLEX chosen again clears the mark and the page reads FLEX.
+- **A sample track** (fixed 8 Oct 2026). T1 = FLEX with a sine in its slot,
+  PB 64 0 127 127 0 79 and the stock SETUP (LOOP ON, TSTR AUTO): the sample
+  plays, then FM SYNTH is chosen in SRC SETUP: every note is C4, 261.7 Hz
+  (autocorrelation; 261.9 Hz spectral peak), sample for sample the render of
+  FM SYNTH chosen on a track that never played. The click table's note-start
+  measure on its C4 notes (cold and warm) equals a marker track with the same
+  patch to 0.0 dB. Before the fix every note was 67.8 Hz: the seed reached
+  the Part and the page but not the value words the voice reads, so the
+  sample's STRT 0 (RATO 0.25) and RATE 127 (FINE +63c) played on (the first
+  build's own render of this route peaked at 271.2 Hz, not C4; its sample had
+  LEN 0, INDX 0). FLEX chosen again: the sample plays with what the Part and
+  the page then hold (STRT 12, LEN 32, RATE 64, SETUP 0), sample for sample
+  (to 1 LSB) a project loaded with that Part -- before the fix it played the
+  stale values until the next reload. The FLEX + STATIC render before FM
+  SYNTH is sample for sample the build without this change.
+- **A marker assigned after a sample** (the FINE rule below): T1 as above,
+  the sample plays, then QUICK ASSIGN slot 1 (`SYNTH.WAV`): C4 at RATO 0.25,
+  FINE 0c = 65.4 Hz (before the fix 67.8 Hz: FINE +63c under a page reading
+  0c).
+- **A marker track** (FLEX slot 1 = `SYNTH.WAV`, PB 64 20 50 64 30 80): FM
+  SYNTH chosen over it keeps the PB and SETUP bytes and adds the mark; the
+  render before and after is the same to 0.00 dB (10 ms RMS envelopes).
+- **SAVE and reload.** FM SYNTH chosen, INDX 32 -> 42, PROJ > SAVE > YES >
+  YES; a cold boot of that card: machine FLEX, the mark, INDX 42, the page
+  FM SYNTH, both lists on FM SYNTH, the voice at C4.
+- **Part COPY / PASTE / CLEAR.** Part ONE with FM SYNTH on T1, copied
+  (FUNC + REC in the PART chooser) and pasted into THREE (FUNC + STOP): THREE's
+  T1 is FM SYNTH (mark, patch, sound); CLEAR (FUNC + PLAY) of THREE: T1
+  STATIC, no mark, the stock defaults.
+- **The note-start click table** (the 2.10 referee: onset splatter per note
+  over 16-step patterns, cold and warm, retriggers and voice steals,
+  RATO 0.25 / 1, INDX 0 / 40 / 100, FDBK 0 / 60, ATK 16) on a marker track:
+  every row within 0.1 dB of the 2.10 build before this change. **The same
+  Parts on a machine-list track with an empty slot: every row within 0.2 dB of
+  the marker track** (before the START answer was fixed: +40..+57 dB on every
+  warm row, cold rows equal). Re-run on the image with the 8 Oct seed fix:
+  chooser rows within 0.1 dB of the build before it and within 0.2 dB of the
+  marker track; 23 of the 31 click and gate renders sample-identical to the
+  build before it, the rest equal to 1 LSB or up to the panel-timed key
+  events of the held-key renders.
+- **The key gate** (a held CHROMATIC key, a sequencer trig, LEG MONO, a VOIC 4
+  chord) and the attack table, marker vs machine-list track: the held key
+  sample-identical up to its release (the release lands up to 2 ms apart, the
+  panel's timing), the sequencer trig and the C4 pattern sample-identical, LEG
+  MONO within 0.4 dB (100 ms envelopes), the VOIC 4 chord within 0.16 dB (100 ms;
+  the voices' phases beat up to 3.8 dB in 10 ms windows, as between any two
+  runs), ATK 0 / 16 / 20 / 32 = 11.07 / 14.01 / 24.24 / 51.04 ms on both.
+- **Unchanged elsewhere.** The LFO destination list and the rest of the 2.10 menu
+  walk: 171 of 171 screenshots pixel-identical to the build before. The engine harnesses (the
+  gate and LFO regression suites): pass, PCM and state identical to the build
+  before; cost per frame mono 1,165.9 -> 1,234.4 instructions (mean; peak 2,556
+  -> 2,658), VOIC 4 4,061.9 -> 4,130.4 (peak 6,390 -> 6,492): the mark tests.
+  poly.s 20,560 -> 20,976 B (32 of them the FINE word, below), machine.s
+  956 B; every source assembles at -mcpu=5475 and 54455.
+  `tools/stock_scan.py`: no stock bytes beyond the displaced instructions and
+  the idioms the tool allows -- 35 runs against 32 before; the three new
+  ones are the Part-address idiom (the Part base read from 0x46c82456, the
+  active Part byte read from 0x100b14cf, times the Part stride 6322) twice in machine.s (16 B each, the second with other
+  registers; the same idiom as poly.s's own run) and an 18-byte save/restore
+  idiom in poly.s (the same stock list as five of the runs before).
+
+Not tested: hardware; MIDI notes, the live recorder and scenes on a
+machine-list track (they read the same `po_is_synth` / `qz_is_synth`);
+eight machine-list tracks playing at once.
+
+---
+
+## The selection guard (2.15)
+
+FM SYNTH and SY DRUM render their sound on the Octatrack's main processor (the ColdFire), every audio
+frame, beside the work the stock firmware does there. A few tracks of them fit; with many, the processor
+runs out of time and the unit freezes. So the machine list refuses a choice that would go past these
+limits, counted in the **active Part**:
+
+| limit | the number | the message when a choice would pass it |
+|---|---|---|
+| SY DRUM tracks | at most 2 | `SY DRUM: 2 MAX` |
+| FM SYNTH tracks | at most 1 (its VOIC setting is not limited) | `FM SYNTH: 1 MAX` |
+| SY DRUM tracks while an FM SYNTH track is in the Part | at most 1 | `FM+SY DRUM: LIMIT` |
+
+So these are refused: a third SY DRUM track; a second FM SYNTH track; FM SYNTH while two tracks are SY
+DRUM; SY DRUM on a second track while the Part has an FM SYNTH track. These are allowed: one or two SY
+DRUM tracks; one FM SYNTH track; one FM SYNTH and one SY DRUM track.
+
+**The limits are final.** They were set from the author's MKI running 2.14, with PROCESSOR LOAD's
+worst-block reading (W, in % of the audio block's time) in an otherwise empty project, playing:
+
+| playing | worst block W |
+|---|---|
+| nothing (an empty project) | 32 - 34 |
+| 1 SY DRUM track | about 60 |
+| 2 SY DRUM tracks | 67 - 71, peaks 72 - 76 |
+| 1 FM SYNTH track at VOIC 4 | 67 - 71 |
+| 1 FM SYNTH (VOIC 4) + 1 SY DRUM | 76 - 77, peaks 85 |
+
+The first SY DRUM track costs about 26 points (the engine's fixed cost and a voice), each further one about
+10; FM SYNTH at VOIC 4 about 35. A real project (effects, samples, more trigs) adds 10 - 15 points on top.
+Everything the guard allows stays at or below about 85 in an empty project, which leaves about 15 points
+for a real one; the combinations it refuses project to 80 - 90 (three SY DRUM, peaks in the mid 80s) and
+90 and more (FM SYNTH with two SY DRUM) before the project's own load. These are the unit's readings; the
+emulator's figures were 10 - 15 points higher and are not used.
+
+**What counts.** The eight audio tracks of the Part being played, each by what it was chosen as in the
+machine list (the mark FM SYNTH / SY DRUM keep in the Part). The track being changed does not count as
+its old machine.
+
+**Always allowed:** choosing the machine a track already has (SY DRUM on a SY DRUM track, FM SYNTH on an
+FM SYNTH track: the patch is kept, as before), and choosing any stock machine (STATIC, FLEX, THRU,
+NEIGHBOR, PICKUP) on any track.
+
+**A refused choice changes nothing.** The track keeps its machine, its parameters and its mark; nothing
+is written. The message pops up in the firmware's own message box (the routine and the duration the lists
+use for their own `NOT AVAILABLE HERE!`) and is gone after a moment (under 0.7 s in the emulator); the
+list stays as it was: SELECT MACHINE TYPE and SRC SETUP stay open with the cursor on the refused row, so
+another row can be chosen at once, or NO closes the list.
+
+**Copy and paste are guarded too.** The stock copy / paste functions that carry a machine are checked
+the same way, for the paste and for its undo alike:
+
+- **COPY TRACK / PASTE TRACK** (in SRC SETUP: FUNC + REC copies the track, FUNC + STOP pastes it onto
+  another track) carries the machine, its mark, every page and the track's trigs;
+- **the SRC page's copy / paste** (hold the SRC key and press REC, then STOP on another track) carries
+  the machine and its PLAYBACK settings;
+- **the Part's copy / paste** (the PART window: FUNC + REC, then FUNC + STOP on another Part) carries all
+  eight tracks.
+
+A paste that would take the Part past a limit is refused with the same message: nothing is written --
+not the machine, not the track's trigs or pages, not SY DRUM's step locks -- the clipboard keeps what was
+copied, and a paste that fits (FM SYNTH or SY DRUM onto a track of the same machine, a stock machine,
+one SY DRUM where one is left) works as before. A Part paste is checked as a whole: a Part within the
+limits pastes as in 2.14; a Part that holds more (saved by an older build) is refused whole -- nothing
+of it is pasted. An undo, or the SRC page's paste of a FLEX page, can make a track the SY DRUM or FM
+SYNTH track it was before (a track given another machine's page keeps its old mark until then): the same
+check runs on it as on a choice (measured for the SRC page's paste below). A track set to FLEX through
+either machine list is a plain FLEX track.
+
+**The FMSYNTH* / SYNTH* marker file selects nothing any more.** Until 2.14 a FLEX track whose sample
+slot held a file named `FMSYNTH*` or `SYNTH*` played the FM voice (the 2.10 way in). Such tracks were not
+chosen in the list, so no guard could count them (eight of them on one slot were eight FM voices). From
+2.15 that file is played as an ordinary sample, the PLAYBACK and LFO pages are FLEX's, and the machine
+list is the only way to FM SYNTH. **Migration:** for each such track of an older project, choose FM SYNTH
+in the machine list (FUNC + SRC, or SELECT MACHINE TYPE); it starts from FM SYNTH's init (the FLEX
+settings the marker track had are not carried over).
+
+**Projects that already hold more load as saved.** The guard works at the moment something is chosen or
+pasted. A project or a Part saved by an older build (Octatrick 2.14 and before had no limit) with, for
+example, three SY DRUM tracks loads and plays exactly as saved; no track is changed behind your back. The
+same holds for a Part reload and a bank or Part change. On such a Part, choosing SY DRUM or FM SYNTH for
+another track is refused until the Part is within the limits again; choosing a stock machine is always
+possible, so the way back is to set the extra tracks to FLEX (or another stock machine). If a project
+like that freezes the unit, set the tracks to a stock machine before playing it.
+
+**Saving, power-off, every Part.** An allowed choice writes exactly what 2.14 writes, on whichever Part is
+active: the machine byte, its copy in the unit's battery-backed memory and the Part's edited flags (the
+first 2.15 test build wrote the battery-backed copy into Part 1's place when Part 2, 3 or 4 was active, so
+after a power-off without SAVE that Part came back with its old machines and Part 1 took them; fixed
+before release). So a change survives a power-off without SAVE on Parts 1 - 4 as in 2.14, and SAVE / RELOAD
+behave as before.
+
+**The message box.** The firmware's message box draws one line no wider than the screen -- 19 letters of
+any kind; a 20th fits only when some characters are narrow (a space, punctuation, I) -- and nothing at all
+for a wider line. The guard's three messages are 14 - 17 characters; SY DRUM's file messages are `SY LOCKS RECOVERED` and `SY
+LOCK FILE ERROR` (18 each; until 2.15 the first read `LOCKS RECOVERED; SAVE TO REPAIR`, 31 characters, and
+never appeared).
+
+**Retuning.** The three numbers live in one file, `synth/machine_limits.inc` (`ML_FM_MAX`, `ML_SY_MAX`,
+`ML_SY_WITH_FM`); the messages print them. Every other line follows. Keep a changed message within 19
+letters (the message box's width).
+
+**PROCESSOR LOAD** (`processor-load/`) is unaffected: its unit is byte for byte 2.14's.
+
+### How it works
+
+`machine.s` `ml_guard` runs in the three places the lists commit a machine (`fm_main_commit` for SELECT
+MACHINE TYPE, `fm_src_commit` / `fm_src_commit2` for SRC SETUP's two paths), before `fm_choose`. It reads
+the chosen row's engine kind from the row table (`ml_rows`: 1 FM SYNTH, 2 SY DRUM; a stock row passes),
+compares it with the machine the track is marked as now (`ml_sigkind`: FLEX with a row's mark; equal
+passes), counts the marks of the other seven tracks of the Part (`ml_guard_p`: any Part, the bank blob +
+part * 6322), and checks the counts against `ml_limits`, the three bytes assembled from
+`machine_limits.inc`. A refusal calls the firmware's message routine (`0x4005a2b8`, text and duration 48,
+as the lists' own refusal of NEIGHBOR on T1 / T5 does) and leaves through the same exit as that stock
+refusal (`0x4007989c` in the machine window, `0x4005a8ba` in SRC SETUP), so the machine byte, its shadow
+and the Part's change flags are not touched. The three commit detours return with every register stock
+uses after them as it was (`d0` = part * 6322 is the offset of the battery-backed copy: the first test
+build left the guard's verdict, 0, in it).
+
+Six detours more: the SRC page's store `0x40027e4c` (page 0, at `0x40027e98`: FLEX pasted over a track
+whose mark names a row), the whole track's store `0x4002b654` (at its paste's call `0x4002b99e`, from the
+clipboard `0x460c8122`, and its undo's `0x4002b962`, from the undo buffer `0x460bf218`: the clip's machine
+and mark against the Part of the pattern it lands in; before SY DRUM's own hook on the same store, so a
+refused paste moves no lock row either), the Part's store `0x40029a4c` (at `0x40029b8a` / `0x40029b54`:
+the Part pasted, counted whole, `ml_part_over`), and the FLEX list's sample preview `0x40096c54` (at
+`0x40096d22`: a track made FLEX for the preview first drops a mark it kept; the preview is FUNC + YES in a
+FLEX slot list, measured below). A refused store takes the function's own "nothing" answer (d0 = 0), so the
+paste reports nothing pasted and the clipboard (or the undo) stays. The slot assigner (`ml_became`,
+poly.s `po_assign`) also drops a mark when a track leaves FLEX and before FLEX is given to a track that was
+not FLEX. The marker
+path is off at its five tests: `po_slot_marker` answers no slot, the engine's START (`sy_render`), the LFO
+page (`po_lfopage`), the PLAYBACK page (`page.s` `pg_resolve`, the pinned cave re-ratified at 1,752 B) and
+the quantizer's `qz_is_synth` read the list's mark only. `manifest.py` reads `machine_limits.inc` into
+`machine.s`'s `remix.inc` only (`machine_include`).
+
+### Measured (16 Oct 2026, octabam's emulator `ot_emu`, the 2.15 test build of this change; emulator results, not the unit)
+
+All on the guard's own test build, against Octatrick 2.14 on the same walks where 2.14 is the reference; the walks
+for the lists, every Part, copy / paste, the marker file, the 2.14 project, SY DRUM's file messages and "nothing
+else changed" were run again on the 2.15 release image (with the MIDI-track scale additions): the same results.
+
+- **Every refusal and every allowed case, in both lists, on Part 1 and on Part 3** (a card with T1 and T5 SY DRUM in
+  all four Parts, the other tracks STATIC; 26 choices in a row, each followed by the active Part's machine bytes and
+  PLAYBACK blocks, the battery-backed copy of all four Parts' machine bytes and three screen captures): 26 of 26 on
+  each Part. The ten refusals left all eight tracks and every Part's battery-backed copy as they were and showed their
+  message, gone again by 0.7 s with the screen back to the list pixel for pixel; the sixteen allowed choices changed
+  exactly the chosen track, in the active Part and in its battery-backed copy only.
+- **Every Part writes as 2.14 writes:** allowed choices in both lists (stock machines, FM SYNTH, SY DRUM, the same
+  machine again) on Parts 1, 2, 3 and 4 in turn, with all four Parts (25,288 bytes), their battery-backed copy and
+  the edited / bank-write flags read after each of 45 steps: identical to 2.14 at every step. A power-off without
+  SAVE right after two changes on Part 3 (the battery-backed memory carried into a fresh power-up): Part 3 came back
+  with its changes and Parts 1, 2, 4 untouched, as on 2.14 (the first test build of 2.15 brought Part 3 back
+  unchanged and gave its machines to Part 1).
+- **Copy and paste.** PASTE TRACK of a SY DRUM track onto a third track: refused, the message shown, all four Parts,
+  their battery-backed copy and the pattern's eight track records unchanged, the stock store not entered (2.14 made a
+  third SY DRUM track there). Pastes that fit -- SY DRUM onto SY DRUM, a STATIC track over a SY DRUM track, its undo
+  (SY DRUM back), STATIC over T1, SY DRUM onto T3 with one SY DRUM left -- left the Parts, their copy, the flags and
+  the pattern identical to 2.14 after every step. The SRC page: a STATIC page pasted over T5 (SY DRUM) and SY DRUM
+  chosen on T3 as on 2.14; then a FLEX page pasted onto T5, which would make it SY DRUM again (a third), was refused
+  with nothing written (2.14 made the third). A Part pasted into Part 2 and into Part 3: identical to 2.14. The
+  2.14-saved Part with three SY DRUM tracks pasted into Part 2: refused whole, the message shown, Part 2 unchanged
+  (2.14 pasted it); the flags afterwards equal those of the same window steps without the paste.
+- **The marker file.** A 2.10-style project with eight FLEX tracks on a slot holding `FMSYNTH.wav`, trigs on every
+  track: it loaded and played; no track ran the FM voice (2.14: all eight did), the PLAYBACK page read FLEX's, and
+  the render was byte for byte the render of the same project with the file named `PLAINSY.wav` (on 2.15 and on
+  2.14). FM SYNTH chosen on T1 then plays the FM voice on T1 alone; FM SYNTH on T2 next is refused (`FM SYNTH: 1 MAX`).
+- **A project saved by 2.14 with three SY DRUM tracks** (T1, T3, T5) loaded with every machine byte and PLAYBACK
+  block as saved and played; on it, SY DRUM again on T3 and T5 was allowed, a fourth SY DRUM and FM SYNTH were
+  refused, T3 to FLEX was allowed, and SY DRUM on another track was still refused with two left.
+- **The message box:** strings poked into the guard's message and shown through the same routine: 19 letters
+  of any kind drew (19 M, 19 W too); 20 letters, 20 M, 20 W, 21 and 31 characters drew nothing; a 20-character
+  line drew only with narrow characters in it (`LOCKS RECOVERED; SAV`, 20 x I). SY DRUM's
+  file messages in their real path (PROJECT > CHANGE reloading a project): a bank whose `sylock01.work` was damaged
+  and whose `.strd` was good showed `SY LOCKS RECOVERED` (2.14 called the routine with its 31-character line and
+  nothing appeared); both files damaged showed `SY LOCK FILE ERROR` (as on 2.14).
+- **Nothing else changed:** with the limits opened (the three bytes poked to 8), the machine-change walk passed its
+  21 checks with every peeked byte and screen equal to 2.14's (as it is, 19: its own third SY DRUM track is refused);
+  the Part / project persistence checks 17 of 17; the LIVE REC and page clear / undo / paste walks equal to 2.14;
+  three power-offs without SAVE (playing, just stopped, stopped; the limits opened) brought back every SY DRUM step
+  lock and stock lock edited before them; the seven SY DRUM reference renders matched 2.14's and the author's 2.11
+  renders window for window, and the 2.14-saved three-SY-DRUM project played by the sequencer matched 2.14 on every
+  channel.
+- **The FLEX preview hook:** reached by holding FUNC + YES in SRC SETUP's FLEX slot list (or in the machine window's
+  slot column). On a STATIC track carrying a dormant SY DRUM mark beside two SY DRUM tracks, 2.14 turned it into a
+  third SY DRUM track while the preview was held; 2.15 previews it as a plain FLEX and clears the mark when the
+  preview stops, two SY DRUM tracks throughout.
+
+## The load budget (2.16)
+
+**Current display update:** 2.17 keeps this budget and adds the PLAYBACK SETUP cap markers described above. The statement below that the LFO page keeps showing the stored VOIC value describes the earlier display.
+
+2.15's selection guard counted tracks: at most 1 FM SYNTH track, 2 SY DRUM tracks, FM SYNTH beside at most
+1 SY DRUM track. 2.16 replaces the three counting rules with **one price per Part**, so that two FM SYNTH
+tracks fit, and SY DRUM tracks beside them cost FM voices instead of being refused.
+
+**The price.** Points of PROCESSOR LOAD's worst block W above an empty project, from twelve readings on the
+author's MKI (OS 1.40C, OCTATRICK 2.14 which has no guard, 18 Oct 2026; every synth track playing a
+16-trig pattern of four-note chords, CHRD set, VOIC = the cap under test, DEC long enough that the chords
+overlap; W read with FUNC held, the upper end of its range; the empty project reads 34):
+
+| term | points | paid |
+|---|---|---|
+| `LOAD_S_ANY` | 15 | once, when the Part holds any FM SYNTH or SY DRUM track |
+| `LOAD_S_FM` | 13 | once, when the Part holds any FM SYNTH track |
+| `LOAD_FM_V1` .. `LOAD_FM_V4` | 4 / 9 / 10 / 12 | per FM SYNTH track, by its EFFECTIVE voice cap 1 / 2 / 3 / 4 |
+| `LOAD_SY_TRACK` | 11 | per SY DRUM track |
+| `LOAD_BUDGET` | 54 | the most a Part may cost: a worst block of about 88 in an empty project, the ceiling the author has run on his unit |
+
+The readings the table was fitted to (model vs measured, W over the empty project's 34): 1 FM at VOIC
+1 / 2 / 3 / 4 read 64 / 70 / 72 / 74 (model 66 / 71 / 72 / 74); 2 FM at 1 / 2 / 3 / 4 each read 70 / 80 /
+82 / 86 (70 / 80 / 82 / 86); 2 FM at 1 + 1 SY DRUM 81 (81); 2 FM at 2 + 1 SY 92 (91); 1 FM at 1 + 2 SY 86
+(88); 2 FM at 1 + 2 SY 88 (92); and, from 16 Oct, 1 SY about 60 (60), 2 SY 67 - 76 (71), 1 FM at 4 + 1 SY
+76 - 85 (85). Within a point everywhere that matters, high where it is off. The model is a four-entry
+table per voice cap, not a line: the first FM SYNTH track costs about 28 points at VOIC 1, a second one 4
+more, the step from VOIC 1 to 2 (the mono path to the paraphonic engine) about 5 per track, each voice
+above 2 about 1.5, an SY DRUM track about 11 beside FM tracks (about 26 alone).
+
+**The cap.** The cost of a Part with every FM SYNTH track at v voices is
+`S_ANY * [any FM or SY] + S_FM * [any FM] + nFM * FM_Vv + nSY * SY_TRACK`. The engine plays every FM SYNTH
+track of the Part at `min(VOIC, cap)` voices, where the cap is the largest v in 4, 3, 2, 1 whose cost
+fits the budget (1 when none does: a Part saved past the budget by an older build plays as saved, mono).
+VOIC 2, 3 and 4 then simply act as the cap: the shape's first `cap` notes, the same stealing order, the
+level per voice as that VOIC gives; the VOIC shown on the LFO page stays the one set, and the lock, the
+scene and the knob all go through the same cap. The matrix:
+
+| the Part holds | 2.15 | 2.16 | cost | the author's W |
+|---|---|---|---|---|
+| 1 FM SYNTH | VOIC up to 4 | unchanged: cap 4 | 40 | 65 - 74 |
+| 1 FM SYNTH + 1 SY DRUM | allowed, FM at 4 | unchanged: cap 4 | 51 | 76 - 85 |
+| 2 SY DRUM | allowed | unchanged | 37 | 67 - 76 |
+| 2 FM SYNTH | refused | allowed: cap 4 each | 52 | 78 - 86 |
+| 2 FM SYNTH + 1 SY DRUM | refused | allowed: cap 1, both FM mono | 47 | 72 - 81 |
+| 1 FM SYNTH + 2 SY DRUM | refused | allowed: cap 1, FM mono | 54 | 75 - 86 |
+| 2 FM SYNTH + 2 SY DRUM | refused | refused: 58 even at mono | 58 | 78 - 88 |
+| 3 FM SYNTH | refused | refused in the lists; a project saved with more loads and plays as saved, every FM track mono | | |
+
+**The guard.** Both lists and the paste guards keep their 2.15 form with the new rule: with the chosen
+machine in the Part (the other seven tracks counted by their marks), refuse when the Part would hold more
+than `ML_FM_MAX` = 2 FM SYNTH tracks (`FM SYNTH: 2 MAX`), more than `ML_SY_MAX` = 2 SY DRUM tracks
+(`SY DRUM: 2 MAX`), or would cost more than the budget even with every FM SYNTH track mono (`FM+SY DRUM:
+LIMIT`, the existing string); else allow, the cap does the rest. So a second FM SYNTH track is allowed
+where 2.15 refused it, FM SYNTH into a Part with two SY DRUM tracks is allowed (it plays mono), and two FM
+SYNTH with two SY DRUM is refused. Everything 2.15 says about a refusal (nothing written, the message,
+the list left open), about COPY / PASTE TRACK, the PLAYBACK page's paste, the Part paste and their undo,
+the FLEX preview, the marker file and projects that already hold more still holds.
+
+**Retuning.** The weights, the budget and the two hard caps are one file, `synth/machine_limits.inc`
+(`ML_FM_MAX`, `ML_SY_MAX`, `LOAD_S_ANY`, `LOAD_S_FM`, `LOAD_FM_V1..V4`, `LOAD_SY_TRACK`, `LOAD_BUDGET`);
+the messages print the hard caps; nothing else in the code depends on the values (the assembler checks
+their ranges, and that one FM SYNTH track and one SY DRUM track each fit the budget). Change the file,
+build, flash.
+
+### How it works
+
+`machine.s`: `ml_count` counts a Part's FM SYNTH and SY DRUM tracks by their marks (`ml_sigkind`, a track
+left out for the lists); `ml_cost` prices the counts at a voice cap v from the table; `ml_cap_of` finds the
+largest v that fits; `ml_over` is the guards' rule (the hard caps, then the cost at v = 1 against the
+budget) and `ml_guard` / `ml_guard_p` / `ml_part_over` use it where 2.15 compared counts with limits.
+
+`ml_cap` answers the cap of the current Part to the engine. It is called inside the frame interrupt at
+every voice START of an FM SYNTH track (`poly.s` `po_voiccap`: the START, the crossfade question `po_xfq`,
+the chord `po_start` and the legato hand-over `po_ho`), so it reads a cache of the unit's own,
+`ml_budget`: the 32 bytes the count depends on -- the Part's eight machine bytes and the eight mark places
+`ml_sigkind` reads (a long each) -- beside the cap. At a START the cached bytes are compared with the
+Part's (about 50 instructions); equal, the cached cap is the answer; else the Part is counted again and
+the bytes and the new cap stored. Nothing is hooked for the recount: whatever writes a Part's machines --
+the lists' commits, the paste / undo stores, the slot assigner, the FLEX preview, a project or Part
+load, PART RELOAD, a bank change, the battery-backed bank at power-on -- is seen by the bytes at the next
+START, and a Part change to a Part with the same machines rightly counts nothing. (A hooked recount was
+the first design: on the emulator a PART RELOAD and a bank change write the Part through no site the
+synth detours, so the bytes are compared instead.) The cache is read and written inside the frame
+interrupt only; the callers outside it -- `po_polytrack` (the keys' release rule, `po_moff`, `po_legkey`),
+`po_legmode` (the LEG gate) and `po_keyrec` (the fingered-chord recorder) -- take `ml_cap_now` through
+`po_voiccap_now`, which counts on the spot and never touches the cache, so no reader sees a half-written
+one. The cap is unknown at power-on (the image's 0) and counted at the first START. The pages' VOIC
+(`po_fmt_chord`) stays the Part's; the quantizer's own `qz_polytrack` (the panel keys' press / release
+bookkeeping) reads the Part's VOIC byte itself and is not capped -- the sound its keys make is the
+engine's, capped (`quantizer/` is unchanged). No new stock site: SYNTH MACHINE keeps 2.15's 58 detours;
+`machine_limits.inc` is read into `machine.s`'s `remix.inc` as before.
+
+### Measured (18 Oct 2026, octabam's emulator `ot_emu`, 2.16; emulator results, not the unit)
+
+All on octabam's `ot_emu`, 2.16 against OCTATRICK 2.15 on the same walks and cards. The budget's own walks and the
+regression walks re-run on 2.16.
+
+- **Two FM SYNTH tracks at four voices each**: a Part with T1 and T2 FM SYNTH (VOIC 4, a four-note chord on each) plays
+  four voices on each track -- the budget (52 of 54) allows the second FM track 2.15 refused.
+- **Capped beside an SY DRUM track**: add an SY DRUM track (T5) and both FM tracks drop to one voice at the next START
+  (the cap is 1: 2 FM + 1 SY cost 47 at mono, over budget at any higher cap); the VOIC box still reads 4. Set T5 back
+  to a stock machine and the next START is four voices again (the recount, by the Part's own bytes, no hook).
+- **The chooser**: a second FM SYNTH track is allowed, a third refused (`FM SYNTH: 2 MAX`); two FM + two SY refused
+  (`FM+SY DRUM: LIMIT`); FM into a Part with two SY DRUM allowed, playing mono; a third SY DRUM refused (`SY DRUM:
+  2 MAX`). COPY / PASTE TRACK, the PLAYBACK page's paste, the Part paste, their undo and the FLEX preview apply the one
+  rule. A 2.14-style project with three FM tracks loads and plays as saved, every FM track mono.
+- **Unchanged where the budget does not change it**: one FM track at VOIC 1..4, and one FM + one SY DRUM, render
+  byte-identical to 2.15; a VOIC lock and a VOIC scene act as the cap; the quantizer's own CHROMATIC-key rule is the
+  Part's VOIC (`quantizer/` unchanged, noted as a limit). Cost (PORT, per-frame ColdFire cycles): one FM VOIC 4 equal
+  to 2.15; the two-FM, two-FM + SY and FM + two-SY figures are the budget's.
+- **The LFO SETUP page is display-only**: no engine change, so every SY DRUM render and every regression render is
+  byte-identical to 2.15 / 2.16 where the budget does not change it.
+
+## The machine list for more than one machine, and SY DRUM's hooks (2.11, 8 Oct 2026)
+
+2.10 added one row, FM SYNTH, by poking the stock list code's constants from five rows to six. 2.11 makes the
+rows after PICKUP a table so that another machine module running on this engine -- SY DRUM (`sy-drum/`) -- gets
+its own row without a site of its own, and the two modules never write the same stock bytes.
+
+- **The row table** (`machine.s`, `ml_rows`): one row descriptor a machine -- its signature (two letters and a
+  version: `F`,`M`,1 / `S`,`Y`,1, in the first three bytes of the track's NEIGHBOR PLAYBACK column, as 2.10), the
+  engine kind the engine's `po_signed` answers for it (1 FM, 2 SY DRUM), its name, its twelve seed bytes, the routine
+  that returns its page (SRC SETUP's right half; written into the PLAYBACK descriptor table's spare slots 5 and 6
+  by the UI tick) and a flag for machines whose SETUP bytes are their own (leaving the row restored FLEX's; since
+  2.12 every change from a row resets the FLEX bytes, and the flag is not read). The
+  table is assembled per remix: FM SYNTH always, SY DRUM's descriptor (`sd_row`, its own unit) when the remix
+  carries SY DRUM. Choosing, highlighting, naming, opening on, editing and validating a row all read the table.
+- **The row count is the remix's.** The six constants 2.10 poked (the two lists' row counts, SRC SETUP's name
+  lookup, the machine window's drawer, highlight and cursor bounds) are six detours now, assembled with
+  `5 + ML_COUNT` and `4 + ML_COUNT`: 6 rows with FM SYNTH alone, 7 with SY DRUM.
+- **SELECT MACHINE TYPE scrolls.** Its window shows six rows; its row drawer drew `name(row)` for the visible rows
+  with no scroll offset, so a seventh row was never drawn, and five copies of a row clamp (`0..5`) after each list
+  move put the cursor back on the sixth row (a study of the list code found the drawer, the development line's machine-list build the clamps, 8 Oct 2026).
+  The drawer draws `name(row + top)` now (one 12-byte detour at `0x40078678`), the highlight compares `row + top`,
+  and the five clamps keep `0 .. the last row` (five 8-byte detours, `ml_clamp1..5`). With six rows the top stays
+  0 and the clamps keep 0..5: stock's behaviour.
+- **One include, two flags.** `poly.s`, `machine.s` and the quantizer include a `remix.inc` the build writes per
+  remix (octabam's `Linked.include`; `manifest.py` `remix_include`): `HAVE_SYDRUM` (1 when SY DRUM is in the remix)
+  and `engine_abi.inc`, the equates SYNTH MACHINE shares with SY DRUM (one copy). With `HAVE_SYDRUM` 0 the engine
+  (`poly.s`) assembles byte for byte as 2.10's and the quantizer as 2.10's.
+- **The engine's SY DRUM call-outs** (`.if HAVE_SYDRUM`, read from the development line's engine and re-placed in this
+  one): a START stores the engine in `sy1_kind[t]` (0 FM, 1 SY DRUM; a change starts cold, its voices freed) and a
+  SY DRUM START runs that engine's trigger and takes no crossfade; its frame, its render, its LEG MONO recharge and
+  its SETUP / LFO tick are SY DRUM's routines; FM's onset law, FINE, VOIC / chords, fingered-chord recording, the
+  paraphonic LEG modes and LFO 3's muting stay FM's (`po_is_fm`). `po_is_synth` is true for both machines (the keys,
+  MIDI IN, the tuning system).
+- **ANALOG BD** (octabam's `modules/analog-bassdrum`) owns the same chooser sites; the manifest declares the
+  conflict so octabam names the reason.
+
+## A machine change resets the track's machine parameters (2.12, 10 Oct 2026)
+
+**Current setup placement:** in 2.17, FM VOIC / CHRD initialise in PLAYBACK SETUP. All LFO controls initialise as stock LFO controls. The dated LFO-byte description below is historical.
+
+The author's request: "if i change that track to be another machine, like from FM synth to SY DRUM, all the
+parameters, including any LFO settings, should be set to init. They should not inherit any parameters from the
+last machine that was on that track." And (11 Oct 2026): "yes i want it to work the same way as stock, i just want
+the machine parameters to init."
+
+**A machine change resets the track's machine parameters (PLAYBACK, PLAYBACK SETUP, AMP, LFO and their SETUP pages)
+to the new machine's init; step and scene locks are kept, as in the stock firmware; FX slots are kept.** Whenever the machine a
+track plays changes and the old or the new machine is FM SYNTH or SY DRUM -- in SELECT MACHINE TYPE, in SRC SETUP,
+or through a marker file (a FLEX track given an `FMSYNTH*` / `SYNTH*` slot in QUICK ASSIGN or the sample list, a
+marker track given a sample, a marker file loaded into or replaced in the track's FLEX slot) -- the track gets:
+
+- **PLAYBACK and PLAYBACK SETUP**: the new machine's defaults -- FM SYNTH: PTCH 0, RATO 1, INDX 32, FINE 0c, FDBK 0,
+  DEC 40, the setup OFF; SY DRUM: PTCH 0, MODE A, WDTH 64, SWEP 0, SPED 64, DEC 64, LSPD 64, LDEP 0, WAVE OFF, S&H
+  OFF; a stock machine: the stock defaults of its page (FLEX / STATIC: PTCH 0, STRT 0, LEN 0, RATE 127, RTRG 0,
+  RTIM 79; LOOP AUTO, SLIC OFF, LEN OFF, RATE PTCH, TSTR AUTO, TSNS 64), and the FLEX page too when the track leaves FM
+  SYNTH or SY DRUM (they keep their values in the FLEX bytes);
+- **AMP and AMP SETUP**: ATK 0, HOLD 127, REL 127, VOL and BAL centred, XVOL 127; AMP SETUP as a new project has it
+  (RTRG, SYNC ON, ATCK LIN, FX1 / FX2 ANLG, LEG OFF);
+- **the three LFOs and LFO SETUP**: SPD 32 and DEP 0 for each; PMTR the first PLAYBACK knob, WAVE TRI, MULT 1X,
+  TRIG FREE; on FM SYNTH, VOIC 1 and CHRD `----` (LFO 3's bytes).
+
+These are the values a new project gives a track (the stock Part initialiser's, read from the OS's own page
+records at run time; nothing is copied into this repository). FX1 / FX2 -- the effects, their pages and setup --
+stay: they are effect slots, not the machine's parameters. The same machine chosen again keeps its patch (FM SYNTH
+over a track that plays FM through a marker file too). A change between two stock machines (FLEX, STATIC, THRU,
+NEIGHBOR, PICKUP) is untouched: stock keeps every page there, each machine with its own PLAYBACK page. Nothing is
+reset by loading a project, reloading or pasting a Part, or changing patterns: only a machine change does. The
+reset is written into the Part and its battery-RAM copy (SAVE keeps it) and into the track's live state, so the
+next note plays it. Locks are not machine parameters and stay, as at a stock machine change: the step locks and
+trigs are the pattern's, the scene locks the Part's, and both apply by position, so a lock recorded on one machine
+plays on the same knob position of the new one; SY DRUM's own lock rows (LSPD LDEP WAVE S&H) stay too and are heard
+again when the track returns to SY DRUM. The
+LFO designer's shapes are the Part's eight designs, which any track's WAVE can pick, so they stay; the track's
+WAVE is reset, so no design plays on it.
+
+### How it works
+
+`machine.s`: `fm_choose` compares the machine the track plays before the choice (`ml_ident`: 0 a stock machine, 1
+FM SYNTH -- chosen, or FLEX over a marker slot --, 2 SY DRUM) with the one it plays after it (the row's; a stock
+row: 0, or 1 for FLEX over a marker slot) and calls `ml_reset` when they differ and either is 1 or 2. `ml_reset`
+writes the PLAYBACK / SETUP column (the row's seeds, or the stock descriptor's defaults through the machine ->
+descriptor table `0x400d5f38`), AMP and LFO pages 1 and 2 from the stock AMP and LFO descriptors' defaults (`P +
+0x5e`: page 1, `+ 0x64`: page 2 -- the tables the stock Part initialiser `0x40005638` reads; the six PMTR / WAVE and
+six MULT / TRIG bytes alternately from slots 6 / 7 and 8 / 9, as it writes them), into the Part, the battery-RAM
+shadow and the live lane (its bytes, the page-1 value words, their slew counters): the stock machine change
+(`0x400972fc`) reloads a track's lane from its Part only for PICKUP. It writes no pattern data and no scene: the
+locks are untouched. The marker route: the slot assigner's hook (`po_assign`) asks `ml_became`
+(the machine before and after the slot write, `ml_kindof`); the file browser's hook (`po_loadsel`) resets every
+FLEX track on the slot whose file went from a sample to a marker or back (a track chosen in the list keeps its
+machine whatever its slot holds) and marks the Part edited as stock's machine write does. The browser unloads
+the slot before it writes the new path (`0x40025288` clears the slot's whole settings record; the load callback
+`0x400226f4` calls it, then the select calls it again), so the file the slot had is read at the callback's call:
+one more detour, `0x40022732` (`jsr`) -> `po_unload` (until 2.12 the hook read the cleared record, so every load
+counted as "not a marker before"). The engine (`poly.s`'s
+voice code) is unchanged: the FM gate is 512 / 512 with the state of 2.11 (28b11d77).
+
+## 6 dB of headroom (2.10, 8 Oct 2026)
+
+**The engine leaves 6 dB of headroom: VOL 0 is the reference, VOL up to about
++6 stays clean.** The author's decision (8 Oct 2026). Two places in `poly.s`
+shift right by one bit (`HEADROOM`, 1 = -6.02 dB): the mono voice's sample
+after its gain (`sy_loop`, the high word is now c / 2 at full gain) and each
+paraphonic voice's contribution before it is added to the sum (`po_fi_loop`).
+Every level in the engine moves down by the same 6.02 dB; nothing else
+changes:
+
+- the relations stay: a paraphonic voice is `1 / sqrt(VOIC)` of the mono
+  voice (-3.0 / -4.8 / -6.0 dB at VOIC 2 / 3 / 4), the AMP envelope, the
+  crossfades and fades, the attack shapes and the index ramp are untouched;
+- the final pass still doubles the sum into the mono format with the
+  saturating clamp. A VOIC 4 chord's coincident peaks, 2.0 FS before, now
+  reach 1.0 FS, so the clamp is a guard that a chord at full scale only
+  touches, where it used to clip every coincidence above 1.0 FS;
+- a fading paraphonic voice under the mono voice (VOIC 2..4 -> 1 across a
+  note) is summed in the same format as before (`po_fill_add` halves the
+  mono samples into the sum, which now holds the shifted values on both
+  sides).
+
+The factor 0.5 is the per-voice law of the author's host-side renderer (in
+development), so both engines meet the DSP chain at the same level. The
+amount is deliberate: 6.02 dB, not the 18.06 dB (`OUTPUT_SHIFT` 3) of
+Modwerk's FM Synth 0.1.2. Cost: one instruction a sample on the mono path
+and one a sample per sounding paraphonic voice; the DRAM unit grows 20,976
+-> 20,980 B (two 2-byte `asr.l #1`; every other instruction, branch and
+PC-relative form assembles to the same encoding).
+
+### Measured (8 Oct 2026, ot_emu lockstep `--dsp`, the quantizer + synth image built from this change against the same build of the commit before it; T1 on the 2.10 click and gate cards, the chooser cards for two of them)
+
+- **Level.** Eighteen renders, each against the same card on the build
+  before: -6.02 dB on every one, whole-render RMS and peak alike, the
+  100 ms windows' median -6.02 dB (C4 at INDX 0 and the INDX 0 / 40 / 100,
+  FDBK 60, RATO 1 and ATK 16 click cards; the VOIC 2 and VOIC 4 steal cards;
+  the VOIC 4 chord card, its peaks -15.25 -> -21.27 dBFS; the gate cards;
+  INDX 0 and the VOIC 4 chord on a machine-list track too).
+- **The waveform is the same, halved.** Aligned to the build before (the
+  captures start up to 47 samples apart), every sample of 16 of the 18
+  renders is the old sample / 2 within 1 LSB of the 16-bit capture -- the
+  attacks, crossfades, steals and releases are unchanged, sample for sample.
+  The other two (one key held, four keys held) differ only where the panel's
+  key-down and key-up land (100 ms envelopes within 0.24 dB of the build
+  before, +6.02 dB applied; the release ends in the same 100 ms).
+- **The click referee** (the onset splatter of "The note-start click (2.10)":
+  HF in the first 10 ms against the tone's own HF, both re the tone) reads up
+  to 4.8 dB LOWER on the quiet cards: the tone's own HF sits at -77 dB re the
+  tone, below the 16-bit capture's floor, and at 6 dB less level that floor
+  rises to -71 dB re the tone (the loud onsets read the same, e.g. the VOIC 4
+  chord's C1 -41.9 dB on both). With the samples equal within 1 LSB, that is
+  the capture's resolution, not the engine.
+- **The menu walk** (the LFO destination list, the hidden pages, the master
+  page): 171 of 171 screens pixel-identical to the build before.
+- **Modwerk's harnesses** (`gate.cpp`, `lfo_regression.cpp`): both pass; the
+  gate harness's PCM is the shifted PCM (its state hash changes, the high
+  words halve); mean cost per render +17 instructions at VOIC 1 (1,234 ->
+  1,251, peak 2,658 -> 2,690) and +64 at VOIC 4 (4,130 -> 4,194, peak 6,492 ->
+  6,556): one instruction a sample per voice. `poly.s` assembles at
+  `-mcpu=5475` and `-mcpu=54455`, 20,976 -> 20,980 B.
+
+### Grid steps and live keys: the same level (2.12, 10 Oct 2026)
+
+**What the author heard** (the same test of 2.11): played live the synth was
+loud enough, but steps entered in GRID RECORDING played back "much softer".
+Later he could not hear the drop on either test image.
+
+**The engine plays a step and a played note at the same level.** Measured on
+the pinned ot_emu (DSP lockstep, track 1's own stem; this image; T1 = FM
+SYNTH C4, RATO 2.00 INDX 60 DEC HOLD; the same Part for every case): RMS and
+sample peak over +20..300 ms after the note starts, dBFS --
+
+| the note | VOIC 1 | VOIC 4 |
+|---|---|---|
+| a CHROMATIC key held | -29.45 / -26.82 | -35.47 / -32.83 |
+| a grid trig (step 1, no lock) | -29.45 / -26.82 | -35.47 / -32.83 |
+| a live-recorded trig played back (the take: the key held 0.5 s in REC + PLAY) | -29.44 / -26.82 | -35.47 / -32.83 |
+
+(AMP HOLD INF, REL INF or REL 60; the recorded rows at REL 60, so no release
+tail of the previous loop sounds beside them.) The 10 ms RMS at +10 / 50 /
+100 / 200 / 300 / 500 / 1000 / 1500 ms agrees within 0.13 dB between the key,
+the trig and the recorded trig -- the spread of 10 ms windows on the steady
+tone itself. Nothing on the trig path
+carries a level: a trig has no velocity, `po_retrig` changes only the START
+byte's form, and the AMP envelope, the index, VOIC and the 6 dB headroom are
+read from the same live lane for both. So no level changes in 2.12.
+
+**What makes steps sound softer than played notes** -- each by design, and
+each a setting:
+
+1. **The metronome (2.11 only)**: every sequencer note was released at the
+   next click -- fixed in 2.12 ("The metronome no longer releases a held note
+   (2.12)").
+2. **HOLD**: a sequencer trig is gated by AMP HOLD, a held key is not (2.10's
+   rule, "A held key is the gate"). At HOLD 14 (one step) REL 98 a grid note is
+   at 0 dB to +100 ms, then -0.7 (+200 ms), -1.7 (+300), -3.6 (+500), -8.4 dB
+   (+1000), while a held key stays at 0 dB. A live-recorded trig carries the
+   played length as its HOLD lock and plays back as the key did. For steps that
+   last like held keys: HOLD 127 (INF), a longer HOLD, or HOLD locks. (The
+   first trig of a session still ignores HOLD, an older finding.)
+3. **VOIC**: each paraphonic voice is 1 / sqrt(VOIC) of the mono voice, so a
+   single step at VOIC 4 (-35.47 / -32.83) is 6.0 dB RMS and 11.85 dB peak below
+   four keys held as a chord on the same track (-29.45 / -20.98). For single
+   notes on a chord track: VOIC 1, or CHRD locks on the steps.
+4. **The same pitch again at VOIC 2..4**: a new note starts cold on a free voice
+   beside the previous note's release tail (keys and trigs alike), so the two
+   sum at whatever phase they meet. At 120 BPM, C4, AMP HOLD 14 REL 98, VOIC 4:
+   a grid trig on every beat summed to -30.5 .. -31.5 dBFS RMS (the regular
+   grid met the tail near in phase), live taps of about the same length every
+   ~0.52 s to -35.3 .. -38.4 (a lone tap of that length: -35.9), and a
+   live-recorded note played back over its previous loop's tail read +0.4 and
+   +1.3 dB against its take; another tempo or pitch can make the grid's sum
+   the quieter one. At VOIC 1 the same repeats continue the sounding voice
+   (phase-continuous): -29.94 for trigs and taps alike. Taking a releasing
+   voice of the same pitch warm instead would make repeats even; it changes
+   every VOIC 2..4 retrigger and is left as a design decision.
+
 ---
 
 ## The engine owns the envelope (28 Sep 2026, OCTATRICK2.9 BUILD 31: plan B)
 
-Tim's MKI (and the emulator, `root29m/ana_pop.txt`): the CF voice keeps
+Tim's MKI (and the emulator, `ana_pop.txt`): the CF voice keeps
 rendering at full after a note-off and only the DSP's AMP envelope silences
 it, so a cold START (BUILD 26..28's rule) cut the still-sounding old tone
 dead in one sample (a step up to 0.95 of the old peak, x25 the tone's slope:
@@ -120,7 +1247,7 @@ Tim's decision: the engine owns the AMP envelope for synth tracks.
 **The DSP-facing override** (`sy_render`, the `sy_ison` synth path): every
 synth call writes the DSP voice record's halfwords 0/1/2 -- `0x80000110 +
 (ping << 9) + 64 * track`, AMP ATK / HOLD / REL as value << 8 -- `:= 0x0000 /
-0x7f00 / 0x7f00` (ATK 0, HOLD INF, REL INF). Stage 1 (`root29o/ana_env.txt`)
+0x7f00 / 0x7f00` (ATK 0, HOLD INF, REL INF). Stage 1 (`ana_env.txt`)
 proved on a stock sample track that those three words keep the DSP's envelope
 fully open across a note-off (no fade 2 s after the key-up, the level
 unchanged) and across re-triggers (within 0.3 dB of full, per-frame maxima all
@@ -135,7 +1262,7 @@ ATK / HOLD / REL is a no-op on the DSP now; the engine reads the lane every
 frame (locks, scenes and LFOs already applied by the frame builder).
 
 **The laws** (the DSP's, as measured in stage 1 on a stock FLEX sine; the
-tables from `root29p/gen_env_tables.py`, `po_atk` / `po_relk` / `po_hold128`):
+tables from `gen_env_tables.py`, `po_atk` / `po_relk` / `po_hold128`):
 
 * ATK: a LINEAR ramp to full in t = 3.85 ms x 2^(v / 8.53) (8: 7.5 ms, 16: 15,
   32: 50, 64: 700, 96: 9.45 s); the engine's step a frame is 32768 / max(16,
@@ -148,6 +1275,8 @@ tables from `root29p/gen_env_tables.py`, `po_atk` / `po_relk` / `po_hold128`):
   anywhere. The engine arms the same timer at every START, a live key's and a
   sequencer trig's alike (`S_HTIM` for the mono voice, `V_HOLD` for a
   paraphonic one); a key-up inside the hold releases at once (as the DSP).
+  2.10: a held CHROMATIC key's START arms no timer -- the key is the gate
+  ("A held key is the gate (2.10)").
 * REL: EXPONENTIAL, tau = 0.295 ms x 2^(v / 8.53) (40: 7.6 ms, 60: 38.5, 80:
   196, 100: 994, 126: 9 s; 127 = INF), floored at 1 ms: -20 dB in 2.3 ms and
   -40 dB in 4.6 ms at REL 0..15 -- the ~2 ms minimum fade Tim asked for, where
@@ -177,10 +1306,12 @@ sequencer trig as before; a finite HOLD ends by the engine's own timer; and
 STOP, a pattern change, a slot or project change and the sample preview stop
 all end a stock voice HARD through the one VOICE KILL `0x40006820(t)`, whose
 CF voice-byte clear carries `po_kill` (BUILD 33, below): the killed track's
-engine voices end at that instant. `po_stop` at 0x4000b2c8 (the frame
-builder's `clrl 0x46c80350`, after it turns the sequencer's STOP word into the
-DSP-wide all-off command) stays as belt-and-braces for a STOP that posts the
-word without a kill. Mute stays the DSP's output mute.
+engine voices end at that instant. (Until 2.11 `po_stop` at 0x4000b2c8, the
+frame builder's clear of the word 0x46c80350, was kept as belt-and-braces for "a STOP that
+posts the word without a kill"; that word is the metronome's click, so
+`po_stop` released every voice at every click -- removed in 2.12, see "The
+metronome no longer releases a held note (2.12)".) Mute stays the DSP's output
+mute.
 
 **Voice stealing / chord memory**: state 3, a fade of T_GMAX / 8 a frame (8
 frames, 2.9 ms; `po_fr_cut`), then freed -- it was one frame. A voice the new
@@ -210,15 +1341,17 @@ sample preview stop (`0x40093ec0` / `0x40096ad4`), the loaders (`0x4007eb3e` /
 `0x4008044e` / `0x4000f518`: a slot or project change) and the frame builder's
 own end mask (`0x4000d45a`); `t >= 8` recurses through the entry for every
 track. Its track path masks interrupts, clears the CF voice byte
-`0x800049d8 + 168 t` (`0x4000685c`, `clrb %d0; moveb %d0,%a1@(0,%a0:l)`, 6
-bytes) and posts the DSP the voice's end. `po_kill` is a jmp detour at that
+`0x800049d8 + 168 t` (`0x4000685c`, 6 bytes: a zero byte stored at the track's
+voice-byte index) and posts the DSP the voice's end. `po_kill` is a jmp detour at that
 clear: for the killed track it zeroes `S_GAIN` / `S_GPREV` / `S_HTIM` and
 `S_ON` (the mono voice: silent, no synth playing), frees the four paraphonic
 voices (`po_free`: state 0, `V_GAIN` / `V_GPREV` 0) and clears their `V_KEY` /
 `V_HOLD`. The DSP voice is dead at that instant, so the immediate zero is
 inaudible, and the next START is cold (`sy_cold`: `S_GPREV == 0` -> phase 0
 from 0). A sample track's record is zeroed the same way (nothing of ours was
-on). `po_stop` (0x4000b2c8) is kept as belt-and-braces: S_ON bit 2 (STOPPED)
+on). [2.12: the next paragraph's `po_stop` is removed -- the global word is the
+metronome's click word and `[0x80000060]` is METRONOME_ENABLED, see "The
+metronome no longer releases a held note (2.12)".] `po_stop` (0x4000b2c8) is kept as belt-and-braces: S_ON bit 2 (STOPPED)
 with the released flag on every synth track, so the mono release
 (`po_mono_env`) and the paraphonic `T_RK` take `po_relk[0]` (tau 1 ms) where
 REL is INF -- on a killed track it finds S_ON 0 and does nothing; it only
@@ -246,7 +1379,7 @@ the attack step (`T_AK`) and per voice the same envelope arithmetic as before
 (the peak scan) and -4 while limiting, -1 divu.l a frame. The DSP override is
 12 instructions a call.
 
-### Measured on BUILD 31 (28 Sep 2026, round 1: the octatrick-tuner BUILD 31 bus on ot_emu `--dsp-rt` through the poke panel, a copy of the pop card: T2 = FM SYNTH, C4 sine, ATK 0 HOLD INF REL INF unless said; `root29m/m40.py` pair / rel / stats / atk and `root29p-verify/m42v.py`, the verifier's log `root29p-verify/run_v31.log`)
+### Measured on BUILD 31 (28 Sep 2026, round 1: the octatrick-tuner BUILD 31 bus on ot_emu `--dsp-rt` through the poke panel, a copy of the pop card: T2 = FM SYNTH, C4 sine, ATK 0 HOLD INF REL INF unless said; `m40.py` pair / rel / stats / atk and `m42v.py`, the verifier's log `run_v31.log`)
 
 - REL INF re-press of the same key at the same VOIC: max |step| x1.12 of the
   tone's slope, 0 cuts (the START rule: warm, phase-continuous).
@@ -267,7 +1400,7 @@ the attack step (`T_AK`) and per voice the same envelope arithmetic as before
 - NOT RUN in round 1: HOLD 20 self-release, the staccato sequencer HOLD 6 /
   INF, the stuck-note set, the regression set.
 
-### Measured on BUILD 32 (28 Sep 2026, round 2: the octatrick-tuner BUILD 32 bus `root29q/bus_32.bin` on ot_emu `--dsp-rt` through the poke panel; the verifier's logs `root29q-verify/run_pop.log` (m40v: pair / voic / chord / rel / atk / stats), `run_stop.log` (m42q: stopinf / stopkey / stopseq / mute / patchg / hold20 / atk20), `run_seq.log` (m37k: hold6 / seq / lock / seqinf), `run_regr.log` / `run_warm.log` (m32v), `run_leg.log` (m36), `run_midi.log` (m38v); `chain.log` for the order)
+### Measured on BUILD 32 (28 Sep 2026, round 2: the octatrick-tuner BUILD 32 bus `bus_32.bin` on ot_emu `--dsp-rt` through the poke panel; the verifier's logs `run_pop.log` (m40v: pair / voic / chord / rel / atk / stats), `run_stop.log` (m42q: stopinf / stopkey / stopseq / mute / patchg / hold20 / atk20), `run_seq.log` (m37k: hold6 / seq / lock / seqinf), `run_regr.log` / `run_warm.log` (m32v), `run_leg.log` (m36), `run_midi.log` (m38v); `chain.log` for the order)
 
 The cut measure is `max |step|` across the START against the tone's own slope
 (184 a sample for the C4 sine at -16.5 dBFS; a bare cut at that level is x14
@@ -312,7 +1445,7 @@ The cut measure is `max |step|` across the START against the tone's own slope
   cleared would have started warm at full into a fresh DSP voice. BUILD 33's
   `po_kill` is the fix (above).
 
-### Measured on BUILD 33 (28 Sep 2026, round 3: the octatrick-tuner BUILD 33 bus `root29r/bus_33.bin` on ot_emu `--dsp-rt` through the poke panel, a copy of the pop card; the builder's `root29r/run_stop.log` / `run_misc.log` and the verifier's `root29r-verify/run_stop.log`, `run_misc.log`, `run_q42.log`, `run_pop.log`, `run_seq.log`, `run_regr.log`)
+### Measured on BUILD 33 (28 Sep 2026, round 3: the octatrick-tuner BUILD 33 bus `bus_33.bin` on ot_emu `--dsp-rt` through the poke panel, a copy of the pop card; the builder's `run_stop.log` / `run_misc.log` and the verifier's `run_stop.log`, `run_misc.log`, `run_q42.log`, `run_pop.log`, `run_seq.log`, `run_regr.log`)
 
 - **The voice kill ends the engine's voice** (`po_kill` at `0x4000685c`):
   wherever the stock kill runs, the engine goes idle at that instant
@@ -361,14 +1494,14 @@ record's byte +62 is stored into the per-track DSP command byte
 `0x46104d15[t]` (`0x4000b906`), the OR-0x10 sites (`0x4000b9aa`,
 `0x4000bd74`, `0x4000bdc0`) add the CF START bit, and the builder copies the
 byte into the packer's nibble byte `0x46104d0c[t]` at `0x4000c642`. Measured
-at that copy (po_rtlog, `root29w/run_f37a.log`): the byte is **`0x10 | n`**,
+at that copy (po_rtlog, `run_f37a.log`): the byte is **`0x10 | n`**,
 the START bit with the trig's sub-frame position n, cycling 4, 0xc, 5, 0xd,
 6, 0xe ... at 120 BPM (a 16th is 344.5 frames, so n advances half a frame a
 step); no bit 5. The packer splits the frame's render calls at n, and the DSP
 crossfades its old voice under the new one over ~26 samples. Both voices are
 the engine's ONE continuous stream (the warm START rule: the same oscillator
 carries on from its level), so old + new is the measured +5.6 dB / 1.8 ms
-bump at every trig (BUILD 33, `root29v/run_a.log`: max |step| / the tone's
+bump at every trig (BUILD 33, `run_a.log`: max |step| / the tone's
 slope x24.76, |d2| 4534, per-frame amplitude 1.85 1.58 1.32 1.13 after the
 trig). A panel key's START on the same sounding note is clean (x1.00, the
 DIAG round's kwh take): its raw mailbox word `0x1d` reaches the DSP as
@@ -378,8 +1511,9 @@ earlier detours -- po_trig at the consumer `0x4000b4dc`, po_pre and
 po_trigless at `0x40005030` -- sat on the key / MIDI path, which a playback
 trig never takes; that is why their takes were byte-identical to BUILD 33.)
 
-**The fix.** `po_retrig`, a jmp detour at `0x4000c634` (the 8 displaced bytes
-`moveal 114(sp),a1; moveb (a0,a1.l),d0`, a0 = `0x46104d15`), the one funnel
+**The fix.** `po_retrig`, a jmp detour at `0x4000c634` (8 displaced bytes, two
+instructions: a1 := the frame's argument at sp+114, then the byte at a0 +
+a1 read into d0, a0 = `0x46104d15`), the one funnel
 every START form passes on its way to the DSP and the packer: on a track
 whose engine voice is on (`S_ON != 0`) every START byte (bit 4 or 5 set) is
 rewritten to exactly the key's clean form `0x30` before the copy. The DSP
@@ -393,15 +1527,15 @@ stock's byte, so a cold sequencer START is unchanged. `po_rtlog` (po_clock +
 START bytes {CK_FRAMES, track | byte posted << 8 | byte now << 16 | S_ON << 24},
 the rig's proof that the fix fired.
 
-**Measured on BUILD 37** (the octatrick-tuner BUILD 37 bus `root29w/bus_37.bin`
+**Measured on BUILD 37** (the octatrick-tuner BUILD 37 bus `bus_37.bin`
 on ot_emu `--dsp-rt` through the poke panel, a copy of the pop card, T2 = FM
-SYNTH VOIC 1, C4 sine, 120 BPM; `root29w/m46.py` = m44 + the po_rtlog counters
+SYNTH VOIC 1, C4 sine, 120 BPM; `m46.py` = m44 + the po_rtlog counters
 + a per-frame sine-fit amplitude; logs `run_f37a.log`, `run_f37.log`,
 `run_regr37.log`):
 
 | take | BUILD 33 | BUILD 37 |
 |---|---|---|
-| **a** ATK 0 HOLD INF REL 60 INDX 0, a trig on every step (the decisive take) | x24.76, \|d2\| 4534, per-frame 1.85 1.58 1.32 1.13 (root29v) | **max \|step\| / slope x1.01, max \|d2\| 9 (the whole take's 99.9th pct 9), per-frame amplitude 1.00 on all 13 frames of all 8 trigs, level -16.5 dBFS before and after**; po_rtlog: 39 rewrites, every T2 START byte `0x14 0x1c 0x15 0x1d ... -> 0x30` |
+| **a** ATK 0 HOLD INF REL 60 INDX 0, a trig on every step (the decisive take) | x24.76, \|d2\| 4534, per-frame 1.85 1.58 1.32 1.13 (the verifier's run of BUILD 33, 28 Sep 2026) | **max \|step\| / slope x1.01, max \|d2\| 9 (the whole take's 99.9th pct 9), per-frame amplitude 1.00 on all 13 frames of all 8 trigs, level -16.5 dBFS before and after**; po_rtlog: 39 rewrites, every T2 START byte `0x14 0x1c 0x15 0x1d ... -> 0x30` |
 | **b** HOLD INF REL 60 INDX 40 DEC 40 | x6.66, \|d2\| 4632, 1 ms env jump 12.3 dB (the verifier's run_b33x; the round's own run_b33 read x1.10 / \|d2\| 105 -- its trigs were frame-aligned) | x7.45, \|d2\| 4961, 1 ms env jump 11.3 dB: a hard step at each trig (2008 -> 4786 in one sample); the spectral centroid 322 Hz before, 498 Hz 1-11 ms after, 298 Hz at 50-60 ms = the index envelope now restarts at the trig (on BUILD 33 it did not: 515 -> 431 -> 308). See open issues. |
 | **c** HOLD 64 REL 20 INDX 40 | as b | as b (x7.45, \|d2\| 4961) |
 | **d** HOLD 6 REL 20 INDX 40 (cold each) | before -34..-24 dBFS, \|d2\| 3 (the grid missed the onsets: 0-5 ms after -37.5) | before -21.8..-15.2 dBFS; the onsets are normal 16-frame ramps (1 ms env -65 -35 -26 -21 -19 -17 -15.5 dBFS, rise 3 ms, \|d2\| 61 at trig 2); the SUMMARY's x2778 / \|d2\| 3047 is trig 1 under the same index step as b |
@@ -428,6 +1562,11 @@ project and STOP mid-note were not re-run this pass.
 
 ### The index ramp (29 Sep 2026, OCTATRICK2.9 BUILD 38)
 
+(2.10, 7 Oct 2026: the ramp now moves the index, not the envelope -- a warm
+START restarts the envelope at 1.0 and the decay runs from the START; see
+"The author's test of the first 2.10 build (2.10)". The record below is
+BUILD 38's.)
+
 **The fix.** A warm START no longer restarts the index envelope. `sy_cold`
 (the mono voice) and `po_st_note` (a paraphonic voice) arm a 16-frame ramp
 instead (`S_ERAMP` at +81, `V_ERAMP` at +62, the frames left): every frame
@@ -450,9 +1589,9 @@ S_GAIN +24, S_ENV +8, S_ON +36, V_STATE +36) are unchanged. Cost: four
 instructions a sample a voice (a load, an add, a store, the multiply on a
 register instead of memory).
 
-**Measured on BUILD 38** (the octatrick-tuner BUILD 38 bus `root29x/bus_38.bin`
-on the same rig, `root29w-verify/m47v.py`, logs `root29x/run_v38b.log`
-(take b alone, first) and `run_v38.log`; `root29x/ana38.py` re-reads the
+**Measured on BUILD 38** (the octatrick-tuner BUILD 38 bus `bus_38.bin`
+on the same rig, `m47v.py`, logs `run_v38b.log`
+(take b alone, first) and `run_v38.log`; `ana38.py` re-reads the
 takes against the PRE-trig waveform's own max slope and 99.9th-percentile
 |d2|, 40..1 ms before each trig, and traces the centroid in 10 ms windows
 hopped 2 ms):
@@ -468,12 +1607,12 @@ hopped 2 ms):
 | **held** VOIC 3 chord 1.5 s (INDX 40 this time) | 0 frame-edge steps | **0 samples above the \|d2\| bound 31 (max 19), fold on 16 x1.01**: the per-sample index step adds no frame-edge step |
 | **mono** | -16.49 dBFS | -16.49 dBFS (0.3..0.6 s -16.44, 0.9..1.2 s -16.50 on the leg take), the cold onset 0 1 4 8 13 20 29 ..., rise to -1 dB 6 ms |
 | **v14r** REL INF VOIC 1 -> 4 D4 (po_carry) | no cut | no cut: onsets [], x1.78 against the quieter D4's slope as before (the C4 at -16.5 fading under it), \|d2\| 45 |
-| regressions (m32v setup regr on card_ex, `root29x/run_regr.log`) | | ROOT A MINOR keys 8/8 OK; the fingered chord recorded as one step (ptch 64 chrd 8 voic 3); the run was stopped at the harness deadline before the legato / tuner / CHAIN AFTER lines |
+| regressions (m32v setup regr on card_ex, `run_regr.log`) | | ROOT A MINOR keys 8/8 OK; the fingered chord recorded as one step (ptch 64 chrd 8 voic 3); the run was stopped at the harness deadline before the legato / tuner / CHAIN AFTER lines |
 
 **Not run on BUILD 38** (the harness deadline): the VOIC 3 CHRD sequence WITH
 INDX 40 (the run's chrd take ran after part a, i.e. at INDX 0: x1.02, \|d2\|
 35 as BUILD 37), STOP mid-note then the next key cold (m39), FINE 0c on a new
-project (m33v A). `root29x/chain38b.sh` holds the recipe for all three.
+project (m33v A). `chain38b.sh` holds the recipe for all three.
 
 (History: the peak limiter and the warm/cold START rules described below are replaced by plan B, "The engine owns the envelope" above.)
 
@@ -483,9 +1622,9 @@ limiter), unchanged by track LEVEL / AMP VOL, other tracks clean; (b) a pop
 at the start of every note, on OCTATRIK11 too.
 
 **The causes, measured** (the 2.9 BUILD 23 bus of 05c1c8c on ot_emu
-`--dsp-rt` through the poke panel, a copy of level2's flat-FX card, T2 = FM
-SYNTH, AMP HOLD INF REL 20, SCALE / GLIDE OFF, CHROMATIC key 13 = C4; the
-session's `root29f/m34.py`, report `root29f/out_base23/report.txt`; a
+`--dsp-rt` through the poke panel, a copy of the level study's flat-FX card, T2 = FM
+SYNTH, AMP HOLD INF REL 20, SCALE / GLIDE OFF, CHROMATIC key 13 = C4; a
+measuring script over the panel's renders and its report; a
 discontinuity = a sample whose second difference `x[n] - 2x[n-1] + x[n-2]`
 exceeds 1.5 x the 99.9th percentile of a 150..4000 Hz low-passed copy's,
 i.e. what the signal's own slope allows, then folded on the 16-sample frame):
@@ -538,7 +1677,7 @@ i.e. what the signal's own slope allows, then folded on the 16-sample frame):
   hard `po_free` (the safety nets, a mono start) also clears `V_GPREV`.
 
 **Measured on the fixed bus** (BUILD 23 of this commit, the same rig and
-card; `root29f/out_fix23/report.txt`):
+card; the fix's report):
 - held MAJ at VOIC 3, INDX 40, 1.7 s: **0 discontinuities / s, max |d2| 79
   against the bound 92** (was 22 / s, 366); the fold on 16 flat (x1.02, was
   x1.44); T_LIM 0.58 .. 0.69, mean 0.606 (was 0.604): the limiter does the
@@ -601,9 +1740,8 @@ block, sy_mono / sy_loop): the same treatment as the paraphonic voices.
   (was 39, +3: +7.7 %), plus 12 a call for the step and the frame stamp;
   poly.s grew 96 bytes. Not measured with the port's counter.
 
-**Measured** (BUILD 24 of that commit, the same rig and card; the session's
-`root29g/m37.py`, reports `root29g/out_fix24/report.txt` and
-`out_base24/report.txt`; "before" = the a0c0bc1 bus of BUILD 23):
+**Measured** (BUILD 24 of that commit, the same rig and card; the
+same measuring script, reports of the fix and of the base; "before" = the a0c0bc1 bus of BUILD 23):
 - a C4 sine at VOIC 1: the first samples 13, 20, 29, 38, 49, 62, 75, 90, 105,
   122, 140, 159, 179, 200, 221, 244, 267, 290, .. -- a smooth raised ramp from
   phase 0, no step at sample 16 (was 22, 44, .. 318, **671**); **max |step| in
@@ -637,7 +1775,7 @@ block, sy_mono / sy_loop): the same treatment as the paraphonic voices.
   onset on every press -- and gives up the retrigger-while-sounding
   continuity: a new key with LEG OFF while a note sounds now dips for the
   16-frame attack (the normal retrigger character) instead of continuing
-  the phase. Measured (BUILD 26, `root29i/out_fix/report.txt`):
+  the phase. Measured (BUILD 26, `report.txt`):
   - fresh onset (VOIC 1 C4 sine): the first samples 13, 20, 29, 38, 49, ..
     from phase 0, **max |step| in the first 20 ms 183 against the steady
     tone's 184 (x0.99), 0 discontinuities**; the second press, 0.4 s after
@@ -692,7 +1830,7 @@ block, sy_mono / sy_loop): the same treatment as the paraphonic voices.
     whole 2048 over its few samples. The second commit of this round ramps
     at the FRAME's slope (/ 16) and stores the gain the ramp reached as
     S_GPREV (the next call carries on; a short call lengthens the attack,
-    at most 2x). Measured (`out_fix2/report.txt`): **HOLD 6 max |d2| 24
+    at most 2x). Measured (`report.txt`): **HOLD 6 max |d2| 24
     (the steady tone's own is ~90), fold x2.25, 35/s above a bound of 15.9
     (the release tails' own, near-silent slope); HOLD INF 8/s above 43,
     max |d2| 197, fold x1.06** -- one per note, the fading old note (at -25
@@ -702,8 +1840,8 @@ block, sy_mono / sy_loop): the same treatment as the paraphonic voices.
   130 (x1.00), 0 discontinuities, the envelope 624 / 630 / 1716 / 2842 /
   3471 -- identical to BUILD 23 (the paraphonic path untouched).
 - the LEG MONO + GLIDE 64 legato press and the ROOT A MINOR keys / chord
-  record / tuner / direct-jump regressions: `root29g/run_leg24.log`,
-  `run_regr24.log` (run after this commit's measurement; see the session's
+  record / tuner / direct-jump regressions: `run_leg24.log`,
+  `run_regr24.log` (run after this commit's measurement; see the
   report).
 
 **The final rule (BUILD 27 / 28, `sy_cold` / `po_rel` / the quantizer's
@@ -754,7 +1892,7 @@ changes, no ramp) only when all four hold, else **cold** as BUILD 26:
   a START from the SEQUENCER is always cold; only a live key or a MIDI note
   may be warm.
 A phase reset at gain 0 stays inaudible; LEG MONO hand-overs never START.
-**Measured on BUILD 27** (`root29j/out_fix/report.txt`, `out_fix2/`,
+**Measured on BUILD 27** (the fix's report and a second pass,
 `run_midi.log`, `run_leg.log`, `run_regr.log`; the same rig and card, VOIC 1
 C4 sine, REL 20):
 - a retrigger while sounding (C4 held, D4 pressed, LEG OFF, HOLD INF): the
@@ -805,8 +1943,8 @@ C4 sine, REL 20):
   jump CHAIN AFTER 0 -> 1; FINE 0c on a new project's first load; warm boot
   with the real sram_out.bin ok.
 
-**Measured on BUILD 28** (`root29k/out_fix/report.txt`, `run_midi.log`,
-`run_leg.log`, `run_regr.log`, `out_stop28/`, `out_tree28/`; the same rig and
+**Measured on BUILD 28** (the fix's report, `run_midi.log`,
+`run_leg.log`, `run_regr.log`, the STOP and tree takes; the same rig and
 card, VOIC 1 C4 sine, REL 20; `S_KEYED` peeked at +127):
 - **staccato 16ths at HOLD INF: one onset per trig** (55 detected in 9 s at
   120 BPM, the rest under the detector's 3 dB rise; S_KEYED 0 mid-play = a
@@ -870,6 +2008,459 @@ for it); the port's instruction count; the VOIC 1 -> 2..4 switch mid-note
 still cuts the mono voice at once. (The re-press click is closed: BUILD 26;
 the sequencer's warm START: BUILD 28.)
 
+### The note-start click (2.10, 6 Oct 2026)
+
+**Cause** (proven on the emulator; the on-board 3.0 build is the same):
+the attack's 16-frame floor (5.8 ms, linear) is a fraction of one cycle below
+about C3 and stops at an arbitrary carrier phase; the onset and the corner at
+frame 16 put 17..35 dB of excess energy at 100 Hz..1 kHz above what a RATO 0.25
+low note carries. A warm START's 16-frame index ramp, a pitch-changing warm
+START (the phase-continuous frequency jump) and the 8-frame steal fade are the
+same kind of splatter.
+
+**The four changes** (`poly.s`):
+1. `po_alaw` -- the attack's step each frame is min(the ATK law's step, one
+   carrier period's step = ((inc >> 13) x full >> 15) + 1), then S-shaped:
+   step x 1.28 x (1/4 + 4 r (1 - r)), r = level / full, the same total time.
+   Called from `po_me_atk` (mono, full 32768) and `po_fr_amp` (per voice, full
+   T_GMAX); a mono voice at full skips it (`cmpi.l #32768; bge`: two
+   instructions), a paraphonic one already did. A step under 32 (ATK past
+   ~370 ms) stays linear: the S-curve's integer truncations there stretched
+   ATK 64 by 11 % and ATK 87 by 2.1x (the law as first proposed); with the
+   floor every ATK 0..127 keeps its total time within 6.2 % (a frame-count model of the law, in the author's workspace, not in the repo:
+   ATK 0/16/20/32 = 16/39/54/144 frames linear -> 17/40/55/146). The period's
+   step is floored at 128 (at most 256 frames: a carrier under ~11 Hz, or none).
+2. `po_erlen` -- a warm START's index ramp (BUILD 38) lasts max(16, one period)
+   frames, at most 254 (`S_ERAMP` / `V_ERAMP` = 255 marks a fresh ramp).
+3. `po_xfq` + `po_carry` in `sy_cold` -- a mono START while the voice sounds,
+   at a word half a semitone or more from the sounding one (`S_CUR`), moves the
+   old tone into a fading voice (state 3, its own pitch and phase) and starts
+   the new note cold from phase 0 with its attack. The same pitch stays
+   phase-continuous (2.); a paraphonic START keeps its own allocation.
+4. `po_fr_cut` (a stolen or chord-memory voice) and `po_fade_frame` (voices
+   fading under the mono voice: VOIC 2..4 -> 1, and 3.'s crossfade) step
+   through `po_alaw` too: no faster than one period -- of the voice itself in
+   po_fr_cut, of the lower of the voice and the mono voice in po_fade_frame, so
+   a crossfade down lasts the new note's period -- and S-shaped.
+5. (second pass) `po_alaw`'s floor for a period of 16..32 frames (~F2..F3) is
+   max(p, min(2p - 16, 32)) frames: C3 26 frames instead of 21. Nothing
+   changes from F3 up (p <= 16: the 16-frame floor) or below F2 (p >= 32).
+6. (second pass) A paraphonic voice handed a note at a HIGHER pitch (half a
+   semitone or more) while it still sounds -- chord memory reusing the
+   previous chord's voices, a VOIC-cap steal -- fades first (state 3,
+   `po_fr_cut`: one period of its own note, S-shaped) and the note starts cold
+   (phase 0, its attack): in a free voice of the track when one exists
+   (`po_st_xf`; the old one fades in its own), else in the same voice once
+   the fade has ended: the note waits in `po_pend` (8 tracks x 4 voices x 16
+   bytes: state, key, root, gate; `po_pfix` writes it, `po_pstart` starts it
+   from `po_frame` where the voice is freed; a key or MIDI note gone in the
+   meantime releases at once; `po_free`, `po_fade`, a steal,
+   `po_carry` and the legato hand-over drop it; `po_start` folds PTCH moves
+   into it). Before any of that, `po_pmatch` gives a new note the fading voice
+   already at its pitch (a chord's common tones keep their voices, warm, as one
+   key's retrigger). A LOWER or the same pitch is taken warm, phase-continuous,
+   as before (measured: fading a brighter old note scores worse, below).
+
+**Measured** (both passes, the Modwerk exporter's quantizer+synth image on
+the pinned ot_emu `--dsp`, the same rig and measure throughout: the onset splatter =
+the energy above max(250 Hz, 8 f0 x ratio) in the first 10 ms over the tone's
+own 100 ms later, 23 ms FIR high-pass; RATO 0.25 INDX 40 unless said; dB, mean
+of two pattern loops; c = cold, w = warm. c51e304 = the renders of
+that image; 1.-4. = 18dd40d; 1.-6. = this image, 161d781d...,
+every case rendered again (the results file is in the author's workspace, not
+in the repo); targets in
+brackets (the click fix's targets, 6 Oct 2026):
+
+| case | c51e304 | 1.-4. | 1.-6. |
+|---|---|---|---|
+| cold C1 / C2 / C3 / C5, INDX 40 [-3..+7; C5 no worse] | +29.4 / +25.6 / +16.9 / +3.0 | -0.2 / +2.4 / +8.2 / +1.8 | -0.2 / +2.4 / +5.7 / +1.8 |
+| cold C1 / C2 / C3 / C5, INDX 0 | +28.5 / +29.1 / +21.9 / +1.3 | -2.5 / +3.3 / +6.5 / +1.7 | -2.5 / +3.3 / +6.8 / +1.7 |
+| cold C1 / C2 / C3 / C5, INDX 100 | +33.2 / +21.5 / +17.4 / +6.5 | +7.0 / +1.2 / +5.9 / +0.6 | +7.0 / +1.2 / +4.6 / +0.6 |
+| cold C1 / C2 / C3 / C5, FDBK 60 | +35.3 / +32.1 / +12.9 / -4.8 | +10.6 / +12.3 / +1.4 / -11.1 | +10.6 / +12.3 / -0.7 / -11.1 |
+| cold C1 / C2 / C3 / C5, RATO 1 | +13.6 / +13.2 / +17.6 / +8.8 | -10.1 / -3.2 / +6.5 / +3.5 | -10.1 / -3.2 / +4.6 / +3.5 |
+| cold C1 / C2 / C3 / C5, ATK 16 | +17.2 / +12.0 / +6.1 / +0.1 | -0.2 / +2.4 / +1.4 / -0.8 | -0.2 / +2.4 / +1.4 / -0.8 |
+| warm C1 -> C2 under the tail (s_ case) | +36.3 | +4.5 | +4.5 |
+| retrigger every step, same pitch C1>C1 / C2>C2 [<= +8] | +23.5 / +19.4 | +1.2 / -0.5 | +1.2 / -0.5 |
+| retrigger every step, pitch change C1>C2 / C2>C1 [10 dB better] | +25.6 / +31.6 | +6.4 / +28.2 | +6.4 / +28.2 |
+| VOIC 4 MAJ chord memory every step, C1>C1 / C1>C2 / C2>C1 / C2>C2 [pitch changes 10 dB better] | +13.2 / +31.0 / +21.8 / +17.8 | +3.7 / +30.6 / +21.2 / +14.1 | -2.2 / +7.6 / +14.5 / +13.8 |
+| VOIC 2 steals, C1>C1 / C1>C2 / C2>C1 / C2>C2 | +37.1 / +34.5 / +26.3 / +34.0 | +19.6 / +5.2 / +14.7 / +4.8 | +19.6 / +5.2 / +14.7 / +4.8 |
+| VOIC 4 MAJ chord, cold C1 / C2 / C3 / C5; C1 chord -> C2 chord (w) | +33.1 / +32.4 / +23.4 / +8.3; +35.4 | +16.6 / +15.8 / +13.9 / +1.8; +32.7 | +16.6 / +14.6 / +13.0 / +1.8; +16.2 |
+
+ATK 0 / 16 / 20 / 32 at C4 (time to 99 % of full level), 1.-6. over
+c51e304: 0.965 / 0.978 / 0.983 / 0.991 (11.07 / 14.01 / 24.24 / 51.04 ms), the
+render sample-identical to 1.-4.'s. C4 defaults (PTCH 64, RATO 1, INDX 40):
+against c51e304 they differ only in the first ~28 ms of each cold onset (as
+1.-4.); against 1.-4. the render is sample-identical.
+
+**The two pitch changes downward miss the target "10 dB better" (6 Oct 2026), and why** (each part
+rendered on its own, and an integer model of the mono and chord cases; the
+scripts are in the author's workspace, not in the repo). Rendered apart, the mono
+C2>C1 crossfade's OLD TAIL ALONE (the new note muted) scores +29.4 -- the
+whole +28.1 -- and its new onset is the cold-start path (a cold C1: -0.2); for
+C1>C2 the parts are +2.0 and +3.5 (+6.2 together). The excess is the old C2
+tone itself: its own HF above 262 Hz sits ~30 dB over the C1 tone's own (the
+measure's reference), so any old tone left in the 10 ms window counts, and
+removing it faster is a click. In an integer model of the engine a C2 tone that simply
+continues scores +29.9 and every fade scores more (S over 85 frames +31.1, 43
++34.0, 16 +42.8, 8 +45.9); an index fade, a glide or the phase-continuous jump
+do not go under +29.7. That model first predicted +9..+17 because its crossfade
+switched at 500 ms, where the old note's index has decayed; the card switches
+after one 16th (125 ms: +31.1 in the same model). The same holds for chords:
+fading a VOIC 4 C2 chord before a C1 chord scored +40.2 on the emulator (model
++51), so a voice moving DOWN is taken warm (6.) and `po_pmatch` keeps the
+common tone (C2) in its voice: +21.8 -> +14.5, 7.3 dB.
+
+**DEVIATIONS** (from the targets of 6 Oct 2026 / the first proposal):
+- A step under 32 stays linear (above); the first law stretched slow attacks.
+- 5. adds frames to F2..F3's attacks (C3 21 -> 26) to bring C3 at INDX 40 into
+  the window; the first law was one period.
+- 6. fades only voices that move UP; a lower pitch stays warm (above). The
+  in-place fade delays such a note by one period of the note it replaces.
+- 3. (the crossfade) stays mono; a paraphonic START is 6.'s.
+
+**Cost** (Modwerk's `gate.cpp` harness, 512 cases, instructions a render,
+both passes): mono mean 1,068 -> 1,161 (1.-4.) -> 1,165 (1.-6.), peak
+1,312 -> 2,515 -> 2,556 (a crossfade: the old tone renders as a voice for one
+period; cap 2,600); VOIC 4 mean 3,910 -> 4,028 -> 4,060, peak 5,348 -> 5,568
+-> 6,324 (1.136 x 1.-4.'s; cap 1.15 x). The DRAM unit grows 18,472 -> 18,896
+(1.-4.'s click part) -> 20,480 B (1.-6. with the LFO list and the key gate).
+
+## The LFO destination list (2.10, 6 Oct 2026)
+
+**Historical, before 2.17:** the SPD3 / DEP3 exclusions below are removed since 2.17. The FM destination names remain.
+
+Tim (6 Oct): "get rid of the parameters that don't exist for granular, and put
+the parameters for granular in as destinations. Do that for FM and [SY DRUM]
+machine too." On this line: FM.
+
+**Cause** (found on the emulator): LFO SETUP's PMTR names a destination as page x 6 + slot
+(0 PLAYBACK, 1 LFO, 2 AMP, 3 FX1, 4 FX2) and prints it with the formatter
+`0x4003bf64` (the LFO descriptor's slot-6 formatter). It takes the PLAYBACK
+names from the machine table `0x400d5f38` itself (at `0x4003bff2`) and the LFO
+names from the stock descriptor (`0x4003bffa`) -- not through the page
+resolver that `page.s` and `po_lfopage` hook -- so a synth track listed the
+Flex names. The audio edit `0x400392cc` walks the 30 entries in display order
+(PLAYBACK AMP LFO FX1 FX2) with no gaps.
+
+**The change** (`poly.s` "THE LFO DESTINATION LIST", three 8-byte detours):
+- `po_lfdname` at `0x4003bff2`: replays the table pick; a FLEX pick becomes the
+  page resolver's PLAYBACK descriptor for the track (the FM SYNTH clone on a
+  synth track, the stock FLEX one on a sample track) unless the resolver
+  answers the master track's descriptor or 0.
+- `po_lfdlfo` at `0x4003bffa`: the LFO page's names from the resolver when it
+  answers our VOIC / CHRD clone (`po_lfodesc`), else stock. So a destination
+  stored before 2.10 (or by a scene or a lock) at SPD3 / DEP3 prints `VOIC` /
+  `CHRD`, what it addresses on a synth track.
+- `po_lfdedit` at `0x400392cc`: stock's walk (the position tables `0x400a72a8`
+  / `0x400a7280`, the encoder `0x4003249c`, the clamp 0..29) with one SHOWN
+  entry a detent in the turn's direction, stepping over the track's hidden
+  mask: `0x900` (values 8 = SPD3 / VOIC and 11 = DEP3 / CHRD) when the
+  resolver gives the track's LFO page as our clone, else none. At an end with
+  nothing shown beyond, it stays; a stored hidden value is left on the first
+  turn for the next shown entry that way; a stored value outside 0..29 starts
+  from the end. PMTR stays the stock Part byte, written by stock's store.
+- `po_lfopage` (the resolver's LFO descriptor, a hook since phase 5): its FLEX
+  test compares the low byte of d5 only (the resolver loads the machine with
+  `moveb`, so a caller whose d5 was negative failed the long compare and got
+  the stock page -- the edit's backward walk then showed SPD3).
+
+**Measured** (the Modwerk exporter's quantizer+synth image with this
+change on the pinned ot_emu: LFO SETUP screenshots per detent, the
+Part byte read from the bank blob):
+- FM track, LFO 1, forward from PTCH: `PTCH RATO INDX FINE FDBK DEC`, `ATK HOLD
+  REL VOL BAL <F>`, `SPD1 SPD2 DEP1 DEP2`, six FILTER, six DELAY, then it stays
+  on the last; backward the same list reversed, staying on PTCH.
+- A stored 8 prints `LFO VOIC` (Part byte 8); forward -> `DEP1` (9), back from
+  there `SPD2` (7) `SPD1` (6) `AMP <F>` (17). A stored 11 prints `LFO CHRD`;
+  forward -> FX1's first (18), back `DEP2` (10) `DEP1` (9) `SPD2` (7). A
+  stored hidden value drives what it always drove (LFO 3's speed / depth,
+  whose depth `po_lfo3` holds at 0 on a synth track): a render with LFO 1 on
+  VOIC at DEP 127 equals the DEP 0 control in level step for step.
+- An LFO on a renamed entry works: LFO 1 on INDX (DEP 127, a C4 note, RATO 1,
+  DEC HOLD) moves the share of energy above 1.5 f0 between 0.04 and 1.0 (mean
+  0.38, its main variation 0.35 Hz); the DEP 0 control stays 0.50..0.51
+  (a spectral split of the render at 1.5 f0).
+- A trig held (TRACKS mode, no GRID RECORDING): the turn moves the Part byte
+  (1 -> 4), as on c51e304. With GRID RECORDING on and a trig held,
+  the turn stores nothing: neither the Part byte (2 throughout) nor a lock (the
+  step's lock bytes stay 0xff), as on c51e304 -- PMTR takes no lock there.
+- The plain FLEX track (T2), a MIDI track (T1 in MIDI mode: its own NOTE /
+  ARP list) and the master track (T8, MASTER TRACK on): every screenshot of
+  the same walk is pixel-identical to c51e304's image (63, 13 and 17 shots).
+- The stack inside the formatter, measured once (a scratch build painting 1,024
+  B below the hooks' entry SP; 14 formatter calls across the FM walk): at most
+  40 B below the hook's entry SP (the resolver call).
+
+The DRAM unit grows 18,896 -> 19,200 B (the three hooks and the step-over); the
+page cave (`page.s`) is unchanged.
+
+## The LFO SETUP page's V/C column (2.16, 18 Oct 2026)
+
+**Historical, removed in 2.17:** the whole V/C column is gone. LFO SETUP is stock again; VOIC and CHRD are on PLAYBACK SETUP.
+
+Tim (18 Oct): on an FM SYNTH track the LFO page shows VOIC in LFO 3's speed box and CHRD in its
+depth box (SPD3 / DEP3 are their storage; LFO 3 is muted on an FM track, `po_lfo3`), and that is
+how he wants it -- VOIC and CHRD are scene parameters, which only main-page slots are. "What is
+wrong is the LFO SETUP page (FUNC + LFO): it still shows an LFO 3 column with speed and depth
+boxes, and turning those changes VOIC and CHRD without saying so. Change it from saying LFO 3 to
+V/C for voice / chord, and from saying speed and depth to display VOIC and CHRD."
+
+**The page.** The LFO SETUP window is a list on the left (LFO 1, LFO 2, LFO 3, DESIGN) and, for the
+LFO the cursor is on, six boxes -- PMTR WAVE MULT / TRIG SPD DEP -- which are the LFO descriptor's
+setup slots 6..11 (as the AMP SETUP window's sixth box is AMP p2 slot 11, "LEG" above). On an FM
+SYNTH track the third LFO is muted and the selected LFO's SPD / DEP, when that LFO is the third,
+are SPD3 / DEP3 = VOIC / CHRD. On this track the third row now reads **V/C**, the SPD box **VOIC**
+(1..4, as the LFO page's) and the DEP box **CHRD** (the chord-shape names); the two LFO columns
+stay LFO 1 / LFO 2, the LFO designer is unchanged, and on a SY DRUM track, any stock track or a
+MIDI track the page is 2.15's.
+
+**Cause.** The window addresses the STOCK LFO record (`0x400d37f6`) by its address, not through the
+page resolver that `page.s` and `po_lfopage` hook -- so the VOIC / CHRD clone (`po_lfodesc`) never
+reached it (a PC watch at the six box-name draws shows the stock record; the resolver's clone, with
+its setup names poked to markers, changes nothing in the window). Its third row therefore read
+`LFO 3`, and its SPD / DEP dials turned VOIC and CHRD over the stock 0..127.
+
+**The change** (`poly.s` "THE LFO SETUP WINDOW'S V/C COLUMN", four 6-byte detours). On an FM
+SYNTH track only (`po_sig` on the current Part's UI track):
+- `po_lfsstage` at `0x40058488` (the push of the LFO descriptor `0x400d37f6`, the staging at the window's open) and
+  `po_lfsmove` at `0x4003a45c` (the staging at every list move) push `po_lfs_desc`'s descriptor;
+  `po_lfsdraw` at `0x400574cc` (the load of the descriptor's address `0x400d37f6` into a4, the drawer) and `po_lfsedit` at `0x40039020`
+  (the same address into a3, the setup editor) take `a4` / `a3` from it too.
+- `po_lfs_desc` answers the VOIC / CHRD clone (built by `po_lfo_build`, shared with `po_lfopage`):
+  with the selected LFO the third row, the stock SPD / DEP DIALS are RENAMED -- slot 10 VOIC
+  (`po_fmt_voic`: "1".."4", a byte outside 1..4 shown "1", the mono voice, exactly as the LFO page
+  and as the engine reads it) and slot 11 CHRD (`po_fmt_chord`: the shape names, "----" while VOIC
+  is 1). Their dials, their stepping (the stock SPD / DEP accumulator over the Part's SPD3 / DEP3
+  bytes) and the enable nibbles are untouched, so turning them edits VOIC and CHRD exactly as the
+  stock SPD / DEP did -- now **saying so**. The four LFO-only boxes PMTR WAVE MULT TRIG are **left
+  stock** (LFO 3 does nothing on an FM track; clearing their enable nibble blanks only the label,
+  not the knob, so they are left as they are -- the spec's fallback).
+
+  VOIC is NOT hard-clamped to 1..4 on this page as it is on the LFO page: the setup editor's dial
+  accumulator steps the raw byte and a dial's step scales by its range, so a range of four rounds
+  to no step (it stalls) -- measured on the emulator across a text-select widget, an enum stepper
+  and a custom handler, none of which the editor steps for this box. So the SETUP page's VOIC steps
+  the SPD3 byte as 2.15's SPD box did (now labelled and formatted 1..4); the LFO page is where VOIC
+  clamps to the four voice counts. This is a display and naming change; turning VOIC past 4 reads
+  back the mono voice ("1"), consistent with the engine and with what the LFO page shows. On LFO 1 / LFO 2 the boxes are stock.
+- The selected LFO is this unit's own byte `po_lfs_sel` (0 LFO 1 .. 3 DESIGN). It is read back from
+  the stock's own drawing at every redraw (`po_lfs_row`, 19 Oct 2026): the stock draws the cursor's
+  bar over the selected row before the drawer's site, and the bar's margin column (x 3, where no
+  glyph is drawn) is set in exactly one row band, so the band that is set is the cursor's row. The
+  move site (`po_lfsmove`) also records the move's destination row. The read-back matters because the
+  MIDI track's LFO SETUP window shares the stock cursor but runs none of the four sites: before it
+  (2.16 rc1) a cursor moved there left the cache stale, and an FM track's window could show LFO 1
+  highlighted with the boxes named VOIC / CHRD while the knob edited LFO 1's speed. Now the names
+  follow the highlighted row whatever moved the cursor (measured: the MIDI-move walk, `lfsx_F2`).
+- KNOWN at 2.16 (the independent verification of the released image, 19 Oct 2026): while the cursor is
+  on the DESIGN row, or inside the LFO designer and right after leaving it, the third row reads LFO 3,
+  not V/C -- the stock's DESIGN-row redraw runs none of the four sites, so the label is not redrawn
+  there; any move off DESIGN draws V/C again. The label only. To be fixed in 2.17 (the UI tick
+  detour `fm_tick` can redraw it while the window is open on an FM SYNTH track).
+- The third row's label `V/C` is DRAWN by the drawer's detour over the stock's (`po_lfsdraw` ->
+  `po_lfs_vc`). Measured on 2.15 (19 Oct 2026, a PC watch on the stock's own text and box primitives
+  with full records): the function the descriptor load (into a4) sits in draws the four list rows first
+  (the small font at x 4, y 48 / 41 / 34 / 27, from its row table), the cursor's bar right after the
+  cursor's row (x 3..50 over the row's rows, inverted), THEN runs that load and the six boxes, with the
+  window's surface in d5 -- so at the detour the stock's `LFO 3` is already on the surface and nothing
+  after it touches the list. The detour clears the row's field (x 4..50, y 34..39: BOX, mode 0), draws
+  `V/C` at the row's origin with the stock's font and TEXT primitive (the ones `tuner.s` and
+  `loadmeter.s` already use), and, when the stock drew the cursor's bar over this row -- read from the
+  surface's own ink plane at the bar's margin column x 3 (the surface record is the blit-record form
+  `{w, h, longs per column, ink*, mask*}`, the handle + 36; a row's bit is the pixel routine's, "How a
+  box is drawn") -- inverts the field back (BOX, mode -1). `po_vc` is the only new string; nothing of
+  the OS is renamed or repointed.
+
+  (2.16 rc1 did this with a `SymbolRef` that repointed the row table's third string pointer
+  `0x400a7516` to a buffer the audio window's four sites refilled -- `V/C` on an FM track, the stock
+  string otherwise. The MIDI track's LFO SETUP window reads the SAME table through its own draw path,
+  which runs none of the four sites, so it showed the buffer: blank at power-on, `V/C` after an FM
+  track's page had been visited (the 2.16 verifier's D1). Fix 1, 19 Oct 2026: no shared string; the
+  MIDI, FLEX, STATIC and SY DRUM windows are the stock's by construction.)
+
+No new parameter, no storage change: the window's knob writes the same SPD3 / DEP3 bytes through the
+stock setup editor, so the LFO page, the step and scene locks, the LFO destination list (`po_lfdedit`
+already steps over VOIC / CHRD), the designer, the engine and the renders are unchanged. Four new
+stock sites were needed (the window reaches the record only by its address); their displaced bytes
+are checked against OS 1.40C like every other detour.
+
+## A held key is the gate (2.10, 6 Oct 2026)
+
+**The rule.** On a synth track a note started by a CHROMATIC key that is still
+held when its START reaches the engine has no HOLD timer: it sounds while the
+key is held and its release (the lane's REL) starts when the key goes up --
+for the voice or voices that key started, unless LEG handed the note to
+another held key (LEG MONO: the newest key is the held one, so letting go of
+an earlier key changes nothing and letting go of the newest releases the
+note, as since 2 Oct; a paraphonic chord's voices release with their keys).
+A sequencer trig is gated by HOLD as before (the timer from the START; 127 =
+INF), and so is a MIDI note (its note-off releases it earlier, as before). A
+key let go before its START reached the engine is treated as a trig (HOLD).
+STOP ends every voice as before. (Until 2.12 every metronome click released a
+held key too, by mistake: "The metronome no longer releases a held note
+(2.12)".) The live recorder is untouched: the played
+length still becomes the recorded step's HOLD (the quantizer's hold /
+release rule), so the recorded note plays back for the length it was held.
+
+**Where** (`poly.s`): `po_livekey` -- the START's identity (`qz_pkey[t]`,
+1..25 a panel key) is still held when its bit is in the quantizer's held
+mask (`qz_pmask[t]`, kept for a paraphonic track) or it is stock's one held
+key (`0x460d171d + t`, key + 1: a mono track's, which never enters the
+mask). `sy_cold` (the mono voice) skips arming `S_HTIM` for such a START;
+`po_st_env` (a paraphonic voice) arms `V_HOLD` only for a sequencer or MIDI
+note. The release itself is the existing path: stock's voice note-off at the
+key-up (`po_rel`) for the mono voice, the held mask (`po_frame`) for a
+paraphonic voice. The DRAM unit grows 19,200 -> 19,296 B.
+
+**Measured** (the Modwerk exporter's quantizer+synth image on the
+pinned ot_emu `--dsp`, T1 = FM SYNTH, AMP ATK 0 HOLD 32 REL 40, 120 BPM,
+the CHROMATIC trig mode; the level every 10 ms, this image's renders against
+c51e304's image's):
+
+| case | c51e304 | 2.10 |
+|---|---|---|
+| key held 2.0 s (VOIC 1) | sounds 0.3 s (HOLD 32), silent while held | sounds 2.0 s, released at the key-up |
+| sequencer trig every bar, HOLD 32 | -- | 0.3 s a note (HOLD), as before |
+| VOIC 4, four keys held 2.0 s then let go one by one | the chord ends at 0.5 s | the chord sounds until the keys go; the last key-up releases it |
+| LEG MONO: key A, key B (legato), B up, A up | ends at HOLD | ends at B's key-up (the 303 rule, unchanged) |
+| LEG MONO: key A, key B (legato), A up, B up | -- | sounds through A's key-up, released at B's |
+| key held across STOP (and HOLD INF on c51e304) | ends 0.7 s after STOP | ends 0.7 s after STOP (the rig's stop timing), key still held |
+| live recording (REC + PLAY), a key held 1.0 s, then two loops of playback | live 0.3 s; played back 1.0 s, 1.0 s | live 1.0 s; played back 1.0 s, 1.0 s (the same recorded length) |
+
+The first note of a session ignoring HOLD (an earlier finding) is untouched:
+in the sequencer case above the first note lasts until the next trig.
+
+## The author's test of the first 2.10 build (2.10, 7 Oct 2026)
+
+The first 2.10 test build (this line at 2db6657) on the author's MKI, with
+PLAYBACK PTCH 0, RATO 2, INDX 127, FINE 0c, FDBK 49, DEC 0; AMP ATK 0, HOLD
+1.000, REL 98; the CHROMATIC trig mode; LEG OFF unless said. Four findings:
+1. a quick press and release: a glitchy pop at the start of notes;
+2. playing fast with the sequencer running, REL 0: many notes do not sound;
+3. fast runs across the keyboard, the sequencer stopped: glitchy pops, and
+   now and then a note an octave up;
+4. a legato phrase recorded live and played back (HOLD 26, REL 112): clicks at
+   the starts of notes -- at DEC 0 with INDX above 0, the more the higher
+   INDX, and none once DEC is turned up a little, even at INDX 127.
+
+Every gesture was played on the emulator with those settings (VOIC 1, 2 and 4,
+REL 0 / 98 / 112, the sequencer running and stopped), with a 1 ms trace of the
+engine's records.
+
+**Cause 1: a warm START at a short DEC** ((1), the pops of (3), (4)). A START
+on a voice that still sounds is warm: the oscillator continues from its level
+(BUILD 38) -- the same pitch again inside its release, a sequencer trig on its
+own tail (a pattern loop restarting on its last note), a lower note onto a
+sounding paraphonic voice, a paraphonic legato note. Its index envelope ramped
+from its level back to 1.0 over max(16 frames, one carrier period) (`po_erlen`)
+and the decay waited for the ramp. At DEC 0 (k = `K_MAX` since 2.10; DEC 1
+reads the same cap) the decay then took the envelope from 1.0 to its floor
+(1/16) within one 16-sample frame: 94 % of the index gone in 0.36 ms, about
+6 ms after the START (0.69 at DEC 2, 0.17 at DEC 4, the ramp's own 0.06 from
+DEC 8 up). A cold START never did this: its envelope decays before its first
+sample. **The change** (`sy_warm_env` / `po_st_warm`, `sy_il_*` /
+`po_fr_il_*`): a warm START restarts the index envelope at 1.0 as a cold one
+does, and the decay runs from the START; the ramp moves to the index itself --
+each of its frames moves I x E by the remaining distance over the remaining
+frames (BUILD 38's formula, `po_erlen` frames in all), so the index never
+moves faster than over one carrier period. At DEC 0 the index stays at its
+floor and a restarted note sounds like a fresh one; a short DEC's pluck is
+spread over the ramp; DEC 127 (HOLD) ramps exactly as before. (A first
+version limited the index to I / L a frame instead; it let a small move
+finish within a few frames, and the click table's same-pitch retriggers at
+C1 / C2 came out 14..21 dB worse: not kept.)
+
+**Cause 2: a second key inside one fade** (the missing notes of (3), VOIC
+2..4). A note moving UP onto a sounding paraphonic voice waits in that
+voice's `po_pend` entry while the voice fades for one period (2.10, second
+pass). `po_alloc` ranked the fading voice (state 3) as good as a free one, so
+a second key pressed inside the wait took the same voice and `po_pclear`
+dropped the first key's note: D4, then D#4 2 ms later with every voice
+releasing -- D4 never sounded. **The change**: `po_alloc` and `po_steal` rank
+a voice whose `po_pend` entry holds a waiting note last (3).
+
+**Cause 3: a trigless step's sub-frame position** (found while measuring (4):
+at VOIC 1 the played-back phrase went silent after its first note). A
+LIVE REC'd LEG MONO phrase is one trig and trigless steps carrying PTCH (and
+the chain's HOLD) locks. A trigless step posts the DSP command byte with no
+START bit and its sub-frame position n in the low nibble; the packer keeps n
+and splits every following frame's render at n until the next event. The
+frame's first call [0, n) runs the stock renderer on the voice without the
+marker pinned (`sy_render` pins it on the frame's second call), so the
+marker's play position walked n samples a frame; 2..20 ms later it reached
+the marker's end, the stock voice ended (the CF voice byte 255 -> 0; not a
+kill) and `sy_check` cut the note to silence until the next loop. The same at
+VOIC 2..4 with LEG POLY (the voices freed). **The change**: `po_retrig`
+clears n in a byte with no START bit when the track's engine voice is on
+(`po_retrig_nost`); sample tracks and silent tracks keep stock's byte.
+
+**Not reproduced.** (2) as silence: at REL 0 with the sequencer running, VOIC
+1 / 2 / 4, with and without sequencer trigs on the track, taps and overlaps
+20..150 ms apart, and taps over a playing live-recorded legato pattern, every
+key got its voice at its pitch within 1..7 ms and sounded for its length.
+Causes 2 and 3 can each silence notes (both fixed); neither showed at REL 0.
+The octave jumps of (3): no voice in any trace sounded off the pressed
+pitches.
+
+**Measured** (the Modwerk exporter's quantizer+synth image on the pinned
+ot_emu `--dsp`, the panel driven as on the unit, the settings above unless
+said; first build = 2db6657's image, 161d781d...; now = this line's,
+b0c440fc...). xs is the click table's onset-splatter measure below (the HF
+above max(250 Hz, 8 f0 x ratio) in the first 10 ms over the note's own 40 ms
+later); hf6 the > 6 kHz band's largest 1 ms window in the first 15 ms over its
+median 30..60 ms after; both in dB, the worst restarted note of the take:
+
+| gesture | first build: xs / hf6 | now: xs / hf6 |
+|---|---|---|
+| C4 re-tapped inside its release, VOIC 1, DEC 0 (the fresh first note: -3.4 / +1.4) | +37.4 / +56.9 | -0.5 / +2.3 |
+| the same, DEC 1 | = DEC 0 | = DEC 0 |
+| the same, DEC 4 (the fresh note: +11.9 / +23.0) | +38.7 / +57.4 | +16.3 / +25.0 |
+| the same, DEC 127 = HOLD | -0.5 / +2.3 | -0.4 / +1.5 |
+| the same, INDX 40 FDBK 49 | +32.7 / +42.2 | +0.1 / +10.2 |
+| the same, INDX 40 FDBK 0 (the fresh note: +1.9 / +3.3) | +35.5 / +41.6 | +8.6 / +14.0 |
+| the same, INDX 40 FDBK 0 DEC 4 | +23.1 / +29.2 | +10.4 / +15.9 |
+| the same, INDX 127 FDBK 0 (the fresh note: +2.0 / +3.3) | +58.0 / +56.1 | +9.0 / +14.1 |
+| fast runs C3 G3 C4 (taps and overlaps 20..150 ms), REL 98: notes with xs >= +10, VOIC 1 / VOIC 4 (of 33) | 2 / 13 | 0 / 0 |
+| fast runs at VOIC 4, every voice releasing, 1..2 ms overlaps: notes dropped / xs >= +10 (of 26) | 2 / 11 | 0 / 0 |
+| a trig every bar on its own tail, HOLD 26 REL 112: DEC 0; DEC 4 | +37.9 / +57.5; +38.6 / +57.4 | +0.3 / +2.3; +16.5 / +25.2 |
+| the live-recorded LEG MONO phrase played back, VOIC 1: the loop's first note | +53.1 / +49.4 | +1.9 / +5.0 |
+| ... its legato steps | silent after the first step (the cut: +66.0 / +88.8) | all sound (-0.2..+12.0: a step DOWN has the old, brighter tone in its window, as live) |
+| the same phrase at VOIC 4, LEG MONO (each note a paraphonic START) | +35.4 / +54.3 | +2.3 / +14.0 |
+| the same phrase at VOIC 4, LEG POLY | silent after the first step | all sound |
+| REL 0, the sequencer running, fast runs, VOIC 1 / 4: notes silent (of 33) | 0 / 0 | 0 / 0 |
+
+**What is left.**
+- At DEC 2..8 a restarted note still has a pluck (DEC 4: +16.3, a fresh
+  note's own +11.9): the decay's shape, not a collapse.
+- At FDBK 0, a darker tone, a re-tapped note at DEC 0 still measures
+  +8..+9 / +14 (INDX 127 or 40; a fresh note +2 / +3). The index does not
+  move there, and the same settings at DEC 127 (a bright tone) measure
+  -0.7 / +2.2: most likely the level's re-attack from the release tail heard
+  against a tone with little HF of its own -- the attack law's, not DEC's.
+- A key tapped and released within the one period it waits for a fading
+  voice (at most 7.6 ms at C3) starts released and is not heard.
+- A recorded legato chain's trigless steps carry the chain's HOLD lock; the
+  engine arms its HOLD timer at the START only, so the played-back phrase
+  starts its release at the first step's HOLD (a stock voice re-lengthens its
+  hold at each step). With REL 112 the later steps sound in the slow release.
+
+**The click table and the gate, again** (the renders of "The note-start
+click (2.10)" and "A held key is the gate (2.10)" on this image): every cold
+row, INDX 0 / 100, FDBK 60, RATO 1, ATK 16, the VOIC 2 steals and the s_ warm
+row equal the first build's to 0.1 dB; the same-pitch retriggers C1>C1 /
+C2>C2 +1.2 / -0.5 -> +1.1 / -1.1, the pitch changes C1>C2 / C2>C1 +6.4 / +28.2
+-> +6.2 / +27.7; VOIC 4 chord memory C1>C1 / C1>C2 / C2>C1 / C2>C2 -2.2 / +7.6
+/ +14.5 / +13.8 -> -1.9 / +6.2 / +15.2 / +11.9 (two rows 0.3 and 0.7 dB worse,
+two better); the VOIC 4 MAJ chord's C2w +16.1 -> +15.6. ATK 0 / 16 / 20 / 32
+sample-identical (11.07 / 14.01 / 24.24 / 51.04 ms). A held key and a
+sequencer trig: sample-identical; LEG MONO: the same end, within 0.6 dB at
+100 ms; the VOIC 4 chord: the same end, within 0.2 dB at 100 ms.
+
+**Cost** (Modwerk's `gate.cpp` harness): mono mean 1,165.0 -> 1,165.9, peak
+2,556 (the same); VOIC 4 mean 4,060.2 -> 4,061.9, peak 6,324 -> 6,390
+(1.010 x). The DRAM unit grows 20,480 -> 20,560 B. No hook, poke or page
+change; `page.s` and the manifest are untouched.
+
 ## FINE defaults to 0c when a track becomes a synth track (28 Sep 2026)
 
 Tim's report: "when I first load a synth track, its FINE parameter is maxed
@@ -899,6 +2490,19 @@ FINE is the user's), or on any sample track (a non-marker slot is no synth
 track, so the byte is never written). RATE p-locks live in the pattern and
 are not read.
 
+**8 Oct 2026: the reset reaches the voice at once.** The lane byte is what
+the page shows; the DSP and the engine read the lane's value WORD
+(`0x80000a50 + 64 * track + 6`, byte << 8), which the frame builder takes
+from the lane only through its slew counters (`0x80000db4 + 32 * track`,
+the converter at `0x4000d63c`) or rewrites from the Part at a trig from another bank or
+Part. So a marker assigned to a track that had played a sample at RATE 127
+in this Part read FINE 0c and played +63c until the next Part change or
+reload (measured: C4 at RATO 0.25 as 67.8 Hz instead of 65.4).
+`po_fine_reset` now also writes the word (0x4000) and clears the slew counter
+of the lane's bytes 0..3, as stock's reload of a track from its Part does
+(`0x40001f18`); the FM SYNTH chooser's seed does the same for all six bytes
+and the SETUP bytes ("Selecting FM SYNTH from the machine list").
+
 **The sites** (three `jmp` detours of 8 bytes each into the DRAM unit,
 `po_assign` / `po_machwin` / `po_machlist`; `manifest.py` ASSIGN_HOOK,
 MACHWIN_HOOK, LISTWIN_HOOK). Stock has ONE routine that assigns a slot to
@@ -908,17 +2512,17 @@ apply path `0x400796a0` at `0x40079770` and the sample-list window's at
 `0x46c8d19c`), exits at `0x40079672` when the Part already holds that slot
 in that machine's column, otherwise writes the machine byte (`0x40079522`,
 the old one saved in d4 and pushed at `0x4007956c` for `0x400972fc(part,
-track, old machine)`) and then the slot byte -- `addal #0x8f04a,%a0; moveb
-%d1,%a0@` at **`0x400795ba`** with a0 = the Part's slot byte of the new
+track, old machine)`) and then the slot byte -- the store of d1 at the Part's slot-byte
+offset `0x8f04a` (added to a0) at **`0x400795ba`** with a0 = the Part's slot byte of the new
 machine (a3) and d1 = the new slot -- and its shadow. `po_assign` reads the
 old slot of that column before the displaced store, takes the old machine
 from the stack (`8(sp)`, the three arguments still parked there) and the
 track from `4(sp)`, and calls `po_became`. When only the machine changes
 (the column's slot equal) the assigner writes nothing and each window
 writes the machine byte on a path of its own: the machine window at
-**`0x40079816`** (`addal #0x8eda2,%a0; mvsb %a0@,%d3`, `0x400797cc`: d3 :=
+**`0x40079816`** (the read of the machine byte at offset `0x8eda2` into d3, `0x400797cc`: d3 :=
 the old machine, d4 = the new, d1 = the track) and the sample-list window
-at **`0x4005a848`** (`addal #0x8eda2,%a0; mvsb %a0@,%d4`, `0x4005a826`: d4
+at **`0x4005a848`** (the read of the machine byte at offset `0x8eda2` into d4, `0x4005a826`: d4
 := the old machine, the new one at `0x460d5c30`, d2 = the track); there the
 FLEX column's slot is read from the Part (`po_flex_slot`). The one other
 writer of the machine and slot bytes, the paste of a copied track record
@@ -933,14 +2537,14 @@ reset. `po_is_synth` now shares the marker scan (`po_slot_marker`). The
 unit grew by 262 B (the ROM footprint and the cave are unchanged: 3,236 B
 of cave left in the octatrick-tuner remix, BUILD 21).
 
-### Measured (28 Sep 2026, the octatrick-tuner BUILD 21 bus on ot_emu `--dsp-rt` through the panel, a copy of the 2.9 card: T1 = FLEX slot 3 `third-0.wav` (a 438.645 Hz sine) with RATE 127, T2 = FM SYNTH slot 5 `SYNTH.wav`; the session's `root29c/m31.py`, shots `root29c/out21/`; the Part byte read from the bank blob, the shadow from `0x1001614e + 0x8edb3`, the lane from `0x80000813`; T1's slot-byte shadow `0x100a5198..+5` watched with ot_emu's `OT_WATCHMEM` for the writers' PCs)
+### Measured (28 Sep 2026, the octatrick-tuner BUILD 21 bus on ot_emu `--dsp-rt` through the panel, a copy of the 2.9 card: T1 = FLEX slot 3 `third-0.wav` (a 438.645 Hz sine) with RATE 127, T2 = FM SYNTH slot 5 `SYNTH.wav`; `m31.py` and its shots; the Part byte read from the bank blob, the shadow from `0x1001614e + 0x8edb3`, the lane from `0x80000813`; T1's slot-byte shadow `0x100a5198..+5` watched with ot_emu's `OT_WATCHMEM` for the writers' PCs)
 
 - The assignment (the machine window, slot 5 = the FMSYNTH marker, YES) on
   T1 = FLEX slot 3 with RATE 127: the FLEX PLAYBACK bytes go
   `[64,0,127,127,0,79]` -> `[64,0,127,64,0,79]`; the Part byte, the
   battery-RAM shadow (`0x1001614e + 0x8edb3`) and the live lane
   (`0x80000813`) all read 64; the page redraws as FM SYNTH > FLEX with
-  FINE 0c at once (`root29c/out21/assign_page.png`).
+  FINE 0c at once (`assign_page.png`).
 - FINE +20c (raw 84), SCALE MAJOR / ROOT A / GLIDE 12, PROJECT > SAVE,
   eject, a cold boot loading the project: RATE 84 in the Part, the shadow
   and the lane -- a tuned synth track keeps its FINE.
@@ -963,8 +2567,8 @@ of cave left in the octatrick-tuner remix, BUILD 21).
   through `0x40021d94`) never ran and is not detoured -- an assignment
   completing that way would not reset. `po_machlist` (the sample-list
   window's machine-only write) is placed and byte-checked, not exercised.
-  Measured twice: the builder's pass (`root29c/`) and an independent
-  verifier's on its own panel (`root29c-verify/`, the SAVE / reload,
+  Measured twice: the builder's pass and an independent
+  verifier's on its own panel (the SAVE / reload,
   regression and warm-boot takes).
 
 ### The new-project case (OCTATRICK2.9 BUILD 22, 27 Sep 2026): the fourth site
@@ -995,10 +2599,10 @@ reproduces it with the load completing at once, so the ATA latency (`+8 ==
 
 **The site.** The file browser's select `0x40022610(machine, slot, path)`
 (from `0x400226f4`, both windows' browsers) writes the path into the slot's
-settings record with `jsr 0x40013a08` (sprintf) at **`0x40022686`** --
+settings record with a call of `0x40013a08` (sprintf) at **`0x40022686`** --
 the one place a FLEX slot's file changes under a track that keeps its
 machine and slot (a project load fills the records another way). The
-`jsr` is rewritten to `jsr po_loadsel` (`manifest.py` LOADSEL_HOOK, kind
+call is retargeted to `po_loadsel` (`manifest.py` LOADSEL_HOOK, kind
 `jsr`, 6 bytes, no displaced instruction: the stub calls the sprintf
 itself with the three arguments re-pushed). `po_loadsel`: when the list is
 FLEX (d4 == 1), the slot's marker state is read BEFORE the write
@@ -1012,10 +2616,10 @@ so an existing project behaves as measured above. The unit grew by 102 B
 (the cave is unchanged: 3,236 B left in the octatrick-tuner remix, BUILD
 22).
 
-### Measured (27 Sep 2026, the port through the panel; the session's `root29e/m33.py`, logs and shots `root29e/`)
+### Measured (27 Sep 2026, the port through the panel; `m33.py`, its logs and shots)
 
 The new project: a project directory holding only `project.work` /
-`project.strd` (`root29b/PROJECT_ref` with its four `[SAMPLE]` blocks
+`project.strd` (`PROJECT_ref` with its four `[SAMPLE]` blocks
 removed and SCALE / ROOT / GLIDE at their defaults; no bank files, so
 every Part is stock's default -- the way the tuner rig's card builder
 stages a project, `panel_server_poke.py --project`), an AUDIO folder
@@ -1038,8 +2642,8 @@ every slot empty (`+8` = 1, path '').
   after the load were the machine window's machine byte (`0x40079828` ->
   `0x100a4ef0` = 1, twice) -- no assigner slot write, no site reached.
 - **BUILD 22 (the fourth site), the same new project from cold boots**
-  (the builder's chain `root29e/run_e.sh`, then an independent verifier's
-  own new project and panel, `root29e-verify/run_v*.log`): flow A (T1
+  (the builder's chain `run_e.sh`, then an independent verifier's
+  own new project and panel, `run_v*.log`): flow A (T1
   machine window, SYNTH.wav into T1's own slot): RATE Part / shadow / lane
   64 / 64 / 64 on the PLAYBACK page, after leaving and re-entering it, and
   after one CHROMATIC note -- FINE 0c; flow B (T3, FUNC + PLAYBACK machine
@@ -1062,7 +2666,7 @@ every slot empty (`+8` = 1, path '').
   LEG MONO + GLIDE 64 one onset, t63 90 ms; the tuner opens and closes;
   CHAIN AFTER +1 = DIRECT; the warm boot (the battery-RAM dump, no load)
   keeps SCALE / ROOT / GLIDE. Placements on Sam's current layout: the
-  detour `jsr 0x40022686 -> poly:po_loadsel` in octatrick-usb (3,236 B of
+  call detour at `0x40022686` -> `poly:po_loadsel` in octatrick-usb (3,236 B of
   cave left), octatrick-tuner (3,236 B) and cfmeter with DIRECT JUMP
   (2,852 B). The unit grew 102 B.
 
@@ -1107,7 +2711,7 @@ without a start, and slide. Nothing is restored after the call: the record
 holds what stock leaves in it, as on a stock unit (until 2.8 the wrapper
 did nothing at all on a sample track).
 
-### Measured (5 Oct 2026, the octatrick-tuner BUILD 18 bus = OCTATRICK2.8 on ot_emu `--dsp-rt` through the panel; a copy of the OTLIVE card whose `third-0.wav` is a 2 s sine at 300.13 Hz (65 whole cycles in the slot's 9,551-frame marker window, LOOPMODE 1, so the tone holds while a key is held -- the slot's markers come from the project and keep the old length), T7 = FLEX slot 2 and T3 = STATIC slot 2 = that sine, 120 BPM, CHROMATIC keys with key 1 = C4 on T7 (key 1 = C3 on T3: 150 Hz); the session's `v28/slide2.py`, `v28/slide3.py`; pitch by zero crossings per 10 ms, "restart" from the stock voice's play position `0x800049d8 + 0xa8 * t + 68` (its wraps at 9,551 are the loop))
+### Measured (5 Oct 2026, the octatrick-tuner BUILD 18 bus = OCTATRICK2.8 on ot_emu `--dsp-rt` through the panel; a copy of the OTLIVE card whose `third-0.wav` is a 2 s sine at 300.13 Hz (65 whole cycles in the slot's 9,551-frame marker window, LOOPMODE 1, so the tone holds while a key is held -- the slot's markers come from the project and keep the old length), T7 = FLEX slot 2 and T3 = STATIC slot 2 = that sine, 120 BPM, CHROMATIC keys with key 1 = C4 on T7 (key 1 = C3 on T3: 150 Hz); `slide2.py`, `slide3.py`; pitch by zero crossings per 10 ms, "restart" from the stock voice's play position `0x800049d8 + 0xa8 * t + 68` (its wraps at 9,551 are the loop))
 
 - **T7 FLEX, LEG MONO, GLIDE 64**, C4 held and E4 130 ms later: 300.2 ->
   377.9 Hz, ONE attack, the position runs on; the pitch leaves 300 within
@@ -1131,7 +2735,7 @@ did nothing at all on a sample track).
   3 / 4 = `0x40004424` / `0x4000466c` / `0x40004008`, stock's (THRU /
   NEIGHBOR / PICKUP not exercised).
 - **The synth path** (T2 = FM SYNTH slot 5 on a copy of the OTLIVE card,
-  `v28/rec28.py`): a lone C4 261.7 Hz; LEG MONO, GLIDE 64, C4 held + E4:
+  `rec28.py`): a lone C4 261.7 Hz; LEG MONO, GLIDE 64, C4 held + E4:
   261.7 -> 330 Hz, t63 90 ms, t95 290 ms -- as 2.7.
 - **The recogniser on 2.8's table** (T2, VOIC 3, CHRD `----`, LEG OFF,
   GLIDE 0, chords rolled 30 ms apart during live recording, the CHRD lock
@@ -1139,7 +2743,7 @@ did nothing at all on a sample track).
   Eb G `MIN`, D F A C `MI7`, C E A `MA6`, D# F G `AD2`, C F# `DIM`, C E
   `3MA`, E G C5 `MAJ1`, C E D5 `AD9`, C F G `SU4`, and the two changed
   ties C A `MI6` (was MA6), C A# D5 `MI9` (was DO9) -- 16 of 16 as the
-  Python model of `po_match` (`v28/chords.py`, which also ran every 2-,
+  Python model of `po_match` (`chords.py`, which also ran every 2-,
   3- and 4-key set within two octaves against 2.7's) predicts.
 
 ## Transposing a step: FUNC + UP / DOWN with a trig held (4 Oct 2026)
@@ -1177,7 +2781,7 @@ hardware).
   `0x400359ac`). This is why a short FUNC + DOWN on stock opens the list
   without changing the mode, and a held one steps it: the repeat does.
 - **The hook** (`modules/synth/manifest.py`, one 6-byte jmp detour at the
-  handle test `0x40051fce`, `tstl 0x400bebae`; `poly.s` `po_octave`,
+  handle test `0x40051fce`, the test of the long word at `0x400bebae`; `poly.s` `po_octave`,
   published at **-32** before `sy_render`) takes a press with the window
   CLOSED when the lock editor's own state says a trig is held for locking:
   the held-trig mask `0x460d174a` (a word, bit n = [TRIG n + 1]; the PTCH
@@ -1218,7 +2822,7 @@ hardware).
   trig held (the trig keys are notes there); the MIDI-mode pages are not
   touched (their FUNC + UP / DOWN is another table).
 
-### Measured (4 Oct 2026, the octatrick-tuner BUILD 18 bus = OCTATRICK2.8 on ot_emu `--dsp-rt` through the panel, a copy of the OTLIVE card, T2 = FM SYNTH slot 5, PTCH 0 / FINE 0 / INDX 0 / FDBK 0 (a sine), AMP HOLD INF REL 20, SCALE / GLIDE OFF, GRID RECORDING on, TRACKS mode; the session's `oct/rig_oct.py`, shots `oct/out_new/`; the lock read back from the bank's RAM record `[0x46c82456] + T * 2330 + pattern * 36568 + 0x59 + step * 32`, the selector's state from its handle `0x400bebae` while FUNC was still down)
+### Measured (4 Oct 2026, the octatrick-tuner BUILD 18 bus = OCTATRICK2.8 on ot_emu `--dsp-rt` through the panel, a copy of the OTLIVE card, T2 = FM SYNTH slot 5, PTCH 0 / FINE 0 / INDX 0 / FDBK 0 (a sine), AMP HOLD INF REL 20, SCALE / GLIDE OFF, GRID RECORDING on, TRACKS mode; `rig_oct.py` and its shots; the lock read back from the bank's RAM record `[0x46c82456] + T * 2330 + pattern * 36568 + 0x59 + step * 32`, the selector's state from its handle `0x400bebae` while FUNC was still down)
 
 - **The octave**: a trig on step 1 with PTCH lock +3 (held trig + knob A).
   Trig 1 held + FUNC + DOWN -> **-9**; again -> **-21**; FUNC + UP three
@@ -1243,7 +2847,7 @@ hardware).
   up), the locks untouched; the screenshot is **pixel-identical** (0 of
   8,192 pixels differ, the text dump equal) to the 2.7 bus (modules
   b44790b) taken in the same state on a second unit (`07_selector_new.png`
-  vs `out_ref/selector_ref.png`; a first comparison from a different page
+  vs `selector_ref.png`; a first comparison from a different page
   state differed by 30 pixels behind the window -- FDBK 0 vs 127 and the
   page arrow -- none of them the selector).
 - **CHROMATIC mode**, trig 1 held + FUNC + DOWN: the selector opened, the
@@ -1298,7 +2902,7 @@ a note's envelope is the same with the byte at 2). What the DSP would do
 with the byte is unknown; a stock unit never sets it.
 
 **The clone, and the hooks.** The AMP SETUP window does not ask the page
-resolver for its descriptor: its staging (`0x40059d56`, `pea 0x400d3988`),
+resolver for its descriptor: its staging (`0x40059d56`, the push of `0x400d3988`),
 its drawer (`0x40036794`: the names at `0x400d39c2`, the formatters and
 widgets at `0x400d3a6a`, the enable pair `0x400d3b12/16`) and the page-2
 editor (`0x4003ae40`: the handler, min and count) all address the stock
@@ -1368,11 +2972,11 @@ of `sy_render`) so the ROM change there is a jsr and a compare
 for a MIDI note-on and takes the trigless path itself (the lock byte set,
 `mailbox |= 0x119`, no START, `T_MLEG` for the recorder).
 
-### Measured (2 Oct 2026, the octatrick-tuner BUILD 17 bus = OCTATRICK2.7 on ot_emu `--dsp-rt` through the panel, a copy of the OTLIVE card, T2 = FM SYNTH slot 5 on MIDI channel 2, INDX 0 / FDBK 0, AMP HOLD INF REL 40, AMP = RTRG with ATK 40 so a fresh START shows as a new attack, 130 BPM, GLIDE 64 unless said, the CHROMATIC octave +1: key 1 = C4, 5 = E4, 8 = G4; the session's `leg/live.py`, `leg/chordpress.py`, `leg/audio.py`, `leg/storage.py`, `leg/warm.py`; pitches as spectral peaks per 10 ms, single voices by zero crossings, "retrigger" read from the engine's voice records -- a voice keeps its allocation stamp (`V_AGE`) across a legato press and gets a new one at a START)
+### Measured (2 Oct 2026, the octatrick-tuner BUILD 17 bus = OCTATRICK2.7 on ot_emu `--dsp-rt` through the panel, a copy of the OTLIVE card, T2 = FM SYNTH slot 5 on MIDI channel 2, INDX 0 / FDBK 0, AMP HOLD INF REL 40, AMP = RTRG with ATK 40 so a fresh START shows as a new attack, 130 BPM, GLIDE 64 unless said, the CHROMATIC octave +1: key 1 = C4, 5 = E4, 8 = G4; `live.py`, `chordpress.py`, `audio.py`, `storage.py`, `warm.py`; pitches as spectral peaks per 10 ms, single voices by zero crossings, "retrigger" read from the engine's voice records -- a voice keeps its allocation stamp (`V_AGE`) across a legato press and gets a new one at a START)
 
 - **The page.** T2's AMP SETUP shows LEG in the sixth box: OFF / MONO / POLY
-  on the three-position dial as the F knob is turned (`leg_montage.png`
-  in the session's `leg/out/`), the Part byte 0 / 1 / 2, the knob clamped
+  on the three-position dial as the F knob is turned (a
+  `leg_montage.png` of the shots), the Part byte 0 / 1 / 2, the knob clamped
   at both ends (+7 detents from OFF read 2, -6 from POLY read 0). T7, a
   sample track: the page is **pixel-identical** to the OCTATRICK2.6 bus
   (0 differing pixels of 128 x 64), and its F knob leaves the Part byte.
@@ -1443,7 +3047,7 @@ for a MIDI note-on and takes the trigless path itself (the lock byte set,
   T2 LEG Part byte 2, shadow 2, the page reads POLY -- it came back from
   battery RAM, not the card (GLIDE 64 came back with it).
 
-### Measured (3 Oct 2026, LEG on every audio track: the octatrick-tuner BUILD 17 bus = OCTATRICK2.7 third pass, modules f53032c, on ot_emu `--dsp-rt` through the panel, a copy of the OTLIVE card, 130 BPM; T7 = FLEX slot 2 `third-0.wav`, a sample track, in the CHROMATIC trig mode with the project's SCALE (PHRYGN, so the E4 key sounds Eb4: rate 1.19 = +3 semitones); the session's `leg3/ui.py`, `leg3/t7.py`, `leg3/e.py`, `leg3/storage.py`; "retrigger" on T7 read from the stock voice's play position, `0x800049d8 + 0xa8 * 6 + 68`)
+### Measured (3 Oct 2026, LEG on every audio track: the octatrick-tuner BUILD 17 bus = OCTATRICK2.7 third pass, modules f53032c, on ot_emu `--dsp-rt` through the panel, a copy of the OTLIVE card, 130 BPM; T7 = FLEX slot 2 `third-0.wav`, a sample track, in the CHROMATIC trig mode with the project's SCALE (PHRYGN, so the E4 key sounds Eb4: rate 1.19 = +3 semitones); `ui.py`, `t7.py`, `e.py`, `storage.py`; "retrigger" on T7 read from the stock voice's play position, `0x800049d8 + 0xa8 * 6 + 68`)
 
 - **The page.** T7's AMP SETUP shows LEG in the sixth box: **OFF / MONO**
   (`leg3_montage.png`), the Part byte 0 / 1 and its shadow with it; the
@@ -1594,14 +3198,14 @@ key handler `0x4004fb94` with key = note - 72: the 25-key paraphony of
 quantizer's `qz_midi` at `0x4000e74c` is gone; ROM cave unchanged at 168 B
 left on the octatrick-tuner remix):
 
-| site | displaced | stub | a sample track |
+| site | displaced (in words; read from your OS by `stock_guard`) | stub | a sample track |
 |---|---|---|---|
-| `0x4000e746` the chromatic block's START `moveq #29,%d1; move.l %d1,(%a5,%d2.l*4)` | 6 B | `po_mon` | the START, then the stock mapping at `0x4000e74c` |
-| `0x4000dfd4` the note-off's compare `mvs.b (%a0),%d1; mvs.b (%a3),%d0; cmp.l %d1,%d0; bne` | 8 B (+ nop) | `po_moff` | replayed |
-| `0x4000e452` the note-on's octave switch `move.l %d6,%d0; subq.l #2,%d0; moveq #5,%d2; cmp.l %d0,%d2` | 8 B | `po_mgate` | replayed |
-| `0x4000de10` the note-off's octave switch `subq.l #2,%d0; moveq #5,%d3; cmp.l %d0,%d3` | 6 B | `po_mogate` | replayed |
-| `0x400625e0` the `0x41` event's recorder entry `move.l 4(%a2),%d0; move.l %d0,0x46c7e956` | 10 B | `po_mrec` | replayed, `jmp 0x400625ea` |
-| `0x4006262a` its trig-held branch `mvs.b 2(%a2),%d2; movea.l %d2,%a0; lea (%a0,%d2.l*4),%a0` | 8 B | `po_mtrig` | replayed |
+| `0x4000e746` the chromatic block's START: the START code 29 put in d1 and stored to the track's long in the event table (a5, indexed by d2) | 6 B | `po_mon` | the START, then the stock mapping at `0x4000e74c` |
+| `0x4000dfd4` the note-off's compare: the two note bytes (at a0 and a3) read sign-extended into d1 and d0, compared, and the branch when they differ | 8 B (+ nop) | `po_moff` | replayed |
+| `0x4000e452` the note-on's octave switch: d0 := d6 - 2, compared with 5 (through d2) | 8 B | `po_mgate` | replayed |
+| `0x4000de10` the note-off's octave switch: d0 - 2, compared with 5 (through d3) | 6 B | `po_mogate` | replayed |
+| `0x400625e0` the `0x41` event's recorder entry: the event's long at a2+4 read into d0 and stored to `0x46c7e956` | 10 B | `po_mrec` | replayed, `jmp 0x400625ea` |
+| `0x4006262a` its trig-held branch: the event's byte at a2+2 read sign-extended into d2, and a0 := 5 × d2 (through a0) | 8 B | `po_mtrig` | replayed |
 
 The engine side (`poly.s`): `po_is_synth` / `po_polytrack` (the quantizer's
 predicates, read here from the Part and the settings table), the list
@@ -1707,11 +3311,11 @@ off here as it does on stock pages.
   now moot and documented so).
 - **The flags, read as the stock handlers read them** (`0x40032d08`, the
   sample tracks' PTCH, and `0x4003240c`, both in `docs/firmware/PARAM_PAGES.md`
-  §4 terms): [FUNCTION] = `tst.l 0x46c7dd26`; the encoder's push switch =
+  §4 terms): [FUNCTION] = the long word at `0x46c7dd26`, tested; the encoder's push switch =
   the key record of code `0x38 + slot` (`0x46c7d8de + code * 0x18`,
   PANEL.md; `+0x10` nonzero while held -- the push switches are key-matrix
   row 0x27, bits 0..5, `tools/panel/KEYMAP.md`); DISABLE FUNCTION + ENCODER
-  = `tst.l 0x800000a0` (the stock handlers take their FUNC path only while
+  = the long word at `0x800000a0`, tested (the stock handlers take their FUNC path only while
   it is 0). Nothing is copied: 92 instructions of our own.
 - **Stock, for the record** (read in the listing): the sample tracks' PTCH
   handler with FUNC jumps among three fixed values (a table at
@@ -1722,7 +3326,7 @@ off here as it does on stock pages.
   synth track's PTCH from the detent count by scale degree, for any handler
   -- FUNC and the push then count degrees, not semitones. SCALE OFF: as the
   table.
-### Measured (30 Sep 2026, the OCTATRICK2.4 BUILD 14 bus on ot_emu, a copy of the OTLIVE card, T2 = FM SYNTH slot 5, SCALE OFF; the BUILD 12 bus beside it as the baseline; `knobs_measure.py`, shots `knobs-shots/`)
+### Measured (30 Sep 2026, the OCTATRICK2.4 BUILD 14 bus on ot_emu, a copy of the OTLIVE card, T2 = FM SYNTH slot 5, SCALE OFF; the BUILD 12 bus beside it as the baseline; `knobs_measure.py`, its shots)
 
 The clone's six handler slots read `po_knob` (`40a96582` x6, `po_pg_built` 1);
 the pointer block before `sy_render` reads `po_knob po_keyrec po_hold128
@@ -1753,7 +3357,7 @@ byte read back after the turn; the page's text is the shot.
 - **INDX, FDBK, DEC** from 0, each: plain 1; FUNC + detent 16, again 32;
   pressed 7; FUNC x9 up: 16 32 48 64 80 96 112 127 127; FUNC down from 127:
   111; FUNC down from 0: 0. (DEC 16 prints `32`, its milliseconds; 127
-  `2.0s`.)
+  `2.0s` -- `HOLD` since 2.10, where 0 prints `0`.)
 - **The baseline (BUILD 12, handlers "0")**: pressed + detent on T2's PTCH
   already gave 71 (`+7`: the stock default stepper `0x4003240c` reads the
   push switch), FUNC + detent gave 65 (`+1`, no FUNC layer), FUNC + detent
@@ -1807,6 +3411,8 @@ byte and the stock "+7.0" display, byte for byte. What changes, and where:
 - **An LFO on PTCH sweeps ONE SEMITONE per unit of depth on a synth track**
   -- five times what it does on a sample track (0.2 st a unit); DEP +-12 is
   an octave. A PTCH lock, a scene, a MIDI CC on PTCH: the same units.
+  (Until 2.19. Since 2.20 an LFO on PTCH has the sample tracks' depth; the
+  lock, scene and CC units are unchanged: see the 2.20 section at the top.)
 - **The CHROMATIC keyboard** (`modules/quantizer`): a key sets PTCH raw =
   64 + note, note = the key's semitone (key 13 = 0 = C4, key 1 = -12) + 12
   * octave, and the octave, FUNC + LEFT / RIGHT, runs **-4..+4** on a synth
@@ -1824,8 +3430,8 @@ byte and the stock "+7.0" display, byte for byte. What changes, and where:
 Measured (27 Sep 2026, the panel on 8901, OCTATRIK12 = octatrick-tuner
 BUILD 12 with this tree, a copy of the OTLIVE card, T2 = FLEX slot 5
 SYNTH.wav, SCALE OFF, GLIDE OFF, INDX 0 / FDBK 0, AMP HOLD INF / REL 20;
-notes = spectral peaks over 0.3-0.5 s windows; `tuning/measure.py` in the
-session scratchpad, `report_*.txt`):
+notes = spectral peaks over 0.3-0.5 s windows; `measure.py` in the
+author's workspace (not in the repo), `report_*.txt`):
 
 - **Keyboard octaves** (VOIC 1, key 13): octave -2 = 65.4 Hz, -1 = 130.8,
   0 = 261.6, +1 = 523.2, +3 = 2093.0; +4 = 4186.0 (key 16 = 4978.0, D#8);
@@ -1891,7 +3497,7 @@ envelopes, release and glide -- summed into the track's one source stream.
 LFO 3 is muted on a synth track (its slots are VOIC and CHRD there).** Normal
 FLEX tracks keep the stock page and their three LFOs. Emulation only
 (`ot_emu` through the virtual panel and the pipe), flashed as OCTATRICK9 on an MKI, 26 Sep 2026 (emulator-verified since); scripts,
-captures and screens in the session scratchpad `poly/`.
+captures and screens in the author's workspace (not in the repo).
 
 ### The DRAM chain (step 1)
 
@@ -1916,7 +3522,7 @@ has the format/reserve rows; SYSTEM > STATUS has no RAM figure).
 symbol. `Detour(kind="ptr")` (`tools/build/build_bus.py`, `tools/remix/
 schema.py`, `docs/remixer/MODULES.md`) rewrites a 4-byte pointer in a stock
 table to a symbol's address, `expect` being the stock pointer -- the FLEX
-entry `0x400d6438` (`40004008` -> `sy_render`), asserted like every other
+entry `0x400d6438` (the stock sample renderer's address -> `sy_render`), asserted like every other
 detour. The ROM cave (`synth.s`) and its `PINNED` bytes are gone from the
 manifest (the source stays beside `poly.s` for the record); `page.s` is
 untouched. **The third zero run has 1,704 B free** (was 168 B): direct-jump
@@ -1924,6 +3530,8 @@ untouched. **The third zero run has 1,704 B free** (was 168 B): direct-jump
 tables at `0x400d7480..0x400d7594`.
 
 ### VOIC, CHRD, and the mono voice
+
+**Historical storage and knob behaviour:** the LFO-slot locations and stepping below predate 2.17. The chord shapes and engine discussion remain the historical record; current controls and lock precedence are described above.
 
 - **VOIC** is the LFO page's slot 2 on a synth track (SPD3's byte, free
   because LFO 3 is muted there): range 1..4, default 1, the stock enum
@@ -1937,6 +3545,10 @@ tables at `0x400d7480..0x400d7594`.
   read the Part's byte. **VOIC 1 is the exact mono synth of OCTATRICK4**: this
   file's mono path, GLIDE legato through the quantizer's hooks, the stock
   voice lifecycle, the same level.
+- **2.10 (8 Oct 2026): 6 dB of headroom.** The levels this section states and
+  measures (the mono voice's peaks, FS, the coincident peaks of a chord) are
+  from before it: since 2.10 the mono voice and each paraphonic voice are
+  6.02 dB lower, the relations unchanged; see "6 dB of headroom (2.10)".
 - **The level: equal power, a voice is `1 / sqrt(VOIC)` of the mono voice,
   and a peak limiter** (29 Sep 2026, Tim: "the volume difference between
   mono and 2 voices and 3 voices is too drastic" -- the 1/VOIC level of 28
@@ -2056,8 +3668,8 @@ tables at `0x400d7480..0x400d7594`.
   : 1.498 (3 notes). Level, as measured then: two voices in phase reached
   full scale, so the sum's peaks clipped and third-order products sat at
   about -26 dB (the phase 5 level design; **changed 28 Sep 2026, "The
-  level" below**). Scripts and captures: the session scratchpad
-  `voiccap/` (`measure.py`, `t1keys.py`, `ab.py`).
+  level" below**). Scripts and captures: the author's workspace (not in the repo:
+  `measure.py`, `t1keys.py`, `ab.py`).
 
   **The voicings and the level, measured (29 Sep 2026)** (the panel on
   8906, `--sound on`, bus = octatrick-tuner BUILD 13 = OCTATRIK13 with
@@ -2066,8 +3678,8 @@ tables at `0x400d7480..0x400d7594`.
   OFF, CHROMATIC keys, key 13 = C4; the emulator's clock reads C4 as 271.3
   Hz, ratio 1.037, every pitch below is scaled by it; peaks and lines over
   the last 0.5 s of a 0.9 s hold, the engine's `V_STATE` / `V_GAIN` /
-  `T_LIM` read beside them; scripts and captures in the session scratchpad
-  `level2/` -- `measure4.py`, `diag.py`, `diag2.py`). The mono voice (VOIC
+  `T_LIM` read beside them; scripts and captures in the author's workspace (not in the repo
+  -- `measure4.py`, `diag.py`, `diag2.py`). The mono voice (VOIC
   1) peaks at **-16.49 dBFS** at C4 and within 0.02 dB of it at E4 F4 G4 B4
   C5 F5 C6 C7: the reference.
   - **The shapes**: `4TH` at VOIC 2 = C4 F4 (271.3, 362.1 Hz; C5 and F5
@@ -2119,8 +3731,7 @@ tables at `0x400d7480..0x400d7594`.
   DELAY flattened on the copy first -- the project's resonant filter lifts
   C5 15 dB over C4 and the delay adds echoes, which had made the first pass
   unreadable; the emulator's clock reads C4 as 271.3 Hz, ratio 1.037;
-  peaks and lines over the last 0.5 s of a 0.9 s hold; the session
-  scratchpad `level/measure3.py`). The mono voice (VOIC 1, key 13) peaks
+  peaks and lines over the last 0.5 s of a 0.9 s hold; the author's workspace (not in the repo) `measure3.py`). The mono voice (VOIC 1, key 13) peaks
   at **-16.49 dBFS** at C4, and the same at C5, C6, C7, G4 and G5 through
   the keyboard octave (the flat chain): that is the reference.
   - single notes: VOIC 2 **-22.52** dBFS = **-6.02** dB re the mono voice,
@@ -2248,7 +3859,7 @@ tables at `0x400d7480..0x400d7594`.
   `NAME2` `NAME3` = the first, second, third inversion (byte + 1, 2, 3):
   the bass (= PTCH) is the shape's second, third, fourth distinct note
   and the notes below it go up an octave. The knob's detents, measured on
-  the LFO page (`v26/out/chrd_knob_grid.png`, 2.7's table): raw 0 and 1
+  the LFO page (`chrd_knob_grid.png`, 2.7's table): raw 0 and 1
   `----`, 4 `4TH`, 36 `MAJ`, 37 `MAJ1`, 38 `MAJ2`, 39 `MAJ3`, 40 `MIN`, 92
   `MA7`, 93 `MA71`, 95 `MA73`, 96 `MI7`, 124 `QUA`, 127 `QUA3` -- on 2.8
   the same detents read `----`, `MIN`, `DI7`, `DI71`, `DI72`, `DI73`,
@@ -2271,7 +3882,7 @@ tables at `0x400d7480..0x400d7594`.
 | `po_frame` | paraphonic, the second call: the key mask diff (`qz_pmask`, released keys -> their voices release), the start (`po_start`: fold the PTCH delta into the sounding voices, read `qz_pkey`, a sequencer trig releases everything, the scale mask through `SCALE_AT` (only if a `jmp` is there: a remix without the quantizer snaps nothing), VOIC, the chord byte, the cap: k = min(shape notes, VOIC), the oldest active + k - VOIC voices cut through `po_steal` (releasing before sounding), then the first k notes of the shape each snapped by `po_snap` and given a voice through `po_alloc`: free, else the oldest releasing, else the oldest sounding), then per voice: target = `V_ROOT + (PTCH word - T_REF)`, `sy_slew` on the voice's own `V_CUR`, the word folded into `0x0400..0x7c00` by octaves and the increment shifted back, ratio, index envelope, the amplitude envelope (Q15, full = `T_GMAX` = 32768 / VOIC latched at the start; ramp `T_GMAX / 8` a frame = 8 frames; release `gain -= gain * k`, `po_relk[REL]`: tau = 5 ms * 1000^(rel/126), 5 ms .. 5 s, 127 = INF, clamped to `T_GMAX`; freed below 64 = -54 dB re the mono voice) |
 | `po_fill` | both calls: clear, every sounding voice adds `c * gain` (gain Q15, at most 32768 / VOIC), the sum doubled into the mono format as the mono path does (`c * g << 1`) and saturated -- a guard, since VOIC voices in phase sum to at most the mono voice's full scale -- L and R |
 | `po_snap` | a note's word snapped onto the SCALE the quantizer's way (`qz_chrom`): its semitone number from PTCH raw 64 (the scale's root) mod 12, moved to the nearest degree of the mask, the lower candidate first at each distance; whole semitones only, the word's fraction kept. The mask comes from `qz_scale_mask` through the pinned trampoline `SCALE_AT = 0x400d2ca8` (`modules/quantizer/scale.s`) -- one copy of the table |
-| `po_lfopage` | the page resolver's kind-1 load `movel #0x400d37f6,%d0; bras` at `0x40031e62`: for a FLEX track whose assigned slot is a SYNTH* sample (page.s's test) a clone of the LFO descriptor built from the stock record on first use (no Elektron bytes in the repo): slot 2 VOIC (formatter `po_fmt_voic`, range 1..4, default 1, handler 0), slot 5 CHRD (formatter `po_fmt_chord`), both always shown (nibbles 2 and 5 = 5) |
+| `po_lfopage` | the page resolver's kind-1 load at `0x40031e62` (8 B, as `stock_guard(LFO_PAGE_HOOK, 8)`: the 6-byte load of the LFO descriptor `0x400d37f6` into d0, then the 2-byte short branch to the epilogue): for a FLEX track whose assigned slot is a SYNTH* sample (page.s's test) a clone of the LFO descriptor built from the stock record on first use (no Elektron bytes in the repo): slot 2 VOIC (formatter `po_fmt_voic`, range 1..4, default 1, handler 0), slot 5 CHRD (formatter `po_fmt_chord`), both always shown (nibbles 2 and 5 = 5) |
 | state | 8 track records x 128 B (the mono voice's 44 + `T_REF T_LAST T_MASK T_DK T_RK T_RATIO T_I T_W T_SCALE T_POLY`), 32 voice records x 64 B (`V_PHC V_PHM V_ENV V_INC V_INCM V_IEFF V_GAIN V_FB V_LASTM V_STATE V_KEY V_CUR V_ROOT V_AGE`), the LFO descriptor clone |
 
 The keys come from the quantizer's hooks (`modules/quantizer/README.md`
@@ -2286,7 +3897,7 @@ other), the last key's release posts the AMP release as stock. Level: a
 paraphonic note is 6 dB below the mono voice (each voice at 1/2), four in
 phase reach full scale.
 
-### Measurements (24 Sep 2026, the panel on 8593, a copy of the OTLIVE card, T2 = SYNTH slot 5, INDX 0 / FDBK 0 for clean lines unless said; `poly/voicF pB3 pC pD2 pF chrom cost`)
+### Measurements (24 Sep 2026, the panel on 8593, a copy of the OTLIVE card, T2 = SYNTH slot 5, INDX 0 / FDBK 0 for clean lines unless said; the rigs `voicF pB3 pC pD2 pF chrom cost`)
 
 - **VOIC 1 == OCTATRICK4**: the lockstep rig on `synth8q.img` (T8 = SYNTH,
   its SPD3 byte the stock 32 = VOIC 1): the sequencer fixture (trigs on
@@ -2344,7 +3955,7 @@ renderer. Hardware cost unmeasured.
 A verification run reported a constant 6,201.6 Hz tone at full level (with
 harmonics on the 689 Hz = 44,100/64 grid) that appeared after a legato step
 and never stopped. Reproduced on a fresh boot with the same sequence
-(`poly/stuck_loop.py`, `stuck/it1_key13_1.json`) and peeked while it sounded:
+(`stuck_loop.py`, `it1_key13_1.json`) and peeked while it sounded:
 T2's stock voice struct **inactive** (`0x800049d8 + 0xa8` = `00`), the
 engine idle for it (`T_POLY` 0, the voices free), no key held, no pending
 key; **T5's voice struct active (`0xff`) on flex slot 1**; muting T5 (FUNC +
@@ -2369,7 +3980,7 @@ owner went). The mono path's samples are unchanged by them: on this build
 the lockstep VOIC 1 A/B against OCTATRICK4 is again **0 samples differ** at
 a one-sample capture alignment (the sequencer fixture 120,090 frames, the
 CHROMATIC key sequence 233,954 frames), and the reproduction loop
-(`poly/stuck_loop.py`: fresh boot, PLAY/STOP, INDX 0, SCALE and GLIDE OFF,
+(`stuck_loop.py`: fresh boot, PLAY/STOP, INDX 0, SCALE and GLIDE OFF,
 CHRD MAJ, CHROMATIC verified by peek, key 13 x4, GLIDE 64 legato 13 + 16,
 VOIC 3 MAJ under SCALE OFF and PHRYGN, back to VOIC 1, rapid overlapping
 presses with GLIDE 64 and off) ran **10 fresh boots clean** (every key press 261.4 Hz, every MAJ 261.6/329.6/392.0, every PHRYGN MAJ 261.6/311.1/391.9) -- and in
@@ -2384,7 +3995,9 @@ of it live here. `po_tick` is the clock it reads: ticked once a frame from
 `po_lfo3b` (the frame builder's LFO pass runs for every track from boot,
 `sy_render` only once a FLEX voice has started), it counts frames and the
 changes of the sequencer's (step, tick) pair, keeps ticks a step and the
-frames a step measured between step changes, and publishes its address at
+frames a step measured between step changes (2.18: not the first change after
+the sequencer was stopped or paused, which spans the stopped time and gated the
+first trig of every PLAY for that long), and publishes its address at
 `qz_clock` (`KEYS_AT + 40`). And a **sequencer-started paraphonic voice is
 gated for the step's HOLD**: `po_start` reads the current HOLD byte
 (`0x80000810 + t*72 + 13`, the lock else the Part's byte), converts it
@@ -2407,14 +4020,14 @@ still its held key (`HELD` = the key): a re-press inside one key scan --
 -- or, on hardware, a key bounce. On a paraphonic track `qz_leg1` skips the
 note-off (the other keys must keep sounding) and `qz_leg2` posts a fresh
 trig, so `po_start` allocated a second voice: **two sounding voices of key
-13, both at full gain, on every such re-press** (`chord/part1c.py`: 2
+13, both at full gain, on every such re-press** (`part1c.py`: 2
 allocations, voices `(1, 13) (1, 13)`). At VOIC 1 the same press goes down
 the stock note-off + retrig path and restarts the one mono voice, which is
 why the doubling only exists at VOIC 2..4. (2) During live recording, the
 pattern's own trigs replaying under the finger: the recorder quantizes a key
 to the nearest step and a recorded trig is a sequencer trig to the engine
 (`qz_pkey` 0), which released the key's voice and allocated its own -- the
-same note twice, tens of ms apart, on the next pass (`chord/part1.py`: 2-3
+same note twice, tens of ms apart, on the next pass (`part1.py`: 2-3
 allocations a press once the pattern had wrapped). The race the report
 guessed at (the key post and the START in the other order) cannot happen:
 `qz_leg2` writes `qz_pkey`/`qz_pmask` before it posts the mailbox, and a
@@ -2436,8 +4049,8 @@ the note sustains while the key is held and releases with it. A shape
 voice still restarts on every trig word, as before.
 
 **Measured (26 Sep 2026, ot_emu on the OCTATRICK2.4 bus, T2 = FMSYNTH,
-SCALE/GLIDE OFF, INDX 0 / FDBK 0, AMP HOLD INF, `chord/part1_final.py`,
-`chord/part1_audio.py`; the engine's allocation stamp `po_seq` and the
+SCALE/GLIDE OFF, INDX 0 / FDBK 0, AMP HOLD INF, `part1_final.py`,
+`part1_audio.py`; the engine's allocation stamp `po_seq` and the
 voice states read from RAM, key 13 = C4):**
 
 | case | allocations per press | sounding voices 150-250 ms after the press |
@@ -2457,6 +4070,8 @@ release + press show the first voice's 30 ms release tail (a 3-6 dB step),
 one sounding voice.
 
 ### Recording fingered chords (26 Sep 2026; the second pass the same day, after 50 takes on 2.4)
+
+**Storage update in 2.17:** the recogniser now writes the synth's dedicated VOIC / CHRD step locks. References below to SPD3 / DEP3 p-locks describe the earlier storage; the recognition rules are unchanged.
 
 With VOIC 2..4 and CHRD "----", a chord played on the CHROMATIC keys (or
 over MIDI IN) during LIVE RECORDING is recognised and the first key's step
@@ -2589,8 +4204,8 @@ card, T2 = FM SYNTH, VOIC 3 unless said, CHRD "----", SCALE OFF, GLIDE OFF,
 AMP HOLD INF / REL 40, INDX 0 / FDBK 0, 130 BPM (a step = 115 ms),
 CHROMATIC octave +1 (key 1 = C4); keys held 0.5 s, the locks read back from
 the pattern record, the live lines from the engine's voices and the take,
-playback = the lines 0.03-0.4 s after the first onset; `v26/cases.py`,
-logs `v26/out_*.log`):**
+playback = the lines 0.03-0.4 s after the first onset; `cases.py`,
+logs `out_*.log`):**
 
 | keys | recorded (one step unless said) | live | playback |
 |---|---|---|---|
@@ -2680,7 +4295,7 @@ envelopes are not retriggered). A voice START snaps to its own pitch: a
 fresh note never slides in from the previous one.
 
 **Where.** `sy_slew`, called once a frame on the second call right after
-the PTCH word is read (`mvz.w (%a4),%d6; bsr sy_slew`), returns the slewed
+the PTCH word is read into d6, returns the slewed
 word in d6, and everything after it -- the stock rate arithmetic
 (`0x4000409e..` copied), RATE, the carrier and modulator increments -- runs
 on the slewed word, so RATE and the locks keep working. The per-track state
@@ -2719,7 +4334,7 @@ index-1 form), this cave at 0x400d6d00, the page cave at 0x400d24d0
 byte at 0x400d2cdc (the second run: 112 B left between the page cave and it;
 the byte moved to battery RAM 0x100b14ed on 26 Sep 2026).
 
-### Measurements (24 Sep 2026, the panel on 8593, `--sound on`, T2 = SYNTH slot 5 of a copy of the OTLIVE card; the session scratchpad's `glide_audio2/3.py`, `glide_seq2.py`)
+### Measurements (24 Sep 2026, the panel on 8593, `--sound on`, T2 = SYNTH slot 5 of a copy of the OTLIVE card; the author's audio and sequencer scripts, not in the repo)
 
 The legato and glide numbers are in `modules/quantizer/README.md` ("GLIDE
 and legato", measurements 2-3): CHROMATIC [TRIG 13] held, [TRIG 16]
@@ -2736,9 +4351,10 @@ Read from the stock disassembly for the question "could the AMP page's
 slot F hold a per-track parameter?" (24 Sep 2026; nothing here is changed
 by this build). The AMP descriptor is P = `0x400d3988` (E = `0x400d3950`,
 page kind 2 in the resolver `0x40031da4`; kind 1 is LFO): names `ATK HOLD
-REL VOL BAL XVOL` / `AMP SYNC ATCK FX1 FX2 TRIG`, defaults `0 127 127 64 64
-127`, counts 128 ×6, minimums 0, enable nibbles `P+0x18e = 0x11811111` and
-`P+0x18a = 0x111` — slot 5's nibble is **8** (bit 3 only: bit 0 "encoder
+REL VOL BAL XVOL` / `AMP SYNC ATCK FX1 FX2 TRIG`, defaults ATK at the bottom
+of its range, HOLD, REL and XVOL at the top, VOL and BAL in the middle, counts 128 ×6, minimums 0, enable nibbles: `P+0x18e` has bit 0 alone
+("encoder live") in every nibble but slot 5's, `P+0x18a` bit 0 alone in its
+three low nibbles and nothing above them — slot 5's nibble is **8** (bit 3 only: bit 0 "encoder
 live" clear, bit 2 "always show" clear), formatter A[5] = `0x4003b484`
 (prints `MIN` for 0, `MAX` otherwise), widget B[5] = `0x400475f8`, knob
 handler `P+0x12a+20` = `0x40032ba4` (a two-state switch through the
@@ -2798,8 +4414,9 @@ names read **PTCH RATO INDX RATE FDBK DEC** (four characters: the boxes are
 19 px wide and a five-character name fills them edge to edge, measured
 below); the four synth slots show their value all the time, Digitone style,
 formatted as the voice understands them -- RATO the ratio table's entry
-(`0.25 … 1 1.41 … 3.5 … 16`), INDX and FDBK `0..127`, DEC `HOLD` / `32ms` /
-`286ms` / `2.0s`; and each draws an icon where the sample dial was: the two
+(`0.25 … 1 1.41 … 3.5 … 16`), INDX and FDBK `0..127`, DEC `32ms` /
+`286ms` / `1.9s` / `HOLD` (since 2.10 HOLD is raw 127 and raw 0 prints `0`,
+the shortest; before, raw 0 was `HOLD` and 127 `2.0s`); and each draws an icon where the sample dial was: the two
 operators **M→C** (RATO), a **sideband spectrum** whose bars grow with the
 index (INDX), the modulator **with its feedback loop** when FDBK > 0, and the
 **index envelope**, a falling curve whose length follows the value (DEC; a
@@ -2808,7 +4425,7 @@ every other page draw byte for byte as stock. One pinned cave (1,672 bytes,
 `page.s`; the descriptor itself is a runtime clone built in the DRAM unit,
 below) and one 6-byte poke; **flashed as OCTATRICK9 on an MKI, 26 Sep 2026 (emulator-verified since)**, everything below measured under
 `ot_emu` through the virtual panel and the oracle, 22 Sep 2026; logs,
-screens, takes: `out/_agents/synth3/`.
+screens, takes: the author's workspace (not in the repo).
 
 ![the page](page_montage.png)
 
@@ -2817,7 +4434,7 @@ STRT 0 LEN 0 RATE 127 RTRG 0 RTIM 79): the defaults (RATO 0.25, INDX 0,
 FDBK 0, DEC 774ms); RATO raw 36 = `2`; raw 127 = `16`; INDX 127 (the full
 spectrum); FDBK 64 (the loop); DEC 16 = `32ms` (a short curve); DEC 127 =
 `2.0s`; DEC 0 = `HOLD` (flat); and T7, a FLEX track with a sample, unchanged
-(`shots/remix/`, `shots/stock/`).
+(shots of the remix and of the stock image).
 
 ### Where the page comes from, and the hook
 
@@ -2828,7 +4445,7 @@ a slot, formatters `P+0xca`, widgets `P+0xfa`, enable nibbles `P+0x18e` /
 and page kind — which tail-calls the resolver `0x40031da4`: for an audio
 track and page kind 0 (PLAYBACK) it returns `0x400d5f38[machine]` at
 `0x40031ece`. Callers: the generic parameter-page renderer `0x4004e0xx`
-(`lea 0x40031ee0` at `0x4004e1da`; names `P+22` at `0x4004e4ea`, formatters
+(the address load of `0x40031ee0` at `0x4004e1da`; names `P+22` at `0x4004e4ea`, formatters
 `P+202` at `0x4004e4f6`, the widget from `+48` past the formatter = `P+0xfa`,
 the enable nibble through `0x400a6994(P+0x18a, P+0x18e, slot)`), the footer
 (`0x4003d64e`: `sprintf("%s%s%s", P+9, "\x07", 0x400a78c8[machine])` =
@@ -2844,15 +4461,16 @@ garbled the half-height boxes (23 Sep 2026).
 
 The enable nibble of slot s (P+0x18e, nibble s from the LOW end): bit 0 =
 the encoder is live, bit 1 = the renderer's small arch bridging the slot to
-the one before it across the divider (stock 0x55311311 sets it on LEN and
-RTIM: STRT-LEN, RTRG-RTIM), bit 2 = always show the value. The clone uses
+the one before it across the divider (the stock record sets it on LEN and
+RTIM only: STRT-LEN, RTRG-RTIM; it sets bit 0 on all six slots, so every
+encoder is live, and bit 2 on none of them), bit 2 = always show the value. The clone uses
 0x55551551: always-show on RATO INDX FDBK DEC, no arches (the synth's slots
 are not pairs). The first build's 0x55715751 had RATE's always-show bit
 instead of FDBK's and kept the arches; both fixed 23 Sep 2026.
 
-| site | stock bytes (displaced) | written | stub |
+| site | displaced (in words; read from your OS by `stock_guard`) | written | stub |
 |---|---|---|---|
-| `0x40031ece` in the resolver `0x40031da4` | `2030 0c00 6002` — `movel %a0@(0,%d0:l:4),%d0; bras 0x40031ed6` | `4ef9 400d 24d0` — `jmp pg_resolve` | replays the load; if it produced the FLEX descriptor `0x400d31ae` and the track's assigned FLEX slot is a SYNTH, `d0 :=` the runtime clone (`poly.s`'s `po_pgdesc`, reached through the long before `sy_render`, whose address the kind table's FLEX entry `0x400d6438` holds; `a1` = `pg_over`); `jmp 0x40031ed6` (the resolver's epilogue restores d2–d5; d1/a0/a1 are C scratch, d6/d7/a2–a6 untouched) |
+| `0x40031ece` in the resolver `0x40031da4` | 6 B, two instructions: the load of the kind's descriptor from the table at a0 (indexed by d0 × 4) into d0, then the short branch to the epilogue `0x40031ed6` | a `jmp pg_resolve` (6 B) | replays the load; if it produced the FLEX descriptor `0x400d31ae` and the track's assigned FLEX slot is a SYNTH, `d0 :=` the runtime clone (`poly.s`'s `po_pgdesc`, reached through the long before `sy_render`, whose address the kind table's FLEX entry `0x400d6438` holds; `a1` = `pg_over`); `jmp 0x40031ed6` (the resolver's epilogue restores d2–d5; d1/a0/a1 are C scratch, d6/d7/a2–a6 untouched) |
 
 The marker test is phase 1's, on the **Part's assignment** rather than the
 playing voice: slot = `blob + part·6322 + 0x8f04a + track·5 + 1` (0-based;
@@ -2888,8 +4506,8 @@ source.l}` records ending at a negative offset, `page.s` owning the layout:
 the full name `P+9` = `FM SYNTH` (the footer), the names of slots 1/2/4/5,
 the four A formatters (INDX and FDBK through the stock's own `"%d"`
 formatter `0x4003c178`, which this cave's copy of it had duplicated byte
-for byte), the four B widgets, and the enable nibbles `0x55311311 →
-0x55551551`. `pg_resolve` reaches the builder through the long published
+for byte), the four B widgets, and the enable nibbles (the stock's two
+arches cleared, always-show set on slots 1/2/4/5: `0x55551551`). `pg_resolve` reaches the builder through the long published
 before `sy_render` (`movea.l 0x400d6438,%a0; movea.l -4(%a0),%a0; jsr
 (%a0)`): the kind table's FLEX entry holds `sy_render`'s address (the
 manifest's SymbolRef), the one address of the unit the ROM knows. The stock
@@ -2966,13 +4584,15 @@ DEC: the baseline, an instant rise at column 1 (rows 1–11), then
 I/16) stretched over `L = 2 + 13·v/127` columns 2–15 (`i = 16·(c−1)/L`,
 clipped to 16), drawn as the vertical runs between consecutive heights (an
 outline);
-v = 0 keeps `i = 0`, a flat top at row 11 — the index holds.
+v = 127 keeps `i = 0`, a flat top at row 11 — the index holds (v = 0 until
+2.10; v = 0 is now the shortest fall, L = 2).
 
 **Formatters** (`fmt(buf, value)`, C convention, `sprintf` `0x40013a08`):
 `pg_fmt_plain` `"%d"` (INDX, FDBK); `pg_fmt_ratio` looks the raw value up in
 a copy of `sy_ratio` (`raw >> 2`, Q8) and prints `"%d"` when the fraction
 is 0, `"%d.5"` when it is .50, else `"%d.%02d"` (`0.25 0.5 0.75 1 1.01 1.25
-1.41 1.5 1.75 2 2.01 … 16`); `pg_fmt_decay` prints `HOLD` for 0, else
+1.41 1.5 1.75 2 2.01 … 16`); `pg_fmt_decay` prints `HOLD` for 127 (for 0
+until 2.10; 0 now takes the formula and prints `0`), else
 `ms = (2000·raw² + 8064) / 16129` (τ = 2 s·(raw/127)², rounded) as the
 milliseconds alone (`"%d"`) below 1000 and `"%d.%ds"` above (raw 8 → `8`,
 16 → `32`, 48 → `286`, 79 → `774`, 96 → `1.1s`, 127 → `2.0s`) -- the value
@@ -2992,7 +4612,7 @@ is `poly.s`'s RAM now), **pinned at `0x400d24d0`** — the second zero run
 60 B before this change) — because the override list holds absolute
 pointers to the formatters and widgets; `PINNED_PAGE` in
 `manifest.py` is the ratified form (linked with `m68k-elf-as -mcpu=5475`,
-`ld -Ttext=0x400d24d0`, `objcopy -j .text`; `out/_agents/synth3/asm/`), the
+`ld -Ttext=0x400d24d0`, `objcopy -j .text`), the
 build re-links the source there and refuses on a difference, `emit()`
 returns `b""` plus the one poke. The phase-2 voice cave is untouched and
 still floats. `REMIX=synth make cf`: **2,345 bytes changed** (was 1,153),
@@ -3003,13 +4623,13 @@ of the third run left** as before (`build_tim_v3.log`); `out/mainos_cf.bin`
 ends as the `tim` build. Both keep the DSP payloads, dispatch and the FX2
 chooser byte-identical to stock (the CFONLY check).
 
-### Measurements (all `out/_agents/synth3/`; the panel on 8593/8594,
+### Measurements (the author's workspace, not in the repo; the panel on 8593/8594,
 `--image mainos_synth_v2.bin` (the first build; the shipped form differs
 only by the marker gate, §6) / the stock section, `--card` a fresh copy of
-phase 1's `synth8q.img`; `session3.py`, `remix.log`, `stock.log`, `shots/`)
+phase 1's `synth8q.img`; `session3.py`, `remix.log`, `stock.log`, shots)
 
 **1. The page.** Booted, [T8], [PLAYBACK]: the frames in the montage and
-`shots/remix/01..16`; the Part bytes after each turn confirm the encoders
+`01..16`; the Part bytes after each turn confirm the encoders
 map 1:1 (`remix.log`: RATO +12 +24 +16 +75 → STRT `0c 24 34 7f`, INDX +32
 +32 +63 → LEN `20 40 7f`, FDBK +1 +63 → RTRG `01 40`, DEC −63 +32 +79 −127
 → RTIM `10 30 7f 00`; `/knob/reset` restores the defaults). The value
@@ -3020,11 +4640,11 @@ frame); the icons change as designed (INDX 0 → one bar, 32 → three, 64
 a 4-column drop, 48 → 7, 127 → the full width, 0 → flat). Names: the first
 build carried `RATIO INDEX DECAY` — five characters are 19 px at the 3×5
 font's 4-px pitch, exactly the box interior, so `RATIO` and `INDEX` touched
-across the dotted separator (`shots/remix_v1/`, `remix_v1.log`); the
+across the dotted separator (the first build's screens, `remix_v1.log`); the
 four-character forms have the stock's 2-px margins.
 
 **2. Everything else is stock.** The same key script on the stock image
-(port 8594, `shots/stock/`): `00_main`, T7's PLAYBACK page and its STRT
+(port 8594, the stock shots): `00_main`, T7's PLAYBACK page and its STRT
 turn, T7's AMP / LFO / FX1 / FX2 / MIXER, T8's AMP / LFO / FX1 / FX2 /
 MIXER, the FLEX slot list (double-tap [T8]: `« MACHINE:FLEX`, `5▸SYNTH.wav
 0.33`) and the file browser (`LOAD FILE TO FLEX 6`) — **16 frames
@@ -3034,9 +4654,9 @@ are T8's PLAYBACK page, by design. Locks: REC and [TRIG 9] held on T8
 carries no PLAYBACK lock — so the highlight path (the stock invert plus the
 icon's own inversion) is by construction, not measured.
 
-**3. Boot A/B** (`ab/`; `tools/emu/ot_emu/oracle/drive.py --emu
+**3. Boot A/B** (`tools/emu/ot_emu/oracle/drive.py --emu
 out/emu/ot_emu --image <stock | mainos_tim_v3.bin>`, the `inter` battery
-on the OTLIVE card; `ab/remix` is the first build, `ab/remix_v3` the
+on the OTLIVE card; `remix` is the first build, `remix_v3` the
 shipped one): `peeks.txt` and `stderr.txt` byte-identical; `tx.bin`
 **18,297 vs 18,289 bytes** — with every LED-level pair (`0x3n <id>`)
 removed the streams are identical (**16,873 bytes: every LCD block and every
@@ -3050,13 +4670,13 @@ lookup (the first build: 18,293 bytes, `3d 24`/`3d 25` alone; `ready`
 (`modules/quantizer/README.md` §5). No text, no state peek differs.
 
 **4. The sound is phase 2's.** PLAYBACK page, RATO +36 (ratio 2), INDX +64,
-PLAY 4.2 s, STOP → `takes/remix_fm_r2_i64.wav` (`fm.py --ratio 2`, 0.15–0.95
+PLAY 4.2 s, STOP → `remix_fm_r2_i64.wav` (`fm.py --ratio 2`, 0.15–0.95
 s): **261.626 Hz (+0.0 cents)**, the lines at 262 ± k·523 Hz: 262 0, 1308
 −2.2, 785 −12.4, 1831 −16.0, 2355 −21.1, 2878 −37.3 dB, worst spur off the
 lines −51.3 dB (a Hann sidelobe); the sidebands sit lower than phase 2's
 held-index table because DEC stayed at its default 774 ms and the index
-decays through the window. The `tim` image (`tim_check.py`, `shots/tim/`,
-`takes/tim_fm_r2_i64.wav`) draws the identical page (`/screen.txt` equal to
+decays through the window. The `tim` image (`tim_check.py`, its shots,
+`tim_fm_r2_i64.wav`) draws the identical page (`/screen.txt` equal to
 the `synth` remix's, T7 equal to stock) and measures the identical lines.
 
 **5. Gates** (`gates.log`, `gates.sh`, `REMIX=synth`): `make bus`,
@@ -3070,8 +4690,8 @@ mode_views" (the Makefile's SKIP); `verify_replaces` fails only on the eight
 MIDI SCENES remixes without the submodule (pre-existing).
 
 **6. A sample loaded through the file browser** (`browser_load.py`,
-`repro_v2.log` / `repro_v3.log`, `shots/repro_v2/`, `shots/repro_v3/`,
-`takes/repro_*`): the fixture booted, T8's PLAYBACK page and a take on the
+`repro_v2.log` / `repro_v3.log`, the shots and takes of both,
+`repro_*`): the fixture booted, T8's PLAYBACK page and a take on the
 project-file slot 5; then double-tap [T8] → the FLEX slot list, DOWN ×2 →
 slot 7, RIGHT → `LOAD FILE TO FLEX 7`, DOWN ×36 → `SYNTH.wav`, YES (load),
 YES (assign: T8's slot byte `04 → 06`), NO NO, [PLAYBACK], a take. The new
@@ -3110,7 +4730,7 @@ pages read the synth and both takes carry the voice (§6 numbers in
   scan, ≤ 255 bytes) — UI-thread only.
 - Flashed as OCTATRICK9 on an MKI, 26 Sep 2026 (emulator-verified since).
 
-Tooling for the record (`out/_agents/synth3/`): `gen_page.py` (the clone
+Tooling for the record (the author's workspace, not in the repo): `gen_page.py` (the clone
 and the column bitmaps from ASCII art), `dis.py` (listing slices by
 address), `montage.py`, `session3.py`, `slotlist_check.py`, `tim_check.py`,
 `gates.sh`; the disassembly slices read for this phase are `dis_*.txt`.
@@ -3134,7 +4754,7 @@ FDBK / DEC, with icons -- "Phase 3: the page" below):
 | LEN (C) | **INDEX** | `fp[2]` = `+4` | I = 8 rad · raw/127, linear (the word's low byte counts: LFO and scene fractions morph smoothly); INDEX 0 = a clean sine |
 | RATE (D) | playback rate | `fp[3]` = `+6` | the stock rate arithmetic (RATE scales the pitch increment; 127 = ×1) |
 | RTRG (E) | **FEEDBACK** | `fp[4]` = `+8` | 0 .. 0.25 cycle of modulator phase per full-scale modulator sample, linear in raw; the stock retrig it used to be is switched off for synth voices |
-| RTIM (F) | **DECAY** | `fp[5]` = `+10` | the index envelope: E := 1 at the trig, then `E -= (E − 1/16)·k` per frame, k = 3,068,384 / raw² (Q20; ≥ 1 = instant), i.e. an exponential toward I/16 with time constant τ = 2 s · (raw/127)²: raw 8 = 8 ms, 16 = 32 ms, 32 = 127 ms, 48 = 286 ms, 64 = 0.5 s, 96 = 1.14 s, 127 = 2.0 s; **0 = no decay** (the index holds) |
+| RTIM (F) | **DECAY** | `fp[5]` = `+10` | the index envelope: E := 1 at the trig, then `E -= (E − 1/16)·k` per frame, k = 3,068,384 / raw² (Q20; ≥ 1 = instant), i.e. an exponential toward I/16 with time constant τ = 2 s · (raw/127)²: raw 8 = 8 ms, 16 = 32 ms, 32 = 127 ms, 48 = 286 ms, 64 = 0.5 s, 96 = 1.14 s, 126 = 1.97 s; **127 = no decay** (the index holds), **0 = the shortest** (k = K_MAX, instant) -- since 2.10; until then 0 held and 127 was 2.0 s |
 
 Locks, scenes and LFOs on those slots reach the voice every frame because
 the cave reads the per-frame record the frame builder already fills for
@@ -3142,10 +4762,10 @@ the DSP (the packer's per-track pointer `0x800062a8`; the record for track
 t of ping p is `0x80000510 + 384·p + 48·t`). The layout was measured by
 poking the Part bytes `0x40171062..67` (T8: PTCH STRT LEN RATE RTRG RTIM)
 to `64 11 22 100 33 44` and reading both ping records: `4000 0b00 1600
-6400 2100 2c00` (`runs/rec_poked.log`; defaults `4000 0000 0000 7f00 0000
-4f00`). **This corrects phase 1's guess**: the stock renderer's `fp@(0)` is
-PTCH (0x4000 = 0 semitones), `fp@(6)` is RATE (0x7f00 = ×1, applied when
-the mode byte `fp@(27)` is 0), and `fp@(10)` — which phase 1 read as PTCH —
+6400 2100 2c00` (`rec_poked.log`; defaults `4000 0000 0000 7f00 0000
+4f00`). **This corrects phase 1's guess**: the stock renderer's `fp+0` is
+PTCH (0x4000 = 0 semitones), `fp+6` is RATE (0x7f00 = ×1, applied when
+the mode byte `fp+27` is 0), and `fp+10` — which phase 1 read as PTCH —
 is RTIM, feeding the retrig-interval table `0x400aae0c` into `state+24`.
 
 ### The design, and why
@@ -3186,16 +4806,16 @@ the phase-1 256+1-entry s16 table with linear interpolation (`mvs.w` ×2,
 fb` the same way, the output `(c × gain) << 1` whose high word is the
 sample (`clr.w`, two `move.l` for L and R). 39 instructions per sample.
 The EMAC is used only in the per-frame rate arithmetic, in the same
-fractional mode and instruction forms as the stock renderer (`msac.l
-%d1,%d2,(%a0)+,%d2,%acc0` / `mac.l` / `movclr.l`; the encodings match the
-stock bytes). Level: the carrier is ±0x4000 (−6 dBFS source) and the gain
+fractional mode and instruction forms as the stock renderer (the EMAC's
+multiply-subtract with a parallel load, its multiply-accumulate and its
+move-and-clear of the accumulator; the encodings match the stock forms). Level: the carrier is ±0x4000 (−6 dBFS source) and the gain
 is ≤ 1.0, so the sample never exceeds it — nothing to saturate; measured
 −24.0 dBFS at the fixture's track/main levels, as phase 1.
 
 **Space.** The cave is **1,684 bytes** (code 0x000–0x30d, `sy_ratio`
 0x30e, `sy_tab` 0x350, per-track state 8 × 40 B at 0x554), position
 independent — linked at `0x400d6b80`, `0x400d6e00`, `0x400d7000` and
-`0x400d7300` the bytes are identical (`out/_agents/synth2/asm/`) — and
+`0x400d7300` the bytes are identical — and
 pinned as phase 1 (`PINNED`, `reference=lambda addr: PINNED`, `emit()`
 returning `b""` plus the kind-table poke). `REMIX=synth make cf`: **1,153
 bytes changed**, cave at `0x400d6b80`, **2,600 B of cave left**
@@ -3207,7 +4827,7 @@ the second zero run (`0x400d24d0`, 2,064 B) or a DRAM unit. Both DSP
 payloads, dispatch and the FX2 chooser byte-identical to stock (the CFONLY
 check).
 
-### Measurements (all `out/_agents/synth2/`; lockstep `--dsp` unless said)
+### Measurements (the author's workspace, not in the repo; lockstep `--dsp` unless said)
 
 Rig: `rig.py` (render.py with timed pokes and pc watches), `fm.py` (FFT
 of a window: the fundamental with parabolic interpolation, the FM lines
@@ -3221,7 +4841,7 @@ Part bytes before PLAY (`0x40171063` STRT, `..64` LEN, `..66` RTRG,
 `..67` RTIM, `..62` PTCH); windows are 0.15–0.95 s (the first note, past
 the voice-start burst described under "What does not work").
 
-**1. INDEX 0 = a clean carrier** (`runs/base`, defaults: STRT 0, LEN 0,
+**1. INDEX 0 = a clean carrier** (`base`, defaults: STRT 0, LEN 0,
 RTIM 79): **261.626 Hz (+0.0 cents)** by FFT, 261.636 Hz by zero
 crossings, −24.0 dBFS L/R. Spur: −54.0 dB with the Hann window (that is
 the window's own sidelobe at ±7 Hz, as phase 1's −51/−52 were); with a
@@ -3230,7 +4850,7 @@ and the harmonics h2–h5 are −104 to −119 dB. The second note (1.15–1.95 
 reads the same pitch, spur −77 dB. Under the panel's rt JIT mode (take
 12, defaults) 261.626 Hz, spur −54 (Hann).
 
-**2. Sidebands** (`runs/r{1,2,35}i{32,64,127}`, RTIM 0 so the index
+**2. Sidebands** (`r{1,2,35}i{32,64,127}`, RTIM 0 so the index
 holds; STRT raw 12 / 36 / 52 = ratio 1 / 2 / 3.5, LEN raw 32 / 64 / 127 =
 2.0 / 4.0 / 8.0 rad). Every line sits at f0 ± k·ratio·f0 to the Hz, the
 fundamental stays at 261.62 Hz (±0.1 cents) in all nine, and the
@@ -3246,11 +4866,11 @@ strongest peaks (dB relative to the strongest line) are:
 fundamental's J0 is small, at 8 rad the energy sits at k = 5–7). Off the
 lines the worst spur is −54 dB (a window sidelobe) at INDEX 32; the
 "spurs" at higher index (−33 to −1 dB) are the k = 7.. lines beyond fm.py's
-six. WAVs to hear: `wav/fm_ratio1_index64.wav`,
-`wav/fm_ratio2_index64.wav`, `wav/fm_ratio3.5_index64.wav`, plus
+six. WAVs to hear: `fm_ratio1_index64.wav`,
+`fm_ratio2_index64.wav`, `fm_ratio3.5_index64.wav`, plus
 `fm_ratio2_index127.wav`, `carrier_index0.wav`.
 
-**3. DECAY** (`runs/dec16`, `runs/dec48`: ratio 2, INDEX 64, RTIM 16 = τ
+**3. DECAY** (`dec16`, `dec48`: ratio 2, INDEX 64, RTIM 16 = τ
 32 ms and RTIM 48 = τ 286 ms). Sideband/fundamental energy per 25 ms bin
 from the trig (dB; the first bin holds the voice-start burst):
 
@@ -3263,11 +4883,11 @@ from the trig (dB; the first bin holds the voice-start burst):
   index passes 2.4 rad, and fitting the small-index tail (0.2–0.5 s, where
   the ratio ≈ I²/2: I = 1.15 → 0.58 rad) gives **τ = 0.295 s** against the
   designed 0.286 s; −10 dB relative to the 100 ms value at ~170 ms.
-  `wav/fm_ratio2_index64_decay48.wav`.
+  `fm_ratio2_index64_decay48.wav`.
 
 **4. A lock on one step; a scene on the crossfader** (the panel on 8593,
 `--image mainos_synth.bin --card cards/panel.img --sound on`, rt 1.002;
-`session.log`, `shots/`, `takes/`). [T8], PLAYBACK page, STRT +36 (Part
+`session.log`, shots and takes). [T8], PLAYBACK page, STRT +36 (Part
 `40 24 00 7f 00 4f`: ratio 2), grid recording, [TRIG 9] held, LEN +64 →
 **the lock byte `0x400e62f1` = 0x40** (T8's track record `0x400e6196` +
 0x59 + 8·32 + 2; PTCH/STRT stay `ff`) and the Part's LEN untouched (a
@@ -3283,10 +4903,10 @@ held, STRT +64 → scene B's RATIO = raw 100 (10.0), the Part's STRT still
 
 The crossfader morphs the raw STRT value, so RATIO steps through the
 table (2 → 5 → 10 here); INDEX under a scene would morph smoothly. WAVs:
-`wav/panel_sceneA_ratio2_step1idx127_step9lock64.wav`,
-`wav/panel_xfader64_ratio5.wav`, `wav/panel_sceneB_ratio10.wav`.
+`panel_sceneA_ratio2_step1idx127_step9lock64.wav`,
+`panel_xfader64_ratio5.wav`, `panel_sceneB_ratio10.wav`.
 
-**5. PTCH ±12** (`runs/p12`, `runs/m12`: Part PTCH 124 / 4, ratio 2, INDEX
+**5. PTCH ±12** (`p12`, `m12`: Part PTCH 124 / 4, ratio 2, INDEX
 64): **523.250 Hz (−0.0 cents)** and **130.813 Hz (+0.0 cents)**; the
 lines at 523 ± k·1046 and 131 ± k·262 with the same relative levels as at
 PTCH 0 (−4.4/−5.2/0/−14.7/−5.5/−19.4/−21.6 dB for k = −1..6, i.e. the
@@ -3295,7 +4915,7 @@ timbre is pitch-invariant); **worst non-harmonic spur −92.3 dB at +12,
 first-order k = 7.. lines above the six fm.py lists reach 7,849 Hz at −37
 dB at +12, which is the FM spectrum itself, not aliasing.
 
-**6. Mute, AMP, FX1** (`runs/amp`, `runs/fx1`, `takes/mute2.wav`). AMP
+**6. Mute, AMP, FX1** (`amp`, `fx1`, `mute2.wav`). AMP
 ATK 60 / HOLD 30 / REL 40 poked (`0x40171128..2a`): the 100 ms envelope
 of each note reads `−31 −34 −29 −26 −24 −31 −94 −90 …`, rising and released
 as phase 1's sine did. FX1 FILTER BASE 100 (`0x4017112e`): −38.9 dBFS
@@ -3304,9 +4924,9 @@ phase 1's −69.7 for a bare 261 Hz). FUNC + [T8] at 2.0 s of a panel take
 (mute mask `0x8000000a` → 0x80): `… −23 −24 −25 −30 −90 −90 −90 −90 −90 −90
 −18 −20 −36 −85 −104 −90 …` — digital silence after the mute, except the
 DSP's voice-start burst at the 3.0 s trig (below), which the mute does not
-stop either. `wav/panel_mute_at_2s.wav`.
+stop either. `panel_mute_at_2s.wav`.
 
-**7. Cost** (`runs/base/hits.txt`, `runs/p12/hits.txt`; `cost2.py hits
+**7. Cost** (the PTCH 0 and PTCH +12 runs' `hits.txt`; `cost2.py hits
 400d6b80 400d6e86` — the cave's entry and its `rts` at +0x306 — plus the
 stock pair `0x40004008/0x40004266`; T8 = SYNTH, the frame's event nibble
 is 4 on this card so the calls are [0,4) and [4,16)):
@@ -3326,7 +4946,7 @@ stock renderer's part is what a playing FLEX track costs anyway.
 
 **7b. The settings-record bounds check (24 Sep 2026).** A start frame's name scan follows the voice struct's `+8` pointer; it is now scanned only when it lies inside the settings table (`0x100b14f0` + 136 x `0x448`), because on the unit RAM after power-on is garbage and a refused start leaves the previous value -- the emulator's zeroed RAM never showed it. Code +14 B, the tables moved to `+0x360` / `+0x564`, cave 1,700 B.
 
-**8. Stock behaviour untouched** (`ab/`): `tools/emu/ot_emu/oracle/drive.py
+**8. Stock behaviour untouched** (A/B boots): `tools/emu/ot_emu/oracle/drive.py
 --emu out/emu/ot_emu --image <stock | mainos_synth.bin>`: `ready.txt`,
 `steps.txt`, `stamps.txt`, `peeks.txt`, `txlen.txt`, **`tx.bin`** and
 `stderr.txt` byte-identical; `boot.log` differs only in the image path
@@ -3335,10 +4955,10 @@ same results as phase 1 — every `verify_*` and `make bus`/`make cf` exit 0,
 `verify_midiscenes`/`verify_labels`/`verify_burn` their usual SKIPs,
 `verify_modenames` its "no module declares mode_views", `verify_replaces`
 failing only on the eight MIDI SCENES remixes without the submodule
-(pre-existing). `REMIX=tim make cf` boots and plays the voice (`runs/tim`:
+(pre-existing). `REMIX=tim make cf` boots and plays the voice (`tim`:
 261.626 Hz, the ratio-2 lines).
 
-**FEEDBACK** (`runs/fb`, `wav/fm_ratio1_index64_feedback127.wav`: ratio
+**FEEDBACK** (`fb`, `fm_ratio1_index64_feedback127.wav`: ratio
 1, INDEX 64, RTRG 127): the ratio-1 lines stay (523 0, 262 −0.4, 785 −2.7,
 1046 −13.4 …) and the spectrum fills up to Nyquist (a cluster at 21.3–21.9
 kHz at −3 to −13 dB): full feedback on a 262 Hz modulator is a bright,
@@ -3349,11 +4969,11 @@ subtle; the useful range is the lower half.
 
 - **A ~30 ms burst at every voice start, up to full scale**, in the
   emulator: the stock image playing the silent `SYNTH.wav` on the same card
-  produces the identical sample sequence at each trig (`runs/stock_silent`:
+  produces the identical sample sequence at each trig (`stock_silent`:
   `103 −310 −916 −587 957 2037 …` from sample 81, peaks 19,281 at 0.0 s and
-  32,767 at 1.0 s; phase 1's image the same, `runs/len0`), it passes the
+  32,767 at 1.0 s; phase 1's image the same, `len0`), it passes the
   track mute, and at 12 ms the T8 record already holds the cave's own sine
-  (`runs/hdr_watch.log`) — so it is the DSP's voice-start path (or its
+  (`hdr_watch.log`) — so it is the DSP's voice-start path (or its
   emulation) working on stale data, not the cave. Phase 1 saw only its RMS
   trace ("a 1 dB dip in one 10 ms bin"; the 100 ms envelopes here read −17
   /−19 at 1.0–1.2 s). It hides the retrigger click the start ramp was for,
@@ -3399,7 +5019,7 @@ One ColdFire cave (1,068 bytes, floating, position independent) and one
 hook in a stock routine. **flashed as OCTATRICK9 on an MKI, 26 Sep 2026 (emulator-verified since)**; everything below is measured under
 `ot_emu` — the lockstep interpreter through the pipe, and the panel's
 real-time JIT mode through keys and takes — 22 Sep 2026. Logs, WAVs,
-screens and numbers: `out/_agents/synth/`.
+screens and numbers: the author's workspace (not in the repo).
 
 To try it: build (`PATH=.venv/bin:$PATH REMIX=synth make cf` or `REMIX=tim
 make cf` → `out/mainos_cf.bin`), put any WAV named `SYNTH.wav` (or
@@ -3420,7 +5040,7 @@ disassembly says about (A):
   machine·6 + slot`) and the sample slots as **five bytes per track**
   (`base + 0x8f04a + track·5 + machine`): a machine index 5 indexes the
   NEXT track's blocks. Every reader computes that itself — 40 sites read
-  the machine byte (`addal #585122` in the listing), 26 read the parameter
+  the machine byte (adding the offset 585122 = 0x8eda2 in the listing), 26 read the parameter
   base, in the knob handler, the p-lock editor, the trig routine, the
   frame builder, the pages, the MIDI paths and the project code. Aliasing
   5 → 1 everywhere is a large, error-prone patch set; the descriptor
@@ -3440,7 +5060,7 @@ shipped. The DSP resamples that source by the voice's rate, which is where
 PTCH, the locks and the LFO are already folded in — no pitch arithmetic in
 the cave at all.
 
-## What was found (stock 1.40C main OS at `0x40000400`; listing `out/_agents/synth/mainos.dis`)
+## What was found (stock 1.40C main OS at `0x40000400`; a disassembly listing of it)
 
 ### The per-frame record and its renderers
 
@@ -3448,12 +5068,12 @@ the cave at all.
 |---|---|
 | the record packer | `0x4000d3fc..0x4000d55e`: for each of 8 tracks, cursor `0x80001c80 := 0x80001c90 + ping·0xa80 + 336·track` (T1–T4's records go to core 1, T5–T8's to core 0 via eDMA ch 0), then TWO renderer calls, `renderer(track, ping, 0, n)` from the current table `0x400d61d0[track]` and `renderer(track, ping, n, 16)` from the next-frame table `0x400d61f0[track]`, where **n = the low nibble of the per-track event byte `0x46104d0c + track`** — the sub-frame position of this frame's event — and **bit 4 of that byte = a voice starts this frame**: the packer then calls the start handler (`0x400d6454[kind]`, `0x4000f450` for STATIC/FLEX), installs the new renderer from the kind table, resets the render state (`0x80004898 + 40·track`) and clears bits 4–7 AFTER the second call |
 | the kind table | `0x400d6434`, 8 longs, index = the machine type (byte `0x80000eb4 + ping·8 + track`): 0 STATIC / 1 FLEX / 4 PICKUP → `0x40004008` (the sample renderer), 2 THRU → `0x40004424`, 3 NEIGHBOR → `0x4000466c`, 5–7 → `0x400047f0` (silent). The renderer for track t is installed at `0x4000c004` (`0x400d61f0[t] := table[kind & 7]`) |
-| the sample renderer | `0x40004008(track, ping, start, end)`, C convention, d0/d1/a0/a1 scratch: writes a 16-byte header at the cursor, recomputes the rate on the frame's second call (`btst #4` on the `end` argument's low byte — 16 = the full frame), ships the source samples through `0x40007960` in sub-segments (retrigs), advances the cursor. The rate: **[corrected in phase 2: `fp@(0)` is PTCH, `fp@(6)` RATE, `fp@(10)` RTIM — the retrig interval; the text below is kept as written]** the pitch word `fp@(10)` of the DSP parameter record (`fp = 0x80000510 + ping·384 + 48·track`) interpolated through the table `0x400aae0c` (a 2^(x/12) curve) into `state+24`, times the RATE word `fp@(0)` through `0x400aa294`, into `state+36`, Q26 (`0x04000000` = 1.0) |
-| the record a call writes (measured, `runs/stock_explore2.log`) | header `+0` = source count (bits 0–7) \| out count << 8 [\| out2 << 16 \| out3 << 24], `+4` fractional phase, `+8` rate Q26, `+12` tag; then `src` samples of 8 bytes: L long, R long; **the DSP takes the top 24 bits of each long** (a 16-bit sample sits at bits 31..16). Silent T8 at n = 0: `[0,0,0x04000000,0]` then `[0x1010, 0x20, 0x04000000, 0x8000]` + 16 zero pairs; a sounding track at n = 4: `[0x404, 0x3c, 1.0, 0xf0000000]` + 4 pairs, `[0xc0c, 0, 1.0, 0]` + 12 pairs (`ffbe0084 ffb000a0 …`) |
+| the sample renderer | `0x40004008(track, ping, start, end)`, C convention, d0/d1/a0/a1 scratch: writes a 16-byte header at the cursor, recomputes the rate on the frame's second call (bit 4 of the `end` argument's low byte — 16 = the full frame), ships the source samples through `0x40007960` in sub-segments (retrigs), advances the cursor. The rate: **[corrected in phase 2: `fp+0` is PTCH, `fp+6` RATE, `fp+10` RTIM — the retrig interval; the text below is kept as written]** the pitch word `fp+10` of the DSP parameter record (`fp = 0x80000510 + ping·384 + 48·track`) interpolated through the table `0x400aae0c` (a 2^(x/12) curve) into `state+24`, times the RATE word `fp+0` through `0x400aa294`, into `state+36`, Q26 (`0x04000000` = 1.0) |
+| the record a call writes (measured, `stock_explore2.log`) | header `+0` = source count (bits 0–7) \| out count << 8 [\| out2 << 16 \| out3 << 24], `+4` fractional phase, `+8` rate Q26, `+12` tag; then `src` samples of 8 bytes: L long, R long; **the DSP takes the top 24 bits of each long** (a 16-bit sample sits at bits 31..16). Silent T8 at n = 0: `[0,0,0x04000000,0]` then `[0x1010, 0x20, 0x04000000, 0x8000]` + 16 zero pairs; a sounding track at n = 4: `[0x404, 0x3c, 1.0, 0xf0000000]` + 4 pairs, `[0xc0c, 0, 1.0, 0]` + 12 pairs (`ffbe0084 ffb000a0 …`) |
 | the voice struct | `0x800049d8 + 0xa8·track`: `+0` active byte (`0xff` while the CF voice runs, 0 when it ended — after which the renderer ships zeros), `+4` the slot's state record (`0x46c922c4 + 44·slot` FLEX, `0x46c90a78 + 44·slot` STATIC), `+8` its settings record (`0x100b14f0 + 0x448·slot` FLEX, `0x100d5b30 + …` STATIC), both written by the start handler `0x4000f450` at `+0x4dc/+0x4e0` unconditionally, i.e. before the start frame's second call. **The settings record's path string is at `+0`** (`"../AUDIO/SYNTH.wav"` for a slot the unit's own browser loaded; slot numbers are 0-based: FLEX slot 5 = index 4 = `0x100b2610`) |
 | the trig → voice path | `0x40005030(track, cmd, flags, slot)`: reads the machine byte, the Part's slot byte (`+0x8f04a + track·5 + type`, or the argument), the settings record (`≤ 128` STATIC, `≤ 135` FLEX/PICKUP), refuses an unloaded slot (`+0x129 == −1`), posts `0x8000186e/0x8000188e/0x800018ae[track]` (`slot \| type << 10`); the frame builder (`0x4000b2ee..`) checks the type against the Part's machine byte and posts the mailbox `0x46c80354[track]` and the slot byte `0x46c80282[track]`; `0x400068e4(track, ping, start, end)` is the per-track voice state machine the packer runs before rendering (`0x4000d322`), not a renderer |
 | parameter locks (found on the way, corrects a 35-byte guess) | a pattern's track record (`blob + pattern·0x8ed8 + track·0x91a`; bank A blob `0x400e21e0`) holds **32 bytes per step from `+0x59`**: byte 0 = PTCH … byte 31 = the sample slot lock; the p-lock editor `0x40050e60` writes the blob byte and an SRAM mirror (`0x100161a6 + pattern·stride + track·2330 + 1 + step·32 + param`). T8 step 9's PTCH lock: blob `+0x159`, mirror `+0x101` |
-| the FLEX cost, stock (`runs/stock_explore.log`, `hits` on `0x40004008/0x40004266`) | first call 16 instructions; second call 261 idle, 264–694 streaming, **897–1,152 for the playing SYNTH slot** (mean 936) |
+| the FLEX cost, stock (`stock_explore.log`, `hits` on `0x40004008/0x40004266`) | first call 16 instructions; second call 261 idle, 264–694 streaming, **897–1,152 for the playing SYNTH slot** (mean 936) |
 
 ### The cave (`synth.s`, 1,068 bytes; `.org` layout in `manifest.py`)
 
@@ -3480,8 +5100,8 @@ its return value, then:
   interpolation would be −48).
 
 Position independent (pc-relative data, OS absolutes): the bytes are
-identical linked at `0x400d7000`, `0x400d7300` and `0x400d6b80`
-(`out/_agents/synth/asm/`), and `PINNED` in the manifest is the ratified
+identical linked at `0x400d7000`, `0x400d7300` and `0x400d6b80`,
+and `PINNED` in the manifest is the ratified
 form the build re-links at the address the cave lands on — `0x400d6b80`
 in `synth`, `0x400d6e00` in `tim`, both accepted. State lives in the cave
 (`sy_on[8]`, `sy_phase[8]`; the main OS runs from DRAM).
@@ -3494,19 +5114,19 @@ changed, the synth cave at `0x400d6e00`, the quantizer's tables at
 DSP payloads, dispatch and FX2 chooser byte-identical to stock (the CFONLY
 check).
 
-## Measurements (all `out/_agents/synth/`)
+## Measurements (files in the author's workspace, not in the repo)
 
-**Rig.** `trees/synth8q` = the clean tree2 fixture (`out/_agents/audio/tree2`)
+**Rig.** `synth8q` = the clean tree2 fixture (`tree2`)
 with `SYNTH.wav` (4 s of silence, 16-bit mono 44.1 kHz) as FLEX slot 5
 (`LOOPMODE=1`), T8 on it in parts 1 and 5, T3/T4/T7 moved to empty slots
 so only T8 sounds, the fixture's step-9 sample-slot lock on T8 cleared
-(`mktree.py`, `cards/synth8q.img`); T8 trigs at steps 1 and 9, 120 BPM.
+(`mktree.py`, `synth8q.img`); T8 trigs at steps 1 and 9, 120 BPM.
 `render.py` boots `out/emu/ot_emu --interactive --dsp` (lockstep) on the
 image + card, PLAYs, captures main L/R; `measure.py` gives the FFT peak
 (parabolic interpolation, 0.8 s Hann window), zero-crossing frequency,
 RMS and a 100 ms envelope. `explore.py` is the peek/watch driver.
 
-**1. PTCH 0** (`runs/ptch0`, `REMIX=synth`): the first note, 0.1–0.9 s:
+**1. PTCH 0** (`ptch0`, `REMIX=synth`): the first note, 0.1–0.9 s:
 **FFT 261.634 Hz (+0.1 cents), zero crossings 261.684 Hz (+0.4 cents)**,
 −24.0 dBFS L and R, worst spur −51.3 dB. The note holds until the next
 trig (the fixture's AMP HOLD/REL are 127; a looped FLEX voice holds):
@@ -3514,21 +5134,21 @@ envelope −23/−24 dBFS throughout, silence after STOP. The step-9 note in
 the first run played the fixture's own slot lock (fourth-0.wav, 5 kHz
 tonal) — a sample-locked step correctly stays a sample.
 
-**2. PTCH +12** (`runs/ptch12`): T8's Part PTCH byte `0x40171062` poked
+**2. PTCH +12** (`ptch12`): T8's Part PTCH byte `0x40171062` poked
 to 124 (+12.0) before PLAY: **523.258 Hz (+1200.0 cents)**, both measures,
 −24.0 dBFS, spur −49.9 dB. The cave did nothing different: the DSP
 consumed 32 source samples a frame at rate 2.0.
 
-**3. A p-locked PTCH on one step** (panel, `takes/take-plock.wav`, take 7;
+**3. A p-locked PTCH on one step** (panel, `take-plock.wav`, take 7;
 GRID RECORDING, [TRIG 9] held, PTCH encoder +120 detents, the lock clamps
 at 124): notes at 0.1–0.9 / 1.1–1.9 / 2.1–2.9 / 3.1–3.9 s = **261.634 /
 523.258 / 261.634 / 523.256 Hz** — step 9 alone at +12 (the earlier
 take 6 measures the same). The lock was written to the SRAM mirror and
 the blob (`+0x159`); a poke of the blob byte alone before PLAY did not
-change the pitch (`runs/plock`), so the sequencer reads the mirror or a
+change the pitch (`plock`), so the sequencer reads the mirror or a
 later copy — the unit's own editor is the path to use.
 
-**4. The AMP page shapes it** (panel, `takes/amp.wav`, take 8): AMP page,
+**4. The AMP page shapes it** (panel, `amp.wav`, take 8): AMP page,
 ATK 0 → 60, HOLD 127 → 30, REL 127 → 40 (Part bytes `0x40171128..2a` =
 `3c 1e 28`, read back). Each note now rises from −35 to −24 dBFS over
 ~340 ms and is released to silence by ~0.5 s (20 ms bins: `-35 -32 -31 …
@@ -3536,20 +5156,20 @@ ATK 0 → 60, HOLD 127 → 30, REL 127 → 40 (Part bytes `0x40171128..2a` =
 the unshaped take holds a flat −24. Knobs reset afterwards with
 `/knob/reset` (`0 127 127`).
 
-**5. FX1 = FILTER audibly changes it** (panel, `takes/fx1.wav`, take 9):
+**5. FX1 = FILTER audibly changes it** (panel, `fx1.wav`, take 9):
 FX1 page, BASE 0 → 100 (`0x4017112e` = `64`; a high-pass rising above the
 tone). Level −24.0 dBFS → **−69.7 dBFS on the 261 Hz steps and −57 dBFS
 on the +12 (523 Hz) steps** — the lower note is 13 dB deeper into the
 slope, as a filter should. Reset to 0 afterwards.
 
-**6. Mute silences it** (panel, `takes/mute.wav`, take 10): FUNC + [T8] at
+**6. Mute silences it** (panel, `mute.wav`, take 10): FUNC + [T8] at
 2.0 s of play (mute mask `0x8000000a` `7f` → `ff`): −24.0 dBFS until the
 2.0 s bin, **digital silence (−999 dBFS) after it**.
 
 **7. Selecting it on the unit with keys** (panel `--port 8593 --image
-out/_agents/synth/mainos_synth.bin --project out/_projects/otlive/OTLIVE/PROJECT
---set OTLIVE --name PROJECT --audio out/_agents/synth/audio --sound on`,
-rt 0.999; `panelctl.py`, `shots/`): double-tap [T8] → the FLEX slot list
+mainos_synth.bin --project out/_projects/otlive/OTLIVE/PROJECT
+--set OTLIVE --name PROJECT --audio audio --sound on`,
+rt 0.999; `panelctl.py`, shots): double-tap [T8] → the FLEX slot list
 `« MACHINE:FLEX` (`01_slotlist`), DOWN to slot 5, RIGHT → `LOAD FILE TO
 FLEX 5` (`03_browser`), DOWN ×36 to `SYNTH.wav` in the name-ordered list
 (`04_browser_synth`), YES loads it — the list reads **`5>SYNTH.wav 0.34`**
@@ -3563,7 +5183,7 @@ of the tone at **261.634 Hz (+0.1 cents), spur −52.6 dB** under the panel's
 as lockstep. A retrigger (each note restarts at phase 0) shows as a 1 dB
 dip in one 10 ms bin.
 
-**8. Cost** (`runs/cost`, `runs/cost12`; `cost.py` over `hits` on the
+**8. Cost** (`cost`, `cost12`; `cost.py` over `hits` on the
 cave's entry `0x400d6b80` and return `0x400d6cb8` and the stock pair):
 
 | per frame, T8 = SYNTH | first call [0,0) | second call [0,16) |
@@ -3583,7 +5203,7 @@ resamples the file whose audio the cave then discards); phase 2 may skip
 it once the voice lifecycle it carries has been re-read, which would
 halve the total.
 
-**9. Stock behaviour untouched** (`ab/`): `tools/emu/ot_emu/oracle/drive.py
+**9. Stock behaviour untouched** (A/B boots): `tools/emu/ot_emu/oracle/drive.py
 --emu out/emu/ot_emu --image <stock | remix>` (boot on the OTLIVE card, YES,
 MIXER, NO, T1 double tap, DOWN, RIGHT, NO, NO, PLAY 20 × 100 ms, STOP
 5 × 100 ms): `ready.txt`, `steps.txt`, `stamps.txt`, `peeks.txt`,
@@ -3601,7 +5221,7 @@ differs because nothing new is drawn.
 mode_views" (the Makefile's SKIP); `verify_replaces` fails only on the
 eight MIDI SCENES remixes whose submodule is not checked out
 (pre-existing; `make check` stops there). `REMIX=tim make cf` boots and
-plays the tone (`runs/tim`: 261.634 Hz).
+plays the tone (`tim`: 261.634 Hz).
 
 ## What does not work, and what is left for phase 2
 

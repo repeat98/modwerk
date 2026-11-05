@@ -20,7 +20,7 @@ const folder = resolve('sdk/octabam/modules/synth')
 describe('FM Synth exact experimental release', () => {
   it('publishes only the exact owner-approved experimental release and keeps unknown measurements visible', async () => {
     const document = parseModuleDocument(source)
-    expect(document.tests.hardwareStatus).toBe('untested')
+    expect(document.tests.hardwareStatus).toBe('reported') // TEST9 (the LFO SETUP names hook back, the slot GAIN fix): the author's MKI report of 1 Nov 2026 (TESTING.md); the TEST7 report of 30 Oct 2026 stays there
     expect(document.resources.processing.value).toBeNull()
     expect(() => requireModuleUiForPublication(document)).not.toThrow()
     expect(() => requireModuleQualificationForPublication(document)).toThrow('worst-case cycles, exact memory and hardware')
