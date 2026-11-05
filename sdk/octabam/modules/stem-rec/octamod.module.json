@@ -48,31 +48,170 @@
     "screenshots": []
   },
   "controls": [
-    {"name": "STEM REC", "default": 0, "count": 1, "doc": "The take's state: READY, ARMED, the time, SAVING, DONE or NO CARD, or a failed take's error. YES arms a take, cancels an armed one or stops a running one.", "labels": null},
-    {"name": "T1", "default": 1, "count": 2, "doc": "Records track 1 after its fader. With MASTER TRACK on, T8 reads MASTER and is left out.", "labels": ["OFF", "ON"]},
-    {"name": "T2", "default": 0, "count": 2, "doc": "Records track 2 after its fader.", "labels": ["OFF", "ON"]},
-    {"name": "T3", "default": 0, "count": 2, "doc": "Records track 3 after its fader.", "labels": ["OFF", "ON"]},
-    {"name": "T4", "default": 0, "count": 2, "doc": "Records track 4 after its fader.", "labels": ["OFF", "ON"]},
-    {"name": "T5", "default": 0, "count": 2, "doc": "Records track 5 after its fader.", "labels": ["OFF", "ON"]},
-    {"name": "T6", "default": 0, "count": 2, "doc": "Records track 6 after its fader.", "labels": ["OFF", "ON"]},
-    {"name": "T7", "default": 0, "count": 2, "doc": "Records track 7 after its fader.", "labels": ["OFF", "ON"]},
-    {"name": "T8", "default": 0, "count": 2, "doc": "Records track 8 after its fader; reads MASTER, and is left out, while MASTER TRACK is on.", "labels": ["OFF", "ON"]},
-    {"name": "MAIN", "default": 0, "count": 2, "doc": "Records the main mix as it is mixed.", "labels": ["OFF", "ON"]},
-    {"name": "CUE", "default": 0, "count": 2, "doc": "Records the cue mix as it is mixed.", "labels": ["OFF", "ON"]},
-    {"name": "AB", "default": 0, "count": 2, "doc": "Records inputs A and B as they arrive. LEFT and RIGHT pick the row's checkbox. With STEREO off the row reads A and B, each with its own checkbox, and each input that is on records as a mono file.", "labels": ["OFF", "ON"]},
-    {"name": "AB STEREO", "default": 1, "count": 2, "doc": "On: inputs A and B record as one stereo file. Off: as one mono file each.", "labels": ["OFF", "ON"]},
-    {"name": "CD", "default": 0, "count": 2, "doc": "Records inputs C and D, as AB does.", "labels": ["OFF", "ON"]},
-    {"name": "CD STEREO", "default": 1, "count": 2, "doc": "On: inputs C and D record as one stereo file. Off: as one mono file each.", "labels": ["OFF", "ON"]},
-    {"name": "24 BIT", "default": 1, "count": 2, "doc": "On: 24-bit files. Off: 16-bit files, half the card's writing.", "labels": ["OFF", "ON"]}
+    {
+      "name": "STEM REC",
+      "default": 0,
+      "count": 1,
+      "doc": "The take's state: READY, ARMED, the time, SAVING, DONE or NO CARD, or a failed take's error. YES arms a take, cancels an armed one or stops a running one.",
+      "labels": null
+    },
+    {
+      "name": "T1",
+      "default": 1,
+      "count": 2,
+      "doc": "Records track 1 after its fader. With MASTER TRACK on, T8 reads MASTER and is left out.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    },
+    {
+      "name": "T2",
+      "default": 0,
+      "count": 2,
+      "doc": "Records track 2 after its fader.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    },
+    {
+      "name": "T3",
+      "default": 0,
+      "count": 2,
+      "doc": "Records track 3 after its fader.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    },
+    {
+      "name": "T4",
+      "default": 0,
+      "count": 2,
+      "doc": "Records track 4 after its fader.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    },
+    {
+      "name": "T5",
+      "default": 0,
+      "count": 2,
+      "doc": "Records track 5 after its fader.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    },
+    {
+      "name": "T6",
+      "default": 0,
+      "count": 2,
+      "doc": "Records track 6 after its fader.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    },
+    {
+      "name": "T7",
+      "default": 0,
+      "count": 2,
+      "doc": "Records track 7 after its fader.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    },
+    {
+      "name": "T8",
+      "default": 0,
+      "count": 2,
+      "doc": "Records track 8 after its fader; reads MASTER, and is left out, while MASTER TRACK is on.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    },
+    {
+      "name": "MAIN",
+      "default": 0,
+      "count": 2,
+      "doc": "Records the main mix as it is mixed.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    },
+    {
+      "name": "CUE",
+      "default": 0,
+      "count": 2,
+      "doc": "Records the cue mix as it is mixed.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    },
+    {
+      "name": "AB",
+      "default": 0,
+      "count": 2,
+      "doc": "Records inputs A and B as they arrive. LEFT and RIGHT pick the row's checkbox. With STEREO off the row reads A and B, each with its own checkbox, and each input that is on records as a mono file.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    },
+    {
+      "name": "AB STEREO",
+      "default": 1,
+      "count": 2,
+      "doc": "On: inputs A and B record as one stereo file. Off: as one mono file each.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    },
+    {
+      "name": "CD",
+      "default": 0,
+      "count": 2,
+      "doc": "Records inputs C and D, as AB does.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    },
+    {
+      "name": "CD STEREO",
+      "default": 1,
+      "count": 2,
+      "doc": "On: inputs C and D record as one stereo file. Off: as one mono file each.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    },
+    {
+      "name": "24 BIT",
+      "default": 1,
+      "count": 2,
+      "doc": "On: 24-bit files. Off: 16-bit files, half the card's writing.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    }
   ],
   "compatibility": {
     "firmware": "1.40C",
     "effectId": null,
-    "location": "Front panel (UP + REC), every track and input",
+    "location": "Audio tracks",
     "conflicts": [],
-    "uiClaims": [
-      "key:UP+REC"
-    ],
+    "uiClaims": [],
     "limitations": [
       "Card builds only: over USB a module lives in the base's 768 KiB ColdFire pool, and Stem Rec needs an 8 MiB ring and runs a writer task of its own for each take.",
       "No YES double tap on the main page in this version: in octabam a second YES within 0.5 s arms a take, but APPLY SCENE patches that stock site and a card build has no key bus. UP + REC and the YES on STEM REC's own row work as upstream.",
@@ -84,7 +223,7 @@
     ]
   },
   "resources": {
-    "recorded": "Pending: exact inventory from the card build's link map and layout, and hardware timing from STATS.TXT",
+    "recorded": "Pending: the link-map inventory and STATS.TXT timing on the tested image",
     "storage": {
       "label": "ColdFire code, data, rings and stack",
       "display": "8,403,968 B of DRAM regions plus its unit (exact inventory pending)",
