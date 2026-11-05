@@ -7,7 +7,7 @@
   "mods": [
     {
       "file": "live-rec-retrig-fix-0.2.0-experimental-os1.74.elemod",
-      "sha256": "d173fad914d380aa3f49c6d9f401079eae832dede7f3354835f113e0df05c734",
+      "sha256": "3863f03c94704e1c03c4b2cfa1b9b785a4c2dc03d16164264153932be3b212be",
       "id": "live-rec-retrig-fix",
       "version": "0.2.0-experimental",
       "device": "analog-rytm-mk2",
@@ -23,8 +23,8 @@
         "core"
       ],
       "conflicts": [],
-      "summary": "LIVE RECORDING records every pad retrig hit as a real trig, with the velocity and timing you played.",
-      "description": "LIVE RECORDING records every pad retrig hit as a real trig, with the velocity and timing you played.",
+      "summary": "LIVE RECORDING records every pad retrig hit as a real trig, with the velocity and timing you played. While the sequencer plays, every pad retrig falls on its swung grid (Retrig Grid).",
+      "description": "LIVE RECORDING records every pad retrig hit as a real trig, with the velocity and timing you played. While the sequencer plays, every pad retrig falls on its swung grid (Retrig Grid).",
       "category": "Sequencer",
       "author": "npp1993",
       "needs_core": "0.7",
