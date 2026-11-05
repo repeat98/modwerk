@@ -61,6 +61,6 @@ Original work by Nathaniel Pavel (@npp1993), GPL-3.0-or-later ([LICENSE](LICENSE
 
 ## Screens and audio
 
-Screenshots are rytm-emu captures of build TS10, this package linked alone ([media/capture.json](media/capture.json)). No audio preview.
+Screenshots are rytm-emu captures of build TS11, this package linked alone on the Modwerk base ([media/capture.json](media/capture.json)). No audio preview.
 
 ![TEMP SAVED after FUNC + YES](media/temp-saved.png) ![RELOADED after FUNC + NO](media/reloaded.png)

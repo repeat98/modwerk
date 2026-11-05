@@ -131,8 +131,8 @@
     "type": "emulator",
     "release": "1.74",
     "moduleVersion": "0.1.0-experimental",
-    "imageSha256": "e0127560783e6e4a9dacb41ccab81222fe2d208c924fb0a764697cad24b6a329",
-    "setup": "Headless rytm-emu (dtboot) running TS10: core-ar2 0.7 and this folder's Temp Save 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit K001 and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+    "imageSha256": "ad1d32ed51c981c9241977007d4d3d8f2bbabb0cee724fc7f1d453e6c7460b20",
+    "setup": "Headless rytm-emu (dtboot) running TS11: the Modwerk base for core-ar2 0.7 and this folder's Temp Save 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit K001 and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
    }
   },
   {
@@ -147,8 +147,8 @@
     "type": "emulator",
     "release": "1.74",
     "moduleVersion": "0.1.0-experimental",
-    "imageSha256": "e0127560783e6e4a9dacb41ccab81222fe2d208c924fb0a764697cad24b6a329",
-    "setup": "Headless rytm-emu (dtboot) running TS10: core-ar2 0.7 and this folder's Temp Save 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit K001 and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+    "imageSha256": "ad1d32ed51c981c9241977007d4d3d8f2bbabb0cee724fc7f1d453e6c7460b20",
+    "setup": "Headless rytm-emu (dtboot) running TS11: the Modwerk base for core-ar2 0.7 and this folder's Temp Save 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit K001 and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
    }
   }
  ]
