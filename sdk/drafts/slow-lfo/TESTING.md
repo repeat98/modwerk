@@ -28,9 +28,19 @@ Not run in the port: the MIDI engine, the page as drawn (the knob range on scree
 
 ## Hardware
 
-Not tested.
+**USB, MKI, 4 November 2026.** The tester's MKI on the flashed Modwerk beta base `9680e9ac861ff931…` (built with `npm run octatrack:base -- --beta` from the tester's own 1.40C; it reproduced the committed base), USB straight into the Mac. Package `slow-lfo.mwrm` (608 bytes, SHA-256 `7392526b133647e5e7b0a0bb85f33c8f4360b0289c16d89cca733ec5ce6ffd65`, module `cd8a0e36`, 184 bytes of code, 4 relocations, 7 stock-code sites) built with `sdk/runtime/loader/build.py --octabam slow-lfo` from commit `79e96c87`, sent with `npm run device`. What the unit answered was read over USB; what the LFOs did is the tester's report.
 
-To qualify: on audio and MIDI tracks, turn MULT past 64X and check 1/2X, 1/4X, 1/8X appear; that an LFO on PTCH or VOL takes 2, 4 and 8 times as long as at 1X; that it follows a tempo change; that a Part saved with 1/2X reloads with it; and that MULT 1X..64X sound as on stock.
+| Step | The unit answered | The tester reported |
+|---|---|---|
+| Before: `status`, `do inventory` | base `9680e9ac…`, generation 5, nothing installed | |
+| Trial: `try slow-lfo.mwrm --seconds 900` | trial running, then rolled back at the end; generation 7, nothing installed | LFO SETUP MULT shows 1/2X, 1/4X and 1/8X after 64X |
+| Second trial: `try slow-lfo.mwrm --seconds 1800`, ended early (rolled back, generation 9) | trial running | Audio track: the LFO slows to the expected rate at each value. MIDI track (LFO to an external MIDI device): MULT shows the same three values and the LFO slows to the expected rate |
+| Keep: `try slow-lfo.mwrm --seconds 5 --accept` | accepted; generation 10, active `7392526b…`; inventory `SLOW LFO` (`cd8a0e36`) | |
+| Power cycle (the tester) | inventory `SLOW LFO` after the boot's restore | MULT still offers 1/2X, 1/4X and 1/8X after the reboot |
+| `do selftest` | SELF TEST passed: 1/1 modules intact, 0 with DSP effects, longest frame 420 us, card set 1, 1/1 | |
+| Remove: `remove slow-lfo.mwrm --accept` | accepted; generation 1, nothing installed | MULT stops at 64X, as stock |
+
+The rates were judged by ear and eye, not measured; the emulator measured them within 1 % (above). Not tested on a unit: a tempo change while playing, external MIDI clock, saving and reloading a Part with 1/2X, a project with 1/2X opened without the module (expected to read 128X), Deja Vu's waves together with the slow values, MKII, the site's own install dialog (the same package and base protocol, sent from the command line).
 
 ## Stock flows
 

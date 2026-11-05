@@ -60,14 +60,14 @@
   "compatibility": {
     "firmware": "1.40C",
     "effectId": null,
-    "location": "Audio tracks",
+    "location": "Audio and MIDI tracks",
     "conflicts": [],
     "uiClaims": [],
     "limitations": [
       "OS 1.40C. The new values come after 64X on the knob, not below 1X.",
       "A project saved with 1/2X, 1/4X or 1/8X, opened without the module, shows 128X and runs that LFO very fast.",
       "On Deja Vu's waves MULT is the loop length; Deja Vu reads 1/2X..1/8X as 64.",
-      "MIDI-track LFOs: the hooks are in place; not yet run in the emulator or on a unit."
+      "Not yet tested: a tempo change while playing, external MIDI clock, saving and reloading a Part with 1/2X..1/8X."
     ]
   },
   "resources": {
@@ -114,8 +114,8 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "ot_emu on stock 1.40C (2 November 2026), unit preloaded (verify.py): track 1's LFO 1 moves 0.5007, 0.2510 and 0.1248 of its 1X distance at 1/2X, 1/4X and 1/8X over 2000 frames, and the MULT formatter writes 1X, 64X, 1/2X, 1/4X, 1/8X. The MIDI engine was not exercised. Not yet run on a unit.",
-    "hardwareStatus": "untested",
+    "summary": "ot_emu on stock 1.40C (2 November 2026), unit preloaded (verify.py): track 1's LFO 1 moves 0.5007, 0.2510 and 0.1248 of its 1X distance at 1/2X, 1/4X and 1/8X over 2000 frames, and the MULT formatter writes 1X, 64X, 1/2X, 1/4X, 1/8X. The MIDI engine was not exercised in the port. USB on an MKI (4 November 2026, Modwerk beta base): trial, Keep, power cycle, SELF TEST (1/1 intact, longest frame 420 us) and remove; the tester reports the three values on audio and MIDI tracks' LFO SETUP and LFOs slowing to the expected rates, and stock's 1X..64X after removal.",
+    "hardwareStatus": "reported",
     "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
     "gates": [
       "modules/slow-lfo/verify.py"

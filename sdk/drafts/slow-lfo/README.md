@@ -40,7 +40,7 @@ It keeps no clock of its own ([sequencing](https://github.com/repeat98/modwerk/b
 - A project saved with 1/2X, 1/4X or 1/8X opened without the module shows 128X and runs that LFO very fast (stock reads 7 to 9 as shift counts).
 - On Deja Vu's waves (DJV, DJQ, DJC) MULT is the loop length; Deja Vu reads 1/2X to 1/8X as 64.
 - No other module or the base patches these sites. Takes no key or screen.
-- MIDI-track LFOs: the hooks are in place but not yet exercised in the emulator or on a unit.
+- Tested on an MKI over USB on audio and MIDI tracks. Not yet tested: a tempo change while playing, external MIDI clock, saving and reloading a Part with the slow values.
 
 ## Tests and measurements
 
