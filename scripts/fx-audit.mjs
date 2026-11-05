@@ -86,16 +86,17 @@ if (command === 'plan' && paths.length === 1) {
   if (missing.length) usage('No render at: ' + missing.join(', '))
   const renders = paths.map(path => ({ name: basename(path), audio: readAudio(resolve(path), { channels: options.mono ? 1 : 2 }) }))
   const width = Math.max(...renders.map(render => render.name.length)) + 2
-  console.log('render'.padEnd(width) + 'against'.padEnd(width) + 'difference'.padStart(11) + 'peak diff'.padStart(11) + 'first diff'.padStart(12) + '  verdict')
+  console.log('render'.padEnd(width) + 'against'.padEnd(width) + 'difference'.padStart(11) + 'level'.padStart(10) + 'peak diff'.padStart(11) + 'first diff'.padStart(12) + '  verdict')
   const counts = {}
   for (let i = 0; i < renders.length; i++) for (let j = i + 1; j < renders.length; j++) {
     const result = compareRenders(renders[i].audio, renders[j].audio, limit)
     counts[result.verdict] = (counts[result.verdict] ?? 0) + 1
     const lengths = result.frames[0] === result.frames[1] ? '' : '  (lengths ' + result.frames.join(' and ') + ': compared over the shorter)'
-    console.log(renders[i].name.padEnd(width) + renders[j].name.padEnd(width) + (fixed(result.differenceDb, 8) + ' dB').padStart(11)
+    console.log(renders[i].name.padEnd(width) + renders[j].name.padEnd(width) + (fixed(result.differenceDb, 8) + ' dB').padStart(11) + (result.levelDb === null ? '-' : (result.levelDb >= 0 ? '+' : '') + result.levelDb.toFixed(2) + ' dB').padStart(10)
       + (fixed(result.peakDbfs, 6) + ' dBFS').padStart(11) + (result.firstSeconds === null ? '-' : result.firstSeconds.toFixed(4) + ' s').padStart(12) + '  ' + result.verdict + lengths)
   }
-  console.log('\ndifference: the two renders\' difference in dB to the louder one, worst channel. identical: every sample equal. same: at or below ' + limit + ' dB'
+  console.log('\ndifference: the two renders\' difference in dB to the louder one, worst channel. level: the second render\'s level against the first\'s.'
+    + '\nidentical: every sample equal. same: at or below ' + limit + ' dB'
     + '\n(--same-limit), which nobody hears: two ends of one knob that are the same mean the knob does nothing to this signal; two presets that are'
     + '\nthe same are one sound. silent: neither render carries the signal, so the pair proves nothing: check the routing and the trigger.')
   if (counts.silent) console.log('\n' + counts.silent + ' silent pair(s): render again before reading anything into this table.')

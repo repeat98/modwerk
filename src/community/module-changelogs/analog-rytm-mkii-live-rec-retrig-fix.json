@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.2.0-experimental",
+    "date": "2026-11-04",
+    "changes": [
+      "First release, for Analog Rytm MKII OS 1.74: LIVE RECORDING records every pad retrig hit, from RTRG + pad or an ALWAYS ON pad, as a real trig with the velocity and timing you played.",
+      "While the sequencer plays, pad retrigs fall on its swung grid (Retrig Grid by stigmagit), and a recorded roll starts on it. QUANT RTRG TO SEQ in GLOBAL > CONTROL > SEQUENCER CONFIG turns this off.",
+      "Rates faster than a step record one trig with a step retrig.",
+      "In the RETRIG menu, YES turns ALWAYS ON over on every row, and the RTRG key glows dim red while the selected track is ALWAYS ON.",
+      "Known issue: above swing 50, rates of 1/20 and faster play back a little unlike the live roll. Not yet tested with external MIDI clock."
+    ]
+  }
+]

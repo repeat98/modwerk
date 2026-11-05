@@ -12,6 +12,16 @@
       "event": "ev_tick",
       "fn": "control_in_actions_tick",
       "order": 50
+    },
+    {
+      "event": "ev_render_out",
+      "fn": "control_in_actions_audio",
+      "order": 50
+    },
+    {
+      "event": "ev_key",
+      "fn": "control_in_actions_key",
+      "order": 10
     }
   ],
   "contribute": [],
