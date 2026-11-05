@@ -57,9 +57,12 @@ intentional private prototype limit, not eight simultaneous instances.
 
 START dispatch from #1029 is merged. The inherited native-FLEX reader fix is
 included with the source and media in #926; #1108 is to be superseded after
-consolidation. The base now keeps FR:1 at boot (`known[]`, added in #926);
-that base has not yet run on a unit. No catalogue entry, public USB/card
-package, compatibility pair proof or exact-public hardware qualification exists.
+consolidation. The base keeps FR:1 at boot (`known[]`, added in #926). On 5 November 2026,
+the owner completed the short physical check on base `9b3ba417` with a private
+paired FRACT build; USB confirmed that exact base and module set after power-on.
+See TESTING.md for identities, reported observations and limits. No catalogue
+entry, listed USB/card package, compatibility pair proof or listed-release
+hardware qualification exists.
 
 Part/project reload, cold boot, Keep/Undo, replacement/removal, missing-module
 fallback, live-trigger deletion, stress and companion-module qualification remain

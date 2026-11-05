@@ -54,8 +54,39 @@ heads; do not extrapolate to more instances or companions.
 
 Exact-public build cold boot, USB install, self-test, Keep/Undo, replacement,
 removal, missing-module reload, Part/project persistence and physical reboot:
-not tested. Physical live-trigger deletion and long stress: not tested. The
-base keeps FR:1 at boot since #926 (`known[]`); that base has not run on a unit.
+not tested for a listed release. Physical live-trigger deletion and long stress:
+not tested. The pre-merge private-pair check below establishes only its stated
+base/boot behavior, not the complete public-release lifecycle.
+
+### Pre-merge base check — 5 November 2026
+
+On the owner's physical Octatrack running OS 1.40C, USB installed the
+`tracks-main-cue` base built from #926 source revision
+`1e227430fbfaf3db6f95f19e1be2703d7e58fc42`:
+
+- Base ID: `9b3ba41715140d5fae07868a8b2adc6d89c3ec0272d8ab34c332461cf990a14c`.
+- Private FRACT package SHA-256: `a5a35eaaeb22d2361b6e8d73c9acc96df640eb4f1306dae719b2c6bb17bbae9b`.
+- Installed set ID: `59cad7f1cc080efb79ecb09624fd1a22173ea392d4887c11a9474f2dee21a05f`; inventory contained one FRACT.
+
+The owner reported successful completion of the requested short checklist:
+ordinary machines and FRACT played, a Part containing FRACT was saved, the unit
+was powered off/on, and the track returned as FRACT and played. The exact
+project/Part name, ordinary-machine names and elapsed test time were not
+supplied; these listening and panel observations are owner-reported.
+
+Independent USB readback after that power cycle confirmed the exact base and
+set IDs above, one FRACT in inventory, normal/known-active operation and a new
+boot session. Slot 1 generation 7 was whole and confirmed, with one boot try
+and no fallback; the previous confirmed slot 0 generation 6 remained intact.
+Before the power cycle, the supported self-image update and FRACT Keep were
+acknowledged, the saved set was read back (one saved/live module), and native
+SELF TEST passed with 1/1 modules intact and no failures (0 DSP-effect modules).
+SELF TEST was not restarted after power-on; postboot checks were read-only.
+
+This satisfies the two short checks requested for base `9b3ba417` before source
+merge. It does not qualify Undo/removal, missing-module behavior, companion
+modules, long stress or a future listed package, and is not a release approval.
+No firmware, card/NVRAM images, samples or USB memory dumps are included.
 
 ## OT UI capture evidence
 
