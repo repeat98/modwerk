@@ -766,8 +766,8 @@ void qperf_render(void)
     }
     // A move anyone else makes: the pads, the QPER knob, MIDI. A pad sends its
     // pressure only when it changes and a 0 when let go, so a performance a pad
-    // left above zero is still held. On the linked performance the pad drives
-    // the knob's value too, so both count as the knob. A knob touch in LIVE
+    // left above zero is still held, the linked one too: only the panel's knob
+    // message moves the knob's value. A knob touch in LIVE
     // RECORDING takes the rest of the loop: the linked performances record what
     // the knob plays, moving or not, from where the turn started to the loop's
     // end, then play it back, so an earlier take before the turn is kept.
