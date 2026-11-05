@@ -1,5 +1,94 @@
 # Live Rec Retrig Fix testing
 
+The sections from "Retrig Grid merged in" up to 0.1.0-experimental cover 0.2.0-experimental, the merged module; its source is the RC11 code plus the RTRG key's light (LD01).
+
+## Retrig Grid merged in (rytm-emu, 31 October 2026)
+
+A local merge, not agreed with stigmagit. rytm-emu c5732f0, factory project, 127 BPM, swing 57 %, RETRIG set in the RTRG menu, BD empty, each roll about 14 steps, press stepped across about two steps. Emulator only; no pad pressure stream; nothing below ran on a unit.
+
+Builds: RC03 (before, Retrig Grid 0.2.0 and this module as two), MG02 (this source with Silent Pad+Trig on core-0.7, sha256 of the build not kept for release), RC04 (RC03's set with the two modules as one, sha256 751e5fbcec605128…).
+
+| Case | Before (RC03) | Merged (MG02) |
+| --- | --- | --- |
+| 1/16, press in the window where stock's step and the skip rule differ | one step empty after the press | no gap, 20 of 20 positions and modes |
+| 1/32, quantize off, press 0.3-0.5 step late | a trig every two steps, micro +3/+9, live hits moved | a trig each step, 10 of 10 |
+| 1/32, quantize on | first step empty for some presses | a trig each step, 10 of 10 |
+| 1/12, quantize off | hits +7/-9/0, press as played | press on the same pattern: 15/-9 or 0/+0 |
+| 1/12, 1/8, quantize on | a gap after the press for some presses | no gap, 20 of 20 |
+| 1/8, quantize off | press as played | on the grid, 10 of 10 |
+
+Playback against the live roll (1/16 and 1/12, quantize off): retrigs within 0.01 step; the press alone moves, by the snap (for example live +0.01, back +0.49 in steps from the press), as designed. RETRIG GRID unchecked: hits a step apart from the press with played micro, 15 of 15, at 1/16, 1/12, 1/32. The row: last in SEQUENCER CONFIG, beside Silent Pad+Trig's rows, YES, RIGHT and three reopens.
+
+Not run: ALWAYS ON, a press again during a roll, a rate change during a roll, rates 1/20, 1/24, 1/40, 1/48, 1/64, 1/80 merged, the row across save and reload, swing 50 and 66, ADVANCED scale with other lengths, a unit.
+
+### First unit run, and the emulator sweep after it
+
+Unit, RC05 (RC04 with Pipo Loop 0.1.1), reported by npp1993: the row is last in SEQUENCER CONFIG and works beside Silent Pad+Trig's rows; 1/16 quantize on, 1/12 quantize off, 1/8 and 1/12 quantize on, 1/32 both modes and RETRIG GRID unchecked all passed. 1/32 quantize off showed the first trig off the step: the press went to a half step, the other trigs sit on whole steps.
+
+RC06 (RC05 with the press on the nearest block start at rates that record a step retrig, sha256 63ad2bf5a6b09935…), rytm-emu c5732f0, set as above, RETRIG set in the RTRG menu. Five press positions unless noted.
+
+| Case | Result |
+| --- | --- |
+| 1/16, 1/8, 1/12, 1/32, ten positions, both modes | no gaps; 1/32 quantize off first trig on the step, was +10 in RC05 |
+| 1/20, 1/24, 1/40, 1/48, 1/64, 1/80, both modes | a trig every 4, 2, 2, 1, 1, 1 steps, none off the step; at 1/20 one press over a step from a block start stayed as played (15/-6) |
+| 1/4, 1/2, 1/1, quantize off, eight positions | within a step of the grid the press snaps; further it stays as played (1/+7, 3/-4), the next grid point follows |
+| ALWAYS ON (RTRG + YES, no RTRG held), 1/16, 1/12, 1/32, both modes | the same trigs as RTRG + pad |
+| Press again during a roll, 1/16, 1/12, 1/32, both modes | no step lost; playback as played |
+| Rate turned during a roll: 1/16 to 1/32, 1/32 to 1/16, 1/16 to 1/12, both modes | trigs follow; playback within about 0.1 step, more inside the two steps the rate passes through in-between values |
+| Swing 50 and 66 (pattern poke), 1/16, 1/12, 1/32, both modes | no gaps. Swing 50: playback equals live |
+| 1/32, swing 57 and 66, live against playback | not the same: live 0.59 1.16 1.73, back 0.59 1.09 1.59 1.73; a step retrig runs straight from its trig. Listed in the README |
+| Row unchecked and checked, `--power-off`, cold boot on that card | the row comes back as it was, on the card |
+
+Temp Save on RC06: TEMP SAVED shown. Not run in the emulator: audible checks, project save through the menu, a project switch, the row's bit on an older project.
+
+Unit, RC07 (RC06 with Pipo Loop 2cd623f3, sha256 6ae42b7b717b63d7…), reported by npp1993: 1/32 quantize off, every trig on the grid; a press under half a step recorded one hit; RETRIG GRID unchecked, SAVE PROJECT AS, LOAD PROJECT: still unchecked. The same save showed random characters in the name entry screen on the tester's project, with the project's name as expected elsewhere. Not reproduced: rytm-emu's factory project shows a clean name on RC07 and on stock 1.74, existing and empty slots. Cause not known.
+
+### Code review fixes, RC08
+
+A code review of the merge found a gap, drift and eight smaller items. RC06 (before) and RC08 (RC07 with the fixes and Pipo Loop f48b95d9, sha256 6fe16a5d7ad580c6…), rytm-emu c5732f0, set as above.
+
+| Case | RC06 | RC08 |
+| --- | --- | --- |
+| 1/16 and 1/12, press stepped 0.02 step across four steps, both modes | one step empty at 1/16, press 1 of 192 positions, both modes: the series skipped a point the snap kept | no gap, 384 of 384 |
+| 1/12, quantize off, a roll past one loop | the second pass rewrote the trigs (2/-10, 3/-5), playback 0.2 step off | second pass as the first (1/+7, 3/-9), playback within 0.01 step |
+| The 259 cases of the sweep above (rates, ALWAYS ON, a press during a roll, rate changes, swing) | | the same trigs on every step, and in the rate-change cases the same hit times as RC06, on the source one commit before Pipo Loop f48b95d9 |
+
+The trace showed the recorder reading the press before the audio block arms the series, in rytm-emu; the source handles either order, a unit's order was not read. A press moved back a step no longer holds the wipe guard: not reproduced before the change, no case added. While LIVE RECORDING retrigs no longer follow trig micro timing, a change from Retrig Grid 0.2.0: listed in the README. Temp Save on RC08: run, screen not compared. `npm run module:doctor` could not run on this branch: it stops on a missing generated file, src/community/module-changelogs.json. Not run: RC08 on a unit.
+
+### First hit lost after a press, RC09
+
+Unit, RC08, swing 61, CH pad, quantize on, 1/16, reported by npp1993: a five-step roll recorded steps 9, 11, 12, 13; step 10 sounded and did not record. 1/12 quantize off held across two bars kept its steps (3, 7, 11, 15 empty) and sounded as triplets; a rate change during a roll played back as played.
+
+Reproduced in rytm-emu on RC08 at swing 61 on CH and on BD, on narrow press timings: 1 of 50 at 8,000 instructions apart, 1 of 200 at 2,000. A traced build showed a hit from the press itself, before the series was rearmed: Retrig Grid leaves a count of 1 after a roll, so stock's 960 at the next press read as a fired retrig, ahead of the press's note event, and the first real hit was not recorded. RC06 lost none of 200 at the same spacing; that is not proof it was free of this.
+
+RC09 (RC08 with the arming test and a press seen soon after its series treated as that series', sha256 a1d978964af8288e…): 0 of 200 on the fix's scratch build, 0 of 50 in each of four loops on RC09, 0 of 384 for the gap, the second pass of the long roll as the first, and the 259 sweep cases the same trigs as RC06. The same press timing on a unit is not known.
+
+Unit, RC09, swing 61, CH pad, quantize on, 1/16, 10 to 15 short rolls, reported by npp1993: recorded as heard, except possibly one roll with a press very late, just before the next step, where a trig may have been missed. Whether that was a hole in the roll was not recorded.
+
+RC10 (RC09 with the row renamed QUANT RTRG TO SEQ by npp1993, sha256 e9b55aa60a2e9695…): rytm-emu, the row drawn beside its checkbox, long roll and 50 press timings as RC09. Earlier sections keep the row's old name, RETRIG GRID, for the builds they name.
+
+### Second review, RC11
+
+A review of the RC08 and RC09 fixes found seven items, from reading the code. RC11 (RC10 with those fixes, Pipo Loop f48b95d9, sha256 3e116d608d056766…), rytm-emu c5732f0, swing 61 unless noted.
+
+| Case | RC11 |
+| --- | --- |
+| Press timings 8,000 instructions apart, 50 each, after a first roll, on BD: 1/12 and 1/32 both modes, 1/20 quantize off, ALWAYS ON at 1/16, 1/12, 1/32, a press again during a roll at 1/12 and 1/32 | one result for every timing in each row, no step lost |
+| The same on CH: 1/16 both modes, a press again at 1/16 (the CH rows set for other rates ran at CH's own 1/16: the RTRG menu in the test set BD's rate) | one result for every timing |
+| Lost first hit, four loops of 50 timings; gap, 384 positions; long roll's second pass | 0 lost, 0 gaps, as the first pass |
+| The 259 sweep cases, swing 57 and the swing cases | the same trigs as RC06 |
+
+A quick tap outside recording, then a press in LIVE RECORDING, at 1/8: first trig on the grid on RC10 and RC11, so the stale state this guards against was not reproduced. Ending recording during a held roll, the case the held swing-only bit is for: not run. 
+Unit, RC11, swing 61, CH pad, quantize on, 1/16, reported by npp1993: two passes of two short rolls across a bar, each roll continuous, no trig missing; a pad released and pressed again during a roll with RTRG held sounded right, nothing heard missing, the grid not read step by step.
+
+### RTRG key light, LD01
+
+The RTRG key's LED, read from OS 1.74 and rytm-emu: stock sends palette 0 (1,1,1) idle and 0x0f (31,0,0) while held; ALWAYS ON changes nothing on it. On npp1993's unit the key is white while held.
+
+LD01 (RC11 with the light, a test build, sha256 8f65b2a6cc244505…), rytm-emu c5732f0: ALWAYS ON turned on with RTRG + YES, key at palette 4; RTRG held, 0x0f; released, palette 4; another track, dark; back on the track, palette 4; ALWAYS ON off, dark. Long roll, 50 press timings, and the ALWAYS ON and 1/8 to 1/32 sweep cases as RC11. The emulator gives no brightness.
+
+Unit, LD01, reported by npp1993: ALWAYS ON on, the key dim red; held, white; another track, off; back, dim red; ALWAYS ON off, dark; a power cycle with ALWAYS ON on, dim red. So the key shows colour: palette 4 is red on the unit as sent. Why stock's 0x0f, red in the emulator, shows white while held is not known.
+
 ## 0.1.0-experimental (rytm-emu, 31 October 2026)
 
 Emulator results first; pad pressure there is a scripted stream, not a real pad. The unit's results, on RR09, RR11, RR14 and RR16, are at the end.
