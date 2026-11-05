@@ -66,7 +66,7 @@ function list(value: unknown, path: string, maximum: number): unknown[] {
 function texts(value: unknown, path: string, maximum: number): string[] { return list(value,path,maximum).map((v,i)=>text(v,path+'['+i+']')) }
 // What a module may claim in compatibility.uiClaims (docs/module-guides/README.md#ui-claims): panel keys, encoder turns
 // (A-F, LEVEL), TRACK and TRIG for any of their keys.
-const UI_KEYS=['FUNC','YES','NO','UP','DOWN','LEFT','RIGHT','PROJ','PART','AED','ARR','MIXER','MIDI','CUE','REC1','REC2','REC3','PLAY','STOP','TEMPO','BANK','PATTERN','PAGE','SCENEA','SCENEB','SRC','AMP','LFO','FX1','FX2','TRACK','TRIG','A','B','C','D','E','F','LEVEL']
+const UI_KEYS=['FUNC','YES','NO','UP','DOWN','LEFT','RIGHT','PROJ','PART','AED','ARR','MIXER','MIDI','CUE','REC','REC1','REC2','REC3','PLAY','STOP','TEMPO','BANK','PATTERN','PAGE','SCENEA','SCENEB','SRC','AMP','LFO','FX1','FX2','TRACK','TRIG','A','B','C','D','E','F','LEVEL']
 function uiClaim(value: unknown, path: string): string {
   const claim=text(value,path,80), key=/^key:([A-Z0-9+]+)(?:@[A-Z0-9][A-Z0-9 ]*)?$/.exec(claim)
   if(key?key[1].split('+').every(name=>UI_KEYS.includes(name)):/^screen:[A-Z0-9][A-Z0-9 ]*$/.test(claim)) return claim
