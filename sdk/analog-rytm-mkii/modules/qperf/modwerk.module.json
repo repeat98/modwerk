@@ -27,9 +27,13 @@
       "Records pad and QPER knob moves in LIVE RECORDING and plays them back, 8 points a step"
     ],
     "usage": [
-      "Link a performance with QPER + a pad, hold QPER and turn knobs to shape one macro on the QPER knob.",
-      "Sweep the QPER knob, then QPER + YES when a sound is worth keeping.",
-      "In LIVE RECORDING, squeeze performance pads while the pattern plays; RECORD + YES writes the moves into the pattern as locks."
+      "Hold QPER, press pad 1 to link its performance, and keep holding.",
+      "Turn FLTR's cutoff up and the resonance a little, and let go of QPER.",
+      "Sweep the QPER knob. Both moves come in together.",
+      "When a position sounds right, hold QPER and press YES to keep it in the kit.",
+      "Hold QPER and press RECORD, press pad 2, then STOP to start another performance from this one.",
+      "Press PERF, hold RECORD and press PLAY. While the pattern plays, press and squeeze pads 1 and 2. Let go and listen to the next pass.",
+      "Hold RECORD and press YES to write the moves into the pattern."
     ]
   },
   "access": {
@@ -41,7 +45,10 @@
       "QPER + YES moves them into the kit.",
       "In PERF mode, hold RECORD and press PLAY, then play the pads: the moves loop. RECORD + YES writes them into the pattern; RECORD + NO empties them, NO again undoes."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/apply-quick-perf-rec.png",
+      "media/clear-quick-perf-rec.png"
+    ]
   },
   "controls": [],
   "compatibility": {
@@ -82,12 +89,12 @@
     ]
   },
   "resources": {
-    "memoryBytes": null,
-    "fastBytes": null,
+    "memoryBytes": 17876,
+    "fastBytes": 0,
     "load": {
       "display": "Not measured yet",
       "method": "unmeasured",
-      "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+      "conditions": "The quick perf rec records and plays back once per audio block; the QPER controls run on key events and the UI tick."
     }
   },
   "evidence": {
@@ -100,7 +107,26 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Run on the author's Analog Rytm MKII and in rytm-emu. TESTING.md names each build."
+    "summary": "The author's Analog Rytm MKII, with a USB MIDI trace for the quick perf rec, and rytm-emu. TESTING.md names each build.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Hold QPER, press pad 1 to link its performance, and keep holding.",
+          "Turn FLTR's cutoff up and the resonance a little, and let go of QPER.",
+          "Sweep the QPER knob. Both moves come in together.",
+          "When a position sounds right, hold QPER and press YES to keep it in the kit.",
+          "Hold QPER and press RECORD, press pad 2, then STOP to start another performance from this one.",
+          "Press PERF, hold RECORD and press PLAY. While the pattern plays, press and squeeze pads 1 and 2. Let go and listen to the next pass.",
+          "Hold RECORD and press YES to write the moves into the pattern."
+        ]
+      },
+      "screenshots": [
+        "media/apply-quick-perf-rec.png",
+        "media/clear-quick-perf-rec.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
   },
   "license": {
     "spdx": "GPL-3.0-or-later",
@@ -116,6 +142,38 @@
       "credit": "npp1993",
       "license": "GPL-3.0-or-later",
       "source": "Original signal-art illustration in the library style."
+    },
+    {
+      "path": "media/apply-quick-perf-rec.png",
+      "kind": "screenshot",
+      "caption": "Main screen after RECORD + YES: the APPLY QUICK PERF REC message.",
+      "alt": "Main screen of kit K001 RYTMLINJE with an APPLY QUICK PERF REC message box over the parameter page.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "a8a2dea0238e0630958f4ca18645db5ddcad3930b50aa2bbc9a8b28d23a8b40b",
+        "setup": "Headless rytm-emu (dtboot) running QL19: the Modwerk base for core-ar2 0.7 and this folder's QPERF 0.2.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit K001 and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/clear-quick-perf-rec.png",
+      "kind": "screenshot",
+      "caption": "Main screen after RECORD + NO: the CLEAR QUICK PERF REC message.",
+      "alt": "Main screen of kit K001 RYTMLINJE with a CLEAR QUICK PERF REC message box over the parameter page.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "a8a2dea0238e0630958f4ca18645db5ddcad3930b50aa2bbc9a8b28d23a8b40b",
+        "setup": "Headless rytm-emu (dtboot) running QL19: the Modwerk base for core-ar2 0.7 and this folder's QPERF 0.2.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit K001 and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
     }
   ]
 }
