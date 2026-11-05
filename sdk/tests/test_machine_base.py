@@ -33,7 +33,7 @@ class MachineBases(unittest.TestCase):
         self.assertEqual({name: imported[name] for name in release["build"]["sources"]}, release["build"]["sources"])
 
     def test_digitakt_ii_base_source_is_core_dt2_1_1_unchanged(self):
-        record = json.loads((APP / "sdk/imports/core-dt2-source-3d7c2e3.json").read_text())
+        record = json.loads((APP / "sdk/imports/core-dt2-source-0df8409.json").read_text())
         self.assertRegex(record["revision"], r"^[0-9a-f]{40}$")
         for item in record["files"]:
             self.assertEqual(sha(APP / item["to"]), item["sha256"], item["to"])
@@ -43,7 +43,7 @@ class MachineBases(unittest.TestCase):
         mod = json.loads((folder / "mod.json").read_text())
         for source in mod["sources"]:
             self.assertIn((folder / source).resolve().relative_to(APP).as_posix(), imported, source)
-        self.assertIn("sdk/machines/digitakt-ii/include/mk2/core.h", imported)
+        self.assertIn("sdk/machines/digitakt-ii/include/digitakt-mk2/core.h", imported)
 
     def test_digitakt_ii_proposed_hooks_name_the_sites_the_source_patches(self):
         interface = json.loads((APP / "sdk/digitakt-ii/core-profile/interface.json").read_text())

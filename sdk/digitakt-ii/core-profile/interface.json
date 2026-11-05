@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "machine": "digitakt-ii",
   "interface": "1.1",
-  "status": "Upstream elekloader core-dt2 1.0 for Digitakt II OS 1.17 is what the site builds with. The entries marked since 1.1 are proposed for Modwerk's Digitakt II base (core-dt2 1.1's source, sdk/machines/digitakt-ii/elekloader/); a module that needs one waits for the base, and the machine's core version stays 1.0 until it ships.",
+  "status": "Upstream elekloader core-dt2 1.0 for Digitakt II OS 1.17 is what the site builds with. The entries marked since 1.1 are proposed for Modwerk's Digitakt II base: core-dt2 1.1's source as elekloader#221 now has it (0df8409, sdk/machines/digitakt-ii/elekloader/). A module that needs one waits for the base, and the machine's core version stays 1.0 until it ships.",
   "events": [
     {
       "name": "ev_tick",
@@ -134,28 +134,10 @@
       "purpose": "Add a PERSONALIZE or SETTINGS row that shows a label and, on the right as LED INTENSITY does, values[get()]; from ev_personalize or ev_settings."
     },
     {
-      "name": "core_notice",
-      "since": "1.1",
-      "prototype": "void core_notice(const char *msg)",
-      "purpose": "Show a message in the header, as a page's title (UI task)."
-    },
-    {
-      "name": "core_view_top",
-      "since": "1.1",
-      "prototype": "uint32_t core_view_top(void)",
-      "purpose": "The vtable of the view on top of the stack."
-    },
-    {
       "name": "core_kit_on",
       "since": "1.1",
       "prototype": "int core_kit_on(void)",
       "purpose": "The kit on (the pattern on's), -1 for none."
-    },
-    {
-      "name": "core_kit_index",
-      "since": "1.1",
-      "prototype": "int core_kit_index(const void *kit)",
-      "purpose": "A kit in RAM's number, -1 when it is not one of the project's."
     },
     {
       "name": "core_kitdata_room",
@@ -170,10 +152,10 @@
       "purpose": "How many times a save or a load met bytes in the mods' areas that are not core's; core left them as they were."
     },
     {
-      "name": "fw_*",
+      "name": "fw_led_set",
       "since": "1.1",
-      "prototype": "mk2/core.h: fw_fillrect, fw_textf, fw_led_set, fw_key_down, fw_toast and the other firmware routines and data",
-      "purpose": "Firmware locations as exports, by address and without stock bytes, so a mod calls the OS's drawing, keys, LEDs, card and strings without its own copy of each address."
+      "prototype": "void fw_led_set(void *mgr, int logical, int layer, int value)",
+      "purpose": "Set a key LED from an ev_key_leds handler: layer 2 lights it with value (its high nibble a colour), layer 1 turns it off. Declared in digitakt-mk2/core.h."
     }
   ],
   "claims": [],

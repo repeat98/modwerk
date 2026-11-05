@@ -9,12 +9,12 @@ A plan for the owner to review, written 5 November 2026 against `main` at `dc568
 | Firmware format, rebuild, boot, core | `done`, `done`, `started`, `done` in the profile | [machine.json](../sdk/machines/digitakt-ii/machine.json) |
 | Site build | Local preview only: the kit 0.7.0 worker links toonst's core 1.0 with the two perform mods from the owner's OS 1.17; downloads off (`DIGI_DOWNLOADS_ENABLED['digitakt-ii'] === false`) | [machine-build.ts](../src/engine/elekloader/machine-build.ts), [elekloader-digitakt2-perform-v1.0.json](../sdk/imports/elekloader-digitakt2-perform-v1.0.json) |
 | Core contract | Interface 1.1: core 1.0's six UI events, plus core 1.1's entries marked `since` 1.1 (proposed); the machine's core stays 1.0, so `module.platform.core` refuses a module that needs 1.1 | [core-profile/interface.json](../sdk/digitakt-ii/core-profile/interface.json) |
-| Base | Core 1.1's source copied unchanged (#1055, 30 October); no `base.json`, no binding, nothing built from it | [elekloader/](../sdk/machines/digitakt-ii/elekloader/README.md) |
+| Base | Core 1.1's source copied unchanged (#1055, 30 October; refreshed to #221's rebased `0df8409` here); no `base.json`, no binding, nothing built from it | [elekloader/](../sdk/machines/digitakt-ii/elekloader/README.md) |
 | Library | Empty. Mute Latch (crisp909, #1160) is the first module under review; the owner asked it to move to `sdk/digitakt-ii/modules/mute-latch/` with a pinned package, and to take the key LEDs from core 1.1's `ev_key_leds` rather than its own patch of the site core 1.1 owns | [modules/](../sdk/digitakt-ii/modules/README.md) |
 | USB link, loader, base updates, MCP tools, machine page | Not started | [recipe](MACHINE_RECIPE.md#the-pieces) |
 | Emulator | digikit (toonst's, AGPL-3.0-or-later): ColdFire and SHARC, OS 1.17; captures only, never hardware evidence | [digikit](https://github.com/toonst/digikit) |
 
-Upstream: elekloader's `main` (5 November) still ships core-dt2 1.0. Core 1.1 is [elekloader#221](https://github.com/elekloader/elekloader/pull/221), a draft by toonst with no review; its second commit `2b0616e` changes only how a value row steps (LEFT and RIGHT only) since the `3d7c2e3` Modwerk copied. Elekloader's 0.9.0 plan (#1129) leaves the Digitakt II out of scope. Since 28 October a Digitakt II hook goes into Modwerk's base and does not wait for elekloader ([decision](decisions/2026-10-28-modwerk-base-every-machine.md)).
+Upstream: elekloader's `main` (5 November) still ships core-dt2 1.0. Core 1.1 is [elekloader#221](https://github.com/elekloader/elekloader/pull/221) by toonst, rebased on elekloader's `main` on 5 November (`0df8409`) and cut to the Digitakt II and what a mod needs: the frame values, key LEDs (with `fw_led_set`), project and kit data and value rows. Its Digitone II half left the pull request, since elekloader has released a different core-dn2 0.3. This pull request refreshes Modwerk's copy to `0df8409` (`sdk/imports/core-dt2-source-0df8409.json`). Elekloader's 0.9.0 plan (#1129) leaves the Digitakt II out of scope. Since 28 October a Digitakt II hook goes into Modwerk's base and does not wait for elekloader ([decision](decisions/2026-10-28-modwerk-base-every-machine.md)).
 
 ## What is decided, and what is open
 
@@ -27,7 +27,7 @@ Decided by the owner and binding on this plan:
 
 Open, for the owner (each is asked again in the pull request that needs the answer):
 
-1. **The source pin.** Copy `2b0616e` over `3d7c2e3` now (one small source change, same sites and entries), or wait for an elekloader release of #221. *Recommended:* take `2b0616e` in the base pull request. Waiting for elekloader costs time and buys nothing the base check below does not cover, since the base is Modwerk's either way.
+1. **The source pin.** This pull request copies `0df8409`, #221 as rebased; the same sites and entries as `3d7c2e3`, without the exports no module used. Take the source again from elekloader's release if #221 lands changed; otherwise the base builds from this copy. Waiting for a release costs time and buys nothing the base check below does not cover, since the base is Modwerk's either way.
 2. **What the base is checked against.** `machine:base` compares a base with the release it started from (`reference.keeps`). There is no core 1.1 release. *Recommended:* compare with the vendored `core-1.0.elemod`, keeping `id`, `sites`, `exports`, `imports`, `collections` and `requires` but not `version` or `build`. Core 1.1 keeps every core 1.0 site, event and table size, so the check proves the base is 1.0 with additions, as the Rytm's base is core-ar2 0.7 with additions.
 3. **The per-kit room.** A Digitakt II kit record has 194 unused bytes after its end mark, which leaves 191 bytes of kit data in all, shared by every module (`core_kitdata_room()`). Macro mode's per-kit setup is exactly 191 bytes. Three ways:
    - (a) **A budget, first come.** The profile gets a `Kit data` budget of 191 bytes, each module declares the bytes it takes (a `kitdata:<tag>` claim and its size), and the planner refuses a set over the budget. Macro mode then excludes every other kit-data module, and says so.
@@ -99,7 +99,7 @@ The Digitakt II's audio runs on its SHARC DSP, and core 1.1 has no audio hook: `
 ## Order
 
 1. The owner reviews this plan and answers the open items, or defers them to the pull request named for each.
-2. Step 1 (base), with items 1, 2 and 5.
+2. Step 1 (base), with items 2 and 5.
 3. Step 2's tool fixes (`module:doctor`, captures), then the modules, one pull request each, macro mode with item 3 and 4.
 4. Step 3 (downloads, the owner's switch).
 5. Step 4 (link, loader, MCP), step 5 (page), each with its own plan section updated first.

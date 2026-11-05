@@ -41,7 +41,7 @@
     {
       "label": "core-dn2 0.3 (toonst's elekloader fork)",
       "url": "https://github.com/toonst/elekloader/tree/3d7c2e3c955a73ad8c8cc9ad6daf83c1a5993f08/mods/core-dn2",
-      "note": "The Digitone II core with the Digitakt II 1.1 additions, an input bridge, SysEx observers and a SHARC bridge. Its README reports unit runs of the UI events; 0.3's additions ran in an emulator only. Not copied into Modwerk yet."
+      "note": "The Digitone II core with the Digitakt II 1.1 additions, an input bridge, SysEx observers and a SHARC bridge. Its README reports unit runs of the UI events; 0.3's additions ran in an emulator only. Left out of rebased elekloader#221; returns as a later core-dn2. Not copied."
     }
   ],
   "art": {

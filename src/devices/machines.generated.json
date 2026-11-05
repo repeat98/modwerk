@@ -284,9 +284,9 @@
         "note": "Released core, perform-direct and perform-levels packages for OS 1.17. The author reports individual hardware results, including an earlier perform-direct version; the combined build is not hardware-tested. Modwerk listings remain to be added."
       },
       {
-        "label": "core-dt2 1.1 source (toonst's elekloader fork)",
-        "url": "https://github.com/toonst/elekloader/tree/3d7c2e3c955a73ad8c8cc9ad6daf83c1a5993f08/mods/core-dt2",
-        "note": "Adds frame values, key LEDs and project and kit data to core 1.0's events; its author reports emulator runs only. Copied unchanged into sdk/machines/digitakt-ii/elekloader/ as the base's start; the site builds core 1.0 until the base ships."
+        "label": "core-dt2 1.1 source (elekloader#221)",
+        "url": "https://github.com/toonst/elekloader/tree/0df84098c8e29472208c9629e70d24012fe82555/mods/core-dt2",
+        "note": "Adds frame values, key LEDs, project and kit data and value rows to core 1.0's events. Its author reports emulator and unit runs on an earlier version. Copied unchanged into sdk/machines/digitakt-ii/elekloader/ as the base's start; the site builds core 1.0 until the base ships."
       }
     ],
     "sdk": {
@@ -376,7 +376,7 @@
       {
         "label": "core-dn2 0.3 (toonst's elekloader fork)",
         "url": "https://github.com/toonst/elekloader/tree/3d7c2e3c955a73ad8c8cc9ad6daf83c1a5993f08/mods/core-dn2",
-        "note": "The Digitone II core with the Digitakt II 1.1 additions, an input bridge, SysEx observers and a SHARC bridge. Its README reports unit runs of the UI events; 0.3's additions ran in an emulator only. Not copied into Modwerk yet."
+        "note": "The Digitone II core with the Digitakt II 1.1 additions, an input bridge, SysEx observers and a SHARC bridge. Its README reports unit runs of the UI events; 0.3's additions ran in an emulator only. Left out of rebased elekloader#221; returns as a later core-dn2. Not copied."
       }
     ]
   },
