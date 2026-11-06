@@ -103,6 +103,8 @@ function octatrack(id) {
   if (exists(folder + '/evidence/performance.json')) {
     const record = json(folder + '/evidence/performance.json'), rows = judgeRecord(record)
     // An ot_emu stress run stands in for dsp_host only where there is no dispatched instance: code reached through stock hooks.
+    // A key-press record has no flood, so a module with a MIDI path or ColdFire sound work cannot take it.
+    if (record.trigger === 'key' && ['midi-usb', 'machines'].includes(document.category)) fail('performance', "a key-press record (trigger: 'key') is for a module with no MIDI path and no frame-interrupt work, not a " + document.category + ' module', 'npm run perf:audit -- template coldfire, and measure under the flood')
     if (record.stress?.harness === 'ot_emu' && document.compatibility?.effectId != null) fail('performance', 'stress: an ot_emu run is for code reached only through stock hooks; an effect with id ' + document.compatibility.effectId + ' renders under dsp_host -guard -dirty', 'python3 tools/harness/stress_project.py, then tools/harness/pressure.py render')
     if (record.module !== id || record.version !== document.version) fail('performance', 'evidence/performance.json is for ' + record.module + '@' + record.version + ', not ' + id + '@' + document.version, 'measure again for this version, then npm run perf:audit -- check ' + folder + '/evidence/performance.json')
     else for (const row of rows.filter(item => item.state === 'fail')) {
