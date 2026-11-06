@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.1.1-experimental",
+    "date": "2026-11-06",
+    "changes": [
+      "Uses less CPU when no sound has RATE on, leaving more time for the screen and pads.",
+      "No change to how RATE plays."
+    ]
+  },
+  {
     "version": "0.1.0-experimental",
     "date": "2026-11-02",
     "changes": [

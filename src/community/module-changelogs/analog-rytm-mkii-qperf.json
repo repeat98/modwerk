@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.2.0-experimental",
+    "date": "2026-11-05",
+    "changes": [
+      "First release, for Analog Rytm MKII OS 1.74: hold QPER and turn a knob to lock the linked performance; QPER + YES writes what you hear into the kit; QPER + PLAY clears, RECORD and STOP copy and paste.",
+      "In LIVE RECORDING, performance moves from the pads, the QPER knob and MIDI are kept in a quick perf rec that loops with the pattern, 8 points a step, and plays back through the performances.",
+      "RECORD + YES writes the quick perf rec into the pattern as locks, and RECORD + NO clears it (NO again undoes), in any recording mode.",
+      "Tracks shorter than the take are lengthened to fit, with their trig conditions rewritten so they play on the same passes.",
+      "The quick perf rec lives in RAM: a pattern change or power off drops a take you have not applied. It loops every 64 steps at most."
+    ]
+  }
+]

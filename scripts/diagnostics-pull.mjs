@@ -162,7 +162,7 @@ function restarts(member) {
   })
 }
 
-export function summary({ events, counts }, { base = '', reports = new Map() } = {}) {
+export function summary({ events, counts }, { base = '', layouts = {}, reports = new Map() } = {}) {
   const found = members(events)
   // The configuration page checks the card build on every module change: a refused selection is not a failure.
   const selection = ({ data }) => data.event === 'build_failed' && data.error === 'selection'
@@ -170,7 +170,9 @@ export function summary({ events, counts }, { base = '', reports = new Map() } =
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   const checks = Object.entries(Object.groupBy(events.filter(selection), entry => entry.username)).sort((a, b) => b[1].length - a[1].length)
   const days = Map.groupBy(counts, row => row.day)
-  const baseName = hash => hash.slice(0, 8) + (!base ? '' : hash === base ? ' (the site’s current base)' : ' (older than the site’s ' + base.slice(0, 8) + ')')
+  // A unit on another output layout of the current base (base-binding.json's variants) runs the current base too.
+  const layout = hash => Object.keys(layouts).find(name => layouts[name] === hash)
+  const baseName = hash => hash.slice(0, 8) + (!base ? '' : hash === base ? ' (the site’s current base)' : layout(hash) ? ` (the site’s current base, ${layout(hash)} layout)` : ' (older than the site’s ' + base.slice(0, 8) + ')')
   return [
     `${events.length} records from ${found.size} members (last 30 days; times are this computer's)`,
     ...[...found].sort((a, b) => b[1].last.localeCompare(a[1].last)).flatMap(([name, member]) => [
@@ -232,13 +234,13 @@ async function main() {
   let binding
   try { binding = execFileSync('git', ['show', 'origin/main:sdk/machines/octatrack/base-binding.json'], { cwd: fileURLToPath(ROOT), encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }) }
   catch { binding = readFileSync(new URL('sdk/machines/octatrack/base-binding.json', ROOT), 'utf8') }
-  const base = JSON.parse(binding).identity
+  const { identity: base, variants: layouts } = JSON.parse(binding)
   let reports = new Map(), note = ''
   try {
     reports = reportsByMember(JSON.parse(execFileSync('gh', ['issue', 'list', '--label', 'issue-report', '--state', 'all', '--limit', '300',
       '--search', 'created:>=' + from.slice(0, 10), '--json', 'number,title,state,body'], { cwd: fileURLToPath(ROOT), encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })))
   } catch (error) { note = '\n\nGitHub reports not matched: ' + (error.stderr?.toString().trim() || error.message) }
-  console.log(summary(data, { base, reports }) + note + '\n\nEvery record: ' + file)
+  console.log(summary(data, { base, layouts, reports }) + note + '\n\nEvery record: ' + file)
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

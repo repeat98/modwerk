@@ -1,9 +1,9 @@
 {
  "elemod": 2,
  "id": "chromatic-aftertouch-fix",
- "version": "0.1.0-experimental",
- "title": "Chromatic Aftertouch Fix",
- "description": "In CHROMATIC mode a held pad's MIDI aftertouch goes out on the note the pad played, not 24 semitones above it, so a receiver sees it.",
+ "version": "0.2.0-experimental",
+ "title": "Pad Pressure Fix",
+ "description": "A held pad's pressure reaches the sound's aftertouch and MIDI out during a retrig roll too, and CHROMATIC pads send their aftertouch on the note they played.",
  "category": "midi-usb",
  "author": "npp1993",
  "license": "GPL-3.0-or-later",
@@ -66,6 +66,30 @@
      0
     ]
    ]
+  },
+  {
+   "addr": "0x400e2924",
+   "len": 2,
+   "stock_sha256": "a8e774a529ecac8cd402f40263e3be8f3998c6a4fd734961cf0ad590e2926d6a",
+   "new": "7000",
+   "kind": "code",
+   "relocs": []
+  },
+  {
+   "addr": "0x400c755a",
+   "len": 4,
+   "stock_sha256": "0e4a2031c12bcd049eb2737a1b852fc71ee88d3cfcdef80cbdf3829739dae732",
+   "new": "4e714e71",
+   "kind": "code",
+   "relocs": []
+  },
+  {
+   "addr": "0x400c6228",
+   "len": 2,
+   "stock_sha256": "5c1c81956ea56ef91a593bbb23f800b4f506699661623acf9944ad0d0da4ac21",
+   "new": "4e71",
+   "kind": "code",
+   "relocs": []
   }
  ],
  "collections": {},
@@ -74,7 +98,9 @@
  "resources": {
   "regions": [],
   "names": [
-   "midi:CHROMATIC pad poly pressure note on MIDI out"
+   "midi:CHROMATIC pad poly pressure note on MIDI out",
+   "midi:pad pressure during pad retrigs on MIDI out",
+   "ui:pad pressure during pad retrigs (RTRG held, ALWAYS ON)"
   ],
   "core": "0.7"
  },
