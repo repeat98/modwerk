@@ -68,7 +68,8 @@ ran for each of the three pressure events, on the pad pages and in PERF mode ali
 step-write path (`0x400e28c6`) ran three times in both modes, so in PERF mode stock writes retrig
 steps to the track numbered like the pad, a stock quirk. With Live Rec Retrig Fix installed (the
 author's set, with this module's 0.1.0 and 0.2.0) that path never ran: that module turns those
-writes off. This module changes neither case.
+writes off. This module changes neither case. On the author's unit (PP01), in PERF mode with LIVE RECORDING on and
+RTRG held or ALWAYS ON, holding pad 1 laid no trigs on track 1, as reported.
 | CHROMATIC, ALWAYS ON | aftertouch 0, roll 3, no pressure | aftertouch 3, roll 3, `ad 24 pp` |
 | CHROMATIC, ALWAYS ON, VEL.CUR 1 | aftertouch 3, `ad 3c pp` | aftertouch 3, `ad 24 pp` |
 
