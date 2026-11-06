@@ -16,7 +16,7 @@ A Zoom MultiStomp pedal (`family: "zoom"`) loads separate effect files on its st
 2. **Own effect runs.** An effect built from original source loads on the stock firmware, plays and is removed again.
 3. **First mods.** Reviewed effects with documentation, licences and evidence.
 
-A Zoom firmware release lists its version with `"files": []`: Zoom ships its OS as an updater app and no mod touches it. A Zoom pedal stays locked for modules until a `zdl` module contract exists ([proposal](ZOOM_MULTISTOMP.md)). MultiStomp profiles use the `pedal` art body (an upright stompbox) and the G1on series uses `floor` (two footswitch plates).
+A Zoom firmware release lists its version with `"files": []`: Zoom ships its OS as an updater app and no mod touches it. A Zoom pedal stays locked for modules until a `zdl` module contract exists ([proposal](ZOOM_MULTISTOMP.md)). The ZD2 pedals (the Plus and Four series) take the same three steps with `.ZD2` files; list them in `isZd2Pedal` (`src/devices/registry.ts`), since the ZDL pedal page, base and contract do not apply to them ([G1 FOUR](ZOOM_ZD2.md)). MultiStomp profiles use the `pedal` art body (an upright stompbox) and the G1on series uses `floor` (two footswitch plates).
 
 An Erica Synths machine (`family: "erica"`) has published firmware source (the LXR-02, GPL-3.0), so mods are changes to that source and nothing is reverse-engineered or rebuilt from a stock image. It moves through four steps, `source`, `boot`, `core` and `mods`:
 
