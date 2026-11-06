@@ -16,7 +16,7 @@
     "label": "LFO MULT 1/2X to 1/8X",
     "family": "LFO",
     "summary": "LFO MULT gains 1/2X, 1/4X and 1/8X on audio and MIDI tracks: LFOs up to eight times slower, still synced to the tempo.",
-    "overview": "Stock LFO MULT runs from 1X to 64X, so the slowest an LFO can go is SPD 1 at 1X. Slow LFO adds three values after 64X: 1/2X, 1/4X and 1/8X, which run at a half, a quarter and an eighth of 1X. They work on every LFO of the audio tracks and the MIDI tracks, follow the project tempo as stock does, and are saved in the Part like any MULT value.",
+    "overview": "Stock LFO MULT runs from 1X to 64X, so the slowest an LFO can go is SPD 1 at 1X. Slow LFO adds three values after 64X: 1/2X, 1/4X and 1/8X, which run at a half, a quarter and an eighth of 1X. They work on every LFO of the audio tracks and the MIDI tracks, follow the project tempo as stock does, and are stored where stock stores MULT, in the Part.",
     "highlights": [
       "MULT 1/2X, 1/4X and 1/8X: LFOs up to eight times slower than stock's slowest.",
       "Audio and MIDI track LFOs; tempo-synced as stock.",
@@ -70,7 +70,7 @@
       "OS 1.40C. The new values come after 64X on the knob, not below 1X.",
       "A project saved with 1/2X, 1/4X or 1/8X, opened without the module, shows 64X and runs that LFO much faster; turning MULT down brings back stock's values.",
       "On Deja Vu's waves MULT is the loop length; Deja Vu reads 1/2X..1/8X as 64.",
-      "Not yet tested: external MIDI clock, MKII. A tempo change while playing is checked in the emulator only."
+      "Run on an MKI only. Not yet tested: reloading the Part or the project from the card with the module installed, MKII."
     ]
   },
   "resources": {

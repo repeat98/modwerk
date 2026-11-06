@@ -6,7 +6,7 @@ Version: 0.1.0-experimental · author: @nathangroth
 
 ## Overview
 
-Stock LFO MULT runs from 1X to 64X, so the slowest an LFO can go is SPD 1 at 1X. Slow LFO adds three values after 64X: **1/2X, 1/4X and 1/8X**, which run at a half, a quarter and an eighth of 1X. They work on every LFO of the audio tracks and the MIDI tracks, follow the project tempo as stock does, and are saved in the Part like any MULT value.
+Stock LFO MULT runs from 1X to 64X, so the slowest an LFO can go is SPD 1 at 1X. Slow LFO adds three values after 64X: **1/2X, 1/4X and 1/8X**, which run at a half, a quarter and an eighth of 1X. They work on every LFO of the audio tracks and the MIDI tracks, follow the project tempo as stock does, and are stored where stock stores MULT, in the Part.
 
 ## Controls
 
@@ -34,13 +34,13 @@ It keeps no clock of its own ([sequencing](https://github.com/repeat98/modwerk/b
 
 ## Compatibility and limitations
 
-- OS 1.40C, MKI and MKII.
+- OS 1.40C. Run on an MKI only; not yet tested on an MKII.
 - Changing a stock flow: MULT on LFO SETUP (audio and MIDI tracks) has three more values after 64X. Nothing else changes; values 1X to 64X behave as stock. Remove the module to get stock's seven values back.
 - The new values sit after 64X on the knob, not below 1X: keeping stock's stored values for 1X to 64X keeps every saved project the same.
 - A project saved with 1/2X, 1/4X or 1/8X opened without the module shows 64X on MULT and runs that LFO much faster (stock reads 7 to 9 as shift counts). Turning MULT down brings back stock's values.
 - On Deja Vu's waves (DJV, DJQ, DJC) MULT is the loop length; Deja Vu reads 1/2X to 1/8X as 64.
 - No other module or the base patches these sites. Takes no key or screen.
-- Tested on an MKI over USB on audio and MIDI tracks: all three LFOs of a track at different slow values, several tracks, a tempo change while playing, external MIDI clock and a power cycle. MULT cannot be locked or reached by scenes or the crossfader, as on stock. Not yet tested: Deja Vu's waves (they load and play, but the loop lengths were not judged), MKII.
+- Tested on an MKI over USB on audio and MIDI tracks: all three LFOs of a track at different slow values, several tracks, a tempo change while playing, external MIDI clock and a power cycle. MULT cannot be locked or reached by scenes or the crossfader, as on stock. The values come back after a power cycle, which restores the Part from battery RAM. Not yet tested: reloading the Part or the project from the card with the module installed, Deja Vu's waves (they load and play, but the loop lengths were not judged), MKII.
 
 ## Tests and measurements
 
