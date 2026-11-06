@@ -12,7 +12,7 @@
   },
   "build": {
     "status": "pending",
-    "reason": "Candidate USB install, Undo, Keep, removal and power-cycle functional checks passed; resource qualification, release integration and first-release approval remain pending."
+    "reason": "Candidate USB lifecycle and stopped-state project reload reported; one earlier PROJECT RELOAD audio stall remains unexplained. Timing qualification, release integration and first-release approval remain pending."
   },
   "author": {
     "github": "ex1010",
@@ -165,7 +165,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Candidate hardware functional checks: USB install/Undo/Keep/removal/reinstall, owner-reported audio and installed-Part reload, USB-verified cold boot. Missing-module reload unconfirmed; full qualification pending.",
+    "summary": "Candidate USB lifecycle and reboot checked; installed-Part reload and one stopped-state PROJECT RELOAD reported successful. Earlier PROJECT RELOAD stopped audio frames and required a power cycle; root cause unresolved. Timing and full qualification pending.",
     "hardwareStatus": "reported",
     "evidenceRevision": "7bfced003145d8641792e91747f7f63ea5aac2e1",
     "gates": [

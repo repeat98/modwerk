@@ -23,5 +23,6 @@
   "stockVerification": "PASS",
   "hardware": "FUNCTIONAL_OWNER_REPORT_AND_USB_READBACK",
   "hardwareReport": "../TESTING.md",
-  "qualification": "PENDING_RESOURCE_AND_RELEASE_INTEGRATION"
+  "qualification": "PENDING_RESOURCE_AND_RELEASE_INTEGRATION",
+  "projectReload": "ONE_STOPPED_REPEAT_PASSED; EARLIER_AUDIO_STALL_UNRESOLVED"
 }

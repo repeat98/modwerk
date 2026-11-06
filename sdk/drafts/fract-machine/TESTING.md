@@ -2,11 +2,14 @@
 
 ## Commands and exact revision
 
-This is an unlisted source draft. The manifest pins the private source baseline
-`5b5aa328c1bbed129ab6b1a65efb9353b93ede8f`; accepted centered-SIZE/UI changes and
-consolidation edits were uncommitted when staged. That baseline is not an exact
-qualification fingerprint for the final public tree. Run and record source
-checks against the final committed revision before publication.
+This is the unlisted `0.1.1-experimental` candidate, exact package SHA-256
+`54ca8f6b1a30e2f4811129e082ce18881148654b00c97c026508460a6cf7272e`.
+The hardware-tested native inputs are from `7bfced003145d8641792e91747f7f63ea5aac2e1`;
+later reports/resource tooling reproduce identical package bytes. The manifest's
+older private baseline `5b5aa328c1bbed129ab6b1a65efb9353b93ede8f` is historical,
+not the final qualification fingerprint. Exact candidate results below supersede
+only the matching items in earlier private/not-tested checklists. Timing and the
+unexplained PROJECT RELOAD stall still prevent completed release qualification.
 
 The README lists reproducible host, normal/profile/detail ColdFire source-check
 and draft-doctor commands. `verify.py` invokes `check_source.py`; its synthetic
@@ -14,8 +17,7 @@ imports and temporary base identity validate compile/link behavior only. Tests
 using `OG_FRACT_CURRENT_ENGINE` exercise the current engine; the explicitly
 host-only `fixtures/fract_reference/` files are a historical differential oracle.
 The FR:1 boot-preservation fixture runs on the host only; it is not hardware
-evidence. Session-wide command results belong in the consolidation record/PR;
-this report does not invent results before those runs finish.
+evidence. Command results and bounded review coverage are in `release/verification.md`.
 
 ## Hardware and audio quality
 
@@ -28,9 +30,9 @@ on the exact public build: not tested.
 
 ## Stock flows
 
-Exact-public tests of transport, parameter locks, LFOs, scenes, MIDI, recording,
-Part/project changes, stock machine restoration and shared-module composition:
-not tested. The intended deliberate change is a custom SRC machine with its own
+Apart from the specific functional checks attributed below, exact-public tests
+of parameter locks, LFOs, scenes, MIDI, recording and shared-module composition
+remain untested. The intended deliberate change is a custom SRC machine with its own
 MAIN/SETUP controls; selecting a stock machine leaves FRACT. That transition
 still needs exact-build hardware validation.
 
@@ -202,9 +204,43 @@ a read-only reconnect succeeded. No SELF TEST was started after reboot.
 Finally, with FRACT installed, the owner changed POS without saving and used
 FUNC+CUE to reload the saved Part. The owner confirmed: “Да, значение вернулось,
 FRACT работает”. This is an installed-Part reload functional pass, separate from
-the unconfirmed missing-module case. Explicit project-file reload, distinct
-parameter comparisons across tracks, other controls, companions, long load,
+the unconfirmed missing-module case. Project-file reload is recorded separately below. Distinct
+parameter comparisons across tracks, other controls, companions and long load,
 worst-case cycles, shared task/interrupt stack use and full release qualification remain untested
 or unmeasured. There is no implied first-release approval. The tested source was
 `7bfced003145d8641792e91747f7f63ea5aac2e1`; this update records observations and
 changes no native candidate input or package byte.
+
+
+### Project RELOAD incident and stopped-state repeat — 6 November 2026
+
+During the later resource-accounting session the owner explicitly used
+PROJECT > RELOAD. FRACT remained on T1, but the owner reported no sound and no
+sequencer movement after PLAY. Exiting menus and STOP twice followed by PLAY
+did not recover it. The precise transport state at the initial RELOAD was not
+recorded. This is a failed observation, not a project-reload pass or an isolated
+FRACT root cause.
+
+Read-only USB at 14:28–14:31 UTC found the same base, canonical FRACT inventory,
+kept set and boot session as before. No module was missing. Runtime ticks
+advanced, but audio frame count stayed at 13,376,511. The base's saved stall
+record had reason 1 (frames stopped), tick 290,997 and that same frame count;
+its loader error/rejection and residency-failure fields were zero. The record
+was captured privately before recovery. Cached CPU/DSP load was stale/null;
+these readings are not a performance measurement. No upload, Keep, base write,
+SELF TEST start or project/Part save was performed by the agent.
+
+The owner then physically powered off/on without a new save and reported that
+PLAY advanced and FRACT sounded again. USB confirmed a new session,
+`e5281fc4cfcb92785615d01aa37964e2575a447b664df3d6c8e7a0b356f3911d`,
+with the same base, canonical inventory and kept set. Frames advanced from
+150,744 to 156,257 over approximately two seconds; both confirmed NOR slots
+were unchanged. No package or base was replaced to obtain recovery.
+
+For a controlled repeat, the owner pressed STOP twice, used PROJECT > RELOAD,
+waited for it to finish, then pressed PLAY. The owner reported that steps ran
+and FRACT sounded. USB at 14:35:28–14:35:30 UTC confirmed the same new session
+and set, with frames advancing from 434,639 to 440,152. This is one successful
+stopped-state project-reload repeat. It does not explain or erase the first
+stall; loading while playing, stock-only isolation and the root cause remain
+unverified. The incident requires review before release qualification.

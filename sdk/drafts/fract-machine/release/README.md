@@ -27,7 +27,8 @@ Worst-case ColdFire timing remains unmeasured.
    the private grnyv1 package/set for recovery. Never run both FRACT ids together.
 4. Record actual owner observations separately from USB/emulator evidence. The
    exact candidate has now passed the reported/USB functional steps in TESTING.md;
-   missing-module reload remains unconfirmed and explicit project reload untested.
+   missing-module reload remains unconfirmed; the later project-reload incident
+   and controlled repeat are recorded separately below.
 5. Only after qualification, move the module into sdk/octabam/modules, activate
    its catalogue/package rows and move CHANGELOG.json to the community changelog.
    Rebuild and verify identical public package bytes, regenerate catalogues,
@@ -42,3 +43,7 @@ The 6 November physical report covers install, explicit Undo, Keep/card readback
 removal, reinstall, owner audio/POS/SIZE and installed-Part reload, and verified
 physical reboot. It supplies functional evidence for this exact candidate; it
 does not replace missing measurements or finish publication qualification.
+
+A later PROJECT RELOAD stopped audio frames and required an owner-operated power
+cycle. A controlled stopped-state repeat passed, but the initial stall remains
+unexplained; see TESTING.md. Source/readiness checks do not qualify that failure.

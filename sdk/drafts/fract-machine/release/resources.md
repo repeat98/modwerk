@@ -92,10 +92,13 @@ worst render. Old private CPU percentages and historical timing-model constants
 are not evidence for this candidate. No `performance.json` pass or waiver is
 manufactured from compiler frames, instruction counts or average CPU.
 
-The current production base compiles out `MODWERK_DEV`, including the live frame
-meter and report/MEM APIs used by the documented measurement scripts. Enabling
-those requires a separately identified diagnostic build. The connected unit
-and saved functional project remain unchanged during this accounting run.
+The production base exposes cached CPU/DSP load through the normal LOAD API,
+but those window readings do not isolate FRACT or measure its worst render.
+It compiles out `MODWERK_DEV`, including the development frame-duration meter
+and report/MEM APIs used by the documented measurement scripts. Enabling those
+requires a separately identified diagnostic build. No diagnostic package or base
+was installed during this accounting run. The later project-RELOAD incident and
+owner-operated recovery are separately recorded in TESTING.md.
 
 The remaining measurement must record the dearest render, native-pitch packet
 splits, all four source PCM formats, smallest/largest SIZE, forward/reverse and
