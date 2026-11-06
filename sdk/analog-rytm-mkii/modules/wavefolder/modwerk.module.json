@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 3,
+  "id": "wavefolder",
+  "name": "Wavefolder",
+  "version": "0.1.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "effects",
+  "exclusive": false,
+  "author": {
+    "github": "stigmagit",
+    "credits": [
+      "stigmagit"
+    ]
+  },
+  "maintainers": [
+    "stigmagit"
+  ],
+  "presentation": {
+    "label": "WAVEFOLDER",
+    "family": "Send effects",
+    "summary": "A wavefolder on the Rytm's send bus: past full level the sound folds back in, more as you push it, and the folds follow each hit's strength.",
+    "overview": "WAVEFOLDER is one effect in the Modwerk base's send-effect list, a new design by its author. Each track sends to it from its SEND page, and it returns in stereo to the mix. Past full level the sound is folded back in instead of clipped, and the harder it is pushed (DRV, FOLD) the more it folds: bright, moving harmonics, with no filter around them. DYN makes the folds follow the sound's strength, so a loud hit folds more than a ghost note. SHPE goes from a sine fold to a triangle one, SYMM moves the fold's centre, WDTH folds the sides a little differently, TONE tilts the result and BLND mixes it with the send.",
+    "highlights": [
+      "Folds that follow each hit's strength (DYN).",
+      "Sine to triangle folds.",
+      "No filter around the fold."
+    ],
+    "usage": [
+      "A tom or a kick with FOLD up: the hits bloom into harmonics.",
+      "DYN up on a hi-hat pattern: accents fold, ghost notes stay round.",
+      "SYMM off centre for a hollower, even-harmonic sound."
+    ]
+  },
+  "access": {
+    "location": "SEND FX page of the FX track (Modwerk base).",
+    "steps": [
+      "Install the module with the Modwerk base; the base carries the send bus, its pages and the effect list.",
+      "On a sound track, press AMP twice to open SEND and turn A to send the track.",
+      "Select the FX track and press DELAY twice to open SEND FX; hold FUNC and turn A to choose WAVEFOLDER.",
+      "Turn A to H to shape it, hold FUNC and turn E for the return level LEV, and hold FUNC to read the CPU."
+    ],
+    "screenshots": []
+  },
+  "controls": [
+    {
+      "name": "FOLD",
+      "default": 48,
+      "doc": "How far it folds: the gain into the fold, 1x to 8x.",
+      "labels": null
+    },
+    {
+      "name": "SYMM",
+      "default": 0,
+      "doc": "The fold's centre, -64 to +63: even harmonics off centre.",
+      "labels": null
+    },
+    {
+      "name": "SHPE",
+      "default": 0,
+      "doc": "The fold's shape: sine (soft) to triangle (hard).",
+      "labels": null
+    },
+    {
+      "name": "DYN",
+      "default": 64,
+      "doc": "How much the folds follow the sound's strength.",
+      "labels": null
+    },
+    {
+      "name": "DRV",
+      "default": 0,
+      "doc": "Gain before, 0 to +18 dB.",
+      "labels": null
+    },
+    {
+      "name": "TONE",
+      "default": 0,
+      "doc": "Tilts the result around 1 kHz, -64 to +63.",
+      "labels": null
+    },
+    {
+      "name": "WDTH",
+      "default": 0,
+      "doc": "The sides folded about slightly different centres.",
+      "labels": null
+    },
+    {
+      "name": "BLND",
+      "default": 127,
+      "doc": "The folded sound against the send.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Needs the Modwerk Analog Rytm MKII base with the send bus (the FX list mw_fx); the library offers it only once the site builds with that base.",
+      "One send effect plays at a time: the one chosen on SEND FX.",
+      "A project that chose this effect plays no return and shows MISSING when the effect is not installed, and keeps its values.",
+      "Hard folds of tones above about 2 kHz alias: the fold runs at 24 kHz to stay near CHORUS's CPU."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [],
+    "claims": []
+  },
+  "resources": {
+    "memoryBytes": 2803,
+    "fastBytes": null,
+    "load": {
+      "display": "Not measured on a unit",
+      "method": "unmeasured",
+      "conditions": "The base runs the chosen effect once per audio block (32 samples at 48 kHz). It uses none of the base's work area. On the ColdFire core alone (rytm-emu cfbench), its render runs at 1.03 of CHORUS's instructions on a drum loop at the defaults (1.27 at its dearest settings). To measure on a unit: the base's CPU reading on SEND FX, every track sending, controls locked and moving."
+    }
+  },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": null,
+    "reports": [],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host: the module's source gives the same samples as on rytm-emu's ColdFire core; no overflow over 20,000 random blocks; idle measured. Load 1.03 of CHORUS's instructions on drums at the defaults, 1.27 at its dearest. rytm-emu: test build MB08 boots like MB02; the SEND FX page could not be reached there. Unit: not tested yet."
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by the author, a new design, under GPL-3.0-or-later."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "WAVEFOLDER on the send bus",
+      "alt": "A wavefolder on the Rytm's send bus: past full level the sound folds back in, more as you push it, and the folds follow each hit's strength.",
+      "credit": "stigmagit",
+      "license": "GPL-3.0-or-later",
+      "source": "Original conceptual illustration in the shared signal-art style."
+    }
+  ]
+}
