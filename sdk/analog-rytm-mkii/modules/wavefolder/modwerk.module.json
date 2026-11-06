@@ -26,9 +26,10 @@
       "No filter around the fold."
     ],
     "usage": [
-      "A tom or a kick with FOLD up: the hits bloom into harmonics.",
-      "DYN up on a hi-hat pattern: accents fold, ghost notes stay round.",
-      "SYMM off centre for a hollower, even-harmonic sound."
+      "Install the module with the Modwerk base; the base carries the send bus, its pages and the effect list.",
+      "On a sound track, press AMP twice to open SEND and turn A to send the track.",
+      "Select the FX track and press DELAY twice to open SEND FX; hold FUNC and turn A to choose WAVEFOLDER.",
+      "Turn A to H to shape it, hold FUNC and turn E for the return level LEV, and hold FUNC to read the CPU."
     ]
   },
   "access": {
@@ -100,6 +101,7 @@
     "limitations": [
       "Needs the Modwerk Analog Rytm MKII base with the send bus (the FX list mw_fx); the library offers it only once the site builds with that base.",
       "One send effect plays at a time: the one chosen on SEND FX.",
+      "The kit keeps the chosen effect and its eight values; Send FX settings saved under MD builds are not read.",
       "A project that chose this effect plays no return and shows MISSING when the effect is not installed, and keeps its values.",
       "Hard folds of tones above about 2 kHz alias: the fold runs at 24 kHz to stay near CHORUS's CPU."
     ]
@@ -121,16 +123,45 @@
     }
   },
   "evidence": {
-    "tier": "none",
+    "tier": "author-hardware",
     "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": null,
-    "reports": [],
-    "hardware": null,
+    "sourceSha256": "6cc42991b690994f8bb4dacc4a72255dce8ae565f3d640a0ed56c822c53a073f",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-10-30",
+      "tester": "stigmagit",
+      "durationMinutes": null,
+      "summary": "Test build MB11 (sha256 3ed14a3d...): the Modwerk base with the send bus and the clock for send effects, this effect with FREQ SHIFTER, REVERSE DELAY and RING MOD, CHORUS, FLANGER and PHASER, Loop Sync 0.3.2 and Retrig Grid 0.2.0. The author reported that group as \"les meilleurs effets de toute la liste\".",
+      "limitations": [
+        "Informal report: which steps of the test sheet were run was not detailed, and the CPU reading was not reported.",
+        "MB11 built this effect from the same source file but for its id (10 there, 4 here, the next free one on main's base), on an earlier base than main's send-bus variant 0cdf0343."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host: the module's source gives the same samples as on rytm-emu's ColdFire core; no overflow over 20,000 random blocks; idle measured. Load 1.03 of CHORUS's instructions on drums at the defaults, 1.27 at its dearest. rytm-emu: test build MB08 boots like MB02; the SEND FX page could not be reached there. Unit: not tested yet."
+    "summary": "Host: the module's source gives the same samples as on rytm-emu's ColdFire core; no overflow over 20,000 random blocks; idle measured. Load 1.03 of CHORUS's instructions on drums at the defaults, 1.27 at its dearest. Unit: test build MB11 reported by the author (30 Oct 2026). rytm-emu 2ac0f1f: the SEND and SEND FX pages with WAVEFOLDER (WF01).",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Install the module with the Modwerk base; the base carries the send bus, its pages and the effect list.",
+          "On a sound track, press AMP twice to open SEND and turn A to send the track.",
+          "Select the FX track and press DELAY twice to open SEND FX; hold FUNC and turn A to choose WAVEFOLDER.",
+          "Turn A to H to shape it, hold FUNC and turn E for the return level LEV, and hold FUNC to read the CPU."
+        ]
+      },
+      "screenshots": [
+        "media/send-fx-wavefolder.png",
+        "media/send-page.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
   },
   "license": {
     "spdx": "GPL-3.0-or-later",
@@ -146,6 +177,38 @@
       "credit": "stigmagit",
       "license": "GPL-3.0-or-later",
       "source": "Original conceptual illustration in the shared signal-art style."
+    },
+    {
+      "path": "media/send-fx-wavefolder.png",
+      "kind": "screenshot",
+      "caption": "SEND FX on the FX track with WAVEFOLDER chosen: its eight controls, the send amount and LEV.",
+      "alt": "SEND FX page titled 04 WAVEFOLDER, with SND 0, knobs FOLD, SYMM, SHPE, DYN, LEV, DRV, TONE, WDTH and BLND.",
+      "credit": "stigmagit documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "bdf7e7767efc15e0424f1a1a1bacea38ee38f248dec269e3f40c3f3c1717b245",
+        "setup": "Headless rytm-emu (dtboot) running WF01: the Modwerk base's send-bus variant and this folder's WAVEFOLDER 0.1.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/send-page.png",
+      "kind": "screenshot",
+      "caption": "SEND on a sound track, behind AMP: how much of BD goes to the send effect.",
+      "alt": "SEND FX BD page with one SND knob, and BD LEV at the bottom.",
+      "credit": "stigmagit documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "bdf7e7767efc15e0424f1a1a1bacea38ee38f248dec269e3f40c3f3c1717b245",
+        "setup": "Headless rytm-emu (dtboot) running WF01: the Modwerk base's send-bus variant and this folder's WAVEFOLDER 0.1.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
     }
   ]
 }

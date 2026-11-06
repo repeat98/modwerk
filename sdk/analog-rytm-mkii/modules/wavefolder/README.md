@@ -48,6 +48,7 @@ None from the module. The base's SEND and SEND FX pages sit behind AMP and DELAY
 
 - Needs the Modwerk Analog Rytm MKII base with the send bus (the FX list mw_fx); the library offers it only once the site builds with that base.
 - One send effect plays at a time: the one chosen on SEND FX.
+- The kit keeps the chosen effect and its eight values; Send FX settings saved under MD builds are not read.
 - A project that chose this effect plays no return and shows MISSING when the effect is not installed, and keeps its values.
 - Hard folds of tones above about 2 kHz alias: the fold runs at 24 kHz to stay near CHORUS's CPU.
 
@@ -57,7 +58,9 @@ See [TESTING.md](TESTING.md).
 
 ## Screens and audio
 
-No captures yet: rytm-emu does not reach the SEND FX page. Host renders of the module's own source are in the pull request.
+Screenshots are rytm-emu captures of build WF01 ([media/capture.json](media/capture.json)). No audio preview yet.
+
+![SEND FX with WAVEFOLDER](media/send-fx-wavefolder.png) ![SEND on a sound track](media/send-page.png)
 
 ## Authorship and licences
 
