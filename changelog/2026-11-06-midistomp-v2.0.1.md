@@ -1,0 +1,1 @@
+Zoom MultiStomp: the MIDISTOMP base moves to V2.0.1 (051fb38), with the looper, mixer, diagnostics page, DSP limit, effect categories and the identity tag. It builds byte for byte what MIDISTOMP's own tool builds. The flash notes add what the pedal answers to a bad checksum.
