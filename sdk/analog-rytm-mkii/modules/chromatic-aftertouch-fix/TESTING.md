@@ -1,6 +1,88 @@
-# Chromatic Aftertouch Fix: testing
+# Pad Pressure Fix: testing
 
-## The bug, read in the code (OS 1.74)
+Up to 0.1.0 the module was Chromatic Aftertouch Fix. 0.2.0 adds the retrig change; the 0.1.0
+sections below (the CHROMATIC note) are unchanged and still apply.
+
+## 0.2.0: pad pressure during retrig rolls
+
+### Stock, read in the code (OS 1.74)
+
+From the same disassembly as below, kept outside the repository.
+
+- A pad pressure event (UI message type 2, `0x400a4766`) goes through `0x400a03b4` to the view
+  stack (`0x400798c0`): the top view's pressure method runs first, and the view below gets it only
+  when that returns 0.
+- The sound's aftertouch is one word per track at `0x800067de` (setter `0x4011f490`). The audio
+  interrupt smooths it every block (`0x40120f0a`); no trig or retrig hit resets it.
+- The kit's RETRIG record per track is at kit + 4 × (610 + track): +3 RATE, +4 LENGTH, +5 VEL.CUR
+  (signed, 0 = OFF; getter `0x400a72f6`). ALWAYS ON is bit `track` of kit + 2439 (`0x400a7020`).
+  RTRG is key `0x85`.
+- `0x4011f262(track, pressure)` writes a running roll's velocity (`0x42ac6b4c` + 56 × track,
+  only while `0x8000fe44[track]` is set).
+- KeyboardView's pressure method (`0x400c74d4`): with RTRG held or ALWAYS ON, and VEL.CUR 0 (and
+  `0x400b7724(view + 148)` false), it calls `0x4011f262` and branches out at `0x400c755a`, before
+  the aftertouch (`0x4011f490`) and MIDI (`0x400850f4`) path. ChromPadsView's (`0x400c6196`) does
+  the same, branching out at `0x400c6228`.
+- The RETRIG menu, open while RTRG is held, has its own pressure method (`0x400e27cc`, reached
+  through `0x400e2930`): its LIVE RECORDING lock writes, then `0x4011f262` if VEL.CUR is 0, and it
+  always returns the pad's valid flag (`0x400e2924`), so the pad views below never see the event.
+
+The module turns the two branches out into no-ops and makes the menu return 0.
+
+### rytm-emu
+
+rytm-emu 2ac0f1f, headless `dtboot`, from a snapshot booted with four NO presses on a fresh card.
+BD held 700M with raw pressure `9014`, `901e`, `901c` (20, 30, 28). RTRG held over the press, or
+ALWAYS ON and VEL.CUR set beforehand in the RETRIG menu (RTRG held: DOWN, DOWN, RIGHT gives VEL.CUR
+1; DOWN, YES checks ALWAYS ON; seen on the screen). Counted with `--count`: calls of the aftertouch
+setter `0x4011f490` and of the roll velocity writer `0x4011f262`; MIDI out with `--midi-out`
+(AUTO channel 14). Every run raised only TRAP #0 (vector 32), as stock does.
+
+| Name | Contents | sha256 |
+| --- | --- | --- |
+| PX01 | core-ar2 0.7 alone | `edebddcf…d075` |
+| **PF01** | core-ar2 0.7 + this folder | `c1b0e115…f319` |
+
+| Case | Stock 1.74 and PX01 | PF01 |
+| --- | --- | --- |
+| Plain pad | aftertouch 3, roll 0, `9d 00 7f ad 00 0a ad 00 0f ad 00 0e 8d 00 00` | the same |
+| RTRG held, VEL.CUR OFF | aftertouch 0, roll 3, `9d 00 7f 8d 00 00` | aftertouch 3, roll 6 (menu and pad view), `ad 00 0a ad 00 0f ad 00 0e` |
+| RTRG held, VEL.CUR 1 | aftertouch 0, roll 0, `9d 00 7f 8d 00 00` | aftertouch 3, roll 0, pressure sent |
+| ALWAYS ON, VEL.CUR OFF | aftertouch 0, roll 3, no pressure | aftertouch 3, roll 3, pressure sent |
+| ALWAYS ON, VEL.CUR 1 | aftertouch 3, roll 0, pressure sent | the same |
+| CHROMATIC, plain | aftertouch 3, `ad 3c pp` | aftertouch 3, `ad 24 pp` (0.1.0) |
+| CHROMATIC, RTRG held | aftertouch 0, roll 3, no pressure | aftertouch 3, roll 6, `ad 24 pp` |
+| CHROMATIC, ALWAYS ON | aftertouch 0, roll 3, no pressure | aftertouch 3, roll 3, `ad 24 pp` |
+| CHROMATIC, ALWAYS ON, VEL.CUR 1 | aftertouch 3, `ad 3c pp` | aftertouch 3, `ad 24 pp` |
+
+The aftertouch words written were `0a00`, `0f00`, `0e00` in every case that wrote them. The same
+nine cases on base 8b0cafbc alone and on the author's 16-module combination gave stock's results
+(the combination's CHROMATIC notes as 0.1.0), so no other module changes them.
+
+Build: `node scripts/link-image.mjs --stock Analog-Rytm_MKII_OS1.74.syx --version PF01 --out PF01.syx
+--elemod vendor/elekloader/catalog/core-ar2-0.7.elemod --module analog-rytm-mkii:chromatic-aftertouch-fix`.
+
+Beside the author's 16 modules (Live Rec Retrig Fix among them; test build PP01 `b939ae56…bd8a`,
+store lock unchanged) the nine cases gave PF01's results, and a roll with RTRG held in LIVE
+RECORDING (RECORD + PLAY, then RTRG + BD) wrote the aftertouch and sent the pressure, with no
+fault; without the module (the same set with 0.1.0) it sent none. The trigs it recorded were not
+compared. Not run: RTRG held over PERF or SCENE pads, a trig's RETRIG menu (trig + UP or DOWN).
+
+### On a unit
+
+Not tested yet. Steps, with a sound that has an AFTERTOUCH target and a MIDI monitor on USB:
+
+| Step | Expect |
+| --- | --- |
+| Hold RTRG, hold BD, press harder, VEL.CUR OFF | the target moves and the roll gets louder; `An 00 pp` on MIDI out |
+| The same with VEL.CUR set | the target moves, the roll follows the curve; `An 00 pp` |
+| ALWAYS ON, VEL.CUR OFF, hold BD | as the first step |
+| CHRO, hold RTRG, hold BD | `An 24 pp` while it rolls |
+| Plain pad, no retrig | as stock |
+
+## 0.1.0: CHROMATIC note
+
+### The bug, read in the code (OS 1.74)
 
 Read from a disassembly of the stock 1.74 main OS (sha256 `34cd0c4d…1f3b`, from
 `Analog-Rytm_MKII_OS1.74.syx` `cb0f99d6…e123`), kept outside the repository.
@@ -28,7 +110,7 @@ Read from a disassembly of the stock 1.74 main OS (sha256 `34cd0c4d…1f3b`, fro
 The module's call reads the held note through a2 and the slot, takes 24 off, and sends nothing
 when no note is held or the result is outside 0 to 127.
 
-## rytm-emu (OS 1.74)
+### rytm-emu (OS 1.74)
 
 rytm-emu 2ac0f1f (`~/.cache/modwerk-upstream/rytm-emu`, the pin of `npm run upstream:tools`),
 headless `dtboot`. Each image cold-boots 8000M, four held NO presses clear the boot notices, CHRO
@@ -78,7 +160,7 @@ muted pad still sends no pressure: read in the code, not run.
 Build: `node scripts/link-image.mjs --stock Analog-Rytm_MKII_OS1.74.syx --version CA02 --out CA02.syx
 --elemod vendor/elekloader/catalog/core-ar2-0.7.elemod --module analog-rytm-mkii:chromatic-aftertouch-fix`.
 
-## On a unit
+### On a unit
 
 CA02 (`820cfaec…2c9a`) on the author's Analog Rytm MKII, OS 1.74, 2 November 2026, watching a MIDI
 monitor, as reported by npp1993: every step below passed. The per-track channel step was first
