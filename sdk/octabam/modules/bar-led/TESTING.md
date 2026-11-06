@@ -82,10 +82,12 @@ The poke leaves the beat ticks running, so after it the flashes fall on steps 7,
 | External MIDI clock | | Green on the pattern's 1, red on the other beats |
 | A tempo change while playing, internal and external clock | | Shown correctly on both |
 | Pattern scale 3/4 and 3/2 | | Green on the pattern's 1 |
-| Pattern scale 2X | | The pattern plays through twice before the green; the tester expected this |
+| Per-track mode, a track at 2X, master scale 1X | | The track plays through twice before the green: the green follows the master scale, as intended (first reported as "pattern scale 2X"; corrected on 6 November) |
 | Per-track mode | | Follows the master length, not the selected track's length, as intended |
 | STOP, then PLAY | | Starts again from the top, green on the 1 |
 | Pause (PLAY while playing), then PLAY to continue | | The green still falls on the pattern's 1; no green on continuing |
+
+**The same unit and packages, 6 November 2026.** Tester's report: pattern scale 2X in normal scale mode, green on every pass.
 
 Not tested on a unit: a pattern change while playing, MKII, the site's own install dialog (the same package and base protocol, sent from the command line).
 
