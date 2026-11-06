@@ -1,50 +1,13 @@
 # Track Solo
 
-Version `0.2.2-experimental` · author `twwwy` · **local release candidate; public deployment unverified**.
+Version `0.2.3-experimental` · author `twwwy`.
 
-**Current evidence status:** this checkout stages a local release candidate;
-public deployment has not been verified by this review. The exact
-package under review is
-`6b7a9d2cb30ceef7d69aedd5cfe5f2ea45fdaa46f6d16069952b8ad93286a2fd`. The six
-production-input hashes in [resource-accounting.md](evidence/resource-accounting.md)
-match the files at review source revision
-`7acb980a07ebef61b98b791e85b098175438d8c3`; this hash match does not claim a
-new build at that revision. The existing package build retains source commit
-`1d2b93234b7e834187c68c74522ebf10ef52cb82`, and host/source evidence retains
-provenance `e7858af5a26e11123064e6a756e94522f95a8df1`. On base MAIN
-`124548dc353b2f9cd41ba0a27113ae441e82b68a16d10a1b9509920c61839587`,
-provisional package-bound emulator results include 8,693 native-routine
-checks, 18/18 control checks, standalone and four-policy audio passes,
-standalone/paired 52-file save/reload passes, two Neighbor/Pickup playback
-cases, and six T8 Master cases. These remain emulator evidence. The earlier
-`ts022-regressions-control-03` P-lock case remains fixture-inconclusive.
-A separate named P-lock edit/activation case passed for this exact package on
-that same `124548dc…9587` base; see the exact identities and report in
-[TESTING.md](TESTING.md#named-p-lock-edit-and-activation-case--5-november-2026).
-Active arranger rows, Pickup recording/routing, and other interaction cases
-remain open. Worst-case cycles and complete memory bounds are unmeasured.
-
-On base MAIN
-`877a8d6884cb05508a59b312a0e95498c33ce4a1e2f1fe452423b0edc74fb69e`,
-run-04 separately passed the menu sequence, 30-UI-tick activation and release
-for the same package. It did not test audio or saving; older-base results do
-not qualify those behaviors on this base. See
-[TESTING.md](TESTING.md#menu-and-hold-on-the-review-base).
-
-A separate 5 November MKII attempt on base
-`9680e9ac861ff9313ce4f7a710a37ad2aa8e9b50b2cf8c043dafa2a0b78cdffc` failed to
-expose the TRACK SOLO setting: the owner saw GLIDE but not TRACK SOLO. Undo was
-unconfirmed at the time, no ROLLBACK was submitted, and the device state was
-UNKNOWN then. The owner later confirmed Undo complete and no restoration needed;
-there is no later device readback, so current base/set identity remains
-unverified. This adds no functional, audio, LED, CPU/timing or persistence
-qualification and grants no new device authority. The earlier 3 November trial
-added three packages to an older 17-module baseline and verified Undo back to
-those 17 modules; that remains admission/rollback evidence only. See
-[TESTING.md](TESTING.md), [DEVICE_TRIAL.md](DEVICE_TRIAL.md), and
-[INTERACTION_CASES.md](INTERACTION_CASES.md) for identities, scope, and local
-evidence paths. The original private base that failed saved-bank integrity
-remains withdrawn.
+**Evidence:** package `1895ceec…` was tested by the author on a real Octatrack
+over USB on 6 November 2026: the setting, the hold, join and leave, audio, lamps
+and editing all worked, and the rollback was read back from the unit. That is a
+functional report on Track Solo alone, not a stress or timing run. The emulator
+results are for the `0.2.2` package, which differs from `0.2.3` in one detour
+site. See [TESTING.md](TESTING.md).
 
 ## Overview
 
@@ -90,8 +53,8 @@ The proposed shared PERSONALIZE table is not a dependency.
 
 ## Compatibility and limitations
 
-- OS 1.40C. MKII emulator development first; physical MKII and MKI qualification
-  have not been performed. MIDI mode is excluded.
+- OS 1.40C. Functional hardware report on one unit recorded as MKII; MKI is
+  untested. MIDI mode is excluded.
 - OFF is the initial state on boot, installation and package replacement. The
   enable setting and temporary group are never saved in a Part or project.
 - During each normal audio-frame interrupt, the live mute/solo word shows
@@ -123,8 +86,7 @@ The proposed shared PERSONALIZE table is not a dependency.
   native color channels where present. Otherwise dark tracks receive channel A.
   The transmitted row is filtered without modifying canonical on/blink bitmaps.
   The exact-package removal fixture restored all 16 captured stock LED levels
-  before anchor release. Physical LED brightness and hardware removal remain
-  untested.
+  before anchor release. Lamps were judged correct by eye on hardware.
 - MIXER continues to show underlying state. Panel, MIDI and arranger mute/solo
   changes operate underneath the audition; release reveals their latest ordinary
   result. No state is inherited from the temporary group and no commands replay.
@@ -152,18 +114,10 @@ The proposed shared PERSONALIZE table is not a dependency.
   OTFX, OTFX-T and DT-T; the separate active-policy probe used synthetic mode
   writes. Physical behavior remains unqualified. Compatibility with any Track
   Mutes proposal needs a deliberate gesture review before publication.
-- Native card settings, public browser packaging and common-companion
-  qualification remain open. The 5 November USB attempt remains functionally
-  unqualified despite the later owner confirmation that Undo completed; current
-  device identity has not been read back. The connection and endpoint steps in
-  [HARDWARE_TRIAL.md](HARDWARE_TRIAL.md) are suspended pending source review of
-  the exact executable client/connection path and specific owner authorization.
-  No self-test, Keep, flash, project-save or power-cycle result is claimed.
-  This local checkout lists Track Solo in `sdk/catalog.json`, stages its
-  browser package records in `src/engine/assets/requested-packages.json`, and
-  tracks `public/octatrack-modules/track-solo/0.2.2-experimental.mwrm` with the
-  package SHA-256 above. These repository facts do not establish public
-  deployment, release approval or qualification.
+- Native card settings and common-companion hardware runs remain open. Over USB
+  it installs beside every active module (`npm run modules:compat`), but it has
+  only run alone on hardware. Self-test, Keep, project save and power-cycle
+  behavior are untested on hardware. Frame load and stress were not measured.
 
 ## Tests and measurements
 

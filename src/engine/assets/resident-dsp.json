@@ -335,7 +335,7 @@
       ]
     }
   ],
-  "sourceCommit": "be64a4ed8ce2fcce671c6e019ea29c250c12defe",
+  "sourceCommit": "35ec1ddfdf39f41f86a94ae1c3afdfa35c1a8eee",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -370,6 +370,7 @@
     "dejavu": "0.1.0-experimental",
     "arp-key-locks": "0.1.0-experimental",
     "temp-save": "0.1.0-experimental",
-    "tuner": "0.1.0-experimental"
+    "tuner": "0.1.0-experimental",
+    "track-solo": "0.2.3-experimental"
   }
 }

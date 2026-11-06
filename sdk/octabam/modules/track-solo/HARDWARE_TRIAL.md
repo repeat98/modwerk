@@ -1,24 +1,15 @@
-# Track Solo 0.2.2 MKII hardware trial plan
+# Track Solo MKII hardware trial plan
 
-**Status:** this plan was not run as written. The 5 November attempt recorded
-in [DEVICE_TRIAL.md](DEVICE_TRIAL.md) failed to expose the TRACK SOLO setting:
-the owner saw GLIDE but not TRACK SOLO. Undo was unconfirmed at the time and
-the state was UNKNOWN then. The owner later confirmed Undo complete and no
-restoration needed; there is no later device readback, so the current base and
-set identity are unverified. This report adds no functional, audio, LED,
-CPU/timing or persistence qualification and grants no new device authority.
+**Status:** trials ran on 6 November 2026; results are in
+[TESTING.md](TESTING.md#hardware-results--6-november-2026). The identities below
+are the older `0.2.2` plan, kept for its unfinished coverage.
 
-**Transport gate — STOP:** all device access steps in this plan are suspended.
-In this checkout, `opening()` can send HELLO and call `cleanUp()` for unfinished
-phases before returning status; `cleanUp()` may adopt, cancel, roll back or
-leave upload mode. Historical `baseline_only`, `writes=false`, and endpoint
-names do not establish passive access. Do not invoke `device_status`,
-`device_review`, `device_trial`, `device_undo`, UI/PNG readbacks, or any listed
-gateway path for diagnosis or automation. Before any future device access, the
-exact executable client and connection path must be source-reviewed and the
-specific scope explicitly authorized by the owner. No such session or authority
-exists now. The manual functional, audio, LED and CPU/timing observations below
-remain intended coverage only and have not run.
+**Keep the link active.** A trial needs a USB request at least every 10 s or the
+base rolls it back. Use `npm run device -- try FILE --seconds N` without
+`--accept`, or the developer MCP's review, trial and Undo; a client that waits
+silently loses the trial. The transport gate that suspended this plan concerned
+`opening()` in `octatrack-link.ts`, which `scripts/device.mjs` does not call. The
+session form of `try` accepts at once, so never use it here.
 
 ## Exact candidate and evidence boundary
 

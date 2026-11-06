@@ -1,4 +1,13 @@
-# Track Solo 0.2.2 — MKII RAM trial records
+# Track Solo MKII RAM trial records
+
+## 6 November 2026 — functional trials, rolled back and verified
+
+See [TESTING.md](TESTING.md#hardware-results--6-november-2026). `0.2.2` package
+`6b7a9d2c…` ran 600 s and `0.2.3` package `1895ceec…` ran 300 s on base
+`462fbd2b…`. Each rolled back with its set identity and empty inventory read
+back unchanged. This supersedes the UNKNOWN state of the 5 November record below
+for the unit's current state; the base differs, so it does not explain which set
+ran then.
 
 ## 5 November 2026 — incomplete attempt; recovery required at the time
 

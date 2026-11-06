@@ -3,7 +3,7 @@
 This module-local matrix copies the approved case groups from
 `docs/TRACK_SOLO_INTERACTION_SPEC.md` (1 November 2026; case-spec commit
 `cd1d8469`, author `twwwy`). The approved design's two-second hold is updated
-here to the current 0.2.2 behavior: 30 instrument UI ticks, approximately 0.5
+here to the 0.2.2 and 0.2.3 behavior: 30 instrument UI ticks, approximately 0.5
 seconds. It also records the accepted rules that editing continues while solo
 is active, the anchor is hidden from stock combinations, unmodified member
 presses toggle once, excluded TRACK LEDs remain dim but lit, MIXER indicators

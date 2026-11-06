@@ -1,5 +1,10 @@
 # Track Solo resource accounting
 
+**0.2.3:** package `1895ceecbfa74cd00cf07b2557ddbdf4668e32327d7c03fcf5c9f529547a5677` has the same size, image length, relocations and
+sites as the `0.2.2` package below. It differs in four byte ranges (see
+TESTING.md); `ts_frame_leave` keeps its instruction count, so the figures here
+carry over. Input hashes below are `0.2.2`'s.
+
 This is static accounting for the exact Track Solo 0.2.2-experimental package
 listed below. It contains no firmware image or extracted stock data and makes
 no hardware or performance qualification claim.

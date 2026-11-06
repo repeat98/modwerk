@@ -1,6 +1,63 @@
 # Track Solo testing
 
-## Current status — Track Solo 0.2.2-experimental; 5 November 2026
+## Hardware results — 6 November 2026
+
+**Evidence type:** functional RAM trials on a real Octatrack, reported by the
+author at the panel. Status reads below are device readbacks; behaviour is the
+tester's report. No Keep, save, flash or power cycle.
+
+| | Trial 1 | Trial 2 (release build) |
+| --- | --- | --- |
+| Module | `0.2.2-experimental` | `0.2.3-experimental` |
+| Package SHA-256 | `6b7a9d2cb30ceef7d69aedd5cfe5f2ea45fdaa46f6d16069952b8ad93286a2fd` | `1895ceecbfa74cd00cf07b2557ddbdf4668e32327d7c03fcf5c9f529547a5677` |
+| Source commit | `7acb980a…` inputs | `35ec1ddfdf39f41f86a94ae1c3afdfa35c1a8eee` |
+| Length | 600 s | 300 s |
+
+Both ran on base `462fbd2b2ee95dd71c02778ef3b17aacba945bac9b6206688d8ef8995003826e` (OS 1.40C, ABI 10, features 903) with Track Solo as
+the only module: the inventory was empty before each trial. Tester: twwwy. The
+USB identity reports `OCTATRACK 1.40C`, not the model; MKII comes from this
+unit's earlier records. The project was a disposable one with audio on several
+tracks.
+
+Client: `scripts/device.mjs try FILE --seconds N` without `--accept`, over
+`scripts/octatrack-usb-bridge.py`. It reads diagnostics every second and rolls
+back at the end.
+
+Reported as working on **both** builds, with playback running: the TRACK SOLO
+row appears and takes HOLD; holding T2 solos it; tapping T3 joins and leaves,
+each tap toggling once; a second anchor works; while held only the anchor and
+joined tracks sound, and release restores the mix with no clicks, cuts or stuck
+mutes; excluded TRACK lamps stay dim but lit and recover on release; pages,
+encoders, MIXER and PLAY/STOP keep working. Trial 1 also covered stock behaviour
+of short presses with TRACK SOLO OFF.
+
+Read back after each rollback: phase normal, inventory empty, set identity
+`87f28e38d5fe18c3f6133158ddb0369f9b62f2a46b0ada8c8fc19de1ca9885e8` unchanged from before, both saved slots confirmed. The refused-request
+counter stayed at 1 throughout; it rose before the trials, on a development
+`screen` request this release base refuses.
+
+**Why the row was missing on 5 November.** The base rolls back any trial after
+10 s without a USB request (`HOST_TIMEOUT_TICKS`, `mv_tick`), and that attempt's
+private controller sent nothing while it waited for `undo`. The trial was very
+likely gone before the menu was opened, which also fits the unconfirmed ENTER
+and no restoration being needed. This is inferred from the source and from the
+row appearing as soon as the link stayed active; that run left no timing record.
+
+**0.2.3 changes one detour.** Tuner reached `main` patching `0x4000d99a`, which
+`modules:compat` refuses for any pair. `ts_frame_leave` moved three instructions
+earlier to `0x4000d98e`, the frame counter read: six bytes, no branch lands in
+the span, nothing else claims it, and only register restores and that counter
+run between the two sites. The two packages differ in four byte ranges only: the
+replayed instruction, the return address, the site and its guard.
+
+**Not tested on hardware:** Track Solo beside Tuner or any other module, the
+card build, MKI, all eight anchors, external MIDI, arranger rows, Pickup
+recording, the K09 modifier orderings, Part or project changes during a hold,
+self-test, Keep, power-cycle behaviour, audio measurement, and CPU or frame
+timing. The emulator results below are for `0.2.2` package `6b7a…`; they were
+not rerun on `0.2.3`.
+
+## Track Solo 0.2.2-experimental status — 5 November 2026
 
 This draft uses a 30-UI-tick hold (approximately 0.5 seconds). The source
 revision under this evidence review is
@@ -19,12 +76,7 @@ sites) and source commit
 `1d2b93234b7e834187c68c74522ebf10ef52cb82`. Its six production-input hashes
 match the files at review source revision
 `7acb980a07ebef61b98b791e85b098175438d8c3`; this does not claim a new build at
-the review commit. This checkout tracks the stock-free runtime package at
-`public/octatrack-modules/track-solo/0.2.2-experimental.mwrm`; its SHA-256 matches
-the package above. It also lists version `0.2.2-experimental` in
-`sdk/catalog.json` and stages browser package records in
-`src/engine/assets/requested-packages.json`. These local tracked artifacts do
-not establish actual public deployment or release approval. Private build
+the review commit. Private build
 receipts and firmware remain outside Git.
 
 On 3 November, this exact package was admitted to a manual RAM set on the MKII

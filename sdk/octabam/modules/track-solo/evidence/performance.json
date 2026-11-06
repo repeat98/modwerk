@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "module": "track-solo",
+  "version": "0.2.3-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": 2615,
+    "measured": null,
+    "budget": 9577,
+    "method": "Static, module-owned only: one event is the dearest UI tick transition (1,028 instructions, a coarse sum of every ts_tick site and maximum callee) plus the active frame path in the same block (12 enter, 9 leave), 1,049 instructions at 2.49216 cycles an instruction, Tuner's model. Instructions, not chip cycles: cache and bus waits are not modelled, and stock callees are excluded. Inactive frame cost is 4 + 4 instructions. Budget: Modwerk's ColdFire allowance, 10 % of a 362.8 us block. Not measured: no emulator or hardware cycle run was made for this package."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": null,
+    "moduleLongestUs": null,
+    "stockIdlePercent": null,
+    "moduleIdlePercent": null,
+    "method": "Not measured: no matched stock and module frame capture exists, and no value is substituted. The module adds at most 21 instructions to a frame."
+  },
+  "stress": {
+    "floodMessagesPerSecond": null,
+    "clockBpm": null,
+    "seconds": null,
+    "stuckNotes": null,
+    "hangs": null,
+    "dropped": null,
+    "droppedExplanation": "Not measured: Track Solo has no MIDI path of its own and no flood was run. Hardware use on 6 November 2026 was 300 s of functional playing, not a stress run."
+  }
+}

@@ -38,39 +38,39 @@
       "key:TRACK+TRACK"
     ],
     "limitations": [
-      "Exact package 6b7a9d2cb30ceef7d69aedd5cfe5f2ea45fdaa46f6d16069952b8ad93286a2fd on base MAIN 124548dc353b2f9cd41ba0a27113ae441e82b68a16d10a1b9509920c61839587 passed 8,693 native-routine checks, 18/18 controls, standalone/four-policy audio, and standalone/paired 52-file emulator save/reload including original-stock reload. The original scoped regression profile remains 9 passed and one fixture-inconclusive P-lock case; a separate named stock-control/exact-package P-lock edit/activation case passed. Separate Neighbor/Pickup playback passed 2/2; T8 Master passed 6/6 scoped synthetic routing/mode cases, not full gesture/audio or hardware qualification. Pickup recording/source routing, active arranger rows, remaining interactions, functional hardware, CPU/timing, total stack and full memory remain unqualified. Historical MKII RAM admission/Undo returned to the original 17-module set; it was not functional hardware qualification. Evidence is package/base-bound, not a run of the later-changed runner. See TESTING.md.",
+      "Functional hardware report on package 1895ceec, Track Solo alone. Not tested on hardware: other modules alongside, MKI, all eight anchors, external MIDI, arranger rows, Pickup recording, K09 modifier orderings, self-test, Keep and power cycles. See TESTING.md.",
       "TRACK SOLO is OFF on startup and after package replacement; its enable setting and solo groups are not saved.",
       "MIDI mode is excluded. When T8 is master, include it with the source tracks in the temporary group; T8 alone has no source audio.",
-      "Mute Modes is optional. Exact-package paired emulator audio passed for OT, OTFX, OTFX-T and DT-T; the active-policy probe used synthetic mode writes. Physical Mute Modes behavior remains unqualified.",
+      "Mute Modes is optional. Paired emulator audio passed for OT, OTFX, OTFX-T and DT-T on the 0.2.2 package; physical Mute Modes behavior is untested.",
       "USB settings use the existing shared row table; native card settings integration is pending."
     ],
     "effectId": null
   },
   "resources": {
-    "recorded": "2026-11-05",
+    "recorded": "2026-11-06",
     "storage": {
       "label": "Storage",
       "display": "1500 bytes linked code/data; zero BSS",
       "value": 1500,
       "unit": "bytes",
       "method": "static",
-      "conditions": "Exact ABI 8 package SHA-256 6b7a9d2cb30ceef7d69aedd5cfe5f2ea45fdaa46f6d16069952b8ad93286a2fd: 2,128-byte package, 1,500-byte linked image, zero BSS, 24 relocations, seven guarded sites. ABI 10 source probe (RUNTIME_MODULES=128; RUNTIME_POOL_BYTES=786432) estimates 2,544 bytes for one module allocation including descriptors and alignment; not an installed-base pool measurement or transition-peak bound. Writable state is inside the image. Module-owned stack subtotals and instruction envelopes are partial static accounting; total stack including stock callees/IRQ/traps and ColdFire cycles remain unmeasured. See evidence/resource-accounting.md and TESTING.md.",
+      "conditions": "Exact ABI 8 package SHA-256 1895ceecbfa74cd00cf07b2557ddbdf4668e32327d7c03fcf5c9f529547a5677: 2,128-byte package, 1,500-byte linked image, zero BSS, 24 relocations, seven guarded sites.",
       "source": "evidence/resource-accounting.md"
     },
     "processing": {
-      "label": "CPU / DSP load",
-      "display": "Not measured",
-      "value": null,
-      "unit": "unknown",
-      "method": "unmeasured",
-      "conditions": "No CPU/DSP-load or ColdFire cycle measurement is recorded. Partial static module-owned instruction envelopes are not cycles or a wall-time bound; stock work, cache/bus waits and IRQ/trap overhead are not bounded by them. Partial stack subtotals are not a total stack maximum. See TESTING.md and evidence/resource-accounting.md.",
-      "source": "TESTING.md"
+      "label": "ColdFire, per event",
+      "display": "2,615 of 9,577 cycles worst case (static)",
+      "value": 2615,
+      "unit": "cycles/event",
+      "method": "static",
+      "conditions": "Module-owned instructions only: the dearest UI tick transition plus the active frame path, at 2.49216 cycles an instruction. Stock callees, cache and bus waits are excluded. Not measured on a chip.",
+      "source": "evidence/performance.json"
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Exact package 6b7a9d2cb30ceef7d69aedd5cfe5f2ea45fdaa46f6d16069952b8ad93286a2fd on base MAIN 124548dc353b2f9cd41ba0a27113ae441e82b68a16d10a1b9509920c61839587 passed 8,693 native-routine checks, 18/18 controls, standalone/four-policy audio, and standalone/paired 52-file emulator save/reload including original-stock reload. The original scoped regression profile remains 9 passed and one fixture-inconclusive P-lock case; a separate named stock-control/exact-package P-lock edit/activation case passed. Separate Neighbor/Pickup playback passed 2/2; T8 Master passed 6/6 scoped synthetic routing/mode cases, not full gesture/audio or hardware qualification. Pickup recording/source routing, active arranger rows, remaining interactions, functional hardware, CPU/timing, total stack and full memory remain unqualified. Historical MKII RAM admission/Undo returned to the original 17-module set; it was not functional hardware qualification. Evidence is package/base-bound, not a run of the later-changed runner. See TESTING.md.",
-    "hardwareStatus": "untested",
+    "summary": "Author functional report on real hardware, 6 November 2026: package 1895ceec alone ran 300 s on base 462fbd2b with the setting, hold, join and leave, audio, lamps and editing working, and rollback read back. Emulator results are for the 0.2.2 package. Frame load and stress not measured. See TESTING.md.",
+    "hardwareStatus": "reported",
     "gates": [
       "python3 -B verify.py",
       "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-control>",
@@ -79,7 +79,112 @@
       "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-save> --audio --save",
       "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-paired-save> --audio --paired --save"
     ],
-    "evidenceRevision": "0000000000000000000000000000000000000000"
+    "evidenceRevision": "35ec1ddfdf39f41f86a94ae1c3afdfa35c1a8eee",
+    "qualification": {
+      "moduleVersion": "0.2.3-experimental",
+      "sourceSha256": "21c89ca10c16d531f8feb3d3aafaa898df111abb3064581ea256a7b1139e9e3d",
+      "imageSha256": "1895ceecbfa74cd00cf07b2557ddbdf4668e32327d7c03fcf5c9f529547a5677",
+      "cycles": [
+        {
+          "processor": "coldfire",
+          "worstCase": 2615,
+          "maxConfiguration": 2615,
+          "maxInstances": 1,
+          "budget": 9577,
+          "unit": "cycles/event",
+          "method": "static",
+          "conditions": {
+            "parameterExtremes": "One setting, OFF or HOLD. Counted: inactive frame path (4 + 4 instructions), active frame path (12 + 9), tick transition with the longest callees, including activation updating all sixteen lamps.",
+            "parameterModulation": "No parameter, lock, LFO, scene or MIDI CC reaches this code. The equivalent path is the live mute word changing underneath a hold, which adds no module work: each frame reads the word once.",
+            "modeSwitching": "Activation, group change and release are the dearest transitions and are the tick bound. PROJECT, project load and MIDI mode cancel through ts_cancel, included in that bound.",
+            "maxLoad": "One global instance. The bound sums mutually exclusive branches and both lamp updates, so it exceeds any single path. No loaded measurement was made.",
+            "inputConditions": "Audio content is not read; cost does not depend on the signal. Membership changes the path only through the eight-track loops, counted at their bound."
+          },
+          "report": "evidence/performance.json"
+        }
+      ],
+      "memory": {
+        "regions": [
+          {
+            "name": "Linked code, tables and read-only data",
+            "space": "sdram",
+            "words": 1456,
+            "wordBits": 8,
+            "bytes": 1456,
+            "scope": "shared"
+          },
+          {
+            "name": "Writable state inside the image: session state, pointers, overlay and frame words",
+            "space": "sdram",
+            "words": 44,
+            "wordBits": 8,
+            "bytes": 44,
+            "scope": "shared"
+          },
+          {
+            "name": "Loader object and seven site descriptors, rounded to 16",
+            "space": "sdram",
+            "words": 1040,
+            "wordBits": 8,
+            "bytes": 1040,
+            "scope": "shared"
+          },
+          {
+            "name": "Image rounding to 16",
+            "space": "sdram",
+            "words": 4,
+            "wordBits": 8,
+            "bytes": 4,
+            "scope": "shared"
+          },
+          {
+            "name": "Largest module-owned stack path before stock replay (caller stack)",
+            "space": "sdram",
+            "words": 56,
+            "wordBits": 8,
+            "bytes": 56,
+            "scope": "shared"
+          }
+        ],
+        "perInstanceBytes": 0,
+        "sharedBytes": 2600,
+        "maxInstances": 1,
+        "totalBytes": 2600,
+        "conditions": "ABI 8 package, zero BSS, one instance. Loader figures come from an ABI 10 probe with RUNTIME_MODULES=128. Stock callee stack, transition peaks during replacement and hardware canaries are not measured.",
+        "report": "evidence/resource-accounting.md"
+      },
+      "hardware": {
+        "kind": "functional",
+        "status": "reported",
+        "model": "MKII",
+        "testedOn": "2026-11-06",
+        "tester": "twwwy",
+        "sourceRevision": "35ec1ddfdf39f41f86a94ae1c3afdfa35c1a8eee",
+        "imageSha256": "1895ceecbfa74cd00cf07b2557ddbdf4668e32327d7c03fcf5c9f529547a5677",
+        "summary": "The author ran this exact package over USB as a 300-second RAM trial on base 462fbd2b, OS 1.40C, Track Solo alone, in a disposable project. They reported the TRACK SOLO row and HOLD setting working; holding a track soloing it with playback running; taps joining and leaving once each; clean audio on release; excluded lamps dim but lit; pages, encoders, MIXER and PLAY/STOP working during a hold. Rollback was read back: phase normal, empty inventory, set identity unchanged.",
+        "limitations": [
+          "Author-reported panel observations with no audio measurement or timing.",
+          "One 300-second run on one unit, alone. The USB identity does not state the model; MKII comes from earlier records of this unit.",
+          "Not tested: other modules alongside, all eight anchors, external MIDI, arranger rows, Pickup recording, K09 orderings, self-test, Keep, power cycles, MKI, the card build."
+        ],
+        "report": "TESTING.md"
+      },
+      "documentation": {
+        "tutorial": {
+          "title": "Quick tutorial: audition tracks while editing",
+          "steps": [
+            "Open PROJECT > CONTROL > SEQUENCER and set TRACK SOLO to HOLD.",
+            "Hold T2 alone for 0.5 seconds, then press T3 to add or remove it.",
+            "Release T2 to end the temporary solo."
+          ]
+        },
+        "screenshots": [
+          "media/track-solo-off.png",
+          "media/track-solo-hold.png"
+        ],
+        "screenshotStyle": "black-and-white"
+      }
+    }
   },
   "license": {
     "spdx": "MIT",
@@ -123,9 +228,9 @@
     }
   ],
   "access": {
-    "location": "PROJECT > CONTROL > SEQUENCER > TRACK SOLO (USB runtime prototype)",
+    "location": "PROJECT > CONTROL > SEQUENCER > TRACK SOLO",
     "steps": [
-      "Install the private Track Solo runtime package in an emulator.",
+      "Install Track Solo over USB.",
       "Open PROJECT > CONTROL > SEQUENCER and choose HOLD for TRACK SOLO.",
       "Close the menu, hold one TRACK button alone for 30 instrument UI ticks (about 0.5 seconds), then tap others to toggle their solo.",
       "Release the original TRACK button to end solo; choose OFF to disable the gesture."
