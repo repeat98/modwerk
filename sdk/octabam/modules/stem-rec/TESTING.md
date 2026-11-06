@@ -78,7 +78,7 @@ The platform reserve is 10,487,808 bytes (`0x40a955e0`..`0x41495de0`), created b
 
 ## 5. Native and browser builds compared (`npm run module:verify`)
 
-PENDING.
+5 November 2026, on this version's native source (fingerprint `caa5d4355c9e…`), the original MAIN OS (`164f31224bf6…`), record `sdk/native-comparisons/stem-rec.json`: of 174 selections, 78 built, each identical to the native octabam image outside the platform writes; 96 refused by both builders alike; 0 mismatches.
 
 ## Not tested
 
