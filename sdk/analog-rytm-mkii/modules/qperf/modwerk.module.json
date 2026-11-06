@@ -92,9 +92,9 @@
     "memoryBytes": 17876,
     "fastBytes": 0,
     "load": {
-      "display": "Not measured yet",
-      "method": "unmeasured",
-      "conditions": "The quick perf rec records and plays back once per audio block; the QPER controls run on key events and the UI tick."
+      "display": "About 0.8 % of the audio block idle (the audio handler, measured on a unit)",
+      "method": "hardware",
+      "conditions": "Measured on an Analog Rytm MKII with a private telemetry base, sequencer stopped, in the author's 16-module set: the audio handler took 8.7 us a block (1.3 %) before its idle early return and 5.1 us (0.8 %) after; removing the whole module lowered the idle block from 72.9 % to 70.9 %. With moves to record, a pad held or a take playing back it runs in full each block."
     }
   },
   "evidence": {
