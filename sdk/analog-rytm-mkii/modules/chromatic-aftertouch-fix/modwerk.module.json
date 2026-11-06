@@ -109,10 +109,10 @@
       "testedOn": "2026-11-06",
       "tester": "npp1993",
       "durationMinutes": null,
-      "summary": "npp1993 (the author) flashed test build PP01 (sha256 b939ae56; the author's 16-module set with Pad Pressure Fix 0.2.0-experimental) on an Analog Rytm MKII, OS 1.74, while USB MIDI was logged on the computer. Reported and logged: pad poly pressure went out during retrig rolls with RTRG held and with ALWAYS ON, with VEL.CUR OFF and set, and in CHROMATIC mode on the played notes.",
+      "summary": "npp1993 (the author) flashed test build PP01 (sha256 b939ae56; the author's 16-module set with Pad Pressure Fix 0.2.0-experimental) on an Analog Rytm MKII, OS 1.74, while USB MIDI was logged on the computer. Reported and logged: pad poly pressure went out during retrig rolls with RTRG held and with ALWAYS ON, with VEL.CUR OFF and set, and in CHROMATIC mode on the played notes. With VEL.CUR OFF the roll got louder with more pressure, as stock.",
       "limitations": [
         "Run beside 15 other modules, not alone.",
-        "Whether the sound's own AFTERTOUCH target moved, and the roll's loudness with VEL.CUR OFF, were not reported.",
+        "Whether the sound's own AFTERTOUCH target moved was not reported.",
         "Duration not recorded."
       ]
     },

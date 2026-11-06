@@ -96,8 +96,9 @@ and pressure per hold); the steps and what was heard are as reported by npp1993.
 | CHROMATIC, RTRG held | aftertouch data | as above |
 
 Pad pressure falling after the note off still went out on normal pads as single `An 00 pp`
-messages, as the plain-pad path sends it on stock. Not reported: whether the sound's own
-AFTERTOUCH target moved, and the roll's loudness with VEL.CUR OFF. Run beside the 16 modules
+messages, as the plain-pad path sends it on stock. Reported: with VEL.CUR OFF the roll got
+louder with more pressure (the sound's velocity to volume on), so stock's roll velocity still
+follows pressure. Not reported: whether the sound's own AFTERTOUCH target moved. Run beside the 16 modules
 only, not alone.
 
 ## 0.1.0: CHROMATIC note
