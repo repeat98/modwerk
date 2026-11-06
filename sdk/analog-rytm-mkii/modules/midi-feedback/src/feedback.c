@@ -28,6 +28,7 @@ void mf_reset(struct mf_state *s)
     unsigned i;
     for (i = 0; i < MF_COUNT; ++i) {
         s->cells[i].valid = s->cells[i].sent = s->cells[i].refresh = 0;
+        s->cells[i].observed = s->cells[i].quiet = 0;
     }
     s->cursor = 0;
 }
@@ -50,6 +51,30 @@ void mf_offer(struct mf_state *s, unsigned track, unsigned parameter, int channe
     c->value = (uint8_t)value;
     c->channel = (uint8_t)channel;
     c->valid = 1;
+}
+/* Do not echo a moving parameter back into a controller's pickup target.
+ * Update/coalesce the sampled value immediately, but withhold its transmission
+ * until ten consecutive stock UI ticks have seen no change. Refresh requests
+ * cannot bypass this gate; other stable parameters continue independently.
+ * This detects observed movement, not which physical device originated it.
+ */
+void mf_observe(struct mf_state *s, unsigned track, unsigned parameter, int channel, int value)
+{
+    struct mf_cell *c;
+    int changed;
+    if (track >= MF_TRACKS || parameter >= MF_PARAMS) return;
+    c = &s->cells[track * MF_PARAMS + parameter];
+    if ((unsigned)channel >= 16) {
+        c->valid = c->sent = c->refresh = c->observed = c->quiet = 0;
+        return;
+    }
+    value = value < 0 ? 0 : value > 127 ? 127 : value;
+    changed = !c->observed || c->value != value || c->channel != channel;
+    mf_offer(s, track, parameter, channel, value);
+    c->observed = 1;
+    if (changed) c->quiet = MF_SETTLE_TICKS;
+    else if (c->quiet) --c->quiet;
+    c->valid = c->quiet == 0;
 }
 unsigned mf_flush(struct mf_state *s, mf_send send)
 {

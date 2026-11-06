@@ -81,5 +81,40 @@ int main(void)
     assert(!mf_flush(&s,emit));
     mf_reset(&s);
     assert(!mf_flush(&s,emit));
+    /* Rapid filter sweeps must not send intermediate pickup targets, even
+     * when refresh is requested continuously. A different stable track keeps
+     * receiving feedback. After a pause, only the final filter values send.
+     */
+    for (t=0;t<12;++t) for(p=0;p<7;++p) seen[t][p]=0;
+    for (i=0;i<64;++i) {
+        mf_observe(&s,0,1,0,(int)i);
+        mf_observe(&s,0,2,0,(int)i+10);
+        mf_observe(&s,1,0,1,55);
+        mf_request_refresh(&s);
+        mf_flush(&s,emit);
+        assert(!seen[0][1] && !seen[0][2]);
+    }
+    assert(seen[1][0]>0);
+    for (i=0;i<MF_SETTLE_TICKS;++i) {
+        mf_observe(&s,0,1,0,63);
+        mf_observe(&s,0,2,0,73);
+        if(i+1<MF_SETTLE_TICKS) assert(!mf_flush(&s,emit));
+    }
+    assert(mf_flush(&s,emit)==2);
+    assert(seen[0][1]==1 && seen[0][2]==1 && last_value==73);
+    /* A queued value that could not send must also be suppressed when a
+     * sweep resumes, rather than leaking a stale pickup target.
+     */
+    blocked=1;
+    for(i=0;i<=MF_SETTLE_TICKS;++i) mf_observe(&s,0,1,0,80);
+    assert(!mf_flush(&s,emit));
+    blocked=0;
+    mf_observe(&s,0,1,0,90);
+    mf_request_refresh(&s);
+    mf_flush(&s,emit);
+    assert(seen[0][1]==1);
+    for(i=0;i<MF_SETTLE_TICKS;++i) mf_observe(&s,0,1,0,90);
+    assert(mf_flush(&s,emit)==1 && last_value==90);
+    mf_reset(&s);
     puts("PASS: 84 assignments, automatic refresh, fair batching, backpressure, coalescing, channels, clamping, reset");
 }

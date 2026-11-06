@@ -101,7 +101,7 @@ static int sample_track(unsigned app, unsigned config, int track)
     {
         const volatile uint8_t *level = (const volatile uint8_t *)(sound - 26u - 150u * track);
         if (track == 0) mf_probe.values[0] = *level;
-        mf_offer(&state, track, 0, channel, *level);
+        mf_observe(&state, track, 0, channel, *level);
     }
     if (track == 0) {
         mf_probe.sound = sound;
@@ -113,7 +113,7 @@ static int sample_track(unsigned app, unsigned config, int track)
     for (p = 0; p < 6; ++p) {
         int value = *(volatile int16_t *)(sound + 0x14 + 2u * slots[p]);
         if (track == 0) mf_probe.values[p + 1] = value >> 8;
-        mf_offer(&state, track, p + 1, channel, value >> 8);
+        mf_observe(&state, track, p + 1, channel, value >> 8);
     }
     return 1;
 }

@@ -12,10 +12,12 @@ tracks to a controller with pickup, such as the Faderfox PC12. All 84 assignment
 are available; choose which to map to the PC12's 72 pots. A controller setup
 does not have to use every assignment.
 
-Feedback follows parameter edits, kit recalls and channel changes. It also
+Feedback follows parameter edits, kit recalls and channel changes after a value
+has stayed unchanged for about half a second. This avoids sending intermediate
+pickup targets back during a knob sweep. It also
 refreshes all assignments automatically about every two seconds while ON,
 so reconnecting the controller or changing its setup needs no menu visit.
-SEND FEEDBACK is an optional immediate refresh. It does not stream the moving results of parameter locks,
+SEND FEEDBACK is an optional refresh of settled values. It does not stream the moving results of parameter locks,
 LFOs, scenes or performances. These continue to affect the sound as on stock.
 
 ## Controls
@@ -81,6 +83,10 @@ feedback rather than an automation stream with a timing guarantee. A full
 refresh is requested every 40 UI ticks while enabled and allowed by stock
 output settings, roughly every two seconds. Repeated requests preserve the
 round-robin cursor, so later tracks are not starved by a busy output.
+Each changing assignment is withheld until ten consecutive UI ticks see the
+same value and channel. Refresh requests cannot bypass that settling period;
+other stable assignments continue to send. The module observes value changes
+and does not distinguish a controller edit from a local edit.
 
 One slot per assignment holds the latest value. Updates replace stale pending
 values and increment the coalesced counter. When the sender cannot accept a

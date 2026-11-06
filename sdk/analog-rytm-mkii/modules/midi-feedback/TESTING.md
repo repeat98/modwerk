@@ -68,8 +68,30 @@ candidate guard now defers special or inconsistent states and requires room
 for every possible active DMA progress/reload count. New host cases cover
 idle stale descriptors, mismatched spans, special state, boundary capacity and
 the sender occupancy model. This hardening is not yet built/tested and is not
-claimed to explain or fix the reported freeze. Pickup interruptions are a
+claimed to explain or fix the reported freeze. MF04 was built twice from
+a82ff483d0e3 with matching outputs. Exact private image SHA-256:
+52f4d1774a09c5b56732a890973a00465fad14b3e41f9e56b868be7d4ce78e24.
+The host queue tests passed as reported by the developer's helper completion.
+Saved MF04 emulator results show 673 CCs/84 assignments, all nine lifecycle
+checks passing, and 60 panel track-select chords during playback with concurrent
+filter edits passing (final CC74=53, CC75=71). None establishes that the hardware
+freeze is fixed. Pickup interruptions are a
 separate unresolved failure; the refresh interval has not been changed.
+MF04 hardware reports: normal boot; feedback ON with DIN disconnected stayed
+responsive during playback and track switching; with two-way PC12 DIN restored,
+filter movement and track switching passed while stopped. During playback the
+developer reports no freeze, but the PC12 stopped controlling the filters;
+stopping playback did not restore pickup. Fast knob movement appeared to reset
+snap. This is a FAILED pickup test, not a passing performance qualification.
+
+A candidate scheduler change now withholds a parameter's feedback until its
+sampled value is unchanged for ten UI ticks (approximately 0.5 seconds). Moving
+values are coalesced, including previously blocked sends, and neither periodic
+nor manual refresh can bypass the per-parameter gate. Other stable parameters
+continue independently. It does not identify the physical input source and
+cannot retract a message already sent to the wire. New host regressions exercise
+rapid simultaneous filter sweeps, refresh during movement, final-value delivery
+and blocked-output recovery. This change is not yet built or qualified.
 Busy playback/audio/timing, NRPN/USB-only suppression, kit changes, controller
 setup changes and measured hardware CPU/IRQ/queue behavior remain unqualified.
 
