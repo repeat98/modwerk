@@ -8,6 +8,12 @@
 | uses the stock fractions. The lane is dashes, a centre 0, and a cursor.
 | The remembered number lives in battery RAM until power-off. The trigs
 | stay in the pattern. This unit does not keep its own clock.
+|
+| The module's battery table. The magic long 0x4d54494d is at 0x100f8ffc.
+| The table is 2048 bytes at 0x100f9000 through 0x100f97ff.
+
+    .equ MT_MAGIC, 0x100f8ffc
+    .equ MT_TABLE, 0x100f9000
 
     .text
 
@@ -100,24 +106,24 @@ mt_current:
     move.b 0x100b14cc, %d1
     andi.l #0x7, %d1
     add.l %d1, %d0
-    lea 0x100f9000, %a0
+    lea MT_TABLE, %a0
     adda.l %d0, %a0
     move.b (%a0), %d0
     ext.w %d0
     ext.l %d0
     rts
 mt_ensure:
-    move.l 0x100f8ffc, %d0
+    move.l MT_MAGIC, %d0
     cmpi.l #0x4d54494d, %d0
     beq.w mt_ensure_ok
-    lea 0x100f9000, %a0
+    lea MT_TABLE, %a0
     move.l #0x200, %d0
 mt_ensure_loop:
     clr.l (%a0)+
     subq.l #0x1, %d0
     bne.w mt_ensure_loop
     move.l #0x4d54494d, %d0
-    move.l %d0, 0x100f8ffc
+    move.l %d0, MT_MAGIC
 mt_ensure_ok:
     rts
 mt_apply:

@@ -10,7 +10,7 @@ Version: `0.1.0-experimental` · author: [@jonathanwardle1992-beep](https://gith
 
 While grid recording, FUNC+BANK opens TRACK TRIG EDIT (FUNCTION on MKI). MICRO T sits under TRIGS and above SLIDE. The window still shows four rows, so REC.TRG scrolls into view and TRIGS scrolls off the top.
 
-LEVEL writes the stock per-trig micro timing of all 64 steps on the current track. MIDI button off writes the audio track. MIDI button on writes the MIDI track of the same number, and does not write the audio track. One remembered number is kept per track number and shown for both views; the pot writes only the side on screen.
+LEVEL writes the stock per-trig micro timing of all 64 steps on the current track. MIDI button off writes the audio track. MIDI button on writes the MIDI track of the same number, and does not write the audio track. One byte is kept per bank, pattern and track. The pattern is the one on the screen. Audio and MIDI share that byte, and the pot writes only the side on screen.
 
 The footer shows the stock fraction next to the track (`MT1:+1/384`, or `MT1:ON GRID`). The lane is sixteen dashes, a 0 fixed at the centre, and a cursor on that 0 when the value is on grid. Editing one trig in the MICRO TIMING page does not move the row. The next turn of LEVEL sets every step to the row's value.
 
@@ -47,7 +47,8 @@ To stop using it, leave the module out of the build. There is no separate off sw
 ## Compatibility and limitations
 
 - OS 1.40C. The reported pass is a private MICRO T9 card, not a build of this package. USB Keep/Undo is untested. Headless `ot_emu` captured TRACK TRIG EDIT only, from a private image built before commit `13d33940`.
-- The remembered number does not survive power-off and is not in the project file.
+- One byte is kept per bank, the pattern on the screen, and track. Audio and MIDI share it. Power-off clears it, and it is not in the project file.
+- The battery table is named in the source. There is no declaration slot for a draft's battery words, so the memory rationale records the addresses and the 2048-byte clear.
 - An individual trig edit does not update the row. The next LEVEL turn overwrites all 64 steps, including empty ones.
 - MKI opens the same menu with FUNCTION. That path is untested on this package.
 
