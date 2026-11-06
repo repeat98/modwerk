@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-04",
+    "changes": [
+      "Source draft of the three-grain track machine, replacing the earlier FX2/SPACE proposal.",
+      "SIZE grows around POS and wraps sample edges; MAIN F uses native pitch with 64 neutral.",
+      "One owner on T1–T4, with MAIN POS/SIZE/REVS/SPRD/SHPE/PTCH and SETUP PAN/SRNG.",
+      "Public build integration and exact-build hardware qualification remain pending."
+    ]
+  }
+]
