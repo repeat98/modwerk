@@ -51,7 +51,7 @@ of this candidate, and no approval/waiver is created here.
 ## Resource-accounting follow-up
 
 `qualification/resources.py` now reproduces the exact tested package and
-accounts for the loader's aligned 31,792-byte resident extent. Its conservative
+accounts for the loader's aligned 31,776-byte resident extent. Its conservative
 own-call graph gives 712 bytes for one render activation, with stock/base and
 task/interrupt frames explicitly outside scope. `resource-audit.json` pins the
 compiler, authored image, package and loader inputs. Native runtime inputs and
@@ -83,3 +83,27 @@ Draft doctor still reports the expected publication failures: no active
 catalogue/package/pair entry, native comparison or completed qualification.
 Its report is not a release pass. The draft is deliberately not promoted to
 hide those failures; the resource report does not substitute for timing.
+
+
+The loader ABI was subsequently checked against Elekloader's base compiler
+flags, the exact compiled base loader object, and its physical saved stall
+report. The module uses `-malign-int`, while the base uses 2-byte aggregate
+alignment. The preliminary layout probe incorrectly used the module's setting;
+its aligned header was 16 bytes too large. The corrected base header is 528
+bytes, resident extent 31,776 and retained same-candidate peak 63,552. The
+firmware-free probe now explicitly uses `-mno-align-int` and rejects a layout
+other than the reviewed `(528, 88, 72, 38, 4)` tuple. The real base loader's
+`(sites * 72 + 543) & ~15` agrees, as does the hardware's 31,776-byte pool
+reading with one module. Native module/package hashes remain identical.
+
+An explicit bounded correction continuation and changed-fragment recheck used
+one further API request (seven across this resource follow-up). The resulting
+checkpoint, after merging newer main, contains 44 chunks: five cached/classified,
+zero flagged, five uncertain, 39 deferred and seven excluded/static-only files.
+Both configured checks passed. The two measurement views, own-stack walker,
+generated report and docstring uncertainties were investigated; the base ABI
+and allocation evidence above supply the missing context for the correction.
+The 32 omitted attention entries were inspected selectively, including the
+later upstream-only diff and updated report/metadata scaffolding. They remain
+outside classified coverage. Later incident-report prose was checked manually.
+There is no completed/passed full-review claim and no timing qualification.

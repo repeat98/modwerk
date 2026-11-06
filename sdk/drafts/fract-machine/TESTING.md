@@ -47,7 +47,7 @@ on a unit or establish real-time timing.
 ## Resources
 
 The firmware-free `qualification/resources.py` reproduces the exact tested
-package and accounts for 31,792 resident pool bytes, including the loader header
+package and accounts for 31,776 resident pool bytes, including the loader header
 and alignment. Its reviewed compiler/assembly call graph bounds one callback's
 own stack contribution at 712 bytes. See `release/resources.md` and
 `release/resource-audit.json` for method and scope. Stock/base frames and

@@ -9,7 +9,7 @@ They are not active entries in sdk/catalog.json or the public package list.
 The prospective row uses the canonical runtime id (5efef0cd), title FRACT,
 base9b3ba417 and its seven published layouts. `candidate-proof.json` records
 its exact binary hash; `reconstruction.json` has source hashes/copy addresses,
-never firmware bytes. `resources.json` and `resources.md` account for 31,792
+never firmware bytes. `resources.json` and `resources.md` account for 31,776
 resident pool bytes and a conservative 712-byte own contribution per callback.
 Worst-case ColdFire timing remains unmeasured.
 

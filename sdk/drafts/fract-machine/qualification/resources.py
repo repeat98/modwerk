@@ -171,20 +171,24 @@ def measure(cross, work):
                       'sizeof(struct runtime_site),RUNTIME_HOOKS,sizeof(uintptr_t)};\n')
     includes = ['sdk/runtime/loader', 'sdk/runtime/upload', 'sdk/runtime/logging',
                 'sdk/machines/octatrack/elekloader']
-    run([cross + 'gcc', '-mcpu=54455', '-malign-int', '-msoft-float', '-Os',
+    # The loader uses Elekloader's default 2-byte aggregate alignment, unlike
+    # FRACT's -malign-int compilation. Applying the module ABI here would add
+    # 16 bytes to the aligned header and overstate the base's real allocation.
+    run([cross + 'gcc', '-mcpu=54455', '-mno-align-int', '-msoft-float', '-Os',
          '-ffreestanding', '-DMODWERK_RUNTIME_EVENTS', '-DRUNTIME_MODULES=128u',
          '-DRUNTIME_POOL_BYTES=786432u', *['-I' + str(ROOT / p) for p in includes],
          '-c', layout, '-o', work / 'layout.o'])
     run([cross + 'objcopy', '-O', 'binary', '--only-section=.rodata',
          work / 'layout.o', work / 'layout.bin'])
     header, owner, site, hooks, pointer = struct.unpack('>5I', (work / 'layout.bin').read_bytes())
-    if pointer != 4 or hooks != 38:
-        raise ValueError('Unexpected target ABI')
+    if (header, owner, site, hooks, pointer) != (528, 88, 72, 38, 4):
+        raise ValueError('Unexpected reviewed base-loader ABI')
     align = lambda size: (size + 15) & ~15
     return {'schema': 1, 'status': 'OWN_MEMORY_AND_CALLBACK_STACK_ACCOUNTED',
             'packageSha256': PACKAGE_SHA, 'authoredImageSha256': digest,
             'compiler': run([cross + 'gcc', '--version']).splitlines()[0],
             'loaderInputs': LOADER_INPUTS,
+            'loaderAggregateAlignment': '2 bytes (base default; explicit -mno-align-int probe)',
             'imageBytes': len(image), 'bssBytes': bss,
             'packageBytes': package.stat().st_size, 'relocations': len(relocs),
             'memory': {'runtimeHeaderBytes': header, 'headerAlignmentBytes': align(header)-header,

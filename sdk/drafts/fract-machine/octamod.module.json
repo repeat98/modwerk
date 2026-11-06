@@ -125,8 +125,8 @@
     "recorded": "6 November 2026; exact candidate memory and own callback stack; timing pending",
     "storage": {
       "label": "Public package memory",
-      "display": "31,792 resident pool bytes; 712 own stack bytes per callback",
-      "value": 31792,
+      "display": "31,776 resident pool bytes; 712 own stack bytes per callback",
+      "value": 31776,
       "unit": "bytes",
       "method": "static",
       "conditions": "One owner, three heads; includes loader header, image/BSS and alignment. Stack separately bounded; samples reuse stock arena.",
@@ -158,7 +158,7 @@
       "memory": {
         "level": "low",
         "basis": "source-estimate",
-        "rationale": "31,792 resident pool bytes for code/tables/state/header, up to 712 own stack bytes per callback, no independent sample buffer; replacement retains two extents.",
+        "rationale": "31,776 resident pool bytes for code/tables/state/header, up to 712 own stack bytes per callback, no independent sample buffer; replacement retains two extents.",
         "source": "release/resources.md"
       }
     }

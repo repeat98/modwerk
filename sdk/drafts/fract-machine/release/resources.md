@@ -14,6 +14,13 @@ python3.12 -B sdk/drafts/fract-machine/qualification/resources.py \
   --output sdk/drafts/fract-machine/release/resource-audit.json
 ```
 
+The loader-layout probe uses the base compiler ABI (2-byte aggregate alignment),
+not the module's `-malign-int` setting. The compiled loader object's header-size
+constant corroborates the 528-byte header; the physical saved stall report
+recorded 31,776 pool bytes with one installed module. A preliminary probe used
+the module ABI and overstated the aligned allocation by 16 bytes; that probe
+and all displayed totals were corrected before publication.
+
 The script recompiles the recipe with `-fstack-usage`, asserts the exact authored
 image hash, rebuilds and verifies the exact package hash, and compiles target
 `sizeof` expressions for the base's loader. Its reviewed loader sources match
@@ -29,12 +36,12 @@ pool allocation also includes its per-module header and alignment:
 
 | Region | Offset in allocated extent | Bytes |
 | --- | ---: | ---: |
-| Runtime header | 0 | 536 |
-| Header alignment | 536 | 8 |
-| Code, tables and initialized state | 544 | 30,596 |
-| Zero-initialized state | 31,140 | 640 |
-| End alignment | 31,780 | 12 |
-| **Resident pool extent** | **0** | **31,792** |
+| Runtime header | 0 | 528 |
+| Header alignment | 528 | 0 |
+| Code, tables and initialized state | 528 | 30,596 |
+| Zero-initialized state | 31,124 | 640 |
+| End alignment | 31,764 | 12 |
+| **Resident pool extent** | **0** | **31,776** |
 
 This candidate has zero patched sites and no DSP tail. There are zero added
 DSP code/state words and no new sample-arena allocation. FRACT reads existing
@@ -45,8 +52,8 @@ it is not a second dynamic allocation. The encoded package is 32,120 bytes in
 the loader's existing upload buffer, not another permanent module allocation.
 
 Retaining old and new copies for replacement/Undo needs their combined extents:
-63,584 bytes for candidate-to-candidate replacement. The previously tested
-private-to-candidate migration used a 31,552-byte old extent, hence 63,344 bytes.
+63,552 bytes for candidate-to-candidate replacement. The previously tested
+private-to-candidate migration used a 31,536-byte old extent, hence 63,312 bytes.
 These are FRACT's pool contributions; other modules, allocator fragmentation,
 the base, upload buffer and the instrument's existing sample memory are not
 available headroom and are not charged a second time to FRACT.
@@ -123,6 +130,6 @@ For one owner with three grains and moving controls: CPU **high** relative to a
 key-only feature, because three overlapping stereo readers interpolate/window
 samples on the ColdFire audio path, with native pitch and packet splits; DSP
 **minimal**, because no DSP code/state is added; memory **low**, because resident
-code/tables/state are 31,792 bytes with at most 712 own stack bytes per callback
+code/tables/state are 31,776 bytes with at most 712 own stack bytes per callback
 and no independent sample buffer. Replacement temporarily retains two extents.
 The estimates do not assert remaining headroom or qualify companion workloads.
