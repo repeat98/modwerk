@@ -43,22 +43,23 @@ describe('the Zoom base builder', () => {
   })
   it('carries no Zoom bytes: every guard is a hash, and every release names patches it has', () => {
     expect(JSON.stringify(MIDISTOMP)).not.toMatch(/"expect"/)
-    for (const write of MIDISTOMP.patches.flatMap(patch => patch.write ?? [])) expect(write.expect_sha256).toMatch(/^[0-9a-f]{64}$/)
+    for (const write of MIDISTOMP.patches.flatMap(patch => patch.write ?? [])) for (const hash of [write.expect_sha256].flat()) expect(hash).toMatch(/^[0-9a-f]{64}$/)
     for (const name of Object.values(MIDISTOMP.releases).flat()) expect(MIDISTOMP.patches.map(patch => patch.name)).toContain(name)
   })
 
-  // zoomms' own output for MIDISTOMP c8d3e1b (zoomms build-mac <app> --build-id ms70cdr-2.10 --patch …). Firmware never
+  // zoomms' own output for MIDISTOMP 051fb38 (zoomms build-mac <app> --build-id ms70cdr-2.10 --patch … --stamp version=V2.0.1
+  // --stamp commit=051fb38 --stamp date=2026-11-06 --stamp label=Modwerk). Firmware never
   // enters CI, so this runs only with Zoom's stock updater at hand: ZOOM_MS70CDR_APP='…/ZOOM MS-70CDR v2.10 Updater.app'.
   const app = process.env.ZOOM_MS70CDR_APP
   it.runIf(app)('builds byte for byte what zoomms builds from the stock MS-70CDR 2.10 updater', async () => {
     const read = (name: string) => new Uint8Array(readFileSync(join(app!, 'Contents/Resources', name)))
     const own = { 'Main.bin': read('Main.bin'), 'Preset.bin': read('Preset.bin') }
-    expect(MIDISTOMP.revision).toMatch(/^c8d3e1b/)
+    expect(MIDISTOMP.revision).toMatch(/^051fb38/)
     const hello = await buildBase(own, ['hello'])
     expect(await sha256(hello.main)).toBe('c32899bf2fded359adee94d968caaf17031401c67e2bafc2752f1d62d51e71df')
     expect(hello.preset).toBeUndefined()
-    const release = await buildBase(own, MIDISTOMP.releases['MIDISTOMP V1.2'])
-    expect(await sha256(release.main)).toBe('37c51df2a91e06b647f377a5989d5eef2f21f90abc60792b218b45dfea0f743c')
+    const release = await buildBase(own, MIDISTOMP.releases['MIDISTOMP V2.0.1'])
+    expect(await sha256(release.main)).toBe('66792a2ecaaf281bb4de97c5cba48a6b36292edb999258b04978960df6340995')
     expect(await sha256(release.preset!)).toBe('ca52f406a7324822a4c9113fec7b6083ff8c8b3c8bb0c956ce39b6ee0055eee4')
     await expect(buildBase({ ...own, 'Main.bin': hello.main }, ['hello'])).rejects.toThrow(/unmodified copy/)
   })
