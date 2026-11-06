@@ -56,7 +56,12 @@ setter `0x4011f490` and of the roll velocity writer `0x4011f262`; MIDI out with 
 | CHROMATIC, plain | aftertouch 3, `ad 3c pp` | aftertouch 3, `ad 24 pp` (0.1.0) |
 | CHROMATIC, RTRG held | aftertouch 0, roll 3 (the pad index's track), no pressure | aftertouch 3, roll 6 (3 the pad index's track, 3 the active track's), `ad 24 pp` |
 | PERF mode, plain | performance pressure `0x400b2c6a` 3 | the same |
-| PERF mode, RTRG held | performance pressure 0, roll 3 | performance pressure 3, roll 3 |
+| PERF mode, RTRG held | performance pressure 0; the menu's roll writer is called 3 times but writes nothing | performance pressure 3; no roll, no write |
+
+In PERF mode with RTRG held, a pad press plays nothing on stock or with the module: the trigger
+`0x40083f40` and KeyboardView's play call `0x400c7a1c` never run (with RTRG held on the pad pages
+they run once), and the roll velocity word is never written. So no track rolls there, and the
+pressure the module passes on only reaches the performance view.
 | CHROMATIC, ALWAYS ON | aftertouch 0, roll 3, no pressure | aftertouch 3, roll 3, `ad 24 pp` |
 | CHROMATIC, ALWAYS ON, VEL.CUR 1 | aftertouch 3, `ad 3c pp` | aftertouch 3, `ad 24 pp` |
 
