@@ -27,7 +27,7 @@ The quick perf rec, in any recording mode:
 
 FUNC + QPER (mute) is stock's. A key or turn with nothing linked shows NO PERFORMANCE LINKED, with several linked MORE THAN ONE LINKED, and with no room LOCK MEM FULL!. Stock draws every message.
 
-These work on the sound pages and in PERF, SCNE, MUTE and CHRO. Press QPER in a menu, dialog, list, the SAMPLER or TEMPO and everything stays stock's, for as long as you hold it. A menu opened with QPER held keeps its keys too. The one exception is linking: where stock lets a pad or trig link over a screen, such as the GLOBAL menu, it moves the one link here too.
+These work on the sound pages and in PERF, SCNE, MUTE and CHRO, on every track, the FX track included. While a pad is held in PERF or SCNE, stock's own performance or scene edit has the keys, so QPER and RECORD + YES/NO stay stock's until you let go. Press QPER in a menu, dialog, list, the SAMPLER or TEMPO and everything stays stock's, for as long as you hold it. A menu opened with QPER held keeps its keys too. The one exception is linking: where stock lets a pad or trig link over a screen, such as the GLOBAL menu, it moves the one link here too.
 
 ## Usage
 
