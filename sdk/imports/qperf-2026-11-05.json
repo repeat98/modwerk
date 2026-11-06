@@ -4,13 +4,14 @@
   "version": "0.2.0-experimental",
   "date": "2026-11-05",
   "changes": [
-    "First library release, for Analog Rytm MKII OS 1.74 on core-ar2 0.7: QPER + knob locks the linked performance and QPER + YES writes it into the kit; in LIVE RECORDING the quick perf rec keeps performance moves, RECORD + YES writes them into the pattern as locks and RECORD + NO clears them."
+    "First library release, for Analog Rytm MKII OS 1.74 on core-ar2 0.7: QPER + knob locks the linked performance and QPER + YES writes it into the kit; in LIVE RECORDING the quick perf rec keeps performance moves, RECORD + YES writes them into the pattern as locks and RECORD + NO clears them.",
+    "6 November 2026, before release: the audio handler returns after one check when nothing is to be done (measured on the author's unit: 8.7 to 5.1 us a block idle); the package is rebuilt from that source."
   ],
   "packages": [
     {
       "os": "1.74",
       "path": "sdk/imports/packages/qperf/qperf-0.2.0-experimental-os1.74.elemod",
-      "sha256": "b6254d36fdb2483870c8dc083bf84e8d47cc1424228fa8d245eb4ae611e8fa2d"
+      "sha256": "37ea0357a38af507a272e31de142c6adbf46f1fb1a2a966d7e731fec2f30df11"
     }
   ],
   "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
