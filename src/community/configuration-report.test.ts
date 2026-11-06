@@ -70,6 +70,9 @@ describe('the public GitHub issue for a configuration', () => {
     const markdown = issueMarkdown({ ...issue([]), scope: 'module', moduleIds: undefined, details: { ...issue([]).details, modules: undefined, version: '0.2.0', full: true }, context, log }, 'https://modwerk.app/')
     expect(markdown.length).toBeLessThan(60000)
     expect(markdown).toContain('| Build fingerprint | `' + 'c'.repeat(64) + '` |')
+    // A report from before the card/USB split stays readable; a new one says which.
+    expect(markdown).toContain('| Firmware | Running a Modwerk build |')
+    expect(issueMarkdown({ ...issue([]), scope: 'module', moduleIds: undefined, context: { ...context, flash: 'usb' } })).toContain('| Firmware | Running modules loaded over USB |')
     expect(markdown).toContain('### Configuration\n\n- `miniverb` 0.2.0')
     expect(markdown).toContain('Everything the reporter submitted is in this issue.')
     expect(markdown).toMatch(/OCTAMOD\.LOG \(oldest \d+ records left out to fit GitHub\)/)

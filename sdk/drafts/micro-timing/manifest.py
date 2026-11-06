@@ -5,8 +5,13 @@ LEVEL rewrites every step of the selected track through the stock per-trig
 MICRO TIMING writer. MIDI button off writes the audio field. MIDI button on
 writes the MIDI field and leaves the audio field alone. The window stays four
 rows tall; REC.TRG scrolls in. The live label table at 0x400b2e66 is not moved.
-The remembered number is battery RAM and is lost at power-off. Rewritten trigs
-stay in the pattern. No effect slot, no second clock, and no PERSONALIZE word.
+The remembered number is one byte per bank, the pattern on the screen and
+the track. Audio and MIDI share it. It is this module's battery table: the
+magic long 0x4d54494d at 0x100f8ffc, and 2048 bytes at 0x100f9000 through
+0x100f97ff, which is the 0x200 longs mt_ensure clears. Power-off drops it.
+There is no declaration slot for a draft's battery words, so the addresses
+are named here and in the source. Rewritten trigs stay in the pattern. No
+effect slot, no second clock, and no PERSONALIZE word.
 """
 
 import os

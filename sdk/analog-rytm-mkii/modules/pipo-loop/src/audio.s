@@ -252,7 +252,7 @@ pipo_loop_trig_gate:
         .equ    WIN_AL, 0x80005838
         .equ    WIN_BASE, 0x80005864
         .globl  pipo_loop_v0w_gate, pipo_loop_v0m_gate, pipo_loop_vnw_gate, pipo_loop_vnm_gate
-        .extern pipo_loop_mirror
+        .extern pipo_loop_mirror, pipo_loop_armed
 
 | mirror(voice d0, which d1, len a0): -> d0 the buffer or 0
 mirror: move.l  %a0,-(%sp)                      | len
@@ -267,6 +267,8 @@ mirror: move.l  %a0,-(%sp)                      | len
 | voice 0, TCD1: a0 its source, a2 the descriptor, d1 LEN1, d3 its window
 | index. Replaces `move.l %d3,%d0; add.l %d0,%d0; move.l %a0,(%a2)`.
 pipo_loop_v0w_gate:
+        tst.b   pipo_loop_armed                 | no voice armed: stock's DMA, no C call
+        beq.s   9f
         tst.l   %d1
         ble.s   9f
         lea     -12(%sp),%sp
@@ -288,6 +290,8 @@ pipo_loop_v0w_gate:
 | voice 0, TCD2: a1 its source, a0 the descriptor, d4 LEN2, d6 its
 | destination. Replaces `moveq #1,%d0; move.l %a1,(%a0); move.l %d6,16(%a0)`.
 pipo_loop_v0m_gate:
+        tst.b   pipo_loop_armed
+        beq.s   9f
         tst.l   LEN1
         ble.s   9f
         lea     -12(%sp),%sp
@@ -309,6 +313,8 @@ pipo_loop_v0m_gate:
 | voices 1-7, TCD1: a0 its source, a2 the descriptor, d0 its window index.
 | Replaces `add.l %d0,%d0; move.l %a0,(%a2); add.l WIN_BASE,%d0`.
 pipo_loop_vnw_gate:
+        tst.b   pipo_loop_armed
+        beq.s   9f
         tst.l   LEN1
         ble.s   9f
         lea     -16(%sp),%sp
@@ -331,6 +337,8 @@ pipo_loop_vnw_gate:
 | voices 1-7, TCD2: a1 its source, a0 the descriptor. Replaces
 | `moveq #1,%d0; move.l %a1,(%a0); movea.l 60(%sp),%a1`.
 pipo_loop_vnm_gate:
+        tst.b   pipo_loop_armed
+        beq.s   9f
         tst.l   LEN1
         ble.s   9f
         lea     -12(%sp),%sp
