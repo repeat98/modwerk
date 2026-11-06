@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-28",
+    "changes": [
+      "New module: FUNC + YES keeps a temporary copy of the active pattern and its whole Part, scenes included; FUNC + NO puts both back, also while playing.",
+      "The crossfader, the selected scenes and the mutes stay where they are. Your saved Part and the clipboard are not touched, so RELOAD PART still returns to your last Part save.",
+      "On another pattern, bank or project FUNC + NO shows NO TEMP SAVE. The copy is gone after a power-off: save the Part and the project to keep your work.",
+      "Works on the pattern screen and in page and menu windows, where FUNC + YES/NO only repeated ARM/DISARM. Sample lists keep their preview; dialogs and editors are left alone.",
+      "Known issue: tested on one MKII over USB, not yet on the MKI or as a card build."
+    ]
+  }
+]

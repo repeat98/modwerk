@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/chorus",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-04",
+  "changes": [
+    "First library release for Analog Rytm MKII OS 1.74, on the Modwerk base's send-bus variant: a stereo chorus on the send bus, Send FX's CHORUS unchanged."
+  ],
+  "runtimeSourceSha256": "6d8a81554c1b18c4384eb84b74f4621509d27e9b745ebd5b27e828dc46c7be8e",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/chorus/chorus-0.1.0-experimental-os1.74.elemod",
+      "sha256": "70be8884028e84dea2d55371a78684a7e7c43028d0c9c238bdc6a0b508d5b0ab"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/chorus/TESTING.md",
+  "requires": []
+}

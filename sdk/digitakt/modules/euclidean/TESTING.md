@@ -1,7 +1,55 @@
 # Euclidean Sequencing — test report
 
-- Module: `euclidean` 1.1.5, for Digitakt I OS 1.53 and 1.54 on Elekloader Core 2.1.
-- Source: https://github.com/sumedho/digirequests at `27432d5aa7281422e7f80467e7e848c7f5433f33`, `modules/euclidean`.
+- Module: `euclidean` 1.1.6, for Digitakt I OS 1.53 and 1.54 on Elekloader Core 2.1.
+- Source: https://github.com/sumedho/digirequests at `46e19aa75835ab22213758ce0653c66e519a76e0`, `modules/euclidean`.
+
+## 1.1.6: FUNC + EUC off no longer clicks ([#1158](https://github.com/repeat98/modwerk/issues/1158))
+
+Holding FUNC while turning D off converts the generated rhythm into
+ordinary trigs. The conversion copies and checks about 8 KB of track and
+lock data inside the Euclidean lock, which masked every interrupt. That held
+off the audio render, so the main outputs gave a short click, on audio and
+MIDI tracks, and faintly even with the sequencer stopped. Plain D off was
+silent. The lock now raises the interrupt mask to level 4 instead of 7 and
+never lowers it. The only source change is that lock function
+(`src/release-*/euclidean.c`).
+
+**Why level 4 is enough** ([evidence/func-euc-off-1.1.6.json](evidence/func-euc-off-1.1.6.json)):
+read from the stock 1.53 and 1.54 snapshots, the audio render is interrupt
+level 5 and the forced task switch is level 1. In the emulator, the sequencer,
+both native event builders and every Euclidean hook ran at level 0 or 2,
+never inside the render. The render read and wrote neither the pattern
+record nor Euclidean memory. Level 4 still excludes everything that touches
+this data, and the audio render now runs during a conversion. The
+emulator's zero-wait memory model shows the old masked windows as 0.5,
+27 and 51 µs and no audible glitch. The click itself is established on
+hardware, not in the emulator.
+
+**Emulator regressions:** the eight Euclidean cases (UI standalone and
+combined, playback, editing with FUNC + EUC-off conversion) pass on 1.53
+and 1.54 with the same counts as 1.1.5 and no failures. Both all-mods SysEx
+files cold-boot. Recaptured screenshots are byte-identical to 1.1.5's.
+
+**Source parity** ([evidence/modwerk-source-parity.json](evidence/modwerk-source-parity.json)):
+Modwerk's compile of this source links all 63 feature selections per OS
+(126 in total) to the same MAIN as the native build, through Modwerk, in
+reversed order, through the browser kit and with the native objects.
+
+**Hardware** (sumedho, Digitakt 1, 2026-11-04): OS 1.53 and 1.54, with all
+six mods and with Euclidean alone. With a sustained audio sound and a MIDI
+track playing, FUNC + D off no longer clicks and converts the rhythm to
+ordinary trigs. Stopped and plain D off are silent, page keys leave
+Euclidean and FUNC + AMP reopens it, and settings survived project
+save/reload and a power cycle. Reported "tested all cases and working". The
+duration was not reported. Tested SysEx:
+
+| OS | All six mods | Euclidean alone |
+| --- | --- | --- |
+| 1.53 | `ad46ffa76fe261ae8fb541767c693e9d3f3f3c48fe7a9aa340af8756eb9eeb47` | `1ea0d1a65538ed456821130e130f9d7c27d2dd4e1586a0ccea8ad1a1754542bf` |
+| 1.54 | `eb119355d3514132ceae730d3cc9a45d64f82a01f2cc61c0d6c3ed3adccc0869` | `ebc31354507f2f154159398e44e2efca14b80791735e2688ceb5e879e5c53b70` |
+
+The emulator CPU-load figures below come from an earlier release and were
+not repeated. The lock change adds no work to the audio render.
 
 ## 1.1.5: page keys leave Euclidean ([#662](https://github.com/repeat98/modwerk/issues/662))
 

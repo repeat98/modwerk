@@ -42,7 +42,7 @@ const SECTIONS: FaqSection[] = [
         answer: <>
           <p><strong>Octatrack MKI and MKII:</strong> the original OS {BASE_FIRMWARE.version} .bin. {DOWNLOADS_ENABLED ? 'Builds and downloads are available.' : 'Downloads are paused.'} Review each module’s test records for your model.</p>
           <p><strong>Digitakt mk1:</strong> OS 1.53 or 1.54 .syx. <strong>Digitone mk1 and Digitone Keys:</strong> OS 1.43 or 1.44 .syx. These machines are in preview: builds and .syx downloads are available, and their module libraries are still growing. This does not include Digitakt II or Digitone II.</p>
-          <p><strong>Analog Rytm MKII:</strong> OS 1.74 .syx, in preview. Builds run in your browser so you can check a combination; downloads open once its release is approved.</p>
+          <p><strong>Analog Rytm MKII:</strong> OS 1.74 .syx, in preview: builds and .syx downloads are available, and its module library is still growing. Recovery needs a MIDI DIN interface, because the startup menu never appears over USB.</p>
           <p><strong>Digitakt II:</strong> OS 1.17, in research. Its page offers a core build in the browser for local checks; there are no Modwerk downloads yet.</p>
           <p>Other machines, such as the Digitone II, Syntakt, Analog Keys, Model:Cycles, Zoom multi-effects pedals and the Erica Synths LXR-02, have research pages or an invitation to contribute. A machine page does not mean firmware builds are available. Check the machine’s status and each module’s supported releases before choosing an OS file.</p>
         </>,
@@ -87,9 +87,9 @@ const SECTIONS: FaqSection[] = [
             <li>Open that machine’s Configuration page and choose the original OS file it requests. For Octatrack, use <code>{BASE_FIRMWARE.filename}</code>.</li>
             <li>Review compatibility messages and use the suggested fixes to resolve any errors before building.</li>
             <li>Read the flashing risks, tick the acknowledgement and choose <strong>Build firmware</strong>. You can sign in or choose <strong>Skip for now</strong> to build as a guest. Keep the tab open until it finishes.</li>
-            <li>Confirm that you know how to get back to the original OS, then download the file: <strong>{DOWNLOADS_ENABLED ? 'Download .bin' : 'downloads are paused'}</strong> for Octatrack, <strong>Download .syx</strong> for Digitakt and Digitone.</li>
+            <li>Confirm that you know how to get back to the original OS, then download the file: <strong>{DOWNLOADS_ENABLED ? 'Download .bin' : 'downloads are paused'}</strong> for Octatrack, <strong>Download .syx</strong> for Digitakt, Digitone and Analog Rytm MKII.</li>
           </ol>
-          <p>Analog Rytm MKII and Digitakt II builds run in your browser for checks only. Modwerk offers their firmware files once a release is approved.</p>
+          <p>Digitakt II builds run in your browser for checks only. Modwerk offers its firmware files once a release is approved.</p>
           <p><strong>Export configuration</strong> saves a JSON backup of your choices. It is not a firmware file and cannot be flashed.</p>
         </>,
       },
@@ -182,7 +182,7 @@ const SECTIONS: FaqSection[] = [
         title: 'What does preview mean for Digitakt, Digitone and Analog Rytm MKII?',
         keywords: 'digitakt digitone analog rytm preview available build verification download module combinations memory conflicts standalone',
         answer: <>
-          <p>Their module libraries are smaller and still growing. On the Digitakt and Digitone you can build and download a .syx. On the Analog Rytm MKII the build runs in your browser for checks, and downloads open once its release is approved. Read each module’s test records before flashing.</p>
+          <p>Their module libraries are smaller and still growing. On the Digitakt, Digitone and Analog Rytm MKII you can build and download a .syx. Read each module’s test records before flashing.</p>
           <p>Two modules may need the same machine slot, control, memory area or firmware change. Follow the conflict message and remove one of the affected modules. A standalone firmware module must be used on its own. A combination that fits is not proof that it works on hardware.</p>
         </>,
       },
@@ -225,7 +225,7 @@ const SECTIONS: FaqSection[] = [
         keywords: 'paused disabled missing ready built hardware audio effects load failed preview digitakt digitone analog rytm recovery',
         answer: <>
           <p>{DOWNLOADS_ENABLED ? 'The download button appears only after a successful build. Choose the original base firmware, add supported modules, resolve configuration errors and acknowledge the flashing risks first. Once the build finishes, confirm that you know how to get back to the original OS.' : 'Firmware downloads are paused. The built-in logger is undergoing verification. Downloads will resume after the updated builds have passed review.'}</p>
-          <p>Digitakt and Digitone builds offer <strong>Download .syx</strong> the same way. Analog Rytm MKII and Digitakt II builds run for checks only, and Modwerk offers their files once a release is approved.</p>
+          <p>Digitakt, Digitone and Analog Rytm MKII builds offer <strong>Download .syx</strong> the same way. Digitakt II builds run for checks only, and Modwerk offers its files once a release is approved.</p>
           <p>A build that fits and passes local file checks is not proof that it will work on hardware. You can still export your configuration as JSON.</p>
         </>,
       },

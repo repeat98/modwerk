@@ -1,0 +1,626 @@
+{
+ "elemod": 2,
+ "id": "control-in-actions",
+ "version": "0.1.0-experimental",
+ "title": "Control In Actions",
+ "description": "An ACTION mode for EXP/CV IN 1 and 2: a gate or footswitch holds or toggles the MUTE screen or live recording, or holds or latches FILL.",
+ "category": "system",
+ "author": "npp1993",
+ "license": "GPL-3.0-or-later",
+ "target": {
+  "device": "analog-rytm-mk2",
+  "product": "Analog Rytm MKII",
+  "os": "1.74",
+  "syx_sha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "section3_sha256": "34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b",
+  "section3_len": 3005432
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 3266,
+   "parts": [
+    [
+     "hex",
+     "2039419f28f84fefffdc2f0e4a8067384878007f42a72f2f00382f2f00384def00182f0e2f4000184eb940071e7c2f0e202f001c2f004eb9400a03362f0e4eb94018984e4fef00202c5f4fef00244e752079419f28f82f0a4a886606245f42804e752468002091c8220a0681000000144a88674820680004b28867e0226800084a8967d820110c80401e2bbc673a0c80401e139467380c80401e305c67240c80401e2ee8671c0c80401e26c467080c80401e2a5466ba245f70144e75206a001860b6245f70134e75245f70114e75245f70124e752f02226f00082209206f000cd28822016a025281e281b1c96f2e200890892400e6820c800000063f6f507002b0af001467084aaf001467329282b2af00105dc0241f710044804e75200990882400e6820c800000063f6f2ab1c96cce202f001044802f400010448160c0d282b2af00105dc0241f710044804e75243c000000c860a8243c000000c860ce2f0a247c4006fbd82f02487800012f2f00184878000f2f2f001c242f001c487800042f024eb940070a3848780001487800132f2f0030487800122f024e924fef002c487800012f2f00182f2f0018487800132f024eb94006fdc048780001487800152f2f0030487800132f024e924fef0028241f245f4e754feffff42f024eb9401816f42f004eb940036370588f4a006708241f4fef000c4e752239418d0d204a816dee20017407c282e68020407001d1fc418d1340e3a81210141032422400c48122098280108148780001487800512f4000102f48000c4ebafdc848780010487800514ebafdbc4fef0010202f0008206f00044a02669a12104680c0811080241f4fef000c4e754feffff42f02222f001441f9000000004a3018006600009a41f9000000004a301800663041f9000000004a3018006608241f4fef000c4e7542021182180048780010487800b24ebafd52508f241f4fef000c4e754200118018002f4100044eb9401816f42f004eb940036370588f222f00044a0067ae487800014878005141fafd1a2f41000c2f4800104e904878001048780051206f00184e904fef001041f900000000222f00044a3018006782608842007411118018002f4100044ebafd2c222f0004b4806600ff5041f900000000103018006602701171804878000141fafcba2f002f4000142f41000c2f4800104e9048780010202f00182f00206f00184e904fef001041f900000000222f00044a3018006700ff0e6000ff3a2f0a72012f02206f000c202801b0b280653e222801d4740122415589b489643643f90000000012310800670c45f9000000001581080042011381080043f90000000023880c0043f90000000023900c00241f245f4e7543f9000000001381080043f90000000023880c0043f90000000023900c0060da4fefffe47001206f002048d7047c282f00242a2801b0b08565000188202801d474012200558143f900000000b481641210315800670c45f9000000001580580042001380580045f9000000007c2d43f90000000023885c0071b2580043f90000000023905c00262801cc2f00242801c82f2f002c2f032f020682000001f44c0628004ebafc584fef00102c3c000017701580580020024c460800722db2806d00016a4a806d00019c2203742d0681000001f44c0218002c3c00001770240056824c461801762db6816d0001324a816d00016226015683b0816f0000d2487800017c2d487800304878001048780003487800032f044eb94007050a202f00400680000001f44c0608002c3c00001770487800014878000f4c460800722db2806d00016a4a806d0001c6204048680003487800042f044eb94006fbd84fef002c487800032f032f0441fafc1e2f4800244e90487800302f022f04206f00304e9048780001487800304878002448780003487800172f044eb94007050a4fef00304a325800670000e648780001702d487800232f00487800182f044eb94006fbd84fef00144cd7047c4fef001c4e75487800017c2d48780030487800104878000348780003200326022f0424004eb94007050a202f00400680000001f44c0608002c3c00001770487800014878000f4c460800722db2806c00ff2c60000090722d26015683b0816e00fed660a22203742d0681000001f44c0218002c3c00001770702d240056824c461801762db6816c00fe9e60ca428126015683b0816e00fea06000ff6c2203742d0681000001f44c0218002c3c000017704280240056824c461801762db6816c00fe666092487800017006487800232f00487800182f044eb94006fbd84fef00146000ff1a702d204048680003487800042f044eb94006fbd84fef002c487800032f032f0441fafaba2f4800244e90487800302f022f04206f00304e9048780001487800304878002448780003487800172f044eb94007050a4fef00304a32580067826000fe9c4280204048680003487800042f044eb94006fbd84fef002c487800032f032f0441fafa582f4800244e90487800302f022f04206f00304e9048780001487800304878002448780003487800172f044eb94007050a4fef00304a3258006700ff206000fe384e56ff9441f90000000048d73c3c45f90000000042822d48ffb447f90000000049f900000000225a4a89670001262079419f28f84a886700011a282800202609220491c80683000000380681000000144a88670000f220680004b288670000f4202800084a80670000eab3c06704b68066de2a6effb42a55bbd166d47003b0a901b4670e41f9000000004a30280067000116486900384eb94007858010332800226afffc588f4a00660001ee4a89670000bc41e901b44beeffc043e901d42ad8b3c866fa7003b0aeffc0660000b820020680e0003f3ee58841f90000000073b0280057812a4042954a816700009877b428002f02282effdc4eb94013f5ac2f032f002f2effd82f2effd44ebaf8804fef001441f900000000260071b02800b8806600010a73b428007802b88167000162b681660000d458aeffb453824a82675c74016000fee22a44206d0018b2886600ff10420041f90000000042aafffc118028004a332800670417802800486effc02f024eb9400fa7e4508f7003b0aeffc06700ff4c2f024ebaf9967202588f19812800538258aeffb44a8266a44cee3c3cff944e5e4e75103328006700ff06718057804a8067000090486effe072032f0278042d49ffb8263c000001c42d41ffbc4eb9400fa7e43a7c01c0508f420017802800202effbc41f60ce0226effb82390d80041f64ce023903800226afffc4a896600feb06000ff66198328007206b2806500ff24303b0a0848c04efb0802ff18009800ee011801ca016c01982f024ebaf8ee4bf900000000588f1b842800198328006000fef2486effe070052f0278062d40ffbc263c000001cc2d49ffb84eb9400fa7e43a7c01c8508f420017802800202effbc41f60ce0226effb82390d80041f64ce023903800226afffc6000ff70198328006000fea04a896600ff12420117812800486effc02f024eb9400fa7e4508f6000fec64a836600017a41f9000000004a3028006700fe6e4200118028004ebaf6367211b2806600fe5c41f900000000163028006602761177834878000141faf5c64bfaf5c22f034e90487800102f034e954fef00106000fe2c4a836700fe26487800014878001141faf59c4e9048780010487800114bfaf58e4e954fef00106000fe024a83660000d241f9000000004a3028006700fdee4200118028004eb9401816f42f004eb940036370588f4a006700fdd2487800014878005141faf5484e9048780010487800514bfaf53a4e954fef00106000fdae41f9000000004a83660000ea4a3028006700fd9a42011181280048780010487800b24ebaf50a508f6000fd824a836700fd7c4a394193c020670000d22f037810487800b241faf4e84e902f04487800b24bfaf4dc4e954fef00106000fd504a836700fd4a4eb9401816f42f004eb940036370588f4a006600ff4e4ebaf6886000fd2c4eb9401816f42f004eb940036370588f41f9000000004a0057c04480118028004ebaf6606000fd044ebaf4d2761141f900000000b68056c11180280041f900000000448111812800b6806700fcde487800014878001141faf4544e9048780010487800114bfaf4464e954fef00106000fcba70011180280048780001487800b24ebaf42a508f6000fca2760778122f03487800b241faf4164e902f04487800b24bfaf40a4e954fef00106000fc7e00007202b280671c7203b28066102f032f022f0a4eb9000000004fef000c4ef94013091a2f0a4eb900000000588f4ef9401307840000020200005052455353204f522053454e442041204645572047415445532e00414354494f4e204c4541524e00414354494f4e00414354494f4e004025469e00000000000000000000000000000000000000000000000046494c4c204c41540046494c4c20484c44005245432054474c0052454320484c44004d5554452054474c004d55544520484c4400"
+    ]
+   ]
+  },
+  ".bss": {
+   "align": 4,
+   "size": 32
+  }
+ },
+ "symbols": {
+  "press": [
+   ".run",
+   0
+  ],
+  "mode_key": [
+   ".run",
+   80
+  ],
+  "pressed": [
+   ".run",
+   212
+  ],
+  "mark": [
+   ".run",
+   350
+  ],
+  "rec_on": [
+   ".run",
+   470
+  ],
+  "end_holds": [
+   ".run",
+   614
+  ],
+  "hold_active": [
+   ".bss",
+   28
+  ],
+  "rec_active": [
+   ".bss",
+   24
+  ],
+  "fill_active": [
+   ".bss",
+   22
+  ],
+  "hold_back": [
+   ".bss",
+   26
+  ],
+  "learning": [
+   ".bss",
+   20
+  ],
+  "finished": [
+   ".bss",
+   0
+  ],
+  "shown": [
+   ".bss",
+   12
+  ],
+  "shown_class": [
+   ".bss",
+   4
+  ],
+  "lit": [
+   ".bss",
+   2
+  ],
+  "state": [
+   ".run",
+   3128
+  ],
+  "last_dest": [
+   ".bss",
+   30
+  ],
+  "control_in_actions_dests": [
+   ".run",
+   3186
+  ],
+  "control_in_actions_draw_glue": [
+   ".run",
+   3076
+  ],
+  "control_in_actions_toggle": [
+   ".run",
+   3248
+  ],
+  "control_in_actions_hold": [
+   ".run",
+   3257
+  ],
+  "control_in_actions_dest": [
+   ".run",
+   3172
+  ],
+  "control_in_actions_fill_hold": [
+   ".run",
+   3223
+  ],
+  "control_in_actions_rec_toggle": [
+   ".run",
+   3232
+  ],
+  "control_in_actions_learn": [
+   ".run",
+   3159
+  ],
+  "control_in_actions_rec_hold": [
+   ".run",
+   3240
+  ],
+  "control_in_actions_draw": [
+   ".run",
+   1016
+  ],
+  "control_in_actions_fill_latch": [
+   ".run",
+   3214
+  ],
+  "control_in_actions_mode": [
+   ".run",
+   3179
+  ],
+  "control_in_actions_expr": [
+   ".run",
+   898
+  ],
+  "control_in_actions_learn_1": [
+   ".run",
+   3132
+  ],
+  "control_in_actions_tick": [
+   ".run",
+   1864
+  ]
+ },
+ "exports": [
+  "control_in_actions_dest",
+  "control_in_actions_dests",
+  "control_in_actions_draw",
+  "control_in_actions_draw_glue",
+  "control_in_actions_expr",
+  "control_in_actions_fill_hold",
+  "control_in_actions_fill_latch",
+  "control_in_actions_hold",
+  "control_in_actions_learn",
+  "control_in_actions_learn_1",
+  "control_in_actions_mode",
+  "control_in_actions_rec_hold",
+  "control_in_actions_rec_toggle",
+  "control_in_actions_tick",
+  "control_in_actions_toggle"
+ ],
+ "imports": [],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   626,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   640,
+   "abs32",
+   "sec:.bss",
+   24
+  ],
+  [
+   ".run",
+   652,
+   "abs32",
+   "sec:.bss",
+   22
+  ],
+  [
+   ".run",
+   774,
+   "abs32",
+   "sec:.bss",
+   22
+  ],
+  [
+   ".run",
+   818,
+   "abs32",
+   "sec:.bss",
+   26
+  ],
+  [
+   ".run",
+   878,
+   "abs32",
+   "sec:.bss",
+   24
+  ],
+  [
+   ".run",
+   932,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   944,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   960,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   970,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   986,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   996,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   1006,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   1056,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   1072,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   1088,
+   "abs32",
+   "sec:.bss",
+   2
+  ],
+  [
+   ".run",
+   1096,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   1110,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   1870,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   1880,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   1892,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   1898,
+   "abs32",
+   "sec:.run",
+   3128
+  ],
+  [
+   ".run",
+   1998,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   2082,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   2140,
+   "abs32",
+   "sec:.bss",
+   30
+  ],
+  [
+   ".run",
+   2206,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   2428,
+   "abs32",
+   "sec:.bss",
+   30
+  ],
+  [
+   ".run",
+   2566,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   2598,
+   "abs32",
+   "sec:.bss",
+   26
+  ],
+  [
+   ".run",
+   2694,
+   "abs32",
+   "sec:.bss",
+   24
+  ],
+  [
+   ".run",
+   2772,
+   "abs32",
+   "sec:.bss",
+   22
+  ],
+  [
+   ".run",
+   2918,
+   "abs32",
+   "sec:.bss",
+   24
+  ],
+  [
+   ".run",
+   2948,
+   "abs32",
+   "sec:.bss",
+   26
+  ],
+  [
+   ".run",
+   2962,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   3096,
+   "abs32",
+   "sec:.run",
+   1016
+  ],
+  [
+   ".run",
+   3114,
+   "abs32",
+   "sec:.run",
+   898
+  ],
+  [
+   ".run",
+   3190,
+   "abs32",
+   "sec:.run",
+   3257
+  ],
+  [
+   ".run",
+   3194,
+   "abs32",
+   "sec:.run",
+   3248
+  ],
+  [
+   ".run",
+   3198,
+   "abs32",
+   "sec:.run",
+   3240
+  ],
+  [
+   ".run",
+   3202,
+   "abs32",
+   "sec:.run",
+   3232
+  ],
+  [
+   ".run",
+   3206,
+   "abs32",
+   "sec:.run",
+   3223
+  ],
+  [
+   ".run",
+   3210,
+   "abs32",
+   "sec:.run",
+   3214
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x40131b66",
+   "len": 8,
+   "stock_sha256": "15e2fcf86577ce3b1dacdfdf8a69a8989d63ba82701c01a4a0187eb2b4981ee0",
+   "new": "7203b2806c027003",
+   "kind": "code",
+   "relocs": []
+  },
+  {
+   "addr": "0x400fa878",
+   "len": 8,
+   "stock_sha256": "15e2fcf86577ce3b1dacdfdf8a69a8989d63ba82701c01a4a0187eb2b4981ee0",
+   "new": "7203b2806c027003",
+   "kind": "code",
+   "relocs": []
+  },
+  {
+   "addr": "0x40131332",
+   "len": 6,
+   "stock_sha256": "c10104bed020a9504b2f87a09c9ecedf89a3d93eb276ad272ff0bae4a9a5ba00",
+   "new": "487900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:control_in_actions_mode",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x401304f2",
+   "len": 6,
+   "stock_sha256": "39437af394b9ddd978b260d49f9032f41198c42511d17558e1659e45aae6f436",
+   "new": "487900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:control_in_actions_dest",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40131aba",
+   "len": 6,
+   "stock_sha256": "4fe8fb09a697d0a988b4dc594c4926439aa5517ad2aaa0fde1794449cddd506b",
+   "new": "487900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:control_in_actions_learn",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4013077c",
+   "len": 8,
+   "stock_sha256": "9478834d07aefa5bbeb79ed6e7e40651d49451b7077592bde6ba4e9851c73a60",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:control_in_actions_draw_glue",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40131e30",
+   "len": 6,
+   "stock_sha256": "86d0d25f424ed2b621166d1a1a4fbf04de9914a8e34c13582fcd23d48aa193f5",
+   "new": "487900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:control_in_actions_learn_1",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x401309bc",
+   "len": 8,
+   "stock_sha256": "d749208f2ebf1e144a87c325281e533ef582759f54549234fcc92c90dc89a595",
+   "new": "7206b2806c027006",
+   "kind": "code",
+   "relocs": []
+  },
+  {
+   "addr": "0x40131462",
+   "len": 6,
+   "stock_sha256": "c3a9fd08f1a83aff82f1ef8380f8a0b802f527526e2de78bfc30896ad0585666",
+   "new": "41f900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:control_in_actions_dests",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {},
+ "contribute": [
+  {
+   "to": "ev_tick",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:control_in_actions_tick",
+     0
+    ]
+   ],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [
+   "ui:GLOBAL > CONTROL > CONTROL INPUT 1 and 2: MODE ACTION and its ACTION list",
+   "input:EXP/CV IN 1 and 2 in ACTION mode"
+  ],
+  "core": "0.7"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}

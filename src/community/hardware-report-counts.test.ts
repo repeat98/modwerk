@@ -25,7 +25,7 @@ describe('public working report counts', () => {
     add('suspended', 'suspended', report)
     async function counts() {
       const detail = await (await call('/modules/tapeecho')).json()
-      const summary = await (await call('/community/summary')).json()
+      const summary = await (await call('/community/summary?fresh=1')).json()
       const thread = await (await call('/forum/threads/module-tapeecho')).json()
       return [detail.worksReports, summary.find((item: { module_id: string }) => item.module_id === 'tapeecho').worksReports, thread.thread.worksReports]
     }
@@ -40,6 +40,6 @@ describe('public working report counts', () => {
     expect(await counts()).toEqual([1, 1, 1])
     db.prepare("UPDATE forum_threads SET hidden=1 WHERE id='module-tapeecho'").run()
     expect((await (await call('/modules/tapeecho')).json()).worksReports).toBe(0)
-    expect((await (await call('/community/summary')).json()).find((item: { module_id: string }) => item.module_id === 'tapeecho').worksReports).toBe(0)
+    expect((await (await call('/community/summary?fresh=1')).json()).find((item: { module_id: string }) => item.module_id === 'tapeecho').worksReports).toBe(0)
   })
 })

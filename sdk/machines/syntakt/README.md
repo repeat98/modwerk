@@ -1,6 +1,6 @@
 # Syntakt
 
-Status: **research, core started**. The OS files are understood and rebuilt, modified builds boot (public reports), and the first Modwerk core stage, a boot probe, links and verifies locally. No module can be built for this machine yet, and nothing in this guide has run on the owner's unit. Read [the research report](../../../docs/SYNTAKT_OS_RESEARCH.md) before changing anything here.
+Status: **research, core started**. The OS files are understood and rebuilt, modified builds boot (public reports), and the first Modwerk core stage, a boot probe, runs on a unit with OS 1.42 ([record](../../../docs/verification/2026-11-04-syntakt-boot-probe-on-unit.md)). No module can be built for this machine yet. Read [the research report](../../../docs/SYNTAKT_OS_RESEARCH.md) before changing anything here.
 
 ## Modwerk stack
 
@@ -36,7 +36,7 @@ Links the boot probe into the owner's stock file, checks every stock write, veri
 
 ## Flash and recover
 
-Flash with Elektron Transfer over USB (MIDI IN and OUT set to the Syntakt, drop the `.syx`, confirm on the unit). To recover a unit that does not boot: hold FUNC while powering on, press TRIG 4 (OS UPGRADE) and send the stock `.syx` from Transfer's legacy OS-upgrade page over MIDI DIN; USB does not work there. Public reports (Synthack-OS) describe this path; it is **not tested on the owner's unit**. Keep the stock file and a DIN interface ready before flashing any build.
+Flash with Elektron Transfer over USB (MIDI IN and OUT set to the Syntakt, drop the `.syx`, confirm on the unit). To recover a unit that does not boot: hold FUNC while powering on, press TRIG 4 (OS UPGRADE) and send the stock `.syx` from Transfer's legacy OS-upgrade page over MIDI DIN; USB does not work there. Public reports (Synthack-OS) describe this path, and it recovered a unit on OS 1.42 through a generic USB-to-MIDI cable ([record](../../../docs/verification/2026-11-04-syntakt-boot-probe-on-unit.md)). Keep the stock file and a DIN interface ready before flashing any build.
 
 ## Credits
 
