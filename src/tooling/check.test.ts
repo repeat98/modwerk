@@ -52,8 +52,10 @@ it.each(['sdk:check', 'lint', 'test', 'build:bundle', ''])('keeps every independ
   const result = check(failure)
   expect(result.status).toBe(failure ? 1 : 0)
   expect(result.scripts.slice(0, 10)).toEqual(['prepare', 'licenses:check', 'machines:check', 'modules:check', 'elekloader:check', 'modules:compat', 'modules:pairs', 'licenses:generate', 'machines:generate', 'modules:generate'])
-  expect(result.scripts.slice(10).sort()).toEqual(['build:bundle', 'lint', 'sdk:check', 'test', 'typecheck'])
+  expect(result.scripts.slice(10, -1).sort()).toEqual(['build:bundle', 'lint', 'sdk:check', 'test', 'typecheck'])
   expect(result.scripts.indexOf('build:bundle')).toBeGreaterThan(result.scripts.indexOf('typecheck'))
+  // The module doctor's draft test copies a draft under sdk/octabam/modules/, so it runs alone once the parallel stage is done.
+  expect(result.scripts.at(-1)).toBe('test')
 })
 
 it('refuses stale or unflagged native pairs before generation or any dependent check can run', () => {
