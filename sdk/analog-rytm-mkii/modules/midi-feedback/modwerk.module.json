@@ -77,6 +77,7 @@
     "core": "0.7",
     "build": "build.json",
     "events": [
+      "ev_render_out",
       "ev_tick",
       "ev_settings",
       "ev_project"
