@@ -44,6 +44,42 @@ The generic compiler is not a sandbox for untrusted C; use the isolated builder.
 
 This coverage snapshot precedes the final prose/report additions. Reports and
 prospective listing declarations are manually checked; hardware qualification,
-complete stack/worst-case-cycle bounds, public promotion and first-release
+worst-case timing, public promotion and first-release
 owner approval remain pending. No earlier private test is counted as qualification
 of this candidate, and no approval/waiver is created here.
+
+## Resource-accounting follow-up
+
+`qualification/resources.py` now reproduces the exact tested package and
+accounts for the loader's aligned 31,792-byte resident extent. Its conservative
+own-call graph gives 712 bytes for one render activation, with stock/base and
+task/interrupt frames explicitly outside scope. `resource-audit.json` pins the
+compiler, authored image, package and loader inputs. Native runtime inputs and
+hardware package bytes remain unchanged. Relative display gauges are labelled
+source estimates; worst-case ColdFire timing remains unmeasured.
+
+Fault injection confirmed refusal of a missing indirect-call policy entry,
+stale policy site, own recursive call, unbounded compiler frame and changed
+loader hash. The normal audit reproduced the package and stack result. The
+manifest's storage method was corrected to the contract's `static` enum;
+details remain in its conditions/source report.
+
+The bounded resource-only Jev deep pass and continuation/recheck used six API
+requests in total. At their final snapshot, five of 32 chunks were classified or
+cached, zero flagged, five uncertain and 27 deferred; three Markdown files were
+excluded/static-only. Both configured source checks passed. All five uncertain
+locations (measurement, own-stack walker, manifest, generated report and module
+docstring) were investigated using the compiler/disassembly, loader allocation
+formula, encoder, contract and source-estimate guide. Manual review checked all
+indirect target definitions, the assembly leaf reservations, outgoing return-PC
+charges, excluded stock boundaries, report offsets and package identity. The
+20 omitted attention locations were inspected in the checkpoint; they are
+deferred imports/constants/comments/CLI scaffolding and the compact resource
+JSON, not additional classified findings. They remain outside Jev coverage.
+This is partial advisory coverage, not a passed/completed full review. This
+paragraph is later manually checked prose and was not part of that snapshot.
+
+Draft doctor still reports the expected publication failures: no active
+catalogue/package/pair entry, native comparison or completed qualification.
+Its report is not a release pass. The draft is deliberately not promoted to
+hide those failures; the resource report does not substitute for timing.

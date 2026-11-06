@@ -30,7 +30,7 @@
     "highlights": [
       "Three grains; SIZE expands around POS and wraps sample edges.",
       "Native pitch at MAIN F, neutral 64.",
-      "One owner on T1–T4; no active SPACE or FX2 effect."
+      "One owner on T1\u2013T4; no active SPACE or FX2 effect."
     ],
     "usage": [
       "On a compatible private paired build, choose FRACT in SRC SETUP on T1 and load a FLEX sample.",
@@ -116,21 +116,21 @@
     "uiClaims": [],
     "limitations": [
       "Unlisted source draft; not offered by the public configurator.",
-      "Eight registry slots exist; FRACT admits only one owner on T1–T4.",
+      "Eight registry slots exist; FRACT admits only one owner on T1\u2013T4.",
       "Private build requires an exact compatible paired base with FR:1 boot preservation.",
       "Candidate functional lifecycle recorded; full resource, stress and companion qualification pending."
     ]
   },
   "resources": {
-    "recorded": "4 November 2026; source-draft limits",
+    "recorded": "6 November 2026; exact candidate memory and own callback stack; timing pending",
     "storage": {
       "label": "Public package memory",
-      "display": "Unmeasured for the public build",
-      "value": null,
+      "display": "31,792 resident pool bytes; 712 own stack bytes per callback",
+      "value": 31792,
       "unit": "bytes",
-      "method": "unmeasured",
-      "conditions": "Exact code/state/buffer/stack inventory not yet measured.",
-      "source": "TESTING.md"
+      "method": "static",
+      "conditions": "One owner, three heads; includes loader header, image/BSS and alignment. Stack separately bounded; samples reuse stock arena.",
+      "source": "release/resources.md"
     },
     "processing": {
       "label": "Worst-case ColdFire work",
@@ -138,8 +138,29 @@
       "value": null,
       "unit": "cycles/block",
       "method": "unmeasured",
-      "conditions": "Private reported CPU about 80% is not an isolated cost measurement.",
+      "conditions": "Worst render timing and matched FLEX comparison not measured; functional hardware checks do not measure cycles.",
       "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "One FRACT owner on T1\u2013T4, three grain heads, moving controls and native-pitch packet splits. Stock sample pages are reused. Replacement temporarily retains two module extents.",
+      "cpu": {
+        "level": "high",
+        "basis": "source-estimate",
+        "rationale": "Audio-rate ColdFire work for three interpolated/windowed stereo readers, unlike a key-only feature; native pitch and split packets affect work. No measured processor percentage or headroom claim.",
+        "source": "release/resources.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No added DSP engine code or DSP state; native FLEX/DSP processing remains instrument-owned.",
+        "source": "release/resources.md"
+      },
+      "memory": {
+        "level": "low",
+        "basis": "source-estimate",
+        "rationale": "31,792 resident pool bytes for code/tables/state/header, up to 712 own stack bytes per callback, no independent sample buffer; replacement retains two extents.",
+        "source": "release/resources.md"
+      }
     }
   },
   "tests": {

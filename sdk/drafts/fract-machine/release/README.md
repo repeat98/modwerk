@@ -9,15 +9,18 @@ They are not active entries in sdk/catalog.json or the public package list.
 The prospective row uses the canonical runtime id (5efef0cd), title FRACT,
 base9b3ba417 and its seven published layouts. `candidate-proof.json` records
 its exact binary hash; `reconstruction.json` has source hashes/copy addresses,
-never firmware bytes. `resources.json` states measured image/BSS counts and
-keeps unknown stack/cycle budgets explicitly unmeasured.
+never firmware bytes. `resources.json` and `resources.md` account for 31,792
+resident pool bytes and a conservative 712-byte own contribution per callback.
+Worst-case ColdFire timing remains unmeasured.
 
 ## Before promotion
 
 1. Review the recipe compiler and exact source/package proofs, including strict
    stock-free scans, base binding, and the full emulator candidate check.
-2. Measure module-owned memory/stack and worst-case ColdFire work. Do not price
-   stock firmware routines without evidence or turn average CPU into a bound.
+2. Module-owned memory and per-callback stack are accounted for by the reproducible
+   resource audit. Measure worst-case ColdFire work and the matched stock
+   comparison. Do not turn average CPU into a bound. The report states the
+   remaining audio-rate ColdFire record-format/method question for the owner.
 3. On the physical unit, after fresh stopped-state/preflight confirmation, test
    the exact candidate's install, integrity, Keep, Undo, controlled replacement,
    removal/missing-module behavior, saved-state reload and power-cycle. Preserve

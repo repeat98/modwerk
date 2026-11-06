@@ -44,8 +44,14 @@ on a unit or establish real-time timing.
 
 ## Resources
 
-The candidate accounting below records linked image/BSS and compiler frames.
-Complete stack/interrupt/stock-call bounds and processor budgets remain unmeasured. The source check prints synthetic
+The firmware-free `qualification/resources.py` reproduces the exact tested
+package and accounts for 31,792 resident pool bytes, including the loader header
+and alignment. Its reviewed compiler/assembly call graph bounds one callback's
+own stack contribution at 712 bytes. See `release/resources.md` and
+`release/resource-audit.json` for method and scope. Stock/base frames and
+interrupt/task nesting are instrument-owned and excluded; this is not a
+whole-system stack reserve. Worst-case ColdFire time and a matched stock
+benchmark remain unmeasured. The source check prints synthetic
 image/BSS/relocation counts, not native package placement or maximum-load
 qualification. Current admission allows one owner on T1–T4, with three grain
 heads; do not extrapolate to more instances or companions.
@@ -119,7 +125,7 @@ canonical runtime module ID and a seven-base guard. Its install/Keep/Undo,
 replacement/removal, missing-module behavior, Part/project reload, physical
 power-cycle, companion and stress results are PENDING. The owner will connect
 the Octatrack later. Earlier hardware results are not promoted to a pass for
-this candidate. Own stack/worst-case cycle measurements and the corresponding
+this candidate. Worst-case cycle measurements and the corresponding
 qualification/performance records remain pending. No approval or waiver is
 created by this candidate declaration.
 
@@ -138,8 +144,11 @@ assembly kernel have byte-identical text/read-only/data sections under the
 candidate compiler settings. Only the base-binding C unit changes. Compilation
 with stack reporting gives the same authored-image hash: the largest individual
 C function frame is 380 bytes. This excludes callees, stock routines and
-interrupt nesting and is not a total stack bound. `release/resources.json`
-records these limits. See `release/verification.md` for check and review scope.
+interrupt nesting and is not a total stack bound. The later own-call-graph audit
+adds a conservative 712-byte per-callback bound, including own callees, assembly
+leaves and return PCs; it excludes instrument-owned frames and interrupt/task
+nesting. `release/resources.json` records these limits. See
+`release/verification.md` for check and review scope.
 
 ### Physical USB functional check — 6 November 2026
 
@@ -195,7 +204,7 @@ FUNC+CUE to reload the saved Part. The owner confirmed: “Да, значени�
 FRACT работает”. This is an installed-Part reload functional pass, separate from
 the unconfirmed missing-module case. Explicit project-file reload, distinct
 parameter comparisons across tracks, other controls, companions, long load,
-complete stack/worst-case cycles and a full release qualification remain untested
+worst-case cycles, shared task/interrupt stack use and full release qualification remain untested
 or unmeasured. There is no implied first-release approval. The tested source was
 `7bfced003145d8641792e91747f7f63ea5aac2e1`; this update records observations and
 changes no native candidate input or package byte.
