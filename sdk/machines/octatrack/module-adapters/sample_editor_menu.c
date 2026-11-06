@@ -268,11 +268,11 @@ void mw_sample_ui_tick(void)
         uintptr_t base;
         if(why==MODWERK_SAMPLE_OK && image(&pending.owner,&base) && mw_sample_owner_current_locked(&pending.owner)) {
 #ifdef MW_SAMPLE_MENU_HOST
-            mw_sample_menu_host_open_action(base+pending.action.entry_offset,token,&mw_sample_editor_api);
+            mw_sample_menu_host_open_action(base+pending.action.entry_offset,token,mw_sample_editor_public_api());
 #else
             void (*open)(uint32_t,const struct modwerk_sample_editor_api *)=
                 (void (*)(uint32_t,const struct modwerk_sample_editor_api *))(base+pending.action.entry_offset);
-            open(token,&mw_sample_editor_api);
+            open(token,mw_sample_editor_public_api());
 #endif
             modwerk_machine_unlock(saved);return;
         }

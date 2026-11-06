@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: MIT
  * Native 1.40C base adapter. The source build checks every owned seam against
  * the private stock image. Enabled only by the private sample-editor option.
- * Flex/Static and inactive recorder metadata only; no PCM access.
+ * Flex/Static and inactive recorder metadata. A bounded read copies absolute
+ * peaks through the stock pair readers; no sample pointer leaves the base.
  */
 #include "sample_editor_board.h"
 #ifdef MW_SAMPLE_BOARD_HOST
@@ -220,7 +221,24 @@ static unsigned publish(void *unused,const struct mw_sample_capture *before,cons
     return matches(settings,v->count,v->records) && READ(0x400ceb3cu)==selected?
         (stale?MODWERK_SAMPLE_STALE:MODWERK_SAMPLE_NO_CHANGE):MODWERK_SAMPLE_FAULT;
 }
-static const struct mw_sample_backend backend={0,lock,unlock,ready,owner,capture,publish};
+static int read_pair(void *unused,uint32_t position,int32_t *left,int32_t *right)
+{
+    (void)unused;
+    if(!audio_preemptible())return 0;
+    const struct modwerk_sample_view *v=&mw_sample_editor.before.view;
+    if(position>=v->frames || v->frames-position<2u)return 0;
+#ifdef MW_SAMPLE_BOARD_HOST
+    int mw_sample_host_read_pair(uint32_t,int32_t *,int32_t *);
+    return mw_sample_host_read_pair(position,left,right);
+#else
+    /* Pair readers identified by the sample-editor research: Flex, then Static.
+     * Two frames per call, the count that research ran on hardware. */
+    typedef int (*reader)(uint32_t,uint32_t,uint32_t,int32_t *,int32_t *);
+    reader native=(reader)(v->kind?0x40095984u:0x40093064u);
+    return native(v->slot,position,2u,left,right)>=0;
+#endif
+}
+static const struct mw_sample_backend backend={0,lock,unlock,ready,owner,capture,publish,read_pair};
 void mw_sample_editor_bootstrap(void)
 {
     if(!mw_sample_editor.initialized)(void)mw_sample_editor_init(&mw_sample_editor,&backend);
@@ -262,9 +280,25 @@ static unsigned api_replace(uint32_t token,const struct modwerk_sample_grid *gri
     unsigned why=buffer(grid,sizeof *grid,0)?mw_sample_editor_replace(&mw_sample_editor,token,grid):MODWERK_SAMPLE_INVALID;
     modwerk_machine_unlock(saved);return why;
 }
+static unsigned api_read(uint32_t token,uint32_t frame,uint32_t count,uint32_t channel,
+    int32_t *peaks,uint32_t cap,uint32_t *got)
+{
+    uint32_t saved=modwerk_machine_lock();
+    unsigned why=MODWERK_SAMPLE_INVALID;
+    if(count && count<=MODWERK_SAMPLE_READ_FRAMES &&
+       buffer(peaks,count*(uint32_t)sizeof *peaks,1) && buffer(got,sizeof *got,1))
+        why=mw_sample_editor_read(&mw_sample_editor,token,frame,count,channel,peaks,cap,got);
+    modwerk_machine_unlock(saved);return why;
+}
 const struct modwerk_sample_editor_api mw_sample_editor_api={
     MODWERK_SAMPLE_EDITOR_ABI,sizeof(struct modwerk_sample_editor_api),api_copy,api_confirm,api_cancel,api_replace
 };
+static const struct modwerk_sample_editor_read_api mw_sample_editor_read_api={
+    {MODWERK_SAMPLE_EDITOR_ABI,sizeof(struct modwerk_sample_editor_read_api),
+     api_copy,api_confirm,api_cancel,api_replace},api_read
+};
+const struct modwerk_sample_editor_api *mw_sample_editor_public_api(void)
+{return &mw_sample_editor_read_api.base;}
 void mw_sample_owner_changing(const struct runtime_dsp *from)
 {
     uint32_t saved=modwerk_machine_mask();
