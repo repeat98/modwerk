@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { post } from './api'
 import { useCommunity } from './context'
 import { MemberPrompt } from './MemberPrompt'
-import { FLASH_STATES, type DigiIssueContext, type FlashState } from './issue-context'
+import { DIGI_FLASH_CHOICES, FLASH_STATES, type DigiIssueContext, type FlashState } from './issue-context'
 import { useWorkspaceReportContext, type WorkspaceReportContext } from './report-context'
 import { communityModule } from './modules'
 import { DEVICES_BY_ID } from '../devices/registry'
@@ -32,7 +32,7 @@ export function DigiIssueReport({ id, openRequest = 0, embedded = false, workspa
   const deviceFields = <div className="issue-report-row issue-report-row-3">
     <label>{device.name}<select name="model" defaultValue={kept.model} required><option value="" disabled>Choose…</option>{(device.variants ?? [device.name]).map(model => <option key={model}>{model}</option>)}</select></label>
     <label>Base OS<select name="os" defaultValue={kept.os} required><option value="" disabled>Choose…</option>{device.firmware?.releases.map(release => <option key={release}>{release}</option>)}</select></label>
-    <label>It is running<select name="flash" defaultValue={kept.flash} required>{Object.entries(FLASH_STATES).map(([key, label]) => <option key={key} value={key}>{label.replace('an Octamod', 'a Modwerk')}</option>)}</select></label>
+    <label>It is running<select name="flash" defaultValue={kept.flash} required>{DIGI_FLASH_CHOICES.map(key => <option key={key} value={key}>{FLASH_STATES[key]}</option>)}</select></label>
   </div>
   /** A fresh form for the next bug; the device answers and follow choice stay as answered. */
   function reportAnother() { setSent(null); setError(''); setFormKey(key => key + 1) }
