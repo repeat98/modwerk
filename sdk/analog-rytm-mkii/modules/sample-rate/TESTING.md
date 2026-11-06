@@ -1,4 +1,4 @@
-# Sample RATE — test report
+# Sample Playback Rate (sample-rate) — test report
 
 Everything below was observed in rytm-emu on the named build. Nothing has run on a unit, and the emulator is not hardware evidence: the Hardware section is empty until the author reports from one.
 
@@ -28,6 +28,17 @@ Everything below was observed in rytm-emu on the named build. Nothing has run on
 - Build SP13 (as SR15, with Pipo Loop `b0ed4fe7`; test image only): `.syx` `221e94bca82b49a56f4179a51df6e01ed472cdcff311475b1ea38a3c86834d5d`.
 - A core-only image, same stock and core, for comparison.
 - Emulator: rytm-emu `c5732f0`, headless `dtboot`, JIT on. One generated sample, RAMP, 23,777 frames (odd, so STA and END fall on no round multiple), on BD with LOP ON. Audio is dtboot's `--wav`. Voice words are read with `DTBOOT_PEEK`: step at rec + 12, position at rec + 4, effective FIN at 0x8000f7cc. A click means a sample-to-sample step over 40, or six times the median, on a ramp whose normal step is below 2; each run also flags the trig's own attack, which is not counted.
+
+## 0.1.1: idle CPU (2026-11-06)
+
+0.1.0's block handler walked all eight voices every block before the prefetch, with no track's RATE on too. 0.1.1 returns at once when no track has RATE on and no voice is still going down (`going_any`, kept at the end of the full pass); otherwise the pass runs as before. The two gates in the step loop are unchanged.
+
+- Source (0.1.1-experimental): fingerprint `22e0fea1…0050` (`evidence.sourceSha256`).
+- Build SR07 (vendored core-ar2 0.7 + Sample Playback Rate 0.1.1-experimental, `--version SR07`): `.syx` `59efe41469ce121a43c9f9d3ed7dd11292487e02615baaf0c0b9f5d949443ac1`. rytm-emu `c5732f0`: the five media frames, replayed from the timed plans now in media/capture.json, are byte-identical to SR06's.
+- Hardware, measured on npp1993's Analog Rytm MKII (OS 1.74) with a private telemetry base that times every audio block on DTIM0 and sends it over USB MIDI, sequencer stopped, scratch project, no USB audio streaming:
+  - 0.1.0's cost: the author's 16-module set idles at 72.9 % of the audio block; the same set without this module at 72.1 %.
+  - LF01 (`a6d85a85…`, that set with this source and Ping Pong Loop's and QPERF's idle fixes, on that base): 71.1 %. Its own share was not separated. npp1993 reports that RATE still slows, stops and reverses on LF01.
+- Not run alone on a unit.
 
 ## The row, the tap and the value (SR06)
 
