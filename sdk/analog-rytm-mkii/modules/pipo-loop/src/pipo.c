@@ -64,6 +64,10 @@ struct voice {
 };
 
 static struct voice voices[VOICES];
+// Voices armed for a turn this block (bit v), for the gates in audio.s: with none armed they
+// leave the DMA as stock set it without calling pipo_loop_mirror, which costs the audio
+// interrupt 16 C calls a block with LOP OFF everywhere.
+unsigned char pipo_loop_armed;
 static short mirror[VOICES][MIRROR] __attribute__((aligned(16)));
 
 int pipo_loop_frame(int v8, unsigned frames);   // audio.s
@@ -165,6 +169,13 @@ void pipo_loop_audio(void)
             EFF(t, IDX_STA) = (short)end;
             EFF(t, IDX_END) = (short)sta;
         }
+    }
+    {
+        unsigned armed = 0;
+        for (v = 0; v < VOICES; v++)
+            if (voices[v].arm != ARM_NONE)
+                armed |= 1u << v;
+        pipo_loop_armed = (unsigned char)armed;
     }
 }
 

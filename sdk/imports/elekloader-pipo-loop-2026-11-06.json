@@ -1,22 +1,22 @@
 {
   "schema": 1,
   "kind": "elekloader-catalog",
-  "revision": "pipo-loop-2026-11-02",
+  "revision": "pipo-loop-2026-11-06",
   "about": "Modwerk source-only pipo-loop package for Analog Rytm MKII OS 1.74, compiled from sdk/analog-rytm-mkii/modules/pipo-loop.",
   "cores": [],
   "mods": [
     {
-      "file": "pipo-loop-0.1.1-experimental-os1.74.elemod",
-      "sha256": "5cfc4e1600ff729e212895f21d2b5b661850661f7ff31d427bdbeb161bcbbb55",
+      "file": "pipo-loop-0.1.2-experimental-os1.74.elemod",
+      "sha256": "74771bfd9ff59eeffd8d3e0d97471c2bf061a128cc119de50f25ced1dd10a8b1",
       "id": "pipo-loop",
-      "version": "0.1.1-experimental",
+      "version": "0.1.2-experimental",
       "device": "analog-rytm-mk2",
       "os": "1.74",
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "0b1c6dbb359b2abe39af4f6b512f46c0daee0182",
-        "path": "sdk/imports/packages/pipo-loop/pipo-loop-0.1.1-experimental-os1.74.elemod"
+        "commit": "0aee586fb822fb0d2b1482939b070fd1d65c9bc6",
+        "path": "sdk/imports/packages/pipo-loop/pipo-loop-0.1.2-experimental-os1.74.elemod"
       },
       "title": "Pipo Loop",
       "requires": [
@@ -28,7 +28,7 @@
       "category": "Playback",
       "author": "npp1993",
       "needs_core": "0.7",
-      "on_unit": "Earlier builds ran on an Analog Rytm MKII on OS 1.74 (the author's PP14 and RC07, as reported); this package has not run on a unit."
+      "on_unit": "This source ran on the author's Analog Rytm MKII on OS 1.74 in a 16-module combined image (LF01, as reported); this package has not run alone on a unit."
     }
   ]
 }
