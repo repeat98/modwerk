@@ -1,4 +1,4 @@
-/* Private exact-base binding, not a production SDK capability. */
+/* Reviewed base-export binding; host fixtures supply controlled APIs. */
 #ifndef OG_MACHINE_BASE_BINDING_H
 #define OG_MACHINE_BASE_BINDING_H
 #ifdef OG_MACHINE_BASE_BOUND

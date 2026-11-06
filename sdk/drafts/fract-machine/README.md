@@ -1,6 +1,6 @@
 # FRACT source draft
 
-Version 0.1.0-experimental · author @ex1010
+Version 0.1.1-experimental · author @ex1010
 
 ## Overview
 
@@ -9,7 +9,9 @@ left to right; SIZE expands the grain span around that center and wraps at the
 sample edges. It uses native FLEX for pitch and voice playback. This replaces
 the earlier FX2/SPACE proposal in the consolidated draft submission #926.
 
-This folder is source staging, not a selectable module or qualified download.
+This folder stages a USB-only release candidate. It is not yet a selectable
+module or qualified public download. The prospective package is reproducible
+without firmware; `release/README.md` lists the remaining publication steps.
 The source provenance baseline is ex1010/modwerk commit
 `5b5aa328c1bbed129ab6b1a65efb9353b93ede8f`, with accepted uncommitted
 centered-SIZE/UI edits and the consolidation changes in this branch. That pin
@@ -56,8 +58,8 @@ current FRACT admission policy allows one owner on T1–T4 only. This is an
 intentional private prototype limit, not eight simultaneous instances.
 
 START dispatch from #1029 is merged. The inherited native-FLEX reader fix is
-included with the source and media in #926; #1108 is to be superseded after
-consolidation. The base keeps FR:1 at boot (`known[]`, added in #926). On 5 November 2026,
+included with the source and media in merged #926; #1108 was closed as
+superseded by that consolidation. The base keeps FR:1 at boot (`known[]`, added in #926). On 5 November 2026,
 the owner completed the short physical check on base `9b3ba417` with a private
 paired FRACT build; USB confirmed that exact base and module set after power-on.
 See TESTING.md for identities, reported observations and limits. No catalogue
@@ -115,3 +117,27 @@ qualify this source tree or hardware audio. Artwork is MIT; screenshots retain
 the underlying interface rights described beside them. No sample audio is
 included. Full release capture provenance and all required control pages remain
 pending; the manifest's screenshot list is intentionally empty for this draft.
+
+## USB release candidate — 6 November 2026
+
+`runtime-build.json` describes the C/assembly build through the shared host
+recipe compiler, `scripts/source-runtime-package.py`. It contributes the same
+machine and START records through `runtime.json`; the granular engine, controls
+and UI are unchanged. The reviewed base-export guard accepts all seven published
+USB layouts whose runtime addresses match. Older or unknown bases refuse the
+machine callbacks. This candidate has the canonical runtime identity
+`fract-machine`; the earlier private `grnyv1` package is a separate module and
+must be replaced as a controlled set, not installed alongside it.
+
+From the repository root:
+
+```sh
+python3 -B scripts/source-runtime-package.py --recipe sdk/drafts/fract-machine/runtime-build.json --output /path/outside/git/fract-machine.mwrm
+python3 -B -m unittest discover -s sdk/tests -p 'test_source_runtime_package.py'
+```
+
+The second command checks recipe confinement, exported imports, each of the
+seven allowed base IDs, wrong-digest refusals and source-only reproducibility.
+Original-OS reconstruction and both strict stock-free scans were additionally
+run locally; no OS file is included. The candidate's exact-package hardware
+lifecycle remains pending, as does the first-release owner's approval.

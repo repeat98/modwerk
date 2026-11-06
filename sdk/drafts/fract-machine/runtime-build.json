@@ -1,0 +1,81 @@
+{
+  "schema": 1,
+  "id": "fract-machine",
+  "title": "FRACT",
+  "layout": 1,
+  "sources": [
+    {
+      "path": "machine.c"
+    },
+    {
+      "path": "render.c",
+      "optimize": "-O2"
+    },
+    {
+      "path": "start.c"
+    },
+    {
+      "path": "registration.c"
+    },
+    {
+      "path": "base_binding.c"
+    },
+    {
+      "path": "engine/grain.c"
+    },
+    {
+      "path": "engine/pitch.c"
+    },
+    {
+      "path": "support/control.c"
+    },
+    {
+      "path": "engine/source.c"
+    },
+    {
+      "path": "@/sdk/runtime/logging/freestanding.c"
+    },
+    {
+      "path": "engine/kernel.s"
+    }
+  ],
+  "includes": [
+    "engine",
+    "support",
+    ".",
+    "@/sdk/machines/octatrack/module-adapters/resident-runtime",
+    "@/sdk/machines/octatrack/include",
+    "@/sdk/runtime/loader",
+    "@/sdk/runtime/upload"
+  ],
+  "defines": [
+    "OG_MACHINE_PROTOTYPE",
+    "OG_MACHINE_START_EXTENSION",
+    "OG_NATIVE_STAGE_ONE",
+    "OG_MACHINE_BASE_BOUND",
+    "OG_MACHINE_GRAIN_ONLY"
+  ],
+  "runtime": "runtime.json",
+  "base": {
+    "identity": "9b3ba41715140d5fae07868a8b2adc6d89c3ec0272d8ab34c332461cf990a14c",
+    "packageSha256": "9b9ef905230d34eebbfb55046be074363082fba059e0b7abe10457d10afac1fd",
+    "runOrigin": 1084839424,
+    "imports": [
+      "mw_stock_pool_open"
+    ],
+    "identityHeader": {
+      "filename": "base_identity.h",
+      "addressDefine": "OG_BASE_DIGEST_ADDRESS",
+      "bytesName": "og_expected_base_digest",
+      "symbol": "modwerk_base_digest"
+    }
+  },
+  "reconstruction": "release/reconstruction.json",
+  "forbiddenPrefixes": [
+    "og_space_",
+    "og_source_",
+    "og_render",
+    "og_release_check",
+    "og_fetch"
+  ]
+}

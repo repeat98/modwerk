@@ -1,0 +1,127 @@
+{
+  "schema": 1,
+  "imageSha256": "4ad64eda75610e2a5de44f9255aff5a2b0e51d50244e77dc0e15175201b4a790",
+  "sources": {
+    "scripts/source-runtime-package.py": "845230615fd66f28c6548bee7d1116c0a4f130615fbdfde2dff2e535909371a1",
+    "module/base_binding.c": "fd9da5a389be0ff54fa1b912c955b481a7cece6168cd00bed99841f02f399a85",
+    "module/base_binding.h": "8d88996b9703b95de1a4197fb80e1c36c9cf9dd189ddc43b68ddad9c21a36397",
+    "module/control_layout.h": "4085f97129fbaf36fe808fba8081bdfbe5b5d175dd47f857d08bc2e98d2e708f",
+    "module/cpu_profile.h": "4fc9ced2fa683f30d3f3c59516a769b41b5dab85ff2f3dacb9126d9aa113ee20",
+    "module/engine/grain.c": "2d5233909b681098810c4a0f3b6f85ddcf3cfbc5179749d6f0ac5452822081d1",
+    "module/engine/kernel.h": "ffd5a9cd274145db26cc988afacce5e007d35c79a36ce8a44914e281ae861d17",
+    "module/engine/kernel.s": "643e34e4c1b75557e365f07030788d2a274fb7b5aa0f30acc5efb699fae6ad1a",
+    "module/engine/page_coordinates.h": "59720b052ab4e43b00ef48a9a292baea3f862bda9c818470e64b929b5a1f5b54",
+    "module/engine/pitch.c": "b49882cccb3a74a5c039b29a1b07e6f4ca8ed7d937fd02b7ccb3d643b9e9ec1c",
+    "module/engine/source.c": "df2abb3a8b6201cff01ee8b380d61c2535390d7f1c04204ebe3b22157bc0a0d6",
+    "module/fract_ui.h": "c70699b713c4ae0a1f3720e4b34bce546de40ac43feaebfb141c93e43659bb3a",
+    "module/machine.c": "4877588007cd5f7cda73bcf4d925f03b70379f07b19f3405aca27d6564eff36f",
+    "module/machine.h": "5d77969beb3aa41b359facfa9d4e267d3d986f2d306c9264a65b1d2cc98cb854",
+    "module/native_source.h": "071d9aee84067d5c165606e555d007c737a8c7aef99811ed3fce926e1ee9f8ab",
+    "module/registration.c": "3f9ffc31540e5a47da3fad1128ec17c28bb9816d930dd6d2062a97f7b558b34f",
+    "module/render.c": "fa4cff0f3b0aa8df3db966bbb9d777b874e39052c12679a814b11d3968f134ce",
+    "module/render.h": "2c81a00122910d8ec71d44917246e5b69fd6ca68e53772700f3c6672d3ffa773",
+    "module/runtime-build.json": "3c44e409185e5346f7f9a6a8f2fbccf52d570d2200877144457d549fcb287195",
+    "module/runtime.json": "10e2234c9a3fcceda4407f51a546bf29b206d298cd7ea0c50e846b0cc046a204",
+    "module/sample_pool.h": "157769f26f7ff4f8b0fb5f1cf42701a95e31616312c9ab234e958080e864b5e9",
+    "module/selection.h": "f2869ec9179878a3ba7020472725219602c0de3c1b331c8069dec68d6272b0ba",
+    "module/start.c": "e1e7e805090a2022f1bea33fe4f98f4b4698d91edb3388df7e2701e2547990c3",
+    "module/support/control.c": "f4035fa092840db61b7cbb7141e1af8cefebd91875748e9c4b05ad9c6fae62e4",
+    "module/support/grain.h": "accd83129e5d243abcfe6ddb27d3bee9440b3d1c25e2c98aff4e56c87c2f22d3",
+    "module/support/pan.h": "e1a05cf6d36716e5c0b0aaca19c19a86d7fa9669956ce97b2cfa2461420128eb",
+    "module/support/shapes.h": "fec26545e613ea7fa60a0d27f1aa906e864ea439ff5d82b7c1dbf3b00496e77a",
+    "module/support/sizes.h": "0e82d939929976de7aa3f0c17e014c34a45bbdc4ea68e92a30c58d40b17081bb",
+    "module/support/source.h": "75bbfd34bc9da1bf315650516eb3118c6472d6a845a56f471d3b39cd70d54771",
+    "module/support/window.h": "963478023953646d95e089110dae034de29aeb4c6c964d8e45ff39f3e9aeb34a",
+    "sdk/machines/octatrack/base-binding.json": "5fd132a438e3c040f4aa9ce1d0def1c5af4072a4953baa0f097c3d711e44fce2",
+    "sdk/machines/octatrack/events.json": "0b75b47895ff85dfcce22cedf46addb0018d7c38893757e8997247280ca0d614",
+    "sdk/machines/octatrack/events.py": "4dd1da3aaa03d72cd36283388ba23a19d07d65588e415aa773c4ac1301c5d78d",
+    "sdk/machines/octatrack/include/modwerk_events.h": "93ce05fdce9743f773a8fed7aa8298c4203e9d5b76f5f6c0f74008a6a9c00127",
+    "sdk/machines/octatrack/include/modwerk_sample_editor.h": "48c0aa9a2227cc59cc6a88fadc7712b48f3fd999b46d263f30975986ae66db12",
+    "sdk/machines/octatrack/module-adapters/resident-runtime/dsp_ledger.h": "4b25ee7a43a40ab8e6181373810731a6f90e3bd84c351575d215bd35089b9c6d",
+    "sdk/machines/octatrack/module-adapters/resident-runtime/resident_engines.h": "9991ef756302106b30fe0d70bbdba1e7949cb2c3950ac9dbcf1e6832edf1c161",
+    "sdk/machines/octatrack/module-adapters/resident-runtime/stock_hook_driver.h": "91554cb0ff7f6d00b3e04eb0fd8f950dd74ad5674d01a1b95a9cf8c774562143",
+    "sdk/machines/octatrack/module-adapters/resident-runtime/stock_hook_resources.h": "adf14294cb1d0813662da1b669ce27db75c3ce7f2e8329100a05cebf2b865018",
+    "sdk/machines/octatrack/module-adapters/resident-runtime/stock_hooks.h": "04f062478016eb69b14c0f0c150e87bb4107d66cdea5afdf047068a4f9511e5e",
+    "sdk/machines/octatrack/module-adapters/stock_recipe.py": "662b79d9dc612845cf85e5051fa2d711cad4f98244194357fdaaabca092d5ca5",
+    "sdk/runtime/loader/build.py": "5131901224dcd037c07f0233cadabd67eec2a952878bef5a92274dd3d6236c7d",
+    "sdk/runtime/loader/context.h": "7c811eb9f3bccef7b03a129f2ebe00ba477422f07315e682f6211d761aacf44b",
+    "sdk/runtime/loader/journal.h": "ecb3a90e3b8ae8f82a50ddc0dccd7d9201fcf1c244faa6f498a55c6625ed26b0",
+    "sdk/runtime/loader/loader.h": "1a1181510e5a6ba000ad57b51daad9bf0a6aa4fb27d41792ddc7e94a9b3de9e9",
+    "sdk/runtime/loader/modwerk_module.h": "55f39232ec7eb2fe8a497f946f559a9f4e78f90e637ea5475cca686bc5c56218",
+    "sdk/runtime/loader/set_package.h": "5ec2b110cb85a6fe7190686101689ae599e7edb467265c35352b26e62b26c545",
+    "sdk/runtime/loader/tests/events/runtime_events.h": "da56edc53d46a30617ef66d9a230ea2ffeeb011a3e5932ff1168870c99ae955c",
+    "sdk/runtime/loader/tests/set_test.h": "643d6dd135cb2c15f46d49fa1e1448953e8965dff1a7342aeb3d541e80d4c8be",
+    "sdk/runtime/logging/freestanding.c": "698d66b43a956e789c8b3057375a195db12e9a88968d2fbb3c7ce09a8021b575",
+    "sdk/runtime/m68k_codegen.py": "2ba57326583cbb0f9ada1d7c2b09fe4577a1ce35693b78dffaa4af7617dedfab",
+    "sdk/runtime/upload/upload.h": "4717f5f55c48e7d3f1d045aee72b5cf5e1194f707eb4a9da2bef0ca48b22ef6b",
+    "sdk/runtime/upload/vendor.h": "e6cd2ffd6137f668c6939a2c4a3990848cf05e92e3f84d04c862bc23e229b363",
+    "sdk/runtime/upload/wire.h": "781b3dc8cd4e59ffdd4e2c60b1b1f99356050be58c3c529b945d82e60e768829",
+    "src/engine/assets/octatrack-base.elemod": "9b9ef905230d34eebbfb55046be074363082fba059e0b7abe10457d10afac1fd"
+  },
+  "copies": [
+    {
+      "offset": 6488,
+      "length": 13,
+      "address": 1073973354,
+      "sha256": "2393ebbe40716982dc0fc11a30e3e53f13d60755b68dc8f156a4cf02ec77c2f2",
+      "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 10498,
+      "length": 18,
+      "address": 1073759904,
+      "sha256": "21fa9b2f73fd45425816040111feafeef4bc4894e08875d45b73907959f9b968",
+      "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 10654,
+      "length": 12,
+      "address": 1073851016,
+      "sha256": "bf5430043c8a12a1b41ec5885c35df271f94f8fcb710a4631e301dd2358ca193",
+      "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 11216,
+      "length": 12,
+      "address": 1073851016,
+      "sha256": "bf5430043c8a12a1b41ec5885c35df271f94f8fcb710a4631e301dd2358ca193",
+      "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 14674,
+      "length": 12,
+      "address": 1074093666,
+      "sha256": "cd309c74b16baa09c3d70ddd23ce1bd3fec58f9facb94cd9ca93eaeabcab993b",
+      "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 14686,
+      "length": 13,
+      "address": 1073821810,
+      "sha256": "a517b1ff860128401ddcb25f632699d7ba2288ca974b6dbfa3999254aff49af6",
+      "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 16508,
+      "length": 14,
+      "address": 1074362300,
+      "sha256": "9e3dd6327de2534128db7663c70f00d765756b788a6ef05047e2857e5963ef78",
+      "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 18636,
+      "length": 12,
+      "address": 1074632928,
+      "sha256": "46b13fd6f448673e784e0a160137853a497770078ee9f9796b6d893b0d5594bb",
+      "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 18648,
+      "length": 1,
+      "address": 1073742859,
+      "sha256": "36a9e7f1c95b82ffb99743e0c5c4ce95d83c9a430aac59f84ef3cbfab6145068",
+      "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    }
+  ],
+  "fills": []
+}

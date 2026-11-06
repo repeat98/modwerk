@@ -1,0 +1,17 @@
+{
+  "status": "CANDIDATE_ACCOUNTING_NOT_QUALIFIED",
+  "codeAndInitializedDataBytes": 30596,
+  "zeroInitializedStateBytes": 640,
+  "linkedModuleAllocationBytes": 31236,
+  "packageBytes": 32120,
+  "relocations": 225,
+  "stockCopies": 9,
+  "stack": "NOT_MEASURED",
+  "worstCaseColdFireCycles": "NOT_MEASURED",
+  "nativeStockRoutineCost": "NOT_MEASURED_OUTSIDE_MODULE_CODE",
+  "dspCodeWordsAdded": 0,
+  "dspStateWordsAdded": 0,
+  "hardware": "PENDING",
+  "compilerStackSingleFunctionMaxBytes": 380,
+  "compilerStackNote": "GCC per-function report on byte-identical code; this is not a complete call-chain/interrupt/stock-stack bound."
+}

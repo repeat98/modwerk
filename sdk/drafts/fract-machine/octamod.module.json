@@ -3,7 +3,7 @@
   "id": "fract-machine",
   "key": "FRACT",
   "name": "FRACT",
-  "version": "0.1.0-experimental",
+  "version": "0.1.1-experimental",
   "category": "machines",
   "source": {
     "repository": "https://github.com/ex1010/modwerk",
@@ -12,7 +12,7 @@
   },
   "build": {
     "status": "pending",
-    "reason": "Private source baseline plus accepted centered-SIZE/UI and consolidation edits; see README. No listed USB/card package or exact-public hardware qualification; the private paired builder refuses unsupported bases."
+    "reason": "Public USB candidate uses the source runtime recipe; exact public install/Keep/Undo/removal/power-cycle and first-release approval are pending."
   },
   "author": {
     "github": "ex1010",
@@ -23,14 +23,14 @@
   },
   "nativeManifest": "manifest.py",
   "presentation": {
-    "label": "Three-grain source draft",
+    "label": "Three-grain USB candidate",
     "family": "Granular track machine",
-    "summary": "Three overlapping grains with centered SIZE, wrapping POS and native FLEX pitch. Unlisted source draft.",
-    "overview": "A private-prototype track machine staged for review; public build integration and exact-build qualification remain pending.",
+    "summary": "Three overlapping grains with centered SIZE, wrapping POS and native FLEX pitch.",
+    "overview": "Three-grain track machine. USB release candidate; publication and exact-package hardware qualification pending.",
     "highlights": [
       "Three grains; SIZE expands around POS and wraps sample edges.",
       "Native pitch at MAIN F, neutral 64.",
-      "One owner on T1\u2013T4; no active SPACE or FX2 effect."
+      "One owner on T1–T4; no active SPACE or FX2 effect."
     ],
     "usage": [
       "On a compatible private paired build, choose FRACT in SRC SETUP on T1 and load a FLEX sample.",
@@ -116,7 +116,7 @@
     "uiClaims": [],
     "limitations": [
       "Unlisted source draft; not offered by the public configurator.",
-      "Eight registry slots exist; FRACT admits only one owner on T1\u2013T4.",
+      "Eight registry slots exist; FRACT admits only one owner on T1–T4.",
       "Private build requires an exact compatible paired base with FR:1 boot preservation.",
       "No public lifecycle, stress, companion or exact-build hardware qualification."
     ]

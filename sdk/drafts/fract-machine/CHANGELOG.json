@@ -1,12 +1,12 @@
 [
   {
-    "version": "0.1.0-experimental",
-    "date": "2026-11-04",
+    "version": "0.1.1-experimental",
+    "date": "2026-11-06",
     "changes": [
-      "Source draft of the three-grain track machine, replacing the earlier FX2/SPACE proposal.",
-      "SIZE grows around POS and wraps sample edges; MAIN F uses native pitch with 64 neutral.",
-      "One owner on T1–T4, with MAIN POS/SIZE/REVS/SPRD/SHPE/PTCH and SETUP PAN/SRNG.",
-      "Public build integration and exact-build hardware qualification remain pending."
+      "Adds the FRACT three-grain sample machine with centered SIZE and wrapping POS.",
+      "Uses native FLEX pitch, with three overlapping grain markers on the display.",
+      "Supports one active FRACT owner on tracks T1–T4.",
+      "Known issue: the listed USB release candidate still awaits its hardware lifecycle check."
     ]
   }
 ]

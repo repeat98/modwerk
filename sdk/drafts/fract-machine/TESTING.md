@@ -44,8 +44,8 @@ on a unit or establish real-time timing.
 
 ## Resources
 
-Exact linked code/state/table/buffer/stack/padding inventory and processor budgets
-for an installable public package: unmeasured. The source check prints synthetic
+The candidate accounting below records linked image/BSS and compiler frames.
+Complete stack/interrupt/stock-call bounds and processor budgets remain unmeasured. The source check prints synthetic
 image/BSS/relocation counts, not native package placement or maximum-load
 qualification. Current admission allows one owner on T1–T4, with three grain
 heads; do not extrapolate to more instances or companions.
@@ -96,3 +96,47 @@ the screenshot README records rights and preview limitations. They do not prove
 public source identity, hardware operation or listening qualification. Additional
 release control-page captures and exact image/emulator/setup provenance remain
 pending. No source sample, firmware, raw framebuffer, card or NVRAM is included.
+
+## Listed USB release candidate — 6 November 2026
+
+Version `0.1.1-experimental`, package SHA-256
+`54ca8f6b1a30e2f4811129e082ce18881148654b00c97c026508460a6cf7272e`:
+32,120 bytes; 30,596 linked image bytes, 640 BSS bytes, 225 relocations,
+38 event words, nine guarded stock copies, no fills or stock-code writes.
+The generated guard contains the seven published base IDs, at their common
+runtime addresses. All seven symbol-map/build-proof pairs were checked locally.
+
+The new host tests exercise every admitted digest and reject wrong complete
+digests. The prospective package reproduces without an OS file; private original
+1.40C reconstruction is byte-exact and passes both unchanged strict scans.
+The stock-copy source spans match the reviewed private recipe; only their
+image offsets moved. Granular/UI host regressions still pass (47 tests,
+four historical transport skips). The seven-layout admission update changes
+neither the granular algorithm nor controls.
+
+This is a different package from the 5 November private build: it has the
+canonical runtime module ID and a seven-base guard. Its install/Keep/Undo,
+replacement/removal, missing-module behavior, Part/project reload, physical
+power-cycle, companion and stress results are PENDING. The owner will connect
+the Octatrack later. Earlier hardware results are not promoted to a pass for
+this candidate. Own stack/worst-case cycle measurements and the corresponding
+qualification/performance records remain pending. No approval or waiver is
+created by this candidate declaration.
+
+### Exact candidate emulator and object comparison
+
+The exact package above completed a full native-voice emulator run on the same
+base: voice 255, owner T1, three advancing grain readers, retrigger, no loader
+errors/rejections or residency failures. Output was 44.1 kHz stereo PCM with
+nonzero samples. `release/emulator-result.json` records scalar results and a
+private audio hash. The fixture was a copied historical card/NVRAM state, not a
+pristine stock fixture. Audio, card/NVRAM, firmware and raw snapshots stay private.
+This is emulator evidence only.
+
+Against the previously accepted private build, all nine other C units and the
+assembly kernel have byte-identical text/read-only/data sections under the
+candidate compiler settings. Only the base-binding C unit changes. Compilation
+with stack reporting gives the same authored-image hash: the largest individual
+C function frame is 380 bytes. This excludes callees, stock routines and
+interrupt nesting and is not a total stack bound. `release/resources.json`
+records these limits. See `release/verification.md` for check and review scope.
