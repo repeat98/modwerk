@@ -26,7 +26,52 @@ Inspection of the pinned compiler's emitted code shows mf_label_text returning
 the text pointer in d0 while labels.s reads a0. The development compiler's ABI
 differs. The fix uses an integer enabled result in d0 and selects static label
 strings in assembly, avoiding pointer-return ABI differences. This correction
-still requires a fresh pinned build, emulator UI check and hardware retest.
+was rebuilt twice from commit d3c2aa967c56 with identical outputs. The private
+MF03 image SHA-256 is e9a1ee45d0335177c78f98f962ab03a012ddabd359cf676842942db44471813e.
+Exact-image emulator output passed (673 CCs, 84 assignments, six automatic
+refreshes), and all nine lifecycle checks passed. Exact MF03 LCD captures were
+visually inspected: both MIDI FEEDBACK: OFF and MIDI FEEDBACK: ON display.
+MF03 hardware results reported by the developer: the toggle label displays;
+feedback was enabled; on Track 1/channel 1, changing the Rytm's LEVEL to 96
+updated the USB-powered PC12's CC95 pickup target automatically without SEND.
+The pot held the Rytm at 96 until crossing pickup, then followed smoothly.
+The developer reports smooth movement for a further approximately 15 seconds
+through repeated automatic refreshes, without jumps or renewed pickup blocking.
+Routing was two-way DIN between PC12 port 1 and the Rytm, with temporary PC12
+USB/DIN forwarding disabled. The developer subsequently reports automatic
+target refresh and smooth pickup passing on Track 1 for filter frequency CC74,
+filter resonance CC75, amp attack CC78, amp decay CC80, delay send CC82 and
+reverb send CC83. Together with Track LEVEL CC95, all seven parameters have
+reported Track 1 hardware coverage. Further developer-reported MF03 results:
+
+- Track 12/channel 12 CC95 refresh and pickup passed independently; Track 1's
+  level stayed unchanged.
+- Opening another project initially stopped pickup; enabling MIDI FEEDBACK in
+  that project restored it, consistent with the per-project OFF default.
+- Saving a spare kit, editing Track 1 LEVEL and filter frequency, and reloading
+  with NO + PLAY MODE restored both PC12 targets automatically.
+- After saving the test project with feedback ON and power cycling, ON remained
+  displayed and automatic pickup worked without SEND FEEDBACK.
+- With feedback switched OFF, the developer reports target updates stopped.
+
+These are developer observations, not a captured hardware MIDI byte trace.
+Subsequent busy-playback testing FAILED: the developer reports filter frequency
+and resonance pickup stopping on tracks without known modulation; Track LEVEL
+was unaffected. A freeze occurred while changing tracks (the developer corrected
+an initial association with stopping playback). Power cycling with both DIN
+cables disconnected restored normal startup. With feedback OFF and DIN still
+disconnected, repeated track switching worked normally. The freeze's cause is
+unresolved; MF03 must not be treated as hardware-qualified or release-ready.
+Investigation found the previous enqueue admission checked block size and
+pending bytes but not the sender's ring-span/remaining-count coherence. A
+candidate guard now defers special or inconsistent states and requires room
+for every possible active DMA progress/reload count. New host cases cover
+idle stale descriptors, mismatched spans, special state, boundary capacity and
+the sender occupancy model. This hardening is not yet built/tested and is not
+claimed to explain or fix the reported freeze. Pickup interruptions are a
+separate unresolved failure; the refresh interval has not been changed.
+Busy playback/audio/timing, NRPN/USB-only suppression, kit changes, controller
+setup changes and measured hardware CPU/IRQ/queue behavior remain unqualified.
 
 ## Results observed
 

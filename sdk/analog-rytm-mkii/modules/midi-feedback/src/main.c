@@ -54,27 +54,27 @@ void mf_settings(void *menu)
     core_additem(menu, refresh_row);
 }
 
-/* Stock DIN enqueue can wait for space. Check its own ring occupancy while
- * interrupts are masked, keeping 64 bytes free for existing stock traffic.
- * Reserve the WHOLE active DMA block, not its decreasing remaining count:
- * the hardware can finish/reload CITER before its completion ISR runs, even
- * while CPU interrupts are masked. Stock's capacity check must still pass
- * in that state, so a progress-dependent preflight is insufficient.
- * Ordinary enqueue was exercised in the emulator; full-queue stress and
- * hardware IRQ timing remain qualification checks.
+/* Stock DIN enqueue can wait for space. Validate its descriptor AND ring
+ * bookkeeping under masked interrupts, reserving the whole active span.
+ * Any inconsistent/special state defers; hardware can still advance or reload
+ * its remaining count while CPU interrupts are masked. See mf_queue_admits.
  */
 static int send_cc(unsigned channel, unsigned cc, unsigned value)
 {
     uint16_t sr;
-    uint32_t dma, pending;
+    uint32_t active, end, begin, block, remaining, pending;
     uint8_t message[3] = {(uint8_t)(0xb0 | channel), (uint8_t)cc, (uint8_t)value};
     int sent = 0;
     __asm__ volatile ("move.w %%sr,%0\n\tmove.w #0x2700,%%sr" : "=d"(sr) : : "memory", "cc");
     if (U32(MIDI_READY_AT) && U32(DIN_BUFFER_AT)) {
-        dma = U32(DIN_STATE_AT) ? U16(DMA_BLOCK_AT) : 0;
-        if (U32(DIN_STATE_AT) && !dma) dma = 4096u; /* inconsistent active state: defer */
+        active = U32(DIN_STATE_AT);
+        end = U32(DIN_STATE_AT + 20u);
+        begin = U32(DIN_STATE_AT + 32u);
+        block = U16(DMA_BLOCK_AT);
+        remaining = U16(DMA_BLOCK_AT - 8u);
         pending = U32(DIN_PENDING_AT);
-        if (pending <= 4096u && dma + pending <= 4096u - 64u - 3u) {
+        if (end < 4096u && begin < 4096u &&
+            mf_queue_admits(active, (end - begin) & 4095u, block, remaining, pending)) {
             DIN_ENQUEUE(3, message);
             sent = 1;
         }

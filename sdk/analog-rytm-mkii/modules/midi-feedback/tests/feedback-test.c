@@ -18,6 +18,27 @@ int main(void)
 {
     struct mf_state s = {0};
     unsigned t, p, i;
+    /* A block-only preflight admits these inconsistent states even though
+     * the sender's modular occupancy can leave less than one CC of room.
+     */
+    assert(!mf_queue_admits(0,0,1,0,0));
+    assert(!mf_queue_admits(1,1,2,0,0));
+    assert(!mf_queue_admits(2,0,0,0,0));
+    assert(!mf_queue_admits(1,0,0,0,0));
+    assert(!mf_queue_admits(1,3,3,4,0));
+    assert(mf_queue_admits(0,0,1,1,0));
+    assert(mf_queue_admits(1,4029,4029,0,0));
+    assert(!mf_queue_admits(1,4030,4030,0,0));
+    /* Validate room against the sender's occupancy model for every DMA
+     * progress/reload value in a representative range of admitted states.
+     */
+    for (t=1;t<4096;t+=31) for (p=0;p<4096;p+=29) {
+        if (!mf_queue_admits(1,t,t,t,p)) continue;
+        for (i=0;i<=t;++i) {
+            unsigned used=(t+i-t)&4095u;
+            assert(4096u-used >= p+64u+3u);
+        }
+    }
     mf_reset(&s);
     assert(!mf_flush(&s, emit));
     for (t = 0; t < 12; ++t) for (p = 0; p < 7; ++p) mf_offer(&s,t,p,t,64);

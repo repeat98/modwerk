@@ -9,6 +9,8 @@
 struct mf_cell { uint8_t value, channel, sent_value, sent_channel, valid, sent, refresh; };
 struct mf_state { struct mf_cell cells[MF_COUNT]; unsigned cursor, coalesced, deferred; };
 typedef int (*mf_send)(unsigned channel, unsigned cc, unsigned value);
+int mf_queue_admits(unsigned active, unsigned span, unsigned block,
+                    unsigned remaining, unsigned pending);
 void mf_reset(struct mf_state *s);
 void mf_request_refresh(struct mf_state *s);
 void mf_offer(struct mf_state *s, unsigned track, unsigned parameter, int channel, int value);
