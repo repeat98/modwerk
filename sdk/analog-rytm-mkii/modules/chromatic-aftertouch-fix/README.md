@@ -91,7 +91,7 @@ The module changes three stock instructions (OS 1.74) and one call:
   pressure handler; the roll's velocity, which it records, is written as on stock.
 - With RTRG held, pressure also reaches whatever is under the RETRIG menu, as without RTRG: the
   pads on the pad pages and in CHROMATIC mode, and in PERF mode the performance pads, whose
-  pressure now moves the performance while RTRG is held, where stock froze it (rytm-emu). A timed
+  pressure now moves the performance while RTRG is held, where stock froze it (rytm-emu and the author's unit). A timed
   popup under the menu closes on pad pressure, as it does without RTRG.
 - During a roll with VEL.CUR OFF, one squeeze moves both the velocity and the aftertouch targets.
 - A receiver that relied on stock's CHROMATIC poly pressure 24 semitones above the note sees it
