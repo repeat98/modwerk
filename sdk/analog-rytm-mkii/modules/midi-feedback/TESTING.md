@@ -13,7 +13,20 @@ readiness from compilation or from a read-only emulator probe.
 - Modwerk's imported core-ar2 0.7, compiled locally with m68k-linux-gnu tools.
   This is a development toolchain, not the pinned release compiler.
 - Firmware, card, snapshots, build receipts and symbol maps stay in the private
-  workspace outside this repository. No real instrument has received a build.
+  workspace outside this repository. See the hardware report below for MF02.
+
+## Hardware report, 2026-11-06
+
+The developer reports that MF02 boots on an Analog Rytm MKII previously running
+stock 1.74, reaches the pattern screen, and responds to buttons and knobs.
+SEND FEEDBACK displays, but the selectable row immediately above it is blank.
+Feedback operation has not yet been tested on hardware.
+
+Inspection of the pinned compiler's emitted code shows mf_label_text returning
+the text pointer in d0 while labels.s reads a0. The development compiler's ABI
+differs. The fix uses an integer enabled result in d0 and selects static label
+strings in assembly, avoiding pointer-return ABI differences. This correction
+still requires a fresh pinned build, emulator UI check and hardware retest.
 
 ## Results observed
 

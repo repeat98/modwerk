@@ -7,8 +7,12 @@ mf_toggle_label:
         link %a6,#-4
         move.l %d2,-(%sp)
         move.l %a0,%d2
-        jsr mf_label_text
-        move.l %a0,%a1
+        | Integer results use d0 with both development and release compilers.
+        jsr mf_label_enabled
+        lea mf_disabled_text,%a1
+        tst.l %d0
+        beq.s mf_make_label
+        lea mf_enabled_text,%a1
         bra.s mf_make_label
 mf_refresh_label:
         link %a6,#-4
@@ -27,3 +31,7 @@ mf_make_label:
         rts
 mf_refresh_text:
         .asciz "SEND FEEDBACK"
+mf_disabled_text:
+        .asciz "MIDI FEEDBACK: OFF"
+mf_enabled_text:
+        .asciz "MIDI FEEDBACK: ON"

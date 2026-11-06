@@ -34,9 +34,9 @@ volatile struct {
 } mf_probe;
 
 static int enabled(void) { return core_store_get(STORE(midi_feedback_enabled), 0, 0) != 0; }
-const char *mf_label_text(void)
+int mf_label_enabled(void)
 {
-    return enabled() ? "MIDI FEEDBACK: ON" : "MIDI FEEDBACK: OFF";
+    return enabled();
 }
 static void toggle(void)
 {
