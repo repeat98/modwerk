@@ -1,0 +1,1 @@
+Site: an Octatrack report now asks whether the unit runs Modwerk firmware from the card or modules loaded over USB, and the mirrored GitHub issue shows which, so maintainers no longer have to ask. Older reports still read "Running a Modwerk build"; Digitakt and Digitone reports are unchanged.
