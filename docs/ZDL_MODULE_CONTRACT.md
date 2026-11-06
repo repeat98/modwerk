@@ -24,10 +24,21 @@ templates) are a later step and not part of this contract.
 effect's knob handlers from a stock Zoom effect's handler code and splices in
 a divide routine taken from a stock effect: a few hundred bytes in every
 effect built so far, Matujuice's included. Modwerk does not ship extracted
-stock code. So before any listing, the project replaces them with handlers of
-its own, written from its documented calling convention, tested on the pedal,
-and every listed effect is rebuilt with them. Work item in
-[ZoomMultistompZDL's TODO](https://github.com/themanro/ZoomMultistompZDL/blob/main/TODO.md).
+stock code. Leemuzhko's own runtime replaces them, vendored in
+[`vendor/zoom-zdl-runtime/`](../vendor/zoom-zdl-runtime/) (MIT; its three call
+helpers equal TI's RTS source, BSD-3-Clause; pin in
+`sdk/imports/zoom-zdl-runtime-487ced9.json`). Both files are written from the
+documented ABI: `zui.asm` holds the OnOff handler and one knob body that a
+short entry per knob calls (knob id = index + 2, parameter at byte
+20 + 4 × index), and `dll.asm` the `Dll_` entry. An effect built with them,
+with generated ABI attributes and without the unused divide routine, carries
+no Zoom code. Its author reports it working on an MS-70CDR 2.10 (13 October
+2026): OnOff, nine knobs, display strings, wide K3 and K8, GEQ faders and
+saving. Still open: an effect that divides floats calls TI's
+`__c6xabi_divf`, so it avoids that call or links divf built from TI's RTS
+source. Before any listing, the project's linker uses this runtime and every
+listed effect is rebuilt with it and retested on the pedal
+([ZoomMultistompZDL's TODO](https://github.com/themanro/ZoomMultistompZDL/blob/main/TODO.md)).
 
 **2. Where the binary comes from.** Modwerk never commits built images. Two
 ways, owner's choice:
@@ -61,6 +72,10 @@ tests, licence, media). Zoom-specific meanings:
 - `access`: where it appears (the effect's category in the pedal's effect
   list) and how to reach its knob pages.
 - `controls`: every knob, with its default and range, in pedal page order.
+  At most nine: a tenth leaks into the next effect's state. A patch stores
+  K1-K9 in 12/11/11/8/8/8/8/9/8 bits, so each knob's range fits its width.
+  Names and shown values are at most five characters (the runtime author's
+  findings; the widths are the MS-50G and MS-70CDR patch format).
 
 The `platform` section, `kind: "zdl"`:
 
@@ -70,7 +85,7 @@ The `platform` section, `kind: "zdl"`:
 | `effectId` | `gid` (category) and `fxid` | Unique across modules and Zoom's stock effects; inside the author's range |
 | `effectVersion` | The version in the ZDL header (`1.00`) | Matches the binary |
 | `dspCost` | The cost the pedal adds up per patch, in its percent units | Within the patch budget; measured, not guessed |
-| `binary` | `sha256`, `bytes`, and `build` (A) or `release` (B: repository, tag, asset) | Size within the proven limit (32,126 bytes on the MS-70CDR 2.10); hash matches |
+| `binary` | `sha256`, `bytes`, and `build` (A) or `release` (B: repository, tag, asset) | Size within the proven limit (32,126 bytes on the MS-70CDR 2.10) and `.text` + `.const` at most 30,032 bytes (the measured load boundary); hash matches |
 | `screen` | `static` (a cover picture) or `live` (draws its own screen) | `live` lists the firmware it draws on; elsewhere it falls back to `static` |
 | `pedals` | Per pedal: `machine`, `firmware`, `status` (`confirmed`, `reported`, `untested`) and the evidence report | `confirmed` needs an author-hardware report for that pedal and firmware |
 
@@ -161,7 +176,7 @@ to `preview` when its first module validates, as other machines do.
 
 A short first set of effects already tested on the MS-70CDR 2.10, for
 example Loop, Scope and Spectrum and one audio effect, each rebuilt with the
-project's own handlers and retested before submission. Matujuice's effects are
+vendored runtime and retested before submission. Matujuice's effects are
 his to submit.
 
 ## Open questions for the owner
