@@ -11,7 +11,9 @@ export function writesDelayTableTail(address: number, length: number) {
 
 // Validate every extent and guard before copying or writing the local image.
 // An error cannot leave a half-patched image for a later build to consume.
-export async function applyGuardedOsWrites(original: Uint8Array, writes: readonly OsWrite[]): Promise<Uint8Array> {
+// `authorSpans`: runs a pinned author image already wrote into `original` (only MIDI Scenes passes its recipe's). A write whose
+// guard lies wholly inside one replaces the author's bytes, not the DELAY's, so the table check lets it through.
+export async function applyGuardedOsWrites(original: Uint8Array, writes: readonly OsWrite[], authorSpans: readonly { address: number; bytes: number }[] = []): Promise<Uint8Array> {
   if (!original.length || original.length > 16 * 1024 * 1024 || writes.length > 4096) throw new Error('The OS write plan has invalid bounds.')
   const ordered = [...writes].sort((a, b) => a.address - b.address)
   let previousEnd = OS_LOAD_ADDRESS
@@ -19,7 +21,7 @@ export async function applyGuardedOsWrites(original: Uint8Array, writes: readonl
     const offset = write.address - OS_LOAD_ADDRESS
     if (!Number.isInteger(write.address) || !Number.isInteger(write.guardLength) || offset < 0 || write.guardLength < 1 || write.bytes.length < 1 || write.bytes.length > write.guardLength || offset + write.guardLength > original.length || !/^[0-9a-f]{64}$/.test(write.guardSha256)) throw new Error('The OS write plan has an invalid guarded range.')
     if (write.address < previousEnd) throw new Error('The OS write plan contains overlapping guards.')
-    if (writesDelayTableTail(write.address, write.bytes.length)) throw new Error(write.note + ' would change ' + DELAY_TABLE_TAIL_REFUSAL + '.')
+    if (writesDelayTableTail(write.address, write.bytes.length) && !authorSpans.some(span => write.address >= span.address && write.address + write.guardLength <= span.address + span.bytes)) throw new Error(write.note + ' would change ' + DELAY_TABLE_TAIL_REFUSAL + '.')
     previousEnd = write.address + write.guardLength
   }
   for (const write of ordered) {

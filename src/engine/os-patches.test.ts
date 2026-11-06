@@ -38,6 +38,12 @@ describe('transactional guarded OS writes', () => {
     expect(result.subarray(DELAY_TABLE_TAIL - 4 - OS_LOAD_ADDRESS, DELAY_TABLE_TAIL - OS_LOAD_ADDRESS)).toEqual(new Uint8Array(4).fill(0x4e))
     expect(result.subarray(DELAY_TABLE_TAIL - OS_LOAD_ADDRESS, DELAY_TABLE_TAIL_END - OS_LOAD_ADDRESS)).toEqual(new Uint8Array(DELAY_TABLE_TAIL_END - DELAY_TABLE_TAIL))
     expect(original.every(byte => byte === 0)).toBe(true)
+    // An author span (MIDI Scenes' own cave) lets through only a guard wholly inside it.
+    const span = [{ address: DELAY_TABLE_TAIL + 0x100, bytes: 0x10 }]
+    expect((await applyGuardedOsWrites(original, [await write(DELAY_TABLE_TAIL + 0x108, 8)], span))[DELAY_TABLE_TAIL + 0x108 - OS_LOAD_ADDRESS]).toBe(0x4e)
+    for (const [address, length] of [[DELAY_TABLE_TAIL + 0x10c, 8], [DELAY_TABLE_TAIL + 0xfc, 8], [DELAY_TABLE_TAIL, 2]]) {
+      await expect(applyGuardedOsWrites(original, [await write(address, length)], span)).rejects.toThrow('synthetic cave would change the stock DELAY reads')
+    }
   })
   it('refuses missing, odd or non-code runtime hook targets before installation', () => {
     const proof = proofs.cases[6], runtime = { symbols: new Map(Object.entries(proof.symbols)), sections: proof.sections }

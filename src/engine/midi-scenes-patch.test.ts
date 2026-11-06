@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createHash } from 'node:crypto'
 import raw from '../../sdk/drafts/midi-scenes/recipe.json'
-import { MIDI_SCENES_SCENE_MUTE, midiScenesConflicts, midiScenesSceneMuteWrites, reconstructMidiScenes, reconstructMidiScenesAuthor, validateMidiScenesPatch, type MidiScenesPatch } from './midi-scenes-patch'
+import { MIDI_SCENES_SCENE_MUTE, midiScenesAuthorSpans, midiScenesConflicts, midiScenesSceneMuteWrites, reconstructMidiScenes, reconstructMidiScenesAuthor, validateMidiScenesPatch, type MidiScenesPatch } from './midi-scenes-patch'
 import { applyGuardedOsWrites, OS_LOAD_ADDRESS } from './os-patches'
 const sha = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex')
 const candidate = raw as MidiScenesPatch
@@ -64,7 +64,10 @@ describe('MIDISC2.0 stock-free candidate', () => {
     const author = new Uint8Array(1112560)
     const hex = (value: string) => Uint8Array.from(value.match(/../g)!, byte => parseInt(byte, 16))
     for (const row of MIDI_SCENES_SCENE_MUTE) author.set(hex(row.author), row.address - OS_LOAD_ADDRESS)
-    const fixed = await applyGuardedOsWrites(author, await midiScenesSceneMuteWrites())
+    // Three sites sit in the author's cave over the stock DELAY table: refused unless they land on the author's own bytes.
+    await expect(applyGuardedOsWrites(author, await midiScenesSceneMuteWrites())).rejects.toThrow('scene mute: crossfader mix: jsr ab_d1 would change the stock DELAY reads')
+    expect(midiScenesAuthorSpans(candidate)).toContainEqual({ address: 0x400d24d0, bytes: 0x808 })
+    const fixed = await applyGuardedOsWrites(author, await midiScenesSceneMuteWrites(), midiScenesAuthorSpans(candidate))
     for (const row of MIDI_SCENES_SCENE_MUTE) {
       const at = row.address - OS_LOAD_ADDRESS
       expect(Buffer.from(fixed.subarray(at, at + row.bytes.length / 2)).toString('hex')).toBe(row.bytes)
@@ -89,7 +92,7 @@ describe('MIDISC2.0 stock-free candidate', () => {
     expect(helpers.match(/4a7980000006/g)).toHaveLength(1)
     expect(author.some(Boolean)).toBe(true)
     const drifted = author.slice(); drifted[0x400d2928 - OS_LOAD_ADDRESS] ^= 1
-    await expect(applyGuardedOsWrites(drifted, await midiScenesSceneMuteWrites())).rejects.toThrow('scene mute')
+    await expect(applyGuardedOsWrites(drifted, await midiScenesSceneMuteWrites(), midiScenesAuthorSpans(candidate))).rejects.toThrow('does not match the guard for MIDISC2.0 scene mute')
   })
   it('refuses a release reconstruction whose author image lacks the scene-mute sites', async () => {
     const { original, recipe } = synthetic()

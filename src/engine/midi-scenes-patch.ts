@@ -1,6 +1,6 @@
 // MIDISC2.0 candidate. Public composition remains behind the catalog's pending gate.
 // All inherited instruction/descriptor spans come from the local verified 1.40C.
-import { applyGuardedOsWrites, type OsWrite } from './os-patches.ts'
+import { applyGuardedOsWrites, OS_LOAD_ADDRESS, type OsWrite } from './os-patches.ts'
 export type MidiScenesPatch = {
   schemaVersion: number; id: string; moduleVersion: string
   upstream: { repository: string; revision: string; path: string; sha256: string }
@@ -73,9 +73,13 @@ export async function midiScenesSceneMuteWrites(): Promise<OsWrite[]> {
   return Promise.all(MIDI_SCENES_SCENE_MUTE.map(async row => ({ address: row.address, guardLength: row.author.length / 2, guardSha256: await hash(fromHex(row.author)), bytes: fromHex(row.bytes), note: `MIDISC2.0 scene mute: ${row.note}` })))
 }
 
+/** The author image's own runs. Its main cave already fills 0x400d24d0..0x400d2cd7, the stock DELAY's table, so the
+ *  scene-mute writes there replace author bytes; the guard lets only those through. */
+export const midiScenesAuthorSpans = (recipe: MidiScenesPatch) => recipe.writes.map(row => ({ address: OS_LOAD_ADDRESS + row.offset, bytes: row.bytes }))
+
 /** Reconstruct the released image: the pinned author image plus the scene-mute fix. */
 export async function reconstructMidiScenes(original: Uint8Array, recipe: MidiScenesPatch): Promise<Uint8Array> {
-  const result = await applyGuardedOsWrites(await reconstructMidiScenesAuthor(original, recipe), await midiScenesSceneMuteWrites())
+  const result = await applyGuardedOsWrites(await reconstructMidiScenesAuthor(original, recipe), await midiScenesSceneMuteWrites(), midiScenesAuthorSpans(recipe))
   if (await hash(result) !== MIDI_SCENES_RELEASE_SHA256) throw new Error('MIDISC2.0 output differs from the scene-mute release image.')
   return result
 }
