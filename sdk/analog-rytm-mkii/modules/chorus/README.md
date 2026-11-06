@@ -54,7 +54,9 @@ See [TESTING.md](TESTING.md).
 
 ## Screens and audio
 
-No captures yet: rytm-emu does not reach the SEND FX page.
+Screenshots are rytm-emu captures of build CH02 ([media/capture.json](media/capture.json)). No audio preview yet.
+
+![SEND FX with CHORUS](media/send-fx-chorus.png) ![SEND on a sound track](media/send-page.png)
 
 ## Authorship and licences
 

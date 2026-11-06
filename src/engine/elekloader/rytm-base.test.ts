@@ -48,13 +48,13 @@ describe('the Rytm sets\' Modwerk base', () => {
 
 // A whole build through the site's own builder path (prepareBuild, buildWithLock) and the kit's worker logic, with the
 // owner's stock OS, which never enters Git: MODWERK_RYTM_STOCK names Analog-Rytm_MKII_OS1.74.syx, MODWERK_RYTM_FX the
-// output folder of scripts/build-elemod-packages.mjs --drafts for analog-rytm-mkii:chorus (flanger and phaser too when
-// there), until their packages join the library. Run locally; CI has no stock file.
+// output folder of scripts/build-elemod-packages.mjs --drafts for the send effects whose packages have not joined the
+// library yet (each one in the catalogue is built from its pinned package). Run locally; CI has no stock file.
 const STOCK = process.env.MODWERK_RYTM_STOCK, FX = process.env.MODWERK_RYTM_FX
 describe.runIf(STOCK && FX)('a Rytm set built on the Modwerk base with the owner\'s OS', () => {
   const BASE = 'https://modwerk.test/elekloader/'
-  const effects = ['chorus', 'flanger', 'phaser'].filter(id => existsSync(FX + '/analog-rytm-mkii/' + id + '/1.74.json'))
-  const exported = new Map(effects.map(id => {
+  const unpinned = ['chorus', 'flanger', 'phaser'].filter(id => existsSync(FX + '/analog-rytm-mkii/' + id + '/1.74.json') && !(CATALOG as Catalog).mods.some(mod => mod.id === id))
+  const exported = new Map(unpinned.map(id => {
     const plan = JSON.parse(readFileSync(FX + '/analog-rytm-mkii/' + id + '/1.74.json', 'utf8'))
     return [`${id}-${plan.version}-os1.74.elemod`, { id, version: plan.version as string, data: new TextEncoder().encode(exportText(packageRecipe(plan))) }]
   }))
@@ -63,6 +63,7 @@ describe.runIf(STOCK && FX)('a Rytm set built on the Modwerk base with the owner
     source: { repo: 'repeat98/modwerk', commit: '0'.repeat(40), path: 'sdk/imports/packages/' + mod.id + '/' + file },
     title: mod.id.toUpperCase(), requires: ['core'], conflicts: [], needs_core: '0.7',
   }))] }
+  const effects = ['chorus', 'flanger', 'phaser'].filter(id => catalog.mods.some(mod => mod.id === id))
   const builder = () => {
     const handle = createService(async url => {
       const file = url.slice(BASE.length)

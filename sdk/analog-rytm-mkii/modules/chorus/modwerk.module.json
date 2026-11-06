@@ -26,9 +26,10 @@
       "Every control can be locked on the FX track."
     ],
     "usage": [
-      "Send a hi-hat and a snare a little, leave the kick dry.",
-      "Lock SPD on a few steps of the FX track for movement in time with the pattern.",
-      "Keep the return low with LEV and raise the sends for a wider sound."
+      "Install the module with the Modwerk base; the base carries the send bus, its pages and the effect list.",
+      "On a sound track, press AMP twice to open SEND and turn A to send the track.",
+      "Select the FX track and press DELAY twice to open SEND FX; hold FUNC and turn A to choose CHORUS.",
+      "Turn A to G to shape it, hold FUNC and turn E for the return level LEV, and hold FUNC to read the CPU."
     ]
   },
   "access": {
@@ -137,7 +138,23 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host: the same samples as Send FX's CHORUS over 20,000 blocks of random settings. Unit: test build MB02 reported working by the author (29 Oct 2026). rytm-emu: MB02 boots; the SEND FX page cannot be reached there."
+    "summary": "Host: the same samples as Send FX's CHORUS over 20,000 blocks of random settings. Unit: test build MB02 reported working by the author (29 Oct 2026). rytm-emu 2ac0f1f: the SEND and SEND FX pages with CHORUS (CH02).",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Install the module with the Modwerk base; the base carries the send bus, its pages and the effect list.",
+          "On a sound track, press AMP twice to open SEND and turn A to send the track.",
+          "Select the FX track and press DELAY twice to open SEND FX; hold FUNC and turn A to choose CHORUS.",
+          "Turn A to G to shape it, hold FUNC and turn E for the return level LEV, and hold FUNC to read the CPU."
+        ]
+      },
+      "screenshots": [
+        "media/send-fx-chorus.png",
+        "media/send-page.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
   },
   "license": {
     "spdx": "GPL-3.0-or-later",
@@ -153,6 +170,38 @@
       "credit": "stigmagit",
       "license": "GPL-3.0-or-later",
       "source": "Original conceptual illustration in the shared signal-art style."
+    },
+    {
+      "path": "media/send-fx-chorus.png",
+      "kind": "screenshot",
+      "caption": "SEND FX on the FX track with CHORUS chosen: its seven controls, the send amount and LEV.",
+      "alt": "SEND FX page titled 01 CHORUS, with SND 0, knobs SPD, DEP, TIME, WDTH, LEV, FDBK, HPF and LPF.",
+      "credit": "stigmagit documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "43a8037a759aa7efd315cd0ac717d2cec669c9db8573b5f22acd27e4e4a55a0b",
+        "setup": "Headless rytm-emu (dtboot) running CH02: the Modwerk base's send-bus variant and this folder's CHORUS 0.1.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/send-page.png",
+      "kind": "screenshot",
+      "caption": "SEND on a sound track, behind AMP: how much of BD goes to the send effect.",
+      "alt": "SEND FX BD page with one SND knob, and BD LEV at the bottom.",
+      "credit": "stigmagit documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "43a8037a759aa7efd315cd0ac717d2cec669c9db8573b5f22acd27e4e4a55a0b",
+        "setup": "Headless rytm-emu (dtboot) running CH02: the Modwerk base's send-bus variant and this folder's CHORUS 0.1.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
     }
   ]
 }
