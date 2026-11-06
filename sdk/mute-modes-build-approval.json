@@ -1,17 +1,13 @@
 {
   "kind": "owner-approved-update",
   "id": "mute-modes",
-  "version": "0.2.1-experimental",
+  "version": "0.2.2-experimental",
   "approvedBy": "repeat98",
-  "approvedOn": "2026-10-14",
+  "approvedOn": "2026-11-04",
   "waived": [
-    "current-build-hardware",
-    "chip-worst-case-cycles",
-    "complete-memory-bounds",
-    "release-documentation"
+    "current-build-hardware"
   ],
-  "retainedUiVersion": "0.1.0-experimental",
-  "sourceSha256": "21cdcf28a1bb4ec35ae379593c1c20614e2cc93638a8b7a18d0db997f6581683",
-  "ownerStatement": "Approved by repeat98 on 14 Oct 2026 (HANDOVER.md, owner decisions): release Mute Modes 0.2.1, not 0.2.0; the OT page screenshots may be kept from the previous versions.",
-  "reason": "The owner approved this exact native source: Zac-Kyoti's 0.1.0 with its runtime package's fresh_bind detour replaced by an ev_voice_bind subscriber (order 50) that runs the same fresh_bind code, the SC_KEY variant replaced by a raise of the base's ev_mute_keep event once per frame in OTFX, OTFX-T and DT-T, and MUTE MODE restored from its battery copy on the first UI tick after an install; native builds, plain, SC_KEY and menu, assemble byte-identical to the author's references. The OT pages and controls are unchanged, so the 0.1.0 captures are retained. Evidence is emulator-only (synthetic mute/mode words, DSP records and a stand-in ev_mute_keep provider); physical audio, power-cycle persistence, current-build hardware, chip worst-case timing and complete memory bounds stay waived for this exact version only, and the author's historical hardware evidence stays historical. Native/browser parity, source-only reproduction and repository checks remain required; the release can only publish once a base built with site events that raises ev_mute_keep ships. 0.2.0 is not released. Re-bound on 14 Oct 2026 from 411613bd4e9a… to cover evidence/performance.json relabelled to 0.2.1-experimental with every measurement unmeasured (its earlier figures not carried over); the native code is unchanged, and the owner gave the go-ahead to ship the beta without hardware verification."
+  "sourceSha256": "bdfceea33319bc21db121e142573a8c2f9b675b457a3de3e3a3b3b7b251ba7b9",
+  "ownerStatement": "Approved by repeat98 on 4 Nov 2026: release Mute Modes 0.2.2-experimental as an owner-reviewed update, without the frame-interrupt load capture and the flood stress run. No owner unit run of this version was done.",
+  "reason": "The 0.2.2 source moves SHADOW out of stock SRAM into mm_softmute and adds KEYHOLD and the OT-exit hold. The native probe (4,353,132 cases) puts the frame hook's worst bound at 3,440 cycles (SC_KEY, OTFX; 3,344 in 0.2.1) and the plain one at 2,176 (2,032), at most 16,624 per block against a 95,778 budget; the per-trig paths are unchanged. The author reported his MKI runs on native card images: MW_MMOH1 (Sidechain Compressor + Mute Modes, MAIN d8267756…, from a2d9882b) on 3 Nov 2026, MW_MMKH1 (before the OT-exit hold) on 3 Nov and MW_MM022 (this module alone, before KEYHOLD) on 27 Oct. The USB package d8b871e3… was not run on a unit, nor was any MKII. Only the missing stock benchmark (frame-interrupt load) and stress rows are waived, for this exact version and source; every other qualification stays required."
 }

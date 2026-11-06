@@ -59,4 +59,4 @@ The sequencer and the audio engine share a musical clock, not a sample count. Me
 | Playing | `0x405c8cf8` | Nonzero while the sequencer runs. |
 | Per-track events | `0x8000fd50`, three longs a track | The times the sequencer will process each track's next steps. They include swing and micro timing: not a grid. |
 
-Read the three pulse words with interrupts masked, so they belong to the same pulse. A pad's retrig series is driven by the same clock (`0x8000fd50[39 + t]`, one tick ahead, and a 960-tick counter at `0x42adf5d0[t]`).
+Read the three pulse words with interrupts masked, so they belong to the same pulse. The step word runs a step ahead of what plays: in rytm-emu at 1x, a lock trig on step 4 acted while it read 5. A change that acts at once, such as a performance amount, made at the counter's step belongs on the step before when you write it as a lock. A pad's retrig series is driven by the same clock (`0x8000fd50[39 + t]`, one tick ahead, and a 960-tick counter at `0x42adf5d0[t]`).

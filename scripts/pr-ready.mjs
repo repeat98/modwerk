@@ -21,9 +21,19 @@ export function gateEdits(files) {
   return files.some(file => MODULE_FOLDER.test(file)) ? files.filter(file => GATE.test(file)) : []
 }
 
+/** Why the checks cannot run on this Python, or null. npm run check runs the module gates in Python 3.10+: an older python3
+ * (macOS's own is 3.9) crashes inside scripts/module-pairs.py while it loads the Octatrack manifests, with no word on why. */
+export function pythonProblem({ command = 'python3', version = null, error = null } = {}) {
+  const [major, minor] = (version ?? '').split('.').map(Number)
+  if (!error && (major > 3 || (major === 3 && minor >= 10))) return null
+  const found = error ? `${command} did not run (${error})` : `${command} is ${version || 'an unknown version'}`
+  return `npm run check needs Python 3.10 or newer, and ${found}. Install Python 3.10+ and put it first on PATH, then run this again.`
+}
+
 /** The verdict from what was found; every problem says what to do. */
-export function readiness({ dirty = [], behind = false, remote = 'upstream', regenerated = [], checkPassed = true, author = null, scope = null, guideEdits = [], gateEdits = [], compiled = null, board = null }) {
+export function readiness({ python = null, dirty = [], behind = false, remote = 'upstream', regenerated = [], checkPassed = true, author = null, scope = null, guideEdits = [], gateEdits = [], compiled = null, board = null }) {
   const problems = [...board?.problems ?? []], notes = [...board?.notes ?? []]
+  if (python) problems.push(python)
   if (gateEdits.length) problems.push('This pull request changes a module and also ' + gateEdits.join(', ') + ': a check that judges modules. A red check names the fix; never change the check to pass it. If the check itself is wrong, send the correction as its own Fix: pull request for the owner to review, and let the module wait for it.')
   if (dirty.length) problems.push('Commit or discard these changes first; only commits reach the PR: ' + dirty.join(', '))
   if (behind) problems.push(`Your branch does not contain current main. Merge it (git merge ${remote}/main), resolve any conflict, then run this again.`)
@@ -38,7 +48,7 @@ export function readiness({ dirty = [], behind = false, remote = 'upstream', reg
   if (compiled?.elemod) notes.push('CI rebuilds the Digitakt, Digitone, Rytm and Four packages (elemod-source) and requires the committed ones to match. pr:ready cannot run that: before you push, run bash scripts/build-elemod-isolated.sh and node scripts/verify-elemod-release-exports.mjs <dir> from a clean, committed tree ("Compiled packages" in docs/DEVELOPER_WORKFLOW.md).')
   // The guides are the context every later agent reads, so each PR says what they lacked or got wrong (AGENTS.md, "Fold what you learn back").
   notes.push('What did the guides lack or get wrong while you did this? ' + (guideEdits.length
-    ? 'Guide edits on this branch: ' + guideEdits.join(', ') + '. Say in the PR what they fix. If a developer working now could hit it before this merges, post it on the agent board too: npm run board -- finding <topic> <key> "…" --pr <n>.'
+    ? 'Guide edits on this branch: ' + guideEdits.join(', ') + '. Say in the PR what they fix. If a developer working now could hit it before this merges, post it on the agent board yourself: npm run board -- finding <topic> <key> "…" --pr <n>.'
     : 'No guide edit is on this branch: fix it where a reader would look (docs/, AGENTS.md, the machine guide; for a module release, a separate Docs: PR), or write "nothing" in the PR.'))
   notes.push('Then push, open or update the PR, and watch it: gh pr checks <number> --watch. If main moves before the merge, run this again and push.')
   return { ok: problems.length === 0, problems, notes }
@@ -55,12 +65,14 @@ export async function boardClaims(root, base, board) {
     if (error instanceof board.BoardUnavailable) return { problems, notes: ['Board: claims not checked. ' + error.message + ' Run this again before you push once it answers.'] }
     throw error
   }
-  for (const item of compared.others) problems.push(`${item.kind} ${item.key} (${item.why}) is claimed by ${board.describeClaim(item.claim)} on the agent board. Never work around a claim: ask them, or renumber or rename yours (docs/AGENT_BOARD.md).`)
+  for (const item of compared.others) problems.push(`${item.kind} ${item.key} (${item.why}) is claimed by ${board.describeClaim(item.claim)} on the agent board. Never work around a claim: ask them yourself (npm run board -- ask ${item.kind} ${item.key} "…"), or renumber or rename yours (docs/AGENT_BOARD.md).`)
   const open = [...compared.free, ...compared.unknown, ...compared.mine]
   if (!login && open.length) problems.push('This branch adds ' + open.map(item => item.kind + ' ' + item.key).join(', ') + ', which need your claim on the agent board. Sign in once with npm run board -- login, then run this again.')
   else for (const item of open) {
     try {
-      const result = await board.claim({ kind: item.kind, key: item.key, branch: board.currentBranch(root) })
+      // A claim says what the work is; a note its holder wrote by hand stays, and one the server refuses never costs the claim.
+      const request = { kind: item.kind, key: item.key, branch: board.currentBranch(root) }, note = item.claim?.note ? '' : item.note
+      const result = note ? await board.claim({ ...request, note }).catch(error => { if (error instanceof board.BoardError && error.status === 400) return board.claim(request); throw error }) : await board.claim(request)
       notes.push((result.renewed ? 'Board: renewed your claim on ' : 'Board: claimed ') + item.kind + ' ' + item.key + ' for @' + login + '.')
     } catch (error) {
       if (error instanceof board.BoardUnavailable) { notes.push('Board: could not claim ' + item.kind + ' ' + item.key + '. ' + error.message); continue }
@@ -90,9 +102,13 @@ async function main(argv) {
   const dirty = tracked()
   let behind = false
   try { git('merge-base', '--is-ancestor', base, head) } catch { behind = true }
+  // The same interpreter the gates call (scripts/modules.mjs).
+  const pythonCommand = process.platform === 'win32' ? 'python' : 'python3'
+  const probe = spawnSync(pythonCommand, ['-c', 'import sys; print("%d.%d.%d" % sys.version_info[:3])'], { cwd: root, encoding: 'utf8' })
+  const python = pythonProblem({ command: pythonCommand, version: probe.stdout?.trim() || null, error: probe.error?.message ?? (probe.status ? (probe.stderr || '').trim().split('\n').pop() || 'exit ' + probe.status : null) })
   // Each step runs only when the ones before it passed, so the first problem is the one to fix.
   let regenerated = [], checkPassed = true, scope = null
-  if (!dirty.length && !behind) {
+  if (!python && !dirty.length && !behind) {
     for (const args of GENERATORS) if (!npm(...args)) throw new Error('npm run ' + args.join(' ') + ' failed')
     regenerated = tracked()
     if (!regenerated.length) checkPassed = npm('check', '--', '--base', base)
@@ -110,7 +126,7 @@ async function main(argv) {
   const boardModule = !dirty.length && !behind ? await import('./agent-board.mjs') : null
   const claimed = boardModule && await boardClaims(root, base, boardModule), waiting = boardModule ? await boardModule.inboxNotes() : []
   const board = claimed || waiting.length ? { problems: claimed?.problems ?? [], notes: [...claimed?.notes ?? [], ...waiting] } : null
-  const verdict = readiness({ dirty, behind, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), compiled, board })
+  const verdict = readiness({ python, dirty, behind, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), compiled, board })
   console.log('')
   for (const line of verdict.problems) console.log('✗ ' + line)
   for (const line of verdict.notes) console.log('· ' + line)

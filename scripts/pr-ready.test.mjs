@@ -3,12 +3,23 @@ import { execFileSync, spawnSync } from 'node:child_process'
 import { copyFileSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { gateEdits, readiness } from './pr-ready.mjs'
+import { gateEdits, pythonProblem, readiness } from './pr-ready.mjs'
 
 describe('pr:ready verdict', () => {
   it('is ready only with a committed, current, regenerated branch whose checks pass', () => {
     expect(readiness({}).ok).toBe(true)
     for (const state of [{ dirty: ['a.ts'] }, { behind: true }, { regenerated: ['src/catalog/module-documents.json'] }, { checkPassed: false }]) expect(readiness(state).ok).toBe(false)
+  })
+  it('says the checks need Python 3.10+ instead of letting an older one crash inside them', () => {
+    for (const version of ['3.10.0', '3.12.4', '3.14.0', '4.0.0']) expect(pythonProblem({ version })).toBeNull()
+    const old = pythonProblem({ command: 'python3', version: '3.9.6' })
+    expect(old).toContain('needs Python 3.10 or newer')
+    expect(old).toContain('python3 is 3.9.6')
+    expect(pythonProblem({ command: 'python', error: 'spawn python ENOENT' })).toContain('python did not run (spawn python ENOENT)')
+    expect(pythonProblem({ version: null })).toContain('an unknown version')
+    const verdict = readiness({ python: old })
+    expect(verdict.ok).toBe(false)
+    expect(verdict.problems[0]).toBe(old)
   })
   it('says how to bring a stale branch up to date from the remote that holds main', () => {
     expect(readiness({ behind: true, remote: 'upstream' }).problems[0]).toContain('git merge upstream/main')
