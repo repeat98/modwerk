@@ -19,7 +19,7 @@ for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => {
   process.exitCode = signal === 'SIGINT' ? 130 : 143
 })
 
-async function run(name, args = []) {
+async function run(name, args = [], env = {}) {
   if (interrupted) return false
   const key = [name, ...args].join(' ')
   if (carried.has(key) && !WRITES.has(name)) {
@@ -32,6 +32,7 @@ async function run(name, args = []) {
     // Use npm's current CLI and Node runtime, preserving each script's flags and lifecycle hooks.
     const child = spawn(process.execPath, [npmCli, 'run', name, ...(args.length ? ['--', ...args] : [])], {
       cwd: root,
+      env: { ...process.env, ...env },
       stdio: ['inherit', 'pipe', 'pipe'],
     })
     children.add(child)
@@ -120,10 +121,14 @@ if (passed && base) passed = await run('board', ['check', '--base', base])
 // Documentation uses the same import policy as publication without running firmware gates. The catalogue tests read Markdown
 // (the module guides' links, the agent files, the pull request template), so a prose-only change can break them and must run them.
 if (passed && documentationOnly) passed = await run('sdk:imports:check') && await run('test', ['src/catalog'])
+// module:doctor --draft copies a draft under sdk/octabam/modules/ for its run, where the SDK suite, the other test files and the
+// build would read it as a listed module. Its test waits out that parallel stage and runs alone after it.
+const DRAFT_DOCTOR = ['scripts/module-doctor.test.mjs', '-t', 'checks a draft where every gate looks']
 if (passed && !documentationOnly) {
   const results = buildOnly
     ? [await build()]
-    : await Promise.all([sdkSuite ? run('sdk:check') : skip('sdk:check', 'no changed path reaches it; CI runs it'), run('lint'), run('test'), build()])
+    : await Promise.all([sdkSuite ? run('sdk:check') : skip('sdk:check', 'no changed path reaches it; CI runs it'), run('lint'), run('test', [], { MODWERK_DEFER_DRAFT_DOCTOR: '1' }), build()])
+  if (!buildOnly) results.push(await run('test', DRAFT_DOCTOR))
   passed = results.every(Boolean) && !interrupted
 }
 const passedNow = [...carried, ...[...results].filter(([, ok]) => ok).map(([key]) => key)].filter(key => results.get(key) !== false)
