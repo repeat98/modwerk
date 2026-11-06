@@ -5,6 +5,11 @@ sections below (the CHROMATIC note) are unchanged and still apply.
 
 ## 0.2.0: pad pressure during retrig rolls
 
+Source (0.2.0-experimental): fingerprint (`sha256` of `sha256sum build.json
+src/chromatic-aftertouch-fix.s`) `a43d7db5…8a5c` (`evidence.sourceSha256`). Package
+`chromatic-aftertouch-fix-0.2.0-experimental-os1.74.elemod` `4c6c86c3…e81b`, compiled in the pinned
+toolchain (`build-elemod-isolated.sh`, image `8f3b70d4`).
+
 ### Stock, read in the code (OS 1.74)
 
 From the same disassembly as below, kept outside the repository.
