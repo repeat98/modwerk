@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/phaser",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-04",
+  "changes": [
+    "First library release for Analog Rytm MKII OS 1.74, on the Modwerk base's send-bus variant: a stereo phaser on the send bus, Send FX's PHASER unchanged."
+  ],
+  "runtimeSourceSha256": "dac6cfa2ce99c4e40acea936dbe0ea1b1207dc0b7285d8573c1e998f9d90bef5",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/phaser/phaser-0.1.0-experimental-os1.74.elemod",
+      "sha256": "a2582fe34f1b3f24a39d27cad224457581653b706d31a76eff521048275d0c17"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/phaser/TESTING.md",
+  "requires": []
+}
