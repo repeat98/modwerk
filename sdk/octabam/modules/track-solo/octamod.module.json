@@ -65,11 +65,32 @@
       "method": "static",
       "conditions": "Module-owned instructions only: the dearest UI tick transition plus the active frame path, at 2.49216 cycles an instruction. Stock callees, cache and bus waits are excluded. Not measured on a chip.",
       "source": "evidence/performance.json"
+    },
+    "impact": {
+      "conditions": "One global instance with HOLD on and a group active. Estimates come from source and static counts, not measured hardware headroom. Loader allocation is included in memory.",
+      "cpu": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "At most 21 module instructions in a frame, 8 when idle. The dearest work is a UI-tick transition updating sixteen lamps, about 1,028 instructions, only when a hold starts or the group changes. Chip load is not measured.",
+        "source": "evidence/performance.json"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP program, effect slot or DSP state is added. The temporary mute word uses the stock mute path.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "A 1,500-byte image with 44 writable bytes, zero BSS, and a 2,544-byte loader extent, with no buffers or per-track allocation.",
+        "source": "evidence/resource-accounting.md"
+      }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Author functional report on real hardware, 6 November 2026: package 1895ceec alone ran 300 s on base 462fbd2b with the setting, hold, join and leave, audio, lamps and editing working, and rollback read back. Emulator results are for the 0.2.2 package. Frame load and stress not measured. See TESTING.md.",
+    "summary": "Author functional report on real hardware, 6 November 2026: package 1895ceec alone ran 300 s on base 462fbd2b with the setting, hold, join and leave, audio, lamps and editing working, and rollback read back. Emulator control (18/18) and audio suites passed on 0.2.3; wider emulator results are for the 0.2.2 package. Frame load and stress not measured. See TESTING.md.",
     "hardwareStatus": "reported",
     "gates": [
       "python3 -B verify.py",
@@ -173,9 +194,9 @@
         "tutorial": {
           "title": "Quick tutorial: audition tracks while editing",
           "steps": [
-            "Open PROJECT > CONTROL > SEQUENCER and set TRACK SOLO to HOLD.",
-            "Hold T2 alone for 0.5 seconds, then press T3 to add or remove it.",
-            "Release T2 to end the temporary solo."
+            "Install Track Solo over USB. Open PROJECT > CONTROL > SEQUENCER, set TRACK SOLO to HOLD, close the menu, and let any stock notification clear.",
+            "Hold T2 alone for 0.5 seconds. While continuing to hold T2, press and release T3: T2 and T3 are now in the temporary group. Press T3 again to remove it.",
+            "Release T2. The underlying mute and solo state applies again. Select OFF to disable the gesture completely."
           ]
         },
         "screenshots": [
@@ -204,9 +225,9 @@
         "page": "PROJECT / CONTROL / SEQUENCER",
         "shows": "location",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "da5a9d93eaed2270af824e6c4b524f122865d01a2d1d168303e962651cb3e029",
-        "setup": "MKII ot_emu; private base plus the exact Track Solo runtime package; actual loaded SOLO/TEST scratch project; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. No reconstructed UI, DSP audio or hardware claim."
+        "moduleVersion": "0.2.3-experimental",
+        "imageSha256": "124548dc353b2f9cd41ba0a27113ae441e82b68a16d10a1b9509920c61839587",
+        "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.3 package installed through the real runtime backend; panel_test.py --menu; empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo."
       }
     },
     {
@@ -221,9 +242,9 @@
         "page": "PROJECT / CONTROL / SEQUENCER",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "da5a9d93eaed2270af824e6c4b524f122865d01a2d1d168303e962651cb3e029",
-        "setup": "MKII ot_emu; private base plus the exact Track Solo runtime package; actual loaded SOLO/TEST scratch project; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. No reconstructed UI, DSP audio or hardware claim."
+        "moduleVersion": "0.2.3-experimental",
+        "imageSha256": "124548dc353b2f9cd41ba0a27113ae441e82b68a16d10a1b9509920c61839587",
+        "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.3 package installed through the real runtime backend; panel_test.py --menu; empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo."
       }
     }
   ],

@@ -54,8 +54,23 @@ replayed instruction, the return address, the site and its guard.
 card build, MKI, all eight anchors, external MIDI, arranger rows, Pickup
 recording, the K09 modifier orderings, Part or project changes during a hold,
 self-test, Keep, power-cycle behaviour, audio measurement, and CPU or frame
-timing. The emulator results below are for `0.2.2` package `6b7a…`; they were
-not rerun on `0.2.3`.
+timing.
+
+### Emulator reruns on 0.2.3 — 6 November 2026
+
+Package `1895ceec…` on base MAIN `124548dc…9587`, emulator evidence only:
+
+- `ux_test.py`: passed, 18 of 18 checks, including MIDI mute/solo/cue retained
+  underneath and active removal restoring seven sites and the stock TRACK levels.
+- `ux_test.py --audio`: passed, 4 checks, including a real MIDI mute surviving
+  the frame override and becoming audible on release.
+- `panel_test.py --menu`: the OFF long-press and SEQUENCER row checks passed and
+  produced the screenshots, then it stopped at the assertion that the overlay is
+  still off 1.8 s into a hold. That line predates the 0.5 s hold: the `0.2.2`
+  package fails at the same line, and the overlay does activate. Not a module fault.
+
+Not rerun on `0.2.3`: `--paired`, `--save`, the broad profiles and the routine
+lane. Results below are for `0.2.2` package `6b7a…`.
 
 ## Track Solo 0.2.2-experimental status — 5 November 2026
 

@@ -5,9 +5,9 @@ Version `0.2.3-experimental` · author `twwwy`.
 **Evidence:** package `1895ceec…` was tested by the author on a real Octatrack
 over USB on 6 November 2026: the setting, the hold, join and leave, audio, lamps
 and editing all worked, and the rollback was read back from the unit. That is a
-functional report on Track Solo alone, not a stress or timing run. The emulator
-results are for the `0.2.2` package, which differs from `0.2.3` in one detour
-site. See [TESTING.md](TESTING.md).
+functional report on Track Solo alone, not a stress or timing run. The control
+and audio emulator suites passed on `0.2.3`; the wider emulator results are for
+the `0.2.2` package, which differs in one detour site. See [TESTING.md](TESTING.md).
 
 ## Overview
 
@@ -38,18 +38,15 @@ membership. All eight audio-track buttons can join one operation.
 
 ## Usage
 
-The USB prototype contributes its setting through the existing shared
+Track Solo contributes its setting through the existing shared
 `ot_sequencer_rows` table. It uses no private PERSONALIZE table or settings file.
 The proposed shared PERSONALIZE table is not a dependency.
 
-### Quick tutorial
+### Quick tutorial: audition tracks while editing
 
-1. Load the private candidate in an emulator. Open PROJECT > CONTROL > SEQUENCER,
-   set TRACK SOLO to HOLD, close the menu, and let any stock notification clear.
-2. Hold T2 alone for 0.5 seconds. While continuing to hold T2, press and release
-   T3: T2 and T3 are now in the temporary group. Press T3 again to remove it.
-3. Release T2. The underlying mute and solo state applies again. Select OFF to
-   disable the gesture completely.
+1. Install Track Solo over USB. Open PROJECT > CONTROL > SEQUENCER, set TRACK SOLO to HOLD, close the menu, and let any stock notification clear.
+2. Hold T2 alone for 0.5 seconds. While continuing to hold T2, press and release T3: T2 and T3 are now in the temporary group. Press T3 again to remove it.
+3. Release T2. The underlying mute and solo state applies again. Select OFF to disable the gesture completely.
 
 ## Compatibility and limitations
 
