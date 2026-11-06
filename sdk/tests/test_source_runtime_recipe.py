@@ -18,8 +18,13 @@ class RecipeBoundaries(unittest.TestCase):
             folder = Path(tmp).resolve()
             (folder / 'source.c').write_text('int entry(void) { return 0; }\n')
             (folder / 'alias.c').symlink_to(folder / 'source.c')
-            for value in ('../source.c', '/tmp/source.c', '@/sdk/octabam/modules/other/source.c', 'alias.c'):
-                with self.subTest(value=value), self.assertRaises(ValueError):
+            # Assert the policy reason so a nonexistent fixture cannot hide a bypass.
+            cases = (('../source.c', 'confined relative source path'),
+                     ('/tmp/source.c', 'confined relative source path'),
+                     ('@/sdk/octabam/modules/other/source.c', 'Shared paths must belong'),
+                     ('alias.c', 'symlinked source path'))
+            for value, reason in cases:
+                with self.subTest(value=value), self.assertRaisesRegex(ValueError, reason):
                     runtime.source_path(ROOT, folder, value)
 
     def test_header_symlink_refuses_before_loading_sdk_or_running_compiler(self):
