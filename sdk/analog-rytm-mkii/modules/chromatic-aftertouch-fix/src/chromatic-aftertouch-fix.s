@@ -1,6 +1,10 @@
         | SPDX-License-Identifier: GPL-3.0-or-later
-        | chromatic-aftertouch-fix - CHROMATIC pads send their MIDI poly
-        | pressure on the note they played.
+        | chromatic-aftertouch-fix (Pad Pressure Fix) - CHROMATIC pads send
+        | their MIDI poly pressure on the note they played. The retrig part
+        | (0.2.0) is three byte sites in build.json with no code here: the
+        | pad views' branches past the aftertouch path in a roll (0x400c755a,
+        | 0x400c6228) become no-ops, and the RETRIG menu's pressure method
+        | returns 0 (0x400e2924) so the pad view below also gets the event.
         |
         | On stock OS 1.74, ChromPadsView (a2 below) keeps two notes per pad:
         | the pad's place in the current layout at view + 404 + 4 * pad, which

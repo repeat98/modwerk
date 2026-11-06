@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/chromatic-aftertouch-fix",
+  "version": "0.2.0-experimental",
+  "date": "2026-11-06",
+  "changes": [
+    "Renamed Pad Pressure Fix. During a retrig roll (RTRG held, or ALWAYS ON) a held pad's pressure now also reaches the sound's aftertouch and MIDI poly pressure, as on a plain held pad; stock sent it only to the roll's velocity, and with RTRG held and VEL.CUR set nowhere. With VEL.CUR OFF pressure still sets the roll's velocity. The CHROMATIC note fix of 0.1.0 is unchanged."
+  ],
+  "runtimeSourceSha256": "a43d7db5c24f5f941ea24d16b33d3c8d4f0727e81a1da8ff99974c285ceb8a5c",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/chromatic-aftertouch-fix/chromatic-aftertouch-fix-0.2.0-experimental-os1.74.elemod",
+      "sha256": "4c6c86c3a577c3b95a06b67c75cea20003b6ebe36cb8e2f72fa769227699e81b"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/chromatic-aftertouch-fix/TESTING.md",
+  "requires": []
+}
