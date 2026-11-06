@@ -12,7 +12,17 @@
 
 Code and data: 2803 bytes of `.run` and `.bss` (m68k-elf GCC 16.2.0). Work area: none.
 
-Load, on rytm-emu's ColdFire core alone (`cfbench`, instructions per `render`, the mean of 64 blocks of a drum loop at full send, five places), against CHORUS 0.1 at 2,644 on the same input: 1.03 at the defaults, 1.27 at its dearest settings. Instructions are not cycles: on the unit, the base's CPU reading on SEND FX is the measure. Not measured on a unit.
+Load, on rytm-emu's ColdFire core alone (`cfbench`, instructions per `render`, the mean of 64 blocks of a drum loop at full send, five places), against CHORUS 0.1 at 2,644 on the same input:
+
+| Settings | Instructions | Against CHORUS |
+| --- | --- | --- |
+| Defaults (SHPE 0: the sine fold alone) | 2,732 | 1.03 |
+| Defaults with WDTH at 127 | 3,004 | 1.14 |
+| SHPE above 1 (sine and triangle mixed) and WDTH at 127: the dearest, with any FOLD, DRV or DYN | 3,356 | 1.27 |
+
+On the same input FLANGER 0.1, in the library, takes 5,810 (2.2). Instructions are not cycles: the divide on every sample costs more on the unit than its count shows, and the base's CPU reading on SEND FX is the measure.
+
+On a unit, not this package: on 6 November 2026 the author read **CPU 6** on the author's own playing OS MD23 (Send FX, OS 1.74), whose WAVEFOLDER runs the same DSP built `-Os` inside Send FX, on Send FX's meter (whole percent): the author's big project, every track sending and the pattern playing, WAVEFOLDER with WDTH at 127, read with FUNC held three seconds after the last knob (the conditions asked; not confirmed one by one, and SHPE's place not reported). On the same project, for scale: CHORUS 6 on the Modwerk base's meter (test build MB13, at rest), and on Send FX's meter (MD22) PITCH SPIRAL 6, FREQ SHIFTER 7 and FLANGER 8. This package has not been measured on a unit.
 
 ## Sound quality
 
@@ -32,7 +42,7 @@ In rytm-emu 2ac0f1f (6 November 2026), build WF01 (the base's send-bus variant 0
 
 Evidence tier **author-hardware** for 0.1.0-experimental, source sha256 `6cc42991b690994f8bb4dacc4a72255dce8ae565f3d640a0ed56c822c53a073f` (sha256 over `build.json` then each `src/` file in name order, each as its path, a NUL, its bytes and a NUL).
 
-Test build MB11, 30 October 2026, Analog Rytm MKII on OS 1.74 (sha256 3ed14a3d…): this effect with FREQ SHIFTER, REVERSE DELAY and RING MOD, CHORUS, FLANGER and PHASER, Loop Sync 0.3.2 and Retrig Grid 0.2.0, on the base with the send bus and the clock. As the author reported, that group holds "les meilleurs effets de toute la liste". Which steps of the sheet were run was not detailed; the CPU reading was not reported. MB11 built this source with id 10; the library's takes 4, the next free id on main's base, and nothing else differs.
+Test build MB11, 30 October 2026, Analog Rytm MKII on OS 1.74 (sha256 3ed14a3d…): this effect with FREQ SHIFTER, REVERSE DELAY and RING MOD, CHORUS, FLANGER and PHASER, Loop Sync 0.3.2 and Retrig Grid 0.2.0, on the base with the send bus and the clock. As the author reported, that group holds "les meilleurs effets de toute la liste". Which steps of the sheet were run was not detailed; the CPU reading was not reported there (see Resources for the reading on MD23). MB11 built this source with id 10; the library's takes 4, the next free id on main's base, and nothing else differs.
 
 ## Library release (proposed, 6 November 2026)
 

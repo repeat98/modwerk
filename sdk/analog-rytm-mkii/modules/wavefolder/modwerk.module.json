@@ -117,9 +117,9 @@
     "memoryBytes": 2803,
     "fastBytes": null,
     "load": {
-      "display": "Not measured on a unit",
+      "display": "CPU 6 on its author's Send FX OS (MD23); this package not measured on a unit",
       "method": "unmeasured",
-      "conditions": "The base runs the chosen effect once per audio block (32 samples at 48 kHz). It uses none of the base's work area. On the ColdFire core alone (rytm-emu cfbench), its render runs at 1.03 of CHORUS's instructions on a drum loop at the defaults (1.27 at its dearest settings). To measure on a unit: the base's CPU reading on SEND FX, every track sending, controls locked and moving."
+      "conditions": "Once per audio block (32 samples at 48 kHz); no work area. rytm-emu cfbench, against CHORUS's instructions on a drum loop: 1.03 at the defaults, 1.27 at the dearest (SHPE above 1, WDTH 127); FLANGER 2.2. Unit, 6 Nov 2026: CPU 6 on Send FX's meter in the author's own OS MD23, whose WAVEFOLDER runs the same DSP built -Os, on the author's big project, every track sending, WDTH 127 (CHORUS read 6 there on the base's meter). This package is not measured: use the base's CPU reading on SEND FX, every track sending, SHPE above 1, WDTH 127."
     }
   },
   "evidence": {
