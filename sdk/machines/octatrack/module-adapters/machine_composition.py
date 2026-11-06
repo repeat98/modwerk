@@ -17,8 +17,8 @@ import sys
 SDK = Path(__file__).resolve().parents[3] / 'octabam'
 PINS = {
     'modules/poly8/manifest.py': 'f8759dbcbb246b247c195e61f0c0464fd0cdc0dd40b68dd8f74c03b46c584afc',
-    'modules/poly8/shared-machine.c': '74dd81c5f3bd1bf3474350989655ea76f5e1b52e7919fa8b11b2e1423e79317c',
-    'modules/poly8/shared-machine-hooks.s': '30701d6e4c3c556bd570a7fd2388679f6cf31021d8b8f056665f522bb976426a',
+    'modules/poly8/shared-machine.c': '4cd72947096619ce569492adb6f5f3a556a37033e647c4e4b7cb07869b3da233',
+    'modules/poly8/shared-machine-hooks.s': '03ec4112848d967f8738de812cb6917f6dea7da6590de15083982f543d9df4ac',
     'modules/poly8/composition.json': 'f8e29f63314e979e23e1cedf080ac0bb9a14be7a4b188230606ea81fc1a5e538',
 }
 COMMON = frozenset(('mr_resolve_pb', 'mr_validate_hook', 'mr_pool_title', 'mr_list_draw', 'mr_pool_open',
