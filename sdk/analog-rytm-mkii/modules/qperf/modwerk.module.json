@@ -89,7 +89,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 17876,
+    "memoryBytes": 17824,
     "fastBytes": 0,
     "load": {
       "display": "About 0.8 % of the audio block idle (the audio handler, measured on a unit)",

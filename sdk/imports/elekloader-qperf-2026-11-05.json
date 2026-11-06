@@ -7,7 +7,7 @@
   "mods": [
     {
       "file": "qperf-0.2.0-experimental-os1.74.elemod",
-      "sha256": "b6254d36fdb2483870c8dc083bf84e8d47cc1424228fa8d245eb4ae611e8fa2d",
+      "sha256": "37ea0357a38af507a272e31de142c6adbf46f1fb1a2a966d7e731fec2f30df11",
       "id": "qperf",
       "version": "0.2.0-experimental",
       "device": "analog-rytm-mk2",
@@ -15,7 +15,7 @@
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "9670de2d19e6514e06138c985ab1431f045ab877",
+        "commit": "59065954a15c8e9ab404248d265f4b308af494dc",
         "path": "sdk/imports/packages/qperf/qperf-0.2.0-experimental-os1.74.elemod"
       },
       "title": "QPERF",
@@ -28,7 +28,7 @@
       "category": "Performance",
       "author": "npp1993",
       "needs_core": "0.7",
-      "on_unit": "The author's Analog Rytm MKII on OS 1.74 ran QL19, this code linked alone on the plain base and the same image this package links to, on 6 November 2026 (RECORD + YES/NO in each recording mode, a take and its apply); QT01 to QT08 ran earlier 0.2.0 builds with a debug trace, and QC13 the 0.1.0 code, as TESTING.md records. The package file itself has not been loaded from the site."
+      "on_unit": "The author's Analog Rytm MKII on OS 1.74 ran this source in a 16-module combined image (LF01, 6 November 2026: the QPER knob, pad locks and the quick perf rec work, as reported); QL19 ran the code before the idle early return alone, and QT01 to QT08 earlier 0.2.0 builds, as TESTING.md records. The package file itself has not been loaded from the site."
     }
   ]
 }
