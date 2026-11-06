@@ -23,7 +23,8 @@ keeps unknown stack/cycle budgets explicitly unmeasured.
    removal/missing-module behavior, saved-state reload and power-cycle. Preserve
    the private grnyv1 package/set for recovery. Never run both FRACT ids together.
 4. Record actual owner observations separately from USB/emulator evidence. The
-   owner will connect later; these device checks are currently pending.
+   exact candidate has now passed the reported/USB functional steps in TESTING.md;
+   missing-module reload remains unconfirmed and explicit project reload untested.
 5. Only after qualification, move the module into sdk/octabam/modules, activate
    its catalogue/package rows and move CHANGELOG.json to the community changelog.
    Rebuild and verify identical public package bytes, regenerate catalogues,
@@ -33,3 +34,8 @@ keeps unknown stack/cycle budgets explicitly unmeasured.
 
 This draft release work does not grant release approval and does not claim an
 installable public catalogue entry until those steps are completed.
+
+The 6 November physical report covers install, explicit Undo, Keep/card readback,
+removal, reinstall, owner audio/POS/SIZE and installed-Part reload, and verified
+physical reboot. It supplies functional evidence for this exact candidate; it
+does not replace missing measurements or finish publication qualification.

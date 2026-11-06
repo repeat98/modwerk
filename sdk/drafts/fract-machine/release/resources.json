@@ -11,7 +11,7 @@
   "nativeStockRoutineCost": "NOT_MEASURED_OUTSIDE_MODULE_CODE",
   "dspCodeWordsAdded": 0,
   "dspStateWordsAdded": 0,
-  "hardware": "PENDING",
+  "hardware": "FUNCTIONAL_CHECK_RECORDED; RESOURCE_MEASUREMENTS_PENDING",
   "compilerStackSingleFunctionMaxBytes": 380,
   "compilerStackNote": "GCC per-function report on byte-identical code; this is not a complete call-chain/interrupt/stock-stack bound."
 }

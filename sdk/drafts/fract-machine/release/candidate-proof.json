@@ -21,5 +21,7 @@
   "stockCopies": 9,
   "stockFills": 0,
   "stockVerification": "PASS",
-  "hardware": "NOT_RUN"
+  "hardware": "FUNCTIONAL_OWNER_REPORT_AND_USB_READBACK",
+  "hardwareReport": "../TESTING.md",
+  "qualification": "PENDING_RESOURCE_AND_RELEASE_INTEGRATION"
 }

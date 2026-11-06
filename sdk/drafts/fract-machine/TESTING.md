@@ -140,3 +140,62 @@ with stack reporting gives the same authored-image hash: the largest individual
 C function frame is 380 bytes. This excludes callees, stock routines and
 interrupt nesting and is not a total stack bound. `release/resources.json`
 records these limits. See `release/verification.md` for check and review scope.
+
+### Physical USB functional check — 6 November 2026
+
+The owner connected the Octatrack, confirmed stopped playback and a disposable
+test project, and selected stock FLEX to release the old private FRACT track.
+The exact candidate above was installed on physical base `9b3ba417` through the
+standard whole-set transaction. The previous private module was removed in the
+same transaction; only canonical `5efef0cd` FRACT is installed (handle 255,
+layout 1). A deliberate Undo returned the exact original inventory and set
+`59cad7f1cc080efb79ecb09624fd1a22173ea392d4887c11a9474f2dee21a05f`.
+The candidate was then installed again and kept. Card save/readback confirmed
+one saved/live module and set
+`ee31f30b8dfb85c6c8083042e9236ef2fd186815880c8f35ab679f4e0cd43a7c`.
+Both confirmed base slots remain unchanged (running slot 1 generation 7,
+previous slot 0 generation 6; no fallback). No base/NOR write occurred.
+
+Native SELF TEST reported passed, zero failures, one intact module and zero
+DSP-effect modules. Its DSP exercise count and CPU peaks were zero; this is
+integrity/lifecycle evidence, not an audio/stress/performance qualification.
+The owner then reported “Всё работает, воспроизведение остановлено” in
+response to selecting the new FRACT on T1, assigning a FLEX-pool sample,
+listening, moving POS/SIZE and checking for hangs/crackle. These are attributed
+owner observations; sample name, duration and model were not supplied. The completed checks and remaining limits are recorded below. No project or Part was saved by the agent.
+
+An initial attempt was safely refused as `RUNTIME_IN_USE` while a track named
+old FRACT; the owner then selected FLEX. Two private test-driver issues were
+also corrected: the base intentionally withholds its cached set digest during
+a retained trial, and a two-row set Undo requires acknowledged continuation
+through its intermediate recovery state. Each stopped attempt was followed by
+confirmation of the exact old inventory/set before a deliberate corrected run.
+These outcomes remain separate from the final successful explicit Undo/Keep;
+no failed/unfinished attempt is counted as a hardware pass.
+
+The canonical package was subsequently removed and kept: USB confirmed an empty
+inventory and saved/read-back count zero. The owner reported that the instrument
+remained responsive, but was unsure whether RELOAD Part had actually been done
+while FRACT was absent. That missing-module reload is **unconfirmed**, not a pass.
+The identical candidate was reinstalled, passed the same integrity check and was
+kept/read back as the original candidate set above.
+
+After saving the test Part/project, the owner physically switched the unit off
+and on and reported: “Да, перезапустил: FRACT остался и звучит”. Independent USB
+readback at 13:06:44 UTC confirmed the same base, one canonical FRACT and the same
+candidate set digest. The boot session changed from
+`63af31a668f574161a218ba25a90981dadb09cbab89207e6866abf6085bc6b61` to
+`51392267d2cfafab48c7618795adb7f612431c66f72b51b2995a0a68a91d74ba`.
+Saved-set restore reported one restored/live module; both confirmed NOR slots
+remained unchanged, with no fallback. The first read met a stale libusb handle;
+a read-only reconnect succeeded. No SELF TEST was started after reboot.
+
+Finally, with FRACT installed, the owner changed POS without saving and used
+FUNC+CUE to reload the saved Part. The owner confirmed: “Да, значение вернулось,
+FRACT работает”. This is an installed-Part reload functional pass, separate from
+the unconfirmed missing-module case. Explicit project-file reload, distinct
+parameter comparisons across tracks, other controls, companions, long load,
+complete stack/worst-case cycles and a full release qualification remain untested
+or unmeasured. There is no implied first-release approval. The tested source was
+`7bfced003145d8641792e91747f7f63ea5aac2e1`; this update records observations and
+changes no native candidate input or package byte.

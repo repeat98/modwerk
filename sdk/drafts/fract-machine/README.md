@@ -63,12 +63,14 @@ superseded by that consolidation. The base keeps FR:1 at boot (`known[]`, added 
 the owner completed the short physical check on base `9b3ba417` with a private
 paired FRACT build; USB confirmed that exact base and module set after power-on.
 See TESTING.md for identities, reported observations and limits. No catalogue
-entry, listed USB/card package, compatibility pair proof or listed-release
-hardware qualification exists.
+entry, listed USB/card package or compatibility pair proof exists. The new
+candidate has the 6 November functional hardware report in TESTING.md; full
+resource and publication qualification remains incomplete.
 
-Part/project reload, cold boot, Keep/Undo, replacement/removal, missing-module
-fallback, live-trigger deletion, stress and companion-module qualification remain
-open for the exact public build. Do not infer these from host tests or previews.
+Candidate install, explicit Undo, Keep/removal/reinstall, installed-Part reload
+and cold boot are recorded in TESTING.md. Missing-module reload is unconfirmed;
+explicit project reload, live-trigger deletion, stress, resource bounds and
+companion-module qualification remain open.
 
 ## Tests and measurements
 
@@ -139,5 +141,6 @@ python3 -B -m unittest discover -s sdk/tests -p 'test_source_runtime_package.py'
 The second command checks recipe confinement, exported imports, each of the
 seven allowed base IDs, wrong-digest refusals and source-only reproducibility.
 Original-OS reconstruction and both strict stock-free scans were additionally
-run locally; no OS file is included. The candidate's exact-package hardware
-lifecycle remains pending, as does the first-release owner's approval.
+run locally; no OS file is included. The candidate's exact-package functional
+hardware results are in TESTING.md; resource qualification, remaining release
+integration and the first-release owner's approval are still pending.

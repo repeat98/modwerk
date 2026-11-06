@@ -12,7 +12,7 @@
   },
   "build": {
     "status": "pending",
-    "reason": "Public USB candidate uses the source runtime recipe; exact public install/Keep/Undo/removal/power-cycle and first-release approval are pending."
+    "reason": "Candidate USB install, Undo, Keep, removal and power-cycle functional checks passed; resource qualification, release integration and first-release approval remain pending."
   },
   "author": {
     "github": "ex1010",
@@ -118,7 +118,7 @@
       "Unlisted source draft; not offered by the public configurator.",
       "Eight registry slots exist; FRACT admits only one owner on T1–T4.",
       "Private build requires an exact compatible paired base with FR:1 boot preservation.",
-      "No public lifecycle, stress, companion or exact-build hardware qualification."
+      "Candidate functional lifecycle recorded; full resource, stress and companion qualification pending."
     ]
   },
   "resources": {
@@ -144,9 +144,9 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Firmware-free source check and host fixtures are provided. Only a short private hardware audition is reported; exact-public audio, lifecycle and stress remain untested.",
-    "hardwareStatus": "historical",
-    "evidenceRevision": "5b5aa328c1bbed129ab6b1a65efb9353b93ede8f",
+    "summary": "Candidate hardware functional checks: USB install/Undo/Keep/removal/reinstall, owner-reported audio and installed-Part reload, USB-verified cold boot. Missing-module reload unconfirmed; full qualification pending.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "7bfced003145d8641792e91747f7f63ea5aac2e1",
     "gates": [
       "modules/fract-machine/verify.py"
     ]
