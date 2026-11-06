@@ -172,6 +172,16 @@ def main():
     def c_build(entry, out, *args, **kwargs):
         if not entry.get('sources'):
             return sourced(entry, out, *args, **kwargs)
+        if entry.get('sourceRecipe'):
+            spec = importlib.util.spec_from_file_location('octatrack_source_runtime', APP / 'scripts/source-runtime-package.py')
+            source_runtime = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(source_runtime)
+            recipe = source_runtime.path_in(APP, entry['sourceRecipe'])
+            doc, _, units, _, _, _, _ = source_runtime.declaration(APP, recipe)
+            if doc['id'] != entry['id'] or entry['sources'] != [str(p.relative_to(APP)) for p, _ in units]:
+                raise ValueError('Source recipe and package row must name the same module and complete source list')
+            data, _ = source_runtime.build(APP, recipe, out, stock_at=kwargs.get('stock_at'))
+            return data
         named = out.parent / (entry['id'] + '.mwrm')
         subprocess.run([sys.executable, '-B', str(builder.BUILD), *entry['sources'],
                         *[arg for hook in entry.get('subscribe', []) for arg in ('--subscribe', hook)],
