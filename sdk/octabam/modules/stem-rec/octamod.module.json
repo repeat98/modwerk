@@ -220,13 +220,18 @@
       "key:UP+REC"
     ],
     "limitations": [
+      "Power cycle before an OS upgrade once REC has been pressed since power-on: the writer task sleeps on a stock timer that holds one waiter.",
       "Card builds only: over USB a module lives in the base's 768 KiB ColdFire pool, and Stem Rec needs an 8 MiB ring and runs a writer task of its own for each take.",
       "No YES double tap on the main page in this version: in octabam a second YES within 0.5 s arms a take, but APPLY SCENE patches that stock site and a card build has no key bus. UP + REC and the YES on STEM REC's own row work as upstream.",
       "Nothing is saved: at every boot T1 alone is on, at 24 bits, both pairs stereo. Stem Rec writes nothing into projects.",
       "A power cut or a card pull before DONE leaves the take's files at 0 bytes: each file's length is set only at the end.",
       "The card must keep up: a 24-bit stereo file needs 264,600 bytes a second. When the card falls behind the ring fills and the take stops with RING FULL; its files still play.",
       "With MASTER TRACK on, T1 to T7 and CUE are 32 samples (0.73 ms) early against MAIN, and the track files do not sum to MAIN.",
-      "Sample memory: a card build with Stem Rec gives up the 10,487,808-byte DRAM platform reserve from Flex sample RAM, shared with any other DRAM module; its 8 MiB ring sits inside it."
+      "Sample memory: a card build with Stem Rec gives up the 10,487,808-byte DRAM platform reserve from Flex sample RAM, shared with any other DRAM module; its 8 MiB ring sits inside it.",
+      "Loading a project while a take records isn't detected. Don't do it.",
+      "After pulling and reinserting the card, power cycle before the next take: a card probe can take the writer's timer, and the take then fills the ring and stays at SAVING (traced in the source, not tested on a unit).",
+      "A card that refuses a write hangs the writer inside the stock card driver, which has no timeout, until a power cycle. Stock's sample save shares this.",
+      "Stem Rec patches the stock PIO card write (0x40014cfe) to advance the card handler's pointer and count before the first sector goes out, fixing a stock race: it changes every PIO card write in the build, not only Stem Rec's. A card that reports DMA takes another path."
     ]
   },
   "resources": {

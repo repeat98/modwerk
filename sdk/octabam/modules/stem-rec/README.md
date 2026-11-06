@@ -62,12 +62,17 @@ No audio examples.
 
 ## Compatibility and limitations
 
+- **Power cycle before an OS upgrade** once REC has been pressed since power-on. The writer task sleeps on a stock timer that holds one waiter.
 - **No YES double tap.** A second YES within 0.5 s on the main page doesn't arm a take in this version: APPLY SCENE patches that stock site, and a card build has no key bus. Arm from STEMS: UP + REC, then YES on STEM REC.
 - **Nothing is saved.** The sources and the format reset at every boot. Stem Rec writes nothing into projects.
 - **Pull the card or power off only when the status reads `DONE`.** A power cut or a card pull before then leaves the take's files at 0 bytes: each file's length is set only at the end. The folder appears when the take starts, so it is not a signal.
 - **The card must keep up.** A 24-bit stereo file needs 264,600 bytes a second, a mono file half that. When the card falls behind, the ring fills and the take stops with `RING FULL`. On Yves's MKII, eleven 24-bit stereo files kept up, the ring at most 32% full.
 - **MASTER TRACK.** With MASTER TRACK on, T8 reads `MASTER` and a take leaves it out, MAIN is T8's output, T1 to T7 and CUE are 32 samples (0.73 ms) early against MAIN, and the track files do not sum to MAIN.
 - **Sample memory.** A card build with Stem Rec gives up the 10,487,808-byte DRAM platform reserve from Flex sample RAM, shared with any other DRAM module; the 8 MiB ring sits inside it.
+- **Don't load a project while a take records.** Stem Rec doesn't detect it.
+- **After pulling and reinserting the card, power cycle before the next take.** A card probe can take the writer's timer, and the take then fills the ring and stays at `SAVING` (traced in the source, not tested on a unit).
+- **A card that refuses a write hangs the writer** inside the stock card driver, which has no timeout, until a power cycle. Stock's sample save shares this.
+- **It changes every PIO card write.** Stem Rec patches the stock PIO write routine (`0x40014cfe`) to advance the card handler's pointer and count before the first sector goes out, which fixes a stock race where a write could hang or write a sector twice. With Stem Rec in a build this applies to every PIO card write, not only Stem Rec's. A card that reports DMA takes another path, where the patch never runs.
 - **Errors:** `RING FULL`, `SAME MINUTE` (99 takes in this minute already), `WRITE FAILED`, `OPEN FAILED`, `PATH FAILED`, `SEEK FAILED`, `CLOSE FAILED`, `TASK FAILED`.
 
 ## Tests and measurements
