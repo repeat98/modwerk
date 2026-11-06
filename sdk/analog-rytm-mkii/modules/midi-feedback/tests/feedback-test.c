@@ -87,18 +87,24 @@ int main(void)
      */
     for (t=0;t<12;++t) for(p=0;p<7;++p) seen[t][p]=0;
     for (i=0;i<64;++i) {
-        mf_observe(&s,0,1,0,(int)i);
-        mf_observe(&s,0,2,0,(int)i+10);
-        mf_observe(&s,1,0,1,55);
+        mf_observe(&s,0,1,0,(int)i,100*i);
+        mf_observe(&s,0,2,0,(int)i+10,100*i);
+        mf_observe(&s,1,0,1,55,100*i);
         mf_request_refresh(&s);
         mf_flush(&s,emit);
         assert(!seen[0][1] && !seen[0][2]);
     }
     assert(seen[1][0]>0);
-    for (i=0;i<MF_SETTLE_TICKS;++i) {
-        mf_observe(&s,0,1,0,63);
-        mf_observe(&s,0,2,0,73);
-        if(i+1<MF_SETTLE_TICKS) assert(!mf_flush(&s,emit));
+    /* Extra UI callbacks without audio time passing must never settle it. */
+    for(i=0;i<1000;++i) {
+        mf_observe(&s,0,1,0,63,6300);
+        mf_observe(&s,0,2,0,73,6300);
+        assert(!mf_flush(&s,emit));
+    }
+    for (i=1;i<=MF_SETTLE_BLOCKS;++i) {
+        mf_observe(&s,0,1,0,63,6300+i);
+        mf_observe(&s,0,2,0,73,6300+i);
+        if(i<MF_SETTLE_BLOCKS) assert(!mf_flush(&s,emit));
     }
     assert(mf_flush(&s,emit)==2);
     assert(seen[0][1]==1 && seen[0][2]==1 && last_value==73);
@@ -106,15 +112,22 @@ int main(void)
      * sweep resumes, rather than leaking a stale pickup target.
      */
     blocked=1;
-    for(i=0;i<=MF_SETTLE_TICKS;++i) mf_observe(&s,0,1,0,80);
+    mf_observe(&s,0,1,0,80,8000);
+    mf_observe(&s,0,1,0,80,8000+MF_SETTLE_BLOCKS);
     assert(!mf_flush(&s,emit));
     blocked=0;
-    mf_observe(&s,0,1,0,90);
+    mf_observe(&s,0,1,0,90,9000);
     mf_request_refresh(&s);
     mf_flush(&s,emit);
     assert(seen[0][1]==1);
-    for(i=0;i<MF_SETTLE_TICKS;++i) mf_observe(&s,0,1,0,90);
+    mf_observe(&s,0,1,0,90,9000+MF_SETTLE_BLOCKS);
     assert(mf_flush(&s,emit)==1 && last_value==90);
+    /* Unsigned elapsed time also works across the audio counter wrapping. */
+    mf_observe(&s,0,1,0,100,UINT32_MAX-100);
+    mf_observe(&s,0,1,0,100,MF_SETTLE_BLOCKS-102);
+    assert(!mf_flush(&s,emit));
+    mf_observe(&s,0,1,0,100,MF_SETTLE_BLOCKS-101);
+    assert(mf_flush(&s,emit)==1 && last_value==100);
     mf_reset(&s);
     puts("PASS: 84 assignments, automatic refresh, fair batching, backpressure, coalescing, channels, clamping, reset");
 }

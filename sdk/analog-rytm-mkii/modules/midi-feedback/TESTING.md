@@ -92,6 +92,22 @@ continue independently. It does not identify the physical input source and
 cannot retract a message already sent to the wire. New host regressions exercise
 rapid simultaneous filter sweeps, refresh during movement, final-value delivery
 and blocked-output recovery. This change is not yet built or qualified.
+
+MF05 (source eab72d2231cd) passed its host tests, repeat builds and nine standard
+emulator lifecycle checks, but FAILED the new rapid-sweep-with-track-switch
+output assertion: intermediate CC74 values including 26, 31, 40, 44, 58, 71 and
+76 escaped the settling gate. MF05 was not installed on hardware. Focused exact
+MF05 traces show only initial/final values during a sweep alone; adding track
+switching produces intermediate values. Over the same 2.5G-instruction duration,
+the UI callback count increased from 250 to 297. UI invocations are therefore
+unsuitable as a fixed-duration clock.
+
+The next candidate counts the instrument's existing 32-frame/48-kHz render-out
+events, with only an aligned 32-bit increment in that hook. Settling requires
+750 elapsed blocks; background refresh requires 3000. UI does the parameter
+reads and MIDI work. Host regressions include 1000 callbacks at an unchanged
+audio time and unsigned counter wrap. This candidate is not yet built/tested;
+the clock change is a hypothesis to test, not a confirmed hardware pickup fix.
 Busy playback/audio/timing, NRPN/USB-only suppression, kit changes, controller
 setup changes and measured hardware CPU/IRQ/queue behavior remain unqualified.
 

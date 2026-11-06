@@ -5,6 +5,7 @@
   "cflags": [],
   "weak": [],
   "subscribe": [
+    {"event": "ev_render_out", "fn": "mf_audio_clock", "order": 60},
     {"event": "ev_tick", "fn": "mf_tick", "order": 60},
     {"event": "ev_settings", "fn": "mf_settings", "order": 60},
     {"event": "ev_project", "fn": "mf_project", "order": 60}

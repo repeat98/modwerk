@@ -83,8 +83,10 @@ feedback rather than an automation stream with a timing guarantee. A full
 refresh is requested every 40 UI ticks while enabled and allowed by stock
 output settings, roughly every two seconds. Repeated requests preserve the
 round-robin cursor, so later tracks are not starved by a busy output.
-Each changing assignment is withheld until ten consecutive UI ticks see the
-same value and channel. Refresh requests cannot bypass that settling period;
+Each changing assignment is withheld until the value and channel stay unchanged
+for 750 stock audio blocks (0.5 seconds). A minimal render-out hook counts the
+stock 32-frame blocks at 48 kHz; UI callback frequency cannot shorten the delay.
+The two-second refresh also uses this counter. Refresh requests cannot bypass that settling period;
 other stable assignments continue to send. The module observes value changes
 and does not distinguish a controller edit from a local edit.
 

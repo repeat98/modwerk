@@ -23,8 +23,13 @@ extern void mf_toggle_label(void), mf_refresh_label(void);
 static struct mf_state state;
 static int was_enabled, was_allowed;
 static unsigned last_kit = ~0u;
-#define REFRESH_TICKS 40u /* about 2 seconds on the stock 20 Hz UI task */
-static unsigned refresh_ticks;
+#define REFRESH_BLOCKS 3000u /* two seconds of stock 32-frame audio blocks */
+static volatile uint32_t audio_blocks;
+static uint32_t refresh_at;
+/* The existing stock render hook runs once per 32 frames at 48 kHz, including
+ * stopped transport. Count only; no audio processing or MIDI work here.
+ */
+void mf_audio_clock(void) { ++audio_blocks; }
 /* Original diagnostic counters/values for local emulator probes. */
 volatile struct {
     unsigned ticks, app, kit, sound, accessor_vtable, parameter_vtable;
@@ -42,9 +47,9 @@ static void toggle(void)
 {
     core_store_set(STORE(midi_feedback_enabled), 0, 0, !enabled());
     mf_reset(&state);
-    refresh_ticks = 0;
+    refresh_at = audio_blocks;
 }
-static void refresh(void) { mf_request_refresh(&state); refresh_ticks = 0; }
+static void refresh(void) { mf_request_refresh(&state); refresh_at = audio_blocks; }
 static int nothing(void) { return 0; }
 static const void *const toggle_row[] = {mf_toggle_label, toggle, nothing, nothing};
 static const void *const refresh_row[] = {mf_refresh_label, refresh, nothing, nothing};
@@ -83,7 +88,7 @@ static int send_cc(unsigned channel, unsigned cc, unsigned value)
     return sent;
 }
 
-static int sample_track(unsigned app, unsigned config, int track)
+static int sample_track(unsigned app, unsigned config, int track, uint32_t now)
 {
     static const uint8_t slots[6] = {30, 31, 33, 35, 40, 41};
     unsigned kit = app + 352, accessor = TRACK_SOUND((void *)kit, track);
@@ -101,7 +106,7 @@ static int sample_track(unsigned app, unsigned config, int track)
     {
         const volatile uint8_t *level = (const volatile uint8_t *)(sound - 26u - 150u * track);
         if (track == 0) mf_probe.values[0] = *level;
-        mf_observe(&state, track, 0, channel, *level);
+        mf_observe(&state, track, 0, channel, *level, now);
     }
     if (track == 0) {
         mf_probe.sound = sound;
@@ -113,7 +118,7 @@ static int sample_track(unsigned app, unsigned config, int track)
     for (p = 0; p < 6; ++p) {
         int value = *(volatile int16_t *)(sound + 0x14 + 2u * slots[p]);
         if (track == 0) mf_probe.values[p + 1] = value >> 8;
-        mf_observe(&state, track, p + 1, channel, value >> 8);
+        mf_observe(&state, track, p + 1, channel, value >> 8, now);
     }
     return 1;
 }
@@ -121,6 +126,7 @@ static int sample_track(unsigned app, unsigned config, int track)
 void mf_tick(void *ctrl)
 {
     unsigned app, config, kit, track;
+    uint32_t now = audio_blocks;
     int on, allowed, port;
     (void)ctrl;
     ++mf_probe.ticks;
@@ -132,11 +138,11 @@ void mf_tick(void *ctrl)
     config = CONFIG(app);
     mf_probe.configuration = config;
     mf_probe.kit = app + 352;
-    if (!on) { if (was_enabled) mf_reset(&state); was_enabled = was_allowed = 0; refresh_ticks = 0; return; }
+    if (!on) { if (was_enabled) mf_reset(&state); was_enabled = was_allowed = 0; refresh_at = now; return; }
     port = OUTPUT_PORT(config);
     allowed = PARAM_ON(config) && PARAM_KIND(config) == 1 && (port == 1 || port == 3);
     mf_probe.allowed = allowed;
-    if (!was_enabled || !was_allowed) { mf_reset(&state); refresh_ticks = 0; }
+    if (!was_enabled || !was_allowed) { mf_reset(&state); refresh_at = now; }
     was_enabled = 1;
     was_allowed = allowed;
     if (!allowed) return;
@@ -147,11 +153,11 @@ void mf_tick(void *ctrl)
     if (kit >= 128) return;
     if (kit != last_kit) { mf_reset(&state); last_kit = kit; }
     for (track = 0; track < MF_TRACKS; ++track) {
-        if (!sample_track(app, config, track)) { mf_reset(&state); return; }
+        if (!sample_track(app, config, track, now)) { mf_reset(&state); return; }
     }
-    if (++refresh_ticks >= REFRESH_TICKS) {
+    if ((uint32_t)(now - refresh_at) >= REFRESH_BLOCKS) {
         mf_request_refresh(&state);
-        refresh_ticks = 0;
+        refresh_at = now;
     }
     mf_probe.sent += mf_flush(&state, send_cc);
 }
@@ -161,5 +167,5 @@ void mf_project(int how, unsigned dropped)
     mf_reset(&state);
     was_enabled = was_allowed = 0;
     last_kit = ~0u;
-    refresh_ticks = 0;
+    refresh_at = audio_blocks;
 }
