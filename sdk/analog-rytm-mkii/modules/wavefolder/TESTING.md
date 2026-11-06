@@ -2,11 +2,11 @@
 
 ## Host: the module's own source
 
-`src/wavefolder.c`, built for the host with the base's tables (`fx-tables.h`) and run as the base runs it: the send at 24 kHz in blocks of 16, lifted (`MW_FX_LIFT`), brought back to 48 kHz linearly. The harness is in the pull request.
+`src/wavefolder.c`, built for the host with the base's tables (`fx-tables.h`) and run as the base runs it: the send at 24 kHz in blocks of 16, lifted (`MW_FX_LIFT`), brought back to 48 kHz linearly. The harness is not in the repository: written for the author's eleven new send effects at once, it is kept on the author's computer with the MB24 test builds' sources, and can be shared on request.
 
 - **The same samples on the ColdFire.** A hash of every output over 32 random settings of 64 blocks each is the same built for the host and built with m68k-elf GCC 16.2.0 (`-mcpu=54455 -O2`) and run on rytm-emu's ColdFire core (`cfbench`): `85fbcaa6` both.
 - **Arithmetic.** 20,000 blocks of random settings, a new set every 97 blocks and every control at an end every 997, over noise, sines and square waves at +-65535 and silence, under `-fsanitize=undefined`: no overflow, no bad shift.
-- **Idle.** A second of noise, then silence: the last half second holds no more than a few units (below -70 dBFS) at the defaults and at every control's top, but for what FDBK or the repeats still play.
+- **Idle.** A second of noise, then silence: the last half second holds no more than a few units (below -70 dBFS) at the defaults and at every control's top.
 
 ## Resources
 

@@ -101,7 +101,7 @@
     "limitations": [
       "Needs the Modwerk Analog Rytm MKII base with the send bus (the FX list mw_fx); the library offers it only once the site builds with that base.",
       "One send effect plays at a time: the one chosen on SEND FX.",
-      "The kit keeps the chosen effect and its eight values; Send FX settings saved under MD builds are not read.",
+      "The kit keeps the chosen effect and its eight values. Kits saved under the author's own test builds (MB, where this effect had id 10) do not bring it back: choose it again on SEND FX.",
       "A project that chose this effect plays no return and shows MISSING when the effect is not installed, and keeps its values.",
       "Hard folds of tones above about 2 kHz alias: the fold runs at 24 kHz to stay near CHORUS's CPU."
     ]
