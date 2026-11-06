@@ -29,6 +29,16 @@ describe('the configuration a report carries', () => {
     expect(() => validateDigiIssueContext({ machine: 'digitakt', model: 'mk1', flash: 'flashed', os: '1.53', moduleVersion: '1.0.1', modules: [], keepStockFx2: null, build: '' }, 'digitakt')).toThrow(/Choose the configuration/)
   })
 
+  it('records whether the Octatrack runs a card build or modules loaded over USB', () => {
+    expect(validateIssueContext({ ...base, flash: 'card' }).flash).toBe('card')
+    expect(validateIssueContext({ ...base, flash: 'usb' }).flash).toBe('usb')
+    // A tab opened before the split still sends `flashed`.
+    expect(validateIssueContext(base).flash).toBe('flashed')
+    expect(() => validateIssueContext({ ...base, flash: 'toString' })).toThrow(/what the Octatrack is running/)
+    expect(() => validateIssueContext({ ...base, model: 'constructor' })).toThrow(/Octatrack model/)
+    expect(() => validateDigiIssueContext({ machine: 'digitakt', model: 'mk1', flash: 'usb', os: '1.53', moduleVersion: '1.0.1', modules: [], keepStockFx2: null, build: '' }, 'digitakt')).toThrow(/what the machine is running/)
+  })
+
   it('is read from the log when one is attached, whatever the browser sent', () => {
     expect(validateIssueContext({ ...base, modules: [] }, log)).toMatchObject({ modules: log.modules, os: '1.40B', keepStockFx2: false, build: base.build })
     // A v1 log has no FX2 setting, so the browser's answer stands.
