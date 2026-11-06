@@ -14,7 +14,8 @@ tester's report. No Keep, save, flash or power cycle.
 | Length | 600 s | 300 s |
 
 Both ran on base `462fbd2b2ee95dd71c02778ef3b17aacba945bac9b6206688d8ef8995003826e` (OS 1.40C, ABI 10, features 903) with Track Solo as
-the only module: the inventory was empty before each trial. Tester: twwwy. The
+the only module: the inventory was empty before each trial. That base is the
+Modwerk beta base from commit `8de3f2f2`. Tester: twwwy. The
 USB identity reports `OCTATRACK 1.40C`, not the model; MKII comes from this
 unit's earlier records. The project was a disposable one with audio on several
 tracks.
