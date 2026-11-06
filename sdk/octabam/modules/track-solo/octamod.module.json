@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 2,
+  "id": "track-solo",
+  "key": "TRACK SOLO",
+  "name": "Track Solo",
+  "version": "0.2.3-experimental",
+  "category": "system",
+  "author": {
+    "github": "twwwy",
+    "credits": [
+      "twwwy"
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "TRACK SOLO",
+    "family": "Track audition",
+    "summary": "Momentary solo: hold a track for 0.5 seconds, tap others to join, then release to restore.",
+    "overview": "A session-only audition while editing. The held anchor is hidden from stock shortcuts; underlying mute and solo changes apply when the audition ends.",
+    "highlights": [
+      "Hold one TRACK button for 0.5 seconds to start a temporary solo.",
+      "Toggle other audio tracks into the group with one press.",
+      "Release the anchor to return to the underlying mute and solo state."
+    ],
+    "usage": [
+      "Open PROJECT > CONTROL > SEQUENCER and set TRACK SOLO to HOLD.",
+      "Hold T2 alone for 0.5 seconds, then press T3 to add or remove it.",
+      "Release T2 to end the temporary solo."
+    ]
+  },
+  "controls": [],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "Audio tracks",
+    "conflicts": [],
+    "uiClaims": [
+      "key:TRACK",
+      "key:TRACK+TRACK"
+    ],
+    "limitations": [
+      "Exact package 6b7a9d2cb30ceef7d69aedd5cfe5f2ea45fdaa46f6d16069952b8ad93286a2fd on base MAIN 124548dc353b2f9cd41ba0a27113ae441e82b68a16d10a1b9509920c61839587 passed 8,693 native-routine checks, 18/18 controls, standalone/four-policy audio, and standalone/paired 52-file emulator save/reload including original-stock reload. The original scoped regression profile remains 9 passed and one fixture-inconclusive P-lock case; a separate named stock-control/exact-package P-lock edit/activation case passed. Separate Neighbor/Pickup playback passed 2/2; T8 Master passed 6/6 scoped synthetic routing/mode cases, not full gesture/audio or hardware qualification. Pickup recording/source routing, active arranger rows, remaining interactions, functional hardware, CPU/timing, total stack and full memory remain unqualified. Historical MKII RAM admission/Undo returned to the original 17-module set; it was not functional hardware qualification. Evidence is package/base-bound, not a run of the later-changed runner. See TESTING.md.",
+      "TRACK SOLO is OFF on startup and after package replacement; its enable setting and solo groups are not saved.",
+      "MIDI mode is excluded. When T8 is master, include it with the source tracks in the temporary group; T8 alone has no source audio.",
+      "Mute Modes is optional. Exact-package paired emulator audio passed for OT, OTFX, OTFX-T and DT-T; the active-policy probe used synthetic mode writes. Physical Mute Modes behavior remains unqualified.",
+      "USB settings use the existing shared row table; native card settings integration is pending."
+    ],
+    "effectId": null
+  },
+  "resources": {
+    "recorded": "2026-11-05",
+    "storage": {
+      "label": "Storage",
+      "display": "1500 bytes linked code/data; zero BSS",
+      "value": 1500,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "Exact ABI 8 package SHA-256 6b7a9d2cb30ceef7d69aedd5cfe5f2ea45fdaa46f6d16069952b8ad93286a2fd: 2,128-byte package, 1,500-byte linked image, zero BSS, 24 relocations, seven guarded sites. ABI 10 source probe (RUNTIME_MODULES=128; RUNTIME_POOL_BYTES=786432) estimates 2,544 bytes for one module allocation including descriptors and alignment; not an installed-base pool measurement or transition-peak bound. Writable state is inside the image. Module-owned stack subtotals and instruction envelopes are partial static accounting; total stack including stock callees/IRQ/traps and ColdFire cycles remain unmeasured. See evidence/resource-accounting.md and TESTING.md.",
+      "source": "evidence/resource-accounting.md"
+    },
+    "processing": {
+      "label": "CPU / DSP load",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "No CPU/DSP-load or ColdFire cycle measurement is recorded. Partial static module-owned instruction envelopes are not cycles or a wall-time bound; stock work, cache/bus waits and IRQ/trap overhead are not bounded by them. Partial stack subtotals are not a total stack maximum. See TESTING.md and evidence/resource-accounting.md.",
+      "source": "TESTING.md"
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Exact package 6b7a9d2cb30ceef7d69aedd5cfe5f2ea45fdaa46f6d16069952b8ad93286a2fd on base MAIN 124548dc353b2f9cd41ba0a27113ae441e82b68a16d10a1b9509920c61839587 passed 8,693 native-routine checks, 18/18 controls, standalone/four-policy audio, and standalone/paired 52-file emulator save/reload including original-stock reload. The original scoped regression profile remains 9 passed and one fixture-inconclusive P-lock case; a separate named stock-control/exact-package P-lock edit/activation case passed. Separate Neighbor/Pickup playback passed 2/2; T8 Master passed 6/6 scoped synthetic routing/mode cases, not full gesture/audio or hardware qualification. Pickup recording/source routing, active arranger rows, remaining interactions, functional hardware, CPU/timing, total stack and full memory remain unqualified. Historical MKII RAM admission/Undo returned to the original 17-module set; it was not functional hardware qualification. Evidence is package/base-bound, not a run of the later-changed runner. See TESTING.md.",
+    "hardwareStatus": "untested",
+    "gates": [
+      "python3 -B verify.py",
+      "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-control>",
+      "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-audio> --audio",
+      "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-paired> --audio --paired",
+      "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-save> --audio --save",
+      "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-paired-save> --audio --paired --save"
+    ],
+    "evidenceRevision": "0000000000000000000000000000000000000000"
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original Track Solo source by twwwy, MIT. No stock firmware, extracted code, tables, projects or memory dumps are distributed."
+  },
+  "media": [
+    {
+      "path": "media/track-solo-off.png",
+      "captureType": "emulator",
+      "caption": "Find TRACK SOLO under PROJECT > CONTROL > SEQUENCER. OFF preserves stock track-button behavior.",
+      "alt": "Octatrack SEQUENCER menu with TRACK SOLO set to OFF.",
+      "credit": "twwwy; underlying Octatrack UI by Elektron",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "PROJECT / CONTROL / SEQUENCER",
+        "shows": "location",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "da5a9d93eaed2270af824e6c4b524f122865d01a2d1d168303e962651cb3e029",
+        "setup": "MKII ot_emu; private base plus the exact Track Solo runtime package; actual loaded SOLO/TEST scratch project; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. No reconstructed UI, DSP audio or hardware claim."
+      }
+    },
+    {
+      "path": "media/track-solo-hold.png",
+      "captureType": "emulator",
+      "caption": "Press YES to choose HOLD. Close the menu and wait for stock notifications to clear before holding a track for 0.5 seconds.",
+      "alt": "Octatrack SEQUENCER menu with TRACK SOLO set to HOLD.",
+      "credit": "twwwy; underlying Octatrack UI by Elektron",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "PROJECT / CONTROL / SEQUENCER",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "da5a9d93eaed2270af824e6c4b524f122865d01a2d1d168303e962651cb3e029",
+        "setup": "MKII ot_emu; private base plus the exact Track Solo runtime package; actual loaded SOLO/TEST scratch project; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. No reconstructed UI, DSP audio or hardware claim."
+      }
+    }
+  ],
+  "access": {
+    "location": "PROJECT > CONTROL > SEQUENCER > TRACK SOLO (USB runtime prototype)",
+    "steps": [
+      "Install the private Track Solo runtime package in an emulator.",
+      "Open PROJECT > CONTROL > SEQUENCER and choose HOLD for TRACK SOLO.",
+      "Close the menu, hold one TRACK button alone for 30 instrument UI ticks (about 0.5 seconds), then tap others to toggle their solo.",
+      "Release the original TRACK button to end solo; choose OFF to disable the gesture."
+    ],
+    "screenshots": [
+      "media/track-solo-off.png",
+      "media/track-solo-hold.png"
+    ]
+  }
+}

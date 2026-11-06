@@ -1,0 +1,88 @@
+{
+  "firmware": "1.40C",
+  "moduleVersion": "0.1.0-experimental",
+  "imageSha256": "da5a9d93eaed2270af824e6c4b524f122865d01a2d1d168303e962651cb3e029",
+  "packageSha256": "7d1abf6e4e201c6834af514974fbcd935ed86b90bf5b1e77c20f35b8d5fdbe47",
+  "emulatorSha256": "b087c97f3031f075551b3336afcd75a407ca4d3476e04a9d5cfaa059b1d40363",
+  "setup": "MKII ot_emu; private base plus the exact Track Solo runtime package; actual loaded SOLO/TEST scratch project; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. No reconstructed UI, DSP audio or hardware claim.",
+  "palette": {
+    "on": [
+      24,
+      24,
+      24
+    ],
+    "off": [
+      240,
+      240,
+      240
+    ]
+  },
+  "keyMs": 40,
+  "plan": [
+    {
+      "press": [
+        "PROJ"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "RIGHT"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "capture": "track-solo-off.png"
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "capture": "track-solo-hold.png"
+    }
+  ],
+  "screenshots": {
+    "track-solo-off.png": "1192f1c875aa9ff5472bf9deb9c39d7f9e6141c09b7ea58cb090d213c78f98be",
+    "track-solo-hold.png": "03cafd686d76dd85f263ed64e8359f6ecc3cce21256eeeeaa8923a62dd9e5b1e"
+  }
+}
