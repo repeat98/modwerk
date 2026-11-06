@@ -733,6 +733,16 @@ static void release_driven(void)
     driven = 0;
 }
 
+// Every performance's amount as we last saw it, none still touched or recording.
+static int quiet(void)
+{
+    int p;
+    for (p = 0; p < PERFS; p++)
+        if (PERF_AMOUNT(p) != seen[p] || touched[p] || rec_pos[p] >= 0)
+            return 0;
+    return 1;
+}
+
 void qperf_render(void)
 {
     int p, pos, rec, pattern = U8(LIVE_PATTERN_AT);
@@ -742,6 +752,18 @@ void qperf_render(void)
         release_driven();
         wipe();
         perf_rec_pattern = pattern;
+    }
+    // Nothing to do this block: no knob turn or take, no pad held, nothing driven or
+    // touched, no quick perf rec to play back, every amount where it was. Then the rest
+    // of this handler changes nothing but last_pos, which position() reads next block, so
+    // set only that. The audio interrupt runs this every block, sequencer stopped or not.
+    if (!knob_touched && !knob_armed && !knob_was && !pads_held && !driven
+        && (!perf_rec_used || perf_rec_hidden)) {
+        int pot = qperf_pot;
+        if ((!pot || (pot == pot_last && pot_rest)) && quiet()) {
+            last_pos = playing() ? position() : -1;
+            return;
+        }
     }
     // The QPER knob: a resting pot wobbles a step, and stock writes each wobble
     // to the linked performance. So a turn starts only once the knob has left
