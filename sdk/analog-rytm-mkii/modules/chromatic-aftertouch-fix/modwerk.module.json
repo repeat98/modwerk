@@ -149,7 +149,7 @@
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
       "caption": "Pad Pressure Fix",
-      "alt": "A held pad's note on and its aftertouch curve drawn on one note line; a faded copy of the curve two octaves above is crossed out.",
+      "alt": "A retrig roll's hits rising and falling with velocity under one pressure curve, which also drives the aftertouch line while the pad is held.",
       "credit": "Nathaniel Pavel (npp1993)",
       "license": "GPL-3.0-or-later",
       "source": "Original conceptual illustration in the shared signal-art style; not a device screenshot."
