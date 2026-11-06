@@ -101,6 +101,23 @@
         "vendor/midistomp",
         "Zoom MultiStomp browser builder (src/engine/zoom)"
       ]
+    },
+    {
+      "id": "zoom-zdl-runtime",
+      "name": "Zoom ZDL runtime (own edit handlers and Dll_ entry for Zoom MultiStomp effects)",
+      "spdx": "MIT AND BSD-3-Clause",
+      "noticeFile": "zoom-zdl-runtime.txt",
+      "sources": [
+        {
+          "path": "vendor/zoom-zdl-runtime/LICENSE"
+        },
+        {
+          "path": "vendor/zoom-zdl-runtime/zui.asm"
+        }
+      ],
+      "usedIn": [
+        "vendor/zoom-zdl-runtime"
+      ]
     }
   ]
 }
