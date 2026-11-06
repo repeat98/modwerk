@@ -7,14 +7,17 @@ provenance and hashes are in
 [sdk/imports/core-ar2-source-fb58292.json](../../../imports/core-ar2-source-fb58292.json). They are
 GPL-2.0-or-later, by irpina and Iced-Cream, and keep their SPDX lines.
 
-Modwerk's own sources sit beside them in `base/`, and `base.json`'s `add` merges them into the imported recipe when the
-build stages it, so the imported files stay exact: the FX track's lock words (`locks.c`, `locks.s`) and the send bus
-(`sendbus.c`, `sendbus.s`, `fx-tables.h`; [send effects](../README.md#send-effects)). A site `add` names gives the stock
-bytes it replaces by length and SHA-256 only; the build fills them from your OS. The USB stack comes next.
+Modwerk's own sources sit beside them in `base/`, and `base.json`'s `common` and `add` merge them into the imported
+recipe when the build stages it, so the imported files stay exact. `common` goes into every variant: the machine list's
+sections (`sections.c`; [machine list sections](../README.md#machine-list-sections)). `add` holds the FX track's lock
+words (`locks.c`, `locks.s`) and the send bus (`sendbus.c`, `sendbus.s`, `fx-tables.h`;
+[send effects](../README.md#send-effects)). A site names the stock bytes it replaces by length and SHA-256 only; the
+build fills them from your OS. The USB stack comes next.
 
-The base comes in two variants (`base.json`'s `variants`): **send-bus**, the default, with everything `add` names, and
-**plain**, the imported recipe alone. The site builds a set with a send effect on send-bus and any other set on plain,
-so a set with no send effect pays none of the bus's cost (below). The full OS file sent with Transfer stays the fallback.
+The base comes in two variants (`base.json`'s `variants`): **send-bus**, the default, with `common` and everything `add`
+names, and **plain**, the imported recipe with `common` alone. The site builds a set with a send effect on send-bus and
+any other set on plain, so a set with no send effect pays none of the bus's cost (below). Put a hook in `common` when a
+module that is no send effect needs it, or that module would not link on plain. The full OS file sent with Transfer stays the fallback.
 
 ## Beside elekloader's core-ar2
 
