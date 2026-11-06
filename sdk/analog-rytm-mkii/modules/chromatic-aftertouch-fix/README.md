@@ -89,16 +89,18 @@ The module changes three stock instructions (OS 1.74) and one call:
   two MIDI pressure sends after them (`0x400c75f2`, `0x400c626e`), so a pad it mutes still sends
   no pressure, now in rolls too. Live Rec Retrig Fix patches other RETRIG menu sites, not its
   pressure handler; the roll's velocity, which it records, is written as on stock.
-- With RTRG held, pressure also reaches whatever view is under the RETRIG menu, as without RTRG:
-  the pads' handler on the pad pages and in CHROMATIC mode.
+- With RTRG held, pressure also reaches whatever is under the RETRIG menu, as without RTRG: the
+  pads on the pad pages and in CHROMATIC mode, and in PERF mode the performance pads, whose
+  pressure now moves the performance while RTRG is held, where stock froze it (rytm-emu). A timed
+  popup under the menu closes on pad pressure, as it does without RTRG.
 - During a roll with VEL.CUR OFF, one squeeze moves both the velocity and the aftertouch targets.
 - A receiver that relied on stock's CHROMATIC poly pressure 24 semitones above the note sees it
   move to the played note.
 - Declares the claims `midi:CHROMATIC pad poly pressure note on MIDI out`, `midi:pad pressure
   during pad retrigs on MIDI out` and `ui:pad pressure during pad retrigs (RTRG held, ALWAYS ON)`;
   no key gesture or screen. No `requires` and no conflicts.
-- 0.2.0's roll change ran in rytm-emu; its unit test is in [TESTING.md](TESTING.md) when done.
-  0.1.0's CHROMATIC fix passed on a unit as CA02.
+- 0.2.0 ran on the author's unit beside 15 other modules (PP01), with MIDI out logged; 0.1.0's
+  CHROMATIC fix passed alone as CA02 ([TESTING.md](TESTING.md)).
 
 ## Tests and measurements
 

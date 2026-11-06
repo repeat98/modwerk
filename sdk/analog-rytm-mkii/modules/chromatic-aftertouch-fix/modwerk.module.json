@@ -69,9 +69,9 @@
     "conflicts": [],
     "limitations": [
       "Built for OS 1.74 only, with core-ar2 0.7.",
-      "0.2.0's retrig change ran in rytm-emu only so far (TESTING.md); 0.1.0's CHROMATIC fix ran on a unit as test build CA02.",
+      "0.2.0 ran on a unit beside the author's other modules (PP01), MIDI out logged; 0.1.0's CHROMATIC fix ran alone as CA02 (TESTING.md).",
       "During a roll with VEL.CUR OFF one squeeze moves both the roll's velocity and the aftertouch targets; set VEL.CUR (1 is almost flat) for aftertouch alone.",
-      "With RTRG held, pressure also reaches the view under the RETRIG menu, as it does without RTRG: the pads' own handler on the pad pages and in CHROMATIC mode.",
+      "With RTRG held, pressure also reaches what is under the RETRIG menu, as without RTRG: the pads, and in PERF mode the performance pads, whose pressure now moves the performance while RTRG is held (stock froze it).",
       "A receiver that relied on stock's CHROMATIC poly pressure 24 semitones above the note sees it move to the played note.",
       "MIDI in, the retrig timing and pads outside a roll and outside CHROMATIC mode are untouched."
     ]
@@ -97,18 +97,30 @@
     }
   },
   "evidence": {
-    "tier": "emulator",
+    "tier": "author-hardware",
     "moduleVersion": "0.2.0-experimental",
     "sourceSha256": "928e3d61cc86486352f5a9d1f6335b2ae44c5884982d5586f9e544e963106f74",
     "reports": [
       "TESTING.md"
     ],
-    "hardware": null,
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-06",
+      "tester": "npp1993",
+      "durationMinutes": null,
+      "summary": "npp1993 (the author) flashed test build PP01 (sha256 b939ae56; the author's 16-module set with Pad Pressure Fix 0.2.0-experimental) on an Analog Rytm MKII, OS 1.74, while USB MIDI was logged on the computer. Reported and logged: pad poly pressure went out during retrig rolls with RTRG held and with ALWAYS ON, with VEL.CUR OFF and set, and in CHROMATIC mode on the played notes.",
+      "limitations": [
+        "Run beside 15 other modules, not alone.",
+        "Whether the sound's own AFTERTOUCH target moved, and the roll's loudness with VEL.CUR OFF, were not reported.",
+        "Duration not recorded."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu on OS 1.74: during rolls (RTRG held, ALWAYS ON, VEL.CUR OFF and set, plain and CHROMATIC pads) stock writes no aftertouch and sends no poly pressure; with the fix every case writes the sound's aftertouch and sends poly pressure, and VEL.CUR OFF still sets the roll's velocity. CHROMATIC pads send pressure on the played note (0.1.0, unit-tested as CA02). Unit test of 0.2.0 pending (TESTING.md).",
+    "summary": "rytm-emu on OS 1.74: during rolls (RTRG held, ALWAYS ON, VEL.CUR OFF and set, plain and CHROMATIC pads) stock writes no aftertouch and sends no poly pressure; with the fix every case writes the sound's aftertouch and sends poly pressure, and VEL.CUR OFF still sets the roll's velocity. CHROMATIC pads send pressure on the played note (0.1.0, unit-tested as CA02). On a unit (PP01, the author's 16-module set): poly pressure went out in every roll case and on CHROMATIC's played notes, as reported and logged (TESTING.md).",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",

@@ -23,9 +23,12 @@ From the same disassembly as below, kept outside the repository.
   `0x400b7724(view + 148)` false), it calls `0x4011f262` and branches out at `0x400c755a`, before
   the aftertouch (`0x4011f490`) and MIDI (`0x400850f4`) path. ChromPadsView's (`0x400c6196`) does
   the same, branching out at `0x400c6228`.
-- The RETRIG menu, open while RTRG is held, has its own pressure method (`0x400e27cc`, reached
-  through `0x400e2930`): its LIVE RECORDING lock writes, then `0x4011f262` if VEL.CUR is 0, and it
-  always returns the pad's valid flag (`0x400e2924`), so the pad views below never see the event.
+- The RETRIG menu KeyboardView pushes while RTRG is held (`0x400c7c56`) has its own pressure
+  method (`0x400e27cc`, reached through `0x400e2930`): step writes while the sequencer records
+  (read as LIVE RECORDING's, not traced further), then `0x4011f262` if VEL.CUR is 0, and it always
+  returns the pad's valid flag (`0x400e2924`), so the views below never see the event. It takes
+  the pad index as the track (`0x4006cf5e`); ChromPadsView takes the active track. A trig's
+  RETRIG menu (trig + UP or DOWN) is another view, whose pressure method returns 0.
 
 The module turns the two branches out into no-ops and makes the menu return 0.
 
@@ -51,7 +54,9 @@ setter `0x4011f490` and of the roll velocity writer `0x4011f262`; MIDI out with 
 | ALWAYS ON, VEL.CUR OFF | aftertouch 0, roll 3, no pressure | aftertouch 3, roll 3, pressure sent |
 | ALWAYS ON, VEL.CUR 1 | aftertouch 3, roll 0, pressure sent | the same |
 | CHROMATIC, plain | aftertouch 3, `ad 3c pp` | aftertouch 3, `ad 24 pp` (0.1.0) |
-| CHROMATIC, RTRG held | aftertouch 0, roll 3, no pressure | aftertouch 3, roll 6, `ad 24 pp` |
+| CHROMATIC, RTRG held | aftertouch 0, roll 3 (the pad index's track), no pressure | aftertouch 3, roll 6 (3 the pad index's track, 3 the active track's), `ad 24 pp` |
+| PERF mode, plain | performance pressure `0x400b2c6a` 3 | the same |
+| PERF mode, RTRG held | performance pressure 0, roll 3 | performance pressure 3, roll 3 |
 | CHROMATIC, ALWAYS ON | aftertouch 0, roll 3, no pressure | aftertouch 3, roll 3, `ad 24 pp` |
 | CHROMATIC, ALWAYS ON, VEL.CUR 1 | aftertouch 3, `ad 3c pp` | aftertouch 3, `ad 24 pp` |
 
@@ -66,19 +71,34 @@ Beside the author's 16 modules (Live Rec Retrig Fix among them; test build PP01 
 store lock unchanged) the nine cases gave PF01's results, and a roll with RTRG held in LIVE
 RECORDING (RECORD + PLAY, then RTRG + BD) wrote the aftertouch and sent the pressure, with no
 fault; without the module (the same set with 0.1.0) it sent none. The trigs it recorded were not
-compared. Not run: RTRG held over PERF or SCENE pads, a trig's RETRIG menu (trig + UP or DOWN).
+compared. Not run: RTRG held over SCENE pads (their views take pressure and do nothing with it,
+read in the code), a trig's RETRIG menu (trig + UP or DOWN; its view passes pressure on as stock).
+
+An independent review of the diff against the disassembly (6 November 2026) confirmed the three
+sites' bytes, guards and instruction boundaries, the stack and registers after each fall-through,
+that a 0 return only passes the event to the next view (`0x400797f2`), and that both writers are
+plain stores, so the double call with RTRG held changes nothing. It found PERF mode and the timed
+popup above, both now in the README.
 
 ### On a unit
 
-Not tested yet. Steps, with a sound that has an AFTERTOUCH target and a MIDI monitor on USB:
+PP01 (`b939ae56…bd8a`: the author's 16-module set with this version, store lock unchanged) on the
+author's Analog Rytm MKII, OS 1.74, 6 November 2026. USB MIDI was logged on the computer (notes
+and pressure per hold); the steps and what was heard are as reported by npp1993.
 
-| Step | Expect |
-| --- | --- |
-| Hold RTRG, hold BD, press harder, VEL.CUR OFF | the target moves and the roll gets louder; `An 00 pp` on MIDI out |
-| The same with VEL.CUR set | the target moves, the roll follows the curve; `An 00 pp` |
-| ALWAYS ON, VEL.CUR OFF, hold BD | as the first step |
-| CHRO, hold RTRG, hold BD | `An 24 pp` while it rolls |
-| Plain pad, no retrig | as stock |
+| Step | Reported | USB MIDI log |
+| --- | --- | --- |
+| RTRG held + BD, VEL.CUR OFF, pressure varied | aftertouch data during the roll | poly pressure in every hold, note 0, values up to 127 |
+| RTRG held + BD, VEL.CUR about 63 | aftertouch data | as above |
+| ALWAYS ON, VEL.CUR set | aftertouch data | as above |
+| ALWAYS ON, VEL.CUR OFF | aftertouch data | as above |
+| CHROMATIC, ALWAYS ON | aftertouch data | poly pressure on the played notes (36, 41, 37, 42), none 24 above |
+| CHROMATIC, RTRG held | aftertouch data | as above |
+
+Pad pressure falling after the note off still went out on normal pads as single `An 00 pp`
+messages, as the plain-pad path sends it on stock. Not reported: whether the sound's own
+AFTERTOUCH target moved, and the roll's loudness with VEL.CUR OFF. Run beside the 16 modules
+only, not alone.
 
 ## 0.1.0: CHROMATIC note
 
