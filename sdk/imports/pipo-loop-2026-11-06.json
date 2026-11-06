@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/pipo-loop",
+  "version": "0.1.2-experimental",
+  "date": "2026-11-06",
+  "changes": [
+    "The four voice gates in stock's prefetch test a byte of the voices armed for a turn before calling the mirror routine, so with no voice in PIPO near a turn the audio interrupt makes no C call there; 0.1.1 cost about 2.3 points of the audio block idle in the author's 16-module set. Playback is unchanged."
+  ],
+  "runtimeSourceSha256": "c47b64054c10167c4496ed8896a83fed8d07c05cd5dc2e62d56774033c87c9e1",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/pipo-loop/pipo-loop-0.1.2-experimental-os1.74.elemod",
+      "sha256": "74771bfd9ff59eeffd8d3e0d97471c2bf061a128cc119de50f25ced1dd10a8b1"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/pipo-loop/TESTING.md",
+  "requires": []
+}
