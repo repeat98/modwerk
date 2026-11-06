@@ -62,6 +62,13 @@ In PERF mode with RTRG held, a pad press plays nothing on stock or with the modu
 `0x40083f40` and KeyboardView's play call `0x400c7a1c` never run (with RTRG held on the pad pages
 they run once), and the roll velocity word is never written. So no track rolls there, and the
 pressure the module passes on only reaches the performance view.
+
+In LIVE RECORDING (RECORD + PLAY) with RTRG held and BD pressed, the RETRIG menu's live branch
+ran for each of the three pressure events, on the pad pages and in PERF mode alike. On stock its
+step-write path (`0x400e28c6`) ran three times in both modes, so in PERF mode stock writes retrig
+steps to the track numbered like the pad, a stock quirk. With Live Rec Retrig Fix installed (the
+author's set, with this module's 0.1.0 and 0.2.0) that path never ran: that module turns those
+writes off. This module changes neither case.
 | CHROMATIC, ALWAYS ON | aftertouch 0, roll 3, no pressure | aftertouch 3, roll 3, `ad 24 pp` |
 | CHROMATIC, ALWAYS ON, VEL.CUR 1 | aftertouch 3, `ad 3c pp` | aftertouch 3, `ad 24 pp` |
 
