@@ -198,6 +198,13 @@ describe('the vendored elekloader catalog', () => {
       missing: [],
     })
   })
+  it('plans WAVEFOLDER, a send effect, from its pinned source-only package on the send-bus base', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['wavefolder'])).toMatchObject({
+      core: { file: SEND_BUS, version: '0.7' },
+      mods: [{ id: 'wavefolder', file: 'wavefolder-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental', needs_core: '0.7' }],
+      missing: [],
+    })
+  })
   it('keeps download approval specific to each device', () => {
     expect(DIGI_DOWNLOADS_ENABLED).toEqual({ digitakt: true, 'digitakt-ii': false, digitone: true, 'analog-rytm-mkii': true })
     expect(digiDownloadsEnabled('digitakt-ii')).toBe(false)

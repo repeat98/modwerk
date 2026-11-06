@@ -53,7 +53,7 @@ describe('the Rytm sets\' Modwerk base', () => {
 const STOCK = process.env.MODWERK_RYTM_STOCK, FX = process.env.MODWERK_RYTM_FX
 describe.runIf(STOCK && FX)('a Rytm set built on the Modwerk base with the owner\'s OS', () => {
   const BASE = 'https://modwerk.test/elekloader/'
-  const unpinned = ['chorus', 'flanger', 'phaser'].filter(id => existsSync(FX + '/analog-rytm-mkii/' + id + '/1.74.json') && !(CATALOG as Catalog).mods.some(mod => mod.id === id))
+  const unpinned = ['chorus', 'flanger', 'phaser', 'wavefolder'].filter(id => existsSync(FX + '/analog-rytm-mkii/' + id + '/1.74.json') && !(CATALOG as Catalog).mods.some(mod => mod.id === id))
   const exported = new Map(unpinned.map(id => {
     const plan = JSON.parse(readFileSync(FX + '/analog-rytm-mkii/' + id + '/1.74.json', 'utf8'))
     return [`${id}-${plan.version}-os1.74.elemod`, { id, version: plan.version as string, data: new TextEncoder().encode(exportText(packageRecipe(plan))) }]
@@ -63,7 +63,7 @@ describe.runIf(STOCK && FX)('a Rytm set built on the Modwerk base with the owner
     source: { repo: 'repeat98/modwerk', commit: '0'.repeat(40), path: 'sdk/imports/packages/' + mod.id + '/' + file },
     title: mod.id.toUpperCase(), requires: ['core'], conflicts: [], needs_core: '0.7',
   }))] }
-  const effects = ['chorus', 'flanger', 'phaser'].filter(id => catalog.mods.some(mod => mod.id === id))
+  const effects = ['chorus', 'flanger', 'phaser', 'wavefolder'].filter(id => catalog.mods.some(mod => mod.id === id))
   const builder = () => {
     const handle = createService(async url => {
       const file = url.slice(BASE.length)
@@ -86,7 +86,7 @@ describe.runIf(STOCK && FX)('a Rytm set built on the Modwerk base with the owner
     return { enabled: prepared.enabled, result, lock: builtLock(result) }
   }
 
-  it('builds CHORUS (and FLANGER and PHASER) with Loop Sync on send-bus, keeping the plain set\'s storage in place', async () => {
+  it('builds CHORUS (and FLANGER, PHASER and WAVEFOLDER) with Loop Sync on send-bus, keeping the plain set\'s storage in place', async () => {
     expect(effects).toContain('chorus')
     const plain = await build(['loop-sync', 'filter-hz'])
     expect(plain.enabled.some(path => path.endsWith(variantPin('plain').file))).toBe(true)
