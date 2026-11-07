@@ -49,6 +49,7 @@
   "copied": [],
   "regions": [],
   "claims": [
+    "settings:EXPRESSION",
     "drive:/cfw/expression"
   ],
   "requires": [],

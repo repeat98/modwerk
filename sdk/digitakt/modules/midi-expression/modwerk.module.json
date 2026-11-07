@@ -114,6 +114,7 @@
       "ev_enc"
     ],
     "claims": [
+      "settings:EXPRESSION",
       "drive:/cfw/expression"
     ]
   },
@@ -129,7 +130,7 @@
   "evidence": {
     "tier": "author-hardware",
     "moduleVersion": "0.13.0-experimental",
-    "sourceSha256": "c63d84caae1afa4d669438c89d26cc243afac76d440838daec078a592d5b4e17",
+    "sourceSha256": "b0263168c142fc314add1426e1af923beb3848805fd56159536187f0edbc021b",
     "reports": [
       "evidence/hardware-testing.json",
       "evidence/source-identity.json"

@@ -6387,6 +6387,7 @@
  "resources": {
   "regions": [],
   "names": [
+   "settings:EXPRESSION",
    "drive:/cfw/expression"
   ],
   "core": "2.1"

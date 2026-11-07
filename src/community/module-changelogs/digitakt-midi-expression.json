@@ -6,7 +6,7 @@
       "The EXPRESSION page opens from SETTINGS > EXPRESSION; TRK + trig moves it to another track, and NO goes back.",
       "Nothing changes until you switch it on: THRU and BEND start OFF. Save a preset with them ON as your default to start that way.",
       "The power-on file is written only while the sequencer is stopped, so a write never lands in playback.",
-      "Digi Perform and Digi Expression can now be installed together."
+      "Installs beside Digi Perform."
     ]
   }
 ]

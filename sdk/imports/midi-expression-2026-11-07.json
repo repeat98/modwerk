@@ -5,20 +5,20 @@
   "date": "2026-11-07",
   "upstream": {
     "repository": "https://github.com/tekomelu/Digi-Expression",
-    "revision": "021cc0d87fdbf2f98c4569652f4c10bac5eab751",
+    "revision": "8c8262f036fa2e8d3dc7e68fc1f073acb04d48e6",
     "path": "module/midi-expression",
     "license": "GPL-3.0-or-later"
   },
   "changes": [
     "0.13.0: the EXPRESSION page opens from SETTINGS > EXPRESSION (core ev_settings) and follows the active track; THRU and BEND start OFF; the power-on file is written only while the sequencer is stopped.",
-    "Source-only export compiled with the Modwerk m68k toolchain (GCC 16.2) on the author's computer; 0.12.4 tested on the author's Digitakt mk1, OS 1.54; 0.13.0 tested in digiemu, the unit check is pending (TESTING.md)."
+    "Source-only export compiled with the Modwerk m68k toolchain (GCC 16.2) on the author's computer; 0.13.0 tested on the author's Digitakt mk1, OS 1.54 (hwqual.py v013, 11 of 11; TESTING.md), after 0.12.4's full run over DIN and USB."
   ],
-  "runtimeSourceSha256": "a930f53ebd960c7b6ea586f3995c932485b6e51eb9a7c9b67f8e774f25c53bf5",
+  "runtimeSourceSha256": "c87901d5a9a7849e048284b2f92fe23c5550bedc7c160b8f47df550d2c732639",
   "packages": [
     {
       "os": "1.54",
       "path": "sdk/imports/packages/midi-expression/midi-expression-0.13.0-experimental-os1.54.elemod",
-      "sha256": "1be338513558b733594049cb01ad3a877a515cb5efbfa0a7a6b67577ae9ba7de"
+      "sha256": "62029347f2df196e3f266f125be2ccd15f6e8c0820236aeef57a7b2045d9d4f6"
     }
   ],
   "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "algorithm": "sha256 of canonical sorted JSON {sources,build}; UTF-8, compact separators",
-  "sha256": "c63d84caae1afa4d669438c89d26cc243afac76d440838daec078a592d5b4e17",
+  "sha256": "b0263168c142fc314add1426e1af923beb3848805fd56159536187f0edbc021b",
   "sources": {
     "src/expr.c": "48d38dd746fa888f0666e215e7f064769c8226a98539e3043e7f9fb19956fd44",
     "src/audio.c": "4b1c4fda024e2d88cb5dd6593ab2d495b21f48aff5adf8eec8bf97d42ce19c37",
@@ -67,6 +67,7 @@
     "copied": [],
     "regions": [],
     "claims": [
+      "settings:EXPRESSION",
       "drive:/cfw/expression"
     ],
     "requires": [],
