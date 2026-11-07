@@ -71,12 +71,12 @@ docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD:$PWD" -w "$PWD"
 | Compiler | `.run` bytes | Relocations | Same as the release |
 |---|---|---|---|
 | irpina's release `core-ar2-0.7.elemod` | 10,692 | 103 | — |
-| m68k-elf GCC 16.2.0, binutils 2.47 (reviewed; this base's plain variant, `e558ad22`) | 10,348 | 102 | sources, sites, interface |
+| m68k-elf GCC 16.2.0, binutils 2.47 (reviewed; this base's plain variant, `ba530f45`) | 10,628 | 102 | sources, sites, interface |
 | Debian 12 m68k-linux-gnu GCC 12.2.0 | 10,248 | 94 | sources, sites, interface |
 | Ubuntu 24.04 m68k-linux-gnu GCC 13.3.0 | 10,320 | 94 | sources, sites, interface |
 | Debian 13 m68k-linux-gnu GCC 14.2.0 | 10,168 | 93 | sources, sites, interface |
 
-The send-bus variant (`0cdf0343`) has 28,358 bytes of `.run` and 35,476 of `.bss`, 32,768 of them the effects' work
+The send-bus variant (`ccd42ea7`) has 28,638 bytes of `.run` and 35,476 of `.bss`, 32,768 of them the effects' work
 area, and 62 of the kit's 64 storage bits: about 67 KB of the 128 KiB mod area stays for modules, against about
 119 KB on plain.
 
