@@ -1,1 +1,24 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 192"><rect width="320" height="192" fill="#1c1c22"/><path d="M28 97h264" stroke="#83c7bc" stroke-width="2.3" stroke-dasharray="6 6" fill="none"/><text x="24" y="40" fill="#83c7bc" font-family="monospace" font-size="12">REPLACE THIS THUMBNAIL</text></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="192" viewBox="0 0 320 192" class="signal-art" fill="none" stroke-linecap="round" stroke-linejoin="round" role="img" aria-labelledby="title description">
+<title id="title">Digi Expression</title>
+<desc id="description">A pitch bend from MIDI IN, its curve rising and falling, splits into two paths: one to a MIDI track and on out of MIDI OUT, one to an audio track's tune. A faint flat line shows what stock passes: nothing. Original conceptual illustration, not an instrument screen or a measured result.</desc>
+<style>.signal-grid{stroke:#fff;opacity:.035;stroke-width:.7}.signal-main{stroke:#79b5f8;stroke-width:2.7}.signal-secondary{stroke:#79b5f8;opacity:.65;stroke-width:1.7}.signal-ghost{stroke:#79b5f8;opacity:.2;stroke-width:1.3}.signal-art text{fill:#79b5f8;opacity:.8;font:10px monospace;letter-spacing:.7px;stroke:none}.signal-dot{fill:#79b5f8;stroke:none}</style>
+<rect width="320" height="192" fill="#232328"/>
+<g class="signal-grid"><path d="M20 52H300"></path><path d="M20 97H300"></path><path d="M20 142H300"></path><path d="M64 33V163"></path><path d="M128 33V163"></path><path d="M192 33V163"></path><path d="M256 33V163"></path></g>
+<g>
+<circle class="signal-dot" cx="32" cy="97" r="3.5"></circle>
+<path class="signal-ghost" d="M32 97H150"></path>
+<path class="signal-main" d="M32 97C52 97 58 56 80 56S104 128 124 128S140 97 150 97"></path>
+<path class="signal-secondary" d="M150 97C170 97 176 66 196 66H262"></path>
+<path class="signal-secondary" d="M150 97C170 97 176 128 196 128H262"></path>
+<path class="signal-main" d="M254 60L262 66L254 72"></path>
+<path class="signal-main" d="M254 122L262 128L254 134"></path>
+<rect class="signal-secondary" x="268" y="56" width="26" height="20" rx="3"></rect>
+<rect class="signal-secondary" x="268" y="118" width="26" height="20" rx="3"></rect>
+<text x="25" y="28">MIDI IN · PB AT MW BC</text>
+<text x="196" y="56">MIDI TRACK</text>
+<text x="272" y="70">OUT</text>
+<text x="196" y="152">AUDIO TRACK</text>
+<text x="270" y="132">TUN</text>
+<text x="25" y="177">LIVE EXPRESSION, EVERY TRACK</text>
+</g>
+</svg>

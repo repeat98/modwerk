@@ -1,31 +1,31 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// MIDI Expression: the EXPRESSION page, the TRIG page's second page. Each
-// track's own settings, laid out like the stock FLTR and LFO pages: eight
-// cells on knobs A-H, under the TRIG page's own header and track box.
+// Digi Expression: the EXPRESSION page, opened from SETTINGS > EXPRESSION for
+// the active track. Each track's own settings, laid out like the stock FLTR
+// and LFO pages: eight cells on knobs A-H, beside a track box like stock's.
 //
 //   audio track  A BEND   B V.SNS  C MW    D M.DEP
 //                E VEL    F V.DEP  G AT    H A.DEP
 //   MIDI track   A PB     B AT     C MW    D V.SNS
 //                E -      F -      G MW>   H AT>
 //
-//   BEND   OFF, 1..12 semitones of TUNE (default 2)
+//   BEND   OFF, 1..12 semitones of TUNE (default OFF)
 //   V.SNS  0..100 %: how much the played velocity counts (default 100 %)
 //   MW, VEL, AT        the parameter each source moves (default none);
 //                      turning opens the list, as the LFO page's DEST does,
 //                      and pushing that knob closes it
 //   M.DEP, V.DEP, A.DEP  -64.00..+64.00, how far (default 0), as finely as
 //                      the LFO page's DEP
-//   PB, AT, MW         a MIDI track passes them or not (default ON)
+//   PB, AT, MW         a MIDI track passes them or not (default OFF)
 //   MW>    CC 1 (adds to the track's own MW, default) or CC 2..119 alone
 //   AT>    channel aftertouch (default) or CC 1..119 alone
 //
-// Opening it. On the TRIG page, a tap of TRIG (stock: nothing; a hold stays
-// the stock page's, showing its values, with TRIG + REC/STOP/PLAY). FUNC +
-// TRIG stays the stock quantize page. Leaving: a tap of TRIG, NO, or any
-// other page or menu key, which then does its stock job. TRIG held on this
-// page shows the knobs' values in place of their labels, as a held page key
-// does on the stock pages, and letting go after that keeps the page. The trig keys, TRK + trig,
-// FUNC, PTN, BANK, the transport and the LEVEL knob keep their stock jobs.
+// Opening it. SETTINGS > EXPRESSION, YES (a row added through the core's
+// ev_settings, as Digi Matrix's MOD MATRIX). The page shows the active track,
+// and follows it: TRK + trig picks another track with the page up, as on the
+// stock pages. NO goes back to SETTINGS; a page key or another menu key closes
+// it and does its stock job. FUNC, TRK, the trig keys and the transport keep
+// their stock jobs; the LEVEL knob does nothing here (the menu under the page
+// would move).
 //
 // Knobs. A turn goes through the firmware's own encoder accelerator with the
 // step size of a stock parameter of the same kind (as Digi Perform does), so
@@ -35,16 +35,6 @@
 // 75, 100 %; a destination to the next page's first (SRC, FLTR, AMP, LFO1,
 // LFO2); a CC to the next ten. After each jump the knob rests 0.4 s, as the
 // firmware does.
-//
-// Which page is up. The UI's view controller is the brain + 0x40 (the ctrl
-// that ev_tick and ev_draw get). Measured in digiemu on OS 1.54 (stock and
-// with this mod): its +0x14 is a list of layers, nodes {next, prev, view};
-// the first layer's view is the main frame (vtable 0x40183268), and +0x1c
-// is the layer that has focus, the first one unless a menu or popup (such
-// as SETTINGS or the scale setup) is over the page. The frame keeps the page
-// it shows at +0xb4. The TRIG page's view (audio and MIDI tracks alike) has
-// the vtable 0x40184308 and keeps its key, 19 (TRIG), at +0x88. All of it
-// only read, never written.
 //
 // The settings are kept on the +Drive by store.c, with the project; a
 // 1-second push of knob A opens the preset menu (below).
@@ -57,7 +47,7 @@
 
 #include "expr.h"
 
-#define D_RANGE   (2 * 256)                 // BEND 2.00 semitones
+#define D_RANGE   0                         // BEND OFF: nothing changes until it is set
 #define D_AMOUNT  0
 #define D_SENS    100
 
@@ -68,7 +58,7 @@ struct me_cfg me_audio_cfg[8] = {
 };
 
 struct me_cfg me_midi_cfg[8] = {
-#define M0 { { 1 }, 0, 0, 0, D_SENS, D_AMOUNT, D_AMOUNT, D_AMOUNT }   /* THRU on */
+#define M0 { { 0 }, 0, 0, 0, D_SENS, D_AMOUNT, D_AMOUNT, D_AMOUNT }   /* THRU off */
     M0, M0, M0, M0, M0, M0, M0, M0,
 #undef M0
 };
@@ -96,44 +86,10 @@ struct me_cfg me_midi_cfg[8] = {
 #define ENC_DESC    ((const int *(*)(int))0x40065794)
 #define ENC_ACC     ((int (*)(void *, int, int, const void *, int))0x400c06ae)
 #define ENC_DECAY   ((void (*)(void *, void *))0x400c05f4)
-#define TRIG_VTABLE  0x40184308u
-#define FRAME_VTABLE 0x40183268u
-
-static int ram(uint32_t a)
-{
-    return a >= 0x40000000u && a < 0x48000000u && !(a & 1);
-}
-
-// The TRIG page's view when it is the page shown and has focus, else 0.
-static void *trig_page(void *ctrl)
-{
-    if (!ctrl)
-        return 0;
-    uint32_t first = *(volatile uint32_t *)((char *)ctrl + 0x14);
-    uint32_t focus = *(volatile uint32_t *)((char *)ctrl + 0x1c);
-    if (!ram(first) || first != focus)
-        return 0;                       // a menu or popup over the page
-    uint32_t frame = *(volatile uint32_t *)(first + 8);
-    if (!ram(frame) || *(volatile uint32_t *)frame != FRAME_VTABLE)
-        return 0;
-    uint32_t view = *(volatile uint32_t *)(frame + 0xb4);
-    if (!ram(view) || *(volatile uint32_t *)view != TRIG_VTABLE)
-        return 0;
-    if (*(volatile int32_t *)(view + 0x88) != 19)
-        return 0;
-    return (void *)view;
-}
-
-// TRIG held on the TRIG page: after a moment the stock page shows its values
-// in place of the labels (VEL 100, LEN 1/16, LEV 100), and letting go then
-// changes nothing; a quick tap is a tap. The view keeps that state in the
-// byte at +0x190 (1 while the values show; measured in digiemu on OS 1.54,
-// set about 0.4 s after the press, cleared on the release). Only read.
-static int trig_held(void *ctrl)
-{
-    void *v = trig_page(ctrl);
-    return v && *(volatile uint8_t *)((char *)v + 0x190) != 0;
-}
+#define LETTER_FONT ((const void *)0x401f9510)  // 5 x 9: the big letter in the stock track box
+#define ICON_FONT   ((const void *)0x401fce60)  // the track box's small bold name
+#define PATTERN_P   (*(volatile uint8_t *)0x4197c6c7)   // the pattern played: bank * 16 + pattern
+#define INVALIDATE  ((void (*)(void *))0x400c9a3a)
 
 static int enc_state[64];               // the accelerator's state, 0x14 bytes an encoder from 0x20
 
@@ -171,7 +127,6 @@ enum {
     K_FUNC = 1, K_TRK = 2, K_YES = 12, K_NO = 13, K_UP = 14, K_DOWN = 15, K_LEFT = 16, K_RIGHT = 17,
     K_TRIG = 19, K_PUSH_A = 40,
 };
-#define TAP_TICKS  15                   // half a second at 30 Hz: shorter is a tap
 #define SHOW_TICKS 30                   // a turned cell shows its value for a second
 #define LIST_TICKS 60                   // the destination list stays two seconds after the last turn
 #define CELLS      8
@@ -182,11 +137,7 @@ enum {
 #define SID_LIST   111                  // the SAMP selector: a list, as Digi Perform's choosers
 
 int me_page_open;                       // read by the tests
-static int pend;                        // TRIG went down on the TRIG page
-static int trig_down;                   // TRIG went down on this page
-static int values_held;                 // drawing: the stock page shows its values (TRIG held)
-static int hold;                        // UI ticks since
-static void *ctrl_seen;                 // the view controller, from ev_tick / ev_draw
+static int no_up;                       // NO closed the page: its release must not reach SETTINGS
 static int recompose;                   // the page just closed: one more frame for the stock page
 static int ticks;
 static uint8_t shown[CELLS];            // ticks left showing the value instead of the label
@@ -207,7 +158,6 @@ static void close_page(void)
         recompose = 1;
     me_page_open = 0;
     list_cell = -1;
-    trig_down = 0;
 }
 
 // ---- destinations ------------------------------------------------------------
@@ -425,7 +375,7 @@ int me_page_default(int t, int k)
     case C_RANGE:  return D_RANGE;
     case C_SENS:   return D_SENS;
     case C_AMOUNT: return D_AMOUNT;
-    case C_ONOFF:  return 1;
+    case C_ONOFF:  return 0;
     default:       return 0;            // C_DEST: none
     }
 }
@@ -714,7 +664,7 @@ static void draw_cell(void *bmp, int t, int k)
     }
     // the label under it, or the value for a moment after a turn
     int value = (shown[k] && c->kind != C_DEST && c->kind != C_NONE)
-                || (values_held && (c->kind == C_SENS || c->kind == C_AMOUNT));   // TRIG held: the knobs' values, as stock
+                ;
     centred(bmp, LABEL_FONT, x + 9, y - 7, value ? val : c->label);
 }
 
@@ -1066,7 +1016,7 @@ static int menu_key(void *ev, int t)
     if (!ours) {                        // another page or menu key: the page goes, stock does its job
         if (press)
             close_page();
-        return id == K_TRIG ? 1 : 0;
+        return 0;
     }
     int arrow = id == K_UP || id == K_DOWN || id == K_LEFT || id == K_RIGHT;
     int repeat = (*(int *)((char *)(ev) + 16) & 9) == 9;   // held: the firmware's own repeat, as stock
@@ -1116,19 +1066,34 @@ static void draw_title(void *bmp)
     FILLRECT(bmp, 127, 55, 127, 62, -1);
 }
 
+// The track box, as the stock pages draw it at the left: the pattern in the
+// header's corner, then SMP 1-8 or MID A-H in a box.
+static void draw_track_box(void *bmp, int t)
+{
+    char b[4];
+    int p = PATTERN_P;
+    b[0] = (char)('A' + (p >> 4 & 7));
+    b[1] = (char)('0' + ((p & 15) + 1) / 10);
+    b[2] = (char)('0' + ((p & 15) + 1) % 10);
+    b[3] = 0;
+    FILLRECT(bmp, 0, 54, 15, 63, 0);    // as the title bar: drawn white, then inverted
+    TEXT(bmp, ICON_FONT, 1, 56, -1, "%s", b);
+    FILLRECT(bmp, 0, 54, 15, 63, -1);
+    box(bmp, 0, 28, 15, 52);
+    centred(bmp, ICON_FONT, 8, 45, t >= 8 ? "MID" : "SMP");
+    b[0] = (char)(t >= 8 ? 'A' + t - 8 : '1' + t);
+    b[1] = 0;
+    centred(bmp, LETTER_FONT, 8, 31, b);
+}
+
 void me_page_draw(void *bmp, void *ctrl)
 {
-    if (ctrl)
-        ctrl_seen = ctrl;
+    (void)ctrl;
     if (!me_page_open || !bmp)
         return;
-    if (!trig_page(ctrl)) {             // another page or a menu took over
-        close_page();
-        return;
-    }
-    values_held = trig_down && trig_held(ctrl);
     int t = track();
-    FILLRECT(bmp, 16, 0, 127, 53, 0);   // the stock track box and LEV meter stay
+    FILLRECT(bmp, 0, 0, 127, 63, 0);    // over SETTINGS: the whole screen is the page's
+    draw_track_box(bmp, t);
     draw_title(bmp);
     if (me_menu) {
         draw_menu(bmp, t);
@@ -1148,10 +1113,6 @@ void me_page_draw(void *bmp, void *ctrl)
 // ---- ev_tick (from me_tick) -----------------------------------------------------
 void me_page_tick(void *ctrl)
 {
-    if (ctrl)
-        ctrl_seen = ctrl;
-    if ((pend || trig_down) && hold < 255)
-        hold++;
     if (++ticks >= 3) {                 // the firmware decays its accelerators ten times a second
         ticks = 0;
         enc_decay();
@@ -1187,30 +1148,42 @@ static void open_page(void)
 {
     me_page_open = 1;
     list_cell = -1;
-    trig_down = values_held = 0;
     enc_reset();
     for (int k = 0; k < CELLS; k++)
         acc[k] = shown[k] = 0;
 }
 
+// SETTINGS > EXPRESSION, YES: the page opens over the menu (a row added from
+// ev_settings in settings.s, as Digi Matrix's).
+void me_settings_select(void **payload)
+{
+    open_page();
+    INVALIDATE((char *)*payload + 0x38);
+}
+
+void me_settings_change(void **payload, int unused, int delta)
+{
+    (void)unused;
+    (void)delta;
+    INVALIDATE((char *)*payload + 0x38);
+}
+
+void me_settings_rowdraw(void *a, void *b, void *bmp, int x, int y)
+{
+    (void)a; (void)b; (void)bmp; (void)x; (void)y;
+}
+
 int me_page_key(void *brain, void *ev)
 {
     int id = KEYID(ev);
-    void *ctrl = brain ? (char *)brain + 0x40 : ctrl_seen;
+    (void)brain;
     if (!me_page_open) {
-        if (id == K_TRIG) {
-            if (KEYPRESS(ev)) {
-                pend = !KEYHELD(K_FUNC) && trig_page(ctrl) != 0;
-                hold = 0;
-            } else if (!KEYDOWN(ev) && pend) {
-                pend = 0;               // a tap opens it; a hold that showed the values does not
-                if (hold < TAP_TICKS && trig_page(ctrl) && !trig_held(ctrl))
-                    open_page();
-            }
-        } else if (pend && KEYPRESS(ev)) {
-            pend = 0;                   // TRIG + another key: the stock page's gesture
+        if (no_up && id == K_NO) {      // the NO that closed the page: its release would close SETTINGS too
+            no_up = 0;
+            if (!KEYDOWN(ev))
+                return 1;
         }
-        return 0;                       // the stock page always sees these keys
+        return 0;
     }
     if (me_menu)
         return menu_key(ev, track());
@@ -1219,30 +1192,16 @@ int me_page_key(void *brain, void *ev)
     if (KEYPRESS(ev) && (!(id >= K_PUSH_A && id < K_PUSH_A + CELLS) || id - K_PUSH_A == list_cell))
         list_cell = -1;                 // any key, or a push of its own knob, closes the list
     switch (id) {
-    case K_TRIG:
-        if (KEYHELD(K_FUNC)) {          // FUNC + TRIG: the stock quantize page
-            close_page();
-            return 0;
-        }
-        if (KEYPRESS(ev)) {
-            trig_down = 1;
-            hold = 0;
-        } else if (!KEYDOWN(ev) && trig_down) {
-            trig_down = 0;              // a tap goes back to the first page; after a hold
-            if (hold < TAP_TICKS && !trig_held(ctrl))   // that showed the values, nothing changes
-                close_page();
-        }
-        return 0;                       // the stock page sees TRIG too: its hold, its LEV value
     case K_NO:
-        if (KEYPRESS(ev))
-            close_page();
+        if (KEYPRESS(ev)) {
+            close_page();               // back to SETTINGS
+            no_up = 1;
+        }
         return 1;
     case K_YES: case K_UP: case K_DOWN: case K_LEFT: case K_RIGHT:
         return 1;                       // nothing here; not passed to the page underneath
     case 1:                             // FUNC
     case 2:                             // TRK: TRK + trig picks another track
-    case 3:                             // PTN
-    case 4:                             // BANK
     case 9: case 10: case 11:           // REC, PLAY, STOP
         return 0;
     default:
@@ -1282,7 +1241,7 @@ int me_page_enc(void *brain, void *ev)
             push_a = 0;
     }
     if (id < 1 || id > CELLS)
-        return 0;                       // LEVEL: the track level, as stock
+        return 1;                       // LEVEL: nothing (SETTINGS' list is under the page)
     if (!n)
         return 1;
     int k = id - 1, t = track();

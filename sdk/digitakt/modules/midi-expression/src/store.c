@@ -61,6 +61,7 @@ typedef struct { u32 inode, pos, writable, open; } ekfile;
 #define EK_OWNER   (*(volatile u32 *)0x42686690)
 #define EK_MOUNTED (*(volatile u32 *)0x420eec50)
 #define NOT_FOUND  0x19
+#define SEQ_PLAYING (*(volatile uint8_t *)0x4199ebb3)   // 1 while the sequencer runs (measured in digiemu, OS 1.54)
 #endif
 
 #define SAVE_WAIT  30                         // ticks after the last change (1 s)
@@ -203,7 +204,8 @@ static void set_field(struct me_cfg *c, int k, s32 v)
 
 void me_factory(struct me_cfg *c, int mid)
 {
-    c->range = (int16_t)(mid ? 1 : 2 * 256);   // audio BEND 2.00; MIDI THRU ON
+    (void)mid;
+    c->range = 0;                              // audio BEND OFF; MIDI THRU OFF
     c->vel_sens = VEL_SENS_MAX;
     c->mw_dest = c->at_dest = c->vel_dest = 0;
     c->mw_amount = c->at_amount = c->vel_amount = 0;
@@ -937,12 +939,13 @@ void me_store_tick(void)
             wait_ticks = SAVE_WAIT;
         }
     }
-    // current.txt waits until nothing plays: a write holds the UI task (and
-    // with it the MIDI tracks' task) for a moment (about 0.1 s a file in
-    // digiemu), which must not land in the middle of a performance.
+    // current.txt waits until the sequencer is stopped and nothing has been
+    // played for 2 s: a write holds the UI task (and with it the MIDI tracks'
+    // task) for a moment (about 0.1 s a file in digiemu), which must not land
+    // in a performance, a sparse pattern or a clock sent to other gear.
     static u32 seen_activity;
     static s32 quiet;
-    if (me_activity != seen_activity) {
+    if (me_activity != seen_activity || SEQ_PLAYING) {
         seen_activity = me_activity;
         quiet = 0;
     } else if (quiet < QUIET) {

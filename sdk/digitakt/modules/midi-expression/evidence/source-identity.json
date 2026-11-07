@@ -1,18 +1,19 @@
 {
   "schemaVersion": 1,
   "algorithm": "sha256 of canonical sorted JSON {sources,build}; UTF-8, compact separators",
-  "sha256": "7db7da432b80137dfbb8201b20a8345721ee8d1c9e799de0c263fac27f7f90a9",
+  "sha256": "c63d84caae1afa4d669438c89d26cc243afac76d440838daec078a592d5b4e17",
   "sources": {
     "src/expr.c": "48d38dd746fa888f0666e215e7f064769c8226a98539e3043e7f9fb19956fd44",
     "src/audio.c": "4b1c4fda024e2d88cb5dd6593ab2d495b21f48aff5adf8eec8bf97d42ce19c37",
-    "src/page.c": "324c26248010748d4fa2bbb286dd8aa40ac40d103339c49938f85dc81e18a9f0",
+    "src/page.c": "e8e23a8519cb336f1f06180507d3edd5e9841fcf4f6366441934f6cfd47e6b3a",
+    "src/settings.s": "4fb87a0cbe7894c301c2d1e0188a064864da8011b0e1feaa357f4efb4bedac67",
     "src/send.s": "923dab3ac90ae345d49263d19b019c64f9fba35522851cb093bdcd193542fd86",
     "src/render.s": "7a61b72637fe0fcf7812ef18eadee4e33ff62d1e87d2dfcf1fbcc014da6cda32",
     "src/lfo.s": "af48088c0a05e678f6f46fd806ab489c692121ec2a1d8e8b696f7a5e2cc8a77a",
     "src/vel.s": "f966ffddf9de4f5a845d767578069d0cb679324f19e41ccdb31c648433519a34",
     "src/task.s": "e60ed1c2eac194d0512884f9baba068ceaa95509c0514618b8fc9b5249a3f9eb",
     "src/midilfo.s": "baa24165ccf2eed2205143faf802d950aab0ad600275b6be822daa2a2a1aed33",
-    "src/store.c": "8bbd5d6b90fcccb89bdff0bae1f48cee74b414982682b8eceb888c909c3a0b42",
+    "src/store.c": "a6e5b656b2df8357b3cc756d94695ae1935ae8e1e75674c0835dca8783607efc",
     "src/store.s": "49be85c8107dc0ec1553efbffd5c114d530e27a4d3e0310c631b867fd5e5ced8"
   },
   "build": {
@@ -21,6 +22,7 @@
       "src/expr.c",
       "src/audio.c",
       "src/page.c",
+      "src/settings.s",
       "src/send.s",
       "src/render.s",
       "src/lfo.s",
@@ -34,6 +36,11 @@
     "cflags": [],
     "weak": [],
     "subscribe": [
+      {
+        "event": "ev_settings",
+        "fn": "me_settings",
+        "order": 50
+      },
       {
         "event": "ev_tick",
         "fn": "me_tick",
@@ -60,7 +67,6 @@
     "copied": [],
     "regions": [],
     "claims": [
-      "ui:TRIG page:second page, TRIG pressed again",
       "drive:/cfw/expression"
     ],
     "requires": [],

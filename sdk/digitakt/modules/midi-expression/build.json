@@ -4,6 +4,7 @@
     "src/expr.c",
     "src/audio.c",
     "src/page.c",
+    "src/settings.s",
     "src/send.s",
     "src/render.s",
     "src/lfo.s",
@@ -17,6 +18,11 @@
   "cflags": [],
   "weak": [],
   "subscribe": [
+    {
+      "event": "ev_settings",
+      "fn": "me_settings",
+      "order": 50
+    },
     {
       "event": "ev_tick",
       "fn": "me_tick",
@@ -43,7 +49,6 @@
   "copied": [],
   "regions": [],
   "claims": [
-    "ui:TRIG page:second page, TRIG pressed again",
     "drive:/cfw/expression"
   ],
   "requires": [],

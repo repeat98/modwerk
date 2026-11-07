@@ -1,18 +1,22 @@
 # Digi Expression
 
-Module version `0.12.4-experimental`, for the original Digitakt on OS 1.54, Core 2.1.
+Module version `0.13.0-experimental`, for the original Digitakt on OS 1.54, Core 2.1.
 
 ## Overview
 
-Stock, the Digitakt passes an external keyboard's notes through a MIDI track to the synth it plays, but drops pitch bend, aftertouch and the mod wheel. With this mod those messages follow the notes and are **added to what the track itself sends**: on the AUTO CHANNEL to the active MIDI track, and on a track's TRACK CHANNEL to that track, on the track's CHAN out of MIDI OUT. A track's LFO bending its synth by a semitone and a live bend of a semitone give two. It is for live playing: nothing is recorded into the sequencer. Each track switches them on or off on its own EXPRESSION page; with them off (and an audio track's BEND OFF and no destinations) MIDI handling is stock.
+Stock, the Digitakt passes an external keyboard's notes through a MIDI track to the synth it plays, but drops pitch bend, aftertouch and the mod wheel. With this mod each track can pass them on and route them: a MIDI track **adds them to what it sends itself**, on its CHAN out of MIDI OUT, and an audio track bends its TUNE and moves parameters of its choice. They reach the active track on the AUTO CHANNEL, and a track on its own TRACK CHANNEL. It is for live playing: nothing is recorded into the sequencer.
 
-## The EXPRESSION page (each track's own settings)
+**Nothing changes until you switch it on.** Out of the box every track has THRU OFF, BEND OFF and no routes, so a fresh install plays exactly as stock. Turn THRU ON on a MIDI track, or set BEND or a route on an audio track, and save a preset as your default with SELECT DEFAULT to start every new project that way.
 
-Select a track, press **TRIG** for its TRIG page, then **tap TRIG again**. The page looks like the stock FLTR and LFO pages: eight cells on knobs A–H, under the TRIG page's own header, track box and LEV meter. The knobs use the firmware's own acceleration, as the stock pages do (pushed, the stock push multiplier); **FUNC + turn** jumps between useful values, as FUNC + TUNE jumps octaves: depths −64, −48 … +48, +64; BEND to whole semitones, OFF, 1, 2 … 12 (turned without FUNC it moves as finely as a depth); V.SNS 0, 25, 50, 75, 100 %; destinations page by page (SRC, FLTR, AMP, LFO1, LFO2); CCs in tens. Turning a destination cell opens a list like the LFO page's DEST; pushing that knob closes it. TRIG (a tap) or NO goes back; TRIG held shows the knobs' values in place of their labels, as on the stock pages, and letting go then keeps the page; any other page or menu key does its stock job. The trig keys, TRK + trig, FUNC, PTN, BANK, the transport and LEVEL keep working.
+## Controls
+
+Open **SETTINGS**, go down to **EXPRESSION** (below SYSTEM) and press **YES**: the EXPRESSION page of the active track. It looks like the stock FLTR and LFO pages, with the track box at the left: eight cells on knobs A–H. **TRK + trig** picks another track with the page up, and the page follows it. **NO** goes back to SETTINGS; a page key (TRIG, SRC, FLTR, AMP, LFO) closes it and does its stock job. FUNC, TRK, the trig keys and the transport keep working; the LEVEL knob does nothing here.
+
+The knobs use the firmware's own acceleration, as the stock pages do (pushed, the stock push multiplier). **FUNC + turn** jumps between useful values, as FUNC + TUNE jumps octaves: depths −64, −48 … +48, +64; BEND to whole semitones, OFF, 1, 2 … 12 (turned without FUNC it moves as finely as a depth); V.SNS 0, 25, 50, 75, 100 %; destinations page by page (SRC, FLTR, AMP, LFO1, LFO2); CCs in tens. Turning a destination cell opens a list like the LFO page's DEST; pushing that knob closes it.
 
 | Knob | Audio track | Default | MIDI track | Default |
 | --- | --- | --- | --- | --- |
-| A | BEND: OFF to 12.00 semitones of TUNE, in fine steps | 2.00 | THRU: the input's PB, AT, MW and BC added to the track's own | ON |
+| A | BEND: OFF to 12.00 semitones of TUNE, in fine steps | OFF | THRU: the input's PB, AT, MW and BC added to the track's own | OFF |
 | B | V.SNS: velocity sensitivity, 0–100 % | 100 % | V.SNS | 100 % |
 | C | MW: the parameter the wheel moves | none | MW: the value the wheel moves | none |
 | D | M.DEP: −64.00 to +64.00, as fine as LFO DEP | 0 | M.DEP | 0 |
@@ -31,7 +35,19 @@ Select a track, press **TRIG** for its TRIG page, then **tap TRIG again**. The p
 
 Changing a MIDI track's settings takes effect at once; values nothing is aimed at any more get the track's own value back, and are stock again.
 
-## Saved with the project
+## Usage
+
+PORT CONFIG > RECEIVE NOTES and, for the mod wheel and breath, RECEIVE CC/NRPN must be ticked. Then switch on what you want, track by track, on the EXPRESSION page.
+
+### Quick tutorial: bend a synth through a MIDI track
+
+1. Connect a keyboard to MIDI IN on the Digitakt's AUTO CHANNEL, and a synth to MIDI OUT.
+2. Select MIDI track A (TRK + trig 9), switch its CHAN on (SRC page, FUNC + knob A) and set the synth's channel.
+3. Open SETTINGS, go down to EXPRESSION and press YES, then turn knob A to set THRU ON.
+4. Play: pitch bend, aftertouch, the mod wheel and breath reach the synth with the notes.
+5. For an audio track: press TRK + its trig with the page up, then set BEND and the routes.
+
+### Saved with the project
 
 The settings are text files of the mod's own on the +Drive, in `/cfw/expression` (no byte of a saved sound or pattern is free for them: see docs/RESEARCH-OS154.md in the source repository):
 
@@ -46,7 +62,7 @@ The settings are text files of the mod's own on the +Drive, in `/cfw/expression`
 
 - **Save a project** (SAVE PROJECT AS, every save): `projects/NNN.txt` gets the settings as they are at that moment.
 - **Load a project:** its file's settings come back. A project saved without the mod gets each track's default preset.
-- **Power-on:** the settings come back as they were when the unit was switched off, as the Digitakt brings back its working project. `current.txt` is written about a second after a change, once nothing has played for 2 seconds, so a write never lands in the middle of a performance.
+- **Power-on:** the settings come back as they were when the unit was switched off, as the Digitakt brings back its working project. `current.txt` is written about a second after a change, only while the sequencer is stopped and nothing has been played for 2 seconds, so a write never lands in a performance, a sparse pattern or a clock sent to other gear.
 - **Projects are known by their slot number**, not their name: renaming a project, or deleting another one, changes nothing. A project put into a slot from outside (with Transfer) takes that slot's old file, if one is left.
 - **Safe against a power cut:** each file is written to `_temp` first. A file that is cut short (it must end with an `END` line) or broken is skipped for its copy in `_temp`, then for the defaults: a bad file is never applied.
 - **Plain text,** one setting a line, with the destination's name as a comment. A value out of range is held to the nearest valid one, an unknown line is skipped, and a missing value is the factory default:
@@ -67,7 +83,7 @@ END
 
 Copying a sound or a track does not copy its EXPRESSION settings: they belong to the track's place (track 1–8, A–H) in the project. Use a preset to carry them.
 
-## Presets
+### Presets
 
 Hold **knob A pushed for a second** on the EXPRESSION page: the preset menu, titled [SND] or [MIDI] for the kind of track. It works like the stock menus: UP/DOWN or the LEVEL knob move, YES or a push of a knob chooses, NO goes back, and a page or menu key (SRC, FLTR, AMP, LFO, SETTINGS…) leaves it and does its own job.
 
@@ -80,20 +96,7 @@ Hold **knob A pushed for a second** on the EXPRESSION page: the preset menu, tit
 
 A preset is copied into the project, never linked: changing a preset later does not change a project that used it.
 
-## Before you play
-
-PORT CONFIG > RECEIVE NOTES and, for the mod wheel and breath, RECEIVE CC/NRPN must be ticked. Nothing else to switch on: the mod works from power-on.
-
-**Avoid a MIDI loop.** If the synth or a MIDI interface echoes the Digitakt's MIDI OUT back into its MIDI IN on the same channel, the mod's own output comes back as input and is added again, running up to the maximum (and notes double, as on a stock Digitakt). Keep the synth's MIDI thru/echo off, or on another channel.
-
-### Quick tutorial: bend a synth through a MIDI track
-
-1. Connect a keyboard to MIDI IN on the Digitakt's AUTO CHANNEL, and a synth to MIDI OUT.
-2. Select MIDI track A (TRK + trig 9), switch its CHAN on (SRC page, FUNC + knob A) and set the synth's channel.
-3. Play.
-4. For an audio track: select it, TRIG, tap TRIG, and set BEND and the routes.
-
-## Message map
+### Message map
 
 | In at MIDI IN | Taken when | Out of MIDI OUT | Stock handling |
 | --- | --- | --- | --- |
@@ -110,7 +113,15 @@ PORT CONFIG > RECEIVE NOTES and, for the mod wheel and breath, RECEIVE CC/NRPN m
 
 **Leaving a track.** When the active track changes, what came in on the AUTO CHANNEL stops counting and the synth gets the track's own values back. A track reached through its own TRACK CHANNEL keeps the live value, as stock routing keeps its notes. A note's velocity stays (the sequencer's notes keep setting it).
 
-## How it hooks in
+**Everything else passes through.** Clock, start, stop, continue, SysEx, program changes, notes and every message type in the table's last row go to stock handling unchanged and in order. The mod claims no SysEx id and sends no SysEx.
+
+**Bounded output.** One input value produces at most one message on each routed MIDI track's channel (eight at most), and two values on one CC number are merged into one. The mod fills the MIDI tracks' output buffers to 128 bytes at most; what does not fit waits for the task's next pass, so nothing is dropped. Nothing is generated: no notes, no echoes, no repeats.
+
+**No loops.** If the synth or an interface echoes MIDI OUT back into MIDI IN on a channel that reaches a track, the mod's output comes back as input and is added again, running up to the maximum (as notes double on a stock Digitakt). Nothing in the mod can tell its own messages from a keyboard's: keep the synth's MIDI thru or echo off, put it on another channel, or set that track's THRU OFF.
+
+**Latency.** On the author's unit (0.12.4, `scripts/hwqual.py`), a pitch bend in and out took 0.9 ms USB to USB and 2.9 ms DIN to DIN, round trip, through the interface. The mod sends in the MIDI tracks' next output pass; it adds no fixed delay and does not move notes.
+
+### How it hooks in
 
 - **Input:** the MIDI task hands each incoming message to one of sixteen handlers from a table, by type. Stock's pitch bend and channel aftertouch entries are an empty function. The mod points them at its own handlers and the control-change entry at a wrapper that calls the stock handler first. Three 4-byte pointer sites.
 - **The track's own values:** an 8-byte site at the entry of the MIDI tracks' `send(track, channel, id, value, force)` lets the mod see and, while live input is active, take over the track's twelve LFO-page values (ids 21–32: PB, AT, MW, BC, CC VAL 1–8). Every other parameter passes untouched. The SEL numbers are read from the MIDI tracks' parameters in use (0x421c9188, as CC Recall documents).
@@ -119,30 +130,44 @@ PORT CONFIG > RECEIVE NOTES and, for the mod wheel and breath, RECEIVE CC/NRPN m
 - **Velocity:** an 8-byte site at 0x40077a60, right after the render stores a note's velocity for its voice, and a 6-byte site at the entry of the MIDI tracks' notes_append (0x400e1002) apply V.SNS to what plays (vel.s). The note router and recording are untouched.
 - **The LFO slots:** an 8-byte site at the LFO stage's entry, 0x400ed766 (lfo.s).
 - **A MIDI track's LFO:** an 8-byte site at the entry of the MIDI tracks' LFO function, 0x400ed438 (midilfo.s): the routes go into the LFO's words just before it runs and come out right after.
-- **Saving:** a 6-byte site over each of the two sprintf calls that format the project jobs' "SAVING '%s'" (0x4004da62) and "LOADING '%s'" (0x4004fe28) messages tells the mod the project's name and its slot (store.s); the files are read and written in the UI tick with the firmware's own ekFS calls, as Digi Slicer does, only while the filesystem is free. No memory is allocated: one 5 KB text buffer.
-- **The page:** the core's key, encoder, draw and tick hooks only. Which page is up is read from the UI's view controller (measured, see docs/RESEARCH-OS154.md); nothing there is written.
+- **Saving:** a 6-byte site over each of the two sprintf calls that format the project jobs' "SAVING '%s'" (0x4004da62) and "LOADING '%s'" (0x4004fe28) messages tells the mod the project's name and its slot, and a 6-byte site at the CREATE NEW branch of the load job (0x4004fcbc) applies the default presets to a new project (store.s); the files are read and written in the UI tick with the firmware's own ekFS calls, as Digi Slicer does, only while the filesystem is free. No memory is allocated: one 5 KB text buffer.
+- **The page:** the core's settings, key, encoder, draw and tick hooks only: an EXPRESSION row in SETTINGS (ev_settings, settings.s), and the page drawn over the menu while it is open.
+- **The sequencer's state:** the byte at 0x4199ebb3 (1 while the sequencer runs; measured in digiemu on OS 1.54) is only read, so the power-on file waits while it plays.
 - **Audio tracks:** a 6-byte site at 0x40077eea, the first call after the render's LFO stage that takes the parameter words (after Digi Matrix's and Digi Poly's sites), adds the live values to them.
 
-All twelve sites are claimed in `build.json`; no other Modwerk Digitakt module patches them.
+All thirteen sites are claimed in `build.json`; no other Modwerk Digitakt module patches them.
 
-**With other mods** (`scripts/compat-pairs.sh`, `results/compat/pairs.txt`): it links with every other Modwerk Digitakt module except Digi Perform (the same TRIG gesture): CC Names, CC Recall, Digichain, Digi EQ, Digi Health, Digi Matrix, Digi Mono, Digi Neighbor, Digi Poly, Digi Slicer, Digi Sophie, Digi String, Digi Utils, Euclidean, FX Track, Input Prefader, MIDI Retrig, Note Accumulator, RAM Machines and Sample Tools. With Digi Slicer about 1.0 KB of RAM is left, so the two fit only on their own. Its CCs go through the task's own CC append, so FX Track sees them (a velocity route's CC goes straight in front of its note and does not). CC Recall's sends pass through it like the track's own. Digi Matrix's routings and its own add up on an audio track.
+**With other mods** (`scripts/compat-pairs.sh`, `results/compat/pairs.txt`): it links with every other Modwerk Digitakt module: CC Names, CC Recall, Digichain, Digi EQ, Digi Health, Digi Matrix, Digi Mono, Digi Neighbor, Digi Perform, Digi Poly, Digi Slicer, Digi Sophie, Digi String, Digi Utils, Euclidean, FX Track, Input Prefader, MIDI Retrig, Note Accumulator, RAM Machines and Sample Tools. With Digi Slicer about 1.0 KB of RAM is left, so the two fit only on their own. Its CCs go through the task's own CC append, so FX Track sees them (a velocity route's CC goes straight in front of its note and does not). CC Recall's sends pass through it like the track's own. Digi Matrix's routings and its own add up on an audio track.
 
 ## Compatibility and limitations
 
 - Built for OS 1.54 only.
+- Builds with every other Modwerk Digitakt module, Digi Perform included. With Digi Slicer about 1.0 KB of RAM is left, so the two fit only on their own.
 - Saved per project slot in files of its own, not inside the project: copying a sound or track does not copy its settings (a preset does).
-- Writing a settings file holds the UI for a moment (about 0.1 s a file in the emulator); the mod waits until nothing plays before it writes the power-on file.
-- Digi Perform opens its own page with the same gesture (TRIG again on the TRIG page), so the two are not built together.
+- Writing a settings file holds the UI for a moment (about 0.1 s a file in the emulator). The power-on file is written only while the sequencer is stopped; a project's file is written when you save the project, as stock saves it.
 - Sends where OUTPUT TO says (MIDI, USB or both), with the track's own values.
 - Not recorded: the sequencer never sees the live values.
 - A bend can reach the synth a few milliseconds before the note played with it: live notes go through the MIDI tracks' task (about 6 ms in the emulator), pass-through goes out in the same task's next pass (about 1 ms in the emulator).
 - The track's PB, AT and MW knobs on screen show the track's own value, not the sum.
 - Machines other than the sample ones take TUNE from their own SRC knob A.
+- The EXPRESSION page has no LEV meter; the track's level stays on its stock pages.
 
-## Tests
+## Tests and measurements
 
-See [TESTING.md](TESTING.md). Host unit tests and the emulator for everything; on a unit, every feature over DIN MIDI and USB MIDI, sequencing several synths at once (saving, presets and the MIDI LFO destinations included), the MIDI-track stress test (0.9.2, 25 of 25), and on 0.12.4 the full `hwqual.py` run over DIN and USB at once (all eight MIDI tracks exact against a model).
+See [TESTING.md](TESTING.md), which names the version of every result. Host unit tests (about 2.44 million checks, also under AddressSanitizer and UBSan) and the digiemu emulator for everything. On the author's unit: every feature over DIN MIDI and USB MIDI on 0.10–0.12, and on 0.12.4 the full `hwqual.py` run over DIN and USB at once (all eight MIDI tracks exact against a model, the sequencer, external clock, a 20-second flood). Memory: about 36 KB of the shared RAM; CPU: about 1.2 % of the emulated CPU idle and 1.9 % under a MIDI flood with every route live (emulator).
 
-## Credits
+## Authorship and licences
 
-Design and code: tekomelu. The page's knob feel, the firmware's knob graphic and name calls follow what Digi Perform documents (GPL-3.0-or-later); CC Recall (draadpiraat) documented the MIDI tracks' task. Licence: GPL-3.0-or-later.
+Design and code: tekomelu. The page's knob feel, the firmware's knob graphic and name calls follow what Digi Perform documents (GPL-3.0-or-later); the SETTINGS row follows the row record Digi Matrix and FX Track use; CC Recall (draadpiraat) documented the MIDI tracks' task. Code: GPL-3.0-or-later ([LICENSE](LICENSE)). Screenshots: see [media/LICENSE.md](media/LICENSE.md).
+
+## Screens and audio
+
+Captured in the pinned emulator through panel input only ([capture-plan.txt](media/capture-plan.txt), [capture.json](media/capture.json)). No audio recordings.
+
+![SETTINGS with the EXPRESSION row selected](media/settings-row.png)
+
+![The EXPRESSION page on audio track 1: BEND 1, MW to SRC Tune, M.DEP +16](media/page-audio.png)
+
+![The EXPRESSION page on MIDI track A with THRU ON](media/page-midi.png)
+
+![The preset menu of a MIDI track](media/presets.png)
