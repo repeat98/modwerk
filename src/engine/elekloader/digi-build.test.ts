@@ -232,6 +232,15 @@ describe('the vendored elekloader catalog', () => {
       missing: [],
     })
   })
+  it('plans Euclid Accents beside Pipo Loop and Silent Pad+Trig from its pinned source-only package on the plain base', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['euclid-accents', 'pipo-loop', 'silent-pad-trig'])).toMatchObject({
+      core: { file: PLAIN, version: '0.7' },
+      mods: expect.arrayContaining([
+        expect.objectContaining({ id: 'euclid-accents', file: 'euclid-accents-1.2.0-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.2.0' }),
+      ]),
+      missing: [],
+    })
+  })
   it('plans Velocity Humanise beside Pipo Loop and Silent Pad+Trig from its pinned source-only package on the plain base', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['velocity-humanise', 'pipo-loop', 'silent-pad-trig'])).toMatchObject({
       core: { file: PLAIN, version: '0.7' },
