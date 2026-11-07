@@ -63,11 +63,14 @@
       "1.74"
     ],
     "requires": [],
-    "conflicts": [],
+    "conflicts": [
+      "sample-rate"
+    ],
     "limitations": [
       "Built for OS 1.74 only. 1.2.0 reaches its parameter through core-ar2's parameter table (core_params, core-ar2 0.4 and later; Modwerk's base is core-ar2 0.7). 1.1.0 detoured the entries of param_apply_delta and param_value_text itself, which core-ar2 0.4 and later own, so it does not link with them.",
       "Needs core-ar2's mod storage: four bits per pattern track (vel_rnd).",
-      "On stock firmware, or a build without this module, the track plays its plain velocities: N is in mod storage, which stock ignores."
+      "On stock firmware, or a build without this module, the track plays its plain velocities: N is in mod storage, which stock ignores.",
+      "Not beside Sample RATE: both patch the start of param_short_name (0x400a9000), the knob label routine, for different parameters (VEL here, FIN there). Modwerk's base (core-ar2 0.7) has no shared hook for labels; core-ar2 0.10's knob-name service would let them share."
     ]
   },
   "platform": {

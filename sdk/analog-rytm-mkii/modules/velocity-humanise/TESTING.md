@@ -112,6 +112,7 @@ measurement.
 
 ## Not tested
 
+- Beside Sample RATE: the two patch overlapping bytes of param_short_name and are flagged as a conflict.
 - 1.2 on Modwerk's base (core-ar2 0.7) on a unit: the hardware runs used core-ar2 0.4.
 - Other modules beside it, except rytm2_mods' own ports.
 - Kit and pattern transfer over SysEx, and loading a project saved with this module into a build without it.

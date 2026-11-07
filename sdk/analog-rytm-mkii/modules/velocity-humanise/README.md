@@ -49,6 +49,7 @@ Requires core-ar2 0.4 or later on OS 1.74. Use your own original stock OS 1.74 f
 - Needs core-ar2's parameter table (`core_params`, core-ar2 0.4 and later) for FUNC + VEL's turn and text. 1.1.0 patched param_apply_delta and param_value_text itself and does not link with core-ar2 0.4 or later.
 - Needs core-ar2's mod storage: four bits per pattern track (`vel_rnd`).
 - On stock firmware, or a build without this module, the track plays its plain velocities: N is in mod storage, which stock ignores.
+- Not beside [Sample RATE](../sample-rate/): both patch the start of param_short_name (`0x400a9000`), the knob label routine, for different parameters (VEL here, FIN there), so `compatibility.conflicts` names it. Modwerk's base (core-ar2 0.7) has no shared hook for labels yet; core-ar2 0.10's knob-name service would let the two share.
 
 ### Mod storage
 
