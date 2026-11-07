@@ -33,6 +33,14 @@ describe('the Rytm sets\' Modwerk base', () => {
     expect(plain.storage).toBeUndefined()
     expect(plain.sections['.bss'].len ?? plain.sections['.bss'].size).toBeLessThan(2048)
   })
+  it('gives both variants the machine list sections: the table and the three sites of stock\'s sort', () => {
+    for (const variant of ['plain', 'send-bus'] as const) {
+      const pack = variantPackage(variant)
+      expect(Object.keys(pack.collections), variant).toContain('mw_machine_sections')
+      const sites = (pack.sites as { addr: string }[]).map(site => site.addr)
+      for (const addr of ['0x400df664', '0x400bdc5e', '0x400bde1c']) expect(sites, variant + ' ' + addr).toContain(addr)
+    }
+  })
   it('takes the send-bus variant for every module that contributes to the FX list', () => {
     const root = new URL('../../../sdk/analog-rytm-mkii/modules/', import.meta.url)
     const folders = [...readdirSync(root).filter(name => !name.startsWith('_')).map(name => new URL(name + '/', root)),

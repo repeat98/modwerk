@@ -16,9 +16,10 @@ temporary tree outside Git and checked against the upstream release it started f
 the fields base.json lists under reference.keeps. It is identified by the SHA-256 of its package, recorded
 in sdk/machines/<id>/base-binding.json; without --write a different identity fails. The stock OS is read where it
 lies and never copied into the repository.
-base.json's variants name the layouts the base comes in, the first the default: a variant with "add": false is the
-imported recipe alone, so a build that needs none of add's parts does not pay for them. Each variant is built and
-checked the same way, and the binding records every variant's identity under variants, the default's as identity.
+base.json's variants name the layouts the base comes in, the first the default: a variant with "add": false leaves
+add's parts out, so a build that needs none of them does not pay for them. base.json's common holds what every
+variant carries (the same keys as add), merged before add; with neither, a variant is the imported recipe alone.
+Each variant is built and checked the same way, and the binding records every variant's identity under variants, the default's as identity.
 """
 import argparse
 import hashlib
@@ -132,11 +133,30 @@ def variants(config):
     return [(name, bool(variant['add'])) for name, variant in config.get('variants', {'base': {'add': True}}).items()]
 
 
+def parts(config, add=True):
+    """What a variant merges into the recipe: base.json's common, then add when the variant takes it. Lists are
+    joined; a name both define is refused."""
+    out = {}
+    for part in [config.get('common', {})] + ([config.get('add', {})] if add else []):
+        for key, value in part.items():
+            if key in DICTS:
+                merged = dict(out.get(key, {}))
+                for name, item in value.items():
+                    if name in merged:
+                        raise ValueError('base.json: %s %s is in both common and add.' % (key, name))
+                    merged[name] = item
+                out[key] = merged
+            else:
+                out[key] = list(out.get(key, [])) + list(value)
+    return out
+
+
 def stage(machine, config, root, sites=None, add=True):
     """The core folder and its sibling sources as mod.json expects them, with the SDK headers beside mod.json
     (the SDK compiles with -I on the mod's own folder first), and base.json's additions merged into the staged
     mod.json, so the imported files stay exact. Without `sites` (no stock OS at hand) the sites are left out;
-    without `add` (a variant that leaves them out) the imported recipe is staged alone."""
+    without `add` (a variant that leaves them out) only common is merged, and with no common either the imported
+    recipe is staged alone."""
     source = APP / 'sdk/machines' / machine / 'elekloader'
     mods = root / 'mods'
     for item in source.iterdir():
@@ -145,7 +165,7 @@ def stage(machine, config, root, sites=None, add=True):
     core = mods / config['core']
     for item in (APP / config['include']).iterdir():
         shutil.copytree(item, core / item.name)
-    add = dict(config.get('add', {})) if add else {}
+    add = parts(config, add)
     if sites is None:
         add.pop('sites', None)
     if add:
@@ -192,14 +212,13 @@ def build(machine, stock, upstream, out):
     firmware_codec.use_elekloader(upstream)
     from elekloader.sdk import build as sdk
     os.environ['ELEKLOADER_CROSS'] = config['toolchain']['cross']
-    sites = stock_sites(config.get('add', {}).get('sites', []), stock)
     built = []
     if out:
         out.mkdir(parents=True)
     for name, add in variants(config):
         with tempfile.TemporaryDirectory(prefix='modwerk-base-') as work:
             root = Path(work)
-            core = stage(machine, config, root, sites, add)
+            core = stage(machine, config, root, stock_sites(parts(config, add).get('sites', []), stock), add)
             try:
                 sdk.build(str(core), str(stock), str(root / 'out'))
             except sdk.BuildError as error:

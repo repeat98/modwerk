@@ -17,4 +17,9 @@ staging_dir=$(mktemp -d "$(dirname "$output_dir")/.modwerk-source.XXXXXX")
 trap 'rm -rf "$staging_dir"' EXIT
 # Archive tracked source only. Ignored local firmware, history and secrets never mount.
 git -C "$source_dir" archive "$source_commit" | tar -x -C "$staging_dir"
-docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges --read-only --user "$(id -u):$(id -g)" --cpus 2 --memory 4g --pids-limit 128 --tmpfs /tmp:rw,nosuid,nodev,noexec,size=256m --tmpfs /test:rw,nosuid,nodev,exec,size=16m,mode=1777 --env HOME=/tmp --env LC_ALL=C --env TZ=UTC --env SOURCE_DATE_EPOCH=0 --mount "type=bind,source=$staging_dir,target=/source,readonly" --mount "type=bind,source=$output_dir,target=/output" "$image_id" node scripts/build-elemod-packages.mjs --output /output --source-commit "$source_commit"
+docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges --read-only --user "$(id -u):$(id -g)" --cpus 2 --memory 4g --pids-limit 128 --tmpfs /tmp:rw,nosuid,nodev,noexec,size=256m --tmpfs /test:rw,nosuid,nodev,exec,size=16m,mode=1777 --env HOME=/tmp --env LC_ALL=C --env TZ=UTC --env SOURCE_DATE_EPOCH=0 --mount "type=bind,source=$staging_dir,target=/source,readonly" --mount "type=bind,source=$output_dir,target=/output" "$image_id" node scripts/build-elemod-packages.mjs --output /output --source-commit "$source_commit" || {
+  status=$?
+  # Docker Desktop on macOS can refuse a bind source under /private/tmp ("bind source path does not exist").
+  case "$output_dir" in /private/*) echo "Docker may not share $(dirname "$output_dir"): choose an output folder under \$HOME." >&2;; esac
+  exit "$status"
+}

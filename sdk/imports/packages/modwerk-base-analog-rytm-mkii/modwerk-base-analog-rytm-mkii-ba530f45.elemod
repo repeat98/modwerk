@@ -28,7 +28,7 @@
   },
   ".run": {
    "align": 4,
-   "len": 10348,
+   "len": 10628,
    "parts": [
     [
      "hex",
@@ -1157,7 +1157,53 @@
     ],
     [
      "hex",
-     "7801e1ac2001d08041ea00042d901c0049ea000c207c401bfbc884842240d3fc401bf42c12aa00080680401bf42d22402001e78812aa000922402394d80049ea00102394680020280004b29066540680fffffff7780c7a074c004800ba80654243f24800282900144a84673671a9001ce1882140000871a9001de1882140000c71a9001ee1882140001071a9001f2140001421440028216a000c002c21690018003041e80034b1fc401c5b0c6698246b0004588b4a8a6600ff206000ff3a0000405c8f20"
+     "7801e1ac2001d08041ea00042d901c0049ea000c207c401bfbc884842240d3fc401bf42c12aa00080680401bf42d22402001e78812aa000922402394d80049ea00102394680020280004b29066540680fffffff7780c7a074c004800ba80654243f24800282900144a84673671a9001ce1882140000871a9001de1882140000c71a9001ee1882140001071a9001f2140001421440028216a000c002c21690018003041e80034b1fc401c5b0c6698246b0004588b4a8a6600ff206000ff3a00002f027021226f0008b0896432200972090680ffffffdeb280651e103900000000671641f9000000007180b089671e1028000458884a0066f04280241f4e75207c40257d70241f71b188004e7573a80001741fb48165e2203c00000ff67401e2a82040c08224080802000067ce241f20014e752f0a2f022f2f000c45faff844e92588f2f2f001024004e92588f720bb282670eb08252c0241f245f710044804e75b28066ee202f000c7404"
+    ],
+    [
+     "stock",
+     "0x40154a0c",
+     8
+    ],
+    [
+     "hex",
+     "653241f90000000022300c00202f00107404"
+    ],
+    [
+     "stock",
+     "0x40154a0c",
+     8
+    ],
+    [
+     "hex",
+     "651c41f90000000020300c00b28055c07100"
+    ],
+    [
+     "stock",
+     "0x400b93c2",
+     8
+    ],
+    [
+     "hex",
+     "720360d47003b28055c07100448060ea0000405c8f20"
+    ],
+    [
+     "stock",
+     "0x401bf4c8",
+     10
+    ],
+    [
+     "stock",
+     "0x401bf156",
+     8
+    ],
+    [
+     "stock",
+     "0x401c021a",
+     8
+    ],
+    [
+     "hex",
+     "000000000000"
     ]
    ]
   },
@@ -1457,7 +1503,7 @@
   ],
   "st_image": [
    ".run",
-   10344
+   10592
   ],
   "pattern_index": [
    ".run",
@@ -1542,6 +1588,10 @@
   "VT_TITLE": [
    "abs",
    76
+  ],
+  "CSWTCH.1": [
+   ".run",
+   10596
   ],
   "st_pat_init_body": [
    ".run",
@@ -1703,6 +1753,10 @@
    ".run",
    8928
   ],
+  "mw_section_before": [
+   ".run",
+   10458
+  ],
   "core_store_globals": [
    ".bss",
    16
@@ -1754,6 +1808,10 @@
   "core_view_2": [
    ".run",
    9544
+  ],
+  "mw_section_of": [
+   ".run",
+   10344
   ],
   "st_at_route": [
    ".run",
@@ -1870,6 +1928,8 @@
   "core_view_8",
   "core_view_9",
   "core_zero",
+  "mw_section_before",
+  "mw_section_of",
   "st_at_route",
   "st_file_load",
   "st_file_save",
@@ -1932,7 +1992,8 @@
   "ev_render_in",
   "ev_render_out",
   "ev_settings",
-  "ev_tick"
+  "ev_tick",
+  "mw_machine_sections"
  ],
  "weak": [],
  "relocs": [
@@ -2109,7 +2170,7 @@
    1680,
    "abs32",
    "sec:.run",
-   10344
+   10592
   ],
   [
    ".run",
@@ -2221,7 +2282,7 @@
    3946,
    "abs32",
    "sec:.run",
-   10344
+   10592
   ],
   [
    ".run",
@@ -2277,7 +2338,7 @@
    4384,
    "abs32",
    "sec:.run",
-   10344
+   10592
   ],
   [
    ".run",
@@ -2326,7 +2387,7 @@
    4816,
    "abs32",
    "sec:.run",
-   10344
+   10592
   ],
   [
    ".run",
@@ -2410,7 +2471,7 @@
    5670,
    "abs32",
    "sec:.run",
-   10344
+   10592
   ],
   [
    ".run",
@@ -2452,42 +2513,42 @@
    6252,
    "abs32",
    "sec:.run",
-   10344
+   10592
   ],
   [
    ".run",
    6276,
    "abs32",
    "sec:.run",
-   10344
+   10592
   ],
   [
    ".run",
    6928,
    "abs32",
    "sec:.run",
-   10344
+   10592
   ],
   [
    ".run",
    6940,
    "abs32",
    "sec:.run",
-   10344
+   10592
   ],
   [
    ".run",
    6974,
    "abs32",
    "sec:.run",
-   10344
+   10592
   ],
   [
    ".run",
    6986,
    "abs32",
    "sec:.run",
-   10344
+   10592
   ],
   [
    ".run",
@@ -2649,6 +2710,34 @@
    "abs32",
    "sym:core_machines",
    0
+  ],
+  [
+   ".run",
+   10372,
+   "abs32",
+   "sym:mw_machine_sections",
+   0
+  ],
+  [
+   ".run",
+   10380,
+   "abs32",
+   "sym:mw_machine_sections",
+   0
+  ],
+  [
+   ".run",
+   10526,
+   "abs32",
+   "sec:.run",
+   10596
+  ],
+  [
+   ".run",
+   10552,
+   "abs32",
+   "sec:.run",
+   10596
   ]
  ],
  "sites": [
@@ -3499,6 +3588,51 @@
    "new": "6010",
    "kind": "code",
    "relocs": []
+  },
+  {
+   "addr": "0x400df664",
+   "len": 6,
+   "stock_sha256": "33e777eec749a004190d598c002f6c8a8fb0e35cb10db9a99a20694f4cf43394",
+   "new": "4ef900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mw_section_of",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400bdc5e",
+   "len": 8,
+   "stock_sha256": "4dff1786ea9ca040dc988b6c398e4e383751f93cbf51fbd57090d717bb2bc6ab",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mw_section_before",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400bde1c",
+   "len": 8,
+   "stock_sha256": "4dff1786ea9ca040dc988b6c398e4e383751f93cbf51fbd57090d717bb2bc6ab",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mw_section_before",
+     0
+    ]
+   ]
   }
  ],
  "collections": {
@@ -3542,6 +3676,9 @@
    "entry": 4
   },
   "core_page_fns": {
+   "entry": 4
+  },
+  "mw_machine_sections": {
    "entry": 4
   }
  },
@@ -3594,7 +3731,8 @@
    "pages.s": "9802fba66d893f66b05daef2ba18846b407e7e6843729a75d939c21a717c5c60",
    "load.s": "c135390d3973a1d62513ffcd32c4294ee744b656744205c6501924eb4690a33d",
    "machines.c": "6c788ea6d305bbc74ca0a037ada8b8d84a7b1ed24f1fb8331e4ee66e01b3f5a1",
-   "finish.s": "f7e8801b7274a9405a443859b2e29fa1cd51a4212c8d7f7c2dfdbf3240bf9e27"
+   "finish.s": "f7e8801b7274a9405a443859b2e29fa1cd51a4212c8d7f7c2dfdbf3240bf9e27",
+   "sections.c": "85920df5bf11aa26281bc565cd22034a8fc2cfa91e49bb6c00716425c5462dff"
   }
  },
  "signature": null

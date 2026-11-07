@@ -105,11 +105,11 @@ describe('the vendored elekloader catalog', () => {
       missing: [],
     })
   })
-  it('plans Chromatic Aftertouch Fix beside the other Rytm library modules from its pinned source-only package on the plain base', () => {
+  it('plans Pad Pressure Fix beside the other Rytm library modules from its pinned source-only package on the plain base', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['chromatic-aftertouch-fix', 'silent-pad-trig'])).toMatchObject({
       core: { file: PLAIN, version: '0.7' },
       mods: [
-        { id: 'chromatic-aftertouch-fix', file: 'chromatic-aftertouch-fix-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
+        { id: 'chromatic-aftertouch-fix', file: 'chromatic-aftertouch-fix-0.2.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.0-experimental' },
         { id: 'silent-pad-trig', file: 'silent-pad-trig-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
       ],
       missing: [],
@@ -141,7 +141,7 @@ describe('the vendored elekloader catalog', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['live-rec-retrig-fix', 'qperf', 'temp-save'])).toMatchObject({
       core: { file: PLAIN, version: '0.7' },
       mods: [
-        { id: 'live-rec-retrig-fix', file: 'live-rec-retrig-fix-0.2.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.0-experimental' },
+        { id: 'live-rec-retrig-fix', file: 'live-rec-retrig-fix-0.2.1-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.1-experimental' },
         { id: 'qperf', file: 'qperf-0.2.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.0-experimental' },
         { id: 'temp-save', file: 'temp-save-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
       ],
@@ -163,7 +163,7 @@ describe('the vendored elekloader catalog', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['control-in-actions', 'sample-rate', 'silent-pad-trig'])).toMatchObject({
       core: { file: PLAIN, version: '0.7' },
       mods: [
-        { id: 'control-in-actions', file: 'control-in-actions-0.1.1-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.1-experimental' },
+        { id: 'control-in-actions', file: 'control-in-actions-0.1.2-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.2-experimental' },
         { id: 'sample-rate', file: 'sample-rate-0.1.1-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.1-experimental' },
         { id: 'silent-pad-trig', file: 'silent-pad-trig-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
       ],
@@ -183,7 +183,7 @@ describe('the vendored elekloader catalog', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['live-rec-retrig-fix', 'pipo-loop', 'sample-rate', 'silent-pad-trig'])).toMatchObject({
       core: { file: PLAIN, version: '0.7' },
       mods: expect.arrayContaining([
-        expect.objectContaining({ id: 'live-rec-retrig-fix', file: 'live-rec-retrig-fix-0.2.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.0-experimental' }),
+        expect.objectContaining({ id: 'live-rec-retrig-fix', file: 'live-rec-retrig-fix-0.2.1-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.1-experimental' }),
       ]),
       missing: [],
     })

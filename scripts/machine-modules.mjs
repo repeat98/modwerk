@@ -36,6 +36,7 @@ const machineProfiles=[]
 for(const entry of await readdir(resolve(root,'sdk/machines'),{withFileTypes:true}).catch(error=>{if(error.code==='ENOENT')return [];throw error}))if(entry.isDirectory())machineProfiles.push(parseMachineProfile(await json(resolve(root,'sdk/machines',entry.name,'machine.json'))))
 let machineModules=0
 const machineDocuments=[]
+const sectionSlots=new Map()
 for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='elemod')){
  const folderRoot=resolve(root,machine.sdk.modules),published=machine.sdk.catalog?(await json(resolve(root,machine.sdk.catalog))).modules:[]
  const dependencies=await loadElemodDependencies(root,machine)
@@ -72,6 +73,14 @@ for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='el
    const ids=Object.entries((await json(resolve(root,'sdk/machines',machine.id,'fx-ids.json'))).ids).filter(([,id])=>id===document.id).map(([n])=>Number(n))
    const said=(await Promise.all(build.sources.map(async path=>readFile(await file(folder,path),'utf8')))).join('\n').match(/MW_FX_ABI,\s*\d+/g)?.map(text=>Number(text.split(',')[1]))??[]
    if(ids.length!==1||!(ids[0]>=1&&ids[0]<=63)||said.length!==1||said[0]!==ids[0])throw new Error(label+': a send effect takes one id, 1 to 63, from sdk/machines/'+machine.id+'/fx-ids.json, and its record (MW_FX_ABI, id, ...) carries it')
+  }
+  // A machine's section in the Rytm base's machine list (mw_machine_sections): four bytes with no relocation, from the module
+  // that adds the machine, naming its slot and a section stock files machines under; no two modules name one slot.
+  for(const entry of build.contribute.filter(entry=>entry.to==='mw_machine_sections')){
+   const bytes=entry.data.match(/../g).map(pair=>parseInt(pair,16)),key=machine.id+':'+bytes[0]
+   if(entry.relocs.length||bytes.length!==4||bytes[0]<34||bytes[0]>43||![1,2,4,5,6,7,8,9,10,11].includes(bytes[1])||bytes[2]||bytes[3]||!build.contribute.some(other=>other.to==='core_machines'))throw new Error(label+': a mw_machine_sections entry is four bytes with no relocation: the slot (34 to 43) of the machine the module adds through core_machines, a stock section (1 BD, 2 SD, 4 CP, 5 BT, 6 RS, 7 HH, 8 CY, 9 CB, 10 UT, 11 SY) and two zero bytes')
+   if(sectionSlots.has(key))throw new Error(label+': '+sectionSlots.get(key)+' already names the section of machine slot '+bytes[0])
+   sectionSlots.set(key,document.id)
   }
   const media=document.media.map(item=>item.path),reports=document.evidence.reports
   for(const path of ['README.md',document.tests.report,document.license.file,...build.sources,...media,...reports])await readFile(await file(folder,path)).catch(()=>{throw new Error(label+': missing '+path)})
