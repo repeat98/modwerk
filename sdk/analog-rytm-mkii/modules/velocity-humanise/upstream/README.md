@@ -7,16 +7,16 @@ On the TRIG page, hold FUNC and turn VEL: the label reads RND and the knob selec
 
 ## Sites
 
-5 sites (OS 1.73 addresses; 1.74's are in mod.json `ports`), the claims rytm-mods' registry makes for its default build
+3 sites (1.1 had 5; OS 1.73 addresses; 1.74's are in mod.json `ports`), the claims rytm-mods' registry makes for its default build
 (`registry/allocations.toml`, owner `0003-velocity-humanise`):
 
 | addr | op | |
 |---|---|---|
-| 0x400378ae | jmp | `jmp velocity_humanise_vel_amount_gate` |
 | 0x4009afa0 | jmp | `jmp velocity_humanise_vel_humanise` |
-| 0x400a85e8 | jmp | `jmp velocity_humanise_vel_text_gate` |
 | 0x400a8f98 | jmp | `jmp velocity_humanise_vel_label_gate` |
 | 0x400a87b6 | keep2 | the instruction's address operand -> `velocity_humanise_vel_get_ui` (stock `4eb9400bfd20`) |
+
+core-ar2 0.4 entry (1.2): `core_params` `velocity_humanise_params` (id 30, VEL: `vel_amount_gate`, `vel_text_gate`), in place of 1.1's detours at the entries of param_apply_delta and param_value_text.
 
 A detour is a `jmp` site over the whole stock instructions it displaces; the stub re-emits them
 as in rytm-mods. Where rytm-mods patched the address operand of a `jsr`/`lea`/`move.l #`, the
@@ -24,6 +24,15 @@ site is elemod's `keep2` (the opcode word kept, the address the mod's). A pointe
 table is a `ptr` site.
 
 ## Changes from rytm-mods
+
+### 1.2: on core-ar2 0.4's page tables
+
+FUNC + VEL's turn and text now go through core-ar2 0.4, which owns the entries of the
+stock page routines, instead of this mod's own detours there (Sites, above). What the unit shows
+and does is unchanged. The reason is that more than one mod can now add a page: with every mod
+jumping from the same entries, only one detour per instruction could link. Needs core-ar2 0.4
+(`"resources": {"core": "0.4"}`), OS 1.74 only; builds of velocity-humanise before 1.2 do not link
+with core 0.4 (their sites overlap core's), and 1.2 does not link with core 0.3.
 
 ### 1.1: the amount in core-ar2 0.2's mod storage, and no euclid-accents
 
@@ -63,6 +72,12 @@ setter and trig_fire mask) and saved them (its pattern track save/load hooks), h
 4. Without euclid-accents in the build: 1..3 the same, and euclid on/off unaffected by N.
 
 ## Results so far
+
+### 1.2 on core-ar2 0.4
+
+- rytm-emu, OS 1.74, core-ar2 0.4 with all eleven mods against the v1.2 release build (core 0.3):
+  FUNC + VEL's turn and text, every screen of the same key and knob sequence pixel-identical.
+- Hardware, Analog Rytm MKII OS 1.74, 2026-10-21, core-ar2 0.4 with all eleven mods (P4A4, then Q4A4 with the page-key lists): every test step passes.
 
 ### 1.1 on core-ar2 0.3
 
