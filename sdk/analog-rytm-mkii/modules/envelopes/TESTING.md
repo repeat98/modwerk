@@ -57,7 +57,7 @@ state and the record outside the attack words, so the skipped call would have ch
 (read in amp_env_commands) sends rate 0 / level 0 to an idle voice every block, and the same one-pole
 record in the decay state, which a voice stays in until its next trig.
 
-- Measured on the owner's MKII with the private lag-telemetry base, RC31's set, scratch project,
+- Measured on the author's MKII with the private lag-telemetry base, RC31's set, scratch project,
   sequencer stopped, no USB audio, 50 one-second readings: LR01 (RC31) 70.84 % of the audio block,
   LR03 (RC31 with this source) 70.37 %. Pad mash (LR02, with two other idle changes): 81.7 % against
   82.7 %, ~10 % fewer presses.

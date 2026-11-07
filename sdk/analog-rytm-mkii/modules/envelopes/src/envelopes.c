@@ -382,7 +382,7 @@ __attribute__((noinline)) static void put_time(char *p, uint32_t ticks)
     put_text(put_uint(p, (ticks + 12000) / 24000), "s");
 }
 
-// log2(y) x 65536, y > 0 (as SY RUMB's).
+// log2(y) x 65536, y > 0.
 __attribute__((noinline)) static int32_t log2_q16(uint32_t y)
 {
     int32_t n = 31, bit, f = 0;
