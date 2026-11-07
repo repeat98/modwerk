@@ -1,0 +1,1607 @@
+{
+ "elemod": 2,
+ "id": "euclid-accents",
+ "version": "1.2.0",
+ "title": "Euclid Accents",
+ "description": "The euclidean generator can accent the pattern's own trigs instead of deciding which steps play: Bool Operator gains OR*, XOR*, AND* and SUB*.",
+ "category": "machines",
+ "author": "Iced-Cream",
+ "license": "GPL-2.0-only",
+ "target": {
+  "device": "analog-rytm-mk2",
+  "product": "Analog Rytm MKII",
+  "os": "1.74",
+  "syx_sha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "section3_sha256": "34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b",
+  "section3_len": 3005432
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 1424,
+   "parts": [
+    [
+     "hex",
+     "20080480407c89e30c8000a8cf006436223c00014f004c4100004c0010000681407c89e320089081204180fc0395220048414a41661002800000ffff720db08164044a804e7570ff4e752f012f09226f000c2f092051206800284e90588f2040225f221f4e752f082f2f00084eb9400c121c588f7203c0812f002f2f000c4ebaffca588f61000012221f4a80670408c100022001205f4e756100ff666b162f002f082f3c000000004eb9000000004fef000c4e7542804e752f022f08242f00102f2f000c4ebaff84588f6100ff346b202202e4890281000000012f012f002f082f3c000000004eb9000000004fef001020027203c0812f002f2f00104eb9400c124c508f205f241f4e754024300f40258b1440248bad40241fc7000000000000000000000000000000004f522a00584f522a00414e442a005355422a000075f208004feffff048d7030341f2b8000828000002ca671a61000026671441f2b80041e802d1103038004a006b0408c200034cd703034fef00104ef94009abf8200b80fc039502800000ffff2f002f0a2f3c000000004eb9000000004fef000c4a804e752f082f2f00084ebafea0588f6100fee84a80670e205f2f2f00044eba0016588f4e75205f4fefff8848d77cfc4ef9400c3c824feffff048d7041c246f001448780001487800012f0a20522068003c4e904fef000c2f0a4eb9400c0524588f26007400b4836c3c2f022f0a4eb9400c12ae508f488048c06b262f022f0a4eb9400bff7e508f4a00671648780001487800082f022f0a4eb9400c24824fef0010528260c042a742a72f0a20522068003c4e904fef000c42a72f0a2052206800104e90508f4cd7041c4fef00104e75102802ca43f37a004feffff048d7030373805381660a6100fef86704422f00034cd703034fef00104ef94009ab3e208000002080000020800000a0a00000e0e000009f200000802000004040000040400000404000002080000020800000110000000e000000040000000430000004300000a0a0000060c000003f800000a0a00000e0e000009f200000802000004040000040400000404000002080000020800000110000000e00000004000000043000000430000020800000208000002080000020800000ffe0000080200000802000008020000080200000802000004040000040400000208000001f000000040000000430000004300000000000003f8000002d800000208000002f8000003f80000000000000040000000400000004000000000000003f800000228000002a800000288000003fb000000030000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004feffff048d70c0c246f001847faff12741c26da538266fa45fafdf647faff7274002f3c402beff42f0a4878000c487800112f0b4eb94006fa2e4fef001445ea004447eb001c52827004b48066d42f2f002048780008487afec82f2f00204eb9401b7f744fef00104cd70c0c4fef00104e752f022f0a242f0014e08267364eb94017fa0a2f004eb9400af0e2588f24402f0a4ebafb46588f7180d0826a04428060087207b0816f0220012f002f0a4ebafb7c508f245f241f70014e75206f0004202800087207b0816f02e0806a024280b0816f02700743fafba62f310c002f28000c4eb940163420508f70014e75000001d3000001d30000000000000000000000000000"
+    ]
+   ]
+  }
+ },
+ "symbols": {
+  "TRIG_BIT_TRIG": [
+   "abs",
+   1
+  ],
+  "TRIG_BIT_LOCK": [
+   "abs",
+   4
+  ],
+  "TRIG_BIT_ACCENT": [
+   "abs",
+   8
+  ],
+  "TRIG_BIT_SWING": [
+   "abs",
+   16
+  ],
+  "MICROTIMING_MAX": [
+   "abs",
+   23
+  ],
+  "MICROTIMING_UNIT_TICKS": [
+   "abs",
+   25
+  ],
+  "TRIG_BIT_SLIDE": [
+   "abs",
+   32
+  ],
+  "FX_RETURN_PRE_OFFSET": [
+   "abs",
+   48
+  ],
+  "KEY_LEFT": [
+   "abs",
+   64
+  ],
+  "OUTPUT_FRAME_STRIDE": [
+   "abs",
+   64
+  ],
+  "KEY_RIGHT": [
+   "abs",
+   65
+  ],
+  "KEY_FUNC": [
+   "abs",
+   128
+  ],
+  "KEY_TRK": [
+   "abs",
+   134
+  ],
+  "PARAM_ID_BOOL_OP": [
+   "abs",
+   467
+  ],
+  "STEP_TICKS": [
+   "abs",
+   600
+  ],
+  "fpga_status_bit5": [
+   "abs",
+   1073743722
+  ],
+  "param_tables_build": [
+   "abs",
+   1073769688
+  ],
+  "param_container_index": [
+   "abs",
+   1073770152
+  ],
+  "param_is_machine": [
+   "abs",
+   1073770264
+  ],
+  "sound_param_id_for_index": [
+   "abs",
+   1073770536
+  ],
+  "machine_available": [
+   "abs",
+   1073770726
+  ],
+  "machine_home_track": [
+   "abs",
+   1073770774
+  ],
+  "param_machine": [
+   "abs",
+   1073770826
+  ],
+  "track_physical_voice_get": [
+   "abs",
+   1073770862
+  ],
+  "sound_load": [
+   "abs",
+   1073775094
+  ],
+  "sound_save": [
+   "abs",
+   1073775674
+  ],
+  "kit_load_machine_fallback": [
+   "abs",
+   1073776392
+  ],
+  "pattern_track_load": [
+   "abs",
+   1073777454
+  ],
+  "pattern_track_load_euclid_resume": [
+   "abs",
+   1073777866
+  ],
+  "pattern_track_save": [
+   "abs",
+   1073778120
+  ],
+  "microtiming_pack_site": [
+   "abs",
+   1073778320
+  ],
+  "pattern_track_save_euclid_resume": [
+   "abs",
+   1073778536
+  ],
+  "sound_init_defaults": [
+   "abs",
+   1073816246
+  ],
+  "kit_param_changed": [
+   "abs",
+   1073952092
+  ],
+  "ui_set_title": [
+   "abs",
+   1073962984
+  ],
+  "trig_keys_held": [
+   "abs",
+   1073964998
+  ],
+  "page_view_activate": [
+   "abs",
+   1073969190
+  ],
+  "param_apply_delta": [
+   "abs",
+   1073969318
+  ],
+  "param_apply_delta_resume": [
+   "abs",
+   1073969326
+  ],
+  "param_apply_delta_body": [
+   "abs",
+   1073969334
+  ],
+  "param_apply_delta_track": [
+   "abs",
+   1073969340
+  ],
+  "param_apply_delta_dispatch": [
+   "abs",
+   1073969346
+  ],
+  "param_apply_delta_dispatch_resume": [
+   "abs",
+   1073969352
+  ],
+  "page_param_set": [
+   "abs",
+   1073969402
+  ],
+  "knob_draw": [
+   "abs",
+   1073969750
+  ],
+  "knob_draw_alt": [
+   "abs",
+   1073970214
+  ],
+  "page_get_value": [
+   "abs",
+   1073972322
+  ],
+  "page_get_value_body": [
+   "abs",
+   1073972330
+  ],
+  "filter_env_graph_draw": [
+   "abs",
+   1073973680
+  ],
+  "filter_graph_draw": [
+   "abs",
+   1073974710
+  ],
+  "page_knob_turn": [
+   "abs",
+   1073979196
+  ],
+  "param_edit_handler": [
+   "abs",
+   1073979196
+  ],
+  "param_edit_resume": [
+   "abs",
+   1073979464
+  ],
+  "page_cycle_after_invalidate": [
+   "abs",
+   1073982364
+  ],
+  "sound_apply_step_locks": [
+   "abs",
+   1073985706
+  ],
+  "pattern_grid_view_keys": [
+   "abs",
+   1073990804
+  ],
+  "microtiming_menu_draw": [
+   "abs",
+   1074024180
+  ],
+  "microtiming_clamp_lo": [
+   "abs",
+   1074024758
+  ],
+  "microtiming_clamp_hi": [
+   "abs",
+   1074024774
+  ],
+  "microtiming_change": [
+   "abs",
+   1074025010
+  ],
+  "microtiming_menu_keys": [
+   "abs",
+   1074025256
+  ],
+  "dest_list_view_ctor": [
+   "abs",
+   1074048288
+  ],
+  "dest_list_build_resume": [
+   "abs",
+   1074048716
+  ],
+  "bitmap_ctor": [
+   "abs",
+   1074199086
+  ],
+  "fill_rect": [
+   "abs",
+   1074202406
+  ],
+  "text_draw": [
+   "abs",
+   1074206028
+  ],
+  "bitmap_draw": [
+   "abs",
+   1074206432
+  ],
+  "text_font": [
+   "abs",
+   1074207720
+  ],
+  "popup_ctor": [
+   "abs",
+   1074227028
+  ],
+  "view_show_popup": [
+   "abs",
+   1074238562
+  ],
+  "control_frame_send": [
+   "abs",
+   1074242980
+  ],
+  "control_frame_dma_start": [
+   "abs",
+   1074243122
+  ],
+  "is_key_held": [
+   "abs",
+   1074273320
+  ],
+  "mem_new": [
+   "abs",
+   1074276928
+  ],
+  "exp_convert": [
+   "abs",
+   1074366952
+  ],
+  "memcpy": [
+   "abs",
+   1074367424
+  ],
+  "trig_fire": [
+   "abs",
+   1074375208
+  ],
+  "trig_fire_euclid_flag_load": [
+   "abs",
+   1074375478
+  ],
+  "trig_fire_euclid_flag_resume": [
+   "abs",
+   1074375486
+  ],
+  "trig_fire_grid_flags_load": [
+   "abs",
+   1074375646
+  ],
+  "trig_fire_flags_join": [
+   "abs",
+   1074375672
+  ],
+  "microtiming_scale_shift": [
+   "abs",
+   1074376020
+  ],
+  "microtiming_unit_mul": [
+   "abs",
+   1074376042
+  ],
+  "trig_fire_vel_resume": [
+   "abs",
+   1074376722
+  ],
+  "trig_fire_cfg_resume": [
+   "abs",
+   1074376820
+  ],
+  "getFadeStep": [
+   "abs",
+   1074390508
+  ],
+  "lfo_block": [
+   "abs",
+   1074391036
+  ],
+  "lfo_mod_block": [
+   "abs",
+   1074391036
+  ],
+  "kit_param_set": [
+   "abs",
+   1074422926
+  ],
+  "kit_apply": [
+   "abs",
+   1074423204
+  ],
+  "kit_track_sound": [
+   "abs",
+   1074423754
+  ],
+  "param_knob_draw": [
+   "abs",
+   1074431464
+  ],
+  "param_knob_draw_body": [
+   "abs",
+   1074431472
+  ],
+  "param_value_text": [
+   "abs",
+   1074431564
+  ],
+  "param_value_text_resume": [
+   "abs",
+   1074431572
+  ],
+  "param_value_text_body": [
+   "abs",
+   1074431580
+  ],
+  "param_value_text_args": [
+   "abs",
+   1074431588
+  ],
+  "param_value_text_invoke": [
+   "abs",
+   1074431668
+  ],
+  "param_value_text_invoke_resume": [
+   "abs",
+   1074431676
+  ],
+  "param_get_boolop_arm": [
+   "abs",
+   1074432184
+  ],
+  "param_set_read": [
+   "abs",
+   1074433638
+  ],
+  "param_set_read_body": [
+   "abs",
+   1074433646
+  ],
+  "param_minmax": [
+   "abs",
+   1074433952
+  ],
+  "param_short_name": [
+   "abs",
+   1074434048
+  ],
+  "param_short_name_body": [
+   "abs",
+   1074434058
+  ],
+  "param_set_value": [
+   "abs",
+   1074434156
+  ],
+  "param_set_value_body": [
+   "abs",
+   1074434164
+  ],
+  "param_set_apply_delta": [
+   "abs",
+   1074435656
+  ],
+  "param_set_boolop_arm": [
+   "abs",
+   1074437398
+  ],
+  "sound_set_write": [
+   "abs",
+   1074438154
+  ],
+  "dest_list_build": [
+   "abs",
+   1074438784
+  ],
+  "pattern_track": [
+   "abs",
+   1074442910
+  ],
+  "lock_pool_set": [
+   "abs",
+   1074448092
+  ],
+  "track_selection": [
+   "abs",
+   1074455698
+  ],
+  "current_track_pattern": [
+   "abs",
+   1074458850
+  ],
+  "kit_reload": [
+   "abs",
+   1074458942
+  ],
+  "param_target_for_track": [
+   "abs",
+   1074459930
+  ],
+  "track_index_of": [
+   "abs",
+   1074489662
+  ],
+  "sound_randomize_values": [
+   "abs",
+   1074513266
+  ],
+  "sound_randomize": [
+   "abs",
+   1074513502
+  ],
+  "env_reset_get": [
+   "abs",
+   1074515744
+  ],
+  "env_reset_set": [
+   "abs",
+   1074515792
+  ],
+  "machine_list_build": [
+   "abs",
+   1074523086
+  ],
+  "trig_flag_get": [
+   "abs",
+   1074526840
+  ],
+  "vel_get_stock": [
+   "abs",
+   1074527628
+  ],
+  "pattern_step_has_trig": [
+   "abs",
+   1074528126
+  ],
+  "Pattern_getMicrotiming": [
+   "abs",
+   1074529096
+  ],
+  "pattern_length": [
+   "abs",
+   1074529572
+  ],
+  "track_lock_set": [
+   "abs",
+   1074529676
+  ],
+  "Pattern_setMicrotiming": [
+   "abs",
+   1074530532
+  ],
+  "euclid_bool_op_get": [
+   "abs",
+   1074532892
+  ],
+  "euclid_bool_op_set": [
+   "abs",
+   1074532940
+  ],
+  "euclid_step_map_get": [
+   "abs",
+   1074533038
+  ],
+  "euclid_generate": [
+   "abs",
+   1074534916
+  ],
+  "trig_flags_set": [
+   "abs",
+   1074537602
+  ],
+  "trig_place": [
+   "abs",
+   1074538016
+  ],
+  "trig_place_lock": [
+   "abs",
+   1074538136
+  ],
+  "euclid_bake": [
+   "abs",
+   1074543738
+  ],
+  "euclid_bake_body": [
+   "abs",
+   1074543746
+  ],
+  "top_bar_draw": [
+   "abs",
+   1074561766
+  ],
+  "view_lfo_page_count": [
+   "abs",
+   1074573462
+  ],
+  "euclid_toggle_handler": [
+   "abs",
+   1074601084
+  ],
+  "sound_page_draw": [
+   "abs",
+   1074605702
+  ],
+  "kit_reload_key": [
+   "abs",
+   1074648498
+  ],
+  "env_reset_menu_change": [
+   "abs",
+   1074722982
+  ],
+  "track_menu_ctor": [
+   "abs",
+   1074764708
+  ],
+  "track_menu_ctor_tail": [
+   "abs",
+   1074765570
+  ],
+  "fx_prepost_format": [
+   "abs",
+   1074773642
+  ],
+  "filter_type_knob_draw": [
+   "abs",
+   1074786578
+  ],
+  "filter_type_text": [
+   "abs",
+   1074786830
+  ],
+  "euclid_bool_op_format": [
+   "abs",
+   1074787398
+  ],
+  "boolop_icon_draw": [
+   "abs",
+   1074787550
+  ],
+  "param_info": [
+   "abs",
+   1074787778
+  ],
+  "param_info_resume": [
+   "abs",
+   1074787788
+  ],
+  "page_info": [
+   "abs",
+   1074787808
+  ],
+  "page_info_resume": [
+   "abs",
+   1074787814
+  ],
+  "synth_page_knob_table": [
+   "abs",
+   1074787846
+  ],
+  "lfo_dst_knob_draw": [
+   "abs",
+   1074788968
+  ],
+  "audio_dsp_region": [
+   "abs",
+   1074790508
+  ],
+  "static_ctors_run": [
+   "abs",
+   1074792174
+  ],
+  "control_frame_cal_init": [
+   "abs",
+   1074825222
+  ],
+  "balance_linear": [
+   "abs",
+   1074829436
+  ],
+  "balance_clamped": [
+   "abs",
+   1074829492
+  ],
+  "amp_env_commands": [
+   "abs",
+   1074829632
+  ],
+  "amp_env_attack_cmd": [
+   "abs",
+   1074830192
+  ],
+  "amp_env_attack_resume": [
+   "abs",
+   1074830198
+  ],
+  "filter_cal_build": [
+   "abs",
+   1074843636
+  ],
+  "filter_env_commands": [
+   "abs",
+   1074843900
+  ],
+  "audio_dsp_block_example": [
+   "abs",
+   1074845772
+  ],
+  "master_controls_write": [
+   "abs",
+   1074848268
+  ],
+  "fx_generate": [
+   "abs",
+   1074849468
+  ],
+  "fx_return_gain_route_site": [
+   "abs",
+   1074850060
+  ],
+  "voice_output_mix": [
+   "abs",
+   1074850460
+  ],
+  "fx_return_mix_pre": [
+   "abs",
+   1074850706
+  ],
+  "fx_return_mix_post": [
+   "abs",
+   1074850922
+  ],
+  "machine_func_gen": [
+   "abs",
+   1074873032
+  ],
+  "machine_hh_test": [
+   "abs",
+   1074873548
+  ],
+  "osc_trim_band": [
+   "abs",
+   1074892796
+  ],
+  "osc_cal_set": [
+   "abs",
+   1074893020
+  ],
+  "osc_trim_write": [
+   "abs",
+   1074894836
+  ],
+  "chip_step_offset": [
+   "abs",
+   1074896832
+  ],
+  "machine_bt_improved": [
+   "abs",
+   1074901732
+  ],
+  "noise_generate": [
+   "abs",
+   1074904250
+  ],
+  "clap_noise": [
+   "abs",
+   1074904540
+  ],
+  "machine_sd_test": [
+   "abs",
+   1074909940
+  ],
+  "machine_rs_test": [
+   "abs",
+   1074910328
+  ],
+  "machine_cy_test": [
+   "abs",
+   1074910752
+  ],
+  "machine_cb_test": [
+   "abs",
+   1074911516
+  ],
+  "machine_bd_test": [
+   "abs",
+   1074912094
+  ],
+  "machine_mt_test": [
+   "abs",
+   1074912892
+  ],
+  "machine_bt_test": [
+   "abs",
+   1074913132
+  ],
+  "voice_trig_reset": [
+   "abs",
+   1074914498
+  ],
+  "segment_rate": [
+   "abs",
+   1074915354
+  ],
+  "segment_length": [
+   "abs",
+   1074915438
+  ],
+  "pitch_tune_unipolar": [
+   "abs",
+   1074915456
+  ],
+  "pitch_tune_bipolar": [
+   "abs",
+   1074915504
+  ],
+  "pitch_to_cv": [
+   "abs",
+   1074915546
+  ],
+  "machine_lt_test": [
+   "abs",
+   1074915588
+  ],
+  "click_level": [
+   "abs",
+   1074915908
+  ],
+  "hat_bank_write": [
+   "abs",
+   1074915926
+  ],
+  "control_frame_defaults": [
+   "abs",
+   1074916194
+  ],
+  "tempo_get": [
+   "abs",
+   1074918236
+  ],
+  "kit_push": [
+   "abs",
+   1074919690
+  ],
+  "lfo_block_call_site": [
+   "abs",
+   1074925594
+  ],
+  "lfo_call_resume": [
+   "abs",
+   1074925600
+  ],
+  "machine_dispatch": [
+   "abs",
+   1074925914
+  ],
+  "audio_rx_filled": [
+   "abs",
+   1074926538
+  ],
+  "audio_rx_filled_resume": [
+   "abs",
+   1074926544
+  ],
+  "adc_average": [
+   "abs",
+   1075027508
+  ],
+  "adc_pedal_update": [
+   "abs",
+   1075049364
+  ],
+  "param_text_format": [
+   "abs",
+   1075196960
+  ],
+  "shared_ptr_release": [
+   "abs",
+   1075252184
+  ],
+  "project_singleton": [
+   "abs",
+   1075313162
+  ],
+  "view_list_open": [
+   "abs",
+   1075321608
+  ],
+  "kit_mark": [
+   "abs",
+   1075407750
+  ],
+  "kit_working_data": [
+   "abs",
+   1075407792
+  ],
+  "bitmap_set_make": [
+   "abs",
+   1075543924
+  ],
+  "std_string_dtor": [
+   "abs",
+   1075557696
+  ],
+  "std_string_from_cstr": [
+   "abs",
+   1075564528
+  ],
+  "voice_channel_map": [
+   "abs",
+   1075572032
+  ],
+  "machine_names": [
+   "abs",
+   1075573332
+  ],
+  "track_default_machine": [
+   "abs",
+   1075573756
+  ],
+  "machine_voice_mask": [
+   "abs",
+   1075573804
+  ],
+  "track_physical_voice": [
+   "abs",
+   1075573912
+  ],
+  "param_modflags": [
+   "abs",
+   1075575752
+  ],
+  "param_record_base": [
+   "abs",
+   1075575752
+  ],
+  "param_table_rom": [
+   "abs",
+   1075575792
+  ],
+  "machine_to_storage_fx": [
+   "abs",
+   1075600204
+  ],
+  "machine_to_storage_voice": [
+   "abs",
+   1075600508
+  ],
+  "sound_slot_map": [
+   "abs",
+   1075600508
+  ],
+  "sound_config_changed_info_vt": [
+   "abs",
+   1075624076
+  ],
+  "pattern_grid_view_vtable": [
+   "abs",
+   1075628332
+  ],
+  "microtiming_label_table": [
+   "abs",
+   1075632924
+  ],
+  "parameter_set_vtables": [
+   "abs",
+   1075695016
+  ],
+  "SOUND_PARAM_SET_VT": [
+   "abs",
+   1075695140
+  ],
+  "TRIG_PARAM_SET_VT": [
+   "abs",
+   1075695388
+  ],
+  "comp_view_knob_draw": [
+   "abs",
+   1075713260
+  ],
+  "params_seq_note_view_vtable": [
+   "abs",
+   1075720520
+  ],
+  "track_selection_view_vtable": [
+   "abs",
+   1075722656
+  ],
+  "env_reset_labels": [
+   "abs",
+   1075745148
+  ],
+  "filter_type_labels": [
+   "abs",
+   1075758740
+  ],
+  "euclid_bool_op_labels": [
+   "abs",
+   1075758768
+  ],
+  "amp_env_rate_tables": [
+   "abs",
+   1075766812
+  ],
+  "voice_switch_bits_rs": [
+   "abs",
+   1075798500
+  ],
+  "voice_switch_bits_sd": [
+   "abs",
+   1075798528
+  ],
+  "voice_switch_bits_bd": [
+   "abs",
+   1075798556
+  ],
+  "str_fmt_s": [
+   "abs",
+   1076106196
+  ],
+  "str_width_xxx": [
+   "abs",
+   1076106200
+  ],
+  "key_scan_ids": [
+   "abs",
+   1076386256
+  ],
+  "tempo_word": [
+   "abs",
+   1076396028
+  ],
+  "param_page_table": [
+   "abs",
+   1076397980
+  ],
+  "machine_engine_table": [
+   "abs",
+   1076430556
+  ],
+  "voice_owner_track": [
+   "abs",
+   1076433208
+  ],
+  "filter_type_icon_pixels": [
+   "abs",
+   1076569344
+  ],
+  "text_ctx": [
+   "abs",
+   1098791068
+  ],
+  "lfo_state_base": [
+   "abs",
+   1100227924
+  ],
+  "PARAM_INFO_BASE": [
+   "abs",
+   1100630152
+  ],
+  "filter_cal_coeffs": [
+   "abs",
+   1100783380
+  ],
+  "fx_return_gain_pre_current": [
+   "abs",
+   1100783648
+  ],
+  "filter_type_icon_set": [
+   "abs",
+   1100946232
+  ],
+  "fx_mix_stage_buffer": [
+   "abs",
+   1118596644
+  ],
+  "fx_mix_ring": [
+   "abs",
+   1118596912
+  ],
+  "fx_return_gain_pre": [
+   "abs",
+   1123764916
+  ],
+  "fx_return_gain_post": [
+   "abs",
+   1123764924
+  ],
+  "machine_pitch_cache": [
+   "abs",
+   1123773048
+  ],
+  "output_ring_base": [
+   "abs",
+   2147483648
+  ],
+  "voice_control_block": [
+   "abs",
+   2147509184
+  ],
+  "voice_digital_buf": [
+   "abs",
+   2147511288
+  ],
+  "voice_noise_gain": [
+   "abs",
+   2147512320
+  ],
+  "voice_noise_buf": [
+   "abs",
+   2147512384
+  ],
+  "fx_reverb_out": [
+   "abs",
+   2147515204
+  ],
+  "fx_delay_out": [
+   "abs",
+   2147515460
+  ],
+  "engine_sound_settings": [
+   "abs",
+   2147543552
+  ],
+  "lfo_track_array": [
+   "abs",
+   2147547048
+  ],
+  "fx_return_level_delay": [
+   "abs",
+   2147548088
+  ],
+  "fx_return_route_flag_delay": [
+   "abs",
+   2147548092
+  ],
+  "fx_mix_ring_slot": [
+   "abs",
+   2147548916
+  ],
+  "voice_machine_state": [
+   "abs",
+   2147548920
+  ],
+  "LIVE_PAT0": [
+   "abs",
+   1081903587
+  ],
+  "LIVE_PAT_SIZE": [
+   "abs",
+   85760
+  ],
+  "LIVE_PATS": [
+   "abs",
+   129
+  ],
+  "LIVE_TRK_SIZE": [
+   "abs",
+   917
+  ],
+  "LIVE_TRKS": [
+   "abs",
+   13
+  ],
+  "track_item": [
+   ".run",
+   0
+  ],
+  "P_DIAG_GET": [
+   "abs",
+   0
+  ],
+  "P_DIAG_ICONS": [
+   "abs",
+   0
+  ],
+  "P_PHASE": [
+   "abs",
+   2
+  ],
+  "P_PROBE_RANGE": [
+   "abs",
+   0
+  ],
+  "OFF_EUCLID_ENABLED": [
+   "abs",
+   714
+  ],
+  "OFF_EUCLID_STEP_MAP": [
+   "abs",
+   721
+  ],
+  "VT_STORAGE": [
+   "abs",
+   40
+  ],
+  "VT_BATCH": [
+   "abs",
+   60
+  ],
+  "VT_NOTIFY": [
+   "abs",
+   16
+  ],
+  "storage_ptr": [
+   ".run",
+   74
+  ],
+  "boolop_get_ui": [
+   ".run",
+   102
+  ],
+  "accent_get": [
+   ".run",
+   152
+  ],
+  "boolop_set_ui": [
+   ".run",
+   184
+  ],
+  "boolop_labels": [
+   ".run",
+   266
+  ],
+  "lbl_or_a": [
+   ".run",
+   298
+  ],
+  "lbl_xor_a": [
+   ".run",
+   302
+  ],
+  "lbl_and_a": [
+   ".run",
+   307
+  ],
+  "lbl_sub_a": [
+   ".run",
+   312
+  ],
+  "trig_fire_accent": [
+   ".run",
+   318
+  ],
+  "accent_field_tf": [
+   ".run",
+   382
+  ],
+  "euclid_bake_gate": [
+   ".run",
+   418
+  ],
+  "bake_accents": [
+   ".run",
+   468
+  ],
+  "trig_fire_euclid_gate": [
+   ".run",
+   622
+  ],
+  "accent_pixels": [
+   ".run",
+   668
+  ],
+  "boolop_bitmaps": [
+   ".run",
+   940
+  ],
+  "ICON_MASK": [
+   "abs",
+   1076621300
+  ],
+  "ICON_W": [
+   "abs",
+   17
+  ],
+  "ICON_H": [
+   "abs",
+   12
+  ],
+  "bitmapset8": [
+   ".run",
+   1164
+  ],
+  "BOOLOP_MAX": [
+   "abs",
+   7
+  ],
+  "param_delta_gate": [
+   ".run",
+   1278
+  ],
+  "boolop_text_gate": [
+   ".run",
+   1352
+  ],
+  "euclid_accents_bitmapset8": [
+   ".run",
+   1164
+  ],
+  "euclid_accents_params": [
+   ".run",
+   1402
+  ],
+  "euclid_accents_boolop_set_ui": [
+   ".run",
+   184
+  ],
+  "euclid_accents_boolop_get_ui": [
+   ".run",
+   102
+  ],
+  "euclid_accents_euclid_bake_gate": [
+   ".run",
+   418
+  ],
+  "euclid_accents_trig_fire_euclid_gate": [
+   ".run",
+   622
+  ],
+  "euclid_accents_boolop_labels": [
+   ".run",
+   266
+  ],
+  "euclid_accents_trig_fire_accent": [
+   ".run",
+   318
+  ]
+ },
+ "exports": [
+  "euclid_accents_bitmapset8",
+  "euclid_accents_boolop_get_ui",
+  "euclid_accents_boolop_labels",
+  "euclid_accents_boolop_set_ui",
+  "euclid_accents_euclid_bake_gate",
+  "euclid_accents_params",
+  "euclid_accents_trig_fire_accent",
+  "euclid_accents_trig_fire_euclid_gate"
+ ],
+ "imports": [
+  "core_store_get",
+  "core_store_set",
+  "euclid_accent"
+ ],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   164,
+   "abs32",
+   "sym:euclid_accent",
+   0
+  ],
+  [
+   ".run",
+   170,
+   "abs32",
+   "sym:core_store_get",
+   0
+  ],
+  [
+   ".run",
+   226,
+   "abs32",
+   "sym:euclid_accent",
+   0
+  ],
+  [
+   ".run",
+   232,
+   "abs32",
+   "sym:core_store_set",
+   0
+  ],
+  [
+   ".run",
+   282,
+   "abs32",
+   "sec:.run",
+   298
+  ],
+  [
+   ".run",
+   286,
+   "abs32",
+   "sec:.run",
+   302
+  ],
+  [
+   ".run",
+   290,
+   "abs32",
+   "sec:.run",
+   307
+  ],
+  [
+   ".run",
+   294,
+   "abs32",
+   "sec:.run",
+   312
+  ],
+  [
+   ".run",
+   400,
+   "abs32",
+   "sym:euclid_accent",
+   0
+  ],
+  [
+   ".run",
+   406,
+   "abs32",
+   "sym:core_store_get",
+   0
+  ],
+  [
+   ".run",
+   1414,
+   "abs32",
+   "sec:.run",
+   1278
+  ],
+  [
+   ".run",
+   1418,
+   "abs32",
+   "sec:.run",
+   1352
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x4009ab36",
+   "len": 8,
+   "stock_sha256": "dc63e255cc517f5256702b3e8ce26ba58e4359e72a19b03d6cf8af446b904f9d",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:euclid_accents_trig_fire_euclid_gate",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4009abde",
+   "len": 6,
+   "stock_sha256": "1734211fe4015fb65e909c092d782641f3d687fd36332a005e19cc6a231ae7b6",
+   "new": "4ef900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:euclid_accents_trig_fire_accent",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400c3c7a",
+   "len": 8,
+   "stock_sha256": "0dc686dad30ecbf17eeac334dbad7317c5de98ab50e91418d9d8927a1763914d",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:euclid_accents_euclid_bake_gate",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400a88b8",
+   "len": 6,
+   "stock_sha256": "0505036de03b8cfd051e264b007e0290d7b27f09093f0d32779144a7a21ede08",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:euclid_accents_boolop_get_ui",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400a9d16",
+   "len": 6,
+   "stock_sha256": "e7360411433bd40e8ca5a527523f80d0672e4ec1ea718e642a657f4e8098c086",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:euclid_accents_boolop_set_ui",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400ff44c",
+   "len": 2,
+   "stock_sha256": "771260b3e7ad3e3bbe992aa16c9958440f42bf5762b268b299898d6eefe67772",
+   "new": "7207",
+   "kind": "code",
+   "relocs": []
+  },
+  {
+   "addr": "0x400ff456",
+   "len": 2,
+   "stock_sha256": "af9599acf20870a4b63cf7389bc164c439ecceca9151756eb2dd36a96368253d",
+   "new": "7007",
+   "kind": "code",
+   "relocs": []
+  },
+  {
+   "addr": "0x400ff460",
+   "len": 6,
+   "stock_sha256": "4a828b9b1fd6ca38abe23c5624927fb62ce95729830d0f7281a415529679e4ec",
+   "new": "43f900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:euclid_accents_boolop_labels",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400ff4e2",
+   "len": 2,
+   "stock_sha256": "771260b3e7ad3e3bbe992aa16c9958440f42bf5762b268b299898d6eefe67772",
+   "new": "7207",
+   "kind": "code",
+   "relocs": []
+  },
+  {
+   "addr": "0x400ff4fe",
+   "len": 2,
+   "stock_sha256": "af9599acf20870a4b63cf7389bc164c439ecceca9151756eb2dd36a96368253d",
+   "new": "7007",
+   "kind": "code",
+   "relocs": []
+  },
+  {
+   "addr": "0x401432f0",
+   "len": 6,
+   "stock_sha256": "1b3930f5bd75a07126f1c3bbec3f25d3d86ef8097f3bb68065e2feddffa74d99",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:euclid_accents_bitmapset8",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {},
+ "contribute": [
+  {
+   "to": "core_params",
+   "order": 30,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:euclid_accents_params",
+     0
+    ]
+   ],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "storage": [
+  {
+   "sym": "euclid_accent",
+   "scope": "track",
+   "bits": 1
+  }
+ ],
+ "resources": {
+  "regions": [],
+  "names": [
+   "ui:EUCLIDEAN page OP values",
+   "sequencer:euclid trig masking and accent"
+  ],
+  "core": "0.7"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}

@@ -264,9 +264,10 @@ static void keep_steps(void)
     }
 }
 
-// ev_render_out: stock's series state for this block in place. Nothing but four
-// reads a block until a pad is pressed.
-void retrig_fix_render(void)
+// ev_render_out: stock's series state for this block in place. The body runs only
+// when a press is new, a series runs or has just ended, or a guard is on; on an
+// idle block the entry below is a few reads with no stack frame.
+static void __attribute__((noinline)) fix_render(void)
 {
     const volatile uint32_t *active = (const volatile uint32_t *)RT_ACTIVE;
     int t;
@@ -311,6 +312,14 @@ void retrig_fix_render(void)
     }
     if (guarding)
         keep_steps();
+}
+
+void retrig_fix_render(void)
+{
+    const volatile uint32_t *active = (const volatile uint32_t *)RT_ACTIVE;
+
+    if (ring_seen != (NOTE_RING_NEXT & 15) || (active[0] | active[1] | active[2]) || running || guarding)
+        fix_render();
 }
 
 // The recorder, for a press with a retrig (live-rec-retrig-fix.s): at a rate that fits the steps

@@ -1,0 +1,149 @@
+{
+  "firmware": "1.40C",
+  "imageSha256": "bdd9d88e58516c66192b7966307505fa51b4367df851a40a375ae746df0ee059",
+  "emulatorSha256": "28391993ae79ba028bc913c40fe6f461a3aef9bfef06501b1241731df0fd57e0",
+  "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6.",
+  "palette": {
+    "on": [
+      240,
+      240,
+      240
+    ],
+    "off": [
+      24,
+      24,
+      24
+    ]
+  },
+  "keyMs": 150,
+  "plan": [
+    {
+      "wait": 3000
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 2000
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "press": [
+        "FUNC",
+        "LFO"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "encoder": {
+        "name": "C",
+        "delta": 4
+      }
+    },
+    {
+      "wait": 300
+    },
+    {
+      "encoder": {
+        "name": "C",
+        "delta": 4
+      }
+    },
+    {
+      "wait": 300
+    },
+    {
+      "encoder": {
+        "name": "C",
+        "delta": 4
+      }
+    },
+    {
+      "wait": 300
+    },
+    {
+      "encoder": {
+        "name": "C",
+        "delta": 4
+      }
+    },
+    {
+      "wait": 300
+    },
+    {
+      "encoder": {
+        "name": "C",
+        "delta": 4
+      }
+    },
+    {
+      "wait": 300
+    },
+    {
+      "encoder": {
+        "name": "C",
+        "delta": 4
+      }
+    },
+    {
+      "wait": 300
+    },
+    {
+      "encoder": {
+        "name": "C",
+        "delta": 4
+      }
+    },
+    {
+      "wait": 300
+    },
+    {
+      "wait": 500
+    },
+    {
+      "capture": "slow_lfo_mult_half.png"
+    },
+    {
+      "encoder": {
+        "name": "C",
+        "delta": 4
+      }
+    },
+    {
+      "wait": 300
+    },
+    {
+      "encoder": {
+        "name": "C",
+        "delta": 4
+      }
+    },
+    {
+      "wait": 300
+    },
+    {
+      "wait": 500
+    },
+    {
+      "capture": "slow_lfo_mult_eighth.png"
+    },
+    {
+      "encoder": {
+        "name": "C",
+        "delta": 4
+      }
+    }
+  ],
+  "screenshots": {
+    "slow_lfo_mult_half.png": "d0e880576d3622ee1d650e1cc6318a8de5b1c7b1db9af66e1dc2b9d3d066af12",
+    "slow_lfo_mult_eighth.png": "a9ec8d98dd9491d90a4ec5ccdc64b008f88fa317dc55b2b9f6550ec99078b43d"
+  }
+}
