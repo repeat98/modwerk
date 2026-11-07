@@ -1,0 +1,195 @@
+{
+  "firmware": "1.40C",
+  "imageSha256": "9a7e1784f9613a66d4957b01911bcc89f24d6a6638a6e29765a90adc923045b2",
+  "emulatorSha256": "8ff35008171775437d19513f60bcfcb04025f27c3d1c613ae65b4b2d91a03e45",
+  "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6.",
+  "palette": {
+    "on": [
+      240,
+      240,
+      240
+    ],
+    "off": [
+      24,
+      24,
+      24
+    ]
+  },
+  "keyMs": 150,
+  "plan": [
+    {
+      "wait": 3000
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 2000
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "press": [
+        "T1"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "01-main.png"
+    },
+    {
+      "press": [
+        "UP",
+        "REC"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "capture": "02-stems-open.png"
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "03-stems-tracks.png"
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "press": [
+        "DOWN"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "capture": "04-stems-sources.png"
+    },
+    {
+      "press": [
+        "UP",
+        "REC"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "press": [
+        "UP",
+        "REC"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "capture": "05-stems-armed.png"
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "press": [
+        "UP",
+        "REC"
+      ]
+    },
+    {
+      "wait": 300
+    }
+  ],
+  "screenshots": {
+    "01-main.png": "b28d825b71eb0b1f7e2b639fe1150392d59d0346d38dc5c9e81d24c4d59a1603",
+    "02-stems-open.png": "864142260347c912a9fb879637d9e888833c2aa395d2681c4832db8ed0e88fd1",
+    "03-stems-tracks.png": "560e28b108f87537c81ff1088887b2a69c8be9fbc882c52d60049e7f45fa6c4b",
+    "04-stems-sources.png": "ff9396ebaf3ca5f7ff533a354ba84e89ebc036f4e7ac6df67e1abf9b7df9d926",
+    "05-stems-armed.png": "5a9c9732896e06dcdea545b52d27b0d5a9f4f57faa3ac9f099e4bf1ef9d25e53"
+  }
+}
