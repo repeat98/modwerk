@@ -138,7 +138,7 @@
       "summary": "Test build MB11 (sha256 3ed14a3d...): the Modwerk base with the send bus and the clock for send effects, this effect with FREQ SHIFTER, REVERSE DELAY and RING MOD, CHORUS, FLANGER and PHASER, Loop Sync 0.3.2 and Retrig Grid 0.2.0. The author reported that group as \"les meilleurs effets de toute la liste\".",
       "limitations": [
         "Informal report: which steps of the test sheet were run was not detailed, and the CPU reading was not reported.",
-        "MB11 built this effect from the same source file but for its id (10 there, 4 here, the next free one on main's base), on an earlier base than main's send-bus variant 0cdf0343."
+        "MB11 built this effect from the same source file but for its id (10 there, 4 here, the next free one on main's base), on an earlier base than the send-bus variant 0cdf0343 of the library's captures."
       ]
     },
     "verifiedBy": null
