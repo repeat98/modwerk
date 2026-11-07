@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "euclid-accents",
   "name": "Euclid Accents",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "machine": "analog-rytm-mkii",
   "category": "machines",
   "exclusive": false,
@@ -19,7 +19,7 @@
   ],
   "source": {
     "repository": "https://github.com/Iced-Cream/rytm2_mods",
-    "revision": "afd461d4a8ef4306bb2a57d4c61ad35c362b3940",
+    "revision": "e029f7540c2df2a5185620ca68b4c08579e120c6",
     "path": "euclid-accents"
   },
   "presentation": {
@@ -70,15 +70,14 @@
     "requires": [],
     "conflicts": [],
     "limitations": [
-      "Built for OS 1.74 only, with core-ar2 0.3.",
-      "Needs core-ar2 0.3's mod storage: one bit per pattern track (euclid_accent). Earlier cores lose the flag at a power-off without a project save.",
-      "On stock firmware, or a build without this module, an accent track plays as its base operator: the flag is in mod storage, which stock ignores.",
-      "Patches param_apply_delta and param_value_text next to other gate-chain modules; each has its own site and they link together."
+      "Built for OS 1.74 only. 1.2.0 reaches its parameter through core-ar2's parameter table (core_params, core-ar2 0.4 and later; Modwerk's base is core-ar2 0.7). 1.1.0 detoured the entries of param_apply_delta and param_value_text itself, which core-ar2 0.4 and later own, so it does not link with them.",
+      "Needs core-ar2's mod storage: one bit per pattern track (euclid_accent).",
+      "On stock firmware, or a build without this module, an accent track plays as its base operator: the flag is in mod storage, which stock ignores."
     ]
   },
   "platform": {
     "kind": "elemod",
-    "core": "0.3",
+    "core": "0.7",
     "build": "build.json",
     "events": [],
     "claims": [
@@ -97,8 +96,8 @@
   },
   "evidence": {
     "tier": "author-hardware",
-    "moduleVersion": "1.1.0",
-    "sourceSha256": "ebc2924de716c557ba86a3e84afa5b09979e43f6ef827b5e5fbb79e0a7f210e5",
+    "moduleVersion": "1.2.0",
+    "sourceSha256": "9ef79ad8b6d760c0a7303f58949c8a3d0bf8b09cd58d881f25e6a66cee2733e7",
     "reports": [
       "evidence/hardware-testing.json",
       "evidence/source-parity.json"
@@ -106,14 +105,15 @@
     "hardware": {
       "model": "Analog Rytm MKII",
       "release": "1.74",
-      "testedOn": "2026-10-25",
+      "testedOn": "2026-10-21",
       "tester": "Iced-Cream",
       "durationMinutes": null,
-      "summary": "Iced-Cream reports that on an Analog Rytm MKII with OS 1.74, euclid-accents 1.1 passed its four test steps (OP's accent values, accent playback, bake with FUNC + EUC off, and back to a plain operator) with core-ar2 0.3 and all eleven rytm2_mods ports in C3A4 (2026-10-20), and OP kept its accent value through a power-cycle without SAVE PROJECT. On SXH4 (released core-ar2 0.3 with the other five Modwerk 1.74 submissions, 2026-10-24/25) only the grid trigs played at XOR* and SUB*, those on euclid hits measured 2.1-2.4 dB louder, and OP kept SUB* through a power cycle without SAVE PROJECT. Alone on EAH4 (released core-ar2 0.3 and this module only, 2026-10-25) only the grid trigs played at XOR* and SUB* and those on euclid hits measured 2.0-2.3 dB louder.",
+      "summary": "Iced-Cream reports that on an Analog Rytm MKII with OS 1.74, euclid-accents 1.2 (this source; rytm2_mods core-pages 7ff47d7, released unchanged in v1.3) passed in P4A4, core-ar2 0.4 with all eleven rytm2_mods ports (2026-10-21): OP turned right and back through OR, XOR, AND, SUB, OR*, XOR*, AND*, SUB*, with the right glyph and label for each and the same order going back, and OP kept its accent value through a power-cycle without SAVE PROJECT. U4A4, core-ar2 0.4's final version with the same eleven objects (the bytes of rytm2_mods v1.3), passed the core's page-key steps the same day. The playback, accent level and bake checks 1.1 passed (C3A4, SXH4, EAH4) were not repeated on 1.2: 1.2 changes only how its parameter's turn and text are reached.",
       "limitations": [
         "Duration was not recorded.",
-        "Tested builds: C3A4, .syx 04d987ced36850eef5eb5cd1215d411edf621a5af94f980525ab561c9108f951. Firmware was not read back from the device.",
-        "SXH4 (the released core-ar2 0.3, 2026-10-24/25, .syx e4d01a6aec250bd2af7743c9f8b0e9c560d805b52564932dddc41d872e1c5000) also carried a remote-control test layer that shares no site with core or the modules. EAH4 (alone with the released core-ar2 0.3, 2026-10-25, .syx 04f4d21ca270ecfb182a801818ebbc8d4086e2d03ba059a7dc9ef404755ed5ca) carried the same test layer."
+        "P4A4: .syx 1c0311697543789316c10dbbbfa78b9a717a180eb26611f2f0d1b732a428d65c. U4A4: .syx 18681f8709242b9d3c5117335a81cd5659ea01c583e3e8477d536e379517b785. Firmware was not read back from the device.",
+        "Both builds use core-ar2 0.4, not Modwerk's base (core-ar2 0.7); this package has not been flashed on its own.",
+        "The playback, accent level and bake checks 1.1 passed (C3A4, SXH4, EAH4) were not repeated on 1.2."
       ]
     },
     "verifiedBy": null

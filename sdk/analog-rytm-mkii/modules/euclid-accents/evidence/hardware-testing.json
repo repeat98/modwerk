@@ -1,12 +1,20 @@
 {
   "schemaVersion": 1,
-  "reportedOn": "2026-10-25",
-  "source": "Iced-Cream's own tests on their unit: the C3A4 unit test (core-ar2 0.3), recorded in rytm2_mods euclid-accents/README.md at afd461d; and the SXH4 bench runs on the same unit (2026-10-24 and 2026-10-25); and the solo bench run of EAH4 on the same unit (2026-10-25)",
+  "reportedOn": "2026-11-07",
+  "source": "Iced-Cream's own tests on their unit: the core-ar2 0.4 unit test (P4A4 and U4A4, 2026-10-21; rytm2_mods core-pages 7ff47d7, released as v1.3) for 1.2; 1.1's runs (C3A4 2026-10-20, SXH4 2026-10-24/25, EAH4 2026-10-25) are kept below for the module's unchanged parts",
   "reporter": "Iced-Cream",
-  "statement": "Hardware, OS 1.74, 2026-10-20, C3A4 (core-ar2 0.3 and all eleven rytm2_mods v1.2 ports): euclid-accents 1.1's test steps 1 to 4 pass. OP turns past SUB to OR*, XOR*, AND* and SUB*; with OR* only grid trigs play and those on euclid hits are accented; FUNC + EUC off writes the accents into the pattern; with an accent operator EUC stays on and the track plays only its grid trigs, and a plain operator brings euclid's trigs back. OP keeps its accent value through a power-cycle without SAVE PROJECT. On SXH4 (released core-ar2 0.3 with the other five Modwerk 1.74 submissions, 2026-10-24/25) only the grid trigs played at XOR* and SUB*, those on euclid hits measured 2.1-2.4 dB louder, and OP kept SUB* through a power cycle without SAVE PROJECT. Alone on EAH4 (released core-ar2 0.3 and this module only, 2026-10-25) only the grid trigs played at XOR* and SUB* and those on euclid hits measured 2.0-2.3 dB louder.",
+  "statement": "Hardware, OS 1.74, 2026-10-21, P4A4 (core-ar2 0.4 and all eleven rytm2_mods ports, euclid-accents 1.2): OP turned right and back through OR, XOR, AND, SUB, OR*, XOR*, AND*, SUB*, with the right glyph and label for each and the same order going back, and OP kept its accent value through a power-cycle without SAVE PROJECT. Hardware, OS 1.74, 2026-10-20, C3A4 (core-ar2 0.3 and all eleven rytm2_mods v1.2 ports): euclid-accents 1.1's test steps 1 to 4 pass. OP turns past SUB to OR*, XOR*, AND* and SUB*; with OR* only grid trigs play and those on euclid hits are accented; FUNC + EUC off writes the accents into the pattern; with an accent operator EUC stays on and the track plays only its grid trigs, and a plain operator brings euclid's trigs back. OP keeps its accent value through a power-cycle without SAVE PROJECT. On SXH4 (released core-ar2 0.3 with the other five Modwerk 1.74 submissions, 2026-10-24/25) only the grid trigs played at XOR* and SUB*, those on euclid hits measured 2.1-2.4 dB louder, and OP kept SUB* through a power cycle without SAVE PROJECT. Alone on EAH4 (released core-ar2 0.3 and this module only, 2026-10-25) only the grid trigs played at XOR* and SUB* and those on euclid hits measured 2.0-2.3 dB louder.",
   "status": "hardware-tested-author-reported",
-  "scope": "euclid-accents 1.1 beside other rytm2_mods ports. SXH4 ran it with the released core-ar2 0.3 and the other five Modwerk 1.74 submissions. EAH4 ran it alone with the released core-ar2 0.3.",
+  "scope": "euclid-accents 1.2 beside the other rytm2_mods ports on core-ar2 0.4 (P4A4, U4A4). euclid-accents 1.1 beside other rytm2_mods ports. SXH4 ran it with the released core-ar2 0.3 and the other five Modwerk 1.74 submissions. EAH4 ran it alone with the released core-ar2 0.3.",
   "modules": [
+    {
+      "id": "euclid-accents",
+      "version": "1.2"
+    },
+    {
+      "id": "core",
+      "version": "0.4"
+    },
     {
       "id": "euclid-accents",
       "version": "1.1"
@@ -17,6 +25,33 @@
     }
   ],
   "builds": [
+    {
+      "label": "P4A4",
+      "testedOn": "2026-10-21",
+      "os": "1.74",
+      "syxSha256": "1c0311697543789316c10dbbbfa78b9a717a180eb26611f2f0d1b732a428d65c",
+      "packageSha256": {
+        "euclid-accents-1.2-os1.74.elemod": "8d07137fb2c735446bb2635014bf960fd321d671e31bddef5069342f05d9b7d6"
+      },
+      "content": "core-ar2 0.4 (first version) with rytm2_mods' eleven OS 1.74 mods, euclid-accents 1.2 among them (rytm2_mods core-pages 7ff47d7, the source released as v1.3 and in this folder). Flashed by the owner, test steps run by hand, stock 1.74 restored.",
+      "results": [
+        "OP steps OR, XOR, AND, SUB, OR*, XOR*, AND*, SUB* to the right and back in the same order, each with its glyph and label.",
+        "OP keeps its accent value through a power-cycle without SAVE PROJECT."
+      ]
+    },
+    {
+      "label": "U4A4",
+      "testedOn": "2026-10-21",
+      "os": "1.74",
+      "syxSha256": "18681f8709242b9d3c5117335a81cd5659ea01c583e3e8477d536e379517b785",
+      "packageSha256": {
+        "euclid-accents-1.2-os1.74.elemod": "8d07137fb2c735446bb2635014bf960fd321d671e31bddef5069342f05d9b7d6"
+      },
+      "content": "core-ar2 0.4's final version with the same eleven mods: the bytes of rytm2_mods v1.3.",
+      "results": [
+        "The core's page-key steps (page step, titles, kept page) and audio-load guard pass; the eleven mods were present, not each retested."
+      ]
+    },
     {
       "label": "EAH4",
       "testedOn": "2026-10-25",
