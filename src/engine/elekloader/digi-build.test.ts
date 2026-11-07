@@ -190,6 +190,17 @@ describe('the vendored elekloader catalog', () => {
       missing: [],
     })
   })
+  it('plans Slice Loop beside Env Reset Amp and Quick Trig Conditions from its pinned source-only package on the plain base', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['env-reset-amp', 'quick-fill-trig-condition', 'slice-loop'])).toMatchObject({
+      core: { file: PLAIN, version: '0.7' },
+      mods: [
+        { id: 'env-reset-amp', file: 'env-reset-amp-1.0.0-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.0.0' },
+        { id: 'quick-fill-trig-condition', file: 'quick-fill-trig-condition-0.2.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.0-experimental' },
+        { id: 'slice-loop', file: 'slice-loop-1.0.0-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.0.0' },
+      ],
+      missing: [],
+    })
+  })
   it('plans Live Rec Retrig Fix beside Pipo Loop, Sample RATE and Silent Pad+Trig from its pinned source-only package on the plain base', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['live-rec-retrig-fix', 'pipo-loop', 'sample-rate', 'silent-pad-trig'])).toMatchObject({
       core: { file: PLAIN, version: '0.7' },
