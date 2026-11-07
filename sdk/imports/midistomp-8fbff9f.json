@@ -3,7 +3,7 @@
   "recorded": "2026-11-07",
   "decision": "MIDISTOMP (Luca Matturro, MIT) as the Zoom MultiStomp base: LICENSE, models/ and asm/ copied unchanged; its patches converted by scripts/midistomp-import.ts into vendor/midistomp/midistomp.json with every guard on Zoom's bytes kept as a sha256 and every run they repeat from Zoom's files as a copy from the user's own, so no Zoom bytes are in the repository.",
   "repository": "https://github.com/matujuice/zoom-ms-midistomp",
-  "revision": "051fb38b59fa850a39d0f885695883e4aab7fedf",
+  "revision": "8fbff9f9a0b0d8cf7d271c4a0c5eb14ed7966860",
   "license": "MIT",
   "files": [
     {
@@ -14,7 +14,12 @@
     {
       "from": "asm/common/draw.h",
       "to": "vendor/midistomp/asm/common/draw.h",
-      "sha256": "02e90f6c74f32187af609e33722e8d6527a12d9889f359eb64adccb466cf2ec8"
+      "sha256": "af494b212b225237b8b84121d70f56bcb6c7ce43b2b0c9ed6c2df9a23a1bdaeb"
+    },
+    {
+      "from": "asm/common/fonts.h",
+      "to": "vendor/midistomp/asm/common/fonts.h",
+      "sha256": "8526aee5c507ffccdea611610fda8afc4053ba392f56441429bfc53f48fb4189"
     },
     {
       "from": "asm/diag/diag.c",
@@ -219,7 +224,7 @@
     {
       "from": "asm/mixer/chain_draw.c",
       "to": "vendor/midistomp/asm/mixer/chain_draw.c",
-      "sha256": "ee0fb12e4eb52577a8ba525e5c4ba1ed94488ff299b1a3d2f334f031c597faa9"
+      "sha256": "f767ad77723d9ac56f0b24b9e0ac2d3cfdda65a1a31fdab697f55600958a144c"
     },
     {
       "from": "asm/mixer/chain_draw_stub.c",

@@ -5,6 +5,7 @@
  * Pure: reads Chain, writes only fb. No libc, no floats, no RTS (no / % by variables).
  * fb: row-major, bit 7 of byte 0 = pixel (0,0), 1 = ink. */
 #include "chain.h"
+#include "../common/fonts.h"
 
 #define CW 38                   /* cover width / height, and the rows of the three line sets */
 #define CH 19
@@ -21,31 +22,6 @@
 typedef struct { int kind, e, a, b, bi, jn; } Col;  /* e: slot or IT_*; a / b: the Bus A / Bus B slot or -1; bi: bus column index or -1; jn: last Serial column (its lines may join) */
 typedef struct { int y, nt, t[4]; } Grp;               /* a fan group: line y forks into / joins from the nt lines t */
 typedef struct { unsigned char (*fb)[16]; const Chain *c; int cur; } D;
-
-/* Stock fonts from the mockup: 5x7 (bit 4 = left column) for covers and titles, 3x5 (bit 2) for softkeys, hints, tags. */
-static const char K5[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 []-.!/";
-static const unsigned char G5[][7] = {
-    {14,17,17,31,17,17,17},{30,17,17,30,17,17,30},{14,17,16,16,16,17,14},{28,18,17,17,17,18,28},{31,16,16,30,16,16,31},{31,16,16,30,16,16,16},
-    {14,17,16,23,17,17,15},{17,17,17,31,17,17,17},{14,4,4,4,4,4,14},{7,2,2,2,2,18,12},{17,18,20,24,20,18,17},{16,16,16,16,16,16,31},
-    {17,27,21,21,17,17,17},{17,17,25,21,19,17,17},{14,17,17,17,17,17,14},{30,17,17,30,16,16,16},{14,17,17,17,21,18,13},{30,17,17,30,20,18,17},
-    {15,16,16,14,1,1,30},{31,4,4,4,4,4,4},{17,17,17,17,17,17,14},{17,17,17,17,17,10,4},{17,17,17,21,21,21,10},{17,17,10,4,10,17,17},
-    {17,17,10,4,4,4,4},{31,1,2,4,8,16,31},{0,0,14,1,15,17,15},{16,16,22,25,17,17,30},{0,0,14,16,16,17,14},{1,1,13,19,17,17,15},
-    {0,0,14,17,31,16,14},{6,9,8,28,8,8,8},{0,15,17,17,15,1,14},{16,16,22,25,17,17,17},{4,0,12,4,4,4,14},{2,0,6,2,2,18,12},
-    {16,16,18,20,24,20,18},{12,4,4,4,4,4,14},{0,0,26,21,21,17,17},{0,0,22,25,17,17,17},{0,0,14,17,17,17,14},{0,0,30,17,30,16,16},
-    {0,0,13,19,15,1,1},{0,0,22,25,16,16,16},{0,0,14,16,14,1,30},{8,8,28,8,8,9,6},{0,0,17,17,17,19,13},{0,0,17,17,17,10,4},
-    {0,0,17,17,21,21,10},{0,0,17,10,4,10,17},{0,0,17,17,15,1,14},{0,0,31,2,4,8,31},{14,17,19,21,25,17,14},{4,12,4,4,4,4,14},
-    {14,17,1,2,4,8,31},{31,2,4,2,1,17,14},{2,6,10,18,31,2,2},{31,16,30,1,1,17,14},{6,8,16,30,17,17,14},{31,1,2,4,8,8,8},
-    {14,17,17,14,17,17,14},{14,17,17,15,1,2,12},{0,0,0,0,0,0,0},{14,8,8,8,8,8,14},{14,2,2,2,2,2,14},{0,0,0,31,0,0,0},
-    {0,0,0,0,0,12,12},{4,4,4,4,4,0,4},{0,1,2,4,8,16,0},
-};
-static const char K3[] = "ABCDEGILMNOPRSTUX/F? !H{}";
-static const unsigned char G3[][5] = {
-    {2,5,7,5,5},{6,5,6,5,6},{3,4,4,4,3},{6,5,5,5,6},{7,4,6,4,7},{3,4,5,5,3},
-    {7,2,2,2,7},{4,4,4,4,7},{5,7,7,5,5},{6,5,5,5,5},{2,5,5,5,2},{6,5,6,4,4},
-    {6,5,6,5,5},{3,4,2,1,6},{7,2,2,2,2},{5,5,5,5,7},{5,5,2,5,5},{1,1,2,4,4},
-    {7,4,6,4,4},{6,1,2,0,2},{0,0,0,0,0},{2,2,2,0,2},{5,5,7,5,5},{1,3,7,3,1},
-    {4,6,7,6,4},
-};
 
 /* ---- pixels --------------------------------------------------------------------------- */
 static void fill(const D *d, int x, int y, int w, int h, int ink)
@@ -79,25 +55,29 @@ static void sq(const D *d, int x, int y, int w, int h)  /* square 1-px frame */
 
 static int slen(const char *s) { int n = 0; while (s[n]) n++; return n; }
 
-static void text(const D *d, const char *keys, const unsigned char *g, int rows, int bits,
-                 const char *s, int x, int y, int ink, int bold)
+/* Text in the pedal's own fonts (fonts.h): FONT7 for covers and the title, the softkey font for keys, hints, tags. */
+static void glyph(const D *d, const unsigned char *g, int n, int x, int y, int ink)   /* n column bytes, bit 0 on top */
 {
-    int n, k, r, i;
-    for (; *s; s++) {
-        for (k = 0, n = -1; keys[k]; k++) if (keys[k] == *s) { n = k; break; }
-        if (n < 0) for (k = 0; keys[k]; k++) if (keys[k] == ' ') { n = k; break; }
-        for (r = 0; r < rows; r++)
-            for (i = 0; i < bits; i++)
-                if (g[n * rows + r] >> (bits - 1 - i) & 1) fill(d, x + i, y + r, bold ? 2 : 1, 1, ink);
-        x += bits + 1 + (bold ? 1 : 0);
-    }
+    int i, r;
+    for (i = 0; i < n; i++)
+        for (r = 0; r < 8; r++)
+            if (g[i] >> r & 1) fill(d, x + i, y + r, 1, 1, ink);
 }
 
-static void t5(const D *d, const char *s, int x, int y, int ink, int bold) { text(d, K5, &G5[0][0], 7, 5, s, x, y, ink, bold); }
-static void t3(const D *d, const char *s, int x, int y, int ink) { text(d, K3, &G3[0][0], 5, 3, s, x, y, ink, 0); }
-static void t7(const D *d, const char *s, int x, int y) { t5(d, s, x, y, 1, 1); }   /* the stock cover font: 6 x 7 */
-static int w5(const char *s, int bold) { return slen(s) * (bold ? 7 : 6) - 1; }
-static int w3(const char *s) { return slen(s) * 4 - 1; }
+static void t7(const D *d, const char *s, int x, int y, int ink)
+{
+    for (; *s; s++, x += 7) glyph(d, F7 + 7 * ((*s < 32 || *s > 126 ? 32 : *s) - 32), 7, x, y, ink);
+}
+
+static void t3(const D *d, const char *s, int x, int y, int ink)   /* ink rows y .. y + 4 */
+{
+    int n;
+    const unsigned char *g;
+    for (; *s; s++, x += n) { g = scols(*s, &n); glyph(d, g, n, x, y - 1, ink); }
+}
+
+static int w7(const char *s) { return slen(s) * 7 - 1; }
+static int w3(const char *s) { int n, w = 0; for (; *s; s++) { scols(*s, &n); w += n; } return w - 1; }
 
 /* Stock CHO: the item inverted inside a box 2 px larger; the cursor is only that box's outline.
  * clear() before drawing the item, mark() after. */
@@ -152,9 +132,9 @@ static void cover(const D *d, int slot, int l, int cy)
     clear(d, l, y, CW, CH, cur);
     pill(d, l, y, !d->c->on[slot], cur && d->c->sel ? 1 : 2);
     part(nm, 0, a); part(nm, 5, z);
-    t7(d, a, l + 1 + (CW - 2 - w5(a, 1)) / 2, y + 2);
+    t7(d, a, l + 1 + (CW - 2 - w7(a)) / 2, y + 2, 1);
     if (d->c->full[slot]) part("     FULL", 5, z);      /* bypassed by DSP FULL: dotted (on = 0), FULL as line 2 */
-    t7(d, z, l + 1 + (CW - 2 - w5(z, 1)) / 2, y + 10);
+    t7(d, z, l + 1 + (CW - 2 - w7(z)) / 2, y + 10, 1);
     if (cur) mark(d, l, y, CW, CH, d->c->sel);
 }
 
@@ -200,9 +180,9 @@ static void node(const D *d, int n, int l)      /* stock EXIT box as wide as a c
     const char *name = n == IT_ROUTE ? "ROUTE" : "MIX";
     clear(d, l, top, CW, h, cur);
     sq(d, l, top, CW, h);
-    t7(d, name, l + 1 + (CW - 2 - w5(name, 1)) / 2, top + 2);
+    t7(d, name, l + 1 + (CW - 2 - w7(name)) / 2, top + 2, 1);
     icon(d, n == IT_MIX ? IC_MIX[d->c->out % 3] : IC_ROUTE[d->c->mode & 3], l + 4, YC - 6);
-    if (n == IT_MIX && d->c->silent) t7(d, "!", l + 16, top + 31);
+    if (n == IT_MIX && d->c->silent) t7(d, "!", l + 16, top + 31, 1);
     if (cur) mark(d, l, top, CW, h, d->c->sel);
 }
 
@@ -495,8 +475,8 @@ void chain_draw(const Chain *c, unsigned char fb[64][16])
 
     /* title bar with the scroll arrows, then the softkeys with the knob hints */
     fill(&d, 0, 0, 128, 9, 1);
-    t5(&d, "EFFECT CHAIN", 64 - w5("EFFECT CHAIN", 1) / 2, 1, 0, 1);
-    if (k + 2 < nc) t3(&d, "{", 1, 2, 0);     /* the 3 x 5 side arrows */
+    t7(&d, "EFFECT CHAIN", 64 - w7("EFFECT CHAIN") / 2, 1, 0);
+    if (k + 2 < nc) t3(&d, "{", 1, 2, 0);     /* the softkey font's side arrows */
     if (k - 2 >= 0) t3(&d, "}", 124, 2, 0);
 
     zn = cur >= 0 && cur < 6 ? zone_of(c, cur) : -1;
