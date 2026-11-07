@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "velocity-humanise",
   "name": "Velocity Humanise",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "machine": "analog-rytm-mkii",
   "category": "machines",
   "exclusive": false,
@@ -19,14 +19,14 @@
   ],
   "source": {
     "repository": "https://github.com/Iced-Cream/rytm2_mods",
-    "revision": "afd461d4a8ef4306bb2a57d4c61ad35c362b3940",
+    "revision": "e029f7540c2df2a5185620ca68b4c08579e120c6",
     "path": "velocity-humanise"
   },
   "presentation": {
     "label": "VEL HUMANISE",
     "family": "Sequencer",
     "summary": "Per track, every trig's velocity gets a random offset of up to ±N, set with FUNC + VEL on the TRIG page.",
-    "overview": "Velocity Humanise gives each track a random velocity offset: every trig's velocity moves by a random amount up to ±N, clamped to 1..127. N is one of sixteen steps from 0 to 64, set by holding FUNC and turning VEL on the TRIG page, where the label reads RND and the knob becomes a sixteen-position selector. N is per pattern track, kept in core-ar2's mod storage and saved with the pattern. It is an elemod port of MrScruff's rytm-mods 0003-velocity-humanise, with his code unchanged apart from the storage port.",
+    "overview": "Velocity Humanise gives each track a random velocity offset: every trig's velocity moves by a random amount up to ±N, clamped to 1..127. N is one of sixteen steps from 0 to 64, set by holding FUNC and turning VEL on the TRIG page, where the label reads RND and the knob becomes a sixteen-position selector. N is per pattern track, kept in core-ar2's mod storage and saved with the pattern. It is an elemod port of MrScruff's rytm-mods 0003-velocity-humanise, with his code unchanged apart from the storage port and FUNC + VEL's turn and text, which now go through core-ar2's parameter table (core_params) instead of two detours of his own.",
     "highlights": [
       "FUNC + VEL sets a per-track random velocity range.",
       "Sixteen steps from 0 to 64; 0 is stock behaviour.",
@@ -63,17 +63,19 @@
       "1.74"
     ],
     "requires": [],
-    "conflicts": [],
+    "conflicts": [
+      "sample-rate"
+    ],
     "limitations": [
-      "Built for OS 1.74 only, with core-ar2 0.3.",
-      "Needs core-ar2 0.3's mod storage: four bits per pattern track (vel_rnd). Earlier cores lose N at a power-off without a project save.",
+      "Built for OS 1.74 only. 1.2.0 reaches its parameter through core-ar2's parameter table (core_params, core-ar2 0.4 and later; Modwerk's base is core-ar2 0.7). 1.1.0 detoured the entries of param_apply_delta and param_value_text itself, which core-ar2 0.4 and later own, so it does not link with them.",
+      "Needs core-ar2's mod storage: four bits per pattern track (vel_rnd).",
       "On stock firmware, or a build without this module, the track plays its plain velocities: N is in mod storage, which stock ignores.",
-      "Patches param_apply_delta and param_value_text next to other gate-chain modules; each has its own site and they link together."
+      "Not beside Sample RATE: both patch the start of param_short_name (0x400a9000), the knob label routine, for different parameters (VEL here, FIN there). Modwerk's base (core-ar2 0.7) has no shared hook for labels; core-ar2 0.10's knob-name service would let them share."
     ]
   },
   "platform": {
     "kind": "elemod",
-    "core": "0.3",
+    "core": "0.7",
     "build": "build.json",
     "events": [],
     "claims": [
@@ -82,7 +84,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 828,
+    "memoryBytes": 816,
     "fastBytes": 0,
     "load": {
       "display": "Small: a storage read, a random draw and a clamp on each trig",
@@ -92,8 +94,8 @@
   },
   "evidence": {
     "tier": "author-hardware",
-    "moduleVersion": "1.1.0",
-    "sourceSha256": "44ffb066a070bad9666f403937a645e4d3ca219c247615bd9538a88b1177ff55",
+    "moduleVersion": "1.2.0",
+    "sourceSha256": "42e0b6fbe491bd3fe5c72a1dc59fb3eb048d1a37aa5231e55e5a38f17a80ec22",
     "reports": [
       "evidence/hardware-testing.json",
       "evidence/source-parity.json"
@@ -101,21 +103,23 @@
     "hardware": {
       "model": "Analog Rytm MKII",
       "release": "1.74",
-      "testedOn": "2026-10-25",
+      "testedOn": "2026-11-07",
       "tester": "Iced-Cream",
       "durationMinutes": null,
-      "summary": "Iced-Cream reports that on an Analog Rytm MKII with OS 1.74, velocity-humanise 1.1 passed test steps 1 to 3 (FUNC + VEL reads RND, N = 32 varies the hits and N = 0 does not, N kept through save and power-cycle) with core-ar2 0.3 and all eleven rytm2_mods ports in C3A4, with N kept through a power-cycle without SAVE PROJECT, and step 4 (the same without euclid-accents) on C3N4 (2026-10-20). On SXH4 (released core-ar2 0.3 with the other five Modwerk 1.74 submissions, 2026-10-24/25) N 10 measurably varied CP's equal-velocity hits where N 0 did not, and N was kept through a power cycle without SAVE PROJECT. Alone on VHH4 (released core-ar2 0.3 and this module only, 2026-10-25) N 64 spread CP's equal-velocity hits by about 3 dB where N 0 did not.",
+      "summary": "Iced-Cream reports that on an Analog Rytm MKII with OS 1.74 and this package on Modwerk's base (core-ar2 0.7, plain variant ba530f45, with analoghealth 1.3 for remote keys and the other module of the pair), build MW12, 2026-11-07 (runs T170-T172): FUNC + VEL on CP's TRIG page read RND and reached N 64, VEL alone stayed stock (screen); with 16 CP trigs, a 10 s take of CP's output (RS/CP channel) showed 61 hits with a peak spread of 3.7 dB (std) and 13.0 dB range, 4.7 dB on average from hit to hit (equal velocities measured about 0.35 dB in the 1.1 runs); N 64 was kept across a hand power cycle with no save. No dropouts; CPU 74-80 %, heap flat. Earlier runs (1.2 on core-ar2 0.4, 1.1 on 0.3) are in TESTING.md.",
       "limitations": [
+        "MW12: .syx 0d0517eac360cb1282704750b37dfbd1c3c3c13e411f13a52f82ed87eb9b69cd, built by scripts/link-image.mjs from this folder; firmware was not read back from the device.",
+        "MW12 also carried Euclid Accents 1.2.0 and analoghealth 1.3 (remote keys; no site shared with this module).",
         "Duration was not recorded.",
-        "Tested builds: C3A4, .syx 04d987ced36850eef5eb5cd1215d411edf621a5af94f980525ab561c9108f951; C3N4, .syx a74435c28591ec0f2d143b0629a4fd5b6f37ab85e0b3e4618b000698dd5ea9f5. Firmware was not read back from the device.",
-        "SXH4 (the released core-ar2 0.3, 2026-10-24/25, .syx e4d01a6aec250bd2af7743c9f8b0e9c560d805b52564932dddc41d872e1c5000) also carried a remote-control test layer that shares no site with core or the modules. VHH4 (alone with the released core-ar2 0.3, 2026-10-25, .syx 4bebbd5d7ba1860f168ee34c35212f58e67b525628a91b6f7d76fd5e5a101ca8) carried the same test layer."
+        "P4A4: .syx 1c0311697543789316c10dbbbfa78b9a717a180eb26611f2f0d1b732a428d65c. U4A4: .syx 18681f8709242b9d3c5117335a81cd5659ea01c583e3e8477d536e379517b785. Firmware was not read back from the device.",
+        "The playback checks of the random velocity spread 1.1 passed were not repeated on 1.2."
       ]
     },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Hardware: velocity-humanise 1.1's test steps pass on an Analog Rytm MKII, OS 1.74, with core-ar2 0.3 (C3A4 and, without euclid-accents, C3N4, 2026-10-20), and N survives a power-cycle without a project save. Modwerk's source build gives a main OS byte-identical to elekloader's build of the rytm2_mods v1.2 release. In rytm-emu, holding FUNC on the TRIG page relabels VEL as RND and turning it shows N, where stock changes VEL.",
+    "summary": "Hardware on Modwerk's base (MW12, 2026-11-07): N 64 spread 3.7 dB std, kept across a power cycle. Hardware: velocity-humanise 1.2 on an Analog Rytm MKII, OS 1.74, with core-ar2 0.4 and the other rytm2_mods ports (P4A4, 2026-10-21): FUNC + VEL reads RND and steps through N's sixteen values, VEL alone is stock, and N survives a power-cycle without a project save. Modwerk's package linked with core-ar2 0.7 gives a main OS byte-identical to the rytm2_mods v1.3 release object linked with it. In the emulator on the Modwerk base (VH12), FUNC relabels VEL as RND and turning it shows N.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -159,9 +163,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "1.1.0",
-        "imageSha256": "f4f01cf1003a5e9e5aa401cca1e49e289a2f99007f8f140f36db0846bdbe8b1b",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running VH74, the released core-ar2 0.3 and velocity-humanise 1.1, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "1.2.0",
+        "imageSha256": "854bfcf00d0ef3c5b11d03211d1eaf8107b30f3106e40c3f88e10e5b85a8b7b3",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running VH12, the Modwerk base for core-ar2 0.7 (plain variant) and velocity-humanise 1.2.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -175,9 +179,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "1.1.0",
-        "imageSha256": "f4f01cf1003a5e9e5aa401cca1e49e289a2f99007f8f140f36db0846bdbe8b1b",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running VH74, the released core-ar2 0.3 and velocity-humanise 1.1, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "1.2.0",
+        "imageSha256": "854bfcf00d0ef3c5b11d03211d1eaf8107b30f3106e40c3f88e10e5b85a8b7b3",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running VH12, the Modwerk base for core-ar2 0.7 (plain variant) and velocity-humanise 1.2.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -191,9 +195,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "1.1.0",
-        "imageSha256": "f4f01cf1003a5e9e5aa401cca1e49e289a2f99007f8f140f36db0846bdbe8b1b",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running VH74, the released core-ar2 0.3 and velocity-humanise 1.1, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "1.2.0",
+        "imageSha256": "854bfcf00d0ef3c5b11d03211d1eaf8107b30f3106e40c3f88e10e5b85a8b7b3",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running VH12, the Modwerk base for core-ar2 0.7 (plain variant) and velocity-humanise 1.2.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]
