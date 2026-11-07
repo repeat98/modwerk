@@ -25,22 +25,121 @@ static uint32_t token,active,level=3,gap=2,channel,reply,unsupported,pending_con
 static int encoder_counts[3];
 static uint32_t consumed[2];
 #define COUNTS_PER_STEP 4
+/* Encoder presses are panel keys. Turning LEVEL moves the waveform marker.
+ * The press only clears a latch. The release, in TRIM 0x4006fb30, SLICE
+ * 0x400718ac and EDIT 0x400745c4, toggles follow-playback. While that flag
+ * is set the next playhead sample replaces the marker, so the line leaves
+ * the zoomed view. This module takes both edges while TRIM, SLICE or EDIT
+ * is open, and writes the saved marker back after the slice is published. */
+#define PUSH_LEVEL 0x3e
+#define EDITOR_WINDOW 0x460e5e4cu
+#define EDITOR_PAGE 0x460e5e5cu
+#define EDITOR_KIND 0x46c8d1a0u
+#define EDITOR_SLOT 0x46c8d19cu
+#define STATIC_SETTINGS 0x100d5b30u
+#define FLEX_SETTINGS 0x100b14f0u
+#define SLICE_MARKERS 0x40070cbcu
+#define EDITOR_REDRAW 0x4006dbdcu
+#define VIEW_REFRESH 0x40077004u
+/* The knob reads the marker through these cells. The view argument is what
+ * the same knob passes to 0x40077004 so the line is scrolled back on screen. */
+static const uint32_t cursor_ptr[3]={0x400ce74cu,0x400ceb40u,0x400cefa4u};
+static const uint32_t cursor_view[3]={0x400ce724u,0x400ceb14u,0x400cef60u};
+static const uint32_t follow_flag[3]={0x460e5e90u,0x460e5f08u,0x460e6bc4u};
+static const uint32_t follow_hold[3]={0x460e5e88u,0x460e5f00u,0x460e6bbcu};
 
+static uint32_t read_u32(uint32_t at)
+{
+    const volatile uint8_t *p=(const volatile uint8_t *)at;
+    return (uint32_t)p[0]<<24|(uint32_t)p[1]<<16|(uint32_t)p[2]<<8|p[3];
+}
+static void write_u32(uint32_t at,uint32_t value)
+{
+    volatile uint8_t *p=(volatile uint8_t *)at;
+    p[0]=(uint8_t)(value>>24);p[1]=(uint8_t)(value>>16);p[2]=(uint8_t)(value>>8);p[3]=(uint8_t)value;
+}
+static uint32_t settings_address(void)
+{
+    uint32_t kind=*(volatile uint32_t *)EDITOR_KIND,slot=*(volatile uint32_t *)EDITOR_SLOT;
+    if(!kind && slot<128u)return STATIC_SETTINGS+slot*1096u;
+    if((kind==1u || kind==4u) && slot<136u)return FLEX_SETTINGS+slot*1096u;
+    return 0;
+}
+/* Stock ADD SLICE HERE (0x400730f0) keeps every slice and inserts one at the
+ * marker. The same insert uses whichever waveform page is open. The marker
+ * is read before any write. Nothing here builds the threshold grid. */
+static void insert_at_cursor(void)
+{
+    uint32_t page=*(volatile uint32_t *)EDITOR_PAGE,cell,cursor,settings,start,end,count,i,at,sr,span;
+    if(page>2u)return;
+    cell=*(volatile uint32_t *)cursor_ptr[page];
+    if(!cell)return;
+    cursor=read_u32(cell);
+    settings=settings_address();
+    if(!settings)return;
+    start=*(volatile uint32_t *)(settings+300u);
+    end=*(volatile uint32_t *)(settings+304u);
+    count=*(volatile uint32_t *)(settings+1092u);
+    if(count>62u || cursor<start || cursor>=end || end-cursor<64u)return;
+    at=count;
+    for(i=0;i<count;++i) {
+        uint32_t have=*(volatile uint32_t *)(settings+312u+12u*i);
+        if(have==cursor)return;
+        if(cursor<have){at=i;break;}
+    }
+    span=cursor+64u;if(span>end)span=end;
+    __asm__ __volatile__("move.w %%sr,%0" : "=d"(sr));
+    __asm__ __volatile__("move.w %0,%%sr" :: "d"((sr&~0x0700u)|0x0700u) : "memory");
+    *(volatile uint32_t *)(settings+1092u)=0;
+    for(i=count;i>at;--i) {
+        uint32_t from=settings+312u+12u*(i-1u),to=from+12u;
+        *(volatile uint32_t *)to=*(volatile uint32_t *)from;
+        *(volatile uint32_t *)(to+4u)=*(volatile uint32_t *)(from+4u);
+        *(volatile uint32_t *)(to+8u)=*(volatile uint32_t *)(from+8u);
+    }
+    *(volatile uint32_t *)(settings+312u+12u*at)=cursor;
+    *(volatile uint32_t *)(settings+316u+12u*at)=span;
+    *(volatile uint32_t *)(settings+320u+12u*at)=0xffffffffu;
+    *(volatile uint32_t *)(settings+1092u)=count+1u;
+    __asm__ __volatile__("move.w %0,%%sr" :: "d"(sr) : "memory");
+    write_u32(cell,cursor);
+    *(volatile uint32_t *)follow_flag[page]=0;
+    ((void (*)(void))SLICE_MARKERS)();
+    write_u32(cell,cursor);
+    ((void (*)(uint32_t,uint32_t))VIEW_REFRESH)(cursor_view[page],cursor_ptr[page]);
+    *(volatile uint32_t *)follow_hold[page]=20u;
+    ((void (*)(void))EDITOR_REDRAW)();
+    write_u32(cell,cursor);
+}
+
+static uint32_t saved_peak,peak_ready;
 static void close_editor(void)
 {
     if(active && editor)editor->cancel(token);
-    active=0;token=0;editor=0;reader=0;pending_confirm=0;unsupported=0;
+    active=0;token=0;editor=0;reader=0;pending_confirm=0;unsupported=0;peak_ready=0;
     encoder_counts[0]=encoder_counts[1]=encoder_counts[2]=0;
 }
 static int readable(void)
 {
     return active && reader && !unsupported && view.frames && view.trim_start<view.trim_end;
 }
-static void restart(void)
+static void remember_peak(void)
+{
+    if(!peak_ready && scan.phase>=1u && scan.status!=TS_FAILED) {
+        saved_peak=scan.peak;peak_ready=1;
+    }
+}
+/* The loudest point depends on the channel only. Threshold and gap reuse it. */
+static void restart(int keep_peak)
 {
     pending_confirm=0;reply=MODWERK_SAMPLE_OK;
     if(!readable())return;
-    ts_scan_begin(&scan,view.trim_start,view.trim_end,view.frame_rate,levels[level],gaps[gap]);
+    if(keep_peak && peak_ready)
+        ts_scan_begin_peak(&scan,view.trim_start,view.trim_end,view.frame_rate,levels[level],gaps[gap],saved_peak);
+    else {
+        peak_ready=0;
+        ts_scan_begin(&scan,view.trim_start,view.trim_end,view.frame_rate,levels[level],gaps[gap]);
+    }
 }
 static void pull(void)
 {
@@ -64,7 +163,9 @@ static void pull(void)
         if(why==MODWERK_SAMPLE_STALE){close_editor();return;}
         if(why!=MODWERK_SAMPLE_OK || !got_frames){scan.phase=2;scan.status=TS_FAILED;return;}
         ts_scan_feed(&scan,scan.cursor,block,got_frames);
+        remember_peak();
     }
+    remember_peak();
 }
 static void confirm_when_ready(void)
 {
@@ -86,7 +187,7 @@ void ts_device_open(uint32_t opened,const struct modwerk_sample_editor_api *api)
     reader=(const struct modwerk_sample_editor_read_api *)api;
     if(!reader->read){unsupported=1;reader=0;return;}
     if(editor->copy(token,&view)!=MODWERK_SAMPLE_OK){close_editor();return;}
-    restart();
+    restart(0);
 }
 const struct modwerk_sample_action ts_sample_action={
     MODWERK_SAMPLE_EDITOR_ABI,MODWERK_SAMPLE_ACTION_BYTES,0x54534c31u,0,ts_device_open,
@@ -110,7 +211,8 @@ static int adjust(int encoder,int delta)
     if(encoder==0)level=(uint32_t)step_value((int)level,delta,(int)(sizeof levels/sizeof levels[0]));
     else if(encoder==1)gap=(uint32_t)step_value((int)gap,delta,(int)(sizeof gaps/sizeof gaps[0]));
     else channel=(uint32_t)step_value((int)channel,delta,3);
-    restart();return 1;
+    if(encoder==2)peak_ready=0;
+    restart(encoder!=2);return 1;
 }
 int module_enc(int encoder,int delta)
 {
@@ -138,6 +240,14 @@ int module_key(int code,int pressed)
         consumed[bank]&=~mask;return 1;
     }
     if(consumed[bank]&mask)return 1;
+    if(!active && code==PUSH_LEVEL && *(volatile uint32_t *)EDITOR_WINDOW &&
+       *(volatile uint32_t *)EDITOR_PAGE<=2u) {
+        /* Both edges. The release is what arms follow-playback; leaving it
+         * for stock replaces the marker and the line leaves the view. */
+        if(pressed){consumed[bank]|=mask;insert_at_cursor();}
+        else consumed[bank]&=~mask;
+        return 1;
+    }
     if(!active)return 0;
     if(code!=YES && code!=NO && code!=UP && code!=DOWN){close_editor();return 0;}
     consumed[bank]|=mask;

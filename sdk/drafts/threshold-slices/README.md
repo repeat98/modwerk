@@ -4,9 +4,9 @@ Version: `0.1.0-experimental` · author: @jonathanwardle1992-beep · draft.
 
 ## Overview
 
-CREATE THRESHOLD SLICES chops the current trim where the level rises. It is on the audio editor SLICE menu, under DELETE ALL SLICES and above CREATE SLICE GRID. With Beat Slicer installed, this row sits above CREATE BEAT GRID.
+CREATE THRESHOLD SLICES chops the current trim where the level rises. It is on the audio editor SLICE menu, under DELETE ALL SLICES and above CREATE SLICE GRID. With Beat Slicer installed, this row sits under CREATE BEAT GRID.
 
-A slice starts about 2 ms before a rise through the threshold and ends at the next start. The last slice ends at the trim. The first start stays at the trim, so the audio before the first hit is still a slice.
+A slice starts about 2 ms before a rise through the threshold and ends at the next start. A held note stays one slice. The last slice ends at the trim. The first start stays at the trim, so the audio before the first hit is still a slice.
 
 ## Controls
 
@@ -17,6 +17,7 @@ Select the sample, open AED, press AMP for SLICE, then YES, and choose CREATE TH
 | Encoder A | Threshold, 10 to 100, as a percent of the loudest point in the trim. Higher keeps fewer hits. |
 | Encoder B | Minimum gap: 10, 20, 50, 100, 200 or 400 ms. |
 | Encoder C | L+R uses the louder side. LEFT and RIGHT use that side only. |
+| LEVEL, pressed | With the waveform open on TRIM, SLICE or EDIT, adds one slice at the marker and leaves the marker on that point. The slices already there stay. The press does nothing while the editor is closed. |
 | YES | When the scan has finished, opens the stock CREATE SLICES? or REPLACE SLICES? question. Markers change only after that second YES. |
 | NO | Close the popup. Nothing is written. |
 

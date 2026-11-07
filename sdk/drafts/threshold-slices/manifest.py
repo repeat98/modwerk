@@ -8,7 +8,7 @@ from remix.schema import Category, Proof, Kind, Module
 
 MODULE = Module(
     name="threshold-slices", key="THRESHOLD", kind=Kind.CF_PATCH,
-    doc="Slice a sample where the level rises through a threshold.",
+    doc="Slice a sample where the level rises through a threshold. The row sits under CREATE BEAT GRID.",
     category=Category.FIXES, author="jonathanwardle1992-beep",
     author_url="https://github.com/jonathanwardle1992-beep",
     proof=Proof.UNTESTED,

@@ -79,9 +79,27 @@ static void short_trim(void)
     ts_scan_begin(&scan,0,40,44100,40,50);
     CHECK(scan.status==TS_SHORT && ts_scan_feed(&scan,0,0,0)==1);
 }
+/* A rectified tone: each half-cycle falls to zero. One burst is one slice. */
+static void tone_burst(void)
+{
+    enum { N=12000 };
+    static int32_t peaks[N];
+    struct ts_scan scan;
+    uint32_t i;
+    for(i=0;i<N;++i)peaks[i]=0;
+    for(i=3000;i<9000;++i) {
+        uint32_t pos=(i-3000u)%200u;
+        if(pos>=100u)pos-=100u;
+        peaks[i]=(int32_t)(pos*(100u-pos)*4u);
+    }
+    ts_scan_begin(&scan,0,N,44100,40,10);
+    feed_all(&scan,peaks,N);
+    CHECK(scan.status==TS_OK && scan.count==2);
+    CHECK(scan.starts[1]>3000u-200u && scan.starts[1]<3200u);
+}
 int main(void)
 {
-    spikes();silence();too_many();within_limit();held();short_trim();
+    spikes();silence();too_many();within_limit();held();short_trim();tone_burst();
     if(fail)return 1;
     puts("PASS: threshold scan");
     return 0;

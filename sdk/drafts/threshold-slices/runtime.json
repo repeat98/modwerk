@@ -1,6 +1,6 @@
 {
   "schema": 1,
   "contribute": [
-    { "to": "ot_sample_editor_actions", "data": "ts_sample_action", "order": 40 }
+    { "to": "ot_sample_editor_actions", "data": "ts_sample_action", "order": 60 }
   ]
 }

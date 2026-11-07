@@ -17,7 +17,7 @@
     "label": "THRESHOLD",
     "family": "Sample workflow",
     "summary": "Slice a sample where the level rises through a threshold you set.",
-    "overview": "CREATE THRESHOLD SLICES sits on the audio editor SLICE menu, under DELETE ALL SLICES and above CREATE SLICE GRID. It finds rises in the trim and writes slice starts through the stock create or replace question.",
+    "overview": "CREATE THRESHOLD SLICES sits on the audio editor SLICE menu, under DELETE ALL SLICES and above CREATE SLICE GRID. With Beat Slicer installed it sits under CREATE BEAT GRID. It finds rises in the trim and writes slice starts through the stock create or replace question.",
     "highlights": [
       "Threshold sets how strong a rise must be, relative to the loudest point in the trim.",
       "Gap is the shortest time between two slice starts.",
