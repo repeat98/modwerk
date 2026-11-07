@@ -6,9 +6,9 @@
   "cycles": {
     "unit": "cycles/event",
     "static": 2615,
-    "measured": null,
+    "measured": 1680,
     "budget": 9577,
-    "method": "Static, module-owned only: one event is the dearest UI tick transition (1,028 instructions, a coarse sum of every ts_tick site and maximum callee) plus the active frame path in the same block (12 enter, 9 leave), 1,049 instructions at 2.49216 cycles an instruction, Tuner's model. Instructions, not chip cycles: cache and bus waits are not modelled, and stock callees are excluded. Inactive frame cost is 4 + 4 instructions. Budget: Modwerk's ColdFire allowance, 10 % of a 362.8 us block. Not measured: no emulator or hardware cycle run was made for this package."
+    "method": "One event is the dearest UI tick plus the frame path in the same block. Static, module-owned only: 1,028 tick instructions (a coarse sum of every ts_tick site and maximum callee) plus 12 frame-enter and 9 frame-leave, 1,049 instructions, 2,615 cycles. Measured in ot_emu (emulator, not hardware) with cycle_count.py on package 1895ceec, base MAIN 124548dc, --dsp --frame, 8 November 2026: PC watches on every halfword of the module image, so only executed module instructions count; 8 activations on anchors T2, T1, T8, T4, each with every other track joining and leaving twice, then release. Dearest tick 653 module instructions over 504 calls, frame enter 12 and leave 9 over 23,190 frames, key 149 over 120 calls: 674 instructions, 1,680 cycles. Entry to exit, with the stock LED and row routines it calls and nested interrupts, the dearest tick was 38,344 instructions; those are stock work. Cycles from instructions at 2.49216 cycles each, Tuner's model; cache and bus waits are not modelled. Budget: Modwerk's ColdFire allowance, 10 % of a 362.8 us block."
   },
   "load": {
     "frameUs": 362.8,
@@ -16,7 +16,7 @@
     "moduleLongestUs": null,
     "stockIdlePercent": null,
     "moduleIdlePercent": null,
-    "method": "Not measured: no matched stock and module frame capture exists, and no value is substituted. The module adds at most 21 instructions to a frame."
+    "method": "Not measured: owner waiver for this exact version (repeat98, agent board, 8 November 2026: no MIDI path). The module adds 21 measured instructions to a frame."
   },
   "stress": {
     "floodMessagesPerSecond": null,
@@ -25,6 +25,6 @@
     "stuckNotes": null,
     "hangs": null,
     "dropped": null,
-    "droppedExplanation": "Not measured: Track Solo has no MIDI path of its own and no flood was run. Hardware use on 6 November 2026 was 300 s of functional playing, not a stress run."
+    "droppedExplanation": "Not measured: owner waiver for this exact version (repeat98, agent board, 8 November 2026): Track Solo has no MIDI path."
   }
 }

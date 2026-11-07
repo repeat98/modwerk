@@ -70,6 +70,16 @@ Package `1895ceec…` on base MAIN `124548dc…9587`, emulator evidence only:
   still off 1.8 s into a hold. That line predates the 0.5 s hold: the `0.2.2`
   package fails at the same line, and the overlay does activate. Not a module fault.
 
+- `cycle_count.py`, 8 November 2026: PC watches on every halfword of the module
+  image count only executed module instructions. Over 8 activations on four
+  anchors, each with every other track joining and leaving twice: dearest tick
+  653 instructions (504 calls), frame enter 12 and leave 9 (23,190 frames), key
+  149 (120 calls). Worst event 674 instructions, about 1,680 cycles at Tuner's
+  2.49216 cycles an instruction, against the static bound of 1,049 instructions.
+  Entry to exit, including the stock LED and row routines the tick calls and any
+  nested interrupt, the dearest tick ran 38,344 instructions; that is stock work.
+  Emulator counts, not chip cycles: cache and bus waits are not modelled.
+
 Not rerun on `0.2.3`: `--paired`, `--save`, the broad profiles and the routine
 lane. Results below are for `0.2.2` package `6b7a…`.
 
