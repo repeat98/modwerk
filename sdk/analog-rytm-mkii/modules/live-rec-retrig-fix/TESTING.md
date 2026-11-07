@@ -8,7 +8,7 @@
 - Hardware, measured on npp1993's Analog Rytm MKII (OS 1.74) with a private telemetry base that times every audio block and every `ev_render_out` handler on DTIM0 and sends the sums over USB MIDI; RC31's 16-module set, scratch project, sequencer stopped, no USB audio streaming, 50 one-second readings each:
   - LR01 (0.2.0 in the set): `retrig_fix_render` 2.20 µs and `retrig_grid_render` 1.20 µs a block, 3.4 µs of the 667 µs block.
   - LR02 (this source in the set, with two other idle changes): 1.49 µs and 1.00 µs, 2.5 µs: about 0.14 % of the block less. The whole block went from 70.84 % to 70.21 %, most of it the other changes (Improved Envelopes alone, LR03: 70.37 %).
-- Not yet played on a unit with this source: recording a roll, Retrig Grid and the RTRG key (pending, see below).
+- Played on the unit, LP01 (`c86b9feb…`, RC31's set with this source, Improved Envelopes' and Control In Actions' idle changes, store lock unchanged), as npp1993 reported: LIVE RECORDING with RTRG + a pad and varying pressure records the hits as trigs, pad retrigs fall on the grid while the sequencer plays, and RTRG + YES turns ALWAYS ON over with the RTRG key's dim red light. All pass; no figures taken. Not run alone on a unit.
 
 The sections from "Retrig Grid merged in" up to 0.1.0-experimental cover 0.2.0-experimental, the merged module; its source is the RC11 code plus the RTRG key's light (LD01).
 
