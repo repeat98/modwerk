@@ -120,8 +120,8 @@
     "release": "1.74",
     "testedOn": "2026-11-07",
     "tester": "claptom-music",
-    "durationMinutes": 5,
-    "summary": "MF06 with Faderfox PC12 over two-way DIN: responsive playback, smooth pickup and pattern transitions with both PC12 forwarding modes disabled. Kit reload and project restart restored pickup.",
+    "durationMinutes": 45,
+    "summary": "MF06 with Faderfox PC12 over two-way DIN: responsive playback, smooth pickup and pattern transitions with both PC12 forwarding modes disabled. Kit reload and project restart restored pickup. A 45-minute follow-up began with about 4–5 minutes of DIN OUT disconnected. The author reported no issues throughout.",
     "limitations": [
       "Author-reported functional checks.",
       "Earlier MF06 pattern transition freeze remains unexplained.",

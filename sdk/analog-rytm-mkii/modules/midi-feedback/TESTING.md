@@ -179,6 +179,12 @@ kit on MF06 restored both Track 1 LEVEL and filter-frequency pickup targets.
 The developer confirms that after saving the spare project and restarting,
 MIDI FEEDBACK remained ON and the PC12 resumed pickup automatically.
 
+For the follow-up requested in PR #1296, the developer reports a 45-minute
+MF06 session with MIDI FEEDBACK ON and no issues. They began with about four
+to five minutes with Rytm DIN OUT disconnected, then continued with the PC12
+connected for the rest of the session. The earlier MF06 freeze occurred after
+the queue guard change (`a82ff483`) and remains unexplained.
+
 The exact MF06 image was timed in a private instrumented copy of analog-emu
 using the existing 187,538-byte DIN stress input. The maximum observed elapsed
 emulator clocks were 2 for `mf_audio_clock`, 87,284 for `mf_tick`, and 71,394
