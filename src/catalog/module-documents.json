@@ -10877,7 +10877,7 @@
           "OS 1.40C. The new values come after 64X on the knob, not below 1X.",
           "A project saved with 1/2X, 1/4X or 1/8X, opened without the module, shows 64X and runs that LFO much faster; turning MULT down brings back stock's values.",
           "On Deja Vu's waves MULT is the loop length; Deja Vu reads 1/2X..1/8X as 64.",
-          "Run on an MKI only. Not yet tested: reloading the Part or the project from the card with the module installed, MKII."
+          "Run on an MKI only; not yet tested on an MKII."
         ]
       },
       "resources": {
