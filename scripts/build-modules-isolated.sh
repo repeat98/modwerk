@@ -25,4 +25,9 @@ git -C "$source_dir" cat-file commit "$source_commit" | git -C "$staging_dir" ha
 git -C "$source_dir" rev-parse "$source_commit^{tree}" | git -C "$source_dir" pack-objects --revs --stdout | git -C "$staging_dir" unpack-objects -q
 git -C "$staging_dir" update-ref HEAD "$source_commit"
 git -C "$staging_dir" read-tree "$source_commit"
-docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges --read-only --user "$(id -u):$(id -g)" --cpus 2 --memory 4g --pids-limit 128 --tmpfs /tmp:rw,nosuid,nodev,size=256m --env HOME=/tmp --mount "type=bind,source=$staging_dir,target=/source,readonly" --mount "type=bind,source=$output_dir,target=/output" "$image_id" python3 -B scripts/build-module-packages.py --vendor /opt/toolchain/vendor --output /output/packages --source-commit "$source_commit"
+docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges --read-only --user "$(id -u):$(id -g)" --cpus 2 --memory 4g --pids-limit 128 --tmpfs /tmp:rw,nosuid,nodev,size=256m --env HOME=/tmp --mount "type=bind,source=$staging_dir,target=/source,readonly" --mount "type=bind,source=$output_dir,target=/output" "$image_id" python3 -B scripts/build-module-packages.py --vendor /opt/toolchain/vendor --output /output/packages --source-commit "$source_commit" || {
+  status=$?
+  # Docker Desktop on macOS can refuse a bind source under /private/tmp ("bind source path does not exist").
+  case "$output_dir" in /private/*) echo "Docker may not share $(dirname "$output_dir"): choose an output folder under \$HOME." >&2;; esac
+  exit "$status"
+}
