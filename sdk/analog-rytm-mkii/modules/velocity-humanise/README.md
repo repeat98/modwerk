@@ -75,7 +75,7 @@ asks from param_apply_delta's and param_value_text's entries.
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md) for the commands and results. In short: on an Analog Rytm MKII, OS 1.74, with core-ar2 0.4 and the other rytm2_mods ports (P4A4, 2026-10-21): FUNC + VEL reads RND and steps through N's sixteen values, VEL alone is stock, and N survives a power-cycle without a project save. Modwerk's package linked with core-ar2 0.7 gives a main OS byte-identical to the rytm2_mods v1.3 release object linked with it. In the emulator on the Modwerk base (VH12), FUNC relabels VEL as RND and turning it shows N. Memory: 816 bytes of the 128 KiB shared mod area.
+See [TESTING.md](TESTING.md) for the commands and results. In short: on an Analog Rytm MKII with OS 1.74 on Modwerk's base (MW12, 2026-11-07), N 64 spread 3.7 dB std, kept across a power cycle. Before that, on OS 1.74 with core-ar2 0.4 and the other rytm2_mods ports (P4A4, 2026-10-21): FUNC + VEL reads RND and steps through N's sixteen values, VEL alone is stock, and N survives a power-cycle without a project save. Modwerk's package linked with core-ar2 0.7 gives a main OS byte-identical to the rytm2_mods v1.3 release object linked with it. In the emulator on the Modwerk base (VH12), FUNC relabels VEL as RND and turning it shows N. Memory: 816 bytes of the 128 KiB shared mod area.
 
 ## Authorship and licences
 

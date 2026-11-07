@@ -15,7 +15,16 @@
   `854bfcf00d0ef3c5b11d03211d1eaf8107b30f3106e40c3f88e10e5b85a8b7b3`. Emulator only.
 - 1.1's tested builds (C3A4, SXH4, VHH4, C3N4) are listed with their runs below.
 
-## Hardware: 1.2
+## Hardware: 1.2 on Modwerk's base
+
+On 2026-11-07 Iced-Cream's Analog Rytm MKII ran MW12: stock OS 1.74, Modwerk's base for core-ar2 0.7 (plain variant `ba530f45`), this module and Euclid Accents 1.2.0, and analoghealth 1.3 for remote keys, `.syx` `0d0517eac360cb1282704750b37dfbd1c3c3c13e411f13a52f82ed87eb9b69cd`, linked by `scripts/link-image.mjs` from these folders. elkbench plans drove it in a `~T` test project after their emulator gate, and stock 1.74 was flashed back after each run (runs T170 to T172).
+
+- FUNC + VEL reads RND and reaches N 64; VEL alone is stock (screen).
+- At N 64 CP's hits spread 3.7 dB (std), 13.0 dB range, 4.7 dB hit to hit.
+- N 64 kept across a power cycle with no save (screen, before and after).
+- No dropouts on the recorded channels; CPU 74 to 80 %, heap flat.
+
+## Hardware: 1.2 on core-ar2 0.4
 
 On an Analog Rytm MKII with OS 1.74, 2026-10-21, Iced-Cream flashed P4A4 as part of the
 core-ar2 0.4 unit test (Part A, the rytm2_mods pages through `core_pages` and `core_params`),
@@ -113,6 +122,5 @@ measurement.
 ## Not tested
 
 - Beside Sample RATE: the two patch overlapping bytes of param_short_name and are flagged as a conflict.
-- 1.2 on Modwerk's base (core-ar2 0.7) on a unit: the hardware runs used core-ar2 0.4.
 - Other modules beside it, except rytm2_mods' own ports.
 - Kit and pattern transfer over SysEx, and loading a project saved with this module into a build without it.
