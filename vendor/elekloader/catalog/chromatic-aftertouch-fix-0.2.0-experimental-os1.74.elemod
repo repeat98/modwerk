@@ -1,0 +1,112 @@
+{
+ "elemod": 2,
+ "id": "chromatic-aftertouch-fix",
+ "version": "0.2.0-experimental",
+ "title": "Pad Pressure Fix",
+ "description": "A held pad's pressure reaches the sound's aftertouch and MIDI out during a retrig roll too, and CHROMATIC pads send their aftertouch on the note they played.",
+ "category": "midi-usb",
+ "author": "npp1993",
+ "license": "GPL-3.0-or-later",
+ "target": {
+  "device": "analog-rytm-mk2",
+  "product": "Analog Rytm MKII",
+  "os": "1.74",
+  "syx_sha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "section3_sha256": "34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b",
+  "section3_len": 3005432
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 44,
+   "parts": [
+    [
+     "hex",
+     "202f0004720bb280651c41ea013420300c0072189081727fb280650a2f40000c4ef9400850f470004e750000"
+    ]
+   ]
+  }
+ },
+ "symbols": {
+  "PRESSURE_OUT": [
+   "abs",
+   1074286836
+  ],
+  "HELD_NOTES": [
+   "abs",
+   308
+  ],
+  "CHRO_OFFSET": [
+   "abs",
+   24
+  ],
+  "chromatic_aftertouch_fix_pressure_out": [
+   ".run",
+   0
+  ]
+ },
+ "exports": [
+  "chromatic_aftertouch_fix_pressure_out"
+ ],
+ "imports": [],
+ "weak": [],
+ "relocs": [],
+ "sites": [
+  {
+   "addr": "0x400c628e",
+   "len": 6,
+   "stock_sha256": "eb8c3b4455860d7a405903deb4a71d861baed698a9ab2fbb8c1166d596dffcd1",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:chromatic_aftertouch_fix_pressure_out",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400e2924",
+   "len": 2,
+   "stock_sha256": "a8e774a529ecac8cd402f40263e3be8f3998c6a4fd734961cf0ad590e2926d6a",
+   "new": "7000",
+   "kind": "code",
+   "relocs": []
+  },
+  {
+   "addr": "0x400c755a",
+   "len": 4,
+   "stock_sha256": "0e4a2031c12bcd049eb2737a1b852fc71ee88d3cfcdef80cbdf3829739dae732",
+   "new": "4e714e71",
+   "kind": "code",
+   "relocs": []
+  },
+  {
+   "addr": "0x400c6228",
+   "len": 2,
+   "stock_sha256": "5c1c81956ea56ef91a593bbb23f800b4f506699661623acf9944ad0d0da4ac21",
+   "new": "4e71",
+   "kind": "code",
+   "relocs": []
+  }
+ ],
+ "collections": {},
+ "contribute": [],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [
+   "midi:CHROMATIC pad poly pressure note on MIDI out",
+   "midi:pad pressure during pad retrigs on MIDI out",
+   "ui:pad pressure during pad retrigs (RTRG held, ALWAYS ON)"
+  ],
+  "core": "0.7"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}

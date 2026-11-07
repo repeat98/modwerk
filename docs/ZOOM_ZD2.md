@@ -36,8 +36,8 @@ The research scripts stay with the developer; only the [checker and builds](#pub
 - The bootloader checks only the `Zoom Corporation` marker in `MAIN_INFO` and the AIS opcodes: **no checksum
   or signature on the OS** [FW]. The official updater erases `MAIN_INFO` first and writes it last, and rewrites
   the bootloader on every update [FW]. Update mode sits in the bootloader, so a broken OS stays recoverable as
-  long as the bootloader is never touched [FW, not tested]. No OS image has been modified for Modwerk, and the
-  route below needs none.
+  long as the bootloader is never touched [FW]. The effect route below needs no OS change; an OS changed on the
+  developer's own pedal, outside Modwerk, booted and was restored ([OS research](#os-research-midi-clock)) [HW].
 - SysEx: `F0 52 00 6E <command> … F7`. Command `60` is the file system (open, read, write, delete, list, disk
   free), `64` parameters and the current patch [FW]; these are the commands zoom-zt2 uses [PUB][HW]. Several
   other commands are implemented and undocumented; never send them blindly [FW].
@@ -122,10 +122,58 @@ the G1 FOUR shows declared load as raw/2.5 %, and its budget is [UNK].
 - **The pedal page and its link** (`src/engine/zoom/`) install ZDL files into the ZDL pedals' effect list and
   check ZDL effect IDs. The G1 FOUR uses the same file commands but a different effect list and its own IDs, so
   it has no pedal page (`isZd2Pedal` in `src/devices/registry.ts`) until the link knows ZD2.
-- **MIDISTOMP** does not run on the G1 FOUR, and no OS change is planned: effects load on the stock OS.
+- **MIDISTOMP** does not run on the G1 FOUR, and effects load on the stock OS. Its MIDI clock design was
+  reimplemented for the G1 FOUR's OS in research ([OS research](#os-research-midi-clock)); an OS base for
+  Modwerk is an owner decision ([next steps](#next-steps)).
 - **The `zdl` contract** is for ZDL files. A ZD2 module needs its own entry in that proposal or a sibling one,
   with Stomphacks' effect-author ID ledger as the model for IDs [PUB].
 - **Ziddle** emulates the ZDL pedals; whether it runs ZD2 effects is [UNK]. It is never hardware evidence.
+
+## OS research: MIDI clock
+
+Done on the developer's own G1 FOUR on 5 November 2026, outside Modwerk and not offered by it. The tools and
+builds stay with the developer. Each build was made on their computer from their own Zoom updater, and the stock
+v2.00 updater restores the pedal [HW]. The design follows [MIDISTOMP](https://github.com/matujuice/zoom-ms-midistomp)'s
+clock patch (MIT) for the MS pedals; the code and addresses are the G1 FOUR's own.
+
+**What the OS offers** [FW]:
+
+- **MIDI task:** entry `0xC0129118`, a 4 KB receive ring. It drops realtime bytes (`0xF8`–`0xFF`) before its
+  parser, and its byte loop ends at `0xC012932C`. That one word is the hook site; a 16-byte trampoline goes in the
+  padding at `0xC01309F0`.
+- **USB:** the USB MIDI layer passes clock, Start and Stop through [HW].
+- **Tempo:** one master tempo, shared by effects, rhythm and looper (the manual says the same), at `0x11812F78`.
+  - `0xC015E6D8` sets it the way the TEMPO knob does and notifies the rhythm engine and effects.
+  - `0xC016F690(1)` asks the UI task to redraw: an event post, safe from any task.
+  - The SYS/BIOS 1 ms tick is `0xC016B540`.
+- **Free memory:** no code, data or `.cinit` record refers to L2 SRAM above `0x1181A1A0`, and the system stack
+  ends at `0x118164A4`. The hook code and state used `0x1181E000`–`0x1181FFFF` without trouble [HW]. Proving the
+  range by an allocator, as [ADD_A_MACHINE.md](ADD_A_MACHINE.md#research-a-coldfire-os-image) asks, is not done.
+- **Init data:** the RHYTHM screen's parameters are a 28-byte record table at runtime `0xC0183190`, and LOOPER's
+  is at `0xC0183120`. Both were found by decoding TI's run-length `.cinit` from the copy table at `0xC0186EF4`.
+
+**How the builds were flashed:**
+
+- The OS is a valid AIS stream. Added code goes in as extra section loads before the final jump.
+- A copy of Zoom's updater app carries the new `Main.bin`. In the copy, the matching entry in its MD5 table is
+  changed, its Preset and bootloader steps are set to a step type its loop skips, and it is re-signed ad hoc. The
+  official updater itself is never changed.
+- The boot screen's version line shows a letter instead of `v` (for example `u2.00`), so a modified build is
+  visible.
+
+**Results** [HW]:
+
+| Build | Result |
+| --- | --- |
+| Two UI strings changed | boots; shows the marked version |
+| Clock probe (24 clocks → +1 BPM, CC 80 → tempo) | clock bytes reach the MIDI task; tempo changes are audible in the rhythm and delays |
+| Clock follower (lock in 2 beats, 1 BPM hysteresis, applied only on a real change) | rhythm and synced delays follow a DAW. Host simulation: 40–250 BPM with ±5 ms jitter, no re-applies |
+| + MIDI transport block at `0x1181FF00` (MIDISTOMP's layout, words 0–7; Start, Stop, clocks since Start, tempo ×100) | a test slicer effect reading it stays locked to the DAW's bar. Host test: within clock jitter over 5 minutes, back on the downbeat after each Start |
+| + UI redraw request | the flash completed; whether the RHYTHM screen's BPM now redraws while the clock runs is not reported yet |
+
+The test slicer was grafted onto a stock effect, so Modwerk can't list it. One flash timed out three times
+while a DAW was still sending clock to the pedal in update mode. It completed with the DAW closed, so quit MIDI
+apps before flashing [HW].
 
 ## Public research
 
@@ -155,5 +203,9 @@ In order. Guitar Lab stays the fallback install, and every write to the pedal is
    limit, the state area and what an oversize image does.
 4. **A ZD2 module contract** (with the `zdl` proposal or beside it), an effect-ID ledger and a recovery path
    users can follow. Owner review.
-5. **The pedal page for ZD2:** the existing link taught the G1 FOUR's device ID, effect list and IDs, read-only
+5. **An OS base, if the owner wants one:** the [OS research](#os-research-midi-clock) is a MIDISTOMP-style core
+   for the G1 FOUR. Under today's [Zoom rules](ADD_A_MACHINE.md) the OS is never modified and no mod touches the
+   updater, so this needs an owner decision first. The open points are: building from the user's own updater,
+   the patched updater copy, the marked start-up screen, and the transport block as the base's shared hook.
+6. **The pedal page for ZD2:** the existing link taught the G1 FOUR's device ID, effect list and IDs, read-only
    first. Shared SDK work in its own pull request.

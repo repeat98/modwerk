@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="192" viewBox="0 0 320 192" class="signal-art" fill="none" stroke-linecap="round" stroke-linejoin="round" role="img" aria-labelledby="title description">
+<title id="title">QPERF</title>
+<desc id="description">Hold QPER and turn a knob to lock the linked performance; in LIVE RECORDING the QPER knob and the performance pads draw a move that loops with the pattern, and RECORD + YES writes it onto the steps as parameter locks. Original conceptual illustration, not an instrument screen or a measured result.</desc>
+<style>.signal-grid{stroke:#fff;opacity:.035;stroke-width:.7}.signal-main{stroke:#9eb4ed;stroke-width:2.7}.signal-secondary{stroke:#9eb4ed;opacity:.65;stroke-width:1.7}.signal-ghost{stroke:#9eb4ed;opacity:.2;stroke-width:1.3}.signal-art text{fill:#9eb4ed;opacity:.8;font:10px monospace;letter-spacing:.7px;stroke:none}</style>
+<rect width="320" height="192" fill="#232328"/>
+<g class="signal-grid"><path d="M20 52H300"/><path d="M20 97H300"/><path d="M20 142H300"/><path d="M64 33V163"/><path d="M128 33V163"/><path d="M192 33V163"/><path d="M256 33V163"/></g>
+<g>
+<text x="36" y="44">QPER + KNOB</text><text x="282" y="44" text-anchor="end">QUICK PERF REC</text>
+<circle class="signal-main" cx="60" cy="94" r="12"/><path class="signal-main" d="M60 94L67 87"/>
+<path class="signal-secondary" d="M44.5 85A18 18 0 0 1 75.5 85M70.7 84L75.5 85L76.2 80.2"/>
+<path class="signal-secondary" d="M78 94H90" stroke-dasharray="3 5"/>
+<path class="signal-main" d="M96 100.0 L98 99.7 L100 99.2 L102 98.6 L104 97.9 L106 97.1 L108 96.3 L110 95.5 L112 94.6 L114 93.7 L116 92.8 L118 91.9 L120 90.9 L122 89.9 L124 88.9 L126 87.8 L128 86.7 L130 85.6 L132 84.5 L134 83.4 L136 82.2 L138 81.1 L140 79.9 L142 78.7 L144 77.5 L146 76.2 L148 75.0 L150 73.8 L152 72.6 L154 71.3 L156 70.1 L158 68.9 L160 67.8 L162 66.6 L164 65.5 L166 64.4 L168 63.4 L170 62.4 L172 61.5 L174 60.6 L176 59.9 L178 59.2 L180 58.6 L182 58.0 L184 57.6 L186 57.3 L188 57.1 L190 57.0 L192 57.0 L194 57.1 L196 57.3 L198 57.7 L200 58.2 L202 58.8 L204 59.5 L206 60.3 L208 61.2 L210 62.3 L212 63.4 L214 64.7 L216 66.0 L218 67.4 L220 68.9 L222 70.5 L224 72.1 L226 73.8 L228 75.4 L230 77.2 L232 78.9 L234 80.6 L236 82.3 L238 84.0 L240 85.7 L242 87.4 L244 88.9 L246 90.5 L248 91.9 L250 93.3 L252 94.6 L254 95.8 L256 96.9 L258 97.8 L260 98.7 L262 99.5 L264 100.1 L266 100.6 L268 101.0 L270 101.3 L272 101.5 L274 101.5 L276 101.4 L278 101.1 L280 100.7 L282 100.0"/>
+<path class="signal-ghost" d="M282 58A10 10 0 1 0 272 68M268.5 64.5L272 68L268 71"/>
+<path class="signal-ghost" d="M96 150H282"/>
+<path class="signal-secondary" d="M102 150V143 M114 150V138 M126 150V133 M138 150V127 M150 150V120 M162 150V114 M174 150V109 M186 150V106 M198 150V106 M210 150V110 M222 150V117 M234 150V127 M246 150V135 M258 150V142 M270 150V145 M282 150V144"/>
+<text x="36" y="176">RECORD + YES</text><text x="282" y="176" text-anchor="end">LOCKS ON STEPS</text>
+</g>
+</svg>

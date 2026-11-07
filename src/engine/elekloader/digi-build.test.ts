@@ -79,17 +79,11 @@ describe('the vendored elekloader catalog', () => {
     })
   })
   it('plans a set with a send effect on the send-bus base, and only then', () => {
-    const chorus = {
-      file: 'chorus-0.1.0-experimental-os1.74.elemod', sha256: 'c'.repeat(64), id: 'chorus', version: '0.1.0-experimental', device: 'analog-rytm-mk2', os: '1.74',
-      license: 'GPL-3.0-or-later', source: { repo: 'repeat98/modwerk', commit: 'c'.repeat(40), path: 'sdk/imports/packages/chorus/chorus-0.1.0-experimental-os1.74.elemod' },
-      title: 'CHORUS', requires: ['core'], conflicts: [], needs_core: '0.7',
-    }
-    const catalog: Catalog = { ...BUILDER_CATALOG, mods: [...BUILDER_CATALOG.mods, chorus] }
-    expect(planBuild('analog-rytm-mkii', '1.74', ['loop-sync', 'chorus'], catalog)).toMatchObject({
+    expect(planBuild('analog-rytm-mkii', '1.74', ['loop-sync', 'chorus'])).toMatchObject({
       core: { file: SEND_BUS, sha256: RYTM_BASE.variants['send-bus'], version: '0.7' },
       mods: [{ id: 'loop-sync' }, { id: 'chorus' }], missing: [],
     })
-    expect(planBuild('analog-rytm-mkii', '1.74', ['loop-sync'], catalog).core?.file).toBe(PLAIN)
+    expect(planBuild('analog-rytm-mkii', '1.74', ['loop-sync']).core?.file).toBe(PLAIN)
     // irpina's core-ar2 0.7 stays in the catalogue as the release machine:base checks the base against, never built on
     expect(BUILDER_CATALOG.cores.some(core => core.file === 'core-ar2-0.7.elemod')).toBe(true)
     expect(baseVariant('analog-rytm-mkii', ['chorus'])).toBe('send-bus')
@@ -104,18 +98,18 @@ describe('the vendored elekloader catalog', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['pipo-loop', 'sample-rate', 'silent-pad-trig'])).toMatchObject({
       core: { file: PLAIN, version: '0.7' },
       mods: [
-        { id: 'pipo-loop', file: 'pipo-loop-0.1.1-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.1-experimental' },
-        { id: 'sample-rate', file: 'sample-rate-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
+        { id: 'pipo-loop', file: 'pipo-loop-0.1.2-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.2-experimental' },
+        { id: 'sample-rate', file: 'sample-rate-0.1.1-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.1-experimental' },
         { id: 'silent-pad-trig', file: 'silent-pad-trig-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
       ],
       missing: [],
     })
   })
-  it('plans Chromatic Aftertouch Fix beside the other Rytm library modules from its pinned source-only package on the plain base', () => {
+  it('plans Pad Pressure Fix beside the other Rytm library modules from its pinned source-only package on the plain base', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['chromatic-aftertouch-fix', 'silent-pad-trig'])).toMatchObject({
       core: { file: PLAIN, version: '0.7' },
       mods: [
-        { id: 'chromatic-aftertouch-fix', file: 'chromatic-aftertouch-fix-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
+        { id: 'chromatic-aftertouch-fix', file: 'chromatic-aftertouch-fix-0.2.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.0-experimental' },
         { id: 'silent-pad-trig', file: 'silent-pad-trig-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
       ],
       missing: [],
@@ -126,7 +120,7 @@ describe('the vendored elekloader catalog', () => {
       core: { file: PLAIN, version: '0.7' },
       mods: [
         { id: 'quick-velocity-aftertouch-assign', file: 'quick-velocity-aftertouch-assign-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
-        { id: 'sample-rate', file: 'sample-rate-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
+        { id: 'sample-rate', file: 'sample-rate-0.1.1-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.1-experimental' },
         { id: 'silent-pad-trig', file: 'silent-pad-trig-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
       ],
       missing: [],
@@ -139,6 +133,17 @@ describe('the vendored elekloader catalog', () => {
         { id: 'quick-fill-trig-condition', file: 'quick-fill-trig-condition-0.2.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.0-experimental' },
         { id: 'quick-velocity-aftertouch-assign', file: 'quick-velocity-aftertouch-assign-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
         { id: 'silent-pad-trig', file: 'silent-pad-trig-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
+      ],
+      missing: [],
+    })
+  })
+  it('plans QPERF beside Live Rec Retrig Fix and Temp Save from its pinned source-only package on the plain base', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['live-rec-retrig-fix', 'qperf', 'temp-save'])).toMatchObject({
+      core: { file: PLAIN, version: '0.7' },
+      mods: [
+        { id: 'live-rec-retrig-fix', file: 'live-rec-retrig-fix-0.2.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.0-experimental' },
+        { id: 'qperf', file: 'qperf-0.2.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.0-experimental' },
+        { id: 'temp-save', file: 'temp-save-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
       ],
       missing: [],
     })
@@ -159,7 +164,7 @@ describe('the vendored elekloader catalog', () => {
       core: { file: PLAIN, version: '0.7' },
       mods: [
         { id: 'control-in-actions', file: 'control-in-actions-0.1.1-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.1-experimental' },
-        { id: 'sample-rate', file: 'sample-rate-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
+        { id: 'sample-rate', file: 'sample-rate-0.1.1-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.1-experimental' },
         { id: 'silent-pad-trig', file: 'silent-pad-trig-0.7.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.7.0-experimental' },
       ],
       missing: [],
@@ -180,6 +185,27 @@ describe('the vendored elekloader catalog', () => {
       mods: expect.arrayContaining([
         expect.objectContaining({ id: 'live-rec-retrig-fix', file: 'live-rec-retrig-fix-0.2.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.0-experimental' }),
       ]),
+      missing: [],
+    })
+  })
+  it('plans CHORUS, a send effect, from its pinned source-only package on the send-bus base', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['chorus'])).toMatchObject({
+      core: { file: SEND_BUS, version: '0.7' },
+      mods: [{ id: 'chorus', file: 'chorus-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental', needs_core: '0.7' }],
+      missing: [],
+    })
+  })
+  it('plans FLANGER, a send effect, from its pinned source-only package on the send-bus base', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['flanger'])).toMatchObject({
+      core: { file: SEND_BUS, version: '0.7' },
+      mods: [{ id: 'flanger', file: 'flanger-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental', needs_core: '0.7' }],
+      missing: [],
+    })
+  })
+  it('plans PHASER, a send effect, from its pinned source-only package on the send-bus base', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['phaser'])).toMatchObject({
+      core: { file: SEND_BUS, version: '0.7' },
+      mods: [{ id: 'phaser', file: 'phaser-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental', needs_core: '0.7' }],
       missing: [],
     })
   })
