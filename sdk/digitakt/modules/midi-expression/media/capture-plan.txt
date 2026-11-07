@@ -1,0 +1,50 @@
+wait 1000
+tap GLOBAL
+wait 800
+tap DOWN
+wait 150
+tap DOWN
+wait 150
+tap DOWN
+wait 150
+tap DOWN
+wait 150
+tap DOWN
+wait 150
+tap DOWN
+wait 150
+tap DOWN
+wait 150
+tap DOWN
+wait 150
+tap DOWN
+wait 150
+tap DOWN
+wait 150
+wait 400
+snap settings-row
+tap YES
+wait 800
+press FUNC 100
+turn A 1 300
+turn A 1 300
+release FUNC 200
+press FUNC 100
+turn C 1 300
+turn C 1 300
+release FUNC 200
+press FUNC 100
+turn D 1 300
+turn D 1 300
+release FUNC 200
+wait 2500
+snap page-audio
+press TRK 100
+tap 9
+release TRK 300
+wait 800
+turn A 1 300
+wait 2500
+snap page-midi
+tap A 3000 1500
+snap presets
