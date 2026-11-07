@@ -12,7 +12,7 @@
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { copyFileSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
-import { dirname, join, resolve } from 'node:path'
+import { dirname, join, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parse } from 'yaml'
 import { parseAis } from '../src/engine/zoom/ais.ts'
@@ -128,7 +128,7 @@ const document = {
 }
 
 const copied = ['LICENSE', ...['models', 'asm'].flatMap(folder => readdirSync(join(upstream, folder), { recursive: true, withFileTypes: true })
-  .filter(entry => entry.isFile()).map(entry => join(entry.parentPath, entry.name).slice(upstream.length + 1))).sort()]
+  .filter(entry => entry.isFile()).map(entry => join(entry.parentPath, entry.name).slice(upstream.length + 1).split(sep).join('/'))).sort()]
 rmSync(OUT, { recursive: true, force: true })
 for (const name of copied) {
   mkdirSync(dirname(join(OUT, name)), { recursive: true })

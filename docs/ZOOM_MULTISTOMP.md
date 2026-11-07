@@ -211,10 +211,9 @@ mod selection and to his transport block as the shared tempo contract.
   own file.
 - [`zoom-base.ts`](../src/engine/zoom/zoom-base.ts), with `ais.ts` (a port of
   zoomms' `ais.py`), applies them in the browser. From the stock MS-70CDR 2.10
-  Mac updater (27 October 2026) it builds `hello` and MIDISTOMP V1.2 byte for
+  Mac updater (27 October 2026) it builds `hello` and MIDISTOMP V2.0.1 byte for
   byte as zoomms does: `ZOOM_MS70CDR_APP='…/ZOOM MS-70CDR v2.10 Updater.app'
   npx vitest run src/engine/zoom`. Firmware never enters CI.
-- MIDISTOMP 2.0 is out; the pin above is still the earlier revision.
 - A new MIDISTOMP revision: run the import on a clean checkout with
   `--app '<stock Mac updater>.app'`, then refresh the zoomms hashes in
   `zoom-base.test.ts` (`zoomms build-mac` at that revision).

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "recorded": "2026-11-06",
+  "recorded": "2026-11-07",
   "decision": "MIDISTOMP (Luca Matturro, MIT) as the Zoom MultiStomp base: LICENSE, models/ and asm/ copied unchanged; its patches converted by scripts/midistomp-import.ts into vendor/midistomp/midistomp.json with every guard on Zoom's bytes kept as a sha256 and every run they repeat from Zoom's files as a copy from the user's own, so no Zoom bytes are in the repository.",
   "repository": "https://github.com/matujuice/zoom-ms-midistomp",
   "revision": "051fb38b59fa850a39d0f885695883e4aab7fedf",
@@ -9,437 +9,437 @@
     {
       "from": "LICENSE",
       "to": "vendor/midistomp/LICENSE",
-      "sha256": "45217d66239115846356857a56e2587ad84000ca34660e8904872718e169d609"
+      "sha256": "ae91fadf6258ab01d71517d77d2a8ff18fd004f100627cd9b6f76c10b92cdf37"
     },
     {
-      "from": "asm\\common\\draw.h",
-      "to": "vendor/midistomp/asm\\common\\draw.h",
-      "sha256": "8d6efefc2bf678a2c2e0de88a7a89711e5ade0d1ea583f6338b529e993116ca7"
+      "from": "asm/common/draw.h",
+      "to": "vendor/midistomp/asm/common/draw.h",
+      "sha256": "02e90f6c74f32187af609e33722e8d6527a12d9889f359eb64adccb466cf2ec8"
     },
     {
-      "from": "asm\\diag\\diag.c",
-      "to": "vendor/midistomp/asm\\diag\\diag.c",
-      "sha256": "ddb454b82342926e30f23420948a298da4a800a58f23aae61634f6ec25dc3406"
+      "from": "asm/diag/diag.c",
+      "to": "vendor/midistomp/asm/diag/diag.c",
+      "sha256": "f4689036169923b3fe4778343fb72a8f9c2d8cb1c1ab90c2c59425eea13d5a3c"
     },
     {
-      "from": "asm\\diag\\diag_vec.asm",
-      "to": "vendor/midistomp/asm\\diag\\diag_vec.asm",
-      "sha256": "1b960bb90cae1383ad6f6daee47fad300f0d71ba8f982a29af2c6a66f5cb0a2d"
+      "from": "asm/diag/diag_vec.asm",
+      "to": "vendor/midistomp/asm/diag/diag_vec.asm",
+      "sha256": "c1831943f77c19883725bb4ddd004d918de3505f1afb67d0ff62af3cf8eb148d"
     },
     {
-      "from": "asm\\fx_category\\fxcat.S",
-      "to": "vendor/midistomp/asm\\fx_category\\fxcat.S",
-      "sha256": "7d2ae3834fb490585147ffd271e9d204522ba1ac9f9d7caeff9e35774978aa77"
+      "from": "asm/fx_category/fxcat.S",
+      "to": "vendor/midistomp/asm/fx_category/fxcat.S",
+      "sha256": "dffe6543ab0d89877f7fd40815f540ca172293b4f0d90063f6b26194aa5f9ce4"
     },
     {
-      "from": "asm\\looper\\block.S",
-      "to": "vendor/midistomp/asm\\looper\\block.S",
-      "sha256": "9e7a0304d8478c6490386970ff602634df6e065eeb50d604a06a0ffe95ba14b9"
+      "from": "asm/looper/block.S",
+      "to": "vendor/midistomp/asm/looper/block.S",
+      "sha256": "0e98d7ff240c93f87f8d1c49e3e6ad061155c8a1f4c70e75aafd6478857a5561"
     },
     {
-      "from": "asm\\looper\\cc_trampoline.S",
-      "to": "vendor/midistomp/asm\\looper\\cc_trampoline.S",
-      "sha256": "eb509da4f63b61b477c777de4ccb4ac289db0da92b87db8d821c6d6283137e13"
+      "from": "asm/looper/cc_trampoline.S",
+      "to": "vendor/midistomp/asm/looper/cc_trampoline.S",
+      "sha256": "cc965a86f6337fc4d9cdd5c036c35fbf0a9531556765fa9bdf0b9b08dc637803"
     },
     {
-      "from": "asm\\looper\\hold_trampoline.S",
-      "to": "vendor/midistomp/asm\\looper\\hold_trampoline.S",
-      "sha256": "70a3e2d56ca664744bdf79b39dd4ceffae9a8991af787d0666478254b7d92148"
+      "from": "asm/looper/hold_trampoline.S",
+      "to": "vendor/midistomp/asm/looper/hold_trampoline.S",
+      "sha256": "dc3f4e59fa1df35a1c1f06f9a97321c54e9ff107412ce2910346e47e5568d159"
     },
     {
-      "from": "asm\\looper\\lbox.c",
-      "to": "vendor/midistomp/asm\\looper\\lbox.c",
-      "sha256": "a96dfe869bcac700fb330980670c3116690af16a365b1e22eb14ffc2bc228900"
+      "from": "asm/looper/lbox.c",
+      "to": "vendor/midistomp/asm/looper/lbox.c",
+      "sha256": "6ca878a3557f2d5bded44f8580343f5f340d270c26493427644b170e8ffcdbf1"
     },
     {
-      "from": "asm\\looper\\lbox_vec.asm",
-      "to": "vendor/midistomp/asm\\looper\\lbox_vec.asm",
-      "sha256": "62f1af87dd75c4bb34185ef153424ac5d3a8494ae3da76785ecc5c2170ce19c3"
+      "from": "asm/looper/lbox_vec.asm",
+      "to": "vendor/midistomp/asm/looper/lbox_vec.asm",
+      "sha256": "3e9eab3c5bd3b714389a6e89f3d91305647876b9d14bfc894e948c802402dbad"
     },
     {
-      "from": "asm\\looper\\looper.S",
-      "to": "vendor/midistomp/asm\\looper\\looper.S",
-      "sha256": "76a18c5e14ff8ac9fd1144443a9845c58f5712adb1c8b2e3ef355f6bcbad629e"
+      "from": "asm/looper/looper.S",
+      "to": "vendor/midistomp/asm/looper/looper.S",
+      "sha256": "15b2fffee75b70652d9e9149df34aed74ec586fd717ef90be9d1893de3bf384c"
     },
     {
-      "from": "asm\\looper\\poll_trampoline.S",
-      "to": "vendor/midistomp/asm\\looper\\poll_trampoline.S",
-      "sha256": "5a263aa54e4a3c0eb810f87500837a1d300570b301edf419a7e0abb3291318fb"
+      "from": "asm/looper/poll_trampoline.S",
+      "to": "vendor/midistomp/asm/looper/poll_trampoline.S",
+      "sha256": "cf15c309754e2d519aa3c75e77e5c869353ade3a4c3790ed0d05ba8ed086b3b4"
     },
     {
-      "from": "asm\\looper\\services.inc",
-      "to": "vendor/midistomp/asm\\looper\\services.inc",
-      "sha256": "5f1ae7ebced6955555f80a7fc381e7bef4dd3ac1c99e6b56ef18dced9052e182"
+      "from": "asm/looper/services.inc",
+      "to": "vendor/midistomp/asm/looper/services.inc",
+      "sha256": "e245a12b0726887c1e7a9b59a9b64b7cce1b3dc6e69d226b75791ee3bf1f9e27"
     },
     {
-      "from": "asm\\looper\\toggle_trampoline.S",
-      "to": "vendor/midistomp/asm\\looper\\toggle_trampoline.S",
-      "sha256": "8a1e5e0bfeba56ffdc80b9f89a1b091bb076837f73f3529dc32e96a7d2d73b5f"
+      "from": "asm/looper/toggle_trampoline.S",
+      "to": "vendor/midistomp/asm/looper/toggle_trampoline.S",
+      "sha256": "51a1013d5bd360287448548f877e38cc9da0185a4808d9a13422470083a13cd5"
     },
     {
-      "from": "asm\\m0_probe\\chain_jump.S",
-      "to": "vendor/midistomp/asm\\m0_probe\\chain_jump.S",
-      "sha256": "6c3683288d793bc90b4c9e163b38331e2546d026edf1e7fa0ecb0ccafbb1b0b5"
+      "from": "asm/m0_probe/chain_jump.S",
+      "to": "vendor/midistomp/asm/m0_probe/chain_jump.S",
+      "sha256": "2a704ad4fc9e52334f745284fe852e5715c79e73b24e0c6860f6c47d2dabc0e1"
     },
     {
-      "from": "asm\\m0_probe\\dsp_limit.S",
-      "to": "vendor/midistomp/asm\\m0_probe\\dsp_limit.S",
-      "sha256": "910e0afca7dc2dd75491db727beb7e84cb42c99b4bc7b07d4313f7a580cacdb3"
+      "from": "asm/m0_probe/dsp_limit.S",
+      "to": "vendor/midistomp/asm/m0_probe/dsp_limit.S",
+      "sha256": "663c4c3c355e00c6e9987bd697b73251ab48d55d8dd8dd285f60ea4683b2d5ce"
     },
     {
-      "from": "asm\\m0_probe\\end_stub.S",
-      "to": "vendor/midistomp/asm\\m0_probe\\end_stub.S",
-      "sha256": "fcdba8f38c3f2bbedc194df7d05b15af566ad0df83077a84edd6ca537cfdd8fc"
+      "from": "asm/m0_probe/end_stub.S",
+      "to": "vendor/midistomp/asm/m0_probe/end_stub.S",
+      "sha256": "2609b77e5634e67ea4318eec4c54e9a67c2324b3724bc4e15d943013d49a963d"
     },
     {
-      "from": "asm\\m0_probe\\probe.S",
-      "to": "vendor/midistomp/asm\\m0_probe\\probe.S",
-      "sha256": "16f7557d2148e97c67b9ac2be9708b6046d406a9dee84fa351ad7ae84adb6b76"
+      "from": "asm/m0_probe/probe.S",
+      "to": "vendor/midistomp/asm/m0_probe/probe.S",
+      "sha256": "07e9aa2d8ea5626c0acbf0b299d7e152c07e05523e7d92c2b430d239c5a83ff8"
     },
     {
-      "from": "asm\\m0_probe\\start_stub.S",
-      "to": "vendor/midistomp/asm\\m0_probe\\start_stub.S",
-      "sha256": "3a2e740c2be93813c944c998aea8572b1e250a71ed7fc7c67287056585a0a27e"
+      "from": "asm/m0_probe/start_stub.S",
+      "to": "vendor/midistomp/asm/m0_probe/start_stub.S",
+      "sha256": "b7ff693ebd281d0d31a02d2623d76f96a4a22b0ca5b7606e66eeb89dadc24dc9"
     },
     {
-      "from": "asm\\master\\master.c",
-      "to": "vendor/midistomp/asm\\master\\master.c",
-      "sha256": "7478e0a3dab9b50b994902699afc7c9b1c268711e03562ff0a2151601fdabd62"
+      "from": "asm/master/master.c",
+      "to": "vendor/midistomp/asm/master/master.c",
+      "sha256": "c226d5639b3e0435b2e6a9ec1516822aa1440fe621ed868b7b8b206f430a36c5"
     },
     {
-      "from": "asm\\master\\master.h",
-      "to": "vendor/midistomp/asm\\master\\master.h",
-      "sha256": "f0988c8d96d7126251f39a01cd3fb1574bb60da24350bf2e1233b68c981c3a65"
+      "from": "asm/master/master.h",
+      "to": "vendor/midistomp/asm/master/master.h",
+      "sha256": "203de6a62698cde5925d4f5abc25ecf20e0dac2d4e2b46b0de15d1b8e1809897"
     },
     {
-      "from": "asm\\master\\master_vec.asm",
-      "to": "vendor/midistomp/asm\\master\\master_vec.asm",
-      "sha256": "a5f41db95a4a5cd2e1373c3805bb536587f4861bdb3f0fe03dea4b753489b6ad"
+      "from": "asm/master/master_vec.asm",
+      "to": "vendor/midistomp/asm/master/master_vec.asm",
+      "sha256": "f31ef8098f5b78c865a9ebf84e9504e31650f2cce892cc3f444c87aaf742fe8a"
     },
     {
-      "from": "asm\\midi_cc\\handler.S",
-      "to": "vendor/midistomp/asm\\midi_cc\\handler.S",
-      "sha256": "f758f4356375a1a62894a85a8d655419b4525e49a5b93f5bba9986fa76c89503"
+      "from": "asm/midi_cc/handler.S",
+      "to": "vendor/midistomp/asm/midi_cc/handler.S",
+      "sha256": "391ed14fb2f4b30c2436289231b9cce160da181bbf04ebf8eefdafefcf30a7b4"
     },
     {
-      "from": "asm\\midi_cc\\step.S",
-      "to": "vendor/midistomp/asm\\midi_cc\\step.S",
-      "sha256": "6bae7853bbc674c1f3dd2c0b369a4a2ea9d4a312871a0e83ac09512b6171f8d1"
+      "from": "asm/midi_cc/step.S",
+      "to": "vendor/midistomp/asm/midi_cc/step.S",
+      "sha256": "bf7f493e79cb886c7b9fce5de7a0226ac6822fa794c579b28387ed35e9b21734"
     },
     {
-      "from": "asm\\midi_cc\\trampoline.S",
-      "to": "vendor/midistomp/asm\\midi_cc\\trampoline.S",
-      "sha256": "067e9bf87ece8d362277401a503b53fa342f91fdc03b513f72badc18ca1adf47"
+      "from": "asm/midi_cc/trampoline.S",
+      "to": "vendor/midistomp/asm/midi_cc/trampoline.S",
+      "sha256": "92ccd95d9cffaa838941487d4fdcd75453917c86d23b3c8950b4024002e994da"
     },
     {
-      "from": "asm\\midi_clock\\clock.S",
-      "to": "vendor/midistomp/asm\\midi_clock\\clock.S",
-      "sha256": "e8f474fa27c5b5109f36725d6734a1db7ac09535a2fb80568325cae0332d136e"
+      "from": "asm/midi_clock/clock.S",
+      "to": "vendor/midistomp/asm/midi_clock/clock.S",
+      "sha256": "51f33c5112d6b6cfd5a67dfba843cc3590f31c0a421fcf15617ad74b2ce4e1ff"
     },
     {
-      "from": "asm\\midi_clock\\diag.S",
-      "to": "vendor/midistomp/asm\\midi_clock\\diag.S",
-      "sha256": "2afd9a3929bbe2ea402071fee5311c3709d7217672202182aa7e820875652453"
+      "from": "asm/midi_clock/diag.S",
+      "to": "vendor/midistomp/asm/midi_clock/diag.S",
+      "sha256": "c8eb25175744ef1dbfad5542b00c982110ee06bcb2288a9587f23a4f6af1e72b"
     },
     {
-      "from": "asm\\midi_clock\\diag2.S",
-      "to": "vendor/midistomp/asm\\midi_clock\\diag2.S",
-      "sha256": "eb3c08866f7126c0e88366a5aad9eec9fd60bebe2a118436d28cab70b3d2716e"
+      "from": "asm/midi_clock/diag2.S",
+      "to": "vendor/midistomp/asm/midi_clock/diag2.S",
+      "sha256": "ffca699412764a8e7c8df5a4eebe3a438f180cd817139cbc4c6717c88e928195"
     },
     {
-      "from": "asm\\midi_clock\\poll.S",
-      "to": "vendor/midistomp/asm\\midi_clock\\poll.S",
-      "sha256": "da343c70088d87791b2b3592860366b9b47832f35ad424ddbcc7e05e358d6fb4"
+      "from": "asm/midi_clock/poll.S",
+      "to": "vendor/midistomp/asm/midi_clock/poll.S",
+      "sha256": "5dba7e1637d75ef71be890c9f01b4070bc9f31bceeef4b1c97079ab94f95fd86"
     },
     {
-      "from": "asm\\midi_clock\\poll_trampoline.S",
-      "to": "vendor/midistomp/asm\\midi_clock\\poll_trampoline.S",
-      "sha256": "f286a190d416a339d6d0d18e7873f5f8b950fcbf4c257fe0c215e06b2848f19a"
+      "from": "asm/midi_clock/poll_trampoline.S",
+      "to": "vendor/midistomp/asm/midi_clock/poll_trampoline.S",
+      "sha256": "0a9ee373f299e76d9ef8bcaaacf9d92c2ce7940a56cf9ba130ed9fddf76dd805"
     },
     {
-      "from": "asm\\midi_clock\\trampoline.S",
-      "to": "vendor/midistomp/asm\\midi_clock\\trampoline.S",
-      "sha256": "e10dd1478ba5b6b353beb07f0b00d7a4adb1c8ecced8bf861bd528d17eecdd52"
+      "from": "asm/midi_clock/trampoline.S",
+      "to": "vendor/midistomp/asm/midi_clock/trampoline.S",
+      "sha256": "5cfed7d9cac3a5e3bb5ebe7c7747f5b30b080badc29fb42c46e719f2b9649c45"
     },
     {
-      "from": "asm\\midi_clock\\transport.inc",
-      "to": "vendor/midistomp/asm\\midi_clock\\transport.inc",
-      "sha256": "7f0a9d32d485213a881ed14ca30c13eaadb3d5bb7058618c684b6c7f0884c029"
+      "from": "asm/midi_clock/transport.inc",
+      "to": "vendor/midistomp/asm/midi_clock/transport.inc",
+      "sha256": "4fa83833beb0904d8bb4dd24268ff7cfef524c8a97cd2f5c8799b19d4057cef0"
     },
     {
-      "from": "asm\\midi_settings\\gate_trampoline.S",
-      "to": "vendor/midistomp/asm\\midi_settings\\gate_trampoline.S",
-      "sha256": "0cc35a30400af83dd4a7ff2079c2dd1fb50d7d17a5ecac5fe4173ae59c68cadc"
+      "from": "asm/midi_settings/gate_trampoline.S",
+      "to": "vendor/midistomp/asm/midi_settings/gate_trampoline.S",
+      "sha256": "ed580e255c84d8fbd36a95626844178dc99a13651e7b266448fe5907aa9d6910"
     },
     {
-      "from": "asm\\midi_settings\\menu_draw_trampoline.S",
-      "to": "vendor/midistomp/asm\\midi_settings\\menu_draw_trampoline.S",
-      "sha256": "f855dde4f84cb1071d4da9b3a1e69deeef8946a9709205d26a81696beba71490"
+      "from": "asm/midi_settings/menu_draw_trampoline.S",
+      "to": "vendor/midistomp/asm/midi_settings/menu_draw_trampoline.S",
+      "sha256": "688f688c7230e8c6ad8c90d346e4f833507737d7a2f7558801707b6fce2e55c6"
     },
     {
-      "from": "asm\\midi_settings\\menu_keys_trampoline.S",
-      "to": "vendor/midistomp/asm\\midi_settings\\menu_keys_trampoline.S",
-      "sha256": "f5753c3fab1af89067b20708cfa9d40e210bdaeae6636bbcf3430fd662ee7102"
+      "from": "asm/midi_settings/menu_keys_trampoline.S",
+      "to": "vendor/midistomp/asm/midi_settings/menu_keys_trampoline.S",
+      "sha256": "b364d4297e4fbfde501da103c5e08f50553ccce39c040dc82c135fac8452e59c"
     },
     {
-      "from": "asm\\midi_settings\\pack_trampoline.S",
-      "to": "vendor/midistomp/asm\\midi_settings\\pack_trampoline.S",
-      "sha256": "4499ada6efad305b051ebd96bc243dab6ffb650b049ece74c143bde90bee6a42"
+      "from": "asm/midi_settings/pack_trampoline.S",
+      "to": "vendor/midistomp/asm/midi_settings/pack_trampoline.S",
+      "sha256": "8f230f94959e1c6f5b3f45007e75f4a7cb8a1fb18a0c33bad67a71efa558f693"
     },
     {
-      "from": "asm\\midi_settings\\rec_load_trampoline.S",
-      "to": "vendor/midistomp/asm\\midi_settings\\rec_load_trampoline.S",
-      "sha256": "836f9297e1769933d85fb6b398e6bbe1321907e87aa291c2c539ec3dff56ef00"
+      "from": "asm/midi_settings/rec_load_trampoline.S",
+      "to": "vendor/midistomp/asm/midi_settings/rec_load_trampoline.S",
+      "sha256": "c514c9a151a0bd2210e3617a2052335c1d28c46441a1b96aa4e65b83e52ff9a0"
     },
     {
-      "from": "asm\\midi_settings\\rec_save_trampoline.S",
-      "to": "vendor/midistomp/asm\\midi_settings\\rec_save_trampoline.S",
-      "sha256": "7fa2c4a2b99471bf81887612fd54e81e7ce5b3ece3ea465e5c92d41e9686589c"
+      "from": "asm/midi_settings/rec_save_trampoline.S",
+      "to": "vendor/midistomp/asm/midi_settings/rec_save_trampoline.S",
+      "sha256": "7c0123669875a2780178192a5a81c78358cadf0f370e9e2e05bd75f371b2889f"
     },
     {
-      "from": "asm\\midi_settings\\settings.S",
-      "to": "vendor/midistomp/asm\\midi_settings\\settings.S",
-      "sha256": "a9f0a29b92b199d2fbd22ac086e0b5a7df76cbc08668e921d42e24a9099937a3"
+      "from": "asm/midi_settings/settings.S",
+      "to": "vendor/midistomp/asm/midi_settings/settings.S",
+      "sha256": "7cb7b5e64a9958931ae9b6e5b18de7beb6c17764fb7f5f0117e5c383398865ef"
     },
     {
-      "from": "asm\\midi_settings\\unpack_trampoline.S",
-      "to": "vendor/midistomp/asm\\midi_settings\\unpack_trampoline.S",
-      "sha256": "da626d0867f82754bac29e68f2b851da2989cfceacd14c49466c3e9d445057ef"
+      "from": "asm/midi_settings/unpack_trampoline.S",
+      "to": "vendor/midistomp/asm/midi_settings/unpack_trampoline.S",
+      "sha256": "f6f70d2bf25f7a7f791048899ead44a82aa1eae8085e350dd88f016ab0fcc15a"
     },
     {
-      "from": "asm\\mixer\\cc_link.S",
-      "to": "vendor/midistomp/asm\\mixer\\cc_link.S",
-      "sha256": "f06926015dae8e184cb29d9ff28fff09fe1f6f4e8dc3c781305cf64ea910039a"
+      "from": "asm/mixer/cc_link.S",
+      "to": "vendor/midistomp/asm/mixer/cc_link.S",
+      "sha256": "273d411eaba42eb508b30041ad120b9dfabbb23f7de860a7e55b28c7232fd707"
     },
     {
-      "from": "asm\\mixer\\chain.h",
-      "to": "vendor/midistomp/asm\\mixer\\chain.h",
-      "sha256": "ba239d3ea8a74de9a01683aa1af7272b461f300ad660edcb94f521b52ce459fe"
+      "from": "asm/mixer/chain.h",
+      "to": "vendor/midistomp/asm/mixer/chain.h",
+      "sha256": "5db5becfd2be9d38b28db55327f375b456076ad847cf358aa16c9de38c31005d"
     },
     {
-      "from": "asm\\mixer\\chain_draw.c",
-      "to": "vendor/midistomp/asm\\mixer\\chain_draw.c",
-      "sha256": "66c0c69ceeb97cba8eb94536e224d3b4e565313e508a08ec04d979c656a4f2c0"
+      "from": "asm/mixer/chain_draw.c",
+      "to": "vendor/midistomp/asm/mixer/chain_draw.c",
+      "sha256": "ee0fb12e4eb52577a8ba525e5c4ba1ed94488ff299b1a3d2f334f031c597faa9"
     },
     {
-      "from": "asm\\mixer\\chain_draw_stub.c",
-      "to": "vendor/midistomp/asm\\mixer\\chain_draw_stub.c",
-      "sha256": "b8e622fa0a5afcd93f21a728dab1a482534604d14f8a61f31a46caece8b07cd9"
+      "from": "asm/mixer/chain_draw_stub.c",
+      "to": "vendor/midistomp/asm/mixer/chain_draw_stub.c",
+      "sha256": "33308b5db47a55183ccaeb0a4d4a64fab1ed9fb2bbaa452cc72949b760af0ce0"
     },
     {
-      "from": "asm\\mixer\\chain_jump.S",
-      "to": "vendor/midistomp/asm\\mixer\\chain_jump.S",
-      "sha256": "16dcbf33241121afd26c8102ed96b1dddf83c096fda30218254db985a74b179e"
+      "from": "asm/mixer/chain_jump.S",
+      "to": "vendor/midistomp/asm/mixer/chain_jump.S",
+      "sha256": "2badf6ea4ae741f6e38154a2b0681fac818955c6a0aee1930759b946e8c14663"
     },
     {
-      "from": "asm\\mixer\\chain_keys.c",
-      "to": "vendor/midistomp/asm\\mixer\\chain_keys.c",
-      "sha256": "739dc9e56aca793ee5accf2f118463a99e8d512de39b1bf8b0d65d0e435f4db0"
+      "from": "asm/mixer/chain_keys.c",
+      "to": "vendor/midistomp/asm/mixer/chain_keys.c",
+      "sha256": "d6baf73a57110bc85cfec03e4dc68aa50ebe1a86f3ad8b0dc91a74cedeb7a4a3"
     },
     {
-      "from": "asm\\mixer\\chain_vec.asm",
-      "to": "vendor/midistomp/asm\\mixer\\chain_vec.asm",
-      "sha256": "199e7c1b5361f6b1dc42326573383ed10da821b5064f1760fa942ca5f4d79868"
+      "from": "asm/mixer/chain_vec.asm",
+      "to": "vendor/midistomp/asm/mixer/chain_vec.asm",
+      "sha256": "b3f444b3d6448e078ad9d9a7b79260ea4b9766752f15e4107d031a1b1a9d7aa6"
     },
     {
-      "from": "asm\\mixer\\engine.c",
-      "to": "vendor/midistomp/asm\\mixer\\engine.c",
-      "sha256": "9ff4c436e3a050c51fed0e356cb5b7d8aadd10f73c40de47fa33e4a9cf7af18a"
+      "from": "asm/mixer/engine.c",
+      "to": "vendor/midistomp/asm/mixer/engine.c",
+      "sha256": "3b4cae144c67449396abbaef6ff11385acd7d19c24193c5ad291f47c12c83c41"
     },
     {
-      "from": "asm\\mixer\\knob_step.h",
-      "to": "vendor/midistomp/asm\\mixer\\knob_step.h",
-      "sha256": "294010a6eb309cefd0826bed15263af1651161dea68f69d7c8977fdfb0b803c9"
+      "from": "asm/mixer/knob_step.h",
+      "to": "vendor/midistomp/asm/mixer/knob_step.h",
+      "sha256": "6c3e3ed926f7d9583d756e2c165a3cb6d1f033a85443ffa889478176a5143a1e"
     },
     {
-      "from": "asm\\mixer\\menu_draw.S",
-      "to": "vendor/midistomp/asm\\mixer\\menu_draw.S",
-      "sha256": "cb75a8187b76767da324efb9b79471c233dac164f8fc024a855002817d07d625"
+      "from": "asm/mixer/menu_draw.S",
+      "to": "vendor/midistomp/asm/mixer/menu_draw.S",
+      "sha256": "b811ee3dbfad5da0cb33b7d9471ae50cb8856d0afdb0fc0fb51ab64f65b6f0bf"
     },
     {
-      "from": "asm\\mixer\\menu_enter.S",
-      "to": "vendor/midistomp/asm\\mixer\\menu_enter.S",
-      "sha256": "af1a27b72e9233ca1e4f2ab45c89a7ce090ef7f44aad8d3a61963753f18f86ab"
+      "from": "asm/mixer/menu_enter.S",
+      "to": "vendor/midistomp/asm/mixer/menu_enter.S",
+      "sha256": "d69bb7c0459acf91280b2b0987eae23b3590794b22b57d27869e8613a32cd5cf"
     },
     {
-      "from": "asm\\mixer\\menu_scroll.S",
-      "to": "vendor/midistomp/asm\\mixer\\menu_scroll.S",
-      "sha256": "0e0d05e68214c4e5755833f9224e0c3957211f211c9973cb6658f34306123153"
+      "from": "asm/mixer/menu_scroll.S",
+      "to": "vendor/midistomp/asm/mixer/menu_scroll.S",
+      "sha256": "97a2f06c2bd2aa2f37df13f3a918455ecbf6321c7ba0b4e249c04ca63c2340aa"
     },
     {
-      "from": "asm\\mixer\\mixer.S",
-      "to": "vendor/midistomp/asm\\mixer\\mixer.S",
-      "sha256": "5976ba78bd97680de54133d9e09bc052bface3861e0fd3a0c8345bb0a6cf00c6"
+      "from": "asm/mixer/mixer.S",
+      "to": "vendor/midistomp/asm/mixer/mixer.S",
+      "sha256": "c709862168f6c4dd75dfd7d1e66c9a4573131507d0d7b46e83612a9a2a310671"
     },
     {
-      "from": "asm\\mixer\\pack_trampoline.S",
-      "to": "vendor/midistomp/asm\\mixer\\pack_trampoline.S",
-      "sha256": "ad6159d40cc40dc2903e9dbade9a0df31d3da260f98fb46843bb1283de552fe7"
+      "from": "asm/mixer/pack_trampoline.S",
+      "to": "vendor/midistomp/asm/mixer/pack_trampoline.S",
+      "sha256": "3640857c272e883833f422981f28e3cd47eb7b979f91ab93dc37a08a6fa12244"
     },
     {
-      "from": "asm\\mixer\\pages.c",
-      "to": "vendor/midistomp/asm\\mixer\\pages.c",
-      "sha256": "27a965967b9e767cc215098d83a142625303cca59d11c54ed54cbbcf8d3bf787"
+      "from": "asm/mixer/pages.c",
+      "to": "vendor/midistomp/asm/mixer/pages.c",
+      "sha256": "d370c665e801421b1a0aa3c854b2e0677bbd3755cd3b519020a8bfdd8ada4e03"
     },
     {
-      "from": "asm\\mixer\\pedal_in.c",
-      "to": "vendor/midistomp/asm\\mixer\\pedal_in.c",
-      "sha256": "34eb9964a58955a88b508779648ac0d38cd2fa592d67e5f1de6e4144b14d93f5"
+      "from": "asm/mixer/pedal_in.c",
+      "to": "vendor/midistomp/asm/mixer/pedal_in.c",
+      "sha256": "9083ba78763983c47c2be5d8e4c266f3d9bc62fc570b25a18681cd9a678fe3fb"
     },
     {
-      "from": "asm\\mixer\\poll_trampoline.S",
-      "to": "vendor/midistomp/asm\\mixer\\poll_trampoline.S",
-      "sha256": "ae9759beb3d8f366ab4ab9d2110b30820aaf9d8befbc2e103fd9f9f8591b0fcd"
+      "from": "asm/mixer/poll_trampoline.S",
+      "to": "vendor/midistomp/asm/mixer/poll_trampoline.S",
+      "sha256": "892103a9aaa62f011ea75ee9bb6ffd77b08652e2fd058886884a3f78f98af7ff"
     },
     {
-      "from": "asm\\mixer\\rec_save_jump.S",
-      "to": "vendor/midistomp/asm\\mixer\\rec_save_jump.S",
-      "sha256": "b659d3a3751960be6dd8621f98b65e498412bfbd691c9cf7f8b1cfbb6b215104"
+      "from": "asm/mixer/rec_save_jump.S",
+      "to": "vendor/midistomp/asm/mixer/rec_save_jump.S",
+      "sha256": "d2f700a6e56d04b04dc5b5aa9e39093cd03112057237a27039a92dd11b11bfce"
     },
     {
-      "from": "asm\\mixer\\stock.h",
-      "to": "vendor/midistomp/asm\\mixer\\stock.h",
-      "sha256": "83c0136cf24064d11a6024ae1b657df0463faea091c288abade16683e2faedec"
+      "from": "asm/mixer/stock.h",
+      "to": "vendor/midistomp/asm/mixer/stock.h",
+      "sha256": "97e063eb7c862f8d2828978e58ba1a920afb4c6fc5196a324b5d40df1b04fc97"
     },
     {
-      "from": "asm\\mixer\\unpack_trampoline.S",
-      "to": "vendor/midistomp/asm\\mixer\\unpack_trampoline.S",
-      "sha256": "cca7282455f8c206eb703a352f76df30e3b7ec29e022a288d3f5538c6472651c"
+      "from": "asm/mixer/unpack_trampoline.S",
+      "to": "vendor/midistomp/asm/mixer/unpack_trampoline.S",
+      "sha256": "210cbb6317884329e9390579bfe257a149a48fa7dfbb10f6a9c1a4ae02d0b17f"
     },
     {
-      "from": "asm\\perform\\perform.h",
-      "to": "vendor/midistomp/asm\\perform\\perform.h",
-      "sha256": "6a81f3faec89a834f5649e65f71a1d7ccaa36a10710ad08c8bf7d7efcf7069bf"
+      "from": "asm/perform/perform.h",
+      "to": "vendor/midistomp/asm/perform/perform.h",
+      "sha256": "2d15fc9c397b40be0f260eec682d9659c8ec5ade5b806fb6a26de6ead65c8e41"
     },
     {
-      "from": "asm\\perform\\perform_draw.c",
-      "to": "vendor/midistomp/asm\\perform\\perform_draw.c",
-      "sha256": "e8bdce3affbee94468a1411f23faf791d5f72c163e5ca07ddc246cd07ceb858d"
+      "from": "asm/perform/perform_draw.c",
+      "to": "vendor/midistomp/asm/perform/perform_draw.c",
+      "sha256": "b3fe0add90b270a069428d02c8ffc488f140ef6193323269f94aa2fa89f4daaf"
     },
     {
-      "from": "asm\\perform\\perform_engine.c",
-      "to": "vendor/midistomp/asm\\perform\\perform_engine.c",
-      "sha256": "7a60dd8e5d43a96c336a468608cb88d17f24721e5ed13130f05b39680b826410"
+      "from": "asm/perform/perform_engine.c",
+      "to": "vendor/midistomp/asm/perform/perform_engine.c",
+      "sha256": "536f0b176e061337ad6f756e111c35424827067f40a92180f3be9d674a4080a6"
     },
     {
-      "from": "asm\\perform\\perform_keys.c",
-      "to": "vendor/midistomp/asm\\perform\\perform_keys.c",
-      "sha256": "41709b96a12e5fcb092756c60fc307bcf467be1f974e572fd42a58804f9dcac9"
+      "from": "asm/perform/perform_keys.c",
+      "to": "vendor/midistomp/asm/perform/perform_keys.c",
+      "sha256": "47a46cf9e1baaf3c6ca64ce1b4b9469470048dcbe67a69a7e8053fbe78abb21a"
     },
     {
-      "from": "asm\\perform\\perform_store.c",
-      "to": "vendor/midistomp/asm\\perform\\perform_store.c",
-      "sha256": "3f5a5afe6eff60b1f73e6d5b0891107ca16ac9d8d5b854d29ef92f91748de718"
+      "from": "asm/perform/perform_store.c",
+      "to": "vendor/midistomp/asm/perform/perform_store.c",
+      "sha256": "390414115d7dcf7bd6f17258aa17ef23a2f773511c54a9ec30dde87cd452fdfb"
     },
     {
-      "from": "asm\\perform\\perform_ui_stub.c",
-      "to": "vendor/midistomp/asm\\perform\\perform_ui_stub.c",
-      "sha256": "09e04281f7e3375cd97c3798796f5fcb29cd912e6e654e855b3ae36055fdd988"
+      "from": "asm/perform/perform_ui_stub.c",
+      "to": "vendor/midistomp/asm/perform/perform_ui_stub.c",
+      "sha256": "3bcd0e3daf26363aecc1d069b58471f00baa9bc2cdec7ddb9115445d8ce1ba63"
     },
     {
-      "from": "asm\\ram_test\\ramtest.S",
-      "to": "vendor/midistomp/asm\\ram_test\\ramtest.S",
-      "sha256": "dac0715bdee038eb2039d8de9af8697f5ab5c23c0642eae243d15bb50ce2fec6"
+      "from": "asm/ram_test/ramtest.S",
+      "to": "vendor/midistomp/asm/ram_test/ramtest.S",
+      "sha256": "69f2199a0df14fd26453e4a990845e8db89f58a17d56a04218fcde0d9b041706"
     },
     {
-      "from": "asm\\scroll\\scroll.S",
-      "to": "vendor/midistomp/asm\\scroll\\scroll.S",
-      "sha256": "de99c71495c3935331c48e7cfa0115f85220ee6d9186ab0400faa5da9a644f9f"
+      "from": "asm/scroll/scroll.S",
+      "to": "vendor/midistomp/asm/scroll/scroll.S",
+      "sha256": "5490f91382c0ee70453c19dacb1dead3f84ac0c96214f4bbda96f66247a4e120"
     },
     {
-      "from": "asm\\tempo_hold\\combo_trampoline.S",
-      "to": "vendor/midistomp/asm\\tempo_hold\\combo_trampoline.S",
-      "sha256": "c49b4fe53ee2b8ce852936f694b286923d5d7af64497b95eb6989872e71d04da"
+      "from": "asm/tempo_hold/combo_trampoline.S",
+      "to": "vendor/midistomp/asm/tempo_hold/combo_trampoline.S",
+      "sha256": "674a384570edcc4c0ed217ee2175e6a697d56917baeb4d51380da67c2695ca63"
     },
     {
-      "from": "asm\\tempo_hold\\dirty_trampoline.S",
-      "to": "vendor/midistomp/asm\\tempo_hold\\dirty_trampoline.S",
-      "sha256": "02acbdf352ced6c5ac3faf1700a9f0d50a1a70bb18eb6fb4e970105a0ecfaf2f"
+      "from": "asm/tempo_hold/dirty_trampoline.S",
+      "to": "vendor/midistomp/asm/tempo_hold/dirty_trampoline.S",
+      "sha256": "be4f8f5bf875e469b207b4ee8ad943f5bcc62c59f700ec4ab225c37398593c39"
     },
     {
-      "from": "asm\\tempo_hold\\hold.S",
-      "to": "vendor/midistomp/asm\\tempo_hold\\hold.S",
-      "sha256": "3a5de6c7179cf4cc4d06ecbfba5fddbc163193b46bf02bc25f4f8d234c9eca07"
+      "from": "asm/tempo_hold/hold.S",
+      "to": "vendor/midistomp/asm/tempo_hold/hold.S",
+      "sha256": "7f280db2ff599391611c5fb88404a2ad2e430ae44372f76fc23b9e977d46c484"
     },
     {
-      "from": "asm\\tempo_hold\\hold.inc",
-      "to": "vendor/midistomp/asm\\tempo_hold\\hold.inc",
-      "sha256": "3218d12ead75161daff71b75c22120a5abac4384666d0b97b0918242aa4ac0fd"
+      "from": "asm/tempo_hold/hold.inc",
+      "to": "vendor/midistomp/asm/tempo_hold/hold.inc",
+      "sha256": "bea123d05dc1f76f11c9047933e3af0919d3956d5297e6007f3264c7065feb23"
     },
     {
-      "from": "asm\\tempo_hold\\hold2.S",
-      "to": "vendor/midistomp/asm\\tempo_hold\\hold2.S",
-      "sha256": "81a7956c92d85fe50cff3a8e9aad0f3ebc7f79ee2b1760a99fcffd64450a9f4d"
+      "from": "asm/tempo_hold/hold2.S",
+      "to": "vendor/midistomp/asm/tempo_hold/hold2.S",
+      "sha256": "2d7056cae9b5082a34dc73b44f183e2ba92ddde4f93ad29be0b2bcefef12528e"
     },
     {
-      "from": "asm\\tempo_hold\\hold_trampoline.S",
-      "to": "vendor/midistomp/asm\\tempo_hold\\hold_trampoline.S",
-      "sha256": "523bfb08877ea083dd35275ba5c0484e143d56a845d6d61e60a6ef585b4020d0"
+      "from": "asm/tempo_hold/hold_trampoline.S",
+      "to": "vendor/midistomp/asm/tempo_hold/hold_trampoline.S",
+      "sha256": "e4d898ca3f151cf0fde359bafeb850d91e0135c65a0f2071bb9b357497c85ca2"
     },
     {
-      "from": "asm\\tempo_hold\\knob_accel.S",
-      "to": "vendor/midistomp/asm\\tempo_hold\\knob_accel.S",
-      "sha256": "e09628500ed1cab2a3c22dad04e7dae1b61d85e3a5c4b73b191365eeff50536c"
+      "from": "asm/tempo_hold/knob_accel.S",
+      "to": "vendor/midistomp/asm/tempo_hold/knob_accel.S",
+      "sha256": "ed0c1987aa58308e8f7c3cb9b6f6af572afacdb89f4a29bb7460b6efb36d2545"
     },
     {
-      "from": "asm\\tempo_hold\\knob_trampoline.S",
-      "to": "vendor/midistomp/asm\\tempo_hold\\knob_trampoline.S",
-      "sha256": "4e769f3fbe020a866aa0b8a999580e4259deaf8bcd3faafaee5a3a2d5940f2f5"
+      "from": "asm/tempo_hold/knob_trampoline.S",
+      "to": "vendor/midistomp/asm/tempo_hold/knob_trampoline.S",
+      "sha256": "2921f53be1119c7ca6b4a938419a6aeacf5ab2751d7c5bff96baba72a3bc9847"
     },
     {
-      "from": "asm\\tempo_hold\\release_trampoline.S",
-      "to": "vendor/midistomp/asm\\tempo_hold\\release_trampoline.S",
-      "sha256": "75eb0007be41a549ff0876b02fb6d0bf5ae11dd05828a31595251de5967ae1f6"
+      "from": "asm/tempo_hold/release_trampoline.S",
+      "to": "vendor/midistomp/asm/tempo_hold/release_trampoline.S",
+      "sha256": "ad3371957f73911f1b07bf3b33a04f36f5b6b86e472940f808857492bd6d0761"
     },
     {
-      "from": "asm\\tempo_hold\\swallow_trampoline.S",
-      "to": "vendor/midistomp/asm\\tempo_hold\\swallow_trampoline.S",
-      "sha256": "1261b5aa6104b87a2c9deb1c96fdf8066177e85b1faa816d7be2c314e52beb9b"
+      "from": "asm/tempo_hold/swallow_trampoline.S",
+      "to": "vendor/midistomp/asm/tempo_hold/swallow_trampoline.S",
+      "sha256": "8d1f2a85d7e5513172b37c53cb6ecb616b7b160726744ba2851e174e2889d090"
     },
     {
-      "from": "asm\\tempo_hold\\tap_trampoline.S",
-      "to": "vendor/midistomp/asm\\tempo_hold\\tap_trampoline.S",
-      "sha256": "7a3c082812704fab3f0b376bfeff59882d72351844f8898e3ccf75baa2cb668e"
+      "from": "asm/tempo_hold/tap_trampoline.S",
+      "to": "vendor/midistomp/asm/tempo_hold/tap_trampoline.S",
+      "sha256": "faf99255bc4c7470c6b04d069d080036076c3bd72b0005e067a9e6b193808a3b"
     },
     {
-      "from": "asm\\tempo_hold\\tempo_draw_trampoline.S",
-      "to": "vendor/midistomp/asm\\tempo_hold\\tempo_draw_trampoline.S",
-      "sha256": "695eb1822a7eb4ce74ef121f421be61f860c6b55a5a32735730b5e21526c71fa"
+      "from": "asm/tempo_hold/tempo_draw_trampoline.S",
+      "to": "vendor/midistomp/asm/tempo_hold/tempo_draw_trampoline.S",
+      "sha256": "384a11fb0c2dd7a71099cc4ca211907a6a5e2864fd94aa541cde4fcfd9ceb8ad"
     },
     {
-      "from": "asm\\tempo_hold\\toggle_trampoline.S",
-      "to": "vendor/midistomp/asm\\tempo_hold\\toggle_trampoline.S",
-      "sha256": "c6fa1a488884376b63bc3da148fd1a06d06c86216432e371def0fea9f94b05aa"
+      "from": "asm/tempo_hold/toggle_trampoline.S",
+      "to": "vendor/midistomp/asm/tempo_hold/toggle_trampoline.S",
+      "sha256": "03792e2a3bfc045933ded24814783a3a08fc911ef97d2a8ff9c5490b7e019b0d"
     },
     {
-      "from": "asm\\tempo_hold\\tuner_exit.S",
-      "to": "vendor/midistomp/asm\\tempo_hold\\tuner_exit.S",
-      "sha256": "40c5c471525c977896de515f1ac677966c25e1be3300e0630133a3b77ca22b18"
+      "from": "asm/tempo_hold/tuner_exit.S",
+      "to": "vendor/midistomp/asm/tempo_hold/tuner_exit.S",
+      "sha256": "37abb17fcd4325f5072c2f0813040eacc198bcfc35e356755363aa1445d75819"
     },
     {
-      "from": "asm\\tempo_hold\\tuner_exit_trampoline.S",
-      "to": "vendor/midistomp/asm\\tempo_hold\\tuner_exit_trampoline.S",
-      "sha256": "74ef8c33c081179ad978b1d4d9e952501a98435ba65e1cb5cf39b766d7fd4ed3"
+      "from": "asm/tempo_hold/tuner_exit_trampoline.S",
+      "to": "vendor/midistomp/asm/tempo_hold/tuner_exit_trampoline.S",
+      "sha256": "ce89ae539f56cfa1cda595362f6da59edeb05318e1795b990eab2d3b852125aa"
     },
     {
-      "from": "asm\\tempo_hold\\tuner_label_trampoline.S",
-      "to": "vendor/midistomp/asm\\tempo_hold\\tuner_label_trampoline.S",
-      "sha256": "5d3b364ebeb43bf0fef988fffe8b447750f4f04522aa8852dd9c71e1e7c7be11"
+      "from": "asm/tempo_hold/tuner_label_trampoline.S",
+      "to": "vendor/midistomp/asm/tempo_hold/tuner_label_trampoline.S",
+      "sha256": "7bd6081d9f375cbe8c2f4a270673718e000641dc8c0328ce8b5187fb485cba26"
     },
     {
-      "from": "models\\ms50g.yaml",
-      "to": "vendor/midistomp/models\\ms50g.yaml",
-      "sha256": "b54f5c1b08cf37cad20a30bf88ac55e230cd2ef8ade1e6e92a6fd5d5ea4a2a98"
+      "from": "models/ms50g.yaml",
+      "to": "vendor/midistomp/models/ms50g.yaml",
+      "sha256": "2535fd6b6eecb5435a067c4e1008139f4129765f3294a0626b6da5ca8753e7ba"
     },
     {
-      "from": "models\\ms60b.yaml",
-      "to": "vendor/midistomp/models\\ms60b.yaml",
-      "sha256": "d92f39f16639fc3f2fdf41cf2ab6230f527bf1266b53bbbb62b2478b55e0f018"
+      "from": "models/ms60b.yaml",
+      "to": "vendor/midistomp/models/ms60b.yaml",
+      "sha256": "123f97cb1388210e1d20110fa62b04155219a510bf2b07b6cb71e9c6ecba9edf"
     },
     {
-      "from": "models\\ms70cdr.yaml",
-      "to": "vendor/midistomp/models\\ms70cdr.yaml",
-      "sha256": "6dfd3e7f10c386361b928f3c8881bce1df2ca586c8e1a99a34b721b01476a05c"
+      "from": "models/ms70cdr.yaml",
+      "to": "vendor/midistomp/models/ms70cdr.yaml",
+      "sha256": "2d1564433ac8423dfb50db96a6fe9e92682b7b777f30ab39a07c4d23f3029b5e"
     }
   ]
 }
