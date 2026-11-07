@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "module": "digitakt/cc-remap",
+  "version": "0.1.0-experimental",
+  "date": "2026-10-29",
+  "upstream": {
+    "repository": "https://github.com/draadpiraat/modwerk",
+    "revision": "c511df1e449456aa37ed04c37d9e9755a69fdfb9",
+    "path": "sdk/digitakt/modules/cc-remap",
+    "license": "GPL-3.0-or-later"
+  },
+  "changes": [
+    "First release: a second layer on a MIDI track's AMP page, CC Receive (2/2), sets the incoming CC number for each of VAL1-VAL8 on the track's own channel; every slot starts at the stock 70-77. Four jsr sites: the per-track incoming-CC handler's entry (0x400d6c80), the parameter read (0x4000fe10) and write (0x40010b62) the pages use, and the parameter pages' title copy (0x40030954).",
+    "Source-only export compiled in the pinned GCC 16.2 Docker toolchain; linked with Core 2.1 it reproduces the three emulator-tested SysEx files byte for byte (alone, with FX Track, with dt-support and CC Assignment Names)."
+  ],
+  "runtimeSourceSha256": "2a8ffcbb977becf6e5a2cde726f1e82e4b914504343963a5edc1729823db2354",
+  "packages": [
+    {
+      "os": "1.54",
+      "path": "sdk/imports/packages/cc-remap/cc-remap-0.1.0-experimental-os1.54.elemod",
+      "sha256": "81d9fd8d105214ee0bb1daf95da8fb004900ae0b109be07ca2c26a459f2f81f1"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/digitakt/modules/cc-remap/TESTING.md",
+  "requires": []
+}

@@ -1,0 +1,265 @@
+{
+ "elemod": 2,
+ "id": "cc-remap",
+ "version": "0.1.0-experimental",
+ "title": "CC Remap",
+ "description": "Choose which incoming CC moves each of a MIDI track’s eight CC VAL knobs, so a controller with fixed CC numbers can play them.",
+ "category": "midi-usb",
+ "author": "draadpiraat",
+ "license": "GPL-3.0-or-later",
+ "target": {
+  "device": "digitakt-mk1",
+  "product": "Digitakt mk1",
+  "os": "1.54",
+  "syx_sha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6",
+  "section3_sha256": "5c58bf9e3949ef09977c5fc007a61e8d026931f67f1621238379dfb8ee4d31a2",
+  "section3_len": 2479680
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 423,
+   "parts": [
+    [
+     "hex",
+     "202f000851807208b081642ae78841f900000000d1c0222f000c7000b218670c52800c800000000866f2600a0680000000462f40000c4aaf001856c04e7593c9203900000000674622402029002c673c7001b0a90090663422020481000000217008b28064262039421c914406800000059a43f900000000d3c17208b1c0670e0680000000705089538166f093c94e7561ac2009670870001011e188600471702a0054974e7561962009670a2004e0801280b0804e7531842a004a054e7520120c80401838146600008e202f00080c804197e2a466000080206a007c202a008090887204b081663e487800084eb9400d412c588f4a806700005e226a007c204022112081214100042f092548007c508025400080254000844eb9400d4332588f23ca00000000b5f900000000660000287001b0aa00906600001e4879000000004879000000002f2f000c4eb94017af204fef000c4e754ef94017a616464748494a4b4c4d464748494a4b4c4d464748494a4b4c4d464748494a4b4c4d464748494a4b4c4d464748494a4b4c4d464748494a4b4c4d464748494a4b4c4d4343205265636569766500"
+    ]
+   ]
+  },
+  ".bss": {
+   "align": 4,
+   "size": 8
+  }
+ },
+ "symbols": {
+  "ALLOC": [
+   "abs",
+   1074610476
+  ],
+  "FREE": [
+   "abs",
+   1074610994
+  ],
+  "STR_CTOR": [
+   "abs",
+   1075293984
+  ],
+  "STR_COPY": [
+   "abs",
+   1075291670
+  ],
+  "PATTERN": [
+   "abs",
+   1109168452
+  ],
+  "MIDI_OFF": [
+   "abs",
+   1434
+  ],
+  "MIDI_SIZE": [
+   "abs",
+   112
+  ],
+  "PAGE_VT": [
+   "abs",
+   1075329044
+  ],
+  "SEL_TITLE": [
+   "abs",
+   1100472996
+  ],
+  "V_SHOWN": [
+   "abs",
+   44
+  ],
+  "V_PAGES": [
+   "abs",
+   124
+  ],
+  "V_SUB": [
+   "abs",
+   144
+  ],
+  "SEL1": [
+   "abs",
+   33
+  ],
+  "VAL1_CC": [
+   "abs",
+   70
+  ],
+  "ccm_slot": [
+   ".run",
+   62
+  ],
+  "ccm_view": [
+   ".bss",
+   0
+  ],
+  "ccm_alloc": [
+   ".bss",
+   4
+  ],
+  "ccm_name": [
+   ".run",
+   412
+  ],
+  "ccm_set": [
+   ".run",
+   166
+  ],
+  "ccm_title": [
+   ".run",
+   190
+  ],
+  "ccm_rx": [
+   ".run",
+   348
+  ],
+  "ccm_get": [
+   ".run",
+   144
+  ],
+  "ccm_in": [
+   ".run",
+   0
+  ]
+ },
+ "exports": [
+  "ccm_get",
+  "ccm_in",
+  "ccm_rx",
+  "ccm_set",
+  "ccm_title"
+ ],
+ "imports": [],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   16,
+   "abs32",
+   "sec:.run",
+   348
+  ],
+  [
+   ".run",
+   66,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   116,
+   "abs32",
+   "sec:.run",
+   348
+  ],
+  [
+   ".run",
+   290,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   296,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   316,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   322,
+   "abs32",
+   "sec:.run",
+   412
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x400d6c80",
+   "len": 6,
+   "stock_sha256": "11b4def320d70497bb70f95c897c82e74a3f9cb4d2062c945379c08c4082bee8",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ccm_in",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4000fe10",
+   "len": 6,
+   "stock_sha256": "87b2accab0f8cd8665cf40ee70dc99667b8f4ae9b78f3bc9ad93d76bf3f54b48",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ccm_get",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40010b62",
+   "len": 6,
+   "stock_sha256": "44e1500d9e87ab0fb7f797ef1c955f2a695119712d5dabbc5e4b83dbf79b7d34",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ccm_set",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40030954",
+   "len": 6,
+   "stock_sha256": "77abc4ef57c949bbe0aad77b60f0e69e822564e11653bbd83175e8d54337780f",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:ccm_title",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {},
+ "contribute": [],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [
+   "ui:MIDI track AMP page:AMP twice"
+  ],
+  "core": "2.1"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}

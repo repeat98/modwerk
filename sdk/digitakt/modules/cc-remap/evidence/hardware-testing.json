@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-10-29",
+  "source": "Direct author statements in the development conversation",
+  "reporter": "draadpiraat",
+  "status": "hardware-tested-author-reported",
+  "model": "Digitakt I",
+  "release": "1.54",
+  "controller": "Allen & Heath Xone:1D",
+  "moduleVersion": "0.1.0-experimental",
+  "builds": [
+    {
+      "name": "Core 2.1 + cc-remap 0.1.0-experimental",
+      "syxSha256": "eaa72c8cc9dfdfd52271b1bdff76aba15d836c591af7f309e39e0a7995c85079",
+      "steps": {
+        "1 AMP toggles CC Receive (2/2) with 70-77 and back to CC Select (1/2), unchanged": "works perfect",
+        "2 untouched, CC 70-77 on channel 9 move VAL1-8 as stock": "confirmed",
+        "3 knobs A-H set to the Xone's pots: each pot moves its VAL slot and the synth receives the slot's CC SELECT number": "confirmed",
+        "4 after a pattern change the same table applies": "confirmed",
+        "5 a second track on its own channel with its own table": "different channels work and follow its own channel",
+        "8 after a power cycle CC Receive is back at 70-77": "confirmed each time"
+      }
+    },
+    {
+      "name": "Core 2.1 + cc-remap 0.1.0-experimental + fx-track 0.1.0-experimental",
+      "syxSha256": "5196ccac2a534154b47cec27f5c8dd870c41f4dfb1d71adb8612ca59c7dd5c74",
+      "steps": {
+        "6 track on FX CONTROL CH, FX TRACK ticked: a pot moves the effect": "fx track seems to work exactly as described"
+      }
+    },
+    {
+      "name": "Core 2.1 + dt-support 1.0.1 + cc-names 2.1.1 + cc-remap 0.1.0-experimental",
+      "syxSha256": "024ff31b1ef14a2e8da4835a349f5d10cafca09345519a82ae062064e966edcc",
+      "steps": {
+        "7 CC Receive works and CC Assignment Names still renames": "confirmed everything works"
+      }
+    }
+  ],
+  "observations": [
+    "Copying an entire MIDI track does not copy its CC Receive table (the table belongs to the track slot, not to the track's pattern data)."
+  ],
+  "packageSha256": "81d9fd8d105214ee0bb1daf95da8fb004900ae0b109be07ca2c26a459f2f81f1",
+  "limitations": [
+    "Which build was used for steps 1-5 and 8 was not stated; the steps were asked for the module-alone build.",
+    "The auto channel, USB MIDI input and a CC flood were not tested.",
+    "Firmware was not read back from the device; the builds are identified by their SysEx hashes."
+  ],
+  "packageParity": "The isolated Docker build (toolchain image sha256:f5c85e78…4854) of this source, packaged with scripts/package-elemod-recipe.mjs and linked with Core 2.1, gives the SysEx of the three tested builds byte for byte (eaa72c8c…c85079 alone, 5196ccac…dd5c74 with FX Track, 024ff31b…66edcc with dt-support and CC Assignment Names).",
+  "usage": {
+    "statement": "tested for about 20 minutes",
+    "durationMinutes": 20
+  }
+}

@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-29",
+    "changes": [
+      "First release for Digitakt I OS 1.54, on Core 2.1. Press AMP again on a MIDI track's AMP page for CC Receive, where knobs A–H choose the incoming CC for VAL1–VAL8.",
+      "A CC with that number on the track's own channel moves the VAL slot as CC 70–77 does stock, so a controller with fixed CC numbers can play the track.",
+      "Every slot starts at 70–77, so an untouched table is stock. One table per MIDI track, for all patterns.",
+      "The tables are not saved and start at 70–77 at every power-on.",
+      "Tested on a Digitakt I with a fixed-CC controller, alone, with FX Track and with CC Assignment Names. Copying a MIDI track does not copy its table."
+    ]
+  }
+]

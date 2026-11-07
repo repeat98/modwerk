@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "cc-remap-2026-10-29",
+  "about": "Modwerk source-only cc-remap package for Digitakt I OS 1.54, compiled from sdk/digitakt/modules/cc-remap.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "cc-remap-0.1.0-experimental-os1.54.elemod",
+      "sha256": "81d9fd8d105214ee0bb1daf95da8fb004900ae0b109be07ca2c26a459f2f81f1",
+      "id": "cc-remap",
+      "version": "0.1.0-experimental",
+      "device": "digitakt-mk1",
+      "os": "1.54",
+      "license": "GPL-3.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "143f366da5099a3a2a9124870430d8ba4fe01fba",
+        "path": "sdk/imports/packages/cc-remap/cc-remap-0.1.0-experimental-os1.54.elemod"
+      },
+      "title": "CC Remap",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [],
+      "summary": "Choose which incoming CC moves each of a MIDI track’s eight CC VAL knobs, so a controller with fixed CC numbers can play them.",
+      "description": "Press AMP again on a MIDI track’s AMP page for CC Receive, where knobs A–H set the incoming CC for VAL1–VAL8 on the track’s own channel. Every slot starts at the stock 70–77.",
+      "category": "MIDI",
+      "author": "draadpiraat",
+      "needs_core": "2.1",
+      "on_unit": "Tested on a Digitakt I by the author, alone, with FX Track and with CC Assignment Names."
+    }
+  ]
+}
