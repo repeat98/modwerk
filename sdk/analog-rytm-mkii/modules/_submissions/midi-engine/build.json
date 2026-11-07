@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/midi-engine.c",
+    "src/hooks.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_tick",
+      "fn": "midi_engine_tick",
+      "order": 50
+    },
+    {
+      "event": "ev_render_out",
+      "fn": "midi_engine_block",
+      "order": 60
+    }
+  ],
+  "contribute": [
+    {
+      "to": "core_machines",
+      "order": 50,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:midi_engine_machine",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "core_params",
+      "order": 40,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:midi_engine_knob_params",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "core_params",
+      "order": 40,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:midi_engine_filter_params",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "core_params",
+      "order": 40,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:midi_engine_amp_params",
+          0
+        ]
+      ]
+    }
+  ],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "storage": [
+    {
+      "sym": "midi_engine_send",
+      "scope": "sound",
+      "bits": 3
+    },
+    {
+      "sym": "midi_engine_lanes",
+      "scope": "sound",
+      "bits": 6
+    }
+  ],
+  "claims": [
+    "ui:SYNTH page of the MIDI machine",
+    "ui:FILTER ATK DEC SUS value texts on tracks on the MIDI machine",
+    "ui:AMP page values and turns on tracks on the MIDI machine"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {
+        "midi_engine_events": "0x42ac5fb0",
+        "midi_engine_notes_resume": "0x4012003e",
+        "midi_engine_stock_wait": "0x40001444"
+      },
+      "cflags": [
+        "-DMIDI_SEND_AT=0x40085840",
+        "-DMSG_ALLOC_AT=0x40091794",
+        "-DMBOX_POST_AT=0x400013b2",
+        "-DMAILBOX_AT=0x41908de0",
+        "-DPROJECT_SINGLETON_AT=0x4017fa0a",
+        "-DTRACK_INDEX_OF_AT=0x400b693e",
+        "-DCLOCK_AT=0x8000fe54",
+        "-DPLAYING_AT=0x405c8cf8",
+        "-DPARAMS_EFF_AT=0x8000f7a8",
+        "-DPARAMS_SMOOTH_AT=0x8000eeec",
+        "-DPARAMS_ENGINE_AT=0x8000e5b0",
+        "-DEDITS_AT=0x401947e4",
+        "-DEDIT_AT=0x4003355c",
+        "-DENGINE_SET_AT=0x4011f466",
+        "-DWORKING_KIT_INDEX_AT=0x40766317"
+      ],
+      "sites": [
+        {
+          "addr": "0x40120038",
+          "len": 6,
+          "stockSha256": "1b85e7492aa21093d58e4e99ad666715e2ec8227b2a0d6507c4f669a0dab7d19",
+          "op": "jmp",
+          "target": "midi_engine_notes_gate"
+        },
+        {
+          "addr": "0x400912ac",
+          "len": 6,
+          "stockSha256": "6ee1dfe697127cfb84f66ff9780c8083f48ea5669bb83d1cfe4ae6c9c05da29b",
+          "op": "jsr",
+          "target": "midi_engine_wait_gate"
+        }
+      ]
+    }
+  }
+}
