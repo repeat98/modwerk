@@ -7,7 +7,21 @@
   "cflags": [],
   "weak": [],
   "subscribe": [],
-  "contribute": [],
+  "contribute": [
+    {
+      "to": "core_params",
+      "order": 30,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:euclid_accents_params",
+          0
+        ]
+      ]
+    }
+  ],
   "collections": {},
   "copied": [],
   "regions": [],
@@ -23,13 +37,6 @@
       "cflags": [],
       "sites": [
         {
-          "addr": "0x400378a6",
-          "len": 8,
-          "stockSha256": "d43e64e0210fdd98e9dd8476d7cea57c93492ec611d50eddcbf6fd90ea80cef7",
-          "op": "jmp",
-          "target": "euclid_accents_param_delta_gate"
-        },
-        {
           "addr": "0x4009ab36",
           "len": 8,
           "stockSha256": "dc63e255cc517f5256702b3e8ce26ba58e4359e72a19b03d6cf8af446b904f9d",
@@ -42,13 +49,6 @@
           "stockSha256": "1734211fe4015fb65e909c092d782641f3d687fd36332a005e19cc6a231ae7b6",
           "op": "jmp",
           "target": "euclid_accents_trig_fire_accent"
-        },
-        {
-          "addr": "0x400a864c",
-          "len": 8,
-          "stockSha256": "a04973fb79ed0896aa768e97902a85f61a10ad9d106955b3fe7a112c76d0e51f",
-          "op": "jmp",
-          "target": "euclid_accents_boolop_text_gate"
         },
         {
           "addr": "0x400c3c7a",
