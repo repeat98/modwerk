@@ -93,7 +93,7 @@ document the modification. No Elektron firmware is included.
 
 ## Screens and audio
 
-These captures are from analog-emu (rytm-emu's successor) running VH12, the Modwerk base
+These captures are from analog-emu (trigcondition's emulator built on rytm-emu) running VH12, the Modwerk base
 for core-ar2 0.7 and Velocity Humanise 1.2.0, from stock OS 1.74; they are byte-identical
 to 1.1's captures. See [capture provenance](media/capture.json) for hashes and inputs.
 The varied velocities were judged on a unit, so there is no audio demonstration.

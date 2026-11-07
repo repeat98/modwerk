@@ -93,8 +93,8 @@ byte-identical to the core linked with the release object
 
 ## Emulator
 
-[analog-emu](https://github.com/trigcondition/analog-emu) `4c07ed3` (rytm-emu's successor; its
-history contains `c5732f0`, which took 1.1's captures), headless `dtboot`, the same input on
+[analog-emu](https://github.com/trigcondition/analog-emu) `4c07ed3` (trigcondition's Rytm and A4
+emulator built on rytm-emu; its history holds `c5732f0`, which took 1.1's captures, `951dcbc` and `e914f46`), headless `dtboot`, the same input on
 VH12 and on stock 1.74 ([capture plan](media/capture.json)): BD's TRIG page, FUNC held while
 VEL turns up. Frames are byte-identical until FUNC is held; from then on stock shows VEL and
 the trig velocity, VH12 shows RND and N. The three captures are byte-identical to 1.1's on
