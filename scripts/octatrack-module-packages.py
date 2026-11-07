@@ -182,6 +182,24 @@ def main():
     if sourced and tools:
         builder.build = c_build
         builder.tools = lambda entry, upstream: bool(shutil.which('m68k-elf-gcc')) if entry.get('sources') else tools(entry, upstream)
+    # A package that carries an engine (hook_engines.PACKAGES, built through base_bound) also needs the native DSP
+    # assembler, found as base_bound finds it. Without one, --check skips it as it skips the rest, and says why.
+    gated = getattr(builder, 'tools', None)
+    def engine_tools(entry, upstream):
+        if not entry.get('base'):
+            return gated(entry, upstream)
+        adapters = str(APP / 'sdk/machines/octatrack/module-adapters')
+        if adapters not in sys.path:
+            sys.path.append(adapters)
+        import base_bound
+        import hook_engines
+        if entry['id'] in hook_engines.PACKAGES and not (
+                os.environ.get('ELEKLOADER_DSP_ASM') or shutil.which('dsp_asm') or base_bound.DSP_ASM.is_file()):
+            print('%-18s needs dsp_asm: ELEKLOADER_DSP_ASM, PATH, or `npm run upstream:tools` with octabam built' % entry['id'])
+            return False
+        return gated(entry, upstream)
+    if gated:
+        builder.tools = engine_tools
     # An SDK-owned recipe preserves an ordinary CF runtime's exact tested
     # image while shipping guarded stock copies. This host layer keeps the
     # base's pinned builder and existing standalone declarations unchanged;
