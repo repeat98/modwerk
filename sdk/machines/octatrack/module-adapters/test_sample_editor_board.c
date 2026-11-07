@@ -112,6 +112,11 @@ void mw_sample_menu_retire_locked(const struct runtime_dsp *from)
 {(void)from;if(!masked)bad=1;++retired;}
 void mw_sample_host_refresh(void)
 {if(!locked || masked)bad=1;++refreshes;}
+int mw_sample_host_read_pair(uint32_t position,int32_t *left,int32_t *right)
+{
+    if(!locked || masked)bad=1;
+    left[0]=left[1]=(int32_t)position;right[0]=right[1]=0;return 1;
+}
 static uint32_t setup(unsigned kind,unsigned slot)
 {
     used=masked=locked=bad=writes=refreshes=retired=metadata_reads=frame_services=0;live=1;
@@ -527,5 +532,19 @@ int main(void)
     mw_sample_owner_changing(&from);
     CHECK(retired==1 && mw_sample_editor_api.copy(token,view)==MODWERK_SAMPLE_STALE && !writes);
     CHECK(!masked && !locked && !bad);
+    {
+        const struct modwerk_sample_editor_api *pub=mw_sample_editor_public_api();
+        const struct modwerk_sample_editor_read_api *ext=(const void *)pub;
+        int32_t *peaks=(int32_t *)((uint8_t *)extent+4096);
+        uint32_t *got=(uint32_t *)((uint8_t *)extent+4096+128);
+        uint32_t settings=setup(1,0);
+        (void)settings;
+        CHECK(pub->bytes==sizeof(struct modwerk_sample_editor_read_api) && pub->bytes>sizeof *pub);
+        CHECK(mw_sample_editor_begin(&mw_sample_editor,&owner,&token)==MODWERK_SAMPLE_OK);
+        CHECK(ext->read(token,0,4,0,peaks,4,got)==MODWERK_SAMPLE_OK && *got==4);
+        CHECK(peaks[0]==0 && peaks[1]==0 && peaks[2]==2 && peaks[3]==2);
+        storage=0;CHECK(ext->read(token,0,4,0,peaks,4,got)==MODWERK_SAMPLE_BUSY);
+        CHECK(!masked && !locked && !bad);
+    }
     puts("PASS: both native metadata paths, buffer ownership, atomic rollback and fail-closed gates");return 0;
 }

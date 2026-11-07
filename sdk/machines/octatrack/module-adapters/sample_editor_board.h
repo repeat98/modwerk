@@ -5,6 +5,7 @@
 #include "sample_editor_actions.h"
 extern struct mw_sample_editor mw_sample_editor;
 extern const struct modwerk_sample_editor_api mw_sample_editor_api;
+const struct modwerk_sample_editor_api *mw_sample_editor_public_api(void);
 void mw_sample_editor_bootstrap(void);
 int mw_sample_owner_current_locked(const struct runtime_owner *);
 void mw_sample_owner_changing(const struct runtime_dsp *);

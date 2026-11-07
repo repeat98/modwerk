@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-06",
+    "changes": [
+      "AED SLICE gains CREATE THRESHOLD SLICES, under DELETE ALL SLICES and above CREATE SLICE GRID.",
+      "Turn the threshold and the minimum gap. Slices start where the level rises, a short moment before each hit.",
+      "YES asks the usual CREATE SLICES or REPLACE SLICES question. NO leaves the slices alone.",
+      "Known issue: the row needs a base that can read the waveform. An older base shows NO READ and writes nothing.",
+      "Known issue: not yet tried on a unit. A long sample takes a while to scan."
+    ]
+  }
+]

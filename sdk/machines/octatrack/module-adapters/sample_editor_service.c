@@ -201,6 +201,42 @@ unsigned mw_sample_editor_confirm(struct mw_sample_editor *e,uint32_t token,cons
 {return confirm(e,token,g,0);}
 unsigned mw_sample_editor_replace(struct mw_sample_editor *e,uint32_t token,const struct modwerk_sample_grid *g)
 {return confirm(e,token,g,1);}
+static uint32_t magnitude(int32_t value)
+{return value<0?(uint32_t)(~value)+1u:(uint32_t)value;}
+static int32_t louder(uint32_t channel,int32_t left,int32_t right)
+{
+    uint32_t l=magnitude(left),r=magnitude(right);
+    if(channel==1u)return (int32_t)l;
+    if(channel==2u)return (int32_t)r;
+    return (int32_t)(l>r?l:r);
+}
+unsigned mw_sample_editor_read(struct mw_sample_editor *e,uint32_t token,uint32_t frame,
+    uint32_t count,uint32_t channel,int32_t *peaks,uint32_t cap,uint32_t *got)
+{
+    if(!binding(e) || !peaks || !got || channel>2u || !count ||
+       count>MODWERK_SAMPLE_READ_FRAMES || count>cap)return MODWERK_SAMPLE_INVALID;
+    const struct mw_sample_backend *b=e->backend;uint32_t saved=b->lock(b->context);
+    unsigned why=current(e,token);
+    if(why==MODWERK_SAMPLE_OK && e->state!=MW_SAMPLE_OPEN)why=MODWERK_SAMPLE_BUSY;
+    if(why==MODWERK_SAMPLE_OK && !b->read_pair)why=MODWERK_SAMPLE_UNSUPPORTED;
+    if(why==MODWERK_SAMPLE_OK) {
+        const struct modwerk_sample_view *v=&e->before.view;
+        if(frame<v->trim_start || frame>=v->trim_end || count>v->trim_end-frame)why=MODWERK_SAMPLE_INVALID;
+        else {
+            uint32_t wrote=0;
+            while(wrote<count) {
+                uint32_t pos=frame+wrote;
+                int32_t left[2],right[2];
+                if(pos+1u>=v->frames || !b->read_pair(b->context,pos,left,right))break;
+                peaks[wrote++]=louder(channel,left[0],right[0]);
+                if(wrote<count)peaks[wrote++]=louder(channel,left[1],right[1]);
+            }
+            *got=wrote;
+            if(!wrote)why=MODWERK_SAMPLE_READ_FAILED;
+        }
+    } else if(token==e->serial && why!=MODWERK_SAMPLE_BUSY)e->state=MW_SAMPLE_CLOSED;
+    b->unlock(b->context,saved);return why;
+}
 unsigned mw_sample_editor_answer(struct mw_sample_editor *e,uint32_t token,unsigned yes)
 {
     if(!binding(e))return MODWERK_SAMPLE_UNSUPPORTED;

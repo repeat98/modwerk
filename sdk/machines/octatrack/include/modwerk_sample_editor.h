@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: MIT
  * Proposed shared Octatrack sample-editor interface. Not released capability.
  * The base owns source access, confirmation and publication; packages own their
- * algorithms and controls. No PCM or instrument pointer crosses this API.
+ * algorithms and controls. No sample pointer crosses this API. The optional
+ * read tail copies bounded absolute peaks into caller memory.
  */
 #ifndef MODWERK_SAMPLE_EDITOR_H
 #define MODWERK_SAMPLE_EDITOR_H
@@ -15,7 +16,8 @@ enum modwerk_sample_reply {
     MODWERK_SAMPLE_OK, MODWERK_SAMPLE_BUSY, MODWERK_SAMPLE_STALE,
     MODWERK_SAMPLE_UNSUPPORTED, MODWERK_SAMPLE_INVALID,
     MODWERK_SAMPLE_PRESERVATION, MODWERK_SAMPLE_CONFIRMING,
-    MODWERK_SAMPLE_APPLIED, MODWERK_SAMPLE_NO_CHANGE, MODWERK_SAMPLE_FAULT
+    MODWERK_SAMPLE_APPLIED, MODWERK_SAMPLE_NO_CHANGE, MODWERK_SAMPLE_FAULT,
+    MODWERK_SAMPLE_READ_FAILED
 };
 struct modwerk_slice_record { uint32_t start, end, loop; };
 struct modwerk_sample_view {
@@ -49,6 +51,17 @@ struct modwerk_sample_editor_api {
      * confirm() above offers preservation-only edits. */
     unsigned (*replace)(uint32_t token, const struct modwerk_sample_grid *);
 };
+/* Optional tail. The ABI-1 struct above keeps its size. bytes covers this
+ * tail when the base provides it. read copies absolute peaks for frames
+ * inside the captured trim: channel 0 is the louder of the pair, 1 is left,
+ * 2 is right. count is at most MODWERK_SAMPLE_READ_FRAMES. BUSY means the
+ * same request can be tried on a later tick. No sample pointer is returned. */
+#define MODWERK_SAMPLE_READ_FRAMES 32u
+struct modwerk_sample_editor_read_api {
+    struct modwerk_sample_editor_api base;
+    unsigned (*read)(uint32_t token, uint32_t frame, uint32_t count, uint32_t channel,
+                     int32_t *peaks, uint32_t cap, uint32_t *got);
+} __attribute__((aligned(4)));
 /* One typed contribution to the proposed base-owned action table. The record
  * is 64 bytes and four-byte aligned on ColdFire; label is inline, printable,
  * NUL + zero padding. ColdFire C otherwise permits two-byte struct alignment.

@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 2,
+  "id": "threshold-slices",
+  "key": "THRESHOLD",
+  "name": "Threshold Slices",
+  "version": "0.1.0-experimental",
+  "category": "system",
+  "author": {
+    "github": "jonathanwardle1992-beep",
+    "credits": [
+      "Original threshold detector and AED SLICE action.",
+      "Popup lettering adapted from Beat Slicer's device font by twwwy, MIT."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "THRESHOLD",
+    "family": "Sample workflow",
+    "summary": "Slice a sample where the level rises through a threshold you set.",
+    "overview": "CREATE THRESHOLD SLICES sits on the audio editor SLICE menu, under DELETE ALL SLICES and above CREATE SLICE GRID. It finds rises in the trim and writes slice starts through the stock create or replace question.",
+    "highlights": [
+      "Threshold sets how strong a rise must be, relative to the loudest point in the trim.",
+      "Gap is the shortest time between two slice starts.",
+      "Each slice runs to the next start. The last slice ends at the trim.",
+      "Left, right, or whichever is louder."
+    ],
+    "usage": [
+      "Select the sample, open AED, press AMP for SLICE, then YES, and choose CREATE THRESHOLD SLICES.",
+      "Turn encoder A for the threshold and encoder B for the minimum gap. Encoder C picks the channel.",
+      "Wait until the popup shows CREATE or REPLACE, press YES, then YES at the stock question."
+    ]
+  },
+  "controls": [
+    {
+      "name": "THRESHOLD",
+      "default": 3,
+      "count": 10,
+      "doc": "Percent of the trim's own peak. A higher value keeps only the stronger hits.",
+      "labels": ["10", "20", "30", "40", "50", "60", "70", "80", "90", "100"]
+    },
+    {
+      "name": "GAP",
+      "default": 2,
+      "count": 6,
+      "doc": "Minimum time between slice starts.",
+      "labels": ["10 MS", "20 MS", "50 MS", "100 MS", "200 MS", "400 MS"]
+    },
+    {
+      "name": "CHANNEL",
+      "default": 0,
+      "count": 3,
+      "doc": "Which side of a stereo sample the rises are taken from.",
+      "labels": ["L+R", "LEFT", "RIGHT"]
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "Flex / Static",
+    "conflicts": [],
+    "uiClaims": ["screen:CREATE THRESHOLD SLICES"],
+    "limitations": [
+      "Needs a Modwerk base that provides the sample-editor peak read. An older base shows NO READ and writes nothing.",
+      "At most 64 slices. A finer result is refused and the old slices stay.",
+      "Each slice ends at the next start. The last ends at the trim. The start sits about 2 ms before the rise.",
+      "Recording into the buffer being edited must be stopped. Other playback may continue.",
+      "Replacing slices can change the slice numbers that parameter locks use.",
+      "Not yet tried on a unit. A scan is not a promise of click-free playback."
+    ],
+    "effectId": null
+  },
+  "resources": {
+    "recorded": "Not measured",
+    "storage": {
+      "label": "Storage",
+      "display": "Not measured",
+      "value": null,
+      "unit": "bytes",
+      "method": "unmeasured",
+      "conditions": "One ColdFire package. No DSP memory. The base owns the slice table it writes.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "CPU load",
+      "display": "Not measured",
+      "value": null,
+      "unit": "us",
+      "method": "unmeasured",
+      "conditions": "The scan runs on the UI task, a few frames at a time, only while the popup is open.",
+      "source": "TESTING.md"
+    }
+  },
+  "access": {
+    "location": "AED → AMP (SLICE) → YES → CREATE THRESHOLD SLICES",
+    "steps": [
+      "Select a Flex or Static sample, or a finished recorder buffer. Stop recording into that buffer.",
+      "Open AED, press AMP for SLICE, then YES, and choose CREATE THRESHOLD SLICES.",
+      "Set the threshold, the gap and the channel. When the popup shows CREATE or REPLACE, press YES, then YES at the stock question."
+    ],
+    "screenshots": []
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host scan of synthetic peaks. The sample-editor read is covered by the base host fixtures. No unit trial yet.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "eaaf60caf0d050cc158e2b281207a913183e813b",
+    "gates": []
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original threshold detector. Popup lettering adapted from Beat Slicer's MIT device font. No Elektron firmware, extracted routines, tables, samples or dumps."
+  },
+  "media": []
+}

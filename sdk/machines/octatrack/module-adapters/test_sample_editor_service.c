@@ -37,7 +37,16 @@ static unsigned publish(void *context,const struct mw_sample_capture *before,con
     }
     return publish_reply;
 }
-static const struct mw_sample_backend backend={&editor,lock,unlock,available,published,capture,publish};
+static int32_t pcm_l[8],pcm_r[8];
+static unsigned pair_calls;
+static int read_pair(void *context,uint32_t position,int32_t *left,int32_t *right)
+{
+    if(context!=&editor || !held){bad=1;return 0;}
+    if(position+1u>=8u)return 0;
+    ++pair_calls;left[0]=pcm_l[position];left[1]=pcm_l[position+1u];
+    right[0]=pcm_r[position];right[1]=pcm_r[position+1u];return 1;
+}
+static const struct mw_sample_backend backend={&editor,lock,unlock,available,published,capture,publish,read_pair};
 static void reset(uint32_t kind,uint32_t slot,uint32_t count)
 {
     uint8_t *p=(uint8_t *)&editor;
@@ -196,6 +205,21 @@ uint32_t mw_sample_editor_service_test(void)
     CHECK(mw_sample_editor_begin(&editor,&owner,&token)==MODWERK_SAMPLE_UNSUPPORTED && token==123);
     reset(1,0,0);editor.revision=UINT32_MAX;mw_sample_editor_changed_locked(&editor);
     CHECK(mw_sample_editor_begin(&editor,&owner,&token)==MODWERK_SAMPLE_UNSUPPORTED);
+    reset(1,0,0);
+    pcm_l[0]=0;pcm_l[1]=-100;pcm_l[2]=40;pcm_l[3]=0;
+    pcm_r[0]=0;pcm_r[1]=20;pcm_r[2]=-80;pcm_r[3]=0;
+    pair_calls=0;
+    CHECK(mw_sample_editor_begin(&editor,&owner,&token)==MODWERK_SAMPLE_OK);
+    static int32_t peaks[4];
+    static uint32_t got;
+    CHECK(mw_sample_editor_read(&editor,token,0,4,0,peaks,4,&got)==MODWERK_SAMPLE_OK && got==4 && pair_calls==2);
+    CHECK(peaks[0]==0 && peaks[1]==100 && peaks[2]==80 && peaks[3]==0);
+    CHECK(mw_sample_editor_read(&editor,token,0,4,1,peaks,4,&got)==MODWERK_SAMPLE_OK && peaks[1]==100 && peaks[2]==40);
+    CHECK(mw_sample_editor_read(&editor,token,0,4,2,peaks,4,&got)==MODWERK_SAMPLE_OK && peaks[1]==20 && peaks[2]==80);
+    CHECK(mw_sample_editor_read(&editor,token,0,33,0,peaks,33,&got)==MODWERK_SAMPLE_INVALID);
+    ready=0;CHECK(mw_sample_editor_read(&editor,token,0,4,0,peaks,4,&got)==MODWERK_SAMPLE_BUSY);
+    ready=1;CHECK(mw_sample_editor_read(&editor,token,100,4,0,peaks,4,&got)==MODWERK_SAMPLE_READ_FAILED && !got);
+    CHECK(!held && !bad);
     return 0;
 }
 #ifdef MW_SAMPLE_EDITOR_HOST_MAIN
