@@ -30,7 +30,8 @@ export function createMachineBuilder(): Builder {
  * selection needs. The catalogue lists every variant as a core of the same version; the build takes only that one. */
 const MODWERK_BASES: Partial<Record<ElekloaderMachine, { variants: Record<string, string>; variant: (moduleIds: readonly string[]) => string }>> = {
   // A send effect contributes to the send-bus variant's FX list, and modules:check ties every one to fx-ids.json; a set
-  // without one builds on plain, core-ar2 0.7's source alone, and pays none of the bus's RAM or kit storage.
+  // without one builds on plain, core-ar2 0.7's source with the machine list's sections, and pays none of the bus's RAM
+  // or kit storage.
   'analog-rytm-mkii': {
     variants: RYTM_BASE.variants,
     variant: moduleIds => moduleIds.some(id => Object.values(RYTM_FX_IDS.ids).includes(id)) ? 'send-bus' : 'plain',
