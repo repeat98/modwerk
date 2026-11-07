@@ -1,4 +1,4 @@
-# MIDI Expression testing
+# Digi Expression testing
 
 Version 0.12.4-experimental, Digitakt I OS 1.54 (stock file SHA-256 f78ba80f…3cf6), Core 2.1.
 

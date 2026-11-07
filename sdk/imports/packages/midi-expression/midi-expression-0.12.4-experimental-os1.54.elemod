@@ -2,7 +2,7 @@
  "elemod": 2,
  "id": "midi-expression",
  "version": "0.12.4-experimental",
- "title": "MIDI Expression",
+ "title": "Digi Expression",
  "description": "Pitch bend, aftertouch, the mod wheel, breath and velocity from MIDI IN play a MIDI track's synth and the Digitakt's own audio tracks, with each track's routings on a second TRIG page.",
  "category": "midi-usb",
  "author": "tekomelu",

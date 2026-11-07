@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
   "id": "midi-expression",
-  "name": "MIDI Expression",
+  "name": "Digi Expression",
   "version": "0.12.4-experimental",
   "machine": "digitakt",
   "category": "midi-usb",
@@ -36,7 +36,7 @@
   "access": {
     "location": "The TRIG page's second page: tap TRIG on the TRIG page",
     "steps": [
-      "Use a build containing MIDI Expression for the original Digitakt on OS 1.54.",
+      "Use a build containing Digi Expression for the original Digitakt on OS 1.54.",
       "Select a track, press TRIG for its TRIG page, then tap TRIG again: the EXPRESSION page. Knobs A-H set the eight cells; FUNC + turn jumps between useful values. TRIG or NO goes back."
     ],
     "screenshots": [
@@ -162,8 +162,8 @@
     {
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
-      "caption": "MIDI Expression thumbnail",
-      "alt": "Placeholder thumbnail for MIDI Expression",
+      "caption": "Digi Expression thumbnail",
+      "alt": "Placeholder thumbnail for Digi Expression",
       "credit": "tekomelu",
       "license": "GPL-3.0-or-later",
       "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
