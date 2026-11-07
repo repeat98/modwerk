@@ -7,15 +7,13 @@ On the euclidean page (TRIG pressed twice), Bool Operator (OP) has eight values 
 
 ## Sites
 
-13 sites (OS 1.73 addresses; 1.74's are in mod.json `ports`), the claims rytm-mods' registry makes for its default build
+11 sites (1.1 had 13; OS 1.73 addresses; 1.74's are in mod.json `ports`), the claims rytm-mods' registry makes for its default build
 (`registry/allocations.toml`, owner `0002-euclid-accents`) less the four 1.1 dropped (below); the diagnostic `probe_range` detour at 0x400ff556 is left out:
 
 | addr | op | |
 |---|---|---|
-| 0x400378a6 | jmp | `jmp euclid_accents_param_delta_gate` |
 | 0x4009aaca | jmp | `jmp euclid_accents_trig_fire_euclid_gate` |
 | 0x4009ab72 | jmp | `jmp euclid_accents_trig_fire_accent` |
-| 0x400a85e0 | jmp | `jmp euclid_accents_boolop_text_gate` |
 | 0x400c3c0e | jmp | `jmp euclid_accents_euclid_bake_gate` |
 | 0x400a884c | keep2 | the instruction's address operand -> `euclid_accents_boolop_get_ui` (stock `4eb9400c11b0`) |
 | 0x400a9caa | keep2 | the instruction's address operand -> `euclid_accents_boolop_set_ui` (stock `4eb9400c11e0`) |
@@ -26,12 +24,23 @@ On the euclidean page (TRIG pressed twice), Bool Operator (OP) has eight values 
 | 0x400ff492 | bytes (code) | `7003` -> `7007` |
 | 0x40143124 | keep2 | the instruction's address operand -> `euclid_accents_bitmapset8` (stock `4eb9401b7cd0`) |
 
+core-ar2 0.4 entry (1.2): `core_params` `euclid_accents_params` (id 467, Bool Operator: `param_delta_gate`, `boolop_text_gate`), in place of 1.1's detours at the entries of param_apply_delta and param_value_text.
+
 A detour is a `jmp` site over the whole stock instructions it displaces; the stub re-emits them
 as in rytm-mods. Where rytm-mods patched the address operand of a `jsr`/`lea`/`move.l #`, the
 site is elemod's `keep2` (the opcode word kept, the address the mod's). A pointer in a data
 table is a `ptr` site.
 
 ## Changes from rytm-mods
+
+### 1.2: on core-ar2 0.4's page tables
+
+Bool Operator's turn and text now go through core-ar2 0.4, which owns the entries of the
+stock page routines, instead of this mod's own detours there (Sites, above). What the unit shows
+and does is unchanged. The reason is that more than one mod can now add a page: with every mod
+jumping from the same entries, only one detour per instruction could link. Needs core-ar2 0.4
+(`"resources": {"core": "0.4"}`), OS 1.74 only; builds of euclid-accents before 1.2 do not link
+with core 0.4 (their sites overlap core's), and 1.2 does not link with core 0.3.
 
 ### 1.1: the accent flag in core-ar2 0.2's mod storage
 
@@ -80,6 +89,12 @@ the other bits (0x400c0e32), and hooks in `pattern_track_save`/`pattern_track_lo
    OP back to a plain operator: euclid generates the trigs again.
 
 ## Results so far
+
+### 1.2 on core-ar2 0.4
+
+- rytm-emu, OS 1.74, core-ar2 0.4 with all eleven mods against the v1.2 release build (core 0.3):
+  Bool Operator's turn and text, every screen of the same key and knob sequence pixel-identical.
+- Hardware, Analog Rytm MKII OS 1.74, 2026-10-21, core-ar2 0.4 with all eleven mods (P4A4, then Q4A4 with the page-key lists): every test step passes.
 
 ### 1.1 on core-ar2 0.3
 

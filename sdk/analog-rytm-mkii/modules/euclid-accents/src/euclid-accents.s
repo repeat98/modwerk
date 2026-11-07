@@ -545,19 +545,15 @@ param_info_probe:
         | for this one parameter we apply the delta ourselves and return, and the
         | stock clamp is never reached rather than being widened.
         |
-        | Entered by a jmp at the function's entry, so the stack is untouched:
-        | (%sp) return, 4 view, 8 id, 12 delta, 16 funcHeld, 20 outFlag.
-        | The delta is 8.8, as everywhere on this path.
+        | core-ar2 0.4's core_params asks this for id 467 (euclid_accents_params)
+        | from param_apply_delta's entry: delta(view, id, delta, func), (%sp)
+        | return, 4 view, 8 id, 12 delta, 16 func. The delta is 8.8, as
+        | everywhere on this path. 1: taken (1.1 detoured the entry itself).
         | ------------------------------------------------------------------
         .equ    BOOLOP_MAX, 7
 
         .align  2
-        .globl  euclid_accents_param_delta_gate
-euclid_accents_param_delta_gate:
 param_delta_gate:
-        move.l  %sp@(8),%d0                       | parameter id
-        cmp.l   #PARAM_ID_BOOL_OP,%d0
-        bne.s     9f
 
         move.l  %d2,-(%sp)
         move.l  %a2,-(%sp)
@@ -587,11 +583,8 @@ param_delta_gate:
         addq.l  #8,%sp
 8:      move.l  (%sp)+,%a2
         move.l  (%sp)+,%d2
+        moveq   #1,%d0
         rts
-
-9:      lea     %sp@(-12),%sp                     | displaced
-        moveml  %d2-%d3/%a2,%sp@                  | displaced
-        jmp     param_apply_delta_resume
 
         | ------------------------------------------------------------------
         | Bool Operator's value text.
@@ -602,24 +595,16 @@ param_delta_gate:
         | is what the four new values were doing. Widening the label table alone
         | never touched this path.
         |
-        | So the same treatment as the encoder: intercept above the virtual and
-        | answer for parameter 467 ourselves, mirroring exactly what the stock
-        | ERR path does - overwrite the first two argument slots and tail-call
-        | the formatter, but with our label instead of "ERR".
-        |
-        | Entered by a jmp at the entry, so the stack is untouched:
-        | (%sp) return, 4 obj, 8 id, 12 value, 16 the formatter's own first arg.
-        | d0/a0 are scratch under this ABI, so nothing needs saving.
+        | So the same treatment as the encoder: answer for parameter 467 above
+        | the virtual, doing what the stock ERR path does - the formatter on the
+        | output buffer - but with our label instead of "ERR". core-ar2 0.4's
+        | core_params asks this from param_value_text's entry: text(t), t =
+        | {obj, id, value, buf}; 1: written.
         | ------------------------------------------------------------------
         .align  2
-        .globl  euclid_accents_boolop_text_gate
-euclid_accents_boolop_text_gate:
 boolop_text_gate:
-        move.l  %sp@(8),%d0                       | parameter id
-        cmp.l   #PARAM_ID_BOOL_OP,%d0
-        bne.s     9f
-
-        move.l  %sp@(12),%d0                      | value
+        move.l  4(%sp),%a0                        | t = {obj, id, value, buf}
+        move.l  8(%a0),%d0                        | value
         moveq   #BOOLOP_MAX,%d1
         cmp.l   %d1,%d0
         ble.s     1f                                | already a plain index
@@ -629,12 +614,16 @@ boolop_text_gate:
 2:      cmp.l   %d1,%d0
         ble.s     3f
         moveq   #BOOLOP_MAX,%d0
-3:      lea     boolop_labels,%a0
-        move.l  %a0@(0,%d0:l:4),%d0               | our label for this value
-        move.l  %sp@(16),%sp@(4)                  | mirror the stock ERR tail
-        move.l  %d0,%sp@(8)
-        jmp     param_text_format
+3:      lea     boolop_labels,%a1
+        move.l  %a1@(0,%d0:l:4),-(%sp)            | our label for this value
+        move.l  12(%a0),-(%sp)                    | the buffer
+        jsr     param_text_format                 | as the stock ERR tail does
+        addq.l  #8,%sp
+        moveq   #1,%d0
+        rts
 
-9:      lea     %sp@(-20),%sp                     | displaced
-        moveml  %d2-%d4/%a2-%a3,%sp@              | displaced
-        jmp     param_value_text_resume
+        | core-ar2 0.4: Bool Operator's encoder and text, by its id
+        .align  2
+        .globl  euclid_accents_params
+euclid_accents_params:
+        .long   PARAM_ID_BOOL_OP, PARAM_ID_BOOL_OP, 0, param_delta_gate, boolop_text_gate
