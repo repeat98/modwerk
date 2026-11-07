@@ -78,8 +78,8 @@ for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='el
   // that adds the machine, naming its slot and a section stock files machines under; no two modules name one slot.
   for(const entry of build.contribute.filter(entry=>entry.to==='mw_machine_sections')){
    const bytes=entry.data.match(/../g).map(pair=>parseInt(pair,16)),key=machine.id+':'+bytes[0]
-   if(entry.relocs.length||bytes.length!==4||bytes[0]<34||bytes[0]>43||![1,2,4,5,6,7,8,9,10,11].includes(bytes[1])||bytes[2]||bytes[3]||!build.contribute.some(other=>other.to==='core_machines'))throw new Error(label+': a mw_machine_sections entry is four bytes with no relocation: the slot of a machine the module adds through core_machines (34 to 43), a stock section (1 BD, 2 SD, 4 CP, 5 BT, 6 RS, 7 HH, 8 CY, 9 CB, 10 UT, 11 SY) and two zero bytes')
-   if(sectionSlots.has(key)&&sectionSlots.get(key)!==document.id)throw new Error(label+': '+sectionSlots.get(key)+' already names the section of machine slot '+bytes[0])
+   if(entry.relocs.length||bytes.length!==4||bytes[0]<34||bytes[0]>43||![1,2,4,5,6,7,8,9,10,11].includes(bytes[1])||bytes[2]||bytes[3]||!build.contribute.some(other=>other.to==='core_machines'))throw new Error(label+': a mw_machine_sections entry is four bytes with no relocation: the slot (34 to 43) of the machine the module adds through core_machines, a stock section (1 BD, 2 SD, 4 CP, 5 BT, 6 RS, 7 HH, 8 CY, 9 CB, 10 UT, 11 SY) and two zero bytes')
+   if(sectionSlots.has(key))throw new Error(label+': '+sectionSlots.get(key)+' already names the section of machine slot '+bytes[0])
    sectionSlots.set(key,document.id)
   }
   const media=document.media.map(item=>item.path),reports=document.evidence.reports

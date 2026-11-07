@@ -9,7 +9,7 @@
 // its slot's section in mw_machine_sections, and its SY machines sort after stock's.
 //
 // An entry is four bytes, contributed as data with no relocation:
-//   {"to": "mw_machine_sections", "order": 50, "data": "290b0000"}     slot 41 (0x29), section 11 (SY)
+//   {"to": "mw_machine_sections", "order": 50, "data": "290b0000", "relocs": []}   slot 41 (0x29), section 11 (SY)
 // A slot with no entry, or an entry naming a section stock does not file machines under, keeps 0 (the top of
 // the list), as without the base. The first entry for a slot is the only one.
 
