@@ -208,7 +208,7 @@
       "sha256": "ccffbf72d45358bde585760b9230c668bf38ebf412ab23efc73732cf96024dca"
     }
   ],
-  "sourceCommit": "c4ab8c1d37166629896917dff2413d766e0dda1b",
+  "sourceCommit": "e441400efaa760ecc392b15e58002e2dcb246bb2",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -245,26 +245,6 @@
     "temp-save": "0.1.0-experimental",
     "tuner": "0.1.0-experimental",
     "slow-lfo": "0.1.0-experimental",
-    "stem-rec": "0.1.0-experimental"
-  },
-  "memoryRegions": [
-    {
-      "moduleId": "stem-rec",
-      "symbol": "stems_ring",
-      "size": 8388608,
-      "align": 16
-    },
-    {
-      "moduleId": "stem-rec",
-      "symbol": "stems_stack",
-      "size": 8192,
-      "align": 16
-    },
-    {
-      "moduleId": "stem-rec",
-      "symbol": "stems_buf",
-      "size": 7168,
-      "align": 512
-    }
-  ]
+    "bar-led": "0.1.0-experimental"
+  }
 }
