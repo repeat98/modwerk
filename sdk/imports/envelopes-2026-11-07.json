@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/envelopes",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-07",
+  "changes": [
+    "First release. The AMP envelope reworked: AMP HLD runs from no hold (0) to AUTO (127) without cutting the attack; ATK, AMP DEC, FILTER DEC and REL and AMP HLD get fine steps at short times (0.2 ms to 5 ms); every envelope knob shows its time; FUNC + turn on HLD steps 0, 124.7 ms, AUTO; SOUND SETTINGS > ENV RESET gains AMP (Env Reset Amp, with a pre-fade)."
+  ],
+  "runtimeSourceSha256": "ae0914c144b265c64fec3da6d9ff94832b84fd7de74c582c02b5765499415618",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/envelopes/envelopes-0.1.0-experimental-os1.74.elemod",
+      "sha256": "f9779b13edaf0d838b3539cc6bf7a4ae16a66b1e918ccac9f3cf82c6ab7f328c"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/envelopes/TESTING.md",
+  "requires": []
+}
