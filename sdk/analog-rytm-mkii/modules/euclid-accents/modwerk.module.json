@@ -86,7 +86,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 1448,
+    "memoryBytes": 1424,
     "fastBytes": 0,
     "load": {
       "display": "Small: a few instructions and one storage read on each trig of an accent track",
@@ -120,7 +120,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Hardware: euclid-accents 1.1's four test steps pass on an Analog Rytm MKII, OS 1.74, with core-ar2 0.3 (C3A4, 2026-10-20), and OP survives a power-cycle without a project save. Modwerk's source build gives a main OS byte-identical to elekloader's build of the rytm2_mods v1.2 release. In rytm-emu, OP turns past SUB to OR* and AND*, where stock stops at SUB.",
+    "summary": "Hardware: euclid-accents 1.2 on an Analog Rytm MKII, OS 1.74, with core-ar2 0.4 and the other rytm2_mods ports (P4A4, 2026-10-21): OP steps through its eight values both ways and keeps an accent value through a power-cycle without a project save. Modwerk's package linked with core-ar2 0.7 gives a main OS byte-identical to the rytm2_mods v1.3 release object linked with it. In the emulator on the Modwerk base (EA12), OP turns past SUB to OR*, XOR*, AND* and SUB*, where stock stops at SUB.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",

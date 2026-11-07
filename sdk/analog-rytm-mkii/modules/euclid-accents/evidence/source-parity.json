@@ -1,51 +1,44 @@
 {
   "schemaVersion": 1,
   "tool": "scripts/verify-elemod-source-parity.mjs",
-  "note": "Modwerk's compiled package for this folder (--source-commit f99681ec, before this record was added), materialised against the owner's stock OS 1.74 and linked with elekloader's released core-ar2 0.3, compared with the same core linked with rytm2_mods v1.2's release object. Firmware stayed local; only hashes are recorded.",
+  "note": "Modwerk's compiled package for this folder (modwerk-source-tools: m68k-elf GCC 16.2.0, binutils 2.47), materialised against the owner's stock OS 1.74 and linked with elekloader's released core-ar2 0.7 (the core Modwerk's base is built from), compared with the same core linked with rytm2_mods v1.3's release object euclid-accents-1.2-os1.74.elemod. Firmware stayed local; only hashes are recorded.",
   "stock": {
     "1.74": {
       "syxSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
       "mainSha256": "34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b"
     }
   },
-  "testedBuilds": {
-    "1.74": {
-      "label": "EA74",
-      "syxSha256": "48697da941188e56dadd59f1344fd2becc2069296c0b50d7106e47850ac5efc8",
-      "mainSha256": "acb72de4548d63d850a2f8e97391c010afcfde0f5087abe9e836d800822b3bb4",
-      "note": "Built for the emulator captures; not run on a unit."
-    }
-  },
+  "testedBuilds": {},
   "sourceSha256Method": "sha256 of `sha256sum include/ar2-1.74.inc shared/live-track.s src/euclid-accents.s` output (manifest evidence.sourceSha256)",
   "cases": [
     {
       "machine": "analog-rytm-mkii",
       "id": "euclid-accents",
       "release": "1.74",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "compiler": {
-        "gcc": "m68k-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
-        "assembler": "GNU assembler (GNU Binutils for Ubuntu) 2.42",
-        "linker": "GNU ld (GNU Binutils for Ubuntu) 2.42",
+        "gcc": "m68k-elf-gcc (GCC) 16.2.0",
+        "assembler": "GNU assembler (GNU Binutils) 2.47.20260726",
+        "linker": "GNU ld (GNU Binutils) 2.47.20260726",
         "node": "v24.21.0"
       },
-      "artifactSha256": "cb0b709b18bc9245822143583d930707b30df86272f8165cbbf8489b2415264b",
-      "authorObjectSha256": "ddba6f8a05af95721606c3c6870ebd157c0904ebf987576f232991990d41fd73",
-      "ownSha256": "acb72de4548d63d850a2f8e97391c010afcfde0f5087abe9e836d800822b3bb4",
-      "referenceSha256": "acb72de4548d63d850a2f8e97391c010afcfde0f5087abe9e836d800822b3bb4",
+      "artifactSha256": "00b3d0404a5e54b3d34dca5542b30bd9f960636009c964c77ead55a5f679ab17",
+      "authorObjectSha256": "8d07137fb2c735446bb2635014bf960fd321d671e31bddef5069342f05d9b7d6",
+      "ownSha256": "c7a0a887d6036eb0b32408ff78f95ce4fc335451bfcb4909c30c9284c44b5d5e",
+      "referenceSha256": "c7a0a887d6036eb0b32408ff78f95ce4fc335451bfcb4909c30c9284c44b5d5e",
       "status": "byte-parity",
       "sections": {
-        ".run": 1448
+        ".run": 1424
       },
       "referenceSections": {
-        ".run": 1448
+        ".run": 1424
       },
       "equalsTestedBuild": false,
       "core": {
         "id": "core",
-        "version": "0.3",
-        "release": "elekloader core-ar2-v0.3 (769d9aa)",
-        "elemodSha256": "6b97dfb3d65ca7d9d292e4ed61dd845e43b2d4f6dc71e7e7d235f27abc4b3e58"
+        "version": "0.7",
+        "release": "elekloader core-ar2-v0.7 (fb58292)",
+        "elemodSha256": "f1e9cb2c39eb52af15e7cf8ad25596e46f550e4f748bc9dd60d63a44da2dd9c1"
       }
     }
   ]

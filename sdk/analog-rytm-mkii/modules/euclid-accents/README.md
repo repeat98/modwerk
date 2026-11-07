@@ -85,13 +85,7 @@ parameter 467), which the core asks from param_apply_delta's and param_value_tex
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md) for the commands and results. In short: on an Analog Rytm
-MKII with OS 1.74 and core-ar2 0.3, beside the other rytm2_mods ports, its four test steps
-pass and OP keeps its accent value through a power-cycle without a project save. Modwerk's
-own build of this folder gives a main OS byte-identical to elekloader's build of the
-rytm2_mods v1.2 release. In rytm-emu OP turns past SUB to the accent values, where stock
-stops at SUB. Memory: 1,448 bytes of the 128 KiB shared mod area and one bit of track
-storage. On an accent track it adds a few instructions and one storage read to each trig.
+See [TESTING.md](TESTING.md) for the commands and results. In short: on an Analog Rytm MKII, OS 1.74, with core-ar2 0.4 and the other rytm2_mods ports (P4A4, 2026-10-21): OP steps through its eight values both ways and keeps an accent value through a power-cycle without a project save. Modwerk's package linked with core-ar2 0.7 gives a main OS byte-identical to the rytm2_mods v1.3 release object linked with it. In the emulator on the Modwerk base (EA12), OP turns past SUB to OR\*, XOR\*, AND\* and SUB\*, where stock stops at SUB. Memory: 1,424 bytes of the 128 KiB shared mod area.
 
 ## Authorship and licences
 
@@ -109,7 +103,7 @@ document the modification. No Elektron firmware is included.
 
 ## Screens and audio
 
-These captures are from rytm-emu running a build of core-ar2 0.3 and Euclid Accents from
+These captures are from analog-emu (rytm-emu's successor) running EA12, the Modwerk base for core-ar2 0.7 and Euclid Accents 1.2.0, from
 stock OS 1.74. See [capture provenance](media/capture.json) for hashes and inputs. The
 accents were judged on a unit, so there is no audio demonstration.
 
@@ -117,7 +111,7 @@ accents were judged on a unit, so there is no audio demonstration.
 
 Press TRIG twice on track BD: the EUCLIDEAN page. OP, the Bool Operator, is knob H, bottom right.
 
-![EUCLIDEAN page with OP reading OR* under an OR gate icon marked with a dot.](media/op-or-accent.png)
+![BOOL OPERATOR popup over the EUCLIDEAN page with OP reading OR* under an OR gate icon marked with a dot.](media/op-or-accent.png)
 
 Turn OP right past SUB, where stock stops: OR\*, the first accent operator.
 
