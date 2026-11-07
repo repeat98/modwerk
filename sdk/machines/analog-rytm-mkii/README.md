@@ -10,7 +10,7 @@ Today the core is Modwerk's base, built from elekloader's core-ar2 0.7 source, a
 
 The base carries the send bus (29 October 2026): per-track sends, the return to the mixer, the SEND and SEND FX pages, the effect chooser, per-kit state and the FX track's p-locks, and an FX list each send effect joins as its own module ([Send effects](#send-effects)). The USB link (SysEx over USB MIDI first), the loader, base installs and updates from the site, the MCP's device tools and the machine page follow.
 
-The site builds every Rytm set on this base (30 October 2026, as studied on [#878](https://github.com/repeat98/modwerk/pull/878)), in one of its two variants, each identified in [base-binding.json](base-binding.json): **send-bus** when the set holds a send effect (a module listed in [fx-ids.json](fx-ids.json)), and **plain**, core-ar2 0.7's source alone, otherwise, so a set with no send effect keeps today's RAM and kit storage. Both use core-ar2's mod storage, so a configuration's storage lockfile carries over from irpina's release and between the variants: adding a send effect keeps every module's fields in place and adds the bus's. The full OS file sent with Transfer stays the fallback.
+The site builds every Rytm set on this base (30 October 2026, as studied on [#878](https://github.com/repeat98/modwerk/pull/878)), in one of its two variants, each identified in [base-binding.json](base-binding.json): **send-bus** when the set holds a send effect (a module listed in [fx-ids.json](fx-ids.json)), and **plain**, core-ar2 0.7's source with the machine list's sections ([below](#machine-list-sections)), otherwise, so a set with no send effect keeps today's RAM and kit storage. Both use core-ar2's mod storage, so a configuration's storage lockfile carries over from irpina's release and between the variants: adding a send effect keeps every module's fields in place and adds the bus's. The full OS file sent with Transfer stays the fallback.
 
 ## Send effects
 
@@ -22,6 +22,18 @@ A send effect is a module that adds one record to the base's FX list; the base o
 - **Budget:** the base with the bus takes 28,278 bytes of `.run` and 35,476 of `.bss`, the 32 KB work area included, leaving about 67 KB of the 128 KiB area for modules: room for fifteen send effects beside Loop Sync and Retrig Grid. Keep an effect's CPU at or below CHORUS's, and say in TESTING.md what you measured with the base's CPU reading.
 
 CHORUS, FLANGER and PHASER (ids 1-3) are the first, taken from Send FX with the same samples on the host.
+
+## Machine list sections
+
+OS 1.74 files each machine in the machine list under a section, a byte per machine id from a 34-byte table at `0x40257d70` (ids 0..33) that function `0x400df664` reads, giving 0 to any higher id: 1 BD, 2 SD, 4 CP, 5 BT, 6 RS, 7 HH, 8 CY, 9 CB, 10 UT, 11 SY, 14 DISABLE. A mod machine (slots 34..43) has no entry, so without help it lands at the top of every track's list, above BD. Two SY machines are ordered by a map of SY DUAL VCO, SY CHIP and SY RAW (ids 28, 29, 32) in the two sort comparators (`0x400bdc5e`, `0x400bde1c`), which throws for any other id. The `home` byte of `core_machine` is another thing (the track a machine belongs to) and does not file the machine in a section. A section also brings what stock draws for it: the callers of `0x400df664` (`0x400de6d8`, `0x400dee34`, `0x400df19e`) use it as a jump-table index and to group the list under a header, so a filed machine sits under its section's header and is drawn as that section's items are, where an unfiled one sits above them with none.
+
+Both base variants take the three entries (`base/sections.c`). A machine module names its slot's section with a table entry of four bytes and no code, in `build.json`:
+
+```json
+{"to": "mw_machine_sections", "order": 50, "data": "290b0000", "relocs": []}
+```
+
+The bytes are the slot (here 0x29, 41), the section (here 11, SY) and two zeros. Offered sections are the ten above except DISABLE. A slot with no entry keeps today's place at the top; the first entry for a slot wins. `npm run modules:check` refuses a malformed entry, a slot that is not 34..43, a module that adds no machine through `core_machines`, and two entries for one slot; it cannot read the machine's own slot from the compiled code, so keep the entry's slot the machine's. Within the SY section a mod machine sorts after stock's three (SY DUAL VCO, SY CHIP, SY RAW); the comparators order by section and, for SY, by that rank, and nothing else. A module whose slot is already taken by another cannot link anyway (`machine:<slot>`).
 
 ## Create a mod
 
