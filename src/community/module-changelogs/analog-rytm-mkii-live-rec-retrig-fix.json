@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.2.1-experimental",
+    "date": "2026-11-06",
+    "changes": [
+      "Uses less of the Rytm's CPU while no pad is retriggering: with nothing to do, each audio block now takes a few reads instead of a full pass. Pads respond a little faster when you play many at once.",
+      "Recording, Retrig Grid and the RTRG key work as in 0.2.0."
+    ]
+  },
+  {
     "version": "0.2.0-experimental",
     "date": "2026-11-04",
     "changes": [

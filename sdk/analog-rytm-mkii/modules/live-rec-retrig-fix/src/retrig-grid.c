@@ -303,10 +303,9 @@ static int32_t deadline_sum(void)
     return sum;
 }
 
-void retrig_grid_render(void)
+static void __attribute__((noinline)) grid_render(int32_t pulse)
 {
     const volatile uint32_t *active = (const volatile uint32_t *)RT_ACTIVE;
-    int32_t pulse = SEQ_PULSE;
     int t;
 
     if (pulse != last_pulse) {
@@ -324,6 +323,17 @@ void retrig_grid_render(void)
         if (RT_ACTIVE[t] && RT_DEADLINE[t] != seen_deadline[t])
             moved(t, RT_DEADLINE[t]);
     seen_sum = deadline_sum();
+}
+
+// The entry: with the pulse where it was and no pad's series, nothing to do, and no
+// stack frame for it.
+void retrig_grid_render(void)
+{
+    const volatile uint32_t *active = (const volatile uint32_t *)RT_ACTIVE;
+    int32_t pulse = SEQ_PULSE;
+
+    if (pulse != last_pulse || (active[0] | active[1] | active[2]))
+        grid_render(pulse);
 }
 
 // ev_project: after a project load (at boot too) or CREATE NEW
