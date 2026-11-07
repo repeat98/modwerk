@@ -1,0 +1,1 @@
+Improvement: C and assembly USB modules can declare their sources, include folders, runtime tables and reviewed base exports in a source-build recipe. Reviewed packages reproduce without an OS file; optional private OS verification checks exact reconstruction and the existing strict firmware scans. Existing package builders keep their current path.
