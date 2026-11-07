@@ -72,7 +72,7 @@ One stock gesture changes:
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). Host tests pass 24/24. On the author's MKI with the Modwerk base 24a0ed57, over USB: totals, time left, elapsed time, the last-30-seconds flash, retriggers and tempo changes checked against a stopwatch; reverse playback (RATE below 0) counted down to the start of the trim; an install with Keep survived a power cycle and Undo removed it; the base's LOAD page showed no CPU or DSP change with the screen open or closed. Package: 2,588 bytes of code and data and 304 of state. The draw cost was measured in the emulator only (about 0.3 ms a UI tick open); no static cycle bound. Not tested: an MKII, Part changes and project reloads with the screen open, timestretch modes other than NORMAL, other modules at the same time.
+See [TESTING.md](TESTING.md). Host tests pass 24/24. On the author's MKI with the Modwerk base 24a0ed57 (and 9b3ba417 for the published package's install, Keep, power cycle and Undo), over USB: totals, time left, elapsed time, the last-30-seconds flash, retriggers and tempo changes checked against a stopwatch; reverse playback (RATE below 0) counted down to the start of the trim; an install with Keep survived a power cycle and Undo removed it; the base's LOAD page showed no CPU or DSP change with the screen open or closed. Package: 2,588 bytes of code and data and 304 of state. The draw cost was measured in the emulator only (about 0.3 ms a UI tick open); no static cycle bound. Not tested: an MKII, Part changes and project reloads with the screen open, timestretch modes other than NORMAL, other modules at the same time.
 
 ## Authorship and licences
 

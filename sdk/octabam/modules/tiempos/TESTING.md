@@ -2,10 +2,13 @@
 
 ## Commands and exact revision
 
-Source: `sdk/octabam/modules/tiempos/` on branch `tiempos`, on Modwerk `main` at `886098f5` (merged 30 October 2026). Packages built with m68k-elf-gcc 16.2.0 (Homebrew), the same compiler as the pinned `modwerk-source-tools` image, which rebuilt the 26 October package byte for byte.
+Source: `sdk/octabam/modules/tiempos/` on branch `tiempos`, on Modwerk `main` at `246c3b41` (merged 7 November 2026, after #1231). Packages built with m68k-elf-gcc 16.2.0 (Homebrew), the same compiler as the pinned `modwerk-source-tools` image, which rebuilt the 26 October package byte for byte.
 
 ```sh
-# ColdFire package (ABI 4: the four core hooks, no site events, no stock-code sites)
+# Published USB package: ABI 8, titled "tiempos" (#1231), written to public/octatrack-modules/tiempos/ and its row
+npm run octatrack:module-packages
+npm run octatrack:module-packages -- --check
+# Development build (ABI 4, untitled). build.py names the module after the output file: keep it tiempos.mwrm
 python3 -B sdk/runtime/loader/build.py sdk/octabam/modules/tiempos/tiempos.c -o tiempos.mwrm
 # Host tests and the package check (simulated OS memory, simulated 132 MHz timer, 60 ticks a second)
 python3 -B sdk/octabam/modules/tiempos/verify.py
@@ -16,7 +19,8 @@ python3 -B sdk/octabam/modules/tiempos/verify.py
 | `225a0170…` | before the double press | 2,336 (2,156 code and data, 268 BSS, 33 relocations) | `225a0170382915f749315e26f4dbf97d4e0c4a047bf85bd347fb0e1bbe35d53e` | emulator 26 October; MKI 28 and 30 October |
 | `0506a245…` | with the double press on a track key | 2,444 (2,240 code and data, 272 BSS, 39 relocations) | `0506a24500c2aa175aede07bcf1cc1a4c5f215b23852b26518acad6ac9444aa7` | MKI 30 October (fourth trial, USB lifecycle, load trial) |
 
-| `8c886466…` | with reverse playback (RATE below 0) and RATE 0 (current) | 2,808 (2,588 code and data, 304 BSS, 43 relocations) | `8c886466b8ef7133e41f64c4e8e3e1c8c7388b2d514370ed0b2f588ce8bd5022` | MKI 2 November (reverse trial) |
+| `8c886466…` | with reverse playback (RATE below 0) and RATE 0, development build (ABI 4) | 2,808 (2,588 code and data, 304 BSS, 43 relocations) | `8c886466b8ef7133e41f64c4e8e3e1c8c7388b2d514370ed0b2f588ce8bd5022` | MKI 2 November (reverse trial) |
+| `0b54a734…` | the same source, published by `octatrack:module-packages` as ABI 8 named "tiempos" (current) | 2,852 | `0b54a734258945acbf74551b8920ee4bfa760d390964bd04d2877e4382e990b9` | MKI 7 November (USB lifecycle on base `9b3ba417…`) |
 
 Hook words of `0506a245…`: `module_tick` 0x1ca, `module_draw` 0x2d0, `module_key` 0x6e6, `module_enc` 0x81e; none after the core four.
 
@@ -199,6 +203,21 @@ The owner asked in #1096 how Tiempos handles RATE below 0. On this MKI the highe
 The first attempt to load `8c886466…` was refused while the diagnostic trial still ran; a SIGINT to that trial did not confirm its rollback, so the session's `recover` request rolled it back (generation 6) before the load. Each trial ended with the bare base (generation 8 after the last).
 
 Not tested: a stopwatch figure for the reversed track, Flex and Static at other negative RATE values, reverse with timestretch modes other than NORMAL.
+
+## Published package on the current base (7 November 2026, MKI, package `0b54a734…`)
+
+The developer's unit had been flashed with a card build for a live set, so it had no base. A new base was built on the local site (`npm run dev` on branch `tiempos` at `70f472b9`, `main` merged; Setup → Install the base, from the developer's own OS 1.40C) as `Modwerk-octatrack-base-d9d29a.bin` and installed from the card with OS UPGRADE. Its SHA-256 was not recorded. Over USB it reports base `9b3ba41715140d5f…`, the identity in `sdk/machines/octatrack/base-binding.json`; normal, generation 0, inventory empty.
+
+| Step | Result |
+| --- | --- |
+| Install with Keep (`npm run device -- try public/octatrack-modules/tiempos/0.1.0-experimental.mwrm --seconds 10 --accept`) | read: accepted; generation 1, active `0b54a734…`; inventory `[{"module":"31282ae5","name":"tiempos"}]` |
+| CUE + MIDI | reported: opens TIEMPOS, the time rows show |
+| Power cycle (the developer) | read: the boot's log records the saved set restored with Tiempos 5 s after the start (`set a=1 [31282ae5]`), inventory still names "tiempos"; `status` reports the bare base identity after the restore. Reported: CUE + MIDI opens TIEMPOS again |
+| Undo (`npm run device -- remove … --accept`) | read: accepted; generation 1, active `75b95b9e…` (the empty set), inventory empty |
+
+No stall in the two boots on this base. The log's earlier stall records belong to boots 9 and 10 on the old base `24a0ed57…`, before the firmware was changed; they follow a `hot` record at 100 % CPU, the trace an OS upgrade leaves (OCTATRACK_HARDWARE_TRAPS.md).
+
+Not tested on this base: the timing, reverse and load checks above, which ran on `24a0ed57…` with packages of the same source (`8c886466…` is `0b54a734…` before titling) or of earlier sources.
 
 ## Hardware and audio quality
 

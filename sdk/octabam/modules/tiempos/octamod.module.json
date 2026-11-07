@@ -38,7 +38,7 @@
     ],
     "limitations": [
       "Needs the Modwerk base over USB: it uses the base's draw and key events.",
-      "Tested on one MKI with the Modwerk base 24a0ed57. Not tested yet: an MKII, Part changes and project reloads with the screen open, timestretch modes other than NORMAL, and other modules installed at the same time.",
+      "Tested on one MKI with the Modwerk bases 24a0ed57 and 9b3ba417 (install, Keep, power cycle and Undo of the published package). Not tested yet: an MKII, Part changes and project reloads with the screen open, timestretch modes other than NORMAL, and other modules installed at the same time.",
       "CUE + MIDI no longer switches to MIDI tracks while Tiempos is installed; MIDI alone still does.",
       "A track that loops shows the time left to the end of the sample, not to the end of the loop.",
       "A track playing backwards (RATE below 0) shows as empty once it reaches its start: the unit clears the voice there.",
@@ -100,7 +100,7 @@
     "qualification": {
       "moduleVersion": "0.1.0-experimental",
       "sourceSha256": "45e53efc39e6aba499d312e8e0b26995d2110a6657cbff8f06dc3aaaa9c1f035",
-      "imageSha256": "8c886466b8ef7133e41f64c4e8e3e1c8c7388b2d514370ed0b2f588ce8bd5022",
+      "imageSha256": "0b54a734258945acbf74551b8920ee4bfa760d390964bd04d2877e4382e990b9",
       "cycles": [
         {
           "processor": "coldfire",
@@ -143,24 +143,25 @@
         "sharedBytes": 2892,
         "maxInstances": 1,
         "totalBytes": 2892,
-        "conditions": "From the USB package 8c886466 (2,588 bytes of code and data, 304 of bss, 43 relocations). Reads OS memory only; writes no stock code or data. No DSP memory, no heap. Stack use is the UI task's and was not measured.",
+        "conditions": "From the USB package 8c886466 (published titled as 0b54a734, 2,852 bytes) (2,588 bytes of code and data, 304 of bss, 43 relocations). Reads OS memory only; writes no stock code or data. No DSP memory, no heap. Stack use is the UI task's and was not measured.",
         "report": "TESTING.md"
       },
       "hardware": {
         "kind": "functional",
         "status": "reported",
         "model": "MKI",
-        "testedOn": "2026-11-02",
+        "testedOn": "2026-11-07",
         "tester": "imdantelo",
         "sourceRevision": "6ad138c9ff5febf7e3e5af16aa3e123905f79b94",
-        "imageSha256": "8c886466b8ef7133e41f64c4e8e3e1c8c7388b2d514370ed0b2f588ce8bd5022",
-        "summary": "The developer's MKI, OS 1.40C, released Modwerk base 24a0ed57 built from a local checkout, driven over USB by Claude Code. With package 0506a245: a timed trial (single and double presses of track keys, the stock QUICK ASSIGN after a double press), an install with Keep that survived a power cycle and opened with CUE + MIDI, an Undo back to the empty set, and a seven-minute trial with three tracks playing (CPU 62 % just after a minute open against a 64 % peak without it; DSP load and space unchanged; no stall). With the previous package 225a0170 (same timing code): totals 2:08 at 120 BPM and 1:49 at 140 BPM on three 64-bar tones at 100, 120 and 140 BPM, a trimmed Static and a Flex track, 1:25 left and 0:24 elapsed at stopwatch 0:24.28, the flash under 30 s and a hand retrigger. With package 8c886466 (reverse playback): a trial with track 1 at RATE below 0 counted down to 0:00 with the stopwatch, restarted from the end on a trig, measured -10,749 and +7,440 frames a second as RATE changed; tracks 2 and 3 as before. The install with Keep, power cycle and Undo were run with 0506a245, not repeated with 8c886466.",
+        "imageSha256": "0b54a734258945acbf74551b8920ee4bfa760d390964bd04d2877e4382e990b9",
+        "summary": "The developer's MKI, OS 1.40C, released Modwerk base 24a0ed57 built from a local checkout, driven over USB by Claude Code. With package 0506a245: a timed trial (single and double presses of track keys, the stock QUICK ASSIGN after a double press), an install with Keep that survived a power cycle and opened with CUE + MIDI, an Undo back to the empty set, and a seven-minute trial with three tracks playing (CPU 62 % just after a minute open against a 64 % peak without it; DSP load and space unchanged; no stall). With the previous package 225a0170 (same timing code): totals 2:08 at 120 BPM and 1:49 at 140 BPM on three 64-bar tones at 100, 120 and 140 BPM, a trimmed Static and a Flex track, 1:25 left and 0:24 elapsed at stopwatch 0:24.28, the flash under 30 s and a hand retrigger. With package 8c886466 (reverse playback): a trial with track 1 at RATE below 0 counted down to 0:00 with the stopwatch, restarted from the end on a trig, measured -10,749 and +7,440 frames a second as RATE changed; tracks 2 and 3 as before. The install with Keep, power cycle and Undo were run with 0506a245, not repeated with 8c886466. With the published package 0b54a734 (the same source titled as ABI 8 by octatrack:module-packages), on a base rebuilt from current main (9b3ba417): install with Keep, the inventory naming it \"tiempos\", CUE + MIDI opening TIEMPOS, the set restored after a power cycle with TIEMPOS opening again, and Undo back to the empty set.",
         "limitations": [
           "One MKI; no MKII.",
           "The stopwatch figures come from the developer's photos and readings; the voice fields were not read directly (a released base answers no mem request).",
           "Part changes, project reloads, timestretch modes other than NORMAL and other modules beside Tiempos were not run.",
           "Draw cost estimated in the emulator, not measured on the unit; no static bound and no MIDI flood.",
-          "Reverse playback: one trial; no stopwatch figure written down for the reversed track; RATE 0 on an active voice covered by the host test only."
+          "Reverse playback: one trial; no stopwatch figure written down for the reversed track; RATE 0 on an active voice covered by the host test only.",
+          "Timing, reverse and load checks ran on the earlier base 24a0ed57 with packages of the same or earlier sources; on base 9b3ba417 only the install, power cycle and Undo."
         ],
         "report": "TESTING.md"
       },
