@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "live-rec-retrig-fix",
   "name": "Live Rec Retrig Fix",
-  "version": "0.2.0-experimental",
+  "version": "0.2.1-experimental",
   "machine": "analog-rytm-mkii",
   "category": "machines",
   "exclusive": false,
@@ -111,7 +111,7 @@
   },
   "evidence": {
     "tier": "none",
-    "moduleVersion": "0.2.0-experimental",
+    "moduleVersion": "0.2.1-experimental",
     "sourceSha256": null,
     "reports": [],
     "hardware": null,
@@ -119,7 +119,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu c5732f0, scripted pressure: every rate, ALWAYS ON, a press during a roll, rate changes, swing 50 to 66, quantize on and off, the RTRG key's light; on 0.1.0 also RETRIG menu YES on every row against stock and beside Silent Pad+Trig with SILENT PAD LIVEREC checked. On the author's Analog Rytm MKII (OS 1.74), reported from playing: 0.1.0 RR09 to RR16 pass; this merged build RC07 to RC11 (rates, quantize, short rolls, re-press, the row, a project save and reload) and LD01 (the key's light). See TESTING.md.",
+    "summary": "rytm-emu c5732f0, scripted pressure: every rate, ALWAYS ON, a press during a roll, rate changes, swing 50 to 66, quantize on and off, the RTRG key's light. On the author's Analog Rytm MKII (OS 1.74), as reported: 0.1.0 RR09 to RR16 pass; 0.2.0 RC07 to RC11 (rates, quantize, short rolls, re-press, the row, a project save and reload) and LD01 (the key's light); 0.2.1 in LP01, a 16-module set (a roll with pad pressure, Retrig Grid, RTRG + YES), its idle handlers 2.5 µs a block against 3.4 µs. Not run alone on a unit. See TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -163,9 +163,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "52de03f6dec4f3457c6de72d839c4f4304eca90d352548d8b942e173f72041e9",
-        "setup": "Headless rytm-emu (dtboot, c5732f0) running LR22: core-ar2 0.7 and this folder's Live Rec Retrig Fix 0.2.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
+        "moduleVersion": "0.2.1-experimental",
+        "imageSha256": "9f65781f497d832abaa1cbf396a2de8145725ca474bb52d187372dfc4545f000",
+        "setup": "Headless rytm-emu (dtboot, c5732f0) running LR23: core-ar2 0.7 and this folder's Live Rec Retrig Fix 0.2.1-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
       }
     },
     {
@@ -179,9 +179,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "52de03f6dec4f3457c6de72d839c4f4304eca90d352548d8b942e173f72041e9",
-        "setup": "Headless rytm-emu (dtboot, c5732f0) running LR22: core-ar2 0.7 and this folder's Live Rec Retrig Fix 0.2.0-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
+        "moduleVersion": "0.2.1-experimental",
+        "imageSha256": "9f65781f497d832abaa1cbf396a2de8145725ca474bb52d187372dfc4545f000",
+        "setup": "Headless rytm-emu (dtboot, c5732f0) running LR23: core-ar2 0.7 and this folder's Live Rec Retrig Fix 0.2.1-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
       }
     }
   ]
