@@ -1,0 +1,204 @@
+{
+  "schemaVersion": 3,
+  "id": "velocity-humanise",
+  "name": "Velocity Humanise",
+  "version": "1.2.0",
+  "machine": "analog-rytm-mkii",
+  "category": "machines",
+  "exclusive": false,
+  "author": {
+    "github": "Iced-Cream",
+    "credits": [
+      "MrScruff — the original mod, 0003-velocity-humanise in rytm-mods, its design and code; published in rytm-mods-src with permission.",
+      "Iced-Cream — the elemod port (rytm2_mods) and this Modwerk module.",
+      "irpina — Elekloader and core-ar2, the core it links with."
+    ]
+  },
+  "maintainers": [
+    "Iced-Cream"
+  ],
+  "source": {
+    "repository": "https://github.com/Iced-Cream/rytm2_mods",
+    "revision": "e029f7540c2df2a5185620ca68b4c08579e120c6",
+    "path": "velocity-humanise"
+  },
+  "presentation": {
+    "label": "VEL HUMANISE",
+    "family": "Sequencer",
+    "summary": "Per track, every trig's velocity gets a random offset of up to ±N, set with FUNC + VEL on the TRIG page.",
+    "overview": "Velocity Humanise gives each track a random velocity offset: every trig's velocity moves by a random amount up to ±N, clamped to 1..127. N is one of sixteen steps from 0 to 64, set by holding FUNC and turning VEL on the TRIG page, where the label reads RND and the knob becomes a sixteen-position selector. N is per pattern track, kept in core-ar2's mod storage and saved with the pattern. It is an elemod port of MrScruff's rytm-mods 0003-velocity-humanise, with his code unchanged apart from the storage port and FUNC + VEL's turn and text, which now go through core-ar2's parameter table (core_params) instead of two detours of his own.",
+    "highlights": [
+      "FUNC + VEL sets a per-track random velocity range.",
+      "Sixteen steps from 0 to 64; 0 is stock behaviour.",
+      "Kept in core-ar2 mod storage and saved with the pattern.",
+      "No longer needs Euclid Accents in the same build."
+    ],
+    "usage": [
+      "Use a build containing Velocity Humanise. On the TRIG page, hold FUNC and turn VEL: the label reads RND and the popup shows N.",
+      "Set N to 32 and play a track of equal-velocity trigs: the hits vary in level. Set N to 0: they are equal again.",
+      "Release FUNC: VEL is the trig velocity again, unchanged."
+    ]
+  },
+  "access": {
+    "location": "TRIG page: the VEL knob with FUNC held.",
+    "steps": [
+      "Open the TRIG page.",
+      "Hold FUNC and turn VEL to set N."
+    ],
+    "screenshots": [
+      "media/func-rnd-label.png",
+      "media/rnd-12.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "FUNC + VEL (TRIG page)",
+      "default": null,
+      "doc": "Sets the track's random velocity range N: sixteen steps from 0 to 64. Each trig's velocity moves by a random amount up to ±N, clamped to 1..127.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [
+      "sample-rate"
+    ],
+    "limitations": [
+      "Built for OS 1.74 only. 1.2.0 reaches its parameter through core-ar2's parameter table (core_params, core-ar2 0.4 and later; Modwerk's base is core-ar2 0.7). 1.1.0 detoured the entries of param_apply_delta and param_value_text itself, which core-ar2 0.4 and later own, so it does not link with them.",
+      "Needs core-ar2's mod storage: four bits per pattern track (vel_rnd).",
+      "On stock firmware, or a build without this module, the track plays its plain velocities: N is in mod storage, which stock ignores.",
+      "Not beside Sample RATE: both patch the start of param_short_name (0x400a9000), the knob label routine, for different parameters (VEL here, FIN there). Modwerk's base (core-ar2 0.7) has no shared hook for labels; core-ar2 0.10's knob-name service would let them share."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [],
+    "claims": [
+      "ui:TRIG page FUNC + VEL",
+      "sequencer:trig velocity offset"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 816,
+    "fastBytes": 0,
+    "load": {
+      "display": "Small: a storage read, a random draw and a clamp on each trig",
+      "method": "static",
+      "conditions": "Static: one detour runs per trig in the sequencer; it reads the track's N through core_store_get, which masks interrupts briefly, then draws and clamps the offset. The others run on UI edits and drawing. Not a measurement."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "1.2.0",
+    "sourceSha256": "42e0b6fbe491bd3fe5c72a1dc59fb3eb048d1a37aa5231e55e5a38f17a80ec22",
+    "reports": [
+      "evidence/hardware-testing.json",
+      "evidence/source-parity.json"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-07",
+      "tester": "Iced-Cream",
+      "durationMinutes": null,
+      "summary": "Iced-Cream reports that on an Analog Rytm MKII with OS 1.74 and this package on Modwerk's base (core-ar2 0.7, plain variant ba530f45, with analoghealth 1.3 for remote keys and the other module of the pair), build MW12, 2026-11-07 (runs T170-T172): FUNC + VEL on CP's TRIG page read RND and reached N 64, VEL alone stayed stock (screen); with 16 CP trigs, a 10 s take of CP's output (RS/CP channel) showed 61 hits with a peak spread of 3.7 dB (std) and 13.0 dB range, 4.7 dB on average from hit to hit (equal velocities measured about 0.35 dB in the 1.1 runs); N 64 was kept across a hand power cycle with no save. No dropouts; CPU 74-80 %, heap flat. Earlier runs (1.2 on core-ar2 0.4, 1.1 on 0.3) are in TESTING.md.",
+      "limitations": [
+        "MW12: .syx 0d0517eac360cb1282704750b37dfbd1c3c3c13e411f13a52f82ed87eb9b69cd, built by scripts/link-image.mjs from this folder; firmware was not read back from the device.",
+        "MW12 also carried Euclid Accents 1.2.0 and analoghealth 1.3 (remote keys; no site shared with this module).",
+        "Duration was not recorded.",
+        "P4A4: .syx 1c0311697543789316c10dbbbfa78b9a717a180eb26611f2f0d1b732a428d65c. U4A4: .syx 18681f8709242b9d3c5117335a81cd5659ea01c583e3e8477d536e379517b785. Firmware was not read back from the device.",
+        "The playback checks of the random velocity spread 1.1 passed were not repeated on 1.2."
+      ]
+    },
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Hardware on Modwerk's base (MW12, 2026-11-07): N 64 spread 3.7 dB std, kept across a power cycle. Hardware: velocity-humanise 1.2 on an Analog Rytm MKII, OS 1.74, with core-ar2 0.4 and the other rytm2_mods ports (P4A4, 2026-10-21): FUNC + VEL reads RND and steps through N's sixteen values, VEL alone is stock, and N survives a power-cycle without a project save. Modwerk's package linked with core-ar2 0.7 gives a main OS byte-identical to the rytm2_mods v1.3 release object linked with it. In the emulator on the Modwerk base (VH12), FUNC relabels VEL as RND and turning it shows N.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Use a build containing Velocity Humanise. On the TRIG page, hold FUNC and turn VEL: the label reads RND and the popup shows N.",
+          "Set N to 32 and play a track of equal-velocity trigs: the hits vary in level. Set N to 0: they are equal again.",
+          "Release FUNC: VEL is the trig velocity again, unchanged."
+        ]
+      },
+      "screenshots": [
+        "media/trig-page.png",
+        "media/func-rnd-label.png",
+        "media/rnd-12.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-2.0-only",
+    "file": "LICENSE",
+    "declaration": "MrScruff's rytm-mods code and Iced-Cream's elemod port, under GPL-2.0-only as rytm-mods-src. include/ar2-1.74.inc, shared/live-track.s and shared/shared.s name firmware routines and RAM by address only; the patch preconditions are addresses, lengths and SHA-256s."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Velocity Humanise",
+      "alt": "Original illustration of sixteen velocity bars scattered around a line",
+      "credit": "Iced-Cream",
+      "license": "GPL-2.0-only",
+      "source": "Original vector illustration; not a device screenshot."
+    },
+    {
+      "path": "media/trig-page.png",
+      "kind": "screenshot",
+      "caption": "Press TRIG on track BD: the TRIG page, with VEL as knob B.",
+      "alt": "TRIG page with NOT, VEL, LEN and PRB above SYN, SMP, ENV and LFO.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.2.0",
+        "imageSha256": "854bfcf00d0ef3c5b11d03211d1eaf8107b30f3106e40c3f88e10e5b85a8b7b3",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running VH12, the Modwerk base for core-ar2 0.7 (plain variant) and velocity-humanise 1.2.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/func-rnd-label.png",
+      "kind": "screenshot",
+      "caption": "Hold FUNC: VEL's label reads RND. Stock keeps VEL.",
+      "alt": "TRIG page with the second knob labelled RND.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.2.0",
+        "imageSha256": "854bfcf00d0ef3c5b11d03211d1eaf8107b30f3106e40c3f88e10e5b85a8b7b3",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running VH12, the Modwerk base for core-ar2 0.7 (plain variant) and velocity-humanise 1.2.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/rnd-12.png",
+      "kind": "screenshot",
+      "caption": "Turn it with FUNC held: the popup shows N, here 12. Stock shows the trig velocity, 100.",
+      "alt": "VELOCITY popup reading 12 over the TRIG page.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.2.0",
+        "imageSha256": "854bfcf00d0ef3c5b11d03211d1eaf8107b30f3106e40c3f88e10e5b85a8b7b3",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running VH12, the Modwerk base for core-ar2 0.7 (plain variant) and velocity-humanise 1.2.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    }
+  ]
+}

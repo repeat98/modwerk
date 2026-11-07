@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/velocity-humanise",
+  "version": "1.2.0",
+  "date": "2026-11-07",
+  "changes": [
+    "First library release, for Analog Rytm MKII OS 1.74 on core-ar2 0.7: FUNC + VEL on the TRIG page sets a per-track random velocity range, 0 to 64; its turn and text go through core-ar2's parameter table."
+  ],
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/velocity-humanise/velocity-humanise-1.2.0-os1.74.elemod",
+      "sha256": "dd85e892f1eb9f2ed882d20ac89a6e5b8e0d85f339cdac3e9b6ee204d5d14e9b"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/velocity-humanise/TESTING.md",
+  "requires": []
+}
