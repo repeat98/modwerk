@@ -3,7 +3,7 @@
   "kind": "authored-utility-packages",
   "stockRead": false,
   "revision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceCommit": "f7fbcc8a655ca63d8c01898a242f771291a41c3e",
+  "sourceCommit": "d8b451823973693f40983bd46917662b8ca1b816",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -41,7 +41,8 @@
     "tuner": "0.1.0-experimental",
     "slow-lfo": "0.1.0-experimental",
     "bar-led": "0.1.0-experimental",
-    "stem-rec": "0.1.0-experimental"
+    "stem-rec": "0.1.0-experimental",
+    "track-solo": "0.2.3-experimental"
   },
   "compilerSha256": "ba4cfc6b0c5948f8b0a2809d5b73bea85633eb32f82ffc761a6373d9c4d48c5f",
   "qualification": "Source assembly and relocation only. Hardware and release approval are not supplied by this artifact.",
