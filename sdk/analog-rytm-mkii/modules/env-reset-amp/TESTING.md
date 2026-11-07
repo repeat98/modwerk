@@ -57,7 +57,7 @@ within 9 ms. Both agree with the SXH4 run. No output froze or dropped out.
 
 ## Source build comparison
 
-The module is a submission (`modules/_submissions/`) until the browser can build it. Modwerk's own validation and compiler path, run on this folder:
+While the module waited in `modules/_submissions/`, Modwerk's own validation and compiler path ran on this folder:
 
 ```sh
 node scripts/machine-modules.mjs --drafts --base origin/main
@@ -75,6 +75,15 @@ relocations.
 Compiler: Ubuntu 24.04 `m68k-linux-gnu` GCC 13.3.0 and binutils 2.42. Modwerk's pinned Docker
 toolchain was not run here, and CI's `elemod-source` job compiles published folders only. The
 firmware and the linked builds stayed on the owner's computer.
+
+## Library package
+
+On 2026-11-07 the folder moved into the library, code unchanged. `scripts/build-elemod-isolated.sh` compiled it in
+Modwerk's pinned `modwerk-source-tools` image (`m68k-elf`, from `sdk/build/Dockerfile`) from a clean checkout of
+`787719d2`, and `scripts/package-elemod-recipe.mjs` exported
+`sdk/imports/packages/env-reset-amp/env-reset-amp-1.0.0-os1.74.elemod` (`fadea586…e993`); `--check` reproduces it. Its
+52-byte `.run`, three sites and symbols are identical to rytm2_mods v1.2's release object (`881bcfed…40d1`). This
+package's own bytes have not been linked against a stock OS file or run on a unit.
 
 ## Emulator
 
