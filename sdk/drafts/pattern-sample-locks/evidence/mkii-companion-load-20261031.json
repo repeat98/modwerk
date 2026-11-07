@@ -1,0 +1,1585 @@
+{
+  "schema": 1,
+  "date": "2026-10-31",
+  "hardware": true,
+  "status": "FAILED higher-load qualification: unresolved input/modifier-state fault and unintended SAMPLE changes. Initial companion pass complete. Recovery, Undo and return to flashed public base verified.",
+  "publicBase": "2aa35c3965d13087e7b83ff6f29d17bd6e6b7a59c7ed443e8720684b2b6d157b",
+  "developmentBase": "20ed79108facb38d72b1e21105a3fd598bc45b76da39e667d6ad1c9b9a67410e",
+  "candidateSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+  "wholeSetSha256": "8ff2effb1c839ea2016eb6cf13fa6973321f75cf96e6667fc52ed06f070670f7",
+  "packages": [
+    {
+      "id": "tapehead",
+      "version": "0.1.2-experimental",
+      "sha256": "980fb1ceda23837b3cb121e42372ccc21e5068ce03cacb1f371c7d53f5150554",
+      "bytes": 2250
+    },
+    {
+      "id": "everb",
+      "version": "0.1.2-experimental",
+      "sha256": "5f81e72fbba43ea827ec3996509b50c036b458d4baa87d801e57d4b4ce1695ca",
+      "bytes": 7454
+    },
+    {
+      "id": "airwindows-chorus",
+      "version": "0.1.2-experimental",
+      "sha256": "e0f05d53b4259e0c3b50f5dde05ed1a1ec5d7c5b80bf5efd5ce4e5ab7d6d7ff8",
+      "bytes": 3758
+    },
+    {
+      "id": "pattern-sample-locks",
+      "version": "0.1.8-experimental",
+      "sha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+      "bytes": 10048
+    }
+  ],
+  "baselineMethod": "Same retained four-module trial: Sample Locks idle/open menu versus Apply. No companion-only or module-unloaded baseline in this pass.",
+  "fixture": {
+    "set": "PSLTEST_261031",
+    "project": "PSL AUDIO TEST",
+    "patterns": "A01-A04",
+    "bpm": 120.0,
+    "machines": "Four Flex/four Static; eight 64-step sample-trig tracks",
+    "fx1": [
+      "TapeHead",
+      "TapeHead",
+      "TapeHead",
+      "TapeHead",
+      "TapeHead",
+      "TapeHead",
+      "TapeHead",
+      "TapeHead"
+    ],
+    "fx2": [
+      "E-Verb",
+      "E-Verb",
+      "NONE",
+      "NONE",
+      "Air Chorus",
+      "COMPRESSOR",
+      "NONE",
+      "NONE"
+    ],
+    "userFxSnapshotSha256": "68d8f59e4cc3cb4d4def17d68410421c74624ef44fc98d9a9cf940790ccd46ff",
+    "userFxSetupSaved": false
+  },
+  "samplerRecordingRefusal": {
+    "passed": true,
+    "plannedChanges": 512,
+    "publicationWrites": 0,
+    "patternPartsAndIndexUnchanged": true,
+    "playbackAndRecordingPreserved": true,
+    "cachedCpuPermilleAtRefusal": 969,
+    "recorderTelemetry": "Eight of sixteen recorder-state entries nonzero; no independently verified track count.",
+    "newDspErrors": 0,
+    "newDspStalls": 0
+  },
+  "firstPass": {
+    "operations": 32,
+    "changedFieldsPerOperation": 512,
+    "repeatedMaximumPairs": 10,
+    "firstOtherSlotAndLastOtherSlotCovered": true,
+    "completePatternAndLockIndexCompared": true,
+    "workingPartSettingsPreserved": true,
+    "fixturePatternsRestored": true,
+    "recordingOff": true,
+    "newDspErrors": 0,
+    "newDspStalls": 0,
+    "frameSheddingObserved": false,
+    "maximumInnerPublicationTimerCounts": 696,
+    "timerCountsPerMicrosecond": 132,
+    "timerLimitation": "Cumulative inner write interval; excludes interrupt-mask boundaries, not complete Apply time.",
+    "wholeNativeApplyTimeMeasured": false,
+    "hostCompletionMs": {
+      "minimum": 9.839250000019092,
+      "maximum": 40.96637500000361
+    },
+    "hostTimingLimitation": "Includes USB/UI scheduling and polling; not isolated module CPU execution."
+  },
+  "windows": [
+    {
+      "label": "closed-no-recording",
+      "cpuPermille": {
+        "minimum": 680,
+        "median": 694.0,
+        "maximum": 730
+      },
+      "dsp1to4PeakPermille": 791,
+      "dsp5to8PeakPermille": 770,
+      "timing": {
+        "gapCounts": 49276,
+        "frameMaxCounts": 45597,
+        "lateMaxCounts": 0,
+        "busy256": 3298938,
+        "frames": 27844,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      }
+    },
+    {
+      "label": "closed-recording",
+      "cpuPermille": {
+        "minimum": 801,
+        "median": 813.0,
+        "maximum": 822
+      },
+      "dsp1to4PeakPermille": 791,
+      "dsp5to8PeakPermille": 770,
+      "timing": {
+        "gapCounts": 54410,
+        "frameMaxCounts": 52318,
+        "lateMaxCounts": 4427,
+        "busy256": 4699233,
+        "frames": 33414,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      }
+    },
+    {
+      "label": "selector-no-recording",
+      "cpuPermille": {
+        "minimum": 707,
+        "median": 719,
+        "maximum": 850
+      },
+      "dsp1to4PeakPermille": 791,
+      "dsp5to8PeakPermille": 770,
+      "timing": {
+        "gapCounts": 53648,
+        "frameMaxCounts": 52589,
+        "lateMaxCounts": 4698,
+        "busy256": 1694634,
+        "frames": 13938,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      }
+    },
+    {
+      "label": "confirmation-no-recording",
+      "cpuPermille": {
+        "minimum": 704,
+        "median": 716,
+        "maximum": 727
+      },
+      "dsp1to4PeakPermille": 791,
+      "dsp5to8PeakPermille": 770,
+      "timing": {
+        "gapCounts": 49246,
+        "frameMaxCounts": 45224,
+        "lateMaxCounts": 0,
+        "busy256": 1657184,
+        "frames": 13928,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      }
+    },
+    {
+      "label": "A02-baseline",
+      "cpuPermille": {
+        "minimum": 800,
+        "median": 812.0,
+        "maximum": 821
+      },
+      "dsp1to4PeakPermille": 791,
+      "dsp5to8PeakPermille": 771,
+      "timing": {
+        "gapCounts": 55193,
+        "frameMaxCounts": 53501,
+        "lateMaxCounts": 5610,
+        "busy256": 3138797,
+        "frames": 22321,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      }
+    },
+    {
+      "label": "A03-baseline",
+      "cpuPermille": {
+        "minimum": 800,
+        "median": 813.0,
+        "maximum": 821
+      },
+      "dsp1to4PeakPermille": 791,
+      "dsp5to8PeakPermille": 770,
+      "timing": {
+        "gapCounts": 57132,
+        "frameMaxCounts": 54647,
+        "lateMaxCounts": 6756,
+        "busy256": 3133225,
+        "frames": 22281,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      }
+    },
+    {
+      "label": "A04-baseline",
+      "cpuPermille": {
+        "minimum": 800,
+        "median": 812.0,
+        "maximum": 820
+      },
+      "dsp1to4PeakPermille": 792,
+      "dsp5to8PeakPermille": 770,
+      "timing": {
+        "gapCounts": 55149,
+        "frameMaxCounts": 53280,
+        "lateMaxCounts": 5389,
+        "busy256": 3131675,
+        "frames": 22272,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      }
+    },
+    {
+      "label": "closed-after-recording",
+      "cpuPermille": {
+        "minimum": 799,
+        "median": 812.0,
+        "maximum": 821
+      },
+      "dsp1to4PeakPermille": 792,
+      "dsp5to8PeakPermille": 770,
+      "timing": {
+        "gapCounts": 55063,
+        "frameMaxCounts": 52988,
+        "lateMaxCounts": 5097,
+        "busy256": 4692741,
+        "frames": 33383,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      }
+    }
+  ],
+  "operations": [
+    {
+      "label": "no-recording-0-lock",
+      "pattern": 1,
+      "clear": false,
+      "changes": 512,
+      "hostCompletionMs": 18.24674999999843,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 260,
+      "frameTiming": {
+        "gapCounts": 48355,
+        "frameMaxCounts": 37618,
+        "lateMaxCounts": 0,
+        "busy256": 7589,
+        "frames": 61,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "a8cd36492baa5f26013b4ba848ad13e6a04d14c64a0949d7284e52c34f721582"
+    },
+    {
+      "label": "no-recording-0-clear",
+      "pattern": 1,
+      "clear": true,
+      "changes": 512,
+      "hostCompletionMs": 19.262833000000683,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 309,
+      "frameTiming": {
+        "gapCounts": 48377,
+        "frameMaxCounts": 34246,
+        "lateMaxCounts": 0,
+        "busy256": 7516,
+        "frames": 61,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "063ffc9d2bce97c1143d4e5bc01bf2cdbf9dbd92313a0a897da04086a2f16948"
+    },
+    {
+      "label": "no-recording-1-lock",
+      "pattern": 1,
+      "clear": false,
+      "changes": 512,
+      "hostCompletionMs": 18.95704200000182,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 309,
+      "frameTiming": {
+        "gapCounts": 48678,
+        "frameMaxCounts": 37761,
+        "lateMaxCounts": 0,
+        "busy256": 7541,
+        "frames": 60,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "a8cd36492baa5f26013b4ba848ad13e6a04d14c64a0949d7284e52c34f721582"
+    },
+    {
+      "label": "no-recording-1-clear",
+      "pattern": 1,
+      "clear": true,
+      "changes": 512,
+      "hostCompletionMs": 19.176833999998053,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 309,
+      "frameTiming": {
+        "gapCounts": 48663,
+        "frameMaxCounts": 36979,
+        "lateMaxCounts": 0,
+        "busy256": 7500,
+        "frames": 61,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "063ffc9d2bce97c1143d4e5bc01bf2cdbf9dbd92313a0a897da04086a2f16948"
+    },
+    {
+      "label": "no-recording-2-lock",
+      "pattern": 1,
+      "clear": false,
+      "changes": 512,
+      "hostCompletionMs": 18.83849999999802,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 309,
+      "frameTiming": {
+        "gapCounts": 48702,
+        "frameMaxCounts": 46149,
+        "lateMaxCounts": 0,
+        "busy256": 7722,
+        "frames": 60,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "a8cd36492baa5f26013b4ba848ad13e6a04d14c64a0949d7284e52c34f721582"
+    },
+    {
+      "label": "no-recording-2-clear",
+      "pattern": 1,
+      "clear": true,
+      "changes": 512,
+      "hostCompletionMs": 19.960250000003725,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 399,
+      "frameTiming": {
+        "gapCounts": 49116,
+        "frameMaxCounts": 46106,
+        "lateMaxCounts": 0,
+        "busy256": 7724,
+        "frames": 64,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "063ffc9d2bce97c1143d4e5bc01bf2cdbf9dbd92313a0a897da04086a2f16948"
+    },
+    {
+      "label": "no-recording-3-lock",
+      "pattern": 1,
+      "clear": false,
+      "changes": 512,
+      "hostCompletionMs": 24.397250000001804,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 399,
+      "frameTiming": {
+        "gapCounts": 48421,
+        "frameMaxCounts": 37842,
+        "lateMaxCounts": 0,
+        "busy256": 9383,
+        "frames": 75,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "a8cd36492baa5f26013b4ba848ad13e6a04d14c64a0949d7284e52c34f721582"
+    },
+    {
+      "label": "no-recording-3-clear",
+      "pattern": 1,
+      "clear": true,
+      "changes": 512,
+      "hostCompletionMs": 18.996624999999767,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 399,
+      "frameTiming": {
+        "gapCounts": 48600,
+        "frameMaxCounts": 35606,
+        "lateMaxCounts": 0,
+        "busy256": 7014,
+        "frames": 61,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "063ffc9d2bce97c1143d4e5bc01bf2cdbf9dbd92313a0a897da04086a2f16948"
+    },
+    {
+      "label": "no-recording-4-lock",
+      "pattern": 1,
+      "clear": false,
+      "changes": 512,
+      "hostCompletionMs": 19.124082999995153,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 399,
+      "frameTiming": {
+        "gapCounts": 48344,
+        "frameMaxCounts": 35078,
+        "lateMaxCounts": 0,
+        "busy256": 7397,
+        "frames": 60,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "a8cd36492baa5f26013b4ba848ad13e6a04d14c64a0949d7284e52c34f721582"
+    },
+    {
+      "label": "no-recording-4-clear",
+      "pattern": 1,
+      "clear": true,
+      "changes": 512,
+      "hostCompletionMs": 19.13387500000681,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 399,
+      "frameTiming": {
+        "gapCounts": 48444,
+        "frameMaxCounts": 37888,
+        "lateMaxCounts": 0,
+        "busy256": 7516,
+        "frames": 61,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "063ffc9d2bce97c1143d4e5bc01bf2cdbf9dbd92313a0a897da04086a2f16948"
+    },
+    {
+      "label": "recorded-0-lock",
+      "pattern": 1,
+      "clear": false,
+      "changes": 512,
+      "hostCompletionMs": 18.93616699999984,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 455,
+      "frameTiming": {
+        "gapCounts": 53228,
+        "frameMaxCounts": 51564,
+        "lateMaxCounts": 3673,
+        "busy256": 9254,
+        "frames": 61,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "a8cd36492baa5f26013b4ba848ad13e6a04d14c64a0949d7284e52c34f721582"
+    },
+    {
+      "label": "recorded-0-clear",
+      "pattern": 1,
+      "clear": true,
+      "changes": 512,
+      "hostCompletionMs": 22.438374999997905,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 557,
+      "frameTiming": {
+        "gapCounts": 54766,
+        "frameMaxCounts": 53381,
+        "lateMaxCounts": 5490,
+        "busy256": 10413,
+        "frames": 69,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "063ffc9d2bce97c1143d4e5bc01bf2cdbf9dbd92313a0a897da04086a2f16948"
+    },
+    {
+      "label": "recorded-1-lock",
+      "pattern": 1,
+      "clear": false,
+      "changes": 512,
+      "hostCompletionMs": 18.964708000006794,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 557,
+      "frameTiming": {
+        "gapCounts": 49501,
+        "frameMaxCounts": 43178,
+        "lateMaxCounts": 0,
+        "busy256": 9009,
+        "frames": 61,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "a8cd36492baa5f26013b4ba848ad13e6a04d14c64a0949d7284e52c34f721582"
+    },
+    {
+      "label": "recorded-1-clear",
+      "pattern": 1,
+      "clear": true,
+      "changes": 512,
+      "hostCompletionMs": 40.96637500000361,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 557,
+      "frameTiming": {
+        "gapCounts": 49451,
+        "frameMaxCounts": 43775,
+        "lateMaxCounts": 0,
+        "busy256": 17707,
+        "frames": 121,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "063ffc9d2bce97c1143d4e5bc01bf2cdbf9dbd92313a0a897da04086a2f16948"
+    },
+    {
+      "label": "recorded-2-lock",
+      "pattern": 1,
+      "clear": false,
+      "changes": 512,
+      "hostCompletionMs": 19.940833000000566,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 557,
+      "frameTiming": {
+        "gapCounts": 49432,
+        "frameMaxCounts": 42156,
+        "lateMaxCounts": 0,
+        "busy256": 9190,
+        "frames": 63,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "a8cd36492baa5f26013b4ba848ad13e6a04d14c64a0949d7284e52c34f721582"
+    },
+    {
+      "label": "recorded-2-clear",
+      "pattern": 1,
+      "clear": true,
+      "changes": 512,
+      "hostCompletionMs": 19.143917000001238,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 557,
+      "frameTiming": {
+        "gapCounts": 49268,
+        "frameMaxCounts": 43716,
+        "lateMaxCounts": 0,
+        "busy256": 9074,
+        "frames": 61,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "063ffc9d2bce97c1143d4e5bc01bf2cdbf9dbd92313a0a897da04086a2f16948"
+    },
+    {
+      "label": "recorded-3-lock",
+      "pattern": 1,
+      "clear": false,
+      "changes": 512,
+      "hostCompletionMs": 18.90625,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 595,
+      "frameTiming": {
+        "gapCounts": 49196,
+        "frameMaxCounts": 45642,
+        "lateMaxCounts": 0,
+        "busy256": 9014,
+        "frames": 60,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "a8cd36492baa5f26013b4ba848ad13e6a04d14c64a0949d7284e52c34f721582"
+    },
+    {
+      "label": "recorded-3-clear",
+      "pattern": 1,
+      "clear": true,
+      "changes": 512,
+      "hostCompletionMs": 18.897709000004397,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 595,
+      "frameTiming": {
+        "gapCounts": 49321,
+        "frameMaxCounts": 43672,
+        "lateMaxCounts": 0,
+        "busy256": 9295,
+        "frames": 62,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "063ffc9d2bce97c1143d4e5bc01bf2cdbf9dbd92313a0a897da04086a2f16948"
+    },
+    {
+      "label": "recorded-4-lock",
+      "pattern": 1,
+      "clear": false,
+      "changes": 512,
+      "hostCompletionMs": 18.71862500000134,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 595,
+      "frameTiming": {
+        "gapCounts": 49525,
+        "frameMaxCounts": 43211,
+        "lateMaxCounts": 0,
+        "busy256": 8744,
+        "frames": 60,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "a8cd36492baa5f26013b4ba848ad13e6a04d14c64a0949d7284e52c34f721582"
+    },
+    {
+      "label": "recorded-4-clear",
+      "pattern": 1,
+      "clear": true,
+      "changes": 512,
+      "hostCompletionMs": 19.32891699999891,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 595,
+      "frameTiming": {
+        "gapCounts": 49420,
+        "frameMaxCounts": 44244,
+        "lateMaxCounts": 0,
+        "busy256": 9035,
+        "frames": 62,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "063ffc9d2bce97c1143d4e5bc01bf2cdbf9dbd92313a0a897da04086a2f16948"
+    },
+    {
+      "label": "A02-clear-no-recording",
+      "pattern": 2,
+      "clear": true,
+      "changes": 512,
+      "hostCompletionMs": 20.063292000006186,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 595,
+      "frameTiming": {
+        "gapCounts": 52783,
+        "frameMaxCounts": 51027,
+        "lateMaxCounts": 3136,
+        "busy256": 9403,
+        "frames": 63,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "063ffc9d2bce97c1143d4e5bc01bf2cdbf9dbd92313a0a897da04086a2f16948"
+    },
+    {
+      "label": "A02-restore-no-recording",
+      "pattern": 2,
+      "clear": false,
+      "changes": 512,
+      "hostCompletionMs": 10.04679199999373,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 595,
+      "frameTiming": {
+        "gapCounts": 48429,
+        "frameMaxCounts": 37972,
+        "lateMaxCounts": 0,
+        "busy256": 4496,
+        "frames": 36,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "a8cd36492baa5f26013b4ba848ad13e6a04d14c64a0949d7284e52c34f721582"
+    },
+    {
+      "label": "A02-clear-recorded",
+      "pattern": 2,
+      "clear": true,
+      "changes": 512,
+      "hostCompletionMs": 18.92683300000499,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 595,
+      "frameTiming": {
+        "gapCounts": 49312,
+        "frameMaxCounts": 41651,
+        "lateMaxCounts": 0,
+        "busy256": 8920,
+        "frames": 61,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "063ffc9d2bce97c1143d4e5bc01bf2cdbf9dbd92313a0a897da04086a2f16948"
+    },
+    {
+      "label": "A02-restore-recorded",
+      "pattern": 2,
+      "clear": false,
+      "changes": 512,
+      "hostCompletionMs": 18.89175000000978,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 595,
+      "frameTiming": {
+        "gapCounts": 49511,
+        "frameMaxCounts": 42213,
+        "lateMaxCounts": 0,
+        "busy256": 8986,
+        "frames": 61,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "a8cd36492baa5f26013b4ba848ad13e6a04d14c64a0949d7284e52c34f721582"
+    },
+    {
+      "label": "A03-clear-no-recording",
+      "pattern": 3,
+      "clear": true,
+      "changes": 512,
+      "hostCompletionMs": 18.803791999991518,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 595,
+      "frameTiming": {
+        "gapCounts": 49171,
+        "frameMaxCounts": 41898,
+        "lateMaxCounts": 0,
+        "busy256": 8902,
+        "frames": 60,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "7ad4504c89a193669d612fd707d33d156254a1f7761d01a0c29c3ce447092cb4"
+    },
+    {
+      "label": "A03-restore-no-recording",
+      "pattern": 3,
+      "clear": false,
+      "changes": 512,
+      "hostCompletionMs": 9.839250000019092,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 595,
+      "frameTiming": {
+        "gapCounts": 48550,
+        "frameMaxCounts": 38387,
+        "lateMaxCounts": 0,
+        "busy256": 4647,
+        "frames": 36,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "74710cf77d6ea4c5517ef8c62f9e0020219fe954e85ab8f15e70625ef3719bb1"
+    },
+    {
+      "label": "A03-clear-recorded",
+      "pattern": 3,
+      "clear": true,
+      "changes": 512,
+      "hostCompletionMs": 18.863666999997804,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 595,
+      "frameTiming": {
+        "gapCounts": 49176,
+        "frameMaxCounts": 41378,
+        "lateMaxCounts": 0,
+        "busy256": 8899,
+        "frames": 61,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "7ad4504c89a193669d612fd707d33d156254a1f7761d01a0c29c3ce447092cb4"
+    },
+    {
+      "label": "A03-restore-recorded",
+      "pattern": 3,
+      "clear": false,
+      "changes": 512,
+      "hostCompletionMs": 18.908290999999736,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 610,
+      "frameTiming": {
+        "gapCounts": 55112,
+        "frameMaxCounts": 53816,
+        "lateMaxCounts": 5925,
+        "busy256": 9067,
+        "frames": 60,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "74710cf77d6ea4c5517ef8c62f9e0020219fe954e85ab8f15e70625ef3719bb1"
+    },
+    {
+      "label": "A04-clear-no-recording",
+      "pattern": 4,
+      "clear": true,
+      "changes": 512,
+      "hostCompletionMs": 18.8899579999852,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 610,
+      "frameTiming": {
+        "gapCounts": 49151,
+        "frameMaxCounts": 44481,
+        "lateMaxCounts": 0,
+        "busy256": 8945,
+        "frames": 61,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "ecf9c2c162d65b18b651e9e41723e126aed06692989ffbe9c3136fa9b876a832"
+    },
+    {
+      "label": "A04-restore-no-recording",
+      "pattern": 4,
+      "clear": false,
+      "changes": 512,
+      "hostCompletionMs": 18.721541999984765,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 610,
+      "frameTiming": {
+        "gapCounts": 48759,
+        "frameMaxCounts": 36867,
+        "lateMaxCounts": 0,
+        "busy256": 7515,
+        "frames": 60,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "5295c0cccfd4ccfca585c72328df2ad8d15c6a80b64cb9c14c09cc858874c262"
+    },
+    {
+      "label": "A04-clear-recorded",
+      "pattern": 4,
+      "clear": true,
+      "changes": 512,
+      "hostCompletionMs": 18.9742499999993,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 696,
+      "frameTiming": {
+        "gapCounts": 49387,
+        "frameMaxCounts": 42407,
+        "lateMaxCounts": 0,
+        "busy256": 8902,
+        "frames": 60,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "ecf9c2c162d65b18b651e9e41723e126aed06692989ffbe9c3136fa9b876a832"
+    },
+    {
+      "label": "A04-restore-recorded",
+      "pattern": 4,
+      "clear": false,
+      "changes": 512,
+      "hostCompletionMs": 18.83933300001081,
+      "guardCount": 64,
+      "guardInnerMaxCountsCumulative": 696,
+      "frameTiming": {
+        "gapCounts": 49390,
+        "frameMaxCounts": 44414,
+        "lateMaxCounts": 0,
+        "busy256": 9115,
+        "frames": 61,
+        "shedCount": 0,
+        "shedTracks": 0,
+        "share": 38312
+      },
+      "patternSha256": "5295c0cccfd4ccfca585c72328df2ad8d15c6a80b64cb9c14c09cc858874c262"
+    }
+  ],
+  "audio": {
+    "captures": 9,
+    "frames": 5915648,
+    "seconds": 134.14167800453515,
+    "channels": 20,
+    "analysedTrackAndMainChannels": 18,
+    "wholeStreamRepeated16FrameBlocks": 0,
+    "perChannelRepeated16SampleBlocks": 0,
+    "channelTracesChecked": 162,
+    "maximumExactZeroRunSamples": 1,
+    "maximumConstantRunSamples": 3,
+    "minimumMain100msRms": 0.009077618130284175,
+    "syntheticIsolatedChannelRepeatDetected": true,
+    "method": "Processed-output descriptive continuity and level checks against matched FX settings; no pure-tone purity or exact-waveform criterion.",
+    "limitation": "Time-varying E-Verb/chorus output varies between captures. No universal click-free or independent analog-output claim."
+  },
+  "captures": [
+    {
+      "label": "closed-recording-baseline",
+      "sha256": "b2e8ad97f2953f1f8e38a146c40b90285cee0425d7f4724b485f407c7e9fd221",
+      "frames": 662016,
+      "mainRms": [
+        0.011260247377044275,
+        0.01150230342214663
+      ],
+      "maximumZeroRun": 1,
+      "maximumConstantRun": 2
+    },
+    {
+      "label": "maximum-edits-recorded",
+      "sha256": "3fb7eedee1ece24812a304496b4a4045f95cba70c6fbdc462d88330f7edc3416",
+      "frames": 1544192,
+      "mainRms": [
+        0.011101987331179113,
+        0.011302933513042757
+      ],
+      "maximumZeroRun": 1,
+      "maximumConstantRun": 3
+    },
+    {
+      "label": "A02-matched-baseline",
+      "sha256": "e64ac9e551b904b170a2e0ea4fcf9dc962e19474f9cc21d506eea79a19c30f1e",
+      "frames": 485888,
+      "mainRms": [
+        0.010974506154291404,
+        0.011281405941592796
+      ],
+      "maximumZeroRun": 1,
+      "maximumConstantRun": 2
+    },
+    {
+      "label": "A02-edits",
+      "sha256": "40a7b6c31a27646ee06b0169cb9aec37a6f9191ab554fc41aca2556e71f19ef9",
+      "frames": 529920,
+      "mainRms": [
+        0.010965632623278142,
+        0.011185822242405562
+      ],
+      "maximumZeroRun": 1,
+      "maximumConstantRun": 3
+    },
+    {
+      "label": "A03-matched-baseline",
+      "sha256": "19bbf3407e213b9c94134092be82feb2be0cc35eb84a4bf18967e3e68cc9bbda",
+      "frames": 485888,
+      "mainRms": [
+        0.011072521373747675,
+        0.011294094381835538
+      ],
+      "maximumZeroRun": 1,
+      "maximumConstantRun": 3
+    },
+    {
+      "label": "A03-edits",
+      "sha256": "fc1fa1d929d134b6450169d78434ca5e84dd646fff817729871ed8ab1756b13d",
+      "frames": 529920,
+      "mainRms": [
+        0.011061030383589082,
+        0.011144694137820736
+      ],
+      "maximumZeroRun": 1,
+      "maximumConstantRun": 2
+    },
+    {
+      "label": "A04-matched-baseline",
+      "sha256": "33f607f0b0c6666ae851aaf49d4f73276102936faf96cb066afc50f79956c5ff",
+      "frames": 485888,
+      "mainRms": [
+        0.010950797194914258,
+        0.011112349238841829
+      ],
+      "maximumZeroRun": 1,
+      "maximumConstantRun": 2
+    },
+    {
+      "label": "A04-edits",
+      "sha256": "3917aea5d27dafc2bf204987450e08ddb846a67d55072ed1eb31d850995c737c",
+      "frames": 529920,
+      "mainRms": [
+        0.01089595492579525,
+        0.011054712254338354
+      ],
+      "maximumZeroRun": 1,
+      "maximumConstantRun": 2
+    },
+    {
+      "label": "closed-recording-after",
+      "sha256": "8600ae06e00dce9813b6008523d2f07e3676791acff14e1f44b21aeacfadef38",
+      "frames": 662016,
+      "mainRms": [
+        0.010863313930837048,
+        0.011012027331339913
+      ],
+      "maximumZeroRun": 1,
+      "maximumConstantRun": 2
+    }
+  ],
+  "recovery": {
+    "wholeSetStillInRamTrial": false,
+    "keep": false,
+    "flash": false,
+    "projectSave": false,
+    "inventoryPreservedThroughPass": true,
+    "plannedOriginalInventoryAfterUndo": [],
+    "authorFxPreservedDuringTest": true,
+    "runnerStoppedPlaybackAfterCompletion": true,
+    "playbackResumedForAuthor": true,
+    "finalUndoAndReturnToPublicBase": "Verified after author power cycle.",
+    "undoVerified": true,
+    "normalActiveIdentity": "20ed79108facb38d72b1e21105a3fd598bc45b76da39e667d6ad1c9b9a67410e",
+    "emptyInventoryVerified": true,
+    "originalThreeSitesVerified": true,
+    "setIdentity": "87f28e38d5fe18c3f6133158ddb0369f9b62f2a46b0ada8c8fc19de1ca9885e8",
+    "finalStopped": "Author reported after physical restart; independently read stopped before Undo.",
+    "heldKeysClearBeforeRestart": true,
+    "allFourFixturePatternsRestored": true,
+    "publicBaseAfterRestart": "2aa35c3965d13087e7b83ff6f29d17bd6e6b7a59c7ed443e8720684b2b6d157b",
+    "publicBaseRestored": true,
+    "publicFramesAdvancing": true,
+    "usbReleased": true
+  },
+  "limitations": [
+    "Higher-load input fault remains unresolved. This is not a completed saturated-load or responsive-panel qualification.",
+    "This first pass is DSP-heavy; closed-screen main CPU median was 69.4%, or 81.3% with USB recording. It is not main-CPU saturation qualification.",
+    "No precise whole-Apply or scan-phase instrumentation on this loaded candidate, and no complete stack/interrupt bound.",
+    "No direct canonical battery-mirror readback, analog capture, external MIDI stress or long Static streaming qualification.",
+    "Baselines and edit windows have different lengths; maxima alone do not isolate added frame-lateness rates.",
+    "All firmware, packages, Part/pattern bytes, LCD buffers and PCM remain private outside Git."
+  ],
+  "helperHashes": {
+    "run-stress.private.mjs": "9b4bccba13ebfe9638cd5b911db750b45bf1dfc2cc11a30d58d780eb2074e02a",
+    "run-stress-higher.private.mjs": "601d485286339aa3916f64731844d9eda9e9070a1de335300bd3070c5ade28d1",
+    "check-recording-refusal.private.mjs": "135874edd1042ecf4d52da706f2ad79a8974fbc6a569c98f324c997d661f1e30",
+    "processed-audio-metrics.private.py": "4e025153cd0806da24479babcf22e295ec46f2026c8b551cc90c5bcdbb55dce2",
+    "channel-block-check.private.cpp": "90814b04a2e3d08c1369e73a8c29b1ba197fbe5098980e2be81e4203438271e9",
+    "analyse-run.private.py": "43a7fc7aa8bff6891fa94be739c52d25bf435d20dac68740605e53fca91ff56f",
+    "run-stress-feedback.private.mjs": "7368507757261964869b265df010088846575f5fe8dab1446d7bcb6ce569f19d",
+    "run-usb-only.private.mjs": "1a800e8b4d11864f4acf8d07d9a362c321e3f44639776506e276d3df09baf27f",
+    "run-usb-followup.private.mjs": "dbae2b61be4341b02513521a23ace148d0c86d3124ba3120a7d55946454437c8",
+    "run-usb-last-layouts.private.mjs": "374b8f6bd978b5e0e93e5c88564159fd8558443f83d997d6e856e2457263fa04",
+    "run-usb-last-layouts-ack.private.mjs": "e4bbecb71a7a97062116b62e027bf83d91c8828b039cc24b84f8b75833c5d092",
+    "recover-modifier.private.mjs": "afbe78e38fdd28d222ea4966682eaf658626c261a3c5ba1e23d6741a26864a79",
+    "restore-after-stuck-modifier2.private.mjs": "f017cfbd23e81c66aa4aed32ac66f13953b873154b6bda705e5024d1cd21b677",
+    "verify-undo.private.mjs": "f6f89af75c12eb45c8ea9c7d8872b9a0aac4639760964cfb110c74765e948a41",
+    "verify-public-restart.private.mjs": "fc044c5b06c451c9969a600eb133732c7af67d79a8628eaa6af156cc393cc0fd"
+  },
+  "higherLoadSetup": {
+    "fx2": [
+      "E-Verb",
+      "E-Verb",
+      "DELAY",
+      "DELAY",
+      "Air Chorus",
+      "COMPRESSOR",
+      "DELAY",
+      "DELAY"
+    ],
+    "allLfosEnabled": "Author reported; not independently decoded",
+    "userFxSnapshotSha256": "dd0525adcdb700c5552f779cf30ac81f32e9b0817f8dce8509f56cd2894519b6",
+    "savedPartsSha256": "66b31cec3813860cbda99ca783bd9cdd99367ba534d79bc8350f21b296192f67",
+    "workingPartSaved": false
+  },
+  "higherLoadAttempts": [
+    {
+      "id": "run2",
+      "completedSuite": false,
+      "verifiedOperationsBeforeFailure": 1,
+      "failure": "AssertionError [ERR_ASSERTION]: track selection",
+      "started": "2026-10-30T18:41:20.746Z",
+      "finished": "2026-10-30T18:42:00.735Z",
+      "receiptSha256": "a3db956168d02299b0b25f45e5a72682bf6cdc40ae9828b60a05feef0fa1f3ea",
+      "windows": [
+        {
+          "label": "closed-no-recording",
+          "cpuPermille": {
+            "minimum": 877,
+            "median": 912.0,
+            "maximum": 946
+          },
+          "distinctFaderReadings": 0,
+          "timing": {
+            "gapCounts": 49767,
+            "frameMaxCounts": 50137,
+            "lateMaxCounts": 2246,
+            "busy256": 3440938,
+            "frames": 27880,
+            "shedCount": 0,
+            "shedTracks": 0,
+            "share": 38312
+          }
+        },
+        {
+          "label": "closed-recording",
+          "cpuPermille": {
+            "minimum": 918,
+            "median": 971.0,
+            "maximum": 992
+          },
+          "distinctFaderReadings": 0,
+          "timing": {
+            "gapCounts": 62324,
+            "frameMaxCounts": 59786,
+            "lateMaxCounts": 11895,
+            "busy256": 4931423,
+            "frames": 33508,
+            "shedCount": 0,
+            "shedTracks": 0,
+            "share": 38312
+          }
+        },
+        {
+          "label": "selector-no-recording",
+          "cpuPermille": {
+            "minimum": 855,
+            "median": 893,
+            "maximum": 938
+          },
+          "distinctFaderReadings": 0,
+          "timing": {
+            "gapCounts": 53889,
+            "frameMaxCounts": 52382,
+            "lateMaxCounts": 4491,
+            "busy256": 1784728,
+            "frames": 13953,
+            "shedCount": 0,
+            "shedTracks": 0,
+            "share": 38312
+          }
+        },
+        {
+          "label": "confirmation-no-recording",
+          "cpuPermille": {
+            "minimum": 812,
+            "median": 835,
+            "maximum": 873
+          },
+          "distinctFaderReadings": 0,
+          "timing": {
+            "gapCounts": 49344,
+            "frameMaxCounts": 46968,
+            "lateMaxCounts": 0,
+            "busy256": 1710720,
+            "frames": 13980,
+            "shedCount": 0,
+            "shedTracks": 0,
+            "share": 38312
+          }
+        }
+      ],
+      "maximumOperationFrameGapCounts": 48592,
+      "maximumOperationLatenessCounts": 0,
+      "sheddingObserved": false
+    },
+    {
+      "id": "run3",
+      "completedSuite": false,
+      "verifiedOperationsBeforeFailure": 1,
+      "failure": "Error: Menu transition timed out: open Part Edit {\"phase\":0,\"selected\":255,\"replace\":0,\"cursor\":0}",
+      "started": "2026-10-30T18:48:53.318Z",
+      "finished": "2026-10-30T18:49:33.793Z",
+      "receiptSha256": "6ecd6d1bebe4f325dea0449eeed6fa52f27b582e1d1501794f69e96c3234c007",
+      "windows": [
+        {
+          "label": "closed-no-recording",
+          "cpuPermille": {
+            "minimum": 683,
+            "median": 723.0,
+            "maximum": 768
+          },
+          "distinctFaderReadings": 1,
+          "timing": {
+            "gapCounts": 52691,
+            "frameMaxCounts": 50929,
+            "lateMaxCounts": 3038,
+            "busy256": 3414284,
+            "frames": 28111,
+            "shedCount": 0,
+            "shedTracks": 0,
+            "share": 38312
+          }
+        },
+        {
+          "label": "closed-recording",
+          "cpuPermille": {
+            "minimum": 809,
+            "median": 875,
+            "maximum": 943
+          },
+          "distinctFaderReadings": 36,
+          "timing": {
+            "gapCounts": 62712,
+            "frameMaxCounts": 60770,
+            "lateMaxCounts": 12879,
+            "busy256": 4786151,
+            "frames": 33173,
+            "shedCount": 0,
+            "shedTracks": 0,
+            "share": 38312
+          }
+        },
+        {
+          "label": "selector-no-recording",
+          "cpuPermille": {
+            "minimum": 817,
+            "median": 824,
+            "maximum": 961
+          },
+          "distinctFaderReadings": 20,
+          "timing": {
+            "gapCounts": 55472,
+            "frameMaxCounts": 54765,
+            "lateMaxCounts": 6874,
+            "busy256": 1774744,
+            "frames": 14068,
+            "shedCount": 0,
+            "shedTracks": 0,
+            "share": 38312
+          }
+        },
+        {
+          "label": "confirmation-no-recording",
+          "cpuPermille": {
+            "minimum": 767,
+            "median": 831,
+            "maximum": 872
+          },
+          "distinctFaderReadings": 22,
+          "timing": {
+            "gapCounts": 51847,
+            "frameMaxCounts": 51093,
+            "lateMaxCounts": 3202,
+            "busy256": 1749840,
+            "frames": 14066,
+            "shedCount": 0,
+            "shedTracks": 0,
+            "share": 38312
+          }
+        }
+      ],
+      "maximumOperationFrameGapCounts": 49358,
+      "maximumOperationLatenessCounts": 0,
+      "sheddingObserved": false
+    },
+    {
+      "id": "run4-usb",
+      "completedSuite": false,
+      "verifiedOperationsBeforeFailure": 20,
+      "failure": "AssertionError [ERR_ASSERTION]: pattern selection timeout",
+      "started": "2026-10-30T18:56:41.089Z",
+      "finished": "2026-10-30T18:57:38.821Z",
+      "receiptSha256": "4550171c814efa0a17a05d7a92f56c7096f22ee35ce4473f22723daadb4d28af",
+      "windows": [
+        {
+          "label": "closed-recording-baseline",
+          "cpuPermille": {
+            "minimum": 808,
+            "median": 838,
+            "maximum": 882
+          },
+          "distinctFaderReadings": 1,
+          "timing": {
+            "gapCounts": 60657,
+            "frameMaxCounts": 58885,
+            "lateMaxCounts": 10994,
+            "busy256": 7988849,
+            "frames": 55685,
+            "shedCount": 0,
+            "shedTracks": 0,
+            "share": 38312
+          }
+        },
+        {
+          "label": "selector-recording",
+          "cpuPermille": {
+            "minimum": 838,
+            "median": 859,
+            "maximum": 918
+          },
+          "distinctFaderReadings": 1,
+          "timing": {
+            "gapCounts": 61246,
+            "frameMaxCounts": 60628,
+            "lateMaxCounts": 12737,
+            "busy256": 2007962,
+            "frames": 14110,
+            "shedCount": 0,
+            "shedTracks": 0,
+            "share": 38312
+          }
+        },
+        {
+          "label": "confirmation-recording",
+          "cpuPermille": {
+            "minimum": 855,
+            "median": 873,
+            "maximum": 907
+          },
+          "distinctFaderReadings": 1,
+          "timing": {
+            "gapCounts": 60458,
+            "frameMaxCounts": 59155,
+            "lateMaxCounts": 11264,
+            "busy256": 2046265,
+            "frames": 14078,
+            "shedCount": 0,
+            "shedTracks": 0,
+            "share": 38312
+          }
+        }
+      ],
+      "maximumOperationFrameGapCounts": 55840,
+      "maximumOperationLatenessCounts": 6716,
+      "sheddingObserved": false
+    },
+    {
+      "id": "run5-usb",
+      "completedSuite": false,
+      "verifiedOperationsBeforeFailure": 4,
+      "failure": "AssertionError [ERR_ASSERTION]: pattern selection timeout",
+      "started": "2026-10-30T18:59:52.192Z",
+      "finished": "2026-10-30T19:00:59.737Z",
+      "receiptSha256": "c1ff0e9cf1fd0b66d9640220a89efa355ece03e142938da7e8183a706fa78ca8",
+      "windows": [
+        {
+          "label": "closed-recording-baseline",
+          "cpuPermille": {
+            "minimum": 808,
+            "median": 832,
+            "maximum": 883
+          },
+          "distinctFaderReadings": 1,
+          "timing": {
+            "gapCounts": 61422,
+            "frameMaxCounts": 58874,
+            "lateMaxCounts": 10983,
+            "busy256": 7957057,
+            "frames": 55607,
+            "shedCount": 0,
+            "shedTracks": 0,
+            "share": 38312
+          }
+        },
+        {
+          "label": "selector-recording",
+          "cpuPermille": {
+            "minimum": 837,
+            "median": 861,
+            "maximum": 903
+          },
+          "distinctFaderReadings": 1,
+          "timing": {
+            "gapCounts": 60104,
+            "frameMaxCounts": 57543,
+            "lateMaxCounts": 9652,
+            "busy256": 2022864,
+            "frames": 14062,
+            "shedCount": 0,
+            "shedTracks": 0,
+            "share": 38312
+          }
+        },
+        {
+          "label": "confirmation-recording",
+          "cpuPermille": {
+            "minimum": 843,
+            "median": 866,
+            "maximum": 903
+          },
+          "distinctFaderReadings": 1,
+          "timing": {
+            "gapCounts": 61364,
+            "frameMaxCounts": 59519,
+            "lateMaxCounts": 11628,
+            "busy256": 2043616,
+            "frames": 14068,
+            "shedCount": 0,
+            "shedTracks": 0,
+            "share": 38312
+          }
+        },
+        {
+          "label": "A02-recording-baseline",
+          "cpuPermille": {
+            "minimum": 808,
+            "median": 832,
+            "maximum": 882
+          },
+          "distinctFaderReadings": 1,
+          "timing": {
+            "gapCounts": 61869,
+            "frameMaxCounts": 59913,
+            "lateMaxCounts": 12022,
+            "busy256": 2003564,
+            "frames": 14087,
+            "shedCount": 0,
+            "shedTracks": 0,
+            "share": 38312
+          }
+        }
+      ],
+      "maximumOperationFrameGapCounts": 52694,
+      "maximumOperationLatenessCounts": 3274,
+      "sheddingObserved": false
+    },
+    {
+      "id": "run6-usb",
+      "completedSuite": false,
+      "verifiedOperationsBeforeFailure": 0,
+      "failure": "AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:",
+      "started": "2026-10-30T19:01:29.051Z",
+      "finished": "2026-10-30T19:01:30.021Z",
+      "receiptSha256": "c7166287a1d307e362f76ee722752c232ea7077981018081d0b6390ffe71b4ee",
+      "windows": []
+    },
+    {
+      "id": "run7-usb",
+      "completedSuite": false,
+      "verifiedOperationsBeforeFailure": 0,
+      "failure": "AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:",
+      "started": "2026-10-30T19:01:51.536Z",
+      "finished": "2026-10-30T19:01:52.020Z",
+      "receiptSha256": "b8a2a72ab24e8652f1c804c4aedf5cbeabfb66e98671e2e76d502d8ba9a79a26",
+      "windows": []
+    }
+  ],
+  "inputFailure": {
+    "authorReported": [
+      "Physical STOP did not stop playback.",
+      "STOP displayed a paste message; author suspected held FUNC."
+    ],
+    "readback": {
+      "sampleLocksPhase": 0,
+      "nativePopupOpen": false,
+      "consumedKeyMasks": [
+        0,
+        0
+      ],
+      "heldKeyNames": [
+        "TRIG5",
+        "TRIG6",
+        "TRIG7"
+      ],
+      "heldFuncInRowReadback": false,
+      "dspFramesAdvancing": true,
+      "dspErrors": 0,
+      "dspStalls": 0
+    },
+    "unexpectedPatternChanges": {
+      "pattern": "A02",
+      "initialMissingSampleFields": 5,
+      "settledMissingSampleFields": 6,
+      "otherPatternBytesChanged": false,
+      "otherFixturePatternsChanged": false,
+      "workingPartsChanged": false,
+      "cause": "Unresolved. Attribution to module, base, USB development input or physical input is not established."
+    },
+    "recovery": {
+      "releasedReportedHeldTrigs": true,
+      "isolatedFuncPressRelease": true,
+      "remoteStopThenSucceeded": true,
+      "heldRowsAfter": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "nativeLockRestoredSampleFields": 6,
+      "allFourPatternsComparedAndRestored": true,
+      "workingAndSavedPartsHashesPreserved": true
+    },
+    "qualificationConsequence": "Higher-load run failed. Successful individual edits and continuous audio do not qualify responsive controls or CPU saturation.",
+    "isolationFollowup": {
+      "hardware": false,
+      "moduleInventory": [],
+      "sameDevelopmentBase": true,
+      "dspEnabled": false,
+      "confirmed": "USB development KEY interleaving with a split physical fader report reproduced TRIG5-7 held and lost FUNC release.",
+      "scope": "Independent input-path bug confirmed. Strong explanation for hardware signature; every unintended hardware edit remains unattributed.",
+      "fixAndFreshHardwareRerun": "Outstanding",
+      "receipt": "input-isolation-emulator-20261031.json"
+    }
+  },
+  "fixedSliderAudio": {
+    "run4-usb": {
+      "frames": 7056384,
+      "sampleRate": 44100,
+      "seconds": 160.0087074829932,
+      "sha256": "9e385deeac1eb097ff2d5be7c754ff98b8a6f114f12f580da3f79e3e188ae8d2",
+      "perChannelRepeated16SampleBlocks": 0,
+      "measuredChannels": 18,
+      "qualification": "Descriptive USB output checks; do not override input/data qualification failure.",
+      "maximumZeroRun": 1,
+      "maximumConstantRun": 3,
+      "mainMetrics": [
+        {
+          "channel": 17,
+          "rms": 0.011269313876247427,
+          "peak": 0.05510175181552768,
+          "zeroRunMax": 1,
+          "constantRunMax": 2,
+          "clippedFraction": 0.0,
+          "rms100msMinimum": 0.009014795894404475,
+          "rms100msMaximum": 0.01593966933289104
+        },
+        {
+          "channel": 18,
+          "rms": 0.011299321127138138,
+          "peak": 0.05427634669467807,
+          "zeroRunMax": 1,
+          "constantRunMax": 2,
+          "clippedFraction": 0.0,
+          "rms100msMinimum": 0.009080071193018048,
+          "rms100msMaximum": 0.01572669511134446
+        }
+      ],
+      "wholeStreamRepeated16FrameBlocks": 0
+    },
+    "run5-usb": {
+      "frames": 7056384,
+      "sampleRate": 44100,
+      "seconds": 160.0087074829932,
+      "sha256": "df297d2d39f9d2e3138d0cde38874793b34eaa9b9bed0d2ac0e70f07ac8153e7",
+      "perChannelRepeated16SampleBlocks": 0,
+      "measuredChannels": 18,
+      "qualification": "Descriptive USB output checks; do not override input/data qualification failure.",
+      "maximumZeroRun": 1,
+      "maximumConstantRun": 3,
+      "mainMetrics": [
+        {
+          "channel": 17,
+          "rms": 0.011299377445756247,
+          "peak": 0.057698845397681,
+          "zeroRunMax": 1,
+          "constantRunMax": 2,
+          "clippedFraction": 0.0,
+          "rms100msMinimum": 0.009182311418271886,
+          "rms100msMaximum": 0.015464124061188793
+        },
+        {
+          "channel": 18,
+          "rms": 0.011330871035824561,
+          "peak": 0.05719757033511996,
+          "zeroRunMax": 1,
+          "constantRunMax": 2,
+          "clippedFraction": 0.0,
+          "rms100msMinimum": 0.008987801042341492,
+          "rms100msMaximum": 0.015965381426316073
+        }
+      ],
+      "wholeStreamRepeated16FrameBlocks": 0
+    }
+  },
+  "helperCorrections": [
+    "Stopped-switch follow-up asserted transport too soon and made no edits.",
+    "Recovery precondition found a sixth missing SAMPLE field and refused before any write.",
+    "Native recovery wrote six fields, then the reused maximum-size harness wrongly expected 64 publication guards instead of six; independent full-pattern readback verified recovery.",
+    "Initial post-Undo site comparison used the wrong MAIN image origin; corrected to OS_ENTRY 0x40000400 from boot.s, then all three sites matched."
+  ]
+}

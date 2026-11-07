@@ -1,0 +1,31 @@
+[
+  {
+    "version": "0.1.2-experimental",
+    "date": "2026-11-06",
+    "changes": [
+      "A jack in ACTION mode with ACTION set to OFF is no longer read in every audio block, which leaves the Rytm more CPU for everything else. Its bars still show the level.",
+      "With no jack in ACTION mode the mod's audio work is now a two-byte check.",
+      "Actions play exactly as in 0.1.1."
+    ]
+  },
+  {
+    "version": "0.1.1-experimental",
+    "date": "2026-11-04",
+    "changes": [
+      "The input is now read 1,500 times a second and acts at once; before, an action could come up to about 80 ms late, enough to start REC HLD or REC TGL's sequencer late.",
+      "A footswitch's bounce is ignored for 10 ms after each press or release.",
+      "The bars' right-hand line now moves with the actions.",
+      "Changing the levels or REVERSE DIRECTION no longer plays the action by itself."
+    ]
+  },
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-03",
+    "changes": [
+      "First release, for Analog Rytm MKII OS 1.74: a new ACTION mode in GLOBAL > CONTROL > CONTROL INPUT 1 and 2.",
+      "A footswitch or a 0 to 5 V gate holds or toggles the MUTE screen or live recording, or holds or latches FILL.",
+      "Bars beside the menu show the input and when it counts as pressed; ACTION LEARN reads a footswitch's levels.",
+      "NO in EXPRESSION LEARN and ACTION LEARN now keeps the levels you had."
+    ]
+  }
+]

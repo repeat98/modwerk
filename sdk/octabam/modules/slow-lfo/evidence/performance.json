@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "module": "slow-lfo",
+  "version": "0.1.0-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": 768,
+    "measured": 207,
+    "budget": 95778,
+    "method": "One event is one frame's LFO pass: the audio engine (0x4000cfa8) and the MIDI engine (0x40003c0e) run every LFO once a frame inside the frame interrupt. Instructions, not chip cycles. Static: an upper bound counted from unit.s, 16 instructions an LFO at MULT 1/2X..1/8X (detour jmp, muls, mvz, subq, bmi, addq, asr, move, jmp at the rate step; detour jmp, mvz, cmpi, bls, moveq, cmp, jmp at the MULT load), 768 for all 24 audio and 24 MIDI LFOs. Measured under ot_emu --mkii --dsp --frame (octabam port), 5 Nov 2026, the load run below: the module image with all 24 audio LFOs at 1/8X executed 207 more instructions a frame on average than the stock-effects image (5,112,556,433 against 5,077,181,996 over 170,898 and 170,902 frames); the MIDI engine did not run (the project plays no MIDI track). Budget: one frame, 362.8 us at 264 MHz (95,778)."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": 144.3,
+    "moduleLongestUs": 145.3,
+    "stockIdlePercent": 53.46,
+    "moduleIdlePercent": 53.14,
+    "method": "Emulator, not hardware: ot_emu --mkii --dsp --frame (octabam port, out/emu/ot_emu), 5 Nov 2026. Two native images from octabam's test remix slow-lfo built with make bus: Slow LFO with the stock effects (bdd9d88e...) and the same remix without Slow LFO (0cdb8495...), both kept local. verify.py's staged test project, transport playing from --sequencer --internal-clock, 62 s (170,887 frames); on the module image all 24 audio LFOs' live MULT lanes (0x80000810 + 72t + 0x3e + l) poked to 9 (1/8X) after the load, on the stock image left at the project's values. The same MIDI flood on both: one three-byte message every emulated ms (note on, CC, note off in turn on channels 1-8, notes 72-96, CCs 16-39), a clock byte every 10 ms (250 BPM), STOP at 7, 22, 37 and 52 s and START one second after each. Longest frame interrupt: the most instructions from the frame handler's entry 0x4000aad4 to its epilogue 0x4000d9a6 between the first and last MIDI handler entry, priced in the port's time (3,990 instructions a sample: 362.8 us = 63,840): 25,388 stock, 25,574 with Slow LFO (+186, about 1.1 us). Idle: 100 x (1 - executed instructions / (3,990 x 16 x frames)) over the same window."
+  },
+  "stress": {
+    "floodMessagesPerSecond": 1000,
+    "clockBpm": 250,
+    "seconds": 62,
+    "stuckNotes": 0,
+    "hangs": 0,
+    "dropped": 0,
+    "droppedExplanation": "Emulator, not hardware, the run above: 62,000 three-byte messages (20,667 note on, 20,666 note off, 20,667 CC), 6,200 clock bytes and four STOP and START pairs. Dropped: PC watches on the MIDI handlers (note on 0x4000e018, note off 0x4000db98, CC 0x4000e79c, clock 0x40005a48) counted every message on both images; the module image's CC watch counted one entry more than was sent (20,668), the stock image's none, cause not found (Arp Key Locks' record notes a watch counting one entry twice). Stuck notes: every note on has its note off and every note off reached its handler; nothing was listened to and the module touches no MIDI path. Hangs: the frames ran to the end on both images and the run ended on its own frame count. Not covered: MIDI-track LFOs (no MIDI track plays in this project), a Part change during the run."
+  }
+}

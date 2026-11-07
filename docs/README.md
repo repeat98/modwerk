@@ -2,7 +2,7 @@
 
 Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which to read first for a task.
 
-**Keep them short.** `AGENTS.md` and every document here may grow to 32 KB, and one already longer may shrink but not grow: `npm run check` refuses an edit that only adds to it. Make room by cutting what is stale or said elsewhere; Git keeps the history. A new document gets a line here (a test checks).
+**Keep them short.** `AGENTS.md` and every document here may grow to 40 KB, and one already longer may shrink but not grow: `npm run check` refuses an edit that only adds to it. Make room by cutting what is stale or said elsewhere; Git keeps the history. A new document gets a line here (a test checks).
 
 **History goes in dated records, not in a guide.**
 
@@ -49,6 +49,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [OCTATRACK_MODULE_EDGE_CASES.md](OCTATRACK_MODULE_EDGE_CASES.md): what can go wrong across projects, Parts and power cycles.
 - [OCTATRACK_MORE_EFFECT_IDS.md](OCTATRACK_MORE_EFFECT_IDS.md): more than 32 effect ids.
 - [OCTATRACK_PACKAGE_DSP_HOOKS.md](OCTATRACK_PACKAGE_DSP_HOOKS.md): design: stock-DSP hooks and DSP memory claims that packages carry.
+- [OCTATRACK_RECONSTRUCTION.md](OCTATRACK_RECONSTRUCTION.md): source-bound USB packaging and explicit USB-only distribution.
 - [OCTATRACK_RESIDENT_ENGINES_ON_DEMAND.md](OCTATRACK_RESIDENT_ENGINES_ON_DEMAND.md): design: resident engines loaded on demand.
 - [OCTATRACK_DSP_WINDOW.md](OCTATRACK_DSP_WINDOW.md): record: the DSP receiver's packet operations in the shared window, FX2 swaps keeping their block (28 October 2026).
 - [OCTATRACK_ELEKLOADER_MIGRATION.md](OCTATRACK_ELEKLOADER_MIGRATION.md): the move to one Elekloader builder and USB loading, as dated plans and checkpoints from 9 October.
@@ -62,6 +63,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [SYNTAKT_OS_RESEARCH.md](SYNTAKT_OS_RESEARCH.md), [TONVERK_OS_RESEARCH.md](TONVERK_OS_RESEARCH.md), [DIGITONE_II_OS_RESEARCH.md](DIGITONE_II_OS_RESEARCH.md): what each stock OS has shown so far.
 - [LXR_02.md](LXR_02.md): the Erica Synths LXR-02, in research.
 - [ZOOM_MULTISTOMP.md](ZOOM_MULTISTOMP.md) and [ZDL_MODULE_CONTRACT.md](ZDL_MODULE_CONTRACT.md): proposals for Zoom MultiStomp pedals and their effect files.
+- [ZOOM_ZD2.md](ZOOM_ZD2.md): the Zoom G1 FOUR and its ZD2 effects, in research.
 - [MACHINE_IMAGES.md](MACHINE_IMAGES.md): where each machine photo comes from, and its terms.
 
 ## Site and backend
@@ -87,6 +89,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 
 History, not current instructions.
 
+- [FRACT consolidation](verification/2026-11-04-fract-consolidation.md): source draft, native FLEX support, source checks and review limits for #926, 4 November 2026.
 - [OCTATRACK_USB_CHECKPOINT.md](OCTATRACK_USB_CHECKPOINT.md) and [OCTATRACK_BETA_HANDOVER.md](OCTATRACK_BETA_HANDOVER.md): handovers frozen on 12 October 2026.
 - [REPITCH_ORIGINAL_TEMPO_CHECK.md](REPITCH_ORIGINAL_TEMPO_CHECK.md): a check of 8 October 2026.
 - [FORUM_LAUNCH.md](FORUM_LAUNCH.md), [MODWERK_INTEGRATION.md](MODWERK_INTEGRATION.md) and [MODWERK_PLAN.md](MODWERK_PLAN.md): the launch evidence, the combined release and the draft plan of record, 3 to 4 October 2026.

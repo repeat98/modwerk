@@ -124,6 +124,26 @@ def engines(capabilities, dsp_words):
     return engine_capabilities, engine_words
 
 
+def titled(data, name):
+    """A C package that subscribes to no event: build.py makes it ABI 4, with no name, and the site publishes only ABI 6
+    and later. Repacked as the ABI 8 package build.py makes for a subscribing one (build_c: its trailing empty hook
+    words dropped, its stem as its unit name), which the base's loader reads, so the unit's inventory names it too.
+    Any other package comes back as it is. Here, not in the builder, whose source the base pins."""
+    if struct.unpack_from('>H', data, 4)[0] != 4:
+        return data
+    spec = importlib.util.spec_from_file_location('octatrack_runtime_builder', APP / 'sdk/runtime/loader/build.py')
+    runtime = importlib.util.module_from_spec(spec); spec.loader.exec_module(runtime)
+    flags, image, bss, count, hooks, sites, ident = struct.unpack_from('>HIIIIII', data, 6)
+    at = 32 + 4 * hooks
+    if flags or sites or ident != runtime.module_id(name) or len(data) != at + image + 4 * count:
+        raise ValueError('%s: not the ABI 4 package build.py makes from C sources.' % name)
+    words = list(struct.unpack_from('>%dI' % hooks, data, 32))
+    while words and words[-1] == runtime.NONE:
+        words.pop()
+    return runtime.package(data[at:at + image], bss, words, list(struct.unpack_from('>%dI' % count, data, at + image)),
+                           name=name, abi=8, hashed=True, title=name[:15])
+
+
 def main():
     spec = importlib.util.spec_from_file_location(
         'octatrack_module_packages', APP / 'sdk/machines/octatrack/elekloader/module_packages.py')
@@ -146,8 +166,8 @@ def main():
     if build:
         builder.build = named_build
     # A C runtime module: its row's "sources", "subscribe" and "raise" go to build.py as they are. It has no card form
-    # (src/catalog/usb-only.ts). build.py takes its id and unit name from the output's stem, so build at <id>.mwrm.
-    # Here, not in the builder, whose source the base pins.
+    # (src/catalog/usb-only.ts). build.py takes its id and unit name from the output's stem, so build at <id>.mwrm; one
+    # with no events goes out as ABI 8 too (titled()). Here, not in the builder, whose source the base pins.
     sourced, tools = getattr(builder, 'build', None), getattr(builder, 'tools', None)
     def c_build(entry, out, *args, **kwargs):
         if not entry.get('sources'):
@@ -157,11 +177,47 @@ def main():
                         *[arg for hook in entry.get('subscribe', []) for arg in ('--subscribe', hook)],
                         *[arg for event in entry.get('raise', []) for arg in ('--raise', event)], '-o', str(named)],
                        check=True, capture_output=True, text=True, cwd=APP)
-        out.write_bytes(named.read_bytes())
+        out.write_bytes(titled(named.read_bytes(), entry['id']))
         return out.read_bytes()
     if sourced and tools:
         builder.build = c_build
         builder.tools = lambda entry, upstream: bool(shutil.which('m68k-elf-gcc')) if entry.get('sources') else tools(entry, upstream)
+    # A package that carries an engine (hook_engines.PACKAGES, built through base_bound) also needs the native DSP
+    # assembler, found as base_bound finds it. Without one, --check skips it as it skips the rest, and says why.
+    gated = getattr(builder, 'tools', None)
+    def engine_tools(entry, upstream):
+        if not entry.get('base'):
+            return gated(entry, upstream)
+        adapters = str(APP / 'sdk/machines/octatrack/module-adapters')
+        if adapters not in sys.path:
+            sys.path.append(adapters)
+        import base_bound
+        import hook_engines
+        if entry['id'] in hook_engines.PACKAGES and not (
+                os.environ.get('ELEKLOADER_DSP_ASM') or shutil.which('dsp_asm') or base_bound.DSP_ASM.is_file()):
+            print('%-18s needs dsp_asm: ELEKLOADER_DSP_ASM, PATH, or `npm run upstream:tools` with octabam built' % entry['id'])
+            return False
+        return gated(entry, upstream)
+    if gated:
+        builder.tools = engine_tools
+    # An SDK-owned recipe preserves an ordinary CF runtime's exact tested
+    # image while shipping guarded stock copies. This host layer keeps the
+    # base's pinned builder and existing standalone declarations unchanged;
+    # shared-input refreshes belong to the SDK change, outside module folders.
+    ordinary = getattr(builder, 'build', None)
+    def reconstructed_build(entry, out, *args, **kwargs):
+        if 'reconstruction' not in entry:
+            return ordinary(entry, out, *args, **kwargs)
+        spec = importlib.util.spec_from_file_location('octatrack_host_reconstruction', APP / 'scripts/octatrack-reconstruction.py')
+        reconstruction = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(reconstruction)
+        reconstruction.module_folder(APP, entry)
+        data = ordinary(entry, out, *args, **kwargs)
+        data = reconstruction.reconstruct(APP, entry, data, stock_at=kwargs.get('stock_at'))
+        out.write_bytes(data)
+        return data
+    if ordinary:
+        builder.build = reconstructed_build
     # The qualified builder's JSON:KEY syntax predates Windows drive letters.
     # Use its documented relative-path form, without altering any base input.
     builder.DSP = builder.DSP.relative_to(APP)

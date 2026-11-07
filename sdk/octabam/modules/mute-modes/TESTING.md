@@ -1,6 +1,69 @@
 # Mute Modes measurements
 
-Recorded 7 October 2026 for `0.1.0-experimental`; 0.2.0 and 0.2.1 below, upstream `6f9e5bc9db0ae9fa99fa2f2a0f4de1fdb8e9a136`.
+Recorded 7 October 2026 for `0.1.0-experimental`; 0.2.0, 0.2.1 and 0.2.2 below, upstream `6f9e5bc9db0ae9fa99fa2f2a0f4de1fdb8e9a136` (0.2.2: sambanks/octabam `08bffd529c0f301708bcb2d48759e54e11f59858`).
+
+## 0.2.2: OT-exit hold, a track still muted when MUTE MODE leaves OT stays cut (3 November 2026)
+
+- **The change.** In MUTE MODE OT, stock plays a muted track's trigs under its post-FX cut. When MUTE MODE was switched to a soft mode while a track was muted, the track went to that mode at once: DT-T leaves a sounding voice alone, so the note started in OT played to its end at full level (a looping sample kept going), and OTFX-T and OTFX let one frame through. Now OT holds every track: a track still muted when MUTE MODE leaves OT keeps stock's post-FX cut until it is unmuted, and its trigs are dropped as for any silenced track. KEYHOLD becomes UNHELD, the same hold stored inverted (bit set = not held) and placed before SHADOW, so OT's `clr.b SHADOW` became one `clr.w` over both. The plain unit (without Sidechain Compressor) gets the hold too. The question came from sambanks/octabam#1013.
+- **Source.** The author's files byte for byte at Zac-Kyoti/octatrack-kyoti-fw `bb9beada9248fdae13bee32684a7f2564e586f6c` (`modwerk-modules/mute-modes/`); `sdk/imports/mute-modes-bb9bead.json` replaces `mute-modes-826d23e.json`. Assembled without `MODWERK_EVENTS`: plain softmute `64d876ca…` (996 bytes at 0x400d7400, was 970), SC_KEY softmute `e622ca6b…` (1106 bytes at 0x400d6e54, was 1100), menu `4c6702aa…` (unchanged).
+- **Native probe.** `probe.cpp` takes every unit address from the new units' symbol tables, and frame cases start with UNHELD = 0xff (nothing held). New checks in both units, for each soft mode and mute mask: an OT frame clears UNHELD and SHADOW; the next soft-mode frame keeps the post-FX cut for every track that was muted; unmuting some tracks while muting others keeps the hold only on held tracks that are still muted, and the new mutes follow MUTE MODE (or stay cut as a KEY); unmuting all releases it. Changing any of the new expectations makes the probe fail. 4,353,132 cases pass. The hold adds three instructions to the SC_KEY frame path (worst bound 3,392 to 3,440, in OTFX) and nine to the plain one (2,032 to 2,176); the per-trig paths are unchanged. The opt-in emulator test `sdk/tests/test_mute_modes_runtime.py` passes with this source.
+- **Tested image.** A static native octabam build of Sidechain Compressor and Mute Modes with every stock effect kept, made the same way as MW_MMKH1 below: MAIN OS SHA-256 `d8267756d27485d51032e4b231538c397afc227d38664a788b258572063dcbeb`, `mm_softmute` (SC_KEY, 1106 bytes) at 0x400d7280. Wrapped with Elektron's firmware tool, OS VERSION `MW_MMOH1`: card file `2e55f106…`, syx `ef1077cd…`.
+
+### Hardware report (MKI, 3 November 2026)
+
+The author flashed MW_MMOH1 (above) on his Octatrack MKI. He reported every step passing:
+
+- A track muted in OT stays silent when MUTE MODE is switched to DT-T, and plays normally when unmuted.
+- An ordinary DT-T mute of a sounding track still lets the note play out.
+- In DT-T, a muted track resting as a COMPRESSOR's KEY stays silent when KEY moves to another track.
+- MUTE MODE survives a power cycle.
+
+The same `mm_softmute` source passed the same checks on that unit as his standalone image, its Bugbuild, KYOTI V1.7 and the octabam form (OCTABAM39).
+
+## 0.2.2: KEYHOLD, a muted side-chain KEY track stays cut (2 November 2026)
+
+- **The change.** With a module that answers `ev_mute_keep` (Sidechain Compressor), a muted track that a COMPRESSOR uses as its KEY plays its trigs, cut after the FX as on stock. When KEY moved to another track, the muted track went back to its MUTE MODE: DT-T leaves a sounding voice alone, so the note it had started as a KEY played out at full level (a looping sample kept going), and OTFX-T and OTFX let one frame through. KEYHOLD is one byte after KEYMASK: a muted track that has been a KEY keeps stock's post-FX cut until it is unmuted, and its trigs are still dropped. Reported on sambanks/octabam#934; the same change is pinned there by PR #1013.
+- **Source.** The author's files byte for byte at Zac-Kyoti/octatrack-kyoti-fw `826d23e16334285edee9c073426bfe76fcca463c` (`modwerk-modules/mute-modes/`); `sdk/imports/mute-modes-826d23e.json` replaces `mute-modes-c5b24d0.json`. Assembled without `MODWERK_EVENTS`: plain softmute `ca7792be…` (970 bytes at 0x400d7400, unchanged), SC_KEY softmute `ac03f559…` (1100 bytes at 0x400d6e54, KYOTI V1.7's placement), menu `4c6702aa…` (unchanged).
+- **Native probe.** `qualification/run.py` with the new SC_KEY reference; `probe.cpp` loads the SC_KEY unit at its new origin, clears KEYHOLD with SHADOW before each case, and adds three checks per mode and mask pair: the hold is set for silenced key tracks, a frame with the keys gone keeps their post-FX cut, and unmuting releases it. 3,563,628 cases pass. KEYHOLD adds three instructions to the SC_KEY frame path (worst bound 3,344 to 3,392); the plain paths are unchanged.
+- **Port.** In the author's octabam emulator, the native image below in DT-T with T1 COMPRESSOR, T7 muted and resting as KEY, then KEY moved mid-pattern: T7 stays silent until it is unmuted (the 0.2.1-era unit plays it at full level).
+- **Tested image.** A static native octabam build of Sidechain Compressor and Mute Modes with every stock effect kept (`scripts/export-composition-proofs.py --select sidechain-compressor+mute-modes:true --image-dir`, in the `modwerk-source-tools` container): MAIN OS SHA-256 `2dfce546cb1eb5e854ab69c7089c87e169355510f888baf9637a18e5f12b0e40`, `mm_softmute` (SC_KEY) at 0x400d7280. Wrapped with Elektron's firmware tool, OS VERSION `MW_MMKH1`: card file `d5d658d4…`, syx `ea08ce11…`.
+
+### Hardware report (MKI, 3 November 2026)
+
+The author flashed MW_MMKH1 (above) on his Octatrack MKI. He reported every step passing:
+
+- In DT-T, with T1 COMPRESSOR and T7 muted, KEY resting on T7 past step 1 and then turned to T6 or T8: T7 stays silent.
+- With KEY on the muted T7, T1 still ducks to it.
+- Unmuting T7 brings it back normally.
+- A non-KEY track muted while its sample plays still plays to its end (DT-T as before).
+- MUTE MODE sits after PREVIEW WITHOUT FX and survives a power cycle.
+
+The same `mm_softmute` source passed the same KEYHOLD checks on that unit in an octabam image (OCTABAM37) and in KYOTI V1.7.
+
+## 0.2.2: SHADOW out of the stock timestretch task's SRAM (27 October 2026)
+
+- **The change.** Hook 1 (`pre`) keeps a one-byte silenced set, SHADOW. Until 0.2.1 it was SRAM `0x80006c66`, inside the work area of a stock ColdFire task that runs the timestretch splice search and transient detection while tracks play, and refills that area with audio on every grain. In OTFX an audio byte read back as the previous frame's silenced set could swallow a newly muted track's note-off, so the mute did not take; and `pre`'s per-frame write landed in the task's search window. SHADOW is now a byte inside `mm_softmute`, right after KEYMASK (it takes KEYMASK's alignment pad, so the SC_KEY unit stays 1086 bytes). Every SHADOW operand is absolute long, so only those seven operands and, in the plain unit, the new byte and its pad (968 to 970 bytes) differ from 0.2.1. sambanks/octabam pins the same change at `a1e0288` (PR #928).
+- **Source.** `patch_softmute.s`, `patch_mutemode.s`, `manifest.py` and `runtime.json` are the author's files byte for byte at Zac-Kyoti/octatrack-kyoti-fw `c5b24d0763698c6775757cce15b6971af952bfb3` (`modwerk-modules/mute-modes/`, the author's Modwerk copy: 0.2.1's sources with Modwerk's `MODWERK_EVENTS` blocks, plus this change). `sdk/imports/mute-modes-c5b24d0.json` records their Git blobs and SHA-256s. Assembled without `MODWERK_EVENTS`: plain softmute `ca7792be…` (970 bytes at 0x400d7400), SC_KEY softmute `9be6df77…` (1086 bytes at 0x400d74e4), menu `4c6702aa…` (unchanged), the `reference` hashes in `manifest.py`.
+- **Native probe.** `qualification/run.py` with this version's references; `probe.cpp` now clears the unit's SHADOW byte before each frame case instead of the SRAM address. 3,170,412 cases pass, with the same instruction counts, model cycles, core-cycle bounds and stack peaks as 0.2.1 on every path (`evidence/probes.json` is unchanged; `evidence/source-identity.json` names the new references). Emulator build: this checkout's `sdk/octabam/tools/emu/ot_emu`, mc68k `4a6d0d17a1f2b30077ab726c27fe9bb770fa0456`, in the reviewed container.
+- **Tested image.** A static native octabam build of this module alone with every stock effect kept (`scripts/export-composition-proofs.py --select mute-modes:true --image-dir`, in the `modwerk-source-tools` container, from Modwerk commit `0d0566ff5d060a7f1272a2b0bdf7ee81a53f9ebb`): MAIN OS SHA-256 `446ece69c1fcf7d19a2c726d8fa1029f218e01780e3ac4c194d4c9a61e527573`, `mm_softmute` placed at 0x400d6b80 with SHADOW at 0x400d6f48, and no word of the image points into the stock task's area. Wrapped for the card with Elektron's firmware tool, OS VERSION `MW_MM022`: card file SHA-256 `ebc5c3e3bd95f15f13928338258cb4e5e511736507f54ea2a41c5bacebdcbbb4`. The captures and the hardware report below are on this image. Under the octabam port (route A, OT DEMO project) the author's logic check passes on it: OT keeps SHADOW at 0 and never writes the old address; OTFX with T2 muted gives one note-off for T2; with `0xff` poked into the old address (what the timestretch task can leave) a following mute of T3 still gets its note-off.
+- **Screenshots.** Re-captured on the tested image with `scripts/capture-module-ui.py` and 0.1.0's plan (`media/capture.json`); the pages are unchanged.
+
+### Hardware report (MKI, 27 October 2026)
+
+The author flashed the card image above on his Octatrack MKI and used it for about ten minutes. He reported every step passing:
+
+- PROJECT > SYSTEM > PERSONALIZE: MUTE MODE sits after PREVIEW WITHOUT FX and cycles OT, OTFX, OTFX-T and DT-T.
+- In each mode, muting and unmuting audio tracks while a pattern plays behaves as described: OT the stock cut; OTFX the dry cut with FX tails; OTFX-T the same with new trigs suppressed; DT-T the sounding note playing out on its amp envelope.
+- Solo in OTFX silences the other tracks the OTFX way.
+- With timestretched loops (TSTR AUTO or NORM) on several tracks, 20 to 30 mutes and unmutes in OTFX of one of them all took.
+- Part save and reload, and project save, load and reload, keep the behaviour and the MUTE MODE setting.
+- MUTE MODE survives a power cycle.
+
+### Not tested in 0.2.2
+
+- An MKII; the USB package on a unit; Mute Modes beside modules other than Sidechain Compressor on a unit (beside Sidechain Compressor: MW_MMKH1, above).
+- Chip timing, frame-interrupt load or a stress run. The cycle figures in `tests.qualification` are conservative V4 core-path bounds from the probe, not wall-clock measurements.
+- `sdk/machines/octatrack/module-adapters/loader_mute_keep_fixture.cpp` still seeds and reads SHADOW at `0x80006c66`; its test runs only with a private stock image and the native emulator archives, and was not run for this version.
 
 ## 0.2.1: ev_mute_keep and the install-time MUTE MODE restore (prepared 14 October 2026, not released)
 
@@ -44,19 +107,39 @@ Before measuring, four port regressions passed: `emac`, `periph`, `mc68kColdFire
 |---|---:|---:|---:|---:|---:|
 | dispatch | 57344 | 21 | 37 | 336 | 12 |
 | frame-mode-0 | 131072 | 13 | 26 | 208 | 16 |
-| frame-mode-1 | 131072 | 118 | 210 | 1888 | 24 |
-| frame-mode-2 | 131072 | 30 | 52 | 480 | 16 |
-| frame-mode-3 | 131072 | 127 | 170 | 2032 | 24 |
+| frame-mode-1 | 131072 | 127 | 222 | 2032 | 24 |
+| frame-mode-2 | 131072 | 39 | 64 | 624 | 16 |
+| frame-mode-3 | 131072 | 136 | 182 | 2176 | 24 |
 | fresh-bind | 57344 | 22 | 33 | 352 | 8 |
+| hold-frame-mode-1 | 512 | 124 | 218 | 1984 | 24 |
+| hold-frame-mode-2 | 512 | 36 | 60 | 576 | 16 |
+| hold-frame-mode-3 | 512 | 133 | 178 | 2128 | 24 |
+| hold-ot-frame | 768 | 13 | 26 | 208 | 16 |
+| hold-release-frame-mode-1 | 256 | 36 | 65 | 576 | 16 |
+| hold-release-frame-mode-2 | 256 | 36 | 60 | 576 | 16 |
+| hold-release-frame-mode-3 | 256 | 37 | 64 | 592 | 16 |
 | menu-get | 54 | 12 | 26 | 192 | 0 |
 | menu-set | 54 | 24 | 46 | 384 | 0 |
 | mt-trig | 57344 | 21 | 34 | 336 | 4 |
 | rebind | 57344 | 20 | 32 | 320 | 0 |
 | sidechain-frame-mode-0 | 65536 | 13 | 26 | 208 | 16 |
-| sidechain-frame-mode-1 | 65536 | 200 | 382 | 3200 | 24 |
-| sidechain-frame-mode-2 | 65536 | 136 | 232 | 2176 | 20 |
-| sidechain-frame-mode-3 | 65536 | 209 | 342 | 3344 | 24 |
+| sidechain-frame-mode-1 | 65536 | 206 | 390 | 3296 | 24 |
+| sidechain-frame-mode-2 | 65536 | 142 | 240 | 2272 | 20 |
+| sidechain-frame-mode-3 | 65536 | 215 | 350 | 3440 | 24 |
 | sidechain-fresh-bind | 2097152 | 17 | 35 | 272 | 8 |
+| sidechain-hold-frame-mode-1 | 65536 | 206 | 390 | 3296 | 24 |
+| sidechain-hold-frame-mode-2 | 65536 | 118 | 232 | 1888 | 20 |
+| sidechain-hold-frame-mode-3 | 65536 | 215 | 350 | 3440 | 24 |
+| sidechain-hold-ot-frame | 196608 | 13 | 26 | 208 | 16 |
+| sidechain-ot-exit-frame-mode-1 | 131072 | 206 | 390 | 3296 | 24 |
+| sidechain-ot-exit-frame-mode-2 | 131072 | 142 | 240 | 2272 | 20 |
+| sidechain-ot-exit-frame-mode-3 | 131072 | 215 | 350 | 3440 | 24 |
+| sidechain-ot-exit-release-mode-1 | 65536 | 142 | 245 | 2272 | 20 |
+| sidechain-ot-exit-release-mode-2 | 65536 | 142 | 240 | 2272 | 20 |
+| sidechain-ot-exit-release-mode-3 | 65536 | 143 | 244 | 2288 | 20 |
+| sidechain-release-frame-mode-1 | 65536 | 118 | 237 | 1888 | 20 |
+| sidechain-release-frame-mode-2 | 65536 | 118 | 232 | 1888 | 20 |
+| sidechain-release-frame-mode-3 | 65536 | 119 | 236 | 1904 | 20 |
 | trig-flag | 57344 | 19 | 30 | 304 | 0 |
 
 Model cycles use mc68k `4a6d0d17a1f2b30077ab726c27fe9bb770fa0456`, its MCF5206E timing model, cache-hit and zero-wait assumptions. They are not MCF5445x wall-clock measurements. V4 core bounds charge 16 cycles per ordinary instruction and 38 per long divide: a deliberately conservative envelope over the actual supported forms, branch misprediction, return prediction and up to three pipeline stalls per instruction. Sources use aligned data except documented stock accesses. The basis is [MCF54455 Reference Manual](https://www.nxp.com/docs/en/reference-manual/MCF54455RM.pdf), section 3.3.5, tables 3-12 through 3-20 (long divide <=35, return <=9, conditional branch <=8, MOVEM at most six registers in these hooks). External stock function bodies, their stack, cache misses, memory-bus waits, interrupt nesting and allocation contention are excluded, so the bound must not be presented as a complete interrupt deadline measurement.
