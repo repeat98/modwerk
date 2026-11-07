@@ -14,7 +14,7 @@
       "os": "1.74",
       "license": "GPL-3.0-or-later",
       "source": {
-        "repo": "Claptom-music/modwerk",
+        "repo": "repeat98/modwerk",
         "commit": "2b352eb816395eb6a30b48cff7a8fcdfaa942a8c",
         "path": "sdk/imports/packages/midi-feedback/midi-feedback-0.1.0-experimental-os1.74.elemod"
       },
