@@ -1,0 +1,12 @@
+[
+  {
+    "version": "1.0.0",
+    "date": "2026-11-07",
+    "changes": [
+      "First release, for Analog Rytm MKII OS 1.74: MrScruff's Slice Loop, ported to elemod by Iced-Cream, with his code unchanged.",
+      "SLICE LOOP in the track menu (FUNC + CHRO) fills an empty sound track with sixteen trigs, each locked to the next sixteenth of the sample.",
+      "Made for a one-bar loop padded so the bar fills 96/120 of the sample; swing, accents and micro timing then move each slice.",
+      "On a track with any trig, a track shorter than 16 steps or the FX track, it refuses and changes nothing."
+    ]
+  }
+]
