@@ -108,7 +108,7 @@ module started from; none of its code is carried. irpina: Elekloader and core-ar
 
 ## Screens and audio
 
-Screenshots are rytm-emu captures of build EN01, this package linked alone on the Modwerk base
+Screenshots are rytm-emu captures of build EN02, this package linked alone on the Modwerk base
 ([media/capture.json](media/capture.json)). No audio preview.
 
 ![AMP DEC reading 2.2ms](media/decay-time.png) ![AMP HLD reading 4.0ms](media/hold-time.png)

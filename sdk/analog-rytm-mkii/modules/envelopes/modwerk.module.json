@@ -164,8 +164,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "b1bccf4d23c6b584ae36f39f2412dddff98c4a206bea83dff6613b313f2ba8bf",
-        "setup": "Headless rytm-emu (dtboot) running EN01: the Modwerk base for core-ar2 0.7 (plain variant ba530f45) and this folder's Improved Envelopes 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "c8835018e591328648e6f5c08fe11e9c929098753234211537cba49c78da4c2e",
+        "setup": "Headless rytm-emu (dtboot) running EN02: the Modwerk base for core-ar2 0.7 (plain variant ba530f45) and this folder's Improved Envelopes 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -180,8 +180,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "b1bccf4d23c6b584ae36f39f2412dddff98c4a206bea83dff6613b313f2ba8bf",
-        "setup": "Headless rytm-emu (dtboot) running EN01: the Modwerk base for core-ar2 0.7 (plain variant ba530f45) and this folder's Improved Envelopes 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "c8835018e591328648e6f5c08fe11e9c929098753234211537cba49c78da4c2e",
+        "setup": "Headless rytm-emu (dtboot) running EN02: the Modwerk base for core-ar2 0.7 (plain variant ba530f45) and this folder's Improved Envelopes 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]
