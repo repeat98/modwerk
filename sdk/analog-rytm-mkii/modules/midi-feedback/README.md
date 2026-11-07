@@ -27,7 +27,7 @@ Press GLOBAL, scroll past SYSTEM to the module's rows, and press YES:
 | Row | Action | Default |
 | --- | --- | --- |
 | MIDI FEEDBACK | Toggle feedback | OFF, stored per project |
-| SEND FEEDBACK | Optional immediate refresh; background refresh already runs | Momentary |
+| SEND FEEDBACK | Optional refresh of settled values | Momentary |
 
 No keys or encoder turns are consumed. The module subscribes to `ev_settings`,
 `ev_tick` and `ev_project`; it patches no stock instructions. Resource claims
@@ -80,8 +80,8 @@ limit, not a musical clock. A complete unchanged 84-message refresh takes at
 least 21 ticks, about 1.05 seconds; busy output can extend it. Fresh edits can
 be delayed behind other pending assignments, so this is controller pickup
 feedback rather than an automation stream with a timing guarantee. A full
-refresh is requested every 40 UI ticks while enabled and allowed by stock
-output settings, roughly every two seconds. Repeated requests preserve the
+refresh is requested about every two seconds while enabled and allowed by stock
+output settings. Repeated requests preserve the
 round-robin cursor, so later tracks are not starved by a busy output.
 Each changing assignment is withheld until the value and channel stay unchanged
 for 750 stock audio blocks (0.5 seconds). A minimal render-out hook counts the
@@ -126,6 +126,6 @@ Pickup behavior: [Faderfox PC12 manual](https://www.faderfox.de/PDF/PC12%20Manua
 
 ![Enable automatic feedback](media/feedback-on.png)
 
-![Optional immediate refresh](media/send-feedback.png)
+![Optional refresh](media/send-feedback.png)
 
 These are firmware-rendered OS 1.74 emulator captures from the named private build in media/capture.json. They show the menus, not hardware or audio qualification. No audio demo is supplied for this MIDI feedback module.

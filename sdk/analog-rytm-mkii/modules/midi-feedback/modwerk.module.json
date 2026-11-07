@@ -88,29 +88,42 @@
     ]
   },
   "resources": {
-    "memoryBytes": 2602,
+    "memoryBytes": 3557,
     "fastBytes": 0,
     "load": {
-      "display": "Not measured yet",
-      "method": "unmeasured",
-      "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+      "display": "Emulator maxima: 2 audio-hook clocks, 87,284 UI-hook clocks",
+      "method": "emulator",
+      "conditions": "Exact MF06 image with 187,538 bytes of DIN stress input. Observed elapsed emulator clocks include stock calls and preemption. Physical cycles, masked-interrupt duration and audio deadline margins are unmeasured."
     }
   },
   "evidence": {
-    "tier": "emulator",
+    "tier": "author-hardware",
     "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": "f0a29634b48a7e74232822b4d8bd13cae0a9513850fd2435a1f32f4e04f174c5",
+    "sourceSha256": "b397e5e6a98f000b8ca2aa4f7813abb7c0b476f53c165c44b520a00d3d9b54d3",
     "reports": [
       "TESTING.md",
       "evidence/emulator.json",
-      "evidence/pinned-candidate.json"
+      "evidence/pinned-candidate.json",
+      "evidence/mf06.json"
     ],
-    "hardware": null,
+    "hardware": {
+      "model": "Elektron Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-07",
+      "tester": "claptom-music",
+      "durationMinutes": 5,
+      "summary": "MF06 with Faderfox PC12 over two-way DIN: responsive playback, smooth pickup and pattern transitions with both PC12 forwarding modes disabled. Kit reload and project restart restored pickup.",
+      "limitations": [
+        "Author-reported functional checks.",
+        "Earlier MF06 pattern transition freeze remains unexplained.",
+        "Hardware CPU, IRQ and queue timing were not measured."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Pinned source-only package reproduced twice and passed nine emulator lifecycle checks. Earlier PC12 Track Level pickup and menu checks passed; physical Rytm qualification and publication remain pending.",
+    "summary": "MF06 passed the exact-image emulator checks. The author reports PC12 pickup, pattern transitions, kit reload and restart passing on hardware after disabling PC12 forwarding. Emulator load is recorded. The earlier freeze remains unexplained.",
     "documentation": {
       "tutorial": {
         "title": "Usage",

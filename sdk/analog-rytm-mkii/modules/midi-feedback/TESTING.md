@@ -108,6 +108,85 @@ events, with only an aligned 32-bit increment in that hook. Settling requires
 reads and MIDI work. Host regressions include 1000 callbacks at an unchanged
 audio time and unsigned counter wrap. This candidate is not yet built/tested;
 the clock change is a hypothesis to test, not a confirmed hardware pickup fix.
+The audio-clock candidate MF06, built twice from 69934f88f664 with matching
+outputs, passed the host regression tests. Exact private image SHA-256:
+51af69bc85d195d77ef802f54a2c15f3a08ddd30c61f76df232a7abd6ac47eb5.
+Saved exact-image emulator results passed the standard lifecycle checks and
+the rapid-filter-sweep/track-switch output assertion that failed on MF05.
+MF06 hardware results reported by the developer: normal startup and responsive
+playback/track switching with DIN disconnected. An initial claim of stopped
+PC12 pickup passing was corrected: the developer had not reconnected the PC12,
+so that initial check is not controller evidence. After reconnecting two-way
+DIN, filter frequency and resonance were controllable. Rytm encoder changes
+updated the PC12 pickup target after approximately half a second, as expected
+from settling. With playback running, the developer then reports approximately
+one minute of slow/fast filter sweeps, pauses/resumption and track changes
+without snap resetting or loss of Rytm responsiveness. Longer performance,
+remaining MF06 parameters/channels and lifecycle regression checks initially
+remained pending. The developer subsequently reports nothing unusual in the
+requested approximately five-minute playback exercise covering all seven mapped
+parameters, track changes, Track LEVEL and Track 12, checking for pickup resets,
+freezes, sluggish controls, clicks and timing problems. This is a reported
+practical listening/control check, not a measured timing or CPU qualification.
+MF06 kit/project/restart regression checks remain pending. MF04's hardware
+failure remains recorded against that earlier build.
+Subsequently MF06 FAILED stability: the developer reports a freeze after
+copying/pasting a pattern and switching. They initially identified paste, then
+clarified that it could have been paste or the following switch and could not
+distinguish them. Neither action is a confirmed isolated trigger. The kit reload
+regression requested just before this report is not recorded as passed. Recovery
+status is pending. The earlier five-minute pass does not establish stability.
+The developer subsequently confirms recovery to the normal screen with DIN
+disconnected and MIDI FEEDBACK OFF. Whether the switch was a track switch or
+a pattern switch has not yet been established. Further hardware testing and
+publication remain blocked by the unresolved freeze.
+The developer clarifies that the switch was to another pattern. An exact MF06
+emulator sequence with feedback OFF stopped UI progress shortly after its first
+paste: mf_probe ticks advanced only 176 over an 8G continuation, the final
+pattern remained A02 rather than A04, and module_sent stayed 669 (zero new
+module output). The firmware continued servicing other tasks/interrupts. The
+test originally failed before boot because dtboot rejects PC counters in module
+RAM; after replacing those counters with supported stock addresses, the UI
+stall was observed. Stock/core-only cold-boot comparisons are pending; this
+does not yet identify whether the fault is in the core, module or emulator.
+The cold-boot comparison completed: stock 1.74, core-only 0.7, MF06 OFF and
+MF06 ON all remained at A02 rather than A04. Stock and patched UI tasks showed
+the same blocked stock wait path (PC 0x40001178, caller 0x400334da). MF06 ended
+with 1183 UI callbacks in both modes and zero sent messages. The cold boots used
+default port settings, so ON does not mean output was allowed. This comparison
+demonstrates a stock-emulator/test-path limitation, not a module-specific
+reproduction or proof that the hardware freeze is unrelated to the module.
+Further developer-reported MF06 hardware isolation with DIN disconnected:
+one spare-pattern copy/paste/switch stayed responsive with feedback OFF and
+transport stopped; the same operation stayed responsive with feedback OFF
+during playback, and then with feedback ON during playback. These limited
+passes do not prove a particular cable/controller cause; PC12 clock routing
+and reconnected transition behavior are not yet established.
+The developer then set all four PC12 routing entries to n in BOTH non-realtime
+(dots OFF) and realtime (dots ON) modes and reconnected two-way DIN. They report
+one copy/paste/pattern switch during playback with feedback ON staying
+responsive while the pots were still, then another staying responsive while
+moving filter frequency/resonance, with the pots working afterward. Earlier
+realtime routing values were not recorded. This is consistent with routing
+being relevant but does not establish a loop or the prior freeze's cause.
+On 2026-11-07 the developer reports a further approximately five-minute MF06
+session with this routing, including repeated pattern copies, pastes and
+switches while moving PC12 knobs. They confirm responsive controls, smooth
+pickup and normal audio throughout the session. The prior freeze remains
+recorded and its cause is undetermined.
+With playback stopped, the developer also confirms that reloading the spare
+kit on MF06 restored both Track 1 LEVEL and filter-frequency pickup targets.
+The developer confirms that after saving the spare project and restarting,
+MIDI FEEDBACK remained ON and the PC12 resumed pickup automatically.
+
+The exact MF06 image was timed in a private instrumented copy of analog-emu
+using the existing 187,538-byte DIN stress input. The maximum observed elapsed
+emulator clocks were 2 for `mf_audio_clock`, 87,284 for `mf_tick`, and 71,394
+for `send_cc`. Entry/return timing includes stock calls and preemption. The
+sender runs inside the UI callback, so its maximum is reported separately
+and is not additive. These are observed emulator timings, not physical CPU
+cycles, masked-interrupt duration or an audio deadline bound. The structured
+timing results are in `evidence/mf06.json`.
 Busy playback/audio/timing, NRPN/USB-only suppression, kit changes, controller
 setup changes and measured hardware CPU/IRQ/queue behavior remain unqualified.
 
