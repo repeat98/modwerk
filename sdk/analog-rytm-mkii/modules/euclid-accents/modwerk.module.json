@@ -164,25 +164,25 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "1.1.0",
-        "imageSha256": "48697da941188e56dadd59f1344fd2becc2069296c0b50d7106e47850ac5efc8",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running EA74, the released core-ar2 0.3 and euclid-accents 1.1, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "1.2.0",
+        "imageSha256": "c18fca9b6f1889adffe901f848ede19230781af17d279c94e292bba64feb41e3",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running EA12, the Modwerk base for core-ar2 0.7 (plain variant) and euclid-accents 1.2.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
       "path": "media/op-or-accent.png",
       "kind": "screenshot",
       "caption": "Turn OP right past SUB, where stock stops: OR*, the first accent operator.",
-      "alt": "EUCLIDEAN page with OP reading OR* under an OR gate icon marked with a dot.",
+      "alt": "BOOL OPERATOR popup over the EUCLIDEAN page with OP reading OR* under an OR gate icon marked with a dot.",
       "credit": "Iced-Cream documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "1.1.0",
-        "imageSha256": "48697da941188e56dadd59f1344fd2becc2069296c0b50d7106e47850ac5efc8",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running EA74, the released core-ar2 0.3 and euclid-accents 1.1, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "1.2.0",
+        "imageSha256": "c18fca9b6f1889adffe901f848ede19230781af17d279c94e292bba64feb41e3",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running EA12, the Modwerk base for core-ar2 0.7 (plain variant) and euclid-accents 1.2.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -196,9 +196,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "1.1.0",
-        "imageSha256": "48697da941188e56dadd59f1344fd2becc2069296c0b50d7106e47850ac5efc8",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running EA74, the released core-ar2 0.3 and euclid-accents 1.1, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "1.2.0",
+        "imageSha256": "c18fca9b6f1889adffe901f848ede19230781af17d279c94e292bba64feb41e3",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running EA12, the Modwerk base for core-ar2 0.7 (plain variant) and euclid-accents 1.2.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]
