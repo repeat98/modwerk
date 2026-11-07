@@ -1,5 +1,13 @@
 # Control In Actions testing
 
+## 0.1.2: no reading with ACTION OFF (6 November 2026)
+
+0.1.1 armed a jack whenever its MODE was ACTION, so with ACTION set to OFF the audio interrupt still read and compared it every block, for no action. 0.1.2 disarms that jack in the UI tick (as a change of ACTION already did), and the `ev_render_out` handler is a two-byte test that calls the reading (`read_jacks`, unchanged) only while a jack is armed. With ACTION OFF the bars' right-hand line follows stock's smoothed level, as during ACTION LEARN. Nothing else changes.
+
+- rytm-emu `2ac0f1f`: CI11 (`6486523f…`, 0.1.1) reproduced byte for byte from this folder's 0.1.1 source, and its three media frames reproduce with the plan timings now in `media/capture.json`. CI12 (vendored core-ar2 0.7 + this source, `3e7e1661…ad18`): the three frames are byte-identical to CI11's.
+- Hardware, measured on npp1993's Analog Rytm MKII (OS 1.74) with a private telemetry base that times every audio block and every `ev_render_out` handler on DTIM0 and sends the sums over USB MIDI; RC31's 16-module set, scratch project, sequencer stopped, no USB audio streaming; a jack in ACTION mode with an action: `control_in_actions_audio` 3.3 µs a block with 0.1.1 (LR01), 3.6-3.7 µs with this source or with only another module changed (LR02, LR03): the reading itself, unchanged, moved by code layout.
+- Not yet measured with ACTION OFF; not yet played on a unit with this source (pending, see below).
+
 ## 0.1.1: faster actions
 
 Build CI11 alone (sha256 6486523f, -O2, this package's source), 4 November 2026, with a footswitch, as the tester reported it: works great. Which of the suggested steps (REC TGL and REC HLD against a click from stop, MUTE and FILL holds and toggles, REVERSE DIRECTION) were run was not reported; no figure was measured.

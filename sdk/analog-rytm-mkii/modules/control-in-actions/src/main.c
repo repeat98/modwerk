@@ -492,8 +492,9 @@ static void play(int port)
 
 // The audio interrupt, once a block: each armed jack's latest result
 // against its thresholds. On an edge the key message goes on the UI task's
-// queue unless it is there already.
-void control_in_actions_audio(void)
+// queue unless it is there already. With no jack armed (no jack in ACTION
+// mode with an action), the entry below reads two bytes and returns.
+static void __attribute__((noinline)) read_jacks(void)
 {
     int port;
     for (port = 0; port < CI_PORTS; port++) {
@@ -524,6 +525,12 @@ void control_in_actions_audio(void)
             POST(UI_QUEUE(), message);
         }
     }
+}
+
+void control_in_actions_audio(void)
+{
+    if (jacks[0].on | jacks[1].on)
+        read_jacks();
 }
 
 // The key message, on the UI task: play what the interrupt saw, and keep it
@@ -582,6 +589,11 @@ void control_in_actions_tick(void *ctrl)
         if (dest != last_dest[port]) {
             disarm(port);
             last_dest[port] = dest;
+        }
+        // ACTION OFF plays nothing: the interrupt leaves the jack alone.
+        if (dest == DEST_OFF) {
+            disarm(port);
+            continue;
         }
         arm(port, record[REC_FSW_LOW / 4], record[REC_FSW_HIGH / 4]);
         // The key message's work, should it come late; and a message the UI
