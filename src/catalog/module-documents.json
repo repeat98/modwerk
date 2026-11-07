@@ -10807,6 +10807,255 @@
     },
     {
       "schemaVersion": 2,
+      "id": "slow-lfo",
+      "key": "SLOW LFO",
+      "name": "Slow LFO",
+      "version": "0.1.0-experimental",
+      "category": "machines",
+      "access": {
+        "location": "LFO SETUP ([FUNC]+[LFO]), MULT on knob C (audio and MIDI tracks)",
+        "steps": [
+          "On a track, hold [FUNC] and press [LFO] to open LFO SETUP, and turn MULT past 64X to 1/2X, 1/4X or 1/8X.",
+          "Set SPD as usual: the LFO now takes 2, 4 or 8 times longer than at 1X, still in time with the tempo.",
+          "Turn MULT back to 1X..64X for stock rates."
+        ],
+        "screenshots": [
+          "media/slow_lfo_mult_half.png",
+          "media/slow_lfo_mult_eighth.png"
+        ]
+      },
+      "author": {
+        "github": "nathangroth",
+        "credits": [
+          "nathangroth: the idea, the LFO rate hooks, documentation and thumbnail."
+        ]
+      },
+      "nativeManifest": "manifest.py",
+      "presentation": {
+        "label": "LFO MULT 1/2X to 1/8X",
+        "family": "LFO",
+        "summary": "LFO MULT gains 1/2X, 1/4X and 1/8X on audio and MIDI tracks: LFOs up to eight times slower, still synced to the tempo.",
+        "overview": "Stock LFO MULT runs from 1X to 64X, so the slowest an LFO can go is SPD 1 at 1X. Slow LFO adds three values after 64X: 1/2X, 1/4X and 1/8X, which run at a half, a quarter and an eighth of 1X. They work on every LFO of the audio tracks and the MIDI tracks, follow the project tempo as stock does, and are stored where stock stores MULT, in the Part.",
+        "highlights": [
+          "MULT 1/2X, 1/4X and 1/8X: LFOs up to eight times slower than stock's slowest.",
+          "Audio and MIDI track LFOs; tempo-synced as stock.",
+          "1X to 64X unchanged; nothing else to set."
+        ],
+        "usage": [
+          "On a track, hold [FUNC] and press [LFO] to open LFO SETUP, and turn MULT past 64X to 1/2X, 1/4X or 1/8X.",
+          "Set SPD as usual: the LFO now takes 2, 4 or 8 times longer than at 1X, still in time with the tempo.",
+          "Turn MULT back to 1X..64X for stock rates."
+        ]
+      },
+      "controls": [
+        {
+          "name": "MULT",
+          "default": 0,
+          "count": 10,
+          "doc": "Stock's LFO rate multiplier, with three slower values after 64X: 1/2X, 1/4X, 1/8X run at a half, a quarter and an eighth of 1X.",
+          "labels": [
+            "1X",
+            "2X",
+            "4X",
+            "8X",
+            "16X",
+            "32X",
+            "64X",
+            "1/2X",
+            "1/4X",
+            "1/8X"
+          ]
+        }
+      ],
+      "compatibility": {
+        "firmware": "1.40C",
+        "effectId": null,
+        "location": "Audio tracks",
+        "conflicts": [],
+        "uiClaims": [],
+        "limitations": [
+          "OS 1.40C. The new values come after 64X on the knob, not below 1X.",
+          "A project saved with 1/2X, 1/4X or 1/8X, opened without the module, shows 64X and runs that LFO much faster; turning MULT down brings back stock's values.",
+          "On Deja Vu's waves MULT is the loop length; Deja Vu reads 1/2X..1/8X as 64.",
+          "Run on an MKI only; not yet tested on an MKII."
+        ]
+      },
+      "resources": {
+        "recorded": "2 November 2026; source and ot_emu, stock 1.40C",
+        "storage": {
+          "label": "ColdFire code and data",
+          "display": "184 bytes",
+          "value": 184,
+          "unit": "bytes",
+          "method": "static",
+          "conditions": "One linked unit of 184 bytes (code, three labels and their pointers), five detours and two four-byte pokes. No DSP memory, no new project bytes: MULT is stored where stock stores it.",
+          "source": "TESTING.md"
+        },
+        "processing": {
+          "label": "ColdFire, per LFO per frame",
+          "display": "+216 instructions a frame (24 audio LFOs)",
+          "value": 216,
+          "unit": "instructions/event",
+          "method": "emulator",
+          "conditions": "ot_emu, stock 1.40C, 2756 frames of a playing project: 23,298 ColdFire instructions a frame with the module against 23,082 without, every audio LFO running. MIDI LFOs add at most as much again while MIDI tracks run.",
+          "source": "TESTING.md"
+        },
+        "impact": {
+          "conditions": "Every audio and MIDI LFO, once per frame.",
+          "cpu": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "About 9 ColdFire instructions per LFO per frame; +216 a frame measured for 24 audio LFOs.",
+            "source": "TESTING.md"
+          },
+          "dsp": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "No DSP code: the module runs only on the ColdFire, inside the LFO engine's own pass.",
+            "source": "manifest.py"
+          },
+          "memory": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "184 bytes of code and labels.",
+            "source": "TESTING.md"
+          }
+        }
+      },
+      "tests": {
+        "report": "TESTING.md",
+        "summary": "USB on an MKI (4 November 2026, Modwerk beta base, package 7392526b): trial, Keep, power cycle, SELF TEST (1/1 intact, longest frame 420 us) and removal; the tester reports 1/2X, 1/4X and 1/8X on audio and MIDI tracks' LFO SETUP, LFOs slowing to the expected rates and stock's 1X..64X after removal. ot_emu on stock 1.40C (verify.py): 1/2X, 1/4X and 1/8X move 0.5007, 0.2510 and 0.1248 of 1X; a tempo change from 120 to 210 BPM while playing scales 1X and 1/2X alike (x1.749, x1.745); the labels print as on the page. The committed package kept beside Bar LED (5 November 2026): SELF TEST passed, 2/2 intact, longest frame 371 us; the tester reports three LFOs of one track at 1/2X, 1/4X and 1/8X on different parameters, several tracks, a tempo change while playing and external MIDI clock all as expected, and the values still set after a power cycle. Without the module, a project saved with a slow value shows 64X and runs that LFO much faster (tester's report); turning MULT down restores stock.",
+        "hardwareStatus": "reported",
+        "evidenceRevision": "79e96c8729341c43cd0f3a324eaa5690b6ef1f36",
+        "gates": [
+          "modules/slow-lfo/verify.py"
+        ],
+        "qualification": {
+          "documentation": {
+            "tutorial": {
+              "title": "Quick tutorial",
+              "steps": [
+                "On a track, hold [FUNC] and press [LFO] to open LFO SETUP, and turn MULT past 64X to 1/2X, 1/4X or 1/8X.",
+                "Set SPD as usual: the LFO now takes 2, 4 or 8 times longer than at 1X, still in time with the tempo.",
+                "Turn MULT back to 1X..64X for stock rates."
+              ]
+            },
+            "screenshots": [
+              "media/slow_lfo_mult_half.png",
+              "media/slow_lfo_mult_eighth.png"
+            ],
+            "screenshotStyle": "black-and-white"
+          },
+          "moduleVersion": "0.1.0-experimental",
+          "sourceSha256": "bbd906ca9eaa1b07e349c8639655232761dc14fe4b696b4b08087d36e7289684",
+          "imageSha256": "7392526b133647e5e7b0a0bb85f33c8f4360b0289c16d89cca733ec5ce6ffd65",
+          "cycles": [
+            {
+              "processor": "coldfire",
+              "worstCase": 48,
+              "maxConfiguration": 768,
+              "maxInstances": 16,
+              "budget": 95778,
+              "unit": "cycles/event",
+              "method": "static",
+              "conditions": {
+                "parameterExtremes": "MULT 1X..64X run 4 added instructions at the rate step and 4 at the MULT load (9 an LFO with the jumps, measured +216 a frame for 24 audio LFOs); 1/2X..1/8X the longest path, 16 an LFO. SPD, DEP, WAVE and TRIG are stock's and untouched.",
+                "parameterModulation": "MULT cannot be locked or reached by scenes or the crossfader (LFO SETUP, as on stock; the tester confirmed it on an MKI). A Part change or reload changes only the stored MULT; each LFO still takes one pass of each hook a frame.",
+                "modeSwitching": "No mode of its own. A Part change or reload changes only the stored MULT the hooks read.",
+                "maxLoad": "8 audio and 8 MIDI tracks, three LFOs each, all at 1/2X..1/8X: 48 LFOs x 16 = 768 instructions in one frame interrupt (budget one frame, 95,778 cycles at 264 MHz, 362.8 us).",
+                "inputConditions": "Static count of unit.s per LFO: detour jmp, muls, mvz, subq, bmi, addq, asr, move, jmp at the rate step (9) and detour jmp, mvz, cmpi, bls, moveq, cmp, jmp at the MULT load (7). Instructions, not cycles: the 32-bit multiply is stock's. The MULT label code runs only when the page draws (one sprintf)."
+              },
+              "report": "TESTING.md"
+            }
+          ],
+          "memory": {
+            "regions": [
+              {
+                "name": "ColdFire code, three labels and their pointers (one linked unit, DRAM)",
+                "space": "sdram",
+                "words": 184,
+                "wordBits": 8,
+                "bytes": 184,
+                "scope": "shared"
+              },
+              {
+                "name": "Stock writes: five detours (10, 6, 10, 6, 6 bytes) and two MULT counts (4 bytes each)",
+                "space": "cpu-flash",
+                "words": 46,
+                "wordBits": 8,
+                "bytes": 46,
+                "scope": "shared"
+              }
+            ],
+            "perInstanceBytes": 0,
+            "sharedBytes": 230,
+            "maxInstances": 16,
+            "totalBytes": 230,
+            "conditions": "From the linked unit (184 bytes of text and data) and the USB package's stock-code sites. No state, no DSP memory, no heap, no new saved data: MULT is stored where stock stores it.",
+            "report": "TESTING.md"
+          },
+          "hardware": {
+            "kind": "functional",
+            "status": "reported",
+            "model": "MKI",
+            "testedOn": "2026-11-04",
+            "tester": "nathangroth",
+            "sourceRevision": "79e96c8729341c43cd0f3a324eaa5690b6ef1f36",
+            "imageSha256": "7392526b133647e5e7b0a0bb85f33c8f4360b0289c16d89cca733ec5ce6ffd65",
+            "summary": "The author's MKI, OS 1.40C, on the flashed Modwerk beta base 9680e9ac, driven over USB by the agent with npm run device. Package 7392526b (608 bytes, module cd8a0e36): a 15-minute trial (MULT shows 1/2X, 1/4X, 1/8X after 64X; rolled back at the end), a second trial (an audio track's LFO and a MIDI track's LFO to an external device slow to the expected rate at each value), Keep, the author's power cycle (still installed, values still offered), SELF TEST passed (1/1 intact, 0 DSP, longest frame 420 us, card set 1/1), removal (MULT stops at 64X as stock).",
+            "limitations": [
+              "One unit, about an hour of use; rates judged by ear and eye, not timed.",
+              "Not tested on hardware: a tempo change while playing (emulator only), external MIDI clock, a project with the slow values opened without the module, Deja Vu's waves beside the slow values, MKII.",
+              "USB only: the card build ran in the author's own octabam remix but its slow values were not timed there. The site's review, Keep and Undo pages were not used."
+            ],
+            "report": "TESTING.md"
+          }
+        }
+      },
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE",
+        "declaration": "Original module by nathangroth, MIT. No firmware, extracted stock code or built images are included."
+      },
+      "media": [
+        {
+          "path": "media/slow_lfo_mult_half.png",
+          "captureType": "emulator",
+          "caption": "LFO SETUP with MULT at 1/2X. Hold [FUNC] and press [LFO], then turn C one step past 64X: the LFO runs at half the 1X rate, still in time with the tempo.",
+          "alt": "LFO SETUP page for LFO 1: PMTR SRC PTCH, a triangle wave, MULT 1/2X, TRIG FREE, and SPD and DEP knobs",
+          "credit": "nathangroth (headless capture)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "LFO SETUP",
+            "shows": "location-and-controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "bdd9d88e58516c66192b7966307505fa51b4367df851a40a375ae746df0ee059",
+            "setup": "Headless ot_emu (octabam port, 28391993); MKII panel; empty scratch card; stopped transport; 128x64 LCD at scale 6 (scripts/capture-module-ui.py)."
+          }
+        },
+        {
+          "path": "media/slow_lfo_mult_eighth.png",
+          "captureType": "emulator",
+          "caption": "MULT at 1/8X, the last value on the knob: the LFO takes eight times as long as at 1X. Turn C back to 64X or lower for stock rates.",
+          "alt": "LFO SETUP page for LFO 1 with MULT 1/8X",
+          "credit": "nathangroth (headless capture)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "LFO SETUP",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "bdd9d88e58516c66192b7966307505fa51b4367df851a40a375ae746df0ee059",
+            "setup": "Headless ot_emu (octabam port, 28391993); MKII panel; empty scratch card; stopped transport; 128x64 LCD at scale 6 (scripts/capture-module-ui.py)."
+          }
+        }
+      ]
+    },
+    {
+      "schemaVersion": 2,
       "id": "bar-led",
       "key": "BAR LED",
       "name": "Bar LED",
