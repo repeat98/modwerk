@@ -1,5 +1,20 @@
 # VECTOR tests and measurements
 
+## 0.2.6: SRC SETUP page 2 on VECTOR's own row (card builds, #1119)
+
+Report #1119 (also #842/#843): on a card build with POLY8, a double tap on SRC on a VECTOR track showed the stock Flex/Static setup (TSTR AUTO) instead of SEED/SPAN. Beside POLY8, VECTOR is machine row 6 or 7; POLY8's shared SRC SETUP hooks replace VECTOR's and never asked VECTOR, and `st_setup_page` itself also wanted SRC SETUP's cursor (0x460d5c30) on row 5. 0.2.6 drops that test: its callers already ask on VECTOR's row (row 5 in `hooks.s` alone, the base's row over USB, POLY8's row with POLY8 0.3.3). The USB adapter dropped the same test since 0.2.5, so `vector_runtime.py` no longer rewrites it; the package's control unit source is byte-identical to 0.2.5's and the 0.2.5 USB package stays published (`lagsBehind`). The 0.2.5 hardware report above that run covers those bytes.
+
+Emulator, 1 November 2026 (`ot_emu` built from upstream octabam, MKII panel, DSP on, empty scratch card; card images composed by the site's builder from packages built in the isolated toolchain; `scripts/capture-module-ui.py` with 50 ms keys: FUNC+SRC, DOWN to VECTOR, YES, YES on STATIC, NO, SRC, FUNC+SRC, encoder A +3, encoder E +2):
+
+| Image | Result |
+| --- | --- |
+| main (VECTOR 0.2.5, POLY8 0.3.2) + FM Synth | reproduces the report: SRC shows SRC▸VECTOR with TYPE…ACNT, SRC SETUP shows LOOP SLIC LEN RATE TSTR(AUTO) TSNS |
+| VECTOR 0.2.6 + POLY8 0.3.3 + FM Synth | SRC SETUP shows SEED 1, SPAN 12, OFST 0, ROT 0, RPT OFF, DIR FWD; encoder A gives SEED 4, encoder E RPT 2; cursor on POLY8 shows the stock setup |
+| VECTOR 0.2.6 + POLY8 0.3.2 + FM Synth | not run; POLY8 0.3.2's shared hooks never call `st_setup_page`, so the stock setup stays as on main (code read) |
+| VECTOR alone, 0.2.5 and 0.2.6 | all eight screens of the plan pixel-identical; page 2 on row 5, encoders A and E as above |
+
+`verify_native.py` passes in the pinned toolchain (sanitizer tests, `control.s` reproduces). Not tested: a unit, MKI, saving and reloading, a power cycle, listening.
+
 ## 0.2.5 over USB on a MKII (SRC SETUP page 2, #972)
 
 Version `0.2.5-experimental` changes only the USB package: its `ot_machines` record is a `struct modwerk_machine_setup` (SETUP_PAGE) naming the card build's own `st_setup_page` and `st_setup_knob`, and the package's source variant drops `st_setup_page`'s test for SRC SETUP's cursor on row 5. The card source and every result in the sections below are 0.2.4's.

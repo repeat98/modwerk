@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.2.6-experimental",
+    "date": "2026-11-01",
+    "changes": [
+      "Card builds: VECTOR's second page (SEED, SPAN, OFST, ROT, RPT, DIR) can now open beside POLY8, where it sits lower in the machine list (#1119). It shows once POLY8 0.3.3 is out too.",
+      "VECTOR on its own and over USB works as before.",
+      "Known issue: not yet tested on hardware."
+    ]
+  },
+  {
     "version": "0.2.5-experimental",
     "date": "2026-10-27",
     "changes": [
