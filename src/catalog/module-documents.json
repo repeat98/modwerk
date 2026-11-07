@@ -11754,6 +11754,687 @@
           }
         }
       ]
+    },
+    {
+      "schemaVersion": 2,
+      "id": "syntiz",
+      "key": "SYNTIZ",
+      "name": "SYNTIZ",
+      "version": "0.1.0-experimental",
+      "category": "machines",
+      "access": {
+        "location": "Audio track: FUNC + SRC (SRC SETUP) → SYNTIZ; a double tap of the track key opens its models.",
+        "steps": [
+          "Select an audio track with its TRACK key.",
+          "Hold FUNC and press SRC to open SRC SETUP. Go DOWN to SYNTIZ, then press YES to assign it; SETUP shows FINE, OCT, DRIV and RTRG.",
+          "Tap the track key twice to open MACHINE:SYNTIZ and pick 001 SAW to 006 CHOIR with YES; LEFT goes back to the machine list. Press SRC for the model's page."
+        ],
+        "screenshots": [
+          "media/ot-chooser.png",
+          "media/ot-model-list.png",
+          "media/ot-saw-src.png",
+          "media/ot-table-src.png"
+        ]
+      },
+      "author": {
+        "github": "stigmagit",
+        "credits": [
+          "Original SYNTIZ engine, tables and machine by stigmagit."
+        ]
+      },
+      "nativeManifest": "manifest.py",
+      "presentation": {
+        "label": "SYNTIZ",
+        "family": "Synthesis",
+        "summary": "A track machine with six models: stacked saws, pulse, ensemble, 32 single-cycle tables, morph and choir.",
+        "overview": "SYNTIZ is a synthesizer you choose for an audio track, as you would choose FLEX or STATIC. Its six models range from stacked, detuned saws and a width-modulated pulse to an ensemble of up to four notes and 32 single-cycle tables of the author's own, crossfaded, morphed or sung as chords. Its sound goes through the track's own filter, AMP envelope, LFOs and effects, like a sample's, and PTCH plays like FLEX's.",
+        "highlights": [
+          "Six models picked from a list opened by a double tap of the track key: SAW, PULSE, ENS, TABLE, MORPH, CHOIR.",
+          "32 single-cycle tables computed from formulas, with crossfades, hard sync, bit crush and chords.",
+          "DRIV into an anti-aliased saturator and RTRG in every model; a square and a sine sub in most.",
+          "PTCH plays like FLEX (chromatic keys, scales, locks); OCT moves the register three octaves up or down."
+        ],
+        "usage": [
+          "Hold FUNC and press SRC on an audio track, go DOWN to SYNTIZ and press YES.",
+          "Tap the track key twice to open the model list and pick a model with YES; LEFT goes back to the machines.",
+          "Shape it on SRC and SETUP, then with the track's filter, AMP, LFOs and effects, and play it like a FLEX sample."
+        ]
+      },
+      "controls": [
+        {
+          "name": "PTCH",
+          "default": 64,
+          "count": 128,
+          "doc": "SRC A in every model: the note on FLEX's scale, an octave down to an octave up; chromatic keys, scales and locks as on FLEX.",
+          "labels": null
+        },
+        {
+          "name": "DET",
+          "default": 24,
+          "count": 128,
+          "doc": "SAW: detune of the inner pair (default 24). PULSE, SETUP E: detune of a detuned pair (default 16).",
+          "labels": null
+        },
+        {
+          "name": "UNI",
+          "default": 0,
+          "count": 128,
+          "doc": "SAW: the inner detuned pair's level. PULSE, SETUP F: the detuned pair's level.",
+          "labels": null
+        },
+        {
+          "name": "WIDE",
+          "default": 0,
+          "count": 128,
+          "doc": "SAW: an outer pair at twice the detune.",
+          "labels": null
+        },
+        {
+          "name": "PW",
+          "default": 64,
+          "count": 128,
+          "doc": "PULSE: pulse width.",
+          "labels": null
+        },
+        {
+          "name": "PWM",
+          "default": 0,
+          "count": 128,
+          "doc": "PULSE: depth of a triangle sweep of the width.",
+          "labels": null
+        },
+        {
+          "name": "PWS",
+          "default": 0,
+          "count": 128,
+          "doc": "PULSE: speed of the width sweep.",
+          "labels": null
+        },
+        {
+          "name": "NOT2",
+          "default": 24,
+          "count": 49,
+          "doc": "ENS and CHOIR: a second note, -24 to +24 semitones, or OFF.",
+          "labels": [
+            "-24",
+            "-23",
+            "-22",
+            "-21",
+            "-20",
+            "-19",
+            "-18",
+            "-17",
+            "-16",
+            "-15",
+            "-14",
+            "-13",
+            "-12",
+            "-11",
+            "-10",
+            "-9",
+            "-8",
+            "-7",
+            "-6",
+            "-5",
+            "-4",
+            "-3",
+            "-2",
+            "-1",
+            "OFF",
+            "+1",
+            "+2",
+            "+3",
+            "+4",
+            "+5",
+            "+6",
+            "+7",
+            "+8",
+            "+9",
+            "+10",
+            "+11",
+            "+12",
+            "+13",
+            "+14",
+            "+15",
+            "+16",
+            "+17",
+            "+18",
+            "+19",
+            "+20",
+            "+21",
+            "+22",
+            "+23",
+            "+24"
+          ]
+        },
+        {
+          "name": "NOT3",
+          "default": 24,
+          "count": 49,
+          "doc": "ENS and CHOIR: a third note, -24 to +24 semitones, or OFF.",
+          "labels": [
+            "-24",
+            "-23",
+            "-22",
+            "-21",
+            "-20",
+            "-19",
+            "-18",
+            "-17",
+            "-16",
+            "-15",
+            "-14",
+            "-13",
+            "-12",
+            "-11",
+            "-10",
+            "-9",
+            "-8",
+            "-7",
+            "-6",
+            "-5",
+            "-4",
+            "-3",
+            "-2",
+            "-1",
+            "OFF",
+            "+1",
+            "+2",
+            "+3",
+            "+4",
+            "+5",
+            "+6",
+            "+7",
+            "+8",
+            "+9",
+            "+10",
+            "+11",
+            "+12",
+            "+13",
+            "+14",
+            "+15",
+            "+16",
+            "+17",
+            "+18",
+            "+19",
+            "+20",
+            "+21",
+            "+22",
+            "+23",
+            "+24"
+          ]
+        },
+        {
+          "name": "NOT4",
+          "default": 24,
+          "count": 49,
+          "doc": "ENS and CHOIR: a fourth note, -24 to +24 semitones, or OFF.",
+          "labels": [
+            "-24",
+            "-23",
+            "-22",
+            "-21",
+            "-20",
+            "-19",
+            "-18",
+            "-17",
+            "-16",
+            "-15",
+            "-14",
+            "-13",
+            "-12",
+            "-11",
+            "-10",
+            "-9",
+            "-8",
+            "-7",
+            "-6",
+            "-5",
+            "-4",
+            "-3",
+            "-2",
+            "-1",
+            "OFF",
+            "+1",
+            "+2",
+            "+3",
+            "+4",
+            "+5",
+            "+6",
+            "+7",
+            "+8",
+            "+9",
+            "+10",
+            "+11",
+            "+12",
+            "+13",
+            "+14",
+            "+15",
+            "+16",
+            "+17",
+            "+18",
+            "+19",
+            "+20",
+            "+21",
+            "+22",
+            "+23",
+            "+24"
+          ]
+        },
+        {
+          "name": "SHAP",
+          "default": 0,
+          "count": 128,
+          "doc": "ENS: the notes' shape, saw, square or narrow pulse.",
+          "labels": null
+        },
+        {
+          "name": "CHOR",
+          "default": 64,
+          "count": 128,
+          "doc": "ENS and CHOIR: the chorus.",
+          "labels": null
+        },
+        {
+          "name": "TABL",
+          "default": 0,
+          "count": 128,
+          "doc": "TABLE and CHOIR: one of the 32 single-cycle tables, its name on screen (CHOIR starts on VOWA).",
+          "labels": null
+        },
+        {
+          "name": "MORF",
+          "default": 0,
+          "count": 128,
+          "doc": "TABLE: a crossfade from the table toward the next.",
+          "labels": null
+        },
+        {
+          "name": "MSWP",
+          "default": 0,
+          "count": 128,
+          "doc": "TABLE: the crossfade sweeping by itself.",
+          "labels": null
+        },
+        {
+          "name": "SYNC",
+          "default": 0,
+          "count": 128,
+          "doc": "TABLE: hard sync.",
+          "labels": null
+        },
+        {
+          "name": "WAV1",
+          "default": 8,
+          "count": 128,
+          "doc": "MORPH: the first table, its name on screen.",
+          "labels": null
+        },
+        {
+          "name": "MIX",
+          "default": 64,
+          "count": 128,
+          "doc": "MORPH: the mix between WAV1 and WAV2.",
+          "labels": null
+        },
+        {
+          "name": "WAV2",
+          "default": 24,
+          "count": 128,
+          "doc": "MORPH: the second table, its name on screen.",
+          "labels": null
+        },
+        {
+          "name": "WID",
+          "default": 0,
+          "count": 128,
+          "doc": "MORPH: WAV2 up to two octaves higher.",
+          "labels": null
+        },
+        {
+          "name": "TIME",
+          "default": 0,
+          "count": 128,
+          "doc": "MORPH: the glide when a table changes.",
+          "labels": null
+        },
+        {
+          "name": "BIT1",
+          "default": 0,
+          "count": 128,
+          "doc": "MORPH, SETUP E: WAV1's resolution, 12 bits down to 1.",
+          "labels": null
+        },
+        {
+          "name": "BIT2",
+          "default": 0,
+          "count": 128,
+          "doc": "MORPH, SETUP F: WAV2's resolution, 12 bits down to 1.",
+          "labels": null
+        },
+        {
+          "name": "SUB",
+          "default": 0,
+          "count": 128,
+          "doc": "A square an octave down (SRC E in SAW and PULSE, SRC F in TABLE, SETUP E in ENS and CHOIR); silent below 25 Hz.",
+          "labels": null
+        },
+        {
+          "name": "SUB2",
+          "default": 0,
+          "count": 128,
+          "doc": "A sine two octaves down (SRC F or SETUP E/F by model); silent below 25 Hz.",
+          "labels": null
+        },
+        {
+          "name": "FINE",
+          "default": 64,
+          "count": 128,
+          "doc": "SETUP A in every model: ±64 cents.",
+          "labels": null
+        },
+        {
+          "name": "OCT",
+          "default": 3,
+          "count": 7,
+          "doc": "SETUP B in every model: moves the two octaves you play, three octaves down to three up; C3 at PTCH 0 and OCT 0.",
+          "labels": [
+            "-3",
+            "-2",
+            "-1",
+            "0",
+            "+1",
+            "+2",
+            "+3"
+          ]
+        },
+        {
+          "name": "DRIV",
+          "default": 64,
+          "count": 128,
+          "doc": "SETUP C in every model: drive into a smooth anti-aliased saturator.",
+          "labels": null
+        },
+        {
+          "name": "RTRG",
+          "default": 0,
+          "count": 2,
+          "doc": "SETUP D in every model: OFF lets the oscillators run free, ON restarts them on each trig.",
+          "labels": [
+            "OFF",
+            "ON"
+          ]
+        }
+      ],
+      "compatibility": {
+        "firmware": "1.40C",
+        "effectId": null,
+        "location": "Track machine",
+        "conflicts": [],
+        "uiClaims": [],
+        "limitations": [
+          "Needs the Modwerk base over USB (beta), in a version that knows SYNTIZ (WV 1-15) and has room for eight machines in the chooser. Card firmware cannot include it.",
+          "On a base that does not know SYNTIZ, switch the unit off only after loading a project without SYNTIZ tracks: the power-on restore would refuse the bank.",
+          "Chromatic keys, MIDI and recorded notes cover two octaves, as on FLEX; OCT, a SETUP control, moves them for the whole track.",
+          "Before a note it asks the base which trigs a mute module drops (ev_trig_muted); not yet tried with a mute module.",
+          "At most three SYNTIZ tracks in a Part: a fourth is refused. On the author's MKII one render takes up to 37 % of a frame, so three heavy tracks holding long notes make the base drop renders (a crackle); two heavy tracks with filter and chorus play clean beside a THRU, three samples, a NEIGHBOR and a master compressor (7 November 2026).",
+          "Another module installed but never played can take SYNTIZ's margin: on the author's MKII, FM Synth installed made the SYNTIZ tracks crackle lightly and a third sample track no longer fit; removing it cured both (one A/B, 7 November 2026, mechanism unknown).",
+          "CHOIR on VOWA is quieter than the other models. Not tested: the MKI, a mute module's muted trigs, a MIDI flood."
+        ]
+      },
+      "resources": {
+        "recorded": "Package f501a6a4, and the author's MKII, 31 Oct to 7 Nov 2026",
+        "storage": {
+          "label": "Storage",
+          "display": "73,304 bytes",
+          "value": 73304,
+          "unit": "bytes",
+          "method": "static",
+          "conditions": "From the USB package f501a6a4: 53,500 bytes of ColdFire code and data (engine 49,051 with the 32 tables, knob map 788, machine glue 3,381, 280 of image alignment and hook records) and 19,804 of bss (eight tracks' oscillator state and the three page records). No DSP memory, no heap, no stock code written.",
+          "source": "evidence/hardware.md"
+        },
+        "processing": {
+          "label": "CPU load",
+          "display": "Up to 135 us a frame for one track",
+          "value": 134.6,
+          "unit": "us",
+          "method": "hardware",
+          "conditions": "The author's MKII, 7 Nov 2026, the base's frame guard and per-render timers on a development twin (7bce173d) of his base, package f501a6a4: one track's render takes up to 37.1 % of the 362.8 us frame (134.6 us) when it follows stock's trig work in the same frame, at most 16.2 % (58.8 us) otherwise; three heavy tracks together averaged 48.2 % of each frame (31 Oct, twin 04e94075). His live set with two SYNTIZ tracks: 69 % of each frame in the frame interrupt against 34 % without SYNTIZ, no render dropped.",
+          "source": "evidence/performance.json"
+        },
+        "impact": {
+          "conditions": "Two or three SYNTIZ tracks on heavy settings (SAW with both pairs and subs, ENS or CHOIR with a chord and chorus) with long notes, beside samples and effects: every SYNTIZ track renders its 16 samples in each frame interrupt.",
+          "cpu": {
+            "level": "high",
+            "basis": "measured-comparison",
+            "rationale": "Each SYNTIZ track renders on the ColdFire in the frame interrupt. Measured on the author's MKII with the base's frame guard: a render costs about 15 % of a frame, up to 37 % after stock's trig work; two heavy tracks beside a THRU, three samples, a NEIGHBOR and a master compressor take the interrupt to 74 % of each frame (36 % without SYNTIZ) and the guard drops about two renders a second, unheard; three heavy tracks with long notes crackle. The base's guard renders a track's silent source rather than overrun; a Part admits three SYNTIZ tracks at most.",
+            "source": "evidence/performance.json"
+          },
+          "dsp": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "No DSP code and no change to the DSP programs: the samples go to the packer as a sample's do, and the track's own filter and effects run as stock.",
+            "source": "manifest.py"
+          },
+          "memory": {
+            "level": "low",
+            "basis": "source-estimate",
+            "rationale": "73,304 bytes of ColdFire code, tables and state in DRAM, from the package; no heap.",
+            "source": "evidence/hardware.md"
+          }
+        }
+      },
+      "tests": {
+        "report": "TESTING.md",
+        "summary": "Host: 5,376 extreme renders of the six models under sanitizers, levels, DC, aliasing, pitch within 1.5 cents of stock's curve, every knob byte, package rebuilt byte for byte (verify.py). Emulator: chooser, pages, model list, notes for every model. The author's MKIIs, 28 Oct to 7 Nov 2026, this package since 31 Oct: six models over USB, projects back after power cycles, a fourth track refused, his live set measured with the base's guard (two SYNTIZ tracks beside a THRU, three samples, NEIGHBOR and a compressor: 74 % of a frame, nothing heard). Open: MKI, mute module, MIDI flood.",
+        "hardwareStatus": "reported",
+        "evidenceRevision": "b36c79977dc4470d497c39f723ba8536fb865efe",
+        "gates": [
+          "modules/syntiz/verify.py"
+        ],
+        "documentation": {
+          "tutorial": {
+            "title": "Quick tutorial: play a SYNTIZ track",
+            "steps": [
+              "Select an audio track, hold FUNC and press SRC: SRC SETUP's machine list opens. Go DOWN to SYNTIZ and press YES.",
+              "Tap the track key twice quickly: the model list opens, 001 SAW to 006 CHOIR. Pick one with the arrows and YES; LEFT goes back to the machine list.",
+              "Press SRC for the model's page and turn the encoders; FUNC + SRC again shows SETUP, where OCT moves the register and DRIV adds drive.",
+              "Place trigs or play the trig keys in chromatic mode: the track's filter, AMP envelope, LFOs and effects shape the sound as they would a sample's."
+            ]
+          },
+          "screenshots": [
+            "media/ot-chooser.png",
+            "media/ot-model-list.png",
+            "media/ot-saw-src.png",
+            "media/ot-table-src.png"
+          ],
+          "screenshotStyle": "black-and-white"
+        },
+        "qualification": {
+          "documentation": {
+            "tutorial": {
+              "title": "Quick tutorial: play a SYNTIZ track",
+              "steps": [
+                "Select an audio track, hold FUNC and press SRC: SRC SETUP's machine list opens. Go DOWN to SYNTIZ and press YES.",
+                "Tap the track key twice quickly: the model list opens, 001 SAW to 006 CHOIR. Pick one with the arrows and YES; LEFT goes back to the machine list.",
+                "Press SRC for the model's page and turn the encoders; FUNC + SRC again shows SETUP, where OCT moves the register and DRIV adds drive.",
+                "Place trigs or play the trig keys in chromatic mode: the track's filter, AMP envelope, LFOs and effects shape the sound as they would a sample's."
+              ]
+            },
+            "screenshots": [
+              "media/ot-chooser.png",
+              "media/ot-model-list.png",
+              "media/ot-saw-src.png",
+              "media/ot-table-src.png"
+            ],
+            "screenshotStyle": "black-and-white"
+          },
+          "moduleVersion": "0.1.0-experimental",
+          "sourceSha256": "6fb4883386f10e512da989a97b4d748e69d2ade1bffdfd10bcac30ab1b5bc163",
+          "imageSha256": "f501a6a4ea3c8361427b85302fc77274906b9de2e3dfd6f3c81bc1759767c5e8",
+          "cycles": [
+            {
+              "processor": "coldfire",
+              "worstCase": 35536,
+              "maxConfiguration": 35536,
+              "maxInstances": 3,
+              "budget": 95782,
+              "unit": "cycles/event",
+              "method": "hardware",
+              "conditions": {
+                "parameterExtremes": "The dearest render measured was a SAW with both detuned pairs, both subs and DRIV, filter and chorus on the track, holding a long note: 37.1 % of a frame as the second call of a frame with a trig, 16.2 % at most as a first call (7 Nov 2026). Three tracks at their heaviest (CHOIR and ENS with three chord notes, SAW with both pairs, all with CHOR, SUB, SUB2 and DRIV at maximum) averaged 48.2 % of each frame together (31 Oct). Under qemu the heaviest branch is ENS with a four-note chord and chorus, 6,372 instructions a frame, SAW 4,044 (tools/count_cf.sh); the host matrix renders every model with every control at 0, 1, 63, 64, 65, 126 and 127.",
+                "parameterModulation": "SRC controls are the track's own: locks, scenes and LFOs on them reach the render through the Part's bytes each frame, as a FLEX track's. The author's live runs turned encoders and switched scenes while playing (7 Nov, measure 3 and 4); the cost per render did not depend on it, and no control-update path exists apart from reading the bytes.",
+                "modeSwitching": "Model changes rewrite the DSP halfwords as a lock would; STOP/PLAY, pattern and scene changes were part of the live runs (7 Nov); a trig in the frame splits the render in two calls, and the second is the dearest case recorded. Choosing SYNTIZ for a fourth track is refused (31 Oct, on the unit). RTRG restarts the oscillators at each trig with no extra cost measured.",
+                "maxLoad": "Three SYNTIZ tracks a Part. Three second-call renders in one frame would sum to 106,608 cycles, more than the 95,782-cycle frame: the base's guard then renders a track's silent source for that frame (16 samples) rather than overrun. Measured: three heavy tracks with long notes and four long samples dropped 24 to 75 renders in 120 s, a crackle the author hears (3 Nov); two SYNTIZ tracks beside a THRU, three samples, a NEIGHBOR with flanger and a master compressor, 73.8 % of each frame, 259 dropped in 120 s, unheard (7 Nov); the same with two samples, 69.3 %, none dropped. Budget basis: one frame, 362.8 us, 95,782 cycles at 264 MHz, 80 % of it for the whole frame interrupt (stock about 34-36 % on these sets, 103.7 % in its worst frame).",
+                "inputConditions": "The render takes no input: it makes its samples from the Part's bytes. Silence costs the same as a note (the oscillators run unless RTRG restarts them); a note above Nyquist is silent; the subs are silent below 25 Hz. The author's MKII, OS 1.40C, package f501a6a4, the base's guard with its 80 % share; one run per case; counts of the 132 MHz timer converted to 264 MHz cycles."
+              },
+              "report": "evidence/performance.json"
+            }
+          ],
+          "memory": {
+            "regions": [
+              {
+                "name": "ColdFire code and the 32 tables (engine.o, DRAM)",
+                "space": "sdram",
+                "words": 49051,
+                "wordBits": 8,
+                "bytes": 49051,
+                "scope": "shared"
+              },
+              {
+                "name": "Knob map (machine_map.o)",
+                "space": "sdram",
+                "words": 788,
+                "wordBits": 8,
+                "bytes": 788,
+                "scope": "shared"
+              },
+              {
+                "name": "Machine glue, code and data (machine.o)",
+                "space": "sdram",
+                "words": 3381,
+                "wordBits": 8,
+                "bytes": 3381,
+                "scope": "shared"
+              },
+              {
+                "name": "Image alignment and the two hook records",
+                "space": "sdram",
+                "words": 280,
+                "wordBits": 8,
+                "bytes": 280,
+                "scope": "shared"
+              },
+              {
+                "name": "State (bss): eight tracks' oscillators and chorus lines, the three page records",
+                "space": "sdram",
+                "words": 19804,
+                "wordBits": 8,
+                "bytes": 19804,
+                "scope": "shared"
+              }
+            ],
+            "perInstanceBytes": 0,
+            "sharedBytes": 73304,
+            "maxInstances": 3,
+            "totalBytes": 73304,
+            "conditions": "From the USB package f501a6a4 (build.py: 53,500 bytes of code and data, 19,804 of bss, 174 relocations) and m68k-elf-size of the three objects compiled with build.py's flags (engine 49,051 text, machine_map 788, machine 3,377 text and 4 data; the 280 bytes left are the image's alignment and its hook records). State is allocated for all eight tracks whatever the Part holds, so it is shared, not per instance. No DSP memory, no heap, no stock code written (the base owns the chooser and SRC SETUP). The render runs on the base's frame-interrupt stack; its depth was not measured (no canary).",
+            "report": "evidence/hardware.md"
+          },
+          "hardware": {
+            "kind": "functional",
+            "status": "reported",
+            "model": "MKII",
+            "testedOn": "2026-11-07",
+            "tester": "stigmagit (the author, on his own MKII, driven over USB from his Claude Code session)",
+            "sourceRevision": "b36c79977dc4470d497c39f723ba8536fb865efe",
+            "imageSha256": "f501a6a4ea3c8361427b85302fc77274906b9de2e3dfd6f3c81bc1759767c5e8",
+            "summary": "The author's Octatrack MKII, OS 1.40C, flashed with his private base 86388105 (Modwerk's base of 31 October with --raise and a start logo); this package f501a6a4 kept over USB since 31 October 2026, beside FM Synth 0.1.2 until 7 November. 7 November 2026, on a RAM-booted development twin (7bce173d) of that base, the base's frame guard, 120 s a run, the author at the keys: his reference set (THRU, two samples, THRU, SAW heavy with filter and chorus, TABLE with filter and chorus, NEIGHBOR with flanger, master compressor) 60 % of each frame with the pattern alone and 69 % played live, no render dropped, no crackle heard; his complete set (a third sample) 74 %, 259 renders dropped in 120 s, nothing heard. Power-cycled twice back onto the flashed base: do inventory lists syntiz alone, nothing missing, the set plays. Reported by the author since 28 October (earlier packages, two MKIIs): the six models play, projects saved with SYNTIZ tracks come back after a power cycle; since 31 October, this package: a fourth SYNTIZ track is refused, three heavy tracks with long notes crackle. With FM Synth installed but never played the SYNTIZ tracks crackled lightly; removing it cured it (one A/B, 7 November).",
+            "limitations": [
+              "One MKII with this package (a second MKII ran an earlier package on 29 October); no MKI.",
+              "The measurements come from the author's own development twins of his base, not Modwerk's beta base, and from his own sets, one run each; on 3 November the same run repeated gave 24 to 75 dropped renders.",
+              "Not run: a mute module's muted trigs, the level against a FLEX sample measured, a MIDI flood, a stress project with eight tracks and three LFOs a track.",
+              "Three heavy SYNTIZ tracks holding long notes still crackle at moments: the three-track limit bounds the load, it does not make the worst frame fit."
+            ],
+            "report": "evidence/hardware.md"
+          }
+        }
+      },
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE",
+        "declaration": "Original engine, tables (computed from formulas) and machine glue. No Elektron firmware, extracted routines, tables, samples or dumps included."
+      },
+      "media": [
+        {
+          "path": "media/ot-chooser.png",
+          "captureType": "emulator",
+          "caption": "Hold FUNC and press SRC on an audio track: SRC SETUP's machine list. Go DOWN to SYNTIZ and press YES; the right side shows its SETUP controls, FINE, OCT, DRIV and RTRG.",
+          "alt": "SRC SETUP with the machine list FLEX, THRU, NEIGHBOR, PICKUP and SYNTIZ selected, and the FINE, OCT, DRIV and RTRG knobs.",
+          "credit": "Modwerk contributors; Elektron Octatrack UI",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "SRC SETUP machine list",
+            "shows": "location-and-controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "8963b03acccb3e8aea2c7f5f8a9a2f7c12692609eb3a189245e94672693fe8d5",
+            "setup": "Headless adapted ot_emu with DSP and frame enabled, MKII panel, the repository's template card. This branch's beta base, SYNTIZ 0.1.0-experimental installed and kept over emulated USB, track 1 assigned from SRC SETUP. Actual pixels, stopped transport, rendered in two grays at scale 6. UI capture only."
+          }
+        },
+        {
+          "path": "media/ot-model-list.png",
+          "captureType": "emulator",
+          "caption": "Tap the track key twice: the model list, 001 SAW to 006 CHOIR. Arrows and YES pick a model; LEFT goes back to the machine list.",
+          "alt": "MACHINE:SYNTIZ list with 001 SAW, 002 PULSE, 003 ENS, 004 TABLE, 005 MORPH and 006 CHOIR, TABLE selected.",
+          "credit": "Modwerk contributors; Elektron Octatrack UI",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "MACHINE:SYNTIZ model list",
+            "shows": "location",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "8963b03acccb3e8aea2c7f5f8a9a2f7c12692609eb3a189245e94672693fe8d5",
+            "setup": "Headless adapted ot_emu with DSP and frame enabled, MKII panel, the repository's template card. This branch's beta base, SYNTIZ 0.1.0-experimental installed and kept over emulated USB, track 1 assigned from SRC SETUP. Actual pixels, stopped transport, rendered in two grays at scale 6. UI capture only."
+          }
+        },
+        {
+          "path": "media/ot-saw-src.png",
+          "captureType": "emulator",
+          "caption": "The SAW model's SRC page: PTCH, DET, UNI, WIDE, SUB and SUB2; the footer reads SRC SAW and the machine's name.",
+          "alt": "SRC page with PTCH, DET, UNI, WIDE, SUB and SUB2 knobs and the footer SRC SAW > SYNTIZ.",
+          "credit": "Modwerk contributors; Elektron Octatrack UI",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "SRC page, SAW",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "8963b03acccb3e8aea2c7f5f8a9a2f7c12692609eb3a189245e94672693fe8d5",
+            "setup": "Headless adapted ot_emu with DSP and frame enabled, MKII panel, the repository's template card. This branch's beta base, SYNTIZ 0.1.0-experimental installed and kept over emulated USB, track 1 assigned from SRC SETUP. Actual pixels, stopped transport, rendered in two grays at scale 6. UI capture only."
+          }
+        },
+        {
+          "path": "media/ot-table-src.png",
+          "captureType": "emulator",
+          "caption": "The TABLE model's SRC page: PTCH, TABL (the table, its name shown while you turn it), MORF, MSWP, SYNC and SUB.",
+          "alt": "SRC page with PTCH, TABL, MORF, MSWP, SYNC and SUB knobs and the footer SRC TABLE > SYNTIZ.",
+          "credit": "Modwerk contributors; Elektron Octatrack UI",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "SRC page, TABLE",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "8963b03acccb3e8aea2c7f5f8a9a2f7c12692609eb3a189245e94672693fe8d5",
+            "setup": "Headless adapted ot_emu with DSP and frame enabled, MKII panel, the repository's template card. This branch's beta base, SYNTIZ 0.1.0-experimental installed and kept over emulated USB, track 1 assigned from SRC SETUP. Actual pixels, stopped transport, rendered in two grays at scale 6. UI capture only."
+          }
+        }
+      ]
     }
   ]
 }
