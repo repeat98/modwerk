@@ -2,7 +2,7 @@
   "schema": 1,
   "revision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
   "license": "/licenses/octabam.txt",
-  "sourceCommit": "e441400efaa760ecc392b15e58002e2dcb246bb2",
+  "sourceCommit": "f7fbcc8a655ca63d8c01898a242f771291a41c3e",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -39,7 +39,8 @@
     "temp-save": "0.1.0-experimental",
     "tuner": "0.1.0-experimental",
     "slow-lfo": "0.1.0-experimental",
-    "bar-led": "0.1.0-experimental"
+    "bar-led": "0.1.0-experimental",
+    "stem-rec": "0.1.0-experimental"
   },
   "packages": [
     {
