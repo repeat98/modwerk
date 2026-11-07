@@ -58,7 +58,7 @@ field by field, and the loop was not heard with a real sample. No output froze o
 
 ## Source build comparison
 
-The module is a submission (`modules/_submissions/`) until the browser can build it. Modwerk's own validation and compiler path, run on this folder:
+While the module waited in `modules/_submissions/`, Modwerk's own validation and compiler path ran on this folder:
 
 ```sh
 node scripts/machine-modules.mjs --drafts --base origin/main
@@ -76,6 +76,14 @@ relocations (the stub's references to its own label, action, icon and strings).
 Compiler: Ubuntu 24.04 `m68k-linux-gnu` GCC 13.3.0 and binutils 2.42. Modwerk's pinned Docker
 toolchain was not run here, and CI's `elemod-source` job compiles published folders only. The
 firmware and the linked builds stayed on the owner's computer.
+
+## Library package
+
+On 2026-11-07 the folder moved into the library, code unchanged. `scripts/build-elemod-isolated.sh` compiled it in
+Modwerk's pinned `modwerk-source-tools` image (`m68k-elf`, from `sdk/build/Dockerfile`) from a clean checkout of
+`b307442d`, and `scripts/package-elemod-recipe.mjs` exported
+`sdk/imports/packages/slice-loop/slice-loop-1.0.0-os1.74.elemod` (`8e9a7d2e…93bd`); `--check` reproduces it. Its
+752-byte `.run`, 1 site, symbols and relocations equal rytm2_mods v1.2's release object (`b1b8f51b…1cf9`), except that where that object takes 46 runs (440 bytes) from the stock OS at link time, this package carries the bytes compiled from the source, as Filter Hz's package does. This package's own bytes have not been linked against a stock OS file or run on a unit.
 
 ## Emulator
 
