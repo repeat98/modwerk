@@ -109,12 +109,19 @@ class MachineBases(unittest.TestCase):
                 imported = (APP / "sdk/machines" / machine / "elekloader" / config["core"] / "mod.json").read_bytes()
                 if add:
                     self.assertNotEqual(staged, imported, name)
+                elif config.get("common"):
+                    # common alone: the imported recipe with common's parts, and none of add's
+                    mod = json.loads(staged)
+                    for source in config["common"].get("sources", []):
+                        self.assertIn(source, mod["sources"], name)
+                    for source in config.get("add", {}).get("sources", []):
+                        self.assertNotIn(source, mod["sources"], name)
                 else:
                     self.assertEqual(staged, imported, name)
 
     def test_every_added_site_is_guarded_by_a_hash_not_stock_bytes(self):
         for machine, config in bases():
-            for site in config.get("add", {}).get("sites", []):
+            for site in config.get("common", {}).get("sites", []) + config.get("add", {}).get("sites", []):
                 self.assertNotIn("stock", site, site["addr"])
                 self.assertRegex(site["stockSha256"], r"^[0-9a-f]{64}$")
                 if site.get("kind") == "data":
@@ -134,6 +141,14 @@ class MachineBases(unittest.TestCase):
             machine_base.merge(dict(mod), {"defsym": {"X": "3"}}, [])
         with self.assertRaises(ValueError):
             machine_base.merge(dict(mod), {"description": "no"}, [])
+
+    def test_parts_put_common_before_add_and_refuse_a_name_in_both(self):
+        config = {"common": {"sources": ["c.c"], "collections": {"t": 4}}, "add": {"sources": ["a.c"], "collections": {"u": 4}}}
+        self.assertEqual(machine_base.parts(config), {"sources": ["c.c", "a.c"], "collections": {"t": 4, "u": 4}})
+        self.assertEqual(machine_base.parts(config, add=False), {"sources": ["c.c"], "collections": {"t": 4}})
+        self.assertEqual(machine_base.parts({"add": {"sources": ["a.c"]}}, add=False), {})
+        with self.assertRaises(ValueError):
+            machine_base.parts({"common": {"collections": {"t": 4}}, "add": {"collections": {"t": 4}}})
 
     def test_keeps_wants_every_item_of_the_release_and_allows_additions(self):
         reference = {"id": "core", "sites": [1, 2], "build": {"sources": {"x": "1"}}}

@@ -13,7 +13,8 @@
 // Needs the cross toolchain (MODWERK_CROSS, default m68k-elf-). Your firmware is read and the result written where you
 // say; neither enters Git. The result is a local test image: whether it is safe on a unit is for hardware to show.
 // It prints the image's sha256, the flash left (flashHeadroom) and the shared mod RAM and fast RAM the set leaves free
-// (ramSpare, fastSpare), in bytes.
+// (ramSpare, fastSpare), in bytes. On the Rytm's base, which lends send effects that RAM, it also prints the largest
+// effect's ask and the room the set leaves it, in words (fxWork), and refuses a set that leaves too little.
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
@@ -23,6 +24,7 @@ import { fileURLToPath } from 'node:url'
 import { materializeElemodRecipe } from '../src/catalog/elemod-recipe.ts'
 import { ELE3_DEVICES, mainImage, packMain, readEle3Syx, verifyEle3Build, writeEle3Syx } from '../src/engine/elektron/ele3.ts'
 import { linkMods, parseElemod } from '../src/engine/elektron/elemod.ts'
+import { sendFxRoom } from '../src/engine/elekloader/rytm-fx-room.ts'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const args = process.argv.slice(2)
@@ -56,9 +58,15 @@ if (modules.length) {
 
 const linked = await linkMods(mods, image, lockIn ? await json(lockIn) : null)
 if (linked.storeNotes.length) console.error(linked.storeNotes.join('\n'))
+// The Rytm base's send effects work in the RAM the set leaves free: a set that leaves too little would not list one.
+// An older base, which reserves a work area of its own, does not import __bss_end.
+const lends = machine === 'analog-rytm-mkii' && mods.some(mod => mod.sections['.boot'] && mod.imports.includes('__bss_end'))
+const fx = lends ? sendFxRoom(linked, mods[0].device.mainLoad) : undefined
+if (fx && fx.largest > fx.room)
+  throw new Error(`The set leaves the send effects ${fx.room} words of work area, and its largest effect asks for ${fx.largest}: drop a module or that effect.`)
 if (lockOut && !linked.store) throw new Error('--lock-out: this set has no mod storage, so there is no lockfile to write')
 if (lockOut) await writeFile(resolve(lockOut), JSON.stringify(linked.store, null, 1) + '\n')
 const built = writeEle3Syx(stock, packMain(linked.image), device, version)
 const facts = verifyEle3Build(built, stock, linked.image, device, version)
 await writeFile(resolve(out), built)
-console.log(JSON.stringify({ out: resolve(out), sha256: createHash('sha256').update(built).digest('hex'), order: linked.order, flashHeadroom: facts.flashHeadroom, ramSpare: linked.layout.ddrSpare, fastSpare: linked.layout.fastSpare }, null, 1))
+console.log(JSON.stringify({ out: resolve(out), sha256: createHash('sha256').update(built).digest('hex'), order: linked.order, flashHeadroom: facts.flashHeadroom, ramSpare: linked.layout.ddrSpare, fastSpare: linked.layout.fastSpare, ...(fx && { fxWork: fx }) }, null, 1))

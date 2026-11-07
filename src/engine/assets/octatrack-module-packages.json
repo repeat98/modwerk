@@ -507,6 +507,36 @@
       "module": "84a2f52f",
       "bytes": 1088,
       "sha256": "00b8d5ab9bedca2e0d1d02add7540af43ce98cbfc0d8b3c06e40c9b18fe68c4a"
+    },
+    {
+      "id": "slow-lfo",
+      "octabam": true,
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/slow-lfo/0.1.0-experimental.mwrm",
+      "abi": 7,
+      "features": 1,
+      "sites": 7,
+      "copies": 0,
+      "fills": 0,
+      "name": "Slow LFO",
+      "module": "cd8a0e36",
+      "bytes": 608,
+      "sha256": "3505194ebe34509b765bb71d38ab6a62ab5f4f5ba18cdfd829c741fec472aeb4"
+    },
+    {
+      "id": "bar-led",
+      "octabam": true,
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/bar-led/0.1.0-experimental.mwrm",
+      "abi": 7,
+      "features": 1,
+      "sites": 1,
+      "copies": 0,
+      "fills": 0,
+      "name": "Bar LED",
+      "module": "9b41cd3d",
+      "bytes": 196,
+      "sha256": "de7f9caed60bffecc47a33144a223125500c4c8bcbd76e5022d1dc2ee9393600"
     }
   ]
 }

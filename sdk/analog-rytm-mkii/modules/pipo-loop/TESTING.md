@@ -1,4 +1,4 @@
-# Pipo Loop — test report
+# Ping Pong Loop (pipo-loop) — test report
 
 Everything below was observed in rytm-emu on the named build, except the Hardware section, which records what npp1993 reported from a unit.
 
@@ -26,6 +26,17 @@ Everything below was observed in rytm-emu on the named build, except the Hardwar
   BD with LOP ON on the SAMPLE page (the setup in [media/capture.json](media/capture.json)). Audio is
   dtboot's `--wav` with `--every 20M` (longer report intervals keep only about a second of audio).
   Effective LOP is read from the track's effective parameter word (`DTBOOT_PEEK`).
+
+## 0.1.2: idle CPU (2026-11-06)
+
+0.1.1's four voice gates in stock's prefetch called `pipo_loop_mirror` for every voice every block, with LOP OFF everywhere too; it returned at once. 0.1.2 keeps a byte of the voices armed for a turn (`pipo_loop_armed`, set at the end of `pipo_loop_audio`, before the prefetch) and the gates test it first. Nothing else changes.
+
+- Source (0.1.2-experimental): fingerprint `c47b6405…c9e1` (`evidence.sourceSha256`).
+- Build PP21 (vendored core-ar2 0.7 + Ping Pong Loop 0.1.2-experimental, `--version PP21`): `.syx` `df1762de120d304615ac58d944250666fcdcbe20e3cf40cdca4cf9529a451432`. rytm-emu `c5732f0`: the ten media/ plans replay on it; nine frames are byte-identical to PP17's, and markers-playing differs only in the playhead's position (the emulator's timing follows the code).
+- Hardware, measured on npp1993's Analog Rytm MKII (OS 1.74) with a private telemetry base that times every audio block on DTIM0 and sends it over USB MIDI, sequencer stopped, scratch project, no USB audio streaming:
+  - 0.1.1's cost: RC30's 16-module set idles at 72.9 % of the audio block; the same set without Pipo Loop at 70.6 %.
+  - LF01 (`a6d85a85…`, the RC30 set with this source and QPERF's and Sample Playback Rate's idle fixes, on that base): 71.1 %. Its own share was not separated. npp1993 reports that PIPO loops still work on LF01.
+- Not run alone on a unit; the other 0.1.1 hardware rows still describe this code's playback, which 0.1.2 does not change.
 
 ## Emulator, 0.1.1 (2026-10-31)
 

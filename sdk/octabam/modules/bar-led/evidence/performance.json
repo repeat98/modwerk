@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "module": "bar-led",
+  "version": "0.1.0-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": 11,
+    "measured": 11,
+    "budget": 2200000,
+    "method": "One event is one beat flash: stock's clock-message loop calls set_led every 24 clock ticks, and the module runs inside that call. Instructions, not chip cycles. Static: unit.s's dearest path, 11 instructions (a flash while playing that sees the pattern wrap). Measured under ot_emu --mkii --dsp --frame (octabam port), 5 Nov 2026, the load run below: PC watches on the call site 0x40056f24 and set_led 0x40013784, 154 flashes, 8 to 12 instructions between them (the jsr plus 7 to 11 of the module's), 1 on the stock image. Budget: the next clock tick at 300 BPM, 8.33 ms, 2,200,000 cycles at 264 MHz."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": 144.3,
+    "moduleLongestUs": 144.3,
+    "stockIdlePercent": 53.46,
+    "moduleIdlePercent": 53.46,
+    "method": "Emulator, not hardware: ot_emu --mkii --dsp --frame (octabam port, out/emu/ot_emu), 5 Nov 2026. Two native images built with make bus from octabam's test remix bar-led (Bar LED with the stock effects, 44eb5207...) and the same remix without it (0cdb8495...), both kept local; a staged test project, transport playing from --sequencer --internal-clock, 62 s (170,887 frames). The same MIDI flood on both: one three-byte message every emulated ms (note on, CC, note off in turn on channels 1-8), a clock byte every 10 ms (250 BPM), STOP at 7, 22, 37 and 52 s and START one second after each. Longest frame interrupt: the most instructions from the frame handler's entry 0x4000aad4 to its epilogue 0x4000d9a6 between the first and last MIDI handler entry, priced in the port's time (3,990 instructions a sample: 362.8 us = 63,840): 25,388 on both (the module runs outside the frame interrupt). Idle: 100 x (1 - executed instructions / (3,990 x 16 x frames)) over the same window: 53.46 % on both (5,077,036,650 instructions with Bar LED against 5,077,181,996)."
+  },
+  "stress": {
+    "floodMessagesPerSecond": 1000,
+    "clockBpm": 250,
+    "seconds": 62,
+    "stuckNotes": 0,
+    "hangs": 0,
+    "dropped": 0,
+    "droppedExplanation": "Emulator, not hardware, the run above: 62,000 three-byte messages (20,667 note on, 20,666 note off, 20,667 CC), 6,200 clock bytes and four STOP and START pairs. Dropped: PC watches on the MIDI handlers (note on 0x4000e018, note off 0x4000db98, CC 0x4000e79c, clock 0x40005a48) counted exactly the messages sent, on both images. Stuck notes: every note on has its note off and every note off reached its handler; nothing was listened to and the module touches no MIDI path. Hangs: the frames ran to the end on both images and 154 beat flashes reached set_led on each. Not covered: a Part change during the run, external clock driving the sequencer (the flood's clock bytes reach the handler; the sequencer ran on its internal clock)."
+  }
+}

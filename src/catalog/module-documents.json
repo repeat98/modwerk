@@ -10804,6 +10804,956 @@
           }
         }
       ]
+    },
+    {
+      "schemaVersion": 2,
+      "id": "slow-lfo",
+      "key": "SLOW LFO",
+      "name": "Slow LFO",
+      "version": "0.1.0-experimental",
+      "category": "machines",
+      "access": {
+        "location": "LFO SETUP ([FUNC]+[LFO]), MULT on knob C (audio and MIDI tracks)",
+        "steps": [
+          "On a track, hold [FUNC] and press [LFO] to open LFO SETUP, and turn MULT past 64X to 1/2X, 1/4X or 1/8X.",
+          "Set SPD as usual: the LFO now takes 2, 4 or 8 times longer than at 1X, still in time with the tempo.",
+          "Turn MULT back to 1X..64X for stock rates."
+        ],
+        "screenshots": [
+          "media/slow_lfo_mult_half.png",
+          "media/slow_lfo_mult_eighth.png"
+        ]
+      },
+      "author": {
+        "github": "nathangroth",
+        "credits": [
+          "nathangroth: the idea, the LFO rate hooks, documentation and thumbnail."
+        ]
+      },
+      "nativeManifest": "manifest.py",
+      "presentation": {
+        "label": "LFO MULT 1/2X to 1/8X",
+        "family": "LFO",
+        "summary": "LFO MULT gains 1/2X, 1/4X and 1/8X on audio and MIDI tracks: LFOs up to eight times slower, still synced to the tempo.",
+        "overview": "Stock LFO MULT runs from 1X to 64X, so the slowest an LFO can go is SPD 1 at 1X. Slow LFO adds three values after 64X: 1/2X, 1/4X and 1/8X, which run at a half, a quarter and an eighth of 1X. They work on every LFO of the audio tracks and the MIDI tracks, follow the project tempo as stock does, and are stored where stock stores MULT, in the Part.",
+        "highlights": [
+          "MULT 1/2X, 1/4X and 1/8X: LFOs up to eight times slower than stock's slowest.",
+          "Audio and MIDI track LFOs; tempo-synced as stock.",
+          "1X to 64X unchanged; nothing else to set."
+        ],
+        "usage": [
+          "On a track, hold [FUNC] and press [LFO] to open LFO SETUP, and turn MULT past 64X to 1/2X, 1/4X or 1/8X.",
+          "Set SPD as usual: the LFO now takes 2, 4 or 8 times longer than at 1X, still in time with the tempo.",
+          "Turn MULT back to 1X..64X for stock rates."
+        ]
+      },
+      "controls": [
+        {
+          "name": "MULT",
+          "default": 0,
+          "count": 10,
+          "doc": "Stock's LFO rate multiplier, with three slower values after 64X: 1/2X, 1/4X, 1/8X run at a half, a quarter and an eighth of 1X.",
+          "labels": [
+            "1X",
+            "2X",
+            "4X",
+            "8X",
+            "16X",
+            "32X",
+            "64X",
+            "1/2X",
+            "1/4X",
+            "1/8X"
+          ]
+        }
+      ],
+      "compatibility": {
+        "firmware": "1.40C",
+        "effectId": null,
+        "location": "Audio tracks",
+        "conflicts": [],
+        "uiClaims": [],
+        "limitations": [
+          "OS 1.40C. The new values come after 64X on the knob, not below 1X.",
+          "A project saved with 1/2X, 1/4X or 1/8X, opened without the module, shows 64X and runs that LFO much faster; turning MULT down brings back stock's values.",
+          "On Deja Vu's waves MULT is the loop length; Deja Vu reads 1/2X..1/8X as 64.",
+          "Run on an MKI only; not yet tested on an MKII."
+        ]
+      },
+      "resources": {
+        "recorded": "2 November 2026; source and ot_emu, stock 1.40C",
+        "storage": {
+          "label": "ColdFire code and data",
+          "display": "184 bytes",
+          "value": 184,
+          "unit": "bytes",
+          "method": "static",
+          "conditions": "One linked unit of 184 bytes (code, three labels and their pointers), five detours and two four-byte pokes. No DSP memory, no new project bytes: MULT is stored where stock stores it.",
+          "source": "TESTING.md"
+        },
+        "processing": {
+          "label": "ColdFire, per LFO per frame",
+          "display": "+216 instructions a frame (24 audio LFOs)",
+          "value": 216,
+          "unit": "instructions/event",
+          "method": "emulator",
+          "conditions": "ot_emu, stock 1.40C, 2756 frames of a playing project: 23,298 ColdFire instructions a frame with the module against 23,082 without, every audio LFO running. MIDI LFOs add at most as much again while MIDI tracks run.",
+          "source": "TESTING.md"
+        },
+        "impact": {
+          "conditions": "Every audio and MIDI LFO, once per frame.",
+          "cpu": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "About 9 ColdFire instructions per LFO per frame; +216 a frame measured for 24 audio LFOs.",
+            "source": "TESTING.md"
+          },
+          "dsp": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "No DSP code: the module runs only on the ColdFire, inside the LFO engine's own pass.",
+            "source": "manifest.py"
+          },
+          "memory": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "184 bytes of code and labels.",
+            "source": "TESTING.md"
+          }
+        }
+      },
+      "tests": {
+        "report": "TESTING.md",
+        "summary": "USB on an MKI (4 November 2026, Modwerk beta base, package 7392526b): trial, Keep, power cycle, SELF TEST (1/1 intact, longest frame 420 us) and removal; the tester reports 1/2X, 1/4X and 1/8X on audio and MIDI tracks' LFO SETUP, LFOs slowing to the expected rates and stock's 1X..64X after removal. ot_emu on stock 1.40C (verify.py): 1/2X, 1/4X and 1/8X move 0.5007, 0.2510 and 0.1248 of 1X; a tempo change from 120 to 210 BPM while playing scales 1X and 1/2X alike (x1.749, x1.745); the labels print as on the page. The committed package kept beside Bar LED (5 November 2026): SELF TEST passed, 2/2 intact, longest frame 371 us; the tester reports three LFOs of one track at 1/2X, 1/4X and 1/8X on different parameters, several tracks, a tempo change while playing and external MIDI clock all as expected, and the values still set after a power cycle. Without the module, a project saved with a slow value shows 64X and runs that LFO much faster (tester's report); turning MULT down restores stock.",
+        "hardwareStatus": "reported",
+        "evidenceRevision": "79e96c8729341c43cd0f3a324eaa5690b6ef1f36",
+        "gates": [
+          "modules/slow-lfo/verify.py"
+        ],
+        "qualification": {
+          "documentation": {
+            "tutorial": {
+              "title": "Quick tutorial",
+              "steps": [
+                "On a track, hold [FUNC] and press [LFO] to open LFO SETUP, and turn MULT past 64X to 1/2X, 1/4X or 1/8X.",
+                "Set SPD as usual: the LFO now takes 2, 4 or 8 times longer than at 1X, still in time with the tempo.",
+                "Turn MULT back to 1X..64X for stock rates."
+              ]
+            },
+            "screenshots": [
+              "media/slow_lfo_mult_half.png",
+              "media/slow_lfo_mult_eighth.png"
+            ],
+            "screenshotStyle": "black-and-white"
+          },
+          "moduleVersion": "0.1.0-experimental",
+          "sourceSha256": "bbd906ca9eaa1b07e349c8639655232761dc14fe4b696b4b08087d36e7289684",
+          "imageSha256": "7392526b133647e5e7b0a0bb85f33c8f4360b0289c16d89cca733ec5ce6ffd65",
+          "cycles": [
+            {
+              "processor": "coldfire",
+              "worstCase": 48,
+              "maxConfiguration": 768,
+              "maxInstances": 16,
+              "budget": 95778,
+              "unit": "cycles/event",
+              "method": "static",
+              "conditions": {
+                "parameterExtremes": "MULT 1X..64X run 4 added instructions at the rate step and 4 at the MULT load (9 an LFO with the jumps, measured +216 a frame for 24 audio LFOs); 1/2X..1/8X the longest path, 16 an LFO. SPD, DEP, WAVE and TRIG are stock's and untouched.",
+                "parameterModulation": "MULT cannot be locked or reached by scenes or the crossfader (LFO SETUP, as on stock; the tester confirmed it on an MKI). A Part change or reload changes only the stored MULT; each LFO still takes one pass of each hook a frame.",
+                "modeSwitching": "No mode of its own. A Part change or reload changes only the stored MULT the hooks read.",
+                "maxLoad": "8 audio and 8 MIDI tracks, three LFOs each, all at 1/2X..1/8X: 48 LFOs x 16 = 768 instructions in one frame interrupt (budget one frame, 95,778 cycles at 264 MHz, 362.8 us).",
+                "inputConditions": "Static count of unit.s per LFO: detour jmp, muls, mvz, subq, bmi, addq, asr, move, jmp at the rate step (9) and detour jmp, mvz, cmpi, bls, moveq, cmp, jmp at the MULT load (7). Instructions, not cycles: the 32-bit multiply is stock's. The MULT label code runs only when the page draws (one sprintf)."
+              },
+              "report": "TESTING.md"
+            }
+          ],
+          "memory": {
+            "regions": [
+              {
+                "name": "ColdFire code, three labels and their pointers (one linked unit, DRAM)",
+                "space": "sdram",
+                "words": 184,
+                "wordBits": 8,
+                "bytes": 184,
+                "scope": "shared"
+              },
+              {
+                "name": "Stock writes: five detours (10, 6, 10, 6, 6 bytes) and two MULT counts (4 bytes each)",
+                "space": "cpu-flash",
+                "words": 46,
+                "wordBits": 8,
+                "bytes": 46,
+                "scope": "shared"
+              }
+            ],
+            "perInstanceBytes": 0,
+            "sharedBytes": 230,
+            "maxInstances": 16,
+            "totalBytes": 230,
+            "conditions": "From the linked unit (184 bytes of text and data) and the USB package's stock-code sites. No state, no DSP memory, no heap, no new saved data: MULT is stored where stock stores it.",
+            "report": "TESTING.md"
+          },
+          "hardware": {
+            "kind": "functional",
+            "status": "reported",
+            "model": "MKI",
+            "testedOn": "2026-11-04",
+            "tester": "nathangroth",
+            "sourceRevision": "79e96c8729341c43cd0f3a324eaa5690b6ef1f36",
+            "imageSha256": "7392526b133647e5e7b0a0bb85f33c8f4360b0289c16d89cca733ec5ce6ffd65",
+            "summary": "The author's MKI, OS 1.40C, on the flashed Modwerk beta base 9680e9ac, driven over USB by the agent with npm run device. Package 7392526b (608 bytes, module cd8a0e36): a 15-minute trial (MULT shows 1/2X, 1/4X, 1/8X after 64X; rolled back at the end), a second trial (an audio track's LFO and a MIDI track's LFO to an external device slow to the expected rate at each value), Keep, the author's power cycle (still installed, values still offered), SELF TEST passed (1/1 intact, 0 DSP, longest frame 420 us, card set 1/1), removal (MULT stops at 64X as stock).",
+            "limitations": [
+              "One unit, about an hour of use; rates judged by ear and eye, not timed.",
+              "Not tested on hardware: a tempo change while playing (emulator only), external MIDI clock, a project with the slow values opened without the module, Deja Vu's waves beside the slow values, MKII.",
+              "USB only: the card build ran in the author's own octabam remix but its slow values were not timed there. The site's review, Keep and Undo pages were not used."
+            ],
+            "report": "TESTING.md"
+          }
+        }
+      },
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE",
+        "declaration": "Original module by nathangroth, MIT. No firmware, extracted stock code or built images are included."
+      },
+      "media": [
+        {
+          "path": "media/slow_lfo_mult_half.png",
+          "captureType": "emulator",
+          "caption": "LFO SETUP with MULT at 1/2X. Hold [FUNC] and press [LFO], then turn C one step past 64X: the LFO runs at half the 1X rate, still in time with the tempo.",
+          "alt": "LFO SETUP page for LFO 1: PMTR SRC PTCH, a triangle wave, MULT 1/2X, TRIG FREE, and SPD and DEP knobs",
+          "credit": "nathangroth (headless capture)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "LFO SETUP",
+            "shows": "location-and-controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "bdd9d88e58516c66192b7966307505fa51b4367df851a40a375ae746df0ee059",
+            "setup": "Headless ot_emu (octabam port, 28391993); MKII panel; empty scratch card; stopped transport; 128x64 LCD at scale 6 (scripts/capture-module-ui.py)."
+          }
+        },
+        {
+          "path": "media/slow_lfo_mult_eighth.png",
+          "captureType": "emulator",
+          "caption": "MULT at 1/8X, the last value on the knob: the LFO takes eight times as long as at 1X. Turn C back to 64X or lower for stock rates.",
+          "alt": "LFO SETUP page for LFO 1 with MULT 1/8X",
+          "credit": "nathangroth (headless capture)",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "LFO SETUP",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "bdd9d88e58516c66192b7966307505fa51b4367df851a40a375ae746df0ee059",
+            "setup": "Headless ot_emu (octabam port, 28391993); MKII panel; empty scratch card; stopped transport; 128x64 LCD at scale 6 (scripts/capture-module-ui.py)."
+          }
+        }
+      ]
+    },
+    {
+      "schemaVersion": 2,
+      "id": "bar-led",
+      "key": "BAR LED",
+      "name": "Bar LED",
+      "version": "0.1.0-experimental",
+      "category": "system",
+      "access": {
+        "location": "The tempo LED, while the sequencer plays",
+        "steps": [
+          "Press [PLAY]: the first flash is green, then red until the pattern comes round again.",
+          "Set the pattern's length (FUNC + PAGE, PATTERN SCALE) to 12 or 20 steps: the green still lands on the pattern's first step.",
+          "Press [STOP]: the LED behaves as stock, and the next [PLAY] starts green again."
+        ],
+        "screenshots": [],
+        "noUiReason": "It draws nothing: the tempo LED turns green on the pattern's 1."
+      },
+      "author": {
+        "github": "nathangroth",
+        "credits": [
+          "nathangroth: the idea, the beat-flash hook, documentation and thumbnail."
+        ]
+      },
+      "nativeManifest": "manifest.py",
+      "presentation": {
+        "label": "Tempo LED marks the pattern's 1",
+        "family": "Transport",
+        "summary": "The tempo LED flashes green on the pattern's 1 while the sequencer plays; every other beat stays red.",
+        "overview": "A visual downbeat for players who can't use the click track, for example when the cue outputs feed external effects. While the sequencer plays, the tempo LED flashes green on the first beat of each pass of the pattern and red on every other beat, as stock does. It reads the sequencer's own step, so it follows the pattern length. Stopped, it is stock. Nothing to set: install it and press PLAY.",
+        "highlights": [
+          "Green on the pattern's 1, stock red on every other beat.",
+          "Reads the sequencer's master step: the green follows the pattern's length.",
+          "No menu, no knob, no project data: remove the module and the LED is stock again."
+        ],
+        "usage": [
+          "Press [PLAY]: the first flash is green, then red until the pattern comes round again.",
+          "Set the pattern's length (FUNC + PAGE, PATTERN SCALE) to 12 or 20 steps: the green still lands on the pattern's first step.",
+          "Press [STOP]: the LED behaves as stock, and the next [PLAY] starts green again."
+        ]
+      },
+      "controls": [],
+      "compatibility": {
+        "firmware": "1.40C",
+        "effectId": null,
+        "location": "Project sequencer",
+        "conflicts": [],
+        "uiClaims": [],
+        "limitations": [
+          "OS 1.40C. The tempo LED only flashes on whole beats: when the pattern's 1 falls mid-beat (say 14 steps at 1x), the green comes on the first flash after it.",
+          "Green is LED id 39, the pair of stock's red 38; seen green on an MKI over USB, MKII not tested.",
+          "A pattern change while playing is checked in the emulator only; not yet tested on a unit."
+        ]
+      },
+      "resources": {
+        "recorded": "2 November 2026; source and ot_emu, stock 1.40C",
+        "storage": {
+          "label": "ColdFire code and state",
+          "display": "64 bytes",
+          "value": 64,
+          "unit": "bytes",
+          "method": "static",
+          "conditions": "One linked unit: 58 bytes of code, 2 of padding and one 4-byte last-step word; the USB package is 196 bytes. One six-byte detour. No DSP memory.",
+          "source": "TESTING.md"
+        },
+        "processing": {
+          "label": "ColdFire, once per beat",
+          "display": "11 instructions a beat",
+          "value": 11,
+          "unit": "instructions/event",
+          "method": "static",
+          "conditions": "At most 11 instructions before stock's set_led, once per beat (24 clock ticks), in stock's clock-message loop. Nothing per sample or per frame.",
+          "source": "TESTING.md"
+        },
+        "impact": {
+          "conditions": "Once per beat in stock's clock-message loop.",
+          "cpu": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "At most 11 ColdFire instructions once per beat.",
+            "source": "TESTING.md"
+          },
+          "dsp": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "No DSP code: one ColdFire call in stock's clock-message loop.",
+            "source": "manifest.py"
+          },
+          "memory": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "64 bytes of code and state.",
+            "source": "TESTING.md"
+          }
+        }
+      },
+      "tests": {
+        "report": "TESTING.md",
+        "summary": "Reported by the tester on an MKI over USB on the Modwerk beta base 9680e9ac with the committed package de7f9cae (5 November 2026, beside Slow LFO): SELF TEST passed, 2/2 intact, longest frame 371 us; green on the pattern's 1 on external MIDI clock, through tempo changes while playing, at pattern scales 3/4, 3/2 and 2X, on the master length in per-track mode, and after continuing from a pause. Earlier builds: a native card build (2 November) and package bce3b4d6 over USB (4 November, trial, Keep, power cycle, removal). ot_emu on stock 1.40C (verify.py): every beat flash on master step 0 asks for id 39 and every other for stock's 38 at 12, 16 and 20 steps, through two pauses, and across a switch to a pattern of another length at the loop point.",
+        "hardwareStatus": "reported",
+        "evidenceRevision": "f876710778126af86f0be9a861c5a2065579bb21",
+        "gates": [
+          "modules/bar-led/verify.py"
+        ],
+        "qualification": {
+          "documentation": {
+            "tutorial": {
+              "title": "Quick tutorial",
+              "steps": [
+                "Press [PLAY]: the first flash is green, then red until the pattern comes round again.",
+                "Set the pattern's length (FUNC + PAGE, PATTERN SCALE) to 12 or 20 steps: the green still lands on the pattern's first step.",
+                "Press [STOP]: the LED behaves as stock, and the next [PLAY] starts green again."
+              ]
+            },
+            "screenshots": [],
+            "screenshotStyle": "black-and-white"
+          },
+          "moduleVersion": "0.1.0-experimental",
+          "sourceSha256": "e80510a8dda0a5d395e91ca059d62433cc605f375bb4f720b67669fd04a15cc3",
+          "imageSha256": "de7f9caed60bffecc47a33144a223125500c4c8bcbd76e5022d1dc2ee9393600",
+          "cycles": [
+            {
+              "processor": "coldfire",
+              "worstCase": 11,
+              "maxConfiguration": 11,
+              "maxInstances": 1,
+              "budget": 2200000,
+              "unit": "cycles/event",
+              "method": "static",
+              "conditions": {
+                "parameterExtremes": "No parameters. The dearest path is a flash while playing that sees the pattern wrap: move, subq, beq, mvz, move, move, cmp, bcc, moveq, move, jmp (11); stopped or paused, at most 7.",
+                "parameterModulation": "Nothing to modulate: the module reads the transport word and the master step, both stock's.",
+                "modeSwitching": "PLAY, STOP and pause change only which branch runs; each flash still runs one pass.",
+                "maxLoad": "One call per beat flash (every 24 clock ticks) in stock's clock-message loop, whatever the track count; budget: one clock tick at 300 BPM, 8.33 ms, 2,200,000 cycles at 264 MHz.",
+                "inputConditions": "Static count of unit.s, instructions not cycles; stock's set_led after it is stock's own cost."
+              },
+              "report": "TESTING.md"
+            }
+          ],
+          "memory": {
+            "regions": [
+              {
+                "name": "ColdFire code, padding and the last-step word (one linked unit, DRAM)",
+                "space": "sdram",
+                "words": 64,
+                "wordBits": 8,
+                "bytes": 64,
+                "scope": "shared"
+              },
+              {
+                "name": "Stock write: the beat-flash call's six-byte detour",
+                "space": "cpu-flash",
+                "words": 6,
+                "wordBits": 8,
+                "bytes": 6,
+                "scope": "shared"
+              }
+            ],
+            "perInstanceBytes": 0,
+            "sharedBytes": 70,
+            "maxInstances": 1,
+            "totalBytes": 70,
+            "conditions": "From the linked unit (64 bytes with the 4-byte last-step word) and the USB package's one stock-code site. No DSP memory, no heap, no saved data.",
+            "report": "TESTING.md"
+          },
+          "hardware": {
+            "kind": "functional",
+            "status": "reported",
+            "model": "MKI",
+            "testedOn": "2026-11-05",
+            "tester": "nathangroth",
+            "sourceRevision": "f876710778126af86f0be9a861c5a2065579bb21",
+            "imageSha256": "de7f9caed60bffecc47a33144a223125500c4c8bcbd76e5022d1dc2ee9393600",
+            "summary": "The author's MKI, OS 1.40C, on the flashed Modwerk beta base 9680e9ac, driven over USB with npm run device. The committed package de7f9cae (196 bytes, module 9b41cd3d) kept beside Slow LFO on 5 November 2026: SELF TEST passed (2/2 intact, longest frame 371 us); green on the pattern's 1 on external MIDI clock, through tempo changes while playing, at pattern scales 3/4 and 3/2, on the master length and master scale in per-track mode, after STOP and PLAY, and after continuing from a pause; on 6 November, green on every pass at pattern scale 2X. Earlier, before the pause fix: the native card build in the author's octabam remix (2 Nov 2026) and package bce3b4d6 over USB (4 Nov 2026: trial, Keep, power cycle, removal).",
+            "limitations": [
+              "One unit; the LED colour is the tester's report.",
+              "A pattern change while playing is checked in the emulator only (verify.py).",
+              "MKII not tested. The site's review, Keep and Undo pages were not used."
+            ],
+            "report": "TESTING.md"
+          }
+        }
+      },
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE",
+        "declaration": "Original module by nathangroth, MIT. No firmware, extracted stock code or built images are included."
+      },
+      "media": []
+    },
+    {
+      "schemaVersion": 2,
+      "id": "stem-rec",
+      "key": "STEM REC",
+      "name": "Stem Rec",
+      "version": "0.1.0-experimental",
+      "category": "system",
+      "source": {
+        "repository": "https://github.com/yvesrosius/octabam",
+        "revision": "00a23502a9e3ce8264888026a2b6764e7f52a3be",
+        "path": "modules/stems"
+      },
+      "access": {
+        "location": "Front panel: hold UP first, then press REC.",
+        "steps": [
+          "Include Stem Rec in a card build. Hold UP first, then press REC: STEMS opens.",
+          "Choose the sources with UP, DOWN and YES: T1 alone is on at boot, at 24 bits.",
+          "Press YES on STEM REC: it arms, and the take starts when the sequencer plays (at once if it already does). Stop the sequencer to end it.",
+          "Wait until STEM REC reads DONE before you pull the card or power off. The files are in AUDIO/!STEMS/<take>/."
+        ],
+        "screenshots": [
+          "media/01-main.png",
+          "media/02-stems-open.png",
+          "media/04-stems-sources.png",
+          "media/05-stems-armed.png"
+        ]
+      },
+      "author": {
+        "github": "yvesrosius",
+        "name": "Yves Rosius",
+        "credits": [
+          "Yves Rosius: design, ColdFire implementation and documentation; MIT.",
+          "Thanks to OctaBam (Sam Banks and contributors) for the toolchain that made it possible."
+        ]
+      },
+      "nativeManifest": "manifest.py",
+      "presentation": {
+        "label": "Multitrack stems to the card",
+        "family": "Recording",
+        "summary": "Hold UP and press REC to open STEMS, then record each track, MAIN, CUE and the inputs to their own WAV files while the sequencer plays.",
+        "overview": "Stem Rec writes a take to the card while the sequencer plays: every track after its fader, the main mix, the cue mix and the four inputs, each as its own 44,100 Hz WAV file in 16 or 24 bits, for up to 60 minutes. Each take gets a folder in AUDIO/!STEMS. It uses no effect slot. Card builds only.",
+        "highlights": [
+          "UP then REC opens and closes STEMS; REC alone stays stock.",
+          "T1 to T8, MAIN, CUE and the input pairs AB and CD, each on or off; a pair records as one stereo file or two mono ones.",
+          "16 or 24 bits; each track's file is its share of MAIN, so levels, scenes and the crossfader are in it.",
+          "The take starts with the sequencer and stops with it, on YES, after 60 minutes, or when the card falls behind."
+        ],
+        "usage": [
+          "Include Stem Rec in a card build. Hold UP first, then press REC: STEMS opens.",
+          "Choose the sources with UP, DOWN and YES: T1 alone is on at boot, at 24 bits.",
+          "Press YES on STEM REC: it arms, and the take starts when the sequencer plays (at once if it already does). Stop the sequencer to end it.",
+          "Wait until STEM REC reads DONE before you pull the card or power off. The files are in AUDIO/!STEMS/<take>/."
+        ]
+      },
+      "controls": [
+        {
+          "name": "STEM REC",
+          "default": 0,
+          "count": 1,
+          "doc": "The take's state: READY, ARMED, the time, SAVING, DONE or NO CARD, or a failed take's error. YES arms a take, cancels an armed one or stops a running one.",
+          "labels": null
+        },
+        {
+          "name": "T1",
+          "default": 1,
+          "count": 2,
+          "doc": "Records track 1 after its fader. With MASTER TRACK on, T8 reads MASTER and is left out.",
+          "labels": [
+            "OFF",
+            "ON"
+          ]
+        },
+        {
+          "name": "T2",
+          "default": 0,
+          "count": 2,
+          "doc": "Records track 2 after its fader.",
+          "labels": [
+            "OFF",
+            "ON"
+          ]
+        },
+        {
+          "name": "T3",
+          "default": 0,
+          "count": 2,
+          "doc": "Records track 3 after its fader.",
+          "labels": [
+            "OFF",
+            "ON"
+          ]
+        },
+        {
+          "name": "T4",
+          "default": 0,
+          "count": 2,
+          "doc": "Records track 4 after its fader.",
+          "labels": [
+            "OFF",
+            "ON"
+          ]
+        },
+        {
+          "name": "T5",
+          "default": 0,
+          "count": 2,
+          "doc": "Records track 5 after its fader.",
+          "labels": [
+            "OFF",
+            "ON"
+          ]
+        },
+        {
+          "name": "T6",
+          "default": 0,
+          "count": 2,
+          "doc": "Records track 6 after its fader.",
+          "labels": [
+            "OFF",
+            "ON"
+          ]
+        },
+        {
+          "name": "T7",
+          "default": 0,
+          "count": 2,
+          "doc": "Records track 7 after its fader.",
+          "labels": [
+            "OFF",
+            "ON"
+          ]
+        },
+        {
+          "name": "T8",
+          "default": 0,
+          "count": 2,
+          "doc": "Records track 8 after its fader; reads MASTER, and is left out, while MASTER TRACK is on.",
+          "labels": [
+            "OFF",
+            "ON"
+          ]
+        },
+        {
+          "name": "MAIN",
+          "default": 0,
+          "count": 2,
+          "doc": "Records the main mix as it is mixed.",
+          "labels": [
+            "OFF",
+            "ON"
+          ]
+        },
+        {
+          "name": "CUE",
+          "default": 0,
+          "count": 2,
+          "doc": "Records the cue mix as it is mixed.",
+          "labels": [
+            "OFF",
+            "ON"
+          ]
+        },
+        {
+          "name": "AB",
+          "default": 0,
+          "count": 2,
+          "doc": "Records inputs A and B as they arrive. LEFT and RIGHT pick the row's checkbox. With STEREO off the row reads A and B, each with its own checkbox, and each input that is on records as a mono file.",
+          "labels": [
+            "OFF",
+            "ON"
+          ]
+        },
+        {
+          "name": "AB STEREO",
+          "default": 1,
+          "count": 2,
+          "doc": "On: inputs A and B record as one stereo file. Off: as one mono file each.",
+          "labels": [
+            "OFF",
+            "ON"
+          ]
+        },
+        {
+          "name": "CD",
+          "default": 0,
+          "count": 2,
+          "doc": "Records inputs C and D, as AB does.",
+          "labels": [
+            "OFF",
+            "ON"
+          ]
+        },
+        {
+          "name": "CD STEREO",
+          "default": 1,
+          "count": 2,
+          "doc": "On: inputs C and D record as one stereo file. Off: as one mono file each.",
+          "labels": [
+            "OFF",
+            "ON"
+          ]
+        },
+        {
+          "name": "24 BIT",
+          "default": 1,
+          "count": 2,
+          "doc": "On: 24-bit files. Off: 16-bit files, half the card's writing.",
+          "labels": [
+            "OFF",
+            "ON"
+          ]
+        }
+      ],
+      "compatibility": {
+        "firmware": "1.40C",
+        "effectId": null,
+        "location": "Audio tracks",
+        "conflicts": [],
+        "uiClaims": [
+          "key:UP+REC"
+        ],
+        "limitations": [
+          "Power cycle before an OS upgrade once REC has been pressed since power-on: the writer task sleeps on a stock timer that holds one waiter.",
+          "Card builds only: over USB a module lives in the base's 768 KiB ColdFire pool, and Stem Rec needs an 8 MiB ring and runs a writer task of its own for each take.",
+          "No YES double tap on the main page in this version: in octabam a second YES within 0.5 s arms a take, but APPLY SCENE patches that stock site and a card build has no key bus. UP + REC and the YES on STEM REC's own row work as upstream.",
+          "Nothing is saved: at every boot T1 alone is on, at 24 bits, both pairs stereo. Stem Rec writes nothing into projects.",
+          "A power cut or a card pull before DONE leaves the take's files at 0 bytes: each file's length is set only at the end.",
+          "The card must keep up: a 24-bit stereo file needs 264,600 bytes a second. When the card falls behind the ring fills and the take stops with RING FULL; its files still play.",
+          "With MASTER TRACK on, T1 to T7 and CUE are 32 samples (0.73 ms) early against MAIN, and the track files do not sum to MAIN.",
+          "Sample memory: a card build with Stem Rec gives up the 10,487,808-byte DRAM platform reserve from Flex sample RAM, shared with any other DRAM module; its 8 MiB ring sits inside it.",
+          "Loading a project while a take records isn't detected. Don't do it.",
+          "After pulling and reinserting the card, power cycle before the next take: a card probe can take the writer's timer, and the take then fills the ring and stays at SAVING (traced in the source, not tested on a unit).",
+          "A card that refuses a write hangs the writer inside the stock card driver, which has no timeout, until a power cycle. Stock's sample save shares this.",
+          "Stem Rec patches the stock PIO card write (0x40014cfe) to advance the card handler's pointer and count before the first sector goes out, fixing a stock race: it changes every PIO card write in the build, not only Stem Rec's. A card that reports DMA takes another path."
+        ]
+      },
+      "resources": {
+        "recorded": "5 November 2026; STEMMW1 on an MKII, emulator counts and the link map",
+        "storage": {
+          "label": "ColdFire code, data, rings and stack",
+          "display": "8,436,254 B of its own, inside the 10.49 MB DRAM platform reserve",
+          "value": 8436254,
+          "unit": "bytes",
+          "method": "static",
+          "conditions": "The 8 MiB ring, the writer's 8 KiB stack, 7 KiB of sector copies with 480 bytes of padding, the 23,210-byte unit, the 8,568-byte loader appendix and 28 bytes of hook sites; any DRAM module also creates the 10,487,808-byte platform reserve taken from Flex sample RAM, which holds them. See TESTING.md.",
+          "source": "TESTING.md"
+        },
+        "processing": {
+          "label": "ColdFire, per audio block",
+          "display": "13,992 of 95,782 cycles a block at 11 files (measured); about 15,505 with every source",
+          "value": 15505,
+          "unit": "cycles/block",
+          "method": "hardware",
+          "conditions": "The frame hook's longest frame on the unit, 53 us at eleven 24-bit files, at 264 MHz; every source at 24 bits scaled from it by the emulator's instruction counts (4,468 / 4,032). The writer task runs outside the audio interrupt. See TESTING.md.",
+          "source": "TESTING.md"
+        },
+        "impact": {
+          "conditions": "One take with every source on at 24 bits. Estimates describe source structure, not measured hardware headroom.",
+          "cpu": {
+            "level": "moderate",
+            "basis": "source-estimate",
+            "rationale": "The frame hook runs every audio block, a few hundred instructions while idle and a few thousand while every source records; the writer task waits on the card.",
+            "source": "upstream/stems.s"
+          },
+          "dsp": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "No DSP program, effect slot or DSP state is added: the hook reads the audio read-back blocks the stock code already has.",
+            "source": "upstream/manifest.py"
+          },
+          "memory": {
+            "level": "high",
+            "basis": "source-estimate",
+            "rationale": "An 8 MiB ring in DRAM, inside the platform reserve every DRAM module shares.",
+            "source": "manifest.py"
+          }
+        }
+      },
+      "tests": {
+        "report": "TESTING.md",
+        "summary": "On Yves's MKII (5 November 2026, image STEMMW1): two takes of eleven 24-bit files, both OK, every file whole, the frame hook 53 us at most (13,992 of 95,782 cycles a block). Under the emulator the card builds alone and beside APPLY SCENE, TUNER and USB AUDIO OUT, boots, and fills its gain table from the OS (verify.py).",
+        "hardwareStatus": "reported",
+        "evidenceRevision": "00a23502a9e3ce8264888026a2b6764e7f52a3be",
+        "gates": [
+          "verify.py: the card build boots under ot_emu, its DRAM runtime reads back equal to the link, its gain table holds the OS's 774 bytes, its regions lie in the reserve, and it builds beside APPLY SCENE, TUNER and USB AUDIO OUT",
+          "Hardware report for this source and image (STEMMW1, 6618b451...): yvesrosius, MKII, 2026-11-05 (reported; TESTING.md)"
+        ],
+        "qualification": {
+          "documentation": {
+            "tutorial": {
+              "title": "Quick tutorial: record your tracks as stems",
+              "steps": [
+                "Include Stem Rec in a card build. Hold UP first, then press REC: STEMS opens.",
+                "Choose the sources with UP, DOWN and YES: T1 alone is on at boot, at 24 bits.",
+                "Press YES on STEM REC: it arms, and the take starts when the sequencer plays (at once if it already does). Stop the sequencer to end it.",
+                "Wait until STEM REC reads DONE before you pull the card or power off. The files are in AUDIO/!STEMS/<take>/."
+              ]
+            },
+            "screenshots": [
+              "media/02-stems-open.png",
+              "media/04-stems-sources.png",
+              "media/05-stems-armed.png"
+            ],
+            "screenshotStyle": "black-and-white"
+          },
+          "moduleVersion": "0.1.0-experimental",
+          "sourceSha256": "caa5d4355c9e3ae0eb8e4d0b4c11117693ebaf837fdde50e0d74bc484a9d7b1e",
+          "imageSha256": "6618b45173de86d012fda10d1868aaec1001c281a5c93fc18024a504f56e4caa",
+          "cycles": [
+            {
+              "processor": "coldfire",
+              "worstCase": 13992,
+              "maxConfiguration": 15505,
+              "maxInstances": 1,
+              "budget": 95782,
+              "unit": "cycles/block",
+              "method": "hardware",
+              "conditions": {
+                "parameterExtremes": "16 and 24 bits, every source on or off, the input pairs stereo or mono, MASTER TRACK on and off: the emulator counts the hook at 396 instructions a frame idle, 937 with T1 alone, 4,032 with the eleven files measured on the unit and 4,468 with every source at 24 bits, the most (the source's cost gate, 400 frames each). The unit measured eleven files at 24 bits: 53 us at most.",
+                "parameterModulation": "Levels, MAIN LEVEL, scenes, the crossfader, LFOs and p-locks reach Stem Rec only through each track's gain: a track whose gain moves on a frame takes the ramp path, about 100 instructions more on that frame, otherwise the flat path. The unit's takes ran the project with its own levels. No MIDI CC or other control path.",
+                "modeSwitching": "Arm, start on the first frame the sequencer plays (the files' layout is latched once, on that frame, inside the frames measured), stop on the sequencer, on YES, after 60 minutes or on RING FULL. The take's end and the card writes run in the writer task, outside the audio interrupt.",
+                "maxLoad": "One instance. Every source at 24 bits (fourteen files) is the most: estimated from the unit's 53 us at eleven files scaled by the emulator's 4,468 / 4,032 instructions, 58.7 us, 15,505 cycles of the 95,782-cycle block at 264 MHz. The unit's takes ran with the project's Static tracks streaming from the card; the hook and the stock frame routine together took 104 us at most.",
+                "inputConditions": "The hook's instructions depend on the source mask and the fader moves, not on the audio, except the limiter: a track whose gain can exceed unity takes the limited loop, one compare a sample on the common path; the source's unit tests drive every loop form with rail samples. Measured with the project's audio; no silence or full-scale take on the unit."
+              },
+              "report": "TESTING.md"
+            }
+          ],
+          "memory": {
+            "regions": [
+              {
+                "name": "The DRAM unit: code, state, gain queue and gain table (.text; no BSS)",
+                "space": "sdram",
+                "words": 23210,
+                "wordBits": 8,
+                "bytes": 23210,
+                "scope": "shared"
+              },
+              {
+                "name": "stems_ring: the take's per-file rings (DramRegion)",
+                "space": "sdram",
+                "words": 8388608,
+                "wordBits": 8,
+                "bytes": 8388608,
+                "scope": "shared"
+              },
+              {
+                "name": "stems_stack: the writer task's stack (DramRegion)",
+                "space": "sdram",
+                "words": 8192,
+                "wordBits": 8,
+                "bytes": 8192,
+                "scope": "shared"
+              },
+              {
+                "name": "stems_buf: fourteen 512-byte sector-0 copies (DramRegion, 512-aligned)",
+                "space": "sdram",
+                "words": 7168,
+                "wordBits": 8,
+                "bytes": 7168,
+                "scope": "shared"
+              },
+              {
+                "name": "Padding between stems_buf and stems_stack",
+                "space": "sdram",
+                "words": 480,
+                "wordBits": 8,
+                "bytes": 480,
+                "scope": "shared"
+              },
+              {
+                "name": "The platform loader and packed unit appended to the image",
+                "space": "sdram",
+                "words": 8568,
+                "wordBits": 8,
+                "bytes": 8568,
+                "scope": "shared"
+              },
+              {
+                "name": "The four rewritten hook sites in stock code",
+                "space": "sdram",
+                "words": 28,
+                "wordBits": 8,
+                "bytes": 28,
+                "scope": "shared"
+              },
+              {
+                "name": "The rest of the platform reserve, given up from Flex sample RAM",
+                "space": "sdram",
+                "words": 2060150,
+                "wordBits": 8,
+                "bytes": 2060150,
+                "scope": "shared"
+              }
+            ],
+            "perInstanceBytes": 0,
+            "sharedBytes": 10496404,
+            "maxInstances": 1,
+            "totalBytes": 10496404,
+            "conditions": "Exact layout of the card build (STEMMW1's MAIN OS): the unit at 0x40a955e0..0x40a9b08a with no BSS, the three DramRegions from layout.json, the 10,487,808-byte platform reserve 0x40a955e0..0x41495de0 that any DRAM module creates and shares, its unused 2,060,150 bytes counted here; the boot stage (8,336 bytes at 0x40a9c000) is temporary inside that unused part. No heap. The writer stack's peak, 1,560 of 8,192 bytes, is from emulator runs of the source; no canary was measured on hardware.",
+            "report": "TESTING.md"
+          },
+          "hardware": {
+            "kind": "functional",
+            "status": "reported",
+            "model": "MKII",
+            "testedOn": "2026-11-05",
+            "tester": "yvesrosius",
+            "sourceRevision": "00a23502a9e3ce8264888026a2b6764e7f52a3be",
+            "imageSha256": "6618b45173de86d012fda10d1868aaec1001c281a5c93fc18024a504f56e4caa",
+            "summary": "Yves flashed OCTATRACK_STEMMW1.bin (454,608 B, SHA-256 6618b451...) on his MKII on 5 November 2026 and recorded two takes of eleven files at 24 bits (T1 to T7, MAIN, CUE, AB, CD), 11.8 s and 3.1 s, both ended by the sequencer: both status OK, every WAV whole with its .ot and the take's STATS.TXT, the ring at most 32% full, the frame hook 28 and 29 us on average and 53 us at most. STEMS opened with UP + REC, YES armed, and a double YES on the main page did stock's ARM ALL only.",
+            "limitations": [
+              "Two short takes; the fourteen-file maximum configuration, a take of T1 alone and a reboot were not run on the unit.",
+              "The track files were not checked against MAIN: the project leaves T8 out of every take, as with MASTER TRACK on, when MAIN is T8's output (inferred).",
+              "MKII only; not run on an MKI."
+            ],
+            "report": "TESTING.md"
+          }
+        }
+      },
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE",
+        "declaration": "The exact upstream source and octabam's MIT terms are retained. The licence covers authored source and documentation; it grants no rights to Elektron firmware and asserts no hardware qualification."
+      },
+      "media": [
+        {
+          "path": "media/01-main.png",
+          "captureType": "emulator",
+          "caption": "The track page, the starting point: hold UP first, then press REC to open STEMS.",
+          "alt": "Octatrack track page with the SRC parameters of a Static machine.",
+          "credit": "Stem Rec by Yves Rosius; documentary emulator capture; underlying interface by Elektron Music Machines.",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "Track page",
+            "shows": "location",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "9a7e1784f9613a66d4957b01911bcc89f24d6a6638a6e29765a90adc923045b2",
+            "setup": "Stem Rec alone on the original OS 1.40C, built natively from this source (the STEMMW1 MAIN OS); emulator from npm run upstream:tools (octabam 5f8e779); MKII panel; empty scratch card; transport stopped; actual 128x64 LCD at integer scale 6."
+          }
+        },
+        {
+          "path": "media/02-stems-open.png",
+          "captureType": "emulator",
+          "caption": "STEMS just opened: STEM REC reads READY, PEAK 0%, and T1 alone is on, as at every boot.",
+          "alt": "STEMS window listing STEM REC READY, PEAK 0%, T1 checked, T2 and T3 unchecked.",
+          "credit": "Stem Rec by Yves Rosius; documentary emulator capture; underlying interface by Elektron Music Machines.",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "STEMS window",
+            "shows": "location-and-controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "9a7e1784f9613a66d4957b01911bcc89f24d6a6638a6e29765a90adc923045b2",
+            "setup": "Stem Rec alone on the original OS 1.40C, built natively from this source (the STEMMW1 MAIN OS); emulator from npm run upstream:tools (octabam 5f8e779); MKII panel; empty scratch card; transport stopped; actual 128x64 LCD at integer scale 6."
+          }
+        },
+        {
+          "path": "media/03-stems-tracks.png",
+          "captureType": "emulator",
+          "caption": "Further down: the track rows T3 to T7, each with its checkbox.",
+          "alt": "STEMS window listing T3 to T7, all unchecked, the cursor on T7.",
+          "credit": "Stem Rec by Yves Rosius; documentary emulator capture; underlying interface by Elektron Music Machines.",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "STEMS window",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "9a7e1784f9613a66d4957b01911bcc89f24d6a6638a6e29765a90adc923045b2",
+            "setup": "Stem Rec alone on the original OS 1.40C, built natively from this source (the STEMMW1 MAIN OS); emulator from npm run upstream:tools (octabam 5f8e779); MKII panel; empty scratch card; transport stopped; actual 128x64 LCD at integer scale 6."
+          }
+        },
+        {
+          "path": "media/04-stems-sources.png",
+          "captureType": "emulator",
+          "caption": "The last rows: MAIN, CUE, the input pairs AB and CD with STEREO on, and 24 BIT on.",
+          "alt": "STEMS window listing MAIN, CUE, AB with STEREO checked, CD with STEREO checked, and 24 BIT checked.",
+          "credit": "Stem Rec by Yves Rosius; documentary emulator capture; underlying interface by Elektron Music Machines.",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "STEMS window",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "9a7e1784f9613a66d4957b01911bcc89f24d6a6638a6e29765a90adc923045b2",
+            "setup": "Stem Rec alone on the original OS 1.40C, built natively from this source (the STEMMW1 MAIN OS); emulator from npm run upstream:tools (octabam 5f8e779); MKII panel; empty scratch card; transport stopped; actual 128x64 LCD at integer scale 6."
+          }
+        },
+        {
+          "path": "media/05-stems-armed.png",
+          "captureType": "emulator",
+          "caption": "YES on STEM REC with the sequencer stopped: the take is armed and starts when the sequencer plays.",
+          "alt": "STEMS window with STEM REC ARMED.",
+          "credit": "Stem Rec by Yves Rosius; documentary emulator capture; underlying interface by Elektron Music Machines.",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "STEMS window",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "9a7e1784f9613a66d4957b01911bcc89f24d6a6638a6e29765a90adc923045b2",
+            "setup": "Stem Rec alone on the original OS 1.40C, built natively from this source (the STEMMW1 MAIN OS); emulator from npm run upstream:tools (octabam 5f8e779); MKII panel; empty scratch card; transport stopped; actual 128x64 LCD at integer scale 6."
+          }
+        }
+      ]
     }
   ]
 }
