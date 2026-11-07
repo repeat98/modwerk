@@ -19,7 +19,7 @@
     "label": "MIDI FEEDBACK",
     "family": "MIDI parameter feedback",
     "summary": "Automatic feedback for seven parameters per drum track, for controller pickup.",
-    "overview": "Sends parameter changes and a full background refresh about every two seconds over DIN MIDI OUT. Enable once per project; no menu visit is required while performing. Emulator lifecycle and physical USB PC12 Track Level pickup tests passed; Rytm hardware qualification remains pending.",
+    "overview": "Sends settled parameter values and refreshes them about every two seconds over DIN MIDI OUT. Enable once per project. While a value is moving, feedback waits for a short pause so it does not interrupt pickup.",
     "highlights": [
       "Automatic background refresh; no performance-time menu diving.",
       "Seven assignments per track; choose your own PC12 pot layout.",
@@ -55,7 +55,7 @@
     {
       "name": "SEND FEEDBACK",
       "default": null,
-      "doc": "Optional immediate refresh of all 84 assignments; background refresh already runs every two seconds while ON.",
+      "doc": "Optional refresh of settled values. Background refresh already runs about every two seconds while ON.",
       "labels": null
     }
   ],
@@ -66,10 +66,10 @@
     "requires": [],
     "conflicts": [],
     "limitations": [
-      "Experimental: automatic refresh and emulator lifecycle checked; Rytm hardware qualification and release packaging pending.",
-      "OS 1.74 only; not for OS 1.72.",
-      "Feedback is DIN-only on Rytm; the Windows/WSL bridge used USB only for the PC12.",
-      "Physical USB PC12 Track Level pickup passed with the emulator; Rytm hardware qualification is pending."
+      "Requires Analog Rytm MKII OS 1.74.",
+      "Feedback uses DIN MIDI OUT.",
+      "Disable both data and clock forwarding on the PC12 for the tested two-way DIN setup.",
+      "An earlier MF06 pattern transition freeze remains unexplained. See the hardware report."
     ]
   },
   "platform": {

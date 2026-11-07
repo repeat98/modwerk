@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "midi-feedback-2026-11-07",
+  "about": "Modwerk source-only MIDI Feedback package for Analog Rytm MKII OS 1.74.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "midi-feedback-0.1.0-experimental-os1.74.elemod",
+      "sha256": "590803e11e7cef3bb981cae26fd50e4c20dd7ac9b11ca5c77bdf6222d4c3980d",
+      "id": "midi-feedback",
+      "version": "0.1.0-experimental",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-3.0-or-later",
+      "source": {
+        "repo": "Claptom-music/modwerk",
+        "commit": "2b352eb816395eb6a30b48cff7a8fcdfaa942a8c",
+        "path": "sdk/imports/packages/midi-feedback/midi-feedback-0.1.0-experimental-os1.74.elemod"
+      },
+      "title": "MIDI Feedback",
+      "requires": ["core"],
+      "conflicts": [],
+      "summary": "Automatic feedback for seven parameters per drum track, for controller pickup.",
+      "description": "Sends settled parameter values and periodic refreshes over DIN MIDI OUT for controller pickup.",
+      "category": "midi-usb",
+      "author": "claptom-music",
+      "needs_core": "0.7",
+      "on_unit": "Author tested MF06 on OS 1.74 with a PC12. See the MF06 report for results and the unresolved earlier freeze."
+    }
+  ]
+}
