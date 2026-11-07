@@ -4,7 +4,7 @@
   "version": "0.1.0-experimental",
   "date": "2026-11-07",
   "changes": [
-    "First release. The AMP envelope reworked: AMP HLD runs from no hold (0) to AUTO (127) without cutting the attack; ATK, AMP DEC, FILTER DEC and REL and AMP HLD get fine steps at short times (0.2 ms to 5 ms); every envelope knob shows its time; FUNC + turn on HLD steps 0, 124.7 ms, AUTO; SOUND SETTINGS > ENV RESET gains AMP (Env Reset Amp, with a pre-fade)."
+    "First release. The AMP envelope reworked: AMP HLD runs from no hold (0) to AUTO (127) without cutting the attack; ATK, AMP DEC, FILTER DEC and REL and AMP HLD get fine steps at short times (0.2 ms to 5 ms); every envelope knob shows its time; FUNC + turn on HLD steps 0, 124.7 ms, AUTO. Installs beside Env Reset Amp, which keeps ENV RESET AMP."
   ],
   "runtimeSourceSha256": "75e8f25452c379aaffba31095e59e1978a09f3acc227e659ebd20d2c088375ee",
   "packages": [

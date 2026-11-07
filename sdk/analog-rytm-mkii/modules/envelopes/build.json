@@ -2,7 +2,6 @@
   "schemaVersion": 1,
   "sources": [
     "src/amp-write.s",
-    "src/pre-fade.c",
     "src/envelopes.c"
   ],
   "defsym": {},
@@ -34,7 +33,6 @@
   "copied": [],
   "regions": [],
   "claims": [
-    "ui:SOUND SETTINGS ENV RESET values",
     "ui:FUNC + turn of AMP HLD",
     "ui:value text of AMP ATK/HLD/DEC and FILTER ATK/DEC/REL",
     "ui:AMP page envelope picture HLD",
@@ -51,22 +49,6 @@
       "defsym": {},
       "cflags": [],
       "sites": [
-        {
-          "addr": "0x400bcf8a",
-          "len": 2,
-          "stockSha256": "0b358362552792220751c58c4cca9c4e54407d2339649a0b96182880f0504c1a",
-          "op": "bytes",
-          "new": "7403",
-          "kind": "code"
-        },
-        {
-          "addr": "0x400ef8d6",
-          "len": 2,
-          "stockSha256": "4e4b41344512feecd49483d4a3f357ebd5b45f53276f21411a66cb3b4d597c16",
-          "op": "bytes",
-          "new": "4e71",
-          "kind": "code"
-        },
         {
           "addr": "0x40109c24",
           "len": 8,

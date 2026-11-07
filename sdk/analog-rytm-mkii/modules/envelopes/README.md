@@ -4,8 +4,8 @@
 
 Module for the Analog Rytm MKII, OS 1.74. It reworks the AMP envelope and shows times on every
 envelope knob: AMP HLD runs from no hold to AUTO without cutting the attack, ATK, DEC, REL and HLD get
-fine steps at short times (0.2 ms up to 5 ms), and SOUND SETTINGS > ENV RESET gains AMP. It carries
-Iced-Cream's Env Reset Amp (ENV RESET AMP, from MrScruff's rytm-mods) on, with a pre-fade added.
+fine steps at short times (0.2 ms up to 5 ms). It installs beside Env Reset Amp (ENV RESET AMP), which
+it began from.
 
 ## Controls
 
@@ -17,7 +17,6 @@ Iced-Cream's Env Reset Amp (ENV RESET AMP, from MrScruff's rytm-mods) on, with a
 | FILTER ATK | stock's curve (as AMP's) | the same new curve as AMP ATK, built for the filter's speed measured on the unit (1.00x the OS model); played on the unit in EV14, 7.5..384 ms within 0.3 % of target |
 | FUNC + turn on HLD | jumps to AUTO | steps 0, 124.7 ms (a 16th at 120 BPM, HLD 42), AUTO |
 | AMP ATK, HLD, DEC, FILTER ATK, DEC, REL | 0..127 | times: an attack's full ramp, a hold's length, a decay's or release's time to -60 dB; AMP DEC 127 = INF |
-| SOUND SETTINGS > ENV RESET | OFF, FILTER | OFF, AMP, FILTER, AMP+FILT (Env Reset Amp). AMP fades the amp envelope to silence just before sequenced trigs and retrig rolls (a held pad's RTRG roll too), so they restart from silence; a pad or MIDI hit itself, and the first trig after PLAY, continue from the current level, as stock |
 
 ## Usage
 
@@ -30,13 +29,11 @@ time, and the short end has the resolution drums need.
 2. Turn HLD to 0: the decay starts as soon as the attack peaks. Turn it up for a hold in ms, or to the top for AUTO (decay from note-off).
 3. Hold FUNC and turn HLD: it jumps between 0, 125 ms and AUTO.
 4. On the FILTER page, ATK, DEC and REL show their times on the same fine curves.
-5. In SOUND SETTINGS, set ENV RESET to AMP: sequenced trigs and retrig rolls restart the amp envelope from silence.
 
 ## How it works
 
 - `src/amp-write.s` takes the amp record write in `amp_env_commands` (0x40109c24, every voice every
-  block). It runs ENV RESET AMP's pre-fade (`src/pre-fade.c`) while a track has AMP in its ENV
-  RESET, then `envelopes_voice`, except for a voice whose record repeats the last one it took when
+  block) and calls `envelopes_voice`, except for a voice whose record repeats the last one it took when
   that one changed nothing (an idle voice, a decay at its end): an idle unit makes no C call there.
 - `envelopes_voice` (`src/envelopes.c`) follows each voice's amp level from the records sent (the level
   lives in the voice hardware) and sets the state stock moves to: after a trig 1 (gate, AUTO) or 2
@@ -47,11 +44,6 @@ time, and the short end has the resolution drums need.
 - FILTER ATK's rates come from `envelopes_flt_atk` (same script, 32-bit words): a `ptr` site in
   `build.json` points stock's lea at 0x4010d2a8 (the filter attack table, read for the attack record
   and the state counter alike) at it.
-- ENV RESET AMP: the pre-fade watches each track's queued sequencer trig and retrig series and ramps
-  a sounding voice toward silence (up to ~4 ms, starting up to 7.3 ms ahead), so stock's attack, which
-  starts from the current level, starts from silence. A pad or MIDI hit, and a trig queued less than
-  the fade ahead (the first after PLAY), are not known in time and play as stock. A roll faster than
-  about 15 ms gets half its spacing to fade, so below about 8 ms it may not reach silence.
 - DEC, REL and HLD: `tools/dec_table.py` builds three tables (`envelopes_amp_dec`, `envelopes_flt_dec`,
   `envelopes_hold`, 128 words each) and `ptr` sites in `build.json` point stock's leas at them: the amp
   decay record (0x40109bee), the filter decay and release records (0x4010d342, 0x4010d3b2, 0x4010d3da)
@@ -67,7 +59,6 @@ time, and the short end has the resolution drums need.
 | --- | --- | --- | --- |
 | AMP HLD 0 is no hold and 127 is AUTO (stock: 0 is AUTO, 127 is 16 s); HLD, ATK, DEC and REL follow new curves. | Anyone with the module installed, including projects made on stock. | A hold that starts at zero and grows with the knob, and resolution at the short end, need the knob's values to mean new times. | Saved sounds and projects play their stored bytes on the new curves (no migration); MIDI CC follows the knob. |
 | FUNC + turn on HLD steps 0, 124.7 ms, AUTO (stock: jumps to AUTO). | Anyone who uses the FUNC jump on HLD. | Quick access to the three most used holds. | Other knobs' FUNC jumps are unchanged. |
-| ENV RESET gains AMP and AMP+FILT. | Anyone who picks them; OFF and FILTER behave as stock. | Env Reset Amp's feature. | A pad or MIDI hit, and the first trig after PLAY, continue from the current level, as stock. |
 
 Saved values keep their bytes and are read the new way: a project made on stock plays HLD 0 as no hold
 (was AUTO) and HLD 127 as AUTO (was 16 s), HLD 1..126, DEC and REL on the new curves (the same byte is a different time, mostly shorter at the low end), and AMP and FILTER ATK on the new curve. MIDI CC 79 (HLD) and the ATK CC
@@ -80,7 +71,7 @@ exponential (straight lines in dB). A choke or stop still fades over stock's fix
 
 It patches the amp record write in `amp_env_commands` (0x40109c24) and points stock's envelope table
 reads at its own tables (`ptr` sites, listed under How it works), and subscribes to `ev_tick`. Claims:
-ENV RESET's values, FUNC + turn on AMP HLD, the value text of AMP ATK/HLD/DEC and FILTER ATK/DEC/REL,
+FUNC + turn on AMP HLD, the value text of AMP ATK/HLD/DEC and FILTER ATK/DEC/REL,
 the AMP page picture and the amp and filter envelope tables. It needs no other module.
 
 - AMP ATK and DEC times are calibrated to one Rytm MKII (EV06, 6 Nov 2026): its VCA ran attacks at
@@ -94,6 +85,10 @@ the AMP page picture and the amp and filter envelope tables. It needs no other m
 - A module that times a note by AMP DEC's table must read the table address the OS code holds at
   0x40109bf0, not stock's 0x401ee61c: with this module that address points at the new table.
 - On stock firmware a sound saved here plays the stock way (HLD 0 = AUTO, the old ATK curve).
+- Beside Env Reset Amp: with AMP in a track's ENV RESET, that module replaces the trig's attack
+  record with a drop to silence. Envelopes then keeps its HOLD rule from the next block's attack
+  record (read in the OS code: [upstream/README.md](upstream/README.md#beside-env-reset-amp)); the
+  pair has not yet run together on a unit.
 - Unit results: TESTING.md.
 
 ## Tests and measurements
@@ -106,9 +101,9 @@ Load: the amp record write runs every block for every voice; an idle voice makes
 
 ## Authorship and licences
 
-Nathaniel Pavel (@npp1993): Envelopes, the curves, the knob times and ENV RESET AMP's pre-fade.
-MrScruff: ENV RESET AMP, rytm-mods 0015-env-reset-amp, its design and code. Iced-Cream: its elemod
-port and Modwerk module, which this carries on. irpina: Elekloader and core-ar2. GPL-2.0-only
+Nathaniel Pavel (@npp1993): Envelopes, the curves and the knob times. MrScruff and Iced-Cream: Env
+Reset Amp (rytm-mods 0015 and its elemod port), whose reading of the amp envelope's commands this
+module started from; none of its code is carried. irpina: Elekloader and core-ar2. GPL-2.0-only
 ([LICENSE](LICENSE)). The source names firmware addresses only; no Elektron firmware is included.
 
 ## Screens and audio

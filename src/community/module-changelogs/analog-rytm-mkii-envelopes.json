@@ -6,7 +6,7 @@
       "First release, for Analog Rytm MKII OS 1.74: the AMP envelope reworked, and every envelope knob shows its time.",
       "AMP HLD runs from no hold (0) to AUTO (127) and never cuts the attack; FUNC + turn jumps 0, 125 ms, AUTO.",
       "ATK, AMP DEC and FILTER DEC/REL step 0.2 ms up to 5 ms, then finer than stock up to 300 ms; HLD steps 0.67 ms.",
-      "SOUND SETTINGS > ENV RESET gains AMP: sequenced trigs and retrig rolls restart from silence (Env Reset Amp).",
+      "Installs beside Env Reset Amp, which keeps ENV RESET AMP.",
       "Saved projects play their HLD, ATK, DEC and REL on the new curves."
     ]
   }

@@ -10,9 +10,8 @@
     "github": "npp1993",
     "name": "Nathaniel Pavel",
     "credits": [
-      "Nathaniel Pavel — Envelopes: HOLD order and attack-aware hold, the ATK curve, envelope times on the knobs, and ENV RESET AMP's pre-fade.",
-      "MrScruff — ENV RESET AMP, the original mod 0015-env-reset-amp in rytm-mods, its design and code; published in rytm-mods-src with permission.",
-      "Iced-Cream — Env Reset Amp, the elemod port (rytm2_mods) and its Modwerk module, which Envelopes carries on.",
+      "Nathaniel Pavel — Envelopes: HOLD order and attack-aware hold, the ATK, DEC, REL and HLD curves, and envelope times on the knobs.",
+      "MrScruff and Iced-Cream — Env Reset Amp (rytm-mods 0015 and its elemod port), whose reading of the amp envelope's commands this module started from; none of its code is carried.",
       "irpina — Elekloader and core-ar2, the core it links with."
     ]
   },
@@ -22,24 +21,23 @@
   "presentation": {
     "label": "IMPROVED ENVELOPES",
     "family": "Sound",
-    "summary": "The AMP envelope reworked: HOLD runs from no hold to AUTO, ATK, HOLD and DEC/REL have fine steps from 0.2 ms, ENV RESET gains AMP, and the envelope knobs show times.",
-    "overview": "Envelopes reworks the AMP envelope. HOLD runs from 0 (no hold: the decay starts the moment the attack reaches the top) up to AUTO at the top of the knob (hold while the note lasts); a hold never cuts the attack short. AMP ATK and FILTER ATK step 0.2 ms at a time up to 5 ms, 0.5 ms up to 15 ms, then about 10 % a step up to 30 s. SOUND SETTINGS > ENV RESET gains AMP and AMP+FILT (from Env Reset Amp): sequenced trigs and retrig rolls restart the amp envelope from silence after a short pre-fade; a pad or MIDI hit itself, and the first trig after PLAY, continue from the current level, as stock. AMP ATK, HLD and DEC and FILTER ATK, DEC and REL show times instead of 0..127.",
+    "summary": "The AMP envelope reworked: HOLD runs from no hold to AUTO, ATK, HOLD and DEC/REL have fine steps from 0.2 ms, and the envelope knobs show times.",
+    "overview": "Envelopes reworks the AMP envelope. HOLD runs from 0 (no hold: the decay starts the moment the attack reaches the top) up to AUTO at the top of the knob (hold while the note lasts); a hold never cuts the attack short. AMP ATK and FILTER ATK step 0.2 ms at a time up to 5 ms, 0.5 ms up to 15 ms, then about 10 % a step up to 30 s; AMP DEC and FILTER DEC and REL step 0.2 ms up to 5 ms and stay finer than stock up to 300 ms. AMP ATK, HLD and DEC and FILTER ATK, DEC and REL show times instead of 0..127.",
     "highlights": [
       "HOLD: 0 = no hold, top = AUTO; never cuts the attack.",
       "AMP and FILTER ATK: 0.2 ms steps at the low end.",
-      "ENV RESET AMP with a click-free pre-fade.",
+      "AMP DEC, FILTER DEC and REL: 0.2 ms steps up to 5 ms.",
       "Envelope knobs show ms and s."
     ],
     "usage": [
       "Press AMP. Turn DEC down: the knob shows its time to -60 dB, in 0.2 ms steps below 5 ms.",
       "Turn HLD to 0: the decay starts as soon as the attack peaks. Turn it up for a hold in ms, or to the top for AUTO (decay from note-off).",
       "Hold FUNC and turn HLD: it jumps between 0, 125 ms and AUTO.",
-      "On the FILTER page, ATK, DEC and REL show their times on the same fine curves.",
-      "In SOUND SETTINGS, set ENV RESET to AMP: sequenced trigs and retrig rolls restart the amp envelope from silence."
+      "On the FILTER page, ATK, DEC and REL show their times on the same fine curves."
     ]
   },
   "access": {
-    "location": "AMP page (HLD, ATK); SOUND menu (FUNC + MUTE) > SOUND SETTINGS > ENV RESET.",
+    "location": "AMP page (ATK, HLD, DEC); FILTER page (ATK, DEC, REL).",
     "steps": [
       "Open the AMP page.",
       "Turn HLD or ATK; FUNC + turn on HLD jumps between 0, 125 ms and AUTO."
@@ -70,12 +68,6 @@
       "default": null,
       "doc": "0 instant, 0.2 ms steps to 5 ms, 0.5 ms to 15 ms, 1 ms to 25 ms, 2.5 ms to 50 ms, 5 ms to 100 ms, 10 ms to 200 ms, 25 ms to 300 ms, then about 14 % a step to 40-45 s. Times are to -60 dB. AMP DEC at the top stays INF.",
       "labels": null
-    },
-    {
-      "name": "SOUND SETTINGS > ENV RESET",
-      "default": null,
-      "doc": "Steps OFF, AMP, FILTER, AMP+FILT. With AMP, sequenced trigs and retrig rolls (a held pad's RTRG too) restart the amp envelope from silence after a short pre-fade; a pad or MIDI hit itself, and the first trig after PLAY, continue from the current level, as stock.",
-      "labels": null
     }
   ],
   "compatibility": {
@@ -87,8 +79,7 @@
     "limitations": [
       "Built for OS 1.74 only.",
       "Saved HLD, ATK, DEC and REL values read differently from stock: HLD 0 is no hold instead of AUTO, 127 is AUTO instead of 16 s, and HLD, AMP and FILTER ATK, DEC and REL follow the new curves.",
-      "Times shown are calibrated to one Rytm MKII (AMP attack 0.957x, decay 0.918x; the filter envelope runs at the OS model's speed); another unit may differ slightly.",
-      "ENV RESET AMP acts only on trigs the Rytm schedules in time (sequencer trigs, retrig rolls): a pad or MIDI hit itself and the first trig after PLAY play as stock, and a roll faster than about 8 ms may not fade fully to silence."
+      "Times shown are calibrated to one Rytm MKII (AMP attack 0.957x, decay 0.918x; the filter envelope runs at the OS model's speed); another unit may differ slightly."
     ]
   },
   "platform": {
@@ -99,7 +90,6 @@
       "ev_tick"
     ],
     "claims": [
-      "ui:SOUND SETTINGS ENV RESET values",
       "ui:FUNC + turn of AMP HLD",
       "ui:value text of AMP ATK/HLD/DEC and FILTER ATK/DEC/REL",
       "ui:AMP page envelope picture HLD",
@@ -137,8 +127,7 @@
           "Press AMP. Turn DEC down: the knob shows its time to -60 dB, in 0.2 ms steps below 5 ms.",
           "Turn HLD to 0: the decay starts as soon as the attack peaks. Turn it up for a hold in ms, or to the top for AUTO (decay from note-off).",
           "Hold FUNC and turn HLD: it jumps between 0, 125 ms and AUTO.",
-          "On the FILTER page, ATK, DEC and REL show their times on the same fine curves.",
-          "In SOUND SETTINGS, set ENV RESET to AMP: sequenced trigs and retrig rolls restart the amp envelope from silence."
+          "On the FILTER page, ATK, DEC and REL show their times on the same fine curves."
         ]
       },
       "screenshots": [
@@ -151,15 +140,15 @@
   "license": {
     "spdx": "GPL-2.0-only",
     "file": "LICENSE",
-    "declaration": "Nathaniel Pavel's code, and MrScruff's rytm-mods code with Iced-Cream's elemod port, under GPL-2.0-only. The source names firmware addresses only; the patch preconditions are addresses, lengths and SHA-256s."
+    "declaration": "Nathaniel Pavel's code, under GPL-2.0-only. The source names firmware addresses only; the patch preconditions are addresses, lengths and SHA-256s."
   },
   "media": [
     {
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
       "caption": "Improved Envelopes",
-      "alt": "Original illustration of four envelopes, each rising from zero",
-      "credit": "Iced-Cream",
+      "alt": "Original illustration of an amp envelope (attack, hold, decay) over a time ruler with fine steps at the short end",
+      "credit": "Nathaniel Pavel",
       "license": "GPL-2.0-only",
       "source": "Original vector illustration; not a device screenshot."
     },

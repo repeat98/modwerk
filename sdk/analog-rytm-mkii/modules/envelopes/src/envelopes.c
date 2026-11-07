@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Envelopes (Nathaniel Pavel): the AMP envelope's HOLD order and ATK curve, and times on the
-// envelope knobs, for the Analog Rytm MKII OS 1.74. ENV RESET AMP and its pre-fade are
-// Env Reset Amp's (amp-write.s, pre-fade.c).
+// envelope knobs, for the Analog Rytm MKII OS 1.74.
 //
 // HOLD (AMP page, id 57) keeps its stored byte, read as: 0 no hold, 1..126 the new hold
 // times (counted from the trig), 127 AUTO (hold while the note is on, stock's 0). The decay
@@ -253,15 +252,18 @@ __attribute__((noinline)) static void follow(struct amp *a, uint32_t rate, uint3
     a->level = d < 0 ? a->target + (int32_t)ad : a->target - (int32_t)ad;
 }
 
+// The writer's skip state (amp-write.s reads it for every voice every block), kept together so a
+// voice with nothing to do touches three 16-byte lines: [0] the voices whose last record left the
+// level follower unchanged, [4 + v] and [12 + v] that record's rate and level words.
+volatile uint32_t envelopes_gate[20] __attribute__((aligned(16)));
+#define GATE_STILL envelopes_gate[0]
+#define GATE_RATE(v) envelopes_gate[4 + (v)]
+#define GATE_LW(v) envelopes_gate[12 + (v)]
+
 // Called by envelopes_write (amp-write.s) for every voice every block, after stock's state
 // machine and before the record is stored; returns the rate word to store. st[0] is the
 // voice's state, st[1] its hold counter (cleared at the trig, +16 a block in state 2, already
 // added this block); snd[0] is the track's ATK, snd[2] its HLD.
-extern volatile uint32_t envelopes_gate[20];   // pre-fade.c
-#define GATE_STILL envelopes_gate[2]
-#define GATE_RATE(v) envelopes_gate[4 + (v)]
-#define GATE_LW(v) envelopes_gate[12 + (v)]
-
 uint32_t envelopes_voice(int32_t v, volatile int32_t *st, const volatile int8_t *snd, uint32_t rate,
                      uint32_t lw)
 {

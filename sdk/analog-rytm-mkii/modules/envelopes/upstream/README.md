@@ -1,54 +1,33 @@
-# env-reset-amp
+# Improved Envelopes: origin
 
-Port of rytm-mods-src `mods/0015-env-reset-amp` (MrScruff; hardware-verified there).
+Improved Envelopes is Nathaniel Pavel's (@npp1993) own module, written for Modwerk; it is not a port
+and has no upstream release. It began as an extension of Iced-Cream's Env Reset Amp (MrScruff's
+rytm-mods 0015, ported to elemod), whose reading of the amp envelope's commands it builds on. From
+0.1.0 it carries none of that module's code: ENV RESET AMP is Env Reset Amp's alone
+(`../../env-reset-amp/`), and the two install side by side.
 
-SOUND menu (FUNC + MUTE) > SOUND SETTINGS > ENV RESET now steps OFF, AMP, FILTER, AMP+FILT. With AMP
-or AMP+FILT the amp envelope restarts from silence on every trig instead of continuing from its
-current level, so AMP ATK is heard on every hit. A trig on a voice that is still sounding drops it
-to silence at once, which can click (most with ATK 0 and a long DEC). The setting is the sound's,
-saved with it.
+## Sites (OS 1.74)
 
-## How it hooks
-
-Three sites, as rytm-mods' registry:
-
-| addr | stock | new | why |
+| addr | len | op | what |
 |---|---|---|---|
-| 0x400bcf1e | `7402` moveq #2,%d2 | `7403` moveq #3,%d2 | ENV RESET's setter masked the amp bit off |
-| 0x400ef86a | `d683` add.l %d3,%d3 | `4e71` nop | the menu stepped by two (OFF <-> FILTER) |
-| 0x40109b04 | `0080b0000000` ori.l #0xb0000000,%d0 | `jmp env_reset_amp_attack` | the trig's amp attack command |
+| 0x40109c24 | 8 | jmp `envelopes_write` | the amp record write in `amp_env_commands`, every voice every block |
+| 0x400d3302 | 6 | jsr `envelopes_amp_graph` | the AMP page's envelope picture (HLD 127 drawn as AUTO, 0 as no hold) |
+| 0x4010d2aa | 4 | ptr `envelopes_flt_atk` | FILTER ATK rate table |
+| 0x40109bc4 | 4 | ptr `envelopes_hold` | AMP HLD compare |
+| 0x40109bf0 | 4 | ptr `envelopes_amp_dec` | AMP DEC record |
+| 0x4010d344, 0x4010d3b4, 0x4010d3dc | 4 each | ptr `envelopes_flt_dec` | FILTER DEC and REL records |
 
-The stub re-emits the `ori.l`, looks up the voice's track and its ENV RESET byte (0x8000ea30 + track),
-and with bit 0 set sends stock's decay form at DEC 0 (rate 0xB0100000, level 0x80) instead; the hold
-states that follow ramp up from silence at the ATK rate. It resumes at 0x40109b0a. It runs in the
-voice-command routine (0x401098d4).
+Addresses, lengths and SHA-256 guards are in `../build.json`; no stock bytes are included.
 
-## Changes from rytm-mods
+## Beside Env Reset Amp
 
-- The shipping code is unchanged. The label `amp_attack` is renamed `env_reset_amp_attack` (global
-  labels carry the mod id) and is the only `.globl`.
-- The `bit_probe` diagnostic is not ported: it needs a fourth patch (0x40109aae) only that build
-  carries. The source sets `P_BIT_PROBE` to 0, so the probe's code is not assembled.
-- It runs from the elemod DDR area instead of cave13 (0x400298e4).
-
-## Test (on a unit)
-
-1. Pick an analog BD sound, AMP ATK about 40, DEC long (100+).
-2. Stock ENV RESET (OFF or FILTER): hit the pad quickly several times; the attack is heard on the
-   first hit only.
-3. Set ENV RESET to AMP: every hit now fades in at the ATK rate.
-4. ENV RESET steps OFF / AMP / FILTER / AMP+FILT with the arrows.
-
-## Results so far
-
-- Hardware: on an Analog Rytm MKII, 2026-10-13, in a build of core-ar2 with filter-hz, ctrl-all,
-  env-reset-amp and slice-loop: works as described (ENV RESET values and the
-  amp restart).
-- `.run` 52 B (50 B of code), 3 sites, no relocations; lint OK; links with core-ar2 0.1.
-- The 50 B of code are byte-identical to the stub in rytm-mods-src's default build (cave13,
-  0x400298e4); the two byte sites match that build byte for byte; the probe's patch site is stock in
-  both.
-- rytm-emu, the four-mod build above: ENV RESET steps FILTER -> AMP -> OFF and OFF -> AMP -> FILTER -> AMP+FILT
-  (stock: FILTER <-> OFF only); with AMP chosen, BD's ENV RESET byte in the engine reads 01 (stock
-  00). Three BD pad hits reach the attack site and resume at 0x40109b0a on both builds. The
-  emulator's voice model is not used to judge the sound: that needs the unit.
+Env Reset Amp takes state 0's `ori.l` at 0x40109b70 and, with AMP in a track's ENV RESET, sends a
+drop to silence (rate 0xb0100000, level 0x80) in place of the trig's attack record (level
+0x4000007f). Envelopes then never sees that record, so stock picks the state after the trig as it
+always does (0x40109b5a: HLD byte 0 gives state 1, the gate; any other value state 2, timed), with
+the hold counter cleared. From the next block the voice sends the continued attack (level 0x7f),
+which Envelopes rewrites to its ATK curve and on which it applies its HOLD rule: HLD 127 turns
+state 2 into the gate, any other value sets 2 or 3 by the hold time and the attack's top. Its level
+follower takes the drop as an instant one-pole fall to -128. So the attack still runs from silence
+on Envelopes' curve, the hold still counts from the trig, and the decay never starts before the
+top. Read in OS 1.74's code, not yet run on the unit.

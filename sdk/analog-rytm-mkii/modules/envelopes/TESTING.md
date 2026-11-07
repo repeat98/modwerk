@@ -43,15 +43,13 @@ DEC 30 (7.5 ms) was too short to track. The 1.5 % is the method's, as on EV14.
 Some takes of the HLD sweep came back with a one-off USB capture gap (a stretch of digital silence);
 those were repeated and the clean take is the one above.
 
-On the unit's screen (ED02, the user): AMP HLD 90 reads 1972ms and fits the field.
+On the unit's screen (ED02, the author): AMP HLD 90 reads 1972ms and fits the field.
 
 Not tested: FILTER DEC/REL below 15 ms and AMP DEC below 5 ms to better than the VCA's slew, the other knob texts on the unit's screen (host-checked: all 128 values of each knob distinct, at most 6 characters), FUNC jump to HLD 42, saving and reloading.
 
 ## Idle CPU, LR03 / LP01 (6 November 2026)
 
-The amp writer called `envelopes_voice` for every voice every block, and voice 0 ran the pre-fade scan
-every block. Now (8028baf2) voice 0 skips the scan while no track has AMP in its ENV RESET (it clears the
-fade mask, as the scan finds), and a voice skips the C call when its rate and level words equal the last
+The amp writer called `envelopes_voice` for every voice every block. Now (8028baf2) a voice skips the C call when its rate and level words equal the last
 ones it took and that call left the level follower as it was. The follower is a pure function of its
 state and the record outside the attack words, so the skipped call would have changed nothing. Stock
 (read in amp_env_commands) sends rate 0 / level 0 to an idle voice every block, and the same one-pole
@@ -69,7 +67,7 @@ record in the decay state, which a voice stays in until its next trig.
 Build EV14: EV13's set with Improved Envelopes at 4efb6fbe (FILTER ATK table for the filter's 1.00x
 speed, FILTER text unscaled; 18a15a2e adds only docs); sha256
 61163e6089ca427505e2c25fcd3401e13dd828a23094cd3d5be856bf5d83cc9f, lock NS01, ramSpare 17,788.
-Flashed by the owner. FILTER ATK by the ~1.3 kHz method of the EV13 section (FRQ 86, ENV +6, ends
+Flashed by the author. FILTER ATK by the ~1.3 kHz method of the EV13 section (FRQ 86, ENV +6, ends
 extrapolated, four takes each; mean / spread):
 
 | FILTER ATK | Target | Measured | Ratio |
@@ -86,26 +84,10 @@ method's error. Everything else of EV13 carries over (AMP code unchanged).
 Build EV13: EV09's set and base (no-send b530a147, lock NS01) with Improved Envelopes at a6df46ff
 (FILTER ATK table, rounded knob times); sha256
 6c7598110742557956310a49906aa44d20978273f31d66a394eb8fa4de9c3cbb, ramSpare 17,708. Flashed by the
-owner; scratch project, track 1 a looped sine. MAIN OUT over USB audio, settings by USB MIDI CC.
+author; scratch project, track 1 a looped sine. MAIN OUT over USB audio, settings by USB MIDI CC.
 
-**ENV RESET AMP, sequenced.** The owner programmed track 1 (trigs on steps 1, 5, 9; step 13 a trig
-with RTRG 1/16, about 4 steps; other tracks muted); the rig set AMP ATK 64 (87 ms), HLD 0, DEC 100
-and ran the pattern with MIDI START, 120 BPM clock and STOP.
-
-| ENV RESET | Each later trig and retrig (steps 5, 9, 13 and the 1/16 roll) |
-|---|---|
-| AMP | the voice, at -1.9 dB (steps) or -0.1 dB (roll) 15 ms before, drops to -48..-54 dB at the trig, then rises to the top in ~91 ms (the 87 ms attack) |
-| OFF | no dip: the attack continues from -2 dB and reaches the top within ~15-20 ms (stock) |
-
-Aborted fades (EV14, same day): the rig drove the pattern with its own MIDI clock and made the step-5
-trig fail on purpose, ENV RESET AMP, a steady ~1.3 kHz tone at -2 dB. STOP sent 3 ms before step 5:
-the voice fades to -50 dB within ~5 ms and stays silent to the end of the take (1.2 s). Clock stopped
-before step 5: the voice holds through the missed step, fades ~90 ms later (when the Rytm's own tempo
-expected the trig) and stays silent. No jump back in either. Unexplained, seen once: on the first run
-(MIDI START with no clock at all while CLOCK RECEIVE is on, same pattern), a fade ~85 ms before an
-expected step was followed ~90 ms later by the level returning to -1 dB within 10 ms. Three more
-START-without-clock runs did not show it (the sequencer either held silent or ignored START); a
-transport with no clock at all is not a normal way to play, so it is left as a note.
+EV13 and EV14 also carried ENV RESET AMP with a pre-fade; it left this module before 0.1.0 (Env Reset
+Amp keeps ENV RESET AMP), so those runs are not recorded here.
 
 **FILTER ATK on the new table** (method as EV09 below: LP2, RES 127, FRQ 40, LEV 0, ENV +24, AMP ATK 0
 / HLD AUTO / DEC INF, FILTER SUS 127 / DEC 0, single MIDI notes; rise start to top, by zero crossings).
@@ -154,7 +136,7 @@ Not tested on the unit in EV13: knob texts (rytm-emu: FILTER ATK reads 1.0ms, 4.
 
 Build EV09: RC30's set with envelopes in place of env-reset-amp, on the private no-send base b530a147,
 lock NS01; sha256 6cccc5e5c91bd24e89c1220ecddef3c569386aed9b44e9f3d79c590999c3f908 (source b6727c48;
-the display-name commit 0764febb is in it). Flashed by the owner; track 1 as the owner set it (a
+the display-name commit 0764febb is in it). Flashed by the author; track 1 as the author set it (a
 looped ~1 kHz sine), only AMP ATK/HLD/DEC sent over USB MIDI (CC 78/79/80), MAIN OUT over USB audio.
 
 | Check | Target | Measured |
@@ -164,7 +146,7 @@ looped ~1 kHz sine), only AMP ATK/HLD/DEC sent over USB MIDI (CC 78/79/80), MAIN
 | Decay start HLD 0 / 1 / 7 / 15 / 31 / 47 | 0 / 15.6 / 62.5 / 125 / 250 / 500 ms | 2.5 / 17.5 / 64.2 / 126.8 / 251.5 / 501.5 ms |
 | AUTO, note 100 / 300 ms | 100 / 300 ms | 102.5 / 301.5 ms |
 | Never cut, ATK 87 ms: HLD 0 / 2 / 7 (62.5 ms) | peak at 87 ms | 87.5 / 87.5 / 87.5-87.8 ms (HLD 7 re-run 3x: one sweep take had a late USB note) |
-| Second MIDI note on a decaying voice (ATK 64/72, DEC 100/110; ENV RESET set to AMP or AMP+FILT, as the owner recalls; MIDI hits bypass it by design) | attack continues from the current level to the first peak | -14.27 vs -14.28 dB, all three; the second peak came 23 / 24.5 / 52 ms after the note, from 0.9 / 1.2 / 2.0 dB below the peak (no restart, as designed). Not a test of ENV RESET AMP |
+| Second MIDI note on a decaying voice (ATK 64/72, DEC 100/110) | attack continues from the current level to the first peak | -14.27 vs -14.28 dB, all three; the second peak came 23 / 24.5 / 52 ms after the note, from 0.9 / 1.2 / 2.0 dB below the peak |
 | AMP DEC slope, DEC 6..126 | 0.918 x model (text) | 0.90-0.925 x model (DEC 108/114 captures failed) |
 
 Decay start = the 3 dB point minus 3 x the measured dB slope. The VCA ran attacks at 0.957x and decays
@@ -189,13 +171,11 @@ These runs used stock's FILTER ATK table (118 ms..3.7 s attacks). The new FILTER
 (`envelopes_flt_atk`, site 0x4010d2aa, EV11 on) is checked in rytm-emu only (knob text); its times on
 the unit, and the filter's speed below 118 ms, were not tested then (now measured: EV13 section).
 
-## Unit, EV04
-
 ## Unit (Analog Rytm MKII, OS 1.74), 6 Nov 2026
 
 Build EV04: RC30's set with Envelopes in place of Env Reset Amp, base 8b0cafbc, sha256
 374157b56041b15bff1d9795371cc60c6a7f0388c7075378e1365287a549d393 (source 818f7b08). Flashed by the
-owner; scratch project.
+author; scratch project.
 
 Automated: track 1 (BD) on BD ANALOG with its DEC 127, filter open, no FX, AMP DEC 40, played over USB
 MIDI (channel 1, note 0, velocity 100), MAIN OUT recorded over USB audio; script envtest.py (private
@@ -213,8 +193,7 @@ click, so hold and AUTO are judged against the HLD 47 take (held to 500 ms), not
 | ATK rise 10-90 %: 0 / 1 / 5 / 10 / 25 (0 / 0.2 / 1 / 2 / 5 ms) | 1.0 / 1.0 / 1.25 / 1.75 / 3.75 ms (hardware slew ~0.8 ms floors the shortest) |
 | ATK 64 rise 10-90 % | 64.8 ms = 0.74 of the 87.2 ms ramp, as earlier probe measurements |
 
-Not tested on the unit: knob texts and the AMP picture (rytm-emu only), FUNC jumps, ENV RESET AMP and
-its pre-fade in this build (unchanged code from Env Reset Amp 1.1.0, which passed ER05), filter
+Not tested on the unit: knob texts and the AMP picture (rytm-emu only), FUNC jumps, filter
 DEC/REL times, retrigs, choke, saving and reloading, CPU cost.
 
 ## rytm-emu (2ac0f1f), EV02-EV04
