@@ -40,7 +40,7 @@ It keeps no clock of its own ([sequencing](https://github.com/repeat98/modwerk/b
 - A project saved with 1/2X, 1/4X or 1/8X opened without the module shows 64X on MULT and runs that LFO much faster (stock reads 7 to 9 as shift counts). Turning MULT down brings back stock's values.
 - On Deja Vu's waves (DJV, DJQ, DJC) MULT is the loop length; Deja Vu reads 1/2X to 1/8X as 64.
 - No other module or the base patches these sites. Takes no key or screen.
-- Tested on an MKI over USB on audio and MIDI tracks: all three LFOs of a track at different slow values, several tracks, a tempo change while playing, external MIDI clock and a power cycle. MULT cannot be locked or reached by scenes or the crossfader, as on stock. The values come back after a power cycle, which restores the Part from battery RAM. Not yet tested: reloading the Part or the project from the card with the module installed, Deja Vu's waves (they load and play, but the loop lengths were not judged), MKII.
+- Tested on an MKI over USB on audio and MIDI tracks: all three LFOs of a track at different slow values, several tracks, a tempo change while playing, external MIDI clock and a power cycle. MULT cannot be locked or reached by scenes or the crossfader, as on stock. The values come back after a power cycle, which restores the Part from battery RAM, and after reloading the Part or the project from the card. Not yet tested: Deja Vu's waves (they load and play, but the loop lengths were not judged), MKII.
 
 ## Tests and measurements
 

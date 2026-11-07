@@ -69,7 +69,9 @@ The committed package `octatrack-modules/slow-lfo/0.1.0-experimental.mwrm` (SHA-
 | Deja Vu 0.1.0 (`95079643…`) kept beside it; DJV, DJQ, DJC with MULT at the slow values | | The waves load and play; the loop lengths were not judged, so not tested |
 | Parameter locks, scenes, crossfader | | Not possible: no LFO SETUP parameter can be locked or reached by the crossfader, so nothing to test |
 
-The rates were judged by ear and eye, not measured; the emulator measured them within 1 % (above). Not tested on a unit: saving and reloading a Part with 1/2X on its own, Deja Vu's loop length at the slow values, MKII, the site's own install dialog (the same package and base protocol, sent from the command line).
+**Save and reload, MKI, 6 November 2026.** The tester's MKI on the developer's private octabam remix `home-base` 8 (native card build with Bar LED, Deja Vu and this module; MAIN OS `fa3a3618…`). Tester's report: a track's LFO set to 1/2X and the project saved by the tester, then MULT changed; after a Part reload, and again after reloading the project from the card, MULT reads 1/2X and the LFO runs at the slow rate.
+
+The rates were judged by ear and eye, not measured; the emulator measured them within 1 % (above). Not tested on a unit: Deja Vu's loop length at the slow values, MKII, the site's own install dialog (the same package and base protocol, sent from the command line).
 
 ## Stock flows
 
