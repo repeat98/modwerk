@@ -1,0 +1,181 @@
+{
+  "scope": "Private corrected measurement base; partial full-set MKII evidence only",
+  "baseIdentity": "36b8c51f7cf5cf421aabac2b1cc1fc9d422cd318b637a7ad0c4f3cdeb8fd8a6b",
+  "mainSha256": "a8e4c2e8460666ea029f7c73c86ada8faf6f746504e7d3b979efe70ec6dd8f9b",
+  "mainBytes": 1305223,
+  "moduleSha256": "195d2b46e2620bd15118478aa02d626d6d803692e02c40db4f45a67f6927b643",
+  "basePatchSha256": "a7dff58642a386f0cb1288af17f6bf4e3774a3f270f5b4bf8896dd0dc8366979",
+  "compiledSourceCommit": "27bf3d5a",
+  "toolchainImage": "sha256:da70d46e10b243277fa3ae2e015f7258d56b3ee08ca4be47e61899958872e792",
+  "moduleCount": 19,
+  "packages": [
+    {
+      "module": "3cbedc9c",
+      "name": "Mini Verb",
+      "layout": 1,
+      "sha256": "eea25e6cf8ac0a39ab300d8ba543b0d5829b789a03e0081c8d136c64f2eed518",
+      "bytes": 2770,
+      "role": "unchanged original package"
+    },
+    {
+      "module": "9f482bb9",
+      "name": "Tape Echo",
+      "layout": 1,
+      "sha256": "921e7a60c3418e7ece96f24c254802b44fee2082713f25e7b964b37f233bbe9e",
+      "bytes": 112124,
+      "role": "unchanged original package"
+    },
+    {
+      "module": "5c49f0f0",
+      "name": "Repitch",
+      "layout": 1,
+      "sha256": "052d27edf6cfac091d126beebac18e2b2d0ecaad470d00581a2a08e215bb47c3",
+      "bytes": 1428,
+      "role": "unchanged original package"
+    },
+    {
+      "module": "bcf0d674",
+      "name": "TapeHead",
+      "layout": 1,
+      "sha256": "980fb1ceda23837b3cb121e42372ccc21e5068ce03cacb1f371c7d53f5150554",
+      "bytes": 2250,
+      "role": "unchanged original package"
+    },
+    {
+      "module": "496d848e",
+      "name": "Air Chorus",
+      "layout": 1,
+      "sha256": "e0f05d53b4259e0c3b50f5dde05ed1a1ec5d7c5b80bf5efd5ce4e5ab7d6d7ff8",
+      "bytes": 3758,
+      "role": "unchanged original package"
+    },
+    {
+      "module": "873d83cc",
+      "name": "E-Verb",
+      "layout": 1,
+      "sha256": "5f81e72fbba43ea827ec3996509b50c036b458d4baa87d801e57d4b4ce1695ca",
+      "bytes": 7454,
+      "role": "unchanged original package"
+    },
+    {
+      "module": "16332a40",
+      "name": "BBD Delay",
+      "layout": 1,
+      "sha256": "614bf23b7d8e6811d096d1d3f5934ace9829cef7a2c1026b1bcbccbe59b6a5c9",
+      "bytes": 5322,
+      "role": "unchanged original package"
+    },
+    {
+      "module": "d7bf66ce",
+      "name": "LOFI2",
+      "layout": 1,
+      "sha256": "a2ab27325404c06197ccf2737b64b480121c6799b439798440b8c73e7884c92c",
+      "bytes": 6300,
+      "role": "unchanged original package"
+    },
+    {
+      "module": "abdb1445",
+      "name": "Analog BD",
+      "layout": 1,
+      "sha256": "1c845579b58fd76b6f00072284ea3f8d83952529812284a5e0b3eb578af505a5",
+      "bytes": 26190,
+      "role": "relinked companion"
+    },
+    {
+      "module": "e8c3e4fa",
+      "name": "FM Synth",
+      "layout": 1,
+      "sha256": "6e5716540d78b652b272c364ddf398f688eb9dff7e2b926b2895e250341aaca7",
+      "bytes": 29810,
+      "role": "unchanged original package"
+    },
+    {
+      "module": "8e791a15",
+      "name": "Preview Vol",
+      "layout": 1,
+      "sha256": "9fd95d9a9a5a1c5932892ab1af36b39994650a51161df3903f36fa8afa6cb1c2",
+      "bytes": 204,
+      "role": "unchanged original package"
+    },
+    {
+      "module": "42a1756e",
+      "name": "CC Map",
+      "layout": 1,
+      "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
+      "bytes": 966,
+      "role": "relinked companion"
+    },
+    {
+      "module": "95cff696",
+      "name": "SIDECHAIN COMP",
+      "layout": 1,
+      "sha256": "b122c2f4259cfb610c45ed35fa634a7b57e87c365c048d6077d0a55f863614a2",
+      "bytes": 2636,
+      "role": "relinked companion"
+    },
+    {
+      "module": "73bab3b1",
+      "name": "Mute Modes",
+      "layout": 1,
+      "sha256": "c35b154d7a6ff4d9affc339387d68bde87554aec82a87b60059b6307f5b2b848",
+      "bytes": 2702,
+      "role": "unchanged original package"
+    },
+    {
+      "module": "7d0747d4",
+      "name": "Quant Live Rec",
+      "layout": 1,
+      "sha256": "297f79efa4259486a6df7ce95efa29947b457597cb8f2d2794a214699d7f87fe",
+      "bytes": 364,
+      "role": "unchanged original package"
+    },
+    {
+      "module": "103be957",
+      "name": "Apply Scene",
+      "layout": 1,
+      "sha256": "236231aaaf2914ed4a4932eda74c455f834d9e0791c0833addd5589b31d23869",
+      "bytes": 2282,
+      "role": "unchanged original package"
+    },
+    {
+      "module": "075d79a3",
+      "name": "DirectJmp Kyoti",
+      "layout": 1,
+      "sha256": "89a38e18728bb2039a0f5e3f39305fcb7be75e0db260acd6b33bd46d7e281cef",
+      "bytes": 2462,
+      "role": "unchanged original package"
+    },
+    {
+      "module": "c8d078f2",
+      "name": "beat-slicer",
+      "layout": 1,
+      "sha256": "195d2b46e2620bd15118478aa02d626d6d803692e02c40db4f45a67f6927b643",
+      "bytes": 5332,
+      "role": "development replacement"
+    },
+    {
+      "module": "4bdbfbf9",
+      "name": "SAMPLE LOCKS",
+      "layout": 1,
+      "sha256": "28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d",
+      "bytes": 9652,
+      "role": "unchanged original package"
+    }
+  ],
+  "runtimeVerification": "Acknowledged whole-set upload SHA/length/TRIAL phase and all 19 inventory IDs/layouts/names; canonical digest unavailable while trial retained",
+  "expectedCanonicalIdentityComputedOffline": "39a3485d1f9c1bbb9659892a280250d98e375ef457b124354585b4ecbf9dc9ae",
+  "uploadIdentity": "92999714805ee105c771b714fccfec355381ab6e41318f85988ac4c75d392510",
+  "trialStartedAt": "2026-10-30T06:52:01.961Z",
+  "hostTrialDeadline": null,
+  "keep": false,
+  "flash": false,
+  "stateAtHandoff": "Trial running; Part working/saved restored; Beat Grid preview open on original sample",
+  "selftest": "Passed: 19/19 intact; 7/7 DSP effects ran together; longest observed frame 417 us",
+  "limitStatusRetest": "Passed: 65536 reads, completion 12, full table and PCM preserved",
+  "splitStereoBothRetest": "Passed: completion 7, 56 reads, right-channel -5-frame boundaries, inactive rows and PCM preserved",
+  "qualification": "Incomplete: full-set Undo failed; uninstrumented build, 24-bit, concurrency and broader audio/stress cases remain pending.",
+  "record": "FULL_SET_2026-10-30.md",
+  "firmwareCommitted": false,
+  "subsequentEnd": "Bounded 45-second Undo failed with 10 modules remaining; active identity unknown; client stopped and owner power cycle requested before any further install.",
+  "recoveryAfterSubsequentEnd": "Owner power-cycled; original base/active set and all 19 module IDs/layouts/names verified before cumulative trial. Failed Undo remains failed."
+}

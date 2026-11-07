@@ -1,0 +1,16 @@
+{
+  "status": "Recorded pre-fix uninstrumented private base; hardware not tested; not for flash/publication",
+  "baseIdentity": "852856cdb93a672cfd9060a120edd15fc17da4269d3bd119228881ab9c0adcc6",
+  "mainSha256": "848f9860e71914f08d206156d261c1b15aa79348bda78c31bcfa11fab2155add",
+  "mainBytes": 1304967,
+  "ramBootLimit": 1310720,
+  "packageSha256": "abbc356045c31425878fdaea4433c4fdfccbb118283e62610897541090da9c00",
+  "sourcesReceiptSha256": "5805ca8dcc005de80c5a5f2127577814422fb26ab59998d5ff2a752137307b57",
+  "stockFreeScan": "passed",
+  "flashSafetyScan": "passed; not permission to flash",
+  "nativeModuleSetAndEditorTests": "passed",
+  "hardware": "not tested",
+  "basePatchSha256": "d57b32ac9eae32e16f1549cf83f467f791f12876a38104871546a337aa7e1369",
+  "preparedInputsMatchCompiledCandidate": true,
+  "sourceScope": "Historical uninstrumented build predates completion fix; corrected measurement build was rebuilt and hardware-tested (hardware/full-set-build.json), while a corrected uninstrumented build remains pending."
+}

@@ -115,6 +115,24 @@ class UpstreamCheckouts(unittest.TestCase):
             self.assertEqual((path / "tools/hw/usb_probe.py").read_text(), text)
             self.sync(second)
 
+    def test_update_moves_a_plain_pin_and_keeps_it_unedited(self):
+        self.pins.write_text(json.dumps({"rytm-emu": {"repository": self.url, "commit": self.first, "updated": "x"}}))
+        tools.sync("rytm-emu", self.url, self.first, self.base, False)
+        (self.upstream / "src.rs").write_text("// upstream fix\n")
+        second = self.commit("fix")
+        self.assertEqual(tools.update_plain(self.pins, "rytm-emu", self.base, "2026-11-02"), (second, True))
+        pins = json.loads(self.pins.read_text())["rytm-emu"]
+        self.assertEqual((pins["commit"], pins["updated"]), (second, "2026-11-02"))
+        path = tools.sync("rytm-emu", self.url, second, self.base, False)
+        self.assertEqual(tools.edits(path), set())
+        self.assertTrue((path / "src.rs").exists())
+        self.assertEqual(tools.update_plain(self.pins, "rytm-emu", self.base), (second, False))
+
+    def test_the_rytm_emu_pin_is_a_full_commit_of_its_repository(self):
+        pin = json.loads(tools.PINS.read_text())["rytm-emu"]
+        self.assertEqual(pin["repository"], "https://github.com/trigcondition/rytm-emu.git")
+        self.assertRegex(pin["commit"], "^[0-9a-f]{40}$")
+
     def test_checkouts_stay_outside_git_and_on_their_own_remote(self):
         with self.assertRaisesRegex(ValueError, "outside every Git"):
             tools.outside_git(APP / "never-created/upstream")

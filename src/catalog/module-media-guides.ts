@@ -41,6 +41,54 @@ export const MODULE_MEDIA_GUIDES: Readonly<Record<string, ScreenshotGuide>> = {
       },
     ],
   },
+  'pattern-sample-locks': {
+    version: '0.1.8-experimental',
+    screenshots: [
+      {
+        path: 'media/mkii-part-menu.png',
+        caption: 'Press FUNC + PART, then choose Lock Samples to Pattern or Clear Sample Locks with YES. Both actions appear below the four stock Part Edit rows.',
+        alt: 'Physical Octatrack Part Edit menu with Lock Samples to Pattern and Clear Sample Locks.',
+      },
+      {
+        path: 'media/mkii-lock-replace-on.png',
+        caption: 'Use arrows to move among eligible tracks. Turn A clockwise to select all and counterclockwise to clear them; B clockwise selects the highlighted track and counterclockwise clears it. This actual MKII screen shows C: Replace existing ON; turn it OFF to keep every existing SAMPLE lock.',
+        alt: 'Lock track selector with T1 selected and C: Replace existing ON.',
+      },
+      {
+        path: 'media/live-removal-open-tracks.png',
+        caption: 'Turn A clockwise to select all eligible tracks or counterclockwise to clear them; turn B clockwise/counterclockwise to select/clear the highlighted track. Arrows skip non-Flex/Static tracks; Clear has no replacement setting and includes manual SAMPLE locks. This is an emulator capture.',
+        alt: 'Clear track selector with all eight eligible tracks selected and the A: All and B: Track controls.',
+      },
+      {
+        path: 'media/v018-mkii-live512-confirm.png',
+        caption: 'After selecting tracks, press YES to review planned Lock changes. This actual MKII screen lists 64 per track with existing locks kept; press YES to apply or NO to return. It is a pre-apply confirmation, not an edit result.',
+        alt: 'Physical Octatrack Lock confirmation with 64 planned changes on each of eight tracks and existing locks kept.',
+      },
+      {
+        path: 'media/live-512-clear-confirm.png',
+        caption: 'Clear\'s confirmation lists 64 planned removals per track and warns that manual locks are included. Press YES to apply or NO to return; this screenshot is from the emulator.',
+        alt: 'Emulator Clear confirmation with 64 planned removals on each track and manual locks included.',
+      },
+      {
+        path: 'media/live-lock-confirm.png',
+        caption: 'On the Lock confirmation, press YES to apply 63 planned changes on T1 or NO to return to selection. Existing locks are kept in this emulator example.',
+        alt: 'Emulator Lock confirmation with 63 planned changes on T1 and existing locks kept.',
+        additional: true,
+      },
+      {
+        path: 'media/live-clear-confirm.png',
+        caption: 'On the Clear confirmation, the 64 T1 count includes manual locks; press YES to remove them or NO to return. This emulator screen shows the plan, not a completed edit.',
+        alt: 'Emulator Clear confirmation with 64 planned T1 removals, including manual locks.',
+        additional: true,
+      },
+      {
+        path: 'media/live-512-lock-confirm.png',
+        caption: 'The Lock confirmation lists 64 planned changes per track with Replace existing: Yes. Press YES to apply or NO to return; this is an emulator pre-apply screen.',
+        alt: 'Emulator Lock confirmation with 64 planned changes per track and Replace existing set to Yes.',
+        additional: true,
+      },
+    ],
+  },
   tapeecho: {
     version: '0.1.2-experimental',
     screenshots: [

@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-04",
+    "changes": [
+      "First library release, for Analog Rytm MKII OS 1.74 on the Modwerk base: a stereo phaser on the send bus.",
+      "Send each track from its SEND page (AMP twice); choose PHASER on SEND FX (DELAY twice on the FX track, FUNC + A).",
+      "Eight controls, SPD to WDTH, lockable on the FX track; the sound is Send FX's PHASER, unchanged.",
+      "Not yet tested on a unit: this exact build."
+    ]
+  }
+]

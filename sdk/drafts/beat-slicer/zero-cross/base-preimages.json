@@ -1,0 +1,18 @@
+{
+  "upstreamCommit": "3b79e797a38d799f6143b8e1f8ea3deba1f98721",
+  "preimages": {
+    "sdk/machines/octatrack/elekloader/build_core.py": "79c6f9fa7337d5f0b6ad04b87dd6ef3d07b8199757d81159bf909e3edd78ba29",
+    "sdk/machines/octatrack/include/modwerk_sample_editor.h": "48c0aa9a2227cc59cc6a88fadc7712b48f3fd999b46d263f30975986ae66db12",
+    "sdk/machines/octatrack/module-adapters/sample_editor_board.c": "c96218647cc1d11f7416cfab2a9400856d6f182ee5d12dab8ce83fd6a788c300",
+    "sdk/machines/octatrack/module-adapters/sample_editor_board.h": "c2ae8a74e56c2185d240df1aa7c36f61f4ea8a3fffda3768906b31fe86b2f90e",
+    "sdk/machines/octatrack/module-adapters/sample_editor_menu.c": "20921575c6210a55ddcc63bfb8a4a7538c2ecb1641813c57b774b10efe65caf8",
+    "sdk/machines/octatrack/module-adapters/sample_editor_service.c": "e797d3efc48f51b82b9ae90b7dd11d34fa8da09c67ea009d8aadc9deea6f5334",
+    "sdk/machines/octatrack/module-adapters/sample_editor_service.h": "bacbd909bcffad764b35d1953f76daf2a22bd58eee1943f5a69168da661785d1",
+    "sdk/machines/octatrack/module-adapters/test_sample_editor_board.c": "984cadd4c987fa236ad5eaa7ae2e0a8aa826f1f359230259e3a6c1cc73384667",
+    "sdk/machines/octatrack/module-adapters/test_sample_editor_menu.c": "0f86ff7105ac5d5bb62e18941ea12ebb335df7046a36a381eb956fdaefaeb0dd",
+    "sdk/machines/octatrack/module-adapters/test_sample_editor_service.c": "e4a7f6914056bb8bacdc7fb5b85660da0b9f59cfd5f6dc6f357d87ce2d0491ed",
+    "sdk/machines/octatrack/module-adapters/sample_editor_snap.h": null,
+    "sdk/machines/octatrack/module-adapters/test_sample_editor_snap.c": null,
+    "sdk/tests/test_sample_editor_snap.py": null
+  }
+}

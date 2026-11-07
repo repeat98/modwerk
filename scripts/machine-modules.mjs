@@ -15,8 +15,20 @@ import { compareModuleVersions } from '../src/catalog/versions.ts'
 import { requireFlaggedOverlaps, requireKnownConflicts } from './conflict-ids.mjs'
 const json=async path=>JSON.parse(await readFile(path,'utf8'))
 async function walk(folder){const paths=[];for(const entry of await readdir(folder,{withFileTypes:true})){if(entry.name==='__pycache__')continue;if(entry.isSymbolicLink())throw new Error('Module symlinks are not allowed: '+entry.name);if(entry.isDirectory())paths.push(...(await walk(resolve(folder,entry.name))).map(p=>entry.name+'/'+p));else paths.push(entry.name)}return paths.sort()}
+// Nothing in _submissions/ reaches the library, so a merged submission never goes live: a pull request may only move one out.
+export function requireNoSubmissions(root,baseCommit){
+ const git=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8',maxBuffer:4*1024*1024}),spec=':(glob)sdk/*/modules/_submissions/**'
+ const paths=(git('diff','--name-only','--diff-filter=d',baseCommit,'--',spec)+git('ls-files','--others','--exclude-standard','--',spec)).trim().split('\n').filter(Boolean)
+ if(paths.length)throw new Error(paths[0]+': _submissions/ takes no new modules or changes, because nothing there goes live. Put the module in modules/<id> with its pinned .elemod package and release notes, and it is live once merged (sdk/machines/analog-rytm-mkii/README.md#create-a-mod; npm run module:doctor -- <id> names what is missing).')
+}
+// The template's thumbnail is scaffolding, and the library card shows whatever the folder holds, so a library module must replace it.
+export const PLACEHOLDER_THUMBNAIL=/REPLACE THIS THUMBNAIL|Original placeholder from the Modwerk SDK template/
+export function requireOriginalThumbnail(label,item,svg){
+ if(PLACEHOLDER_THUMBNAIL.test(svg)||PLACEHOLDER_THUMBNAIL.test(item.source))throw new Error(label+': '+item.path+' is still the SDK template\'s placeholder thumbnail. Draw an original 320x192 one in the shared signal-art style, and give its media entry a real alt and source (docs/ADD_A_MODULE.md#module-thumbnail-style).')
+}
 export async function machineModules({root,write=false,baseCommit=null,includeDrafts=false}) {
 if(includeDrafts&&write)throw new Error('Draft validation cannot publish generated library metadata')
+if(baseCommit)requireNoSubmissions(root,baseCommit)
 const git=(...args)=>execFileSync('git',args,{cwd:root,encoding:'utf8',maxBuffer:4*1024*1024})
 // Machines on module contract v3 (elemod): the same folder rules, checked against each machine profile.
 const machineProfiles=[]
@@ -24,6 +36,7 @@ const machineProfiles=[]
 for(const entry of await readdir(resolve(root,'sdk/machines'),{withFileTypes:true}).catch(error=>{if(error.code==='ENOENT')return [];throw error}))if(entry.isDirectory())machineProfiles.push(parseMachineProfile(await json(resolve(root,'sdk/machines',entry.name,'machine.json'))))
 let machineModules=0
 const machineDocuments=[]
+const sectionSlots=new Map()
 for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='elemod')){
  const folderRoot=resolve(root,machine.sdk.modules),published=machine.sdk.catalog?(await json(resolve(root,machine.sdk.catalog))).modules:[]
  const dependencies=await loadElemodDependencies(root,machine)
@@ -61,9 +74,19 @@ for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='el
    const said=(await Promise.all(build.sources.map(async path=>readFile(await file(folder,path),'utf8')))).join('\n').match(/MW_FX_ABI,\s*\d+/g)?.map(text=>Number(text.split(',')[1]))??[]
    if(ids.length!==1||!(ids[0]>=1&&ids[0]<=63)||said.length!==1||said[0]!==ids[0])throw new Error(label+': a send effect takes one id, 1 to 63, from sdk/machines/'+machine.id+'/fx-ids.json, and its record (MW_FX_ABI, id, ...) carries it')
   }
+  // A machine's section in the Rytm base's machine list (mw_machine_sections): four bytes with no relocation, from the module
+  // that adds the machine, naming its slot and a section stock files machines under; no two modules name one slot.
+  for(const entry of build.contribute.filter(entry=>entry.to==='mw_machine_sections')){
+   const bytes=entry.data.match(/../g).map(pair=>parseInt(pair,16)),key=machine.id+':'+bytes[0]
+   if(entry.relocs.length||bytes.length!==4||bytes[0]<34||bytes[0]>43||![1,2,4,5,6,7,8,9,10,11].includes(bytes[1])||bytes[2]||bytes[3]||!build.contribute.some(other=>other.to==='core_machines'))throw new Error(label+': a mw_machine_sections entry is four bytes with no relocation: the slot (34 to 43) of the machine the module adds through core_machines, a stock section (1 BD, 2 SD, 4 CP, 5 BT, 6 RS, 7 HH, 8 CY, 9 CB, 10 UT, 11 SY) and two zero bytes')
+   if(sectionSlots.has(key))throw new Error(label+': '+sectionSlots.get(key)+' already names the section of machine slot '+bytes[0])
+   sectionSlots.set(key,document.id)
+  }
   const media=document.media.map(item=>item.path),reports=document.evidence.reports
   for(const path of ['README.md',document.tests.report,document.license.file,...build.sources,...media,...reports])await readFile(await file(folder,path)).catch(()=>{throw new Error(label+': missing '+path)})
   await requireModwerkDocumentation(folder,document)
+  // Only the pull-request check (--base) refuses it: a newly scaffolded module must still pass npm ci's prepare while its developer draws one.
+  if(baseCommit&&dir===folderRoot)for(const item of document.media)if(item.kind==='thumbnail')requireOriginalThumbnail(label,item,await readFile(await file(folder,item.path),'utf8'))
   for(const path of await walk(folder))if(/\.(bin|syx|elemod|exe|dll|so|dylib|zip|img|hex)$/i.test(path))throw new Error('Prohibited firmware/binary file: '+label+'/'+path)
   if(published.some(item=>item.id===document.id)){try{requireModwerkPublication(document)}catch(error){throw new Error(label+': '+error.message,{cause:error})}}
   if(write)for(const item of document.media){const destination=resolve(root,'public/module-media',machine.id+'-'+document.id,document.version,item.path);await mkdir(dirname(destination),{recursive:true});await copyFile(await file(folder,item.path),destination)}

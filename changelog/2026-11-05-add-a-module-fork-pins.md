@@ -1,0 +1,1 @@
+Docs: the module guide now says what the elemod source build guide already does: from a fork, open the pull request before `npm run elekloader:update -- --overlay`, because a fork's pinned commit answers 404 until a pull request names it.

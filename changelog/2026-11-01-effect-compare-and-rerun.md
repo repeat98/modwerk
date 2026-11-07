@@ -1,0 +1,3 @@
+- Effect sound checks: `npm run fx:audit -- compare` compares renders of a new `noise` signal sample for sample, so a knob that does nothing, two presets that are one sound, or a refactor that changed the output shows up. The effects guide also points at `scripts/octatrack-clicks.py` for clicks in a steady tone.
+- `npm run check -- --rerun-failed` skips the checks that passed in the last run against the same base, as a shortcut between fixes.
+- Machine recipe: a base hook costs nothing while no module uses it.

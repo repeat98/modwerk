@@ -2,7 +2,11 @@
 
 Status: **draft**. SYNTIZ is an Octatrack track machine with six models, whose sound goes through the track's
 own filter, AMP envelope, LFOs and effects. All six have played on the author's MKII over USB, and a project
-with SYNTIZ tracks came back whole after a power cycle (TESTING.md); no CPU reading on a unit yet.
+with SYNTIZ tracks came back whole after a power cycle (TESTING.md).
+
+At most three SYNTIZ tracks in a Part: choosing SYNTIZ for a fourth track is refused, and that track stays what it
+was. On the author's MKII a fourth track holding a long note overran the time the base gives machines in each frame,
+and the base dropped renders: a crackle (TESTING.md). A Part saved with more plays on as it was, and may crackle.
 
 The engine is original: no code, table or recording of any other product is used.
 

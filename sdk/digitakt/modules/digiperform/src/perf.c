@@ -56,6 +56,7 @@
 #define F_PATTERN  0x4197c6c7
 #define F_ENC_ACC  0x400c06ae
 #define F_ENC_DECAY 0x400c05f4
+#define F_APP      0x421fac10
 #else
 #define F_400c19a6 0x400c19a6
 #define F_400c257c 0x400c257c
@@ -72,6 +73,7 @@
 #define F_PATTERN  0x4197b6c7
 #define F_ENC_ACC  0x400c0486
 #define F_ENC_DECAY 0x400c03cc
+#define F_APP      0x421f9c10
 #endif
 
 typedef unsigned int u32;
@@ -814,11 +816,19 @@ static void draw_edit(void *bmp, unsigned char *kit)
     }
 }
 
+/* the screen saver's state, in the application object the firmware keeps a pointer to: 0 awake, 1 dimmed (after 5 minutes, only the display's brightness), 2 off (after 60 minutes: the firmware blanks its own screen) */
+#define SAVER_OFF    2
+static int screen_off(void)
+{
+    unsigned char *app = *(unsigned char *volatile *)F_APP;
+    return app && *(volatile int *)(app + 0xe8) == SAVER_OFF;
+}
+
 void digiperform_draw(void *bmp, void *ctrl)
 {
     unsigned char *kit = UI_KIT;
     (void)ctrl;
-    if (!digiperform_open)
+    if (!digiperform_open || screen_off())      /* the page stays open under the saver and comes back with the next key */
         return;
     FILLRECT(bmp, 0, 0, 127, from_trig && !editing ? 53 : 63, 0);   /* the PLAY view leaves the TRIG page's header */
     if (editing)
@@ -887,11 +897,12 @@ void digiperform_tick(void *ctrl)           /* keep the frame coming while the p
             trackt--;
         if (dlg_t > 0)
             dlg_t--;
-        *((volatile char *)ctrl + 0x20) = 1;
+        if (!screen_off())                   /* under the saver the firmware's blank screen stays: no frame is asked for */
+            *((volatile char *)ctrl + 0x20) = 1;
     }
 }
 
-#define KEYID(ev)    (*(int *)((char *)(ev) + 12))
+#define KEYID(ev)   (*(int *)((char *)(ev) + 12))
 #define KEYDOWN(ev)  (*(int *)((char *)(ev) + 16) & 1)
 /* a fresh press, as the firmware tests it: down, and not an auto-repeat */
 #define KEYPRESS(ev) ((*(int *)((char *)(ev) + 16) & 9) == 1)

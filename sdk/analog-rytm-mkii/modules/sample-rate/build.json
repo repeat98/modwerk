@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/rate.c",
+    "src/audio.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_tick",
+      "fn": "sample_rate_tick",
+      "order": 50
+    },
+    {
+      "event": "ev_enc",
+      "fn": "sample_rate_turn",
+      "order": 50
+    }
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:SOUND SETTINGS row SMP RATE, after SMP:",
+    "ui:a tap on the SAMPLE page's FIN knob (encoder B)",
+    "param:FIN (id 40) label while SMP RATE is on"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {
+        "sample_rate_stock_frames": "0x4011bf44",
+        "sample_rate_string": "0x401bcff0",
+        "sample_rate_label_resume": "0x400a900a",
+        "sample_rate_long_resume": "0x400a902c",
+        "sample_rate_menu_resume": "0x400ef522",
+        "sample_rate_vt_scene": "0x401e305c",
+        "sample_rate_vt_perf": "0x401e26c4",
+        "sample_rate_string_end": "0x401bb540",
+        "sample_rate_header": "0x40035fe8",
+        "sample_rate_long_name": "0x400a9022"
+      },
+      "cflags": [
+        "-DPARAMS_EFF_AT=0x8000f7a8",
+        "-DVOICE_REC_AT=0x80005b30",
+        "-DVOICE_OWNER_AT=0x40291138",
+        "-DTRIG_NEXT_AT=0x8000586c",
+        "-DPROJECT_AT=0x4017fa0a",
+        "-DTRACK_INDEX_OF_AT=0x400b693e",
+        "-DKIT_TRACK_SOUND_AT=0x400a67ca",
+        "-DPARAM_TARGET_AT=0x400af51a",
+        "-DPARAM_SET_AT=0x400a906c",
+        "-DVIEW_INVALIDATE_AT=0x40078580",
+        "-DCONFIG_CHANGED_INFO=0x401cb88c",
+        "-DBITMAP_DRAW_AT=0x400716e0",
+        "-DCHECK_GLYPHS_AT=0x419f0910",
+        "-DIS_KEY_HELD_AT=0x40081c28",
+        "-DLOCK_EDITOR_AT=0x40036636",
+        "-DLIVE_RECORDING_AT=0x40036370"
+      ],
+      "sites": [
+        {
+          "addr": "0x4012112c",
+          "len": 6,
+          "stockSha256": "1d795c05a6f60518847adb3c8c3b315f746852ca7313b6b89ca22a1c51f829c0",
+          "op": "jsr",
+          "target": "sample_rate_block_gate"
+        },
+        {
+          "addr": "0x4011c644",
+          "len": 8,
+          "stockSha256": "0bd28d132775cde98fb671d54ef9598f4708ea45afaf5fd8638720d5eaf80031",
+          "op": "jsr",
+          "target": "sample_rate_fin_gate"
+        },
+        {
+          "addr": "0x4011c686",
+          "len": 6,
+          "stockSha256": "9d0e4936533326f7eee2789cd3c74ffc378f5663ee9fbf48ba9ee96a78e35bb0",
+          "op": "jsr",
+          "target": "sample_rate_scale_gate"
+        },
+        {
+          "addr": "0x4011f642",
+          "len": 6,
+          "stockSha256": "31b0bc52db69aaff8360a124860157c469baaa800d268525283617e06264228a",
+          "op": "jsr",
+          "target": "sample_rate_apply_gate"
+        },
+        {
+          "addr": "0x400a9000",
+          "len": 10,
+          "stockSha256": "0533f93bdb4d699e3dc69bd0f4d00dece9bdcfd9be8b5555608150161f4e1d42",
+          "op": "jmp",
+          "target": "sample_rate_label_gate"
+        },
+        {
+          "addr": "0x400a9022",
+          "len": 10,
+          "stockSha256": "0533f93bdb4d699e3dc69bd0f4d00dece9bdcfd9be8b5555608150161f4e1d42",
+          "op": "jmp",
+          "target": "sample_rate_long_gate"
+        },
+        {
+          "addr": "0x400ef51c",
+          "len": 6,
+          "stockSha256": "469424553e58742b9c745be7dd37ed3b5096c6ccf78facb7bd7170aa24a52507",
+          "op": "jmp",
+          "target": "sample_rate_menu_gate"
+        },
+        {
+          "addr": "0x4003a5fc",
+          "len": 6,
+          "stockSha256": "5cb2061dc8e4b71f74f2b6b6ddf6db701a4167e0047a6e5fced6fac9948bc766",
+          "op": "jsr",
+          "target": "sample_rate_knob_gate"
+        }
+      ]
+    }
+  },
+  "storage": [
+    {
+      "sym": "sample_rate_on",
+      "scope": "sound",
+      "bits": 1
+    }
+  ]
+}
