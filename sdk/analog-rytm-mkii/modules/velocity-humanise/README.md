@@ -74,13 +74,7 @@ asks from param_apply_delta's and param_value_text's entries.
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md) for the commands and results. In short: on an Analog Rytm
-MKII with OS 1.74 and core-ar2 0.3, beside the other rytm2_mods ports (with and without
-Euclid Accents), its test steps pass and N survives a power-cycle without a project save.
-Modwerk's own build of this folder gives a main OS byte-identical to elekloader's build of
-the rytm2_mods v1.2 release. In rytm-emu, FUNC on the TRIG page relabels VEL as RND and
-turning it shows N. Memory: 828 bytes of the 128 KiB shared mod area and four bits of
-track storage. On each trig it adds one storage read, a random draw and a clamp.
+See [TESTING.md](TESTING.md) for the commands and results. In short: on an Analog Rytm MKII, OS 1.74, with core-ar2 0.4 and the other rytm2_mods ports (P4A4, 2026-10-21): FUNC + VEL reads RND and steps through N's sixteen values, VEL alone is stock, and N survives a power-cycle without a project save. Modwerk's package linked with core-ar2 0.7 gives a main OS byte-identical to the rytm2_mods v1.3 release object linked with it. In the emulator on the Modwerk base (VH12), FUNC relabels VEL as RND and turning it shows N. Memory: 816 bytes of the 128 KiB shared mod area.
 
 ## Authorship and licences
 
@@ -98,8 +92,9 @@ document the modification. No Elektron firmware is included.
 
 ## Screens and audio
 
-These captures are from rytm-emu running a build of core-ar2 0.3 and Velocity Humanise
-from stock OS 1.74. See [capture provenance](media/capture.json) for hashes and inputs.
+These captures are from analog-emu (rytm-emu's successor) running VH12, the Modwerk base
+for core-ar2 0.7 and Velocity Humanise 1.2.0, from stock OS 1.74; they are byte-identical
+to 1.1's captures. See [capture provenance](media/capture.json) for hashes and inputs.
 The varied velocities were judged on a unit, so there is no audio demonstration.
 
 ![TRIG page with NOT, VEL, LEN and PRB above SYN, SMP, ENV and LFO.](media/trig-page.png)
