@@ -159,9 +159,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "1.1.0",
-        "imageSha256": "f4f01cf1003a5e9e5aa401cca1e49e289a2f99007f8f140f36db0846bdbe8b1b",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running VH74, the released core-ar2 0.3 and velocity-humanise 1.1, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "1.2.0",
+        "imageSha256": "854bfcf00d0ef3c5b11d03211d1eaf8107b30f3106e40c3f88e10e5b85a8b7b3",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running VH12, the Modwerk base for core-ar2 0.7 (plain variant) and velocity-humanise 1.2.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -175,9 +175,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "1.1.0",
-        "imageSha256": "f4f01cf1003a5e9e5aa401cca1e49e289a2f99007f8f140f36db0846bdbe8b1b",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running VH74, the released core-ar2 0.3 and velocity-humanise 1.1, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "1.2.0",
+        "imageSha256": "854bfcf00d0ef3c5b11d03211d1eaf8107b30f3106e40c3f88e10e5b85a8b7b3",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running VH12, the Modwerk base for core-ar2 0.7 (plain variant) and velocity-humanise 1.2.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -191,9 +191,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "1.1.0",
-        "imageSha256": "f4f01cf1003a5e9e5aa401cca1e49e289a2f99007f8f140f36db0846bdbe8b1b",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running VH74, the released core-ar2 0.3 and velocity-humanise 1.1, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "1.2.0",
+        "imageSha256": "854bfcf00d0ef3c5b11d03211d1eaf8107b30f3106e40c3f88e10e5b85a8b7b3",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running VH12, the Modwerk base for core-ar2 0.7 (plain variant) and velocity-humanise 1.2.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]
