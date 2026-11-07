@@ -6,7 +6,7 @@
   "changes": [
     "Both ev_render_out handlers (the recording follower and Retrig Grid's) are now short entries that call the unchanged bodies only when they have work, so an idle audio block no longer builds a 144-byte stack frame; on the author's unit the two cost 3.4 µs a block before and 2.5 µs after. Recording, the grid and the RTRG key are unchanged."
   ],
-  "runtimeSourceSha256": "a1114ecd3b3ce0a2a0645754dae7493c90862365f6d8d01781e4463c44d1a3db",
+  "runtimeSourceSha256": "bcec8ed5ae4f8200a1dfde2c370cf60b505355058b0c4008ce804e38b86fd070",
   "packages": [
     {
       "os": "1.74",
