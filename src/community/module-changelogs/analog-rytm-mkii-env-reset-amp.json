@@ -1,0 +1,12 @@
+[
+  {
+    "version": "1.0.0",
+    "date": "2026-11-07",
+    "changes": [
+      "First release, for Analog Rytm MKII OS 1.74: MrScruff's Env Reset Amp, ported to elemod by Iced-Cream, with his code unchanged.",
+      "SOUND SETTINGS > ENV RESET now steps OFF, AMP, FILTER and AMP+FILT, saved with the sound.",
+      "With AMP or AMP+FILT, the amp envelope restarts from silence on every trig, so AMP ATK is heard on every hit.",
+      "Known issue: a trig on a voice that is still sounding drops it to silence at once, which can click, most with ATK 0 and a long DEC."
+    ]
+  }
+]

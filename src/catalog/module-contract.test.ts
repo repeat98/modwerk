@@ -10,6 +10,11 @@ describe('module folder contract',()=>{
   expect(claims(['key:UP+TEMPO','key:FUNC+LEFT@CHROMATIC','key:CUE+LEVEL','screen:TEMPO'])).toEqual(['key:UP+TEMPO','key:FUNC+LEFT@CHROMATIC','key:CUE+LEVEL','screen:TEMPO'])
   for(const invalid of [['key:UP+TMPO'],['key:up+TEMPO'],['TEMPO'],['screen:tempo'],'key:UP'])expect(()=>claims(invalid)).toThrow('compatibility.uiClaims')
  })
+ it('accepts the transport REC key, apart from the recorder keys REC1 to REC3',()=>{
+  const claims=(uiClaims:unknown)=>parseModuleDocument({...example,compatibility:{...example.compatibility,uiClaims}}).compatibility.uiClaims
+  expect(claims(['key:UP+REC','key:REC+PLAY','key:TRACK+REC1'])).toEqual(['key:UP+REC','key:REC+PLAY','key:TRACK+REC1'])
+  expect(()=>claims(['key:UP+RECORD'])).toThrow('compatibility.uiClaims')
+ })
  it('retains multiple credited contributors without replacing the primary author',()=>{
   const contributors=[{github:'bryantysinger',name:'Bryan Tysinger'},{github:'tester-two'}]
   expect(parseModuleDocument({...example,author:{...example.author,contributors}}).author).toEqual({...example.author,contributors})

@@ -63,6 +63,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [SYNTAKT_OS_RESEARCH.md](SYNTAKT_OS_RESEARCH.md), [TONVERK_OS_RESEARCH.md](TONVERK_OS_RESEARCH.md), [DIGITONE_II_OS_RESEARCH.md](DIGITONE_II_OS_RESEARCH.md): what each stock OS has shown so far.
 - [LXR_02.md](LXR_02.md): the Erica Synths LXR-02, in research.
 - [ZOOM_MULTISTOMP.md](ZOOM_MULTISTOMP.md) and [ZDL_MODULE_CONTRACT.md](ZDL_MODULE_CONTRACT.md): proposals for Zoom MultiStomp pedals and their effect files.
+- [ZOOM_ZD2.md](ZOOM_ZD2.md): the Zoom G1 FOUR and its ZD2 effects, in research.
 - [MACHINE_IMAGES.md](MACHINE_IMAGES.md): where each machine photo comes from, and its terms.
 
 ## Site and backend
@@ -88,6 +89,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 
 History, not current instructions.
 
+- [FRACT consolidation](verification/2026-11-04-fract-consolidation.md): source draft, native FLEX support, source checks and review limits for #926, 4 November 2026.
 - [OCTATRACK_USB_CHECKPOINT.md](OCTATRACK_USB_CHECKPOINT.md) and [OCTATRACK_BETA_HANDOVER.md](OCTATRACK_BETA_HANDOVER.md): handovers frozen on 12 October 2026.
 - [REPITCH_ORIGINAL_TEMPO_CHECK.md](REPITCH_ORIGINAL_TEMPO_CHECK.md): a check of 8 October 2026.
 - [FORUM_LAUNCH.md](FORUM_LAUNCH.md), [MODWERK_INTEGRATION.md](MODWERK_INTEGRATION.md) and [MODWERK_PLAN.md](MODWERK_PLAN.md): the launch evidence, the combined release and the draft plan of record, 3 to 4 October 2026.

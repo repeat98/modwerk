@@ -2,7 +2,7 @@
  "schemaVersion": 3,
  "id": "control-in-actions",
  "name": "Control In Actions",
- "version": "0.1.0-experimental",
+ "version": "0.1.2-experimental",
  "machine": "analog-rytm-mkii",
  "category": "system",
  "exclusive": false,
@@ -55,7 +55,7 @@
   "conflicts": [],
   "limitations": [
    "Stay within the jack's -5 V to +5 V.",
-   "The input is read about 20 times a second, so an action can come up to about 50 ms after it.",
+   "The input is read 1,500 times a second; after each switch it is not read for 10 ms, so a footswitch that bounces longer than that can play an action twice.",
    "A jack in ACTION mode plays no CONTROL IN MOD macro. Without the module, a unit left in ACTION mode reads that jack as nothing."
   ]
  },
@@ -64,7 +64,9 @@
   "core": "0.7",
   "build": "build.json",
   "events": [
-   "ev_tick"
+   "ev_tick",
+   "ev_render_out",
+   "ev_key"
   ],
   "claims": [
    "ui:GLOBAL > CONTROL > CONTROL INPUT 1 and 2: MODE ACTION and its ACTION list",
@@ -72,17 +74,17 @@
   ]
  },
  "resources": {
-  "memoryBytes": 3292,
+  "memoryBytes": 4182,
   "fastBytes": null,
   "load": {
    "display": "Not measured yet",
    "method": "unmeasured",
-   "conditions": "UI only: two readings each UI tick, never in the audio path."
+   "conditions": "Each audio block, a comparison of each jack in ACTION mode with two thresholds; each UI tick, the thresholds from the settings."
   }
  },
  "evidence": {
   "tier": "none",
-  "moduleVersion": "0.1.0-experimental",
+  "moduleVersion": "0.1.2-experimental",
   "sourceSha256": null,
   "reports": [],
   "hardware": null,
@@ -90,7 +92,7 @@
  },
  "tests": {
   "report": "TESTING.md",
-  "summary": "Author's unit reports on an Analog Rytm MKII, builds alone: CI06 and CI07 passed every action, ACTION LEARN with YES and NO, REVERSE DIRECTION, EXPRESSION LEARN's NO and a power cycle; CI09 (this package's source, with the ACTION LEARN name and a code review's fixes) passed the bars, both learns' NO and a hold action. rytm-emu on CE02 to CE14, CI08 and CI09. Not run beside other modules.",
+  "summary": "Author's unit, builds alone: CI06 and CI07 passed every action, both learns with YES and NO, REVERSE DIRECTION and a power cycle; CI09 the bars, both learns' NO and a hold action. CI11 (0.1.1) reads the jacks in the audio interrupt: in rytm-emu every action played within 0.02 to 1.12 ms of the edge (0.1.0: 4 to 49 ms); works great on the unit, as reported. 0.1.2 in LP01, a 16-module set: actions play, ACTION OFF plays nothing, and with both jacks at ACTION OFF the handler takes 0.8 µs a block (0.1.1: 3.6 µs). Not run alone on a unit.",
   "documentation": {
    "tutorial": {
     "title": "Quick tutorial",
@@ -118,11 +120,11 @@
   {
    "path": "media/thumbnail.svg",
    "kind": "thumbnail",
-   "caption": "Control In Actions thumbnail",
-   "alt": "Placeholder thumbnail for Control In Actions",
+   "caption": "Control In Actions",
+   "alt": "A footswitch or gate on EXP/CV IN 1, in MODE ACTION, rises and falls through two switch levels and plays MUTE (hold or toggle), REC (hold or toggle) or FILL (hold or latch).",
    "credit": "Nathaniel Pavel",
    "license": "GPL-3.0-or-later",
-   "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+   "source": "Original conceptual illustration in the shared signal-art style; not a device screenshot."
   },
   {
    "path": "media/action-menu.png",
@@ -135,9 +137,9 @@
    "capture": {
     "type": "emulator",
     "release": "1.74",
-    "moduleVersion": "0.1.0-experimental",
-    "imageSha256": "1b4bc2dd242d350afce51e42ece6944ebe7504f03b29abf8b80d3b617e7dae06",
-    "setup": "Headless rytm-emu (dtboot) running CI09: core-ar2 0.7 and this folder's Control In Actions 0.1.0-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+    "moduleVersion": "0.1.2-experimental",
+    "imageSha256": "3e7e1661cb9ab84931cd4e60bec9b8ccc4d79b56e69a60ac5fbb5e2fac8cad18",
+    "setup": "Headless rytm-emu (dtboot) running CI12: core-ar2 0.7 and this folder's Control In Actions 0.1.2-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
    }
   },
   {
@@ -151,9 +153,9 @@
    "capture": {
     "type": "emulator",
     "release": "1.74",
-    "moduleVersion": "0.1.0-experimental",
-    "imageSha256": "1b4bc2dd242d350afce51e42ece6944ebe7504f03b29abf8b80d3b617e7dae06",
-    "setup": "Headless rytm-emu (dtboot) running CI09: core-ar2 0.7 and this folder's Control In Actions 0.1.0-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+    "moduleVersion": "0.1.2-experimental",
+    "imageSha256": "3e7e1661cb9ab84931cd4e60bec9b8ccc4d79b56e69a60ac5fbb5e2fac8cad18",
+    "setup": "Headless rytm-emu (dtboot) running CI12: core-ar2 0.7 and this folder's Control In Actions 0.1.2-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
    }
   },
   {
@@ -167,9 +169,9 @@
    "capture": {
     "type": "emulator",
     "release": "1.74",
-    "moduleVersion": "0.1.0-experimental",
-    "imageSha256": "1b4bc2dd242d350afce51e42ece6944ebe7504f03b29abf8b80d3b617e7dae06",
-    "setup": "Headless rytm-emu (dtboot) running CI09: core-ar2 0.7 and this folder's Control In Actions 0.1.0-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+    "moduleVersion": "0.1.2-experimental",
+    "imageSha256": "3e7e1661cb9ab84931cd4e60bec9b8ccc4d79b56e69a60ac5fbb5e2fac8cad18",
+    "setup": "Headless rytm-emu (dtboot) running CI12: core-ar2 0.7 and this folder's Control In Actions 0.1.2-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
    }
   }
  ]

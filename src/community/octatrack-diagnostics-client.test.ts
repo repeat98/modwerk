@@ -96,6 +96,20 @@ describe('beta diagnostic collection',()=>{
     emit({event:'sync_started',phase:'sending'})
     expect(health).not.toHaveBeenCalled();expect(apiFetch).not.toHaveBeenCalled();expect(diagnosticPreference().enabled).toBe(false)
   })
+  it('reads the choice once without a connected unit, and again when the tab comes back into view',async()=>{
+    const page=Object.assign(new EventTarget(),{visibilityState:'hidden'});vi.stubGlobal('document',page)
+    const link={subscribeDiagnostics:()=>()=>{},getState:()=>({status:'idle'})} as unknown as OctatrackLink
+    cleanup=collectOctatrackDiagnostics('member',link,()=>undefined)
+    await vi.advanceTimersByTimeAsync(10*30000)
+    expect(api).toHaveBeenCalledTimes(1)
+    page.dispatchEvent(new Event('visibilitychange'));await vi.advanceTimersByTimeAsync(0)
+    expect(api).toHaveBeenCalledTimes(1)
+    page.visibilityState='visible';page.dispatchEvent(new Event('visibilitychange'));await vi.advanceTimersByTimeAsync(0)
+    expect(api).toHaveBeenCalledTimes(2)
+    cleanup();cleanup=undefined;page.dispatchEvent(new Event('visibilitychange'));await vi.advanceTimersByTimeAsync(0)
+    expect(api).toHaveBeenCalledTimes(2)
+    vi.unstubAllGlobals()
+  })
   it('requires the consent account to match the rendered member before collecting',async()=>{
     vi.mocked(api).mockResolvedValue({...consent(),accountId:'another',enabled:true} as never)
     const {health,emit}=await fixture();await vi.advanceTimersByTimeAsync(30000)

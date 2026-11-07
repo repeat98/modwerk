@@ -76,6 +76,7 @@ export function ModuleCommunity({id,mode='all',onDiscuss,onReportIssue,onDiscuss
     try {
       await post('/modules/' + id + '/like',{liked:!data?.liked})
       await refresh();setData(await api<Data>('/modules/' + id))
+      window.dispatchEvent(new Event(MODULE_STATISTICS_CHANGED))
       setNotice(data?.liked?'Like removed.':'Liked.')
     } catch(error){setError(error instanceof Error?error.message:'Unable to save.')} finally{setBusy(false)}
   }

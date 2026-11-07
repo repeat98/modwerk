@@ -1,5 +1,53 @@
 # Control In Actions testing
 
+## 0.1.2: no reading with ACTION OFF (6 November 2026)
+
+0.1.1 armed a jack whenever its MODE was ACTION, so with ACTION set to OFF the audio interrupt still read and compared it every block, for no action. 0.1.2 disarms that jack in the UI tick (as a change of ACTION already did), and the `ev_render_out` handler is a two-byte test that calls the reading (`read_jacks`, unchanged) only while a jack is armed. With ACTION OFF the bars' right-hand line follows stock's smoothed level, as during ACTION LEARN. Nothing else changes.
+
+- rytm-emu `2ac0f1f`: CI11 (`6486523f…`, 0.1.1) reproduced byte for byte from this folder's 0.1.1 source, and its three media frames reproduce with the plan timings now in `media/capture.json`. CI12 (vendored core-ar2 0.7 + this source, `3e7e1661…ad18`): the three frames are byte-identical to CI11's.
+- Hardware, measured on npp1993's Analog Rytm MKII (OS 1.74) with a private telemetry base that times every audio block and every `ev_render_out` handler on DTIM0 and sends the sums over USB MIDI; RC31's 16-module set, scratch project, sequencer stopped, no USB audio streaming; a jack in ACTION mode with an action: `control_in_actions_audio` 3.3 µs a block with 0.1.1 (LR01), 3.6-3.7 µs with this source or with only another module changed (LR02, LR03): the reading itself, unchanged, moved by code layout.
+- Both jacks in ACTION mode with ACTION OFF: 0.1.1 (LR03) still spends 3.60 µs a block there and the audio block idles at 70.39 %; this source (LR02) 0.81 µs (the handler's call and the telemetry's own timing) and 69.79 %. The handler's 2.8 µs is about 0.4 points of the block; most of the rest of the 0.6-point block difference is LR02's Live Rec Retrig Fix 0.2.1 (both images carry the Improved Envelopes change). 41 one-second readings each.
+- Played on the unit, LP01 (`c86b9feb…`, RC31's set with this source and the other two idle changes, store lock unchanged), as npp1993 reported: the footswitch plays the chosen action; with ACTION OFF it plays nothing and the bars still move; the action restored afterwards. All pass. Not run alone on a unit.
+
+## 0.1.1: faster actions
+
+Build CI11 alone (sha256 6486523f, -O2, this package's source), 4 November 2026, with a footswitch, as the tester reported it: works great. Which of the suggested steps (REC TGL and REC HLD against a click from stop, MUTE and FILL holds and toggles, REVERSE DIRECTION) were run was not reported; no figure was measured.
+
+Where the delay came from, read in OS 1.74's code: the audio interrupt (vector 191, 32 frames a block, 1,500 blocks a second) reads each jack's converter result once a block in 0x4013f394 and smooths it by 2% a block into the level the CONTROL INPUT code and 0.1.0 read. From a clean edge between levels 1.6 V or more apart, that level crosses the switch point (5/8 of the way) after 49 blocks, about 33 ms. 0.1.0 read it once each UI tick, about every 50 ms, so an action came 33 to 83 ms after the edge. The converter is set up and started once at boot (0x40000946) and nothing restarts it per block, so its result is taken to follow the jack between blocks; what the jack's analog input stage adds is not known. Actions must play on the UI task, through KEYDISP, as a panel key does.
+
+0.1.1 reads the converter's result in `ev_render_out`, unsmoothed, against thresholds the UI tick works out from the settings on the converter's scale (with stock's own conversion, 0x4013f5c6). On an edge it puts a key message (type 0, the module's own key) on the UI task's queue with stock's 0x400013b2, as stock's converter report does from the same interrupt (0x4013f53e), at most one waiting at a time. The UI loop (0x400a46f0) takes it as a panel key and the module's `ev_key` handler, at order 10, plays the edges and keeps the message from every other handler and stock. The UI tick plays any edge the message has not. After each edge the jack is not read for 15 blocks (10 ms), for a switch's bounce.
+
+### rytm-emu, delay from the input's edge to the action's KEYDISP call
+
+rytm-emu (`~/.cache/modwerk-upstream/rytm-emu`, 2ac0f1f, 200 M instructions an emulated second), test builds with `-DCIA_EMU`, which read the poked level in place of the converter: CE15 is 0.1.0's code, CE16 0.1.1's. CONTROL INPUT 1 in ACTION mode, REC TGL, menu left; the level poked to 5 V at ten points 1.03 M instructions apart, spanning one UI tick; `--break 0x400a0336` (KEYDISP, which nothing else calls while no key is pressed) gives the clock of the PLAY press.
+
+| Build | Delay, instructions | ms |
+| --- | --- | --- |
+| CE15 (0.1.0) | 0.84 M to 9.80 M, mean 5.35 M | 4.2 to 49.0, mean 26.8 |
+| CE16 (0.1.1) | 4 k to 224 k, mean 83 k | 0.02 to 1.12, mean 0.42 |
+| CE17 (0.1.1 after review) | 5 k to 224 k, mean 83 k | 0.02 to 1.12, mean 0.42 |
+
+CE15's figures leave out stock's smoothing, as its level is poked; on a unit 0.1.0 adds about 33 ms to each.
+
+### rytm-emu, CE16 behaviour (CE17: the first five rows, the bounce row and REVERSE again, same results)
+
+| Check | Result |
+| --- | --- |
+| REC TGL: press, release, press | Live recording on, stays on, off |
+| MUTE HLD: press, release, twice | MUTE mode on, off, on, off |
+| MUTE TGL: press, release, press, release | MUTE mode on, stays on, off, stays off |
+| REC HLD: press, release, twice | Live recording on, off, on, off |
+| FILL HLD, sequencer playing: press, release, twice | Fill on, off, on, off |
+| FILL LAT, sequencer playing: press, release, press, release | Fill on, stays on, off, stays off |
+| MUTE TGL, press bouncing 5 times 0.1 ms apart | One action: MUTE mode on |
+| Then a bouncing release and a bouncing press | One action: MUTE mode off |
+| MUTE HLD, press and release 0.3 ms apart | Ends with MUTE mode closed (only the end state was read) |
+| REVERSE DIRECTION with the input at 0 V, MUTE TGL | CE16: reads as pressed, no action; CE15 (0.1.0): MUTE mode opened |
+
+CI10 (sha256 78bfe9e1, -O2) alone booted and ran 2 G instructions with the same CPU exception count as core-ar2 0.7 alone (1,661, all TRAP #0) and no fault; its three screens are byte for byte CI09's. Beside the author's 13-module set RC24 (base 441d96f7, RC24's store lock, unchanged layout), CI10 links (combined test image CC10, sha256 8281aa34) and boots in rytm-emu with only TRAP #0 exceptions.
+
+CI11 (sha256 6486523f, -O2, this package) is CI10 after a code review: the tick clears the key message's flag, so a message another queue reader takes cannot leave later actions on the tick; a compiler barrier keeps the interrupt off while thresholds change; edges seen before MODE leaves ACTION or a learn starts still play; and the bars' right-hand line shows the state the actions follow. CI11 alone boots with the same 1,661 TRAP #0 exceptions and no fault, and its three screens are byte for byte CI09's; with the input poked to 5 V in CE17 the bars' line moves to the box's far end.
+
 ## Unit
 
 Build CI09 alone (sha256 1b4bc2dd, -O2), 3 November 2026, as the tester reported it: the ACTION bars move with the pedal and the right-hand line moves when pressed; ACTION LEARN with NO returns the marks; EXPRESSION LEARN with NO keeps the old range after leaving the menu and coming back; a hold action works from inside the menu and after leaving it. All pass.
@@ -102,9 +150,10 @@ Test builds FE02 to FE04, CE02, CE06, CE07, CE10, CE12 and CE13: the module buil
 
 ## Not tested
 
-- Anything on a unit: the real converter's levels, LEARN LEVELS with a real switch, a gate, the 50 ms worst-case delay.
+- 0.1.1 (CI11) on a unit: the delay measured rather than felt, a gate, the audio interrupt's added load.
+- Before 0.1.1, on a unit: a gate, and the delay measured rather than felt.
 - EXP/CV IN 2 (same code as port 1, not run).
 - Settings after a power cycle, and a unit without the module reading ACTION settings.
 - The CONTROL IN MOD macro of a jack switched from EXPR to ACTION mid-sweep.
-- Beside other modules: not run, as the full Rytm set does not fit beside it in the shared mod RAM yet. CI09's code and data are 3,260 bytes and 32 of `.bss` at the default -O2.
-- CPU and memory: UI only, two readings per UI tick; the module's code is about 1 KB. Not measured.
+- Beside other modules on a unit: not run. CI10 linked and booted beside RC24 (above); CI11, 152 bytes larger, was not linked there again.
+- CPU: each audio block, a comparison of each jack in ACTION mode with its thresholds; the core's load figure was not read. Memory (CI10, -O2): 3,946 bytes of code and data and 84 of `.bss`; CI11 4,098 and 84.

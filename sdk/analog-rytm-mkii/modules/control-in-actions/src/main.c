@@ -8,12 +8,17 @@
 // LEVELS, and give the ACTION row its own five choices; stock keeps storing all
 // of it with its other control-input settings.
 //
-// Each UI tick reads the jack's smoothed level and compares it with the middle
-// of the two levels ACTION LEARN found (0 V and 5 V until learned). Past
-// it toward the higher level is pressed; REVERSE DIRECTION swaps the two, for a
-// switch that pulls the tip low. An action is a key press played through
-// stock's own key path, so the MUTE screen and live recording behave exactly
-// as from the panel.
+// The input is pressed past the middle of the two levels ACTION LEARN found
+// (0 V and 5 V until learned), toward the higher one; REVERSE DIRECTION swaps
+// the two, for a switch that pulls the tip low. Each UI tick turns the
+// settings into thresholds on the converter's own scale. The audio interrupt
+// (ev_render_out, 1,500 a second) compares the converter's latest result with
+// them, unsmoothed: a few instructions a jack. On an edge it puts a key
+// message of the module's own on the UI task's queue, as stock's converter
+// reports there from the same interrupt, so the UI task plays the action
+// (ev_key) as soon as it would a panel key, not at the next tick. An action is
+// a key press played through stock's own key path, so the MUTE screen and
+// live recording behave exactly as from the panel.
 
 #include "ar2-1.74.h"
 
@@ -37,10 +42,12 @@
 
 #define HYSTERESIS_MIN 200          // mV
 #define UNSEEN 2                    // a port's state before its first reading
+#define QUIET_BLOCKS 15             // audio blocks (10 ms) after an edge with no other: a switch's bounce
+#define CIA_KEY 0x43494131          // the module's own key message, 'CIA1': no panel key
+#define EV_KEY 12                   // event + 12: the key
 
 typedef unsigned word_t;
 typedef void (*settings_t)(int port, void *record);
-typedef int (*millivolts_t)(int port);
 typedef void (*event_ctor_t)(void *event, int key, int flags, int when, int velocity);
 typedef void (*event_dtor_t)(void *event);
 typedef int (*dispatch_t)(void *brain, void *event);
@@ -50,9 +57,11 @@ typedef void (*rect_t)(void *screen, int x1, int y1, int x2, int y2, int colour)
 typedef void (*hline_t)(void *screen, int x1, int y, int x2, int colour);
 typedef void (*vline_t)(void *screen, int x, int y1, int y2, int colour);
 typedef void (*invalidate_t)(void *view);
+typedef long (*to_result_t)(int port, int mv);
+typedef void *(*queue_t)(void);
+typedef void (*post_t)(void *queue, const void *message);
 
 #define SETTINGS ((settings_t)CI_SETTINGS_AT)
-#define MILLIVOLTS ((millivolts_t)CI_MILLIVOLTS_AT)
 #define EVENT_CTOR ((event_ctor_t)KEY_EVENT_CTOR_AT)
 #define EVENT_DTOR ((event_dtor_t)KEY_EVENT_DTOR_AT)
 #define DISPATCH ((dispatch_t)KEY_DISPATCH_AT)
@@ -63,6 +72,8 @@ typedef void (*invalidate_t)(void *view);
 #define HLINE ((hline_t)DRAW_HLINE_AT)
 #define VLINE ((vline_t)DRAW_VLINE_AT)
 #define INVALIDATE ((invalidate_t)VIEW_INVALIDATE_AT)
+#define UI_QUEUE ((queue_t)UI_QUEUE_AT)
+#define POST ((post_t)QUEUE_POST_AT)
 
 // The ACTION row's names, in place of stock's list (OFF, TEMPO, ACTIVE,
 // PRESET +, PRESET -, ENV TRIG); the row has room for 8 characters.
@@ -92,11 +103,32 @@ const char control_in_actions_learn_1[] = "PRESS OR SEND A FEW GATES.";
 volatile int control_in_actions_emu_mv[CI_PORTS];
 volatile int control_in_actions_emu_mode;  // the open mode screen's key, for DTBOOT_PEEK
 #define LEVEL(port) control_in_actions_emu_mv[port]
+#define RESULT(port) control_in_actions_emu_mv[port]
+#define TO_RESULT(port, mv) (mv)
 #else
-#define LEVEL(port) MILLIVOLTS(port)
+#define RESULT(port) ((volatile short *)CI_RESULT)[port]
+#define TO_RESULT(port, mv) ((to_result_t)CI_TO_RESULT_AT)(port, mv)
 #endif
 
-static unsigned char state[CI_PORTS] = { UNSEEN, UNSEEN };
+// What the audio interrupt reads for a jack. The UI writes all but word,
+// seen and quiet, with on 0; the interrupt writes those three.
+struct jack {
+    volatile unsigned char on;      // the jack is in ACTION mode and armed
+    volatile unsigned char seen;    // the interrupt has its first reading
+    unsigned char quiet;            // blocks left with no edge
+    signed char sign;               // -1: the result falls toward the pressed level
+    long press, release, middle;    // thresholds, times sign: pressed past press, released at release or below
+    volatile unsigned long word;    // edges << 1 | pressed
+};
+
+static struct jack jacks[CI_PORTS];
+static volatile unsigned char posted; // the key message is on the queue, not yet taken
+static unsigned long played[CI_PORTS]; // the edges the UI has played
+
+// The key message the interrupt posts, as the UI loop reads one: type,
+// then the key at +4, its flags at +8, its time at +12.
+static const long message[4] = { MESSAGE_KEY << 24, CIA_KEY, 0, 0 };
+
 static unsigned char last_dest[CI_PORTS];
 static unsigned char hold_active[CI_PORTS]; // MUTE HOLD opened the screen
 static unsigned char hold_back[CI_PORTS];   // the mode key to go back to, 0 for none
@@ -376,7 +408,12 @@ void control_in_actions_draw(char *view, void *screen, int mv)
 #endif
     low = *(long *)(view + VIEW_FSW_LOW);
     high = *(long *)(view + VIEW_FSW_HIGH);
-    lit[port] = pressed(low, high, mv, lit[port]);
+    // Armed, the line shows what the actions follow; while ACTION LEARN
+    // runs, stock's smoothed level against the menu's levels.
+    if (jacks[port].on && jacks[port].seen)
+        lit[port] = jacks[port].word & 1;
+    else
+        lit[port] = pressed(low, high, mv, lit[port]);
     low = bar_row(low);
     high = bar_row(high);
     if (low > high) {
@@ -392,16 +429,134 @@ void control_in_actions_draw(char *view, void *screen, int mv)
     HLINE(screen, 24, lit[port] ? 45 : 6, 35, 1);
 }
 
+// Stop the interrupt reading a jack, ending a hold in progress as on
+// release; the next arm starts afresh.
+static void disarm(int port)
+{
+    jacks[port].on = 0;
+    __asm__ volatile ("" ::: "memory"); // off before anything else is written
+    end_holds(port);
+}
+
+// Arm a jack with its thresholds, from the levels and REVERSE DIRECTION, on
+// the converter's scale: the pressed level's side is the sign's. Its first
+// reading sets whether it is pressed with no action, so a new choice, new
+// levels or a pedal already down at start wait for the next press.
+static void arm(int port, int low, int high)
+{
+    struct jack *j = &jacks[port];
+    int middle = (low + high) / 2;
+    int band = (high > low ? high - low : low - high) / 8;
+    int sign;
+    long press, release, at;
+    if (band < HYSTERESIS_MIN)
+        band = HYSTERESIS_MIN;
+    if (high < low)
+        band = -band;               // REVERSE: pressed toward the lower level
+    sign = (band > 0) == (TO_RESULT(port, 1000) >= TO_RESULT(port, 0)) ? 1 : -1;
+    press = sign * TO_RESULT(port, middle + band);
+    release = sign * TO_RESULT(port, middle - band);
+    at = sign * TO_RESULT(port, middle);
+    if (j->on && j->sign == sign && j->press == press && j->release == release && j->middle == at)
+        return;
+    disarm(port);
+    j->sign = sign;
+    j->press = press;
+    j->release = release;
+    j->middle = at;
+    j->word = 0;
+    j->seen = 0;
+    j->quiet = 0;
+    played[port] = 0;
+    __asm__ volatile ("" ::: "memory"); // all of it written before the interrupt reads it
+    j->on = 1;
+}
+
+// Play the edges the interrupt has seen since the last time, in order: they
+// alternate, and the last leaves the jack as it reads now. A press and
+// release both seen before the UI came to them play as a tap.
+static void play(int port)
+{
+    struct jack *j = &jacks[port];
+    unsigned long word, n;
+    if (!j->on)
+        return;
+    word = j->word;
+    n = (word >> 1) - played[port];
+    played[port] = word >> 1;
+    if (n > 3)
+        n = 2 + (n & 1);
+    while (n--)
+        pedal(port, last_dest[port], (word & 1) ^ (n & 1));
+}
+
+// The audio interrupt, once a block: each armed jack's latest result
+// against its thresholds. On an edge the key message goes on the UI task's
+// queue unless it is there already. With no jack armed (no jack in ACTION
+// mode with an action), the entry below reads two bytes and returns.
+static void __attribute__((noinline)) read_jacks(void)
+{
+    int port;
+    for (port = 0; port < CI_PORTS; port++) {
+        struct jack *j = &jacks[port];
+        long v;
+        unsigned long word;
+        if (!j->on)
+            continue;
+        v = RESULT(port);
+        if (j->sign < 0)
+            v = -v;
+        word = j->word;
+        if (!j->seen) {
+            j->word = v > j->middle;  // no edge yet
+            j->seen = 1;
+            continue;
+        }
+        if (j->quiet) {
+            j->quiet--;
+            continue;
+        }
+        if (word & 1 ? v > j->release : v <= j->press)
+            continue;
+        j->word = word + (word & 1 ? 1 : 3);
+        j->quiet = QUIET_BLOCKS;
+        if (!posted) {
+            posted = 1;
+            POST(UI_QUEUE(), message);
+        }
+    }
+}
+
+void control_in_actions_audio(void)
+{
+    if (jacks[0].on | jacks[1].on)
+        read_jacks();
+}
+
+// The key message, on the UI task: play what the interrupt saw, and keep it
+// from every other key handler and stock.
+int control_in_actions_key(void *brain, char *event)
+{
+    int port;
+    (void)brain;
+    if (*(long *)(event + EV_KEY) != CIA_KEY)
+        return 0;
+    posted = 0;
+    for (port = 0; port < CI_PORTS; port++)
+        play(port);
+    return 1;
+}
+
 void control_in_actions_tick(void *ctrl)
 {
     long record[REC_BYTES / 4];
     int port;
     (void)ctrl;
 #ifdef CIA_EMU
-    control_in_actions_emu_mode = mode_key() | live_rec() << 8 | state[0] << 16 | learning[0] << 24;
+    control_in_actions_emu_mode = mode_key() | live_rec() << 8 | (jacks[0].word & 1) << 16 | learning[0] << 24;
 #endif
     for (port = 0; port < CI_PORTS; port++) {
-        int down, dest, i;
+        int dest, i;
         redraw(port);
         if (finished[port]) {
             if (shown[port])
@@ -415,9 +570,10 @@ void control_in_actions_tick(void *ctrl)
                 record[i] = ((long *)(shown[port] + VIEW_RECORD))[i];
         else
             SETTINGS(port, record);
+        // What the interrupt saw plays first, under the choice it was seen with.
+        play(port);
         if (record[REC_MODE / 4] != MODE_FSW) {
-            end_holds(port);
-            state[port] = UNSEEN;
+            disarm(port);
             continue;
         }
         // Stock's input routine leaves the macro's level as it was for this
@@ -426,25 +582,24 @@ void control_in_actions_tick(void *ctrl)
         // While ACTION LEARN runs the input moves on purpose, and the levels
         // in force are the old ones: no action, and a fresh start after.
         if (learning[port] == LEARN_FSW) {
-            end_holds(port);
-            state[port] = UNSEEN;
+            disarm(port);
             continue;
         }
         dest = record[REC_DEST / 4];
-        down = pressed(record[REC_FSW_LOW / 4], record[REC_FSW_HIGH / 4], LEVEL(port), state[port]);
         if (dest != last_dest[port]) {
-            end_holds(port);
+            disarm(port);
             last_dest[port] = dest;
-            state[port] = down;     // a new choice waits for the next press
+        }
+        // ACTION OFF plays nothing: the interrupt leaves the jack alone.
+        if (dest == DEST_OFF) {
+            disarm(port);
             continue;
         }
-        if (state[port] == UNSEEN) {
-            state[port] = down;     // no action for a pedal already down at start
-            continue;
-        }
-        if (down != state[port]) {
-            state[port] = down;
-            pedal(port, dest, down);
-        }
+        arm(port, record[REC_FSW_LOW / 4], record[REC_FSW_HIGH / 4]);
+        // The key message's work, should it come late; and a message the UI
+        // took without the key handler (another loop reading the queue) no
+        // longer stops the next one. A spare message plays nothing.
+        play(port);
     }
+    posted = 0;
 }

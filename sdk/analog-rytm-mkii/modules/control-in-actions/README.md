@@ -1,6 +1,6 @@
 # Control In Actions
 
-An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.1.0-experimental, OS 1.74 with core-ar2 0.7.
+An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.1.2-experimental, OS 1.74 with core-ar2 0.7.
 
 ## Overview
 
@@ -31,9 +31,9 @@ Everything is set up in stock's own CONTROL INPUT menus and saved with stock's c
 | FILL HLD | Holds FILL: fill mode on, as while you hold the key | Lets FILL go: fill mode off, and a latched fill unlatched, as stock's FILL release |
 | FILL LAT | Latches fill mode, as FUNC + FILL FILL, or ends the latch, as FILL | Nothing |
 
-The switch point is halfway between the two learned levels, with a margin of an eighth of their range, at least 0.2 V, either side of it, so a noisy or slow edge switches once. Until you learn, the levels are stock's 0 V and 5 V: a gate counts as pressed above about 3.1 V and as released below about 1.9 V. As stock's, a learn takes the higher level as pressed. If the bars' right-hand line drops to the far end with your foot off the switch, choose REVERSE DIRECTION after learning.
+The switch point is halfway between the two learned levels, with a margin of an eighth of their range, at least 0.2 V, either side of it, so a noisy or slow edge switches once. After each switch the input is not read again for 10 ms, so a footswitch's bounce plays one action. An action plays within about a millisecond of the edge, through the same queue as a panel key. Until you learn, the levels are stock's 0 V and 5 V: a gate counts as pressed above about 3.1 V and as released below about 1.9 V. As stock's, a learn takes the higher level as pressed. If the bars' right-hand line drops to the far end with your foot off the switch, choose REVERSE DIRECTION after learning.
 
-The bars: at the left a level line against the two learned levels, shaded beyond them and bracketed, which move as ACTION LEARN runs; beside it a line, as EXPR's output line, that moves to the box's far end while the input counts as pressed. While the CONTROL INPUT screen is open, the jack follows what it shows, so a new ACTION choice works at once; stock saves the menu when you leave it.
+The bars: at the left a level line against the two learned levels, shaded beyond them and bracketed, which move as ACTION LEARN runs; beside it a line, as EXPR's output line, that moves to the box's far end while the input counts as pressed, as the actions read it (with ACTION OFF, from stock's smoothed level, as during ACTION LEARN). While the CONTROL INPUT screen is open, the jack follows what it shows, so a new ACTION choice works at once; stock saves the menu when you leave it.
 
 ## Usage
 
@@ -60,14 +60,14 @@ Plug the switch or gate in, set MODE to ACTION, learn the levels if it is a foot
 ## Compatibility and limitations
 
 - OS 1.74 only, with core-ar2 0.7. No other module is needed.
-- It changes nine stock instructions, all in the CONTROL INPUT menu: the two MODE limits, the ACTION row's limit and where it reads its names, the names of the mode, the row and ACTION LEARN, ACTION LEARN's first message line, and the draw's test for EXPR, so that ACTION draws its bars. Stock's own text stays in the firmware; only these screens point at the mod's. It subscribes to `ev_tick` and no key, encoder or audio hook; an action is the key press stock already handles (MUTE, CHRO, SCNE, PERF, PLAY, FILL), played through stock's own key path (`KEYDISP`), so the pads, LEDs and modes behave as from the panel. REC HLD and REC TGL hold RECORD as stock reads it only for their one PLAY press. No storage of its own.
+- It changes nine stock instructions, all in the CONTROL INPUT menu: the two MODE limits, the ACTION row's limit and where it reads its names, the names of the mode, the row and ACTION LEARN, ACTION LEARN's first message line, and the draw's test for EXPR, so that ACTION draws its bars. Stock's own text stays in the firmware; only these screens point at the mod's. It subscribes to `ev_tick` for the settings and the screen, `ev_render_out` to read the jacks, and `ev_key` (order 10) for its own key message; an action is the key press stock already handles (MUTE, CHRO, SCNE, PERF, PLAY, FILL), played through stock's own key path (`KEYDISP`), so the pads, LEDs and modes behave as from the panel. REC HLD and REC TGL hold RECORD as stock reads it only for their one PLAY press. No storage of its own.
 - It claims the ACTION mode of the CONTROL INPUT menus and the jacks in that mode.
-- The input is read about 20 times a second, so an action can come up to about 50 ms after it: fine for the MUTE screen, but a sequencer started from REC HLD or REC TGL can start that late.
+- Timing. The audio interrupt reads the converter 1,500 times a second, unsmoothed, and on an edge puts a key message on the UI task's queue, as stock's converter reports there from the same interrupt. The UI task plays it as it would a panel key, so an action comes within about a millisecond of the edge (rytm-emu: 0.02 to 1.1 ms). Stock's own reading of the jack, which 0.1.0 used once each UI tick, is smoothed by 2% a block and so crosses the switch point about 33 ms after a clean edge; with the tick, about 20 a second, an action came 33 to 83 ms late. What the jack's analog input stage adds is not known.
 - Without the mod, a unit left in ACTION mode reads that jack as nothing, and the menu turns MODE back no further than EXPR.
 
 ## Tests and measurements
 
-The author's unit, builds alone: CI06 passed every action, ACTION LEARN with YES and NO, REVERSE DIRECTION and a power cycle; CI07 passed EXPRESSION LEARN's NO and YES. CI09, this package, adds the ACTION LEARN name and a code review's fixes; on the unit its bars, both learns' NO and a hold action passed ([TESTING.md](TESTING.md)). Memory (CI09, -O2): 3,260 bytes of code and initialised data and 32 bytes of `.bss` in the 128 KiB shared mod area. Load: UI only, two readings each UI tick; nothing runs in the audio path.
+The author's unit, builds alone: CI06 passed every action, ACTION LEARN with YES and NO, REVERSE DIRECTION and a power cycle; CI07 passed EXPRESSION LEARN's NO and YES. CI09 added the ACTION LEARN name and a code review's fixes; on the unit its bars, both learns' NO and a hold action passed. CI11, this package (0.1.1), reads the jacks in the audio interrupt: in rytm-emu every action played within 0.02 to 1.12 ms of the edge, against 4 to 49 ms for 0.1.0's code there; on the unit, as reported, it works great. 0.1.2, this package, stops reading a jack with ACTION OFF; in the author's 16-module build LP01 actions play and ACTION OFF plays nothing, as reported ([TESTING.md](TESTING.md)). Memory (CI11, -O2): 4,098 bytes of code and initialised data and 84 bytes of `.bss` in the 128 KiB shared mod area. Load: each audio block, a comparison of each jack in ACTION mode with an action against its thresholds; a jack with ACTION OFF, or in another mode, is not read. Measured on the author's unit (TESTING.md): about 3.3 to 3.7 µs of the 667 µs audio block with a jack armed, and 0.8 µs with both jacks at ACTION OFF (0.1.1: 3.6 µs). Each UI tick, the thresholds from the settings.
 
 ## Authorship and licences
 
@@ -75,7 +75,7 @@ Original code by Nathaniel Pavel (@npp1993), GPL-3.0-or-later ([LICENSE](LICENSE
 
 ## Screens and audio
 
-Screenshots are rytm-emu captures of build CI09 ([media/capture.json](media/capture.json)). No audio preview.
+Screenshots are rytm-emu captures of build CI12 (0.1.2), pixel for pixel CI11's and CI09's ([media/capture.json](media/capture.json)). No audio preview.
 
 ![CONTROL INPUT 1 in ACTION mode with MUTE HLD and the bars](media/action-menu.png) ![ACTION LEARN's message](media/action-learn.png)
 

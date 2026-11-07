@@ -1,0 +1,1 @@
+Module checks: a module that changes stock behaviour and draws nothing of its own (no controls, no effect slot, no `screen:` claim) can now give `access.noUiReason`, one sentence naming what it changes, in place of screenshots on any Octatrack location, not only USB; its README tutorial of at least three steps is still required.

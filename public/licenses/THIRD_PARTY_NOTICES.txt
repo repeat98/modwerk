@@ -3264,6 +3264,115 @@ targets.
 
 ========================================================================
 
+Tim Hastie Tuner
+SPDX: MIT
+Used in: modules/tuner
+Notice source: https://github.com/timhastie/octatrick-modules/blob/fd18f5530989be348e6aa4c6e38f93beba555e6d/LICENSE
+
+MIT License
+
+Copyright (c) 2026 Tim Hastie
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+This licence covers this repository's own source code and documentation:
+the three modules' ColdFire sources, their manifests and their READMEs. It
+does not extend to any Elektron Music Machines firmware, which is not
+distributed here and remains the property of its copyright holder; every
+image is built by the user from their own copy of the official OS with
+octabam (https://github.com/sambanks/octabam, MIT, Sam Banks), whose build
+system these manifests are written for. The displaced stock instructions a
+hook site replays (a few bytes per site) are carried the way every octabam
+ColdFire module carries them. Nothing in this project is endorsed by,
+supported by or affiliated with Elektron. Octatrack and Elektron are
+trademarks of Elektron Music Machines MAV AB, used only to identify the
+hardware this project targets.
+
+---
+
+The FM SYNTH machine-list chooser -- synth/machine.s and the chooser's parts of
+synth/poly.s, synth/page.s and quantizer/quantizer.s -- is adapted from
+Modwerk's FM Synth module (https://github.com/repeat98/modwerk,
+sdk/octabam/modules/synth, commit 1c1d938), whose chooser is derived from
+Modwerk's Analog BD chooser hooks. Since 2.13 the quantizer's CHROMATIC drawer
+hook at the drawer's common push (quantizer/quantizer.s qz_octnum at 0x400449be,
+Modwerk #264) takes the form of the quantizer that module bundles. Their
+notices, as that module's LICENSE carries them:
+
+Dedicated chooser, Part validation, sample-free transport and original presentation:
+
+MIT License
+
+Copyright (c) 2026 Modwerk contributors
+
+Portions of the firmware analysis tooling originate from the octamax project
+(https://github.com/mxldyn/octamax), Copyright (c) 2025-2026 Maxolydian,
+also under the MIT License.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+MIT License
+
+Copyright (c) 2026 Sam Banks
+
+Portions of the firmware analysis tooling originate from the octamax project
+(https://github.com/mxldyn/octamax), Copyright (c) 2025-2026 Maxolydian,
+also under the MIT License.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+========================================================================
+
 elekloader's kit (vendored Digitakt/Digitone builder)
 SPDX: GPL-3.0-or-later
 Used in: vendor/elekloader/kit; Digitakt/Digitone browser builder
@@ -3271,7 +3380,7 @@ Notice source: vendor/elekloader/kit/NOTICE
 Notice source: vendor/elekloader/kit/LICENSE
 Notice source: https://github.com/irpina/elekloader/tree/3b31ef3c0e43c810e3acd0be6257e2484b20fc40/js
 
-Modwerk ships this kit with src/codec/aplib.ts, src/codec/elz.ts, src/codec/transport.ts, src/isa/coldfire.ts replaced by Modwerk's own implementation (vendor/elekloader/README.md).
+Modwerk ships this kit with src/codec/aplib.ts, src/codec/elz.ts, src/codec/transport.ts, src/isa/coldfire.ts replaced by Modwerk's own implementation (vendor/elekloader/README.md). They keep the formats of the code credited under "Code from other projects" below and were checked against outputs recorded from it, so that credit stays.
 
 elekloader
 Copyright (C) 2026 irpina and contributors
@@ -3285,6 +3394,18 @@ elekloader is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
 more details.
+
+Code from other projects
+------------------------
+These files come from digikit (https://github.com/m-dwyer/digikit),
+under the GNU GPL version 2 or (at your option) any later version. Each file names its origin in its header.
+
+  elekloader/codec/elz.py        dt2/elz.py, by Em D
+  elekloader/codec/aplib.py      dt2/aplib.py, by Em D; the match-finder and
+                                 compressed output by irpina
+  elekloader/codec/transport.py  the transport encoders and checksums from
+                                 dt2/build.py, by Em D; changes by irpina
+  elekloader/isa/coldfire.py     emu/cfisa.py, by irpina
 
 The TypeScript engine
 ---------------------
@@ -4452,6 +4573,95 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+========================================================================
+
+Zoom ZDL runtime (own edit handlers and Dll_ entry for Zoom MultiStomp effects)
+SPDX: MIT AND BSD-3-Clause
+Used in: vendor/zoom-zdl-runtime
+Notice source: vendor/zoom-zdl-runtime/LICENSE
+Notice source: vendor/zoom-zdl-runtime/zui.asm
+
+Scope of the repository-level MIT grant
+
+Except where a file or component provides its own license or scope limitation,
+the MIT License below applies to original software and associated original
+documentation in this repository, only to the extent their copyrights are
+controlled by Leemuzhko and the portions can be licensed independently.
+
+Third-party and vendor material, imported/reference components, firmware,
+drivers, toolchains, IRs, model weights, recordings, graphics and other datasets
+or assets are outside this default grant, including when unmarked. They retain
+their own terms. Modifications and mixed or derived files remain subject to all
+applicable component terms; this notice does not relicense third-party portions.
+
+Existing license grants, copyright notices and component-specific scope
+statements remain in force. The exclusions above do not withdraw permissions
+already granted under those licenses. ZOOM-CORE/ is outside this licensing change.
+
+See LICENSING.md, THIRD_PARTY_NOTICES.md and license_map.json for the scope and
+reviewed evidence. The inventory is not exhaustive.
+
+---------------------------------------------------------------------------
+
+MIT License
+
+Copyright (c) 2026 Leemuzhko
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---------------------------------------------------------------------------
+
+zui_stub / zui_stub_ret, zui_push_rts and zui_pop_rts in zui.asm are adapted from
+TI C6000 CGT 8.5.0.LTS lib/src/call_stub.asm and push.asm:
+
+Copyright (c) 2000 Texas Instruments Incorporated
+http://www.ti.com/
+
+Redistribution and  use in source  and binary forms, with  or without
+modification,  are permitted provided  that the  following conditions
+are met:
+
+Redistributions  of source  code must  retain the  above copyright
+notice, this list of conditions and the following disclaimer.
+
+Redistributions in binary form  must reproduce the above copyright
+notice, this  list of conditions  and the following  disclaimer in
+the  documentation  and/or   other  materials  provided  with  the
+distribution.
+
+Neither the  name of Texas Instruments Incorporated  nor the names
+of its  contributors may  be used to  endorse or  promote products
+derived  from   this  software  without   specific  prior  written
+permission.
+
+THIS SOFTWARE  IS PROVIDED BY THE COPYRIGHT  HOLDERS AND CONTRIBUTORS
+"AS IS"  AND ANY  EXPRESS OR IMPLIED  WARRANTIES, INCLUDING,  BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT
+OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL,  EXEMPLARY,  OR CONSEQUENTIAL  DAMAGES  (INCLUDING, BUT  NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF  LIABILITY, WHETHER IN CONTRACT, STRICT  LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ========================================================================
 

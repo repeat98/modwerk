@@ -1,5 +1,68 @@
 | SCALE QUANTIZER -- the DRAM unit (13 Sep 2026; a DRAM unit since 28 Sep 2026). GNU as.
 |
+| OCTATRICK 2.22 (29 Oct 2026): the per-track switches are two rows.
+|   * PROJECT > CONTROL > SEQUENCER rows 7 and 8, TRACK and FOLLOW, replace
+|     the sixteen rows MIDI 1..8 SCALE (2.15) and AUDIO 1..8 SCALE (2.19):
+|     TRACK picks the track (AUDIO 1 .. AUDIO 8, MIDI 1 .. MIDI 8; it only
+|     chooses what FOLLOW shows, no sound changes, a RAM byte that starts at
+|     AUDIO 1 and is not saved), FOLLOW is that track's ON / OFF. Stock's
+|     three rows + SCALE, ROOT, GLIDE, TRACK, FOLLOW = 8. The settings are
+|     2.21's: the same bits of NV_AOFF / NV_MOFF, the same project-file
+|     lines, so a project saved on 2.21 loads with the same tracks OFF.
+|
+| OCTATRICK 2.19 (24 Oct 2026): what an AUDIO track plays follows the scale.
+|   * qz_atrig, a jmp at 0x4000c614 in the frame builder's trig path, right
+|     after a trig's locks are applied to the track's parameter words: with
+|     a scale on and the track's AUDIO n SCALE ON, the PLAYBACK PTCH word
+|     the trig resolved (its PTCH lock, or the Part's PTCH) is snapped to
+|     the nearest scale degree (qz_asnap: ties down; a sample track's PTCH
+|     in fifths of raw around the sample's own pitch, a synth track's in
+|     semitones) and applied the way a stock PTCH lock is (the word and its
+|     base byte, the slot's bit in the trig's lock mask, so the next trig
+|     restores the Part's value first). Nothing stored changes: a pattern
+|     recorded in C MAJOR plays its E, A, B as Eb, Ab, Bb in C MINOR and
+|     as recorded again in C MAJOR.
+|   * THE PER-TRACK SWITCH: SEQUENCER rows 15..22, "AUDIO 1 SCALE" ..
+|     "AUDIO 8 SCALE" (TRACK AUDIO n + FOLLOW since 2.22), ON (default) / OFF, one battery-RAM byte NV_AOFF
+|     0x100b14eb (bit t = audio track t+1 is OFF), saved as
+|     "#SEQUENCER_AUDIO_SCALE_OFF=n" after the MIDI line. OFF = SCALE OFF
+|     for that track's sequencer, PTCH knob, PTCH locks, CHROMATIC keys,
+|     their mark and readout.
+|
+| OCTATRICK 2.15 (15 Oct 2026): the MIDI tracks, part two.
+|   * WHAT A MIDI TRACK PLAYS follows the scale: qz_mnote, a jmp at
+|     0x4009fb80 in the sequencer's MIDI note stage (0x4009f794), after
+|     TRAN, the MIDI transpose and stock's ARP SETUP KEY, before the
+|     active-note test and the note-on. Every note the stage sends -- NOTE,
+|     NOTE + NOT2..4, NOTE locks, TRAN, the arpeggiator's notes (its RANGE
+|     octaves, fed by the sequencer, the keys or MIDI IN) -- is snapped in
+|     place to the nearest scale note (qz_msnap, ties down), so the note-on,
+|     the note stage's stored note (the note-off) and its active-note table
+|     all carry the snapped note: no note can hang. Two notes of one trig
+|     that snap to the same note sound once: stock's active-note test drops
+|     the second (the same track already holds it), so one note-on and one
+|     note-off. The offsets stay semitones. qz_mprev, a jmp at 0x400439d6,
+|     snaps the same way the chord a held [TRIG] key previews in GRID
+|     RECORDING (stock: NOTE + NOT2..4 without TRAN, its note-offs
+|     recomputed at the release).
+|   * THE PER-TRACK SWITCH: PROJECT > CONTROL > SEQUENCER rows 7..14, "MIDI
+|     1 SCALE" .. "MIDI 8 SCALE" (TRACK MIDI n + FOLLOW since 2.22), ON (default) / OFF. A MIDI track set OFF is
+|     a track with SCALE OFF in every path -- the NOTE knob, NOTE locks, the
+|     CHROMATIC keys and their readout, the note stage, the preview. Stored
+|     as one battery-RAM byte, NV_MOFF 0x100b14ef (bit t = MIDI track t+1 is
+|     OFF; 0 = every track follows), the last byte of the padding SCALE /
+|     GLIDE / ROOT live in; saved as "#SEQUENCER_MIDI_SCALE_OFF=n" after the
+|     GLIDE line; core.s's qz_defaults clears it with the others.
+|
+| OCTATRICK 2.13 (12 Oct 2026): the MIDI tracks. With a scale on, a MIDI
+|   track's NOTE knob and NOTE locks step by scale degree from ROOT
+|   (qz_mknob, qz_mplock, qz_quant's MIDI mode) and its CHROMATIC keys play
+|   note + ROOT snapped to the scale (qz_mkey, qz_msnap); the keyboard's
+|   number reads "A 3". Editing only: the sequencer, NOT2..4, TRAN, the
+|   arpeggiator's notes and MIDI IN are stock. qz_octnum sits at the
+|   drawer's common push 0x400449be (Modwerk #264; until 2.12 CHROMATIC on a
+|   MIDI track froze the unit).
+|
 | OCTATRICK 2.9 (28 Sep 2026): ROOT, and the move into DRAM.
 |   * ROOT: a fifth SEQUENCER row, right under SCALE (GLIDE is the sixth
 |     now): C C# D D# E F F# G G# A A# B, the root the scale is
@@ -138,12 +201,18 @@
 | the qz_names entries, which the linker resolves.
 
         .text
+        .include "remix.inc"            | 2.11: HAVE_SYDRUM -- 1 when SY DRUM is in the remix (manifest.py); 0
+                                        | assembles this unit byte for byte as 2.10's
         .global qz_knob, qz_plock, qz_chrom, qz_draw, qz_ld_entry, qz_ld_line, qz_wr
         .global qz_get, qz_set, qz_lbl_scale, qz_scale
         .global qz_get_glide, qz_set_glide, qz_lbl_glide, qz_leg1, qz_leg2
         .global qz_leg0, qz_leg3, qz_leg4, qz_leg5
         .global qz_get_root, qz_set_root, qz_lbl_root
-        .global qz_keyidx, qz_octkey, qz_octdraw, qz_octnum
+        .global qz_keyidx, qz_octkey, qz_octdraw, qz_octnum, qz_heldmark
+        .global qz_mknob, qz_mplock, qz_mkey
+        .global qz_mnote, qz_mprev
+        .global qz_atrig
+        .global qz_lbl_trk, qz_get_trk, qz_set_trk, qz_lbl_fol, qz_get_fol, qz_set_fol
         .set    OCT_WORD, 0x460d16fc      | stock's CHROMATIC octave word: 0 or 1 (FUNC + LEFT/RIGHT eor it)
         .set    KEYS_AT, 0x400d2cb0       | keys.s, pinned (manifest KEYS_AT): the paraphonic key mailbox
         .set    qz_pkey, KEYS_AT          |   the live key (index + 1) per track, 8 bytes
@@ -164,6 +233,9 @@
         .set    MIDI_NOTE, 0x4003f3a8     | (track, note, velocity): the key's MIDI note out
         .set    SPRINTF, 0x40013a08
         .set    FMT_D, 0x400b465d         | "%d"
+        .set    MIDI_MODE, 0x80000012     | (2.13) != 0: the UI shows the MIDI tracks
+        .set    PARTS, 0x46c82456         | the project's Part blob (6322 B a Part; 0x100b14cf = the Part)
+        .set    MPART_NOTE, 0x8f162       | a MIDI track's parameters in its Part: + 32 * track, NOTE at +0
 
 | ---- the settings ----------------------------------------------------------------
 | Two bytes of the unit's BATTERY-BACKED RAM (CS1, 0x10000000..: the same
@@ -184,6 +256,10 @@
         .set    NV_SCALE, 0x100b14ec
         .set    NV_GLIDE, 0x100b14ed
         .set    NV_ROOT,  0x100b14ee
+        .set    NV_MOFF,  0x100b14ef      | (2.15) bit t: MIDI track t+1 has the scale OFF (0 = every MIDI track follows)
+        .set    NV_AOFF,  0x100b14eb      | (2.19) bit t: audio track t+1 has the scale OFF (0 = every audio track follows)
+        .set    PWORDS,   0x80000a50      | (2.19) the frame builder's parameter words, 64 B a track (slot k at + 2 k, raw << 8)
+        .set    PBYTES,   0x80000810      | (2.19) their base bytes, 72 B a track (slot k at + k)
         .set    qz_scale, NV_SCALE      | 0 = OFF, 1..24 = index into core.s qz_masks / qz_names
         .set    qz_glide, NV_GLIDE      | 0 = OFF, 1..127 (modules/synth GLIDE_AT: keep equal)
         .set    qz_root,  NV_ROOT       | 0..11 = C .. B (28 Sep 2026; core.s clamps and defaults it with the others)
@@ -198,48 +274,42 @@ qz_glide_of:
 | qz_boot (0x40010212), qz_defaults (0x40025ac2) and qz_scale_mask (the
 | SCALE_AT trampoline's target) are core.s, the ROM core, since 28 Sep 2026.
 
-| qz_polytrack: d0 := 1 (flags NE) when track d2 is a FLEX track whose
-| assigned FLEX slot holds a SYNTH*-named sample AND its Part's VOIC byte
-| (the LFO page's slot 2: Part + 0x8ee9a + track*24 + 2) is 2..4, else 0
-| (EQ). Preserves everything but d0.
+| qz_polytrack: d0 := 1 (flags NE) for an FM track whose effective
+| VOIC (Part, scene, step lock and cap) is paraphonic, else 0 (EQ).
+| Uses the engine's published legato-mode reader; preserves all but d0.
 qz_polytrack:
+        .if     HAVE_SYDRUM
+        jbsr    qz_fmtrack
+        .else
         jbsr    qz_is_synth
+        .endif
         jbeq    qz_pt_ret
         move.l  %a0,-(%sp)
-        move.l  %d1,-(%sp)
-        movea.l 0x46c82456,%a0
-        mvz.b   0x100b14cf,%d0
-        move.l  #6322,%d1
-        muls.l  %d1,%d0
-        adda.l  %d0,%a0                 | the Part
-        adda.l  #0x8ee9a,%a0            | its LFO page bytes
-        move.l  %d2,%d1
-        lsl.l   #3,%d1                  | track * 8 ...
-        move.l  %d1,%d0
-        add.l   %d1,%d1                 | ... * 2 = 16 ...
-        add.l   %d0,%d1                 | ... + 8 = track * 24 (27 Sep 2026: a third
-                                        | doubling made it track * 40, so T2..T8 read an
-                                        | unrelated byte for VOIC and their keys stayed mono)
-        mvz.b   2(%a0,%d1.l),%d0        | VOIC
-        subq.l  #2,%d0
-        cmpi.l  #2,%d0                  | 2..4?
-        jbls    qz_pt_yes
-        moveq   #0,%d0
-        jbra    qz_pt_out
-qz_pt_yes:
-        moveq   #1,%d0
-qz_pt_out:
-        move.l  (%sp)+,%d1
+        jbsr    qz_legmode              | engine resolves setup locks and the Part cap
         movea.l (%sp)+,%a0
-        tst.l   %d0
+        subq.l  #2,%d0
+        cmpi.l  #1,%d0                  | modes 2/3 are paraphonic
+        sls     %d0
+        andi.l  #1,%d0
 qz_pt_ret:
         rts
 
-| qz_is_synth: d0 := 1 (NE) when track d2's machine is FLEX and its assigned
-| FLEX slot's settings record names a SYNTH* file -- the synth page's own test
-| (modules/synth/page.s pg_resolve): slot = Part + 0x8f04a + track*5 + 1, its
-| record 0x100b14f0 + 0x448*slot, the path at +0 scanned for the basename.
+| qz_is_synth: d0 := 1 (NE) when track d2's machine is FLEX and the FM SYNTH
+| machine is chosen (the Part's "FM", 1; 2.11: 2 for SY DRUM's "SY", 1) -- the
+| synth page's own test (modules/synth/page.s pg_resolve). Until 2.14 a FLEX slot
+| whose sample was named SYNTH* / FMSYNTH* counted too; that marker selects nothing
+| since 2.15 (the synth's selection guard counts the machines the lists give).
 | Preserves everything but d0.
+        .if     HAVE_SYDRUM
+| qz_fmtrack (2.11): d0 := 1 (NE) when track d2 plays FM (qz_is_synth's 1: FM SYNTH chosen),
+| 0 for SY DRUM (2) and sample tracks. Preserves everything but d0.
+qz_fmtrack:
+        jbsr    qz_is_synth
+        subq.l  #1,%d0
+        seq     %d0
+        andi.l  #1,%d0
+        rts
+        .endif
 qz_is_synth:
         lea     -16(%sp),%sp
         movem.l %d1/%d3/%a0/%a1,(%sp)
@@ -253,45 +323,31 @@ qz_is_synth:
         mvz.b   (%a1,%d2.l),%d0         | the track's machine
         subq.l  #1,%d0                  | FLEX
         jbne    qz_is_no
-        move.l  %d2,%d0
-        lsl.l   #2,%d0
-        add.l   %d2,%d0                 | track * 5
-        adda.l  %d0,%a0
-        adda.l  #0x8f04b,%a0
-        mvz.b   (%a0),%d0               | its FLEX slot, 0-based
-        moveq   #127,%d1
-        cmp.l   %d1,%d0
-        jbhi    qz_is_no                | none, or a recorder buffer
-        move.l  #0x448,%d1
-        mulu.l  %d1,%d0
-        addi.l  #0x100b14f0,%d0
-        move.l  %d0,%a0                 | the settings record; its path at +0
-        move.l  %a0,%a1
-        move.l  #255,%d3
-qz_is_scan:
-        mvz.b   (%a0)+,%d0
-        jbeq    qz_is_scanned
-        cmpi.l  #'/',%d0
-        jbne    qz_is_scan1
-        move.l  %a0,%a1                 | after the last '/'
-qz_is_scan1:
-        subq.l  #1,%d3
-        jbne    qz_is_scan
-qz_is_scanned:
-        move.w  #0x464d,%d0             | "FM": FMSYNTH* is the marker name too
-        cmp.w   (%a1),%d0
-        jbne    qz_is_fm
-        addq.l  #2,%a1
-qz_is_fm:
-        lea     qz_synthname(%pc),%a0
-        moveq   #5,%d3
-qz_is_cmp:
-        mvz.b   (%a0)+,%d0
-        mvz.b   (%a1)+,%d1
-        cmp.l   %d1,%d0
+        move.l  %a0,%a1                 | the FM SYNTH machine chosen in the machine list
+        move.l  %d2,%d0                 | (the synth module's machine.s): "FM", 1 in the
+        mulu.w  #30,%d0                 | track's NEIGHBOR column, Part + 0x8edbc + 30*track
+        adda.l  %d0,%a1
+        adda.l  #0x8edbc,%a1
+        .if     HAVE_SYDRUM
+        mvz.b   2(%a1),%d0              | (2.11) or SY DRUM (sy-drum/): "SY", 1 -- its PTCH is semitones
+        subq.l  #1,%d0                  | too, its keys and locks as FM SYNTH's
         jbne    qz_is_no
-        subq.l  #1,%d3
-        jbne    qz_is_cmp
+        mvz.w   (%a1),%d0
+        cmpi.l  #0x464d,%d0             | "FM": 1
+        jbeq    qz_is_fmsig
+        cmpi.l  #0x5359,%d0             | "SY": 2
+        jbne    qz_is_no
+        moveq   #2,%d0
+        jbra    qz_is_out
+qz_is_fmsig:
+        .else
+        mvz.w   (%a1),%d0
+        cmpi.l  #0x464d,%d0
+        jbne    qz_is_no
+        mvz.b   2(%a1),%d0
+        subq.l  #1,%d0
+        jbne    qz_is_no
+        .endif
         moveq   #1,%d0
         jbra    qz_is_out
 qz_is_no:
@@ -323,6 +379,9 @@ qz_knob:
         lea     qz_scale,%a0
         mvz.b   (%a0),%d0
         jbeq     qz_k_store              | OFF: stock
+        mvz.b   UI_TRACK,%d1            | (2.19) the track's AUDIO n SCALE OFF: stock
+        btst    %d1,NV_AOFF
+        jbne     qz_k_store
         tst.l   %d5                     | slot A only
         jbne     qz_k_store
         tst.l   0x460d1684              | page kind 0 = PLAYBACK
@@ -344,7 +403,7 @@ qz_k_store:
 | The p-lock editor (loops over the held steps; d6 = step, d7 = the rest) takes
 | the step's lock byte -- or the Part's value when there is none (0xff) --
 | through the slot's own handler and the descriptor clamp into d4, then
-| stores it at (0x59,%a0,%a1.l) = track record + 0x59 + flat slot (a0 = the
+| stores it at the byte a0 + a1 + 0x59 = track record + 0x59 + flat slot (a0 = the
 | record, a1 = flat slot) and into the SRAM mirror after the hook. Same
 | registers as above: d5 = slot, a3 = descriptor, fp = delta. The lock byte
 | is still the old one when the hook runs, so the start value is read there.
@@ -353,6 +412,9 @@ qz_plock:
         lea     qz_scale,%a2
         mvz.b   (%a2),%d0
         jbeq     qz_p_done
+        mvz.b   UI_TRACK,%d1            | (2.19) the track's AUDIO n SCALE OFF: stock
+        btst    %d1,NV_AOFF
+        jbne     qz_p_done
         tst.l   %d5                     | slot A only
         jbne     qz_p_done
         tst.l   0x460d1684              | PLAYBACK page only
@@ -399,14 +461,228 @@ qz_p_done:
         mvz.b   0x100b14cc,%d1          | displaced
         rts
 
+| ---- (2.13) THE MIDI TRACKS' NOTE: the knob, jsr planted at 0x40055382 -----------
+| The MIDI branch of the knob handler (0x40055304, reached with the MIDI tracks
+| on screen) resolves the Part byte into a5 (Part + 0x8f162 + 32 * track +
+| flat), calls the slot's handler (NOTE: the generic 0x4003240c, a semitone a
+| detent), clamps it to the descriptor's min into d0, and at 0x40055382 -- the
+| hook, 8 bytes: d0 copied into d2, compared with d1 and replaced by d1 when above it -- to the max
+| d1 into d2, which 0x4005538a stores into the Part; the SRAM mirror, the live
+| copy 0x46c76dc0 + 68 * track, a LIVE REC lock (0x40042158) and the CC echo
+| then read d2. The hook sits one instruction group before the store so that
+| the store itself stays stock: octabam's MIDI SCENES detours 0x4005538a (its
+| scn_pwrite), and the two compose -- this unit decides d2, the store
+| (stock's or MIDI SCENES') takes it. Registers here: d6 = the flat slot
+| (signed byte; 0 = NOTE, slot A of the NOTE page), d5 = slot, a4 = the
+| delta (detents, signed), a3 = the page descriptor (slot names at +0x16),
+| (a5) still the old value. With a scale on, NOTE steps by scale degree from
+| the old value exactly as PTCH does on an audio track (qz_quantm: a value
+| between degrees goes to the next one in the turn direction, at 0 or 127 it
+| stays). VEL, LEN, NOT2..4 and every other slot: stock. Only d2 changes:
+| d0 / d1 / a0 / a1 leave as stock leaves them (d1 is kept on the stack
+| while it names the slot), so whatever follows the store sees stock's
+| registers but for d2.
+qz_mknob:
+        move.l  %d0,%d2                 | displaced: d2 := the value,
+        cmp.l   %d0,%d1                 | displaced:   capped at the max (d1)
+        jbge    qz_mk_capped            | displaced
+        move.l  %d1,%d2                 | displaced
+qz_mk_capped:
+        tst.b   NV_SCALE
+        jbeq    qz_mk_done              | OFF: stock
+        tst.l   MIDI_MODE
+        jbeq    qz_mk_done
+        tst.b   %d6                     | flat 0: NOTE
+        jbne    qz_mk_chord             | (2.18) or NOT2..4
+        tst.l   %d5                     | slot A
+        jbne    qz_mk_done
+        move.l  %d1,-(%sp)
+        mvz.b   UI_TRACK,%d1            | (2.15) the track's switch: MIDI n SCALE OFF = stock
+        btst    %d1,NV_MOFF
+        jbne    qz_mk_pop
+        move.l  0x16(%a3),%d1           | the slot's name: "NOTE"
+        cmpi.l  #0x4e4f5445,%d1
+        jbne    qz_mk_pop
+        move.l  %a4,%d1                 | delta: detents, signed
+        jbeq    qz_mk_pop
+        mvz.b   (%a5),%d2               | from the value the knob was turned from
+        jbsr    qz_quantm
+qz_mk_pop:
+        move.l  (%sp)+,%d1
+qz_mk_done:
+        rts
+| (2.18) NOT2, NOT3, NOT4 (flat 3..5 = slots D..F of the NOTE page, named "NOT2".."NOT4"):
+| the offset steps so that NOTE + offset is the next note of the scale in the turn
+| direction, as NOTE itself steps (qz_quantmb: the walk over the offset's raw 0..127,
+| 64 = +0, the pitch class that of the Part's NOTE + raw - 64; the descriptor's
+| range is NOTE's, 0 / 128, for all six slots). The value shown, the one stored and
+| the chord the track plays then hold scale notes only, each its own note.
+qz_mk_chord:
+        move.l  %d1,-(%sp)
+        move.l  %d6,%d1
+        subq.l  #3,%d1
+        cmpi.l  #2,%d1
+        jbhi    qz_mk_pop               | not flat 3..5
+        cmp.l   %d5,%d6
+        jbne    qz_mk_pop               | the flat is the slot (D..F) on the NOTE page
+        mvz.b   UI_TRACK,%d1            | the track's switch: MIDI n SCALE OFF = stock
+        btst    %d1,NV_MOFF
+        jbne    qz_mk_pop
+        move.l  %d5,%d1
+        add.l   %d1,%d1
+        add.l   %d5,%d1
+        add.l   %d1,%d1                 | 6 * slot: the names are 6 bytes apart
+        move.l  0x16(%a3,%d1.l),%d1
+        lsr.l   #8,%d1
+        cmpi.l  #0x4e4f54,%d1           | "NOT"
+        jbne    qz_mk_pop
+        move.l  %a4,%d1                 | delta: detents, signed
+        jbeq    qz_mk_pop
+        move.l  %a0,-(%sp)
+        movea.l %a5,%a0
+        suba.l  %d6,%a0                 | the Part's NOTE (a5 = the slot's Part byte)
+        mvz.b   (%a0),%d2
+        addq.l  #8,%d2                  | the bias: NOTE + 8 = NOTE - 64 mod 12
+        lea     qz_mbias(%pc),%a0
+        move.l  %d2,(%a0)
+        movea.l (%sp)+,%a0
+        mvz.b   (%a5),%d2               | from the value the knob was turned from
+        jbsr    qz_quantmb
+        jbra    qz_mk_pop
+
+| ---- (2.13) the MIDI NOTE with a [TRIG] key held: jsr planted at 0x40050b98 ------
+| The MIDI p-lock editor (the loop at 0x400509f6, GRID REC + a held trig) takes
+| the step's lock -- or the Part's value + delta when there is none (0xff) --
+| clamps it into d4 and stores it at 0x40050b98 into 18688(a0) (the pattern's
+| lock byte: a0 = the step's record + flat) and then into the SRAM mirror at
+| (a0', a1). Registers: a1 = the flat slot (0 = NOTE), d5 = slot, fp = delta,
+| a3 = the descriptor; the old lock is still in 18688(a0). qz_plock's twin:
+| with a scale on, NOTE steps by scale degree from the lock, or from the
+| Part's NOTE when the step has none. Only d0 / d1 are free (a0 / a1 / d2 / d3
+| are read after the hook).
+qz_mplock:
+        mvz.b   NV_SCALE,%d0
+        jbeq    qz_mp_store             | OFF: stock
+        tst.l   MIDI_MODE
+        jbeq    qz_mp_store
+        mvz.b   UI_TRACK,%d0            | (2.15) the track's switch: MIDI n SCALE OFF = stock
+        btst    %d0,NV_MOFF
+        jbne    qz_mp_store
+        move.l  %a1,%d0                 | flat 0: NOTE
+        jbne    qz_mp_chord             | (2.18) or NOT2..4
+        tst.l   %d5
+        jbne    qz_mp_store
+        move.l  0x16(%a3),%d0
+        cmpi.l  #0x4e4f5445,%d0         | "NOTE"
+        jbne    qz_mp_store
+        move.l  %fp,%d1                 | delta
+        jbeq    qz_mp_store
+        move.l  %d2,-(%sp)
+        mvz.b   (18688,%a0),%d2         | the step's lock before the store
+        cmpi.l  #0xff,%d2
+        jbne    qz_mp_go                | a lock: step from it
+        move.l  %a0,-(%sp)              | none: from the Part's NOTE
+        move.l  #6322,%d0               | a Part's size
+        mvz.b   0x100b14cf,%d2          | the Part
+        muls.l  %d0,%d2
+        movea.l PARTS,%a0
+        adda.l  %d2,%a0                 | the Part
+        mvz.b   UI_TRACK,%d2
+        lsl.l   #5,%d2
+        adda.l  %d2,%a0                 | + 32 * track
+        adda.l  #MPART_NOTE,%a0
+        mvz.b   (%a0),%d2               | its NOTE
+        movea.l (%sp)+,%a0
+qz_mp_go:
+        jbsr    qz_quantm
+        move.l  %d2,%d4                 | the value the lock and the mirror take
+        move.l  (%sp)+,%d2
+qz_mp_store:
+        move.b  %d4,(18688,%a0)         | displaced: the lock byte
+        mvz.b   UI_TRACK,%d1            | displaced
+        rts
+| (2.18) a NOT2..4 lock (flat 3..5, the slot D..F named "NOT2".."NOT4"): qz_mk_chord's
+| rule from the step's lock (or the Part's offset when the step has none), the note
+| it is an offset from being the step's NOTE lock (or the Part's NOTE when none).
+qz_mp_chord:
+        subq.l  #3,%d0
+        cmpi.l  #2,%d0
+        jbhi    qz_mp_store             | not flat 3..5
+        cmpa.l  %d5,%a1
+        jbne    qz_mp_store             | the flat is the slot (D..F) on the NOTE page
+        move.l  %d5,%d0
+        add.l   %d0,%d0
+        add.l   %d5,%d0
+        add.l   %d0,%d0                 | 6 * slot
+        move.l  0x16(%a3,%d0.l),%d0
+        lsr.l   #8,%d0
+        cmpi.l  #0x4e4f54,%d0           | "NOT"
+        jbne    qz_mp_store
+        move.l  %fp,%d1                 | delta
+        jbeq    qz_mp_store
+        move.l  %d2,-(%sp)
+        move.l  %a0,-(%sp)
+        suba.l  %a1,%a0                 | the step's record (flat 0)
+        mvz.b   (18688,%a0),%d2         | its NOTE lock
+        cmpi.l  #0xff,%d2
+        jbne    qz_mp_cb
+        moveq   #0,%d2                  | none: the Part's NOTE
+        jbsr    qz_mpart
+qz_mp_cb:
+        addq.l  #8,%d2                  | the bias: NOTE + 8
+        lea     qz_mbias(%pc),%a0
+        move.l  %d2,(%a0)
+        movea.l (%sp),%a0
+        mvz.b   (18688,%a0),%d2         | the step's offset lock before the store
+        cmpi.l  #0xff,%d2
+        jbne    qz_mp_cgo
+        move.l  %a1,%d2                 | none: the Part's offset
+        jbsr    qz_mpart
+        movea.l (%sp),%a0
+qz_mp_cgo:
+        jbsr    qz_quantmb
+        move.l  %d2,%d4                 | the value the lock and the mirror take
+        movea.l (%sp)+,%a0
+        move.l  (%sp)+,%d2
+        jbra    qz_mp_store
+| qz_mpart: d2 := the UI MIDI track's Part byte at flat d2 (Part + MPART_NOTE + 32 * track
+| + flat). Clobbers d0, a0.
+qz_mpart:
+        move.l  %d2,-(%sp)
+        move.l  #6322,%d0
+        mvz.b   0x100b14cf,%d2          | the Part
+        muls.l  %d0,%d2
+        movea.l PARTS,%a0
+        adda.l  %d2,%a0
+        mvz.b   UI_TRACK,%d2
+        lsl.l   #5,%d2
+        adda.l  %d2,%a0                 | + 32 * track
+        adda.l  #MPART_NOTE,%a0
+        adda.l  (%sp)+,%a0              | + flat
+        mvz.b   (%a0),%d2
+        rts
+
 | ---- qz_quant: d2 := d2 stepped |d1| degrees in the direction of d1 -------------
 | SCALE is on (the mask comes from SCALE_AT), a3 = the descriptor (min at +0x6a, count at
 | +0x9a for slot A). Each step goes to the next raw value on a semitone of the
 | scale (raw = 64 + 5 * n; qz_pcraw maps raw - min to a pitch class); a value
 | between degrees snaps to the nearest one in the turn direction; at the ends
 | the value stays, which is the stock clamp. Preserves everything but d2.
+| qz_quantm (2.13) is the same walk over a MIDI track's NOTE: raw = the MIDI
+| note, every value a semitone, pitch class = note mod 12 (48 = C3, C = 0).
 qz_quant:
         move.l  %d0,-(%sp)
+        moveq   #0,%d0                  | an audio track (qz_ui_synth decides below)
+        jbra    qz_q_go
+qz_quantm:
+        move.l  %a0,-(%sp)
+        lea     qz_mbias(%pc),%a0
+        clr.l   (%a0)                   | NOTE: the note's own pitch class
+        movea.l (%sp)+,%a0
+qz_quantmb:                             | (2.18) NOT2..4: qz_mbias set by the caller (NOTE + 8)
+        move.l  %d0,-(%sp)
+        moveq   #-1,%d0                 | (2.13) a MIDI track's NOTE
+qz_q_go:
         move.l  %d1,-(%sp)
         move.l  %d3,-(%sp)
         move.l  %d4,-(%sp)
@@ -415,14 +691,18 @@ qz_quant:
         move.l  %d7,-(%sp)
         move.l  %a0,-(%sp)
         move.l  %a1,-(%sp)
+        move.l  %d0,%d6                 | the mode (d6 is saved; the walk sets it before use)
         jsr     SCALE_AT                | d3 = the scale's pitch-class mask, rotated by ROOT (core.s)
         move.l  %d0,%d3
-        move.l  0x6a(%a3),%d4           | d4 = the parameter's minimum (4; 0 on the synth page)
+        move.l  0x6a(%a3),%d4           | d4 = the parameter's minimum (4; 0 on the synth page and MIDI's NOTE)
         move.l  0x9a(%a3),%d5
         add.l   %d4,%d5
-        subq.l  #1,%d5                  | d5 = its maximum (124; 127 on the synth page)
+        subq.l  #1,%d5                  | d5 = its maximum (124; 127 on the synth page and MIDI's NOTE)
         lea     qz_pcraw(%pc),%a0
+        move.l  %d6,%d0
+        jbne    qz_q_mode               | MIDI: -1
         jbsr    qz_ui_synth             | a synth track: raw = 64 + semitones (qz_pcof)
+qz_q_mode:
         lea     qz_synthq(%pc),%a1
         move.b  %d0,(%a1)
         move.l  %d1,%d0                 | d0 = |delta| degrees to step
@@ -482,16 +762,23 @@ qz_k_dn1:
 
 | qz_pcof: d7 := the pitch class of raw d6 (a0 = qz_pcraw, d4 = the minimum): a
 | sample track looks raw - min up in qz_pcraw (0xff between semitones); a synth
-| track (qz_synthq, set by qz_quant) computes (raw + 56) mod 12 = (raw - 64)
-| mod 12, every raw a semitone. Preserves everything but d7.
+| track (qz_synthq > 0, set by qz_quant) computes (raw + 56) mod 12 = (raw - 64)
+| mod 12, every raw a semitone; a MIDI track's NOTE (qz_synthq < 0, qz_quantm)
+| is the note itself, raw mod 12. Preserves everything but d7.
 qz_pcof:
         move.l  %d6,%d7
         sub.l   %d4,%d7
         tst.b   qz_synthq(%pc)
         jbeq    qz_pc_tab
+        jbpl    qz_pc_syn
+        move.l  %d6,%d7                 | (2.13) MIDI: the note's own pitch class
+        add.l   qz_mbias(%pc),%d7       | (2.18) NOT2..4: + NOTE + 8, the class of the note NOTE + (raw - 64)
+        jbra    qz_pc_mod
+qz_pc_syn:
+        addi.l  #56,%d7
+qz_pc_mod:
         move.l  %d0,-(%sp)
         move.l  %d6,-(%sp)
-        addi.l  #56,%d7
         move.l  %d7,%d6
         moveq   #12,%d0
         divu.l  %d0,%d6                 | q
@@ -519,6 +806,8 @@ qz_chrom:
         lea     qz_scale,%a0
         mvz.b   (%a0),%d0
         jbeq     qz_c_replay
+        btst    %d2,NV_AOFF             | (2.19) the track's AUDIO n SCALE OFF: stock
+        jbne     qz_c_replay
         move.l  %d2,-(%sp)
         move.l  %d3,-(%sp)
         move.l  %d4,-(%sp)
@@ -578,7 +867,7 @@ qz_c_replay:
 | qz_oct (-60..+51) -- plus ROOT with a scale on, so key 1 sounds the root --
 | snapped to the nearest degree of the ROOT-rotated SCALE mask by pitch class
 | (lower first at each distance, the rule qz_c_loop and po_snap follow), raw =
-| 64 + n. The lea is not replayed: a2 := raw.
+| 64 + n. The displaced address load is not replayed: a2 := raw.
 qz_c_synth:
         move.l  %d3,-(%sp)
         move.l  %d4,-(%sp)
@@ -591,6 +880,8 @@ qz_c_synth:
         lea     qz_scale,%a0
         tst.b   (%a0)
         jbeq    qz_cs_raw               | SCALE OFF: ROOT ignored, 2.8's raw
+        btst    %d2,NV_AOFF             | (2.19) the track's AUDIO n SCALE OFF: as SCALE OFF
+        jbne    qz_cs_raw
         mvz.b   NV_ROOT,%d0
         add.l   %d0,%d1                 | ... + ROOT: key 1 sounds the root (28 Sep 2026), -60..+62
         move.l  %d1,%d0
@@ -647,16 +938,16 @@ qz_cs_lo_ok:
 
 | ---- the CHROMATIC octave on a synth track --------------------------------------
 | Stock keeps ONE octave word for the keyboard, OCT_WORD, 0 or 1: FUNC + LEFT
-| or RIGHT eor it (0x40045918), the key handler's caller adds 12 * word to the
+| or RIGHT flips it (0x40045918), the key handler's caller adds 12 * word to the
 | key (0x40050254) and the drawer picks the 16- or 13-key picture by it
-| (0x40044968), prints it with "%d" (0x400449b8) and places the held-key marks
+| (0x40044968), prints it with "%d" (0x400449be) and places the held-key marks
 | with it (0x40044abe). On a synth track the octave is qz_oct instead, -4..+4:
 | the stock word is held at 0 there (the key index stays the physical key,
 | the marks land on the keys, the 16-key picture shows), qz_chrom adds the 12
 | * qz_oct, and the number beside the keyboard is qz_oct. Sample tracks: the
 | displaced instructions, byte for byte.
 
-| 0x40050254, the key handler's caller: `movel OCT_WORD,%d0; movel %d0,%d1` (8
+| 0x40050254, the key handler's caller: OCT_WORD read into d0 and copied into d1 (8
 | bytes) -> jmp qz_keyidx; a0 = the key, d2 = press (pushed already); stock
 | goes on at 0x4005025c with d1 = the word and computes 12 * d1.
 qz_keyidx:
@@ -670,8 +961,8 @@ qz_ki_out:
         move.l  %d0,%d1                 | displaced
         jmp     0x4005025c
 
-| 0x40045918, FUNC + LEFT / RIGHT in CHROMATIC mode: `moveq #1,%d2; eorl
-| %d2,OCT_WORD` (8 bytes) -> jmp qz_octkey. The key code is the handler's
+| 0x40045918, FUNC + LEFT / RIGHT in CHROMATIC mode: OCT_WORD toggled by 1 through
+| d2 (8 bytes) -> jmp qz_octkey. The key code is the handler's
 | first argument, 8(%sp) (d2 is pushed at its entry): 0x34 = LEFT, 0x21 =
 | RIGHT (PANEL.md: key code = row * 8 + bit). Stock goes on at 0x40045920
 | (the redraw); d2 is dead (popped at the return).
@@ -702,8 +993,8 @@ qz_ok_stock:
         eor.l   %d2,OCT_WORD            | displaced
         jmp     0x40045920
 
-| 0x40044968, the CHROMATIC drawer's picture choice: `moveq #1,%d1; cmpl
-| OCT_WORD,%d1` (8 bytes) -> jmp qz_octdraw; stock's `bne` at 0x40044970 reads
+| 0x40044968, the CHROMATIC drawer's picture choice: OCT_WORD compared with 1
+| through d1 (8 bytes) -> jmp qz_octdraw; stock's conditional branch at 0x40044970 reads
 | the compare's flags. On a synth track the word is set to 0 first, so this
 | draw -- the picture, the number, the marks -- sees octave 0 (the word may
 | hold 1 from a sample track; the keys of a synth track ignore it anyway).
@@ -716,27 +1007,42 @@ qz_od_cmp:
         cmp.l   OCT_WORD,%d1            | displaced
         jmp     0x40044970
 
-| 0x400449be, the common number/format argument pushes (8 bytes). The
-| MIDI branch targets this push with its octave already in d0; audio still
-| executes the stock OCT_WORD load at 0x400449b8. The number is printed by stock's own
-| "%d" (0x400b465d) at 0x400449c0 -- the formatter 0x40013904 takes (ctx,
-| font, x 0x44, y 9, 1, 0, buf 0x400b527d, fmt, value) and 0x400449ec pops
-| the nine -- so a synth track's -4..+4 prints as is. With a scale on (28 Sep
-| 2026) the format is this unit's qz_ofmt, ROOT's name + " %d" ("A %d"), pushed
-| in place of stock's, the continuation at 0x400449c6: same nine arguments.
+| 0x400449be, the number beside the keyboard: the pushes of d0 and of 0x400b465d
+| (8 bytes, the octave and stock's decimal format) -> jmp qz_octnum. The
+| drawer reaches 0x400449be from BOTH branches: the audio one loads OCT_WORD
+| into d0 at 0x400449b8 and falls through, the MIDI one (0x400449a6: a test of the
+| long at 0x80000012) loads stock's MIDI octave word 0x400beba2 - 1 into d0 and
+| branches straight here. The value is printed by the formatter 0x40013904
+| (ctx, font, x 0x44, y 9, 1, 0, buf 0x400b527d, fmt, value), and 0x400449ec
+| pops the nine -- so a synth track's -4..+4 prints as is. With a scale on
+| (28 Sep 2026) the format is this unit's qz_ofmt, ROOT's name + " %d" ("A
+| %d"), pushed in place of stock's; the continuation is 0x400449c6 on every
+| path: same nine arguments.
+| 2.13 (Modwerk #264): until 2.12 this detour sat at 0x400449b8, the audio
+| branch's load, and 0x400449be was its pad. Stock's MIDI branch jumps to
+| 0x400449be, so on a MIDI track the octave push was skipped, the drawer's
+| call ran one argument short and the unit froze when CHROMATIC was entered
+| (every public tag since the ROOT round, 2.9 .. 2.12). Modwerk found it and
+| its bundled quantizer moved the detour to the common push; this is that
+| form: the push is ours on both branches, a MIDI track's d0 is stock's.
+| A MIDI track (2.13): stock's number, with ROOT's name before it when a
+| scale is on ("A 3": qz_mkey makes key 1 the root at that octave).
 qz_octnum:
-        tst.l   0x80000012              | MIDI: stock already loaded its octave into d0
-        jbne    qz_on_stockfmt           | keep the MIDI value and stock format
+        tst.l   MIDI_MODE               | MIDI: stock already loaded its octave into d0
+        jbne    qz_on_out               | (an audio track's octave is not read)
         jbsr    qz_ui_synth
         jbeq    qz_on_stock
         mvs.b   qz_oct,%d0              | the synth track's octave (keys.s, pinned)
         jbra    qz_on_out
 qz_on_stock:
-        move.l  OCT_WORD,%d0            | displaced: a sample track's position, 0 or 1
+        move.l  OCT_WORD,%d0            | as 0x400449b8: a sample track's position, 0 or 1
         jbeq    qz_on_out               | the default position: 0
         lea     qz_scale,%a0
         tst.b   (%a0)
         jbeq    qz_on_out               | SCALE OFF: stock's 1
+        mvz.b   UI_TRACK,%d1            | (2.19) the track's AUDIO n SCALE OFF: stock's 1
+        btst    %d1,NV_AOFF
+        jbne    qz_on_out
         mvz.b   NV_ROOT,%d1
         subq.l  #7,%d1
         jbmi    qz_on_out               | ROOT C..F#: the other position is the octave above, 1
@@ -746,6 +1052,17 @@ qz_on_out:
         lea     qz_scale,%a0
         tst.b   (%a0)
         jbeq    qz_on_fmt               | SCALE OFF: stock's "%d" (ROOT ignored)
+        tst.l   MIDI_MODE               | (2.15) a MIDI track whose switch is OFF: stock's "%d"
+        jbeq    qz_on_audio
+        mvz.b   UI_TRACK,%d1
+        btst    %d1,NV_MOFF
+        jbne    qz_on_fmt
+        jbra    qz_on_root
+qz_on_audio:                            | (2.19) an audio track whose AUDIO n SCALE is OFF: stock's "%d"
+        mvz.b   UI_TRACK,%d1
+        btst    %d1,NV_AOFF
+        jbne    qz_on_fmt
+qz_on_root:
         lea     qz_ofmt(%pc),%a0        | ROOT's name, then " %d": "A -1" where stock printed "-1"
         mvz.b   NV_ROOT,%d0             | (d0 / d1 / a0 / a1 are C scratch at the site: the call follows)
         lea     qz_rootnames(%pc),%a1
@@ -760,13 +1077,386 @@ qz_on_copied:
         move.b  #37,(%a0)+              | '%'
         move.b  #100,(%a0)+             | 'd'
         clr.b   (%a0)
-        pea     qz_ofmt(%pc)            | the format, in place of stock's pea "%d" at 0x400449c0
+        pea     qz_ofmt(%pc)            | the format, in place of stock's "%d"
         jmp     0x400449c6
-qz_on_stockfmt:
-        move.l  %d0,-(%sp)              | common argument push reached by stock MIDI
 qz_on_fmt:
-        pea     0x400b465d              | displaced stock "%d" format
+        pea     FMT_D                   | displaced: stock's decimal format
         jmp     0x400449c6
+
+| ---- (2.18) the held key's mark on an audio track's keyboard: jmp planted at 0x40044abc
+| The drawer's audio branch (MIDI_MODE 0) walks the eight tracks' held keys, a2 =
+| HELD + track (the key index the handler saw + 1, 0 = none), and marks the
+| picture's key at held - 1 - 12 * OCT_WORD (0x40044ac4..: the range check, the
+| key's x, the draw through a3). That is the PHYSICAL key, but with a scale on the
+| key sounds qz_chrom's note -- key 1 the root, every key snapped -- so with ROOT E
+| key 1 played E while the mark sat on C (a MIDI track's mark is its held note,
+| which qz_mkey already made the sounding one: that branch is not touched). Here
+| the held key goes through qz_chrom itself, the press path's own rule, and d1
+| becomes the sounding note's place in the picture (+ 1 + 12 * OCT_WORD, which the
+| stock arithmetic takes off again): a sample track's index s (raw = 5 * s + 4)
+| sits at s - 12 * N, N = the number beside the keyboard (qz_octnum: 0 at word 0;
+| 1 at word 1 with ROOT C..F#; -1 at word 1 with ROOT G..B, the dropped keyboard);
+| a synth track's n (raw = 64 + n) sits at n + 12 - 12 * qz_oct. A note outside the
+| picture fails the stock range check, as a key off the picture does. SCALE OFF or
+| no key held: the displaced instructions. d0 / d1 / d2 / a0 are loaded by the
+| stock code that follows, a1 / a2 are saved; qz_chrom keeps d2..d4.
+qz_heldmark:
+        mvz.b   (%a2),%d1               | displaced: the track's held key + 1 (0 = none)
+        tst.b   NV_SCALE
+        jbeq    qz_hm_word              | SCALE OFF: stock
+        move.l  %a2,%d0                 | (2.19) the track's AUDIO n SCALE OFF: stock
+        subi.l  #HELD,%d0
+        btst    %d0,NV_AOFF
+        jbne    qz_hm_word
+        tst.l   %d1
+        jbeq    qz_hm_word              | no key held on this track
+        lea     -8(%sp),%sp
+        movem.l %a1-%a2,(%sp)
+        move.l  %a2,%d2
+        subi.l  #HELD,%d2               | the track, 0..7
+        subq.l  #1,%d1
+        movea.l %d1,%a2                 | the key index the handler saw
+        jbsr    qz_chrom                | a2 := the raw the key sounds (the press path's rule)
+        move.l  %a2,%d1
+        jbsr    qz_is_synth             | (track d2)
+        jbne    qz_hm_synth
+        subq.l  #4,%d1
+        moveq   #5,%d0
+        divu.l  %d0,%d1                 | s = (raw - 4) / 5: the index that sounds, 0..24
+        tst.l   OCT_WORD
+        jbeq    qz_hm_place             | position 0: the picture starts at index 0
+        mvz.b   NV_ROOT,%d0
+        subq.l  #7,%d0
+        jbmi    qz_hm_place             | ROOT C..F#, position 1: it starts at index 12 (the stock 12 * word)
+        addi.l  #24,%d1                 | ROOT G..B, position 1 ("-1"): it starts at index -12
+        jbra    qz_hm_place
+qz_hm_synth:
+        subi.l  #52,%d1                 | raw - 64 + 12: n + 12, key 1 of the picture is n = -12 at octave 0
+        mvs.b   qz_oct,%d0
+        move.l  %d0,%d2
+        lsl.l   #2,%d0
+        lsl.l   #3,%d2
+        add.l   %d2,%d0                 | 12 * qz_oct
+        sub.l   %d0,%d1                 | the place, n + 12 - 12 * qz_oct
+        tst.l   OCT_WORD
+        jbeq    qz_hm_place
+        addi.l  #12,%d1                 | (+ 12 * word: the stock arithmetic takes it off)
+qz_hm_place:
+        addq.l  #1,%d1                  | + 1: the stock arithmetic takes held - 1
+        movem.l (%sp),%a1-%a2
+        lea     8(%sp),%sp
+qz_hm_word:
+        move.l  OCT_WORD,%d0            | displaced
+        jmp     0x40044ac4
+
+| ---- (2.13) the CHROMATIC keys of a MIDI track: jmp planted at 0x400436a8 ---------
+| 0x40043664(track, note, press) plays a MIDI track's CHROMATIC key: its caller
+| (0x40050226) made the note key + 12 * stock's octave word 0x400beba2 (4 at
+| boot: key 1 = 48 = C3). On a press stock has checked note <= 127 and taken
+| the key's held slot d2 = note & 15; at 0x400436a8 it pushes the event flag
+| (a push of 1) and then calls 0x4009e9a8(track, note, the Part's VEL, 1) -- the
+| note-on, or the arpeggiator's add with ARP MODE on -- and stores held[d2] =
+| note + 1 (0x460d170c), which the release turns back into the note-off; the
+| live recorder records the note it was given (event 0x46). With a scale on
+| the note becomes the keyboard's own rule (qz_chrom's, the synth track's):
+| note + ROOT (at most 127), then the nearest scale note, ties down -- key 1
+| sounds the root, every key a note of the scale. The note-on, the arp, held[]
+| (so the note-off) and the recorder all carry it; the release needs no hook.
+| Registers: d3 = the note, d4 = track, d2 = the slot; d0 / d1 / a0 / a1 are
+| free (d5 is not: stock's word load of a constant into d5 keeps its upper half).
+qz_mkey:
+        mvz.b   NV_SCALE,%d0
+        jbeq    qz_mky_replay           | OFF: stock
+        btst    %d4,NV_MOFF             | (2.15) d4 = the track: MIDI n SCALE OFF = stock
+        jbne    qz_mky_replay
+        mvz.b   NV_ROOT,%d0
+        add.l   %d3,%d0                 | + ROOT: key 1 sounds the root
+        moveq   #127,%d1
+        cmp.l   %d1,%d0
+        jble    qz_mky_snap
+        move.l  %d1,%d0                 | the MIDI ceiling
+qz_mky_snap:
+        jbsr    qz_msnap
+        move.l  %d0,%d3
+qz_mky_replay:
+        pea     1                       | displaced: the event flag
+        mvz.b   0x100b14cf,%d1          | displaced: the Part
+        jmp     0x400436b2
+
+| qz_msnap: d0 := the MIDI note nearest to note d0 (0..127) whose pitch class
+| (note mod 12, C = 0) is in the scale's ROOT-rotated mask (SCALE_AT), the
+| lower candidate first at each distance (ties go down: qz_chrom's and the
+| synth's po_snap's rule), within 0..127. SCALE is on. Clobbers d1, a0, a1.
+qz_msnap:
+        lea     -12(%sp),%sp
+        movem.l %d2-%d4,(%sp)
+        move.l  %d0,%d2                 | n
+        jsr     SCALE_AT                | d0 = the mask (clobbers a0, d0)
+        move.l  %d0,%d3
+        move.l  %d2,%d1
+        moveq   #12,%d4
+        divu.l  %d4,%d1
+        mulu.l  %d4,%d1
+        move.l  %d2,%d0
+        sub.l   %d1,%d0
+        move.l  %d0,%a1                 | a1 = n's pitch class
+        moveq   #0,%d4                  | distance 0, 1, 2 ...
+qz_ms_loop:
+        move.l  %d2,%d1
+        sub.l   %d4,%d1                 | the lower candidate first
+        jbmi    qz_ms_hi                | (below note 0: none)
+        move.l  %a1,%d0
+        sub.l   %d4,%d0
+        jbpl    qz_ms_lo
+        addi.l  #12,%d0
+qz_ms_lo:
+        btst    %d0,%d3
+        jbne    qz_ms_found
+qz_ms_hi:
+        move.l  %d2,%d1
+        add.l   %d4,%d1                 | then the upper
+        cmpi.l  #127,%d1
+        jbgt    qz_ms_next              | (above note 127: none)
+        move.l  %a1,%d0
+        add.l   %d4,%d0
+        cmpi.l  #12,%d0
+        jblt    qz_ms_up
+        subi.l  #12,%d0
+qz_ms_up:
+        btst    %d0,%d3
+        jbne    qz_ms_found
+qz_ms_next:
+        addq.l  #1,%d4
+        cmpi.l  #11,%d4
+        jble    qz_ms_loop
+        move.l  %d2,%d1                 | no degree at all: cannot happen (every mask has the root)
+qz_ms_found:
+        move.l  %d1,%d0
+        movem.l (%sp),%d2-%d4
+        lea     12(%sp),%sp
+        rts
+
+| ---- (2.15) WHAT A MIDI TRACK PLAYS: jmp planted at 0x4009fb80 --------------------
+| The sequencer's MIDI note stage 0x4009f794 (called from the sequencer tick
+| 0x400a1dfe, playing or stopped: the arpeggiator runs there too) builds a
+| track's four notes in its frame (fp-4..-1: NOTE, NOTE + NOT2..4 - 64, or
+| what the arpeggiator 0x40099c08 / 0x40099ee4 wrote there) and walks them
+| (0x4009fb2e, a2 = the note, d4 = 0..3, d7 = the track 0..7): + TRAN - 64 +
+| the MIDI transpose 0x46c7a124[t] (a byte out of 0..127 becomes -1),
+| stock's ARP SETUP KEY (0x4009fb58..7e), then at 0x4009fb80 -- the hook,
+| 6 bytes: the note byte read into d1 and a branch to 0x4009fd2a when it is negative -- a negative note is skipped
+| and any other one goes through the active-note table 0x46c78152 (ch * 128
+| + note): a free note is sent (0x4009fbac) and stored for its note-off
+| (0x46c77a1a + 32 t + 8 i; the table entry := t * 4 + i), a note this track
+| already holds is SKIPPED (0x4009fc8c: the same or a lower track holds it),
+| a note a higher track holds is taken over. With a scale on and the
+| track's switch ON, the note is snapped in place (qz_msnap: nearest scale
+| note, ties down) before the replay, so the note-on, the stored note (the
+| note-off) and the table all carry it -- nothing can hang, whatever SCALE
+| or ROOT does later; two notes of one trig that snap to the same note:
+| the second is the skipped kind, one note-on, one note-off. Registers:
+| d0 / d1 / a0 / a1 are free here (stock loads each before it reads it),
+| d2..d4 are saved by qz_msnap; d5 / d6 / a2..a5 are not touched.
+qz_mnote:
+        tst.b   NV_SCALE
+        jbeq    qz_mn_replay            | OFF: stock
+        btst    %d7,NV_MOFF             | d7 = the track: MIDI n SCALE OFF = stock
+        jbne    qz_mn_replay
+        mvs.b   (%a2),%d0
+        jbmi    qz_mn_replay            | none / out of range: stock skips it
+        jbsr    qz_msnap
+        move.b  %d0,(%a2)               | the note, snapped (fp-4..-1: the stage's own copy)
+qz_mn_replay:
+        move.b  (%a2),%d1               | displaced
+        jblt    qz_mn_skip              | displaced: the branch on a negative note (to 0x4009fd2a)
+        jmp     0x4009fb86
+qz_mn_skip:
+        jmp     0x4009fd2a
+
+| ---- (2.19) WHAT AN AUDIO TRACK PLAYS: jmp planted at 0x4000c614 -----------------
+| The frame builder's trig path (the track at 114(sp), the trig's lock mask at
+| (184(sp)): bit k = slot k was locked) has restored the slots the previous
+| trig locked from the Part and applied this trig's locks: each lock byte b
+| went into the track's base byte PBYTES + 72 t + k and, as b << 8, into its
+| parameter word PWORDS + 64 t + 2 k, with bit k set in the mask. Here, with
+| a scale on and the track's AUDIO n SCALE ON, on a STATIC or FLEX track (the
+| synth machines are FLEX), slot 0 (PLAYBACK PTCH) is taken as the trig
+| resolved it -- the word -- and snapped (qz_asnap); when that moves it, the
+| snapped value is applied as a lock of that value is (byte, word, mask bit),
+| so the next trig restores the Part's own PTCH first: nothing stored changes,
+| and a scale switched back plays the pattern as recorded. Then the two
+| displaced instructions are replayed (a register copy into d1 and a bit test
+| of it, whose flags the stock branch after the site reads). d1 is the
+| displaced code's; everything else used is saved.
+qz_atrig:
+        tst.b   NV_SCALE
+        jbeq    qz_at_replay            | SCALE OFF: stock
+        lea     -28(%sp),%sp
+        movem.l %d0/%d2-%d4/%a0-%a2,(%sp)
+        move.l  28+114(%sp),%d2         | the track
+        moveq   #7,%d0
+        cmp.l   %d0,%d2
+        jbhi    qz_at_pop
+        btst    %d2,NV_AOFF             | the track's AUDIO n SCALE OFF: stock
+        jbne    qz_at_pop
+        movea.l PARTS,%a0
+        mvz.b   0x100b14cf,%d0
+        move.l  #6322,%d1
+        muls.l  %d1,%d0
+        adda.l  %d0,%a0
+        adda.l  #0x8eda2,%a0            | the Part's machine bytes
+        mvz.b   (%a0,%d2.l),%d0
+        moveq   #5,%d3                  | STATIC: a sample track, 5 raw a semitone
+        tst.l   %d0
+        jbeq    qz_at_go
+        subq.l  #1,%d0
+        jbne    qz_at_pop               | THRU / NEIGHBOR / PICKUP: stock
+        jbsr    qz_is_synth             | FLEX: FM SYNTH / SY DRUM -- semitones; a sample: fifths
+        jbeq    qz_at_go
+        moveq   #1,%d3
+qz_at_go:
+        move.l  %d2,%d0
+        lsl.l   #6,%d0
+        movea.l %d0,%a1
+        adda.l  #PWORDS,%a1             | the track's PTCH word
+        mvs.w   (%a1),%d4
+        move.l  %d4,%d0
+        asr.l   #8,%d0                  | the raw the trig resolved
+        jbsr    qz_asnap                | d0 := the snapped raw (d3 = raw per semitone)
+        move.l  %d0,%d1
+        lsl.l   #8,%d1
+        cmp.l   %d1,%d4
+        jbeq    qz_at_pop               | on the scale already: nothing to do
+        move.w  %d1,(%a1)               | the word, as a lock writes it
+        move.l  %d2,%d1
+        lsl.l   #3,%d1
+        lsl.l   #6,%d2
+        add.l   %d1,%d2                 | 72 t
+        movea.l %d2,%a2
+        adda.l  #PBYTES,%a2
+        move.b  %d0,(%a2)               | the base byte
+        movea.l 28+184(%sp),%a2
+        moveq   #1,%d1
+        or.l    %d1,(%a2)               | slot 0 locked by this trig: the next one restores the Part's PTCH
+qz_at_pop:
+        movem.l (%sp),%d0/%d2-%d4/%a0-%a2
+        lea     28(%sp),%sp
+qz_at_replay:
+        .if     HAVE_PANEL_TRANSACTION
+        jbsr    po_tx_base             | bind the resolved pre-LFO base to this accepted frame
+        .endif
+        move.l  %a4,%d1                 | displaced
+        btst    #1,%d1                  | displaced
+        jmp     0x4000c61a
+
+| qz_asnap: d0 := the raw nearest to raw d0 (0..127) that sits on a degree of the
+| ROOT-rotated scale (SCALE_AT), ties to the lower (the keys' rule). d3 = raw a
+| semitone: 5 on a sample track (raw = 64 + 5 n, n = -12..+12 semitones from
+| the sample's own pitch, which counts as C, the keys' and the knob's
+| convention), 1 on a synth track (raw = 64 + n, n = -64..+63). The search
+| runs over the degrees within 7 semitones of the raw's own semitone. SCALE
+| is on. Preserves everything but d0 (a0 is saved: SCALE_AT clobbers it).
+qz_asnap:
+        lea     -32(%sp),%sp
+        movem.l %d1-%d7/%a0,(%sp)
+        move.l  %d0,%d2                 | r
+        jsr     SCALE_AT                | the mask
+        move.l  %d0,%d7
+        move.l  %d2,%d0
+        subi.l  #64,%d0
+        divs.l  %d3,%d0                 | n0 = (r - 64) / u, toward 0
+        move.l  %d0,%d4
+        subq.l  #7,%d4                  | n = n0 - 7 ..
+        move.l  %d0,%d5
+        addq.l  #7,%d5                  | .. n0 + 7
+        moveq   #-12,%d0                | clamped to the track's range
+        moveq   #12,%d1
+        cmpi.l  #5,%d3
+        jbeq    qz_as_clamp
+        moveq   #-64,%d0
+        moveq   #63,%d1
+qz_as_clamp:
+        cmp.l   %d0,%d4
+        jbge    qz_as_lo_ok
+        move.l  %d0,%d4
+qz_as_lo_ok:
+        cmp.l   %d1,%d5
+        jble    qz_as_hi_ok
+        move.l  %d1,%d5
+qz_as_hi_ok:
+        move.l  %d2,%a0                 | the best raw so far: r itself (none found)
+        move.l  #0x7fff,%d6             | its distance
+qz_as_loop:
+        cmp.l   %d5,%d4
+        jbgt    qz_as_done
+        move.l  %d4,%d0
+        addi.l  #120,%d0
+        moveq   #12,%d1
+        divu.l  %d1,%d0                 | (n + 120) / 12 ...
+        mulu.l  %d1,%d0
+        move.l  %d4,%d1
+        addi.l  #120,%d1
+        sub.l   %d0,%d1                 | ... pc = (n + 120) mod 12
+        btst    %d1,%d7
+        jbeq    qz_as_next
+        move.l  %d4,%d0
+        muls.l  %d3,%d0
+        addi.l  #64,%d0                 | c = 64 + u n
+        move.l  %d0,%d1
+        sub.l   %d2,%d1
+        jbpl    qz_as_abs
+        neg.l   %d1
+qz_as_abs:
+        cmp.l   %d6,%d1
+        jbge    qz_as_next              | not nearer (a tie keeps the lower, found first)
+        move.l  %d1,%d6
+        movea.l %d0,%a0
+qz_as_next:
+        addq.l  #1,%d4
+        jbra    qz_as_loop
+qz_as_done:
+        move.l  %a0,%d0
+        movem.l (%sp),%d1-%d7/%a0
+        lea     32(%sp),%sp
+        rts
+
+| ---- (2.15) the chord a held [TRIG] key previews: jmp planted at 0x400439d6 ------
+| 0x400438fc(_, press) plays the UI MIDI track's step under a [TRIG] key in
+| GRID RECORDING: its four notes into 28(sp)..31(sp) (the step's NOTE lock or
+| the Part's NOTE, + the NOT2..4 locks or the Part's - 64; no TRAN, no KEY),
+| then at 0x400439d6 -- the hook, 8 bytes: a test of the press argument on the stack and a branch to 0x40043b1c when it is 0 --
+| the press sends each note that is not negative through 0x4009e9a8 (the
+| note-on, or the arpeggiator's add), the release recomputes the four the
+| same way and sends their note-offs. The snap goes on both, so the release
+| turns off what the press turned on. d0 / d1 / a0 / a1 are free (stock
+| reloads each); a2 is saved.
+qz_mprev:
+        tst.b   NV_SCALE
+        jbeq    qz_mv_replay            | OFF: stock
+        mvz.b   UI_TRACK,%d0            | the track the preview plays
+        btst    %d0,NV_MOFF
+        jbne    qz_mv_replay            | MIDI n SCALE OFF: stock
+        move.l  %a2,-(%sp)
+        lea     32(%sp),%a2             | the four notes (28(sp) before the push)
+        jbsr    qz_mv_one
+        jbsr    qz_mv_one
+        jbsr    qz_mv_one
+        jbsr    qz_mv_one
+        movea.l (%sp)+,%a2
+qz_mv_replay:
+        tst.l   40(%sp)                 | displaced: the press?
+        jbeq    qz_mv_rel               | displaced: the branch on a release (to 0x40043b1c)
+        jmp     0x400439de
+qz_mv_rel:
+        jmp     0x40043b1c
+qz_mv_one:                              | (a2)+ snapped when it is a note (not negative)
+        mvs.b   (%a2),%d0
+        jbmi    qz_mv_next
+        jbsr    qz_msnap
+        move.b  %d0,(%a2)
+qz_mv_next:
+        addq.l  #1,%a2
+        rts
 
 | ---- GLIDE legato: two jmp detours in the same handler --------------------------
 | 0x4004fb94 keeps ONE held key per track (HELD + track = key + 1). Stock, a
@@ -800,7 +1490,7 @@ qz_on_fmt:
 | track; until 3 Oct 2026 still on a sample track). FUNC
 | held, a release, or nothing held: stock, byte for byte.
 
-| 0x4004fbfe: `tstl 0x46c7dd26; bnes 0x4004fc44` (8 bytes) -> jmp qz_leg1.
+| 0x4004fbfe: a test of the long at 0x46c7dd26 and a short branch to 0x4004fc44 when it is set (8 bytes) -> jmp qz_leg1.
 | d1 = the held key + 1 (nonzero here), d2 = track, d3 = the new key + 1
 | (0 on a release); d0/a0 are free (reloaded by the stock code that follows).
 qz_leg1:
@@ -841,7 +1531,7 @@ qz_legmode:
 qz_lm_ret:
         rts
 
-| 0x4004fc94: `tstl 0x46c7dd26; beqs 0x4004fcb2` (8 bytes) -> jmp qz_leg2.
+| 0x4004fc94: the same test and a short branch to 0x4004fcb2 when it is clear (8 bytes) -> jmp qz_leg2.
 | d2 = track, d3 = the new key + 1; the pitch is staged (0x4004fc84..fc90).
 | The legato press posts stock's own trigless word through 0x4004fc9c
 | (`mailbox |= 0x119`). Measured 24 Sep 2026: that word does not restart the
@@ -851,6 +1541,16 @@ qz_lm_ret:
 | 3 dropped: frame flag 0x20, 0x4000b5fc, event-byte bit 3, 0x4000c662)
 | changed nothing about it, so the stock word is kept.
 qz_leg2:
+        .if     HAVE_PANEL_TRANSACTION
+        jbsr    qz_leg2_select
+        tst.l   %d0
+        jbeq    qz_leg2_legacy_fresh
+        jmp     0x4004fc9c
+qz_leg2_legacy_fresh:
+        jbsr    qz_panel_legacy_key
+        jmp     0x4004fcb2
+qz_leg2_select:
+        .endif
         lea     qz_legato(%pc),%a0
         clr.b   (%a0)                   | this press is not a legato one until decided below
         clr.l   qz_chain-qz_legato(%a0) | ... nor a continuation of a held note's chain
@@ -875,10 +1575,22 @@ qz_g2_nofunc:
         jbeq    qz_g2_para              | none: a fresh voice (the first key)
         subq.l  #2,%d4
         jbne    qz_g2_para              | no legato: a fresh voice
+        .if     HAVE_PANEL_TRANSACTION
+        move.l  (%sp),%d0
+        cmpi.l  #qz_panel_selected,%d0
+        jbne    qz_g2_poly_legacy
+        moveq   #1,%d0
+        move.l  %d0,20(%sp)            | this FM transaction's private deferred legato intent
+        jbra    qz_g2_poly_record
+qz_g2_poly_legacy:
+        .endif
         movea.l KIND_FLEX,%a0           | paraphonic legato: the engine's po_legkey (-28) -- the sounding
         movea.l -28(%a0),%a0            | chord follows this key (the flag before the trig it waits for)
         move.l  %d3,%d0
         jsr     (%a0)
+        .if     HAVE_PANEL_TRANSACTION
+qz_g2_poly_record:
+        .endif
         lea     qz_legato(%pc),%a0
         move.b  %d3,(%a0)               | ... recorded as trigless (qz_leg3)
         jbra    qz_g2_trigless
@@ -891,18 +1603,45 @@ qz_g2_mono:
         jbsr    qz_chain_of             | legato: the new step continues the held note's chain
         lea     HELD,%a0
         move.b  %d3,(%a0,%d2.l)         | legato: the new key is the held key
+        .if     HAVE_SYDRUM
+        .if     HAVE_PANEL_TRANSACTION
+        move.l  (%sp),%d0
+        cmpi.l  #qz_panel_selected,%d0
+        jbeq    qz_g2_mono_mark         | this FM mono selector has no envelope-recharge intent
+        .endif
+        jbsr    qz_is_synth             | (2.11) a synth track: the engine's po_legkey (-28) hears the key --
+        jbeq    qz_g2_mono_mark         | SY DRUM recharges its envelopes at the key's trigless frame (FM and
+        movea.l qz_clock,%a0            | samples: nothing); the engine there (its clock published)?
+        move.l  %a0,%d0
+        jbeq    qz_g2_mono_mark
+        movea.l KIND_FLEX,%a0
+        movea.l -28(%a0),%a0
+        move.l  %d3,%d0
+        jsr     (%a0)
+qz_g2_mono_mark:
+        .endif
         lea     qz_legato(%pc),%a0
         move.b  %d3,(%a0)               | ... and the live recorder records it as trigless (qz_leg3)
 qz_g2_trigless:
+        .if     HAVE_PANEL_TRANSACTION
+        moveq   #1,%d0
+        rts
+        .else
         jmp     0x4004fc9c
+        .endif
 qz_g2_trig:
+        .if     HAVE_PANEL_TRANSACTION
+        moveq   #0,%d0
+        rts
+        .else
         lea     qz_pkey,%a0             | the engine is told which key this trig is (index + 1) on EVERY
         move.b  %d3,(%a0,%d2.l)         | fresh-note trig (BUILD 28: the mono voice's sy_cold reads it as its
         jmp     0x4004fcb2              | condition (d) -- a live key, not a sequencer trig -- and clears it at
                                         | the START; po_start does the same for a paraphonic voice, a sample
                                         | track's START clears it in sy_no; before, only the paraphonic path posted it)
+        .endif
 
-| 0x4004fce0: `tstl 0x46c7dd26; beqs 0x4004fcf8` (8 bytes) -> jmp qz_leg3. The
+| 0x4004fce0: the same test and a short branch to 0x4004fcf8 when it is clear (8 bytes) -> jmp qz_leg3. The
 | same press, a few instructions on, is handed to the LIVE RECORDER (the
 | block 0x4004fcd8..0x4004fd24 runs while 0x460d172a is set: live recording,
 | or a trig held): stock records a TRIGLESS trig (0x4004271c) when FUNC is
@@ -937,8 +1676,8 @@ qz_g3_joined:
         jmp     0x4004fd3e              | a joined key: no trig of its own, no PTCH / HOLD lock (the chord's step has them)
 
 | ---- the note length (OCTATRICK7 report: a recorded note droned for the AMP HOLD) --
-| 0x4004fd06, after the recorder returned: `addql #8,%sp; tstl %d0; blts
-| 0x4004fd3e` (6 bytes) -> jmp qz_leg4. d0 = the step the press was recorded on
+| 0x4004fd06, after the recorder returned: the release of 8 stack bytes, a test of d0
+| and a short branch to 0x4004fd3e when it is negative (6 bytes) -> jmp qz_leg4. d0 = the step the press was recorded on
 | (-1 = none), d2 = track, d3 = the key + 1, a2 = the raw pitch. On a synth track
 | the press is noted -- key, step, the engine's tick count (po_clock through
 | qz_clock, 0 until the engine has run) -- in one of the track's four slots;
@@ -987,7 +1726,7 @@ qz_g4_none:
         jmp     0x4004fd3e
 
 | ---- fingered chords (26 Sep 2026): 0x4004fd20, right after the recorder's PTCH
-| lock write for the key: `lea %sp@(20),%sp; bras 0x4004fd3e` (6 bytes) -> jmp
+| lock write for the key: the release of 20 stack bytes and a short branch to 0x4004fd3e (6 bytes) -> jmp
 | qz_leg5. d2 = track, d3 = the key + 1, a2 = the raw pitch (callee-saved
 | across the writer), the step in qz_step (qz_leg4). On a synth track, once
 | the engine has run (qz_clock: the synth module is there), the engine's
@@ -1170,8 +1909,8 @@ qz_ha_next:
         lea     8(%sp),%sp
         rts
 
-| 0x4004fbde, the release path: `mvzb %a0@(0,%d2:l),%d1; movel %a2,%d0` (6
-| bytes) -> jmp qz_leg0. a0 = HELD, d2 = track, a2 = the key index; stock
+| 0x4004fbde, the release path: the track's held-key byte read unsigned into d1 and a2
+| copied into d0 (6 bytes) -> jmp qz_leg0. a0 = HELD, d2 = track, a2 = the key index; stock
 | goes on at 0x4004fbe4 with d0 = the index and d1 = the held key + 1, and
 | returns at once unless they match. On a paraphonic synth track the mask
 | decides: the key leaves qz_pmask (the engine releases its voices); with keys
@@ -1309,6 +2048,136 @@ qz_s_store:
         move.b  %d0,(%a0)
         rts
 
+| (2.22) rows 7 and 8, TRACK and FOLLOW: the per-track switch of 2.15 (MIDI)
+| and 2.19 (AUDIO), one pair of rows instead of sixteen. TRACK only picks the
+| track the next row shows -- AUDIO 1 .. AUDIO 8, then MIDI 1 .. MIDI 8 -- and
+| changes no sound: it is qz_trk, a byte of this unit's RAM (0 = AUDIO 1 at
+| every power-on, not saved). FOLLOW is that track's switch: ON (the track
+| follows SCALE and ROOT, the default) / OFF (the track is stock, as with
+| SCALE OFF), the same bits as before -- bit t of NV_AOFF for AUDIO t+1, bit
+| t of NV_MOFF for MIDI t+1, set = OFF -- so the bytes, the project-file lines
+| and every path that tests them are 2.21's. The window draws every visible
+| row's getter at each redraw, so FOLLOW reads the newly picked track's bit
+| as soon as TRACK moves. The setters' (delta, wrap) as the other rows': the
+| LEVEL knob and the arrows step (clamped: TRACK stops at AUDIO 1 and MIDI 8,
+| FOLLOW at OFF and ON), [YES] wraps (TRACK: past MIDI 8 -> AUDIO 1; FOLLOW
+| toggles).
+qz_get_trk:                             | "AUDIO 1" .. "MIDI 8"
+        jbsr    qz_trk_of
+        lea     qz_trknames(%pc),%a0
+        move.l  (%a0,%d0.l*4),%d0
+        rts
+qz_set_trk:
+        lea     qz_trk(%pc),%a0
+        moveq   #15,%d1
+        jbra    qz_set_any
+qz_get_fol:                             | "ON" / "OFF": the TRACK row's track
+        jbsr    qz_trk_of
+        moveq   #8,%d1
+        cmp.l   %d1,%d0
+        jblt    qz_get_a                | 0..7: AUDIO d0+1
+        sub.l   %d1,%d0                 | 8..15: MIDI d0-7
+        jbra    qz_get_m
+qz_set_fol:                             | (delta, wrap) at 4(sp) / 8(sp), as the setter jumped to
+        jbsr    qz_trk_of
+        moveq   #8,%d1
+        cmp.l   %d1,%d0
+        jblt    qz_set_a
+        sub.l   %d1,%d0
+        jbra    qz_set_m
+qz_trk_of:                              | d0 := qz_trk, 0..15 (clobbers a0)
+        lea     qz_trk(%pc),%a0
+        mvz.b   (%a0),%d0
+        moveq   #15,%d1
+        and.l   %d1,%d0
+        rts
+
+| The MIDI track d0's switch (2.15): the value is bit d0 of NV_MOFF.
+qz_get_m:
+        mvz.b   NV_MOFF,%d1
+        btst    %d0,%d1
+        jbne    qz_gm_off
+        lea     qz_s_on(%pc),%a0
+        move.l  %a0,%d0
+        rts
+qz_gm_off:
+        lea     qz_n0(%pc),%a0          | "OFF"
+        move.l  %a0,%d0
+        rts
+qz_set_m:                               | d0 = the track; (delta, wrap) at 4(sp) / 8(sp)
+        move.l  %d2,-(%sp)              | (8(sp) / 12(sp) now)
+        move.l  %d0,%d2
+        mvz.b   NV_MOFF,%d1
+        moveq   #0,%d0                  | the row's value: 0 = OFF ...
+        btst    %d2,%d1
+        jbne    qz_sm_add
+        moveq   #1,%d0                  | ... 1 = ON
+qz_sm_add:
+        add.l   8(%sp),%d0
+        tst.l   12(%sp)
+        jbeq    qz_sm_clamp
+        moveq   #1,%d1                  | [YES]: wrap -- a toggle
+        and.l   %d1,%d0
+        jbra    qz_sm_put
+qz_sm_clamp:
+        tst.l   %d0
+        jble    qz_sm_off
+        moveq   #1,%d0
+        jbra    qz_sm_put
+qz_sm_off:
+        moveq   #0,%d0
+qz_sm_put:
+        mvz.b   NV_MOFF,%d1
+        bclr    %d2,%d1
+        tst.l   %d0
+        jbne    qz_sm_store
+        bset    %d2,%d1                 | OFF
+qz_sm_store:
+        move.b  %d1,NV_MOFF
+        move.l  (%sp)+,%d2
+        rts
+
+| The audio track d0's switch (2.19): as the MIDI one, on NV_AOFF.
+qz_get_a:
+        mvz.b   NV_AOFF,%d1
+        btst    %d0,%d1
+        jbne    qz_gm_off
+        lea     qz_s_on(%pc),%a0
+        move.l  %a0,%d0
+        rts
+qz_set_a:                               | d0 = the track; (delta, wrap) at 4(sp) / 8(sp)
+        move.l  %d2,-(%sp)              | (8(sp) / 12(sp) now)
+        move.l  %d0,%d2
+        mvz.b   NV_AOFF,%d1
+        moveq   #0,%d0                  | the row's value: 0 = OFF ...
+        btst    %d2,%d1
+        jbne    qz_sa_add
+        moveq   #1,%d0                  | ... 1 = ON
+qz_sa_add:
+        add.l   8(%sp),%d0
+        tst.l   12(%sp)
+        jbeq    qz_sa_clamp
+        moveq   #1,%d1                  | [YES]: wrap -- a toggle
+        and.l   %d1,%d0
+        jbra    qz_sa_put
+qz_sa_clamp:
+        tst.l   %d0
+        jble    qz_sa_off
+        moveq   #1,%d0
+        jbra    qz_sa_put
+qz_sa_off:
+        moveq   #0,%d0
+qz_sa_put:
+        mvz.b   NV_AOFF,%d1
+        bclr    %d2,%d1
+        tst.l   %d0
+        jbne    qz_sa_store
+        bset    %d2,%d1                 | OFF
+qz_sa_store:
+        move.b  %d1,NV_AOFF
+        move.l  (%sp)+,%d2
+        rts
+
 | ---- the project file ------------------------------------------------------------
 | The loader 0x400866c4 reads project.work line by line; a line starting
 | with '#' is skipped at 0x400867a2 before any key is compared, on stock
@@ -1328,6 +2197,8 @@ qz_ld_entry:
         clr.b   (%a0)
         lea     qz_root,%a0
         clr.b   (%a0)
+        clr.b   NV_MOFF                 | (2.15) every MIDI track follows
+        clr.b   NV_AOFF                 | (2.19) every audio track follows
 qz_e_back:
         jmp     0x400866d4
 
@@ -1349,6 +2220,14 @@ qz_ld_line:
         lea     qz_key3(%pc),%a1
         jbsr     qz_l_cmp
         jbeq     qz_l_root
+        move.l  %d3,%a0
+        lea     qz_key4(%pc),%a1
+        jbsr     qz_l_cmp
+        jbeq     qz_l_moff
+        move.l  %d3,%a0
+        lea     qz_key5(%pc),%a1
+        jbsr     qz_l_cmp
+        jbeq     qz_l_aoff
         moveq   #35,%d5                 | another comment: stock skips it
         mvs.b   %d1,%d0
 qz_l_back:
@@ -1384,6 +2263,22 @@ qz_l_root:
         moveq   #0,%d0                  | out of range: C
 qz_l_rok:
         lea     qz_root,%a0
+        jbra    qz_l_store
+qz_l_moff:                              | (2.15) the MIDI tracks with the scale OFF, a mask 0..255
+        jbsr     qz_l_dec
+        cmpi.l  #255,%d0
+        jbls     qz_l_mok
+        moveq   #0,%d0                  | out of range: every track follows
+qz_l_mok:
+        lea     NV_MOFF,%a0
+        jbra    qz_l_store
+qz_l_aoff:                              | (2.19) the audio tracks with the scale OFF, a mask 0..255
+        jbsr     qz_l_dec
+        cmpi.l  #255,%d0
+        jbls     qz_l_aok
+        moveq   #0,%d0                  | out of range: every track follows
+qz_l_aok:
+        lea     NV_AOFF,%a0
 qz_l_store:
         tst.l   58(%sp)                 | parse-only pass: nothing is stored
         jbne     qz_l_next
@@ -1420,6 +2315,12 @@ qz_wr:
         jbsr     qz_glide_of             | (d2 = the writer's buffer, not a track: the accessor ignores it)
         lea     qz_fmt2(%pc),%a0
         jbsr     qz_wr_line
+        mvz.b   NV_MOFF,%d0             | (2.15)
+        lea     qz_fmt4(%pc),%a0
+        jbsr     qz_wr_line
+        mvz.b   NV_AOFF,%d0             | (2.19)
+        lea     qz_fmt5(%pc),%a0
+        jbsr     qz_wr_line
         mvs.b   0x8000004f,%d1          | displaced
         move.l  %d1,-(%sp)              | displaced
         jmp     0x400888b2
@@ -1444,17 +2345,25 @@ qz_key2:        .asciz  "#SYNTH_GLIDE="
 qz_fmt2:        .asciz  "#SYNTH_GLIDE=%d\r\n"
 qz_key3:        .asciz  "#SEQUENCER_ROOT="
 qz_fmt3:        .asciz  "#SEQUENCER_ROOT=%d\r\n"
+qz_key4:        .asciz  "#SEQUENCER_MIDI_SCALE_OFF="
+qz_fmt4:        .asciz  "#SEQUENCER_MIDI_SCALE_OFF=%d\r\n"
+qz_key5:        .asciz  "#SEQUENCER_AUDIO_SCALE_OFF="
+qz_fmt5:        .asciz  "#SEQUENCER_AUDIO_SCALE_OFF=%d\r\n"
+qz_lbl_trk:     .asciz  "TRACK"
+qz_lbl_fol:     .asciz  "FOLLOW"
+qz_s_on:        .asciz  "ON"
 qz_lbl_scale:   .asciz  "SCALE"
 qz_lbl_root:    .asciz  "ROOT"
 qz_lbl_glide:   .asciz  "GLIDE"
-qz_synthname:   .ascii  "SYNTH"
         .balign 4
 qz_gbuf:        .fill   8, 1, 0          | the GLIDE row's number (RAM)
 qz_ofmt:        .fill   8, 1, 0          | the keyboard's octave format with ROOT's name: "A# %d" (RAM)
 qz_legato:      .byte   0                | the press in flight is a legato one (qz_leg2 -> qz_leg3)
-qz_synthq:      .byte   0                | qz_quant runs for a synth track (qz_pcof reads it)
+qz_synthq:      .byte   0                | qz_quant runs for a synth track (> 0) or a MIDI note (< 0, 2.13; qz_pcof reads it)
+qz_trk:         .byte   0                | (2.22) the TRACK row: 0..7 = AUDIO 1..8, 8..15 = MIDI 1..8 (RAM, not saved)
         .balign 4
 qz_chain:       .long   0                | ... and continues a held note: that note's start (ticks), 0 = a fresh note
+qz_mbias:       .long   0                | (2.18) qz_pcof's MIDI bias: 0 for NOTE, NOTE + 8 for NOT2..4 (qz_quantm / qz_quantmb)
 qz_step:        .byte   0                | the step the key in flight was recorded on (qz_leg4 -> qz_leg5)
         .balign 4
 qz_press:       .fill   8 * 4 * 8, 1, 0  | the notes being played on each track: 4 x (key, step, in use, pad, ticks)
@@ -1485,6 +2394,40 @@ qz_n21:  .asciz  "PELOG"
 qz_n22:  .asciz  "DBLHARM"
 qz_n23:  .asciz  "SUPRLOC"
 qz_n24:  .asciz  "LYD.DOM"
+        .balign 4
+qz_trknames:                            | (2.22) TRACK 0..15 -> its name (7 characters at most, as qz_names)
+        .long   qz_t0
+        .long   qz_t1
+        .long   qz_t2
+        .long   qz_t3
+        .long   qz_t4
+        .long   qz_t5
+        .long   qz_t6
+        .long   qz_t7
+        .long   qz_t8
+        .long   qz_t9
+        .long   qz_t10
+        .long   qz_t11
+        .long   qz_t12
+        .long   qz_t13
+        .long   qz_t14
+        .long   qz_t15
+qz_t0:  .asciz  "AUDIO 1"
+qz_t1:  .asciz  "AUDIO 2"
+qz_t2:  .asciz  "AUDIO 3"
+qz_t3:  .asciz  "AUDIO 4"
+qz_t4:  .asciz  "AUDIO 5"
+qz_t5:  .asciz  "AUDIO 6"
+qz_t6:  .asciz  "AUDIO 7"
+qz_t7:  .asciz  "AUDIO 8"
+qz_t8: .asciz  "MIDI 1"
+qz_t9: .asciz  "MIDI 2"
+qz_t10: .asciz  "MIDI 3"
+qz_t11: .asciz  "MIDI 4"
+qz_t12: .asciz  "MIDI 5"
+qz_t13: .asciz  "MIDI 6"
+qz_t14: .asciz  "MIDI 7"
+qz_t15: .asciz  "MIDI 8"
         .balign 4
 qz_rootnames:                           | ROOT 0..11 -> its name (the ROOT row's value, the keyboard readout)
         .long   qz_r0, qz_r1, qz_r2, qz_r3, qz_r4, qz_r5, qz_r6, qz_r7, qz_r8, qz_r9, qz_r10, qz_r11
@@ -1519,4 +2462,5 @@ qz_pcraw:                               | PTCH raw - 4 (0..120) -> pitch class w
         .byte   10, 0xff, 0xff, 0xff, 0xff, 11, 0xff, 0xff, 0xff, 0xff
         .byte   0
         .balign 4
+        .include "remix.inc"             | second pass: panel publication adapters
 qz_end:

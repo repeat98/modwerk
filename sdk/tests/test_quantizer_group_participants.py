@@ -60,19 +60,34 @@ class ParticipantTests(unittest.TestCase):
             declarations.generate([self.entry(1), self.entry(1, True)])
 
     def test_original_quantizer_sources_are_pinned_and_only_mailboxes_move(self):
+        sys.path.insert(0, str(ROOT / 'sdk/octabam/tools'))
+        from remix import registry
+        # Each unit's own include, as the module declares it (2.19: quantizer.s's remix.inc).
+        module = registry._load_one(ROOT / 'sdk/octabam/modules/quantizer/manifest.py')
+        includes = {Path(unit.source).name: unit.include for unit in module.linked}
         sdk = ROOT / 'sdk/octabam/modules/quantizer/upstream/quantizer'
         for name in quantizer.PINS:
             original = (sdk / name).read_text()
-            changed = quantizer.source_variant(name, original)
+            changed = quantizer.source_variant(name, original, includes[name])
             with self.assertRaisesRegex(ValueError, 'source changed'):
-                quantizer.source_variant(name, original + '\n')
+                quantizer.source_variant(name, original + '\n', includes[name])
             if name != 'quantizer.s':
+                self.assertIsNone(includes[name])
                 self.assertEqual(changed, original)
             else:
                 self.assertIn('.set    KEYS_AT, qz_pkey', changed)
                 self.assertIn('.set    SCALE_AT, qz_scale_at', changed)
                 self.assertNotIn('movea.l #sy_render', changed)
                 self.assertIn('KIND_FLEX', changed)
+                # A standalone package is the author's remix without SY DRUM and without FM Synth: 2.21's
+                # remix.inc is two-pass (the flags, then the panel adapters), written at both include sites.
+                self.assertNotIn('.include "remix.inc"', changed)
+                self.assertEqual(changed.count('        .set HAVE_SYDRUM, 0\n'), 2)
+                self.assertEqual(changed.count('        .set HAVE_PANEL_TRANSACTION, 0\n'), 2)
+                with self.assertRaisesRegex(ValueError, 'remix.inc seam changed'):
+                    quantizer.source_variant(name, original)
+                with self.assertRaisesRegex(ValueError, 'standalone include changed'):
+                    quantizer.source_variant(name, original, lambda modules: '.set HAVE_SYDRUM, 1\n')
 
 
 if __name__ == '__main__':

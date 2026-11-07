@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 3,
+  "id": "live-rec-retrig-fix",
+  "name": "Live Rec Retrig Fix",
+  "version": "0.2.1-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "machines",
+  "exclusive": false,
+  "author": {
+    "github": "npp1993",
+    "name": "Nathaniel Pavel",
+    "credits": [
+      "Nathaniel Pavel (@npp1993) — the recording fix, the merge, its design and code.",
+      "stigmagit — Retrig Grid, its design and code, folded in from Retrig Grid 0.2.0.",
+      "irpina — Elekloader and core-ar2, the core it links with."
+    ],
+    "contributors": [
+      {
+        "github": "stigmagit"
+      }
+    ]
+  },
+  "maintainers": [
+    "npp1993",
+    "stigmagit"
+  ],
+  "presentation": {
+    "label": "LIVE REC RETRIG FIX",
+    "family": "Sequencer recording",
+    "summary": "LIVE RECORDING records every pad retrig hit as a real trig, with the velocity and timing you played. While the sequencer plays, every pad retrig falls on its swung grid (Retrig Grid).",
+    "overview": "Stock records a retrig hold as one trig and a few locks that its held-note erase mostly removes, so what plays back is not what you played. With Live Rec Retrig Fix every hit of a roll, from RTRG + pad or a pad set to ALWAYS ON, records a real trig at the velocity it sounded and the time it sounded, quantize live rec on or off. Rates faster than a step record a trig with a step retrig, because a step holds one trig. Retrig Grid by stigmagit is folded in: while the sequencer plays, pad retrigs fall on its swung grid, and the row QUANT RTRG TO SEQ in SEQUENCER CONFIG turns that off.",
+    "highlights": [
+      "One real trig for each hit at 1/16 and slower, velocity following pressure.",
+      "ALWAYS ON pads record the same way.",
+      "Quantize live rec applies to retrig hits as to any note.",
+      "Faster rates record a step retrig, and the RETRIG menu's VEL.CUR goes with it.",
+      "Pad retrigs fall on the sequencer's swung grid while it plays (Retrig Grid, by stigmagit), and a recorded roll starts on that grid.",
+      "The RTRG key glows dim red while the selected track is ALWAYS ON."
+    ],
+    "usage": [
+      "Hold RTRG and press YES: ALWAYS ON turns on for the selected track. Let go of RTRG: its key glows dim red.",
+      "Hold RECORD and press PLAY, then play that track's pad, varying the pressure.",
+      "Leave LIVE RECORDING: the roll plays back hit for hit, on the sequencer's grid.",
+      "To keep rolls where you play them, uncheck QUANT RTRG TO SEQ in GLOBAL > CONTROL > SEQUENCER CONFIG."
+    ]
+  },
+  "access": {
+    "location": "LIVE RECORDING, with RTRG + pad or a pad set to ALWAYS ON. The QUANT RTRG TO SEQ checkbox is the last row of GLOBAL > CONTROL > SEQUENCER CONFIG.",
+    "steps": [
+      "Hold RECORD and press PLAY.",
+      "Hold RTRG, then hold a pad and vary the pressure."
+    ],
+    "screenshots": [
+      "media/retrig-always-on.png",
+      "media/seq-config.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "QUANT RTRG TO SEQ",
+      "default": 1,
+      "doc": "Checkbox in GLOBAL > CONTROL > SEQUENCER CONFIG, after SAMPLE POS RES. Checked puts pad retrigs on the swung grid while the sequencer plays and records a roll's first trig on it. YES turns it over, RIGHT checks, LEFT unchecks. Kept with the project.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Rates faster than a step record one velocity for each trig's hits, or VEL.CUR's fade.",
+      "Micro timing has 24 units a step.",
+      "A roll started before LIVE RECORDING can miss hits.",
+      "This merged build has run on one unit, on the builds TESTING.md names.",
+      "rytm-emu's pad pressure was scripted; the unit results are the author's own, from playing.",
+      "External MIDI clock not tested.",
+      "The press sounds where it was played; only its recorded trig moves to the grid, and not when the grid point is more than a step away."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [
+      "ev_render_out",
+      "ev_project",
+      "ev_tick"
+    ],
+    "claims": [
+      "ui:RETRIG menu step writes in LIVE RECORDING",
+      "ui:live recording of pad retrigs",
+      "key:RTRG+YES",
+      "ui:GLOBAL > CONTROL > SEQUENCER CONFIG row QUANT RTRG TO SEQ",
+      "ui:pad retrig timing while the sequencer plays",
+      "ui:RTRG key light for ALWAYS ON"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 10192,
+    "fastBytes": 0,
+    "load": {
+      "display": "Not measured yet",
+      "method": "unmeasured",
+      "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+    }
+  },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "0.2.1-experimental",
+    "sourceSha256": null,
+    "reports": [],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "rytm-emu c5732f0, scripted pressure: every rate, ALWAYS ON, a press during a roll, rate changes, swing 50 to 66, quantize on and off, the RTRG key's light. On the author's Analog Rytm MKII (OS 1.74), as reported: 0.1.0 RR09 to RR16 pass; 0.2.0 RC07 to RC11 (rates, quantize, short rolls, re-press, the row, a project save and reload) and LD01 (the key's light); 0.2.1 in LP01, a 16-module set (a roll with pad pressure, Retrig Grid, RTRG + YES), its idle handlers 2.5 µs a block against 3.4 µs. Not run alone on a unit. See TESTING.md.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Hold RTRG and press YES: ALWAYS ON turns on for the selected track. Let go of RTRG: its key glows dim red.",
+          "Hold RECORD and press PLAY, then play that track's pad, varying the pressure.",
+          "Leave LIVE RECORDING: the roll plays back hit for hit, on the sequencer's grid.",
+          "To keep rolls where you play them, uncheck QUANT RTRG TO SEQ in GLOBAL > CONTROL > SEQUENCER CONFIG."
+        ]
+      },
+      "screenshots": [
+        "media/retrig-always-on.png",
+        "media/seq-config.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by the author, under GPL-3.0-or-later."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Live Rec Retrig Fix: a roll recorded as one trig for each hit, with its velocity",
+      "alt": "A row of step trigs whose heights follow a pressure line.",
+      "credit": "npp1993",
+      "license": "GPL-3.0-or-later",
+      "source": "Original illustration in the shared signal-art style."
+    },
+    {
+      "path": "media/seq-config.png",
+      "kind": "screenshot",
+      "caption": "GLOBAL > CONTROL > SEQUENCER CONFIG: the QUANT RTRG TO SEQ row, last, checked.",
+      "alt": "SEQUENCER CONFIG rows QUANTIZE LIVE REC, KIT RELOAD ON CHG, AUTO TRK SWITCH, SAMPLE POS RES and QUANT RTRG TO SEQ, the last one selected and checked.",
+      "credit": "npp1993",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.2.1-experimental",
+        "imageSha256": "9f65781f497d832abaa1cbf396a2de8145725ca474bb52d187372dfc4545f000",
+        "setup": "Headless rytm-emu (dtboot, c5732f0) running LR23: core-ar2 0.7 and this folder's Live Rec Retrig Fix 0.2.1-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
+      }
+    },
+    {
+      "path": "media/retrig-always-on.png",
+      "kind": "screenshot",
+      "caption": "RTRG held: YES on the RETRIG row turns ALWAYS ON over.",
+      "alt": "RETRIG menu over the kit screen: RETRIG 1/16, LENGTH 1/4, VEL.CUR OFF, ALWAYS ON checked.",
+      "credit": "npp1993",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.2.1-experimental",
+        "imageSha256": "9f65781f497d832abaa1cbf396a2de8145725ca474bb52d187372dfc4545f000",
+        "setup": "Headless rytm-emu (dtboot, c5732f0) running LR23: core-ar2 0.7 and this folder's Live Rec Retrig Fix 0.2.1-experimental, linked by Modwerk on stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation capture only."
+      }
+    }
+  ]
+}

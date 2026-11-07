@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.1.2-experimental",
+    "date": "2026-11-06",
+    "changes": [
+      "Uses much less CPU when no sample is ping-ponging, leaving more time for the screen and pads.",
+      "No change to how LOP, PIPO or the zero snap play or look."
+    ]
+  },
+  {
     "version": "0.1.1-experimental",
     "date": "2026-11-02",
     "changes": [
