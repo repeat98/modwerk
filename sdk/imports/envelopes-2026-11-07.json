@@ -6,12 +6,12 @@
   "changes": [
     "First release. The AMP envelope reworked: AMP HLD runs from no hold (0) to AUTO (127) without cutting the attack; ATK, AMP DEC, FILTER DEC and REL and AMP HLD get fine steps at short times (0.2 ms to 5 ms); every envelope knob shows its time; FUNC + turn on HLD steps 0, 124.7 ms, AUTO. Installs beside Env Reset Amp, which keeps ENV RESET AMP."
   ],
-  "runtimeSourceSha256": "75e8f25452c379aaffba31095e59e1978a09f3acc227e659ebd20d2c088375ee",
+  "runtimeSourceSha256": "8a7323f7932374f2f1759b0c37bca786970855265433bcf31c7ef9e05b5a9424",
   "packages": [
     {
       "os": "1.74",
       "path": "sdk/imports/packages/envelopes/envelopes-0.1.0-experimental-os1.74.elemod",
-      "sha256": "f9779b13edaf0d838b3539cc6bf7a4ae16a66b1e918ccac9f3cf82c6ab7f328c"
+      "sha256": "3c5016aebe69610e3406a0d6839fdb91a1a97caf6b3538907c2e16d76046dc30"
     }
   ],
   "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",

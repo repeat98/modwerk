@@ -96,7 +96,7 @@ the AMP page picture and the amp and filter envelope tables. It needs no other m
 Measured on the author's Analog Rytm MKII over USB (builds EV04 to ED02, in combined sets of up to 16
 modules), with rytm-emu for the screens ([TESTING.md](TESTING.md)): AMP DEC within 0.7 % of its text
 from 5 ms, AMP HLD within 0.1 ms, FILTER ATK within 0.3 %, FILTER DEC and REL 1.5 % (the method's).
-Memory: 5,900 bytes of the shared mod area (the base alone leaves 119,004, with this module 113,104).
+Memory: 5,228 bytes of the shared mod area (the plain base alone leaves 119,004, with this module 113,776).
 Load: the amp record write runs every block for every voice; an idle voice makes no C call there.
 
 ## Authorship and licences
