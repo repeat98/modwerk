@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/control-in-actions",
+  "version": "0.1.2-experimental",
+  "date": "2026-11-06",
+  "changes": [
+    "A jack in ACTION mode with ACTION OFF is no longer read in the audio interrupt, and with no jack in ACTION mode the ev_render_out handler is a two-byte test; on the author's unit, both jacks at ACTION OFF, the handler costs 0.8 µs a block instead of 3.6 µs. A jack with an action is read as in 0.1.1, and actions play unchanged."
+  ],
+  "runtimeSourceSha256": "65086605a1b2fbeb137a3a07de6c8f13105d83b8fc661c57703974d06dde1655",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/control-in-actions/control-in-actions-0.1.2-experimental-os1.74.elemod",
+      "sha256": "9c63f6c7be94b83063a139644504352be50e4e80a4faaf15f6ede9857d03277d"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/control-in-actions/TESTING.md",
+  "requires": []
+}
