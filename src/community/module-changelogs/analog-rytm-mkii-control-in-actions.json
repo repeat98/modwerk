@@ -3,7 +3,7 @@
     "version": "0.1.2-experimental",
     "date": "2026-11-06",
     "changes": [
-      "A jack in ACTION mode with ACTION set to OFF is no longer read in every audio block, which leaves the Rytm more CPU for playing, so pads respond a little faster. Its bars still show the level.",
+      "A jack in ACTION mode with ACTION set to OFF is no longer read in every audio block, which leaves the Rytm more CPU for everything else. Its bars still show the level.",
       "With no jack in ACTION mode the mod's audio work is now a two-byte check.",
       "Actions play exactly as in 0.1.1."
     ]
