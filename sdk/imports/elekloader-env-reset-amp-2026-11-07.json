@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "env-reset-amp-2026-11-07",
+  "about": "Modwerk source-only env-reset-amp package for Analog Rytm MKII OS 1.74, compiled from sdk/analog-rytm-mkii/modules/env-reset-amp.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "env-reset-amp-1.0.0-os1.74.elemod",
+      "sha256": "fadea586838ab574ee69a3f1d524cfc981404e3cee7745593ab02eda0e23e993",
+      "id": "env-reset-amp",
+      "version": "1.0.0",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-2.0-only",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "f9953205795b8bc58b2f33aeae39d7c95d3c2a01",
+        "path": "sdk/imports/packages/env-reset-amp/env-reset-amp-1.0.0-os1.74.elemod"
+      },
+      "title": "Env Reset Amp",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [],
+      "summary": "SOUND SETTINGS ENV RESET gains AMP and AMP+FILT: the amp envelope restarts from silence on every trig, so AMP ATK is heard on every hit.",
+      "description": "Env Reset Amp extends SOUND SETTINGS > ENV RESET from OFF and FILTER to OFF, AMP, FILTER and AMP+FILT. With AMP or AMP+FILT the amp envelope restarts from silence on every trig instead of continuing from its current level, so the AMP attack is heard on every hit. The setting belongs to the sound and is saved with it. It is an elemod port of MrScruff's rytm-mods 0015-env-reset-amp, with his shipping code unchanged.",
+      "category": "Sound",
+      "author": "Iced-Cream",
+      "needs_core": "0.3",
+      "on_unit": "On an Analog Rytm MKII on OS 1.74, as reported by the author: with ENV RESET at AMP the amp envelope restarted from silence on every quick hit, in builds R8T2 and C3A4 beside other rytm2_mods ports, SXH4 beside the other five Modwerk submissions and ERH4 alone, each with core-ar2 0.3 or earlier. This package's own bytes have not been flashed from the site."
+    }
+  ]
+}

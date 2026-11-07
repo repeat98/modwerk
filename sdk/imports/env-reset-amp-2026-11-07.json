@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/env-reset-amp",
+  "version": "1.0.0",
+  "date": "2026-11-07",
+  "changes": [
+    "First library release, for Analog Rytm MKII OS 1.74 on core-ar2 0.3 and later: SOUND SETTINGS > ENV RESET gains AMP and AMP+FILT, so the amp envelope restarts from silence on every trig."
+  ],
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/env-reset-amp/env-reset-amp-1.0.0-os1.74.elemod",
+      "sha256": "fadea586838ab574ee69a3f1d524cfc981404e3cee7745593ab02eda0e23e993"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/env-reset-amp/TESTING.md",
+  "requires": []
+}
