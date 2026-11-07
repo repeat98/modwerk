@@ -47,8 +47,8 @@
     "uiClaims": [],
     "limitations": [
       "OS 1.40C. The tempo LED only flashes on whole beats: when the pattern's 1 falls mid-beat (say 14 steps at 1x), the green comes on the first flash after it.",
-      "Green is LED id 39, the pair of stock's red 38; seen green on an MKI (reported, card build), MKII not tested.",
-      "Pausing and continuing is checked in the emulator only. Not yet tested on a unit: pausing and continuing, a pattern change while playing, external MIDI clock."
+      "Green is LED id 39, the pair of stock's red 38; seen green on an MKI over USB, MKII not tested.",
+      "A pattern change while playing is checked in the emulator only; not yet tested on a unit."
     ]
   },
   "resources": {
@@ -95,16 +95,16 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Reported by the tester on an MKI: as a native card build in their private octabam remix home-base 5 (2 November 2026), red while stopped and green on the pattern's first beat while playing, in several play modes and with a 17-step master length; over USB on the Modwerk beta base 9680e9ac (4 November 2026), the same LED behaviour in a trial, after Keep and a power cycle, and stock again after the trial's Undo and after removal, with the unit's inventory read at each step; the base's SELF TEST passed with it kept (1/1 intact, longest frame 391 us). The committed package kept beside Slow LFO (5 November 2026): SELF TEST passed, 2/2 intact, longest frame 371 us; the tester reports the green on the pattern's 1 on external MIDI clock, through tempo changes while playing, at pattern scales 3/4, 3/2 and 2X, on the master length in per-track mode, and after continuing from a pause. ot_emu on stock 1.40C: every beat flash on master step 0 asks for id 39 and every other for stock's 38 at 12, 16 and 20 steps (verify.py).",
+    "summary": "Reported by the tester on an MKI over USB on the Modwerk beta base 9680e9ac with the committed package de7f9cae (5 November 2026, beside Slow LFO): SELF TEST passed, 2/2 intact, longest frame 371 us; green on the pattern's 1 on external MIDI clock, through tempo changes while playing, at pattern scales 3/4, 3/2 and 2X, on the master length in per-track mode, and after continuing from a pause. Earlier builds: a native card build (2 November) and package bce3b4d6 over USB (4 November, trial, Keep, power cycle, removal). ot_emu on stock 1.40C (verify.py): every beat flash on master step 0 asks for id 39 and every other for stock's 38 at 12, 16 and 20 steps, through two pauses, and across a switch to a pattern of another length at the loop point.",
     "hardwareStatus": "reported",
-    "evidenceRevision": "faa39c790e9e2bedac0c158880447eb34bf74376",
+    "evidenceRevision": "f876710778126af86f0be9a861c5a2065579bb21",
     "gates": [
       "modules/bar-led/verify.py"
     ],
     "qualification": {
       "moduleVersion": "0.1.0-experimental",
-      "sourceSha256": "e652600649442b392f49d17bb90c0c231e9adc762ad1efadd7068ad32c2d710f",
-      "imageSha256": "bce3b4d6906c5368cb0c129dfa82a215b986d9cbe221c5178053ea8eed1a72a4",
+      "sourceSha256": "e80510a8dda0a5d395e91ca059d62433cc605f375bb4f720b67669fd04a15cc3",
+      "imageSha256": "de7f9caed60bffecc47a33144a223125500c4c8bcbd76e5022d1dc2ee9393600",
       "cycles": [
         {
           "processor": "coldfire",
@@ -154,14 +154,14 @@
         "kind": "functional",
         "status": "reported",
         "model": "MKI",
-        "testedOn": "2026-11-04",
+        "testedOn": "2026-11-05",
         "tester": "nathangroth",
-        "sourceRevision": "faa39c790e9e2bedac0c158880447eb34bf74376",
-        "imageSha256": "bce3b4d6906c5368cb0c129dfa82a215b986d9cbe221c5178053ea8eed1a72a4",
-        "summary": "The author's MKI, OS 1.40C, on the flashed Modwerk beta base 9680e9ac, driven over USB with npm run device. Package bce3b4d6 (196 bytes, module 9b41cd3d): a 2-minute trial (green on the pattern's 1 while playing, red stopped, stock after the rollback), Keep, the author's power cycle (green after the reboot), removal (stock red), kept again with SELF TEST passed (1/1 intact, longest frame 391 us), removed. Earlier, 2 Nov 2026, the native card build in the author's octabam remix: green on the 1 in several play modes and with a 17-step master length.",
+        "sourceRevision": "f876710778126af86f0be9a861c5a2065579bb21",
+        "imageSha256": "de7f9caed60bffecc47a33144a223125500c4c8bcbd76e5022d1dc2ee9393600",
+        "summary": "The author's MKI, OS 1.40C, on the flashed Modwerk beta base 9680e9ac, driven over USB with npm run device. The committed package de7f9cae (196 bytes, module 9b41cd3d) kept beside Slow LFO on 5 November 2026: SELF TEST passed (2/2 intact, longest frame 371 us); green on the pattern's 1 on external MIDI clock, through tempo changes while playing, at pattern scales 3/4 and 3/2, on the master length and master scale in per-track mode, after STOP and PLAY, and after continuing from a pause; on 6 November, green on every pass at pattern scale 2X. Earlier, before the pause fix: the native card build in the author's octabam remix (2 Nov 2026) and package bce3b4d6 over USB (4 Nov 2026: trial, Keep, power cycle, removal).",
         "limitations": [
           "One unit; the LED colour is the tester's report.",
-          "This run predates the pause fix (only transport 0 rearms); pause and continue, a pattern change while playing and external MIDI clock are not yet tested on a unit.",
+          "A pattern change while playing is checked in the emulator only (verify.py).",
           "MKII not tested. The site's review, Keep and Undo pages were not used."
         ],
         "report": "TESTING.md"

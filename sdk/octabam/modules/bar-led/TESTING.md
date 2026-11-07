@@ -38,7 +38,17 @@ The owner's review found that the first source rearmed on every flash while the 
 | before the fix | G@0 r@4 r@8 r@12 G@0 r@4 r@4 r@4 **G@7** r@11 r@13 r@13 **G@14** G@2 r@6 | FAIL: green after each continue |
 | this source | G@0 r@4 r@8 r@12 G@0 r@4 r@4 r@4 r@7 r@11 r@13 r@13 r@14 G@2 r@6 | PASS |
 
-The poke leaves the beat ticks running, so after it the flashes fall on steps 7, 11, … and the first after the wrap on step 2; the stock pause path may realign them. The three runs at 12, 16 and 20 steps still pass. Not run in the port: a pattern change while playing.
+The poke leaves the beat ticks running, so after it the flashes fall on steps 7, 11, … and the first after the wrap on step 2; the stock pause path may realign them. The three runs at 12, 16 and 20 steps still pass.
+
+## ot_emu: a pattern change while playing (7 November 2026)
+
+`verify.py`'s fifth run, stock 1.40C with the unit preloaded, a staged card's project (`slow-card.img`, project `SLOW`). A01 is set to 16 steps and A02 to 12 in the bank's RAM, then a panel script presses [PLAY] and, in A01's first pass, [PTN] + [TRIG 2]. Stock switches at A01's end: the playing-pattern byte `0x800065be` turns 1.
+
+| Flashes (G green, r red, @ master step; (A02) once A02 plays) | Result |
+|---|---|
+| r@– G@0 r@4 r@8 r@12 G@0 r@4 r@8 r@12 G@0(A02) r@4(A02) r@8(A02) G@0(A02) r@4(A02) r@8(A02) G@0(A02) … | PASS: the green lands on A02's 1 on every pass, and A02's passes end on step 8 |
+
+The first red comes before [PLAY]'s first step write (stock's flash while stopped). Emulator only; not run on a unit.
 
 ## ot_emu: load and stress (5 November 2026)
 
@@ -89,7 +99,7 @@ The poke leaves the beat ticks running, so after it the flashes fall on steps 7,
 
 **The same unit and packages, 6 November 2026.** Tester's report: pattern scale 2X in normal scale mode, green on every pass.
 
-Not tested on a unit: a pattern change while playing, MKII, the site's own install dialog (the same package and base protocol, sent from the command line).
+Not tested on a unit: a pattern change while playing (emulator only, above), MKII, the site's own install dialog (the same package and base protocol, sent from the command line).
 
 ## Stock flows
 
