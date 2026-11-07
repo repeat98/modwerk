@@ -2,6 +2,22 @@
 
 Status: experimental release preparation, **not hardware-qualified**.
 
+## 0.3.3: VECTOR's SRC SETUP page beside POLY8 (1 November 2026)
+
+Report #1119 (also #842/#843): on a card build with POLY8 and VECTOR, a double tap on SRC on a VECTOR track showed the stock Flex/Static setup (TSTR AUTO) instead of VECTOR's page 2. POLY8's composition replaces VECTOR's SRC SETUP hooks at 0x4003a52e and 0x4003cd98 with `mr_setup_edit6`/`mr_setup_draw6`, which mapped every module row to its backing pool's stock setup and never asked VECTOR.
+
+**Fix.** The two hooks ask `mr_setup_knob`/`mr_setup_page` first, as the base's `mw_setup_edit6`/`mw_setup_draw6` do over USB: with SRC SETUP's cursor on VECTOR's row and the current track a VECTOR track, the page is `st_setup_page`'s and encoders A-F go to `st_setup_knob`. The encoders follow only a page VECTOR drew (`setup_shown`), so VECTOR 0.2.5, whose `st_setup_page` still wants row 5, keeps the stock page and stock encoders; VECTOR 0.2.6 drops that test. Over USB nothing changes: the package drops the `machine_registry` unit (shared-machine.s) and stays 0.3.1's.
+
+**Emulator results** (`ot_emu` built from upstream octabam, MKII panel, DSP on, empty scratch card; images composed by the site's builder from packages built in the isolated toolchain; `scripts/capture-module-ui.py` with 50 ms keys: FUNC+SRC, DOWN to VECTOR, YES, YES on STATIC, NO, SRC, FUNC+SRC, then encoders):
+
+| Image (all with FM Synth) | Result |
+| --- | --- |
+| main: POLY8 0.3.2, VECTOR 0.2.5 | reproduces the report: SRC▸VECTOR, but SRC SETUP shows LOOP SLIC LEN RATE TSTR(AUTO) TSNS |
+| POLY8 0.3.3, VECTOR 0.2.6 | SRC SETUP shows SEED 1, SPAN 12, OFST 0, ROT 0, RPT OFF, DIR FWD; encoder A gives SEED 4, encoder E RPT 2; cursor up on POLY8 shows the stock setup |
+| POLY8 0.3.3, VECTOR 0.2.5 | every screen pixel-identical to main's, with encoder A -1, B +1 or E +2 on the setup. Those stock encoders change nothing visible there in either build, so that the encoders stay stock is read from the code, not observed |
+
+Build checks: the isolated build's POLY8 gates pass (addressing, loaded state, the 256 AB/FM/VECTOR signature masks). Not tested: a unit, MKI, a set with Analog BD (VECTOR on row 7), Part/project reload and power cycles.
+
 ## 0.3.2: the card build's machine list scrolls (27 October 2026)
 
 Reports #842 (VECTOR), #941 and #942 (FM Synth): on card builds with POLY8 and another signed machine, the double-tap TRACK machine list ended at POLY8, DOWN past it put the highlight on PICKUP while the header still said POLY8, and the other machine was reachable only through FUNC+SRC.

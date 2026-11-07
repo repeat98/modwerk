@@ -182,8 +182,8 @@
       "bytes": 59308,
       "sha256": "dc2ce372af73b93ef9e34a1c05c8ad18269631e0f20ed4f94e461310990466b9",
       "path": "octatrack-modules/poly8/0.3.1-experimental.mwrm",
-      "lagsBehind": "0.3.2-experimental",
-      "lagReason": "0.3.2 changes only the card build's machine chooser (#842, #941, #942); over USB the base owns the chooser, and the package rebuilds byte-identical from 0.3.2's source"
+      "lagsBehind": "0.3.3-experimental",
+      "lagReason": "0.3.2 and 0.3.3 change only the card build (the machine chooser, #842, #941, #942; VECTOR's SRC SETUP page beside POLY8, #1119); over USB the base owns both, and the package drops the only changed unit (machine_registry, shared-machine.s), so it stays 0.3.1's"
     },
     {
       "id": "vector",

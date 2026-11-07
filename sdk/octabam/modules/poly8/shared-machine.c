@@ -177,6 +177,22 @@ int mr_validate(Part *part) {
   for(unsigned k=0;k<12;++k) {unsigned at=(k<6?0x2a:0x1da)+30*t+6+k%6;part[at]=saved[t][k];}
  return result;
 }
+/* SRC SETUP with the cursor on VECTOR's row of a VECTOR track shows and edits
+ * VECTOR's page 2, as the base's mw_setup_page/mw_setup_knob do over USB
+ * (#1119). Its knobs follow only a drawn VECTOR page: an older VECTOR keeps
+ * the stock page there, and with it the stock encoders. */
+extern uint32_t st_setup_page(uint32_t) WEAK;
+extern unsigned st_setup_knob(unsigned,int) WEAK;
+static unsigned setup_shown=0;
+static unsigned vector_setup(unsigned row) { return row==mr_row(VECTOR) && mr_current_owner()==VECTOR; }
+uint32_t mr_setup_page(unsigned row,uint32_t stock) {
+ uint32_t page=st_setup_page && vector_setup(row)?st_setup_page(stock):stock;
+ setup_shown=page!=stock;
+ return page;
+}
+unsigned mr_setup_knob(unsigned row,unsigned index,int delta) {
+ return index<6 && setup_shown && st_setup_knob && vector_setup(row) && st_setup_knob(index,delta);
+}
 unsigned mr_open_pool(void) {
  unsigned kind=mr_current_owner();
  if(kind==POLY) pm_pool_choice_open();

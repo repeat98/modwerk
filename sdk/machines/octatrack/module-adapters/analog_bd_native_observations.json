@@ -5,7 +5,7 @@
  "sourcePins": {
   "sdk/machines/octatrack/module-adapters/analog_bd_runtime.py": "b9c0e0f96632a0d0ab5283387edaae1b604e4e82e27e26b3fdc1666867d31daf",
   "sdk/machines/octatrack/module-adapters/analog_bd_write_lease.py": "3e6a3766f32176e9be69627ef2b71272970f2d02a2088e77673946b640d365c7",
-  "sdk/machines/octatrack/module-adapters/machine_composition.py": "f8f17f63e1d18bb1f730f1766f0a52ddf75ba7886056838d6218af85ff37143e",
+  "sdk/machines/octatrack/module-adapters/machine_composition.py": "fbbd0b2a8c5181fa573baee062546d32ece27ea3096962cc9f73035a9e14d4e4",
   "sdk/machines/octatrack/module-adapters/stock_hook_write_lease.h": "ab14679a5faae84ef47d1ca37e46b3171da45252d12310e0b4458228be8334be",
   "sdk/machines/octatrack/module-adapters/analog_bd_write_lease_fixture.c": "dd3714d8c5f493a7507ff72575e48e0a67376806daef726a2a23845a999c5e08",
   "sdk/machines/octatrack/module-adapters/analog_bd_ui.c": "cc675f578053a14a634a2878d9f3cadd8a0280896ba4fd94957a868517bc0839",
