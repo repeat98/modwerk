@@ -85,7 +85,7 @@ parameter 467), which the core asks from param_apply_delta's and param_value_tex
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md) for the commands and results. In short: on an Analog Rytm MKII, OS 1.74, with core-ar2 0.4 and the other rytm2_mods ports (P4A4, 2026-10-21): OP steps through its eight values both ways and keeps an accent value through a power-cycle without a project save. Modwerk's package linked with core-ar2 0.7 gives a main OS byte-identical to the rytm2_mods v1.3 release object linked with it. In the emulator on the Modwerk base (EA12), OP turns past SUB to OR\*, XOR\*, AND\* and SUB\*, where stock stops at SUB. Memory: 1,424 bytes of the 128 KiB shared mod area.
+See [TESTING.md](TESTING.md) for the commands and results. In short: on an Analog Rytm MKII with OS 1.74 on Modwerk's base (MW12, 2026-11-07), accent +2.3 dB on euclid hits, kept across a power cycle. Before that, on OS 1.74 with core-ar2 0.4 and the other rytm2_mods ports (P4A4, 2026-10-21): OP steps through its eight values both ways and keeps an accent value through a power-cycle without a project save. Modwerk's package linked with core-ar2 0.7 gives a main OS byte-identical to the rytm2_mods v1.3 release object linked with it. In the emulator on the Modwerk base (EA12), OP turns past SUB to OR\*, XOR\*, AND\* and SUB\*, where stock stops at SUB. Memory: 1,424 bytes of the 128 KiB shared mod area.
 
 ## Authorship and licences
 

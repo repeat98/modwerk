@@ -3,9 +3,9 @@
   "reportedOn": "2026-11-07",
   "source": "Iced-Cream's own tests on their unit: the core-ar2 0.4 unit test (P4A4 and U4A4, 2026-10-21; rytm2_mods core-pages 7ff47d7, released as v1.3) for 1.2; 1.1's runs (C3A4 2026-10-20, SXH4 2026-10-24/25, EAH4 2026-10-25) are kept below for the module's unchanged parts",
   "reporter": "Iced-Cream",
-  "statement": "Hardware, OS 1.74, 2026-10-21, P4A4 (core-ar2 0.4 and all eleven rytm2_mods ports, euclid-accents 1.2): OP turned right and back through OR, XOR, AND, SUB, OR*, XOR*, AND*, SUB*, with the right glyph and label for each and the same order going back, and OP kept its accent value through a power-cycle without SAVE PROJECT. Hardware, OS 1.74, 2026-10-20, C3A4 (core-ar2 0.3 and all eleven rytm2_mods v1.2 ports): euclid-accents 1.1's test steps 1 to 4 pass. OP turns past SUB to OR*, XOR*, AND* and SUB*; with OR* only grid trigs play and those on euclid hits are accented; FUNC + EUC off writes the accents into the pattern; with an accent operator EUC stays on and the track plays only its grid trigs, and a plain operator brings euclid's trigs back. OP keeps its accent value through a power-cycle without SAVE PROJECT. On SXH4 (released core-ar2 0.3 with the other five Modwerk 1.74 submissions, 2026-10-24/25) only the grid trigs played at XOR* and SUB*, those on euclid hits measured 2.1-2.4 dB louder, and OP kept SUB* through a power cycle without SAVE PROJECT. Alone on EAH4 (released core-ar2 0.3 and this module only, 2026-10-25) only the grid trigs played at XOR* and SUB* and those on euclid hits measured 2.0-2.3 dB louder.",
+  "statement": "On an Analog Rytm MKII with OS 1.74 and this package on Modwerk's base (core-ar2 0.7, plain variant ba530f45, with analoghealth 1.3 for remote keys and the other module of the pair), build MW12, 2026-11-07 (runs T170-T172): OP on BD's EUCLIDEAN page reached SUB* (screen); with BD grid trigs on steps 1, 2, 4, 5, 7, 10 and PL1 6, a 10 s take of BD's output showed the trigs on euclid hits (1, 4, 7) peaking at -15.0 dBFS against -17.3 on step 10, a 2.3 dB accent (1.1 on core-ar2 0.3: 2.0-2.4 dB); OP SUB* was kept across a hand power cycle with no save. No dropouts; CPU 74-80 %, heap flat. Hardware, OS 1.74, 2026-10-21, P4A4 (core-ar2 0.4 and all eleven rytm2_mods ports, euclid-accents 1.2): OP turned right and back through OR, XOR, AND, SUB, OR*, XOR*, AND*, SUB*, with the right glyph and label for each and the same order going back, and OP kept its accent value through a power-cycle without SAVE PROJECT. Hardware, OS 1.74, 2026-10-20, C3A4 (core-ar2 0.3 and all eleven rytm2_mods v1.2 ports): euclid-accents 1.1's test steps 1 to 4 pass. OP turns past SUB to OR*, XOR*, AND* and SUB*; with OR* only grid trigs play and those on euclid hits are accented; FUNC + EUC off writes the accents into the pattern; with an accent operator EUC stays on and the track plays only its grid trigs, and a plain operator brings euclid's trigs back. OP keeps its accent value through a power-cycle without SAVE PROJECT. On SXH4 (released core-ar2 0.3 with the other five Modwerk 1.74 submissions, 2026-10-24/25) only the grid trigs played at XOR* and SUB*, those on euclid hits measured 2.1-2.4 dB louder, and OP kept SUB* through a power cycle without SAVE PROJECT. Alone on EAH4 (released core-ar2 0.3 and this module only, 2026-10-25) only the grid trigs played at XOR* and SUB* and those on euclid hits measured 2.0-2.3 dB louder.",
   "status": "hardware-tested-author-reported",
-  "scope": "euclid-accents 1.2 beside the other rytm2_mods ports on core-ar2 0.4 (P4A4, U4A4). euclid-accents 1.1 beside other rytm2_mods ports. SXH4 ran it with the released core-ar2 0.3 and the other five Modwerk 1.74 submissions. EAH4 ran it alone with the released core-ar2 0.3.",
+  "scope": "euclid-accents 1.2.0 on Modwerk's base (MW12). euclid-accents 1.2 beside the other rytm2_mods ports on core-ar2 0.4 (P4A4, U4A4). euclid-accents 1.1 beside other rytm2_mods ports. SXH4 ran it with the released core-ar2 0.3 and the other five Modwerk 1.74 submissions. EAH4 ran it alone with the released core-ar2 0.3.",
   "modules": [
     {
       "id": "euclid-accents",
@@ -25,6 +25,18 @@
     }
   ],
   "builds": [
+    {
+      "label": "MW12",
+      "testedOn": "2026-11-07",
+      "os": "1.74",
+      "syxSha256": "0d0517eac360cb1282704750b37dfbd1c3c3c13e411f13a52f82ed87eb9b69cd",
+      "content": "Stock OS 1.74 + Modwerk base for core-ar2 0.7 (plain ba530f45) + euclid-accents 1.2.0 + velocity-humanise 1.2.0 + analoghealth 1.3, linked by scripts/link-image.mjs. Driven by elkbench plans after their emulator gate; stock 1.74 restored after each run.",
+      "results": [
+        "OP reaches SUB* on the EUCLIDEAN page (screen).",
+        "Trigs on euclid hits peak 2.3 dB above the others on BD's output (-15.0 against -17.3 dBFS, five bars).",
+        "OP SUB* kept across a power cycle with no save (screen, before and after)."
+      ]
+    },
     {
       "label": "P4A4",
       "testedOn": "2026-10-21",
