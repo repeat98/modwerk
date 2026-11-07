@@ -181,6 +181,11 @@
       "id": "slow-lfo",
       "version": "0.1.0-experimental",
       "addedAt": "2026-11-05T12:00:00Z"
+    },
+    {
+      "id": "syntiz",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-10-29T21:00:00Z"
     }
   ]
 }

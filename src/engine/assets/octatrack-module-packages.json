@@ -522,6 +522,41 @@
       "module": "cd8a0e36",
       "bytes": 608,
       "sha256": "3505194ebe34509b765bb71d38ab6a62ab5f4f5ba18cdfd829c741fec472aeb4"
+    },
+    {
+      "id": "syntiz",
+      "sources": [
+        "sdk/octabam/modules/syntiz/engine.c",
+        "sdk/octabam/modules/syntiz/machine_map.c",
+        "sdk/octabam/modules/syntiz/machine.c"
+      ],
+      "subscribe": [
+        "ot_machines:wave_machine:50"
+      ],
+      "raise": [
+        "ev_trig_muted"
+      ],
+      "partSignature": {
+        "sig": "WV",
+        "lo": 1,
+        "hi": 15,
+        "flags": [
+          "PROTECT",
+          "POOL",
+          "SETUP_ALL"
+        ]
+      },
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/syntiz/0.1.0-experimental.mwrm",
+      "abi": 8,
+      "features": 128,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "syntiz",
+      "module": "970f03ad",
+      "bytes": 54416,
+      "sha256": "f501a6a4ea3c8361427b85302fc77274906b9de2e3dfd6f3c81bc1759767c5e8"
     }
   ]
 }
