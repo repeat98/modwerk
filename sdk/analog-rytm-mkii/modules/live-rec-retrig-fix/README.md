@@ -1,6 +1,6 @@
 # Live Rec Retrig Fix
 
-An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Retrig Grid by stigmagit (@stigmagit) is folded in. Version 0.2.1-experimental, for OS 1.74 with core-ar2 0.7. Tested in rytm-emu and, by the author, on an Analog Rytm MKII (OS 1.74): 0.1.0 on builds RR09 to RR16, this version on RC07 to RC11 and LD01.
+An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Retrig Grid by stigmagit (@stigmagit) is folded in. Version 0.2.1-experimental, for OS 1.74 with core-ar2 0.7. Tested in rytm-emu and, by the author, on an Analog Rytm MKII (OS 1.74): 0.1.0 on builds RR09 to RR16, 0.2.0 on RC07 to RC11 and LD01, and this version in the combined build LP01 (as reported).
 
 ## Overview
 

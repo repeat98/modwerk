@@ -119,7 +119,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu c5732f0, scripted pressure: every rate, ALWAYS ON, a press during a roll, rate changes, swing 50 to 66, quantize on and off, the RTRG key's light; on 0.1.0 also RETRIG menu YES on every row against stock and beside Silent Pad+Trig with SILENT PAD LIVEREC checked. On the author's Analog Rytm MKII (OS 1.74), reported from playing: 0.1.0 RR09 to RR16 pass; this merged build RC07 to RC11 (rates, quantize, short rolls, re-press, the row, a project save and reload) and LD01 (the key's light). See TESTING.md.",
+    "summary": "rytm-emu c5732f0, scripted pressure: every rate, ALWAYS ON, a press during a roll, rate changes, swing 50 to 66, quantize on and off, the RTRG key's light; on 0.1.0 also RETRIG menu YES on every row against stock and beside Silent Pad+Trig with SILENT PAD LIVEREC checked. On the author's Analog Rytm MKII (OS 1.74), reported from playing: 0.1.0 RR09 to RR16 pass; this merged build RC07 to RC11 (rates, quantize, short rolls, re-press, the row, a project save and reload) and LD01 (the key's light); 0.2.1 in LP01, a 16-module set (a roll recorded with pad pressure, Retrig Grid while playing, RTRG + YES), and its two audio handlers timed at 2.5 µs an idle block against 0.2.0's 3.4 µs. Not run alone on a unit. See TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
