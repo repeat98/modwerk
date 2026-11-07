@@ -103,7 +103,7 @@ document the modification. No Elektron firmware is included.
 
 ## Screens and audio
 
-These captures are from analog-emu (rytm-emu's successor) running EA12, the Modwerk base for core-ar2 0.7 and Euclid Accents 1.2.0, from
+These captures are from analog-emu (trigcondition's emulator built on rytm-emu) running EA12, the Modwerk base for core-ar2 0.7 and Euclid Accents 1.2.0, from
 stock OS 1.74. See [capture provenance](media/capture.json) for hashes and inputs. The
 accents were judged on a unit, so there is no audio demonstration.
 
