@@ -380,6 +380,24 @@
     "jmp 0x4007a1f2"
    ],
    "done": null
+  },
+  {
+   "site": "0x4008485e",
+   "length": 6,
+   "guard": "0bc2ef188c68224486591693fb94e822b6cc59b94e31323c678457ef5363120e",
+   "routine": "the engine task's loop (0x4008484e the idle hook, 0x40084854 the queue receive): a2 the job just received, its type in the first byte; the switch here reads the type and skips every type above 45 (0x40084864). The core logger's job record sits here on every build (sdk/runtime/logging/stock-guards.json, job).",
+   "head": [
+    "jsr olog_job_hook | the core logger's job record (and the sample editor's job seam), every register kept; with site events build_core.py ends it with rts"
+   ],
+   "tail": [
+    {
+     "stock": 6
+    },
+    "jmp 0x40084864"
+   ],
+   "done": [
+    "jmp 0x4008484e | back to the engine loop's top: the idle hook, then the next receive"
+   ]
   }
  ],
  "events": [
@@ -1866,6 +1884,27 @@
      "what": "source START selection: load the selected fallback, choose a standard-call custom dispatcher when required, replay the null test and resume at 0x4000d484; leave Mute Modes at 0x4000d498 unchanged"
     }
    ]
+  },
+  {
+   "event": "ev_engine_job",
+   "index": 38,
+   "site": "0x4008485e",
+   "length": 6,
+   "prototype": "int f(const uint8_t *job)",
+   "args": [
+    "a2"
+   ],
+   "results": {
+    "0": "next",
+    "1": "done",
+    "*": "tail"
+   },
+   "when": "the engine task has received a job and is about to run it, after the core logger recorded it",
+   "context": "the engine task, between its receive and stock's job switch (not an interrupt): bounded work, as the next job waits behind it",
+   "contract": "job is the received job; its first byte is the type (stock runs types 0-45 and skips the rest). Return 0 to pass. 1 takes the job: stock does not run it and the engine goes back to its loop, so finishing or answering a stock job the handler drops is the handler's work. Any other nonzero runs stock's switch at once: no later handler. d2-d7/a2-a6 are the engine's and must be kept.",
+   "order": "lower first, then module id. 10-29: a module's own job types (above 45); 30-69: work before stock jobs (a machine flushing its state, a gate that defers a job).",
+   "subscribers": [],
+   "orderEvidence": "No package subscribes yet. Card builds have no base: a module that subscribes keeps its detour there, entered from the core logger's job hook (src/engine/core-logger.ts), so on every build the logger records the job first."
   }
  ]
 }

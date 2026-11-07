@@ -192,4 +192,8 @@ struct modwerk_machine_start {
 };
 #define MODWERK_MACHINE_START_ABI 1u
 
+/* ev_engine_job (0x4008485e): the engine task has received a job and is about to run it, after the core logger recorded it. The engine task, between its receive and stock's job switch (not an interrupt): bounded work, as the next job waits behind it. job is the received job; its first byte is the type (stock runs types 0-45 and skips the rest). Return 0 to pass. 1 takes the job: stock does not run it and the engine goes back to its loop, so finishing or answering a stock job the handler drops is the handler's work. Any other nonzero runs stock's switch at once: no later handler. d2-d7/a2-a6 are the engine's and must be kept. */
+#define MODWERK_EV_ENGINE_JOB 38
+typedef int modwerk_ev_engine_job(const uint8_t *job);
+
 #endif

@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { beforeEach, expect, it, vi } from 'vitest'
 const state = vi.hoisted(() => ({ error: 'Analog BD boot payloads overlap or exceed reserved memory.' }))
-vi.mock('../src/engine/static-compose.ts', () => ({ planStaticOs: async () => ({ menus: { writes: [] }, dsp: { writes: [], layouts: [] }, logging: { writes: [] }, platform: [] }) }))
+vi.mock('../src/engine/static-compose.ts', () => ({ planStaticOs: async () => ({ menus: { writes: [] }, dsp: { writes: [], layouts: [] }, logging: { writes: [], chained: [] }, platform: [] }) }))
 vi.mock('../src/engine/compose-os.ts', () => ({ composeOs: async () => { throw new Error(state.error) } }))
 vi.mock('../src/engine/analog-bd.ts', () => ({ composeAnalogBd: async (_original, image) => ({ bytes: image }) }))
 vi.mock('../src/engine/os-patches.ts', () => ({ OS_LOAD_ADDRESS: 0x40000400, applyGuardedOsWrites: async original => original.slice() }))

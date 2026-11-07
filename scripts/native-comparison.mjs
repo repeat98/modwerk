@@ -43,7 +43,7 @@ export async function compareSelection(original, proof, menus) {
   // independent native fingerprint checks below, never an unknown error.
   const browserPlatformRefused = proof.moduleIds.includes('analog-bassdrum') && plan && error === 'Analog BD boot payloads overlap or exceed reserved memory.'
   if (error && !browserPlatformRefused) return { failure: 'native builds it but the browser refused: ' + error.slice(0, 120) }
-  const owned = [...plan.menus.writes, ...plan.dsp.writes], other = [...plan.platform, ...plan.logging.writes]
+  const owned = [...plan.menus.writes, ...plan.dsp.writes], other = [...plan.platform, ...plan.logging.writes.filter(w => !plan.logging.chained.some(c => c.address === w.address))] // a logger site handed on to the module's own detour (core-logger.ts chainedDetour)
   for (const a of owned) for (const b of other) if (a.address < b.address + b.bytes.length && b.address < a.address + a.bytes.length) return { failure: b.note + ' overlaps ' + a.note }
   let image = await applyGuardedOsWrites(original, owned)
   // Analog BD rewrites both DSP payloads and repoints their uploads after the plan, as composeStaticOs does.

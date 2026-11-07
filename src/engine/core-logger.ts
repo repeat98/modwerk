@@ -26,7 +26,14 @@ export async function readCoreLogger() {
   if (await loggerHash(bytes) !== pkg.sha256) throw new Error('Core logger package checksum mismatch.')
   return { label: 'octamod-core-logger', object: parseColdFireObject(bytes) }
 }
-export async function installCoreLogger(runtime: CfRuntimeLink, original: Uint8Array, ids: readonly string[], chooser: {fx1: readonly string[]; fx2: readonly string[]; hidden: readonly string[]}, startup?: {version: string; sourceSha256: string}) {
+/** A module's whole detour on a logger site: a card build's stand-in for a base hook there (ev_engine_job, events.json).
+ *  The logger's hook runs first and replays the module's jmp, so the module runs as it would from the site. */
+export function chainedDetour(held: readonly OsWrite[], address: number, length: number) {
+  const write = held.find(w => w.address === address && w.bytes.length === length)
+  if (write && (write.bytes[0] !== 0x4e || write.bytes[1] !== 0xf9 || write.bytes.slice(6).some((b, i) => b !== (i % 2 ? 0x71 : 0x4e)))) throw new Error('A module write on a core logger site is not a jmp detour: ' + write.note)
+  return write
+}
+export async function installCoreLogger(runtime: CfRuntimeLink, original: Uint8Array, ids: readonly string[], chooser: {fx1: readonly string[]; fx2: readonly string[]; hidden: readonly string[]}, startup?: {version: string; sourceSha256: string}, held: readonly OsWrite[] = []) {
   const source = await loggerHash(encode(JSON.stringify({core:pkg.sourceSha256,modules:compiledModuleSource().sourceTreeSha256,...(startup?{startup:startup.sourceSha256}:{})})))
   const modules = resolveSelection(ids).map(({id,version}) => ({id,version}))
   const own = new Set(resolveSelection(ids).map(module => module.key))
@@ -49,13 +56,15 @@ export async function installCoreLogger(runtime: CfRuntimeLink, original: Uint8A
   }
   // Eight ColdFire pointers precede the uint32 stock-FX2 flag.
   new DataView(runtime.bytes.buffer,runtime.bytes.byteOffset,runtime.bytes.byteLength).setUint32(offset('octamod_log_identity',36)+32,Number(configuration.stockfx2))
-  const writes: OsWrite[] = []
+  const writes: OsWrite[] = [], chained: OsWrite[] = []
   for (const [key,guard] of Object.entries(pkg.guards)) {
     const at = guard.address - OS_BASE
     if (at < 0 || at + guard.length > original.length || await loggerHash(original.slice(at,at+guard.length)) !== guard.sha256) throw new Error('Core logger stock guard mismatch: '+key)
     if (!['idle','job','transport','open','read','write','close','frame_entry','frame_exit','render_first','render_second'].includes(key)) continue
     const n = 'patchLength' in guard ? guard.patchLength : guard.length, replay = 'replay' in guard ? guard.replay : n
-    runtime.bytes.set(original.slice(at,at+replay),offset('olog_replay_'+key,replay))
+    const module = 'replay' in guard ? undefined : chainedDetour(held, guard.address, n)
+    if (module) chained.push(module)
+    runtime.bytes.set(module ? module.bytes : original.slice(at,at+replay),offset('olog_replay_'+key,replay))
     const target = runtime.symbols.get('olog_'+key+'_hook')
     const text = runtime.sections.find(section=>section.name==='.text')
     if (!target || !text || target < text.address || target >= text.address + text.size || target % 2) throw new Error('Invalid core logger hook: '+key)
@@ -64,5 +73,5 @@ export async function installCoreLogger(runtime: CfRuntimeLink, original: Uint8A
     for (let i=6;i<n;i+=2)view.setUint16(i,0x4e71)
     writes.push({address:guard.address,guardLength:guard.length,guardSha256:guard.sha256,bytes,note:'core logger '+key})
   }
-  return {writes,configuration,configurationHash:hash}
+  return {writes,chained,configuration,configurationHash:hash}
 }

@@ -20,14 +20,14 @@ export async function planStaticOs(original: Uint8Array, ids: readonly string[],
   const cores = await recoverStockDsp(original), runtime = await createStaticColdFireRuntime(ids, original, undefined, usbAudio, betaAccess)
   const menus = await composeChoosers(original, ids, profile, runtime, betaAccess), dsp = await composeStaticDsp(cores, ids, menus.chooser)
   if (usbAudio) menus.writes = await replaceUsbAudioHooks(original, menus.writes, runtime)
-  const logging = await installCoreLogger(runtime, original, ids, menus.chooser, betaAccess ? BETA_STARTUP_IDENTITY : undefined)
+  const logging = await installCoreLogger(runtime, original, ids, menus.chooser, betaAccess ? BETA_STARTUP_IDENTITY : undefined, menus.writes)
   const platform = createPlatformOsWrites(runtime, ids, { loader: false, reserveBytes: runtime.reserveBytes })
   const startup = await installStartup(runtime, original, betaAccess)
   return { runtime, menus, dsp, logging, platform, startup }
 }
 export async function composeStaticOs(original: Uint8Array, ids: readonly string[], profile = defaultChoosers(ids), usbAudio?: UsbAudioConfiguration, betaAccess = false) {
   const { runtime, menus, dsp, logging, platform, startup } = await planStaticOs(original, ids, profile, usbAudio, betaAccess)
-  let patched = await applyGuardedOsWrites(original, [...menus.writes, ...dsp.writes, ...platform, ...logging.writes, ...startup])
+  let patched = await applyGuardedOsWrites(original, [...menus.writes.filter(write => !logging.chained.includes(write)), ...dsp.writes, ...platform, ...logging.writes, ...startup])
   const analog = ids.includes('analog-bassdrum') ? await composeAnalogBd(original, patched, ids, profile, dsp.layouts) : null
   if (analog) patched = analog.bytes
   await verifyNativeContracts(patched, ids)

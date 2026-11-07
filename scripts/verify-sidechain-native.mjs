@@ -66,7 +66,7 @@ for (const suite of suites) {
     }
     if (error) { failures.push(label + ': native builds it but the browser refused: ' + error.slice(0, 120)); continue }
     built++
-    const owned = [...plan.menus.writes, ...plan.dsp.writes], other = [...plan.platform, ...plan.logging.writes]
+    const owned = [...plan.menus.writes, ...plan.dsp.writes], other = [...plan.platform, ...plan.logging.writes.filter(w => !plan.logging.chained.some(c => c.address === w.address))] // a logger site handed on to the module's own detour (core-logger.ts chainedDetour)
     for (const a of owned) for (const b of other) if (a.address < b.address + b.bytes.length && b.address < a.address + a.bytes.length) failures.push(label + ': ' + b.note + ' overlaps ' + a.note)
     const image = await applyGuardedOsWrites(original, owned)
     if (proof.bytes === original.length) {

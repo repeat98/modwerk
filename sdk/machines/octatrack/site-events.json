@@ -203,6 +203,11 @@
    "kind": "table",
    "room": 8,
    "record": 16
+  },
+  {
+   "index": 38,
+   "event": "ev_engine_job",
+   "kind": "call"
   }
  ]
 }

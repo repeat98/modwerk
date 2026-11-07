@@ -2,7 +2,7 @@ import {describe,it,expect} from 'vitest'
 import {readFileSync,readdirSync} from 'node:fs'
 import {createHash} from 'node:crypto'
 import pkg from './assets/core-logger.json'
-import {readCoreLogger,loggerExternals,LOGGER_RESERVE_BYTES} from './core-logger'
+import {readCoreLogger,loggerExternals,chainedDetour,LOGGER_RESERVE_BYTES} from './core-logger'
 import {createStaticColdFireRuntime} from './coldfire-runtime'
 import {runtimeStageLayout} from './bootstrap'
 import {DOWNLOADS_ENABLED} from './protocol'
@@ -31,6 +31,15 @@ describe('mandatory core logger',()=>{
    const ceiling=loggerExternals(runtime.reserveBytes).get('octamod_log_retained')!
    expect(runtimeStageLayout(runtime.bytes.length,8192,runtime.reserveBytes-8192).stageEnd).toBeLessThan(ceiling)
   }
+ })
+ it('hands a logger site on to a module jmp detour of the same span, and nothing else',()=>{
+  const write=(address:number,hex:string)=>({address,guardLength:hex.length/2,guardSha256:'',bytes:Uint8Array.from(hex.match(/../g)!,b=>parseInt(b,16)),note:'test '+hex})
+  const job=pkg.guards.job.address,jmp=write(job,'4ef940a96000'),held=[write(job+6,'4ef940a96000'),jmp]
+  expect(chainedDetour(held,job,6)).toBe(jmp)
+  expect(chainedDetour(held,job,8)).toBeUndefined()
+  expect(chainedDetour([write(job,'4ef940a960004e71')],job,8)).toBeDefined()
+  expect(()=>chainedDetour([write(job,'4eb940a96000')],job,6)).toThrow('not a jmp detour')
+  expect(()=>chainedDetour([write(job,'4ef940a960000000')],job,8)).toThrow('not a jmp detour')
  })
  it('allows downloads under the explicit owner-approved logger exception',()=>{
   expect(DOWNLOADS_ENABLED).toBe(true)
