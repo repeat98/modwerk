@@ -6,7 +6,7 @@
   "changes": [
     "A jack in ACTION mode with ACTION OFF is no longer read in the audio interrupt, and with no jack in ACTION mode the ev_render_out handler is a two-byte test; on the author's unit, both jacks at ACTION OFF, the handler costs 0.8 µs a block instead of 3.6 µs. A jack with an action is read as in 0.1.1, and actions play unchanged."
   ],
-  "runtimeSourceSha256": "8e3aabc50079217995eda9ee69b97c7e87c59885154c99f6acdb799c2be82fa4",
+  "runtimeSourceSha256": "e93a782b22e0682e22bd3439ba2978a5397f3422f5b6ba3f19cbf4a66dca23d1",
   "packages": [
     {
       "os": "1.74",
