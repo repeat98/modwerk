@@ -1,22 +1,22 @@
 {
   "schema": 1,
   "kind": "elekloader-catalog",
-  "revision": "live-rec-retrig-fix-2026-11-04",
+  "revision": "live-rec-retrig-fix-2026-11-06",
   "about": "Modwerk source-only live-rec-retrig-fix package for Analog Rytm MKII OS 1.74, compiled from sdk/analog-rytm-mkii/modules/live-rec-retrig-fix.",
   "cores": [],
   "mods": [
     {
-      "file": "live-rec-retrig-fix-0.2.0-experimental-os1.74.elemod",
-      "sha256": "3863f03c94704e1c03c4b2cfa1b9b785a4c2dc03d16164264153932be3b212be",
+      "file": "live-rec-retrig-fix-0.2.1-experimental-os1.74.elemod",
+      "sha256": "0760ed0da03b6b217bc2781b483a5fbae4da4135f1e97b129160b24801f261d5",
       "id": "live-rec-retrig-fix",
-      "version": "0.2.0-experimental",
+      "version": "0.2.1-experimental",
       "device": "analog-rytm-mk2",
       "os": "1.74",
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "1607e84749e5be928b0d6a427173fd315cb51c45",
-        "path": "sdk/imports/packages/live-rec-retrig-fix/live-rec-retrig-fix-0.2.0-experimental-os1.74.elemod"
+        "commit": "ec69c137364157b929c2b0c247f485a56fab1056",
+        "path": "sdk/imports/packages/live-rec-retrig-fix/live-rec-retrig-fix-0.2.1-experimental-os1.74.elemod"
       },
       "title": "Live Rec Retrig Fix",
       "requires": [
@@ -28,7 +28,7 @@
       "category": "Sequencer",
       "author": "npp1993",
       "needs_core": "0.7",
-      "on_unit": "The author's builds RC07 to RC11 and LD01 ran this code on an Analog Rytm MKII on OS 1.74 beside other modules, as reported; this package links to the same image as its source build LR20 but has not run on a unit."
+      "on_unit": "This source ran on the author's Analog Rytm MKII on OS 1.74 in a 16-module combined image (LP01, as reported): recording a roll, Retrig Grid and the RTRG key pass; this package has not run alone on a unit."
     }
   ]
 }
