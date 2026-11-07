@@ -10,11 +10,15 @@ by a random amount up to ±N, clamped to 1..127.
   knob becomes a sixteen-position selector. Without FUNC, VEL is the trig velocity as on stock.
 - N is per pattern track. It is kept in core-ar2's mod storage and saved with the pattern.
 
-Version **1.1.0** for Analog Rytm MKII OS **1.74**, with core-ar2 0.3. It is
+Version **1.2.0** for Analog Rytm MKII OS **1.74**, with core-ar2 0.4 or later (Modwerk's
+base is core-ar2 0.7). It is
 [rytm2_mods](https://github.com/Iced-Cream/rytm2_mods)' elemod port of MrScruff's
 `0003-velocity-humanise` from [rytm-mods-src](https://github.com/Iced-Cream/rytm-mods-src).
 His code is unchanged, except that N moved from spare bits of stock's euclid-enable byte
-into core storage, so the module no longer needs Euclid Accents in the same build. Hardware
+into core storage, so the module no longer needs Euclid Accents in the same build, and that
+from 1.2 FUNC + VEL's turn and text are reached through core-ar2's parameter table,
+`core_params`, instead of two detours of his own at the entries of param_apply_delta and
+param_value_text, which core-ar2 0.4 and later own. Hardware
 testing is recorded in the [hardware report](evidence/hardware-testing.json) and
 [TESTING.md](TESTING.md).
 
@@ -39,12 +43,13 @@ TRIG page: the VEL knob with FUNC held.
 
 ## Compatibility and limitations
 
-Requires core-ar2 0.3 on OS 1.74. Use your own original stock OS 1.74 file.
+Requires core-ar2 0.4 or later on OS 1.74. Use your own original stock OS 1.74 file.
 
 - Built for OS 1.74 only.
-- Needs core-ar2 0.3's mod storage: four bits per pattern track (`vel_rnd`). Earlier cores lose N at a power-off without a project save.
+- Needs core-ar2's parameter table (`core_params`, core-ar2 0.4 and later) for FUNC + VEL's turn and text. 1.1.0 patched param_apply_delta and param_value_text itself and does not link with core-ar2 0.4 or later.
+- Needs core-ar2's mod storage: four bits per pattern track (`vel_rnd`).
 - On stock firmware, or a build without this module, the track plays its plain velocities: N is in mod storage, which stock ignores.
-- Patches param_apply_delta and param_value_text next to other gate-chain modules; each has its own site and they link together.
+- Not beside [Sample RATE](../sample-rate/): both patch the start of param_short_name (`0x400a9000`), the knob label routine, for different parameters (VEL here, FIN there), so `compatibility.conflicts` names it. Modwerk's base (core-ar2 0.7) has no shared hook for labels yet; core-ar2 0.10's knob-name service would let the two share.
 
 ### Mod storage
 
@@ -57,26 +62,20 @@ was and projects keep their N. Removing the module leaves the bits in the projec
 
 ### Sites
 
-The module patches five sites, the original mod's own. Another module patching the same
-bytes cannot be combined with it.
+The module patches three sites, the original mod's own. Another module patching the same
+bytes cannot be combined with it. FUNC + VEL setting N and N in the popup are an entry in
+core-ar2's `core_params` (`velocity_humanise_params`, parameter 30, VEL), which the core
+asks from param_apply_delta's and param_value_text's entries.
 
 | Address | Bytes | Op |
 | --- | --- | --- |
-| `0x400378ae` | 8 | jmp `velocity_humanise_vel_amount_gate` (param_apply_delta: FUNC + VEL sets N) |
 | `0x4009b00c` | 6 | jmp `velocity_humanise_vel_humanise` (the trig's velocity, each trig) |
-| `0x400a8654` | 8 | jmp `velocity_humanise_vel_text_gate` (param_value_text: N in the popup) |
 | `0x400a9004` | 6 | jmp `velocity_humanise_vel_label_gate` (the RND label) |
 | `0x400a8822` | 6 | jsr `velocity_humanise_vel_get_ui` (VEL's getter, with FUNC held) |
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md) for the commands and results. In short: on an Analog Rytm
-MKII with OS 1.74 and core-ar2 0.3, beside the other rytm2_mods ports (with and without
-Euclid Accents), its test steps pass and N survives a power-cycle without a project save.
-Modwerk's own build of this folder gives a main OS byte-identical to elekloader's build of
-the rytm2_mods v1.2 release. In rytm-emu, FUNC on the TRIG page relabels VEL as RND and
-turning it shows N. Memory: 828 bytes of the 128 KiB shared mod area and four bits of
-track storage. On each trig it adds one storage read, a random draw and a clamp.
+See [TESTING.md](TESTING.md) for the commands and results. In short: on an Analog Rytm MKII with OS 1.74 on Modwerk's base (MW12, 2026-11-07), N 64 spread 3.7 dB std, kept across a power cycle. Before that, on OS 1.74 with core-ar2 0.4 and the other rytm2_mods ports (P4A4, 2026-10-21): FUNC + VEL reads RND and steps through N's sixteen values, VEL alone is stock, and N survives a power-cycle without a project save. Modwerk's package linked with core-ar2 0.7 gives a main OS byte-identical to the rytm2_mods v1.3 release object linked with it. In the emulator on the Modwerk base (VH12), FUNC relabels VEL as RND and turning it shows N. Memory: 816 bytes of the 128 KiB shared mod area.
 
 ## Authorship and licences
 
@@ -87,15 +86,16 @@ core-ar2, whose storage keeps N.
 
 Code: [GPL-2.0-only](LICENSE), as rytm-mods-src. `src/velocity-humanise.s` (rytm2_mods'
 `velocity-humanise/os1.74/velocity-humanise.s`), `include/ar2-1.74.inc`,
-`shared/live-track.s` and `shared/shared.s` are rytm2_mods' files at `afd461d` (v1.2),
+`shared/live-track.s` and `shared/shared.s` are rytm2_mods' files at `e029f75` (v1.3),
 unchanged; they name firmware routines and RAM by address only. The upstream README is in
 [upstream/README.md](upstream/README.md). Screens show Elektron's interface solely to
 document the modification. No Elektron firmware is included.
 
 ## Screens and audio
 
-These captures are from rytm-emu running a build of core-ar2 0.3 and Velocity Humanise
-from stock OS 1.74. See [capture provenance](media/capture.json) for hashes and inputs.
+These captures are from analog-emu (trigcondition's emulator built on rytm-emu) running VH12, the Modwerk base
+for core-ar2 0.7 and Velocity Humanise 1.2.0, from stock OS 1.74; they are byte-identical
+to 1.1's captures. See [capture provenance](media/capture.json) for hashes and inputs.
 The varied velocities were judged on a unit, so there is no audio demonstration.
 
 ![TRIG page with NOT, VEL, LEN and PRB above SYN, SMP, ENV and LFO.](media/trig-page.png)

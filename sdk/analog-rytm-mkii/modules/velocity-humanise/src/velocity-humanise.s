@@ -142,10 +142,12 @@ mark_changed:
         | ------------------------------------------------------------------
         | FUNC + VEL edits the amount.
         |
-        | Reached by a jmp over `moveal %sp@(16),%a2; movel %sp@(28),%d3`, after
-        | param_apply_delta's prologue has run: %sp@(0..11) holds d2/d3/a2,
+        | core-ar2 0.4's delta(view, id, delta, func) for VEL (core_params): it
+        | takes the turn (1) only while FUNC is held, and passes it on (0)
+        | otherwise. The prologue below is param_apply_delta's own, so the frame
+        | is the one this gate had as a detour: %sp@(0..11) holds d2/d3/a2,
         | %sp@(20) is the parameter id, %sp@(24) the delta in 8.8 and %sp@(28) the
-        | FUNC-held flag. Anything else continues into stock unchanged.
+        | FUNC-held flag.
         |
         | The write goes to core's field (elemod; in rytm-mods, straight into the
         | euclid-enable byte), so the change notification that stock raises
@@ -157,22 +159,21 @@ mark_changed:
         .globl  velocity_humanise_vel_amount_gate
 velocity_humanise_vel_amount_gate:
 vel_amount_gate:
-        moveq   #PARAM_ID_VEL,%d0
-        cmp.l   %sp@(20),%d0
-        bne.s   8f
-        tst.b   %sp@(31)                          | the flag is passed as a byte
+        lea     -12(%sp),%sp
+        movem.l %d2-%d3/%a2,(%sp)
+        tst.b   %sp@(31)                          | the flag's low byte
         beq.s   8f
 
         move.l  %sp@(24),%d2
         asr.l   #8,%d2                            | whole steps, sign preserved
         beq.s   7f
-        bsr.s   track_bytes
+        bsr.w   track_bytes
         beq.s   7f
         move.l  %a0,-(%sp)                        | elemod: the accessor, across the calls
         move.l  %d0,%a0
         bsr.w   track_item                        | a0 = live pattern, d0 = track
         bmi.s   6f
-        move.l  %a0,%a2                           | d2/d3/a2 are the prologue's to use
+        move.l  %a0,%a2
         move.l  %d0,%d3
         move.l  %d3,-(%sp)                        | index
         move.l  %a2,-(%sp)                        | item
@@ -195,13 +196,12 @@ vel_amount_gate:
         move.l  (%sp),%a0                         | the accessor
         bsr.w   mark_changed
 6:      addq.l  #4,%sp                            | the accessor
-7:      movem.l (%sp),%d2-%d3/%a2                 | param_apply_delta's epilogue
+7:      moveq   #1,%d0                            | taken
+        bra.s   9f
+8:      moveq   #0,%d0                            | not FUNC: stock's turn
+9:      movem.l (%sp),%d2-%d3/%a2
         lea     12(%sp),%sp
         rts
-
-8:      moveal  %sp@(16),%a2                      | displaced
-        movel   %sp@(28),%d3                      | displaced
-        jmp     param_apply_delta_body
 
         | ------------------------------------------------------------------
         | vel_get_ui(TrackPattern *p) -> d0.b
@@ -291,33 +291,23 @@ vel_get_ui:
         | itself. VEL's formatter also rejects 0, so an amount of 0 - index 0,
         | stop 0, or a velocity of 0 - is written out here as "0".
         |
-        | Reached by a jmp over `movel %sp@(28),%d4; moveal %sp@(24),%a3`, after
-        | param_value_text's prologue: %sp@(0..19) holds d2-d4/a2-a3, %sp@(28) is
-        | the id, %sp@(32) the value, %sp@(36) the output buffer.
+        | core-ar2 0.4's text(t) for VEL (core_params): t is param_value_text's
+        | {obj, id, value, buf}. 1 when the text is written, 0 to let stock print
+        | the real velocity.
         | ------------------------------------------------------------------
         .align  2
         .globl  velocity_humanise_vel_text_gate
 velocity_humanise_vel_text_gate:
 vel_text_gate:
-        moveq   #PARAM_ID_VEL,%d0
-        cmp.l   %sp@(28),%d0
-        bne.s   8f
-        move.l  %sp@(32),%d0
+        lea     -12(%sp),%sp
+        movem.l %d2-%d3/%a2,(%sp)
+        move.l  16(%sp),%a2                       | t
+        move.l  8(%a2),%d0
         beq.s   7f                                | 0, from either source
-        move.l  %d1,-(%sp)                        | across the key test, for the
-        move.l  %d2,-(%sp)                        | fall-through that still
-        move.l  %d3,-(%sp)                        | needs them
-        move.l  %a0,-(%sp)
-        move.l  %a1,-(%sp)
         jsr     shared_func_held
-        move.l  (%sp)+,%a1
-        move.l  (%sp)+,%a0
-        move.l  (%sp)+,%d3
-        move.l  (%sp)+,%d2
-        move.l  (%sp)+,%d1
         tst.l   %d0
         beq.s   8f
-        move.l  %sp@(32),%d0                      | the stop, in 8.8
+        move.l  8(%a2),%d0                        | the stop, in 8.8
         lsr.l   #8,%d0
         moveq   #AMOUNT_MAX,%d1
         mulu.w  %d1,%d0                           | the stop as sixteenths of the
@@ -328,14 +318,14 @@ vel_text_gate:
         andil   #AMOUNT_MAX,%d0
         lea     shared_amounts,%a0
         mvzb    %a0@(0,%d0:l),%d0                 | N
-7:      move.l  %sp@(36),%a1                      | the output buffer
+7:      move.l  12(%a2),%a1                       | the output buffer
         jsr     shared_fmt_u8
-        movem.l (%sp),%d2-%d4/%a2-%a3             | param_value_text's epilogue
-        lea     20(%sp),%sp
+        moveq   #1,%d0                            | written
+        bra.s   9f
+8:      moveq   #0,%d0                            | stock prints the velocity
+9:      movem.l (%sp),%d2-%d3/%a2
+        lea     12(%sp),%sp
         rts
-8:      movel   %sp@(28),%d4                      | displaced
-        moveal  %sp@(24),%a3                      | displaced
-        jmp     param_value_text_body
 
         | ------------------------------------------------------------------
         | The VEL knob's label reads RND while FUNC is held.
@@ -377,6 +367,12 @@ rng_state:
         .align  2
 label_rnd:
         .asciz  "RND"
+
+        | core-ar2 0.4: VEL's encoder and text, by its id
+        .align  2
+        .globl  velocity_humanise_params
+velocity_humanise_params:
+        .long   PARAM_ID_VEL, PARAM_ID_VEL, 0, vel_amount_gate, vel_text_gate
 
         | Canary for verifying the cave2 pool on hardware: a known pattern
         | behind the code, counted by vel_get_ui's diagnostic arm. Mode 2 counts

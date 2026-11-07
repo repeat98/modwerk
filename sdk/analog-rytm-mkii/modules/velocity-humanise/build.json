@@ -7,7 +7,21 @@
   "cflags": [],
   "weak": [],
   "subscribe": [],
-  "contribute": [],
+  "contribute": [
+    {
+      "to": "core_params",
+      "order": 31,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:velocity_humanise_params",
+          0
+        ]
+      ]
+    }
+  ],
   "collections": {},
   "copied": [],
   "regions": [],
@@ -23,25 +37,11 @@
       "cflags": [],
       "sites": [
         {
-          "addr": "0x400378ae",
-          "len": 8,
-          "stockSha256": "54d6697f72db7bfa1692bdfcefac1e9d3cc9a5f5da5e977e05a3bfe73cc26662",
-          "op": "jmp",
-          "target": "velocity_humanise_vel_amount_gate"
-        },
-        {
           "addr": "0x4009b00c",
           "len": 6,
           "stockSha256": "b64dbe9d8c379576ddddf76e532de231f115f4bc084860e54e9eb90ed1c315c3",
           "op": "jmp",
           "target": "velocity_humanise_vel_humanise"
-        },
-        {
-          "addr": "0x400a8654",
-          "len": 8,
-          "stockSha256": "89c87b50d170ae64779dbadb6b047e528e68d3faff6c6ab500168cd253d6f9de",
-          "op": "jmp",
-          "target": "velocity_humanise_vel_text_gate"
         },
         {
           "addr": "0x400a9004",
