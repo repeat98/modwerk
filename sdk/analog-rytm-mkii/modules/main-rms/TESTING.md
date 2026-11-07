@@ -60,7 +60,7 @@ after STOP while the tails rang, and plain again at 4.4 s and 8.4 s. No output f
 
 ## Source build comparison
 
-The module is a submission (`modules/_submissions/`) until the browser can build it. Modwerk's own validation and compiler path, run on this folder:
+While the module waited in `modules/_submissions/`, Modwerk's own validation and compiler path ran on this folder:
 
 ```sh
 node scripts/machine-modules.mjs --drafts --base origin/main
@@ -78,6 +78,14 @@ relocations.
 Compiler: Ubuntu 24.04 `m68k-linux-gnu` GCC 13.3.0 and binutils 2.42. Modwerk's pinned Docker
 toolchain was not run here, and CI's `elemod-source` job compiles published folders only. The
 firmware and the linked builds stayed on the owner's computer.
+
+## Library package
+
+On 2026-11-07 the folder moved into the library, code unchanged. `scripts/build-elemod-isolated.sh` compiled it in
+Modwerk's pinned `modwerk-source-tools` image (`m68k-elf`, from `sdk/build/Dockerfile`) from a clean checkout of
+`d93ad9a2`, and `scripts/package-elemod-recipe.mjs` exported
+`sdk/imports/packages/main-rms/main-rms-1.0.0-os1.74.elemod` (`fe24c98b…6f4a`); `--check` reproduces it. Its
+264-byte `.run`, 3 sites, symbols and relocations equal rytm2_mods v1.2's release object (`cbd69edb…5d54`), except that where that object takes 2 runs (16 bytes) from the stock OS at link time, this package carries the bytes compiled from the source, as Filter Hz's package does. This package's own bytes have not been linked against a stock OS file or run on a unit.
 
 ## Emulator
 
