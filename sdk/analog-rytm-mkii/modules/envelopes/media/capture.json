@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "envelopes",
+  "moduleVersion": "0.1.0-experimental",
+  "firmware": "1.74",
+  "capturedAt": "2026-11-07T15:51:00Z",
+  "imageSha256": "c8835018e591328648e6f5c08fe11e9c929098753234211537cba49c78da4c2e",
+  "build": "Modwerk's linker: Modwerk base for core-ar2 0.7 (plain variant ba530f45) + this folder's Improved Envelopes 0.1.0-experimental, materialised against stock OS 1.74, --version EN02",
+  "emulator": {
+    "name": "rytm-emu",
+    "repository": "https://github.com/trigcondition/rytm-emu",
+    "binary": "dtboot",
+    "settings": "revision 2ac0f1f; no card (starts formatted); JIT on; --every 1000M; DTBOOT_TURN_PNG after each turn"
+  },
+  "conditions": "Cold boot; eight NO presses from 7003M, 300M apart, close the calibration notices. AMP at 11003M (12M). 64 turns of DEC (encoder 2) by -6, 20M apart from 11303M; then 6 turns of HLD (encoder 1) by +6, 20M apart from 12803M. Frames are dtboot's firmware-rendered 128x64 screen at 3x, unmodified.",
+  "captures": [
+    {
+      "path": "media/decay-time.png",
+      "frame": "turn64.png",
+      "plan": "DTBOOT_TURN_PNG=t3 dtboot Rytm-EN02-os1.74.syx --instr 13400M --every 1000M --press NO@7003M:12M --press NO@7303M:12M --press NO@7603M:12M --press NO@7903M:12M --press NO@8203M:12M --press NO@8503M:12M --press NO@8803M:12M --press NO@9103M:12M --press AMP@11003M:12M --turn 2:-6@11303Mx64/20M --turn 1:6@12803Mx6/20M",
+      "sha256": "5166a566f68a2dbd427c05469c589464d1691c67e39b671566615fc00d154dc9"
+    },
+    {
+      "path": "media/hold-time.png",
+      "frame": "turn70.png",
+      "plan": "DTBOOT_TURN_PNG=t3 dtboot Rytm-EN02-os1.74.syx --instr 13400M --every 1000M --press NO@7003M:12M --press NO@7303M:12M --press NO@7603M:12M --press NO@7903M:12M --press NO@8203M:12M --press NO@8503M:12M --press NO@8803M:12M --press NO@9103M:12M --press AMP@11003M:12M --turn 2:-6@11303Mx64/20M --turn 1:6@12803Mx6/20M",
+      "sha256": "869cde2e56143f53fb755ee383d59f1bb0c575d371d0de9d285f372a77b12cd5"
+    }
+  ]
+}
