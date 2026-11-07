@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "module": "digitakt/midi-expression",
+  "version": "0.12.4-experimental",
+  "date": "2026-11-07",
+  "upstream": {
+    "repository": "https://github.com/tekomelu/Digi-Expression",
+    "revision": "4393501364dd8e6e98cccdf5236fd565d4c4c678",
+    "path": "module/midi-expression",
+    "license": "GPL-3.0-or-later"
+  },
+  "changes": [
+    "First release: an EXPRESSION page (TRIG, then TRIG again) on every track routes pitch bend, aftertouch, the mod wheel, breath and velocity to sound parameters on audio tracks and to CCs, pitch bend and the LFO on MIDI tracks, with presets and per-project settings in /cfw/expression.",
+    "Source-only export compiled with the Modwerk m68k toolchain (GCC 16.2) on the author's computer; tested on the author's Digitakt mk1, OS 1.54 (evidence/hardware-testing.json)."
+  ],
+  "runtimeSourceSha256": "1895641e2b39da32fb8bdfac7b402821f81cfd5958e3adf86ac72c30b0e8427a",
+  "packages": [
+    {
+      "os": "1.54",
+      "path": "sdk/imports/packages/midi-expression/midi-expression-0.12.4-experimental-os1.54.elemod",
+      "sha256": "8a82485fc582191ff0ecf51e8f6c83abec6dd023f0fef931c3a934a66838dfbb"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/digitakt/modules/midi-expression/TESTING.md",
+  "requires": []
+}

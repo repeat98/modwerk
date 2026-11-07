@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-11-07",
+  "source": "The author's own test runs with scripts/hwqual.py, logged per message; summary in docs/HARDWARE-TESTS.md",
+  "reporter": "tekomelu",
+  "status": "hardware-tested-author",
+  "module": {
+    "id": "midi-expression",
+    "version": "0.12.4-experimental"
+  },
+  "hardware": {
+    "model": "Digitakt 1",
+    "release": "1.54",
+    "connections": [
+      "DIN MIDI through a USB MIDI interface",
+      "USB MIDI"
+    ]
+  },
+  "firmware": {
+    "file": "midi-expression-0.12.4-experimental.syx",
+    "sha256": "cb67ec47ab6e36fee362fcb984d66fa9b4c6cf21c921506ad73315fccb88f27e",
+    "note": "Built by the author from the stock OS 1.54 file; not read back from the device."
+  },
+  "results": [
+    {
+      "phase": "tracks",
+      "what": "all eight MIDI tracks, pitch bend, aftertouch, mod wheel and breath, every value against a model of the sums",
+      "result": "pass, DIN and USB, both outputs identical"
+    },
+    {
+      "phase": "notes",
+      "what": "V.SNS 100/50/25/0 %, velocity routes before their note",
+      "result": "pass"
+    },
+    {
+      "phase": "multi",
+      "what": "3,000 random messages to all eight tracks",
+      "result": "pass"
+    },
+    {
+      "phase": "latency",
+      "what": "pitch bend round trip",
+      "result": "USB-USB 0.9 ms, DIN-USB 1.9 ms, USB-DIN 2.0 ms, DIN-DIN 2.9 ms"
+    },
+    {
+      "phase": "seq",
+      "what": "sequencer started over MIDI, live input while playing",
+      "result": "pass"
+    },
+    {
+      "phase": "clockloss",
+      "what": "300 live pitch bends and 300 stock notes each with the clock stopped, running, sequencer playing, a clock byte inside a message",
+      "result": "pass over USB; over DIN pass once the interface fault below was kept out"
+    },
+    {
+      "phase": "flood",
+      "what": "15,511 messages in 20 s to all eight tracks, sequencer at 160 BPM (USB)",
+      "result": "pass: no stuck notes, well formed, model exact afterwards, UI kept up"
+    },
+    {
+      "phase": "persist",
+      "what": "project load, power cycle, unsaved change, CREATE NEW with default presets",
+      "result": "pass"
+    },
+    {
+      "phase": "ui",
+      "what": "page, TRIG hold, BEND, preset menu and naming, audio tracks by ear",
+      "result": "pass (by eye and ear)"
+    }
+  ],
+  "limitations": [
+    "The test MIDI interface drops a DIN message that follows a clock byte within about 0.3 ms (scripts/loopback.py: 300 of 300 with no Digitakt connected); DIN losses with clock were traced to it, not the mod.",
+    "A loose DIN cable corrupted bytes in one session; those runs were discarded.",
+    "Run on one unit; Digitakt 2 and OS 1.53 not tested."
+  ]
+}
