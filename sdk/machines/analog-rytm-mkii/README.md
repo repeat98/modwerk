@@ -167,6 +167,23 @@ From 0.4 the core takes the four routines every parameter page goes through, and
 
 Mods built for 0.3 that patch a page's entry or a page key's list themselves (rytm2_mods v1.2's lfo-rnd, voice-dac, euclid-accents, velocity-humanise and comp-preview 1.0) overlap core's page sites and are refused at link with 0.4 and later; their 0.4 versions contribute entries instead. Mods with only events and storage, and mods that hook deeper in those routines (filter-hz's text, ctrl-all's turn), link with 0.7 as with 0.3.
 
+## Mod machines (core 0.5)
+
+A mod machine takes a hidden machine slot through `core_machines` ([`machines.h`](include/analog-rytm-mk2/machines.h)). What stock does around it, read for OS 1.74 and checked in rytm-emu; the analog figures were measured on a unit:
+
+- **Knob positions are the slot's.** Each slot's SYNTH page shows fixed sound indices: slot 40 A10 B13 C12 D11 / E14 F16 G15 H9, slot 41 A10 B13 C15 D11 / E16 F14 G12 H9, slot 42 A10 B12 C13 D11 / E16 F14 G15 H9. Give a meaning to an index, not to a knob. Indices 9 (LEV), 10 (TUN) and 11 (DEC) keep stock's MIDI CCs, and stock puts TUN top left, DEC top right and LEV bottom right (manual, Appendix D).
+- **Values can show bipolar.** A hidden slot's records may display -64..+63 whatever the core's `centred` says: give such knobs a `core_params` text.
+- **Pictures and jumps come from the parameter's RAM record** (`0x419a4888 + 84 * id`), not from code. Its draw std::function (manager `+0x2c`, invoker `+0x30`, called by `0x400a85e8` as (functor, value 8.8, bitmap, x, y, 1)) draws the knob: point it at a stock picture, such as SY DUAL VCO's CFG (`0x400fc1ec`) or SY CHIP's WAV (`0x400febf2`), or a function of the mod's, with no code site. FUNC jumps work the same way at `+0x4c`/`+0x50` ([Core hooks](#core-hooks)). The words can be set again on each `ev_draw`.
+- **The title bar shows the long name** in the ROM record (`0x401bfbc8 + 0x34 * id + 0x28`), drawn before the knob in a frame. Other screens list it too (`0x4004a800`), so a name changed for the title goes back afterwards.
+- **Added machines sort first.** The machine list orders by a category byte from `0x40257d70`, which covers stock's ids 0..33 only (comparator `0x400df664`), so every mod machine lands at the top of its track's list. Filing one with the SY machines needs a base hook.
+- **Driving a dual-oscillator voice** (BD, SD, RS; the control frame `0x800063c0` holds their TUNE1, TUNE2, LEVEL1, LEVEL2 at `+90`, `+98` and `+106`, as SY RAW `0x4011aa4c` writes them):
+  - A tune word is 16 x Hz after stock's trim `0x401197f4`; call it every block and force it on the trig (without it the oscillator crawls at a few Hz). Below about 40 Hz osc 1 runs sharp and osc 2 flat.
+  - A LEVEL word acts within its block. Its loud end saturates mostly after AMP VOL, so it is no drive control.
+  - An amp record at -128 still passes about -45 dB: write the LEVELs to 0 when a note ends.
+  - Stock's amp envelope state (`0x41329b54 + 32 * v`) stays 3 after its decay and is -1 only after a choke. To end with it, time its decay with `segment_length` (`0x4011e86e`) of AMP DEC's coefficient (`0x401ee61c`).
+  - A trig takes two blocks, as stock's machines: the reset bit, then the amps open.
+  - Ring mod at 1:1 cancels the fundamental (DC and 2f); an octave up keeps it (f and 3f).
+
 ## Mod storage (core 0.3)
 
 Declare each field in `build.json`, then read and write it through the core with elekloader's `analog-rytm-mk2/store.h`. Modwerk's source builder finds it in [`include/`](include/analog-rytm-mk2/store.h), copied unchanged from elekloader's `core-ar2-v0.3` tag (`sdk/imports/core-ar2-store-header-769d9aa.json`); elekloader's own builder uses its SDK's copy:
