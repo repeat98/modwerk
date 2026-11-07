@@ -1,0 +1,133 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+#include <assert.h>
+#include <stdio.h>
+#include "../src/feedback.h"
+static unsigned count, blocked, last_cc, last_value, last_channel;
+static unsigned seen[12][7];
+static int emit(unsigned ch, unsigned cc, unsigned value)
+{
+    unsigned p;
+    if (blocked) return 0;
+    assert(ch < 16 && cc < 128 && value < 128);
+    last_cc = cc; last_value = value; last_channel = ch;
+    for (p = 0; p < 7; ++p) if (cc == mf_cc[p] && ch < 12) ++seen[ch][p];
+    ++count;
+    return 1;
+}
+int main(void)
+{
+    struct mf_state s = {0};
+    unsigned t, p, i;
+    /* A block-only preflight admits these inconsistent states even though
+     * the sender's modular occupancy can leave less than one CC of room.
+     */
+    assert(!mf_queue_admits(0,0,1,0,0));
+    assert(!mf_queue_admits(1,1,2,0,0));
+    assert(!mf_queue_admits(2,0,0,0,0));
+    assert(!mf_queue_admits(1,0,0,0,0));
+    assert(!mf_queue_admits(1,3,3,4,0));
+    assert(mf_queue_admits(0,0,1,1,0));
+    assert(mf_queue_admits(1,4029,4029,0,0));
+    assert(!mf_queue_admits(1,4030,4030,0,0));
+    /* Validate room against the sender's occupancy model for every DMA
+     * progress/reload value in a representative range of admitted states.
+     */
+    for (t=1;t<4096;t+=31) for (p=0;p<4096;p+=29) {
+        if (!mf_queue_admits(1,t,t,t,p)) continue;
+        for (i=0;i<=t;++i) {
+            unsigned used=(t+i-t)&4095u;
+            assert(4096u-used >= p+64u+3u);
+        }
+    }
+    mf_reset(&s);
+    assert(!mf_flush(&s, emit));
+    for (t = 0; t < 12; ++t) for (p = 0; p < 7; ++p) mf_offer(&s,t,p,t,64);
+    for (i = 0; i < 21; ++i) assert(mf_flush(&s,emit) == 4);
+    assert(count == 84 && !mf_flush(&s,emit));
+    for (t = 0; t < 12; ++t) for (p = 0; p < 7; ++p) assert(seen[t][p] == 1);
+    /* Background refresh repeats every current assignment without moving
+     * the round-robin cursor or discarding the last transmitted values.
+     */
+    mf_request_refresh(&s);
+    for (i = 0; i < 21; ++i) assert(mf_flush(&s,emit) == 4);
+    assert(count == 168 && !mf_flush(&s,emit));
+    for (t = 0; t < 12; ++t) for (p = 0; p < 7; ++p) assert(seen[t][p] == 2);
+    /* Even requests arriving on every tick keep later tracks reachable. */
+    for (i = 0; i < 21; ++i) { mf_request_refresh(&s); assert(mf_flush(&s,emit) == 4); }
+    for (t = 0; t < 12; ++t) for (p = 0; p < 7; ++p) assert(seen[t][p] == 3);
+    /* Clear that deliberate backlog before testing ordinary edits. */
+    for (i = 0; i < 21; ++i) mf_flush(&s,emit);
+    /* A full wire queue retains the newest edit and sends it once later. */
+    blocked = 1;
+    mf_offer(&s,0,0,0,1);
+    assert(!mf_flush(&s,emit));
+    mf_offer(&s,0,0,0,127);
+    assert(s.coalesced == 1 && s.deferred == 1);
+    blocked = 0;
+    assert(mf_flush(&s,emit) == 1 && last_cc == 95 && last_value == 127);
+    assert(!mf_flush(&s,emit));
+    /* Channel reassignment resends even when the parameter is unchanged. */
+    mf_offer(&s,0,0,15,127);
+    assert(mf_flush(&s,emit) == 1 && last_channel == 15);
+    mf_offer(&s,0,0,16,0);
+    assert(!mf_flush(&s,emit));
+    mf_offer(&s,0,0,0,-10);
+    assert(mf_flush(&s,emit) == 1 && last_value == 0);
+    mf_offer(&s,0,0,0,999);
+    assert(mf_flush(&s,emit) == 1 && last_value == 127);
+    /* Edits that return to the last transmitted value need no feedback. */
+    mf_offer(&s,0,0,0,2);
+    mf_offer(&s,0,0,0,127);
+    assert(!mf_flush(&s,emit));
+    mf_reset(&s);
+    assert(!mf_flush(&s,emit));
+    /* Rapid filter sweeps must not send intermediate pickup targets, even
+     * when refresh is requested continuously. A different stable track keeps
+     * receiving feedback. After a pause, only the final filter values send.
+     */
+    for (t=0;t<12;++t) for(p=0;p<7;++p) seen[t][p]=0;
+    for (i=0;i<64;++i) {
+        mf_observe(&s,0,1,0,(int)i,100*i);
+        mf_observe(&s,0,2,0,(int)i+10,100*i);
+        mf_observe(&s,1,0,1,55,100*i);
+        mf_request_refresh(&s);
+        mf_flush(&s,emit);
+        assert(!seen[0][1] && !seen[0][2]);
+    }
+    assert(seen[1][0]>0);
+    /* Extra UI callbacks without audio time passing must never settle it. */
+    for(i=0;i<1000;++i) {
+        mf_observe(&s,0,1,0,63,6300);
+        mf_observe(&s,0,2,0,73,6300);
+        assert(!mf_flush(&s,emit));
+    }
+    for (i=1;i<=MF_SETTLE_BLOCKS;++i) {
+        mf_observe(&s,0,1,0,63,6300+i);
+        mf_observe(&s,0,2,0,73,6300+i);
+        if(i<MF_SETTLE_BLOCKS) assert(!mf_flush(&s,emit));
+    }
+    assert(mf_flush(&s,emit)==2);
+    assert(seen[0][1]==1 && seen[0][2]==1 && last_value==73);
+    /* A queued value that could not send must also be suppressed when a
+     * sweep resumes, rather than leaking a stale pickup target.
+     */
+    blocked=1;
+    mf_observe(&s,0,1,0,80,8000);
+    mf_observe(&s,0,1,0,80,8000+MF_SETTLE_BLOCKS);
+    assert(!mf_flush(&s,emit));
+    blocked=0;
+    mf_observe(&s,0,1,0,90,9000);
+    mf_request_refresh(&s);
+    mf_flush(&s,emit);
+    assert(seen[0][1]==1);
+    mf_observe(&s,0,1,0,90,9000+MF_SETTLE_BLOCKS);
+    assert(mf_flush(&s,emit)==1 && last_value==90);
+    /* Unsigned elapsed time also works across the audio counter wrapping. */
+    mf_observe(&s,0,1,0,100,UINT32_MAX-100);
+    mf_observe(&s,0,1,0,100,MF_SETTLE_BLOCKS-102);
+    assert(!mf_flush(&s,emit));
+    mf_observe(&s,0,1,0,100,MF_SETTLE_BLOCKS-101);
+    assert(mf_flush(&s,emit)==1 && last_value==100);
+    mf_reset(&s);
+    puts("PASS: 84 assignments, automatic refresh, fair batching, backpressure, coalescing, channels, clamping, reset");
+}
