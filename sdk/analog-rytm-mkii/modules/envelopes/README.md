@@ -1,12 +1,13 @@
 # Improved Envelopes
 
-Module for the Analog Rytm MKII, OS 1.74. It reworks the AMP envelope and shows times on the
-envelope knobs. It carries Env Reset Amp (ENV RESET AMP, with a pre-fade added) on, so a set takes this module instead.
+## Overview
 
-Credits: Nathaniel Pavel (@npp1993) for Envelopes and the pre-fade; MrScruff for ENV RESET AMP (rytm-mods
-0015-env-reset-amp); Iced-Cream for its elemod port and Modwerk module; irpina for Elekloader and core-ar2.
+Module for the Analog Rytm MKII, OS 1.74. It reworks the AMP envelope and shows times on every
+envelope knob: AMP HLD runs from no hold to AUTO without cutting the attack, ATK, DEC, REL and HLD get
+fine steps at short times (0.2 ms up to 5 ms), and SOUND SETTINGS > ENV RESET gains AMP. It carries
+Iced-Cream's Env Reset Amp (ENV RESET AMP, from MrScruff's rytm-mods) on, with a pre-fade added.
 
-## What changes
+## Controls
 
 | Control | Stock | With Envelopes |
 |---|---|---|
@@ -18,12 +19,18 @@ Credits: Nathaniel Pavel (@npp1993) for Envelopes and the pre-fade; MrScruff for
 | AMP ATK, HLD, DEC, FILTER ATK, DEC, REL | 0..127 | times: an attack's full ramp, a hold's length, a decay's or release's time to -60 dB; AMP DEC 127 = INF |
 | SOUND SETTINGS > ENV RESET | OFF, FILTER | OFF, AMP, FILTER, AMP+FILT (Env Reset Amp). AMP fades the amp envelope to silence just before sequenced trigs and retrig rolls (a held pad's RTRG roll too), so they restart from silence; a pad or MIDI hit itself, and the first trig after PLAY, continue from the current level, as stock |
 
-Saved values keep their bytes and are read the new way: a project made on stock plays HLD 0 as no hold
-(was AUTO) and HLD 127 as AUTO (was 16 s), HLD 1..126, DEC and REL on the new curves (the same byte is a different time, mostly shorter at the low end), and AMP and FILTER ATK on the new curve. MIDI CC 79 (HLD) and the ATK CC
-follow the knob. There is no migration.
+## Usage
 
-The ramps stay as stock makes them: the attack is a straight line in amplitude, decay and release are
-exponential (straight lines in dB). A choke or stop still fades over stock's fixed ~43 ms.
+Shape short, clicky transients and tight holds by ear and by number: every envelope knob reads its
+time, and the short end has the resolution drums need.
+
+### Quick tutorial
+
+1. Press AMP. Turn DEC down: the knob shows its time to -60 dB, in 0.2 ms steps below 5 ms.
+2. Turn HLD to 0: the decay starts as soon as the attack peaks. Turn it up for a hold in ms, or to the top for AUTO (decay from note-off).
+3. Hold FUNC and turn HLD: it jumps between 0, 125 ms and AUTO.
+4. On the FILTER page, ATK, DEC and REL show their times on the same fine curves.
+5. In SOUND SETTINGS, set ENV RESET to AMP: sequenced trigs and retrig rolls restart the amp envelope from silence.
 
 ## How it works
 
@@ -54,7 +61,27 @@ exponential (straight lines in dB). A choke or stop still fades over stock's fix
 - Times on the knobs come from core-ar2's `core_params` text for ids 50..58; HLD's FUNC jump is its
   parameter record's jump function (id 57, +0x4c/+0x50).
 
-## Limits
+## Changes to stock flows
+
+| Change | For whom | Why | Neighbouring flows |
+| --- | --- | --- | --- |
+| AMP HLD 0 is no hold and 127 is AUTO (stock: 0 is AUTO, 127 is 16 s); HLD, ATK, DEC and REL follow new curves. | Anyone with the module installed, including projects made on stock. | A hold that starts at zero and grows with the knob, and resolution at the short end, need the knob's values to mean new times. | Saved sounds and projects play their stored bytes on the new curves (no migration); MIDI CC follows the knob. |
+| FUNC + turn on HLD steps 0, 124.7 ms, AUTO (stock: jumps to AUTO). | Anyone who uses the FUNC jump on HLD. | Quick access to the three most used holds. | Other knobs' FUNC jumps are unchanged. |
+| ENV RESET gains AMP and AMP+FILT. | Anyone who picks them; OFF and FILTER behave as stock. | Env Reset Amp's feature. | A pad or MIDI hit, and the first trig after PLAY, continue from the current level, as stock. |
+
+Saved values keep their bytes and are read the new way: a project made on stock plays HLD 0 as no hold
+(was AUTO) and HLD 127 as AUTO (was 16 s), HLD 1..126, DEC and REL on the new curves (the same byte is a different time, mostly shorter at the low end), and AMP and FILTER ATK on the new curve. MIDI CC 79 (HLD) and the ATK CC
+follow the knob. There is no migration.
+
+The ramps stay as stock makes them: the attack is a straight line in amplitude, decay and release are
+exponential (straight lines in dB). A choke or stop still fades over stock's fixed ~43 ms.
+
+## Compatibility and limitations
+
+It patches the amp record write in `amp_env_commands` (0x40109c24) and points stock's envelope table
+reads at its own tables (`ptr` sites, listed under How it works), and subscribes to `ev_tick`. Claims:
+ENV RESET's values, FUNC + turn on AMP HLD, the value text of AMP ATK/HLD/DEC and FILTER ATK/DEC/REL,
+the AMP page picture and the amp and filter envelope tables. It needs no other module.
 
 - AMP ATK and DEC times are calibrated to one Rytm MKII (EV06, 6 Nov 2026): its VCA ran attacks at
   0.957x and decays at 0.918x the OS's timing model, so the ATK table is built for 0.957 and the
@@ -68,3 +95,25 @@ exponential (straight lines in dB). A choke or stop still fades over stock's fix
   0x40109bf0, not stock's 0x401ee61c: with this module that address points at the new table.
 - On stock firmware a sound saved here plays the stock way (HLD 0 = AUTO, the old ATK curve).
 - Unit results: TESTING.md.
+
+## Tests and measurements
+
+Measured on the author's Analog Rytm MKII over USB (builds EV04 to ED02, in combined sets of up to 16
+modules), with rytm-emu for the screens ([TESTING.md](TESTING.md)): AMP DEC within 0.7 % of its text
+from 5 ms, AMP HLD within 0.1 ms, FILTER ATK within 0.3 %, FILTER DEC and REL 1.5 % (the method's).
+Memory: 5,900 bytes of the shared mod area (the base alone leaves 119,004, with this module 113,104).
+Load: the amp record write runs every block for every voice; an idle voice makes no C call there.
+
+## Authorship and licences
+
+Nathaniel Pavel (@npp1993): Envelopes, the curves, the knob times and ENV RESET AMP's pre-fade.
+MrScruff: ENV RESET AMP, rytm-mods 0015-env-reset-amp, its design and code. Iced-Cream: its elemod
+port and Modwerk module, which this carries on. irpina: Elekloader and core-ar2. GPL-2.0-only
+([LICENSE](LICENSE)). The source names firmware addresses only; no Elektron firmware is included.
+
+## Screens and audio
+
+Screenshots are rytm-emu captures of build EN01, this package linked alone on the Modwerk base
+([media/capture.json](media/capture.json)). No audio preview.
+
+![AMP DEC reading 2.2ms](media/decay-time.png) ![AMP HLD reading 4.0ms](media/hold-time.png)

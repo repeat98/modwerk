@@ -31,9 +31,11 @@
       "Envelope knobs show ms and s."
     ],
     "usage": [
-      "Load a sound, open the AMP page and turn HLD fully left: the sound decays straight from its peak.",
-      "Turn HLD fully right to AUTO: the sound holds while the trig or note lasts.",
-      "Turn ATK from 0 up: it reads 0.2ms, 0.4ms, ... with fine steps for clicks and transients."
+      "Press AMP. Turn DEC down: the knob shows its time to -60 dB, in 0.2 ms steps below 5 ms.",
+      "Turn HLD to 0: the decay starts as soon as the attack peaks. Turn it up for a hold in ms, or to the top for AUTO (decay from note-off).",
+      "Hold FUNC and turn HLD: it jumps between 0, 125 ms and AUTO.",
+      "On the FILTER page, ATK, DEC and REL show their times on the same fine curves.",
+      "In SOUND SETTINGS, set ENV RESET to AMP: sequenced trigs and retrig rolls restart the amp envelope from silence."
     ]
   },
   "access": {
@@ -127,7 +129,24 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Not tested yet."
+    "summary": "Emulator captures, and the author's measurements on an Analog Rytm MKII over USB (ED02 and earlier builds).",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Press AMP. Turn DEC down: the knob shows its time to -60 dB, in 0.2 ms steps below 5 ms.",
+          "Turn HLD to 0: the decay starts as soon as the attack peaks. Turn it up for a hold in ms, or to the top for AUTO (decay from note-off).",
+          "Hold FUNC and turn HLD: it jumps between 0, 125 ms and AUTO.",
+          "On the FILTER page, ATK, DEC and REL show their times on the same fine curves.",
+          "In SOUND SETTINGS, set ENV RESET to AMP: sequenced trigs and retrig rolls restart the amp envelope from silence."
+        ]
+      },
+      "screenshots": [
+        "media/decay-time.png",
+        "media/hold-time.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
   },
   "license": {
     "spdx": "GPL-2.0-only",
@@ -138,11 +157,43 @@
     {
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
-      "caption": "Env Reset Amp",
+      "caption": "Improved Envelopes",
       "alt": "Original illustration of four envelopes, each rising from zero",
       "credit": "Iced-Cream",
       "license": "GPL-2.0-only",
       "source": "Original vector illustration; not a device screenshot."
+    },
+    {
+      "path": "media/decay-time.png",
+      "kind": "screenshot",
+      "caption": "AMP page, DEC turned down: DECAY TIME, 2.2ms.",
+      "alt": "AMP page titled DECAY TIME with the DEC knob reading 2.2ms and a short decay drawn in the envelope picture.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "b1bccf4d23c6b584ae36f39f2412dddff98c4a206bea83dff6613b313f2ba8bf",
+        "setup": "Headless rytm-emu (dtboot) running EN01: the Modwerk base for core-ar2 0.7 (plain variant ba530f45) and this folder's Improved Envelopes 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/hold-time.png",
+      "kind": "screenshot",
+      "caption": "AMP page, HLD turned up: HOLD TIME, 4.0ms, beside DEC at 1.8ms.",
+      "alt": "AMP page titled HOLD TIME with the HLD knob reading 4.0ms and DEC reading 1.8ms.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "b1bccf4d23c6b584ae36f39f2412dddff98c4a206bea83dff6613b313f2ba8bf",
+        "setup": "Headless rytm-emu (dtboot) running EN01: the Modwerk base for core-ar2 0.7 (plain variant ba530f45) and this folder's Improved Envelopes 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
     }
   ]
 }
