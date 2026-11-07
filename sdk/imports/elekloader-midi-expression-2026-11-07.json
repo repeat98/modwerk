@@ -7,15 +7,15 @@
   "mods": [
     {
       "file": "midi-expression-0.13.0-experimental-os1.54.elemod",
-      "sha256": "1be338513558b733594049cb01ad3a877a515cb5efbfa0a7a6b67577ae9ba7de",
+      "sha256": "62029347f2df196e3f266f125be2ccd15f6e8c0820236aeef57a7b2045d9d4f6",
       "id": "midi-expression",
       "version": "0.13.0-experimental",
       "device": "digitakt-mk1",
       "os": "1.54",
       "license": "GPL-3.0-or-later",
       "source": {
-        "repo": "tekomelu/modwerk",
-        "commit": "a67c6c0c0a36711dcd2d4f5d1039b80a47b35619",
+        "repo": "repeat98/modwerk",
+        "commit": "6ea6c3b8d187dbbd4d7de7e591aef2c7cf3eef9f",
         "path": "sdk/imports/packages/midi-expression/midi-expression-0.13.0-experimental-os1.54.elemod"
       },
       "title": "Digi Expression",
@@ -28,7 +28,7 @@
       "category": "MIDI",
       "author": "tekomelu",
       "needs_core": "2.1",
-      "on_unit": "0.12.4 tested on a Digitakt I by the author over DIN and USB; 0.13.0 tested in digiemu, the author's unit check is pending."
+      "on_unit": "0.13.0 tested on the author's Digitakt I, OS 1.54: hwqual.py v013, 11 of 11 (the SETTINGS row, factory defaults, the power-on file); 0.12.4 passed the full hwqual.py run over DIN and USB."
     }
   ]
 }
