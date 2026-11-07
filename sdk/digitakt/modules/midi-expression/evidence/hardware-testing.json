@@ -6,7 +6,7 @@
   "status": "hardware-tested-author",
   "module": {
     "id": "midi-expression",
-    "version": "0.12.4-experimental"
+    "version": "0.13.0-experimental"
   },
   "hardware": {
     "model": "Digitakt 1",
@@ -17,10 +17,53 @@
     ]
   },
   "firmware": {
-    "file": "midi-expression-0.12.4-experimental.syx",
-    "sha256": "cb67ec47ab6e36fee362fcb984d66fa9b4c6cf21c921506ad73315fccb88f27e",
-    "note": "Built by the author from the stock OS 1.54 file; not read back from the device."
+    "file": "midi-expression-0.13.0-experimental.syx",
+    "sha256": "8abc2a681841a9f78d0938a1e2b7b72a8e61c55115d2ea7eddb84b6e40df3a02",
+    "note": "Built by the author from the stock OS 1.54 file; the same image as the emulator captures (media/capture.json). Not read back from the device."
   },
+  "limitations": [
+    "The test MIDI interface drops a DIN message that follows a clock byte within about 0.3 ms (scripts/loopback.py: 300 of 300 with no Digitakt connected); DIN losses with clock were traced to it, not the mod.",
+    "A loose DIN cable corrupted bytes in one session; those runs were discarded.",
+    "Run on one unit; Digitakt 2 and OS 1.53 not tested."
+  ],
+  "results0130": [
+    {
+      "check": "SETTINGS > EXPRESSION is the last row, below SYSTEM; YES opens the page of the active track",
+      "result": "pass"
+    },
+    {
+      "check": "TRK + trig with the page up moves it to that track (MID A, SMP 1)",
+      "result": "pass"
+    },
+    {
+      "check": "NO back to SETTINGS with the row selected; NO again closes SETTINGS as stock",
+      "result": "pass"
+    },
+    {
+      "check": "TRIG closes the page and shows the TRIG page, as stock; PLAY and STOP work with the page up",
+      "result": "pass"
+    },
+    {
+      "check": "Factory settings on MIDI track A: 8 notes out, no pitch bend, aftertouch, mod wheel or breath (over USB, scripted)",
+      "result": "pass"
+    },
+    {
+      "check": "EXPR TEST reloaded: track A passes pitch bend again (THRU ON as saved)",
+      "result": "pass"
+    },
+    {
+      "check": "A new project (CREATE NEW): THRU OFF and BEND OFF, no routes",
+      "result": "pass"
+    },
+    {
+      "check": "A change made while the sequencer plays, then power off without STOP: not written",
+      "result": "pass"
+    },
+    {
+      "check": "The same change, STOP, 5 s, power off: written",
+      "result": "pass"
+    }
+  ],
   "results": [
     {
       "phase": "tracks",
@@ -68,9 +111,5 @@
       "result": "pass (by eye and ear)"
     }
   ],
-  "limitations": [
-    "The test MIDI interface drops a DIN message that follows a clock byte within about 0.3 ms (scripts/loopback.py: 300 of 300 with no Digitakt connected); DIN losses with clock were traced to it, not the mod.",
-    "A loose DIN cable corrupted bytes in one session; those runs were discarded.",
-    "Run on one unit; Digitakt 2 and OS 1.53 not tested."
-  ]
+  "resultsNote": "'results' are the 0.12.4 run (hwqual.py over DIN and USB); the MIDI, audio and file code they cover is unchanged in 0.13.0. 'results0130' are the 0.13.0 run (hwqual.py --only v013, 7.2 minutes, 11 of 11)."
 }

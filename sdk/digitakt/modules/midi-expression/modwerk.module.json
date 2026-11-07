@@ -127,16 +127,31 @@
     }
   },
   "evidence": {
-    "tier": "none",
+    "tier": "author-hardware",
     "moduleVersion": "0.13.0-experimental",
-    "sourceSha256": null,
-    "reports": [],
-    "hardware": null,
+    "sourceSha256": "c63d84caae1afa4d669438c89d26cc243afac76d440838daec078a592d5b4e17",
+    "reports": [
+      "evidence/hardware-testing.json",
+      "evidence/source-identity.json"
+    ],
+    "hardware": {
+      "model": "Digitakt 1",
+      "release": "1.54",
+      "testedOn": "2026-11-07",
+      "tester": "tekomelu",
+      "durationMinutes": 15,
+      "summary": "The author ran hwqual.py's v013 phase on 0.13.0 (11 of 11): the SETTINGS row and the page following the track, NO and TRIG as stock, the factory settings passing only notes over MIDI, THRU and BEND OFF in a new project, and the power-on file not written while playing, written after STOP. The MIDI, audio and file code is 0.12.4's, which passed the full hwqual.py run over DIN and USB.",
+      "limitations": [
+        "durationMinutes is the time on 0.13.0 (two runs of the v013 phase); 0.10-0.12.4 had about 8 hours on the unit, the author's own playing included.",
+        "The test MIDI interface drops a DIN message that follows a clock byte within about 0.3 ms (scripts/loopback.py); DIN losses with clock in the 0.12.4 runs were traced to it, not the mod.",
+        "Run on one unit; Digitakt 2 and OS 1.53 not tested."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host unit tests (about 2.44 million checks, also under AddressSanitizer and UBSan, with 3,000 random broken files); the digiemu emulator on the firmware (MIDI-track sums and merging, saving and loading, the SETTINGS row and the page, the preset menu, heap and CPU use); a link check with every other Modwerk Digitakt module. Hardware: the full hwqual.py run on 0.12.4 over DIN and USB (TESTING.md); 0.13.0's opening, defaults and power-on file are to be checked on the unit.",
+    "summary": "Host unit tests (about 2.44 million checks, also under AddressSanitizer and UBSan, with 3,000 random broken files); the digiemu emulator on the firmware (MIDI-track sums and merging, saving and loading, the SETTINGS row and the page, the preset menu, heap and CPU use); a link check with every other Modwerk Digitakt module. Hardware: the full hwqual.py run on 0.12.4 over DIN and USB (TESTING.md); 0.13.0's SETTINGS row, factory defaults and power-on file passed on the unit (hwqual.py v013, 11 of 11).",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial: bend a synth through a MIDI track",
