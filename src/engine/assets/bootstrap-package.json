@@ -16,7 +16,7 @@
   "reserveBytes": 10487808,
   "uncachedAlias": 134217728,
   "stageAlignment": 4096,
-  "sourceCommit": "e5025c5f75b21831ac1c68824a940d3224cf2f7f",
+  "sourceCommit": "e441400efaa760ecc392b15e58002e2dcb246bb2",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -52,6 +52,7 @@
     "arp-key-locks": "0.1.0-experimental",
     "temp-save": "0.1.0-experimental",
     "tuner": "0.1.0-experimental",
-    "slow-lfo": "0.1.0-experimental"
+    "slow-lfo": "0.1.0-experimental",
+    "bar-led": "0.1.0-experimental"
   }
 }
