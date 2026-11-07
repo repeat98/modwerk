@@ -8,7 +8,8 @@ const WORK_OFFSET = 8   // struct mw_fx (include/modwerk/fx.h): abi, id (u16 eac
 
 /** The words the largest send effect asks for and the words the set leaves it (sendbus.c's room), or undefined for a
  * set without the FX list. Only for a base that lends that RAM: one that imports __bss_end. mainLoad: the device's main
- * OS load address (LINK_DEVICES). */
+ * OS load address (LINK_DEVICES). The largest is taken over every record, including one sendbus.c's build_list would not
+ * list anyway (its ABI, slot or id, a repeated id, work over MW_FX_WORK, past the first 16), so a check on it errs on the side of refusing. */
 export function sendFxRoom(linked: Pick<Linked, 'image' | 'tables' | 'layout'>, mainLoad: number) {
   const table = linked.tables.mw_fx
   if (!table) return undefined
