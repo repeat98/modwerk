@@ -553,7 +553,7 @@
       }
     ]
   },
-  "sourceCommit": "e5025c5f75b21831ac1c68824a940d3224cf2f7f",
+  "sourceCommit": "c4ab8c1d37166629896917dff2413d766e0dda1b",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -589,6 +589,7 @@
     "arp-key-locks": "0.1.0-experimental",
     "temp-save": "0.1.0-experimental",
     "tuner": "0.1.0-experimental",
-    "slow-lfo": "0.1.0-experimental"
+    "slow-lfo": "0.1.0-experimental",
+    "stem-rec": "0.1.0-experimental"
   }
 }
