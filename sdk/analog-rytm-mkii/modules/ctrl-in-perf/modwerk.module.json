@@ -90,9 +90,9 @@
   "memoryBytes": 952,
   "fastBytes": 0,
   "load": {
-   "display": "Not measured yet",
-   "method": "unmeasured",
-   "conditions": "Each audio block, for each jack with a PERF DEST, a scale and a compare; each UI tick, each jack's settings and stored PERF DEST."
+   "display": "Under 0.1% of the audio block",
+   "method": "static",
+   "conditions": "Static, from the source: each audio block runs about 25 instructions a jack with a PERF DEST and about 8 without one; each UI tick (about 20 Hz) reads each jack's settings and its stored PERF DEST. At about 0.023% of the block period per instruction a frame (the Rytm SDK's emulator figure), that is well under 0.1%. Not a measurement; the unit run reads analoghealth's CPU figure."
   }
  },
  "evidence": {
