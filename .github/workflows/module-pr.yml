@@ -51,6 +51,18 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      # npm ci empties node_modules, where ESLint (content-hashed, per-file rules), tsc (incremental), Vitest and sdk:check
+      # (the order of their files) keep their caches. The newest one, from this pull request or main, lets lint and typecheck
+      # redo only what changed.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            node_modules/.cache/eslint
+            node_modules/.cache/sdk-check-times.json
+            node_modules/.tmp
+            node_modules/.vite/vitest
+          key: check-cache-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: check-cache-${{ runner.os }}-
       - name: Require versions, qualification evidence and complete release documentation
         env:
           OCTAMOD_PR_BASE: ${{ github.event.pull_request.base.sha }}

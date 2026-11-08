@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "identity": "c06053d6d6b61fd9b99c08205cf7225bee40e32ab1846f2872a3d7bf06f42703",
+  "package": "core-1.1.elemod",
+  "sections": {
+    ".boot": 50,
+    ".run": 4651,
+    ".bss": 3128
+  },
+  "sites": 18,
+  "built": {
+    "kit": "3b31ef3c0e43c810e3acd0be6257e2484b20fc40",
+    "toolchain": {
+      "cross": "m68k-elf-",
+      "gcc": "16.2.0",
+      "binutils": "2.47"
+    },
+    "stock": "26c22f6652625ac2cfd47f7ee970d388ed8b6427dae3563c0a6a2f2d334350d5"
+  }
+}

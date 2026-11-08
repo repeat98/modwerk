@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { linkColdFireRuntime, runtimeCatalogObject } from './coldfire-link'
+import { linkColdFireRuntime, runtimeCatalogObject, MAX_LINK_INPUTS } from './coldfire-link'
 import { readColdFirePackage, PLATFORM_UNITS } from './coldfire-package'
 import { serializeRuntimeCatalog } from './runtime-catalog'
 import suffix from './test-fixtures/coldfire-suffix.json'
@@ -36,6 +36,16 @@ describe('native ColdFire runtime link parity', () => {
     const reserved={...object,symbols:object.symbols.map(symbol=>symbol.name==='scratch'?{...symbol,name:'_end'}:symbol)}
     expect(()=>linkColdFireRuntime([{label:'reserved',object:reserved}],fixture.base,new Map([['ring',fixture.symbols.ring]]))).toThrow('reserved linker memory boundary')
     expect(() => linkColdFireRuntime([{ label: 'bss', object }], fixture.base, new Map([['scratch', 0x40000000]]))).toThrow('duplicate')
+  })
+  it('links more than 32 units, as GNU ld does, so the fullest selections reach native\'s free-space refusals', () => {
+    // The whole catalogue linked 32 units in November 2026; one more ColdFire module made the site refuse on the count
+    // where native refused for space. Data-only units stand in for module objects.
+    const unit = (i: number) => ({ label: 'module' + i, object: { flags: 0, symbols: [], relocations: [], sections: [{ index: 0, name: '.rodata', type: 1, flags: 2, size: 4, alignment: 4, entrySize: 0, data: new Uint8Array([i, 0, 0, 1]) }] } })
+    const units = Array.from({ length: 40 }, (_, i) => unit(i))
+    const link = linkColdFireRuntime(units, 0x1000)
+    expect(link.placements.size).toBe(units.length)
+    expect(new Set(units.map(u => link.placements.get(u.label)!.get(0)!.address)).size).toBe(40)
+    expect(() => linkColdFireRuntime(Array.from({ length: MAX_LINK_INPUTS + 1 }, (_, i) => unit(i)), 0x1000)).toThrow('input count')
   })
   it('rejects incompatible, duplicate, unbounded and unsupported runtime inputs' , async () => {
     const units = await inputs()

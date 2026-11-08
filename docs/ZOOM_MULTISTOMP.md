@@ -32,6 +32,16 @@ without a pedal. It is a developer tool: never hardware evidence, and the site
 never bundles it or offers it to musicians, so it cannot stand in for a pedal
 (owner, 31 October 2026).
 
+`npm run upstream:tools` keeps its source at the archive pinned in
+`sdk/upstream-tools.json`; build it there with
+`cargo build --release --locked -p ziddle-cli` (Rust 1.88 or newer). Modwerk
+uses only the emulator, on your own effect files: `ziddle effect check
+FILE.ZDL` reads the loader contract and `ziddle effect render FILE.ZDL in.wav
+out.wav` plays a 44.1 kHz WAV through it, both without Zoom firmware. Leave
+`library import` and `NAME@FIRMWARE` alone: they read a Zoom updater. An effect
+whose coefficient knobs (depth, rate, mix) read the firmware refuses to render
+without one; test it on the pedal.
+
 ## Devices
 
 | Device | Firmware | Status (from the project's reports) |
@@ -211,10 +221,9 @@ mod selection and to his transport block as the shared tempo contract.
   own file.
 - [`zoom-base.ts`](../src/engine/zoom/zoom-base.ts), with `ais.ts` (a port of
   zoomms' `ais.py`), applies them in the browser. From the stock MS-70CDR 2.10
-  Mac updater (27 October 2026) it builds `hello` and MIDISTOMP V1.2 byte for
+  Mac updater (27 October 2026) it builds `hello` and MIDISTOMP V2.0.1 byte for
   byte as zoomms does: `ZOOM_MS70CDR_APP='…/ZOOM MS-70CDR v2.10 Updater.app'
   npx vitest run src/engine/zoom`. Firmware never enters CI.
-- MIDISTOMP 2.0 is out; the pin above is still the earlier revision.
 - A new MIDISTOMP revision: run the import on a clean checkout with
   `--app '<stock Mac updater>.app'`, then refresh the zoomms hashes in
   `zoom-base.test.ts` (`zoomms build-mac` at that revision).
@@ -236,8 +245,11 @@ Nothing writes to a pedal yet. Before the first write of our own:
    `F0 52 00 61 <command> … F7`, numbers in 7-bit groups, least significant
    first: erase `0A` + address (5) + length (5); write `02` + address (5) +
    length (2) + 2,048 bytes packed 8-into-7, high bits first, + CRC32 of the
-   block XOR `0xFFFFFFFF` (5); finish `04`, and the pedal reboots. Each answers
-   `00 00`. The recording settles anything the OS write does differently.
+   block XOR `0xFFFFFFFF` (5); finish `04`. Each answers `00 00`; a write
+   with a bad CRC answers `00 08`, and sending that block again fixes it. The
+   pedal does not reboot after `04`: the owner restarts it. A USB recording
+   of MIDISTOMP's updater on an MS-70CDR showed these messages, and the OS
+   erase answering after about 3 s.
 3. **Its steps**, the stock updater's script with MIDISTOMP's skips
    (`zoomms/macapp.py`): erase `0x0EF000` +`0x1000` (the OS trailer first, so
    an interrupted flash shows); if the boot logo changed, erase `0x3FD000`

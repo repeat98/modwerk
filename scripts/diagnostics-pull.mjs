@@ -12,6 +12,7 @@ import { chmodSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { DSP_REPORT_NAMES } from '../src/community/octatrack-diagnostics-contract.ts'
 
 const ROOT = new URL('..', import.meta.url)
 const SERVICE = 'modwerk-diagnostics-read'
@@ -64,7 +65,17 @@ const logBase = (incidents, epoch) => {
   const mine = incidents.filter(r => r.epoch === epoch), first = mine.find(r => r.kind === 'base')
   return first ? first.a.toString(16).padStart(8, '0') : mine[0]?.upload?.slice(0, 8) ?? 'unknown'
 }
-const PROJ = 0x1c, RIGHT = 0x21, YES = 0x31 // stock key codes (scripts/device.mjs)
+const PROJ = 0x1c, DOWN = 0x20, RIGHT = 0x21, YES = 0x31, UP = 0x33 // stock key codes (scripts/device.mjs)
+/** RIGHT then YES on the same row: a DOWN and an UP between them cancel, any other key or a net move breaks it. */
+const rightYes = keys => {
+  let walk = keys.map(k => k === RIGHT ? 'R' : k === YES ? 'Y' : k === UP ? 'U' : k === DOWN ? 'D' : '-').join('')
+  while (/UD|DU/.test(walk)) walk = walk.replace(/UD|DU/g, '')
+  return walk.includes('RY')
+}
+/** The stall record's report words that help triage (dsp.c modwerk_dsp_report); cpu is per mille. */
+const STALL_WORDS = ['frames', 'watchTicks', 'rejected0', 'rejected1', 'errors', 'edmaErrors', 'missed', 'setModules', 'cpu']
+const stallWords = report => STALL_WORDS.map(name => [name, report[DSP_REPORT_NAMES.indexOf(name)]]).filter(([, word]) => word !== undefined)
+  .map(([name, word]) => name + ' ' + (name === 'cpu' ? percent(word) : word)).join(', ')
 
 /** The unit's last incidents, oldest first, each log's in turn; an earlier log's name the base they ran on. A stall
  * found at a start that runs another base than the session before is an OS upgrade (stock halts the DSPs for it while
@@ -81,7 +92,7 @@ export function unitLines(incidents) {
     const last = all.findLast(p => at(p) === at(r, r.boot - 1) && !STATELESS.includes(p.kind))
     const set = all.findLast(p => p.epoch === r.epoch && p.seq < r.seq && p.kind === 'set')
     const keys = last?.keys.filter(k => k !== 255) ?? [], from = keys.lastIndexOf(PROJ), walk = from >= 0 ? keys.slice(from) : keys.length === 16 ? keys : []
-    return last?.cpu >= 950 && !last.playing && walk.some((k, i) => k === RIGHT && walk[i + 1] === YES) && set?.a === 0
+    return last?.cpu >= 950 && !last.playing && rightYes(walk) && set?.a === 0
   }
   const latest = Math.max(...all.map(r => r.epoch)), on = r => base.has(at(r)) ? base.get(at(r)).toString(16).padStart(8, '0') : logBase(all, r.epoch)
   return all.filter(r => r.kind !== 'start').slice(-12).map(r => '  unit: ' + incident(r) +
@@ -186,7 +197,8 @@ export function summary({ events, counts }, { base = '', layouts = {}, reports =
       ...member.loads?.size ? [`  unit's load log: ${member.loads.size} five-minute records, CPU peak ${percent(Math.max(...[...member.loads.values()].map(r => r.cpu[1])))}, mean ${percent([...member.loads.values()].reduce((a, r) => a + r.cpu[0], 0) / member.loads.size)}`] : [],
       ...(member.loads && [...member.loads.values()].some(r => r.frameGap !== undefined) ? [`  longest frame gap ${Math.max(...[...member.loads.values()].map(r => r.frameGap ?? 0))} us (frames are 363, DSPs starve past about 515), longest UI-tick gap ${Math.max(...[...member.loads.values()].map(r => r.tickGap ?? 0))} frames (freeze at 13,781)`] : []),
       ...member.crash ? [`  crash record ${member.crash.count}: vector ${member.crash.vector} pc 0x${member.crash.pc.toString(16)} code ${member.crash.code.map(w => w.toString(16).padStart(8, '0')).join(' ')} uncached ${member.crash.memory.map(w => w.toString(16).padStart(8, '0')).join(' ')}`] : [],
-      ...member.stall ? [`  stall record ${member.stall.count}: reason ${member.stall.reason} (1 frames stopped, 2 eDMA refused) at tick ${member.stall.ticks}`] : [],
+      ...member.stall ? [`  stall record ${member.stall.count}: reason ${member.stall.reason} (1 frames stopped, 2 eDMA refused) at tick ${member.stall.ticks}`,
+        ...member.stall.report?.length ? ['    report: ' + stallWords(member.stall.report)] : []] : [],
       ...unitLines([...member.incidents?.values() ?? []]),
       '  ' + Object.entries(member.kinds).map(([kind, n]) => kind + ' ' + n).join(', '),
     ]),

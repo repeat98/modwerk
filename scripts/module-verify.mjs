@@ -26,6 +26,7 @@ import { CATALOG_SOURCE } from '../src/catalog/modules.ts'
 import { comparisonPool, coverageSelections, selectionKey } from './module-coverage.mjs'
 import { moduleSourceFingerprint } from './module-source.mjs'
 import { moduleNativeSourceSha256 } from './module-qualification.mjs'
+import { lockDirectory } from './directory-lock.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const args = process.argv.slice(2)
@@ -33,7 +34,9 @@ const option = name => { const i = args.indexOf(name); return i < 0 ? undefined 
 const flag = name => args.includes(name)
 const usage = 'Usage: npm run module:verify -- <module-id> --os <OCTATRACK_OS1.40C.bin> [--jobs N] [--image TAG] [--check] [--all] [--clean]'
 const home = resolve(process.env.MODWERK_NATIVE_HOME ?? join(homedir(), '.cache', 'modwerk-native'))
-if (flag('--clean')) { rmSync(home, { recursive: true, force: true }); console.log('Removed ' + home); process.exit(0) }
+// One build run at a time: each one replaces the shared octabam copy below, so a run from another worktree would swap its sources mid-build.
+const lockHome = () => lockDirectory(home, { waiting: pid => console.log(`Waiting for the module:verify run with PID ${pid} to finish with ${home} …`) })
+if (flag('--clean')) { await lockHome(); rmSync(home, { recursive: true, force: true }); console.log('Removed ' + home); process.exit(0) }
 const positional = args.filter((arg, i) => !arg.startsWith('--') && !['--os', '--jobs', '--image'].includes(args[i - 1]))
 const osFile = option('--os'), check = flag('--check'), all = flag('--all')
 if (!osFile || (all ? positional.length : positional.length !== 1) || (all && !check)) throw new Error(usage + '\n(--all works with --check only)')
@@ -105,6 +108,7 @@ if (check) {
 
   // The private SDK: the reviewed sources (the exporter checks they equal this checkout's), the toolchain from the image, the
   // original MAIN OS, and octabam's compiler memo, which survives between runs.
+  await lockHome()
   const octabam = join(home, 'octabam')
   for (const group of ['modules', 'platform', 'tools', 'dsp', 'licenses']) {
     rmSync(join(octabam, group), { recursive: true, force: true })

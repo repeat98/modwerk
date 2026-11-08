@@ -219,7 +219,7 @@ To compare a Part's working and saved copies: `mem:` both addresses with length 
   inventory` lists what is installed (a contributor's MKII, beta bases `38a0bde1…` and `99336d35…`, 15 October 2026).
 - Before a test: `ui`, the bank and Part bytes, the Part's working-equals-saved check. After: restore and
   read them again.
-- Long runs (`scripts/octatrack-qualify.py`, benchmarks) in the background with a progress log; look at the
+- Long runs (`npm run device:qualify`, benchmarks) in the background with a progress log; look at the
   log instead of waiting.
 - If the screen does not change for a minute, the run is stuck: kill it, restart the session, read `ui`.
 - Audio: `~/.cache/modwerk-octatrack/tools/rec SECONDS OUT.wav Octatrack` records MAIN and CUE over USB

@@ -1,0 +1,1 @@
+Site: the card-build ColdFire linker no longer stops at 32 linked units. The whole catalogue already needs 35, and a selection that big now reaches the same free-space check native octabam refuses it with, instead of failing earlier with "invalid base or input count".
