@@ -340,7 +340,7 @@
       "bytes": 2636,
       "sha256": "eadf2382bc71fc75a4e911c405f394ac505cc94932a1fa2ea9ce159e658b6447",
       "path": "octatrack-modules/sidechain-compressor/0.2.0-experimental.mwrm",
-      "requiredBase": "462fbd2b2ee95dd71c02778ef3b17aacba945bac9b6206688d8ef8995003826e"
+      "requiredBase": "72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6"
     },
     {
       "id": "output-matrix",
@@ -356,7 +356,7 @@
       "bytes": 3740,
       "sha256": "65a311c38c64652e1730426e62bed9e7c97c390d378e535a2848e660ae85dcca",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "462fbd2b2ee95dd71c02778ef3b17aacba945bac9b6206688d8ef8995003826e"
+      "requiredBase": "72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6"
     },
     {
       "id": "cc-map",
@@ -372,7 +372,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "462fbd2b2ee95dd71c02778ef3b17aacba945bac9b6206688d8ef8995003826e"
+      "requiredBase": "72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -450,7 +450,7 @@
       "bytes": 1818,
       "sha256": "180b52c68018f34a0fbadb0ad518972c4dc70dc621e3ab730beab33b7a081137",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "462fbd2b2ee95dd71c02778ef3b17aacba945bac9b6206688d8ef8995003826e"
+      "requiredBase": "72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6"
     },
     {
       "id": "analog-bassdrum",
@@ -466,7 +466,7 @@
       "bytes": 26190,
       "sha256": "6272600408466c3e3d313e943fc3f57beb06a55c61aab25720fce4b833eb53b0",
       "path": "octatrack-modules/analog-bassdrum/0.1.6-experimental.mwrm",
-      "requiredBase": "462fbd2b2ee95dd71c02778ef3b17aacba945bac9b6206688d8ef8995003826e",
+      "requiredBase": "72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6",
       "requires": 0,
       "claims": 1,
       "entries": 1
@@ -507,6 +507,53 @@
       "module": "84a2f52f",
       "bytes": 1088,
       "sha256": "00b8d5ab9bedca2e0d1d02add7540af43ce98cbfc0d8b3c06e40c9b18fe68c4a"
+    },
+    {
+      "id": "slow-lfo",
+      "octabam": true,
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/slow-lfo/0.1.0-experimental.mwrm",
+      "abi": 7,
+      "features": 1,
+      "sites": 7,
+      "copies": 0,
+      "fills": 0,
+      "name": "Slow LFO",
+      "module": "cd8a0e36",
+      "bytes": 608,
+      "sha256": "3505194ebe34509b765bb71d38ab6a62ab5f4f5ba18cdfd829c741fec472aeb4"
+    },
+    {
+      "id": "bar-led",
+      "octabam": true,
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/bar-led/0.1.0-experimental.mwrm",
+      "abi": 7,
+      "features": 1,
+      "sites": 1,
+      "copies": 0,
+      "fills": 0,
+      "name": "Bar LED",
+      "module": "9b41cd3d",
+      "bytes": 196,
+      "sha256": "de7f9caed60bffecc47a33144a223125500c4c8bcbd76e5022d1dc2ee9393600"
+    },
+    {
+      "id": "tiempos",
+      "sources": [
+        "sdk/octabam/modules/tiempos/tiempos.c"
+      ],
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/tiempos/0.1.0-experimental.mwrm",
+      "abi": 8,
+      "features": 0,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "tiempos",
+      "module": "31282ae5",
+      "bytes": 2852,
+      "sha256": "0b54a734258945acbf74551b8920ee4bfa760d390964bd04d2877e4382e990b9"
     }
   ]
 }

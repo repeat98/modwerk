@@ -54,7 +54,8 @@ class MachineEventTests(unittest.TestCase):
         ports = json.loads((ADAPTERS / 'machine-ports.json').read_text())['ports']
         protect = {(p['machine']['sig'], p['machine']['lo'], p['machine']['hi']) for p in ports.values()
                    if 'PROTECT' in p.get('machine', {}).get('flags', [])}
-        native = {('WV', 1, 15)}  # SYNTIZ (sdk/drafts/syntiz/machine.c): the model is the version byte, 1-6 used, up to 15 kept
+        native = {('WV', 1, 15),  # SYNTIZ (sdk/drafts/syntiz/machine.c): the model is the version byte, 1-6 used, up to 15 kept
+                  ('FR', 1, 1)}  # FRACT (sdk/drafts/fract-machine/registration.c)
         self.assertEqual(known, protect | native)
         self.assertIn(('AB', 1, 1), known)
 

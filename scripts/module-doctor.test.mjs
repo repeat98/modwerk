@@ -17,7 +17,9 @@ describe('module doctor', () => {
     for (const id of ['miniverb', 'sidechain-compressor', 'analog-bassdrum', 'midi-scenes', 'digihealth']) expect(result.stdout).toContain(id)
   // The full catalogue shares CPU with app checks; this is an integration check, not a five-second performance gate.
   }, catalogCheckTimeout + 5000)
-  it('checks a draft where every gate looks and leaves no copy behind', () => {
+  // The draft's copy under sdk/octabam/modules/ is visible to anything reading that folder while it runs, so npm run check defers
+  // this test from its parallel stage (SDK suite, other test files, build) and runs it alone afterwards.
+  it.skipIf(process.env.MODWERK_DEFER_DRAFT_DOCTOR === '1')('checks a draft where every gate looks and leaves no copy behind', () => {
     // Any draft with a manifest that is not also a listed module; the fast loop keeps unqualified work in sdk/drafts/.
     const draft = readdirSync(join(root, 'sdk/drafts')).find(name => existsSync(join(root, 'sdk/drafts', name, 'octamod.module.json')) && !existsSync(join(root, 'sdk/octabam/modules', name)))
     expect(draft, 'a draft to check').toBeTruthy()

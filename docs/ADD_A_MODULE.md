@@ -188,7 +188,15 @@ regeneration and stock-free scan, base compatibility and truthful inventory,
 installation, the self-test of the running set, Keep/Undo, replacement/removal, missing-module
 fallback and distinct instances through Part/project reload and physical
 reboot where applicable. Give hardware steps and record actual results;
-emulator/host tests do not fill missing hardware qualification. Preserve the
+emulator/host tests do not fill missing hardware qualification. With
+`npm run device -- serve` running, `npm run device:qualify -- --keeps-ok
+--testing-entry run.md <package>` installs the package, places it alone on
+each DSP core and then beside itself on every track, sweeps its knobs, switches
+Parts and banks, optionally soaks (`--soak`) and crashes on purpose
+(`--crash`), restores the Part and removes the package. It writes what it saw,
+with the package's SHA-256, as an entry to paste into TESTING.md. The
+self-test is the session's `selftest` step while the package is installed;
+listening, the power cycle and persistence stay yours. Preserve the
 previous approved download while preparing candidates.
 
 **A private USB package of a draft.** Its `Gate` must be
@@ -240,7 +248,7 @@ A newly developed module selectable in beta module sets must have a working
 USB path, not a card-only fallback; existing card-only modules need a reviewed
 migration before USB rollout. An unavoidable compatibility limit needs its
 actual resource/ownership reason and explicit owner review; the owner's
-card-only OK for one exact version goes in `sdk/usb-card-only.json` with its
+card-only OK for one exact version goes in `sdk/approvals/usb-card-only.json` with its
 reason and the issue that ends it, and `module:doctor` accepts only that version. This does not
 assert that pending loader ABI work (ABI 7), shared machine registration,
 table support or hooked DSP work is released: those adapters and new bases
@@ -290,7 +298,7 @@ the [loader compatibility guide](../sdk/machines/octatrack/elekloader/README.md#
 
 Firmware for these machines is built by elekloader's builder, vendored unchanged and run in the browser ([vendor/elekloader](../vendor/elekloader/README.md)). It decides which mods combine, so there is no comparison with a native builder to run.
 
-Modwerk imports released `.elemod` files; it does not package mods for elekloader. To list a mod in elekloader's shop, including one Modwerk's library does not take, follow elekloader's [shop guide](https://github.com/elekloader/elekloader/blob/main/docs/SHOP.md) ([elekloader mods and cores](../CONTRIBUTING.md#elekloader-mods-and-cores)).
+Every new library version passes the publication gate: at least `author-hardware` evidence, measured `resources.memoryBytes` and load, and screenshots of where the mod appears ([SDK.md](SDK.md)). Modwerk imports released `.elemod` files; it does not package mods for elekloader. To list a mod in elekloader's shop, including one Modwerk's library does not take, follow elekloader's [shop guide](https://github.com/elekloader/elekloader/blob/main/docs/SHOP.md) ([elekloader mods and cores](../CONTRIBUTING.md#elekloader-mods-and-cores)).
 
 **Porting an elekloader mod:**
 

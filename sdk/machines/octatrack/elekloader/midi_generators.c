@@ -2,7 +2,7 @@
  * MIDI generators on the Octatrack's MIDI tracks (events.json ot_midi_generators). The base reads the table. A card
  * build compiles this file into its one generator module, with MG_FIXED naming that module's record, and patches
  * the same four sites itself (midi_generators.s); every private name here carries mg_ so it can share the module's
- * translation unit. MIDI NOTE SETUP lists OFF and the generators in its empty left half (UP/DOWN, YES); double-tap
+ * translation unit. MIDI NOTE SETUP lists ARP (stock's arpeggiator) and the generators in its empty left half (UP/DOWN, YES); double-tap
  * TRACK in MIDI mode, which stock ignores, opens it. A track running a generator keeps 'M' and its id in the arp step
  * mask, which stock's validator never reads and only ARP SETUP edits, and shows the generator's pages on the MIDI pages
  * it takes (always the ARP page, whose note bytes hold its settings; FUNC+AMP, which would open ARP SETUP, turns that
@@ -29,7 +29,8 @@
 #define MG_DIRTY_SCREEN 0x46c7c72cu
 #define MG_MASK(t) (0x1822u + 2u * (t))  /* the arp step mask, high byte first: 'M' and the id; stock's default ffff */
 #define MG_MARK 0x4du
-#define MG_ROWS 5u                /* OFF and the table's room */
+#define MG_ROOM 16u               /* the table's room (events.json) */
+#define MG_SHOWN 5u               /* rows NOTE SETUP's left half shows: ARP and four generators; UP/DOWN scroll */
 typedef struct modwerk_midi_generator MgGen;
 #if defined(MODWERK_DEV) && !defined(MG_FIXED)
 void modwerk_cost_stamp(unsigned k); /* diag.c: the development profile, [24]-[27] */
@@ -55,7 +56,7 @@ static unsigned mg_generators(const MgGen **out)
 {
     unsigned n = 0;
     uint32_t mask = modwerk_machine_mask();
-    for (uintptr_t volatile *row = modwerk_runtime_event_row[MG_TABLE]; *row && n < MG_ROWS - 1u; ++row) {
+    for (uintptr_t volatile *row = modwerk_runtime_event_row[MG_TABLE]; *row && n < MG_ROOM; ++row) {
         const MgGen *g = (const MgGen *)*row;
         if (g->abi == MODWERK_MIDI_GENERATOR_ABI && g->id && g->id < 256u) out[n++] = g;
     }
@@ -145,7 +146,7 @@ static void mg_choose(const MgGen *const *g, unsigned n, unsigned t, unsigned ro
 extern uint32_t mg_list_layer[], mg_page_layer[];
 static uint32_t *mg_active;
 static uint32_t mg_saved[4][3];
-static unsigned mg_mine, mg_second, mg_shown, mg_cursor, mg_opened;
+static unsigned mg_mine, mg_second, mg_shown, mg_cursor, mg_top, mg_opened;
 static const uint8_t mg_keys[4] = {0x33, 0x20, 0x31, 0x32}; /* UP, DOWN, YES, NO */
 
 /* A page a generator takes on its track while no trig, scene or popup is held, as VECTOR's audio page: a held trig
@@ -163,7 +164,7 @@ static void mg_redraw(void) { MG_CALL(void (*)(int), 0x4004d948u)(-1); U32(MG_DI
 uint32_t mg_page(uint32_t stock);
 uint32_t mg_page(uint32_t stock)
 {
-    const MgGen *g[MG_ROWS - 1u], *who; unsigned n = mg_generators(g);
+    const MgGen *g[MG_ROOM], *who; unsigned n = mg_generators(g);
     /* Only with its layer on: without it the knobs would edit stock's ARP values under the generator's labels. */
     return mg_active == mg_page_layer && (who = mg_view(g, n)) && who->page ? who->page(stock, U32(MG_PAGE), mg_second) : stock;
 }
@@ -172,7 +173,7 @@ uint32_t mg_page(uint32_t stock)
 unsigned mg_arp_setup(void);
 unsigned mg_arp_setup(void)
 {
-    const MgGen *g[MG_ROWS - 1u], *who; unsigned n = mg_generators(g);
+    const MgGen *g[MG_ROOM], *who; unsigned n = mg_generators(g);
     if (!mg_midi() || !mg_running(g, n, mg_part(), U8(MG_TRACK), &who)) return 0;
     mg_second ^= 1u;
     mg_redraw();
@@ -182,28 +183,33 @@ unsigned mg_arp_setup(void)
 void mg_track_tap(unsigned track);
 void mg_track_tap(unsigned track)
 {
-    const MgGen *g[MG_ROWS - 1u];
+    const MgGen *g[MG_ROOM];
     if (track < 8u && mg_generators(g) && !U32(MG_NOTE_SETUP)) MG_CALL(void (*)(unsigned), 0x40032228u)(0);
 }
 
-/* The list in MIDI NOTE SETUP's left half (window x 3-50; its knobs start past 52): OFF, then each generator. The
- * cursor opens on the track's own row. Every call of stock's drawer comes here (midi_generators.s). */
+/* The list in MIDI NOTE SETUP's left half (window x 3-50; its knobs start past 52): ARP, the stock arpeggiator (no
+ * generator), then each generator, MG_SHOWN rows at a time; the rows scroll with the cursor. The cursor opens on the
+ * track's own row. Every call of stock's drawer comes here (midi_generators.s). */
 extern void mg_stock_note_draw(void);
 void mg_note_setup_draw(void);
 void mg_note_setup_draw(void)
 {
     mg_stock_note_draw();
-    const MgGen *g[MG_ROWS - 1u]; unsigned n = mg_generators(g);
+    const MgGen *g[MG_ROOM]; unsigned n = mg_generators(g);
     uint32_t window = U32(MG_NOTE_SETUP);
     if (!n || !window || !mg_midi()) return;
+    if (mg_cursor > n) mg_cursor = n; /* a generator left while the list was open */
+    if (mg_top + MG_SHOWN > n + 1u) mg_top = n + 1u > MG_SHOWN ? n + 1u - MG_SHOWN : 0; /* no empty rows below */
+    if (mg_top > mg_cursor) mg_top = mg_cursor;
+    if (mg_cursor >= mg_top + MG_SHOWN) mg_top = mg_cursor + 1u - MG_SHOWN;
     uint32_t surface = window + 0x24u;
     int height = (int)U32(window + 0x28u);
     void (*rect)(uint32_t, int, int, int, int, int) = MG_CALL(void (*)(uint32_t, int, int, int, int, int), 0x40012254u);
     rect(surface, 3, 2, 50, height - 10, 0);
-    for (unsigned row = 0; row <= n; ++row) {
-        int y = height - 20 - 8 * (int)row;
+    for (unsigned row = mg_top; row <= n && row < mg_top + MG_SHOWN; ++row) {
+        int y = height - 20 - 8 * (int)(row - mg_top);
         MG_CALL(void (*)(uint32_t, uint32_t, int, int, int, const char *), 0x40012bd8u)
-            (0x400ba876u, surface, 5, y, -1, row ? g[row - 1u]->label : "OFF");
+            (0x400ba876u, surface, 5, y, -1, row ? g[row - 1u]->label : "ARP");
         if (row == mg_cursor) rect(surface, 3, y - 1, 50, y + 6, -1);
     }
     U32(MG_DIRTY_SCREEN) = 1;
@@ -221,7 +227,7 @@ void mg_key(unsigned code, unsigned edge)
 {
     unsigned k = mg_slot(code), bit = 1u << k;
     if (k < 4 && edge != 1 && mg_mine & bit) { if (!edge) mg_mine &= ~bit; return; }
-    const MgGen *g[MG_ROWS - 1u], *who; unsigned n = mg_generators(g);
+    const MgGen *g[MG_ROOM], *who; unsigned n = mg_generators(g);
     if (edge == 1 && mg_active == mg_list_layer && n && mg_midi()) {
         if (code == 0x31) {
             mg_forward(code, edge); /* stock's YES still confirms NOTE SETUP's own values */
@@ -246,7 +252,7 @@ void mg_key(unsigned code, unsigned edge)
 void mg_knob(unsigned index, int delta);
 void mg_knob(unsigned index, int delta)
 {
-    const MgGen *g[MG_ROWS - 1u], *who; unsigned n = mg_generators(g);
+    const MgGen *g[MG_ROOM], *who; unsigned n = mg_generators(g);
     if (index < 6 && mg_active == mg_page_layer && (who = mg_view(g, n)) && who->knob) {
         MG_STAMP(26); who->knob(U32(MG_PAGE), index, delta, mg_second); MG_STAMP(27);
         mg_redraw();
@@ -267,7 +273,7 @@ static void mg_put_on(uint32_t *layer)
 void mg_tick(void);
 void mg_tick(void)
 {
-    const MgGen *g[MG_ROWS - 1u], *who; unsigned n = mg_generators(g);
+    const MgGen *g[MG_ROOM], *who; unsigned n = mg_generators(g);
     for (unsigned k = 0; k < n; ++k) if (g[k]->ui_tick) g[k]->ui_tick();
     mg_guard(g, n);
     unsigned midi = n && U32(MG_MIDI_MODE) && mg_valid_bank();

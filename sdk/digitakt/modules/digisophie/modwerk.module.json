@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "digisophie",
   "name": "SOPHIE",
-  "version": "1.1.13-experimental.3",
+  "version": "1.2.0-experimental",
   "machine": "digitakt",
   "category": "machines",
   "exclusive": false,
@@ -19,7 +19,7 @@
   ],
   "source": {
     "repository": "https://github.com/soejrd/digisophie",
-    "revision": "ce17b9e4868027bafe8684054b45f28ea368bd7c",
+    "revision": "11d2364f3ea8faabd21bb9942fdc0a79606b4e1a",
     "path": "."
   },
   "presentation": {
@@ -107,27 +107,32 @@
       "1.53",
       "1.54"
     ],
-    "requires": [],
+    "requires": [
+      "machine-pages"
+    ],
     "conflicts": [
       "digineighbor",
       "digislicer"
     ],
     "limitations": [
       "One instance runs without FAST AUDIO; the author found two practical with FAST AUDIO on. Eight tracks are not claimed.",
-      "Built for OS 1.53 and 1.54. The OS 1.54 package is the author\u2019s port of the same 1.1.13; it has not been tested on a unit yet."
+      "Built by Modwerk from the author\u2019s 1.2.0 sources for Core 2.1 and Machine Pages, on OS 1.53 and 1.54. It has not been tested on a unit yet.",
+      "Machine Pages conflicts with DigiChain, so SOPHIE cannot be combined with Digi Mono or Digi Poly. NEIGHBOR 0.6 and DIGISLICER 2.1 draw their own SRC pages and stay incompatible."
     ]
   },
   "platform": {
     "kind": "elemod",
     "core": "2.1",
     "build": "build.json",
-    "events": [],
+    "events": [
+      "ev_render_voices"
+    ],
     "claims": [
       "machine:7"
     ]
   },
   "resources": {
-    "memoryBytes": 8722,
+    "memoryBytes": 8528,
     "fastBytes": 0,
     "load": {
       "display": "Not measured in Modwerk yet",
@@ -145,7 +150,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Imported from the author\u2019s v1.1.13 source with its OS 1.54 port (ce17b9e); Modwerk serves the author\u2019s own packages for both releases. Emulator documentation captures of 1.1.13-experimental.3 on OS 1.54 show the machine chooser, SRC page, all four models and AMP page; audio, timing and hardware remain unqualified.",
+    "summary": "Imported unchanged from the author\u2019s v1.2.0 sources (11d2364) and compiled by Modwerk for Core 2.1 and Machine Pages 1.2 on OS 1.53 and 1.54. Emulator captures of 1.2.0-experimental on OS 1.54 show the machine chooser, SRC page, all four models and AMP page pixel for pixel as 1.1.13 drew them; audio, timing and hardware remain unqualified.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial: sequence a metallic percussion voice",
@@ -169,7 +174,7 @@
   "license": {
     "spdx": "MIT",
     "file": "LICENSE",
-    "declaration": "The author\u2019s source, imported unchanged from github.com/soejrd/digisophie at ce17b9e (v1.1.13 with its OS 1.54 port) under its MIT licence. Stock firmware bytes in the upstream build manifest were replaced with length and SHA-256 guards."
+    "declaration": "The author\u2019s source, imported unchanged from github.com/soejrd/digisophie at 11d2364 (v1.2.0) under its MIT licence. Modwerk adds Machine Pages\u2019 header digitakt-mk1/core3.h (irpina, GPL-2.0-or-later), which the source includes to describe its page."
   },
   "media": [
     {
@@ -192,8 +197,8 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "1.1.13-experimental.3",
-        "imageSha256": "7c71c84a8937f639090b0849b72d7972d89eb28c2be9f97acecfd91600fdd1d4",
+        "moduleVersion": "1.2.0-experimental",
+        "imageSha256": "5da920599d738d18be264c1bfe1ab57e1e05346981f60ac1bfec461ce058140e",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     },
@@ -208,8 +213,8 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "1.1.13-experimental.3",
-        "imageSha256": "7c71c84a8937f639090b0849b72d7972d89eb28c2be9f97acecfd91600fdd1d4",
+        "moduleVersion": "1.2.0-experimental",
+        "imageSha256": "5da920599d738d18be264c1bfe1ab57e1e05346981f60ac1bfec461ce058140e",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     },
@@ -224,8 +229,8 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "1.1.13-experimental.3",
-        "imageSha256": "7c71c84a8937f639090b0849b72d7972d89eb28c2be9f97acecfd91600fdd1d4",
+        "moduleVersion": "1.2.0-experimental",
+        "imageSha256": "5da920599d738d18be264c1bfe1ab57e1e05346981f60ac1bfec461ce058140e",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     },
@@ -240,8 +245,8 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "1.1.13-experimental.3",
-        "imageSha256": "7c71c84a8937f639090b0849b72d7972d89eb28c2be9f97acecfd91600fdd1d4",
+        "moduleVersion": "1.2.0-experimental",
+        "imageSha256": "5da920599d738d18be264c1bfe1ab57e1e05346981f60ac1bfec461ce058140e",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     }

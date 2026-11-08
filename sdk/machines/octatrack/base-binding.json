@@ -1,13 +1,13 @@
 {
  "schema": 1,
- "identity": "462fbd2b2ee95dd71c02778ef3b17aacba945bac9b6206688d8ef8995003826e",
+ "identity": "72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6",
  "arena": 1089508832,
- "pool": 1087548400,
+ "pool": 1087548496,
  "symbols": {
   "modwerk_controller_write_begin": 1084872232,
   "modwerk_controller_write_end": 1084872260,
-  "modwerk_cue_cfg_clamp": 1085077184,
-  "modwerk_raise_ev_mute_keep": 1085079538
+  "modwerk_cue_cfg_clamp": 1085077656,
+  "modwerk_raise_ev_mute_keep": 1085080010
  },
  "controllers": {
   "sidechain-compressor": "178d200073896dd2416f07bb952f835087f9250778e773fc9426a5165db259ce",
@@ -15,12 +15,12 @@
   "analog-bassdrum": "579b9b5e76b000a8b9c95f6131a547fbb5117f497d4bc3ee0f98385edc96e5a3"
  },
  "variants": {
-  "tracks-main-cue": "462fbd2b2ee95dd71c02778ef3b17aacba945bac9b6206688d8ef8995003826e",
-  "tracks": "2fba659c58db63c42ace7cfeba23bfcdb98ca8b73738b8b2504ddc042d1f9451",
-  "tracks-post": "5fcd9902f697951f7aacf17af4e8e1fac82528c81f4ff19d6370e391dfa0ebe4",
-  "main-cue": "69532eed67b1bd8931207ffc3d0cccbfcad3a72e08a8ac7aadf7b40e07083daa",
-  "main": "485fe2533ef7a98261e91c8d19982c1a0199703818be9ac50f36af81ab0e56e3",
-  "master": "1a4b1da86bcbc1c0e8faa32e17f5fd96cd34dd36ff963c7bcfe304cff26ebb70",
-  "off": "ec660ded5e6c4e291a38046925a11b74d0a15b627b8a6aab853a201d4ec8df8a"
+  "tracks-main-cue": "72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6",
+  "tracks": "6487294575677340a2d89d252a2f3359efa2a366a5b31f19ad7a6986fd816a71",
+  "tracks-post": "b52defaedf224357fc01aa2d4a77cb46d95bea6f932d5cbb09ea0a21506992b2",
+  "main-cue": "3c2a80b4b6d3deaa897e0400fb0f77e2018096d89816f89c6ff7ddbe3905cb46",
+  "main": "13885dd5b0f80b00596052706ff82308f705ab4f7997569103b2609be1381fa6",
+  "master": "a6ad81fbd2b41e5e7cbc77de55c5f4b86852689107f231e9bc9f1bcafacc1710",
+  "off": "8d297b113bd56ed30ba7438838ee8a9bab314232b0d1d4c4fbb3561ebeb2fca2"
  }
 }

@@ -36,7 +36,7 @@ to a persistence or multiple-instance pass.
 
 ## Persistence audit — 8 October 2026
 
-[The control-state audit](persistence-check-2026-10-08.json) binds the results to
+[The control-state audit](verification/persistence-check-2026-10-08.json) binds the results to
 exact firmware image hashes. The tested images include local development
 compositions; the results apply only to those hashes. Analog BD and eight FX
 modules (MiniVerb, Tape Echo, Euclid, Tapehead, Sidechain Compressor, Spectrum,
@@ -50,7 +50,7 @@ include assignments, source/sample/engine settings and both FX parameter pages.
 
 The private POLY32T01 image failed actual machine assignment followed by reboot:
 its live `PL/1` marker was copied one byte too far forward in battery RAM.
-PROJECT SAVE preserved the wrong battery marker. A [source correction](poly-marker-copy-2026-10-08.patch)
+PROJECT SAVE preserved the wrong battery marker. A [source correction](verification/poly-marker-copy-2026-10-08.patch)
 reads all three bytes before writing the mirror. The corrected private build
 passed the same two-track assignment/reboot check and the full save/reload
 matrix. POLY is outside the current public module catalog; this patch records a
@@ -65,7 +65,7 @@ memory dumps remain outside the repository.
 
 ## Existing modules
 
-The eleven module folders present when this policy was requested remain included at their current versions, with their existing measurements and historical/status labels intact. [The frozen baseline](../sdk/module-qualification-baseline.json) records each exact version and complete folder SHA-256. This preserves the owner's acceptance of the existing tests without inventing cycle counts or changing earlier qualification claims. Existing availability, build and download restrictions remain intact.
+The eleven module folders present when this policy was requested remain included at their current versions, with their existing measurements and historical/status labels intact. [The frozen baseline](../sdk/approvals/module-qualification-baseline.json) records each exact version and complete folder SHA-256. This preserves the owner's acceptance of the existing tests without inventing cycle counts or changing earlier qualification claims. Existing availability, build and download restrictions remain intact.
 
 The original baseline exemption applies only while **every file in that module folder and its version are unchanged**. Runtime-impacting updates require a new qualification record. Editorial updates can retain the original evidence through the separate, checked path below; they still need a semantic version increase, complete documentation, actual UI/media provenance and owner or scoped registered-author approval. New IDs cannot inherit an exemption. PR checks reject changes to the baseline once it exists on the base branch. Do not add modules to it or regenerate it as a way of making a failed gate pass.
 
@@ -206,7 +206,7 @@ Keep firmware, extracted stock, LCD/RAM dumps, cards and private raw logs local 
 
 ## Owner-approved CC Map / Preview Vol exception — 2 October 2026
 
-The owner explicitly approved `cc-map` and `previewvol` version `0.1.2-experimental` with software verification and real-chip timing marked unmeasured because physical hardware runs are unavailable. `sdk/module-release-waivers.json` binds only these two complete folder/native-source hashes. It is separate from the unchanged eleven-module baseline and immutable after this PR. Both manifests retain `hardwareStatus: "untested"`, null chip cycles, actual LCD provenance, complete tutorials and source-bound software reports. Ordinary submission validation still requires full measured qualification; a contributor cannot grant a waiver in metadata. Any folder/version change invalidates the exception. Source-only release compilation reproduces the locally native-parity-verified packages without firmware.
+The owner explicitly approved `cc-map` and `previewvol` version `0.1.2-experimental` with software verification and real-chip timing marked unmeasured because physical hardware runs are unavailable. `sdk/approvals/module-release-waivers.json` binds only these two complete folder/native-source hashes. It is separate from the unchanged eleven-module baseline and immutable after this PR. Both manifests retain `hardwareStatus: "untested"`, null chip cycles, actual LCD provenance, complete tutorials and source-bound software reports. Ordinary submission validation still requires full measured qualification; a contributor cannot grant a waiver in metadata. Any folder/version change invalidates the exception. Source-only release compilation reproduces the locally native-parity-verified packages without firmware.
 
 ## MIDI Scenes standalone approval, 3 October 2026
 
@@ -226,7 +226,7 @@ baseline and two utility waivers are unchanged.
 ## MIDI Scenes 0.2.5 owner-approved update, 10 October 2026
 
 The owner approved `midi-scenes` `0.2.5-experimental` (Scene A/B mute) "without
-concrete hardware evidence". `../sdk/midi-scenes-build-approval.json` is an
+concrete hardware evidence". `../sdk/approvals/midi-scenes-build-approval.json` is an
 `owner-approved-update` that waives only current-build hardware evidence, bound to
 this version and its native source. The contributor's MKII report ran on the
 pre-#392 shared runtime, so hardware stays `reported`, not verified, and timing
@@ -235,11 +235,11 @@ version needs its own record.
 
 ## Sidechain Compressor hardware-only exception
 
-On 5 October 2026 the owner explicitly approved sidechain-compressor@0.1.1-experimental without fresh physical hardware evidence. `sdk/sidechain-compressor-build-approval.json` binds that exception to the exact version, source and image, and `scripts/module-qualification.mjs` refuses it for anything else. Documentation and media are not part of the binding, so editing them needs no new approval. Both processor cycle bounds, sixteen-instance memory accounting, the composition comparison with native octabam, rejection checks, licensing and actual LCD documentation remain mandatory. Hardware status stays historical; no chip wall-clock timing or current-image hardware pass is claimed.
+On 5 October 2026 the owner explicitly approved sidechain-compressor@0.1.1-experimental without fresh physical hardware evidence. `sdk/approvals/sidechain-compressor-build-approval.json` binds that exception to the exact version, source and image, and `scripts/module-qualification.mjs` refuses it for anything else. Documentation and media are not part of the binding, so editing them needs no new approval. Both processor cycle bounds, sixteen-instance memory accounting, the composition comparison with native octabam, rejection checks, licensing and actual LCD documentation remain mandatory. Hardware status stays historical; no chip wall-clock timing or current-image hardware pass is claimed.
 
 ## FM Synth exact experimental release exception
 
-On 6 October 2026 the owner explicitly approved synth@0.1.1-experimental without current hardware evidence, worst-case chip timing or complete stack/memory bounds. The exact statements are in the module’s evidence/owner-hardware.md; sdk/synth-build-approval.json binds this separate exception to its version, native-source SHA-256, runtime declarations and tested common-builder image. Hardware stays untested, and chip timing/complete lifetime bounds stay null. It grants no exception to later versions or other modules.
+On 6 October 2026 the owner explicitly approved synth@0.1.1-experimental without current hardware evidence, worst-case chip timing or complete stack/memory bounds. The exact statements are in the module’s evidence/owner-hardware.md; sdk/approvals/synth-build-approval.json binds this separate exception to its version, native-source SHA-256, runtime declarations and tested common-builder image. Hardware stays untested, and chip timing/complete lifetime bounds stay null. It grants no exception to later versions or other modules.
 
 Publication still requires the 94-case native/browser comparison (37 builds, 57 refusals, zero mismatches), the common worker’s packaging and changed-base/refusal checks, sample-free playback and double-STOP silence on that exact image, source/stock isolation, licensing and actual monochrome LCD documentation. scripts/synth-release.mjs checks these records without executing submitted code. The frozen baseline and existing exceptions remain unchanged.
 
@@ -247,12 +247,12 @@ The additive compiler/engine integration has a separate exact infrastructure bin
 
 ## VECTOR 0.2.4 hardware-only exception — 9 October 2026
 
-For issue #349, the owner explicitly approved: “Approve release and closure with hardware reboot/audio unverified”, after receiving the exact private 0.2.4 firmware and source patch. The new `sdk/vector-build-approval.json` binds only this version/native source and tested image; it does not extend the 0.2.3 exception to new source. Fresh sanitizer, native resource, UI, composition and two-instance Part/project/battery-RAM restart evidence are in [the reboot regression report](vector-reboot-2026-10-09.json) and the module TESTING.md. Hardware status stays untested. Physical reboot, working audio after transitions and maximum audio load remain unverified; closure must state those limits and how to reopen.
+For issue #349, the owner explicitly approved: “Approve release and closure with hardware reboot/audio unverified”, after receiving the exact private 0.2.4 firmware and source patch. The new `sdk/approvals/vector-build-approval.json` binds only this version/native source and tested image; it does not extend the 0.2.3 exception to new source. Fresh sanitizer, native resource, UI, composition and two-instance Part/project/battery-RAM restart evidence are in [the reboot regression report](vector-reboot-2026-10-09.json) and the module TESTING.md. Hardware status stays untested. Physical reboot, working audio after transitions and maximum audio load remain unverified; closure must state those limits and how to reopen.
 
 ## POLY8 exact experimental release exception — 8 October 2026
 
-The owner approved POLY8@0.2.5-experimental with current-build physical hardware, chip worst-case timing and complete memory-bound qualification explicitly waived, and subsequently verified a Modwerk-builder launch in Octemu. `sdk/poly8-build-approval.json` binds the exception to the exact native source. Missing measurements remain null and hardware remains untested. The 114-selection native/browser comparison, stock-free package replay/rejection guards, stock DSP preservation, documentation, actual LCD captures and owner-reviewed publication remain required. Historical T03/T04 physical failures and T06 native results keep their original image identities. This exception grants no approval to another source or version.
+The owner approved POLY8@0.2.5-experimental with current-build physical hardware, chip worst-case timing and complete memory-bound qualification explicitly waived, and subsequently verified a Modwerk-builder launch in Octemu. `sdk/approvals/poly8-build-approval.json` binds the exception to the exact native source. Missing measurements remain null and hardware remains untested. The 114-selection native/browser comparison, stock-free package replay/rejection guards, stock DSP preservation, documentation, actual LCD captures and owner-reviewed publication remain required. Historical T03/T04 physical failures and T06 native results keep their original image identities. This exception grants no approval to another source or version.
 
 ## POLY8 0.2.6 exact experimental release exception — 9 October 2026
 
-The owner reported “works like a charm” on the exact POLY8T10 MKII image and explicitly approved “Approve this scoped experimental release” for 0.2.6-experimental. [The source-bound report](../sdk/octabam/modules/poly8/evidence/owner-release-t10.md) retains the delivered image hashes, actual statement and unreported coverage. `sdk/poly8-build-approval.json` now binds only the exact T10 native source. Chip worst-case timing, complete memory-bound qualification and separately reported Part/project/reboot tests remain waived and unverified. The historical 0.2.5 approval remains in Git history and the report; it does not authorize this update. Documentation, licence, native/browser parity and release checks remain mandatory.
+The owner reported “works like a charm” on the exact POLY8T10 MKII image and explicitly approved “Approve this scoped experimental release” for 0.2.6-experimental. [The source-bound report](../sdk/octabam/modules/poly8/evidence/owner-release-t10.md) retains the delivered image hashes, actual statement and unreported coverage. `sdk/approvals/poly8-build-approval.json` now binds only the exact T10 native source. Chip worst-case timing, complete memory-bound qualification and separately reported Part/project/reboot tests remain waived and unverified. The historical 0.2.5 approval remains in Git history and the report; it does not authorize this update. Documentation, licence, native/browser parity and release checks remain mandatory.
