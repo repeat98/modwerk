@@ -120,9 +120,30 @@ A temporary probe (not shipped) split the 1.3 ms build by stage: copying the rec
 
 The hoisted scale lookup in `engine.c` gives the same phrases as 0.2.4 over 18,144,000 parameter sets (a throwaway host comparison of both engines), and `test_engine.c` passes. `sdk/tests/test_machine_events.py` checks the base's registry on the host (`test_midi_generators.c`), the package glue and the port's sources.
 
-Card builds and .bss, 8 November 2026 (found by `machine_composition_tests`, not on a unit): the base's generator registry, which a card build links into VECTOR, has statics without an initialiser, and the compiler put them (144 bytes) in .bss. A card unit's .bss is never loaded or zeroed (`tools/remix/platform_build.py`), so on a card `mg_active` and the list's cursor would have started as whatever the boot left. `prepare.py` now puts them in .data as zeros and stops if any .bss is left; the code is unchanged (22,314 text bytes), .data grows by 144. Over USB the package was not affected (the loader zeroes a package's .bss, `sdk/runtime/loader/loader.c`), so the October unit runs stand.
+Card builds and .bss, 8 November 2026 (found by `machine_composition_tests`, not on a unit): the base's generator registry, which a card build links into VECTOR, has statics without an initialiser, and the compiler put them (144 bytes) in .bss. octabam's native card builder never loads or zeroes a unit's .bss (`tools/remix/platform_build.py`), so there `mg_active` and the list's cursor would start as whatever the boot left; the site's card builder sizes the runtime past .bss (`src/engine/coldfire-link.ts`), so its images ship those bytes as zeros, and the USB loader zeroes a package's .bss (`sdk/runtime/loader/loader.c`). `prepare.py` now puts them in .data as zeros and stops if any .bss is left, so every path starts them at zero and the two-origin composition proof holds; the code is unchanged (22,314 text bytes), .data grows by 144.
 
 Not tested: a card build on the unit (layout A included); a physical power cycle with a VECTOR MIDI track (RAM boots kept it: the battery-backed bank restore and the Part validator pass); a project save and reload; scenes and LFOs on a VECTOR MIDI track; MKI. Two RAM boots of development twins out of about fifteen did not come back on USB (one stall record: frames stopped 41 s after a boot with no module installed); a power cycle recovered both, and the next boot of the same image worked. It matches the RAM-boot trap of 19 October 2026 and was not reproduced.
+
+## MIDI generator in the emulator (8 November 2026)
+
+Emulator results only, not hardware evidence: `ot_emu` (idle-adapted build, no DSP), MKII panel, a private copy of a Template Live card, VECTOR's exact USB package `b66a440e…` installed over emulated USB on the committed beta base, and a card image of this source composed by the site's builder (`composeSelection`). Steps checked against the Part and pattern bytes and LCD captures; MIDI out taken from a cold boot of the saved project.
+
+| What | USB package | Card image |
+|---|---|---|
+| Install, removal, reinstall over USB | passed | n/a |
+| Boot with no crash or stall record | passed | passed |
+| NOTE SETUP's list by double-tap SRC and double-tap TRACK; YES on VECTOR writes `4d56`, the defaults and NOTE/VEL/LEN 48/100/6 | passed | passed |
+| Every encoder on SRC, AMP and FUNC+AMP (OCT moves every lock by 12; PROB conditions only off the beat; HUMN micro-timing; GATE the LEN locks); NO back | passed | passed |
+| YES: new seed and phrase; held trig shows stock's NOTE page with the step's locks | passed | passed |
+| A second MIDI track keeps its own settings and phrase | passed | passed |
+| OFF: arp step mask `ffff`, arp defaults; after removal stock's page | passed | passed |
+| Audio track: SRC SETUP page 2 (SEED…DIR) shows and edits | passed | passed |
+| MIDI out: 71 note-ons in phrase order, one per 16th; no chord notes | passed | passed |
+| MIDI out, PROB 1%: 29 note-ons in 7.6 bars, all on steps 1, 5, 9, 13 | passed | not run |
+| MIDI out, HUMN 23: all 78 note-ons at step + k/24 (k -21..+19) within 0.002 step | passed | not run |
+| Part switch | not run: needs DSP in the emulator | not run |
+
+On the base of #1332 (the list's first row ARP, scrolling, room 16) the same USB pass gave 31 passed and the Part switch skipped; ARP from VECTOR gives mask `ffff` and stock's ARPEGGIATOR page with MODE OFF. A card image composed before the .bss fix (`bd2af8c3d`) behaved the same in the emulator, which starts with zeroed memory. Footer: VECTOR's pages still read MIDI NOTE and MIDI ARPEGGIATOR (stock's page names), a known cosmetic gap.
 
 ## Owner exception and remaining limits
 
