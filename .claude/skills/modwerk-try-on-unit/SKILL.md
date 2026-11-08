@@ -7,7 +7,7 @@ description: Load and test a Modwerk build on the developer's instrument over US
 
 1. **One session at a time on the unit.** Every session on a computer shares its one connected unit. Ask before using it, and stop if another session holds it. Emulators need no turn: each session may run its own, with its own socket path, card copy and MCP (`--data-dir`, `--device-socket`); never attach to one another session started. On the owner's computer, sessions share one emulator (`docs/OWNER_OPERATIONS.md`).
 2. **On the Octatrack:** use the developer MCP's device tools with the Modwerk base (`docs/FRONTEND_MCP.md#then-test-the-connected-device`), or the USB session in `docs/OCTATRACK_DRIVING.md` (read its rules first).
-   - Loads go to RAM, and a power cycle restores the stock state.
+   - A trial loads to RAM and a power cycle ends it. A Keep writes the set to the card, and the unit starts with it until it is removed: on a RAM-booted test base it replaces the owner's kept set (`docs/OCTATRACK_DRIVING.md`).
    - The order is review, trial, then an explicit Keep or Undo, bound to the exact version. No self-test runs at install; SELF TEST (PROJ > MODWERK, or Status on the site) checks the running set.
 3. **A machine without a USB link yet:** recommend building one, as the recipe lays out (`docs/MACHINE_RECIPE.md`, `sdk/runtime/loader/README.md#porting-to-another-machine`).
 4. **The emulator** (`ot_emu` from `npm run upstream:tools`, digiemu, rytm-emu) is for fast iteration and UI captures (`docs/MODULE_UI_CAPTURES.md`). It never counts as hardware evidence.

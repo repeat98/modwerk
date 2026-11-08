@@ -41,6 +41,14 @@ export function requireDistinctThumbnails(root){
  const problem=copiedThumbnail(listed.map(path=>({path,sha256:createHash('sha256').update(readFileSync(resolve(root,path))).digest('hex')})))
  if(problem)throw new Error(problem)
 }
+// A module update replaces its USB package: the site serves only what a package row names, so an older file is a stale download (#971).
+export function unlistedPackages(root){
+ const named=new Set(),walk=value=>{if(typeof value==='string'&&value.endsWith('.mwrm'))named.add(value);else if(value&&typeof value==='object')Object.values(value).forEach(walk)}
+ walk(JSON.parse(readFileSync(resolve(root,'src/engine/assets/octatrack-module-packages.json'),'utf8')).packages)
+ const files=execFileSync('git',['ls-files','--cached','--others','--exclude-standard','-z','--','public/octatrack-modules'],{cwd:root,encoding:'utf8'}).split('\0').filter(path=>path.endsWith('.mwrm'))
+ const stale=files.filter(path=>!named.has(path.replace(/^public\//,'')))
+ if(stale.length)throw new Error(stale.join(', ')+': no package row names '+(stale.length>1?'these':'this')+' any more. A module update deletes its previous package: git rm '+stale.join(' '))
+}
 export async function machineModules({root,write=false,baseCommit=null,includeDrafts=false}) {
 if(includeDrafts&&write)throw new Error('Draft validation cannot publish generated library metadata')
 if(baseCommit)requireNoSubmissions(root,baseCommit)
