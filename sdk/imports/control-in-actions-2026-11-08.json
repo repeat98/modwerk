@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/control-in-actions",
+  "version": "0.1.3-experimental",
+  "date": "2026-11-08",
+  "changes": [
+    "When an action (REC HLD or REC TGL) ends live recording, the Rytm is back in the record mode it was in before live recording started: grid recording or step recording, through stock's own setters, whether live recording started from the input or from the panel's RECORD + PLAY. From play mode it still ends in play mode. The audio path is unchanged."
+  ],
+  "runtimeSourceSha256": "4664910015b2e5097243eddd2e66e8f212769620ba827a0c4302b89c15e00a9a",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/control-in-actions/control-in-actions-0.1.3-experimental-os1.74.elemod",
+      "sha256": "d8923e1d274d06968a8956fc320e7f3e24d2e422916c3ea17a5d3b8589253c0a"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/control-in-actions/TESTING.md",
+  "requires": []
+}
