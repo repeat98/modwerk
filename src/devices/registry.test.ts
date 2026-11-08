@@ -66,10 +66,19 @@ describe('digi combination estimate', () => {
     const estimate = estimateCombination('digitakt', ['digineighbor', 'digisophie'])
     expect(estimate.fits).toBe(true)
     expect(estimate.compatibleReleases).toEqual([])
+    // Since SOPHIE 1.2.0 their firmware changes meet in Machine Pages, which this estimate does not expand; the declared conflict refuses them.
     expect(estimate.clashes).toEqual([
       { claim: 'marked as incompatible by their authors', mods: ['NEIGHBOR', 'SOPHIE'] },
-      { claim: 'overlapping firmware changes in OS 1.53', mods: ['NEIGHBOR', 'SOPHIE'] },
-      { claim: 'overlapping firmware changes in OS 1.54', mods: ['NEIGHBOR', 'SOPHIE'] },
+    ])
+  })
+
+  it('refuses two mods whose own firmware changes overlap', () => {
+    const estimate = estimateCombination('digitakt', ['digislicer', 'sample-tools'])
+    expect(estimate.compatibleReleases).toEqual([])
+    expect(estimate.clashes).toEqual([
+      { claim: 'marked as incompatible by their authors', mods: ['DIGISLICER', 'Sample Snap and Crossfade'] },
+      { claim: 'overlapping firmware changes in OS 1.53', mods: ['DIGISLICER', 'Sample Snap and Crossfade'] },
+      { claim: 'overlapping firmware changes in OS 1.54', mods: ['DIGISLICER', 'Sample Snap and Crossfade'] },
     ])
   })
 
