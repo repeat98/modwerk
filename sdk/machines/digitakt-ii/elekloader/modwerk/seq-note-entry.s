@@ -1,10 +1,10 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
         .text
-        .globl start_bridge
-        .globl step_bridge
+        .globl core_seq_note_start
+        .globl core_seq_note_step
 
 /* The stock event and deadline are already on the stack on PLAY. */
-start_bridge:
+core_seq_note_start:
         cmpi.l  #0x4013a98c,%d7
         bne.s   start_stock
         lea     -16(%sp),%sp
@@ -31,7 +31,7 @@ start_stock:
         addq.l  #8,%sp
         jmp     0x400d6638
 
-step_bridge:
+core_seq_note_step:
         /* Keep the constructor's actual pattern argument across a switch. */
         move.l  %d0,-(%sp)
         move.l  %d7,-(%sp)

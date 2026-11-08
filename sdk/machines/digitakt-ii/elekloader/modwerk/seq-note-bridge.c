@@ -55,6 +55,11 @@ void core_seq_note_bridge(uint8_t *event, const uint8_t *pattern, uint32_t track
         return;
     }
 
+    /* Stock writes the default pitch only for a negative trig override index. */
+    if (!(event[0x20] & 0x80u)) {
+        return;
+    }
+
     const uint8_t root = pattern[0x1db7f];
     const uint16_t mask = scale_mask(pattern[0x1db7d]);
     if (root >= 12 || !mask) {
