@@ -2,8 +2,9 @@
 
 - Module: `lfo-rnd` 1.2.0, for Analog Rytm MKII OS 1.74 on core-ar2 0.4 and later; Modwerk's base is core-ar2 0.7.
 - Source: https://github.com/Iced-Cream/rytm2_mods at `e029f7540c2df2a5185620ca68b4c08579e120c6` (tag `v1.3`), `lfo-rnd`.
-  `src/lfo-rnd.s` (`9363d09a…f648`, rytm2_mods' `lfo-rnd/os1.74/lfo-rnd.s`), `include/ar2-1.74.inc` (`c57431f7…874b`)
-  and `shared/shared.s` (`8cc89465…62d6`) are byte-identical to it.
+  `include/ar2-1.74.inc` (`c57431f7…874b`) and `shared/shared.s` (`8cc89465…62d6`) are byte-identical to it.
+  `src/lfo-rnd.s` (`434dd93f…9c0b`) is rytm2_mods' `lfo-rnd/os1.74/lfo-rnd.s` (`9363d09a…f648`) with six comments
+  reworded so none quotes a stock instruction; it assembles to the same bytes (the package reproduces with `--check`).
   1.2 changed `src/lfo-rnd.s` and the sites only: the page, its four knobs and the LFO key's second press are entries in
   core-ar2's `core_pages`, `core_params` and `core_view_pages` instead of 1.1's detours at the entries of page_info,
   page_get_value, param_apply_delta and param_value_text and its own list for the LFO view, which core-ar2 0.4 and later own.

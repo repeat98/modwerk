@@ -484,10 +484,10 @@ setter_gate:
         | ------------------------------------------------------------------
         | The destination list, filtered to our sixteen.
         |
-        | Reached by a jmp over the `jsr dest_list_build` inside the list view's
-        | constructor - the six bytes are that call alone, and the `addql #8,%sp`
-        | after it is NOT displaced, so it must not be re-emitted here: the stub
-        | rejoins at it and stock pops the arguments once. The frame is still the
+        | Reached by a jmp over the list view constructor's call to dest_list_build
+        | - the six bytes are that call alone, and the stack cleanup after it is NOT
+        | displaced, so it must not be re-emitted here: the stub rejoins at it and
+        | stock pops the arguments once. The frame is still the
         | constructor's: %fp@(20) is the CONTAINER
         | INDEX of the parameter the list is for - not its id - and %fp@(-88) takes
         | the vector, whose +0 and +4 are begin and end.
@@ -549,7 +549,7 @@ list_filter_gate:
         | ------------------------------------------------------------------
         | The picker's test for whether the open list is this knob's.
         |
-        | Reached by a jmp over `jsr param_container_index` at 0x40039d32, with
+        | Reached by a jmp over the call to param_container_index at 0x40039d32, with
         | the id at (%sp). Stock keeps the open list when its container index
         | matches the knob's, and cancels it and opens the knob's own otherwise.
         | DS1 and DS2 share index 0, so turning one with the other's list up
@@ -577,7 +577,7 @@ list_owner:                                       | the id the open list is for
         | ------------------------------------------------------------------
         | The knob-release test, for the two depth knobs.
         |
-        | Reached by a jmp over `jsr param_container_index` in the page view key
+        | Reached by a jmp over the call to param_container_index in the page view key
         | handler's knob-event path, with the id at (%sp) and in d4. The result is
         | kept at %fp@(-20) and read only by the release, at 0x4003aa1e: a list
         | whose container index matches the released knob's is confirmed, any
@@ -605,7 +605,7 @@ knob_cidx_gate:
 
         | ------------------------------------------------------------------
         | The picker, creating a list: record whose it is, for list_same_gate.
-        | Reached by a jmp over `jsr param_container_index` at 0x40039d9a, with
+        | Reached by a jmp over the call to param_container_index at 0x40039d9a, with
         | the id at (%sp).
         | ------------------------------------------------------------------
         .equ    LIST_NEW_RESUME, 0x40039da0
@@ -641,7 +641,7 @@ list_new_gate:
         | ------------------------------------------------------------------
         | trig_fire, once the event is valid.
         |
-        | Reached by a jmp over `movel %d5,%a4@(12); movel %d0,%a4@(24)`, after
+        | Reached by a jmp over the two stores of the event's fields, after
         | the event has been marked valid, so only trigs that play arrive here.
         | Everything the stub touches is saved; the frame is balanced here, so the
         | track argument is at TF_TRACK(%sp) on arrival.
@@ -677,7 +677,7 @@ trig_cfg_gate:
         | ------------------------------------------------------------------
         | The audio interrupt's LFO call, with the modifiers first.
         |
-        | Reached by a jmp over `jsr 0x4009e790`, with the LFO's argument at
+        | Reached by a jmp over the call to the LFO block routine, with its argument at
         | (%sp). Per voice track: on a note this block, draw both offsets from
         | cfg; then add the held offsets to their destinations, clamped to
         | 0..PARAM_MAX. Then call the LFO exactly as stock does.

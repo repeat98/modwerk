@@ -14,7 +14,7 @@
     {
      "from": "lfo-rnd/os1.74/lfo-rnd.s",
      "to": "src/lfo-rnd.s",
-     "sha256": "9363d09afc5973e6c1a806a0f911a0c3be00b010606257154f60b022dfd1f648"
+     "sha256": "434dd93fe628bf7194307b80f9121849dc41e7a98c47051564e1c8344a119c0b"
     },
     {
      "from": "include/ar2-1.74.inc",
@@ -46,7 +46,8 @@
     "mod.json's storage field (lfo_rnd_cfg, scope sound, 16 bits) became build.json's storage, and its three contribute entries (core_pages, core_params, core_view_pages) build.json's contribute.",
     "The OS 1.73 source and sites are not imported: Modwerk's base is for OS 1.74 only.",
     "include/ar2-1.74.inc and shared/shared.s keep their paths relative to the source, so the .include lines in src/lfo-rnd.s are unchanged.",
-    "upstream/README.md is lfo-rnd/README.md at e029f75 with the stock values of its ten `bytes` rows replaced by (stock), so no stock bytes are kept; the new values and everything else are unchanged."
+    "upstream/README.md is lfo-rnd/README.md at e029f75 with the stock values of its ten `bytes` rows replaced by (stock), so no stock bytes are kept; the new values and everything else are unchanged.",
+    "src/lfo-rnd.s is lfo-rnd/os1.74/lfo-rnd.s at e029f75 with six comments reworded so that none quotes a stock instruction (the author's OK, 2026-11-08); the code and its assembled bytes are unchanged."
    ]
   }
  ]

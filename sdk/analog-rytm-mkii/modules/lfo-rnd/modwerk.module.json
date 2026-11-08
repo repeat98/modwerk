@@ -115,7 +115,7 @@
   "evidence": {
     "tier": "author-hardware",
     "moduleVersion": "1.2.0",
-    "sourceSha256": "0bf9dcd601e53c573cc1fce45099f5fef0f484bc30eacefb7166c53269668cc8",
+    "sourceSha256": "ebe1b499069d08992845853366a231466f10fe28c99d04f24344af347d600bbf",
     "reports": [
       "evidence/hardware-testing.json",
       "evidence/source-parity.json"

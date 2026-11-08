@@ -125,10 +125,11 @@ rytm-mods-src with his permission. Iced-Cream: the elemod port in rytm2_mods, in
 move to core storage and to core-ar2's page tables, and this module. irpina: Elekloader and
 core-ar2, whose storage and page tables it uses.
 
-Code: [GPL-2.0-only](LICENSE), as rytm-mods-src. `src/lfo-rnd.s` (rytm2_mods'
-`lfo-rnd/os1.74/lfo-rnd.s`), `include/ar2-1.74.inc` and `shared/shared.s` are rytm2_mods'
-files at `e029f75` (v1.3), unchanged; they name firmware routines and RAM by address only.
-The upstream README is in [upstream/README.md](upstream/README.md). Screens show Elektron's
+Code: [GPL-2.0-only](LICENSE), as rytm-mods-src. `src/lfo-rnd.s` is rytm2_mods'
+`lfo-rnd/os1.74/lfo-rnd.s` at `e029f75` (v1.3) with six comments reworded to describe what
+each patched site does instead of quoting the stock instructions there; the code is
+unchanged. `include/ar2-1.74.inc` and `shared/shared.s` are rytm2_mods' files at `e029f75`,
+unchanged. They name firmware routines and RAM by address only. The upstream README is in [upstream/README.md](upstream/README.md). Screens show Elektron's
 interface solely to document the modification. No Elektron firmware is included.
 
 ## Screens and audio
