@@ -6404,7 +6404,7 @@
           "value": 10586112,
           "unit": "bytes",
           "method": "static",
-          "conditions": "Tested reported profile: repitch, vector, playmodes, mute-modes and recorder-loop-fix with stock FX2, original 1.40C. Shared arena 10,586,112 bytes includes 10,487,808 module arena plus 98,304 logger reserve, counted once. Linked runtime 90,780 bytes and packed staging fit within it. VECTOR allocated sections (0.3.0, the MIDI generator and on a card the base's generator registry): 22,314 text, 678 rodata and 3,908 data bytes; no BSS (a card never zeroes it, so prepare.py keeps zero statics in .data) or new heap. Complete flash append: 18,153 bytes measured for 0.2.4's profile, counted here as 28,287, that plus the 10,134 allocated bytes 0.3.0 adds (an upper bound; packing makes it smaller). On MIDI tracks VECTOR reuses stock storage only: the tracks' pattern records, 16 arp note bytes and the arp step mask per Part. Maximum observed native commit stack 1,048; Part validation 252; fixed added UI stack bound 1,216. Borrowed stock window, lock indexes and 8-track bank/SRAM capacities are retained. Hardware canaries are unmeasured.",
+          "conditions": "Tested reported profile: repitch, vector, playmodes, mute-modes and recorder-loop-fix with stock FX2, original 1.40C. Shared arena 10,586,112 bytes includes 10,487,808 module arena plus 98,304 logger reserve, counted once. Linked runtime 90,780 bytes and packed staging fit within it. VECTOR allocated sections (0.3.0, the MIDI generator and on a card the base's generator registry): 22,422 text, 682 rodata and 3,912 data bytes; no BSS (a card never zeroes it, so prepare.py keeps zero statics in .data) or new heap. Complete flash append: 18,153 bytes measured for 0.2.4's profile, counted here as 28,403, that plus the 10,250 allocated bytes 0.3.0 adds (an upper bound; packing makes it smaller). On MIDI tracks VECTOR reuses stock storage only: the tracks' pattern records, 16 arp note bytes and the arp step mask per Part. Maximum observed native commit stack 1,048; Part validation 252; fixed added UI stack bound 1,216. Borrowed stock window, lock indexes and 8-track bank/SRAM capacities are retained. Hardware canaries are unmeasured.",
           "source": "TESTING.md"
         },
         "processing": {
@@ -6440,17 +6440,17 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "0.3.0 adds VECTOR as a MIDI generator for the MIDI tracks and makes edits cheaper: a 64-step rewrite took 0.5 ms on the owner's MKII (3.9 ms before), with audio frames and MIDI timing steady. The list, the SRC, AMP and FUNC+AMP pages, generation, PROB and HUMN against recorded MIDI, grid-recording locks, removal and reinstall ran on the owner's MKII over USB with development bases (21 and 24 October 2026); the card build was checked by octabam's native builder only. Current-build hardware, chip cycles and complete memory bounds are not measured, under the owner's approval for this exact source.",
+        "summary": "0.3.0 adds VECTOR as a MIDI generator for the MIDI tracks and makes edits cheaper: a 64-step rewrite took 0.5 ms on the owner's MKII (3.9 ms before), with audio frames and MIDI timing steady. The list, the SRC, AMP and FUNC+AMP pages, generation, PROB and HUMN against recorded MIDI, grid-recording locks, removal and reinstall ran on the owner's MKII over USB on 21 and 24 October 2026 (development bases). The released package, which adds main's changes, the #1119 card fix, the card .bss fix and the ARP list, ran in the emulator only: the USB package and a site-built card image passed every step but the Part switch, which needs DSP there. The owner accepted the 24 October run for this source on 8 November 2026.",
         "hardwareStatus": "reported",
-        "evidenceRevision": "645d73da3872ce9111f3e3172114fb33a3660b9f",
+        "evidenceRevision": "3b56452d20c640ab6b8bb323cc5aba5602e95c34",
         "gates": [
           "Firmware-free sanitizer generator, writer and packed-settings checks",
           "Hoisted scale lookup identical to 0.2.4 over 18,144,000 parameter sets",
           "Authored C/hooks to assembly reproducibility without firmware",
           "Base MIDI generator registry host test (sdk/tests test_midi_generators.c)",
-          "Owner's MKII over USB: list, SRC/AMP pages, generation, MIDI output, PROB and HUMN timing, grid-recording locks, removal, MODE guard, edit cost",
-          "Browser/native build parity and matching composition rejection",
-          "Owner-approved update for this exact source; current-build hardware, chip cycles and memory bounds unmeasured"
+          "Owner's MKII over USB (24 October 2026, an earlier build of 0.3.0): list, SRC/AMP pages, generation, MIDI output, PROB and HUMN timing, grid-recording locks, removal, MODE guard, edit cost",
+          "Emulator (ot_emu), the released USB package and a site-built card image: list, pages, encoders, MIDI out with PROB and HUMN, removal; no Part switch",
+          "Browser/native build parity and matching composition rejection"
         ],
         "qualification": {
           "documentation": {
@@ -6478,8 +6478,8 @@
             "screenshotStyle": "black-and-white"
           },
           "moduleVersion": "0.3.0-experimental",
-          "sourceSha256": "50a4f243d3ed16872173a2a742a345916aec60e316cd477d86ef3727a2ed85ce",
-          "imageSha256": "a753ddf67b0fe64e3742b4c89ecf141071eb30757b170173215e92b1b4794d24",
+          "sourceSha256": "5c6004d8adedf47888c70cb38ad9f0a2fb2cf6c61f6ac164f507cc77ef142015",
+          "imageSha256": "08240af3b24126a50aa1b617a46c956fe4c5aac5582534039812b5b303bb273a",
           "cycles": [
             {
               "processor": "coldfire",
@@ -6512,9 +6512,9 @@
               {
                 "name": "Complete tested-profile flash append: bootstrap and packed runtime",
                 "space": "cpu-flash",
-                "words": 28287,
+                "words": 28403,
                 "wordBits": 8,
-                "bytes": 28287,
+                "bytes": 28403,
                 "scope": "shared"
               },
               {
@@ -6559,26 +6559,25 @@
               }
             ],
             "perInstanceBytes": 74656,
-            "sharedBytes": 10617875,
+            "sharedBytes": 10617991,
             "maxInstances": 8,
-            "totalBytes": 11215123,
-            "conditions": "Tested reported profile: repitch, vector, playmodes, mute-modes and recorder-loop-fix with stock FX2, original 1.40C. Shared arena 10,586,112 bytes includes 10,487,808 module arena plus 98,304 logger reserve, counted once. Linked runtime 90,780 bytes and packed staging fit within it. VECTOR allocated sections (0.3.0, the MIDI generator and on a card the base's generator registry): 22,314 text, 678 rodata and 3,908 data bytes; no BSS (a card never zeroes it, so prepare.py keeps zero statics in .data) or new heap. Complete flash append: 18,153 bytes measured for 0.2.4's profile, counted here as 28,287, that plus the 10,134 allocated bytes 0.3.0 adds (an upper bound; packing makes it smaller). On MIDI tracks VECTOR reuses stock storage only: the tracks' pattern records, 16 arp note bytes and the arp step mask per Part. Maximum observed native commit stack 1,048; Part validation 252; fixed added UI stack bound 1,216. Borrowed stock window, lock indexes and 8-track bank/SRAM capacities are retained. Hardware canaries are unmeasured.",
+            "totalBytes": 11215239,
+            "conditions": "Tested reported profile: repitch, vector, playmodes, mute-modes and recorder-loop-fix with stock FX2, original 1.40C. Shared arena 10,586,112 bytes includes 10,487,808 module arena plus 98,304 logger reserve, counted once. Linked runtime 90,780 bytes and packed staging fit within it. VECTOR allocated sections (0.3.0, the MIDI generator and on a card the base's generator registry): 22,422 text, 682 rodata and 3,912 data bytes; no BSS (a card never zeroes it, so prepare.py keeps zero statics in .data) or new heap. Complete flash append: 18,153 bytes measured for 0.2.4's profile, counted here as 28,403, that plus the 10,250 allocated bytes 0.3.0 adds (an upper bound; packing makes it smaller). On MIDI tracks VECTOR reuses stock storage only: the tracks' pattern records, 16 arp note bytes and the arp step mask per Part. Maximum observed native commit stack 1,048; Part validation 252; fixed added UI stack bound 1,216. Borrowed stock window, lock indexes and 8-track bank/SRAM capacities are retained. Hardware canaries are unmeasured.",
             "report": "evidence/software.json"
           },
           "hardware": {
             "kind": "functional",
             "status": "reported",
             "model": "MKII",
-            "testedOn": "2026-10-27",
+            "testedOn": "2026-10-24",
             "tester": "repeat98 (owner's unit, driven over USB by the coordinating session)",
-            "sourceRevision": "645d73da3872ce9111f3e3172114fb33a3660b9f",
-            "imageSha256": "a753ddf67b0fe64e3742b4c89ecf141071eb30757b170173215e92b1b4794d24",
-            "summary": "Over USB on an Octatrack MKII: a RAM-booted development twin of the release base (identity e6e75d75..., MAIN a753ddf6...; the b1b2ca58 build plus --dev) with POLY8 0.3.1, Analog BD 0.1.5 (rebuilt for the twin) and this VECTOR 0.2.5 package (45c962ca...), all accepted. On a STATIC track SRC SETUP's list scrolls to POLY8, ANALOG BD and VECTOR; with the cursor on VECTOR before YES the stock STATIC setup shows, and on ANALOG BD Analog BD's page. YES on VECTOR opens its STATIC/FLEX choice and the main SRC page shows SRC>VECTOR. SRC SETUP then shows VECTOR's page 2 (SEED 1, SPAN 12, OFST 0, ROT 0, RPT OFF, DIR FWD); encoders A-F change SEED, OFST, ROT, RPT and DIR (SPAN already at its maximum) and back, and SPAN moves within its range. Another STATIC track keeps the stock setup.",
+            "sourceRevision": "3b56452d20c640ab6b8bb323cc5aba5602e95c34",
+            "imageSha256": "08240af3b24126a50aa1b617a46c956fe4c5aac5582534039812b5b303bb273a",
+            "summary": "Over USB on an Octatrack MKII: a RAM-booted development twin of the base with the MIDI generator table (identity 4fd515ff210d53db, MAIN 08240af3...), VECTOR 0.3.0 layout A installed with `try` (package 49dc25cc..., 29,478 bytes), a disposable project, MIDI recorded over USB. NOTE SETUP's list by double-tap; YES on VECTOR; SRC TYPE DENS ROOT SCAL OCT SEED, AMP VEL ACNT GATE SPAN OFST RPT, FUNC+AMP ROT DIR PROB HUMN; OCT and ROOT move the phrase's NOTE locks; PROB 1% let none of 46 off-beat notes play; HUMN: all 50 note-ons within 1.0 ms of grid + offset; a held trig shows stock's page and its locks; OFF, removal and reinstall; 0.52 ms mean, 0.69 ms longest a control turn at 64 steps, MIDI timing and audio frames steady.",
             "limitations": [
-              "The base was the development twin of the release base, not the b1b2ca58 build itself, nor the base this release commits.",
-              "Not tested: the FLEX, THRU and PICKUP setups; a POLY8 or Analog BD track's SRC SETUP; VECTOR 0.2.4 on the new base; whether the SRC main page regenerates the phrase.",
-              "Not tested: saving and reloading, a power cycle with VECTOR kept, and listening; no chip timing or stress.",
-              "One MKII; no MKI. The card build was not run on a unit: 0.2.4's card source, and 0.2.6's (st_setup_page without its row-5 test, for POLY8 sets, #1119) only in ot_emu. 0.2.6 keeps publishing this 0.2.5 USB package; its control unit source is byte-identical."
+              "An earlier build of 0.3.0 on a development base: the released package (4d37ad92..., on main with #1332's list) adds main's changes, the #1119 card fix, the card .bss fix and the ARP list row; those ran in the emulator only. The owner accepted this run for the release on 8 November 2026.",
+              "Not tested on a unit: a card build, a power cycle with a VECTOR MIDI track, project save and reload, scenes and LFOs on a VECTOR MIDI track, more than one MIDI generator installed.",
+              "One MKII; no MKI. No chip timing or stress."
             ],
             "report": "TESTING.md"
           }

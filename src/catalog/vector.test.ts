@@ -27,10 +27,10 @@ const CHANGED_SINCE_CARD_EVIDENCE = ['engine.c', 'native.c', 'prepare.py', 'mani
 const sha = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex')
 
 describe('VECTOR release', () => {
-  it('publishes a reported functional hardware result for 0.2.5', async () => {
+  it('publishes a reported functional hardware result for 0.3.0', async () => {
     const document = parseModuleDocument(draft)
     expect(document.tests.hardwareStatus).toBe('reported')
-    expect(document.tests.qualification!.hardware).toMatchObject({ kind: 'functional', status: 'reported', model: 'MKII', testedOn: '2026-10-27' })
+    expect(document.tests.qualification!.hardware).toMatchObject({ kind: 'functional', status: 'reported', model: 'MKII', testedOn: '2026-10-24' })
     expect(() => requireModuleUiForPublication(document)).not.toThrow()
     expect(() => requireModuleQualificationForPublication(document)).not.toThrow()
     await expect(requireFolderQualification(folder, document, parseQualificationBaseline(baseline))).resolves.toBe('qualified')

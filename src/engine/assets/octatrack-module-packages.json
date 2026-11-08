@@ -194,10 +194,10 @@
       "copies": 12,
       "fills": 0,
       "version": "0.3.0-experimental",
-      "name": "VECTOR",
+      "name": "VECTOR MIDI",
       "module": "b0d51c58",
-      "bytes": 29630,
-      "sha256": "b66a440e6969ed9c5a863245956ebbaa7d81f96993f8837c53a5a7428b6a7a31",
+      "bytes": 29774,
+      "sha256": "4d37ad9225f813f68c3e3ad0da42b1bd4c4cf883def911f785e92b700190a36d",
       "path": "octatrack-modules/vector/0.3.0-experimental.mwrm"
     },
     {
