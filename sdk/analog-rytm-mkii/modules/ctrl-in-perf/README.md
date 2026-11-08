@@ -24,6 +24,10 @@ PERF DEST is kept for each jack in the active globals slot and saved with the pr
 
 ## Usage
 
+Set each jack up in its own CONTROL INPUT menu, then play the jack as you would the macro's knob. Set PERF DEST back to OFF to give the macro back to its knob and pad.
+
+## Quick tutorial
+
 1. Plug a CV source or an expression pedal into EXP/CV IN 1, then open GLOBAL > CONTROL > CONTROL INPUT 1 and set MODE to CV or EXPR (for EXPR, run EXPRESSION LEARN).
 2. Set PERF DEST, the last row, to PF1 and leave the menu.
 3. Give performance 1 some locks (hold PF1 in PERF mode and turn knobs), then move the jack: the locks follow it, and pad 1 lights with the level in PERF mode.
@@ -48,10 +52,22 @@ Stay within the jack's -5 V to +5 V.
 
 [upstream/README.md](upstream/README.md) lists what changed from the OS 1.73 original.
 
-## Credits
+## Screens and audio
+
+The CONTROL INPUT 1 menu in MODE CV, with PERF DEST at OFF and at PF1 ([capture record](media/capture.json)):
+
+![PERF DEST at OFF](media/perf-dest-off.png)
+![PERF DEST at PF1](media/perf-dest-pf1.png)
+
+The module makes no sound of its own: it moves performance macros, which change the sound through their locks.
+
+## Tests and measurements
+
+Not run on a unit yet. In analog-emu, on CP02 (the Modwerk base for core-ar2 0.7 with this module), PERF DEST shows and steps as described, and a poked CV at ZERO, midway and MAX set macro 1 to 0, 63 and 127. It takes 952 bytes of the shared mod RAM and 672 bytes of flash. [TESTING.md](TESTING.md) has the details and the hardware steps still to run.
+
+## Authorship and licences
+
 
 MrScruff wrote the original, rytm-mods `0017-ctrl-in-perf`, published in rytm-mods-src with permission. Iced-Cream ported it to OS 1.74 and core-ar2 0.7. irpina wrote Elekloader and core-ar2.
-
-## Licence
 
 GPL-2.0-only, as rytm-mods-src ([LICENSE](LICENSE)).
