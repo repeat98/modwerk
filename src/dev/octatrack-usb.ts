@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Chrome page for a hardware run of the private Octatrack base (dev/octatrack-usb.html,
+// Chrome page for a hardware run of the private Octatrack base (src/dev/octatrack-usb.html,
 // served by `npm run dev` only). Claims only Modwerk's vendor interface.
 import { findVendorInterface, type ControlDevice } from '../engine/elekloader/upload-usb.ts'
 import { encodeUploadRequest } from '../engine/elekloader/upload-wire.ts'

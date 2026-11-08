@@ -41,6 +41,7 @@
     "upload:verify": "sh sdk/runtime/upload/tests/run_host.sh",
     "upstream:tools": "python3 -B scripts/upstream-tools.py",
     "device": "node scripts/device.mjs",
+    "device:qualify": "python3 -B scripts/octatrack-qualify.py",
     "modules:generate": "node scripts/modules.mjs --write",
     "modules:check": "node scripts/modules.mjs",
     "modules:compat": "python3 -B scripts/module-compat.py",
