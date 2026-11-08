@@ -1,5 +1,7 @@
 # Threshold Slices testing
 
+0.1.0-experimental. The host scan passed. A 12-second USB try was rolled back without opening the editor. D removal is not tested yet.
+
 ## Commands and exact revision
 
 The host scan and the 12-second USB try below are commit `f96425206d5b209701cb0d4c05c7a03084612dee`. Pressing D to remove a slice came after that and was not part of those runs.
