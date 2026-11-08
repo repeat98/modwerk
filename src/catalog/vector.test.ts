@@ -18,19 +18,17 @@ const folder = resolve('sdk/octabam/modules/vector')
 // 0.2.5 changes only the USB package: its card source (the native source SHA-256 below) and card build are 0.2.4's, so
 // 0.2.4's emulator and behaviour records stand for its card build; the UI captures are labelled 0.2.5 for publication.
 const CARD_EVIDENCE = '0.2.4-experimental'
-// The owner accepted 0.2.4's card evidence for 0.2.6 (6 Nov 2026): 0.2.6 only drops st_setup_page's row-5 test (#1119), in
-// control.s and native.c, so the captures stay bound to 0.2.4's native source by name. 0.3.0 (which carries 0.2.6) adds the
-// MIDI generator (midi.c, not a capture input; its card detours in manifest.py and prepare.py) and cheaper commits (engine.c,
-// native.c) that give the same phrases; the audio-track screens the captures show are unchanged.
+// The owner accepted 0.2.4's card evidence for 0.2.6, released as 0.3.1 (6 and 8 Nov 2026): it only drops st_setup_page's row-5 test (#1119), in
+// control.s and native.c, so the captures stay bound to 0.2.4's native source by name.
 const CARD_EVIDENCE_SOURCE = '1255e99133cbd8d6d2587c95f93462ea80fccbd169462a2acb02aedbd346cbd3'
-const CHANGED_SINCE_CARD_EVIDENCE = ['engine.c', 'native.c', 'prepare.py', 'manifest.py', 'control.s']
+const CHANGED_SINCE_CARD_EVIDENCE = ['native.c', 'control.s']
 const sha = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex')
 
 describe('VECTOR release', () => {
-  it('publishes a reported functional hardware result for 0.3.0', async () => {
+  it('publishes a reported functional hardware result for 0.2.5', async () => {
     const document = parseModuleDocument(draft)
     expect(document.tests.hardwareStatus).toBe('reported')
-    expect(document.tests.qualification!.hardware).toMatchObject({ kind: 'functional', status: 'reported', model: 'MKII', testedOn: '2026-10-24' })
+    expect(document.tests.qualification!.hardware).toMatchObject({ kind: 'functional', status: 'reported', model: 'MKII', testedOn: '2026-10-27' })
     expect(() => requireModuleUiForPublication(document)).not.toThrow()
     expect(() => requireModuleQualificationForPublication(document)).not.toThrow()
     await expect(requireFolderQualification(folder, document, parseQualificationBaseline(baseline))).resolves.toBe('qualified')
@@ -93,8 +91,7 @@ describe('VECTOR release', () => {
   })
 
   it('binds the recorded firmware-free tests without running native code in application checks', async () => {
-    expect(coreTests.moduleVersion).toBe(draft.version)
-    expect(coreTests.sourceSha256).toBe(draft.tests.qualification.sourceSha256)
+    expect(coreTests.moduleVersion).toBe(CARD_EVIDENCE)
     for (const [path, hash] of Object.entries(coreTests.sources)) {
       expect(sha(await readFile(resolve(folder, path)))).toBe(hash)
     }

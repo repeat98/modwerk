@@ -490,7 +490,7 @@ describe('new module release announcements', () => {
     expect(items).toHaveLength(2)
     expect(items.map(item => item.kind)).toEqual(['announcement', 'announcement'])
     expect(notificationLines(items)).toEqual(expect.arrayContaining([
-      expect.objectContaining({ text: 'VECTOR MIDI is now available', href: '#module/vector' }),
+      expect.objectContaining({ text: 'VECTOR is now available', href: '#module/vector' }),
       expect.objectContaining({ text: 'FM Synth is now available', href: '#module/fm-synth' }),
     ]))
     expect(await f.items(one.session)).toEqual([])

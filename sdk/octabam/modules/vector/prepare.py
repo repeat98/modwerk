@@ -4,7 +4,6 @@ Run the compiler in the isolated toolchain; firmware is not an input.
 """
 from pathlib import Path
 import argparse
-import re
 import subprocess
 import tempfile
 
@@ -24,24 +23,14 @@ def main():
     parser.add_argument('--output',type=Path,required=True)
     args=parser.parse_args()
     here=Path(__file__).resolve().parent
-    octatrack=here.parents[2]/'machines/octatrack'
     if args.output.exists(): parser.error('Output exists; use a fresh private build directory.')
     with tempfile.TemporaryDirectory(prefix='vector-cf.') as directory:
         work=Path(directory)
         unity=work/'vector.c'
-        # On a card VECTOR is the one MIDI generator: it links the base's registry with its own record.
-        unity.write_text('#include "engine.c"\n#include "persistence.c"\n#include "native.c"\n#include "midi.c"\n'
-                         '#define MG_FIXED vector_midi\n#include "midi_generators.c"\n')
+        unity.write_text('#include "engine.c"\n#include "persistence.c"\n#include "native.c"\n')
         assembly=work/'vector.s'
-        include=[x for d in (here,octatrack/'elekloader',octatrack/'include') for x in ('-I',str(d))]
-        subprocess.run(['m68k-elf-gcc',*FLAGS,*include,'-S',str(unity),'-o',str(assembly)],check=True)
-        # A card unit's .bss is never loaded or zeroed (tools/remix/platform_build.py), and -fno-zero-initialized-in-bss
-        # leaves statics without an initialiser in .comm: put them in .data as zeros, and keep the unit free of .bss.
-        compiled=re.sub(r'\t\.local\t(\S+)\n\t\.comm\t\1,(\d+),(\d+)\n',
-                        r'\t.pushsection .data\n\t.balign \3\n\1:\n\t.zero \2\n\t.popsection\n',assembly.read_text())
-        if re.search(r'\.(?:l?comm|bss)\b',compiled): raise SystemExit('VECTOR must not have .bss: a card never zeroes it.')
-        text=(compiled+'\n#APP\n'+(here/'hooks.s').read_text()+'\n'+
-              (octatrack/'elekloader/midi_generators.s').read_text()+'\n.text\n.balign 2\n')
+        subprocess.run(['m68k-elf-gcc',*FLAGS,'-I',str(here),'-S',str(unity),'-o',str(assembly)],check=True)
+        text=assembly.read_text()+'\n#APP\n'+(here/'hooks.s').read_text()+'\n.text\n.balign 2\n'
         # The shared native/browser linkers restore these from verified local OS.
         for name,address,length in REPLAYS:
             text+=name+':\n.space '+str(length)+'\njmp '+hex(address+length)+'\n'

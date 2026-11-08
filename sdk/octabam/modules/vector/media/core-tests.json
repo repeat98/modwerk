@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "moduleVersion": "0.3.0-experimental",
-  "testedOn": "2026-11-08",
+  "moduleVersion": "0.2.4-experimental",
+  "testedOn": "2026-10-06",
   "compiler": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
-  "toolchainImage": "sha256:283235500ccd14b48d0a0fdbf4ac8556a37c63332bda02f9c838736d098617f2",
+  "toolchainImage": "sha256:244853509446c2f2bb0b9032b6160b1dbffc911ab5a66a9139eadfbd0930f457",
   "isolation": "Network-disabled read-only Docker root, all capabilities dropped, private executable tmpfs. Firmware-free C core only.",
   "command": "cc -std=c11 -Wall -Wextra -Werror -fsanitize=address,undefined engine.c test_engine.c -o /tmp/riff-tests && /tmp/riff-tests",
   "cases": 244800,
@@ -28,7 +28,7 @@
     "seed wrap at 127"
   ],
   "sources": {
-    "engine.c": "18c57b2f40371b8e36e4bbac6d181ad5cc0a33c2961758da11166c6123e5623a",
+    "engine.c": "508448ef3897450877b2aa66de0f9305d6d8e950747774289aeeb7f09793a302",
     "engine.h": "7191686c8fc62869a37aa27717c1d92460eea3c77debf154a482df1b913469b2",
     "test_engine.c": "e05151ec4e184c4f2a6ae133296a2a37f6917a45585dcf114eddf6025d269a3d",
     "persistence.c": "e2233df8fcef4eee4eabaced214e76e5b88f5844e03962a5900266a8fdc9ecfc",
@@ -37,7 +37,7 @@
     "verify_native.py": "e329133cf080bdd47a4ab7a5e4658e1455a2629c88ed731555e430e6f16b0ec0"
   },
   "limitations": "Synthetic host buffers; not hardware or native timing, audio or persistence qualification.",
-  "sourceSha256": "5c6004d8adedf47888c70cb38ad9f0a2fb2cf6c61f6ac164f507cc77ef142015",
+  "sourceSha256": "1255e99133cbd8d6d2587c95f93462ea80fccbd169462a2acb02aedbd346cbd3",
   "partValidation": {
     "instanceMasks": 256,
     "sanitizers": "ASan/UBSan",
