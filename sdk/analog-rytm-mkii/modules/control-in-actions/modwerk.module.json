@@ -2,7 +2,7 @@
  "schemaVersion": 3,
  "id": "control-in-actions",
  "name": "Control In Actions",
- "version": "0.1.1-experimental",
+ "version": "0.1.2-experimental",
  "machine": "analog-rytm-mkii",
  "category": "system",
  "exclusive": false,
@@ -84,7 +84,7 @@
  },
  "evidence": {
   "tier": "none",
-  "moduleVersion": "0.1.1-experimental",
+  "moduleVersion": "0.1.2-experimental",
   "sourceSha256": null,
   "reports": [],
   "hardware": null,
@@ -92,7 +92,7 @@
  },
  "tests": {
   "report": "TESTING.md",
-  "summary": "Author's unit, builds alone: CI06 and CI07 passed every action, both learns with YES and NO, REVERSE DIRECTION and a power cycle; CI09 passed the bars, both learns' NO and a hold action. CI11 (0.1.1, this package) reads the jacks in the audio interrupt: in rytm-emu (CE16, CE17) every action played within 0.02 to 1.12 ms of the edge, against 4 to 49 ms for 0.1.0's code (CE15); on the unit it works great, as reported. Not run beside other modules on a unit.",
+  "summary": "Author's unit, builds alone: CI06 and CI07 passed every action, both learns with YES and NO, REVERSE DIRECTION and a power cycle; CI09 the bars, both learns' NO and a hold action. CI11 (0.1.1) reads the jacks in the audio interrupt: in rytm-emu every action played within 0.02 to 1.12 ms of the edge (0.1.0: 4 to 49 ms); works great on the unit, as reported. 0.1.2 in LP01, a 16-module set: actions play, ACTION OFF plays nothing, and with both jacks at ACTION OFF the handler takes 0.8 µs a block (0.1.1: 3.6 µs). Not run alone on a unit.",
   "documentation": {
    "tutorial": {
     "title": "Quick tutorial",
@@ -137,9 +137,9 @@
    "capture": {
     "type": "emulator",
     "release": "1.74",
-    "moduleVersion": "0.1.1-experimental",
-    "imageSha256": "6486523fe7cd765f9d81f1a5224ba9d30ee7f8f3a50b5a900212c42e10428678",
-    "setup": "Headless rytm-emu (dtboot) running CI11: core-ar2 0.7 and this folder's Control In Actions 0.1.1-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+    "moduleVersion": "0.1.2-experimental",
+    "imageSha256": "3e7e1661cb9ab84931cd4e60bec9b8ccc4d79b56e69a60ac5fbb5e2fac8cad18",
+    "setup": "Headless rytm-emu (dtboot) running CI12: core-ar2 0.7 and this folder's Control In Actions 0.1.2-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
    }
   },
   {
@@ -153,9 +153,9 @@
    "capture": {
     "type": "emulator",
     "release": "1.74",
-    "moduleVersion": "0.1.1-experimental",
-    "imageSha256": "6486523fe7cd765f9d81f1a5224ba9d30ee7f8f3a50b5a900212c42e10428678",
-    "setup": "Headless rytm-emu (dtboot) running CI11: core-ar2 0.7 and this folder's Control In Actions 0.1.1-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+    "moduleVersion": "0.1.2-experimental",
+    "imageSha256": "3e7e1661cb9ab84931cd4e60bec9b8ccc4d79b56e69a60ac5fbb5e2fac8cad18",
+    "setup": "Headless rytm-emu (dtboot) running CI12: core-ar2 0.7 and this folder's Control In Actions 0.1.2-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
    }
   },
   {
@@ -169,9 +169,9 @@
    "capture": {
     "type": "emulator",
     "release": "1.74",
-    "moduleVersion": "0.1.1-experimental",
-    "imageSha256": "6486523fe7cd765f9d81f1a5224ba9d30ee7f8f3a50b5a900212c42e10428678",
-    "setup": "Headless rytm-emu (dtboot) running CI11: core-ar2 0.7 and this folder's Control In Actions 0.1.1-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+    "moduleVersion": "0.1.2-experimental",
+    "imageSha256": "3e7e1661cb9ab84931cd4e60bec9b8ccc4d79b56e69a60ac5fbb5e2fac8cad18",
+    "setup": "Headless rytm-emu (dtboot) running CI12: core-ar2 0.7 and this folder's Control In Actions 0.1.2-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
    }
   }
  ]
