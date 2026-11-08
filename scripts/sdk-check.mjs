@@ -8,7 +8,8 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const python = process.platform === 'win32' ? 'python' : 'python3'
 // Repository text is UTF-8, including on Windows hosts with an ANSI locale.
 const unittest = { PYTHONDONTWRITEBYTECODE: '1', PYTHONUTF8: '1' }
-// One unittest process per test file, as many at once as Vitest runs workers: run in one process, the suite took minutes.
+// One unittest process per test file, on half the cores (at most 4), since npm run check runs Vitest's workers beside it:
+// in one process the suite took minutes, and more processes starve Vitest's timed tests on a 4-core CI runner.
 const jobs = readdirSync(resolve(root, 'sdk/tests')).filter(file => /^test.*\.py$/.test(file))
   .map(file => ({ name: file, command: python, args: ['-X', 'utf8', '-B', '-m', 'unittest', 'discover', '-s', 'sdk/tests', '-p', file, '-v'], env: unittest }))
 // Shared Octatrack host checks (no firmware, a few seconds): here, on every pull request, so a change that breaks them
@@ -27,7 +28,7 @@ for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => {
   for (const child of children) child.kill(signal)
   process.exit(signal === 'SIGINT' ? 130 : 143)
 })
-const workers = Math.min(4, availableParallelism()), started = performance.now(), failed = [], count = jobs.length, taken = {}
+const workers = Math.max(1, Math.min(4, Math.floor(availableParallelism() / 2))), started = performance.now(), failed = [], count = jobs.length, taken = {}
 let tests = 0
 async function worker() {
   for (let job; (job = jobs.shift());) {
