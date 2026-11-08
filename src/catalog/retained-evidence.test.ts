@@ -112,7 +112,7 @@ describe('risk-based retained module evidence',()=>{
     put(path,JSON.stringify({packages:[row]}))
     await expect(check()).rejects.toThrow('package rows changed')
     const waiver={module:document.id,version:document.version,path:row.path,sha256:sha,approval:'Synthetic owner beta waiver',hardware:'not tested',emulator:'not tested'}
-    const waive=(item:object)=>put('sdk/usb-package-waivers.json',JSON.stringify({schemaVersion:1,about:'Synthetic',waivers:[item]}))
+    const waive=(item:object)=>put('sdk/approvals/usb-package-waivers.json',JSON.stringify({schemaVersion:1,about:'Synthetic',waivers:[item]}))
     waive(waiver);expect(await check()).toBe('retained-evidence')
     waive({...waiver,sha256:'6'.repeat(64)});await expect(check()).rejects.toThrow('full qualification')
     waive({...waiver,version:'0.1.0',path:`octatrack-modules/${document.id}/0.1.0.mwrm`});await expect(check()).rejects.toThrow('package rows changed')
