@@ -482,7 +482,7 @@ is recovered from the Startup Menu over DIN MIDI.
 1. Build with `build_core.py` (above) and install `NOT_FLASH_CANDIDATE.syx`
    or `.bin` the way you install any test OS.
 2. Leave USB disk mode, stop playback and recording, and connect USB.
-3. Run `npm run dev` and open `http://localhost:5173/dev/octatrack-usb.html`
+3. Run `npm run dev` and open `http://localhost:5173/src/dev/octatrack-usb.html`
    in Chrome. **Run lifecycle** claims only the vendor interface, loads a
    test module, replaces and rolls it back, removes it, and reads each
    effect back through the base's read-only DIAG request. The slot is empty

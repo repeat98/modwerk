@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+import { existsSync } from 'node:fs'
 import { readFile, writeFile, mkdir, mkdtemp, rm, stat } from 'node:fs/promises'
 import { basename, resolve, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -45,6 +46,12 @@ async function publicFile(site, path, limit = 16 * 1024 * 1024) {
     chunks.push(chunk)
   }
   return Buffer.concat(chunks)
+}
+
+/** Library modules among planned packages. Dependency folders (sdk/<machine>/dependencies, e.g. Machine Pages) have no
+ * release of their own; their packages are checked against the published catalogue's SHA-256 pins instead. */
+export function libraryModuleIds(ids, machine, root = ROOT) {
+  return ids.filter(id => !existsSync(resolve(root, 'sdk', machine, 'dependencies', id, 'dependency.json')))
 }
 
 export function verifyPublishedModules(inventory, localModules, machine, ids, expectedVersions = {}) {
@@ -101,7 +108,7 @@ export async function buildAndSave(value, { stockPath, outputDir, site = 'https:
     const plan = planBuild(parseCatalog(JSON.parse(catalogBytes)), DEVICES[request.machine], request.os, request.moduleIds)
     if (!plan.core || plan.missing.length) throw new Error('No compatible published packages for: ' + (plan.missing.join(', ') || 'core'))
     const modules = JSON.parse(await readFile(resolve(root, 'src/catalog/machine-modules.json'), 'utf8')).modules
-    moduleVersions = verifyPublishedModules(inventory, modules, request.machine, plan.mods.map(pin => pin.id), request.expectedVersions)
+    moduleVersions = verifyPublishedModules(inventory, modules, request.machine, libraryModuleIds(plan.mods.map(pin => pin.id), request.machine, root), request.expectedVersions)
     const bridge = new Bridge()
     const loaded = await bridge.setStock({ name: basename(stockPath) }, stock)
     if (!loaded.ok) throw new Error(loaded.error)

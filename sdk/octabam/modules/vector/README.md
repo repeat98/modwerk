@@ -1,8 +1,8 @@
 # VECTOR
 
-Version: `0.2.4-experimental` · author: @repeat98 / Octamod contributors.
+Version: `0.3.0-experimental` · author: @repeat98 / Octamod contributors.
 
-Native SRC generator for Flex and Static samples. Physical hardware remains untested; the owner approved release and closure with physical reboot/audio unverified on 9 October 2026.
+Native SRC generator for Flex and Static samples, and from 0.3.0 a MIDI generator for the eight MIDI tracks. The MIDI generator ran on the owner's MKII over USB (21 October 2026, development bases); the sample machine's physical hardware testing remains owner-waived (9 October 2026).
 
 ![VECTOR phrase generator](presentation/thumbnail.svg)
 
@@ -10,7 +10,7 @@ Native SRC generator for Flex and Static samples. Physical hardware remains unte
 
 VECTOR creates real note trigs and PTCH/HOLD/VOL locks for one Flex or Static sample. Turn a generator parameter on either native SRC page to commit the sequence immediately, including while playing. Knob edits keep the current seed; YES makes a fresh variation. The normal Octatrack track display, sample name, Part, native dials and sequencer remain in use. No generator window is allocated.
 
-The algorithm is original, inspired by Iftah’s Sting 2; no Sting source or artwork was copied. It generates internal sample notes and emits no MIDI. STOP/PLAY preserves populated tracks. When native playback starts, VECTOR fills only empty tracks and refuses existing note, recorder, trigless, slide or lock data.
+The algorithm is original, inspired by Iftah’s Sting 2; no Sting source or artwork was copied. On an audio track it generates internal sample notes and emits no MIDI; on a MIDI track it writes MIDI note trigs, which the stock sequencer sends ([VECTOR on MIDI tracks](#vector-on-midi-tracks)). STOP/PLAY preserves populated tracks. When native playback starts, VECTOR fills only empty tracks and refuses existing note, recorder, trigless, slide or lock data.
 
 ## Controls
 
@@ -57,9 +57,38 @@ The Part’s unused NEIGHBOR slots store the marker and nine packed settings byt
 
 The modal uses the stock list controller and window chrome, as Analog BD does for 808/909. Confirming a stock sample slot preserves VECTOR, its generator parameters and the current phrase. NO cancels a pool choice without changing the backing pool.
 
+## VECTOR on MIDI tracks
+
+VECTOR is the first entry of the MIDI generator list, which the Modwerk base (over USB) or VECTOR's own card build adds to MIDI mode. It writes real note trigs with NOTE, VEL and LEN locks into the MIDI track; the stock MIDI sequencer plays them, so tempo, track speed, swing, trig conditions, the track's channel and every note-off stay stock's.
+
+| Page | Encoder | Control | Default | On a MIDI track |
+|---|---|---|---|---|
+| SRC | A-F | TYPE, DENS, ROOT, SCAL, OCT, SEED | 11, 11, C, MIN, the track's octave, track + 1 | TYPE, DENS, ROOT, SCAL and SEED as on audio tracks. OCT is the track's NOTE: the root in that octave, shown as a note (C3); OCT and ROOT both set NOTE, so a trig placed by hand plays the root. The scale is built on the C of that octave. |
+| AMP | A-F | VEL, ACNT, GATE, SPAN, OFST, RPT | the track's VEL and LEN, 48, 12, 0, OFF | VEL is the track's VEL, real MIDI velocity: strong notes get it, ACNT lowers the others. GATE is the track's LEN, in stock LEN units and shown as a note length; generated LEN locks range from half to all of it. SPAN, OFST and RPT as on audio tracks. |
+| FUNC+AMP | A-D | ROT, DIR, PROB, HUMN | 0, FWD, OFF, 0 | ROT and DIR as on audio tracks. PROB gives every note off the beat (steps 2-4, 6-8, ...) a stock trig condition from 99% down to 1%; notes on the beat always play. HUMN moves every note by up to that many micro-timing units (stock's ±23) either way. Both come from the seed and the step, so turning another control keeps them. |
+
+1. Press MIDI and select a MIDI track. Double-tap its TRACK key (or double-tap SRC): MIDI NOTE SETUP opens with OFF and VECTOR on its left. Highlight VECTOR with DOWN and press YES. An empty track gets its first phrase at once.
+2. Press SRC. The NOTE page now shows TYPE, DENS, ROOT, SCAL, OCT and SEED. Turn any of them to write a new phrase, also while playing. YES makes a fresh variation on any VECTOR page.
+3. Press AMP for VEL, ACNT, GATE, SPAN, OFST and RPT, and FUNC+AMP for ROT, DIR, PROB and HUMN; FUNC+AMP or NO returns. Set the track's channel in MIDI NOTE SETUP (CHAN) to hear it.
+4. To leave, open MIDI NOTE SETUP and choose OFF. The phrase stays on the track as ordinary trigs and locks.
+
+LFO, FX1 and FX2 stay stock's: the track's LFOs, PB, AT and CC1-10 work as on any MIDI track. FX1 and FX2 are kept for MIDI effects (planned, not built).
+
+Changes to stock flows, while a MIDI track runs VECTOR (the README's minor changes, owner-requested on 21 and 24 October 2026):
+
+- **Double-tap TRACK in MIDI mode** opens MIDI NOTE SETUP. Stock does nothing there; with no MIDI generator installed it still does nothing.
+- **MIDI NOTE SETUP's empty left half** lists the generators. UP, DOWN and YES move and choose; YES also confirms the window's own values as before. CHAN, BANK, PROG and SBNK are unchanged.
+- **The SRC page** shows VECTOR's controls instead of NOTE, VEL, LEN and NOT2-4. Choosing VECTOR sets NOTE to the C of its octave and turns NOT2-4 off (64), which have no place on VECTOR's page; VEL and LEN stay and are VECTOR's VEL and GATE.
+- **The AMP page and FUNC+AMP** show VECTOR's controls instead of the arpeggiator's. Choosing VECTOR puts the track's arpeggiator back to stock's defaults with MODE OFF and keeps it off; its 16 arp note bytes then hold VECTOR's controls.
+- Holding a trig or a scene shows stock's NOTE and ARP pages, so locks there stay stock's: hold a trig on SRC to change one generated note's NOTE, VEL or LEN. Choosing OFF restores stock's arpeggiator defaults and leaves NOTE, VEL and LEN as VECTOR set them.
+
+Where it is stored: the Part. The track's arp step mask holds 'M' and VECTOR's id (stock's validator never reads it), and its arp note bytes hold the controls other than OCT, VEL and GATE (value - 64, within the -64..63 stock's validator keeps). Without VECTOR the track reads as an ordinary MIDI track whose arpeggiator is off. If its ARP SETUP is edited then, the stored controls show there as arp notes, and turning MODE on would play them; installing VECTOR again turns MODE off. NOTE SETUP's two unused slots are not used: its encoders D and F edit them unseen.
+
+Cost, measured on the owner's MKII (21 October 2026, development base, PLAY running): the base's generator code takes 4-10 µs a UI tick, with no generator installed 2 µs. A control turn that rewrites all 64 steps takes 0.5 ms on the UI task (0.66 ms at most of 40); the longest time between audio frames stayed 406-417 µs while turning, and the MIDI notes kept their 125 ms grid within 1 ms. Nothing runs in an interrupt. [TESTING.md](TESTING.md#midi-generator-on-the-unit) has the method.
+
 ## Compatibility and limitations
 
-OS 1.40C is the local base. Captures and sequence checks use octemu’s MKII panel. Hardware and MKI support remain unverified. Generation runs on the UI task; the adapter uses native lock-index rebuilding and live track publication. This emulator result does not establish hardware race safety or an audio continuity guarantee.
+OS 1.40C is the local base. Captures and sequence checks use octemu’s MKII panel; the MIDI generator ran on the owner's MKII. MKI support remains unverified. Generation runs on the UI task. From 0.3.0 it sets its own track's bit of stock's per-step lock index instead of calling stock's rebuild of every track (about 3 ms on the unit), then publishes the track with stock's routine. The emulator result does not establish hardware race safety or an audio continuity guarantee for the sample machine.
 
 Analog BD shares chooser/display hook sites and conflicts. Other combinations, including OctaKit, need explicit integration checks. Generator settings are not LFO, scene or p-lock destinations; the ordinary sample controls remain available through the edit view. Pitch is limited to ±12 semitones.
 

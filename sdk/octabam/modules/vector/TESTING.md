@@ -1,5 +1,20 @@
 # VECTOR tests and measurements
 
+## SRC SETUP page 2 on VECTOR's own row (card builds, #1119; prepared as 0.2.6, released in 0.3.0)
+
+Report #1119 (also #842/#843): on a card build with POLY8, a double tap on SRC on a VECTOR track showed the stock Flex/Static setup (TSTR AUTO) instead of SEED/SPAN. Beside POLY8, VECTOR is machine row 6 or 7; POLY8's shared SRC SETUP hooks replace VECTOR's and never asked VECTOR, and `st_setup_page` itself also wanted SRC SETUP's cursor (0x460d5c30) on row 5. 0.2.6 drops that test: its callers already ask on VECTOR's row (row 5 in `hooks.s` alone, the base's row over USB, POLY8's row with POLY8 0.3.3). The USB adapter dropped the same test since 0.2.5, so `vector_runtime.py` no longer rewrites it; the package's control unit source is byte-identical to 0.2.5's and the 0.2.5 USB package stays published (`lagsBehind`). The 0.2.5 hardware report above that run covers those bytes.
+
+Emulator, 1 November 2026 (`ot_emu` built from upstream octabam, MKII panel, DSP on, empty scratch card; card images composed by the site's builder from packages built in the isolated toolchain; `scripts/capture-module-ui.py` with 50 ms keys: FUNC+SRC, DOWN to VECTOR, YES, YES on STATIC, NO, SRC, FUNC+SRC, encoder A +3, encoder E +2):
+
+| Image | Result |
+| --- | --- |
+| main (VECTOR 0.2.5, POLY8 0.3.2) + FM Synth | reproduces the report: SRC shows SRC▸VECTOR with TYPE…ACNT, SRC SETUP shows LOOP SLIC LEN RATE TSTR(AUTO) TSNS |
+| VECTOR 0.2.6 + POLY8 0.3.3 + FM Synth | SRC SETUP shows SEED 1, SPAN 12, OFST 0, ROT 0, RPT OFF, DIR FWD; encoder A gives SEED 4, encoder E RPT 2; cursor on POLY8 shows the stock setup |
+| VECTOR 0.2.6 + POLY8 0.3.2 + FM Synth | not run; POLY8 0.3.2's shared hooks never call `st_setup_page`, so the stock setup stays as on main (code read) |
+| VECTOR alone, 0.2.5 and 0.2.6 | all eight screens of the plan pixel-identical; page 2 on row 5, encoders A and E as above |
+
+`verify_native.py` passes in the pinned toolchain (sanitizer tests, `control.s` reproduces). Not tested: a unit, MKI, saving and reloading, a power cycle, listening.
+
 ## 0.2.5 over USB on a MKII (SRC SETUP page 2, #972)
 
 Version `0.2.5-experimental` changes only the USB package: its `ot_machines` record is a `struct modwerk_machine_setup` (SETUP_PAGE) naming the card build's own `st_setup_page` and `st_setup_knob`, and the package's source variant drops `st_setup_page`'s test for SRC SETUP's cursor on row 5. The card source and every result in the sections below are 0.2.4's.
@@ -50,7 +65,89 @@ Maximum observed native commit stack is 1,048 bytes; validation is 252. The 1,21
 
 The current 110-profile VECTOR coverage matrix has 46 matching module-owned builds outside existing platform/logger writes and 64 matching refusals, zero mismatches. The changed original OS is refused. The source-only package build and complete importer inventory pass; `sdk/native-comparisons/vector.json` binds the current native source. Private VECT349A01 ELUP packaging round-trips to the exact tested MAIN; update SHA-256 `a2bc9e1892c5bda40083c61abe19c73c9ff64fd73ff9b88d975a2c0f5b456130`. The standard common worker and deployed download are verified separately during release completion.
 
+## MIDI generator on the unit
+
+0.3.0 on the owner's MKII, 21 October 2026: development twins of the Modwerk base built from this branch (`build_core.py --dsp-loader --usb-midi --site-events --table-owners … --dev`), RAM-booted, VECTOR installed over USB as a runtime package (`try`), a disposable project (LIVE/PROJECT 261019), bank A, Part 1, MIDI track 1. Steps were sent with `scripts/device-send.py`; screens were read from `png:` captures; Part and pattern bytes with `mem:`. Not a card (non-USB) build on hardware: the card build was checked by octabam's native builder only (`module:verify`).
+
+| What | Result |
+|---|---|
+| No generator installed, MIDI mode, double-tap TRACK | nothing happens, as stock |
+| VECTOR installed, double-tap T1 or SRC | MIDI NOTE SETUP opens with OFF and VECTOR in its left half; CHAN, BANK, PROG and SBNK unchanged; UP/DOWN move the highlight |
+| YES on VECTOR | the arp step mask reads `4d56` ('M', 'V'); the arp note bytes hold the twelve defaults (value - 64) and the mark; MODE OFF |
+| ARP page, FUNC+AMP, NO | TYPE, DENS, ROOT, SCAL, GATE, ACNT with their values; FUNC+AMP SEED, SPAN, OFST, ROT, RPT, DIR; NO back |
+| DENS +2, then YES | 13 notes in 16 steps with NOTE/VEL/LEN locks (C minor around C3, VEL 100/81); YES gives seed 2 and a new phrase |
+| PLAY with CHAN 1, MIDI recorded over USB (`midimon`) | the phrase as note-ons and note-offs on channel 1, the 16-step phrase repeating every 2 s at 120 BPM, accents and lengths as written |
+| VECTOR removed on its own page | stock's ARP page and ARP SETUP return, no crash; reinstalled, the VECTOR page returns |
+| MODE turned on while VECTOR was away, then VECTOR installed | MODE back to OFF (and a MODE 6 left from before: OFF on install) |
+| Crash record during all of the above | unchanged (record 12, older than this work) |
+
+Layout A (the owner's choice of 24 October 2026: VECTOR on SRC and AMP, LFO, FX1 and FX2 stock's), on the owner's MKII, 24 October 2026: a development twin of the base built from this branch merged with `main` (base `4fd515ff…`), RAM-booted, VECTOR installed with `try`, the same disposable project (bank A, Part 1, pattern 16, MIDI track 1, CHAN 1, 132 BPM). MIDI recorded over USB with `midimon`.
+
+| What | Result |
+|---|---|
+| No generator installed, double-tap T1 in MIDI mode | nothing happens, as stock |
+| VECTOR installed on a track still holding 21 October's layout | SRC shows TYPE 11, DENS 11, ROOT C, SCAL MIN, OCT C3, SEED 2; OFF then VECTOR again puts the new defaults in the arp note bytes (mark `V`, PROB and HUMN 0, byte 4 unused), NOTE 48, VEL 100, LEN 6, NOT2-4 64 |
+| SRC, AMP, FUNC+AMP, LFO, FX1 | SRC: TYPE DENS ROOT SCAL OCT SEED; AMP: VEL ACNT GATE SPAN OFST RPT; FUNC+AMP: ROT DIR PROB HUMN and two empty slots; LFO and FX1 stock's, and LFO's SPD1 turns stock's value (32, 33, 32) |
+| OCT +1, ROOT +2 | NOTE 48 to 62 (D4); the phrase's NOTE locks move into D (step 1: 36 to 50) |
+| PROB +5 | stock's label 91%; every note off the beat gets condition 25, the notes on the beat none |
+| PROB 21 (1%), PLAY 12 s | 27 note-ons, all on steps 1, 5, 9 and 13 at VEL 100; none of the 46 notes off the beat played |
+| HUMN 23, PLAY 8 s | the 11 notes of each bar move by their written offsets: all 50 note-ons within 1.0 ms (mean 0.3 ms) of grid + offset x 1/24 step; a negative offset on the first step does not sound before PLAY, as stock |
+| YES; VEL -20; GATE +4 | SEED 1 to 2 and a new phrase; the track's VEL 100 to 80 and LEN 6 to 10; strong notes VEL 80, others 64, LEN locks 5 to 10 |
+| Grid recording, hold TRIG 1 on SRC | stock's NOTE page with the step's locks (D4, 80, 7); turning NOTE locks D#4; letting go shows VECTOR's page again |
+| OFF; VECTOR again; module removed | stock's NOTE (D4, 80, 10) and ARP (MODE OFF) pages, arp step mask `ffff`; VECTOR again: its defaults, NOTE to C4; removed: stock's pages, nothing installed |
+| Crash record | unchanged (record 12) |
+
+Cost with the 21 October method (pattern length 64, DENS 16, every step a note, PLAY, 40 turns of TYPE): 0.52 ms a turn on average, 0.69 ms the longest (0.51 and 0.66 ms on 21 October; the trig words for PROB and HUMN are new). The base's generator code took 10.5-11.9 µs a UI tick on VECTOR's page while playing. The MIDI notes kept their grid while turning: 59 note-ons 113.0-114.0 ms apart (113.6 ms at 132 BPM). The longest time between audio frames was 423-425 µs while turning and 422-424 µs playing without a turn, so this base's normal is a little higher than 21 October's (406-417 µs) and the turns add nothing measurable.
+
+Cost, with the base's development profile (`modwerk_cost[24]`-`[27]`, DTIM3 at 132 MHz, read over `mem` 5 s apart; `cost.py` in the session's private tools):
+
+| State | Base's MIDI generator code per UI tick (61 a second) |
+|---|---|
+| No generator installed | 2.2-2.4 µs |
+| VECTOR installed, audio mode | 4.1-4.2 µs |
+| MIDI mode: NOTE page, VECTOR page, NOTE SETUP with the list, playing | 7.3-10.2 µs |
+
+A control turn rewrites the phrase on the UI task. Worst case measured: pattern length 64, DENS 16 (every step a note), PLAY running, 40 turns of TYPE and ACNT in 4 s, MIDI recorded throughout:
+
+| Build | Mean | Longest |
+|---|---|---|
+| Stock's lock-index rebuild, record copied in and out | 3.92 ms | 4.24 ms |
+| Own track's lock-index bit | 1.76 ms | 1.95 ms |
+| Plus the scale's pitches once a phrase | 1.29 ms | 1.47 ms |
+| Plus the record written in place (0.3.0) | 0.51 ms | 0.66 ms |
+
+A temporary probe (not shipped) split the 1.3 ms build by stage: copying the record in 331 µs, the phrase 268 µs, writing it 178 µs, committing and mirroring 434 µs, saving and publishing 31 µs. The longest time between audio frames stayed 406-417 µs (normal 380-420) through every burst, and the recorded MIDI kept its grid: 96 note-ons 124-126 ms apart, every two-step span 249-251 ms. The audio track's `generate_track` got the same lock-index change; its other costs are as in 0.2.4. VECTOR's own audio UI tick reads the battery-backed Part and track numbers once a tick (it read them about 20 times): with VECTOR installed the machine tick fell from about 50 to 41 µs.
+
+The hoisted scale lookup in `engine.c` gives the same phrases as 0.2.4 over 18,144,000 parameter sets (a throwaway host comparison of both engines), and `test_engine.c` passes. `sdk/tests/test_machine_events.py` checks the base's registry on the host (`test_midi_generators.c`), the package glue and the port's sources.
+
+Card builds and .bss, 8 November 2026 (found by `machine_composition_tests`, not on a unit): the base's generator registry, which a card build links into VECTOR, has statics without an initialiser, and the compiler put them (144 bytes) in .bss. octabam's native card builder never loads or zeroes a unit's .bss (`tools/remix/platform_build.py`), so there `mg_active` and the list's cursor would start as whatever the boot left; the site's card builder sizes the runtime past .bss (`src/engine/coldfire-link.ts`), so its images ship those bytes as zeros, and the USB loader zeroes a package's .bss (`sdk/runtime/loader/loader.c`). `prepare.py` now puts them in .data as zeros and stops if any .bss is left, so every path starts them at zero and the two-origin composition proof holds; the code is unchanged (22,314 text bytes), .data grows by 144.
+
+Not tested: a card build on the unit (layout A included); a physical power cycle with a VECTOR MIDI track (RAM boots kept it: the battery-backed bank restore and the Part validator pass); a project save and reload; scenes and LFOs on a VECTOR MIDI track; MKI. Two RAM boots of development twins out of about fifteen did not come back on USB (one stall record: frames stopped 41 s after a boot with no module installed); a power cycle recovered both, and the next boot of the same image worked. It matches the RAM-boot trap of 19 October 2026 and was not reproduced.
+
+## MIDI generator in the emulator (8 November 2026)
+
+Emulator results only, not hardware evidence: `ot_emu` (idle-adapted build, no DSP), MKII panel, a private copy of a Template Live card, VECTOR's exact USB package `b66a440e…` installed over emulated USB on the committed beta base, and a card image of this source composed by the site's builder (`composeSelection`). Steps checked against the Part and pattern bytes and LCD captures; MIDI out taken from a cold boot of the saved project.
+
+| What | USB package | Card image |
+|---|---|---|
+| Install, removal, reinstall over USB | passed | n/a |
+| Boot with no crash or stall record | passed | passed |
+| NOTE SETUP's list by double-tap SRC and double-tap TRACK; YES on VECTOR writes `4d56`, the defaults and NOTE/VEL/LEN 48/100/6 | passed | passed |
+| Every encoder on SRC, AMP and FUNC+AMP (OCT moves every lock by 12; PROB conditions only off the beat; HUMN micro-timing; GATE the LEN locks); NO back | passed | passed |
+| YES: new seed and phrase; held trig shows stock's NOTE page with the step's locks | passed | passed |
+| A second MIDI track keeps its own settings and phrase | passed | passed |
+| OFF: arp step mask `ffff`, arp defaults; after removal stock's page | passed | passed |
+| Audio track: SRC SETUP page 2 (SEED…DIR) shows and edits | passed | passed |
+| MIDI out: 71 note-ons in phrase order, one per 16th; no chord notes | passed | passed |
+| MIDI out, PROB 1%: 29 note-ons in 7.6 bars, all on steps 1, 5, 9, 13 | passed | not run |
+| MIDI out, HUMN 23: all 78 note-ons at step + k/24 (k -21..+19) within 0.002 step | passed | not run |
+| Part switch | not run: needs DSP in the emulator | not run |
+
+On the base of #1332 (the list's first row ARP, scrolling, room 16) the same USB pass gave 31 passed and the Part switch skipped; ARP from VECTOR gives mask `ffff` and stock's ARPEGGIATOR page with MODE OFF. A card image composed before the .bss fix (`bd2af8c3d`) behaved the same in the emulator, which starts with zeroed memory. Footer: VECTOR's pages still read MIDI NOTE and MIDI ARPEGGIATOR (stock's page names), a known cosmetic gap.
+
 ## Owner exception and remaining limits
+
+For 0.3.0 the owner chose, on 8 November 2026, to release on the 24 October unit run of the MIDI generator ("MIDI generator on the unit" above: development base 4fd515ff, package 49dc25cc) and the emulator passes above, rather than a run of the released package; the manifest's hardware record names that run and what it does not cover. The paragraphs below are 0.2.4's exception, kept as history.
 
 On 9 October 2026 the owner stated: "Approve release and closure with hardware reboot/audio unverified" after receiving the exact 0.2.4 private image and source patch. `sdk/vector-build-approval.json` binds this separate current-build-hardware exception to the source/image above. `hardwareStatus` stays `untested`; no physical reboot, audible playback, chip timing, maximum audio stress or hardware canary pass is claimed. The 0.2.3 approval remains historical and is not reused. Already reset projects need a known-good backup. The issue closure must name these limits and explain how to reopen.
 

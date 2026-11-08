@@ -3,7 +3,7 @@ import { execFileSync, spawnSync } from 'node:child_process'
 import { copyFileSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { gateEdits, pythonProblem, readiness } from './pr-ready.mjs'
+import { MODULE_SCOPE_REQUIRED_FROM, baseEdits, gateEdits, moduleScopeProblems, pythonProblem, readiness } from './pr-ready.mjs'
 
 describe('pr:ready verdict', () => {
   it('is ready only with a committed, current, regenerated branch whose checks pass', () => {
@@ -60,6 +60,28 @@ describe('pr:ready verdict', () => {
     expect(verdict.ok).toBe(false)
     expect(verdict.problems[0]).toContain('scripts/module-compat.py')
     expect(verdict.problems[0]).toContain('never change the check to pass it')
+  })
+  it('refuses a module pull request that also changes the base, and leaves a module its own recipe rows', () => {
+    // Threshold Slices (#1285) added a shared sample-editor service and a hook beside its draft.
+    const threshold = ['sdk/drafts/threshold-slices/README.md', 'sdk/machines/octatrack/events.json', 'sdk/machines/octatrack/include/modwerk_events.h', 'sdk/machines/octatrack/module-adapters/sample_editor_service.c']
+    expect(baseEdits(threshold)).toEqual(threshold.slice(1))
+    expect(baseEdits(['sdk/octabam/modules/syntiz/manifest.py', 'src/engine/assets/octatrack-base.elemod', 'src/engine/assets/octatrack-base-sources.json'])).toHaveLength(2)
+    // What module releases carried in October and November: package rows, their own recipe rows and runtime helpers.
+    expect(baseEdits(['sdk/octabam/modules/scale-quantizer/manifest.py', 'sdk/machines/octatrack/module-adapters/machine-recipes.json', 'sdk/machines/octatrack/module-adapters/quantizer_runtime.py', 'src/engine/assets/octatrack-module-packages.json'])).toEqual([])
+    // A base pull request changes no module folder.
+    expect(baseEdits(threshold.slice(1))).toEqual([])
+    const verdict = readiness({ baseEdits: threshold.slice(1) })
+    expect(verdict.ok).toBe(false)
+    expect(verdict.problems[0]).toContain('its own owner-reviewed pull request')
+  })
+  it('refuses both in CI for a contributor\'s module pull request opened from the start day, never the owner\'s', () => {
+    const files = ['sdk/drafts/threshold-slices/README.md', 'sdk/machines/octatrack/events.json', 'scripts/modules.mjs']
+    const contributor = { author: 'someone', owner: 'repeat98', openedAt: MODULE_SCOPE_REQUIRED_FROM + 'T10:00:00Z' }
+    expect(moduleScopeProblems(files, contributor)).toHaveLength(2)
+    expect(moduleScopeProblems(files, { ...contributor, author: 'Repeat98' })).toEqual([])
+    expect(moduleScopeProblems(files, { ...contributor, openedAt: '2026-11-07T10:00:00Z' })).toEqual([])
+    expect(moduleScopeProblems(files, { ...contributor, author: null })).toEqual([])
+    expect(moduleScopeProblems(['sdk/drafts/threshold-slices/README.md'], contributor)).toEqual([])
   })
   it('says which packages CI rebuilds and how to reproduce them before the push', () => {
     expect(readiness({ compiled: { octatrack: true, elemod: false } }).notes.some(note => note.includes('build-modules-isolated.sh'))).toBe(true)

@@ -1,6 +1,6 @@
 # SOPHIE — Digitakt
 
-Modwerk documentation version: `1.1.13-experimental.2`. This editorial update adds the guide, LCD captures and frontend descriptions; the pinned native source, build recipe and existing test evidence are unchanged.
+Modwerk version: `1.2.0-experimental`, the author's 1.2.0 sources compiled by Modwerk for Core 2.1 and Machine Pages.
 
 ## Overview
 
@@ -63,7 +63,8 @@ MODEL, COLOR, METAL and FBK interact, so compare models using the same pitch and
 
 ## Compatibility and limitations
 
-- Original Digitakt (Mk1), OS 1.53 only, with core 2.1. OS 1.54 and Digitakt II are not declared compatible.
+- Original Digitakt (Mk1), OS 1.53 and 1.54, with Core 2.1 and Machine Pages, which draws SOPHIE's SRC and LFO pages. Digitakt II is not declared compatible.
+- Not with NEIGHBOR 0.6 or DIGISLICER 2.1, which draw their own SRC pages, or with Digi Mono and Digi Poly, whose DigiChain conflicts with Machine Pages.
 - digihealth is optional, not a dependency. One instance runs without FAST AUDIO; the author’s earlier hardware test found two practical with it enabled. Eight simultaneous SOPHIE tracks are not claimed.
 - The pinned author README distinguishes the older hardware-tested release from later source revisions. That history does not qualify this Modwerk metadata revision.
 - FOLD replaces BR on SOPHIE’s SRC page; SAMP remains visible but has no effect on synthesis. DEC = INF can sustain notes indefinitely.
@@ -72,7 +73,7 @@ MODEL, COLOR, METAL and FBK interact, so compare models using the same pitch and
 
 The Modwerk evidence tier remains `none`. [TESTING.md](TESTING.md) records the UI capture run, exact source/build identities and the separate imported author evidence. The captures do not qualify audio, timing, persistence or hardware.
 
-The imported release-object memory estimate is **8,722 B**, excluding the shared core and linker alignment. Modwerk CPU/audio load remains unmeasured. Upstream results in the [pinned author guide](upstream/README.md) describe the author's builds and are separate from this revision's evidence.
+The compiled package holds **8,528 B** (code, data and state), excluding the shared core, Machine Pages and linker alignment. Modwerk CPU/audio load remains unmeasured. Upstream results in the [pinned author guide](upstream/README.md) describe the author's builds and are separate from this revision's evidence.
 
 ## Authorship and licences
 

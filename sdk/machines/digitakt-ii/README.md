@@ -6,7 +6,7 @@ Modwerk's Digitakt II path is experimental and targets stock OS 1.17 only. It us
 
 Today the core is toonst's digitakt2-perform 1.0, and builds stay local. The Digitakt II is to get the Octatrack's stack ([recipe](../../../docs/MACHINE_RECIPE.md)): a Modwerk base started from that core's source, which takes the hooks mods propose, then a USB link, the loader's glue, base updates over USB, the MCP's device tools and the machine page.
 
-The base has started with its source (29 October 2026): core 1.1, copied unchanged into [elekloader/](elekloader/README.md) with its provenance in `sdk/imports/`. Nothing builds from it yet, and the site still links core 1.0. Its first additions, proposed below, are what a performance mode needs: per-frame parameter values, key LEDs and per-project and per-kit data. The USB link, the loader, base updates, the device tools and the machine page are not started.
+The base has started with its source (29 October 2026): core 1.1, copied unchanged into [elekloader/](elekloader/README.md) with its provenance in `sdk/imports/`. A local candidate links these sources with the proposed audio sequencer pitch hook for emulator testing. The site still links core 1.0. The proposed 1.1 additions below give performance mods per-frame parameter values, key LEDs and per-project and per-kit data. The USB link, the loader, base updates, the device tools and the machine page are not started.
 
 ## Core hooks
 

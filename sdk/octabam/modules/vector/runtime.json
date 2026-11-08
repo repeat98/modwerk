@@ -1,0 +1,16 @@
+{
+ "schema": 1,
+ "contribute": [
+  {
+   "to": "ot_midi_generators",
+   "order": 30,
+   "data": "vector_midi",
+   "replaces": [
+    "mg_tap_site",
+    "mg_page_site",
+    "mg_setup_site",
+    "mg_note_setup_draw"
+   ]
+  }
+ ]
+}

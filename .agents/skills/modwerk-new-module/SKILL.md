@@ -31,6 +31,7 @@ Follow `docs/ADD_A_MODULE.md` and the rules in `AGENTS.md`, in this order.
 8. **Finish,** once the developer says testing is done (until then, commit without pushing):
    - docs, credits, and a thumbnail in the shared style (`docs/ADD_A_MODULE.md#module-thumbnail-style`);
    - release notes in `src/community/module-changelogs/`;
+   - review it as the owner will, against the pull request worker's checklist and the rules contributions most often break (`docs/MAINTENANCE.md#pull-request-worker`), and fix what applies;
    - then `/modwerk-pr-ready` and the pull request.
 
    A new module ships in a pull request of its own, and the owner reviews its first release. A push, merge or "Firmware ready" is not a release: after the merge, verify the live version and a saved download.
