@@ -2,7 +2,7 @@
 // Standalone validation/generation for the elemod source catalogue. Publication gates are unchanged.
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { readFile, readdir, mkdir, writeFile, copyFile } from 'node:fs/promises'
-import { resolve, dirname } from 'node:path'
+import { resolve, dirname, relative, sep } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
@@ -88,8 +88,7 @@ for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='el
   if(document.id!==entry.name||document.machine!==machine.id)throw new Error(label+': module id and machine must match its folder')
   let newVersion=false
   if(baseCommit){
-   // Git names paths with /, also on Windows, where dir has backslashes.
-   const prefix=dir.slice(root.length+1).replaceAll('\\','/')+'/'+entry.name+'/',oldPath=prefix+'modwerk.module.json'
+   const prefix=relative(root,dir).split(sep).join('/')+'/'+entry.name+'/',oldPath=prefix+'modwerk.module.json'
    const baseText=git('ls-tree','--name-only',baseCommit,'--',oldPath).trim()===oldPath?git('show',baseCommit+':'+oldPath):null
    newVersion=publishesNewVersion({inLibrary:dir===folderRoot,baseVersion:baseText===null?null:JSON.parse(baseText).version,version:document.version})
    const changedPaths=(git('diff','--name-only',baseCommit,'--',prefix)+git('ls-files','--others','--exclude-standard','--',prefix)).trim().split('\n').filter(Boolean),changed=changedPaths.length>0
