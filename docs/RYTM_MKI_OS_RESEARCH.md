@@ -1,6 +1,6 @@
 # Analog Rytm MKI OS research
 
-Research on the Analog Rytm MKI OS file, toward the machine steps in [Add a machine](ADD_A_MACHINE.md): `format`, `rebuild` and `boot`, and what every later build must leave alone. Stock-free: hashes, layout, addresses and notes only. The firmware, the decoded image and every listing stay on the researcher's computer.
+Research on the Analog Rytm MKI OS file, toward the machine steps in [Add a machine](ADD_A_MACHINE.md): `format`, `rebuild`, `boot` and `core`, and what every later build must leave alone. Stock-free: hashes, layout, addresses and notes only. The firmware, the decoded image and every listing stay on the researcher's computer.
 
 ## 0. Inputs and tools
 
@@ -80,8 +80,42 @@ All three modified builds pass `verifyEle2Build` against stock (the two elektron
 
 So a container that differs from stock only in its stream and version field boots, shows its mark, and stock brings the unit back, over USB with Transfer as well as over MIDI DIN.
 
-## 6. Next
+## 6. The Modwerk base (step `core`)
 
-- The MKI's base from the MKII's Modwerk base (`sdk/machines/analog-rytm-mkii/elekloader/`), the same sites found in the MKI image, so MKII modules can be rebuilt for the MKI.
+The MKI's base is the MKII base's plain variant built for the MKI ([`sdk/machines/analog-rytm-mki/elekloader/`](../sdk/machines/analog-rytm-mki/elekloader/README.md)): core-ar2 0.7's source and the machine list's sections, with the MKI's sites and addresses. Sites were found by matching the Digitakt mk1 1.54 routines elekloader's cores hook (the MKI shares the Digitakt's UI framework; its graphics library lies at `-0x52CA0` from the Digitakt's), by core-ar2's own stock bytes with addresses masked, and by behaviour in rytm-emu; every site's stock bytes are checked by length and SHA-256 at build time.
+
+| Part | MKI 1.74 | Notes |
+| --- | --- | --- |
+| boot | `0x40000620` | two calls, `jsr 0x40000506` (SRAM copy) and `jsr 0x4000055C` (`.bss` clear), as on the Model:Cycles: core.s's `VBR_FN2` path |
+| tick, draw, key, encoder | `0x400A0680`, `0x400A06EC`, `0x400A1FF0`, `0x400A203A` | targets `0x400777BC`, `0x400777F2`, `0x4009E35E`, `0x4009E3EC`; ev_tick at about 20 Hz |
+| settings | `0x400D545E` | in the GLOBAL builder `0x400D4E66` (once at boot), which keeps the menu in **a3**: an MKI variant of core_settings |
+| render in, out | `0x4011898C`, `0x4011A16C` | vector 191 at `0x40118984`; the handler keeps **no a6 frame** and leaves through `movem.l (sp),d0-a6 ; lea 156(sp),sp ; rte`: an MKI variant of core_render_out takes those 8 bytes |
+| storage routines | the MKII's at `-0x120` | all thirteen (save, load, init), same prologues; the `keep2` calls at `0x40034C62`, `0x400ADAE2` (file save), `0x40034EDC` (file load), `0x401616B4`, `0x40162062`, `0x40162284` (song copies), `0x40161A58`, `0x401626FE`, `0x40162930` (pattern copies), `0x400BC8AC`, `0x400A7FD8`, `0x400A95E2`, `0x400A9600`, `0x400C24C0` |
+| velocity and aftertouch routes | `0x401187C8`, `0x400C23BA`, `0x400C2346`, `0x400C2248`, `0x400337FA` | the MKII's instructions (setAmount's operand names the MKI's SoundConfigChangedInfo, `0x40199D28`) |
+| pages | page_info `0x400F87A2`, get `0x400381A0`, turn `0x400376D4`, text `0x400A5964`, views `0x400C7154`..`0x400C74AA`, page cycle `0x4003A962` | **11 stock pages** (0..10: no second sample page), same 36-byte entries and 469 parameter records. The MKI steps a view's pages by pressing its parameter key again, which reaches the same cycle |
+| machines | names `0x4018D6F0`, availability `0x4018D8C8`, records `0x4018E064`, engines `0x40254430` | 53 machines with the MKII's ids, 34..52 hidden; the same offsets between the tables |
+| sections | `0x400D89C8` (table `0x4021F98D`), comparators `0x400BACF2`, `0x400BAEB0` | |
+| OS upgrade finish | `0x4009D514` | drain `0x40001A2A`, queues `0x405FE9E4`, `0x405FE9F4` |
+
+Memory and storage:
+
+- The sample pool is `0x4313E770–0x4713E7C0`, and nothing above `0x4713E920` up to the stack (`0x48000000`, run down) is named in the image. Mod area `0x47BE0000–0x47C00000`, as on the MKII.
+- The MKI keeps its **stored project in persistent memory at `0x20000000`** (2 MB on CS1; rytm-emu models it), at `0x20000110`, not in DDR. The live project is at `0x40B55708`, its global slots at `+0xB50934`. The stored layout is the MKII's (kits at `+0x19D3FB`, 2,610 B; pool at `+0x1F4397`; globals at `+0x1F9DEE`; songs of 1,304 B; patterns of 13,101 B).
+- The bytes core-ar2 keeps its fields in, checked in the MKI's own save and load code: a stored sound's `+0x70..+0x7B` (save clears them and writes parameters at `+28..+111` only; load never reads them), a kit's FX block `+0x50..+0x5C` (38 FX words at `+4..+79`), a global slot's `+0x4B..+0x4F` (save writes `+0..+74`). Song rows' byte +2 is zero at rest and through boot in rytm-emu; editing songs was not tested. These bytes stay after a reflash to stock.
+
+On draadpiraat's unit, 8 November 2026, each flashed with Transfer:
+
+| Build | Result |
+| --- | --- |
+| MW02, a canary of Modwerk's own: `0x47B00000–0x47F00000` filled at boot with `address ^ 0xC0DEF00D`, checked 16 KB per UI tick | `P90 E0 0` with the sample memory full, sound locks, playback and a save: never written. After a power cycle the fill and count start again |
+| MW03, core.s's hook bus with a counter per event | `MW03 1349 K132 E74 S1`, `R102601 O102601`: every event, GLOBAL built once, render in and out equal; sound and timing as on stock |
+| MW06, this base (no modules), linked by Modwerk's linker and written by `ele2.ts` | a scratch project loads, plays, saves and reloads; GLOBAL and the pages as on stock; it survives a power cycle; stock 1.74 then loads the same project |
+
+`npm run machine:base` builds this base once Elekloader's kit knows the MKI (its device and the ELE2 reader, proposed upstream); with the device registered privately it gives MW06's package section for section.
+
+## 7. Next
+
+- The MKI in Elekloader (device, ELE2 reader, storage profile), then `base-binding.json` and the MKI in the site's linker (`LINK_DEVICES`).
+- The send bus, and MKII modules rebuilt for the MKI: each module's own stock addresses found again.
 - ELE2 in the site's firmware flow, next to ELE3, once a build boots.
 - Later, as on the other machines: the USB link and loading modules without a reflash.
