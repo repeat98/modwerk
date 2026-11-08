@@ -174,7 +174,7 @@
       "value": 10586112,
       "unit": "bytes",
       "method": "static",
-      "conditions": "Tested reported profile: repitch, vector, playmodes, mute-modes and recorder-loop-fix with stock FX2, original 1.40C. Shared arena 10,586,112 bytes includes 10,487,808 module arena plus 98,304 logger reserve, counted once. Linked runtime 90,780 bytes and packed staging fit within it. VECTOR allocated sections (0.3.0, the MIDI generator and on a card the base's generator registry): 22,314 text, 678 rodata and 3,908 data bytes; no BSS (a card never zeroes it, so prepare.py keeps zero statics in .data) or new heap. Complete flash append: 18,153 bytes measured for 0.2.4's profile, counted here as 28,287, that plus the 10,134 allocated bytes 0.3.0 adds (an upper bound; packing makes it smaller). On MIDI tracks VECTOR reuses stock storage only: the tracks' pattern records, 16 arp note bytes and the arp step mask per Part. Maximum observed native commit stack 1,048; Part validation 252; fixed added UI stack bound 1,216. Borrowed stock window, lock indexes and 8-track bank/SRAM capacities are retained. Hardware canaries are unmeasured.",
+      "conditions": "Tested reported profile: repitch, vector, playmodes, mute-modes and recorder-loop-fix with stock FX2, original 1.40C. Shared arena 10,586,112 bytes includes 10,487,808 module arena plus 98,304 logger reserve, counted once. Linked runtime 90,780 bytes and packed staging fit within it. VECTOR allocated sections (0.3.0, the MIDI generator and on a card the base's generator registry): 22,422 text, 682 rodata and 3,912 data bytes; no BSS (a card never zeroes it, so prepare.py keeps zero statics in .data) or new heap. Complete flash append: 18,153 bytes measured for 0.2.4's profile, counted here as 28,403, that plus the 10,250 allocated bytes 0.3.0 adds (an upper bound; packing makes it smaller). On MIDI tracks VECTOR reuses stock storage only: the tracks' pattern records, 16 arp note bytes and the arp step mask per Part. Maximum observed native commit stack 1,048; Part validation 252; fixed added UI stack bound 1,216. Borrowed stock window, lock indexes and 8-track bank/SRAM capacities are retained. Hardware canaries are unmeasured.",
       "source": "TESTING.md"
     },
     "processing": {
@@ -224,7 +224,7 @@
     "evidenceRevision": "645d73da3872ce9111f3e3172114fb33a3660b9f",
     "qualification": {
       "moduleVersion": "0.3.0-experimental",
-      "sourceSha256": "50a4f243d3ed16872173a2a742a345916aec60e316cd477d86ef3727a2ed85ce",
+      "sourceSha256": "5c6004d8adedf47888c70cb38ad9f0a2fb2cf6c61f6ac164f507cc77ef142015",
       "imageSha256": "a753ddf67b0fe64e3742b4c89ecf141071eb30757b170173215e92b1b4794d24",
       "cycles": [
         {
@@ -258,9 +258,9 @@
           {
             "name": "Complete tested-profile flash append: bootstrap and packed runtime",
             "space": "cpu-flash",
-            "words": 28287,
+            "words": 28403,
             "wordBits": 8,
-            "bytes": 28287,
+            "bytes": 28403,
             "scope": "shared"
           },
           {
@@ -305,10 +305,10 @@
           }
         ],
         "perInstanceBytes": 74656,
-        "sharedBytes": 10617875,
+        "sharedBytes": 10617991,
         "maxInstances": 8,
-        "totalBytes": 11215123,
-        "conditions": "Tested reported profile: repitch, vector, playmodes, mute-modes and recorder-loop-fix with stock FX2, original 1.40C. Shared arena 10,586,112 bytes includes 10,487,808 module arena plus 98,304 logger reserve, counted once. Linked runtime 90,780 bytes and packed staging fit within it. VECTOR allocated sections (0.3.0, the MIDI generator and on a card the base's generator registry): 22,314 text, 678 rodata and 3,908 data bytes; no BSS (a card never zeroes it, so prepare.py keeps zero statics in .data) or new heap. Complete flash append: 18,153 bytes measured for 0.2.4's profile, counted here as 28,287, that plus the 10,134 allocated bytes 0.3.0 adds (an upper bound; packing makes it smaller). On MIDI tracks VECTOR reuses stock storage only: the tracks' pattern records, 16 arp note bytes and the arp step mask per Part. Maximum observed native commit stack 1,048; Part validation 252; fixed added UI stack bound 1,216. Borrowed stock window, lock indexes and 8-track bank/SRAM capacities are retained. Hardware canaries are unmeasured.",
+        "totalBytes": 11215239,
+        "conditions": "Tested reported profile: repitch, vector, playmodes, mute-modes and recorder-loop-fix with stock FX2, original 1.40C. Shared arena 10,586,112 bytes includes 10,487,808 module arena plus 98,304 logger reserve, counted once. Linked runtime 90,780 bytes and packed staging fit within it. VECTOR allocated sections (0.3.0, the MIDI generator and on a card the base's generator registry): 22,422 text, 682 rodata and 3,912 data bytes; no BSS (a card never zeroes it, so prepare.py keeps zero statics in .data) or new heap. Complete flash append: 18,153 bytes measured for 0.2.4's profile, counted here as 28,403, that plus the 10,250 allocated bytes 0.3.0 adds (an upper bound; packing makes it smaller). On MIDI tracks VECTOR reuses stock storage only: the tracks' pattern records, 16 arp note bytes and the arp step mask per Part. Maximum observed native commit stack 1,048; Part validation 252; fixed added UI stack bound 1,216. Borrowed stock window, lock indexes and 8-track bank/SRAM capacities are retained. Hardware canaries are unmeasured.",
         "report": "evidence/software.json"
       },
       "hardware": {
