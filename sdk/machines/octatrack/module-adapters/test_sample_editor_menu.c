@@ -93,7 +93,7 @@ static unsigned publish(void *p,const struct mw_sample_capture *before,const str
     ++writes;source.view.count=edit->count;memcpy(source.view.records,edit->records,sizeof edit->records);
     return MODWERK_SAMPLE_APPLIED;
 }
-static const struct mw_sample_backend backend={0,lock,unlock,ready,owner,capture,publish,0};
+static const struct mw_sample_backend backend={0,lock,unlock,ready,owner,capture,publish};
 void mw_sample_editor_bootstrap(void)
 {if(!mw_sample_editor.initialized && !mw_sample_editor_init(&mw_sample_editor,&backend))bad=1;}
 static unsigned api_copy(uint32_t t,struct modwerk_sample_view *v){return mw_sample_editor_copy(&mw_sample_editor,t,v);}
@@ -102,8 +102,6 @@ static unsigned api_replace(uint32_t t,const struct modwerk_sample_grid *g){retu
 static void api_cancel(uint32_t t){mw_sample_editor_cancel(&mw_sample_editor,t);}
 const struct modwerk_sample_editor_api mw_sample_editor_api={MODWERK_SAMPLE_EDITOR_ABI,sizeof mw_sample_editor_api,
     api_copy,api_confirm,api_cancel,api_replace};
-const struct modwerk_sample_editor_api *mw_sample_editor_public_api(void)
-{return &mw_sample_editor_api;}
 static void reset(void)
 {
     memset(&mw_sample_editor,0,sizeof mw_sample_editor);memset(&source,0,sizeof source);

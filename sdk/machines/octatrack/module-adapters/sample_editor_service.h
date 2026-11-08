@@ -35,10 +35,6 @@ struct mw_sample_backend {
      * Recorder extent/trim/PCM changes must never be rolled back. No disk save,
      * PCM mutation, normalizing old rows or user history is permitted. */
     unsigned (*publish)(void *, const struct mw_sample_capture *, const struct mw_sample_edit *);
-    /* Optional. NULL means read returns UNSUPPORTED. Called with the same lock
-     * held, below the frame interrupt, for two frames at position. 0 fails the
-     * read and writes nothing. It must not retain the pointers. */
-    int (*read_pair)(void *, uint32_t position, int32_t *left, int32_t *right);
 };
 enum mw_sample_state { MW_SAMPLE_CLOSED, MW_SAMPLE_OPEN, MW_SAMPLE_PROMPT };
 struct mw_sample_editor {
@@ -55,10 +51,6 @@ unsigned mw_sample_editor_begin(struct mw_sample_editor *, const struct runtime_
 unsigned mw_sample_editor_copy(struct mw_sample_editor *, uint32_t token, struct modwerk_sample_view *);
 unsigned mw_sample_editor_confirm(struct mw_sample_editor *, uint32_t token, const struct modwerk_sample_grid *);
 unsigned mw_sample_editor_replace(struct mw_sample_editor *, uint32_t token, const struct modwerk_sample_grid *);
-/* Copies up to MODWERK_SAMPLE_READ_FRAMES absolute peaks from the captured trim.
- * The caller owns peaks and got. A short *got still returns OK. */
-unsigned mw_sample_editor_read(struct mw_sample_editor *, uint32_t token, uint32_t frame,
-    uint32_t count, uint32_t channel, int32_t *peaks, uint32_t cap, uint32_t *got);
 /* Invoked only by the base's verified stock confirmation dispatch, with the
  * token captured when THAT prompt was shown. Revalidate source/owner on YES.
  * NO just cancels. BUSY retains the prompt for a later revalidated attempt;

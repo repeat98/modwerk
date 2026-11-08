@@ -41,9 +41,7 @@ The target descriptor test reads the registry index instead of assuming 32.
   and row writes preserve frame/DMA interrupts. The 0.1.65 candidate briefly
   excludes level 5 only for a recorder's final state/controls/trim check and
   count store, with DMA still enabled; physical timing remains unqualified.
-  Playback processing and implicit saves remain out of scope. A module may
-  copy absolute peaks through the optional read tail, in short steps, and
-  propose slice starts. No sample pointer crosses the API.
+  PCM analysis, playback processing and implicit saves remain out of scope.
 - `sample_editor_menu.c` and `sample_editor_hooks.s`: native menu/selection and
   waveform-worker boundaries, built with `--sample-editor`. The beta base sets
   it; a base built without it leaves the stock editor sites alone and refuses
