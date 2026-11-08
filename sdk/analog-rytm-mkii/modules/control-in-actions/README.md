@@ -1,6 +1,6 @@
 # Control In Actions
 
-An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.1.2-experimental, OS 1.74 with core-ar2 0.7.
+An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.1.3-experimental, OS 1.74 with core-ar2 0.7.
 
 ## Overview
 

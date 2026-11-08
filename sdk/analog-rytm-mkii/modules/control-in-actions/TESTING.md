@@ -22,7 +22,8 @@ An earlier CI14 draft restored grid recording only. A code sweep had missed the 
 | REC HLD: RECORD + STOP, input high, then low | Live recording on, then off: step recording on |
 | Step recording, panel RECORD + PLAY, then input high (REC TGL) | Live recording off, step recording on |
 
-- Unit, RC35 (combo with CI14's code), as npp1993 reported: grid recording returns ("I think it's working"); from step recording, REC HLD returned to grid recording, which CI15 fixes. CI15 is not on a unit yet.
+- Unit, RC35 (combo with CI14's code), as npp1993 reported: grid recording returns ("I think it's working"); from step recording, REC HLD returned to grid recording, which CI15 fixes.
+- Unit, RC36 (combo with CI15's code, `25ced056…`), as npp1993 reported on 8 November 2026: all the unit checks passed. REC HLD and REC TGL from step recording come back in step recording, from grid recording in grid recording, and from play mode in play mode; live recording started with the panel's RECORD + PLAY from step recording and ended by the input comes back in step recording.
 
 ## 0.1.2: no reading with ACTION OFF (6 November 2026)
 
