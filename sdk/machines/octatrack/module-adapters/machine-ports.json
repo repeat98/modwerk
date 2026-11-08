@@ -151,7 +151,7 @@
   },
   "vector": {
    "sources": {
-    "sdk/octabam/modules/vector/control.s": "c95c74baa5e5d79d1c3edf0148b2c4a84daf4e5d61c1bff5eb3934626fd0a9be",
+    "sdk/octabam/modules/vector/control.s": "3e9cefa630c8425af9b2ea48cf4ce88bb9a48fa18bb1876cd1447dc12d0212b9",
     "sdk/octabam/modules/vector/manifest.py": "b9dec167f8bd4f1b691069cc89834f6c2a6717b874eb28629ef5c8c026d3d976"
    },
    "contribute": [

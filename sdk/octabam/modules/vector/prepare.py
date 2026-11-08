@@ -4,6 +4,7 @@ Run the compiler in the isolated toolchain; firmware is not an input.
 """
 from pathlib import Path
 import argparse
+import re
 import subprocess
 import tempfile
 
@@ -34,7 +35,12 @@ def main():
         assembly=work/'vector.s'
         include=[x for d in (here,octatrack/'elekloader',octatrack/'include') for x in ('-I',str(d))]
         subprocess.run(['m68k-elf-gcc',*FLAGS,*include,'-S',str(unity),'-o',str(assembly)],check=True)
-        text=(assembly.read_text()+'\n#APP\n'+(here/'hooks.s').read_text()+'\n'+
+        # A card unit's .bss is never loaded or zeroed (tools/remix/platform_build.py), and -fno-zero-initialized-in-bss
+        # leaves statics without an initialiser in .comm: put them in .data as zeros, and keep the unit free of .bss.
+        compiled=re.sub(r'\t\.local\t(\S+)\n\t\.comm\t\1,(\d+),(\d+)\n',
+                        r'\t.pushsection .data\n\t.balign \3\n\1:\n\t.zero \2\n\t.popsection\n',assembly.read_text())
+        if re.search(r'\.(?:l?comm|bss)\b',compiled): raise SystemExit('VECTOR must not have .bss: a card never zeroes it.')
+        text=(compiled+'\n#APP\n'+(here/'hooks.s').read_text()+'\n'+
               (octatrack/'elekloader/midi_generators.s').read_text()+'\n.text\n.balign 2\n')
         # The shared native/browser linkers restore these from verified local OS.
         for name,address,length in REPLAYS:

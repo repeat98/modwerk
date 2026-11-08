@@ -7385,8 +7385,11 @@ titles.2:
 	.size	first.3, 16
 first.3:
 	.base64	"CwsAAQAwAQwMAAAAAAAAAA=="
-	.local	locked.4
-	.comm	locked.4,64,1
+	.pushsection .data
+	.balign 1
+locked.4:
+	.zero 64
+	.popsection
 	.section	.rodata.str1.1
 .LC9:
 	.string	"C"
@@ -7456,22 +7459,46 @@ handlers.8:
 	.size	mg_keys, 4
 mg_keys:
 	.ascii	"3 12"
-	.local	mg_opened
-	.comm	mg_opened,4,2
-	.local	mg_cursor
-	.comm	mg_cursor,4,2
-	.local	mg_shown
-	.comm	mg_shown,4,2
-	.local	mg_second
-	.comm	mg_second,4,2
-	.local	mg_mine
-	.comm	mg_mine,4,2
-	.local	mg_saved
-	.comm	mg_saved,48,2
-	.local	mg_active
-	.comm	mg_active,4,2
-	.local	mg_seen
-	.comm	mg_seen,4,2
+	.pushsection .data
+	.balign 2
+mg_opened:
+	.zero 4
+	.popsection
+	.pushsection .data
+	.balign 2
+mg_cursor:
+	.zero 4
+	.popsection
+	.pushsection .data
+	.balign 2
+mg_shown:
+	.zero 4
+	.popsection
+	.pushsection .data
+	.balign 2
+mg_second:
+	.zero 4
+	.popsection
+	.pushsection .data
+	.balign 2
+mg_mine:
+	.zero 4
+	.popsection
+	.pushsection .data
+	.balign 2
+mg_saved:
+	.zero 48
+	.popsection
+	.pushsection .data
+	.balign 2
+mg_active:
+	.zero 4
+	.popsection
+	.pushsection .data
+	.balign 2
+mg_seen:
+	.zero 4
+	.popsection
 	.type	mg_arp_setup_slots, @object
 	.size	mg_arp_setup_slots, 6
 mg_arp_setup_slots:
@@ -7495,8 +7522,11 @@ vector_midi:
 	.long	vector_midi_knob
 	.long	vector_midi_yes
 	.long	0
-	.local	midi_view
-	.comm	midi_view,4,2
+	.pushsection .data
+	.balign 2
+midi_view:
+	.zero 4
+	.popsection
 	.data
 	.align	2
 	.type	midi_page_built, @object
