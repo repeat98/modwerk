@@ -2,6 +2,8 @@
 
 ## 0.1.3: back to grid or step recording after live recording (8 November 2026)
 
+Source (0.1.3-experimental): fingerprint (`sha256` of `sha256sum build.json src/ar2-1.74.h src/draw.S src/main.c`) `46649100…00a9a` (`evidence.sourceSha256`), the source RC36 carried.
+
 Reported by npp1993 on 0.1.2: in grid recording, REC HLD or REC TGL started live recording, and ending it left the Rytm in play mode, not grid recording. Read in OS 1.74's code: stock's RECORD + PLAY (0x4004190a) turns grid recording (0x400362da, app + 360) and step recording (0x400363cc, app + 362) off before it turns live recording on (0x4003638a, app + 361), and leaving live recording with PLAY (0x4004196c) turns only live recording off. The panel does the same. RECORD + STOP (0x40041ada) turns step recording on with 0x400363cc, which also sets grid recording. 0.1.3 notes the record mode (step, grid or neither) just before live recording starts: when an action starts it, and at the panel's RECORD press (its `ev_key` handler passes the key on to stock), since RECORD + PLAY starts it there. When an action ends live recording, it puts that mode back with stock's own setter. The note goes when RECORD is released with no live recording (a toggle or RECORD + STOP) and when live recording ends any other way. Restoring step recording through 0x400363cc clears the 52 bytes it clears on any entry (app + 364 to 415), as RECORD + STOP does.
 
 An earlier CI14 draft restored grid recording only. A code sweep had missed the call at 0x40041ada, and npp1993 found on RC35 (unit) that REC HLD from step recording returned to grid recording.

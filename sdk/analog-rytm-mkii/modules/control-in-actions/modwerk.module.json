@@ -83,11 +83,24 @@
   }
  },
  "evidence": {
-  "tier": "none",
+  "tier": "author-hardware",
   "moduleVersion": "0.1.3-experimental",
-  "sourceSha256": null,
-  "reports": [],
-  "hardware": null,
+  "sourceSha256": "4664910015b2e5097243eddd2e66e8f212769620ba827a0c4302b89c15e00a9a",
+  "reports": [
+   "TESTING.md"
+  ],
+  "hardware": {
+   "model": "Analog Rytm MKII",
+   "release": "1.74",
+   "testedOn": "2026-11-08",
+   "tester": "npp1993",
+   "durationMinutes": null,
+   "summary": "npp1993 reports that on an Analog Rytm MKII with OS 1.74, in RC36 (a combo set with this source), REC HLD and REC TGL from step recording ended live recording back in step recording, from grid recording back in grid recording and from play mode in play mode, and live recording started with the panel's RECORD + PLAY from step recording and ended by the input came back in step recording. All passed. Earlier, 0.1.2 in LP01 played every action, played nothing with ACTION OFF, and was timed with a telemetry base.",
+   "limitations": [
+    "Duration was not recorded.",
+    "Tested in combo sets only (RC35 with the earlier grid-only draft, RC36 .syx 25ced0562cd79f13 with this source); not run alone on a unit. Firmware was not read back from the device."
+   ]
+  },
   "verifiedBy": null
  },
  "tests": {
