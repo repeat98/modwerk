@@ -4,7 +4,7 @@ from dataclasses import replace
 import hashlib
 from pathlib import Path
 
-CONTROL_SHA256 = '1939a627870464126d138522173d0465d1abc790cdb4ad4bc29a15501484faf5'
+CONTROL_SHA256 = 'c95c74baa5e5d79d1c3edf0148b2c4a84daf4e5d61c1bff5eb3934626fd0a9be'
 ARITHMETIC = (
     ('\tsub.l #staging-268525901,%a1', '\tadd.l #268525901,%a1\n\tsub.l #staging,%a1'),
     ('\tlea saved-1187503478,%a1', '\tlea saved,%a1\n\tsub.l #1187503478,%a1'),
