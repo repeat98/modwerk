@@ -38,4 +38,6 @@ The pinned base repeated the stock comparisons above in digikit `d6de4d0`: all 5
 
 Two guarded OS 1.17 sites cover loading a saved project and initializing a new project. Both check that stock is operating on the active project and replay the displaced stock operations. The generation lives in RAM and adds no data to the project format.
 
+The project-replacement entry points also clear each contributed kit-data block and notify its `changed(kit, 0)` callback. A saved load fills the blocks from its kit records. A new project starts with empty blocks even if it is saved before the UI ticks. `core_project_kitdata_generation` exposes the same generation on bases that provide this guarantee.
+
 Two isolated builds with GCC 16.2.0 and binutils 2.47 reproduced [the same base package](../../base-binding.json). The base kept the preceding package's sites and interface entries and linked with both released Perform modules, separately and together. In digikit `d6de4d0`, the exact build incremented the generation once on saved-project reload and once on **Create New**. Save and cancelled load kept the same generation. The base linked with Euclidean Scale reached ColdFire and SHARC ready after 7,750 DSP frames with no missing blocks or halt. Physical-unit verification is pending.
