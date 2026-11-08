@@ -65,11 +65,13 @@ const machineProfiles=[]
 // Repositories without machine profiles (such as minimal test fixtures) have no elemod machines.
 for(const entry of await readdir(resolve(root,'sdk/machines'),{withFileTypes:true}).catch(error=>{if(error.code==='ENOENT')return [];throw error}))if(entry.isDirectory())machineProfiles.push(parseMachineProfile(await json(resolve(root,'sdk/machines',entry.name,'machine.json'))))
 let machineModules=0
-const machineDocuments=[]
+const machineDocuments=[],machineDependencies=[]
 const sectionSlots=new Map()
 for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='elemod')){
  const folderRoot=resolve(root,machine.sdk.modules),published=machine.sdk.catalog?(await json(resolve(root,machine.sdk.catalog))).modules:[]
  const dependencies=await loadElemodDependencies(root,machine)
+ // The configurator follows each module's requires through these, so a clash between what two modules build on is refused at the pick.
+ for(const {document} of dependencies.values())machineDependencies.push({machine:machine.id,id:document.id,name:document.name,requires:document.compatibility.requires,conflicts:document.compatibility.conflicts})
  const roots=[folderRoot,...(includeDrafts?[resolve(folderRoot,'_submissions')]:[])]
  const entries=[]
  for(const dir of roots)for(const entry of await readdir(dir,{withFileTypes:true}).catch(error=>{if(error.code==='ENOENT'&&dir!==folderRoot)return [];throw error}))entries.push({entry,dir})
@@ -131,8 +133,8 @@ for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='el
 // Two mods that patch overlapping bytes on a release both support never link together: one must flag the other.
 if(!includeDrafts)requireFlaggedOverlaps(machineDocuments)
 // The website lists every machine's modules from the same validated folders.
-machineDocuments.sort((a,b)=>a.machine.localeCompare(b.machine)||a.id.localeCompare(b.id))
-const machineTarget=resolve(root,'src/catalog/machine-modules.json'),machineGenerated=JSON.stringify({schemaVersion:3,modules:machineDocuments},null,2)+'\n'
+for(const list of [machineDocuments,machineDependencies])list.sort((a,b)=>a.machine.localeCompare(b.machine)||a.id.localeCompare(b.id))
+const machineTarget=resolve(root,'src/catalog/machine-modules.json'),machineGenerated=JSON.stringify({schemaVersion:3,modules:machineDocuments,dependencies:machineDependencies},null,2)+'\n'
 // Generated, not committed, so module PRs never edit the same lines; rewritten only when it changed.
 if(!includeDrafts&&(await readFile(machineTarget,'utf8').catch(()=>''))!==machineGenerated)await writeFile(machineTarget,machineGenerated)
 return machineModules

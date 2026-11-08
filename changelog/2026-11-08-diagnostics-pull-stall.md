@@ -1,0 +1,1 @@
+Development: the owner's diagnostics pull now gives beta finding 72's hint when a DOWN and an UP sit between RIGHT and YES (they cancel, so the cursor stays on the same row), and its stall line also names the stall record's main report words: frames, watch ticks, rejected packets, errors, eDMA errors, missed, the set's modules and CPU.
