@@ -31,18 +31,21 @@ void vector_unpack(VectorParams *p, uint32_t *seed, const uint8_t in[9]) {
 static int in_window(int pitch, unsigned span, int center) {
     return pitch>=center-(int)span && pitch<=center+(int)span;
 }
-static int semitone(unsigned degree, unsigned root, unsigned scale, unsigned span, int center) {
-    unsigned allowed[25], n = 0;
-    int closest=0, distance=100;
+/* The scale's pitches in the window, once a phrase (they depend on no step): `allowed` holds them, the result is
+ * their count; with none, *closest is the scale note nearest the window's centre. */
+static unsigned window_pitches(unsigned allowed[25], int *closest, unsigned root, unsigned scale, unsigned span, int center) {
+    unsigned n = 0;
+    int distance=100;
+    *closest=0;
     for (int pitch = -12; pitch <= 12; ++pitch) {
         unsigned pc = (unsigned)(pitch + 24 - (int)root) % 12;
         if ((scales[scale] >> pc) & 1u) {
             if(in_window(pitch,span,center)) allowed[n++] = (unsigned)(pitch + 12);
             int d=pitch-center; if(d<0) d=-d;
-            if(d<distance) { closest=pitch; distance=d; }
+            if(d<distance) { *closest=pitch; distance=d; }
         }
     }
-    return n ? (int)allowed[degree % n] - 12 : closest;
+    return n;
 }
 int vector_generate(VectorPhrase *out, const VectorParams *params,
                    unsigned length, unsigned base_volume, uint32_t seed) {
@@ -72,13 +75,15 @@ int vector_generate(VectorPhrase *out, const VectorParams *params,
         while (j && ranks[order[j - 1]] > ranks[i]) { order[j] = order[j - 1]; --j; }
         order[j] = i;
     }
+    unsigned allowed[25]; int closest;
+    const unsigned pitches = window_pitches(allowed, &closest, root, scale, span, center);
     unsigned count = (period * density + 8u) / 16u;
     for (unsigned i = 0; i < count; ++i) motif[order[i]].active = 1;
     for (unsigned i = 0; i < period; ++i) {
         VectorStep *s = &motif[i];
         if (!s->active) continue;
         uint32_t r = mix(seed ^ (0x85ebca6bu * (i + 1u)) ^ 0xb5297a4du);
-        int pitch = semitone(r >> 8, root, scale, span, center);
+        int pitch = pitches ? (int)allowed[(r >> 8) % pitches] - 12 : closest;
         /* High TYPE prefers tonic and fifth; constrain the fifth to the scale
          * too (chromatic/root transposition must never break scale membership). */
         if ((r & 15u) < type) {

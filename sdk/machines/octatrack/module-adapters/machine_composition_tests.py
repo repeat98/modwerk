@@ -159,7 +159,7 @@ class ManifestTests(unittest.TestCase):
                 claims += [(r.addr, r.addr + 4, m.name) for r in m.symbol_refs]
                 claims += [(p.addr, p.addr + len(p.write), m.name) for p in m.pokes]
                 claims += [(addr, addr + 4, m.name) for table in m.tables for addr, _ in table.refs]
-            self.assertEqual(len(claims), 96)
+            self.assertEqual(len(claims), 100)  # VECTOR 0.3.0 adds its four MIDI generator detours
             for previous, current in zip(sorted(claims), sorted(claims)[1:]):
                 self.assertLessEqual(previous[1], current[0], (previous, current))
             self.assertEqual(sum(r.symbol == 'mr_pb_table' for r in bridge.symbol_refs), 5)

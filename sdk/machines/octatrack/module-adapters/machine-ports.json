@@ -151,8 +151,8 @@
   },
   "vector": {
    "sources": {
-    "sdk/octabam/modules/vector/control.s": "c4f829e437ffbde1275c00827031b694a86011013d37269077e4696818323471",
-    "sdk/octabam/modules/vector/manifest.py": "4d921f24256038797a99671534885b0bb9a27eaa79261b11136cf0a95a75af21"
+    "sdk/octabam/modules/vector/control.s": "e12b5f82744d14a5511a605fabc5ff0624387084164c59143f9ddccec1f207dd",
+    "sdk/octabam/modules/vector/manifest.py": "b9dec167f8bd4f1b691069cc89834f6c2a6717b874eb28629ef5c8c026d3d976"
    },
    "contribute": [
     {
@@ -218,7 +218,8 @@
     "st_name_replay",
     "st_main_replay",
     "st_edit_replay",
-    "st_draw_replay"
+    "st_draw_replay",
+    "mg_stock_note_draw"
    ],
    "why": "VECTOR's st_* chooser hooks and their stock replays are unreachable in the package; its registry functions are the descriptor's, and its SRC SETUP page 2 (st_setup_page, st_setup_knob, which its card build's st_setup_draw6 and st_setup_edit6 call) the SETUP_PAGE record's"
   },

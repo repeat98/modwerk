@@ -191,14 +191,14 @@
       "abi": 8,
       "features": 131,
       "sites": 2,
-      "copies": 8,
+      "copies": 12,
       "fills": 0,
-      "version": "0.2.5-experimental",
-      "name": "VECTOR",
+      "version": "0.3.0-experimental",
+      "name": "VECTOR MIDI",
       "module": "b0d51c58",
-      "bytes": 18354,
-      "sha256": "45c962ca3a202ac697e3d33d97e4b3b94052706a390189e5baf923fa829de577",
-      "path": "octatrack-modules/vector/0.2.5-experimental.mwrm"
+      "bytes": 29774,
+      "sha256": "4d37ad9225f813f68c3e3ad0da42b1bd4c4cf883def911f785e92b700190a36d",
+      "path": "octatrack-modules/vector/0.3.0-experimental.mwrm"
     },
     {
       "id": "synth",

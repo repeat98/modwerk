@@ -12,6 +12,7 @@ MODULE=Module(
         StockCopy("st_main_replay", stock_guard(0x4007981c, 6, "89c50ac3ca041fdf5647ec5ee2c3580f9a67dd79f0b5cc15ceadda4b9e9bede0")),
         StockCopy("st_edit_replay", stock_guard(0x4003a52e, 8, "cae34bf50383462ed4f92d8044e3021247edb8bf69c17a9c7ead62f6edf79510")),
         StockCopy("st_draw_replay", stock_guard(0x4003cd98, 8, "ed71ef874312890edc87cef7e19cd8c0f8ac4ac9b90182c2364f78d3a4567f45")),
+        StockCopy("mg_stock_note_draw", stock_guard(0x40036548, 8, "e7935464f6aea76650f55814efc9b45785485164937f3bd5ed6f2a4d384b8d4b")),
     )),),
     symbol_refs=(
         SymbolRef(0x400ce128, 0, "vector", "st_pool_choice_right", note="RIGHT browses the highlighted backing pool without committing it"),
@@ -40,6 +41,11 @@ MODULE=Module(
         Detour(0x4005a850, stock_guard(0x4005a850, 6, '7a7350a69423ec41ec468a189ba167059626cb7f499d9862394d2388a23c8b59'), 'vector', 'st_src_commit2', 'VECTOR native selection/editor access'),
         Detour(0x4003a52e, stock_guard(0x4003a52e, 8, 'cae34bf50383462ed4f92d8044e3021247edb8bf69c17a9c7ead62f6edf79510'), 'vector', 'st_setup_edit6', 'VECTOR native selection/editor access', pad_to=8),
         Detour(0x4003cd98, stock_guard(0x4003cd98, 8, 'ed71ef874312890edc87cef7e19cd8c0f8ac4ac9b90182c2364f78d3a4567f45'), 'vector', 'st_setup_draw6', 'VECTOR native selection/editor access', pad_to=8),
+        # The MIDI generator sites (the base's ot_midi_generators sites; on a card VECTOR is the one generator).
+        Detour(0x40083afc, stock_guard(0x40083afc, 10, 'd611d680ad5031e96fe61f954ea40fd87a76bbc961c6d2deefdfc55935dd9f1e'), 'vector', 'mg_tap_site', 'Double-tap TRACK in MIDI mode opens MIDI NOTE SETUP, with the generator list', pad_to=10),
+        Detour(0x4004e1ea, stock_guard(0x4004e1ea, 10, 'b40743bf9a64ff977ac996a4a3c34f6582d8fcda08b78cf52fdf634c94c54959'), 'vector', 'mg_page_site', 'VECTOR controls on a VECTOR MIDI track\'s ARP page', pad_to=10),
+        Detour(0x40032280, stock_guard(0x40032280, 8, 'de77e904028311689866c543af3ce42a7fcfa1e3fdc531807fc98eaf0689d1cf'), 'vector', 'mg_setup_site', 'FUNC+AMP turns a VECTOR MIDI track\'s ARP page to its second page', pad_to=8),
+        Detour(0x40036548, stock_guard(0x40036548, 8, 'e7935464f6aea76650f55814efc9b45785485164937f3bd5ed6f2a4d384b8d4b'), 'vector', 'mg_note_setup_draw', 'MIDI NOTE SETUP lists the MIDI generators in its left half', pad_to=8),
     ),
     pokes=(
         Poke(0x40079248, stock_guard(0x40079248, 4, '8fbd3190028fe564c11b56e3e73e8eaf36925cbabf94164176eeb4c4f57bc6ac'), H('48780006'), 'VECTOR is machine chooser row six'),

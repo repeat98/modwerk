@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.3.0-experimental",
+    "date": "2026-11-08",
+    "changes": [
+      "New: VECTOR generates phrases on MIDI tracks. Double-tap SRC (or the track key in MIDI mode) and choose VECTOR; its controls are on SRC, AMP and FUNC+AMP.",
+      "On a MIDI track OCT, VEL and GATE are the track's NOTE, VEL and LEN; PROB puts trig conditions on off-beat notes, HUMN adds micro-timing. The Octatrack's own sequencer plays it.",
+      "Turning a control is faster on audio and MIDI tracks; the generated phrases are the same as before.",
+      "Card builds: VECTOR's second page also opens beside POLY8 (#1119).",
+      "Known issue: not yet tested on hardware with this exact build; a power cycle and project save and reload are untested."
+    ]
+  },
+  {
     "version": "0.2.5-experimental",
     "date": "2026-10-27",
     "changes": [
