@@ -856,7 +856,12 @@ int main(void)
     CHECK(modwerk_runtime_owner_snapshot(candidate->dsp.image, &old_owner));
     CHECK(old_owner.generation && old_owner.module == 91 && old_owner.owned_extent == (uintptr_t)candidate);
     CHECK(old_owner.extent_bytes == candidate->size && old_owner.image_bytes == 32 && modwerk_runtime_owner_valid(&old_owner));
+    /* crash.c's lookup: any byte of the extent, nothing past it, nothing once the owner is gone. */
+    uintptr_t extent = (uintptr_t)candidate;
+    CHECK(modwerk_runtime_owner_module(extent) == 91 && modwerk_runtime_owner_module(extent + candidate->size - 1u) == 91);
+    CHECK(modwerk_runtime_owner_module(extent + candidate->size) != 91 && !modwerk_runtime_owner_module(0x10u));
     CHECK(b->discard(0) && !modwerk_runtime_owner_valid(&old_owner));
+    CHECK(modwerk_runtime_owner_module(extent) != 91);
     id = 92; begin(32, 16, 0, 0, 0, 0, 0x92);
     CHECK(b->prepare(0, p, n) && modwerk_runtime_owner_snapshot(candidate->dsp.image, &current_owner));
     CHECK(current_owner.owned_extent == old_owner.owned_extent && current_owner.generation > old_owner.generation);

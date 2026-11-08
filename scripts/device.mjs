@@ -444,13 +444,15 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
       }
     }
     else if (step === 'crash') { // crash.c's record in battery RAM: what the last error exception was, and where
-      const b = await mem(0x100ff800, 180), v = new DataView(b.buffer, b.byteOffset, 180), w = i => v.getUint32(4 * i)
+      const b = await mem(0x100ff800, 224), v = new DataView(b.buffer, b.byteOffset, 224), w = i => v.getUint32(4 * i) // then its owners ("MWCO")
       if (w(0) !== 0x4d574352) console.log('crash: none recorded')
       else console.log(`crash ${w(1)} (shown ${w(28)}): vector ${w(2) >>> 18 & 0xff} PC 0x${w(3).toString(16)} SR 0x${(w(2) & 0xffff).toString(16)} ` +
         `FS ${(w(2) >>> 24 & 0xc) | (w(2) >>> 16 & 3)} SP 0x${w(19).toString(16)}\n  d ${[...Array(8)].map((_, i) => w(4 + i).toString(16)).join(' ')}\n` +
         `  a ${[...Array(7)].map((_, i) => w(12 + i).toString(16)).join(' ')}\n  stack ${[...Array(8)].map((_, i) => w(20 + i).toString(16)).join(' ')}\n` +
         `  code at PC ${[...Array(8)].map((_, i) => w(29 + i).toString(16).padStart(8, '0')).join(' ')}\n` +
         `  uncached   ${[...Array(8)].map((_, i) => w(37 + i).toString(16).padStart(8, '0')).join(' ')}`)
+      if (w(0) === 0x4d574352 && w(45) === 0x4d57434f && w(46) === w(1)) // crash.c named the modules behind it (0: stock or none)
+        console.log(`  modules: PC ${w(47).toString(16).padStart(8, '0')}, stack ${[...Array(8)].map((_, i) => w(48 + i).toString(16).padStart(8, '0')).join(' ')}`)
     }
     else if (step === 'loader') { // packets each core took, the jobs in flight, the manager's transactions (report words)
       const w = await statusWords()

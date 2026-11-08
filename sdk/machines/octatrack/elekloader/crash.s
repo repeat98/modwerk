@@ -49,4 +49,6 @@ mw_crash:
         clr.l   (112,%a0)
 2:      addq.l  #1,(4,%a0)
         move.l  %d0,(%a0)
+        lea     (mw_crash_stack+256).l,%sp | crash.c names the modules behind the PC and the stack longs, on its
+        jsr     (modwerk_crash_owners).l   | own stack (the faulting one may be what broke)
         jmp     (modwerk_boot_reset).l

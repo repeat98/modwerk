@@ -10,7 +10,7 @@
 static unsigned failures;
 #define CHECK(x) do { if (!(x)) { failures++; fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #x); } } while (0)
 volatile struct diag_log modwerk_test_log;
-volatile uint32_t modwerk_test_crash[DIAG_CRASH_BYTES / 4u], modwerk_test_stall[DIAG_STALL_BYTES / 4u], modwerk_test_playing, modwerk_test_tempo24,
+volatile uint32_t modwerk_test_crash[DIAG_CRASH_BYTES / 4u + 11u], modwerk_test_stall[DIAG_STALL_BYTES / 4u], modwerk_test_playing, modwerk_test_tempo24,
     modwerk_test_screen, modwerk_test_timer;
 uint32_t modwerk_test_modules[16];
 const uint8_t modwerk_base_digest[32] = {0x32, 0x0f, 0xc4, 0x54, 9};
@@ -148,6 +148,21 @@ int main(void)
     CHECK(modwerk_diag_read(page, stall_at / DIAG_PAGE) == DIAG_PAGE && page[stall_at % DIAG_PAGE] == sb[0] && page[stall_at % DIAG_PAGE + 3u] == sb[3]);
     CHECK(modwerk_diag_read(page, end / DIAG_PAGE) == DIAG_PAGE && page[end % DIAG_PAGE] == 0 && page[DIAG_PAGE - 1u] == 0);
     CHECK(DIAG_PAGE % 64u != 0u);
+
+    /* A crash crash.c named: the PC's module in screen, the stack's distinct modules as a run of ids. */
+    volatile uint32_t *owners = modwerk_test_crash + DIAG_CRASH_BYTES / 4u;
+    const uint32_t named[11] = {0x4d57434fu, 4u, 0x95cff696u, 0xbcf0d674u, 0, 0xbcf0d674u, 0x773c84aau, 0, 0, 0, 0};
+    for (unsigned i = 0; i < 11u; ++i) owners[i] = named[i];
+    modwerk_test_crash[1] = 4, modwerk_test_crash[3] = 0x40d30010u;
+    restart();
+    volatile struct diag_incident *c = last(); /* START, BASE, CRASH */
+    CHECK(c->kind == DIAG_CRASH && c->a == 0x40d30010u && c->screen == 0x95cff696u);
+    CHECK(c->machine[0] == 0xbcu && c->machine[3] == 0x74u && c->machine[4] == 0x77u && c->machine[7] == 0xaau && c->machine[8] == 0u && c->keys[0] == 0u);
+    /* Owners left from an earlier count are not this crash's. */
+    modwerk_test_crash[1] = 5;
+    restart();
+    c = last();
+    CHECK(c->kind == DIAG_CRASH && c->screen == 0u && c->machine[0] == 0u && c->keys[0] == 0xffu);
 
     if (failures) fprintf(stderr, "%u failure(s)\n", failures);
     else puts("diag: start, crash and stall, load, HOT, freeze, restart and LOG pages passed");

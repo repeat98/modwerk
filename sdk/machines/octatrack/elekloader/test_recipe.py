@@ -305,6 +305,9 @@ class RuntimeSlotTests(unittest.TestCase):
     def test_diagnostics_log_on_the_host(self):
         self.host_test('test_diag.c')
 
+    def test_crash_owners_on_the_host(self):
+        self.host_test('test_crash.c')
+
     def test_the_base_at_128_effect_ids_on_the_host(self):
         # docs/OCTATRACK_MORE_EFFECT_IDS.md: the base behind MODWERK_FX_IDS works past 32 before the tables move.
         for test in ('test_dsp.c', 'test_fxpage.c', 'test_status.c', 'test_selftest.c'):

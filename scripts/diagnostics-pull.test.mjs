@@ -103,6 +103,12 @@ describe('diagnostics pull', () => {
       fx: Array(16).fill(0), keys: Array(16).fill(0), screen: 0x773c84aa, tempo24: 5, playing: false }
     expect(unitLines([set])[0]).toContain('1 installed: Mini Verb; refused SC Ringmod (busy)')
   })
+  it('names the modules behind a crash, and none for an older base', () => {
+    const crash = (screen, machines, keys) => ({ seq: 5, boot: 4, second: 0, kind: 'crash', a: 0x40d30010, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines, fx: Array(16).fill(0), keys, screen, tempo24: 0, playing: false })
+    expect(unitLines([crash(0x3cbedc9c, [0x77, 0x3c, 0x84, 0xaa, ...Array(20).fill(0)], Array(16).fill(0))])[0])
+      .toBe('  unit: #5 start 4 +0m0s crash pc 0x40d30010 in Mini Verb, stack through SC Ringmod')
+    expect(unitLines([crash(0, Array(24).fill(0), Array(16).fill(255))])[0]).toBe('  unit: #5 start 4 +0m0s crash pc 0x40d30010')
+  })
   it('calls a stall found at a start on another base an OS upgrade, and one on the same base nothing', () => {
     const at = (seq, boot, kind, a = 0) => ({ seq, boot, second: 0, kind, a, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0),
       fx: Array(16).fill(0), keys: Array(16).fill(255), screen: 0, tempo24: 0, playing: false })

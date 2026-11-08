@@ -360,6 +360,17 @@ int modwerk_runtime_owner_at(uintptr_t address,struct runtime_owner *out)
     }
     return 0;
 }
+/* The module whose extent holds `address`, in the alias it was placed at, from the base's own owner records only: no
+ * pool read, so crash.c can ask after the pool or a module broke. A record half-written by a change (odd epoch) can
+ * name the wrong module; the others stay right. 0: none. */
+uint32_t modwerk_runtime_owner_module(uintptr_t address)
+{
+    for (unsigned i = 0; i < owners && i < OWNERS; ++i) {
+        const struct runtime_owner *o = &owner_identity[i];
+        if (o->generation && address - o->owned_extent < o->extent_bytes) return o->module;
+    }
+    return 0;
+}
 int modwerk_runtime_owner_canonical(const struct runtime_owner *o,uintptr_t *extent)
 {
     uintptr_t lo = (uintptr_t)first();

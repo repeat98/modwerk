@@ -26,7 +26,7 @@ extern const uint8_t modwerk_base_digest[32];       /* the base's identity (buil
 
 #ifdef MODWERK_HOST /* test_diag.c models the unit's memory */
 extern volatile struct diag_log modwerk_test_log;
-extern volatile uint32_t modwerk_test_crash[DIAG_CRASH_BYTES / 4u], modwerk_test_stall[DIAG_STALL_BYTES / 4u], modwerk_test_playing, modwerk_test_tempo24,
+extern volatile uint32_t modwerk_test_crash[DIAG_CRASH_BYTES / 4u + 11u], modwerk_test_stall[DIAG_STALL_BYTES / 4u], modwerk_test_playing, modwerk_test_tempo24,
     modwerk_test_screen, modwerk_test_timer;
 extern volatile uint8_t modwerk_test_running[16];
 #define LOG (&modwerk_test_log)
@@ -91,6 +91,8 @@ static void bare(volatile struct diag_incident *r, unsigned kind)
     r->kind = (uint16_t)kind;
     for (unsigned i = 0; i < 16u; ++i) r->keys[i] = 0xffu;
 }
+/* crash.c's owners, right after its record: "MWCO", the record's count, the module behind the PC, the eight stack longs'. */
+#define CRASH_OWNERS (CRASH + DIAG_CRASH_BYTES / 4u)
 /* The next incident: its seq is 0 while it is written and set last, so a reader never takes half of one. */
 static volatile struct diag_incident *slot(volatile struct diag_log *l)
 {
@@ -109,6 +111,29 @@ static void add(volatile struct diag_log *l, unsigned kind, uint32_t a, int with
     volatile struct diag_incident *r = slot(l);
     if (with_context) context(r, kind); else bare(r, kind);
     r->boot = l->boot, r->second = ticks / 60u, r->a = a;
+    push(l, r);
+}
+/* A crash: its PC, and when crash.c named them for this record, the module behind the PC (screen) and the distinct ones
+ * behind the stack longs (the 56-byte run, as a set record's ids). A crash an older base recorded keeps screen 0 and
+ * the keys at 0xff. */
+static void add_crash(volatile struct diag_log *l)
+{
+    volatile struct diag_incident *r = slot(l);
+    bare(r, DIAG_CRASH);
+    r->boot = l->boot, r->second = ticks / 60u, r->a = CRASH[3];
+    if (CRASH_OWNERS[0] == 0x4d57434fu && CRASH_OWNERS[1] == CRASH[1]) {
+        uint32_t ids[8];
+        unsigned n = 0;
+        for (unsigned i = 0; i < 8u; ++i) {
+            uint32_t id = CRASH_OWNERS[3u + i];
+            unsigned j = 0;
+            while (j < n && ids[j] != id) ++j;
+            if (id && j == n) ids[n++] = id;
+        }
+        r->screen = CRASH_OWNERS[2];
+        volatile uint8_t *b = r->machine;
+        for (unsigned i = 0; i < 56u; ++i) b[i] = i < 4u * n ? (uint8_t)(ids[i / 4u] >> (24u - 8u * (i % 4u))) : 0;
+    }
     push(l, r);
 }
 /* The frame interrupt's freeze, into the incidents (it keeps its own boot and second). */
@@ -132,7 +157,7 @@ static void start(volatile struct diag_log *l)
     l->boot = l->boot + 1u;
     add(l, DIAG_START, crashes << 16 | (stalls & 0xffffu), 1);
     add(l, DIAG_BASE, (uint32_t)modwerk_base_digest[0] << 24 | (uint32_t)modwerk_base_digest[1] << 16 | (uint32_t)modwerk_base_digest[2] << 8 | modwerk_base_digest[3], 0);
-    if (crashes != l->crash_seen) add(l, DIAG_CRASH, CRASH[3], 0);
+    if (crashes != l->crash_seen) add_crash(l);
     if (stalls != l->stall_seen) add(l, DIAG_STALL, STALL[2], 0);
     l->crash_seen = crashes, l->stall_seen = stalls;
 }
