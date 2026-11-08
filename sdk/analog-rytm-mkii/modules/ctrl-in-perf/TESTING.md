@@ -19,12 +19,13 @@ project, approved by Iced-Cream, with a power cycle by hand. Stock 1.74 was flas
   holds at both ends; MODE OFF hides it.
 - PF1 was kept over a project save and reload, and over the power cycle; then set back to OFF.
 - With nothing plugged into EXP/CV IN 1, the port reads below CV ZERO and macro 1 stays at 0.
+- Iced-Cream listened to the unit throughout the run.
 
 The manifest's `evidence.sourceSha256` is the sha256 of `sha256sum build.json src/ctrl-in-perf.s` output;
 neither file changed after CPH2 was built.
 
 Not run on the unit: a CV source driving a macro (no CV source was patched; emulator only, below), EXPR
-mode, CONTROL INPUT 2 and a listening check.
+mode and CONTROL INPUT 2.
 
 ## Emulator (analog-emu `4c07ed3`, dtboot, CP02, fresh card, 2026-11-08)
 
