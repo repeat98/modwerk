@@ -8,6 +8,8 @@
         .equ    V_PRESST, 8                 ; time of that press
         .equ    V_MARM, 12                  ; 1 = flip back on a long press
         .equ    V_SWALLOW, 16               ; releases to ignore, bit = event - 64
+                                            ; +20 V_PDOWN (looper.S)
+        .equ    V_KTIME, 24                 ; last fast tempo knob turn (knob_accel.S)
         .equ    MODE, 320                   ; B14 offset, 0 = play
         .equ    PENDING, 340                ; B14 offset, stock keys cancel it first
         .equ    HOLD_FIRED, 348             ; B14 offset, 1 = the release does not tap
@@ -34,6 +36,7 @@
         .equ    TOGGLE, 0xC00ABCB8          ; (slot)
         .equ    IS_DIRTY, 0xC00B8534
         .equ    STOCK_KNOB, 0xC00AC0E8
+        .equ    KNOB_ACCEL, 0xC00F2700      ; knob_accel.S
         .equ    STOCK_TAP, 0xC00BA488
         .equ    STOCK_HOLD, 0xC00ABD30
         .equ    STOCK_RELEASE, 0xC00AC8FC
