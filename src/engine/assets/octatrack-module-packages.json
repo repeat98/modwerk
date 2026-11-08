@@ -196,8 +196,8 @@
       "version": "0.3.0-experimental",
       "name": "VECTOR",
       "module": "b0d51c58",
-      "bytes": 29486,
-      "sha256": "4fc33aef2606bcc8c0801365fd123f5a31b9ac46b0b3dfbc774a10a8d59812d3",
+      "bytes": 29630,
+      "sha256": "b66a440e6969ed9c5a863245956ebbaa7d81f96993f8837c53a5a7428b6a7a31",
       "path": "octatrack-modules/vector/0.3.0-experimental.mwrm"
     },
     {

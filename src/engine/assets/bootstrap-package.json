@@ -16,7 +16,7 @@
   "reserveBytes": 10487808,
   "uncachedAlias": 134217728,
   "stageAlignment": 4096,
-  "sourceCommit": "9be221aabc43919ab1165cad9df7c1415b96f2f7",
+  "sourceCommit": "ebceb74f8ad1676bd8cb934b875d6f064ea2ab48",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
