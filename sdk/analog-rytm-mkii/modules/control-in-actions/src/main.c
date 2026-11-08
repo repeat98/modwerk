@@ -72,6 +72,7 @@ typedef void (*post_t)(void *queue, const void *message);
 #define APP_SINGLETON ((singleton_t)APP_SINGLETON_AT)
 #define LIVE_REC ((live_rec_t)LIVE_REC_AT)
 #define GRID_REC_SET ((grid_rec_set_t)GRID_REC_SET_AT)
+#define STEP_REC_SET ((grid_rec_set_t)STEP_REC_SET_AT)
 #define FRAME ((rect_t)DRAW_FRAME_AT)
 #define FILL ((rect_t)DRAW_FILL_AT)
 #define HLINE ((hline_t)DRAW_HLINE_AT)
@@ -139,7 +140,7 @@ static unsigned char hold_active[CI_PORTS]; // MUTE HOLD opened the screen
 static unsigned char hold_back[CI_PORTS];   // the mode key to go back to, 0 for none
 static unsigned char rec_active[CI_PORTS];  // REC HOLD turned live recording on
 static unsigned char fill_active[CI_PORTS]; // FILL HOLD holds FILL down
-static unsigned char grid_back;             // grid recording was on before live recording started
+static unsigned char rec_back;              // the record mode before live recording started: REC_GRID, REC_STEP or 0
 static unsigned char record_down;           // RECORD held, from its own key events
 static unsigned char learning[CI_PORTS];    // the learn open as the view last drew: LEARN_EXPR, LEARN_FSW or 0
 static char *shown[CI_PORTS];               // the CONTROL INPUT view that last drew
@@ -227,28 +228,42 @@ static unsigned char app_byte(int at)
     return *(volatile unsigned char *)((char *)APP_SINGLETON() + at);
 }
 
+#define REC_GRID 1
+#define REC_STEP 2
+
+// The record mode outside live recording: step recording (which keeps grid
+// recording on), grid recording or neither, as stock's 0x400363bc reads step.
+static int rec_mode(void)
+{
+    if (app_byte(APP_REC_OK) && app_byte(APP_STEP_REC))
+        return REC_STEP;
+    return app_byte(APP_GRID_REC) ? REC_GRID : 0;
+}
+
 // Live recording on, from RECORD + PLAY: a stopped sequencer starts too.
-// Stock's RECORD + PLAY turns grid recording off; rec_off puts it back.
+// Stock's RECORD + PLAY turns grid and step recording off; rec_off puts
+// back the one that was on.
 static void rec_on(void)
 {
     if (!live_rec()) {
-        unsigned char grid = app_byte(APP_GRID_REC);
+        int mode = rec_mode();
         record_play();
-        grid_back = grid && live_rec();
+        rec_back = live_rec() ? mode : 0;
     }
 }
 
 // Live recording off, from PLAY, which stock reads in live recording as
-// leaving it: the sequencer plays on, in grid recording again when it was
-// on before live recording started, from an action or the panel.
+// leaving it: the sequencer plays on, in the record mode that was on before
+// live recording started, from an action or the panel, through stock's own
+// setter for it.
 static void rec_off(void)
 {
     if (live_rec()) {
         tap(KEY_PLAY);
-        if (grid_back && !live_rec() && !app_byte(APP_GRID_REC))
-            GRID_REC_SET((void *)APP_SINGLETON(), 1);
+        if (rec_back && !live_rec() && rec_mode() != rec_back)
+            (rec_back == REC_STEP ? STEP_REC_SET : GRID_REC_SET)((void *)APP_SINGLETON(), 1);
     }
-    grid_back = 0;
+    rec_back = 0;
 }
 
 static void pedal(int port, int dest, int down)
@@ -555,16 +570,16 @@ void control_in_actions_audio(void)
 }
 
 // The panel's RECORD, passed on to stock: at its press, before stock acts,
-// whether grid recording is on, for a live recording that RECORD + PLAY may
-// start (which turns grid recording off). Released with no live recording,
-// it was a grid toggle, and the note goes.
+// the record mode, for a live recording that RECORD + PLAY may start (which
+// turns grid and step recording off). Released with no live recording, it
+// was a toggle or RECORD + STOP, and the note goes.
 static void record_key(unsigned flags)
 {
     if (flags & EV_REPEAT)
         return;
     record_down = flags & EV_PRESSED;
     if (!app_byte(APP_LIVE_REC))
-        grid_back = record_down && app_byte(APP_GRID_REC);
+        rec_back = record_down ? rec_mode() : 0;
 }
 
 // The key message, on the UI task: play what the interrupt saw, and keep it
@@ -590,12 +605,12 @@ void control_in_actions_tick(void *ctrl)
     int port;
     (void)ctrl;
 #ifdef CIA_EMU
-    control_in_actions_emu_mode = mode_key() | live_rec() << 8 | app_byte(APP_GRID_REC) << 9 | (jacks[0].word & 1) << 16 | learning[0] << 24;
+    control_in_actions_emu_mode = mode_key() | live_rec() << 8 | app_byte(APP_GRID_REC) << 9 | (rec_mode() == REC_STEP) << 10 | (jacks[0].word & 1) << 16 | learning[0] << 24;
 #endif
     // Live recording over (left from the panel too), or never started: the
     // note is for no live recording. RECORD held may still start one.
-    if (grid_back && !record_down && !app_byte(APP_LIVE_REC))
-        grid_back = 0;
+    if (rec_back && !record_down && !app_byte(APP_LIVE_REC))
+        rec_back = 0;
     for (port = 0; port < CI_PORTS; port++) {
         int dest, i;
         redraw(port);

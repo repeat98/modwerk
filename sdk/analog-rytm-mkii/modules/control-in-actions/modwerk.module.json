@@ -20,7 +20,7 @@
   "label": "CONTROL IN ACTIONS",
   "family": "Workflow",
   "summary": "An ACTION mode for EXP/CV IN 1 and 2: a gate or footswitch holds or toggles the MUTE screen or live recording, or holds or latches FILL.",
-  "overview": "Stock's CONTROL INPUT menus get a fourth MODE, ACTION. Pick what the input does in the ACTION row: MUTE HLD shows the MUTE screen while the input is high and goes back to the mode you were in when it drops, MUTE TGL opens and closes it, REC HLD records live while the input is high, REC TGL turns live recording on and off, FILL HLD holds FILL, FILL LAT latches and unlatches it. Live recording starts a stopped sequencer and never stops it, and ends back in grid recording if you were in it. A 0 to 5 V gate works as it is; for a footswitch, ACTION LEARN reads its two levels. Bars beside the menu show the input against the learned levels and whether it counts as pressed. Each jack has its own MODE, so one can switch while the other still plays the kit's CV or expression macro.",
+  "overview": "Stock's CONTROL INPUT menus get a fourth MODE, ACTION. Pick what the input does in the ACTION row: MUTE HLD shows the MUTE screen while the input is high and goes back to the mode you were in when it drops, MUTE TGL opens and closes it, REC HLD records live while the input is high, REC TGL turns live recording on and off, FILL HLD holds FILL, FILL LAT latches and unlatches it. Live recording starts a stopped sequencer and never stops it, and ends back in grid or step recording if you were in it. A 0 to 5 V gate works as it is; for a footswitch, ACTION LEARN reads its two levels. Bars beside the menu show the input against the learned levels and whether it counts as pressed. Each jack has its own MODE, so one can switch while the other still plays the kit's CV or expression macro.",
   "highlights": [
    "Hands-free mutes with both hands on the pads",
    "Set up in stock's own CONTROL INPUT menus, saved with them",
@@ -138,8 +138,8 @@
     "type": "emulator",
     "release": "1.74",
     "moduleVersion": "0.1.3-experimental",
-    "imageSha256": "ae0f63fbbd86184e7e36739dc8a4cdc8b7be12e9eb7bfcf5223424513da685fc",
-    "setup": "Headless rytm-emu (dtboot) running CI14: core-ar2 0.7 and this folder's Control In Actions 0.1.3-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+    "imageSha256": "10700f01622297f07b84f93355f75e639139ce0436be81f8bb8debdaf149f0a7",
+    "setup": "Headless rytm-emu (dtboot) running CI15: core-ar2 0.7 and this folder's Control In Actions 0.1.3-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
    }
   },
   {
@@ -154,8 +154,8 @@
     "type": "emulator",
     "release": "1.74",
     "moduleVersion": "0.1.3-experimental",
-    "imageSha256": "ae0f63fbbd86184e7e36739dc8a4cdc8b7be12e9eb7bfcf5223424513da685fc",
-    "setup": "Headless rytm-emu (dtboot) running CI14: core-ar2 0.7 and this folder's Control In Actions 0.1.3-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+    "imageSha256": "10700f01622297f07b84f93355f75e639139ce0436be81f8bb8debdaf149f0a7",
+    "setup": "Headless rytm-emu (dtboot) running CI15: core-ar2 0.7 and this folder's Control In Actions 0.1.3-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
    }
   },
   {
@@ -170,8 +170,8 @@
     "type": "emulator",
     "release": "1.74",
     "moduleVersion": "0.1.3-experimental",
-    "imageSha256": "ae0f63fbbd86184e7e36739dc8a4cdc8b7be12e9eb7bfcf5223424513da685fc",
-    "setup": "Headless rytm-emu (dtboot) running CI14: core-ar2 0.7 and this folder's Control In Actions 0.1.3-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+    "imageSha256": "10700f01622297f07b84f93355f75e639139ce0436be81f8bb8debdaf149f0a7",
+    "setup": "Headless rytm-emu (dtboot) running CI15: core-ar2 0.7 and this folder's Control In Actions 0.1.3-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
    }
   }
  ]

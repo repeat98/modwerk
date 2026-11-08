@@ -1,13 +1,13 @@
 # Control In Actions testing
 
-## 0.1.3: back to grid recording after live recording (8 November 2026)
+## 0.1.3: back to grid or step recording after live recording (8 November 2026)
 
-Reported by npp1993 on 0.1.2: in grid recording, REC HLD or REC TGL started live recording, and ending it left the Rytm in play mode, not grid recording. Read in OS 1.74's code: stock's RECORD + PLAY (0x4004190a) turns grid recording off (0x400362da, app + 360) before it turns live recording on (0x4003638a, app + 361), and leaving live recording with PLAY (0x4004196c) turns only live recording off. The panel does the same. 0.1.3 notes whether grid recording is on just before live recording starts: when an action starts it, and at the panel's RECORD press (its `ev_key` handler passes the key on to stock), since RECORD + PLAY starts it there. When an action ends live recording, it turns grid recording back on with stock's own 0x400362da if the note says so. The note goes when RECORD is released with no live recording (a grid toggle) and when live recording ends any other way.
+Reported by npp1993 on 0.1.2: in grid recording, REC HLD or REC TGL started live recording, and ending it left the Rytm in play mode, not grid recording. Read in OS 1.74's code: stock's RECORD + PLAY (0x4004190a) turns grid recording (0x400362da, app + 360) and step recording (0x400363cc, app + 362) off before it turns live recording on (0x4003638a, app + 361), and leaving live recording with PLAY (0x4004196c) turns only live recording off. The panel does the same. RECORD + STOP (0x40041ada) turns step recording on with 0x400363cc, which also sets grid recording. 0.1.3 notes the record mode (step, grid or neither) just before live recording starts: when an action starts it, and at the panel's RECORD press (its `ev_key` handler passes the key on to stock), since RECORD + PLAY starts it there. When an action ends live recording, it puts that mode back with stock's own setter. The note goes when RECORD is released with no live recording (a toggle or RECORD + STOP) and when live recording ends any other way. Restoring step recording through 0x400363cc clears the 52 bytes it clears on any entry (app + 364 to 415), as RECORD + STOP does.
 
-RECORD + PLAY also calls 0x400363cc with 0, which clears app + 362. Nothing in OS 1.74 sets that byte: 0x400363cc's only caller passes 0, and the app's setup (0x40036fc8) and the grid toggle (0x40036310) clear it. So there is no third mode to restore.
+An earlier CI14 draft restored grid recording only. A code sweep had missed the call at 0x40041ada, and npp1993 found on RC35 (unit) that REC HLD from step recording returned to grid recording.
 
-- rytm-emu `2ac0f1f`: CI14 (vendored core-ar2 0.7 + this source, `ae0f63fb…85fc`) boots, and its three media frames are byte-identical to CI12's.
-- CE19 (CI14's source with `-DCIA_EMU`, `87c0f8cd…`, whose status word now carries grid recording as bit 9), CONTROL INPUT 1 in ACTION mode, the level poked:
+- rytm-emu `2ac0f1f`: CI15 (vendored core-ar2 0.7 + this source, `10700f01…f0a7`) boots, and its three media frames are byte-identical to CI12's.
+- CE20 (CI15's source with `-DCIA_EMU`, `cf274eca…`, whose status word carries grid recording as bit 9 and step recording as bit 10), CONTROL INPUT 1 in ACTION mode, the level poked:
 
 | Steps | Result |
 | --- | --- |
@@ -18,8 +18,11 @@ RECORD + PLAY also calls 0x400363cc with 0, which clears app + 362. Nothing in O
 | Play mode, panel RECORD + PLAY, then input high (REC TGL) | Live recording off: play mode |
 | RECORD twice (grid on, then off), then REC TGL high, low, high | Play mode at the end |
 | Grid recording, input high (live), panel PLAY (stock: play mode), panel RECORD + PLAY from play mode, input low, then high | Play mode at the end |
+| REC TGL: RECORD + STOP (step recording), input high, low, high | Live recording on, step and grid off; then live recording off, step recording on |
+| REC HLD: RECORD + STOP, input high, then low | Live recording on, then off: step recording on |
+| Step recording, panel RECORD + PLAY, then input high (REC TGL) | Live recording off, step recording on |
 
-- Not tested: on a unit.
+- Unit, RC35 (combo with CI14's code), as npp1993 reported: grid recording returns ("I think it's working"); from step recording, REC HLD returned to grid recording, which CI15 fixes. CI15 is not on a unit yet.
 
 ## 0.1.2: no reading with ACTION OFF (6 November 2026)
 
