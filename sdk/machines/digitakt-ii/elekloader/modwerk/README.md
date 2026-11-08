@@ -31,3 +31,11 @@ A MIDI Euclidean track on channel 1 reached the stock MIDI constructor 37 times 
 The pinned GCC 16.2.0/binutils 2.47 base reproduced [the same package](../../base-binding.json) twice. It linked with each released perform package and with both together. Both diagnostic images passed framing, packet checksum and HMAC checks and preserved every non-MAIN section. The base-only image (`75ff5a0f6e9a09929103c2212dfb5d556d510106b6fc00d5451cf5e66db8ed27`) and the image linked with the existing GCC 13.1.0 fixture subscriber (`152e461d7974e4d0546343f1adf463bde6f9a7c9bc1daaefd4118aa81e09c0b3`) each saved coupled ready snapshots after 7,750 DSP frames with zero missing blocks and no halt.
 
 The pinned base repeated the stock comparisons above in digikit `d6de4d0`: all 5,909 frame headers with an empty hook, 32 note events in the same DSP frames with the subscriber, three explicit override records skipped by the dispatcher, and all 39 stock MIDI note messages matched. The override fixture still started one DSP frame later relative to PLAY and matched all event times when aligned to the first note. Hardware qualification remains open.
+
+## Active project generation
+
+`project-generation.h` exposes a read-only generation for modules with temporary project state. Capture the generation when populating that state and compare it for equality before reading the state again. Saving the project does not replace the active project.
+
+Two guarded OS 1.17 sites cover loading a saved project and initializing a new project. Both check that stock is operating on the active project and replay the displaced stock operations. The generation lives in RAM and adds no data to the project format.
+
+In digikit `d6de4d0`, a Windows GCC 13.1.0 build incremented the generation once on saved-project reload and once on **Create New**. Save and cancelled load kept the same generation. The base kept the preceding package's sites and interface entries and linked with both released Perform modules, separately and together. The base linked with Euclidean Scale reached ColdFire and SHARC ready after 7,750 DSP frames with no missing blocks or halt. Pinned-toolchain and physical-unit verification are pending.
