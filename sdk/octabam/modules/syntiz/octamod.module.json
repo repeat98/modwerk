@@ -407,7 +407,7 @@
       "Chromatic keys, MIDI and recorded notes cover two octaves, as on FLEX; OCT, a SETUP control, moves them for the whole track.",
       "Before a note it asks the base which trigs a mute module drops (ev_trig_muted); not yet tried with a mute module.",
       "At most three SYNTIZ tracks in a Part: a fourth is refused. On the author's MKII one render takes up to 37 % of a frame, so three heavy tracks holding long notes make the base drop renders (a crackle); two heavy tracks with filter and chorus play clean beside a THRU, three samples, a NEIGHBOR and a master compressor (7 November 2026).",
-      "Another module installed but never played can take SYNTIZ's margin: on the author's MKII, FM Synth installed made the SYNTIZ tracks crackle lightly and a third sample track no longer fit; removing it cured both (one A/B, 7 November 2026, mechanism unknown).",
+      "Another module installed but never played can take SYNTIZ's margin: on the author's MKII, another installed module made the SYNTIZ tracks crackle lightly and a third sample track no longer fit; removing it cured both (one A/B, 7 November 2026, mechanism unknown).",
       "CHOIR on VOWA is quieter than the other models. Not tested: the MKI, a mute module's muted trigs, a MIDI flood."
     ]
   },

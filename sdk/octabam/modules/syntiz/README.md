@@ -92,8 +92,8 @@ you from the machine list to a first note; the models follow it.
   base drop renders, a crackle, while two heavy tracks with filter and chorus play clean beside a THRU, three
   samples, a NEIGHBOR and a master compressor ([TESTING.md](TESTING.md)). A Part saved with more plays on as it was,
   and may crackle. Not yet tested on the MKI.
-- If SYNTIZ crackles on a set that should fit, look at the other modules kept on the unit: on the author's MKII, FM
-  Synth installed and never played made the SYNTIZ tracks crackle lightly and took a sample track's worth of margin;
+- If SYNTIZ crackles on a set that should fit, look at the other modules kept on the unit: on the author's MKII,
+  another installed module that was never played made the SYNTIZ tracks crackle lightly and took a sample track's worth of margin;
   removing it cured both (7 November 2026, one A/B, cause unknown).
 - Its levels differ by model: CHOIR on VOWA is lower than the others, as the shape itself is sparse.
 
