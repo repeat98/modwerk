@@ -90,6 +90,15 @@ describe('diagnostics pull', () => {
     expect(text).toContain('playing at 120.0 BPM, screen 0x400cbf2c, keys 28 1c, fx 21 0')
     expect(text).toContain('unresponsive ready reason=ui')
   })
+  it('names the stall record’s report words that help triage', () => {
+    const report = Array.from({ length: 85 }, (_, i) => i) // synthetic: each word is its own index
+    report[66] = 973 // cpu, per mille
+    const text = summary({ events: [entry(1, 'tester', { event: 'device_log', phase: 'ready', log: { loads: [], incidents: [], stall: { count: 2, reason: 1, ticks: 400, report } } })], counts: [] })
+    expect(text).toContain('  stall record 2: reason 1 (1 frames stopped, 2 eDMA refused) at tick 400\n' +
+      '    report: frames 1, watchTicks 15, rejected0 8, rejected1 9, errors 10, edmaErrors 42, missed 59, setModules 64, cpu 97.3%\n')
+    expect(summary({ events: [entry(1, 'tester', { event: 'device_log', phase: 'ready', log: { loads: [], incidents: [], stall: { count: 1, reason: 2, ticks: 9, report: [11, 5] } } })], counts: [] }))
+      .toContain('at tick 9\n    report: frames 5\n') // a short report names what it holds
+  })
   it('names what a refused restore dropped', () => {
     const mods = ids => ids.map(id => ({ id, catalogVersion: '0.1.0' }))
     const events = [entry(1, 'tester', { event: 'connected', phase: 'ready' }),
@@ -131,6 +140,10 @@ describe('diagnostics pull', () => {
       at(5, 2, 'start'), at(6, 2, 'base', 0xcd39c494), at(7, 2, 'stall', 1)]).at(-1)
     expect(run(0)).toBe('  unit: #7 start 2 +0m0s stall reason 1 (likely an OS upgrade or USB disk mode, beta finding 72: the session before ended stopped at 95 %+ CPU after PROJ … RIGHT YES, no module installed)')
     expect(run(0, { keys: [...Array(14).fill(0x20), 0x21, 0x31] })).toContain('likely') // PROJ has left the 16 keys the unit keeps
-    for (const [set, hot] of [[1], [0, { playing: true }], [0, { cpu: 940 }], [0, { keys: [...Array(14).fill(255), 0x21, 0x31] }]]) expect(run(set, hot)).toBe('  unit: #7 start 2 +0m0s stall reason 1')
+    // FUNC PROJ NO PROJ DOWN RIGHT DOWN UP YES: the DOWN and UP between RIGHT and YES cancel, the cursor ends on the same row.
+    expect(run(0, { keys: [...Array(7).fill(255), 0x2d, 0x1c, 0x32, 0x1c, 0x20, 0x21, 0x20, 0x33, 0x31] })).toContain('likely')
+    for (const [set, hot] of [[1], [0, { playing: true }], [0, { cpu: 940 }], [0, { keys: [...Array(14).fill(255), 0x21, 0x31] }],
+      [0, { keys: [...Array(9).fill(255), 0x1c, 0x20, 0x21, 0x20, 0x20, 0x33, 0x31] }], // one row down: maybe another item
+      [0, { keys: [...Array(11).fill(255), 0x1c, 0x21, 0x32, 0x31] }]]) expect(run(set, hot)).toBe('  unit: #7 start 2 +0m0s stall reason 1')
   })
 })
