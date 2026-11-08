@@ -73,6 +73,48 @@ Also observed, not caused by this module:
 Not tested here: audio, MKI, maximum-size edits, live recording refusal and
 playback-running Apply on this base.
 
+## Worst key press and press stress on the emulator — 8 November 2026
+
+Emulator only (`ot_emu` `b087c97f…`), not hardware. Public beta base
+`9b3ba417…` (a local build with that identity), exact package `3e13c46f…`,
+DSP running, in the toolchain container. Recorded in
+[evidence/performance.json](evidence/performance.json), as the owner asked for
+this version: a measured worst event in place of the static stack and cycle
+bound; stock benchmark and MIDI flood waived (no MIDI path).
+
+| Check | Result |
+| --- | --- |
+| record | key-press coldfire record for pattern-sample-locks@0.1.8-experimental |
+| cycles | worst event 333,805 of 26,600,000 (1 %) |
+| stock benchmark | none: a key-press module adds nothing to the frame interrupt |
+| stress | 40 presses of the dearest event while playing, no hang |
+
+The dearest press is CLEAR SAMPLE LOCKS on 8 tracks × 64 steps (512 fields,
+no other locks): 333,805 instructions from `module_key` entry to return, stock
+callees and interrupts included; the commit alone 314,215 (314,314 on
+4 November on the older base). Lock on the same fixture: 134,167. Every case
+verified the written fields and lock index.
+
+Stress: 20 rounds of Lock then Clear on 512 fields while playing, each write
+verified, playback still running and audio frames advancing (at least 8,280
+per round), then STOP and a Part change (hold PART + DOWN or UP; the Part
+index changed every round).
+
+Commands (private paths elided):
+
+```sh
+python3 -B sdk/drafts/pattern-sample-locks/capture_emulator.py --emulator ot_emu \
+  --base <public base 9b3ba417 build> --card <disposable card> \
+  --package pattern-sample-locks-0.1.8.mwrm --profile-symbols <package profile symbols> \
+  --out <new dir> --performance
+npm run perf:audit -- check sdk/drafts/pattern-sample-locks/evidence/performance.json
+```
+
+The stress rounds and the menu captures ran from a scratch copy of
+`capture_emulator.py`. That copy skipped the image attestation, which predates
+the reconstructed package, and added a 20-round press exercise and a
+pre-install option. The copy is not committed.
+
 ## MKII RAM functional trial — 3 November 2026 (reported configuration identity)
 
 The author (`twwwy`) reports that both physical actions passed on the
