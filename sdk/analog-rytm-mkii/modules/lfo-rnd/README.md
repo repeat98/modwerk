@@ -64,7 +64,7 @@ Requires core-ar2 0.4 or later on OS 1.74. Use your own original stock OS 1.74 f
 - The four settings are sound settings: they cannot be p-locked, scene-locked, sent by MIDI or modulated. lfo-rnd 1.3 adds that, but needs core-ar2 0.9, which Modwerk's base is not yet.
 - The offset is drawn when a note starts and added to the destination's playing value until the next note, so turning the destination's knob during a note moves the value under the offset. A change to DS or DP applies from the next trig.
 - On stock firmware, or a build without this module, the sound plays without the offsets: the settings are in mod storage, which stock ignores.
-- It hooks the audio interrupt next to [Loop Sync](../loop-sync/)'s site. They patch different bytes and link together, but the pair has not been run.
+- It hooks the audio interrupt next to [Loop Sync](../loop-sync/)'s site. They patch different bytes and the configurator plans them together, but the pair has not been linked or run.
 
 ### Mod storage
 
@@ -113,8 +113,10 @@ with OS 1.74 and core-ar2 0.4 beside the other rytm2_mods ports (P4A4, Q4A4 and 
 2026-10-21), the page and its knobs through core's page tables passed every test step, the
 LFO key's list stepped LFO, LFO RND, LFO, and the header followed. This folder's package has
 the same code, symbols, relocations, sites and contributions as rytm2_mods v1.3's release
-object. It has not yet run on Modwerk's base. Memory: 1,664 bytes of the 128 KiB shared mod
-area (`.run`, no `.bss`).
+object, and linked with core-ar2 0.7 it gives a main OS byte-identical to that object linked
+with the same core. In the emulator on the Modwerk base (LR12) the page, the destination list,
+DS1 and DP1 work as on the unit. It has not yet run on a unit with Modwerk's base. Memory:
+1,676 bytes of the 128 KiB shared mod area (`.run` 1,664 bytes) and 1,216 bytes of flash.
 
 ## Authorship and licences
 
@@ -131,4 +133,27 @@ interface solely to document the modification. No Elektron firmware is included.
 
 ## Screens and audio
 
-SCREENS_PENDING
+These captures are from analog-emu (trigcondition's emulator built on rytm-emu) running LR12,
+the Modwerk base for core-ar2 0.7 and LFO RND 1.2.0, from stock OS 1.74. See
+[capture provenance](media/capture.json) for hashes and inputs. The random offsets were
+judged on a unit, so there is no audio demonstration.
+
+![LFO page with SPD, MUL, FAD and DST above WAV, SPH, MOD and DEP.](media/lfo-page.png)
+
+Press LFO on track BD: the LFO page, as on stock.
+
+![LFO RND page with DS1 and DS2 reading LEV above the DP1 and DP2 dials.](media/lfo-rnd-page.png)
+
+Press LFO again: LFO RND, with DS1 and DS2 on knobs A and B and DP1 and DP2 on E and F. Stock stays on the LFO page.
+
+![Destination list with FILT:Frequency highlighted under CONFIRM? YES/N.](media/destination-list.png)
+
+Turn DS1: the destination list opens. Here FILT:Frequency is selected; press YES to confirm.
+
+![LFO RND page after confirming, DS1 reading FRQ.](media/ds1-frq-confirmed.png)
+
+After YES, DS1 reads FRQ: modifier 1 now moves the filter frequency.
+
+![RANDOM 1 DEPTH popup reading 10 over the LFO RND page.](media/dp1-depth.png)
+
+Turn DP1: the popup shows the depth, here 10. Each note now offsets FRQ by up to plus or minus 10; 0 turns it off.

@@ -46,7 +46,10 @@
       "Press the LFO page key, then press it again: LFO RND.",
       "Press LFO once more to return to the LFO page."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/lfo-page.png",
+      "media/lfo-rnd-page.png"
+    ]
   },
   "controls": [
     {
@@ -101,7 +104,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": null,
+    "memoryBytes": 1676,
     "fastBytes": 0,
     "load": {
       "display": "Small: a storage read per voice trig and one random draw per modifier at each note's start",
@@ -114,7 +117,8 @@
     "moduleVersion": "1.2.0",
     "sourceSha256": "0bf9dcd601e53c573cc1fce45099f5fef0f484bc30eacefb7166c53269668cc8",
     "reports": [
-      "evidence/hardware-testing.json"
+      "evidence/hardware-testing.json",
+      "evidence/source-parity.json"
     ],
     "hardware": {
       "model": "Analog Rytm MKII",
@@ -135,7 +139,25 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Hardware: lfo-rnd 1.2 on an Analog Rytm MKII, OS 1.74, with core-ar2 0.4 and the other rytm2_mods ports (P4A4, Q4A4, U4A4, 2026-10-21): the LFO RND page through core's page tables, its destination list and depths, random offsets per note, and the settings kept through save, power cycle and reload. Not yet run on Modwerk's base."
+    "summary": "Hardware: lfo-rnd 1.2 on an Analog Rytm MKII, OS 1.74, with core-ar2 0.4 and the other rytm2_mods ports (P4A4, Q4A4, U4A4, 2026-10-21): the page through core's page tables, its list and depths, offsets per note, settings kept through save and power cycle. Modwerk's package linked with core-ar2 0.7 is byte-identical to rytm2_mods v1.3's release object linked with it. Emulator on the Modwerk base (LR12): page, list, DS1 and DP1. Not yet on a unit with Modwerk's base.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Use a build containing LFO RND. Open the LFO page on a voice track and press the LFO page key again: LFO RND shows DS1 and DS2 on knobs A and B, DP1 and DP2 on E and F.",
+          "Turn DS1: the destination list opens. Pick FRQ and press YES, then turn DP1 to 32.",
+          "Play trigs on that track: the filter cutoff moves to a new random value on every note. Turn DP1 to 0: the notes play as stock again. Press LFO once more to go back to the LFO page."
+        ]
+      },
+      "screenshots": [
+        "media/lfo-page.png",
+        "media/lfo-rnd-page.png",
+        "media/destination-list.png",
+        "media/ds1-frq-confirmed.png",
+        "media/dp1-depth.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
   },
   "license": {
     "spdx": "GPL-2.0-only",
@@ -151,6 +173,86 @@
       "credit": "Iced-Cream",
       "license": "GPL-2.0-only",
       "source": "Original vector illustration; not a device screenshot."
+    },
+    {
+      "path": "media/lfo-page.png",
+      "kind": "screenshot",
+      "caption": "Press LFO on track BD: the LFO page, as on stock.",
+      "alt": "LFO page with SPD, MUL, FAD and DST above WAV, SPH, MOD and DEP.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.2.0",
+        "imageSha256": "252003328bb687ed0996bb5b0073741dea0a56d65c8db46c70fb74534cd7ca26",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running LR12, the Modwerk base for core-ar2 0.7 (plain variant) and lfo-rnd 1.2.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/lfo-rnd-page.png",
+      "kind": "screenshot",
+      "caption": "Press LFO again: LFO RND, with DS1 and DS2 on knobs A and B and DP1 and DP2 on E and F. Stock stays on the LFO page.",
+      "alt": "LFO RND page with DS1 and DS2 reading LEV above the DP1 and DP2 dials.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.2.0",
+        "imageSha256": "252003328bb687ed0996bb5b0073741dea0a56d65c8db46c70fb74534cd7ca26",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running LR12, the Modwerk base for core-ar2 0.7 (plain variant) and lfo-rnd 1.2.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/destination-list.png",
+      "kind": "screenshot",
+      "caption": "Turn DS1: the destination list opens. Here FILT:Frequency is selected; press YES to confirm.",
+      "alt": "Destination list with FILT:Frequency highlighted under CONFIRM? YES/N.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.2.0",
+        "imageSha256": "252003328bb687ed0996bb5b0073741dea0a56d65c8db46c70fb74534cd7ca26",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running LR12, the Modwerk base for core-ar2 0.7 (plain variant) and lfo-rnd 1.2.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/ds1-frq-confirmed.png",
+      "kind": "screenshot",
+      "caption": "After YES, DS1 reads FRQ: modifier 1 now moves the filter frequency.",
+      "alt": "LFO RND page after confirming, DS1 reading FRQ.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.2.0",
+        "imageSha256": "252003328bb687ed0996bb5b0073741dea0a56d65c8db46c70fb74534cd7ca26",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running LR12, the Modwerk base for core-ar2 0.7 (plain variant) and lfo-rnd 1.2.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/dp1-depth.png",
+      "kind": "screenshot",
+      "caption": "Turn DP1: the popup shows the depth, here 10. Each note now offsets FRQ by up to plus or minus 10; 0 turns it off.",
+      "alt": "RANDOM 1 DEPTH popup reading 10 over the LFO RND page.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.2.0",
+        "imageSha256": "252003328bb687ed0996bb5b0073741dea0a56d65c8db46c70fb74534cd7ca26",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running LR12, the Modwerk base for core-ar2 0.7 (plain variant) and lfo-rnd 1.2.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
     }
   ]
 }

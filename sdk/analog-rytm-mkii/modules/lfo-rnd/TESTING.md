@@ -65,15 +65,38 @@ Compared with rytm2_mods v1.3's release object `lfo-rnd-1.2-os1.74.elemod` (`3cd
 identical sites (31, with the same stock guards and new bytes), relocations (9), symbols, exports, imports, storage
 and `core_pages`, `core_params` and `core_view_pages` entries. `.run` is 1,664 bytes in both: every byte the release
 object ships matches, and its 278 other bytes are runs elekloader's packager takes from the stock image at link time,
-which this package carries as authored code. A linked-image comparison against stock OS 1.74 has not been run yet.
+which this package carries as authored code.
+
+The same package built in `modwerk-source-tools` (m68k-elf GCC 16.2.0, binutils 2.47) from source commit `751a4c4d`
+(the same tree as this branch's first commit), materialised against stock OS 1.74 and linked with elekloader's released
+`core-ar2-0.7.elemod` (`f1e9cb2c…c9c1`), gives main OS `8e19e468…733f`, byte-identical to the same core linked with the
+release object (`scripts/verify-elemod-source-parity.mjs`, [source-parity.json](evidence/source-parity.json)). The
+firmware and the linked builds stayed on the owner's computer.
 
 ## Emulator
 
-Not run yet for this package.
+[analog-emu](https://github.com/trigcondition/analog-emu) `4c07ed3` (trigcondition's Rytm and A4 emulator built on
+rytm-emu), headless `dtboot`, the same input on LR12 and on stock 1.74 ([capture plan](media/capture.json)). LR12 is
+`scripts/link-image.mjs` in `modwerk-source-tools`: the Modwerk base's plain variant (`ba530f45`) and this package from
+stock OS 1.74, `.syx` `252003328bb687ed0996bb5b0073741dea0a56d65c8db46c70fb74534cd7ca26`.
+
+- On BD, LFO opens the LFO page; a second LFO press opens LFO RND with DS1 and DS2 (LEV) and DP1 and DP2.
+- Turning DS1 opens the destination list (CONFIRM? YES/N); YES on FILT:Frequency shows CONFIRMED! and DS1 reads FRQ.
+- Turning DP1 shows the RANDOM 1 DEPTH popup stepping through the depths (10 in the capture).
+- Stock with the same input gives byte-identical frames until the second LFO press, where it stays on the LFO page;
+  afterwards its turns move LFO SPD and DEP.
+
+The first pass's frame after the last list turn lagged one entry behind the selection YES confirmed; a zero-count turn
+before YES lets the list settle, and the plan in `capture.json` has it. Key presses are 12M, as
+[MODULE_UI_CAPTURES.md](../../../../docs/MODULE_UI_CAPTURES.md) asks. Playback and persistence were not exercised in
+the emulator; the hardware runs cover them.
 
 ## Load and memory
 
-1,664 bytes in the shared DDR area (`.run`), no `.bss`, no fast SRAM, and 16 bits of sound storage.
+Linked with `scripts/link-image.mjs` on the Modwerk base's plain variant: the base alone (BA12) leaves 119,004 bytes of
+the shared mod area and 1,203,744 bytes of flash; with this module (LR12) 117,328 and 1,202,528. The module takes
+1,676 bytes of RAM (`.run` 1,664, no `.bss`, no fast SRAM) and 1,216 bytes of flash, and 16 bits of sound storage
+(`lfo_rnd_cfg` at sound bit 0 in LR12's lockfile).
 The sequencer interrupt's detour reads the sound's field through `core_store_get`, which masks interrupts briefly,
 once per voice trig. The audio interrupt's detour draws at most two offsets per voice track when a note starts and
 adds the held offsets to their destinations every block. The page, knobs and lists run on UI edits and drawing.
@@ -81,7 +104,7 @@ Static reading, not a measurement.
 
 ## Not tested
 
-- This package on Modwerk's base (core-ar2 0.7), on a unit or in the emulator.
+- This package on a unit with Modwerk's base (core-ar2 0.7).
 - Beside Loop Sync, whose audio-interrupt site is next to this module's.
 - Beside library modules other than rytm2_mods' own ports.
 - Loading a kit saved with this module into a build without it.

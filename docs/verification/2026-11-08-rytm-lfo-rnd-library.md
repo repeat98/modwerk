@@ -1,0 +1,10 @@
+# Analog Rytm MKII: LFO RND 1.2.0 in the library — 8 November 2026
+
+LFO RND enters the library as 1.2.0: Iced-Cream's rytm2_mods v1.3 source (`e029f75`), the elemod port of MrScruff's rytm-mods `0004-lfo-rnd`. Pressing the LFO page key again opens LFO RND, two random modifiers per sound whose offsets are drawn on every note. 1.2 reaches its page, knobs and the LFO key's second press through core-ar2's page tables (`core_pages`, `core_params`, `core_view_pages`, core-ar2 0.4 and later) instead of the detours 1.1 made at the page routines, which core-ar2 0.4 and later own. Its source-only OS 1.74 package is pinned in `sdk/imports/elekloader-lfo-rnd-2026-11-08.json`.
+
+- **Build:** `scripts/build-elemod-packages.mjs` and `package-elemod-recipe.mjs`; the export reproduces with `--check`. `.run` is 1,664 bytes, no `.bss`.
+- **Parity:** built in `modwerk-source-tools` and linked with elekloader's released core-ar2 0.7 on stock OS 1.74, the package gives a main OS byte-identical to rytm2_mods v1.3's release object linked with the same core ([source-parity.json](../../sdk/analog-rytm-mkii/modules/lfo-rnd/evidence/source-parity.json)).
+- **Memory:** 1,676 bytes of the shared mod area and 1,216 bytes of flash, from `scripts/link-image.mjs` with and without the module on the plain base.
+- **Linking:** `planBuild` plans it beside Loop Sync and Velocity Humanise on the plain base (`src/engine/elekloader/digi-build.test.ts`). Its 31 sites overlap neither the base nor any library module.
+- **Emulator:** captures on the Modwerk base's plain variant with this package (LR12), in analog-emu `4c07ed3`.
+- **On a unit:** the author's Analog Rytm MKII passed the module's six test steps on core-ar2 0.4 (P4A4, 21 October 2026), and this folder's exact source passed core's page step there (U4A4), as [TESTING.md](../../sdk/analog-rytm-mkii/modules/lfo-rnd/TESTING.md) records. This package on the Modwerk base has not been flashed.
