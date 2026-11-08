@@ -95,7 +95,7 @@ describe('module qualification hard gates',()=>{
   it('binds an owner-approved update to its exact version and native source, never to verified hardware',async()=>{
     const root=mkdtempSync(resolve(tmpdir(),'octamod-owner-update.')),folder=resolve(root,'module')
     try {
-      mkdirSync(resolve(root,'sdk')); mkdirSync(folder)
+      mkdirSync(resolve(root,'sdk','approvals'),{recursive:true}); mkdirSync(folder)
       writeFileSync(resolve(folder,'manifest.py'),'raise AssertionError("never execute module source")\n')
       const document=parseModuleDocument(JSON.parse(readFileSync('sdk/octabam/modules/usb-audio-out-tracks-main-cue/octamod.module.json','utf8')))
       const approval={kind:'owner-approved-update',id:document.id,version:document.version,sourceSha256:await moduleNativeSourceSha256(folder,document),approvedBy:'repeat98',approvedOn:'2026-10-07',waived:['current-build-hardware','chip-worst-case-cycles','complete-memory-bounds','release-documentation'],ownerStatement:'Approved.',reason:'Test.'}
@@ -114,7 +114,7 @@ describe('module qualification hard gates',()=>{
   it('retains historical UI only for an exact owner-approved update with the documentation waiver',async()=>{
     const root=mkdtempSync(resolve(tmpdir(),'octamod-retained-ui.')),folder=resolve(root,'module')
     try {
-      mkdirSync(resolve(root,'sdk'));mkdirSync(folder)
+      mkdirSync(resolve(root,'sdk','approvals'),{recursive:true});mkdirSync(folder)
       writeFileSync(resolve(folder,'manifest.py'),'SOURCE = 1\n')
       const document=parseModuleDocument(JSON.parse(readFileSync('sdk/octabam/modules/euclid/octamod.module.json','utf8')))
       const approval={kind:'owner-approved-update',id:document.id,version:document.version,sourceSha256:await moduleNativeSourceSha256(folder,document),approvedBy:'repeat98',approvedOn:'2026-10-07',waived:['current-build-hardware','chip-worst-case-cycles','complete-memory-bounds','release-documentation'],ownerStatement:'Approved.',reason:'Test.',retainedUiVersion:'0.1.3-experimental'}
