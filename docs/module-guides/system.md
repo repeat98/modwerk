@@ -9,7 +9,7 @@ Read [the module guides index](README.md) first.
 - [ ] **Put the setting in the stock menu where it belongs.** Scale Quantizer's SCALE, ROOT and GLIDE rows sit under PROJ → CONTROL → SEQUENCER. Do not add a top-level screen.
 - [ ] **A way to turn it off that restores stock behaviour exactly.** Test OFF against an unmodified build.
 - [ ] **Defaults are stock behaviour,** so adding the module changes nothing until the musician changes a setting. Say so.
-- [ ] **Persistence is honest.** Settings storage today is "nowhere, or a private file", and the proposed shared project store is not implemented ([MODULES.md, Settings on the card](../../sdk/octabam/docs/remixer/MODULES.md#settings-on-the-card)). Do not invent a format. State whether your setting survives Part Save, project save and load and power cycles, and test it.
+- [ ] **Persistence is honest.** On the Octatrack, keep a setting in the base's store: contribute one `ot_store` record ([HOOKS.md](../../sdk/machines/octatrack/HOOKS.md)), and the block saves and loads with the project and survives a power cycle. Do not invent a format or take battery RAM of your own. State whether your setting survives Part Save, project save and load and power cycles, and test it.
 - [ ] **A project saved with the setting loads on a build without the module.** State what the musician sees. **Verify.**
 - [ ] **Say who is affected:** which track types, which models (MKI and MKII key sequences differ), which existing projects.
 - [ ] **No effect slot and no new knob** unless the feature genuinely needs one. The README says so.

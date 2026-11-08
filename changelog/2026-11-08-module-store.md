@@ -1,0 +1,1 @@
+Octatrack base: a store for module settings. A module adds one `ot_store` record that names its state, and the base saves that state with the project, loads it back, and keeps it through a power cycle. A module that isn't installed keeps what it saved. Many modules can now keep project settings side by side, where before only one could use the project file's lines.
