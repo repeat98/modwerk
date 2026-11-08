@@ -103,7 +103,7 @@
     "report": "TESTING.md",
     "summary": "Host gate on screen_off.c. The author reports that on a MKII the chord blanks the screen and brings it back. An MKI and a power cycle were not tried.",
     "hardwareStatus": "untested",
-    "evidenceRevision": "0000000000000000000000000000000000000000",
+    "evidenceRevision": "fe9e689d3043f215ea4d621613706454c7062cc0",
     "gates": [
       "modules/screen-off/verify.py"
     ]
