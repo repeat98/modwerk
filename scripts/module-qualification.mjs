@@ -160,3 +160,22 @@ export function evidenceOnBaseProblem({ root, base }) {
   }
   return null
 }
+
+/** A pull request that gives a module a new version also says in its TESTING.md what was tested at that version: 84 of 87 modules
+ * name their current version there, and a report left at the old one reads as evidence for the new. Every machine's manifests and drafts. */
+export function testingVersionProblem({ root, base }) {
+  const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 32 * 1024 * 1024 })
+  const specs = [':(glob)sdk/drafts/*/octamod.module.json', ':(glob)sdk/octabam/modules/*/octamod.module.json', ':(glob)sdk/*/modules/*/modwerk.module.json']
+  const changed = (git('diff', '--name-only', '--diff-filter=AM', base, '--', ...specs) + git('ls-files', '--others', '--exclude-standard', '--', ...specs)).split('\n').filter(Boolean)
+  for (const path of new Set(changed)) {
+    const version = JSON.parse(readFileSync(resolve(root, path), 'utf8')).version
+    let before = null
+    try { before = JSON.parse(git('show', base + ':' + path)).version } catch { /* new here */ }
+    if (version === before || typeof version !== 'string') continue
+    const folder = path.slice(0, path.lastIndexOf('/')), report = resolve(root, folder, 'TESTING.md')
+    const text = (() => { try { return readFileSync(report, 'utf8') } catch { return '' } })(), short = version.replace(/-experimental$/, '')
+    if (!text.includes(version) && !new RegExp('(?<![\\d.])' + short.replaceAll('.', '\\.') + '(?![\\d.])').test(text))
+      return folder + '/TESTING.md does not name ' + version + '. Say what you ran on this version, and on which build, or write that it is not tested yet.'
+  }
+  return null
+}

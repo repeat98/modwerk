@@ -151,6 +151,14 @@ function octatrack(id) {
     else info('usb package', 'none: card-only, listed before ' + USB_PACKAGE_REQUIRED_FROM + '; a reviewed migration comes before USB rollout')
   }
 
+  // The hardware record against the package that ships. A base relink rebuilds a package without new source, so a mismatch is a line
+  // to read, never a red one: run the shipped package, or say in TESTING.md why the earlier run covers it (Bar LED, #1173).
+  const hardware = document.tests?.qualification?.hardware
+  if (hardware?.status === 'reported' && usbRow?.version === document.version) {
+    if (hardware.imageSha256 === usbRow.sha256) ok('tested package', 'the hardware record names the shipped USB package (' + usbRow.sha256.slice(0, 8) + ')')
+    else info('tested package', 'the hardware record names ' + hardware.imageSha256.slice(0, 8) + ', the shipped USB package is ' + usbRow.sha256.slice(0, 8) + ': run the shipped one (npm run device:qualify), or say in TESTING.md why the earlier run covers it')
+  }
+
   if (cOnly) info('native comparison', 'no card form to compare; npm run octatrack:module-packages -- --check rebuilds its USB package')
   else if (paused) info('native comparison', 'skipped while paused')
   else if (NOT_COMPOSED.includes(id)) info('native comparison', 'builds only on its own; standalone parity is recorded in docs/VERIFICATION.md')
