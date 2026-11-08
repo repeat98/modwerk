@@ -5,9 +5,23 @@
   `src/voice-dac.s` is rytm2_mods' `voice-dac/os1.74/voice-dac.s`; `include/ar2-1.74.inc` and `shared/shared.s` are its `include/` and `shared/` files, unchanged.
 - Original: MrScruff's rytm-mods `0013-voice-dac`, at rytm-mods-src 3a98e23.
 
-## Run for this submission (emulator and offline, Modwerk's base)
+## Unit run on Modwerk's base (hardware, 2026-11-08)
 
-Nothing was run on a unit on Modwerk's base (core-ar2 0.7). All results below are from the emulator or offline tools, on 2026-11-08.
+Analog Rytm MKII, OS 1.74, build VD4H (`d2b7c794…503a`) = stock 1.74 + the Modwerk base for core-ar2 0.7 (plain variant `ba530f45`) + analoghealth 1.3 (remote keys, the test harness) + this package (`f6b2b459…edb6`), linked by `scripts/link-image.mjs`. Four elkbench plans, each passed first in the emulator (flash transitions included), then run on the unit; stock 1.74 flashed back at the end.
+
+- **Flash on and off:** VD4H over stock and stock back over VD4H both completed.
+- **DAC SUM off:** FILTER pressed twice stays on stock's FILTER page.
+- **DAC SUM:** GLOBAL > AUDIO ROUTING shows the DAC SUM row (stock's list has none); RIGHT sets it ON.
+- **DAC FILTER:** with DAC SUM on, FILTER then FILTER again opens DAC FILTER with TYP OFF (FRQ and RES empty).
+- **Knobs follow TYP:** LP2 shows FRQ and RES, LP1 FRQ only, OFF neither (checked on screen).
+- **Kept:** BD on LP1 comes back after SAVE KIT and KIT RELOAD; DAC SUM ON and BD on LP1 are kept across a hand power cycle with no save. DAC SUM was then set OFF and read back.
+- **Load:** CPU 74.9 / 74.5 % before any key, 82.8 / 82.9 % while A01 played with DAC SUM on and BD on LP2 at the lowest FRQ; free heap flat.
+- **Listening (by the owner):** BD on LP2 at the lowest FRQ, then TYP turned to OFF and back to LP2 by hand while it played. The owner's words: "sounds as expected".
+- **Not checked on the unit:** persistence of FRQ, RES, DEP, ATK, SUS and POL; TYP past LP1 (BP, HP1, HP2, BS, PK); beside other modules that use sound bits. The sound was judged by ear only; nothing was recorded or measured.
+
+## Emulator and offline checks for this submission (Modwerk's base)
+
+All results in this section are from the emulator or offline tools, on 2026-11-08.
 
 - **Build.** `scripts/build-elemod-isolated.sh` in `modwerk-source-tools` (image `6f8066eb…`, m68k-elf GCC 16.2.0, binutils 2.47) compiled this folder; `package-elemod-recipe.mjs` wrote `voice-dac-1.4.0-os1.74.elemod` (`.run` 11,080 bytes, no `.bss`), and `--check` reproduces it. Its hash and source commit are in `sdk/imports/voice-dac-2026-11-08.json`.
 - **Link.** `scripts/link-image.mjs` on the owner's stock OS 1.74 (`cb0f99d6…e123`) links it with the vendored Modwerk base for core-ar2 0.7 (plain variant `ba530f45`): `ramSpare` drops from 119,004 bytes (base alone) to 107,896, `fastSpare` stays 0, flash headroom 1,195,984 bytes. The image, VD14, is `1ed68998…432e`.
@@ -17,7 +31,7 @@ Nothing was run on a unit on Modwerk's base (core-ar2 0.7). All results below ar
   - With DAC SUM on, TRIG and then FLTR twice on BD opens DAC FILTER with TYP OFF: DEP, ATK, SUS and POL shown, FRQ and RES empty. On stock the second FLTR press stays on the FILTER page.
   - Turning knob C (TYP) up: LP2 shows FRQ and RES; LP1 shows FRQ and leaves RES empty.
   - Every frame before AUDIO ROUTING opens is byte-identical to stock's with the same input.
-- **Not tested on Modwerk's base:** anything on a unit; the sound (the emulator's analog voices are stubbed); FRQ, RES, DEP, ATK, SUS and POL moving the audio; values kept through kit save, reload or a power cycle; TYP values past LP1; beside other modules that use sound bits (rytm2_mods' LFO RND takes 16 of core's 56 sound bits; this module takes 39).
+- **Not shown by the emulator:** the sound (its analog voices are stubbed). The unit run above covers what ran on hardware; rytm2_mods' LFO RND takes 16 of core's 56 sound bits and this module 39, so the two were not combined.
 - **Offline:** the patch sites in `build.json` are the 27 of rytm2_mods' `ports["1.74"]`, as address, length and SHA-256 of the stock bytes; the link above checks those guards against the owner's stock file.
 
 ## Reported by the author on core-ar2 0.6
@@ -30,4 +44,4 @@ These are the porting contributor's results as written in rytm2_mods' README for
 
 ## Sound
 
-Voice DAC changes the sound. It stays a draft until the owner has listened to it.
+Voice DAC changes the sound. The owner listened on the unit run above (2026-11-08) and reported "sounds as expected".

@@ -56,7 +56,7 @@ GLOBAL > AUDIO ROUTING > DAC SUM ON, then FILTER pressed twice on a voice track.
 
 Requires core-ar2 0.6 or later on OS 1.74 (Modwerk's base is core-ar2 0.7). Use your own original stock OS 1.74 file.
 
-- Built for OS 1.74 only. It uses core's page functions (`core_page_fns`), so it does not link with core-ar2 before 0.6. On Modwerk's base (core-ar2 0.7) it links and was checked in the emulator; it has not run on a unit there.
+- Built for OS 1.74 only. It uses core's page functions (`core_page_fns`), so it does not link with core-ar2 before 0.6. On Modwerk's base (core-ar2 0.7) it ran on a unit (VD4H, 2026-11-08; see TESTING.md).
 - The voices reach MAIN 2.58 ms later than through the analog bus. They share the PRE return pair with the delay and reverb returns and are clamped at its full scale. The individual outputs carry the voice before the filter.
 - DAC FILTER's values cannot be p-locked or reached over MIDI. They live outside the sound's parameters.
 - Switching TYP between LP1 and HP1 can click on a sound with much energy at either end.

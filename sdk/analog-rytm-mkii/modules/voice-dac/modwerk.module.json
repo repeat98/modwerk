@@ -123,7 +123,7 @@
     "requires": [],
     "conflicts": [],
     "limitations": [
-      "Built for OS 1.74 only, on core-ar2 0.6 or later (it uses core's page functions). Modwerk's base is core-ar2 0.7: this package links there and was checked in the emulator, but has not run on a unit on Modwerk's base.",
+      "Built for OS 1.74 only, on core-ar2 0.6 or later (it uses core's page functions). Modwerk's base is core-ar2 0.7, where it ran on a unit (VD4H, 2026-11-08).",
       "The voices reach MAIN 2.58 ms later than through the analog bus. They share the PRE return pair with the delay and reverb returns and are clamped at its full scale. The individual outputs carry the voice before the filter.",
       "Needs core-ar2's mod storage: 39 sound bits (vd_flt 24, vd_shp 15) and one global bit (vd_dac). A module needing more than the remaining sound bits will not link beside it.",
       "DAC FILTER's values cannot be p-locked or reached over MIDI. They live outside the sound's parameters.",
@@ -165,23 +165,23 @@
     "hardware": {
       "model": "Analog Rytm MKII",
       "release": "1.74",
-      "testedOn": "2026-10-23",
+      "testedOn": "2026-11-08",
       "tester": "Iced-Cream",
       "durationMinutes": null,
-      "summary": "Iced-Cream reports: Hardware, Analog Rytm MKII, OS 1.74, 2026-10-23, V6H4 (core-ar2 0.6 with all eleven rytm2_mods ports, voice-dac 1.4 among them, plus analoghealth for remote keys): with DAC SUM on, FILTER pressed twice opened DAC FILTER; TYP OFF showed TYP and DEP only with the empty knobs inert; LP2, BP, HP2, BS and PK showed FRQ and RES, LP1 and HP1 FRQ only; the page followed BD (LP1) to SD (OFF) and back; RES was kept across LP2, LP1 and LP2; BD on LP2, LP1 and OFF played without dropouts, checked by ear with no click or break; after SAVE KIT, a power cycle and RELOAD, DAC SUM was still ON and BD's LP1 setting came back. The other ten mods behaved as in v1.3.",
+      "summary": "Iced-Cream reports that on an Analog Rytm MKII with OS 1.74 and this package on Modwerk's base (core-ar2 0.7, plain variant ba530f45, with analoghealth 1.3 for remote keys), build VD4H, 2026-11-08: with DAC SUM off FILTER pressed twice stayed on stock's FILTER page; GLOBAL > AUDIO ROUTING showed the DAC SUM row and it turned ON; FILTER pressed twice then opened DAC FILTER; its knobs followed TYP (OFF: neither FRQ nor RES; LP2: both; LP1: FRQ only); BD's LP1 came back after SAVE KIT and KIT RELOAD; DAC SUM ON and BD's LP1 were kept across a hand power cycle with no save; DAC SUM went back OFF. CPU 74.5-74.9 % before any key and 82.8-82.9 % while playing with DAC SUM on and BD on LP2, heap flat. The owner listened to BD on LP2 at the lowest FRQ and on TYP OFF, turning TYP by hand, and reported: \"sounds as expected\".",
       "limitations": [
-        "Core-ar2 0.6, not Modwerk's base (core-ar2 0.7); this package has not been flashed.",
-        "V6H4's voice-dac object was built from 77bd329 before the v1.4 release; its source equals v1.4's, but its bytes were not compared with the v1.4 release object.",
-        "Duration was not recorded; firmware was not read back from the device.",
-        "No v1.3 reference recording, so the sound was not compared with an earlier version.",
-        "V6H4: .syx 4a896e597ea0f30540e762b7273321338399c3ba5ee4ac070fff100f839df697."
+        "VD4H: .syx d2b7c794741bd7846136046daa20e4b3f66d1e7608180e35306f1dba7209503a, built by scripts/link-image.mjs from this folder's package; firmware was not read back from the device.",
+        "VD4H also carried analoghealth 1.3 (remote keys; no site shared with this module).",
+        "Persistence checked for TYP (LP1) and DAC SUM only; FRQ, RES, DEP, ATK, SUS and POL, and TYP past LP1, were not checked on the unit.",
+        "The filter's effect on the sound was judged by ear only (no data read or recording); duration was not recorded.",
+        "Earlier, on core-ar2 0.6 (V6H4, .syx 4a896e597ea0f30540e762b7273321338399c3ba5ee4ac070fff100f839df697, 2026-10-23): see TESTING.md."
       ]
     },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Emulator on Modwerk's base (VD14, analog-emu, 2026-11-08): DAC SUM appears as AUDIO ROUTING's last row and turns ON; FILTER pressed twice opens DAC FILTER; its knobs follow TYP (OFF, LP2, LP1). Modwerk's package linked with core-ar2 0.7 gives a main OS byte-identical to rytm2_mods v1.4's release object linked with it. Not run on a unit on Modwerk's base; the author's hardware results for 1.4 on core-ar2 0.6 are in TESTING.md, as reported. Sound was not judged.",
+    "summary": "Hardware on Modwerk's base (VD4H, 2026-11-08): DAC SUM turns ON, FILTER pressed twice opens DAC FILTER, its knobs follow TYP, BD's LP1 is kept across SAVE KIT/KIT RELOAD and a power cycle, CPU 82.8-82.9 % playing; the owner listened: \"sounds as expected\". Modwerk's package linked with core-ar2 0.7 gives a main OS byte-identical to rytm2_mods v1.4's release object linked with it. The author's earlier unit run on core-ar2 0.6 (V6H4) and the emulator captures are in TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
