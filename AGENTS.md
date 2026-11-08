@@ -2,6 +2,19 @@
 
 Modwerk builds custom firmware modules for Elektron instruments and the other machines in `sdk/machines/`. This repository holds the module SDKs (`sdk/`), a React and Vite site (`src/`) and a Cloudflare Worker API (`server/`, `worker.ts`). This file holds the rules for every task. The guides it points to hold the detail.
 
+## What Modwerk is for
+
+Modwerk is a community workshop for opening up electronic music hardware to mods. Anyone who owns an instrument can start here. They open its machine page, see how far it has come, and take the next step with their coding agent. Musicians get the results as mods built in the browser from their own OS file, tried over USB and undone with a power cycle.
+
+- **Anyone can start.** The next open step and its guide are one click from the machine page. Each step stands on its own: a documented file format, a rebuilt stock file, a first boot, a hook, a module. You don't have to finish an unlock to have helped, and nobody starts from zero.
+- **What one person learns, everyone gets.** Findings land where the next person looks: the machine page, its guide, a check, the agent board. Work is claimed so nobody duplicates it, and it is credited to whoever did it.
+- **Every machine grows the same stack.** A base whose hooks own shared sites, the USB link, the device tools and a machine page. Modwerk builds its own implementations.
+- **Musicians can trust what they install.** Any set of modules runs side by side and never bricks the unit. The official OS always restores it, and every claim was seen on a real unit.
+- **Good for the makers.** Nothing is copied, no protection is broken, nothing a maker sells gets unlocked, and nothing passes as official ([modding guidelines](MODDING_GUIDELINES.md)).
+- **The community runs it.** Authors release their own modules, maintainers look after their machines, and the owner keeps the guidelines and the safety of the units.
+
+When these pull apart, the unit's safety and the guidelines come first. Then working beside everything else, then the musician, then the newcomer's path, then speed. A rule below that seems to work against this goal is worth raising, not working around.
+
 ## Commands
 
 Committed skills that load on clone: Claude Code reads `.claude/skills/`, Codex the identical `.agents/skills/`, and any other agent follows `<name>/SKILL.md` when asked. Open a developer's first session with `/modwerk-start`. Then `/modwerk-new-module`, `/modwerk-update-module`, `/modwerk-fix-issue <link>`, `/modwerk-try-on-unit`, `/modwerk-pr-ready`, `/modwerk-review-prs`, `/modwerk-triage-issues`, `/modwerk-discord`, and the owner's `/modwerk-maintain` ([docs/MAINTENANCE.md](docs/MAINTENANCE.md)).

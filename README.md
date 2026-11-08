@@ -5,7 +5,7 @@
     <img src="public/modwerk-mark-on-light.svg" alt="Modwerk logo" width="88" height="88" />
   </picture>
   <h1>Modwerk</h1>
-  <p><strong>Firmware modules and developer SDKs for Elektron instruments.</strong></p>
+  <p><strong>A community workshop for opening up electronic music hardware to mods.</strong></p>
   <p>Independent and unofficial. Not affiliated with, endorsed by or supported by Elektron.</p>
   <p>
     <a href="#get-started">Get started</a> ·
@@ -19,6 +19,8 @@
     <a href="sdk/octabam/docs/remixer/MODULES.md"><img src="https://img.shields.io/badge/Assembly-DSP56300_%2F_ColdFire-5755c5" alt="DSP56300 and ColdFire assembly" /></a>
   </p>
 </div>
+
+Anyone who owns an instrument can start here: open its machine page on [modwerk.app](https://modwerk.app), see how far it has come, and take the next step with your coding agent. Each step stands on its own, from a documented file format to a first boot, a hook or a module, and what one person learns lands where the next one looks. Musicians get the results as mods built in the browser from their own OS file. What Modwerk is for, and what comes first when goals pull apart, is at the top of [AGENTS.md](AGENTS.md).
 
 For Octatrack modules, write DSP effects in **DSP56300 assembly** or playback and system patches in **ColdFire assembly**, with Python manifests describing their controls, placement and compatibility. Source, documentation and module metadata live together in this repository.
 
