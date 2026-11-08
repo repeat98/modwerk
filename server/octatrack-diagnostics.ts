@@ -21,8 +21,12 @@ const exactly = (v: Record<string, unknown>, names: string) => Object.keys(v).so
 function live(v: unknown) {
   return object(v) && fields(v, ['samples','cpu','dsp1to4','dsp5to8']) && upTo(v.samples, 10000) && ['cpu','dsp1to4','dsp5to8'].every(k => !(k in v) || pair(v[k], 1000))
 }
+const words = (v: unknown, n: number) => Array.isArray(v) && v.length === n && v.every(uint)
 function deviceLoad(v: unknown) {
-  return object(v) && exactly(v, 'boot,cpu,dsp1to4,dsp5to8,minute,playing,samples,seq') && uint(v.seq) && uint(v.boot) && uint(v.minute)
+  // A version 2 log (device-log.ts) adds the window's frame and tick gaps.
+  return object(v) && (exactly(v, 'boot,cpu,dsp1to4,dsp5to8,minute,playing,samples,seq')
+    || exactly(v, 'boot,cpu,dsp1to4,dsp5to8,frameGap,minute,playing,samples,seq,tickGap') && upTo(v.frameGap, 0xffff) && upTo(v.tickGap, 0xffff))
+    && uint(v.seq) && uint(v.boot) && uint(v.minute)
     && ['cpu','dsp1to4','dsp5to8'].every(k => pair(v[k], 0xffff)) && upTo(v.samples, 0xffff) && upTo(v.playing, 0xffff)
 }
 function deviceIncident(v: unknown) {
@@ -30,8 +34,17 @@ function deviceIncident(v: unknown) {
     && DEVICE_INCIDENTS.some(kind => kind === v.kind) && ['seq','boot','second','a','screen','tempo24'].every(k => uint(v[k]))
     && ['cpu','dsp1to4','dsp5to8'].every(k => upTo(v[k], 0xffff)) && bytes(v.machines, 24) && bytes(v.fx, 16) && bytes(v.keys, 16) && typeof v.playing === 'boolean'
 }
+/** crash.c's and dsp.c's records, as device-log.ts reads them from a version 2 log. */
+function deviceCrash(v: unknown) {
+  return object(v) && exactly(v, 'a,code,count,d,memory,pc,sp,sr,stack,vector') && uint(v.count) && uint(v.pc) && uint(v.sp) && upTo(v.vector, 0xff) && upTo(v.sr, 0xffff)
+    && words(v.d, 8) && words(v.a, 7) && words(v.stack, 8) && words(v.code, 8) && words(v.memory, 8)
+}
+function deviceStall(v: unknown) {
+  return object(v) && exactly(v, 'count,reason,report,ticks') && uint(v.count) && uint(v.reason) && uint(v.ticks) && Array.isArray(v.report) && v.report.length <= 96 && v.report.every(uint)
+}
 function deviceLog(v: unknown) {
-  return object(v) && exactly(v, 'incidents,loads') && Array.isArray(v.loads) && Array.isArray(v.incidents) && v.loads.length + v.incidents.length > 0
+  return object(v) && fields(v, ['loads','incidents','crash','stall']) && Array.isArray(v.loads) && Array.isArray(v.incidents)
+    && v.loads.length + v.incidents.length + Number('crash' in v) + Number('stall' in v) > 0 && (!('crash' in v) || deviceCrash(v.crash)) && (!('stall' in v) || deviceStall(v.stall))
     && v.loads.length <= DEVICE_LOG_LOADS && v.loads.every(deviceLoad) && v.incidents.length <= DEVICE_LOG_INCIDENTS && v.incidents.every(deviceIncident)
 }
 /** Which of the newer fields each USB event may carry; any other USB event carries none of them. */
