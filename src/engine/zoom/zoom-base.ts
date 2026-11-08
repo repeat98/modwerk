@@ -6,7 +6,7 @@ import midistomp from '../../../vendor/midistomp/midistomp.json'
 import { addSection, buildPart, concat, hex, parseAis, span } from './ais'
 
 type Part = ['hex', string] | ['copy', string, number, number]
-type Entry = { model: string; addr?: number; offset?: number; data: string | Part[]; expect_sha256?: string; expect_length?: number }
+type Entry = { model: string; addr?: number; offset?: number; data: string | Part[]; expect_sha256?: string | string[]; expect_length?: number }
 export type ZoomPatch = { name: string; description?: string; builds?: string[]; write?: Entry[]; section?: Entry[]; bin133?: Entry[] }
 /** Zoom's own parts, as the Mac updater keeps them (Contents/Resources) and the Windows one as BIN/129 and BIN/133. */
 export type ZoomStock = { 'Main.bin': Uint8Array; 'Preset.bin': Uint8Array }
@@ -31,7 +31,7 @@ export async function applyPatches(stock: ZoomStock, patches: ZoomPatch[], build
     const own = (entries: Entry[] = []) => entries.filter(entry => entry.model === build)
     let applied = 0
     for (const write of own(patch.write)) {
-      if (await sha256(span(img, write.addr!, write.expect_length!)) !== write.expect_sha256) throw new Error(patch.name + ': the bytes at ' + hex(write.addr!) + ' are not the expected ones.')
+      if (![write.expect_sha256].flat().includes(await sha256(span(img, write.addr!, write.expect_length!)))) throw new Error(patch.name + ': the bytes at ' + hex(write.addr!) + ' are not the expected ones.')
       const data = bytes(write.data)
       span(img, write.addr!, data.length).set(data)
       applied++
