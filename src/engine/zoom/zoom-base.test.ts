@@ -47,19 +47,19 @@ describe('the Zoom base builder', () => {
     for (const name of Object.values(MIDISTOMP.releases).flat()) expect(MIDISTOMP.patches.map(patch => patch.name)).toContain(name)
   })
 
-  // zoomms' own output for MIDISTOMP 8fbff9f (zoomms build-mac <app> --build-id ms70cdr-2.10 --patch … --stamp version=V2.0.1
-  // --stamp commit=8fbff9f --stamp date=2026-11-07 --stamp label=Modwerk). Firmware never
+  // zoomms' own output for MIDISTOMP fccbe40 (zoomms build-mac <app> --build-id ms70cdr-2.10 --patch … --stamp version=V2.0.1
+  // --stamp commit=fccbe40 --stamp date=2026-11-08 --stamp label=Modwerk). Firmware never
   // enters CI, so this runs only with Zoom's stock updater at hand: ZOOM_MS70CDR_APP='…/ZOOM MS-70CDR v2.10 Updater.app'.
   const app = process.env.ZOOM_MS70CDR_APP
   it.runIf(app)('builds byte for byte what zoomms builds from the stock MS-70CDR 2.10 updater', async () => {
     const read = (name: string) => new Uint8Array(readFileSync(join(app!, 'Contents/Resources', name)))
     const own = { 'Main.bin': read('Main.bin'), 'Preset.bin': read('Preset.bin') }
-    expect(MIDISTOMP.revision).toMatch(/^8fbff9f/)
+    expect(MIDISTOMP.revision).toMatch(/^fccbe40/)
     const hello = await buildBase(own, ['hello'])
     expect(await sha256(hello.main)).toBe('c32899bf2fded359adee94d968caaf17031401c67e2bafc2752f1d62d51e71df')
     expect(hello.preset).toBeUndefined()
     const release = await buildBase(own, MIDISTOMP.releases['MIDISTOMP V2.0.1'])
-    expect(await sha256(release.main)).toBe('ed26bc0abab06c1ac60e3f294b0c956320f8abdd1043098031742507fe31d58b')
+    expect(await sha256(release.main)).toBe('fffb805f42a047a94d1fa731994d2925e92776ea22f1c152cccf74f25a9edad0')
     expect(await sha256(release.preset!)).toBe('ca52f406a7324822a4c9113fec7b6083ff8c8b3c8bb0c956ce39b6ee0055eee4')
     await expect(buildBase({ ...own, 'Main.bin': hello.main }, ['hello'])).rejects.toThrow(/unmodified copy/)
   })

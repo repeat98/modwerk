@@ -1,24 +1,24 @@
-; Effect select: the MS-50G 3.10 category screen on the MS-70CDR 2.10 OS.
+; Effect select: a 3 x 2 category screen on the MS-70CDR 2.10 OS.
 ;
-; The category screen (B14[88] = 32 change effect, 33 add effect unit) is
-; shared code with the MS-50G 3.10; only the data differs. This copies the
-; MS-50G screen:
+; The stock category screen (B14[88] = 32 change effect, 33 add effect unit)
+; has 5 spots. This gives it 6, in a 3 x 2 grid, one effect group per spot
+; and EXIT last, after the category screen of Zoom's MS pedals as an idea:
 ;     DYN/FLTR  OD/DIST  AMP        cursor 0 1 2       gid 1 3 4
 ;     MOD/SFX   DLY/REV  EXIT              3 4 5           6 8
-;   cursor:  mod 6 (0xC00A7A50/56, the MS-50G bytes); x / y tables here with
-;            6 spots, the MS-50G 0xC00ECE50 / 68 values (the stock ones hold
-;            5, other data follows); keys 68 / 70 column-wise, 0 3 1 4 2 5,
-;            as the MS-50G (jump table 0xC00EF18C), keys 72 / 74 stay +-1.
-;   enter:   ENTER (event 32) on EXIT (cursor 5) leaves, as the MS-50G; on
-;            any other spot the stock code puts the first effect of its gid
-;            in the unit; an empty gid gives effect 0, a blank unit (MS-50G).
-;   tbl:     the MS-50G gid table 0xC00ECF80, moved here (the stock one
-;            holds 4, other data follows).
-;   draw:    labels 1-4 point at the MS-50G strings below, row 2 at the
-;            MS-50G x (fx-category.yaml); DLY/REV and the EXIT box here.
-; One gid per spot, as the MS-50G: ENTER puts the first effect of that gid
-; in the unit, the effect knob then scrolls on through the sorted list, so
-; Filter (2) follows DYN, SFX (7) follows MOD and Reverb (9) follows DLY.
+;   cursor:  mod 6 (0xC00A7A50/56); x / y tables here with 6 spots, three
+;            columns 42 px apart, rows at y 10 and 36 (the stock ones hold 5,
+;            other data follows); keys 68 / 70 move column-wise, 0 3 1 4 2 5
+;            (jump table 0xC00EF18C), keys 72 / 74 stay +-1.
+;   enter:   ENTER (event 32) on EXIT (cursor 5) leaves; on any other spot
+;            the stock code puts the first effect of its gid in the unit; an
+;            empty gid gives effect 0, a blank unit.
+;   tbl:     the gid per spot, here (the stock table holds 4, other data
+;            follows).
+;   draw:    labels 1-4 point at the group names below, row 2 at x 3
+;            (fx-category.yaml); DLY/REV and the EXIT box here.
+; One gid per spot: ENTER puts the first effect of that gid in the unit, the
+; effect knob then scrolls on through the sorted list, so Filter (2) follows
+; DYN, SFX (7) follows MOD and Reverb (9) follows DLY.
 ; The knob 2 press does what it does on the stock screen.
 ;
 ; In DDR at 0xC00F2A00, between midi-cc (to 0xC00F29A0) and looper
@@ -32,12 +32,12 @@
 
         .text
         .nocmp
-tbl:    .word   1, 3, 4, 6, 8, 0            ; as the MS-50G 0xC00ECF80, [5] EXIT
-xs:     .word   1, 43, 85, 1, 43, 85        ; cursor box, as the MS-50G 0xC00ECE50
-ys:     .word   10, 10, 10, 36, 36, 36      ; as the MS-50G 0xC00ECE68
+tbl:    .word   1, 3, 4, 6, 8, 0            ; gid per spot, [5] EXIT
+xs:     .word   1, 43, 85, 1, 43, 85        ; cursor box x: 3 columns, 42 px apart
+ys:     .word   10, 10, 10, 36, 36, 36      ; cursor box y: 2 rows
 nxt:    .word   3, 4, 5, 1, 2, 0            ; column-wise: 0 3 1 4 2 5
 prv:    .word   5, 3, 4, 0, 1, 2
-        .global s1, s2, s3, s4, s5          ; the MS-50G strings, 0xC00E967E on
+        .global s1, s2, s3, s4, s5          ; the group names
 s2:     .string "OD/ DIST", 0
 s3:     .string "AMP", 0
 s4:     .string "MOD/SFX ", 0
@@ -59,7 +59,7 @@ draw:           ; at +160, from the EXIT box call (0xC00A90D4); B3 = return
         mvk     .S1     38, a6
         mvk     .L2     4, b6
         nop     2
-box:            ; the EXIT box at the MS-50G place, then back to the caller
+box:            ; the EXIT box at spot 5, then back to the caller
         ldw     .D2T2   *++b15[2], b3
         mvkl    .S2     BOX, b0
         mvkh    .S2     BOX, b0
@@ -84,7 +84,7 @@ next:           ; key 70, from the jump table; B4 = cursor
 prev:           ; key 68
         mvkl    .S1     prv, a3
         mvkh    .S1     prv, a3
-move:           ; cursor = a3[cursor], where the MS-50G's own moves land
+move:           ; cursor = a3[cursor]
         mv      .L1X    b4, a5
         ldw     .D1T1   *+a3[a5], a4
         mvkl    .S2     RET, b0

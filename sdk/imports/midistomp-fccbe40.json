@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "recorded": "2026-11-07",
+  "recorded": "2026-11-08",
   "decision": "MIDISTOMP (Luca Matturro, MIT) as the Zoom MultiStomp base: LICENSE, models/ and asm/ copied unchanged; its patches converted by scripts/midistomp-import.ts into vendor/midistomp/midistomp.json with every guard on Zoom's bytes kept as a sha256 and every run they repeat from Zoom's files as a copy from the user's own, so no Zoom bytes are in the repository.",
   "repository": "https://github.com/matujuice/zoom-ms-midistomp",
-  "revision": "8fbff9f9a0b0d8cf7d271c4a0c5eb14ed7966860",
+  "revision": "fccbe400413b1a787f8213095319903a3befd084",
   "license": "MIT",
   "files": [
     {
@@ -34,7 +34,7 @@
     {
       "from": "asm/fx_category/fxcat.S",
       "to": "vendor/midistomp/asm/fx_category/fxcat.S",
-      "sha256": "dffe6543ab0d89877f7fd40815f540ca172293b4f0d90063f6b26194aa5f9ce4"
+      "sha256": "e026d0ccd21003e770353e9cc8f9b2bbbcb0af06bb813e24eeb80a56d826bf3f"
     },
     {
       "from": "asm/looper/block.S",
