@@ -46,7 +46,10 @@
       "Open GLOBAL > AUDIO ROUTING and set DAC SUM (the last item) ON.",
       "Press FILTER twice on a voice track to open DAC FILTER."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/dac-sum-on.png",
+      "media/dac-filter-off.png"
+    ]
   },
   "controls": [
     {
@@ -120,7 +123,7 @@
     "requires": [],
     "conflicts": [],
     "limitations": [
-      "Built for OS 1.74 only, on core-ar2 0.6 or later (it uses core's page functions); Modwerk's base is core-ar2 0.7. It was not built or run against 0.7 before this submission.",
+      "Built for OS 1.74 only, on core-ar2 0.6 or later (it uses core's page functions). Modwerk's base is core-ar2 0.7: this package links there and was checked in the emulator, but has not run on a unit on Modwerk's base.",
       "The voices reach MAIN 2.58 ms later than through the analog bus. They share the PRE return pair with the delay and reverb returns and are clamped at its full scale. The individual outputs carry the voice before the filter.",
       "Needs core-ar2's mod storage: 39 sound bits (vd_flt 24, vd_shp 15) and one global bit (vd_dac). A module needing more than the remaining sound bits will not link beside it.",
       "DAC FILTER's values cannot be p-locked or reached over MIDI. They live outside the sound's parameters.",
@@ -155,13 +158,15 @@
     "tier": "none",
     "moduleVersion": "1.4.0",
     "sourceSha256": "a9628fe3f3b47bdc1078ae2ced849b2770523d55e3eef853c6823a9c438e5754",
-    "reports": [],
+    "reports": [
+      "evidence/source-parity.json"
+    ],
     "hardware": null,
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Not run on a unit or an emulator for this submission. The author's earlier hardware and emulator results for voice-dac 1.4 on core-ar2 0.6 are in upstream/README.md and TESTING.md, as reported.",
+    "summary": "Emulator on Modwerk's base (VD14, analog-emu, 2026-11-08): DAC SUM appears as AUDIO ROUTING's last row and turns ON; FILTER pressed twice opens DAC FILTER; its knobs follow TYP (OFF, LP2, LP1). Modwerk's package linked with core-ar2 0.7 gives a main OS byte-identical to rytm2_mods v1.4's release object linked with it. Not run on a unit on Modwerk's base; the author's hardware results for 1.4 on core-ar2 0.6 are in TESTING.md, as reported. Sound was not judged.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -172,8 +177,13 @@
           "Set DAC SUM OFF: FILTER pressed twice stays on stock's page and the sound is stock's again."
         ]
       },
-      "screenshots": [],
-      "captureRecord": null
+      "screenshots": [
+        "media/dac-sum-on.png",
+        "media/dac-filter-off.png",
+        "media/dac-filter-lp2.png",
+        "media/dac-filter-lp1.png"
+      ],
+      "captureRecord": "media/capture.json"
     }
   },
   "license": {
@@ -190,6 +200,70 @@
       "credit": "a contributor",
       "license": "GPL-2.0-only",
       "source": "Original vector illustration; not a device screenshot."
+    },
+    {
+      "path": "media/dac-sum-on.png",
+      "kind": "screenshot",
+      "caption": "GLOBAL > AUDIO ROUTING: DAC SUM is the last row. Move to it with DOWN and press RIGHT: it reads ON. Stock's list ends at USB TO MAIN.",
+      "alt": "AUDIO ROUTING list with the last row, DAC SUM, highlighted and reading ON.",
+      "credit": "a contributor; documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.4.0",
+        "imageSha256": "1ed6899821da549678a63dde001c402f0054e85932b81da836530a4aa519432e",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running VD14, the Modwerk base for core-ar2 0.7 (plain variant) and voice-dac 1.4.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/dac-filter-off.png",
+      "kind": "screenshot",
+      "caption": "With DAC SUM on, press FILTER twice on BD: DAC FILTER opens. TYP is OFF, so FRQ and RES are empty. Stock stays on its FILTER page.",
+      "alt": "DAC FILTER page with TYP reading OFF, DEP, ATK, SUS and POL, and no FRQ or RES labels.",
+      "credit": "a contributor; documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.4.0",
+        "imageSha256": "1ed6899821da549678a63dde001c402f0054e85932b81da836530a4aa519432e",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running VD14, the Modwerk base for core-ar2 0.7 (plain variant) and voice-dac 1.4.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/dac-filter-lp2.png",
+      "kind": "screenshot",
+      "caption": "Turn knob C (TYP) up to LP2: FRQ and RES appear under the filter graph, and FRQ sets the cutoff.",
+      "alt": "DAC FILTER page with a 2-pole low-pass symbol over TYP and FRQ and RES labelled.",
+      "credit": "a contributor; documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.4.0",
+        "imageSha256": "1ed6899821da549678a63dde001c402f0054e85932b81da836530a4aa519432e",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running VD14, the Modwerk base for core-ar2 0.7 (plain variant) and voice-dac 1.4.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/dac-filter-lp1.png",
+      "kind": "screenshot",
+      "caption": "Turn TYP on to LP1: RES goes empty, since LP1 has no resonance. Set TYP back to OFF, or DAC SUM OFF, to hear the voice unfiltered.",
+      "alt": "DAC FILTER page with a 1-pole low-pass symbol over TYP and only FRQ labelled.",
+      "credit": "a contributor; documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.4.0",
+        "imageSha256": "1ed6899821da549678a63dde001c402f0054e85932b81da836530a4aa519432e",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running VD14, the Modwerk base for core-ar2 0.7 (plain variant) and voice-dac 1.4.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
     }
   ]
 }

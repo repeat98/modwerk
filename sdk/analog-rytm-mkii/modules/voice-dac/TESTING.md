@@ -5,16 +5,20 @@
   `src/voice-dac.s` is rytm2_mods' `voice-dac/os1.74/voice-dac.s`; `include/ar2-1.74.inc` and `shared/shared.s` are its `include/` and `shared/` files, unchanged.
 - Original: MrScruff's rytm-mods `0013-voice-dac`, at rytm-mods-src 3a98e23.
 
-## Run for this submission
+## Run for this submission (emulator and offline, Modwerk's base)
 
-Nothing was run on a unit or in the emulator on Modwerk's base (core-ar2 0.7). Not tested:
+Nothing was run on a unit on Modwerk's base (core-ar2 0.7). All results below are from the emulator or offline tools, on 2026-11-08.
 
-- a build of this folder against core-ar2 0.7 and stock OS 1.74, and its source parity with rytm2_mods v1.4's release object;
-- DAC SUM, DAC FILTER, the page following TYP, and keeping the values, on Modwerk's base;
-- beside other modules that use sound bits (rytm2_mods' LFO RND takes 16 of core 0.3's 56 sound bits; this module takes 39);
-- emulator captures of the page.
-
-Done offline: `src/voice-dac.s` assembles with GNU as 2.42 (`-mcpu=5475`, `include/` and `shared/` in place) to 11,078 bytes, the memory figure in the manifest. The patch sites in `build.json` are the 27 of rytm2_mods' `ports["1.74"]`, as address, length and SHA-256 of the stock bytes; the SHA-256s come from rytm2_mods' own `mod.json` and were not compared with a stock file.
+- **Build.** `scripts/build-elemod-isolated.sh` in `modwerk-source-tools` (image `e9fc4df5…`, m68k-elf GCC 16.2.0, binutils 2.47) compiled this folder; `package-elemod-recipe.mjs` wrote `voice-dac-1.4.0-os1.74.elemod` (`.run` 11,078 bytes, no `.bss`), and `--check` reproduces it. Its hash and source commit are in `sdk/imports/voice-dac-2026-11-08.json`.
+- **Link.** `scripts/link-image.mjs` on the owner's stock OS 1.74 (`cb0f99d6…e123`) links it with the vendored Modwerk base for core-ar2 0.7 (plain variant `ba530f45`): `ramSpare` drops from 119,004 bytes (base alone) to 107,896, `fastSpare` stays 0, flash headroom 1,195,984 bytes. The image, VD14, is `1ed68998…432e`.
+- **Source parity.** Linked with elekloader's released core-ar2 0.7 (`f1e9cb2c…c9`) on the same stock file, the package gives a main OS byte-identical to rytm2_mods v1.4's release object `voice-dac-1.4-os1.74.elemod` (`9649ce2a…960c`) linked with that core ([evidence/source-parity.json](evidence/source-parity.json)).
+- **Emulator, analog-emu `4c07ed3` (dtboot, headless), VD14** ([media/capture.json](media/capture.json) has the full input plan):
+  - GLOBAL > AUDIO ROUTING ends with a DAC SUM row reading OFF; RIGHT sets it ON. On stock 1.74 the same input shows a list ending at USB TO MAIN.
+  - With DAC SUM on, TRIG and then FLTR twice on BD opens DAC FILTER with TYP OFF: DEP, ATK, SUS and POL shown, FRQ and RES empty. On stock the second FLTR press stays on the FILTER page.
+  - Turning knob C (TYP) up: LP2 shows FRQ and RES; LP1 shows FRQ and leaves RES empty.
+  - Every frame before AUDIO ROUTING opens is byte-identical to stock's with the same input.
+- **Not tested on Modwerk's base:** anything on a unit; the sound (the emulator's analog voices are stubbed); FRQ, RES, DEP, ATK, SUS and POL moving the audio; values kept through kit save, reload or a power cycle; TYP values past LP1; beside other modules that use sound bits (rytm2_mods' LFO RND takes 16 of core's 56 sound bits; this module takes 39).
+- **Offline:** the patch sites in `build.json` are the 27 of rytm2_mods' `ports["1.74"]`, as address, length and SHA-256 of the stock bytes; the link above checks those guards against the owner's stock file.
 
 ## Reported by the author on core-ar2 0.6
 
