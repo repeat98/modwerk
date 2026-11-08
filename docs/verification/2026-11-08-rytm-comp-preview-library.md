@@ -1,0 +1,10 @@
+# Analog Rytm MKII: Compressor Preview 1.1.0 in the library — 8 November 2026
+
+Compressor Preview enters the library at 1.1.0. It is Iced-Cream's rytm2_mods v1.3 source (`e029f75`): press AMP again on the FX track and a page shows a scrolling estimate of the master compressor's gain reduction. 1.1 adds the preview to the compressor view through core-ar2's page lists (`core_view_pages`, core-ar2 0.4 and later). 1.0 replaced the view's page list itself. The source-only OS 1.74 package is pinned in `sdk/imports/elekloader-comp-preview-2026-11-08.json` (commit `67e5c148`).
+
+- **Build:** `scripts/build-elemod-isolated.sh` in `modwerk-source-tools` (image `6f8066eb…`, from `sdk/build/Dockerfile`; m68k-elf GCC 16.2.0, binutils 2.47) ran on a clean checkout of `2a1d18ff`, the source of the pinned commit. The export reproduces with `package-elemod-recipe.mjs --check`.
+- **Package:** `comp-preview-1.1.0-os1.74.elemod` `cfc26a7d…c925`, vendored through its pin by `npm run elekloader:update -- --overlay`. `.run` is 3912 bytes, with no `.bss`.
+- **Parity:** linked with elekloader's released core-ar2 0.7 on stock OS 1.74, the package gives a main OS byte-identical to rytm2_mods v1.3's release object linked with the same core (`cf6463cb…66ef`, [source-parity.json](../../sdk/analog-rytm-mkii/modules/comp-preview/evidence/source-parity.json)).
+- **Linking:** `planBuild` plans it on the plain base beside Pipo Loop and Velocity Humanise (`src/engine/elekloader/digi-build.test.ts`).
+- **Emulator:** three captures on the Modwerk base's plain variant with this package (CP11, `55dafc3b…`), taken in analog-emu `4c07ed3`: the stock compressor page, the preview with a BD hit, and the second layout. At THR 41 and below the full layout drew no trace there; [TESTING.md](../../sdk/analog-rytm-mkii/modules/comp-preview/TESTING.md) has the details.
+- **On a unit:** the author's Analog Rytm MKII passed this source on core-ar2 0.4 (U4A4 and others, 21 October 2026). This package on the Modwerk base has not been flashed, and no browser build from a stock OS file ran here.
