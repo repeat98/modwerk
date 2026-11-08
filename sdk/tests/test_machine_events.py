@@ -44,6 +44,10 @@ class MachineEventTests(unittest.TestCase):
         result = host(self, OT / 'elekloader/test_midi_generators.c')
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_module_store_on_the_host(self):
+        result = host(self, OT / 'elekloader/test_store.c')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_registry_knows_every_protect_port_signature(self):
         # The validator keeps a known PROTECT machine's 12 bytes while it is absent (the boot's battery restore runs
         # before the saved set reinstalls it: beta finding 24). The list must be exactly the PROTECT ports and the

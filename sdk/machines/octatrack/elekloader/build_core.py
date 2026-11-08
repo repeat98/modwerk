@@ -1675,7 +1675,7 @@ def main():
         sys.path.insert(0, str(APP / 'sdk/machines/octatrack/module-adapters'))
         import resident_engines as dev_engines
         (source / 'dev.c').write_text(dev_engines.dev((source / 'dev.c').read_text()))
-    if args.site_events:  # the tables' records (struct modwerk_machine, struct modwerk_sequencer_rows)
+    if args.site_events or args.dsp_loader:  # the tables' records (struct modwerk_machine, struct modwerk_store, ...)
         shutil.copyfile(APP / 'sdk/machines/octatrack/include/modwerk_events.h', source / 'modwerk_events.h')
     # The startup (boot_anim.c) draws the art the shared startup sources describe, with this base's version.
     spec = importlib.util.spec_from_file_location('modwerk_base_art', APP / 'sdk/runtime/startup/base_art.py')
@@ -1794,7 +1794,7 @@ def main():
         if saved_set_wiring:
             (source / 'dsp.c').write_text(saved_set_wiring.dsp((source / 'dsp.c').read_text()))
         shutil.copyfile(HERE / 'dsp_core1.s', source / 'dsp_core1.s')
-        for name in ('dsp_journal.h', 'dsp_journal_manager.h', 'fxmap.h', 'fxpage.h', 'fxmap.c', 'fxmap.s', 'fxpage.c', 'fxpage.s', 'status.c', 'status.s', 'status.h', 'load_wire.h', 'selftest.h', 'diag.c', 'diag.h'):
+        for name in ('dsp_journal.h', 'dsp_journal_manager.h', 'fxmap.h', 'fxpage.h', 'fxmap.c', 'fxmap.s', 'store.c', 'store.h', 'fxpage.c', 'fxpage.s', 'status.c', 'status.s', 'status.h', 'load_wire.h', 'selftest.h', 'diag.c', 'diag.h'):
             shutil.copyfile(HERE / name, source / name)
         if args.resident_on_demand:
             (source / 'status.c').write_text(resident_engines.status((source / 'status.c').read_text()))
@@ -2161,6 +2161,7 @@ modwerk_retained_end:
     if args.dsp_loader:  # the DSP manager's UI work (its own hook was the UI tick, 0x4005221e) and its ColdFire hooks
         recipe['subscribe'].append(dict(event='ev_tick', fn='modwerk_dsp_tick', order=92))  # dsp.c's test picks
         recipe['subscribe'].append(dict(event='ev_tick', fn='dl_ui', order=93))
+        recipe['subscribe'].append(dict(event='ev_tick', fn='modwerk_store_tick', order=94))  # store.c: the module store
         if args.resident_stock_hooks:  # controller_board.c: activation and retirement of trusted controllers
             recipe['subscribe'].append(dict(event='ev_tick', fn='modwerk_controller_tick', order=95))
         # The status modal (status.c): CUE + PROJ before stock and the modules see it, drawn under the dev capture.

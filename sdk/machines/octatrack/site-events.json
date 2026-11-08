@@ -203,6 +203,13 @@
    "kind": "table",
    "room": 8,
    "record": 16
+  },
+  {
+   "index": 38,
+   "event": "ot_store",
+   "kind": "table",
+   "room": 32,
+   "record": 16
   }
  ]
 }

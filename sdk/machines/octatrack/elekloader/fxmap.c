@@ -9,6 +9,12 @@
 #include <stdint.h>
 #include "fxids.h"
 #include "fxmap.h"
+#ifdef MODWERK_HOST /* store.c, which rides these seams, has its own host test (test_store.c) */
+#define STORE(call) ((void)0)
+#else
+#include "store.h"
+#define STORE(call) call
+#endif
 
 struct fx_entry { uint32_t module; uint16_t layout, spare; char name[16]; };
 struct fx_map { uint32_t magic, generation; struct fx_entry e[MODWERK_FX_IDS]; uint32_t sum; };
@@ -215,6 +221,7 @@ static volatile int loading;
 int modwerk_fxmap_loading(void) { return loading; }
 void modwerk_fxmap_begin(uint32_t storing)
 {
+    STORE(modwerk_store_begin(storing));
     loading = 1;
     if (!storing) return;
     for (unsigned k = 0; k < MODWERK_FX_IDS; ++k) put(&staged[k], 0, 0, 0);
@@ -234,6 +241,7 @@ static const char *number(const char *s, unsigned base, uint32_t *out)
 }
 void modwerk_fxmap_line(const char *line, uint32_t parse_only)
 {
+    if (!parse_only) STORE(modwerk_store_line(line));
     if (parse_only || !staging) return;
     for (unsigned i = 0; LINE[i]; ++i) if (line[i] != LINE[i]) return;
     uint32_t id, module, layout;
@@ -245,6 +253,7 @@ void modwerk_fxmap_line(const char *line, uint32_t parse_only)
 }
 void modwerk_fxmap_loaded(int32_t result)
 {
+    STORE(modwerk_store_loaded(result));
     if (!staging) { loading = 0; return; }
     staging = 0;
     if (result < 0) { loading = 0; return; } /* a failed load keeps the project that is still there */
@@ -262,6 +271,7 @@ void modwerk_fxmap_loaded(int32_t result)
 /* One line per handle the project uses: "#MODWERK_FX=27:873d83cc:1:E-Verb\r\n". */
 void modwerk_fxmap_write(uint32_t file)
 {
+    STORE(modwerk_store_write(file));
     modwerk_fxmap_written = 0;
     if (!valid()) return;
     fx_set used = modwerk_fxmap_used();
