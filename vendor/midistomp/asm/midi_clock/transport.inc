@@ -2,7 +2,7 @@
 ;
 ; Transport block for custom effects (issue #24): 8 words at a fixed L2
 ; address, read by effects with plain loads. Loaded at boot with the magic
-; and 120 BPM; layout and reader rules in docs/transport-block.md.
+; and 120 BPM; layout and reader rules in docs/dev/transport-block.md.
         .equ    BLOCK, 0x1181FF00
         .equ    B_MAGIC, 0                  ; 0x5A4D5401 ("ZMT", version 1)
         .equ    B_SEQ, 4                    ; +1 before and after each update
@@ -10,6 +10,8 @@
         .equ    B_STARTS, 12                ; +1 on every Start
         .equ    B_TICKS, 16                 ; clocks since Start
         .equ    B_TEMPO, 20                 ; BPM x 100
+        .equ    B_FTSW, 24                  ; 1 while the footswitch is down (looper.S poll_pre)
+        .equ    B_CLAIM, 28                 ; hold claim: an effect's params pointer, 0 each poll
 
 ; MIDI SETTINGS (v0.5): the MIDI word, kept in the settings section
 ; (asm/midi_settings/settings.S, base + 0) and saved in flash record 51.
