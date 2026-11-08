@@ -1,5 +1,5 @@
 {
- "description": "The card-build counterpart of ev_trig_muted: sdk/machines/octatrack/card/trig_muted.inc (sha256 7528de86321421574f6438021322f77b71d1679e3f609689e64909e375ce56c5), fixtures assembled by GNU m68k-elf-as (CPU 54455) and linked by remix.platform_build.link_runtime at the platform runtime base. Written by sdk/tests/test_card_trig_muted.py --write.",
+ "description": "The card-build counterpart of ev_trig_muted: sdk/machines/octatrack/card/trig_muted.inc (sha256 35a4944654c0ec8b17f5bb96d2b7b46add1b03980c0488e86de4f36bf27a3ec7), fixtures assembled by GNU m68k-elf-as (CPU 54455) and linked by remix.platform_build.link_runtime at the platform runtime base. Written by sdk/tests/test_card_trig_muted.py --write.",
  "base": 1084839392,
  "answer": "modwerk_card_ev_trig_muted",
  "sources": {

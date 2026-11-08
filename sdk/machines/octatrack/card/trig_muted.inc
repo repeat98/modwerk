@@ -16,6 +16,15 @@
 |              is only in bits 0-7 lets its note finish (DT-T). An asker that keeps no notes
 |              ignores these bits.
 |   bits 16-31 zero; the ask masks them off.
+| The contract, so answer and ask cannot drift:
+|   - Bits 8-15 are a state, not a one-frame event: bit 8+t is set in every frame where bit t
+|     is set and MUTE MODE is OTFX-T. It is never set without bit t, and never in DT-T. The
+|     asker ends a sounding note when it first sees bit 8+t set, and starts nothing while it
+|     stays set.
+|   - A SIDE-CHAIN key track's bits are clear in both bytes: its trigs and its note carry on,
+|     because the compressor still hears it (the exemption fresh_bind makes with KEYMASK).
+|   - Unmute: when a track's bits clear, the asker plays its next trig as usual. A note it
+|     cut stays cut.
 | The ask: d0 := the answer, or 0 with no answering module in the image. C convention.
 | Both sit in DRAM units (Linked(dram=True)). Every card build links its DRAM units together
 | (remix/platform_build.py natively, src/engine/coldfire-link.ts in the configurator), so the
