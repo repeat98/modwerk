@@ -59,9 +59,6 @@ export const DIGI_MODS: DigiMod[] = (MACHINE_MODULES.modules as (ModwerkModule &
   hardware: module.evidence.hardware ? module.evidence.hardware.summary : undefined,
 }))
 
-// Shared code modules build on (sdk/<machine>/dependencies/<id>); the builder refuses a set when any two of its parts conflict.
-const DEPENDENCIES = Object.values(import.meta.glob<{ id: string; name: string; machine: string; compatibility: { requires: string[]; conflicts: string[] } }>('../../sdk/*/dependencies/*/dependency.json', { eager: true, import: 'document' }))
-
 export type DigiEstimate = { usedBytes: number; areaBytes: number; fits: boolean; compatibleReleases: string[]; clashes: { claim: string; mods: string[] }[] }
 
 export function estimateCombination(device: DigiMod['device'], ids: string[], release?: string): DigiEstimate {
@@ -72,7 +69,8 @@ export function estimateCombination(device: DigiMod['device'], ids: string[], re
   const usedBytes = mods.reduce((sum, mod) => sum + mod.ramBytes, mods.some(mod => mod.exclusive) ? 0 : core.ramBytes)
   const clashes = [...owners].filter(([, names]) => names.length > 1).map(([claim, names]) => ({ claim, mods: names }))
   const parts = new Map<string, { name: string; requires: string[]; conflicts: string[] }>([
-    ...DEPENDENCIES.filter(dependency => dependency.machine === device).map(dependency => [dependency.id, { name: dependency.name, ...dependency.compatibility }] as const),
+    // Shared code modules build on (sdk/<machine>/dependencies/<id>); the builder refuses a set when any two of its parts conflict.
+    ...MACHINE_MODULES.dependencies.filter(dependency => dependency.machine === device).map(dependency => [dependency.id, dependency] as const),
     ...DIGI_MODS.filter(mod => mod.device === device).map(mod => [mod.id, { name: mod.title, requires: mod.requires, conflicts: mod.conflicts }] as const),
   ])
   // Each picked mod, itself first, then everything it builds on, so a clash the authors declared directly is named first.
