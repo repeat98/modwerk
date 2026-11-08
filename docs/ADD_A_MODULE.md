@@ -188,7 +188,15 @@ regeneration and stock-free scan, base compatibility and truthful inventory,
 installation, the self-test of the running set, Keep/Undo, replacement/removal, missing-module
 fallback and distinct instances through Part/project reload and physical
 reboot where applicable. Give hardware steps and record actual results;
-emulator/host tests do not fill missing hardware qualification. Preserve the
+emulator/host tests do not fill missing hardware qualification. With
+`npm run device -- serve` running, `npm run device:qualify -- --keeps-ok
+--testing-entry run.md <package>` installs the package, places it alone on
+each DSP core and then beside itself on every track, sweeps its knobs, switches
+Parts and banks, optionally soaks (`--soak`) and crashes on purpose
+(`--crash`), restores the Part and removes the package. It writes what it saw,
+with the package's SHA-256, as an entry to paste into TESTING.md. The
+self-test is the session's `selftest` step while the package is installed;
+listening, the power cycle and persistence stay yours. Preserve the
 previous approved download while preparing candidates.
 
 **A private USB package of a draft.** Its `Gate` must be

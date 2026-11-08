@@ -37,7 +37,7 @@ it.each(['./', '/octamod/'])('builds crawlable content and a sitemap matching th
     const documentBase = new URL(page.source.match(/<base href="([^"]*)"/)[1], pageUrl)
     expect(new URL(startup[0].match(/src="([^"]*)"/)[1], documentBase).href).toBe(new URL('app-startup.js', appUrl).href)
   }
-  expect(root).toContain('<h1>Mods for Elektron instruments</h1>')
+  expect(root).toContain('<h1>Community mods for electronic music hardware</h1>')
   expect(root).toContain(HOME_DESCRIPTION)
   expect(root).toContain(`<meta property="og:url" content="${appUrl.href}" />`)
   expect(root).toContain(`<link rel="canonical" href="${appUrl.href}" />`)

@@ -157,6 +157,9 @@ describe('the elekloader update', () => {
     expect(merged.revision).toMatch(/^[a-f0-9]{64}$/)
     expect(mergeCatalogOverlay(merged, overlay)).toEqual(merged)
     expect(() => mergeCatalogOverlay(base, { ...overlay, cores: [pin('core', 'digitakt-mk2', 'core-2.1.elemod', 'd'.repeat(64))] })).toThrow('changes the existing file')
+    const forked = { ...overlay.mods[0], source: { repo: 'someone/modwerk', commit: 'f'.repeat(40), path: 'sdk/imports/packages/perform-direct/perform-direct-1.0.elemod' } }
+    expect(() => mergeCatalogOverlay(base, { ...overlay, mods: [forked] })).toThrow('so source.repo is repeat98/modwerk, not someone/modwerk')
+    expect(mergeCatalogOverlay(base, { ...overlay, mods: [{ ...forked, source: { ...forked.source, repo: 'repeat98/modwerk' } }] }).mods).toHaveLength(1)
   })
 })
 
