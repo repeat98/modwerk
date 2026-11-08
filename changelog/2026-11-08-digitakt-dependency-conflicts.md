@@ -1,0 +1,1 @@
+Digitakt configurator: a set whose modules build on dependencies that cannot run together is now refused when you pick it, not only when the build starts. Digi Mono beside STRING or RAM Record and Playback, for example, says that Digi Mono builds on digichain and the other on machine pages, which their authors marked as incompatible.

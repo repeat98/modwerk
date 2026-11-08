@@ -32,6 +32,8 @@ export type DigiMod = {
   claims: string[]
   // Mods its author marked as unable to run beside it; either side's flag refuses the pair.
   conflicts: string[]
+  // Modules and shared dependencies it builds on; their conflicts count as its own.
+  requires: string[]
   releases: string[]
   patchSites: Partial<Record<string, { addr: string; len: number }[]>>
   hardware?: string
@@ -52,10 +54,13 @@ export const DIGI_MODS: DigiMod[] = (MACHINE_MODULES.modules as (ModwerkModule &
   author: displayName(module.author.github, module.author.name), authorLogin: module.author.github, repository: module.source?.repository ?? 'https://github.com/' + module.author.github,
   contributors: module.author.contributors,
   license: module.license.spdx, category: module.presentation.family, libraryCategory: module.category, summary: module.presentation.summary,
-  ramBytes: module.resources.memoryBytes ?? 0, claims: module.platform.claims, conflicts: module.compatibility.conflicts, exclusive: module.exclusive,
+  ramBytes: module.resources.memoryBytes ?? 0, claims: module.platform.claims, conflicts: module.compatibility.conflicts, requires: module.compatibility.requires, exclusive: module.exclusive,
   releases: module.compatibility.releases, patchSites: module.patchSites,
   hardware: module.evidence.hardware ? module.evidence.hardware.summary : undefined,
 }))
+
+// Shared code modules build on (sdk/<machine>/dependencies/<id>); the builder refuses a set when any two of its parts conflict.
+const DEPENDENCIES = Object.values(import.meta.glob<{ id: string; name: string; machine: string; compatibility: { requires: string[]; conflicts: string[] } }>('../../sdk/*/dependencies/*/dependency.json', { eager: true, import: 'document' }))
 
 export type DigiEstimate = { usedBytes: number; areaBytes: number; fits: boolean; compatibleReleases: string[]; clashes: { claim: string; mods: string[] }[] }
 
@@ -66,9 +71,22 @@ export function estimateCombination(device: DigiMod['device'], ids: string[], re
   for (const mod of mods) for (const claim of mod.claims) owners.set(claim, [...(owners.get(claim) ?? []), mod.title])
   const usedBytes = mods.reduce((sum, mod) => sum + mod.ramBytes, mods.some(mod => mod.exclusive) ? 0 : core.ramBytes)
   const clashes = [...owners].filter(([, names]) => names.length > 1).map(([claim, names]) => ({ claim, mods: names }))
+  const parts = new Map<string, { name: string; requires: string[]; conflicts: string[] }>([
+    ...DEPENDENCIES.filter(dependency => dependency.machine === device).map(dependency => [dependency.id, { name: dependency.name, ...dependency.compatibility }] as const),
+    ...DIGI_MODS.filter(mod => mod.device === device).map(mod => [mod.id, { name: mod.title, requires: mod.requires, conflicts: mod.conflicts }] as const),
+  ])
+  // Each picked mod, itself first, then everything it builds on, so a clash the authors declared directly is named first.
+  const builtOn = mods.map(mod => {
+    const ids = [mod.id]
+    for (let i = 0; i < ids.length; i++) for (const next of parts.get(ids[i])?.requires ?? []) if (parts.has(next) && !ids.includes(next)) ids.push(next)
+    return ids
+  })
   for (let i = 0; i < mods.length; i++) for (let j = i + 1; j < mods.length; j++) {
     const a = mods[i], b = mods[j]
-    if (a.conflicts.includes(b.id) || b.conflicts.includes(a.id)) clashes.push({ claim: 'marked as incompatible by their authors', mods: [a.title, b.title] })
+    const pair = builtOn[i].flatMap(x => builtOn[j].map(y => [x, y])).find(([x, y]) => parts.get(x)!.conflicts.includes(y) || parts.get(y)!.conflicts.includes(x))
+    if (!pair) continue
+    const [x, y] = pair.map(id => parts.get(id)!.name), via = [pair[0] !== a.id && a.title + ' builds on ' + x, pair[1] !== b.id && b.title + ' builds on ' + y].filter(Boolean)
+    clashes.push({ claim: via.length ? via.join(' and ') + ', and ' + x + ' and ' + y + ' are marked as incompatible by their authors' : 'marked as incompatible by their authors', mods: [a.title, b.title] })
   }
   const standalone = mods.find(mod => mod.exclusive)
   if (standalone && mods.length > 1) clashes.push({ claim: 'the whole OS (standalone firmware)', mods: mods.map(mod => mod.title) })
