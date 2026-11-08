@@ -186,7 +186,7 @@
     {
       "path": "media/preview.png",
       "kind": "screenshot",
-      "caption": "Press AMP again: the preview. THR 64: a BD hit pulls the trace down from the dotted threshold row and it recovers. The header shows the kit after a pad press. Stock stays on COMPRESSOR.",
+      "caption": "Press AMP again: the preview. THR 64: the trace runs below the dotted threshold row; a BD hit pulls it down and it recovers. The header shows the kit after a pad press. Stock stays on COMPRESSOR.",
       "alt": "Preview page: knob names at top and bottom, a dotted threshold row and a trace that drops at the right and curves back up.",
       "credit": "Iced-Cream documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",

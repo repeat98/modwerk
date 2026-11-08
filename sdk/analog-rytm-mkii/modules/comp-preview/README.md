@@ -97,8 +97,8 @@ On the FX track, press AMP: the stock compressor page.
 
 ![Preview page: knob names at top and bottom, a dotted threshold row and a trace that drops at the right and curves back up.](media/preview.png)
 
-Press AMP again: the preview. With THR at 64 a BD hit pulls the trace down from the dotted
-threshold row and it recovers. The header shows the kit, as it does after any pad press. Stock
+Press AMP again: the preview. With THR at 64 the trace runs below the dotted threshold row; a BD
+hit pulls it down and it recovers. The header shows the kit, as it does after any pad press. Stock
 stays on the compressor page.
 
 ![Preview page in its second layout: a line near the top that drops at the right and curves back up.](media/preview-gr-only.png)
