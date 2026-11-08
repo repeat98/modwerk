@@ -12,7 +12,7 @@
 #include "modwerk_events.h"
 
 #define MAGIC 0x4d575342u    /* "MWSB" */
-#define CAPACITY 12288u      /* what every kept block shares */
+#define CAPACITY 10232u      /* what every kept block shares: the image fills 0x100f9800-0x100fc000 */
 #define HEAD 12u             /* an entry: module, bytes, version, sum; then its bytes, padded to 4 */
 #define MOST 4096u           /* a block's largest */
 #define ROOM 32u             /* ot_store's room (events.json) */
@@ -32,9 +32,10 @@ int (*modwerk_test_write)(uint32_t file, const void *data, unsigned length);
 #define MASK() 0u
 #define UNMASK(m) ((void)(m))
 #else
-/* Battery RAM stock never uses (fxmap.c): after PLAY MODES's 0x100f8600-0x100f8f06, below diag.c's log at 0x100fc000. */
-#define BAT ((volatile struct image *)0x100f8f08u)
-typedef char store_fits[0x100f8f08u + sizeof(struct image) <= 0x100fc000u ? 1 : -1];
+/* Battery RAM stock never uses (fxmap.c): after the Micro Timing draft's table (0x100f8ffc-0x100f97ff, which follows
+ * PLAY MODES's 0x100f8600-0x100f8f06), below diag.c's log at 0x100fc000. */
+#define BAT ((volatile struct image *)0x100f9800u)
+typedef char store_fits[0x100f9800u + sizeof(struct image) <= 0x100fc000u ? 1 : -1];
 #define WRITE ((int (*)(uint32_t, const void *, unsigned))0x400166b8u) /* write(file, data, n), the writer's own */
 #define MASK() modwerk_machine_mask()
 #define UNMASK(m) modwerk_machine_unmask(m)

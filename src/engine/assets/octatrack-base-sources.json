@@ -78,7 +78,7 @@
   "sdk/machines/octatrack/elekloader/status.h": "2a1ad4ae2140bce80815a334fdfcc8e41cd088518f0f2107a5d99ea7eb8e1774",
   "sdk/machines/octatrack/elekloader/status.s": "9385d6a425e37c948a22c9a947d02d7a737fad6d6f89656011f0a7ae7d12b6ae",
   "sdk/machines/octatrack/elekloader/stock_dsp_worst.py": "3705e5b086a896fe48f30661eb52053b34ff4c51bf9e5bfc26a4d1bad6df3500",
-  "sdk/machines/octatrack/elekloader/store.c": "c370123bb25caac47b35dcdd5457b5fea4c8b80aeb5b632d345bc5d68df95285",
+  "sdk/machines/octatrack/elekloader/store.c": "f10b2e82283267082cc42ecaf954d0f43b093099ffbc84d3adb3ab01b7dcf167",
   "sdk/machines/octatrack/elekloader/store.h": "60be30ad5531f22668171cc5ea220956cb6a892fc5bb2f87654550882a52121c",
   "sdk/machines/octatrack/elekloader/stub.c": "e5c312a66d8c3909cb7657548d771c05c16f6f70046160aeb571b1a383b209db",
   "sdk/machines/octatrack/elekloader/stub.s": "79261292ef92d45412de86d454206044cbe14d7e1e9921744e6d4f5487994911",
