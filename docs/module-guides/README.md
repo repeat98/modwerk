@@ -181,7 +181,7 @@ The more of these the base owns, the more modules combine. Each is a hook to [pr
 | MIDI generators on a MIDI track (MIDI NOTE SETUP's list, the ARP page) | Base table `ot_midi_generators`; on the card, VECTOR's own registry ([midi-usb.md](midi-usb.md#midi-generators-and-midi-effects)) |
 | MIDI effects on a MIDI track's notes | Pitch: take hook `ev_midi_note_key`. Velocity, timing, added notes: not built |
 | Stock DSP effects a module hooks (Sidechain Compressor, Output Matrix) | Not built: DSP-side taps, one owner per stock site |
-| Module settings | Not built in the base. Upstream octabam has a card-image store, BRAIN ([spec](https://github.com/sambanks/octabam/blob/main/docs/specs/BRAIN.md)), which replaced its OTX proposal |
+| Module settings | Not built: the base's own per-module store is planned |
 
 ### Read the gate's message
 
