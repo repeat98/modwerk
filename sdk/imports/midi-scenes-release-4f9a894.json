@@ -41,5 +41,5 @@
   "archivedNative8_2Port": "sdk/archive/midi-scenes-8.2/modules/midi-scenes",
   "sourceSha256": "5116aa89e8ff9086126313c260fb0b10ca5e1b0bb521238955dc0888b27c4d11",
   "folderSha256": "8ff983de2c0baf5e5f732f68311d02f9265bb43371da3a362a3a462cb34d0180",
-  "ownerApproval": "sdk/midi-scenes-build-approval.json"
+  "ownerApproval": "sdk/approvals/midi-scenes-build-approval.json"
 }

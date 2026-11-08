@@ -80,6 +80,24 @@ For updates, increase the module's semantic version for **every code change** (d
 
 Open a pull request with source, documentation, test results, attribution and licence declarations. **Owner merge approves the version.** Read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting.
 
+## Repository layout
+
+| Path | What |
+| --- | --- |
+| `sdk/` | modules, machine profiles, cores, the module templates and owner approvals ([SDK README](sdk/README.md)) |
+| `src/` | the site (React and Vite, entered from `index.html`); `src/engine/` is the in-browser firmware builder, `src/dev/` holds local hardware test pages |
+| `server/`, `worker.ts`, `migrations/` | the Cloudflare Worker API (`wrangler.worker.jsonc`) and its D1 schema |
+| `functions/`, `wrangler.jsonc` | the Cloudflare Pages entry point, which passes `/api/*` to `server/` |
+| `public/` | static files the site build copies unchanged |
+| `scripts/` | the programs behind `npm run`: checks, builders, native verifiers, the developer MCP, release tools |
+| `vendor/` | pinned third-party code (Elekloader, MIDIstomp, the Zoom runtime) and its licences |
+| `docs/` | guides ([index](docs/README.md)), dated records in `docs/verification/` and `docs/decisions/`, news mails |
+| `changelog/` | one file per site, tool or SDK change; `CHANGELOG.md` holds the entries up to 22 October 2026 |
+| `LICENSES/` | licence texts and credits for the generated notices |
+| `redirect/` | the page that forwards the old octamod.app domain to modwerk.app |
+| `.claude/skills/`, `.agents/skills/` | the commands in [AGENTS.md](AGENTS.md), one identical copy each for Claude Code and Codex |
+| `.github/` | CI workflows, the pull request template and the module author registry |
+
 ## Documentation
 
 | Need | Start here |

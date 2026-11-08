@@ -9,8 +9,8 @@ import { requireModuleQualificationForPublication, requireModuleUiForPublication
 import { compareModuleVersions } from '../src/catalog/versions.ts'
 import { requireModuleDocumentation } from './module-documentation.mjs'
 
-export const BASELINE_PATH = 'sdk/module-qualification-baseline.json'
-export const WAIVERS_PATH = 'sdk/module-release-waivers.json'
+export const BASELINE_PATH = 'sdk/approvals/module-qualification-baseline.json'
+export const WAIVERS_PATH = 'sdk/approvals/module-release-waivers.json'
 const sha = bytes => createHash('sha256').update(bytes).digest('hex')
 async function inventory(folder, prefix='') {
   const files=[]
@@ -47,7 +47,7 @@ export async function moduleNativeSourceSha256(folder, document) {
 const UPDATE_WAIVABLE=['current-build-hardware','chip-worst-case-cycles','complete-memory-bounds','release-documentation']
 async function requireOwnerApprovedUpdate(root, folder, document) {
   let approval
-  try { approval=JSON.parse(await readFile(resolve(root,'sdk',document.id+'-build-approval.json'),'utf8')) } catch(error) { if(error.code==='ENOENT') return null; throw error }
+  try { approval=JSON.parse(await readFile(resolve(root,'sdk','approvals',document.id+'-build-approval.json'),'utf8')) } catch(error) { if(error.code==='ENOENT') return null; throw error }
   if(approval?.kind!=='owner-approved-update') return null
   const fail=message=>{ throw new Error(document.id+': owner-approved update '+message) }
   const keys=Object.keys(approval).filter(key=>key!=='retainedUiVersion').sort().join(',')
@@ -93,7 +93,7 @@ export async function requireFolderQualification(folder, document, baseline, wai
   if(existing?.version===document.version&&existing.folderSha256===await moduleFolderSha256(folder)) return 'retained'
   const declaration=document.tests.releaseWaiver
   if(document.id==='midi-scenes'&&document.version==='0.2.4-experimental'&&declaration?.approvedOn==='2026-10-03') {
-    const approval=JSON.parse(await readFile(new URL('../sdk/midi-scenes-build-approval.json',import.meta.url),'utf8'))
+    const approval=JSON.parse(await readFile(new URL('../sdk/approvals/midi-scenes-build-approval.json',import.meta.url),'utf8'))
     if(approval.id!=='midi-scenes'||approval.version!==document.version||approval.approvedBy!=='repeat98'||approval.approvedOn!=='2026-10-03'||JSON.stringify(approval.waived)!==JSON.stringify(['hardware-timing','complete-memory-bounds'])||approval.imageSha256!=='debb24090cada4be00bc70880136f14e813b0d3a9018b516f922d33671bd9b87'||approval.sourceSha256!==declaration.sourceSha256||approval.imageSha256!==declaration.imageSha256||await moduleNativeSourceSha256(folder,document)!==approval.sourceSha256||await moduleFolderSha256(folder)!==approval.folderSha256) throw new Error('MIDI Scenes: owner build approval does not cover this exact source, image and folder')
     if(document.build||document.tests.qualification||document.tests.hardwareStatus!=='reported'||document.compatibility.conflicts.length!==13) throw new Error('MIDI Scenes: standalone approval requires honest reported status and all companion exclusions')
     const report=JSON.parse(await readFile(resolve(folder,declaration.report),'utf8'))
@@ -121,7 +121,7 @@ export async function requireFolderQualification(folder, document, baseline, wai
     // The owner waived only fresh hardware evidence, for this exact version, source and image. Documentation and media are not part of that binding. The approval is a
     // separate record, so the module folder cannot grant it to itself; every software record must still describe the same build.
     const q=document.tests.qualification
-    const approval=JSON.parse(await readFile(new URL('../sdk/'+document.id+'-build-approval.json',import.meta.url),'utf8'))
+    const approval=JSON.parse(await readFile(new URL('../sdk/approvals/'+document.id+'-build-approval.json',import.meta.url),'utf8'))
     if(approval.id!==document.id||approval.version!==document.version||approval.approvedBy!=='repeat98'||approval.approvedOn!==q.hardware.approvedOn||JSON.stringify(approval.waived)!==JSON.stringify(['current-build-hardware'])||approval.sourceSha256!==q.sourceSha256||approval.imageSha256!==q.imageSha256) throw new Error(document.id+': hardware-only approval does not cover this exact version, source and image')
     const software=JSON.parse(await readFile(resolve(folder,'evidence/software.json'),'utf8'))
     if(software.sourceSha256!==q.sourceSha256||software.imageSha256!==q.imageSha256||software.moduleVersion!==document.version||software.hardwareStatus!==document.tests.hardwareStatus||software.currentBuildHardware!=='owner-waived'||software.chipWallClockCycles!==null||software.memory?.totalBytes!==q.memory.totalBytes||software.memory?.hardwareCanaries!==null) throw new Error(document.id+': software evidence does not match the qualification record')
