@@ -45,7 +45,11 @@
       "Edit a sound on the loaded kit.",
       "Press NO + PLAY to hear the saved kit, and again to get your edits back."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/kit-menu.png",
+      "media/kit-reloaded.png",
+      "media/edits-restored.png"
+    ]
   },
   "controls": [
     {
@@ -96,7 +100,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "No hardware run of this module on OS 1.74 is recorded in this repository yet. Source: rytm2_mods' OS 1.74 file, unchanged. Its four sites are the original two call sites and two popup texts.",
+    "summary": "No hardware run of this module on OS 1.74 is recorded in this repository yet. Source: rytm2_mods' OS 1.74 file, unchanged. In the emulator, KIT menu > RELOAD after a BD DEC edit shows KIT RELOADED! with the saved kit, and a second RELOAD shows EDITS RESTORED! with the edit back; stock shows KIT RELOADED! twice and keeps the saved kit.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -106,8 +110,14 @@
           "Press NO + PLAY again: EDITS RESTORED! and your edited value returns. The KIT menu's RELOAD (FUNC + PLAY MODE) does the same, with KIT RELOADED! in place of KIT 1 RELOADED!."
         ]
       },
-      "screenshots": [],
-      "captureRecord": null
+      "screenshots": [
+        "media/kit-menu.png",
+        "media/dec-edited.png",
+        "media/kit-reloaded.png",
+        "media/edits-restored.png",
+        "media/dec-restored.png"
+      ],
+      "captureRecord": "media/capture.json"
     }
   },
   "license": {
@@ -124,6 +134,86 @@
       "credit": "Iced-Cream",
       "license": "GPL-2.0-only",
       "source": "Original vector illustration; not a device screenshot."
+    },
+    {
+      "path": "media/kit-menu.png",
+      "kind": "screenshot",
+      "caption": "FUNC + PLAY MODE opens the KIT menu with RELOAD first.",
+      "alt": "KIT menu with RELOAD (KIT) highlighted above LOAD KIT, SAVE KIT, CLEAR KIT and TRACK ROUTING.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.0.0",
+        "imageSha256": "88839f128eb98b731fdcbd93672422e867b2c9514bfd3323cdffcb978d760c24",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KA74, core-ar2 0.3 and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/dec-edited.png",
+      "kind": "screenshot",
+      "caption": "An edit on the loaded kit: BD DEC turned down to 82.",
+      "alt": "BD synthesis page with DECAY TIME in the header and DEC showing 82.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.0.0",
+        "imageSha256": "88839f128eb98b731fdcbd93672422e867b2c9514bfd3323cdffcb978d760c24",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KA74, core-ar2 0.3 and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/kit-reloaded.png",
+      "kind": "screenshot",
+      "caption": "First RELOAD: the edits go to the stash and the saved kit loads, under stock's KIT RELOADED!.",
+      "alt": "KIT RELOADED! popup over the BD synthesis page.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.0.0",
+        "imageSha256": "88839f128eb98b731fdcbd93672422e867b2c9514bfd3323cdffcb978d760c24",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KA74, core-ar2 0.3 and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/edits-restored.png",
+      "kind": "screenshot",
+      "caption": "Second RELOAD: the stash is applied, EDITS RESTORED!. Stock shows KIT RELOADED! again.",
+      "alt": "EDITS RESTORED! popup over the BD synthesis page.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.0.0",
+        "imageSha256": "88839f128eb98b731fdcbd93672422e867b2c9514bfd3323cdffcb978d760c24",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KA74, core-ar2 0.3 and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/dec-restored.png",
+      "kind": "screenshot",
+      "caption": "After the second RELOAD the DEC dial is back at the edited value; after the first it was at the saved one.",
+      "alt": "BD synthesis page with the DEC dial at the edited, lower setting.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.0.0",
+        "imageSha256": "88839f128eb98b731fdcbd93672422e867b2c9514bfd3323cdffcb978d760c24",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KA74, core-ar2 0.3 and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
     }
   ]
 }

@@ -54,7 +54,7 @@ The module patches four sites, two in the key handler's NO + PLAY path and two i
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). No run of this module on OS 1.74 is recorded in this repository yet, and the screenshots the library asks for have not been captured. Memory: about 340 bytes of the shared mod area (the 1.74 build's `.run` is to be confirmed by the package build), and the stash on the firmware's heap. There is no code in the audio, sequencer or tick paths.
+See [TESTING.md](TESTING.md). No run of this module on OS 1.74 hardware is recorded in this repository yet. In the emulator the KIT menu's RELOAD stashes and restores a BD DEC edit as described. Memory: about 340 bytes of the shared mod area (the 1.74 build's `.run` is to be confirmed by the package build), and the stash on the firmware's heap. There is no code in the audio, sequencer or tick paths.
 
 ## Authorship and licences
 
@@ -64,4 +64,26 @@ Code: [GPL-2.0-only](LICENSE), as rytm-mods-src. `src/kit-ab.s` (rytm2_mods' `ki
 
 ## Screens and audio
 
-No screenshots yet: rytm-emu captures of KIT 1 RELOADED! and EDITS RESTORED! on a build of this module are still to be made. There is no audio demonstration.
+Emulator captures (analog-emu, headless `dtboot`) of KA74, core-ar2 0.3 with this module, built from stock OS 1.74; see [the capture record](media/capture.json). The KIT menu's RELOAD is used because NO + PLAY does not reach the reload handler in the emulator.
+
+![KIT menu with RELOAD first](media/kit-menu.png)
+
+FUNC + PLAY MODE opens the KIT menu with RELOAD first.
+
+![BD DEC edited to 82](media/dec-edited.png)
+
+An edit on the loaded kit: BD DEC turned down to 82.
+
+![KIT RELOADED! popup](media/kit-reloaded.png)
+
+First RELOAD: the edits go to the stash and the saved kit loads, under stock's KIT RELOADED!.
+
+![EDITS RESTORED! popup](media/edits-restored.png)
+
+Second RELOAD: EDITS RESTORED!. Stock shows KIT RELOADED! again here.
+
+![DEC back at the edited value](media/dec-restored.png)
+
+After the second RELOAD the DEC dial is back at the edited value.
+
+There is no audio demonstration.
