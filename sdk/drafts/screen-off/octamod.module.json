@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 2,
+  "id": "screen-off",
+  "key": "SCREEN OFF",
+  "name": "Screen Off",
+  "version": "0.1.0-experimental",
+  "category": "system",
+  "author": {
+    "github": "jonathanwardle1992-beep",
+    "credits": [
+      "jonathanwardle1992-beep: the chord and the wish to blank the panel while a pattern keeps running."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "Blank the screen with UP + NO",
+    "family": "Front-panel shortcut",
+    "summary": "Hold UP and tap NO to blank the screen until the same chord. Sound, the sequencer and the other keys keep going.",
+    "overview": "The MKII already dims its OLED after five quiet minutes and turns it off after an hour, and only while the sequencer is stopped. Screen Off blanks the glass at once, including while a pattern plays, and leaves it blank until you ask for it back. The trig lamps stay lit, so a running pattern is still visible on the keys.",
+    "highlights": [
+      "Hold UP and tap NO. The screen goes black. The same chord brings it back.",
+      "Every other key and every knob still does what it did. The screen stays black while you use them.",
+      "UP alone and NO alone are unchanged. NO still disarms, or steps back in a list.",
+      "Nothing is stored in the project. A power cycle turns the screen back on."
+    ],
+    "usage": [
+      "Hold UP and tap NO. The screen goes black. Let go of both keys.",
+      "Press PLAY, change a pattern or turn a knob. The action happens and the screen stays black.",
+      "Hold UP and tap NO again. The screen returns to the page you were on."
+    ]
+  },
+  "access": {
+    "location": "Front panel: hold UP, tap NO",
+    "steps": [
+      "Hold UP and tap NO. The screen goes black. Let go of both keys.",
+      "Press PLAY, change a pattern or turn a knob. The action happens and the screen stays black.",
+      "Hold UP and tap NO again. The screen returns to the page you were on."
+    ],
+    "screenshots": [],
+    "noUiReason": "It draws nothing of its own. Hold UP and tap NO and the stock screen goes black until the same chord."
+  },
+  "controls": [],
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": null,
+    "location": "Project sequencer",
+    "conflicts": [],
+    "uiClaims": [
+      "key:UP+NO"
+    ],
+    "limitations": [
+      "OS 1.40C. The author reports that on a MKII the chord blanks the screen and brings it back. It needs the Modwerk base: the base passes keys and the composed frame to the module.",
+      "The blank clears the pixels. On a MKII that leaves the OLED dark. Whether the panel's own power-off command can be used as well is not yet known. On an MKI the backlight may stay lit behind a blank glass.",
+      "The screen stays black until UP + NO again, including while other keys and knobs do their usual jobs. You will not see the result until the screen is back.",
+      "Holding UP already moves the highlight in a list by one step before NO blanks the screen. That NO does not disarm and does not answer a question.",
+      "The blank is forgotten at power-on. It is not saved with the Part or the project. The stock screen saver still runs when this blank is off.",
+      "Known issue: not yet tested on the MKI, or beside the stock screen saver while a pattern plays."
+    ]
+  },
+  "resources": {
+    "recorded": "6 November 2026",
+    "storage": {
+      "label": "ColdFire unit",
+      "display": "Not measured",
+      "value": null,
+      "unit": "bytes",
+      "method": "unmeasured",
+      "conditions": "screen_off.s, one key hook, one draw hook and one tick hook. No stock site, no DSP code. The package size waits on the ColdFire toolchain.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "ColdFire, per key and per composed frame",
+      "display": "Not measured",
+      "value": null,
+      "unit": "cycles/event",
+      "method": "unmeasured",
+      "conditions": "A short compare on each key. While the blank is on, 1024 bytes cleared on each composed frame, in the UI task.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "UI task: one key chord, and a frame clear only while the blank is on.",
+      "cpu": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "The chord is a handful of compares. The clear is 1024 bytes on the UI draw, and only while the screen is black. Nothing runs in the audio interrupt.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code. The blank only clears the composed frame on the UI task.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "One small ColdFire unit and 12 bytes of state.",
+        "source": "screen_off.c"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host gate on screen_off.c. The author reports that on a MKII the chord blanks the screen and brings it back. An MKI and a power cycle were not tried.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "0000000000000000000000000000000000000000",
+    "gates": [
+      "modules/screen-off/verify.py"
+    ]
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original module by jonathanwardle1992-beep, MIT. No firmware, extracted stock code or built images are included."
+  },
+  "media": []
+}
