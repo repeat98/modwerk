@@ -21,6 +21,12 @@ it('accepts a description in the template\'s own shape and in free form', () => 
   expect(bodyProblems(filled, template)).toEqual([])
   expect(bodyProblems('Moves the hook table to Y $7E00 and rebuilds the base packages; checked with pr:ready and a unit run.\n\nGuides: nothing.', template)).toEqual([])
   expect(bodyProblems('Moves the hook table to Y $7E00 and rebuilds the base packages; checked with pr:ready.\n\n## What the guides lacked\n\ndocs/module-guides/README.md had no word on Y memory; fixed there.', template)).toEqual([])
+  // Bold in place of a heading or a bullet, as #1333 wrote it.
+  const free = 'Moves the hook table to Y $7E00 and rebuilds the base packages; checked with pr:ready.\n\n'
+  expect(bodyProblems(free + '**What the guides lacked or got wrong, and where I fixed it**\n\nUpdated the base README.', template)).toEqual([])
+  expect(bodyProblems(free + '**Guides:** nothing', template)).toEqual([])
+  // A bold question followed only by the next bold question is unanswered.
+  expect(bodyProblems(free + '**What the guides lacked**\n\n**Related issues**', template)).toEqual([expect.stringMatching(/^Say what the guides lacked/)])
   // A link to a guide is not an answer.
   expect(bodyProblems('Follows docs/module-guides/effects.md for the new reverb; checked with pr:ready and on an MKII.', template)).toEqual([expect.stringMatching(/^Say what the guides lacked/)])
 })

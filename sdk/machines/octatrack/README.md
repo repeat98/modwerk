@@ -6,6 +6,7 @@ Octatrack modules build on [octabam](https://github.com/sambanks/octabam) (MIT, 
 
 - To add, port or update a module, follow [Add or port a module](../../../docs/ADD_A_MODULE.md).
 - [The SDK README](../../README.md) describes the layout and the native verifiers.
+- [Card-build events](card/README.md): where two modules meet on a card build, which has no base events (`modwerk_card_ev_trig_muted`, the counterpart of `ev_trig_muted`).
 - Octatrack modules use contract v2 (`octamod.module.json`) with the qualification gates in [MODULE_QUALIFICATION.md](../../../docs/MODULE_QUALIFICATION.md) and the frozen eleven-module baseline. They move to contract v3 (see [the SDK guide](../../../docs/SDK.md)) at their next version.
 - OT UI captures follow [MODULE_UI_CAPTURES.md](../../../docs/MODULE_UI_CAPTURES.md).
 
