@@ -22,8 +22,8 @@ Interface 0.1 ([sdk/syntakt/core/interface.json](../../syntakt/core/interface.js
 | --- | --- | --- | --- |
 | Fast SRAM tail | 0x8000733c–0x80008000 | 3,268 bytes | Proven free in both releases. Zeroed at every reset; the core writes its 16-byte signature at its start. |
 | Boot stub space | appended to the main OS, up to 16 KB | 2,256 bytes of image fill exist, but the stub lives in the appended tail | Inside the BSS-clear range: valid only until the clear, which the hook runs before. |
-| SDRAM for mods | none | 0 | Not proven. Candidates: 128 KB above a lowered initial stack (0x47fe0000–0x48000000, data patch at 0x400004f4) or the first 64 KB block of the OS heap. Either needs the owner's decision and a hardware stress run with every sample slot loaded. |
-| In-place depack margin | — | 16,679 bytes (1.42) and 84,063 bytes (1.40) on the probe builds; 96,357 and 160,989 on the stock files | The repository packer compresses section 3 better than Elektron's, which narrows the margin. Every build is checked exactly; a tail that compresses badly consumes it. |
+| SDRAM for mods | none from the linker | 0 | The 1.42 core lowers the stack and copies itself into 0x47fe0000–0x48000000. That gap is not proven under a full sample load, and a mod still cannot take `.run` or `.bss`. The heap block stays unused. |
+| In-place depack margin | — | 16,673 bytes on the 1.42 stack-gap build and 84,063 bytes on the 1.40 probe; 96,357 and 160,989 on the stock files | The repository packer compresses section 3 better than Elektron's, which narrows the margin. Every build is checked exactly; a tail that compresses badly consumes it. |
 | Container | — | 2 MB | The in-OS upgrade receive buffer; 67,760 bytes of stored growth remain on 1.42, 204,864 on 1.40. |
 
 ## Build

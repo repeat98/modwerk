@@ -14,11 +14,12 @@ await mkdir(output, { recursive: true })
 for (const path of values('--firmware')) {
   const raw = new Uint8Array(await readFile(path))
   const { release, linked, writes, syx, facts, stockMargin } = await buildSyntaktBootProbe(raw)
-  const name = 'syntakt-' + release + '-boot-probe.syx'
+  const gap = release === '1.42'
+  const name = gap ? 'syntakt-1.42-stack-gap.syx' : 'syntakt-' + release + '-boot-probe.syx'
   await writeFile(resolve(output, name), syx)
-  const result = { machine: 'syntakt', release, stock: basename(path), stockSha256: sha(raw), stage: 'boot-probe', providesInterface: false, containerVerified: true,
+  const result = { machine: 'syntakt', release, stock: basename(path), stockSha256: sha(raw), stage: gap ? 'stack-gap' : 'boot-probe', providesInterface: false, containerVerified: true,
     buildSha256: sha(syx), imageSha256: sha(linked.image), writes, layout: linked.layout, facts, stockInplaceMargin: stockMargin, hardware: 'not tested' }
   cases.push(result)
-  console.log('syntakt ' + release + ': boot probe linked (' + writes.sites + ' site, ' + writes.tail + ' tail bytes), container verified, in-place margin ' + facts.inplaceGap + ' (stock ' + stockMargin + '); hardware evidence still required')
+  console.log('syntakt ' + release + ': ' + (gap ? 'stack gap' : 'boot probe') + ' linked (' + writes.sites + (writes.sites === 1 ? ' site, ' : ' sites, ') + writes.tail + ' tail bytes), container verified, in-place margin ' + facts.inplaceGap + ' (stock ' + stockMargin + '); hardware evidence still required')
 }
 await writeFile(resolve(output, 'boot-probes.json'), JSON.stringify({ cases }, null, 2) + '\n')
