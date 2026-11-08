@@ -1,0 +1,1 @@
+Octatrack base: on a MIDI track, MIDI NOTE SETUP's generator list now starts with ARP, the track's own arpeggiator, where it said OFF. The list shows five rows and scrolls with UP and DOWN, and room for MIDI generators grows from 4 to 16.
