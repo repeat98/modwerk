@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 3,
+  "id": "lfo-rnd",
+  "name": "LFO RND",
+  "version": "1.2.0",
+  "machine": "analog-rytm-mkii",
+  "category": "machines",
+  "exclusive": false,
+  "author": {
+    "github": "Iced-Cream",
+    "credits": [
+      "MrScruff — the original mod, 0004-lfo-rnd in rytm-mods, its design and code; published in rytm-mods-src with permission.",
+      "Iced-Cream — the elemod port (rytm2_mods), its move to core-ar2 storage and pages, and this Modwerk module.",
+      "irpina — Elekloader and core-ar2, the core it links with."
+    ]
+  },
+  "maintainers": [
+    "Iced-Cream"
+  ],
+  "source": {
+    "repository": "https://github.com/Iced-Cream/rytm2_mods",
+    "revision": "e029f7540c2df2a5185620ca68b4c08579e120c6",
+    "path": "lfo-rnd"
+  },
+  "presentation": {
+    "label": "LFO RND",
+    "family": "Modulation",
+    "summary": "A second LFO page: two random modifiers per sound, each offsetting a chosen parameter by a new random amount on every note.",
+    "overview": "LFO RND adds a page behind the LFO page key: press LFO again to reach it. It holds two random modifiers per sound. Each has a destination (DS1, DS2), one of sixteen parameters taken from stock's LFO destination list (the eight machine parameters, FIN, STA, FRQ, RES, DEC, PAN, DEL and REV), and a depth (DP1, DP2), 0 to 64 in sixteen steps. On every note trig each modifier draws a random offset between -depth and +depth for its destination, clamped to the parameter's range and held until the next note, on top of p-locks, slides and LFO 1. The settings are kept in the sound through core-ar2's mod storage. It is rytm2_mods' elemod port of MrScruff's rytm-mods 0004-lfo-rnd; from 1.2 its page and knobs go through core-ar2's page tables (core_pages, core_params, core_view_pages) instead of detours of its own.",
+    "highlights": [
+      "Two random modifiers per sound, each with its own destination and depth.",
+      "Sixteen destinations from stock's LFO list; depth 0 is stock behaviour.",
+      "A new value on every note, held until the next one.",
+      "Saved with the sound in core-ar2 mod storage."
+    ],
+    "usage": [
+      "Use a build containing LFO RND. Open the LFO page on a voice track and press the LFO page key again: LFO RND shows DS1 and DS2 on knobs A and B, DP1 and DP2 on E and F.",
+      "Turn DS1: the destination list opens. Pick FRQ and press YES, then turn DP1 to 32.",
+      "Play trigs on that track: the filter cutoff moves to a new random value on every note. Turn DP1 to 0: the notes play as stock again. Press LFO once more to go back to the LFO page."
+    ]
+  },
+  "access": {
+    "location": "LFO page key, pressed a second time on a voice track: the LFO RND page.",
+    "steps": [
+      "Select a voice track (not the FX track).",
+      "Press the LFO page key, then press it again: LFO RND.",
+      "Press LFO once more to return to the LFO page."
+    ],
+    "screenshots": []
+  },
+  "controls": [
+    {
+      "name": "DS1 (knob A, LFO RND page)",
+      "default": null,
+      "doc": "Random modifier 1's destination: opens stock's LFO destination list, limited to sixteen entries (the eight machine parameters, FIN, STA, FRQ, RES, DEC, PAN, DEL, REV). YES confirms.",
+      "labels": null
+    },
+    {
+      "name": "DS2 (knob B, LFO RND page)",
+      "default": null,
+      "doc": "Random modifier 2's destination, as DS1.",
+      "labels": null
+    },
+    {
+      "name": "DP1 (knob E, LFO RND page)",
+      "default": null,
+      "doc": "Random modifier 1's depth: sixteen steps from 0 to 64. Each note offsets DS1's parameter by a random amount between -DP1 and +DP1. 0 is off.",
+      "labels": null
+    },
+    {
+      "name": "DP2 (knob F, LFO RND page)",
+      "default": null,
+      "doc": "Random modifier 2's depth, as DP1.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for OS 1.74 only. 1.2.0 reaches its page and knobs through core-ar2's page tables (core_pages, core_params, core_view_pages; core-ar2 0.4 and later; Modwerk's base is core-ar2 0.7). 1.1 and earlier detoured those page routines itself and does not link with core-ar2 0.4 or later.",
+      "Voice tracks only: the FX track has no LFO RND page.",
+      "DS1, DS2, DP1 and DP2 cannot be p-locked, scene-locked or modulated; they are sound settings (lfo-rnd 1.3 adds that, but needs core-ar2 0.9).",
+      "Needs core-ar2's mod storage: one 16-bit sound field (lfo_rnd_cfg). On stock firmware, or a build without this module, the sound plays without the random offsets.",
+      "Sounds saved by lfo-rnd 1.0 (which kept the settings in the sound's parameter word 0) keep them; the first edit moves them into mod storage.",
+      "Hooks the audio interrupt next to Loop Sync's site (different bytes); the pair has not been run together."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [],
+    "claims": [
+      "ui:LFO page key second press (LFO RND page, core_view_pages)",
+      "sequencer:note trig random parameter offset",
+      "param:hidden ids 1-4"
+    ]
+  },
+  "resources": {
+    "memoryBytes": null,
+    "fastBytes": 0,
+    "load": {
+      "display": "Small: a storage read per voice trig and one random draw per modifier at each note's start",
+      "method": "static",
+      "conditions": "Static: the sequencer interrupt reads the sound's field once per voice trig; the audio interrupt draws and clamps at most two offsets when a note starts and otherwise adds the held offsets. The rest runs on UI edits and drawing. On a unit with all eleven rytm2_mods ports on core-ar2 0.10 (T133, lfo-rnd 1.2 among them) the whole set idled at CPU 80 % and peaked at 96 % with notes on eight voice tracks; this module's share was not measured on its own."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "1.2.0",
+    "sourceSha256": "0bf9dcd601e53c573cc1fce45099f5fef0f484bc30eacefb7166c53269668cc8",
+    "reports": [
+      "evidence/hardware-testing.json"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-10-21",
+      "tester": "Iced-Cream",
+      "durationMinutes": null,
+      "summary": "Iced-Cream reports: Hardware, Analog Rytm MKII OS 1.74, 2026-10-21 (runs T22, T23 and T25): with core-ar2 0.4 and all eleven rytm2_mods ports, LFO RND's page and four knobs went through core_pages and core_params (P4A4, the source before the page-key list) and every README test step passed; the page-key list through core_view_pages passed (Q4A4); core's page step and title (U4A4, the bytes of rytm2_mods v1.3, which this folder holds) stepped LFO, LFO RND, LFO with the header following.",
+      "limitations": [
+        "Not yet run from this package on Modwerk's base (core-ar2 0.7): the unit runs used core-ar2 0.4.",
+        "P4A4 ran the source before the page-key list (rytm2_mods 7ff47d7); U4A4 ran this folder's bytes, but only the page step and header were checked on it.",
+        "P4A4: .syx 1c0311697543789316c10dbbbfa78b9a717a180eb26611f2f0d1b732a428d65c. U4A4: .syx 18681f8709242b9d3c5117335a81cd5659ea01c583e3e8477d536e379517b785. Firmware was not read back from the device.",
+        "Duration was not recorded.",
+        "Random offsets per note were seen on 1.0's unit run and read from the module's tables on 1.3; their spread was not measured on 1.2."
+      ]
+    },
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Hardware: lfo-rnd 1.2 on an Analog Rytm MKII, OS 1.74, with core-ar2 0.4 and the other rytm2_mods ports (P4A4, Q4A4, U4A4, 2026-10-21): the LFO RND page through core's page tables, its destination list and depths, random offsets per note, and the settings kept through save, power cycle and reload. Not yet run on Modwerk's base."
+  },
+  "license": {
+    "spdx": "GPL-2.0-only",
+    "file": "LICENSE",
+    "declaration": "MrScruff's rytm-mods code and Iced-Cream's elemod port, under GPL-2.0-only as rytm-mods-src. include/ar2-1.74.inc and shared/shared.s name firmware routines and RAM by address only; the patch preconditions are addresses, lengths and SHA-256s."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "LFO RND",
+      "alt": "Original illustration of a parameter line jumping to a new random level at each trig, within a plus-minus band",
+      "credit": "Iced-Cream",
+      "license": "GPL-2.0-only",
+      "source": "Original vector illustration; not a device screenshot."
+    }
+  ]
+}

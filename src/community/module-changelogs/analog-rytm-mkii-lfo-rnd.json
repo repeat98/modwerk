@@ -1,0 +1,12 @@
+[
+  {
+    "version": "1.2.0",
+    "date": "2026-11-08",
+    "changes": [
+      "First library release, for Analog Rytm MKII OS 1.74 on core-ar2 0.7: press the LFO page key again for LFO RND, two random modifiers per sound.",
+      "Each modifier offsets one of sixteen parameters by a new random amount on every note, up to its depth (0 to 64).",
+      "Port of MrScruff's rytm-mods LFO RND through rytm2_mods; 1.2.0 reaches its page through core-ar2's page tables. Sounds saved by lfo-rnd 1.0 keep their settings.",
+      "Known issue: not yet run on a unit with Modwerk's base; the settings cannot be p-locked."
+    ]
+  }
+]

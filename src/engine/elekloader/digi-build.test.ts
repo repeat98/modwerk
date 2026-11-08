@@ -250,6 +250,15 @@ describe('the vendored elekloader catalog', () => {
       missing: [],
     })
   })
+  it('plans LFO RND beside Loop Sync and Velocity Humanise from its pinned source-only package on the plain base', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['lfo-rnd', 'loop-sync', 'velocity-humanise'])).toMatchObject({
+      core: { file: PLAIN, version: '0.7' },
+      mods: expect.arrayContaining([
+        expect.objectContaining({ id: 'lfo-rnd', file: 'lfo-rnd-1.2.0-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.2.0' }),
+      ]),
+      missing: [],
+    })
+  })
   it('plans CHORUS, a send effect, from its pinned source-only package on the send-bus base', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['chorus'])).toMatchObject({
       core: { file: SEND_BUS, version: '0.7' },

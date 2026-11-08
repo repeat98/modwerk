@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-11-08",
+  "source": "Iced-Cream's own tests on their unit: the core-ar2 0.4 unit test (P4A4, Q4A4 and U4A4, 2026-10-21, runs T22, T23 and T25; rytm2_mods core-pages, released as v1.3) for 1.2; 1.1's run (C3A4, 2026-10-20) and 1.0's (R2T3, 2026-10-14) are kept below for the module's unchanged parts",
+  "reporter": "Iced-Cream",
+  "statement": "Hardware, OS 1.74, 2026-10-21, P4A4 (core-ar2 0.4 and all eleven rytm2_mods ports, lfo-rnd 1.2 through core_pages and core_params): LFO pressed twice opened LFO RND with DS1, DS2, DP1 and DP2; DS1 opened the destination list and YES confirmed FRQ; with DP1 32 the cutoff varied from note to note and with DP1 0 it did not; the four settings were kept through a kit save, power cycle and reload, and through a power cycle without a kit save; a kit saved with lfo-rnd 1.0 showed and played its settings and kept an edit through a power cycle. Q4A4 (the LFO key's list through core_view_pages) passed the page keys beside the other mods. U4A4 (the bytes of rytm2_mods v1.3, this folder's source) stepped LFO, LFO RND, LFO with the header following. Hardware, OS 1.74, 2026-10-20, C3A4 (core-ar2 0.3, lfo-rnd 1.1): the same six steps passed, and the settings were kept through the +Drive sound library and a kit sent and received by SysEx and by Overbridge. Hardware, 2026-11-05, V14H (core-ar2 0.10, all eleven ports with this release object): load baseline CPU 80.0 % idle, 96 % with notes on eight voice tracks, for the whole set.",
+  "status": "hardware-tested-author-reported",
+  "scope": "lfo-rnd 1.2 beside the other rytm2_mods ports on core-ar2 0.4 (P4A4, Q4A4, U4A4) and 0.10 (V14H). lfo-rnd 1.1 beside the other ports on core-ar2 0.3 (C3A4). Not this package on Modwerk's base.",
+  "modules": [
+    {
+      "id": "lfo-rnd",
+      "version": "1.2"
+    },
+    {
+      "id": "core",
+      "version": "0.4"
+    },
+    {
+      "id": "lfo-rnd",
+      "version": "1.1"
+    },
+    {
+      "id": "core",
+      "version": "0.3"
+    }
+  ],
+  "builds": [
+    {
+      "label": "P4A4",
+      "testedOn": "2026-10-21",
+      "os": "1.74",
+      "syxSha256": "1c0311697543789316c10dbbbfa78b9a717a180eb26611f2f0d1b732a428d65c",
+      "content": "core-ar2 0.4 (first version) with rytm2_mods' eleven OS 1.74 mods, lfo-rnd 1.2 among them (rytm2_mods core-pages 7ff47d7, before the page-key list). Flashed by the owner, test steps run by hand, stock 1.74 restored.",
+      "results": [
+        "LFO pressed twice opens LFO RND; DS1 opens the list, YES confirms FRQ; DP1 32 varies the cutoff note to note, DP1 0 does not.",
+        "The four settings are kept through kit save, power cycle and reload, and through a power cycle without a kit save.",
+        "A kit saved with lfo-rnd 1.0 keeps its settings, and an edit to it survives a power cycle."
+      ]
+    },
+    {
+      "label": "Q4A4",
+      "testedOn": "2026-10-21",
+      "os": "1.74",
+      "content": "core-ar2 0.4's second version with the same eleven mods; lfo-rnd's LFO key list through core_view_pages (rytm2_mods d20f352). .syx aeeefc50… (prefix as logged).",
+      "results": [
+        "The page keys step through stock's pages and each mod's beside the other mods."
+      ]
+    },
+    {
+      "label": "U4A4",
+      "testedOn": "2026-10-21",
+      "os": "1.74",
+      "syxSha256": "18681f8709242b9d3c5117335a81cd5659ea01c583e3e8477d536e379517b785",
+      "content": "core-ar2 0.4's final version with the same eleven mods: the bytes of rytm2_mods v1.3, this folder's source.",
+      "results": [
+        "LFO steps LFO, LFO RND, LFO with the header following; the module's six steps were not repeated."
+      ]
+    },
+    {
+      "label": "V14H",
+      "testedOn": "2026-11-05",
+      "os": "1.74",
+      "syxSha256": "7ed16990cabb721acbc98a60b88744ee69300fc8f9a1b371180c62b67fa3070d",
+      "packageSha256": {
+        "lfo-rnd-1.2-os1.74.elemod": "3cd138058c31d0f992f1a66e165b2764a769e7dd763269a72f33c75d86b36a08"
+      },
+      "content": "core-ar2 0.10 with all eleven rytm2_mods ports (this release object among them) and analoghealth 1.3 for remote keys; a load baseline.",
+      "results": [
+        "The whole set: CPU 80.0 % / DSP 74.8 % idle, 96 % / 88.6 % with notes on eight voice tracks. This module's share was not separated."
+      ]
+    },
+    {
+      "label": "C3A4",
+      "testedOn": "2026-10-20",
+      "os": "1.74",
+      "content": "core-ar2 0.3 and all eleven rytm2_mods v1.2 ports, lfo-rnd 1.1 among them.",
+      "results": [
+        "Steps 1 to 6 pass; the settings are kept through the +Drive sound library and a kit sent and received by SysEx and by Overbridge."
+      ]
+    }
+  ],
+  "limitations": [
+    "Not yet run from this package on Modwerk's base (core-ar2 0.7).",
+    "P4A4 ran the source before the page-key list; U4A4 ran this folder's bytes, but only the page step and header were checked on it.",
+    "Duration was not recorded.",
+    "Firmware was not read back from the device."
+  ]
+}
