@@ -8,7 +8,7 @@
     "tools/build/ab_image.py": "c4573d4e0715961f7081dc1d5a0639d42ac63313ccc9e50a0737ac0685e2fc14",
     "tools/remix/loader.S": "32e09fd813ddc65511390faaebc3b86d963b2700f304b35cdb1ec48f90449287"
   },
-  "moduleSourceTreeSha256": "9a824ef6dc7299be4b7acc29278cac52bdbf0f252018bcedc3c552da572e1610",
+  "moduleSourceTreeSha256": "cc211a576fc3c4bb79b33d69b31782f1d290a7a43cddb66a1ebe8a88a92c51f3",
   "packing": null,
   "proofs": [
     {
