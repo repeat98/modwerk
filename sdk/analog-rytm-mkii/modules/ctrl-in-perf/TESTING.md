@@ -8,9 +8,23 @@
   takes 672 bytes of flash and 952 bytes of the shared mod RAM. Linked with irpina's core-ar2 0.7 release
   instead (CP01, `92983fe0…a206`), the emulator frames below are byte-identical.
 
-## Status
+## Hardware (T208, 2026-11-08)
 
-Not run on a unit. The emulator results below are emulator results, not hardware evidence.
+On Iced-Cream's Analog Rytm MKII, OS 1.74, a scripted elkbench run of CPH2 (CP02 plus the analoghealth 1.3
+remote-key layer, `.syx` `3039fb3d23caf9e499a3fa2352508420d63e88db24ff6dda855548bd4895a954`) in a `~T` test
+project, approved by Iced-Cream, with a power cycle by hand. Stock 1.74 was flashed back after.
+
+- CPU 74.6% and 74.8%, read 30 s apart, heap flat (analoghealth).
+- CONTROL INPUT 1 started at MODE OFF. With MODE CV, PERF DEST is the last row, steps OFF, PF1..PF12 and
+  holds at both ends; MODE OFF hides it.
+- PF1 was kept over a project save and reload, and over the power cycle; then set back to OFF.
+- With nothing plugged into EXP/CV IN 1, the port reads below CV ZERO and macro 1 stays at 0.
+
+The manifest's `evidence.sourceSha256` is the sha256 of `sha256sum build.json src/ctrl-in-perf.s` output;
+neither file changed after CPH2 was built.
+
+Not run on the unit: a CV source driving a macro (no CV source was patched; emulator only, below), EXPR
+mode, CONTROL INPUT 2 and a listening check.
 
 ## Emulator (analog-emu `4c07ed3`, dtboot, CP02, fresh card, 2026-11-08)
 
@@ -38,7 +52,7 @@ port 2 to PF3 worked on its own; the value stopped at both ends; the row showed 
 the setting survived a power-off and a cold boot. Those results are for the 1.73 build and its
 persisted-gap storage, not for this port.
 
-## Hardware (to run)
+## Still to run on hardware
 
 1. **Row.** In rytm-emu and on the unit: GLOBAL > CONTROL > CONTROL INPUT 1, MODE CV and EXPR show
    PERF DEST as the last row; OFF shows none. Turning it steps OFF, PF1..PF12 and stops at both ends.
