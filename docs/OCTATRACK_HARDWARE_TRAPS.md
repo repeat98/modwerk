@@ -571,17 +571,17 @@ such a leftover call at once instead of on a later install.
 RAM boot stock restores the current bank from its battery-backed Part copies
 (`0x40025770`) and runs the Part validator on each first; the saved module set
 reinstalls modules only about 3 s later. One value the validator has to fix
-refuses the whole restore: the bank is never copied in or applied, every Part
-reads STATIC with stock defaults, no track is ever bound (renderer slots stay
-`0x400047f0`) and the unit is silent. A module whose Part bytes stock would reject must be kept
+refuses the whole restore: the bank is never applied, every Part reads STATIC
+with stock defaults and the unit is silent. A module whose Part bytes stock would reject must be kept
 from the validator by the base itself, before the module is installed (beta
 finding 24: Analog BD). That includes a module that gives a stock effect's slots new
 meanings: Sidechain Compressor's KEY, KFLT and KGN in COMPRESSOR's page-2 slots
-8-11 wiped testers' current banks at every power-on (finding 47). The restore also runs a
-pattern validator (`0x4009a670`, not hooked) on all 16 patterns, so pattern
-bytes a module writes need the same care. To test a module for this, set it up
-in a scratch project's current bank and RAM-boot: the restore and both
-validators run as at power-up. A refused restore has already written its fixes
+8-11 wiped testers' current banks at every power-on (finding 47). It caps stock fields too
+(a recorder's LOOP at 1, SRC3 at 10), and the bank file read runs it silently on
+every load ([register](../sdk/octabam/docs/TRAPS.md#trap-part-validator-fields)).
+The restore also checks all 16 patterns (`0x4009a670`), so pattern bytes need the
+same care. To test, set the module up in a scratch project's bank and
+RAM-boot. A refused restore has already written its fixes
 into the battery copy, so the next boot restores the bank with those values
 changed (Sidechain's KFLT 64 became 1). To recover a bank lost this way, do not
 save or edit: power-cycle once more, or PROJECT > RELOAD the last save from the
