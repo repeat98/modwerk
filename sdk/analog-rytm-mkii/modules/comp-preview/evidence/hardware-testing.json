@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-11-08",
+  "source": "Iced-Cream's own tests on their unit, recorded in rytm2_mods' comp-preview/README.md (1.0 on 2026-10-14; 1.1 on core-ar2 0.4 on 2026-10-21)",
+  "reporter": "Iced-Cream",
+  "statement": "On an Analog Rytm MKII with OS 1.74, 2026-10-21, comp-preview 1.1 on core-ar2 0.4 with the other rytm2_mods ports: in the full build (Q4A4) COMP and the preview cycle, the preview's FUNC keys work and it is kept on leaving the FX track; with duck (Q4D4) COMP, preview, DUCK cycle and the preview's trace runs while DUCK ducks. With the load guard (U4A4, U4D4, U4F4, U4M4): the preview is kept on the COMP view with and without duck; in the busiest case (DAC SUM, fx-sends' chorus and the preview) CPU touches 100 %, the audio interrupt reads 92 % and peaks at 94 %, the trace stops now and then and comes back by itself, knobs and values keep responding meanwhile, and nothing is audible. 1.0 ran on a unit on 2026-10-14 in the full build: works as described, and the SEQ value goes back to its name after about 1 s. This package on Modwerk's base has not been flashed.",
+  "status": "hardware-tested-author-reported",
+  "scope": "comp-preview 1.1 beside the other rytm2_mods ports on core-ar2 0.4. Not Modwerk's base (core-ar2 0.7).",
+  "modules": [
+    {
+      "id": "comp-preview",
+      "version": "1.1"
+    },
+    {
+      "id": "core",
+      "version": "0.4"
+    }
+  ],
+  "builds": [
+    {
+      "label": "Q4A4",
+      "testedOn": "2026-10-21",
+      "os": "1.74",
+      "content": "core-ar2 0.4 with the rytm2_mods OS 1.74 ports, comp-preview 1.1 among them. Flashed by the owner, test steps run by hand. The .syx hash was not recorded in the source README.",
+      "results": [
+        "COMP and the preview cycle; the preview's FUNC keys work; the preview is kept on leaving the FX track."
+      ]
+    },
+    {
+      "label": "Q4D4",
+      "testedOn": "2026-10-21",
+      "os": "1.74",
+      "content": "Q4A4 with duck (a module that adds a DUCK page behind COMP). The .syx hash was not recorded in the source README.",
+      "results": [
+        "COMP, preview, DUCK cycle; the preview's trace runs while DUCK ducks."
+      ]
+    },
+    {
+      "label": "U4A4, U4D4, U4F4, U4M4",
+      "testedOn": "2026-10-21",
+      "os": "1.74",
+      "content": "The same with core-ar2 0.4's load guard (U4A4's .syx is 18681f8709242b9d3c5117335a81cd5659ea01c583e3e8477d536e379517b785); with and without duck. The others' hashes were not recorded in the source README.",
+      "results": [
+        "The preview is kept on the COMP view with and without duck.",
+        "Busiest case: CPU touches 100 %, the audio interrupt reads 92 % and peaks at 94 %, the trace stops now and then and comes back by itself, nothing is audible."
+      ]
+    }
+  ],
+  "limitations": [
+    "Not run on Modwerk's base (core-ar2 0.7).",
+    "Duration was not recorded.",
+    "Firmware was not read back from the device."
+  ]
+}
