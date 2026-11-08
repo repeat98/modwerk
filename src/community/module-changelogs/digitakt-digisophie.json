@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.2.0-experimental",
+    "date": "2026-11-08",
+    "changes": [
+      "SOPHIE 1.2.0 from its author: the same sound, with a render about 7% lighter by the author’s estimate.",
+      "Machine Pages now draws SOPHIE’s SRC and LFO pages, so SOPHIE can share a build with STRING and RAM Machines.",
+      "Projects keep their SOPHIE tracks; the controls, ranges and pages are as before.",
+      "Known issue: not tested on a unit yet."
+    ]
+  },
+  {
     "version": "1.1.13-experimental.3",
     "date": "2026-10-30",
     "changes": [

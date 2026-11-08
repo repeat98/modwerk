@@ -18,7 +18,7 @@ On Digitakt and Digitone a standalone module is `exclusive`, links with no core 
 ## Integrate
 
 - [ ] The exclusivity is declared everywhere it is read: `exclusive` in a contract-v3 manifest, the conflict in `selection-conflicts.ts` for an Octatrack module, and the library note (`STANDALONE_NOTE`). They agree.
-- [ ] `sdk/catalog.json` entry, thumbnail, README sections, tutorial and screenshots. Any exception to a gate is a separate owner record bound to the exact version, source and image (`sdk/midi-scenes-build-approval.json`); never write one yourself.
+- [ ] `sdk/catalog.json` entry, thumbnail, README sections, tutorial and screenshots. Any exception to a gate is a separate owner record bound to the exact version, source and image (`sdk/approvals/midi-scenes-build-approval.json`); never write one yourself.
 - [ ] `npm run module:doctor -- <id>` is green.
 
 ## Digitakt and Digitone

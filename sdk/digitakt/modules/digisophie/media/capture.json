@@ -2,14 +2,14 @@
   "schemaVersion": 1,
   "machine": "digitakt",
   "moduleId": "digisophie",
-  "moduleVersion": "1.1.13-experimental.3",
-  "capturedAt": "2026-10-30",
+  "moduleVersion": "1.2.0-experimental",
+  "capturedAt": "2026-11-08",
   "firmware": "1.54",
-  "imageSha256": "7c71c84a8937f639090b0849b72d7972d89eb28c2be9f97acecfd91600fdd1d4",
+  "imageSha256": "5da920599d738d18be264c1bfe1ab57e1e05346981f60ac1bfec461ce058140e",
   "stockSha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6",
   "source": {
     "repository": "https://github.com/soejrd/digisophie",
-    "revision": "ce17b9e4868027bafe8684054b45f28ea368bd7c",
+    "revision": "11d2364f3ea8faabd21bb9942fdc0a79606b4e1a",
     "path": "."
   },
   "kit": {
@@ -17,10 +17,10 @@
     "lockSha256": "b8b330328071092fe6e64fab5f55ddc25dd027e41ac8c9f0584dab95814a8e85"
   },
   "catalog": {
-    "revision": "5112c9ed3112fb95df06b3b3f04837d10e557089289d7e373bc18c7f1da43bcb",
-    "sha256": "680b6f8b590a8df8d46d836d34cd13301058bf49c83fe9dd1db556c99ea331e7",
-    "cores": 8,
-    "mods": 49
+    "revision": "5610f2ed965ce526e3bda88c06f512848976aeb3a82b78292bcaea5cf3ed8664",
+    "sha256": "11008a904cc2bf1a0b00538cf9b48ebe02facc3902a6984169129f6217a27f56",
+    "cores": 10,
+    "mods": 73
   },
   "build": {
     "modules": [
@@ -30,9 +30,14 @@
         "sha256": "8c1fe78ccd1427d6a93f181eaad9f064efb65cf6dd683192dbcc33e83dc548b9"
       },
       {
+        "id": "machine-pages",
+        "version": "1.2",
+        "sha256": "1ab853a2ff628dd60b8fa0c5693f3babac64b95c456b331162797aac1526b1a0"
+      },
+      {
         "id": "digisophie",
-        "version": "1.1.13",
-        "sha256": "51cd3aca3652e1926b6be0213269ac0b54b3c44655f06af4a79270db371b58fa"
+        "version": "1.2.0-experimental",
+        "sha256": "025675fc72ce15d9708fd5c4fd6f39dd1ae6aa1c9ea3624ec9641f26f9cf2ed7"
       }
     ],
     "outputVersion": "D001",
@@ -70,115 +75,115 @@
   },
   "inputs": [
     [
-      1000.0,
+      1000.004,
       "press 1"
     ],
     [
-      1100.001,
+      1103.959,
       "press 20"
     ],
     [
-      1200.001,
+      1203.962,
       "release 20"
     ],
     [
-      1514.237,
+      1503.971,
       "release 1"
     ],
     [
-      1614.24,
+      1603.973,
       "press 15"
     ],
     [
-      1714.243,
+      1703.977,
       "release 15"
     ],
     [
-      2014.252,
+      2003.985,
       "press 15"
     ],
     [
-      2114.255,
+      2103.988,
       "release 15"
     ],
     [
-      2414.264,
+      2403.997,
       "press 15"
     ],
     [
-      2514.266,
+      2504,
       "release 15"
     ],
     [
-      2814.275,
+      2804.009,
       "press 15"
     ],
     [
-      2914.279,
+      2904.012,
       "release 15"
     ],
     [
-      3214.287,
+      3204.02,
       "press 12"
     ],
     [
-      3314.29,
+      3304.023,
       "release 12"
     ],
     [
-      3614.299,
+      3604.032,
       "press 12"
     ],
     [
-      3714.302,
+      3704.034,
       "release 12"
     ],
     [
-      5014.34,
+      5004.072,
       "turn 2 -127"
     ],
     [
-      5014.34,
+      5004.072,
       "turn 2 -127"
     ],
     [
-      5014.34,
+      5004.072,
       "turn 2 -127"
     ],
     [
-      5014.34,
+      5004.072,
       "turn 2 -127"
     ],
     [
-      5614.357,
+      5604.09,
       "turn 2 +127"
     ],
     [
-      5614.357,
+      5604.09,
       "turn 2 +1"
     ],
     [
-      6214.375,
+      6204.107,
       "turn 2 +127"
     ],
     [
-      6214.375,
+      6204.107,
       "turn 2 +1"
     ],
     [
-      6814.392,
+      6804.125,
       "turn 2 +127"
     ],
     [
-      6814.392,
+      6804.125,
       "turn 2 +1"
     ],
     [
-      7414.409,
+      7404.142,
       "press 22"
     ],
     [
-      7514.412,
+      7504.145,
       "release 22"
     ]
   ],
@@ -187,29 +192,29 @@
       "path": "media/chooser.png",
       "sha256": "91a6092cd61218e596a7669f900317ec2dc5945b137ae88e47b563f26871d572",
       "plan": "wait 1000\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap chooser\ntap YES\ntap YES\nwait 1000\nturn B -127 600\nsnap fuse\nturn B 32 600\nsnap boom\nturn B 32 600\nsnap pipe\nturn B 32 600\nsnap shard\ntap AMP\nsnap amp\n",
-      "atMs": 3214.2871794871794,
-      "requestedAtMs": 3214.2871794871794
+      "atMs": 3204.019871794872,
+      "requestedAtMs": 3204.019871794872
     },
     {
       "path": "media/fuse.png",
       "sha256": "d97e8afb6452c23cda9dd79443224bce7aac5a8f7736c416d5e4b7b6f308840e",
       "plan": "wait 1000\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap chooser\ntap YES\ntap YES\nwait 1000\nturn B -127 600\nsnap fuse\nturn B 32 600\nsnap boom\nturn B 32 600\nsnap pipe\nturn B 32 600\nsnap shard\ntap AMP\nsnap amp\n",
-      "atMs": 5447.685042735043,
-      "requestedAtMs": 5614.356837606838
+      "atMs": 5604.0895299145295,
+      "requestedAtMs": 5604.0895299145295
     },
     {
       "path": "media/boom.png",
       "sha256": "e8dd552ebabea8784f98cbdfbdeb32bcc3fecd5035d2ec1b72b92f75ea09a9f9",
       "plan": "wait 1000\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap chooser\ntap YES\ntap YES\nwait 1000\nturn B -127 600\nsnap fuse\nturn B 32 600\nsnap boom\nturn B 32 600\nsnap pipe\nturn B 32 600\nsnap shard\ntap AMP\nsnap amp\n",
-      "atMs": 6047.70235042735,
-      "requestedAtMs": 6214.374572649573
+      "atMs": 6146.089316239316,
+      "requestedAtMs": 6204.106837606838
     },
     {
       "path": "media/amp.png",
       "sha256": "5b46758d7f4afe900fb625ef8afe7a08905e06cbc66f02c167a76bb167370e72",
       "plan": "wait 1000\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap chooser\ntap YES\ntap YES\nwait 1000\nturn B -127 600\nsnap fuse\nturn B 32 600\nsnap boom\nturn B 32 600\nsnap pipe\nturn B 32 600\nsnap shard\ntap AMP\nsnap amp\n",
-      "atMs": 7640.0,
-      "requestedAtMs": 7814.42094017094
+      "atMs": 7654.149572649572,
+      "requestedAtMs": 7804.153418803418
     }
   ],
   "limitations": [

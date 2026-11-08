@@ -19,6 +19,9 @@ describe('documentation and firmware scheduling', () => {
   it.each(['scripts/frontend-mcp.mjs', 'scripts/frontend-mcp-private-host.mjs', 'sdk/tests/test_frontend_mcp_host.py'])('checks actual native Windows MCP refusal for %s without firmware compilation', path => {
     expect(scope(change(path))).toMatchObject({ documentation: false, windows: true, modules: false, elemod: false })
   })
+  it.each(['scripts/modules.mjs', 'scripts/machine-modules.mjs', 'scripts/module-qualification.mjs'])('runs the Windows module path check for %s, which modules:check runs', path => {
+    expect(scope(change(path))).toMatchObject({ windows: true })
+  })
   it.each(['scripts/prepare-runtime-spans.py', 'scripts/runtime_private_paths.py', 'sdk/tests/test_runtime_spans.py'])('runs native Windows privacy checks for %s without firmware compilation', path => {
     expect(scope(change(path))).toMatchObject({ documentation: false, windows: true, modules: false, elemod: false })
   })

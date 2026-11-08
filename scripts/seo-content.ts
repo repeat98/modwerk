@@ -11,8 +11,8 @@ import { EXTERNAL_PROJECTS, PROJECT_DESCRIPTION, PROJECT_MACHINES, PROJECT_TITLE
 
 export function homeContent(appUrl: URL) {
   const modules = (items: { path: string; name: string; description: string }[]) => `<ul>${items.map(item => `<li>${link(new URL(item.path, appUrl).href, item.name)}${paragraph(item.description)}</li>`).join('')}</ul>`
-  return '<h1>Mods for Elektron instruments</h1>'
-    + paragraph('Explore custom firmware modules for the Elektron Octatrack, Digitakt and Digitone. Choose modules, check compatibility and build firmware in your browser. Your original firmware stays on your device.')
+  return '<h1>Community mods for electronic music hardware</h1>'
+    + paragraph('Modwerk is a community workshop for opening up electronic music hardware to mods. Choose modules for the Elektron Octatrack, Digitakt, Digitone and Analog Rytm, check compatibility and build firmware in your browser, or help open up the next instrument. Your original firmware stays on your device.')
     + '<h2>Octatrack modules</h2>' + modules(AVAILABLE_MODULES.map(module => ({ path: modulePath(module.id), name: module.name, description: module.description })))
     + DIGI_DEVICES.filter(device => DIGI_MODS.some(mod => mod.device === device)).map(device => `<h2>${escapeHtml(DEVICES_BY_ID[device].name)} modules</h2>` + modules(DIGI_MODS.filter(mod => mod.device === device).map(mod => ({ path: `${device}/module/${mod.id}/`, name: mod.title, description: mod.summary })))).join('')
     + '<h2>Build your own module</h2>' + paragraph('Use the instrument SDK, document your module and submit it for review in the Modwerk library.')
