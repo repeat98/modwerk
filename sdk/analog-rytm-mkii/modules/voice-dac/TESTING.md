@@ -9,7 +9,7 @@
 
 Nothing was run on a unit on Modwerk's base (core-ar2 0.7). All results below are from the emulator or offline tools, on 2026-11-08.
 
-- **Build.** `scripts/build-elemod-isolated.sh` in `modwerk-source-tools` (image `e9fc4df5…`, m68k-elf GCC 16.2.0, binutils 2.47) compiled this folder; `package-elemod-recipe.mjs` wrote `voice-dac-1.4.0-os1.74.elemod` (`.run` 11,078 bytes, no `.bss`), and `--check` reproduces it. Its hash and source commit are in `sdk/imports/voice-dac-2026-11-08.json`.
+- **Build.** `scripts/build-elemod-isolated.sh` in `modwerk-source-tools` (image `6f8066eb…`, m68k-elf GCC 16.2.0, binutils 2.47) compiled this folder; `package-elemod-recipe.mjs` wrote `voice-dac-1.4.0-os1.74.elemod` (`.run` 11,080 bytes, no `.bss`), and `--check` reproduces it. Its hash and source commit are in `sdk/imports/voice-dac-2026-11-08.json`.
 - **Link.** `scripts/link-image.mjs` on the owner's stock OS 1.74 (`cb0f99d6…e123`) links it with the vendored Modwerk base for core-ar2 0.7 (plain variant `ba530f45`): `ramSpare` drops from 119,004 bytes (base alone) to 107,896, `fastSpare` stays 0, flash headroom 1,195,984 bytes. The image, VD14, is `1ed68998…432e`.
 - **Source parity.** Linked with elekloader's released core-ar2 0.7 (`f1e9cb2c…c9`) on the same stock file, the package gives a main OS byte-identical to rytm2_mods v1.4's release object `voice-dac-1.4-os1.74.elemod` (`9649ce2a…960c`) linked with that core ([evidence/source-parity.json](evidence/source-parity.json)).
 - **Emulator, analog-emu `4c07ed3` (dtboot, headless), VD14** ([media/capture.json](media/capture.json) has the full input plan):

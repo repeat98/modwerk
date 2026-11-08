@@ -76,7 +76,7 @@ The 39 sound bits are a large share of core's sound bits: a module that needs mo
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). Memory: 11,078 bytes of code and data in `.run`.
+See [TESTING.md](TESTING.md). Memory: 11,080 bytes of code and data in `.run`.
 
 ## Authorship and licences
 

@@ -146,7 +146,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 11078,
+    "memoryBytes": 11080,
     "fastBytes": 0,
     "load": {
       "display": "Medium: per-voice filters and a shaper in the audio interrupt, skipped for voices that do not use them",
