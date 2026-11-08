@@ -1,4 +1,6 @@
 // Read-only qualification checks. Never import/evaluate submitted native source.
+import { execFileSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import { readFile, readdir } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
 import { resolve } from 'node:path'
@@ -141,4 +143,20 @@ export async function requireFolderQualification(folder, document, baseline, wai
   }
   await requireModuleDocumentation(folder,document)
   return 'qualified'
+}
+
+/** A module new to the library was never on main, so a tested commit already on main cannot be the one its tests ran on (DATAMATIC, #1103,
+ * named a main commit without its draft). Commits from the author's own repository or octabam are not judged: this clone does not know them. */
+export function evidenceOnBaseProblem({ root, base }) {
+  const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 32 * 1024 * 1024 })
+  const succeeds = (...args) => { try { git(...args); return true } catch { return false } }
+  const specs = [':(glob)sdk/drafts/*/octamod.module.json', ':(glob)sdk/octabam/modules/*/octamod.module.json']
+  const changed = (git('diff', '--name-only', '--diff-filter=AM', base, '--', ...specs) + git('ls-files', '--others', '--exclude-standard', '--', ...specs)).split('\n').filter(Boolean)
+  for (const path of new Set(changed)) {
+    const id = path.split('/').at(-2), rev = JSON.parse(readFileSync(resolve(root, path), 'utf8')).tests?.evidenceRevision
+    if (!/^[a-f0-9]{40}$/.test(rev ?? '')) continue
+    const listedOnBase = ['sdk/drafts/' + id, 'sdk/octabam/modules/' + id].some(folder => succeeds('cat-file', '-e', base + ':' + folder + '/octamod.module.json'))
+    if (!listedOnBase && succeeds('merge-base', '--is-ancestor', rev, base)) return path + ': tests.evidenceRevision names ' + rev.slice(0, 8) + ', a commit already on main, which has no ' + id + '. Name the commit your tests ran on: one of this branch\'s, or your own repository\'s (docs/MODULE_QUALIFICATION.md).'
+  }
+  return null
 }

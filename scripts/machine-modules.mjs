@@ -5,6 +5,7 @@ import { readFile, readdir, mkdir, writeFile, copyFile } from 'node:fs/promises'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { execFileSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { isVersionNeutralChange } from './change-scope.mjs'
 import { loadElemodDependencies, dependencyCollections } from './elemod-dependencies.mjs'
 import { requireModwerkDocumentation } from './module-documentation.mjs'
@@ -25,6 +26,20 @@ export function requireNoSubmissions(root,baseCommit){
 export const PLACEHOLDER_THUMBNAIL=/REPLACE THIS THUMBNAIL|Original placeholder from the Modwerk SDK template/
 export function requireOriginalThumbnail(label,item,svg){
  if(PLACEHOLDER_THUMBNAIL.test(svg)||PLACEHOLDER_THUMBNAIL.test(item.source))throw new Error(label+': '+item.path+' is still the SDK template\'s placeholder thumbnail. Draw an original 320x192 one in the shared signal-art style, and give its media entry a real alt and source (docs/ADD_A_MODULE.md#module-thumbnail-style).')
+}
+// Every module draws its own card: a thumbnail copied from another module (Envelopes from Env Reset Amp, #1291) passes the placeholder
+// rule. The same module on two machines, or a draft beside its listed folder, may share one.
+const THUMBNAIL=/^sdk\/(?:drafts\/([^/]+)|[^/]+\/modules\/(?:_submissions\/)?([^/]+))\/(?:media|presentation)\/thumbnail\.svg$/
+export function copiedThumbnail(files){
+ const byHash=new Map()
+ for(const {path,sha256} of files){const match=THUMBNAIL.exec(path);if(!match)continue;const id=match[1]??match[2];if(!byHash.has(sha256))byHash.set(sha256,[]);byHash.get(sha256).push({path,id})}
+ for(const group of byHash.values())if(new Set(group.map(item=>item.id)).size>1)return group[group.length-1].path+' is the same file as '+group.find(item=>item.id!==group[group.length-1].id).path+'. Draw this module its own 320x192 thumbnail in the shared signal-art style (docs/ADD_A_MODULE.md#module-thumbnail-style).'
+ return null
+}
+export function requireDistinctThumbnails(root){
+ const listed=execFileSync('git',['ls-files','--cached','--others','--exclude-standard','-z','--','sdk'],{cwd:root,encoding:'utf8',maxBuffer:32*1024*1024}).split('\0').filter(path=>THUMBNAIL.test(path))
+ const problem=copiedThumbnail(listed.map(path=>({path,sha256:createHash('sha256').update(readFileSync(resolve(root,path))).digest('hex')})))
+ if(problem)throw new Error(problem)
 }
 export async function machineModules({root,write=false,baseCommit=null,includeDrafts=false}) {
 if(includeDrafts&&write)throw new Error('Draft validation cannot publish generated library metadata')

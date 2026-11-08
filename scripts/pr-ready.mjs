@@ -21,6 +21,28 @@ export function gateEdits(files) {
   return files.some(file => MODULE_FOLDER.test(file)) ? files.filter(file => GATE.test(file)) : []
 }
 
+// The base: its hooks and tables, the shared services and adapter code, its loader and the committed base image. A base change is its own
+// owner-reviewed pull request, merged before a module uses it (docs/module-guides/README.md#propose-a-hook). The per-module recipe
+// files beside the adapters (*.json, *.py) are a module's own and stay in its pull request.
+const BASE = /^(?:sdk\/machines\/[^/]+\/(?:events\.json$|site-events\.json$|dsp-sites\.json$|base-binding\.json$|HOOKS\.md$|include\/|elekloader\/|module-adapters\/[^/]+\.(?:c|h|cpp|s)$)|src\/engine\/assets\/[a-z0-9-]+-base(?:[.-]|$))/
+/** The base files a change edits while it also adds or changes a module; [] when it changes no module. */
+export function baseEdits(files) {
+  return files.some(file => MODULE_FOLDER.test(file)) ? files.filter(file => BASE.test(file)) : []
+}
+
+// CI refuses both in contributors' module pull requests opened from this day; earlier ones and the owner's are judged in review.
+export const MODULE_SCOPE_REQUIRED_FROM = '2026-11-09'
+/** CI's refusals for one pull request: [] for the owner's, for one opened before MODULE_SCOPE_REQUIRED_FROM, or for one in scope. */
+export function moduleScopeProblems(files, { author = null, owner = null, openedAt = null } = {}) {
+  if (!author || author.toLowerCase() === owner?.toLowerCase() || (openedAt ?? '').slice(0, 10) < MODULE_SCOPE_REQUIRED_FROM) return []
+  const problems = [], gates = gateEdits(files), base = baseEdits(files)
+  if (gates.length) problems.push(gateProblem(gates))
+  if (base.length) problems.push(baseProblem(base))
+  return problems
+}
+const gateProblem = files => 'This pull request changes a module and also ' + files.join(', ') + ': a check that judges modules. A red check names the fix; never change the check to pass it. If the check itself is wrong, send the correction as its own Fix: pull request for the owner to review, and let the module wait for it.'
+const baseProblem = files => 'This pull request changes a module and also the base: ' + files.join(', ') + '. A base change is its own owner-reviewed pull request, merged before the module uses it (docs/module-guides/README.md#propose-a-hook). Move these files to a pull request of their own, then base the module on main once it has merged.'
+
 /** Why the checks cannot run on this Python, or null. npm run check runs the module gates in Python 3.10+: an older python3
  * (macOS's own is 3.9) crashes inside scripts/module-pairs.py while it loads the Octatrack manifests, with no word on why. */
 export function pythonProblem({ command = 'python3', version = null, error = null } = {}) {
@@ -31,10 +53,11 @@ export function pythonProblem({ command = 'python3', version = null, error = nul
 }
 
 /** The verdict from what was found; every problem says what to do. */
-export function readiness({ python = null, dirty = [], behind = false, remote = 'upstream', regenerated = [], checkPassed = true, author = null, scope = null, guideEdits = [], gateEdits = [], compiled = null, board = null }) {
+export function readiness({ python = null, dirty = [], behind = false, remote = 'upstream', regenerated = [], checkPassed = true, author = null, scope = null, guideEdits = [], gateEdits = [], baseEdits = [], compiled = null, board = null }) {
   const problems = [...board?.problems ?? []], notes = [...board?.notes ?? []]
   if (python) problems.push(python)
-  if (gateEdits.length) problems.push('This pull request changes a module and also ' + gateEdits.join(', ') + ': a check that judges modules. A red check names the fix; never change the check to pass it. If the check itself is wrong, send the correction as its own Fix: pull request for the owner to review, and let the module wait for it.')
+  if (gateEdits.length) problems.push(gateProblem(gateEdits))
+  if (baseEdits.length) problems.push(baseProblem(baseEdits))
   if (dirty.length) problems.push('Commit or discard these changes first; only commits reach the PR: ' + dirty.join(', '))
   if (behind) problems.push(`Your branch does not contain current main. Merge it (git merge ${remote}/main), resolve any conflict, then run this again.`)
   if (regenerated.length) problems.push('The generated files were stale. They are regenerated now; commit them: ' + regenerated.join(', '))
@@ -50,7 +73,7 @@ export function readiness({ python = null, dirty = [], behind = false, remote = 
   notes.push('What did the guides lack or get wrong while you did this? ' + (guideEdits.length
     ? 'Guide edits on this branch: ' + guideEdits.join(', ') + '. Say in the PR what they fix. If a developer working now could hit it before this merges, post it on the agent board yourself: npm run board -- finding <topic> <key> "…" --pr <n>.'
     : 'No guide edit is on this branch: fix it where a reader would look (docs/, AGENTS.md, the machine guide; for a module release, a separate Docs: PR), or write "nothing" in the PR.'))
-  notes.push('Then push, open or update the PR, and watch it: gh pr checks <number> --watch. If main moves before the merge, run this again and push.')
+  notes.push('Then push, open or update the PR with a description in the template\'s shape (CI checks it says what changed and answers the guides question), and watch it: gh pr checks <number> --watch. If main moves before the merge, run this again and push.')
   return { ok: problems.length === 0, problems, notes }
 }
 
@@ -126,7 +149,7 @@ async function main(argv) {
   const boardModule = !dirty.length && !behind ? await import('./agent-board.mjs') : null
   const claimed = boardModule && await boardClaims(root, base, boardModule), waiting = boardModule ? await boardModule.inboxNotes() : []
   const board = claimed || waiting.length ? { problems: claimed?.problems ?? [], notes: [...claimed?.notes ?? [], ...waiting] } : null
-  const verdict = readiness({ python, dirty, behind, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), compiled, board })
+  const verdict = readiness({ python, dirty, behind, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), baseEdits: baseEdits(changed), compiled, board })
   console.log('')
   for (const line of verdict.problems) console.log('✗ ' + line)
   for (const line of verdict.notes) console.log('· ' + line)

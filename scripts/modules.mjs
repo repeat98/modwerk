@@ -1,4 +1,4 @@
-import { machineModules as generateMachineModules } from './machine-modules.mjs'
+import { machineModules as generateMachineModules, requireDistinctThumbnails } from './machine-modules.mjs'
 import { readFileSync } from 'node:fs'
 import { readFile, readdir, mkdir, writeFile, copyFile, rm } from 'node:fs/promises'
 import { resolve, dirname } from 'node:path'
@@ -8,7 +8,7 @@ import { parseModuleDocument, requireModuleUiForPublication } from '../src/catal
 import { compareModuleVersions } from '../src/catalog/versions.ts'
 import { isDocumentationPath, manifestBuildFields } from './module-source.mjs'
 import { resolveModuleFile as file } from '../src/catalog/module-folder.ts'
-import { BASELINE_PATH, WAIVERS_PATH, parseQualificationBaseline, parseReleaseWaivers, qualificationReports, requireFolderQualification } from './module-qualification.mjs'
+import { BASELINE_PATH, WAIVERS_PATH, parseQualificationBaseline, parseReleaseWaivers, qualificationReports, requireFolderQualification, evidenceOnBaseProblem } from './module-qualification.mjs'
 import { parseRetainedResourceImpacts, requireModuleResourceImpact } from '../src/catalog/resource-impact.ts'
 import { USB_WAIVERS_PATH, parseUsbPackageWaivers } from './retained-evidence.mjs'
 import { requireKnownConflicts } from './conflict-ids.mjs'
@@ -65,4 +65,6 @@ for(const item of catalog.modules){const document=documents.get(item.id);if(!doc
 const generated=JSON.stringify({schemaVersion:2,revision:catalog.sourceRevision,modules:selected},null,2)+'\n',target=resolve(root,'src/catalog/module-documents.json')
 if(write){await mkdir(dirname(target),{recursive:true});await writeFile(target,generated);const mediaRoot=resolve(root,'public/module-media');await rm(mediaRoot,{recursive:true,force:true});for(const document of selected){for(const item of document.media){const destination=resolve(mediaRoot,document.id,document.version,item.path);await mkdir(dirname(destination),{recursive:true});await copyFile(await file(resolve(modules,document.id),item.path),destination)}const thumbnail=await file(resolve(modules,document.id),'presentation/thumbnail.svg').catch(error=>{if(error.code==='ENOENT')return null;throw error});if(thumbnail){const destination=resolve(mediaRoot,document.id,document.version,'presentation/thumbnail.svg');await mkdir(dirname(destination),{recursive:true});await copyFile(thumbnail,destination)}}}else if(await readFile(target,'utf8')!==generated)throw new Error('Generated catalog is stale. Run npm run modules:generate and include it in the PR.')
 const machineModules=await generateMachineModules({root,write,baseCommit})
+requireDistinctThumbnails(root)
+if(baseCommit){const problem=evidenceOnBaseProblem({root,base:baseCommit});if(problem)throw new Error(problem)}
 console.log('Validated '+documents.size+' Octatrack module folders and '+machineModules+' elemod module folders; '+selected.length+' version-pinned catalog entries; all CPU/DSP/memory gauges populated; two exact owner-waived utility versions retain untested hardware/unmeasured timing; worst-case cycles, exact memory, hardware test evidence and complete documentation/tutorial/screenshots required for new modules and runtime/resource changes; editorial updates may retain evidence from approved, byte-identical runtime inputs'+(baseCommit?'; version bumps and OT UI publication evidence checked against '+baseCommit:'.'))
