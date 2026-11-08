@@ -109,9 +109,14 @@ async function main(argv) {
   // Each step runs only when the ones before it passed, so the first problem is the one to fix.
   let regenerated = [], checkPassed = true, scope = null
   if (!python && !dirty.length && !behind) {
-    for (const args of GENERATORS) if (!npm(...args)) throw new Error('npm run ' + args.join(' ') + ' failed')
-    regenerated = tracked()
-    if (!regenerated.length) checkPassed = npm('check', '--', '--base', base)
+    // A passing check proved every generated file current, so the generators run only after a failure: stale files are then
+    // the first problem to fix, and the next run checks the rest. A generator that fails leaves the check's own report.
+    checkPassed = npm('check', '--', '--base', base)
+    if (!checkPassed) {
+      for (const args of GENERATORS) if (!npm(...args)) break
+      regenerated = tracked()
+      if (regenerated.length) checkPassed = true
+    }
   }
   if (author && !behind) scope = await authorScope(root, git, base, head, author)
   const changed = git('diff', '--name-only', base + '...' + head).split('\n').filter(Boolean)
