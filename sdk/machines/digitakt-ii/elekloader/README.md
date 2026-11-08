@@ -25,15 +25,15 @@ The entries are proposed in [core-profile/interface.json](../../../digitakt-ii/c
 
 [base.json](base.json) stages the imported sources and adds the proposed [sequencer pitch hook](modwerk/README.md).
 The recipe checks that the candidate retains the stock sites and interface entries of the released `core-1.0.elemod`.
-It pins the same compiler and assembler as `sdk/build/Dockerfile`. To record an identity after review, build with
+It pins the same compiler and assembler as `sdk/build/Dockerfile`. To reproduce the local candidate, build with
 that toolchain, the kit-pinned Elekloader SDK and your local copy of the exact stock OS:
 
 ```sh
-npm run machine:base -- digitakt-ii --stock /private/Digitakt_II_OS1.17.syx --out /private/dt2-base --write
+npm run machine:base -- digitakt-ii --stock /private/Digitakt_II_OS1.17.syx --out /private/dt2-base
 ```
 
-The Windows emulator diagnostic used the pinned SDK with GCC 13.1.0 and binutils 2.40. It passed the recipe's
-reference checks. `base-binding.json` remains pending a build and verification with GCC 16.2.0 and binutils 2.47.
+Two isolated builds with GCC 16.2.0 and binutils 2.47 produced byte-identical packages and verified the
+[recorded binding](../base-binding.json). The [emulator results](modwerk/README.md) cover that exact base.
 
 ## Release status
 
