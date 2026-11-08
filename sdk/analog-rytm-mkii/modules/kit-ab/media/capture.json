@@ -4,11 +4,11 @@
   "moduleId": "kit-ab",
   "moduleVersion": "1.0.0",
   "firmware": "1.74",
-  "capturedAt": "2026-11-08T21:00:00Z",
-  "imageSha256": "88839f128eb98b731fdcbd93672422e867b2c9514bfd3323cdffcb978d760c24",
-  "mainSha256": "91d2887bacd0bee76d0390f728e6ade9c37e9ff9162666fedce1464c01c3d786",
+  "capturedAt": "2026-11-08T21:20:00Z",
+  "imageSha256": "0c773091da851a2e551aacdb0a4b40f03d1ad82b49460d130640d91141c98c6d",
+  "mainSha256": "0e8d066501b18a775d17b2487a4da457f3a975d06911b30b58e42050d7f9856f",
   "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
-  "build": "Modwerk's linker (scripts/link-image.mjs): the vendored core-ar2 0.3 release (6b97dfb3…3e58) + this folder's kit-ab 1.0.0, compiled with m68k-linux-gnu GCC and materialised against stock OS 1.74, --version KA74",
+  "build": "Modwerk's linker (scripts/link-image.mjs): Modwerk's base for core-ar2 0.7 (plain variant ba530f45, sdk/imports/packages/modwerk-base-analog-rytm-mkii) + this folder's kit-ab 1.0.0, compiled with m68k-linux-gnu GCC and materialised against stock OS 1.74 (cb0f99d6…e123), --version KB07",
   "emulator": {
     "name": "analog-emu (trigcondition's Rytm and A4 emulator built on rytm-emu; its history holds rytm-emu c5732f0)",
     "repository": "https://github.com/trigcondition/analog-emu",
@@ -16,37 +16,37 @@
     "binary": "dtboot (cargo build --release, Windows)",
     "settings": "no card image, JIT on, --every 1000M; DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out"
   },
-  "conditions": "Headless cold boot; four NO presses clear the missing-calibration notices and leave the BD synthesis page. DEC (encoder index 3) is turned down eight times by 10, to 82. FUNC + PLAY MODE opens the KIT menu, YES chooses RELOAD, NO leaves the menu and a zero-count turn of DEC takes a frame; the same again for the second RELOAD; a last +1 turn of DEC ends the run (its frame is not used). The same plan on stock 1.74 gives byte-identical frames up to the second RELOAD, which shows KIT RELOADED! again and leaves the boot screen's DEC (the saved value). On both builds the frame after the first RELOAD equals the boot frame byte for byte; on KA74 the frame after the second RELOAD shows the edited DEC.",
+  "conditions": "Headless cold boot; four NO presses clear the missing-calibration notices and leave the BD synthesis page. DEC (encoder index 3) is turned down eight times by 10, to 82. FUNC + PLAY MODE opens the KIT menu, YES chooses RELOAD, NO leaves the menu and a zero-count turn of DEC takes a frame; the same again for the second RELOAD; a last +1 turn of DEC ends the run (its frame is not used). The same plan on stock 1.74 gives byte-identical frames up to the second RELOAD, which shows KIT RELOADED! again and leaves the boot screen's DEC (the saved value). On both builds the frame after the first RELOAD equals the boot frame byte for byte; on KB07 the frame after the second RELOAD shows the edited DEC. Every frame is byte-identical to the same plan's frames on KA74 (core-ar2 0.3 + kit-ab), where the screenshots were first taken.",
   "captures": [
     {
       "path": "media/kit-menu.png",
       "sha256": "3ee3d87a6e216585ae92a5e198ad3fff23db27c758886fd4f1341fe531275a4d",
       "frame": "step14_FUNC.png",
-      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot ka74.syx --instr 12500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --turn 3:-10@7300Mx8/40M --press FUNC@8200M:300M --press PLAYMODE@8300M:40M --press YES@8800M:40M --press NO@9300M:40M --turn 3:0@9700Mx1 --press FUNC@10000M:300M --press PLAYMODE@10100M:40M --press YES@10600M:40M --press NO@11100M:40M --turn 3:0@11500Mx1 --turn 3:1@11900Mx1"
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot kb07.syx --instr 12500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --turn 3:-10@7300Mx8/40M --press FUNC@8200M:300M --press PLAYMODE@8300M:40M --press YES@8800M:40M --press NO@9300M:40M --turn 3:0@9700Mx1 --press FUNC@10000M:300M --press PLAYMODE@10100M:40M --press YES@10600M:40M --press NO@11100M:40M --turn 3:0@11500Mx1 --turn 3:1@11900Mx1"
     },
     {
       "path": "media/dec-edited.png",
       "sha256": "f240919084b02351627597ba52cc1d2fc14cca4443dafa09af5c99ade7720985",
       "frame": "turn12.png",
-      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot ka74.syx --instr 12500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --turn 3:-10@7300Mx8/40M --press FUNC@8200M:300M --press PLAYMODE@8300M:40M --press YES@8800M:40M --press NO@9300M:40M --turn 3:0@9700Mx1 --press FUNC@10000M:300M --press PLAYMODE@10100M:40M --press YES@10600M:40M --press NO@11100M:40M --turn 3:0@11500Mx1 --turn 3:1@11900Mx1"
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot kb07.syx --instr 12500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --turn 3:-10@7300Mx8/40M --press FUNC@8200M:300M --press PLAYMODE@8300M:40M --press YES@8800M:40M --press NO@9300M:40M --turn 3:0@9700Mx1 --press FUNC@10000M:300M --press PLAYMODE@10100M:40M --press YES@10600M:40M --press NO@11100M:40M --turn 3:0@11500Mx1 --turn 3:1@11900Mx1"
     },
     {
       "path": "media/kit-reloaded.png",
       "sha256": "860548a8cfce4ecbd9901f68d907c611c97c0b599278bbeb2efc516e3d300601",
       "frame": "step15_YES.png",
-      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot ka74.syx --instr 12500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --turn 3:-10@7300Mx8/40M --press FUNC@8200M:300M --press PLAYMODE@8300M:40M --press YES@8800M:40M --press NO@9300M:40M --turn 3:0@9700Mx1 --press FUNC@10000M:300M --press PLAYMODE@10100M:40M --press YES@10600M:40M --press NO@11100M:40M --turn 3:0@11500Mx1 --turn 3:1@11900Mx1"
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot kb07.syx --instr 12500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --turn 3:-10@7300Mx8/40M --press FUNC@8200M:300M --press PLAYMODE@8300M:40M --press YES@8800M:40M --press NO@9300M:40M --turn 3:0@9700Mx1 --press FUNC@10000M:300M --press PLAYMODE@10100M:40M --press YES@10600M:40M --press NO@11100M:40M --turn 3:0@11500Mx1 --turn 3:1@11900Mx1"
     },
     {
       "path": "media/edits-restored.png",
       "sha256": "f6c99b7f0db0e35bfdbc8508ce11c18ddea691614facfc122a9f5a116bc47e9f",
       "frame": "step20_YES.png",
-      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot ka74.syx --instr 12500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --turn 3:-10@7300Mx8/40M --press FUNC@8200M:300M --press PLAYMODE@8300M:40M --press YES@8800M:40M --press NO@9300M:40M --turn 3:0@9700Mx1 --press FUNC@10000M:300M --press PLAYMODE@10100M:40M --press YES@10600M:40M --press NO@11100M:40M --turn 3:0@11500Mx1 --turn 3:1@11900Mx1"
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot kb07.syx --instr 12500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --turn 3:-10@7300Mx8/40M --press FUNC@8200M:300M --press PLAYMODE@8300M:40M --press YES@8800M:40M --press NO@9300M:40M --turn 3:0@9700Mx1 --press FUNC@10000M:300M --press PLAYMODE@10100M:40M --press YES@10600M:40M --press NO@11100M:40M --turn 3:0@11500Mx1 --turn 3:1@11900Mx1"
     },
     {
       "path": "media/dec-restored.png",
       "sha256": "eb5f3cd02b7118de29aa3ad730e8fac98b7de68fcbf4804de03931cc80961780",
       "frame": "turn22.png",
-      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot ka74.syx --instr 12500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --turn 3:-10@7300Mx8/40M --press FUNC@8200M:300M --press PLAYMODE@8300M:40M --press YES@8800M:40M --press NO@9300M:40M --turn 3:0@9700Mx1 --press FUNC@10000M:300M --press PLAYMODE@10100M:40M --press YES@10600M:40M --press NO@11100M:40M --turn 3:0@11500Mx1 --turn 3:1@11900Mx1"
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out dtboot kb07.syx --instr 12500M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --turn 3:-10@7300Mx8/40M --press FUNC@8200M:300M --press PLAYMODE@8300M:40M --press YES@8800M:40M --press NO@9300M:40M --turn 3:0@9700Mx1 --press FUNC@10000M:300M --press PLAYMODE@10100M:40M --press YES@10600M:40M --press NO@11100M:40M --turn 3:0@11500Mx1 --turn 3:1@11900Mx1"
     }
   ]
 }

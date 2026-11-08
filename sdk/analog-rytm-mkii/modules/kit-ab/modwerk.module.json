@@ -66,7 +66,7 @@
     "requires": [],
     "conflicts": [],
     "limitations": [
-      "Built for OS 1.74 only, with core-ar2 0.3 or later.",
+      "Built for OS 1.74 only, on Modwerk's base (core-ar2 0.7). The same code links with core-ar2 0.3, where rytm2_mods' release object was built, with the same 340-byte .run.",
       "One set of edits is kept: a stash of one kit, 2.5 KB (0x9e3 bytes) taken from the firmware's heap on the first press. If the allocation fails the press is a plain reload.",
       "The restore applies the stash as stock's reload applies the saved kit, including kit_mark(working, 0), whose meaning is not established.",
       "Reloading every kit stays stock."
@@ -74,7 +74,7 @@
   },
   "platform": {
     "kind": "elemod",
-    "core": "0.3",
+    "core": "0.7",
     "build": "build.json",
     "events": [],
     "claims": [
@@ -100,7 +100,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "No hardware run of this module on OS 1.74 is recorded in this repository yet. Source: rytm2_mods' OS 1.74 file, unchanged. In the emulator, KIT menu > RELOAD after a BD DEC edit shows KIT RELOADED! with the saved kit, and a second RELOAD shows EDITS RESTORED! with the edit back; stock shows KIT RELOADED! twice and keeps the saved kit.",
+    "summary": "No hardware run of this module on OS 1.74 is recorded in this repository yet. Source: rytm2_mods' OS 1.74 file, unchanged. In the emulator on Modwerk's base (core-ar2 0.7), KIT menu > RELOAD after a BD DEC edit shows KIT RELOADED! with the saved kit, and a second RELOAD shows EDITS RESTORED! with the edit back; stock shows KIT RELOADED! twice and keeps the saved kit.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -147,8 +147,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "1.0.0",
-        "imageSha256": "88839f128eb98b731fdcbd93672422e867b2c9514bfd3323cdffcb978d760c24",
-        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KA74, core-ar2 0.3 and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "0c773091da851a2e551aacdb0a4b40f03d1ad82b49460d130640d91141c98c6d",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KB07, Modwerk's base (core-ar2 0.7, plain variant) and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -163,8 +163,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "1.0.0",
-        "imageSha256": "88839f128eb98b731fdcbd93672422e867b2c9514bfd3323cdffcb978d760c24",
-        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KA74, core-ar2 0.3 and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "0c773091da851a2e551aacdb0a4b40f03d1ad82b49460d130640d91141c98c6d",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KB07, Modwerk's base (core-ar2 0.7, plain variant) and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -179,8 +179,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "1.0.0",
-        "imageSha256": "88839f128eb98b731fdcbd93672422e867b2c9514bfd3323cdffcb978d760c24",
-        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KA74, core-ar2 0.3 and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "0c773091da851a2e551aacdb0a4b40f03d1ad82b49460d130640d91141c98c6d",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KB07, Modwerk's base (core-ar2 0.7, plain variant) and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -195,8 +195,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "1.0.0",
-        "imageSha256": "88839f128eb98b731fdcbd93672422e867b2c9514bfd3323cdffcb978d760c24",
-        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KA74, core-ar2 0.3 and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "0c773091da851a2e551aacdb0a4b40f03d1ad82b49460d130640d91141c98c6d",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KB07, Modwerk's base (core-ar2 0.7, plain variant) and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -211,8 +211,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "1.0.0",
-        "imageSha256": "88839f128eb98b731fdcbd93672422e867b2c9514bfd3323cdffcb978d760c24",
-        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KA74, core-ar2 0.3 and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "0c773091da851a2e551aacdb0a4b40f03d1ad82b49460d130640d91141c98c6d",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KB07, Modwerk's base (core-ar2 0.7, plain variant) and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]

@@ -11,7 +11,7 @@ Kit A/B turns the single-kit reload into an A/B between the kit as edited and th
 
 Reloading every kit stays stock. The stash is one kit (0x9e3 bytes, about 2.5 KB) taken from the firmware's heap on the first press and kept; if that fails, the press is a plain reload.
 
-Version **1.0.0** for Analog Rytm MKII OS **1.74**, with core-ar2 0.3 or later. It is
+Version **1.0.0** for Analog Rytm MKII OS **1.74**, on Modwerk's base (core-ar2 0.7). It is
 [rytm2_mods](https://github.com/Iced-Cream/rytm2_mods)' elemod port of MrScruff's
 `0010-kit-ab` from [rytm-mods-src](https://github.com/Iced-Cream/rytm-mods-src),
 with his code unchanged.
@@ -36,7 +36,7 @@ NO + PLAY wherever stock reloads the single kit, or RELOAD in the KIT menu (FUNC
 
 ## Compatibility and limitations
 
-Requires core-ar2 0.3 or later on OS 1.74. Use your own original stock OS 1.74 file.
+Built on Modwerk's base (core-ar2 0.7) for OS 1.74; the same code also links with core-ar2 0.3. Use your own original stock OS 1.74 file.
 
 - Built for OS 1.74 only.
 - One set of edits is kept, in a stash of one kit taken from the firmware's heap on the first press.
@@ -64,7 +64,7 @@ Code: [GPL-2.0-only](LICENSE), as rytm-mods-src. `src/kit-ab.s` (rytm2_mods' `ki
 
 ## Screens and audio
 
-Emulator captures (analog-emu, headless `dtboot`) of KA74, core-ar2 0.3 with this module, built from stock OS 1.74; see [the capture record](media/capture.json). The KIT menu's RELOAD is used because NO + PLAY does not reach the reload handler in the emulator.
+Emulator captures (analog-emu, headless `dtboot`) of KB07, Modwerk's base (core-ar2 0.7, plain variant) with this module, built from stock OS 1.74; see [the capture record](media/capture.json). The KIT menu's RELOAD is used because NO + PLAY does not reach the reload handler in the emulator.
 
 ![KIT menu with RELOAD first](media/kit-menu.png)
 
