@@ -42,7 +42,10 @@
       "Open the AMP page.",
       "Turn HLD or ATK; FUNC + turn on HLD jumps between 0, 125 ms and AUTO."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/decay-time.png",
+      "media/hold-time.png"
+    ]
   },
   "controls": [
     {
@@ -104,9 +107,9 @@
     "memoryBytes": 5228,
     "fastBytes": null,
     "load": {
-      "display": "Not measured yet",
-      "method": "unmeasured",
-      "conditions": "Measure with every voice playing, retrigs and modulated envelopes."
+      "display": "Small: one compare per voice each block, and a short C call per voice only while its amp envelope moves",
+      "method": "static",
+      "conditions": "Read in the code: the amp record write skips a voice whose record repeats and changed nothing, so an idle voice makes no C call. On the author's MKII an earlier build in a 16-module set (LR03, private telemetry base, sequencer stopped) read 70.37 % of the audio block idle, against 70.84 % before that skip (LR01); the module's own share was not separated."
     }
   },
   "evidence": {
