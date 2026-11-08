@@ -2,18 +2,18 @@
   "schemaVersion": 1,
   "machine": "analog-rytm-mkii",
   "moduleId": "control-in-actions",
-  "moduleVersion": "0.1.2-experimental",
+  "moduleVersion": "0.1.3-experimental",
   "firmware": "1.74",
-  "capturedAt": "2026-11-06T22:45:00Z",
-  "imageSha256": "3e7e1661cb9ab84931cd4e60bec9b8ccc4d79b56e69a60ac5fbb5e2fac8cad18",
-  "build": "Modwerk's linker: core-ar2 0.7 + this folder's Control In Actions 0.1.2-experimental, materialised against stock OS 1.74, --version CI12",
+  "capturedAt": "2026-11-08T16:20:00Z",
+  "imageSha256": "a262da4d6be5b49cd7294629eaf7bce5c16a592cee3befda3ee25c0b46418552",
+  "build": "Modwerk's linker: core-ar2 0.7 + this folder's Control In Actions 0.1.3-experimental, materialised against stock OS 1.74, --version CI13",
   "emulator": {
     "name": "rytm-emu",
     "repository": "https://github.com/trigcondition/rytm-emu",
     "binary": "dtboot",
     "settings": "revision 2ac0f1f; a fresh card; key presses held 12M; DTBOOT_END_PNG at the end of each run"
   },
-  "conditions": "SETUP: boot CI12 on a fresh card for 4000M with NO six times to close the calibration notices, snapshot. Each capture loads that snapshot and runs the listed --press events, off the --every grid: the first at 4101M, then one every 250M (the setup's NO presses at 2501M, 2801M, 3101M, 3401M, 3701M and 3901M). These timings reproduce 0.1.1's CI11 frames byte for byte.",
+  "conditions": "SETUP: boot CI13 on a fresh card for 4000M with NO six times to close the calibration notices, snapshot. Each capture loads that snapshot and runs the listed --press events, off the --every grid: the first at 4101M, then one every 250M (the setup's NO presses at 2501M, 2801M, 3101M, 3401M, 3701M and 3901M). These timings reproduce 0.1.1's CI11 and 0.1.2's CI12 frames byte for byte.",
   "captures": [
     {
       "path": "media/action-menu.png",

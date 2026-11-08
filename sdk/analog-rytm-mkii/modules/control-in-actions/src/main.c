@@ -53,6 +53,7 @@ typedef void (*event_dtor_t)(void *event);
 typedef int (*dispatch_t)(void *brain, void *event);
 typedef word_t (*singleton_t)(void);
 typedef unsigned char (*live_rec_t)(void *app);
+typedef void (*grid_rec_set_t)(void *app, int on);
 typedef void (*rect_t)(void *screen, int x1, int y1, int x2, int y2, int colour);
 typedef void (*hline_t)(void *screen, int x1, int y, int x2, int colour);
 typedef void (*vline_t)(void *screen, int x, int y1, int y2, int colour);
@@ -67,6 +68,7 @@ typedef void (*post_t)(void *queue, const void *message);
 #define DISPATCH ((dispatch_t)KEY_DISPATCH_AT)
 #define APP_SINGLETON ((singleton_t)APP_SINGLETON_AT)
 #define LIVE_REC ((live_rec_t)LIVE_REC_AT)
+#define GRID_REC_SET ((grid_rec_set_t)GRID_REC_SET_AT)
 #define FRAME ((rect_t)DRAW_FRAME_AT)
 #define FILL ((rect_t)DRAW_FILL_AT)
 #define HLINE ((hline_t)DRAW_HLINE_AT)
@@ -134,6 +136,7 @@ static unsigned char hold_active[CI_PORTS]; // MUTE HOLD opened the screen
 static unsigned char hold_back[CI_PORTS];   // the mode key to go back to, 0 for none
 static unsigned char rec_active[CI_PORTS];  // REC HOLD turned live recording on
 static unsigned char fill_active[CI_PORTS]; // FILL HOLD holds FILL down
+static unsigned char grid_back;             // grid recording was on when an action started live recording
 static unsigned char learning[CI_PORTS];    // the learn open as the view last drew: LEARN_EXPR, LEARN_FSW or 0
 static char *shown[CI_PORTS];               // the CONTROL INPUT view that last drew
 static word_t shown_class[CI_PORTS];        // its vtable, so a new object at that address is not it
@@ -215,19 +218,33 @@ static int live_rec(void)
     return LIVE_REC((void *)APP_SINGLETON());
 }
 
+static unsigned char app_byte(int at)
+{
+    return *(volatile unsigned char *)((char *)APP_SINGLETON() + at);
+}
+
 // Live recording on, from RECORD + PLAY: a stopped sequencer starts too.
+// Stock's RECORD + PLAY turns grid recording off; rec_off puts it back.
 static void rec_on(void)
 {
-    if (!live_rec())
+    if (!live_rec()) {
+        unsigned char grid = app_byte(APP_GRID_REC);
         record_play();
+        grid_back = grid && live_rec();
+    }
 }
 
 // Live recording off, from PLAY, which stock reads in live recording as
-// leaving it: the sequencer plays on.
+// leaving it: the sequencer plays on, in grid recording again when the
+// action that started live recording found it on.
 static void rec_off(void)
 {
-    if (live_rec())
+    if (live_rec()) {
         tap(KEY_PLAY);
+        if (grid_back && !live_rec() && !app_byte(APP_GRID_REC))
+            GRID_REC_SET((void *)APP_SINGLETON(), 1);
+    }
+    grid_back = 0;
 }
 
 static void pedal(int port, int dest, int down)
@@ -555,6 +572,10 @@ void control_in_actions_tick(void *ctrl)
 #ifdef CIA_EMU
     control_in_actions_emu_mode = mode_key() | live_rec() << 8 | (jacks[0].word & 1) << 16 | learning[0] << 24;
 #endif
+    // Live recording left another way (the panel): the next action that
+    // ends one did not start it.
+    if (grid_back && !app_byte(APP_LIVE_REC))
+        grid_back = 0;
     for (port = 0; port < CI_PORTS; port++) {
         int dest, i;
         redraw(port);

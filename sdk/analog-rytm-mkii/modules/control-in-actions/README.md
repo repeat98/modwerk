@@ -7,7 +7,7 @@ An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.1.2-experimenta
 A footswitch or a 0 to 5 V gate on EXP/CV IN 1 or 2 can play a panel action, so both hands stay on the pads. Stock OS 1.74 already holds a footswitch mode in GLOBAL > CONTROL > CONTROL INPUT 1 and 2, left over from Elektron's other machines, but stops MODE at EXPR and does nothing with it on the Rytm. This mod opens it as **ACTION**:
 
 - **MUTE HLD / MUTE TGL**: MUTE mode while the input is held, then back to the mode you were in, or a MUTE press.
-- **REC HLD / REC TGL**: live recording while held, or on and off. It starts a stopped sequencer and never stops it.
+- **REC HLD / REC TGL**: live recording while held, or on and off. It starts a stopped sequencer and never stops it, and leaves you in grid recording again if you were in it.
 - **FILL HLD / FILL LAT**: FILL while held, or latched as FUNC + FILL FILL and ended as FILL.
 
 Everything is set up in stock's own CONTROL INPUT menus and saved with stock's control-input settings. Bars beside the menu, laid out as EXPR's, show the input against the learned levels and when it counts as pressed.
@@ -26,8 +26,8 @@ Everything is set up in stock's own CONTROL INPUT menus and saved with stock's c
 | OFF | Nothing | Nothing |
 | MUTE HLD | Opens MUTE mode | Goes back to the mode you were in: CHRO, SCNE, PERF, or none; if MUTE mode was already open, it stays |
 | MUTE TGL | A MUTE press: opens or closes MUTE mode | Nothing |
-| REC HLD | Live recording on (RECORD + PLAY: starts the sequencer when stopped) | Live recording off; the pattern plays on |
-| REC TGL | Live recording on (starting a stopped sequencer) or off (the pattern plays on) | Nothing |
+| REC HLD | Live recording on (RECORD + PLAY: starts the sequencer when stopped) | Live recording off; the pattern plays on, back in grid recording if it was on when the input went high |
+| REC TGL | Live recording on (starting a stopped sequencer) or off (the pattern plays on, back in grid recording if it was on when this input started live recording) | Nothing |
 | FILL HLD | Holds FILL: fill mode on, as while you hold the key | Lets FILL go: fill mode off, and a latched fill unlatched, as stock's FILL release |
 | FILL LAT | Latches fill mode, as FUNC + FILL FILL, or ends the latch, as FILL | Nothing |
 

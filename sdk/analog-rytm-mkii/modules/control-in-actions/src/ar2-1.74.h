@@ -61,9 +61,14 @@
 #define KEY_BIT_INDEX 0x418d0be0
 #define KEY_BITS 0x418d1340
 
-// Live recording, on the app.
+// Live recording, on the app (*0x419f28d8, which 0x401816f4 returns). Stock's
+// RECORD + PLAY (0x4004190a) turns grid recording off, then live recording
+// on; leaving live recording (0x4004196c) turns only live recording off.
 #define APP_SINGLETON_AT 0x401816f4
 #define LIVE_REC_AT 0x40036370      // (app) -> live recording on
+#define GRID_REC_SET_AT 0x400362da  // (app, on): grid recording
+#define APP_GRID_REC 360            // app + 360: grid recording on
+#define APP_LIVE_REC 361            // app + 361: live recording on
 
 // The mode screens' view classes (pad tracks, then the FX track's).
 #define MUTE_VTABLE 0x401e2bbc

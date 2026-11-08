@@ -2,7 +2,7 @@
  "schemaVersion": 3,
  "id": "control-in-actions",
  "name": "Control In Actions",
- "version": "0.1.2-experimental",
+ "version": "0.1.3-experimental",
  "machine": "analog-rytm-mkii",
  "category": "system",
  "exclusive": false,
@@ -20,7 +20,7 @@
   "label": "CONTROL IN ACTIONS",
   "family": "Workflow",
   "summary": "An ACTION mode for EXP/CV IN 1 and 2: a gate or footswitch holds or toggles the MUTE screen or live recording, or holds or latches FILL.",
-  "overview": "Stock's CONTROL INPUT menus get a fourth MODE, ACTION. Pick what the input does in the ACTION row: MUTE HLD shows the MUTE screen while the input is high and goes back to the mode you were in when it drops, MUTE TGL opens and closes it, REC HLD records live while the input is high, REC TGL turns live recording on and off, FILL HLD holds FILL, FILL LAT latches and unlatches it. Live recording starts a stopped sequencer and never stops it. A 0 to 5 V gate works as it is; for a footswitch, ACTION LEARN reads its two levels. Bars beside the menu show the input against the learned levels and whether it counts as pressed. Each jack has its own MODE, so one can switch while the other still plays the kit's CV or expression macro.",
+  "overview": "Stock's CONTROL INPUT menus get a fourth MODE, ACTION. Pick what the input does in the ACTION row: MUTE HLD shows the MUTE screen while the input is high and goes back to the mode you were in when it drops, MUTE TGL opens and closes it, REC HLD records live while the input is high, REC TGL turns live recording on and off, FILL HLD holds FILL, FILL LAT latches and unlatches it. Live recording starts a stopped sequencer and never stops it, and ends back in grid recording if you were in it. A 0 to 5 V gate works as it is; for a footswitch, ACTION LEARN reads its two levels. Bars beside the menu show the input against the learned levels and whether it counts as pressed. Each jack has its own MODE, so one can switch while the other still plays the kit's CV or expression macro.",
   "highlights": [
    "Hands-free mutes with both hands on the pads",
    "Set up in stock's own CONTROL INPUT menus, saved with them",
@@ -84,7 +84,7 @@
  },
  "evidence": {
   "tier": "none",
-  "moduleVersion": "0.1.2-experimental",
+  "moduleVersion": "0.1.3-experimental",
   "sourceSha256": null,
   "reports": [],
   "hardware": null,
@@ -92,7 +92,7 @@
  },
  "tests": {
   "report": "TESTING.md",
-  "summary": "Author's unit, builds alone: CI06 and CI07 passed every action, both learns with YES and NO, REVERSE DIRECTION and a power cycle; CI09 the bars, both learns' NO and a hold action. CI11 (0.1.1) reads the jacks in the audio interrupt: in rytm-emu every action played within 0.02 to 1.12 ms of the edge (0.1.0: 4 to 49 ms); works great on the unit, as reported. 0.1.2 in LP01, a 16-module set: actions play, ACTION OFF plays nothing, and with both jacks at ACTION OFF the handler takes 0.8 µs a block (0.1.1: 3.6 µs). Not run alone on a unit.",
+  "summary": "Author's unit, builds alone: CI06 and CI07 passed every action, both learns with YES and NO, REVERSE DIRECTION and a power cycle; CI09 the bars, both learns' NO and a hold action. CI11 (0.1.1) reads the jacks in the audio interrupt: in rytm-emu every action played within 0.02 to 1.12 ms of the edge (0.1.0: 4 to 49 ms); works great on the unit, as reported. 0.1.2 in LP01, a 16-module set: actions play, ACTION OFF plays nothing, and with both jacks at ACTION OFF the handler takes 0.8 µs a block (0.1.1: 3.6 µs). Not run alone on a unit. 0.1.3 grid return: emulator only.",
   "documentation": {
    "tutorial": {
     "title": "Quick tutorial",
@@ -137,9 +137,9 @@
    "capture": {
     "type": "emulator",
     "release": "1.74",
-    "moduleVersion": "0.1.2-experimental",
-    "imageSha256": "3e7e1661cb9ab84931cd4e60bec9b8ccc4d79b56e69a60ac5fbb5e2fac8cad18",
-    "setup": "Headless rytm-emu (dtboot) running CI12: core-ar2 0.7 and this folder's Control In Actions 0.1.2-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+    "moduleVersion": "0.1.3-experimental",
+    "imageSha256": "a262da4d6be5b49cd7294629eaf7bce5c16a592cee3befda3ee25c0b46418552",
+    "setup": "Headless rytm-emu (dtboot) running CI13: core-ar2 0.7 and this folder's Control In Actions 0.1.3-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
    }
   },
   {
@@ -153,9 +153,9 @@
    "capture": {
     "type": "emulator",
     "release": "1.74",
-    "moduleVersion": "0.1.2-experimental",
-    "imageSha256": "3e7e1661cb9ab84931cd4e60bec9b8ccc4d79b56e69a60ac5fbb5e2fac8cad18",
-    "setup": "Headless rytm-emu (dtboot) running CI12: core-ar2 0.7 and this folder's Control In Actions 0.1.2-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+    "moduleVersion": "0.1.3-experimental",
+    "imageSha256": "a262da4d6be5b49cd7294629eaf7bce5c16a592cee3befda3ee25c0b46418552",
+    "setup": "Headless rytm-emu (dtboot) running CI13: core-ar2 0.7 and this folder's Control In Actions 0.1.3-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
    }
   },
   {
@@ -169,9 +169,9 @@
    "capture": {
     "type": "emulator",
     "release": "1.74",
-    "moduleVersion": "0.1.2-experimental",
-    "imageSha256": "3e7e1661cb9ab84931cd4e60bec9b8ccc4d79b56e69a60ac5fbb5e2fac8cad18",
-    "setup": "Headless rytm-emu (dtboot) running CI12: core-ar2 0.7 and this folder's Control In Actions 0.1.2-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+    "moduleVersion": "0.1.3-experimental",
+    "imageSha256": "a262da4d6be5b49cd7294629eaf7bce5c16a592cee3befda3ee25c0b46418552",
+    "setup": "Headless rytm-emu (dtboot) running CI13: core-ar2 0.7 and this folder's Control In Actions 0.1.3-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
    }
   }
  ]

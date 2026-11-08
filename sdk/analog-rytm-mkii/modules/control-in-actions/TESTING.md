@@ -1,5 +1,21 @@
 # Control In Actions testing
 
+## 0.1.3: back to grid recording after live recording (8 November 2026)
+
+Reported by npp1993 on 0.1.2: in grid recording, REC HLD or REC TGL started live recording, and ending it left the Rytm in play mode, not grid recording. Read in OS 1.74's code: stock's RECORD + PLAY (0x4004190a) turns grid recording off (0x400362da, app + 360) before it turns live recording on (0x4003638a, app + 361), and leaving live recording with PLAY (0x4004196c) turns only live recording off. The panel does the same. 0.1.3 notes whether grid recording was on when an action starts live recording and, when the action ends it, turns grid recording back on with stock's own 0x400362da. When live recording ends another way (the panel), the note is dropped, so a later action that ends a live recording it did not start leaves play mode as before.
+
+- rytm-emu `2ac0f1f`: CI13 (vendored core-ar2 0.7 + this source, `a262da4d…8552`) boots, and its three media frames are byte-identical to CI12's.
+- CE18 (CI13's source with `-DCIA_EMU`, `5ab47102…`), CONTROL INPUT 1 in ACTION mode, the level poked, app + 360 and + 361 read with `DTBOOT_PEEK`:
+
+| Steps | Result |
+| --- | --- |
+| REC TGL: RECORD (grid recording), input high, low, high | Live recording on and grid recording off, then live recording off and grid recording on |
+| REC HLD: RECORD (grid recording), input high, then low | Live recording on and grid recording off, then live recording off and grid recording on |
+| REC TGL from play mode, input high, low, high | Live recording on, then off: play mode, as 0.1.2 |
+| REC TGL from grid recording, input high (live recording), panel PLAY (stock leaves it, play mode), panel RECORD + PLAY, input low, then high | Live recording off: play mode, since the input did not start that live recording |
+
+- Not tested: on a unit; with the third record flag on (app + 362, set by 0x400363cc, which also sets grid recording), which RECORD + PLAY also clears and this change does not restore.
+
 ## 0.1.2: no reading with ACTION OFF (6 November 2026)
 
 0.1.1 armed a jack whenever its MODE was ACTION, so with ACTION set to OFF the audio interrupt still read and compared it every block, for no action. 0.1.2 disarms that jack in the UI tick (as a change of ACTION already did), and the `ev_render_out` handler is a two-byte test that calls the reading (`read_jacks`, unchanged) only while a jack is armed. With ACTION OFF the bars' right-hand line follows stock's smoothed level, as during ACTION LEARN. Nothing else changes.
