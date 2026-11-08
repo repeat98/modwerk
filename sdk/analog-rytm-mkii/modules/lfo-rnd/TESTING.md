@@ -16,6 +16,25 @@
 - Tested build U4A4 (OS 1.74, core-ar2 0.4's final version + the same eleven, the bytes of rytm2_mods v1.3, this folder's source): `.syx`
   `18681f8709242b9d3c5117335a81cd5659ea01c583e3e8477d536e379517b785`.
 
+## Hardware: this package on Modwerk's base
+
+On the same Analog Rytm MKII with OS 1.74, 2026-11-08 (run T207), Iced-Cream's unit ran LT12 under elklock:
+`scripts/link-image.mjs` in `modwerk-source-tools` from stock 1.74 with the Modwerk base's plain variant (`ba530f45`,
+core-ar2 0.7), analoghealth 1.3 (`c32aa50c`, remote keys and screen dumps) and this package (`9ff379de…4db6`), `.syx`
+`f9622564736c613a638575e29d7484a0c2cee94fb4e8d05c9d8656f9581e01f1`. Every plan had passed the same steps in the
+emulator first. LT12 was flashed over stock, the plans ran with remote keys and screen checks, and stock 1.74 was
+flashed back.
+
+1. Idle load before the first key: CPU 74.9 % and 74.6 % 30 s apart, DSP 70.2 %, heap flat.
+2. On CP, LFO opened the LFO page; a second press opened LFO RND.
+3. DS1's destination list confirmed FILT:Frequency and DS1 read FRQ. DP1's popup showed 64.
+4. A 10 s take of CP playing 16ths (channel 5) at DP1 64, then one at DP1 0. Both had no dropouts. Over the 80 hits of
+   each take, on the 125 ms step grid, the per-hit spectral centroid had a standard deviation of 5.66 semitones at
+   DP1 64 and 0.45 at DP1 0, 12.6 times the spread: the cutoff moves note to note only with depth.
+5. After a power cycle by hand without a save, LFO RND still read DS1 FRQ and DP1 64.
+
+Kit save and reload and 1.0 kits were not repeated on this base (they passed on core-ar2 0.3 and 0.4 below).
+
 ## Hardware: 1.2 on core-ar2 0.4
 
 On an Analog Rytm MKII with OS 1.74, 2026-10-21, Iced-Cream flashed P4A4, Q4A4 and U4A4 as part of the
@@ -105,7 +124,8 @@ Static reading, not a measurement.
 
 ## Not tested
 
-- This package on a unit with Modwerk's base (core-ar2 0.7).
+- Kit save and reload, and a kit saved with lfo-rnd 1.0, on Modwerk's base (passed on core-ar2 0.3 and 0.4).
+- DS2/DP2 and destinations other than FRQ on Modwerk's base.
 - Beside Loop Sync, whose audio-interrupt site is next to this module's.
 - Beside library modules other than rytm2_mods' own ports.
 - Loading a kit saved with this module into a build without it.

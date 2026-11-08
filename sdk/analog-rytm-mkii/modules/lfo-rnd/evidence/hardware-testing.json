@@ -1,12 +1,24 @@
 {
   "schemaVersion": 1,
   "reportedOn": "2026-11-08",
-  "source": "Iced-Cream's own tests on their unit: the core-ar2 0.4 unit test (P4A4, Q4A4 and U4A4, 2026-10-21, runs T22, T23 and T25; rytm2_mods core-pages, released as v1.3) for 1.2; 1.1's run (C3A4, 2026-10-20) and 1.0's (R2T3, 2026-10-14) are kept below for the module's unchanged parts",
+  "source": "Iced-Cream's own tests on their unit: LT12 on Modwerk's base (core-ar2 0.7) with this package, 2026-11-08, run T207; the core-ar2 0.4 unit test (P4A4, Q4A4 and U4A4, 2026-10-21, runs T22, T23 and T25; rytm2_mods core-pages, released as v1.3) for 1.2; 1.1's run (C3A4, 2026-10-20) and 1.0's (R2T3, 2026-10-14) are kept below for the module's unchanged parts",
   "reporter": "Iced-Cream",
-  "statement": "Hardware, OS 1.74, 2026-10-21, P4A4 (core-ar2 0.4 and all eleven rytm2_mods ports, lfo-rnd 1.2 through core_pages and core_params): LFO pressed twice opened LFO RND with DS1, DS2, DP1 and DP2; DS1 opened the destination list and YES confirmed FRQ; with DP1 32 the cutoff varied from note to note and with DP1 0 it did not; the four settings were kept through a kit save, power cycle and reload, and through a power cycle without a kit save; a kit saved with lfo-rnd 1.0 showed and played its settings and kept an edit through a power cycle. Q4A4 (the LFO key's list through core_view_pages) passed the page keys beside the other mods. U4A4 (the bytes of rytm2_mods v1.3, this folder's source) stepped LFO, LFO RND, LFO with the header following. Hardware, OS 1.74, 2026-10-20, C3A4 (core-ar2 0.3, lfo-rnd 1.1): the same six steps passed, and the settings were kept through the +Drive sound library and a kit sent and received by SysEx and by Overbridge. Hardware, 2026-11-05, V14H (core-ar2 0.10, all eleven ports with this release object): load baseline CPU 80.0 % idle, 96 % with notes on eight voice tracks, for the whole set.",
+  "statement": "Hardware, OS 1.74, 2026-11-08, LT12 (Modwerk's base ba530f45 on core-ar2 0.7, analoghealth 1.3 for remote keys, this package 1.2.0; run T207): on CP, LFO opened the LFO page and a second press opened LFO RND; DS1's list confirmed FILT:Frequency and DS1 read FRQ; DP1's popup showed 64 and then 0; two 10 s CP takes at DP1 64 and DP1 0 had no dropouts, and over 80 hits each the per-hit spectral centroid spread was 5.66 semitones (std) at DP1 64 against 0.45 at DP1 0; after a hand power cycle without a save DS1 still read FRQ and DP1 64. Idle load before the first key: CPU 74.9 % and 74.6 %, DSP 70.2 %. Hardware, OS 1.74, 2026-10-21, P4A4 (core-ar2 0.4 and all eleven rytm2_mods ports, lfo-rnd 1.2 through core_pages and core_params): LFO pressed twice opened LFO RND with DS1, DS2, DP1 and DP2; DS1 opened the destination list and YES confirmed FRQ; with DP1 32 the cutoff varied from note to note and with DP1 0 it did not; the four settings were kept through a kit save, power cycle and reload, and through a power cycle without a kit save; a kit saved with lfo-rnd 1.0 showed and played its settings and kept an edit through a power cycle. Q4A4 (the LFO key's list through core_view_pages) passed the page keys beside the other mods. U4A4 (the bytes of rytm2_mods v1.3, this folder's source) stepped LFO, LFO RND, LFO with the header following. Hardware, OS 1.74, 2026-10-20, C3A4 (core-ar2 0.3, lfo-rnd 1.1): the same six steps passed, and the settings were kept through the +Drive sound library and a kit sent and received by SysEx and by Overbridge. Hardware, 2026-11-05, V14H (core-ar2 0.10, all eleven ports with this release object): load baseline CPU 80.0 % idle, 96 % with notes on eight voice tracks, for the whole set.",
   "status": "hardware-tested-author-reported",
-  "scope": "lfo-rnd 1.2 beside the other rytm2_mods ports on core-ar2 0.4 (P4A4, Q4A4, U4A4) and 0.10 (V14H). lfo-rnd 1.1 beside the other ports on core-ar2 0.3 (C3A4). Not this package on Modwerk's base.",
+  "scope": "lfo-rnd 1.2.0 from this package on Modwerk's base, core-ar2 0.7 (LT12). lfo-rnd 1.2 beside the other rytm2_mods ports on core-ar2 0.4 (P4A4, Q4A4, U4A4) and 0.10 (V14H). lfo-rnd 1.1 beside the other ports on core-ar2 0.3 (C3A4).",
   "modules": [
+    {
+      "id": "lfo-rnd",
+      "version": "1.2.0"
+    },
+    {
+      "id": "core",
+      "version": "0.7"
+    },
+    {
+      "id": "analoghealth",
+      "version": "1.3"
+    },
     {
       "id": "lfo-rnd",
       "version": "1.2"
@@ -25,6 +37,23 @@
     }
   ],
   "builds": [
+    {
+      "label": "LT12",
+      "testedOn": "2026-11-08",
+      "os": "1.74",
+      "syxSha256": "f9622564736c613a638575e29d7484a0c2cee94fb4e8d05c9d8656f9581e01f1",
+      "packageSha256": {
+        "lfo-rnd-1.2.0-os1.74.elemod": "9ff379de8b530281e1e95e85c4fca10c03eb5299d81d4fed640f17e9a4fe4db6"
+      },
+      "content": "scripts/link-image.mjs from stock 1.74: Modwerk's base plain variant (ba530f45, core-ar2 0.7), analoghealth 1.3 (c32aa50c) for remote keys and screen dumps, and this package. Flashed over stock under elklock, plans run with remote keys and screen checks, stock 1.74 flashed back and slots 121-128 erased. Run T207.",
+      "results": [
+        "LFO on CP opens the LFO page; a second press opens LFO RND.",
+        "DS1's destination list confirms FILT:Frequency; DS1 reads FRQ. DP1's popup shows 64, then 0.",
+        "Two 10 s CP takes (16ths, 125 ms grid), 80 hits each: per-hit spectral centroid spread 5.66 semitones (std) at DP1 64, 0.45 at DP1 0 (12.6 times). No audio dropouts.",
+        "After a hand power cycle without a save, DS1 reads FRQ and DP1 64.",
+        "Idle load before the first key: CPU 74.9 % then 74.6 %, DSP 70.2 %, heap flat."
+      ]
+    },
     {
       "label": "P4A4",
       "testedOn": "2026-10-21",
@@ -80,9 +109,9 @@
     }
   ],
   "limitations": [
-    "Not yet run from this package on Modwerk's base (core-ar2 0.7).",
-    "P4A4 ran the source before the page-key list; U4A4 ran this folder's bytes, but only the page step and header were checked on it.",
-    "Duration was not recorded.",
+    "LT12 ran this package with analoghealth only, not beside other library modules.",
+    "Kit save and reload, and 1.0 kits, were checked on core-ar2 0.3 and 0.4 (C3A4, P4A4), not on Modwerk's base.",
+    "The random offsets were measured as spectral spread on CP's FRQ only; other destinations and DS2/DP2 were not exercised on LT12.",
     "Firmware was not read back from the device."
   ]
 }

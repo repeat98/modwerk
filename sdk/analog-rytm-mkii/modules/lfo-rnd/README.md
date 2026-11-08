@@ -115,7 +115,9 @@ LFO key's list stepped LFO, LFO RND, LFO, and the header followed. This folder's
 the same code, symbols, relocations, sites and contributions as rytm2_mods v1.3's release
 object, and linked with core-ar2 0.7 it gives a main OS byte-identical to that object linked
 with the same core. In the emulator on the Modwerk base (LR12) the page, the destination list,
-DS1 and DP1 work as on the unit. It has not yet run on a unit with Modwerk's base. Memory:
+DS1 and DP1 work as on the unit. On the unit with Modwerk's base (LT12, 2026-11-08) the page,
+DS1 FRQ and DP1 passed, CP's tone varied 12.6 times as much from note to note at DP1 64 as at
+DP1 0, and the settings were kept through a power cycle. Memory:
 1,676 bytes of the 128 KiB shared mod area (`.run` 1,664 bytes) and 1,216 bytes of flash.
 
 ## Authorship and licences

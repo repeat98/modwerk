@@ -123,16 +123,16 @@
     "hardware": {
       "model": "Analog Rytm MKII",
       "release": "1.74",
-      "testedOn": "2026-10-21",
+      "testedOn": "2026-11-08",
       "tester": "Iced-Cream",
       "durationMinutes": null,
-      "summary": "Iced-Cream reports: Hardware, Analog Rytm MKII OS 1.74, 2026-10-21 (runs T22, T23 and T25): with core-ar2 0.4 and all eleven rytm2_mods ports, LFO RND's page and four knobs went through core_pages and core_params (P4A4, the source before the page-key list) and every README test step passed; the page-key list through core_view_pages passed (Q4A4); core's page step and title (U4A4, the bytes of rytm2_mods v1.3, which this folder holds) stepped LFO, LFO RND, LFO with the header following.",
+      "summary": "Iced-Cream reports: Hardware, Analog Rytm MKII OS 1.74, 2026-11-08 (run T207), LT12: Modwerk's base (core-ar2 0.7), analoghealth 1.3 and this package. LFO pressed twice on CP opened LFO RND; DS1 confirmed FRQ; DP1 showed 64 and 0; over 80 hits per 10 s take, CP's per-hit spectral centroid spread 5.66 semitones at DP1 64 against 0.45 at DP1 0; DS1 FRQ and DP1 64 were kept through a power cycle without a save. Earlier, 2026-10-21 (runs T22, T23, T25) on core-ar2 0.4 with all eleven rytm2_mods ports, every README test step passed (P4A4), the page-key list through core_view_pages passed (Q4A4) and U4A4 (this folder's bytes) stepped LFO, LFO RND, LFO.",
       "limitations": [
-        "Not yet run from this package on Modwerk's base (core-ar2 0.7): the unit runs used core-ar2 0.4.",
-        "P4A4 ran the source before the page-key list (rytm2_mods 7ff47d7); U4A4 ran this folder's bytes, but only the page step and header were checked on it.",
-        "P4A4: .syx 1c0311697543789316c10dbbbfa78b9a717a180eb26611f2f0d1b732a428d65c. U4A4: .syx 18681f8709242b9d3c5117335a81cd5659ea01c583e3e8477d536e379517b785. Firmware was not read back from the device.",
+        "LT12 ran this package with analoghealth only, not beside other library modules.",
+        "Kit save and reload and 1.0 kits were checked on core-ar2 0.3 and 0.4 (C3A4, P4A4), not on Modwerk's base.",
+        "LT12: .syx f9622564736c613a638575e29d7484a0c2cee94fb4e8d05c9d8656f9581e01f1. P4A4: .syx 1c0311697543789316c10dbbbfa78b9a717a180eb26611f2f0d1b732a428d65c. U4A4: .syx 18681f8709242b9d3c5117335a81cd5659ea01c583e3e8477d536e379517b785. Firmware was not read back from the device.",
         "Duration was not recorded.",
-        "Random offsets per note were seen on 1.0's unit run and read from the module's tables on 1.3; their spread was not measured on 1.2."
+        "The random offsets were measured on CP's FRQ only; other destinations and DS2/DP2 were not exercised on LT12."
       ]
     },
     "verifiedBy": null
