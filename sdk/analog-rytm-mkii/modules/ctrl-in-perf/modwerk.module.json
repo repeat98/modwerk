@@ -1,0 +1,135 @@
+{
+ "schemaVersion": 3,
+ "id": "ctrl-in-perf",
+ "name": "Ctrl In Perf",
+ "version": "1.0.0-experimental",
+ "machine": "analog-rytm-mkii",
+ "category": "system",
+ "exclusive": false,
+ "author": {
+  "github": "Iced-Cream",
+  "credits": [
+   "MrScruff — the original mod, 0017-ctrl-in-perf in rytm-mods, its design and code; published in rytm-mods-src with permission.",
+   "Iced-Cream — the OS 1.74 port and this Modwerk module.",
+   "irpina — Elekloader and core-ar2, the core it links with."
+  ]
+ },
+ "maintainers": [
+  "Iced-Cream"
+ ],
+ "source": {
+  "repository": "https://github.com/Iced-Cream/rytm-mods-src",
+  "revision": "cd4ded4a8fc5eabd4bddb824696196202db50ef8",
+  "path": "mods/0017-ctrl-in-perf"
+ },
+ "presentation": {
+  "label": "CTRL IN PERF",
+  "family": "Performance",
+  "summary": "EXP/CV IN 1 or 2 plays a performance macro: a PERF DEST row in the CONTROL INPUT menus sends the jack to PF1 to PF12.",
+  "overview": "Ctrl In Perf adds PERF DEST to GLOBAL > CONTROL > CONTROL INPUT 1 and 2 in CV and EXPR modes. Set it to PF1 to PF12 and the jack sets that performance macro as its knob would: CV ZERO LEVEL to CV MAX LEVEL, or the learned EXPR range, maps to 0 to 127, the macro's performance locks follow and its pad lights in PERF mode. The jack always wins: while it drives a macro, that macro's knob and pad are overwritten at the next audio block. The value moves in whole steps and holds still against converter noise. Nothing is sent over MIDI or Overbridge, and the kit is not marked edited. PERF DEST is saved with the globals slot. It is a port of MrScruff's rytm-mods 0017-ctrl-in-perf to OS 1.74.",
+  "highlights": [
+   "A CV or expression pedal plays any of the twelve performance macros.",
+   "Set up in stock's CONTROL INPUT menus.",
+   "The macro's locks and its PERF pad light follow the jack.",
+   "Each jack has its own destination."
+  ],
+  "usage": [
+   "Plug a CV source or an expression pedal into EXP/CV IN 1, then open GLOBAL > CONTROL > CONTROL INPUT 1 and set MODE to CV or EXPR (for EXPR, run EXPRESSION LEARN).",
+   "Set PERF DEST, the last row, to PF1 and leave the menu.",
+   "Give performance 1 some locks (hold PF1 in PERF mode and turn knobs), then move the jack: the locks follow it, and pad 1 lights with the level in PERF mode.",
+   "Set PERF DEST back to OFF to give PF1 back to its knob and pad."
+  ]
+ },
+ "access": {
+  "location": "GLOBAL > CONTROL > CONTROL INPUT 1 or 2, in MODE CV or EXPR.",
+  "steps": [
+   "Connect a CV source or an expression pedal to EXP/CV IN 1 or 2.",
+   "Open GLOBAL > CONTROL > CONTROL INPUT 1 (or 2) and set MODE to CV or EXPR.",
+   "Set PERF DEST to PF1..PF12."
+  ],
+  "screenshots": []
+ },
+ "controls": [
+  {
+   "name": "PERF DEST",
+   "default": null,
+   "doc": "In GLOBAL > CONTROL > CONTROL INPUT 1 and 2, MODE CV or EXPR: the performance macro the jack sets, OFF or PF1 to PF12.",
+   "labels": null
+  }
+ ],
+ "compatibility": {
+  "releases": [
+   "1.74"
+  ],
+  "requires": [],
+  "conflicts": [],
+  "limitations": [
+   "Stay within the jack's -5 V to +5 V.",
+   "While a jack drives a macro, that macro's knob, pad and CC 35 to 47 are overwritten at the next audio block, about 0.7 ms later.",
+   "PERF DEST belongs to the globals slot and is saved with the project's globals: a new project, or one saved without the module, reads OFF.",
+   "A jack in OFF mode, or in another module's mode, drives no macro. CONTROL IN 1 MOD and 2 MOD still play as stock beside it."
+  ]
+ },
+ "platform": {
+  "kind": "elemod",
+  "core": "0.7",
+  "build": "build.json",
+  "events": [
+   "ev_render_in",
+   "ev_tick"
+  ],
+  "claims": [
+   "ui:GLOBAL > CONTROL > CONTROL INPUT 1 and 2: PERF DEST row in CV and EXPR modes",
+   "input:EXP/CV IN 1 and 2 in CV and EXPR modes drive a performance macro"
+  ]
+ },
+ "resources": {
+  "memoryBytes": null,
+  "fastBytes": 0,
+  "load": {
+   "display": "Not measured yet",
+   "method": "unmeasured",
+   "conditions": "Each audio block, for each jack with a PERF DEST, a scale and a compare; each UI tick, each jack's settings and stored PERF DEST."
+  }
+ },
+ "evidence": {
+  "tier": "none",
+  "moduleVersion": "1.0.0-experimental",
+  "sourceSha256": null,
+  "reports": [],
+  "hardware": null,
+  "verifiedBy": null
+ },
+ "tests": {
+  "report": "TESTING.md",
+  "summary": "Not tested on OS 1.74 yet. The OS 1.73 original passed its checks in rytm-emu (rytm-mods-src) and never ran on a unit.",
+  "documentation": {
+   "tutorial": {
+    "title": "Quick tutorial",
+    "steps": [
+     "Plug a CV source or an expression pedal into EXP/CV IN 1, then open GLOBAL > CONTROL > CONTROL INPUT 1 and set MODE to CV or EXPR (for EXPR, run EXPRESSION LEARN).",
+     "Set PERF DEST, the last row, to PF1 and leave the menu.",
+     "Give performance 1 some locks (hold PF1 in PERF mode and turn knobs), then move the jack: the locks follow it, and pad 1 lights with the level in PERF mode.",
+     "Set PERF DEST back to OFF to give PF1 back to its knob and pad."
+    ]
+   },
+   "screenshots": []
+  }
+ },
+ "license": {
+  "spdx": "GPL-2.0-only",
+  "file": "LICENSE",
+  "declaration": "MrScruff's rytm-mods code and Iced-Cream's OS 1.74 port, under GPL-2.0-only as rytm-mods-src. The source names firmware routines by address only; the patch precondition is an address, a length and a SHA-256."
+ },
+ "media": [
+  {
+   "path": "media/thumbnail.svg",
+   "kind": "thumbnail",
+   "caption": "Ctrl In Perf",
+   "alt": "A control voltage on the left and a performance macro's level following it in steps on the right, with PERF pad 3 lit.",
+   "credit": "Iced-Cream",
+   "license": "GPL-2.0-only",
+   "source": "Original conceptual illustration in the shared signal-art style; not a device screenshot."
+  }
+ ]
+}
