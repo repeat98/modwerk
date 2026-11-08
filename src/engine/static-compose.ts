@@ -13,12 +13,25 @@ import { createPlatformOsWrites } from './platform-writes.ts'
 import { applyGuardedOsWrites, OS_LOAD_ADDRESS } from './os-patches.ts'
 import { replaceUsbAudioHooks } from './usb-audio.ts'
 import type { UsbAudioConfiguration } from '../config/usb-audio.ts'
+type StaticRuntime = Awaited<ReturnType<typeof createStaticColdFireRuntime>>
+function sameLayout(provisional: StaticRuntime, final: StaticRuntime) {
+  const same = provisional.bytes.length === final.bytes.length && provisional.reserveBytes === final.reserveBytes &&
+    JSON.stringify(provisional.sections) === JSON.stringify(final.sections) && JSON.stringify(provisional.units) === JSON.stringify(final.units) &&
+    [...provisional.symbols].every(([name, address]) => provisional.romRefs.includes(name) || final.symbols.get(name) === address)
+  if (!same) throw new Error('The DRAM link moved when the ROM symbols were applied.')
+  return final
+}
 /** Every write set of a loader-free build, kept apart so a verifier can compare the module-owned
  *  writes with a native build that has no logger, and prove the others leave them untouched. */
 export async function planStaticOs(original: Uint8Array, ids: readonly string[], profile = defaultChoosers(ids), usbAudio?: UsbAudioConfiguration, betaAccess = false) {
   await verifyNativeContracts(original, ids)
-  const cores = await recoverStockDsp(original), runtime = await createStaticColdFireRuntime(ids, original, undefined, usbAudio, betaAccess)
+  const cores = await recoverStockDsp(original)
+  let runtime = await createStaticColdFireRuntime(ids, original, undefined, usbAudio, betaAccess, undefined, 'provisional')
   const menus = await composeChoosers(original, ids, profile, runtime, betaAccess), dsp = await composeStaticDsp(cores, ids, menus.chooser)
+  // The menus place the ROM units after the DRAM link (their caves start past its reserve, and their hooks name runtime
+  // code), so a DRAM unit that names a ROM symbol is linked once more with it. Only relocated values change: the menus'
+  // writes, which name runtime addresses, stay valid. Native resolves the same names (build_bus.py, _dram_rom_externals).
+  if (runtime.romRefs.some(name => menus.romSymbols.has(name))) runtime = sameLayout(runtime, await createStaticColdFireRuntime(ids, original, undefined, usbAudio, betaAccess, undefined, menus.romSymbols))
   if (usbAudio) menus.writes = await replaceUsbAudioHooks(original, menus.writes, runtime)
   const logging = await installCoreLogger(runtime, original, ids, menus.chooser, betaAccess ? BETA_STARTUP_IDENTITY : undefined)
   const platform = createPlatformOsWrites(runtime, ids, { loader: false, reserveBytes: runtime.reserveBytes })
