@@ -16,7 +16,7 @@
     "binary": "dtboot (cargo build --release, Windows)",
     "settings": "no card image, JIT on, --every 1000M; DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out"
   },
-  "conditions": "Headless cold boot; four held NO presses clear the missing-calibration notices; short presses (12M) select the FX track and open its AMP page (the compressor); encoder 0 (THR) turns down thirty-eight steps to 64; AMP again opens the preview; BD is struck ten times, 300M apart; FUNC is held while AMP is pressed for the second layout, and BD is struck ten times more. Stock 1.74 with the same input gives byte-identical frames up to the compressor page and stays on it when AMP is pressed again. Below THR about 45 the estimate holds a large reduction between hits in the emulator, so the full layout's trace leaves the screen; the captures use 64. Playback was not judged in the emulator.",
+  "conditions": "Headless cold boot; four held NO presses clear the missing-calibration notices; short presses (12M) select the FX track and open its AMP page (the compressor); encoder 0 (THR) turns down thirty-eight steps to 64; AMP again opens the preview; BD is struck ten times, 300M apart; FUNC is held while AMP is pressed for the second layout, and BD is struck ten times more. Stock 1.74 with the same input gives byte-identical frames up to the compressor page and stays on it when AMP is pressed again. At THR 41 and below the full layout drew no trace in the emulator (TESTING.md, Emulator); the captures use 64. Playback was not judged in the emulator.",
   "captures": [
     {
       "path": "media/compressor-page.png",

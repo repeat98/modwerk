@@ -101,7 +101,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 3856,
+    "memoryBytes": 3912,
     "fastBytes": 0,
     "load": {
       "display": "Moderate: a 32-frame estimate each audio block, 4 to 5 points of CPU",
@@ -114,7 +114,8 @@
     "moduleVersion": "1.1.0",
     "sourceSha256": "a36fa34530ef0809810ceff82f117667849af2de944796ce5aab511018ad0cb7",
     "reports": [
-      "evidence/hardware-testing.json"
+      "evidence/hardware-testing.json",
+      "evidence/source-parity.json"
     ],
     "hardware": {
       "model": "Analog Rytm MKII",
@@ -126,15 +127,14 @@
       "limitations": [
         "Not run on Modwerk's base (core-ar2 0.7); the runs were on core-ar2 0.4 with the other rytm2_mods ports.",
         "Duration was not recorded.",
-        "Firmware was not read back from the device.",
-        "No emulator capture or source-parity run on Modwerk's base has been made yet."
+        "Firmware was not read back from the device."
       ]
     },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Hardware, core-ar2 0.4 (2026-10-21): COMP and the preview cycle, the FUNC keys work, the page is kept on leaving the FX track, and the load guard pauses the trace rather than the audio. Not yet run on Modwerk's base.",
+    "summary": "Hardware, core-ar2 0.4 (2026-10-21): COMP and the preview cycle, the FUNC keys work, the page is kept on leaving the FX track, and the load guard pauses the trace rather than the audio. Modwerk's package linked with core-ar2 0.7 gives a main OS byte-identical to the rytm2_mods v1.3 release object linked with it. In the emulator on the Modwerk base (CP11), AMP again opens the preview and FUNC + AMP its second layout, and BD hits draw the trace. Not yet run on a unit on Modwerk's base.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",

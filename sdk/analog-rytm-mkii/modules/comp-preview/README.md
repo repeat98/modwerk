@@ -71,7 +71,7 @@ preview's place in the COMP view's page list is an entry in core-ar2's `core_vie
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md) for the commands and results. In short: on the author's Analog Rytm MKII with OS 1.74 and core-ar2 0.4 (2026-10-21), COMP and the preview cycle, the FUNC keys work, the page is kept on leaving the FX track, and the load guard pauses the trace rather than the audio; in the busiest case the audio interrupt peaked at 94 %. This package on Modwerk's base has not been flashed, and there is no emulator capture of it yet. Memory: 3856 bytes of the 128 KiB shared mod area.
+See [TESTING.md](TESTING.md) for the commands and results. In short: on the author's Analog Rytm MKII with OS 1.74 and core-ar2 0.4 (2026-10-21), COMP and the preview cycle, the FUNC keys work, the page is kept on leaving the FX track, and the load guard pauses the trace rather than the audio; in the busiest case the audio interrupt peaked at 94 %. Modwerk's package linked with core-ar2 0.7 gives a main OS byte-identical to the rytm2_mods v1.3 release object linked with it. In the emulator on the Modwerk base (CP11), AMP again opens the preview, FUNC + AMP its second layout, and BD hits draw the trace; at THR 41 and below the full layout drew no trace there. This package on Modwerk's base has not been flashed. Memory: 3912 bytes of the 128 KiB shared mod area.
 
 ## Authorship and licences
 
