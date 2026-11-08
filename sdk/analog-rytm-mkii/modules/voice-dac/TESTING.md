@@ -22,10 +22,10 @@ Nothing was run on a unit on Modwerk's base (core-ar2 0.7). All results below ar
 
 ## Reported by the author on core-ar2 0.6
 
-These are the porting contributor's results as written in rytm2_mods' README for 1.4 (see [upstream/README.md](upstream/README.md), "Results so far"), not repeated on Modwerk's base. The build hashes are not recorded here.
+These are the porting contributor's results as written in rytm2_mods' README for 1.4 (see [upstream/README.md](upstream/README.md), "Results so far"), not repeated on Modwerk's base. The unit build's hash is in [evidence/hardware-testing.json](evidence/hardware-testing.json); its voice-dac source equals v1.4's, but its object was not compared with the v1.4 release object.
 
 - rytm-emu, OS 1.74, core-ar2 0.6 with all eleven rytm2_mods (V6A4) against the same with voice-dac 1.3: a 59-screen walk was pixel-identical except DAC FILTER with TYP OFF, LP1 and HP1, where FRQ and RES, or RES, are empty as intended; the empty knobs do nothing; the page follows a switch from BD (LP1) to SD (OFF) and back.
-- Hardware, Analog Rytm MKII, OS 1.74, 2026-10-23, V6A4 plus the analoghealth test mod for remote keys: every test step passed. DAC FILTER through every TYP, the empty knobs inert, the page following TRK + SD and back, RES kept across LP2, LP1 and LP2, and BD's DAC FILTER back as saved after SAVE KIT, a power cycle and RELOAD. BD on LP2, LP1 and OFF: no dropouts, nothing audible. Not compared with a v1.3 recording.
+- Hardware, Analog Rytm MKII, OS 1.74, 2026-10-23, V6H4 (V6A4 plus the analoghealth test mod for remote keys, `.syx` `4a896e59…f697`): every test step passed. DAC FILTER through every TYP, the empty knobs inert, the page following TRK + SD and back, RES kept across LP2, LP1 and LP2, and BD's DAC FILTER back as saved after SAVE KIT, a power cycle and RELOAD. BD on LP2, LP1 and OFF: no dropouts, nothing audible. Not compared with a v1.3 recording.
 - Earlier versions: values kept through kit save and reload, a power cycle without a kit save, the +Drive sound library and a kit sent by SysEx and Overbridge (1.2, 2026-10-20); the shaper, 2-pole filters and polarity on hardware (1.0 era, 2026-10-06/07).
 
 ## Sound

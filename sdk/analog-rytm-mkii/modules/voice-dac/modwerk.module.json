@@ -155,13 +155,28 @@
     }
   },
   "evidence": {
-    "tier": "none",
+    "tier": "author-hardware",
     "moduleVersion": "1.4.0",
     "sourceSha256": "a9628fe3f3b47bdc1078ae2ced849b2770523d55e3eef853c6823a9c438e5754",
     "reports": [
+      "evidence/hardware-testing.json",
       "evidence/source-parity.json"
     ],
-    "hardware": null,
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-10-23",
+      "tester": "Iced-Cream",
+      "durationMinutes": null,
+      "summary": "Iced-Cream reports: Hardware, Analog Rytm MKII, OS 1.74, 2026-10-23, V6H4 (core-ar2 0.6 with all eleven rytm2_mods ports, voice-dac 1.4 among them, plus analoghealth for remote keys): with DAC SUM on, FILTER pressed twice opened DAC FILTER; TYP OFF showed TYP and DEP only with the empty knobs inert; LP2, BP, HP2, BS and PK showed FRQ and RES, LP1 and HP1 FRQ only; the page followed BD (LP1) to SD (OFF) and back; RES was kept across LP2, LP1 and LP2; BD on LP2, LP1 and OFF played without dropouts, checked by ear with no click or break; after SAVE KIT, a power cycle and RELOAD, DAC SUM was still ON and BD's LP1 setting came back. The other ten mods behaved as in v1.3.",
+      "limitations": [
+        "Core-ar2 0.6, not Modwerk's base (core-ar2 0.7); this package has not been flashed.",
+        "V6H4's voice-dac object was built from 77bd329 before the v1.4 release; its source equals v1.4's, but its bytes were not compared with the v1.4 release object.",
+        "Duration was not recorded; firmware was not read back from the device.",
+        "No v1.3 reference recording, so the sound was not compared with an earlier version.",
+        "V6H4: .syx 4a896e597ea0f30540e762b7273321338399c3ba5ee4ac070fff100f839df697."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {

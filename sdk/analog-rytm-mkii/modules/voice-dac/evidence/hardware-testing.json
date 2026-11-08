@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-11-08",
+  "source": "Iced-Cream's own test on their unit: the core-ar2 0.6 unit test (V6H4, 2026-10-23) of rytm2_mods' voice-dac 1.4 source (rytm2_mods 77bd329, whose voice-dac/os1.74, include and shared files are identical to the v1.4 tag 01254ab)",
+  "reporter": "Iced-Cream",
+  "statement": "Hardware, Analog Rytm MKII, OS 1.74, 2026-10-23, V6H4 (core-ar2 0.6 with all eleven rytm2_mods ports, voice-dac 1.4 among them, plus analoghealth for remote keys): with DAC SUM on, FILTER pressed twice opened DAC FILTER; TYP OFF showed TYP and DEP only with the empty knobs inert; LP2, BP, HP2, BS and PK showed FRQ and RES, LP1 and HP1 FRQ only; the page followed BD (LP1) to SD (OFF) and back; RES was kept across LP2, LP1 and LP2; BD on LP2, LP1 and OFF played without dropouts, checked by ear with no click or break; after SAVE KIT, a power cycle and RELOAD, DAC SUM was still ON and BD's LP1 setting came back. The other ten mods behaved as in v1.3.",
+  "status": "hardware-tested-author-reported",
+  "scope": "voice-dac 1.4 beside the other ten rytm2_mods ports and analoghealth on core-ar2 0.6, not on Modwerk's base (core-ar2 0.7).",
+  "modules": [
+    {
+      "id": "voice-dac",
+      "version": "1.4"
+    },
+    {
+      "id": "core",
+      "version": "0.6"
+    }
+  ],
+  "builds": [
+    {
+      "label": "V6H4",
+      "testedOn": "2026-10-23",
+      "os": "1.74",
+      "syxSha256": "4a896e597ea0f30540e762b7273321338399c3ba5ee4ac070fff100f839df697",
+      "content": "core-ar2 0.6 (6d5302f) with rytm2_mods' eleven OS 1.74 mods, voice-dac 1.4 built from 77bd329, plus analoghealth 1.2 for remote keys. Flashed by the owner, test steps run through remote keys and by hand, stock 1.74 restored.",
+      "results": [
+        "DAC FILTER by TYP: OFF shows TYP and DEP only; LP1 and HP1 hide RES; the empty knobs are inert.",
+        "The page follows the track: BD (LP1) to SD (OFF) and back.",
+        "RES kept across LP2, LP1, LP2.",
+        "BD on LP2, LP1 and OFF: no dropouts; checked by ear, no click or break.",
+        "SAVE KIT, power cycle, RELOAD: DAC SUM still ON, BD back on LP1 at its saved FRQ."
+      ]
+    }
+  ],
+  "limitations": [
+    "Core-ar2 0.6, not Modwerk's base (core-ar2 0.7); this package has not been flashed.",
+    "V6H4's voice-dac object was built from 77bd329 before the v1.4 release; its source equals v1.4's, but its bytes were not compared with the v1.4 release object.",
+    "Duration was not recorded; firmware was not read back from the device.",
+    "No v1.3 reference recording, so the sound was not compared with an earlier version."
+  ]
+}
