@@ -1,6 +1,6 @@
 # Analog Rytm MKI OS research
 
-Research on the Analog Rytm MKI OS file, toward the machine steps in [Add a machine](ADD_A_MACHINE.md): `format` and `rebuild`, and what every later build must leave alone. Stock-free: hashes, layout, addresses and notes only. The firmware, the decoded image and every listing stay on the researcher's computer.
+Research on the Analog Rytm MKI OS file, toward the machine steps in [Add a machine](ADD_A_MACHINE.md): `format`, `rebuild` and `boot`, and what every later build must leave alone. Stock-free: hashes, layout, addresses and notes only. The firmware, the decoded image and every listing stay on the researcher's computer.
 
 ## 0. Inputs and tools
 
@@ -65,9 +65,23 @@ Elektron's MKI release notes say an OS upgrade from the startup menu goes over M
 
 Notes: quit Transfer before sending (set to a MIDI output it may put its own SysEx into the stream); use an interface straight into the Rytm; keep it connected while testing modified builds.
 
-## 5. Next
+## 5. Boot (step `boot`)
 
-- Step `boot`: a repacked control build, a build marked only in its version field, and stock restoring the unit, in their own pull request.
+Modified builds on draadpiraat's unit, 8 November 2026, each flashed over USB with Transfer, with the MIDI DIN route of section 4 at hand. The unit had booted stock 1.74 first, so its installed bootstrap is `0x0602` (rule 2).
+
+| Build | Container | Result |
+| --- | --- | --- |
+| Control: the stock MAIN OS repacked by elektron-firmware-tool | 1,220,020 bytes, in-place gap 491,890 | boots, a project loads, pads and patterns play |
+| Marked: the same, version field `MW01` | 1,220,020 bytes | the start-up screen shows `MW01` where stock shows `1.74` (the field is four characters); boots and plays |
+| Stock 1.74 with Transfer | stock | restores the unit: the start-up screen shows `1.74` again, a project loads, pads play, Transfer reads 1.74 |
+| Marked `MW05`: the stock MAIN OS packed by `ele2.ts` and `packSection` | 1,217,124 bytes, in-place gap 488,992 | boots; the start-up screen shows `MW05`, a project loads, pads and patterns play as on stock. Stock 1.74 with Transfer then restores the unit again |
+
+All three modified builds pass `verifyEle2Build` against stock (the two elektron-firmware-tool builds were checked after they were flashed, once `ele2.ts` existed). None of them changes the bootstrap or its version check.
+
+So a container that differs from stock only in its stream and version field boots, shows its mark, and stock brings the unit back, over USB with Transfer as well as over MIDI DIN.
+
+## 6. Next
+
 - The MKI's base from the MKII's Modwerk base (`sdk/machines/analog-rytm-mkii/elekloader/`), the same sites found in the MKI image, so MKII modules can be rebuilt for the MKI.
 - ELE2 in the site's firmware flow, next to ELE3, once a build boots.
 - Later, as on the other machines: the USB link and loading modules without a reflash.
