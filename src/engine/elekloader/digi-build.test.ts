@@ -250,6 +250,15 @@ describe('the vendored elekloader catalog', () => {
       missing: [],
     })
   })
+  it('plans Voice DAC beside Filter Hz from its pinned source-only package on the plain base', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['voice-dac', 'filter-hz'])).toMatchObject({
+      core: { file: PLAIN, version: '0.7' },
+      mods: expect.arrayContaining([
+        expect.objectContaining({ id: 'voice-dac', file: 'voice-dac-1.4.0-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '1.4.0' }),
+      ]),
+      missing: [],
+    })
+  })
   it('plans CHORUS, a send effect, from its pinned source-only package on the send-bus base', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['chorus'])).toMatchObject({
       core: { file: SEND_BUS, version: '0.7' },
