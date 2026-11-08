@@ -64,6 +64,8 @@ it('checks real PR publication changes without executing module source', async (
     document.version='0.1.1'
     catalog.modules[0].version=document.version
     save()
+    // A new version's TESTING.md names it (scripts/module-qualification.mjs, testingVersionProblem).
+    put(resolve(folder,'TESTING.md'),'Fixture document for 0.1.1\n')
     expect(failure()).toContain('actual screenshots')
     const path='media/ui.png'
     document.access.screenshots=[path]

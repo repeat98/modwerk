@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Standalone validation/generation for the elemod source catalogue. Publication gates are unchanged.
-import { readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { readFile, readdir, mkdir, writeFile, copyFile } from 'node:fs/promises'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -36,16 +36,20 @@ export function copiedThumbnail(files){
  for(const group of byHash.values())if(new Set(group.map(item=>item.id)).size>1)return group[group.length-1].path+' is the same file as '+group.find(item=>item.id!==group[group.length-1].id).path+'. Draw this module its own 320x192 thumbnail in the shared signal-art style (docs/ADD_A_MODULE.md#module-thumbnail-style).'
  return null
 }
+const folders=(root,path)=>existsSync(resolve(root,path))?readdirSync(resolve(root,path),{withFileTypes:true}).filter(entry=>entry.isDirectory()).map(entry=>path+'/'+entry.name):[]
 export function requireDistinctThumbnails(root){
- const listed=execFileSync('git',['ls-files','--cached','--others','--exclude-standard','-z','--','sdk'],{cwd:root,encoding:'utf8',maxBuffer:32*1024*1024}).split('\0').filter(path=>THUMBNAIL.test(path))
+ const listed=folders(root,'sdk').flatMap(top=>top==='sdk/drafts'?[top]:[top+'/modules',top+'/modules/_submissions']).flatMap(base=>folders(root,base))
+  .flatMap(folder=>['media','presentation'].map(sub=>folder+'/'+sub+'/thumbnail.svg')).filter(path=>THUMBNAIL.test(path)&&existsSync(resolve(root,path)))
  const problem=copiedThumbnail(listed.map(path=>({path,sha256:createHash('sha256').update(readFileSync(resolve(root,path))).digest('hex')})))
  if(problem)throw new Error(problem)
 }
 // A module update replaces its USB package: the site serves only what a package row names, so an older file is a stale download (#971).
 export function unlistedPackages(root){
  const named=new Set(),walk=value=>{if(typeof value==='string'&&value.endsWith('.mwrm'))named.add(value);else if(value&&typeof value==='object')Object.values(value).forEach(walk)}
- walk(JSON.parse(readFileSync(resolve(root,'src/engine/assets/octatrack-module-packages.json'),'utf8')).packages)
- const files=execFileSync('git',['ls-files','--cached','--others','--exclude-standard','-z','--','public/octatrack-modules'],{cwd:root,encoding:'utf8'}).split('\0').filter(path=>path.endsWith('.mwrm'))
+ const rows=resolve(root,'src/engine/assets/octatrack-module-packages.json')
+ if(!existsSync(rows))return // a repository without USB packages, such as a minimal test fixture
+ walk(JSON.parse(readFileSync(rows,'utf8')).packages)
+ const files=folders(root,'public/octatrack-modules').flatMap(folder=>readdirSync(resolve(root,folder)).filter(name=>name.endsWith('.mwrm')).map(name=>folder+'/'+name))
  const stale=files.filter(path=>!named.has(path.replace(/^public\//,'')))
  if(stale.length)throw new Error(stale.join(', ')+': no package row names '+(stale.length>1?'these':'this')+' any more. A module update deletes its previous package: git rm '+stale.join(' '))
 }
