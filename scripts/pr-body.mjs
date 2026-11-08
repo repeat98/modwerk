@@ -13,10 +13,13 @@ const NOT_OWN = /^(?:[-*] \[[ xX]\]|<!--|🤖 Generated with|Co-Authored-By:)/
 
 // The guides answer: a line that starts with the question or "Guides" and answers it after a colon, or a heading followed by the answer.
 const GUIDES = /^(?:what )?(?:the )?guides?\b/i
+// A Markdown heading, or a line that is all bold, which many write as a heading.
+const isHeading = line => /^#/.test(line) || /^\*\*[^*]+\*\*:?$/.test(line)
 function answersGuides(line, next) {
-  const text = line.replace(/^(?:[-*]|#+)\s*/, '').replaceAll('**', '').trim()
+  // Bold first: the list-marker strip would otherwise eat one star of a leading "**".
+  const text = line.replaceAll('**', '').replace(/^(?:[-*]|#+)\s*/, '').trim()
   if (!GUIDES.test(text)) return false
-  return /:\s*\S/.test(text) || (/^#/.test(line) && !!next && !/^#/.test(next))
+  return /:\s*\S/.test(text) || (isHeading(line) && !!next && !isHeading(next))
 }
 
 /** What the description still lacks; [] when it is described and answers the guides question. */
