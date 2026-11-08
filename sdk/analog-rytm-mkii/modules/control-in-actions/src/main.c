@@ -45,6 +45,9 @@
 #define QUIET_BLOCKS 15             // audio blocks (10 ms) after an edge with no other: a switch's bounce
 #define CIA_KEY 0x43494131          // the module's own key message, 'CIA1': no panel key
 #define EV_KEY 12                   // event + 12: the key
+#define EV_FLAGS 16                 // event + 16: its flags
+#define EV_PRESSED 1                // flags: down (clear on release)
+#define EV_REPEAT 8                 // flags: a held key's repeat
 
 typedef unsigned word_t;
 typedef void (*settings_t)(int port, void *record);
@@ -136,7 +139,8 @@ static unsigned char hold_active[CI_PORTS]; // MUTE HOLD opened the screen
 static unsigned char hold_back[CI_PORTS];   // the mode key to go back to, 0 for none
 static unsigned char rec_active[CI_PORTS];  // REC HOLD turned live recording on
 static unsigned char fill_active[CI_PORTS]; // FILL HOLD holds FILL down
-static unsigned char grid_back;             // grid recording was on when an action started live recording
+static unsigned char grid_back;             // grid recording was on before live recording started
+static unsigned char record_down;           // RECORD held, from its own key events
 static unsigned char learning[CI_PORTS];    // the learn open as the view last drew: LEARN_EXPR, LEARN_FSW or 0
 static char *shown[CI_PORTS];               // the CONTROL INPUT view that last drew
 static word_t shown_class[CI_PORTS];        // its vtable, so a new object at that address is not it
@@ -235,8 +239,8 @@ static void rec_on(void)
 }
 
 // Live recording off, from PLAY, which stock reads in live recording as
-// leaving it: the sequencer plays on, in grid recording again when the
-// action that started live recording found it on.
+// leaving it: the sequencer plays on, in grid recording again when it was
+// on before live recording started, from an action or the panel.
 static void rec_off(void)
 {
     if (live_rec()) {
@@ -550,13 +554,29 @@ void control_in_actions_audio(void)
         read_jacks();
 }
 
+// The panel's RECORD, passed on to stock: at its press, before stock acts,
+// whether grid recording is on, for a live recording that RECORD + PLAY may
+// start (which turns grid recording off). Released with no live recording,
+// it was a grid toggle, and the note goes.
+static void record_key(unsigned flags)
+{
+    if (flags & EV_REPEAT)
+        return;
+    record_down = flags & EV_PRESSED;
+    if (!app_byte(APP_LIVE_REC))
+        grid_back = record_down && app_byte(APP_GRID_REC);
+}
+
 // The key message, on the UI task: play what the interrupt saw, and keep it
 // from every other key handler and stock.
 int control_in_actions_key(void *brain, char *event)
 {
     int port;
+    long key = *(long *)(event + EV_KEY);
     (void)brain;
-    if (*(long *)(event + EV_KEY) != CIA_KEY)
+    if (key == KEY_REC)
+        record_key(*(unsigned *)(event + EV_FLAGS));
+    if (key != CIA_KEY)
         return 0;
     posted = 0;
     for (port = 0; port < CI_PORTS; port++)
@@ -570,11 +590,11 @@ void control_in_actions_tick(void *ctrl)
     int port;
     (void)ctrl;
 #ifdef CIA_EMU
-    control_in_actions_emu_mode = mode_key() | live_rec() << 8 | (jacks[0].word & 1) << 16 | learning[0] << 24;
+    control_in_actions_emu_mode = mode_key() | live_rec() << 8 | app_byte(APP_GRID_REC) << 9 | (jacks[0].word & 1) << 16 | learning[0] << 24;
 #endif
-    // Live recording left another way (the panel): the next action that
-    // ends one did not start it.
-    if (grid_back && !app_byte(APP_LIVE_REC))
+    // Live recording over (left from the panel too), or never started: the
+    // note is for no live recording. RECORD held may still start one.
+    if (grid_back && !record_down && !app_byte(APP_LIVE_REC))
         grid_back = 0;
     for (port = 0; port < CI_PORTS; port++) {
         int dest, i;

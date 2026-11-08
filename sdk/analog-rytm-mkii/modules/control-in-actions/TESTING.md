@@ -2,19 +2,24 @@
 
 ## 0.1.3: back to grid recording after live recording (8 November 2026)
 
-Reported by npp1993 on 0.1.2: in grid recording, REC HLD or REC TGL started live recording, and ending it left the Rytm in play mode, not grid recording. Read in OS 1.74's code: stock's RECORD + PLAY (0x4004190a) turns grid recording off (0x400362da, app + 360) before it turns live recording on (0x4003638a, app + 361), and leaving live recording with PLAY (0x4004196c) turns only live recording off. The panel does the same. 0.1.3 notes whether grid recording was on when an action starts live recording and, when the action ends it, turns grid recording back on with stock's own 0x400362da. When live recording ends another way (the panel), the note is dropped, so a later action that ends a live recording it did not start leaves play mode as before.
+Reported by npp1993 on 0.1.2: in grid recording, REC HLD or REC TGL started live recording, and ending it left the Rytm in play mode, not grid recording. Read in OS 1.74's code: stock's RECORD + PLAY (0x4004190a) turns grid recording off (0x400362da, app + 360) before it turns live recording on (0x4003638a, app + 361), and leaving live recording with PLAY (0x4004196c) turns only live recording off. The panel does the same. 0.1.3 notes whether grid recording is on just before live recording starts: when an action starts it, and at the panel's RECORD press (its `ev_key` handler passes the key on to stock), since RECORD + PLAY starts it there. When an action ends live recording, it turns grid recording back on with stock's own 0x400362da if the note says so. The note goes when RECORD is released with no live recording (a grid toggle) and when live recording ends any other way.
 
-- rytm-emu `2ac0f1f`: CI13 (vendored core-ar2 0.7 + this source, `a262da4d…8552`) boots, and its three media frames are byte-identical to CI12's.
-- CE18 (CI13's source with `-DCIA_EMU`, `5ab47102…`), CONTROL INPUT 1 in ACTION mode, the level poked, app + 360 and + 361 read with `DTBOOT_PEEK`:
+RECORD + PLAY also calls 0x400363cc with 0, which clears app + 362. Nothing in OS 1.74 sets that byte: 0x400363cc's only caller passes 0, and the app's setup (0x40036fc8) and the grid toggle (0x40036310) clear it. So there is no third mode to restore.
+
+- rytm-emu `2ac0f1f`: CI14 (vendored core-ar2 0.7 + this source, `ae0f63fb…85fc`) boots, and its three media frames are byte-identical to CI12's.
+- CE19 (CI14's source with `-DCIA_EMU`, `87c0f8cd…`, whose status word now carries grid recording as bit 9), CONTROL INPUT 1 in ACTION mode, the level poked:
 
 | Steps | Result |
 | --- | --- |
 | REC TGL: RECORD (grid recording), input high, low, high | Live recording on and grid recording off, then live recording off and grid recording on |
 | REC HLD: RECORD (grid recording), input high, then low | Live recording on and grid recording off, then live recording off and grid recording on |
 | REC TGL from play mode, input high, low, high | Live recording on, then off: play mode, as 0.1.2 |
-| REC TGL from grid recording, input high (live recording), panel PLAY (stock leaves it, play mode), panel RECORD + PLAY, input low, then high | Live recording off: play mode, since the input did not start that live recording |
+| Grid recording, panel RECORD + PLAY, then input high (REC TGL) | Live recording off, grid recording on |
+| Play mode, panel RECORD + PLAY, then input high (REC TGL) | Live recording off: play mode |
+| RECORD twice (grid on, then off), then REC TGL high, low, high | Play mode at the end |
+| Grid recording, input high (live), panel PLAY (stock: play mode), panel RECORD + PLAY from play mode, input low, then high | Play mode at the end |
 
-- Not tested: on a unit; with the third record flag on (app + 362, set by 0x400363cc, which also sets grid recording), which RECORD + PLAY also clears and this change does not restore.
+- Not tested: on a unit.
 
 ## 0.1.2: no reading with ACTION OFF (6 November 2026)
 

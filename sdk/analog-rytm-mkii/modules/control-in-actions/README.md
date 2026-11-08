@@ -26,8 +26,8 @@ Everything is set up in stock's own CONTROL INPUT menus and saved with stock's c
 | OFF | Nothing | Nothing |
 | MUTE HLD | Opens MUTE mode | Goes back to the mode you were in: CHRO, SCNE, PERF, or none; if MUTE mode was already open, it stays |
 | MUTE TGL | A MUTE press: opens or closes MUTE mode | Nothing |
-| REC HLD | Live recording on (RECORD + PLAY: starts the sequencer when stopped) | Live recording off; the pattern plays on, back in grid recording if it was on when the input went high |
-| REC TGL | Live recording on (starting a stopped sequencer) or off (the pattern plays on, back in grid recording if it was on when this input started live recording) | Nothing |
+| REC HLD | Live recording on (RECORD + PLAY: starts the sequencer when stopped) | Live recording off; the pattern plays on, back in grid recording if it was on before live recording started |
+| REC TGL | Live recording on (starting a stopped sequencer) or off (the pattern plays on, back in grid recording if it was on before live recording started, from the input or RECORD + PLAY) | Nothing |
 | FILL HLD | Holds FILL: fill mode on, as while you hold the key | Lets FILL go: fill mode off, and a latched fill unlatched, as stock's FILL release |
 | FILL LAT | Latches fill mode, as FUNC + FILL FILL, or ends the latch, as FILL | Nothing |
 

@@ -138,8 +138,8 @@
     "type": "emulator",
     "release": "1.74",
     "moduleVersion": "0.1.3-experimental",
-    "imageSha256": "a262da4d6be5b49cd7294629eaf7bce5c16a592cee3befda3ee25c0b46418552",
-    "setup": "Headless rytm-emu (dtboot) running CI13: core-ar2 0.7 and this folder's Control In Actions 0.1.3-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+    "imageSha256": "ae0f63fbbd86184e7e36739dc8a4cdc8b7be12e9eb7bfcf5223424513da685fc",
+    "setup": "Headless rytm-emu (dtboot) running CI14: core-ar2 0.7 and this folder's Control In Actions 0.1.3-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
    }
   },
   {
@@ -154,8 +154,8 @@
     "type": "emulator",
     "release": "1.74",
     "moduleVersion": "0.1.3-experimental",
-    "imageSha256": "a262da4d6be5b49cd7294629eaf7bce5c16a592cee3befda3ee25c0b46418552",
-    "setup": "Headless rytm-emu (dtboot) running CI13: core-ar2 0.7 and this folder's Control In Actions 0.1.3-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+    "imageSha256": "ae0f63fbbd86184e7e36739dc8a4cdc8b7be12e9eb7bfcf5223424513da685fc",
+    "setup": "Headless rytm-emu (dtboot) running CI14: core-ar2 0.7 and this folder's Control In Actions 0.1.3-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
    }
   },
   {
@@ -170,8 +170,8 @@
     "type": "emulator",
     "release": "1.74",
     "moduleVersion": "0.1.3-experimental",
-    "imageSha256": "a262da4d6be5b49cd7294629eaf7bce5c16a592cee3befda3ee25c0b46418552",
-    "setup": "Headless rytm-emu (dtboot) running CI13: core-ar2 0.7 and this folder's Control In Actions 0.1.3-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+    "imageSha256": "ae0f63fbbd86184e7e36739dc8a4cdc8b7be12e9eb7bfcf5223424513da685fc",
+    "setup": "Headless rytm-emu (dtboot) running CI14: core-ar2 0.7 and this folder's Control In Actions 0.1.3-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
    }
   }
  ]
