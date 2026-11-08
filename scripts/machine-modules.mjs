@@ -53,6 +53,9 @@ export function unlistedPackages(root){
  const stale=files.filter(path=>!named.has(path.replace(/^public\//,'')))
  if(stale.length)throw new Error(stale.join(', ')+': no package row names '+(stale.length>1?'these':'this')+' any more. A module update deletes its previous package: git rm '+stale.join(' '))
 }
+// The publication gate (measured memory and load, author-hardware evidence, screenshots) judges every new library version, as on the
+// Octatrack; versions already published before 9 November 2026 keep their place until their next update (owner, 8 November 2026).
+export const publishesNewVersion=({inLibrary,baseVersion,version})=>inLibrary&&baseVersion!==version
 export async function machineModules({root,write=false,baseCommit=null,includeDrafts=false}) {
 if(includeDrafts&&write)throw new Error('Draft validation cannot publish generated library metadata')
 if(baseCommit)requireNoSubmissions(root,baseCommit)
@@ -83,8 +86,11 @@ for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='el
   const folder=resolve(dir,entry.name),label=machine.id+'/'+entry.name;let document
   try{document=parseModwerkModule(await json(resolve(folder,'modwerk.module.json')),machineProfiles)}catch(error){throw new Error(label+': '+error.message,{cause:error})}
   if(document.id!==entry.name||document.machine!==machine.id)throw new Error(label+': module id and machine must match its folder')
+  let newVersion=false
   if(baseCommit){
    const prefix=dir.slice(root.length+1)+'/'+entry.name+'/',oldPath=prefix+'modwerk.module.json'
+   const baseText=git('ls-tree','--name-only',baseCommit,'--',oldPath).trim()===oldPath?git('show',baseCommit+':'+oldPath):null
+   newVersion=publishesNewVersion({inLibrary:dir===folderRoot,baseVersion:baseText===null?null:JSON.parse(baseText).version,version:document.version})
    const changedPaths=(git('diff','--name-only',baseCommit,'--',prefix)+git('ls-files','--others','--exclude-standard','--',prefix)).trim().split('\n').filter(Boolean),changed=changedPaths.length>0
    if(changed&&!document.tests.documentation)throw new Error(label+': new and updated modules require complete documentation, tutorial and capture provenance')
    if(git('ls-tree','--name-only',baseCommit,'--',oldPath).trim()===oldPath){const old=JSON.parse(git('show',baseCommit+':'+oldPath));const codeChanged=changedPaths.some(path=>!isVersionNeutralChange({path,before:path===oldPath?JSON.stringify(old):'',after:path===oldPath?readFileSync(resolve(folder,'modwerk.module.json'),'utf8'):''}));if(codeChanged&&compareModuleVersions(document.version,old.version)<=0)throw new Error(label+': every code or behaviour update requires a greater module version than '+old.version+'; documentation, media and compatibility.conflicts edits do not')}
@@ -115,7 +121,7 @@ for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='el
   // Only the pull-request check (--base) refuses it: a newly scaffolded module must still pass npm ci's prepare while its developer draws one.
   if(baseCommit&&dir===folderRoot)for(const item of document.media)if(item.kind==='thumbnail')requireOriginalThumbnail(label,item,await readFile(await file(folder,item.path),'utf8'))
   for(const path of await walk(folder))if(/\.(bin|syx|elemod|exe|dll|so|dylib|zip|img|hex)$/i.test(path))throw new Error('Prohibited firmware/binary file: '+label+'/'+path)
-  if(published.some(item=>item.id===document.id)){try{requireModwerkPublication(document)}catch(error){throw new Error(label+': '+error.message,{cause:error})}}
+  if(published.some(item=>item.id===document.id)||newVersion){try{requireModwerkPublication(document)}catch(error){throw new Error(label+': '+error.message+(newVersion?' (every new library version passes the publication gate: docs/ADD_A_MODULE.md#digitakt-and-digitone)':''),{cause:error})}}
   if(write)for(const item of document.media){const destination=resolve(root,'public/module-media',machine.id+'-'+document.id,document.version,item.path);await mkdir(dirname(destination),{recursive:true});await copyFile(await file(folder,item.path),destination)}
   // Only addresses and lengths are needed by the planner; never include stock bytes.
   const patchSites=Object.fromEntries(Object.entries(build.releases).map(([release,value])=>[release,[...value.sites,...(build.derive?.releases.includes(release)?build.derive.callSites:[])].map(({addr,len})=>({addr,len}))]))

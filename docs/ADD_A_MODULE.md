@@ -298,7 +298,7 @@ the [loader compatibility guide](../sdk/machines/octatrack/elekloader/README.md#
 
 Firmware for these machines is built by elekloader's builder, vendored unchanged and run in the browser ([vendor/elekloader](../vendor/elekloader/README.md)). It decides which mods combine, so there is no comparison with a native builder to run.
 
-Modwerk imports released `.elemod` files; it does not package mods for elekloader. To list a mod in elekloader's shop, including one Modwerk's library does not take, follow elekloader's [shop guide](https://github.com/elekloader/elekloader/blob/main/docs/SHOP.md) ([elekloader mods and cores](../CONTRIBUTING.md#elekloader-mods-and-cores)).
+Every new library version passes the publication gate: at least `author-hardware` evidence, measured `resources.memoryBytes` and load, and screenshots of where the mod appears ([SDK.md](SDK.md)). Modwerk imports released `.elemod` files; it does not package mods for elekloader. To list a mod in elekloader's shop, including one Modwerk's library does not take, follow elekloader's [shop guide](https://github.com/elekloader/elekloader/blob/main/docs/SHOP.md) ([elekloader mods and cores](../CONTRIBUTING.md#elekloader-mods-and-cores)).
 
 **Porting an elekloader mod:**
 

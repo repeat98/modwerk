@@ -7,11 +7,11 @@
     "MKI"
   ],
   "status": "research",
-  "summary": "OS 1.74 decoded and rebuilt byte for byte in the browser builder (ELE2); bootstrap and calibration areas mapped; stock recovery over MIDI DIN rehearsed on a unit.",
+  "summary": "OS 1.74 decoded and rebuilt byte for byte in the browser builder (ELE2); repacked and marked builds boot on a unit, stock restores it, MIDI DIN recovery rehearsed.",
   "steps": {
     "format": "done",
     "rebuild": "done",
-    "boot": "open",
+    "boot": "done",
     "core": "open",
     "mods": "open"
   },
