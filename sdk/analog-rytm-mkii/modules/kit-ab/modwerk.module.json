@@ -91,16 +91,33 @@
     }
   },
   "evidence": {
-    "tier": "none",
+    "tier": "author-hardware",
     "moduleVersion": "1.0.0",
-    "sourceSha256": null,
-    "reports": [],
-    "hardware": null,
+    "sourceSha256": "b549c21470a24aabf88a91cbe8102537015aa1584ee63668957ce1f57a3adda8",
+    "reports": [
+      "evidence/hardware-testing.json",
+      "evidence/source-parity.json"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-08",
+      "tester": "Iced-Cream",
+      "durationMinutes": 7,
+      "summary": "On an Analog Rytm MKII with OS 1.74 and this package on Modwerk's base (core-ar2 0.7, plain variant ba530f45, with analoghealth 1.2 for remote keys), build KBH7, 2026-11-08: KIT menu RELOAD twice on an unedited kit: KIT RELOADED! both times, saved BD DEC kept (screen). BD DEC turned to 0; RELOAD: KIT RELOADED! with the saved DEC; RELOAD again: EDITS RESTORED! with DEC at 0 (screens). After RELOAD armed the A/B, DEC turned to 127; RELOAD: KIT RELOADED! (not EDITS RESTORED!) with the saved DEC; RELOAD again: EDITS RESTORED! with DEC at 127, not the stashed 0 (screens). CPU 76.6 / 76.2 %, DSP 70.1 / 70.0 %, heap flat, two readings 30 s apart after the flash. The run stopped before its last section (a change of kit) on a kit-list reference mismatch; NO + PLAY was not exercised.",
+      "limitations": [
+        "KBH7: .syx a94bed0fe09ebd2fb3e959b52e0912a3c18203dabe1691844cdf5c902b691678, built by scripts/link-image.mjs from this folder; firmware was not read back from the device.",
+        "KBH7 also carried analoghealth 1.2 (remote keys; no site shared with this module).",
+        "A change of kit (KIT menu LOAD KIT to kit 2) was not reached: the run stopped at the kit list, whose reference (recorded in the emulator) lacks a marker the unit draws after kits 02-16. The check compared list content the plan does not control; the module had not acted yet.",
+        "NO + PLAY was not exercised: remote NO(PLAY) starts the sequencer in the emulator. The KIT menu's RELOAD calls the same kit_ab_toggle; the two NO + PLAY sites (0x400cd51a, 0x400cd542) are untested on the unit.",
+        "A press on a kit with no edits after an A/B, and a power cycle (the stash is not kept, by design), were not run."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "No hardware run of this module on OS 1.74 is recorded in this repository yet. Source: rytm2_mods' OS 1.74 file, unchanged. In the emulator on Modwerk's base (core-ar2 0.7), KIT menu > RELOAD after a BD DEC edit shows KIT RELOADED! with the saved kit, and a second RELOAD shows EDITS RESTORED! with the edit back; stock shows KIT RELOADED! twice and keeps the saved kit.",
+    "summary": "Hardware on Modwerk's base (KBH7, 2026-11-08), through the KIT menu's RELOAD: a BD DEC edit is stashed by the first RELOAD (KIT RELOADED!, saved value) and restored by the second (EDITS RESTORED!); an edit while the saved kit plays ends the A/B; an unedited kit reloads plainly. Not covered on the unit: NO + PLAY and a change of kit. Source: rytm2_mods' OS 1.74 file, unchanged; the package linked with the base equals the rytm2_mods release object linked with it.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",

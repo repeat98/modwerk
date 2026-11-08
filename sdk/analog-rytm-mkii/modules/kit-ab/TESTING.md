@@ -8,9 +8,28 @@
 
 ## Hardware
 
-None recorded for OS 1.74 in this repository. rytm2_mods records the original port as confirmed on an Analog Rytm MKII on 2026-10-14 in a full build (before the OS 1.74 port). A run of this module's test on 1.74 is to be reported by the author.
+On an Analog Rytm MKII with OS 1.74, 2026-11-08, Iced-Cream ran build **KBH7**: stock 1.74 + Modwerk's base for core-ar2 0.7
+(plain variant `ba530f45…20fe`) + analoghealth 1.2 (`a86f07c5…87b6`, remote keys only, no site shared with this module) + this
+module, linked by `scripts/link-image.mjs`: `.syx` `a94bed0fe09ebd2fb3e959b52e0912a3c18203dabe1691844cdf5c902b691678`, main OS `987562e097f7db2f4944b1d8f4bffe9123e049336dbcc0e7ea100d5746b72559`.
+elkbench plans, each gated in the emulator first, flashed it over stock, ran the test and flashed stock 1.74 back (about 7 minutes).
+The evidence is bound to the tested source, `src/kit-ab.s` (`b549c21470a24aabf88a91cbe8102537015aa1584ee63668957ce1f57a3adda8`), unchanged since rytm2_mods. Every check below is a screen comparison against the emulator's reference, in a `~T` test project made by CREATE NEW, through the
+KIT menu's RELOAD (FUNC + PLAY MODE):
 
-Test to run on a unit: edit a sound (for example BD DEC). NO + PLAY shows KIT 1 RELOADED! with the saved value. NO + PLAY again shows EDITS RESTORED! with the edited value. Also: edit while the original plays, then press once (the new edits are kept, the old stash dropped); change kit and press (a plain reload); press on an unedited kit (a plain reload, nothing armed); KIT menu > RELOAD twice.
+| Check | Result |
+| --- | --- |
+| Unedited kit, RELOAD twice | KIT RELOADED! both times, saved BD DEC kept |
+| BD DEC to 0, RELOAD | KIT RELOADED!, saved DEC |
+| RELOAD again | EDITS RESTORED!, DEC 0 |
+| RELOAD (A/B armed), DEC to 127, RELOAD | KIT RELOADED! (not EDITS RESTORED!), saved DEC |
+| RELOAD again | EDITS RESTORED!, DEC 127 (not the stashed 0) |
+| CPU after the flash, twice 30 s apart | 76.6 / 76.2 %, DSP 70.1 / 70.0 %, heap flat |
+
+The run stopped before its last section, a change of kit (LOAD KIT to kit 2): the kit list on the unit draws a marker after kits
+02-16 that the emulator's reference lacks, so the cursor check failed before kit 2 was loaded. That check compared list content the
+plan does not control; the module had not acted. NO + PLAY was not exercised: remote NO(PLAY) starts the sequencer in the emulator,
+so only the KIT menu's sites ran (the NO + PLAY sites call the same `kit_ab_toggle`). Stock 1.74 was restored and the test slots emptied.
+
+Earlier, rytm2_mods recorded the original port as confirmed on an Analog Rytm MKII on 2026-10-14 in a full build (before the OS 1.74 port).
 
 ## Source and site conversion
 
@@ -54,7 +73,7 @@ screen and the working kit's DEC were compared.
 
 ## Not tested
 
-- Everything on a unit with OS 1.74, and every other module beside it.
+- On the unit: NO + PLAY, a change of kit, and every other module beside it.
 - Persistence: the stash lives in heap and is not saved; a power cycle or project load loses it, by design. Not exercised.
 - NO + PLAY in the emulator: rytm2_mods reports that it does not reach the reload handler in rytm-emu (stock included), so only the KIT menu's RELOAD was run there.
 - In the emulator: edit while the original plays, a change of kit, a press on an unedited kit.
