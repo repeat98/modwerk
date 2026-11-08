@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 3,
+  "id": "scene-mutes",
+  "name": "Scene Mutes",
+  "version": "0.1.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "system",
+  "exclusive": false,
+  "author": {
+    "github": "Iced-Cream",
+    "credits": [
+      "MrScruff — the original mod, 0018-scene-mutes in rytm-mods, its design and code; published in rytm-mods-src with permission.",
+      "Iced-Cream — this Modwerk module, the elemod port moved to OS 1.74.",
+      "irpina — Elekloader and core-ar2, the core it links with."
+    ]
+  },
+  "maintainers": [
+    "Iced-Cream"
+  ],
+  "presentation": {
+    "label": "SCENE MUTES",
+    "family": "Performance",
+    "summary": "Each scene can carry its own track mutes: engage the scene and the mutes change with it.",
+    "overview": "Scene Mutes lets a scene set the track mutes. In scene edit (hold SCENE until it opens), FUNC + a trig key toggles that track in the edited scene's mute mask, T1 to T12 for the sound tracks and T13 for FX; the first toggle marks the scene as one that sets mutes. While FUNC is held there, the trig keys light for the tracks the scene mutes. Engaging a marked scene replaces the mutes with its mask; engaging an unmarked scene, or none, puts back the mutes from before the first scene. A mute changed by hand or by MIDI while a scene is engaged goes into that saved state too. CLEAR drops the edited scene's mask and mark, CLEAR ALL every scene's. Masks are kept with each kit in the project and saved at once. It is a port of MrScruff's rytm-mods 0018-scene-mutes, with his code unchanged.",
+    "highlights": [
+      "FUNC + trig in scene edit builds a scene's mute mask.",
+      "Engaging the scene sets the mutes; leaving it puts the earlier mutes back.",
+      "Works for scenes engaged from the pads, CC 92, NRPN and Overbridge.",
+      "Masks are kept per kit in the project."
+    ],
+    "usage": [
+      "Hold SCENE until scene edit opens, then hold FUNC and press T1, T2 and so on to pick the tracks this scene mutes.",
+      "Release SCENE and engage the scene: those tracks mute.",
+      "Disengage it: the mutes come back as they were."
+    ]
+  },
+  "access": {
+    "location": "Scene edit: hold SCENE until it opens, then FUNC + T1..T13.",
+    "steps": [
+      "Hold SCENE until scene edit opens; FUNC + a pad picks the scene to edit without engaging it.",
+      "Hold FUNC: the trig keys show the scene's mask.",
+      "Press T1..T13 with FUNC held to toggle tracks (T13 is FX)."
+    ],
+    "screenshots": []
+  },
+  "controls": [
+    {
+      "name": "SCENE (held) + FUNC + T1..T13",
+      "default": null,
+      "doc": "Toggles that track in the edited scene's mute mask and marks the scene as one that sets mutes; T13 is the FX track.",
+      "labels": null
+    },
+    {
+      "name": "SCENE edit <CLEAR> / <CLEAR ALL>",
+      "default": null,
+      "doc": "Also drops the edited scene's mask and mark, or every scene's.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for OS 1.74 only, with core-ar2 0.7.",
+      "SCENE has to be held until scene edit opens before FUNC goes down.",
+      "While SCENE is held the module takes FUNC + trig in every mode, so grid record's trigless lock and step record's track preview are hidden until SCENE is released.",
+      "Kit copy and paste, SysEx kit transfer, COPY/PASTE SCENE and clearing a kit do not carry or clear the masks.",
+      "A kit change while a scene is engaged keeps the old saved mutes.",
+      "Overbridge's silent mute path is not followed into the saved mutes."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [],
+    "claims": [
+      "ui:FUNC + trig 1..13 in scene edit (SCENE held)",
+      "ui:trig LEDs while FUNC is held in scene edit"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 1008,
+    "fastBytes": 0,
+    "load": {
+      "display": "None in the audio path: runs on key presses, LED updates and scene or mute changes",
+      "method": "static",
+      "conditions": "Static: the sites are SceneEditView's key and LED handlers, its two clear actions, and the entries of the scene-engage and track-mute routines. Nothing is added to the audio, sequencer or tick paths. Not a measurement."
+    }
+  },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": null,
+    "reports": [],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Not run on a unit or in rytm-emu on OS 1.74 yet. The source assembles, and every address and site guard was checked against stock OS 1.73 and 1.74 with rytm2_mods' port_os.py mapper."
+  },
+  "license": {
+    "spdx": "GPL-2.0-only",
+    "file": "LICENSE",
+    "declaration": "MrScruff's rytm-mods code, under GPL-2.0-only as rytm-mods-src. include/ar2-1.74.inc names firmware routines by address only; each patch precondition is an address, a length and a SHA-256."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Scene Mutes thumbnail",
+      "alt": "Placeholder thumbnail for Scene Mutes",
+      "credit": "Iced-Cream",
+      "license": "GPL-3.0-or-later",
+      "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+    }
+  ],
+  "source": {
+    "repository": "https://github.com/Iced-Cream/rytm-mods-src",
+    "revision": "cd4ded4a8fc5eabd4bddb824696196202db50ef8",
+    "path": "mods/0018-scene-mutes"
+  }
+}
