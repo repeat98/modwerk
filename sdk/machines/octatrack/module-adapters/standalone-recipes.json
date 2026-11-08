@@ -1,563 +1,563 @@
 {
- "schema": 1,
- "ports": {
-  "playmodes": {
-   "schema": 1,
-   "imageSha256": "8791721bb6f20898600bba88e600ad8710531c2a35db41a8299516dbc99f63b4",
-   "sources": {
-    "sdk/octabam/modules/playmodes/hooks.s": "55899e51737e76e9da1886353cc2330beb0f5b499e96c70fdd621172337332a3",
-    "sdk/octabam/modules/playmodes/manifest.py": "d1fc7d07762faa32c9fdc782b1b4fdcc527d2d2aba4530df69f013a0a4c4a4b8",
-    "sdk/octabam/modules/playmodes/generate.py": "b4d9cb0b38d5a946c53e4ccbf629c0cf16f59047f6a95360464acb89d6bf52a5",
-    "sdk/octabam/modules/playmodes/playmodes.s": "34a2464faadfd583c4fd9c773cfefd6e77c8125c291016a9b90942a2bb91f001",
-    "sdk/octabam/modules/playmodes/test_playmode.c": "25857c24842be4797e6a3b584c991a04329691591baf3f70a2944f69012187b4",
-    "sdk/octabam/modules/playmodes/test_adapter.c": "6765da074aa8f293081a3b2c824f81a589a7d4629e4c682c646ceb66a0804eb9",
-    "sdk/octabam/modules/playmodes/octamod.module.json": "2b8bb40bd95b908e4ca3a5d02fa642a33e2e7ccab71173cb54ba316dbc896e0e",
-    "sdk/octabam/modules/playmodes/playmode.c": "3c414a2eb48d3c198c369ee8924ed6608a0b55cf4fa03f57e424184f8485968e",
-    "sdk/octabam/modules/playmodes/verify.py": "377cc8d573ac98b1d9ec430b05f9d488bc8a37b8841cf6d9fbb64badafbf15ca",
-    "sdk/octabam/modules/playmodes/adapter.c": "b8786b2bfbfa9ed8f8b87ba0bdd98fbf4ed6cc0f16da8811e5cdfa3aa442fe9f",
-    "sdk/octabam/modules/playmodes/playmode.h": "1ba24397d193a3ca0ad4ed43652d19eef6ad7b0049bc26eb1265a21c69950ccc",
-    "sdk/octabam/modules/playmodes/evidence/performance.json": "8ecca1d6a7b6bebf49d306768f1d2e145e18d46bcfb8ae5044f47eb87030d1bd",
-    "sdk/octabam/modules/playmodes/media/capture.json": "98be9c2b0fe1e899be7d8c76d2e384e75d0cba9324975aee74c93f1675fc8eff",
-    "sdk/octabam/tools/remix/platform_build.py": "e72b7a29b45851addecf135ad520db98b66f5e10c5cd354adf37fb52d6c2e42f",
-    "sdk/octabam/tools/remix/machine_composition.py": "6be0efdccc78a4fd1fafdba0cf39fcdb9cf510e72bd26aa22e7cdfe06d857783",
-    "sdk/octabam/tools/remix/stock_guard.py": "b05e115afaa11d1507273bdcd26e05c25e7a6424d3e0fb4eb21d797194e508b3",
-    "sdk/octabam/tools/remix/index.py": "29a0090afb78aa6f5142aa1e862c8563badeb9ff0c78c03a458d5b2ad6e6104c",
-    "sdk/octabam/tools/remix/registry.py": "f3b2fbfb90b97db33e360603ccf3eb0a703913dddaad78c681b9676287ee23e5",
-    "sdk/octabam/tools/remix/keep.py": "18e1f485900768bd896507da4f6669199bc52466e7af7a1102d7d9a2bc03d305",
-    "sdk/octabam/tools/remix/geom.py": "6bf3e107cd45c1213f0c071ae65c2ab0b9037241b0d2b974813757f0e08d2997",
-    "sdk/octabam/tools/remix/ledger.py": "73407d159a965671da2255aef5864bd0c745dfa2a600575918f48c40fc170f83",
-    "sdk/octabam/tools/remix/__init__.py": "c925cdb1d084a4e2bd02f8f13e87204bff38ff4c40087ec86a8f2fe1395f83f9",
-    "sdk/octabam/tools/remix/rig.py": "975ee01f9e925c0170602db2e9bd0427bc9e3fc5a5b2d85a8829a701b2d20691",
-    "sdk/octabam/tools/remix/stock.py": "11a41e3176719776712e4aa719bdeab6a319bd04186aa9b954063392d8be919f",
-    "sdk/octabam/tools/remix/audition.py": "98cae0606138b98878d9d1b18fd4ecd541e99332beeec0c7b4c7b0fb5b6dfd43",
-    "sdk/octabam/tools/remix/runtime_build.py": "27d2d73d56716f7088f174364f057e0c041f29741885d7cfbb7d91e49cc8b6ba",
-    "sdk/octabam/tools/remix/selftest.py": "78f46022e4537eccf204e2bc3a3fdb683fd86c6cf0ee87f78ae5fe804cb17853",
-    "sdk/octabam/tools/remix/dsp_ranges.py": "085aca1208a672c91e8db2ea620a5a17eaa2b577f16f074ecb89fdf2bc23c300",
-    "sdk/octabam/tools/remix/detour_guard.py": "0235a68c70127e72815be0ef65e3dbba7655b46fb027b77cf3b82a6f7111145c",
-    "sdk/octabam/tools/remix/app.py": "33b2bf8374192241c9e2cdb0667d9ac52c66cde6be0cb9afd3e0b96c78e51fd1",
-    "sdk/octabam/tools/remix/grains.py": "d7e39aac08497b56679d68155f234b374d08b326356bc5e4ccd3030128a246a2",
-    "sdk/octabam/tools/remix/stock_copies.py": "c593de7f68d5df584eefcbd75a120bb1d72258646d3444a5a8db7e81a290e4b4",
-    "sdk/octabam/tools/remix/state.py": "acad0b6cac5c852acf7c5efefd59180457213a03ff707f219b34cebd2289042b",
-    "sdk/octabam/tools/remix/arena.py": "41c84bd9ab84873bf5f17adb42c4d895b679e0890fb79d120e61906b2f793d65",
-    "sdk/octabam/tools/remix/compile_cache.py": "74d7d08cdbad8ebf6e56d8be7041c9603197b6f7b089962d8fccd880bb592504",
-    "sdk/octabam/tools/remix/schema.py": "6843e02b1baf24572d77f9ecc9cac4c51644b48ca949d6eee6524408741b0fb3",
-    "sdk/runtime/loader/build.py": "5131901224dcd037c07f0233cadabd67eec2a952878bef5a92274dd3d6236c7d",
-    "sdk/machines/octatrack/module-adapters/standalone_runtime.py": "b2841ad6c500e3f4731221267d86d032c92dacfa604ce9e9ab85f36cb6489af3",
-    "sdk/machines/octatrack/module-adapters/stock_recipe.py": "662b79d9dc612845cf85e5051fa2d711cad4f98244194357fdaaabca092d5ca5",
-    "upstream/elekloader/link.py": "2d950474a5bd9d54e62747bfe7f9be30a37a7857df24cd9594e2198b912204f7",
-    "upstream/elekloader/dsp.py": "9486d64eecee023670b716f6ae854996da02ee7c1a0efd5361cd963c756dbc69",
-    "upstream/elekloader/patch.py": "13cc7457aa9a9e6d8f40cd5add4d40b69a3fcedd2cc5f3d65fd1b9841cc8bd9f",
-    "upstream/elekloader/elemod.py": "a14188eff1975df98660fa2c4efc310a9d8bc24fa042cd796e0ac680453df9cd",
-    "upstream/elekloader/mkmod.py": "716d1c6ded9c254b4e9081b0c4b3ec4ccfb7a9095b7978b253abcce921452718",
-    "upstream/elekloader/__init__.py": "0fa4969f9803f886b7ce0d82d151037670981f155f89328635e30ba77b99579d",
-    "upstream/elekloader/syx.py": "af8ccc0949b82135d9c591e0f983b50966c629037105305021b316f224e51deb",
-    "upstream/elekloader/formats.py": "4300d7f6b8692d80e68072e37af15c7706c7ef4b2b5ece646c552bc87e61ab29",
-    "upstream/elekloader/gui.py": "c4e5727bdc47da37baf6eb57126715e4fe5ae4e20c447f72ac2912fc51d3b543",
-    "upstream/elekloader/__main__.py": "726cc8870ca878c56aedd9519aad980a91fba0d889e55ed8fb5b5321a009f2a1",
-    "upstream/elekloader/elek.py": "5012a2a9edd4ce1a03062d333da36b47f72f241e4a26ce04885a905043e3080f",
-    "upstream/elekloader/lint.py": "468fc0cfd177b7646a0a4dc24f633775a8bc9a350f8c6bf0af8b29c12c762674",
-    "upstream/elekloader/isa/__init__.py": "df27c3c73735bf160a930231d5c138d848653d0820e870bb7544223afa3c6b7f",
-    "upstream/elekloader/isa/coldfire.py": "7936cd81549113d32781e5ae96f91e35c62d756ebfc509655cfa06dd00fa58df",
-    "upstream/elekloader/codec/transport.py": "b8ac543de1ff1e8c94c268256cc02ec02203145d4f5a1b4d87d50a4a34156d77",
-    "upstream/elekloader/codec/__init__.py": "df27c3c73735bf160a930231d5c138d848653d0820e870bb7544223afa3c6b7f",
-    "upstream/elekloader/codec/aplib.py": "26c86226e4ae07597012a869f97f90fd9506aed401a823506e6f8b8fc13456a1",
-    "upstream/elekloader/codec/elz.py": "bace6db7e69acc766c16cc0b4bc0ed9b33e53b91bfbc56e2c650b9c6417d65ec",
-    "upstream/elekloader/sdk/build.py": "81b6e5426a74f51d529a2c05207502bb25207b037b0e32329cdc1c70ca61c505",
-    "upstream/elekloader/sdk/octabam.py": "18cafc9e8d91917017a78330c22c3f51a2e0529abea7c292ffe8a364273802b4",
-    "upstream/elekloader/sdk/__init__.py": "365832fc180371d7cd356994a0e3bbd6892ac7de6b1c1f1c0b337a947c3fd148",
-    "upstream/elekloader/sdk/elf.py": "0b897766f03ffe8e15eaadc25935822b95f7a78fea65a1de132267680148f766",
-    "upstream/elekloader/devices/digitakt_mk2.py": "e074140afb03958610c9d018064ba0b840db6ec0e4974b67b87627445f3f40b5",
-    "upstream/elekloader/devices/digitone_mk1.py": "8f86b2384f2aae8b34fcee6036c3c347bf77c2d55dc24677649baa09a2e4adc0",
-    "upstream/elekloader/devices/__init__.py": "724ebe0ecf4d9447a5d66bba3c10b168f5abe5d2d8296b4447d3562b66141bec",
-    "upstream/elekloader/devices/octatrack.py": "110dbea9e71046994d4ae1f05638dbf6f8ab72388dca5ffc590e5e978ea38975",
-    "upstream/elekloader/devices/digitakt_mk1.py": "2126ee25bb30f98246a03e93e1766376ec975de751cf2c9b8e24f987e77fc022"
-   },
-   "copies": [
-    {
-     "offset": 3198,
-     "length": 15,
-     "address": 1073909732,
-     "sha256": "6f0382a91ff044f6a464025c1d7f03bad8b822cb49dbce8cda3ab60535f848c7",
-     "purpose": "Authored pm_per_track instruction span; reconstructed identically from guarded stock coincidence",
-     "authored": {
-      "source": "sdk/octabam/modules/playmodes/playmodes.s",
-      "lines": [
-       1271,
-       1281
+  "schema": 1,
+  "ports": {
+    "playmodes": {
+      "schema": 1,
+      "imageSha256": "8791721bb6f20898600bba88e600ad8710531c2a35db41a8299516dbc99f63b4",
+      "sources": {
+        "sdk/octabam/modules/playmodes/hooks.s": "55899e51737e76e9da1886353cc2330beb0f5b499e96c70fdd621172337332a3",
+        "sdk/octabam/modules/playmodes/manifest.py": "d1fc7d07762faa32c9fdc782b1b4fdcc527d2d2aba4530df69f013a0a4c4a4b8",
+        "sdk/octabam/modules/playmodes/generate.py": "b4d9cb0b38d5a946c53e4ccbf629c0cf16f59047f6a95360464acb89d6bf52a5",
+        "sdk/octabam/modules/playmodes/playmodes.s": "34a2464faadfd583c4fd9c773cfefd6e77c8125c291016a9b90942a2bb91f001",
+        "sdk/octabam/modules/playmodes/test_playmode.c": "25857c24842be4797e6a3b584c991a04329691591baf3f70a2944f69012187b4",
+        "sdk/octabam/modules/playmodes/test_adapter.c": "6765da074aa8f293081a3b2c824f81a589a7d4629e4c682c646ceb66a0804eb9",
+        "sdk/octabam/modules/playmodes/octamod.module.json": "2b8bb40bd95b908e4ca3a5d02fa642a33e2e7ccab71173cb54ba316dbc896e0e",
+        "sdk/octabam/modules/playmodes/playmode.c": "3c414a2eb48d3c198c369ee8924ed6608a0b55cf4fa03f57e424184f8485968e",
+        "sdk/octabam/modules/playmodes/verify.py": "377cc8d573ac98b1d9ec430b05f9d488bc8a37b8841cf6d9fbb64badafbf15ca",
+        "sdk/octabam/modules/playmodes/adapter.c": "b8786b2bfbfa9ed8f8b87ba0bdd98fbf4ed6cc0f16da8811e5cdfa3aa442fe9f",
+        "sdk/octabam/modules/playmodes/playmode.h": "1ba24397d193a3ca0ad4ed43652d19eef6ad7b0049bc26eb1265a21c69950ccc",
+        "sdk/octabam/modules/playmodes/evidence/performance.json": "8ecca1d6a7b6bebf49d306768f1d2e145e18d46bcfb8ae5044f47eb87030d1bd",
+        "sdk/octabam/modules/playmodes/media/capture.json": "98be9c2b0fe1e899be7d8c76d2e384e75d0cba9324975aee74c93f1675fc8eff",
+        "sdk/octabam/tools/remix/platform_build.py": "e72b7a29b45851addecf135ad520db98b66f5e10c5cd354adf37fb52d6c2e42f",
+        "sdk/octabam/tools/remix/machine_composition.py": "6be0efdccc78a4fd1fafdba0cf39fcdb9cf510e72bd26aa22e7cdfe06d857783",
+        "sdk/octabam/tools/remix/stock_guard.py": "b05e115afaa11d1507273bdcd26e05c25e7a6424d3e0fb4eb21d797194e508b3",
+        "sdk/octabam/tools/remix/index.py": "29a0090afb78aa6f5142aa1e862c8563badeb9ff0c78c03a458d5b2ad6e6104c",
+        "sdk/octabam/tools/remix/registry.py": "f3b2fbfb90b97db33e360603ccf3eb0a703913dddaad78c681b9676287ee23e5",
+        "sdk/octabam/tools/remix/keep.py": "18e1f485900768bd896507da4f6669199bc52466e7af7a1102d7d9a2bc03d305",
+        "sdk/octabam/tools/remix/geom.py": "6bf3e107cd45c1213f0c071ae65c2ab0b9037241b0d2b974813757f0e08d2997",
+        "sdk/octabam/tools/remix/ledger.py": "73407d159a965671da2255aef5864bd0c745dfa2a600575918f48c40fc170f83",
+        "sdk/octabam/tools/remix/__init__.py": "c925cdb1d084a4e2bd02f8f13e87204bff38ff4c40087ec86a8f2fe1395f83f9",
+        "sdk/octabam/tools/remix/rig.py": "975ee01f9e925c0170602db2e9bd0427bc9e3fc5a5b2d85a8829a701b2d20691",
+        "sdk/octabam/tools/remix/stock.py": "11a41e3176719776712e4aa719bdeab6a319bd04186aa9b954063392d8be919f",
+        "sdk/octabam/tools/remix/audition.py": "98cae0606138b98878d9d1b18fd4ecd541e99332beeec0c7b4c7b0fb5b6dfd43",
+        "sdk/octabam/tools/remix/runtime_build.py": "27d2d73d56716f7088f174364f057e0c041f29741885d7cfbb7d91e49cc8b6ba",
+        "sdk/octabam/tools/remix/selftest.py": "78f46022e4537eccf204e2bc3a3fdb683fd86c6cf0ee87f78ae5fe804cb17853",
+        "sdk/octabam/tools/remix/dsp_ranges.py": "085aca1208a672c91e8db2ea620a5a17eaa2b577f16f074ecb89fdf2bc23c300",
+        "sdk/octabam/tools/remix/detour_guard.py": "0235a68c70127e72815be0ef65e3dbba7655b46fb027b77cf3b82a6f7111145c",
+        "sdk/octabam/tools/remix/app.py": "33b2bf8374192241c9e2cdb0667d9ac52c66cde6be0cb9afd3e0b96c78e51fd1",
+        "sdk/octabam/tools/remix/grains.py": "d7e39aac08497b56679d68155f234b374d08b326356bc5e4ccd3030128a246a2",
+        "sdk/octabam/tools/remix/stock_copies.py": "c593de7f68d5df584eefcbd75a120bb1d72258646d3444a5a8db7e81a290e4b4",
+        "sdk/octabam/tools/remix/state.py": "acad0b6cac5c852acf7c5efefd59180457213a03ff707f219b34cebd2289042b",
+        "sdk/octabam/tools/remix/arena.py": "41c84bd9ab84873bf5f17adb42c4d895b679e0890fb79d120e61906b2f793d65",
+        "sdk/octabam/tools/remix/compile_cache.py": "74d7d08cdbad8ebf6e56d8be7041c9603197b6f7b089962d8fccd880bb592504",
+        "sdk/octabam/tools/remix/schema.py": "6843e02b1baf24572d77f9ecc9cac4c51644b48ca949d6eee6524408741b0fb3",
+        "sdk/runtime/loader/build.py": "5131901224dcd037c07f0233cadabd67eec2a952878bef5a92274dd3d6236c7d",
+        "sdk/machines/octatrack/module-adapters/standalone_runtime.py": "b2841ad6c500e3f4731221267d86d032c92dacfa604ce9e9ab85f36cb6489af3",
+        "sdk/machines/octatrack/module-adapters/stock_recipe.py": "662b79d9dc612845cf85e5051fa2d711cad4f98244194357fdaaabca092d5ca5",
+        "upstream/elekloader/link.py": "2d950474a5bd9d54e62747bfe7f9be30a37a7857df24cd9594e2198b912204f7",
+        "upstream/elekloader/dsp.py": "9486d64eecee023670b716f6ae854996da02ee7c1a0efd5361cd963c756dbc69",
+        "upstream/elekloader/patch.py": "13cc7457aa9a9e6d8f40cd5add4d40b69a3fcedd2cc5f3d65fd1b9841cc8bd9f",
+        "upstream/elekloader/elemod.py": "a14188eff1975df98660fa2c4efc310a9d8bc24fa042cd796e0ac680453df9cd",
+        "upstream/elekloader/mkmod.py": "716d1c6ded9c254b4e9081b0c4b3ec4ccfb7a9095b7978b253abcce921452718",
+        "upstream/elekloader/__init__.py": "0fa4969f9803f886b7ce0d82d151037670981f155f89328635e30ba77b99579d",
+        "upstream/elekloader/syx.py": "af8ccc0949b82135d9c591e0f983b50966c629037105305021b316f224e51deb",
+        "upstream/elekloader/formats.py": "4300d7f6b8692d80e68072e37af15c7706c7ef4b2b5ece646c552bc87e61ab29",
+        "upstream/elekloader/gui.py": "c4e5727bdc47da37baf6eb57126715e4fe5ae4e20c447f72ac2912fc51d3b543",
+        "upstream/elekloader/__main__.py": "726cc8870ca878c56aedd9519aad980a91fba0d889e55ed8fb5b5321a009f2a1",
+        "upstream/elekloader/elek.py": "5012a2a9edd4ce1a03062d333da36b47f72f241e4a26ce04885a905043e3080f",
+        "upstream/elekloader/lint.py": "468fc0cfd177b7646a0a4dc24f633775a8bc9a350f8c6bf0af8b29c12c762674",
+        "upstream/elekloader/isa/__init__.py": "df27c3c73735bf160a930231d5c138d848653d0820e870bb7544223afa3c6b7f",
+        "upstream/elekloader/isa/coldfire.py": "7936cd81549113d32781e5ae96f91e35c62d756ebfc509655cfa06dd00fa58df",
+        "upstream/elekloader/codec/transport.py": "b8ac543de1ff1e8c94c268256cc02ec02203145d4f5a1b4d87d50a4a34156d77",
+        "upstream/elekloader/codec/__init__.py": "df27c3c73735bf160a930231d5c138d848653d0820e870bb7544223afa3c6b7f",
+        "upstream/elekloader/codec/aplib.py": "26c86226e4ae07597012a869f97f90fd9506aed401a823506e6f8b8fc13456a1",
+        "upstream/elekloader/codec/elz.py": "bace6db7e69acc766c16cc0b4bc0ed9b33e53b91bfbc56e2c650b9c6417d65ec",
+        "upstream/elekloader/sdk/build.py": "81b6e5426a74f51d529a2c05207502bb25207b037b0e32329cdc1c70ca61c505",
+        "upstream/elekloader/sdk/octabam.py": "18cafc9e8d91917017a78330c22c3f51a2e0529abea7c292ffe8a364273802b4",
+        "upstream/elekloader/sdk/__init__.py": "365832fc180371d7cd356994a0e3bbd6892ac7de6b1c1f1c0b337a947c3fd148",
+        "upstream/elekloader/sdk/elf.py": "0b897766f03ffe8e15eaadc25935822b95f7a78fea65a1de132267680148f766",
+        "upstream/elekloader/devices/digitakt_mk2.py": "e074140afb03958610c9d018064ba0b840db6ec0e4974b67b87627445f3f40b5",
+        "upstream/elekloader/devices/digitone_mk1.py": "8f86b2384f2aae8b34fcee6036c3c347bf77c2d55dc24677649baa09a2e4adc0",
+        "upstream/elekloader/devices/__init__.py": "724ebe0ecf4d9447a5d66bba3c10b168f5abe5d2d8296b4447d3562b66141bec",
+        "upstream/elekloader/devices/octatrack.py": "110dbea9e71046994d4ae1f05638dbf6f8ab72388dca5ffc590e5e978ea38975",
+        "upstream/elekloader/devices/digitakt_mk1.py": "2126ee25bb30f98246a03e93e1766376ec975de751cf2c9b8e24f987e77fc022"
+      },
+      "copies": [
+        {
+          "offset": 3198,
+          "length": 15,
+          "address": 1073909732,
+          "sha256": "6f0382a91ff044f6a464025c1d7f03bad8b822cb49dbce8cda3ab60535f848c7",
+          "purpose": "Authored pm_per_track instruction span; reconstructed identically from guarded stock coincidence",
+          "authored": {
+            "source": "sdk/octabam/modules/playmodes/playmodes.s",
+            "lines": [
+              1271,
+              1281
+            ],
+            "symbol": "pm_per_track",
+            "method": "native-unit"
+          }
+        },
+        {
+          "offset": 3530,
+          "length": 14,
+          "address": 1073882006,
+          "sha256": "eb5a0a000b0368e2a23847c4251da29f3f28ada9b50cf71ca177e11ae65d2aaf",
+          "purpose": "Authored pm_track_length instruction span; reconstructed identically from guarded stock coincidence",
+          "authored": {
+            "source": "sdk/octabam/modules/playmodes/playmodes.s",
+            "lines": [
+              1393,
+              1402
+            ],
+            "symbol": "pm_track_length",
+            "method": "native-unit"
+          }
+        },
+        {
+          "offset": 6008,
+          "length": 13,
+          "address": 1073972194,
+          "sha256": "db509240d0b12958fad1adbe414340a8580949e5116ed3ceecac4e3b5cc6c005",
+          "purpose": "Authored pm_key_updown instruction span; reconstructed identically from guarded stock coincidence",
+          "authored": {
+            "source": "sdk/octabam/modules/playmodes/playmodes.s",
+            "lines": [
+              2226,
+              2234
+            ],
+            "symbol": "pm_key_updown",
+            "method": "native-unit"
+          }
+        },
+        {
+          "offset": 7138,
+          "length": 12,
+          "address": 1074056994,
+          "sha256": "1c5975330c0ddc7a32f1d70c5735118826981c8a68a7bf3397c92d094e0e5385",
+          "purpose": "Authored pm_key_entry instruction span; reconstructed identically from guarded stock coincidence",
+          "authored": {
+            "source": "sdk/octabam/modules/playmodes/playmodes.s",
+            "lines": [
+              2712,
+              2714
+            ],
+            "symbol": "pm_key_entry",
+            "method": "native-unit"
+          }
+        },
+        {
+          "offset": 7605,
+          "length": 13,
+          "address": 1074305305,
+          "sha256": "55eada7b38d544499ed47966c271580737bf1f50409d06e8c38d4289f836929f",
+          "purpose": "Authored pm_proj_write instruction span; reconstructed identically from guarded stock coincidence",
+          "authored": {
+            "source": "sdk/octabam/modules/playmodes/playmodes.s",
+            "lines": [
+              2950,
+              2953
+            ],
+            "symbol": "pm_proj_write",
+            "method": "native-unit"
+          }
+        }
       ],
-      "symbol": "pm_per_track",
-      "method": "native-unit"
-     }
+      "fills": []
     },
-    {
-     "offset": 3530,
-     "length": 14,
-     "address": 1073882006,
-     "sha256": "eb5a0a000b0368e2a23847c4251da29f3f28ada9b50cf71ca177e11ae65d2aaf",
-     "purpose": "Authored pm_track_length instruction span; reconstructed identically from guarded stock coincidence",
-     "authored": {
-      "source": "sdk/octabam/modules/playmodes/playmodes.s",
-      "lines": [
-       1393,
-       1402
+    "tapeecho": {
+      "schema": 1,
+      "imageSha256": "def1bc39f8bc9e998cf49b7df6ab36725f42f460b1e73c079238ebc4c25caded",
+      "sources": {
+        "sdk/octabam/modules/tapeecho/cpu_hooks.s": "d1d959af91fbd0759191c5e244b4396613d18c057c8e65281d76cb67beb73e34",
+        "sdk/octabam/modules/tapeecho/cpu.c": "bbb50e96305a64f99d72045defa40d09ab3e8fc910e717d8122dd1f070de35a7",
+        "sdk/octabam/modules/tapeecho/time_fmt.s": "f50337532bbd802f67bb3c93d975405c2e386ec2a75bf525a814b9f9756f9d15",
+        "sdk/octabam/modules/tapeecho/cpu_tables.h": "1d2e3e062651f021ca94fd19339dde824bcf49c4d867da790c20957dd24db9b2",
+        "sdk/octabam/modules/tapeecho/manifest.py": "8444fc496776df2c719401f6967aba44a5922e15f0906268286663d012dd94b8",
+        "sdk/octabam/modules/tapeecho/octamod.module.json": "9784954380cba4ec5d5f9440eb188dd65ff885d09192ed534a117a1a5f761d58",
+        "sdk/octabam/modules/tapeecho/cpu_kernels.s": "1cb1d400cbf0f0b7a75dc0ea13f6afc70b56221f2d45f424f7f58fa79ce6347f",
+        "sdk/octabam/modules/tapeecho/cpu.s": "783901f817efc5496c9b6178367459cfae1fe036adfd2a5be3a89d62e37906b6",
+        "sdk/octabam/modules/tapeecho/cpu_passthrough.asm": "68ef0beaa213de43e116d2feb367b437ef8c73c7f7b1c07328fde2d72edb3fdc",
+        "sdk/octabam/modules/tapeecho/cpu.h": "d07d496a62b95f23f8c2cbd893a0125e8a67071e83bf2c642e14251e48e69ff3",
+        "sdk/octabam/modules/tapeecho/generate_tables.py": "3461b659e2f22d7da776eb87755610094a4a3e72609c875e82902a8da9a8a69c",
+        "sdk/octabam/modules/tapeecho/generate_cpu.py": "09477f59af29dc6b68458454f818ec999339f4f4eefadb979cc13236ce431353",
+        "sdk/octabam/modules/tapeecho/media/capture.json": "8e0627d47f074322917978cd4abf505d82d9b53ece8e8c2b1ad280b69cd2902b",
+        "sdk/octabam/tools/remix/platform_build.py": "e72b7a29b45851addecf135ad520db98b66f5e10c5cd354adf37fb52d6c2e42f",
+        "sdk/octabam/tools/remix/machine_composition.py": "6be0efdccc78a4fd1fafdba0cf39fcdb9cf510e72bd26aa22e7cdfe06d857783",
+        "sdk/octabam/tools/remix/stock_guard.py": "b05e115afaa11d1507273bdcd26e05c25e7a6424d3e0fb4eb21d797194e508b3",
+        "sdk/octabam/tools/remix/index.py": "29a0090afb78aa6f5142aa1e862c8563badeb9ff0c78c03a458d5b2ad6e6104c",
+        "sdk/octabam/tools/remix/registry.py": "f3b2fbfb90b97db33e360603ccf3eb0a703913dddaad78c681b9676287ee23e5",
+        "sdk/octabam/tools/remix/keep.py": "18e1f485900768bd896507da4f6669199bc52466e7af7a1102d7d9a2bc03d305",
+        "sdk/octabam/tools/remix/geom.py": "6bf3e107cd45c1213f0c071ae65c2ab0b9037241b0d2b974813757f0e08d2997",
+        "sdk/octabam/tools/remix/ledger.py": "73407d159a965671da2255aef5864bd0c745dfa2a600575918f48c40fc170f83",
+        "sdk/octabam/tools/remix/__init__.py": "c925cdb1d084a4e2bd02f8f13e87204bff38ff4c40087ec86a8f2fe1395f83f9",
+        "sdk/octabam/tools/remix/rig.py": "975ee01f9e925c0170602db2e9bd0427bc9e3fc5a5b2d85a8829a701b2d20691",
+        "sdk/octabam/tools/remix/stock.py": "11a41e3176719776712e4aa719bdeab6a319bd04186aa9b954063392d8be919f",
+        "sdk/octabam/tools/remix/audition.py": "98cae0606138b98878d9d1b18fd4ecd541e99332beeec0c7b4c7b0fb5b6dfd43",
+        "sdk/octabam/tools/remix/runtime_build.py": "27d2d73d56716f7088f174364f057e0c041f29741885d7cfbb7d91e49cc8b6ba",
+        "sdk/octabam/tools/remix/selftest.py": "78f46022e4537eccf204e2bc3a3fdb683fd86c6cf0ee87f78ae5fe804cb17853",
+        "sdk/octabam/tools/remix/dsp_ranges.py": "085aca1208a672c91e8db2ea620a5a17eaa2b577f16f074ecb89fdf2bc23c300",
+        "sdk/octabam/tools/remix/detour_guard.py": "0235a68c70127e72815be0ef65e3dbba7655b46fb027b77cf3b82a6f7111145c",
+        "sdk/octabam/tools/remix/app.py": "33b2bf8374192241c9e2cdb0667d9ac52c66cde6be0cb9afd3e0b96c78e51fd1",
+        "sdk/octabam/tools/remix/grains.py": "d7e39aac08497b56679d68155f234b374d08b326356bc5e4ccd3030128a246a2",
+        "sdk/octabam/tools/remix/stock_copies.py": "c593de7f68d5df584eefcbd75a120bb1d72258646d3444a5a8db7e81a290e4b4",
+        "sdk/octabam/tools/remix/state.py": "acad0b6cac5c852acf7c5efefd59180457213a03ff707f219b34cebd2289042b",
+        "sdk/octabam/tools/remix/arena.py": "41c84bd9ab84873bf5f17adb42c4d895b679e0890fb79d120e61906b2f793d65",
+        "sdk/octabam/tools/remix/compile_cache.py": "74d7d08cdbad8ebf6e56d8be7041c9603197b6f7b089962d8fccd880bb592504",
+        "sdk/octabam/tools/remix/schema.py": "6843e02b1baf24572d77f9ecc9cac4c51644b48ca949d6eee6524408741b0fb3",
+        "sdk/runtime/loader/build.py": "5131901224dcd037c07f0233cadabd67eec2a952878bef5a92274dd3d6236c7d",
+        "sdk/machines/octatrack/module-adapters/standalone_runtime.py": "3a7559a330ae4f031c7c47b7cb67f679cd7fb4e4f2aa69f2e3971940be4c46ae",
+        "sdk/machines/octatrack/module-adapters/stock_recipe.py": "662b79d9dc612845cf85e5051fa2d711cad4f98244194357fdaaabca092d5ca5",
+        "scripts/octatrack-module-page.mjs": "8faa5b3822f2de023a8cad593d863bea36ed9bbd4c6d3c48b77c02d5844b672c",
+        "src/engine/menu-formatters.ts": "c90fa33acb37429e8f9d1f17adc569931467f686990f07ab34e3a1130468a48f",
+        "src/engine/rom-package.ts": "08a8a7329e11f431561546c09379b92ebca26903bd9c4d7cd81e95ad675dc060",
+        "src/engine/coldfire-elf.ts": "319ca0d835d1b0c602c8f4b06990016d0ebfe246cedbfc596cea3cc7adfe3cd2",
+        "src/engine/module-build.ts": "dcd8397b8cecf6fab61debd9aa2f86f612da0ca6ccf363c79d56033bc170b993",
+        "src/catalog/modules.ts": "e268c6d42e4d5093ab943aed5cf2263a72e6d5e1a7ac0e72efc8a7ec6c62b89b",
+        "src/engine/assets/dsp-packages.json": "a477e6ee507f9e4bea803b2ed6d5d11806d8c43f3ffe54a6f1abab8c2731330d",
+        "src/engine/assets/descriptor-recipes.json": "6a4b25c14d6b0375a1df64916d83a2483f92c451fdda696cf4d37cd3dc3e22c9",
+        "src/engine/assets/menu-recipes.json": "268efd2d3fe89c88eced1dc7e367ebc76625d1686ce7186af66e7020081b6089",
+        "src/engine/assets/rom-packages.json": "77c8a166715cf2f433c343911a8710a4f86e05fc0536588275a411fbab79129f",
+        "upstream/elekloader/link.py": "5d31157ccbe62807ff9f05fd47e1e55b54be0475ab53565e6607a56566603ba8",
+        "upstream/elekloader/dsp.py": "9486d64eecee023670b716f6ae854996da02ee7c1a0efd5361cd963c756dbc69",
+        "upstream/elekloader/patch.py": "77c0a74bf4b0ff8c5525d4c4b1bc42af765314a4601c0510577817a7487d8666",
+        "upstream/elekloader/store.py": "1f20970b0da2a89a64847c337045f4d33b43038d670cf542f4ad03c01ada296d",
+        "upstream/elekloader/elemod.py": "7536f9bee1e16876662bee03b1d80f81ca705e36b12b9f8ae060e1f8ae873228",
+        "upstream/elekloader/mkmod.py": "716d1c6ded9c254b4e9081b0c4b3ec4ccfb7a9095b7978b253abcce921452718",
+        "upstream/elekloader/__init__.py": "eb28d2a32bf87b72fe4f792e55ce37f50c23042f573cf75275f6983731ed8779",
+        "upstream/elekloader/syx.py": "0ef9a2154ab2c100ab1cd7d09b48923916aa663c722418b8f6f4d500a56084f6",
+        "upstream/elekloader/formats.py": "715b0ca1c6bb96e41ab73338a6e625f33949d95599f58d94cd37e86ad0544b4e",
+        "upstream/elekloader/gui.py": "0d9b289bf72e6b7b23280fe099a92ee80c7007ca484a72fadc37147a4f9e8056",
+        "upstream/elekloader/__main__.py": "726cc8870ca878c56aedd9519aad980a91fba0d889e55ed8fb5b5321a009f2a1",
+        "upstream/elekloader/elek.py": "5012a2a9edd4ce1a03062d333da36b47f72f241e4a26ce04885a905043e3080f",
+        "upstream/elekloader/lint.py": "8eeb918e9c2d0d8a20ffa26df326834ddff2676090624a587c1902d3dee76e9c",
+        "upstream/elekloader/sdk/build.py": "a602ea4c24d80a653c2c6f6786399016503a5294674d942e97e7895983108592",
+        "upstream/elekloader/sdk/coresites.py": "27c1c90ca6a96e0b7b9e9eaeae2e5709a991967eaf7db5199af955e9fe0e8589",
+        "upstream/elekloader/sdk/bounties.py": "55170aa1cf763e3dd1d5cef7b86ccbf12e6ec4beebb7f709ac42469f9f8020cd",
+        "upstream/elekloader/sdk/octabam.py": "26103cf846bc7a3d038ae5f213bef614b35144293539e3721e31affc0e4eda7a",
+        "upstream/elekloader/sdk/__init__.py": "365832fc180371d7cd356994a0e3bbd6892ac7de6b1c1f1c0b337a947c3fd148",
+        "upstream/elekloader/sdk/elf.py": "0b897766f03ffe8e15eaadc25935822b95f7a78fea65a1de132267680148f766",
+        "upstream/elekloader/devices/digitakt_mk2.py": "e074140afb03958610c9d018064ba0b840db6ec0e4974b67b87627445f3f40b5",
+        "upstream/elekloader/devices/digitone_mk1.py": "ddd084da185af114eeda708634a56e6601bf1d365c43d750a69b5c959d1c1900",
+        "upstream/elekloader/devices/__init__.py": "8b350354c5b1e1e2ffc0bb4f3a446b9267d29c807163a84da9312aa31a888208",
+        "upstream/elekloader/devices/model_samples.py": "2d441ab41233a228cf98894bede7e745d48eb56d85ff3d4fabe5a3045ff61e47",
+        "upstream/elekloader/devices/analog_rytm_mk2.py": "07cae57bf241981c9aee8f1953ac69f0f24b9bfd9764910fc85fbc8c761a953b",
+        "upstream/elekloader/devices/model_cycles.py": "cfa5b27f1075669589f892f65c1bb55433a6cf12477076f4612b6531fdf37cb7",
+        "upstream/elekloader/devices/analog_four_mk2.py": "60effb1531138bceafc93d5a99fb574da51c381c39679c2b5b9f229070761102",
+        "upstream/elekloader/devices/octatrack.py": "6d062387e822a88f9629ba88667f031c5a933098d206377d2b18190ff87e346b",
+        "upstream/elekloader/devices/digitakt_mk1.py": "ce3df4e8b65f4d8c2265a2c0fb224ab28640b139ffcf8c98731b9561b0aae07b",
+        "sdk/firmware_codec/__init__.py": "0864c063d8c45793479098c425dbd4ec34b7d14acf781c1eaa8f65805e5016ca",
+        "sdk/firmware_codec/aplib.py": "b1c6473b3bc81cfa4301f599693e7959c78fa0b033ba8c3d31f560fcc41e4d2a",
+        "sdk/firmware_codec/coldfire.py": "c3b3736273ced01afd89cd75dd7ba78f6a3b0e0800971173bbc16e89bf1f56be",
+        "sdk/firmware_codec/elz.py": "417eb28fbadcfdfb4f4efa56a7c88d7f4d248953f668fb308f56796acb37049f",
+        "sdk/firmware_codec/transport.py": "30f1b71c28cf4c57fdbe38c0e535465cc2f29503ef348888a68940f93f070ae5"
+      },
+      "copies": [
+        {
+          "offset": 676,
+          "length": 16,
+          "address": 1073984446,
+          "sha256": "2208dade979a9235783eacb36cdde6fac1f68a1c1e97629678e6ef71eaa7643b",
+          "purpose": "Authored free instruction span; reconstructed identically from guarded stock coincidence",
+          "authored": {
+            "source": "sdk/octabam/modules/tapeecho/time_fmt.s",
+            "lines": [
+              46,
+              49
+            ],
+            "symbol": "free",
+            "method": "native-formatter"
+          }
+        },
+        {
+          "offset": 3076,
+          "length": 18,
+          "address": 1073753950,
+          "sha256": "1e998d15e30ac012a8b3cd88d4588e8f85d7921a2850b0551b2259a84752a995",
+          "purpose": "Authored render_head instruction span; reconstructed identically from guarded stock coincidence",
+          "authored": {
+            "source": "sdk/octabam/modules/tapeecho/cpu.s",
+            "lines": [
+              915,
+              919
+            ],
+            "symbol": "render_head",
+            "method": "native-unit"
+          }
+        },
+        {
+          "offset": 3100,
+          "length": 26,
+          "address": 1074366192,
+          "sha256": "90dc32b1ff6203f13faaba47d8a89d606c770746e69ea8010df241e1241fd9c5",
+          "purpose": "Authored render_head instruction span; reconstructed identically from guarded stock coincidence",
+          "authored": {
+            "source": "sdk/octabam/modules/tapeecho/cpu.s",
+            "lines": [
+              921,
+              927
+            ],
+            "symbol": "render_head",
+            "method": "native-unit"
+          }
+        },
+        {
+          "offset": 3462,
+          "length": 19,
+          "address": 1074375602,
+          "sha256": "3fd2ea50644e110d89a47a30180101283abeae689e44d39c646c941fea217965",
+          "purpose": "Authored te_target instruction span; reconstructed identically from guarded stock coincidence",
+          "authored": {
+            "source": "sdk/octabam/modules/tapeecho/cpu.s",
+            "lines": [
+              1055,
+              1060
+            ],
+            "symbol": "te_target",
+            "method": "native-unit"
+          }
+        },
+        {
+          "offset": 7462,
+          "length": 13,
+          "address": 1073973354,
+          "sha256": "2393ebbe40716982dc0fc11a30e3e53f13d60755b68dc8f156a4cf02ec77c2f2",
+          "purpose": "Authored te_filter_block instruction span; reconstructed identically from guarded stock coincidence",
+          "authored": {
+            "source": "sdk/octabam/modules/tapeecho/cpu.s",
+            "lines": [
+              27285,
+              27332
+            ],
+            "symbol": "te_filter_block",
+            "method": "native-unit"
+          }
+        },
+        {
+          "offset": 8940,
+          "length": 8,
+          "address": 1073897668,
+          "sha256": "8937904adb028ee826e1da6e9593b99222dd3fb141bbaa852b54ef596f94054f",
+          "purpose": "Authored te_tape_block instruction span; reconstructed identically from guarded stock coincidence",
+          "authored": {
+            "source": "sdk/octabam/modules/tapeecho/cpu.s",
+            "lines": [
+              27523,
+              27524
+            ],
+            "symbol": "te_tape_block",
+            "method": "native-unit"
+          }
+        },
+        {
+          "offset": 8948,
+          "length": 16,
+          "address": 1073745896,
+          "sha256": "324b9e08fe60e608cbdebbbd690d3efdac6a0fc7a2ec6b9756fc1f64e1ef5281",
+          "purpose": "Authored te_read_linear instruction span; reconstructed identically from guarded stock coincidence",
+          "authored": {
+            "source": "sdk/octabam/modules/tapeecho/cpu.s",
+            "lines": [
+              27525,
+              27545
+            ],
+            "symbol": "te_read_linear",
+            "method": "native-unit"
+          }
+        }
       ],
-      "symbol": "pm_track_length",
-      "method": "native-unit"
-     }
+      "fills": []
     },
-    {
-     "offset": 6008,
-     "length": 13,
-     "address": 1073972194,
-     "sha256": "db509240d0b12958fad1adbe414340a8580949e5116ed3ceecac4e3b5cc6c005",
-     "purpose": "Authored pm_key_updown instruction span; reconstructed identically from guarded stock coincidence",
-     "authored": {
-      "source": "sdk/octabam/modules/playmodes/playmodes.s",
-      "lines": [
-       2226,
-       2234
+    "euclid": {
+      "schema": 1,
+      "imageSha256": "5fc73790f3419521044aa8dab4bf08e44436a9d89797cf157777923cbf7e442b",
+      "sources": {
+        "sdk/octabam/modules/euclid/control.s": "5a7881df366f6c7ec83c9b1a7cfe8825aedbe8af933ecf155c156223c744c263",
+        "sdk/octabam/modules/euclid/control.h": "3b46d1ec81f83942c0303bbb146cbd3509cabd7e030c4ed1d6ff7304181bb7b2",
+        "sdk/octabam/modules/euclid/hooks.s": "597006c7fd73fc9956170f284deb47a2ddd13c8f20e7a9669ef51fa469f767d1",
+        "sdk/octabam/modules/euclid/manifest.py": "e43eac70260eda028417be31773b2cd3abf4bf60698ca5968704de3774d1f31a",
+        "sdk/octabam/modules/euclid/octamod.module.json": "fec0b22a202a1e4a7f51d1fcab5e056841a603d3ffe49a00156cb19d36357eac",
+        "sdk/octabam/modules/euclid/control.c": "bb49a94ac7d63eb9d33258c995026d6ad8ac1843dbe8be1c2f944a6a38bd8333",
+        "sdk/octabam/modules/euclid/generate_control.py": "64e711025c513d5c3c933dbecf73a95e1193bb9a7ab31a11ad28906246dbf6fd",
+        "sdk/octabam/modules/euclid/filter.asm": "b0fef9bfb99aabc67de2bd452feba6ae045603340b7d56405140d2afc3a0f35e",
+        "sdk/octabam/modules/euclid/media/audio-preview.json": "566a6c339eaffab1936a40826ef2a9fdb552c519b635d1bfacec955a8b817b00",
+        "sdk/octabam/modules/euclid/media/capture.json": "787927d11f68c1e148032d2098e1ce9486cae7d2bc293595cc2308d105c5dd75",
+        "sdk/octabam/tools/remix/platform_build.py": "e72b7a29b45851addecf135ad520db98b66f5e10c5cd354adf37fb52d6c2e42f",
+        "sdk/octabam/tools/remix/machine_composition.py": "6be0efdccc78a4fd1fafdba0cf39fcdb9cf510e72bd26aa22e7cdfe06d857783",
+        "sdk/octabam/tools/remix/stock_guard.py": "b05e115afaa11d1507273bdcd26e05c25e7a6424d3e0fb4eb21d797194e508b3",
+        "sdk/octabam/tools/remix/index.py": "29a0090afb78aa6f5142aa1e862c8563badeb9ff0c78c03a458d5b2ad6e6104c",
+        "sdk/octabam/tools/remix/registry.py": "f3b2fbfb90b97db33e360603ccf3eb0a703913dddaad78c681b9676287ee23e5",
+        "sdk/octabam/tools/remix/keep.py": "18e1f485900768bd896507da4f6669199bc52466e7af7a1102d7d9a2bc03d305",
+        "sdk/octabam/tools/remix/geom.py": "6bf3e107cd45c1213f0c071ae65c2ab0b9037241b0d2b974813757f0e08d2997",
+        "sdk/octabam/tools/remix/ledger.py": "73407d159a965671da2255aef5864bd0c745dfa2a600575918f48c40fc170f83",
+        "sdk/octabam/tools/remix/__init__.py": "c925cdb1d084a4e2bd02f8f13e87204bff38ff4c40087ec86a8f2fe1395f83f9",
+        "sdk/octabam/tools/remix/rig.py": "975ee01f9e925c0170602db2e9bd0427bc9e3fc5a5b2d85a8829a701b2d20691",
+        "sdk/octabam/tools/remix/stock.py": "11a41e3176719776712e4aa719bdeab6a319bd04186aa9b954063392d8be919f",
+        "sdk/octabam/tools/remix/audition.py": "98cae0606138b98878d9d1b18fd4ecd541e99332beeec0c7b4c7b0fb5b6dfd43",
+        "sdk/octabam/tools/remix/runtime_build.py": "27d2d73d56716f7088f174364f057e0c041f29741885d7cfbb7d91e49cc8b6ba",
+        "sdk/octabam/tools/remix/selftest.py": "78f46022e4537eccf204e2bc3a3fdb683fd86c6cf0ee87f78ae5fe804cb17853",
+        "sdk/octabam/tools/remix/dsp_ranges.py": "085aca1208a672c91e8db2ea620a5a17eaa2b577f16f074ecb89fdf2bc23c300",
+        "sdk/octabam/tools/remix/detour_guard.py": "0235a68c70127e72815be0ef65e3dbba7655b46fb027b77cf3b82a6f7111145c",
+        "sdk/octabam/tools/remix/app.py": "33b2bf8374192241c9e2cdb0667d9ac52c66cde6be0cb9afd3e0b96c78e51fd1",
+        "sdk/octabam/tools/remix/grains.py": "d7e39aac08497b56679d68155f234b374d08b326356bc5e4ccd3030128a246a2",
+        "sdk/octabam/tools/remix/stock_copies.py": "c593de7f68d5df584eefcbd75a120bb1d72258646d3444a5a8db7e81a290e4b4",
+        "sdk/octabam/tools/remix/state.py": "acad0b6cac5c852acf7c5efefd59180457213a03ff707f219b34cebd2289042b",
+        "sdk/octabam/tools/remix/arena.py": "41c84bd9ab84873bf5f17adb42c4d895b679e0890fb79d120e61906b2f793d65",
+        "sdk/octabam/tools/remix/compile_cache.py": "74d7d08cdbad8ebf6e56d8be7041c9603197b6f7b089962d8fccd880bb592504",
+        "sdk/octabam/tools/remix/schema.py": "6843e02b1baf24572d77f9ecc9cac4c51644b48ca949d6eee6524408741b0fb3",
+        "sdk/runtime/loader/build.py": "5131901224dcd037c07f0233cadabd67eec2a952878bef5a92274dd3d6236c7d",
+        "sdk/machines/octatrack/module-adapters/standalone_runtime.py": "3a7559a330ae4f031c7c47b7cb67f679cd7fb4e4f2aa69f2e3971940be4c46ae",
+        "sdk/machines/octatrack/module-adapters/stock_recipe.py": "662b79d9dc612845cf85e5051fa2d711cad4f98244194357fdaaabca092d5ca5",
+        "scripts/octatrack-module-page.mjs": "8faa5b3822f2de023a8cad593d863bea36ed9bbd4c6d3c48b77c02d5844b672c",
+        "src/engine/menu-formatters.ts": "c90fa33acb37429e8f9d1f17adc569931467f686990f07ab34e3a1130468a48f",
+        "src/engine/rom-package.ts": "08a8a7329e11f431561546c09379b92ebca26903bd9c4d7cd81e95ad675dc060",
+        "src/engine/coldfire-elf.ts": "319ca0d835d1b0c602c8f4b06990016d0ebfe246cedbfc596cea3cc7adfe3cd2",
+        "src/engine/module-build.ts": "dcd8397b8cecf6fab61debd9aa2f86f612da0ca6ccf363c79d56033bc170b993",
+        "src/catalog/modules.ts": "e268c6d42e4d5093ab943aed5cf2263a72e6d5e1a7ac0e72efc8a7ec6c62b89b",
+        "src/engine/assets/dsp-packages.json": "a477e6ee507f9e4bea803b2ed6d5d11806d8c43f3ffe54a6f1abab8c2731330d",
+        "src/engine/assets/descriptor-recipes.json": "6a4b25c14d6b0375a1df64916d83a2483f92c451fdda696cf4d37cd3dc3e22c9",
+        "src/engine/assets/menu-recipes.json": "268efd2d3fe89c88eced1dc7e367ebc76625d1686ce7186af66e7020081b6089",
+        "src/engine/assets/rom-packages.json": "77c8a166715cf2f433c343911a8710a4f86e05fc0536588275a411fbab79129f",
+        "upstream/elekloader/link.py": "5d31157ccbe62807ff9f05fd47e1e55b54be0475ab53565e6607a56566603ba8",
+        "upstream/elekloader/dsp.py": "9486d64eecee023670b716f6ae854996da02ee7c1a0efd5361cd963c756dbc69",
+        "upstream/elekloader/patch.py": "77c0a74bf4b0ff8c5525d4c4b1bc42af765314a4601c0510577817a7487d8666",
+        "upstream/elekloader/store.py": "1f20970b0da2a89a64847c337045f4d33b43038d670cf542f4ad03c01ada296d",
+        "upstream/elekloader/elemod.py": "7536f9bee1e16876662bee03b1d80f81ca705e36b12b9f8ae060e1f8ae873228",
+        "upstream/elekloader/mkmod.py": "716d1c6ded9c254b4e9081b0c4b3ec4ccfb7a9095b7978b253abcce921452718",
+        "upstream/elekloader/__init__.py": "eb28d2a32bf87b72fe4f792e55ce37f50c23042f573cf75275f6983731ed8779",
+        "upstream/elekloader/syx.py": "0ef9a2154ab2c100ab1cd7d09b48923916aa663c722418b8f6f4d500a56084f6",
+        "upstream/elekloader/formats.py": "715b0ca1c6bb96e41ab73338a6e625f33949d95599f58d94cd37e86ad0544b4e",
+        "upstream/elekloader/gui.py": "0d9b289bf72e6b7b23280fe099a92ee80c7007ca484a72fadc37147a4f9e8056",
+        "upstream/elekloader/__main__.py": "726cc8870ca878c56aedd9519aad980a91fba0d889e55ed8fb5b5321a009f2a1",
+        "upstream/elekloader/elek.py": "5012a2a9edd4ce1a03062d333da36b47f72f241e4a26ce04885a905043e3080f",
+        "upstream/elekloader/lint.py": "8eeb918e9c2d0d8a20ffa26df326834ddff2676090624a587c1902d3dee76e9c",
+        "upstream/elekloader/sdk/build.py": "a602ea4c24d80a653c2c6f6786399016503a5294674d942e97e7895983108592",
+        "upstream/elekloader/sdk/coresites.py": "27c1c90ca6a96e0b7b9e9eaeae2e5709a991967eaf7db5199af955e9fe0e8589",
+        "upstream/elekloader/sdk/bounties.py": "55170aa1cf763e3dd1d5cef7b86ccbf12e6ec4beebb7f709ac42469f9f8020cd",
+        "upstream/elekloader/sdk/octabam.py": "26103cf846bc7a3d038ae5f213bef614b35144293539e3721e31affc0e4eda7a",
+        "upstream/elekloader/sdk/__init__.py": "365832fc180371d7cd356994a0e3bbd6892ac7de6b1c1f1c0b337a947c3fd148",
+        "upstream/elekloader/sdk/elf.py": "0b897766f03ffe8e15eaadc25935822b95f7a78fea65a1de132267680148f766",
+        "upstream/elekloader/devices/digitakt_mk2.py": "e074140afb03958610c9d018064ba0b840db6ec0e4974b67b87627445f3f40b5",
+        "upstream/elekloader/devices/digitone_mk1.py": "ddd084da185af114eeda708634a56e6601bf1d365c43d750a69b5c959d1c1900",
+        "upstream/elekloader/devices/__init__.py": "8b350354c5b1e1e2ffc0bb4f3a446b9267d29c807163a84da9312aa31a888208",
+        "upstream/elekloader/devices/model_samples.py": "2d441ab41233a228cf98894bede7e745d48eb56d85ff3d4fabe5a3045ff61e47",
+        "upstream/elekloader/devices/analog_rytm_mk2.py": "07cae57bf241981c9aee8f1953ac69f0f24b9bfd9764910fc85fbc8c761a953b",
+        "upstream/elekloader/devices/model_cycles.py": "cfa5b27f1075669589f892f65c1bb55433a6cf12477076f4612b6531fdf37cb7",
+        "upstream/elekloader/devices/analog_four_mk2.py": "60effb1531138bceafc93d5a99fb574da51c381c39679c2b5b9f229070761102",
+        "upstream/elekloader/devices/octatrack.py": "6d062387e822a88f9629ba88667f031c5a933098d206377d2b18190ff87e346b",
+        "upstream/elekloader/devices/digitakt_mk1.py": "ce3df4e8b65f4d8c2265a2c0fb224ab28640b139ffcf8c98731b9561b0aae07b",
+        "sdk/firmware_codec/__init__.py": "0864c063d8c45793479098c425dbd4ec34b7d14acf781c1eaa8f65805e5016ca",
+        "sdk/firmware_codec/aplib.py": "b1c6473b3bc81cfa4301f599693e7959c78fa0b033ba8c3d31f560fcc41e4d2a",
+        "sdk/firmware_codec/coldfire.py": "c3b3736273ced01afd89cd75dd7ba78f6a3b0e0800971173bbc16e89bf1f56be",
+        "sdk/firmware_codec/elz.py": "417eb28fbadcfdfb4f4efa56a7c88d7f4d248953f668fb308f56796acb37049f",
+        "sdk/firmware_codec/transport.py": "30f1b71c28cf4c57fdbe38c0e535465cc2f29503ef348888a68940f93f070ae5"
+      },
+      "copies": [
+        {
+          "offset": 994,
+          "length": 19,
+          "address": 1074538000,
+          "sha256": "d79549e480eda591c8bac253ca51f45f0e46adc1a974a11f3adb6f1058e35401",
+          "purpose": "Independently authored select-offset table emitted by strings(labels); not an inherited stock DSP table. Labels and emitter are exact source inputs.",
+          "authored": {
+            "source": "src/engine/menu-formatters.ts",
+            "lines": [
+              15,
+              23
+            ],
+            "symbol": "strings(labels): select-offset table",
+            "method": "authored-emitter"
+          }
+        },
+        {
+          "offset": 1040,
+          "length": 17,
+          "address": 1074538052,
+          "sha256": "7ea3e88a66234442987a9d7c00de9cab4f5b489a50479af84d3885801cc658b1",
+          "purpose": "Independently authored select-offset table emitted by strings(labels); not an inherited stock DSP table. Labels and emitter are exact source inputs.",
+          "authored": {
+            "source": "src/engine/menu-formatters.ts",
+            "lines": [
+              15,
+              23
+            ],
+            "symbol": "strings(labels): select-offset table",
+            "method": "authored-emitter"
+          }
+        },
+        {
+          "offset": 1764,
+          "length": 17,
+          "address": 1074538068,
+          "sha256": "c9fcad68135e071d2f2c2951f1549b882182e14996c0a40b446c76dad30be07b",
+          "purpose": "Independently authored select-offset table emitted by strings(labels); not an inherited stock DSP table. Labels and emitter are exact source inputs.",
+          "authored": {
+            "source": "src/engine/menu-formatters.ts",
+            "lines": [
+              15,
+              23
+            ],
+            "symbol": "strings(labels): select-offset table",
+            "method": "authored-emitter"
+          }
+        },
+        {
+          "offset": 2847,
+          "length": 15,
+          "address": 1073823235,
+          "sha256": "e55084d95cae82126a193bb40a29bf95ccea984da71239f0921d8aa462575562",
+          "purpose": "Authored eu_pulse instruction span; reconstructed identically from guarded stock coincidence",
+          "authored": {
+            "source": "sdk/octabam/modules/euclid/control.s",
+            "lines": [
+              102,
+              108
+            ],
+            "symbol": "eu_pulse",
+            "method": "native-unit"
+          }
+        },
+        {
+          "offset": 2862,
+          "length": 3,
+          "address": 1073904372,
+          "sha256": "4922ffe36e9e6bbf37fa5b0cede482d9d358e9298688f88d3b254e5abe701a60",
+          "purpose": "Authored eu_process instruction span; reconstructed identically from guarded stock coincidence",
+          "authored": {
+            "source": "sdk/octabam/modules/euclid/control.s",
+            "lines": [
+              114,
+              114
+            ],
+            "symbol": "eu_process",
+            "method": "native-unit"
+          }
+        },
+        {
+          "offset": 2865,
+          "length": 5,
+          "address": 1073919575,
+          "sha256": "9cb0f53f6c3b6e0e99c6c40d3cc83e87812a0a09c922b793da49eb0da7b9ca0d",
+          "purpose": "Authored eu_process instruction span; reconstructed identically from guarded stock coincidence",
+          "authored": {
+            "source": "sdk/octabam/modules/euclid/control.s",
+            "lines": [
+              114,
+              115
+            ],
+            "symbol": "eu_process",
+            "method": "native-unit"
+          }
+        },
+        {
+          "offset": 5164,
+          "length": 18,
+          "address": 1074195396,
+          "sha256": "bf3b0da00e1f3fe9aff66ca39625cb7e811d034b6d64f60c698215414126d8ed",
+          "purpose": "Authored eu_publish_frame instruction span; reconstructed identically from guarded stock coincidence",
+          "authored": {
+            "source": "sdk/octabam/modules/euclid/control.s",
+            "lines": [
+              939,
+              951
+            ],
+            "symbol": "eu_publish_frame",
+            "method": "native-unit"
+          }
+        }
       ],
-      "symbol": "pm_key_updown",
-      "method": "native-unit"
-     }
-    },
-    {
-     "offset": 7138,
-     "length": 12,
-     "address": 1074056994,
-     "sha256": "1c5975330c0ddc7a32f1d70c5735118826981c8a68a7bf3397c92d094e0e5385",
-     "purpose": "Authored pm_key_entry instruction span; reconstructed identically from guarded stock coincidence",
-     "authored": {
-      "source": "sdk/octabam/modules/playmodes/playmodes.s",
-      "lines": [
-       2712,
-       2714
-      ],
-      "symbol": "pm_key_entry",
-      "method": "native-unit"
-     }
-    },
-    {
-     "offset": 7605,
-     "length": 13,
-     "address": 1074305305,
-     "sha256": "55eada7b38d544499ed47966c271580737bf1f50409d06e8c38d4289f836929f",
-     "purpose": "Authored pm_proj_write instruction span; reconstructed identically from guarded stock coincidence",
-     "authored": {
-      "source": "sdk/octabam/modules/playmodes/playmodes.s",
-      "lines": [
-       2950,
-       2953
-      ],
-      "symbol": "pm_proj_write",
-      "method": "native-unit"
-     }
+      "fills": []
     }
-   ],
-   "fills": []
-  },
-  "tapeecho": {
-   "schema": 1,
-   "imageSha256": "def1bc39f8bc9e998cf49b7df6ab36725f42f460b1e73c079238ebc4c25caded",
-   "sources": {
-    "sdk/octabam/modules/tapeecho/cpu_hooks.s": "d1d959af91fbd0759191c5e244b4396613d18c057c8e65281d76cb67beb73e34",
-    "sdk/octabam/modules/tapeecho/cpu.c": "bbb50e96305a64f99d72045defa40d09ab3e8fc910e717d8122dd1f070de35a7",
-    "sdk/octabam/modules/tapeecho/time_fmt.s": "f50337532bbd802f67bb3c93d975405c2e386ec2a75bf525a814b9f9756f9d15",
-    "sdk/octabam/modules/tapeecho/cpu_tables.h": "1d2e3e062651f021ca94fd19339dde824bcf49c4d867da790c20957dd24db9b2",
-    "sdk/octabam/modules/tapeecho/manifest.py": "8444fc496776df2c719401f6967aba44a5922e15f0906268286663d012dd94b8",
-    "sdk/octabam/modules/tapeecho/octamod.module.json": "9784954380cba4ec5d5f9440eb188dd65ff885d09192ed534a117a1a5f761d58",
-    "sdk/octabam/modules/tapeecho/cpu_kernels.s": "1cb1d400cbf0f0b7a75dc0ea13f6afc70b56221f2d45f424f7f58fa79ce6347f",
-    "sdk/octabam/modules/tapeecho/cpu.s": "783901f817efc5496c9b6178367459cfae1fe036adfd2a5be3a89d62e37906b6",
-    "sdk/octabam/modules/tapeecho/cpu_passthrough.asm": "68ef0beaa213de43e116d2feb367b437ef8c73c7f7b1c07328fde2d72edb3fdc",
-    "sdk/octabam/modules/tapeecho/cpu.h": "d07d496a62b95f23f8c2cbd893a0125e8a67071e83bf2c642e14251e48e69ff3",
-    "sdk/octabam/modules/tapeecho/generate_tables.py": "3461b659e2f22d7da776eb87755610094a4a3e72609c875e82902a8da9a8a69c",
-    "sdk/octabam/modules/tapeecho/generate_cpu.py": "09477f59af29dc6b68458454f818ec999339f4f4eefadb979cc13236ce431353",
-    "sdk/octabam/modules/tapeecho/media/capture.json": "8e0627d47f074322917978cd4abf505d82d9b53ece8e8c2b1ad280b69cd2902b",
-    "sdk/octabam/tools/remix/platform_build.py": "e72b7a29b45851addecf135ad520db98b66f5e10c5cd354adf37fb52d6c2e42f",
-    "sdk/octabam/tools/remix/machine_composition.py": "6be0efdccc78a4fd1fafdba0cf39fcdb9cf510e72bd26aa22e7cdfe06d857783",
-    "sdk/octabam/tools/remix/stock_guard.py": "b05e115afaa11d1507273bdcd26e05c25e7a6424d3e0fb4eb21d797194e508b3",
-    "sdk/octabam/tools/remix/index.py": "29a0090afb78aa6f5142aa1e862c8563badeb9ff0c78c03a458d5b2ad6e6104c",
-    "sdk/octabam/tools/remix/registry.py": "f3b2fbfb90b97db33e360603ccf3eb0a703913dddaad78c681b9676287ee23e5",
-    "sdk/octabam/tools/remix/keep.py": "18e1f485900768bd896507da4f6669199bc52466e7af7a1102d7d9a2bc03d305",
-    "sdk/octabam/tools/remix/geom.py": "6bf3e107cd45c1213f0c071ae65c2ab0b9037241b0d2b974813757f0e08d2997",
-    "sdk/octabam/tools/remix/ledger.py": "73407d159a965671da2255aef5864bd0c745dfa2a600575918f48c40fc170f83",
-    "sdk/octabam/tools/remix/__init__.py": "c925cdb1d084a4e2bd02f8f13e87204bff38ff4c40087ec86a8f2fe1395f83f9",
-    "sdk/octabam/tools/remix/rig.py": "975ee01f9e925c0170602db2e9bd0427bc9e3fc5a5b2d85a8829a701b2d20691",
-    "sdk/octabam/tools/remix/stock.py": "11a41e3176719776712e4aa719bdeab6a319bd04186aa9b954063392d8be919f",
-    "sdk/octabam/tools/remix/audition.py": "98cae0606138b98878d9d1b18fd4ecd541e99332beeec0c7b4c7b0fb5b6dfd43",
-    "sdk/octabam/tools/remix/runtime_build.py": "27d2d73d56716f7088f174364f057e0c041f29741885d7cfbb7d91e49cc8b6ba",
-    "sdk/octabam/tools/remix/selftest.py": "78f46022e4537eccf204e2bc3a3fdb683fd86c6cf0ee87f78ae5fe804cb17853",
-    "sdk/octabam/tools/remix/dsp_ranges.py": "085aca1208a672c91e8db2ea620a5a17eaa2b577f16f074ecb89fdf2bc23c300",
-    "sdk/octabam/tools/remix/detour_guard.py": "0235a68c70127e72815be0ef65e3dbba7655b46fb027b77cf3b82a6f7111145c",
-    "sdk/octabam/tools/remix/app.py": "33b2bf8374192241c9e2cdb0667d9ac52c66cde6be0cb9afd3e0b96c78e51fd1",
-    "sdk/octabam/tools/remix/grains.py": "d7e39aac08497b56679d68155f234b374d08b326356bc5e4ccd3030128a246a2",
-    "sdk/octabam/tools/remix/stock_copies.py": "c593de7f68d5df584eefcbd75a120bb1d72258646d3444a5a8db7e81a290e4b4",
-    "sdk/octabam/tools/remix/state.py": "acad0b6cac5c852acf7c5efefd59180457213a03ff707f219b34cebd2289042b",
-    "sdk/octabam/tools/remix/arena.py": "41c84bd9ab84873bf5f17adb42c4d895b679e0890fb79d120e61906b2f793d65",
-    "sdk/octabam/tools/remix/compile_cache.py": "74d7d08cdbad8ebf6e56d8be7041c9603197b6f7b089962d8fccd880bb592504",
-    "sdk/octabam/tools/remix/schema.py": "6843e02b1baf24572d77f9ecc9cac4c51644b48ca949d6eee6524408741b0fb3",
-    "sdk/runtime/loader/build.py": "5131901224dcd037c07f0233cadabd67eec2a952878bef5a92274dd3d6236c7d",
-    "sdk/machines/octatrack/module-adapters/standalone_runtime.py": "3a7559a330ae4f031c7c47b7cb67f679cd7fb4e4f2aa69f2e3971940be4c46ae",
-    "sdk/machines/octatrack/module-adapters/stock_recipe.py": "662b79d9dc612845cf85e5051fa2d711cad4f98244194357fdaaabca092d5ca5",
-    "scripts/octatrack-module-page.mjs": "8faa5b3822f2de023a8cad593d863bea36ed9bbd4c6d3c48b77c02d5844b672c",
-    "src/engine/menu-formatters.ts": "c90fa33acb37429e8f9d1f17adc569931467f686990f07ab34e3a1130468a48f",
-    "src/engine/rom-package.ts": "08a8a7329e11f431561546c09379b92ebca26903bd9c4d7cd81e95ad675dc060",
-    "src/engine/coldfire-elf.ts": "319ca0d835d1b0c602c8f4b06990016d0ebfe246cedbfc596cea3cc7adfe3cd2",
-    "src/engine/module-build.ts": "dcd8397b8cecf6fab61debd9aa2f86f612da0ca6ccf363c79d56033bc170b993",
-    "src/catalog/modules.ts": "e268c6d42e4d5093ab943aed5cf2263a72e6d5e1a7ac0e72efc8a7ec6c62b89b",
-    "src/engine/assets/dsp-packages.json": "5c4079c9c3873bf56978c8ea8b9b0c7ebe834b80f472362ca949867b754820ac",
-    "src/engine/assets/descriptor-recipes.json": "e5e8ec50ed28f38ae072dba255469d5472934e399bafa8310e9fb56f9011b514",
-    "src/engine/assets/menu-recipes.json": "32faddf1856f4bec60bcb15b6d5f1fcf75ef70c8b7841ab4c2b78e1a3ab9e74e",
-    "src/engine/assets/rom-packages.json": "6a3354fac4379a8c2011716b4deb25425257b46e93c871e3a9914fab4cc91cd1",
-    "upstream/elekloader/link.py": "5d31157ccbe62807ff9f05fd47e1e55b54be0475ab53565e6607a56566603ba8",
-    "upstream/elekloader/dsp.py": "9486d64eecee023670b716f6ae854996da02ee7c1a0efd5361cd963c756dbc69",
-    "upstream/elekloader/patch.py": "77c0a74bf4b0ff8c5525d4c4b1bc42af765314a4601c0510577817a7487d8666",
-    "upstream/elekloader/store.py": "1f20970b0da2a89a64847c337045f4d33b43038d670cf542f4ad03c01ada296d",
-    "upstream/elekloader/elemod.py": "7536f9bee1e16876662bee03b1d80f81ca705e36b12b9f8ae060e1f8ae873228",
-    "upstream/elekloader/mkmod.py": "716d1c6ded9c254b4e9081b0c4b3ec4ccfb7a9095b7978b253abcce921452718",
-    "upstream/elekloader/__init__.py": "eb28d2a32bf87b72fe4f792e55ce37f50c23042f573cf75275f6983731ed8779",
-    "upstream/elekloader/syx.py": "0ef9a2154ab2c100ab1cd7d09b48923916aa663c722418b8f6f4d500a56084f6",
-    "upstream/elekloader/formats.py": "715b0ca1c6bb96e41ab73338a6e625f33949d95599f58d94cd37e86ad0544b4e",
-    "upstream/elekloader/gui.py": "0d9b289bf72e6b7b23280fe099a92ee80c7007ca484a72fadc37147a4f9e8056",
-    "upstream/elekloader/__main__.py": "726cc8870ca878c56aedd9519aad980a91fba0d889e55ed8fb5b5321a009f2a1",
-    "upstream/elekloader/elek.py": "5012a2a9edd4ce1a03062d333da36b47f72f241e4a26ce04885a905043e3080f",
-    "upstream/elekloader/lint.py": "8eeb918e9c2d0d8a20ffa26df326834ddff2676090624a587c1902d3dee76e9c",
-    "upstream/elekloader/sdk/build.py": "a602ea4c24d80a653c2c6f6786399016503a5294674d942e97e7895983108592",
-    "upstream/elekloader/sdk/coresites.py": "27c1c90ca6a96e0b7b9e9eaeae2e5709a991967eaf7db5199af955e9fe0e8589",
-    "upstream/elekloader/sdk/bounties.py": "55170aa1cf763e3dd1d5cef7b86ccbf12e6ec4beebb7f709ac42469f9f8020cd",
-    "upstream/elekloader/sdk/octabam.py": "26103cf846bc7a3d038ae5f213bef614b35144293539e3721e31affc0e4eda7a",
-    "upstream/elekloader/sdk/__init__.py": "365832fc180371d7cd356994a0e3bbd6892ac7de6b1c1f1c0b337a947c3fd148",
-    "upstream/elekloader/sdk/elf.py": "0b897766f03ffe8e15eaadc25935822b95f7a78fea65a1de132267680148f766",
-    "upstream/elekloader/devices/digitakt_mk2.py": "e074140afb03958610c9d018064ba0b840db6ec0e4974b67b87627445f3f40b5",
-    "upstream/elekloader/devices/digitone_mk1.py": "ddd084da185af114eeda708634a56e6601bf1d365c43d750a69b5c959d1c1900",
-    "upstream/elekloader/devices/__init__.py": "8b350354c5b1e1e2ffc0bb4f3a446b9267d29c807163a84da9312aa31a888208",
-    "upstream/elekloader/devices/model_samples.py": "2d441ab41233a228cf98894bede7e745d48eb56d85ff3d4fabe5a3045ff61e47",
-    "upstream/elekloader/devices/analog_rytm_mk2.py": "07cae57bf241981c9aee8f1953ac69f0f24b9bfd9764910fc85fbc8c761a953b",
-    "upstream/elekloader/devices/model_cycles.py": "cfa5b27f1075669589f892f65c1bb55433a6cf12477076f4612b6531fdf37cb7",
-    "upstream/elekloader/devices/analog_four_mk2.py": "60effb1531138bceafc93d5a99fb574da51c381c39679c2b5b9f229070761102",
-    "upstream/elekloader/devices/octatrack.py": "6d062387e822a88f9629ba88667f031c5a933098d206377d2b18190ff87e346b",
-    "upstream/elekloader/devices/digitakt_mk1.py": "ce3df4e8b65f4d8c2265a2c0fb224ab28640b139ffcf8c98731b9561b0aae07b",
-    "sdk/firmware_codec/__init__.py": "0864c063d8c45793479098c425dbd4ec34b7d14acf781c1eaa8f65805e5016ca",
-    "sdk/firmware_codec/aplib.py": "b1c6473b3bc81cfa4301f599693e7959c78fa0b033ba8c3d31f560fcc41e4d2a",
-    "sdk/firmware_codec/coldfire.py": "c3b3736273ced01afd89cd75dd7ba78f6a3b0e0800971173bbc16e89bf1f56be",
-    "sdk/firmware_codec/elz.py": "417eb28fbadcfdfb4f4efa56a7c88d7f4d248953f668fb308f56796acb37049f",
-    "sdk/firmware_codec/transport.py": "30f1b71c28cf4c57fdbe38c0e535465cc2f29503ef348888a68940f93f070ae5"
-   },
-   "copies": [
-    {
-     "offset": 676,
-     "length": 16,
-     "address": 1073984446,
-     "sha256": "2208dade979a9235783eacb36cdde6fac1f68a1c1e97629678e6ef71eaa7643b",
-     "purpose": "Authored free instruction span; reconstructed identically from guarded stock coincidence",
-     "authored": {
-      "source": "sdk/octabam/modules/tapeecho/time_fmt.s",
-      "lines": [
-       46,
-       49
-      ],
-      "symbol": "free",
-      "method": "native-formatter"
-     }
-    },
-    {
-     "offset": 3076,
-     "length": 18,
-     "address": 1073753950,
-     "sha256": "1e998d15e30ac012a8b3cd88d4588e8f85d7921a2850b0551b2259a84752a995",
-     "purpose": "Authored render_head instruction span; reconstructed identically from guarded stock coincidence",
-     "authored": {
-      "source": "sdk/octabam/modules/tapeecho/cpu.s",
-      "lines": [
-       915,
-       919
-      ],
-      "symbol": "render_head",
-      "method": "native-unit"
-     }
-    },
-    {
-     "offset": 3100,
-     "length": 26,
-     "address": 1074366192,
-     "sha256": "90dc32b1ff6203f13faaba47d8a89d606c770746e69ea8010df241e1241fd9c5",
-     "purpose": "Authored render_head instruction span; reconstructed identically from guarded stock coincidence",
-     "authored": {
-      "source": "sdk/octabam/modules/tapeecho/cpu.s",
-      "lines": [
-       921,
-       927
-      ],
-      "symbol": "render_head",
-      "method": "native-unit"
-     }
-    },
-    {
-     "offset": 3462,
-     "length": 19,
-     "address": 1074375602,
-     "sha256": "3fd2ea50644e110d89a47a30180101283abeae689e44d39c646c941fea217965",
-     "purpose": "Authored te_target instruction span; reconstructed identically from guarded stock coincidence",
-     "authored": {
-      "source": "sdk/octabam/modules/tapeecho/cpu.s",
-      "lines": [
-       1055,
-       1060
-      ],
-      "symbol": "te_target",
-      "method": "native-unit"
-     }
-    },
-    {
-     "offset": 7462,
-     "length": 13,
-     "address": 1073973354,
-     "sha256": "2393ebbe40716982dc0fc11a30e3e53f13d60755b68dc8f156a4cf02ec77c2f2",
-     "purpose": "Authored te_filter_block instruction span; reconstructed identically from guarded stock coincidence",
-     "authored": {
-      "source": "sdk/octabam/modules/tapeecho/cpu.s",
-      "lines": [
-       27285,
-       27332
-      ],
-      "symbol": "te_filter_block",
-      "method": "native-unit"
-     }
-    },
-    {
-     "offset": 8940,
-     "length": 8,
-     "address": 1073897668,
-     "sha256": "8937904adb028ee826e1da6e9593b99222dd3fb141bbaa852b54ef596f94054f",
-     "purpose": "Authored te_tape_block instruction span; reconstructed identically from guarded stock coincidence",
-     "authored": {
-      "source": "sdk/octabam/modules/tapeecho/cpu.s",
-      "lines": [
-       27523,
-       27524
-      ],
-      "symbol": "te_tape_block",
-      "method": "native-unit"
-     }
-    },
-    {
-     "offset": 8948,
-     "length": 16,
-     "address": 1073745896,
-     "sha256": "324b9e08fe60e608cbdebbbd690d3efdac6a0fc7a2ec6b9756fc1f64e1ef5281",
-     "purpose": "Authored te_read_linear instruction span; reconstructed identically from guarded stock coincidence",
-     "authored": {
-      "source": "sdk/octabam/modules/tapeecho/cpu.s",
-      "lines": [
-       27525,
-       27545
-      ],
-      "symbol": "te_read_linear",
-      "method": "native-unit"
-     }
-    }
-   ],
-   "fills": []
-  },
-  "euclid": {
-   "schema": 1,
-   "imageSha256": "5fc73790f3419521044aa8dab4bf08e44436a9d89797cf157777923cbf7e442b",
-   "sources": {
-    "sdk/octabam/modules/euclid/control.s": "5a7881df366f6c7ec83c9b1a7cfe8825aedbe8af933ecf155c156223c744c263",
-    "sdk/octabam/modules/euclid/control.h": "3b46d1ec81f83942c0303bbb146cbd3509cabd7e030c4ed1d6ff7304181bb7b2",
-    "sdk/octabam/modules/euclid/hooks.s": "597006c7fd73fc9956170f284deb47a2ddd13c8f20e7a9669ef51fa469f767d1",
-    "sdk/octabam/modules/euclid/manifest.py": "e43eac70260eda028417be31773b2cd3abf4bf60698ca5968704de3774d1f31a",
-    "sdk/octabam/modules/euclid/octamod.module.json": "fec0b22a202a1e4a7f51d1fcab5e056841a603d3ffe49a00156cb19d36357eac",
-    "sdk/octabam/modules/euclid/control.c": "bb49a94ac7d63eb9d33258c995026d6ad8ac1843dbe8be1c2f944a6a38bd8333",
-    "sdk/octabam/modules/euclid/generate_control.py": "64e711025c513d5c3c933dbecf73a95e1193bb9a7ab31a11ad28906246dbf6fd",
-    "sdk/octabam/modules/euclid/filter.asm": "b0fef9bfb99aabc67de2bd452feba6ae045603340b7d56405140d2afc3a0f35e",
-    "sdk/octabam/modules/euclid/media/audio-preview.json": "566a6c339eaffab1936a40826ef2a9fdb552c519b635d1bfacec955a8b817b00",
-    "sdk/octabam/modules/euclid/media/capture.json": "787927d11f68c1e148032d2098e1ce9486cae7d2bc293595cc2308d105c5dd75",
-    "sdk/octabam/tools/remix/platform_build.py": "e72b7a29b45851addecf135ad520db98b66f5e10c5cd354adf37fb52d6c2e42f",
-    "sdk/octabam/tools/remix/machine_composition.py": "6be0efdccc78a4fd1fafdba0cf39fcdb9cf510e72bd26aa22e7cdfe06d857783",
-    "sdk/octabam/tools/remix/stock_guard.py": "b05e115afaa11d1507273bdcd26e05c25e7a6424d3e0fb4eb21d797194e508b3",
-    "sdk/octabam/tools/remix/index.py": "29a0090afb78aa6f5142aa1e862c8563badeb9ff0c78c03a458d5b2ad6e6104c",
-    "sdk/octabam/tools/remix/registry.py": "f3b2fbfb90b97db33e360603ccf3eb0a703913dddaad78c681b9676287ee23e5",
-    "sdk/octabam/tools/remix/keep.py": "18e1f485900768bd896507da4f6669199bc52466e7af7a1102d7d9a2bc03d305",
-    "sdk/octabam/tools/remix/geom.py": "6bf3e107cd45c1213f0c071ae65c2ab0b9037241b0d2b974813757f0e08d2997",
-    "sdk/octabam/tools/remix/ledger.py": "73407d159a965671da2255aef5864bd0c745dfa2a600575918f48c40fc170f83",
-    "sdk/octabam/tools/remix/__init__.py": "c925cdb1d084a4e2bd02f8f13e87204bff38ff4c40087ec86a8f2fe1395f83f9",
-    "sdk/octabam/tools/remix/rig.py": "975ee01f9e925c0170602db2e9bd0427bc9e3fc5a5b2d85a8829a701b2d20691",
-    "sdk/octabam/tools/remix/stock.py": "11a41e3176719776712e4aa719bdeab6a319bd04186aa9b954063392d8be919f",
-    "sdk/octabam/tools/remix/audition.py": "98cae0606138b98878d9d1b18fd4ecd541e99332beeec0c7b4c7b0fb5b6dfd43",
-    "sdk/octabam/tools/remix/runtime_build.py": "27d2d73d56716f7088f174364f057e0c041f29741885d7cfbb7d91e49cc8b6ba",
-    "sdk/octabam/tools/remix/selftest.py": "78f46022e4537eccf204e2bc3a3fdb683fd86c6cf0ee87f78ae5fe804cb17853",
-    "sdk/octabam/tools/remix/dsp_ranges.py": "085aca1208a672c91e8db2ea620a5a17eaa2b577f16f074ecb89fdf2bc23c300",
-    "sdk/octabam/tools/remix/detour_guard.py": "0235a68c70127e72815be0ef65e3dbba7655b46fb027b77cf3b82a6f7111145c",
-    "sdk/octabam/tools/remix/app.py": "33b2bf8374192241c9e2cdb0667d9ac52c66cde6be0cb9afd3e0b96c78e51fd1",
-    "sdk/octabam/tools/remix/grains.py": "d7e39aac08497b56679d68155f234b374d08b326356bc5e4ccd3030128a246a2",
-    "sdk/octabam/tools/remix/stock_copies.py": "c593de7f68d5df584eefcbd75a120bb1d72258646d3444a5a8db7e81a290e4b4",
-    "sdk/octabam/tools/remix/state.py": "acad0b6cac5c852acf7c5efefd59180457213a03ff707f219b34cebd2289042b",
-    "sdk/octabam/tools/remix/arena.py": "41c84bd9ab84873bf5f17adb42c4d895b679e0890fb79d120e61906b2f793d65",
-    "sdk/octabam/tools/remix/compile_cache.py": "74d7d08cdbad8ebf6e56d8be7041c9603197b6f7b089962d8fccd880bb592504",
-    "sdk/octabam/tools/remix/schema.py": "6843e02b1baf24572d77f9ecc9cac4c51644b48ca949d6eee6524408741b0fb3",
-    "sdk/runtime/loader/build.py": "5131901224dcd037c07f0233cadabd67eec2a952878bef5a92274dd3d6236c7d",
-    "sdk/machines/octatrack/module-adapters/standalone_runtime.py": "3a7559a330ae4f031c7c47b7cb67f679cd7fb4e4f2aa69f2e3971940be4c46ae",
-    "sdk/machines/octatrack/module-adapters/stock_recipe.py": "662b79d9dc612845cf85e5051fa2d711cad4f98244194357fdaaabca092d5ca5",
-    "scripts/octatrack-module-page.mjs": "8faa5b3822f2de023a8cad593d863bea36ed9bbd4c6d3c48b77c02d5844b672c",
-    "src/engine/menu-formatters.ts": "c90fa33acb37429e8f9d1f17adc569931467f686990f07ab34e3a1130468a48f",
-    "src/engine/rom-package.ts": "08a8a7329e11f431561546c09379b92ebca26903bd9c4d7cd81e95ad675dc060",
-    "src/engine/coldfire-elf.ts": "319ca0d835d1b0c602c8f4b06990016d0ebfe246cedbfc596cea3cc7adfe3cd2",
-    "src/engine/module-build.ts": "dcd8397b8cecf6fab61debd9aa2f86f612da0ca6ccf363c79d56033bc170b993",
-    "src/catalog/modules.ts": "e268c6d42e4d5093ab943aed5cf2263a72e6d5e1a7ac0e72efc8a7ec6c62b89b",
-    "src/engine/assets/dsp-packages.json": "5c4079c9c3873bf56978c8ea8b9b0c7ebe834b80f472362ca949867b754820ac",
-    "src/engine/assets/descriptor-recipes.json": "e5e8ec50ed28f38ae072dba255469d5472934e399bafa8310e9fb56f9011b514",
-    "src/engine/assets/menu-recipes.json": "32faddf1856f4bec60bcb15b6d5f1fcf75ef70c8b7841ab4c2b78e1a3ab9e74e",
-    "src/engine/assets/rom-packages.json": "6a3354fac4379a8c2011716b4deb25425257b46e93c871e3a9914fab4cc91cd1",
-    "upstream/elekloader/link.py": "5d31157ccbe62807ff9f05fd47e1e55b54be0475ab53565e6607a56566603ba8",
-    "upstream/elekloader/dsp.py": "9486d64eecee023670b716f6ae854996da02ee7c1a0efd5361cd963c756dbc69",
-    "upstream/elekloader/patch.py": "77c0a74bf4b0ff8c5525d4c4b1bc42af765314a4601c0510577817a7487d8666",
-    "upstream/elekloader/store.py": "1f20970b0da2a89a64847c337045f4d33b43038d670cf542f4ad03c01ada296d",
-    "upstream/elekloader/elemod.py": "7536f9bee1e16876662bee03b1d80f81ca705e36b12b9f8ae060e1f8ae873228",
-    "upstream/elekloader/mkmod.py": "716d1c6ded9c254b4e9081b0c4b3ec4ccfb7a9095b7978b253abcce921452718",
-    "upstream/elekloader/__init__.py": "eb28d2a32bf87b72fe4f792e55ce37f50c23042f573cf75275f6983731ed8779",
-    "upstream/elekloader/syx.py": "0ef9a2154ab2c100ab1cd7d09b48923916aa663c722418b8f6f4d500a56084f6",
-    "upstream/elekloader/formats.py": "715b0ca1c6bb96e41ab73338a6e625f33949d95599f58d94cd37e86ad0544b4e",
-    "upstream/elekloader/gui.py": "0d9b289bf72e6b7b23280fe099a92ee80c7007ca484a72fadc37147a4f9e8056",
-    "upstream/elekloader/__main__.py": "726cc8870ca878c56aedd9519aad980a91fba0d889e55ed8fb5b5321a009f2a1",
-    "upstream/elekloader/elek.py": "5012a2a9edd4ce1a03062d333da36b47f72f241e4a26ce04885a905043e3080f",
-    "upstream/elekloader/lint.py": "8eeb918e9c2d0d8a20ffa26df326834ddff2676090624a587c1902d3dee76e9c",
-    "upstream/elekloader/sdk/build.py": "a602ea4c24d80a653c2c6f6786399016503a5294674d942e97e7895983108592",
-    "upstream/elekloader/sdk/coresites.py": "27c1c90ca6a96e0b7b9e9eaeae2e5709a991967eaf7db5199af955e9fe0e8589",
-    "upstream/elekloader/sdk/bounties.py": "55170aa1cf763e3dd1d5cef7b86ccbf12e6ec4beebb7f709ac42469f9f8020cd",
-    "upstream/elekloader/sdk/octabam.py": "26103cf846bc7a3d038ae5f213bef614b35144293539e3721e31affc0e4eda7a",
-    "upstream/elekloader/sdk/__init__.py": "365832fc180371d7cd356994a0e3bbd6892ac7de6b1c1f1c0b337a947c3fd148",
-    "upstream/elekloader/sdk/elf.py": "0b897766f03ffe8e15eaadc25935822b95f7a78fea65a1de132267680148f766",
-    "upstream/elekloader/devices/digitakt_mk2.py": "e074140afb03958610c9d018064ba0b840db6ec0e4974b67b87627445f3f40b5",
-    "upstream/elekloader/devices/digitone_mk1.py": "ddd084da185af114eeda708634a56e6601bf1d365c43d750a69b5c959d1c1900",
-    "upstream/elekloader/devices/__init__.py": "8b350354c5b1e1e2ffc0bb4f3a446b9267d29c807163a84da9312aa31a888208",
-    "upstream/elekloader/devices/model_samples.py": "2d441ab41233a228cf98894bede7e745d48eb56d85ff3d4fabe5a3045ff61e47",
-    "upstream/elekloader/devices/analog_rytm_mk2.py": "07cae57bf241981c9aee8f1953ac69f0f24b9bfd9764910fc85fbc8c761a953b",
-    "upstream/elekloader/devices/model_cycles.py": "cfa5b27f1075669589f892f65c1bb55433a6cf12477076f4612b6531fdf37cb7",
-    "upstream/elekloader/devices/analog_four_mk2.py": "60effb1531138bceafc93d5a99fb574da51c381c39679c2b5b9f229070761102",
-    "upstream/elekloader/devices/octatrack.py": "6d062387e822a88f9629ba88667f031c5a933098d206377d2b18190ff87e346b",
-    "upstream/elekloader/devices/digitakt_mk1.py": "ce3df4e8b65f4d8c2265a2c0fb224ab28640b139ffcf8c98731b9561b0aae07b",
-    "sdk/firmware_codec/__init__.py": "0864c063d8c45793479098c425dbd4ec34b7d14acf781c1eaa8f65805e5016ca",
-    "sdk/firmware_codec/aplib.py": "b1c6473b3bc81cfa4301f599693e7959c78fa0b033ba8c3d31f560fcc41e4d2a",
-    "sdk/firmware_codec/coldfire.py": "c3b3736273ced01afd89cd75dd7ba78f6a3b0e0800971173bbc16e89bf1f56be",
-    "sdk/firmware_codec/elz.py": "417eb28fbadcfdfb4f4efa56a7c88d7f4d248953f668fb308f56796acb37049f",
-    "sdk/firmware_codec/transport.py": "30f1b71c28cf4c57fdbe38c0e535465cc2f29503ef348888a68940f93f070ae5"
-   },
-   "copies": [
-    {
-     "offset": 994,
-     "length": 19,
-     "address": 1074538000,
-     "sha256": "d79549e480eda591c8bac253ca51f45f0e46adc1a974a11f3adb6f1058e35401",
-     "purpose": "Independently authored select-offset table emitted by strings(labels); not an inherited stock DSP table. Labels and emitter are exact source inputs.",
-     "authored": {
-      "source": "src/engine/menu-formatters.ts",
-      "lines": [
-       15,
-       23
-      ],
-      "symbol": "strings(labels): select-offset table",
-      "method": "authored-emitter"
-     }
-    },
-    {
-     "offset": 1040,
-     "length": 17,
-     "address": 1074538052,
-     "sha256": "7ea3e88a66234442987a9d7c00de9cab4f5b489a50479af84d3885801cc658b1",
-     "purpose": "Independently authored select-offset table emitted by strings(labels); not an inherited stock DSP table. Labels and emitter are exact source inputs.",
-     "authored": {
-      "source": "src/engine/menu-formatters.ts",
-      "lines": [
-       15,
-       23
-      ],
-      "symbol": "strings(labels): select-offset table",
-      "method": "authored-emitter"
-     }
-    },
-    {
-     "offset": 1764,
-     "length": 17,
-     "address": 1074538068,
-     "sha256": "c9fcad68135e071d2f2c2951f1549b882182e14996c0a40b446c76dad30be07b",
-     "purpose": "Independently authored select-offset table emitted by strings(labels); not an inherited stock DSP table. Labels and emitter are exact source inputs.",
-     "authored": {
-      "source": "src/engine/menu-formatters.ts",
-      "lines": [
-       15,
-       23
-      ],
-      "symbol": "strings(labels): select-offset table",
-      "method": "authored-emitter"
-     }
-    },
-    {
-     "offset": 2847,
-     "length": 15,
-     "address": 1073823235,
-     "sha256": "e55084d95cae82126a193bb40a29bf95ccea984da71239f0921d8aa462575562",
-     "purpose": "Authored eu_pulse instruction span; reconstructed identically from guarded stock coincidence",
-     "authored": {
-      "source": "sdk/octabam/modules/euclid/control.s",
-      "lines": [
-       102,
-       108
-      ],
-      "symbol": "eu_pulse",
-      "method": "native-unit"
-     }
-    },
-    {
-     "offset": 2862,
-     "length": 3,
-     "address": 1073904372,
-     "sha256": "4922ffe36e9e6bbf37fa5b0cede482d9d358e9298688f88d3b254e5abe701a60",
-     "purpose": "Authored eu_process instruction span; reconstructed identically from guarded stock coincidence",
-     "authored": {
-      "source": "sdk/octabam/modules/euclid/control.s",
-      "lines": [
-       114,
-       114
-      ],
-      "symbol": "eu_process",
-      "method": "native-unit"
-     }
-    },
-    {
-     "offset": 2865,
-     "length": 5,
-     "address": 1073919575,
-     "sha256": "9cb0f53f6c3b6e0e99c6c40d3cc83e87812a0a09c922b793da49eb0da7b9ca0d",
-     "purpose": "Authored eu_process instruction span; reconstructed identically from guarded stock coincidence",
-     "authored": {
-      "source": "sdk/octabam/modules/euclid/control.s",
-      "lines": [
-       114,
-       115
-      ],
-      "symbol": "eu_process",
-      "method": "native-unit"
-     }
-    },
-    {
-     "offset": 5164,
-     "length": 18,
-     "address": 1074195396,
-     "sha256": "bf3b0da00e1f3fe9aff66ca39625cb7e811d034b6d64f60c698215414126d8ed",
-     "purpose": "Authored eu_publish_frame instruction span; reconstructed identically from guarded stock coincidence",
-     "authored": {
-      "source": "sdk/octabam/modules/euclid/control.s",
-      "lines": [
-       939,
-       951
-      ],
-      "symbol": "eu_publish_frame",
-      "method": "native-unit"
-     }
-    }
-   ],
-   "fills": []
   }
- }
 }

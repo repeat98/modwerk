@@ -208,7 +208,7 @@
       "sha256": "ccffbf72d45358bde585760b9230c668bf38ebf412ab23efc73732cf96024dca"
     }
   ],
-  "sourceCommit": "cd988717aa9d86a86887cd309ce0df8a2aa88511",
+  "sourceCommit": "898ac30d6a716eaee665f08c4176a51a3e1ee9db",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -231,7 +231,7 @@
     "previewvol": "0.1.2-experimental",
     "cc-map": "0.1.2-experimental",
     "sidechain-compressor": "0.2.0-experimental",
-    "vector": "0.3.0-experimental",
+    "vector": "0.3.1-experimental",
     "playmodes": "0.2.0-experimental",
     "mute-modes": "0.2.2-experimental",
     "recorder-loop-fix": "0.1.0-experimental",

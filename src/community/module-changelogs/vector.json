@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.3.1-experimental",
+    "date": "2026-11-08",
+    "changes": [
+      "VECTOR is back to sample tracks only, as in 0.2.5. The MIDI-track generator from 0.3.0 moves to its own module, VECTOR MIDI.",
+      "Card builds: VECTOR's second page (SEED, SPAN, OFST, ROT, RPT, DIR) can now open beside POLY8 (#1119).",
+      "Over USB this installs the 0.2.5 package, which ran on a unit.",
+      "Known issue: the card build is not yet tested on hardware."
+    ]
+  },
+  {
     "version": "0.3.0-experimental",
     "date": "2026-11-08",
     "changes": [

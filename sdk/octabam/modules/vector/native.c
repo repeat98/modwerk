@@ -70,6 +70,11 @@ int st_validate_part(uint8_t *part) {
 unsigned st_selected(void) {
     return valid_bank() && !U8(0x80000015u) && signed_track(current_part(),U8(TRACK_IDX));
 }
+static unsigned any_vector(void) {
+    if(!valid_bank()) return 0;
+    for(unsigned t=0;t<8;++t) if(signed_track(current_part(),t)) return 1;
+    return 0;
+}
 unsigned st_type(unsigned type, const volatile uint8_t *ptr) {
     if(!valid_bank()) return type;
     volatile uint8_t *p=current_part();
@@ -251,14 +256,9 @@ static int generate_track(unsigned t, int replace, int fresh) {
     for(unsigned k=0;k<VECTOR_TRACK_BYTES;++k)
         if(src[k]!=staging[k]) { src[k]=staging[k]; mirror[k]=staging[k]; }
     save_settings(t,&params,seed); dirty_part(part&3u);
-    /* Stock's lock index (0x400339d8) rescans every track of the pattern, 16 x 64 x 32 bytes, about 3 ms on the
-     * unit; only this track's bit changes: bit t of each step's byte at 0x46c7d48c (the audio tracks'), as that
-     * routine sets it. Then stock's track publication. */
-    for(unsigned i=0;i<VECTOR_STEPS;++i) {
-        unsigned any=0;
-        for(unsigned k=0;!any && k<32;++k) any=staging[VECTOR_LOCKS+32u*i+k]!=VECTOR_NO_LOCK;
-        U8(0x46c7d48cu+i)=(uint8_t)((U8(0x46c7d48cu+i)&~(1u<<t))|any<<t);
-    }
+    /* Stock lock-index rebuilding and track publication. ABI still requires
+     * native qualification; never promote a screenshot to behavioral proof. */
+    ((void (*)(void))0x400339d8u)();
     ((void (*)(unsigned))0x4009da20u)(t);
     U32(SCREEN_DIRTY)=1;
     return 1;
@@ -390,9 +390,7 @@ void st_key(unsigned code,unsigned edge) {
     }
     forward(which,code,edge);
 }
-void mg_tick(void); /* midi.c's generator in the MIDI generator list (the card's own copy acts only there) */
 void st_ui_tick(void) {
-    mg_tick();
     if(pool_direct && (!U32(0x460e70e0u) || !pool_context())) pool_direct=0;
     if(pool_pending) {
         if(!pool_context()) pool_pending=0;
@@ -401,24 +399,20 @@ void st_ui_tick(void) {
     /* PLAY stays entirely in the native input layer. Observe its completed
      * transport transition here, then fill only empty VECTOR lanes. Forwarding
      * PLAY through our key layer can change native start-key ownership. */
-    /* The Part and track numbers are battery RAM on the external bus: read once a tick. */
-    unsigned ok=valid_bank(), vector=0;
-    volatile uint8_t *now=ok?current_part():0;
-    for(unsigned t=0;ok && t<8;++t) if(signed_track(now,t)) vector|=1u<<t;
     uint32_t transport=U32(TRANSPORT);
-    if(transport==1 && last_transport!=1 && vector)
+    if(transport==1 && last_transport!=1 && any_vector())
         for(unsigned t=0;t<8;++t) (void)generate_track(t,0,0);
     last_transport=transport;
-    uint32_t bank=U32(BANK_PTR), part=U8(PART_IDX), track=U8(TRACK_IDX);
     /* Row five aliases the current backing pool for native SRC SETUP. */
-    if(ok) {
-        for(unsigned t=0;t<8;++t) if((vector>>t&1u) && now[SIGNATURE+30u*t+2]==1) {
-            VectorParams p=settings(t); save_settings(t,&p,get_seed(t)); dirty_part(part&3u);
+    if(valid_bank()) {
+        for(unsigned t=0;t<8;++t) if(signed_track(current_part(),t) && current_part()[SIGNATURE+30u*t+2]==1) {
+            VectorParams p=settings(t); save_settings(t,&p,get_seed(t)); dirty_part(U8(PART_IDX)&3u);
         }
-        unsigned pool=track<8?now[0x22+track]:1;
+        unsigned t=U8(TRACK_IDX), pool=t<8?current_part()[0x22+t]:1;
         U32(0x400d5f4cu)=pool==0?0x400d301cu:0x400d31aeu;
     }
-    unsigned want=vector && !U32(0x80000012u); /* MIDI mode: the MIDI generator's layer */
+    unsigned want=any_vector();
+    uint32_t bank=U32(BANK_PTR), part=U8(PART_IDX), track=U8(TRACK_IDX);
     unsigned changed=bank!=shown_bank || part!=shown_part || track!=shown_track;
     uint32_t *layer=layer_gen?st_layer:st_edit_layer;
     if(active && (!want || layer[0] || changed || layer_gen!=generator_view())) {

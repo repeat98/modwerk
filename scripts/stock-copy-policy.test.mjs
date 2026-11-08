@@ -17,12 +17,6 @@ describe('stock copies a requested card package may carry', () => {
   it('refuses a replaying package without exactly four copies', () => {
     expect(() => checkRequestedStockCopies({ label: 'vector', stockCopies: replay(3) }, detours)).toThrow('Invalid inherited stock placeholder inventory')
   })
-  it("accepts VECTOR's fifth replay span (its MIDI generator list on a card) and no other package's", () => {
-    const five = { detours: [0, 1, 2, 3, 4].map(i => ({ address: 0x40001000 + 16 * i, guardLength: 6, guardSha256: A })) }
-    expect(() => checkRequestedStockCopies({ label: 'vector', stockCopies: replay(5) }, five)).not.toThrow()
-    expect(() => checkRequestedStockCopies({ label: 'vector', stockCopies: replay(4) }, five)).toThrow('Invalid inherited stock placeholder inventory')
-    expect(() => checkRequestedStockCopies({ label: 'polyui', stockCopies: replay(5) }, five)).toThrow('Invalid inherited stock placeholder inventory')
-  })
   it('refuses a replay span that differs from its detour guard', () => {
     const copies = replay(); copies[2] = copy(copies[2].source, 6, B, 16)
     expect(() => checkRequestedStockCopies({ label: 'polyui', stockCopies: copies }, detours)).toThrow('Inherited replay span must match its declared native detour guard')
