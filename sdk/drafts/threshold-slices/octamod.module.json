@@ -100,7 +100,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host scan of synthetic peaks. The sample-editor read is covered by the base host fixtures. No unit trial yet.",
+    "summary": "Host scan of synthetic peaks. The author reports that pressing D removes the slice under the marker. The menu, scan time and CPU were not tried.",
     "hardwareStatus": "untested",
     "evidenceRevision": "f96425206d5b209701cb0d4c05c7a03084612dee",
     "gates": []

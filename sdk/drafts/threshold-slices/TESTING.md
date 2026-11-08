@@ -1,6 +1,6 @@
 # Threshold Slices testing
 
-0.1.0-experimental. The host scan passed. A 12-second USB try was rolled back without opening the editor. D removal is not tested yet.
+0.1.0-experimental. The host scan passed. A 12-second USB try was rolled back without opening the editor. The author reports that pressing D on the waveform removes only the slice under the marker.
 
 ## Commands and exact revision
 
@@ -12,7 +12,9 @@ The host scan and the 12-second USB try below are commit `f96425206d5b209701cb0d
 
 Private ColdFire package `C:\Users\Roy Walker\modwerk-builds\threshold-slices.mwrm`, SHA-256 `a020a947cfdad3ad42b3e5566ec78e88a1e769942926f20fd897e6e9b145d3e7`, subscribed at order 60. Not committed.
 
-On the unit, 2026-11-07, OCTATRACK 1.40C, base `671f0afd406290cb`: `device try` of that package for 12 seconds, then rolled back (not kept). While it ran, the slot was running, refusals stayed 0, and the tick value stayed `0x54530000` (the editor was not opened). About 60 ticks a second. After rollback the unit was normal, generation 2, the same base, and no slot running. The menu, LEVEL insert, D removal, scan time and CPU were not tried.
+On the unit, 2026-11-07, OCTATRACK 1.40C, base `671f0afd406290cb`: `device try` of that package for 12 seconds, then rolled back (not kept). While it ran, the slot was running, refusals stayed 0, and the tick value stayed `0x54530000` (the editor was not opened). About 60 ticks a second. After rollback the unit was normal, generation 2, the same base, and no slot running. The menu, LEVEL insert, scan time and CPU were not tried.
+
+Reported by the author, 8 November 2026: with the waveform open, pressing D removed only the slice under the marker. The other slices stayed, and the result matched the description. No package hash was recorded for that load.
 
 ## Hardware and audio quality
 
@@ -32,4 +34,4 @@ Unmeasured.
 
 ## Hardware
 
-Untested.
+The author's report of the D gesture is above. No audio capture. The menu, scan time and CPU were not tried.
