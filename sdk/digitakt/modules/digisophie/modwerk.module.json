@@ -150,7 +150,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Imported unchanged from the author\u2019s v1.2.0 sources (11d2364) and compiled by Modwerk for Core 2.1 and Machine Pages 1.2 on OS 1.53 and 1.54. The captures show 1.1.13-experimental.3 in the emulator on OS 1.54; the author says the pages are unchanged in 1.2.0. Audio, timing and hardware remain unqualified.",
+    "summary": "Imported unchanged from the author\u2019s v1.2.0 sources (11d2364) and compiled by Modwerk for Core 2.1 and Machine Pages 1.2 on OS 1.53 and 1.54. Emulator captures of 1.2.0-experimental on OS 1.54 show the machine chooser, SRC page, all four models and AMP page pixel for pixel as 1.1.13 drew them; audio, timing and hardware remain unqualified.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial: sequence a metallic percussion voice",
@@ -197,8 +197,8 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "1.1.13-experimental.3",
-        "imageSha256": "7c71c84a8937f639090b0849b72d7972d89eb28c2be9f97acecfd91600fdd1d4",
+        "moduleVersion": "1.2.0-experimental",
+        "imageSha256": "5da920599d738d18be264c1bfe1ab57e1e05346981f60ac1bfec461ce058140e",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     },
@@ -213,8 +213,8 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "1.1.13-experimental.3",
-        "imageSha256": "7c71c84a8937f639090b0849b72d7972d89eb28c2be9f97acecfd91600fdd1d4",
+        "moduleVersion": "1.2.0-experimental",
+        "imageSha256": "5da920599d738d18be264c1bfe1ab57e1e05346981f60ac1bfec461ce058140e",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     },
@@ -229,8 +229,8 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "1.1.13-experimental.3",
-        "imageSha256": "7c71c84a8937f639090b0849b72d7972d89eb28c2be9f97acecfd91600fdd1d4",
+        "moduleVersion": "1.2.0-experimental",
+        "imageSha256": "5da920599d738d18be264c1bfe1ab57e1e05346981f60ac1bfec461ce058140e",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     },
@@ -245,8 +245,8 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "1.1.13-experimental.3",
-        "imageSha256": "7c71c84a8937f639090b0849b72d7972d89eb28c2be9f97acecfd91600fdd1d4",
+        "moduleVersion": "1.2.0-experimental",
+        "imageSha256": "5da920599d738d18be264c1bfe1ab57e1e05346981f60ac1bfec461ce058140e",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     }
