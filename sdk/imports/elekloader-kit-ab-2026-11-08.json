@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "kit-ab-2026-11-08",
+  "about": "Modwerk source-only kit-ab package for Analog Rytm MKII OS 1.74, compiled from sdk/analog-rytm-mkii/modules/kit-ab.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "kit-ab-1.0.0-os1.74.elemod",
+      "sha256": "c1ed9d4947e7235330cdc66d34c23ea5a1a7ae590c75d92056faa2a9a70476d9",
+      "id": "kit-ab",
+      "version": "1.0.0",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-2.0-only",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "dd79456c296b4768ac4c4a02e1055fa489c89ef1",
+        "path": "sdk/imports/packages/kit-ab/kit-ab-1.0.0-os1.74.elemod"
+      },
+      "title": "Kit A/B",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [],
+      "summary": "NO + PLAY becomes an A/B between the kit as edited and as saved.",
+      "description": "Kit A/B changes the single-kit reload. The first NO + PLAY (or RELOAD in the KIT menu) keeps your edits in a stash and loads the saved kit, with stock's popup KIT 1 RELOADED!. The next press puts the edits back and shows EDITS RESTORED!. Editing while the original plays ends the A/B: the next press keeps those edits instead, drops the stashed ones and reloads as a first press does. The same happens after a change of kit or any other reload. A press on a kit with no edits is a plain reload and arms nothing. Reloading every kit stays stock. It is an elemod port of MrScruff's rytm-mods 0010-kit-ab, with his code unchanged.",
+      "category": "Workflow",
+      "author": "Iced-Cream",
+      "needs_core": "0.7",
+      "on_unit": "On an Analog Rytm MKII on OS 1.74, as reported by the author: in build KBH7 (Modwerk's base, core-ar2 0.7, with analoghealth 1.2 for remote keys), the KIT menu's RELOAD stashed a BD DEC edit (KIT RELOADED!) and restored it (EDITS RESTORED!), and an edit while the saved kit played, or a change of kit, ended the A/B. NO + PLAY was not exercised on the unit. This package's own bytes have not been flashed from the site."
+    }
+  ]
+}
