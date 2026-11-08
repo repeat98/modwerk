@@ -1,0 +1,38 @@
+{
+  "selftest": {
+    "state": 2,
+    "failed": 0,
+    "modules": 12,
+    "dsp": 7,
+    "intact": 12,
+    "ran": 7,
+    "frameGap": 51644,
+    "saved": 1,
+    "savedCount": 11,
+    "live": 12,
+    "culprit": 0,
+    "refusal": 0,
+    "cpu": 724,
+    "tracks1to4": 739,
+    "tracks5to8": 577
+  },
+  "diagnosticValue": 1112756043,
+  "undoVerified": true,
+  "hardware": true,
+  "frontendRevision": "4519794c92891c1ccc6c84c46bee938f838a85da",
+  "sourceRevision": "b670fa7506c824d73eee741e3bdca2c51b2bd4aa",
+  "sourceSha256": {
+    "usb_probe.c": "bb5d50e5cc22b5aa85ad2146fb47bf1ce43be28187916723418db5d66e311326",
+    "build_usb_probe.py": "aea0171bbb2dc2ad3238486880ef4279f43b7cd1c393159097b6d180df02e081",
+    "trial_usb_probe.mjs": "8af52c89212a487c626467bfaa17bdd89d38a25258ac5a08aacc1af0736b1405"
+  },
+  "version": "0.1.53-experimental",
+  "packageSha256": "3f62f662f5eca55a8b6bc48301810feb5d5d9b17fc05d41ad3b380a97b3c5d35",
+  "base": "cd39c494b63beae086271f8790f7e704f46fe0a617a8eb1c341c9a925f917e4e",
+  "scope": "Physical MKII private fixed-input planner USB trial on owner-selected empty pattern; actual self-test and planner diagnostic PASS, five-second display interval and verified Undo. No Keep, flash or sample edits.",
+  "originalInventoryCount": 11,
+  "exactInventoryRestored": true,
+  "visualDisplayConfirmed": false,
+  "limits": "Fixed generated silence only; rendered display unconfirmed. No live Flex preview, Apply, audible output or persistence qualification.",
+  "visualDisplayObservation": "Owner was not looking at the Octatrack during the trial; rendered PLANNER PASS is unconfirmed."
+}

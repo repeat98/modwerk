@@ -17,13 +17,13 @@ import { communityModule, moduleThreadId } from '../src/community/modules'
 import { ensureDiscussionThread, ensureModuleThreadsOnce } from './module-threads'
 import { validateDigiIssueContext } from '../src/community/digi-issue-context'
 import { recordAnonymousCount, recordUsage, recordModuleDownload, usageStatistics } from './usage'
-import { moduleStatistics } from './module-statistics'
+import { sharedModuleStatistics } from './module-statistics'
 import { worksReportCount } from './hardware-reports'
 import { workingReportRoute } from './working-reports'
 import { membersOnline, sitePresenceRoute } from './presence'
 import { adminInsights } from './admin-insights'
 import { adminAccounts } from './admin-accounts'
-import { adminActivity } from './admin-activity'
+import { adminActivity, unansweredThreads } from './admin-activity'
 import { adminAnnouncements, publicAnnouncementItems, publicAnnouncementRoutes } from './announcements'
 import { adminNews, newsUnsubscribe } from './news-mail'
 import recipes from '../src/catalog/module-sets.json'
@@ -38,6 +38,7 @@ import { publicIssueReplies } from './issue-replies'
 import { createConfigurationReport } from './configuration-reports'
 import { octatrackDiagnosticRoutes } from './octatrack-diagnostics'
 import { remoteSessionRoutes } from './remote-sessions'
+import { agentBoardRoutes } from './agent-board'
 import { IssueInputError, validateIssueContext, validateLogMissing } from '../src/community/issue-context'
 import { OT_LOG_MAX_BYTES, OtLogError, parseOtLog } from '../src/community/ot-log'
 
@@ -82,7 +83,7 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     if (path === '/api/usage/module-downloads' && request.method === 'POST') return await recordModuleDownload(request,env,db)
     if (path === '/api/usage/count' && request.method === 'POST') return await recordAnonymousCount(request,env,db)
     if (path === '/api/catalog' && request.method === 'GET') return response((await db.prepare("SELECT s.module_id,s.title,s.repository_url,s.description,s.usage,s.resource_notes,s.test_report_url,s.reviewed_at,strftime('%Y-%m-%dT%H:%M:%SZ',s.reviewed_at) AS updated_at,(SELECT strftime('%Y-%m-%dT%H:%M:%SZ', MIN(first.reviewed_at)) FROM submissions first WHERE first.module_id=s.module_id AND first.status='approved') AS added_at,u.github_login AS author FROM module_publications p JOIN submissions s ON s.id=p.submission_id JOIN users u ON u.id=s.owner_id ORDER BY s.reviewed_at DESC").all()).results)
-    if(path==='/api/community/summary'&&request.method==='GET')return response(await moduleStatistics(db))
+    if(path==='/api/community/summary'&&request.method==='GET')return response(await sharedModuleStatistics(db,url.searchParams.get('fresh')==='1'))
     if(path==='/api/community/online'&&request.method==='GET')return response(await membersOnline(db))
     if (path === '/api/announcements' && request.method === 'GET') return response({ items: await publicAnnouncementItems(db) })
     const developerAuth = await developerAuthentication(request,env,db)
@@ -100,6 +101,8 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     if (diagnostics) return diagnostics
     const remote = await remoteSessionRoutes(request,env,db,user,adminId)
     if (remote) return remote
+    const board = await agentBoardRoutes(request,env,db,adminId)
+    if (board) return board
     const push = await pushRoutes(request,env,db,user,admin)
     if(push)return push
     const signedDeveloper = await developerUser(request,env,db)
@@ -262,6 +265,7 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
       const news = await adminNews(request, env, db, path, adminId)
       if (news) return news
       if (path === '/api/admin/insights' && request.method === 'GET') return response(await adminInsights(db))
+      if (path === '/api/admin/unanswered-threads' && request.method === 'GET') return response(await unansweredThreads(db,new Date(),url.searchParams))
       if (path === '/api/admin/activity' && request.method === 'GET') return response(await adminActivity(db,new Date(),Number(url.searchParams.get('days') ?? 30)))
       if (path === '/api/admin/accounts' && request.method === 'GET') return response(await adminAccounts(db,new Date(),Number(url.searchParams.get('days') ?? 30)))
       if (path === '/api/admin/statistics' && request.method === 'GET') return await usageStatistics(db,Number(url.searchParams.get('days') ?? 7))

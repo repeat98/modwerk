@@ -1,11 +1,11 @@
-import { BetaReportReminder, BugReportNotice, BugReportSuccess, ExistingIssues } from './BugReportNotice'
+import { AuthorExpectations, BetaReportReminder, BugReportNotice, BugReportSuccess, ExistingIssues } from './BugReportNotice'
 import { ReportNotifications } from './ReportNotifications'
 import { refreshModuleIssues, useIssueTracker, type BugReportResult } from './issue-tracker'
 import { useEffect, useId, useRef, useState } from 'react'
 import { post } from './api'
 import { useCommunity } from './context'
 import { MemberPrompt } from './MemberPrompt'
-import { CONFIGURATION_REQUIRED, FLASH_STATES, OT_MODELS } from './issue-context'
+import { CONFIGURATION_REQUIRED, FLASH_STATES, OT_FLASH_CHOICES, OT_MODELS } from './issue-context'
 import type { FlashState, IssueContext, OtModel } from './issue-context'
 import { describeOtLog, OT_LOG_MAX_BYTES, OT_LOG_NAME, OtLogError, parseOtLog } from './ot-log'
 import type { OtLog } from './ot-log'
@@ -26,7 +26,7 @@ export function IssueReport({id,author,openRequest=0,embedded=false,workspaceCon
  const {draft,clearDraft}=useDiscussionIssueDraft(id,report)
  const savedWorkspace=useWorkspaceReportContext(),workspace=workspaceContext??savedWorkspace
  const [opened,setOpened]=useState(embedded),tracker=useIssueTracker(id,opened)
- const [model,setModel]=useState<OtModel|''>(''),[flash,setFlash]=useState<FlashState>('flashed')
+ const [model,setModel]=useState<OtModel|''>(''),[flash,setFlash]=useState<FlashState|''>(embedded?'card':'')
  const [log,setLog]=useState<OtLog|null>(null),[logError,setLogError]=useState('')
  const [reading,setReading]=useState(false),[logName,setLogName]=useState(''),[logNote,setLogNote]=useState('')
  const [sent,setSent]=useState<BugReportResult|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState('')
@@ -68,7 +68,7 @@ export function IssueReport({id,author,openRequest=0,embedded=false,workspaceCon
  /** A fresh form for the next bug; the Octatrack, running state and follow choice stay as answered. */
  function reportAnother(){removeLog();setSent(null);setError('');setFormKey(key=>key+1)}
  async function send(form:HTMLFormElement){
-  if(!model||reading||busy)return
+  if(!model||!flash||reading||busy)return
   setBusy(true);setError('')
   const fields=Object.fromEntries(new FormData(form)) as Record<string,string>
   if(isPreview){setSent({id:'local-preview',author,github:'none',githubUrl:null,forumThreadId:null});setBusy(false);onReported?.();return}
@@ -100,11 +100,11 @@ export function IssueReport({id,author,openRequest=0,embedded=false,workspaceCon
    <label>What happened?<textarea name="actual" required maxLength={2000} rows={3} defaultValue={draft?.body??''} placeholder="What you did and what you heard or saw: sound, screen message, freeze, reboot …"/></label>
    <div className="issue-report-row">
     <label>Octatrack<select required value={model} onChange={event=>setModel(event.target.value as OtModel)}><option value="" disabled>Choose…</option>{(Object.keys(OT_MODELS) as OtModel[]).map(key=><option key={key} value={key}>{OT_MODELS[key]}</option>)}</select></label>
-    {!embedded&&<label>It is running<select required value={flash} onChange={event=>setFlash(event.target.value as FlashState)}>{(Object.keys(FLASH_STATES) as FlashState[]).map(key=><option key={key} value={key}>{FLASH_STATES[key]}</option>)}</select></label>}
+    {!embedded&&<label>It is running<select required value={flash} onChange={event=>setFlash(event.target.value as FlashState)}><option value="" disabled>Choose…</option>{OT_FLASH_CHOICES.map(key=><option key={key} value={key}>{FLASH_STATES[key]}</option>)}</select></label>}
    </div>
    <ReportMoreDetails embedded={embedded}>
    <details className="issue-report-more"><summary>Steps to reproduce <span>Optional</span></summary>
-    {embedded&&<label>It is running<select value={flash} onChange={event=>setFlash(event.target.value as FlashState)}>{(Object.keys(FLASH_STATES) as FlashState[]).map(key=><option key={key} value={key}>{FLASH_STATES[key]}</option>)}</select></label>}
+    {embedded&&<label>It is running<select value={flash} onChange={event=>setFlash(event.target.value as FlashState)}>{OT_FLASH_CHOICES.map(key=><option key={key} value={key}>{FLASH_STATES[key]}</option>)}</select></label>}
     <label>Steps to reproduce<textarea name="steps" maxLength={3000} rows={3} placeholder={'1. Load a project with …\n2. Set FX1 to …\n3. Turn …'}/></label>
     <label>Expected result<textarea name="expected" maxLength={1000} rows={2}/></label>
    </details>
@@ -127,6 +127,7 @@ export function IssueReport({id,author,openRequest=0,embedded=false,workspaceCon
    {embedded&&!log?<details className="issue-report-more"><summary>Downloaded build <span>{workspace.modules.length} modules attached</span></summary><ReportConfiguration machine="octatrack" moduleId={reportedModule} workspace={workspace} log={null} value={configuration} onChange={setConfiguration} disabled={busy} os={baseOs}/></details>:<ReportConfiguration machine="octatrack" moduleId={reportedModule} workspace={workspace} log={log?.summary??null} value={configuration} onChange={setConfiguration} disabled={busy} os={baseOs}/>}
    </ReportMoreDetails>
    {isPreview?<p className="service-note">Local preview — nothing is sent.</p>:embedded?<p className="service-note">{tracker?.tracker==='github'?'Your report, configuration and any log are public on GitHub and notify the module’s developers.':'Your report is public and notifies the module’s developers. The configuration and any log stay private to you, the maintainers and the administrator.'}</p>:<BugReportNotice tracker={tracker}/>}
+   {!isPreview&&<AuthorExpectations/>}
    <ReportNotifications id={id} defaultChecked={follow}/>
    <button className="button button-primary" disabled={busy||reading}>{busy?'Posting…':'Post report'}</button>
   </form>}

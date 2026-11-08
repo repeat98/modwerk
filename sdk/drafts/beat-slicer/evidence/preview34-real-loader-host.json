@@ -1,0 +1,108 @@
+{
+  "scope": "actual runtime loader with synthetic host machine glue; actual loader and full-owner menu fixture; both layouts and coexisting owners; synthetic machine services and no uploaded module execution; no native dispatcher, module execution or USB",
+  "sourceSha256": {
+    "menu_owner.c": "3724dbdbddd793969c1f3c65a85fc77c42831d80a8d9e65b874bceb4dbbd2613",
+    "menu_owner.h": "cdc62f42130d7fb61c08929be261bfd51c413aac9b191f0653fa708e3b1abe8c",
+    "menu_owner_backend.c": "a45566ac814b1515a1ca2d52f4fc6744e72c37d99f967ba5656e96f2ca2dd459",
+    "menu_owner_backend.h": "d3ef6f5edc958d8ff3f57292bdfbbada289054e6ab6368567847b6e38e907fb8",
+    "editor_menu.c": "9e7a73ff05e65eddb9db7d4163c29e4d6f55d6bce33379f4f9dfac64e451a043",
+    "editor_menu.h": "211496964f026a650e3e28847314478b25dac5106a586cede963109ff0b26631",
+    "test_menu_owner_loader_target.c": "905dc0bf79ccbb513746cf7a68c78e2d2ba4569adb3ea79388b9bee2933679de",
+    "owner_package_vectors.h": "8bc821db83ffffff8622fab7b7b32d08b1c89c88193fe8235e35ac49ae542992",
+    "test_owner_package_vectors.py": "ccdb6a37f91def8de11b3220de81ce77fcc175c5cd79ba4d70e83ba8fc76080f",
+    "test_menu_owner_loader.py": "40ca94a5ad9fcba4423d97b1ef6890d8a3178918a4bc2f57a074de6f91e37c92",
+    "menu-owner-runtime-sources.json": "f944af9391dec483e68310e512aa23e706a3483f805fc00db008d22b54a0f16c"
+  },
+  "independentPackageVectors": 4,
+  "ownerFieldMismatchesPerLayout": 8,
+  "sdkRevision": "c8fcb8054b10366b3a7881ec957a566460aab3d4",
+  "sdkDependencySha256": {
+    "sdk/runtime/loader/context.h": "7c811eb9f3bccef7b03a129f2ebe00ba477422f07315e682f6211d761aacf44b",
+    "sdk/runtime/loader/journal.h": "b7bdf800ac2d59413582ae0626cec1d951c29e9567fbd4c15f77856ae509811f",
+    "sdk/runtime/loader/loader.c": "cdd05233d078324b0bf4f706adfb5d19e03e8a735e11fa976c315adb726357ac",
+    "sdk/runtime/loader/loader.h": "0e97ec78ed5a25f93d8c2c390542c2c42bd1cdcf677d345095c953781067719b",
+    "sdk/runtime/loader/modwerk_module.h": "55f39232ec7eb2fe8a497f946f559a9f4e78f90e637ea5475cca686bc5c56218",
+    "sdk/runtime/loader/set_package.h": "bcfd3829af0785cfd15ec801237226c24959d32d44d0c1fb2df4fb08806ac743",
+    "sdk/runtime/upload/sha256.c": "9e19fb3a7de7ff56a3910610eac0304c66ab1b5df1290979c732c1642fdee7d1",
+    "sdk/runtime/upload/upload.c": "ec9716df5ee61e45e19a5846839e6cb4dca54faf58eaa6df0256b50ede260cd8",
+    "sdk/runtime/upload/upload.h": "4717f5f55c48e7d3f1d045aee72b5cf5e1194f707eb4a9da2bef0ca48b22ef6b"
+  },
+  "compiler": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+  "flags": [
+    "-std=c99",
+    "-O1",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer"
+  ],
+  "variants": [
+    {
+      "defines": [],
+      "exitCode": 0,
+      "stdout": [
+        "PASS: real loader and owner-backed menu; two owners, both layouts, replacement/restoration/removal, permanent retirement and restored allocation"
+      ]
+    },
+    {
+      "defines": [
+        "-DMODWERK_CACHED_MODULES"
+      ],
+      "exitCode": 0,
+      "stdout": [
+        "PASS: real loader and owner-backed menu; two owners, both layouts, replacement/restoration/removal, permanent retirement and restored allocation"
+      ]
+    },
+    {
+      "defines": [
+        "-DRUNTIME_MODULES=128u",
+        "-DRUNTIME_POOL_BYTES=786432u"
+      ],
+      "exitCode": 0,
+      "stdout": [
+        "PASS: real loader and owner-backed menu; two owners, both layouts, replacement/restoration/removal, permanent retirement and restored allocation"
+      ]
+    },
+    {
+      "defines": [
+        "-DRUNTIME_MODULES=128u",
+        "-DRUNTIME_POOL_BYTES=786432u",
+        "-DMODWERK_CACHED_MODULES"
+      ],
+      "exitCode": 0,
+      "stdout": [
+        "PASS: real loader and owner-backed menu; two owners, both layouts, replacement/restoration/removal, permanent retirement and restored allocation"
+      ]
+    },
+    {
+      "defines": [
+        "-DRUNTIME_MODULES=128u",
+        "-DRUNTIME_POOL_BYTES=786432u",
+        "-DMODWERK_RUNTIME_SETS"
+      ],
+      "exitCode": 0,
+      "stdout": [
+        "PASS: real loader and owner-backed menu; two owners, both layouts, replacement/restoration/removal, permanent retirement and restored allocation"
+      ]
+    },
+    {
+      "defines": [
+        "-DRUNTIME_MODULES=128u",
+        "-DRUNTIME_POOL_BYTES=786432u",
+        "-DMODWERK_RUNTIME_SETS",
+        "-DMODWERK_CACHED_MODULES"
+      ],
+      "exitCode": 0,
+      "stdout": [
+        "PASS: real loader and owner-backed menu; two owners, both layouts, replacement/restoration/removal, permanent retirement and restored allocation"
+      ]
+    }
+  ],
+  "exitCode": 0,
+  "hardware": "not tested",
+  "nativeMenu": "not integrated",
+  "limits": "Production transition-time lease retirement, typed contribution admission, complete module-set readiness and retained-reference reclamation remain absent."
+}

@@ -1,0 +1,43 @@
+{
+  "scope": "Physical corrected private USB probe trial; failed CPU self-test, no planner PASS claim; automatic recovery restored baseline. No Keep, flash or sample edits.",
+  "version": "0.1.53-experimental",
+  "sourceRevision": "b670fa7506c824d73eee741e3bdca2c51b2bd4aa",
+  "sourceSha256": {
+    "usb_probe.c": "bb5d50e5cc22b5aa85ad2146fb47bf1ce43be28187916723418db5d66e311326",
+    "build_usb_probe.py": "aea0171bbb2dc2ad3238486880ef4279f43b7cd1c393159097b6d180df02e081",
+    "trial_usb_probe.mjs": "8af52c89212a487c626467bfaa17bdd89d38a25258ac5a08aacc1af0736b1405"
+  },
+  "packageSha256": "3f62f662f5eca55a8b6bc48301810feb5d5d9b17fc05d41ad3b380a97b3c5d35",
+  "packageBytes": 2288,
+  "base": "cd39c494b63beae086271f8790f7e704f46fe0a617a8eb1c341c9a925f917e4e",
+  "hardware": "failed",
+  "selftest": {
+    "state": 3,
+    "failed": 256,
+    "modules": 12,
+    "dsp": 7,
+    "intact": 12,
+    "ran": 7,
+    "frameGap": 52824,
+    "saved": 1,
+    "savedCount": 11,
+    "live": 11,
+    "culprit": 1019141276,
+    "refusal": 0,
+    "cpu": 937,
+    "tracks1to4": 701,
+    "tracks5to8": 577
+  },
+  "failureMeaning": "SELFTEST_CPU: ColdFire peak 937 per mille exceeds 900; frameGap 52824 below 68000 limit. Culprit field names Mini Verb; this alone does not establish causality.",
+  "newCrash": false,
+  "bootBeforeAndAfter": 18,
+  "crashCountBeforeAndAfter": 1,
+  "originalInventoryCount": 11,
+  "exactInventoryRestored": true,
+  "originalBaseAndActiveRestored": true,
+  "physicalSelftestPassed": false,
+  "plannerPassVerified": false,
+  "successfulTrialUndoVerified": false,
+  "remaining": "Repeat only after fresh authorization with playback/recording stopped and baseline CPU observed; live Flex preview and release qualification remain pending.",
+  "ownerObservationAfterTrial": "Owner reports a pattern was already playing during the trial and peaked at 92% without the probe. This exceeds the 90% physical self-test threshold; candidate CPU overhead is not isolated."
+}

@@ -8,14 +8,19 @@ choice of licences for the repository as a whole.
    and worker.ts is licensed under Elastic License 2.0 (SPDX: Elastic-2.0).
    Full terms: LICENSES/Elastic-2.0.txt and server/LICENSE.
 
-2. The original shared helpers listed in LICENSES/platform.json are licensed
-   under GPL-3.0-or-later OR Elastic-2.0. Each listed file carries that expression.
-   The browser frontend uses the GPL option; the independent backend uses ELv2.
+2. The original pipeline files listed as pipelineFiles in LICENSES/platform.json
+   (GitHub workflows and build, release, device and service tools) are licensed
+   under Elastic-2.0. Each listed file carries that declaration.
 
-3. Other original Modwerk code remains GPL-3.0-or-later unless a file or its
+3. The original shared helpers listed as sharedFiles in LICENSES/platform.json
+   are licensed under GPL-3.0-or-later OR Elastic-2.0. Each listed file carries
+   that expression. The browser frontend uses the GPL option; the independent
+   backend and the pipeline files use ELv2.
+
+4. Other original Modwerk code remains GPL-3.0-or-later unless a file or its
    component declares another licence. Full GPL terms: LICENSES/GPL-3.0-or-later.txt.
 
-4. SDKs, firmware modules, vendored builders, generated module/machine metadata,
+5. SDKs, firmware modules, vendored builders, generated module/machine metadata,
    media, dependencies and other third-party works retain their respective
    licences and copyright notices. ELv2 does not relicense those works.
 

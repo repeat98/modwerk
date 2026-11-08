@@ -14,6 +14,8 @@
 .instrument-dot.is-connected { background: #7fd39b; }
 .instrument-dot.is-busy { background: var(--accent); animation: link-pulse 1.5s ease-in-out infinite; }
 .instrument-dot.is-stock { background: #e0b26a; }
+/* A base update over USB: red and blinking until it is done, so nobody unplugs the cable. */
+.instrument-dot.is-updating, .status-dot.is-updating { background: #ef6b61; animation: link-pulse .8s ease-in-out infinite; }
 .unit-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: -8px 0 18px; color: var(--muted); font-size: 13px; }
 .unit-strip.is-connected { color: var(--text-secondary); }
 .unit-tag { flex: none; margin-right: 6px; padding: 3px 8px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 11px; white-space: nowrap; }
@@ -29,7 +31,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .octatrack-activity.is-error { border-color: #6a4348; }
 .octatrack-activity .button { min-height: 30px; padding: 5px 10px; }
 @keyframes link-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
-@media (prefers-reduced-motion: reduce) { .status-dot.is-live, .instrument-dot.is-busy { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .status-dot.is-live, .instrument-dot.is-busy, .instrument-dot.is-updating, .status-dot.is-updating { animation: none; } }
 @media (max-width: 1100px) { .link-card { margin-bottom: 22px; } }
 /* The module set as a compact grid of tiles, with each module's state on the Octatrack. */
 .module-grid-section .section-title { flex-wrap: wrap; }
@@ -221,7 +223,8 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-cell { min-width: 0; min-height: 0; overflow: auto; padding: 14px 18px; background: var(--surface); }
 .hub-cell-cpu { grid-area: cpu; } .hub-cell-dsp1 { grid-area: dsp1; } .hub-cell-dsp2 { grid-area: dsp2; }
 .hub-cell-chart { grid-area: chart; } .hub-cell-health { grid-area: health; } .hub-cell-unit { grid-area: unit; } .hub-cell-history { grid-area: history; }
-.hub-cell-unit, .hub-cell-history { display: flex; flex-direction: column; }
+/* Size containment: their lists never size the row, so a long history can't stretch the graph; they scroll instead. */
+.hub-cell-unit, .hub-cell-history { display: flex; flex-direction: column; contain: size; }
 /* Modules the unit's project uses but the unit lacks: a yellow-edged note, one band wide where there is room. */
 .usb-missing { padding: 14px 16px; border: 1px solid var(--line); border-left: 3px solid #d4b663; border-radius: 8px; background: var(--surface-raised); }
 .usb-missing h3 { margin: 0; color: var(--text); font-size: 14px; font-weight: 600; line-height: 1.5; }
@@ -350,7 +353,6 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .load-unchanged { margin-top: 14px; color: var(--muted); font-size: 13px; }
 .load-unchanged summary { cursor: pointer; padding: 8px 0; }
 .load-unchanged ul { margin: 4px 0 0; padding-left: 20px; line-height: 1.7; }
-.load-undo { white-space: normal; overflow-wrap: anywhere; }
 .octatrack-diagnostics { margin: 20px 0; padding: 16px 0; border-top: 1px solid var(--line); font-size: 13px; line-height: 1.6; }
 .octatrack-diagnostics h3 { margin: 0 0 6px; font-size: 15px; }
 .octatrack-diagnostics p { margin: 8px 0; }
@@ -372,13 +374,6 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .load-blocked p { margin: 0; }
 .load-blocked p + p { display: flex; gap: 16px; margin-top: 6px; }
 .load-blocked .text-button { color: #f4c978; font-size: 13px; }
-.load-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 18px 0 12px; padding: 0; list-style: none; }
-.load-steps li { display: flex; flex-direction: column; gap: 8px; color: var(--muted); font-size: 12px; }
-.load-steps li::before { content: ''; height: 4px; border-radius: 2px; background: var(--line); }
-.load-steps li.is-complete { color: var(--text-secondary); }
-.load-steps li.is-complete::before { background: #7fd39b; }
-.load-steps li.is-active { color: var(--text); font-weight: 600; }
-.load-steps li.is-active::before { background: var(--accent); }
 .load-progress { display: block; width: 100%; height: 6px; margin: 0 0 4px; accent-color: var(--accent); }
 .load-dialog .link-hint { margin: 0 0 12px; }
 .load-dialog .base-install-footer { flex-wrap: wrap; }
@@ -409,6 +404,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .base-install-warning svg { flex-shrink: 0; margin-top: 3px; }
 .base-install-warning strong, .base-install-warning a { color: #ffe0b8; }
 .base-install-stage .base-install-note { margin-top: 24px; padding: 16px; border-left: 2px solid var(--accent); background: var(--surface-raised); }
+.base-install-note .status-dot.is-updating { width: 8px; height: 8px; margin-right: 10px; vertical-align: 1px; }
 .base-instructions { display: flex; flex-direction: column; gap: 22px; margin: 24px 0 0; padding-left: 22px; }
 .base-instructions li { padding-left: 7px; }
 .base-instructions li::marker { color: var(--accent); font-weight: 600; }
@@ -426,3 +422,23 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
   .base-install-dialog .base-install-footer > .button:first-child { flex: 0 1 auto; }
   .base-install-dialog .base-install-footer > .button:last-child { flex: 1; }
 }
+/* The update over USB: three stages and one restart, one row before, during and after. */
+.base-update-plan { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 20px 0; padding: 0; list-style: none; }
+.base-update-plan li { display: flex; flex-direction: column; gap: 6px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-raised); font-size: 13px; line-height: 1.5; color: var(--muted); }
+.base-update-plan strong { color: var(--text); font-size: 15px; }
+.base-update-plan p { margin: 0; }
+.base-update-plan progress { width: 100%; height: 4px; margin-top: 4px; accent-color: var(--accent); }
+.base-update-mark { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border: 1px solid var(--control-border); border-radius: 50%; font-size: 12px; color: var(--text-secondary); }
+.base-update-plan .is-active { border-color: var(--accent); }
+.base-update-plan .is-active .base-update-mark { color: var(--field); background: var(--accent); border-color: var(--accent); }
+.base-update-plan .is-complete .base-update-mark { color: #7fd39b; border-color: #456354; }
+.base-update-plan .is-failed { border-color: #6a4348; }
+.base-update-plan .is-failed .base-update-mark { color: #e4b0b4; border-color: #6a4348; }
+.base-install-stage .base-update-error p { margin: 4px 0 0; }
+.base-update-error strong { color: #f3cfd2; }
+@media (max-width: 600px) {
+  .base-update-plan { grid-template-columns: 1fr; gap: 8px; }
+  .base-update-plan li { display: grid; grid-template-columns: 24px 1fr; column-gap: 12px; row-gap: 2px; align-items: center; padding: 12px; }
+  .base-update-plan li p, .base-update-plan li progress { grid-column: 2; }
+}
+.base-install-warning .status-dot.is-updating { width: 8px; height: 8px; margin-top: 8px; }

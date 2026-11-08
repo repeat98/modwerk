@@ -51,6 +51,14 @@ brought back the baseline exactly. Not yet: another project and back, a real pow
 | 19 | The arranger switching banks and Parts with modules | open |
 | 20 | The self-test while the project names missing modules | Passed: 3/3 intact and ran, peaks and frames fine, card set saved | done |
 
+## Key gestures in windows
+
+A module that takes a stock key gesture (FUNC + YES, a SCENE chord) decides where it acts. Measured under the port for Temp Save (OS 1.40C):
+
+- The FUNCTION key's layer sits over every window, so a hook on a FUNCTION-layer handler sees the keys in menus, SETUP pages and dialogs too; only windows with a layer of their own (TEMPO, SRC SETUP's sample preview) keep them away.
+- Every window, and the message box (`0x4005a2b8`), is the same popup record (`0x460d175c`, flags `0x21` while open). Test the message by its handle (`0x460d1e70`): a "window open" check that does not, sends a quick second press to stock while the message still shows.
+- Stock's window table (`0x460d1188` close routine, `0x460d119c` kind, entry 0) names the open window, but entries stay after a close: read it only while the popup is open. A yes/no dialog is `0x460e5cd0` (its window, cleared on close), wherever it opens.
+
 ## The effect list
 
 | # | Case | Today | Status |
@@ -142,6 +150,8 @@ brought back the baseline exactly. Not yet: another project and back, a real pow
     as saved.
 - **The module pool** (256 KB) held six modules in 26 KB with no hole; removing Euclid from the middle and
   installing it again left none (first fit at the lowest address; nothing moves).
+
+A ColdFire unit with a large `.bss` (Temp Save keeps 42 KB) reaches it by absolute address (`lea (sym).l`, relocated at load): in the fullest card selections the shared DRAM link puts `.bss` past a 16-bit PC offset ("relocation truncated"; `module:verify` finds it).
 
 ## Order
 

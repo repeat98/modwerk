@@ -4,6 +4,7 @@
 import importlib.util
 import json
 import os
+import shutil
 import struct
 import subprocess
 import sys
@@ -41,11 +42,32 @@ def lag_guard(builder, check):
 
 def run(builder):
     try:
-        builder.main()
+        if '--check' in sys.argv[1:] or '--prepare-ports' in sys.argv[1:]:
+            builder.main()
+        else:
+            keep_published(builder, builder.main)
     except subprocess.CalledProcessError as error:
         print(error.stdout or '', end='', file=sys.stderr)
         print(error.stderr or '', end='', file=sys.stderr)
         raise SystemExit(error.returncode) from error
+
+
+def keep_published(builder, action):
+    """Run a write, then put back every published package it did not rewrite.
+
+    The builder clears public/octatrack-modules before its first write, so a rebuild dropped every earlier
+    version's .mwrm that main still publishes, and a run that stopped part way left the folder half empty.
+    A file the run writes stays as written; one it removed comes back byte for byte, whether the run
+    finished or not. Kept here, not in the builder, whose source the base pins."""
+    folder = Path(builder.PUBLIC) / 'octatrack-modules'
+    before = {path: path.read_bytes() for path in sorted(folder.rglob('*.mwrm'))} if folder.is_dir() else {}
+    try:
+        return action()
+    finally:
+        for path, data in before.items():
+            if not path.exists():
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(data)
 
 
 def only_key_bus(capabilities):
@@ -102,12 +124,82 @@ def engines(capabilities, dsp_words):
     return engine_capabilities, engine_words
 
 
+def titled(data, name):
+    """A C package that subscribes to no event: build.py makes it ABI 4, with no name, and the site publishes only ABI 6
+    and later. Repacked as the ABI 8 package build.py makes for a subscribing one (build_c: its trailing empty hook
+    words dropped, its stem as its unit name), which the base's loader reads, so the unit's inventory names it too.
+    Any other package comes back as it is. Here, not in the builder, whose source the base pins."""
+    if struct.unpack_from('>H', data, 4)[0] != 4:
+        return data
+    spec = importlib.util.spec_from_file_location('octatrack_runtime_builder', APP / 'sdk/runtime/loader/build.py')
+    runtime = importlib.util.module_from_spec(spec); spec.loader.exec_module(runtime)
+    flags, image, bss, count, hooks, sites, ident = struct.unpack_from('>HIIIIII', data, 6)
+    at = 32 + 4 * hooks
+    if flags or sites or ident != runtime.module_id(name) or len(data) != at + image + 4 * count:
+        raise ValueError('%s: not the ABI 4 package build.py makes from C sources.' % name)
+    words = list(struct.unpack_from('>%dI' % hooks, data, 32))
+    while words and words[-1] == runtime.NONE:
+        words.pop()
+    return runtime.package(data[at:at + image], bss, words, list(struct.unpack_from('>%dI' % count, data, at + image)),
+                           name=name, abi=8, hashed=True, title=name[:15])
+
+
 def main():
     spec = importlib.util.spec_from_file_location(
         'octatrack_module_packages', APP / 'sdk/machines/octatrack/elekloader/module_packages.py')
     builder = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = builder
     spec.loader.exec_module(builder)
+    # A catalogue name over the unit's 15 characters gets a shorter one on the unit: an entry's "unitName" becomes the
+    # builder's --name. Here, not in the builder, whose source the base pins.
+    build = getattr(builder, 'build', None)
+    def named_build(entry, *args, **kwargs):
+        if not entry.get('unitName'):
+            return build(entry, *args, **kwargs)
+        run_process = builder.subprocess.run
+        builder.subprocess = type('Subprocess', (), {'run': staticmethod(
+            lambda command, **options: run_process(command + ['--name', entry['unitName']], **options))})
+        try:
+            return build(entry, *args, **kwargs)
+        finally:
+            builder.subprocess = importlib.import_module('subprocess')
+    if build:
+        builder.build = named_build
+    # A C runtime module: its row's "sources", "subscribe" and "raise" go to build.py as they are. It has no card form
+    # (src/catalog/usb-only.ts). build.py takes its id and unit name from the output's stem, so build at <id>.mwrm; one
+    # with no events goes out as ABI 8 too (titled()). Here, not in the builder, whose source the base pins.
+    sourced, tools = getattr(builder, 'build', None), getattr(builder, 'tools', None)
+    def c_build(entry, out, *args, **kwargs):
+        if not entry.get('sources'):
+            return sourced(entry, out, *args, **kwargs)
+        named = out.parent / (entry['id'] + '.mwrm')
+        subprocess.run([sys.executable, '-B', str(builder.BUILD), *entry['sources'],
+                        *[arg for hook in entry.get('subscribe', []) for arg in ('--subscribe', hook)],
+                        *[arg for event in entry.get('raise', []) for arg in ('--raise', event)], '-o', str(named)],
+                       check=True, capture_output=True, text=True, cwd=APP)
+        out.write_bytes(titled(named.read_bytes(), entry['id']))
+        return out.read_bytes()
+    if sourced and tools:
+        builder.build = c_build
+        builder.tools = lambda entry, upstream: bool(shutil.which('m68k-elf-gcc')) if entry.get('sources') else tools(entry, upstream)
+    # An SDK-owned recipe preserves an ordinary CF runtime's exact tested
+    # image while shipping guarded stock copies. This host layer keeps the
+    # base's pinned builder and existing standalone declarations unchanged;
+    # shared-input refreshes belong to the SDK change, outside module folders.
+    ordinary = getattr(builder, 'build', None)
+    def reconstructed_build(entry, out, *args, **kwargs):
+        if 'reconstruction' not in entry:
+            return ordinary(entry, out, *args, **kwargs)
+        spec = importlib.util.spec_from_file_location('octatrack_host_reconstruction', APP / 'scripts/octatrack-reconstruction.py')
+        reconstruction = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(reconstruction)
+        reconstruction.module_folder(APP, entry)
+        data = ordinary(entry, out, *args, **kwargs)
+        data = reconstruction.reconstruct(APP, entry, data, stock_at=kwargs.get('stock_at'))
+        out.write_bytes(data)
+        return data
+    if ordinary:
+        builder.build = reconstructed_build
     # The qualified builder's JSON:KEY syntax predates Windows drive letters.
     # Use its documented relative-path form, without altering any base input.
     builder.DSP = builder.DSP.relative_to(APP)

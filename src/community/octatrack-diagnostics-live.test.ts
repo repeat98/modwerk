@@ -24,7 +24,7 @@ beforeEach(async () => {
   version = (await import('./octatrack-diagnostics-contract')).OCTATRACK_DIAGNOSTICS_VERSION
   store = await import('./octatrack-diagnostics')
   mocked.request.mockImplementation(async () => consent())
-  mocked.fetch.mockResolvedValue(Response.json({ stored: true }))
+  mocked.fetch.mockImplementation(async () => Response.json({ stored: true })) // a fresh body each time: a read one throws
   // Node's digest finishes on its thread pool, which fake timers don't wait for: a stand-in that settles at once.
   vi.spyOn(crypto.subtle, 'digest').mockImplementation(async (_algorithm, data) => {
     const bytes = new Uint8Array(data as ArrayBuffer), out = new Uint8Array(32)
@@ -87,5 +87,22 @@ describe('live load and the unit’s own log, with consent', () => {
     link.deviceLog.mockResolvedValue({ nonce: 7, boot: 2, seq: 4, loads: [load(1), load(3), load(4)], incidents: [incident(2)] })
     await rounds(20)
     expect(sent().filter(data => data.event === 'device_log').at(-1).log).toEqual({ loads: [load(4)], incidents: [] })
+  })
+  it('sends incidents again when their group failed after a later load group was stored', async () => {
+    const incidents = () => sent().filter(data => data.event === 'device_log' && data.log.incidents.length).map(data => data.log.incidents.map((r: DeviceIncident) => r.seq))
+    mocked.fetch.mockImplementation(async (_path: string, init: RequestInit) => JSON.parse(String(init.body)).data.log?.incidents.length ? Promise.reject(new Error('offline')) : Response.json({ stored: true }))
+    const link = unit(); await collect(link); await rounds(1)
+    expect(incidents()).toEqual([[2]])
+    mocked.fetch.mockImplementation(async () => Response.json({ stored: true }))
+    await rounds(20)
+    expect(incidents()).toEqual([[2], [2]])
+    await rounds(20) // stored now: not again
+    expect(incidents()).toEqual([[2], [2]])
+  })
+  it('starts from the mark an earlier version kept for both kinds', async () => {
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('member:7'))
+    localStorage.setItem('modwerk.diagnostics.device-log:' + Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join(''), '2')
+    await collect(unit()); await rounds(1)
+    expect(sent().filter(data => data.event === 'device_log').map(data => data.log)).toEqual([{ loads: [load(3)], incidents: [] }])
   })
 })

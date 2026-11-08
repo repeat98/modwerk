@@ -17,21 +17,24 @@ import json
 from pathlib import Path
 import sys
 
+sys.path.append(str(Path(__file__).resolve().parents[3]))  # sdk/, for firmware_codec
+import firmware_codec  # noqa: E402
 BOOTLOADER = (0x400de1e0, 0x400e21e0)
 
 
 def unexplained(stock, built, load, sites):
-    """Changed spans of the stock-length image that no (addr, len) site covers."""
+    """Changed spans of the stock-length image that no (addr, len) site covers; adjacent sites may cover one run
+    together (the frame guard's exit begins where USB Audio's frame site ends)."""
+    covered = {a + k for a, m in sites for k in range(m)}
     spans, i, n = [], 0, min(len(stock), len(built))
     while i < n:
-        if stock[i] == built[i]:
+        if stock[i] == built[i] or load + i in covered:
             i += 1
             continue
         j = i
-        while j < n and stock[j] != built[j]:
+        while j < n and stock[j] != built[j] and load + j not in covered:
             j += 1
-        if not any(a <= load + i and load + j <= a + m for a, m in sites):
-            spans.append((load + i, j - i))
+        spans.append((load + i, j - i))
         i = j
     return spans
 
@@ -42,7 +45,7 @@ def main():
     parser.add_argument('--build', type=Path, required=True, help="build_core.py's output directory")
     parser.add_argument('--upstream', type=Path, required=True, help='the kit-pinned Elekloader checkout')
     args = parser.parse_args()
-    sys.path.insert(0, str(args.upstream.expanduser()))
+    firmware_codec.use_elekloader(args.upstream)
     from elekloader import formats
     parsed, dev, _ = formats.load(str(args.stock))
     stock = formats.main_image(parsed, dev)

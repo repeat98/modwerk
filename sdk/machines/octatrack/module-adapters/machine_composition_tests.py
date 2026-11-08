@@ -147,8 +147,8 @@ class ManifestTests(unittest.TestCase):
             self.assertIs(result[-1], unrelated)
             bridge, v, fm = result[:3]
             self.assertEqual(len(bridge.detours), 19)
-            self.assertEqual(len(bridge.symbol_refs), 10)
-            self.assertEqual(len(bridge.pokes), 6)
+            self.assertEqual(len(bridge.symbol_refs), 11)  # with the chooser-name pointer (POLY8 0.3.2)
+            self.assertEqual(len(bridge.pokes), 16)  # six count sites and the chooser's ten cursor clamps
             self.assertTrue(all(p.write[-1] == (7 if len(p.write) == 4 else 6) for p in bridge.pokes))
             self.assertTrue(any(d.site == 0x400449be for d in fm.detours))
             self.assertFalse(any(d.symbol in ('fm_tick_hook', 'fm_resolve_pb') for d in fm.detours))
@@ -159,7 +159,7 @@ class ManifestTests(unittest.TestCase):
                 claims += [(r.addr, r.addr + 4, m.name) for r in m.symbol_refs]
                 claims += [(p.addr, p.addr + len(p.write), m.name) for p in m.pokes]
                 claims += [(addr, addr + 4, m.name) for table in m.tables for addr, _ in table.refs]
-            self.assertEqual(len(claims), 85)
+            self.assertEqual(len(claims), 96)
             for previous, current in zip(sorted(claims), sorted(claims)[1:]):
                 self.assertLessEqual(previous[1], current[0], (previous, current))
             self.assertEqual(sum(r.symbol == 'mr_pb_table' for r in bridge.symbol_refs), 5)

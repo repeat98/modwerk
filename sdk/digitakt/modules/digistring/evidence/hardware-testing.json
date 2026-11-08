@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-10-28",
+  "source": "Direct statements by the module author after flashing each build",
+  "reporter": "Alez22",
+  "statement": "M003 1.53: tutto ok (5 minuti). M003 1.54: tutto ok anche su 1.54, 3 tracce senza problemi, a 4 lag inaccettabili, 15 minuti. M004: sempre 3 tracce è il limite. M005: 1 81% 2 87% 3 91% 4 95% 5 96% 6 98%. M006: 1 82% 2 89% 3 91% 4 92% 5 96% 6 100%. Lag a 4 tracce su tutti e due.",
+  "status": "hardware-tested-author-reported",
+  "model": "Digitakt 1",
+  "release": "1.54",
+  "durationMinutes": 15,
+  "build": {
+    "version": "M003",
+    "syxSha256": "ef1a7631d27e832888edc34d21c61fcbc5b5ecd69a7710928f93c82c509256ed",
+    "mainImageSha256": "2c340db88d31359bfe4f86763ac5e32d42122e87e6bd5c1e0915b27869e9f0c4",
+    "modules": [
+      {
+        "id": "core",
+        "version": "2.1",
+        "sha256": "8c1fe78ccd1427d6a93f181eaad9f064efb65cf6dd683192dbcc33e83dc548b9"
+      },
+      {
+        "id": "machine-pages",
+        "version": "1.2",
+        "sha256": "1ab853a2ff628dd60b8fa0c5693f3babac64b95c456b331162797aac1526b1a0"
+      },
+      {
+        "id": "digistring",
+        "version": "0.9.0",
+        "sha256": "247aba7f6d56f1081a94677b2c665322e5e3754a1b420bf12760f4762f4ccf0b"
+      },
+      {
+        "id": "ram-machines",
+        "version": "1.3.1",
+        "sha256": "0e6d4ca589b84da505b29e3b245b326635c1148730a86d87a93c8ff0dad221eb"
+      },
+      {
+        "id": "note-accumulator",
+        "version": "1.1.1",
+        "sha256": "1f9004c33e91eb8f7eba0ba44c8c0f0dcd2c3731116218f510ab04b7fbdd471e"
+      }
+    ]
+  },
+  "otherBuilds": [
+    {
+      "version": "M003",
+      "release": "1.53",
+      "durationMinutes": 5,
+      "syxSha256": "73d4f1f3924c90c7114e60d1d89be86647a9cb08fe80514bf072c4670cf2148f",
+      "mainImageSha256": "c5d006736fa12b7f5faa8ec28c0b26cacc55668278eb56f541b6f90ffada5201",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "f38b0c193677a060b3fdb28fe71b9332be8a5e7d36ecaf91a3c86a61bab558eb"
+        },
+        {
+          "id": "machine-pages",
+          "version": "1.2",
+          "sha256": "93092ba38bf65583a3d436e3d8c560b0df0480477f81127fe9de7a3264ba38c6"
+        },
+        {
+          "id": "digistring",
+          "version": "0.9.0",
+          "sha256": "9e3ca5570ec7e3521e2e2c3df576db08287f3329624dee9373808fa7fe63bc8f"
+        },
+        {
+          "id": "ram-machines",
+          "version": "1.3.1",
+          "sha256": "75cad6c7148709ea1e9188def89ebae200497ad78b295d9762a4af83dca15a6d"
+        },
+        {
+          "id": "note-accumulator",
+          "version": "1.1.1",
+          "sha256": "5e52d94a0991469c2efc83531d96fb42ffacc6de11aa287de6df54929f500f23"
+        }
+      ],
+      "result": "Same checks as the OS 1.54 M003 session: all work. Track count not stated."
+    },
+    {
+      "version": "M004",
+      "release": "1.54",
+      "syxSha256": "a4f139e213da4f0186d135e0b40b0ffe086b46811561a95cd584e64f1e9139a2",
+      "mainImageSha256": "76e40bf48b020417b52a84839f9af5fc805aa30665da30a980b579bb1fa4c8ec",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "8c1fe78ccd1427d6a93f181eaad9f064efb65cf6dd683192dbcc33e83dc548b9"
+        },
+        {
+          "id": "machine-pages",
+          "version": "1.2",
+          "sha256": "1ab853a2ff628dd60b8fa0c5693f3babac64b95c456b331162797aac1526b1a0"
+        },
+        {
+          "id": "digistring",
+          "version": "0.9.0",
+          "sha256": "247aba7f6d56f1081a94677b2c665322e5e3754a1b420bf12760f4762f4ccf0b"
+        }
+      ],
+      "result": "STRING without RAM Machines and Note Accumulator: still three STRING tracks before the UI lag."
+    },
+    {
+      "version": "M005",
+      "release": "1.54",
+      "syxSha256": "48b73042188657cb1474fee10801820739248a6539cbac94f8e4b9f47742cd21",
+      "mainImageSha256": "b32d78254fb778302bd0f786cf740101a51f6fca167b439f3f2f4e83d475f2ca",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "8c1fe78ccd1427d6a93f181eaad9f064efb65cf6dd683192dbcc33e83dc548b9"
+        },
+        {
+          "id": "digihealth",
+          "version": "1.0",
+          "sha256": "b8a49c1137fb3f2a06338f71f0d5730812481a0ce1cef362144334fe55b11c5a"
+        },
+        {
+          "id": "machine-pages",
+          "version": "1.2",
+          "sha256": "1ab853a2ff628dd60b8fa0c5693f3babac64b95c456b331162797aac1526b1a0"
+        },
+        {
+          "id": "digistring",
+          "version": "0.9.0",
+          "sha256": "247aba7f6d56f1081a94677b2c665322e5e3754a1b420bf12760f4762f4ccf0b"
+        }
+      ],
+      "result": "digihealth DSP load with 1-6 STRING tracks: 81, 87, 91, 95, 96, 98%. The UI lags from four tracks."
+    },
+    {
+      "version": "M006",
+      "release": "1.54",
+      "syxSha256": "a37f15d537a99bdfcd9f4a686b33bd9af764936aa87d1527eef1f9c9eada6496",
+      "mainImageSha256": "17775fa983004e3780a76c449c3f370d611e703aca437c2d4fb3ce11eb8eab17",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "8c1fe78ccd1427d6a93f181eaad9f064efb65cf6dd683192dbcc33e83dc548b9"
+        },
+        {
+          "id": "digihealth",
+          "version": "1.0",
+          "sha256": "b8a49c1137fb3f2a06338f71f0d5730812481a0ce1cef362144334fe55b11c5a"
+        },
+        {
+          "id": "digistring",
+          "version": "0.8.0",
+          "sha256": "cf64535c89b0d93eeb6d3973c86ce321f5a6a8218fa240bc1f775c549a17fcdf"
+        }
+      ],
+      "result": "Comparison with STRING 0.8.0 (no Machine Pages), same pattern: 82, 89, 91, 92, 96, 100%. The UI lags from four tracks."
+    }
+  ],
+  "checked": [
+    "STRING in the FUNC + SRC machine list, below SLICE, with its menu icon",
+    "SRC page: names, EXC icons, knob D blank, POS and TONE knob scaling",
+    "STRING's own defaults applied when a track switches to STRING",
+    "LFO destinations named and grouped as STRG",
+    "Project save, power cycle and reload",
+    "Note Accumulator transposing a STRING track step by step",
+    "RAM-R1 recording STRING from MAIN and RAM-P1 playing the take back",
+    "Three STRING tracks play cleanly; from four the UI lags (OS 1.54)",
+    "DSP load equal to STRING 0.8.0 within 3 points (digihealth, M005 against M006)"
+  ],
+  "notChecked": [
+    "Track count on OS 1.53",
+    "Firmware read back from the device",
+    "Loading a project saved with STRING 0.8.0 on M003 (checked on the author's elekloader builds K014 and K015 of the same source, Core 4.1 and Machine Pages 1.5)"
+  ]
+}

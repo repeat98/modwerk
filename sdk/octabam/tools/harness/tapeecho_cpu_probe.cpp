@@ -53,8 +53,11 @@ static std::vector<uint8_t> read(const char *p) {
 }
 static constexpr uint32_t stack = 0x47100000, endpc = 0x47200000;
 // Direct-kernel instruction ceilings (regression limits, not hardware cycles).
+// TAPE_CEILING rose from 1000 to 1100 with BBD's MIX law (0.1.6, #969): a
+// ramping block forms both MIX gains per sample, 8 instructions more each;
+// settled blocks form them once.
 static constexpr unsigned READER_FIXED_CEILING=165, READER_MOVING_CEILING=250,
-    FADE_EXTRA=90, FILTER_CEILING=420, TAPE_CEILING=1000;
+    FADE_EXTRA=90, FILTER_CEILING=420, TAPE_CEILING=1100;
 static std::map<uint32_t,uint64_t>* activeProfile=nullptr;
 static std::vector<uint32_t>* activeTrace=nullptr;
 static unsigned run(ot::Machine& m, uint32_t pc, uint32_t until, unsigned max = 100000) {
@@ -175,6 +178,8 @@ static void kernel_tests(ot::Machine& m) {
         int32_t dm=0,df=0,dn=0;
         if(mode==3) {
             dm=test%16==3?-s.mix/8:(int32_t((random()%128)*16909320u)-s.mix)/512;
+            // A MIX ramp across the gain knee (MIX 64) inside the block, both ways.
+            if(test%16==7){dm=int32_t(random()%4194304)+1;if(test%32==7)dm=-dm;s.mix=1082196480-8*dm;}
             df=(te_feedback[random()%128]-s.feedback)/512;
             dn=((te_hiss[random()%128]<<16)-s.hiss)/512;
         }
@@ -312,7 +317,8 @@ static void benchmark(const std::vector<uint8_t>& image,const std::vector<uint8_
         {"Tape x8, all controls moving, full synthetic history",8,5,127,true},
     };
     // Synchronized edits deliberately align work across tracks. Full history
-    // avoids the cheap not-yet-recorded path. MIX=90 is the shipped default.
+    // avoids the cheap not-yet-recorded path. MIX=90 was the default until
+    // 0.1.5 (40 from 0.1.6); the cases keep it so the figures stay comparable.
     const char* controlNames[]={"TIME", "FDBK", "WOW", "AGE", "SYNC", "MIX"};
     std::vector<std::string> stressNames;
     stressNames.reserve(20);

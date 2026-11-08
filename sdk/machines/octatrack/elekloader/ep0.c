@@ -157,6 +157,23 @@ int modwerk_upload_busy(void) {
 #endif
     return controller_started && controller.phase != MU_NORMAL;
 }
+#ifdef MODWERK_SAMPLE_EDITOR
+/* UI observations only. A complete trial may run its module, while receiving,
+ * partial publication, uncertain rollback and a disconnect may not edit. */
+int mw_sample_ep0_wake(const void *message) { return message==wake_message; }
+int mw_sample_transport_ready(void)
+{
+    if(receiving || held)return 0;
+#ifdef MODWERK_RUNTIME_VOLATILE_JOURNAL
+    if(modwerk_runtime_volatile_busy() || modwerk_volatile_busy(VOLATILE_SERVICE))return 0;
+#endif
+#ifdef MODWERK_SAVED_SET_EXPORT
+    if(modwerk_saved_set_busy())return 0;
+#endif
+    return !controller_started || (controller.initialized && controller.active_known && !controller.disconnecting &&
+        (controller.phase==MU_NORMAL || controller.phase==MU_TRIAL));
+}
+#endif
 
 static void wake(void)
 {
@@ -318,6 +335,14 @@ uint32_t modwerk_ep0_dispatch(void)
         out[6] |= 1u; /* feature bit 8: this base writes its own container to NOR over USB (flash.c) */
         return n;
     }
+    /* SLOTS (0xC1, bRequest 39, wValue 0, wLength 24): the two-slot layout as the engine last read it (flash.h),
+     * zeros before its first look. Read-only; bases before the two slots stall it. */
+    if (r.action == MV_STALL && SETUP[0] == MV_RESULT_TYPE && SETUP[1] == 39 && !SETUP[2] && !SETUP[3] &&
+        SETUP[4] == MODWERK_VENDOR_INTERFACE && !SETUP[5] && SETUP[6] == FLASH_SLOTS_BYTES && !SETUP[7]) {
+        for (unsigned i = 0; i < FLASH_SLOTS_BYTES; ++i) out[i] = modwerk_flash_slots[i];
+        modwerk_ep0_reply = out;
+        return FLASH_SLOTS_BYTES;
+    }
 #ifdef MODWERK_RUNTIME_SETS
     /* Exact baseline identity; only cached copies in the ISR. A stale cache
      * wakes its engine owner and refuses this read until it is refreshed. */
@@ -478,6 +503,7 @@ void modwerk_ep0_bus_reset(void)
  * or trial is open is handled as unplugged (mv_tick). */
 #define HOST_TIMEOUT_TICKS 600u
 int modwerk_modset_due(void); /* modset.c: a kept set waits for its save */
+void modwerk_modset_notice_tick(void); /* modset.c: "MODULES LOADED" once the restored engines run */
 void modwerk_ep0_tick(void);
 static void ep0_tick(void);
 void modwerk_ep0_tick(void)
@@ -486,6 +512,7 @@ void modwerk_ep0_tick(void)
 }
 static void ep0_tick(void)
 {
+    modwerk_modset_notice_tick();
 #ifdef MODWERK_RUNTIME_VOLATILE_JOURNAL
     if(volatile_started && modwerk_volatile_tick(VOLATILE_SERVICE,modwerk_runtime_ticks)) wake();
 #endif
@@ -499,10 +526,12 @@ static void ep0_tick(void)
     if (activity != heard) {
         if (quiet >= HOST_TIMEOUT_TICKS) ((void (*)(const char *, unsigned))0x4005a2b8u)("MODWERK CONNECTED", 0x60);
         heard = activity, quiet = 0;
+        modwerk_flash_host = 1; /* a computer talks to this base: flash.c may confirm its slot */
     } else if (quiet < HOST_TIMEOUT_TICKS) ++quiet;
     if (started && controller_started && mv_tick(vendor(), controller.phase != MU_NORMAL, HOST_TIMEOUT_TICKS)) wake();
     if (controller_started && controller.disconnecting) wake(); /* finish all rows of an abandoned set */
     if (modwerk_boot_tick()) wake(); /* an armed RAM boot is due */
+    if (modwerk_flash_tick()) wake(); /* the slots' first look, or the confirm (flash.c) */
     if (held) held = 0, wake(); /* the engine runs only when woken; an idle unit sends it nothing else */
     /* A kept set the card gate held back (playing, the card busy) or a failed write whose retry is due: twice a
      * second. Only an OUT frame wakes the engine, and a host waiting for the save only reads, so without this the
@@ -613,5 +642,6 @@ void modwerk_engine_idle(void)
     modwerk_volatile_service(VOLATILE_SERVICE,modwerk_runtime_ticks);
 #endif
     modwerk_modset_service(); /* a set this pass accepted is saved now: the one above ran before the host's command */
+    modwerk_flash_service(); /* the slots read once after start, and the confirm (flash.c) */
     modwerk_boot_service(); /* an armed RAM boot, once due (boot.c): does not return then */
 }

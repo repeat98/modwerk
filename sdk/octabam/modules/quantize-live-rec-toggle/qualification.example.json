@@ -1,12 +1,12 @@
 {
-  "moduleVersion": "0.1.0-experimental",
-  "sourceSha256": "403c3e4b47e312d78c4ba5a6049d80452efbd63905f33573666c22f281e498b5",
-  "imageSha256": "026464deb27c8178d44ad1fd5866b754478b11c114561e73000cdca3b44f86e8",
+  "moduleVersion": "0.1.1-experimental",
+  "sourceSha256": "dc262e3b08448b7955d3436792a5ba03c3336b120a8e9e1bc20dfa2e37da09f9",
+  "imageSha256": "3a39f682b372ad1ad962cc3f327893b51db54273ac5a0690918552298a7b9328",
   "cycles": [
     {
       "processor": "coldfire",
-      "worstCase": 416,
-      "maxConfiguration": 416,
+      "worstCase": 448,
+      "maxConfiguration": 448,
       "maxInstances": 1,
       "budget": 95778,
       "unit": "cycles/event",
@@ -16,7 +16,7 @@
         "parameterModulation": "Not applicable: one global boolean reached by a key gesture; no LFO, parameter lock, scene or MIDI CC reaches it.",
         "modeSwitching": "Repeated show, invert and invert-back presses inside one toast, and [REC] release with and without a toast on screen.",
         "maxLoad": "One instance per unit (a global key gesture). The code runs once per [PLAY] press or [REC] release in the key handler, never in the frame or audio path.",
-        "inputConditions": "Independent of audio. Counts cover the authored instructions only; the stock routines they call (project gate, checksum, notification open and close) are stock cost and excluded. The qualified image is the USB package 026464de (ABI 7, 356 bytes), which carries this 188-byte unit byte for byte; the instructions were counted on the same unit in the card image QLRTEST03 (MAIN OS eb34c12e9c906107fc6a8285ec757eaacf83a39c8dfb42e7bc390421f4189afd)."
+        "inputConditions": "Independent of audio. Counts cover the authored instructions only; the stock routines they call (project gate, checksum, menu redraw, notification open and close) are stock cost and excluded. Counted on the qualified image, the native card image of this module alone with every stock effect kept (MAIN OS 3a39f682b372ad1ad962cc3f327893b51db54273ac5a0690918552298a7b9328); the USB package 297f79ef (ABI 7, 364 bytes) carries the same 196-byte unit byte for byte."
       },
       "report": "TESTING.md"
     }
@@ -26,9 +26,9 @@
       {
         "name": "Authored ColdFire code and the two toast strings (linked unit qlr, ROM cave)",
         "space": "cpu-flash",
-        "words": 188,
+        "words": 196,
         "wordBits": 8,
-        "bytes": 188,
+        "bytes": 196,
         "scope": "shared"
       },
       {
@@ -41,25 +41,25 @@
       }
     ],
     "perInstanceBytes": 0,
-    "sharedBytes": 200,
+    "sharedBytes": 208,
     "maxInstances": 1,
-    "totalBytes": 200,
-    "conditions": "From the linked unit (188 bytes at any address; it is position independent) and the two detours. No RAM of its own: it reads and writes the stock setting word and its battery copy, and reads stock key and notification state. No heap; at most 8 bytes of stack beyond the stock key handler (two pushed arguments) before the stock calls.",
+    "totalBytes": 208,
+    "conditions": "From the linked unit (196 bytes at any address; it is position independent) and the two detours. No RAM of its own: it reads and writes the stock setting word and its battery copy, and reads stock key and notification state. No heap; at most 8 bytes of stack beyond the stock key handler (two pushed arguments) before the stock calls.",
     "report": "TESTING.md"
   },
   "hardware": {
     "kind": "functional",
     "status": "reported",
-    "model": "MKII",
-    "testedOn": "2026-10-15",
-    "tester": "npp1993",
-    "sourceRevision": "d7526ad548965cebea84b211a60d3bc00c1c6f3a",
-    "imageSha256": "026464deb27c8178d44ad1fd5866b754478b11c114561e73000cdca3b44f86e8",
-    "summary": "Package 026464de (source d7526ad5) over USB on the user's MKII with the flashed Modwerk beta base, OS 1.40C, APPLY SCENE installed beside it. Two trials without Keep rolled back; a kept trial was accepted and listed as Quant Live Rec. With it kept the user reported: hold [REC] + tap [PLAY] shows the toast and starts live recording; a tap within about a second flips the setting; a tap after the toast has gone only shows it; releasing [REC] closes the toast; with PERSONALIZE open the box follows a flip; a changed setting survives a power cycle, and the module was still installed after it. Removal was accepted and the inventory no longer listed it.",
+    "model": "MKI",
+    "testedOn": "2026-10-23",
+    "tester": "Zac Kyoti",
+    "sourceRevision": "3ff9dee1b0fc81da1fd20209a3f5a05f0ec37018",
+    "imageSha256": "3a39f682b372ad1ad962cc3f327893b51db54273ac5a0690918552298a7b9328",
+    "summary": "The author flashed the native card image of this module alone (MAIN OS 3a39f682, OS VERSION MW_QLR011) on his MKI and ran it for about five minutes. All passed: hold [REC] + tap [PLAY] shows the toast and starts live recording; a second tap while the toast is up flips the setting and another flips it back; a tap after the toast has gone only shows it; releasing [REC] closes the toast and [STOP] ends live recording; with PROJECT > SYSTEM > PERSONALIZE open on QUANTIZE LIVE REC the show press leaves the box alone and a flip changes it at once; a changed setting survives a power cycle.",
     "limitations": [
-      "Over USB only: the card image of this source (QLRTEST03) has not run on a unit. An earlier source (50f65395, QLRTEST02) ran from the card on the same MKII with the same results, before the stock-free re-encoding.",
-      "Not checked: stock [REC] + [PLAY] behaviour after the removal, grid recording, MIDI tracks, an MKI with this build. Part and project reload ran on 20 October 2026 (same MKII, same package, beside other modules) and left the setting unchanged; whether the gesture was used again after each reload was not recorded.",
-      "How long the tests ran was not recorded."
+      "From the card only: the USB package 297f79ef has not run on a unit; 0.1.0's USB package ran on an MKII (15 October 2026).",
+      "Not checked on this version: an MKII, grid recording, MIDI tracks, Part and project reload, combined builds with other modules.",
+      "About five minutes of use; nothing timed or recorded."
     ],
     "report": "TESTING.md"
   },

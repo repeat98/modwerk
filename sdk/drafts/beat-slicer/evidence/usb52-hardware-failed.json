@@ -1,0 +1,24 @@
+{
+  "scope": "physical USB probe failed; no passed self-test or verified trial Undo",
+  "version": "0.1.52-experimental",
+  "sourceRevision": "1d19d3b8d29dd48d7b92744eb01d2d488934d24d",
+  "packageSha256": "f5432b875899a2262ddb17af3c34120bac58b52ec4f58a6d858687564fcb8328",
+  "base": "cd39c494b63beae086271f8790f7e704f46fe0a617a8eb1c341c9a925f917e4e",
+  "ownerObservedRestart": true,
+  "crashVector": 3,
+  "crashPc": "40d52f64",
+  "probeImageOffset": 132,
+  "cachedAndUncachedCodeEqual": true,
+  "originalInventoryCount": 11,
+  "originalInventoryVerifiedAfterRestart": true,
+  "probeAbsent": true,
+  "physicalSelftestPassed": false,
+  "trialUndoVerified": false,
+  "hardware": "failed",
+  "remaining": "Rejected wrong-target package; corrected 0.1.53 trial recorded separately.",
+  "sourceSha256": {
+    "usb_probe.c": "bb5d50e5cc22b5aa85ad2146fb47bf1ce43be28187916723418db5d66e311326",
+    "build_usb_probe.py": "08bdfc34fa740b21567a461084a7cb3d23a22dc1d673c42c8cdd12ac36d7718f",
+    "trial_usb_probe.mjs": "28d2fc604ed561c625698b112a60554a760006bcfa65334014de7a7861e368de"
+  }
+}

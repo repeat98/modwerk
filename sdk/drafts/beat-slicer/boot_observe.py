@@ -44,6 +44,10 @@ def digest(path):
 
 class Port:
     def __init__(self, command, work):
+        # Some retained emulator builds buffer their ready line when piped.
+        # The child then waits for commands while its parent waits for ready.
+        if shutil.which('stdbuf') and Path(command[0]).name != 'stdbuf':
+            command = ['stdbuf', '-oL', *command]
         self.err = (work / 'emulator-stderr.private.log').open('wb')
         self.log = (work / 'emulator-stdout.private.log').open('wb')
         self.process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,

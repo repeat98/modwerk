@@ -1,0 +1,112 @@
+{
+  "scope": "actual runtime loader with synthetic host machine glue; menu composition/dispatch through exact current full-owner leases and copied action allowlists; no native dispatcher, module execution or USB",
+  "sourceSha256": {
+    "menu_owner.c": "3724dbdbddd793969c1f3c65a85fc77c42831d80a8d9e65b874bceb4dbbd2613",
+    "menu_owner.h": "cdc62f42130d7fb61c08929be261bfd51c413aac9b191f0653fa708e3b1abe8c",
+    "test_menu_owner_backend.c": "a8173fa0b66685e2ced87325d2d711c0ba8ee7bc9265378a6bdab4d5881dc3ab",
+    "test_menu_owner_backend.py": "72e73991ed01ddba79062337f3f145639be3c2ff08657991df3d12c832c3e11d",
+    "menu_owner_backend.c": "a45566ac814b1515a1ca2d52f4fc6744e72c37d99f967ba5656e96f2ca2dd459",
+    "menu_owner_backend.h": "d3ef6f5edc958d8ff3f57292bdfbbada289054e6ab6368567847b6e38e907fb8",
+    "editor_menu.c": "9e7a73ff05e65eddb9db7d4163c29e4d6f55d6bce33379f4f9dfac64e451a043",
+    "editor_menu.h": "211496964f026a650e3e28847314478b25dac5106a586cede963109ff0b26631",
+    "menu-owner-runtime-sources.json": "f944af9391dec483e68310e512aa23e706a3483f805fc00db008d22b54a0f16c"
+  },
+  "sdkRevision": "c8fcb8054b10366b3a7881ec957a566460aab3d4",
+  "sdkDependencySha256": {
+    "sdk/runtime/loader/context.h": "7c811eb9f3bccef7b03a129f2ebe00ba477422f07315e682f6211d761aacf44b",
+    "sdk/runtime/loader/journal.h": "b7bdf800ac2d59413582ae0626cec1d951c29e9567fbd4c15f77856ae509811f",
+    "sdk/runtime/loader/loader.c": "cdd05233d078324b0bf4f706adfb5d19e03e8a735e11fa976c315adb726357ac",
+    "sdk/runtime/loader/loader.h": "0e97ec78ed5a25f93d8c2c390542c2c42bd1cdcf677d345095c953781067719b",
+    "sdk/runtime/loader/modwerk_module.h": "55f39232ec7eb2fe8a497f946f559a9f4e78f90e637ea5475cca686bc5c56218",
+    "sdk/runtime/loader/set_package.h": "bcfd3829af0785cfd15ec801237226c24959d32d44d0c1fb2df4fb08806ac743",
+    "sdk/runtime/loader/tests/host_test.c": "bf7460412ca756eb8117888788d3d086e0bf94086d93018d8c462deeb73152c7",
+    "sdk/runtime/loader/tests/set_test.h": "643d6dd135cb2c15f46d49fa1e1448953e8965dff1a7342aeb3d541e80d4c8be",
+    "sdk/runtime/upload/sha256.c": "9e19fb3a7de7ff56a3910610eac0304c66ab1b5df1290979c732c1642fdee7d1",
+    "sdk/runtime/upload/upload.c": "ec9716df5ee61e45e19a5846839e6cb4dca54faf58eaa6df0256b50ede260cd8",
+    "sdk/runtime/upload/upload.h": "4717f5f55c48e7d3f1d045aee72b5cf5e1194f707eb4a9da2bef0ca48b22ef6b"
+  },
+  "compiler": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+  "flags": [
+    "-std=c99",
+    "-O1",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer"
+  ],
+  "variants": [
+    {
+      "defines": [],
+      "exitCode": 0,
+      "stdout": [
+        "Loader: refusals, relocation, bss, hooks, stock-code sites (in-flight, stock and changed-code refusals, replace, rollback, removal), reclamation, several modules (conflicts, positions), exhaustion, DSP sections, ABI 7's hashed stock bytes (kept bytes, stock copies, address arithmetic, replacement over its own patch, mismatch refusals) and ABI 9's base features, DSP claims and hook entries passed.",
+        "PASS: full-owner menu backend with real host loader; copied action allowlist, two coexisting owners sharing an action ID, sorted dispatch, callback refusal, replacement/restoration/removal and permanent retirement; no native menu/USB qualification"
+      ]
+    },
+    {
+      "defines": [
+        "-DMODWERK_CACHED_MODULES"
+      ],
+      "exitCode": 0,
+      "stdout": [
+        "Loader: refusals, relocation, bss, hooks, stock-code sites (in-flight, stock and changed-code refusals, replace, rollback, removal), reclamation, several modules (conflicts, positions), exhaustion, DSP sections, ABI 7's hashed stock bytes (kept bytes, stock copies, address arithmetic, replacement over its own patch, mismatch refusals) and ABI 9's base features, DSP claims and hook entries passed.",
+        "PASS: full-owner menu backend with real host loader; copied action allowlist, two coexisting owners sharing an action ID, sorted dispatch, callback refusal, replacement/restoration/removal and permanent retirement; no native menu/USB qualification"
+      ]
+    },
+    {
+      "defines": [
+        "-DRUNTIME_MODULES=128u",
+        "-DRUNTIME_POOL_BYTES=786432u"
+      ],
+      "exitCode": 0,
+      "stdout": [
+        "Loader: refusals, relocation, bss, hooks, stock-code sites (in-flight, stock and changed-code refusals, replace, rollback, removal), reclamation, several modules (conflicts, positions), exhaustion, DSP sections, ABI 7's hashed stock bytes (kept bytes, stock copies, address arithmetic, replacement over its own patch, mismatch refusals) and ABI 9's base features, DSP claims and hook entries passed.",
+        "PASS: full-owner menu backend with real host loader; copied action allowlist, two coexisting owners sharing an action ID, sorted dispatch, callback refusal, replacement/restoration/removal and permanent retirement; no native menu/USB qualification"
+      ]
+    },
+    {
+      "defines": [
+        "-DRUNTIME_MODULES=128u",
+        "-DRUNTIME_POOL_BYTES=786432u",
+        "-DMODWERK_CACHED_MODULES"
+      ],
+      "exitCode": 0,
+      "stdout": [
+        "Loader: refusals, relocation, bss, hooks, stock-code sites (in-flight, stock and changed-code refusals, replace, rollback, removal), reclamation, several modules (conflicts, positions), exhaustion, DSP sections, ABI 7's hashed stock bytes (kept bytes, stock copies, address arithmetic, replacement over its own patch, mismatch refusals) and ABI 9's base features, DSP claims and hook entries passed.",
+        "PASS: full-owner menu backend with real host loader; copied action allowlist, two coexisting owners sharing an action ID, sorted dispatch, callback refusal, replacement/restoration/removal and permanent retirement; no native menu/USB qualification"
+      ]
+    },
+    {
+      "defines": [
+        "-DRUNTIME_MODULES=128u",
+        "-DRUNTIME_POOL_BYTES=786432u",
+        "-DMODWERK_RUNTIME_SETS"
+      ],
+      "exitCode": 0,
+      "stdout": [
+        "Loader: refusals, relocation, bss, hooks, stock-code sites (in-flight, stock and changed-code refusals, replace, rollback, removal), reclamation, several modules (conflicts, positions), exhaustion, DSP sections, ABI 7's hashed stock bytes (kept bytes, stock copies, address arithmetic, replacement over its own patch, mismatch refusals) and ABI 9's base features, DSP claims and hook entries passed.",
+        "PASS: full-owner menu backend with real host loader; copied action allowlist, two coexisting owners sharing an action ID, sorted dispatch, callback refusal, replacement/restoration/removal and permanent retirement; no native menu/USB qualification"
+      ]
+    },
+    {
+      "defines": [
+        "-DRUNTIME_MODULES=128u",
+        "-DRUNTIME_POOL_BYTES=786432u",
+        "-DMODWERK_RUNTIME_SETS",
+        "-DMODWERK_CACHED_MODULES"
+      ],
+      "exitCode": 0,
+      "stdout": [
+        "Loader: refusals, relocation, bss, hooks, stock-code sites (in-flight, stock and changed-code refusals, replace, rollback, removal), reclamation, several modules (conflicts, positions), exhaustion, DSP sections, ABI 7's hashed stock bytes (kept bytes, stock copies, address arithmetic, replacement over its own patch, mismatch refusals) and ABI 9's base features, DSP claims and hook entries passed.",
+        "PASS: full-owner menu backend with real host loader; copied action allowlist, two coexisting owners sharing an action ID, sorted dispatch, callback refusal, replacement/restoration/removal and permanent retirement; no native menu/USB qualification"
+      ]
+    }
+  ],
+  "exitCode": 0,
+  "hardware": "not tested",
+  "nativeMenu": "not integrated",
+  "limits": "Production transition-time lease retirement, typed contribution admission, complete module-set readiness and retained-reference reclamation remain absent."
+}

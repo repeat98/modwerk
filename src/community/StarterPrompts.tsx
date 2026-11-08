@@ -41,7 +41,7 @@ export function StarterPrompts({ login, machine, onMachine, task, repository, in
         <label className="starter-field starter-field-wide"><span>Change or GitHub issue link <small>optional</small></span><textarea rows={2} value={change} onChange={event => setChange(event.target.value)} placeholder="Describe the improvement, or link the report to fix." /></label>
       </>}
     </div>
-    <div className="developer-prompt-actions"><span>Full workflow, tests and release rules included.</span><CopyButton text={prompt} label="Copy prompt" primary /></div>
+    <div className="developer-prompt-actions"><span>Hands the work to the Modwerk skills in your fork.</span><CopyButton text={prompt} label="Copy prompt" primary /></div>
     <details className="starter-prompt"><summary>Preview complete prompt</summary><pre tabIndex={0} aria-label="Starter prompt">{prompt}</pre></details>
   </div>
 }

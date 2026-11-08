@@ -42,6 +42,7 @@ Fields: five-digit sequence modulo 100,000; eight-digit hex UI tick counter; lev
 | `USB 0001` | USB disk state changed | Job token | Stock USB disk flag |
 | `FS 0001`–`0004` | Buffered open/read/write/close failed | Active job token, or 0 | Signed stock return value as uint32 |
 | `FLT` + vector number | Exception callback | Faulting PC | Full format/vector-SR word |
+| `GRD 0001` (W) | The frame guard silenced module machine renders since the last `GRD` (at most one record per 10 s) | Renders silenced | Tracks silenced, bit 0 = T1 |
 | `LOG 0002` (E) | Checkpoint failed | Attempted slot | Meaningful text bytes |
 | `LOG 0BAD` (W) | Record tag/level invalid | Raw a | Raw b |
 

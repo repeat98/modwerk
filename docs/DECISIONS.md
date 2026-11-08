@@ -1,5 +1,7 @@
 # Architecture decisions
 
+Frozen on 25 October 2026, with the decisions up to then. A new decision is its own file in [decisions/](decisions/), `<YYYY-MM-DD>-<topic>.md`, and says which one below it replaces, if any. `npm run check` refuses new entries here.
+
 ## One Elekloader builder for every machine — 9 October 2026
 
 The owner chose Elekloader as the core builder, with each machine extending its

@@ -23,7 +23,8 @@ static double rms(const std::vector<double>& x,int begin,int end) {
 static TapeParams params(unsigned feedback=0,unsigned wow=0,unsigned age=0) {
     return {60,feedback,wow,0,127,age,2880};
 }
-static std::vector<double> render(TapeParams p,double seconds,double hz=0,double amp=.01,bool burst=false) {
+static std::vector<double> render(TapeParams p,double seconds,double hz=0,double amp=.01,bool burst=false,
+                                  unsigned (*mixAt)(unsigned block)=nullptr) {
     unsigned length=unsigned(seconds*fs)/16*16, write=0;
     std::vector<double> output(length);
     std::vector<int32_t> ring(TE_RING*2);
@@ -36,6 +37,7 @@ static std::vector<double> render(TapeParams p,double seconds,double hz=0,double
             if(burst && t<1024) envelope=std::min({1.,t/64.,(1024-t)/64.});
             audio[2*j]=audio[2*j+1]=int32_t(q*amp*envelope*std::sin(2*pi*hz*t/fs));
         }
+        if(mixAt)p.mix=mixAt(n/16);
         te_process(&state,&p,ring.data(),write,audio,record);
         std::copy(record,record+32,ring.begin()+write*2);
         write=(write+16)%TE_RING;
@@ -124,6 +126,44 @@ int main() {
     auto low=render(params(),2,1000,.001),hot=render(params(),2,1000,1);
     double compression=db(rms(hot,fs,hot.size())/rms(low,fs,low.size()))-60;
     check("Fixed DRIVE=0 retains gentle record compression (dB)",compression<0&&compression>-4,compression);
+    // MIX (#969, 0.1.6), BBD's law. The burst's first 1024 samples are dry
+    // only: the echo arrives 5888 samples later and the unrecorded history
+    // reads as silence. Its first echo is the wet path alone.
+    auto mixed=[&](unsigned mix,bool echo) {
+        auto p=params();p.mix=mix;
+        auto x=render(p,.5,1000,.003,true);
+        return echo?rms(x,5888+128,5888+896):rms(x,128,896);
+    };
+    const double dry=mixed(0,false),fullWet=mixed(127,true); // MIX 0 is the exact input
+    auto dryLevel=[&](unsigned mix){return db(mixed(mix,false)/dry);};
+    auto wetLevel=[&](unsigned mix){return db(mixed(mix,true)/fullWet);};
+    double worstDry=0;
+    for(unsigned mix:{1u,20u,40u,63u,64u})worstDry=std::max(worstDry,std::abs(dryLevel(mix)));
+    check("Dry stays at full level from MIX 0 through 64 (worst dB)",worstDry<.01,worstDry);
+    check("Dry fades above MIX 64: MIX 96 is (127-96)/63, -6.16 dB",std::abs(dryLevel(96)+6.16)<.05,dryLevel(96));
+    check("Full wet carries no dry",dryLevel(127)<-60,dryLevel(127));
+    check("Echo reaches its full-wet level at MIX 64",std::abs(wetLevel(64))<.01,wetLevel(64));
+    check("Echo at MIX 32 is half its full-wet level (-6.02 dB)",std::abs(wetLevel(32)+6.02)<.05,wetLevel(32));
+    check("Echo stays at its full-wet level above MIX 64 (MIX 96)",std::abs(wetLevel(96))<.01,wetLevel(96));
+    check("Default MIX 40 echo is 40/64 of full wet (-4.08 dB)",std::abs(wetLevel(40)+4.08)<.05,wetLevel(40));
+    // MIX moves stay smooth: a steady 997 Hz tone through dry plus a
+    // delayed, filtered copy is still one sinusoid, so the recurrence
+    // residual shows any step the gain ramps leave. Sweep through the knee,
+    // jump endpoint to endpoint and reverse every 1, 16 and 64 blocks.
+    auto residual=[&](unsigned (*mixAt)(unsigned)) {
+        auto p=params();p.mix=mixAt?mixAt(0):40;
+        auto x=render(p,2,997,.2,false,mixAt);
+        const double k=2*std::cos(2*pi*997/fs);double worst=0;
+        for(unsigned n=fs/2;n<x.size();++n)worst=std::max(worst,std::abs(x[n]-k*x[n-1]+x[n-2]));
+        return worst;
+    };
+    double still=residual(nullptr),moving=0;
+    for(auto mixAt:{+[](unsigned b){return b%256<128?b%128:127-b%128;},
+                    +[](unsigned b){return (b/64)%2?127u:0u;},+[](unsigned b){return (b/16)%2?127u:0u;},
+                    +[](unsigned b){return b%2?127u:0u;},+[](unsigned b){return (b/16)%2?96u:40u;}})
+        moving=std::max(moving,residual(mixAt));
+    check("Settled MIX 40 tone residual (FS)",still<.006,still);
+    check("MIX sweeps, jumps and reversals leave no click (peak residual FS)",moving<.006,moving);
     auto fast=params(),slow=params();fast.time=20;slow.time=100;
     auto f1=render(fast,2,1000),f8=render(fast,2,8000);
     auto s1=render(slow,2,1000),s8=render(slow,2,8000);

@@ -23,10 +23,11 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 APP = HERE.parents[3]
 PORTS = HERE / 'machine-ports.json'
-FLAGS = {'PROTECT': 1, 'POOL': 2, 'RENDER_FLEX': 4, 'BACKING': 8}
+FLAGS = {'PROTECT': 1, 'POOL': 2, 'RENDER_FLEX': 4, 'BACKING': 8, 'SETUP_ALL': 16, 'LIST': 32, 'SETUP_PAGE': 64}
 KINDS = {'executed': 1, 'modeled': 2, 'hardware': 3}  # loader.h runtime_cycles
 FIELDS = ('assign', 'admit_track', 'chooser_type', 'track_page', 'ui_tick', 'leave', 'pool_open', 'pool_left',
           'choice_left', 'list_draw', 'render', 'validate')  # struct modwerk_machine after abi, sig, label, flags, page, defaults
+SETUP_FIELDS = ('setup_page', 'setup_knob')  # struct modwerk_machine_setup after the machine: SETUP_PAGE only
 # Claim predicates (C convention: the argument on the stack, d0 the answer; d1/a0-a1 free), from a module's own
 # exported predicate. poly_is_track: d0 = track -> d0 nonzero for a POLY track, d1/a0 scratch (polyphony.s).
 CLAIMS = {
@@ -133,7 +134,9 @@ def glue(name, entry):
         price = entry.get('price')
         out.append('        .word   %d, %d\n        .byte   %d, 0, 0, 0\n' % (
             (price['voice'], price['engine'], KINDS[price['kind']]) if price else (0, 0, 0)))
-        unknown = set(m['fields']) - set(FIELDS) - {'defaults'}
+        if 'SETUP_PAGE' in m['flags']:  # the record goes on: struct modwerk_machine_setup (EVENTS.md ot_machines)
+            out += ['        .long   %s\n' % (m['fields'].get(f) or 0) for f in SETUP_FIELDS]
+        unknown = set(m['fields']) - set(FIELDS) - {'defaults'} - (set(SETUP_FIELDS) if 'SETUP_PAGE' in m['flags'] else set())
         if unknown:
             raise ValueError('%s: unknown machine fields %s' % (name, ', '.join(sorted(unknown))))
         out.append('mw_machine_label:\n        .asciz  "%s"\n        .balign 4\n' % m['label'])

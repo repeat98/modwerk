@@ -1,4 +1,6 @@
 import type { Database } from './platform'
+import { FORUM_CATEGORIES } from '../src/community/forum-contract'
+import type { UnansweredThreadsPage } from '../src/community/admin-activity-contract'
 import type { AdminActivity, AdminActivityDay } from '../src/community/admin-activity-contract'
 import { HttpError } from './security'
 import { SYSTEM_AUTHOR } from './module-threads'
@@ -9,6 +11,25 @@ const before = (now: Date, days: number) => day(new Date(now.getTime() - days * 
 const sqlTime = (date: Date) => date.toISOString().replace('T', ' ').slice(0, 19)
 /** A reply answers a thread when it is visible and written by someone other than the thread's author. */
 const ANSWERS = 'FROM forum_posts p WHERE p.thread_id=t.id AND p.id<>t.id AND p.hidden=0 AND p.user_id<>t.user_id'
+
+const UNANSWERED = `t.user_id<>? AND t.hidden=0 AND t.locked=0 AND t.status='open' AND t.created_at<? AND NOT EXISTS(SELECT 1 ${ANSWERS})`
+
+/** A bounded, administrator-only first-reply queue. Filters never alter the activity report's headline totals. */
+export async function unansweredThreads(db: Database, now = new Date(), params = new URLSearchParams()): Promise<UnansweredThreadsPage> {
+  const rawPage = params.get('page') ?? '1', category = params.get('category') ?? 'all', order = params.get('order') ?? 'oldest'
+  if (!/^[1-9][0-9]{0,5}$/.test(rawPage)) throw new HttpError(400, 'Choose a valid page.')
+  if (category !== 'all' && !Object.hasOwn(FORUM_CATEGORIES, category)) throw new HttpError(400, 'Choose a forum category.')
+  if (order !== 'oldest' && order !== 'newest') throw new HttpError(400, 'Choose oldest or newest first.')
+  const stale = sqlTime(new Date(now.getTime() - 48 * 3600000))
+  const where = UNANSWERED + (category === 'all' ? '' : ' AND COALESCE(t.section,t.category)=?')
+  const values = [SYSTEM_AUTHOR, stale, ...(category === 'all' ? [] : [category])]
+  const count = await db.prepare(`SELECT COUNT(*) AS total FROM forum_threads t WHERE ${where}`).bind(...values).first<{ total: number }>()
+  const total = count?.total ?? 0, pageSize = 10, page = Math.min(Number(rawPage), Math.max(1, Math.ceil(total / pageSize)))
+  const direction = order === 'oldest' ? 'ASC' : 'DESC'
+  const rows = await db.prepare(`SELECT t.id,t.title,t.created_at AS createdAt FROM forum_threads t WHERE ${where} ORDER BY t.created_at ${direction},t.id ${direction} LIMIT ? OFFSET ?`)
+    .bind(...values, pageSize, (page - 1) * pageSize).all<UnansweredThreadsPage['threads'][number]>()
+  return { total, page, pageSize, category: category as UnansweredThreadsPage['category'], order, generatedAt: now.toISOString(), threads: rows.results }
+}
 
 export function median(values: readonly number[]) {
   if (!values.length) return null
@@ -31,7 +52,7 @@ export async function adminActivity(db: Database, now = new Date(), days = 30): 
     db.prepare(`SELECT (julianday((SELECT MIN(p.created_at) ${ANSWERS}))-julianday(t.created_at))*24 AS hours
       FROM forum_threads t WHERE t.user_id<>? AND t.hidden=0 AND t.created_at>=?`).bind(SYSTEM_AUTHOR, from).all<{ hours: number | null }>(),
     db.prepare(`SELECT t.id,t.title,t.created_at AS createdAt,COUNT(*) OVER() AS total FROM forum_threads t
-      WHERE t.user_id<>? AND t.hidden=0 AND t.locked=0 AND t.status='open' AND t.created_at<? AND NOT EXISTS(SELECT 1 ${ANSWERS}) ORDER BY t.created_at DESC LIMIT 10`)
+      WHERE ${UNANSWERED} ORDER BY t.created_at ASC,t.id ASC LIMIT 10`)
       .bind(SYSTEM_AUTHOR, stale).all<{ id: string; title: string; createdAt: string; total: number }>(),
     db.prepare("SELECT julianday(closed_at)-julianday(created_at) AS days FROM issues WHERE status='closed' AND closed_at>=?").bind(from).all<{ days: number }>(),
     db.prepare("SELECT COUNT(*) AS n FROM issues WHERE status='closed' AND closed_at IS NULL").first<{ n: number }>(),

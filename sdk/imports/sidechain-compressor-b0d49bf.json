@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+  "revision": "b0d49bf32d3fcc2e3ce7e9cec67f4fbb2619e511",
+  "moduleVersion": "0.2.0-experimental",
+  "root": "sdk/octabam/modules/sidechain-compressor",
+  "modules": [
+    "sidechain-compressor"
+  ],
+  "files": [
+    {
+      "path": "manifest.py",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "b0d49bf32d3fcc2e3ce7e9cec67f4fbb2619e511",
+      "sourcePath": "modwerk-modules/sidechain-compressor/manifest.py",
+      "sourceBytes": 12605,
+      "sourceGitBlob": "4b25454bbfd3ea03812bc9bf01d46f77e72a944a",
+      "sourceSha256": "62f004df8eb3e727da05430b18785142f6f3de6c1418b42de49b9073d6f17e44",
+      "vendoredSha256": "62f004df8eb3e727da05430b18785142f6f3de6c1418b42de49b9073d6f17e44"
+    },
+    {
+      "path": "patch_sc_dsp3.asm",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "b0d49bf32d3fcc2e3ce7e9cec67f4fbb2619e511",
+      "sourcePath": "modwerk-modules/sidechain-compressor/patch_sc_dsp3.asm",
+      "sourceBytes": 53364,
+      "sourceGitBlob": "1b33bba89ba1250a06ae29599bc208884778f0e8",
+      "sourceSha256": "11022dbd84e1fffa71946aa19e8d8f0a51b1f25371c5b6b794066c855012ddf8",
+      "vendoredSha256": "11022dbd84e1fffa71946aa19e8d8f0a51b1f25371c5b6b794066c855012ddf8"
+    },
+    {
+      "path": "patch_sidechain.s",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "b0d49bf32d3fcc2e3ce7e9cec67f4fbb2619e511",
+      "sourcePath": "modwerk-modules/sidechain-compressor/patch_sidechain.s",
+      "sourceBytes": 14900,
+      "sourceGitBlob": "762ecfa829822738aad09a7d4d19bdee71b0486a",
+      "sourceSha256": "0cbd52f14497253f067f91f54e9bbeb96176e73bb8a438edb89aaf3d09abd325",
+      "vendoredSha256": "0cbd52f14497253f067f91f54e9bbeb96176e73bb8a438edb89aaf3d09abd325"
+    },
+    {
+      "path": "ui_switch.s",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "b0d49bf32d3fcc2e3ce7e9cec67f4fbb2619e511",
+      "sourcePath": "modwerk-modules/sidechain-compressor/ui_switch.s",
+      "sourceBytes": 8809,
+      "sourceGitBlob": "b974249331482bfcce71795331b075b4291e9672",
+      "sourceSha256": "643c8e68a6f914896740406599369c5d6e0112f1b2f388233a2bfcda10b7b4ab",
+      "vendoredSha256": "643c8e68a6f914896740406599369c5d6e0112f1b2f388233a2bfcda10b7b4ab"
+    },
+    {
+      "path": "sc_tables.py",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "b0d49bf32d3fcc2e3ce7e9cec67f4fbb2619e511",
+      "sourcePath": "modwerk-modules/sidechain-compressor/sc_tables.py",
+      "sourceBytes": 4645,
+      "sourceGitBlob": "e58b2cac6febedfa0fc230a142f6ffd17f44a2de",
+      "sourceSha256": "cf4bba489c652fca75021f9d81a8aa8ecf0247ce6edc36b01420903c74324054",
+      "vendoredSha256": "cf4bba489c652fca75021f9d81a8aa8ecf0247ce6edc36b01420903c74324054"
+    },
+    {
+      "path": "sc_keyfilt.py",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "b0d49bf32d3fcc2e3ce7e9cec67f4fbb2619e511",
+      "sourcePath": "modwerk-modules/sidechain-compressor/sc_keyfilt.py",
+      "sourceBytes": 8702,
+      "sourceGitBlob": "52e180ac1957c27acfbd9aa852c5490f0f9fd68f",
+      "sourceSha256": "8e68216a2ec8ec366c686fd7d6ab0690776b66065de58ab2aa807a5e88438edb",
+      "vendoredSha256": "8e68216a2ec8ec366c686fd7d6ab0690776b66065de58ab2aa807a5e88438edb"
+    },
+    {
+      "path": "upstream/README.md",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "b0d49bf32d3fcc2e3ce7e9cec67f4fbb2619e511",
+      "sourcePath": "modwerk-modules/sidechain-compressor/README.md",
+      "sourceBytes": 1567,
+      "sourceGitBlob": "3a16cc919b47984b3d3dc25dbb06ad1d01322e3c",
+      "sourceSha256": "695451e0e2e3485d2510cd116e29c331374bdb75ee0acb1787385ef4a3cc4bdf",
+      "vendoredSha256": "695451e0e2e3485d2510cd116e29c331374bdb75ee0acb1787385ef4a3cc4bdf"
+    },
+    {
+      "path": "upstream/LICENSE",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "b0d49bf32d3fcc2e3ce7e9cec67f4fbb2619e511",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 4451,
+      "sourceGitBlob": "8cd09176a276a3854ae947ab148b9b327d77e381",
+      "sourceSha256": "f1f8d5837b6df5d6e5744286e3929883253f1ee754c4f9e0494989f2ef992a05",
+      "vendoredSha256": "f1f8d5837b6df5d6e5744286e3929883253f1ee754c4f9e0494989f2ef992a05"
+    },
+    {
+      "path": "LICENSE",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "b0d49bf32d3fcc2e3ce7e9cec67f4fbb2619e511",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 4451,
+      "sourceGitBlob": "8cd09176a276a3854ae947ab148b9b327d77e381",
+      "sourceSha256": "f1f8d5837b6df5d6e5744286e3929883253f1ee754c4f9e0494989f2ef992a05",
+      "vendoredSha256": "243b2224f86e4b88add7434b5ef3614e5ef951fff50c8fcf3e74dd0c952e8670",
+      "transforms": [
+        "The author's MIT licence with one line added at its end: Modwerk's own copyright notice for its import adaptations, verification tools and original documentation/artwork, under the same MIT terms."
+      ]
+    }
+  ],
+  "stockGuards": [
+    {
+      "kind": "guarded-local-dsp-read",
+      "payload": "A",
+      "address": 1191,
+      "words": 2,
+      "sha256": "92441a8fc9f1dd20359d87c8342e3d5653d8c853a274358df0cfc0451c57115b",
+      "note": "Both payloads have the same guarded instruction at their declared sites; recover expectations only from a verified local stock OS."
+    },
+    {
+      "kind": "guarded-local-dsp-read",
+      "payload": "A",
+      "address": 6833,
+      "words": 2,
+      "sha256": "114aacb95ee45437fff14f2dcd91b67e26d8bc42ef3ba2e9f6ae0cb8be1574fa",
+      "note": "Both payloads have the same guarded instruction at their declared sites; recover expectations only from a verified local stock OS."
+    },
+    {
+      "kind": "guarded-local-dsp-read",
+      "payload": "A",
+      "address": 1294,
+      "words": 2,
+      "sha256": "9dad4262559be3a41c85136d50f7d017f161cff9a609d17d21da895cd2137118",
+      "note": "Both payloads have the same guarded instruction at their declared sites; recover expectations only from a verified local stock OS."
+    },
+    {
+      "address": "0x4000cae8",
+      "bytes": 6,
+      "sha256": "9a4b68c7876e6a4b172ba77e67b4305494b67444bae1a8e13c5f6e62ac6e7c2c"
+    },
+    {
+      "address": "0x40003d1c",
+      "bytes": 6,
+      "sha256": "9a4b68c7876e6a4b172ba77e67b4305494b67444bae1a8e13c5f6e62ac6e7c2c"
+    },
+    {
+      "payload": "A",
+      "address": 6820,
+      "words": 2,
+      "sha256": "9eb96aa9abbf3d522e54911d6fa634dbcfc8820ad32d593e405bacc87193f305",
+      "note": "COMPRESSOR init (scinit, 0.2.0); B 0x01864 holds the same two words"
+    }
+  ],
+  "excluded": [
+    "Firmware and stock expectation bytes",
+    "The author's standalone builders (tools/build_sidechain_compressor.py and its diagnostics), emulator checks (tools/emu_sc_dsp3.py) and tooling outside modwerk-modules/",
+    "octabam's wrapper of the module (octabam-modules/sidechain-compressor), which is the octabam form of the same sources",
+    "Generated firmware, runtime images and memory dumps"
+  ],
+  "notes": [
+    "Every source file and manifest.py are the author's files byte for byte, from the author's own Modwerk copy of the module (modwerk-modules/sidechain-compressor). The manifest is the Modwerk form: stock expectations as address/length/SHA-256 guards read from the builder's own OS file, no PLACE setting or store.",
+    "The sources are the author's final SIDECHAIN_COMPRESSOR (the base-width key filter, KEY switch and KWID clip), the same code octabam carries since sambanks/octabam #869, #873 and #875.",
+    "The stock guards were checked again against the original OS 1.40C MAIN image (SHA-256 164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e) by this version's native build."
+  ],
+  "status": "Owner review requested: the module changes the beta base's resident engine and controller (resident_dsp.py, stock_hook_controllers.py, dsp-sites.json, machine_registry.c).",
+  "authorPin": {
+    "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+    "revision": "b0d49bf32d3fcc2e3ce7e9cec67f4fbb2619e511"
+  }
+}

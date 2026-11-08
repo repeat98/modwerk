@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { expect, it } from 'vitest'
 import { SITE_PAGES, sitePageHtml, sitePages } from './site-pages.ts'
 import { EXTERNAL_PROJECTS } from '../src/projects/projects.ts'
@@ -22,7 +23,7 @@ it('gives the page its own title, description, canonical URL and card', () => {
 
 it('emits each page and its generated card', async () => {
   const plugin = sitePages()
-  plugin.configResolved({ root: new URL('../', import.meta.url).pathname, base: './' })
+  plugin.configResolved({ root: fileURLToPath(new URL('../', import.meta.url)), base: './' })
   const assets = []
   await plugin.generateBundle.call({ emitFile(asset) { assets.push(asset) } }, {}, { 'index.html': { type: 'asset', source: html } })
   expect(assets.map(asset => asset.fileName)).toEqual([expect.stringMatching(/^page-thumbnails\/submit-[0-9a-f]{12}\.jpg$/), 'submit/index.html', 'projects/index.html'])

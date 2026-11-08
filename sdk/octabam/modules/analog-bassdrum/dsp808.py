@@ -10,7 +10,8 @@ RATE=44100
 # Preserve the model balance, with the shared +12.04 dB output boost.
 OUTPUT_TRIM=0.215*dsp909.OUTPUT_GAIN
 SWORDS=48
-OFF=dict(U=0,EH=1,EL=2,EP=3,PC=4,PS=5,DC=6,TF=7,INC=8,BEND=9,DE=10,DP=11,KT=12,GAIN=13,VEL=14,ATK=15,SEG=16,YL=20,KLPF=32)
+OFF=dict(U=0,EH=1,EL=2,EP=3,PC=4,PS=5,DC=6,TF=7,INC=8,BEND=9,DE=10,DP=11,KT=12,GAIN=13,VEL=14,ATK=15,SEG=16,LCG8=18,YL=20,KLPF=32)
+KVJ=0.04  # 0.1.6: FIXD OFF scales each hit's trigger transient by 1 + KVJ*white
 OFF.update({k:v for k,v in dsp909.OFF.items() if v>=37})
 def interp(i, vals):
     x=i/127*5; j=min(4,int(x)); return vals[j]+(vals[j+1]-vals[j])*(x-j)
@@ -51,6 +52,7 @@ def source(lay,shared,*,output_trim=True,shared_desk=False):
     con=dict(PK=2*math.sin(math.pi*129.10747/RATE),PD=-math.expm1(-1/(RATE*.00203264)),DD=-math.expm1(-1/(RATE*.00301295)),PC0=3.27303983/4,PS0=-1.57554231/4,DC0=-1.09270470/4,U0=(-1.3892912-math.pi/2)/math.pi,
              S1=math.pi/4,S3=-(math.pi/2)**3/12,S5=(math.pi/2)**5/240,S7=-(math.pi/2)**7/10080,S9=(math.pi/2)**9/725760)
     subs.update({k:f'${dsp909.q24(v):06x}' for k,v in con.items()})
+    subs.update(LCGK=f'${dsp909.LCG_K & 0xffffff:06x}',LCGC=f'${dsp909.LCG_C & 0xffffff:06x}',SEED=f'${dsp909.SEED & 0xffffff:06x}',KVJ=f'${dsp909.q24(KVJ):06x}')
     return re.sub(r'@([A-Z0-9_]+)@',lambda m:subs[m[1]],text)
 
 class Voice(dsp909.Voice):
@@ -62,11 +64,12 @@ class Voice(dsp909.Voice):
         self.q=q
         self.u=self.e=self.ep=self.pc=self.ps=self.dc=self.tf=0.
         self.count=0x7fffff
+        self.lcg8=dsp909.SEED
     def block(self,k,trig=None,frames=16):
         t=self.bt; f=dsp909.fl24; q=self.q
         inc=t['B_INC'][k[0]]; de=t['B_DE'][k[1]]; dp=t['B_DP'][k[1]]
         bend=f(2*t['B_BEND'][k[1]]*k[4]/128)
-        gain=t['B_GAIN'][k[1]];kt=t['B_TONE'][k[2]];vel=t['B_VEL'][k[7]];atk=t['B_ATK'][k[3]]
+        gain=t['B_GAIN'][k[1]];kt=t['B_TONE'][k[2]];vel=t['B_VEL'][k[8]];atk=t['B_ATK'][k[3]]
         pk=q(2*math.sin(math.pi*129.10747/RATE));pd=q(-math.expm1(-1/(RATE*.00203264)));dd=q(-math.expm1(-1/(RATE*.00301295)))
         cs=[q(math.pi/4),q(-(math.pi/2)**3/12),q((math.pi/2)**5/240),q(-(math.pi/2)**7/10080),q((math.pi/2)**9/725760)]
         self.desk_knobs(k);out=[]
@@ -74,6 +77,11 @@ class Voice(dsp909.Voice):
             if i==trig:
                 self.count=0;self.e=1.;self.ep=q(1);self.u=q((-1.3892912-math.pi/2)/math.pi)
                 self.pc=q(3.27303983/4);self.ps=q(-1.57554231/4);self.dc=q(-1.09270470/4)
+                if not k[7]:  # FIXD OFF: one LCG step per hit scales the trigger transient
+                    self.lcg8=(self.lcg8*dsp909.LCG_M+dsp909.LCG_C)&0xffffff
+                    white=(self.lcg8-(1<<24) if self.lcg8&0x800000 else self.lcg8)/8388608
+                    d=f(q(KVJ)*white)
+                    self.pc,self.ps,self.dc=(f(v+v*d) for v in (self.pc,self.ps,self.dc))
             step=f(inc+bend*self.ep);self.ep=f(self.ep-dp*self.ep)
             self.u=(self.u+step+1)%2-1
             x=min(1-2**-23,1-2*abs(self.u));xx=f(x*x)
@@ -90,6 +98,6 @@ class Voice(dsp909.Voice):
             y=(f(2*(self.pc+self.dc)*atk) if self.count<4096 else 0)+body
             self.tf=f(self.tf+kt*(y-self.tf))
             y=f(max(-1,min(1-2**-23,4*self.tf))*vel)
-            self.yl+=self.t['T_LPF'][k[8]]*(y-self.yl)
+            self.yl+=self.t['T_LPF'][k[11]]*(y-self.yl)
             out.append(f(f(self.desk(self.yl))*q(OUTPUT_TRIM)))
         return out

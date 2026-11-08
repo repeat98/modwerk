@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "algorithm": "sha256 of canonical sorted JSON {sources,build}; UTF-8, compact separators",
+  "sha256": "9a96a39d964ef0d5168b21f0d21a2499d28613f2c6f0ab8561cd0e2464d40ec7",
+  "sources": {
+    "src/cm_ui.h": "f3b992a185536727033afd823a378812086d148b6b69a80e23b62bf6313dd062",
+    "src/digitakt.c": "ca7df91e94a1105e6ca7fba903dce1b517c476c66b6ab5978c2f12d8437ec8a2",
+    "src/karplus.c": "ba49107a461bd1bd1830535cf89359e3ce4f704010efcdd79367445c994a09f4",
+    "src/karplus.h": "efc7f22273877758338871c123910513a0025edc80ac3c7f5a3141db9ff6f70f",
+    "src/ks_icons.inc": "ae1bd659112dde4489c0e9f8bd33d5fba370098cbf94427866d2a9b7362b84bf",
+    "src/ks_loop.inc": "46d63a7e0a91aaf043174c58ae26300db320fbc7ca5ec74e886f5893140048b3",
+    "src/ks_tables.inc": "4ae85753416038d7cd2f3255a50c29134004142744072032ce6a274253792633",
+    "src/ui.c": "2612f53519a80ca4ce4aba97e00b5ac6aff51c07f6d3dda6f6bc2b623d40fdb0"
+  },
+  "build": {
+    "schemaVersion": 1,
+    "sources": [
+      "src/digitakt.c",
+      "src/karplus.c",
+      "src/ui.c"
+    ],
+    "defsym": {},
+    "cflags": [],
+    "weak": [],
+    "subscribe": [
+      {
+        "event": "ev_render_voices",
+        "fn": "digistring_render",
+        "order": 20
+      }
+    ],
+    "contribute": [
+      {
+        "to": "core_machines",
+        "order": 80,
+        "data": "00000000",
+        "relocs": [
+          [
+            0,
+            "abs32",
+            "sym:digistring_machine",
+            0
+          ]
+        ]
+      }
+    ],
+    "collections": {},
+    "copied": [],
+    "regions": [],
+    "claims": [
+      "machine:8"
+    ],
+    "requires": [
+      "machine-pages"
+    ],
+    "derive": null,
+    "releases": {
+      "1.53": {
+        "defsym": {},
+        "cflags": [],
+        "sites": []
+      },
+      "1.54": {
+        "defsym": {},
+        "cflags": [
+          "-DDIGISTRING_OS154"
+        ],
+        "sites": []
+      }
+    }
+  }
+}

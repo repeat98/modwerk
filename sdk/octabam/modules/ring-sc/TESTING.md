@@ -1,4 +1,4 @@
-# Ringmod SC testing
+# Sidechain Ringmod testing
 
 ## 0.2.0-experimental: RING's SLEW, S&H and RECT (21 October 2026)
 

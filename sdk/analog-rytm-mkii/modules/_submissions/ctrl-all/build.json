@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/ctrl-all.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:TRK + knob on sound and TRIG pages"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x400378c2",
+          "len": 6,
+          "stockSha256": "9eddd7afd21e58a5d7861e1750db11875692e71363091d68100ac64517b6af69",
+          "op": "jmp",
+          "target": "ctrl_all_gate"
+        }
+      ]
+    }
+  }
+}

@@ -6,6 +6,7 @@ import { createFrontendTools, createProtocol, validateApiPath, formatMcpLog } fr
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import { fileURLToPath } from 'node:url'
+import { DSP_LOADER } from '../src/engine/protocol.ts'
 
 const persistence = vi.hoisted(() => ({ fail: false }))
 vi.mock('node:fs/promises', async importOriginal => {
@@ -67,6 +68,8 @@ describe('frontend MCP protocol and isolated site workflows', () => {
     expect(catalogue.machines.some(item => item.id === 'octatrack')).toBe(true)
     expect((await service.call('site_module', { id: 'everb' })).controls.length).toBeGreaterThan(0)
     expect((await service.call('site_selection', { moduleIds: ['vector', 'analog-bassdrum'] })).conflicts.length).toBeGreaterThan(0)
+    // Like the site, Keep stock FX2 only counts when the DSP loader is on.
+    expect((await service.call('site_selection', { moduleIds: ['analog-bassdrum'], keepStockFx2: true })).conflicts.some(conflict => conflict.id === 'stock-fx2-space')).toBe(DSP_LOADER)
     const usb = catalogue.modules.filter(module => module.usb).map(module => module.id)
     expect(usb.length).toBeGreaterThanOrEqual(4)
     expect(usb).toContain('usb-audio-out-tracks-main-cue')
@@ -90,6 +93,17 @@ describe('frontend MCP protocol and isolated site workflows', () => {
       expect((await service.call('site_selection', { moduleIds: [module.id] })).card).toMatch('over USB')
     // Without the beta interface there is no USB sync, so the public catalogue offers no USB-only module.
     expect((await service.call('site_catalogue', { machine: 'octatrack' })).modules.filter(module => module.card === false)).toEqual([])
+  })
+  it('offers the agent board, refuses claims without --allow-api-writes and never reaches the live board in tests', async () => {
+    expect((await service.call('site_features')).tools).toEqual(expect.arrayContaining(['board_claims', 'board_claim', 'board_release', 'board_messages', 'board_inbox', 'board_activity', 'board_post', 'board_reply', 'board_close']))
+    await expect(service.call('board_claim', { kind: 'migration', key: '0085' })).rejects.toThrow('--allow-api-writes')
+    await expect(service.call('board_release', { id: '00000000-0000-0000-0000-000000000000' })).rejects.toThrow('--allow-api-writes')
+    await expect(service.call('board_post', { kind: 'question', topic: 'machine', key: 'octatrack', text: 'Anyone on FX2?' })).rejects.toThrow('--allow-api-writes')
+    await expect(service.call('board_reply', { id: '00000000-0000-0000-0000-000000000000', text: 'Yes' })).rejects.toThrow('--allow-api-writes')
+    await expect(service.call('board_close', { id: '00000000-0000-0000-0000-000000000000' })).rejects.toThrow('--allow-api-writes')
+    await expect(service.call('board_post', { kind: 'note', topic: 'machine', key: 'octatrack', text: 'x' })).rejects.toThrow()
+    await expect(service.call('board_claims', { kind: 'module' })).rejects.toThrow('turned off')
+    await expect(service.call('board_messages', { machine: 'octatrack' })).rejects.toThrow('turned off')
   })
   it('round trips sets through frontend validation without including private firmware', async () => {
     const created = await service.call('set_save', { name: 'MCP test', moduleIds: ['miniverb'] })

@@ -31,6 +31,7 @@ async function fixture(){
  db.exec(readFileSync(new URL('../../migrations/0008_private_usage.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0009_module_downloads.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0042_usage_breakdowns.sql',import.meta.url),'utf8'))
+ db.exec(readFileSync(new URL('../../migrations/0083_usage_machine_coverage.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0051_support_and_hourly_usage.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0052_module_first_download.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0011_forum_accounts.sql',import.meta.url),'utf8'))
@@ -61,6 +62,7 @@ async function fixture(){
  db.exec(readFileSync(new URL('../../migrations/0068_report_triage.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0021_social_onboarding.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0063_github_actions.sql',import.meta.url),'utf8'))
+ db.exec(readFileSync(new URL('../../migrations/0087_shared_read_cache.sql',import.meta.url),'utf8'))
  const env:Env={DB:adapter(db),APP_URL:'https://octamod.test',ADMIN_KEY_SHA256:await digest(adminKey)}
  const objects=new Map<string,ArrayBuffer>()
  env.MEDIA={async put(key,bytes){objects.set(key,bytes)},async get(key){const bytes=objects.get(key);return bytes?{body:new ReadableStream({start(controller){controller.enqueue(new Uint8Array(bytes));controller.close()}})}:null},async delete(key){objects.delete(key)}}
@@ -610,7 +612,7 @@ describe('public module popularity',()=>{
    const detail=await (await call('/modules/'+module.id)).json()
    expect(detail).toMatchObject({ratings:{average:value,count:1},likes:1,downloads:2})
   }
-  const updated=await (await call('/community/summary')).json()
+  const updated=await (await call('/community/summary?fresh=1')).json()
   const insights=await (await call('/admin/insights','GET',undefined,'',undefined,admin)).json()
   for(const [index,module] of digi.entries()){
    expect(updated.find((item:{module_id:string})=>item.module_id===module.id)).toMatchObject({average:index%5+1,count:1,likes:1,downloads:2})
@@ -639,7 +641,13 @@ describe('public module popularity',()=>{
   expect(db.prepare('SELECT COUNT(*) AS n FROM usage_daily').get()).toEqual({n:0})
   expect(db.prepare("SELECT COUNT(*) AS n FROM users WHERE id<>'modwerk'").get()).toEqual({n:3})
   expect((await call('/modules/miniverb/like','POST',{liked:false},'octamod_session='+tokens.author)).status).toBe(200)
-  expect((await (await call('/community/summary')).json()).find((item:{module_id:string})=>item.module_id==='miniverb').likes).toBe(0)
+  expect((await (await call('/community/summary')).json()).find((item:{module_id:string})=>item.module_id==='miniverb').likes).toBe(1) // the shared answer holds for a minute
+  expect((await (await call('/community/summary?fresh=1')).json()).find((item:{module_id:string})=>item.module_id==='miniverb').likes).toBe(0) // the member's own change asks for a fresh one
+  expect((await (await call('/community/summary')).json()).find((item:{module_id:string})=>item.module_id==='miniverb').likes).toBe(0) // which everyone then gets
+  db.prepare("UPDATE shared_read_cache SET computed_at=computed_at-60000").run()
+  db.prepare("INSERT INTO likes(module_id,user_id) VALUES('miniverb','author')").run()
+  expect((await (await call('/community/summary')).json()).find((item:{module_id:string})=>item.module_id==='miniverb').likes).toBe(1) // a minute later anyone's read counts again
+  expect(String(db.prepare('SELECT body FROM shared_read_cache').get()!.body)).not.toMatch(/visitor|event_hash|eventId|configuration|email|author/i) // counts only
  })
  it('adds open and latest issue reports and the first download for the stability grade, but nothing from the reports',async()=>{
   const {call,db}=await fixture()
@@ -722,28 +730,51 @@ it('retains the first approved addition date when a community module is updated'
  expect((await (await call('/catalog')).json())[0]).toMatchObject({ title: 'Version two', reviewed_at: '2026-10-02 12:00:00', added_at: '2026-10-01T12:00:00Z', updated_at: '2026-10-02T12:00:00Z' })
 })
 
+it('protects the first-reply queue with the administrator boundary and validates its filters',async()=>{
+ const {call,admin}=await fixture()
+ expect((await call('/admin/unanswered-threads')).status).toBe(403)
+ expect((await call('/admin/unanswered-threads','GET',undefined,'',undefined,admin)).status).toBe(200)
+ const empty=await(await call('/admin/unanswered-threads','GET',undefined,'',undefined,admin)).json()
+ expect(empty).toMatchObject({total:0,page:1,pageSize:10,category:'all',order:'oldest',threads:[]})
+ for(const query of ['category=unknown','order=title','page=0'])expect((await call('/admin/unanswered-threads?'+query,'GET',undefined,'',undefined,admin)).status).toBe(400)
+})
+
 describe('usage breakdowns: failed builds, machines and weekly module trends',()=>{
+ it.each(['digitakt-ii','analog-rytm-mkii'])('attributes consented and identifier-free %s events with retry safety',async device=>{
+  const {call,admin}=await fixture()
+  for(const event of ['build_succeeded','build_failed','firmware_download_requested']){
+   const body={...usageEvent(event),device}
+   expect((await call('/usage/events','POST',body)).status).toBe(200)
+   expect((await call('/usage/events','POST',body)).status).toBe(200)
+   expect((await call('/usage/count','POST',{event,device})).status).toBe(200)
+  }
+  const result=await (await call('/admin/statistics?days=7','GET',undefined,'',undefined,admin)).json()
+  expect(result.devices.find((row:{device:string})=>row.device===device)).toEqual({device,builds:2,builds_failed:2,downloads:2})
+  expect(result.rows[0]).toMatchObject({builds:2,builds_failed:2,downloads:2})
+  expect(result.machineCoverageExpanded).toMatch(/^[0-9]{4}-[0-9]{2}-[0-9]{2}T/)
+ })
+
  it('counts consented builds, failures and downloads per machine once per event and reports them to administrators',async()=>{
   const {call,db,admin}=await fixture(),failed={...usageEvent('build_failed'),device:'digitakt'}
   expect((await call('/usage/events','POST',failed)).status).toBe(200)
   expect((await call('/usage/events','POST',failed)).status).toBe(200) // A repeated event ID adds nothing, here either.
   for(const [event,device] of [['build_succeeded','digitakt'],['build_succeeded','octatrack'],['firmware_download_requested','digitone']])expect((await call('/usage/events','POST',{...usageEvent(event),device})).status).toBe(200)
   expect((await call('/usage/events','POST',usageEvent('build_succeeded'))).status).toBe(200) // Older pages send no machine.
-  // A machine only on builds and downloads, and only one of the three building machines.
+  // A machine only on builds and downloads, from the closed supported list.
   for(const body of [{...usageEvent(),device:'octatrack'},{...usageEvent('build_succeeded'),device:'syntakt'},{...usageEvent('build_succeeded'),device:1}])expect((await call('/usage/events','POST',body)).status).toBe(400)
   const today=new Date().toISOString().slice(0,10)
   expect(db.prepare('SELECT builds,builds_failed,downloads FROM usage_daily WHERE day=?').get(today)).toEqual({builds:3,builds_failed:1,downloads:1})
   const result=await (await call('/admin/statistics?days=7','GET',undefined,'',undefined,admin)).json()
   expect(result.rows[0]).toMatchObject({builds:3,builds_failed:1,downloads:1})
   expect(result.breakdownsStarted).toMatch(/^\d{4}-\d{2}-\d{2}T/)
-  expect(result.devices).toEqual([{device:'octatrack',builds:1,builds_failed:0,downloads:0},{device:'digitakt',builds:1,builds_failed:1,downloads:0},{device:'digitone',builds:0,builds_failed:0,downloads:1}])
+  expect(result.devices).toEqual([{device:'octatrack',builds:1,builds_failed:0,downloads:0},{device:'digitakt',builds:1,builds_failed:1,downloads:0},{device:'digitone',builds:0,builds_failed:0,downloads:1},{device:'digitakt-ii',builds:0,builds_failed:0,downloads:0},{device:'analog-rytm-mkii',builds:0,builds_failed:0,downloads:0}])
   expect(JSON.stringify(db.prepare('SELECT * FROM usage_device_daily').all())).not.toContain(failed.visitor)
  })
  it('accepts a machine on identifier-free counts and keeps daily module counts for weekly trends',async()=>{
   const {env,db,call,admin}=await fixture()
   const count=(body:unknown)=>handleCommunity(new Request('https://octamod.test/api/usage/count',{method:'POST',headers:{Origin:env.APP_URL!,'Content-Type':'application/json','CF-Connecting-IP':'192.0.2.7','User-Agent':'Synthetic Browser/1.0'},body:JSON.stringify(body)}),env)
   for(const body of [{event:'build_failed',device:'octatrack'},{event:'build_succeeded',device:'digitone'},{event:'module_download',moduleId:'miniverb'},{event:'module_download',moduleId:'miniverb'}])expect((await count(body)).status).toBe(200)
-  for(const body of [{event:'page_view',device:'octatrack'},{event:'module_download',moduleId:'miniverb',device:'octatrack'},{event:'build_failed',device:'digitakt-ii'}])expect((await count(body)).status).toBe(400)
+  for(const body of [{event:'page_view',device:'octatrack'},{event:'module_download',moduleId:'miniverb',device:'octatrack'},{event:'build_failed',device:'syntakt'}])expect((await count(body)).status).toBe(400)
   const today=new Date().toISOString().slice(0,10)
   expect(db.prepare('SELECT device,builds,builds_failed FROM usage_device_daily ORDER BY device').all()).toEqual([{device:'digitone',builds:1,builds_failed:0},{device:'octatrack',builds:0,builds_failed:1}])
   expect(db.prepare('SELECT day,module_id,downloads FROM module_downloads_daily').all()).toEqual([{day:today,module_id:'miniverb',downloads:2}])

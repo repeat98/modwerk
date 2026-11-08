@@ -16,8 +16,8 @@ export function inspectAuthorUpdate(root, base, head, author) {
   const registry = parseAuthorRegistry(JSON.parse(text(base, '.github/module-authors.json')))
   const published = new Set(JSON.parse(text(base, 'sdk/catalog.json')).modules.map(row => 'octabam/' + row.id))
   // The generated Digitakt/Digitone/Analog Rytm list (not committed) holds every module folder on main.
-  for (const path of oldTree.keys()) { const folder = path.match(/^sdk\/(digitakt|digitone|analog-rytm-mkii)\/modules\/([^/_][^/]*)\/modwerk\.module\.json$/); if (folder) published.add(folder[1] + '/' + folder[2]) }
-  const modules = [...oldTree.keys()].filter(path => /^sdk\/(octabam|digitakt|digitone|analog-rytm-mkii)\/modules\/[^/]+\/(octamod|modwerk)\.module\.json$/.test(path)).map(path => {
+  for (const path of oldTree.keys()) { const folder = path.match(/^sdk\/(digitakt|digitone|analog-rytm-mkii|analog-four-mkii)\/modules\/([^/_][^/]*)\/modwerk\.module\.json$/); if (folder) published.add(folder[1] + '/' + folder[2]) }
+  const modules = [...oldTree.keys()].filter(path => /^sdk\/(octabam|digitakt|digitone|analog-rytm-mkii|analog-four-mkii)\/modules\/[^/]+\/(octamod|modwerk)\.module\.json$/.test(path)).map(path => {
     const parts = path.split('/'), document = JSON.parse(text(base, path))
     return { folder: parts.slice(0, -1).join('/'), document, published: published.has(parts[1] + '/' + document.id) }
   }).filter(module => module.published)
@@ -38,6 +38,15 @@ export function inspectAuthorUpdate(root, base, head, author) {
     vendor = { catalog, next, lock: JSON.parse(text(base, 'vendor/elekloader/elekloader.lock.json')), artifacts }
   }
   const authorization = authorizeAuthorUpdate(registry, author, modules, changes, vendor)
+  // An update that names a 32-bit address its published source never named (a new hook, stock routine,
+  // register or flash location) needs owner review. shortcut: a tripwire, not a sandbox; an address built
+  // at run time passes, so the follower hold and the owner notice stay the safety net.
+  const addresses = (ref, entries, folder) => new Set([...entries.keys()].filter(path => path.startsWith(folder + '/') && /\.(c|h|s|asm|inc|cpp|py)$/i.test(path))
+    .flatMap(path => (text(ref, path).match(/\b0x[0-9a-f]{8}\b/gi) ?? []).map(value => value.toLowerCase())))
+  for (const module of modules.filter(module => changes.some(change => change.path.startsWith(module.folder + '/')))) {
+    const known = addresses(base, oldTree, module.folder), added = [...addresses(head, newTree, module.folder)].filter(value => !known.has(value))
+    if (added.length) throw new Error('New addresses in ' + module.folder + ' (' + added.slice(0, 5).join(', ') + '): reaching firmware or hardware the published version did not touch needs owner review.')
+  }
   const scope = readChangeScope({ root, base, head })
   if (scope.elemod && authorization.elemod && !authorization.vendorPackages) throw new Error('A Digitakt/Digitone runtime update needs matching authored elekloader packages; source or version changes alone cannot replace the downloaded code.')
   return { ...authorization, elemodCompile: scope.elemod }

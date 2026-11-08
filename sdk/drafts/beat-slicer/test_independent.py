@@ -55,7 +55,7 @@ class IndependentTests(unittest.TestCase):
         for case in range(2000):
             rate = rng.randint(8000, 192000)
             bpm = rng.randint(720, 7200)
-            beats = rng.choice((1, 4, 16, 32, 64))
+            beats = rng.choice((1, 2, 4, 16, 32, 64))
             length = rng.randint(1, min(0xFFFFFFFF, rate * 150))
             start = rng.randint(0, 0xFFFFFFFF - length)
             end = start + length

@@ -11,12 +11,11 @@ import type { FirmwareModule } from '../src/catalog/modules.ts'
 import { DETAILS } from '../src/catalog/details.ts'
 import { MODULE_DOCUMENTS_BY_ID } from '../src/catalog/documents.ts'
 import { ModulePreview } from '../src/components/ModulePreview.tsx'
-import { DIGI_MODS, type DigiMod } from '../src/devices/digi-mods.ts'
+import { DIGI_MODS, digiModuleDocument, type DigiMod } from '../src/devices/digi-mods.ts'
 import { DEVICES_BY_ID } from '../src/devices/registry.ts'
 import { escapeHtml, pageMetadataHtml, pageContentHtml } from './page-html.ts'
 import { pageTitle } from '../src/site-metadata.ts'
 import { digiContent, octatrackContent } from './seo-content.ts'
-import { socialCard } from './social-cards.ts'
 
 /** Rasterize the same artwork and CSS used by the module cards, without browser or firmware input. */
 export async function moduleThumbnail(id: string, stylesheet: string): Promise<Buffer> {
@@ -47,6 +46,20 @@ export async function moduleThumbnail(id: string, stylesheet: string): Promise<B
     <circle cx="1140" cy="48" r="7" fill="${color}" opacity=".6"/>
     ${artwork.replace('<svg ', '<svg x="60" y="70" width="1080" height="490" ')}
     ${detail.controls.slice(0, 3).map((control, index) => `<text x="${[55, 600, 1145][index]}" y="595" text-anchor="${['start', 'middle', 'end'][index]}" fill="${color}" opacity=".75" font-family="monospace" font-size="22" letter-spacing="1">${escapeHtml(control)}</text>`).join('')}
+  </svg>`
+  return sharp(Buffer.from(svg)).jpeg({ quality: 90 }).toBuffer()
+}
+
+/** A Digitakt, Digitone or Analog Rytm module's saved thumbnail, the library card's cover art, fitted to a 1200 × 630 card. */
+export async function digiModuleThumbnail(mod: DigiMod): Promise<Buffer> {
+  const document = digiModuleDocument(mod), thumbnail = document.media.find(item => item.kind === 'thumbnail')
+  if (!thumbnail) throw new Error(`Missing module thumbnail artwork: ${mod.device}/${mod.id}`)
+  const source = readFileSync(new URL(`../public/module-media/${mod.device}-${mod.id}/${document.version}/${thumbnail.path}`, import.meta.url))
+  // The 5:3 artwork at full height; its own background fills the sides.
+  const fill = source.toString('utf8').match(/<rect\b[^>]*\bfill="(#[0-9a-fA-F]{3,6})"/)?.[1] ?? '#1c1c22'
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+    <rect width="1200" height="630" fill="${fill}"/>
+    <image x="75" y="0" width="1050" height="630" href="data:image/svg+xml;base64,${source.toString('base64')}"/>
   </svg>`
   return sharp(Buffer.from(svg)).jpeg({ quality: 90 }).toBuffer()
 }
@@ -115,6 +128,8 @@ export function modulePages(): Plugin {
         const hash = createHash('sha256').update(thumbnail).digest('hex').slice(0, 12)
         const imagePath = `module-thumbnails/${module.id}-${hash}.jpg`
         this.emitFile({ type: 'asset', fileName: imagePath, source: thumbnail })
+        // The weekly news digest links each module's card by its community ID (server/news-mail.ts).
+        this.emitFile({ type: 'asset', fileName: `module-thumbnails/${module.id}.jpg`, source: thumbnail })
         const page = modulePageHtml(html, module, imagePath, config.base)
         this.emitFile({ type: 'asset', fileName: modulePath(module.id) + 'index.html', source: page })
         // Keep existing links loadable; startRouting replaces them with the public canonical URL.
@@ -123,9 +138,10 @@ export function modulePages(): Plugin {
         }
       }
       for (const mod of DIGI_MODS) {
-        const card = await socialCard(config.root, { kicker: 'Elektron ' + DEVICES_BY_ID[mod.device].name, title: mod.title, left: 'modwerk.app', right: mod.category })
+        const card = await digiModuleThumbnail(mod)
         const imagePath = `module-thumbnails/${mod.device}-${mod.id}-${createHash('sha256').update(card).digest('hex').slice(0, 12)}.jpg`
         this.emitFile({ type: 'asset', fileName: imagePath, source: card })
+        this.emitFile({ type: 'asset', fileName: `module-thumbnails/${mod.device}-${mod.id}.jpg`, source: card })
         this.emitFile({ type: 'asset', fileName: `${mod.device}/module/${mod.id}/index.html`, source: digiModulePageHtml(html, mod, imagePath, config.base) })
       }
     },

@@ -1,0 +1,819 @@
+{
+  "scope": "Private fixed-lifetime previews run by the stock engine scheduler with recorder/preparation/ordinary-job exclusion; no driver service calls or hardware",
+  "sourceSha256": {
+    "boot_recorder_engine.py": "94a897a102e123999e9f1b52b723c7123db6c7f5188fa2040ed5c2dbdf0c9940",
+    "boot_engine_native.py": "c67ee4444518182aa773f8e4f4d3ecf13157bc60ec8abe304d14c1bd5ff1b0ca",
+    "boot_recorder.py": "d59f44c7ab115df05450b85ec22a3919e1e59f278bd377bd38d81cee9f878423",
+    "boot_source_native.py": "173e58b631503b237287cec6a79dc31a69d1e72a76ad7b902d9d4d2b13cf3607",
+    "boot_worker_native.py": "ee502efcc357f08f5dcd5dd38da41e401c49ab788502e35697152546e0573f95",
+    "boot_writer.py": "cd6eef19a79dd15ba376c8d53d6656cf1c765c11561b496acf664de7a6a10c7a",
+    "boot_formats.py": "914577a9a60fa98921d52d750b8fcc21357ab0fdf34d409e88f65084672966be",
+    "boot_observe.py": "63a617ac48532b69707c86b29d9fe92e0fc8db789b73eb55d85511966dd08499",
+    "boot_slices.py": "9a73c01d50cd6c28ed2cbecd0185a14ada1a5c30abe2eaccf3c75ec4516ee2d5",
+    "boot_static.py": "0c8765d150fa6a3a0fa075449f6d38423b3b85a8b20eea02bfc2ffebd289c1b9",
+    "test_planner.py": "d39a96c4ac4e7cc35c65323249dbe076b4bf73ae88c2a2a5b27963b97253bf16",
+    "inspect_stock.py": "3df8e0019c7c1b095132a16da21a40c739b233548b9030a6dd8befadceb59190",
+    "recorder_native.py": "1c4449662dead7c27e538c3c5de690e5cd050a33638d25c4111284814161942f",
+    "recorder_boundary.c": "0af5829b4b3dc6ba5b57ff34b211040b6a9e2699daaceb9a16a7ab489c2192d8",
+    "recorder_boundary.h": "a5674fc98d53342468fe74e49ec56f6d5b1350136730f45ef2b3fe0a0879a5cf",
+    "preview_guard.c": "da1299674cf2ae967c58231ee9c16891afa94e27254407b5d09df6b73cc4343e",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "test_recorder_boundary.c": "ff6bea4924691da97f4479b6fa0a831f1983eeacf7ae5219670aee592bc950a3",
+    "test_recorder_stock.c": "020892419daecfde2b29529ef1189d7097fd8b6c14ca856e831947933be2e781",
+    "stock_probe/recorder_native_probe.cpp": "e1173bb0be602c68412adbb9bfe38aeddbd78ef361709355bf832b6ae2c9c326",
+    "stock_probe/recorder_probe.cpp": "94b75d22f9f475ee429c8950faf36453a202ef2616377881a38e30682e435d2b",
+    "stock_probe/CMakeLists.txt": "d64d2f9c0ab5b6caf63e7785a09934eb2cd6a96c1f2e1ddb47048b34acf84e86",
+    "recorder_engine_native.py": "e2338716d6055e53288f783c287e3206fbf0737c750d4d37184aea4ef225c53c",
+    "recorder-engine-runtime-sources.json": "88722bb4da82b7bf39177d43758e603777aaf9d57420c6a12dfb68c79c13c1ed",
+    "engine_boundary.c": "7989e9811c74e1d9ddd847f6b10a291a7757999153d75960d4996a2325629e9a",
+    "engine_boundary.h": "22d98964c49edaead23f27be9007efe4ed97d9a7d0ffac727641756e37a76b01",
+    "test_recorder_engine.c": "00c7570864402a625a275c5cd20545eb03e57c6abb01e658c9af6999d7a36d74",
+    "test_recorder_prepare.c": "6de85478c8f2534fe38db3618602182c5c581433c24b929875653c8a6e34068c",
+    "planner.c": "01c9c25efa363679a591969931dd376a3b694a949dd8b9f89eda4bf77a88cee4",
+    "planner.h": "1a10ce9e6b34dfd35eb138690e2134550621c3bf91b2178fb50f95b9def6b7ae",
+    "planner_job.c": "767d82cc375677a115e9457af35e26fddd9de66a0dc80aa2af0fe3b5adaf0581",
+    "planner_job.h": "c4dd3faa8b3320194b54ab4d7bec6541d9e936f544b0e6236efa4fa5518d6547",
+    "pcm_reader.c": "8762e389a39b7407a7d987dc6e3e36d7d75aa6c408b1d3232d8672a380226088",
+    "pcm_reader.h": "462f495a86f32730b79a56177f99929f685d82729e4646e7b391df475d929821",
+    "preview_session.c": "863a66aee00818e6e71c09896d2c222176d7bf4726a3886b2991384d9f43b664",
+    "preview_session.h": "4518b3d75a92081c98c619157fcf2c6bbcb43b82621d8a41dd953bcfbd48c909",
+    "marker_edit.h": "cd8c16a7771bf5a6d251b20e3a02fd0887d68cf4f8e5900e0c6a7fdecc0d4f05",
+    "flex_copy.c": "b069d6b3ac5d8922281811a8eaa5c93d8ab33267ec89fb9f1c99305f35d80b2c",
+    "flex_copy.h": "1bb469187ef75be2d25b671622f79ec2a5e199d877a418e8d9885c70781ee513",
+    "flex_metadata.c": "7dd96a7d94ceb81bbd20fd49995d1c5e64c1077f97ad15b623a14c32607f732b",
+    "flex_metadata.h": "8a5e2da2cb447380883209942ee2654956cd50aae4e68abfe7f2d270d97eab6f",
+    "flex_source.c": "83ca4c3330ba147ea1d9f4248095ef0350210e6451eb5b0f65572ac31432c208",
+    "flex_source.h": "8dce26364e7f270eafbd7f40f12021aaa0b966edf577305477efd7aaa9a19021",
+    "test_flex_source.py": "a8fd662fcbbd0d20770a01e8eab99163ee070322e55152114592fd10d91de4fe",
+    "test_source_boot.c": "1777fae6f71f57cb9a8609c030af4f602c9b3276a393f6dbdcd87c3952fafa38",
+    "test_recorder_source.c": "81a7567462b87eb256bf1973cd387623d2ad427b382ff8f9c423ecc6c59d03b5",
+    "recorder_source_native.py": "84df3856c1d9d4aade45f912faa5a0a24a0771553ccbfee1910ef58889315d46",
+    "flex_lookup.S": "baeb9375129d44fe2db0bcb8d845ced29cd755ac126c3ab2afd696aebbca2487",
+    "preview_async.c": "d7250549fa634ffe287c37d2410025146a6bb168f4dc7ec146f7e288f35e8917",
+    "preview_async.h": "ea0189432e63b6ddaf3672ab531dad18f93adac15bdae21e648e7fd5ec040d61",
+    "test_recorder_service.c": "ae15004c9b0dcf5fea7e74721038703d1679b694a8846703710cd5d44eaac223",
+    "test_recorder_engine_service.c": "41d8bf833c1cf252c63b57d89a827979899fe8662fd3123f363e040761554fdc",
+    "recorder_service_native.py": "64fd33f8be88be9832067a8b0f7f31f84cf7e165e998d092938de205afb0e9d3"
+  },
+  "mainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "reservedMainSha256": "4587538f77fd6b93c844218f1bb70e257979d0300b7f5a316c0b3d79b6b69a72",
+  "nativeReceiptSha256": "e46937337f0b177e5a1c09720ef1dba2aeaf4b5fdadedca493afa123454a916b",
+  "nativeBinarySha256": "832c6842d577b4e8c7ffe5a4dd16c5ef25ace7884fcd08dccc70bb597e192b14",
+  "emulatorSha256": "6be15470567961d8113d16a547c29f294c8f786bff8daaedd66ee5e1386f0eeb",
+  "sdkRevision": "c8fcb8054b10366b3a7881ec957a566460aab3d4",
+  "sdkDependencySha256": {
+    "sdk/runtime/m68k_codegen.py": "861da4bf86f662362055f1082147b2c14824075724f7c7a2b77acca3e0c973c0",
+    "sdk/runtime/logging/stock-guards.json": "5df445855cbae19c4582fb724855230e47be70c4736d5027786247582e60f9b4"
+  },
+  "codegenGuardSha256": "861da4bf86f662362055f1082147b2c14824075724f7c7a2b77acca3e0c973c0",
+  "arenaToolSha256": "23c89015c010ce9d4e6e7957f9325b7da78b7ba75144de10d56cb22149f21e61",
+  "reservedPages": 8,
+  "physicalUsablePages": 14594,
+  "cardSha256": "be0b309d9eabdef1a385fde3b05837a7232db3f17bcacf0b9e0a0f0761998e82",
+  "wavSha256": "47d530968847cf7970970b0dc7cd33be7cdc001bfeda27ac263b6732dc9c90b1",
+  "boundedCheckpointObservations": {
+    "retries": 3,
+    "emptyScopeUnbalancedDiagnostics": 0,
+    "maxRetries": 1
+  },
+  "preparationBoundaryEnabled": true,
+  "closedBootstrap": {
+    "revision": 7,
+    "serial": 3,
+    "entries": 135136,
+    "exits": 135136,
+    "engineIdleSeen": 1,
+    "recorderScopesEntered": 135136,
+    "recorderCallerMaskLevels": [
+      5
+    ],
+    "preparationScopesEntered": 0,
+    "preparationCallerMaskLevels": []
+  },
+  "preparationSettingsWordsChanged": [
+    271
+  ],
+  "preparedSource": {
+    "frames": 44100,
+    "inputBits": 16,
+    "outputBits": 16,
+    "channels": 2,
+    "formatId": 3,
+    "ownedPages": 29,
+    "pcmMatchesWidthConvertedOriginal": true,
+    "conversion": "none",
+    "pcmSha256": "bf86abadc9f0eb4cc8c01dffbf7d7dafb61f43eafd278ce398c6e6ca7af84311",
+    "controlsSha256": "78ec726909a7ce81c762a8197422ab9d1052fa6134a026bd67e5d9dff4102ce4",
+    "settingsSha256": "c95077842a8700afaf0ec996464d2ca7d5359b729c14c82750f39c3870053987"
+  },
+  "initialNative": {
+    "revision": 7,
+    "serial": 3,
+    "entries": 135152,
+    "exits": 135152,
+    "engineIdleSeen": 1,
+    "recorderScopesEntered": 135152,
+    "recorderCallerMaskLevels": [
+      5
+    ],
+    "preparationScopesEntered": 0,
+    "preparationCallerMaskLevels": []
+  },
+  "results": [
+    {
+      "track": 1,
+      "reservedRecorderPages": 460,
+      "firstRecorderPage": 14594,
+      "initial": {
+        "bank": 0,
+        "states": [
+          0,
+          0
+        ],
+        "positions": [
+          0,
+          0
+        ],
+        "published": 0,
+        "queueCounts": [
+          0,
+          0
+        ]
+      },
+      "started": {
+        "bank": 1,
+        "states": [
+          0,
+          2
+        ],
+        "positions": [
+          0,
+          16688
+        ],
+        "published": 16688,
+        "queueCounts": [
+          0,
+          0
+        ]
+      },
+      "advanced": {
+        "bank": 1,
+        "states": [
+          0,
+          2
+        ],
+        "positions": [
+          0,
+          29984
+        ],
+        "published": 29984,
+        "queueCounts": [
+          0,
+          0
+        ]
+      },
+      "retriggered": {
+        "bank": 0,
+        "states": [
+          2,
+          2
+        ],
+        "positions": [
+          16704,
+          32720
+        ],
+        "published": 16704,
+        "queueCounts": [
+          0,
+          0
+        ]
+      },
+      "stopped": {
+        "bank": 0,
+        "states": [
+          0,
+          2
+        ],
+        "positions": [
+          0,
+          32720
+        ],
+        "published": 29952,
+        "queueCounts": [
+          0,
+          0
+        ]
+      },
+      "idle": {
+        "bank": 0,
+        "states": [
+          0,
+          2
+        ],
+        "positions": [
+          0,
+          32720
+        ],
+        "published": 29952,
+        "queueCounts": [
+          0,
+          0
+        ]
+      },
+      "callerCounts": {
+        "0x4000d342": 5799,
+        "0x4000d36e": 5799
+      },
+      "preparationCalls": [
+        {
+          "caller": "0x4000d35c",
+          "arguments": [
+            0,
+            36880
+          ],
+          "adjacentCallerWords": [
+            7,
+            3
+          ]
+        },
+        {
+          "caller": "0x4000d35c",
+          "arguments": [
+            0,
+            4112
+          ],
+          "adjacentCallerWords": [
+            5,
+            5
+          ]
+        }
+      ],
+      "stopCalls": [
+        {
+          "caller": "0x40007942",
+          "arguments": [
+            0,
+            29952,
+            0,
+            0
+          ]
+        }
+      ],
+      "coverage": {
+        "pcmPrefixStores": 32,
+        "mapTailStores": 3,
+        "recorderScopes": 7847,
+        "engineScopes": 6,
+        "guardedRecorderStateStores": 54907,
+        "unguardedRecorderStateStores": [],
+        "stateTransitions": [
+          {
+            "bank": 1,
+            "value": 1,
+            "bytes": 4,
+            "pc": "0x40006274",
+            "guarded": true,
+            "recorderGuarded": true,
+            "engineGuarded": false
+          },
+          {
+            "bank": 1,
+            "value": 2,
+            "bytes": 1,
+            "pc": "0x400069e6",
+            "guarded": true,
+            "recorderGuarded": true,
+            "engineGuarded": true
+          },
+          {
+            "bank": 0,
+            "value": 1,
+            "bytes": 4,
+            "pc": "0x40006274",
+            "guarded": true,
+            "recorderGuarded": true,
+            "engineGuarded": false
+          },
+          {
+            "bank": 0,
+            "value": 2,
+            "bytes": 1,
+            "pc": "0x400069e6",
+            "guarded": true,
+            "recorderGuarded": true,
+            "engineGuarded": true
+          },
+          {
+            "bank": 0,
+            "value": 0,
+            "bytes": 1,
+            "pc": "0x40005e9e",
+            "guarded": true,
+            "recorderGuarded": true,
+            "engineGuarded": false
+          }
+        ]
+      },
+      "idleCoverage": {
+        "pcmPrefixStores": 0,
+        "mapTailStores": 0,
+        "recorderScopes": 0,
+        "engineScopes": 0,
+        "guardedRecorderStateStores": 0,
+        "unguardedRecorderStateStores": [],
+        "stateTransitions": []
+      },
+      "nativeState": {
+        "revision": 7860,
+        "serial": 7859,
+        "entries": 250560,
+        "exits": 250560,
+        "engineIdleSeen": 1,
+        "recorderScopesEntered": 250560,
+        "recorderCallerMaskLevels": [
+          5
+        ],
+        "preparationScopesEntered": 2,
+        "preparationCallerMaskLevels": [
+          5
+        ]
+      },
+      "unrelatedFlexPreserved": true,
+      "nativeCodeAndCanariesIntact": true
+    },
+    {
+      "track": 8,
+      "reservedRecorderPages": 460,
+      "firstRecorderPage": 11374,
+      "initial": {
+        "bank": 0,
+        "states": [
+          0,
+          0
+        ],
+        "positions": [
+          0,
+          0
+        ],
+        "published": 0,
+        "queueCounts": [
+          0,
+          0
+        ]
+      },
+      "started": {
+        "bank": 1,
+        "states": [
+          0,
+          2
+        ],
+        "positions": [
+          0,
+          16688
+        ],
+        "published": 16688,
+        "queueCounts": [
+          0,
+          0
+        ]
+      },
+      "advanced": {
+        "bank": 1,
+        "states": [
+          0,
+          2
+        ],
+        "positions": [
+          0,
+          29936
+        ],
+        "published": 29936,
+        "queueCounts": [
+          0,
+          0
+        ]
+      },
+      "retriggered": {
+        "bank": 0,
+        "states": [
+          2,
+          2
+        ],
+        "positions": [
+          16688,
+          32672
+        ],
+        "published": 16688,
+        "queueCounts": [
+          0,
+          0
+        ]
+      },
+      "stopped": {
+        "bank": 0,
+        "states": [
+          0,
+          2
+        ],
+        "positions": [
+          0,
+          32672
+        ],
+        "published": 29952,
+        "queueCounts": [
+          0,
+          0
+        ]
+      },
+      "idle": {
+        "bank": 0,
+        "states": [
+          0,
+          2
+        ],
+        "positions": [
+          0,
+          32672
+        ],
+        "published": 29952,
+        "queueCounts": [
+          0,
+          0
+        ]
+      },
+      "callerCounts": {
+        "0x4000d342": 5795,
+        "0x4000d36e": 5795
+      },
+      "preparationCalls": [
+        {
+          "caller": "0x4000d35c",
+          "arguments": [
+            7,
+            36880
+          ],
+          "adjacentCallerWords": [
+            7860,
+            3
+          ]
+        },
+        {
+          "caller": "0x4000d35c",
+          "arguments": [
+            7,
+            4112
+          ],
+          "adjacentCallerWords": [
+            5,
+            5
+          ]
+        }
+      ],
+      "stopCalls": [
+        {
+          "caller": "0x40007942",
+          "arguments": [
+            7,
+            29952,
+            0,
+            0
+          ]
+        }
+      ],
+      "coverage": {
+        "pcmPrefixStores": 32,
+        "mapTailStores": 3,
+        "recorderScopes": 7841,
+        "engineScopes": 6,
+        "guardedRecorderStateStores": 54865,
+        "unguardedRecorderStateStores": [],
+        "stateTransitions": [
+          {
+            "bank": 1,
+            "value": 1,
+            "bytes": 4,
+            "pc": "0x40006274",
+            "guarded": true,
+            "recorderGuarded": true,
+            "engineGuarded": false
+          },
+          {
+            "bank": 1,
+            "value": 2,
+            "bytes": 1,
+            "pc": "0x400069e6",
+            "guarded": true,
+            "recorderGuarded": true,
+            "engineGuarded": true
+          },
+          {
+            "bank": 0,
+            "value": 1,
+            "bytes": 4,
+            "pc": "0x40006274",
+            "guarded": true,
+            "recorderGuarded": true,
+            "engineGuarded": false
+          },
+          {
+            "bank": 0,
+            "value": 2,
+            "bytes": 1,
+            "pc": "0x400069e6",
+            "guarded": true,
+            "recorderGuarded": true,
+            "engineGuarded": true
+          },
+          {
+            "bank": 0,
+            "value": 0,
+            "bytes": 1,
+            "pc": "0x40005e9e",
+            "guarded": true,
+            "recorderGuarded": true,
+            "engineGuarded": false
+          }
+        ]
+      },
+      "idleCoverage": {
+        "pcmPrefixStores": 0,
+        "mapTailStores": 0,
+        "recorderScopes": 0,
+        "engineScopes": 0,
+        "guardedRecorderStateStores": 0,
+        "unguardedRecorderStateStores": [],
+        "stateTransitions": []
+      },
+      "nativeState": {
+        "revision": 15707,
+        "serial": 15708,
+        "entries": 393088,
+        "exits": 393088,
+        "engineIdleSeen": 1,
+        "recorderScopesEntered": 393088,
+        "recorderCallerMaskLevels": [
+          5
+        ],
+        "preparationScopesEntered": 4,
+        "preparationCallerMaskLevels": [
+          5
+        ]
+      },
+      "unrelatedFlexPreserved": true,
+      "nativeCodeAndCanariesIntact": true
+    }
+  ],
+  "cardUnchanged": true,
+  "receiveCallUnchanged": true,
+  "exitCode": 0,
+  "hardware": "not tested",
+  "audio": "not qualified",
+  "physicalTiming": "not measured",
+  "nativeSourceAccess": "fixed synthetic lifetime; production owner/source admission, UI integration, DMA/cache and physical timing remain open",
+  "sourcePreviewEnabled": true,
+  "previews": [
+    {
+      "driverPolls": 1,
+      "queries": 12,
+      "markerCount": 5,
+      "bpm24": 2886,
+      "existingMarkers": 4,
+      "snap": 1,
+      "beats": 1,
+      "starts": [
+        0,
+        11024,
+        22049,
+        33074,
+        44008
+      ],
+      "wholePlanMatchesHostOracle": true,
+      "balancedLocks": true
+    },
+    {
+      "driverPolls": 1,
+      "queries": 12,
+      "markerCount": 5,
+      "bpm24": 2886,
+      "existingMarkers": 4,
+      "snap": 1,
+      "beats": 1,
+      "starts": [
+        0,
+        11024,
+        22049,
+        33074,
+        44008
+      ],
+      "wholePlanMatchesHostOracle": true,
+      "balancedLocks": true
+    },
+    {
+      "driverPolls": 1,
+      "queries": 12,
+      "markerCount": 5,
+      "bpm24": 2886,
+      "existingMarkers": 4,
+      "snap": 1,
+      "beats": 1,
+      "starts": [
+        0,
+        11024,
+        22049,
+        33074,
+        44008
+      ],
+      "wholePlanMatchesHostOracle": true,
+      "balancedLocks": true
+    },
+    {
+      "driverPolls": 1,
+      "queries": 12,
+      "markerCount": 5,
+      "bpm24": 2886,
+      "existingMarkers": 4,
+      "snap": 1,
+      "beats": 1,
+      "starts": [
+        0,
+        11024,
+        22049,
+        33074,
+        44008
+      ],
+      "wholePlanMatchesHostOracle": true,
+      "balancedLocks": true
+    },
+    {
+      "driverPolls": 1,
+      "queries": 12,
+      "markerCount": 5,
+      "bpm24": 2886,
+      "existingMarkers": 4,
+      "snap": 1,
+      "beats": 1,
+      "starts": [
+        0,
+        11024,
+        22049,
+        33074,
+        44008
+      ],
+      "wholePlanMatchesHostOracle": true,
+      "balancedLocks": true
+    }
+  ],
+  "invalidations": [
+    {
+      "track": 1,
+      "priorState": "READY",
+      "staleBeforeFurtherCopy": true,
+      "resultOutputUntouched": true,
+      "guardRevisionAdvanced": true,
+      "oldTokenStillStaleAfterStop": true,
+      "editorAfterStop": [
+        1,
+        0
+      ],
+      "freshPreviewAfterStop": {
+        "driverPolls": 1,
+        "queries": 12,
+        "markerCount": 5,
+        "bpm24": 2886,
+        "existingMarkers": 4,
+        "snap": 1,
+        "beats": 1,
+        "starts": [
+          0,
+          11024,
+          22049,
+          33074,
+          44008
+        ],
+        "wholePlanMatchesHostOracle": true,
+        "balancedLocks": true
+      }
+    },
+    {
+      "track": 8,
+      "priorState": "READY",
+      "staleBeforeFurtherCopy": true,
+      "resultOutputUntouched": true,
+      "guardRevisionAdvanced": true,
+      "oldTokenStillStaleAfterStop": true,
+      "editorAfterStop": [
+        0,
+        7
+      ],
+      "sourceRestoredViaTrack1": true,
+      "freshPreviewAfterStop": {
+        "driverPolls": 1,
+        "queries": 12,
+        "markerCount": 5,
+        "bpm24": 2886,
+        "existingMarkers": 4,
+        "snap": 1,
+        "beats": 1,
+        "starts": [
+          0,
+          11024,
+          22049,
+          33074,
+          44008
+        ],
+        "wholePlanMatchesHostOracle": true,
+        "balancedLocks": true
+      }
+    }
+  ],
+  "enginePreviewService": true,
+  "engineServiceCounts": {
+    "calls": 402,
+    "requests": 5,
+    "steps": 390,
+    "begins": 5,
+    "max_steps": 1,
+    "posted": 390,
+    "consumed": 390,
+    "pending": 0
+  },
+  "taskIdentities": {
+    "query": [
+      1175313892
+    ],
+    "engine": [
+      1175313892
+    ],
+    "producer": [
+      1187491460
+    ]
+  },
+  "scheduling": "borrowed-main request/result producer, one engine consumer, exact coalesced immutable wake; ordinary jobs remain writers",
+  "sourceMaskProfile": {
+    "method": "PC instruction counts before source mask and before exact SR restore; includes both instructions; unchanged native code",
+    "sites": {
+      "mask": 1174529502,
+      "restore": 1174529534,
+      "capture": 1174526150,
+      "copy": 1174526054,
+      "query": 1174529538
+    },
+    "existingMarkers": 4,
+    "previewSnap": 1,
+    "previewBeats": 1,
+    "windows": 251,
+    "pcmQueries": 12,
+    "groups": {
+      "coordination": {
+        "count": 159,
+        "min": 55,
+        "max": 414,
+        "total": 10117,
+        "histogram": {
+          "55": 1,
+          "58": 77,
+          "59": 1,
+          "64": 77,
+          "66": 1,
+          "129": 1,
+          "414": 1
+        },
+        "callerInterruptMasks": [
+          0
+        ]
+      },
+      "capture": {
+        "count": 80,
+        "min": 1061,
+        "max": 1861,
+        "total": 95820,
+        "histogram": {
+          "1061": 1,
+          "1191": 78,
+          "1861": 1
+        },
+        "callerInterruptMasks": [
+          0
+        ]
+      },
+      "copy": {
+        "count": 12,
+        "min": 2882,
+        "max": 3255,
+        "total": 38548,
+        "histogram": {
+          "2882": 1,
+          "3122": 1,
+          "3254": 6,
+          "3255": 4
+        },
+        "callerInterruptMasks": [
+          0
+        ]
+      }
+    },
+    "maxInstructions": 3255,
+    "input": "one-second stereo 16-bit stopped Flex source; full metadata snapshot on source acquisition; async coordination uses the same lock without capture",
+    "limits": "executed ColdFire instructions only; no cycle, physical latency, ISR stack, DMA/cache or production admission qualification"
+  }
+}

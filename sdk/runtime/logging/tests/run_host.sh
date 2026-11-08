@@ -10,3 +10,5 @@ trap 'rm -rf "$out"' EXIT HUP INT TERM
 "$out/controller"
 "${CC:-cc}" -std=c99 -Wall -Wextra -Werror -DOCTAMOD_LOG_HOST -I"$root" "$root/tests/port_test.c" "$root/stock_140c.c" -o "$out/port"
 "$out/port"
+"${CC:-cc}" -std=c99 -Wall -Wextra -Werror -I"$root" "$root/tests/guard_test.c" -o "$out/guard"
+"$out/guard"

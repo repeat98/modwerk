@@ -71,16 +71,48 @@ def hits(disassembly):
     return found
 
 
-def check(objects, objdump='m68k-elf-objdump'):
-    """Refuse any listed object (the C objects of a build) holding a stepped-register reuse."""
-    problems = []
+def _check_objects(objects, objdump, instrument=False):
+    objects = tuple(objects)
+    problems, indexes = [], []
     for obj in objects:
         text = subprocess.run([str(objdump), '-d', str(obj)], check=True, capture_output=True, text=True).stdout
         problems += ['%s: %s' % (Path(obj).name, h) for h in hits(text)]
+        if instrument:
+            indexes += ['%s: %s' % (Path(obj).name, h) for h in index_hits(text)]
     if problems:
         raise ValueError('ColdFire code reuses a post-incremented or pre-decremented address register in the same '
                          'instruction (GCC late-combine; sdk/runtime/m68k_codegen.py):\n  ' + '\n  '.join(problems))
+    if indexes:
+        raise ValueError('MCF54455-incompatible indexed addressing:\n  ' + '\n  '.join(indexes))
     return len(objects)
+
+
+def check(objects, objdump='m68k-elf-objdump'):
+    """Refuse stepped-register reuse, disassembling each input object once."""
+    return _check_objects(objects, objdump)
+
+
+def index_hits(disassembly):
+    """MCF54455 rejects word indexes and scale-eight indexed addresses (RM 3.3.4.2).
+
+    The emulator's MCF5475 target accepts them; emulator execution is therefore
+    not this check. Keep this explicit for shipping MCF54455 builds rather than
+    silently changing the contract of older emulator-only research fixtures.
+    """
+    found, function = [], '?'
+    for line in disassembly.splitlines():
+        label = re.match(r'^[0-9a-f]+ <(.+)>:$', line)
+        if label:
+            function = label.group(1)
+        m = _LINE.match(line)
+        if m and re.search(r'%(?:[ad][0-7]|fp|sp):w|:[wl]:8', m.group(3)):
+            found.append('%s+0x%s: %s %s' % (function, m.group(1), m.group(2), m.group(3).strip()))
+    return found
+
+
+def check_mcf54455(objects, objdump='m68k-elf-objdump'):
+    """Shipping C code: late-combine safety AND the instrument's indexed modes."""
+    return _check_objects(objects, objdump, instrument=True)
 
 
 def check_assembly(assembly, cross='m68k-elf-', cpu='54455'):

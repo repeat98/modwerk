@@ -34,17 +34,17 @@ describe('independently authored DSP package relocation', () => {
   it('carries Sidechain Compressor as one hooked package per core that leaves stock COMPRESSOR dispatch alone', async () => {
     const fixtures = catalog.packages.filter(pkg => pkg.id === 'sidechain-compressor')
     expect(fixtures.map(pkg => 'tag' in pkg && pkg.tag).sort()).toEqual(['A', 'B'])
-    const sites = { A: [0x4a7, 0x1ab1, 0x50e], B: [0x29c, 0x1871, 0x303] }
-    const guards = ['92441a8fc9f1dd20359d87c8342e3d5653d8c853a274358df0cfc0451c57115b', '114aacb95ee45437fff14f2dcd91b67e26d8bc42ef3ba2e9f6ae0cb8be1574fa', '9dad4262559be3a41c85136d50f7d017f161cff9a609d17d21da895cd2137118']
+    const sites = { A: [0x4a7, 0x1ab1, 0x50e, 0x1aa4], B: [0x29c, 0x1871, 0x303, 0x1864] }
+    const guards = ['92441a8fc9f1dd20359d87c8342e3d5653d8c853a274358df0cfc0451c57115b', '114aacb95ee45437fff14f2dcd91b67e26d8bc42ef3ba2e9f6ae0cb8be1574fa', '9dad4262559be3a41c85136d50f7d017f161cff9a609d17d21da895cd2137118', '9eb96aa9abbf3d522e54911d6fa634dbcfc8820ad32d593e405bacc87193f305']
     for (const tag of ['A', 'B'] as const) {
       const pkg = await readDspPackage('sidechain-compressor', tag)
-      expect(pkg).toMatchObject({ stockDsp: true, stockKey: 'COMPRESSOR', fxId: 24, words: 388, tag })
-      expect(pkg.relocations).toHaveLength(9)
-      // Three displaced two-word stock instructions per core, each fingerprinted; the same stock code sits at different addresses on each core.
+      expect(pkg).toMatchObject({ stockDsp: true, stockKey: 'COMPRESSOR', fxId: 24, words: 677, tag })
+      expect(pkg.relocations).toHaveLength(12)
+      // Four displaced two-word stock instructions per core (0.2.0 adds COMPRESSOR init), each fingerprinted; the same stock code sits at different addresses on each core.
       expect(pkg.hooks?.map(hook => hook.site)).toEqual(sites[tag])
       expect(pkg.hooks?.map(hook => hook.guardSha256)).toEqual(guards)
       expect(pkg.hooks?.every(hook => hook.words === 2 && hook.entry >= 0 && hook.entry < pkg.words)).toBe(true)
-      expect(pkg.hooks?.map(hook => hook.entry)).toEqual([48, 116, 361])
+      expect(pkg.hooks?.map(hook => hook.entry)).toEqual([65, 129, 591, 669])
     }
     // The package is per core: asking for it without one, or for another core, finds nothing rather than the wrong code.
     await expect(readDspPackage('sidechain-compressor')).rejects.toThrow('different native placement')

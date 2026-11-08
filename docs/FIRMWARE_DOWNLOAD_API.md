@@ -62,6 +62,23 @@ stock hash, deployed builder fingerprint, inventory hash, exact module
 versions, source pins, saved paths and SHA-256. A failed save removes its
 incomplete output folder. Keep these stock-derived sidecars private too.
 
+## After a release that rebuilt modules
+
+When a merge changes module source, the release compiles the packages again
+and imports them with its approval record, so a plain checkout of the merge
+commit reports "Local builder differs from the deployed builder". Reproduce
+that import in a scratch worktree at the merge commit, then build:
+
+```sh
+gh run download <release run id> -n octamod-source-<merge sha> -D <dir>
+GITHUB_REPOSITORY=repeat98/modwerk GITHUB_TOKEN=$(gh auth token) \
+  OCTAMOD_APPROVER_ID=$(gh api users/repeat98 -q .id) \
+  node scripts/import-module-build.mjs <dir>
+npm run prepare
+```
+
+The local fingerprint then equals the deployed `firmware-builder.json`.
+
 ## HTTP API
 
 ```sh

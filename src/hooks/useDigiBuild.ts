@@ -30,8 +30,8 @@ export function useDigiBuild(machine: BuilderMachine, file: File | undefined, re
   const inputs = JSON.stringify([machine, release ?? '', file ? [file.name, file.size, file.lastModified] : null, [...moduleIds].sort()])
   const key = inputs + '#' + attempt
   const [view, setView] = useState<DigiBuildState>({ phase: 'idle', key: '' })
-  // Core build previews (Digitakt II, Analog Rytm MKII) stay out of usage counts.
-  const usageMachine = machine === 'digitakt' || machine === 'digitone' ? machine : undefined
+  // Local build outcomes include preview machines; their download gates remain separate.
+  const usageMachine = machine
   const client = useRef<Builder | null>(null), operation = useRef(0), storageRef = useRef(storage)
   useEffect(() => { storageRef.current = storage })
   useEffect(() => () => { client.current?.dispose(); client.current = null }, [])

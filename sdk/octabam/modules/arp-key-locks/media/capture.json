@@ -1,0 +1,165 @@
+{
+  "firmware": "1.40C",
+  "imageSha256": "db2e61fa540f21edfb70bc8e9df33b0435fc9eae6ec140b58e866e9ec6f56cca",
+  "emulatorSha256": "1bfeb35aef87521ac03eddbce706110f863e9d8659f7232108414ecbad2b1abc",
+  "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6.",
+  "palette": {
+    "on": [
+      240,
+      240,
+      240
+    ],
+    "off": [
+      24,
+      24,
+      24
+    ]
+  },
+  "keyMs": 150,
+  "plan": [
+    {
+      "wait": 3000
+    },
+    {
+      "press": [
+        "NO"
+      ]
+    },
+    {
+      "press": [
+        "MIDI"
+      ]
+    },
+    {
+      "press": [
+        "T1"
+      ]
+    },
+    {
+      "press": [
+        "REC"
+      ]
+    },
+    {
+      "press": [
+        "FUNC",
+        "AMP"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "capture": "ot-arp-setup.png"
+    },
+    {
+      "hold": [
+        "TRIG3"
+      ]
+    },
+    {
+      "wait": 400
+    },
+    {
+      "capture": "ot-held-no-lock.png"
+    },
+    {
+      "encoder": {
+        "name": "F",
+        "delta": 6
+      }
+    },
+    {
+      "wait": 400
+    },
+    {
+      "capture": "ot-lock-c-minor.png"
+    },
+    {
+      "release": [
+        "TRIG3"
+      ]
+    },
+    {
+      "wait": 400
+    },
+    {
+      "hold": [
+        "TRIG5"
+      ]
+    },
+    {
+      "wait": 400
+    },
+    {
+      "capture": "ot-held-f-dorian.png"
+    },
+    {
+      "release": [
+        "TRIG5"
+      ]
+    },
+    {
+      "wait": 400
+    },
+    {
+      "hold": [
+        "TRIG9"
+      ]
+    },
+    {
+      "wait": 400
+    },
+    {
+      "encoder": {
+        "name": "D",
+        "delta": 1
+      }
+    },
+    {
+      "wait": 300
+    },
+    {
+      "encoder": {
+        "name": "D",
+        "delta": 3
+      }
+    },
+    {
+      "wait": 400
+    },
+    {
+      "capture": "ot-shift-pick-note.png"
+    },
+    {
+      "encoder": {
+        "name": "E",
+        "delta": 1
+      }
+    },
+    {
+      "wait": 400
+    },
+    {
+      "capture": "ot-shift-plus-one.png"
+    },
+    {
+      "release": [
+        "TRIG9"
+      ]
+    }
+  ],
+  "screenshots": {
+    "ot-arp-setup.png": "cd2ac6f1f8c02983625414c749b7050f4a373877e5632ddecc1467796d651db8",
+    "ot-held-no-lock.png": "bb5dfed00f948291bd2ece44f03d7fef8ab9d50881377cf006e74cea4a11a6ce",
+    "ot-lock-c-minor.png": "25fa01467936ce6b4739618ee58babcd37b74163ab553868e4fce69ce50543be",
+    "ot-held-f-dorian.png": "4eab4b0b4713f2a5e7048fc2fe2e7f07658b9fda0a4ceab635153fd358c1d2c4",
+    "ot-shift-pick-note.png": "c5256413bdcb5bb3e0ed4f3136a06ca04a37c63fc02a1eadae15f0c769068888",
+    "ot-shift-plus-one.png": "6f6c564427d65416f0f1c1feb66e4c6fe4547edfd1c5493c8566c07850f103dc"
+  },
+  "cardSha256": "3bc6e85ad80b87ef405f0608fb56351b4e20bbf820af04306b9ecd1680d20336",
+  "project": {
+    "set": "OCTABAM",
+    "name": "BASS"
+  }
+}

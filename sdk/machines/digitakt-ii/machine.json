@@ -29,19 +29,19 @@
   },
   "research": [
     {
-      "label": "digikit",
-      "url": "https://github.com/m-dwyer/digikit",
-      "note": "Emulator for the control processor that boots the real OS and shows its screen, plus analysis tools for the audio processor and the sealed OS file."
-    },
-    {
       "label": "elekloader DTII core and OS 1.17 tests",
       "url": "https://github.com/irpina/elekloader/tree/3acac10/mods/core-dt2",
-      "note": "Experimental OS 1.17 profile, sealed firmware writer and shared-event core. Its DTII tests verify byte-exact stock rebuilding, seal checks and linked builds. Core builds boot in Digikit; this is not Modwerk hardware qualification."
+      "note": "Experimental OS 1.17 profile, sealed firmware writer and shared-event core. Its DTII tests verify byte-exact stock rebuilding, seal checks and linked builds. Core builds boot in an emulator; this is not Modwerk hardware qualification."
     },
     {
       "label": "toonst's Digitakt II perform mods 1.0",
       "url": "https://github.com/toonst/digitakt2-perform/releases/tag/v1.0",
       "note": "Released core, perform-direct and perform-levels packages for OS 1.17. The author reports individual hardware results, including an earlier perform-direct version; the combined build is not hardware-tested. Modwerk listings remain to be added."
+    },
+    {
+      "label": "core-dt2 1.1 source (toonst's elekloader fork)",
+      "url": "https://github.com/toonst/elekloader/tree/3d7c2e3c955a73ad8c8cc9ad6daf83c1a5993f08/mods/core-dt2",
+      "note": "Adds frame values, key LEDs and project and kit data to core 1.0's events; its author reports emulator runs only. Copied unchanged into sdk/machines/digitakt-ii/elekloader/ as the base's start; the site builds core 1.0 until the base ships."
     }
   ],
   "sdk": {

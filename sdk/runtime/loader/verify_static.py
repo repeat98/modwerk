@@ -20,6 +20,9 @@ import struct
 import sys
 import tempfile
 
+sys.path.append(str(Path(__file__).resolve().parents[2]))  # sdk/, for firmware_codec
+import firmware_codec  # noqa: E402
+
 
 def unpack(data):
     """(image, self-reference offsets, sites) of an ABI 3 to 7 package (its DSP code is not linked statically). A site
@@ -93,7 +96,7 @@ def main():
     for name in ('stock', 'upstream', 'core', 'elemod', 'package'):
         parser.add_argument('--' + name, type=Path, required=True)
     args = parser.parse_args()
-    sys.path.insert(0, str(args.upstream.expanduser().resolve()))
+    firmware_codec.use_elekloader(args.upstream.expanduser().resolve())
     from elekloader import formats, patch
     parsed, device, _ = formats.load(str(args.stock))
     stock = formats.main_image(parsed, device)

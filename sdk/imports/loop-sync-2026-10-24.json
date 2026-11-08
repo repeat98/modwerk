@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/loop-sync",
+  "version": "0.2.0-experimental",
+  "date": "2026-10-24",
+  "changes": [
+    "First library release for Analog Rytm MKII OS 1.74, on core-ar2 0.3, approved by the owner on 24 October 2026. Keeps sample loops in time with the project tempo by repitching them.",
+    "Source-only export compiled from sdk/analog-rytm-mkii/modules/loop-sync in Modwerk's pinned toolchain (m68k-elf GCC 16.2.0, binutils 2.47) with the shared SDK's analog-rytm-mk2/store.h. Not byte-identical to the author's emulator-tested LS18 build (GCC 12.2); the released package has not run in the emulator or on a unit."
+  ],
+  "runtimeSourceSha256": "6df71df64799781b66e0e266297e64a2b6ce18679fd98def305e2536d8d0f0bc",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/loop-sync/loop-sync-0.2.0-experimental-os1.74.elemod",
+      "sha256": "2dd3d6718c76b89930a64e43e6a71509bdf425d9b17285b7eb6eea443ecbc196"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/loop-sync/TESTING.md",
+  "requires": []
+}

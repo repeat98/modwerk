@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from './api'
 import { PageTraffic } from './PageTraffic'
 import { CommunityInsights } from './CommunityInsights'
-import { HOURLY_ERA_METRICS, hourlyRows, usageCsv, usageInsights, usageMetrics } from './statistics-insights'
+import { HOURLY_ERA_METRICS, hourlyRows, usageCsv, usageInsights, usageMachineBreakdown, usageMetrics } from './statistics-insights'
 import type { UsageMetric } from './statistics-insights'
 import type { DiscordInviteCounts, UsageStatistics } from './usage-contract'
 import type { AdminInsights } from './admin-insights-contract'
@@ -44,7 +44,7 @@ export function UsageDashboard({data}: {data: UsageStatistics}) {
   const hourlyDay = data.hourlyStarted?.slice(0,10) ?? null
   const comparable = (key: UsageMetric) => HOURLY_ERA_METRICS.includes(key) ? !!hourlyDay && !!data.comparison && hourlyDay < data.comparison.from
     : key!=='builds' && key!=='builds_failed' || !!breakdownsDay && !!data.comparison && breakdownsDay < data.comparison.from
-  const devices = data.devices ?? [], attempts = devices.reduce((sum,row) => sum+row.builds+row.builds_failed,0), failed = devices.reduce((sum,row) => sum+row.builds_failed,0)
+  const devices = usageMachineBreakdown(data), attempts = devices.reduce((sum,row) => sum+row.builds+row.builds_failed,0), failed = devices.reduce((sum,row) => sum+row.builds_failed,0)
   const failureRate = (failures: number, total: number) => total ? format(failures/total*100)+'%' : '—'
   // One bar per UTC day, or per UTC hour in the 7-day view. Hourly visitors are daily visitors in the hour they first arrived.
   const hourly = resolution==='hour' && !!hours
@@ -109,8 +109,9 @@ export function UsageDashboard({data}: {data: UsageStatistics}) {
       {breakdownsDay && <div className="statistics-table statistics-device-table" role="region" aria-label="Builds and download requests by machine" tabIndex={0}><table>
         <caption>By machine · {breakdownsDay > data.from ? 'counted since '+dateLabel(breakdownsDay)+' · ' : ''}build failure rate {failureRate(failed,attempts)}</caption>
         <thead><tr><th scope="col">Machine</th><th scope="col">Successful builds</th><th scope="col">Failed builds</th><th scope="col">Failure rate</th><th scope="col">Download requests</th></tr></thead>
-        <tbody>{devices.map(row => <tr key={row.device}><th scope="row">{DEVICES_BY_ID[row.device]?.name ?? row.device}</th><td>{format(row.builds)}</td><td>{format(row.builds_failed)}</td><td>{failureRate(row.builds_failed,row.builds+row.builds_failed)}</td><td>{format(row.downloads)}</td></tr>)}</tbody>
+        <tbody>{devices.map(row => <tr key={row.device}><th scope="row">{row.device === 'unattributed' ? 'Unattributed' : DEVICES_BY_ID[row.device]?.name ?? row.device}</th><td>{format(row.builds)}</td><td>{format(row.builds_failed)}</td><td>{failureRate(row.builds_failed,row.builds+row.builds_failed)}</td><td>{format(row.downloads)}</td></tr>)}</tbody>
       </table></div>}
+      {breakdownsDay && data.devices && <p className="service-note">Unattributed events are the difference between overall totals and named machines, including older browsers and earlier collection. They cannot be reassigned retrospectively.{data.machineCoverageExpanded ? ' Digitakt II and Analog Rytm MKII attribution became available on ' + data.machineCoverageExpanded.slice(0, 10) + '; that day is partial. Earlier zero counts do not imply no builds.' : ' This backend has not reported expanded machine coverage yet.'}</p>}
       <details className="statistics-daily"><summary>Daily counts and CSV export</summary><button className="button button-quiet" onClick={exportDaily}>Export daily CSV</button><div className="statistics-table" role="region" aria-label="Daily usage counts" tabIndex={0}>
         <table><caption>UTC days · today and the collection start day are partial · — means not collected</caption>
           <thead><tr><th scope="col">Date</th>{usageMetrics.map(([key,title]) => <th scope="col" key={key}>{title}</th>)}</tr></thead>

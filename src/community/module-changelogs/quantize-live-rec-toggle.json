@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.1.1-experimental",
+    "date": "2026-10-23",
+    "changes": [
+      "Now Zac Kyoti's own final source, unchanged; the gesture and the LIVE REC messages work as before.",
+      "Switching the setting redraws PERSONALIZE only while that page is open.",
+      "Tested by the author on an MKI from the card: the gesture, the PERSONALIZE redraw and a power cycle.",
+      "Known issue: this version is not yet tested over USB, on an MKII, with grid recording or on MIDI tracks."
+    ]
+  },
+  {
     "version": "0.1.0-experimental",
     "date": "2026-10-15",
     "changes": [

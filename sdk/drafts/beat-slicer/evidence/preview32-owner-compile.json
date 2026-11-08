@@ -1,0 +1,60 @@
+{
+  "scope": "ColdFire compile and code-generation guard only; expected loader imports remain unresolved; no native link/execution",
+  "sourceSha256": {
+    "menu_owner.c": "3724dbdbddd793969c1f3c65a85fc77c42831d80a8d9e65b874bceb4dbbd2613",
+    "menu_owner.h": "cdc62f42130d7fb61c08929be261bfd51c413aac9b191f0653fa708e3b1abe8c",
+    "menu_owner_native.py": "31a9ed9751a8ef0718cd99e8ce52a5bc0005fe2d391c0511d255075abdc991c6",
+    "menu-owner-runtime-sources.json": "f944af9391dec483e68310e512aa23e706a3483f805fc00db008d22b54a0f16c"
+  },
+  "sdkRevision": "c8fcb8054b10366b3a7881ec957a566460aab3d4",
+  "sdkDependencySha256": {
+    "sdk/runtime/loader/loader.h": "0e97ec78ed5a25f93d8c2c390542c2c42bd1cdcf677d345095c953781067719b",
+    "sdk/runtime/upload/upload.h": "4717f5f55c48e7d3f1d045aee72b5cf5e1194f707eb4a9da2bef0ca48b22ef6b",
+    "sdk/runtime/loader/modwerk_module.h": "55f39232ec7eb2fe8a497f946f559a9f4e78f90e637ea5475cca686bc5c56218"
+  },
+  "codegenGuardSha256": "861da4bf86f662362055f1082147b2c14824075724f7c7a2b77acca3e0c973c0",
+  "compiler": "m68k-elf-gcc (GCC) 16.2.0",
+  "flags": [
+    "-std=c99",
+    "-mcpu=5475",
+    "-msoft-float",
+    "-O2",
+    "-ffreestanding",
+    "-fno-builtin",
+    "-fno-common",
+    "-fno-jump-tables",
+    "-fno-tree-loop-distribute-patterns",
+    "-fno-optimize-sibling-calls",
+    "-fno-asynchronous-unwind-tables",
+    "-fno-unwind-tables",
+    "-fno-ident",
+    "-fstack-usage",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fno-late-combine-instructions",
+    "-DRUNTIME_MODULES=128u",
+    "-DRUNTIME_POOL_BYTES=786432u"
+  ],
+  "objectSha256": "78a6a3a6e335001c48fbdb57407e6b87ff3a2aeb9d7230274e50a123758c0136",
+  "size": [
+    "   text\t   data\t    bss\t    dec\t    hex\tfilename",
+    "    308\t      0\t      0\t    308\t    134\t/evidence/owner32-compile2/menu_owner.o"
+  ],
+  "localStackUsage": [
+    "/evidence/next-owner32/staging/sdk/drafts/beat-slicer/menu_owner.c:3:5:bs_menu_owner_published_locked\t16\tdynamic,bounded",
+    "/evidence/next-owner32/staging/sdk/drafts/beat-slicer/menu_owner.c:11:5:bs_menu_owner_bind_locked\t16\tdynamic,bounded",
+    "/evidence/next-owner32/staging/sdk/drafts/beat-slicer/menu_owner.c:24:5:bs_menu_owner_current_locked\t8\tdynamic,bounded",
+    "/evidence/next-owner32/staging/sdk/drafts/beat-slicer/menu_owner.c:29:6:bs_menu_owner_retire_locked\t0\tstatic"
+  ],
+  "expectedLoaderImports": [
+    "         U modwerk_runtime_module",
+    "         U modwerk_runtime_owner_valid"
+  ],
+  "codegenGuard": "passed",
+  "exitCode": 0,
+  "nativeLink": "not performed",
+  "nativeExecution": "not performed",
+  "hardware": "not tested"
+}

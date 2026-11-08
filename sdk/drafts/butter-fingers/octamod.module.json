@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 2,
+  "id": "butter-fingers",
+  "key": "BUTTER FINGERS",
+  "name": "Butter Fingers",
+  "version": "0.1.0-experimental",
+  "category": "system",
+  "author": {
+    "github": "jankolkmeier",
+    "name": "Jan Kolkmeier",
+    "credits": [
+      "Jan Kolkmeier: the module, its tests and documentation, and the thumbnail."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "No stray locks after removing one",
+    "family": "Editing",
+    "summary": "Removing a parameter or scene lock with a knob press no longer writes a new lock when the knob slips a detent.",
+    "overview": "On the MKII, pressing a DATA ENTRY knob while holding a trig (or SCENE A/B) removes that lock when you let go. A finger that nudges the knob while pressed turns the removal into a coarse x7 jump, and one that nudges it on release writes a new lock. Butter Fingers ignores the first slipped detent while the knob is pressed and every detent for 150 ms after its release, only while a lock is being edited. Deliberate coarse edits still work, one detent later.",
+    "highlights": [
+      "Only while a TRIG key or SCENE A/B is held, and only for the pressed knob: everything else behaves as stock.",
+      "The release window is 150 ms; a deliberate turn right after it is not delayed.",
+      "Press + turn still makes stock's coarse x7 edit, starting from the second detent.",
+      "No setting, no stock code patched, nothing stored in the project."
+    ],
+    "usage": [
+      "Hold a TRIG key with a parameter lock and press the DATA ENTRY knob of the locked parameter; let go. The lock is removed, as in stock.",
+      "Let go of the knob carelessly, nudging it a detent as you lift your finger: with Butter Fingers the lock stays removed instead of a new lock being written.",
+      "For a deliberate coarse edit, keep the knob pressed and turn it: the first detent is ignored, from the second on it moves in stock's coarse steps (x7).",
+      "Scene locks work the same way: hold SCENE A or B and press the knob to remove that scene's lock."
+    ]
+  },
+  "access": {
+    "location": "Every page with DATA ENTRY knobs, while a TRIG key or SCENE A/B is held",
+    "steps": [
+      "Hold a TRIG key with a parameter lock and press the DATA ENTRY knob of the locked parameter; let go. The lock is removed, as in stock.",
+      "Let go of the knob carelessly, nudging it a detent as you lift your finger: with Butter Fingers the lock stays removed instead of a new lock being written.",
+      "For a deliberate coarse edit, keep the knob pressed and turn it: the first detent is ignored, from the second on it moves in stock's coarse steps (x7).",
+      "Scene locks work the same way: hold SCENE A or B and press the knob to remove that scene's lock."
+    ],
+    "screenshots": []
+  },
+  "controls": [],
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": null,
+    "location": "Project sequencer",
+    "conflicts": [],
+    "uiClaims": [
+      "key:TRIG+A",
+      "key:TRIG+B",
+      "key:TRIG+C",
+      "key:TRIG+D",
+      "key:TRIG+E",
+      "key:TRIG+F",
+      "key:SCENEA+A",
+      "key:SCENEA+B",
+      "key:SCENEA+C",
+      "key:SCENEA+D",
+      "key:SCENEA+E",
+      "key:SCENEA+F"
+    ],
+    "limitations": [
+      "OS 1.40C, MKII (the MKI has no knob presses). Reported on one MKII only.",
+      "Changes a stock gesture while a lock is edited: the first detent of press + turn and every detent for 150 ms after the knob's release are ignored. Remove the module to restore stock behaviour.",
+      "A detent turned just before the press registers reaches the firmware; the press then removes the lock it wrote.",
+      "LEVEL and press + turn outside lock editing are untouched."
+    ]
+  },
+  "resources": {
+    "recorded": "25 October 2026",
+    "storage": {
+      "label": "Runtime package",
+      "display": "544 B code and data + 44 B state",
+      "value": 544,
+      "unit": "bytes",
+      "method": "static",
+      "conditions": "sdk/runtime/loader/build.py --octabam, one ColdFire unit, three runtime hooks, 4 relocations, no stock-code sites, no DSP code.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "ColdFire, per key, knob turn and UI tick",
+      "display": "Unmeasured",
+      "value": null,
+      "unit": "instructions/event",
+      "method": "unmeasured",
+      "conditions": "A few compares and bit operations per key or turn, one increment per UI tick (60 a second). Nothing per sample or frame.",
+      "source": "TESTING.md"
+    },
+    "impact": {
+      "conditions": "UI task: key and encoder events and the 60 Hz tick.",
+      "cpu": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "Tens of ColdFire instructions per panel event and a counter per UI tick; no audio-path work.",
+        "source": "TESTING.md"
+      },
+      "dsp": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "No DSP code.",
+        "source": "manifest.py"
+      },
+      "memory": {
+        "level": "minimal",
+        "basis": "source-estimate",
+        "rationale": "A 544-byte unit and 44 bytes of state.",
+        "source": "TESTING.md"
+      }
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host gate (verify.py, 20 checks) and an ot_emu lock-removal comparison against stock on the beta base cd39c494 over emulated USB; reported working on one MKII over USB. No owner-verified hardware qualification yet.",
+    "hardwareStatus": "reported",
+    "evidenceRevision": "0000000000000000000000000000000000000000",
+    "gates": [
+      "modules/butter-fingers/verify.py"
+    ]
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original module by Jan Kolkmeier, MIT. No firmware, extracted stock code or built images are included."
+  },
+  "media": []
+}

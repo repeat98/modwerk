@@ -1,0 +1,1 @@
+Octatrack base: the machine chooser takes up to eight contributed machines instead of four. POLY8, Analog BD, VECTOR and FM Synth filled the four rows, so a fifth machine module could not install beside them; the chooser's list scrolls and its cursor reaches the last row, as before.

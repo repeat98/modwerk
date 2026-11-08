@@ -1,0 +1,1 @@
+Developers: pull request reviews (`/modwerk-review-prs` and the maintenance pass) now judge every pull request against the modding guidelines and the whole stack: the base and its regeneration order, the USB lifecycle, module splits, cross-compatibility and the machine recipe, not only its code.

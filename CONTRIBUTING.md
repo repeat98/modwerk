@@ -18,15 +18,24 @@ What review expects for a new module, or for a change to how a module runs:
 
 A change to a module's documentation or media alone can keep its existing test evidence ([retained evidence](docs/MODULE_QUALIFICATION.md#risk-based-update-checks--3-october-2026)).
 
+## Elekloader mods and cores
+
+Modwerk and [elekloader](https://github.com/elekloader/elekloader) are separate projects. Send elekloader work there:
+
+- **A mod for elekloader's shop**, including one Modwerk's library does not take: publish its `.elemod` files in a release and fill in elekloader's [Submit a mod](https://github.com/elekloader/elekloader/issues/new?template=submit-mod.yml) form ([the shop](https://github.com/elekloader/elekloader/blob/main/docs/SHOP.md)).
+- **A change to an elekloader core**, such as core-ot, core-ar2, core-a4, core-dt2 or core-dn2: elekloader's [core contributing guide](https://github.com/elekloader/elekloader/blob/main/docs/CORE-CONTRIBUTING.md).
+
+The Octatrack, Analog Rytm MKII and Digitakt II bases in `sdk/machines/` are Modwerk's own. Each started from an elekloader core's source, but none of them is that core, and an elekloader mod is not built for them. A hook a Modwerk module needs on one of those three machines goes into its base here ([propose a hook](docs/module-guides/README.md#propose-a-hook)). The Digitakt and Digitone cores (`sdk/digitakt/core`, `sdk/digitone/core`) are Modwerk's own as well, and their hooks go there. Modwerk has no Digitone II base, so Digitone II core work goes to elekloader.
+
 ## Versions
 
 Any change to a module's code needs a strictly higher semantic `version` than on `main`. Code is what a compiler reads: source files, `manifest.py`, licences and the manifest's build fields (`version`, `key`, `author.github`, `source`, `compatibility.effectId` and `build.status`). Documentation and media do not: README and other Markdown, `media/`, `presentation/`, `evidence/` and the rest of the manifest's text can change under the same version, and need no rebuilt packages or fresh approval. (The eleven frozen baseline modules, `cc-map`, `previewvol` and MIDI Scenes keep their exact-folder exemptions, so a documentation edit to them still uses the retained-evidence path.) Update the module's entry in `sdk/catalog.json` to match when it is listed. Never reuse a released version for different code. Explain parameter-layout or ID changes and what happens to existing projects. `npm run modules:check -- --base origin/main` checks this after you rebase onto current `main`.
 
 ## Intellectual property
 
-Submit only original or properly licensed source and media.
+Submit only original or properly licensed source and media, and follow the [modding guidelines](MODDING_GUIDELINES.md).
 
-Platform contributions follow the [component licence scope](LICENSE): backend changes in `server/`, `worker.ts`, `functions/` and `migrations/` are submitted under Elastic-2.0; changes to the explicit shared-helper inventory in `LICENSES/platform.json` are submitted under GPL-3.0-or-later OR Elastic-2.0. Other frontend code remains GPL-3.0-or-later. Contributors retain copyright and must have authority to grant these terms; this does not assign copyright or grant permission for arbitrary future relicensing. SDKs, module source and media keep their own declared licences. See [platform licensing](docs/PLATFORM_LICENSING.md) before adding cross-boundary imports.
+Platform contributions follow the [component licence scope](LICENSE): backend changes in `server/`, `worker.ts`, `functions/` and `migrations/`, and changes to the pipeline files listed as `pipelineFiles` in `LICENSES/platform.json` (workflows and build, release, device and service tools), are submitted under Elastic-2.0; changes to its shared-helper inventory (`sharedFiles`) are submitted under GPL-3.0-or-later OR Elastic-2.0. Other frontend code remains GPL-3.0-or-later. Contributors retain copyright and must have authority to grant these terms; this does not assign copyright or grant permission for arbitrary future relicensing. SDKs, module source and media keep their own declared licences. See [platform licensing](docs/PLATFORM_LICENSING.md) before adding cross-boundary imports.
 
 - Do not include Elektron firmware, extracted instructions, routines or tables, stock slices, upgrade or SysEx files, or anyone else's work you have no licence for. Firmware-dependent content comes from each user's own verified OS at build time, matched by address, length and hash.
 - For adapted components, keep their copyright notices and full terms in the module's `LICENSE`. Add their provenance to `sdk/octabam/licenses/manifest.json`, and declare every licence as an SPDX expression, for example `MIT AND ISC`.

@@ -18,6 +18,8 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.append(str(ROOT / 'sdk'))  # firmware_codec
+import firmware_codec  # noqa: E402
 ADAPTERS, GLUE, LOADER = (ROOT / 'sdk/machines/octatrack/module-adapters', ROOT / 'sdk/machines/octatrack/elekloader',
                           ROOT / 'sdk/runtime/loader')
 sys.path.insert(0, str(ADAPTERS))
@@ -45,7 +47,7 @@ class MuteModesRuntime(unittest.TestCase):
         main = Path(stock).read_bytes()
         stock_at = lambda address, n: main[address - 0x40000400:address - 0x40000400 + n]
         import runtime_units
-        sys.path.insert(0, str(upstream))
+        firmware_codec.use_elekloader(upstream)
         from elekloader.sdk import octabam
         port = octabam.Octabam(str(ROOT / 'sdk/octabam')).modules['mute-modes']
         tables = json.loads((ADAPTERS / 'candidate-recipes.json').read_text())['ports']['mute-modes']['tables']
@@ -96,7 +98,7 @@ class MuteModesRuntime(unittest.TestCase):
                             '-I' + str(native / 'vendor/dsp56300/source'), str(ADAPTERS / 'loader_mute_keep_fixture.cpp'), *map(str, archives),
                             '-lpthread', '-o', str(work / 'probe')], check=True, capture_output=True)
             result = subprocess.run([str(work / 'probe'), stock, *(str(work / f) for f in (
-                'events.bin', 'events.sym', 'legacy.bin', 'legacy.sym', 'new.mwrm', 'new.syms', 'plain.mwrm', 'key.mwrm', 'key.syms',
+                'events.bin', 'events.sym', 'legacy.bin', 'legacy.sym', 'new.mwrm', 'new.syms', 'plain.mwrm', 'plain.syms', 'key.mwrm', 'key.syms',
                 'keep.mwrm'))], capture_output=True, text=True)
             packages = {f: hashlib.sha256((work / f).read_bytes()).hexdigest() for f in ('new.mwrm', 'plain.mwrm', 'key.mwrm', 'keep.mwrm')}
         self.assertEqual(result.returncode, 0, result.stderr[-4000:])

@@ -24,7 +24,9 @@ feature's region), and a replacement waiting while the sequencer plays.
 Engines load when a track uses them (owner, 22 October 2026), not at install: modes 2, 3, 15 and 21 admit a module whose
 engine has no room and let it wait; modes 54-58 place an engine only once its feature is used (Analog BD's lease, stock
 COMPRESSOR for Sidechain, a reader's effect for the key bus), park it when a new bank does not use it, and remove a
-parked or never-used module. Mode 59: an engine is placed on all its cores or none.
+parked or never-used module. Mode 59: an engine is placed on all its cores or none. Mode 61 (owner, 24 October 2026):
+a reader goes in whatever room the Part leaves; the pick that brings its effect pays the key bus's price, or is DSP FULL.
+Mode 64: a core's owned channel closed from outside the engines (MKII, 27 October 2026) refuses at admission.
 """
 import importlib.util
 import hashlib
@@ -194,8 +196,11 @@ int test_select(const uint8_t ids[16], void (*pump)(void))
 MODEL = r'''
 #include "resident_engines.h"
 #include "expected.h"
-static unsigned quiet = 1;
-int mw_engines_test_quiet(void) { return (int)quiet; }
+/* quiet: stopped with no pattern change queued; queued: a pattern change waits (so not quiet either). Playing is
+ * quiet = 0 with nothing queued. */
+static unsigned quiet = 1, queued;
+int mw_engines_test_quiet(void) { return (int)(quiet && !queued); }
+int mw_engines_test_queued(void) { return (int)queued; }
 /* UI ticks, the last key, a pick waiting: the evacuation's own wait (two seconds after the last key, no pick waiting). */
 static unsigned ticks = 1000, key_at, pick_waiting;
 int mw_engines_test_settled(void) { return ticks - key_at >= 120u && !pick_waiting; }
@@ -248,9 +253,11 @@ static unsigned refuse_enable[2];
 static unsigned test_window_busy;
 int dl_hook_buffer_ranges_idle(unsigned feature);
 int board_buffer_ranges_idle(unsigned feature) { return feature == 8u && test_window_busy ? 0 : dl_hook_buffer_ranges_idle(feature); }
-/* The key bus's tap price (dsp.c's resident_engines.dsp seam): whether it would fit, and whether it is charged. */
+/* The key bus's tap price (dsp.c's resident_engines.dsp seam): whether it would fit, whether it is charged, and its
+ * price on a core while it is not (what the FX allocator adds to a set naming a reader's effect). */
 static unsigned kb_fits = 1, kb_charged;
-int modwerk_dsp_keybus_fits(void) { return (int)(kb_fits || kb_charged); }
+static uint32_t kb_price = 72;
+uint32_t modwerk_dsp_keybus_price(unsigned c) { (void)c; return kb_charged ? 0u : kb_price; }
 int modwerk_dsp_keybus_charge(int on)
 {
     if (!on) { kb_charged = 0; return 1; }
@@ -267,6 +274,11 @@ volatile uint8_t modwerk_controller_lease_seen;
 uint32_t mw_controller_board_test_bank(void) { return board_bank; }
 int mw_controller_board_test_handle(uint32_t module) { (void)module; return 63; }
 int modwerk_dsp_bank_names(unsigned id) { return id == 24u ? (int)names_compressor : id == 63u ? (int)names_reader : 0; }
+/* The module whose machine a track of the bank's Parts is signed for (machine_registry.c), or none. */
+static uint32_t bank_module;
+extern volatile uint32_t modwerk_machine_assigned; /* controller_board.c: a Part signed outside the fixture's bank change */
+unsigned modwerk_machine_bank_modules(uint32_t *module, unsigned max)
+{ if (!bank_module || !max) return 0; module[0] = bank_module; return 1; }
 static unsigned refuse_write[2], refuse_place[2]; /* table offsets at which a WRITE chunk, a PLACE is refused */
 static unsigned refuse_bind[2], drop_bind[2], refuse_once[2]; /* a BIND to this table offset refused; applied but never
                                                                  * answered (once); refused once */
@@ -350,6 +362,25 @@ static void dsp(void)
 }
 static void run(unsigned n) { while (n--) { ++ticks; modwerk_controller_lease_seen |= (uint8_t)leasing; modwerk_controller_tick(); test_advance(); dsp(); dsp(); } }
 static void pump(void) { dsp(); }
+/* dsp.c's packer for mode 62 (manager.c's third way to make room): while the manager is idle, the block right above core
+ * A's lowest hole moves down into it, one move a pump, until no hole is left below the free top. */
+static unsigned pack_on, pack_left, packs;
+int modwerk_dsp_pack(void) { if (!pack_on) return 0; ++packs, pack_left = 1; return 1; }
+int modwerk_dsp_packing(void) { return (int)pack_left; }
+static void pack_pump(void)
+{
+    dsp();
+    if (!pack_left || test_phase()) return;
+    unsigned end = 0;
+    for (;;) {
+        int next = -1, at = 1 << 30;
+        for (unsigned p = 0; p < MODWERK_FX_IDS; ++p) if (test_live(0, p) >= (int)end && test_live(0, p) < at) at = test_live(0, p), next = (int)p;
+        if (next < 0) { pack_left = 0; return; }
+        if ((unsigned)at == end) { end += test_words((unsigned)next); continue; }
+        if (end + test_words((unsigned)next) > (unsigned)at || !test_move(0, (unsigned)next, end)) pack_left = 0;
+        return;
+    }
+}
 /* A UI tick of the board alone (the manager advances from the selection's own poll). */
 static void board_pump(void) { ++ticks; modwerk_controller_lease_seen |= (uint8_t)leasing; modwerk_controller_tick(); dsp(); dsp(); }
 /* Mode 28's frames: once the transaction runs, core B's table entry 0 is made to differ; an owned reservation held on
@@ -559,15 +590,20 @@ int main(int argc, char **argv)
         assert(slot_for(SC, MW_CTL_ACTIVE) && dsp_mask[0] == 9);
         placed_at(0, 1, sc); placed_at(1, 1, sc);
     } else if (mode == 1) {
-        /* The guard: nothing is placed or unplaced while the sequencer plays or a pattern change waits. */
-        quiet = 0;
+        /* The guard: nothing is placed while a pattern change waits; while the sequencer plays an engine that fits in
+         * free words is placed, reset and enabled; nothing is unplaced until it stops. */
+        quiet = 0; queued = 1;
         assert(install(pkg_sc, sizeof pkg_sc) == MU_APPLIED);
         run(300);
         assert(slot_for(SC, MW_CTL_BOUND) && !mw_engines_jobs && !trails[0] && !trails[1] && !dl_engine_reserved(0));
-        assert(!words[0][0] && !dsp_mask[0]);
-        quiet = 1;
+        assert(!words[0][0] && !dsp_mask[0] && mw_engines_wait[0][0] == MW_WAIT_PLAYING);
+        queued = 0; /* playing, nothing queued */
         run(200);
-        assert(slot_for(SC, MW_CTL_ACTIVE)); placed_at(0, 1, sc); placed_at(1, 1, sc);
+        assert(slot_for(SC, MW_CTL_ACTIVE) && dsp_mask[0] == 9 && dsp_mask[1] == 9);
+        for (unsigned c = 0; c < 2; ++c) { placed_at(c, 1, sc); ordered(c, 1, sc, 0); }
+        assert(!dl_engine_evacuations && !test_trims());
+        quiet = 1;
+        run(20);
         assert(refused(removal(SC), 32) == RUNTIME_BUSY);
         run(20);
         quiet = 0; /* the removal's switch, then play */
@@ -784,13 +820,17 @@ int main(int argc, char **argv)
     } else if (mode == 13) {
         /* Nothing moves while playing, within two seconds of a key, or while a pick waits; then it does. */
         big_at_top(0);
-        unsigned from = trails[0], from1 = trails[1];
+        unsigned from = trails[0];
         quiet = 0;
         assert(install(pkg_sc, sizeof pkg_sc) == MU_APPLIED);
         run(300);
-        assert(trails[0] == from && trails[1] == from1 && !mw_engines_jobs && !dl_engine_evacuations && test_live(0, 3) == (int)(top - 900u));
-        assert(mw_engines_wait[0][0] == MW_WAIT_PLAYING && slot_for(SC, MW_CTL_BOUND));
-        quiet = 1; key_at = ticks; /* stopped by a key: core B places at once, core A waits for the two seconds */
+        /* Playing: core B, which needs no move, places at once; core A's code stays where it is and nothing is written
+         * there. Sidechain stays off on both until core A has its engine too. */
+        assert(trails[0] == from && !dl_engine_evacuations && test_live(0, 3) == (int)(top - 900u));
+        /* Core A asked once, was told its code must move (why 7), and waits for the stop without asking again. */
+        assert(mw_engines_wait[0][0] == MW_WAIT_EVACUATION && mw_engines[1][0].state == MW_ENGINE_PLACED);
+        assert(slot_for(SC, MW_CTL_BOUND) && !dsp_mask[0] && !(dsp_mask[1] & 1u));
+        quiet = 1; key_at = ticks; /* stopped by a key: core A waits for the two seconds */
         run(100);
         assert(!count_ops(0, from, 3) && !count_ops(0, from, 4) && test_live(0, 3) == (int)(top - 900u) && !dl_engine_evacuations);
         assert(mw_engines_wait[0][0] == MW_WAIT_EVACUATION && dl_engine_why[0] == 7 && mw_engines[1][0].state == MW_ENGINE_PLACED);
@@ -1219,20 +1259,20 @@ int main(int argc, char **argv)
         unplaced(0, 1); unplaced(1, 1); unplaced(0, 8); unplaced(1, 8);
         assert(!dl_engine_reserved(0) && !dl_engine_reserved(1) && test_capacity(0) == top);
     } else if (mode == 40) {
-        /* No room for the tap's price: a reader is refused (RUNTIME_CYCLES), nothing placed. Sidechain is not charged
-         * for the tap (it never was), so it comes as before the key bus, the bus with it, and nothing is charged. A
-         * reader beside it still pays the price: refused while it does not fit, then taken with no bus job at all.
-         * Sidechain goes and the bus stays for the reader (Sidechain's span a hole under it); the reader goes and the
-         * bus is disabled, unplaced and its price let go. */
+        /* No room for the tap's price: a reader still goes in (owner, 24 October 2026: its install never depends on the
+         * Part on screen), nothing placed or charged, the bus waiting for room. Sidechain is not charged for the tap (it
+         * never was), so it comes as before the key bus, the bus with it, and nothing is charged. With room the reader's
+         * price is taken with no bus job at all. Sidechain goes and the bus stays for the reader (Sidechain's span a
+         * hole under it); the reader goes and the bus is disabled, unplaced and its price let go. */
         kb_fits = 0;
-        assert(refused(pkg_reader, sizeof pkg_reader) == RUNTIME_CYCLES && !mw_engines_jobs && !trails[0]);
+        assert(install(pkg_reader, sizeof pkg_reader) == MU_APPLIED);
+        run(100);
+        assert(!mw_engines_jobs && !trails[0] && !kb_charged && !dsp_mask[0] && !dsp_mask[1]);
         assert(install(pkg_sc, sizeof pkg_sc) == MU_APPLIED);
         run(300);
         assert(slot_for(SC, MW_CTL_ACTIVE) && dsp_mask[0] == 9 && dsp_mask[1] == 9 && mw_engines_jobs == 8 && !kb_charged);
-        assert(refused(pkg_reader, sizeof pkg_reader) == RUNTIME_CYCLES && !kb_charged);
         kb_fits = 1;
         unsigned from[2] = {trails[0], trails[1]};
-        assert(install(pkg_reader, sizeof pkg_reader) == MU_APPLIED);
         run(100);
         assert(mw_engines_jobs == 8 && trails[0] == from[0] && trails[1] == from[1] && kb_charged); /* nothing sent */
         remove_module(SC);
@@ -1357,8 +1397,9 @@ int main(int argc, char **argv)
         }
     } else if (mode == 46) {
         /* One core's reset lags (its chunks answered late): the other core waits, its bus not enabled, until both
-         * resets are complete, so no reader reads that core's half of the window before it is fresh. */
-        stall_reset[1] = 40;
+         * resets are complete, so no reader reads that core's half of the window before it is fresh. The stall stays under
+         * the transport's 64-frame timeout: core 0's reset packets, one a frame, advance the frames meanwhile. */
+        stall_reset[1] = 24;
         assert(install(pkg_reader, sizeof pkg_reader) == MU_APPLIED);
         unsigned waited = 0;
         for (unsigned t = 0; t < 300 && (dsp_mask[0] & dsp_mask[1] & 8u) != 8u; ++t) {
@@ -1382,10 +1423,11 @@ int main(int argc, char **argv)
         second[31] ^= 1u;
         assert(refused(second, sizeof second) == RUNTIME_FEATURE);
         assert(mw_engines_view.keybus & 0x80u); /* the view says the bus cannot come up this boot */
-        if (install(pkg_sc, sizeof pkg_sc) == MU_APPLIED) {
-            run(300);
-            assert(!(dsp_mask[0] & 8u) && !(dsp_mask[0] & 1u)); /* core 0 waits for an unknown core 1 */
-        }
+        /* The uncertain DISABLE closed core 1's owned channel: Sidechain could never place there, so it is refused at
+         * admission (STUCK_BOOT), and nothing enables core 0's bus or Sidechain meanwhile. */
+        assert(dl_owned_closed(1) && refused(pkg_sc, sizeof pkg_sc) == RUNTIME_CONFLICT);
+        run(300);
+        assert(!(dsp_mask[0] & 8u) && !(dsp_mask[0] & 1u));
     } else if (mode == 48) {
         /* The scrub waits while a slot buffer covers the window: the bus is off there, its seed live, the window held,
          * and a reader is told to retry (the third BUSY reason: a live seed with the bus off and an idle lane). */
@@ -1513,7 +1555,7 @@ int main(int argc, char **argv)
         assert(install(pkg_ab, sizeof pkg_ab) == MU_APPLIED);
         run(400);
         assert(slot_for(AB, MW_CTL_BOUND) && !mw_engines_jobs && !cas_count && !dl_engine_reserved(0) && !dl_engine_reserved(1));
-        assert(test_capacity(0) == top && test_capacity(1) == top);
+        assert(test_capacity(0) == top && test_capacity(1) == top && !modwerk_controller_settling()); /* nothing to wait for */
         leasing = 4u;
         run(600);
         assert(slot_for(AB, MW_CTL_ACTIVE) && dsp_mask[0] == 4 && dsp_mask[1] == 4 && ab_reset_is(0));
@@ -1641,6 +1683,133 @@ int main(int argc, char **argv)
         kb_fits = 1;
         run(200);
         assert(kb_charged && dsp_mask[0] == 8 && dsp_mask[1] == 8);
+    } else if (mode == 61) {
+        /* Owner, 24 October 2026: the pick that brings a reader's effect pays the tap's price, not its install. No Part
+         * names it yet: installed, nothing charged. A pick of it where the price does not fit is DSP FULL, nothing
+         * charged. The tap is charged on both cores, so the box shows the core that ran out: on T5 FX1 (core A, 3,120)
+         * the pick's own, counting 100 its own and 3,200 the tap; on T1 FX1 (core B, 3,565, which has room) core A, the
+         * tap all it adds there. With room the pick goes, and once the bank names it the bus comes with its price, which
+         * no later set pays again. */
+        extern volatile uint32_t dl_refusal[8], dl_refusal_core;
+        names_reader = 0;
+        test_none(); test_fx(63, 50);
+        memset(test_parts, 0, sizeof test_parts);
+        assert(install(pkg_reader, sizeof pkg_reader) == MU_APPLIED);
+        run(100);
+        assert(!kb_charged && !dsp_mask[0] && !dsp_mask[1]);
+        uint8_t ids[16] = {0};
+        kb_price = 3200;
+        ids[4] = 63; /* T5 FX1: core A */
+        assert(test_select(ids, pump) != 1 && test_active(4) != 63 && !kb_charged);
+        assert(dl_refusal[0] == 1u && dl_refusal[1] == 4u && dl_refusal[2] == 63u && dl_refusal[4] == 3300u && dl_refusal_core == 2u);
+        ids[4] = 0; ids[0] = 63; /* T1 FX1: core B */
+        assert(test_select(ids, pump) != 1 && test_active(0) != 63 && !kb_charged);
+        assert(dl_refusal[0] == 1u && dl_refusal[1] == 0u && dl_refusal[2] == 63u && dl_refusal[4] == 3200u && dl_refusal_core == 0u);
+        kb_price = 72;
+        assert(test_select(ids, pump) == 1 && test_active(0) == 63);
+        names_reader = 1; test_parts[0][0] = 63;
+        run(200);
+        assert(kb_charged && dsp_mask[0] == 8 && dsp_mask[1] == 8);
+        kb_price = 3500; /* charged now: a set naming it again adds nothing for the tap */
+        ids[1] = 63;
+        assert(test_select(ids, pump) == 1);
+    } else if (mode == 62) {
+        /* Beta finding 35: a 600-word pick on T6 FX1 fits core A packed (1,800 of 1,936) but no one run beside the three
+         * running (holes of 400 and 336 words), and no trim or unload frees one. Without a packer it is refused, as
+         * before; with one the manager has the core packed while the request waits, then loads it at the top. */
+        test_fx(11, 600);
+        memset(test_parts, 0, sizeof test_parts);
+        test_parts[0][4] = 5; test_parts[0][5] = 6; test_parts[0][6] = 7; test_parts[0][7] = 8;
+        uint8_t ids[16];
+        memcpy(ids, test_parts[0], 16);
+        assert(test_select(ids, pump) == 1);
+        test_parts[0][5] = 0; memcpy(ids, test_parts[0], 16);
+        assert(test_select(ids, pump) == 1);
+        assert(test_live(0, 5) == 0 && test_live(0, 6) < 0 && test_live(0, 7) == 800 && test_live(0, 8) == 1200);
+        test_parts[0][5] = 11; memcpy(ids, test_parts[0], 16);
+        unsigned trims = test_trims(), unloads = test_unloads();
+        assert(test_select(ids, pump) == DL_SELECT_MEMORY && test_idle() && test_live(0, 11) < 0 && !packs);
+        pack_on = 1;
+        assert(test_select(ids, pack_pump) == 1 && test_idle() && packs == 1 && !pack_left);
+        assert(test_live(0, 5) == 0 && test_live(0, 7) == 400 && test_live(0, 8) == 800 && test_live(0, 11) == 1336);
+        assert(test_trims() == trims && test_unloads() == unloads && test_active(5) == 11);
+        /* Packed, the next pick needs no packing. */
+        ids[5] = 6;
+        assert(test_select(ids, pack_pump) == 1 && packs == 1 && test_live(0, 6) >= 0);
+    } else if (mode == 63) {
+        /* A pick refused after its slot's old code was unloaded for it (no packer): the observer is nudged to load that
+         * code back, since the slot runs the stub under the old effect's name. */
+        test_fx(11, 600);
+        memset(test_parts, 0, sizeof test_parts);
+        test_parts[0][4] = 5; test_parts[0][5] = 6; test_parts[0][6] = 7; test_parts[0][7] = 8;
+        uint8_t ids[16];
+        memcpy(ids, test_parts[0], 16);
+        assert(test_select(ids, pump) == 1);
+        test_set_observed_valid(1);
+        unsigned unloads = test_unloads();
+        ids[5] = 11;
+        assert(test_select(ids, pump) == DL_SELECT_MEMORY && test_unloads() == unloads + 1 && test_idle());
+        assert(test_live(0, 6) < 0 && test_live(0, 11) < 0 && !test_observed_valid());
+    } else if (mode == 64) {
+        /* Core B's owned channel closed from outside the engines (as a legacy packet aging out or the stall watchdog's
+         * abort closes it; MKII, 27 Oct 2026): no engine job can reach it this boot. Sidechain is refused at admission
+         * (STUCK_BOOT), a reader too (the key bus is down), and a placement there reads STUCK, never a wait for the
+         * transport that lasts until a power cycle. Core A stays open. */
+        dl_owned_fail_closed(1);
+        run(20);
+        assert(dl_owned_closed(1) && !dl_owned_closed(0));
+        assert(refused(pkg_sc, sizeof pkg_sc) == RUNTIME_CONFLICT && mw_engines_admitted[0] == MW_ENGINE_STUCK_BOOT + 1u);
+        assert(refused(pkg_reader, sizeof pkg_reader) == RUNTIME_FEATURE);
+        static const uint8_t idle[2], none[2];
+        assert(mw_engines_place(1u, 2u, 7u, idle, none, 3u) == -1 && mw_engines_wait[1][0] == MW_WAIT_STUCK);
+        assert(mw_engines_place(8u, 2u, 7u, idle, none, 3u) == -1 && mw_engines_wait[1][3] == MW_WAIT_STUCK);
+        run(20);
+        assert(!mw_engines_jobs && !dl_engine_reserved(1) && mw_engines[1][0].state == MW_ENGINE_FREE && !trails[1]);
+        assert(mw_engines_admit(1u, 0u, 0u) == MW_ENGINE_STUCK_BOOT);
+    } else if (mode == 65) {
+        /* PLAY right after a boot (owner's MKII, 27 October 2026, Analog BD silent until the next stop): used while the
+         * sequencer plays, Analog BD is placed, reset from its package and enabled without a stop, and nothing moves.
+         * Its 3,776-word reset goes eight packets a job, so the whole thing takes about 30 board ticks (half a second);
+         * at one 24-word packet a tick the reset alone took 158 (2.6 s). */
+        quiet = 0;
+        unsigned start = ticks;
+        assert(install(pkg_ab, sizeof pkg_ab) == MU_APPLIED);
+        /* About as many frames a tick as the unit runs (16 samples a frame, 60 ticks a second: about 46). */
+        while (!slot_for(AB, MW_CTL_ACTIVE) && ticks - start < 600u) {
+            ++ticks; modwerk_controller_lease_seen |= (uint8_t)leasing; modwerk_controller_tick(); test_advance();
+            for (unsigned f = 0; f < 23; ++f) dsp();
+            /* The boot restore's "MODULES LOADED" waits for this (modset.c). */
+            assert(slot_for(AB, MW_CTL_ACTIVE) || modwerk_controller_settling());
+        }
+        assert(!modwerk_controller_settling());
+        assert(slot_for(AB, MW_CTL_ACTIVE) && dsp_mask[0] == 4 && dsp_mask[1] == 4 && ab_reset_is(0));
+        placed_at(0, 4, top - 998u); placed_at(1, 4, top - 998u);
+        for (unsigned c = 0; c < 2; ++c) {
+            unsigned resets = 0;
+            for (unsigned i = 0; i < trails[c]; ++i) resets += trail[c][i].op == 11u && trail[c][i].w7 == 4u;
+            assert(resets == 158u); /* every packet still 24 words or fewer, at its own offset (the receiver's check) */
+        }
+        assert(ticks - start <= 30u && !dl_engine_evacuations && !test_trims()); /* half a second */
+    } else if (mode == 66) {
+        /* After a boot (owner's MKII, 28 October 2026): the restored Part's track is signed for Analog BD's machine, but
+         * its renderer asks for the lease only from the first trig, so the engine waited for PLAY and missed the first
+         * trigs. The Part's signature counts as use: placed while stopped, before any lease, and the notice waits. */
+        leasing = 0; ++board_bank;
+        assert(install(pkg_ab, sizeof pkg_ab) == MU_APPLIED);
+        run(400);
+        assert(slot_for(AB, MW_CTL_BOUND) && !mw_engines_jobs && !modwerk_controller_settling());
+        bank_module = AB; ++modwerk_machine_assigned; /* the track signed, as mw_assign counts it */
+        unsigned start = ticks;
+        while (!slot_for(AB, MW_CTL_ACTIVE) && ticks - start < 600u) {
+            run(1);
+            assert(slot_for(AB, MW_CTL_ACTIVE) || modwerk_controller_settling());
+        }
+        assert(slot_for(AB, MW_CTL_ACTIVE) && dsp_mask[0] == 4 && dsp_mask[1] == 4 && !modwerk_controller_settling());
+        placed_at(0, 4, top - 998u); placed_at(1, 4, top - 998u);
+        /* A bank whose Parts sign no Analog BD track parks it again once stopped and settled. */
+        bank_module = 0; ++board_bank;
+        run(400);
+        assert(slot_for(AB, MW_CTL_RETIRING)); unplaced(0, 4); unplaced(1, 4);
     } else assert(0);
     return 0;
 }
@@ -1668,6 +1837,9 @@ def generated(work, units):
             for old, new in core.REFUSAL_EDITS['manager.c']:
                 assert text.count(old) == 1, old[:60]
                 text = text.replace(old, new)
+            text = resident_engines.refusal(text)
+        elif name == 'allocator.c':
+            text = resident_engines.allocator(text)
         if name in zero_state.UNITS:
             text = zero_state.unit(name, text, reference)
         if name == 'transfer.c':
@@ -1748,7 +1920,7 @@ def build(work):
 
 @unittest.skipUnless(shutil.which('cc'), 'host C compiler unavailable')
 class ResidentEnginesBoard(unittest.TestCase):
-    MODES = 61
+    MODES = 67
 
     def test_place_switch_run_disable_unswitch_free_and_their_refusals(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -1797,10 +1969,12 @@ int dl_owned_cancel(const struct dl_owned_job *v) { (void)v;return 0; }
 int dl_owned_job_poll(const struct dl_owned_job *v,struct dl_owned_progress *p) { (void)v;(void)p;return 0; }
 int dl_owned_job_release(const struct dl_owned_job *v) { (void)v;return 0; }
 void dl_owned_fail_closed(unsigned c) { (void)c; }
+int dl_owned_closed(unsigned c) { (void)c;return 0; }
 int dl_engine_claim(unsigned c,unsigned r,int k) { (void)c;(void)r;(void)k;return 0; }
 void dl_engine_release(unsigned c,unsigned r) { (void)c;(void)r; }
 unsigned dl_engine_reserved(unsigned c) { (void)c;return 0; }
 int mw_engines_test_quiet(void) { return 1; }
+int mw_engines_test_queued(void) { return 0; }
 int mw_engines_test_settled(void) { return 1; }
 volatile uint8_t dl_engine_why[2];
 '''

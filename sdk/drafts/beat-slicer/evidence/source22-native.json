@@ -1,0 +1,93 @@
+{
+  "scope": "compiled composed Flex source backend with real stock page lookup: 32 previews and ten invalidations; synthetic ownership/identity/regions/tempo",
+  "mainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "sourceSha256": {
+    "planner.c": "01c9c25efa363679a591969931dd376a3b694a949dd8b9f89eda4bf77a88cee4",
+    "planner.h": "1a10ce9e6b34dfd35eb138690e2134550621c3bf91b2178fb50f95b9def6b7ae",
+    "planner_job.c": "767d82cc375677a115e9457af35e26fddd9de66a0dc80aa2af0fe3b5adaf0581",
+    "planner_job.h": "c4dd3faa8b3320194b54ab4d7bec6541d9e936f544b0e6236efa4fa5518d6547",
+    "pcm_reader.c": "8762e389a39b7407a7d987dc6e3e36d7d75aa6c408b1d3232d8672a380226088",
+    "pcm_reader.h": "462f495a86f32730b79a56177f99929f685d82729e4646e7b391df475d929821",
+    "preview_guard.c": "da1299674cf2ae967c58231ee9c16891afa94e27254407b5d09df6b73cc4343e",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "preview_session.c": "f87a51c77c6fda24159dcdc137cfa3b895224b0c17605c3612558e37b5a049f5",
+    "preview_session.h": "1dfe1f9ea8fb6785edc48020609c51f6b88e75381043504c011dc4bfedc8ca9d",
+    "marker_edit.h": "cd8c16a7771bf5a6d251b20e3a02fd0887d68cf4f8e5900e0c6a7fdecc0d4f05",
+    "flex_copy.c": "b069d6b3ac5d8922281811a8eaa5c93d8ab33267ec89fb9f1c99305f35d80b2c",
+    "flex_copy.h": "1bb469187ef75be2d25b671622f79ec2a5e199d877a418e8d9885c70781ee513",
+    "flex_metadata.c": "7dd96a7d94ceb81bbd20fd49995d1c5e64c1077f97ad15b623a14c32607f732b",
+    "flex_metadata.h": "8a5e2da2cb447380883209942ee2654956cd50aae4e68abfe7f2d270d97eab6f",
+    "flex_source.c": "83ca4c3330ba147ea1d9f4248095ef0350210e6451eb5b0f65572ac31432c208",
+    "flex_source.h": "8dce26364e7f270eafbd7f40f12021aaa0b966edf577305477efd7aaa9a19021",
+    "test_flex_fixture.h": "a365b7e5794e2bf16e39df925aeb44d3d405932711827ffefbe2848a5583393d",
+    "test_flex_source.c": "3ae9a11d7a14c5f7d39f9c559ef2804be8b8337e62e692682ceedc320248f88e",
+    "test_flex_source.py": "a8fd662fcbbd0d20770a01e8eab99163ee070322e55152114592fd10d91de4fe",
+    "flex_lookup.S": "baeb9375129d44fe2db0bcb8d845ced29cd755ac126c3ab2afd696aebbca2487",
+    "flex_source_native.py": "4ea4f0bc7015f6a937d9b9e698687fe1f0b1311522d2812037dd8a62c2b39aca",
+    "stock_probe/flex_native_probe.cpp": "6b882a87d0d058463a51e14ebb4f2913ffd90228a422b31ae5e0cd98701ae006",
+    "stock_probe/CMakeLists.txt": "20f11b46e9dd6426ef4ba4383340f951108bf021c771a75576cc3d6e49c6b620"
+  },
+  "compiler": "m68k-elf-gcc (GCC) 16.2.0",
+  "flags": [
+    "-DBS_FLEX_STOCK=1",
+    "-std=c99",
+    "-mcpu=5475",
+    "-msoft-float",
+    "-O2",
+    "-ffreestanding",
+    "-fno-builtin",
+    "-fno-common",
+    "-fno-jump-tables",
+    "-fno-tree-loop-distribute-patterns",
+    "-fno-optimize-sibling-calls",
+    "-fno-asynchronous-unwind-tables",
+    "-fno-unwind-tables",
+    "-fno-ident",
+    "-fstack-usage",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fno-late-combine-instructions"
+  ],
+  "assemblyFlags": [
+    "-mcpu=5475",
+    "-c"
+  ],
+  "objectSha256": {
+    "planner.o": "862fbf786e4388477f7c3efa7601dad7bef8d9583c5b0a21db5351e3276594d4",
+    "planner_job.o": "8f9b560021a93770770eb294c6d569d94fd5b75596e5f1d332d61b4d75664485",
+    "pcm_reader.o": "79fa1b604de2d1e08edc4f41db4578f9ff68afc802dfadc3dd8a4d14a27427e3",
+    "preview_guard.o": "9c246ad2e54d39275f17c672f2dbed461df158345dbbb214153c180d6cb5b24b",
+    "preview_session.o": "3fac6614d37d4abbc6037859a5722fe36aeb3c48ff816cc43ea61e49e95bb298",
+    "flex_metadata.o": "81dc6086e9ccab879bc215398e87d793a72bc5153abc9eeafddf0c3f2426ee9b",
+    "flex_copy.o": "569c269a42d5fcb9e401be217326030f56ce3e89a1fde23d7b5cf6c185a42544",
+    "flex_source.o": "d42c28018f81f29ba3921b8c483916ffa9e8ff38405ad8ba953c8bb203563796",
+    "test_flex_source.o": "e66c39faf20f7c8c2134bb59de6b9ee9335d9764daf584a6097722d028e2b97b",
+    "flex_lookup.o": "814d6c1ba95acf54b1afadc5767e733071288fb408cf14d87cadb271e8a1b54f"
+  },
+  "runnerSha256": "37430f78a9cb14684a378716f71aeb127883ca1baeb3474db553c3021aba5991",
+  "codegenGuard": "passed",
+  "freestandingLink": true,
+  "componentSize": [
+    "text\t   data\t    bss\t    dec\t    hex\tfilename",
+    "    624\t      0\t      0\t    624\t    270\t/evidence/source22-native/flex_source.o",
+    "    940\t      0\t      0\t    940\t    3ac\t/evidence/source22-native/flex_metadata.o",
+    "   1010\t      0\t      0\t   1010\t    3f2\t/evidence/source22-native/flex_copy.o",
+    "     40\t      0\t      0\t     40\t     28\t/evidence/source22-native/flex_lookup.o"
+  ],
+  "copyStackUsage": [
+    "/source/sdk/drafts/beat-slicer/flex_copy.c:7:24:bs_flex_copy_locked\t116\tdynamic,bounded"
+  ],
+  "exitCode": 0,
+  "stdout": [
+    "SOURCE_SHA256: 6b882a87d0d058463a51e14ebb4f2913ffd90228a422b31ae5e0cd98701ae006",
+    "PASS: compiled Flex copy, real stock page lookup and preserved registers"
+  ],
+  "stderrLines": 8,
+  "stderrSha256": "21495107133b98459d58d78262e4935ad828b0578af9c62da412effd72215f99",
+  "hardware": "not tested",
+  "audio": "not tested",
+  "timing": "not measured",
+  "nativeSourceAccess": "compiled preview/candidate chain with fixture provider; native lock, complete writer coverage and live admission absent"
+}

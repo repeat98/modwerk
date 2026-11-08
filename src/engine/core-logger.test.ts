@@ -18,7 +18,7 @@ describe('mandatory core logger',()=>{
   for(const [key,row] of Object.entries(pkg.guards)){
    const symbol=object.symbols.find(s=>s.name==='olog_replay_'+key)
    if(!symbol)continue
-   const n='patchLength' in row?row.patchLength:row.length
+   const n='replay' in row?row.replay:'patchLength' in row?row.patchLength:row.length
    expect(Array.from(object.sections[symbol.section].data.slice(symbol.value,symbol.value+n))).toEqual(Array(n).fill(0))
   }
  })

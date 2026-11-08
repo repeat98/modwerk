@@ -32,10 +32,10 @@ class TableAdmissionTests(unittest.TestCase):
                      '-fno-jump-tables', '-fno-asynchronous-unwind-tables', '-fomit-frame-pointer',
                      '-ffunction-sections', '-fdata-sections', '-Wall', '-Wextra', '-Werror',
                      '-I' + str(glue), '-I' + str(ADAPTER), '-I' + str(ROOT / 'sdk/runtime/loader'),
-                     '-I' + str(ROOT / 'sdk/runtime/upload')]
+                     '-I' + str(ROOT / 'sdk/runtime/upload'), '-I' + str(ROOT / 'sdk/machines/octatrack/include')]
             sources = [entry, glue / 'runtime.c', *[ADAPTER / (name + '.c') for name in
                        ('machine_admission_runtime', 'machine_admission', 'machine_contributors', 'machine_declarations',
-                        'machine_lifetime', 'machine_parts', 'table_admission', 'table_declarations')]]
+                        'machine_lifetime', 'machine_parts', 'sample_editor_actions', 'table_admission', 'table_declarations')]]
             objects = []
             for source in sources:
                 obj = work / (source.stem + '.o')
@@ -90,7 +90,7 @@ class TableAdmissionTests(unittest.TestCase):
                      '-fno-jump-tables', '-fno-asynchronous-unwind-tables', '-fomit-frame-pointer',
                      '-ffunction-sections', '-fdata-sections', '-Wall', '-Wextra', '-Werror',
                      '-I' + str(glue), '-I' + str(ADAPTER), '-I' + str(ROOT / 'sdk/runtime/loader'),
-                     '-I' + str(ROOT / 'sdk/runtime/upload')]
+                     '-I' + str(ROOT / 'sdk/runtime/upload'), '-I' + str(ROOT / 'sdk/machines/octatrack/include')]
             objects = []
             for source in [glue / 'runtime.c', *[ADAPTER / (name + '.c') for name in
                            ('loader_table_driver', 'table_admission', 'table_declarations', 'machine_lifetime',

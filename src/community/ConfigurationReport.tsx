@@ -3,10 +3,10 @@ import { createPortal } from 'react-dom'
 import { Icon } from '../components/Icon'
 import { DEVICES_BY_ID } from '../devices/registry'
 import { post } from './api'
-import { BetaReportReminder, BugReportSuccess } from './BugReportNotice'
+import { AuthorExpectations, BetaReportReminder, BugReportSuccess } from './BugReportNotice'
 import { catalogModules, configurationSummary } from './configuration-report'
 import { useCommunity } from './context'
-import { FLASH_STATES, OT_MODELS, type FlashState, type IssueContext, type OtModel } from './issue-context'
+import { DIGI_FLASH_CHOICES, FLASH_STATES, OT_FLASH_CHOICES, OT_MODELS, type FlashState, type IssueContext, type OtModel } from './issue-context'
 import { refreshModuleIssues, type BugReportResult } from './issue-tracker'
 import { MemberPrompt } from './MemberPrompt'
 import { describeOtLog, OT_LOG_NAME } from './ot-log'
@@ -22,7 +22,7 @@ export function ConfigurationReportDialog({ machine, configurationId, onClose }:
   const dialog = useRef<HTMLDialogElement>(null), heading = useId(), success = useRef<HTMLDivElement>(null), logHelp = useId()
   const { session } = useCommunity(), workspace = useWorkspaceReportContext(machine), device = DEVICES_BY_ID[machine]
   const { file, input: logInput, read: readLog, remove: removeLog } = useOtLogFile(), digi = machine !== 'octatrack'
-  const [model, setModel] = useState<OtModel | ''>(''), [flash, setFlash] = useState<FlashState>('flashed')
+  const [model, setModel] = useState<OtModel | ''>(''), [flash, setFlash] = useState<FlashState | ''>('')
   const [sent, setSent] = useState<BugReportResult | null>(null), [busy, setBusy] = useState(false), [error, setError] = useState('')
   useEffect(() => {
     const element = dialog.current, previousFocus = document.activeElement
@@ -48,7 +48,7 @@ export function ConfigurationReportDialog({ machine, configurationId, onClose }:
       if (fields.actual.length > 2000) throw new Error('Keep the description under 2,000 characters.')
       const context: IssueContext = digi
         ? { machine: machine as 'digitakt' | 'digitone', model: fields.model, flash: fields.flash as FlashState, os: fields.os, moduleVersion: resolved.modules[0]?.version ?? '', modules: resolved.modules, keepStockFx2: null, build: '' }
-        : { model: model as OtModel, flash, os: file.log?.summary.os ?? REPORT_OS, modules: resolved.modules, keepStockFx2: resolved.keepStockFx2, build: resolved.build }
+        : { model: model as OtModel, flash: flash as FlashState, os: file.log?.summary.os ?? REPORT_OS, modules: resolved.modules, keepStockFx2: resolved.keepStockFx2, build: resolved.build }
       const result = await post<BugReportResult>('/configuration-reports', { title: fields.title, steps: fields.steps, expected: fields.expected, actual: fields.actual, context, visibility: 'forum', notifyUpdates: fields.notifyUpdates === 'on', ...(file.log ? { log: file.log.text } : {}) })
       setSent(result)
       for (const module of catalogued) refreshModuleIssues(module.id)
@@ -60,11 +60,11 @@ export function ConfigurationReportDialog({ machine, configurationId, onClose }:
     ? <div className="issue-report-row issue-report-row-3">
       <label>{device.name}<select name="model" required defaultValue=""><option value="" disabled>Choose…</option>{(device.variants ?? [device.name]).map(variant => <option key={variant}>{variant}</option>)}</select></label>
       <label>Base OS<select name="os" required defaultValue=""><option value="" disabled>Choose…</option>{device.firmware?.releases.map(release => <option key={release}>{release}</option>)}</select></label>
-      <label>It is running<select name="flash" required defaultValue="flashed">{Object.entries(FLASH_STATES).map(([key, label]) => <option key={key} value={key}>{label.replace('an Octamod', 'a Modwerk')}</option>)}</select></label>
+      <label>It is running<select name="flash" required defaultValue="flashed">{DIGI_FLASH_CHOICES.map(key => <option key={key} value={key}>{FLASH_STATES[key]}</option>)}</select></label>
     </div>
     : <div className="issue-report-row">
       <label>Octatrack<select required value={model} onChange={event => setModel(event.target.value as OtModel)}><option value="" disabled>Choose…</option>{(Object.keys(OT_MODELS) as OtModel[]).map(key => <option key={key} value={key}>{OT_MODELS[key]}</option>)}</select></label>
-      <label>It is running<select required value={flash} onChange={event => setFlash(event.target.value as FlashState)}>{(Object.keys(FLASH_STATES) as FlashState[]).map(key => <option key={key} value={key}>{FLASH_STATES[key]}</option>)}</select></label>
+      <label>It is running<select required value={flash} onChange={event => setFlash(event.target.value as FlashState)}><option value="" disabled>Choose…</option>{OT_FLASH_CHOICES.map(key => <option key={key} value={key}>{FLASH_STATES[key]}</option>)}</select></label>
     </div>
 
   const count = configurationSummary(catalogued.length)
@@ -80,6 +80,7 @@ export function ConfigurationReportDialog({ machine, configurationId, onClose }:
       <div className="configuration-report-body">
         <BetaReportReminder />
         <p className="configuration-report-intro">For a problem in the combination, or when you do not know which module is to blame. If one module clearly misbehaves, report it on that module’s page.</p>
+        <AuthorExpectations />
         <section className="configuration-report-config" aria-label="Configuration">
           <div className="configuration-report-config-head"><span>Configuration</span><strong>{file.log ? 'Read from ' + OT_LOG_NAME : resolved.name || 'Not saved'}</strong><small>{count}</small></div>
           {catalogued.length > 0

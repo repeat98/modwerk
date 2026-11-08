@@ -79,6 +79,16 @@ it('advances one publication transaction without reporting a prefix as the compl
   expect(await client.rollback()).toMatchObject({ phase: 'ready', active: old, generation: 2 })
 })
 
+it('lets a long set keep publishing past the reply timeout within the budget it is given', async () => {
+  const data = new Uint8Array(200).fill(9)
+  for (const budget of [undefined, 2000]) {
+    const unit = controller(0, 8), client = await UploadSession.connect(unit.transport, base, { timeoutMs: 100 })
+    await client.stage({ base, data, sha256: sha(data) })
+    if (budget) expect(await client.activate(budget)).toMatchObject({ phase: 'pending', active: sha(data) })
+    else await expect(client.activate()).rejects.toThrow(/did not finish before its deadline/) // 8 rows at 25 ms each
+  }
+})
+
 it('retains an unconfirmed prefix after a lost progress reply and sends no more commands on that connection', async () => {
   const unit = controller(0, 3), data = new Uint8Array(200).fill(9)
   let commits = 0, calls = 0

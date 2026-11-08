@@ -4,10 +4,10 @@
  "ports": {
   "poly8": {
    "sources": {
-    "sdk/octabam/modules/poly8/manifest.py": "1b9dfc90a6d5901ee3e453b7c3854363aad82f7267edc090b5f4439a57f12ddb",
+    "sdk/octabam/modules/poly8/manifest.py": "f8759dbcbb246b247c195e61f0c0464fd0cdc0dd40b68dd8f74c03b46c584afc",
     "sdk/octabam/modules/poly8/polyphony.s": "c86a3a783c46ecdbb3b44341098f0c094c65b9a8d11716835c2d28c2d2d6ecee",
     "sdk/octabam/modules/poly8/registration.s": "9bd549a03c7008d45e5ffcd647375ed5ea7507845857f68c407bb247edd942ae",
-    "sdk/octabam/modules/poly8/shared-machine.s": "e49d47ed22aa70a770e5738e69225106219b0337eabe67351d2e09150220ee80"
+    "sdk/octabam/modules/poly8/shared-machine.s": "3148a219ca0a1cdf5b1a20c64ff4da564b1078f599a2ceb08b15f6c10e908923"
    },
    "subscribe": [
     {
@@ -62,8 +62,19 @@
       "0x40079248",
       "0x400585fa",
       "0x4003c950",
+      "0x4007865e",
       "0x40078678",
       "0x400786ce",
+      "0x40078c22",
+      "0x40078c28",
+      "0x40078cb0",
+      "0x40078cb6",
+      "0x40078d2e",
+      "0x40078d34",
+      "0x40078dee",
+      "0x40078df4",
+      "0x40078e7c",
+      "0x40078e82",
       "0x40079904",
       "0x4003a526",
       "0x4003bff4",
@@ -140,8 +151,8 @@
   },
   "vector": {
    "sources": {
-    "sdk/octabam/modules/vector/control.s": "caa138dc1113f80b9d00477f022debebc9d331d87e63c4b06c9257b5e4897aea",
-    "sdk/octabam/modules/vector/manifest.py": "b9dec167f8bd4f1b691069cc89834f6c2a6717b874eb28629ef5c8c026d3d976"
+    "sdk/octabam/modules/vector/control.s": "1939a627870464126d138522173d0465d1abc790cdb4ad4bc29a15501484faf5",
+    "sdk/octabam/modules/vector/manifest.py": "4d921f24256038797a99671534885b0bb9a27eaa79261b11136cf0a95a75af21"
    },
    "contribute": [
     {
@@ -187,7 +198,8 @@
     "label": "VECTOR",
     "flags": [
      "POOL",
-     "BACKING"
+     "BACKING",
+     "SETUP_PAGE"
     ],
     "fields": {
      "assign": "st_assign",
@@ -197,17 +209,18 @@
      "pool_left": "st_pool_left",
      "choice_left": "st_pool_choice_left",
      "list_draw": "st_list_draw",
-     "validate": "vector_validate_part"
+     "validate": "vector_validate_part",
+     "setup_page": "st_setup_page",
+     "setup_knob": "st_setup_knob"
     }
    },
    "dropCopies": [
     "st_name_replay",
     "st_main_replay",
     "st_edit_replay",
-    "st_draw_replay",
-    "mg_stock_note_draw"
+    "st_draw_replay"
    ],
-   "why": "VECTOR's st_* chooser hooks and their stock replays are unreachable in the package; its registry functions are the descriptor's"
+   "why": "VECTOR's st_* chooser hooks and their stock replays are unreachable in the package; its registry functions are the descriptor's, and its SRC SETUP page 2 (st_setup_page, st_setup_knob, which its card build's st_setup_draw6 and st_setup_edit6 call) the SETUP_PAGE record's"
   },
   "synth": {
    "sources": {
@@ -518,12 +531,14 @@
   },
   "quantizer": {
    "sources": {
-    "sdk/octabam/modules/quantizer/manifest.py": "0cb4a79f7cd68e1881cd1076a0f6ba2e132b1c199da3a2d4923906b443797602",
-    "sdk/octabam/modules/quantizer/upstream/quantizer/core.s": "2992b6c85cff440de03ae84eb22dee8b8a83a84f23e94b699404d28940b6f958",
+    "sdk/octabam/modules/quantizer/manifest.py": "e0841437a471b000b448ce8417c8fd25cba1cf155aec488d08d2888f4c249394",
+    "sdk/octabam/modules/quantizer/upstream/quantizer/core.s": "655bf8cb893ecbe8ec167633322491ae89fdf498c818e172ad6ba34c3fc992c8",
     "sdk/octabam/modules/quantizer/upstream/quantizer/keys.s": "e2ffdbfae34b0828794a4eb4cc229e3efcaed25dc953bf7c05c13f6e37f65587",
-    "sdk/octabam/modules/quantizer/upstream/quantizer/manifest.py": "e637e3718e4b65320b847ef0758e0d46800f8be6b8020290f89192c798c535ef",
-    "sdk/octabam/modules/quantizer/upstream/quantizer/quantizer.s": "b14f214cc8236c19b8881d1113ea42359052a6d7ef0e9e0f02aaa88279da64a9",
-    "sdk/octabam/modules/quantizer/upstream/quantizer/scale.s": "82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64"
+    "sdk/octabam/modules/quantizer/upstream/quantizer/manifest.py": "9550382938153ec1c6fe5a262612c5a4daad1d71aca68da7c0b6a4c55e801aa8",
+    "sdk/octabam/modules/quantizer/upstream/quantizer/panel_transaction.inc.s": "e51d5d035e8561b27671ac751957756831988786b5b25163688cc066c36b9c79",
+    "sdk/octabam/modules/quantizer/upstream/quantizer/quantizer.s": "6883dce6058cfc42eca1cb4c51a1d7d2318579a5adb5e84ae4202d7570c26abb",
+    "sdk/octabam/modules/quantizer/upstream/quantizer/scale.s": "82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64",
+    "sdk/octabam/modules/quantizer/upstream/quantizer/stock_guard.py": "5f1fe08ef5a4eb05cd772c9b65ee9f54c2371914a8360c8589109a9ce4308c2d"
    },
    "subscribe": [
     {
@@ -736,6 +751,16 @@
       "qz_lbl_glide",
       "qz_get_glide",
       "qz_set_glide"
+     ],
+     [
+      "qz_lbl_trk",
+      "qz_get_trk",
+      "qz_set_trk"
+     ],
+     [
+      "qz_lbl_fol",
+      "qz_get_fol",
+      "qz_set_fol"
      ]
     ],
     "tables": [
@@ -749,13 +774,13 @@
     "SEQUENCER getters",
     "SEQUENCER setters"
    ],
-   "why": "Every Scale Quantizer site is a take event (order 50) or the SEQUENCER table"
+   "why": "Every Scale Quantizer site that FM Synth's bundled copy and POLY8 also hook is a take event (order 50) or the SEQUENCER table; the source's other hooks (qz_mknob, qz_mplock, qz_mkey, qz_mnote, qz_atrig, qz_mprev, qz_heldmark, and 2.21's qz_panel_stage, qz_panel_commit) meet no base event or site and stay guarded patches. The source brings five SEQUENCER rows (SCALE, ROOT, GLIDE, TRACK, FOLLOW), inside the table's eight contributed rows"
   },
   "analog-bassdrum": {
    "sources": {
-    "sdk/octabam/modules/analog-bassdrum/control.s": "644f10fbc534d8351424e55ee96c2d0ff2f39a1b691ad8a695422d1c05e37a3f",
-    "sdk/octabam/modules/analog-bassdrum/engine.s": "c86a6ac24326fb52f71dd766b1ccc25e5dfd8511028b162459447c279da48425",
-    "sdk/octabam/modules/analog-bassdrum/machine.s": "90f9ddb5c2a4cee47e0334c3cd35a7e92d42b0ee37eb3bbc8062cc7821e6aeb4",
+    "sdk/octabam/modules/analog-bassdrum/control.s": "463dacf528e4996c7f21e97533391583329a2e3aabda95c87b7cd020dee7adb6",
+    "sdk/octabam/modules/analog-bassdrum/engine.s": "a6ff5f2fe90dbe5570512bbe54dede4c8c8f86c4ef4656fce4c57a9b600c4805",
+    "sdk/octabam/modules/analog-bassdrum/machine.s": "a33e4d36da6a14e7e856c7c7088be2820a40c7fb7014917983c729931eed55a3",
     "sdk/octabam/modules/analog-bassdrum/manifest.py": "20fa1f744630354b3986a3ad82ac6a41744345796dc783891a4c9f0bd81c787e"
    },
    "contribute": [
@@ -802,16 +827,14 @@
     "label": "ANALOG BD",
     "flags": [
      "PROTECT",
-     "POOL"
+     "SETUP_ALL",
+     "LIST"
     ],
     "fields": {
      "defaults": "ab_defaults",
      "admit_track": "ab_admit_track",
      "track_page": "ab_track_page",
      "ui_tick": "ab_ui_tick",
-     "pool_open": "ab_engine_open",
-     "choice_left": "ab_engine_left",
-     "list_draw": "ab_list_draw",
      "render": "ab_render"
     }
    },
@@ -826,7 +849,7 @@
     "modwerk_controller_write_begin",
     "modwerk_controller_write_end"
    ],
-   "why": "Every Analog BD chooser, page and renderer seam is the base registry's. Its package links the analog-bd lane's controller (analog_bd_runtime.port: no writes to stock's descriptor row 5; analog_bd_write_lease.port: render only under the board's write lease, else the stock silent source), whose two lease functions are the exact base's exports. ab_type and ab_engine_right are not descriptor fields: both assume chooser row 5, and the registry's signature lookup and RIGHT dispatch do the same with the machine's actual row."
+   "why": "Every Analog BD chooser, page and renderer seam is the base registry's. Since 0.1.6 it has no engine list (TYPE on SRC SETUP picks 808/909): without a pool it is a LIST machine: the base opens the track's window on the machine list, as for PICKUP, so the double tap shows the list at once. Its package links the analog-bd lane's controller (analog_bd_runtime.port: no writes to stock's descriptor row 5; analog_bd_write_lease.port: render only under the board's write lease, else the stock silent source), whose two lease functions are the exact base's exports. ab_type and ab_engine_right are not descriptor fields: both assume chooser row 5, and the registry's signature lookup and RIGHT dispatch do the same with the machine's actual row."
   }
  }
 }

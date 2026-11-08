@@ -95,6 +95,7 @@
     },
     {
       "id": "ring-sc",
+      "unitName": "SC Ringmod",
       "slots": "both",
       "cycles": 81,
       "cyclesKind": "executed",
@@ -116,10 +117,10 @@
       "requires": 8,
       "claims": 4,
       "version": "0.2.0-experimental",
-      "name": "Ringmod SC",
+      "name": "SC Ringmod",
       "module": "773c84aa",
       "bytes": 2416,
-      "sha256": "2ba32a49c49fbda951ae3658d663e6e8663d7ff6680e27e5b089b163d7e0a187",
+      "sha256": "5c4e7fcfdc2ec212ae2bd551fe959fe2a2c8a798e8ad24baee08b44093c6304a",
       "path": "octatrack-modules/ring-sc/0.2.0-experimental.mwrm"
     },
     {
@@ -180,7 +181,9 @@
       "module": "9fa85eef",
       "bytes": 59308,
       "sha256": "dc2ce372af73b93ef9e34a1c05c8ad18269631e0f20ed4f94e461310990466b9",
-      "path": "octatrack-modules/poly8/0.3.1-experimental.mwrm"
+      "path": "octatrack-modules/poly8/0.3.1-experimental.mwrm",
+      "lagsBehind": "0.3.2-experimental",
+      "lagReason": "0.3.2 changes only the card build's machine chooser (#842, #941, #942); over USB the base owns the chooser, and the package rebuilds byte-identical from 0.3.2's source"
     },
     {
       "id": "vector",
@@ -190,12 +193,14 @@
       "sites": 2,
       "copies": 8,
       "fills": 0,
-      "version": "0.2.4-experimental",
+      "version": "0.2.5-experimental",
       "name": "VECTOR",
       "module": "b0d51c58",
-      "bytes": 18350,
-      "sha256": "2cf04fd4343aa276271cef9d32025fb94e0da064f5702052acc152c486b1aec0",
-      "path": "octatrack-modules/vector/0.2.4-experimental.mwrm"
+      "bytes": 18354,
+      "sha256": "45c962ca3a202ac697e3d33d97e4b3b94052706a390189e5baf923fa829de577",
+      "path": "octatrack-modules/vector/0.2.5-experimental.mwrm",
+      "lagsBehind": "0.2.6-experimental",
+      "lagReason": "0.2.6 changes only the card build: st_setup_page no longer tests for row 5, which VECTOR's USB adapter already dropped (#972, #1119); the package's control unit source is byte-identical to 0.2.5's"
     },
     {
       "id": "synth",
@@ -216,16 +221,16 @@
       "id": "quantizer",
       "machine": true,
       "abi": 8,
-      "features": 130,
-      "sites": 0,
-      "copies": 5,
+      "features": 131,
+      "sites": 9,
+      "copies": 6,
       "fills": 0,
-      "version": "0.1.3-experimental",
+      "version": "0.1.4-experimental",
       "name": "Scale Quantizer",
       "module": "7e9d5687",
-      "bytes": 4660,
-      "sha256": "4bd0e586aa5c2d47e77f554734868651207f3caa57f5b7798608fda3f4efad51",
-      "path": "octatrack-modules/quantizer/0.1.3-experimental.mwrm"
+      "bytes": 7210,
+      "sha256": "33700b9339c0d0e619716cf6358ac83c9912c9881e30721411d2bf79897bbe04",
+      "path": "octatrack-modules/quantizer/0.1.4-experimental.mwrm"
     },
     {
       "id": "tapeecho",
@@ -239,14 +244,14 @@
       "abi": 8,
       "features": 3,
       "sites": 2,
-      "copies": 6,
+      "copies": 7,
       "fills": 0,
-      "version": "0.1.5-experimental",
+      "version": "0.1.6-experimental",
       "name": "Tape Echo",
       "module": "9f482bb9",
-      "bytes": 111932,
-      "sha256": "21b953eb038429a5f7428c655cb889aa871e6c794313e51b00568150528630d1",
-      "path": "octatrack-modules/tapeecho/0.1.5-experimental.mwrm"
+      "bytes": 112124,
+      "sha256": "921e7a60c3418e7ece96f24c254802b44fee2082713f25e7b964b37f233bbe9e",
+      "path": "octatrack-modules/tapeecho/0.1.6-experimental.mwrm"
     },
     {
       "id": "euclid",
@@ -316,28 +321,28 @@
       "sites": 14,
       "copies": 9,
       "fills": 0,
-      "version": "0.2.1-experimental",
+      "version": "0.2.2-experimental",
       "name": "Mute Modes",
       "module": "73bab3b1",
-      "bytes": 2702,
-      "sha256": "c35b154d7a6ff4d9affc339387d68bde87554aec82a87b60059b6307f5b2b848",
-      "path": "octatrack-modules/mute-modes/0.2.1-experimental.mwrm"
+      "bytes": 2754,
+      "sha256": "d8b871e39733ca38101c5fc42b37f3984c38a577eab393d85e3f3a6fa1f1dd00",
+      "path": "octatrack-modules/mute-modes/0.2.2-experimental.mwrm"
     },
     {
       "id": "sidechain-compressor",
       "base": true,
       "abi": 8,
-      "features": 129,
+      "features": 131,
       "sites": 2,
-      "copies": 0,
+      "copies": 8,
       "fills": 0,
-      "version": "0.1.2-experimental",
+      "version": "0.2.0-experimental",
       "name": "SIDECHAIN COMP",
       "module": "95cff696",
-      "bytes": 1236,
-      "sha256": "bb4ae316b6419288bdaeca330d08123e2ad34e8dbda3a238d3a13532e7d7e017",
-      "path": "octatrack-modules/sidechain-compressor/0.1.2-experimental.mwrm",
-      "requiredBase": "52b222497f13d3488ed71d711832beff928d40be78e7a44b72358919b504708c"
+      "bytes": 2636,
+      "sha256": "eadf2382bc71fc75a4e911c405f394ac505cc94932a1fa2ea9ce159e658b6447",
+      "path": "octatrack-modules/sidechain-compressor/0.2.0-experimental.mwrm",
+      "requiredBase": "9b3ba41715140d5fae07868a8b2adc6d89c3ec0272d8ab34c332461cf990a14c"
     },
     {
       "id": "output-matrix",
@@ -351,9 +356,9 @@
       "name": "OUTPUT MATRIX",
       "module": "caf158b5",
       "bytes": 3740,
-      "sha256": "63ab35f777ffdf1d17f619f75480b2a6d398ec04a91d7cf1e163ff7b771a3cee",
+      "sha256": "65a311c38c64652e1730426e62bed9e7c97c390d378e535a2848e660ae85dcca",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "52b222497f13d3488ed71d711832beff928d40be78e7a44b72358919b504708c"
+      "requiredBase": "9b3ba41715140d5fae07868a8b2adc6d89c3ec0272d8ab34c332461cf990a14c"
     },
     {
       "id": "cc-map",
@@ -369,22 +374,69 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "52b222497f13d3488ed71d711832beff928d40be78e7a44b72358919b504708c"
+      "requiredBase": "9b3ba41715140d5fae07868a8b2adc6d89c3ec0272d8ab34c332461cf990a14c"
     },
     {
       "id": "quantize-live-rec-toggle",
+      "unitName": "Quant Live Rec",
       "octabam": true,
       "abi": 7,
       "features": 1,
       "sites": 2,
       "copies": 0,
       "fills": 0,
-      "version": "0.1.0-experimental",
+      "version": "0.1.1-experimental",
       "name": "Quant Live Rec",
       "module": "7d0747d4",
-      "bytes": 356,
-      "sha256": "026464deb27c8178d44ad1fd5866b754478b11c114561e73000cdca3b44f86e8",
-      "path": "octatrack-modules/quantize-live-rec-toggle/0.1.0-experimental.mwrm"
+      "bytes": 364,
+      "sha256": "297f79efa4259486a6df7ce95efa29947b457597cb8f2d2794a214699d7f87fe",
+      "path": "octatrack-modules/quantize-live-rec-toggle/0.1.1-experimental.mwrm"
+    },
+    {
+      "id": "direct-jump-kyoti",
+      "unitName": "DirectJmp Kyoti",
+      "octabam": true,
+      "abi": 7,
+      "features": 1,
+      "sites": 5,
+      "copies": 0,
+      "fills": 0,
+      "version": "0.1.2-experimental",
+      "name": "DirectJmp Kyoti",
+      "module": "075d79a3",
+      "bytes": 2462,
+      "sha256": "89a38e18728bb2039a0f5e3f39305fcb7be75e0db260acd6b33bd46d7e281cef",
+      "path": "octatrack-modules/direct-jump-kyoti/0.1.2-experimental.mwrm"
+    },
+    {
+      "id": "dejavu",
+      "octabam": true,
+      "abi": 7,
+      "features": 3,
+      "sites": 9,
+      "copies": 6,
+      "fills": 0,
+      "version": "0.1.0-experimental",
+      "name": "Deja Vu",
+      "module": "ede213c6",
+      "bytes": 3600,
+      "sha256": "95079643d3e11914a9fcea21c3417bd95fe7083333660470147d7e89a1f53260",
+      "path": "octatrack-modules/dejavu/0.1.0-experimental.mwrm"
+    },
+    {
+      "id": "arp-key-locks",
+      "octabam": true,
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/arp-key-locks/0.1.0-experimental.mwrm",
+      "abi": 8,
+      "features": 128,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "Arp Key Locks",
+      "module": "894693ae",
+      "bytes": 4888,
+      "sha256": "907a03cf980996b30b0c3ba89ea0e80b889727ba4d407d04e2f95ceb30b44e8c"
     },
     {
       "id": "recorder-loop-fix",
@@ -398,9 +450,9 @@
       "name": "Recorder Loop",
       "module": "823e0f45",
       "bytes": 1818,
-      "sha256": "8c00cf85f7017cd2a842f12081dc8f74178f1dd8453f78e9a59ecaf59ff5e484",
+      "sha256": "180b52c68018f34a0fbadb0ad518972c4dc70dc621e3ab730beab33b7a081137",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "52b222497f13d3488ed71d711832beff928d40be78e7a44b72358919b504708c"
+      "requiredBase": "9b3ba41715140d5fae07868a8b2adc6d89c3ec0272d8ab34c332461cf990a14c"
     },
     {
       "id": "analog-bassdrum",
@@ -408,18 +460,55 @@
       "abi": 10,
       "features": 130,
       "sites": 0,
-      "copies": 5,
+      "copies": 6,
       "fills": 0,
-      "version": "0.1.5-experimental",
+      "version": "0.1.6-experimental",
       "name": "Analog BD",
       "module": "abdb1445",
-      "bytes": 25822,
-      "sha256": "be597d65a3140f84998c17cda0fd2cc186417027eaa5414e0f6c828df982e3da",
-      "path": "octatrack-modules/analog-bassdrum/0.1.5-experimental.mwrm",
-      "requiredBase": "52b222497f13d3488ed71d711832beff928d40be78e7a44b72358919b504708c",
+      "bytes": 26190,
+      "sha256": "6272600408466c3e3d313e943fc3f57beb06a55c61aab25720fce4b833eb53b0",
+      "path": "octatrack-modules/analog-bassdrum/0.1.6-experimental.mwrm",
+      "requiredBase": "9b3ba41715140d5fae07868a8b2adc6d89c3ec0272d8ab34c332461cf990a14c",
       "requires": 0,
       "claims": 1,
       "entries": 1
+    },
+    {
+      "id": "beat-slicer",
+      "sources": [
+        "sdk/octabam/modules/beat-slicer/device_module.c",
+        "sdk/octabam/modules/beat-slicer/device_font.c",
+        "sdk/octabam/modules/beat-slicer/grid_preview.c"
+      ],
+      "subscribe": [
+        "ot_sample_editor_actions:bs_sample_action:50"
+      ],
+      "version": "0.1.66-experimental",
+      "path": "octatrack-modules/beat-slicer/0.1.66-experimental.mwrm",
+      "abi": 8,
+      "features": 128,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "beat-slicer",
+      "module": "c8d078f2",
+      "bytes": 5780,
+      "sha256": "6650ef77a837a61a570a300c3bd0b2d4dfd4c9bed6e52bb355034d39bf5ff90d"
+    },
+    {
+      "id": "temp-save",
+      "octabam": true,
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/temp-save/0.1.0-experimental.mwrm",
+      "abi": 7,
+      "features": 1,
+      "sites": 2,
+      "copies": 0,
+      "fills": 0,
+      "name": "Temp Save",
+      "module": "84a2f52f",
+      "bytes": 1088,
+      "sha256": "00b8d5ab9bedca2e0d1d02add7540af43ce98cbfc0d8b3c06e40c9b18fe68c4a"
     }
   ]
 }

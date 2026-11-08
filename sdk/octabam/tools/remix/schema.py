@@ -379,6 +379,10 @@ class DspSection:
     # its limits). ⚠️ So a module with a table may read P for NOTHING
     # ELSE: every `p:(` in its code is the table.
     ptable: tuple[int, ...] = ()
+    # A second table block, placed straight after the ptable, with its own literal `$fab2e0` (upstream
+    # octabam's DspSection.ptable2, P placement only): a module whose code cannot keep the ptable's base
+    # in a register until it reads the second table loads that one by its own literal.
+    ptable2: tuple[int, ...] = ()
     # Permit separate P table/code runs when a contiguous package cannot fit.
     # Source packages prove both origins independently; no X table rewrite.
     split_ptable: bool = False
@@ -408,6 +412,8 @@ class DspSection:
     def __post_init__(self):
         if self.split_ptable and (not self.ptable or self.arena):
             raise ValueError("split_ptable needs a fixed nonempty ptable")
+        if self.ptable2 and (not self.ptable or self.arena):
+            raise ValueError("ptable2 needs a fixed nonempty ptable")
         if self.max_per_core is not None and not 1 <= self.max_per_core <= 4:
             raise ValueError("max_per_core must be in 1..4")
         object.__setattr__(self, "subst", MappingProxyType(

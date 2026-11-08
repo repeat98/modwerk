@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/euclid-accents.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:EUCLIDEAN page OP values",
+    "sequencer:euclid trig masking and accent"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x400378a6",
+          "len": 8,
+          "stockSha256": "d43e64e0210fdd98e9dd8476d7cea57c93492ec611d50eddcbf6fd90ea80cef7",
+          "op": "jmp",
+          "target": "euclid_accents_param_delta_gate"
+        },
+        {
+          "addr": "0x4009ab36",
+          "len": 8,
+          "stockSha256": "dc63e255cc517f5256702b3e8ce26ba58e4359e72a19b03d6cf8af446b904f9d",
+          "op": "jmp",
+          "target": "euclid_accents_trig_fire_euclid_gate"
+        },
+        {
+          "addr": "0x4009abde",
+          "len": 6,
+          "stockSha256": "1734211fe4015fb65e909c092d782641f3d687fd36332a005e19cc6a231ae7b6",
+          "op": "jmp",
+          "target": "euclid_accents_trig_fire_accent"
+        },
+        {
+          "addr": "0x400a864c",
+          "len": 8,
+          "stockSha256": "a04973fb79ed0896aa768e97902a85f61a10ad9d106955b3fe7a112c76d0e51f",
+          "op": "jmp",
+          "target": "euclid_accents_boolop_text_gate"
+        },
+        {
+          "addr": "0x400c3c7a",
+          "len": 8,
+          "stockSha256": "0dc686dad30ecbf17eeac334dbad7317c5de98ab50e91418d9d8927a1763914d",
+          "op": "jmp",
+          "target": "euclid_accents_euclid_bake_gate"
+        },
+        {
+          "addr": "0x400a88b8",
+          "len": 6,
+          "stockSha256": "0505036de03b8cfd051e264b007e0290d7b27f09093f0d32779144a7a21ede08",
+          "op": "jsr",
+          "target": "euclid_accents_boolop_get_ui"
+        },
+        {
+          "addr": "0x400a9d16",
+          "len": 6,
+          "stockSha256": "e7360411433bd40e8ca5a527523f80d0672e4ec1ea718e642a657f4e8098c086",
+          "op": "jsr",
+          "target": "euclid_accents_boolop_set_ui"
+        },
+        {
+          "addr": "0x400ff44c",
+          "len": 2,
+          "stockSha256": "771260b3e7ad3e3bbe992aa16c9958440f42bf5762b268b299898d6eefe67772",
+          "op": "bytes",
+          "new": "7207",
+          "kind": "code"
+        },
+        {
+          "addr": "0x400ff456",
+          "len": 2,
+          "stockSha256": "af9599acf20870a4b63cf7389bc164c439ecceca9151756eb2dd36a96368253d",
+          "op": "bytes",
+          "new": "7007",
+          "kind": "code"
+        },
+        {
+          "addr": "0x400ff460",
+          "len": 6,
+          "stockSha256": "4a828b9b1fd6ca38abe23c5624927fb62ce95729830d0f7281a415529679e4ec",
+          "op": "lea",
+          "target": "euclid_accents_boolop_labels",
+          "register": 1
+        },
+        {
+          "addr": "0x400ff4e2",
+          "len": 2,
+          "stockSha256": "771260b3e7ad3e3bbe992aa16c9958440f42bf5762b268b299898d6eefe67772",
+          "op": "bytes",
+          "new": "7207",
+          "kind": "code"
+        },
+        {
+          "addr": "0x400ff4fe",
+          "len": 2,
+          "stockSha256": "af9599acf20870a4b63cf7389bc164c439ecceca9151756eb2dd36a96368253d",
+          "op": "bytes",
+          "new": "7007",
+          "kind": "code"
+        },
+        {
+          "addr": "0x401432f0",
+          "len": 6,
+          "stockSha256": "1b3930f5bd75a07126f1c3bbec3f25d3d86ef8097f3bb68065e2feddffa74d99",
+          "op": "jsr",
+          "target": "euclid_accents_bitmapset8"
+        }
+      ]
+    }
+  },
+  "storage": [
+    {
+      "sym": "euclid_accent",
+      "scope": "track",
+      "bits": 1
+    }
+  ]
+}

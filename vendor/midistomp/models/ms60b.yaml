@@ -1,0 +1,19 @@
+# MS-60B per-model build config.
+name: MS-60B
+kind: bass
+# Zoom SysEx model id. Community-reported; confirm with "zoomms identify".
+sysex_model_id: 0x5F
+max_effects_in_chain: 4
+patches: 50
+effect_format: zdl
+# Latest official firmware; confirm the pedal runs it (shown at power-up).
+firmware_version: "2.10"
+stock_updater: "MS-60B_v2.10_Win_E/ZOOM MS-60B v2.10 Updater.exe"  # relative to firmware/, never committed
+stock_updater_sha256: 7bacde44ae32fd514c162e0b5830f925292563832fb2b0d7e3e15e85dc4f9939
+# Measured from the stock updater with `zoomms updater-info`.
+stock_effects: 143
+stock_free_blocks: 10  # 4090 bytes each; a typical effect needs 4-6
+# ZDL file names to place on this pedal. Empty means "stock list unchanged".
+effects: []
+# Guitar amp ZDLs moved onto this pedal also need CMN_DRV.ZDL.
+requires_with_amp_effects: [CMN_DRV.ZDL]

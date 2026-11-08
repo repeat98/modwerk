@@ -1,0 +1,46 @@
+{
+ "schemaVersion": 1,
+ "recorded": "2026-10-22",
+ "decision": "Analog Rytm MKII module: rytm2_mods' elemod port of MrScruff's rytm-mods 0012-slice-loop, for OS 1.74, imported under GPL-2.0-only with attribution. rytm-mods-src is published with MrScruff's permission.",
+ "modules": [
+  {
+   "module": "analog-rytm-mkii/slice-loop",
+   "version": "1.0.0",
+   "repository": "https://github.com/Iced-Cream/rytm2_mods",
+   "tag": "v1.2",
+   "revision": "afd461d4a8ef4306bb2a57d4c61ad35c362b3940",
+   "license": "GPL-2.0-only",
+   "files": [
+    {
+     "from": "slice-loop/os1.74/slice-loop.s",
+     "to": "src/slice-loop.s",
+     "sha256": "619f97550f7c15da23f64dcc9cdae6fc7635f3fab279e13b2f4166fd58fa9d15"
+    },
+    {
+     "from": "include/ar2-1.74.inc",
+     "to": "include/ar2-1.74.inc",
+     "sha256": "c57431f7b678c68cc007d2a180339edfcb395e9a40b753fe53ea649364e0874b"
+    },
+    {
+     "from": "LICENSE",
+     "to": "LICENSE",
+     "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+     "from": "slice-loop/README.md",
+     "to": "upstream/README.md",
+     "sha256": "8df0ddd9da8f40e0abe7a257aad48fd141fe4b9662f87fd20f2faa5b82ceac39"
+    }
+   ],
+   "excluded": [
+    "slice-loop/mod.json",
+    "slice-loop/slice-loop.s"
+   ],
+   "transformations": [
+    "mod.json's OS 1.74 port site (0x400f9f02, 6 stock bytes, jmp slice_loop_menu_add) became an address, length and SHA-256 guard in build.json's 1.74 release.",
+    "The OS 1.73 source and site are not imported: core-ar2 0.3 is for OS 1.74 only.",
+    "include/ar2-1.74.inc keeps its path relative to the source, so the .include line in src/slice-loop.s is unchanged."
+   ]
+  }
+ ]
+}

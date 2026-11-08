@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "module": "arp-key-locks",
+  "version": "0.1.0-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": 282112,
+    "measured": 32064,
+    "budget": 2200000,
+    "method": "An event is one MIDI sequencer tick: the note hook runs in its interrupt (0x400a1e0c, vector 0x60), once per note a track sends, priced at 16 core cycles an instruction (the ColdFire V4 envelope Direct Jump's record uses). Static: 17,632 instructions (17,600 before package 907a03cf, whose shift decode can add one a note), an upper bound from akl.s for the dearest tick: all eight MIDI tracks sending four notes each with every track's step answer uncached and no trig on any track, so both backward scans (the key, then the arp note shift, 64 steps each at about 10 and 12 instructions a step) run their full length, plus about 60 for the base's take dispatch and claim per note over USB. Measured on the card build under ot_emu --mkii (octabam 8250be0), 24 Oct 2026: PC watches on akl_note_entry and its two exits on a 64-step pattern whose only key lock sits just after the notes, with an arp note shift on step 14 (three tracks arpeggiating, every new step a full key scan): at most 900 instructions a note, 84-109 cached, 2,004 in the dearest tick (5 notes). Budget: the next tick, 8.33 ms at the top tempo of 300 BPM, 2,200,000 cycles at 264 MHz. Not chip timing."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": 131.9,
+    "moduleLongestUs": 131.9,
+    "stockIdlePercent": 59.2,
+    "moduleIdlePercent": 59.22,
+    "method": "Emulator, not hardware: ot_emu --mkii --dsp --frame (octabam 8250be0, upstream:tools build), 24 Oct 2026. The original MAIN OS and the card build with ARP KEY LOCKS alone, the same 62 s from PLAY on the same project (a 64-step pattern, three MIDI tracks arpeggiating, a G PHR lock on track 1): one three-byte message every ms (note on, CC, note off on channels 1-8) and a clock byte every 10 ms (250 BPM), STOP and PLAY at 7, 22, 37 and 52 s, Part 2 and back at 30 and 31 s. Longest frame interrupt: the most instructions from the frame handler's entry 0x4000aad4 to its epilogue 0x4000d9a6 over 217,000 frames, 23,201 on both, priced in the port's time (3,990 instructions a sample, dsp.h g_cfIps). Idle: 100 x (1 - executed instructions / (3,990 x samples)) between the first and last frame. The module's work runs in the sequencer tick interrupt, which the frame interrupt preempts."
+  },
+  "stress": {
+    "floodMessagesPerSecond": 1000,
+    "clockBpm": 250,
+    "seconds": 62,
+    "stuckNotes": 0,
+    "hangs": 0,
+    "dropped": 0,
+    "droppedExplanation": "Emulator, not hardware, the run above on the module image (shifts included in the source): 62,000 three-byte messages and 6,200 clock bytes; PC watches on the MIDI handlers (note on 0x4000e018, note off 0x4000db98, CC 0x4000e79c, clock 0x40005a48) counted every one, none missing (the note-off watch counted one entry more than was sent, a watch counting an entry twice, as Direct Jump's record notes). MIDI OUT: 206 note-ons and their note-offs, 44 moved into the lock's key; after the final STOP no note was left on, including the four STOPs that landed mid-note. Hangs: frames advanced to the end and the run ended on its own quit. Bypass: a pattern without locks or shifts plays stock's KEY (claims answer no; host test and the USB check)."
+  },
+  "hardwareEvidence": {
+    "status": "reported",
+    "existingReport": "evidence/hardware.md",
+    "note": "Two trial sessions on the author's MKII over USB (24 Oct 2026); nothing timed on the unit. The cycles, load and stress rows are ot_emu measurements."
+  }
+}

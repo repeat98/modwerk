@@ -98,7 +98,8 @@ function documentationCheck(missingNotes = false, failure = '', changelogEntry =
   const scope = new URL('../../scripts/change-scope.mjs', import.meta.url).href
   const changelogs = new URL('../../scripts/module-changelogs.mjs', import.meta.url).href
   const application = new URL('../../scripts/changelog.mjs', import.meta.url).href
-  writeFileSync(join(scripts, 'check.mjs'), readFileSync(runner, 'utf8').replace("'./change-scope.mjs'", JSON.stringify(scope)).replace("'./module-changelogs.mjs'", JSON.stringify(changelogs)).replace("'./changelog.mjs'", JSON.stringify(application)))
+  const docs = new URL('../../scripts/docs.mjs', import.meta.url).href
+  writeFileSync(join(scripts, 'check.mjs'), readFileSync(runner, 'utf8').replace("'./change-scope.mjs'", JSON.stringify(scope)).replace("'./module-changelogs.mjs'", JSON.stringify(changelogs)).replace("'./changelog.mjs'", JSON.stringify(application)).replace("'./docs.mjs'", JSON.stringify(docs)))
   writeFileSync(npm, `import { appendFileSync } from 'node:fs'; appendFileSync(process.env.CHECK_TEST_LOG, process.argv[3] + '\\n'); process.exitCode = process.env.CHECK_TEST_FAIL === process.argv[3] ? 1 : 0`)
   mkdirSync(join(folder, 'src/catalog'), { recursive: true })
   mkdirSync(join(folder, 'src/community/module-changelogs'), { recursive: true })
@@ -128,21 +129,21 @@ it('checks documentation without starting the full application suite, build or g
   expect(result.status, result.stderr).toBe(0)
   expect(result.stdout).toContain('Documentation check passed')
   expect(result.stdout).toContain('Module changelogs: 1 modules, 1 releases')
-  expect(result.scripts).toEqual(['prepare', 'licenses:check', 'machines:check', 'modules:check', 'sdk:imports:check', 'test'])
+  expect(result.scripts).toEqual(['prepare', 'licenses:check', 'machines:check', 'modules:check', 'board', 'sdk:imports:check', 'test'])
 })
 
 it('catches imported-source drift before a documentation PR can reach publication', () => {
   const result = documentationCheck(false, 'sdk:imports:check')
   expect(result.status).toBe(1)
   expect(result.stdout).toContain('Documentation check FAILED')
-  expect(result.scripts).toEqual(['prepare', 'licenses:check', 'machines:check', 'modules:check', 'sdk:imports:check'])
+  expect(result.scripts).toEqual(['prepare', 'licenses:check', 'machines:check', 'modules:check', 'board', 'sdk:imports:check'])
 })
 
 it('runs the catalogue tests that read Markdown, so a prose-only change cannot break main unseen', () => {
   const result = documentationCheck(false, 'test')
   expect(result.status).toBe(1)
   expect(result.stdout).toContain('Documentation check FAILED')
-  expect(result.scripts).toEqual(['prepare', 'licenses:check', 'machines:check', 'modules:check', 'sdk:imports:check', 'test'])
+  expect(result.scripts).toEqual(['prepare', 'licenses:check', 'machines:check', 'modules:check', 'board', 'sdk:imports:check', 'test'])
 })
 
 it('requires current-version release notes even on the documentation-only validation path', () => {

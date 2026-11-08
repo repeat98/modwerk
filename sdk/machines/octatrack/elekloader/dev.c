@@ -96,6 +96,14 @@ uint32_t modwerk_dev_request(const uint8_t *s, const uint8_t **reply, uint8_t *o
         *reply = out;
         return 1;
     }
+    if (s[1] == 40 && want == 1 && s[2] <= 1u && !s[3]) { /* GUARD TEST: modset.c's boot guard as a crash in the restore
+                                                            * leaves it, blaming its first package (1) or none (0) */
+        void modwerk_modset_guard_test(unsigned blame);
+        modwerk_modset_guard_test(s[2]);
+        out[0] = 1;
+        *reply = out;
+        return 1;
+    }
     if (s[1] == 19 && want == 1 && s[2] <= 1u && !s[3]) { /* PEEK STORM on (1) or off (0): build_core.py's transfer.c edit */
         extern volatile uint32_t dl_storm;
         dl_storm = s[2];
@@ -190,6 +198,20 @@ uint32_t modwerk_dev_request(const uint8_t *s, const uint8_t **reply, uint8_t *o
         for (unsigned b = 0; b < 4u; ++b) out[b] = (uint8_t)(step >> (24 - 8 * b)), out[4 + b] = (uint8_t)(counts >> (24 - 8 * b));
         *reply = out;
         return 8;
+    }
+    if (s[1] == 29 && want == 28u) { /* GUARD: the frame guard (machine_registry.c); wValue its share in per mille of a frame
+                                        * (0 keeps it): since the last read the longest frame interrupt, the latest start, the
+                                        * time in it (/256) and its frames; the skips, their tracks; the share */
+        extern volatile uint32_t mw_frame_max, mw_frame_late_max, mw_frame_busy, mw_frame_count, mw_frame_sheds,
+            mw_frame_shed_tracks, mw_frame_share;
+        unsigned mille = s[2] | (unsigned)s[3] << 8;
+        if (mille) mw_frame_share = 47891u / 100u * mille / 10u;
+        uint32_t v[7] = {mw_frame_max, mw_frame_late_max, mw_frame_busy, mw_frame_count, mw_frame_sheds, mw_frame_shed_tracks,
+                         mw_frame_share};
+        mw_frame_max = mw_frame_late_max = mw_frame_busy = mw_frame_count = 0;
+        for (unsigned i = 0; i < 28u; ++i) out[i] = (uint8_t)(v[i / 4u] >> (24 - 8 * (i % 4u)));
+        *reply = out;
+        return 28;
     }
     if (s[1] == 23 && want == 4 && !s[2] && !s[3]) { /* GAP: the longest time between two frames since the last read, DTCN3 counts */
         extern volatile uint32_t dl_frame_gap;

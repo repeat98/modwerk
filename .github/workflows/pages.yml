@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Elastic-2.0
+# Copyright (c) 2026 Jannik Aßfalg (repeat98)
 name: Build approved modules and publish Octamod
 on:
   push:
@@ -21,6 +23,7 @@ jobs:
       actions: read
     outputs:
       modules: ${{ steps.changes.outputs.modules }}
+      author-modules: ${{ steps.approval.outputs.author-modules }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -30,6 +33,7 @@ jobs:
         with:
           node-version: 24
       - name: Verify owner or scoped module-author approval for this exact source commit
+        id: approval
         run: node scripts/verify-merge-approval.mjs
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -137,6 +141,8 @@ jobs:
       - run: npm run licenses:check && npm run machines:check && npm run modules:check && npm run elekloader:check && npm run sdk:check
       - run: npm run build
         env:
+          # Followers hear about an author's own release 48 hours after it goes live (server/module-updates.ts).
+          MODWERK_AUTHOR_RELEASE_MODULES: ${{ needs.approval.outputs.author-modules }}
           VITE_COMMUNITY_API_URL: ${{ vars.COMMUNITY_API_URL }}
           VITE_REPOSITORY_URL: ${{ github.server_url }}/${{ github.repository }}
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

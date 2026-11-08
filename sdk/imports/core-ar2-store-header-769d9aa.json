@@ -1,0 +1,16 @@
+{
+ "schemaVersion": 1,
+ "recorded": "2026-10-24",
+ "decision": "elekloader's mod-storage header for core-ar2 0.3, copied unchanged into the Analog Rytm MKII shared SDK so Modwerk's source builder can compile Rytm mods that include it (the SDK guide's #include \"analog-rytm-mk2/store.h\"). Declarations and macros only; GPL-2.0-or-later, kept with its SPDX line.",
+ "repository": "https://github.com/irpina/elekloader",
+ "tag": "core-ar2-v0.3",
+ "revision": "769d9aaf406e0bd89371c1a7e97e126c4c6bb0bb",
+ "license": "GPL-2.0-or-later",
+ "files": [
+  {
+   "from": "elekloader/sdk/include/analog-rytm-mk2/store.h",
+   "to": "sdk/machines/analog-rytm-mkii/include/analog-rytm-mk2/store.h",
+   "sha256": "25dd5c4444b1e4552b4cf869c824645d2d0d4a1c45ba2877bdb5e5e8c8ba0599"
+  }
+ ]
+}

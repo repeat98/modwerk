@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Elastic-2.0
+# Copyright (c) 2026 Jannik Aßfalg (repeat98)
 name: Deploy community Worker
 # Merging to main redeploys the account/forum API when its sources change. Every push runs the scope job, and
 # scripts/change-scope.mjs decides, so there is no second path list here to fall out of date.

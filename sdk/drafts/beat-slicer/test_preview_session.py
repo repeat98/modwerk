@@ -17,7 +17,7 @@ int bs_session_selftest(void);
 int main(void) {
     int line = bs_session_selftest();
     if (line) { printf("FAIL line %d\n", line); return 1; }
-    puts("PASS: 32 complete session previews, 22 metadata invalidations, pending/cancel/restart and failure paths");
+    puts("PASS: 32 complete session previews, 22 metadata invalidations, pending/cancel/restart, failure paths and nine lock-release interleavings");
     return 0;
 }
 '''

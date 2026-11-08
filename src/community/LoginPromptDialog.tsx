@@ -19,7 +19,7 @@ export function LoginPromptDialog({next,onClose,action,onSkip}:{next:string;onCl
     </header>
     <p id="login-prompt-message">Sign in or create a free Modwerk account to continue.</p>
     <div id="login-prompt-notice" className="login-prompt-notice">
-      {action?<p>A free account lets you like and rate modules, join discussions, follow module updates and build firmware. Every member helps us grow an active community for bug reports, feedback and forum discussions.</p>:<p>An account lets you report bugs, give feedback, follow module updates and join the forum. Every member helps us grow an active community.</p>}
+      {action?<p>A free account lets you like modules, join discussions, follow module updates and build firmware. Every member helps us grow an active community for bug reports, feedback and forum discussions.</p>:<p>An account lets you report bugs, give feedback, follow module updates and join the forum. Every member helps us grow an active community.</p>}
       <p><strong>Modwerk will always stay free and open source &lt;3</strong></p>
     </div>
     <p id="login-prompt-privacy">{action?'You come back to this page after signing in.':'Your configuration will be waiting when you return. Your firmware stays on this device.'}</p>

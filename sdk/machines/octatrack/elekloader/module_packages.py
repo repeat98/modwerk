@@ -46,6 +46,8 @@ import argparse, hashlib, json, shutil, struct, subprocess, sys, tempfile
 from pathlib import Path
 
 APP = Path(__file__).resolve().parents[4]
+sys.path.append(str(APP / 'sdk'))  # firmware_codec
+import firmware_codec  # noqa: E402
 BUILD = APP / 'sdk/runtime/loader/build.py'
 DSP = APP / 'src/engine/assets/dsp-packages.json'
 MANIFEST = APP / 'src/engine/assets/octatrack-module-packages.json'
@@ -200,7 +202,7 @@ def main():
     dsp = {p['id']: p for p in json.loads(DSP.read_text())['packages']}
     stock, stock_at, upstream = None, None, a.upstream.expanduser().resolve()
     if a.stock:
-        sys.path.insert(0, str(upstream))
+        firmware_codec.use_elekloader(upstream)
         from elekloader import formats
         parsed, device, _ = formats.load(str(a.stock))
         stock = formats.main_image(parsed, device)

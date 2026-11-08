@@ -10,7 +10,9 @@ called through `init` and `proc` labels. Exit status 1 when the outputs differ."
 import argparse, os, random, subprocess, sys, tempfile
 from pathlib import Path
 
-sys.path.insert(0, str(Path(os.environ.get('ELEKLOADER_UPSTREAM', Path.home() / '.cache/modwerk-upstream/elekloader'))))
+sys.path.append(str(Path(__file__).resolve().parents[4]))  # sdk/, for firmware_codec
+import firmware_codec  # noqa: E402
+firmware_codec.use_elekloader(os.environ.get('ELEKLOADER_UPSTREAM', Path.home() / '.cache/modwerk-upstream/elekloader'))
 from elekloader.sdk.build import dsp_assemble  # noqa: E402
 
 CODE = 0x2000

@@ -247,7 +247,8 @@ static unsigned memory_left; /* ticks the box still shows */
  * refused effect's core, its DSP time and code memory as admission counts them with what the effect would add, or its
  * buffer blocks. A snapshot at the refusal (manager.c's dl_refusal, build_core.py), for three seconds; a key closes it. */
 extern volatile uint32_t dl_refusal[8];
-static unsigned refused_left, refused_reason, refused_core;
+static unsigned refused_left, refused_reason, refused_core, refused_machine;
+void modwerk_dsp_source_refusal(unsigned *core, uint32_t *add); /* dsp.c: the last machine voice refused for cycles */
 static uint32_t refused[8], refused_booked, refused_words, refused_arena;
 static char refused_name[17];
 static int budget_slot = -1; /* the slot the pick put a module on; -1: an accept over USB (memory only) */
@@ -287,6 +288,10 @@ volatile uint32_t modwerk_status_key_at; /* modwerk_runtime_ticks at the last ke
 #define STOP 0x27
 #define PLAY 0x28
 #define REC 0x29
+/* modset.c: the restore's notice waits while one of these shows, since it would show beneath it (owner's MKII, 30 October
+ * 2026: MISSING hid MINI VERB LEFT OUT until it timed out). */
+int modwerk_status_dialog(void);
+int modwerk_status_dialog(void) { return open != CLOSED; }
 int modwerk_status_key(int code, int pressed)
 {
     static int cue;
@@ -596,6 +601,7 @@ int modwerk_status_refused(unsigned reason)
     if ((open != CLOSED && open != MEMORY) || dl_refusal[1] > 15u || (reason == 3u) != (dl_refusal[0] == 1u)) return 0;
     for (unsigned i = 0; i < 8u; ++i) refused[i] = dl_refusal[i];
     unsigned slot = refused[1], id = refused[2], c = (slot & 7u) < 4u ? 1u : 0u;
+    refused_machine = 0;
     refused_reason = reason, refused_core = c, refused_booked = modwerk_dsp_booked(c), refused_words = dl_residency_words[c];
     refused_arena = c ? modwerk_status[ARENA] >> 16 : modwerk_status[ARENA] & 0xffffu; /* the arena as the page reads it */
     for (unsigned i = 0; i < sizeof refused_name; ++i) refused_name[i] = 0; /* a shorter name after a longer one */
@@ -612,6 +618,24 @@ int modwerk_status_refused(unsigned reason)
     open = REFUSED, refused_left = 180u;
     return 1;
 }
+/* machine_registry.c's claim(): the track's machine voice did not fit its core. The box as an effect's DSP FULL has it,
+ * on "Tn SRC", with what the voice asks for; the track renders stock's silent source until room is made. Not over a
+ * page, and not twice for the same track while it shows (a Part change claims many tracks). */
+void modwerk_status_machine_refused(unsigned track, const char *label)
+{
+    if ((open != CLOSED && open != MEMORY) || track > 7u) return; /* a page or a box already shows: not over it */
+    unsigned c; uint32_t add;
+    modwerk_dsp_source_refusal(&c, &add);
+    for (unsigned i = 0; i < 8u; ++i) refused[i] = 0;
+    refused[0] = 1u, refused[1] = track, refused[4] = add;
+    refused_machine = 1u, refused_reason = 3u, refused_core = c, refused_booked = modwerk_dsp_booked(c);
+    refused_words = dl_residency_words[c];
+    refused_arena = c ? modwerk_status[ARENA] >> 16 : modwerk_status[ARENA] & 0xffffu;
+    for (unsigned i = 0; i < sizeof refused_name; ++i) refused_name[i] = 0;
+    for (unsigned i = 0; label && i < 16u && label[i]; ++i) refused_name[i] = label[i] >= 'a' && label[i] <= 'z' ? (char)(label[i] - 32) : label[i];
+    refused_name[16] = 0;
+    open = REFUSED, refused_left = 180u;
+}
 static void refused_box(unsigned char *frame)
 {
     for (unsigned i = 0; i < 7u; ++i) surface[i] = ((const volatile uint32_t *)SURFACE)[i];
@@ -620,23 +644,23 @@ static void refused_box(unsigned char *frame)
     outline(frame, 18u, 12u, 109u, 50u);
     unsigned slot = refused[1], c = refused_core;
     char where[8] = {'T', (char)('1' + (slot & 7u)), ' ', 'F', 'X', (char)(slot < 8u ? '1' : '2'), 0};
-    const char *title = refused_reason == 3u ? "DSP FULL" : "DSP MEMORY FULL";
+    if (refused_machine) where[3] = 'S', where[4] = 'R', where[5] = 'C'; /* a machine's voice, not an effect slot */
+    const char *title = refused[0] == 3u ? "NO ROOM" : refused_reason == 3u ? "DSP FULL" : "DSP MEMORY FULL";
     if (TEXT_WIDTH(FONT, -1, title) + TEXT_WIDTH(FONT, -1, where) + 6 > 82) title += 4; /* "MEMORY FULL": clear of the slot */
     label(23u, 15u, title), label((unsigned)(105 - TEXT_WIDTH(FONT, -1, where)), 15u, where);
     fill(frame, 18u, 22u, 109u, 22u, 1);
     char need[32], *e = need;
     for (const char *t = refused_name[0] ? refused_name : "THIS EFFECT"; *t && e < need + 16; ) *e++ = *t++;
     const uint32_t allowance = c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0;
-    if (refused[0] == 3u) { /* a Y buffer: the blocks this slot kind has on the core, all taken */
-        const char *t = " NEEDS A BUFFER";
-        while (*t) *e++ = *t++;
+    if (refused[0] == 3u) { /* a Y buffer: the slot kind's blocks on the core that this effect may take, all taken */
+        /* In the player's words: the other FX on these four tracks hold the delay memory (refused[6] of refused[7]
+         * blocks; fewer than all when this effect may not take the free one: Air Chorus and BBD stay off block 3). */
         *e = 0, label(23u, 26u, need);
-        char line[24] = "FX1 BUFFERS T1-4", count[8], *n = count;
+        char line[24] = "FX2 ON T1-4 FULL";
         line[2] = slot < 8u ? '1' : '2';
-        if (!c) line[13] = '5', line[15] = '8';
-        label(23u, 36u, line);
-        n = number(n, refused[6]), *n++ = '/', n = number(n, refused[7]), *n = 0;
-        label((unsigned)(105 - TEXT_WIDTH(FONT, -1, count)), 36u, count);
+        if (!c) line[8] = '5', line[10] = '8';
+        label(23u, 34u, line);
+        label(23u, 42u, "CHANGE ONE FIRST");
         return;
     }
     /* DSP: what admission books on the core now, and what the effect adds (its cycles less the slot's old effect's);
@@ -654,6 +678,19 @@ static void refused_box(unsigned char *frame)
     label(23u, 34u, "DSP"), share_bar(frame, 45u, 34u, 40, 6, dsp, dsp_add), percent(89u, 34u, dsp);
     label(23u, 42u, "MEM"), share_bar(frame, 45u, 42u, 40, 6, mem, mem_add), percent(89u, 42u, mem);
 }
+extern volatile uint32_t modwerk_flash_progress; /* flash.c: 1 + per mille of a write while the OS runs on, 0 none */
+/* A base update saving itself while the OS runs on (flash.c: its own write, no restart after), over everything until
+ * it is saved; while quiesced for another base's write, stock's own upgrade screen shows instead. */
+static void saving_box(unsigned char *frame)
+{
+    uint32_t done = modwerk_flash_progress - 1u;
+    if (done > 1000u) done = 1000u;
+    dialog(frame, "BASE UPDATE");
+    label(X0 + 6u, Y0 + 17u, "SAVING THE NEW BASE.");
+    label(X0 + 6u, Y0 + 25u, "KEEP THE POWER ON.");
+    bar(frame, X0 + 6u, Y0 + 38u, 76, 5, done, 0);
+    percent(X0 + 86u, Y0 + 37u, done);
+}
 static void status_draw(unsigned char *frame);
 void modwerk_status_draw(unsigned char *frame)
 {
@@ -661,6 +698,7 @@ void modwerk_status_draw(unsigned char *frame)
 }
 static void status_draw(unsigned char *frame)
 {
+    if (modwerk_flash_progress) { saving_box(frame); return; }
     if (open == REFUSED) { refused_box(frame); return; }
     if (open == MEMORY) { memory_box(frame); return; }
     if (open == MISSING) { missing_page(frame); return; }
@@ -677,7 +715,7 @@ static void status_draw(unsigned char *frame)
     /* each core's arena spelled out: the on-demand build rewrites these reads (resident_engines.py status()) */
     const uint32_t code[2] = {share(dl_residency_words[0], modwerk_dsp_arena[0]), share(dl_residency_words[1], modwerk_dsp_arena[1])};
     uint32_t used[2];
-    for (unsigned core = 0; core < 2u; ++core) used[core] = modwerk_dsp_booked(core) > code[core] ? modwerk_dsp_booked(core) : code[core];
+    for (unsigned core = 0; core < 2u; ++core) { uint32_t booked = modwerk_dsp_booked(core); used[core] = booked > code[core] ? booked : code[core]; }
     static const char *const names[7] = {"WORKING NOW", "CPU", "TRACKS 1-4", "TRACKS 5-8", "DSP SPACE USED", "TRACKS 1-4", "TRACKS 5-8"};
     const uint32_t value[7] = {0, modwerk_status[CPU], modwerk_status[DSP1_MEAN], modwerk_status[DSP0_MEAN], 0, used[1], used[0]},
                    peak[7] = {0, cpu_peak, modwerk_status[DSP1_PEAK], modwerk_status[DSP0_PEAK], 0, 0, 0};

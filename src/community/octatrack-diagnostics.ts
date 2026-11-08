@@ -172,14 +172,18 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
       const log = await link!.deviceLog(signal, allowed)
       if (!log || !allowed()) return
       const scope = await digest(memberId + ':' + log.nonce), key = 'modwerk.diagnostics.device-log:' + scope
-      let after = 0
-      try { after = Number(localStorage.getItem(key)) || 0 } catch { /* storage off: send what the unit holds */ }
-      const keep = (seq: number) => () => { try { if (seq > (Number(localStorage.getItem(key)) || 0)) localStorage.setItem(key, String(seq)) } catch { /* storage off */ } }
-      const groups = [...chunks(log.loads.filter(record => record.seq > after), DEVICE_LOG_LOADS).map(loads => ({loads, incidents: []})),
-        ...chunks(log.incidents.filter(record => record.seq > after), DEVICE_LOG_INCIDENTS).map(incidents => ({loads: [], incidents}))]
+      /* A mark per kind, moved only past groups stored in order: loads and incidents share the unit's seq, so one mark
+       * moved by a stored load group skipped the incidents of a group that failed or never left a closing tab. The
+       * mark before 27 October 2026 (one for both) is where each starts. */
+      const mark = (kind: 'loads' | 'incidents') => { try { return Number(localStorage.getItem(key + ':' + kind) ?? localStorage.getItem(key)) || 0 } catch { return 0 /* storage off: send what the unit holds */ } }
+      const keep = (kind: 'loads' | 'incidents', from: number, seq: number) => () => { try { const at = mark(kind); if (at >= from && seq > at) localStorage.setItem(key + ':' + kind, String(seq)) } catch { /* storage off */ } }
+      const from = {loads: mark('loads'), incidents: mark('incidents')}
+      const groups = [...chunks(log.loads.filter(record => record.seq > from.loads), DEVICE_LOG_LOADS).map(loads => ({kind: 'loads' as const, log: {loads, incidents: []}})),
+        ...chunks(log.incidents.filter(record => record.seq > from.incidents), DEVICE_LOG_INCIDENTS).map(incidents => ({kind: 'incidents' as const, log: {loads: [], incidents}}))]
       for (const group of groups) {
-        const seqs = [...group.loads, ...group.incidents].map(record => record.seq)
-        send({event:'device_log',...unit(),log:group}, eventId(await digest(scope + ':' + seqs.join(','))), keep(Math.max(...seqs)))
+        const seqs = [...group.log.loads, ...group.log.incidents].map(record => record.seq), last = Math.max(...seqs)
+        send({event:'device_log',...unit(),log:group.log}, eventId(await digest(scope + ':' + seqs.join(','))), keep(group.kind, from[group.kind], last))
+        from[group.kind] = last
       }
       /* The crash and stall records (log version 2), once per count: the id makes a resend a duplicate. */
       if (log.crash || log.stall) {
@@ -190,8 +194,10 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
   }
   async function tick() {
     syncSiteCollection()
+    // Without a connected unit there is nothing to read, so no consent read either: it was 35% of all API requests
+    // (every member's tab, every 30 s). The choice is read on mount and when the tab comes back into view.
+    if (link?.getState().status !== 'ready') { logAt = 0; lastTicks = undefined; return } // the next connection reads the log first
     if (!await refresh()) return // Never use a stale choice while another refresh is still pending.
-    if (link?.getState().status !== 'ready') { logAt = 0; lastTicks = undefined } // the next connection reads the log first
     if (!allowed() || reading || !link || link.getState().status !== 'ready') return
     reading = true
     const controller = healthRead = new AbortController()
@@ -203,9 +209,12 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
   }
   void refresh()
   const timer = setInterval(() => { void tick() }, 30_000)
+  // A choice changed in another tab or on another device shows here once this tab is looked at again.
+  const visible = () => { if (globalThis.document?.visibilityState === 'visible') void refresh() }
+  globalThis.document?.addEventListener('visibilitychange', visible)
   // shortcut: a report still sending when the tab closes holds the readings back, so they are lost; a queue on disk would keep them.
   globalThis.addEventListener?.('pagehide', flushLoad)
-  return () => { stopped = true; requests.abort(); clearInterval(timer); globalThis.removeEventListener?.('pagehide', flushLoad); unsubscribe?.(); stopPreference(); siteCleanup?.(); if (generation === currentGeneration) { transfer?.abort(); healthRead?.abort(); owner = null; accountApi = undefined; publish({accountId:null,available:false,enabled:false,ready:false}) } }
+  return () => { stopped = true; requests.abort(); clearInterval(timer); globalThis.document?.removeEventListener('visibilitychange', visible); globalThis.removeEventListener?.('pagehide', flushLoad); unsubscribe?.(); stopPreference(); siteCleanup?.(); if (generation === currentGeneration) { transfer?.abort(); healthRead?.abort(); owner = null; accountApi = undefined; publish({accountId:null,available:false,enabled:false,ready:false}) } }
 }
 
 const chunks = <T>(items: T[], size: number) => Array.from({ length: Math.ceil(items.length / size) }, (_, i) => items.slice(i * size, (i + 1) * size))

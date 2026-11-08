@@ -1,0 +1,77 @@
+{
+  "scope": "portable session target execution: 32 previews, 22 metadata invalidations, pending/cancel/restart, failure paths and nine lock-release interleavings",
+  "sourceSha256": {
+    "planner.c": "01c9c25efa363679a591969931dd376a3b694a949dd8b9f89eda4bf77a88cee4",
+    "planner.h": "4faab6f03e679d0b9389dbf016416afc87fb4d2d354952b22efb81a0381c5c1b",
+    "planner_job.c": "767d82cc375677a115e9457af35e26fddd9de66a0dc80aa2af0fe3b5adaf0581",
+    "planner_job.h": "c4dd3faa8b3320194b54ab4d7bec6541d9e936f544b0e6236efa4fa5518d6547",
+    "pcm_reader.c": "8762e389a39b7407a7d987dc6e3e36d7d75aa6c408b1d3232d8672a380226088",
+    "pcm_reader.h": "462f495a86f32730b79a56177f99929f685d82729e4646e7b391df475d929821",
+    "preview_guard.c": "da1299674cf2ae967c58231ee9c16891afa94e27254407b5d09df6b73cc4343e",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "preview_session.c": "f87a51c77c6fda24159dcdc137cfa3b895224b0c17605c3612558e37b5a049f5",
+    "preview_session.h": "1dfe1f9ea8fb6785edc48020609c51f6b88e75381043504c011dc4bfedc8ca9d",
+    "test_preview_session.c": "449682681c483d5be936c001ce25e0f8f84516713ee9e69caf2ffa3df2f086d0",
+    "session_native.py": "b9e5ce5d537b4885af2ef12eabdf4d276bafad6dd7f782e17b945528d3460191",
+    "stock_probe/job_probe.cpp": "eba70897030ec3b8804de5641d533955455761df75c19db278438006bc8b4e1a",
+    "stock_probe/CMakeLists.txt": "20f11b46e9dd6426ef4ba4383340f951108bf021c771a75576cc3d6e49c6b620"
+  },
+  "compiler": "m68k-elf-gcc (GCC) 16.2.0",
+  "flags": [
+    "-std=c99",
+    "-mcpu=5475",
+    "-msoft-float",
+    "-O2",
+    "-ffreestanding",
+    "-fno-builtin",
+    "-fno-common",
+    "-fno-jump-tables",
+    "-fno-tree-loop-distribute-patterns",
+    "-fno-optimize-sibling-calls",
+    "-fno-asynchronous-unwind-tables",
+    "-fno-unwind-tables",
+    "-fno-ident",
+    "-fstack-usage",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fno-late-combine-instructions"
+  ],
+  "objectSha256": {
+    "planner.o": "862fbf786e4388477f7c3efa7601dad7bef8d9583c5b0a21db5351e3276594d4",
+    "planner_job.o": "8f9b560021a93770770eb294c6d569d94fd5b75596e5f1d332d61b4d75664485",
+    "pcm_reader.o": "79fa1b604de2d1e08edc4f41db4578f9ff68afc802dfadc3dd8a4d14a27427e3",
+    "preview_guard.o": "9c246ad2e54d39275f17c672f2dbed461df158345dbbb214153c180d6cb5b24b",
+    "preview_session.o": "3fac6614d37d4abbc6037859a5722fe36aeb3c48ff816cc43ea61e49e95bb298",
+    "test_preview_session.o": "a85c57afac3aee1e8cff0c1dc7d0038a519612ad430c86fdc8fdfc31c80338b0"
+  },
+  "runnerSha256": "fa8c5f47aab4d97bff73d8afaea9b69701c1a1df095062460f2c3bbeb9969103",
+  "codegenGuard": "passed",
+  "freestandingLink": true,
+  "sessionSize": [
+    "text\t   data\t    bss\t    dec\t    hex\tfilename",
+    "   2828\t      0\t      0\t   2828\t    b0c\t/evidence/session21-native/preview_session.o"
+  ],
+  "sessionStackUsage": [
+    "/source/sdk/drafts/beat-slicer/preview_session.c:54:30:capture_reply\t12\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/preview_session.c:63:30:revalidate\t32\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/preview_session.c:10:6:bs_session_init\t0\tstatic",
+    "/source/sdk/drafts/beat-slicer/preview_session.c:17:6:bs_session_cancel\t8\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/preview_session.c:119:23:bs_session_step\t164\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/preview_session.c:148:23:bs_session_begin\t24\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/preview_session.c:158:5:bs_session_result_locked\t16\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/preview_session.c:164:5:bs_session_result\t16\tdynamic,bounded"
+  ],
+  "exitCode": 0,
+  "stdout": [
+    "SOURCE_SHA256: eba70897030ec3b8804de5641d533955455761df75c19db278438006bc8b4e1a",
+    "PASS: cooperative preview target selftest and preserved registers"
+  ],
+  "stderrLines": 8,
+  "stderrSha256": "21495107133b98459d58d78262e4935ad828b0578af9c62da412effd72215f99",
+  "hardware": "not tested",
+  "audio": "not tested",
+  "timing": "not measured",
+  "nativeSourceAccess": "not implemented"
+}

@@ -60,7 +60,7 @@ def main():
              'preview_session.c', 'preview_session.h', 'test_preview_session.c', 'session_native.py',
              'stock_probe/job_probe.cpp', 'stock_probe/CMakeLists.txt')
     report = {
-        'scope': 'portable session target execution: 32 previews, 22 metadata invalidations, pending/cancel/restart and failure paths',
+        'scope': 'portable session target execution: 32 previews, 22 metadata invalidations, pending/cancel/restart, failure paths and nine lock-release interleavings',
         'sourceSha256': {n: sha(ROOT / n) for n in names},
         'compiler': run('m68k-elf-gcc', '--version').splitlines()[0], 'flags': flags,
         'objectSha256': {o.name: sha(o) for o in objects},

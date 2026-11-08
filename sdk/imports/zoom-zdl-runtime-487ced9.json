@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "recorded": "2026-11-06",
+  "decision": "Leemuzhko's own runtime for Zoom MultiStomp (ZDL) effects, so a built effect carries no stock Zoom code: zui.asm (OnOff and knob edit handlers, written from the documented edit-handler ABI; its three call helpers equal TI's C6000 RTS source, BSD-3-Clause) and dll.asm (the Dll_ entry) copied unchanged with the repository licence. The repository stays private, so this is copied from the snapshot its author sent for integration (Discord, November 2026). Nothing else is taken: the snapshot's firmware-derived runtime blobs, factory sprite pixels, stock firmware addresses and third-party copies stay out.",
+  "repository": "Leemuzhko/ZOOM_development (private)",
+  "revision": "487ced92bb4d8825269ef32dcbdd0582f5c53170",
+  "license": "MIT AND BSD-3-Clause",
+  "files": [
+    { "from": "LICENSE", "to": "vendor/zoom-zdl-runtime/LICENSE", "sha256": "1eb68dd3355094192e6ee8ba151a8a3f8978cc9533a65560b965566faa60aea0" },
+    { "from": "SDK/runtime_src/dll.asm", "to": "vendor/zoom-zdl-runtime/dll.asm", "sha256": "1b5acdc0f87499a948b53960103e0760b883853cb84800865cb70ae097898142" },
+    { "from": "SDK/runtime_src/zui.asm", "to": "vendor/zoom-zdl-runtime/zui.asm", "sha256": "24b91fc615eb6ff4660c18bbddc0723cda14ec2eb844da6b95db109b3fce1f34" }
+  ]
+}

@@ -1,0 +1,186 @@
+{
+  "scope": "Private recorder/engine-owned preview service compilation only",
+  "mainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "textBase": 1174511088,
+  "fixtureEnd": 1174549124,
+  "hookSites": {
+    "enter": {
+      "address": 1073768676,
+      "length": 8,
+      "sha256": "c37ae892e5ce12f10f2658717beb991455bbb898e42b08f0d620f7dab7b1d69c"
+    },
+    "leave": {
+      "address": 1073772884,
+      "length": 8,
+      "sha256": "46e9fe8321dbc1c3dbf1bd6cdbd5d83a847fac0b18983bcb1646cc3e79a4ba55"
+    }
+  },
+  "interiorScan": {
+    "scope": "Aligned encoding and absolute-literal leads only; indirect/control-flow completeness unqualified",
+    "interiorTargets": [
+      1073768678,
+      1073768680,
+      1073768682,
+      1073772886,
+      1073772888,
+      1073772890
+    ],
+    "branchCandidates": [],
+    "literalCandidates": []
+  },
+  "binarySha256": "97aaafaed4c8542645ce4c0df3de7829e03dd647b06c7d4c67b9426d2511614b",
+  "symbolsSha256": "e874e62c886490fdc58751512a4b3ce70729f8b9a1f9eedfafae8d66917f9160",
+  "compiler": "m68k-elf-gcc (GCC) 16.2.0",
+  "flags": [
+    "-std=c99",
+    "-mcpu=5475",
+    "-msoft-float",
+    "-O2",
+    "-ffreestanding",
+    "-fno-builtin",
+    "-fno-common",
+    "-fno-jump-tables",
+    "-fno-tree-loop-distribute-patterns",
+    "-fno-optimize-sibling-calls",
+    "-fno-asynchronous-unwind-tables",
+    "-fno-unwind-tables",
+    "-fno-ident",
+    "-fstack-usage",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fno-late-combine-instructions"
+  ],
+  "sourceSha256": {
+    "recorder_native.py": "1c4449662dead7c27e538c3c5de690e5cd050a33638d25c4111284814161942f",
+    "recorder_boundary.c": "0af5829b4b3dc6ba5b57ff34b211040b6a9e2699daaceb9a16a7ab489c2192d8",
+    "recorder_boundary.h": "a5674fc98d53342468fe74e49ec56f6d5b1350136730f45ef2b3fe0a0879a5cf",
+    "preview_guard.c": "da1299674cf2ae967c58231ee9c16891afa94e27254407b5d09df6b73cc4343e",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "test_recorder_boundary.c": "ff6bea4924691da97f4479b6fa0a831f1983eeacf7ae5219670aee592bc950a3",
+    "test_recorder_stock.c": "020892419daecfde2b29529ef1189d7097fd8b6c14ca856e831947933be2e781",
+    "stock_probe/recorder_native_probe.cpp": "e1173bb0be602c68412adbb9bfe38aeddbd78ef361709355bf832b6ae2c9c326",
+    "stock_probe/recorder_probe.cpp": "94b75d22f9f475ee429c8950faf36453a202ef2616377881a38e30682e435d2b",
+    "stock_probe/CMakeLists.txt": "d64d2f9c0ab5b6caf63e7785a09934eb2cd6a96c1f2e1ddb47048b34acf84e86",
+    "inspect_stock.py": "3df8e0019c7c1b095132a16da21a40c739b233548b9030a6dd8befadceb59190",
+    "recorder_engine_native.py": "e2338716d6055e53288f783c287e3206fbf0737c750d4d37184aea4ef225c53c",
+    "recorder-engine-runtime-sources.json": "88722bb4da82b7bf39177d43758e603777aaf9d57420c6a12dfb68c79c13c1ed",
+    "engine_boundary.c": "7989e9811c74e1d9ddd847f6b10a291a7757999153d75960d4996a2325629e9a",
+    "engine_boundary.h": "22d98964c49edaead23f27be9007efe4ed97d9a7d0ffac727641756e37a76b01",
+    "test_recorder_engine.c": "00c7570864402a625a275c5cd20545eb03e57c6abb01e658c9af6999d7a36d74",
+    "test_recorder_prepare.c": "6de85478c8f2534fe38db3618602182c5c581433c24b929875653c8a6e34068c",
+    "planner.c": "01c9c25efa363679a591969931dd376a3b694a949dd8b9f89eda4bf77a88cee4",
+    "planner.h": "1a10ce9e6b34dfd35eb138690e2134550621c3bf91b2178fb50f95b9def6b7ae",
+    "planner_job.c": "767d82cc375677a115e9457af35e26fddd9de66a0dc80aa2af0fe3b5adaf0581",
+    "planner_job.h": "c4dd3faa8b3320194b54ab4d7bec6541d9e936f544b0e6236efa4fa5518d6547",
+    "pcm_reader.c": "8762e389a39b7407a7d987dc6e3e36d7d75aa6c408b1d3232d8672a380226088",
+    "pcm_reader.h": "462f495a86f32730b79a56177f99929f685d82729e4646e7b391df475d929821",
+    "preview_session.c": "863a66aee00818e6e71c09896d2c222176d7bf4726a3886b2991384d9f43b664",
+    "preview_session.h": "4518b3d75a92081c98c619157fcf2c6bbcb43b82621d8a41dd953bcfbd48c909",
+    "marker_edit.h": "cd8c16a7771bf5a6d251b20e3a02fd0887d68cf4f8e5900e0c6a7fdecc0d4f05",
+    "flex_copy.c": "b069d6b3ac5d8922281811a8eaa5c93d8ab33267ec89fb9f1c99305f35d80b2c",
+    "flex_copy.h": "1bb469187ef75be2d25b671622f79ec2a5e199d877a418e8d9885c70781ee513",
+    "flex_metadata.c": "dcb92e3d7067febc134c5f4fad5936407e3eb8ef37c19a4d4819a99dde64ae75",
+    "flex_metadata.h": "8a5e2da2cb447380883209942ee2654956cd50aae4e68abfe7f2d270d97eab6f",
+    "flex_source.c": "83ca4c3330ba147ea1d9f4248095ef0350210e6451eb5b0f65572ac31432c208",
+    "flex_source.h": "8dce26364e7f270eafbd7f40f12021aaa0b966edf577305477efd7aaa9a19021",
+    "test_flex_source.py": "a8fd662fcbbd0d20770a01e8eab99163ee070322e55152114592fd10d91de4fe",
+    "test_source_boot.c": "1777fae6f71f57cb9a8609c030af4f602c9b3276a393f6dbdcd87c3952fafa38",
+    "test_recorder_source.c": "81a7567462b87eb256bf1973cd387623d2ad427b382ff8f9c423ecc6c59d03b5",
+    "recorder_source_native.py": "84df3856c1d9d4aade45f912faa5a0a24a0771553ccbfee1910ef58889315d46",
+    "flex_lookup.S": "baeb9375129d44fe2db0bcb8d845ced29cd755ac126c3ab2afd696aebbca2487",
+    "preview_async.c": "d7250549fa634ffe287c37d2410025146a6bb168f4dc7ec146f7e288f35e8917",
+    "preview_async.h": "ea0189432e63b6ddaf3672ab531dad18f93adac15bdae21e648e7fd5ec040d61",
+    "test_recorder_service.c": "ae15004c9b0dcf5fea7e74721038703d1679b694a8846703710cd5d44eaac223",
+    "test_recorder_engine_service.c": "41d8bf833c1cf252c63b57d89a827979899fe8662fd3123f363e040761554fdc",
+    "recorder_service_native.py": "64fd33f8be88be9832067a8b0f7f31f84cf7e165e998d092938de205afb0e9d3"
+  },
+  "objectSha256": {
+    "preview_guard.o": "9c246ad2e54d39275f17c672f2dbed461df158345dbbb214153c180d6cb5b24b",
+    "recorder_boundary.o": "859b3e58676e57226638c4526575b4d91e66867d2f1b574ce8a820d1620522a3",
+    "test_recorder_boundary.o": "9044d27fcab674a7d4f97e34242e191e268f5c6f5e6784dc6be61051323a2e28",
+    "test_recorder_stock.o": "df25f348c1970d16f7058c489b3929a8579d55149dad7637d3bfdfab16c7e7ed",
+    "recorder-hooks.private.o": "245e960a113fe2986b88df065fb581603ee84f0ae80402a37de7c7061e622a3c",
+    "engine_boundary.o": "d4a7841ff9aa0c32d28bf5975543523147403bf16b718968954d7d8f4358301c",
+    "test_recorder_prepare.o": "1fc4143f015bf6491405723d2fc001b98ea35791d9d798e822d8683f94b8edda",
+    "recorder-engine-hooks.private.o": "690a0fdb26b2829e3799ed4abe0b1243a0770d6430fe65e2680cfd65b43331b8",
+    "planner.o": "862fbf786e4388477f7c3efa7601dad7bef8d9583c5b0a21db5351e3276594d4",
+    "planner_job.o": "8f9b560021a93770770eb294c6d569d94fd5b75596e5f1d332d61b4d75664485",
+    "pcm_reader.o": "79fa1b604de2d1e08edc4f41db4578f9ff68afc802dfadc3dd8a4d14a27427e3",
+    "preview_session.o": "50a62a752f3f966ee09288d075cabbc399d1beb9770516f66740096620038304",
+    "flex_metadata.o": "76850abcbac49616869c394c367ea53423f55b1ca6eea25bb5c98dd8ee2364b9",
+    "flex_copy.o": "569c269a42d5fcb9e401be217326030f56ce3e89a1fde23d7b5cf6c185a42544",
+    "flex_source.o": "d42c28018f81f29ba3921b8c483916ffa9e8ff38405ad8ba953c8bb203563796",
+    "flex_lookup.o": "814d6c1ba95acf54b1afadc5767e733071288fb408cf14d87cadb271e8a1b54f",
+    "preview_async.o": "17a44161e03b8b7f6ffaef4d958eaa025eef08f9ed674e6ce147b6c7dbb2391e",
+    "test_recorder_service.o": "1e647bf999a10b6576250002dbf4949fee1148027401fb88e3e798b075b12c0b",
+    "test_recorder_engine_service.o": "55b1bea8e06f319cc36e2d52066539c913ec2d1b566afd89b72bdddfe454daf2"
+  },
+  "codegenGuard": "passed",
+  "freestandingLink": true,
+  "boundarySize": [
+    "text\t   data\t    bss\t    dec\t    hex\tfilename",
+    "    632\t      0\t      0\t    632\t    278\t/evidence/metadata49-final-native/recorder_boundary.o"
+  ],
+  "boundaryStackUsage": [
+    "/source/sdk/drafts/beat-slicer/recorder_boundary.c:14:13:enter\t24\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/recorder_boundary.c:7:6:bs_recorder_boundary_init\t8\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/recorder_boundary.c:28:6:bs_recorder_enter_locked\t16\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/recorder_boundary.c:34:6:bs_recorder_prepare_locked\t16\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/recorder_boundary.c:38:6:bs_recorder_leave_locked\t32\tdynamic,bounded",
+    "/source/sdk/drafts/beat-slicer/recorder_boundary.c:48:5:bs_recorder_quiescent_locked\t0\tstatic"
+  ],
+  "hardware": "not tested",
+  "audio": "not tested",
+  "timing": "not measured",
+  "nativeSourceAccess": "private fixed-lifetime engine service; production admission, retirement and USB remain unimplemented",
+  "sdkRevision": "c8fcb8054b10366b3a7881ec957a566460aab3d4",
+  "sdkDependencySha256": {
+    "sdk/runtime/m68k_codegen.py": "861da4bf86f662362055f1082147b2c14824075724f7c7a2b77acca3e0c973c0",
+    "sdk/runtime/logging/stock-guards.json": "5df445855cbae19c4582fb724855230e47be70c4736d5027786247582e60f9b4"
+  },
+  "codegenGuardSha256": "861da4bf86f662362055f1082147b2c14824075724f7c7a2b77acca3e0c973c0",
+  "engineHookSites": {
+    "idle": {
+      "name": "idle",
+      "address": 1074284622,
+      "length": 6,
+      "sha256": "d355f8d6cb1b5bf2b6618ea8419e7501aafcfeac5c0616b645646734c0878428"
+    },
+    "job": {
+      "name": "job",
+      "address": 1074284638,
+      "length": 6,
+      "sha256": "0bc2ef188c68224486591693fb94e822b6cc59b94e31323c678457ef5363120e"
+    }
+  },
+  "preparationEnabled": true,
+  "preparationHookSites": {
+    "enter": {
+      "address": 1073766384,
+      "length": 8,
+      "sha256": "528455adb37f738a3aa0af9ef04cc1c0069f81405025b7f0cea526cbba9389e4"
+    },
+    "leave": {
+      "address": 1073768202,
+      "length": 8,
+      "sha256": "b3c64cdb09d421052742154877f60c4cd52e8cc5e54d70ff2c9186a53256225a"
+    }
+  },
+  "preparationInteriorScan": {
+    "scope": "Aligned encoding and absolute-literal leads only; indirect/control-flow completeness unqualified",
+    "interiorTargets": [
+      1073766386,
+      1073766388,
+      1073766390,
+      1073768204,
+      1073768206,
+      1073768208
+    ],
+    "branchCandidates": [],
+    "literalCandidates": []
+  },
+  "sourcePreviewEnabled": true,
+  "enginePreviewService": true
+}

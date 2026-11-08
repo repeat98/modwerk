@@ -51,7 +51,17 @@ initcopied:
         move    x:(r0)+,x0
         move    x0,x:(r1)+
 proccopied:
-@PROCFILL@        move    #>nullentry,r1
+@PROCFILL@        ; The packet operations run from the shared window (see the split at coldops below): the payload
+        ; record leaves their words at the top of the arena, and they move to this core's window tail before any
+        ; packet is read. Both payloads' boot loops zero the window before the first frame, so they cannot be
+        ; loaded there; once copied, the arena's top words are the allocator's like the rest.
+        move    #>@STAGE@,r0
+        move    #>@WINDOW@,r1
+        do      #@COLDWORDS@,coldcopied
+        move    p:(r0)+,x0
+        move    x0,p:(r1)+
+coldcopied:
+        move    #>nullentry,r1
         move    #>@NULL_INIT@,x0
         move    x0,p:(r1)+
         move    #>@NULL_PROC@,x0
@@ -137,12 +147,45 @@ cleaned:
         move    a1,x1
 checksumdone:
         and     #>$ffff,a
-        bne     badsum
+        bne     coldsum
         move    r3,x:(r0+63)
         move    x:(r0+2),a
         and     #>$ffff,a
         cmp     #>1,a
         beq     accepted
+        bra     coldops
+coldsum:
+        move    #>@COLDSUM@,r1          ; a torn packet: its record is kept by the window's half (badsum)
+        jmp     (r1)
+coldops:
+        move    #>@COLDOPS@,r1          ; every other opcode: the window's half
+        jmp     (r1)
+accepted:
+        move    x:(r0+63),r3
+        move    #>0,x0                  ; HF3 clear: done
+        bra     reply
+badsaved:
+        move    x:(r0+63),r3
+        move    #>$10,x0                ; HF3 set: refused
+reply:
+        ; One HCR write: HF3 the result, HF2 toggled so the host sees the packet handled.
+        movep   x:<<$ffffc2,a1
+        and     #>$ffffef,a
+        or      x0,a
+        eor     #>$8,a
+        movep   a1,x:<<$ffffc2
+        move    #>0,a
+        move    a1,x:(r0)               ; consume the packet
+finish:
+        rts
+;=window=
+; From here to the private marker the receiver runs from the window, the top of this core's FX2 block 3, which no buffer
+; reaching past offset $3e00 is given (buffers.c, the build's block-3 rule). Code fetched from the window costs a wait
+; state a word (twice the cycles of private P, measured on the owner's MKII, 28 October 2026), so only what runs on a
+; frame that carries a packet is here. It is assembled on its own: the private half's addresses are absolute numbers.
+coldops:
+        move    x:(r0+2),a
+        and     #>$ffff,a
         cmp     #>3,a
         beq     upload
         cmp     #>4,a
@@ -192,7 +235,7 @@ upload:
         bgt     refusewrite
         sub     x1,a
         move    a1,x0
-        bsr     tablebase
+        move    #>@TABLE@,a
         add     x0,a
         move    a,r3
         move    r0,a
@@ -217,7 +260,7 @@ written:
         move    x:(r0+5),a
         and     #>$ffff,a
         move    a1,x0
-        bsr     tablebase
+        move    #>@TABLE@,a
         add     x0,a
         move    a,r3
         move    #>0,x1
@@ -253,7 +296,7 @@ mismatch:
         move    x:(r0+5),a
         and     #>$ffff,a
         move    a1,x0
-        bsr     tablebase
+        move    #>@TABLE@,a
         add     x0,a
         move    a,r3                    ; P, from the chunk's first word
         move    r0,a
@@ -297,7 +340,7 @@ scanned:
         move    a1,x:(r0+59)
         move    x0,x:(r0+60)
 tableoffset:
-        bsr     tablebase
+        move    #>@TABLE@,a
         move    a1,x0
         move    x:(r0+61),a
         sub     x0,a
@@ -339,7 +382,7 @@ weighed:
         move    x0,x:(r0+60)
 ; The record: (r0+61) first, then (r0+59) and (r0+60). Only the first of a boot is kept.
 keeprecord:
-        move    #>missoffset,r3
+        move    #>@MISSOFFSET@,r3
         move    p:(r3),x0
         move    x0,a
         tst     a
@@ -347,10 +390,10 @@ keeprecord:
         move    x:(r0+61),x0
         move    x0,p:(r3)
         move    x:(r0+59),x0
-        move    #>missexpected,r3
+        move    #>@MISSEXPECTED@,r3
         move    x0,p:(r3)
         move    x:(r0+60),x0
-        move    #>missactual,r3
+        move    #>@MISSACTUAL@,r3
         move    x0,p:(r3)
         bra     badsaved
 binding:
@@ -361,7 +404,7 @@ binding:
         move    a1,x1
         asl     a
         move    a1,x0
-        bsr     tablebase
+        move    #>@TABLE@,a
         add     x0,a
         move    a,r3
         ; Only stock's 32 ids have originals to keep: past them the saved pair is the null stub's, so BIND keeps
@@ -369,7 +412,7 @@ binding:
         move    x1,a
         cmp     #>31,a
         ble     ownsaved
-        move    #>nullentry,r3
+        move    #>@NULLENTRY@,r3
 ownsaved:
         move    x1,a
         add     #>@INITTABLE@,a
@@ -408,13 +451,13 @@ retained:
         move    x:(r0+5),a
         and     #>$ffff,a
         move    a1,x0
-        bsr     tablebase
+        move    #>@TABLE@,a
         add     x0,a
         move    a1,x:(r1)
         move    x:(r0+7),a
         and     #>$ffff,a
         move    a1,x0
-        bsr     tablebase
+        move    #>@TABLE@,a
         add     x0,a
         move    a1,x:(r1+@IDS@)
         bra     accepted
@@ -513,6 +556,7 @@ reply:
         move    a1,x:(r0)               ; consume the packet
 finish:
         rts
+;=private=
 ; Core 1's wait for core 0 (P:$57, brclr #1,y:<<$ffffd3) as a counted one: each pass adds one to
 ; X:$2840 (core 1's, untouched by stock), which its frame hook takes as its idle count (see frame).
 ; DO FOREVER and BRKCS, not a branch back: dsp_asm writes a backward brclr's target absolute.

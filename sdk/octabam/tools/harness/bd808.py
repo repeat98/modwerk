@@ -5,7 +5,7 @@ import bd909
 sys.path.insert(0,str(bd909.ROOT/'modules/analog-bassdrum'))
 import dsp808,dsp909
 OUT=bd909.ROOT/'out/bd808'
-INIT=[64,80,80,64,64,0,0,100,127,64,64,0]
+INIT=[64,80,80,64,64,0,0,0,100,64,64,126]  # 0.1.6 order: ... TYPE FIXD ACNT LOW HIGH LPF; LPF 126 = 18 kHz (0.1.5's default)
 def build(*,output_trim=True):
     bd909.build_host();OUT.mkdir(parents=True,exist_ok=True)
     shared=dsp909.default_layout(0x1000);lay=dsp808.layout(0x3200)
@@ -41,7 +41,7 @@ def main():
         blocks=bd909.hits(k,seconds=4,at=(0,));y,_=render(syms,blocks,f'tail{sat}')
         assert max(map(abs,y[-4410:]))<.0001,('tail/DC floor',sat)
     k=INIT.copy()
-    blocks=bd909.hits(k,seconds=.5,at=(32,4001),changes={100:{0:127,2:0,5:127,8:1,9:0,10:127},300:{0:0,2:127,5:0,8:127,9:127,10:0}})
+    blocks=bd909.hits(k,seconds=.5,at=(32,4001),changes={100:{0:127,2:0,5:127,11:0,9:0,10:127},300:{0:0,2:127,5:0,11:126,9:127,10:0}})
     y,_=render(syms,blocks,'automation');assert bd909.err_db(y,reference(blocks)) < -45
     print('PASS DSP 808; worst reference residual',worst)
 if __name__=='__main__':main()

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "main-rms",
+  "moduleVersion": "1.0.0",
+  "firmware": "1.74",
+  "capturedAt": "2026-10-22T22:05:00Z",
+  "imageSha256": "f4d7e60de44e77658a05747886d33945dba25d4ea0cfcdb028244e0ecaabf6c0",
+  "mainSha256": "70767ae4626140dc98244c4f29e1b09f8dbe53da534820dd5663dd23e6460053",
+  "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "build": "Modwerk's linker (kit 0.7.0 parity): core-ar2 0.3 release (6b97dfb3…3e58) + rytm2_mods v1.2 main-rms-1.0-os1.74.elemod (cbd69edb…5d54), --version MR74",
+  "emulator": {
+    "name": "rytm-emu",
+    "repository": "https://github.com/trigcondition/rytm-emu",
+    "revision": "c5732f0",
+    "binary": "dtboot (cargo build --release)",
+    "settings": "no card image, JIT on"
+  },
+  "conditions": "Headless cold boot; four held NO presses clear the missing-calibration notices; FX selects the FX track and AMP opens the compressor page, with the sequencer stopped. The same plan on stock 1.74 gives byte-identical frames throughout, as expected while the output is quiet. In further runs with the pattern playing and a full-scale square wave on EXT IN (and, in separate runs, RAT at MAX, or MUP raised and THR lowered), the receive buffer's MAIN words peaked around -30 dBFS, well below the threshold, so the inverted label could not be captured.",
+  "captures": [
+    {
+      "path": "media/compressor-page.png",
+      "sha256": "74536cafe18c8b6f98398b8c6eb5ff2cf68aca650e6ff69b628fd69164d84c9e",
+      "frame": "step06_AMP.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out dtboot mr74.syx --instr 8800M --every 1000M --press NO@4500M:80M --press NO@5300M:80M --press NO@6100M:80M --press NO@6900M:80M --press FX@7500M:40M --press AMP@8000M:40M"
+    }
+  ]
+}

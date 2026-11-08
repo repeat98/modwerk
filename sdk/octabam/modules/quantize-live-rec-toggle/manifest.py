@@ -30,21 +30,18 @@ The cave is position-independent, so it may land anywhere the allocator puts it.
 MEASURED: hardware-confirmed on the author's MKI: the show-then-invert gesture works
 on this version, with the tick hook removed (2026-09-25), and a setting changed with it
 survives a power cycle (2026-09-30). The standalone image is tools/build_quantize_live_rec_toggle.py
-in the author's repository. MODWERK: on an MKII, the user tested this source with the
-redraw below (13 October 2026); see TESTING.md.
+in the author's repository. See TESTING.md for this version's results.
 
-MODWERK. The author's declaration is one floating CavePatch whose emit() plants the
-two `jmp` detours and carries the stock instruction bytes it expects at each site.
-Here the same cave is one floating Linked unit (`qlr`, linked by the build where it
-lands and compared with the author's 176 bytes at his own address every build), the
-two `jmp`s are Detours onto its global symbols, and every stock expectation is an
-address/length/SHA-256 guard read from the builder's own OS file. No stock bytes
-are carried. patch_qlrec.s is the author's but for the two toast strings: his
-"QUANT LIVE REC ON" / "QUANT LIVE REC OFF" read "LIVE REC: QUANTIZED" /
-"LIVE REC: UNQUANTIZED" here, and after a flip the unit calls the stock routine that
-redraws the open PROJECT menu page (0x40064d7c, a no-op when that menu is closed), so
-an open PERSONALIZE list shows the new value at once; the flip writes the battery shadow before the
-word and reaches that call through %a0, so no 12 bytes repeat stock code. Nothing else changed.
+patch_qlrec.s is the author's file, unchanged (Zac-Kyoti/octatrack-kyoti-fw 3ead7f9): the
+"LIVE REC: QUANTIZED" / "LIVE REC: UNQUANTIZED" toasts, the PERSONALIZE redraw after a flip
+(only while PERSONALIZE is the open PROJECT page) and the store order that keeps the unit
+stock-free are all his. The author's declaration is one floating CavePatch whose emit()
+plants the two `jmp` detours and carries the stock instruction bytes it expects at each
+site. Here the same cave is one floating Linked unit (`qlr`, linked by the build where it
+lands and compared every build with the SHA-256 of the author's 196 bytes at 0x400d7400),
+the two `jmp`s are Detours onto its global symbols, and every stock expectation is an
+address/length/SHA-256 guard read from the builder's own OS file. No stock bytes are
+carried.
 """
 
 import os
@@ -67,15 +64,12 @@ RECREL_HOOK = 0x4004883a
 RETIRED_TICK_HOOK = 0x400522ca
 RETIRED_TICK_GUARD = stock_guard(RETIRED_TICK_HOOK, 6, "1eb782bde4b72ae5bad5fe826898c238315df94d4a4e583f7e7949210e3d02fb")
 
-# patch_qlrec.s, m68k-elf-as -mcpu=5407, linked at 0x400d7400: 188 bytes. The unit is position
-# independent (the author verified his 176 bytes at 0x400d7700 and 0x400d7100), so the one reference
-# holds wherever it floats. Modwerk changed the two toast strings and added one call (see the
-# docstring), so these are no longer the author's bytes: his unit is 176 bytes, SHA-256
-# 52c26af67443e470147844a52009d09fa308be5045a1f891c01344dbbaa8670d, and with both changes taken
-# back this source still links to exactly that (with the stock-free reorder of 15 October 2026 taken back too).
-UNIT_BYTES = 188
-RECREL_OFFSET = 0x7c                     # qlr_recrel within the unit; qlr_play is at 0
-REFERENCE = (0x400d7400, "9ab1d8e56eee486a1844e6d57330888aaf001f532c1d87d0d0e6b95361749518")
+# patch_qlrec.s, m68k-elf-as -mcpu=5407, linked at 0x400d7400: 196 bytes, the author's unit byte for
+# byte. It is position independent (its strings are reached PC-relative, stock code by absolute
+# address), so the one reference holds wherever it floats.
+UNIT_BYTES = 196
+RECREL_OFFSET = 0x84                     # qlr_recrel within the unit; qlr_play is at 0
+REFERENCE = (0x400d7400, "065cafcb0c3896aad746efd0ce9bf022fb6a6d17a7e593bb7f9e889c2861b9e4")
 
 MODULE = Module(
     name="quantize-live-rec-toggle",

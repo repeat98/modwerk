@@ -1,0 +1,40 @@
+[
+  {
+    "version": "0.3.2-experimental",
+    "date": "2026-10-26",
+    "changes": [
+      "In AUTO each sample keeps the length it picked while the tempo moves: lowering or raising the tempo no longer makes a loop jump an octave.",
+      "AUTO picks the length at the tempo of the moment you set it, and again when the project loads. Leave AUTO and come back to pick again.",
+      "Known issue: a length of 3 to 16 BAR on a sample shorter than about 0.14 s can freeze the unit; use AUTO or a shorter length for such samples."
+    ]
+  },
+  {
+    "version": "0.3.1-experimental",
+    "date": "2026-10-26",
+    "changes": [
+      "Uses less CPU in the audio engine, most of all while the tempo keeps moving, as with an external MIDI clock. Loops play exactly as in 0.3.0.",
+      "Known issue: a length of 3 to 16 BAR on a sample shorter than about 0.14 s can freeze the unit; use AUTO or a shorter length for such samples."
+    ]
+  },
+  {
+    "version": "0.3.0-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "FUNC + TUN now offers 1/4, 1/2, 3/4, 1, 1.5, 2, 3, 4, 6, 8, 12 and 16 bars; AUTO still picks 1/4 to 16 in powers of two.",
+      "FUNC + FIN corrects by up to 25 % in 0.2 % steps.",
+      "Mode and correction are kept per sample (up to 51); FUNC + TUN/FIN always set the loop the sound loads.",
+      "A SMP-locked loop with no setting plays at the main loop's speed if it is a copy, else in AUTO; past TUN's range a loop no longer jumps back to full speed.",
+      "Settings saved with 0.2 are not read: set your loops again once."
+    ]
+  },
+  {
+    "version": "0.2.0-experimental",
+    "date": "2026-10-24",
+    "changes": [
+      "First library release, for Analog Rytm MKII OS 1.74 on core-ar2 0.3: keeps sample loops in time with the project tempo by repitching them.",
+      "AUTO reads each loop's tempo from its length, SMP locks and scenes included; FUNC + FIN corrects each sample slot in percent.",
+      "Trailing digital silence is left out and the pitch glides on tempo changes. Pitch follows tempo: there is no time-stretch.",
+      "Not yet tested on a unit: this exact build, saving and reboots, external MIDI clock and CPU load."
+    ]
+  }
+]

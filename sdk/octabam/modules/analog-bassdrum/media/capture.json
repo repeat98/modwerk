@@ -1,131 +1,165 @@
 {
-  "firmware": "1.40C",
-  "imageSha256": "137580f326b6adc3b0d58f2183d530507f1b370c48911b38d5d0cf94d9e96898",
-  "emulatorSha256": "908a0f8deb76fc8ab3cc0968b924db68e108d9b4f54145e7a8facfe6cad0732c",
-  "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6.",
-  "palette": {
-    "on": [
-      240,
-      240,
-      240
-    ],
-    "off": [
-      24,
-      24,
-      24
-    ]
-  },
-  "keyMs": 50,
-  "plan": [
-    {
-      "press": [
-        "NO"
-      ]
-    },
-    {
-      "wait": 2000
-    },
-    {
-      "press": [
-        "T1"
-      ]
-    },
-    {
-      "press": [
-        "SRC"
-      ]
-    },
-    {
-      "wait": 1000
-    },
-    {
-      "capture": "ot-808.png"
-    },
-    {
-      "press": [
-        "T5"
-      ]
-    },
-    {
-      "press": [
-        "SRC"
-      ]
-    },
-    {
-      "wait": 1000
-    },
-    {
-      "capture": "ot-909.png"
-    },
-    {
-      "hold": [
-        "FUNC"
-      ]
-    },
-    {
-      "press": [
-        "SRC"
-      ]
-    },
-    {
-      "release": [
-        "FUNC"
-      ]
-    },
-    {
-      "wait": 500
-    },
-    {
-      "capture": "ot-setup.png"
-    },
-    {
-      "press": [
-        "SRC"
-      ]
-    },
-    {
-      "wait": 500
-    },
-    {
-      "press": [
-        "T5"
-      ]
-    },
-    {
-      "press": [
-        "T5"
-      ]
-    },
-    {
-      "wait": 500
-    },
-    {
-      "capture": "ot-engines.png"
-    },
-    {
-      "press": [
-        "NO"
-      ]
-    }
+ "firmware": "1.40C",
+ "imageSha256": "9a52d642e1280c704789dfcca11876a7086cd170424aa8417988ceff442895f7",
+ "emulatorSha256": "23ba6f6cdc6ec4b89b8cf206915e66d3160aec8499b1abfc9b475ac849152b28",
+ "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6.",
+ "palette": {
+  "on": [
+   240,
+   240,
+   240
   ],
-  "screenshots": {
-    "ot-808.png": "969712a0c51a33fe26af66171a37c548dc049c83999231cbf98d8cde643354b4",
-    "ot-909.png": "a60d6691fb5245c08c7133f47c768726c4a93a6aa07886405e6460336723f510",
-    "ot-setup.png": "3d5955dc2363762927bd82d38fce609a96a46b9f432b3d692c32b8762ae21d90",
-    "ot-engines.png": "870dc55c4c595656a9483d8d6d0c925ef21db47f6bf9f2613b56f6e1cd5427f6"
+  "off": [
+   24,
+   24,
+   24
+  ]
+ },
+ "keyMs": 150,
+ "plan": [
+  {
+   "wait": 3000
   },
-  "cardSha256": "a48519a040778cc4174e98f3309f9f3e07b5591dd33aa326ed4b20e71fed012d",
-  "project": {
-    "set": "OCTABAM",
-    "name": "RIG"
+  {
+   "press": [
+    "YES"
+   ]
   },
-  "moduleVersion": "0.1.5-experimental",
-  "capturedOn": "2026-10-09",
-  "dsp": "Real DSP enabled on both cores; stopped transport. DSP source/upload bytes identical to 0.1.4.",
-  "captureTool": "scripts/capture-module-ui.py",
-  "captureToolSha256": "0d234a1bcfae080f86110263e37a3c34a7ed692412e0221bd6cf7da84f52f9c7",
-  "visualReview": "All four actual LCD images opened and reviewed. Assignment, selected 909 engine and both model controls visible; no popup/error. The shared third label reads TONE in both shots; it controls 808 TONE and 909 TUNE.",
-  "license": "LicenseRef-OT-UI-Documentation",
-  "credit": "Octamod contributors (headless capture)",
-  "sourceSha256": "e741e4876ea3ae44eb54ddc93ff3b5bf5f65ebb3e9320cc5fd1f602f7925966d"
+  {
+   "wait": 2000
+  },
+  {
+   "press": [
+    "NO"
+   ]
+  },
+  {
+   "wait": 500
+  },
+  {
+   "press": [
+    "T1"
+   ]
+  },
+  {
+   "hold": [
+    "FUNC"
+   ]
+  },
+  {
+   "press": [
+    "SRC"
+   ]
+  },
+  {
+   "release": [
+    "FUNC"
+   ]
+  },
+  {
+   "wait": 800
+  },
+  {
+   "press": [
+    "DOWN"
+   ]
+  },
+  {
+   "press": [
+    "DOWN"
+   ]
+  },
+  {
+   "press": [
+    "DOWN"
+   ]
+  },
+  {
+   "press": [
+    "DOWN"
+   ]
+  },
+  {
+   "press": [
+    "DOWN"
+   ]
+  },
+  {
+   "wait": 300
+  },
+  {
+   "press": [
+    "YES"
+   ]
+  },
+  {
+   "wait": 800
+  },
+  {
+   "capture": "ot-setup.png"
+  },
+  {
+   "press": [
+    "SRC"
+   ]
+  },
+  {
+   "wait": 800
+  },
+  {
+   "capture": "ot-808.png"
+  },
+  {
+   "hold": [
+    "FUNC"
+   ]
+  },
+  {
+   "press": [
+    "SRC"
+   ]
+  },
+  {
+   "release": [
+    "FUNC"
+   ]
+  },
+  {
+   "wait": 800
+  },
+  {
+   "encoder": {
+    "name": "A",
+    "delta": 8
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "press": [
+    "SRC"
+   ]
+  },
+  {
+   "wait": 800
+  },
+  {
+   "capture": "ot-909.png"
+  }
+ ],
+ "screenshots": {
+  "ot-setup.png": "ba3f510a1435f37ffe85a80f7403a6c169eb2d225a5e56028bf5abdcee568335",
+  "ot-808.png": "452d49e227ea9b67c99302c52a633a80b6608bfe530802d868dd95538e846fa1",
+  "ot-909.png": "4c67db3d9c93046af6d197b7960d340a3c7c1258802a722ec15317e0eba90c41"
+ },
+ "moduleVersion": "0.1.6-experimental",
+ "capturedOn": "2026-10-27",
+ "dsp": "Real DSP enabled on both cores; stopped transport; empty scratch card, new project.",
+ "captureTool": "scripts/capture-module-ui.py",
+ "captureToolSha256": "6521395cc2a9c05aff546bb422d73952011bf56de44ecb7de2741c8e74b78a9c",
+ "visualReview": "All three actual LCD images opened and reviewed: SRC SETUP after assigning ANALOG BD on T1 (TYPE 808, FIXD OFF, ACNT / LOW, HIGH, LPF), the 808 SRC page (PTCH DCAY TONE / ATK SWEP SAT) and, after turning TYPE to 909 with encoder A, the 909 SRC page (PTCH DCAY TUNE / ATK TDEP SAT). No popup or error.",
+ "license": "LicenseRef-OT-UI-Documentation",
+ "credit": "Octamod contributors (headless capture)",
+ "image": "Native octabam card build of this source, Analog BD alone (export-composition-proofs.py --select analog-bassdrum:false --image-dir), on the developer's own OS 1.40C; the image stays local."
 }

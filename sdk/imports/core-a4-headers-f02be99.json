@@ -1,0 +1,21 @@
+{
+ "schemaVersion": 1,
+ "recorded": "2026-10-25",
+ "decision": "elekloader's mod-storage and parameter-page headers for core-a4 0.2, copied unchanged into the Analog Four MKII shared SDK so mods can include analog-four-mk2/store.h and analog-four-mk2/pages.h as the SDK guide shows. Declarations and macros only; GPL-2.0-or-later, kept with their SPDX lines.",
+ "repository": "https://github.com/irpina/elekloader",
+ "tag": null,
+ "revision": "f02be99b631f4869133dc014af5b290d372b8a4a",
+ "license": "GPL-2.0-or-later",
+ "files": [
+  {
+   "from": "elekloader/sdk/include/analog-four-mk2/store.h",
+   "to": "sdk/machines/analog-four-mkii/include/analog-four-mk2/store.h",
+   "sha256": "a5088df026645073501444f1873169c2b7d049df47abffc4745b91a2317afcd0"
+  },
+  {
+   "from": "elekloader/sdk/include/analog-four-mk2/pages.h",
+   "to": "sdk/machines/analog-four-mkii/include/analog-four-mk2/pages.h",
+   "sha256": "3cb92671370c6cec02d2760213b38a17b2e673daff341525c901de6982d2584b"
+  }
+ ]
+}

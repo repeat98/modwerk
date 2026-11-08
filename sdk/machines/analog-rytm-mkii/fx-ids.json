@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "about": "Send effect ids on the Modwerk Analog Rytm MKII base. Each send effect module's record (struct mw_fx, include/modwerk/fx.h) carries its id, 1 to 63, and a kit saves the chosen effect by that id, so an id is never reused or renumbered. npm run modules:check refuses a module whose record carries another id than its entry here. Take the next free number.",
+  "ids": {
+    "1": "chorus",
+    "2": "flanger",
+    "3": "phaser"
+  }
+}

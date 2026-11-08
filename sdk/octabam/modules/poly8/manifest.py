@@ -2,6 +2,14 @@
 from remix.stock_guard import stock_guard
 from remix.schema import Category, Detour, Kind, Linked, Module, Poke, SymbolRef, StockCopy
 H=bytes.fromhex
+# The machine chooser's five UP/DOWN handlers clamp its cursor to row 5 (moveq #5 at each address, then at +6):
+# past six rows the list scrolled but the cursor stayed on POLY8. The composition sets them to the last row.
+# Over USB the base's ot_machines owns these bytes and the package leaves them out (machine-ports.json replaces).
+CHOOSER_CLAMPS=tuple(
+ Poke(at+k, stock_guard(at+k, 2, guard), H(code), 'machine chooser cursor reaches the last row')
+ for at in (0x40078c22, 0x40078cb0, 0x40078d2e, 0x40078dee, 0x40078e7c)
+ for k,code,guard in ((0,'7205','c55bd639d8c368e737cdc6bb17522f91dbe1f51682d2433f4caa962e6ca77513'),
+                      (6,'7005','63540692485e9982808a3ad2d9eda3ef9f9b6b45ea3d491ee894cc3f0b7579e9')))
 U32=lambda value:value.to_bytes(4,"big")
 MODULE=Module(
  name="poly8", key="POLY8",kind=Kind.CF_PATCH, category=Category.MACHINES,
@@ -24,6 +32,7 @@ Linked("polyui", "modules/poly8/registration.s", cpu="5475", dram=True, stock_co
         SymbolRef(0x400cf6fa, 0x4007893c, "machine_registry", "mr_pool_left", note="LEFT returns from POLY FLEX samples to the machine list"),
         SymbolRef(0x400cf702, 0x4007893c, "machine_registry", "mr_pool_left", note="Repeated LEFT uses the same menu navigation"),
         SymbolRef(0x400cf714, 0x4007909c, "machine_registry", "mr_pool_right", note="RIGHT on POLY opens its FLEX sample pool"),
+        SymbolRef(0x4007865e, 0x400334d8, "machine_registry", "mr_chooser_name", note="Machine chooser names by the list's row: its scroll offset plus the row on screen"),
     ),
  detours=(
 Detour(0x40031e74, stock_guard(0x40031e74,8,"bba32826863751ec568719c202735da1ba8f06560e4d375a80637ae6653caa8f"), "machine_registry", "mr_resolve_pb", "Resolve the signed machine parameter page", pad_to=10),
@@ -98,6 +107,7 @@ Poke(0x4003c950, stock_guard(0x4003c950, 2, '74d01dadcbe6a57ef61bc53a5a65404cd84
 Poke(0x40078678, stock_guard(0x40078678, 2, '04cd1c6d463ba6752ff68f9125991b1c4af983ae355b62366122ba2d47eee3b2'), H('7005'), 'POLY is machine chooser row six'),
 Poke(0x400786ce, stock_guard(0x400786ce, 2, '04cd1c6d463ba6752ff68f9125991b1c4af983ae355b62366122ba2d47eee3b2'), H('7005'), 'POLY is machine chooser row six'),
 Poke(0x40079904, stock_guard(0x40079904, 2, '577d7ba37f9786ab02a7dc9eeb612bb55936018179b550b14f4b9f000a89bf20'), H('7605'), 'POLY is machine chooser row six'),
+*CHOOSER_CLAMPS,
 Poke(0x4000244E, stock_guard(0x4000244E, 2, "74d01dadcbe6a57ef61bc53a5a65404cd8446c6738ff0ac86b1b1a78d8ae7d41"), H("7205"),
              "project loader accepts stored machine type 5"),
 Poke(0x40002454, stock_guard(0x40002454, 2, "04cd1c6d463ba6752ff68f9125991b1c4af983ae355b62366122ba2d47eee3b2"), H("7005"),

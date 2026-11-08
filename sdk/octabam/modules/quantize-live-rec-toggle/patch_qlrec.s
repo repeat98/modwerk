@@ -1,5 +1,5 @@
 | SPDX-License-Identifier: MIT
-| SPDX-FileCopyrightText: 2026 Zac-Kyoti
+| SPDX-FileCopyrightText: 2026 Zac Kyoti
 |
 | patch_qlrec -- surface QUANTIZE LIVE REC (PERSONALIZE) to the front panel.
 |
@@ -131,8 +131,20 @@
 | ---- still open from Session 51 (not addressed here) ----
 |   * An occasional small, textless box flashes where the toast was, right
 |     after it closes.
-|   MODWERK: Session 51's second open item, the PERSONALIZE row not redrawing
-|   while open, is addressed in qp_flip below (jsr MENU_REDRAW).
+
+| ---- PERSONALIZE live redraw (2026-10-22) ----
+| Until now the PERSONALIZE row kept its old check mark until the menu was
+| re-opened (the VALUE was right, the widget stale).  The cause: PERSONALIZE's
+| key handler 0x40068fd0 only calls the setter; it is the PROJECT menu's key
+| dispatcher 0x400650a0 that redraws, by tail-jumping to FUN_40064d7c after
+| every screen key handler.  Our flip runs in the [PLAY] handler, so nothing
+| redrew.  qp_flip now calls FUN_40064d7c itself when the current menu screen
+| (0x400cbf40, an index into the menu-state table 0x400cbdac, stride 0x14) is
+| 12 = PERSONALIZE (its record 0x400cbe9c: draw 0x40068e00, key 0x40068fd0).
+| FUN_40064d7c returns at once when the menu window 0x400cbf4c is 0 (menu
+| closed), and stock calls it from about ten other key handlers (0x4004d8d8,
+| 0x40062d98, 0x40066978, 0x40069b24, ...), so a key-handler call is a stock use.
+| It runs before NOTIFY, so the toast is drawn over the redrawn menu.
 |
 | Detours (applied by build_quantize_live_rec_toggle.py) -- TWO, both key handlers:
 |   0x40061778  6 B  `jsr 0x4009b5c0`           -> jmp qlr_play
@@ -152,10 +164,11 @@
     .equ NOTIF_H,      0x460d1e70        | the toast's window handle; 0 == none on screen
     .equ NOTIF_T,      0x460d1e6c        | its remaining duration; 0 == expired
     .equ PROJ_GATE,    0x4009b5c0        | displaced from 0x40061778
-    .equ MENU_REDRAW,  0x40064d7c        | MODWERK: redraws the open PROJECT menu page; returns at once
-                                          |   when that menu's window (0x400cbf4c) is not open.  It is
-                                          |   what stock's own menu key dispatch ends in (0x40065132).
     .equ PLAY_RESUME,  0x4006177e        | 0x40061778 + 6  (tst.l %d0 ; bne.s ...)
+    .equ MENU_SCR,     0x400cbf40        | current PROJECT-menu screen (menu-state index)
+    .equ SCR_PERSONAL, 12                | PERSONALIZE's index (record 0x400cbe9c)
+    .equ MENU_REDRAW,  0x40064d7c        | FUN_40064d7c -- redraw the current screen;
+                                          |   no-op while the menu window 0x400cbf4c is 0
 
     | The toast's life == the window in which a press flips, because they are
     | the same thing: the OS's own countdown.  At the 59.999 Hz UI tick derived
@@ -183,9 +196,7 @@
 
 | ================= [PLAY] press -- detour @ 0x40061778 =================
 | Entry stack (exactly what stock 0x40061778 sees): 0(sp)=ret, 4(sp)=keycode,
-| 8(sp)=event (always 1 here).  MODWERK: d0/a0 directly; the stock routines
-| called (PROJ_GATE, CKSUM, MENU_REDRAW, NOTIFY) may also clobber d1/a1, as
-| at the stock entry this replaces.
+| 8(sp)=event (always 1 here).  Only d0/a0 touched.
     .global qlr_play
 qlr_play:
     tst.l   REC_HELD
@@ -247,21 +258,21 @@ qp_flip:
     move.l  QLR,%d0
     eori.l  #1,%d0
     andi.l  #1,%d0
-|   MODWERK: the shadow is written before the word and the redraw below is called through
-|   %a0, so that no 12 bytes of this unit repeat a run of stock code (the strict stock-free
-|   scan of a USB package).  Nothing reads either word before the checksum; same calls, same order.
+|   Shadow first, then the word: in the other order these two stores and the
+|   jsr below are byte for byte stock's own PERSONALIZE setter (0x40068ccf),
+|   which a stock-free scan (Modwerk's USB packages: 12 shared bytes) refuses.
+|   Nothing reads either word before the checksum, so the order is free.
     move.l  %d0,QLR_SH                   | battery-SRAM shadow
     move.l  %d0,QLR
     jsr     CKSUM                        | re-checksum the 'ANDY' block
-|   MODWERK: stock redraws a PROJECT menu page only after a key reaches that page, and
-|   [PLAY] does not, so an open PERSONALIZE list kept showing the old box until an arrow
-|   key was pressed (the author's open item from Session 51; seen on an MKII, 13 Oct 2026).
-|   Redraw it here, before the toast is opened over it.  Key-handler context, as stock's.
-    lea     MENU_REDRAW,%a0
-    jsr     (%a0)
+|   PERSONALIZE on screen? redraw it, so its row shows the new value now
+    moveq   #SCR_PERSONAL,%d0
+    cmp.l   MENU_SCR,%d0
+    bne.b   qp_open
+    jsr     MENU_REDRAW
 |   fall through: show the setting we just wrote
 
-|   --- (re)open the toast on the CURRENT setting, and restart its LIVE_DUR (1 s) ---
+|   --- (re)open the toast on the CURRENT setting, and restart its 0.8 s ---
 qp_open:
     | Session 51: HW-confirmed the menu's checked/unchecked glyph is the
     | OPPOSITE of the raw bit's face value -- raw 0 draws as checked/ON in
@@ -303,9 +314,11 @@ qlr_recrel:
 qr_done:
     rts
 
-|   MODWERK: the two strings below are changed from the author's "QUANT LIVE REC ON" /
-|   "QUANT LIVE REC OFF" (17/18 ch). His note on them: FUN_4005a2b8 sizes the window to
-|   textpx+15, and the full "QUANTIZE LIVE REC OFF" (21 ch) overruns the 128 px screen.
+|   FUN_4005a2b8 sizes the window to textpx+15 (textpx = FUN_40012f30 over the
+|   font 0x400ba862).  Measured with that font: "LIVE REC: QUANTIZED" = 114 px,
+|   "LIVE REC: UNQUANTIZED" = 126 px, within the 128 px screen (stock shows
+|   127 px "NOT A STEREO SAMPLE!" and 129 px "NO FREE STATIC SLOTS!").
+|   (2026-10-22, the user's wording; was "QUANT LIVE REC ON/OFF".)
 qlr_msg_on:
     .asciz "LIVE REC: QUANTIZED"
     .align 2

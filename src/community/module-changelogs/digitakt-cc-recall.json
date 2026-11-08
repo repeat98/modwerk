@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-28",
+    "changes": [
+      "First release for Digitakt I OS 1.54, on Core 2.1. SETTINGS > CC RECALL makes the MIDI tracks send their pattern’s CC values at once.",
+      "It acts after a pattern reload, a pattern change (also while playing, in a chain or in song mode), a project load or STOP; stock waits for each track’s next trig.",
+      "Pitch bend and aftertouch go out as with the stock first trig. Unticked, MIDI output is stock.",
+      "The setting is not saved and starts unticked at every power-on.",
+      "Tested on a Digitakt I, alone and with FX Track."
+    ]
+  }
+]

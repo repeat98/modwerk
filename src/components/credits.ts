@@ -86,11 +86,6 @@ export const CREDIT_SECTIONS: readonly CreditSection[] = [
         description: 'The vendored TypeScript kit for local Digitakt and Digitone firmware builds, shared cores and elemod format. Its public ABI and adaptation guides also inform Modwerk’s core research.',
         links: [repo('irpina/elekloader')],
       },
-      {
-        name: 'digikit', author: 'Em D (@m-dwyer) and contributors',
-        description: 'Elektron firmware research, memory maps and tools. Its codecs and transport encoders are credited in the elekloader builder used here.',
-        links: [repo('m-dwyer/digikit')],
-      },
     ],
   },
   {

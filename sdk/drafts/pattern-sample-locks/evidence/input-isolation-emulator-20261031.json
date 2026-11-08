@@ -1,0 +1,96 @@
+{
+  "schema": 1,
+  "date": "2026-10-31",
+  "hardware": false,
+  "status": "Reproduced packet-interleaving input fault with Sample Locks absent. Hardware incident attribution and fix qualification remain open.",
+  "baseConfigurationHash": "20ed79108facb38d72b1e21105a3fd598bc45b76da39e667d6ad1c9b9a67410e",
+  "baseImageSha256": "8ede9cf9d702f93acbbfede4ade157c11abf7a18d6ddab0000ab68b48a84fb3f",
+  "emulatorSha256": "b087c97f3031f075551b3336afcd75a407ca4d3476e04a9d5cfaa059b1d40363",
+  "helperSha256": "c14e3b37f19242352dd4fc7d3eb0fa70b91cb1b03843b2b6156525e99b9adb46",
+  "receiptSha256": "350a3f4507b9cf31571a07a878430b4b7daccdd7e12fceca3751d733ccbc3c71",
+  "moduleInventoryVerifiedViaUsb": [],
+  "dspExecutionEnabled": false,
+  "physicalUnitAccessed": false,
+  "firmwareCodeModified": false,
+  "method": "The unchanged development base ran on a copied disposable card. A fader report was delivered through emulated UART1 in two pieces; a real USB development KEY request was inserted between them. To construct one-byte arrivals using the emulator two-byte key command, a dummy leading byte was removed from the emulated receive FIFO while execution was paused, before firmware ran. No firmware or project-memory bytes were patched.",
+  "control": {
+    "order": [
+      "Complete physical fader report",
+      "Remote FUNC down",
+      "Remote FUNC up"
+    ],
+    "heldRowsAfter": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "stockFuncStateAfter": 0
+  },
+  "interleavedFuncPress": {
+    "order": [
+      "Physical fader header",
+      "Remote FUNC down",
+      "Physical fader value 112"
+    ],
+    "heldRowsAfter": [
+      112,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "unexpectedHeldKeys": [
+      "TRIG5",
+      "TRIG6",
+      "TRIG7"
+    ],
+    "remainedHeldAfterRemoteFuncRelease": true,
+    "faderValueChangedFromControl": true
+  },
+  "interleavedFuncRelease": {
+    "precondition": "FUNC held normally: held row bit set and stock key state 2.",
+    "order": [
+      "Physical fader header",
+      "Remote FUNC up",
+      "Physical fader value 112"
+    ],
+    "heldRowsAfter": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      32,
+      0,
+      0
+    ],
+    "stockFuncStateAfter": 2,
+    "funcReleaseLost": true
+  },
+  "interpretation": [
+    "The development input implementation can corrupt packet framing without any module installed.",
+    "The unintended TRIG5-7 state matches the hardware readback exactly; missed FUNC release is also reproduced.",
+    "This is a strong mechanism-level explanation for the hardware incident, not proof of every unintended hardware edit or any saturation threshold."
+  ],
+  "limitations": [
+    "No DSP execution, audible-output assertion or hardware timing qualification in this reproduction.",
+    "Model transport did not advance in the no-DSP setup; successful STOP or the exact paste message is not claimed here.",
+    "The deliberate split widens the interleaving window; no physical occurrence rate or latency bound is inferred.",
+    "No input-path fix, fresh hardware rerun, source runtime change, Keep, flash or publication occurred."
+  ],
+  "attemptsNotCountedAsPass": [
+    "Default boot instruction budget ended before startup; increased for later attempts.",
+    "DSP-enabled startup was stopped to focus on UI/input isolation.",
+    "An early helper tried a nonexistent Bench.close method; no clean pass was claimed.",
+    "A first split-byte method required a parked main context and was refused before injection; the UART FIFO construction replaced it."
+  ],
+  "nextRequired": "Serialize remote input at complete physical report boundaries and add this reproduction as a failing-then-passing regression; then repeat exact-build hardware qualification from a fresh boot."
+}

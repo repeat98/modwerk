@@ -55,6 +55,14 @@ export const LINK_DEVICES: LinkDevice[] = [
     areas: { ddr: [0x47be0000, 0x47c00000] },
     ddr: [0x47be0000, 0x47c00000], sramCode: [0, 0], fastTable: '', protected: [],
   },
+  {
+    key: 'analog-four-mk2', machine: 'analog-four-mkii', name: 'Analog Four MKII', sysexId: 0x0b, mainLoad: 0x40000400,
+    releases: [
+      { version: '1.56', syxSha256: '5aea489db3e747547f71d5e08a2d20253149fe6258defad60306402d2fc23cb5', mainSha256: '748fec15ddc61bc3ff66047facba74328934c5fb59f427ddaf34a4e2629a474c', mainLength: 2500408 },
+    ],
+    areas: { ddr: [0x47be0000, 0x47c00000] },
+    ddr: [0x47be0000, 0x47c00000], sramCode: [0, 0], fastTable: '', protected: [],
+  },
 ]
 
 type Part = { kind: 'hex'; bytes: Uint8Array } | { kind: 'stock'; addr: number; length: number }

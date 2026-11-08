@@ -1,0 +1,29 @@
+{
+  "scope": "portable resident selection-context checks; serialized trusted adapter model, not actual native dispatch or loader lifetime",
+  "sourceSha256": {
+    "selection_context.c": "6b48e848921ded1de4fb7f3be11dfcf52a9a505674924b91c514935b0aa7d1b4",
+    "selection_context.h": "1d3b65173bf534d96c9cf4af9f444d7115cdd052d40505ce7fc38d8e5726f98c",
+    "editor_menu.h": "211496964f026a650e3e28847314478b25dac5106a586cede963109ff0b26631",
+    "test_selection_context.c": "43254c7351420f14e75c5855bc39d3ccf836705c74715857a27a7f466ca4f5bf",
+    "test_selection_context.py": "ab03002ba70b75d87d8be40f515309bf514f137f83a92b9895f59671a49c6f81"
+  },
+  "compiler": "cc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+  "flags": [
+    "-std=c99",
+    "-O1",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer"
+  ],
+  "exitCode": 0,
+  "stdout": [
+    "PASS: 200 repeated context lifetimes, direct/late/duplicate callback refusal, exact task/table/row/owner/epoch binding, blocked selection and serial exhaustion"
+  ],
+  "hardware": "not tested",
+  "audio": "not tested",
+  "nativeSourceAccess": "not implemented"
+}

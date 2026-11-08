@@ -1,0 +1,387 @@
+wait 1000
+tap TRIG
+tap TRIG
+wait 500
+snap perform-page
+press FUNC 200
+press #40 200
+release #40 200
+release FUNC 200
+wait 1500
+snap assign-track
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+turn A +1 40
+wait 800
+tap #40
+wait 800
+wait 800
+tap #40
+wait 800
+tap TRIG
+wait 800
+tap TRIG
+wait 800
+press FUNC 200
+press #41 200
+release #41 200
+release FUNC 200
+wait 1500
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+wait 800
+tap #41
+wait 800
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+turn B +1 40
+wait 800
+tap #41
+wait 800
+tap TRIG
+wait 800
+tap TRIG
+wait 800
+press FUNC 200
+press #42 200
+release #42 200
+release FUNC 200
+wait 1500
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+wait 800
+tap #42
+wait 800
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+turn C +1 40
+wait 800
+tap #42
+wait 800
+tap TRIG
+wait 800
+tap TRIG
+wait 800
+press FUNC 200
+press #43 200
+release #43 200
+release FUNC 200
+wait 1500
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+wait 800
+tap #43
+wait 800
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+turn D +1 40
+wait 800
+tap #43
+wait 800
+tap TRIG
+wait 800
+tap TRIG
+wait 800
+press FUNC 200
+press #44 200
+release #44 200
+release FUNC 200
+wait 1500
+turn E +1 40
+turn E +1 40
+turn E +1 40
+turn E +1 40
+turn E +1 40
+turn E +1 40
+wait 800
+tap #44
+wait 800
+turn E +1 40
+turn E +1 40
+turn E +1 40
+wait 800
+tap #44
+wait 800
+tap TRIG
+wait 800
+tap TRIG
+wait 800
+press FUNC 200
+press #45 200
+release #45 200
+release FUNC 200
+wait 1500
+turn F +1 40
+turn F +1 40
+turn F +1 40
+turn F +1 40
+turn F +1 40
+turn F +1 40
+turn F +1 40
+wait 800
+tap #45
+wait 800
+turn F +1 40
+turn F +1 40
+turn F +1 40
+turn F +1 40
+turn F +1 40
+wait 800
+tap #45
+wait 800
+tap TRIG
+wait 800
+tap TRIG
+wait 800
+press FUNC 200
+press #46 200
+release #46 200
+release FUNC 200
+wait 1500
+turn G +1 40
+turn G +1 40
+turn G +1 40
+turn G +1 40
+turn G +1 40
+turn G +1 40
+turn G +1 40
+turn G +1 40
+wait 800
+tap #46
+wait 800
+turn G +1 40
+turn G +1 40
+turn G +1 40
+turn G +1 40
+turn G +1 40
+turn G +1 40
+turn G +1 40
+turn G +1 40
+wait 800
+tap #46
+wait 800
+tap TRIG
+wait 800
+tap TRIG
+wait 800
+snap assigned
+tap GLOBAL
+wait 500
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+tap DOWN
+snap settings
+tap YES
+wait 500
+snap perform-edit

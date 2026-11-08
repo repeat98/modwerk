@@ -1,0 +1,82 @@
+MIT License
+
+Copyright (c) 2026 Zac-Kyoti and the OT Kyoti FW contributors
+
+WHAT THIS LICENSE COVERS
+
+Everything in this repository is offered under the MIT terms below, EXCEPT the
+items listed under "What it does not cover". That includes the reverse-engineering
+notes and knowledge base, the analysis, emulation and diagnostic scripts, the
+ColdFire and DSP patch sources, the build tooling, and the documentation. A file
+does not need an "SPDX-License-Identifier: MIT" tag to be covered; the tag is a
+convenience. Where a file carries its own license tag or header, that tag or
+header takes precedence over this default.
+
+WHAT IT DOES NOT COVER
+
+  1. Elektron material. This repository contains no Elektron firmware, firmware
+     image, or binary (.bin / .syx / .zip), and no Elektron user manual. You
+     supply your own copy of the official OS. Firmware built with these tools is
+     derived from Elektron's software and is not distributed here; it is not
+     licensed by this file.
+
+  2. Files inherited from https://github.com/mxldyn/octamax, which ships no license
+     file: fetch-os.sh, analyze.sh, setup.sh, tools/entropy.py and
+     tools/bin_decode.py. They remain the property of their author. They are kept
+     because the one-time setup and the flashing checks use them, and are offered
+     under GitHub's Terms of Service in the same educational spirit as upstream
+     (see CREDITS.md). tools/elektron-firmware-tool.patch, also inherited, falls
+     under item 3.
+
+  3. Patches to third-party tools, and everything fetched at build time. The
+     *.patch files under tools/ (for example tools/elektron-firmware-tool.patch,
+     tools/dsp56300_xcore/vendor.patch and tools/refs/local-patches/) modify
+     other projects' code and stay under the license of the project they modify.
+     Anything fetched into vendor/ or refs/ keeps its own license (for example
+     dsp56300/dsp56300 is GPLv3, and octabam is MIT). Neither directory is
+     tracked here beyond its manifests.
+
+  4. Third-party sources are never copied into this repository unless their
+     license is compatible with MIT and they carry their own notice. Code under
+     GPL-family licenses (including other Paulstretch implementations) may be
+     read as a reference but is not to be copied in.
+
+ABOUT THE FIRMWARE FACTS, DISASSEMBLY AND DECOMPILER EXCERPTS
+
+Factual information about the Elektron firmware (memory addresses, byte values,
+field offsets, and behavioural descriptions) is stated as fact, and is claimed as
+no one's copyrightable expression.
+
+This repository does not include a disassembly or decompilation of the firmware
+as a whole, or wholesale listings of it. It does include behavioural pseudocode
+restated in our own notation, a small number of closer excerpts of decompiler
+output (in NOTES.md), and a few two-instruction "displaced prologue" listings in
+reference/, quoted as evidence for individual findings or to document a patch
+site. To the extent that any such excerpt is Elektron's expression, it is not
+licensed by this file and remains subject to whatever rights Elektron holds in
+it. The patch sources in
+this repository are our own code and are covered by the MIT terms.
+
+"Elektron" and "Octatrack" are trademarks of Elektron Music Machines MAV AB, used
+only to identify the hardware under study. This project is independent and
+unofficial, and is not affiliated with or endorsed by Elektron.
+
+MIT TERMS
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

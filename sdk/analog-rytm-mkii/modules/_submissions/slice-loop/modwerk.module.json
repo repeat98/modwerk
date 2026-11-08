@@ -1,0 +1,232 @@
+{
+  "schemaVersion": 3,
+  "id": "slice-loop",
+  "name": "Slice Loop",
+  "version": "1.0.0",
+  "machine": "analog-rytm-mkii",
+  "category": "playback",
+  "exclusive": false,
+  "author": {
+    "github": "Iced-Cream",
+    "credits": [
+      "MrScruff — the original mod, 0012-slice-loop in rytm-mods, its design and code; published in rytm-mods-src with permission.",
+      "Iced-Cream — the elemod port (rytm2_mods) and this Modwerk module.",
+      "irpina — Elekloader and core-ar2, the core it links with."
+    ]
+  },
+  "maintainers": [
+    "Iced-Cream"
+  ],
+  "source": {
+    "repository": "https://github.com/Iced-Cream/rytm2_mods",
+    "revision": "afd461d4a8ef4306bb2a57d4c61ad35c362b3940",
+    "path": "slice-loop"
+  },
+  "presentation": {
+    "label": "SLICE LOOP",
+    "family": "Sequencer",
+    "summary": "SLICE LOOP in the track menu fills an empty sound track with sixteen trigs, each locked to the next sixteenth of the sample.",
+    "overview": "Slice Loop adds SLICE LOOP after SAVE TRACK in the track menu (FUNC + CHRO). On an empty sound track of 16 steps or more it sets the TRIG defaults to SYN off and SMP on, places trigs on steps 1 to 16, locks trig n's sample STA to 6(n-1) and END to 6n, then shows LOOP SLICED. It is meant for a one-bar loop padded so the bar fills 96/120 of the sample. On a track with any trig, a shorter track or the FX track it refuses and changes nothing. It is an elemod port of MrScruff's rytm-mods 0012-slice-loop, with his code unchanged.",
+    "highlights": [
+      "One menu item slices a loop across sixteen steps.",
+      "Every write goes through stock's own setters.",
+      "Refuses, changing nothing, on a track that is not empty.",
+      "MrScruff's rytm-mods code, unchanged, linked by the elemod core."
+    ],
+    "usage": [
+      "Use a build containing Slice Loop. Select an empty sound track and press FUNC + CHRO: SLICE LOOP is the last item.",
+      "Choose it: the screen shows LOOP SLICED, and steps 1 to 16 have trigs with STA/END locks 0/6, 6/12 up to 90/96.",
+      "Choose it again on the same track: TRACK NOT EMPTY, and nothing changes. On the FX track it shows ONLY ON SOUND TRACKS."
+    ]
+  },
+  "access": {
+    "location": "Track menu (FUNC + CHRO), after SAVE TRACK.",
+    "steps": [
+      "Select an empty sound track.",
+      "Press FUNC + CHRO and choose SLICE LOOP."
+    ],
+    "screenshots": [
+      "media/slice-loop-menu.png",
+      "media/loop-sliced.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "Track menu > SLICE LOOP",
+      "default": null,
+      "doc": "On an empty sound track of 16 steps or more: SYN off, SMP on, trigs on steps 1 to 16 with STA 6(n-1) and END 6n locks.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for OS 1.74 only, with core-ar2 0.3.",
+      "Only on an empty sound track of at least 16 steps: any trig, lock trigs included, makes it refuse.",
+      "The slices are fixed at sixteen equal parts of 96/120 of the sample."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.3",
+    "build": "build.json",
+    "events": [],
+    "claims": [
+      "ui:track menu SLICE LOOP item"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 752,
+    "fastBytes": 0,
+    "load": {
+      "display": "None in the audio path: runs when the track menu opens and when SLICE LOOP is chosen",
+      "method": "static",
+      "conditions": "Static: the site adds one menu item when the track menu is built; the action runs once when chosen. Nothing is added to the audio, sequencer or tick paths. Not a measurement."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "1.0.0",
+    "sourceSha256": "886a3b2c659a7ee38ac44ad4b73d9ec281fb331f14c8160f53d676d9eecccdf5",
+    "reports": [
+      "evidence/hardware-testing.json",
+      "evidence/source-parity.json"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-10-25",
+      "tester": "Iced-Cream",
+      "durationMinutes": null,
+      "summary": "Iced-Cream reports that on an Analog Rytm MKII with OS 1.74, slice-loop 1.0 passed its test (on an empty sound track SLICE LOOP shows LOOP SLICED and places 16 trigs; choosing it again shows TRACK NOT EMPTY) in R8T2 (2026-10-18), and its own test again with core-ar2 0.3 and all eleven rytm2_mods ports in C3A4 (2026-10-20). On SXH4 (released core-ar2 0.3 with the other five Modwerk 1.74 submissions, 2026-10-24) SLICE LOOP showed LOOP SLICED and then TRACK NOT EMPTY, and a four-minute play showed no freeze or dropout. Alone on SLH4 (released core-ar2 0.3 and this module only, 2026-10-25) SLICE LOOP showed LOOP SLICED and then TRACK NOT EMPTY without changing the pattern again.",
+      "limitations": [
+        "Duration was not recorded.",
+        "Tested builds: C3A4, .syx 04d987ced36850eef5eb5cd1215d411edf621a5af94f980525ab561c9108f951; R8T2, .syx 94c8b8c4f3f537132b7ee689ad1221591186f14dc605a420cdefe3df804e3c39. Firmware was not read back from the device.",
+        "SXH4 (the released core-ar2 0.3, 2026-10-24/25, .syx e4d01a6aec250bd2af7743c9f8b0e9c560d805b52564932dddc41d872e1c5000) also carried a remote-control test layer that shares no site with core or the modules. SLH4 (alone with the released core-ar2 0.3, 2026-10-25, .syx 10ef52bfdda5f24f1d0adf0f22055ff6fe4cc7acf711d9275d7943369205c95e) carried the same test layer."
+      ]
+    },
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Hardware: slice-loop 1.0's test passes on an Analog Rytm MKII, OS 1.74 (R8T2 with core-ar2 0.1, 2026-10-18; C3A4 with core-ar2 0.3, 2026-10-20). Modwerk's source build gives a main OS byte-identical to elekloader's build of the rytm2_mods v1.2 release. In rytm-emu, SLICE LOOP on BD places trigs locked 6/12 on step 2 and 90/96 on step 16, and a second try shows TRACK NOT EMPTY; stock's track menu ends at SAVE TRACK.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Use a build containing Slice Loop. Select an empty sound track and press FUNC + CHRO: SLICE LOOP is the last item.",
+          "Choose it: the screen shows LOOP SLICED, and steps 1 to 16 have trigs with STA/END locks 0/6, 6/12 up to 90/96.",
+          "Choose it again on the same track: TRACK NOT EMPTY, and nothing changes. On the FX track it shows ONLY ON SOUND TRACKS."
+        ]
+      },
+      "screenshots": [
+        "media/slice-loop-menu.png",
+        "media/loop-sliced.png",
+        "media/step2-locks.png",
+        "media/step16-locks.png",
+        "media/track-not-empty.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-2.0-only",
+    "file": "LICENSE",
+    "declaration": "MrScruff's rytm-mods code and Iced-Cream's elemod port, under GPL-2.0-only as rytm-mods-src. include/ar2-1.74.inc names firmware routines by address only; the patch precondition is an address, a length and a SHA-256."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Slice Loop",
+      "alt": "Original illustration of a waveform cut into sixteen equal slices",
+      "credit": "Iced-Cream",
+      "license": "GPL-2.0-only",
+      "source": "Original vector illustration; not a device screenshot."
+    },
+    {
+      "path": "media/slice-loop-menu.png",
+      "kind": "screenshot",
+      "caption": "FUNC + CHRO on track BD: SLICE LOOP is the last item, after SAVE TRACK. Stock's list ends at SAVE TRACK.",
+      "alt": "TRACK menu with TRIGS SETUP, PAD SCALE, RELOAD TRACK, SAVE TRACK and SLICE LOOP highlighted.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.0.0",
+        "imageSha256": "f6563d2e440273b6885ccaeabab7d5b3f6297d1e43fe103deb54eeb31cd0bc65",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running SL74, the released core-ar2 0.3 and slice-loop 1.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/loop-sliced.png",
+      "kind": "screenshot",
+      "caption": "Choose it on the empty BD track: LOOP SLICED.",
+      "alt": "LOOP SLICED popup over the BD synthesis page.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.0.0",
+        "imageSha256": "f6563d2e440273b6885ccaeabab7d5b3f6297d1e43fe103deb54eeb31cd0bc65",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running SL74, the released core-ar2 0.3 and slice-loop 1.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/step2-locks.png",
+      "kind": "screenshot",
+      "caption": "In grid recording, hold trig 2 on the SAMPLE page: STA and END are locked to 6 and 12.",
+      "alt": "SAMPLE page with STA 6 and END 12 drawn inverted as locked values.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.0.0",
+        "imageSha256": "f6563d2e440273b6885ccaeabab7d5b3f6297d1e43fe103deb54eeb31cd0bc65",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running SL74, the released core-ar2 0.3 and slice-loop 1.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/step16-locks.png",
+      "kind": "screenshot",
+      "caption": "Trig 16 is locked to 90 and 96, the last of the sixteen slices.",
+      "alt": "SAMPLE page with STA 90 and END 96 drawn inverted as locked values.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.0.0",
+        "imageSha256": "f6563d2e440273b6885ccaeabab7d5b3f6297d1e43fe103deb54eeb31cd0bc65",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running SL74, the released core-ar2 0.3 and slice-loop 1.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/track-not-empty.png",
+      "kind": "screenshot",
+      "caption": "Choose SLICE LOOP again on BD: TRACK NOT EMPTY, and nothing changes.",
+      "alt": "TRACK NOT EMPTY popup over the BD sample page.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.0.0",
+        "imageSha256": "f6563d2e440273b6885ccaeabab7d5b3f6297d1e43fe103deb54eeb31cd0bc65",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running SL74, the released core-ar2 0.3 and slice-loop 1.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    }
+  ]
+}

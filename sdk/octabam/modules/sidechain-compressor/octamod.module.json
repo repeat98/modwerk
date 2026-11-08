@@ -3,12 +3,12 @@
   "id": "sidechain-compressor",
   "key": "SIDECHAIN_COMPRESSOR",
   "name": "Sidechain Compressor",
-  "version": "0.1.2-experimental",
+  "version": "0.2.0-experimental",
   "category": "effects",
   "source": {
-    "repository": "https://github.com/sambanks/octabam",
-    "revision": "922878234b22221a1c298b3c7e0b3bdeffb468a9",
-    "path": "modules/sidechain-compressor"
+    "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+    "revision": "b0d49bf32d3fcc2e3ce7e9cec67f4fbb2619e511",
+    "path": "modwerk-modules/sidechain-compressor"
   },
   "author": {
     "github": "Zac-Kyoti",
@@ -23,28 +23,29 @@
   "presentation": {
     "label": "TRACK-KEYED COMPRESSION",
     "family": "Dynamics",
-    "summary": "Drive the stock COMPRESSOR detector from any audio track, with key filtering, gain and audition controls.",
-    "overview": "The stock COMPRESSOR gains KEY, KFLT, KGN and MON beside RMS on its SETUP page. Choose T1-T8 as the detector input, filter and adjust the key, or audition it on the receiving track.",
+    "summary": "Drive the stock COMPRESSOR detector from any audio track, with a base-width key filter, key gain and audition.",
+    "overview": "The stock COMPRESSOR gains MON, KEY, KGN, KBAS and KWID beside RMS on its SETUP page. Choose T1-T8 as the detector input, set its gain, isolate it with a high-pass (KBAS, in Hz) and a low-pass a set number of octaves above it (KWID), or audition it on the receiving track.",
     "highlights": [
-      "KEY selects OFF or any of T1-T8, including the other DSP core.",
-      "KFLT provides low-pass, bypass and high-pass key filtering.",
-      "KGN applies a smoothed, stepped detector gain; 64 is unity.",
-      "MON auditions the processed key on the receiving track.",
+      "KEY selects OFF or any of T1-T8, including the other DSP core, on a rotary switch.",
+      "KBAS is the key's high-pass (18 dB/oct, OFF or 20 Hz-19.6 kHz); KWID its low-pass, 0.5-9.9 octaves above KBAS (12 dB/oct, or OFF). They cannot cross.",
+      "KGN sets the key's gain, about -24 to +24 dB around 64.",
+      "MON auditions the processed key on the receiving track; switching it, or changing KEY while it is on, crossfades instead of clicking.",
       "Stock ATK, REL, THRS, RAT, GAIN, MIX and RMS remain available."
     ],
     "usage": [
       "Select COMPRESSOR in FUNC + FX1/FX2 SETUP with LEVEL and YES.",
       "Hold FUNC and press the selected FX button to open SETUP; choose the key with encoder C.",
-      "Turn MON off before normal listening; KEY OFF restores self-keying."
+      "To duck from a kick's fundamental, set KBAS to about 30-40 Hz and KWID to about 1.2-1.5 octaves.",
+      "Turn MON OFF before normal listening; KEY OFF restores self-keying."
     ]
   },
   "access": {
-    "location": "Audio track FX1 or FX2: COMPRESSOR in FUNC + FX SETUP; main compression controls on page 1; RMS and KEY/KFLT/KGN/MON on page 2.",
+    "location": "Audio track FX1 or FX2: COMPRESSOR in FUNC + FX SETUP; main compression controls on page 1; RMS and MON/KEY/KGN/KBAS/KWID on page 2.",
     "steps": [
       "Select the receiving audio track. Hold FUNC and press FX1 or FX2 to open its SETUP chooser.",
       "Turn LEVEL to COMPRESSOR and press YES. The visible name stays COMPRESSOR; the module takes that stock row on FX1 and in the FX2 chooser.",
-      "Press the selected FX button for ATK, REL, THRS, RAT, GAIN and MIX. Hold FUNC and press that FX button for SETUP with RMS, KEY, KFLT, KGN and MON.",
-      "In SETUP use encoder C for KEY, D for KFLT, E for KGN and F for MON. The unnamed inherited descriptor slot is not a new sidechain control.",
+      "Press the selected FX button for ATK, REL, THRS, RAT, GAIN and MIX. Hold FUNC and press that FX button for SETUP with RMS, MON, KEY, KGN, KBAS and KWID.",
+      "In SETUP use encoder B for MON, C for KEY, D for KGN, E for KBAS and F for KWID.",
       "Set KEY to OFF and MON to OFF to restore self-keying; choose NONE to remove the effect."
     ],
     "screenshots": [
@@ -104,10 +105,22 @@
       "labels": null
     },
     {
+      "name": "MON",
+      "default": 2,
+      "count": 4,
+      "doc": "ON plays the processed key on this receiving track instead of its output, after both effects; OFF is normal compression. OFF on the left, ON on the right (stored 2 = OFF, 3 = ON); a COMPRESSOR saved with an earlier version comes up with MON OFF. Switching it crossfades over 256 samples.",
+      "labels": [
+        "OFF",
+        "ON",
+        "OFF",
+        "ON"
+      ]
+    },
+    {
       "name": "KEY",
       "default": 0,
       "count": 9,
-      "doc": "OFF restores self-keyed stock detection; 1-8 selects absolute T1-T8, including tracks on the other DSP core.",
+      "doc": "OFF restores self-keyed stock detection; T1-T8 selects that track, including tracks on the other DSP core. A rotary switch on the LCD that moves one position per detent, also with the encoder pressed. A KEY change made while MON is audible waits for MON to fade, then takes the new key.",
       "labels": [
         "OFF",
         "T1",
@@ -121,28 +134,25 @@
       ]
     },
     {
-      "name": "KFLT",
-      "default": 64,
-      "count": 128,
-      "doc": "0-63 low-pass; 64 bypass; 65-127 high-pass. LCD shows LP/OFF/HP. One-pole filter uses a 32-entry 40-2200 Hz table and special near-bypass edges; no exact cutoff readout.",
-      "labels": null
-    },
-    {
       "name": "KGN",
       "default": 64,
       "count": 128,
-      "doc": "Raw 0-127 about unity at 64. Sixteen 8-value buckets yield -24 to +21 dB in 3 dB steps; the gain is smoothed with a nominal 5 ms block-rate time constant. LCD displays the stock bipolar raw offset, not dB.",
+      "doc": "The key's gain before the detector, about -24 to +24 dB; 64 is unity. Smoothed at block rate. The LCD shows the stock bipolar offset, not dB.",
       "labels": null
     },
     {
-      "name": "MON",
+      "name": "KBAS",
       "default": 0,
-      "count": 2,
-      "doc": "OFF is normal compression; ON plays the processed key on this receiving track instead of its output, after both effects. MON requires a selected KEY.",
-      "labels": [
-        "OFF",
-        "ON"
-      ]
+      "count": 128,
+      "doc": "The key's high-pass, 18 dB/oct Butterworth: 0 is OFF, 1-127 run from 20 Hz to 19.6 kHz on a 1/16-octave grid. The LCD shows Hz.",
+      "labels": null
+    },
+    {
+      "name": "KWID",
+      "default": 127,
+      "count": 128,
+      "doc": "The key's low-pass, 12 dB/oct Butterworth, set as a distance above KBAS: 0.5 to 9.9 octaves, 127 is OFF. With KBAS OFF it counts from 20 Hz. The LCD shows octaves; a link clip ties it to KBAS.",
+      "labels": null
     }
   ],
   "compatibility": {
@@ -156,94 +166,92 @@
     "limitations": [
       "Replaces COMPRESSOR on FX1 and in the FX2 chooser with the same stock effect ID 0x18; the visible effect name remains COMPRESSOR.",
       "With Keep stock FX2 effects on, SPRING REV gives up its code space for this module; reassign any old SPRING REV slots. With it off, every stock FX2 effect leaves the FX2 chooser and the stock FX1 effects stay.",
-      "It builds beside the other Modwerk modules unless native octabam and Modwerk both refuse the selection. Among the nine visible modules other than Analog BD it builds beside every other module and every pair; 786 of the 1,024 selections that contain it build. 0.1.2's larger ColdFire unit (sc_norm, +204 B) runs the effect-menu cave out of room in 12 selections that 0.1.1 built, each holding Euclid with Scale Quantizer or eight or more modules. The selection checker says which applies.",
-      "It cannot be combined with Analog BD, which currently runs with the original effects only, or with MIDI Scenes, which is standalone firmware.",
+      "It builds beside every other visible module alone. Among the nine visible modules other than Analog BD, 648 of the 1,024 selections that contain it build (786 with 0.1.2): 0.2.0's two ColdFire units (1,216 B) leave less effect-menu and cave space, so 138 more selections are refused, the smallest Euclid with Scale Quantizer. The selection checker says which applies.",
+      "Beside Analog BD, 146 of the 212 Analog BD selections build (162 with 0.1.2); its larger DSP section (677 words a core) no longer fits core A in 16, the smallest Analog BD with Airwindows Chorus.",
+      "It cannot be combined with MIDI Scenes, which is standalone firmware.",
       "Its core-private keybus and cross-core window overlap BusDelay and BusVerb, which Modwerk does not carry; the native resource ledger refuses them beside it.",
-      "MUTE_MODES is not imported here. The author reports that muted-key behavior with MUTE_MODES needs its matching integration variant.",
-      "Cross-core keys use a buffered shared window. Core rate-locking and real-time race behavior require hardware qualification; no exact hardware latency is claimed.",
-      "The fixed-key MON stash is indexed by the source track. Simultaneous compressors sharing one KEY with different key processing need explicit interaction testing.",
+      "A 0.1.x COMPRESSOR keeps its KEY; KGN takes the old KFLT, KBAS the old KGN, KWID the old MON, and MON comes up OFF.",
+      "Cross-core keys use a buffered shared window, two blocks late on the beta base whatever the cores' enable order; no exact hardware latency is claimed.",
       "Every download carries the core logger; the module's LCD pages are identical with and without it.",
-      "No current Modwerk hardware, audio or maximum-load result is claimed. Emulator captures show the UI only, from an MKII panel, and do not qualify audio, transport or MKI operation.",
-      "Cycle bounds are conditional software models of this module's own contribution, measured on the author-form image whose Sidechain bytes this build reproduces; they are not summed with other modules. Physical hardware and silicon wall-clock timing remain unverified."
+      "The DSP figures are emulator measurements of whole core loops on a real project, not chip timing.",
+      "A COMPRESSOR saved with an earlier version (0.1.x, or 0.2.0 before 25 October 2026) comes up with MON OFF."
     ]
   },
   "resources": {
-    "recorded": "2026-10-10; static qualification and author-reported MKI hardware operation",
+    "recorded": "2026-10-24; emulator load measurement, static ColdFire bound and exact memory inventory",
     "storage": {
       "label": "Declared DSP reservation",
-      "display": "23,520 logical bytes / 16 instances",
-      "value": 23520,
+      "display": "26,288 logical bytes / 16 instances",
+      "value": 26288,
       "unit": "bytes",
       "method": "static",
-      "conditions": "Full reservation of the module's own contribution including inherited stock state/scratch and complete hardware DSP stack capacity; no new heap, SDRAM or delay buffer. Stock RTOS/UI frames remain inherited. Measured on Modwerk's native image of this source (MAIN OS 2816f0bc...); 0.1.2 adds 204 B of ColdFire code (sc_norm) and 24 B of caller stack, and rewrites 12 stock bytes at the two detour sites in place. See exact addresses in TESTING.md.",
+      "conditions": "Full reservation of the module's own contribution including inherited stock state/scratch and complete hardware DSP stack capacity; no new heap, SDRAM or delay buffer. The key filters' state sits inside stock COMPRESSOR's instance block. Two ColdFire units (600 B + 616 B) and 612 DSP code words and 65 table words per core. See TESTING.md.",
       "source": "TESTING.md"
     },
     "processing": {
-      "label": "Worst-case processing",
-      "display": "6,196 cycles/block bound",
-      "value": 6196,
-      "unit": "cycles/block",
-      "method": "static",
-      "conditions": "One instance plus shared tap/MON work, all branches with 2x instruction-model allowance; sixteen-slot core upper 69,496 includes stock reserve.",
+      "label": "Busiest core, eight keyed instances",
+      "display": "1,743 cycles/sample peak (emulator)",
+      "value": 1743,
+      "unit": "cycles/sample",
+      "method": "emulator",
+      "conditions": "ot_emu load meter on the OT DEMO project: every FX1 and FX2 slot of one core holding a keyed COMPRESSOR (filters on, MON ON), the whole core loop in modelled cycles a sample, peak over 300 frames including the filters' glides and the MON fade; stock firmware with stock COMPRESSORs peaks at 1,298. Budget 4,535 a sample.",
       "source": "TESTING.md"
     },
     "impact": {
-      "conditions": "Standalone sixteen-slot compressor configuration; bounds are conditional software estimates. No arbitrary whole-device utilization claim.",
+      "conditions": "Sixteen keyed compressors (eight per core); emulator figures, not chip timing.",
       "cpu": {
         "level": "low",
         "basis": "source-estimate",
-        "rationale": "UI formatters (KEY peak 132 instructions) plus sc_norm, a per-frame check of the sixteen FX slots: 144 instructions/frame with no compressor, 752 worst when sixteen stale compressors reset in one frame; 171 measured in the OT DEMO project. Static frame bound 8,192 of a 9,577-cycle allowance.",
+        "rationale": "sc_norm, a per-frame check of the sixteen FX slots: 144 instructions with no compressor, 752 when sixteen stale compressors reset in one frame (static frame bound 8,192 of a 9,577-cycle allowance). UI callbacks (formatters and the KEY switch) run at the 30 Hz redraw, at most 174 authored instructions each.",
         "source": "TESTING.md"
       },
       "dsp": {
         "level": "moderate",
         "basis": "source-estimate",
-        "rationale": "Bounded key tap, gain/filter detector and monitor stages. Sixteen-slot core bound 69,496 modeled cycles/block including reserved stock work.",
+        "rationale": "Key tap, detector with the base-width filters and MON crossfade. Eight keyed instances on a core peak at 1,743 modelled cycles a sample in the emulator against 4,535 (stock COMPRESSORs: 1,298).",
         "source": "TESTING.md"
       },
       "memory": {
         "level": "low",
         "basis": "source-estimate",
-        "rationale": "23,520 bytes at sixteen instances including inherited stock buffers; no new heap/SDRAM delay storage.",
+        "rationale": "26,288 bytes at sixteen instances including inherited stock buffers; no new heap/SDRAM delay storage.",
         "source": "TESTING.md"
       }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Native octabam builds 0.1.2 in every selection Modwerk compares (122 coverage selections, 1,536 suite selections); the module's ColdFire unit equals the author's 338-byte reference; DSP code byte-identical to 0.1.1; ledger checks of its DSP ranges; static cycle bounds for both processors, including sc_norm's per-frame cost, and an exact memory inventory; author-reported MKI functional test of this exact image on 10 October 2026.",
+    "summary": "Native octabam builds 0.2.0 alone and in 965 of the suites' selections (648 of 1,024 visible, 171 of 512 historical, 146 of 212 with Analog BD); both ColdFire units equal the author's references; the beta base's resident engine and controller pass the resident-engine, controller, registry and stock-free checks; emulator load of eight keyed instances a core; static ColdFire bound and exact memory inventory.",
     "hardwareStatus": "reported",
-    "evidenceRevision": "922878234b22221a1c298b3c7e0b3bdeffb468a9",
+    "evidenceRevision": "b0d49bf32d3fcc2e3ce7e9cec67f4fbb2619e511",
     "gates": [
       "Native octabam and browser composition compared on the module's coverage set, with and without stock FX2",
-      "Native suites regenerated: 512 selections of the original eight modules and 1,024 of the nine visible modules",
-      "ColdFire unit byte-identical to the author's reference build (338 B, sha256 76a4badc...)",
-      "DSP payload code and tables unchanged from 0.1.1",
+      "Native suites regenerated: 512 selections of the original eight modules, 1,024 of the nine visible modules and 212 Analog BD selections",
+      "ColdFire units byte-identical to the author's references (sc_cf 600 B 4984aba2..., sc_ui 616 B 157f883f...)",
+      "Beta base: resident engine (key phase two blocks late on every enable order, MON ends with its COMPRESSOR, split and placed engines bit-exact), the scinit site and COMPRESSOR bridges, controller stock-free scans, power-up check for 0.2.0's page 2",
       "Resource ledger: declared DSP ranges, source literals and stock shared-window tenants",
       "Source-only reproducible package build in the pinned toolchain",
-      "Static cycle bound per processor, sc_norm priced per audio frame; exact memory inventory",
-      "Guarded stock bytes at both sc_norm detour sites; original firmware and malformed recipe rejection",
-      "Author-reported MKI functional hardware test of the exact image"
+      "Emulator load (eight keyed instances a core), static sc_norm bound, exact memory inventory"
     ],
     "qualification": {
-      "moduleVersion": "0.1.2-experimental",
-      "sourceSha256": "0a0e8d770973eef0acc580724ab16732ba593e1b6b0240cc1c48e83b05248ae2",
-      "imageSha256": "2816f0bce5aaabfadac6dba9e778dc184b8af3e4a611990d6e6b3e36095bc5eb",
+      "moduleVersion": "0.2.0-experimental",
+      "sourceSha256": "9e7fdbf0f6ac6447c99efe7d60db56fed1d3bff8d23bd77103705f2a6cf41426",
+      "imageSha256": "131142e1839bf1a62b48929dee396cc23b1f2f27f33595a9e6f39bf57f7be22e",
       "cycles": [
         {
           "processor": "dsp",
-          "worstCase": 6196,
-          "maxConfiguration": 69496,
+          "worstCase": 890,
+          "maxConfiguration": 27887,
           "maxInstances": 16,
           "budget": 72560,
           "unit": "cycles/block",
-          "method": "static",
+          "method": "emulator",
           "conditions": {
-            "parameterExtremes": "Every KEY 0..8, KFLT 0..127, sixteen KGN table buckets, MON/RMS switches and stock parameter endpoints; static all-branch analysis.",
-            "parameterModulation": "Block-wise simultaneous parameter changes model published LFO/scene/p-lock/CC values; no new control-source callback or unbounded DSP loop.",
-            "modeSwitching": "Every split 0..15, both stock init and split COMPRESSOR calls; OFF/ON KEY, HP re-entry and MON toggle. Firmware Part reload scheduling belongs to reserved stock work.",
-            "maxLoad": "Sixteen COMPRESSOR FX slots, eight per core. Standard stock dispatcher/transport reserve; the bound is this module's contribution and is not summed with other modules. Arbitrary other stock FX/USB or RTOS stalls are not a measured streaming deadline.",
-            "inputConditions": "Silence and impulse matrix; author numeric stage suite; signal-independent all-branch bound includes every fixed loop. No physical audible or cross-core timing claim."
+            "parameterExtremes": "KEY on every compressor, keyed from the other core; KGN 64, KBAS 40, KWID 30 (both filters on) and MON ON; filters OFF and MON OFF measured for comparison.",
+            "parameterModulation": "All parameters set at once at frame 3: the filters' glides (coefficients recomputed each block a position moves) and MON's 256-sample fade fall inside the measured window.",
+            "modeSwitching": "MON switched on and KEY taken while the transport plays; scinit runs when the effect is assigned.",
+            "maxLoad": "Eight COMPRESSORs on one core (FX1 and FX2 on four tracks), the OT DEMO project playing. The figure is the whole core loop (stock dispatcher, every effect, this module), so it is not summed with other modules.",
+            "inputConditions": "Emulator (ot_emu, datasheet cycles, no memory stalls), not chip timing. worstCase: one keyed instance's added cost over a stock COMPRESSOR, its share of the always-on tap and MON commit included: (1,742.9 - 1,298.3) / 8 = 55.6 cycles a sample, x 16, rounded up. maxConfiguration: the eight-instance core loop's peak, 1,742.9 x 16, everything on the core included."
           },
           "report": "TESTING.md"
         },
@@ -256,7 +264,7 @@
           "unit": "cycles/event",
           "method": "static",
           "conditions": {
-            "parameterExtremes": "sc_norm: every FX slot holding COMPRESSOR (id 0x18) with KEY 0..8 (left alone) and KEY 9..255 (reset), in the Part working store and the live lane; KEY 0..8 and KFLT 0..127 formatter calls through the real stock sprintf.",
+            "parameterExtremes": "sc_norm: every FX slot holding COMPRESSOR (id 0x18) with KEY 0..8 (left alone, but a MON other than 2/3 set OFF) and KEY 9..255 (reset to MON OFF, KEY OFF, KGN 64, KBAS OFF, KWID OFF), in the Part working store and the live lane; the MON/KEY/KBAS/KWID formatters and the KEY switch through the stock widget, knob and sprintf.",
             "parameterModulation": "LFO, p-lock, scene and CC changes write the same page-2 bytes the stock editor writes; sc_norm reads them once per frame and never calls the kernel or UI. A KEY inside 0..8 is never rewritten, so modulation inside the control range costs only the compare path.",
             "modeSwitching": "Part change, Part reload, project load and transport start bring stored page-2 bytes into the working store or the lane; each copy is judged only against its own FX id. The worst frame is sixteen stale compressors reset at once (both copies of all eight tracks' FX1 and FX2), priced cold.",
             "maxLoad": "Sixteen COMPRESSOR slots (FX1 and FX2 on eight tracks), both detour sites (0x4000cae8 every frame; 0x40003d1c has no static caller and never ran in a 600-frame coverage run, priced as if it also ran every frame). Budget: 10% of a 362.8 us frame at 264 MHz (9,577 of 95,779 cycles), Modwerk's ColdFire allowance; the other 90% is reserved for stock frame work. UI formatters run in the UI task at the 30 Hz redraw, outside the frame path (TESTING.md).",
@@ -268,7 +276,7 @@
       "memory": {
         "regions": [
           {
-            "name": "Inherited stock X instance block",
+            "name": "Inherited stock X instance block (the key filters at r7+$1c..$2d inside it)",
             "space": "dsp-x",
             "words": 256,
             "wordBits": 24,
@@ -278,17 +286,17 @@
           {
             "name": "Two authored DSP code blocks",
             "space": "dsp-p",
-            "words": 680,
+            "words": 1224,
             "wordBits": 24,
-            "bytes": 2040,
+            "bytes": 3672,
             "scope": "shared"
           },
           {
-            "name": "Two coefficient tables",
+            "name": "Two KEY GAIN and key-filter tables",
             "space": "dsp-p",
-            "words": 96,
+            "words": 130,
             "wordBits": 24,
-            "bytes": 288,
+            "bytes": 390,
             "scope": "shared"
           },
           {
@@ -332,11 +340,11 @@
             "scope": "shared"
           },
           {
-            "name": "ColdFire authored code and alignment",
+            "name": "ColdFire authored code (sc_cf 698 B, sc_ui 616 B)",
             "space": "cpu-flash",
-            "words": 340,
+            "words": 1314,
             "wordBits": 8,
-            "bytes": 340,
+            "bytes": 1314,
             "scope": "shared"
           },
           {
@@ -348,35 +356,50 @@
             "scope": "shared"
           },
           {
-            "name": "Additional ColdFire caller stack (sc_norm peak)",
+            "name": "Additional ColdFire caller stack (sc_norm peak, frame)",
             "space": "cpu-ram",
             "words": 40,
             "wordBits": 8,
             "bytes": 40,
             "scope": "shared"
+          },
+          {
+            "name": "Additional ColdFire UI stack (KEY switch through its formatter)",
+            "space": "cpu-ram",
+            "words": 48,
+            "wordBits": 8,
+            "bytes": 48,
+            "scope": "shared"
+          },
+          {
+            "name": "Additional ColdFire UI stack (MON and KEY step handlers: two arguments and a return address)",
+            "space": "cpu-ram",
+            "words": 12,
+            "wordBits": 8,
+            "bytes": 12,
+            "scope": "shared"
           }
         ],
         "perInstanceBytes": 768,
-        "sharedBytes": 11232,
+        "sharedBytes": 14000,
         "maxInstances": 16,
-        "totalBytes": 23520,
-        "conditions": "Full reservation of the module's own contribution including inherited stock state/scratch and complete hardware DSP stack capacity; no new heap, SDRAM or delay buffer. Stock RTOS/UI frames remain inherited. Measured on Modwerk's native image of this source (MAIN OS 2816f0bc...); 0.1.2 adds 204 B of ColdFire code (sc_norm) and 24 B of caller stack, and rewrites 12 stock bytes at the two detour sites in place. See exact addresses in TESTING.md.",
+        "totalBytes": 26288,
+        "conditions": "Full reservation of the module's own contribution including inherited stock state/scratch and complete hardware DSP stack capacity; no new heap, SDRAM or delay buffer. Measured on Modwerk's native image of this source (MAIN OS 131142e1...); see TESTING.md.",
         "report": "TESTING.md"
       },
       "hardware": {
         "kind": "functional",
         "status": "reported",
         "model": "MKI",
-        "testedOn": "2026-10-10",
+        "testedOn": "2026-10-26",
         "tester": "Zac-Kyoti",
-        "sourceRevision": "922878234b22221a1c298b3c7e0b3bdeffb468a9",
-        "imageSha256": "2816f0bce5aaabfadac6dba9e778dc184b8af3e4a611990d6e6b3e36095bc5eb",
-        "summary": "On an Octatrack MKI the author flashed Modwerk's native image of this source (the module alone, stock FX2 kept) and reported all checks passing: a COMPRESSOR saved before the module was installed came up with KEY OFF, KFLT and KGN centred and MON OFF; two instances on T1 FX1 and T5 FX2, keyed from each other across the DSP cores, both ducked and stayed independent; MON auditioned the key; Part save/reload, project save/reload and a power cycle kept both compressors' settings.",
+        "sourceRevision": "b0d49bf32d3fcc2e3ce7e9cec67f4fbb2619e511",
+        "imageSha256": "131142e1839bf1a62b48929dee396cc23b1f2f27f33595a9e6f39bf57f7be22e",
+        "summary": "The author flashed Modwerk's native image of this source, the module alone (MW_SC021), on an Octatrack MKI and reported it working: KBAS and KWID across their range with MON on and off, MON's OFF/ON switch and its OFF on older projects, KEY's pressed turn, the MON and KEY fades, and a MON ON project across a power cycle.",
         "limitations": [
-          "A functional report: duration, project, material and tempo were not reported.",
-          "Two instances, not the sixteen-slot maximum the cycle and memory models price; no overload was reported, none was measured.",
-          "No measured chip timing, memory canary, recording, recovery or stress test; cross-core key latency and rate locking were not measured.",
-          "The flashed image is the module alone; the Modwerk download (with the core logger) and selections with other modules were not flashed."
+          "A functional report: duration, project, material and tempo were not reported, and the checklist was confirmed as a whole.",
+          "No measured chip timing, memory canary, recording, recovery or stress test; cross-core key latency was not measured.",
+          "The flashed image is the module alone; the Modwerk download (with the core logger), the USB beta base and selections with other modules were not flashed."
         ],
         "report": "evidence/hardware.md"
       },
@@ -384,11 +407,11 @@
         "tutorial": {
           "title": "Quick tutorial: duck T5 from a T1 kick",
           "steps": [
-            "Back up the project, work on a disposable copy, and put a kick on T1 and a sustained sample or loop on T5. Build with Modwerk; with Keep stock FX2 effects on, SPRING REV gives up its code space, so reassign any track that used it.",
+            "Back up the project, work on a disposable copy, and put a kick on T1 and a sustained sample or loop on T5.",
             "Select T5, hold FUNC and press FX1, turn LEVEL to COMPRESSOR and press YES. Press FX1 for the main page; hold FUNC and press FX1 to return to SETUP with the key controls.",
-            "Set KEY to T1, KFLT to 64, KGN to 64 and MON to OFF. On the main page, keep MIX at 127, raise RAT and lower THRS until the T5 signal dips when the T1 kick plays; adjust ATK and REL for the desired envelope.",
-            "Briefly set MON to ON on page 2 to hear the processed T1 key on T5, then return MON to OFF. Try KFLT below 64 to focus on bass, or above 64 to remove bass from the detector.",
-            "Return KEY to OFF and MON to OFF to restore self-keyed stock compression. Set MIX to 0 for the dry signal or select NONE to remove this effect; stop transport before saving the disposable project."
+            "Set KEY to T1 and leave KGN at 64, KBAS and KWID OFF and MON OFF. On the main page, keep MIX at 127, raise RAT and lower THRS until T5 dips when the T1 kick plays; adjust ATK and REL for the envelope you want.",
+            "To duck from the kick's fundamental only, set KBAS to about 30-40 Hz and KWID to about 1.2-1.5 octaves. Set MON to ON to hear what the detector hears, then back to OFF.",
+            "Return KEY to OFF and MON to OFF to restore self-keyed stock compression, or select NONE to remove the effect."
           ]
         },
         "screenshots": [
@@ -409,17 +432,17 @@
     {
       "path": "media/ot-compressor-selection.png",
       "captureType": "emulator",
-      "caption": "COMPRESSOR selected in FX1 SETUP with RMS and the default external-key controls.",
-      "alt": "Actual Octatrack FX1 SETUP chooser with COMPRESSOR selected, KEY OFF, KFLT, KGN and MON OFF.",
-      "credit": "Modwerk contributor; actual ot_emu LCD, 5 October 2026.",
+      "caption": "COMPRESSOR selected in FX1 SETUP with RMS and the default side-chain controls: MON OFF, KEY OFF, KGN, KBAS and KWID.",
+      "alt": "Actual Octatrack FX1 SETUP chooser with COMPRESSOR selected: RMS, MON OFF, the KEY switch, KGN, KBAS and KWID with its link clip.",
+      "credit": "Modwerk contributors (capture plan); actual ot_emu LCD, 24 October 2026.",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
       "otUi": {
         "page": "FX1 SETUP",
         "shows": "location-and-controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
-        "imageSha256": "2816f0bce5aaabfadac6dba9e778dc184b8af3e4a611990d6e6b3e36095bc5eb",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "131142e1839bf1a62b48929dee396cc23b1f2f27f33595a9e6f39bf57f7be22e",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6. Empty scratch card; no project loaded."
       }
     },
@@ -428,32 +451,32 @@
       "captureType": "emulator",
       "caption": "Stock main compression page: ATK, REL, THRS, RAT, GAIN and MIX.",
       "alt": "Actual Octatrack COMPRESSOR FX1 main page showing the six retained stock compression controls.",
-      "credit": "Modwerk contributor; actual ot_emu LCD, 5 October 2026.",
+      "credit": "Modwerk contributors (capture plan); actual ot_emu LCD, 24 October 2026.",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
       "otUi": {
         "page": "FX1 main",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
-        "imageSha256": "2816f0bce5aaabfadac6dba9e778dc184b8af3e4a611990d6e6b3e36095bc5eb",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "131142e1839bf1a62b48929dee396cc23b1f2f27f33595a9e6f39bf57f7be22e",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6. Empty scratch card; no project loaded."
       }
     },
     {
       "path": "media/ot-sidechain-key-selected.png",
       "captureType": "emulator",
-      "caption": "KEY T2 selected through encoder C; MON remains OFF.",
-      "alt": "Actual Octatrack COMPRESSOR FX1 SETUP showing KEY T2 and the KFLT, KGN and MON controls.",
-      "credit": "Modwerk contributor; actual ot_emu LCD, 5 October 2026.",
+      "caption": "KEY T2 selected through encoder C on the rotary switch; MON remains OFF.",
+      "alt": "Actual Octatrack COMPRESSOR FX1 SETUP showing the KEY switch at T2 beside MON, KGN, KBAS and KWID.",
+      "credit": "Modwerk contributors (capture plan); actual ot_emu LCD, 24 October 2026.",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
       "otUi": {
         "page": "FX1 SETUP",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.2-experimental",
-        "imageSha256": "2816f0bce5aaabfadac6dba9e778dc184b8af3e4a611990d6e6b3e36095bc5eb",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "131142e1839bf1a62b48929dee396cc23b1f2f27f33595a9e6f39bf57f7be22e",
         "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6. Empty scratch card; no project loaded."
       }
     }

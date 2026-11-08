@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "tool": "scripts/verify-elemod-source-parity.mjs",
+  "note": "Modwerk's compiled package for this folder (--source-commit f99681ec, before this record was added), materialised against the owner's stock OS 1.74 and linked with elekloader's released core-ar2 0.3, compared with the same core linked with rytm2_mods v1.2's release object. Firmware stayed local; only hashes are recorded.",
+  "stock": {
+    "1.74": {
+      "syxSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+      "mainSha256": "34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b"
+    }
+  },
+  "testedBuilds": {
+    "1.74": {
+      "label": "MR74",
+      "syxSha256": "f4d7e60de44e77658a05747886d33945dba25d4ea0cfcdb028244e0ecaabf6c0",
+      "mainSha256": "70767ae4626140dc98244c4f29e1b09f8dbe53da534820dd5663dd23e6460053",
+      "note": "Built for the emulator captures; not run on a unit."
+    }
+  },
+  "sourceSha256Method": "sha256 of `sha256sum include/ar2-1.74.inc src/main-rms.s` output (manifest evidence.sourceSha256)",
+  "cases": [
+    {
+      "machine": "analog-rytm-mkii",
+      "id": "main-rms",
+      "release": "1.74",
+      "version": "1.0.0",
+      "compiler": {
+        "gcc": "m68k-linux-gnu-gcc (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
+        "assembler": "GNU assembler (GNU Binutils for Ubuntu) 2.42",
+        "linker": "GNU ld (GNU Binutils for Ubuntu) 2.42",
+        "node": "v24.21.0"
+      },
+      "artifactSha256": "22ac889708a9ef3151cf070299390c77d9b32a6363ddf9b43cd188522fa80a16",
+      "authorObjectSha256": "cbd69edb906e10db5278d8202e2f9c9e8abbb7dbff553bad404c5f834e825d54",
+      "ownSha256": "70767ae4626140dc98244c4f29e1b09f8dbe53da534820dd5663dd23e6460053",
+      "referenceSha256": "70767ae4626140dc98244c4f29e1b09f8dbe53da534820dd5663dd23e6460053",
+      "status": "byte-parity",
+      "sections": {
+        ".run": 264
+      },
+      "referenceSections": {
+        ".run": 264
+      },
+      "equalsTestedBuild": false,
+      "core": {
+        "id": "core",
+        "version": "0.3",
+        "release": "elekloader core-ar2-v0.3 (769d9aa)",
+        "elemodSha256": "6b97dfb3d65ca7d9d292e4ed61dd845e43b2d4f6dc71e7e7d235f27abc4b3e58"
+      }
+    }
+  ]
+}

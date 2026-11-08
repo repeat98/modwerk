@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "module": "beat-slicer",
+  "version": "0.1.66-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": 279312,
+    "budget": 4330000,
+    "method": "An event is one composed screen frame while the CREATE BEAT GRID popup is open: module_draw redraws the popup over the stock AED frame, on the UI task, not in an interrupt. Measured on the owner's MKII, 27 Oct 2026 (evidence/hardware.md): the development twin's modwerk_cost[22] (runtime module draw, DTIM3 counts at 132 MHz) read before and after 9.9 s with the popup open and BEATS/BPM turned 16 times: 640 ms over 605 UI ticks, 1,058 us a tick, 279,312 cycles at 264 MHz. An average over 605 frames, not a per-frame maximum; the drawing is a fixed layout, so frames differ only in their text. No static bound was counted. Grid calculation (bs_grid_preview, at most 65 grid points and 64-entry inserts) runs once per encoder step in module_tick: runtime_tick went from 25.8 to 27.0 us a tick in the same window. Budget: one UI tick, 16.4 ms at 61 ticks a second (4,330,000 cycles)."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": 125.2,
+    "moduleLongestUs": 126.6,
+    "stockIdlePercent": 43.2,
+    "moduleIdlePercent": 36.8,
+    "method": "Hardware, not cfmeter.py, on the owner's MKII with the transport stopped on the AED SLICE page of a Flex sample. Longest frame from the base's guard (47,891 counts a frame): 34.5 % (125.2 us) with no module, 34.9 % (126.6 us) with the popup open and its settings turning. Idle: the base's CPU meter swung between 41 % and 60 % with the popup open and closed alike (ten readings a second apart in each state), so the module's share is taken from its own hook instead: stock idle 43.2 % (100 minus the closed median, 56.8 %), module idle 36.8 %, that minus the draw hook's 6.4 % (1,055 us in each of 61 UI ticks a second, modwerk_cost[22]). Nothing else measurably changed (module tick 26-27 us a tick in both states). The cost applies only while the popup is open. No MIDI flood ran."
+  },
+  "stress": {
+    "floodMessagesPerSecond": null,
+    "clockBpm": null,
+    "seconds": null,
+    "stuckNotes": null,
+    "hangs": null,
+    "dropped": null,
+    "droppedExplanation": "No MIDI flood ran: Beat Slicer has no MIDI path, and nothing on this Mac sends MIDI yet. Instead it re-sliced while the pattern played, and the base self-test passed with it installed (evidence/hardware.md)."
+  }
+}

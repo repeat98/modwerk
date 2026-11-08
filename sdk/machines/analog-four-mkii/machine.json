@@ -6,14 +6,76 @@
   "variants": [
     "MKII"
   ],
-  "status": "open",
-  "summary": "Four-voice analog synthesizer. No public firmware research yet.",
+  "status": "research",
+  "summary": "OS 1.56 rebuilt byte-identical; modified OSes boot on hardware; stock recovers over MIDI DIN; core-a4 0.2 (the Rytm's core, with mod storage and parameter pages) runs on a unit.",
+  "firmware": {
+    "releases": [
+      {
+        "version": "1.56",
+        "files": [
+          {
+            "name": "Analog-Four_MKII_OS1.56.syx",
+            "sha256": "5aea489db3e747547f71d5e08a2d20253149fe6258defad60306402d2fc23cb5"
+          }
+        ]
+      }
+    ],
+    "flash": "Elektron Transfer over USB: set MIDI IN and OUT to the device, drop the .syx on and press YES on the device. It restarts by itself.",
+    "recovery": "Recovery mode is MIDI DIN only, as on the Analog Rytm MKII: hold FUNC at power-on for the STARTUP menu, press TRIG 4 (OS UPGRADE) and send the owner's stock .syx over MIDI DIN (a USB-MIDI interface or a serial adapter at 31250 baud), not USB."
+  },
   "steps": {
-    "format": "open",
-    "rebuild": "open",
-    "boot": "open",
-    "core": "open",
+    "format": "done",
+    "rebuild": "done",
+    "boot": "done",
+    "core": "done",
     "mods": "open"
+  },
+  "research": [
+    {
+      "label": "elektron-firmware-tool",
+      "url": "https://github.com/mischa85/elektron-firmware-tool",
+      "note": "Container and SysEx transport. OS 1.56 unpacks to five sections (meta, bootstrap, FPGA, packed main OS, ARM) with every checksum valid, and an unchanged repack is byte-identical to the stock file."
+    },
+    {
+      "label": "elekloader analog-four-mk2",
+      "url": "https://github.com/irpina/elekloader/blob/main/elekloader/devices/analog_four_mk2.py",
+      "note": "Device profile for OS 1.56: the Analog Rytm MKII's platform, OS entry and bootstrap loader matched instruction for instruction; the writer rebuilds the stock file byte for byte; flash limit, no protected range and the mods' DDR area evidenced; DIN recovery checked on a unit. No firmware hosted."
+    },
+    {
+      "label": "elekloader core-a4",
+      "url": "https://github.com/irpina/elekloader/tree/main/mods/core-a4",
+      "note": "core-ar2 on OS 1.56 (irpina/elekloader#180). On a unit: HC56 ran every event; SC56 kept mod storage through saves, loads and power cycles; CA56 left the mods' area intact; PA56 (core 0.2) passed the parameter page checks; stock 1.56 restored it. No firmware hosted."
+    },
+    {
+      "label": "analog-emu",
+      "url": "https://github.com/Iced-Cream/analog-emu",
+      "note": "rytm-emu fork that boots stock Analog Four MKII OS 1.56 to its main UI, headless or in a window, with the analog voices stubbed; used for the core's emulator checks before each hardware run. No firmware hosted."
+    }
+  ],
+  "sdk": {
+    "platform": "elemod",
+    "modules": "sdk/analog-four-mkii/modules",
+    "catalog": null,
+    "guide": "sdk/machines/analog-four-mkii/README.md",
+    "core": {
+      "version": "0.2",
+      "path": "sdk/analog-four-mkii/core-profile"
+    },
+    "toolchain": "m68k-linux-gnu (or m68k-elf) GCC and binutils for ColdFire, and elekloader's builder: core-a4 0.2 from the owner's exact OS 1.56 .syx.",
+    "budgets": [
+      {
+        "name": "Shared mod memory",
+        "unit": "bytes",
+        "value": 131072,
+        "note": "DDR 0x47BE0000–0x47C00000, shared by the core and every mod; a fill of the area and its neighbouring gaps read back intact on a unit through normal use and a power cycle (elekloader ddr-canary-a4)."
+      },
+      {
+        "name": "Core image",
+        "unit": "bytes",
+        "value": 8956,
+        "note": "Core 0.2 build (elekloader f02be99): 8,764 bytes .run plus 192 bytes .bss in the shared area, and an 88-byte .boot copier; the link check measures each selected module set."
+      }
+    ]
   },
   "art": {
     "body": "wide",

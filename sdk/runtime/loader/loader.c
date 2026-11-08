@@ -92,6 +92,11 @@ __attribute__((weak)) int modwerk_machine_metadata_admit(const struct runtime_ds
 { (void)context;(void)operation;to->foreign_roots=0;return (from->flags | to->flags) & RUNTIME_GROUP_METADATA ? RUNTIME_MALFORMED : RUNTIME_OK; }
 #endif
 
+#ifndef MODWERK_RUNTIME_IMAGE_EXTERNAL
+__attribute__((weak)) int modwerk_machine_image_validate(const struct runtime_dsp *d)
+{ (void)d;return RUNTIME_OK; }
+#endif
+
 const struct runtime_module *modwerk_runtime_module(unsigned i) { return i < RUNTIME_MODULES ? live[i] : 0; }
 unsigned modwerk_runtime_active(void)
 {
@@ -100,6 +105,7 @@ unsigned modwerk_runtime_active(void)
     return n;
 }
 enum runtime_refusal modwerk_runtime_refusal(void) { return refusal; }
+void modwerk_runtime_refused(enum runtime_refusal why) { refusal = why; }
 uint32_t modwerk_runtime_value(void) { return modwerk_runtime_api.value; }
 uint32_t modwerk_runtime_calls(void) { return modwerk_runtime_ticks; }
 
@@ -312,8 +318,14 @@ static int owner_intact(unsigned i)
 int modwerk_runtime_owner_snapshot(const uint8_t *image,struct runtime_owner *out)
 {
     if (!image || !out) return 0;
-    for (unsigned i = 0; i < owners; ++i) if (owned[i]->dsp.image == image && owner_intact(i)) {
-        *out = owner_identity[i]; return 1;
+    /* Each owner record, in the base's own RAM, names where its image starts (owner_intact proves the header agrees):
+     * the header in the pool, read uncached, is read for that one owner only, not for every owner on every call (the
+     * controller board asks once per module and tick: 0.8 ms a tick with 26 modules, 24 October 2026). */
+    for (unsigned i = 0; i < owners; ++i) {
+        const struct runtime_owner *o = &owner_identity[i];
+        if (o->owned_extent + o->image_offset == (uintptr_t)image && owned[i]->dsp.image == image && owner_intact(i)) {
+            *out = *o; return 1;
+        }
     }
     return 0;
 }
@@ -947,6 +959,12 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
             }
             p += site_bytes(abi, n, r);
         }
+        dsp.image = to;
+        if (be16(data + 6) & 1u) dsp.page = to, dsp.page_bytes = image; /* a page recipe heads the image */
+        admission_lock = modwerk_machine_lock();
+        why = modwerk_machine_image_validate(&dsp);
+        modwerk_machine_unlock(admission_lock);
+        if (why) return refuse((enum runtime_refusal)why);
 #if CACHED_MODULES /* instruction fetches read memory, not the data cache: the extent's lines reach memory first */
         modwerk_machine_flush_data((uint32_t)(uintptr_t)m, head + code + tail);
 #endif
@@ -965,8 +983,6 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
                     dsp.entries = kept_entries, dsp.initial = init_words ? kept_init : 0;
         else dsp.words = dsp_words, dsp.relocations = dsp_relocations;
         dsp.claims = claims ? kept : 0;
-        dsp.image = to;
-        if (be16(data + 6) & 1u) dsp.page = to, dsp.page_bytes = image; /* a page recipe heads the image; the machine checks it */
         m->id = id; m->size = head + code + tail; m->dsp = dsp;
         for (uint32_t i = 0; i < RUNTIME_HOOKS; ++i) m->hook[i] = hook[i] == RUNTIME_NONE ? 0 : (uintptr_t)to + hook[i], m->order[i] = order[i];
         m->site = site; m->sites = sites;
@@ -1030,7 +1046,8 @@ static int journal_view(const struct journal_row *r,struct runtime_journal_view 
 }
 int modwerk_runtime_journal_digest(uint8_t out[MU_DIGEST_BYTES])
 {
-    uint32_t ids[RUNTIME_JOURNAL_ROWS];uint8_t sha[MU_DIGEST_BYTES*RUNTIME_JOURNAL_ROWS];unsigned n=0;
+    static uint32_t ids[RUNTIME_JOURNAL_ROWS];static uint8_t sha[MU_DIGEST_BYTES*RUNTIME_JOURNAL_ROWS]; /* engine task only */
+    unsigned n=0;
     if(!out) return 0;
     for(unsigned i=0;i<RUNTIME_MODULES;++i) if(live[i]) {
         struct runtime_owner o;
@@ -1230,7 +1247,7 @@ static void set_end(const struct runtime_context *context)
 }
 static int __attribute__((used)) set_prepare_context(void *u,const uint8_t *data,uint32_t bytes,const struct runtime_context *context)
 {
-    const uint8_t *packages[RUNTIME_SET_CHANGES];uint32_t lengths[RUNTIME_SET_CHANGES];
+    static const uint8_t *packages[RUNTIME_SET_CHANGES];static uint32_t lengths[RUNTIME_SET_CHANGES];
     if(change_set.count || candidate || prepared || previous || modwerk_runtime_volatile_busy()) return refuse(RUNTIME_BUSY);
     int count=runtime_set_parse(data,bytes,packages,lengths);
     if(!count) return refuse(RUNTIME_MALFORMED);

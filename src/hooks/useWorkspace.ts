@@ -115,6 +115,7 @@ export function useWorkspace() {
     replaceConfigurations([...configsRef.current,item]);changeActive(item.id)
     if(item.moduleIds.length)trackConfigurationStarted(item.id)
     persist(async store => {await store.saveConfiguration(item);await store.setActiveConfiguration(item.id)})
+    return item.id
   }
   function updateActive(update: Partial<Pick<Configuration, 'name' | 'moduleIds' | 'moduleVersions' | 'keepStockFx2' | 'usbAudio' | 'removedStockFx' | 'classicStartup'>>) {
     const current = configsRef.current.find(item => item.id === activeRef.current)

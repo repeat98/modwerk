@@ -34,7 +34,7 @@ function downloadAction(machine: DigiMachine) {
 }
 
 describe('Digi firmware download statistics', () => {
-  it.each(['digitakt', 'digitone'] as const)('counts %s modules from the completed build only after a download request', machine => {
+  it.each(['digitakt', 'digitone', 'analog-rytm-mkii'] as const)('counts %s modules from the completed build only after a download request', machine => {
     const click = vi.fn()
     vi.stubGlobal('document', {createElement: () => ({click, remove: vi.fn()}), body: {append: vi.fn()}})
     vi.stubGlobal('window', {setTimeout: (callback: () => void) => callback()})

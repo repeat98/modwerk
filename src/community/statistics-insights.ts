@@ -50,6 +50,19 @@ export function usageInsights(data: UsageStatistics) {
     activeDays:completed.filter(row => row.visitors>0).length,peak:peak?.visitors ? peak : null,today:collected.find(row => row.day===data.to)?.visitors??0}
 }
 
+/** Reconcile the machine split against period totals, including older clients without attribution. */
+export function usageMachineBreakdown(data: UsageStatistics) {
+  if (!data.devices) return []
+  const totals = usageInsights(data).totals
+  const unattributed = {
+    device: 'unattributed' as const,
+    builds: Math.max(0, totals.builds - data.devices.reduce((sum, row) => sum + row.builds, 0)),
+    builds_failed: Math.max(0, totals.builds_failed - data.devices.reduce((sum, row) => sum + row.builds_failed, 0)),
+    downloads: Math.max(0, totals.downloads - data.devices.reduce((sum, row) => sum + row.downloads, 0)),
+  }
+  return [...data.devices, unattributed]
+}
+
 export type ModuleInsightSort = 'downloads' | 'downloadsWeek' | 'likes' | 'ratingAverage' | 'comments' | 'openIssues'
 export function rankedModules(modules: readonly AdminModuleInsight[], sort: ModuleInsightSort, search: string) {
   const query = search.trim().toLowerCase()

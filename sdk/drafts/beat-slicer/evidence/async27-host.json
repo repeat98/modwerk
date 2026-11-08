@@ -1,0 +1,38 @@
+{
+  "scope": "portable copied UI/engine exchange with modeled serialized interleavings; no native task/source access",
+  "sourceSha256": {
+    "planner.c": "01c9c25efa363679a591969931dd376a3b694a949dd8b9f89eda4bf77a88cee4",
+    "planner.h": "1a10ce9e6b34dfd35eb138690e2134550621c3bf91b2178fb50f95b9def6b7ae",
+    "planner_job.c": "767d82cc375677a115e9457af35e26fddd9de66a0dc80aa2af0fe3b5adaf0581",
+    "planner_job.h": "c4dd3faa8b3320194b54ab4d7bec6541d9e936f544b0e6236efa4fa5518d6547",
+    "pcm_reader.c": "8762e389a39b7407a7d987dc6e3e36d7d75aa6c408b1d3232d8672a380226088",
+    "pcm_reader.h": "462f495a86f32730b79a56177f99929f685d82729e4646e7b391df475d929821",
+    "preview_guard.c": "da1299674cf2ae967c58231ee9c16891afa94e27254407b5d09df6b73cc4343e",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "preview_session.c": "f87a51c77c6fda24159dcdc137cfa3b895224b0c17605c3612558e37b5a049f5",
+    "preview_session.h": "1dfe1f9ea8fb6785edc48020609c51f6b88e75381043504c011dc4bfedc8ca9d",
+    "preview_async.c": "17c40f9473f88a55de58913f152fe1f93de53b521eaa0cd06ab7ef61bcc7b393",
+    "preview_async.h": "4a15ed59ff0db70382fa47515f3600e92fd0d8ba9bdc90149409dc7ed78e4864",
+    "test_preview_async.c": "6bd3f4a8dd413e25ff6a0e7ef4acd6fc7f6ca006df3a2dde7b6a60a85f48f5c0",
+    "test_preview_async.py": "002e4248358922e49b2f4ca6c4d1fe07b221534698582567173e8d69731a131d"
+  },
+  "compiler": "Apple clang version 17.0.0 (clang-1700.6.4.2)",
+  "flags": [
+    "-std=c99",
+    "-O1",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer"
+  ],
+  "exitCode": 0,
+  "stdout": [
+    "PASS: 32 complete previews, 72 cancel/replace/revoke/reentry/lock-refusal/publication interleavings, waiting/readiness, stale publication and sequence exhaustion"
+  ],
+  "hardware": "not tested",
+  "audio": "not tested",
+  "nativeSourceAccess": "not implemented"
+}

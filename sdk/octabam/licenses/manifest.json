@@ -304,6 +304,50 @@
       "usedIn": [
         "modules/quantize-live-rec-toggle"
       ]
+    },
+    {
+      "id": "kyoti-direct-jump",
+      "name": "Zac Kyoti Direct Jump",
+      "spdx": "MIT",
+      "noticeFile": "kyoti-direct-jump.txt",
+      "sources": [
+        {
+          "path": "sdk/octabam/modules/direct-jump-kyoti/LICENSE"
+        }
+      ],
+      "usedIn": [
+        "modules/direct-jump-kyoti"
+      ]
+    },
+    {
+      "id": "jankolkmeier-dejavu",
+      "name": "Jan Kolkmeier Deja Vu",
+      "spdx": "MIT",
+      "noticeFile": "jankolkmeier-dejavu.txt",
+      "sources": [
+        {
+          "path": "sdk/octabam/modules/dejavu/LICENSE"
+        }
+      ],
+      "usedIn": [
+        "modules/dejavu"
+      ]
+    },
+    {
+      "id": "tim-hastie-tuner",
+      "name": "Tim Hastie Tuner",
+      "spdx": "MIT",
+      "noticeFile": "tuner.txt",
+      "sources": [
+        {
+          "url": "https://github.com/timhastie/octatrick-modules/blob/fd18f5530989be348e6aa4c6e38f93beba555e6d/LICENSE",
+          "revision": "fd18f5530989be348e6aa4c6e38f93beba555e6d",
+          "path": "LICENSE"
+        }
+      ],
+      "usedIn": [
+        "modules/tuner"
+      ]
     }
   ],
   "moduleComponents": {
@@ -343,6 +387,15 @@
     ],
     "quantize-live-rec-toggle": [
       "kyoti-quantize-live-rec-toggle"
+    ],
+    "direct-jump-kyoti": [
+      "kyoti-direct-jump"
+    ],
+    "dejavu": [
+      "jankolkmeier-dejavu"
+    ],
+    "tuner": [
+      "tim-hastie-tuner"
     ]
   }
 }

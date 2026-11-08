@@ -31,7 +31,7 @@ static enum bs_status insert(struct bs_plan *p, uint32_t frame) {
 enum bs_status bs_preview(const struct bs_request *r, struct bs_plan *out) {
     if (!r || !out || !r->read || r->sample_rate < 8000 || r->sample_rate > 192000 ||
         r->trim_start >= r->trim_end || r->tempo_source > BS_PROJECT_BPM || r->snap > 1 ||
-        (r->beats != 1 && r->beats != 4 && r->beats != 16 && r->beats != 32 && r->beats != 64) ||
+        (r->beats != 1 && r->beats != 2 && r->beats != 4 && r->beats != 16 && r->beats != 32 && r->beats != 64) ||
         r->existing_count > BS_MAX_SLICES || (r->existing_count && !r->existing)) return BS_INVALID;
     uint32_t bpm = r->tempo_source == BS_SAMPLE_BPM ? r->sample_bpm24 : r->project_bpm24;
     /* Refuse unavailable/implausible tempo, never silently change BPM source. */

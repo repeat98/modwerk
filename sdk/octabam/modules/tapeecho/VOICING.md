@@ -30,7 +30,8 @@ EMAC form used has sites in stock 1.40C. Five kernels became three:
   staging and output mix in one pass for full wet, MIX, MIX=0 and knob
   ramps. The record sum is one saturating accumulator; the curve is a
   signed table of finished ring words (no sign handling). Full wet is
-  `sat(4*wet)`, other MIX values `sat(4*mix*wet + (1-mix)*dry)`.
+  `sat(4*wet)`, other MIX values `sat(4*mix*wet + (1-mix)*dry)` (until
+  0.1.5; see "MIX law (0.1.6)" below for the current law).
 
 Playback, filters and the record sum are Q3.29 (+/-4 FS = the old clamp
 points, now the read-out's own saturation); the FIR and curve index stay
@@ -669,3 +670,9 @@ module-absent gates were skipped as expected. ASan/UBSan voice plus stress
 tests passed with no diagnostics. FREE/BEAT peak recurrence residual was
 0.001618 FS. The final standalone build leaves the `tapeecho` remix selected;
 no release image/container is emitted.
+
+## MIX law (0.1.6, 27 October 2026)
+
+Until 0.1.5 MIX was a linear crossfade, `out = (1-mix)*dry + 4*mix*wet` with `mix = MIX/127`, so the default MIX 90 left the dry signal at -10.7 dB (issues #607 and #969). From 0.1.6 MIX follows BBD's law with Tape Echo's full-wet level (`4*wet`) as unity: `out = sat(4*g*wet + k*dry)` with `g = min(MIX, 64)/64` and `k = 1` up to MIX 64, `k = (127-MIX)/63` above it. The default MIX is 40, as BBD's. MIX 0 and settled full wet keep their own exact paths.
+
+`te_process` is unchanged: it still ramps `s->mix = MIX/127` per sample (about 12 ms) and snaps it to exact zero. The tape kernel turns that one ramped value into both gains, once per block when MIX is settled and every sample while it ramps, so the gains stay continuous through the knee: below `gain(64)`, `g = 2*mix - mix/64` (= `mix*127/64`) and `k = 1`; above it, `g = 1` and `k = ((full - mix) >> 14) * 33028`, a 16 x 16 bit `MULU.W` within 2e-5 of `(1-mix)*127/63`. `mix_gains()` in `cpu.c` is the native oracle of this arithmetic. Keeping the compiled C unchanged keeps the committed `cpu.s` C section byte-identical, apart from the PC-relative tail call into the moved `te_read_linear`. Level and cost figures are in [TESTING.md](TESTING.md).

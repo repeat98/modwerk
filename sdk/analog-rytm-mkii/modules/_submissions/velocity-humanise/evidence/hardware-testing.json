@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-10-25",
+  "source": "Iced-Cream's own tests on their unit: the C3A4 and C3N4 builds of the core-ar2 0.3 unit test, recorded in rytm2_mods velocity-humanise/README.md at afd461d; and the SXH4 bench runs on the same unit (2026-10-24 and 2026-10-25); and the solo bench run of VHH4 on the same unit (2026-10-25)",
+  "reporter": "Iced-Cream",
+  "statement": "Hardware, OS 1.74, 2026-10-20: in C3A4 (core-ar2 0.3 and all eleven rytm2_mods v1.2 ports) velocity-humanise 1.1's test steps 1 to 3 pass: on the TRIG page FUNC + VEL reads RND with a 0..64 popup; with N = 32 a track of equal-velocity trigs varies in level, with N = 0 it does not; N is kept through save, power-cycle and reload, and through a power-cycle without SAVE PROJECT. In C3N4 (C3A4 without euclid-accents) step 4 passes: steps 1 to 3 behave the same, and euclid on/off is unaffected by N. On SXH4 (released core-ar2 0.3 with the other five Modwerk 1.74 submissions, 2026-10-24/25) N 10 measurably varied CP's equal-velocity hits where N 0 did not, and N was kept through a power cycle without SAVE PROJECT. Alone on VHH4 (released core-ar2 0.3 and this module only, 2026-10-25) N 64 spread CP's equal-velocity hits by about 3 dB where N 0 did not.",
+  "status": "hardware-tested-author-reported",
+  "scope": "velocity-humanise 1.1 beside other rytm2_mods ports (with and without euclid-accents). SXH4 ran it with the released core-ar2 0.3 and the other five Modwerk 1.74 submissions. VHH4 ran it alone with the released core-ar2 0.3.",
+  "modules": [
+    {
+      "id": "velocity-humanise",
+      "version": "1.1"
+    },
+    {
+      "id": "core",
+      "version": "0.3"
+    }
+  ],
+  "builds": [
+    {
+      "label": "VHH4",
+      "testedOn": "2026-10-25",
+      "os": "1.74",
+      "syxSha256": "4bebbd5d7ba1860f168ee34c35212f58e67b525628a91b6f7d76fd5e5a101ca8",
+      "mainSha256": "ae1c680f9c6d7a697c3efac244c0d62b059dbd79eb0224f01330f1d985af20aa",
+      "packageSha256": {
+        "velocity-humanise-1.1-os1.74.elemod": "545cf2ec3d79f6f8053fe996a4497e5597c5f85d74be2f8a22997d7de494e0d9",
+        "core-ar2-0.3.elemod": "6b97dfb3d65ca7d9d292e4ed61dd845e43b2d4f6dc71e7e7d235f27abc4b3e58",
+        "analoghealth-1.2.elemod": "a86f07c53a375fa3d6e6398a452806217984b6fd35ff8a66d4b40885992787b6"
+      },
+      "content": "The released core-ar2 0.3 and this module's rytm2_mods v1.2 release object as the only module, plus the remote-control test layer (analoghealth 1.2, no site shared with core or the module). Driven over USB by a scripted bench in a ~T test project; outputs recorded over USB audio; stock 1.74 restored after the run.",
+      "results": [
+        "Alone: N 64 spreads CP's hits by 2.99 dB per step against 0.36 dB at N 0 (measured).",
+        "No freeze or dropout on any output."
+      ]
+    },
+    {
+      "label": "SXH4",
+      "testedOn": "2026-10-25",
+      "os": "1.74",
+      "syxSha256": "e4d01a6aec250bd2af7743c9f8b0e9c560d805b52564932dddc41d872e1c5000",
+      "mainSha256": "0ef422bf64c7c9257ae9f5b04b0733324f74d5db40b19dcc63e86e49ef288fb8",
+      "packageSha256": {
+        "velocity-humanise-1.1-os1.74.elemod": "545cf2ec3d79f6f8053fe996a4497e5597c5f85d74be2f8a22997d7de494e0d9",
+        "core-ar2-0.3.elemod": "6b97dfb3d65ca7d9d292e4ed61dd845e43b2d4f6dc71e7e7d235f27abc4b3e58"
+      },
+      "content": "The released core-ar2 0.3 and rytm2_mods v1.2's release objects for the six Modwerk 1.74 submissions, plus a remote-control test layer (three sites, none shared with core or the modules). Without the test layer the same inputs give SX74 (2a352718de044cdba51a2b8a3a064ef126d79ab54f24ac7a7662f6c686e64371). Driven over USB by a scripted bench in a ~T test project; outputs recorded over USB audio; stock 1.74 restored after each run.",
+      "results": [
+        "SXH4: N 10 spreads CP's hits by 0.63 dB per step against 0.35 dB at N 0 (measured).",
+        "SXH4: N kept through a power cycle without SAVE PROJECT (dial position).",
+        "Four minutes of play with samples, delay and reverb sends and knob turns: no freeze, gap or level dip on any output; clicks on the main mix also appear on the same core and test layer without the modules."
+      ]
+    },
+    {
+      "label": "C3A4",
+      "testedOn": "2026-10-20",
+      "os": "1.74",
+      "syxSha256": "04d987ced36850eef5eb5cd1215d411edf621a5af94f980525ab561c9108f951",
+      "mainSha256": "fc8714760c023541299b261529887f62e100c5d415626d728d3b53202afcd529",
+      "packageSha256": {
+        "velocity-humanise-1.1-os1.74.elemod": "545cf2ec3d79f6f8053fe996a4497e5597c5f85d74be2f8a22997d7de494e0d9",
+        "core-ar2-0.3.elemod": "fe066532a7cbac82ed48278d49456523bbc14dab6cbe6c0a9006c2bee9c50373"
+      },
+      "content": "core-ar2 0.3 as built before elekloader #153, and rytm2_mods v1.2's eleven OS 1.74 release objects. Relinking those files on stock 1.74 gives this main OS byte for byte.",
+      "results": [
+        "Test steps 1 to 3 pass.",
+        "N is kept through a power-cycle without SAVE PROJECT."
+      ]
+    },
+    {
+      "label": "C3N4",
+      "testedOn": "2026-10-20",
+      "os": "1.74",
+      "syxSha256": "a74435c28591ec0f2d143b0629a4fd5b6f37ab85e0b3e4618b000698dd5ea9f5",
+      "content": "C3A4 without euclid-accents: core-ar2 0.3 as built before elekloader #153 and ten of rytm2_mods v1.2's OS 1.74 release objects, this module's included.",
+      "results": [
+        "Step 4: steps 1 to 3 behave the same without euclid-accents, and euclid on/off is unaffected by N."
+      ]
+    }
+  ],
+  "coverageDetails": {
+    "deviceDetails": "Analog Rytm MKII",
+    "testDate": "2026-10-25",
+    "duration": null,
+    "durationMinutes": null,
+    "individualTestResults": [
+      "FUNC + VEL reads RND, popup 0..64",
+      "N = 32 varies the hits; N = 0 does not",
+      "N kept through save, power-cycle and reload",
+      "Same without euclid-accents; euclid unaffected by N",
+      "SXH4: N 10 varies hits, N 0 does not (measured)",
+      "SXH4: N kept through a power cycle without SAVE PROJECT",
+      "SXH4: four-minute play, no freeze or dropout",
+      "Alone (VHH4): N 64 varies hits, N 0 does not (measured)"
+    ]
+  },
+  "contextNote": "Main OS hashes are the builds', not read back from the device. SXH4 links the released core-ar2 0.3 (6b97dfb3…, with #153) that Modwerk links; C3A4's core was built before #153.",
+  "modwerkPipelineQualified": false,
+  "authorGithub": "Iced-Cream"
+}

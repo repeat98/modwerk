@@ -1,12 +1,23 @@
 [
   {
     "version": "0.3.0-experimental",
-    "date": "2026-10-24",
+    "date": "2026-11-08",
     "changes": [
-      "New: VECTOR is a MIDI generator for the eight MIDI tracks. Double-tap a MIDI track's key (or double-tap SRC) and choose VECTOR in MIDI NOTE SETUP's list. Its controls take the SRC page (TYPE, DENS, ROOT, SCAL, OCT, SEED) and the AMP page (VEL, ACNT, GATE, SPAN, OFST, RPT; FUNC+AMP: ROT, DIR, PROB, HUMN); LFO, FX1 and FX2 stay the track's own. OCT, VEL and GATE are the track's NOTE, VEL and LEN, so a trig placed by hand fits the phrase. PROB gives the notes off the beat a trig condition (99% down to 1%) and HUMN a micro-timing offset of up to 23/24 of a step. It writes real note trigs with NOTE, VEL and LEN locks that the Octatrack's own MIDI sequencer plays, so tempo, track speed, swing, the channel and every note-off stay stock's. Over USB it needs a Modwerk base with MIDI generators; a card build brings its own.",
-      "Faster edits on both kinds of track: a control turn no longer rebuilds the lock index of all 16 tracks (about 3 ms on the unit), the scale's pitches are worked out once a phrase instead of once a step, and the MIDI phrase is written in place. A 64-step rewrite took 0.5 ms on the owner's MKII; the audio frames and the MIDI timing stayed steady while turning. The generated phrases are the same as 0.2.4's.",
-      "VECTOR's audio tick reads the Part and track numbers once a tick, and its key layer stays off in MIDI mode.",
-      "Tested on the owner's MKII over USB with development bases (21 and 24 October 2026): the list, the SRC, AMP and FUNC+AMP pages, generation, OCT, ROOT, VEL and GATE, PROB at 1% (only the notes on the beat played) and HUMN (every note within 1 ms of its written offset), holding a trig in grid recording (stock's page and locks), OFF, removal and reinstall. Not tested: a card build on the unit, a physical power cycle, project save and reload, scenes and LFOs on a VECTOR MIDI track, MKI. While VECTOR is not installed, a VECTOR MIDI track's ARP SETUP shows its stored controls as arp notes. The STATIC/FLEX bank problem of #596 is not addressed."
+      "New: VECTOR generates phrases on MIDI tracks. Double-tap SRC (or the track key in MIDI mode) and choose VECTOR; its controls are on SRC, AMP and FUNC+AMP.",
+      "On a MIDI track OCT, VEL and GATE are the track's NOTE, VEL and LEN; PROB puts trig conditions on off-beat notes, HUMN adds micro-timing. The Octatrack's own sequencer plays it.",
+      "Turning a control is faster on audio and MIDI tracks; the generated phrases are the same as before.",
+      "Card builds: VECTOR's second page also opens beside POLY8 (#1119).",
+      "Known issue: not yet tested on hardware with this exact build; a power cycle and project save and reload are untested."
+    ]
+  },
+  {
+    "version": "0.2.5-experimental",
+    "date": "2026-10-27",
+    "changes": [
+      "Over USB, a double tap on SRC on a VECTOR track now opens VECTOR's second page (SEED, SPAN, OFST, ROT, RPT, DIR) instead of the stock Flex or Static setup (#972).",
+      "Needs the current Modwerk beta base; on an older base SRC SETUP stays as before.",
+      "Card builds are unchanged.",
+      "Known issue: saving and reloading, a power cycle with VECTOR kept and listening are not yet tested on hardware."
     ]
   },
   {

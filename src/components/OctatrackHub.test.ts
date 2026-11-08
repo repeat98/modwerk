@@ -107,6 +107,13 @@ describe('the Octatrack page', () => {
     expect(link.update).not.toHaveBeenCalled()
   })
 
+  it('says when not every saved module came back at startup', async () => {
+    const set = newConfiguration('Live', ['miniverb', 'synth']), link = unit(), props = callbacks()
+    link.health.mockResolvedValue({ ...reading, saved: 6, savedCount: 1 })
+    await act(() => root.render(createElement(OctatrackHub, { ...props, view: 'status', link, inventory: { moduleIds: ['miniverb'], removedStockFx: [] }, sets: [set], selectedId: set.id, header: null, grid: null, card: null })))
+    expect(open().textContent).toContain('Not all loaded at startup · 1 module running. Sync your modules to put the rest back.')
+  })
+
   it('keeps local samples while other pages open, and pauses their preview', async () => {
     const createURL = vi.fn(() => 'blob:hub-sample'), revokeURL = vi.fn(), pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {})
     vi.stubGlobal('URL', class extends URL { static createObjectURL = createURL; static revokeObjectURL = revokeURL })
@@ -155,12 +162,12 @@ describe('link results outside the sync dialog', () => {
     expect(open().textContent).toContain('only once it runs the Modwerk base')
   })
   it('does not repeat a result the sync dialog already showed, and still shows one that arrives on this page', async () => {
-    let state: LinkState = { ...ready, notice: { tone: 'success', text: 'Kept. Live stays on your Octatrack, also after a restart.' } }
+    let state: LinkState = { ...ready, notice: { tone: 'success', text: 'Synced. Live stays on your Octatrack, also after a restart.' } }
     const listeners = new Set<() => void>(), link = { ...unit(), getState: () => state, subscribe: (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener) } } }
     await act(() => root.render(createElement(OctatrackActivity, { link: link as unknown as OctatrackLink })))
     expect(container.querySelector('.octatrack-activity')).toBeNull()
     await act(() => { state = { ...ready, status: 'trial', module: 'Studio' }; listeners.forEach(listener => listener()) })
-    await act(() => { state = { ...ready, notice: { tone: 'success', text: 'Kept. Studio stays on your Octatrack, also after a restart.' } }; listeners.forEach(listener => listener()) })
-    expect(container.querySelector('.octatrack-activity')?.textContent).toContain('Kept. Studio stays')
+    await act(() => { state = { ...ready, notice: { tone: 'success', text: 'Synced. Studio stays on your Octatrack, also after a restart.' } }; listeners.forEach(listener => listener()) })
+    expect(container.querySelector('.octatrack-activity')?.textContent).toContain('Synced. Studio stays')
   })
 })

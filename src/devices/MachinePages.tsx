@@ -31,6 +31,7 @@ import { MemberGate } from '../community/MemberGate'
 import { useDigiFirmware } from '../hooks/useDigiFirmware'
 import { DigiFirmwarePanel } from '../components/DigiFirmwarePanel'
 import { DigiBuildPanel } from '../components/DigiBuildPanel'
+import { BUILDER_SOURCE } from '../engine/elekloader/machine-build'
 import { ConfigurationHeader } from '../components/ConfigurationLayout'
 import { ModuleAuthors } from '../components/ModuleAuthors'
 import { digiMatchesQuery, octatrackMatchesQuery } from '../catalog/module-search'
@@ -69,7 +70,7 @@ const FAMILY_PAGE: Record<DeviceProfile['family'], { invite: string; unlock: str
     start: () => [
       ['Build the source', 'Build Erica Synths’ firmware with the toolchain its README names, and check that two builds give the same image.'],
       ['Boot a marked build', 'Change the start-up screen so it shows the build is modified, install it from the SD card, then put the official update back the same way.'],
-      ['Agree the base, then a first mod', 'A Modwerk base adds shared events to the source so mods combine. Your first mod ships with its source, documentation and test evidence from the unit.'],
+      ['Agree the base, then a first mod', 'A Modwerk base adds shared hooks to the source so mods combine. Your first mod ships with its source, documentation and test evidence from the unit.'],
     ],
     risk: ['Keep the bootloader', 'Update only from the SD card. Never run the full-flash or bootloader targets: if writing the bootloader fails, only a debug probe brings the unit back. Share source, not built images.'],
   },
@@ -249,6 +250,7 @@ export function DigiConfiguration({ device, configuration, configurations, onSel
         <div className="configuration-checkout">
           <section className={'compatibility-panel compatibility-' + (estimate.fits && !estimate.clashes.length ? 'clear' : 'conflict')} aria-live="polite" aria-labelledby="digi-compatibility-title"><div className="compatibility-heading"><span className="compatibility-icon"><Icon name={estimate.fits && !estimate.clashes.length ? 'shield' : 'sliders'} size={20}/></span><div><h2 id="digi-compatibility-title">{!estimate.fits || estimate.clashes.length ? 'Your selection needs a change' : selection.length ? 'No declared conflicts' : 'Choose your modules'}</h2><p>{!estimate.fits || estimate.clashes.length ? 'Review the resources below and choose a compatible set.' : selection.length ? mobile ? 'Module claims were checked. Placement checks happen on a computer with your base firmware.' : 'Choose your base firmware for placement checks.' : 'Add a module from the library, or build the core alone. Compatibility updates as you make changes.'}</p></div></div></section>
           <div className="checkout-card">{mobile ? <ConfigurationHandoff onExport={() => { if (configuration) { downloadDigiSelection(configuration, device.id); setExported(exportKey) } }} exported={exported === exportKey} canExport={!!configuration} /> : <MemberGate action="build firmware" next={device.id+'/configuration'}><DigiBuildPanel device={device} firmware={firmware} moduleIds={ids} storage={configuration && { lock: configuration.storageLock, save: lock => onStorageLock(configuration.id, lock) }} onExport={() => { if (configuration) { downloadDigiSelection(configuration, device.id); setExported(exportKey) } }} exported={exported===exportKey} canExport={!!configuration} results={buildResults}/></MemberGate>}</div>
+          <p className="builder-credit">Powered by <a href={BUILDER_SOURCE.repository} target="_blank" rel="noreferrer">elekloader ↗</a></p>
         </div>
       </div>
     </div>

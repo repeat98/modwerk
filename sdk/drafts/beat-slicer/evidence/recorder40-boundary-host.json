@@ -1,0 +1,30 @@
+{
+  "scope": "Recorder entry/return adaptation with synthetic ownership; no installed source service",
+  "sourceSha256": {
+    "recorder_boundary.c": "8e9fbd9f525deef13a10b3328557ba5c106f3dd373f7e8b5adf6d76c57766a9b",
+    "recorder_boundary.h": "be93d64de6605471a3a34116b5549657a5e93416a60cc9c5920bbf56440edda7",
+    "preview_guard.c": "da1299674cf2ae967c58231ee9c16891afa94e27254407b5d09df6b73cc4343e",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "test_recorder_boundary.c": "d5d8595fbd56bdbae3b3478a620c7e577bab9a5ddf593348ece09d1f65de0020",
+    "test_recorder_boundary.py": "5fa3d7021b7cbb4e2c9a82c44bf890dc513c987ff3d6d0eda500dc711350a8f9"
+  },
+  "compiler": "Apple clang version 17.0.0 (clang-1700.6.4.2)",
+  "flags": [
+    "-std=c99",
+    "-O1",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-pedantic",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer"
+  ],
+  "exitCode": 0,
+  "stdout": [
+    "PASS: 72 bank/track states, eight nested scopes, independent writers and 13 terminal faults"
+  ],
+  "hardware": "not tested",
+  "audio": "not tested",
+  "nativeSourceAccess": "not implemented"
+}

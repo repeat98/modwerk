@@ -1,0 +1,1 @@
+Octatrack base (USB, beta): when the Octatrack's DSP stops during a session ("DSP STOPPED"), modules can't load their DSP code again until you switch it off and on. The self-test now fails in that case ("the Octatrack's DSP stopped") instead of passing, so a sync isn’t kept on a unit that can’t run it. Beta base `5155fc3e`.

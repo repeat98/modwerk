@@ -1,0 +1,155 @@
+{
+ "schemaVersion": 3,
+ "id": "temp-save",
+ "name": "Temp Save",
+ "version": "0.1.0-experimental",
+ "machine": "analog-rytm-mkii",
+ "category": "system",
+ "exclusive": false,
+ "author": {
+  "github": "npp1993",
+  "credits": [
+   "Nathaniel Pavel"
+  ]
+ },
+ "maintainers": [
+  "npp1993"
+ ],
+ "presentation": {
+  "label": "TEMP SAVE",
+  "family": "Workflow",
+  "summary": "FUNC + YES overwrites the pattern's and kit's saved copies, the ones stock's reloads go back to; FUNC + NO brings both back.",
+  "overview": "Try something on the Rytm and get back to where you were. FUNC + YES saves the active pattern and its kit, performance and scene locks included, over their saved copies, with stock's own save. FUNC + NO reloads both. A save belongs to its pattern and kit: change either or load a project and FUNC + NO shows NO TEMP SAVE.",
+  "highlights": [
+   "One gesture for the pattern and its kit",
+   "Performance and scene locks come back with the kit",
+   "Screens that use YES or NO keep them"
+  ],
+  "usage": [
+   "On the main screen, hold FUNC and press YES: TEMP SAVED. The pattern and its kit are saved.",
+   "Change the pattern's trigs, or turn a sound knob. Play the pattern if you like.",
+   "Hold FUNC and press NO: RELOADED. Trigs, kit and performance and scene locks are back as they were at the save.",
+   "FUNC + NO shows NO TEMP SAVE once you change pattern or kit, or load a project: save again with FUNC + YES."
+  ]
+ },
+ "access": {
+  "location": "FUNC + YES and FUNC + NO on the main screen and the sound pages.",
+  "steps": [
+   "Hold FUNC and press YES: TEMP SAVED.",
+   "Change the pattern's trigs, or the sound.",
+   "Hold FUNC and press NO: RELOADED."
+  ],
+  "screenshots": []
+ },
+ "controls": [],
+ "compatibility": {
+  "releases": [
+   "1.74"
+  ],
+  "requires": [],
+  "conflicts": [],
+  "limitations": [
+   "FUNC + YES overwrites the pattern's and the kit's saved copies, the ones stock's reloads return to. A project save keeps both, apart from the edits; a power cycle keeps the kit's only.",
+   "A save lasts until the pattern or kit changes, a project loads or the power goes off.",
+   "With a trig held, both keys stay stock's. In running LIVE RECORDING, FUNC + NO erases locks as in stock."
+  ]
+ },
+ "platform": {
+  "kind": "elemod",
+  "core": "0.7",
+  "build": "build.json",
+  "events": [
+   "ev_tick",
+   "ev_project"
+  ],
+  "claims": [
+   "ui:FUNC + YES",
+   "ui:FUNC + NO"
+  ]
+ },
+ "resources": {
+  "memoryBytes": 1100,
+  "fastBytes": 0,
+  "load": {
+   "display": "Not measured yet",
+   "method": "unmeasured",
+   "conditions": "UI only: runs on FUNC + YES, FUNC + NO and the project event, never in the audio path."
+  }
+ },
+ "evidence": {
+  "tier": "none",
+  "moduleVersion": "0.1.0-experimental",
+  "sourceSha256": null,
+  "reports": [],
+  "hardware": null,
+  "verifiedBy": null
+ },
+ "tests": {
+  "report": "TESTING.md",
+  "summary": "Emulator and a functional pass on an Analog Rytm MKII.",
+  "documentation": {
+   "tutorial": {
+    "title": "Quick tutorial",
+    "steps": [
+     "On the main screen, hold FUNC and press YES: TEMP SAVED. The pattern and its kit are saved.",
+     "Change the pattern's trigs, or turn a sound knob. Play the pattern if you like.",
+     "Hold FUNC and press NO: RELOADED. Trigs, kit and performance and scene locks are back as they were at the save.",
+     "FUNC + NO shows NO TEMP SAVE once you change pattern or kit, or load a project: save again with FUNC + YES."
+    ]
+   },
+   "screenshots": [
+    "media/temp-saved.png",
+    "media/reloaded.png"
+   ],
+   "captureRecord": "media/capture.json"
+  }
+ },
+ "license": {
+  "spdx": "GPL-3.0-or-later",
+  "file": "LICENSE",
+  "declaration": "Original work by the author."
+ },
+ "media": [
+  {
+   "path": "media/thumbnail.svg",
+   "kind": "thumbnail",
+   "caption": "Temp Save",
+   "alt": "Temp Save thumbnail: a pattern line with a saved point and a return arrow",
+   "credit": "npp1993",
+   "license": "GPL-3.0-or-later",
+   "source": "Original conceptual illustration in the shared signal-art style; not a device screenshot."
+  },
+  {
+   "path": "media/temp-saved.png",
+   "kind": "screenshot",
+   "caption": "Main screen after FUNC + YES: the TEMP SAVED message.",
+   "alt": "Main screen of kit K001 RYTMLINJE with a TEMP SAVED message box over the parameter page.",
+   "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+   "license": "LicenseRef-Rytm-UI-Documentation",
+   "source": "original",
+   "capture": {
+    "type": "emulator",
+    "release": "1.74",
+    "moduleVersion": "0.1.0-experimental",
+    "imageSha256": "ad1d32ed51c981c9241977007d4d3d8f2bbabb0cee724fc7f1d453e6c7460b20",
+    "setup": "Headless rytm-emu (dtboot) running TS11: the Modwerk base for core-ar2 0.7 and this folder's Temp Save 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit K001 and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+   }
+  },
+  {
+   "path": "media/reloaded.png",
+   "kind": "screenshot",
+   "caption": "Main screen after FUNC + NO: the RELOADED message.",
+   "alt": "Main screen of kit K001 RYTMLINJE with a RELOADED message box over the parameter page.",
+   "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+   "license": "LicenseRef-Rytm-UI-Documentation",
+   "source": "original",
+   "capture": {
+    "type": "emulator",
+    "release": "1.74",
+    "moduleVersion": "0.1.0-experimental",
+    "imageSha256": "ad1d32ed51c981c9241977007d4d3d8f2bbabb0cee724fc7f1d453e6c7460b20",
+    "setup": "Headless rytm-emu (dtboot) running TS11: the Modwerk base for core-ar2 0.7 and this folder's Temp Save 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit K001 and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+   }
+  }
+ ]
+}

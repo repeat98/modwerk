@@ -1,6 +1,7 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
+import { usageMachineBreakdown } from './statistics-insights'
 import { UsageDashboard } from './StatisticsPanel'
 import { CommunityInsights } from './CommunityInsights'
 import type { UsageDay, UsageStatistics } from './usage-contract'
@@ -15,6 +16,21 @@ const usage: UsageStatistics = { generatedAt: '2026-10-06T12:00:00Z', collection
 const dashboard = (value: UsageStatistics) => renderToStaticMarkup(createElement(UsageDashboard, { data: value }))
 
 describe('usage dashboard breakdowns', () => {
+  it('reconciles older unattributed events and labels expanded coverage', () => {
+    const data = { ...usage, machineCoverageExpanded: '2026-10-27T10:00:00Z',
+      rows: [row('2026-10-05', 12, 4)],
+      devices: [{ device: 'digitakt-ii' as const, builds: 2, builds_failed: 1, downloads: 0 }, { device: 'analog-rytm-mkii' as const, builds: 2, builds_failed: 0, downloads: 1 }] }
+    const split = usageMachineBreakdown(data)
+    expect(split.at(-1)).toEqual({ device: 'unattributed', builds: 8, builds_failed: 3, downloads: 1 })
+    for (const key of ['builds', 'builds_failed', 'downloads'] as const) expect(split.reduce((sum, value) => sum + value[key], 0)).toBe(data.rows[0][key])
+    const html = dashboard(data)
+    expect(html).toContain('Digitakt II')
+    expect(html).toContain('Analog Rytm MKII')
+    expect(html).toContain('<th scope="row">Unattributed</th><td>8</td><td>3</td>')
+    expect(html).toContain('2026-10-27; that day is partial')
+    expect(usageMachineBreakdown({ ...usage, devices: undefined })).toEqual([])
+  })
+
   it('shows support dialog opens and Ko-fi clicks, compared only once both windows were counted', () => {
     const html = dashboard({ ...usage, hourlyStarted: '2026-10-04T08:00:00Z' })
     expect(html).toContain('<dt>Support dialog opens</dt><dd>12</dd>')

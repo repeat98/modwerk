@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { api } from './api'
 import type { AdminActivity, AdminActivityDay } from './admin-activity-contract'
-import { threadHref } from '../routing'
+import { UnansweredThreadsQueue } from './UnansweredThreadsQueue'
 
 const format = (value: number) => value.toLocaleString(undefined, { maximumFractionDigits: 1 })
 const dateLabel = (day: string) => new Date(day + 'T00:00:00Z').toLocaleDateString(undefined, { month: 'short', day: 'numeric', timeZone: 'UTC' })
@@ -10,7 +10,6 @@ const percent = (part: number, whole: number) => whole ? format(part / whole * 1
 const plural = (count: number, word: string) => format(count) + ' ' + word + (count === 1 ? '' : 's')
 /** Hours under two days read as hours; longer waits read as days. */
 const duration = (hours: number | null) => hours === null ? '—' : hours < 1 ? format(Math.round(hours * 60)) + ' min' : hours < 48 ? format(hours) + ' h' : format(hours / 24) + ' days'
-const age = (createdAt: string, now: string) => duration((Date.parse(now) - Date.parse(createdAt.includes('T') ? createdAt : createdAt.replace(' ', 'T') + 'Z')) / 3600000)
 
 const activityMetrics = [['threads', 'New threads'], ['replies', 'Replies and comments'], ['shouts', 'Shoutbox messages'], ['issuesOpened', 'Issues opened'], ['issuesClosed', 'Issues closed']] as const
 export type ActivityMetric = typeof activityMetrics[number][0]
@@ -64,10 +63,7 @@ export function CommunityActivityReport({ data, loading, metric, onMetric, selec
       <div className="chart-dates"><span>{dateLabel(data.from)}</span><span>{dateLabel(data.to)} · partial</span></div>
       <p className="statistics-selected" aria-live="polite">{dateLabel(selected.day)} · {describe(selected)}</p>
     </figure>
-    <div className="statistics-unanswered"><h3>Waiting for a first reply</h3>
-      {unanswered.threads.length ? <ul>{unanswered.threads.map(thread => <li key={thread.id}><a href={threadHref(thread.id, thread.title)}>{thread.title}</a><small>{age(thread.createdAt, data.generatedAt)} old</small></li>)}</ul> : <p className="service-note">Every open thread older than 48 hours has a reply.</p>}
-      {unanswered.total > unanswered.threads.length && <p className="service-note">Showing the newest {unanswered.threads.length} of {format(unanswered.total)}.</p>}
-    </div>
+    <UnansweredThreadsQueue key={data.generatedAt} initial={unanswered} generatedAt={data.generatedAt}/>
     <details className="statistics-definitions"><summary>How forum and issue figures are counted</summary>
       <p>Threads count when a member starts them; the automatic module threads are left out. Replies and comments are visible posts after a thread's opening post, including comments on module pages. Hidden and deleted posts, threads and shoutbox messages are not counted.</p>
       <p>A thread is answered by its first visible reply from someone other than its author. Answered within 48 h and the median first reply cover threads started in this period; threads still waiting are included in the percentage as unanswered. The unanswered list covers all open, unlocked threads older than 48 hours, whenever they started.</p>

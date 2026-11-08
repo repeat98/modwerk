@@ -1,0 +1,1 @@
+Improvement: the floating Shoutbox 8 window is bigger, so a longer message no longer fills it after a few lines. It was 360 × 490 px; it is now 440 × 720 px, still limited to the window's width and height, so on a smaller screen it fills the space left above the launcher as before. Phones keep the 360 px width. Not looked at in a browser.

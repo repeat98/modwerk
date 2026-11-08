@@ -1,5 +1,6 @@
 import { validateStockCopies } from '../src/engine/stock-copy.ts'
-import { readFile, lstat, realpath, copyFile, writeFile } from 'node:fs/promises'
+import { readFile, readdir, lstat, realpath, copyFile, writeFile } from 'node:fs/promises'
+import { checkRequestedStockCopies } from './stock-copy-policy.mjs'
 import { createHash } from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 import { isDeepStrictEqual } from 'node:util'
@@ -64,6 +65,15 @@ for (const variant of packages.get('resident-dsp.json').variants) {
   if (variant.nullInit !== variant.stockCopy.sourceAddress || variant.nullProc !== variant.stockCopy.sourceAddress + 1) throw new Error('Compiled receiver must keep stock null dispatch entries')
 }
 const requested = packages.get('requested-packages.json')
+// The stock data each module's import record declares it reads from the user's OS (scripts/stock-copy-policy.mjs).
+const dataGuards = new Map()
+for (const name of (await readdir(resolve(root, 'sdk/imports'))).filter(name => name.endsWith('.json')).sort()) {
+  const record = await json(resolve(root, 'sdk/imports', name))
+  for (const id of record.modules ?? []) for (const guard of record.stockGuards ?? []) if (guard.kind === 'guarded-local-cpu-read') {
+    const key = id + '@' + record.moduleVersion
+    dataGuards.set(key, [...(dataGuards.get(key) ?? []), guard])
+  }
+}
 const composition = await json(resolve(native, 'modules/poly8/composition.json'))
 const quantizerRule = await json(resolve(native, 'modules/quantizer/composition.json'))
 if (quantizerRule.moduleId !== 'quantizer') throw new Error('Expected Quantizer composition rule')
@@ -79,8 +89,7 @@ for (const rule of importedComposition.groups) {
 if (!isDeepStrictEqual(importedComposition, composition)) throw new Error('Machine composition recipe differs from authored source')
 
 for (const pkg of requested.objects) {
-  // VECTOR's fifth is MIDI NOTE SETUP's drawer prologue (its MIDI generator registry on a card)
-  if (!Array.isArray(pkg.stockCopies) || pkg.stockCopies.length !== ({ usbmidi_cfg: 4, vector: 5, polyui: 4 }[pkg.label] ?? 0)) throw new Error('Invalid inherited stock placeholder inventory')
+  checkRequestedStockCopies(pkg, requested.groups.find(group => group.moduleId === pkg.moduleId), dataGuards.get(pkg.moduleId + '@' + pkg.version) ?? [])
   if (!hash(pkg.sha256) || !/^[a-f0-9]+$/.test(pkg.code) || pkg.code.length !== pkg.bytes * 2 || sha(Buffer.from(pkg.code, 'hex')) !== pkg.sha256) throw new Error('Invalid requested authored object')
   for (const variant of pkg.variants) {
     const conditions = [...variant.whenModules, ...variant.withoutModules]
@@ -93,11 +102,6 @@ for (const pkg of requested.objects) {
   }
   const object = parseColdFireObject(new Uint8Array(Buffer.from(pkg.code, 'hex')))
   validateStockCopies(object, pkg.stockCopies)
-  const group = requested.groups.find(group => group.moduleId === pkg.moduleId)
-  for (const copy of pkg.stockCopies) {
-    if (pkg.label === 'usbmidi_cfg' && copy.bytes !== 23) throw new Error('Invalid inherited USB descriptor length')
-    if (pkg.label !== 'usbmidi_cfg' && !group?.detours.some(hook => hook.address === copy.source && hook.guardLength === copy.bytes && hook.guardSha256 === copy.sha256)) throw new Error('Inherited replay span must match its declared native detour guard')
-  }
 }
 const usb = packages.get('usb-audio-packages.json')
 if (usb.schema !== 1 || usb.version !== versions['usb-audio-out-tracks-main-cue'] || usb.upstreamRevision !== '7b2984c859732ae6c797ae49c7d61d250b1b6519' || usb.layouts.length !== 6 || new Set(usb.layouts.map(row => row.id)).size !== 6 || usb.common.length !== 3) throw new Error('Invalid USB layout scope or release identity')

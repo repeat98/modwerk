@@ -16,7 +16,7 @@ from dataclasses import replace
 
 HEADER = Path(__file__).with_name('stock_hook_write_lease.h')
 HEADER_SHA256 = 'ab14679a5faae84ef47d1ca37e46b3171da45252d12310e0b4458228be8334be'
-CONTROLLER_ADAPTER_SHA256 = 'c3e3f51076e9ae3579e2e00d96d21eee87a2d12afa4ae69fb7067da3399fa17a'
+CONTROLLER_ADAPTER_SHA256 = 'b9c0e0f96632a0d0ab5283387edaae1b604e4e82e27e26b3fdc1666867d31daf'
 IMPORTS = ('modwerk_controller_write_begin', 'modwerk_controller_write_end')
 
 

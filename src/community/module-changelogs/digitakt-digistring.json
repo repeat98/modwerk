@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.9.0",
+    "date": "2026-10-28",
+    "changes": [
+      "First release in Modwerk for Digitakt I OS 1.53 and 1.54, on Core 2.1 with Machine Pages: STRING, a Karplus-Strong plucked string SRC machine.",
+      "Four exciters (BOW, HIT, NOISE, PLUCK) and STIFF, POS, SOFT, TONE and DECAY controls with their own ranges and defaults; values are saved, p-lockable and LFO destinations.",
+      "Works beside Note Accumulator and RAM Machines; through Machine Pages it cannot be combined with SOPHIE, Digi Neighbor, Digi Slicer, Digi Mono or Digi Poly.",
+      "Same code as the author's source at commit 69ab748; Modwerk only repackaged it."
+    ]
+  }
+]

@@ -1,0 +1,1 @@
+Developer tools: `npm run upstream:tools` now checks out the upstream tool checkout at its main of 29 October 2026, with the newer hardware tools: the fresh-project writer turns on MIDI program change, clock and transport receive and keeps a cache key beside the project. Nothing in that checkout enters a Modwerk build, catalogue or release.

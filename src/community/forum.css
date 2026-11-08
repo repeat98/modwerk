@@ -4,7 +4,8 @@
 .forum-heading { margin-bottom: 24px; padding-top: 8px; }
 .forum-eyebrow { display: block; margin-bottom: 9px; color: #b5b9dc; font-size: 10px; font-weight: 600; letter-spacing: 1.4px; text-transform: uppercase; }
 .forum-heading h1 { font-size: 30px; letter-spacing: -.8px; }
-.forum-heading > .button { flex-shrink: 0; min-height: 44px; }
+.forum-heading-actions { display: flex; flex-shrink: 0; gap: 8px; }
+.forum-heading-actions .button { min-height: 44px; }
 .community-page.account-page { max-width: 820px; }
 .community-page.account-page-member { max-width: 900px; }
 .community-page.account-page-recovery { max-width: 480px; }
@@ -628,7 +629,7 @@ li[data-status="error"] .forum-media-status { color: #f0a6ad; }
 /* Floating chat occupies no space in the forum's grid or document flow. */
 .forum-chat-launcher { position: fixed; z-index: 90; right: 22px; bottom: 48px; display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 12px 17px; border: 1px solid #6b628b; border-radius: 24px; background: #393346; color: #e4dcfa; box-shadow: 0 5px 24px #0006; font-size: 13px; font-weight: 600; }
 .forum-chat-launcher:hover { background: #48405a; border-color: #9684b9; }
-.forum-shoutbox.is-floating { position: fixed; z-index: 90; right: 22px; bottom: 48px; display: flex; flex-direction: column; width: 360px; height: 490px; max-width: calc(100vw - 28px); max-height: calc(100dvh - 115px); margin: 0; box-shadow: 0 12px 55px #0008; }
+.forum-shoutbox.is-floating { position: fixed; z-index: 90; right: 22px; bottom: 48px; display: flex; flex-direction: column; width: 440px; height: 720px; max-width: calc(100vw - 28px); max-height: calc(100dvh - 115px); margin: 0; box-shadow: 0 12px 55px #0008; }
 .forum-shoutbox.is-floating .shoutbox-heading { flex-shrink: 0; padding: 12px 14px; }
 .forum-shoutbox.is-floating .shoutbox-heading > div:first-child { gap: 6px 9px; }
 .forum-shoutbox.is-floating .shoutbox-heading > div:first-child > span { flex-basis: 100%; font-size: 10px; }
@@ -698,7 +699,7 @@ li[data-status="error"] .forum-media-status { color: #f0a6ad; }
   .forum-page .page-heading.forum-heading { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; padding-top: 0; }
   .forum-heading .forum-eyebrow, .forum-heading > div > p { display: none; }
   .forum-heading h1 { font-size: 22px; }
-  .forum-heading > .button { min-height: 40px; padding-inline: 12px; font-size: 13px; }
+  .forum-heading-actions .button { min-height: 40px; padding-inline: 12px; font-size: 13px; }
   .forum-start-long { display: none; }
   .forum-start-short { display: inline; }
   .forum-categories { margin: 0 0 10px; padding: 3px; }

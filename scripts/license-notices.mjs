@@ -10,7 +10,7 @@ export async function renderPlatformNotices(root) {
   const elastic = (await readFile(resolve(root, 'LICENSES/Elastic-2.0.txt'), 'utf8')).trimEnd()
   const gpl = (await readFile(resolve(root, 'LICENSES/GPL-3.0-or-later.txt'), 'utf8')).trimEnd()
   const manifest = JSON.parse(await readFile(resolve(root, 'LICENSES/platform.json'), 'utf8'))
-  return [scope, 'Shared helpers (GPL-3.0-or-later OR Elastic-2.0):', ...manifest.sharedFiles,
+  return [scope, 'Pipeline files (Elastic-2.0):', ...manifest.pipelineFiles, '', 'Shared helpers (GPL-3.0-or-later OR Elastic-2.0):', ...manifest.sharedFiles,
     '', 'Full Elastic License 2.0 terms:', elastic, '', 'Full GPL-3.0-or-later terms:', gpl].join('\n') + '\n'
 }
 

@@ -53,9 +53,9 @@ export async function installCoreLogger(runtime: CfRuntimeLink, original: Uint8A
   for (const [key,guard] of Object.entries(pkg.guards)) {
     const at = guard.address - OS_BASE
     if (at < 0 || at + guard.length > original.length || await loggerHash(original.slice(at,at+guard.length)) !== guard.sha256) throw new Error('Core logger stock guard mismatch: '+key)
-    if (!['idle','job','transport','open','read','write','close'].includes(key)) continue
-    const n = 'patchLength' in guard ? guard.patchLength : guard.length
-    runtime.bytes.set(original.slice(at,at+n),offset('olog_replay_'+key,n))
+    if (!['idle','job','transport','open','read','write','close','frame_entry','frame_exit','render_first','render_second'].includes(key)) continue
+    const n = 'patchLength' in guard ? guard.patchLength : guard.length, replay = 'replay' in guard ? guard.replay : n
+    runtime.bytes.set(original.slice(at,at+replay),offset('olog_replay_'+key,replay))
     const target = runtime.symbols.get('olog_'+key+'_hook')
     const text = runtime.sections.find(section=>section.name==='.text')
     if (!target || !text || target < text.address || target >= text.address + text.size || target % 2) throw new Error('Invalid core logger hook: '+key)

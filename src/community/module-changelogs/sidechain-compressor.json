@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.2.0-experimental",
+    "date": "2026-10-25",
+    "changes": [
+      "New key filter: KBAS (a high-pass, in Hz) and KWID (a low-pass, in octaves above KBAS) replace KFLT, so the key can be narrowed to a kick's fundamental.",
+      "Page 2 is now RMS, MON, KEY, KGN, KBAS and KWID. MON shows OFF on the left and ON on the right; KEY moves one step per detent, also with the encoder pressed.",
+      "Switching MON, or changing KEY while it is on, fades instead of clicking. Over USB it comes with the next beta base.",
+      "A COMPRESSOR saved with 0.1.x keeps its KEY, but KGN takes the old KFLT, KBAS the old KGN and KWID the old MON, and MON comes up OFF: set KGN, KBAS and KWID again.",
+      "Known issue: some large selections that built with 0.1.2 no longer fit, the smallest Euclid with Scale Quantizer, MiniVerb with Modulation, and Analog BD with Airwindows Chorus."
+    ]
+  },
+  {
     "version": "0.1.2-experimental",
     "date": "2026-10-10",
     "changes": [

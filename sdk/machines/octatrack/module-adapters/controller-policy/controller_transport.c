@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later */
 #include "controller_transport.h"
 #include "loader.h"
+typedef char mw_controller_reset_chunk_is_the_transports[MW_CONTROLLER_RESET_CHUNK == DL_RESET_DATA ? 1 : -1];
 
 static int locked(void) {
 #ifdef MW_CONTROLLER_TRANSPORT_TEST
@@ -90,7 +91,7 @@ int mw_controller_transport_begin(struct mw_controller_transport *t,const struct
     if(op==MW_CTL_RESET) {
         uint32_t offset=s->acknowledged_words[c];const uint32_t *words=0;unsigned count=0;
         if(offset>=s->reset_words[c] || t->policy->reset_source(t->context,b,c,offset,&words,&count)!=1 ||
-           !count || count>DL_DATA || count>s->reset_words[c]-offset ||
+           !count || count>MW_CONTROLLER_RESET_CHUNK || count>s->reset_words[c]-offset ||
            !dl_owned_reset_reserve(c,b->generation,b->identity.feature,offset,count,words,&receipt)) goto out;
     } else if(op==MW_CTL_ENABLE || op==MW_CTL_DISABLE) {
         uint32_t mask=0;

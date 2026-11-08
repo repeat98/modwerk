@@ -28,10 +28,10 @@ describe('local descriptor composition', () => {
   })
   it('inherits the donor enable nibbles of a stock-DSP replacement and points its raw words into its own ROM unit', () => {
     const recipe = recipes.recipes.find(recipe => recipe.id === 'sidechain-compressor')!
-    // Slots 0-7 are stock COMPRESSOR's, unchanged; KEY, KFLT, KGN and MON are the module's own.
-    expect(recipe.inheritedEnable).toEqual([0, 1, 2, 3, 4, 5, 6, 7])
+    // Slots 0-6 are stock COMPRESSOR's, unchanged; MON, KEY, KGN, KBAS and KWID (slots 7-11) are the module's own.
+    expect(recipe.inheritedEnable).toEqual([0, 1, 2, 3, 4, 5, 6])
     expect(recipe.replaces).toBe('COMPRESSOR')
-    expect(recipe.rawPointers).toEqual([{ offset: 234, unit: 'sc_cf', symbol: 'key_fmt' }, { offset: 282, unit: 'sc_cf', symbol: 'key_list_fix' }, { offset: 238, unit: 'sc_cf', symbol: 'kfilt_fmt' }])
+    expect(recipe.rawPointers).toEqual([{ offset: 230, unit: 'sc_cf', symbol: 'mon_fmt' }, { offset: 278, unit: 'sc_cf', symbol: 'mon_widget' }, { offset: 326, unit: 'sc_cf', symbol: 'mon_step' }, { offset: 234, unit: 'sc_cf', symbol: 'key_fmt' }, { offset: 282, unit: 'sc_ui', symbol: 'sw9_widget' }, { offset: 330, unit: 'sc_cf', symbol: 'key_step' }, { offset: 242, unit: 'sc_cf', symbol: 'hp_fmt' }, { offset: 246, unit: 'sc_cf', symbol: 'lp_fmt' }, { offset: 294, unit: 'sc_ui', symbol: 'clip_knob' }])
     for (const other of recipes.recipes.filter(recipe => recipe.id !== 'sidechain-compressor')) expect(other).not.toHaveProperty('inheritedEnable')
   })
 })

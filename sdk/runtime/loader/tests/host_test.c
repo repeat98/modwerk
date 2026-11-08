@@ -4,6 +4,7 @@
  * Module code never runs. */
 #define MODWERK_RUNTIME_REFERENCE_EXTERNAL
 #define MODWERK_RUNTIME_METADATA_EXTERNAL
+#define MODWERK_RUNTIME_IMAGE_EXTERNAL
 #define MODWERK_RUNTIME_JOURNAL_EXTERNAL
 #define MODWERK_RUNTIME_FEATURES_EXTERNAL
 #include "../loader.c"
@@ -83,6 +84,17 @@ int modwerk_machine_metadata_admit(const struct runtime_dsp *from, struct runtim
 {
     (void)context;(void)operation;
     return (from->flags | to->flags) & RUNTIME_GROUP_METADATA ? (metadata_allow ? metadata_why : RUNTIME_MALFORMED) : RUNTIME_OK;
+}
+static int image_check;
+static unsigned image_checks;
+int modwerk_machine_image_validate(const struct runtime_dsp *d)
+{
+    CHECK(locked && !masked);
+    if (!image_check) return RUNTIME_OK;
+    ++image_checks;
+    CHECK(d->present && d->image_bytes == 8u && d->image[0] == 0xa1 && d->hook_offset[RUNTIME_TICK] == 2u);
+    CHECK(be32(d->image + 4) == (uint32_t)(uintptr_t)d->image + 6u && be32(d->image + 8) == 0u);
+    return RUNTIME_MALFORMED;
 }
 
 /* ABI 9: the base features this host base provides. */
@@ -309,6 +321,20 @@ int main(void)
         CHECK(!b->prepare(0, p, n) && modwerk_runtime_free(0) == RUNTIME_POOL_BYTES && modwerk_runtime_refusal() == RUNTIME_MALFORMED);
     }
     CHECK(!masked && !locked && memcmp(stock, original, sizeof stock) == 0);
+
+    /* Relocated-image refusal happens during prepare, before owner generation, candidate publication or any
+     * DSP/stock changes. Repeated malformed uploads cannot leak pool space or force a busy publication retry. */
+    uint32_t image_generation = owner_generation;
+    image_check = 1;
+    for (unsigned i = 0; i < 3u; ++i) {
+        begin(8, 4, 2, &four, 1, 1, 0xa1); site(STOCK + 32, 6);
+        CHECK(!b->prepare(0, p, n) && modwerk_runtime_refusal() == RUNTIME_MALFORMED);
+        CHECK(!candidate && !owners && !modwerk_runtime_active() && owner_generation == image_generation);
+        CHECK(modwerk_runtime_free(0) == RUNTIME_POOL_BYTES && !dsp_switches && !masked && !locked);
+        CHECK(!memcmp(stock, original, sizeof stock));
+    }
+    CHECK(image_checks == 3u);
+    image_check = 0;
 
     /* A: hooks, a relocated word, bss and one site, published while nothing is in flight. */
     begin(8, 4, 2, &four, 1, 1, 0xa1); site(STOCK + 32, 6);
@@ -567,7 +593,11 @@ int main(void)
      * two): those two are read as they are and put back on removal. */
     stock[68] = 0x99;
     id = 74; begin7(8, 2, 1, 0xeb); site7(STOCK + 64, 6, 0, 4);
-    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0) && stock[64] == 0x4e && stock[68] != 0x99);
+    CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0) && stock[64] == 0x4e);
+    /* The jump's target, not stock[68] != 0x99: that byte is the host address's bits 15..8, which ASLR can make 0x99. */
+    const struct runtime_module *guarded = 0;
+    for (unsigned i = 0; i < RUNTIME_MODULES; ++i) if (modwerk_runtime_module(i) && modwerk_runtime_module(i)->id == 74) guarded = modwerk_runtime_module(i);
+    CHECK(guarded && word(STOCK + 66) == (uint32_t)(uintptr_t)guarded->hook[RUNTIME_TICK]);
     begin(0, 0, RUNTIME_NONE, 0, 0, 0, 0);
     CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0) && bytes_at(STOCK + 64, original + 64, 4) && stock[68] == 0x99);
     stock[68] = original[68];

@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.1.6-experimental",
+    "date": "2026-10-27",
+    "changes": [
+      "SRC SETUP now reads TYPE, FIXD, ACNT above LOW, HIGH, LPF. TYPE (808 left, 909 right) replaces the engine browser; double-tapping TRACK opens the machine list.",
+      "FIXD ON makes every hit identical; OFF, the default, varies each hit slightly, now on the 808 too (808 with FIXD ON and 909 with FIXD OFF sound as in 0.1.5).",
+      "LPF is OFF fully clockwise, the default. HIGH can now be edited over USB. Labels are four letters (PTCH, DCAY, SWEP, ACNT).",
+      "0.1.5 projects keep their 808/909 choice, but ACNT, LPF and FIXD moved on the page: set them again on each Analog BD track.",
+      "On a MKII one voice loads its DSP core about a quarter (909) and a fifth (808) less; emulator count about 15% fewer instructions. The price stays 411 per voice. Needs the new Modwerk beta base."
+    ]
+  },
+  {
     "version": "0.1.5-experimental",
     "date": "2026-10-09",
     "changes": [

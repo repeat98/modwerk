@@ -1,0 +1,25 @@
+{
+  "scope": "isolated real recorder shortage/length-limit stops followed by actual queued worker dispatch; synthetic active state/silent input and host guard, 16 positive controls, 32 single follow-ups and four paired-recorder FIFO cases; no scheduler, ISR, UI consumer, manual-stop/overdub, native admission or hardware",
+  "mainSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
+  "sourceSha256": {
+    "stock_probe.py": "ffd538fdd841cc697587c960205215c5106e0e543f1dc2a0c707ce609e989f14",
+    "stock_probe/recorder_followup_probe.cpp": "2301c359c53108fcebd2453931c2364d5e2cfda47b251fe8d2da65cd80b068b6",
+    "stock_probe/recorder_probe.cpp": "94b75d22f9f475ee429c8950faf36453a202ef2616377881a38e30682e435d2b",
+    "preview_guard.c": "da1299674cf2ae967c58231ee9c16891afa94e27254407b5d09df6b73cc4343e",
+    "preview_guard.h": "abcaff39ef1b9a21cb238f0021344ffb5b812ea1740a354cbc1d1f2ace4ddf36",
+    "stock_probe/CMakeLists.txt": "3abe477f875944e80bf8cb7ad660750797a031934ab977ae81a8dcf450734df8"
+  },
+  "executableSha256": "cea76fea7ebb441ca79c0b583fec464536ed64dd43a90d1a808a77adddcec467",
+  "exitCode": 0,
+  "stdout": [
+    "SOURCE_SHA256: e11c3e920ea056518a8d322b747c5da03fbc4664da82df067472a5626f3be2ff",
+    "PASS: four paired-recorder FIFO cases; tracks 1/8 keep distinct pending records and map extents; fresh native guard identity per command and final unmasked wait",
+    "PASS: 32 recorder follow-ups; 16/24-bit, tracks 1/8, both banks; exhausted/disabled allocation and two length-limited stops; 14601/14600 zero tail-map stores; post-stop PCM/controls/counts/state/free cursors unchanged",
+    "PASS: host observer covers complete follow-up dispatch; startup writes distinguished; original recorder positive controls pass"
+  ],
+  "stderrLines": 416,
+  "stderrSha256": "2b265d4897be20bd2b60df06f2b0302b2b3287b2b246b7928db4c6648080bd46",
+  "hardware": "not tested",
+  "audio": "not tested",
+  "stockPersistence": "not tested"
+}

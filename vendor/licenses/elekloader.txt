@@ -1,3 +1,5 @@
+Modwerk ships this kit with src/codec/aplib.ts, src/codec/elz.ts, src/codec/transport.ts, src/isa/coldfire.ts replaced by Modwerk's own implementation (vendor/elekloader/README.md). They keep the formats of the code credited under "Code from other projects" below and were checked against outputs recorded from it, so that credit stays.
+
 elekloader
 Copyright (C) 2026 irpina and contributors
 

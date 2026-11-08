@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/sambanks/octabam",
+  "revision": "b725fb1a20e77bea37930be4f934a13ba53abc23",
+  "moduleVersion": "0.1.0-experimental",
+  "root": "sdk/octabam/modules/direct-jump-kyoti",
+  "modules": [
+    "direct-jump-kyoti"
+  ],
+  "stockGuards": [
+    {
+      "address": "0x400a1f72",
+      "bytes": 6,
+      "sha256": "4aaaa6d9488b552fc485627001a1f1b8b4fc72156809c7f9750050c787869e56"
+    },
+    {
+      "address": "0x400a221c",
+      "bytes": 6,
+      "sha256": "6d3f127d6f8c27521bb383e06dae4599364ceb88426d80464a0cdffdc7d71cda"
+    },
+    {
+      "address": "0x40043418",
+      "bytes": 6,
+      "sha256": "b229662bc9a5d09d0d4613dc32ce8de200fbda85d81dd13630451d0b780946e2"
+    },
+    {
+      "address": "0x4009b6f2",
+      "bytes": 18,
+      "sha256": "1737cfa861055a533a8a63f6ee4a007de11433354ad97185fba8e79c7a06ac43",
+      "note": "The per-track scale seed of a track's manual start (0.1.1-experimental): the cave redoes all 18 bytes; only the first instruction becomes its jmp."
+    },
+    {
+      "address": "0x400bf0c0",
+      "bytes": 4,
+      "sha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119",
+      "note": "The [PTN]-layer YES press slot: NULL in stock, written with the unit's dj_toggle."
+    }
+  ],
+  "excluded": [
+    "Firmware and stock expectation bytes",
+    "octabam's wrapper manifest (modules/direct-jump-kyoti/manifest.py, git blob 715f6690ce0763b933d5348f98d41177b7036771): it only runs the author's manifest out of a git submodule and adds octabam's table fields",
+    "The author's BATCH_BUGFIXES module as such: not a prerequisite. Its MIDI_PLAYS_FREE_FIX source is imported into this module (0.1.1-experimental); its EMPTY_PATTERN_LED_FIX and PART_CHANGE_CARRYOVER_FIX are not.",
+    "The author's standalone builder tools/build_direct_jump_kyoti.py and his emulator diagnostics, which read a firmware file",
+    "Generated firmware, runtime images and memory dumps",
+    "Unrelated modules and author repository tooling"
+  ],
+  "notes": [
+    "patch_directjump_v7.s is the author's file with three kernel posts re-encoded through one helper and two leas swapped (transforms). Its comments describe stock routines and data by address and in assembler mnemonics, as the author wrote them; it contains no firmware bytes or hex dumps. The only byte strings the import removed were in manifest.py.",
+    "The stock guard digests were computed from the author's declared expectations and matched against a local original OS 1.40C MAIN image (SHA-256 164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e).",
+    "BATCH_BUGFIXES is not a prerequisite here. 0.1.0-experimental said the author measured the two as independent; his README measures that for PART_CHANGE_CARRYOVER_FIX only. The requirement was for MIDI_PLAYS_FREE_FIX: stock seeds a Plays-Free MIDI track's PER TRACK scale from the audio stride, which stalls the track and leaves Direct Jump a garbage scale byte (read as the master's). The author asked for the fix to be carried (issue #881), and 0.1.1-experimental folds it into this module, as his standalone image does."
+  ],
+  "status": "Listed; owner review pending.",
+  "authorPin": {
+    "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+    "revision": "329b801cf90f32cbca97c6699a908908968e4df6"
+  },
+  "files": [
+    {
+      "path": "patch_directjump_v7.s",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "329b801cf90f32cbca97c6699a908908968e4df6",
+      "sourcePath": "octabam-modules/direct-jump-kyoti/patch_directjump_v7.s",
+      "sourceBytes": 40195,
+      "sourceGitBlob": "214fe819501faff11c65b69a8402c4a0ce041076",
+      "sourceSha256": "41c1e185ec53d5b34795b87fff207b46724b41fb6719f404cf47f0ec101e536d",
+      "vendoredSha256": "c66436aa1b07ee4c094175249a561a50a8db6af1f5813ae5b2c006638c56d011",
+      "transforms": [
+        "Route the three kernel posts of the landing ({0x15, bank}, {0x14, part}, {0x11, pattern}) through one added helper, dj_post, which reaches KPOST through %a1, and load the second purge table's two addresses in the other order (a3 before a1), each marked MODWERK: the same calls with the same arguments in the same order, so that no 12 bytes of the USB package repeat stock's own posting and cancellation code (the strict stock-free scan). The unit shrinks from 2026 to 2016 bytes; with these changes taken back it links to the author's bytes (SHA-256 a0f480909d91b7fac0fb77d08dd8b5e2199fc14731d4bb427be71478e296bf9e at 0x400d6d38)."
+      ]
+    },
+    {
+      "path": "patch_trigscale.s",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "329b801cf90f32cbca97c6699a908908968e4df6",
+      "sourcePath": "octabam-modules/batch-bugfixes/patch_trigscale.s",
+      "sourceBytes": 2684,
+      "sourceGitBlob": "f9ff30728c683750b43c83558a155c87655a6092",
+      "sourceSha256": "8d776f363d21a0741b0da325cdd671788e250ac91c30a42c08da3969336d5eb6",
+      "vendoredSha256": "f657f576c14cf61e23cc563eab54a07ef4f9774ddfca0c8bf3286c13bb76068f",
+      "transforms": [
+        "Added in 0.1.1-experimental: the author's MIDI_PLAYS_FREE_FIX from his BATCH_BUGFIXES, as his standalone Direct Jump image folds it in. Two changes, each marked MODWERK: the global label cave is renamed ts_cave (it links beside Direct Jump's unit), and the audio path's movea.l moves before its add.l (same d0, a0 and flags), so the USB package does not repeat the 18 stock bytes the cave replays. With both taken back it links to the author's 62 pinned bytes (SHA-256 a1eec6b67bb817cc2e063f23897377697f6057a9bf2389d5eb442813b854bba4)."
+      ]
+    },
+    {
+      "path": "manifest.py",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "329b801cf90f32cbca97c6699a908908968e4df6",
+      "sourcePath": "octabam-modules/direct-jump-kyoti/manifest.py",
+      "sourceBytes": 7952,
+      "sourceGitBlob": "ddb5ebef53574443259c4f54eb876e4325fdbf7b",
+      "sourceSha256": "fda68c811022908c82b7cd2ab5e687a1558bf4fa5eef7219ebf7c4f25e8a6036",
+      "vendoredSha256": "cb692249697b3c982f2ac984b7a50f7933b7ad9dcd50b02600b966df04b53c8e",
+      "transforms": [
+        "Rewrite the declaration for Modwerk: the same DRAM unit, three detours and symbol reference, with every stock expectation an address/length/SHA-256 guard in place of the stock bytes the author's file spells out.",
+        "Drop requires=(\"BATCH_BUGFIXES\",): Modwerk modules never depend on another module. The bundle was required for its MIDI_PLAYS_FREE_FIX; since 0.1.1-experimental that fix is carried here as a second DRAM unit (patch_trigscale.s) and one more detour, guarded over the 18 stock bytes it redoes.",
+        "Drop the two Keeps around the [PTN]-layer YES record (a USB package cannot carry them; the symbol reference's NULL guard still refuses a changed slot) and the conflicts with octabam's DIRECT JUMP and OCTAKIT, which Modwerk does not have.",
+        "Add the author fields, UNIT_BYTES and Modwerk's references for the re-encoded units."
+      ]
+    },
+    {
+      "path": "upstream/README.md",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "329b801cf90f32cbca97c6699a908908968e4df6",
+      "sourcePath": "octabam-modules/direct-jump-kyoti/README.md",
+      "sourceBytes": 7568,
+      "sourceGitBlob": "ea05e9a0d33a33abc8ef4122896162d8550fba1b",
+      "sourceSha256": "81954c5314b70381ade501aa849eb291ef230bff7445f251af429651e3fc28b2",
+      "vendoredSha256": "81954c5314b70381ade501aa849eb291ef230bff7445f251af429651e3fc28b2"
+    },
+    {
+      "path": "LICENSE",
+      "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
+      "revision": "329b801cf90f32cbca97c6699a908908968e4df6",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 4451,
+      "sourceGitBlob": "3e76489f7da43570add4342b27fd9e1aff949672",
+      "sourceSha256": "0d3f46fdaa57dcf513b0d62975eb019334f4eb9cc8ea0b973ce191dd661741f5",
+      "vendoredSha256": "0d3f46fdaa57dcf513b0d62975eb019334f4eb9cc8ea0b973ce191dd661741f5"
+    },
+    {
+      "path": "upstream/OCTABAM_LICENSE",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "b725fb1a20e77bea37930be4f934a13ba53abc23",
+      "sourcePath": "LICENSE",
+      "sourceBytes": 2112,
+      "sourceGitBlob": "112114d5d319dc4a789dacf1e84b867420a03614",
+      "sourceSha256": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113",
+      "vendoredSha256": "f91a43799d9e31ccc3540f385f68c4d6ff5a096f93ae933be2ce98f6b3f7f113"
+    },
+    {
+      "path": "upstream/OCTABAM_README.md",
+      "repository": "https://github.com/sambanks/octabam",
+      "revision": "b725fb1a20e77bea37930be4f934a13ba53abc23",
+      "sourcePath": "modules/direct-jump-kyoti/README.md",
+      "sourceBytes": 2923,
+      "sourceGitBlob": "15bd3eaf87591957e563902afa0ceee91028ec3f",
+      "sourceSha256": "ca375bc0ddd58e86c39cad14d7b4248c8231a9d76d00786ebba10a0058c0abe9",
+      "vendoredSha256": "ca375bc0ddd58e86c39cad14d7b4248c8231a9d76d00786ebba10a0058c0abe9"
+    }
+  ]
+}
