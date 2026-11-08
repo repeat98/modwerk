@@ -77,9 +77,9 @@
   "memoryBytes": 4182,
   "fastBytes": null,
   "load": {
-   "display": "Not measured yet",
-   "method": "unmeasured",
-   "conditions": "Each audio block, a comparison of each jack in ACTION mode with two thresholds; each UI tick, the thresholds from the settings."
+   "display": "About 0.5 % of the audio block per jack in ACTION mode, 0.1 % with ACTION OFF (measured on a unit)",
+   "method": "hardware",
+   "conditions": "Measured on an Analog Rytm MKII with a private telemetry base, sequencer stopped, in the author's 16-module set (0.1.2, LR02): with a jack in ACTION mode and an action, the audio handler took 3.6 us a block (0.54 %); with both jacks at ACTION OFF, 0.81 us (0.12 %), the handler's call and the timing itself. 0.1.3 changes only the UI tick and the RECORD key, not the audio path."
   }
  },
  "evidence": {
