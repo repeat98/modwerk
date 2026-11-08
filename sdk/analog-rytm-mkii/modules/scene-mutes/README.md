@@ -18,7 +18,7 @@ normal mute with no MIDI echo, so screens and notices follow and nothing is sent
 Version **0.1.0-experimental** for Analog Rytm MKII OS **1.74**, with core-ar2 0.7. It is a
 port of MrScruff's `0018-scene-mutes` from
 [rytm-mods-src](https://github.com/Iced-Cream/rytm-mods-src), with his code unchanged, moved
-from OS 1.73 to 1.74. It has not run on a unit yet ([TESTING.md](TESTING.md)).
+from OS 1.73 to 1.74. It passed its tests on a unit ([TESTING.md](TESTING.md)).
 
 ## Controls
 
@@ -70,7 +70,8 @@ The module patches six sites, none shared with the core, the base or another mod
 
 See [TESTING.md](TESTING.md). In short: in rytm-emu on OS 1.74 with core-ar2 0.7, FUNC +
 T1, T2 in scene edit lights T1 and T2, engaging the scene mutes BD and SD and disengaging
-unmutes them, where the base alone does nothing. It has not run on a unit yet. Memory: about 1 KB of the
+unmutes them, where the base alone does nothing. On a unit (run T210) the same held, the mask
+survived a power cycle and `<CLEAR>` dropped it. Memory: about 1 KB of the
 shared mod area. There is no code in the audio, sequencer or tick paths.
 
 ## Screens and audio

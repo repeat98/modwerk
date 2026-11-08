@@ -95,16 +95,31 @@
     }
   },
   "evidence": {
-    "tier": "none",
+    "tier": "author-hardware",
     "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": null,
-    "reports": [],
-    "hardware": null,
+    "sourceSha256": "9f8c08e49639794b7cf359a28d360e2831160be59b53409e9d197bc801bb6747",
+    "reports": [
+      "evidence/hardware-testing.json"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-08",
+      "tester": "Iced-Cream",
+      "durationMinutes": null,
+      "summary": "On an Analog Rytm MKII with OS 1.74 (run T210, build SMH1: the Modwerk base for core-ar2 0.7 and this module), engaging a scene whose mask held T1 and T2 silenced BD and SD while RS and CH played, a hand mute while engaged was kept after disengaging, the mask survived a power cycle, and <CLEAR> dropped it. Iced-Cream listened to the takes.",
+      "limitations": [
+        "Duration was not recorded.",
+        "Build SMH1, .syx 7bec08468757ca5ef2e9ad0afd9a1ee1d3c9922ad0adb3c6734b361d57d66740, also carried analoghealth 1.3 as the remote-key harness. Firmware was not read back from the device.",
+        "Not tested on a unit: <CLEAR ALL>, scene engage by CC 92, NRPN or Overbridge, kit changes.",
+        "sourceSha256 is the SHA-256 of src/scene-mutes.s as tested."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Emulator only: in rytm-emu on OS 1.74, FUNC + T1, T2 in scene edit lights T1 and T2, engaging the scene mutes BD and SD and disengaging unmutes them, where the base alone does nothing. Not run on a unit yet.",
+    "summary": "Hardware (run T210, OS 1.74, core-ar2 0.7): a scene with T1 and T2 in its mask silenced BD and SD when engaged and brought them back when disengaged, a hand mute while engaged was kept, the mask survived a power cycle and <CLEAR> dropped it. Emulator: the same in rytm-emu, where the base alone does nothing.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",

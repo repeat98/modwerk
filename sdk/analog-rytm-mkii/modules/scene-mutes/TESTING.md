@@ -51,7 +51,7 @@ are from the USB audio takes; RS, outside the mask, played at -10 dBFS in every 
   tail had died away), and the hand mute of CH was still in the saved mutes.
 - `<CLEAR>` showed CLEARED; afterwards scene 1 no longer muted BD or SD.
 - CPU (analoghealth): 74 % before the keys, 82 % at the end; heap flat.
-- The owner's own listening check has not been done yet.
+- Iced-Cream listened to the takes (2026-11-08).
 
 ## Upstream results (OS 1.73, rytm-mods-src)
 
