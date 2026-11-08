@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 import unittest
 from unittest import mock
+import zipfile
 
 APP = pathlib.Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location("upstream_tools", APP / "scripts/upstream-tools.py")
@@ -146,6 +147,41 @@ class UpstreamCheckouts(unittest.TestCase):
         (path / "tools/hw/rec.swift").write_text("// mine\n")
         with self.assertRaisesRegex(ValueError, "local edits"):
             tools.sync("plain", self.url, self.first, self.base, False)
+
+
+class ArchivePin(unittest.TestCase):
+    def setUp(self):
+        self.temp = pathlib.Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.temp)
+        source = self.temp / "ziddle-1.zip"
+        with zipfile.ZipFile(source, "w") as bundle:
+            bundle.writestr("ziddle-1/Cargo.toml", "[workspace]\n")
+            bundle.writestr("ziddle-1/ziddle/src/lib.rs", "// upstream\n")
+        self.entry = {"archive": source.as_uri(), "sha256": tools.sha(source.read_bytes())}
+        self.base = self.temp / "checkouts"
+        self.base.mkdir()
+
+    def test_unpacks_once_keeps_builds_and_refuses_local_edits(self):
+        path = tools.fetch_archive(self.entry, self.base)
+        self.assertEqual(path, self.base / "ziddle-1")
+        (path / "target").mkdir()
+        self.assertEqual(tools.fetch_archive(self.entry, self.base), path)
+        (path / "Cargo.toml").write_text("# mine\n")
+        with self.assertRaisesRegex(ValueError, "local edits"):
+            tools.fetch_archive(self.entry, self.base)
+        (path / "Cargo.toml").unlink()
+        with self.assertRaisesRegex(ValueError, "local edits"):
+            tools.fetch_archive(self.entry, self.base)
+
+    def test_an_archive_other_than_the_pinned_one_is_refused_unwritten(self):
+        with self.assertRaisesRegex(ValueError, "does not match its pin"):
+            tools.fetch_archive(dict(self.entry, sha256="0" * 64), self.base)
+        self.assertEqual(list(self.base.iterdir()), [])
+
+    def test_the_ziddle_pin_is_berbasofts_source_archive(self):
+        pin = json.loads(tools.PINS.read_text())["ziddle"]
+        self.assertRegex(pin["archive"], r"^https://berbasoft\.com/ziddle/ziddle-\d+\.zip$")
+        self.assertRegex(pin["sha256"], "^[0-9a-f]{64}$")
 
 
 if __name__ == "__main__":

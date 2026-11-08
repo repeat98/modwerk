@@ -14,5 +14,10 @@
     "repository": "https://github.com/trigcondition/rytm-emu.git",
     "commit": "2ac0f1f09e0c126d314b87de494f8da2848cfa8b",
     "updated": "2026-11-02"
+  },
+  "ziddle": {
+    "archive": "https://berbasoft.com/ziddle/ziddle-1793487371.zip",
+    "sha256": "c45f11a0ffa51c327169c3c8c6965043882d39b4a8f5f0ac624603e5941579a3",
+    "updated": "2026-11-08"
   }
 }
