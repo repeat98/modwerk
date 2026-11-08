@@ -40,7 +40,7 @@ npm run pr:ready                       # a new module or any other change
 npm run pr:ready -- --author <login>   # a registered author's update: also the bot's merge scope
 ```
 
-It fetches Modwerk's `main` (from `upstream` when your fork has it, else `origin`), refuses uncommitted changes and a branch that does not contain current `main`, and runs the same `npm run check -- --base <main>` CI runs; when that fails, it regenerates the catalogues and licence notices and names any that were stale, for you to commit. With `--author` it also runs the scope inspection the author-update bot runs and says whether the bot can merge the update, and if not, why. Fix what it names until it says **Ready**, then push and watch the PR with `gh pr checks <number> --watch` until every check is green.
+It fetches Modwerk's `main` (from `upstream` when your fork has it, else `origin`), refuses uncommitted changes and a branch that does not contain current `main`, and runs the same `npm run check -- --base <main>` CI runs; when that fails, it regenerates the catalogues and licence notices and names any that were stale, for you to commit. With `--author` it also runs the scope inspection the author-update bot runs and says whether the bot can merge the update, and if not, why. Fix what it names until it says **Ready**, then push and watch the PR with `gh pr checks <number> --watch` until every check is green. A test that times out but passes alone usually starved because other checks ran on the same computer, for example from another worktree: run it again once they are done, and leave the test as it is.
 
 These stumbling blocks have each cost a contributor and the owner a repair round:
 
