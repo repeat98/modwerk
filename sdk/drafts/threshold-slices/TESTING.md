@@ -2,7 +2,7 @@
 
 ## Commands and exact revision
 
-Draft written against `eaaf60caf0d050cc158e2b281207a913183e813b`. No device trial is tied to that commit.
+The host scan and the 12-second USB try below are commit `f96425206d5b209701cb0d4c05c7a03084612dee`. Pressing D to remove a slice came after that and was not part of those runs.
 
 - `python -m unittest sdk.tests.test_threshold_slices` — PASS, 2026-11-06, host gcc. Spikes, silence, 64-slice refusal, a held rise and a short trim.
 - The sample-editor host fixtures (service, board, menu, actions) were compiled with the same gcc and each printed PASS, including the new peak read.
