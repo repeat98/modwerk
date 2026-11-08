@@ -1,0 +1,195 @@
+{
+  "schemaVersion": 3,
+  "id": "voice-dac",
+  "name": "Voice DAC",
+  "version": "1.4.0",
+  "machine": "analog-rytm-mkii",
+  "category": "machines",
+  "exclusive": false,
+  "author": {
+    "github": "Iced-Cream",
+    "credits": [
+      "MrScruff — the original mod, 0013-voice-dac in rytm-mods, its design and code; published in rytm-mods-src with permission.",
+      "a contributor — the elemod port (rytm2_mods) and this Modwerk module.",
+      "irpina — Elekloader and core-ar2, the core it links with."
+    ]
+  },
+  "maintainers": [
+    "Iced-Cream"
+  ],
+  "source": {
+    "repository": "https://github.com/Iced-Cream/rytm2_mods",
+    "revision": "01254ab5f69f7083a70746b18de715d52335e499",
+    "path": "voice-dac"
+  },
+  "presentation": {
+    "label": "VOICE DAC",
+    "family": "Sound",
+    "summary": "Routes the eight voices to the main mix through the DAC and adds a per-voice filter, transient shaper and polarity on a second FILTER page.",
+    "overview": "Voice DAC lets the eight voices leave the analog main bus and reach it again through the DAC, where each voice is processed after its analog filter and amp. With GLOBAL > AUDIO ROUTING > DAC SUM on, FILTER pressed twice opens DAC FILTER: a digital filter per voice (FRQ, RES, TYP OFF, LP2, LP1, BP, HP1, HP2, BS or PK, and DEP, the depth of the effect), a transient shaper (ATK and SUS) and polarity (POL). The values are kept with the sound and DAC SUM with the project's global slot. From 1.4 the page shows only the knobs the selected sound's TYP uses. It is an elemod port of MrScruff's rytm-mods 0013-voice-dac at his update 3a98e23, with his code unchanged apart from the storage port and the page entries, which now go through core-ar2's page tables.",
+    "highlights": [
+      "DAC SUM routes every voice to the main mix through the DAC; OFF is stock routing.",
+      "A second FILTER page, DAC FILTER, with eight filter types, DEP, ATK, SUS and POL per voice.",
+      "The page's knobs follow TYP: no RES for LP1 and HP1, no FRQ or RES with TYP OFF.",
+      "Kept in core-ar2 mod storage: the filter settings with the sound, DAC SUM with the global slot."
+    ],
+    "usage": [
+      "Use a build containing Voice DAC. Open GLOBAL > AUDIO ROUTING and set DAC SUM (the last item) ON.",
+      "Press FILTER twice on a voice track: the DAC FILTER page opens. Set TYP to LP2 and turn FRQ down while a pattern plays: the voice darkens. Turn ATK and SUS to shape the hits.",
+      "Set TYP to LP1 or HP1: the RES knob goes empty. Set TYP to OFF: FRQ and RES go empty and the voice is unfiltered.",
+      "Set DAC SUM OFF: FILTER pressed twice stays on stock's page and the sound is stock's again."
+    ]
+  },
+  "access": {
+    "location": "GLOBAL > AUDIO ROUTING > DAC SUM, then FILTER pressed twice.",
+    "steps": [
+      "Open GLOBAL > AUDIO ROUTING and set DAC SUM (the last item) ON.",
+      "Press FILTER twice on a voice track to open DAC FILTER."
+    ],
+    "screenshots": []
+  },
+  "controls": [
+    {
+      "name": "DAC SUM (GLOBAL > AUDIO ROUTING)",
+      "default": 0,
+      "doc": "ON routes every voice to the main mix through the DAC. OFF is stock's routing. Kept per global slot. Switching clicks once.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    },
+    {
+      "name": "FRQ (DAC FILTER)",
+      "default": 127,
+      "doc": "Filter frequency, a semitone a step with 440 Hz at 60. Not shown with TYP OFF.",
+      "labels": null
+    },
+    {
+      "name": "RES (DAC FILTER)",
+      "default": 0,
+      "doc": "Q of the 2-pole types: 0.707 to 2.0 for LP2 and HP2, 0.5 to 8 for BP, BS and PK. Not shown with TYP OFF, LP1 or HP1.",
+      "labels": null
+    },
+    {
+      "name": "TYP (DAC FILTER)",
+      "default": 0,
+      "doc": "Filter type, in stock's FILTER order: OFF, LP2, LP1, BP, HP1, HP2, BS, PK.",
+      "labels": [
+        "OFF",
+        "LP2",
+        "LP1",
+        "BP",
+        "HP1",
+        "HP2",
+        "BS",
+        "PK"
+      ]
+    },
+    {
+      "name": "DEP (DAC FILTER)",
+      "default": 127,
+      "doc": "Mixes the filtered voice with the dry one: 0 dB, then 0.25 dB steps of cut to -31.5 dB, then FULL (127), the plain filter. For PK, a boost of +0.0 to +6.0 dB.",
+      "labels": null
+    },
+    {
+      "name": "ATK (DAC FILTER)",
+      "default": 0,
+      "doc": "Transient shaper attack, -64 to +63; 12 dB of change at full scale. FUNC + turn snaps to -64, 0 or +63.",
+      "labels": null
+    },
+    {
+      "name": "SUS (DAC FILTER)",
+      "default": 0,
+      "doc": "Transient shaper sustain, -64 to +63; 12 dB of change at full scale. FUNC + turn snaps to -64, 0 or +63.",
+      "labels": null
+    },
+    {
+      "name": "POL (DAC FILTER)",
+      "default": 0,
+      "doc": "Polarity of the voice's contribution to the sum, + or -.",
+      "labels": [
+        "+",
+        "-"
+      ]
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for OS 1.74 only, on core-ar2 0.6 or later (it uses core's page functions); Modwerk's base is core-ar2 0.7. It was not built or run against 0.7 before this submission.",
+      "The voices reach MAIN 2.58 ms later than through the analog bus. They share the PRE return pair with the delay and reverb returns and are clamped at its full scale. The individual outputs carry the voice before the filter.",
+      "Needs core-ar2's mod storage: 39 sound bits (vd_flt 24, vd_shp 15) and one global bit (vd_dac). A module needing more than the remaining sound bits will not link beside it.",
+      "DAC FILTER's values cannot be p-locked or reached over MIDI. They live outside the sound's parameters.",
+      "Switching TYP between LP1 and HP1 can click on a sound with much energy at either end.",
+      "A global slot received as SysEx loads with DAC SUM OFF, since core keeps no mod data for it.",
+      "Settings saved by builds before 1.2 or by rytm-mods 0013 load as the defaults."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [
+      "ev_project"
+    ],
+    "claims": [
+      "ui:FILTER key, second press: DAC FILTER page (DAC SUM on)",
+      "menu:GLOBAL > AUDIO ROUTING > DAC SUM",
+      "audio:voice routing through the DAC sum"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 11078,
+    "fastBytes": 0,
+    "load": {
+      "display": "Medium: per-voice filters and a shaper in the audio interrupt, skipped for voices that do not use them",
+      "method": "static",
+      "conditions": "Static: the audio interrupt filters and shapes each voice whose track has TYP, ATK or SUS set; a voice with them off costs a few instructions a block, so the cost follows the voices using them. The author's profile of an earlier version measured about 2.4 % of a block with every TYP OFF and 4.0 % with all voice tracks on LP1 (2026-09-29, timing build). Not a measurement of this release."
+    }
+  },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "1.4.0",
+    "sourceSha256": "a9628fe3f3b47bdc1078ae2ced849b2770523d55e3eef853c6823a9c438e5754",
+    "reports": [],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Not run on a unit or an emulator for this submission. The author's earlier hardware and emulator results for voice-dac 1.4 on core-ar2 0.6 are in upstream/README.md and TESTING.md, as reported.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Use a build containing Voice DAC. Open GLOBAL > AUDIO ROUTING and set DAC SUM (the last item) ON.",
+          "Press FILTER twice on a voice track: the DAC FILTER page opens. Set TYP to LP2 and turn FRQ down while a pattern plays: the voice darkens. Turn ATK and SUS to shape the hits.",
+          "Set TYP to LP1 or HP1: the RES knob goes empty. Set TYP to OFF: FRQ and RES go empty and the voice is unfiltered.",
+          "Set DAC SUM OFF: FILTER pressed twice stays on stock's page and the sound is stock's again."
+        ]
+      },
+      "screenshots": [],
+      "captureRecord": null
+    }
+  },
+  "license": {
+    "spdx": "GPL-2.0-only",
+    "file": "LICENSE",
+    "declaration": "MrScruff's rytm-mods code and a contributor's elemod port, under GPL-2.0-only as rytm-mods-src. include/ar2-1.74.inc and shared/shared.s name firmware routines and RAM by address only; the patch preconditions are addresses, lengths and SHA-256s."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Voice DAC",
+      "alt": "Original illustration of a waveform passing through a low-pass curve",
+      "credit": "a contributor",
+      "license": "GPL-2.0-only",
+      "source": "Original vector illustration; not a device screenshot."
+    }
+  ]
+}
