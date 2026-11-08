@@ -31,7 +31,27 @@
   - Disengaging (BD again): SM01 unmutes both (four calls in all), every pad lit again.
   - No faults on either build. The screens show no mute state, so the mutes were read from
     the pad LEDs and the routine's calls.
-- Not tested: any unit run.
+- Not tested on a unit: `<CLEAR ALL>`, scene engage by CC 92, NRPN or Overbridge, kit changes.
+
+## Hardware
+
+Run T210, 2026-11-08, on an Analog Rytm MKII with OS 1.74, driven by elkbench under the owner's
+go, with one power cycle by the owner. Build SMH1 (the Modwerk base for core-ar2 0.7, plain
+variant ba530f45, + analoghealth 1.3 as the remote-key harness, not under test, + this module
+at `e5317b15`): `.syx` `7bec08468757ca5ef2e9ad0afd9a1ee1d3c9922ad0adb3c6734b361d57d66740`. Each
+flash (SMH1 over stock, stock 1.74 back) and both plans passed the emulator gate first. Peaks
+are from the USB audio takes; RS, outside the mask, played at -10 dBFS in every take.
+
+- Setup: a new `~T` project in test slot 121, trigs on BD, SD, RS and CH, scene 1's mask set
+  with SCENE + FUNC + T1, T2.
+- Scene 1 engaged: BD and SD silent (-83 dBFS), CH played (-11).
+- CH muted by hand while engaged: CH silent (-79).
+- Scene 1 disengaged: BD and SD back (-17, -14); CH stayed muted.
+- After a power cycle: scene 1 still silenced BD and SD (-82 to -85 once the earlier hit's
+  tail had died away), and the hand mute of CH was still in the saved mutes.
+- `<CLEAR>` showed CLEARED; afterwards scene 1 no longer muted BD or SD.
+- CPU (analoghealth): 74 % before the keys, 82 % at the end; heap flat.
+- The owner's own listening check has not been done yet.
 
 ## Upstream results (OS 1.73, rytm-mods-src)
 
