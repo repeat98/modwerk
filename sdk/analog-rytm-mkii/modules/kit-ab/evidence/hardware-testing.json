@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "reportedOn": "2026-11-08",
-  "source": "Iced-Cream's own test on their unit: elkbench plans KBH F1, T1 and F2 (runs r-bf3d20, r-05d8db, r-0ef22c), gated in the emulator on the same PC",
+  "source": "Iced-Cream's own tests on their unit, two runs of build KBH7 on 2026-11-08: elkbench plans KBH F1, T1 and F2 (r-bf3d20, r-05d8db, r-0ef22c), then F1, T2 and F2 (r-4c42e5, r-3a1a42, r-5cff4c), each gated in the emulator on the same PC",
   "reporter": "Iced-Cream",
-  "statement": "On an Analog Rytm MKII with OS 1.74 and this package on Modwerk's base (core-ar2 0.7, plain variant ba530f45, with analoghealth 1.2 for remote keys), build KBH7, 2026-11-08: KIT menu RELOAD twice on an unedited kit: KIT RELOADED! both times, saved BD DEC kept (screen). BD DEC turned to 0; RELOAD: KIT RELOADED! with the saved DEC; RELOAD again: EDITS RESTORED! with DEC at 0 (screens). After RELOAD armed the A/B, DEC turned to 127; RELOAD: KIT RELOADED! (not EDITS RESTORED!) with the saved DEC; RELOAD again: EDITS RESTORED! with DEC at 127, not the stashed 0 (screens). CPU 76.6 / 76.2 %, DSP 70.1 / 70.0 %, heap flat, two readings 30 s apart after the flash. The run stopped before its last section (a change of kit) on a kit-list reference mismatch; NO + PLAY was not exercised.",
+  "statement": "On an Analog Rytm MKII with OS 1.74 and this package on Modwerk's base (core-ar2 0.7, plain variant ba530f45, with analoghealth 1.2 for remote keys), build KBH7, 2026-11-08, through the KIT menu's RELOAD: KIT menu RELOAD twice on an unedited kit: KIT RELOADED! both times, saved BD DEC kept (screen). BD DEC turned to 0; RELOAD: KIT RELOADED! with the saved DEC; RELOAD again: EDITS RESTORED! with DEC at 0 (screens). After RELOAD armed the A/B, DEC turned to 127; RELOAD: KIT RELOADED! (not EDITS RESTORED!) with the saved DEC; RELOAD again: EDITS RESTORED! with DEC at 127, not the stashed 0 (screens). After DEC to 0 and RELOAD armed the A/B, KIT menu LOAD KIT loaded kit 2; two RELOADs then both showed KIT RELOADED! on kit 2, never EDITS RESTORED! (screens; second run, 2026-11-08 23:01). CPU 74-77 %, heap flat. NO + PLAY was not exercised.",
   "status": "hardware-tested-author-reported",
-  "scope": "kit-ab 1.0.0 on Modwerk's base (KBH7), through the KIT menu's RELOAD. Not covered: NO + PLAY, a change of kit, persistence.",
+  "scope": "kit-ab 1.0.0 on Modwerk's base (KBH7), through the KIT menu's RELOAD. Not covered: NO + PLAY, persistence.",
   "modules": [
     {
       "id": "kit-ab",
@@ -28,29 +28,30 @@
         "KIT menu RELOAD twice on an unedited kit: KIT RELOADED! both times, saved BD DEC kept (screen).",
         "BD DEC turned to 0; RELOAD: KIT RELOADED! with the saved DEC; RELOAD again: EDITS RESTORED! with DEC at 0 (screens).",
         "After RELOAD armed the A/B, DEC turned to 127; RELOAD: KIT RELOADED! (not EDITS RESTORED!) with the saved DEC; RELOAD again: EDITS RESTORED! with DEC at 127, not the stashed 0 (screens).",
-        "CPU 76.6 / 76.2 %, DSP 70.1 / 70.0 %, heap flat, two readings 30 s apart after the flash."
+        "CPU 76.6 / 76.2 %, DSP 70.1 / 70.0 %, heap flat, two readings 30 s apart after the flash.",
+        "After DEC to 0 and RELOAD armed the A/B, KIT menu LOAD KIT loaded kit 2; two RELOADs then both showed KIT RELOADED! on kit 2, never EDITS RESTORED! (screens; second run, 2026-11-08 23:01).",
+        "Second run: CPU 74.7 / 74.2 %, DSP 70.0 / 69.8 %, heap flat after the flash."
       ],
       "notRun": [
-        "A change of kit (KIT menu LOAD KIT to kit 2) was not reached: the run stopped at the kit list, whose reference (recorded in the emulator) lacks a marker the unit draws after kits 02-16. The check compared list content the plan does not control; the module had not acted yet.",
         "NO + PLAY was not exercised: remote NO(PLAY) starts the sequencer in the emulator. The KIT menu's RELOAD calls the same kit_ab_toggle; the two NO + PLAY sites (0x400cd51a, 0x400cd542) are untested on the unit.",
-        "A press on a kit with no edits after an A/B, and a power cycle (the stash is not kept, by design), were not run."
+        "A power cycle (the stash is not kept, by design) was not run."
       ]
     }
   ],
   "coverageDetails": {
     "deviceDetails": "Analog Rytm MKII",
     "testDate": "2026-11-08",
-    "duration": "about 7 minutes (flash to stock restore)",
+    "duration": "about 7 minutes per run (flash to stock restore), two runs",
     "durationMinutes": 7,
     "individualTestResults": [
       "Unedited kit: two RELOADs are plain reloads",
       "Edit, RELOAD, RELOAD: KIT RELOADED! then EDITS RESTORED!",
       "An edit while the saved kit plays ends the A/B",
-      "Change of kit: not reached (kit-list reference mismatch)",
+      "A change of kit ends the A/B (second run)",
       "NO + PLAY: not exercised"
     ]
   },
-  "contextNote": "Main OS hash is the build's, not read back from the device. The plan's T1 run is recorded as failed (its last section); the results above are its sections that passed.",
+  "contextNote": "Main OS hash is the build's, not read back from the device. The first run's T1 is recorded as failed in its last section, on a kit-list reference that compared screen content the plan does not control; the second run's T2 covered that section with the check narrowed to the cursor row, and passed.",
   "modwerkPipelineQualified": false,
   "authorGithub": "Iced-Cream"
 }

@@ -54,7 +54,7 @@ The module patches four sites, two in the key handler's NO + PLAY path and two i
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). On an Analog Rytm MKII with OS 1.74 on Modwerk's base (build KBH7, 2026-11-08) the KIT menu's RELOAD stashed and restored a BD DEC edit, and an edit while the saved kit played ended the A/B. NO + PLAY and a change of kit were not covered on the unit. Memory: 340 bytes of the shared mod area (the 1.74 package's `.run`), and the stash on the firmware's heap. There is no code in the audio, sequencer or tick paths.
+See [TESTING.md](TESTING.md). On an Analog Rytm MKII with OS 1.74 on Modwerk's base (build KBH7, 2026-11-08) the KIT menu's RELOAD stashed and restored a BD DEC edit, and an edit while the saved kit played, or a change of kit, ended the A/B. NO + PLAY was not covered on the unit. Memory: 340 bytes of the shared mod area (the 1.74 package's `.run`), and the stash on the firmware's heap. There is no code in the audio, sequencer or tick paths.
 
 ## Authorship and licences
 
