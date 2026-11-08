@@ -31,6 +31,14 @@ PERF DEST is kept for each jack in the active globals slot and saved with the pr
 
 Stay within the jack's -5 V to +5 V.
 
+## Compatibility and limitations
+
+- Analog Rytm MKII OS 1.74 only, with core-ar2 0.7 (the Modwerk base).
+- Stay within the jack's -5 V to +5 V.
+- While a jack drives a macro, that macro's knob, pad and CC 35 to 47 are overwritten at the next audio block, about 0.7 ms later.
+- PERF DEST belongs to the globals slot and is saved with the project's globals: a new project, or one saved without the module, reads OFF.
+- A jack in OFF mode, or in another module's mode (such as Control In Actions' ACTION), drives no macro. CONTROL IN 1 MOD and 2 MOD still play as stock beside it.
+
 ## How it hooks
 
 - `ev_render_in` (core-ar2): each audio block, before stock's performance lock loop, each jack with a PERF DEST and MODE CV or EXPR writes its macro's value.
