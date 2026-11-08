@@ -33,6 +33,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 - [SDK.md](SDK.md): machine profiles, module contract v3, evidence tiers and the shared commands.
 - [MODULE_REPOSITORIES.md](MODULE_REPOSITORIES.md): the module folder and its manifest fields.
 - [MODULE_QUALIFICATION.md](MODULE_QUALIFICATION.md): qualification gates: cycles, memory, hardware, exceptions.
+- [MODULE_PERFORMANCE.md](MODULE_PERFORMANCE.md): how to measure a module before it is listed: worst-case cycles, a benchmark against stock and a stress run.
 - [MODULE_RESOURCE_GAUGES.md](MODULE_RESOURCE_GAUGES.md): the CPU, DSP and memory gauges a release needs.
 - [MODULE_UI_CAPTURES.md](MODULE_UI_CAPTURES.md): screenshots and the capture tool.
 - [MODULE_AUDIO_PREVIEWS.md](MODULE_AUDIO_PREVIEWS.md): a module's audio clip.

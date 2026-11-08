@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process'
+import { execFileSync, spawn } from 'node:child_process'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { performance } from 'node:perf_hooks'
 import { fileURLToPath } from 'node:url'
@@ -6,6 +6,7 @@ import { readChangeScope } from './change-scope.mjs'
 import { checkChangelog } from './changelog.mjs'
 import { checkDocs } from './docs.mjs'
 import { checkModuleChangelogs } from './module-changelogs.mjs'
+import { moduleScopeProblems } from './pr-ready.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const npmCli = process.env.npm_execpath
@@ -82,7 +83,7 @@ const sdkSuite = !scope || scope.sdk || !!process.env.CI
 async function changelogs() {
   let passed = true
   try {
-    const notes = await checkModuleChangelogs(root)
+    const notes = await checkModuleChangelogs(root, base)
     console.log(`Module changelogs: ${notes.modules} modules, ${notes.releases} releases`)
   } catch (error) { console.error(`Module changelogs: ${error.message}`); passed = false }
   try {
@@ -115,6 +116,15 @@ if (!buildOnly && !documentationOnly && passed) passed = await all(() => run('el
 if (passed && !documentationOnly) passed = await run('licenses:generate') && await run('machines:generate') && await run('modules:generate')
 // Every path, including documentation-only checks and release builds, requires current-version notes and documents within their size.
 if (passed) passed = await changelogs()
+// In a pull request's CI run, a contributor's module pull request carries no check that judges modules and no base change;
+// pr:ready says the same to everyone before they push.
+if (passed && base && process.env.GITHUB_EVENT_PATH) {
+  const pull = (() => { try { return JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8')).pull_request ?? null } catch { return null } })()
+  const files = execFileSync('git', ['diff', '--name-only', '--no-renames', base + '...HEAD'], { cwd: root, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 }).split('\n').filter(Boolean)
+  const problems = pull ? moduleScopeProblems(files, { author: pull.user?.login, owner: process.env.GITHUB_REPOSITORY_OWNER, openedAt: pull.created_at }) : []
+  for (const problem of problems) console.error('Module scope: ' + problem)
+  if (problems.length) passed = false
+}
 // The agent board's claims (docs/AGENT_BOARD.md): a module, hook or migration this branch adds that someone else holds fails it;
 // an unreachable board only warns, so an outage never blocks a pull request.
 if (passed && base) passed = await run('board', ['check', '--base', base])

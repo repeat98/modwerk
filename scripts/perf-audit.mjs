@@ -4,7 +4,7 @@
 //   npm run perf:audit -- check <record.json> [options]
 //   npm run perf:audit -- selftest                  prove the judgement on known-good and known-bad records
 //
-// Measure with the harness (docs/module-guides/README.md, "Performance"), write the numbers into <module>/evidence/performance.json
+// Measure with the harness (docs/MODULE_PERFORMANCE.md), write the numbers into <module>/evidence/performance.json
 // and check it. `module:doctor` runs the same judgement and refuses a new module whose record is missing or fails.
 //
 // options: --usable <cycles>  --ratio-note <x>  --ratio-fail <x>  --load-fail <share of a frame>

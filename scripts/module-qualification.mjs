@@ -1,4 +1,6 @@
 // Read-only qualification checks. Never import/evaluate submitted native source.
+import { execFileSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
 import { readFile, readdir } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
 import { resolve } from 'node:path'
@@ -141,4 +143,39 @@ export async function requireFolderQualification(folder, document, baseline, wai
   }
   await requireModuleDocumentation(folder,document)
   return 'qualified'
+}
+
+/** A module new to the library was never on main, so a tested commit already on main cannot be the one its tests ran on (DATAMATIC, #1103,
+ * named a main commit without its draft). Commits from the author's own repository or octabam are not judged: this clone does not know them. */
+export function evidenceOnBaseProblem({ root, base }) {
+  const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 32 * 1024 * 1024 })
+  const succeeds = (...args) => { try { git(...args); return true } catch { return false } }
+  const specs = [':(glob)sdk/drafts/*/octamod.module.json', ':(glob)sdk/octabam/modules/*/octamod.module.json']
+  const changed = (git('diff', '--name-only', '--diff-filter=AM', base, '--', ...specs) + git('ls-files', '--others', '--exclude-standard', '--', ...specs)).split('\n').filter(Boolean)
+  for (const path of new Set(changed)) {
+    const id = path.split('/').at(-2), rev = JSON.parse(readFileSync(resolve(root, path), 'utf8')).tests?.evidenceRevision
+    if (!/^[a-f0-9]{40}$/.test(rev ?? '')) continue
+    const listedOnBase = ['sdk/drafts/' + id, 'sdk/octabam/modules/' + id].some(folder => succeeds('cat-file', '-e', base + ':' + folder + '/octamod.module.json'))
+    if (!listedOnBase && succeeds('merge-base', '--is-ancestor', rev, base)) return path + ': tests.evidenceRevision names ' + rev.slice(0, 8) + ', a commit already on main, which has no ' + id + '. Name the commit your tests ran on: one of this branch\'s, or your own repository\'s (docs/MODULE_QUALIFICATION.md).'
+  }
+  return null
+}
+
+/** A pull request that gives a module a new version also says in its TESTING.md what was tested at that version: 84 of 87 modules
+ * name their current version there, and a report left at the old one reads as evidence for the new. Every machine's manifests and drafts. */
+export function testingVersionProblem({ root, base }) {
+  const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 32 * 1024 * 1024 })
+  const specs = [':(glob)sdk/drafts/*/octamod.module.json', ':(glob)sdk/octabam/modules/*/octamod.module.json', ':(glob)sdk/*/modules/*/modwerk.module.json']
+  const changed = (git('diff', '--name-only', '--diff-filter=AM', base, '--', ...specs) + git('ls-files', '--others', '--exclude-standard', '--', ...specs)).split('\n').filter(Boolean)
+  for (const path of new Set(changed)) {
+    const version = JSON.parse(readFileSync(resolve(root, path), 'utf8')).version
+    let before = null
+    try { before = JSON.parse(git('show', base + ':' + path)).version } catch { /* new here */ }
+    if (version === before || typeof version !== 'string') continue
+    const folder = path.slice(0, path.lastIndexOf('/')), report = resolve(root, folder, 'TESTING.md')
+    const text = (() => { try { return readFileSync(report, 'utf8') } catch { return '' } })(), short = version.replace(/-experimental$/, '')
+    if (!text.includes(version) && !new RegExp('(?<![\\d.])' + short.replaceAll('.', '\\.') + '(?![\\d.])').test(text))
+      return folder + '/TESTING.md does not name ' + version + '. Say what you ran on this version, and on which build, or write that it is not tested yet.'
+  }
+  return null
 }
