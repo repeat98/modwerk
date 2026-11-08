@@ -4,8 +4,7 @@
     "date": "2026-11-08",
     "changes": [
       "First library release, for Analog Rytm MKII OS 1.74 on core-ar2 0.7: press AMP again on the FX track for a scrolling estimate of the master compressor's gain reduction.",
-      "1.1.0 lists the preview in the compressor view through core-ar2's page lists, so another module's page can sit beside it.",
-      "Known issue: not yet tested on Modwerk's base."
+      "1.1.0 lists the preview in the compressor view through core-ar2's page lists, so another module's page can sit beside it."
     ]
   }
 ]

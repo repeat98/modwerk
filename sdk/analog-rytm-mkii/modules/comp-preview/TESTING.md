@@ -8,13 +8,38 @@
 - Stock OS 1.74: `.syx` `cb0f99d6…e123`, main OS `34cd0c4d…1f3b`.
 - Build CP11 (OS 1.74, the Modwerk base for core-ar2 0.7, plain variant `ba530f45`, + this folder's 1.1.0): `.syx`
   `55dafc3b527e1bb83c2f62b8a61c27cf9d1c6102a06bfee7ac796223dc94ec47`. Emulator only.
+- Tested build CPH1 (OS 1.74, the Modwerk base for core-ar2 0.7, plain variant `ba530f45`, + analoghealth 1.3 for remote keys and
+  stats + this folder's 1.1.0): `.syx` `c443e91e087bb1f2b1481150fa59cfa16b97b1eff077dc91b45149cc521ba152`.
 - 1.1's tested builds on core-ar2 0.4 (Q4A4, Q4D4, Q4F4, U4A4, U4D4, U4F4, U4M4) are listed with their runs below.
 
 ## What has not been run
 
-- **Modwerk's base on a unit:** this package has not been flashed on a unit with core-ar2 0.7, and no browser build from a stock OS file ran for it.
-- **Playback on Modwerk's base:** the module makes no sound, so the owner's listening check does not apply; its CPU cost on this base is unmeasured.
-- **Low thresholds:** at THR 41 and below the emulator's full layout drew no trace (see Emulator). Not checked on a unit, and not followed into the source.
+- **Browser build:** no browser build from a stock OS file ran for this package.
+- **Sound:** the module makes no sound, so there is no listening check.
+- **The trace against the compressor:** the trace was not compared with a measured reduction on Modwerk's base; layout, speed and scale were judged from shots.
+- **Low thresholds (an observation):** on the unit, at THR 41 and below the full layout draws little or nothing and gain reduction alone sits at the bottom or off the screen (see below). The emulator differs by project (see Emulator). Not judged right or wrong, and not followed into the source.
+- **Busier sets on this base:** CPU was read with BD alone playing; DAC SUM, send effects or duck beside it were not measured on core-ar2 0.7.
+
+## Hardware: 1.1.0 on Modwerk's base (T205, 2026-11-08)
+
+On 2026-11-08 Iced-Cream's Analog Rytm MKII ran CPH1 (above), linked by `scripts/link-image.mjs` from this folder. elkbench
+plans drove it in a `~T` test project made from CREATE NEW, after their emulator gate (the flash onto stock, the test plan from
+the fresh, dirty and cleared-slot starts, and stock flashed back over CPH1), and stock 1.74 was flashed back at the end.
+
+- BD trigs on steps 1, 5, 9 and 13. On the FX track AMP opens the stock COMPRESSOR page; THR set to 64 by CC 78 on the FX
+  channel (13) and read back on the page (screen check).
+- AMP pressed again opens the preview: its knob names as a text row where the stock page has its dials (screen check).
+- FUNC + AMP switches to gain reduction alone and back (judged from shots).
+- PLAY, then stats 30 s apart: CPU 84.8 % and 84.8 % with BD playing and the preview open, heap flat. Before any key, idle:
+  74.5 % and 74.1 %. After STOP: 84.1 %.
+- FUNC + LEFT/RIGHT changes the scroll speed (with RIGHT pressed four times many more hits fit on the screen), and
+  FUNC + UP/DOWN the vertical scale; both come back when the presses are undone (judged from shots).
+- STOP and AMP return to the stock COMPRESSOR page, THR at 64 (screen check).
+
+THR sweep with BD playing, a shot at each value after 4 s (an observation, not a fault): at 64 the full layout shows the level
+curve and the reduction at each hit; at 52 and 41 less is drawn and at 24 almost nothing. Gain reduction alone sits at the
+bottom at 24, shows nothing at 41, and draws the trace at 52 and 64. In the emulator the same plan drew the trace at 41 and at
+24 in both layouts, so the unit differs from it there. Whether the estimate is right at these settings was not measured.
 
 ## Source build comparison
 
@@ -45,12 +70,13 @@ preview each BD hit pulls the gain-reduction trace down and it recovers; FUNC + 
 reduction alone. Key presses are 12M, as [MODULE_UI_CAPTURES.md](../../../../docs/MODULE_UI_CAPTURES.md)
 asks since rytm-emu `e914f46`.
 
-The same plan with THR at other values: at 52 the trace runs as at 64. At 41 the full layout drew
-no trace and no level for any of ten hits, while the second layout showed the line near the bottom,
-dipping at each hit: between hits the estimate holds a reduction past the full layout's range. At 24
-neither layout drew it. The emulator's voices are not a unit's, so whether a unit shows the same at
-low thresholds is open. FUNC + LEFT/RIGHT were pressed only at THR 24, where nothing was drawn,
-and FUNC + UP/DOWN not at all, so neither was judged in the emulator; the hardware runs cover the keys.
+The same capture plan with THR at other values, on the card's own project: at 52 the trace runs as at
+64. At 41 the full layout drew no trace and no level for any of ten hits, while the second layout
+showed the line near the bottom, dipping at each hit: between hits the estimate holds a reduction past
+the full layout's range. At 24 neither layout drew it. The T205 test plan in the emulator gate, on a
+new project with BD on four steps, drew the trace at 41 and at 24 in both layouts, where the unit
+drew little or nothing (see Hardware). The emulator's voices are not a unit's, so the emulator says
+little about low thresholds. FUNC + LEFT/RIGHT and FUNC + UP/DOWN are judged from the T205 shots.
 
 ## Load and memory
 
