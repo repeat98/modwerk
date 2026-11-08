@@ -1,6 +1,6 @@
 // Offline performance checks for a module: worst-case cycles, a benchmark against stock, and a stress run.
 // No firmware and no module code runs here. You measure with the harness you already have, write the numbers into
-// evidence/performance.json (`template` prints the skeleton) and `check` judges them. See docs/module-guides/README.md, "Performance".
+// evidence/performance.json (`template` prints the skeleton) and `check` judges them. See docs/MODULE_PERFORMANCE.md.
 
 /** Audit defaults, not repository rules; the CLI can override each and TESTING.md says why. */
 export const LIMITS = {

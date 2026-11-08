@@ -306,8 +306,9 @@ function pullRequestAuthor() {
   try { return JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8')).pull_request?.user?.login ?? null } catch { return null }
 }
 
-/** npm run board -- check: refuse what someone else holds; name what is unclaimed. Never fails on an outage. */
-export async function checkBranch({ root, base, login }) {
+/** npm run board -- check: refuse what someone else holds; name what is unclaimed. Never fails on an outage.
+ * A pull request's CI run (requireClaims) also refuses what nobody claimed: reviewers asked for the claim on one module PR in seven. */
+export async function checkBranch({ root, base, login, requireClaims = false }) {
   const needed = neededClaims({ root, base })
   if (!needed.length) return { ok: true, lines: ['Board: this branch adds nothing that needs a claim.'] }
   let compared
@@ -315,12 +316,19 @@ export async function checkBranch({ root, base, login }) {
     if (error instanceof BoardUnavailable) return { ok: true, lines: ['Board: not checked. ' + error.message] }
     throw error
   }
+  return branchVerdict(compared, { requireClaims })
+}
+
+/** The check's verdict on compared claims. Locally an unclaimed item is a note, since pr:ready claims it right after. */
+export function branchVerdict(compared, { requireClaims = false } = {}) {
   const lines = []
   for (const item of compared.others) lines.push(`✗ ${item.kind} ${item.key} (${item.why}) is claimed by ${describeClaim(item.claim)}. Ask them, or renumber / rename.`)
   for (const item of compared.unknown) lines.push(`· ${item.kind} ${item.key} is claimed by ${describeClaim(item.claim)}; sign in (npm run board -- login) so the check can tell whether that is you.`)
   for (const item of compared.mine) lines.push(`✓ ${item.kind} ${item.key}: yours.`)
-  for (const item of compared.free) lines.push(`· ${item.kind} ${item.key} (${item.why}) is unclaimed: npm run board -- claim ${item.kind} ${item.key}`)
-  return { ok: !compared.others.length, lines }
+  for (const item of compared.free) lines.push(requireClaims
+    ? `✗ ${item.kind} ${item.key} (${item.why}) is unclaimed. Claim it so nobody else starts the same work: npm run board -- login once, then npm run pr:ready (it claims what the branch adds) or npm run board -- claim ${item.kind} ${item.key}. Then rerun this check.`
+    : `· ${item.kind} ${item.key} (${item.why}) is unclaimed: npm run board -- claim ${item.kind} ${item.key}`)
+  return { ok: !compared.others.length && !(requireClaims && compared.free.length), lines }
 }
 
 async function main(argv) {
@@ -394,7 +402,8 @@ async function main(argv) {
     const base = option('--base') ?? 'origin/main'
     let name = pullRequestAuthor()
     if (!name) try { name = await whoami() } catch (error) { if (!(error instanceof BoardUnavailable)) throw error }
-    const result = await checkBranch({ root, base, login: name })
+    // In a pull request's CI run the author is known from the event, and an unclaimed module, hook or migration fails.
+    const result = await checkBranch({ root, base, login: name, requireClaims: Boolean(pullRequestAuthor()) })
     result.lines.forEach(line => console.log(line))
     return result.ok ? 0 : 1
   }
