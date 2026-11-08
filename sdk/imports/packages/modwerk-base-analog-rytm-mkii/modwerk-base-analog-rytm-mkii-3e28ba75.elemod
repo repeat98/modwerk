@@ -28,7 +28,7 @@
   },
   ".run": {
    "align": 4,
-   "len": 10628,
+   "len": 10744,
    "parts": [
     [
      "hex",
@@ -1184,7 +1184,16 @@
     ],
     [
      "hex",
-     "720360d47003b28055c07100448060ea0000405c8f20"
+     "720360d47003b28055c07100448060ea000041f940291138720012303800780cb284642a41f9000000004a301800671e41f900000000203c3006a7ec07d06606203cb006a7ec243c00000080600841f900000000079041f9000000004a90670e2f09224820594e904a9166f8225f"
+    ],
+    [
+     "stock",
+     "0x40109c24",
+     18
+    ],
+    [
+     "hex",
+     "4ef940109c36405c8f20"
     ],
     [
      "stock",
@@ -1209,7 +1218,7 @@
   },
   ".bss": {
    "align": 4,
-   "size": 1368
+   "size": 1384
   }
  },
  "symbols": {
@@ -1503,7 +1512,7 @@
   ],
   "st_image": [
    ".run",
-   10592
+   10708
   ],
   "pattern_index": [
    ".run",
@@ -1591,7 +1600,35 @@
   ],
   "CSWTCH.1": [
    ".run",
-   10596
+   10712
+  ],
+  "VOICE_TRACK": [
+   "abs",
+   1076433208
+  ],
+  "STORES_DONE": [
+   "abs",
+   1074830390
+  ],
+  "FADE_START": [
+   "abs",
+   2953226220
+  ],
+  "FADE_GO_ON": [
+   "abs",
+   805742572
+  ],
+  "FADE_LEVEL": [
+   "abs",
+   128
+  ],
+  "TRACKS": [
+   "abs",
+   12
+  ],
+  "mw_amp_silence": [
+   ".bss",
+   1368
   ],
   "st_pat_init_body": [
    ".run",
@@ -1757,6 +1794,10 @@
    ".run",
    10458
   ],
+  "mw_amp_silenced": [
+   ".bss",
+   1380
+  ],
   "core_store_globals": [
    ".bss",
    16
@@ -1784,6 +1825,10 @@
   "st_settings_save": [
    ".run",
    3528
+  ],
+  "mw_amp_record": [
+   ".run",
+   10592
   ],
   "core_param_get": [
    ".run",
@@ -1928,6 +1973,9 @@
   "core_view_8",
   "core_view_9",
   "core_zero",
+  "mw_amp_record",
+  "mw_amp_silence",
+  "mw_amp_silenced",
   "mw_section_before",
   "mw_section_of",
   "st_at_route",
@@ -1985,6 +2033,7 @@
   "core_params",
   "core_store_ids",
   "core_view_pages",
+  "ev_amp_record",
   "ev_draw",
   "ev_enc",
   "ev_key",
@@ -2170,7 +2219,7 @@
    1680,
    "abs32",
    "sec:.run",
-   10592
+   10708
   ],
   [
    ".run",
@@ -2282,7 +2331,7 @@
    3946,
    "abs32",
    "sec:.run",
-   10592
+   10708
   ],
   [
    ".run",
@@ -2338,7 +2387,7 @@
    4384,
    "abs32",
    "sec:.run",
-   10592
+   10708
   ],
   [
    ".run",
@@ -2387,7 +2436,7 @@
    4816,
    "abs32",
    "sec:.run",
-   10592
+   10708
   ],
   [
    ".run",
@@ -2471,7 +2520,7 @@
    5670,
    "abs32",
    "sec:.run",
-   10592
+   10708
   ],
   [
    ".run",
@@ -2513,42 +2562,42 @@
    6252,
    "abs32",
    "sec:.run",
-   10592
+   10708
   ],
   [
    ".run",
    6276,
    "abs32",
    "sec:.run",
-   10592
+   10708
   ],
   [
    ".run",
    6928,
    "abs32",
    "sec:.run",
-   10592
+   10708
   ],
   [
    ".run",
    6940,
    "abs32",
    "sec:.run",
-   10592
+   10708
   ],
   [
    ".run",
    6974,
    "abs32",
    "sec:.run",
-   10592
+   10708
   ],
   [
    ".run",
    6986,
    "abs32",
    "sec:.run",
-   10592
+   10708
   ],
   [
    ".run",
@@ -2730,14 +2779,42 @@
    10526,
    "abs32",
    "sec:.run",
-   10596
+   10712
   ],
   [
    ".run",
    10552,
    "abs32",
    "sec:.run",
-   10596
+   10712
+  ],
+  [
+   ".run",
+   10612,
+   "abs32",
+   "sec:.bss",
+   1368
+  ],
+  [
+   ".run",
+   10624,
+   "abs32",
+   "sec:.bss",
+   1380
+  ],
+  [
+   ".run",
+   10654,
+   "abs32",
+   "sec:.bss",
+   1380
+  ],
+  [
+   ".run",
+   10662,
+   "abs32",
+   "sym:ev_amp_record",
+   0
   ]
  ],
  "sites": [
@@ -3633,6 +3710,21 @@
      0
     ]
    ]
+  },
+  {
+   "addr": "0x40109c24",
+   "len": 18,
+   "stock_sha256": "e09bfacff6d86befa58348d345369597ddb8ce5b5060d26a8ae973684d1a62fe",
+   "new": "4ef9000000004e714e714e714e714e714e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mw_amp_record",
+     0
+    ]
+   ]
   }
  ],
  "collections": {
@@ -3679,6 +3771,9 @@
    "entry": 4
   },
   "mw_machine_sections": {
+   "entry": 4
+  },
+  "ev_amp_record": {
    "entry": 4
   }
  },
@@ -3732,7 +3827,8 @@
    "load.s": "c135390d3973a1d62513ffcd32c4294ee744b656744205c6501924eb4690a33d",
    "machines.c": "6c788ea6d305bbc74ca0a037ada8b8d84a7b1ed24f1fb8331e4ee66e01b3f5a1",
    "finish.s": "f7e8801b7274a9405a443859b2e29fa1cd51a4212c8d7f7c2dfdbf3240bf9e27",
-   "sections.c": "85920df5bf11aa26281bc565cd22034a8fc2cfa91e49bb6c00716425c5462dff"
+   "sections.c": "85920df5bf11aa26281bc565cd22034a8fc2cfa91e49bb6c00716425c5462dff",
+   "amp.s": "0f94e30429fbc75914515a2112d30ebe1600732798941aaef97616af5ddd2ac5"
   }
  },
  "signature": null

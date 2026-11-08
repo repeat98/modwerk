@@ -19,7 +19,8 @@
   },
   "common": {
     "sources": [
-      "../base/sections.c"
+      "../base/sections.c",
+      "../base/amp.s"
     ],
     "sites": [
       {
@@ -42,13 +43,21 @@
         "stockSha256": "4dff1786ea9ca040dc988b6c398e4e383751f93cbf51fbd57090d717bb2bc6ab",
         "op": "jmp",
         "target": "mw_section_before"
+      },
+      {
+        "addr": "0x40109c24",
+        "len": 18,
+        "stockSha256": "e09bfacff6d86befa58348d345369597ddb8ce5b5060d26a8ae973684d1a62fe",
+        "op": "jmp",
+        "target": "mw_amp_record"
       }
     ],
     "cflags": [
       "-DMACHINE_SECTION_AT=0x40257d70"
     ],
     "collections": {
-      "mw_machine_sections": 4
+      "mw_machine_sections": 4,
+      "ev_amp_record": 4
     }
   },
   "reference": {
