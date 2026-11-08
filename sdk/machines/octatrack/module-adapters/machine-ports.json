@@ -218,7 +218,8 @@
     "st_name_replay",
     "st_main_replay",
     "st_edit_replay",
-    "st_draw_replay"
+    "st_draw_replay",
+    "mg_stock_note_draw"
    ],
    "why": "VECTOR's st_* chooser hooks and their stock replays are unreachable in the package; its registry functions are the descriptor's, and its SRC SETUP page 2 (st_setup_page, st_setup_knob, which its card build's st_setup_draw6 and st_setup_edit6 call) the SETUP_PAGE record's"
   },

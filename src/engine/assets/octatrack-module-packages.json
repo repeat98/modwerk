@@ -191,16 +191,14 @@
       "abi": 8,
       "features": 131,
       "sites": 2,
-      "copies": 8,
+      "copies": 12,
       "fills": 0,
-      "version": "0.2.5-experimental",
+      "version": "0.3.0-experimental",
       "name": "VECTOR",
       "module": "b0d51c58",
-      "bytes": 18354,
-      "sha256": "45c962ca3a202ac697e3d33d97e4b3b94052706a390189e5baf923fa829de577",
-      "path": "octatrack-modules/vector/0.2.5-experimental.mwrm",
-      "lagsBehind": "0.2.6-experimental",
-      "lagReason": "0.2.6 changes only the card build: st_setup_page no longer tests for row 5, which VECTOR's USB adapter already dropped (#972, #1119); the package's control unit source is byte-identical to 0.2.5's"
+      "bytes": 29486,
+      "sha256": "4fc33aef2606bcc8c0801365fd123f5a31b9ac46b0b3dfbc774a10a8d59812d3",
+      "path": "octatrack-modules/vector/0.3.0-experimental.mwrm"
     },
     {
       "id": "synth",
