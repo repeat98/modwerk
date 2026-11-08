@@ -29,9 +29,10 @@
       "Masks are kept per kit in the project."
     ],
     "usage": [
-      "Hold SCENE until scene edit opens, then hold FUNC and press T1, T2 and so on to pick the tracks this scene mutes.",
-      "Release SCENE and engage the scene: those tracks mute.",
-      "Disengage it: the mutes come back as they were."
+      "Hold SCENE until scene edit opens (FUNC pressed straight after SCENE does not open it).",
+      "Hold FUNC and press T1 and T2: the scene now mutes BD and SD, and those keys light while FUNC is held.",
+      "Release SCENE, start the pattern and engage the scene (SCENE + its pad): BD and SD mute.",
+      "Disengage it: the mutes come back as they were before."
     ]
   },
   "access": {
@@ -39,9 +40,11 @@
     "steps": [
       "Hold SCENE until scene edit opens; FUNC + a pad picks the scene to edit without engaging it.",
       "Hold FUNC: the trig keys show the scene's mask.",
-      "Press T1..T13 with FUNC held to toggle tracks (T13 is FX)."
+      "Press T1..T13 with FUNC held to toggle tracks (T13 is FX): T1 and T2 mute BD and SD."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/scene-edit.png"
+    ]
   },
   "controls": [
     {
@@ -101,7 +104,22 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Not run on a unit or in rytm-emu on OS 1.74 yet. The source assembles, and every address and site guard was checked against stock OS 1.73 and 1.74 with rytm2_mods' port_os.py mapper."
+    "summary": "Emulator only: in rytm-emu on OS 1.74, FUNC + T1, T2 in scene edit lights T1 and T2, engaging the scene mutes BD and SD and disengaging unmutes them, where the base alone does nothing. Not run on a unit yet.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Hold SCENE until scene edit opens (FUNC pressed straight after SCENE does not open it).",
+          "Hold FUNC and press T1 and T2: the scene now mutes BD and SD, and those keys light while FUNC is held.",
+          "Release SCENE, start the pattern and engage the scene (SCENE + its pad): BD and SD mute.",
+          "Disengage it: the mutes come back as they were before."
+        ]
+      },
+      "screenshots": [
+        "media/scene-edit.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
   },
   "license": {
     "spdx": "GPL-2.0-only",
@@ -112,11 +130,27 @@
     {
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
-      "caption": "Scene Mutes thumbnail",
-      "alt": "Placeholder thumbnail for Scene Mutes",
+      "caption": "Scene Mutes",
+      "alt": "Original illustration of thirteen track lanes, some cut while a scene is engaged",
       "credit": "Iced-Cream",
-      "license": "GPL-3.0-or-later",
-      "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+      "license": "GPL-2.0-only",
+      "source": "Original vector illustration; not a device screenshot."
+    },
+    {
+      "path": "media/scene-edit.png",
+      "kind": "screenshot",
+      "caption": "Scene edit with SCENE and FUNC held, after T1 and T2: the screen is stock's (SCENE: 1 footer); on the unit, T1 and T2 light for the tracks the scene mutes.",
+      "alt": "Kit K001 RYTMLINJE's synth page with a SCENE: 1 footer and LOCKS: 20, the scene edit view.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "556262bde12a54fe6108d5de3e4af30b9ef95304dc54f2059d84deead3d91767",
+        "setup": "Headless rytm-emu (dtboot) running SM01: the Modwerk base for core-ar2 0.7 and this folder's Scene Mutes 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the factory project K001. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
     }
   ],
   "source": {

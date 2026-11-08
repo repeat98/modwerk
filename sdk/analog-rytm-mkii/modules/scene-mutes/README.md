@@ -31,10 +31,12 @@ from OS 1.73 to 1.74. It has not run on a unit yet ([TESTING.md](TESTING.md)).
 
 ## Usage
 
+Scene edit: hold SCENE until it opens, then FUNC + T1..T13.
+
 ### Quick tutorial
 
 1. Hold SCENE until scene edit opens (FUNC pressed straight after SCENE does not open it).
-2. Hold FUNC and press T1 and T3: the scene now mutes BD and SD, and those keys light while FUNC is held.
+2. Hold FUNC and press T1 and T2: the scene now mutes BD and SD, and those keys light while FUNC is held.
 3. Release SCENE, start the pattern and engage the scene (SCENE + its pad): BD and SD mute.
 4. Disengage it: the mutes come back as they were before.
 
@@ -66,9 +68,22 @@ The module patches six sites, none shared with the core, the base or another mod
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). In short: the source assembles; it has not yet been built
-with core-ar2 0.7, run in rytm-emu on 1.74 or run on a unit. Memory: about 1 KB of the
+See [TESTING.md](TESTING.md). In short: in rytm-emu on OS 1.74 with core-ar2 0.7, FUNC +
+T1, T2 in scene edit lights T1 and T2, engaging the scene mutes BD and SD and disengaging
+unmutes them, where the base alone does nothing. It has not run on a unit yet. Memory: about 1 KB of the
 shared mod area. There is no code in the audio, sequencer or tick paths.
+
+## Screens and audio
+
+This capture is from rytm-emu running SM01, the Modwerk base for core-ar2 0.7 with Scene
+Mutes, built from stock OS 1.74 ([capture provenance](media/capture.json)). The module draws
+nothing on the screen: its mask shows on the trig keys. It changes no sound, so there is no
+audio demonstration.
+
+![Kit K001 RYTMLINJE's synth page with a SCENE: 1 footer and LOCKS: 20, the scene edit view.](media/scene-edit.png)
+
+Scene edit with SCENE and FUNC held, after T1 and T2: on the unit, T1 and T2 light for the
+tracks the scene mutes.
 
 ## Authorship and licences
 
