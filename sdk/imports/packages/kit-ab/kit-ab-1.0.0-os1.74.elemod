@@ -1310,7 +1310,7 @@
   "names": [
    "ui:kit reload (NO + PLAY and the KIT menu's RELOAD)"
   ],
-  "core": "0.3"
+  "core": "0.7"
  },
  "requires": [
   "core"
