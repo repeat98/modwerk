@@ -32,6 +32,7 @@ static uint32_t consumed[2];
  * the zoomed view. This module takes both edges while TRIM, SLICE or EDIT
  * is open, and writes the saved marker back after the slice is published. */
 #define PUSH_LEVEL 0x3e
+#define PUSH_D 0x3b
 #define EDITOR_WINDOW 0x460e5e4cu
 #define EDITOR_PAGE 0x460e5e5cu
 #define EDITOR_KIND 0x46c8d1a0u
@@ -64,6 +65,23 @@ static uint32_t settings_address(void)
     if(!kind && slot<128u)return STATIC_SETTINGS+slot*1096u;
     if((kind==1u || kind==4u) && slot<136u)return FLEX_SETTINGS+slot*1096u;
     return 0;
+}
+static int waveform_open(void)
+{
+    return *(volatile uint32_t *)EDITOR_WINDOW && *(volatile uint32_t *)EDITOR_PAGE<=2u;
+}
+/* The knob's own redraw. The saved marker is written back after the slice
+ * table changes, so follow-playback cannot walk the line off the point. */
+static void show_marker(uint32_t page,uint32_t cell,uint32_t cursor)
+{
+    write_u32(cell,cursor);
+    *(volatile uint32_t *)follow_flag[page]=0;
+    ((void (*)(void))SLICE_MARKERS)();
+    write_u32(cell,cursor);
+    ((void (*)(uint32_t,uint32_t))VIEW_REFRESH)(cursor_view[page],cursor_ptr[page]);
+    *(volatile uint32_t *)follow_hold[page]=20u;
+    ((void (*)(void))EDITOR_REDRAW)();
+    write_u32(cell,cursor);
 }
 /* Stock ADD SLICE HERE (0x400730f0) keeps every slice and inserts one at the
  * marker. The same insert uses whichever waveform page is open. The marker
@@ -102,14 +120,47 @@ static void insert_at_cursor(void)
     *(volatile uint32_t *)(settings+320u+12u*at)=0xffffffffu;
     *(volatile uint32_t *)(settings+1092u)=count+1u;
     __asm__ __volatile__("move.w %0,%%sr" :: "d"(sr) : "memory");
-    write_u32(cell,cursor);
-    *(volatile uint32_t *)follow_flag[page]=0;
-    ((void (*)(void))SLICE_MARKERS)();
-    write_u32(cell,cursor);
-    ((void (*)(uint32_t,uint32_t))VIEW_REFRESH)(cursor_view[page],cursor_ptr[page]);
-    *(volatile uint32_t *)follow_hold[page]=20u;
-    ((void (*)(void))EDITOR_REDRAW)();
-    write_u32(cell,cursor);
+    show_marker(page,cell,cursor);
+}
+/* Stock DELETE SLICE (0x40073064) sets the chosen start to 0x7fffffff, sorts
+ * the 12-byte records by start, and drops the count by one. End and loop
+ * travel with their start, so every slice that remains keeps them. The later
+ * records slide down and the hole in the list closes. This does the same
+ * shift for the one slice that contains the marker. */
+static void remove_at_cursor(void)
+{
+    uint32_t page=*(volatile uint32_t *)EDITOR_PAGE,cell,cursor,settings,count,i,which,found,sr;
+    if(page>2u)return;
+    cell=*(volatile uint32_t *)cursor_ptr[page];
+    if(!cell)return;
+    cursor=read_u32(cell);
+    settings=settings_address();
+    if(!settings)return;
+    count=*(volatile uint32_t *)(settings+1092u);
+    if(count<2u || count>64u)return;
+    found=0;
+    which=0;
+    for(i=0;i<count;++i) {
+        uint32_t have=*(volatile uint32_t *)(settings+312u+12u*i);
+        uint32_t stop=*(volatile uint32_t *)(settings+316u+12u*i);
+        if(have<=cursor && cursor<stop){found=1u;which=i;}
+    }
+    if(!found)return;
+    __asm__ __volatile__("move.w %%sr,%0" : "=d"(sr));
+    __asm__ __volatile__("move.w %0,%%sr" :: "d"((sr&~0x0700u)|0x0700u) : "memory");
+    *(volatile uint32_t *)(settings+1092u)=0;
+    for(i=which+1u;i<count;++i) {
+        uint32_t from=settings+312u+12u*i,to=from-12u;
+        *(volatile uint32_t *)to=*(volatile uint32_t *)from;
+        *(volatile uint32_t *)(to+4u)=*(volatile uint32_t *)(from+4u);
+        *(volatile uint32_t *)(to+8u)=*(volatile uint32_t *)(from+8u);
+    }
+    *(volatile uint32_t *)(settings+312u+12u*(count-1u))=0;
+    *(volatile uint32_t *)(settings+316u+12u*(count-1u))=0;
+    *(volatile uint32_t *)(settings+320u+12u*(count-1u))=0;
+    *(volatile uint32_t *)(settings+1092u)=count-1u;
+    __asm__ __volatile__("move.w %0,%%sr" :: "d"(sr) : "memory");
+    show_marker(page,cell,cursor);
 }
 
 static uint32_t saved_peak,peak_ready;
@@ -240,12 +291,12 @@ int module_key(int code,int pressed)
         consumed[bank]&=~mask;return 1;
     }
     if(consumed[bank]&mask)return 1;
-    if(!active && code==PUSH_LEVEL && *(volatile uint32_t *)EDITOR_WINDOW &&
-       *(volatile uint32_t *)EDITOR_PAGE<=2u) {
-        /* Both edges. The release is what arms follow-playback; leaving it
-         * for stock replaces the marker and the line leaves the view. */
-        if(pressed){consumed[bank]|=mask;insert_at_cursor();}
-        else consumed[bank]&=~mask;
+    if(!active && (code==PUSH_LEVEL || code==PUSH_D) && waveform_open()) {
+        /* Both edges. A release left for stock can arm follow-playback and
+         * walk the marker off the point. D is not a stock waveform key. */
+        consumed[bank]|=mask;
+        if(code==PUSH_LEVEL)insert_at_cursor();
+        else remove_at_cursor();
         return 1;
     }
     if(!active)return 0;

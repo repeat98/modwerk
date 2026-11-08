@@ -6,7 +6,7 @@
       "AED SLICE gains CREATE THRESHOLD SLICES, under DELETE ALL SLICES. With Beat Slicer it sits under CREATE BEAT GRID.",
       "Turn the threshold and the gap. A held note stays one slice, a short moment before the hit.",
       "YES asks the usual CREATE SLICES or REPLACE SLICES question. NO leaves the slices alone.",
-      "Press LEVEL on the waveform to add one slice at the marker. The marker stays, and the slices already there stay.",
+      "Press LEVEL on the waveform to add one slice at the marker, or D to remove only the slice under it. The marker stays, and the other slices stay.",
       "Known issue: needs a base that can read the waveform. A long sample still takes a while to scan."
     ]
   }

@@ -18,6 +18,7 @@ Select the sample, open AED, press AMP for SLICE, then YES, and choose CREATE TH
 | Encoder B | Minimum gap: 10, 20, 50, 100, 200 or 400 ms. |
 | Encoder C | L+R uses the louder side. LEFT and RIGHT use that side only. |
 | LEVEL, pressed | With the waveform open on TRIM, SLICE or EDIT, adds one slice at the marker and leaves the marker on that point. The slices already there stay. The press does nothing while the editor is closed. |
+| Encoder D, pressed | With the waveform open on TRIM, SLICE or EDIT, removes only the slice that contains the marker. The others keep their starts, ends and loops, and the marker stays on that point. Nothing happens when the marker is outside every slice, or when fewer than two slices exist. |
 | YES | When the scan has finished, opens the stock CREATE SLICES? or REPLACE SLICES? question. Markers change only after that second YES. |
 | NO | Close the popup. Nothing is written. |
 
