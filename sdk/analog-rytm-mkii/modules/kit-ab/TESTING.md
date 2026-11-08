@@ -16,6 +16,21 @@ Test to run on a unit: edit a sound (for example BD DEC). NO + PLAY shows KIT 1 
 
 The four sites are rytm2_mods' OS 1.74 sites. Its `keep2` sites (which keep a stock opcode word) are written as the equivalent authored instructions, so no stock opcode is retained: the two `jsr` sites are `jsr` sites (opcode `4eb9`), and the two `pea` sites are `bytes` sites (`487900000000`, the address relocated to `kit_ab_kab_msg`). Each guards 6 stock bytes by address, length and SHA-256.
 
+## Library package
+
+`scripts/build-elemod-isolated.sh` compiled this folder in Modwerk's pinned `modwerk-source-tools` image (from `sdk/build/Dockerfile`,
+image `sha256:6f8066eb…6895`; m68k-elf GCC 16.2.0, binutils 2.47) from a clean checkout of `15c66561`, and
+`scripts/package-elemod-recipe.mjs` exported `sdk/imports/packages/kit-ab/kit-ab-1.0.0-os1.74.elemod`
+(`f44834bc25831efc966ba1020d146ffe322fe1baf8e7120467b9dc29ae5f9228`); `--check` reproduces it. `.run` is 340 bytes, 4 sites.
+
+## Source build comparison
+
+`scripts/verify-elemod-source-parity.mjs` linked that build with the vendored core-ar2 0.3 release (`6b97dfb3…3e58`) on stock OS 1.74,
+and rytm2_mods' release object `kit-ab-1.0-os1.74.elemod` (`4e36608c9745c985a7b99ab9ab43f25e518451b53c6ba184f517d631c96daa64`,
+the same file in releases v1.2, v1.3 and v1.4) with the same core: both give main OS
+`91d2887bacd0bee76d0390f728e6ade9c37e9ff9162666fedce1464c01c3d786`, byte parity, `.run` 340 bytes in each
+([source-parity.json](evidence/source-parity.json)). KA74 below has the same main OS. The firmware and the linked builds stayed on the owner's computer.
+
 ## Emulator
 
 [analog-emu](https://github.com/trigcondition/analog-emu) `4c07ed3` (rytm-emu lineage), headless `dtboot`, no card, JIT on

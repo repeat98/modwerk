@@ -54,7 +54,7 @@ The module patches four sites, two in the key handler's NO + PLAY path and two i
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). No run of this module on OS 1.74 hardware is recorded in this repository yet. In the emulator the KIT menu's RELOAD stashes and restores a BD DEC edit as described. Memory: about 340 bytes of the shared mod area (the 1.74 build's `.run` is to be confirmed by the package build), and the stash on the firmware's heap. There is no code in the audio, sequencer or tick paths.
+See [TESTING.md](TESTING.md). No run of this module on OS 1.74 hardware is recorded in this repository yet. In the emulator the KIT menu's RELOAD stashes and restores a BD DEC edit as described. Memory: 340 bytes of the shared mod area (the 1.74 package's `.run`), and the stash on the firmware's heap. There is no code in the audio, sequencer or tick paths.
 
 ## Authorship and licences
 
