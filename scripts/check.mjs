@@ -137,7 +137,10 @@ const DRAFT_DOCTOR = ['scripts/module-doctor.test.mjs', '-t', 'checks a draft wh
 if (passed && !documentationOnly) {
   const results = buildOnly
     ? [await build()]
-    : await Promise.all([sdkSuite ? run('sdk:check') : skip('sdk:check', 'no changed path reaches it; CI runs it'), run('lint'), run('test', [], { MODWERK_DEFER_DRAFT_DOCTOR: '1' }), build()])
+    // The SDK suite starts once the app tests are done, whatever their result: its processes beside Vitest's workers starved
+    // Vitest's five-second tests.
+    : await Promise.all([run('lint'), run('test', [], { MODWERK_DEFER_DRAFT_DOCTOR: '1' }).then(async tested =>
+      (sdkSuite ? await run('sdk:check') : skip('sdk:check', 'no changed path reaches it; CI runs it')) && tested), build()])
   if (!buildOnly) results.push(await run('test', DRAFT_DOCTOR))
   passed = results.every(Boolean) && !interrupted
 }

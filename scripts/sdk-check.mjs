@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process'
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { availableParallelism } from 'node:os'
+import { availableParallelism, setPriority } from 'node:os'
 import { performance } from 'node:perf_hooks'
 import { fileURLToPath } from 'node:url'
 import { resolve, dirname } from 'node:path'
@@ -8,8 +8,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const python = process.platform === 'win32' ? 'python' : 'python3'
 // Repository text is UTF-8, including on Windows hosts with an ANSI locale.
 const unittest = { PYTHONDONTWRITEBYTECODE: '1', PYTHONUTF8: '1' }
-// One unittest process per test file, on half the cores (at most 4), since npm run check runs Vitest's workers beside it:
-// in one process the suite took minutes, and more processes starve Vitest's timed tests on a 4-core CI runner.
+// One unittest process per test file, up to four at once: in one process, the suite took minutes.
 const jobs = readdirSync(resolve(root, 'sdk/tests')).filter(file => /^test.*\.py$/.test(file))
   .map(file => ({ name: file, command: python, args: ['-X', 'utf8', '-B', '-m', 'unittest', 'discover', '-s', 'sdk/tests', '-p', file, '-v'], env: unittest }))
 // Shared Octatrack host checks (no firmware, a few seconds): here, on every pull request, so a change that breaks them
@@ -28,7 +27,7 @@ for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => {
   for (const child of children) child.kill(signal)
   process.exit(signal === 'SIGINT' ? 130 : 143)
 })
-const workers = Math.max(1, Math.min(4, Math.floor(availableParallelism() / 2))), started = performance.now(), failed = [], count = jobs.length, taken = {}
+const workers = Math.min(4, availableParallelism()), started = performance.now(), failed = [], count = jobs.length, taken = {}
 let tests = 0
 async function worker() {
   for (let job; (job = jobs.shift());) {
@@ -36,6 +35,9 @@ async function worker() {
     const code = await new Promise(done => {
       const child = spawn(job.command, job.args, { cwd: root, env: { ...process.env, ...job.env } })
       children.add(child)
+      // Below normal priority (the compilers and emulators a test starts inherit it), so Vitest's five-second tests, from another
+      // worktree's check too, get the cores first. Alone, these processes still take every free core.
+      try { setPriority(child.pid, 10) } catch { /* already exited */ }
       child.stdout.on('data', chunk => output.push(chunk))
       child.stderr.on('data', chunk => output.push(chunk))
       child.on('error', error => { output.push(Buffer.from(error.message + '\n')); done(1) })
