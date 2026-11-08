@@ -2,6 +2,7 @@
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -162,9 +163,11 @@ class FollowingBase(unittest.TestCase):
             self.assertNotIn(bytes.fromhex('1' * 64), data)
             self.assertNotIn(bytes.fromhex('2' * 64), data)
         snapshot = {p.relative_to(self.root): p.read_bytes() for p in self.root.rglob('*') if p.is_file()}
+        check_env = dict(os.environ)
+        check_env.pop('PYTHONDONTWRITEBYTECODE', None)  # sdk:check sets it for its children
         # Even without python -B, check mode must not leave SDK bytecode.
         checked = subprocess.run([sys.executable, str(self.root / 'scripts/source-runtime-package.py'),
-                                  '--recipe', str(self.recipe), '--check'], capture_output=True, text=True)
+                                  '--recipe', str(self.recipe), '--check'], capture_output=True, text=True, env=check_env)
         self.assertEqual(checked.returncode, 0, checked.stderr)
         self.assertEqual(json.loads(checked.stdout)['sha256'], after['sha256'])
         self.assertEqual(snapshot, {p.relative_to(self.root): p.read_bytes()
