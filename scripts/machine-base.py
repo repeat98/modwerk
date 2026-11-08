@@ -20,6 +20,11 @@ base.json's variants name the layouts the base comes in, the first the default: 
 add's parts out, so a build that needs none of them does not pay for them. base.json's common holds what every
 variant carries (the same keys as add), merged before add; with neither, a variant is the imported recipe alone.
 Each variant is built and checked the same way, and the binding records every variant's identity under variants, the default's as identity.
+A machine whose OS shares another's base names that machine in source: its elekloader folder is staged instead,
+with this machine's own folders beside it. recipe then replaces the imported recipe's device, defsym and sites
+(sites named by length and SHA-256, as add's) and adds sources. copies lays files of this machine's copies/ folder
+over the staged ones; each names the file it was made from and that file's SHA-256, and the build refuses once the
+original has changed, so a copy is redone rather than silently left behind.
 """
 import argparse
 import hashlib
@@ -151,26 +156,53 @@ def parts(config, add=True):
     return out
 
 
-def stage(machine, config, root, sites=None, add=True):
+RECIPE = ('device', 'defsym', 'sites', 'sources')
+
+
+def retarget(mod, recipe, sites):
+    """mod.json for another machine's OS: recipe's device, defsym and sites (`sites`, their stock bytes resolved)
+    in place of the imported ones, and its sources after them."""
+    for key, value in recipe.items():
+        if key not in RECIPE:
+            raise ValueError('base.json recipe: %s is not something a recipe replaces.' % key)
+        mod[key] = list(mod.get(key, [])) + list(value) if key == 'sources' else sites if key == 'sites' else value
+    return mod
+
+
+def stage(machine, config, root, sites=None, add=True, recipe_sites=None):
     """The core folder and its sibling sources as mod.json expects them, with the SDK headers beside mod.json
     (the SDK compiles with -I on the mod's own folder first), and base.json's additions merged into the staged
     mod.json, so the imported files stay exact. Without `sites` (no stock OS at hand) the sites are left out;
     without `add` (a variant that leaves them out) only common is merged, and with no common either the imported
     recipe is staged alone."""
-    source = APP / 'sdk/machines' / machine / 'elekloader'
+    own = APP / 'sdk/machines' / machine / 'elekloader'
+    source = APP / 'sdk/machines' / config.get('source', machine) / 'elekloader'
     mods = root / 'mods'
     for item in source.iterdir():
         if item.is_dir():
             shutil.copytree(item, mods / item.name)
+    if source != own:
+        for item in own.iterdir():
+            if item.is_dir() and item.name != 'copies':
+                shutil.copytree(item, mods / item.name)
+    for copy in config.get('copies', []):
+        if sha((source / copy['from']).read_bytes()) != copy['sha256']:
+            raise ValueError('%s has changed since its copy %s was made from it: redo the copy, then record the new '
+                             'SHA-256 in base.json.' % (source.relative_to(APP) / copy['from'], copy['path']))
+        shutil.copyfile(own / 'copies' / copy['path'], mods / copy['path'])
     core = mods / config['core']
     for item in (APP / config['include']).iterdir():
         shutil.copytree(item, core / item.name)
     add = parts(config, add)
     if sites is None:
         add.pop('sites', None)
-    if add:
-        recipe = core / 'mod.json'
-        recipe.write_text(json.dumps(merge(json.loads(recipe.read_text()), add, sites or []), indent=1) + '\n')
+    recipe = dict(config.get('recipe', {}))
+    if recipe_sites is None:
+        recipe.pop('sites', None)
+    if add or recipe:
+        path = core / 'mod.json'
+        mod = retarget(json.loads(path.read_text()), recipe, recipe_sites or [])
+        path.write_text(json.dumps(merge(mod, add, sites or []), indent=1) + '\n')
     return core
 
 
@@ -211,6 +243,10 @@ def build(machine, stock, upstream, out):
         raise ValueError('%s does not match base.json.' % reference['file'])
     firmware_codec.use_elekloader(upstream)
     from elekloader.sdk import build as sdk
+    from elekloader import devices
+    device = config.get('recipe', {}).get('device')
+    if device and not any(d.key == device for d in devices.devices()):
+        raise ValueError('The pinned Elekloader kit has no %s device yet, so this base cannot be built with it.' % device)
     os.environ['ELEKLOADER_CROSS'] = config['toolchain']['cross']
     built = []
     if out:
@@ -218,7 +254,8 @@ def build(machine, stock, upstream, out):
     for name, add in variants(config):
         with tempfile.TemporaryDirectory(prefix='modwerk-base-') as work:
             root = Path(work)
-            core = stage(machine, config, root, stock_sites(parts(config, add).get('sites', []), stock), add)
+            core = stage(machine, config, root, stock_sites(parts(config, add).get('sites', []), stock), add,
+                         stock_sites(config['recipe']['sites'], stock) if 'sites' in config.get('recipe', {}) else None)
             try:
                 sdk.build(str(core), str(stock), str(root / 'out'))
             except sdk.BuildError as error:
