@@ -1,6 +1,6 @@
 # VECTOR tests and measurements
 
-## 0.2.6: SRC SETUP page 2 on VECTOR's own row (card builds, #1119)
+## SRC SETUP page 2 on VECTOR's own row (card builds, #1119; prepared as 0.2.6, released in 0.3.0)
 
 Report #1119 (also #842/#843): on a card build with POLY8, a double tap on SRC on a VECTOR track showed the stock Flex/Static setup (TSTR AUTO) instead of SEED/SPAN. Beside POLY8, VECTOR is machine row 6 or 7; POLY8's shared SRC SETUP hooks replace VECTOR's and never asked VECTOR, and `st_setup_page` itself also wanted SRC SETUP's cursor (0x460d5c30) on row 5. 0.2.6 drops that test: its callers already ask on VECTOR's row (row 5 in `hooks.s` alone, the base's row over USB, POLY8's row with POLY8 0.3.3). The USB adapter dropped the same test since 0.2.5, so `vector_runtime.py` no longer rewrites it; the package's control unit source is byte-identical to 0.2.5's and the 0.2.5 USB package stays published (`lagsBehind`). The 0.2.5 hardware report above that run covers those bytes.
 

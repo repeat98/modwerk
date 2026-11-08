@@ -174,7 +174,7 @@
       "value": 10586112,
       "unit": "bytes",
       "method": "static",
-      "conditions": "Tested reported profile: repitch, vector, playmodes, mute-modes and recorder-loop-fix with stock FX2, original 1.40C. Shared arena 10,586,112 bytes includes 10,487,808 module arena plus 98,304 logger reserve, counted once. Linked runtime 90,780 bytes and packed staging fit within it. VECTOR allocated sections: 13,000 text, 398 rodata and 3,368 data bytes; no BSS or new heap. Complete flash append is 18153 bytes. Maximum observed native commit stack 1,048; Part validation 252; fixed added UI stack bound 1,216. Borrowed stock window, lock indexes and 8-track bank/SRAM capacities are retained. Hardware canaries are unmeasured.",
+      "conditions": "Tested reported profile: repitch, vector, playmodes, mute-modes and recorder-loop-fix with stock FX2, original 1.40C. Shared arena 10,586,112 bytes includes 10,487,808 module arena plus 98,304 logger reserve, counted once. Linked runtime 90,780 bytes and packed staging fit within it. VECTOR allocated sections (0.3.0, the MIDI generator and on a card the base's generator registry): 22,314 text, 678 rodata, 3,764 data and 144 BSS bytes; no new heap. Complete flash append: 18,153 bytes measured for 0.2.4's profile, counted here as 28,143, that plus the 9,990 allocated bytes 0.3.0 adds (an upper bound; packing makes it smaller). On MIDI tracks VECTOR reuses stock storage only: the tracks' pattern records, 16 arp note bytes and the arp step mask per Part. Maximum observed native commit stack 1,048; Part validation 252; fixed added UI stack bound 1,216. Borrowed stock window, lock indexes and 8-track bank/SRAM capacities are retained. Hardware canaries are unmeasured.",
       "source": "TESTING.md"
     },
     "processing": {
@@ -224,7 +224,7 @@
     "evidenceRevision": "645d73da3872ce9111f3e3172114fb33a3660b9f",
     "qualification": {
       "moduleVersion": "0.3.0-experimental",
-      "sourceSha256": "27eca33a8d42bc0b5c56010864915454684d8d61df1a074403a66dda1e3d9a42",
+      "sourceSha256": "d7e4896f42468fff30308d7cded104ac0f9803fb3e7279cbab61f65d617c9312",
       "imageSha256": "a753ddf67b0fe64e3742b4c89ecf141071eb30757b170173215e92b1b4794d24",
       "cycles": [
         {
@@ -239,8 +239,8 @@
             "parameterExtremes": "Firmware-free sanitizer matrix covers all roots/scales/pitch windows and all secondary-control domains. Native instruction probe: 3,840 length/type/scale/seed cases and eight full native commit calls; static loop ceilings cover 64 steps and 2,016 rank shifts. Part-validation probe covers all 256 instance masks; maximum 64,241 executed instructions including the real stock validator, with 252 observed stack bytes. Added adapter has bounded 8-track/12-byte save and restore loops; no per-sample work.",
             "parameterModulation": "Generator controls are request parameters, not LFO/p-lock/scene destinations. UI knob changes and YES synchronously publish stock trigs and locks; ordinary sample playback modulation remains native.",
             "modeSwitching": "Current exact-image emulator: all twelve SRC edits, native sample editor, both backing-pool menus, advancing PLAY, native Part save/reload, panel-driven project save/reload, fresh saved-card project load and battery-RAM-only restart. Physical reboot/audio remain untested.",
-            "maxLoad": "Eight signed audio tracks may auto-fill on one PLAY edge. Conditional UI budget allows one such burst per second at 264 MHz; no audio-thread work is added. Stock rendering/scheduling uses the explicit reserve. Mixed-module audio stress is not measured.",
-            "inputConditions": "Original integer generator is input-independent. Density up to 64 notes/track; native lock rebuild scans every audio/MIDI lane. Audio sample/FX costs remain stock and are outside the added UI-work bound; hardware audio continuity is untested."
+            "maxLoad": "Eight signed audio tracks may auto-fill on one PLAY edge. Conditional UI budget allows one such burst per second at 264 MHz; no audio-thread work is added. Stock rendering/scheduling uses the explicit reserve. Mixed-module audio stress is not measured. On a MIDI track one control turn rewrites one phrase on the UI task (no PLAY-edge filling); 0.66 ms was the longest of 40 turns at 64 steps on the owner's MKII.",
+            "inputConditions": "Original integer generator is input-independent. Density up to 64 notes/track; from 0.3.0 a commit sets only its own track's bit of stock's lock index instead of stock's rebuild of every lane, so the bound over-counts it. Audio sample/FX costs remain stock and are outside the added UI-work bound; hardware audio continuity is untested."
           },
           "report": "evidence/software.json"
         }
@@ -258,9 +258,9 @@
           {
             "name": "Complete tested-profile flash append: bootstrap and packed runtime",
             "space": "cpu-flash",
-            "words": 18153,
+            "words": 28143,
             "wordBits": 8,
-            "bytes": 18153,
+            "bytes": 28143,
             "scope": "shared"
           },
           {
@@ -305,10 +305,10 @@
           }
         ],
         "perInstanceBytes": 74656,
-        "sharedBytes": 10607741,
+        "sharedBytes": 10617731,
         "maxInstances": 8,
-        "totalBytes": 11204989,
-        "conditions": "Tested reported profile: repitch, vector, playmodes, mute-modes and recorder-loop-fix with stock FX2, original 1.40C. Shared arena 10,586,112 bytes includes 10,487,808 module arena plus 98,304 logger reserve, counted once. Linked runtime 90,780 bytes and packed staging fit within it. VECTOR allocated sections: 13,000 text, 398 rodata and 3,368 data bytes; no BSS or new heap. Complete flash append is 18153 bytes. Maximum observed native commit stack 1,048; Part validation 252; fixed added UI stack bound 1,216. Borrowed stock window, lock indexes and 8-track bank/SRAM capacities are retained. Hardware canaries are unmeasured.",
+        "totalBytes": 11214979,
+        "conditions": "Tested reported profile: repitch, vector, playmodes, mute-modes and recorder-loop-fix with stock FX2, original 1.40C. Shared arena 10,586,112 bytes includes 10,487,808 module arena plus 98,304 logger reserve, counted once. Linked runtime 90,780 bytes and packed staging fit within it. VECTOR allocated sections (0.3.0, the MIDI generator and on a card the base's generator registry): 22,314 text, 678 rodata, 3,764 data and 144 BSS bytes; no new heap. Complete flash append: 18,153 bytes measured for 0.2.4's profile, counted here as 28,143, that plus the 9,990 allocated bytes 0.3.0 adds (an upper bound; packing makes it smaller). On MIDI tracks VECTOR reuses stock storage only: the tracks' pattern records, 16 arp note bytes and the arp step mask per Part. Maximum observed native commit stack 1,048; Part validation 252; fixed added UI stack bound 1,216. Borrowed stock window, lock indexes and 8-track bank/SRAM capacities are retained. Hardware canaries are unmeasured.",
         "report": "evidence/software.json"
       },
       "hardware": {

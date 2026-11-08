@@ -19,9 +19,11 @@ const folder = resolve('sdk/octabam/modules/vector')
 // 0.2.4's emulator and behaviour records stand for its card build; the UI captures are labelled 0.2.5 for publication.
 const CARD_EVIDENCE = '0.2.4-experimental'
 // The owner accepted 0.2.4's card evidence for 0.2.6 (6 Nov 2026): 0.2.6 only drops st_setup_page's row-5 test (#1119), in
-// control.s and native.c, so the captures stay bound to 0.2.4's native source by name.
+// control.s and native.c, so the captures stay bound to 0.2.4's native source by name. 0.3.0 (which carries 0.2.6) adds the
+// MIDI generator (midi.c, not a capture input; its card detours in manifest.py and prepare.py) and cheaper commits (engine.c,
+// native.c) that give the same phrases; the audio-track screens the captures show are unchanged.
 const CARD_EVIDENCE_SOURCE = '1255e99133cbd8d6d2587c95f93462ea80fccbd169462a2acb02aedbd346cbd3'
-const CHANGED_SINCE_CARD_EVIDENCE = ['native.c', 'control.s']
+const CHANGED_SINCE_CARD_EVIDENCE = ['engine.c', 'native.c', 'prepare.py', 'manifest.py', 'control.s']
 const sha = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex')
 
 describe('VECTOR release', () => {
@@ -91,7 +93,8 @@ describe('VECTOR release', () => {
   })
 
   it('binds the recorded firmware-free tests without running native code in application checks', async () => {
-    expect(coreTests.moduleVersion).toBe(CARD_EVIDENCE)
+    expect(coreTests.moduleVersion).toBe(draft.version)
+    expect(coreTests.sourceSha256).toBe(draft.tests.qualification.sourceSha256)
     for (const [path, hash] of Object.entries(coreTests.sources)) {
       expect(sha(await readFile(resolve(folder, path)))).toBe(hash)
     }
