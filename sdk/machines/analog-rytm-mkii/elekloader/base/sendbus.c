@@ -124,8 +124,8 @@ typedef void (*add_lock_trig_t)(void *tp, int step, int on);
 #define PAGE_SHOWN_FX 1            // page: the FX page
 #define PAGE_SHOWN_SEND 2          // the SEND page
 
-#define POOL MW_FX_WORK             // words: the work area the effect that runs uses
-#define CLEAR_STEP 1024            // pool words cleared a block, the effect silent until it is clean
+#define MODS_END 0x47c00000        // the end of the mods' RAM (elekloader's Analog Rytm MKII ddr), where the work area ends
+#define CLEAR_STEP 1024            // work area words cleared a block, the effect silent until it is clean
 #define UNITS_PER_BPM 120          // the tempo word's unit
 #define DIVS 12                    // note divisions (div_q1000)
 #define VOICES 8
@@ -140,22 +140,31 @@ typedef void (*add_lock_trig_t)(void *tp, int step, int on);
 // names its effect by the record's id, so a kit whose effect the build does not hold keeps its values and plays
 // no return (MISSING).
 extern const struct mw_fx *const mw_fx[];
+// The work area the effect that runs uses (its delay lines, its tables): the mods' RAM the build leaves free, from
+// the end of every mod's .bss (__bss_end, the linker's) to MODS_END. It is sized by the set, so it takes no RAM a mod
+// needs, and a set whose modules leave less than an effect asks for does not list that effect.
+extern int __bss_end[];
 #define ROOM 16                    // the records the chooser lists
 #define MISSING 0xff
 static const struct mw_fx *list[ROOM];
 static int n_fx = -1;              // -1 until the first project: nothing runs
 static const struct mw_fx missing = { MW_FX_ABI, 0, 0, 0, 256, 0, "MISSING", { { "", 0, 0, 0 } }, 0, 0, 0 };
 
+static int *work;                  // the work area (below)
+static unsigned room;              // its words
+
 // The records a module may hold: this ABI, the one send, a known id once, the work area it fits in.
 static void build_list(void)
 {
     int i, j, n = 0;
+    work = (int *)(((unsigned)__bss_end + 15) & ~15u);
+    room = (MODS_END - (unsigned)work) / 4;
     for (i = 0; mw_fx[i] && n < ROOM; i++) {
         const struct mw_fx *fx = mw_fx[i];
         int dup = 0;
         for (j = 0; j < n; j++) dup |= list[j]->id == fx->id;
         if (fx->abi == MW_FX_ABI && fx->slot == 0 && fx->id >= 1 && fx->id <= 63 && !dup
-            && fx->work <= MW_FX_WORK && fx->render && fx->reset)
+            && fx->work <= MW_FX_WORK && fx->work <= room && fx->render && fx->reset)
             list[n++] = fx;
     }
     n_fx = n;
@@ -188,10 +197,9 @@ static const struct mw_fx *cur(void) { return fx_type < n_fx ? list[fx_type] : &
 static unsigned char send[SOUND_TRACKS];
 static int ready;
 
-// The audio block's state. The work area the effect that runs uses (its delay lines, its tables), cleared a step
-// a block when an effect starts.
-static int work[POOL] __attribute__((aligned(16)));
-static int clear_at = POOL;
+// The audio block's state. The words of the work area the effect that runs uses, cleared a step a block when it
+// starts.
+static unsigned clear_at, clear_end;
 static int g_voice[VOICES];
 // Light blocks (gate.s): every other block only keeps its input (xb) and
 // gives back the return the block before worked out for it (ob); the block
@@ -253,6 +261,7 @@ static int lfo(unsigned ph)
 static void reset_state(const struct mw_fx *fx)
 {
     clear_at = 0;
+    clear_end = fx->work;
     fx->reset(work);
     blk.last = blk.pv[0] = blk.pv[1] = blk.state = 0;
     blk.lockw = ~0;
@@ -353,12 +362,12 @@ static int COLD active(void)
 }
 
 // A new effect starts clean; after 2 s with no send the effect is left
-// silent (a clean state once); a new effect's pool is cleared a step a
-// block, the effect silent until it is clean. 1: the block stops here, each
+// silent (a clean state once); the work area words a new effect uses are
+// cleared a step a block, the effect silent until they are clean. 1: the block stops here, each
 // voice's gain set to its send.
 static int COLD unusual(int type, int moving)
 {
-    int f;
+    unsigned f, n;
     if (type != run_type) {
         const struct mw_fx *fx = list[type];
         reset_state(fx);
@@ -371,9 +380,10 @@ static int COLD unusual(int type, int moving)
             reset_state(list[type]);
             idle++;
         }
-    } else if (clear_at < POOL) {
-        for (f = 0; f < CLEAR_STEP; f++) work[clear_at + f] = 0;
-        clear_at += CLEAR_STEP;
+    } else if (clear_at < clear_end) {
+        n = clear_end - clear_at < CLEAR_STEP ? clear_end - clear_at : CLEAR_STEP;
+        for (f = 0; f < n; f++) work[clear_at + f] = 0;
+        clear_at += n;
     } else {
         return 0;
     }
@@ -459,7 +469,7 @@ void mw_send_block(int slot)
     n = moving ? active() : blk.nv;
     if (n) idle = 0;
     else if (idle < IDLE_BLOCKS) idle++;
-    if ((type != run_type || idle >= IDLE_BLOCKS || clear_at < POOL) && unusual(type, moving)) return;
+    if ((type != run_type || idle >= IDLE_BLOCKS || clear_at < clear_end) && unusual(type, moving)) return;
 
     // A-H: one word read a block, the lock pairs only while a lock plays.
     m = SMOOTH_FX(LOCK_WORD_MASK);
@@ -490,8 +500,8 @@ void mw_send_block(int slot)
 }
 
 // Everything below runs in the UI task: built for size, as the 128 KB the
-// mods share holds core-ar2, Loop Sync, Retrig Grid and this mod's 32 KB
-// pool. The audio block above stays at the build's -O2.
+// mods share holds core-ar2, every other mod and what is left of it is the
+// send effects' work area. The audio block above stays at the build's -O2.
 #pragma GCC optimize ("Os")
 
 // ---------------------------------------------------------------- storage

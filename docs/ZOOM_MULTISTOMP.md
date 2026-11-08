@@ -32,6 +32,16 @@ without a pedal. It is a developer tool: never hardware evidence, and the site
 never bundles it or offers it to musicians, so it cannot stand in for a pedal
 (owner, 31 October 2026).
 
+`npm run upstream:tools` keeps its source at the archive pinned in
+`sdk/upstream-tools.json`; build it there with
+`cargo build --release --locked -p ziddle-cli` (Rust 1.88 or newer). Modwerk
+uses only the emulator, on your own effect files: `ziddle effect check
+FILE.ZDL` reads the loader contract and `ziddle effect render FILE.ZDL in.wav
+out.wav` plays a 44.1 kHz WAV through it, both without Zoom firmware. Leave
+`library import` and `NAME@FIRMWARE` alone: they read a Zoom updater. An effect
+whose coefficient knobs (depth, rate, mix) read the firmware refuses to render
+without one; test it on the pedal.
+
 ## Devices
 
 | Device | Firmware | Status (from the project's reports) |

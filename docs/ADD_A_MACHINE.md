@@ -55,6 +55,7 @@ What the Syntakt research turned up that applies to every ColdFire machine (the 
 - A region with no static reference is not free. On the Syntakt, hardware showed runtime page writes into memory nothing in the image names (Synthack-OS issue #4). Prove a range two ways, static and allocator, in every supported release, and offer mods only what both proofs cover.
 - Check where the image's BSS starts before appending code: on the Syntakt everything after the initialised data, including an appended tail, lies inside the range the OS zeroes at reset, so a core must hook before the clear and move its payload first.
 - The repository's packer may store the main OS more densely than Elektron's, which narrows the in-place depack margin rather than widening it; check the margin of the actual build, not of the stock file.
+- The packed OS stream's end marker is an offset gamma that wraps to the bias only in 32 bits. A decoder written with unbounded integers (Python, for example) reads it as a huge offset and concludes the stream has no end marker; decode with the repository's `unpackSection` or wrap explicitly.
 
 ## Research a Linux-class OS image
 

@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Standalone validation/generation for the elemod source catalogue. Publication gates are unchanged.
-import { readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { readFile, readdir, mkdir, writeFile, copyFile } from 'node:fs/promises'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { execFileSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import { isVersionNeutralChange } from './change-scope.mjs'
 import { loadElemodDependencies, dependencyCollections } from './elemod-dependencies.mjs'
 import { requireModwerkDocumentation } from './module-documentation.mjs'
@@ -26,6 +27,32 @@ export const PLACEHOLDER_THUMBNAIL=/REPLACE THIS THUMBNAIL|Original placeholder 
 export function requireOriginalThumbnail(label,item,svg){
  if(PLACEHOLDER_THUMBNAIL.test(svg)||PLACEHOLDER_THUMBNAIL.test(item.source))throw new Error(label+': '+item.path+' is still the SDK template\'s placeholder thumbnail. Draw an original 320x192 one in the shared signal-art style, and give its media entry a real alt and source (docs/ADD_A_MODULE.md#module-thumbnail-style).')
 }
+// Every module draws its own card: a thumbnail copied from another module (Envelopes from Env Reset Amp, #1291) passes the placeholder
+// rule. The same module on two machines, or a draft beside its listed folder, may share one.
+const THUMBNAIL=/^sdk\/(?:drafts\/([^/]+)|[^/]+\/modules\/(?:_submissions\/)?([^/]+))\/(?:media|presentation)\/thumbnail\.svg$/
+export function copiedThumbnail(files){
+ const byHash=new Map()
+ for(const {path,sha256} of files){const match=THUMBNAIL.exec(path);if(!match)continue;const id=match[1]??match[2];if(!byHash.has(sha256))byHash.set(sha256,[]);byHash.get(sha256).push({path,id})}
+ for(const group of byHash.values())if(new Set(group.map(item=>item.id)).size>1)return group[group.length-1].path+' is the same file as '+group.find(item=>item.id!==group[group.length-1].id).path+'. Draw this module its own 320x192 thumbnail in the shared signal-art style (docs/ADD_A_MODULE.md#module-thumbnail-style).'
+ return null
+}
+const folders=(root,path)=>existsSync(resolve(root,path))?readdirSync(resolve(root,path),{withFileTypes:true}).filter(entry=>entry.isDirectory()).map(entry=>path+'/'+entry.name):[]
+export function requireDistinctThumbnails(root){
+ const listed=folders(root,'sdk').flatMap(top=>top==='sdk/drafts'?[top]:[top+'/modules',top+'/modules/_submissions']).flatMap(base=>folders(root,base))
+  .flatMap(folder=>['media','presentation'].map(sub=>folder+'/'+sub+'/thumbnail.svg')).filter(path=>THUMBNAIL.test(path)&&existsSync(resolve(root,path)))
+ const problem=copiedThumbnail(listed.map(path=>({path,sha256:createHash('sha256').update(readFileSync(resolve(root,path))).digest('hex')})))
+ if(problem)throw new Error(problem)
+}
+// A module update replaces its USB package: the site serves only what a package row names, so an older file is a stale download (#971).
+export function unlistedPackages(root){
+ const named=new Set(),walk=value=>{if(typeof value==='string'&&value.endsWith('.mwrm'))named.add(value);else if(value&&typeof value==='object')Object.values(value).forEach(walk)}
+ const rows=resolve(root,'src/engine/assets/octatrack-module-packages.json')
+ if(!existsSync(rows))return // a repository without USB packages, such as a minimal test fixture
+ walk(JSON.parse(readFileSync(rows,'utf8')).packages)
+ const files=folders(root,'public/octatrack-modules').flatMap(folder=>readdirSync(resolve(root,folder)).filter(name=>name.endsWith('.mwrm')).map(name=>folder+'/'+name))
+ const stale=files.filter(path=>!named.has(path.replace(/^public\//,'')))
+ if(stale.length)throw new Error(stale.join(', ')+': no package row names '+(stale.length>1?'these':'this')+' any more. A module update deletes its previous package: git rm '+stale.join(' '))
+}
 export async function machineModules({root,write=false,baseCommit=null,includeDrafts=false}) {
 if(includeDrafts&&write)throw new Error('Draft validation cannot publish generated library metadata')
 if(baseCommit)requireNoSubmissions(root,baseCommit)
@@ -36,6 +63,7 @@ const machineProfiles=[]
 for(const entry of await readdir(resolve(root,'sdk/machines'),{withFileTypes:true}).catch(error=>{if(error.code==='ENOENT')return [];throw error}))if(entry.isDirectory())machineProfiles.push(parseMachineProfile(await json(resolve(root,'sdk/machines',entry.name,'machine.json'))))
 let machineModules=0
 const machineDocuments=[]
+const sectionSlots=new Map()
 for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='elemod')){
  const folderRoot=resolve(root,machine.sdk.modules),published=machine.sdk.catalog?(await json(resolve(root,machine.sdk.catalog))).modules:[]
  const dependencies=await loadElemodDependencies(root,machine)
@@ -72,6 +100,14 @@ for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='el
    const ids=Object.entries((await json(resolve(root,'sdk/machines',machine.id,'fx-ids.json'))).ids).filter(([,id])=>id===document.id).map(([n])=>Number(n))
    const said=(await Promise.all(build.sources.map(async path=>readFile(await file(folder,path),'utf8')))).join('\n').match(/MW_FX_ABI,\s*\d+/g)?.map(text=>Number(text.split(',')[1]))??[]
    if(ids.length!==1||!(ids[0]>=1&&ids[0]<=63)||said.length!==1||said[0]!==ids[0])throw new Error(label+': a send effect takes one id, 1 to 63, from sdk/machines/'+machine.id+'/fx-ids.json, and its record (MW_FX_ABI, id, ...) carries it')
+  }
+  // A machine's section in the Rytm base's machine list (mw_machine_sections): four bytes with no relocation, from the module
+  // that adds the machine, naming its slot and a section stock files machines under; no two modules name one slot.
+  for(const entry of build.contribute.filter(entry=>entry.to==='mw_machine_sections')){
+   const bytes=entry.data.match(/../g).map(pair=>parseInt(pair,16)),key=machine.id+':'+bytes[0]
+   if(entry.relocs.length||bytes.length!==4||bytes[0]<34||bytes[0]>43||![1,2,4,5,6,7,8,9,10,11].includes(bytes[1])||bytes[2]||bytes[3]||!build.contribute.some(other=>other.to==='core_machines'))throw new Error(label+': a mw_machine_sections entry is four bytes with no relocation: the slot (34 to 43) of the machine the module adds through core_machines, a stock section (1 BD, 2 SD, 4 CP, 5 BT, 6 RS, 7 HH, 8 CY, 9 CB, 10 UT, 11 SY) and two zero bytes')
+   if(sectionSlots.has(key))throw new Error(label+': '+sectionSlots.get(key)+' already names the section of machine slot '+bytes[0])
+   sectionSlots.set(key,document.id)
   }
   const media=document.media.map(item=>item.path),reports=document.evidence.reports
   for(const path of ['README.md',document.tests.report,document.license.file,...build.sources,...media,...reports])await readFile(await file(folder,path)).catch(()=>{throw new Error(label+': missing '+path)})

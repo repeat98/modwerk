@@ -47,6 +47,7 @@ unsigned char sample_rate_voices;               // one bit a voice: audio.s scal
 static volatile unsigned char track_on[TRACKS]; // one byte a track: written from the UI and the audio interrupt
 
 static unsigned char going_down[VOICES];        // the way each voice went last block
+static unsigned char going_any;                  // any of them going down
 
 // stock's frames for STA and END (8.8, of 120), audio.s; the DMA follows these frames
 void sample_rate_frames(int sta, int end, unsigned frames, int *out);
@@ -83,8 +84,19 @@ static int turn_round(int v, int t, int trig)
 // Each block, before the prefetch
 void sample_rate_block(void)
 {
-    unsigned char mask = 0;
+    unsigned char mask = 0, down_now = 0;
     int v;
+    // No track with RATE on and no voice still going down: the loop below would change
+    // nothing, so skip it (the audio interrupt runs this every block).
+    if (!going_any) {
+        int t;
+        for (t = 0; t < TRACKS && !track_on[t]; t++)
+            ;
+        if (t == TRACKS) {
+            sample_rate_voices = 0;
+            return;
+        }
+    }
     for (v = 0; v < VOICES; v++) {
         int t = OWNER(v), on, down;
         if (t >= TRACKS) {
@@ -106,7 +118,10 @@ void sample_rate_block(void)
             EFF(t, IDX_STA) = EFF(t, IDX_END);
             EFF(t, IDX_END) = sta;
         }
+        if (going_down[v])
+            down_now = 1;
     }
+    going_any = down_now;
     sample_rate_voices = mask;
 }
 

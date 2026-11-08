@@ -70,7 +70,7 @@ class OctakitDraft(unittest.TestCase):
     def test_draft_stays_outside_native_discovery_and_publication(self):
         self.assertEqual(RECORD['root'], 'sdk/drafts/octakit')
         self.assertFalse((APP / 'sdk/octabam/modules/octakit').exists())
-        for rel in ['sdk/catalog.json', 'src/catalog/module-documents.json', 'sdk/module-qualification-baseline.json']:
+        for rel in ['sdk/catalog.json', 'src/catalog/module-documents.json', 'sdk/approvals/module-qualification-baseline.json']:
             entries = json.loads((APP / rel).read_text())['modules']
             self.assertNotIn('octakit', {entry['id'] for entry in entries})
         doc = json.loads((DRAFT / 'octamod.module.json').read_text())

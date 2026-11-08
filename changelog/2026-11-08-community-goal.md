@@ -1,0 +1,1 @@
+Site: the home page's title, description and search summary now say what Modwerk is for: a community workshop for opening up electronic music hardware to mods. They name the Analog Rytm beside the Octatrack, Digitakt and Digitone, and invite visitors to help open up the next instrument.

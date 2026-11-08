@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { DEVICE_LOG_BYTES, DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, parseDeviceLog } from './device-log'
+import { validateDiagnostic } from '../../../server/octatrack-diagnostics'
 
 /** A log as diag.h lays it out, big-endian: header, freeze slot, 96 loads, 32 incidents. */
 function log(edit: (view: DataView) => void) {
@@ -68,6 +69,11 @@ describe('the unit’s diagnostics log, version 2', () => {
     expect(parsed.incidents[1]).toMatchObject({ a: 2 }); expect(parsed.incidents[1].machines.slice(0, 8)).toEqual([0x95, 0xcf, 0xf6, 0x96, 0xbc, 0xf0, 0xd6, 0x74])
     expect(parsed.crash).toMatchObject({ count: 12, vector: 4, sr: 0x2000, pc: 0x40c52322 }); expect(parsed.crash!.code[0]).toBe(0x4fefffd4); expect(parsed.crash!.memory[0]).toBe(0)
     expect(parsed.stall).toMatchObject({ count: 2, reason: 1, ticks: 17328 }); expect(parsed.stall!.report).toEqual([806180, 0])
+    // The site uploads these records as they are read here; the Worker refused version 2 loads and the records until 8 November 2026.
+    const upload = (log: object) => () => validateDiagnostic({ id: crypto.randomUUID(), event: 'device_log', phase: 'ready', log })
+    expect(upload({ loads: parsed.loads, incidents: [] })).not.toThrow()
+    expect(upload({ loads: [], incidents: parsed.incidents })).not.toThrow()
+    expect(upload({ loads: [], incidents: [], crash: parsed.crash, stall: parsed.stall })).not.toThrow()
   })
   it('leaves the records out when their magic is missing', () => {
     const parsed = parseDeviceLog(log2(() => {}))!
