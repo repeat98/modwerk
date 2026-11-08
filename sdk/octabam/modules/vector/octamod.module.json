@@ -2,7 +2,7 @@
   "schemaVersion": 2,
   "id": "vector",
   "key": "VECTOR",
-  "name": "VECTOR",
+  "name": "VECTOR MIDI",
   "version": "0.3.0-experimental",
   "category": "machines",
   "author": {
@@ -16,8 +16,8 @@
   "nativeManifest": "manifest.py",
   "presentation": {
     "label": "GENERATIVE",
-    "family": "Sample pattern generator",
-    "summary": "Shape an editable sample phrase directly on both native SRC pages.",
+    "family": "Sample and MIDI pattern generator",
+    "summary": "Shape an editable phrase on a sample track's SRC pages, or on a MIDI track's SRC and AMP pages.",
     "overview": "VECTOR commits real trigs and PTCH/HOLD/VOL locks as its SRC parameters change. The native sequencer plays the result immediately. SRC SETUP holds secondary controls. This update protects packed settings from stock Part validation during startup. Physical hardware remains untested; the owner approved release and issue closure with physical reboot/audio unverified.",
     "highlights": [
       "Immediate sequence changes while playing",
