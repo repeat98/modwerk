@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "module": "pattern-sample-locks",
+  "version": "0.1.8-experimental",
+  "kind": "coldfire",
+  "trigger": "key",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": 333805,
+    "budget": 26600000,
+    "method": "Emulator, not hardware (8 November 2026): executed instructions in ot_emu (sha256 b087c97f...) from entry to return of module_key for the dearest press, CLEAR SAMPLE LOCKS confirmed on 8 tracks x 64 steps (512 SAMPLE fields, no other locks), stock callees and interrupts included. Exact package 3e13c46f..., public beta base 9b3ba417..., profile symbols for that package, capture_emulator.py --performance with DSP running. The commit alone took 314,215; every field and the lock index were verified after each edit. Five cases measured (2, 64 and three 512-field fixtures); the next dearest was 326,556."
+  },
+  "stress": {
+    "events": 40,
+    "playing": true,
+    "hangs": 0,
+    "method": "Emulator, not hardware (8 November 2026): 20 rounds, each LOCK SAMPLES TO PATTERN then CLEAR SAMPLE LOCKS on 512 fields while the sequencer played, every write verified, playback still running and audio frames advancing (at least 8,280 per round); then STOP and a Part change (hold PART + DOWN or UP; the Part index changed every round). Same base, package and emulator as above, scratch copy of capture_emulator.py with a 20-round press exercise."
+  }
+}
