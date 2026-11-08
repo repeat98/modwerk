@@ -5,7 +5,7 @@ import { resolve } from 'node:path'
 import { parseModuleDocument, requireModuleQualificationForPublication, type ModuleQualification } from './module-contract'
 import { moduleFolderSha256, moduleNativeSourceSha256, parseQualificationBaseline, requireFolderQualification } from '../../scripts/module-qualification.mjs'
 import example from '../../public/module-repository.example.json'
-import baseline from '../../sdk/module-qualification-baseline.json'
+import baseline from '../../sdk/approvals/module-qualification-baseline.json'
 import catalog from './module-documents.json'
 
 import { qualificationFixture, qualificationMedia, qualificationReadme, qualificationPng } from './test-fixtures/qualification'
@@ -99,7 +99,7 @@ describe('module qualification hard gates',()=>{
       writeFileSync(resolve(folder,'manifest.py'),'raise AssertionError("never execute module source")\n')
       const document=parseModuleDocument(JSON.parse(readFileSync('sdk/octabam/modules/usb-audio-out-tracks-main-cue/octamod.module.json','utf8')))
       const approval={kind:'owner-approved-update',id:document.id,version:document.version,sourceSha256:await moduleNativeSourceSha256(folder,document),approvedBy:'repeat98',approvedOn:'2026-10-07',waived:['current-build-hardware','chip-worst-case-cycles','complete-memory-bounds','release-documentation'],ownerStatement:'Approved.',reason:'Test.'}
-      const write=(value:object)=>writeFileSync(resolve(root,'sdk',document.id+'-build-approval.json'),JSON.stringify(value))
+      const write=(value:object)=>writeFileSync(resolve(root,'sdk','approvals',document.id+'-build-approval.json'),JSON.stringify(value))
       const check=(doc=document)=>requireFolderQualification(folder,doc,new Map(),new Map(),{root})
       write(approval)
       expect(await check()).toBe('owner-approved-update')
@@ -118,7 +118,7 @@ describe('module qualification hard gates',()=>{
       writeFileSync(resolve(folder,'manifest.py'),'SOURCE = 1\n')
       const document=parseModuleDocument(JSON.parse(readFileSync('sdk/octabam/modules/euclid/octamod.module.json','utf8')))
       const approval={kind:'owner-approved-update',id:document.id,version:document.version,sourceSha256:await moduleNativeSourceSha256(folder,document),approvedBy:'repeat98',approvedOn:'2026-10-07',waived:['current-build-hardware','chip-worst-case-cycles','complete-memory-bounds','release-documentation'],ownerStatement:'Approved.',reason:'Test.',retainedUiVersion:'0.1.3-experimental'}
-      const write=(value:object)=>writeFileSync(resolve(root,'sdk',document.id+'-build-approval.json'),JSON.stringify(value))
+      const write=(value:object)=>writeFileSync(resolve(root,'sdk','approvals',document.id+'-build-approval.json'),JSON.stringify(value))
       const check=()=>requireFolderQualification(folder,document,new Map(),new Map(),{root})
       write(approval);expect(await check()).toBe('owner-approved-update')
       write({...approval,retainedUiVersion:document.version});await expect(check()).rejects.toThrow('earlier version')
