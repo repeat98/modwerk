@@ -3,7 +3,8 @@
     "version": "0.1.3-experimental",
     "date": "2026-11-08",
     "changes": [
-      "REC HLD and REC TGL: when the input ends live recording, you are back in grid recording or step recording if you were in it before live recording started, from the input or from RECORD + PLAY. From play mode it still ends in play mode."
+      "REC HLD and REC TGL: when the input ends live recording, you are back in grid or step recording if you were in it before live recording started.",
+      "This works whether live recording started from the input or from RECORD + PLAY. From play mode it still ends in play mode."
     ]
   },
   {
