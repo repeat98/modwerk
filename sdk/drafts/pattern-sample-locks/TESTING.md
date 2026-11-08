@@ -16,6 +16,105 @@ Offline stack, memory, callback and instruction-count analyses below use the pri
 
 The [clock, timer, SDRAM and arbitration inventory](evidence/clock-memory-static-facts-20261105.md) reviews startup configuration facts for that exact candidate and private reconstruction. The reported physical IDENTIFY matched the canonical configuration hash, but no physical MAIN hash was recorded; the inventory therefore proves neither device-image equality nor live timing state, a cycle/latency bound or release qualification.
 
+## MKII owner checks on the public beta base — 8 November 2026 (Taipei)
+
+Tester: `twwwy` (panel results reported by the author; USB readings observed by
+the session). Octatrack MKII, OS 1.40C, flashed public base `9b3ba417…`, exact
+package `3e13c46f…` (10,048 bytes; `main`'s draft runtime sources unchanged
+since `5a15ac39`). Twenty kept modules, set identity `42fcda34…`, which equals
+the digest of `main`'s published packages (Sidechain Comp 0.2.0, LOFI2 0.1.1).
+Every offer was a whole-set USB offer; no flash.
+
+**The owner's checks passed** on a freshly power-cycled unit with the 20 kept
+modules plus Sample Locks (reported unless stated):
+
+- FUNC+PART on a Flex track's SRC page showed LOCK SAMPLES TO PATTERN and CLEAR
+  SAMPLE LOCKS, before and after opening AED SLICE > CREATE BEAT GRID. Observed:
+  the module's status word read `0x01000000` (Part menu open).
+- Lock on two patterns wrote SAMPLE locks; a manual SAMPLE lock and a
+  non-SAMPLE lock were unchanged. Native save and reload kept both.
+- Keep of the 21-module set: observed saved status 7, 21 saved and 21 live,
+  set identity `38436efb…`, self-test 21 intact, 6 DSP ran, failed 0, peaks
+  CPU 67.1 %, T1–4 54.3 %, T5–8 70.4 %.
+- Physical power cycle: observed cold start (generation 0) with the exact 21
+  records and set identity `38436efb…`. Reported: both patterns' locks
+  returned and the menu rows still appeared.
+- Clear on one pattern removed its SAMPLE locks and kept the non-SAMPLE lock;
+  after native save and reload it stayed clear and the other pattern kept its
+  locks.
+
+**Earlier the same day the rows did not appear** (reported: FUNC+PART showed
+only the four stock rows) in three trials on a unit that had been running for
+a long session: 20 plus Sample Locks (21 live), 19 plus Sample Locks (VECTOR
+out) and Sample Locks alone. Each passed self-test. Observed: the shared status
+word stayed on Beat Slicer's tick signature `0x42530000`, also during the alone
+trial, after the base reported Beat Slicer removed. A trial with only Beat
+Slicer out of the live set showed the rows. After a physical power cycle the
+same 21-module offer (identity `fc790fc5…`) worked, with the status word on
+Sample Locks' value. Cause not found; not reproduced in the emulator.
+
+Emulator, labelled as such: on a private build of base `9b3ba417…`, with the
+exact package and the 20 published packages (identity `42fcda34…`), sent alone,
+after the 20 and as a whole-set offer, the Part menu showed both rows each time
+(menu-only scratch harness, image attestation skipped).
+
+Also observed, not caused by this module:
+
+- Removing a module a project track uses is refused at verify as
+  `RUNTIME_IN_USE` (loader refusal 7, read from the self-test record).
+- A trial with the project's heavier DSP load stopped the DSP during self-test
+  (culprit BBD Delay, peaks CPU 89.8 %, T1–4 82.2 %); it rolled back and the
+  set was verified. That trial left VECTOR out and added Sample Locks, which
+  has no DSP code.
+- After long-held trials, rollback on the trial's own connection failed with
+  "enter was not confirmed" three times; a fresh connection rolled back and the
+  set was verified each time.
+
+Not tested here: audio, MKI, maximum-size edits, live recording refusal and
+playback-running Apply on this base.
+
+## Worst key press and press stress on the emulator — 8 November 2026
+
+Emulator only (`ot_emu` `b087c97f…`), not hardware. Public beta base
+`9b3ba417…` (a local build with that identity), exact package `3e13c46f…`,
+DSP running, in the toolchain container. Recorded in
+[evidence/performance.json](evidence/performance.json), as the owner asked for
+this version: a measured worst event in place of the static stack and cycle
+bound; stock benchmark and MIDI flood waived (no MIDI path).
+
+| Check | Result |
+| --- | --- |
+| record | key-press coldfire record for pattern-sample-locks@0.1.8-experimental |
+| cycles | worst event 333,805 of 26,600,000 (1 %) |
+| stock benchmark | none: a key-press module adds nothing to the frame interrupt |
+| stress | 40 presses of the dearest event while playing, no hang |
+
+The dearest press is CLEAR SAMPLE LOCKS on 8 tracks × 64 steps (512 fields,
+no other locks): 333,805 instructions from `module_key` entry to return, stock
+callees and interrupts included; the commit alone 314,215 (314,314 on
+4 November on the older base). Lock on the same fixture: 134,167. Every case
+verified the written fields and lock index.
+
+Stress: 20 rounds of Lock then Clear on 512 fields while playing, each write
+verified, playback still running and audio frames advancing (at least 8,280
+per round), then STOP and a Part change (hold PART + DOWN or UP; the Part
+index changed every round).
+
+Commands (private paths elided):
+
+```sh
+python3 -B sdk/drafts/pattern-sample-locks/capture_emulator.py --emulator ot_emu \
+  --base <public base 9b3ba417 build> --card <disposable card> \
+  --package pattern-sample-locks-0.1.8.mwrm --profile-symbols <package profile symbols> \
+  --out <new dir> --performance
+npm run perf:audit -- check sdk/drafts/pattern-sample-locks/evidence/performance.json
+```
+
+The stress rounds and the menu captures ran from a scratch copy of
+`capture_emulator.py`. That copy skipped the image attestation, which predates
+the reconstructed package, and added a 20-round press exercise and a
+pre-install option. The copy is not committed.
+
 ## MKII RAM functional trial — 3 November 2026 (reported configuration identity)
 
 The author (`twwwy`) reports that both physical actions passed on the
