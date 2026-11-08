@@ -48,7 +48,7 @@ GLOBAL > AUDIO ROUTING > DAC SUM ON, then FILTER pressed twice on a voice track.
 ### Quick tutorial
 
 1. Use a build containing Voice DAC. Open GLOBAL > AUDIO ROUTING and set DAC SUM (the last item) ON.
-2. Press FILTER twice on a voice track: DAC FILTER. Set TYP to LP2 and turn FRQ down while a pattern plays: the voice darkens. Turn ATK and SUS to shape the hits.
+2. Press FILTER twice on a voice track: the DAC FILTER page opens. Set TYP to LP2 and turn FRQ down while a pattern plays: the voice darkens. Turn ATK and SUS to shape the hits.
 3. Set TYP to LP1 or HP1: the RES knob goes empty. Set TYP to OFF: FRQ and RES go empty and the voice is unfiltered.
 4. Set DAC SUM OFF: FILTER pressed twice stays on stock's page and the sound is stock's again.
 
