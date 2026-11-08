@@ -34,7 +34,7 @@
     {
      "from": "lfo-rnd/README.md",
      "to": "upstream/README.md",
-     "sha256": "6e7558c787e99c7c988702a66ce023431ab2401889bd63f704841b8706be1516"
+     "sha256": "ee8fe41cdc4fc355a13f1e4a746ff4a51ca41958b75f3494c34c52aa7db36b0c"
     }
    ],
    "excluded": [
@@ -45,7 +45,8 @@
     "mod.json's 31 OS 1.74 port sites became address, length and SHA-256 guards in build.json's 1.74 release; its ten bytes sites are declared kind data. No stock bytes are retained.",
     "mod.json's storage field (lfo_rnd_cfg, scope sound, 16 bits) became build.json's storage, and its three contribute entries (core_pages, core_params, core_view_pages) build.json's contribute.",
     "The OS 1.73 source and sites are not imported: Modwerk's base is for OS 1.74 only.",
-    "include/ar2-1.74.inc and shared/shared.s keep their paths relative to the source, so the .include lines in src/lfo-rnd.s are unchanged."
+    "include/ar2-1.74.inc and shared/shared.s keep their paths relative to the source, so the .include lines in src/lfo-rnd.s are unchanged.",
+    "upstream/README.md is lfo-rnd/README.md at e029f75 with the stock values of its ten `bytes` rows replaced by (stock), so no stock bytes are kept; the new values and everything else are unchanged."
    ]
   }
  ]

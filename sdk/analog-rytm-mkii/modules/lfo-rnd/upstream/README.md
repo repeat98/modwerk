@@ -62,25 +62,25 @@ too. The cost is a test and a branch per read.
 | 0x400a8dfa | jmp | `jmp lfo_rnd_read_gate` |
 | 0x400a9000 | jmp | `jmp lfo_rnd_setter_gate` |
 | 0x40120fae | jmp | `jmp lfo_rnd_audio_gate` |
-| 0x401bf950 | bytes | `ffffffff` -> `00000000` |
-| 0x401bf958 | bytes | `00000000` -> `00007f00` |
-| 0x401bf970 | bytes | `00000000` -> `00010000` |
+| 0x401bf950 | bytes | (stock) -> `00000000` |
+| 0x401bf958 | bytes | (stock) -> `00007f00` |
+| 0x401bf970 | bytes | (stock) -> `00010000` |
 | 0x401bf974 | ptr | pointer -> `lfo_rnd_str_r1dst_l` |
 | 0x401bf978 | ptr | pointer -> `lfo_rnd_str_group` |
 | 0x401bf97c | ptr | pointer -> `lfo_rnd_str_r1dst` |
-| 0x401bf984 | bytes | `ffffffff` -> `00000000` |
-| 0x401bf98c | bytes | `00000000` -> `00007f00` |
+| 0x401bf984 | bytes | (stock) -> `00000000` |
+| 0x401bf98c | bytes | (stock) -> `00007f00` |
 | 0x401bf9a8 | ptr | pointer -> `lfo_rnd_str_r1dep_l` |
 | 0x401bf9ac | ptr | pointer -> `lfo_rnd_str_group` |
 | 0x401bf9b0 | ptr | pointer -> `lfo_rnd_str_r1dep` |
-| 0x401bf9b8 | bytes | `ffffffff` -> `00000000` |
-| 0x401bf9c0 | bytes | `00000000` -> `00007f00` |
-| 0x401bf9d8 | bytes | `00000000` -> `00010000` |
+| 0x401bf9b8 | bytes | (stock) -> `00000000` |
+| 0x401bf9c0 | bytes | (stock) -> `00007f00` |
+| 0x401bf9d8 | bytes | (stock) -> `00010000` |
 | 0x401bf9dc | ptr | pointer -> `lfo_rnd_str_r2dst_l` |
 | 0x401bf9e0 | ptr | pointer -> `lfo_rnd_str_group` |
 | 0x401bf9e4 | ptr | pointer -> `lfo_rnd_str_r2dst` |
-| 0x401bf9ec | bytes | `ffffffff` -> `00000000` |
-| 0x401bf9f4 | bytes | `00000000` -> `00007f00` |
+| 0x401bf9ec | bytes | (stock) -> `00000000` |
+| 0x401bf9f4 | bytes | (stock) -> `00007f00` |
 | 0x401bfa10 | ptr | pointer -> `lfo_rnd_str_r2dep_l` |
 | 0x401bfa14 | ptr | pointer -> `lfo_rnd_str_group` |
 | 0x401bfa18 | ptr | pointer -> `lfo_rnd_str_r2dep` |
