@@ -120,6 +120,8 @@ A temporary probe (not shipped) split the 1.3 ms build by stage: copying the rec
 
 The hoisted scale lookup in `engine.c` gives the same phrases as 0.2.4 over 18,144,000 parameter sets (a throwaway host comparison of both engines), and `test_engine.c` passes. `sdk/tests/test_machine_events.py` checks the base's registry on the host (`test_midi_generators.c`), the package glue and the port's sources.
 
+Card builds and .bss, 8 November 2026 (found by `machine_composition_tests`, not on a unit): the base's generator registry, which a card build links into VECTOR, has statics without an initialiser, and the compiler put them (144 bytes) in .bss. A card unit's .bss is never loaded or zeroed (`tools/remix/platform_build.py`), so on a card `mg_active` and the list's cursor would have started as whatever the boot left. `prepare.py` now puts them in .data as zeros and stops if any .bss is left; the code is unchanged (22,314 text bytes), .data grows by 144. Over USB the package was not affected (the loader zeroes a package's .bss, `sdk/runtime/loader/loader.c`), so the October unit runs stand.
+
 Not tested: a card build on the unit (layout A included); a physical power cycle with a VECTOR MIDI track (RAM boots kept it: the battery-backed bank restore and the Part validator pass); a project save and reload; scenes and LFOs on a VECTOR MIDI track; MKI. Two RAM boots of development twins out of about fifteen did not come back on USB (one stall record: frames stopped 41 s after a boot with no module installed); a power cycle recovered both, and the next boot of the same image worked. It matches the RAM-boot trap of 19 October 2026 and was not reproduced.
 
 ## Owner exception and remaining limits
