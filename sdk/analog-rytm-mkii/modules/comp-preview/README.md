@@ -45,6 +45,9 @@ FX track, AMP page (the compressor): press AMP again.
 2. Play a pattern and turn THR down: the gain-reduction line dips below the dotted threshold row. Hold FUNC and press AMP to switch between the full layout and gain reduction alone; FUNC + LEFT/RIGHT sets the scroll speed and FUNC + UP/DOWN the vertical scale.
 3. Press AMP again to return to the stock compressor page. Build without the module and the page is stock.
 
+The stock page of step 1, the preview and its second layout of step 2 are under [Screens and audio](#screens-and-audio):
+[compressor page](media/compressor-page.png), [preview](media/preview.png), [gain reduction alone](media/preview-gr-only.png).
+
 ## Compatibility and limitations
 
 Requires core-ar2 0.4 or later on OS 1.74. Use your own original stock OS 1.74 file.
@@ -83,6 +86,22 @@ unchanged; they name firmware routines and RAM by address only. The upstream REA
 
 ## Screens and audio
 
-No screenshots yet: they need a capture of the preview page from the emulator or a unit running this
-package on Modwerk's base. The preview's behaviour was judged on a unit; there is no audio
-demonstration, and the module makes no sound.
+These captures are from analog-emu (trigcondition's emulator built on rytm-emu) running CP11, the Modwerk base
+for core-ar2 0.7 and Compressor Preview 1.1.0, from stock OS 1.74. See [capture provenance](media/capture.json)
+for hashes and inputs. The trace is the emulator's estimate from its rendered voices; the
+preview's behaviour was judged on a unit. There is no audio demonstration, and the module makes no sound.
+
+![COMPRESSOR page with THR, ATK, REL and MUP above RAT, SEQ, MIX and VOL.](media/compressor-page.png)
+
+On the FX track, press AMP: the stock compressor page.
+
+![Preview page: knob names at top and bottom, a dotted threshold row and a trace that drops at the right and curves back up.](media/preview.png)
+
+Press AMP again: the preview. With THR at 64 a BD hit pulls the trace down from the dotted
+threshold row and it recovers. The header shows the kit, as it does after any pad press. Stock
+stays on the compressor page.
+
+![Preview page in its second layout: a line near the top that drops at the right and curves back up.](media/preview-gr-only.png)
+
+Hold FUNC and press AMP: gain reduction alone, 0 dB at the top. A BD hit pulls the line down and it
+recovers.

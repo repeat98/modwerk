@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "comp-preview",
+  "moduleVersion": "1.1.0",
+  "firmware": "1.74",
+  "capturedAt": "2026-11-08T20:50:17Z",
+  "imageSha256": "55dafc3b527e1bb83c2f62b8a61c27cf9d1c6102a06bfee7ac796223dc94ec47",
+  "mainSha256": null,
+  "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "build": "Modwerk's linker (scripts/link-image.mjs in modwerk-source-tools): the Modwerk base for core-ar2 0.7 (plain variant ba530f45, vendored) + this folder's comp-preview 1.1.0, materialised against stock OS 1.74 (cb0f99d6…e123), --version CP11",
+  "emulator": {
+    "name": "analog-emu (trigcondition's Rytm and A4 emulator built on rytm-emu; its history holds rytm-emu c5732f0, 951dcbc and e914f46)",
+    "repository": "https://github.com/trigcondition/analog-emu",
+    "revision": "4c07ed3",
+    "binary": "dtboot (cargo build --release, Windows)",
+    "settings": "no card image, JIT on, --every 1000M; DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out"
+  },
+  "conditions": "Headless cold boot; four held NO presses clear the missing-calibration notices; short presses (12M) select the FX track and open its AMP page (the compressor); encoder 0 (THR) turns down thirty-eight steps to 64; AMP again opens the preview; BD is struck ten times, 300M apart; FUNC is held while AMP is pressed for the second layout, and BD is struck ten times more. Stock 1.74 with the same input gives byte-identical frames up to the compressor page and stays on it when AMP is pressed again. Below THR about 45 the estimate holds a large reduction between hits in the emulator, so the full layout's trace leaves the screen; the captures use 64. Playback was not judged in the emulator.",
+  "captures": [
+    {
+      "path": "media/compressor-page.png",
+      "sha256": "74536cafe18c8b6f98398b8c6eb5ff2cf68aca650e6ff69b628fd69164d84c9e",
+      "frame": "step06_AMP.png",
+      "plan": "dtboot cp11.syx --instr 18000M --every 1000M --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press FX@7503M:12M --press AMP@8003M:12M --turn 0:-4@8103Mx38/20M --press AMP@8903M:12M --press BD@9903M:12M --press BD@10203M:12M --press BD@10503M:12M --press BD@10803M:12M --press BD@11103M:12M --press BD@11403M:12M --press BD@11703M:12M --press BD@12003M:12M --press BD@12303M:12M --press BD@12603M:12M --press BD@14103M:12M --press BD@14403M:12M --press BD@14703M:12M --press BD@15003M:12M --press BD@15303M:12M --press BD@15603M:12M --press BD@15903M:12M --press BD@16203M:12M --press BD@16503M:12M --press BD@16803M:12M --press FUNC@13000M:600M --press AMP@13203M:12M"
+    },
+    {
+      "path": "media/preview.png",
+      "sha256": "6dd7d714d011bf6aaaf42dcd80f1853e9aff3dd0017f279e509f8e2398986ae7",
+      "frame": "step55_BD.png",
+      "plan": "dtboot cp11.syx --instr 18000M --every 1000M --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press FX@7503M:12M --press AMP@8003M:12M --turn 0:-4@8103Mx38/20M --press AMP@8903M:12M --press BD@9903M:12M --press BD@10203M:12M --press BD@10503M:12M --press BD@10803M:12M --press BD@11103M:12M --press BD@11403M:12M --press BD@11703M:12M --press BD@12003M:12M --press BD@12303M:12M --press BD@12603M:12M --press BD@14103M:12M --press BD@14403M:12M --press BD@14703M:12M --press BD@15003M:12M --press BD@15303M:12M --press BD@15603M:12M --press BD@15903M:12M --press BD@16203M:12M --press BD@16503M:12M --press BD@16803M:12M --press FUNC@13000M:600M --press AMP@13203M:12M"
+    },
+    {
+      "path": "media/preview-gr-only.png",
+      "sha256": "94ee8af00bf47cf363587ec01592f7a005b3ba53586ca834c1101abce0895757",
+      "frame": "step67_BD.png",
+      "plan": "dtboot cp11.syx --instr 18000M --every 1000M --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press FX@7503M:12M --press AMP@8003M:12M --turn 0:-4@8103Mx38/20M --press AMP@8903M:12M --press BD@9903M:12M --press BD@10203M:12M --press BD@10503M:12M --press BD@10803M:12M --press BD@11103M:12M --press BD@11403M:12M --press BD@11703M:12M --press BD@12003M:12M --press BD@12303M:12M --press BD@12603M:12M --press BD@14103M:12M --press BD@14403M:12M --press BD@14703M:12M --press BD@15003M:12M --press BD@15303M:12M --press BD@15603M:12M --press BD@15903M:12M --press BD@16203M:12M --press BD@16503M:12M --press BD@16803M:12M --press FUNC@13000M:600M --press AMP@13203M:12M"
+    }
+  ]
+}

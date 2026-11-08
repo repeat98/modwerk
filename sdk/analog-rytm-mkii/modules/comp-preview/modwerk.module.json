@@ -45,7 +45,10 @@
       "Select the FX track and open its AMP page.",
       "Press AMP again for the preview."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/preview.png",
+      "media/preview-gr-only.png"
+    ]
   },
   "controls": [
     {
@@ -141,8 +144,12 @@
           "Press AMP again to return to the stock compressor page. Build without the module and the page is stock."
         ]
       },
-      "screenshots": [],
-      "captureRecord": null
+      "screenshots": [
+        "media/compressor-page.png",
+        "media/preview.png",
+        "media/preview-gr-only.png"
+      ],
+      "captureRecord": "media/capture.json"
     }
   },
   "license": {
@@ -159,6 +166,54 @@
       "credit": "Iced-Cream",
       "license": "GPL-2.0-only",
       "source": "Original vector illustration; not a device screenshot."
+    },
+    {
+      "path": "media/compressor-page.png",
+      "kind": "screenshot",
+      "caption": "On the FX track, press AMP: the stock compressor page.",
+      "alt": "COMPRESSOR page with THR, ATK, REL and MUP above RAT, SEQ, MIX and VOL.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.1.0",
+        "imageSha256": "55dafc3b527e1bb83c2f62b8a61c27cf9d1c6102a06bfee7ac796223dc94ec47",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running CP11, the Modwerk base for core-ar2 0.7 (plain variant) and comp-preview 1.1.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/preview.png",
+      "kind": "screenshot",
+      "caption": "Press AMP again: the preview. THR 64: a BD hit pulls the trace down from the dotted threshold row and it recovers. The header shows the kit after a pad press. Stock stays on COMPRESSOR.",
+      "alt": "Preview page: knob names at top and bottom, a dotted threshold row and a trace that drops at the right and curves back up.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.1.0",
+        "imageSha256": "55dafc3b527e1bb83c2f62b8a61c27cf9d1c6102a06bfee7ac796223dc94ec47",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running CP11, the Modwerk base for core-ar2 0.7 (plain variant) and comp-preview 1.1.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/preview-gr-only.png",
+      "kind": "screenshot",
+      "caption": "Hold FUNC and press AMP: gain reduction alone, 0 dB at the top. A BD hit pulls the line down and it recovers.",
+      "alt": "Preview page in its second layout: a line near the top that drops at the right and curves back up.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.1.0",
+        "imageSha256": "55dafc3b527e1bb83c2f62b8a61c27cf9d1c6102a06bfee7ac796223dc94ec47",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running CP11, the Modwerk base for core-ar2 0.7 (plain variant) and comp-preview 1.1.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
     }
   ]
 }
