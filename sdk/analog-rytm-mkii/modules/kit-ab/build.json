@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/kit-ab.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:kit reload (NO + PLAY and the KIT menu's RELOAD)"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x400cd51a",
+          "len": 6,
+          "stockSha256": "234dcb0dff99fd2b0fe99f6fab532a8e50c7c1f3fc3a96121ea25dc5a829b5bf",
+          "op": "jsr",
+          "target": "kit_ab_toggle"
+        },
+        {
+          "addr": "0x400cd542",
+          "len": 6,
+          "stockSha256": "48f537e3bda3ab9b514c7e97ec766ae0dcf69c6db68942b7b87f7829e555d02a",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "kit_ab_kab_msg"
+            }
+          ]
+        },
+        {
+          "addr": "0x400dd64a",
+          "len": 6,
+          "stockSha256": "234dcb0dff99fd2b0fe99f6fab532a8e50c7c1f3fc3a96121ea25dc5a829b5bf",
+          "op": "jsr",
+          "target": "kit_ab_toggle"
+        },
+        {
+          "addr": "0x400dd652",
+          "len": 6,
+          "stockSha256": "d240c05e07ac3f1481a86d8c239611c741810cb068735dd6025b33a3cf94e424",
+          "op": "bytes",
+          "new": "487900000000",
+          "kind": "code",
+          "relocs": [
+            {
+              "at": 2,
+              "target": "kit_ab_kab_msg"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 3,
+  "id": "kit-ab",
+  "name": "Kit A/B",
+  "version": "1.0.0",
+  "machine": "analog-rytm-mkii",
+  "category": "system",
+  "exclusive": false,
+  "author": {
+    "github": "Iced-Cream",
+    "credits": [
+      "MrScruff — the original mod, 0010-kit-ab in rytm-mods, its design and code; published in rytm-mods-src with permission.",
+      "Iced-Cream — the elemod port (rytm2_mods) and this Modwerk module.",
+      "irpina — Elekloader and core-ar2, the core it links with."
+    ]
+  },
+  "maintainers": [
+    "Iced-Cream"
+  ],
+  "source": {
+    "repository": "https://github.com/Iced-Cream/rytm2_mods",
+    "revision": "2b3561a78bb716f92c879080d53b262a8d5869a1",
+    "path": "kit-ab"
+  },
+  "presentation": {
+    "label": "KIT A/B",
+    "family": "Workflow",
+    "summary": "NO + PLAY becomes an A/B between the kit as edited and as saved.",
+    "overview": "Kit A/B changes the single-kit reload. The first NO + PLAY (or RELOAD in the KIT menu) keeps your edits in a stash and loads the saved kit, with stock's popup KIT 1 RELOADED!. The next press puts the edits back and shows EDITS RESTORED!. Editing while the original plays ends the A/B: the next press keeps those edits instead, drops the stashed ones and reloads as a first press does. The same happens after a change of kit or any other reload. A press on a kit with no edits is a plain reload and arms nothing. Reloading every kit stays stock. It is an elemod port of MrScruff's rytm-mods 0010-kit-ab, with his code unchanged.",
+    "highlights": [
+      "Compare the kit as edited with the kit as saved with one key.",
+      "Edits are stashed, not lost: the next press restores them.",
+      "Noticed by a checksum of the working kit, so a change of kit or an edit during the A/B ends it cleanly.",
+      "MrScruff's rytm-mods code, unchanged, linked by the elemod core."
+    ],
+    "usage": [
+      "Use a build containing Kit A/B. Edit a sound on the loaded kit, for example BD DEC.",
+      "Press NO + PLAY: the screen shows KIT 1 RELOADED! and the saved value is back.",
+      "Press NO + PLAY again: EDITS RESTORED! and your edited value returns. The KIT menu's RELOAD (FUNC + PLAY MODE) does the same, with KIT RELOADED! in place of KIT 1 RELOADED!."
+    ]
+  },
+  "access": {
+    "location": "NO + PLAY on any screen that reloads the kit, and RELOAD in the KIT menu (FUNC + PLAY MODE).",
+    "steps": [
+      "Edit a sound on the loaded kit.",
+      "Press NO + PLAY to hear the saved kit, and again to get your edits back."
+    ],
+    "screenshots": []
+  },
+  "controls": [
+    {
+      "name": "NO + PLAY, and KIT menu > RELOAD",
+      "default": null,
+      "doc": "First press: stash the edited kit and reload the saved one (KIT 1 RELOADED!). Next press: restore the stash (EDITS RESTORED!). A press on a kit with no edits is a plain reload.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for OS 1.74 only, with core-ar2 0.3 or later.",
+      "One set of edits is kept: a stash of one kit, 2.5 KB (0x9e3 bytes) taken from the firmware's heap on the first press. If the allocation fails the press is a plain reload.",
+      "The restore applies the stash as stock's reload applies the saved kit, including kit_mark(working, 0), whose meaning is not established.",
+      "Reloading every kit stays stock."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.3",
+    "build": "build.json",
+    "events": [],
+    "claims": [
+      "ui:kit reload (NO + PLAY and the KIT menu's RELOAD)"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 340,
+    "fastBytes": 0,
+    "load": {
+      "display": "None in the audio path: runs when a single kit is reloaded",
+      "method": "static",
+      "conditions": "Static: the sites replace the kit reload call and its popup text in the two single-kit reload paths. Nothing is added to the audio, sequencer or tick paths. The stash takes 2,531 bytes of the firmware's heap on the first press. Not a measurement."
+    }
+  },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "1.0.0",
+    "sourceSha256": null,
+    "reports": [],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "No hardware run of this module on OS 1.74 is recorded in this repository yet. Source: rytm2_mods' OS 1.74 file, unchanged. Its four sites are the original two call sites and two popup texts.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Use a build containing Kit A/B. Edit a sound on the loaded kit, for example BD DEC.",
+          "Press NO + PLAY: the screen shows KIT 1 RELOADED! and the saved value is back.",
+          "Press NO + PLAY again: EDITS RESTORED! and your edited value returns. The KIT menu's RELOAD (FUNC + PLAY MODE) does the same, with KIT RELOADED! in place of KIT 1 RELOADED!."
+        ]
+      },
+      "screenshots": [],
+      "captureRecord": null
+    }
+  },
+  "license": {
+    "spdx": "GPL-2.0-only",
+    "file": "LICENSE",
+    "declaration": "MrScruff's rytm-mods code and Iced-Cream's elemod port, under GPL-2.0-only as rytm-mods-src. include/ar2-1.74.inc names firmware routines by address only; the patch precondition is an address, a length and a SHA-256."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Kit A/B",
+      "alt": "Original illustration of two kits with arrows swapping the edited and the saved one",
+      "credit": "Iced-Cream",
+      "license": "GPL-2.0-only",
+      "source": "Original vector illustration; not a device screenshot."
+    }
+  ]
+}

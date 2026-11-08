@@ -1,0 +1,12 @@
+[
+  {
+    "version": "1.0.0",
+    "date": "2026-11-08",
+    "changes": [
+      "First release, for Analog Rytm MKII OS 1.74: MrScruff's Kit A/B, ported to elemod by Iced-Cream, with his code unchanged.",
+      "NO + PLAY, and RELOAD in the KIT menu, toggle between the kit as edited and the kit as saved: the first press stashes the edits and reloads the saved kit (KIT 1 RELOADED!), the next restores them (EDITS RESTORED!).",
+      "Editing while the original plays, changing kit or any other reload ends the A/B; a press on a kit with no edits is a plain reload.",
+      "One set of edits is kept, 2.5 KB from the firmware's heap taken on the first press."
+    ]
+  }
+]
