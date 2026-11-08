@@ -102,19 +102,7 @@
  },
  "tests": {
   "report": "TESTING.md",
-  "summary": "Not tested on OS 1.74 yet. The OS 1.73 original passed its checks in rytm-emu (rytm-mods-src) and never ran on a unit.",
-  "documentation": {
-   "tutorial": {
-    "title": "Quick tutorial",
-    "steps": [
-     "Plug a CV source or an expression pedal into EXP/CV IN 1, then open GLOBAL > CONTROL > CONTROL INPUT 1 and set MODE to CV or EXPR (for EXPR, run EXPRESSION LEARN).",
-     "Set PERF DEST, the last row, to PF1 and leave the menu.",
-     "Give performance 1 some locks (hold PF1 in PERF mode and turn knobs), then move the jack: the locks follow it, and pad 1 lights with the level in PERF mode.",
-     "Set PERF DEST back to OFF to give PF1 back to its knob and pad."
-    ]
-   },
-   "screenshots": []
-  }
+  "summary": "Not tested on OS 1.74 yet. The OS 1.73 original passed its checks in rytm-emu (rytm-mods-src) and never ran on a unit."
  },
  "license": {
   "spdx": "GPL-2.0-only",

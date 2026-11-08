@@ -14,7 +14,8 @@ was moved to its OS 1.74 place, and two of the original's three hooks are gone.
   which the core calls at the audio interrupt's entry (0x4011fb6e), before `adc_pedal_update`
   (called at 0x40120f00 on OS 1.74) and before stock's lock loop (0x40120fc8). It reads the port
   value the previous block left, so the macro follows the jack one block (0.67 ms) later than in
-  the original, and stock's lock loop still applies it in the same block it is written.
+  the original. Stock's smoother (0x40120d0e) reads the macro words after the hook, and the lock loop
+  reads its output, so a write still reaches the locks in the same block.
 - **PERF DEST in mod storage.** The original kept it device-wide in the persisted gap at 0x405c8e84
   under its own tag. Here each port's PERF DEST is a 4-bit core-ar2 mod storage field in global
   scope, so it belongs to the globals slot and is saved with the project's globals, as Silent
