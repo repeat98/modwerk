@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Keep verified developer checkouts of upstream Octabam, Elekloader and rytm-emu outside Git.
+"""Keep verified developer checkouts of upstream Octabam, Elekloader, rytm-emu and Ziddle outside Git.
 
     npm run upstream:tools                 # check out the pinned commits
     npm run upstream:tools -- --update     # move Octabam and rytm-emu to upstream main first
@@ -9,7 +9,9 @@
 Octabam and rytm-emu are pinned in sdk/upstream-tools.json; Elekloader follows
 the vendored kit's commit, so the browser builder and the Python SDK cannot
 drift apart. rytm-emu is the Analog Rytm MKII emulator the capture guide uses;
-a hand-made clone falls behind its fixes, so take it from here.
+a hand-made clone falls behind its fixes, so take it from here. Ziddle,
+Berbasoft's Zoom effect emulator, has no Git upstream: its source archive is
+pinned by address and SHA-256, and a newer archive is pinned by hand.
 These are developer tools only: nothing in a checkout enters a Modwerk build,
 catalogue or release fingerprint, and no firmware is read or written here.
 Octabam's reviewed host-tool repairs (sdk/machines/octatrack/hw) are applied in
@@ -19,9 +21,12 @@ import argparse
 import datetime
 import hashlib
 import importlib.util
+import io
 import json
 from pathlib import Path
 import subprocess
+import urllib.request
+import zipfile
 
 APP = Path(__file__).resolve().parents[1]
 PINS = APP / 'sdk/upstream-tools.json'
@@ -110,6 +115,31 @@ def sync(name, repository, commit, base, repairs):
     return path
 
 
+def fetch_archive(entry, base):
+    """Keep a pinned source archive and its unpacked tree, unedited; builds beside the sources are allowed."""
+    archive = base / entry['archive'].rsplit('/', 1)[1]
+    if archive.exists():
+        data = archive.read_bytes()
+    else:
+        with urllib.request.urlopen(entry['archive']) as response:
+            data = response.read()
+    if sha(data) != entry['sha256']:
+        raise ValueError('%s does not match its pin (sha256 %s).' % (entry['archive'], sha(data)))
+    archive.write_bytes(data)
+    tree = base / archive.stem
+    with zipfile.ZipFile(io.BytesIO(data)) as bundle:
+        files = [item for item in bundle.infolist() if not item.is_dir()]
+        if any(not item.filename.startswith(tree.name + '/') for item in files):
+            raise ValueError('%s does not unpack into %s/.' % (archive, tree.name))
+        if not tree.exists():
+            bundle.extractall(base)
+        for item in files:
+            path = base / item.filename
+            if not path.is_file() or path.read_bytes() != bundle.read(item):
+                raise ValueError('%s has local edits (%s); keep your own work out of this checkout.' % (tree, item.filename))
+    return tree
+
+
 def update_octabam(pins_path, base, today=None):
     """Move the Octabam pin to upstream main, unless a repaired tool changed upstream."""
     pins = json.loads(pins_path.read_text())
@@ -162,22 +192,26 @@ def main():
         octabam = sync('octabam', pins['octabam']['repository'], pins['octabam']['commit'], base, True)
         elekloader = sync('elekloader', pins['elekloader']['repository'], kit['commit'], base, False)
         rytm_emu = sync('rytm-emu', pins['rytm-emu']['repository'], pins['rytm-emu']['commit'], base, False)
+        ziddle = fetch_archive(pins['ziddle'], base)
         if args.update:
             main_head = git(elekloader, 'ls-remote', 'origin', 'refs/heads/main').split()[0]
             if main_head != kit['commit']:
                 print('Elekloader main (%s) is ahead of kit %s. The kit and catalogue follow releases: '
                       'npm run elekloader:update -- elekloader-kit-<version>.zip' % (main_head[:7], kit['version']))
-    except (ValueError, subprocess.CalledProcessError) as error:
+    except (ValueError, OSError, subprocess.CalledProcessError) as error:
         parser.error(str(error))
     tools = sorted(p.name for p in (octabam / 'tools/hw').iterdir() if p.is_file())
     print('octabam     %s (%s)  %s  repaired: %s' % (pins['octabam']['commit'][:7], pins['octabam']['updated'],
                                                     octabam, ', '.join(adapter.TOOLS)))
     print('elekloader  %s (kit %s)  %s' % (kit['commit'][:7], kit['version'], elekloader))
     print('rytm-emu    %s (%s)  %s' % (pins['rytm-emu']['commit'][:7], pins['rytm-emu']['updated'], rytm_emu))
+    print('ziddle      %s (%s)  %s' % (ziddle.name, pins['ziddle']['updated'], ziddle))
     print('Hardware tools (%d): %s/tools/hw' % (len(tools), octabam))
     print('Recorder:    swiftc -O %s/tools/hw/rec.swift -o %s/tools/rec' % (octabam, octabam))
     print('Emulator and DSP assembler: run "make setup" then "make emu-cf" in %s (builds into its ignored vendor/).' % octabam)
     print('Rytm emulator: run "cargo build --release --bin dtboot" in %s (builds into its ignored target/).' % rytm_emu)
+    print('Zoom effect emulator: run "cargo build --release --locked -p ziddle-cli" in %s (Rust 1.88 or newer), '
+          'then use only "ziddle effect show|check|render" on your own .ZDL files.' % ziddle)
 
 
 if __name__ == '__main__':

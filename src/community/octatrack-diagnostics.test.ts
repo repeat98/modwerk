@@ -209,15 +209,25 @@ describe('private consented Octatrack diagnostics',()=>{
     const ids={id:crypto.randomUUID(),phase:'ready',base:'a'.repeat(64)}, live={samples:10,cpu:[400,600],dsp1to4:[200,250]}
     const load={seq:3,boot:1,minute:5,cpu:[400,600],dsp1to4:[200,250],dsp5to8:[300,350],samples:600,playing:300}
     const incident={seq:4,boot:1,second:9,kind:'freeze',a:0,cpu:950,dsp1to4:0,dsp5to8:0,machines:Array(24).fill(1),fx:Array(16).fill(2),keys:Array(16).fill(255),screen:0x400cbf2c,tempo24:2880,playing:true}
+    // What the site sends from a version 2 log (device-log.ts), at the largest values, so a full group still fits the 8 KiB request.
+    const most=0xffffffff, v2={seq:most,boot:most,minute:most,cpu:[0xffff,0xffff],dsp1to4:[0xffff,0xffff],dsp5to8:[0xffff,0xffff],samples:0xffff,playing:0xffff,frameGap:0xffff,tickGap:0xffff}
+    const crash={count:3,vector:4,sr:0x2704,pc:0x40d2b000,sp:0x2003fff0,d:Array(8).fill(most),a:Array(7).fill(most),stack:Array(8).fill(most),code:Array(8).fill(most),memory:Array(8).fill(most)}
+    const stall={count:2,reason:1,ticks:most,report:Array(96).fill(most)}
     const fresh=<T extends object>(value:T)=>({...value,id:crypto.randomUUID()})
     for(const value of [{...ids,event:'load',live},{...ids,event:'unresponsive',reason:'ui',live},{...ids,event:'unresponsive',reason:'usb'},
-      {...ids,event:'device_log',log:{loads:[load],incidents:[]}},{...ids,event:'device_log',log:{loads:[],incidents:[incident]}}])expect((await send(fresh(value),token)).status).toBe(200)
+      {...ids,event:'device_log',log:{loads:[load],incidents:[]}},{...ids,event:'device_log',log:{loads:[],incidents:[incident]}},
+      {...ids,event:'device_log',log:{loads:Array(40).fill(v2),incidents:[]}},{...ids,event:'device_log',log:{loads:[],incidents:Array(10).fill(incident)}},
+      {...ids,event:'device_log',log:{loads:[],incidents:[],crash}},{...ids,event:'device_log',log:{loads:[],incidents:[],stall}},{...ids,event:'device_log',log:{loads:[],incidents:[],crash,stall}}])
+      expect((await send(fresh(value),token)).status).toBe(200)
     const cases=[{...ids,event:'load'},{...ids,event:'load',live:{...live,cpu:[400,1001]}},{...ids,event:'load',live:{...live,note:'x'}},{...ids,event:'load',live,reason:'ui'},
       {...ids,event:'unresponsive',reason:'other'},{...ids,event:'health',live},{...ids,event:'device_log',log:{loads:[],incidents:[]}},
       {...ids,event:'device_log',log:{loads:[load],incidents:[]},modules:[]},{...ids,event:'device_log',log:{loads:[{...load,name:'x'}],incidents:[]}},
       {...ids,event:'device_log',log:{loads:[],incidents:[{...incident,kind:'other'}]}},{...ids,event:'device_log',log:{loads:[],incidents:[{...incident,keys:Array(17).fill(1)}]}},
       {...ids,event:'device_log',log:{loads:[],incidents:[{...incident,fx:Array(16).fill(256)}]}},{...ids,event:'device_log',log:{loads:Array(41).fill(load),incidents:[]}},
-      {...ids,event:'device_log',log:{loads:[],incidents:Array(11).fill(incident)}},{...ids,event:'sync_failed',log:{loads:[load],incidents:[]}}]
+      {...ids,event:'device_log',log:{loads:[],incidents:Array(11).fill(incident)}},{...ids,event:'sync_failed',log:{loads:[load],incidents:[]}},
+      {...ids,event:'device_log',log:{loads:[{...load,frameGap:1}],incidents:[]}},{...ids,event:'device_log',log:{loads:[{...v2,tickGap:0x10000}],incidents:[]}},
+      {...ids,event:'device_log',log:{loads:[],incidents:[],crash:{...crash,code:Array(9).fill(0)}}},{...ids,event:'device_log',log:{loads:[],incidents:[],crash:{...crash,note:'x'}}},
+      {...ids,event:'device_log',log:{loads:[],incidents:[],stall:{...stall,report:Array(97).fill(0)}}},{...ids,event:'device_log',log:{loads:[],incidents:[],dump:[1]}}]
     for(const value of cases)expect((await send(fresh(value),token)).status).toBe(400)
   })
   it('rejects raw browser/build data and cross-event USB fields instead of storing them',async()=>{

@@ -79,6 +79,18 @@ npm run prepare
 
 The local fingerprint then equals the deployed `firmware-builder.json`.
 
+A release whose `source-packages` job was skipped (no Octatrack module source
+changed, for example a Digitakt module update) stamps its approval into
+`src/engine/assets/module-build.json` instead, which the fingerprint covers too.
+At the merge commit, run the same stamp:
+
+```sh
+npm run prepare
+GITHUB_REPOSITORY=repeat98/modwerk GITHUB_TOKEN=$(gh auth token) \
+  OCTAMOD_APPROVER_ID=$(gh api users/repeat98 -q .id) \
+  node scripts/stamp-module-build.mjs
+```
+
 ## HTTP API
 
 ```sh

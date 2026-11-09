@@ -97,7 +97,7 @@ Every version records one evidence tier, bound to that version and its tested so
 | `author-hardware` | The author ran it on a real unit | the hardware report: model, OS release, date, tester, duration, summary, limitations |
 | `owner-verified` | The owner checked the actual reports on hardware | as above, plus the verifying owner |
 
-To publish, a version needs at least `author-hardware`, measured memory and load, and actual screenshots of where the mod appears. `owner-verified` is a badge shown to users, not a gate.
+To publish, a version needs at least `author-hardware`, measured memory and load, and actual screenshots of where the mod appears. CI checks it for every new library version; versions published before 9 November 2026 keep their place until their next update. `owner-verified` is a badge shown to users, not a gate.
 
 The Octatrack keeps its stricter qualification contract ([MODULE_QUALIFICATION.md](MODULE_QUALIFICATION.md)) for contract v2 modules.
 

@@ -22,7 +22,7 @@
 ; MOMENTARY (asm/tempo_hold/hold.S reads it), saved as bit 6 of byte 23 of
 ; record 50.
 ;
-; UI (docs/os-reverse-engineering.md, "Settings screen"): screens 1, 13 and
+; UI (docs/dev/os-reverse-engineering.md, "Settings screen"): screens 1, 13 and
 ; 14 go through the dispatchers' switch tables, which branch (not call) to
 ; an entry with the frame still on the stack; the entries here load the
 ; event like the stock stubs and return to the dispatcher's epilogue.

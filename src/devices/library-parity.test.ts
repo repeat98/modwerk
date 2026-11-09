@@ -1,3 +1,4 @@
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
@@ -58,10 +59,15 @@ describe('Digitakt II research preview', () => {
 })
 
 describe('Analog Rytm MKII library', () => {
-  it('lists Audio In FX, CHORUS, Pad Pressure Fix, Control In Actions, Ctrl All, Env Reset Amp, Euclid Accents, Filter Hz, FLANGER, Live Rec Retrig Fix, Loop Sync, Main RMS, MIDI Feedback, PHASER, Pipo Loop, QPERF, Quick Trig Conditions, Quick Velocity+Aftertouch Assign, Sample RATE, Silent Pad+Trig, Slice Loop, Temp Save, Velocity Humanise and WAVEFOLDER and leaves the core build preview once a module is in the library', () => {
+  // Derived from the module folders, so two Rytm module pull requests never conflict on a hand-kept list.
+  it('lists every Rytm module folder at its version for OS 1.74, and leaves the core build preview once a module is in the library', () => {
     expect(DEVICES_BY_ID['analog-rytm-mkii'].status).toBe('preview')
     expect(isCoreBuildPreview('analog-rytm-mkii')).toBe(false)
-    expect(DIGI_MODS.filter(mod => mod.device === 'analog-rytm-mkii').map(mod => [mod.id, mod.version, mod.releases])).toEqual([['audio-in-fx', '0.1.0', ['1.74']], ['chorus', '0.1.0', ['1.74']], ['chromatic-aftertouch-fix', '0.2.0', ['1.74']], ['control-in-actions', '0.1.2', ['1.74']], ['ctrl-all', '1.2.0', ['1.74']], ['env-reset-amp', '1.0.0', ['1.74']], ['euclid-accents', '1.2.0', ['1.74']], ['filter-hz', '1.2.0', ['1.74']], ['flanger', '0.1.0', ['1.74']], ['live-rec-retrig-fix', '0.2.1', ['1.74']], ['loop-sync', '0.3.2', ['1.74']], ['main-rms', '1.0.0', ['1.74']], ['midi-feedback', '0.1.0', ['1.74']], ['phaser', '0.1.0', ['1.74']], ['pipo-loop', '0.1.2', ['1.74']], ['qperf', '0.2.0', ['1.74']], ['quick-fill-trig-condition', '0.2.0', ['1.74']], ['quick-velocity-aftertouch-assign', '0.1.0', ['1.74']], ['sample-rate', '0.1.1', ['1.74']], ['silent-pad-trig', '0.7.0', ['1.74']], ['slice-loop', '1.0.0', ['1.74']], ['temp-save', '0.1.0', ['1.74']], ['velocity-humanise', '1.2.0', ['1.74']], ['wavefolder', '0.1.0', ['1.74']]])
+    const folder = 'sdk/analog-rytm-mkii/modules/'
+    const folders = readdirSync(folder).filter(id => existsSync(folder + id + '/modwerk.module.json')).sort()
+      .map(id => [id, (JSON.parse(readFileSync(folder + id + '/modwerk.module.json', 'utf8')) as { version: string }).version.replace(/-experimental$/, ''), ['1.74']])
+    expect(folders.length).toBeGreaterThan(20)
+    expect(DIGI_MODS.filter(mod => mod.device === 'analog-rytm-mkii').map(mod => [mod.id, mod.version, mod.releases])).toEqual(folders)
   })
 })
 

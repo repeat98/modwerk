@@ -40,7 +40,7 @@ export function kitNotice(notice: string) {
     + 'They keep the formats of the code credited under "Code from other projects" below and were checked against outputs '
     + 'recorded from it, so that credit stays.\n\n' + notice
 }
-type Pin = { file: string; sha256: string; id: string; version: string; device: string; os: string; requires?: string[] }
+type Pin = { file: string; sha256: string; id: string; version: string; device: string; os: string; requires?: string[]; source?: { repo?: string; path?: string } }
 export type CatalogFile = { schema?: number; kind?: string; about?: string; revision: string; cores: Pin[]; mods: Pin[] }
 const sha = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex')
 
@@ -52,6 +52,9 @@ export function mergeCatalogOverlay(base: CatalogFile, overlay: CatalogFile): Ca
   const cores = [...base.cores], mods = [...base.mods]
   const append = (target: Pin[], pins: Pin[]) => {
     for (const pin of pins) {
+      // A package built here is fetched from this repository, also when the author's fork pins the commit (#1286, #1296).
+      if (pin.source?.path?.startsWith('sdk/') && pin.source.repo !== 'repeat98/modwerk')
+        throw new Error(`${pin.file}: source.path ${pin.source.path} is a file in this repository, so source.repo is repeat98/modwerk, not ${pin.source.repo}. elekloader:update fetches it from there once the pull request is open.`)
       const existing = names.get(pin.file)
       if (existing) {
         if (existing.sha256 !== pin.sha256) throw new Error(`Catalog overlay changes the existing file ${pin.file}.`)

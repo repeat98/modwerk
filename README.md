@@ -5,7 +5,7 @@
     <img src="public/modwerk-mark-on-light.svg" alt="Modwerk logo" width="88" height="88" />
   </picture>
   <h1>Modwerk</h1>
-  <p><strong>Firmware modules and developer SDKs for Elektron instruments.</strong></p>
+  <p><strong>A community workshop for opening up electronic music hardware to mods.</strong></p>
   <p>Independent and unofficial. Not affiliated with, endorsed by or supported by Elektron.</p>
   <p>
     <a href="#get-started">Get started</a> ·
@@ -19,6 +19,8 @@
     <a href="sdk/octabam/docs/remixer/MODULES.md"><img src="https://img.shields.io/badge/Assembly-DSP56300_%2F_ColdFire-5755c5" alt="DSP56300 and ColdFire assembly" /></a>
   </p>
 </div>
+
+Anyone who owns an instrument can start here: open its machine page on [modwerk.app](https://modwerk.app), see how far it has come, and take the next step with your coding agent. Each step stands on its own, from a documented file format to a first boot, a hook or a module, and what one person learns lands where the next one looks. Musicians get the results as mods built in the browser from their own OS file. What Modwerk is for, and what comes first when goals pull apart, is at the top of [AGENTS.md](AGENTS.md).
 
 For Octatrack modules, write DSP effects in **DSP56300 assembly** or playback and system patches in **ColdFire assembly**, with Python manifests describing their controls, placement and compatibility. Source, documentation and module metadata live together in this repository.
 
@@ -79,6 +81,24 @@ For updates, increase the module's semantic version for **every code change** (d
 ## Contribute
 
 Open a pull request with source, documentation, test results, attribution and licence declarations. **Owner merge approves the version.** Read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting.
+
+## Repository layout
+
+| Path | What |
+| --- | --- |
+| `sdk/` | modules, machine profiles, cores, the module templates and owner approvals ([SDK README](sdk/README.md)) |
+| `src/` | the site (React and Vite, entered from `index.html`); `src/engine/` is the in-browser firmware builder, `src/dev/` holds local hardware test pages |
+| `server/`, `worker.ts`, `migrations/` | the Cloudflare Worker API (`wrangler.worker.jsonc`) and its D1 schema |
+| `functions/`, `wrangler.jsonc` | the Cloudflare Pages entry point, which passes `/api/*` to `server/` |
+| `public/` | static files the site build copies unchanged |
+| `scripts/` | the programs behind `npm run`: checks, builders, native verifiers, the developer MCP, release tools |
+| `vendor/` | pinned third-party code (Elekloader, MIDIstomp, the Zoom runtime) and its licences |
+| `docs/` | guides ([index](docs/README.md)), dated records in `docs/verification/` and `docs/decisions/`, news mails |
+| `changelog/` | one file per site, tool or SDK change; `CHANGELOG.md` holds the entries up to 22 October 2026 |
+| `LICENSES/` | licence texts and credits for the generated notices |
+| `redirect/` | the page that forwards the old octamod.app domain to modwerk.app |
+| `.claude/skills/`, `.agents/skills/` | the commands in [AGENTS.md](AGENTS.md), one identical copy each for Claude Code and Codex |
+| `.github/` | CI workflows, the pull request template and the module author registry |
 
 ## Documentation
 

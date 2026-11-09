@@ -22,7 +22,7 @@ To add, port or update a module, follow [Add or port a module](../docs/ADD_A_MOD
 | `imports/` | ported source history: repository, commit and file hashes; code and preserved upstream files stay exact, while local module README, TESTING and CPU guides can be edited without checksum updates |
 | `templates/` | what `npm run module:new` copies |
 | `build/Dockerfile` | the pinned, firmware-free toolchain that compiles module packages |
-| `module-qualification-baseline.json`, `module-release-waivers.json`, `*-build-approval.json` | owner-approved exceptions, each bound to exact versions and hashes ([qualification](../docs/MODULE_QUALIFICATION.md)) |
+| `approvals/` | owner-approved exceptions (`<id>-build-approval.json`, the qualification baseline, release and USB waivers, card-only OKs), each bound to exact versions and hashes ([qualification](../docs/MODULE_QUALIFICATION.md)). Records before 8 November 2026 cite them at `sdk/` itself |
 
 The shared builder now admits Analog BD with Mini Verb, Tape Echo, Euclid, TapeHead and Sidechain Compressor, subject to actual DSP and menu capacity. The engine and shared reverb helper have explicit reservations on both cores; Tape Echo fits in the remaining Spring Reverb gap, while larger inserts use the fewest additional reverb regions that fit. This supersedes the stock-effects-only restriction in the historical module releases and composition proofs. Module algorithms and versioned hardware evidence are unchanged; these new combinations have composition verification, not new hardware qualification. See [the current verification record](../docs/VERIFICATION.md#analog-bd-with-custom-effects--7-october-2026).
 

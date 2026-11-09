@@ -1,0 +1,59 @@
+{
+  "schema": 1,
+  "about": "Modwerk's Digitakt II OS 1.17 base candidate. The unchanged core-dt2 1.1 sources carry the core bus. The Modwerk sources add the audio sequencer pitch collection and active project generation.",
+  "core": "core-dt2",
+  "include": "sdk/machines/digitakt-ii/include",
+  "os": "1.17",
+  "toolchain": {
+    "cross": "m68k-elf-",
+    "gcc": "16.2.0",
+    "binutils": "2.47"
+  },
+  "reference": {
+    "file": "vendor/elekloader/catalog/core-1.0.elemod",
+    "sha256": "95303655a9358f581b485acb68b884b394a577f5d0b373f0a3e5957c8d0ca72c",
+    "keeps": ["id", "sites", "exports", "imports", "weak", "contribute", "collections", "requires", "conflicts"]
+  },
+  "add": {
+    "sources": [
+      "../modwerk/seq-note-entry.s",
+      "../modwerk/seq-note-bridge.c",
+      "../modwerk/seq-note.c",
+      "../modwerk/project-generation.s",
+      "../modwerk/project-kitdata.c"
+    ],
+    "sites": [
+      {
+        "addr": "0x400d6632",
+        "len": 6,
+        "stockSha256": "99ffb4255cee5ce97ab12b419a0363d57b6cec99f924416364629a96d93a8f0e",
+        "op": "jmp",
+        "target": "core_seq_note_start"
+      },
+      {
+        "addr": "0x400d81fc",
+        "len": 8,
+        "stockSha256": "51280ae0eb20244d34b609595a75a5a3f34301c01e6e27eed44875d43075d7a4",
+        "op": "jmp",
+        "target": "core_seq_note_step"
+      },
+      {
+        "addr": "0x400df9e0",
+        "len": 6,
+        "stockSha256": "9533b6838ac5d465f549cb8e073703485341b4cbd41dca80ab255b00c871435a",
+        "op": "jsr",
+        "target": "core_project_loaded"
+      },
+      {
+        "addr": "0x400e6094",
+        "len": 6,
+        "stockSha256": "9123093562f982f533c055b957ef510dd2438a23b5bd8ed1470024b218b90344",
+        "op": "jsr",
+        "target": "core_project_created"
+      }
+    ],
+    "collections": {
+      "ev_seq_note": 4
+    }
+  }
+}
