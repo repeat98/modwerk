@@ -3,7 +3,7 @@
  "id": "kit-ab",
  "version": "1.0.0",
  "title": "Kit A/B",
- "description": "NO + PLAY becomes an A/B between the kit as edited and as saved.",
+ "description": "NO + PLAY MODE becomes an A/B between the kit as edited and as saved.",
  "category": "system",
  "author": "Iced-Cream",
  "license": "GPL-2.0-only",
@@ -1308,7 +1308,7 @@
  "resources": {
   "regions": [],
   "names": [
-   "ui:kit reload (NO + PLAY and the KIT menu's RELOAD)"
+   "ui:kit reload (NO + PLAY MODE and the KIT menu's RELOAD)"
   ],
   "core": "0.7"
  },

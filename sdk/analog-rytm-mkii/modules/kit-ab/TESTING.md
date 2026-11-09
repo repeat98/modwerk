@@ -42,7 +42,7 @@ The four sites are rytm2_mods' OS 1.74 sites. Its `keep2` sites (which keep a st
 ## Library package
 
 `scripts/build-elemod-isolated.sh` compiled this folder in Modwerk's pinned `modwerk-source-tools` image (from `sdk/build/Dockerfile`,
-image `sha256:6f8066eb…6895`; m68k-elf GCC 16.2.0, binutils 2.47) from a clean checkout of `6a1fba0c`, and
+image `sha256:6f8066eb…6895`; m68k-elf GCC 16.2.0, binutils 2.47) from a clean checkout of `1a91a0f1` (re-exported 2026-11-09 for the NO + PLAY MODE name; first built from `6a1fba0c`), and
 `scripts/package-elemod-recipe.mjs` exported `sdk/imports/packages/kit-ab/kit-ab-1.0.0-os1.74.elemod`
 (`90354e1df1b2af8870f92b6572fe7ed6bd39742e4817fd7e219d66fb5e2bc09c`); `--check` reproduces it. `.run` is 340 bytes, 4 sites; it requires core 0.7, Modwerk's base.
 
