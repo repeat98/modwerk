@@ -15,11 +15,21 @@ On top of that:
   - `store.c`: the MKI's addresses, and `is_image` also accepts the stored project, which the MKI keeps in its
     persistent memory at `0x20000000`, outside DDR.
   - `store.s`, `machines.c`: the MKI's addresses only.
+  - `base/sendbus.c`, `base/sendbus.s`: the send bus reads the voices from the MKI's receive ring (10 words a
+    frame, the eight voices first, in voice order; the block before the one about to be unpacked), not the MKII's
+    fixed 12-word buffer; the kit is at project + 232. Its pages are stock parameter pages (core-ar2's core_pages,
+    core_page_fns and core_params), so stock draws them and turns their knobs: the controls, SEND and a SEND FX page
+    (TYPE, DEL, REV, CPU, LEV) behind the DELAY key, on hidden TEST-machine records whose RAM records copy the stock
+    parameter each stands for (AMP's DEL send for SND, DEL and REV, DELAY's VOL for LEV, and so on), so each knob
+    turns, accelerates and draws as that one. DEL and REV send the effect's return into stock's delay and reverb,
+    inside stock's send routine (after it builds their inputs, before they run), at the level a voice with the same
+    signal and send gets. CPU is the send bus's mean share of the audio block.
+  - `base/locks.s`: the MKI's three lock routines (their lock tables are laid out as the MKII's).
 - **`mki/`**: two variants of the core's own routines. `settings_mk1.s`: the MKI's GLOBAL builder keeps the menu in
   a3. `render_mk1.s`: the MKI's audio handler keeps no a6 frame.
 - **`common`**: the MKII base's machine list sections, at the MKI's three sites.
-
-No send bus yet (one variant, `plain`). The addresses and how each was found are in
+- **`add`**: the send bus (variant `send-bus`), from the MKII base's `add` with the MKI's sites and addresses;
+  `plain` stays the default until the send bus has passed on a unit. The addresses and how each was found are in
 [the research report](../../../../docs/RYTM_MKI_OS_RESEARCH.md#6-the-modwerk-base-step-core).
 
 ## Build it

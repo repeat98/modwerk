@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "about": "Modwerk's Analog Rytm MKI base, built by npm run machine:base -- analog-rytm-mki: the MKII base's core-ar2 0.7 source (source names that folder) with the MKI's own sites and addresses (recipe), MKI copies of four of its files (copies: each names the core-ar2 file and SHA-256 it was made from, and the build refuses when that file has changed), the MKI's settings and render-out variants (mki/), and the MKII base's machine list sections (common). No send bus yet: one variant, plain. Every site names the stock bytes it replaces by length and SHA-256; the build fills them from the user's OS. Addresses and differences: docs/RYTM_MKI_OS_RESEARCH.md.",
+  "about": "Modwerk's Analog Rytm MKI base, built by npm run machine:base -- analog-rytm-mki: the MKII base's core-ar2 0.7 source (source names that folder) with the MKI's own sites and addresses (recipe), MKI copies of four of its files (copies: each names the core-ar2 file and SHA-256 it was made from, and the build refuses when that file has changed), the MKI's settings and render-out variants (mki/), and the MKII base's machine list sections (common). Two variants: plain (the default, the one that passed on a unit) and send-bus (add: the MKII base's send bus, its FX track lock words and clock, with MKI copies of sendbus.c, sendbus.s and locks.s in copies/base). Every site names the stock bytes it replaces by length and SHA-256; the build fills them from the user's OS. Addresses and differences: docs/RYTM_MKI_OS_RESEARCH.md.",
   "pending": "No base-binding.json yet: the pinned Elekloader kit has no analog-rytm-mk1 device or ELE2 reader (proposed upstream), so npm run machine:base cannot build this base. Built with a privately registered device, it gave the package that passed on a unit (MW06, 8 November 2026).",
   "source": "analog-rytm-mkii",
   "core": "core-ar2",
@@ -14,6 +14,9 @@
   "variants": {
     "plain": {
       "add": false
+    },
+    "send-bus": {
+      "add": true
     }
   },
   "copies": [
@@ -36,6 +39,21 @@
       "path": "core-ar2/machines.c",
       "from": "core-ar2/machines.c",
       "sha256": "6c788ea6d305bbc74ca0a037ada8b8d84a7b1ed24f1fb8331e4ee66e01b3f5a1"
+    },
+    {
+      "path": "base/sendbus.c",
+      "from": "base/sendbus.c",
+      "sha256": "6b47efdaa7fa47a36d176534b6ae96b5f1d8321ddb7360bee0e5d2727a6da86f"
+    },
+    {
+      "path": "base/sendbus.s",
+      "from": "base/sendbus.s",
+      "sha256": "a86d097ce7b2bd1e91888931034bea83afe1983685e901fa349e7f376ae9e0f4"
+    },
+    {
+      "path": "base/locks.s",
+      "from": "base/locks.s",
+      "sha256": "221e5b51c87eec6db3b5b199bae9f2da6551753a3ed789002e64acdffcbb2d50"
     }
   ],
   "recipe": {
@@ -558,6 +576,664 @@
       "collections",
       "requires",
       "conflicts"
+    ]
+  },
+  "add": {
+    "sources": [
+      "../base/locks.c",
+      "../base/locks.s",
+      "../base/clock.c",
+      "../base/sendbus.c",
+      "../base/sendbus.s"
+    ],
+    "sites": [
+      {
+        "addr": "0x400092ec",
+        "len": 8,
+        "stockSha256": "9d8b5c6fa44fca2b22f8cb24de82782737e5615dff673baad1c7423135d0d27f",
+        "op": "jmp",
+        "target": "core_lk_save_one"
+      },
+      {
+        "addr": "0x400090f6",
+        "len": 8,
+        "stockSha256": "9763fb611c807f5dc904f9b5ee15ae74bda1e39d0f9e46671289a147cd2daaa7",
+        "op": "jmp",
+        "target": "core_lk_save_all"
+      },
+      {
+        "addr": "0x40008e78",
+        "len": 8,
+        "stockSha256": "b53d75034fecf8309dbb02802961868579be15db8fe3165ad3123f52c2a9c36c",
+        "op": "jmp",
+        "target": "core_lk_load"
+      },
+      {
+        "addr": "0x40107fa4",
+        "len": 6,
+        "stockSha256": "2d5c036095404da53503812386216abbcc38b98b809fc6197ee476c16dc9a521",
+        "op": "jmp",
+        "target": "mw_send_gate"
+      },
+      {
+        "addr": "0x40193acc",
+        "op": "bytes",
+        "len": 4,
+        "new": "ffffffff",
+        "kind": "data",
+        "stockSha256": "390b36a09502b05d4f8c27aea2636c6b7fd05b27d742ed32074ffea1f888ebe4"
+      },
+      {
+        "addr": "0x40193b00",
+        "op": "bytes",
+        "len": 4,
+        "new": "ffffffff",
+        "kind": "data",
+        "stockSha256": "5085cb99dbe1e374ccd321e5b58182d2c42cf4840c68cfab17b0618a8285e7d6"
+      },
+      {
+        "addr": "0x40193b34",
+        "op": "bytes",
+        "len": 4,
+        "new": "ffffffff",
+        "kind": "data",
+        "stockSha256": "c22ceee66b8ab104483c83053173b33f992dd4fcb457284c60ef9d699a1c7059"
+      },
+      {
+        "addr": "0x40193b68",
+        "op": "bytes",
+        "len": 4,
+        "new": "ffffffff",
+        "kind": "data",
+        "stockSha256": "8092fe01b9ce31a49ce380fc2fe1ee6b6b7d5c15c5f1ecb6ad98c60c4273a435"
+      },
+      {
+        "addr": "0x40193b9c",
+        "op": "bytes",
+        "len": 4,
+        "new": "ffffffff",
+        "kind": "data",
+        "stockSha256": "3b28a6c3766c6295adad976d349705ef49393fbfdebe4facb5862d2cdfa285d3"
+      },
+      {
+        "addr": "0x40193c04",
+        "op": "bytes",
+        "len": 4,
+        "new": "ffffffff",
+        "kind": "data",
+        "stockSha256": "390b36a09502b05d4f8c27aea2636c6b7fd05b27d742ed32074ffea1f888ebe4"
+      },
+      {
+        "addr": "0x40193c38",
+        "op": "bytes",
+        "len": 4,
+        "new": "ffffffff",
+        "kind": "data",
+        "stockSha256": "c22ceee66b8ab104483c83053173b33f992dd4fcb457284c60ef9d699a1c7059"
+      },
+      {
+        "addr": "0x40193c6c",
+        "op": "bytes",
+        "len": 4,
+        "new": "ffffffff",
+        "kind": "data",
+        "stockSha256": "8092fe01b9ce31a49ce380fc2fe1ee6b6b7d5c15c5f1ecb6ad98c60c4273a435"
+      },
+      {
+        "addr": "0x40193ca0",
+        "op": "bytes",
+        "len": 4,
+        "new": "ffffffff",
+        "kind": "data",
+        "stockSha256": "7fde8eebf388fcff667a89be60430cc6e198b1a78cb603a39cdd09885a3336e3"
+      },
+      {
+        "addr": "0x40193b24",
+        "len": 4,
+        "stockSha256": "a66d40c9bd2faf96a208a450fac62cbfcde947f32322cb0865b41634d30208fc",
+        "op": "ptr",
+        "target": "mw_send_lbl"
+      },
+      {
+        "addr": "0x40193b2c",
+        "len": 4,
+        "stockSha256": "f92922376ca441b8b31ee845e64659352a609864af837ba5250c2f66e3c93e4e",
+        "op": "ptr",
+        "target": "mw_send_lbl"
+      },
+      {
+        "addr": "0x40193b28",
+        "len": 4,
+        "stockSha256": "75acb73c88f0dcc9f02a27cdfb4357fe86e787cf20d6e2dde51255ddc6e193dd",
+        "op": "ptr",
+        "target": "mw_send_title"
+      },
+      {
+        "addr": "0x40193b58",
+        "len": 4,
+        "stockSha256": "d80fa18e08b188754ac389a52c6443333d6cda66e18cce9ad94c23db74642d0b",
+        "op": "ptr",
+        "target": "mw_send_lbl",
+        "addend": 6
+      },
+      {
+        "addr": "0x40193b60",
+        "len": 4,
+        "stockSha256": "3357bcdbe4d6385f8c6e62a22365ec5c11038e661a3b6b119a129cd844de587b",
+        "op": "ptr",
+        "target": "mw_send_lbl",
+        "addend": 6
+      },
+      {
+        "addr": "0x40193b5c",
+        "len": 4,
+        "stockSha256": "75acb73c88f0dcc9f02a27cdfb4357fe86e787cf20d6e2dde51255ddc6e193dd",
+        "op": "ptr",
+        "target": "mw_send_title"
+      },
+      {
+        "addr": "0x40193b8c",
+        "len": 4,
+        "stockSha256": "337a37fc0c601a765be789e7c3f87523296f0103cc9713913af7c908b39b81e5",
+        "op": "ptr",
+        "target": "mw_send_lbl",
+        "addend": 12
+      },
+      {
+        "addr": "0x40193b94",
+        "len": 4,
+        "stockSha256": "ad87bcec8c92465e8ce89eaa2301a543633d6eb67fb0e255f765ccee5b46049b",
+        "op": "ptr",
+        "target": "mw_send_lbl",
+        "addend": 12
+      },
+      {
+        "addr": "0x40193b90",
+        "len": 4,
+        "stockSha256": "75acb73c88f0dcc9f02a27cdfb4357fe86e787cf20d6e2dde51255ddc6e193dd",
+        "op": "ptr",
+        "target": "mw_send_title"
+      },
+      {
+        "addr": "0x40193bc0",
+        "len": 4,
+        "stockSha256": "93d711430762ff169cebe9a98a6efbf8dbac08c8fbf851569ebf27bffd4ae7f6",
+        "op": "ptr",
+        "target": "mw_send_lbl",
+        "addend": 18
+      },
+      {
+        "addr": "0x40193bc8",
+        "len": 4,
+        "stockSha256": "46da4d25b2fd39c52d9555f9b63db7fac10a86d27c63b598552b679661158a42",
+        "op": "ptr",
+        "target": "mw_send_lbl",
+        "addend": 18
+      },
+      {
+        "addr": "0x40193bc4",
+        "len": 4,
+        "stockSha256": "75acb73c88f0dcc9f02a27cdfb4357fe86e787cf20d6e2dde51255ddc6e193dd",
+        "op": "ptr",
+        "target": "mw_send_title"
+      },
+      {
+        "addr": "0x40193c28",
+        "len": 4,
+        "stockSha256": "f44cb6a90ed9d2385545686ffda8839b9258c7f92bcba70c5a664be4d0e68ddf",
+        "op": "ptr",
+        "target": "mw_send_lbl",
+        "addend": 24
+      },
+      {
+        "addr": "0x40193c30",
+        "len": 4,
+        "stockSha256": "61d66ec839291d4c15b08044958efa7154bd7d59a56f4ac2f1db6e2190702bc1",
+        "op": "ptr",
+        "target": "mw_send_lbl",
+        "addend": 24
+      },
+      {
+        "addr": "0x40193c2c",
+        "len": 4,
+        "stockSha256": "75acb73c88f0dcc9f02a27cdfb4357fe86e787cf20d6e2dde51255ddc6e193dd",
+        "op": "ptr",
+        "target": "mw_send_title"
+      },
+      {
+        "addr": "0x40193c5c",
+        "len": 4,
+        "stockSha256": "49c0e4a65ed2a3573e0ac45ca680aecc45a4988c246a0c2e910304a962654ede",
+        "op": "ptr",
+        "target": "mw_send_lbl",
+        "addend": 30
+      },
+      {
+        "addr": "0x40193c64",
+        "len": 4,
+        "stockSha256": "944da2c8fad6db47f451f215c1ee6ddce72a7fd95f67a18b38f46cb14144300a",
+        "op": "ptr",
+        "target": "mw_send_lbl",
+        "addend": 30
+      },
+      {
+        "addr": "0x40193c60",
+        "len": 4,
+        "stockSha256": "75acb73c88f0dcc9f02a27cdfb4357fe86e787cf20d6e2dde51255ddc6e193dd",
+        "op": "ptr",
+        "target": "mw_send_title"
+      },
+      {
+        "addr": "0x40193c90",
+        "len": 4,
+        "stockSha256": "b9a7c8826d9b09658a622b68e7b7b82afbc13d598ff892c36e079e7cb9fabca8",
+        "op": "ptr",
+        "target": "mw_send_lbl",
+        "addend": 36
+      },
+      {
+        "addr": "0x40193c98",
+        "len": 4,
+        "stockSha256": "6bd75d1c6774f19a2d8838de476146792f73319d7142da41eb3989f1f1ea916b",
+        "op": "ptr",
+        "target": "mw_send_lbl",
+        "addend": 36
+      },
+      {
+        "addr": "0x40193c94",
+        "len": 4,
+        "stockSha256": "75acb73c88f0dcc9f02a27cdfb4357fe86e787cf20d6e2dde51255ddc6e193dd",
+        "op": "ptr",
+        "target": "mw_send_title"
+      },
+      {
+        "addr": "0x40193cc4",
+        "len": 4,
+        "stockSha256": "9de4d87a4a69eb18c63cb7f68b94e3c0040ec350608cc27b5f65150ecb9dd8f4",
+        "op": "ptr",
+        "target": "mw_send_lbl",
+        "addend": 42
+      },
+      {
+        "addr": "0x40193ccc",
+        "len": 4,
+        "stockSha256": "746ebb6ae7cbbba13b21b7e6c8493d698ac37cac2967db6aa80a3b94cd1a652b",
+        "op": "ptr",
+        "target": "mw_send_lbl",
+        "addend": 42
+      },
+      {
+        "addr": "0x40193cc8",
+        "len": 4,
+        "stockSha256": "75acb73c88f0dcc9f02a27cdfb4357fe86e787cf20d6e2dde51255ddc6e193dd",
+        "op": "ptr",
+        "target": "mw_send_title"
+      },
+      {
+        "addr": "0x40193af0",
+        "len": 4,
+        "stockSha256": "616556448965be6c1619b326c54b77462935fca5728f6adc868816e86365b820",
+        "op": "ptr",
+        "target": "mw_send_snd_long"
+      },
+      {
+        "addr": "0x40193af8",
+        "len": 4,
+        "stockSha256": "918530e930302b5e508da9c43be0b8d84913c08672dbdccf8f12b6751b08dc5b",
+        "op": "ptr",
+        "target": "mw_send_snd_short"
+      },
+      {
+        "addr": "0x40193cd4",
+        "op": "bytes",
+        "len": 4,
+        "new": "ffffffff",
+        "kind": "data",
+        "stockSha256": "9246be1e9ba9f5de5baf766a256eb725e9a7551fb93d7faa793c938e0f41de35"
+      },
+      {
+        "addr": "0x40193cf8",
+        "len": 4,
+        "stockSha256": "ada9ef52ec87ec2b1c06ebe89b2b74fcbc149ad6e0f62b08ec0e49c7fe9c9e3b",
+        "op": "ptr",
+        "target": "mw_send_type_long"
+      },
+      {
+        "addr": "0x40193d00",
+        "len": 4,
+        "stockSha256": "a5ad63542f44c5aa5516bea4b656c58e5d5da9245022ba87b892be51d11b3f7e",
+        "op": "ptr",
+        "target": "mw_send_type_short"
+      },
+      {
+        "addr": "0x40193cfc",
+        "len": 4,
+        "stockSha256": "75acb73c88f0dcc9f02a27cdfb4357fe86e787cf20d6e2dde51255ddc6e193dd",
+        "op": "ptr",
+        "target": "mw_send_group"
+      },
+      {
+        "addr": "0x40193d08",
+        "op": "bytes",
+        "len": 4,
+        "new": "ffffffff",
+        "kind": "data",
+        "stockSha256": "5085cb99dbe1e374ccd321e5b58182d2c42cf4840c68cfab17b0618a8285e7d6"
+      },
+      {
+        "addr": "0x40193d2c",
+        "len": 4,
+        "stockSha256": "3bec1c2654764e28091d6cd792ce73d7c4586a78b05137e2420adc1f754b5273",
+        "op": "ptr",
+        "target": "mw_send_lev_long"
+      },
+      {
+        "addr": "0x40193d34",
+        "len": 4,
+        "stockSha256": "f92922376ca441b8b31ee845e64659352a609864af837ba5250c2f66e3c93e4e",
+        "op": "ptr",
+        "target": "mw_send_lev_short"
+      },
+      {
+        "addr": "0x40193d30",
+        "len": 4,
+        "stockSha256": "75acb73c88f0dcc9f02a27cdfb4357fe86e787cf20d6e2dde51255ddc6e193dd",
+        "op": "ptr",
+        "target": "mw_send_group"
+      },
+      {
+        "addr": "0x40193d70",
+        "op": "bytes",
+        "len": 4,
+        "new": "ffffffff",
+        "kind": "data",
+        "stockSha256": "390b36a09502b05d4f8c27aea2636c6b7fd05b27d742ed32074ffea1f888ebe4"
+      },
+      {
+        "addr": "0x40193d94",
+        "len": 4,
+        "stockSha256": "d7d8fae9f3e233505a376a182bad48a676fce790db5af2a51df05e636b9be6a3",
+        "op": "ptr",
+        "target": "mw_send_del_long"
+      },
+      {
+        "addr": "0x40193d9c",
+        "len": 4,
+        "stockSha256": "6e740bdd39babbfd197b0a26036e2d1deae33f4953a5f3a1f461ddf7efe1a062",
+        "op": "ptr",
+        "target": "mw_send_del_short"
+      },
+      {
+        "addr": "0x40193d98",
+        "len": 4,
+        "stockSha256": "75acb73c88f0dcc9f02a27cdfb4357fe86e787cf20d6e2dde51255ddc6e193dd",
+        "op": "ptr",
+        "target": "mw_send_group"
+      },
+      {
+        "addr": "0x40193da4",
+        "op": "bytes",
+        "len": 4,
+        "new": "ffffffff",
+        "kind": "data",
+        "stockSha256": "c22ceee66b8ab104483c83053173b33f992dd4fcb457284c60ef9d699a1c7059"
+      },
+      {
+        "addr": "0x40193dc8",
+        "len": 4,
+        "stockSha256": "501b8fbb5010241613bf682294399f21f3bc97460de6aa00e3370a561632ae3b",
+        "op": "ptr",
+        "target": "mw_send_rev_long"
+      },
+      {
+        "addr": "0x40193dd0",
+        "len": 4,
+        "stockSha256": "e1f497608b0e03a4b36f95ecf78695a341371890323cb813659a71f4d3b476d9",
+        "op": "ptr",
+        "target": "mw_send_rev_short"
+      },
+      {
+        "addr": "0x40193dcc",
+        "len": 4,
+        "stockSha256": "75acb73c88f0dcc9f02a27cdfb4357fe86e787cf20d6e2dde51255ddc6e193dd",
+        "op": "ptr",
+        "target": "mw_send_group"
+      },
+      {
+        "addr": "0x401076e8",
+        "len": 6,
+        "stockSha256": "4addf56864aac9aea5454958e15e9e926cfb9f25e3e1d57169c41625200dac59",
+        "op": "jsr",
+        "target": "mw_send_sends_gate"
+      },
+      {
+        "addr": "0x40193dd8",
+        "op": "bytes",
+        "len": 4,
+        "new": "ffffffff",
+        "kind": "data",
+        "stockSha256": "5085cb99dbe1e374ccd321e5b58182d2c42cf4840c68cfab17b0618a8285e7d6"
+      },
+      {
+        "addr": "0x40193dfc",
+        "len": 4,
+        "stockSha256": "80a43b518b24b5aa3649b42014044b45719c31ef205bb873ad29ba8ddb0d9ced",
+        "op": "ptr",
+        "target": "mw_send_cpu_long"
+      },
+      {
+        "addr": "0x40193e04",
+        "len": 4,
+        "stockSha256": "f92922376ca441b8b31ee845e64659352a609864af837ba5250c2f66e3c93e4e",
+        "op": "ptr",
+        "target": "mw_send_cpu_short"
+      },
+      {
+        "addr": "0x40193e00",
+        "len": 4,
+        "stockSha256": "75acb73c88f0dcc9f02a27cdfb4357fe86e787cf20d6e2dde51255ddc6e193dd",
+        "op": "ptr",
+        "target": "mw_send_group"
+      }
+    ],
+    "cflags": [
+      "-DIS_KEY_HELD_AT=0x4008029a",
+      "-DPROJECT_SINGLETON_AT=0x40155738",
+      "-DTRACK_INDEX_OF_AT=0x400b3a70",
+      "-DKIT_TRACK_SOUND_AT=0x400a3d74",
+      "-DFILLRECT_AT=0x4006ef2e",
+      "-DSOUND_CONFIG_CHANGED_VT=0x40199d28",
+      "-DTX_RING_AT=0x80000000",
+      "-DVOICE_TRACK_AT=0x40254e8c",
+      "-DTEXT_DRAW_AT=0x4006fd54",
+      "-DTEXT_FONT_AT=0x400703f0",
+      "-DTEXT_CTX_AT=0x40a07b54",
+      "-DTEMPO_WORD_AT=0x4024be94",
+      "-DSMOOTH_FX_AT=0x800061e4",
+      "-DREC_STATE_AT=0x40157422",
+      "-DSEQ_STATE_AT=0x401574be",
+      "-DIS_LIVE_REC_AT=0x4003624c",
+      "-DPLAYING_STEP_AT=0x40035208",
+      "-DPATTERN_OF_AT=0x400ac31e",
+      "-DTRACK_PATTERN_AT=0x400a85b2",
+      "-DSET_LOCK_AT=0x400bd620",
+      "-DHAS_TRIG_AT=0x400bd012",
+      "-DHAS_TRIG2_AT=0x400bd0a2",
+      "-DADD_LOCK_TRIG_AT=0x400bf72c",
+      "-DLOCK_GUARD_AT=0x401604d6",
+      "-DUNLOCK_GUARD_AT=0x40155264",
+      "-DFOOTER_DRAW_AT=0x4003f1f0",
+      "-DTITLE_DRAW_AT=0x40037194",
+      "-DMCLOCK_AT=0x8000ab64",
+      "-DSEQ_PULSE_AT=0x40566570",
+      "-DSEQ_STEP_AT=0x405666e4",
+      "-DSEQ_PULSE_N_AT=0x405666e6",
+      "-DSEQ_PLAYING_AT=0x40566748",
+      "-DSEQ_PATTERN_AT=0x40566754",
+      "-DPATTERNS_AT=0x40b6a620",
+      "-DSPEED_PULSES_AT=0x401a9050",
+      "-DDELAY_IN_AT=0x800074b4",
+      "-DPARAM_RECORDS_AT=0x416a6aa4"
+    ],
+    "defsym": {
+      "mw_send_resume": "0x40107faa",
+      "mw_rx_index": "0x402acd70",
+      "mw_rx_ring": "0x8000cf34"
+    },
+    "subscribe": [
+      {
+        "event": "ev_tick",
+        "fn": "mw_send_tick",
+        "order": 50
+      },
+      {
+        "event": "ev_draw",
+        "fn": "mw_send_draw",
+        "order": 50
+      },
+      {
+        "event": "ev_key",
+        "fn": "mw_send_key",
+        "order": 50
+      },
+      {
+        "event": "ev_enc",
+        "fn": "mw_send_enc",
+        "order": 50
+      },
+      {
+        "event": "ev_project",
+        "fn": "mw_send_project",
+        "order": 50
+      }
+    ],
+    "contribute": [
+      {
+        "to": "core_page_fns",
+        "order": 17,
+        "data": "00000000",
+        "relocs": [
+          [
+            0,
+            "abs32",
+            "sym:mw_send_page_fx",
+            0
+          ]
+        ]
+      },
+      {
+        "to": "core_pages",
+        "order": 18,
+        "data": "00000000",
+        "relocs": [
+          [
+            0,
+            "abs32",
+            "sym:mw_send_page_send",
+            0
+          ]
+        ]
+      },
+      {
+        "to": "core_params",
+        "order": 50,
+        "data": "00000000",
+        "relocs": [
+          [
+            0,
+            "abs32",
+            "sym:mw_send_params",
+            0
+          ]
+        ]
+      },
+      {
+        "to": "core_view_pages",
+        "order": 30,
+        "data": "00000000",
+        "relocs": [
+          [
+            0,
+            "abs32",
+            "sym:mw_send_view_fx",
+            0
+          ]
+        ]
+      },
+      {
+        "to": "core_view_pages",
+        "order": 30,
+        "data": "00000000",
+        "relocs": [
+          [
+            0,
+            "abs32",
+            "sym:mw_send_view_send",
+            0
+          ]
+        ]
+      },
+      {
+        "to": "core_pages",
+        "order": 19,
+        "data": "00000000",
+        "relocs": [
+          [
+            0,
+            "abs32",
+            "sym:mw_send_page_setup",
+            0
+          ]
+        ]
+      },
+      {
+        "to": "core_view_pages",
+        "order": 31,
+        "data": "00000000",
+        "relocs": [
+          [
+            0,
+            "abs32",
+            "sym:mw_send_view_setup",
+            0
+          ]
+        ]
+      }
+    ],
+    "collections": {
+      "mw_fx": 4
+    },
+    "storage": [
+      {
+        "sym": "mw_send_send",
+        "scope": "sound",
+        "bits": 7
+      },
+      {
+        "sym": "mw_send_a",
+        "scope": "kit",
+        "bits": 27
+      },
+      {
+        "sym": "mw_send_b",
+        "scope": "kit",
+        "bits": 28
+      },
+      {
+        "sym": "mw_send_c",
+        "scope": "kit",
+        "bits": 7
+      },
+      {
+        "sym": "mw_send_lev",
+        "scope": "project",
+        "bits": 7
+      },
+      {
+        "sym": "mw_send_d",
+        "scope": "project",
+        "bits": 14
+      }
     ]
   }
 }
