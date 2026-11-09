@@ -42,7 +42,7 @@ FX track, AMP page (the compressor): press AMP again.
 ### Quick tutorial
 
 1. On the FX track, open the AMP page (the compressor). Press AMP again: the preview page, a scrolling trace of estimated gain reduction.
-2. Play a pattern and turn THR down: the gain-reduction line dips below the dotted threshold row. Hold FUNC and press AMP to switch between the full layout and gain reduction alone; FUNC + LEFT/RIGHT sets the scroll speed and FUNC + UP/DOWN the vertical scale.
+2. Play a pattern and turn THR down: the gain-reduction line dips below the dotted threshold row. If the trace sits at the bottom of the screen, hold FUNC and press UP once or twice (the vertical scale). FUNC + AMP switches to gain reduction alone and back; FUNC + LEFT/RIGHT sets the scroll speed.
 3. Press AMP again to return to the stock compressor page. Build without the module and the page is stock.
 
 The stock page of step 1, the preview and its second layout of step 2 are under [Screens and audio](#screens-and-audio):
@@ -55,6 +55,7 @@ Requires core-ar2 0.4 or later on OS 1.74. Use your own original stock OS 1.74 f
 - Built for OS 1.74 only. 1.0 replaced the COMP view's page list itself and does not link with core-ar2 0.4 or later.
 - The trace is an estimate. On random settings over drum patterns it was not fitted on it reads 1.6 dB rms from the measured reduction with no bias (author's calibration, 2026-09-26), a steady tone 0.56. DIST symmetry away from 64 is outside the model; the reduction past 36 dB is capped; POST returns are not modelled and PRE returns join the sum about 4 ms early; material whose crest factor is far from the calibration tone's reads off.
 - The estimate runs in the audio interrupt and costs 4 to 5 points of CPU. It stands aside while core-ar2's `core_audio_load` says the last block was over 95 % busy and comes back below 88 %, so the trace pauses rather than the audio or the UI running short. Stock alone peaks near 84 % on a unit.
+- At very low THR (around 24) the estimate holds a large reduction between hits, so the trace is a nearly flat line even on a raised vertical scale. At THR 41 one or two FUNC + UP presses bring the full trace back (unit run T217).
 - It keeps no settings: nothing is stored in mod storage or saved with a project.
 
 ### Sites
@@ -71,7 +72,7 @@ preview's place in the COMP view's page list is an entry in core-ar2's `core_vie
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md) for the commands and results. In short: on an Analog Rytm MKII with OS 1.74 on Modwerk's base (CPH1, 2026-11-08, with analoghealth 1.3 for remote keys), AMP again opens the preview and returns to the stock page, FUNC + AMP switches the layout, FUNC + LEFT/RIGHT and UP/DOWN change speed and scale (judged from shots), and CPU read 84.8 % with BD playing and the preview open (74.5 % idle); at THR 41 and below the full layout drew little or nothing there, an observation not judged right or wrong. Before that, on the author's unit with core-ar2 0.4 (2026-10-21), COMP and the preview cycle, the FUNC keys work, the page is kept on leaving the FX track, and the load guard pauses the trace rather than the audio; in the busiest case the audio interrupt peaked at 94 %. Modwerk's package linked with core-ar2 0.7 gives a main OS byte-identical to the rytm2_mods v1.3 release object linked with it. In the emulator on the Modwerk base (CP11), AMP again opens the preview, FUNC + AMP its second layout, and BD hits draw the trace. Memory: 3912 bytes of the 128 KiB shared mod area.
+See [TESTING.md](TESTING.md) for the commands and results. In short: on an Analog Rytm MKII with OS 1.74 on Modwerk's base (CPH1, 2026-11-08, with analoghealth 1.3 for remote keys), AMP again opens the preview and returns to the stock page, FUNC + AMP switches the layout, FUNC + LEFT/RIGHT and UP/DOWN change speed and scale (judged from shots), and CPU read 84.8 % with BD playing and the preview open (74.5 % idle). On the current base (CPH2, plain variant 1c14b6b0, 2026-11-09) the full layout at THR 41 showed little on its starting scale and one or two FUNC + UP presses brought the trace back; at THR 24 it stayed nearly flat (judged from shots). Before that, on the author's unit with core-ar2 0.4 (2026-10-21), COMP and the preview cycle, the FUNC keys work, the page is kept on leaving the FX track, and the load guard pauses the trace rather than the audio; in the busiest case the audio interrupt peaked at 94 %. Modwerk's package linked with core-ar2 0.7 gives a main OS byte-identical to the rytm2_mods v1.3 release object linked with it. In the emulator on the Modwerk base (CP11), AMP again opens the preview, FUNC + AMP its second layout, and BD hits draw the trace. Memory: 3912 bytes of the 128 KiB shared mod area.
 
 ## Authorship and licences
 
