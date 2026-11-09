@@ -10,7 +10,7 @@
     {
       "os": "1.74",
       "path": "sdk/imports/packages/scene-mutes/scene-mutes-0.1.0-experimental-os1.74.elemod",
-      "sha256": "8b8ebc1ecdf6ad34399b7615a96d720fb3e716afac964e36f7c6004f2dcda3e2"
+      "sha256": "79828696a54066244b0e7e0ddf60123850895b70802ddbd2b4715cefc203af83"
     }
   ],
   "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",

@@ -4,7 +4,7 @@
  "version": "0.1.0-experimental",
  "title": "Scene Mutes",
  "description": "Each scene can carry its own track mutes: engage the scene and the mutes change with it.",
- "category": "system",
+ "category": "scenes",
  "author": "Iced-Cream",
  "license": "GPL-2.0-only",
  "target": {

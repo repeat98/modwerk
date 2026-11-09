@@ -4,7 +4,7 @@
   "name": "Scene Mutes",
   "version": "0.1.0-experimental",
   "machine": "analog-rytm-mkii",
-  "category": "system",
+  "category": "scenes",
   "exclusive": false,
   "author": {
     "github": "Iced-Cream",
@@ -25,7 +25,7 @@
     "highlights": [
       "FUNC + trig in scene edit builds a scene's mute mask.",
       "Engaging the scene sets the mutes; leaving it puts the earlier mutes back.",
-      "Works for scenes engaged from the pads, CC 92, NRPN and Overbridge.",
+      "Scenes engaged from the pads set the mutes (run on a unit); CC 92, NRPN and Overbridge go through the same routine and should work, not tested.",
       "Masks are kept per kit in the project."
     ],
     "usage": [

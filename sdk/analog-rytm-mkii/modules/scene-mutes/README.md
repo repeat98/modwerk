@@ -12,7 +12,8 @@ FX). The first toggle marks the scene as one that sets mutes.
   so disengaging keeps it.
 - `<CLEAR>` drops the edited scene's mask and mark, `<CLEAR ALL>` every scene's.
 
-Scenes engaged from the pads, CC 92, NRPN and Overbridge all count. Each mute change is a
+Scenes engaged from the pads set the mutes, as a unit run showed. CC 92, NRPN and Overbridge
+engage scenes through the same routine, so they should work too, but they are not tested. Each mute change is a
 normal mute with no MIDI echo, so screens and notices follow and nothing is sent as CC 94.
 
 Version **0.1.0-experimental** for Analog Rytm MKII OS **1.74**, with core-ar2 0.7. It is a
