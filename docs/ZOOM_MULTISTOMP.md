@@ -74,7 +74,7 @@ pedals, see Stomphacks and nam2zoom, which already have their own pipelines.
 | Platform (`octabam`, `elemod`) | A new `zdl` platform | Contract section in `module-contract-v3.ts` |
 | Module | One ZDL effect, or a NAM/cab slot built from a template | Module manifest for a prebuilt binary plus source |
 | Build | Effects: prebuilt (the TI compiler cannot run in CI or the browser and is not redistributed). NAM/cab: in the browser from MIT templates (`nam_loader.js`, `cab_loader.js`, `slot_identity.js`, `cover_art.js`) | No native build in Modwerk |
-| Install | Now: Zoom Effect Manager 2.3.3+ (USB), a guided download. Planned: a browser install from the owner's own Zoom updater ([below](#installing-on-stock-firmware)) | No runtime loader, trial or Keep/Undo: Effect Manager reflashes the whole effect file system; per-effect USB replacement is now demonstrated |
+| Install | The pedal page installs and removes one effect file at a time over USB (Web MIDI SysEx), each write read back, and syncs a module set; Zoom Effect Manager 2.3.3+ stays the fallback | No runtime loader, trial or Keep/Undo: an effect loads when the pedal is power-cycled; Effect Manager reflashes the whole effect file system |
 | Patches | The project's Web MIDI patch editor (MS-70CDR mapped; read-only elsewhere) | Optional integration |
 | Combination budget | Summed DSP cost per patch: refused between 224.4 and 228.4 on the MS-70CDR 2.10 (measured); 6 slots | A `percent`-style budget in the profile |
 | Resource rules | Effect ID unique per pedal (the project reserves 403-499, 500-699 NAM, 700-899 cab, 900-957), file name 8 characters unique, file size cap (~32 KB proven) | A per-family ID ledger, like Stomphacks' author ranges for ZD2 |
@@ -114,7 +114,7 @@ Done (22 October 2026):
 4. `art.body` gains `pedal` (the MultiStomp stompbox) and `floor` (the G1on
    series): original line drawings of each layout, never a product photo.
 
-Still to come: `MACHINE_PLATFORMS` gains `zdl`, with its module contract.
+`MACHINE_PLATFORMS` has `zdl`, with its module contract ([ZDL_MODULE_CONTRACT.md](ZDL_MODULE_CONTRACT.md)).
 
 ## Owner's answers (Janik, 2026-10-20)
 

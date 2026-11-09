@@ -19,7 +19,10 @@ describe('syncing a Zoom set', () => {
     expect(zoomSyncPlan([listedEffect('loop', 'Loop.ZDL', 467, '0.03', 5000), dirt], ['loop'], [onPedal('DIRT.ZDL', 469)]).adds).toBe(5000 - 1200)
   })
   it('counts a listed effect moved to a local ID as on the pedal, and never a different file under the same name', () => {
-    expect(zoomSyncPlan([loop], ['loop'], [onPedal('LOOP.ZDL', 1000)]).keep).toEqual([loop])
+    expect(zoomSyncPlan([loop], ['loop'], [onPedal('LOOP.ZDL', 1000)], { 1000: 'LOOP.ZDL' }).keep).toEqual([loop])
+    // A file of that name at an ID neither listed nor given to it here was installed by hand: the sync leaves it alone.
+    expect(zoomSyncPlan([loop], ['loop'], [onPedal('LOOP.ZDL', 1000)], {})).toMatchObject({ keep: [], install: [loop] })
+    expect(zoomSyncPlan([dirt], [], [onPedal('DIRT.ZDL', 999)], { 999: 'OTHER.ZDL' }).remove).toEqual([])
     expect(zoomSyncPlan([dirt], [], [onPedal('DIRT.ZDL', 3, '1.00', 1200, 4)]).remove).toEqual([])
     expect(zoomSyncPlan([loop], ['loop'], []).install).toEqual([loop])
   })

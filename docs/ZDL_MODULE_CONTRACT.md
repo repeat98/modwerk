@@ -160,9 +160,11 @@ machine: Add to set in the library; the pedal page lists your sets beside its
 own pages (`HubSets.tsx`, shared with the Octatrack's), and Sync on a set brings the
 pedal to it (`zoomSyncPlan` in `src/devices/zoom-effects.ts`): it installs
 the set's effects that are missing or another version and removes listed
-effects the set dropped, telling them apart by name and header group; Zoom's
-own effects and files installed by hand are never touched, and nothing is
-written before the list is confirmed.
+effects the set dropped, from a fresh read of the pedal. It tells them apart
+by file name and header group and ID (the listed ID, or the local ID this
+browser gave that name): Zoom's own effects are never touched, nor files
+installed by hand unless one has a listed effect's file name and ID, and
+nothing is written before the list is confirmed.
 
 ## Machine profiles
 
