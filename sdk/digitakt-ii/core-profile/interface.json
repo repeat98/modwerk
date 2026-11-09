@@ -134,28 +134,10 @@
       "purpose": "Add a PERSONALIZE or SETTINGS row that shows a label and, on the right as LED INTENSITY does, values[get()]; from ev_personalize or ev_settings."
     },
     {
-      "name": "core_notice",
-      "since": "1.1",
-      "prototype": "void core_notice(const char *msg)",
-      "purpose": "Show a message in the header, as a page's title (UI task)."
-    },
-    {
-      "name": "core_view_top",
-      "since": "1.1",
-      "prototype": "uint32_t core_view_top(void)",
-      "purpose": "The vtable of the view on top of the stack."
-    },
-    {
       "name": "core_kit_on",
       "since": "1.1",
       "prototype": "int core_kit_on(void)",
       "purpose": "The kit on (the pattern on's), -1 for none."
-    },
-    {
-      "name": "core_kit_index",
-      "since": "1.1",
-      "prototype": "int core_kit_index(const void *kit)",
-      "purpose": "A kit in RAM's number, -1 when it is not one of the project's."
     },
     {
       "name": "core_kitdata_room",
@@ -172,8 +154,8 @@
     {
       "name": "fw_*",
       "since": "1.1",
-      "prototype": "mk2/core.h: fw_fillrect, fw_textf, fw_led_set, fw_key_down, fw_toast and the other firmware routines and data",
-      "purpose": "Firmware locations as exports, by address and without stock bytes, so a mod calls the OS's drawing, keys, LEDs, card and strings without its own copy of each address."
+      "prototype": "digitakt-mk2/core.h: fw_led_set. mk2/core.h: Modwerk's drawing and view bindings.",
+      "purpose": "Firmware locations as exports, by address and without stock bytes, for the LED frame and Modwerk module pages."
     }
   ],
   "claims": [],

@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
-#include "mk2/core.h"
+#include "digitakt-mk2/core.h"
 
 extern const core_kitdata_t *const core_kitdata[];
 

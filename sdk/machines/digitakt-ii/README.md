@@ -1,12 +1,12 @@
 # Digitakt II SDK
 
-Modwerk's Digitakt II path is experimental and targets stock OS 1.17 only. It uses elekloader kit 0.5.0 and the `core-dt2` 1.0 hook bus. The machine remains in research: builds can be checked locally, but downloads stay disabled until the exact Modwerk packages are qualified and reviewed.
+Modwerk's Digitakt II path is experimental and targets stock OS 1.17 only. It uses the pinned Elekloader kit. The machine remains in research. It supports local builds, and downloads stay disabled.
 
 ## Modwerk stack
 
 Today the core is toonst's digitakt2-perform 1.0, and builds stay local. The Digitakt II is to get the Octatrack's stack ([recipe](../../../docs/MACHINE_RECIPE.md)): a Modwerk base started from that core's source, which takes the hooks mods propose, then a USB link, the loader's glue, base updates over USB, the MCP's device tools and the machine page.
 
-The base has started with its source (29 October 2026): core 1.1, copied unchanged into [elekloader/](elekloader/README.md) with its provenance in `sdk/imports/`. A local candidate links these sources with the proposed audio sequencer pitch hook for emulator testing. The site still links core 1.0. The proposed 1.1 additions below give performance mods per-frame parameter values, key LEDs and per-project and per-kit data. The USB link, the loader, base updates, the device tools and the machine page are not started.
+The [local Modwerk base](elekloader/README.md) adds the audio sequencer pitch and phrase hooks and active-project lifecycle to the pinned core 1.1 source. The site currently links core 1.0. The 1.1 additions below give mods per-frame parameter values, key LEDs and per-project and per-kit data.
 
 ## Core hooks
 
@@ -33,7 +33,7 @@ These are in [core-profile/interface.json](../../digitakt-ii/core-profile/interf
 | `ev_key_leds` | the key-LED frame, every UI frame, after the frame clears the LEDs and before the stock views set theirs | `void f(void *mgr)`; set an LED with `fw_led_set(mgr, logical, 2, value)`; the first setter wins |
 | `core_projdata` | a mod's block in the project file's header gap, saved with every project save and loaded back | table of `core_projdata_t {tag[4], size, data, loaded}`, four entries; claim `projdata:<tag>` |
 | `core_kitdata` | a mod's block per kit (128), after each kit record's end mark; saved with the project and SAVE KIT and carried through pattern copy and paste, PASTE KIT and undo | table of `core_kitdata_t {tag[4], size, data, changed}`, four entries; claim `kitdata:<tag>` |
-| `core_addvalue`, `core_notice`, `core_view_top`, `fw_*` | a value row for PERSONALIZE or SETTINGS drawn like LED INTENSITY, a header message, the view on top, and firmware routines by address | `mk2/core.h` |
+| `core_addvalue`, `fw_*` | a value row for PERSONALIZE or SETTINGS drawn like LED INTENSITY, and firmware drawing and LED routines by address | upstream `digitakt-mk2/core.h` and Modwerk's `mk2/core.h` |
 
 By the core's documentation (emulator-tested, not hardware-tested), both data areas hold bytes the stock OS writes as zeros and never reads, so a project saved with mods loads on the stock OS, which keeps them when it saves a project it loaded. Core writes them only over zeros or its own data and counts anything else in `core_store_conflicts`. **A kit record has room for 191 bytes of kit data in all** (`core_kitdata_room()`), shared by every mod's block. One mod with a 191-byte block takes all of it and leaves any other kit-data mod out, so per-kit state that several modules will want belongs to the base, as one record per module in a table the base owns ([recipe](../../../docs/MACHINE_RECIPE.md#rules)), not to the first module that asks for the room.
 
