@@ -154,7 +154,10 @@ void core_seq_phrase_empty(unsigned int track)
         return;
     }
     const uint8_t *const row = (const uint8_t *)&carry->event[9];
-    struct dt2_seq_phrase_note notes[DT2_SEQ_PHRASE_MAX_NOTES] = {0};
+    struct dt2_seq_phrase_note notes[DT2_SEQ_PHRASE_MAX_NOTES];
+    for (unsigned int i = 0; i < DT2_SEQ_PHRASE_MAX_NOTES; ++i) {
+        notes[i].velocity = 0;
+    }
     window.flags |= DT2_SEQ_GRID_EMPTY;
     const uint32_t count = carry->handler(&window, row[2], row[3], notes);
     if (!count) {
