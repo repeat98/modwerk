@@ -45,9 +45,10 @@ git clone https://github.com/repeat98/modwerk.git
 cd modwerk
 npm ci
 npm run module:new -- my-effect --kind dsp --author your-github-login
+npm run module:dev -- my-effect --watch   # build it and try it on your unit on every save
 ```
 
-Use `--kind coldfire` for a CPU module. Open `sdk/octabam/modules/my-effect/`:
+Use `--kind coldfire` for a CPU module. Open the draft in `sdk/drafts/my-effect/`:
 
 ```text
 engine.asm           DSP source (unit.s for ColdFire)
@@ -60,7 +61,7 @@ LICENSE              Licence and attribution
 media/               Original or properly licensed captures
 ```
 
-The scaffold is untested: choose an unused effect ID for DSP modules and replace the deliberately failing verification gate. It does not enter the catalog automatically.
+The scaffold is untested: choose an unused effect ID for DSP modules and replace the deliberately failing verification gate. It does not enter the catalog automatically. What a module can hook into, and where it keeps state, is in [the Octatrack API](docs/OCTATRACK_API.md).
 
 ## Develop and validate
 
