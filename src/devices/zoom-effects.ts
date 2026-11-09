@@ -5,6 +5,8 @@ import type { ModwerkModule, ZdlPlatform } from '../catalog/module-contract-v3'
 import { displayName } from '../catalog/module-authors'
 import { moduleReleasedAt } from '../catalog/module-releases'
 import { assetUrl } from '../hosting'
+import type { MachineProfile } from './machine-contract'
+import MACHINES from './machines.generated.json'
 
 export type ZoomEffect = ModwerkModule & { platform: ZdlPlatform }
 
@@ -31,4 +33,30 @@ export async function fetchZoomEffect(effect: ZoomEffect, load: typeof fetch = f
 export const matchesZoomEffect = (effect: ZoomEffect, query: string) => {
   const term = query.toLowerCase().trim()
   return !term || [effect.name, effect.presentation.summary, effect.presentation.family, zoomEffectAuthor(effect), effect.platform.file].some(value => value.toLowerCase().includes(term))
+}
+
+/** Zoom pedals whose effects go in sets: those with the zdl platform. */
+export const isZoomSetDevice = (id: string) => (MACHINES as MachineProfile[]).some(machine => machine.id === id && machine.sdk?.platform === 'zdl')
+export function resolveZoomSelection(device: string, ids: readonly string[]): ZoomEffect[] {
+  const effects = ZOOM_EFFECTS.filter(effect => effect.machine === device)
+  const unknown = ids.filter(id => !effects.some(effect => effect.id === id))
+  if (unknown.length) throw new Error('Unknown module: ' + unknown.join(', '))
+  return effects.filter(effect => ids.includes(effect.id))
+}
+
+type PedalFile = { name: string; size: number; effect?: { gid: number; fxid: number; version: string } }
+/**
+ * What a sync does to bring the pedal to the set: install the set's effects that are missing or another version, and
+ * remove listed effects the set no longer has. A file is a listed effect only by its name and its header's group (its ID
+ * may have moved to a local one on this pedal), so Zoom's own effects and files installed by hand are never touched.
+ */
+export function zoomSyncPlan(listed: readonly ZoomEffect[], setIds: readonly string[], files: readonly PedalFile[]) {
+  const fileOf = (effect: ZoomEffect) => files.find(file => file.name.toUpperCase() === effect.platform.file.toUpperCase() && file.effect?.gid === effect.platform.effectId.gid)
+  const current = (effect: ZoomEffect) => { const file = fileOf(effect); return !!file && file.size === effect.platform.binary.bytes && file.effect?.version === effect.platform.effectVersion }
+  const set = listed.filter(effect => setIds.includes(effect.id))
+  return {
+    keep: set.filter(current),
+    install: set.filter(effect => !current(effect)),
+    remove: listed.filter(effect => !setIds.includes(effect.id) && fileOf(effect)),
+  }
 }

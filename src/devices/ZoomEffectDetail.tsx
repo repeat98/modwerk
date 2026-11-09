@@ -1,24 +1,19 @@
-// A Zoom MultiStomp effect in the library: its card, its page and its install, over USB through the pedal page's link
-// (beta) or as a file for Zoom Effect Manager. The effect file is the author's release, pinned and served by the site.
-import { useState } from 'react'
+// A Zoom MultiStomp effect in the library: its card and its page. It goes in a set, which the pedal page syncs to the
+// pedal over USB (beta); the file itself is there for Zoom Effect Manager. It is the author's release, pinned and served by the site.
 import type { CatalogBrowse } from '../catalog/catalog-browse'
 import { moduleStability } from '../catalog/module-stability'
 import { Icon } from '../components/Icon'
 import { ModuleAuthors } from '../components/ModuleAuthors'
-import { CardProof, CardStats } from '../components/ModuleCard'
+import { AddButton, CardProof, CardStats } from '../components/ModuleCard'
 import { ModuleDetailLayout } from '../components/ModuleDetailLayout'
 import { ModuleResourceSummary } from '../components/ModuleResourceSummary'
 import { ModuleUsageInstructions } from '../components/ModuleUsageInstructions'
 import { issueRepository } from '../community/report-context'
 import type { ModuleStatistics } from '../community/module-statistics'
-import { avoidFor, rememberId } from '../engine/zoom/local-ids'
-import type { ZoomLink } from '../engine/zoom/zoom-link'
-import { ZOOM_DEVICE_IDS } from '../engine/zoom/zoom-protocol'
-import { useZoomLink } from '../hooks/useZoomLink'
 import type { MachineProfile } from './machine-contract'
 import MACHINES from './machines.generated.json'
 import { DEVICES_BY_ID, deviceHref, type DeviceProfile } from './registry'
-import { fetchZoomEffect, zoomEffectAuthor, zoomEffectRepository, zoomEffectThumbnail, zoomEffectUrl, type ZoomEffect } from './zoom-effects'
+import { zoomEffectAuthor, zoomEffectRepository, zoomEffectThumbnail, zoomEffectUrl, type ZoomEffect } from './zoom-effects'
 
 const kib = (bytes: number) => (bytes / 1024).toFixed(1) + ' KiB'
 const documentUrl = (effect: ZoomEffect, path: string) => issueRepository() + '/blob/main/sdk/zoom/modules/' + effect.id + '/' + path
@@ -32,48 +27,19 @@ export function ZoomEffectPreview({ effect }: { effect: ZoomEffect }) {
   </div>
 }
 
-export function ZoomEffectCard({ effect, statistics, compared, canCompare, onCompare, onBrowse }: { effect: ZoomEffect; statistics?: ModuleStatistics; compared: boolean; canCompare: boolean; onCompare: () => void; onBrowse?: () => void }) {
+export function ZoomEffectCard({ effect, selected, onToggle, statistics, compared, canCompare, onCompare, onBrowse }: { effect: ZoomEffect; selected: boolean; onToggle: () => void; statistics?: ModuleStatistics; compared: boolean; canCompare: boolean; onCompare: () => void; onBrowse?: () => void }) {
   const href = deviceHref(effect.machine, 'module/' + effect.id), name = DEVICES_BY_ID[effect.machine].name
   const stability = moduleStability(statistics, { hardware: tested(effect).length ? 'Tested on ' + tested(effect).join(', ') + '.' : '' })
-  return <article className="module-card">
+  return <article className={'module-card ' + (selected ? 'is-selected' : '')}>
     <a href={href} onClick={onBrowse} onAuxClick={onBrowse} className="module-cover" aria-label={'View ' + effect.name}><ZoomEffectPreview effect={effect} /><div className="hover-info"><span>{effect.presentation.summary}</span><strong>Explore effect <Icon name="arrow" size={15} /></strong></div></a>
     <div className="module-card-body">
-      <div className="module-card-title"><div className="module-card-heading"><a href={href} onClick={onBrowse} onAuxClick={onBrowse}>{effect.name}</a><div className="card-release"><span className="card-version">v{effect.version}</span></div></div></div>
+      <div className="module-card-title"><div className="module-card-heading"><a href={href} onClick={onBrowse} onAuxClick={onBrowse}>{effect.name}</a><div className="card-release"><span className="card-version">v{effect.version}</span></div></div><AddButton name={effect.name} selected={selected} onToggle={onToggle} /></div>
       <div className="card-credit"><ModuleAuthors name={zoomEffectAuthor(effect)} url={zoomEffectRepository(effect)} contributors={effect.author.contributors} /><span>{effect.license.spdx}</span></div>
       <p className="card-description">{effect.presentation.summary}</p>
       <div className="card-bottom"><span>{effect.presentation.family}</span><CardStats statistics={statistics}><span className="card-stat">DSP {effect.platform.dspCost}</span></CardStats></div>
       <CardProof stability={stability} statistics={statistics} name={effect.name + ' for ' + name} compared={compared} canCompare={canCompare} onCompare={onCompare} />
     </div>
   </article>
-}
-
-/** Install over USB, as the pedal page does: connect, then write the file, add it to the effect list and read it back. */
-export function ZoomEffectInstall({ effect, link }: { effect: ZoomEffect; link: ZoomLink }) {
-  const { status, identity, progress } = useZoomLink(link), name = DEVICES_BY_ID[effect.machine].name
-  const [result, setResult] = useState<{ tone: 'error' | 'info'; text: string }>()
-  const connected = status === 'ready' || status === 'reading' || status === 'writing', busy = status === 'reading' || status === 'writing' || status === 'connecting'
-  const other = connected && identity && identity.deviceId !== ZOOM_DEVICE_IDS[effect.machine]
-  // In update mode the bootloader answers the identity request with 1.1x and takes no file commands.
-  const updateMode = connected && !!identity?.firmware.startsWith('1.1')
-  async function install() {
-    const file = effect.platform.file.toUpperCase()
-    if (!window.confirm('Install ' + effect.name + ' (' + file + ', effect ID ' + effect.platform.effectId.gid + '/' + effect.platform.effectId.fxid + ', ' + kib(effect.platform.binary.bytes) + ') on your ' + name + '? It is written, read back and added to the pedal’s effect list. Don’t touch the pedal or the cable until it’s done.')) return
-    setResult(undefined)
-    try {
-      const done = await link.installFile(file, await fetchZoomEffect(effect), { avoid: avoidFor(file) })
-      if (done.moved) rememberId(done.moved.to, file)
-      setResult({ tone: 'info', text: done.unchanged ? 'Your ' + name + ' already has this exact file.' : effect.name + ' is installed and read back identical. Power-cycle the pedal to load it.' + (done.moved && 'clash' in done.moved ? ' ' + done.moved.clash + ' already had its ID, so it is ' + effect.platform.effectId.gid + '/' + done.moved.to + ' on this pedal.' : '') })
-    } catch (error) { setResult({ tone: 'error', text: (error as Error).message }) }
-  }
-  const line = status === 'unsupported' ? 'This browser can’t use MIDI. Install from Chrome or Edge on a computer, or with Zoom Effect Manager.'
-    : other ? 'This is an ' + identity!.model + ', not an ' + name + '.'
-    : updateMode ? 'The pedal is in update mode. Unplug it and plug it in normally.'
-    : progress ? progress.label + '…' : undefined
-  return <div className="zoom-effect-install">
-    {status === 'idle' ? <button type="button" className="button button-primary module-configure-action" onClick={() => void link.connect()}><Icon name="arrow" size={16} />Connect your {name}</button>
-      : <button type="button" className="button button-primary module-configure-action" disabled={!connected || busy || !!other || updateMode} onClick={() => void install()}><Icon name="download" size={16} />{busy && connected ? 'Installing…' : 'Install on your ' + name}</button>}
-    {(result || line) && <p className={result?.tone === 'error' ? 'file-error' : 'add-block-detail'} role="status">{result?.text ?? line}</p>}
-  </div>
 }
 
 function ZoomEffectGuide({ effect, device }: { effect: ZoomEffect; device: DeviceProfile }) {
@@ -103,6 +69,7 @@ function ZoomEffectGuide({ effect, device }: { effect: ZoomEffect; device: Devic
       <div className="disclosure-content">
         <section className="detail-section module-access"><h2>Find it on your {device.name}</h2>{'location' in access ? <><p>{access.location}</p><ol>{access.steps.map(step => <li key={step}>{step}</li>)}</ol></> : <p>{access.noUiReason}</p>}</section>
         <ModuleUsageInstructions module={{ id: effect.machine + '-' + effect.id, name: effect.name, version: effect.version }} title={effect.tests.documentation?.tutorial.title} steps={effect.presentation.usage} />
+        <p>Add it to your set and sync the set from the pedal page (beta), or <a href={zoomEffectUrl(effect)} download={platform.file}>download {platform.file}</a> and install it with Zoom Effect Manager. Power-cycle the pedal afterwards.</p>
         <a href={documentUrl(effect, 'README.md')} target="_blank" rel="noreferrer">Read the complete guide ↗</a>
       </div>
     </details>
@@ -118,17 +85,12 @@ function ZoomEffectGuide({ effect, device }: { effect: ZoomEffect; device: Devic
   </>
 }
 
-export function ZoomEffectDetail({ device, effect, link, browse, onBackToResults }: { device: DeviceProfile; effect: ZoomEffect; link: ZoomLink | null; browse?: CatalogBrowse | null; onBackToResults?: () => void }) {
+export function ZoomEffectDetail({ device, effect, selected, onToggle, browse, onBackToResults }: { device: DeviceProfile; effect: ZoomEffect; selected: boolean; onToggle: () => void; browse?: CatalogBrowse | null; onBackToResults?: () => void }) {
   const id = effect.machine + '-' + effect.id, dsp = budget(effect, 'Patch DSP') ?? 225, size = budget(effect, 'Effect file') ?? effect.platform.binary.bytes
   return <ModuleDetailLayout browse={browse} onBackToResults={onBackToResults} id={id} title={effect.name} family={effect.presentation.family}
     detail={'location' in effect.access ? effect.access.location : effect.access.noUiReason}
     author={zoomEffectAuthor(effect)} authorUrl={zoomEffectRepository(effect)} contributors={effect.author.contributors} description={effect.presentation.summary}
-    selected={false} onToggle={() => {}} backHref={deviceHref(effect.machine)} backLabel={'All ' + device.name + ' effects'}
-    action={<>
-      {link && <ZoomEffectInstall effect={effect} link={link} />}
-      <a className="button button-quiet" href={zoomEffectUrl(effect)} download={effect.platform.file}><Icon name="download" size={16} />Download {effect.platform.file}</a>
-      <p className="add-block-detail">{link ? 'Or install the file with Zoom Effect Manager.' : 'Install it with Zoom Effect Manager, or over USB from the pedal page (beta).'}</p>
-    </>}
+    selected={selected} onToggle={onToggle} backHref={deviceHref(effect.machine)} backLabel={'All ' + device.name + ' effects'}
     preview={<ZoomEffectPreview effect={effect} />}
     resources={<ModuleResourceSummary indicators={[
       { id: 'dsp', label: 'DSP', value: String(effect.platform.dspCost), status: 'Declared', score: effect.platform.dspCost, maximum: dsp, fill: Math.min(100, effect.platform.dspCost / dsp * 100), valueText: effect.platform.dspCost + ' of ' + dsp + ' per patch' },

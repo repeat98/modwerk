@@ -58,7 +58,8 @@ Where the MS-70CDR stands on the stack every machine gets
    effect's own screen come from ZoomMultistompZDL's
    `src/custom/common/zvis_host.py` (emulator captures) or the pedal.
 7. Run `npm run module:doctor -- <id>` until it is green, then
-   `npm run pr:ready`.
+   `npm run pr:ready`. Once listed, musicians add it to their set in the
+   library and sync the set from the pedal page.
 
 ## Effect IDs
 

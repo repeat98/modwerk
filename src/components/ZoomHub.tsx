@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { DeviceImage } from '../devices/DeviceImage'
 import { zoomHubHref, type ZoomHubView } from '../devices/zoom-hub-route'
-import type { DeviceProfile } from '../devices/registry'
+import { deviceHref, type DeviceProfile } from '../devices/registry'
+import { ZOOM_EFFECTS, fetchZoomEffect, zoomSyncPlan, type ZoomEffect } from '../devices/zoom-effects'
+import type { Configuration } from '../config/workspace'
 import type { ZoomFile, ZoomLink } from '../engine/zoom/zoom-link'
 import { ZOOM_DEVICE_IDS, effectInfo, installRefusal, isAddedEffect } from '../engine/zoom/zoom-protocol'
 import { useMobileWorkspace } from '../hooks/useMobileWorkspace'
@@ -25,7 +27,8 @@ const isCapture = (name: string) => /^(NAM|C)\d/i.test(name)
  * It identifies the pedal, lists what's on it, backs it up, and installs or removes added effect files (the link
  * refuses Zoom's own and known ID clashes).
  */
-export function ZoomHub({ device, view, link, header }: { device: DeviceProfile; view: ZoomHubView; link: ZoomLink | null; header?: ReactNode }) {
+/** `set` is the pedal's module set, which Sync brings the pedal to; `listed` the library's effects for this pedal. */
+export function ZoomHub({ device, view, link, header, set, listed = ZOOM_EFFECTS.filter(effect => effect.machine === device.id) }: { device: DeviceProfile; view: ZoomHubView; link: ZoomLink | null; header?: ReactNode; set?: Pick<Configuration, 'name' | 'moduleIds'>; listed?: readonly ZoomEffect[] }) {
   const mobile = useMobileWorkspace()
   const state = useZoomLink(link), { status, identity, notice, progress } = state
   const connected = status === 'ready' || status === 'reading' || status === 'writing', busy = status === 'reading' || status === 'writing' || status === 'connecting'
@@ -57,6 +60,22 @@ export function ZoomHub({ device, view, link, header }: { device: DeviceProfile;
     const done = result.unchanged ? name + ' is already this exact file.' : name + ' installed and read back identical. Power-cycle the pedal to load it.'
     const where = !moved ? '' : 'clash' in moved ? ' ' + moved.clash + ' already has ID ' + info.gid + '/' + moved.from + ', so ' + name + ' is ' + info.gid + '/' + moved.to + ' on this pedal. Patches made elsewhere with ' + name + ' won’t find it here.' : ' It keeps ID ' + info.gid + '/' + moved.to + ', which it was given when it was installed, so your patches still find it.'
     if (alive.current) setChanged({ text: done + where, list: keepList(result.previousList) })
+    await read()
+  })
+  // Sync: the pedal to the set, as the Octatrack's: the set's effects in, listed effects it dropped out; nothing else is touched.
+  const plan = set && files ? zoomSyncPlan(listed, set.moduleIds, files) : undefined
+  const sync = () => run(async () => {
+    if (!link || !plan) return
+    const names = (effects: readonly ZoomEffect[]) => effects.map(effect => effect.name).join(', ')
+    if (!window.confirm('Sync your set to the ' + model + '? ' + (plan.install.length ? 'Installs ' + names(plan.install) + '. ' : '') + (plan.remove.length ? 'Removes ' + names(plan.remove) + ', which your set no longer has. ' : '') + 'Every write is read back, and the effect list from before is kept. Don’t touch the pedal or the cable until it’s done.')) return
+    let previousList: number[] | undefined
+    for (const effect of plan.remove) previousList ??= (await link.removeFile(effect.platform.file)).previousList
+    for (const effect of plan.install) {
+      const file = effect.platform.file.toUpperCase(), result = await link.installFile(file, await fetchZoomEffect(effect), { avoid: avoidFor(file) })
+      if (result.moved) rememberId(result.moved.to, file)
+      previousList ??= result.previousList
+    }
+    if (alive.current) setChanged({ text: 'Your ' + model + ' has your set. Power-cycle the pedal to load it.', list: keepList(previousList) })
     await read()
   })
   const uninstall = (file: ZoomFile) => run(async () => {
@@ -103,6 +122,15 @@ export function ZoomHub({ device, view, link, header }: { device: DeviceProfile;
         {error && <p role="alert" className="hub-error">{error}</p>}
         {panel('status', <>
           <h2 className="hub-view-title">Status</h2>
+          {set && <section className="hub-section" aria-labelledby="zoom-set-title">
+            <h3 id="zoom-set-title">Your set: {set.name}</h3>
+            {!set.moduleIds.length ? <p>No effects in it yet. <a href={deviceHref(device.id)}>Add some from the library</a>.</p>
+              : !plan ? <p>{listed.filter(effect => set.moduleIds.includes(effect.id)).map(effect => effect.name).join(', ')}. {connected ? 'Read the pedal to see what a sync does.' : 'Connect your pedal to sync it.'}</p>
+              : <>
+                <ul className="zoom-files">{[...plan.keep.map(effect => [effect, 'on the pedal'] as const), ...plan.install.map(effect => [effect, 'installs'] as const), ...plan.remove.map(effect => [effect, 'leaves'] as const)].map(([effect, state]) => <li key={effect.id}><code>{effect.platform.file}</code><small>{effect.name} · {state}</small></li>)}</ul>
+                <button type="button" className="button button-primary" disabled={busy || (!plan.install.length && !plan.remove.length)} onClick={sync}>{plan.install.length || plan.remove.length ? 'Sync to ' + model : 'In sync'}</button>
+              </>}
+          </section>}
           <section className="hub-section" aria-labelledby="zoom-onit-title">
             <h3 id="zoom-onit-title">On the pedal</h3>
             {!connected ? <p>Connect your pedal to see what’s on it.</p>
