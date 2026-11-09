@@ -15,7 +15,7 @@ Every module follows [the guide for its category](module-guides/README.md): effe
 | You want to | Go to | Start with |
 | --- | --- | --- |
 | Port an octabam module | [Octatrack](#octatrack) | the module's folder in octabam at an exact commit |
-| Write a new Octatrack module | [Octatrack](#octatrack) | `npm run module:new -- my-filter --kind dsp --author <github-login>` (`--kind coldfire` for a CPU module) |
+| Write a new Octatrack module | [Octatrack](#octatrack) | `npm run module:new -- my-filter --kind dsp --author <github-login>` (`--kind coldfire` for a CPU module), then `npm run module:dev -- my-filter` to hear it ([the fast loop](#the-fast-loop)) |
 | Bring an elekloader mod to Digitakt or Digitone | [Digitakt and Digitone](#digitakt-and-digitone) | the author's released `.elemod` files |
 | Write a new Digitakt or Digitone mod | [Digitakt and Digitone](#digitakt-and-digitone) | `npm run module:new -- my-mod --machine digitakt --author <github-login>` |
 
@@ -53,12 +53,32 @@ separately; failures or unavailable paths remain explicit qualification gaps.
 ## The fast loop
 
 Keep unqualified Octatrack work under `sdk/drafts/<id>/`, with its draft
-release notes in `CHANGELOG.json`. Every folder in `sdk/octabam/modules/` is
-validated for publication even when absent from `sdk/catalog.json`, so a
-draft there blocks catalogue generation for everyone; `npm run module:new`
-scaffolds there, so move the new folder to `sdk/drafts/<id>/` at once. Move
-it back, and its notes into `src/community/module-changelogs/`, only when
-the publication requirements are met.
+release notes in `CHANGELOG.json`; `npm run module:new` starts it there. Every
+folder in `sdk/octabam/modules/` is validated for publication even when absent
+from `sdk/catalog.json`, so a draft there blocks catalogue generation for
+everyone. Move it there, and its notes into `src/community/module-changelogs/`,
+only when the publication requirements are met.
+
+**Hear it.** `npm run module:dev -- <id>` builds the module from its source and
+tries it on your unit over USB: a trial in RAM, undone when it ends or on
+Ctrl-C (`npm run device -- try FILE --accept` keeps it). `--watch` undoes,
+rebuilds and tries again on every save; `--build-only` stops at the package,
+written outside the checkout. It stages a draft where the builders look, as the
+doctor does, and uses the package builder the site's packages come from: a
+listed effect builds byte for byte as published. A draft effect gets its page
+from its manifest (stepped knobs show numbers until it is listed) and generous
+DSP figures; give `--cycles` and `--state` once measured. It needs the unit on
+a Modwerk base with the USB bridge ([driving the Octatrack](OCTATRACK_DRIVING.md)),
+`m68k-elf` binutils for ColdFire code and Octabam's `dsp_asm` for DSP code
+(`npm run upstream:tools`, then `make setup` in that octabam checkout), and
+no firmware. Hooks, entry points and state: [OCTATRACK_API.md](OCTATRACK_API.md).
+
+**Two tiers.** `module:doctor -- --draft <id>` judges a draft as experimental:
+the lines a trial and a tester need (category, DSP sources, cross-compatibility,
+UI claims, the board claim) must be green, and the release lines read as still
+to do (○). Share an experimental draft as a branch; a tester runs
+`npm run module:dev -- <id>` on it. `--draft <id> --release` judges every line,
+as listing it does.
 
 Run this after every edit: about 15 seconds, no firmware, no module code run.
 
@@ -199,12 +219,9 @@ self-test is the session's `selftest` step while the package is installed;
 listening, the power cycle and persistence stay yours. Preserve the
 previous approved download while preparing candidates.
 
-**A private USB package of a draft.** Its `Gate` must be
-`modules/<id>/verify.py` (the schema takes only `tools/` or `modules/`
-paths), and `build.py --octabam <id>` looks only in `sdk/octabam/modules/`.
-Link it there for the build, never commit the link, and remove it before
-`module:doctor -- --draft`, which refuses it:
-`ln -s ../../drafts/<id> sdk/octabam/modules/<id>`.
+**A private USB package of a draft.** `npm run module:dev -- <id> --build-only`
+builds it ([the fast loop](#the-fast-loop)). Its `Gate` must be
+`modules/<id>/verify.py`: the schema takes only `tools/` or `modules/` paths.
 
 **Growing a stock table over USB.** A runtime package carries no `TableGrow`
 (`sdk/runtime/loader/build.py --octabam` refuses `tables`). Keep the grown
@@ -259,7 +276,7 @@ the [loader compatibility guide](../sdk/machines/octatrack/elekloader/README.md#
 
 1. **Create the folder.**
    - *Porting:* copy the module's folder from octabam at an exact commit into `sdk/octabam/modules/<id>/`, and put the author's original files it depends on under `upstream/`. Record every copied file with its source path and SHA-256 in `sdk/imports/<id>-<short-commit>.json`; `sidechain-compressor-f80ecfe.json` is an example. Add the licence to `sdk/octabam/licenses/manifest.json`, then run `npm run licenses:generate`.
-   - *New:* `npm run module:new` creates the folder. Pick a free effect ID, and replace `verify.py`, which fails on purpose until you do.
+   - *New:* `npm run module:new` creates the draft in `sdk/drafts/<id>/`. Pick a free effect ID, and replace `verify.py`, which fails on purpose until you do.
    - Either way, read the traps in [octabam's AGENTS.md](../sdk/octabam/AGENTS.md) before writing DSP or ColdFire code. The DSP assembler silently mis-encodes some instructions, and several of these traps assemble cleanly into the wrong machine code.
 2. **Fill in the manifest** from [the template](../public/module-repository.example.json): every control, the access steps, compatibility and conflicts. Add the resource gauges (`resources.impact`, see [gauges](MODULE_RESOURCE_GAUGES.md)) and the qualification record (`tests.qualification`, see [fields](MODULE_QUALIFICATION.md)).
 3. **Measure and test.**
