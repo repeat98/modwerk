@@ -4,6 +4,7 @@
 // (scripts/midistomp-import.ts).
 import midistomp from '../../../vendor/midistomp/midistomp.json'
 import { addSection, buildPart, concat, hex, parseAis, span } from './ais'
+import { zipEntry } from './zip'
 
 type Part = ['hex', string] | ['copy', string, number, number]
 type Entry = { model: string; addr?: number; offset?: number; data: string | Part[]; expect_sha256?: string | string[]; expect_length?: number }
@@ -52,10 +53,30 @@ export async function applyPatches(stock: ZoomStock, patches: ZoomPatch[], build
   return { main: buildPart(img, stock['Main.bin']), preset: preset.some((b, i) => b !== stock['Preset.bin'][i]) ? preset : undefined }
 }
 
-/** The base for the user's own stock MS-70CDR 2.10 parts, from MIDISTOMP's patches by name (a release: MIDISTOMP.releases). */
-export async function buildBase(stock: ZoomStock, names: readonly string[]) {
+async function checkStock(stock: ZoomStock) {
   for (const [file, pin] of [['Main.bin', MIDISTOMP.stock.main], ['Preset.bin', MIDISTOMP.stock.preset]] as const)
     if (stock[file].length !== pin.bytes || await sha256(stock[file]) !== pin.sha256) throw new Error(file + ' isn’t from Zoom’s MS-70CDR 2.10 updater. Choose an unmodified copy.')
+}
+
+/** Zoom's MS-70CDR 2.10 updater for Mac as Zoom ships it (the .zip, which works on any computer): its two parts, checked. */
+export async function readUpdater(zip: Uint8Array): Promise<ZoomStock> {
+  const part = (name: string) => zipEntry(zip, '.app/Contents/Resources/' + name)
+  const main = await part('Main.bin'), preset = await part('Preset.bin')
+  if (!main || !preset) throw new Error('This isn’t Zoom’s MS-70CDR 2.10 updater for Mac. Download MS-70CDR_v2.10_Mac_E.zip from Zoom (not the MS-70CDR Plus one) and choose it as it is.')
+  const stock = { 'Main.bin': main, 'Preset.bin': preset }
+  await checkStock(stock)
+  return stock
+}
+
+/** The base the pedal page installs: MIDISTOMP's release, and the version its identity reply then gives (its
+ * identity-tag patch: "2.10" becomes, for V2.0.1, "M201"). */
+const RELEASE = Object.keys(MIDISTOMP.releases)[0] as keyof typeof MIDISTOMP.releases
+const TAG = MIDISTOMP.patches.find(patch => patch.name === 'identity-tag')?.write?.[0].data
+export const ZOOM_BASE = { name: RELEASE, patches: MIDISTOMP.releases[RELEASE], tag: typeof TAG === 'string' ? String.fromCharCode(...fromHex(TAG)) : '' }
+
+/** The base for the user's own stock MS-70CDR 2.10 parts, from MIDISTOMP's patches by name (a release: MIDISTOMP.releases). */
+export async function buildBase(stock: ZoomStock, names: readonly string[]) {
+  await checkStock(stock)
   const patches = names.map(name => {
     const patch = MIDISTOMP.patches.find(patch => patch.name === name)
     if (!patch) throw new Error('MIDISTOMP has no patch ' + name + '.')

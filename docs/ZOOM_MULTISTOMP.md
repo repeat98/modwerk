@@ -230,12 +230,16 @@ mod selection and to his transport block as the shared tempo contract.
 
 ### Flashing from the browser
 
-On the MS-70CDR, the pedal page's Setup flashes a base: choose the unzipped
-Mac updater folder and the base (the `hello` test or a MIDISTOMP release),
-put the pedal in update mode (hold Up and Down while plugging in USB), connect
-and flash. `flashSteps` in `zoom-protocol.ts` builds the messages and
-`ZoomLink.flashBase` sends them. Recovery: update mode and Zoom's 2.10
-updater.
+On an MS-70CDR running Zoom's firmware, the pedal page offers Install base
+(the hero and Setup), which opens `ZoomBaseDialog.tsx` in the Octatrack's
+dialog frame: Zoom's updater (the `.zip` as Zoom ships it, read and checked in
+the browser and kept like the Octatrack's OS file), update mode (hold Up and
+Down while plugging in USB; the link finds the pedal by itself), the flash
+(Erase, Write, Finish) and the restart, done when the pedal answers the
+identity request with the release's tag (`M201`). It installs MIDISTOMP's
+release; `hello` stays a test. `flashSteps` in `zoom-protocol.ts` builds the
+messages and `ZoomLink.flashBase` sends them. Recovery: update mode and Zoom's
+2.10 updater.
 
 - **The messages**, recorded on 9 November 2026 with MIDI Monitor's spy
   driver while zoomms' `hello` updater flashed an MS-70CDR (357 messages each

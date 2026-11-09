@@ -7,11 +7,12 @@ import type { MidiAccessLike, MidiIn, MidiOut } from '../engine/zoom/zoom-link'
 export type FakePedalFile = { name: string; data: number[] }
 const BLOCK = 512
 
-export function fakeZoomPedal({ deviceId = 0x61, firmware = '2.10', files = [] as FakePedalFile[], free = 400_000, portName = 'ZOOM MS Series', silent = false, slow = undefined as { cmd: number; nth: number; ms: number | null } | undefined, latency = 0, failWriteOf = '', keepOnDelete = '', badCrcAt = 0 } = {}) {
+export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', files = [] as FakePedalFile[], free = 400_000, portName = 'ZOOM MS Series', silent = false, slow = undefined as { cmd: number; nth: number; ms: number | null } | undefined, latency = 0, failWriteOf = '', keepOnDelete = '', badCrcAt = 0 } = {}) {
   const sent: number[][] = [], flash = new Uint8Array(0x400000).fill(0xff)
+  let firmware = started
   let writes = 0
   let listAt = 0, reading: FakePedalFile | undefined, readAt = 0, step = 0, writing: FakePedalFile | undefined, failing = !!failWriteOf
-  const input: MidiIn = { id: 'in', name: portName, state: 'connected', onmidimessage: null }
+  const input: MidiIn & { state: string } = { id: 'in', name: portName, state: 'connected', onmidimessage: null }
   // Every reply takes `latency` ms; with `slow`, the nth reply to file command `cmd` comes `ms` later still, or never (null).
   let seen = 0, current = -1
   const reply = (m: number[]) => {
@@ -35,7 +36,7 @@ export function fakeZoomPedal({ deviceId = 0x61, firmware = '2.10', files = [] a
     const v = (crc32(data) ^ 0xffffffff) >>> 0
     reply([...head, 0x22, 0, 0, data.length & 0x7f, (data.length >> 7) & 0x7f, ...pack7(data), v & 0x7f, (v >>> 7) & 0x7f, (v >>> 14) & 0x7f, (v >>> 21) & 0x7f, (v >>> 28) & 0x0f, 0xf7])
   }
-  const output: MidiOut = {
+  const output: MidiOut & { state: string } = {
     id: 'out', name: portName, state: 'connected',
     send(data) {
       const m = Array.from(data); sent.push(m)
@@ -77,7 +78,12 @@ export function fakeZoomPedal({ deviceId = 0x61, firmware = '2.10', files = [] a
     status(0x00)
   }
   const access: MidiAccessLike = { inputs: new Map([['in', input]]), outputs: new Map([['out', output]]), onstatechange: null }
-  return { access, sent, input, output, files, flash }
+  /** Unplugged, then plugged in again running `next` (1.10: update mode; the base's tag after a flash), as Web MIDI tells it. */
+  function replug(next: string) {
+    input.state = output.state = 'disconnected'; access.onstatechange?.({})
+    firmware = next; input.state = output.state = 'connected'; access.onstatechange?.({})
+  }
+  return { access, sent, input, output, files, flash, replug }
 }
 
 /** A stand-in effect file: Zoom's header (SIZE, group, effect id, version) before an ELF signature. */

@@ -22,6 +22,7 @@ export type MidiOut = MidiPort & { send(data: number[], timestamp?: number): voi
 export type MidiAccessLike = { readonly inputs: Iterable<[string, MidiIn]> | Map<string, MidiIn>; readonly outputs: Iterable<[string, MidiOut]> | Map<string, MidiOut>; onstatechange: ((event: unknown) => void) | null }
 
 const PEDAL = /zoom|ms-?(50g|60b|70cdr)/i
+const isPedal = (port: MidiPort) => PEDAL.test(port.name ?? '') && port.state !== 'disconnected'
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now())
 
 export class ZoomLink {
@@ -63,9 +64,13 @@ export class ZoomLink {
     this.set({ status: 'connecting' })
     try {
       this.access ??= await this.requestAccess()
-      this.access.onstatechange = () => { if (this.output && this.output.state === 'disconnected') this.lost() }
+      // Unplugged: lost. Plugged in again (in update mode, or restarted after a flash): connect by itself.
+      this.access.onstatechange = () => {
+        if (this.output && this.output.state === 'disconnected') this.lost()
+        else if (this.state.status === 'idle' && !this.output && [...portsOf(this.access!.outputs)].some(isPedal)) void this.connect()
+      }
       const inputs = [...portsOf(this.access.inputs)], outputs = [...portsOf(this.access.outputs)]
-      const input = inputs.find(p => PEDAL.test(p.name ?? '')), output = outputs.find(p => PEDAL.test(p.name ?? ''))
+      const input = inputs.find(isPedal), output = outputs.find(isPedal)
       if (!input || !output) return this.set({ status: 'idle', notice: { tone: 'error', text: 'No Zoom pedal found. Connect it by USB, switch it on, then try again.' } })
       if (this.input) this.input.onmidimessage = null
       this.input = input; this.output = output; this.sysex = null
@@ -301,13 +306,17 @@ export class ZoomLink {
    * Flash a base (zoom-base.ts) onto an MS-70CDR in update mode: flashSteps' messages, each answered before the next,
    * which goes 22 ms after that answer as in zoomms' updater (an erase answers when done: the OS one after about 3 s).
    * A block whose checksum failed is sent again. Never the bootloader or the effects. The pedal stays in update mode
-   * after the last step until it's unplugged.
+   * after the last step until it's unplugged. `onStep`: erasing until the first block, then writing (the fraction of
+   * blocks sent), then finishing.
    */
-  readonly flashBase = (main: Uint8Array, preset?: Uint8Array) => this.exclusive('Flashing', async () => {
+  readonly flashBase = (main: Uint8Array, preset?: Uint8Array, onStep?: (step: 'erase' | 'write' | 'finish', fraction: number) => void) => this.exclusive('Flashing', async () => {
     if (!isUpdateMode(this.state.identity)) throw new Error('Put the MS-70CDR in update mode first: unplug it, hold Up and Down while plugging in USB, then connect again.')
-    const steps = flashSteps(main, preset)
+    const steps = flashSteps(main, preset), blocks = steps.filter(body => body[0] === 0x02).length
+    let sent = 0
     for (const [i, body] of steps.entries()) {
       this.progress('Flashing', i + 1, steps.length)
+      if (body[0] === 0x02) sent++
+      onStep?.(body[0] === 0x04 ? 'finish' : sent ? 'write' : 'erase', sent / blocks)
       let reply: number[] | null = null
       for (let tries = 0; tries < 3; tries++) {
         reply = await this.ask(body, body[0] === 0x0a ? 15_000 : this.timeout)

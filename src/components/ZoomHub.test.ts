@@ -68,22 +68,25 @@ describe('the Zoom pedal page', () => {
     expect([...open().querySelectorAll('.zoom-firmware tbody th')].map(th => th.textContent)).toEqual(['Zoom’s firmware (2.10) with effect files', 'MIDISTOMP as the base, by Luca Matturro'])
   })
 
-  it('in update mode, offers the flash only once Zoom’s updater is chosen', async () => {
-    const link = new ZoomLink(() => Promise.resolve(fakeZoomPedal({ firmware: '1.10' }).access), 200)
+  it('offers the base on an MS-70CDR without it, and names it once the pedal runs it', async () => {
+    HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', '') }
+    HTMLDialogElement.prototype.close = function () { this.removeAttribute('open') }
+    HTMLElement.prototype.scrollTo = () => {}
+    const pedal = fakeZoomPedal({ firmware: '1.10' }), link = new ZoomLink(() => Promise.resolve(pedal.access), 200)
     await link.connect()
     await render('status', link)
     expect(container.querySelector('[role=status]')?.textContent).toBe('Connected in update mode · bootloader 1.10')
-    expect(open().textContent).toMatch(/update mode: Setup can flash it/)
+    expect(open().textContent).toMatch(/update mode: Install base flashes it/)
+    await click([...container.querySelectorAll('.hub-hero button')].find(b => b.textContent === 'Install base')!)
+    expect(container.querySelector('dialog h2')?.textContent).toMatch(/^MIDISTOMP on your MS-70CDR/)
+    await click([...container.querySelectorAll('dialog button')].find(b => b.textContent === 'Later')!)
+    expect(container.querySelector('dialog')).toBeNull()
+    await act(async () => { pedal.replug('M201') })
+    await vi.waitFor(() => expect(container.querySelector('[role=status]')?.textContent).toBe('Connected · MIDISTOMP V2.0.1'))
     await render('setup', link)
-    expect(button('Flash').disabled).toBe(true)
-    expect([...open().querySelectorAll('option')].map(o => o.textContent)).toEqual(['The hello test: the menu’s VERSION entry reads MOD 0.1', 'MIDISTOMP V2.0.1'])
-    const input = open().querySelector<HTMLInputElement>('input[webkitdirectory]')!, file = new File(['x'], 'Main.bin')
-    Object.defineProperty(file, 'webkitRelativePath', { value: 'Elsewhere/Main.bin' })
-    Object.defineProperty(input, 'files', { value: [file], configurable: true })
-    await act(() => { input.dispatchEvent(new Event('change', { bubbles: true })) })
-    await settle()
-    expect(container.querySelector('.hub-error')?.textContent).toMatch(/No MS-70CDR 2\.10 updater in that folder/)
-    expect(button('Flash').disabled).toBe(true)
+    expect(open().textContent).toMatch(/Your MS-70CDR runs MIDISTOMP V2\.0\.1/)
+    expect(button('Install again')).toBeDefined()
+    expect(container.querySelector('.hub-hero button')).toBeNull()
   })
 
   it('needs MIDI: without it, it says which browsers work', async () => {
