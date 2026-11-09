@@ -38,7 +38,8 @@ const count = (n: number, one: string, many: string) => n + ' ' + (n === 1 ? one
 const isCapture = (name: string) => /^(NAM|C)\d/i.test(name)
 
 /**
- * Your Zoom pedal: the Octatrack page (OctatrackHub.tsx) for a Zoom MultiStomp, beta only. The pedal's own
+ * Your Zoom pedal: the Octatrack page (OctatrackHub.tsx) for a Zoom MultiStomp, open to everyone where the library lists
+ * its effects (the MS-70CDR, base install included) and beta on the other pedals (App.tsx). The pedal's own
  * pages on the leading side, the selected one on the trailing side, over the Web MIDI link (zoom-link.ts).
  * It identifies the pedal, lists what's on it, backs it up, and installs or removes added effect files (the link
  * refuses Zoom's own and known ID clashes). On the MS-70CDR it offers the base (`onInstall` opens ZoomBaseDialog), as the Octatrack's page does.

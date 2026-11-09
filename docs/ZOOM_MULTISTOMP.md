@@ -83,8 +83,8 @@ pedals, see Stomphacks and nam2zoom, which already have their own pipelines.
 ## The pedal page
 
 `#zoom-ms-70cdr/pedal` (and the MS-50G's and MS-60B's) is the Octatrack page for a Zoom pedal. The MS-70CDR's is open to
-everyone (owner, 9 November 2026), as is every pedal's whose effects the library lists (`isZoomSetDevice`);
-installing the base from it and the other pedals' pages stay beta (`hasBetaUi`): [`ZoomHub.tsx`](../src/components/ZoomHub.tsx), copied from `OctatrackHub.tsx` as the owner
+everyone (owner, 9 November 2026), as is every pedal's whose effects the library lists (`isZoomSetDevice`),
+and so is installing the base from it (owner, 10 November 2026); the other pedals' pages stay beta (`hasBetaUi`): [`ZoomHub.tsx`](../src/components/ZoomHub.tsx), copied from `OctatrackHub.tsx` as the owner
 asked, over its own Web MIDI link ([`zoom-link.ts`](../src/engine/zoom/zoom-link.ts),
 [`zoom-protocol.ts`](../src/engine/zoom/zoom-protocol.ts)). It identifies the pedal (model, firmware), lists
 its files and backs every file up into a zip, and installs or removes one added effect file (group 8, IDs
