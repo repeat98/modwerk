@@ -235,7 +235,10 @@ modules kept.
 `evidence/performance.json` carries the 7 November figures as the audit asks (`npm run perf:audit -- check`): the
 dearest render, 35,536 cycles of a 95,782-cycle frame, with no static bound; the longest-frame rise (37.8 us, 10.4 %
 of a frame) and the idle fall (37.5 points) against the same set without SYNTIZ; no MIDI flood. The audit's limits
-were not changed: the record fails its static-bound, 10 % and stress rules, and the release pull request asks the
-owner whether a machine that renders on the ColdFire can ship on these figures. The manifest's
+were not changed: the record fails its static-bound, 10 % and stress rules. The owner (repeat98) decided on the
+release pull request on 8 November 2026: the rows `chip-worst-case-cycles` and `current-build-hardware` are waived for
+0.1.0-experimental and this exact source, as for POLY8, and he adds `sdk/syntiz-build-approval.json` last, once the
+pull request is in order. The waiver covers rows with no numbers, so the load and stress fields are `null` and the
+measurements stay in their `method` text and here. The manifest's
 `tests.qualification` records one render as the event (at most three a frame; their worst sum exceeds the frame and
 is left to the base's guard), the exact package memory, and the functional hardware report.
