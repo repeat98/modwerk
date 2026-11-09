@@ -1,6 +1,6 @@
 # Analog Rytm MKII: Scene Mutes 0.1.0-experimental in the library — 8 November 2026
 
-MrScruff's rytm-mods `0018-scene-mutes` (rytm-mods-src `cd4ded4`), moved from OS 1.73 to 1.74, enters the library as Scene Mutes 0.1.0-experimental: in scene edit, FUNC + T1..T13 builds a scene's mute mask, and engaging the scene sets the mutes. Its source-only OS 1.74 package is pinned in `sdk/imports/elekloader-scene-mutes-2026-11-08.json` (commit `15c89ef5`).
+MrScruff's rytm-mods `0018-scene-mutes` (rytm-mods-src `cd4ded4`), moved from OS 1.73 to 1.74, enters the library as Scene Mutes 0.1.0-experimental: in scene edit, FUNC + T1..T13 builds a scene's mute mask, and engaging the scene sets the mutes. Its source-only OS 1.74 package is pinned in `sdk/imports/elekloader-scene-mutes-2026-11-08.json` (commit `1dec1d3c`).
 
 - **Build:** `scripts/build-elemod-packages.mjs` with Debian's `m68k-linux-gnu` GCC and binutils (`MODWERK_CROSS=m68k-linux-gnu-`); the same toolchain reproduces Env Reset Amp's committed package with `package-elemod-recipe.mjs --check`. Not yet built in `modwerk-source-tools`; CI's elemod-source job does that.
 - **Package:** `scene-mutes-0.1.0-experimental-os1.74.elemod` `79828696…af83` (re-exported on 9 November with category `scenes`; it differs from the first export `8b8ebc1e…a3e2`, which the tested builds linked, only in that field), 1002 bytes of `.run`, 6 of `.bss`, six sites, fetched into the vendored catalogue through its pin by `npm run elekloader:update -- --overlay`.

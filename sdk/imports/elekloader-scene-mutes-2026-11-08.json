@@ -15,7 +15,7 @@
       "license": "GPL-2.0-only",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "15c89ef5b886578864a17e166753e08b6ecb7426",
+        "commit": "1dec1d3c5476942184259e24a0513b0fbd4e74dd",
         "path": "sdk/imports/packages/scene-mutes/scene-mutes-0.1.0-experimental-os1.74.elemod"
       },
       "title": "Scene Mutes",
