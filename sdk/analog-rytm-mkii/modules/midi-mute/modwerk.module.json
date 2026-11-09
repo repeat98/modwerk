@@ -85,7 +85,7 @@
     "fastBytes": null,
     "load": {
       "display": "About 3 µs per incoming note on the unit; none per audio block",
-      "method": "measured",
+      "method": "hardware",
       "conditions": "Measured on the author's Rytm MKII with a timing build (DMA timer 0, 132 MHz) under two 60 s floods over USB and DIN: 3.3 µs average per Note On/Off, 588 µs worst including interruptions; worst UI tick 1.99 ms after a mute or solo change, stock's release calls and interruptions included. See TESTING.md."
     }
   },
