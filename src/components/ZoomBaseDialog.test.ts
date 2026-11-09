@@ -24,7 +24,7 @@ const until = (check: () => boolean) => vi.waitFor(() => { if (!check()) throw n
 
 describe('installing the base on an MS-70CDR', () => {
   it('goes from Zoom’s updater through update mode and the flash to the pedal answering with the base', async () => {
-    const pedal = fakeZoomPedal(), link = new ZoomLink(() => Promise.resolve(pedal.access), 200)
+    const pedal = fakeZoomPedal(), link = new ZoomLink(() => Promise.resolve(pedal.access), 200, 50)   // asked again after 50 ms instead of a second
     await link.connect()
     const main = Uint8Array.from({ length: 0xb0000 }, (_, i) => i & 0xff), stock = { 'Main.bin': new Uint8Array(1), 'Preset.bin': new Uint8Array(1) }
     const read = vi.fn(async () => stock), build = vi.fn(async () => ({ main })), onClose = vi.fn()

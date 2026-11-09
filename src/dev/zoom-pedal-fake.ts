@@ -19,7 +19,11 @@ export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', fil
   const reply = (m: number[]) => {
     let ms: number | null = 0
     if (slow && current === slow.cmd && ++seen === slow.nth) ms = slow.ms
-    if (ms !== null) setTimeout(() => input.onmidimessage?.({ data: Uint8Array.from(m) }), latency + ms)
+    // An instant reply goes as a microtask: a nested setTimeout(0) waits 4 ms or more, which made a whole flash crawl.
+    const deliver = () => input.onmidimessage?.({ data: Uint8Array.from(m) })
+    if (ms === null) return
+    if (latency + ms) setTimeout(deliver, latency + ms)
+    else queueMicrotask(deliver)
   }
   const head = [0xf0, 0x52, 0x00, deviceId, 0x60, 0x04]
   const ack = () => reply([...head, 0, 0xf7])

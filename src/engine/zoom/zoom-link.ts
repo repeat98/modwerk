@@ -44,9 +44,11 @@ export class ZoomLink {
   private stale = false
   private readonly requestAccess: (() => Promise<MidiAccessLike>) | null
   private readonly timeout: number
+  private readonly retry: number
 
-  constructor(requestAccess: (() => Promise<MidiAccessLike>) | null = defaultAccess(), timeout = 1500) {
-    this.requestAccess = requestAccess; this.timeout = timeout
+  /** `timeout`: how long a reply may take; `retry`: how often a pedal just plugged in is asked again (reconnect). */
+  constructor(requestAccess: (() => Promise<MidiAccessLike>) | null = defaultAccess(), timeout = 1500, retry = 1000) {
+    this.requestAccess = requestAccess; this.timeout = timeout; this.retry = retry
     this.state = { status: requestAccess ? 'idle' : 'unsupported' }
   }
 
@@ -99,7 +101,7 @@ export class ZoomLink {
     this.retrying = true
     try {
       for (let i = 0; i < 10 && this.state.status === 'idle' && this.pedalPresent(); i++) {
-        if (i) await new Promise(resolve => setTimeout(resolve, 1000))
+        if (i) await new Promise(resolve => setTimeout(resolve, this.retry))
         if (this.state.status === 'idle') await this.connect()
       }
     } finally { this.retrying = false }
@@ -360,11 +362,12 @@ export class ZoomLink {
   readonly flashBase = (main: Uint8Array, preset?: Uint8Array, onStep?: (step: 'erase' | 'write' | 'finish', fraction: number) => void) => this.exclusive('Flashing', async () => {
     if (!isUpdateMode(this.state.identity)) throw new Error('Put the MS-70CDR in update mode first: unplug it, hold Up and Down while plugging in USB, then connect again.')
     const steps = flashSteps(main, preset), blocks = steps.filter(body => body[0] === 0x02).length
-    let sent = 0
+    let sent = 0, shown = ''
     for (const [i, body] of steps.entries()) {
-      this.progress('Flashing', i + 1, steps.length)
       if (body[0] === 0x02) sent++
-      onStep?.(body[0] === 0x04 ? 'finish' : sent ? 'write' : 'erase', sent / blocks)
+      // Progress once per step name and percent, not per block: every report redraws what follows the link.
+      const step = body[0] === 0x04 ? 'finish' : sent ? 'write' : 'erase', at = step + Math.floor(100 * (i + 1) / steps.length)
+      if (at !== shown) { shown = at; this.progress('Flashing', i + 1, steps.length); onStep?.(step, sent / blocks) }
       let reply: number[] | null = null
       for (let tries = 0; tries < 3; tries++) {
         reply = await this.ask(body, body[0] === 0x0a ? 15_000 : this.timeout)
