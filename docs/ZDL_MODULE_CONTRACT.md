@@ -156,8 +156,9 @@ MS-70CDR 2.10 with a test file, replacing an installed effect, and adding and
 removing a new one, also from the pedal page. Recovery: remove the effect again;
 for a boot freeze, All Initialize, then remove it. Zoom Effect Manager 2.3.3 or
 later stays a fallback. Listed effects go in a module set, as on every
-machine: Add to set in the library, then Sync on the pedal page brings the
-pedal to the set (`zoomSyncPlan` in `src/devices/zoom-effects.ts`): it installs
+machine: Add to set in the library; the pedal page lists your sets beside its
+own pages (`HubSets.tsx`, shared with the Octatrack's), and Sync on a set brings the
+pedal to it (`zoomSyncPlan` in `src/devices/zoom-effects.ts`): it installs
 the set's effects that are missing or another version and removes listed
 effects the set dropped, telling them apart by name and header group; Zoom's
 own effects and files installed by hand are never touched, and nothing is

@@ -11,6 +11,10 @@ import { useZoomLink } from '../hooks/useZoomLink'
 import { avoidFor, rememberId } from '../engine/zoom/local-ids'
 import { Icon, type IconName } from './Icon'
 import { ZoomLoad } from './ZoomLoad'
+import { HubSetHead, HubSetList, type SetAction } from './HubSets'
+
+// A pedal set has no JSON backup yet (its format is still to come); the other actions work as on the Octatrack.
+const SET_ACTIONS: SetAction[] = ['rename', 'duplicate', 'share', 'delete']
 import './octatrack-link.css'
 import './zoom-hub.css'
 
@@ -38,8 +42,13 @@ const isCapture = (name: string) => /^(NAM|C)\d/i.test(name)
  * refuses Zoom's own and known ID clashes). On the MS-70CDR it offers the base (`onInstall` opens ZoomBaseDialog), as the Octatrack's page does.
  * Status is the Octatrack's console: the base's load (ZoomLoad), the firmware, and the effects on the pedal, read by itself.
  */
-/** `set` is the pedal's module set, which Sync brings the pedal to; `listed` the library's effects for this pedal. */
-export function ZoomHub({ device, view, link, header, onInstall, set, listed = ZOOM_EFFECTS.filter(effect => effect.machine === device.id) }: { device: DeviceProfile; view: ZoomHubView; link: ZoomLink | null; header?: ReactNode; onInstall?: () => void; set?: Pick<Configuration, 'name' | 'moduleIds'>; listed?: readonly ZoomEffect[] }) {
+/** `listed`: the library's effects for this pedal. */
+export function ZoomHub({ device, view, link, header, onInstall, sets, selectedId, onSelect, onNew, onSetAction, listed = ZOOM_EFFECTS.filter(effect => effect.machine === device.id) }: {
+  device: DeviceProfile; view: ZoomHubView; link: ZoomLink | null; header?: ReactNode; onInstall?: () => void
+  /** The pedal's module sets beside its own pages, as on the Octatrack's: opening one makes it the set you edit, Sync brings the pedal to it. */
+  sets?: Configuration[]; selectedId?: string; onSelect?: (id: string) => void; onNew?: () => void; onSetAction?: (id: string, action: SetAction) => void
+  listed?: readonly ZoomEffect[]
+}) {
   const mobile = useMobileWorkspace()
   const state = useZoomLink(link), { status, identity, notice, progress } = state
   const connected = status === 'ready' || status === 'reading' || status === 'writing', busy = status === 'reading' || status === 'writing' || status === 'connecting'
@@ -76,7 +85,11 @@ export function ZoomHub({ device, view, link, header, onInstall, set, listed = Z
     await read()
   })
   // Sync: the pedal to the set, as the Octatrack's: the set's effects in, listed effects it dropped out; nothing else is touched.
-  const plan = set && files ? zoomSyncPlan(listed, set.moduleIds, files) : undefined
+  const selected = sets?.find(item => item.id === selectedId) ?? sets?.[0]
+  const plan = selected && files ? zoomSyncPlan(listed, selected.moduleIds, files) : undefined
+  // A set's LED: the pedal holds exactly its effects (current) and no other listed ones.
+  const holdsSet = (item: Configuration) => !!files && item.moduleIds.length > 0 && (({ install, remove }) => !install.length && !remove.length)(zoomSyncPlan(listed, item.moduleIds, files))
+  const names = (item: Pick<Configuration, 'moduleIds'>) => listed.filter(effect => item.moduleIds.includes(effect.id)).map(effect => effect.name).join(' · ')
   const sync = () => run(async () => {
     if (!link || !plan) return
     const names = (effects: readonly ZoomEffect[]) => effects.map(effect => effect.name).join(', ')
@@ -116,7 +129,7 @@ export function ZoomHub({ device, view, link, header, onInstall, set, listed = Z
   const action = status === 'idle' ? <button className="button button-quiet" onClick={() => void link?.connect()}>Connect</button>
     : canBase && connected && !onBase && !other ? <button className="button button-primary" disabled={busy} onClick={onInstall}>Install base</button> : null
   const led = connected ? 'on' : busy ? 'load' : 'off'
-  const panel = (name: ZoomHubView, content: ReactNode) => <section key={name} className={'hub-view hub-view-' + name} hidden={view !== name} aria-label={VIEWS.find(item => item.view === name)!.title}>{content}</section>
+  const panel = (name: ZoomHubView, content: ReactNode) => <section key={name} className={'hub-view hub-view-' + name} hidden={view !== name} aria-label={name === 'set' ? selected?.name ?? 'Module set' : VIEWS.find(item => item.view === name)!.title}>{content}</section>
   const effects = files?.filter(f => /\.zdl$/i.test(f.name)) ?? [], captures = effects.filter(f => isCapture(f.name))
 
   if (mobile) return <div className="configuration-page">{header}<p>Connecting a Zoom pedal needs Chrome or Edge on a computer.</p></div>
@@ -136,6 +149,8 @@ export function ZoomHub({ device, view, link, header, onInstall, set, listed = Z
           <h2 className="hub-nav-label">{device.name}</h2>
           <ul className="hub-nav-list">{VIEWS.map(item => <li key={item.view}><a className="hub-nav-item" href={zoomHubHref(device.id, item.view)} aria-current={view === item.view ? 'page' : undefined}><Icon name={item.icon} size={16} /><span>{item.title}</span></a></li>)}</ul>
         </div>
+        {sets && onSelect && onNew && onSetAction && <HubSetList sets={sets} selected={selected} open={view === 'set'} contents={names} onSelect={onSelect} onNew={onNew} onSetAction={onSetAction} actions={SET_ACTIONS}
+          state={item => { const on = connected && holdsSet(item); return { on, label: on ? 'On your ' + model : undefined } }} />}
       </nav>
       <div className="hub-pane">
         {panel('status', <div className="hub-console">
@@ -161,15 +176,6 @@ export function ZoomHub({ device, view, link, header, onInstall, set, listed = Z
             </> : <p className="hub-empty">{!connected ? 'Connect your pedal to see what’s on it.' : updating ? 'Plug it in normally to see its files.' : other ? '' : busy ? 'Reading what’s on it…' : 'Not read yet.'}</p>}
             {connected && !files && !updating && !other && !busy && <button type="button" className="text-button" onClick={read}>Read the pedal</button>}
           </section>
-          {set && <section className="hub-cell hub-cell-history" aria-labelledby="zoom-set-title">
-            <div className="hub-cell-head"><h3 id="zoom-set-title">Your set · {set.name}</h3></div>
-            {!set.moduleIds.length ? <p className="hub-empty">No effects in it yet. <a href={deviceHref(device.id)}>Add some from the library</a>.</p>
-              : plan ? <>
-                <ul className="hub-unit-modules zoom-files">{[...plan.keep.map(effect => [effect, 'on the pedal'] as const), ...plan.install.map(effect => [effect, 'installs'] as const), ...plan.remove.map(effect => [effect, 'leaves'] as const)].map(([effect, state]) => <li key={effect.id}><span className={'unit-led is-' + (state === 'on the pedal' ? 'on' : state === 'installs' ? 'load' : 'off')} aria-hidden="true" /><strong>{effect.platform.file}</strong><small>{effect.name} · {state}</small></li>)}</ul>
-                <button type="button" className="button button-primary" disabled={busy || (!plan.install.length && !plan.remove.length)} onClick={sync}>{plan.install.length || plan.remove.length ? 'Sync to ' + model : 'In sync'}</button>
-              </>
-              : <p className="hub-empty">{listed.filter(effect => set.moduleIds.includes(effect.id)).map(effect => effect.name).join(', ')}. {connected && !updating ? 'Read the pedal to see what a sync does.' : 'Connect your pedal to sync it.'}</p>}
-          </section>}
         </div>)}
         {panel('backups', <>
           <h2 className="hub-view-title">Backups</h2>
@@ -208,6 +214,23 @@ export function ZoomHub({ device, view, link, header, onInstall, set, listed = Z
             <p><strong>In use by another app:</strong> close Zoom Effect Manager and other editors, then connect again.</p>
           </section>
         </>)}
+        {sets && panel('set', selected ? <>
+          <HubSetHead set={selected} kicker={'Module set · ' + count(selected.moduleIds.length, 'effect', 'effects')} onSetAction={onSetAction!} actions={SET_ACTIONS} />
+          <div className="hub-sync" role="group" aria-label="Module set sync">
+            <p>{!connected ? 'Connect your pedal to sync this set.' : updating ? 'The pedal is in update mode: plug it in normally to sync this set.'
+              : !plan ? busy ? 'Reading what’s on your pedal…' : <>Read the pedal to see what a sync does. <button type="button" className="text-button" onClick={read}>Read the pedal</button></>
+              : plan.install.length || plan.remove.length ? <>Installs {plan.install.length} · Removes {plan.remove.length}</>
+              : selected.moduleIds.length ? <span className="hub-insync"><span className="unit-led is-on" aria-hidden="true" />Already on your {model}</span> : 'No effects in this set.'}</p>
+            <button type="button" className="button button-primary" disabled={!plan || busy || (!plan.install.length && !plan.remove.length)} onClick={sync}><Icon name="download" size={16} />Sync to {model}</button>
+          </div>
+          {error && <p role="alert" className="hub-error">{error}</p>}
+          {changed && <p role="status" className="hub-cell-note">{changed.text}{changed.list && <> <a className="text-button" href={changed.list.url} download={changed.list.name}>Save the effect list from before</a></>}</p>}
+          {selected.moduleIds.length || plan?.remove.length ? <ul className="hub-unit-modules zoom-files" aria-label={selected.name + ' effects'}>
+            {[...listed.filter(effect => selected.moduleIds.includes(effect.id)).map(effect => [effect, !plan ? '' : plan.keep.includes(effect) ? 'on the pedal' : 'installs'] as const), ...(plan?.remove ?? []).map(effect => [effect, 'leaves'] as const)].map(([effect, state]) =>
+              <li key={effect.id}><span className={'unit-led is-' + (state === 'on the pedal' ? 'on' : state === 'installs' ? 'load' : 'off')} aria-hidden="true" /><strong>{effect.name}</strong><small>{effect.platform.file}{state && <> · {state}</>}</small></li>)}
+          </ul> : <p className="hub-empty">No effects in it yet.</p>}
+          <p><a className="text-button" href={deviceHref(device.id)}>Add effects from the library <Icon name="arrow" size={14} /></a></p>
+        </> : <div className="hub-empty-set"><h2 className="hub-view-title">No module sets yet</h2><p>Start one, then add effects from the library.</p><button type="button" className="button button-primary" onClick={onNew}><Icon name="plus" size={16} />New module set</button></div>)}
       </div>
     </div>
   </div>
