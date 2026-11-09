@@ -3,6 +3,7 @@ import { BrandName } from './components/BrandName'
 import { AccountPage } from './community/AccountPage'
 import { SignupWelcome } from './community/SignupWelcome'
 import { HardwareFeedbackReminder } from './community/HardwareFeedbackReminder'
+import { LiveUseNotice } from './components/LiveUseNotice'
 import { HardwareFeedbackCheckIn } from './community/HardwareFeedbackCheckIn'
 import { NotificationBell } from './community/NotificationBell'
 import { useRemoteSessionSeen } from './community/remote-session-signal'
@@ -599,6 +600,7 @@ export default function App() {
         </main>
         {libraryDock && <LibraryDock compared={comparedNames} onClearComparison={() => setComparison([])} onCompare={() => setCompareOpen(true)} build={dockBuild} />}
         {forumRoute&&!route.startsWith('forum/shoutbox')&&<ForumShoutbox floating/>}
+        <LiveUseNotice />
         {phoneLayout ? <footer className="phone-footer">
           <p className="phone-footer-status"><span className={'status-dot ' + (firmwareVerified ? 'verified' : '')} /><span>{machineStatus}</span><span role="status">{saveStatus}</span></p>
           {legalLinks}
