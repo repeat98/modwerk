@@ -28,7 +28,7 @@
   },
   ".run": {
    "align": 4,
-   "len": 10676,
+   "len": 10792,
    "parts": [
     [
      "hex",
@@ -1193,7 +1193,16 @@
     ],
     [
      "hex",
-     "4ef940109c36405c8f20"
+     "4ef940109c364bfa00044e7520170c80400a570467080c80400a57626654700cb0af0004664c202f0008722690817203b081623e220b67342f0a2052"
+    ],
+    [
+     "stock",
+     "0x40033866",
+     8
+    ],
+    [
+     "hex",
+     "20402228004c27410050222800502741005422390000000027410058223c0000000048411741005c202f00084e754ef9400076020000405c8f20"
     ],
     [
      "stock",
@@ -1512,7 +1521,7 @@
   ],
   "st_image": [
    ".run",
-   10640
+   10756
   ],
   "pattern_index": [
    ".run",
@@ -1600,7 +1609,7 @@
   ],
   "CSWTCH.1": [
    ".run",
-   10644
+   10760
   ],
   "STORES_DONE": [
    "abs",
@@ -1645,6 +1654,10 @@
   "st_proj_init": [
    ".run",
    5464
+  ],
+  "mw_fx_map_load": [
+   ".run",
+   10640
   ],
   "st_file_load": [
    ".run",
@@ -1886,6 +1899,10 @@
    ".run",
    9784
   ],
+  "mw_fx_map": [
+   ".run",
+   10646
+  ],
   "st_glob_load_body": [
    ".run",
    8998
@@ -1946,6 +1963,8 @@
   "core_view_9",
   "core_zero",
   "mw_amp_record",
+  "mw_fx_map",
+  "mw_fx_map_load",
   "mw_section_before",
   "mw_section_of",
   "st_at_route",
@@ -2189,7 +2208,7 @@
    1680,
    "abs32",
    "sec:.run",
-   10640
+   10756
   ],
   [
    ".run",
@@ -2301,7 +2320,7 @@
    3946,
    "abs32",
    "sec:.run",
-   10640
+   10756
   ],
   [
    ".run",
@@ -2357,7 +2376,7 @@
    4384,
    "abs32",
    "sec:.run",
-   10640
+   10756
   ],
   [
    ".run",
@@ -2406,7 +2425,7 @@
    4816,
    "abs32",
    "sec:.run",
-   10640
+   10756
   ],
   [
    ".run",
@@ -2490,7 +2509,7 @@
    5670,
    "abs32",
    "sec:.run",
-   10640
+   10756
   ],
   [
    ".run",
@@ -2532,42 +2551,42 @@
    6252,
    "abs32",
    "sec:.run",
-   10640
+   10756
   ],
   [
    ".run",
    6276,
    "abs32",
    "sec:.run",
-   10640
+   10756
   ],
   [
    ".run",
    6928,
    "abs32",
    "sec:.run",
-   10640
+   10756
   ],
   [
    ".run",
    6940,
    "abs32",
    "sec:.run",
-   10640
+   10756
   ],
   [
    ".run",
    6974,
    "abs32",
    "sec:.run",
-   10640
+   10756
   ],
   [
    ".run",
    6986,
    "abs32",
    "sec:.run",
-   10640
+   10756
   ],
   [
    ".run",
@@ -2749,20 +2768,34 @@
    10526,
    "abs32",
    "sec:.run",
-   10644
+   10760
   ],
   [
    ".run",
    10552,
    "abs32",
    "sec:.run",
-   10644
+   10760
   ],
   [
    ".run",
    10594,
    "abs32",
    "sym:ev_amp_record",
+   0
+  ],
+  [
+   ".run",
+   10722,
+   "abs32",
+   "sym:core_store_ids",
+   0
+  ],
+  [
+   ".run",
+   10732,
+   "abs32",
+   "sym:__store_gen",
    0
   ]
  ],
@@ -3674,6 +3707,36 @@
      0
     ]
    ]
+  },
+  {
+   "addr": "0x400a56ee",
+   "len": 6,
+   "stock_sha256": "d0402ab9708e0813aef1ef6bd5201ad121798936916b20540d23573fab2978e3",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mw_fx_map_load",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400a575a",
+   "len": 6,
+   "stock_sha256": "d0402ab9708e0813aef1ef6bd5201ad121798936916b20540d23573fab2978e3",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:mw_fx_map_load",
+     0
+    ]
+   ]
   }
  ],
  "collections": {
@@ -3777,7 +3840,8 @@
    "machines.c": "6c788ea6d305bbc74ca0a037ada8b8d84a7b1ed24f1fb8331e4ee66e01b3f5a1",
    "finish.s": "f7e8801b7274a9405a443859b2e29fa1cd51a4212c8d7f7c2dfdbf3240bf9e27",
    "sections.c": "85920df5bf11aa26281bc565cd22034a8fc2cfa91e49bb6c00716425c5462dff",
-   "amp.s": "0b96fac578b2ff15cbd82b5e5990ec9b1300a61365e0228be9d853a9d75912da"
+   "amp.s": "0b96fac578b2ff15cbd82b5e5990ec9b1300a61365e0228be9d853a9d75912da",
+   "fxguard.s": "aa5a93e9ce211e3508dbd9c654b77448190f98a6637b9c234844585a7272ea72"
   }
  },
  "signature": null
