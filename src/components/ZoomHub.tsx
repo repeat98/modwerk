@@ -12,6 +12,8 @@ import { avoidFor, rememberId } from '../engine/zoom/local-ids'
 import { Icon, type IconName } from './Icon'
 import { ZoomLoad } from './ZoomLoad'
 import { HubSetHead, HubSetList, type SetAction } from './HubSets'
+import { ModuleGrid } from './ModuleGrid'
+import { ZoomEffectPreview } from '../devices/ZoomEffectDetail'
 
 // A pedal set has no JSON backup yet (its format is still to come); the other actions work as on the Octatrack.
 const SET_ACTIONS: SetAction[] = ['rename', 'duplicate', 'share', 'delete']
@@ -43,10 +45,12 @@ const isCapture = (name: string) => /^(NAM|C)\d/i.test(name)
  * Status is the Octatrack's console: the base's load (ZoomLoad), the firmware, and the effects on the pedal, read by itself.
  */
 /** `listed`: the library's effects for this pedal. */
-export function ZoomHub({ device, view, link, header, onInstall, sets, selectedId, onSelect, onNew, onSetAction, listed = ZOOM_EFFECTS.filter(effect => effect.machine === device.id) }: {
+export function ZoomHub({ device, view, link, header, onInstall, sets, selectedId, onSelect, onNew, onSetAction, onToggle, listed = ZOOM_EFFECTS.filter(effect => effect.machine === device.id) }: {
   device: DeviceProfile; view: ZoomHubView; link: ZoomLink | null; header?: ReactNode; onInstall?: () => void
   /** The pedal's module sets beside its own pages, as on the Octatrack's: opening one makes it the set you edit, Sync brings the pedal to it. */
   sets?: Configuration[]; selectedId?: string; onSelect?: (id: string) => void; onNew?: () => void; onSetAction?: (id: string, action: SetAction) => void
+  /** Takes an effect out of the open set, or keeps one the next sync would remove. */
+  onToggle?: (id: string) => void
   listed?: readonly ZoomEffect[]
 }) {
   const mobile = useMobileWorkspace()
@@ -225,11 +229,9 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
           </div>
           {error && <p role="alert" className="hub-error">{error}</p>}
           {changed && <p role="status" className="hub-cell-note">{changed.text}{changed.list && <> <a className="text-button" href={changed.list.url} download={changed.list.name}>Save the effect list from before</a></>}</p>}
-          {selected.moduleIds.length || plan?.remove.length ? <ul className="hub-unit-modules zoom-files" aria-label={selected.name + ' effects'}>
-            {[...listed.filter(effect => selected.moduleIds.includes(effect.id)).map(effect => [effect, !plan ? '' : plan.keep.includes(effect) ? 'on the pedal' : 'installs'] as const), ...(plan?.remove ?? []).map(effect => [effect, 'leaves'] as const)].map(([effect, state]) =>
-              <li key={effect.id}><span className={'unit-led is-' + (state === 'on the pedal' ? 'on' : state === 'installs' ? 'load' : 'off')} aria-hidden="true" /><strong>{effect.name}</strong><small>{effect.platform.file}{state && <> · {state}</>}</small></li>)}
-          </ul> : <p className="hub-empty">No effects in it yet.</p>}
-          <p><a className="text-button" href={deviceHref(device.id)}>Add effects from the library <Icon name="arrow" size={14} /></a></p>
+          <ModuleGrid ids={selected.moduleIds} inventory={plan && { moduleIds: [...plan.keep, ...plan.remove].map(effect => effect.id), removedStockFx: [] }} describe={id => listed.find(effect => effect.id === id)?.presentation.summary ?? ''}
+            module={id => { const effect = listed.find(item => item.id === id); return effect && { name: effect.name, preview: <ZoomEffectPreview effect={effect} compact />, href: deviceHref(effect.machine, 'module/' + effect.id) } }}
+            onRemove={id => onToggle?.(id)} onKeep={id => onToggle?.(id)} add={{ href: deviceHref(device.id), label: 'Add effects' }} />
         </> : <div className="hub-empty-set"><h2 className="hub-view-title">No module sets yet</h2><p>Start one, then add effects from the library.</p><button type="button" className="button button-primary" onClick={onNew}><Icon name="plus" size={16} />New module set</button></div>)}
       </div>
     </div>

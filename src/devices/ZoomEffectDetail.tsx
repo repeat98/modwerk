@@ -20,8 +20,8 @@ const documentUrl = (effect: ZoomEffect, path: string) => issueRepository() + '/
 const budget = (effect: ZoomEffect, name: string) => (MACHINES as MachineProfile[]).find(machine => machine.id === effect.machine)?.sdk?.budgets.find(entry => entry.name === name)?.value
 const tested = (effect: ZoomEffect) => effect.platform.pedals.filter(pedal => pedal.status === 'confirmed').map(pedal => DEVICES_BY_ID[pedal.machine].name + ' ' + pedal.firmware)
 
-export function ZoomEffectPreview({ effect }: { effect: ZoomEffect }) {
-  return <div className="module-preview" data-module="zoom-effect" aria-hidden="true">
+export function ZoomEffectPreview({ effect, compact = false }: { effect: ZoomEffect; compact?: boolean }) {
+  return <div className={'module-preview' + (compact ? ' compact-preview' : '')} data-module="zoom-effect" aria-hidden="true">
     <div className="preview-label"><span>{effect.name}</span><span className="preview-led" /></div>
     <svg viewBox="0 0 320 192" className="signal-art" fill="none"><image className="saved-thumbnail" href={zoomEffectThumbnail(effect)} width="320" height="192" /></svg>
   </div>

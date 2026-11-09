@@ -196,7 +196,7 @@ describe('installing and removing on the pedal page', () => {
 describe('syncing the set to the pedal', () => {
   const device = DEVICES_BY_ID['zoom-ms-70cdr']
   const sha = async (data: number[]) => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', Uint8Array.from(data))), b => b.toString(16).padStart(2, '0')).join('')
-  const listed = async (id: string, file: string, fxid: number, data: number[]) => ({ id, name: id, version: '0.1.0', machine: device.id,
+  const listed = async (id: string, file: string, fxid: number, data: number[]) => ({ id, name: id, version: '0.1.0', machine: device.id, presentation: { summary: '' }, media: [{ kind: 'thumbnail', path: 'thumbnail.svg' }],
     platform: { kind: 'zdl', file, effectId: { gid: 8, fxid }, effectVersion: '0.03', dspCost: 8, binary: { sha256: await sha(data), bytes: data.length, release: { repository: 'https://github.com/x/y', tag: 't', asset: file } }, screen: 'static', pedals: [] } }) as unknown as ZoomEffect
 
   it('installs the set’s effects, replaces an older version, removes listed ones it dropped and leaves the rest', async () => {
@@ -215,7 +215,7 @@ describe('syncing the set to the pedal', () => {
     await click(button('Read the pedal'))
     for (let i = 0; i < 100 && !/Installs/.test(open().textContent ?? ''); i++) await settle()
     expect(open().querySelector('.hub-sync p')?.textContent).toBe('Installs 2 · Removes 1')
-    expect([...open().querySelectorAll('[aria-label="Live effects"] small')].map(item => item.textContent)).toEqual(['Loop.ZDL · installs', 'Scope.ZDL · installs', 'Dirt.ZDL · leaves'])
+    expect([...open().querySelectorAll('.module-tile:not(.is-add)')].map(tile => tile.querySelector('strong')?.textContent + ' ' + tile.querySelector('.module-tile-state')?.textContent)).toEqual(['loop Adds', 'scope Adds', 'dirt Leaves'])
     await click(button('Sync to MS-70CDR'))
     for (let i = 0; i < 200 && !/has your set/.test(open().textContent ?? ''); i++) await settle()
     expect(open().textContent).toMatch(/Your MS-70CDR has your set\. Power-cycle the pedal/)
@@ -225,6 +225,8 @@ describe('syncing the set to the pedal', () => {
     expect(fake.files.some(f => f.name === 'DELAY.ZDL')).toBe(true)
     for (let i = 0; i < 100 && !/Already on your MS-70CDR/.test(open().textContent ?? ''); i++) await settle()
     expect(button('Sync to MS-70CDR').disabled).toBe(true)
+    expect([...open().querySelectorAll('.module-tile:not(.is-add) .module-tile-state')].map(chip => chip.textContent)).toEqual(['On it', 'On it'])
+    expect(open().querySelector('a.module-tile-open')?.getAttribute('href')).toBe('#zoom-ms-70cdr/module/loop')
     expect(container.querySelector('.hub-set-open em')?.textContent).toBe('Editing · On your MS-70CDR')
   })
 })
