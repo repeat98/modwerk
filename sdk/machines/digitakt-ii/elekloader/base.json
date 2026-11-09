@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "about": "Modwerk's Digitakt II OS 1.17 base candidate. The unchanged core-dt2 1.1 sources carry the core bus. The Modwerk sources add the audio sequencer pitch collection and active project generation.",
+  "about": "Modwerk's Digitakt II OS 1.17 base candidate. The Modwerk sources add audio sequencer pitch, grid and phrase collections and active project generation to the unchanged core-dt2 1.1 bus.",
   "core": "core-dt2",
   "include": "sdk/machines/digitakt-ii/include",
   "os": "1.17",
@@ -19,9 +19,20 @@
       "../modwerk/seq-note-entry.s",
       "../modwerk/seq-note-bridge.c",
       "../modwerk/seq-note.c",
-      "../modwerk/project-generation.s"
+      "../modwerk/seq-grid.c",
+      "../modwerk/seq-phrase.c",
+      "../modwerk/seq-phrase-entry.s",
+      "../modwerk/project-generation.s",
+      "../modwerk/project-kitdata.c"
     ],
     "sites": [
+      {
+        "addr": "0x400d82f8",
+        "len": 6,
+        "stockSha256": "74cb3c143b6a825d695e48fbac2bca8e5ce59700baca9721a368828f7bbba81e",
+        "op": "jmp",
+        "target": "core_seq_phrase_submit"
+      },
       {
         "addr": "0x400d6632",
         "len": 6,
@@ -52,7 +63,9 @@
       }
     ],
     "collections": {
-      "ev_seq_note": 4
+      "ev_seq_note": 4,
+      "ev_seq_grid": 4,
+      "ev_seq_audio_phrase": 4
     }
   }
 }

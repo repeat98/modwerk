@@ -1,0 +1,192 @@
+{
+ "schemaVersion": 3,
+ "id": "improved-machine-browser",
+ "name": "Improved Machine Browser",
+ "version": "0.1.0-experimental",
+ "machine": "analog-rytm-mkii",
+ "category": "system",
+ "exclusive": false,
+ "author": {
+  "github": "npp1993",
+  "name": "Nathaniel Pavel",
+  "credits": [
+   "Nathaniel Pavel (@npp1993) — the mod, its design and code, and this Modwerk module."
+  ]
+ },
+ "maintainers": [
+  "npp1993"
+ ],
+ "presentation": {
+  "label": "MACHINE BROWSER",
+  "family": "Workflow",
+  "summary": "Browse the machine list without loading each machine, and jump between its sections with FUNC + UP or DOWN. YES loads.",
+  "overview": "Stock loads every machine the machine list's outline passes, so the track's sound and SRC page change while you scroll. Here UP, DOWN and the knobs only move the outline: nothing loads until YES, and NO leaves the track as it was. FUNC + DOWN jumps to the first machine of the next section (BD, SD, SY and so on), and FUNC + UP to the top of the current section, then of the one above.",
+  "highlights": [
+   "Scroll the machine list without changing the track's sound",
+   "YES loads the outlined machine, NO changes nothing",
+   "FUNC + UP or DOWN jumps between the list's sections",
+   "Knobs A-H browse as the arrows do, with FUNC for sections"
+  ],
+  "usage": [
+   "Press SRC twice to open the machine list on the BD track.",
+   "Press DOWN a few times: the outline moves and the header asks Confirm? Y/N, but the BD keeps its machine and its SRC page.",
+   "Press FUNC + DOWN: the outline jumps to SY DUAL VCO, the first machine of the next section. FUNC + UP goes back to the top of the BD section.",
+   "Press YES: the outlined machine loads and the list closes. Open it again, scroll and press NO: nothing changed."
+  ]
+ },
+ "access": {
+  "location": "The machine list: SRC pressed twice, or FUNC + SRC.",
+  "steps": [
+   "Open the machine list with SRC pressed twice.",
+   "UP and DOWN, or a turn of any knob A-H, move the outline one machine without loading it.",
+   "FUNC + DOWN or FUNC + UP jumps between sections. YES loads the outlined machine, NO closes the list unchanged."
+  ],
+  "screenshots": [
+   "media/browse.png",
+   "media/section-jump.png"
+  ]
+ },
+ "controls": [],
+ "compatibility": {
+  "releases": [
+   "1.74"
+  ],
+  "requires": [],
+  "conflicts": [],
+  "limitations": [
+   "Tapping the track's pad in the list plays the machine the track has, not the outlined one: press YES to hear a machine.",
+   "Sections are the list's own dotted lines: with the Modwerk base's machine list sections, a mod machine sits in its section; without them it sits above BD."
+  ]
+ },
+ "platform": {
+  "kind": "elemod",
+  "core": "0.7",
+  "build": "build.json",
+  "events": [
+   "ev_key",
+   "ev_enc"
+  ],
+  "claims": [
+   "ui:UP and DOWN in the machine list",
+   "ui:FUNC + UP and FUNC + DOWN in the machine list",
+   "ui:knobs A-H in the machine list",
+   "ui:YES in the machine list"
+  ]
+ },
+ "resources": {
+  "memoryBytes": 1072,
+  "fastBytes": 0,
+  "load": {
+   "display": "UI only",
+   "method": "static",
+   "conditions": "Runs only on key and knob events while the machine list is open: a walk of the list's items (about 50) per press, never in the audio path. Not measured on a unit."
+  }
+ },
+ "evidence": {
+  "tier": "author-hardware",
+  "moduleVersion": "0.1.0-experimental",
+  "sourceSha256": "66b2bc167447d7411186966a35217fc4aa31736abc7e92f8f1ca7cbb319741e8",
+  "reports": [
+   "TESTING.md"
+  ],
+  "hardware": {
+   "model": "Analog Rytm MKII",
+   "release": "1.74",
+   "testedOn": "2026-11-08",
+   "tester": "npp1993",
+   "durationMinutes": null,
+   "summary": "npp1993 (the author) flashed test builds MBC2 (sha256 31f0c670) and MBC3 (sha256 4aa63f8e; the author's 16-module set with Improved Machine Browser 0.1.0-experimental) on an Analog Rytm MKII, OS 1.74. Reported: UP, DOWN and knob turns move the outline without loading, held arrows repeat, YES loads with stock's Confirmed!, NO changes nothing, and FUNC + UP, FUNC + DOWN and FUNC + knob jump between the tops of sections, on BD and another track; a knob pushed while turning goes faster, as on stock. MBC2 read FUNC + knob wrongly; MBC3, this source, fixed it.",
+   "limitations": [
+    "Run beside 16 other modules, not alone.",
+    "MIDI out of a load was not checked.",
+    "Duration not recorded."
+   ]
+  },
+  "verifiedBy": null
+ },
+ "tests": {
+  "report": "TESTING.md",
+  "summary": "On a unit (MBC3, the author's 16-module set): browsing without loading, YES and NO, held arrows, knob turns and FUNC section jumps with the arrows and the knobs, as reported. rytm-emu on OS 1.74, alone on the base and in the set: arrows, section jumps, YES and NO (TESTING.md).",
+  "documentation": {
+   "tutorial": {
+    "title": "Quick tutorial",
+    "steps": [
+     "Press SRC twice to open the machine list on the BD track.",
+     "Press DOWN a few times: the outline moves and the header asks Confirm? Y/N, but the BD keeps its machine and its SRC page.",
+     "Press FUNC + DOWN: the outline jumps to SY DUAL VCO, the first machine of the next section. FUNC + UP goes back to the top of the BD section.",
+     "Press YES: the outlined machine loads and the list closes. Open it again, scroll and press NO: nothing changed."
+    ]
+   },
+   "screenshots": [
+    "media/browse.png",
+    "media/section-jump.png",
+    "media/confirmed.png"
+   ],
+   "captureRecord": "media/capture.json"
+  }
+ },
+ "license": {
+  "spdx": "GPL-3.0-or-later",
+  "file": "LICENSE",
+  "declaration": "Original work by the author."
+ },
+ "media": [
+  {
+   "path": "media/thumbnail.svg",
+   "kind": "thumbnail",
+   "caption": "Improved Machine Browser",
+   "alt": "A machine list with a dotted line between two sections, an outline on one row and FUNC+UP/DOWN arrows jumping across the line.",
+   "credit": "Nathaniel Pavel",
+   "license": "GPL-3.0-or-later",
+   "source": "Original conceptual illustration in the shared signal-art style; not a device screenshot."
+  },
+  {
+   "path": "media/browse.png",
+   "kind": "screenshot",
+   "caption": "Machine list after DOWN twice: the outline on BD SHARP and Confirm? Y/N, while BD PLASTIC stays loaded and its SRC page shows behind.",
+   "alt": "Machine list; BD PLASTIC filled as the loaded machine, BD SHARP outlined; header CONFIRM? Y/N.",
+   "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+   "license": "LicenseRef-Rytm-UI-Documentation",
+   "source": "original",
+   "capture": {
+    "type": "emulator",
+    "release": "1.74",
+    "moduleVersion": "0.1.0-experimental",
+    "imageSha256": "b80f699128b096aeced35fc8840aa3dd1800c694288609baab85e802dff68e6e",
+    "setup": "Headless rytm-emu (dtboot) running MB03: the Modwerk base for core-ar2 0.7 and this folder's Improved Machine Browser 0.1.0-experimental, linked by Modwerk on stock OS 1.74, the default kit, BD track. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+   }
+  },
+  {
+   "path": "media/section-jump.png",
+   "kind": "screenshot",
+   "caption": "FUNC + DOWN from BD PLASTIC: the outline jumps past the dotted line to SY DUAL VCO, the first machine of the next section.",
+   "alt": "Machine list; a dotted line under BD ACOUSTIC, then SY DUAL VCO outlined beside a keyboard icon.",
+   "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+   "license": "LicenseRef-Rytm-UI-Documentation",
+   "source": "original",
+   "capture": {
+    "type": "emulator",
+    "release": "1.74",
+    "moduleVersion": "0.1.0-experimental",
+    "imageSha256": "b80f699128b096aeced35fc8840aa3dd1800c694288609baab85e802dff68e6e",
+    "setup": "Headless rytm-emu (dtboot) running MB03: the Modwerk base for core-ar2 0.7 and this folder's Improved Machine Browser 0.1.0-experimental, linked by Modwerk on stock OS 1.74, the default kit, BD track. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+   }
+  },
+  {
+   "path": "media/confirmed.png",
+   "kind": "screenshot",
+   "caption": "DOWN, then YES: BD SILKY loads, the list closes and stock shows Confirmed!.",
+   "alt": "SRC page of BD SILKY (TUN SWT SWD DEC, HLD DUS CLK LEV); header CONFIRMED!.",
+   "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+   "license": "LicenseRef-Rytm-UI-Documentation",
+   "source": "original",
+   "capture": {
+    "type": "emulator",
+    "release": "1.74",
+    "moduleVersion": "0.1.0-experimental",
+    "imageSha256": "b80f699128b096aeced35fc8840aa3dd1800c694288609baab85e802dff68e6e",
+    "setup": "Headless rytm-emu (dtboot) running MB03: the Modwerk base for core-ar2 0.7 and this folder's Improved Machine Browser 0.1.0-experimental, linked by Modwerk on stock OS 1.74, the default kit, BD track. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+   }
+  }
+ ]
+}

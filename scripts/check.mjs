@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url'
 import { readChangeScope } from './change-scope.mjs'
 import { checkChangelog } from './changelog.mjs'
 import { checkDocs } from './docs.mjs'
+import { takeSlot, workersFor } from './machine-slots.mjs'
 import { checkModuleChangelogs } from './module-changelogs.mjs'
 import { moduleScopeProblems } from './pr-ready.mjs'
 
@@ -63,8 +64,12 @@ async function build() {
   return await run('typecheck') && await run('build:bundle')
 }
 
-const started = performance.now()
 const buildOnly = process.argv.includes('--build')
+// One full check at a time per slot on this computer, whichever worktree or session starts it (scripts/machine-slots.mjs);
+// then Vitest gets as many workers as the free memory carries, unless MODWERK_TEST_WORKERS says.
+await takeSlot(buildOnly ? 'npm run build' : 'npm run check')
+process.env.MODWERK_TEST_WORKERS ??= String(workersFor({ most: 4, each: 700 * 1024 ** 2, keep: 2 * 1024 ** 3 }))
+const started = performance.now()
 const baseIndex = process.argv.indexOf('--base'), base = baseIndex < 0 ? null : process.argv[baseIndex + 1]
 if (baseIndex >= 0 && !base) throw new Error('--base requires a Git commit/ref')
 // --rerun-failed skips the checks that passed in the last run against the same base. Steps that write files always run, since later

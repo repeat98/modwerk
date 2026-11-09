@@ -20,19 +20,28 @@ core_project_created:
 1:      clrl    %a0@(8)
         rts
 
-/* Address-register addition leaves X intact, as do the displaced stock operations. */
+/* The displaced stock operations leave X intact. Preserve it across the reset. */
 project_changed:
-        movel   %a1,%sp@-
-        moveal  core_project_generation,%a1
-        addql   #1,%a1
-        movel   %a1,core_project_generation
-        moveal  %sp@+,%a1
+        lea     %sp@(-20),%sp
+        moveml  %d0-%d1/%a0-%a1,%sp@
+        movew   %ccr,%d0
+        movel   %d0,%sp@(16)
+        addql   #1,core_project_generation
+        jsr     core_project_clear_kitdata
+        movel   %sp@(16),%d0
+        movew   %d0,%ccr
+        moveml  %sp@,%d0-%d1/%a0-%a1
+        lea     %sp@(20),%sp
         rts
 
         .bss
         .balign 4
         .globl  core_project_generation
+        .globl  core_project_kitdata_generation
         .type   core_project_generation,@object
+        .type   core_project_kitdata_generation,@object
 core_project_generation:
+core_project_kitdata_generation:
         .zero   4
         .size   core_project_generation,4
+        .size   core_project_kitdata_generation,4
