@@ -19,7 +19,8 @@
       "../modwerk/seq-note-entry.s",
       "../modwerk/seq-note-bridge.c",
       "../modwerk/seq-note.c",
-      "../modwerk/project-generation.s"
+      "../modwerk/project-generation.s",
+      "../modwerk/project-kitdata.c"
     ],
     "sites": [
       {
