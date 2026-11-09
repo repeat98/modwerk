@@ -976,12 +976,12 @@
     "order": 200,
     "name": "MS-70CDR",
     "family": "zoom",
-    "status": "research",
-    "summary": "Main target of ZoomMultistompZDL: about 30 custom effects, NAM and cab loaders and a patch editor, tested on firmware 2.10. Modwerk does not list ZDL effects yet.",
+    "status": "preview",
+    "summary": "Main target of ZoomMultistompZDL: about 30 custom effects, NAM and cab loaders and a patch editor, tested on firmware 2.10. Modwerk lists its effects built with no Zoom code, starting with Loop.",
     "steps": {
       "format": "done",
       "load": "done",
-      "mods": "open"
+      "mods": "done"
     },
     "art": {
       "body": "pedal",
@@ -996,7 +996,7 @@
           "files": []
         }
       ],
-      "flash": "Effects are installed with Zoom Effect Manager 2.3.3 or later over USB; the OS is not modified.",
+      "flash": "Effects install over USB from their page or the pedal page (beta), or with Zoom Effect Manager 2.3.3 or later; the OS is not modified.",
       "recovery": "Remove the effect in Effect Manager. If a bad effect freezes the pedal at boot, run All Initialize (hold the leftmost knob while powering on), then remove the effect."
     },
     "research": [
