@@ -15,6 +15,8 @@ describe('syncing a Zoom set', () => {
     expect(plan.keep.map(effect => effect.id)).toEqual(['loop'])
     expect(plan.install.map(effect => effect.id)).toEqual(['scope'])
     expect(plan.remove.map(effect => effect.id)).toEqual(['dirt'])
+    expect(plan.adds).toBe(-1200)   // Scope replaces a file of the same size; removing Dirt frees its 1,200 bytes
+    expect(zoomSyncPlan([listedEffect('loop', 'Loop.ZDL', 467, '0.03', 5000), dirt], ['loop'], [onPedal('DIRT.ZDL', 469)]).adds).toBe(5000 - 1200)
   })
   it('counts a listed effect moved to a local ID as on the pedal, and never a different file under the same name', () => {
     expect(zoomSyncPlan([loop], ['loop'], [onPedal('LOOP.ZDL', 1000)]).keep).toEqual([loop])

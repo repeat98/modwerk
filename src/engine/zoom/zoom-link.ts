@@ -1,7 +1,8 @@
 // The site's link to a Zoom MultiStomp over Web MIDI: identify the pedal, list its files, read them (the backup),
-// and install or remove one effect file the way the project's editor proved safe on the MS-70CDR 2.10.
+// install or remove one effect file the way the project's editor proved safe on the MS-70CDR 2.10, and flash a base
+// in update mode the way zoomms' updater does.
 // The commands are in zoom-protocol.ts.
-import { EFFECT_LIST, EFFECT_LIST_SIZE, FILE, IDENTITY_REQUEST, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, isLocalId, localIdFor, withEffectId, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity } from './zoom-protocol'
+import { EFFECT_LIST, EFFECT_LIST_SIZE, FILE, LOCAL_IDS, FLASH_BAD_CRC, FLASH_OK, IDENTITY_REQUEST, MST, flashSteps, isMstReply, mstSysex, parseHello, parseLoad, isFlashReply, isUpdateMode, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, isLocalId, localIdFor, withEffectId, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity } from './zoom-protocol'
 import { storedZip } from './zip'
 
 export type ZoomLinkStatus = 'unsupported' | 'idle' | 'connecting' | 'ready' | 'reading' | 'writing'
@@ -21,6 +22,7 @@ export type MidiOut = MidiPort & { send(data: number[], timestamp?: number): voi
 export type MidiAccessLike = { readonly inputs: Iterable<[string, MidiIn]> | Map<string, MidiIn>; readonly outputs: Iterable<[string, MidiOut]> | Map<string, MidiOut>; onstatechange: ((event: unknown) => void) | null }
 
 const PEDAL = /zoom|ms-?(50g|60b|70cdr)/i
+const isPedal = (port: MidiPort) => PEDAL.test(port.name ?? '') && port.state !== 'disconnected'
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now())
 
 export class ZoomLink {
@@ -33,6 +35,8 @@ export class ZoomLink {
   private nextSend = 0
   private waitFile?: (m: number[]) => void
   private waitIdentity?: (m: number[]) => void
+  private waitMst?: (m: number[]) => void
+  private nonce = 0
   private op: Promise<unknown> = Promise.resolve()
   /** Effect headers already read (upper-case name -> size and header); a write or delete forgets that file. */
   private readonly heads = new Map<string, { size: number; effect?: ZoomFile['effect'] }>()
@@ -40,9 +44,11 @@ export class ZoomLink {
   private stale = false
   private readonly requestAccess: (() => Promise<MidiAccessLike>) | null
   private readonly timeout: number
+  private readonly retry: number
 
-  constructor(requestAccess: (() => Promise<MidiAccessLike>) | null = defaultAccess(), timeout = 1500) {
-    this.requestAccess = requestAccess; this.timeout = timeout
+  /** `timeout`: how long a reply may take; `retry`: how often a pedal just plugged in is asked again (reconnect). */
+  constructor(requestAccess: (() => Promise<MidiAccessLike>) | null = defaultAccess(), timeout = 1500, retry = 1000) {
+    this.requestAccess = requestAccess; this.timeout = timeout; this.retry = retry
     this.state = { status: requestAccess ? 'idle' : 'unsupported' }
   }
 
@@ -62,9 +68,13 @@ export class ZoomLink {
     this.set({ status: 'connecting' })
     try {
       this.access ??= await this.requestAccess()
-      this.access.onstatechange = () => { if (this.output && this.output.state === 'disconnected') this.lost() }
+      // Unplugged: lost. Plugged in again (in update mode, or restarted after a flash): connect by itself.
+      this.access.onstatechange = () => {
+        if (this.output && this.output.state === 'disconnected') this.lost()
+        if (this.state.status === 'idle' && this.pedalPresent()) void this.reconnect()
+      }
       const inputs = [...portsOf(this.access.inputs)], outputs = [...portsOf(this.access.outputs)]
-      const input = inputs.find(p => PEDAL.test(p.name ?? '')), output = outputs.find(p => PEDAL.test(p.name ?? ''))
+      const input = inputs.find(isPedal), output = outputs.find(isPedal)
       if (!input || !output) return this.set({ status: 'idle', notice: { tone: 'error', text: 'No Zoom pedal found. Connect it by USB, switch it on, then try again.' } })
       if (this.input) this.input.onmidimessage = null
       this.input = input; this.output = output; this.sysex = null
@@ -77,9 +87,24 @@ export class ZoomLink {
       const identity = reply ? parseIdentity(reply) : undefined
       if (!identity) return this.set({ status: 'idle', notice: { tone: 'error', text: 'The pedal didn’t answer. Close other apps that use it (Zoom Effect Manager, editors), then try again.' } })
       this.set({ status: 'ready', identity })
+      if (!isUpdateMode(identity)) void this.quiet(() => this.hello())
     } catch {
       this.set({ status: 'idle', notice: { tone: 'error', text: 'This browser didn’t allow MIDI. Allow MIDI with SysEx for this site, then try again.' } })
     }
+  }
+
+  private pedalPresent = () => !!this.access && [...portsOf(this.access.outputs)].some(isPedal)
+  // A pedal just plugged in is on USB before it answers (the base shows its boot screen first): ask again for a while.
+  private retrying = false
+  private async reconnect() {
+    if (this.retrying) return
+    this.retrying = true
+    try {
+      for (let i = 0; i < 10 && this.state.status === 'idle' && this.pedalPresent(); i++) {
+        if (i) await new Promise(resolve => setTimeout(resolve, this.retry))
+        if (this.state.status === 'idle') await this.connect()
+      }
+    } finally { this.retrying = false }
   }
 
   private lost() {
@@ -99,9 +124,10 @@ export class ZoomLink {
     }
   }
   private dispatch(m: number[]) {
+    if (isMstReply(m)) { this.waitMst?.(m); return }
     if (m[1] === 0x7e && m[3] === 0x06 && m[4] === 0x02) { this.waitIdentity?.(m); return }
     const id = this.state.identity?.deviceId
-    if (id !== undefined && isFileReply(m, id)) this.waitFile?.(m)
+    if (id !== undefined && (isFileReply(m, id) || isFlashReply(m, id))) this.waitFile?.(m)
   }
 
   // Paced like the project's editor: a long message gets 22 ms, a short one 3 ms.
@@ -110,11 +136,11 @@ export class ZoomLink {
     this.output?.send(bytes, t)
     this.nextSend = t + (bytes.length >= 64 ? 22 : 3)
   }
-  private ask(body: number[]): Promise<number[] | null> {
+  private ask(body: number[], timeout = this.timeout): Promise<number[] | null> {
     const id = this.state.identity?.deviceId
     if (id === undefined || !this.output) return Promise.resolve(null)
     return new Promise(resolve => {
-      const timer = setTimeout(() => { this.waitFile = undefined; this.stale = true; resolve(null) }, this.timeout)
+      const timer = setTimeout(() => { this.waitFile = undefined; this.stale = true; resolve(null) }, timeout)
       this.waitFile = m => { clearTimeout(timer); this.waitFile = undefined; resolve(m) }
       this.send(zoomSysex(id, body))
     })
@@ -138,6 +164,36 @@ export class ZoomLink {
     })
     this.stale = false
   }
+
+  /** A MIDISTOMP command (zoom-protocol.ts MST): its replies with this request's nonce, `count` of them, or null when
+   * they don't all come in time (stock firmware never answers). A late reply has another nonce, so it's never taken. */
+  private mst(command: number, count: number): Promise<number[][] | null> {
+    if (!this.output) return Promise.resolve(null)
+    const nonce = this.nonce = (this.nonce + 1) & 0x7f, got: number[][] = []
+    return new Promise(resolve => {
+      const timer = setTimeout(() => { this.waitMst = undefined; resolve(null) }, this.timeout)
+      this.waitMst = m => { if (m[6] !== nonce) return; got.push(m); if (got.length === count) { clearTimeout(timer); this.waitMst = undefined; resolve(got) } }
+      this.send(mstSysex(command, nonce))
+    })
+  }
+  /** After connecting: a pedal that runs MIDISTOMP with its SysEx says its version and features (identity.midistomp). */
+  private async hello() {
+    const asked = this.state.identity, replies = await this.mst(MST.hello, 2)
+    const version = replies?.find(m => m[5] === MST.version), status = replies?.find(m => m[5] === MST.features)
+    if (version && status && asked && this.state.identity === asked) this.set({ ...this.state, identity: { ...asked, midistomp: parseHello(version, status) } })
+  }
+  /** In turn with the file operations, without showing as one. */
+  private quiet<T>(work: () => Promise<T>): Promise<T> {
+    const run = this.op.then(work)
+    this.op = run.catch(() => undefined)
+    return run
+  }
+  /** The base's load now (MIDISTOMP's load command), null when it doesn't answer, undefined when the link is busy. */
+  readonly load = () => this.quiet(async () => {
+    if (this.state.status !== 'ready' || !this.state.identity?.midistomp) return undefined
+    const reply = await this.mst(MST.load, 1)
+    return reply ? parseLoad(reply[0]) ?? null : null
+  })
 
   /** One file operation at a time, shown as reading while it runs. */
   private exclusive<T>(label: string, work: () => Promise<T>, status: 'reading' | 'writing' = 'reading'): Promise<T> {
@@ -181,6 +237,13 @@ export class ZoomLink {
     return out
   }
 
+  // Which effect files can hold an effect of group `gid`: those the effect list puts in that group, and any it doesn't
+  // name (its group is the header's, seen on all 158 of an MS-70CDR). A header costs six round trips and a pedal holds
+  // about 160 effects, most in other groups. Without a readable list, every effect file.
+  private inGroup(files: ZoomFile[], gid: number, list: number[]) {
+    const groups = list.length === EFFECT_LIST_SIZE ? new Map(listRecords(list).map(r => [r.name.toUpperCase(), r.gid])) : undefined
+    return files.filter(f => /\.zdl$/i.test(f.name) && (groups?.get(f.name.toUpperCase()) ?? gid) === gid)
+  }
   private async head(file: ZoomFile) {
     const key = file.name.toUpperCase(), known = this.heads.get(key)
     if (known && known.size === file.size) return known.effect
@@ -192,10 +255,13 @@ export class ZoomLink {
   private async write(name: string, data: number[]) {
     this.heads.delete(name.toUpperCase())
     for (const body of FILE.writeOpen(name)) if (!await this.ask(body)) { await this.close(); throw new Error('No reply from the pedal before writing ' + name + '; nothing was written.') }
+    const label = this.state.progress?.label ?? 'Writing ' + name, blocks = Math.ceil(data.length / WRITE_BLOCK)
     for (let at = 0; at < data.length; at += WRITE_BLOCK) {
+      this.progress(label, at / WRITE_BLOCK + 1, blocks)
       if (!await this.ask(FILE.writeBlock(data.slice(at, at + WRITE_BLOCK))) || !await this.ask(FILE.readBlock[0])) { await this.close(); throw new Error('The pedal stopped answering while writing ' + name + '.') }
     }
     await this.close()
+    this.progress('Reading back ' + name, 0, 0)
     const back = await this.read(name)
     if (back.length !== data.length || back.some((b, i) => b !== data[i])) throw new Error(name + ' read back different from what was written.')
   }
@@ -240,7 +306,7 @@ export class ZoomLink {
       await this.write(existing.name, bytes)
       return { previousList: undefined, unchanged: false, moved }
     }
-    const effects = files.filter(f => /\.zdl$/i.test(f.name)), taken = new Map<number, string>()
+    const list = await this.effectList(), effects = this.inGroup(files, info.gid, list), taken = new Map<number, string>()
     for (const [i, f] of effects.entries()) {
       this.progress('Checking effect IDs on the pedal', i + 1, effects.length)
       const head = await this.head(f)
@@ -256,7 +322,6 @@ export class ZoomLink {
     }
     const free = parseUsage(await this.ask(FILE.usage()))
     if (free !== undefined && free < bytes.length + 8192) throw new Error('Not enough space on the pedal (' + Math.round(free / 1024) + ' KB free).')
-    const list = await this.effectList()
     if (listRecords(list).some(r => r.name.toUpperCase() === file)) throw new Error('The effect list already names ' + file + ' although the file is missing. Nothing was changed.')
     const updated = listWith(list, info.gid, file)
     this.progress('Writing ' + file, 0, 0)
@@ -282,10 +347,10 @@ export class ZoomLink {
     return { previousList: list }
   }, 'writing')
 
-  /** Every file on the pedal; with versions, effect files also get their group, effect id and version (slower). */
+  /** Every file on the pedal; with versions, the effect files that can be added effects (group 8) also get their group, effect id and version (slower). */
   readonly listFiles = ({ versions = false } = {}) => this.exclusive('Reading the file list', async () => {
     const files = await this.list()
-    const effects = versions ? files.filter(f => /\.zdl$/i.test(f.name)) : []
+    const effects = versions ? this.inGroup(files, LOCAL_IDS.gid, files.some(f => f.name.toUpperCase() === EFFECT_LIST) ? await this.read(EFFECT_LIST) : []) : []
     for (const [i, file] of effects.entries()) {
       this.progress('Reading effect versions', i + 1, effects.length)
       file.effect = await this.head(file)
@@ -295,6 +360,32 @@ export class ZoomLink {
 
   /** Free space on the pedal in bytes, when it says. */
   readonly freeSpace = () => this.exclusive('Reading free space', async () => parseUsage(await this.ask(FILE.usage())))
+
+  /**
+   * Flash a base (zoom-base.ts) onto an MS-70CDR in update mode: flashSteps' messages, each answered before the next,
+   * which goes 22 ms after that answer as in zoomms' updater (an erase answers when done: the OS one after about 3 s).
+   * A block whose checksum failed is sent again. Never the bootloader or the effects. The pedal stays in update mode
+   * after the last step until it's unplugged. `onStep`: erasing until the first block, then writing (the fraction of
+   * blocks sent), then finishing.
+   */
+  readonly flashBase = (main: Uint8Array, preset?: Uint8Array, onStep?: (step: 'erase' | 'write' | 'finish', fraction: number) => void) => this.exclusive('Flashing', async () => {
+    if (!isUpdateMode(this.state.identity)) throw new Error('Put the MS-70CDR in update mode first: unplug it, hold Up and Down while plugging in USB, then connect again.')
+    const steps = flashSteps(main, preset), blocks = steps.filter(body => body[0] === 0x02).length
+    let sent = 0, shown = ''
+    for (const [i, body] of steps.entries()) {
+      if (body[0] === 0x02) sent++
+      // Progress once per step name and percent, not per block: every report redraws what follows the link.
+      const step = body[0] === 0x04 ? 'finish' : sent ? 'write' : 'erase', at = step + Math.floor(100 * (i + 1) / steps.length)
+      if (at !== shown) { shown = at; this.progress('Flashing', i + 1, steps.length); onStep?.(step, sent / blocks) }
+      let reply: number[] | null = null
+      for (let tries = 0; tries < 3; tries++) {
+        reply = await this.ask(body, body[0] === 0x0a ? 15_000 : this.timeout)
+        if (reply?.[5] !== FLASH_BAD_CRC) break
+      }
+      if (reply?.[5] !== FLASH_OK) throw new Error('The flash stopped at step ' + (i + 1) + ' of ' + steps.length + (reply ? ' (the pedal answered ' + reply[5] + ')' : ' (no answer)') + '. The bootloader is untouched: put the pedal in update mode and flash again, or put Zoom’s 2.10 back with its own updater.')
+      this.nextSend = Math.max(this.nextSend, now() + 22)
+    }
+  }, 'writing')
 
   /** Every file, read and checksum-checked, in a zip with the list order: the backup to restore from. */
   readonly backup = () => this.exclusive('Backing up', async () => {

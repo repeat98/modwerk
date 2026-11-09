@@ -1,0 +1,1 @@
+Zoom MS-70CDR: the pedal page is open to everyone, not only the beta: read the pedal, back up its files, and sync your set of effects to it over USB. Installing the base from it stays in the beta for now.

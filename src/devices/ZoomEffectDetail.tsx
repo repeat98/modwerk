@@ -1,5 +1,5 @@
 // A Zoom MultiStomp effect in the library: its card and its page. It goes in a set, which the pedal page syncs to the
-// pedal over USB (beta); the file itself is there for Zoom Effect Manager. It is the author's release, pinned and served by the site.
+// pedal over USB; the file itself is there for Zoom Effect Manager. It is the author's release, pinned and served by the site.
 import type { CatalogBrowse } from '../catalog/catalog-browse'
 import { moduleStability } from '../catalog/module-stability'
 import { Icon } from '../components/Icon'
@@ -20,8 +20,8 @@ const documentUrl = (effect: ZoomEffect, path: string) => issueRepository() + '/
 const budget = (effect: ZoomEffect, name: string) => (MACHINES as MachineProfile[]).find(machine => machine.id === effect.machine)?.sdk?.budgets.find(entry => entry.name === name)?.value
 const tested = (effect: ZoomEffect) => effect.platform.pedals.filter(pedal => pedal.status === 'confirmed').map(pedal => DEVICES_BY_ID[pedal.machine].name + ' ' + pedal.firmware)
 
-export function ZoomEffectPreview({ effect }: { effect: ZoomEffect }) {
-  return <div className="module-preview" data-module="zoom-effect" aria-hidden="true">
+export function ZoomEffectPreview({ effect, compact = false }: { effect: ZoomEffect; compact?: boolean }) {
+  return <div className={'module-preview' + (compact ? ' compact-preview' : '')} data-module="zoom-effect" aria-hidden="true">
     <div className="preview-label"><span>{effect.name}</span><span className="preview-led" /></div>
     <svg viewBox="0 0 320 192" className="signal-art" fill="none"><image className="saved-thumbnail" href={zoomEffectThumbnail(effect)} width="320" height="192" /></svg>
   </div>
@@ -69,7 +69,7 @@ function ZoomEffectGuide({ effect, device }: { effect: ZoomEffect; device: Devic
       <div className="disclosure-content">
         <section className="detail-section module-access"><h2>Find it on your {device.name}</h2>{'location' in access ? <><p>{access.location}</p><ol>{access.steps.map(step => <li key={step}>{step}</li>)}</ol></> : <p>{access.noUiReason}</p>}</section>
         <ModuleUsageInstructions module={{ id: effect.machine + '-' + effect.id, name: effect.name, version: effect.version }} title={effect.tests.documentation?.tutorial.title} steps={effect.presentation.usage} />
-        <p>Add it to your set and sync the set from the pedal page (beta), or <a href={zoomEffectUrl(effect)} download={platform.file}>download {platform.file}</a> and install it with Zoom Effect Manager. Power-cycle the pedal afterwards.</p>
+        <p>Add it to your set and sync the set from the pedal page, or <a href={zoomEffectUrl(effect)} download={platform.file}>download {platform.file}</a> and install it with Zoom Effect Manager. Power-cycle the pedal afterwards.</p>
         <a href={documentUrl(effect, 'README.md')} target="_blank" rel="noreferrer">Read the complete guide ↗</a>
       </div>
     </details>
