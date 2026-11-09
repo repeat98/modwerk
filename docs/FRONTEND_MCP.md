@@ -204,6 +204,36 @@ unqualified machine groups retain their existing refusals. The MCP offers no
 raw memory/key injection, arbitrary packages, whole-OS flashing or automatic
 Keep. Base installation/upgrades retain the reviewed card/recovery flow.
 
+## A Zoom pedal over MIDI
+
+A Zoom MultiStomp needs no bridge: the CLI and the MCP drive the site's own
+`ZoomLink` over the computer's MIDI through `@julusian/midi` (RtMidi), wrapped in
+Web MIDI's shape by [`zoom-device.ts`](../scripts/zoom-device.ts). It turns SysEx
+on and sends each message at its Web MIDI timestamp, so the link's pacing holds.
+Close Zoom Effect Manager and the browser's pedal page first: the pedal answers
+every MIDI client, and their requests would mix.
+
+```sh
+npm run zoom -- status | list | backup [OUT.zip]
+npm run zoom -- install FILE.ZDL --yes | remove NAME.ZDL --yes
+node scripts/frontend-mcp.mjs --data-dir /private/path/modwerk-mcp --zoom-midi [--zoom-effects DIR] [--allow-device-writes]
+```
+
+`zoom_status` reads the model and firmware (on MIDISTOMP also its version,
+features and load), `zoom_list` the files with each effect's group, ID and
+version and the free space, and `zoom_backup` every file into a zip in the
+private workspace (the CLI's default is `~/.cache/modwerk-local/zoom/`).
+`zoom_install` takes an effect file by name from the startup-selected
+`--zoom-effects` directory, never a path; it and `zoom_remove` need
+`--allow-device-writes` and `confirm: true` (the CLI: `--yes`), act as the
+site's pedal page does, and save the effect list from before next to the
+backups. Power-cycle the pedal to load a change. A pedal in update mode
+answers `status` only; flashing a base stays in the site's dialog. These are
+the pedal's own file operations, which the Octatrack's tools have no
+counterpart for; once a Zoom base loads modules over USB, that goes behind
+`device_review`, `device_trial`, Keep and Undo, as the
+[recipe](MACHINE_RECIPE.md) asks. Tests run against `fakeZoomPedal`.
+
 ## A member's unit through a remote session
 
 An administrator can read a member's Octatrack through their browser, with
