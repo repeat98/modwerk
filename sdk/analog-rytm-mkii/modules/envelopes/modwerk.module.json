@@ -87,16 +87,16 @@
   },
   "platform": {
     "kind": "elemod",
-    "core": "0.3",
+    "core": "0.7",
     "build": "build.json",
     "events": [
-      "ev_tick"
+      "ev_tick",
+      "ev_amp_record"
     ],
     "claims": [
       "ui:FUNC + turn of AMP HLD",
       "ui:value text of AMP ATK/HLD/DEC and FILTER ATK/DEC/REL",
       "ui:AMP page envelope picture HLD",
-      "audio:amp envelope record write",
       "audio:filter attack rate table",
       "audio:amp hold table",
       "audio:amp decay table",

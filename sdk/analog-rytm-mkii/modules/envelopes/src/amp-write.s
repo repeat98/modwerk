@@ -6,14 +6,15 @@
         | amp level and decides when the hold ends (HOLD 0 = no hold, 127 =
         | AUTO, never before the attack's top).
 
-        .equ    WRITE_RESUME,   0x40109c2c        | moveq #8,%d0, then the level word
-
         .text
 
         | ------------------------------------------------------------------
-        | envelopes_write: over the two `move.l %d0` stores of the voice's rate
-        | word at 0x40109c24 (amp_env_commands 0x40109940), every block for each
-        | voice, in every state, after stock's state machine.
+        | envelopes_write: an ev_amp_record entry (modwerk/amp.h, order 50): the
+        | base runs it once a voice an audio block, in every state, after stock's
+        | state machine and before stock's stores of the record at 0x40109c24
+        | (amp_env_commands 0x40109940). Order 50 puts it after the entries that
+        | rewrite the record (10-39), so it follows the record the amp gets, and
+        | before the followers (60-89), which see its ATK rewrite.
         |
         | It calls envelopes_voice unless the voice's record is the one it last
         | took and that one left the voice as it was (envelopes_gate,
@@ -23,8 +24,8 @@
         |
         | d0 the rate word, d2 the level word, d3 the voice, a2 its state (-1
         | idle; +4 the hold counter), a3 the frame at the voice's record, a4 the
-        | track's sound slice (+0 ATK, +2 HLD, +4 DEC). d1 and a0 are written
-        | before they are read on the next pass, so they are free.
+        | track's sound slice (+0 ATK, +2 HLD, +4 DEC). It uses d1 and a0, as the
+        | hook allows, and keeps every other register.
         | ------------------------------------------------------------------
         .globl  envelopes_write
         .align  2
@@ -49,9 +50,7 @@ envelopes_write:
         lea     20(%sp),%sp
         movem.l (%sp),%d0-%d1/%a0-%a1
         lea     16(%sp),%sp
-8:      move.l  %d0,172(%a3)                      | displaced
-        move.l  %d0,236(%a3)
-        jmp     WRITE_RESUME
+8:      rts
 
         | ------------------------------------------------------------------
         | envelopes_amp_graph: over the AMP page's call of stock's envelope

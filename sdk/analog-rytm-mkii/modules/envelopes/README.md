@@ -32,8 +32,9 @@ time, and the short end has the resolution drums need.
 
 ## How it works
 
-- `src/amp-write.s` takes the amp record write in `amp_env_commands` (0x40109c24, every voice every
-  block) and calls `envelopes_voice`, except for a voice whose record repeats the last one it took when
+- `src/amp-write.s` subscribes to the base's amp record hook `ev_amp_record` (`amp_env_commands`
+  0x40109c24, every voice every block, order 50: after entries that rewrite the record, such as Env
+  Reset Amp's pre-fade) and calls `envelopes_voice`, except for a voice whose record repeats the last one it took when
   that one changed nothing (an idle voice, a decay at its end): an idle unit makes no C call there.
 - `envelopes_voice` (`src/envelopes.c`) follows each voice's amp level from the records sent (the level
   lives in the voice hardware) and sets the state stock moves to: after a trig 1 (gate, AUTO) or 2
@@ -69,8 +70,9 @@ exponential (straight lines in dB). A choke or stop still fades over stock's fix
 
 ## Compatibility and limitations
 
-It patches the amp record write in `amp_env_commands` (0x40109c24) and points stock's envelope table
-reads at its own tables (`ptr` sites, listed under How it works), and subscribes to `ev_tick`. Claims:
+It needs Modwerk's Rytm base with the amp record hook. It takes the amp record through `ev_amp_record`,
+points stock's envelope table reads at its own tables (`ptr` sites, listed under How it works), and
+subscribes to `ev_tick`. Claims:
 FUNC + turn on AMP HLD, the value text of AMP ATK/HLD/DEC and FILTER ATK/DEC/REL,
 the AMP page picture and the amp and filter envelope tables. It needs no other module.
 

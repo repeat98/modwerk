@@ -12,6 +12,11 @@
       "event": "ev_tick",
       "fn": "envelopes_tick",
       "order": 50
+    },
+    {
+      "event": "ev_amp_record",
+      "fn": "envelopes_write",
+      "order": 50
     }
   ],
   "contribute": [
@@ -36,7 +41,6 @@
     "ui:FUNC + turn of AMP HLD",
     "ui:value text of AMP ATK/HLD/DEC and FILTER ATK/DEC/REL",
     "ui:AMP page envelope picture HLD",
-    "audio:amp envelope record write",
     "audio:filter attack rate table",
     "audio:amp hold table",
     "audio:amp decay table",
@@ -49,13 +53,6 @@
       "defsym": {},
       "cflags": [],
       "sites": [
-        {
-          "addr": "0x40109c24",
-          "len": 8,
-          "stockSha256": "3df81daa6f0b5b044b3c5bbf7c45a8d96b97caa686b60bf262eeda8b7dc87dc5",
-          "op": "jmp",
-          "target": "envelopes_write"
-        },
         {
           "addr": "0x400d3302",
           "len": 6,
