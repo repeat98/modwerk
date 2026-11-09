@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "about": "Modwerk's Digitakt II OS 1.17 base candidate. The unchanged core-dt2 1.1 sources carry the core bus. The Modwerk sources add the audio sequencer pitch collection and active project generation.",
+  "about": "Modwerk's Digitakt II OS 1.17 base candidate. The Modwerk sources add audio sequencer pitch, grid and phrase collections and active project generation to the unchanged core-dt2 1.1 bus.",
   "core": "core-dt2",
   "include": "sdk/machines/digitakt-ii/include",
   "os": "1.17",
