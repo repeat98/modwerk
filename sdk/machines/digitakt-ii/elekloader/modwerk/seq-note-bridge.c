@@ -44,10 +44,12 @@ static void observe_grid(const uint8_t *pattern, uint32_t track, uint32_t step,
     }
     if (track >= 16 || step >= 128 || slot >= PATTERN_COUNT ||
         offset != slot * PATTERN_STRIDE || SEQ_SOURCE != PATTERN_SOURCE ||
-        address != CURRENT_PATTERN || (pending && address != pending)) {
+        (address != CURRENT_PATTERN && address != pending)) {
         return;
     }
 
+    /* The stock constructor can select the incoming pattern during lookahead.
+     * The pending slot can still name the outgoing pattern after the switch. */
     const uint8_t *track_data = pattern + track * TRACK_STRIDE;
     const uint8_t track_mode = pattern[0x1db79];
     if (track_mode > 1 || track_data[0x498] || track_data[0x5a4]) {
