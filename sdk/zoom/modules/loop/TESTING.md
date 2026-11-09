@@ -1,6 +1,6 @@
 # Loop testing
 
-The listed file: `Loop.ZDL` from the release
+The listed file, Loop 0.3.0: `Loop.ZDL` from the release
 [loop-0.03](https://github.com/repeat98/ZoomMultistompZDL/releases/tag/loop-0.03),
 26,546 bytes, SHA-256
 `696623f79f1d895b317c5230309c00b0058a2b984f4437021455bc19fe1624da`,
