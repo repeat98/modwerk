@@ -210,8 +210,12 @@ A Zoom MultiStomp needs no bridge: the CLI and the MCP drive the site's own
 `ZoomLink` over the computer's MIDI through `@julusian/midi` (RtMidi), wrapped in
 Web MIDI's shape by [`zoom-device.ts`](../scripts/zoom-device.ts). It turns SysEx
 on and sends each message at its Web MIDI timestamp, so the link's pacing holds.
-Close Zoom Effect Manager and the browser's pedal page first: the pedal answers
-every MIDI client, and their requests would mix.
+Close Zoom Effect Manager and every browser tab with a pedal page (dev servers
+too) first: the pedal answers every MIDI client, so another client's replies
+end up in this link's operations, and this link's file commands in theirs.
+On 9 November 2026 `status` read the owner's MS-70CDR on MIDISTOMP 2.0.1
+(identity, features and load) over CoreMIDI; `list` stopped after four files
+because a pedal page in another worktree's dev server was reading the pedal.
 
 ```sh
 npm run zoom -- status | list | backup [OUT.zip]
