@@ -20,6 +20,8 @@ Build MBC3 (this source, the same set, sha256 4aa63f8e), reported by the tester,
 | FUNC held, knob A turned slowly and quickly | Jumps between the tops of sections, as FUNC + UP and FUNC + DOWN do; a quick turn behaves as expected |
 | Knob pushed while turning | A little faster, as on stock |
 
+Source (0.1.0-experimental, as built for MBC3 and MB03): fingerprint (`sha256` of `sha256sum build.json src/ar2-1.74.h src/main.c`) `66b2bc16…41e8` (`evidence.sourceSha256`).
+
 ## Emulator
 
 rytm-emu (dtboot) at revision 2ac0f1f, headless, panel keys held 12M instructions. Not hardware evidence: the emulator only approximates the instrument.
