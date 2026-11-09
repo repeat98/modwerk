@@ -1,9 +1,17 @@
-# Proposal: Zoom MultiStomp pedals (ZDL effects)
+# Zoom MultiStomp pedals (ZDL effects)
 
-Status: **proposal, with the owner's first answers; the machine contract part is in.** The
-four pedals have profiles in `sdk/machines/zoom-*/` (family `zoom`, all in
-research) and machine pages on the site. Modwerk lists no ZDL effects yet:
-that needs the `zdl` platform and module contract (steps 3 onward below).
+Status: **the MS-70CDR is in preview, with Loop as the first effect in the
+library.** The four pedals have profiles in `sdk/machines/zoom-*/` (family
+`zoom`; the MS-50G, MS-60B and G1on series still in research) and machine
+pages on the site. What is left is in the [Plan](#plan).
+
+Telling Zoom, as the [modding guidelines](../MODDING_GUIDELINES.md#talking-with-makers)
+ask before a new maker's first public download: the owner emailed Zoom on 9
+November 2026 about the effects built with no Zoom code, the MIDISTOMP base
+and the plan for Zoom's stock effects (a set's stock entries are read from
+the pedal and reinstalled from the user's own Zoom updater, never from library
+pages or hosted files, and only after the first release). The email named no
+effect authors, and no reply from Zoom is on record.
 
 Source project: [themanro/ZoomMultistompZDL](https://github.com/themanro/ZoomMultistompZDL)
 (MIT), a fork of [repeat98/ZoomMultistompZDL](https://github.com/repeat98/ZoomMultistompZDL),
@@ -295,10 +303,10 @@ install throughout.
 7. Effects without stock code: the project's linker builds with Leemuzhko's
    runtime (`own_runtime`, [settled](ZDL_MODULE_CONTRACT.md#settled-first));
    Loop built so ran on the owner's MS-70CDR (9 November 2026). The `zdl`
-   module contract is in force on the MS-70CDR; next, the first effects as
-   modules (Loop, then Scope, Spectrum and Scorch after their pedal runs),
-   `divf` from TI's RTS source, the effect-ID ledger and the DSP limit of 300
-   under MIDISTOMP 2.
+   module contract is in force on the MS-70CDR, and Loop is its first module,
+   which puts the pedal in preview. Next: Scope, Spectrum and Scorch as
+   modules after their pedal runs, `divf` from TI's RTS source, the effect-ID
+   ledger and the DSP limit of 300 under MIDISTOMP 2.
 8. Later: the Windows `.exe` as input (a port of `zoomms/parts.py`), the
    MS-50G and MS-60B (their stock updaters resolve and check the patches),
    loading effects without a reboot, in-browser NAM and cab builds, and the

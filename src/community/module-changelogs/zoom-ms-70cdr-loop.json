@@ -4,7 +4,7 @@
     "date": "2026-11-09",
     "changes": [
       "First Modwerk release for the MS-70CDR: Manro's Loop 0.03, built with no code from Zoom's effects. Record, play, overdub, undo and redo from the footswitch, with tempo-quantized loops and a click.",
-      "Install it from its page over USB (beta) or with Zoom Effect Manager.",
+      "Add it to your set and sync the set from the pedal page over USB, or install it with Zoom Effect Manager.",
       "A recalled patch plays the knobs' defaults until you touch a knob."
     ]
   }

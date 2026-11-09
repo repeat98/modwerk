@@ -44,8 +44,9 @@ applies to the next loop.
 ## Usage
 
 Add Loop to a patch from the effect list (Delay group) and put it in the last
-slot, so it records everything before it. Install it from this page over USB
-(beta) or with Zoom Effect Manager, then power-cycle the pedal.
+slot, so it records everything before it. Add it to your set and sync the set
+from the pedal page over USB, or install it with Zoom Effect Manager, then
+power-cycle the pedal.
 
 ### Quick tutorial
 

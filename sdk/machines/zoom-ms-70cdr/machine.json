@@ -13,7 +13,7 @@
         "files": []
       }
     ],
-    "flash": "Effects install over USB from their page or the pedal page (beta), or with Zoom Effect Manager 2.3.3 or later; the OS is not modified.",
+    "flash": "Effects install over USB from the pedal page, or with Zoom Effect Manager 2.3.3 or later; the OS is not modified.",
     "recovery": "Remove the effect in Effect Manager. If a bad effect freezes the pedal at boot, run All Initialize (hold the leftmost knob while powering on), then remove the effect."
   },
   "steps": {
