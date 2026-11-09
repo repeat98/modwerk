@@ -113,6 +113,9 @@ type AllMachinesLibraryProps = {
   onToggleOctatrack: (id: string) => void
   digiSelected: Record<DigiMod['device'], string[]>
   onToggleDigi: (device: DigiMod['device'], id: string) => void
+  // Each Zoom pedal's set (machine id → effect ids); Sync on the pedal page brings the pedal to it.
+  zoomSelected?: Record<string, string[]>
+  onToggleZoom?: (device: string, id: string) => void
   family: string
   onFamilyChange: (value: string) => void
   sort: string
@@ -137,7 +140,7 @@ type MachineLibraryProps = AllMachinesLibraryProps & {
   buildHref?: string; buildLabel?: string
 }
 
-export function MachineLibrary({ device, query, category, octatrackModules: octatrack, octatrackSelected, onToggleOctatrack, digiSelected, onToggleDigi, family, onFamilyChange, sort, onSortChange, statistics, octatrackConflicts, octatrackBlocks, onSwapOctatrack, comparison, onCompare, onOpenComparison, viewedModuleVersions, moduleBaseline, machinePicker, children, onClearSearch, onClearQuery, onBrowse, phone = false, resultsSlot, octatrackCatalogue = AVAILABLE_MODULES, buildHref, buildLabel }: MachineLibraryProps) {
+export function MachineLibrary({ device, query, category, octatrackModules: octatrack, octatrackSelected, onToggleOctatrack, digiSelected, onToggleDigi, zoomSelected = {}, onToggleZoom, family, onFamilyChange, sort, onSortChange, statistics, octatrackConflicts, octatrackBlocks, onSwapOctatrack, comparison, onCompare, onOpenComparison, viewedModuleVersions, moduleBaseline, machinePicker, children, onClearSearch, onClearQuery, onBrowse, phone = false, resultsSlot, octatrackCatalogue = AVAILABLE_MODULES, buildHref, buildLabel }: MachineLibraryProps) {
   const w = useSetWords()
   const heading = useRef<HTMLHeadingElement>(null)
   const term = query.toLowerCase().trim()
@@ -184,7 +187,7 @@ export function MachineLibrary({ device, query, category, octatrackModules: octa
   const groups: { device: DeviceProfile; count: number; cards: ReactNode[] }[] = [
     ...(!device || device.id === 'octatrack' ? [{device: DEVICES_BY_ID.octatrack, count: octatrack.length, cards: octatrack.map(module => <ModuleCard key={module.id} module={module} selected={octatrackSelected.includes(module.id)} statistics={statistics?.find(item => item.module_id === module.id)} viewedVersion={viewedModuleVersions[module.id]} baseline={moduleBaseline} compared={comparison.includes(module.id)} canCompare={comparison.length < 3 || comparison.includes(module.id)} onToggle={() => onToggleOctatrack(module.id)} onCompare={() => onCompare(module.id)} onBrowse={browseResults} block={octatrackBlocks?.[module.id]} onSwap={removeIds => onSwapOctatrack?.(module.id, removeIds)} />)}] : []),
     ...digiGroups.map(({ id, mods }) => ({device: DEVICES_BY_ID[id], count: mods.length, cards: mods.map(mod => <DigiModCard key={mod.id} mod={mod} selected={digiSelected[id].includes(mod.id)} statistics={statistics?.find(item => item.module_id === id + '-' + mod.id)} onToggle={() => onToggleDigi(id, mod.id)} compared={comparison.includes(id + '-' + mod.id)} canCompare={comparison.length < 3 || comparison.includes(id + '-' + mod.id)} onCompare={() => onCompare(id + '-' + mod.id)} onBrowse={browseResults} />)})),
-    ...zoomGroups.map(({ device: pedal, effects }) => ({device: pedal, count: effects.length, cards: effects.map(effect => <ZoomEffectCard key={effect.id} effect={effect} statistics={statistics?.find(item => item.module_id === pedal.id + '-' + effect.id)} compared={comparison.includes(pedal.id + '-' + effect.id)} canCompare={comparison.length < 3 || comparison.includes(pedal.id + '-' + effect.id)} onCompare={() => onCompare(pedal.id + '-' + effect.id)} onBrowse={browseResults} />)})),
+    ...zoomGroups.map(({ device: pedal, effects }) => ({device: pedal, count: effects.length, cards: effects.map(effect => <ZoomEffectCard key={effect.id} effect={effect} selected={(zoomSelected[pedal.id] ?? []).includes(effect.id)} onToggle={() => onToggleZoom?.(pedal.id, effect.id)} statistics={statistics?.find(item => item.module_id === pedal.id + '-' + effect.id)} compared={comparison.includes(pedal.id + '-' + effect.id)} canCompare={comparison.length < 3 || comparison.includes(pedal.id + '-' + effect.id)} onCompare={() => onCompare(pedal.id + '-' + effect.id)} onBrowse={browseResults} />)})),
   ]
   const total = groups.reduce((sum, group) => sum + group.count, 0)
   const shownGroups = groups.filter(group => group.count)

@@ -155,8 +155,13 @@ back, then the pedal is power-cycled; removing is the reverse. Tested on the
 MS-70CDR 2.10 with a test file, replacing an installed effect, and adding and
 removing a new one, also from the pedal page. Recovery: remove the effect again;
 for a boot freeze, All Initialize, then remove it. Zoom Effect Manager 2.3.3 or
-later stays a fallback. With MIDISTOMP as the base, installing follows the
-Octatrack's sync ([the base](ZOOM_MULTISTOMP.md#the-base-midistomp)).
+later stays a fallback. Listed effects go in a module set, as on every
+machine: Add to set in the library, then Sync on the pedal page brings the
+pedal to the set (`zoomSyncPlan` in `src/devices/zoom-effects.ts`): it installs
+the set's effects that are missing or another version and removes listed
+effects the set dropped, telling them apart by name and header group; Zoom's
+own effects and files installed by hand are never touched, and nothing is
+written before the list is confirmed.
 
 ## Machine profiles
 
