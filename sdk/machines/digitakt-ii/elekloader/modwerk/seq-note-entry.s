@@ -32,7 +32,10 @@ start_stock:
 
 core_seq_note_step:
         tst.l   ev_seq_grid
+        bne.s   step_grid
+        tst.l   ev_seq_audio_phrase
         beq.s   step_stock
+step_grid:
         lea     -16(%sp),%sp
         movem.l %d0-%d1/%a0-%a1,(%sp)
         move.l  %d2,-(%sp)             /* lookahead */

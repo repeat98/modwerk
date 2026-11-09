@@ -20,9 +20,18 @@
       "../modwerk/seq-note-bridge.c",
       "../modwerk/seq-note.c",
       "../modwerk/seq-grid.c",
+      "../modwerk/seq-phrase.c",
+      "../modwerk/seq-phrase-entry.s",
       "../modwerk/project-generation.s"
     ],
     "sites": [
+      {
+        "addr": "0x400d82f8",
+        "len": 6,
+        "stockSha256": "74cb3c143b6a825d695e48fbac2bca8e5ce59700baca9721a368828f7bbba81e",
+        "op": "jmp",
+        "target": "core_seq_phrase_submit"
+      },
       {
         "addr": "0x400d6632",
         "len": 6,
@@ -54,7 +63,8 @@
     ],
     "collections": {
       "ev_seq_note": 4,
-      "ev_seq_grid": 4
+      "ev_seq_grid": 4,
+      "ev_seq_audio_phrase": 4
     }
   }
 }

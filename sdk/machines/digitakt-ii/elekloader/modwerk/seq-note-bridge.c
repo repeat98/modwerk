@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "seq-note.h"
 #include "seq-grid.h"
+#include "seq-phrase.h"
+#include "mk2/core.h"
 
 /* Digitakt II OS 1.17. Guards for the stock sites and scale rows are in README.md. */
 #define PATTERN_BASE 0x41776cb8u
@@ -37,6 +39,9 @@ static void observe_grid(const uint8_t *pattern, uint32_t track, uint32_t step,
     const uintptr_t offset = address - PATTERN_BASE;
     const uintptr_t slot = offset / PATTERN_STRIDE;
     const uintptr_t pending = PENDING_PATTERN;
+    if (track < 16 && ev_seq_audio_phrase[0]) {
+        core_seq_phrase_windows[track].length = 0;
+    }
     if (track >= 16 || step >= 128 || slot >= PATTERN_COUNT ||
         offset != slot * PATTERN_STRIDE || SEQ_SOURCE != PATTERN_SOURCE ||
         address != CURRENT_PATTERN || (pending && address != pending)) {
@@ -79,6 +84,9 @@ static void observe_grid(const uint8_t *pattern, uint32_t track, uint32_t step,
         }
     }
     if (core_seq_grid_timing(&window, tick, lookahead, swing, flags)) {
+        if (ev_seq_audio_phrase[0] && !play_event) {
+            fw_memcpy(&core_seq_phrase_windows[track], &window, sizeof window);
+        }
         for (unsigned int i = 0; i < DT2_SEQ_GRID_HANDLERS && ev_seq_grid[i]; ++i) {
             ev_seq_grid[i](&window);
         }
