@@ -221,6 +221,9 @@ export function parseLoad(m: number[]): MidistompLoad | undefined {
 /** Update mode (hold Up and Down while plugging in USB): the MS-70CDR's bootloader answers the identity request with
  * version 1.1x and takes the flash commands below. */
 export const isUpdateMode = (identity?: ZoomIdentity) => !!identity && identity.deviceId === 0x61 && identity.firmware.startsWith('1.1')
+/** Where installing and removing effect files may write: the MS-70CDR on Zoom's 2.10, where they were proven, or on
+ * the base (Zoom's 2.10, patched). Every other pedal or firmware is only read. */
+export const canWriteFiles = (identity?: ZoomIdentity) => identity?.deviceId === ZOOM_DEVICE_IDS['zoom-ms-70cdr'] && (identity.firmware === '2.10' || identity.firmware === ZOOM_BASE.tag)
 /** The bootloader's answer to a flash command: F0 52 00 <id> 00 <status> F7, 00 done, 08 a write's checksum failed. */
 export const isFlashReply = (m: number[], deviceId: number) => m.length === 7 && m[1] === 0x52 && m[3] === deviceId && m[4] === 0x00
 export const FLASH_OK = 0x00, FLASH_BAD_CRC = 0x08

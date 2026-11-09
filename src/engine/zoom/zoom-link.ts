@@ -2,7 +2,7 @@
 // install or remove one effect file the way the project's editor proved safe on the MS-70CDR 2.10, and flash a base
 // in update mode the way zoomms' updater does.
 // The commands are in zoom-protocol.ts.
-import { EFFECT_LIST, EFFECT_LIST_SIZE, FILE, LOCAL_IDS, FLASH_BAD_CRC, FLASH_OK, IDENTITY_REQUEST, MST, flashSteps, isMstReply, mstSysex, parseHello, parseLoad, isFlashReply, isUpdateMode, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, isLocalId, localIdFor, withEffectId, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity } from './zoom-protocol'
+import { EFFECT_LIST, EFFECT_LIST_SIZE, FILE, LOCAL_IDS, canWriteFiles, FLASH_BAD_CRC, FLASH_OK, IDENTITY_REQUEST, MST, flashSteps, isMstReply, mstSysex, parseHello, parseLoad, isFlashReply, isUpdateMode, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, isLocalId, localIdFor, withEffectId, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity } from './zoom-protocol'
 import { storedZip } from './zip'
 
 export type ZoomLinkStatus = 'unsupported' | 'idle' | 'connecting' | 'ready' | 'reading' | 'writing'
@@ -254,7 +254,11 @@ export class ZoomLink {
   // Delete any old file of that name, write it in blocks, close, then read it back.
   private async write(name: string, data: number[]) {
     this.heads.delete(name.toUpperCase())
-    for (const body of FILE.writeOpen(name)) if (!await this.ask(body)) { await this.close(); throw new Error('No reply from the pedal before writing ' + name + '; nothing was written.') }
+    let deleting = false
+    for (const body of FILE.writeOpen(name)) {
+      deleting ||= body[1] === 0x24
+      if (!await this.ask(body)) { await this.close(); throw new Error('No reply from the pedal before writing ' + name + (deleting ? '; the old ' + name + ' may already be deleted.' : '; nothing was written.')) }
+    }
     const label = this.state.progress?.label ?? 'Writing ' + name, blocks = Math.ceil(data.length / WRITE_BLOCK)
     for (let at = 0; at < data.length; at += WRITE_BLOCK) {
       this.progress(label, at / WRITE_BLOCK + 1, blocks)
@@ -279,6 +283,20 @@ export class ZoomLink {
     if (list.length !== EFFECT_LIST_SIZE) throw new Error('Could not read the effect list; nothing was changed.')
     return list
   }
+  /** Write a changed effect list; when that fails, write the original back. Its errors carry the original
+   * (`previousList`) for the caller to offer for saving. */
+  private async writeList(updated: number[], list: number[]) {
+    const failed = (text: string, cause: unknown) => Object.assign(new Error(text, { cause }), { previousList: list })
+    try { await this.write(EFFECT_LIST, updated) } catch (error) {
+      await this.drain()   // a late reply to the failed write must not answer the rollback's requests
+      try { await this.write(EFFECT_LIST, list) } catch (again) { throw failed((error as Error).message + ' Writing the original effect list back also failed (' + (again as Error).message + '): restore it from your backup before power-cycling.', again) }
+      throw failed((error as Error).message + ' The original effect list was written back.', error)
+    }
+  }
+  private refuseWrites() {
+    const identity = this.state.identity
+    if (!canWriteFiles(identity)) throw new Error('Installing and removing effects is tested only on the MS-70CDR with Zoom’s firmware 2.10 or the base; this is ' + (identity ? 'an ' + identity.model + ' with firmware ' + (identity.firmware || 'unknown') : 'an unknown pedal') + '. Nothing was written.')
+  }
 
   /**
    * Install one added effect file (installRefusal: never Zoom's own, nor a known ID clash). A new one: there must be
@@ -290,6 +308,7 @@ export class ZoomLink {
    * list from before, for the caller to offer for saving, and any move. Power-cycle the pedal to load it.
    */
   readonly installFile = (name: string, data: ArrayLike<number>, { avoid = new Set<number>() }: { avoid?: Set<number> } = {}) => this.exclusive('Installing ' + name, async () => {
+    this.refuseWrites()
     const file = name.toUpperCase(), refused = installRefusal(name, data)
     if (refused) throw new Error(refused)
     let bytes = Array.from(data)
@@ -303,7 +322,21 @@ export class ZoomLink {
       const current = await this.read(existing.name)
       if (current.length === bytes.length && current.every((b, i) => b === bytes[i])) return { previousList: undefined, unchanged: true, moved }
       this.progress('Writing ' + existing.name, 0, 0)
-      await this.write(existing.name, bytes)
+      // The effect list names this file throughout: a failed write is tried once more, then the file goes from the
+      // list and the pedal, so the pedal never boots with a cut-short effect it would load.
+      try { await this.write(existing.name, bytes) } catch {
+        await this.drain()
+        try { await this.write(existing.name, bytes) } catch (error) {
+          let after = ', so ' + existing.name + ' was taken out of the effect list and off the pedal'
+          try {
+            await this.drain()
+            const list = await this.effectList(), updated = listWithout(list, existing.name)
+            if (updated) await this.writeList(updated, list)
+            await this.remove(existing.name)
+          } catch (again) { after = ', and taking it out of the effect list failed too (' + (again as Error).message + ')' }
+          throw new Error((error as Error).message + ' It failed twice' + after + '. Don’t power-cycle the pedal until it is installed again.', { cause: error })
+        }
+      }
       return { previousList: undefined, unchanged: false, moved }
     }
     const list = await this.effectList(), effects = this.inGroup(files, info.gid, list), taken = new Map<number, string>()
@@ -327,22 +360,20 @@ export class ZoomLink {
     this.progress('Writing ' + file, 0, 0)
     await this.write(file, bytes)
     this.progress('Adding ' + file + ' to the effect list', 0, 0)
-    try { await this.write(EFFECT_LIST, updated) } catch (error) {
-      await this.drain()   // a late reply to the failed write must not answer the rollback's requests
-      try { await this.write(EFFECT_LIST, list) } catch (again) { throw new Error((error as Error).message + ' Writing the original effect list back also failed (' + (again as Error).message + '): restore it from your backup before power-cycling.', { cause: again }) }
-      throw new Error((error as Error).message + ' The original effect list was written back.', { cause: error })
-    }
+    await this.writeList(updated, list)
     return { previousList: list, unchanged: false, moved }
   }, 'writing')
 
-  /** Remove one added effect file: out of the effect list first, then the file, then list to check it went. Returns the effect list from before. */
+  /** Remove one added effect file: out of the effect list first (whose original is written back if that fails), then
+   * the file, then list to check it went. Returns the effect list from before. */
   readonly removeFile = (name: string) => this.exclusive('Removing ' + name, async () => {
+    this.refuseWrites()
     const files = await this.list(), file = files.find(f => f.name.toUpperCase() === name.toUpperCase())
     if (!file || !/\.zdl$/i.test(file.name)) throw new Error(name + ' is not an effect on the pedal.')
     const head = await this.head(file)
     if (!isAddedEffect(head)) throw new Error(file.name + (head ? ' has effect ID ' + head.gid + '/' + head.fxid : ' has no effect header') + ': only added effects (group 8, IDs 403 to 1023) are removed. Zoom’s own effects stay as they are.')
     const list = await this.effectList(), updated = listWithout(list, file.name)
-    if (updated) await this.write(EFFECT_LIST, updated)
+    if (updated) await this.writeList(updated, list)
     await this.remove(file.name)
     return { previousList: list }
   }, 'writing')
