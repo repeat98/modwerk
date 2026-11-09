@@ -49,6 +49,7 @@
     "licenses:generate": "node scripts/licenses.mjs --write",
     "licenses:check": "node scripts/platform-licenses.mjs && node scripts/licenses.mjs && node --test scripts/license-notices.node-test.mjs scripts/platform-licenses.node-test.mjs",
     "module:new": "node scripts/scaffold-module.mjs",
+    "module:dev": "node scripts/module-dev.mjs",
     "module:verify": "node scripts/module-verify.mjs",
     "module:doctor": "node scripts/module-doctor.mjs",
     "fx:audit": "node scripts/fx-audit.mjs",
