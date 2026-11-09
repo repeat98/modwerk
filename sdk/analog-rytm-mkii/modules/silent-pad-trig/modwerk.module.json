@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "silent-pad-trig",
   "name": "Silent Pad+Trig Settings",
-  "version": "0.7.0-experimental",
+  "version": "0.8.0-experimental",
   "machine": "analog-rytm-mkii",
   "category": "system",
   "exclusive": false,
@@ -103,14 +103,15 @@
     "conflicts": [],
     "limitations": [
       "Built for OS 1.74 only, with core-ar2 0.3.",
-      "0.5.0 (PS07) and 0.5.1 (PS08) ran on a unit: both settings worked as intended and the renamed row fits, as reported. MIDI out and STEP REC not yet tested on a unit. 0.6.0 with MUTE ALL SOUND ran on a unit as PS10, PS11 and PS12, as reported. MIDI notes in on a unit not tested. 0.7.0's FUNC + TRIG and LIVE REC TRIG keys ran on a unit as PS14, as reported.",
-      "A note already ringing when you mute keeps ringing, as stock: MUTE ALL SOUND stops new hits and does not cut the voice or the delay and reverb tails.",
+      "0.5.0 (PS07) and 0.5.1 (PS08) ran on a unit: both settings worked as intended and the renamed row fits, as reported. MIDI out and STEP REC not yet tested on a unit. 0.6.0 with MUTE ALL SOUND ran on a unit as PS10, PS11 and PS12, as reported. MIDI notes in on a unit not tested. 0.7.0's FUNC + TRIG and LIVE REC TRIG keys ran on a unit as PS14, as reported. 0.8.0's muted RTRG rolls in LIVE REC ran on a unit in the combined build AT04, as reported.",
+      "A note already ringing when you mute keeps ringing, as stock: MUTE ALL SOUND stops new hits and does not cut the voice or the delay and reverb tails. In LIVE RECORDING a muted pad's hit still sets the track's pitch and velocity, so a note the track itself still rings can change pitch.",
       "The SOUND BROWSER's audition reaches the voice by another path, so it still plays on a muted track, on purpose (read in the code, not tested). A muted hit runs no envelope or LFO trig. MIDI out gets no note on or poly pressure from a muted pad, but its release still sends a note off, which a receiver ignores.",
       "FUNC + TRIG is stock in GRID and STEP RECORDING: it places a trig in GRID RECORDING and plays and selects in STEP RECORDING. Elsewhere stock's FUNC + TRIG plays nothing, and the module makes it play where TRIG keys are silent. 0.7.0 renames the row from SILENT PAD LIVEREC to SILENT P+T LIVEREC.",
       "With the SILENT rows, a silent press passes its aftertouch on, so MIDI out can carry poly pressure with no note-on before it. MUTE ALL SOUND stops poly pressure on a muted track; the pressure still reaches the sound, so it can modulate a ringing note.",
       "TRIG 13 (the FX track), the SOUND BROWSER's pad audition and pads with a menu open are silent too; FUNC + pad and FUNC + TRIG play.",
       "RTRG + pad selects silently; FUNC + RTRG also toggles the metronome click, as on stock, so it is not a clean way to roll.",
       "A unit that ran 0.6.x starts 0.7.0 with its rows unchecked when linked alone: the LIVE REC row's storage field is renamed, which changes the storage layout, so check the rows again once. The same held from 0.5.x to 0.6.0 and from 0.4.x to 0.5.x.",
+      "In LIVE RECORDING a muted pad's dropped hit lights its pad at a fixed level that fades as a sound's light does; it does not follow the hit's velocity.",
       "A GLOBAL slot saved without a setting, or received as Global SysEx, loads it unchecked.",
       "LIVE RECORDING counts only while the sequencer runs; a paused LIVE REC follows SILENT PAD+TRIG.",
       "Like stock's SEQUENCER CONFIG rows, a changed row is saved when you leave the menu: power off straight from SEQUENCER CONFIG and the change is lost (seen on a unit, with KIT RELOAD ON CHG behaving the same)."
@@ -120,7 +121,9 @@
     "kind": "elemod",
     "core": "0.3",
     "build": "build.json",
-    "events": [],
+    "events": [
+      "ev_tick"
+    ],
     "claims": [
       "ui:pad press outside CHROMATIC mode",
       "ui:TRIG 1-13 press",
@@ -133,14 +136,14 @@
     "memoryBytes": 1196,
     "fastBytes": 0,
     "load": {
-      "display": "None in the audio path: a few compares per pad, TRIG key or MIDI note",
+      "display": "A few compares per track each audio block, and per pad, TRIG key or MIDI note",
       "method": "static",
-      "conditions": "Static: the sites are in KeyboardView's pad and TRIG key handlers, their shared play routine, its voice trigger call, both pad views' MIDI note on and poly pressure, and the SEQUENCER CONFIG menu's constructor; each press or note reads the record state and the mute masks, and one storage bit for a muted track. Nothing is added to the audio, sequencer or tick paths. Not a measurement."
+      "conditions": "Static: the sites are in KeyboardView's pad and TRIG key handlers, their shared play routine, its voice trigger call, the audio block's trig loop and pad glow store, both pad views' MIDI note on and poly pressure, and the SEQUENCER CONFIG menu's constructor; each press or note reads the record state and the mute masks, and one storage bit for a muted track. The audio block's trig loop gains a few compares per track (13 a block) and its pad glow store a table read per track (12 a block), and the tick reads MUTE ALL SOUND about 20 times a second for it. Not a measurement."
     }
   },
   "evidence": {
     "tier": "author-hardware",
-    "moduleVersion": "0.7.0-experimental",
+    "moduleVersion": "0.8.0-experimental",
     "sourceSha256": "4e0e6f073b8032f3521167b3a376791c70e590638800950b84e17a6adfcb5680",
     "reports": [
       "TESTING.md"
@@ -148,13 +151,14 @@
     "hardware": {
       "model": "Analog Rytm MKII",
       "release": "1.74",
-      "testedOn": "2026-11-04",
+      "testedOn": "2026-11-08",
       "tester": "npp1993",
       "durationMinutes": null,
-      "summary": "npp1993 (the author) ran it on an Analog Rytm MKII, OS 1.74. 0.7.0 (PS14, then PS16), 4 Nov 2026: FUNC + TRIG plays at VEL and follows VEL; in LIVE REC plain TRIG keys stay silent and record nothing while FUNC + TRIG plays and records. 0.6.0 (PS10 to PS12), 1 Nov 2026: muted pads and TRIG keys silent with sends up; LIVE REC records in silence; no note on or pressure from a muted pad; row survives a power cycle. 0.5.x (PS07, PS08): both rows work and save. Details in TESTING.md.",
+      "summary": "npp1993 (the author) ran it on an Analog Rytm MKII, OS 1.74. 0.8.0 (AT04), 8 Nov 2026: in LIVE REC with MUTE ALL SOUND, RTRG + a muted CH while OH plays records every retrig, makes no sound or click, leaves OH ringing and lights the CH pad per hit; muted pads stay silent outside LIVE REC. 0.7.0 (PS14, then PS16), 4 Nov 2026: FUNC + TRIG plays at VEL and follows VEL; in LIVE REC plain TRIG keys stay silent and record nothing while FUNC + TRIG plays and records. 0.6.0 (PS10 to PS12), 1 Nov 2026: muted pads and TRIG keys silent with sends up; LIVE REC records in silence; no note on or pressure from a muted pad; row survives a power cycle. 0.5.x (PS07, PS08): both rows work and save. Details in TESTING.md.",
       "limitations": [
         "MUTE ALL SOUND on a unit: PS10 for the full run; PS11 for LIVE REC and aftertouch only; PS12 for muted pads and aftertouch, keyboard and CHRO. MIDI notes in were not tested on a unit.",
         "Results are as reported by the author, not itemized measurements; duration not recorded.",
+        "0.8.0 ran on a unit only in AT04, a combined build with this folder's code beside 15 other modules on a modified core-ar2 0.7 (sha256 d018eb553f22cd973063cbc25acc2f98b241ec87b1cfad875c44418630049427), not alone; MIDI out and solo were not retested.",
         "0.7.0 ran on a unit as PS14, which still showed the row as SILENT PAD LIVEREC; PS15 renames that label and PS16 its storage field; PS16 ran on a unit on 4 Nov 2026 and worked, as reported.",
         "PS07 carried the functional tests; PS08 (0.5.1, the same code with the second row relabelled) was checked for the label and saving.",
         "MIDI out, STEP REC, RTRG + pad, the SOUND BROWSER, AUTO TRK SWITCH off, per-slot settings on 0.5.x and loading a checked project on stock 1.74 were not tested on a unit.",
@@ -165,7 +169,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Emulator (rytm-emu, OS 1.74). 0.7.0 (PS14): FUNC + TRIG plays its track at VEL wherever plain TRIG is silent; with SILENT P+T LIVEREC, plain TRIG in LIVE REC is silent and runs no record code, and FUNC + TRIG runs it as stock's press does; GRID and STEP REC and unchecked rows stay stock. 0.6.0 (PS12): MUTE ALL SOUND gives a muted track digital zero and no MIDI note on or pressure, LIVE REC still records, the row survives power-off. 0.5.0, 0.5.1 and 0.6.0 ran on a unit, as reported.",
+    "summary": "Emulator (rytm-emu, OS 1.74). 0.8.0 (AT04E, CH forced muted): RTRG + CH in LIVE REC is sample-identical to no press while CH's retrig series runs as unmuted, and the CH pad glow rises per hit; with nothing muted, identical to the build before. 0.7.0 (PS14): FUNC + TRIG plays at VEL where plain TRIG is silent; in LIVE REC plain TRIG runs no record code. 0.6.0 (PS12): MUTE ALL SOUND gives digital zero, LIVE REC still records. 0.5.0 to 0.8.0 ran on a unit, as reported.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
