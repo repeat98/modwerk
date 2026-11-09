@@ -54,14 +54,14 @@ describe('the Zoom pedal page', () => {
   it('shows the load MIDISTOMP reports over USB, as the Octatrack’s Status does', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true })
     try {
-      const load = { cpu: 473, audio: 301, audioMax: 352, perform: 12, midi: 4, system: 2, late: 0, lateTotal: 3, dsp: 1350,
+      const load = { cpu: 473, audio: 301, audioMax: 352, perform: 12, midi: 4, system: 2, late: 0, lateTotal: 3, dsp: 1050,
         slots: [{ name: 'TapeEcho', cpu: 120, dsp: 450 }, { name: '-', cpu: 0, dsp: 0 }, { name: '-', cpu: 0, dsp: 0 }, { name: '-', cpu: 0, dsp: 0 }, { name: 'NAM1', cpu: 70, dsp: 600 }, { name: '-', cpu: 0, dsp: 0 }] }
       const link = new ZoomLink(() => Promise.resolve(fakeZoomPedal({ files, firmware: 'M201', midistomp: { version: [2, 0, 2], features: 0b111_1111_1111, load } }).access), 200)
       await link.connect()
       await render('status', link)
       await vi.waitFor(() => expect(open().querySelector('.hub-cell-health')?.textContent).toMatch(/MIDISTOMP 2\.0\.2.*Looper services/))
       for (let i = 0; i < 5 && !/47\.3%/.test(open().textContent ?? ''); i++) { await act(() => vi.advanceTimersByTimeAsync(2000)); await settle() }   // the first answer only turns the timing on
-      expect([...open().querySelectorAll('.load-meter strong')].map(s => s.textContent)).toEqual(['47.3%', '30.1%', '135/300'])
+      expect([...open().querySelectorAll('.load-meter strong')].map(s => s.textContent)).toEqual(['47.3%', '30.1%', '105/300'])
       expect(open().querySelector('.hub-cell-cpu small')?.textContent).toBe('Late blocks 0 · 3 since switched on')
       expect([...open().querySelectorAll('.hub-cell-history strong')].map(s => s.textContent)).toEqual(['1 · TapeEcho', '2 · Empty', '3 · Empty', '4 · Empty', '5 · NAM1', '6 · Empty', 'Mixer', 'PERFORM', 'MIDI', 'SYSTEM meter', 'Zoom’s OS and screen'])
       expect(open().querySelector('.hub-cell-history li')?.textContent).toMatch(/12\.0%DSP 45\.0/)

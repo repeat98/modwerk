@@ -211,14 +211,17 @@ export type MidistompLoad = {
   window: number; cpu: number; audio: number; audioMax: number; perform: number; midi: number; system: number; late: number; lateTotal: number; dsp: number
   slots: { name: string; cpu: number; dsp: number }[]
 }
-/** Load 06 (built for MIDISTOMP on top of its PR #64, not in a release yet): keeps the SYSTEM screen's timing on for 5 s and answers 47
- * <nonce> <window> + 21 16-bit values packed 8-into-7 (cpu, audio, audio max, perform, midi, system, late, late total,
- * dsp, then each slot's cpu, then each slot's dsp) + each slot's name in 8 characters (zero-padded; '-' empty, '?' loading). */
+/** Load 06 (built for MIDISTOMP on top of its PR #64, not in a release yet): keeps the SYSTEM screen's timing on for
+ * 5 s and answers 47 <nonce> + 120 bytes packed 8-into-7: the window's 14 words as diag.c keeps them (per, ch, chmax,
+ * own, cyc[7], late, win, midi; cycles of a block), then late total, all 32-bit; each slot's DSP in tenths (16-bit);
+ * each slot's name in 8 bytes, ended by a 0 when shorter ('-' empty, '?' loading). Cycles become tenths of a percent
+ * as its pc() does: an 8-frame block at 300 MHz is 54,422 cycles. */
 export function parseLoad(m: number[]): MidistompLoad | undefined {
-  if (!isMstReply(m) || m[5] !== MST.loadReply || m.length !== 105) return undefined
-  const b = unpack7(m.slice(8, 56)), v = Array.from({ length: 21 }, (_, i) => b[2 * i] | b[2 * i + 1] << 8)
-  const name = (s: number) => String.fromCharCode(...m.slice(56 + 8 * s, 64 + 8 * s)).replace(/\0+$/, '')
-  return { window: m[7], cpu: v[0], audio: v[1], audioMax: v[2], perform: v[3], midi: v[4], system: v[5], late: v[6], lateTotal: v[7], dsp: v[8], slots: Array.from({ length: 6 }, (_, s) => ({ name: name(s), cpu: v[9 + s], dsp: v[15 + s] })) }
+  if (!isMstReply(m) || m[5] !== MST.loadReply || m.length !== 146) return undefined
+  const b = unpack7(m.slice(7, -1)), word = (k: number) => (b[4 * k] | b[4 * k + 1] << 8 | b[4 * k + 2] << 16 | b[4 * k + 3] << 24) >>> 0
+  const tenths = (k: number) => Math.round(word(k) * 1000 / 54422)
+  const slots = Array.from({ length: 6 }, (_, s) => ({ name: String.fromCharCode(...b.slice(72 + 8 * s, 80 + 8 * s)).replace(/\0[^]*$/, ''), cpu: tenths(5 + s), dsp: b[60 + 2 * s] | b[61 + 2 * s] << 8 }))
+  return { window: word(12), cpu: tenths(0), audio: tenths(1), audioMax: tenths(2), system: tenths(3), perform: tenths(4), late: word(11), midi: tenths(13), lateTotal: word(14), dsp: slots.reduce((sum, slot) => sum + slot.dsp, 0), slots }
 }
 
 /** Update mode (hold Up and Down while plugging in USB): the MS-70CDR's bootloader answers the identity request with

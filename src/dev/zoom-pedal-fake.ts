@@ -84,10 +84,11 @@ export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', fil
   function mstCommand(m: number[]) {
     const mst = [0xf0, 0x7d, 0x4d, 0x53, 0x54], nonce = m[6], { version, features: f, load } = midistomp!
     if (m[5] === 0x01) { reply([...mst, 0x41, nonce, ...version, 0xf7]); reply([...mst, 0x42, nonce, f & 127, f >> 7 & 127, f >> 14 & 127, 0x7f, 0xf7]) }
-    if (m[5] === 0x06 && load) {
-      const values = [load.cpu, load.audio, load.audioMax, load.perform, load.midi, load.system, load.late, load.lateTotal, load.dsp, ...load.slots.map(s => s.cpu), ...load.slots.map(s => s.dsp)]
-      const names = load.slots.flatMap(s => Array.from(s.name.padEnd(8, '\0'), c => c.charCodeAt(0)))
-      reply([...mst, 0x47, nonce, ++window & 0x7f, ...pack7(values.flatMap(v => [v & 0xff, v >> 8])), ...names, 0xf7])
+    if (m[5] === 0x06 && load) {   // diag.c's window in cycles (an 8-frame block is 54,422), then names; the DSP total is the slots'
+      const cyc = (tenths: number) => Math.round(tenths * 54422 / 1000)
+      const words = [cyc(load.cpu), cyc(load.audio), cyc(load.audioMax), cyc(load.system), cyc(load.perform), ...load.slots.map(s => cyc(s.cpu)), load.late, ++window, cyc(load.midi), load.lateTotal]
+      const bytes = [...words.flatMap(w => [w & 255, w >> 8 & 255, w >> 16 & 255, w >>> 24]), ...load.slots.flatMap(s => [s.dsp & 255, s.dsp >> 8]), ...load.slots.flatMap(s => Array.from(s.name.padEnd(8, '\0').slice(0, 8), c => c.charCodeAt(0)))]
+      reply([...mst, 0x47, nonce, ...pack7(bytes), 0xf7])
     }
   }
   const access: MidiAccessLike = { inputs: new Map([['in', input]]), outputs: new Map([['out', output]]), onstatechange: null }

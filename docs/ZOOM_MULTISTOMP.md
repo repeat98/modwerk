@@ -281,7 +281,8 @@ install throughout.
    (feature bits); the link sends it after connecting (stock firmware drops
    `7D`) and the page names the version and features. The load on Status
    needs a command the base doesn't have yet: `06` keeps the SYSTEM screen's
-   timing on for 5 s and answers `47` with its LOAD and EFFECTS pages
+   timing on for 5 s and answers `47` with the SYSTEM screen's raw window
+   (cycles, which the page turns into percent), each slot's DSP and name
    (`parseLoad` in `zoom-protocol.ts` has the bytes; its test holds the reply
    MIDISTOMP's own C sends), built by Modwerk on top of PR #64 for Luca. Until a
    release has it, Status says where MIDISTOMP shows its load on the pedal.
