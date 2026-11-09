@@ -186,6 +186,10 @@ export function installRefusal(name: string, data: ArrayLike<number>): string | 
   if (clash) return name + ' uses effect ID ' + id + ', which older builds of ' + clash.files + ' both used. Swapping one for the other has frozen a pedal at boot, so it isn’t installed. ' + clash.moved + ': get the current file.'
 }
 
+/** The base the pedal page installs on an MS-70CDR, and the version its identity reply gives then (MIDISTOMP's
+ * identity-tag patch). Kept here so pages don't load MIDISTOMP's patches (277 KB); zoom-base.test.ts checks they agree. */
+export const ZOOM_BASE = { name: 'MIDISTOMP V2.0.1', tag: 'M201' } as const
+
 /** Update mode (hold Up and Down while plugging in USB): the MS-70CDR's bootloader answers the identity request with
  * version 1.1x and takes the flash commands below. */
 export const isUpdateMode = (identity?: ZoomIdentity) => !!identity && identity.deviceId === 0x61 && identity.firmware.startsWith('1.1')

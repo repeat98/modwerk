@@ -6,7 +6,8 @@ import { fakeEffect, fakeEffectList, fakeZoomPedal } from '../dev/zoom-pedal-fak
 import { DEVICES_BY_ID } from '../devices/registry'
 import { parseZoomHubRoute, zoomHubHref, type ZoomHubView } from '../devices/zoom-hub-route'
 import { ZoomLink } from '../engine/zoom/zoom-link'
-import { ZoomHub } from './ZoomHub'
+import { InstrumentItem } from './InstrumentItem'
+import { ZoomHub, ZoomSidebarStatus } from './ZoomHub'
 
 let container: HTMLDivElement, root: ReturnType<typeof createRoot>
 beforeEach(() => {
@@ -25,7 +26,7 @@ const settle = () => act(() => new Promise(resolve => setTimeout(resolve, 30)))
 describe('the Zoom pedal page', () => {
   const device = DEVICES_BY_ID['zoom-ms-70cdr']
   const files = [fakeEffect('LOOP.ZDL', 8, 480, '0.03'), fakeEffect('NAM1smok.ZDL', 8, 900, '0.26'), { name: 'FLST_SEQ.ZDT', data: Array(4108).fill(0) }]
-  const render = (view: ZoomHubView, link: ZoomLink) => act(() => root.render(createElement(ZoomHub, { device, view, link })))
+  const render = (view: ZoomHubView, link: ZoomLink, onInstall?: () => void) => act(() => root.render(createElement(ZoomHub, { device, view, link, onInstall })))
 
   it('has its routes, beside the machine’s library', () => {
     expect(zoomHubHref('zoom-ms-70cdr')).toBe('#zoom-ms-70cdr/pedal')
@@ -69,24 +70,35 @@ describe('the Zoom pedal page', () => {
   })
 
   it('offers the base on an MS-70CDR without it, and names it once the pedal runs it', async () => {
-    HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', '') }
-    HTMLDialogElement.prototype.close = function () { this.removeAttribute('open') }
-    HTMLElement.prototype.scrollTo = () => {}
-    const pedal = fakeZoomPedal({ firmware: '1.10' }), link = new ZoomLink(() => Promise.resolve(pedal.access), 200)
+    const pedal = fakeZoomPedal({ firmware: '1.10' }), link = new ZoomLink(() => Promise.resolve(pedal.access), 200), onInstall = vi.fn()
     await link.connect()
-    await render('status', link)
+    await render('status', link, onInstall)
     expect(container.querySelector('[role=status]')?.textContent).toBe('Connected in update mode · bootloader 1.10')
     expect(open().textContent).toMatch(/update mode: Install base flashes it/)
     await click([...container.querySelectorAll('.hub-hero button')].find(b => b.textContent === 'Install base')!)
-    expect(container.querySelector('dialog h2')?.textContent).toMatch(/^MIDISTOMP on your MS-70CDR/)
-    await click([...container.querySelectorAll('dialog button')].find(b => b.textContent === 'Later')!)
-    expect(container.querySelector('dialog')).toBeNull()
+    expect(onInstall).toHaveBeenCalledOnce()
     await act(async () => { pedal.replug('M201') })
     await vi.waitFor(() => expect(container.querySelector('[role=status]')?.textContent).toBe('Connected · MIDISTOMP V2.0.1'))
-    await render('setup', link)
+    await render('setup', link, onInstall)
     expect(open().textContent).toMatch(/Your MS-70CDR runs MIDISTOMP V2\.0\.1/)
     expect(button('Install again')).toBeDefined()
     expect(container.querySelector('.hub-hero button')).toBeNull()
+  })
+
+  it('shows the pedal in the sidebar with what it runs, and the action it needs next', async () => {
+    const pedal = fakeZoomPedal(), link = new ZoomLink(() => Promise.resolve(pedal.access), 200), onInstall = vi.fn()
+    const sidebar = () => act(() => root.render(createElement('div', null, createElement(InstrumentItem, { device, href: '#zoom-ms-70cdr/pedal', zoom: link, current: false }), createElement(ZoomSidebarStatus, { link, onInstall }))))
+    await sidebar()
+    expect(container.querySelector('.instrument-item small')?.textContent).toBe('Not connected')
+    await click([...container.querySelectorAll('button')].find(b => b.textContent === 'Connect pedal')!)
+    await vi.waitFor(() => expect(container.querySelector('.instrument-item small')?.textContent).toBe('Zoom firmware 2.10: install the base'))
+    expect(container.querySelector('.instrument-dot')?.className).toBe('instrument-dot is-stock')
+    await click([...container.querySelectorAll('button')].find(b => b.textContent === 'Install the base')!)
+    expect(onInstall).toHaveBeenCalledOnce()
+    await act(async () => { pedal.replug('M201') })
+    await vi.waitFor(() => expect(container.querySelector('.instrument-item small')?.textContent).toBe('MIDISTOMP V2.0.1'))
+    expect(container.querySelector('.instrument-dot')?.className).toBe('instrument-dot is-connected')
+    expect(container.querySelector('button')).toBeNull()
   })
 
   it('needs MIDI: without it, it says which browsers work', async () => {

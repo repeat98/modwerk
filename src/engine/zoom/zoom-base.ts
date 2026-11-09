@@ -5,6 +5,7 @@
 import midistomp from '../../../vendor/midistomp/midistomp.json'
 import { addSection, buildPart, concat, hex, parseAis, span } from './ais'
 import { zipEntry } from './zip'
+import { ZOOM_BASE } from './zoom-protocol'
 
 type Part = ['hex', string] | ['copy', string, number, number]
 type Entry = { model: string; addr?: number; offset?: number; data: string | Part[]; expect_sha256?: string | string[]; expect_length?: number }
@@ -68,11 +69,8 @@ export async function readUpdater(zip: Uint8Array): Promise<ZoomStock> {
   return stock
 }
 
-/** The base the pedal page installs: MIDISTOMP's release, and the version its identity reply then gives (its
- * identity-tag patch: "2.10" becomes, for V2.0.1, "M201"). */
-const RELEASE = Object.keys(MIDISTOMP.releases)[0] as keyof typeof MIDISTOMP.releases
-const TAG = MIDISTOMP.patches.find(patch => patch.name === 'identity-tag')?.write?.[0].data
-export const ZOOM_BASE = { name: RELEASE, patches: MIDISTOMP.releases[RELEASE], tag: typeof TAG === 'string' ? String.fromCharCode(...fromHex(TAG)) : '' }
+/** The base the pedal page installs (ZOOM_BASE), built from the user's own stock parts. */
+export const buildRelease = (stock: ZoomStock) => buildBase(stock, MIDISTOMP.releases[ZOOM_BASE.name])
 
 /** The base for the user's own stock MS-70CDR 2.10 parts, from MIDISTOMP's patches by name (a release: MIDISTOMP.releases). */
 export async function buildBase(stock: ZoomStock, names: readonly string[]) {

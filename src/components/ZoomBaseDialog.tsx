@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import type { DeviceProfile } from '../devices/registry'
 import { ZoomPedalArt } from '../devices/ZoomPedalArt'
-import { ZOOM_BASE, buildBase, readUpdater, type ZoomStock } from '../engine/zoom/zoom-base'
+import type { ZoomStock } from '../engine/zoom/zoom-base'
 import type { ZoomLink } from '../engine/zoom/zoom-link'
-import { isUpdateMode } from '../engine/zoom/zoom-protocol'
+import { ZOOM_BASE, isUpdateMode } from '../engine/zoom/zoom-protocol'
 import { useZoomLink } from '../hooks/useZoomLink'
 import { deviceStore, openDeviceDatabase } from '../storage/device'
 import { BaseDialogFrame, BaseIntro, StagePlan, StageProgress, type BasePromise } from './BaseDialogFrame'
@@ -30,8 +30,10 @@ const PROMISES: BasePromise[] = [
 const RECOVERY = 'The bootloader is never written, so the pedal can always go back: unplug it, hold Up and Down while plugging it in, and flash again here. Or run Zoom’s own MS-70CDR 2.10 updater, which puts Zoom’s firmware back and also rewrites the effects area, so back up your files first (Backups).'
 const SUPPORT = 'https://zoomcorp.com/en/us/multi-effects/multistomp-pedals/ms-70cdr/ms-70cdr-support/'
 const store = () => openDeviceDatabase().then(deviceStore)
-const readZip = (file: File) => file.arrayBuffer().then(buffer => readUpdater(new Uint8Array(buffer)))
-const buildRelease = (stock: ZoomStock) => buildBase(stock, ZOOM_BASE.patches)
+// The builder carries MIDISTOMP's patches (277 KB): loaded when a zip is read, not with the page.
+const builder = () => import('../engine/zoom/zoom-base')
+const readZip = (file: File) => Promise.all([file.arrayBuffer(), builder()]).then(([buffer, zoom]) => zoom.readUpdater(new Uint8Array(buffer)))
+const buildRelease = (stock: ZoomStock) => builder().then(zoom => zoom.buildRelease(stock))
 
 /**
  * Installing the Modwerk base on an MS-70CDR, like the Octatrack's (BaseInstallDialog), in the shared frame: Zoom's

@@ -3,7 +3,8 @@ import { join } from 'node:path'
 import { deflateRawSync } from 'node:zlib'
 import { describe, expect, it } from 'vitest'
 import { buildPart, concat, parseAis } from './ais'
-import { MIDISTOMP, ZOOM_BASE, applyPatches, buildBase, readUpdater, sha256, type ZoomPatch } from './zoom-base'
+import { MIDISTOMP, applyPatches, buildBase, readUpdater, sha256, type ZoomPatch } from './zoom-base'
+import { ZOOM_BASE } from './zoom-protocol'
 import { storedZip, zipEntry } from './zip'
 
 const words = (...values: number[]) => new Uint8Array(Uint32Array.from(values).buffer)
@@ -63,7 +64,11 @@ describe('the Zoom base builder', () => {
     await expect(readUpdater(stored)).rejects.toThrow(/Main\.bin isn’t from Zoom’s MS-70CDR 2\.10 updater/)
     await expect(readUpdater(deflated('MS-70CDR Plus/Main.bin', data))).rejects.toThrow(/This isn’t Zoom’s MS-70CDR 2\.10 updater for Mac/)
     await expect(readUpdater(Uint8Array.of(1, 2, 3))).rejects.toThrow(/isn’t a zip/)
-    expect(ZOOM_BASE).toMatchObject({ name: 'MIDISTOMP V2.0.1', tag: 'M201' })
+    // The pages' copy of the release name and its identity tag agrees with MIDISTOMP's patches.
+    expect(Object.keys(MIDISTOMP.releases)).toEqual([ZOOM_BASE.name])
+    const tag = MIDISTOMP.patches.find(patch => patch.name === 'identity-tag')!.write![0].data as string
+    expect(String.fromCharCode(...tag.match(/../g)!.map(byte => parseInt(byte, 16)))).toBe(ZOOM_BASE.tag)
+    expect(MIDISTOMP.releases[ZOOM_BASE.name]).toContain('identity-tag')
   })
 
   // With Zoom's download at hand (ZOOM_MS70CDR_ZIP='…/MS-70CDR_v2.10_Mac_E.zip'): the page reads its parts as they are.
