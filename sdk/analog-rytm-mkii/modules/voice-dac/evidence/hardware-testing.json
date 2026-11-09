@@ -1,15 +1,19 @@
 {
   "schemaVersion": 1,
-  "reportedOn": "2026-11-08",
-  "source": "Iced-Cream's own tests on their unit: VD4H on Modwerk's base (core-ar2 0.7, 2026-11-08, runs T209 F1/P1/P2/F2) and, before it, the core-ar2 0.6 unit test V6H4 (2026-10-23) of the same source",
+  "reportedOn": "2026-11-09",
+  "source": "Iced-Cream's own tests on their unit: VL4H beside LFO RND on Modwerk's base (core-ar2 0.7, 2026-11-09, runs T236 F1/P1/P2/F2), VD4H on Modwerk's base (2026-11-08, runs T209 F1/P1/P2/F2) and, before them, the core-ar2 0.6 unit test V6H4 (2026-10-23) of the same source",
   "reporter": "Iced-Cream",
-  "statement": "Iced-Cream reports that on an Analog Rytm MKII with OS 1.74 and this package on Modwerk's base (core-ar2 0.7, plain variant ba530f45, with analoghealth 1.3 for remote keys), build VD4H, 2026-11-08: with DAC SUM off FILTER pressed twice stayed on stock's FILTER page; GLOBAL > AUDIO ROUTING showed the DAC SUM row and it turned ON; FILTER pressed twice then opened DAC FILTER; its knobs followed TYP (OFF: neither FRQ nor RES; LP2: both; LP1: FRQ only); BD's LP1 came back after SAVE KIT and KIT RELOAD; DAC SUM ON and BD's LP1 were kept across a hand power cycle with no save; DAC SUM went back OFF. CPU 74.5-74.9 % before any key and 82.8-82.9 % while playing with DAC SUM on and BD on LP2, heap flat. The owner listened to BD on LP2 at the lowest FRQ and on TYP OFF, turning TYP by hand, and reported: \"sounds as expected\". Earlier: Hardware, Analog Rytm MKII, OS 1.74, 2026-10-23, V6H4 (core-ar2 0.6 with all eleven rytm2_mods ports, voice-dac 1.4 among them, plus analoghealth for remote keys): with DAC SUM on, FILTER pressed twice opened DAC FILTER; TYP OFF showed TYP and DEP only with the empty knobs inert; LP2, BP, HP2, BS and PK showed FRQ and RES, LP1 and HP1 FRQ only; the page followed BD (LP1) to SD (OFF) and back; RES was kept across LP2, LP1 and LP2; BD on LP2, LP1 and OFF played without dropouts, checked by ear with no click or break; after SAVE KIT, a power cycle and RELOAD, DAC SUM was still ON and BD's LP1 setting came back. The other ten mods behaved as in v1.3.",
+  "statement": "Iced-Cream reports that on an Analog Rytm MKII with OS 1.74, build VL4H (this package beside LFO RND 1.2.0 on Modwerk's base, core-ar2 0.7 plain variant ba530f45, with analoghealth 1.3 for remote keys), 2026-11-09: on BD and SD the knobs and TYP symbol followed all eight TYPs; the page followed the track with its values; non-default FRQ, RES, DEP, ATK, SUS and POL on BD and SD and LFO RND on CP came back after SAVE KIT/KIT RELOAD and after a hand power cycle with no save; DAC SUM went back OFF. CPU 75.2-75.4 % before any key, 92.8-92.9 % playing with four voices on DAC FILTER, heap flat. Ten measured MAIN takes of BD on 16ths had no gaps or dips; ATK +4.3 dB, POL correlation -1.000 and RES +11.4 dB met their marks, SUS +2.9 dB (mark +3) and DEP's centroid measure did not (TESTING.md explains both). The owner listened to RES, DEP, ATK, SUS and POL: \"I heard clicks on polarity changes\", \"otherwise was as expected\". Earlier, Iced-Cream reported that on an Analog Rytm MKII with OS 1.74 and this package on Modwerk's base (core-ar2 0.7, plain variant ba530f45, with analoghealth 1.3 for remote keys), build VD4H, 2026-11-08: with DAC SUM off FILTER pressed twice stayed on stock's FILTER page; GLOBAL > AUDIO ROUTING showed the DAC SUM row and it turned ON; FILTER pressed twice then opened DAC FILTER; its knobs followed TYP (OFF: neither FRQ nor RES; LP2: both; LP1: FRQ only); BD's LP1 came back after SAVE KIT and KIT RELOAD; DAC SUM ON and BD's LP1 were kept across a hand power cycle with no save; DAC SUM went back OFF. CPU 74.5-74.9 % before any key and 82.8-82.9 % while playing with DAC SUM on and BD on LP2, heap flat. The owner listened to BD on LP2 at the lowest FRQ and on TYP OFF, turning TYP by hand, and reported: \"sounds as expected\". Earlier: Hardware, Analog Rytm MKII, OS 1.74, 2026-10-23, V6H4 (core-ar2 0.6 with all eleven rytm2_mods ports, voice-dac 1.4 among them, plus analoghealth for remote keys): with DAC SUM on, FILTER pressed twice opened DAC FILTER; TYP OFF showed TYP and DEP only with the empty knobs inert; LP2, BP, HP2, BS and PK showed FRQ and RES, LP1 and HP1 FRQ only; the page followed BD (LP1) to SD (OFF) and back; RES was kept across LP2, LP1 and LP2; BD on LP2, LP1 and OFF played without dropouts, checked by ear with no click or break; after SAVE KIT, a power cycle and RELOAD, DAC SUM was still ON and BD's LP1 setting came back. The other ten mods behaved as in v1.3.",
   "status": "hardware-tested-author-reported",
-  "scope": "voice-dac 1.4.0 (this package) on Modwerk's base with analoghealth (VD4H); earlier voice-dac 1.4 beside the other ten rytm2_mods ports and analoghealth on core-ar2 0.6 (V6H4).",
+  "scope": "voice-dac 1.4.0 (this package) beside lfo-rnd 1.2.0 on Modwerk's base with analoghealth (VL4H); the same package alone (VD4H); earlier voice-dac 1.4 beside the other ten rytm2_mods ports and analoghealth on core-ar2 0.6 (V6H4).",
   "modules": [
     {
       "id": "voice-dac",
       "version": "1.4.0"
+    },
+    {
+      "id": "lfo-rnd",
+      "version": "1.2.0"
     },
     {
       "id": "core",
@@ -25,6 +29,23 @@
     }
   ],
   "builds": [
+    {
+      "label": "VL4H",
+      "testedOn": "2026-11-09",
+      "os": "1.74",
+      "syxSha256": "a019341d9a874233e72d6bed3f2ec53d89cce6e432f3ea6552b0508d0787ecc2",
+      "packageSha256": {
+        "voice-dac-1.4.0-os1.74.elemod": "f6b2b4591086595631f8d6b06f535d50d3bdb9ad935307d4ca55819a1782edb6"
+      },
+      "content": "stock 1.74 + Modwerk base for core-ar2 0.7 (plain variant ba530f45) + analoghealth 1.3 (c32aa50c, remote keys) + this package + LFO RND 1.2.0 (the package in repeat98/modwerk#1344), linked by scripts/link-image.mjs; 55 of 56 sound bits. Flashed under elkbench plans after their emulator gate, stock 1.74 restored.",
+      "results": [
+        "BD and SD: the knobs and TYP symbol follow all eight TYPs; the page follows the track with its values.",
+        "Non-default FRQ, RES, DEP, ATK, SUS, POL on BD and SD and LFO RND on CP are kept across SAVE KIT/KIT RELOAD and a hand power cycle; DAC SUM back OFF.",
+        "CPU 75.2-75.4 % before keys, 92.8-92.9 % (DSP 86.0-86.3 %) playing with four voices on DAC FILTER; heap flat.",
+        "Ten 8 s MAIN takes, BD on 16ths: no gaps or dips (click detection off). ATK +4.3 dB (mark +3), POL correlation -1.000 (mark -0.8), RES +11.4 dB at 80-101 Hz (mark +3): met. SUS +2.9 dB (mark +3) and DEP centroid -13.7 st (mark +6; DEP FULL 25 dB quieter) not met.",
+        "The owner listened (RES, DEP, ATK, SUS, POL by hand): \"I heard clicks on polarity changes\", \"otherwise was as expected\"."
+      ]
+    },
     {
       "label": "VD4H",
       "testedOn": "2026-11-08",
@@ -59,13 +80,13 @@
     }
   ],
   "limitations": [
-    "VD4H: .syx d2b7c794741bd7846136046daa20e4b3f66d1e7608180e35306f1dba7209503a, built by scripts/link-image.mjs from this folder's package; firmware was not read back from the device.",
-    "VD4H also carried analoghealth 1.3 (remote keys; no site shared with this module).",
-    "Persistence checked for TYP (LP1) and DAC SUM only; FRQ, RES, DEP, ATK, SUS and POL, and TYP past LP1, were not checked on the unit.",
-    "The filter's effect on the sound was judged by ear only (no data read or recording); duration was not recorded.",
-    "Core-ar2 0.6, not Modwerk's base (core-ar2 0.7); this package has not been flashed.",
+    "VL4H: .syx a019341d9a874233e72d6bed3f2ec53d89cce6e432f3ea6552b0508d0787ecc2; VD4H: .syx d2b7c794741bd7846136046daa20e4b3f66d1e7608180e35306f1dba7209503a; both built by scripts/link-image.mjs from this folder's package; firmware was not read back from the device.",
+    "Both carried analoghealth 1.3 (remote keys; no site shared with this module).",
+    "Changing POL while a voice sounds clicks (an instant sign flip); heard by the owner in VL4H.",
+    "SUS and DEP did not meet their measurement marks in VL4H; TESTING.md gives the numbers and why the measures fit the 16th pattern poorly.",
+    "TYP past LP2 was checked on screen only; settings over SysEx, +Drive and Overbridge were not checked on Modwerk's base.",
+    "Duration was not recorded.",
     "V6H4's voice-dac object was built from 77bd329 before the v1.4 release; its source equals v1.4's, but its bytes were not compared with the v1.4 release object.",
-    "Duration was not recorded; firmware was not read back from the device.",
     "No v1.3 reference recording, so the sound was not compared with an earlier version."
   ]
 }

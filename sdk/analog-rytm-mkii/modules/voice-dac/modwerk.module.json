@@ -181,7 +181,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Hardware on Modwerk's base (VD4H, 2026-11-08): DAC SUM turns ON, FILTER pressed twice opens DAC FILTER, its knobs follow TYP, BD's LP1 is kept across SAVE KIT/KIT RELOAD and a power cycle, CPU 82.8-82.9 % playing; the owner listened: \"sounds as expected\". Modwerk's package linked with core-ar2 0.7 gives a main OS byte-identical to rytm2_mods v1.4's release object linked with it. The author's earlier unit run on core-ar2 0.6 (V6H4) and the emulator captures are in TESTING.md.",
+    "summary": "Hardware on Modwerk's base: VL4H beside LFO RND (2026-11-09) showed all eight TYPs on BD and SD, every value and LFO RND kept across SAVE KIT/KIT RELOAD and a power cycle, CPU 92.8-92.9 % with four voices; measured ATK, POL and RES met their marks, SUS and DEP did not (see TESTING.md); owner: clicks on POL changes, otherwise as expected. VD4H (2026-11-08) and the source-parity check are in TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",

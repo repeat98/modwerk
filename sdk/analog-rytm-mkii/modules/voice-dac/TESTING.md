@@ -5,6 +5,27 @@
   `src/voice-dac.s` is rytm2_mods' `voice-dac/os1.74/voice-dac.s`; `include/ar2-1.74.inc` and `shared/shared.s` are its `include/` and `shared/` files, unchanged.
 - Original: MrScruff's rytm-mods `0013-voice-dac`, at rytm-mods-src 3a98e23.
 
+## Unit run beside LFO RND, with measurements (hardware, 2026-11-09)
+
+Analog Rytm MKII, OS 1.74, build VL4H (`a019341d…ecc2`) = stock 1.74 + the Modwerk base for core-ar2 0.7 (plain variant `ba530f45`) + analoghealth 1.3 (remote keys, the test harness) + this package (`f6b2b459…edb6`) + LFO RND 1.2.0 (the package in repeat98/modwerk#1344), linked by `scripts/link-image.mjs`. The two modules take 55 of core's 56 sound bits (LFO RND 16, Voice DAC 39). Four elkbench plans, each passed first in the emulator, then run on the unit; stock 1.74 flashed back at the end.
+
+- **Flash on and off:** VL4H over stock and stock back over VL4H both completed.
+- **DAC SUM and DAC FILTER:** as in the run below: FILTER pressed twice stays on stock's page with DAC SUM off and opens DAC FILTER with it on.
+- **All eight TYPs:** on BD and on SD, the knobs and the TYP symbol follow OFF, LP2, LP1, BP, HP1, HP2, BS and PK (checked on screen).
+- **Page follows the track:** switching between BD and SD shows each track's own DAC FILTER values.
+- **Kept:** BD (LP2, FRQ 0, RES max, DEP 0, ATK -64, SUS +63, POL -), SD (BS, FRQ 0, RES max, DEP 0, ATK +63, SUS -64, POL -) and CP's LFO RND setting come back after SAVE KIT and KIT RELOAD, and again after a hand power cycle with no save. DAC SUM was then set OFF and read back.
+- **Load:** CPU 75.2 / 75.4 % before any key; 92.8 / 92.9 % (DSP 86.0 / 86.3 %) while playing with four voices on DAC FILTER beside LFO RND, read 30 s apart; free heap flat.
+- **Measured takes:** BD alone on all 16 steps of A01, ten 8 s recordings of MAIN (USB channels 1-2), one control changed per pair. Pass marks were set before the run.
+  - **Dropouts:** none in all ten takes (gap and dip checks). Click detection was off, because on a kick every 16th step each new hit reads as a click.
+  - **ATK** (-64 against +63): the attack peak rises +4.3 dB (mark +3 dB). Pass.
+  - **POL** (- against +): the mean hits correlate at -1.000, so the sign flips (mark -0.8 or lower). Pass.
+  - **RES** (0 against max, LP2 at FRQ about 38): +11.4 dB at 80-101 Hz (mark +3 dB). Pass.
+  - **SUS** (-64 against +63): the tail 60-120 ms after each hit rises +2.9 dB, under the +3 dB mark. On 16ths that window ends just before the next hit. An earlier attempt the same day with BD on quarter notes measured +9.5 dB for the same pair (and ATK +5.5 dB) before it stopped on a test-tool false alarm.
+  - **DEP** (0 against FULL, LP2 at FRQ 0): the spectral-centroid mark (+6 semitones) was not met; it measured -13.7. The DEP FULL take is about 25 dB quieter in RMS (-53.2 against -28.2 dBFS), so the filter removed the kick's body. What is left is mostly the attack and noise, which the centroid reads as brighter, so this measure does not fit the pair. The owner heard DEP work as expected.
+- **Listening (by the owner):** BD alone through DAC FILTER on LP2, turning RES, DEP, ATK, SUS and POL by hand. The owner's words: "I heard clicks on polarity changes" and "finished, otherwise was as expected".
+- **POL click:** POL is applied as an instant sign change of the voice's gain in the audio interrupt, with no ramp, so changing POL while the voice sounds clicks. Listed under the README's limitations.
+- **Not checked on the unit:** TYP's effect on the sound past LP2 (BP, HP1, HP2, BS, PK were checked on screen only); SysEx, +Drive and Overbridge transfers of the settings.
+
 ## Unit run on Modwerk's base (hardware, 2026-11-08)
 
 Analog Rytm MKII, OS 1.74, build VD4H (`d2b7c794…503a`) = stock 1.74 + the Modwerk base for core-ar2 0.7 (plain variant `ba530f45`) + analoghealth 1.3 (remote keys, the test harness) + this package (`f6b2b459…edb6`), linked by `scripts/link-image.mjs`. Four elkbench plans, each passed first in the emulator (flash transitions included), then run on the unit; stock 1.74 flashed back at the end.
@@ -31,7 +52,7 @@ All results in this section are from the emulator or offline tools, on 2026-11-0
   - With DAC SUM on, TRIG and then FLTR twice on BD opens DAC FILTER with TYP OFF: DEP, ATK, SUS and POL shown, FRQ and RES empty. On stock the second FLTR press stays on the FILTER page.
   - Turning knob C (TYP) up: LP2 shows FRQ and RES; LP1 shows FRQ and leaves RES empty.
   - Every frame before AUDIO ROUTING opens is byte-identical to stock's with the same input.
-- **Not shown by the emulator:** the sound (its analog voices are stubbed). The unit run above covers what ran on hardware; rytm2_mods' LFO RND takes 16 of core's 56 sound bits and this module 39, so the two were not combined.
+- **Not shown by the emulator:** the sound (its analog voices are stubbed). The unit runs above cover what ran on hardware; LFO RND (16 of core's 56 sound bits) and this module (39) ran together in VL4H.
 - **Offline:** the patch sites in `build.json` are the 27 of rytm2_mods' `ports["1.74"]`, as address, length and SHA-256 of the stock bytes; the link above checks those guards against the owner's stock file.
 
 ## Reported by the author on core-ar2 0.6
@@ -44,4 +65,4 @@ These are the porting contributor's results as written in rytm2_mods' README for
 
 ## Sound
 
-Voice DAC changes the sound. The owner listened on the unit run above (2026-11-08) and reported "sounds as expected".
+Voice DAC changes the sound. The owner listened on both unit runs above: on 2026-11-08 (TYP) "sounds as expected"; on 2026-11-09 (RES, DEP, ATK, SUS, POL) "I heard clicks on polarity changes" and "otherwise was as expected".
