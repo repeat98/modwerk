@@ -206,9 +206,9 @@ describe('installing and removing on the pedal page', () => {
     await idle(fake.link)
     await pick(fakeEffect('GOOEY.ZDL', 8, 480, '2.00'))
     expect(open().textContent).toMatch(/An effect removed from this pedal had ID 8\/480, so GOOEY\.ZDL is 8\/9\d\d on this pedal/)
-    expect(effectInfo(fake.files.find(f => f.name === 'GOOEY.ZDL')!.data).fxid).toBeGreaterThanOrEqual(958)
+    expect(effectInfo(fake.files.find(f => f.name === 'GOOEY.ZDL')!.data)?.fxid).toBeGreaterThanOrEqual(958)
     await pick(fakeEffect('LOOP.ZDL', 8, 480, '0.03'))
-    expect(effectInfo(fake.files.find(f => f.name === 'LOOP.ZDL')!.data).fxid).toBe(480)
+    expect(effectInfo(fake.files.find(f => f.name === 'LOOP.ZDL')!.data)?.fxid).toBe(480)
   })
   it('asks before the tab closes while it writes to the pedal', async () => {
     const fake = await setup(), unload = () => { const event = new Event('beforeunload', { cancelable: true }); window.dispatchEvent(event); return event.defaultPrevented }
