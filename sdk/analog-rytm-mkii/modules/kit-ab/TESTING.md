@@ -8,8 +8,6 @@
 
 ## Hardware
 
-A run of NO + PLAY MODE on the unit is pending; the runs below used the KIT menu's RELOAD.
-
 
 On an Analog Rytm MKII with OS 1.74, 2026-11-08, Iced-Cream ran build **KBH7**: stock 1.74 + Modwerk's base for core-ar2 0.7
 (plain variant `ba530f45…20fe`) + analoghealth 1.2 (`a86f07c5…87b6`, remote keys only, no site shared with this module) + this
@@ -29,7 +27,22 @@ KIT menu's RELOAD (FUNC + PLAY MODE):
 | Second run: DEC to 0, RELOAD (A/B armed), LOAD KIT kit 2, RELOAD twice | KIT RELOADED! both times on kit 2, never EDITS RESTORED! |
 | Second run, CPU after the flash | 74.7 / 74.2 %, DSP 70.0 / 69.8 %, heap flat |
 
-The first run stopped before its last section, a change of kit: the kit list on the unit draws a marker after kits 02-16 that the emulator's reference lacks, so the cursor check failed before kit 2 was loaded (the check compared list content the plan does not control; the module had not acted). A second run the same evening, gated again, covered that section alone with the kit-list check narrowed to the cursor row, and passed. NO + PLAY MODE, stock's kit reload key (manual, OS 1.74), was not run: the plans sent NO + PLAY MODE, which pressed transport PLAY, so only the KIT menu's sites ran (the key path calls the same `kit_ab_toggle`); a NO + PLAY MODE run on the unit is pending. After each run stock 1.74 was restored and the test slots emptied.
+The first run stopped before its last section, a change of kit: the kit list on the unit draws a marker after kits 02-16 that the emulator's reference lacks, so the cursor check failed before kit 2 was loaded (the check compared list content the plan does not control; the module had not acted). A second run the same evening, gated again, covered that section alone with the kit-list check narrowed to the cursor row, and passed. These two runs sent NO + PLAY, which pressed transport PLAY, not the reload key, so only the KIT menu's sites ran; the third run below covers NO + PLAY MODE. After each run stock 1.74 was restored and the test slots emptied.
+
+On 2026-11-09, after the review of the pull request, a third run pressed NO + PLAY MODE, stock's kit reload key, by remote keys
+(analoghealth key `PLAYMODE`, 0xb5; transport PLAY is 0x51), on build **KBH8**: stock 1.74 + Modwerk's base for core-ar2 0.7 (plain variant
+`1c14b6b0…13b6`, current `main`) + analoghealth 1.2 + this module (package `90354e1d…c09c`), `.syx` `51efb833d06f6228119018cc64320ee222227fb0922ad6eccf3f52c714786c52`, main OS `c29fe4c8cc945e6d6046b2b9f92b38362f51a6872158c9c1c0821cd710ee6aca`.
+Gated in the emulator first (gate r-6fb2ef), then on the unit (r-bf0528, r-03dac9, r-7cf43c), in a `~T` project made by CREATE NEW:
+
+| Check | Result |
+| --- | --- |
+| Unedited kit, NO + PLAY MODE twice | KIT 1 RELOADED! both times, saved BD DEC kept |
+| BD DEC to 0, NO + PLAY MODE | KIT 1 RELOADED!, saved DEC |
+| NO + PLAY MODE again | EDITS RESTORED!, DEC 0 |
+| After every press | the stop square: the sequencer stayed stopped (transport PLAY was not pressed) |
+| CPU after the flash, twice 30 s apart | 74.8 / 74.3 %, DSP 70.1 / 69.9 %, heap flat |
+
+Stock 1.74 was restored and the test slots emptied.
 
 Earlier, rytm2_mods recorded the original port as confirmed on an Analog Rytm MKII on 2026-10-14 in a full build (before the OS 1.74 port).
 
@@ -97,5 +110,5 @@ Each module's frames in KT17 equal its frames alone up to the point where the ot
 
 ## Not tested
 
-- On the unit: NO + PLAY MODE (pending), and every module beside it but Temp Save (checked in the emulator).
+- On the unit: any other module beside it (Temp Save was checked beside it in the emulator).
 - Persistence: the stash lives in heap and is not saved; a power cycle or project load loses it, by design. Not exercised.

@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "reportedOn": "2026-11-08",
-  "source": "Iced-Cream's own tests on their unit, two runs of build KBH7 on 2026-11-08: elkbench plans KBH F1, T1 and F2 (r-bf3d20, r-05d8db, r-0ef22c), then F1, T2 and F2 (r-4c42e5, r-3a1a42, r-5cff4c), each gated in the emulator on the same PC",
+  "reportedOn": "2026-11-09",
+  "source": "Iced-Cream's own tests on their unit, two runs of build KBH7 on 2026-11-08: elkbench plans KBH F1, T1 and F2 (r-bf3d20, r-05d8db, r-0ef22c), then F1, T2 and F2 (r-4c42e5, r-3a1a42, r-5cff4c), each gated in the emulator on the same PC; then, 2026-11-09, build KBH8 on the current base: F1, T3 and F2 (r-bf0528, r-03dac9, r-7cf43c), gated the same way",
   "reporter": "Iced-Cream",
-  "statement": "On an Analog Rytm MKII with OS 1.74 and this package on Modwerk's base (core-ar2 0.7, plain variant ba530f45, with analoghealth 1.2 for remote keys), build KBH7, 2026-11-08, through the KIT menu's RELOAD: KIT menu RELOAD twice on an unedited kit: KIT RELOADED! both times, saved BD DEC kept (screen). BD DEC turned to 0; RELOAD: KIT RELOADED! with the saved DEC; RELOAD again: EDITS RESTORED! with DEC at 0 (screens). After RELOAD armed the A/B, DEC turned to 127; RELOAD: KIT RELOADED! (not EDITS RESTORED!) with the saved DEC; RELOAD again: EDITS RESTORED! with DEC at 127, not the stashed 0 (screens). After DEC to 0 and RELOAD armed the A/B, KIT menu LOAD KIT loaded kit 2; two RELOADs then both showed KIT RELOADED! on kit 2, never EDITS RESTORED! (screens; second run, 2026-11-08 23:01). CPU 74-77 %, heap flat. NO + PLAY MODE has not been run on the unit yet.",
+  "statement": "On an Analog Rytm MKII with OS 1.74 and this package on Modwerk's base (core-ar2 0.7, plain variant ba530f45, with analoghealth 1.2 for remote keys), build KBH7, 2026-11-08, through the KIT menu's RELOAD: KIT menu RELOAD twice on an unedited kit: KIT RELOADED! both times, saved BD DEC kept (screen). BD DEC turned to 0; RELOAD: KIT RELOADED! with the saved DEC; RELOAD again: EDITS RESTORED! with DEC at 0 (screens). After RELOAD armed the A/B, DEC turned to 127; RELOAD: KIT RELOADED! (not EDITS RESTORED!) with the saved DEC; RELOAD again: EDITS RESTORED! with DEC at 127, not the stashed 0 (screens). After DEC to 0 and RELOAD armed the A/B, KIT menu LOAD KIT loaded kit 2; two RELOADs then both showed KIT RELOADED! on kit 2, never EDITS RESTORED! (screens; second run, 2026-11-08 23:01). CPU 74-77 %, heap flat. On 2026-11-09, build KBH8 (the current plain base 1c14b6b0, analoghealth 1.2): NO + PLAY MODE (key 0xb5) on an unedited kit, twice: KIT 1 RELOADED! both times, saved BD DEC kept (screens). BD DEC turned to 0; NO + PLAY MODE: KIT 1 RELOADED! with the saved DEC; NO + PLAY MODE again: EDITS RESTORED! with DEC at 0 (screens). The stop square was checked after every press: the sequencer stayed stopped, so transport PLAY was not pressed. CPU 74-75 %, heap flat.",
   "status": "hardware-tested-author-reported",
-  "scope": "kit-ab 1.0.0 on Modwerk's base (KBH7), through the KIT menu's RELOAD. Not covered: NO + PLAY MODE on the unit (pending), persistence.",
+  "scope": "kit-ab 1.0.0 on Modwerk's base: KBH7 (plain ba530f45) through the KIT menu's RELOAD; KBH8 (plain 1c14b6b0) through NO + PLAY MODE. Not covered: persistence across a power cycle (by design the stash is not kept).",
   "modules": [
     {
       "id": "kit-ab",
@@ -33,25 +33,43 @@
         "Second run: CPU 74.7 / 74.2 %, DSP 70.0 / 69.8 %, heap flat after the flash."
       ],
       "notRun": [
-        "NO + PLAY MODE, stock's kit reload key, has not been run on the unit yet (pending). The runs' remote NO(PLAY) pressed transport PLAY, which is not the reload gesture; the KIT menu's RELOAD calls the same kit_ab_toggle.",
+        "KBH7's runs (2026-11-08) used the KIT menu's RELOAD; their remote NO(PLAY) pressed transport PLAY, not the reload gesture.",
+        "A power cycle (the stash is not kept, by design) was not run."
+      ]
+    },
+    {
+      "label": "KBH8",
+      "testedOn": "2026-11-09",
+      "os": "1.74",
+      "syxSha256": "51efb833d06f6228119018cc64320ee222227fb0922ad6eccf3f52c714786c52",
+      "mainSha256": "c29fe4c8cc945e6d6046b2b9f92b38362f51a6872158c9c1c0821cd710ee6aca",
+      "content": "Stock OS 1.74 + Modwerk base for core-ar2 0.7 (plain variant 1c14b6b0) + analoghealth 1.2 (remote keys, test harness; no site shared with this module) + kit-ab 1.0.0 (package 90354e1d), linked by scripts/link-image.mjs. Driven by elkbench plans after their emulator gate; stock 1.74 restored at the end.",
+      "results": [
+        "NO + PLAY MODE (key 0xb5) on an unedited kit, twice: KIT 1 RELOADED! both times, saved BD DEC kept (screens).",
+        "BD DEC turned to 0; NO + PLAY MODE: KIT 1 RELOADED! with the saved DEC; NO + PLAY MODE again: EDITS RESTORED! with DEC at 0 (screens).",
+        "The stop square was checked after every press: the sequencer stayed stopped, so transport PLAY was not pressed.",
+        "CPU 74.8 / 74.3 %, DSP 70.1 / 69.9 %, heap flat, two readings 30 s apart after the flash."
+      ],
+      "notRun": [
         "A power cycle (the stash is not kept, by design) was not run."
       ]
     }
   ],
   "coverageDetails": {
     "deviceDetails": "Analog Rytm MKII",
-    "testDate": "2026-11-08",
-    "duration": "about 7 minutes per run (flash to stock restore), two runs",
+    "testDate": "2026-11-09",
+    "duration": "about 7 minutes per run (flash to stock restore), three runs",
     "durationMinutes": 7,
     "individualTestResults": [
       "Unedited kit: two RELOADs are plain reloads",
       "Edit, RELOAD, RELOAD: KIT RELOADED! then EDITS RESTORED!",
       "An edit while the saved kit plays ends the A/B",
       "A change of kit ends the A/B (second run)",
-      "NO + PLAY MODE: pending on the unit"
+      "NO + PLAY MODE on an unedited kit: plain reloads (KBH8)",
+      "NO + PLAY MODE: KIT 1 RELOADED! then EDITS RESTORED!, sequencer stopped (KBH8)"
     ]
   },
-  "contextNote": "Main OS hash is the build's, not read back from the device. The first run's T1 is recorded as failed in its last section, on a kit-list reference that compared screen content the plan does not control; the second run's T2 covered that section with the check narrowed to the cursor row, and passed.",
+  "contextNote": "Main OS hash is the build's, not read back from the device. The first run's T1 is recorded as failed in its last section, on a kit-list reference that compared screen content the plan does not control; the second run's T2 covered that section with the check narrowed to the cursor row, and passed. The third run (KBH8) pressed NO + PLAY MODE, stock's kit reload key, by remote keys, and passed.",
   "modwerkPipelineQualified": false,
   "authorGithub": "Iced-Cream"
 }
