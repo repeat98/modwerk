@@ -1,7 +1,7 @@
 import { compareModuleVersions } from './versions.ts'
 import { parseModuleContributors, type ModuleContributor } from './module-authors.ts'
 import type { MachineProfile } from '../devices/machine-contract.ts'
-import { CLASHING_EFFECT_IDS, LOCAL_IDS } from '../engine/zoom/zoom-protocol.ts'
+import { CLASHING_EFFECT_IDS, LOCAL_IDS } from './zoom-effect-ids.ts'
 
 // Module contract v3 (modwerk.module.json): one shared core for every machine, plus the machine's platform section.
 // Octatrack modules keep contract v2 (octamod.module.json) until their next version; this file adds the shared core and

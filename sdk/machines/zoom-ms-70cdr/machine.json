@@ -25,7 +25,7 @@
     "platform": "zdl",
     "modules": "sdk/zoom/modules",
     "catalog": null,
-    "guide": "docs/ZDL_MODULE_CONTRACT.md",
+    "guide": "sdk/machines/zoom-ms-70cdr/README.md",
     "core": null,
     "toolchain": "TI's C6000 compiler 8.5.0.LTS and ZoomMultistompZDL's linker with Leemuzhko's runtime (own_runtime), so a built effect carries no code from Zoom's effects.",
     "budgets": [

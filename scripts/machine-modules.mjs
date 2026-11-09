@@ -15,7 +15,7 @@ import { parseMachineProfile } from '../src/devices/machine-contract.ts'
 import { parseElemodBuild, parseModwerkModule, requireModwerkPublication } from '../src/catalog/module-contract-v3.ts'
 import { compareModuleVersions } from '../src/catalog/versions.ts'
 import { requireFlaggedOverlaps, requireKnownConflicts } from './conflict-ids.mjs'
-import { requireDistinctZdl, requireZdlBinary, unlistedZdl } from './zdl-binaries.mjs'
+import { requireDistinctZdl, requireZdlBinary, unlistedZdl, zdlPath } from './zdl-binaries.mjs'
 const json=async path=>JSON.parse(await readFile(path,'utf8'))
 async function walk(folder){const paths=[];for(const entry of await readdir(folder,{withFileTypes:true})){if(entry.name==='__pycache__')continue;if(entry.isSymbolicLink())throw new Error('Module symlinks are not allowed: '+entry.name);if(entry.isDirectory())paths.push(...(await walk(resolve(folder,entry.name))).map(p=>entry.name+'/'+p));else paths.push(entry.name)}return paths.sort()}
 // Nothing in _submissions/ reaches the library, so a merged submission never goes live: a pull request may only move one out.
@@ -102,7 +102,9 @@ for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='el
    if(git('ls-tree','--name-only',baseCommit,'--',oldPath).trim()===oldPath){const old=JSON.parse(git('show',baseCommit+':'+oldPath));const codeChanged=changedPaths.some(path=>!isVersionNeutralChange({path,before:path===oldPath?JSON.stringify(old):'',after:path===oldPath?readFileSync(resolve(folder,'modwerk.module.json'),'utf8'):''}));if(codeChanged&&compareModuleVersions(document.version,old.version)<=0)throw new Error(label+': every code or behaviour update requires a greater module version than '+old.version+'; documentation, media and compatibility.conflicts edits do not')}
   }
   const build=zdl?null:parseElemodBuild(await json(await file(folder,document.platform.build)),document)
-  if(zdl)requireZdlBinary(root,label,document)
+  // The pull-request check (--base) holds every Zoom effect to its vendored file; locally a newly scaffolded one passes npm ci's
+  // prepare until its release is vendored, but a file that is there must match.
+  if(zdl&&(baseCommit||existsSync(resolve(root,zdlPath(document)))))requireZdlBinary(root,label,document)
   requireKnownConflicts(machine.id,document,new Set(dependencies.keys()))
   // Modules may use only what their machine's core interface provides.
   if(core){const events=new Set(core.events.map(event=>event.name)),tables=new Set([...core.tables.map(table=>table.name),...dependencyCollections(document,build,dependencies)])
