@@ -27,8 +27,36 @@ CPH2 and CP02 were built when this version was numbered 1.0.0-experimental; `bui
 The manifest's `evidence.sourceSha256` is the sha256 of `sha256sum build.json src/ctrl-in-perf.s` output;
 neither file changed after CPH2 was built.
 
-Not run on the unit: a CV source driving a macro (no CV source was patched; emulator only, below), EXPR
-mode and CONTROL INPUT 2.
+## Hardware, CV source (T221, 2026-11-09)
+
+On the same Analog Rytm MKII, OS 1.74, a scripted elkbench run of CPH3, approved by Iced-Cream:
+`.syx` `e13685cfea3572c9e84cdf5f915c95b367c0a94e5c1c9585d7070d7522777afb`. CPH3 is this package
+(`6b6fdb7d…cb05`) on the Modwerk base plain variant `1c14b6b0` (core-ar2 0.7), plus analoghealth 1.3,
+built from `bb04f1a`. An Analog Four MKII (stock 1.56 plus a remote-key build, flashed back to stock
+after) drove its CV OUT A, set to VALUE LIN 0-5 V, into the Rytm's EXP/CV IN 1. Iced-Cream moved the
+cable by hand. The run used a `~T` test project, and stock 1.74 was flashed back after.
+
+- CPU 74.9% and 74.9%, DSP 70.2%, heap flat (analoghealth).
+- CONTROL INPUT 1 MODE CV, PERF DEST PF1, and a performance 1 lock on BD TUNE at +127.
+- Each row was read twice, 1 s apart, and both reads matched:
+
+| CV OUT A | port 1 | macro 1 | BD TUNE live word |
+|---|---|---|---|
+| 0 V | 0x3fcc | 0x0000 | 0x3d00 (base) |
+| about 2.5 V | 0x6048 | 0x4000 | 0x7cff |
+| 5 V | 0x7fff | 0x7f00 | 0x7fff (top) |
+| 0 V again | 0x3fcc | 0x0000 | 0x3d00 |
+
+- The jack drove macro 1, and the lock on performance 1 followed. Macro 1 returned to 0 with the jack.
+- PERF DEST and MODE were set back to OFF after the run, and checked on screen.
+
+Not run on the unit: EXPR mode and CONTROL INPUT 2. Iced-Cream did not listen during this run.
+
+## Beside Control In Actions (emulator, 2026-11-09)
+
+One build with this module and Control In Actions on the plain base `1c14b6b0`. MODE OFF looks the
+same as either module alone. CV and EXPR look the same as this module alone. ACTION looks the same as
+Control In Actions alone, with no PERF DEST row.
 
 ## Emulator (analog-emu `4c07ed3`, dtboot, CP02, fresh card, 2026-11-08)
 
@@ -58,11 +86,8 @@ persisted-gap storage, not for this port.
 
 ## Still to run on hardware
 
-1. **Row.** In rytm-emu and on the unit: GLOBAL > CONTROL > CONTROL INPUT 1, MODE CV and EXPR show
-   PERF DEST as the last row; OFF shows none. Turning it steps OFF, PF1..PF12 and stops at both ends.
-2. **Drive.** CV mode, PERF DEST PF1: ZERO, the midpoint and MAX give macro 1 the values 0, 63 and 127
-   (in rytm-emu by poking the converter's result word; on the unit with a CV source), and a lock on
-   performance 1 follows.
+1. **Row.** On the unit in EXPR mode (CV and OFF were run in T208).
+2. **Drive.** Run on the unit in CV mode (T221). Still to run: EXPR mode.
 3. **Wins.** While the jack drives PF1, turning the PERF knob or pressing pad 1 in PERF mode does not
    move macro 1 past the next block; PERF DEST OFF gives them back.
 4. **Port 2.** CONTROL INPUT 2 to PF3 drives macro 3 only.

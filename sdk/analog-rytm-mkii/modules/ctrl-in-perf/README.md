@@ -63,7 +63,7 @@ The module makes no sound of its own: it moves performance macros, which change 
 
 ## Tests and measurements
 
-On an Analog Rytm MKII with OS 1.74 (2026-11-08), PERF DEST showed and stepped as described in CV mode and PF1 was kept over a project save, reload and power cycle; a CV source driving a macro was not run on the unit. In analog-emu, on CP02 (the Modwerk base for core-ar2 0.7 with this module), PERF DEST shows and steps as described, and a poked CV at ZERO, midway and MAX set macro 1 to 0, 63 and 127. It takes 952 bytes of the shared mod RAM and 672 bytes of flash. [TESTING.md](TESTING.md) has the details and the hardware steps still to run.
+On an Analog Rytm MKII with OS 1.74 (2026-11-08), PERF DEST showed and stepped as described in CV mode, and PF1 was kept over a project save, reload and power cycle. On 2026-11-09 an Analog Four's CV output into EXP/CV IN 1 drove macro 1 to 0, 64 and 127 at 0, 2.5 and 5 V, and a BD TUNE lock on performance 1 followed it. EXPR mode and CONTROL INPUT 2 were not run on the unit. In analog-emu, on CP02 (the Modwerk base for core-ar2 0.7 with this module), PERF DEST shows and steps as described, and a poked CV at ZERO, midway and MAX set macro 1 to 0, 63 and 127. It takes 952 bytes of the shared mod RAM and 672 bytes of flash. [TESTING.md](TESTING.md) has the details and the hardware steps still to run.
 
 ## Authorship and licences
 
