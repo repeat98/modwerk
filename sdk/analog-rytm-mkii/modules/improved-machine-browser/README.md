@@ -54,4 +54,4 @@ The outline moves through stock's own routine, and YES loads with the same call 
 
 ## Tests and measurements
 
-In rytm-emu on OS 1.74, alone on the Modwerk base and beside sixteen other modules; not yet on a unit ([TESTING.md](TESTING.md)). Memory: about 950 bytes of code in the 128 KiB shared mod area, no stored data. Load: UI only, on key and knob events while the machine list is open; nothing runs in the audio path.
+In rytm-emu on OS 1.74, alone on the Modwerk base and beside sixteen other modules; not yet on a unit ([TESTING.md](TESTING.md)). Memory: 1,044 bytes of code in the 128 KiB shared mod area, no stored data. Load: UI only, on key and knob events while the machine list is open; nothing runs in the audio path.

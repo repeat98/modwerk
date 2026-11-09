@@ -40,9 +40,21 @@ sha256 1fba69f1. The same set without the module reproduced its reference image 
 
 Both runs: the only CPU exceptions were TRAP #0, as on the builds without the module.
 
+### MB02 and MBC2: after the code review
+
+The knobs now go through stock's own accumulator, as stock's list does; the arrows pass on if the list has no step function (never on OS 1.74); YES loads only while the track still has the machine the list opened with. MB02 (the plain base + this module, sha256 e2adbc2a) and MBC2 (the sixteen-module set + this module, sha256 31f0c670, storage lockfile unchanged), BD track, list on BD PLASTIC:
+
+| Check | Result, both builds |
+| --- | --- |
+| DOWN, FUNC + DOWN | BD SILKY, then SY DUAL VCO; SRC page still BD PLASTIC's |
+| FUNC + UP twice | BD HARD, then stays |
+| Knob A and B turns, with and without FUNC | The outline does not move. Stock OS 1.74 alone does not move either for the same emulated turns (one to eight steps a turn): rytm-emu's turns do not get through stock's accumulator, so knobs are not tested |
+| UP, YES | BD HARD loads: Confirmed!, its SRC page (WAV HLD TIC) |
+| List again, DOWN, NO | BD CLASSIC outlined, then NO: still BD HARD's page |
+
 ## Not tested
 
-- Anything on a unit: loading, its MIDI out, the sound while browsing, key repeat timing.
+- Anything on a unit: loading, its MIDI out, the sound while browsing, key repeat timing, and the knobs A-H, which rytm-emu cannot turn far enough here.
 - The other tracks' lists, and a track's list with no dotted line.
 - Undo after YES (stock's).
 - The list opened from a sound's SOUND SETTINGS menu, if it opens there.

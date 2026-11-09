@@ -28,6 +28,7 @@ typedef word_t (*word1_t)(word_t a);
 typedef word_t (*word2_t)(word_t a, word_t b);
 typedef void (*show_machine_t)(word_t view, word_t machine);
 typedef word_t (*set_machine_t)(word_t sound, word_t machine, word_t track, int notify);
+typedef word_t (*knob_steps_t)(word_t state, word_t encoder, word_t count, word_t table, word_t func);
 
 #define KEY_ID ((word1_t)KEY_ID_AT)
 #define KEY_DOWN ((word1_t)KEY_DOWN_AT)
@@ -37,6 +38,7 @@ typedef word_t (*set_machine_t)(word_t sound, word_t machine, word_t track, int 
 #define KIT_TRACK ((word2_t)KIT_TRACK_AT)
 #define SOUND_MACHINE ((word1_t)SOUND_MACHINE_AT)
 #define SET_MACHINE ((set_machine_t)SET_MACHINE_AT)
+#define KNOB_STEPS ((knob_steps_t)KNOB_STEPS_AT)
 
 #define KEY_UP 0x42
 #define KEY_DOWN_ARROW 0x43
@@ -140,18 +142,27 @@ static void browse(word_t view, int dir, int func)
         SHOW_MACHINE(view, item_value(view, j));
 }
 
+// The list has its step function: always on OS 1.74, which sets it right
+// after building the list. Without one stock passes the arrows and knobs on.
+static int browsable(word_t view)
+{
+    return WORD(view, VIEW_STEP_FN + FN_MANAGER) != 0;
+}
+
 // YES: load the outlined machine as stock's step does, once, before stock's
-// own YES confirms and closes the list.
+// own YES confirms and closes the list. Only while the track still has the
+// machine the list opened with: if a kit load or program change replaced it
+// meanwhile, the new kit is left as it came.
 static void load_shown(word_t view)
 {
     word_t functor, track, page, sound, shown = WORD(view, VIEW_SHOWN);
-    if (!WORD(view, VIEW_STEP_FN + FN_MANAGER) || shown == DIVIDER)
-        return;                         // no step function: stock's list as it is
+    if (!browsable(view) || shown == DIVIDER)
+        return;
     functor = WORD(view, VIEW_STEP_FN);
     track = WORD(functor, FUNCTOR_TRACK);
     page = WORD(functor, FUNCTOR_PAGE);
     sound = KIT_TRACK(WORD(page, PAGE_KIT), track);
-    if (SOUND_MACHINE(sound) != shown)
+    if (SOUND_MACHINE(sound) == WORD(view, VIEW_OPENED) && shown != WORD(view, VIEW_OPENED))
         SET_MACHINE(sound, shown, track, 1);
 }
 
@@ -160,7 +171,7 @@ int improved_machine_browser_key(void *brain, void *event)
     word_t view = machine_list(brain), key = KEY_ID((word_t)event);
     if (!view)
         return 0;
-    if (key == KEY_UP || key == KEY_DOWN_ARROW) {
+    if ((key == KEY_UP || key == KEY_DOWN_ARROW) && browsable(view)) {
         // Stock acts while the key is down, repeats too, and takes the
         // release: so does this.
         if (KEY_DOWN((word_t)event) & 1)
@@ -174,12 +185,19 @@ int improved_machine_browser_key(void *brain, void *event)
 
 int improved_machine_browser_enc(void *brain, void *event)
 {
-    word_t view = machine_list(brain);
-    int count;
-    if (!view || WORD(event, EV_ENCODER) >= KNOBS)
+    word_t view = machine_list(brain), encoder;
+    int func, steps;
+    if (!view || (encoder = WORD(event, EV_ENCODER)) >= KNOBS)
         return 0;
-    count = (int)WORD(event, EV_COUNT);
-    if (count)
-        browse(view, count < 0 ? -1 : 1, *((unsigned char *)event + EV_FUNC) != 0);
+    if (!browsable(view))
+        return 1;                       // stock takes the turn and does nothing
+    // Stock's own accumulator, as its knob routine calls it, so a turn moves
+    // the outline as often as stock's would load: one step per result, by sign.
+    func = *((unsigned char *)event + EV_FUNC) != 0;
+    steps = (int)KNOB_STEPS(view + VIEW_KNOB_STATE, encoder,
+                            (word_t)((int)WORD(event, EV_COUNT) * (func ? FUNC_SCALE : 1)),
+                            KNOB_TABLE, (word_t)func);
+    if (steps)
+        browse(view, steps < 0 ? -1 : 1, func);
     return 1;
 }

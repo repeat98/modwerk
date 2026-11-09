@@ -19,6 +19,8 @@
 #define LIST_BEGIN 4
 #define LIST_END 8
 #define ITEM_VALUE 4                // an item's value: a machine id, -1 for the dotted line between sections
+#define VIEW_KNOB_STATE 180         // the knobs' accumulator state, as the encoder routine passes it
+#define VIEW_OPENED 412             // the machine the list opened with
 #define VIEW_SHOWN 432              // the outlined machine
 #define VIEW_STEP_FN 464            // the step std::function: + 0 its functor { track, page }, + 8 its manager
 #define FN_MANAGER 8
@@ -26,6 +28,12 @@
 #define FUNCTOR_PAGE 4
 #define PAGE_KIT 120                // the sound page + 120: the kit
 #define SHOW_MACHINE_AT 0x400dea5e  // (view, machine): outline it, "Confirm? Y/N" when it is not the one loaded, redraw
+
+// Stock's knob accumulator: (state, encoder, count x (FUNC ? 16 : 1), table,
+// FUNC) -> a step, 0 until the turn adds up to one (0x400df5d4..0x400df616).
+#define KNOB_STEPS_AT 0x4006f1fa
+#define KNOB_TABLE 0x417e3790
+#define FUNC_SCALE 16
 
 #define KIT_TRACK_AT 0x400a67ca     // (kit, track) -> the track's sound object
 #define SOUND_MACHINE_AT 0x400bcadc // (sound) -> its machine
