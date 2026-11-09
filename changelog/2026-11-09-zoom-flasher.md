@@ -1,0 +1,1 @@
+Zoom MS-70CDR: the pedal page's Setup flashes a base from your own MS-70CDR 2.10 Mac updater, the `hello` test or MIDISTOMP, over USB in update mode. It sends exactly the messages MIDISTOMP's updater was recorded sending, and never writes the bootloader or your effects.

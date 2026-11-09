@@ -1,7 +1,8 @@
 // The site's link to a Zoom MultiStomp over Web MIDI: identify the pedal, list its files, read them (the backup),
-// and install or remove one effect file the way the project's editor proved safe on the MS-70CDR 2.10.
+// install or remove one effect file the way the project's editor proved safe on the MS-70CDR 2.10, and flash a base
+// in update mode the way zoomms' updater does.
 // The commands are in zoom-protocol.ts.
-import { EFFECT_LIST, EFFECT_LIST_SIZE, FILE, IDENTITY_REQUEST, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, isLocalId, localIdFor, withEffectId, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity } from './zoom-protocol'
+import { EFFECT_LIST, EFFECT_LIST_SIZE, FILE, FLASH_BAD_CRC, FLASH_OK, IDENTITY_REQUEST, flashSteps, isFlashReply, isUpdateMode, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, isLocalId, localIdFor, withEffectId, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity } from './zoom-protocol'
 import { storedZip } from './zip'
 
 export type ZoomLinkStatus = 'unsupported' | 'idle' | 'connecting' | 'ready' | 'reading' | 'writing'
@@ -101,7 +102,7 @@ export class ZoomLink {
   private dispatch(m: number[]) {
     if (m[1] === 0x7e && m[3] === 0x06 && m[4] === 0x02) { this.waitIdentity?.(m); return }
     const id = this.state.identity?.deviceId
-    if (id !== undefined && isFileReply(m, id)) this.waitFile?.(m)
+    if (id !== undefined && (isFileReply(m, id) || isFlashReply(m, id))) this.waitFile?.(m)
   }
 
   // Paced like the project's editor: a long message gets 22 ms, a short one 3 ms.
@@ -110,11 +111,11 @@ export class ZoomLink {
     this.output?.send(bytes, t)
     this.nextSend = t + (bytes.length >= 64 ? 22 : 3)
   }
-  private ask(body: number[]): Promise<number[] | null> {
+  private ask(body: number[], timeout = this.timeout): Promise<number[] | null> {
     const id = this.state.identity?.deviceId
     if (id === undefined || !this.output) return Promise.resolve(null)
     return new Promise(resolve => {
-      const timer = setTimeout(() => { this.waitFile = undefined; this.stale = true; resolve(null) }, this.timeout)
+      const timer = setTimeout(() => { this.waitFile = undefined; this.stale = true; resolve(null) }, timeout)
       this.waitFile = m => { clearTimeout(timer); this.waitFile = undefined; resolve(m) }
       this.send(zoomSysex(id, body))
     })
@@ -295,6 +296,27 @@ export class ZoomLink {
 
   /** Free space on the pedal in bytes, when it says. */
   readonly freeSpace = () => this.exclusive('Reading free space', async () => parseUsage(await this.ask(FILE.usage())))
+
+  /**
+   * Flash a base (zoom-base.ts) onto an MS-70CDR in update mode: flashSteps' messages, each answered before the next,
+   * which goes 22 ms after that answer as in zoomms' updater (an erase answers when done: the OS one after about 3 s).
+   * A block whose checksum failed is sent again. Never the bootloader or the effects. The pedal stays in update mode
+   * after the last step until it's unplugged.
+   */
+  readonly flashBase = (main: Uint8Array, preset?: Uint8Array) => this.exclusive('Flashing', async () => {
+    if (!isUpdateMode(this.state.identity)) throw new Error('Put the MS-70CDR in update mode first: unplug it, hold Up and Down while plugging in USB, then connect again.')
+    const steps = flashSteps(main, preset)
+    for (const [i, body] of steps.entries()) {
+      this.progress('Flashing', i + 1, steps.length)
+      let reply: number[] | null = null
+      for (let tries = 0; tries < 3; tries++) {
+        reply = await this.ask(body, body[0] === 0x0a ? 15_000 : this.timeout)
+        if (reply?.[5] !== FLASH_BAD_CRC) break
+      }
+      if (reply?.[5] !== FLASH_OK) throw new Error('The flash stopped at step ' + (i + 1) + ' of ' + steps.length + (reply ? ' (the pedal answered ' + reply[5] + ')' : ' (no answer)') + '. The bootloader is untouched: put the pedal in update mode and flash again, or put Zoom’s 2.10 back with its own updater.')
+      this.nextSend = Math.max(this.nextSend, now() + 22)
+    }
+  }, 'writing')
 
   /** Every file, read and checksum-checked, in a zip with the list order: the backup to restore from. */
   readonly backup = () => this.exclusive('Backing up', async () => {

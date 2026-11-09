@@ -1,13 +1,15 @@
 // A pretend Zoom MultiStomp for tests: answers the identity request and the file commands the link sends,
-// in the pedal's reply formats (zoom-protocol.ts), over a fake Web MIDI access.
+// in the pedal's reply formats (zoom-protocol.ts), over a fake Web MIDI access. With firmware 1.10 it is in update
+// mode: it takes the flash commands into a 4 MB flash where, as in NOR flash, a write only clears bits until erased.
 import { crc32, pack7, unpack7 } from '../engine/zoom/zoom-protocol'
 import type { MidiAccessLike, MidiIn, MidiOut } from '../engine/zoom/zoom-link'
 
 export type FakePedalFile = { name: string; data: number[] }
 const BLOCK = 512
 
-export function fakeZoomPedal({ deviceId = 0x61, firmware = '2.10', files = [] as FakePedalFile[], free = 400_000, portName = 'ZOOM MS Series', silent = false, slow = undefined as { cmd: number; nth: number; ms: number | null } | undefined, latency = 0, failWriteOf = '', keepOnDelete = '' } = {}) {
-  const sent: number[][] = []
+export function fakeZoomPedal({ deviceId = 0x61, firmware = '2.10', files = [] as FakePedalFile[], free = 400_000, portName = 'ZOOM MS Series', silent = false, slow = undefined as { cmd: number; nth: number; ms: number | null } | undefined, latency = 0, failWriteOf = '', keepOnDelete = '', badCrcAt = 0 } = {}) {
+  const sent: number[][] = [], flash = new Uint8Array(0x400000).fill(0xff)
+  let writes = 0
   let listAt = 0, reading: FakePedalFile | undefined, readAt = 0, step = 0, writing: FakePedalFile | undefined, failing = !!failWriteOf
   const input: MidiIn = { id: 'in', name: portName, state: 'connected', onmidimessage: null }
   // Every reply takes `latency` ms; with `slow`, the nth reply to file command `cmd` comes `ms` later still, or never (null).
@@ -39,6 +41,7 @@ export function fakeZoomPedal({ deviceId = 0x61, firmware = '2.10', files = [] a
       const m = Array.from(data); sent.push(m)
       if (silent) return
       if (m[0] === 0xf0 && m[1] === 0x7e && m[4] === 0x01) return reply([0xf0, 0x7e, 0x00, 0x06, 0x02, 0x52, deviceId, 0, 0, 0, ...Array.from(firmware.padEnd(4), c => c.charCodeAt(0)), 0xf7])
+      if (m[1] === 0x52 && m[3] === deviceId && firmware.startsWith('1.1')) return flashCommand(m)
       if (m[1] !== 0x52 || m[3] !== deviceId || m[4] !== 0x60) return
       current = m[5]
       const cmd = m[5], name = cmd === 0x20 ? String.fromCharCode(...m.slice(16, m.indexOf(0, 16))) : ''   // read: 9 zero bytes, then the name
@@ -60,8 +63,21 @@ export function fakeZoomPedal({ deviceId = 0x61, firmware = '2.10', files = [] a
       return ack()
     },
   }
+  // Update mode: 01 start, 0A erase, 02 write (the nth write, with badCrcAt, fails its checksum once), 04 finish.
+  const n = (d: number[]) => d.reduce((v, b, i) => v + b * 128 ** i, 0)
+  function flashCommand(m: number[]) {
+    current = m[4]
+    const status = (s: number) => reply([0xf0, 0x52, 0x00, deviceId, 0x00, s, 0xf7])
+    if (m[4] === 0x0a) flash.fill(0xff, n(m.slice(5, 10)), n(m.slice(5, 10)) + n(m.slice(10, 15)))
+    if (m[4] === 0x02) {
+      const at = n(m.slice(5, 10)), length = n(m.slice(10, 12)), data = unpack7(m.slice(12, -6)).slice(0, length)
+      if (++writes === badCrcAt || ((n(m.slice(-6, -1)) ^ 0xffffffff) >>> 0) !== crc32(data)) return status(0x08)
+      data.forEach((b, i) => { flash[at + i] &= b })
+    }
+    status(0x00)
+  }
   const access: MidiAccessLike = { inputs: new Map([['in', input]]), outputs: new Map([['out', output]]), onstatechange: null }
-  return { access, sent, input, output, files }
+  return { access, sent, input, output, files, flash }
 }
 
 /** A stand-in effect file: Zoom's header (SIZE, group, effect id, version) before an ELF signature. */

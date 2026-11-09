@@ -68,6 +68,24 @@ describe('the Zoom pedal page', () => {
     expect([...open().querySelectorAll('.zoom-firmware tbody th')].map(th => th.textContent)).toEqual(['Zoom’s firmware (2.10) with effect files', 'MIDISTOMP as the base, by Luca Matturro'])
   })
 
+  it('in update mode, offers the flash only once Zoom’s updater is chosen', async () => {
+    const link = new ZoomLink(() => Promise.resolve(fakeZoomPedal({ firmware: '1.10' }).access), 200)
+    await link.connect()
+    await render('status', link)
+    expect(container.querySelector('[role=status]')?.textContent).toBe('Connected in update mode · bootloader 1.10')
+    expect(open().textContent).toMatch(/update mode: Setup can flash it/)
+    await render('setup', link)
+    expect(button('Flash').disabled).toBe(true)
+    expect([...open().querySelectorAll('option')].map(o => o.textContent)).toEqual(['The hello test: the menu’s VERSION entry reads MOD 0.1', 'MIDISTOMP V2.0.1'])
+    const input = open().querySelector<HTMLInputElement>('input[webkitdirectory]')!, file = new File(['x'], 'Main.bin')
+    Object.defineProperty(file, 'webkitRelativePath', { value: 'Elsewhere/Main.bin' })
+    Object.defineProperty(input, 'files', { value: [file], configurable: true })
+    await act(() => { input.dispatchEvent(new Event('change', { bubbles: true })) })
+    await settle()
+    expect(container.querySelector('.hub-error')?.textContent).toMatch(/No MS-70CDR 2\.10 updater in that folder/)
+    expect(button('Flash').disabled).toBe(true)
+  })
+
   it('needs MIDI: without it, it says which browsers work', async () => {
     await render('status', new ZoomLink(null))
     expect(container.querySelector('[role=status]')?.textContent).toMatch(/Chrome or Edge on a computer/)

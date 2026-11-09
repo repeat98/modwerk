@@ -29,9 +29,9 @@ const fileName = (name: string) => [...Array.from(name, c => c.charCodeAt(0)), 0
 
 /** 8 bytes into 7-bit MIDI data: each group of up to 7 bytes is led by their high bits, first byte's highest. */
 export function pack7(bytes: ArrayLike<number>): number[] {
-  const out: number[] = []
-  for (let i = 0; i < bytes.length; i += 7) {
-    const group = Array.from(bytes).slice(i, i + 7)
+  const out: number[] = [], all = Array.from(bytes)
+  for (let i = 0; i < all.length; i += 7) {
+    const group = all.slice(i, i + 7)
     let high = 0
     group.forEach((b, j) => { if (b & 0x80) high |= 1 << (6 - j) })
     out.push(high, ...group.map(b => b & 0x7f))
@@ -184,4 +184,39 @@ export function installRefusal(name: string, data: ArrayLike<number>): string | 
   if (!isAddedEffect(info)) return name + ' has effect ID ' + id + ': only added effects (group 8, IDs 403 to 1023) are installed. Zoom’s own effects stay as they are.'
   const clash = CLASHING_EFFECT_IDS.find(c => c.gid === info.gid && c.fxid === info.fxid)
   if (clash) return name + ' uses effect ID ' + id + ', which older builds of ' + clash.files + ' both used. Swapping one for the other has frozen a pedal at boot, so it isn’t installed. ' + clash.moved + ': get the current file.'
+}
+
+/** Update mode (hold Up and Down while plugging in USB): the MS-70CDR's bootloader answers the identity request with
+ * version 1.1x and takes the flash commands below. */
+export const isUpdateMode = (identity?: ZoomIdentity) => !!identity && identity.deviceId === 0x61 && identity.firmware.startsWith('1.1')
+/** The bootloader's answer to a flash command: F0 52 00 <id> 00 <status> F7, 00 done, 08 a write's checksum failed. */
+export const isFlashReply = (m: number[], deviceId: number) => m.length === 7 && m[1] === 0x52 && m[3] === deviceId && m[4] === 0x00
+export const FLASH_OK = 0x00, FLASH_BAD_CRC = 0x08
+const n7 = (n: number, groups: number) => Array.from({ length: groups }, (_, i) => Math.floor(n / 128 ** i) & 0x7f)
+/** Flash command bodies, numbers in 7-bit groups, least significant first; as recorded from zoomms' MS-70CDR updater. */
+export const FLASH = {
+  start: [0x01],
+  erase: (address: number, length: number) => [0x0a, ...n7(address, 5), ...n7(length, 5)],
+  /** One block: address, length, the data packed 8-into-7, CRC32 ^ 0xFFFFFFFF. */
+  write: (address: number, block: ArrayLike<number>) => [0x02, ...n7(address, 5), ...n7(block.length, 2), ...pack7(block), ...n7((crc32(block) ^ 0xffffffff) >>> 0, 5)],
+  finish: [0x04],
+}
+export const FLASH_BLOCK = 2048
+const OS = { trailer: 0x0ef000, at: 0x040000, length: 0xb0000 }, PRESET = { at: 0x3fd000, length: 0x3000 }
+
+/** The MS-70CDR flash, every message body in order: Zoom's updater script with zoomms' skips (zoomms/macapp.py), so
+ * never the bootloader (0x000000) or the effects (0x0F0000). The OS trailer is erased first, so an interrupted flash
+ * shows; Preset.bin (the boot logo block) only when the base changes it. */
+export function flashSteps(main: Uint8Array, preset?: Uint8Array): number[][] {
+  if (main.length !== OS.length) throw new Error('Main.bin must be ' + OS.length + ' bytes, not ' + main.length + '.')
+  if (preset && preset.length !== PRESET.length) throw new Error('Preset.bin must be ' + PRESET.length + ' bytes, not ' + preset.length + '.')
+  const writes = (at: number, data: Uint8Array) => Array.from({ length: data.length / FLASH_BLOCK }, (_, i) => FLASH.write(at + i * FLASH_BLOCK, data.subarray(i * FLASH_BLOCK, (i + 1) * FLASH_BLOCK)))
+  return [
+    FLASH.start,
+    FLASH.erase(OS.trailer, 0x1000),
+    ...preset ? [FLASH.erase(PRESET.at, PRESET.length), ...writes(PRESET.at, preset)] : [],
+    FLASH.erase(OS.at, OS.length),
+    ...writes(OS.at, main),
+    FLASH.finish,
+  ]
 }

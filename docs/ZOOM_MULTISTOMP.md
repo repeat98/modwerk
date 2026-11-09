@@ -228,37 +228,39 @@ mod selection and to his transport block as the shared tempo contract.
   `--app '<stock Mac updater>.app'`, then refresh the zoomms hashes in
   `zoom-base.test.ts` (`zoomms build-mac` at that revision).
 
-### Flashing from the browser (next)
+### Flashing from the browser
 
-Nothing writes to a pedal yet. Before the first write of our own:
+On the MS-70CDR, the pedal page's Setup flashes a base: choose the unzipped
+Mac updater folder and the base (the `hello` test or a MIDISTOMP release),
+put the pedal in update mode (hold Up and Down while plugging in USB), connect
+and flash. `flashSteps` in `zoom-protocol.ts` builds the messages and
+`ZoomLink.flashBase` sends them. Recovery: update mode and Zoom's 2.10
+updater.
 
-1. **Record one flash on the wire.** Only Effect Manager's write of the effect
-   area has been recorded, never the OS write. Record MIDISTOMP's updater (its
-   own builder, or `zoomms build-mac`) flashing an MS-70CDR, with MIDI
-   Monitor's spy driver. Use MIDISTOMP's updater, not Zoom's: Zoom's rewrites
-   the bootloader on every update, MIDISTOMP's never does. Recovery: update
-   mode (hold Up and Down while plugging in USB) and Zoom's 2.10 updater. The
-   capture carries Zoom's OS, so it stays private.
-2. **The flasher**, on the pedal page's link (SysEx framing, 8-into-7 packing
-   and CRC32 in `zoom-protocol.ts`). In update mode the identity's version
-   reads "1.1…" (the bootloader) and `01` answers `00 00`. Messages are
-   `F0 52 00 61 <command> … F7`, numbers in 7-bit groups, least significant
-   first: erase `0A` + address (5) + length (5); write `02` + address (5) +
-   length (2) + 2,048 bytes packed 8-into-7, high bits first, + CRC32 of the
-   block XOR `0xFFFFFFFF` (5); finish `04`. Each answers `00 00`; a write
-   with a bad CRC answers `00 08`, and sending that block again fixes it. The
-   pedal does not reboot after `04`: the owner restarts it. A USB recording
-   of MIDISTOMP's updater on an MS-70CDR showed these messages, and the OS
-   erase answering after about 3 s.
-3. **Its steps**, the stock updater's script with MIDISTOMP's skips
-   (`zoomms/macapp.py`): erase `0x0EF000` +`0x1000` (the OS trailer first, so
-   an interrupted flash shows); if the boot logo changed, erase `0x3FD000`
-   +`0x3000` and write `Preset.bin`; erase `0x040000` +`0xB0000`; write
-   `Main.bin` (720,896 bytes, 352 blocks). Never `0x000000` (the bootloader)
-   or `0x0F0000` (the effects).
-4. **Tests:** a fake pedal that must receive exactly the recorded messages,
-   byte for byte; then `hello` (it only renames the VERSION menu entry) on a
-   real MS-70CDR, its owner putting it in update mode.
+- **The messages**, recorded on 9 November 2026 with MIDI Monitor's spy
+  driver while zoomms' `hello` updater flashed an MS-70CDR (357 messages each
+  way, 13.4 s; the recording carries Zoom's OS, so only its hash is in
+  `zoom-flash.test.ts`). In update mode the identity's version reads `1.10`
+  (the bootloader). Messages are `F0 52 00 61 <command> … F7`, numbers in
+  7-bit groups, least significant first: start `01`; erase `0A` + address (5)
+  + length (5); write `02` + address (5) + length (2) + 2,048 bytes packed
+  8-into-7, high bits first, + CRC32 of the block XOR `0xFFFFFFFF` (5);
+  finish `04`. Each answers `F0 52 00 61 00 00 F7` when done (the OS erase
+  after about 3 s); a write with a bad CRC answers `00 08`, and sending that
+  block again fixes it. The updater sends each message about 22 ms after the
+  last answer. The pedal does not reboot after `04`: unplug it.
+- **The steps**, the stock updater's script with MIDISTOMP's skips
+  (`zoomms/macapp.py`): erase `0x0EF000` +`0x1000` (the OS trailer first, so
+  an interrupted flash shows); if the boot logo changed, erase `0x3FD000`
+  +`0x3000` and write `Preset.bin`; erase `0x040000` +`0xB0000`; write
+  `Main.bin` (720,896 bytes, 352 blocks). Never `0x000000` (the bootloader)
+  or `0x0F0000` (the effects). Zoom's own updater rewrites both.
+- **Tests:** the fake pedal (`src/dev/zoom-pedal-fake.ts`) keeps a flash in
+  which a write only clears bits, so a write without its erase shows. With
+  `ZOOM_MS70CDR_APP` set, the browser's `hello` flash must send the recorded
+  messages byte for byte. On 9 November 2026 the page flashed `hello` onto
+  the owner's MS-70CDR, which booted with MOD 0.1. The boot picture step (a release's `Preset.bin`) is
+  not in the recording.
 
 ## Plan
 
@@ -267,7 +269,7 @@ install throughout.
 
 1. The read-only pedal page and its link: #956 (Manro).
 2. ~~The base built in the browser~~: done (#991).
-3. The recording and the browser flasher (above), first run with `hello`.
+3. ~~The recording and the browser flasher~~: done (above).
 4. A hello base: a MIDISTOMP patch that answers a Modwerk SysEx hello
    (version, then status), so the site knows a pedal runs the base (Luca,
    with Modwerk agreeing the message).
