@@ -31,7 +31,7 @@ For a Modwerk Octatrack base, use [the adapted emulator builder](../scripts/octa
 
 ## Make it mergeable
 
-Keep source worktrees in a persistent location, such as the ignored `.claude/worktrees/` directory. macOS can clear `/private/tmp` on restart, including uncommitted worktrees; reserve it for reproducible builds and logs, and preserve needed evidence separately.
+Keep source worktrees in a persistent location, not `/tmp`, which a restart can clear with uncommitted work. Reuse a few lanes instead of a new worktree per task: `npm run lane -- <name> --branch <branch>` makes one in the ignored `.claude/worktrees/`, or resets a clean one to current `main`, and borrows `node_modules` from a worktree with the same install as hard links. `npm run lane -- prune --all` lists the worktrees whose work is all pushed (`--yes` removes them). `npm run check`, `pr:ready` and `sdk:check` share the computer: each takes a slot first (one per 6 GB of memory and 4 cores; `npm run slots` shows who holds them, `MODWERK_SLOTS` sets the number) and fits its workers to the free memory, so worktrees and agent sessions queue instead of running out of memory together.
 
 Submit only what the owner can merge as it is, and what the bot merges on its own for an author update. Run this before every push, and again after you merge `main`:
 
