@@ -5,6 +5,7 @@ import type { ModwerkModule, ZdlPlatform } from '../catalog/module-contract-v3'
 import { displayName } from '../catalog/module-authors'
 import { moduleReleasedAt } from '../catalog/module-releases'
 import { assetUrl } from '../hosting'
+import { givenIds } from '../engine/zoom/local-ids'
 import type { MachineProfile } from './machine-contract'
 import MACHINES from './machines.generated.json'
 
@@ -47,11 +48,13 @@ export function resolveZoomSelection(device: string, ids: readonly string[]): Zo
 type PedalFile = { name: string; size: number; effect?: { gid: number; fxid: number; version: string } }
 /**
  * What a sync does to bring the pedal to the set: install the set's effects that are missing or another version, and
- * remove listed effects the set no longer has. A file is a listed effect only by its name and its header's group (its ID
- * may have moved to a local one on this pedal), so Zoom's own effects and files installed by hand are never touched.
+ * remove listed effects the set no longer has. A file is a listed effect only by its name and its header's group and ID:
+ * the listed ID, or the local ID this browser gave that name (`given`, local-ids.ts). So Zoom's own effects and files
+ * installed by hand are never touched, unless one has a listed effect's file name and ID.
  */
-export function zoomSyncPlan(listed: readonly ZoomEffect[], setIds: readonly string[], files: readonly PedalFile[]) {
-  const fileOf = (effect: ZoomEffect) => files.find(file => file.name.toUpperCase() === effect.platform.file.toUpperCase() && file.effect?.gid === effect.platform.effectId.gid)
+export function zoomSyncPlan(listed: readonly ZoomEffect[], setIds: readonly string[], files: readonly PedalFile[], given: Record<string, string> = givenIds()) {
+  const fileOf = (effect: ZoomEffect) => files.find(file => { const name = effect.platform.file.toUpperCase(), id = file.effect
+    return file.name.toUpperCase() === name && id?.gid === effect.platform.effectId.gid && (id.fxid === effect.platform.effectId.fxid || given[id.fxid] === name) })
   const current = (effect: ZoomEffect) => { const file = fileOf(effect); return !!file && file.size === effect.platform.binary.bytes && file.effect?.version === effect.platform.effectVersion }
   const set = listed.filter(effect => setIds.includes(effect.id)), install = set.filter(effect => !current(effect))
   const remove = listed.filter(effect => !setIds.includes(effect.id) && fileOf(effect)), size = (effect: ZoomEffect) => fileOf(effect)?.size ?? 0
