@@ -6,7 +6,8 @@
 ; (TEMPO and the BPM, made taller), then tempo_draw adds a line inside it,
 ; TURN OR TAP, or
 ; MIDI CLOCK while the clock sets the tempo (CLOCK RECEIVE on, a clock in
-; the last 0.5 s). Turning knob 1 changes the tempo by 1 BPM a step (40 to
+; the last 0.5 s). Turning knob 1 changes the tempo by 1 BPM a step, more
+; on a fast turn (knob_accel.S; 40 to
 ; 250, like tap) and keeps the screen 2 s; while the clock is live turns and
 ; taps do nothing. State 2 closes 2 s after the last tap (patch word in
 ; tempo-hold.yaml, stock waits forever).
@@ -26,7 +27,7 @@
 ;
 ; Everything here is reached through vectors at fixed offsets, from
 ; trampolines in DDR (tempo-hold.yaml). Design and addresses:
-; docs/os-reverse-engineering.md, "Tempo screen, HOLD FOR and combos".
+; docs/dev/os-reverse-engineering.md, "Tempo screen, HOLD FOR and combos".
 
         .include "hold.inc"
 
@@ -118,10 +119,12 @@ knob_hook:
         mv      .L1     a4, a1
   [a1]  b       .S1     knob_keep           ; the clock owns the tempo
         nop     5
+        ldw     .D2T1   *+b15(12), a4       ; steps
+        FCALL   KNOB_ACCEL                  ; faster on a fast turn
+        mv      .L1     a4, a5
         mvkl    .S1     TEMPO_VALUE, a0
         mvkh    .S1     TEMPO_VALUE, a0
         ldw     .D1T1   *a0, a4
-        ldw     .D2T1   *+b15(12), a5       ; steps
         mvk     .S2     MIN_BPM, b4
         mvk     .S1     MAX_BPM, a6
         nop     3

@@ -72,6 +72,24 @@ describe('digi combination estimate', () => {
     ])
   })
 
+  it('refuses a pair whose dependencies conflict: Digi Mono builds on digichain, STRING on machine pages (#1306)', () => {
+    const estimate = estimateCombination('digitakt', ['digimono', 'digistring'])
+    expect(estimate.fits).toBe(true)
+    expect(estimate.compatibleReleases).toEqual([])
+    expect(estimate.clashes).toEqual([
+      { claim: 'Digi Mono builds on digichain and STRING builds on machine pages, and digichain and machine pages are marked as incompatible by their authors', mods: ['Digi Mono', 'STRING'] },
+    ])
+    expect(estimateCombination('digitakt', ['digichain', 'digistring']).clashes).toEqual([
+      { claim: 'STRING builds on machine pages, and digichain and machine pages are marked as incompatible by their authors', mods: ['digichain', 'STRING'] },
+    ])
+  })
+
+  it('combines mods whose dependencies do not conflict', () => {
+    // Both build on machine pages, and both on digichain.
+    expect(estimateCombination('digitakt', ['digistring', 'ram-machines'])).toMatchObject({ clashes: [], compatibleReleases: ['1.53', '1.54'] })
+    expect(estimateCombination('digitakt', ['digimono', 'digipoly'])).toMatchObject({ clashes: [], compatibleReleases: ['1.53', '1.54'] })
+  })
+
   it('refuses two mods whose own firmware changes overlap', () => {
     const estimate = estimateCombination('digitakt', ['digislicer', 'sample-tools'])
     expect(estimate.compatibleReleases).toEqual([])

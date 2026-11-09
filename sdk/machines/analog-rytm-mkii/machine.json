@@ -92,14 +92,14 @@
       {
         "name": "Core image",
         "unit": "bytes",
-        "value": 11996,
-        "note": "Modwerk's base, plain variant (ba530f45), for a set with no send effect: 10,628 bytes .run plus 1,368 bytes .bss in the shared area, and a 94-byte .boot copier. The link check measures each selected module set."
+        "value": 12044,
+        "note": "Modwerk's base, plain variant (b02d611f), for a set with no send effect: 10,676 bytes .run plus 1,368 bytes .bss in the shared area, and a 94-byte .boot copier. The link check measures each selected module set."
       },
       {
         "name": "Core image with the send bus",
         "unit": "bytes",
-        "value": 31410,
-        "note": "The base's send-bus variant (c338266c), for a set with a send effect: 28,702 bytes .run plus 2,708 bytes .bss. It reserves no work area: the effect that runs works in the shared area the modules leave free (CHORUS and FLANGER ask for 16 KB, PHASER none)."
+        "value": 31458,
+        "note": "The base's send-bus variant (54e008d9), for a set with a send effect: 28,750 bytes .run plus 2,708 bytes .bss. It reserves no work area: the effect that runs works in the shared area the modules leave free (CHORUS and FLANGER ask for 16 KB, PHASER none)."
       }
     ]
   },
