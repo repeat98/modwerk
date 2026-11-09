@@ -6,17 +6,17 @@
   "cores": [],
   "mods": [
     {
-      "file": "ctrl-in-perf-1.0.0-experimental-os1.74.elemod",
-      "sha256": "13ba8dff489ab1424a0ebb82fc19058ee1ba472341cbcb3f993d9607d0b9c87b",
+      "file": "ctrl-in-perf-0.1.0-experimental-os1.74.elemod",
+      "sha256": "6b6fdb7de3852f0bd7a72e1e55a1074fbccb73214a88fe56a2b9b5f6ed77cb05",
       "id": "ctrl-in-perf",
-      "version": "1.0.0-experimental",
+      "version": "0.1.0-experimental",
       "device": "analog-rytm-mk2",
       "os": "1.74",
       "license": "GPL-2.0-only",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "7ccdac49e623a92a9fa96d5787ebe003f6205b9d",
-        "path": "sdk/imports/packages/ctrl-in-perf/ctrl-in-perf-1.0.0-experimental-os1.74.elemod"
+        "commit": "0b80c6ed783e72eefb9c138078979a2a64ae1be4",
+        "path": "sdk/imports/packages/ctrl-in-perf/ctrl-in-perf-0.1.0-experimental-os1.74.elemod"
       },
       "title": "Ctrl In Perf",
       "requires": [
@@ -28,7 +28,7 @@
       "category": "Performance",
       "author": "Iced-Cream",
       "needs_core": "0.7",
-      "on_unit": "Not run on a unit yet. In rytm-emu, linked with core-ar2 0.7 on stock OS 1.74 (CP01), PERF DEST shows in CV and EXPR modes and a poked CV at ZERO, midway and MAX set macro 1 to 0, 63 and 127."
+      "on_unit": "Ran on an Analog Rytm MKII on OS 1.74 (T208, 2026-11-08), alone on the Modwerk base for core-ar2 0.7 with a remote-key layer, built from this source as 1.0.0-experimental: PERF DEST shows and steps in CV mode, MODE OFF hides it, and PF1 was kept over a project save, reload and power cycle. A CV source or pedal driving a macro, EXPR mode and CONTROL INPUT 2 have not run on a unit."
     }
   ]
 }
