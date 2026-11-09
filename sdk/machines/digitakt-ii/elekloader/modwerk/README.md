@@ -1,5 +1,15 @@
 # Proposed Digitakt II sequencer note hook
 
+## Playback grid prototype
+
+`ev_seq_grid` observes the audio constructor before stock tests for a trig. It uses the existing playback detour and returns immediately when the collection is empty. The callback receives the originating pattern, track and step plus four adjacent deadlines in stock musical time. The base derives these from the stock tick, lookahead, speed table and per-step swing flags. The callback is read-only.
+
+The prototype covers ordinary audio tracks during playback. It skips mapped and Euclidean tracks, non-pattern sources, and pending pattern switches. The initial PLAY path and the stock queue writer need separate verification. This prototype has no public hook index.
+
+Digikit `d6de4d0` reported 49 windows at swung 2× and 25 at straight 1×, including rests. All 40 captured track notes matched their grid onset. The empty, observer and renderer builds preserved the stock relative queue deadlines in the swung 2× fixture. The renderer used the Chord Arp engine at 1/32 and generated 168 checked note requests. It submitted no events. The renderer image SHA-256 was `0ad1f1d953a1bdac2facab959b46f39b2e3efe248d3a8f3ec1900854a55c8b7b`.
+
+## Pitch callback
+
 `ev_seq_note` is a pitch-only callback for the OS 1.17 sequencer. The base calls it after stock constructs the note and before the event enters the stock queue. PLAY and subsequent steps use the same callback contract. The base passes the pattern that generated the note, the sounding track, the stock step, root and a twelve-bit scale mask relative to that root. The base sets `DT2_SEQ_NOTE_EUCLIDEAN` for the verified Euclidean event shape on the audio path.
 
 Subscribers receive a read-only context and the current pitch. The linker orders the callbacks by subscription order. Each receives the previous callback's accepted result. A result outside 0–127 retains the current pitch. There are four slots, and an empty collection preserves the incoming pitch. The dispatcher does no allocation or timing work and changes no pattern records.

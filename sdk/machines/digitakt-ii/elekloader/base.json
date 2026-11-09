@@ -19,6 +19,7 @@
       "../modwerk/seq-note-entry.s",
       "../modwerk/seq-note-bridge.c",
       "../modwerk/seq-note.c",
+      "../modwerk/seq-grid.c",
       "../modwerk/project-generation.s"
     ],
     "sites": [
@@ -52,7 +53,8 @@
       }
     ],
     "collections": {
-      "ev_seq_note": 4
+      "ev_seq_note": 4,
+      "ev_seq_grid": 4
     }
   }
 }

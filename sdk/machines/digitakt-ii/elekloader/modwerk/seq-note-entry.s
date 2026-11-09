@@ -32,6 +32,19 @@ start_stock:
         jmp     0x400d6638
 
 core_seq_note_step:
+        tst.l   ev_seq_grid
+        beq.s   step_stock
+        lea     -16(%sp),%sp
+        movem.l %d0-%d1/%a0-%a1,(%sp)
+        move.l  %d2,-(%sp)             /* lookahead */
+        move.l  %d1,-(%sp)             /* step, including rests */
+        move.l  %d7,-(%sp)             /* audio track */
+        move.l  %d0,-(%sp)             /* scheduled pattern */
+        jsr     core_seq_grid_observe
+        lea     16(%sp),%sp
+        movem.l (%sp),%d0-%d1/%a0-%a1
+        lea     16(%sp),%sp
+step_stock:
         /* Keep the constructor's actual pattern argument across a switch. */
         move.l  %d0,-(%sp)
         move.l  %d7,-(%sp)
