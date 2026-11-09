@@ -27,6 +27,13 @@
     ],
     "sites": [
       {
+        "addr": "0x400d633a",
+        "len": 6,
+        "stockSha256": "63d46be24be33e65936ad35cb9ac775aeb3ee91df521112af7c09eba3abd278c",
+        "op": "jsr",
+        "target": "core_seq_phrase_start"
+      },
+      {
         "addr": "0x400d82f8",
         "len": 6,
         "stockSha256": "74cb3c143b6a825d695e48fbac2bca8e5ce59700baca9721a368828f7bbba81e",

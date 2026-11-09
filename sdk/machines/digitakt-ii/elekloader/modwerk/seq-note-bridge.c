@@ -76,6 +76,7 @@ static void observe_grid(const uint8_t *pattern, uint32_t track, uint32_t step,
         .length = (uint8_t)length,
         .pulses_per_step = (uint8_t)SPEED_PULSES[speed],
         .flags = play_event ? DT2_SEQ_GRID_PLAY_SOURCE : 0,
+        .transport_epoch = core_seq_transport_epoch,
     };
     const unsigned int swing = pattern[0x1db78];
     uint32_t tick = SEQ_TICK;

@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "seq-phrase.h"
+#include "mk2/core.h"
 
 enum {
     EVENT_BASE = 0x44e67e88u, EVENT_COUNT = 128, EVENT_STRIDE = 108,
@@ -18,10 +19,20 @@ typedef void (*submit_fn)(void *, uint32_t);
 static const allocate_fn allocate = (allocate_fn)(uintptr_t)0x4013a806u;
 static const allocate_fn allocate_payload = (allocate_fn)(uintptr_t)0x4013a7b6u;
 static const release_fn recycle = (release_fn)(uintptr_t)0x4013a83cu;
+static const release_fn recycle_payload = (release_fn)(uintptr_t)0x4013a7d8u;
 static const copy_fn copy_event = (copy_fn)(uintptr_t)0x4013a870u;
 static const submit_fn submit = (submit_fn)(uintptr_t)0x4013a98cu;
 
 struct dt2_seq_grid_window core_seq_phrase_windows[16];
+uint32_t core_seq_transport_epoch;
+
+struct phrase_carry {
+    uint32_t event[EVENT_STRIDE / sizeof(uint32_t)];
+    dt2_seq_phrase_handler handler;
+    uint32_t epoch;
+    uint16_t pattern;
+};
+static struct phrase_carry carries[16];
 
 /* The DSP dispatcher reads an inline row for index -1 and a pattern row otherwise. */
 static const uint8_t *source_values(const uint8_t *source)
@@ -50,19 +61,12 @@ int core_seq_phrase_commit(uint8_t *source, const struct dt2_seq_phrase_note *no
 {
     uint8_t *records[DT2_SEQ_PHRASE_MAX_NOTES * 2];
     const uint32_t kind = *(const uint32_t *)source;
+    const int owned = (uintptr_t)source - EVENT_BASE < EVENT_COUNT * EVENT_STRIDE;
     if (!count || count > DT2_SEQ_PHRASE_MAX_NOTES ||
         !has_room(FREE_DEADLINE_HEAD, 16, 2 * count + STOCK_RESERVE) ||
         !has_room(FREE_EVENT_HEAD, 104, 2 * count + STOCK_RESERVE) ||
         (kind == 1 && !has_room(FREE_PAYLOAD_HEAD, 16, STOCK_RESERVE))) {
         return 0;
-    }
-
-    if (kind == 1) {
-        /* PLAY borrows a track template. The new kind-0 notes own an empty pool payload. */
-        const uintptr_t payload = allocate_payload();
-        *(uint32_t *)(payload + 8) = 0;
-        *(uintptr_t *)(source + 84) = payload;
-        *(uint32_t *)source = 0;
     }
 
     for (unsigned int i = 0; i < 2 * count; ++i) {
@@ -73,6 +77,14 @@ int core_seq_phrase_commit(uint8_t *source, const struct dt2_seq_phrase_note *no
             }
             return 0;
         }
+    }
+
+    if (kind == 1) {
+        /* PLAY and empty steps use a template. Queue records share a fresh empty payload. */
+        const uintptr_t payload = allocate_payload();
+        *(uint32_t *)(payload + 8) = 0;
+        *(uintptr_t *)(source + 84) = payload;
+        *(uint32_t *)source = 0;
     }
 
     for (unsigned int i = 0; i < count; ++i) {
@@ -93,7 +105,11 @@ int core_seq_phrase_commit(uint8_t *source, const struct dt2_seq_phrase_note *no
         submit(on, note->onset);
         submit(off, note->release);
     }
-    recycle(source);
+    if (owned) {
+        recycle(source);
+    } else {
+        recycle_payload((void *)*(const uintptr_t *)(source + 84));
+    }
     return 1;
 }
 
@@ -118,6 +134,36 @@ static int notes_fit(const struct dt2_seq_grid_window *window,
         last = off;
     }
     return 1;
+}
+
+void core_seq_phrase_empty(unsigned int track)
+{
+    if (track >= 16 || !carries[track].handler) {
+        return;
+    }
+    struct phrase_carry *const carry = &carries[track];
+    struct dt2_seq_grid_window window = core_seq_phrase_windows[track];
+    if (!window.length || carry->pattern != window.pattern ||
+        carry->epoch != window.transport_epoch) {
+        carry->handler = 0;
+        return;
+    }
+
+    const uint8_t *const stock_track = (const uint8_t *)(uintptr_t)carry->event[11];
+    if (stock_track[window.step * 2 + 1] & 5u) {
+        return;
+    }
+    const uint8_t *const row = (const uint8_t *)&carry->event[9];
+    struct dt2_seq_phrase_note notes[DT2_SEQ_PHRASE_MAX_NOTES] = {0};
+    window.flags |= DT2_SEQ_GRID_EMPTY;
+    const uint32_t count = carry->handler(&window, row[2], row[3], notes);
+    if (!count) {
+        carry->handler = 0;
+    } else if (notes_fit(&window, notes, count)) {
+        uint32_t source[EVENT_STRIDE / sizeof(uint32_t)];
+        fw_memcpy(source, carry->event, EVENT_STRIDE);
+        core_seq_phrase_atomic((uint8_t *)source, notes, count);
+    }
 }
 
 int core_seq_phrase_replace(uint8_t *source, uint32_t deadline)
@@ -170,14 +216,38 @@ int core_seq_phrase_replace(uint8_t *source, uint32_t deadline)
         for (unsigned int n = 0; n < DT2_SEQ_PHRASE_MAX_NOTES; ++n) {
             notes[n].velocity = 0;
         }
-        const uint32_t count = ev_seq_audio_phrase[i](&window, pitch, velocity, notes);
-        if (count == DT2_SEQ_PHRASE_REST) {
-            recycle(source);
+        const uint32_t result = ev_seq_audio_phrase[i](&window, pitch, velocity, notes);
+        const int keep = result != DT2_SEQ_PHRASE_REST && (result & DT2_SEQ_PHRASE_CARRY);
+        const uint32_t count = result & ~DT2_SEQ_PHRASE_CARRY;
+        const int rest = result == DT2_SEQ_PHRASE_REST || (keep && !count);
+        if (rest || notes_fit(&window, notes, count)) {
+            struct phrase_carry *const carry = &carries[track];
+            carry->handler = 0;
+            if (keep) {
+                fw_memcpy(carry->event, source, EVENT_STRIDE);
+                carry->event[0] = 1; /* Template marker for a fresh payload. */
+                carry->event[8] = UINT32_MAX; /* Use an inline row. */
+                carry->event[21] = 0; /* The stock payload's lifetime ends with the source. */
+                carry->event[26] = 0;
+                uint8_t *const inline_row = (uint8_t *)&carry->event[9];
+                inline_row[0] = row[0];
+                inline_row[1] = row[1];
+                inline_row[2] = pitch;
+                inline_row[3] = velocity;
+                carry->epoch = window.transport_epoch;
+                carry->pattern = window.pattern;
+            }
+            if (rest) {
+                recycle(source);
+            } else if (!core_seq_phrase_atomic(source, notes, count)) {
+                return 0;
+            }
+            if (keep) {
+                carry->handler = ev_seq_audio_phrase[i];
+            }
             return 1;
         }
-        if (notes_fit(&window, notes, count)) {
-            return core_seq_phrase_atomic(source, notes, count);
-        }
     }
+    carries[track].handler = 0;
     return 0;
 }
