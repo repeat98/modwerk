@@ -255,10 +255,13 @@ export class ZoomLink {
   private async write(name: string, data: number[]) {
     this.heads.delete(name.toUpperCase())
     for (const body of FILE.writeOpen(name)) if (!await this.ask(body)) { await this.close(); throw new Error('No reply from the pedal before writing ' + name + '; nothing was written.') }
+    const label = this.state.progress?.label ?? 'Writing ' + name, blocks = Math.ceil(data.length / WRITE_BLOCK)
     for (let at = 0; at < data.length; at += WRITE_BLOCK) {
+      this.progress(label, at / WRITE_BLOCK + 1, blocks)
       if (!await this.ask(FILE.writeBlock(data.slice(at, at + WRITE_BLOCK))) || !await this.ask(FILE.readBlock[0])) { await this.close(); throw new Error('The pedal stopped answering while writing ' + name + '.') }
     }
     await this.close()
+    this.progress('Reading back ' + name, 0, 0)
     const back = await this.read(name)
     if (back.length !== data.length || back.some((b, i) => b !== data[i])) throw new Error(name + ' read back different from what was written.')
   }

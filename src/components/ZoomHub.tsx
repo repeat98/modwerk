@@ -91,6 +91,9 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
   // Sync: the pedal to the set, as the Octatrack's: the set's effects in, listed effects it dropped out; nothing else is touched.
   const selected = sets?.find(item => item.id === selectedId) ?? sets?.[0]
   const plan = selected && files ? zoomSyncPlan(listed, selected.moduleIds, files) : undefined
+  // installFile keeps 8 KB free when it writes a new file; removals go first.
+  const fits = !plan?.install.length || free === undefined || free >= plan.adds + 8192
+  const [syncing, setSyncing] = useState<{ what: string; step: number; steps: number }>()
   // A set's LED: the pedal holds exactly its effects (current) and no other listed ones.
   const holdsSet = (item: Configuration) => !!files && item.moduleIds.length > 0 && (({ install, remove }) => !install.length && !remove.length)(zoomSyncPlan(listed, item.moduleIds, files))
   const names = (item: Pick<Configuration, 'moduleIds'>) => listed.filter(effect => item.moduleIds.includes(effect.id)).map(effect => effect.name).join(' · ')
@@ -98,13 +101,17 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
     if (!link || !plan) return
     const names = (effects: readonly ZoomEffect[]) => effects.map(effect => effect.name).join(', ')
     if (!window.confirm('Sync your set to the ' + model + '? ' + (plan.install.length ? 'Installs ' + names(plan.install) + '. ' : '') + (plan.remove.length ? 'Removes ' + names(plan.remove) + ', which your set no longer has. ' : '') + 'Every write is read back, and the effect list from before is kept. Don’t touch the pedal or the cable until it’s done.')) return
-    let previousList: number[] | undefined
-    for (const effect of plan.remove) previousList ??= (await link.removeFile(effect.platform.file)).previousList
-    for (const effect of plan.install) {
-      const file = effect.platform.file.toUpperCase(), result = await link.installFile(file, await fetchZoomEffect(effect), { avoid: avoidFor(file) })
-      if (result.moved) rememberId(result.moved.to, file)
-      previousList ??= result.previousList
-    }
+    let previousList: number[] | undefined, step = 0
+    const steps = plan.remove.length + plan.install.length, say = (what: string) => { if (alive.current) setSyncing({ what, step: ++step, steps }) }
+    try {
+      for (const effect of plan.remove) { say('Removing ' + effect.name); previousList ??= (await link.removeFile(effect.platform.file)).previousList }
+      for (const effect of plan.install) {
+        say('Installing ' + effect.name)
+        const file = effect.platform.file.toUpperCase(), result = await link.installFile(file, await fetchZoomEffect(effect), { avoid: avoidFor(file) })
+        if (result.moved) rememberId(result.moved.to, file)
+        previousList ??= result.previousList
+      }
+    } finally { if (alive.current) setSyncing(undefined) }
     if (alive.current) setChanged({ text: 'Your ' + model + ' has your set. Power-cycle the pedal to load it.', list: keepList(previousList) })
     await read()
   })
@@ -223,9 +230,10 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
           <div className="hub-sync" role="group" aria-label="Module set sync">
             <p>{!connected ? 'Connect your pedal to sync this set.' : updating ? 'The pedal is in update mode: plug it in normally to sync this set.'
               : !plan ? busy ? 'Reading what’s on your pedal…' : <>Read the pedal to see what a sync does. <button type="button" className="text-button" onClick={read}>Read the pedal</button></>
-              : plan.install.length || plan.remove.length ? <>Installs {plan.install.length} · Removes {plan.remove.length}</>
-              : selected.moduleIds.length ? <span className="hub-insync"><span className="unit-led is-on" aria-hidden="true" />Already on your {model}</span> : 'No effects in this set.'}</p>
-            <button type="button" className="button button-primary" disabled={!plan || busy || (!plan.install.length && !plan.remove.length)} onClick={sync}><Icon name="download" size={16} />Sync to {model}</button>
+              : syncing ? <><strong>{syncing.what} · {syncing.step} of {syncing.steps}</strong>{progress && <> · {progress.label}{progress.total ? <> {progress.done} of {progress.total}</> : '…'}</>}<br />Don’t unplug or touch the pedal until it’s done.</>
+              : plan.install.length || plan.remove.length ? <>Installs {plan.install.length} · Removes {plan.remove.length}{free !== undefined && <> · {plan.adds > 0 && <>needs {Math.ceil(plan.adds / 1024)} KB of </>}{kb(free)} free</>}{!fits && <><br />Not enough space on your {model}: take effects out of the set, or remove effects you added by hand.</>}</>
+              : selected.moduleIds.length ? <span className="hub-insync"><span className="unit-led is-on" aria-hidden="true" />Already on your {model}{free !== undefined && <> · {kb(free)} free</>}</span> : 'No effects in this set.'}</p>
+            <button type="button" className="button button-primary" disabled={!plan || busy || !fits || (!plan.install.length && !plan.remove.length)} onClick={sync}><Icon name="download" size={16} />Sync to {model}</button>
           </div>
           {error && <p role="alert" className="hub-error">{error}</p>}
           {changed && <p role="status" className="hub-cell-note">{changed.text}{changed.list && <> <a className="text-button" href={changed.list.url} download={changed.list.name}>Save the effect list from before</a></>}</p>}

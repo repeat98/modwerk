@@ -214,7 +214,7 @@ describe('syncing the set to the pedal', () => {
     expect(container.querySelector('.hub-set-open strong')?.textContent).toBe('Live')
     await click(button('Read the pedal'))
     for (let i = 0; i < 100 && !/Installs/.test(open().textContent ?? ''); i++) await settle()
-    expect(open().querySelector('.hub-sync p')?.textContent).toBe('Installs 2 · Removes 1')
+    expect(open().querySelector('.hub-sync p')?.textContent).toBe('Installs 2 · Removes 1 · needs 1 KB of 391 KB free')
     expect([...open().querySelectorAll('.module-tile:not(.is-add)')].map(tile => tile.querySelector('strong')?.textContent + ' ' + tile.querySelector('.module-tile-state')?.textContent)).toEqual(['loop Adds', 'scope Adds', 'dirt Leaves'])
     await click(button('Sync to MS-70CDR'))
     for (let i = 0; i < 200 && !/has your set/.test(open().textContent ?? ''); i++) await settle()
@@ -228,5 +228,16 @@ describe('syncing the set to the pedal', () => {
     expect([...open().querySelectorAll('.module-tile:not(.is-add) .module-tile-state')].map(chip => chip.textContent)).toEqual(['On it', 'On it'])
     expect(open().querySelector('a.module-tile-open')?.getAttribute('href')).toBe('#zoom-ms-70cdr/module/loop')
     expect(container.querySelector('.hub-set-open em')?.textContent).toBe('Editing · On your MS-70CDR')
+  })
+  it('won’t start a sync that doesn’t fit in the pedal’s free space', async () => {
+    const scope = fakeEffect('SCOPE.ZDL', 8, 468, '0.03', 900), fake = fakeZoomPedal({ files: [fakeEffectList({ 8: [] })], free: 5000 }), link = new ZoomLink(() => Promise.resolve(fake.access), 200)
+    await link.connect()
+    const live = { id: 'live', name: 'Live', device: device.id, moduleIds: ['scope'], moduleVersions: {}, keepStockFx2: false, createdAt: '2026-11-09T00:00:00Z', updatedAt: '2026-11-09T00:00:00Z' }
+    const effects = [await listed('scope', 'Scope.ZDL', 468, scope.data)]
+    await act(() => root.render(createElement(ZoomHub, { device, view: 'set', link, sets: [live], selectedId: 'live', onSelect: () => {}, onNew: () => {}, onSetAction: () => {}, listed: effects })))
+    await click(button('Read the pedal'))
+    for (let i = 0; i < 100 && !/Installs/.test(open().textContent ?? ''); i++) await settle()
+    expect(open().querySelector('.hub-sync p')?.textContent).toMatch(/needs 1 KB of 5 KB free.*Not enough space/)
+    expect(button('Sync to MS-70CDR').disabled).toBe(true)
   })
 })
