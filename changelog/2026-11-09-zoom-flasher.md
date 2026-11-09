@@ -1,0 +1,1 @@
+Zoom MS-70CDR (beta): the pedal page installs the Modwerk base the way the Octatrack's does. Choose Zoom's MS-70CDR 2.10 updater .zip as you downloaded it, put the pedal in update mode, and the page flashes MIDISTOMP over USB and confirms it when the pedal restarts. The bootloader and your effects are never written, and Zoom's updater always puts the original back.
