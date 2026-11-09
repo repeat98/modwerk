@@ -2,6 +2,7 @@
 // Counts come from the same catalogue the library shows, so the overview and the sidebar never disagree.
 import { DEVICES, deviceHref, deviceSteps, readyForMods, type DeviceProfile } from '../devices/registry'
 import { DIGI_MODS, type DigiMod } from '../devices/digi-mods'
+import { ZOOM_EFFECTS, zoomEffectAuthor, zoomEffectReleasedAt, type ZoomEffect } from '../devices/zoom-effects'
 import { LIBRARY_CATEGORIES, LIBRARY_CATEGORY_LABELS, type FirmwareModule, type ModuleCategory } from '../catalog/modules'
 import { compareModules } from '../community/module-statistics'
 
@@ -45,10 +46,11 @@ export function developHref(machine: string) { return '#submit?machine=' + machi
 export const DEVELOP_PITCH = 'Describe your idea, paste the starter prompt into your AI assistant, and build the module together with the coding assistant, step by step.'
 export const UNLOCK_NOTE = 'Unlocking a machine is reverse engineering and needs programming experience. Once it has a core, its modules start from the same starter prompt as every other.'
 
-export function machineOverview(octatrack: readonly FirmwareModule[], digi: readonly DigiMod[] = DIGI_MODS): Overview {
+export function machineOverview(octatrack: readonly FirmwareModule[], digi: readonly DigiMod[] = DIGI_MODS, zoom: readonly ZoomEffect[] = ZOOM_EFFECTS): Overview {
   const entries = (device: DeviceProfile): Entry[] => [
     ...(device.id === 'octatrack' ? octatrack.map(module => ({ id: module.id, name: module.name, category: module.category, creator: module.author.toLowerCase(), authorName: module.authorName, addedAt: module.addedAt, updatedAt: module.updatedAt })) : []),
     ...digi.filter(mod => mod.device === device.id).map(mod => ({ id: mod.device + '-' + mod.id, name: mod.title, category: mod.libraryCategory, creator: (mod.authorLogin ?? mod.author).toLowerCase(), authorName: mod.author, updatedAt: mod.updatedAt })),
+    ...zoom.filter(effect => effect.machine === device.id).map(effect => ({ id: effect.machine + '-' + effect.id, name: effect.name, category: effect.category, creator: effect.author.github.toLowerCase(), authorName: zoomEffectAuthor(effect), updatedAt: zoomEffectReleasedAt(effect) })),
   ]
   const machines = DEVICES.map((device, order) => {
     const modules = entries(device)
