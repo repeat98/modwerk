@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-09",
+    "changes": [
+      "First release, for Analog Rytm MKII OS 1.74: the AMP page reworked. Always on while installed.",
+      "AMP HLD runs from no hold (0) to AUTO (127), never cuts the attack and reads in steps; FUNC + turn jumps 0, one step at 120 BPM, AUTO.",
+      "ATK, DEC and REL (AMP and FILTER) step 0.2 ms up to 5 ms and show times; OVR gets a fine low end.",
+      "ENV RESET gains AMP and AMP+FILT: every sequenced trig and retrig starts from silence, without a click.",
+      "Saved projects play their HLD, ATK, DEC, REL and OVR on the new curves. Not for use with Env Reset Amp."
+    ]
+  }
+]

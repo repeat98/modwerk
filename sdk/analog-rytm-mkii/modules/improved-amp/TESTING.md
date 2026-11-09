@@ -1,4 +1,120 @@
-# Improved Envelopes: testing
+# Improved AMP: testing
+
+Improved AMP 0.1.0-experimental, Analog Rytm MKII OS 1.74, on the Modwerk base (core-ar2 0.7) with the
+amp record hook. The sections from "Unit, ED02" down record the module's builds under its earlier name,
+Improved Envelopes (symbols `envelopes_*`, now `improved_amp_*`; HLD then read in ms). "ENV RESET AMP
+pre-fade" records the pre-fade's builds from before it moved into this module. The test builds' `.syx`
+files stayed on the tester's computer.
+
+## This version: IA08 (rytm-emu only), 9 Nov 2026
+
+Build IA08: the plain Modwerk base and this module alone, linked on stock OS 1.74 by
+`scripts/link-image.mjs`; sha256 0c5420f573e80245192fe9414f678e8d993033efbd9e636ef0edf2ee1d3625c1, ramSpare 111,136 (the base alone: 119,004). rytm-emu
+2ac0f1f, headless `dtboot`:
+
+- Boots to the main screen; CPU exceptions only TRAP #0 (vector 32), as the plain base.
+- AMP page: DEC turned down reads "2.2ms" under DECAY TIME; HLD 6 reads "0.034" and HLD 42 "1.06" under HOLD TIME
+  (steps at the emulator's 127.0 BPM, track speed 1x, a step 118.1 ms: 6 is 4.0 ms, 42 is 124.7 ms).
+- SOUND SETTINGS, ENV RESET: LEFT and RIGHT step FILTER, AMP, OFF, AMP, FILTER, AMP+FILT, one value a press.
+- OVR (CC 81 on track 1, a break after the reader at 0x40109b1e): the CV word in d0 is 0x0000, 0x003e, 0x01ef,
+  0x182f and 0xfe00 for 0, 1, 8, 64 and 127 (stock: 0x0000, 0x0200, 0x1000, 0x8000, 0xfe00); d1 to d7 and a0 to a7
+  are the same in all five runs.
+- Pre-fade, BD on ENV RESET AMP with trigs on steps 1, 5, 9 and 13 (the scan's mask and the entry's started bit read
+  every 250k instructions): both are set for voice 0 for 5 or 6 readings (6.3 to 7.5 ms) before each trig, four
+  steps apart, and clear between. None before the first trig after PLAY (queued less than a fade ahead).
+- Pre-fade, RTRG held with the BD pad over the same pattern: the mask is set for 5 or 6 readings before each
+  retrig, one step apart, without a gap inside a fade. (An earlier build of this version gated the retrig scan on
+  stock's byte at 0x8000fc13 + track; the mask then flickered within each fade. That byte only says a tick is due
+  this block and the gate is gone.)
+- Pre-fade, the end of a retrig series (the same pad roll from a snapshot, the series' length word at 0x42ade0e4
+  set by hand to run out around one hit: 13 lengths, 338 to 352 blocks, read every 60k instructions): up to 343
+  blocks the series ended before the hit's tick, the hit did not play and the mask stayed clear; from 344 the hit
+  played and the fade came before it, as in the run without a length. (An earlier build of this version faded
+  for the hit that never plays: the mask was set for 3 readings up to the series' end.)
+- Pre-fade, BD trigs on steps 1 to 4 in the emulator's default pattern, which has swing (another track's event
+  times alternate 4,644,000 and 6,156,000 clock units), read every 250k instructions with the track's slot
+  states: the trig after a swung one is queued while that one still waits and sits in the track's second event
+  slot, as does the first trig queued after PLAY. The mask is set for 5 readings before each of the four trigs
+  of every loop. (An earlier build of this version, IA05, read the first slot only, as EN05 and ER04 did: the
+  second-slot trigs fired with the mask clear, so they played as stock.)
+- The AMP page run's 89 frames and the ENV RESET run's 23 are the same, byte for byte, as IA05's and IA07's,
+  and the OVR words and every reading of the trig, roll, swing and series-end runs are the same as IA07's, the
+  build before.
+- Independent code reviews of the pre-fade and text changes, each finding confirmed in the OS 1.74 code and
+  fixed in this build. First: a hit after a retrig series' length ran out was faded for, which cut the last
+  hit's tail; a trig that plays a note ends the track's series, and the retrigs after it were still predicted;
+  HLD's number in steps was rounded twice. Second: only the first of a track's three event slots was read
+  (above); a queued event takes its track's turn in the block it fires in, so a retrig tick due then is stepped
+  a block later, which the series' end now allows for; on external MIDI clock a series' last hit within a block
+  of its end can be judged wrong (README). Third: stock
+  fires one queued event a track a block, the lowest due slot first, and the scan now counts blocks the same
+  way instead of clock time; a lock trig without a note whose RTRG is on rewrites a running series' rate,
+  now followed; a pattern change clears queued trigs (README). Fourth: a trig of the kit the track's sound
+  came from loads no sound in stock, so it is judged by the track's sound as it stands; the RTRG rate is a
+  signed byte shifted by its low six bits, counted the same way; a retrig hit shortly before a trig is cut
+  short (README); a series further behind than its slots can hold it up plays as stock. Fifth, of the
+  fourth's fixes: they match the OS code and no defect was found; a trig with parameter locks makes stock
+  load the kit's sound again on the next trig, which a lock trig still queued does not yet tell the scan
+  (above, not tested; `src/pre-fade.c`); comments corrected, the image unchanged.
+- A host build of `src/pre-fade.c` with the OS's memory as an array: 54 cases of the scan's model pass (slots,
+  two events in one block, lock trigs and rates, the series' end, sound locks, the kit's sound, held and muted
+  tracks).
+
+Not tested on a unit in this version:
+
+- HLD's number in steps on the unit's screen, and against a tempo or track-speed change.
+- OVR's new curve, by ear and by measurement.
+- ENV RESET AMP on a trig with a sound lock (track sound on AMP and the trig locked to a FILTER or OFF
+  sound, and the reverse). The lookup was read in the code only.
+- A trig of the track's own kit sound after an ENV RESET edit (the edit is expected to count at
+  once), and after a sound lock on the step before (the kit's sound is loaded again). Read in the code
+  and run as a host test of the scan's model.
+- A lock trig without a note shortly before a trig of the same kit, when the kit's sound and the
+  track's sound differ in ENV RESET: stock loads the kit's sound again after a trig with parameter
+  locks, and a lock trig still queued is not counted (`src/pre-fade.c`), so the fade can come late or
+  not at all there.
+- A mute during a running retrig roll; trig conditions and probability (rytm-emu: only trigs that fire
+  are queued).
+- A trig with RTRG and a retrig length (the tail after the last hit of the series), and a trig that
+  plays a note inside another trig's retrig length. The series' end was read in the code and run in
+  rytm-emu on a pad roll only, with the length word set by hand.
+- A pad roll let go just before its next hit (the tail is expected to be cut: README).
+- Swing and micro timing on the unit: a trig queued while the one before still waits. Run in rytm-emu
+  only (above).
+- A lock trig on the step of a retrig hit (the retrig's tick is stepped a block later), a lock trig
+  without a note that changes a running series' RTRG rate, two events of one track due in the same
+  block, a retrig hit shortly before the track's next trig, an RTRG rate outside the knob's range in a
+  pattern's data, and retrigs above 187.5 BPM (a block is then longer than half a retrig tick). All
+  read in the code and run as a host test of the scan's model, not in rytm-emu.
+- A retrig series' end on external MIDI clock, and a pattern change inside a fade. Read in the code
+  only, the pattern change in part.
+- Saving a sound with AMP, reloading it, a power cycle.
+- The screen lag once reported on trig + RTRG (ER05), with and without the module.
+- FUNC + turn on HLD (0, 42, AUTO) on the unit.
+- Memory and audio load on the unit: `resources` are read from the link and the code.
+
+## Unit, EN05 (envelopes on the amp record hook), 9 Nov 2026
+
+EN05 `.syx` `d02af414…a2d8`: the Modwerk base b02d611f with the envelope rewriter (3b68c7a80, order 50)
+and the pre-fade (74f91057, order 20) as two modules on `ev_amp_record`, the pairing this module now
+carries in one. Rig over USB MIDI, Overbridge channels recorded at 48 kHz.
+
+| AMP DEC (looped sine at ~1042 Hz) | design t60 | measured |
+|---|---|---|
+| 3 / 5 / 8 | 0.6 / 1.0 / 1.6 ms | 1.25 / 1.25 / 2.25 ms (the VCA's slew floors the shortest) |
+| 12 / 15 / 20 / 25 | 2.4 / 3.0 / 4.0 / 5.0 ms | 2.75 / 3.0 / 4.0 / 5.25 ms |
+| 35 / 45 / 65 | 10 / 15 / 50 ms | 10.5 / 15.0 / 50.25 ms |
+
+With the tone at 264 Hz the short decays read four to seven times long: the method needs a tone near
+1 kHz or higher below DEC 45.
+
+| AMP HLD (an analog BD sound, DEC 25) | design | measured decay start, minus HLD 0 |
+|---|---|---|
+| 5 / 10 / 15 / 21 / 31 / 42 | 3.33 / 6.67 / 10.0 / 18.0 / 51.3 / 124.7 ms | 2.29 / 6.08 / 9.46 / 17.5 / 50.54 / 124.04 ms |
+| 57 / 70 / 85 | 298 / 627 / 1481 ms | 297.4 / 626.8 / 1480.5 ms |
+
+First takes of the HLD sweep hit USB capture gaps (runs of digital silence) and were repeated. The
+pre-fade's EN05 results are under [EN05](#en05-on-the-bases-amp-record-hook-2026-11-09).
 
 ## Unit, EV15 / ED02 (DEC, REL and HLD curves), 6 Nov 2026
 
@@ -62,7 +178,7 @@ record in the decay state, which a voice stays in until its next trig.
 - Independent code review: no findings (registers, ColdFire encodings, skip equivalence).
 - rytm-emu: LP01 boots, TRAP #0 only. Rig re-run on the unit: pending.
 
-## Unit, EV14 (current), 6 Nov 2026
+## Unit, EV14, 6 Nov 2026
 
 Build EV14: EV13's set with Improved Envelopes at 4efb6fbe (FILTER ATK table for the filter's 1.00x
 speed, FILTER text unscaled; 18a15a2e adds only docs); sha256
@@ -86,8 +202,8 @@ Build EV13: EV09's set and base (no-send b530a147, lock NS01) with Improved Enve
 6c7598110742557956310a49906aa44d20978273f31d66a394eb8fa4de9c3cbb, ramSpare 17,708. Flashed by the
 author; scratch project, track 1 a looped sine. MAIN OUT over USB audio, settings by USB MIDI CC.
 
-EV13 and EV14 also carried ENV RESET AMP with a pre-fade; it left this module before 0.1.0 (Env Reset
-Amp keeps ENV RESET AMP), so those runs are not recorded here.
+EV13 and EV14 also carried an earlier ENV RESET AMP pre-fade; the pre-fade's own runs are under
+[ENV RESET AMP pre-fade](#env-reset-amp-pre-fade).
 
 **FILTER ATK on the new table** (method as EV09 below: LP2, RES 127, FRQ 40, LEV 0, ENV +24, AMP ATK 0
 / HLD AUTO / DEC INF, FILTER SUS 127 / DEC 0, single MIDI notes; rise start to top, by zero crossings).
@@ -177,9 +293,9 @@ Build EV04: RC30's set with Envelopes in place of Env Reset Amp, base 8b0cafbc, 
 374157b56041b15bff1d9795371cc60c6a7f0388c7075378e1365287a549d393 (source 818f7b08). Flashed by the
 author; scratch project.
 
-Automated: track 1 (BD) on BD ANALOG with its DEC 127, filter open, no FX, AMP DEC 40, played over USB
-MIDI (channel 1, note 0, velocity 100), MAIN OUT recorded over USB audio; script envtest.py (private
-rig, not in the repo). BD ANALOG's own body falls about 3 dB over the first 150 ms and it has an onset
+Automated: track 1 (BD) on an analog BD sound with its DEC 127, filter open, no FX, AMP DEC 40, played over
+USB MIDI (channel 1, note 0, velocity 100), MAIN OUT recorded over USB audio; script envtest.py (private
+rig, not in the repo). The sound's own body falls about 3 dB over the first 150 ms and it has an onset
 click, so hold and AUTO are judged against the HLD 47 take (held to 500 ms), not by an absolute peak.
 
 | Check | Result |
@@ -189,12 +305,107 @@ click, so hold and AUTO are judged against the HLD 47 take (held to 500 ms), not
 | AUTO, note 100 ms / 300 ms | leaves the held take right after note-off (125 / 400 ms points) |
 | AUTO, ATK 64, note 50 ms | decays from the note-off, mid-attack (AUTO is outside the never-cut rule) |
 | Never cut: ATK 64 (87 ms) with HLD 0, 2 (24 ms), 7 (62.5 ms) | identical takes; peak 87 ms, decay from 85 ms |
-| ATK peak: 55 / 64 / 72 / 80 (37.9 / 87.2 / 183 / 384 ms) | 36.8 / 87.3 / 171.5 / 348 ms (long ones peak early on BD ANALOG's falling body) |
+| ATK peak: 55 / 64 / 72 / 80 (37.9 / 87.2 / 183 / 384 ms) | 36.8 / 87.3 / 171.5 / 348 ms (long ones peak early on the sound's falling body) |
 | ATK rise 10-90 %: 0 / 1 / 5 / 10 / 25 (0 / 0.2 / 1 / 2 / 5 ms) | 1.0 / 1.0 / 1.25 / 1.75 / 3.75 ms (hardware slew ~0.8 ms floors the shortest) |
 | ATK 64 rise 10-90 % | 64.8 ms = 0.74 of the 87.2 ms ramp, as earlier probe measurements |
 
 Not tested on the unit: knob texts and the AMP picture (rytm-emu only), FUNC jumps, filter
 DEC/REL times, retrigs, choke, saving and reloading, CPU cost.
+
+## ENV RESET AMP pre-fade
+
+The pre-fade was built and tested as version 1.1.0 of a private copy of Env Reset Amp before it moved
+here; `src/pre-fade.s` and `src/pre-fade.c` are that code, with the sound-lock lookup added after EN05.
+ER02 to ER05 are private test builds in a 14-module set with the Modwerk base, OS 1.74, module at -O2.
+
+### Before the build: how the Rytm schedules a trig (rytm-emu `2ac0f1f`)
+
+- The sequencer queues each trig in the track's first event slot (`0x42ac5fb0` + 224 x track, 1) about 60 ticks
+  ahead and clears it when it fires. With every trig at 50 %, exactly the queued trigs fired (5 of 9); without a
+  condition all 9 were queued and fired. A muted track's trig stays queued and does not fire, so the module reads
+  the mute masks itself.
+- Retrigs run on a per-track counter stock steps once a tick (`0x4012089a`): RT_COUNT `0x42adf5d0`, the firing
+  table `0x402909b8` and the deadline `0x8000fdec`; the scan counts the same way.
+
+### ER02: fade, then the drop at the trig (2026-11-05)
+
+ER02 combined `.syx` `eb51f80c3ebdd0ba5aae74b3ac852da6601c9f0f99b02cd8a70dac65b2b355b5`. In rytm-emu (BD at ATK 16,
+ENV RESET AMP, trigs on 1, 5, 9, 13) each sequenced trig was preceded by five blocks of the fade record, then
+Env Reset Amp 1.0's drop to silence and the attack; with BD muted, no fade and no drop.
+
+On the unit, outputs recorded in Ableton Live (48 kHz, 24-bit):
+- A sustained synth sound retrigged every ~0.5 s: with ENV RESET FILTER the waveform steps from +0.017 to -0.025
+  in one sample at each trig (the oscillator's phase reset), peak above 3 kHz 0.011; with AMP+FILT it falls over
+  ~4 ms before the trig and the new hit rises from there, peak above 3 kHz 0.0018.
+- RS and CP sharing voice 7, alternated every 0.5 s, peak above 3 kHz at each transition:
+
+  | ENV RESET | CP over CP | RS cuts CP | CP cuts RS |
+  | --- | --- | --- | --- |
+  | both FILTER | 0.0061 | 0.0064 | 0.0020 |
+  | RS AMP+FILT, CP FILTER | 0.0060 | 0.0013 | 0.0022 |
+  | RS FILTER, CP AMP+FILT | 0.0010 | 0.0063 | below 0.0008 |
+  | both AMP+FILT | about 0.001 at every transition | | |
+
+  The incoming trig's setting decides. The fade (mode B resent every block) was only about -8 dB down when the trig
+  fired; ER02's drop did the rest.
+- Pad hits tapped by hand: 0.0027 to 0.0128 above 3 kHz, the largest clicks in any take (the drop).
+
+### ER03: the drop removed (2026-11-05)
+
+ER03 combined `.syx` `1d2cb24d6bdcc2e667a7dac92135949d6382ed5e6c7caa934530cc3052892162`: no drop at the trig, retrig
+series predicted. On the unit (AMP+FILT, sequenced, RTRG pad roll, sequenced retrig, pad taps) no trig restarted
+from silence: the shallow fade alone was left. Not a pass.
+
+### ER04: the fade sent as stock sends its attack (2026-11-05)
+
+ER04 combined `.syx` `132bc5dc90e5285feb2f447e88401f4a08602f178fee7562d8dae87c1acc2ede`: the ramp (mode B) once, then
+mode 3 with the same target and rate every block until the trig; window 10 blocks (6.7 ms). On the unit, an analog
+BD sound sustained at about 30 Hz, AMP+FILT:
+- Sequenced trigs: the level falls to the voice's floor (about 0.018) over ~3 ms and stays there 1 to 3 ms before
+  the hit; peak above 3 kHz 0.0003, below the recording's click threshold. Patterns of 8 and 16 steps, trigs on
+  several steps: every trig faded.
+- One unexplained miss: on one older 8-step pattern the loop's first step did not fade (stock phase-reset step,
+  0.0085 above 3 kHz). A freshly made pattern faded on every step, step 1 included, and the miss did not come back.
+  Not reproduced on EN05: micro timing (step 1 half a step early, 161 of 161 hits faded), an 8-step loop (140 of
+  140 and 141 of 141), 2 min on the internal clock.
+- RTRG on the same sound (12 s) and a sequenced trig with RTRG (3.7 s): no event above 0.0008 above 3 kHz (stock
+  restarts measure 0.006 to 0.013); each hit down to silence before the next.
+- Hand-played hits over a sequenced retrig: they break into the roll as stock does; largest content above 3 kHz
+  0.0002.
+
+### ER05: retrig prediction bounded (2026-11-05)
+
+ER05 combined `.syx` `433d576306ee9b20d02993a4d2d0903f9ca63ff1906cbe50fedea3ecdcc4f1ec`. From a code review of ER04:
+the prediction gives up on a deadline already past, so it walks at most about twice the fade in ticks, and a series
+whose next hit follows sooner than twice the fade gets half its spacing to fade in.
+
+On the unit (Nathaniel Pavel, recordings 0040, 0041, 0043, the analog BD sound on AMP+FILT):
+- A fast RTRG roll (17 s, hits every ~10 ms): every hit sounds (about 7 ms of each), falls to the floor for 2 to
+  3 ms and restarts; no step at the restarts. Content above 3 kHz up to 0.0035 is each hit's own onset, the same on
+  every hit.
+- An RTRG roll at 1/16 and sequenced trigs: each hit dips to the floor first; largest content above 3 kHz 0.0004
+  and 0.0005.
+- Reported by the tester: the screen felt a little laggy while holding a trig and pressing RTRG. Not yet compared
+  with the same gesture without the module.
+
+### EN05: on the base's amp record hook (2026-11-09)
+
+EN05 `.syx` `d02af414…a2d8` (see the EN05 section above). On the unit (Nathaniel Pavel's setup, test run driven
+over USB MIDI by the developer's rig, all 12 Overbridge channels recorded at 48 kHz). BD (an analog BD, about
+261 Hz at -35 dBFS, AMP DEC 100, HLD 0) on AMP+FILT and SD on FILTER, trigs on steps 1, 5, 9 and 13, step 13 with
+a 1/16 RTRG:
+- Internal clock, 2 min at about 141 BPM: every one of the 493 BD hits, sequenced steps and retrigs, fell to digital
+  silence before its trig. The voice goes to zero within about 0.5 ms, about 7 ms before the trig (the ramp has a
+  fixed rate, so a quiet voice gets there sooner than ER04's ~3 ms), and the trig starts from silence on time.
+- External MIDI clock at 120 BPM, 20 s each: AMP+FILT 67 of 68 hits faded (32 to 67 dB down); BD set to OFF, none of
+  71 (about 4 dB, as stock); SD on FILTER about 4 dB throughout.
+- External clock with one tick held back on purpose: when the tick before a trig's own tick arrives d ms late, that
+  trig fires d ms early against the clock's estimate and its fade is d ms shorter: 2 ms late left about 4 ms of
+  silence, 4 ms a partial fade, 6, 8 and 10 ms none. A late tick on the trig's own step only lengthens the silence.
+  The one miss above was a 12 ms stall of the rig's own clock.
+- MIDI notes on BD (the pad path): as stock, about 4 dB dip.
+- 3 min of sequencer with 1,888 BD MIDI notes and AMP HLD/DEC sweeps over 2 min of it: no dropout, SD steady at 12
+  hits per 8 s, the unit answered notes afterwards and the fade still held (109 hits, median 41 dB down).
 
 ## rytm-emu (2ac0f1f), EV02-EV04
 

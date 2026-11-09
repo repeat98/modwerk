@@ -47,7 +47,10 @@
         | state's command: the ramp (mode B) in its first block, then mode 3 with
         | the same target and rate every block until the trig, as stock's own
         | attack does - a linear ramp resent as B every block falls short on the
-        | unit (ER02 measured about -8 dB by the trig). d0 the rate word and d2
+        | unit (ER02 measured about -8 dB by the trig). amp_prefade_started holds
+        | the voices whose mode B has gone out; a trig inside the fade (a pad)
+        | sends stock's attack and clears the bit, so the ramp starts again with
+        | a mode B, never a mode 3 after another command. d0 the rate word and d2
         | the level word, in and out; d3 the voice, a2 its state (-1 idle).
         | It uses d1, d4 and a0, as the hook allows, and keeps a1.
         | ------------------------------------------------------------------
@@ -65,17 +68,23 @@ amp_prefade_write:
         btst    %d3,%d1
         beq.s   9f
         tst.l   (%a2)
-        bmi.s   9f                                | idle
+        bmi.s   8f                                | idle
         lea     VOICE_TRACK,%a0
         mvz.b   (%a0,%d3.l),%d1
         lea     TRIG,%a0
         moveq   #1,%d4
         cmp.l   (%a0,%d1.l*4),%d4
-        beq.s   9f                                | trigged this block
+        beq.s   8f                                | trigged this block
+        move.l  #FADE_LEVEL,%d2
         move.l  #FADE_GO_ON,%d0
-        move.l  amp_prefade_first,%d1
-        btst    %d3,%d1
-        beq.s   2f
+        move.l  amp_prefade_started,%d1
+        bset    %d3,%d1
+        bne.s   9f                                | its ramp is running
         move.l  #FADE_START,%d0
-2:      move.l  #FADE_LEVEL,%d2
+        move.l  %d1,amp_prefade_started
 9:      rts
+8:      move.l  amp_prefade_started,%d1           | no ramp out: the next one starts afresh
+        bclr    %d3,%d1
+        beq.s   9b
+        move.l  %d1,amp_prefade_started
+        rts

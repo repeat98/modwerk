@@ -430,6 +430,8 @@ __attribute__((noinline)) static void put_steps(char *p, uint32_t ticks)
         return;
     }
     q = (ticks * 4000 + step4 / 2) / step4;     // thousandths of a step
+    if (!q)
+        q = 1;                                  // a hold there is never reads as none
     if (q < 100) {
         *p++ = '0';
         *p++ = '.';
@@ -439,7 +441,8 @@ __attribute__((noinline)) static void put_steps(char *p, uint32_t ticks)
         *p = 0;
         return;
     }
-    if ((d = (q + 5) / 10) < 1000) {            // hundredths, below 10
+    // Each unit rounds from the ticks, not from the unit below it.
+    if ((d = (ticks * 400 + step4 / 2) / step4) < 1000) {      // hundredths, below 10
         p = put_uint(p, d / 100);
         *p++ = '.';
         *p++ = (char)('0' + d / 10 % 10);
@@ -447,14 +450,14 @@ __attribute__((noinline)) static void put_steps(char *p, uint32_t ticks)
         *p = 0;
         return;
     }
-    if ((d = (q + 50) / 100) < 1000) {          // tenths, below 100
+    if ((d = (ticks * 40 + step4 / 2) / step4) < 1000) {       // tenths, below 100
         p = put_uint(p, d / 10);
         *p++ = '.';
         *p++ = (char)('0' + d % 10);
         *p = 0;
         return;
     }
-    put_uint(p, (q + 500) / 1000)[0] = 0;
+    put_uint(p, (ticks * 4 + step4 / 2) / step4)[0] = 0;
 }
 
 // log2(y) x 65536, y > 0.
