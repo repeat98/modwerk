@@ -14,7 +14,7 @@ describe('machine profiles', () => {
   it('validates every machine and matches the generated registry', () => {
     const parsed = profiles.map(parseMachineProfile).sort((a, b) => a.order - b.order)
     expect(parsed.map(profile => profile.id)).toEqual(GENERATED.map(profile => profile.id))
-    expect(parsed.filter(profile => profile.sdk).map(profile => profile.id)).toEqual(['octatrack', 'digitakt', 'digitone', 'digitakt-ii', 'analog-rytm-mkii', 'analog-four-mkii'])
+    expect(parsed.filter(profile => profile.sdk).map(profile => profile.id)).toEqual(['octatrack', 'digitakt', 'digitone', 'digitakt-ii', 'analog-rytm-mkii', 'analog-four-mkii', 'zoom-ms-70cdr'])
   })
 
   it('keeps status, steps and SDK claims consistent', () => {

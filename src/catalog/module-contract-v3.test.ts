@@ -106,3 +106,39 @@ describe('module contract v3', () => {
     expect(() => parseElemodBuild({ ...build, derive }, document)).toThrow('supported releases including the base')
   })
 })
+
+describe('module contract v3, zdl (Zoom effect files)', () => {
+  const zdl = (): Record<string, any> => ({
+    ...published(), machine: 'zoom-ms-70cdr', category: 'effects',
+    compatibility: { releases: ['2.10'], requires: [], conflicts: [], limitations: [] },
+    resources: { memoryBytes: 26546, fastBytes: null, load: { display: 'DSP 8 of 225 per patch', method: 'static', conditions: 'The cost the effect declares; the pedal adds it up per patch.' } },
+    platform: {
+      kind: 'zdl', file: 'Loop.ZDL', effectId: { gid: 8, fxid: 467 }, effectVersion: '0.03', dspCost: 8,
+      binary: { sha256: sha, bytes: 26546, release: { repository: 'https://github.com/repeat98/ZoomMultistompZDL', tag: 'loop-0.03', asset: 'Loop.ZDL' } },
+      screen: 'live',
+      pedals: [{ machine: 'zoom-ms-70cdr', firmware: '2.10', status: 'confirmed', report: 'TESTING.md' }, { machine: 'zoom-ms-50g', firmware: '3.10', status: 'untested', report: null }],
+    },
+    media: published().media.map((item: Record<string, any>) => item.capture ? { ...item, capture: { ...item.capture, release: '2.10' } } : item),
+  })
+  it('reads an effect file pinned to its release, with each pedal’s status', () => {
+    const document = parse(zdl())
+    expect(document.platform).toMatchObject({ kind: 'zdl', file: 'Loop.ZDL', effectId: { gid: 8, fxid: 467 }, screen: 'live' })
+    expect(() => requireModwerkPublication(document)).not.toThrow()
+  })
+  it('refuses what the pedal can’t take or Modwerk can’t list', () => {
+    const with_ = (change: (value: Record<string, any>) => void) => { const value = zdl(); change(value); return () => parse(value) }
+    expect(with_(value => { value.platform.file = 'LoopLonger.ZDL' })).toThrow('at most 8 letters')
+    expect(with_(value => { value.platform.effectId.fxid = 1000 })).toThrow('local IDs')
+    expect(with_(value => { value.platform.effectId.fxid = 409 })).toThrow('Spool.ZDL and TEcho4.ZDL')
+    expect(with_(value => { value.platform.effectVersion = '3' })).toThrow('version in the file')
+    expect(with_(value => { value.platform.binary.bytes = 40000; value.resources.memoryBytes = 40000 })).toThrow('at most 32126 bytes')
+    expect(with_(value => { value.resources.memoryBytes = 2048 })).toThrow('the effect file’s size')
+    expect(with_(value => { value.platform.pedals[0].report = null })).toThrow('needs the report')
+    expect(with_(value => { value.platform.pedals = [value.platform.pedals[1]] })).toThrow('include MS-70CDR')
+    expect(with_(value => { value.platform.pedals[1].firmware = '9.99' })).toThrow('not a MS-50G release')
+    expect(with_(value => { value.platform.binary.release.repository = 'https://example.com/x' })).toThrow('GitHub repository')
+    expect(with_(value => { value.platform = { ...template().platform } })).toThrow('expected zdl')
+    const reported = zdl(); reported.platform.pedals[0].status = 'reported'
+    expect(() => requireModwerkPublication(parse(reported))).toThrow('confirmed hardware report on zoom-ms-70cdr')
+  })
+})
