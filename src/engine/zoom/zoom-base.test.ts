@@ -1,8 +1,11 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { deflateRawSync } from 'node:zlib'
 import { describe, expect, it } from 'vitest'
 import { buildPart, concat, parseAis } from './ais'
-import { MIDISTOMP, applyPatches, buildBase, sha256, type ZoomPatch } from './zoom-base'
+import { MIDISTOMP, applyPatches, buildBase, readUpdater, sha256, type ZoomPatch } from './zoom-base'
+import { ZOOM_BASE } from './zoom-protocol'
+import { storedZip, zipEntry } from './zip'
 
 const words = (...values: number[]) => new Uint8Array(Uint32Array.from(values).buffer)
 // A small AIS image: magic, a register set, one section, a function call, jump-and-close, padding and a trailer.
@@ -45,6 +48,34 @@ describe('the Zoom base builder', () => {
     expect(JSON.stringify(MIDISTOMP)).not.toMatch(/"expect"/)
     for (const write of MIDISTOMP.patches.flatMap(patch => patch.write ?? [])) for (const hash of [write.expect_sha256].flat()) expect(hash).toMatch(/^[0-9a-f]{64}$/)
     for (const name of Object.values(MIDISTOMP.releases).flat()) expect(MIDISTOMP.patches.map(patch => patch.name)).toContain(name)
+  })
+
+  it('reads Zoom’s updater zip as downloaded (deflated), and refuses another zip or altered parts', async () => {
+    const deflated = (name: string, data: Uint8Array) => {   // one deflated entry, central directory, end record
+      const packed = deflateRawSync(data), n = new TextEncoder().encode(name), u16 = (v: number) => [v & 255, v >> 8], u32 = (v: number) => [...u16(v & 0xffff), ...u16(v >>> 16)]
+      const common = [...u16(20), 0, 0, ...u16(8), 0, 0, 0, 0, 0, 0, 0, 0, ...u32(packed.length), ...u32(data.length), ...u16(n.length), 0, 0]
+      const local = [0x50, 0x4b, 3, 4, ...common, ...n], central = [0x50, 0x4b, 1, 2, ...u16(20), ...common, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ...n]
+      return Uint8Array.from([...local, ...packed, ...central, 0x50, 0x4b, 5, 6, 0, 0, 0, 0, 1, 0, 1, 0, ...u32(central.length), ...u32(local.length + packed.length), 0, 0])
+    }
+    const data = Uint8Array.from({ length: 5000 }, (_, i) => i % 7)
+    expect(await zipEntry(deflated('x/Main.bin', data), 'Main.bin')).toEqual(data)
+    const stored = new Uint8Array(await storedZip([{ name: 'a/U.app/Contents/Resources/Main.bin', data: [1, 2] }, { name: 'a/U.app/Contents/Resources/Preset.bin', data: [3] }]).arrayBuffer())
+    expect(await zipEntry(stored, 'Preset.bin')).toEqual(Uint8Array.of(3))
+    await expect(readUpdater(stored)).rejects.toThrow(/Main\.bin isn’t from Zoom’s MS-70CDR 2\.10 updater/)
+    await expect(readUpdater(deflated('MS-70CDR Plus/Main.bin', data))).rejects.toThrow(/This isn’t Zoom’s MS-70CDR 2\.10 updater for Mac/)
+    await expect(readUpdater(Uint8Array.of(1, 2, 3))).rejects.toThrow(/isn’t a zip/)
+    // The pages' copy of the release name and its identity tag agrees with MIDISTOMP's patches.
+    expect(Object.keys(MIDISTOMP.releases)).toEqual([ZOOM_BASE.name])
+    const tag = MIDISTOMP.patches.find(patch => patch.name === 'identity-tag')!.write![0].data as string
+    expect(String.fromCharCode(...tag.match(/../g)!.map(byte => parseInt(byte, 16)))).toBe(ZOOM_BASE.tag)
+    expect(MIDISTOMP.releases[ZOOM_BASE.name]).toContain('identity-tag')
+  })
+
+  // With Zoom's download at hand (ZOOM_MS70CDR_ZIP='…/MS-70CDR_v2.10_Mac_E.zip'): the page reads its parts as they are.
+  const zip = process.env.ZOOM_MS70CDR_ZIP
+  it.runIf(zip)('reads the stock parts from Zoom’s own updater zip', async () => {
+    const parts = await readUpdater(new Uint8Array(readFileSync(zip!)))
+    expect(await sha256(parts['Main.bin'])).toBe(MIDISTOMP.stock.main.sha256)
   })
 
   // zoomms' own output for MIDISTOMP fccbe40 (zoomms build-mac <app> --build-id ms70cdr-2.10 --patch … --stamp version=V2.0.1

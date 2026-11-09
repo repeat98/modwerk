@@ -16,3 +16,22 @@ export function storedZip(entries: { name: string; data: ArrayLike<number> }[]):
   parts.push(new Uint8Array(central), new Uint8Array([0x50, 0x4b, 5, 6, 0, 0, 0, 0, ...u16(entries.length), ...u16(entries.length), ...u32(central.length), ...u32(offset), 0, 0]))
   return new Blob(parts, { type: 'application/zip' })
 }
+
+/** The file in a zip whose name ends with `suffix` (stored or deflated), or undefined: how Zoom's updater download is read. */
+export async function zipEntry(zip: Uint8Array, suffix: string): Promise<Uint8Array | undefined> {
+  const view = new DataView(zip.buffer, zip.byteOffset, zip.byteLength), decoder = new TextDecoder()
+  let end = zip.length - 22
+  while (end >= 0 && view.getUint32(end, true) !== 0x06054b50) end--
+  if (end < 0) throw new Error('This isn’t a zip file.')
+  for (let at = view.getUint32(end + 16, true), n = view.getUint16(end + 10, true); n > 0; n--) {
+    if (view.getUint32(at, true) !== 0x02014b50) throw new Error('This zip is damaged.')
+    const method = view.getUint16(at + 10, true), size = view.getUint32(at + 20, true), length = view.getUint16(at + 28, true)
+    const name = decoder.decode(zip.subarray(at + 46, at + 46 + length)), local = view.getUint32(at + 42, true)
+    at += 46 + length + view.getUint16(at + 30, true) + view.getUint16(at + 32, true)
+    if (!name.endsWith(suffix)) continue
+    const start = local + 30 + view.getUint16(local + 26, true) + view.getUint16(local + 28, true), data = zip.subarray(start, start + size)
+    if (method === 0) return data
+    if (method !== 8) throw new Error(name + ' is packed in a way this page can’t read.')
+    return new Uint8Array(await new Response(new Blob([data.slice()]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer())
+  }
+}

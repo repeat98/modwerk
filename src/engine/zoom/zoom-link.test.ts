@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { fakeEffect, fakeZoomPedal } from '../../dev/zoom-pedal-fake'
 import { ZoomLink } from './zoom-link'
-import { crc32, effectInfo, pack7, parseIdentity, unpack7 } from './zoom-protocol'
+import { MIDISTOMP_FEATURES, crc32, effectInfo, pack7, parseIdentity, parseLoad, unpack7 } from './zoom-protocol'
 
 const connected = async (pedal: ReturnType<typeof fakeZoomPedal>, timeout = 200) => {
   const link = new ZoomLink(() => Promise.resolve(pedal.access), timeout)
@@ -20,6 +20,12 @@ describe('the Zoom file protocol', () => {
   it('reads model and firmware from the identity reply', () => {
     expect(parseIdentity([0xf0, 0x7e, 0, 0x06, 0x02, 0x52, 0x61, 0, 0, 0, 0x32, 0x2e, 0x31, 0x30, 0xf7])).toEqual({ deviceId: 0x61, model: 'MS-70CDR', firmware: '2.10' })
     expect(parseIdentity([0xf0, 0x7e, 0, 0x06, 0x02, 0x41, 0x61, 0xf7])).toBeUndefined()
+  })
+  it('reads MIDISTOMP’s load reply as its diag.c sends it', () => {
+    // MIDISTOMP's 06 code compiled for the host by its tests/test_diag_sysex.py harness (per 25742 cycles, window 133).
+    const m = 'F0 7D 4D 53 54 47 11 44 0E 64 00 00 7D 3F 00 20 00 55 4A 00 00 6D 00 11 00 00 0D 02 00 00 03 00 19 00 00 00 00 00 00 00 00 00 00 00 00 00 00 20 00 62 0E 00 00 00 00 01 00 00 02 00 00 00 05 08 00 00 00 5A 00 00 00 04 70 11 01 00 42 01 00 00 00 00 00 00 00 58 02 00 00 00 54 61 70 65 45 00 63 68 6F 2D 00 00 00 00 00 00 00 00 2D 00 00 00 00 00 00 00 00 2D 00 00 00 00 00 00 00 00 4E 00 41 4D 31 00 00 00 00 00 3F 00 00 00 00 00 00 00 00 F7'
+    expect(parseLoad(m.split(' ').map(h => parseInt(h, 16)))).toEqual({ window: 133, cpu: 473, audio: 301, audioMax: 352, perform: 12, midi: 4, system: 2, late: 2, lateTotal: 70000, dsp: 1050,
+      slots: [{ name: 'TapeEcho', cpu: 120, dsp: 450 }, { name: '-', cpu: 0, dsp: 0 }, { name: '-', cpu: 0, dsp: 0 }, { name: '-', cpu: 0, dsp: 0 }, { name: 'NAM1', cpu: 70, dsp: 600 }, { name: '?', cpu: 0, dsp: 0 }] })
   })
   it('reads an effect file header', () => expect(effectInfo(fakeEffect('LOOP.ZDL', 8, 480, '0.03').data)).toEqual({ gid: 8, fxid: 480, version: '0.03' }))
 })
@@ -76,5 +82,51 @@ describe('the Zoom link', () => {
     const link = await connected(fakeZoomPedal({ files, latency: 20, slow: { cmd: 0x26, nth: 1, ms: 70 } }), 60)
     await expect(link.listFiles()).rejects.toThrow(/stopped answering/)   // the reply comes after the timeout…
     expect((await link.listFiles()).map(f => f.name)).toEqual(['A.ZDL', 'B.ZDL', 'C.ZDL'])   // …and is swallowed, not read as the next answer
+  })
+})
+
+describe('MIDISTOMP over USB', () => {
+  const load = { cpu: 473, audio: 301, audioMax: 352, perform: 12, midi: 4, system: 2, late: 0, lateTotal: 3, dsp: 1350,
+    slots: [{ name: 'TapeEcho', cpu: 120, dsp: 450 }, { name: 'Looper', cpu: 80, dsp: 300 }, { name: '-', cpu: 0, dsp: 0 }, { name: '-', cpu: 0, dsp: 0 }, { name: 'NAM1', cpu: 70, dsp: 600 }, { name: '?', cpu: 0, dsp: 0 }] }
+  const hello = (pedal: ReturnType<typeof fakeZoomPedal>, link: ZoomLink) => vi.waitFor(() => expect(pedal.sent.some(m => m[1] === 0x7d)).toBe(true)).then(() => new Promise(resolve => setTimeout(resolve, 60))).then(() => link.getState().identity)
+
+  it('reads the base’s version and features from its hello', async () => {
+    const pedal = fakeZoomPedal({ firmware: 'M201', midistomp: { version: [2, 0, 2], features: 0b111_1111_1111 } }), link = await connected(pedal)
+    expect((await hello(pedal, link))?.midistomp).toEqual({ version: '2.0.2', features: MIDISTOMP_FEATURES })
+  })
+  it('asks a stock pedal too, which never answers, and then reads no load', async () => {
+    const pedal = fakeZoomPedal(), link = await connected(pedal, 50)
+    expect((await hello(pedal, link))?.midistomp).toBeUndefined()
+    expect(await link.load()).toBeUndefined()
+    expect(pedal.sent.filter(m => m[1] === 0x7d)).toEqual([[0xf0, 0x7d, 0x4d, 0x53, 0x54, 0x01, 1, 0xf7]])
+  })
+  it('sends nothing of its own to a pedal in update mode', async () => {
+    const pedal = fakeZoomPedal({ firmware: '1.10' })
+    await connected(pedal)
+    await new Promise(resolve => setTimeout(resolve, 60))
+    expect(pedal.sent.some(m => m[1] === 0x7d)).toBe(false)
+  })
+  it('reads the SYSTEM screen’s load, each answer a new window', async () => {
+    const pedal = fakeZoomPedal({ firmware: 'M201', midistomp: { version: [2, 0, 2], features: 1, load } }), link = await connected(pedal)
+    await hello(pedal, link)
+    const first = await link.load(), second = await link.load()
+    expect(first).toEqual({ window: 1, ...load })
+    expect(second?.window).toBe(2)
+  })
+  it('says null when the base answers the hello but not the load', async () => {
+    const pedal = fakeZoomPedal({ firmware: 'M201', midistomp: { version: [2, 0, 1], features: 1 } }), link = await connected(pedal, 50)
+    await hello(pedal, link)
+    expect(await link.load()).toBeNull()
+  })
+  it('reads the load in turn with a file operation, without showing as one', async () => {
+    const files = [fakeEffect('A.ZDL', 8, 480, '0.01'), fakeEffect('B.ZDL', 8, 481, '0.01')]
+    const pedal = fakeZoomPedal({ files, firmware: 'M201', midistomp: { version: [2, 0, 2], features: 1, load } }), link = await connected(pedal)
+    await hello(pedal, link)
+    const statuses: string[] = [], stop = link.subscribe(() => statuses.push(link.getState().status))
+    const [listed, reading] = await Promise.all([link.listFiles(), link.load()])
+    stop()
+    expect(listed.map(f => f.name)).toEqual(['A.ZDL', 'B.ZDL'])
+    expect(reading?.cpu).toBe(473)
+    expect(statuses.at(-1)).toBe('ready')
   })
 })
