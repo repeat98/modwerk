@@ -41,7 +41,10 @@
    "UP and DOWN, or a turn of any knob A-H, move the outline one machine without loading it.",
    "FUNC + DOWN or FUNC + UP jumps between sections. YES loads the outlined machine, NO closes the list unchanged."
   ],
-  "screenshots": []
+  "screenshots": [
+   "media/browse.png",
+   "media/section-jump.png"
+  ]
  },
  "controls": [],
  "compatibility": {
@@ -74,22 +77,53 @@
   "memoryBytes": 1072,
   "fastBytes": 0,
   "load": {
-   "display": "Not measured yet",
-   "method": "unmeasured",
-   "conditions": "UI only: runs on key and encoder events while the machine list is open, never in the audio path."
+   "display": "UI only",
+   "method": "static",
+   "conditions": "Runs only on key and knob events while the machine list is open: a walk of the list's items (about 50) per press, never in the audio path. Not measured on a unit."
   }
  },
  "evidence": {
-  "tier": "none",
+  "tier": "author-hardware",
   "moduleVersion": "0.1.0-experimental",
-  "sourceSha256": null,
-  "reports": [],
-  "hardware": null,
+  "sourceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "reports": [
+   "TESTING.md"
+  ],
+  "hardware": {
+   "model": "Analog Rytm MKII",
+   "release": "1.74",
+   "testedOn": "2026-11-08",
+   "tester": "npp1993",
+   "durationMinutes": null,
+   "summary": "npp1993 (the author) flashed test builds MBC2 (sha256 31f0c670) and MBC3 (sha256 4aa63f8e; the author's 16-module set with Improved Machine Browser 0.1.0-experimental) on an Analog Rytm MKII, OS 1.74. Reported: UP, DOWN and knob turns move the outline without loading, held arrows repeat, YES loads with stock's Confirmed!, NO changes nothing, and FUNC + UP, FUNC + DOWN and FUNC + knob jump between the tops of sections, on BD and another track; a knob pushed while turning goes faster, as on stock. MBC2 read FUNC + knob wrongly; MBC3, this source, fixed it.",
+   "limitations": [
+    "Run beside 16 other modules, not alone.",
+    "MIDI out of a load was not checked.",
+    "Duration not recorded."
+   ]
+  },
   "verifiedBy": null
  },
  "tests": {
   "report": "TESTING.md",
-  "summary": "In rytm-emu on OS 1.74; not yet on a unit. See TESTING.md."
+  "summary": "On a unit (MBC3, the author's 16-module set): browsing without loading, YES and NO, held arrows, knob turns and FUNC section jumps with the arrows and the knobs, as reported. rytm-emu on OS 1.74, alone on the base and in the set: arrows, section jumps, YES and NO (TESTING.md).",
+  "documentation": {
+   "tutorial": {
+    "title": "Quick tutorial",
+    "steps": [
+     "Press SRC twice to open the machine list on the BD track.",
+     "Press DOWN a few times: the outline moves and the header asks Confirm? Y/N, but the BD keeps its machine and its SRC page.",
+     "Press FUNC + DOWN: the outline jumps to SY DUAL VCO, the first machine of the next section. FUNC + UP goes back to the top of the BD section.",
+     "Press YES: the outlined machine loads and the list closes. Open it again, scroll and press NO: nothing changed."
+    ]
+   },
+   "screenshots": [
+    "media/browse.png",
+    "media/section-jump.png",
+    "media/confirmed.png"
+   ],
+   "captureRecord": "media/capture.json"
+  }
  },
  "license": {
   "spdx": "GPL-3.0-or-later",
@@ -105,6 +139,54 @@
    "credit": "Nathaniel Pavel",
    "license": "GPL-3.0-or-later",
    "source": "Original conceptual illustration in the shared signal-art style; not a device screenshot."
+  },
+  {
+   "path": "media/browse.png",
+   "kind": "screenshot",
+   "caption": "Machine list after DOWN twice: the outline on BD SHARP and Confirm? Y/N, while BD PLASTIC stays loaded and its SRC page shows behind.",
+   "alt": "Machine list; BD PLASTIC filled as the loaded machine, BD SHARP outlined; header CONFIRM? Y/N.",
+   "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+   "license": "LicenseRef-Rytm-UI-Documentation",
+   "source": "original",
+   "capture": {
+    "type": "emulator",
+    "release": "1.74",
+    "moduleVersion": "0.1.0-experimental",
+    "imageSha256": "b80f699128b096aeced35fc8840aa3dd1800c694288609baab85e802dff68e6e",
+    "setup": "Headless rytm-emu (dtboot) running MB03: the Modwerk base for core-ar2 0.7 and this folder's Improved Machine Browser 0.1.0-experimental, linked by Modwerk on stock OS 1.74, the default kit, BD track. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+   }
+  },
+  {
+   "path": "media/section-jump.png",
+   "kind": "screenshot",
+   "caption": "FUNC + DOWN from BD PLASTIC: the outline jumps past the dotted line to SY DUAL VCO, the first machine of the next section.",
+   "alt": "Machine list; a dotted line under BD ACOUSTIC, then SY DUAL VCO outlined beside a keyboard icon.",
+   "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+   "license": "LicenseRef-Rytm-UI-Documentation",
+   "source": "original",
+   "capture": {
+    "type": "emulator",
+    "release": "1.74",
+    "moduleVersion": "0.1.0-experimental",
+    "imageSha256": "b80f699128b096aeced35fc8840aa3dd1800c694288609baab85e802dff68e6e",
+    "setup": "Headless rytm-emu (dtboot) running MB03: the Modwerk base for core-ar2 0.7 and this folder's Improved Machine Browser 0.1.0-experimental, linked by Modwerk on stock OS 1.74, the default kit, BD track. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+   }
+  },
+  {
+   "path": "media/confirmed.png",
+   "kind": "screenshot",
+   "caption": "DOWN, then YES: BD SILKY loads, the list closes and stock shows Confirmed!.",
+   "alt": "SRC page of BD SILKY (TUN SWT SWD DEC, HLD DUS CLK LEV); header CONFIRMED!.",
+   "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+   "license": "LicenseRef-Rytm-UI-Documentation",
+   "source": "original",
+   "capture": {
+    "type": "emulator",
+    "release": "1.74",
+    "moduleVersion": "0.1.0-experimental",
+    "imageSha256": "b80f699128b096aeced35fc8840aa3dd1800c694288609baab85e802dff68e6e",
+    "setup": "Headless rytm-emu (dtboot) running MB03: the Modwerk base for core-ar2 0.7 and this folder's Improved Machine Browser 0.1.0-experimental, linked by Modwerk on stock OS 1.74, the default kit, BD track. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+   }
   }
  ]
 }

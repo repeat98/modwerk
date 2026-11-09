@@ -54,4 +54,16 @@ The outline moves through stock's own routine, and YES loads with the same call 
 
 ## Tests and measurements
 
-In rytm-emu on OS 1.74, alone on the Modwerk base and beside sixteen other modules; not yet on a unit ([TESTING.md](TESTING.md)). Memory: 1,072 bytes of code in the 128 KiB shared mod area, no stored data. Load: UI only, on key and knob events while the machine list is open; nothing runs in the audio path.
+On the author's Analog Rytm MKII (build MBC3, beside sixteen other modules), and in rytm-emu on OS 1.74, alone on the Modwerk base and beside the same set ([TESTING.md](TESTING.md)). Memory: 1,072 bytes of code in the 128 KiB shared mod area, no stored data. Load: UI only, on key and knob events while the machine list is open; nothing runs in the audio path.
+
+## Authorship and licences
+
+Original code by Nathaniel Pavel (@npp1993), GPL-3.0-or-later ([LICENSE](LICENSE)). The OS 1.74 addresses were read by the author from their own stock firmware; the build carries addresses only, no stock bytes. No Elektron firmware is included.
+
+## Screens and audio
+
+Screenshots are rytm-emu captures of build MB03 ([media/capture.json](media/capture.json)). No audio preview.
+
+![The outline on BD SHARP while BD PLASTIC stays loaded](media/browse.png) ![FUNC + DOWN: the outline on SY DUAL VCO, past the dotted line](media/section-jump.png)
+
+![YES: Confirmed! and BD SILKY's SRC page](media/confirmed.png)

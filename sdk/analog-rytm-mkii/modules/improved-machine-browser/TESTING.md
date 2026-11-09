@@ -11,7 +11,14 @@ Analog Rytm MKII, OS 1.74, build MBC2 (0.1.0-experimental beside sixteen other m
 | Knob A slowly and quickly | Scrolls the outline |
 | YES | Confirmed!, stock's own message; the outlined machine loads |
 | Scroll, then NO | No change |
-| FUNC + knob A | Same as without FUNC: one machine, no section jump. Cause: the module read the knob event's byte + 20 as FUNC, but it is the knob's own button held while turning. Fixed in MBC3 (FUNC read from the keys), not yet tested on the unit |
+| FUNC + knob A | Same as without FUNC: one machine, no section jump. Cause: the module read the knob event's byte + 20 as FUNC, but it is the knob's own button held while turning. Fixed in MBC3 (FUNC read from the keys) |
+
+Build MBC3 (this source, the same set, sha256 4aa63f8e), reported by the tester, 8 Nov 2026:
+
+| Check | Result |
+| --- | --- |
+| FUNC held, knob A turned slowly and quickly | Jumps between the tops of sections, as FUNC + UP and FUNC + DOWN do; a quick turn behaves as expected |
+| Knob pushed while turning | A little faster, as on stock |
 
 ## Emulator
 
@@ -63,7 +70,7 @@ The knobs now go through stock's own accumulator, as stock's list does; the arro
 
 ## Not tested
 
-- On the unit: MIDI out of the load, FUNC + knob on MBC3, and a knob pushed while turning (stock's faster turn, passed on unchanged).
+- On the unit: MIDI out of a load, and the module alone without other modules.
 - In rytm-emu, the knobs A-H: its turns do not get through stock's accumulator, stock's own list included.
 - A track's list with no dotted line.
 - The list opened from a sound's SOUND SETTINGS menu, if it opens there.
