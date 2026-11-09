@@ -148,6 +148,17 @@ describe('the vendored elekloader catalog', () => {
       missing: [],
     })
   })
+  it('plans Improved Machine Browser beside Quick Trig Conditions and Temp Save from its pinned source-only package on the plain base', () => {
+    expect(planBuild('analog-rytm-mkii', '1.74', ['improved-machine-browser', 'quick-fill-trig-condition', 'temp-save'])).toMatchObject({
+      core: { file: PLAIN, version: '0.7' },
+      mods: [
+        { id: 'improved-machine-browser', file: 'improved-machine-browser-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
+        { id: 'quick-fill-trig-condition', file: 'quick-fill-trig-condition-0.2.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.2.0-experimental' },
+        { id: 'temp-save', file: 'temp-save-0.1.0-experimental-os1.74.elemod', device: 'analog-rytm-mk2', os: '1.74', version: '0.1.0-experimental' },
+      ],
+      missing: [],
+    })
+  })
   it('plans QPERF beside Live Rec Retrig Fix and Temp Save from its pinned source-only package on the plain base', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['live-rec-retrig-fix', 'qperf', 'temp-save'])).toMatchObject({
       core: { file: PLAIN, version: '0.7' },
