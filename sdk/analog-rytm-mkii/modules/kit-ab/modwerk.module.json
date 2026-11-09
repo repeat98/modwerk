@@ -25,8 +25,8 @@
   "presentation": {
     "label": "KIT A/B",
     "family": "Workflow",
-    "summary": "NO + PLAY becomes an A/B between the kit as edited and as saved.",
-    "overview": "Kit A/B changes the single-kit reload. The first NO + PLAY (or RELOAD in the KIT menu) keeps your edits in a stash and loads the saved kit, with stock's popup KIT 1 RELOADED!. The next press puts the edits back and shows EDITS RESTORED!. Editing while the original plays ends the A/B: the next press keeps those edits instead, drops the stashed ones and reloads as a first press does. The same happens after a change of kit or any other reload. A press on a kit with no edits is a plain reload and arms nothing. Reloading every kit stays stock. It is an elemod port of MrScruff's rytm-mods 0010-kit-ab, with his code unchanged.",
+    "summary": "NO + PLAY MODE becomes an A/B between the kit as edited and as saved.",
+    "overview": "Kit A/B changes the single-kit reload. The first NO + PLAY MODE (or RELOAD in the KIT menu) keeps your edits in a stash and loads the saved kit, with stock's popup KIT 1 RELOADED!. The next press puts the edits back and shows EDITS RESTORED!. Editing while the original plays ends the A/B: the next press keeps those edits instead, drops the stashed ones and reloads as a first press does. The same happens after a change of kit or any other reload. A press on a kit with no edits is a plain reload and arms nothing. Reloading every kit stays stock. It is an elemod port of MrScruff's rytm-mods 0010-kit-ab, with his code unchanged.",
     "highlights": [
       "Compare the kit as edited with the kit as saved with one key.",
       "Edits are stashed, not lost: the next press restores them.",
@@ -35,25 +35,25 @@
     ],
     "usage": [
       "Use a build containing Kit A/B. Edit a sound on the loaded kit, for example BD DEC.",
-      "Press NO + PLAY: the screen shows KIT 1 RELOADED! and the saved value is back.",
-      "Press NO + PLAY again: EDITS RESTORED! and your edited value returns. The KIT menu's RELOAD (FUNC + PLAY MODE) does the same, with KIT RELOADED! in place of KIT 1 RELOADED!."
+      "Press NO + PLAY MODE: the screen shows KIT 1 RELOADED! and the saved value is back.",
+      "Press NO + PLAY MODE again: EDITS RESTORED! and your edited value returns. The KIT menu's RELOAD (FUNC + PLAY MODE) does the same, with KIT RELOADED! in place of KIT 1 RELOADED!."
     ]
   },
   "access": {
-    "location": "NO + PLAY on any screen that reloads the kit, and RELOAD in the KIT menu (FUNC + PLAY MODE).",
+    "location": "NO + PLAY MODE on any screen that reloads the kit, and RELOAD in the KIT menu (FUNC + PLAY MODE).",
     "steps": [
       "Edit a sound on the loaded kit.",
-      "Press NO + PLAY to hear the saved kit, and again to get your edits back."
+      "Press NO + PLAY MODE to hear the saved kit, and again to get your edits back."
     ],
     "screenshots": [
-      "media/kit-menu.png",
-      "media/kit-reloaded.png",
-      "media/edits-restored.png"
+      "media/noplaymode-reloaded.png",
+      "media/edits-restored.png",
+      "media/kit-menu.png"
     ]
   },
   "controls": [
     {
-      "name": "NO + PLAY, and KIT menu > RELOAD",
+      "name": "NO + PLAY MODE, and KIT menu > RELOAD",
       "default": null,
       "doc": "First press: stash the edited kit and reload the saved one (KIT 1 RELOADED!). Next press: restore the stash (EDITS RESTORED!). A press on a kit with no edits is a plain reload.",
       "labels": null
@@ -69,7 +69,8 @@
       "Built for OS 1.74 only, on Modwerk's base (core-ar2 0.7). The same code links with core-ar2 0.3, where rytm2_mods' release object was built, with the same 340-byte .run.",
       "One set of edits is kept: a stash of one kit, 2.5 KB (0x9e3 bytes) taken from the firmware's heap on the first press. If the allocation fails the press is a plain reload.",
       "The restore applies the stash as stock's reload applies the saved kit, including kit_mark(working, 0), whose meaning is not established.",
-      "Reloading every kit stays stock."
+      "Reloading every kit stays stock.",
+      "With Temp Save installed both work (emulator): its FUNC + YES saves the kit, so a later NO + PLAY MODE reloads to that save; its FUNC + NO reloads pattern and kit and ends any A/B. Neither module requires the other."
     ]
   },
   "platform": {
@@ -78,7 +79,7 @@
     "build": "build.json",
     "events": [],
     "claims": [
-      "ui:kit reload (NO + PLAY and the KIT menu's RELOAD)"
+      "ui:kit reload (NO + PLAY MODE and the KIT menu's RELOAD)"
     ]
   },
   "resources": {
@@ -104,11 +105,11 @@
       "testedOn": "2026-11-08",
       "tester": "Iced-Cream",
       "durationMinutes": 14,
-      "summary": "On an Analog Rytm MKII with OS 1.74 and this package on Modwerk's base (core-ar2 0.7, plain variant ba530f45, with analoghealth 1.2 for remote keys), build KBH7, 2026-11-08, through the KIT menu's RELOAD: KIT menu RELOAD twice on an unedited kit: KIT RELOADED! both times, saved BD DEC kept (screen). BD DEC turned to 0; RELOAD: KIT RELOADED! with the saved DEC; RELOAD again: EDITS RESTORED! with DEC at 0 (screens). After RELOAD armed the A/B, DEC turned to 127; RELOAD: KIT RELOADED! (not EDITS RESTORED!) with the saved DEC; RELOAD again: EDITS RESTORED! with DEC at 127, not the stashed 0 (screens). After DEC to 0 and RELOAD armed the A/B, KIT menu LOAD KIT loaded kit 2; two RELOADs then both showed KIT RELOADED! on kit 2, never EDITS RESTORED! (screens; second run, 2026-11-08 23:01). CPU 74-77 %, heap flat. NO + PLAY was not exercised.",
+      "summary": "On an Analog Rytm MKII with OS 1.74 and this package on Modwerk's base (core-ar2 0.7, plain variant ba530f45, with analoghealth 1.2 for remote keys), build KBH7, 2026-11-08, through the KIT menu's RELOAD: KIT menu RELOAD twice on an unedited kit: KIT RELOADED! both times, saved BD DEC kept (screen). BD DEC turned to 0; RELOAD: KIT RELOADED! with the saved DEC; RELOAD again: EDITS RESTORED! with DEC at 0 (screens). After RELOAD armed the A/B, DEC turned to 127; RELOAD: KIT RELOADED! (not EDITS RESTORED!) with the saved DEC; RELOAD again: EDITS RESTORED! with DEC at 127, not the stashed 0 (screens). After DEC to 0 and RELOAD armed the A/B, KIT menu LOAD KIT loaded kit 2; two RELOADs then both showed KIT RELOADED! on kit 2, never EDITS RESTORED! (screens; second run, 2026-11-08 23:01). CPU 74-77 %, heap flat. NO + PLAY MODE has not been run on the unit yet.",
       "limitations": [
         "KBH7: .syx a94bed0fe09ebd2fb3e959b52e0912a3c18203dabe1691844cdf5c902b691678, built by scripts/link-image.mjs from this folder; firmware was not read back from the device.",
         "KBH7 also carried analoghealth 1.2 (remote keys; no site shared with this module).",
-        "NO + PLAY was not exercised: remote NO(PLAY) starts the sequencer in the emulator. The KIT menu's RELOAD calls the same kit_ab_toggle; the two NO + PLAY sites (0x400cd51a, 0x400cd542) are untested on the unit.",
+        "NO + PLAY MODE, stock's kit reload key, has not been run on the unit yet (pending). The runs' remote NO(PLAY) pressed transport PLAY, which is not the reload gesture; the KIT menu's RELOAD calls the same kit_ab_toggle.",
         "A power cycle (the stash is not kept, by design) was not run."
       ]
     },
@@ -116,20 +117,21 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Hardware on Modwerk's base (KBH7, 2026-11-08), through the KIT menu's RELOAD: a BD DEC edit is stashed by the first RELOAD (KIT RELOADED!, saved value) and restored by the second (EDITS RESTORED!); an edit while the saved kit plays, or a change of kit, ends the A/B; an unedited kit reloads plainly. NO + PLAY was not exercised on the unit. Source: rytm2_mods' OS 1.74 file, unchanged; the package linked with the base equals the rytm2_mods release object linked with it.",
+    "summary": "Hardware on Modwerk's base (KBH7, 2026-11-08), through the KIT menu's RELOAD: a BD DEC edit is stashed by the first RELOAD (KIT RELOADED!, saved value) and restored by the second (EDITS RESTORED!); an edit while the saved kit plays, or a change of kit, ends the A/B; an unedited kit reloads plainly. NO + PLAY MODE has not been run on the unit yet. Source: rytm2_mods' OS 1.74 file, unchanged; the package linked with the base equals the rytm2_mods release object linked with it.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
         "steps": [
           "Use a build containing Kit A/B. Edit a sound on the loaded kit, for example BD DEC.",
-          "Press NO + PLAY: the screen shows KIT 1 RELOADED! and the saved value is back.",
-          "Press NO + PLAY again: EDITS RESTORED! and your edited value returns. The KIT menu's RELOAD (FUNC + PLAY MODE) does the same, with KIT RELOADED! in place of KIT 1 RELOADED!."
+          "Press NO + PLAY MODE: the screen shows KIT 1 RELOADED! and the saved value is back.",
+          "Press NO + PLAY MODE again: EDITS RESTORED! and your edited value returns. The KIT menu's RELOAD (FUNC + PLAY MODE) does the same, with KIT RELOADED! in place of KIT 1 RELOADED!."
         ]
       },
       "screenshots": [
         "media/kit-menu.png",
         "media/dec-edited.png",
         "media/kit-reloaded.png",
+        "media/noplaymode-reloaded.png",
         "media/edits-restored.png",
         "media/dec-restored.png"
       ],
@@ -163,8 +165,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "1.0.0",
-        "imageSha256": "0c773091da851a2e551aacdb0a4b40f03d1ad82b49460d130640d91141c98c6d",
-        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KB07, Modwerk's base (core-ar2 0.7, plain variant) and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "2128ac54e0dcd0c2da9dc6a3d484ff21f7481c57bb6a82d2988670886ec74b36",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KB17, Modwerk's base (core-ar2 0.7, plain variant 1c14b6b0) and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -179,8 +181,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "1.0.0",
-        "imageSha256": "0c773091da851a2e551aacdb0a4b40f03d1ad82b49460d130640d91141c98c6d",
-        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KB07, Modwerk's base (core-ar2 0.7, plain variant) and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "2128ac54e0dcd0c2da9dc6a3d484ff21f7481c57bb6a82d2988670886ec74b36",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KB17, Modwerk's base (core-ar2 0.7, plain variant 1c14b6b0) and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -195,8 +197,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "1.0.0",
-        "imageSha256": "0c773091da851a2e551aacdb0a4b40f03d1ad82b49460d130640d91141c98c6d",
-        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KB07, Modwerk's base (core-ar2 0.7, plain variant) and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "2128ac54e0dcd0c2da9dc6a3d484ff21f7481c57bb6a82d2988670886ec74b36",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KB17, Modwerk's base (core-ar2 0.7, plain variant 1c14b6b0) and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -211,8 +213,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "1.0.0",
-        "imageSha256": "0c773091da851a2e551aacdb0a4b40f03d1ad82b49460d130640d91141c98c6d",
-        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KB07, Modwerk's base (core-ar2 0.7, plain variant) and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "2128ac54e0dcd0c2da9dc6a3d484ff21f7481c57bb6a82d2988670886ec74b36",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KB17, Modwerk's base (core-ar2 0.7, plain variant 1c14b6b0) and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -227,8 +229,24 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "1.0.0",
-        "imageSha256": "0c773091da851a2e551aacdb0a4b40f03d1ad82b49460d130640d91141c98c6d",
-        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KB07, Modwerk's base (core-ar2 0.7, plain variant) and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "2128ac54e0dcd0c2da9dc6a3d484ff21f7481c57bb6a82d2988670886ec74b36",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KB17, Modwerk's base (core-ar2 0.7, plain variant 1c14b6b0) and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/noplaymode-reloaded.png",
+      "kind": "screenshot",
+      "caption": "NO + PLAY MODE, stock's kit reload key, after the DEC edit: KIT 1 RELOADED! and the saved kit. A second press shows EDITS RESTORED!.",
+      "alt": "KIT 1 RELOADED! popup over the BD synthesis page.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.0.0",
+        "imageSha256": "2128ac54e0dcd0c2da9dc6a3d484ff21f7481c57bb6a82d2988670886ec74b36",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot, rytm-emu lineage) running KB17, Modwerk's base (core-ar2 0.7, plain variant 1c14b6b0) and kit-ab 1.0.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]

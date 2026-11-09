@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="320" height="192" viewBox="0 0 320 192" class="signal-art" fill="none" stroke-linecap="round" stroke-linejoin="round" role="img" aria-labelledby="title description">
 <title id="title">KIT A/B</title>
-<desc id="description">NO + PLAY swaps between the kit as edited and the kit as saved. Original conceptual illustration, not an instrument screen or a measured result.</desc>
+<desc id="description">NO + PLAY MODE swaps between the kit as edited and the kit as saved. Original conceptual illustration, not an instrument screen or a measured result.</desc>
 <style>.signal-grid{stroke:#fff;opacity:.035;stroke-width:.7}.signal-main{stroke:#c9a0f0;stroke-width:2.7}.signal-secondary{stroke:#c9a0f0;opacity:.65;stroke-width:1.7}.signal-art text{fill:#c9a0f0;opacity:.8;font:10px monospace;letter-spacing:.7px;stroke:none}</style>
 <rect width="320" height="192" fill="#232328"/>
 <g class="signal-grid"><path d="M20 52H300"/><path d="M20 97H300"/><path d="M20 142H300"/><path d="M64 33V163"/><path d="M128 33V163"/><path d="M192 33V163"/><path d="M256 33V163"/></g>
-<g><rect class="signal-main" x="40" y="66" width="80" height="60" rx="4"/><rect class="signal-secondary" x="200" y="66" width="80" height="60" rx="4"/><path class="signal-main" d="M132 86H188M180 78L188 86L180 94"/><path class="signal-secondary" d="M188 108H132M140 100L132 108L140 116"/><text x="68" y="100">EDITS</text><text x="226" y="100">SAVED</text><text x="108" y="150">NO + PLAY</text></g>
+<g><rect class="signal-main" x="40" y="66" width="80" height="60" rx="4"/><rect class="signal-secondary" x="200" y="66" width="80" height="60" rx="4"/><path class="signal-main" d="M132 86H188M180 78L188 86L180 94"/><path class="signal-secondary" d="M188 108H132M140 100L132 108L140 116"/><text x="68" y="100">EDITS</text><text x="226" y="100">SAVED</text><text x="108" y="150">NO + PLAY MODE</text></g>
 </svg>

@@ -8,6 +8,9 @@
 
 ## Hardware
 
+A run of NO + PLAY MODE on the unit is pending; the runs below used the KIT menu's RELOAD.
+
+
 On an Analog Rytm MKII with OS 1.74, 2026-11-08, Iced-Cream ran build **KBH7**: stock 1.74 + Modwerk's base for core-ar2 0.7
 (plain variant `ba530f45…20fe`) + analoghealth 1.2 (`a86f07c5…87b6`, remote keys only, no site shared with this module) + this
 module, linked by `scripts/link-image.mjs`: `.syx` `a94bed0fe09ebd2fb3e959b52e0912a3c18203dabe1691844cdf5c902b691678`, main OS `987562e097f7db2f4944b1d8f4bffe9123e049336dbcc0e7ea100d5746b72559`.
@@ -26,9 +29,11 @@ KIT menu's RELOAD (FUNC + PLAY MODE):
 | Second run: DEC to 0, RELOAD (A/B armed), LOAD KIT kit 2, RELOAD twice | KIT RELOADED! both times on kit 2, never EDITS RESTORED! |
 | Second run, CPU after the flash | 74.7 / 74.2 %, DSP 70.0 / 69.8 %, heap flat |
 
-The first run stopped before its last section, a change of kit: the kit list on the unit draws a marker after kits 02-16 that the emulator's reference lacks, so the cursor check failed before kit 2 was loaded (the check compared list content the plan does not control; the module had not acted). A second run the same evening, gated again, covered that section alone with the kit-list check narrowed to the cursor row, and passed. NO + PLAY was not exercised: remote NO(PLAY) starts the sequencer in the emulator, so only the KIT menu's sites ran (the NO + PLAY sites call the same `kit_ab_toggle`). After each run stock 1.74 was restored and the test slots emptied.
+The first run stopped before its last section, a change of kit: the kit list on the unit draws a marker after kits 02-16 that the emulator's reference lacks, so the cursor check failed before kit 2 was loaded (the check compared list content the plan does not control; the module had not acted). A second run the same evening, gated again, covered that section alone with the kit-list check narrowed to the cursor row, and passed. NO + PLAY MODE, stock's kit reload key (manual, OS 1.74), was not run: the plans sent NO + PLAY MODE, which pressed transport PLAY, so only the KIT menu's sites ran (the key path calls the same `kit_ab_toggle`); a NO + PLAY MODE run on the unit is pending. After each run stock 1.74 was restored and the test slots emptied.
 
 Earlier, rytm2_mods recorded the original port as confirmed on an Analog Rytm MKII on 2026-10-14 in a full build (before the OS 1.74 port).
+
+Stock's single-kit reload key is NO + PLAY MODE (the OS 1.74 manual: "[NO] + [PLAY MODE]"). Until 2026-11-09 this module's documents, like rytm2_mods' README, called it NO + PLAY; `src/kit-ab.s` keeps rytm2_mods' comments unchanged, so they still say NO + PLAY.
 
 ## Source and site conversion
 
@@ -44,23 +49,23 @@ image `sha256:6f8066eb…6895`; m68k-elf GCC 16.2.0, binutils 2.47) from a clean
 ## Source build comparison
 
 `scripts/verify-elemod-source-parity.mjs` linked that build with Modwerk's base for core-ar2 0.7 (plain variant,
-`ba530f45d0cd33791d9098d87c1867ef74f6a210953f60d2a97a7548379d20fe`) on stock OS 1.74, and rytm2_mods' release object
+`1c14b6b058d473ca20ba93a128ca39fe74a69f0b08603ca566ee0300933713b6`, current `main`; before it `ba530f45`, with main OS `0e8d0665…856f`) on stock OS 1.74, and rytm2_mods' release object
 `kit-ab-1.0-os1.74.elemod` (`4e36608c9745c985a7b99ab9ab43f25e518451b53c6ba184f517d631c96daa64`, the same file in releases v1.2,
-v1.3 and v1.4) with the same base: both give main OS `0e8d066501b18a775d17b2487a4da457f3a975d06911b30b58e42050d7f9856f`, byte parity, `.run` 340 bytes in each
-([source-parity.json](evidence/source-parity.json)). KB07 below has the same main OS. The same check with the vendored core-ar2
+v1.3 and v1.4) with the same base: both give main OS `11f2ad04bebfd1aac6e865f38087089182b834a989f0a6d8fdcb7db6485152ca`, byte parity, `.run` 340 bytes in each
+([source-parity.json](evidence/source-parity.json)). KB17 below has the same main OS. The same check with the vendored core-ar2
 0.3 release (`6b97dfb3…3e58`) in place of the base also gives byte parity (main OS `91d2887bacd0bee76d0390f728e6ade9c37e9ff9162666fedce1464c01c3d786`). On the base, the module takes 340
-bytes of the shared mod area (`ramSpare` 119,004 for the base alone, 118,664 with it). The firmware and the linked builds stayed on the owner's computer.
+bytes of the shared mod area (`ramSpare` 118,836 for the current base alone, 118,496 with it; 119,004 and 118,664 on `ba530f45`). The firmware and the linked builds stayed on the owner's computer.
 
 ## Emulator
 
 [analog-emu](https://github.com/trigcondition/analog-emu) `4c07ed3` (rytm-emu lineage), headless `dtboot`, no card, JIT on
-([capture plan](media/capture.json)). Build KB07: Modwerk's `scripts/link-image.mjs` with Modwerk's base for core-ar2 0.7 (plain
-variant `ba530f45…20fe`) and this folder (compiled with Ubuntu's `m68k-linux-gnu` GCC), materialised against stock OS 1.74,
-`--version KB07`: `.syx` `0c773091da851a2e551aacdb0a4b40f03d1ad82b49460d130640d91141c98c6d`, main OS `0e8d066501b18a775d17b2487a4da457f3a975d06911b30b58e42050d7f9856f`.
-The same plan ran on stock 1.74, and on KA74 (core-ar2 0.3 release + this module, `.syx` `88839f12…0c24`), whose frames are
-byte-identical to KB07's. The committed screenshots are KB07's frames.
+([capture plan](media/capture.json)). Build KB17: Modwerk's `scripts/link-image.mjs` with Modwerk's base for core-ar2 0.7 (plain
+variant `1c14b6b0…13b6`, current `main`) and this folder (compiled with Ubuntu's `m68k-linux-gnu` GCC), materialised against stock OS 1.74,
+`--version KB17`: `.syx` `2128ac54e0dcd0c2da9dc6a3d484ff21f7481c57bb6a82d2988670886ec74b36`, main OS `11f2ad04bebfd1aac6e865f38087089182b834a989f0a6d8fdcb7db6485152ca`.
+The same plans ran on stock 1.74, on KB07 (the earlier plain base `ba530f45` + this module, `.syx` `0c773091…8c6d`) and on KA74
+(core-ar2 0.3 + this module); KB07's and KA74's frames are byte-identical to KB17's.
 
-| Input | KB07 (and KA74) | Stock 1.74 |
+| Input | KB17 (KB07, KA74 the same) | Stock 1.74 |
 | --- | --- | --- |
 | Boot, four NO, BD DEC down to 82 | DECAY TIME 82 | same frame |
 | FUNC + PLAY MODE | KIT menu, RELOAD first | same frame |
@@ -70,8 +75,27 @@ byte-identical to KB07's. The committed screenshots are KB07's frames.
 Every frame before the second RELOAD is byte-identical on the two builds. The emulator has no audio check here; only the
 screen and the working kit's DEC were compared.
 
+NO + PLAY MODE, stock's kit reload key, after the same DEC edit:
+
+| Input | KB17 | Stock 1.74 |
+| --- | --- | --- |
+| NO + PLAY MODE | KIT 1 RELOADED!; the screen equals the boot frame (saved DEC) | same |
+| NO + PLAY MODE again | EDITS RESTORED!; DEC at the edited value (the KIT menu's second RELOAD frame, byte for byte) | KIT 1 RELOADED!; saved DEC |
+
+Beside Temp Save: KT17 = the same base + Temp Save 0.1.0-experimental + this module (`.syx` `27429dcbc04c582c98b9253bcc3bc68445f0948aba3a22e77826f49be0904101`), against KS17 (Temp Save alone,
+`937a5569…89b4`) and KB17. Neither module requires the other, and they share no site. One plan: DEC edit, NO + PLAY MODE twice, FUNC + YES,
+DEC edited again, FUNC + NO, NO + PLAY MODE.
+
+| Input | KT17 (both) | KS17 (Temp Save) | KB17 (Kit A/B) |
+| --- | --- | --- | --- |
+| NO + PLAY MODE twice | KIT 1 RELOADED!, EDITS RESTORED! | KIT 1 RELOADED! twice | as KT17 |
+| FUNC + YES | TEMP SAVED | TEMP SAVED | stock (no popup) |
+| DEC edited, FUNC + NO | RELOADED, DEC back to the temp-saved value | RELOADED, its saved value | stock |
+| NO + PLAY MODE | KIT 1 RELOADED!, DEC at the temp-saved value (a plain reload: the kit equals its save) | KIT 1 RELOADED! | KIT 1 RELOADED! |
+
+Each module's frames in KT17 equal its frames alone up to the point where the other module's state differs.
+
 ## Not tested
 
-- On the unit: NO + PLAY, and every other module beside it.
+- On the unit: NO + PLAY MODE (pending), and every module beside it but Temp Save (checked in the emulator).
 - Persistence: the stash lives in heap and is not saved; a power cycle or project load loses it, by design. Not exercised.
-- NO + PLAY in the emulator: rytm2_mods reports that it does not reach the reload handler in rytm-emu (stock included), so only the KIT menu's RELOAD was run there.

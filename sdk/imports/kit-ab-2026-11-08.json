@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "date": "2026-11-08",
   "changes": [
-    "First library release, for Analog Rytm MKII OS 1.74 on Modwerk's base (core-ar2 0.7): NO + PLAY and the KIT menu's RELOAD toggle between the kit as edited and the kit as saved; the first press stashes the edits, the next restores them."
+    "First library release, for Analog Rytm MKII OS 1.74 on Modwerk's base (core-ar2 0.7): NO + PLAY MODE and the KIT menu's RELOAD toggle between the kit as edited and the kit as saved; the first press stashes the edits, the next restores them."
   ],
   "packages": [
     {
