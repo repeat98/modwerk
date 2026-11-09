@@ -3,7 +3,7 @@ import { DeviceImage } from '../devices/DeviceImage'
 import { zoomHubHref, type ZoomHubView } from '../devices/zoom-hub-route'
 import type { DeviceProfile } from '../devices/registry'
 import type { ZoomFile, ZoomLink } from '../engine/zoom/zoom-link'
-import { ZOOM_BASE, ZOOM_DEVICE_IDS, effectInfo, installRefusal, isAddedEffect, isUpdateMode } from '../engine/zoom/zoom-protocol'
+import { ZOOM_BASE, ZOOM_DEVICE_IDS, canWriteFiles, effectInfo, installRefusal, isAddedEffect, isUpdateMode } from '../engine/zoom/zoom-protocol'
 import { useMobileWorkspace } from '../hooks/useMobileWorkspace'
 import { useZoomLink } from '../hooks/useZoomLink'
 import { Icon, type IconName } from './Icon'
@@ -46,6 +46,7 @@ export function ZoomHub({ device, view, link, header, onInstall }: { device: Dev
   const connected = status === 'ready' || status === 'reading' || status === 'writing', busy = status === 'reading' || status === 'writing' || status === 'connecting'
   const expected = ZOOM_DEVICE_IDS[device.id], other = connected && identity && expected !== undefined && identity.deviceId !== expected
   const model = identity?.model ?? device.name, updating = connected && isUpdateMode(identity)
+  const writable = canWriteFiles(identity), readOnly = writable ? undefined : 'Installing and removing effects is tested only on the MS-70CDR with Zoom’s firmware 2.10 or the base.'
   // The base answers the identity request with its tag; an MS-70CDR without it can have it installed.
   const canBase = device.id === 'zoom-ms-70cdr' && !!onInstall, onBase = connected && identity?.deviceId === 0x61 && identity.firmware === ZOOM_BASE.tag
   // What was read belongs to the pedal it was read from: gone when that pedal is.
@@ -57,7 +58,8 @@ export function ZoomHub({ device, view, link, header, onInstall }: { device: Dev
   // Work keeps going on the link after the page closes; its result is then dropped.
   const alive = useRef(true)
   useEffect(() => { alive.current = true; return () => { alive.current = false } }, [])
-  const run = (work: () => Promise<void>) => { setError(undefined); work().catch(e => { if (alive.current) setError((e as Error).message) }) }
+  // A failed change to the effect list still offers the list from before (the error's previousList) for saving.
+  const run = (work: () => Promise<void>) => { setError(undefined); work().catch(e => { if (!alive.current) return; setError((e as Error).message); const list = keepList((e as { previousList?: number[] }).previousList); if (list) setChanged({ text: '', list }) }) }
   const read = () => run(async () => { if (!link) return; const listed = await link.listFiles({ versions: true }), space = await link.freeSpace(); if (alive.current) setOnPedal({ key: pedalKey, files: listed, free: space }) })
   // Installing and removing: confirm, offer the effect list from before for saving, then read again.
   const [changed, setChanged] = useState<{ text: string; list?: { url: string; name: string } }>()
@@ -138,11 +140,11 @@ export function ZoomHub({ device, view, link, header, onInstall }: { device: Dev
           <section className="hub-cell hub-cell-unit" aria-labelledby="zoom-onit-title">
             <div className="hub-cell-head"><h3 id="zoom-onit-title">On your pedal{files && <> · {effects.length}</>}</h3>
               {files && <span><button type="button" className="text-button" disabled={busy} onClick={read}>Read again</button>
-                <label className={'text-button zoom-pick' + (busy ? ' is-disabled' : '')}><input type="file" accept=".zdl,.ZDL" hidden disabled={busy} onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) install(file) }} />Install a .ZDL</label></span>}</div>
+                <label className={'text-button zoom-pick' + (busy || !writable ? ' is-disabled' : '')} title={readOnly}><input type="file" accept=".zdl,.ZDL" hidden disabled={busy || !writable} onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) install(file) }} />Install a .ZDL</label></span>}</div>
             {error && <p role="alert" className="hub-error">{error}</p>}
             {changed && <p role="status" className="hub-cell-note">{changed.text}{changed.list && <> <a className="text-button" href={changed.list.url} download={changed.list.name}>Save the effect list from before</a></>}</p>}
             {files ? <>
-              <ul className="hub-unit-modules zoom-files">{effects.map(f => <li key={f.name}><span className="unit-led is-on" aria-hidden="true" /><strong>{f.name}</strong><small>{f.effect?.version ?? ''} · {kb(f.size)}{isAddedEffect(f.effect) && <button type="button" className="text-button" disabled={busy} onClick={() => uninstall(f)}>Remove</button>}</small></li>)}</ul>
+              <ul className="hub-unit-modules zoom-files">{effects.map(f => <li key={f.name}><span className="unit-led is-on" aria-hidden="true" /><strong>{f.name}</strong><small>{f.effect?.version ?? ''} · {kb(f.size)}{isAddedEffect(f.effect) && <button type="button" className="text-button" disabled={busy || !writable} title={readOnly} onClick={() => uninstall(f)}>Remove</button>}</small></li>)}</ul>
               <p className="hub-cell-note">{count(effects.length - captures.length, 'effect', 'effects')}{captures.length ? <> · {count(captures.length, 'capture or cab', 'captures and cabs')}</> : null}{free !== undefined && <> · {kb(free)} free</>}. <strong>Two added effects must never share an effect ID</strong>: swapping one for another with the same ID has frozen a pedal at boot, and recovering it needed a ROM programmer. Installing refuses the IDs it knows about but can’t see what the pedal had before, so back up all files first.</p>
             </> : <p className="hub-empty">{!connected ? 'Connect your pedal to see what’s on it.' : updating ? 'Plug it in normally to see its files.' : other ? '' : busy ? 'Reading what’s on it…' : 'Not read yet.'}</p>}
             {connected && !files && !updating && !other && !busy && <button type="button" className="text-button" onClick={read}>Read the pedal</button>}
