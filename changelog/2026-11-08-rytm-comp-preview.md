@@ -1,1 +1,0 @@
-Analog Rytm MKII: Compressor Preview 1.1.0 enters the library, a scrolling estimate of the master compressor's gain reduction on its own page behind the compressor page key. It is listed through core-ar2's page lists, so another module's page can sit beside it. It ran on a unit on Modwerk's base (T205): the preview, its layouts and keys, with CPU at 84.8 % playing.
