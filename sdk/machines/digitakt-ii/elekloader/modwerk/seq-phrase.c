@@ -6,6 +6,7 @@ enum {
     EVENT_BASE = 0x44e67e88u, EVENT_COUNT = 128, EVENT_STRIDE = 108,
     PATTERN_BASE = 0x41776cb8u, PATTERN_STRIDE = 0x1db8cu, TRACK_STRIDE = 0x6a5u,
     STEP_VALUES = 0x6a50, STEP_VALUE_SIZE = 6, STEP_VALUE_COUNT = 16 * 128,
+    STEP_VALUE_INDICES = 0x12a50,
     FREE_EVENT_HEAD = 0x44e6b494u, FREE_DEADLINE_HEAD = 0x44e6b490u,
     FREE_PAYLOAD_HEAD = 0x44e6b48cu, PLAY_PAYLOAD_BASE = 0x44f61c40u, PLAY_PAYLOAD_STRIDE = 0x484,
     STOCK_RESERVE = 16,
@@ -33,6 +34,38 @@ struct phrase_carry {
     uint16_t pattern;
 };
 static struct phrase_carry carries[16];
+
+/* Ordinary pattern trigs use the stock step-value row's signed microtiming
+ * byte, scaled by track speed and the same Q16 multiplier as the queue path. */
+static int32_t micro_offset(const uint8_t *pattern, unsigned int track,
+                            unsigned int step, unsigned int pulses)
+{
+    const uint8_t *const trigs = pattern + track * TRACK_STRIDE;
+    if (!(trigs[step * 2 + 1] & 5u)) {
+        return 0;
+    }
+    const uint8_t *const entry = pattern + STEP_VALUE_INDICES + 2 * (track * 128 + step);
+    const unsigned int index = (unsigned int)entry[0] << 8 | entry[1];
+    if (index >= STEP_VALUE_COUNT) {
+        return 0;
+    }
+    const int32_t timing = (int8_t)pattern[STEP_VALUES + STEP_VALUE_SIZE * index + 5];
+    const int track_amount = (int8_t)trigs[0x48e];
+    const int pattern_amount = (int8_t)pattern[0x1db7b];
+    const int amount = track_amount > pattern_amount ? track_amount : pattern_amount;
+    const int32_t scale = ((100 - amount) * 83887) >> 7;
+    const uint32_t product = (uint32_t)(timing * (int32_t)pulses * 25) * (uint32_t)scale;
+    return ((int32_t)product >> 16) * 1500;
+}
+
+static void bound_next(struct dt2_seq_grid_window *window, const uint8_t *pattern)
+{
+    const unsigned int step = window->step + 1u == window->length ? 0 : window->step + 1u;
+    const int32_t offset = micro_offset(pattern, window->track, step, window->pulses_per_step);
+    if (offset < 0) {
+        window->next += (uint32_t)offset;
+    }
+}
 
 /* The DSP dispatcher reads an inline row for index -1 and a pattern row otherwise. */
 static const uint8_t *source_values(const uint8_t *source)
@@ -159,6 +192,10 @@ void core_seq_phrase_empty(unsigned int track)
         notes[i].velocity = 0;
     }
     window.flags |= DT2_SEQ_GRID_EMPTY;
+    bound_next(&window, stock_track - track * TRACK_STRIDE);
+    if ((int32_t)(window.next - window.onset) <= 0) {
+        return;
+    }
     const uint32_t count = carry->handler(&window, row[2], row[3], notes);
     if (!count) {
         carry->handler = 0;
@@ -178,7 +215,7 @@ int core_seq_phrase_replace(uint8_t *source, uint32_t deadline)
     const uint32_t kind = *(const uint32_t *)source;
     if (kind > 1 || *(const uint32_t *)(source + 4) != 1 ||
         *(const uint32_t *)(source + 20) != 1 || !*(const uintptr_t *)(source + 84) ||
-        !(*(const uint32_t *)(source + 56) & 128u) || *(const uint32_t *)(source + 8) != deadline) {
+        !(*(const uint32_t *)(source + 56) & 128u)) {
         return 0;
     }
     const unsigned int track = *(const uint32_t *)(source + 16);
@@ -186,12 +223,12 @@ int core_seq_phrase_replace(uint8_t *source, uint32_t deadline)
         return 0;
     }
     struct dt2_seq_grid_window *const pending = &core_seq_phrase_windows[track];
-    const struct dt2_seq_grid_window window = *pending;
+    struct dt2_seq_grid_window window = *pending;
     pending->length = 0;
     const uintptr_t stock_pattern = PATTERN_BASE + window.pattern * PATTERN_STRIDE;
     const uint8_t *const stock_track = (const uint8_t *)(stock_pattern + track * TRACK_STRIDE);
     if (!window.length || !!(window.flags & DT2_SEQ_GRID_PLAY_SOURCE) != kind ||
-        window.onset != deadline ||
+        window.onset != *(const uint32_t *)(source + 8) ||
         *(const uint8_t *const *)(source + 44) != stock_track) {
         return 0;
     }
@@ -211,6 +248,17 @@ int core_seq_phrase_replace(uint8_t *source, uint32_t deadline)
     const uint8_t pitch = row[2] <= 127 ? row[2] : stock_track[0x485];
     const uint8_t velocity = row[3] <= 127 ? row[3] : stock_track[0x480];
     if (row[0] > 127 || pitch > 127 || !velocity || velocity > 127) {
+        return 0;
+    }
+
+    if (deadline != window.onset &&
+        (kind != 0 || deadline - window.onset != (uint32_t)micro_offset(
+            (const uint8_t *)stock_pattern, track, window.step, window.pulses_per_step))) {
+        return 0;
+    }
+    window.onset = deadline;
+    bound_next(&window, (const uint8_t *)stock_pattern);
+    if ((int32_t)(window.next - window.onset) <= 0) {
         return 0;
     }
 
