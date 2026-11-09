@@ -65,6 +65,9 @@ static void bound_next(struct dt2_seq_grid_window *window, const uint8_t *patter
     if (offset < 0) {
         window->next += (uint32_t)offset;
     }
+    /* Give the DSP at least one frame to observe a release before the next
+     * step can set a different pitch in the same track's packet. */
+    window->next -= UINT32_C(120000);
 }
 
 /* The DSP dispatcher reads an inline row for index -1 and a pattern row otherwise. */
