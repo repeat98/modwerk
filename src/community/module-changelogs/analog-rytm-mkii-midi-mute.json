@@ -1,0 +1,11 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-09",
+    "changes": [
+      "Muted tracks, and tracks left out of a solo, ignore MIDI notes from USB and DIN on Analog Rytm MKII OS 1.74.",
+      "A note held over MIDI stops when its track is muted, so nothing hangs.",
+      "Off by default: check MUTE MIDI IN in GLOBAL > MIDI CONFIG > PORT CONFIG; the project keeps it."
+    ]
+  }
+]
