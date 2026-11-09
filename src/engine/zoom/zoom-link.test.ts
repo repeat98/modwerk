@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import { fakeEffect, fakeZoomPedal } from '../../dev/zoom-pedal-fake'
 import { ZoomLink } from './zoom-link'
-import { MIDISTOMP_FEATURES, crc32, effectInfo, pack7, parseIdentity, unpack7 } from './zoom-protocol'
+import { MIDISTOMP_FEATURES, crc32, effectInfo, pack7, parseIdentity, parseLoad, unpack7 } from './zoom-protocol'
 
 const connected = async (pedal: ReturnType<typeof fakeZoomPedal>, timeout = 200) => {
   const link = new ZoomLink(() => Promise.resolve(pedal.access), timeout)
@@ -20,6 +20,12 @@ describe('the Zoom file protocol', () => {
   it('reads model and firmware from the identity reply', () => {
     expect(parseIdentity([0xf0, 0x7e, 0, 0x06, 0x02, 0x52, 0x61, 0, 0, 0, 0x32, 0x2e, 0x31, 0x30, 0xf7])).toEqual({ deviceId: 0x61, model: 'MS-70CDR', firmware: '2.10' })
     expect(parseIdentity([0xf0, 0x7e, 0, 0x06, 0x02, 0x41, 0x61, 0xf7])).toBeUndefined()
+  })
+  it('reads MIDISTOMP’s load reply as its diag.c sends it', () => {
+    // MIDISTOMP's 06 code compiled for the host by its tests/test_diag_sysex.py harness (window 133, late total 70000).
+    const m = 'F0 7D 4D 53 54 47 11 05 40 59 01 2D 01 60 01 0C 00 00 04 00 02 00 02 00 60 7F 7F 1A 04 78 00 00 00 00 00 00 00 00 46 00 10 00 00 42 01 00 00 00 00 00 00 00 58 02 00 00 54 61 70 65 45 63 68 6F 2D 00 00 00 00 00 00 00 2D 00 00 00 00 00 00 00 2D 00 00 00 00 00 00 00 4E 41 4D 31 00 00 00 00 3F 00 00 00 00 00 00 00 F7'
+    expect(parseLoad(m.split(' ').map(h => parseInt(h, 16)))).toEqual({ window: 5, cpu: 473, audio: 301, audioMax: 352, perform: 12, midi: 4, system: 2, late: 2, lateTotal: 65535, dsp: 1050,
+      slots: [{ name: 'TapeEcho', cpu: 120, dsp: 450 }, { name: '-', cpu: 0, dsp: 0 }, { name: '-', cpu: 0, dsp: 0 }, { name: '-', cpu: 0, dsp: 0 }, { name: 'NAM1', cpu: 70, dsp: 600 }, { name: '?', cpu: 0, dsp: 0 }] })
   })
   it('reads an effect file header', () => expect(effectInfo(fakeEffect('LOOP.ZDL', 8, 480, '0.03').data)).toEqual({ gid: 8, fxid: 480, version: '0.03' }))
 })

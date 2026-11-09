@@ -282,7 +282,8 @@ install throughout.
    `7D`) and the page names the version and features. The load on Status
    needs a command the base doesn't have yet: `06` keeps the SYSTEM screen's
    timing on for 5 s and answers `47` with its LOAD and EFFECTS pages
-   (`parseLoad` in `zoom-protocol.ts` has the bytes), proposed to Luca. Until a
+   (`parseLoad` in `zoom-protocol.ts` has the bytes; its test holds the reply
+   MIDISTOMP's own C sends), built by Modwerk on top of PR #64 for Luca. Until a
    release has it, Status says where MIDISTOMP shows its load on the pedal.
 5. Which MIDISTOMP features depend on each other, so they can be picked as
    mods (Luca). Shared parts, such as the transport block, go into the base.

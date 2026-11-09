@@ -211,7 +211,7 @@ export type MidistompLoad = {
   window: number; cpu: number; audio: number; audioMax: number; perform: number; midi: number; system: number; late: number; lateTotal: number; dsp: number
   slots: { name: string; cpu: number; dsp: number }[]
 }
-/** Load 06 (proposed to MIDISTOMP, not in a release yet): keeps the SYSTEM screen's timing on for 5 s and answers 47
+/** Load 06 (built for MIDISTOMP on top of its PR #64, not in a release yet): keeps the SYSTEM screen's timing on for 5 s and answers 47
  * <nonce> <window> + 21 16-bit values packed 8-into-7 (cpu, audio, audio max, perform, midi, system, late, late total,
  * dsp, then each slot's cpu, then each slot's dsp) + each slot's name in 8 characters (zero-padded; '-' empty, '?' loading). */
 export function parseLoad(m: number[]): MidistompLoad | undefined {
