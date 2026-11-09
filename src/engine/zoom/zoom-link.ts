@@ -2,7 +2,7 @@
 // install or remove one effect file the way the project's editor proved safe on the MS-70CDR 2.10, and flash a base
 // in update mode the way zoomms' updater does.
 // The commands are in zoom-protocol.ts.
-import { EFFECT_LIST, EFFECT_LIST_SIZE, FILE, FLASH_BAD_CRC, FLASH_OK, IDENTITY_REQUEST, MST, flashSteps, isMstReply, mstSysex, parseHello, parseLoad, isFlashReply, isUpdateMode, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, isLocalId, localIdFor, withEffectId, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity } from './zoom-protocol'
+import { EFFECT_LIST, EFFECT_LIST_SIZE, FILE, LOCAL_IDS, FLASH_BAD_CRC, FLASH_OK, IDENTITY_REQUEST, MST, flashSteps, isMstReply, mstSysex, parseHello, parseLoad, isFlashReply, isUpdateMode, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, isLocalId, localIdFor, withEffectId, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity } from './zoom-protocol'
 import { storedZip } from './zip'
 
 export type ZoomLinkStatus = 'unsupported' | 'idle' | 'connecting' | 'ready' | 'reading' | 'writing'
@@ -237,6 +237,13 @@ export class ZoomLink {
     return out
   }
 
+  // Which effect files can hold an effect of group `gid`: those the effect list puts in that group, and any it doesn't
+  // name (its group is the header's, seen on all 158 of an MS-70CDR). A header costs six round trips and a pedal holds
+  // about 160 effects, most in other groups. Without a readable list, every effect file.
+  private inGroup(files: ZoomFile[], gid: number, list: number[]) {
+    const groups = list.length === EFFECT_LIST_SIZE ? new Map(listRecords(list).map(r => [r.name.toUpperCase(), r.gid])) : undefined
+    return files.filter(f => /\.zdl$/i.test(f.name) && (groups?.get(f.name.toUpperCase()) ?? gid) === gid)
+  }
   private async head(file: ZoomFile) {
     const key = file.name.toUpperCase(), known = this.heads.get(key)
     if (known && known.size === file.size) return known.effect
@@ -296,7 +303,7 @@ export class ZoomLink {
       await this.write(existing.name, bytes)
       return { previousList: undefined, unchanged: false, moved }
     }
-    const effects = files.filter(f => /\.zdl$/i.test(f.name)), taken = new Map<number, string>()
+    const list = await this.effectList(), effects = this.inGroup(files, info.gid, list), taken = new Map<number, string>()
     for (const [i, f] of effects.entries()) {
       this.progress('Checking effect IDs on the pedal', i + 1, effects.length)
       const head = await this.head(f)
@@ -312,7 +319,6 @@ export class ZoomLink {
     }
     const free = parseUsage(await this.ask(FILE.usage()))
     if (free !== undefined && free < bytes.length + 8192) throw new Error('Not enough space on the pedal (' + Math.round(free / 1024) + ' KB free).')
-    const list = await this.effectList()
     if (listRecords(list).some(r => r.name.toUpperCase() === file)) throw new Error('The effect list already names ' + file + ' although the file is missing. Nothing was changed.')
     const updated = listWith(list, info.gid, file)
     this.progress('Writing ' + file, 0, 0)
@@ -338,10 +344,10 @@ export class ZoomLink {
     return { previousList: list }
   }, 'writing')
 
-  /** Every file on the pedal; with versions, effect files also get their group, effect id and version (slower). */
+  /** Every file on the pedal; with versions, the effect files that can be added effects (group 8) also get their group, effect id and version (slower). */
   readonly listFiles = ({ versions = false } = {}) => this.exclusive('Reading the file list', async () => {
     const files = await this.list()
-    const effects = versions ? files.filter(f => /\.zdl$/i.test(f.name)) : []
+    const effects = versions ? this.inGroup(files, LOCAL_IDS.gid, files.some(f => f.name.toUpperCase() === EFFECT_LIST) ? await this.read(EFFECT_LIST) : []) : []
     for (const [i, file] of effects.entries()) {
       this.progress('Reading effect versions', i + 1, effects.length)
       file.effect = await this.head(file)
