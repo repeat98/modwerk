@@ -107,7 +107,8 @@ function authorizeVendor(vendor: AuthorVendor | undefined, changes: readonly Aut
 export function authorizeAuthorUpdate(registry: AuthorRegistry, author: unknown, modules: readonly AuthorModule[], changes: readonly AuthorChange[], vendor?: AuthorVendor) {
   parseAuthorRegistry(registry)
   const account = object(author), login = typeof account.login === 'string' ? account.login.toLowerCase() : ''
-  if (registry.accounts[login] !== account.id || account.type !== 'User') throw new Error('This GitHub account is not a registered module author.')
+  // An unregistered login maps to undefined, so a missing id must not match it.
+  if (!Number.isSafeInteger(account.id) || registry.accounts[login] !== account.id || account.type !== 'User') throw new Error('This GitHub account is not a registered module author.')
   const touched = modules.filter(module => changes.some(change => change.path.startsWith(module.folder + '/')))
   if (!touched.length) throw new Error('An author release must update an existing published module.')
   const next = new Map<string, Record<string, unknown>>()
