@@ -43,7 +43,7 @@ Read this before you plan a core, a base or the first modules for any machine ot
 | Syntakt | research | Modwerk boot probe | not started | none known | the core stage, planned as the base |
 | Digitone II | research | a local draft; core-dn2 0.3, with the Digitakt II 1.1 additions, is in toonst's elekloader fork | not started | digikit (the author's; emulator only) | the machine steps ([add a machine](ADD_A_MACHINE.md)); core-dn2 work goes to elekloader, and a Modwerk base only by the owner's decision |
 | Analog Keys, Model:Cycles | research | none | not started | none known | the machine steps first ([add a machine](ADD_A_MACHINE.md)) |
-| Zoom MultiStomp | research | MIDISTOMP | the base builds in the browser and the MS-70CDR's page installs it over USB (Web MIDI); a SysEx hello and loading without a reboot are not built | none | [plan](ZOOM_MULTISTOMP.md#plan) |
+| Zoom MultiStomp | research | MIDISTOMP | the base builds in the browser and the MS-70CDR's page installs it over USB (Web MIDI); the page reads MIDISTOMP's SysEx hello and load once a release has them (MIDISTOMP PR #64); loading without a reboot is not built | none | [plan](ZOOM_MULTISTOMP.md#plan) |
 | Zoom G1 FOUR | research | none: effects load on the stock OS | not started: zoom-zt2's file commands work over USB, the pedal page does not speak ZD2 yet | none known | [next steps](ZOOM_ZD2.md#next-steps) |
 | LXR-02 | research | published source | planned: SD-card base, USB-MIDI SysEx link | none | [plan](LXR_02.md) |
 | Tonverk | research | none | closed: signed, encrypted updates | none | nothing without Elektron's agreement |
