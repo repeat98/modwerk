@@ -6,7 +6,7 @@ the storage field (`silent_pad_trig_on`), with no change in behaviour. 0.5.1 ren
 second row, SILENT LIVE REC, to SILENT PAD LIVEREC (its storage field stays `silent_live_rec_on`).
 After 0.5.1 the module's display name becomes Silent Pad+Trig Settings (the id, rows and fields stay). The sections below use the new names, also for the earlier builds. 0.7.0 renames the second row SILENT P+T LIVEREC; sections before 0.7.0 keep SILENT PAD LIVEREC.
 
-- Module: `silent-pad-trig` 0.7.0-experimental, for Analog Rytm MKII OS 1.74 on core-ar2 0.3.
+- Module: `silent-pad-trig` 0.8.0-experimental, for Analog Rytm MKII OS 1.74 on core-ar2 0.3.
 - Source: npp1993's own mod, first written as `pad-select` 0.2 in a local rytm2_mods checkout
   (commit `35ea2f0`, branch `claude/pad-select`), never published there; this folder is now the
   source, so the manifest names no upstream revision. 0.2.0-experimental here was that file byte for byte
@@ -24,10 +24,19 @@ After 0.5.1 the module's display name becomes Silent Pad+Trig Settings (the id, 
   the provenance hashes differ, so the PS07/PS08 results stand.
 - 0.6.0's `src/silent-pad-trig.s` is `54402bee…d71f`, fingerprint `cb882beb…5193`
   (`evidence.sourceSha256`).
-- 0.7.0's `src/silent-pad-trig.s` is `a98f7e1e…1a8e`, fingerprint `4e0e6f07…5680`
+- 0.7.0's `src/silent-pad-trig.s` is `a98f7e1e…1a8e`, fingerprint `4e0e6f07…5680`.
+- 0.8.0's `src/silent-pad-trig.s` is `e00acb55…50f4`, fingerprint `ad162c3d…b5e6`
   (`evidence.sourceSha256`).
 - Stock OS 1.74: `.syx` `cb0f99d6…e123`, main OS `34cd0c4d…1f3b`, the owner's file.
 - Core: elekloader core-ar2 0.3 (`core-ar2-v0.3`, `core-ar2-0.3.elemod` `6b97dfb3…3e58`, as vendored).
+- Build PS17 (vendored core-ar2 0.7 `f1e9cb2c…` + 0.8.0 alone, Modwerk's linker, `--version PS17`):
+  `.syx` `0c55c4c8a661b7b05e9516a40bc245a4892e5aed76952b3433f1de5b5b59d6ce`, main OS `6ff61580…8b2e`.
+  Screenshots only: rytm-emu reproduces PS16's four media frames byte for byte. Not run on a unit.
+- Build AT04 (the author's combined build: a modified core-ar2 0.7 base with 15 other modules and
+  this folder's 0.8.0 code, `--version AT04`): `.syx`
+  `d018eb553f22cd973063cbc25acc2f98b241ec87b1cfad875c44418630049427`. Ran on an Analog Rytm MKII on
+  2026-11-08 ([below](#at04-on-an-analog-rytm-mkii-2026-11-08-as-reported)). AT04E is the same with
+  CH forced muted, for the emulator only.
 - Build PS16 (as PS15, with the LIVE REC row's storage field renamed `silent_pt_live_rec_on`,
   `--version PS16`): `.syx` `0b76d7322f5f19415c6c3eacf2201b96e4ff09bd73f2c497cfbde254c861afa9`, main OS
   `40a8221f…0e3d`. Checked in rytm-emu 2026-11-04. Ran on an Analog Rytm MKII on 2026-11-04: flashed,
@@ -70,6 +79,44 @@ After 0.5.1 the module's display name becomes Silent Pad+Trig Settings (the id, 
 - Build PS03 (0.3.0 before the review fixes): `.syx` `f0ac2210…7a85`, main OS `2884ff5a…5879`.
 - Build PS74 (core-ar2 0.3 + 0.2.0): `.syx` `4b2e6567…ad21`, main OS `7ea05528…033f`. The
   emulator sections below marked 0.2.0 ran on it.
+
+## 0.8.0: muted retrig rolls record, no shared-voice steal, pad lights (2026-11-08)
+
+Before 0.8.0, MUTE ALL SOUND stopped a muted pad's hit at the voice trigger (`0x40084114`). The
+retrig series is armed later, in the audio block, from that trigger's pad mailbox, so RTRG + a
+muted pad in LIVE RECORDING recorded its first hit only. 0.8.0 lets a muted hit in LIVE RECORDING
+go on to the voice trigger, and drops the track's trig in the audio block instead, at the end of
+each track's pass over its trig sources (`0x40120a66`), before voice allocation (`0x4012106a`):
+no voice is taken, so CH muted never steals OH's voice, and the series, kept per track, keeps
+counting. A dropped note's release is dropped while a partner owns the voice (stock's release at
+`0x40121108` does not check the owner). A second site at the pad glow store (`0x4012155a`) lights
+the pad on each dropped hit: stock lights a pad from its voice's sound (a running mean of the
+voice's square, `0x419ca178[t]`, drawn as log2 by the pad view `0x400c987e`), and a dropped hit
+makes none.
+
+### In rytm-emu (2ac0f1f, `DTEMU_ANALOG_IDEAL=1`), 2026-11-08
+
+Emulator results, not hardware. AT04E forces MUTE ALL SOUND on and CH muted; OH pressed at 5701M,
+RTRG held from 5901M, CH from 5911M for 150M.
+
+| Run | Result |
+| --- | --- |
+| AT04E, RTRG + CH | analog and DAC output sample-identical to the same run without CH (0 of 771840 and 0 of 3102592 samples differ) |
+| AT03E (AT04E without the glow site), RTRG + CH | CH's retrig count (`0x42adf5d0 + 8`) written as often as with CH unmuted; message 31 (the trig notice) sent 8 times, as unmuted |
+| AT04E, RTRG + CH | CH's pad glow `0x419ca198` rises to `0x0adcea0f` after a hit and falls block by block, again on each retrig, and reaches 0 about 30M after release |
+| AT04, nothing muted | output identical to the build before (AT03 and AT02) |
+| All | one CPU exception class only, TRAP #0 (stock's) |
+
+The emulator renders CH but not OH, so OH ringing on, and stock's own pad glow, were checked on
+the unit only.
+
+### AT04 on an Analog Rytm MKII, 2026-11-08, as reported
+
+With MUTE ALL SOUND checked, OH playing a pattern and CH muted, RTRG + CH in LIVE RECORDING: every
+retrig recorded, no CH sound and no click, OH kept ringing (not choked), and the CH pad flashed on
+each retrig like an unmuted pad. With LIVE RECORDING off, a muted pad stayed silent. A normal jam
+felt unchanged. The step that unmutes during a held roll could not be done by hand; MIDI out and
+solo were not retested.
 
 ## 0.7.0: FUNC + TRIG plays, TRIG keys in LIVE REC, row renamed (2026-11-04)
 
