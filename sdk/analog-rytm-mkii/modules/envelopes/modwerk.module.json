@@ -80,7 +80,7 @@
     "requires": [],
     "conflicts": [],
     "limitations": [
-      "Built for OS 1.74 only.",
+      "Built for OS 1.74 only, on Modwerk's Rytm base with the amp record hook (ev_amp_record).",
       "Saved HLD, ATK, DEC and REL values read differently from stock: HLD 0 is no hold instead of AUTO, 127 is AUTO instead of 16 s, and HLD, AMP and FILTER ATK, DEC and REL follow the new curves.",
       "Times shown are calibrated to one Rytm MKII (AMP attack 0.957x, decay 0.918x; the filter envelope runs at the OS model's speed); another unit may differ slightly."
     ]
