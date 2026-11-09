@@ -28,7 +28,7 @@
       "category": "Performance",
       "author": "Iced-Cream",
       "needs_core": "0.7",
-      "on_unit": "Ran on an Analog Rytm MKII on OS 1.74 (T208, 2026-11-08), alone on the Modwerk base for core-ar2 0.7 with a remote-key layer, built from this source as 1.0.0-experimental: PERF DEST shows and steps in CV mode, MODE OFF hides it, and PF1 was kept over a project save, reload and power cycle. A CV source or pedal driving a macro, EXPR mode and CONTROL INPUT 2 have not run on a unit."
+      "on_unit": "Ran on an Analog Rytm MKII on OS 1.74 (T208, 2026-11-08), alone on the Modwerk base for core-ar2 0.7 with a remote-key layer, built from this source as 1.0.0-experimental: PERF DEST shows and steps in CV mode, MODE OFF hides it, and PF1 was kept over a project save, reload and power cycle. On 2026-11-09 (T221, the same package on the Modwerk base plain variant 1c14b6b0) an Analog Four's CV OUT A into EXP/CV IN 1 at 0, 2.5 and 5 V set macro 1 to 0, 64 and 127, and a BD TUNE lock on performance 1 followed. EXPR mode and CONTROL INPUT 2 have not run on a unit."
     }
   ]
 }

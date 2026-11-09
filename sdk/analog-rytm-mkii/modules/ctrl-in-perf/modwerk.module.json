@@ -119,7 +119,7 @@
  },
  "tests": {
   "report": "TESTING.md",
-  "summary": "Hardware: on an Analog Rytm MKII, OS 1.74 (CPH2, 2026-11-08), PERF DEST shows and steps in CV mode, MODE OFF hides it, and PF1 is kept over a project save, reload and power cycle. In analog-emu (CP02) a poked CV at ZERO, midway and MAX set macro 1 to 0, 63 and 127; the jack driving a macro was not run on the unit.",
+  "summary": "Hardware on an Analog Rytm MKII, OS 1.74: PERF DEST shows and steps in CV mode, MODE OFF hides it, and PF1 is kept over a project save, reload and power cycle (CPH2, 2026-11-08). A CV source at 0, 2.5 and 5 V drove macro 1 to 0, 64 and 127, and a lock on performance 1 followed (CPH3, 2026-11-09). EXPR mode and CONTROL INPUT 2 were not run on the unit.",
   "documentation": {
    "tutorial": {
     "title": "Quick tutorial",
