@@ -29,11 +29,16 @@
 #define PAGE_KIT 120                // the sound page + 120: the kit
 #define SHOW_MACHINE_AT 0x400dea5e  // (view, machine): outline it, "Confirm? Y/N" when it is not the one loaded, redraw
 
-// Stock's knob accumulator: (state, encoder, count x (FUNC ? 16 : 1), table,
-// FUNC) -> a step, 0 until the turn adds up to one (0x400df5d4..0x400df616).
+// Stock's knob accumulator: (state, encoder, count x (pushed ? 16 : 1), table,
+// pushed) -> a step, 0 until the turn adds up to one (0x400df5d4..0x400df616).
+// "Pushed" is the encoder event's byte + 20: the knob's own button held while
+// it turns (the UI loop sets it from is_key_held(knob + 112), 0x400a4858),
+// not FUNC.
 #define KNOB_STEPS_AT 0x4006f1fa
 #define KNOB_TABLE 0x417e3790
-#define FUNC_SCALE 16
+#define PUSHED_SCALE 16
+#define IS_KEY_HELD_AT 0x40081c28   // (key) -> held, from the panel scan
+#define KEY_FUNC 0x80
 
 #define KIT_TRACK_AT 0x400a67ca     // (kit, track) -> the track's sound object
 #define SOUND_MACHINE_AT 0x400bcadc // (sound) -> its machine

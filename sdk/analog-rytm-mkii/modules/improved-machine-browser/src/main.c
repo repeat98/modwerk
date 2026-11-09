@@ -28,7 +28,7 @@ typedef word_t (*word1_t)(word_t a);
 typedef word_t (*word2_t)(word_t a, word_t b);
 typedef void (*show_machine_t)(word_t view, word_t machine);
 typedef word_t (*set_machine_t)(word_t sound, word_t machine, word_t track, int notify);
-typedef word_t (*knob_steps_t)(word_t state, word_t encoder, word_t count, word_t table, word_t func);
+typedef word_t (*knob_steps_t)(word_t state, word_t encoder, word_t count, word_t table, word_t pushed);
 
 #define KEY_ID ((word1_t)KEY_ID_AT)
 #define KEY_DOWN ((word1_t)KEY_DOWN_AT)
@@ -39,6 +39,7 @@ typedef word_t (*knob_steps_t)(word_t state, word_t encoder, word_t count, word_
 #define SOUND_MACHINE ((word1_t)SOUND_MACHINE_AT)
 #define SET_MACHINE ((set_machine_t)SET_MACHINE_AT)
 #define KNOB_STEPS ((knob_steps_t)KNOB_STEPS_AT)
+#define IS_KEY_HELD ((word1_t)IS_KEY_HELD_AT)
 
 #define KEY_UP 0x42
 #define KEY_DOWN_ARROW 0x43
@@ -50,7 +51,7 @@ typedef word_t (*knob_steps_t)(word_t state, word_t encoder, word_t count, word_
 #define NODE_VIEW 8
 #define EV_ENCODER 12               // encoder event + 12: the encoder, 0-7 for A-H
 #define EV_COUNT 16                 // + 16: the count after acceleration, signed
-#define EV_FUNC 20                  // + 20: a byte, FUNC held
+#define EV_PUSHED 20                // + 20: a byte, the knob's button held while it turns
 #define KNOBS 8
 #define DIVIDER ((word_t)-1)
 
@@ -186,18 +187,20 @@ int improved_machine_browser_key(void *brain, void *event)
 int improved_machine_browser_enc(void *brain, void *event)
 {
     word_t view = machine_list(brain), encoder;
-    int func, steps;
+    int pushed, steps;
     if (!view || (encoder = WORD(event, EV_ENCODER)) >= KNOBS)
         return 0;
     if (!browsable(view))
         return 1;                       // stock takes the turn and does nothing
     // Stock's own accumulator, as its knob routine calls it, so a turn moves
     // the outline as often as stock's would load: one step per result, by sign.
-    func = *((unsigned char *)event + EV_FUNC) != 0;
+    // A section jump takes FUNC held, read from the keys as stock's sound
+    // pages read it for their FUNC turns.
+    pushed = *((unsigned char *)event + EV_PUSHED) != 0;
     steps = (int)KNOB_STEPS(view + VIEW_KNOB_STATE, encoder,
-                            (word_t)((int)WORD(event, EV_COUNT) * (func ? FUNC_SCALE : 1)),
-                            KNOB_TABLE, (word_t)func);
+                            (word_t)((int)WORD(event, EV_COUNT) * (pushed ? PUSHED_SCALE : 1)),
+                            KNOB_TABLE, (word_t)pushed);
     if (steps)
-        browse(view, steps < 0 ? -1 : 1, func);
+        browse(view, steps < 0 ? -1 : 1, IS_KEY_HELD(KEY_FUNC) != 0);
     return 1;
 }
