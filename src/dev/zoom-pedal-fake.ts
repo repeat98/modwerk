@@ -1,13 +1,14 @@
 // A pretend Zoom MultiStomp for tests: answers the identity request and the file commands the link sends,
 // in the pedal's reply formats (zoom-protocol.ts), over a fake Web MIDI access. With firmware 1.10 it is in update
 // mode: it takes the flash commands into a 4 MB flash where, as in NOR flash, a write only clears bits until erased.
-import { crc32, pack7, unpack7 } from '../engine/zoom/zoom-protocol'
+// With `midistomp` it also answers MIDISTOMP's hello (version, feature bits) and, given `load`, its load request.
+import { crc32, pack7, unpack7, type MidistompLoad } from '../engine/zoom/zoom-protocol'
 import type { MidiAccessLike, MidiIn, MidiOut } from '../engine/zoom/zoom-link'
 
 export type FakePedalFile = { name: string; data: number[] }
 const BLOCK = 512
 
-export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', files = [] as FakePedalFile[], free = 400_000, portName = 'ZOOM MS Series', silent = false, slow = undefined as { cmd: number; nth: number; ms: number | null } | undefined, latency = 0, failWriteOf = '', keepOnDelete = '', badCrcAt = 0 } = {}) {
+export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', files = [] as FakePedalFile[], free = 400_000, portName = 'ZOOM MS Series', silent = false, slow = undefined as { cmd: number; nth: number; ms: number | null } | undefined, latency = 0, failWriteOf = '', keepOnDelete = '', badCrcAt = 0, midistomp = undefined as { version: number[]; features: number; load?: Omit<MidistompLoad, 'window'> } | undefined } = {}) {
   const sent: number[][] = [], flash = new Uint8Array(0x400000).fill(0xff)
   let firmware = started, starting = 0
   let writes = 0
@@ -42,6 +43,7 @@ export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', fil
       const m = Array.from(data); sent.push(m)
       if (silent) return
       if (m[0] === 0xf0 && m[1] === 0x7e && m[4] === 0x01) return starting > 0 ? void starting-- : reply([0xf0, 0x7e, 0x00, 0x06, 0x02, 0x52, deviceId, 0, 0, 0, ...Array.from(firmware.padEnd(4), c => c.charCodeAt(0)), 0xf7])
+      if (m[1] === 0x7d) return midistomp && !firmware.startsWith('1.1') ? mstCommand(m) : undefined   // stock drops 7D
       if (m[1] === 0x52 && m[3] === deviceId && firmware.startsWith('1.1')) return flashCommand(m)
       if (m[1] !== 0x52 || m[3] !== deviceId || m[4] !== 0x60) return
       current = m[5]
@@ -76,6 +78,17 @@ export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', fil
       data.forEach((b, i) => { flash[at + i] &= b })
     }
     status(0x00)
+  }
+  // MIDISTOMP's SysEx: 01 hello -> 41 version + 42 feature bits; 06 load -> 47, its window one on each time.
+  let window = 0
+  function mstCommand(m: number[]) {
+    const mst = [0xf0, 0x7d, 0x4d, 0x53, 0x54], nonce = m[6], { version, features: f, load } = midistomp!
+    if (m[5] === 0x01) { reply([...mst, 0x41, nonce, ...version, 0xf7]); reply([...mst, 0x42, nonce, f & 127, f >> 7 & 127, f >> 14 & 127, 0x7f, 0xf7]) }
+    if (m[5] === 0x06 && load) {
+      const values = [load.cpu, load.audio, load.audioMax, load.perform, load.midi, load.system, load.late, load.lateTotal, load.dsp, ...load.slots.map(s => s.cpu), ...load.slots.map(s => s.dsp)]
+      const names = load.slots.flatMap(s => Array.from(s.name.padEnd(8, '\0'), c => c.charCodeAt(0)))
+      reply([...mst, 0x47, nonce, ++window & 0x7f, ...pack7(values.flatMap(v => [v & 0xff, v >> 8])), ...names, 0xf7])
+    }
   }
   const access: MidiAccessLike = { inputs: new Map([['in', input]]), outputs: new Map([['out', output]]), onstatechange: null }
   /** Unplugged, then plugged in again running `next` (1.10: update mode; the base's tag after a flash), as Web MIDI

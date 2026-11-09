@@ -2,7 +2,7 @@
 // install or remove one effect file the way the project's editor proved safe on the MS-70CDR 2.10, and flash a base
 // in update mode the way zoomms' updater does.
 // The commands are in zoom-protocol.ts.
-import { EFFECT_LIST, EFFECT_LIST_SIZE, FILE, FLASH_BAD_CRC, FLASH_OK, IDENTITY_REQUEST, flashSteps, isFlashReply, isUpdateMode, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, isLocalId, localIdFor, withEffectId, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity } from './zoom-protocol'
+import { EFFECT_LIST, EFFECT_LIST_SIZE, FILE, FLASH_BAD_CRC, FLASH_OK, IDENTITY_REQUEST, MST, flashSteps, isMstReply, mstSysex, parseHello, parseLoad, isFlashReply, isUpdateMode, WRITE_BLOCK, effectInfo, installRefusal, isAddedEffect, isFileReply, isLocalId, localIdFor, withEffectId, listRecords, listWith, listWithout, parseBlock, parseIdentity, parseListEntry, parseUsage, zoomSysex, type ZoomIdentity } from './zoom-protocol'
 import { storedZip } from './zip'
 
 export type ZoomLinkStatus = 'unsupported' | 'idle' | 'connecting' | 'ready' | 'reading' | 'writing'
@@ -35,6 +35,8 @@ export class ZoomLink {
   private nextSend = 0
   private waitFile?: (m: number[]) => void
   private waitIdentity?: (m: number[]) => void
+  private waitMst?: (m: number[]) => void
+  private nonce = 0
   private op: Promise<unknown> = Promise.resolve()
   /** Effect headers already read (upper-case name -> size and header); a write or delete forgets that file. */
   private readonly heads = new Map<string, { size: number; effect?: ZoomFile['effect'] }>()
@@ -83,6 +85,7 @@ export class ZoomLink {
       const identity = reply ? parseIdentity(reply) : undefined
       if (!identity) return this.set({ status: 'idle', notice: { tone: 'error', text: 'The pedal didn’t answer. Close other apps that use it (Zoom Effect Manager, editors), then try again.' } })
       this.set({ status: 'ready', identity })
+      if (!isUpdateMode(identity)) void this.quiet(() => this.hello())
     } catch {
       this.set({ status: 'idle', notice: { tone: 'error', text: 'This browser didn’t allow MIDI. Allow MIDI with SysEx for this site, then try again.' } })
     }
@@ -119,6 +122,7 @@ export class ZoomLink {
     }
   }
   private dispatch(m: number[]) {
+    if (isMstReply(m)) { this.waitMst?.(m); return }
     if (m[1] === 0x7e && m[3] === 0x06 && m[4] === 0x02) { this.waitIdentity?.(m); return }
     const id = this.state.identity?.deviceId
     if (id !== undefined && (isFileReply(m, id) || isFlashReply(m, id))) this.waitFile?.(m)
@@ -158,6 +162,36 @@ export class ZoomLink {
     })
     this.stale = false
   }
+
+  /** A MIDISTOMP command (zoom-protocol.ts MST): its replies with this request's nonce, `count` of them, or null when
+   * they don't all come in time (stock firmware never answers). A late reply has another nonce, so it's never taken. */
+  private mst(command: number, count: number): Promise<number[][] | null> {
+    if (!this.output) return Promise.resolve(null)
+    const nonce = this.nonce = (this.nonce + 1) & 0x7f, got: number[][] = []
+    return new Promise(resolve => {
+      const timer = setTimeout(() => { this.waitMst = undefined; resolve(null) }, this.timeout)
+      this.waitMst = m => { if (m[6] !== nonce) return; got.push(m); if (got.length === count) { clearTimeout(timer); this.waitMst = undefined; resolve(got) } }
+      this.send(mstSysex(command, nonce))
+    })
+  }
+  /** After connecting: a pedal that runs MIDISTOMP with its SysEx says its version and features (identity.midistomp). */
+  private async hello() {
+    const asked = this.state.identity, replies = await this.mst(MST.hello, 2)
+    const version = replies?.find(m => m[5] === MST.version), status = replies?.find(m => m[5] === MST.features)
+    if (version && status && asked && this.state.identity === asked) this.set({ ...this.state, identity: { ...asked, midistomp: parseHello(version, status) } })
+  }
+  /** In turn with the file operations, without showing as one. */
+  private quiet<T>(work: () => Promise<T>): Promise<T> {
+    const run = this.op.then(work)
+    this.op = run.catch(() => undefined)
+    return run
+  }
+  /** The base's load now (MIDISTOMP's load command), null when it doesn't answer, undefined when the link is busy. */
+  readonly load = () => this.quiet(async () => {
+    if (this.state.status !== 'ready' || !this.state.identity?.midistomp) return undefined
+    const reply = await this.mst(MST.load, 1)
+    return reply ? parseLoad(reply[0]) ?? null : null
+  })
 
   /** One file operation at a time, shown as reading while it runs. */
   private exclusive<T>(label: string, work: () => Promise<T>, status: 'reading' | 'writing' = 'reading'): Promise<T> {

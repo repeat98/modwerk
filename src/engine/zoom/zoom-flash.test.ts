@@ -39,7 +39,7 @@ describe('the MS-70CDR flash', () => {
   it('refuses a pedal that is not in update mode, and stops when the bootloader stops answering', async () => {
     const running = fakeZoomPedal(), link = await connect(running)
     await expect(link.flashBase(os())).rejects.toThrow(/update mode first/)
-    expect(running.sent.length).toBe(1)
+    expect(running.sent.some(m => m[1] === 0x52)).toBe(false)   // only the identity request and MIDISTOMP's hello
     const stuck = fakeZoomPedal({ firmware: '1.10', slow: { cmd: 0x02, nth: 5, ms: null } })
     await expect((await connect(stuck)).flashBase(os())).rejects.toThrow(/step 8 of 356 \(no answer\).*bootloader is untouched/)
   })

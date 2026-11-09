@@ -10,7 +10,8 @@ export const ZOOM_DEVICE_IDS: Record<string, number> = { 'zoom-ms-70cdr': 0x61, 
 /** Universal identity request. */
 export const IDENTITY_REQUEST = [0xf0, 0x7e, 0x00, 0x06, 0x01, 0xf7]
 
-export type ZoomIdentity = { deviceId: number; model: string; firmware: string }
+/** `midistomp`: what the base said to the hello, when it answered one. */
+export type ZoomIdentity = { deviceId: number; model: string; firmware: string; midistomp?: MidistompHello }
 
 /** The pedal's identity reply: F0 7E ch 06 02 52 <device id> 00 00 00 <four firmware characters> F7. */
 export function parseIdentity(m: number[]): ZoomIdentity | undefined {
@@ -189,6 +190,36 @@ export function installRefusal(name: string, data: ArrayLike<number>): string | 
 /** The base the pedal page installs on an MS-70CDR, and the version its identity reply gives then (MIDISTOMP's
  * identity-tag patch). Kept here so pages don't load MIDISTOMP's patches (277 KB); zoom-base.test.ts checks they agree. */
 export const ZOOM_BASE = { name: 'MIDISTOMP V2.0.1', tag: 'M201' } as const
+
+/** MIDISTOMP's own SysEx, on the non-commercial id 7D so Zoom's parser drops it (stock firmware never answers):
+ * F0 7D 'M' 'S' 'T' <command> <nonce> … F7; replies are numbered from 41 in the order the commands came, with the
+ * request's nonce (MIDISTOMP PR #64, its docs/dev/modwerk-research.md section 1). Hello 01 answers 41 (major, minor,
+ * patch) and 42 (feature bits, 7 a byte); 02 to 05 (MIXER and PERFORM entries, 43 to 46) aren't used here; load 06 answers 47. */
+export const MST = { hello: 0x01, version: 0x41, features: 0x42, load: 0x06, loadReply: 0x47 } as const
+export const mstSysex = (command: number, nonce: number, args: number[] = []) => [0xf0, 0x7d, 0x4d, 0x53, 0x54, command, nonce & 0x7f, ...args, 0xf7]
+export const isMstReply = (m: number[]) => m[1] === 0x7d && m[2] === 0x4d && m[3] === 0x53 && m[4] === 0x54
+/** The hello's feature bits, low bit first. */
+export const MIDISTOMP_FEATURES = ['MIDI CC', 'MIDI clock and transport', 'MIDI settings', 'Tempo hold', 'Looper services', 'Mixer', 'PERFORM', 'MASTER', 'KALEIDO', 'SYSTEM meters', 'DSP limit 300']
+export type MidistompHello = { version: string; features: string[] }
+export function parseHello(version: number[], status: number[]): MidistompHello {
+  const bits = status[7] | status[8] << 7 | status[9] << 14
+  return { version: version.slice(7, 10).join('.'), features: MIDISTOMP_FEATURES.filter((_, bit) => bits & 1 << bit) }
+}
+/** One window (0.74 s) of the SYSTEM screen's numbers: CPU parts in tenths of a percent of an audio block, DSP in
+ * tenths of the effects' declared units (limit 300), late = blocks that started late, the CPU being full. */
+export type MidistompLoad = {
+  window: number; cpu: number; audio: number; audioMax: number; perform: number; midi: number; system: number; late: number; lateTotal: number; dsp: number
+  slots: { name: string; cpu: number; dsp: number }[]
+}
+/** Load 06 (proposed to MIDISTOMP, not in a release yet): keeps the SYSTEM screen's timing on for 5 s and answers 47
+ * <nonce> <window> + 21 16-bit values packed 8-into-7 (cpu, audio, audio max, perform, midi, system, late, late total,
+ * dsp, then each slot's cpu, then each slot's dsp) + each slot's name in 8 characters (zero-padded; '-' empty, '?' loading). */
+export function parseLoad(m: number[]): MidistompLoad | undefined {
+  if (!isMstReply(m) || m[5] !== MST.loadReply || m.length !== 105) return undefined
+  const b = unpack7(m.slice(8, 56)), v = Array.from({ length: 21 }, (_, i) => b[2 * i] | b[2 * i + 1] << 8)
+  const name = (s: number) => String.fromCharCode(...m.slice(56 + 8 * s, 64 + 8 * s)).replace(/\0+$/, '')
+  return { window: m[7], cpu: v[0], audio: v[1], audioMax: v[2], perform: v[3], midi: v[4], system: v[5], late: v[6], lateTotal: v[7], dsp: v[8], slots: Array.from({ length: 6 }, (_, s) => ({ name: name(s), cpu: v[9 + s], dsp: v[15 + s] })) }
+}
 
 /** Update mode (hold Up and Down while plugging in USB): the MS-70CDR's bootloader answers the identity request with
  * version 1.1x and takes the flash commands below. */

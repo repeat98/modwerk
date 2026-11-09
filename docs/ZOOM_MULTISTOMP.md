@@ -92,7 +92,9 @@ on removal, every write read back, the list from before offered for saving and w
 fails. The link itself refuses to install or remove anything but an added effect, and an effect ID known
 to clash across collections; an effect whose ID another effect on the pedal has gets a local ID
 ([Effect IDs](ZDL_MODULE_CONTRACT.md#effect-ids)); after removing, it lists the files again to check the file went. Status, Backups and Setup are its unit
-pages; NAM / Cab (in the Samples slot), Patches and module sets follow. Tests run against
+pages. Status is the Octatrack's console (`ZoomLoad.tsx` shares its meters and chart): CPU, the effect chain and
+the patch's DSP out of 300 now, the last five minutes, each slot's share, the firmware, and the effects on the
+pedal, read by itself; NAM / Cab (in the Samples slot), Patches and module sets follow. Tests run against
 a fake pedal (`src/dev/zoom-pedal-fake.ts`) in the pedal's reply formats. On an MS-70CDR 2.10 (27 October
 2026) it identified the pedal, listed its 162 files and backed them up: every file byte-identical to the
 project's Patch Editor backup, the effect list apart (changed on the pedal in between). Installing and
@@ -274,9 +276,14 @@ install throughout.
 1. The read-only pedal page and its link: #956 (Manro).
 2. ~~The base built in the browser~~: done (#991).
 3. ~~The recording and the browser flasher~~: done (above).
-4. A hello base: a MIDISTOMP patch that answers a Modwerk SysEx hello
-   (version, then status), so the site knows a pedal runs the base (Luca,
-   with Modwerk agreeing the message).
+4. A hello base: MIDISTOMP's own SysEx (`F0 7D 'MST' <command> <nonce> … F7`,
+   MIDISTOMP PR #64, Luca). Hello `01` answers `41` (version) and `42`
+   (feature bits); the link sends it after connecting (stock firmware drops
+   `7D`) and the page names the version and features. The load on Status
+   needs a command the base doesn't have yet: `06` keeps the SYSTEM screen's
+   timing on for 5 s and answers `47` with its LOAD and EFFECTS pages
+   (`parseLoad` in `zoom-protocol.ts` has the bytes), proposed to Luca. Until a
+   release has it, Status says where MIDISTOMP shows its load on the pedal.
 5. Which MIDISTOMP features depend on each other, so they can be picked as
    mods (Luca). Shared parts, such as the transport block, go into the base.
 6. `OctatrackHub` taking a machine instead of `ZoomHub` copying it, then the

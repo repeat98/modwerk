@@ -7,6 +7,7 @@ import { ZOOM_BASE, ZOOM_DEVICE_IDS, effectInfo, installRefusal, isAddedEffect, 
 import { useMobileWorkspace } from '../hooks/useMobileWorkspace'
 import { useZoomLink } from '../hooks/useZoomLink'
 import { Icon, type IconName } from './Icon'
+import { ZoomLoad } from './ZoomLoad'
 import './octatrack-link.css'
 import './zoom-hub.css'
 
@@ -24,6 +25,7 @@ export function ZoomSidebarStatus({ link, onInstall }: { link: ZoomLink; onInsta
   return <button type="button" className="instrument-action" title={isUpdateMode(identity) ? 'In update mode: the base can go on now.' : 'Zoom’s firmware 2.10. Flash the base once over USB.'} onClick={onInstall}><span>Install the base</span><Icon name="arrow" size={14} /></button>
 }
 const kb = (bytes: number) => Math.round(bytes / 1024) + ' KB'
+const count = (n: number, one: string, many: string) => n + ' ' + (n === 1 ? one : many)
 const isCapture = (name: string) => /^(NAM|C)\d/i.test(name)
 // Local IDs this browser has given out, by file name: a stored patch may still point at one after its effect is
 // removed, so another effect never gets it. Lost with the browser's storage; then only the pedal's own IDs count.
@@ -36,6 +38,7 @@ const rememberId = (fxid: number, name: string) => { try { localStorage.setItem(
  * pages on the leading side, the selected one on the trailing side, over the Web MIDI link (zoom-link.ts).
  * It identifies the pedal, lists what's on it, backs it up, and installs or removes added effect files (the link
  * refuses Zoom's own and known ID clashes). On the MS-70CDR it offers the base (`onInstall` opens ZoomBaseDialog), as the Octatrack's page does.
+ * Status is the Octatrack's console: the base's load (ZoomLoad), the firmware, and the effects on the pedal, read by itself.
  */
 export function ZoomHub({ device, view, link, header, onInstall }: { device: DeviceProfile; view: ZoomHubView; link: ZoomLink | null; header?: ReactNode; onInstall?: () => void }) {
   const mobile = useMobileWorkspace()
@@ -80,6 +83,9 @@ export function ZoomHub({ device, view, link, header, onInstall }: { device: Dev
     if (alive.current) setChanged({ text: file.name + ' removed. Power-cycle the pedal.', list: keepList(result.previousList) })
     await read()
   })
+  // Status reads what's on the pedal by itself, once per pedal; Read again is in its cell.
+  const asked = useRef('')
+  useEffect(() => { if (view === 'status' && status === 'ready' && pedalKey && !updating && !other && asked.current !== pedalKey) { asked.current = pedalKey; read() } })
   const save = () => run(async () => {
     if (!link) return
     const { files: count, zip } = await link.backup(), stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')
@@ -90,7 +96,7 @@ export function ZoomHub({ device, view, link, header, onInstall }: { device: Dev
     : status === 'connecting' ? 'Looking for your pedal…'
     : progress ? <>{progress.label}{progress.total ? <> · {progress.done} of {progress.total}</> : '…'}</>
     : updating ? <>Connected in update mode · bootloader {identity!.firmware}</>
-    : onBase ? <>Connected · {ZOOM_BASE.name}{files && <> · {files.length} files on it</>}{free !== undefined && <> · {kb(free)} free</>}</>
+    : onBase ? <>Connected · {identity?.midistomp ? 'MIDISTOMP ' + identity.midistomp.version : ZOOM_BASE.name}{files && <> · {files.length} files on it</>}{free !== undefined && <> · {kb(free)} free</>}</>
     : connected ? <>Connected · firmware {identity?.firmware || 'unknown'}{files && <> · {files.length} files on it</>}{free !== undefined && <> · {kb(free)} free</>}</>
     : notice ? notice.text : 'Not connected'
   const action = status === 'idle' ? <button className="button button-quiet" onClick={() => void link?.connect()}>Connect</button>
@@ -118,28 +124,33 @@ export function ZoomHub({ device, view, link, header, onInstall }: { device: Dev
         </div>
       </nav>
       <div className="hub-pane">
-        {error && <p role="alert" className="hub-error">{error}</p>}
-        {panel('status', <>
-          <h2 className="hub-view-title">Status</h2>
-          <section className="hub-section" aria-labelledby="zoom-onit-title">
-            <h3 id="zoom-onit-title">On the pedal</h3>
-            {!connected ? <p>Connect your pedal to see what’s on it.</p>
-              : updating ? <p>The pedal is in update mode: Install base flashes it. Unplug it and plug it in normally to see its files.</p>
-              : !files ? <><p>Reads the pedal’s file list. Nothing is written.</p><button type="button" className="button button-primary" disabled={busy} onClick={read}>Read the pedal</button></>
-              : <><p>{effects.length - captures.length} effects{captures.length ? <> · {captures.length} captures and cabs</> : null}{free !== undefined && <> · {kb(free)} free</>}</p>
-                <ul className="zoom-files">{effects.map(f => <li key={f.name}><code>{f.name}</code><small>{f.effect?.version ?? ''} · {kb(f.size)}</small>{isAddedEffect(f.effect) && <button type="button" className="text-button" disabled={busy} onClick={() => uninstall(f)}>Remove</button>}</li>)}</ul>
-                <button type="button" className="button button-quiet" disabled={busy} onClick={read}>Read again</button></>}
+        {panel('status', <div className="hub-console">
+          <ZoomLoad key={pedalKey} link={link} identity={connected && !other ? identity : undefined} active={view === 'status'} />
+          <section className="hub-cell hub-cell-health" aria-labelledby="zoom-firmware-cell">
+            <h3 id="zoom-firmware-cell">Firmware</h3>
+            {!connected ? <p className="hub-empty">Connect your pedal to read it.</p>
+              : other ? <p className="hub-empty">This is an {identity!.model}: open its own page.</p>
+              : updating ? <><p className="hub-test"><span className="unit-led is-load" aria-hidden="true" />Update mode · bootloader {identity!.firmware}</p><p className="hub-empty">The pedal is in update mode: Install base flashes it. Unplug it and plug it in normally to see its files.</p></>
+              : onBase || identity?.midistomp ? <><p className="hub-test"><span className="unit-led is-on" aria-hidden="true" />{identity?.midistomp ? 'MIDISTOMP ' + identity.midistomp.version : ZOOM_BASE.name}</p><p className="hub-empty">The base, by Luca Matturro. Zoom’s 2.10 updater puts Zoom’s firmware back.</p>
+                {identity?.midistomp && <><h3>What it adds</h3><p className="hub-empty">{identity.midistomp.features.join(' · ')}</p></>}</>
+              : <><p className="hub-test"><span className="unit-led is-off" aria-hidden="true" />Zoom’s firmware {identity?.firmware || 'unknown'}</p><p className="hub-empty">{canBase ? 'Effect files work on it. The base adds routing on two buses, PERFORM and a looper.' : 'Effect files work on it.'}</p></>}
           </section>
-          {connected && files && !updating && <section className="hub-section" aria-labelledby="zoom-install-title">
-            <h3 id="zoom-install-title">Install an effect file</h3>
-            <p>An added effect (.ZDL), for example a NAM capture or cab from the NAM + Cab Loader. It’s written, read back and added to the effect list; the list from before is offered for saving. Zoom’s own effects are never changed here.</p>
-            <p><strong>Two added effects must never share an effect ID.</strong> Swapping one for another with the same ID has frozen a pedal at boot, and recovering it needed a ROM programmer. This page refuses an ID already on the pedal or known to clash, but it can’t see what the pedal had before. Back up all files first.</p>
-            <label className="button button-quiet zoom-pick"><input type="file" accept=".zdl,.ZDL" hidden disabled={busy} onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) install(file) }} />Choose a .ZDL file</label>
-            {changed && <p role="status">{changed.text}{changed.list && <> <a className="text-button" href={changed.list.url} download={changed.list.name}>Save the effect list from before</a></>}</p>}
-          </section>}
-        </>)}
+          <section className="hub-cell hub-cell-unit" aria-labelledby="zoom-onit-title">
+            <div className="hub-cell-head"><h3 id="zoom-onit-title">On your pedal{files && <> · {effects.length}</>}</h3>
+              {files && <span><button type="button" className="text-button" disabled={busy} onClick={read}>Read again</button>
+                <label className={'text-button zoom-pick' + (busy ? ' is-disabled' : '')}><input type="file" accept=".zdl,.ZDL" hidden disabled={busy} onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) install(file) }} />Install a .ZDL</label></span>}</div>
+            {error && <p role="alert" className="hub-error">{error}</p>}
+            {changed && <p role="status" className="hub-cell-note">{changed.text}{changed.list && <> <a className="text-button" href={changed.list.url} download={changed.list.name}>Save the effect list from before</a></>}</p>}
+            {files ? <>
+              <ul className="hub-unit-modules zoom-files">{effects.map(f => <li key={f.name}><span className="unit-led is-on" aria-hidden="true" /><strong>{f.name}</strong><small>{f.effect?.version ?? ''} · {kb(f.size)}{isAddedEffect(f.effect) && <button type="button" className="text-button" disabled={busy} onClick={() => uninstall(f)}>Remove</button>}</small></li>)}</ul>
+              <p className="hub-cell-note">{count(effects.length - captures.length, 'effect', 'effects')}{captures.length ? <> · {count(captures.length, 'capture or cab', 'captures and cabs')}</> : null}{free !== undefined && <> · {kb(free)} free</>}. <strong>Two added effects must never share an effect ID</strong>: swapping one for another with the same ID has frozen a pedal at boot, and recovering it needed a ROM programmer. Installing refuses the IDs it knows about but can’t see what the pedal had before, so back up all files first.</p>
+            </> : <p className="hub-empty">{!connected ? 'Connect your pedal to see what’s on it.' : updating ? 'Plug it in normally to see its files.' : other ? '' : busy ? 'Reading what’s on it…' : 'Not read yet.'}</p>}
+            {connected && !files && !updating && !other && !busy && <button type="button" className="text-button" onClick={read}>Read the pedal</button>}
+          </section>
+        </div>)}
         {panel('backups', <>
           <h2 className="hub-view-title">Backups</h2>
+          {error && <p role="alert" className="hub-error">{error}</p>}
           <section className="hub-section" aria-labelledby="zoom-backup-title">
             <h3 id="zoom-backup-title">Back up all files</h3>
             <p>Reads every file on the pedal, checks each block, and saves them in one zip with the effect list’s order: what to restore from if anything goes wrong. Nothing is written to the pedal. Patches are backed up separately, by SysEx.</p>
@@ -149,6 +160,7 @@ export function ZoomHub({ device, view, link, header, onInstall }: { device: Dev
         </>)}
         {panel('setup', <>
           <h2 className="hub-view-title">Setup</h2>
+          {error && <p role="alert" className="hub-error">{error}</p>}
           <section className="hub-section" aria-labelledby="zoom-firmware-title">
             <h3 id="zoom-firmware-title">Firmware</h3>
             <p>{connected ? <>Your {model} runs firmware <b>{identity?.firmware || 'unknown'}</b>.</> : 'Connect your pedal to see its firmware.'} Effects here are tested on the MS-70CDR with Zoom’s firmware 2.10.</p>

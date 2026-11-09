@@ -36,17 +36,46 @@ describe('the Zoom pedal page', () => {
     expect(parseZoomHubRoute('zoom-ms-70cdr/pedal/samples')).toBeUndefined()
   })
 
-  it('connects, then lists what’s on the pedal only when asked', async () => {
+  it('connects, then reads what’s on the pedal by itself', async () => {
     const link = new ZoomLink(() => Promise.resolve(fakeZoomPedal({ files, free: 204_800 }).access), 200)
     await render('status', link)
     expect(container.querySelector('[role=status]')?.textContent).toMatch(/Not connected/)
     await click([...container.querySelectorAll('button')].find(b => b.textContent === 'Connect')!); await settle()
     expect(container.querySelector('[role=status]')?.textContent).toMatch(/Connected · firmware 2\.10/)
     expect(container.querySelector('.hub-hero h2')?.textContent).toBe('MS-70CDR')
-    await click(button('Read the pedal'))
     for (let i = 0; i < 150 && !open().querySelector('.zoom-files'); i++) await settle()   // reads every effect's version first
-    expect(open().textContent).toMatch(/1 effects · 1 captures and cabs · 200 KB free/)
-    expect([...open().querySelectorAll('.zoom-files code')].map(c => c.textContent)).toEqual(['LOOP.ZDL', 'NAM1smok.ZDL'])
+    expect(open().textContent).toMatch(/1 effect · 1 capture or cab · 200 KB free/)
+    expect([...open().querySelectorAll('.zoom-files strong')].map(c => c.textContent)).toEqual(['LOOP.ZDL', 'NAM1smok.ZDL'])
+    expect(open().querySelector('.hub-cell-health')?.textContent).toMatch(/Zoom’s firmware 2\.10/)
+    expect(open().querySelector('.hub-cell-chart')?.textContent).toMatch(/Zoom’s firmware doesn’t report its load/)
+    await idle(link)
+  })
+
+  it('shows the load MIDISTOMP reports over USB, as the Octatrack’s Status does', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      const load = { cpu: 473, audio: 301, audioMax: 352, perform: 12, midi: 4, system: 2, late: 0, lateTotal: 3, dsp: 1350,
+        slots: [{ name: 'TapeEcho', cpu: 120, dsp: 450 }, { name: '-', cpu: 0, dsp: 0 }, { name: '-', cpu: 0, dsp: 0 }, { name: '-', cpu: 0, dsp: 0 }, { name: 'NAM1', cpu: 70, dsp: 600 }, { name: '-', cpu: 0, dsp: 0 }] }
+      const link = new ZoomLink(() => Promise.resolve(fakeZoomPedal({ files, firmware: 'M201', midistomp: { version: [2, 0, 2], features: 0b111_1111_1111, load } }).access), 200)
+      await link.connect()
+      await render('status', link)
+      await vi.waitFor(() => expect(open().querySelector('.hub-cell-health')?.textContent).toMatch(/MIDISTOMP 2\.0\.2.*Looper services/))
+      for (let i = 0; i < 5 && !/47\.3%/.test(open().textContent ?? ''); i++) { await act(() => vi.advanceTimersByTimeAsync(2000)); await settle() }   // the first answer only turns the timing on
+      expect([...open().querySelectorAll('.load-meter strong')].map(s => s.textContent)).toEqual(['47.3%', '30.1%', '135/300'])
+      expect(open().querySelector('.hub-cell-cpu small')?.textContent).toBe('Late blocks 0 · 3 since switched on')
+      expect([...open().querySelectorAll('.hub-cell-history strong')].map(s => s.textContent)).toEqual(['1 · TapeEcho', '2 · Empty', '3 · Empty', '4 · Empty', '5 · NAM1', '6 · Empty', 'Mixer', 'PERFORM', 'MIDI', 'SYSTEM meter', 'Zoom’s OS and screen'])
+      expect(open().querySelector('.hub-cell-history li')?.textContent).toMatch(/12\.0%DSP 45\.0/)
+      await idle(link)
+    } finally { vi.useRealTimers() }
+  })
+
+  it('says where MIDISTOMP V2.0.1 shows its load, as it doesn’t send it', async () => {
+    const link = new ZoomLink(() => Promise.resolve(fakeZoomPedal({ files, firmware: 'M201' }).access), 200)
+    await link.connect()
+    await render('status', link)
+    expect(open().querySelector('.hub-cell-health')?.textContent).toMatch(/MIDISTOMP V2\.0\.1/)
+    expect(open().querySelector('.hub-cell-chart')?.textContent).toMatch(/shows its load on the pedal \(at the top of MENU, and in MENU › SYSTEM\)/)
+    await idle(link)
   })
 
   it('backs up all files into a zip to save', async () => {
@@ -115,7 +144,6 @@ describe('installing and removing on the pedal page', () => {
     const fake = fakeZoomPedal({ files }), link = new ZoomLink(() => Promise.resolve(fake.access), 200)
     await link.connect()
     await act(() => root.render(createElement(ZoomHub, { device, view: 'status', link })))
-    await click(button('Read the pedal'))
     for (let i = 0; i < 100 && !open().querySelector('.zoom-files'); i++) await settle()
     return Object.assign(fake, { link })
   }
@@ -123,7 +151,7 @@ describe('installing and removing on the pedal page', () => {
 
   it('offers Remove only for added effects, never for Zoom’s own', async () => {
     await setup()
-    const rows = [...open().querySelectorAll('.zoom-files li')].map(li => [li.querySelector('code')?.textContent, !!li.querySelector('button')])
+    const rows = [...open().querySelectorAll('.zoom-files li')].map(li => [li.querySelector('strong')?.textContent, !!li.querySelector('button')])
     expect(rows).toEqual([['DELAY.ZDL', false], ['LOOP.ZDL', true]])
   })
   it('installs a chosen file, then offers the list from before', async () => {
