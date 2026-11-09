@@ -85,6 +85,7 @@ export function ZoomBaseDialog({ link, device, onClose, read = readZip, build = 
   const restartLine = onBase ? <p className="success-note" role="status"><Icon name="check" size={16} /> Your {device.name} runs {ZOOM_BASE.name}.</p>
     : updateMode ? <p className="base-install-note" role="status">It started in update mode again. Unplug it, then plug it in without holding any buttons.</p>
     : connected ? <p className="file-error" role="status">Your pedal answers with firmware {identity?.firmware || 'unknown'}, not the base. Go back and flash again.</p>
+    : status === 'idle' && state.notice?.tone === 'error' ? <p className="base-install-note" role="status">{state.notice.text} Once it shows its patch screen, connect again.</p>
     : <p className="base-install-note" role="status">Waiting for your pedal…</p>
   const modeLine = updateMode ? <p className="success-note" role="status"><Icon name="check" size={16} /> Your {device.name} is in update mode.</p>
     : connected ? <p className="base-install-note" role="status">Your pedal is running normally. Unplug it, then plug it in again while holding Up and Down.</p>
@@ -101,7 +102,8 @@ export function ZoomBaseDialog({ link, device, onClose, read = readZip, build = 
     {stage === 'mode' && (status === 'idle' && !updateMode ? <button type="button" className="button button-primary" onClick={() => void link.connect()}>Connect</button>
       : <button type="button" className="button button-primary" disabled={!updateMode} onClick={() => void flash()}><Icon name="arrow" size={16} />Flash the base</button>)}
     {stage === 'flash' && <button type="button" className="button button-primary" disabled={flashing || !updateMode} onClick={() => void flash()}>{flashing ? 'Flashing…' : 'Try again'}</button>}
-    {stage === 'restart' && <button type="button" className="button button-primary" disabled={!onBase} onClick={() => { finished.current = true; onClose() }}>Done</button>}
+    {stage === 'restart' && (status === 'idle' ? <button type="button" className="button button-primary" onClick={() => void link.connect()}>Connect</button>
+      : <button type="button" className="button button-primary" disabled={!onBase} onClick={() => { finished.current = true; onClose() }}>Done</button>)}
   </>
 
   return <BaseDialogFrame canClose={!flashing} busy={flashing} focus={view + stage} finishedRef={finished} onClose={onClose} footer={footer}>

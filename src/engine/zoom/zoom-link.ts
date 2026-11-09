@@ -67,7 +67,7 @@ export class ZoomLink {
       // Unplugged: lost. Plugged in again (in update mode, or restarted after a flash): connect by itself.
       this.access.onstatechange = () => {
         if (this.output && this.output.state === 'disconnected') this.lost()
-        else if (this.state.status === 'idle' && !this.output && [...portsOf(this.access!.outputs)].some(isPedal)) void this.connect()
+        if (this.state.status === 'idle' && this.pedalPresent()) void this.reconnect()
       }
       const inputs = [...portsOf(this.access.inputs)], outputs = [...portsOf(this.access.outputs)]
       const input = inputs.find(isPedal), output = outputs.find(isPedal)
@@ -86,6 +86,20 @@ export class ZoomLink {
     } catch {
       this.set({ status: 'idle', notice: { tone: 'error', text: 'This browser didn’t allow MIDI. Allow MIDI with SysEx for this site, then try again.' } })
     }
+  }
+
+  private pedalPresent = () => !!this.access && [...portsOf(this.access.outputs)].some(isPedal)
+  // A pedal just plugged in is on USB before it answers (the base shows its boot screen first): ask again for a while.
+  private retrying = false
+  private async reconnect() {
+    if (this.retrying) return
+    this.retrying = true
+    try {
+      for (let i = 0; i < 10 && this.state.status === 'idle' && this.pedalPresent(); i++) {
+        if (i) await new Promise(resolve => setTimeout(resolve, 1000))
+        if (this.state.status === 'idle') await this.connect()
+      }
+    } finally { this.retrying = false }
   }
 
   private lost() {

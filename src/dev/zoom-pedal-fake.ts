@@ -9,7 +9,7 @@ const BLOCK = 512
 
 export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', files = [] as FakePedalFile[], free = 400_000, portName = 'ZOOM MS Series', silent = false, slow = undefined as { cmd: number; nth: number; ms: number | null } | undefined, latency = 0, failWriteOf = '', keepOnDelete = '', badCrcAt = 0 } = {}) {
   const sent: number[][] = [], flash = new Uint8Array(0x400000).fill(0xff)
-  let firmware = started
+  let firmware = started, starting = 0
   let writes = 0
   let listAt = 0, reading: FakePedalFile | undefined, readAt = 0, step = 0, writing: FakePedalFile | undefined, failing = !!failWriteOf
   const input: MidiIn & { state: string } = { id: 'in', name: portName, state: 'connected', onmidimessage: null }
@@ -41,7 +41,7 @@ export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', fil
     send(data) {
       const m = Array.from(data); sent.push(m)
       if (silent) return
-      if (m[0] === 0xf0 && m[1] === 0x7e && m[4] === 0x01) return reply([0xf0, 0x7e, 0x00, 0x06, 0x02, 0x52, deviceId, 0, 0, 0, ...Array.from(firmware.padEnd(4), c => c.charCodeAt(0)), 0xf7])
+      if (m[0] === 0xf0 && m[1] === 0x7e && m[4] === 0x01) return starting > 0 ? void starting-- : reply([0xf0, 0x7e, 0x00, 0x06, 0x02, 0x52, deviceId, 0, 0, 0, ...Array.from(firmware.padEnd(4), c => c.charCodeAt(0)), 0xf7])
       if (m[1] === 0x52 && m[3] === deviceId && firmware.startsWith('1.1')) return flashCommand(m)
       if (m[1] !== 0x52 || m[3] !== deviceId || m[4] !== 0x60) return
       current = m[5]
@@ -78,10 +78,11 @@ export function fakeZoomPedal({ deviceId = 0x61, firmware: started = '2.10', fil
     status(0x00)
   }
   const access: MidiAccessLike = { inputs: new Map([['in', input]]), outputs: new Map([['out', output]]), onstatechange: null }
-  /** Unplugged, then plugged in again running `next` (1.10: update mode; the base's tag after a flash), as Web MIDI tells it. */
-  function replug(next: string) {
+  /** Unplugged, then plugged in again running `next` (1.10: update mode; the base's tag after a flash), as Web MIDI
+   * tells it; the first `boot` identity requests go unanswered, as while the pedal shows its boot screen. */
+  function replug(next: string, boot = 0) {
     input.state = output.state = 'disconnected'; access.onstatechange?.({})
-    firmware = next; input.state = output.state = 'connected'; access.onstatechange?.({})
+    firmware = next; starting = boot; input.state = output.state = 'connected'; access.onstatechange?.({})
   }
   return { access, sent, input, output, files, flash, replug }
 }

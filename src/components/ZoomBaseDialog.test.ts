@@ -52,7 +52,7 @@ describe('installing the base on an MS-70CDR', () => {
     expect(build).toHaveBeenCalledWith(stock)
     expect(pedal.flash.subarray(0x040000, 0x0f0000)).toEqual(main)
     expect(button('Done').disabled).toBe(true)
-    await act(async () => { pedal.replug('M201') })
+    await act(async () => { pedal.replug('M201', 1) })   // still on its boot screen: the first identity request goes unanswered
     await until(() => /runs MIDISTOMP V2\.0\.1/.test(status() ?? ''))
     await click(button('Done'))
     expect(onClose).toHaveBeenCalled()
