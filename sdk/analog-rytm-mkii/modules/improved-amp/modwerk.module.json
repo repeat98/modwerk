@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
-  "id": "envelopes",
-  "name": "Improved Envelopes",
+  "id": "improved-amp",
+  "name": "Improved AMP",
   "version": "0.1.0-experimental",
   "machine": "analog-rytm-mkii",
   "category": "machines",
@@ -10,8 +10,9 @@
     "github": "npp1993",
     "name": "Nathaniel Pavel",
     "credits": [
-      "Nathaniel Pavel — Envelopes: HOLD order and attack-aware hold, the ATK, DEC, REL and HLD curves, and envelope times on the knobs.",
-      "MrScruff and Iced-Cream — Env Reset Amp (rytm-mods 0015 and its elemod port), whose reading of the amp envelope's commands this module started from; none of its code is carried.",
+      "Nathaniel Pavel — Improved AMP: HOLD order and attack-aware hold, the ATK, DEC, REL and HLD curves, envelope times and HLD in steps on the knobs, OVR's fine low end, and ENV RESET AMP's pre-fade.",
+      "MrScruff — the original ENV RESET AMP mod (rytm-mods 0015-env-reset-amp), its design and code, free to use.",
+      "Iced-Cream — Env Reset Amp, the elemod port of 0015 (rytm2_mods) whose ENV RESET values this module carries.",
       "irpina — Elekloader and core-ar2, the core it links with."
     ]
   },
@@ -19,7 +20,7 @@
     "npp1993"
   ],
   "presentation": {
-    "label": "IMPROVED ENVELOPES",
+    "label": "IMPROVED AMP",
     "family": "Sound",
     "summary": "The AMP envelope reworked: HOLD runs from no hold to AUTO, ATK, HOLD and DEC/REL have fine steps from 0.2 ms, and the envelope knobs show times.",
     "overview": "Envelopes reworks the AMP envelope. HOLD runs from 0 (no hold: the decay starts the moment the attack reaches the top) up to AUTO at the top of the knob (hold while the note lasts); a hold never cuts the attack short. AMP ATK and FILTER ATK step 0.2 ms at a time up to 5 ms, 0.5 ms up to 15 ms, then about 10 % a step up to 30 s; AMP DEC and FILTER DEC and REL step 0.2 ms up to 5 ms and stay finer than stock up to 300 ms. AMP ATK, HLD and DEC and FILTER ATK, DEC and REL show times instead of 0..127.",
@@ -78,7 +79,9 @@
       "1.74"
     ],
     "requires": [],
-    "conflicts": [],
+    "conflicts": [
+      "env-reset-amp"
+    ],
     "limitations": [
       "Built for OS 1.74 only, on Modwerk's Rytm base with the amp record hook (ev_amp_record).",
       "Saved HLD, ATK, DEC and REL values read differently from stock: HLD 0 is no hold instead of AUTO, 127 is AUTO instead of 16 s, and HLD, AMP and FILTER ATK, DEC and REL follow the new curves.",
@@ -97,10 +100,12 @@
       "ui:FUNC + turn of AMP HLD",
       "ui:value text of AMP ATK/HLD/DEC and FILTER ATK/DEC/REL",
       "ui:AMP page envelope picture HLD",
+      "ui:SOUND SETTINGS ENV RESET values",
       "audio:filter attack rate table",
       "audio:amp hold table",
       "audio:amp decay table",
-      "audio:filter decay and release table"
+      "audio:filter decay and release table",
+      "audio:amp overdrive CV"
     ]
   },
   "resources": {
@@ -149,7 +154,7 @@
     {
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
-      "caption": "Improved Envelopes",
+      "caption": "Improved AMP",
       "alt": "Original illustration of an amp envelope (attack, hold, decay) over a time ruler with fine steps at the short end",
       "credit": "Nathaniel Pavel",
       "license": "GPL-2.0-only",

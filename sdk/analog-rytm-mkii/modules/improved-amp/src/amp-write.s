@@ -1,7 +1,7 @@
         | SPDX-License-Identifier: GPL-2.0-only
         | Envelopes - the amp envelope record write (OS 1.74), Nathaniel Pavel.
         |
-        | Every voice's record goes to envelopes_voice (envelopes.c), which puts
+        | Every voice's record goes to improved_amp_voice (envelopes.c), which puts
         | this module's ATK rate into the attack's records, follows the voice's
         | amp level and decides when the hold ends (HOLD 0 = no hold, 127 =
         | AUTO, never before the attack's top).
@@ -9,15 +9,15 @@
         .text
 
         | ------------------------------------------------------------------
-        | envelopes_write: an ev_amp_record entry (modwerk/amp.h, order 50): the
+        | improved_amp_write: an ev_amp_record entry (modwerk/amp.h, order 50): the
         | base runs it once a voice an audio block, in every state, after stock's
         | state machine and before stock's stores of the record at 0x40109c24
         | (amp_env_commands 0x40109940). Order 50 puts it after the entries that
         | rewrite the record (10-39), so it follows the record the amp gets, and
         | before the followers (60-89), which see its ATK rewrite.
         |
-        | It calls envelopes_voice unless the voice's record is the one it last
-        | took and that one left the voice as it was (envelopes_gate,
+        | It calls improved_amp_voice unless the voice's record is the one it last
+        | took and that one left the voice as it was (improved_amp_gate,
         | envelopes.c): an idle voice (rate and level words 0) and a decay that
         | has reached its end get the same record every block, so an idle unit
         | makes no C call.
@@ -27,13 +27,13 @@
         | track's sound slice (+0 ATK, +2 HLD, +4 DEC). It uses d1 and a0, as the
         | hook allows, and keeps every other register.
         | ------------------------------------------------------------------
-        .globl  envelopes_write
+        .globl  improved_amp_write
         .align  2
-envelopes_write:
-        move.l  envelopes_gate,%d1                | the voices left as they were
+improved_amp_write:
+        move.l  improved_amp_gate,%d1                | the voices left as they were
         btst    %d3,%d1
         beq.s   5f
-        lea     envelopes_gate+16,%a0
+        lea     improved_amp_gate+16,%a0
         cmp.l   (%a0,%d3.l*4),%d0                 | the same rate word
         bne.s   5f
         cmp.l   32(%a0,%d3.l*4),%d2               | and level word: nothing changes
@@ -45,7 +45,7 @@ envelopes_write:
         move.l  %a4,-(%sp)                        | sound slice
         move.l  %a2,-(%sp)                        | state, counter
         move.l  %d3,-(%sp)                        | voice
-        jsr     envelopes_voice
+        jsr     improved_amp_voice
         move.l  %d0,20(%sp)                       | the rate word it returns
         lea     20(%sp),%sp
         movem.l (%sp),%d0-%d1/%a0-%a1
@@ -53,7 +53,7 @@ envelopes_write:
 8:      rts
 
         | ------------------------------------------------------------------
-        | envelopes_amp_graph: over the AMP page's call of stock's envelope
+        | improved_amp_amp_graph: over the AMP page's call of stock's envelope
         | picture at 0x400d3302, `jsr 0x40038bce` (SoundPageView's draw). The
         | picture takes (view, bmp, 6, 0, 0, ATK, HLD, DEC) in 8.8 and draws HLD
         | 0 as AUTO (the note and a full-width hold). Here HLD 127 is AUTO and 0
@@ -63,9 +63,9 @@ envelopes_write:
         | ------------------------------------------------------------------
         .equ    AMP_PICTURE,    0x40038bce
 
-        .globl  envelopes_amp_graph
+        .globl  improved_amp_amp_graph
         .align  2
-envelopes_amp_graph:
+improved_amp_amp_graph:
         move.l  28(%sp),%d0
         cmp.l   #0x7f00,%d0
         blt.s   1f

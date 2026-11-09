@@ -1,17 +1,18 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Envelopes (Nathaniel Pavel): the AMP envelope's HOLD order and ATK curve, and times on the
-// envelope knobs, for the Analog Rytm MKII OS 1.74.
+// Improved AMP (Nathaniel Pavel): the AMP envelope's HOLD order and ATK curve, fine DEC/REL/HLD
+// steps, and times on the envelope knobs (HLD in steps), for the Analog Rytm MKII OS 1.74. The
+// pre-fade (pre-fade.c, pre-fade.s) and OVR's curve (ovr.s) are beside it.
 //
 // HOLD (AMP page, id 57) keeps its stored byte, read as: 0 no hold, 1..126 the new hold
 // times (counted from the trig), 127 AUTO (hold while the note is on, stock's 0). The decay
 // never starts before the attack reaches the top, so every value but AUTO is at least a
 // plain attack-decay. Stock's state machine (amp_env_commands 0x40109940) still runs; at
-// its record write, envelopes_voice sets the state it moves to: 1 (gate) or 2 (timed)
+// its record write, improved_amp_voice sets the state it moves to: 1 (gate) or 2 (timed)
 // after a trig, and in the timed state 2 or 3 (decay) by its own rule. To know when the
 // attack is at the top, it follows each voice's level from the records sent (the level
 // itself lives in the voice hardware and is not read back).
 //
-// ATK (id 56): envelopes_voice puts the rate from atk_rate (tools/atk_table.py) into the
+// ATK (id 56): improved_amp_voice puts the rate from atk_rate (tools/atk_table.py) into the
 // attack's records: 0 instant, 0.2 ms steps to 5 ms, 0.5 ms steps to 15 ms, then about 10 % a
 // step to stock's 30 s.
 //
@@ -19,12 +20,14 @@
 // at the short end too (tools/dec_table.py): their stock tables are replaced by our own, through
 // ptr sites in build.json, so stock's state machine and record writers read them unchanged.
 //
-// FILTER ATK (id 50) has the same curve, in its own table envelopes_flt_atk: build.json's ptr
+// FILTER ATK (id 50) has the same curve, in its own table improved_amp_flt_atk: build.json's ptr
 // site points stock's lea at 0x4010d2a8 (the filter envelope's attack table, read for the
 // attack record and the state counter alike) at it.
 //
-// The AMP ATK, HLD and DEC and FILTER ATK, DEC and REL knobs show times: an attack's full
-// ramp, a decay's or release's time to -60 dB, a hold's length.
+// The AMP ATK and DEC and FILTER ATK, DEC and REL knobs show times: an attack's full ramp, a
+// decay's or release's time to -60 dB. AMP HLD shows its length in steps of the selected track,
+// at the current tempo and the track's speed (the pattern's, or the track's own in ADVANCED
+// scale); the stored value and the hold's timing are the same ms as ever, only the text follows.
 
 #include <stdint.h>
 #include "analog-rytm-mk2/pages.h"
@@ -33,10 +36,10 @@ typedef uint32_t word_t;
 
 // ---- stock OS 1.74 ----
 // (The stock tables of AMP HLD 0x401ee81c, AMP DEC 0x401ee61c and FILTER DEC/REL 0x401ef030 are
-// replaced by envelopes_hold, envelopes_amp_dec and envelopes_flt_dec below, through ptr sites.)
-#define HOLD_TICKS envelopes_hold
-#define AMP_DECAY envelopes_amp_dec
-#define FLT_DECAY envelopes_flt_dec
+// replaced by improved_amp_hold, improved_amp_amp_dec and improved_amp_flt_dec below, through ptr sites.)
+#define HOLD_TICKS improved_amp_hold
+#define AMP_DECAY improved_amp_amp_dec
+#define FLT_DECAY improved_amp_flt_dec
 #define REC(id) (0x419a4888 + 84 * (id))            // a parameter's RAM record
 #define JUMP_MANAGER(id) (*(volatile word_t *)(REC(id) + 0x4c))
 #define JUMP_INVOKER(id) (*(volatile word_t *)(REC(id) + 0x50))
@@ -86,7 +89,7 @@ static const uint16_t atk_rate[128] = {
 
 // The same curve for FILTER ATK (0 -> 127 levels), read by stock through the lea at
 // 0x4010d2a8 (attack record and the state counter alike), so full 32-bit words.
-const uint32_t envelopes_flt_atk[128] __attribute__((aligned(4))) = {
+const uint32_t improved_amp_flt_atk[128] __attribute__((aligned(4))) = {
     0x00000, 0x2f499, 0x42751, 0x4d097, 0x54128, 0x59e5b, 0x5db60, 0x60cd9,
     0x64cd8, 0x67e49, 0x6a5a0, 0x6c5ad, 0x6e04a, 0x6f6be, 0x713e1, 0x73515,
     0x75214, 0x76ba0, 0x7824c, 0x7968e, 0x7a8c4, 0x7b93a, 0x7c82d, 0x7d5d0,
@@ -107,7 +110,7 @@ const uint32_t envelopes_flt_atk[128] __attribute__((aligned(4))) = {
 
 // AMP DEC knob -> one-pole coefficient (time to -60 dB, for the VCA at 0.918x), read by stock
 // through the lea at 0x40109bee.
-const uint32_t envelopes_amp_dec[128] __attribute__((aligned(4))) = {
+const uint32_t improved_amp_amp_dec[128] __attribute__((aligned(4))) = {
     0x00000, 0x0889d, 0x110f2, 0x1933b, 0x1dff5, 0x2246e, 0x26b39, 0x29fbb,
     0x2c836, 0x2e85d, 0x30508, 0x33065, 0x354ef, 0x37423, 0x38f18, 0x3a69d,
     0x3bb51, 0x3cdae, 0x3de14, 0x3eccf, 0x3fa1d, 0x40c64, 0x4226b, 0x43696,
@@ -128,7 +131,7 @@ const uint32_t envelopes_amp_dec[128] __attribute__((aligned(4))) = {
 
 // FILTER DEC and REL knob -> coefficient (the filter runs at the OS model's speed), read by
 // stock through the leas at 0x4010d342, 0x4010d3b2 and 0x4010d3da.
-const uint32_t envelopes_flt_dec[128] __attribute__((aligned(4))) = {
+const uint32_t improved_amp_flt_dec[128] __attribute__((aligned(4))) = {
     0x00000, 0x07968, 0x0f951, 0x179ce, 0x1ca90, 0x1ffe0, 0x24b38, 0x28362,
     0x2aeca, 0x2d154, 0x2ed76, 0x309a3, 0x33108, 0x352b3, 0x36fcf, 0x38939,
     0x39f9b, 0x3b377, 0x3c535, 0x3d527, 0x3e38f, 0x3f0a4, 0x3fc93, 0x40f01,
@@ -148,8 +151,8 @@ const uint32_t envelopes_flt_dec[128] __attribute__((aligned(4))) = {
 };
 
 // AMP HLD knob -> hold in ticks of 2 samples, whole blocks of 16, read by stock through the lea
-// at 0x40109bc2 and by envelopes_voice. 0 is no hold and 127 AUTO (not read).
-const int32_t envelopes_hold[128] __attribute__((aligned(4))) = {
+// at 0x40109bc2 and by improved_amp_voice. 0 is no hold and 127 AUTO (not read).
+const int32_t improved_amp_hold[128] __attribute__((aligned(4))) = {
     0, 16, 32, 48, 64, 80, 96, 112,
     128, 144, 160, 176, 192, 208, 224, 240,
     272, 304, 336, 368, 400, 432, 512, 592,
@@ -255,16 +258,16 @@ __attribute__((noinline)) static void follow(struct amp *a, uint32_t rate, uint3
 // The writer's skip state (amp-write.s reads it for every voice every block), kept together so a
 // voice with nothing to do touches three 16-byte lines: [0] the voices whose last record left the
 // level follower unchanged, [4 + v] and [12 + v] that record's rate and level words.
-volatile uint32_t envelopes_gate[20] __attribute__((aligned(16)));
-#define GATE_STILL envelopes_gate[0]
-#define GATE_RATE(v) envelopes_gate[4 + (v)]
-#define GATE_LW(v) envelopes_gate[12 + (v)]
+volatile uint32_t improved_amp_gate[20] __attribute__((aligned(16)));
+#define GATE_STILL improved_amp_gate[0]
+#define GATE_RATE(v) improved_amp_gate[4 + (v)]
+#define GATE_LW(v) improved_amp_gate[12 + (v)]
 
-// Called by envelopes_write (amp-write.s) for every voice every block, after stock's state
+// Called by improved_amp_write (amp-write.s) for every voice every block, after stock's state
 // machine and before the record is stored; returns the rate word to store. st[0] is the
 // voice's state, st[1] its hold counter (cleared at the trig, +16 a block in state 2, already
 // added this block); snd[0] is the track's ATK, snd[2] its HLD.
-uint32_t envelopes_voice(int32_t v, volatile int32_t *st, const volatile int8_t *snd, uint32_t rate,
+uint32_t improved_amp_voice(int32_t v, volatile int32_t *st, const volatile int8_t *snd, uint32_t rate,
                      uint32_t lw)
 {
     struct amp *a = &amps[v & 7], was = *a;
@@ -320,7 +323,7 @@ static int32_t hold_jump(const void *fn, int32_t value, int32_t delta, int32_t m
 }
 
 // The records are built at boot; the jump goes in once and is checked at the UI's rate.
-void envelopes_tick(void *ctrl)
+void improved_amp_tick(void *ctrl)
 {
     (void)ctrl;
     if (JUMP_INVOKER(ID_A_HLD) != (word_t)hold_jump) {
@@ -384,6 +387,76 @@ __attribute__((noinline)) static void put_time(char *p, uint32_t ticks)
     put_text(put_uint(p, (ticks + 12000) / 24000), "s");
 }
 
+// ---- HLD in steps ----
+typedef uint32_t (*get0_t)(void);
+typedef int (*index_t)(uint32_t);
+#define PROJECT ((get0_t)PROJECT_AT)
+#define TRACK_INDEX_OF ((index_t)TRACK_INDEX_OF_AT)
+#define TEMPO_WORD (*(volatile int32_t *)TEMPO_WORD_AT)     // BPM x 120
+#define SEQ_PATTERN (*(volatile int8_t *)SEQ_PATTERN_AT)
+#define PATTERN(p) ((const volatile int8_t *)PATTERNS_AT + 85760 * (p))
+#define SPEED_PULSES ((const int32_t *)SPEED_PULSES_AT)    // 3, 4, 6, 8, 12, 24, 48 pulses a step
+#define PROJECT_TRACKSEL 48                                // the project's track selection
+#define PAT_SCALE 85689                                    // 1: ADVANCED, each track its own speed
+#define PAT_SPEED 85690                                    // 0..6, as SPEED_PULSES
+#define TRACK_BYTES 917
+#define TRK_SPEED 711
+
+// The selected track's step in ticks of 2 samples, x 4: pulses x 60000 / BPM ms, 24 ticks a ms.
+static uint32_t step_ticks4(void)
+{
+    int track = TRACK_INDEX_OF(PROJECT() + PROJECT_TRACKSEL), p = SEQ_PATTERN, speed = 2;
+    int32_t tempo = TEMPO_WORD;
+
+    if (p >= 0 && p < 128) {
+        const volatile int8_t *pattern = PATTERN(p);
+        speed = pattern[PAT_SCALE] == 1 && (unsigned)track < 12 ? pattern[TRACK_BYTES * track + TRK_SPEED]
+                                                                 : pattern[PAT_SPEED];
+    }
+    if (speed < 0 || speed > 6)
+        speed = 2;
+    if (tempo < 30 * 120 || tempo > 300 * 120)
+        tempo = 120 * 120;
+    return (uint32_t)SPEED_PULSES[speed] * 28800000u / (uint32_t)tempo;
+}
+
+// A hold in steps, three digits: "0", "0.005", "0.10", "2.40", "31.2", "124".
+__attribute__((noinline)) static void put_steps(char *p, uint32_t ticks)
+{
+    uint32_t step4 = step_ticks4(), q, d;
+
+    if (!ticks) {
+        put_text(p, "0");
+        return;
+    }
+    q = (ticks * 4000 + step4 / 2) / step4;     // thousandths of a step
+    if (q < 100) {
+        *p++ = '0';
+        *p++ = '.';
+        *p++ = '0';
+        *p++ = (char)('0' + q / 10);
+        *p++ = (char)('0' + q % 10);
+        *p = 0;
+        return;
+    }
+    if ((d = (q + 5) / 10) < 1000) {            // hundredths, below 10
+        p = put_uint(p, d / 100);
+        *p++ = '.';
+        *p++ = (char)('0' + d / 10 % 10);
+        *p++ = (char)('0' + d % 10);
+        *p = 0;
+        return;
+    }
+    if ((d = (q + 50) / 100) < 1000) {          // tenths, below 100
+        p = put_uint(p, d / 10);
+        *p++ = '.';
+        *p++ = (char)('0' + d % 10);
+        *p = 0;
+        return;
+    }
+    put_uint(p, (q + 500) / 1000)[0] = 0;
+}
+
 // log2(y) x 65536, y > 0.
 __attribute__((noinline)) static int32_t log2_q16(uint32_t y)
 {
@@ -440,7 +513,7 @@ static uint32_t scaled(uint32_t ticks, uint32_t f)
     return (ticks >> 10) * f + (((ticks & 1023) * f + 512) >> 10);
 }
 
-static int envelopes_text(struct core_text *t)
+static int improved_amp_text(struct core_text *t)
 {
     int v = t->value >> 8;
 
@@ -456,7 +529,7 @@ static int envelopes_text(struct core_text *t)
         if (v == HLD_AUTO)
             put_text(t->buf, "AUTO");
         else
-            put_time(t->buf, v ? (uint32_t)HOLD_TICKS[v] : 0);
+            put_steps(t->buf, v ? (uint32_t)HOLD_TICKS[v] : 0);
         break;
     case ID_A_DEC:
         if (v == 127)
@@ -465,7 +538,7 @@ static int envelopes_text(struct core_text *t)
             put_time(t->buf, scaled(t60_ticks(AMP_DECAY[v] & 0xfffff), HW_DECAY));
         break;
     case ID_F_ATK:
-        put_time(t->buf, linear_ticks(127, envelopes_flt_atk[v]));
+        put_time(t->buf, linear_ticks(127, improved_amp_flt_atk[v]));
         break;
     case ID_F_DEC:
     case ID_F_REL:
@@ -477,4 +550,4 @@ static int envelopes_text(struct core_text *t)
     return CORE_TEXT_DONE;
 }
 
-const struct core_param envelopes_params = { ID_F_ATK, ID_A_DEC, 0, 0, envelopes_text };
+const struct core_param improved_amp_params = { ID_F_ATK, ID_A_DEC, 0, 0, improved_amp_text };
