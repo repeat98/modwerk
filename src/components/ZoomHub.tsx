@@ -103,8 +103,8 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
     if (!link || !plan) return
     const names = (effects: readonly ZoomEffect[]) => effects.map(effect => effect.name).join(', ')
     if (!window.confirm('Sync your set to the ' + model + '? ' + (plan.install.length ? 'Installs ' + names(plan.install) + '. ' : '') + (plan.remove.length ? 'Removes ' + names(plan.remove) + ', which your set no longer has. ' : '') + 'Every write is read back, and the effect list from before is kept. Don’t touch the pedal or the cable until it’s done.')) return
-    let previousList: number[] | undefined, step = 0
-    const steps = plan.remove.length + plan.install.length, say = (what: string) => { if (alive.current) setSyncing({ what, step: ++step, steps }) }
+    let previousList: number[] | undefined, step = 0, what = ''
+    const steps = plan.remove.length + plan.install.length, say = (next: string) => { what = next; step++; if (alive.current) setSyncing({ what, step, steps }) }
     try {
       for (const effect of plan.remove) { say('Removing ' + effect.name); previousList ??= (await link.removeFile(effect.platform.file)).previousList }
       for (const effect of plan.install) {
@@ -113,6 +113,9 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
         if (result.moved) rememberId(result.moved.to, file)
         previousList ??= result.previousList
       }
+    } catch (error) {
+      // A failed step stops the sync and the steps before it stay done: say which, and offer the effect list from before the sync.
+      throw Object.assign(new Error(what + ' failed (step ' + step + ' of ' + steps + (step > 1 ? '; the steps before it are done' : '') + '). ' + (error as Error).message, { cause: error }), { previousList: previousList ?? (error as { previousList?: number[] }).previousList })
     } finally { if (alive.current) setSyncing(undefined) }
     if (alive.current) setChanged({ text: 'Your ' + model + ' has your set. Power-cycle the pedal to load it.', list: keepList(previousList) })
     await read()
@@ -235,7 +238,7 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
               : syncing ? <><strong>{syncing.what} · {syncing.step} of {syncing.steps}</strong>{progress && <> · {progress.label}{progress.total ? <> {progress.done} of {progress.total}</> : '…'}</>}<br />Don’t unplug or touch the pedal until it’s done.</>
               : plan.install.length || plan.remove.length ? <>Installs {plan.install.length} · Removes {plan.remove.length}{free !== undefined && <> · {plan.adds > 0 && <>needs {Math.ceil(plan.adds / 1024)} KB of </>}{kb(free)} free</>}{!fits && <><br />Not enough space on your {model}: take effects out of the set, or remove effects you added by hand.</>}</>
               : selected.moduleIds.length ? <span className="hub-insync"><span className="unit-led is-on" aria-hidden="true" />Already on your {model}{free !== undefined && <> · {kb(free)} free</>}</span> : 'No effects in this set.'}</p>
-            <button type="button" className="button button-primary" disabled={!plan || busy || !fits || (!plan.install.length && !plan.remove.length)} onClick={sync}><Icon name="download" size={16} />Sync to {model}</button>
+            <button type="button" className="button button-primary" disabled={!plan || busy || !writable || !fits || (!plan.install.length && !plan.remove.length)} title={readOnly} onClick={sync}><Icon name="download" size={16} />Sync to {model}</button>
           </div>
           {error && <p role="alert" className="hub-error">{error}</p>}
           {changed && <p role="status" className="hub-cell-note">{changed.text}{changed.list && <> <a className="text-button" href={changed.list.url} download={changed.list.name}>Save the effect list from before</a></>}</p>}

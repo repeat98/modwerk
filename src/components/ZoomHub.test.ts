@@ -240,4 +240,33 @@ describe('syncing the set to the pedal', () => {
     expect(open().querySelector('.hub-sync p')?.textContent).toMatch(/needs 1 KB of 5 KB free.*Not enough space/)
     expect(button('Sync to MS-70CDR').disabled).toBe(true)
   })
+  it('stops at a failed step, says which and what was done, and offers the effect list from before the sync', async () => {
+    vi.stubGlobal('confirm', () => true)
+    const scope = fakeEffect('SCOPE.ZDL', 8, 468, '0.03', 900), dirt = fakeEffect('DIRT.ZDL', 8, 469, '0.03', 700)
+    const effects = [await listed('scope', 'Scope.ZDL', 468, scope.data), await listed('dirt', 'Dirt.ZDL', 469, dirt.data)]
+    vi.stubGlobal('fetch', async () => new Response(Uint8Array.from(scope.data)))
+    const fake = fakeZoomPedal({ files: [dirt, fakeEffectList({ 8: ['DIRT.ZDL'] })], failWriteOf: 'SCOPE.ZDL' }), link = new ZoomLink(() => Promise.resolve(fake.access), 200)
+    await link.connect()
+    const live = { id: 'live', name: 'Live', device: device.id, moduleIds: ['scope'], moduleVersions: {}, keepStockFx2: false, createdAt: '2026-11-09T00:00:00Z', updatedAt: '2026-11-09T00:00:00Z' }
+    await act(() => root.render(createElement(ZoomHub, { device, view: 'set', link, sets: [live], selectedId: 'live', onSelect: () => {}, onNew: () => {}, onSetAction: () => {}, listed: effects })))
+    await click(button('Read the pedal'))
+    for (let i = 0; i < 100 && !/Installs/.test(open().textContent ?? ''); i++) await settle()
+    await click(button('Sync to MS-70CDR'))
+    for (let i = 0; i < 200 && !open().querySelector('.hub-error'); i++) await settle()
+    expect(open().querySelector('.hub-error')?.textContent).toMatch(/^Installing scope failed \(step 2 of 2; the steps before it are done\)\. The pedal stopped answering while writing SCOPE\.ZDL/)
+    expect(fake.files.some(f => f.name === 'DIRT.ZDL')).toBe(false)
+    expect(open().querySelector<HTMLAnchorElement>('a[download^="pedal-FLST_SEQ"]')).not.toBeNull()
+    await idle(link)
+  })
+  it('won’t sync a pedal it may not write to', async () => {
+    const scope = fakeEffect('SCOPE.ZDL', 8, 468, '0.03', 900), fake = fakeZoomPedal({ firmware: '2.00', files: [fakeEffectList({ 8: [] })] }), link = new ZoomLink(() => Promise.resolve(fake.access), 200)
+    await link.connect()
+    const live = { id: 'live', name: 'Live', device: device.id, moduleIds: ['scope'], moduleVersions: {}, keepStockFx2: false, createdAt: '2026-11-09T00:00:00Z', updatedAt: '2026-11-09T00:00:00Z' }
+    const effects = [await listed('scope', 'Scope.ZDL', 468, scope.data)]
+    await act(() => root.render(createElement(ZoomHub, { device, view: 'set', link, sets: [live], selectedId: 'live', onSelect: () => {}, onNew: () => {}, onSetAction: () => {}, listed: effects })))
+    await click(button('Read the pedal'))
+    for (let i = 0; i < 100 && !/Installs/.test(open().textContent ?? ''); i++) await settle()
+    expect(button('Sync to MS-70CDR').disabled).toBe(true)
+    expect(button('Sync to MS-70CDR').title).toMatch(/tested only on the MS-70CDR with Zoom’s firmware 2\.10/)
+  })
 })
