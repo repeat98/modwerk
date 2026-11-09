@@ -216,10 +216,11 @@ Both rows came back after a power-off and two cold boots, and GLOBAL slot 2 kept
 SEQUENCER CONFIG 30 times caused no trouble. 0.5.1 (PS08) changes only the second row's label: its
 full text shows, its box lines up with the other rows', and a card saved by PS07 with the row
 checked boots PS08 with it still checked. 0.3.0 (build PS04) and 0.4.0 (PS05), with one setting,
-and 0.5.0 (PS07) ran on an Analog Rytm MKII, as reported. Memory (0.7.0): a 1196-byte
-`.run` in the 128 KiB shared mod area, no `.bss`, no fast SRAM, three storage bits. Nothing runs in
-the audio, sequencer or tick paths; each key press costs a few compares (static reading, not a
-measurement).
+and 0.5.0 (PS07) ran on an Analog Rytm MKII, as reported. Memory (0.8.0): a 1524-byte
+`.run` in the 128 KiB shared mod area (0.7.0: 1196), no `.bss`, no fast SRAM, three storage bits.
+Each key press costs a few compares; the audio block's trig loop a few compares per track (13 a
+block) and its pad glow store a table read per track (12 a block); the tick reads MUTE ALL SOUND
+about 20 times a second (static reading, not a measurement).
 
 ## Authorship and licences
 

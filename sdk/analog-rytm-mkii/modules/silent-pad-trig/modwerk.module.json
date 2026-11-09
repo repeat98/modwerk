@@ -103,7 +103,7 @@
     "conflicts": [],
     "limitations": [
       "Built for OS 1.74 only, with core-ar2 0.3.",
-      "0.5.0 (PS07) and 0.5.1 (PS08) ran on a unit: both settings worked as intended and the renamed row fits, as reported. MIDI out and STEP REC not yet tested on a unit. 0.6.0 with MUTE ALL SOUND ran on a unit as PS10, PS11 and PS12, as reported. MIDI notes in on a unit not tested. 0.7.0's FUNC + TRIG and LIVE REC TRIG keys ran on a unit as PS14, as reported. 0.8.0's muted RTRG rolls in LIVE REC ran on a unit in the combined build AT04, as reported.",
+      "0.5.x (PS07, PS08), 0.6.0 (PS10 to PS12), 0.7.0 (PS14, PS16) and 0.8.0 (in the combined build AT04) ran on a unit, as reported. MIDI out, STEP REC and MIDI notes in are not yet tested on a unit.",
       "A note already ringing when you mute keeps ringing, as stock: MUTE ALL SOUND stops new hits and does not cut the voice or the delay and reverb tails. In LIVE RECORDING a muted pad's hit still sets the track's pitch and velocity, so a note the track itself still rings can change pitch.",
       "The SOUND BROWSER's audition reaches the voice by another path, so it still plays on a muted track, on purpose (read in the code, not tested). A muted hit runs no envelope or LFO trig. MIDI out gets no note on or poly pressure from a muted pad, but its release still sends a note off, which a receiver ignores.",
       "FUNC + TRIG is stock in GRID and STEP RECORDING: it places a trig in GRID RECORDING and plays and selects in STEP RECORDING. Elsewhere stock's FUNC + TRIG plays nothing, and the module makes it play where TRIG keys are silent. 0.7.0 renames the row from SILENT PAD LIVEREC to SILENT P+T LIVEREC.",
@@ -144,7 +144,7 @@
   "evidence": {
     "tier": "author-hardware",
     "moduleVersion": "0.8.0-experimental",
-    "sourceSha256": "4e0e6f073b8032f3521167b3a376791c70e590638800950b84e17a6adfcb5680",
+    "sourceSha256": "ad162c3df4a526a733d60d0f1cdb3224398263711f85bc0c33bb3ff2d56bb5e6",
     "reports": [
       "TESTING.md"
     ],
@@ -215,9 +215,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.7.0-experimental",
-        "imageSha256": "0b76d7322f5f19415c6c3eacf2201b96e4ff09bd73f2c497cfbde254c861afa9",
-        "setup": "Headless rytm-emu 2ac0f1f (dtboot) cold-booting PS16: the vendored core-ar2 0.7 (f1e9cb2c) and this folder's Silent Pad+Trig 0.7.0, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.8.0-experimental",
+        "imageSha256": "0c55c4c8a661b7b05e9516a40bc245a4892e5aed76952b3433f1de5b5b59d6ce",
+        "setup": "Headless rytm-emu 2ac0f1f (dtboot) cold-booting PS17: the vendored core-ar2 0.7 (f1e9cb2c) and this folder's Silent Pad+Trig 0.8.0, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -231,9 +231,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.7.0-experimental",
-        "imageSha256": "0b76d7322f5f19415c6c3eacf2201b96e4ff09bd73f2c497cfbde254c861afa9",
-        "setup": "Headless rytm-emu 2ac0f1f (dtboot) cold-booting PS16: the vendored core-ar2 0.7 (f1e9cb2c) and this folder's Silent Pad+Trig 0.7.0, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.8.0-experimental",
+        "imageSha256": "0c55c4c8a661b7b05e9516a40bc245a4892e5aed76952b3433f1de5b5b59d6ce",
+        "setup": "Headless rytm-emu 2ac0f1f (dtboot) cold-booting PS17: the vendored core-ar2 0.7 (f1e9cb2c) and this folder's Silent Pad+Trig 0.8.0, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -247,9 +247,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.7.0-experimental",
-        "imageSha256": "0b76d7322f5f19415c6c3eacf2201b96e4ff09bd73f2c497cfbde254c861afa9",
-        "setup": "Headless rytm-emu 2ac0f1f (dtboot) cold-booting PS16: the vendored core-ar2 0.7 (f1e9cb2c) and this folder's Silent Pad+Trig 0.7.0, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.8.0-experimental",
+        "imageSha256": "0c55c4c8a661b7b05e9516a40bc245a4892e5aed76952b3433f1de5b5b59d6ce",
+        "setup": "Headless rytm-emu 2ac0f1f (dtboot) cold-booting PS17: the vendored core-ar2 0.7 (f1e9cb2c) and this folder's Silent Pad+Trig 0.8.0, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -263,9 +263,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.7.0-experimental",
-        "imageSha256": "0b76d7322f5f19415c6c3eacf2201b96e4ff09bd73f2c497cfbde254c861afa9",
-        "setup": "Headless rytm-emu 2ac0f1f (dtboot) cold-booting PS16: the vendored core-ar2 0.7 (f1e9cb2c) and this folder's Silent Pad+Trig 0.7.0, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.8.0-experimental",
+        "imageSha256": "0c55c4c8a661b7b05e9516a40bc245a4892e5aed76952b3433f1de5b5b59d6ce",
+        "setup": "Headless rytm-emu 2ac0f1f (dtboot) cold-booting PS17: the vendored core-ar2 0.7 (f1e9cb2c) and this folder's Silent Pad+Trig 0.8.0, linked by Modwerk on the owner's stock OS 1.74. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]
