@@ -190,7 +190,8 @@ export default function App() {
   const zoomConnected = zoomState.identity && ['ready', 'reading', 'writing'].includes(zoomState.status) ? DEVICES.find(device => device.family === 'zoom' && device.name === zoomState.identity!.model) : undefined
   const [unitKit, setUsbKit] = useState<{ link: OctatrackLink; prepareUpdate?: PrepareUpdate; readInventory?: ReadInventory } | null>(null)
   useEffect(() => { if (import.meta.env.DEV && usbLinkPreview) void import('./dev/octatrack-link-fake').then(fake => setUsbKit(fake.previewKit())) }, [])
-  useEffect(() => { if (usbAllowed && !unitKit) void beta().then(module => setUsbKit(kit => kit ?? module.createUsbKit())) }, [usbAllowed, unitKit])
+  // A beta chunk that did not arrive already shows PageError through the sidebar's parts from it; this catch keeps it out of the diagnostics as an unhandled rejection.
+  useEffect(() => { if (usbAllowed && !unitKit) void beta().then(module => setUsbKit(kit => kit ?? module.createUsbKit())).catch(console.error) }, [usbAllowed, unitKit])
   // Beta only: without access every USB view unmounts, and the link lets go of the unit.
   const usbKit = !mobileWorkspace && (usbLinkPreview || usbAllowed) ? unitKit : null
   const usbLink = usbKit?.link
@@ -215,7 +216,7 @@ export default function App() {
   // A Zoom pedal's page (ZoomHub.tsx): #<machine>/pedal, beta only, over its own Web MIDI link.
   const zoomHub = betaUi ? parseZoomHubRoute(moduleRoute) : undefined
   const zoomHubName = zoomHub?.device.name
-  useEffect(() => { if (zoomHub && !mobileWorkspace) void beta().then(module => setZoomLink(link => link ?? module.createZoomLink())) }, [!!zoomHub, mobileWorkspace]) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (zoomHub && !mobileWorkspace) void beta().then(module => setZoomLink(link => link ?? module.createZoomLink())).catch(console.error) }, [!!zoomHub, mobileWorkspace]) // eslint-disable-line react-hooks/exhaustive-deps
   const missingRoute=!zoomHub&&!faqRoute&&!projectsRoute&&!overviewRoute&&!allRoute&&!devicesRoute&&!machineView&&route!=='octatrack'&&!route.startsWith('octatrack/')&&!route.startsWith('device/')&&!forumRoute&&!accountRoute&&!developerRoute&&!['library',...LIBRARY_CATEGORIES,'module-sets','configuration','faq','credits','review','admin','privacy','impressum','community-rules','modding-guidelines','report-content'].includes(route)&&!route.startsWith('submit')&&!detailModule&&!communityModule&&!route.startsWith('module-set/')
   const filter = LIBRARY_CATEGORIES.find(category => category === route) ?? 'all'
   const hubRoute = betaUi && (route === 'octatrack' || route.startsWith('octatrack/') || route === 'configuration')

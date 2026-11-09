@@ -60,7 +60,8 @@ export function useWorkspace() {
         if (cancelled) return
         replaceConfigurations(items)
         changeActive(items.some(item => item.id === rememberedId) ? rememberedId! : items[0].id)
-        const stored = await store.readFirmware()
+        // The saved sets are open by now: a firmware record that cannot be read or forgotten must not replace them.
+        const stored = await store.readFirmware().catch(() => undefined)
         if (cancelled) return
         if (stored) {
           const request = requestGeneration.current
@@ -73,7 +74,7 @@ export function useWorkspace() {
             setFirmware(verified); setFirmwareSaved(true); setFileState('ready')
           } catch {
             // A file chosen or cleared during the check supersedes it and must not be forgotten.
-            if (!cancelled && request === requestGeneration.current) { setFileState('error'); setFileError('The saved firmware could not be verified. Choose the original 1.40C file again.'); await store.forgetFirmware() }
+            if (!cancelled && request === requestGeneration.current) { setFileState('error'); setFileError('The saved firmware could not be verified. Choose the original 1.40C file again.'); await store.forgetFirmware().catch(() => {}) }
           }
         }
       } catch (error) {
