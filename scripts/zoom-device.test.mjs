@@ -129,6 +129,14 @@ describe('the developer MCP’s Zoom tools', () => {
     expect(service.tools.find(tool => tool.name === 'zoom_list').annotations.readOnlyHint).toBe(true)
     expect(writes(pedal)).toEqual([])
   })
+  it('starts again after the pedal went away, as these ports don’t say', async () => {
+    service = await open()
+    await service.call('zoom_status')
+    pedal.output.send = () => {}   // unplugged: the link still says ready
+    await expect(service.call('zoom_list')).rejects.toThrow(/stopped answering/)
+    pedal = fakeZoomPedal({ files: effects() })   // plugged in again
+    expect((await service.call('zoom_list')).files).toHaveLength(3)
+  }, 15000)
   it('refuses Zoom tools without --zoom-midi, and writes without --allow-device-writes, confirm=true and a plain effect name', async () => {
     service = await open({ zoomMidi: false })
     await expect(service.call('zoom_status')).rejects.toThrow('--zoom-midi')

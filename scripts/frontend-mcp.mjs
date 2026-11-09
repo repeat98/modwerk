@@ -205,6 +205,11 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     }
     return zoom.link
   }
+  async function zoomRun(command, file, confirmed = false) {
+    try { return await zoomCommand(await zoomLink(), command, file, { dir: dataDir, confirmed }) }
+    // An unplugged pedal leaves the link ready (these ports have no hot-plug): start again on the next call.
+    catch (error) { zoom?.access.close?.(); zoom = undefined; throw error }
+  }
   const zoomWrite = (args, name) => {
     if (!options.allowDeviceWrites || args.confirm !== true) throw new Error('Zoom writes require --allow-device-writes and confirm=true.')
     if (!/^[A-Za-z0-9_]{1,8}\.zdl$/i.test(args.file)) throw new Error('Name one effect file: at most 8 letters, digits or underscores, then .ZDL.')
@@ -346,11 +351,11 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     },
     device_keep: async args => finish(args, true),
     device_undo: async args => finish(args, false),
-    zoom_status: async () => zoomCommand(await zoomLink(), 'status', undefined, { dir: dataDir }),
-    zoom_list: async () => zoomCommand(await zoomLink(), 'list', undefined, { dir: dataDir }),
-    zoom_backup: async () => zoomCommand(await zoomLink(), 'backup', undefined, { dir: dataDir }),
-    zoom_install: async args => { const file = zoomWrite(args, true); return zoomCommand(await zoomLink(), 'install', file, { dir: dataDir, confirmed: true }) },
-    zoom_remove: async args => { const file = zoomWrite(args, false); return zoomCommand(await zoomLink(), 'remove', file, { dir: dataDir, confirmed: true }) },
+    zoom_status: async () => zoomRun('status'),
+    zoom_list: async () => zoomRun('list'),
+    zoom_backup: async () => zoomRun('backup'),
+    zoom_install: async args => zoomRun('install', zoomWrite(args, true), true),
+    zoom_remove: async args => zoomRun('remove', zoomWrite(args, false), true),
     board_claims: async args => {
       const query = new URLSearchParams(Object.entries({ kind: args.kind, key: args.key, holder: args.holder, released: args.released && '1' }).filter(([, value]) => value))
       const { claims, released } = await board.boardRequest('/agent-board/claims' + (query.size ? '?' + query : ''), boardOptions())
