@@ -22,7 +22,8 @@
       "../modwerk/seq-grid.c",
       "../modwerk/seq-phrase.c",
       "../modwerk/seq-phrase-entry.s",
-      "../modwerk/project-generation.s"
+      "../modwerk/project-generation.s",
+      "../modwerk/project-kitdata.c"
     ],
     "sites": [
       {
