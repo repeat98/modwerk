@@ -30,8 +30,8 @@ static unsigned int swing_trig(const uint8_t *track, unsigned int step)
     return track[step * 2u + 1u] & 16u;
 }
 
-void core_seq_grid_observe(const uint8_t *pattern, uint32_t track, uint32_t step,
-                           uint32_t lookahead)
+static void observe_grid(const uint8_t *pattern, uint32_t track, uint32_t step,
+                         uint32_t lookahead, const uint8_t *play_event)
 {
     const uintptr_t address = (uintptr_t)pattern;
     const uintptr_t offset = address - PATTERN_BASE;
@@ -68,12 +68,33 @@ void core_seq_grid_observe(const uint8_t *pattern, uint32_t track, uint32_t step
         .step = (uint8_t)step,
         .length = (uint8_t)length,
         .pulses_per_step = (uint8_t)SPEED_PULSES[speed],
+        .flags = play_event ? DT2_SEQ_GRID_PLAY_SOURCE : 0,
     };
-    if (core_seq_grid_timing(&window, SEQ_TICK, lookahead, pattern[0x1db78], flags)) {
+    const unsigned int swing = pattern[0x1db78];
+    uint32_t tick = SEQ_TICK;
+    if (play_event) {
+        tick = *(const uint32_t *)(play_event + 8);
+        if (flags & DT2_SEQ_GRID_SWING_NOW) {
+            tick -= window.pulses_per_step * swing * UINT32_C(18000);
+        }
+    }
+    if (core_seq_grid_timing(&window, tick, lookahead, swing, flags)) {
         for (unsigned int i = 0; i < DT2_SEQ_GRID_HANDLERS && ev_seq_grid[i]; ++i) {
             ev_seq_grid[i](&window);
         }
     }
+}
+
+void core_seq_grid_observe(const uint8_t *pattern, uint32_t track, uint32_t step,
+                           uint32_t lookahead)
+{
+    observe_grid(pattern, track, step, lookahead, 0);
+}
+
+static int stock_event_valid(const uint8_t *event)
+{
+    const uintptr_t offset = (uintptr_t)event - EVENT_BASE;
+    return offset < EVENT_COUNT * EVENT_STRIDE && offset % EVENT_STRIDE == 0;
 }
 
 static uint16_t scale_mask(uint8_t scale)
@@ -101,8 +122,7 @@ void core_seq_note_bridge(uint8_t *event, const uint8_t *pattern, uint32_t track
         return;
     }
 
-    const uintptr_t event_offset = (uintptr_t)event - EVENT_BASE;
-    if (event_offset >= EVENT_COUNT * EVENT_STRIDE || event_offset % EVENT_STRIDE != 0) {
+    if (!stock_event_valid(event)) {
         return;
     }
 
@@ -134,4 +154,14 @@ void core_seq_note_bridge(uint8_t *event, const uint8_t *pattern, uint32_t track
         (uint16_t)slot, mask, (uint8_t)track, (uint8_t)step, root, DT2_SEQ_NOTE_EUCLIDEAN
     };
     event[0x26] = (uint8_t)core_seq_note_pitch(&context, event[0x26]);
+}
+
+void core_seq_note_start_bridge(uint8_t *event, const uint8_t *pattern, uint32_t track)
+{
+    if (ev_seq_grid[0] && stock_event_valid(event) &&
+        event[0] == 0 && event[1] == 0 && event[2] == 0 && event[3] <= 1 &&
+        event[7] == 1 && event[13] == 1 && *(const uint32_t *)(event + 16) == track) {
+        observe_grid(pattern, track, 0, 1, event);
+    }
+    core_seq_note_bridge(event, pattern, track, 0);
 }

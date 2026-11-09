@@ -17,12 +17,11 @@ core_seq_note_start:
         movea.l %a5,%a0
         suba.l  %d1,%a0
         move.l  16(%sp),%d1
-        clr.l   -(%sp)
         move.l  %d0,-(%sp)
         move.l  %a0,-(%sp)
         move.l  %d1,-(%sp)
-        jsr     core_seq_note_bridge
-        lea     16(%sp),%sp
+        jsr     core_seq_note_start_bridge
+        lea     12(%sp),%sp
         movem.l (%sp),%d0-%d1/%a0-%a1
         lea     16(%sp),%sp
 start_stock:

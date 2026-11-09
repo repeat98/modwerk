@@ -4,9 +4,9 @@
 
 `ev_seq_grid` observes the audio constructor before stock tests for a trig. It uses the existing playback detour and returns immediately when the collection is empty. The callback receives the originating pattern, track and step plus four adjacent deadlines in stock musical time. The base derives these from the stock tick, lookahead, speed table and per-step swing flags. The callback is read-only.
 
-The prototype covers ordinary audio tracks during playback. It skips mapped and Euclidean tracks, non-pattern sources, and pending pattern switches. The initial PLAY path and the stock queue writer need separate verification. This prototype has no public hook index.
+The prototype covers ordinary audio tracks during playback. On initial PLAY, the existing queue bridge publishes step zero when stock created an audio source event. It skips mapped and Euclidean tracks, non-pattern sources, and pending pattern switches. The stock queue writer is a separate experiment. This prototype has no public hook index.
 
-Digikit `d6de4d0` reported 49 windows at swung 2× and 25 at straight 1×, including rests. All 40 captured track notes matched their grid onset. The empty, observer and renderer builds preserved the stock relative queue deadlines in the swung 2× fixture. The renderer used the Chord Arp engine at 1/32 and generated 168 checked note requests. It submitted no events. The renderer image SHA-256 was `0ad1f1d953a1bdac2facab959b46f39b2e3efe248d3a8f3ec1900854a55c8b7b`.
+Digikit `d6de4d0` reported 50 windows at swung 2× and 26 at straight 1×, including the PLAY source and rests. All 40 captured playback notes matched their grid onset. The empty, observer and renderer builds preserved the stock relative queue deadlines in the swung 2× fixture. The renderer used the Chord Arp engine at 1/32 and generated 174 checked note requests. It submitted no events. The renderer image SHA-256 was `570640af06a9fa642badb5c7515bb911df98da467720e25a326d6f0fe1010190`.
 
 ## Pitch callback
 

@@ -9,6 +9,7 @@
 #define DT2_SEQ_GRID_SWING_NEXT 2u
 #define DT2_SEQ_GRID_SWING_PREVIOUS 4u
 #define DT2_SEQ_GRID_SWING_FOLLOWING 8u
+#define DT2_SEQ_GRID_PLAY_SOURCE 1u
 
 struct dt2_seq_grid_window {
     uint32_t nominal;
@@ -19,6 +20,7 @@ struct dt2_seq_grid_window {
     uint8_t step;
     uint8_t length;
     uint8_t pulses_per_step;
+    uint8_t flags;
     uint32_t previous;
     uint32_t following;
 };
