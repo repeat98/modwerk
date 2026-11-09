@@ -6,6 +6,7 @@ import type { ZoomFile, ZoomLink } from '../engine/zoom/zoom-link'
 import { ZOOM_DEVICE_IDS, effectInfo, installRefusal, isAddedEffect } from '../engine/zoom/zoom-protocol'
 import { useMobileWorkspace } from '../hooks/useMobileWorkspace'
 import { useZoomLink } from '../hooks/useZoomLink'
+import { avoidFor, rememberId } from '../engine/zoom/local-ids'
 import { Icon, type IconName } from './Icon'
 import './octatrack-link.css'
 import './zoom-hub.css'
@@ -17,11 +18,6 @@ const VIEWS: { view: ZoomHubView; title: string; icon: IconName }[] = [
 ]
 const kb = (bytes: number) => Math.round(bytes / 1024) + ' KB'
 const isCapture = (name: string) => /^(NAM|C)\d/i.test(name)
-// Local IDs this browser has given out, by file name: a stored patch may still point at one after its effect is
-// removed, so another effect never gets it. Lost with the browser's storage; then only the pedal's own IDs count.
-const LOCAL_ID_KEY = 'modwerk-zoom-local-ids'
-const givenIds = (): Record<string, string> => { try { return JSON.parse(localStorage.getItem(LOCAL_ID_KEY) || '{}') } catch { return {} } }
-const rememberId = (fxid: number, name: string) => { try { localStorage.setItem(LOCAL_ID_KEY, JSON.stringify({ ...givenIds(), [fxid]: name })) } catch { /* storage off: nothing to keep */ } }
 
 /**
  * Your Zoom pedal: the Octatrack page (OctatrackHub.tsx) for a Zoom MultiStomp, beta only. The pedal's own
@@ -56,8 +52,7 @@ export function ZoomHub({ device, view, link, header }: { device: DeviceProfile;
     if (refused) throw new Error(refused)
     const info = effectInfo(data)!
     if (!window.confirm('Install ' + name + ' (version ' + info.version + ', effect ID ' + info.gid + '/' + info.fxid + ', ' + kb(data.length) + ')? If another effect on the pedal has that ID, this one gets a free ID from 958 to 1023 instead. It is written, read back and added to the pedal’s effect list. Don’t touch the pedal or the cable until it’s done.')) return
-    const given = givenIds(), avoid = new Set(Object.keys(given).filter(id => given[id] !== name).map(Number))
-    const result = await link.installFile(name, data, { avoid }), moved = result.moved
+    const result = await link.installFile(name, data, { avoid: avoidFor(name) }), moved = result.moved
     if (moved) rememberId(moved.to, name)
     const done = result.unchanged ? name + ' is already this exact file.' : name + ' installed and read back identical. Power-cycle the pedal to load it.'
     const where = !moved ? '' : 'clash' in moved ? ' ' + moved.clash + ' already has ID ' + info.gid + '/' + moved.from + ', so ' + name + ' is ' + info.gid + '/' + moved.to + ' on this pedal. Patches made elsewhere with ' + name + ' won’t find it here.' : ' It keeps ID ' + info.gid + '/' + moved.to + ', which it was given when it was installed, so your patches still find it.'

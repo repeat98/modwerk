@@ -31,7 +31,7 @@ function linkedTab(): DetailTab {
   return tabs.find(value => value.toLowerCase() === query.get('tab')) ?? 'Overview'
 }
 
-export function ModuleDetailLayout({ id, title, family, detail, author, authorUrl, contributors, description, selected, onToggle, backHref, backLabel, preview, resources, notice, guide, issueReport, browse, onBackToResults, titleBadge, configureTarget, overviewIntro, addBlock, onSwap, modal = false }: {
+export function ModuleDetailLayout({ id, title, family, detail, author, authorUrl, contributors, description, selected, onToggle, backHref, backLabel, preview, resources, notice, guide, issueReport, browse, onBackToResults, titleBadge, configureTarget, overviewIntro, addBlock, onSwap, action, modal = false }: {
   browse?: CatalogBrowse | null; onBackToResults?: () => void
   /** Shown in a dialog over another page: no way back, since nothing navigated. */
   modal?: boolean
@@ -45,6 +45,8 @@ export function ModuleDetailLayout({ id, title, family, detail, author, authorUr
   overviewIntro?: ReactNode
   // What adding this module would do to the current configuration; undefined when it fits.
   addBlock?: AddBlock; onSwap?: (removeIds: readonly string[]) => void
+  /** In place of Add to set, for a module that goes onto the device by itself (a Zoom effect file). */
+  action?: ReactNode
 }) {
   const w = useSetWords()
   const navigation = catalogNeighbors(browse, id, hasBetaAccess(useCommunity().session))
@@ -85,11 +87,11 @@ export function ModuleDetailLayout({ id, title, family, detail, author, authorUr
         <p className="detail-description">{description}</p>
         {notice && <div className="detail-notice">{notice}</div>}
         <div className="module-add-region">
-          {pending?.kind === 'usb-only'
+          {action ?? (pending?.kind === 'usb-only'
             ? <button className="button button-quiet module-configure-action is-blocked" disabled title={pending.detail}><Icon name="lock" size={16} /><span className="add-block-label">{pending.reason}</span></button>
             : prompt.conflict
             ? <button ref={addTrigger} className="button button-quiet module-configure-action is-conflict" onClick={prompt.toggle} aria-expanded={prompt.open} aria-controls={prompt.id}><Icon name="swap" size={16} /><span className="add-block-label">{prompt.conflict.reason}</span></button>
-            : <button className={'button module-configure-action ' + (selected ? 'button-added' : 'button-primary')} onClick={configureTarget && !selected ? showConfiguration : onToggle} aria-pressed={selected}><Icon name={selected ? 'check' : configureTarget ? 'sliders' : 'plus'} size={16} />{selected ? 'Added to ' + w.set : configureTarget ? 'Configure ' + title : 'Add to ' + w.set}</button>}
+            : <button className={'button module-configure-action ' + (selected ? 'button-added' : 'button-primary')} onClick={configureTarget && !selected ? showConfiguration : onToggle} aria-pressed={selected}><Icon name={selected ? 'check' : configureTarget ? 'sliders' : 'plus'} size={16} />{selected ? 'Added to ' + w.set : configureTarget ? 'Configure ' + title : 'Add to ' + w.set}</button>)}
           {pending?.kind === 'usb-only' ? <p className="add-block-detail">{pending.detail}</p> : pending && !prompt.conflict && <AddBlockChip block={pending} />}
           {prompt.conflict && prompt.open && <AddBlockPrompt id={prompt.id} name={title} block={prompt.conflict} onCancel={prompt.close}
             onSwap={() => { onSwap?.(prompt.conflict?.swapRemoveIds ?? []); prompt.close() }} onAddAnyway={() => { onToggle(); prompt.close() }} />}

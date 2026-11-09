@@ -108,7 +108,7 @@ describe('module contract v3', () => {
 })
 
 describe('module contract v3, zdl (Zoom effect files)', () => {
-  const zdl = (): Record<string, any> => ({
+  const zdl = (): ReturnType<typeof template> => ({
     ...published(), machine: 'zoom-ms-70cdr', category: 'effects',
     compatibility: { releases: ['2.10'], requires: [], conflicts: [], limitations: [] },
     resources: { memoryBytes: 26546, fastBytes: null, load: { display: 'DSP 8 of 225 per patch', method: 'static', conditions: 'The cost the effect declares; the pedal adds it up per patch.' } },
@@ -118,7 +118,7 @@ describe('module contract v3, zdl (Zoom effect files)', () => {
       screen: 'live',
       pedals: [{ machine: 'zoom-ms-70cdr', firmware: '2.10', status: 'confirmed', report: 'TESTING.md' }, { machine: 'zoom-ms-50g', firmware: '3.10', status: 'untested', report: null }],
     },
-    media: published().media.map((item: Record<string, any>) => item.capture ? { ...item, capture: { ...item.capture, release: '2.10' } } : item),
+    media: (published().media as ReturnType<typeof template>[]).map(item => item.capture ? { ...item, capture: { ...item.capture, release: '2.10' } } : item),
   })
   it('reads an effect file pinned to its release, with each pedal’s status', () => {
     const document = parse(zdl())
@@ -126,7 +126,7 @@ describe('module contract v3, zdl (Zoom effect files)', () => {
     expect(() => requireModwerkPublication(document)).not.toThrow()
   })
   it('refuses what the pedal can’t take or Modwerk can’t list', () => {
-    const with_ = (change: (value: Record<string, any>) => void) => { const value = zdl(); change(value); return () => parse(value) }
+    const with_ = (change: (value: ReturnType<typeof template>) => void) => { const value = zdl(); change(value); return () => parse(value) }
     expect(with_(value => { value.platform.file = 'LoopLonger.ZDL' })).toThrow('at most 8 letters')
     expect(with_(value => { value.platform.effectId.fxid = 1000 })).toThrow('local IDs')
     expect(with_(value => { value.platform.effectId.fxid = 409 })).toThrow('Spool.ZDL and TEcho4.ZDL')

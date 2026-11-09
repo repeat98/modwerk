@@ -276,12 +276,13 @@ install throughout.
 6. `OctatrackHub` taking a machine instead of `ZoomHub` copying it, then the
    base install and update on the pedal page, effect sync (file plus
    effect-list record, then a power cycle, as proven) and module sets.
-7. Effects without stock code: the runtime that replaces the stock knob
-   handlers is in `vendor/zoom-zdl-runtime/` (Leemuzhko, [what's left](ZDL_MODULE_CONTRACT.md#two-things-to-settle-first));
-   the project's linker takes it and the effects are rebuilt and retested
-   (Manro). Until then no ZDL effect can be listed. Then the
-   `zdl` module contract (effect-ID ledger, DSP limit 300 under MIDISTOMP 2)
-   and a first module set.
+7. Effects without stock code: the project's linker builds with Leemuzhko's
+   runtime (`own_runtime`, [settled](ZDL_MODULE_CONTRACT.md#settled-first));
+   Loop built so ran on the owner's MS-70CDR (9 November 2026). The `zdl`
+   module contract is in force on the MS-70CDR; next, the first effects as
+   modules (Loop, then Scope, Spectrum and Scorch after their pedal runs),
+   `divf` from TI's RTS source, the effect-ID ledger and the DSP limit of 300
+   under MIDISTOMP 2.
 8. Later: the Windows `.exe` as input (a port of `zoomms/parts.py`), the
    MS-50G and MS-60B (their stock updaters resolve and check the patches),
    loading effects without a reboot, in-browser NAM and cab builds, and the
