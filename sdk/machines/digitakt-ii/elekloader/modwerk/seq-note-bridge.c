@@ -84,7 +84,7 @@ static void observe_grid(const uint8_t *pattern, uint32_t track, uint32_t step,
         }
     }
     if (core_seq_grid_timing(&window, tick, lookahead, swing, flags)) {
-        if (ev_seq_audio_phrase[0] && !play_event) {
+        if (ev_seq_audio_phrase[0]) {
             fw_memcpy(&core_seq_phrase_windows[track], &window, sizeof window);
         }
         for (unsigned int i = 0; i < DT2_SEQ_GRID_HANDLERS && ev_seq_grid[i]; ++i) {
@@ -164,12 +164,17 @@ void core_seq_note_bridge(uint8_t *event, const uint8_t *pattern, uint32_t track
     event[0x26] = (uint8_t)core_seq_note_pitch(&context, event[0x26]);
 }
 
-void core_seq_note_start_bridge(uint8_t *event, const uint8_t *pattern, uint32_t track)
+int core_seq_note_start_bridge(uint8_t *event, const uint8_t *pattern, uint32_t track,
+                              uint32_t deadline)
 {
-    if (ev_seq_grid[0] && stock_event_valid(event) &&
+    if ((ev_seq_grid[0] || ev_seq_audio_phrase[0]) && stock_event_valid(event) &&
         event[0] == 0 && event[1] == 0 && event[2] == 0 && event[3] <= 1 &&
         event[7] == 1 && event[13] == 1 && *(const uint32_t *)(event + 16) == track) {
         observe_grid(pattern, track, 0, 1, event);
+        if (ev_seq_audio_phrase[0] && core_seq_phrase_replace(event, deadline)) {
+            return 1;
+        }
     }
     core_seq_note_bridge(event, pattern, track, 0);
+    return 0;
 }

@@ -17,17 +17,24 @@ core_seq_note_start:
         movea.l %a5,%a0
         suba.l  %d1,%a0
         move.l  16(%sp),%d1
+        move.l  20(%sp),-(%sp)
         move.l  %d0,-(%sp)
         move.l  %a0,-(%sp)
         move.l  %d1,-(%sp)
         jsr     core_seq_note_start_bridge
-        lea     12(%sp),%sp
+        lea     16(%sp),%sp
+        tst.l   %d0
+        bne.s   start_replaced
         movem.l (%sp),%d0-%d1/%a0-%a1
         lea     16(%sp),%sp
 start_stock:
         movea.l %d7,%a0
         jsr     (%a0)
         addq.l  #8,%sp
+        jmp     0x400d6638
+start_replaced:
+        movem.l (%sp),%d0-%d1/%a0-%a1
+        lea     24(%sp),%sp
         jmp     0x400d6638
 
 core_seq_note_step:

@@ -6,6 +6,7 @@
 
 #define DT2_SEQ_PHRASE_HANDLERS 4
 #define DT2_SEQ_PHRASE_MAX_NOTES 8
+#define DT2_SEQ_PHRASE_REST UINT32_MAX
 
 struct dt2_seq_phrase_note {
     uint32_t onset;
@@ -14,7 +15,7 @@ struct dt2_seq_phrase_note {
     uint8_t velocity;
 };
 
-/* Experimental source-trig callback. Zero leaves the source note in stock. */
+/* Zero passes the source through. REST consumes it without producing a note. */
 typedef uint32_t (*dt2_seq_phrase_handler)(const struct dt2_seq_grid_window *,
     uint32_t pitch, uint32_t velocity, struct dt2_seq_phrase_note *);
 extern dt2_seq_phrase_handler const ev_seq_audio_phrase[DT2_SEQ_PHRASE_HANDLERS];
@@ -24,5 +25,6 @@ extern struct dt2_seq_grid_window core_seq_phrase_windows[16];
 
 int core_seq_phrase_commit(uint8_t *source, const struct dt2_seq_phrase_note *notes, uint32_t count);
 int core_seq_phrase_atomic(uint8_t *source, const struct dt2_seq_phrase_note *notes, uint32_t count);
+int core_seq_phrase_replace(uint8_t *source, uint32_t deadline);
 
 #endif

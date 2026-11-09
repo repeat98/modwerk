@@ -6,6 +6,7 @@ enum {
     PATTERN_BASE = 0x41776cb8u, PATTERN_STRIDE = 0x1db8cu, TRACK_STRIDE = 0x6a5u,
     STEP_VALUES = 0x6a50, STEP_VALUE_SIZE = 6, STEP_VALUE_COUNT = 16 * 128,
     FREE_EVENT_HEAD = 0x44e6b494u, FREE_DEADLINE_HEAD = 0x44e6b490u,
+    FREE_PAYLOAD_HEAD = 0x44e6b48cu, PLAY_PAYLOAD_BASE = 0x44f61c40u, PLAY_PAYLOAD_STRIDE = 0x484,
     STOCK_RESERVE = 16,
 };
 
@@ -15,6 +16,7 @@ typedef void (*copy_fn)(void *, const void *);
 typedef void (*submit_fn)(void *, uint32_t);
 
 static const allocate_fn allocate = (allocate_fn)(uintptr_t)0x4013a806u;
+static const allocate_fn allocate_payload = (allocate_fn)(uintptr_t)0x4013a7b6u;
 static const release_fn recycle = (release_fn)(uintptr_t)0x4013a83cu;
 static const copy_fn copy_event = (copy_fn)(uintptr_t)0x4013a870u;
 static const submit_fn submit = (submit_fn)(uintptr_t)0x4013a98cu;
@@ -47,10 +49,20 @@ static int has_room(uintptr_t head, unsigned int next, unsigned int required)
 int core_seq_phrase_commit(uint8_t *source, const struct dt2_seq_phrase_note *notes, uint32_t count)
 {
     uint8_t *records[DT2_SEQ_PHRASE_MAX_NOTES * 2];
+    const uint32_t kind = *(const uint32_t *)source;
     if (!count || count > DT2_SEQ_PHRASE_MAX_NOTES ||
         !has_room(FREE_DEADLINE_HEAD, 16, 2 * count + STOCK_RESERVE) ||
-        !has_room(FREE_EVENT_HEAD, 104, 2 * count + STOCK_RESERVE)) {
+        !has_room(FREE_EVENT_HEAD, 104, 2 * count + STOCK_RESERVE) ||
+        (kind == 1 && !has_room(FREE_PAYLOAD_HEAD, 16, STOCK_RESERVE))) {
         return 0;
+    }
+
+    if (kind == 1) {
+        /* PLAY borrows a track template. The new kind-0 notes own an empty pool payload. */
+        const uintptr_t payload = allocate_payload();
+        *(uint32_t *)(payload + 8) = 0;
+        *(uintptr_t *)(source + 84) = payload;
+        *(uint32_t *)source = 0;
     }
 
     for (unsigned int i = 0; i < 2 * count; ++i) {
@@ -111,8 +123,11 @@ static int notes_fit(const struct dt2_seq_grid_window *window,
 int core_seq_phrase_replace(uint8_t *source, uint32_t deadline)
 {
     const uintptr_t offset = (uintptr_t)source - EVENT_BASE;
-    if (offset >= EVENT_COUNT * EVENT_STRIDE || offset % EVENT_STRIDE ||
-        *(const uint32_t *)source || *(const uint32_t *)(source + 4) != 1 ||
+    if (offset >= EVENT_COUNT * EVENT_STRIDE || offset % EVENT_STRIDE) {
+        return 0;
+    }
+    const uint32_t kind = *(const uint32_t *)source;
+    if (kind > 1 || *(const uint32_t *)(source + 4) != 1 ||
         *(const uint32_t *)(source + 20) != 1 || !*(const uintptr_t *)(source + 84) ||
         !(*(const uint32_t *)(source + 56) & 128u) || *(const uint32_t *)(source + 8) != deadline) {
         return 0;
@@ -126,9 +141,17 @@ int core_seq_phrase_replace(uint8_t *source, uint32_t deadline)
     pending->length = 0;
     const uintptr_t stock_pattern = PATTERN_BASE + window.pattern * PATTERN_STRIDE;
     const uint8_t *const stock_track = (const uint8_t *)(stock_pattern + track * TRACK_STRIDE);
-    if (!window.length || (window.flags & DT2_SEQ_GRID_PLAY_SOURCE) || window.onset != deadline ||
+    if (!window.length || !!(window.flags & DT2_SEQ_GRID_PLAY_SOURCE) != kind ||
+        window.onset != deadline ||
         *(const uint8_t *const *)(source + 44) != stock_track) {
         return 0;
+    }
+    if (kind == 1) {
+        const uintptr_t payload = *(const uintptr_t *)(source + 84);
+        if (payload != PLAY_PAYLOAD_BASE + track * PLAY_PAYLOAD_STRIDE ||
+            *(const uint32_t *)(payload + 8) != 0) {
+            return 0;
+        }
     }
     const int32_t index = *(const int32_t *)(source + 32);
     if (index >= STEP_VALUE_COUNT ||
@@ -148,6 +171,10 @@ int core_seq_phrase_replace(uint8_t *source, uint32_t deadline)
             notes[n].velocity = 0;
         }
         const uint32_t count = ev_seq_audio_phrase[i](&window, pitch, velocity, notes);
+        if (count == DT2_SEQ_PHRASE_REST) {
+            recycle(source);
+            return 1;
+        }
         if (notes_fit(&window, notes, count)) {
             return core_seq_phrase_atomic(source, notes, count);
         }
