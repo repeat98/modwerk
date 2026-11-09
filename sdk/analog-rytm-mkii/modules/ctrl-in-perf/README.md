@@ -1,6 +1,6 @@
 # Ctrl In Perf
 
-An Analog Rytm MKII mod by MrScruff, ported to OS 1.74 by Iced-Cream. Version 1.0.0-experimental, OS 1.74 with core-ar2 0.7.
+An Analog Rytm MKII mod by MrScruff, ported to OS 1.74 by Iced-Cream. Version 0.1.0-experimental, OS 1.74 with core-ar2 0.7.
 
 ## Overview
 

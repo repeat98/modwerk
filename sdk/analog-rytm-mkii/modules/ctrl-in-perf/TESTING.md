@@ -1,6 +1,6 @@
 # Ctrl In Perf — test report
 
-- Module: `ctrl-in-perf` 1.0.0-experimental, for Analog Rytm MKII OS 1.74 on core-ar2 0.7.
+- Module: `ctrl-in-perf` 0.1.0-experimental, for Analog Rytm MKII OS 1.74 on core-ar2 0.7.
 - Original: MrScruff's rytm-mods-src `mods/0017-ctrl-in-perf` at `cd4ded4a`, for OS 1.73.
 
 - Build CP02 (OS 1.74, the Modwerk base for core-ar2 0.7, plain variant `ba530f45`, + this module): `.syx`
@@ -20,6 +20,9 @@ project, approved by Iced-Cream, with a power cycle by hand. Stock 1.74 was flas
 - PF1 was kept over a project save and reload, and over the power cycle; then set back to OFF.
 - With nothing plugged into EXP/CV IN 1, the port reads below CV ZERO and macro 1 stays at 0.
 - Iced-Cream listened to the unit throughout the run.
+
+CPH2 and CP02 were built when this version was numbered 1.0.0-experimental; `build.json` and
+`src/ctrl-in-perf.s` are unchanged since, so the renumbered package differs only in its version label.
 
 The manifest's `evidence.sourceSha256` is the sha256 of `sha256sum build.json src/ctrl-in-perf.s` output;
 neither file changed after CPH2 was built.

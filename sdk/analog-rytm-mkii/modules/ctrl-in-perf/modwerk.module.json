@@ -2,7 +2,7 @@
  "schemaVersion": 3,
  "id": "ctrl-in-perf",
  "name": "Ctrl In Perf",
- "version": "1.0.0-experimental",
+ "version": "0.1.0-experimental",
  "machine": "analog-rytm-mkii",
  "category": "system",
  "exclusive": false,
@@ -97,7 +97,7 @@
  },
  "evidence": {
   "tier": "author-hardware",
-  "moduleVersion": "1.0.0-experimental",
+  "moduleVersion": "0.1.0-experimental",
   "sourceSha256": "c8040ce2665ac48426e0ea13c9c9a03541506ac7236ee66015799d56ea95933d",
   "reports": [
    "evidence/hardware-testing.json"
@@ -163,9 +163,9 @@
    "capture": {
     "type": "emulator",
     "release": "1.74",
-    "moduleVersion": "1.0.0-experimental",
+    "moduleVersion": "0.1.0-experimental",
     "imageSha256": "f154018ef7c671b4d59a428e71fa78dac1662c0e2746e50cc51b0f4c7f8708b9",
-    "setup": "Headless analog-emu 4c07ed3 (dtboot) running CP02: the Modwerk base for core-ar2 0.7 and this folder's Ctrl In Perf 1.0.0-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+    "setup": "Headless analog-emu 4c07ed3 (dtboot) running CP02: the Modwerk base for core-ar2 0.7 and this folder's Ctrl In Perf (the same source as 0.1.0-experimental, built as 1.0.0-experimental), linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
    }
   },
   {
@@ -179,9 +179,9 @@
    "capture": {
     "type": "emulator",
     "release": "1.74",
-    "moduleVersion": "1.0.0-experimental",
+    "moduleVersion": "0.1.0-experimental",
     "imageSha256": "f154018ef7c671b4d59a428e71fa78dac1662c0e2746e50cc51b0f4c7f8708b9",
-    "setup": "Headless analog-emu 4c07ed3 (dtboot) running CP02: the Modwerk base for core-ar2 0.7 and this folder's Ctrl In Perf 1.0.0-experimental, linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+    "setup": "Headless analog-emu 4c07ed3 (dtboot) running CP02: the Modwerk base for core-ar2 0.7 and this folder's Ctrl In Perf (the same source as 0.1.0-experimental, built as 1.0.0-experimental), linked by Modwerk on stock OS 1.74, a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
    }
   }
  ]
