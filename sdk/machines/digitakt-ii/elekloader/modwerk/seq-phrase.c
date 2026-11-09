@@ -4,6 +4,7 @@
 enum {
     EVENT_BASE = 0x44e67e88u, EVENT_COUNT = 128, EVENT_STRIDE = 108,
     PATTERN_BASE = 0x41776cb8u, PATTERN_STRIDE = 0x1db8cu, TRACK_STRIDE = 0x6a5u,
+    STEP_VALUES = 0x6a50, STEP_VALUE_SIZE = 6, STEP_VALUE_COUNT = 16 * 128,
     FREE_EVENT_HEAD = 0x44e6b494u, FREE_DEADLINE_HEAD = 0x44e6b490u,
     STOCK_RESERVE = 16,
 };
@@ -19,6 +20,16 @@ static const copy_fn copy_event = (copy_fn)(uintptr_t)0x4013a870u;
 static const submit_fn submit = (submit_fn)(uintptr_t)0x4013a98cu;
 
 struct dt2_seq_grid_window core_seq_phrase_windows[16];
+
+/* The DSP dispatcher reads an inline row for index -1 and a pattern row otherwise. */
+static const uint8_t *source_values(const uint8_t *source)
+{
+    const int32_t index = *(const int32_t *)(source + 32);
+    if (index < 0) {
+        return source + 36;
+    }
+    return (const uint8_t *)*(const uintptr_t *)(source + 28) + STEP_VALUE_SIZE * index;
+}
 
 static int has_room(uintptr_t head, unsigned int next, unsigned int required)
 {
@@ -58,6 +69,9 @@ int core_seq_phrase_commit(uint8_t *source, const struct dt2_seq_phrase_note *no
         const struct dt2_seq_phrase_note *const note = &notes[i];
         copy_event(on, source);
         *(uint32_t *)(on + 8) = note->onset;
+        *(int32_t *)(on + 32) = -1;
+        on[36] = source_values(source)[0];
+        on[37] = source_values(source)[1];
         on[38] = note->pitch;
         on[39] = note->velocity;
         on[40] = 126;
@@ -99,8 +113,7 @@ int core_seq_phrase_replace(uint8_t *source, uint32_t deadline)
     const uintptr_t offset = (uintptr_t)source - EVENT_BASE;
     if (offset >= EVENT_COUNT * EVENT_STRIDE || offset % EVENT_STRIDE ||
         *(const uint32_t *)source || *(const uint32_t *)(source + 4) != 1 ||
-        *(const uint32_t *)(source + 20) != 1 || *(const int32_t *)(source + 32) >= 0 ||
-        source[38] > 127 || !source[39] || source[39] > 127 || !*(const uintptr_t *)(source + 84) ||
+        *(const uint32_t *)(source + 20) != 1 || !*(const uintptr_t *)(source + 84) ||
         !(*(const uint32_t *)(source + 56) & 128u) || *(const uint32_t *)(source + 8) != deadline) {
         return 0;
     }
@@ -111,9 +124,21 @@ int core_seq_phrase_replace(uint8_t *source, uint32_t deadline)
     struct dt2_seq_grid_window *const pending = &core_seq_phrase_windows[track];
     const struct dt2_seq_grid_window window = *pending;
     pending->length = 0;
-    const uintptr_t stock_track = PATTERN_BASE + window.pattern * PATTERN_STRIDE + track * TRACK_STRIDE;
+    const uintptr_t stock_pattern = PATTERN_BASE + window.pattern * PATTERN_STRIDE;
+    const uint8_t *const stock_track = (const uint8_t *)(stock_pattern + track * TRACK_STRIDE);
     if (!window.length || (window.flags & DT2_SEQ_GRID_PLAY_SOURCE) || window.onset != deadline ||
-        *(const uintptr_t *)(source + 44) != stock_track) {
+        *(const uint8_t *const *)(source + 44) != stock_track) {
+        return 0;
+    }
+    const int32_t index = *(const int32_t *)(source + 32);
+    if (index >= STEP_VALUE_COUNT ||
+        (index >= 0 && *(const uintptr_t *)(source + 28) != stock_pattern + STEP_VALUES)) {
+        return 0;
+    }
+    const uint8_t *const row = source_values(source);
+    const uint8_t pitch = row[2] <= 127 ? row[2] : stock_track[0x485];
+    const uint8_t velocity = row[3] <= 127 ? row[3] : stock_track[0x480];
+    if (row[0] > 127 || pitch > 127 || !velocity || velocity > 127) {
         return 0;
     }
 
@@ -122,7 +147,7 @@ int core_seq_phrase_replace(uint8_t *source, uint32_t deadline)
         for (unsigned int n = 0; n < DT2_SEQ_PHRASE_MAX_NOTES; ++n) {
             notes[n].velocity = 0;
         }
-        const uint32_t count = ev_seq_audio_phrase[i](&window, source[38], source[39], notes);
+        const uint32_t count = ev_seq_audio_phrase[i](&window, pitch, velocity, notes);
         if (notes_fit(&window, notes, count)) {
             return core_seq_phrase_atomic(source, notes, count);
         }
