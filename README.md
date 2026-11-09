@@ -15,7 +15,7 @@
   </p>
   <p>
     <a href="#get-started"><img src="https://img.shields.io/badge/Node.js-24-417e38?logo=nodedotjs&amp;logoColor=white" alt="Node.js 24" /></a>
-    <a href="sdk/README.md#octatrack-native-development"><img src="https://img.shields.io/badge/Python-3.10%2B-3776ab?logo=python&amp;logoColor=white" alt="Python 3.10 or newer" /></a>
+    <a href="sdk/README.md#octatrack-native-development"><img src="https://img.shields.io/badge/Python-3.12%2B-3776ab?logo=python&amp;logoColor=white" alt="Python 3.12 or newer" /></a>
     <a href="sdk/octabam/docs/remixer/MODULES.md"><img src="https://img.shields.io/badge/Assembly-DSP56300_%2F_ColdFire-5755c5" alt="DSP56300 and ColdFire assembly" /></a>
   </p>
 </div>
@@ -38,7 +38,7 @@ Music Tribe and Behringer, and the AI agents that work for them: the owner does 
 
 ## Get started
 
-Requires **Git, Node.js 24 and Python 3.10+**. Clone the repository, or your fork when contributing:
+Requires **Git, Node.js 24 and Python 3.12+**. Clone the repository, or your fork when contributing:
 
 ```sh
 git clone https://github.com/repeat98/modwerk.git
