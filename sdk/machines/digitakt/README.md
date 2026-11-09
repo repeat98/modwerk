@@ -2,7 +2,7 @@
 
 **Platform:** elemod · **OS:** 1.53 and 1.54 (mk1) · **Core:** 2.1 · **Modules:** [`sdk/digitakt/modules/`](../../digitakt/modules/) · **Status:** preview
 
-Digitakt mods are linkable objects. One core patches the OS once at a few shared sites and calls every subscribed mod's handler, in order, from tables the linker builds. So any set of mods that fits the budgets combines. Modwerk builds them with its own TypeScript linker and OS writer, interoperable with the `.elemod` format. Building firmware in Modwerk is in development, so the machine is in preview.
+Digitakt mods are linkable objects. One core patches the OS once at a few shared sites and calls every subscribed mod's handler, in order, from tables the linker builds. So any set of mods that fits the budgets combines. The site builds firmware with elekloader's builder (below), so the machine is in preview.
 
 ## Modwerk stack
 
@@ -15,6 +15,15 @@ npm run module:new -- my-mod --machine digitakt --author your-github-login
 ```
 
 This creates `modwerk.module.json` (contract v3), `build.json`, `src/main.c`, README, TESTING, licence and a placeholder thumbnail. See [the SDK guide](../../../docs/SDK.md) for the contract and evidence tiers.
+
+To try it before a pull request, build a local image from your own stock OS and flash it as below:
+
+```sh
+node scripts/link-image.mjs --stock Digitakt_OS1.53.syx --version XX01 --out test.syx \
+  --elemod vendor/elekloader/catalog/core-2.1.elemod --module digitakt:my-mod
+```
+
+For OS 1.54 use `core-2.1-os1.54.elemod`.
 
 ## Core hooks
 
@@ -30,7 +39,7 @@ Handlers use the C calling convention: arguments on the stack, d0–d1/a0–a1 f
 | `ev_render_in` / `ev_render_out` | entry and exit of the audio render | `void f(void)` |
 | SRC machines | the table `core_machines`: new SRC machines take ids 4–127, treated by the OS like the stock machine they stand in for | — |
 
-A site the core does not expose is proposed as a core hook before the mod, never patched by it ([propose a hook](../../../docs/module-guides/README.md#propose-a-hook-on-the-digitakt-digitone-or-digitakt-ii)).
+A site the core does not expose and other mods will need is proposed as a core hook before the mod ([propose a hook](../../../docs/module-guides/README.md#propose-a-hook-on-the-digitakt-digitone-or-digitakt-ii)); a site only this mod needs, it patches through `sites` in `build.json` ([choose how a module hooks in](../../../docs/module-guides/README.md#choose-how-a-module-hooks-in)).
 
 ## Budgets
 
@@ -42,7 +51,7 @@ Claim named resources (a machine slot, a SETTINGS row, a SysEx id, a +Drive path
 
 ## Toolchain
 
-m68k-elf GCC and binutils for ColdFire, and elekloader's builder, which Modwerk runs in the browser for the launch ([vendor/elekloader](../../../vendor/elekloader/README.md)). Modwerk's own linker, OS writer and core are frozen until work resumes; the core's contract is [core/interface.json](../../digitakt/core/interface.json), and `npm run modules:check` rejects modules that use anything it does not provide.
+m68k-elf GCC and binutils for ColdFire, and elekloader's builder, which Modwerk runs in the browser for the launch ([vendor/elekloader](../../../vendor/elekloader/README.md)). Modwerk's own linker and OS writer build local images (`scripts/link-image.mjs`, above); its own core is frozen until work resumes. The core's contract is [core/interface.json](../../digitakt/core/interface.json), and `npm run modules:check` rejects modules that use anything it does not provide.
 
 ## Flash and recover
 
