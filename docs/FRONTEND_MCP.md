@@ -227,8 +227,8 @@ node scripts/frontend-mcp.mjs --data-dir /private/path/modwerk-mcp --zoom-midi [
 ```
 
 `zoom_status` reads the model and firmware (on MIDISTOMP also its version,
-features and load), `zoom_list` the files with each effect's group, ID and
-version and the free space, and `zoom_backup` every file into a zip in the
+features and load), `zoom_list` the files and the free space, with the
+group, ID and version of effects in the group added effects use, and `zoom_backup` every file into a zip in the
 private workspace (the CLI's default is `~/.cache/modwerk-local/zoom/`).
 `zoom_install` takes an effect file by name from the startup-selected
 `--zoom-effects` directory, never a path; it and `zoom_remove` need

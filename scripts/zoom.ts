@@ -2,7 +2,7 @@
 // A Zoom MultiStomp from the command line, through the site's own ZoomLink over the computer's MIDI (zoom-device.ts):
 //
 //   npm run zoom -- status                  # model and firmware; on MIDISTOMP its version, features and load
-//   npm run zoom -- list                    # every file, each effect's group, ID and version, and the free space
+//   npm run zoom -- list                    # every file, the group, ID and version of effects in the added effects' group, and the free space
 //   npm run zoom -- backup [OUT.zip]        # every file, read and checksum-checked, in a zip (default: ~/.cache/modwerk-local/zoom/)
 //   npm run zoom -- install FILE.ZDL --yes  # writes: one added effect, read back and put in the effect list
 //   npm run zoom -- remove NAME.ZDL --yes   # writes: one added effect out of the effect list and off the pedal

@@ -46,7 +46,7 @@ export async function nodeMidiAccess(native?: Native): Promise<MidiAccessLike & 
 
 /**
  * One command through a ZoomLink that has connected: `status` (identity, and MIDISTOMP's load on its base), `list`
- * (files with each effect's group, ID and version, and the free space), `backup` (every file into a zip at `file`,
+ * (files, with the group, ID and version of each effect in the group added effects use, and the free space), `backup` (every file into a zip at `file`,
  * resolved against `dir`, by default a new name in `dir`), `install` (the effect file at path `file`) and `remove`
  * (the effect named `file`). Install and remove write to the pedal: only `confirmed`, and the effect list from before
  * is saved in `dir`. Every file written here is new and private.

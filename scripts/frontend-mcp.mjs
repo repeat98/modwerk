@@ -69,7 +69,7 @@ const TOOLS = [
   tool('device_keep', 'Explicitly accept the current trial and save it on the card. Requires --allow-device-writes.', { trial: string }, ['trial'], true),
   tool('device_undo', 'Undo the current trial and restore its exact reviewed previous packages.', { trial: string }, ['trial'], true),
   tool('zoom_status', 'Connect to the Zoom MultiStomp over MIDI (startup --zoom-midi) through the site\u2019s own ZoomLink and read its model and firmware; on MIDISTOMP also its version, features and load. Read-only.'),
-  tool('zoom_list', 'List every file on the Zoom pedal with each effect\u2019s group, ID and version, and the free space. Read-only.'),
+  tool('zoom_list', 'List every file on the Zoom pedal with the group, ID and version of each effect in the group added effects use, and the free space. Read-only.'),
   { ...tool('zoom_backup', 'Read every file on the Zoom pedal, checksum-checked, into a zip in the startup-selected private workspace and return a receipt (path, size, sha256). Writes nothing to the pedal.'),
     annotations: { readOnlyHint: false, destructiveHint: false, openWorldHint: true, idempotentHint: false } },
   tool('zoom_install', 'Install one added effect file, by name from the startup-selected --zoom-effects directory, as the site does: an effect ID clash moves it to a local ID, it is written and read back, then added to the effect list (the list from before is saved in the workspace). Requires --allow-device-writes and confirm=true; power-cycle the pedal to load it.', { file: string, confirm: { type: 'boolean' } }, ['file', 'confirm'], true),

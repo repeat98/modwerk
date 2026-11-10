@@ -71,7 +71,7 @@ describe('the Zoom commands (CLI and MCP)', () => {
     const pedal = fakeZoomPedal({ files: effects(), free: 123_456 }), link = await connected(pedal)
     expect(await zoomCommand(link, 'status', undefined, { dir })).toEqual({ deviceId: 0x61, model: 'MS-70CDR', firmware: '2.10' })
     const { files, free } = await zoomCommand(link, 'list', undefined, { dir })
-    expect(files.map(f => [f.name, f.effect?.fxid])).toEqual([['DELAY.ZDL', 16], ['LOOP.ZDL', 480], ['FLST_SEQ.ZDT', undefined]])
+    expect(files.map(f => [f.name, f.effect?.fxid])).toEqual([['DELAY.ZDL', undefined], ['LOOP.ZDL', 480], ['FLST_SEQ.ZDT', undefined]])   // headers only where added effects live (group 8)
     expect(free).toBe(123_456)
     const backup = await zoomCommand(link, 'backup', 'pedal.zip', { dir })
     expect(backup).toMatchObject({ files: 3, path: join(dir, 'pedal.zip'), sha256: expect.stringMatching(/^[0-9a-f]{64}$/) })
