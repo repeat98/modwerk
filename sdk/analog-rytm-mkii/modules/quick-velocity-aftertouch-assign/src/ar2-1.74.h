@@ -104,9 +104,9 @@
 // The LFO page key. Its press shows the LFO page (the page holder's key
 // handler, 0x400cc928, calls 0x400cbbd6 on a fresh press). Stock has one LFO
 // page; a second press steps only to a page a module adds behind it through
-// core-ar2's page cycle (LFO RND), on the release. The module replays a press it held
-// back through Brain::key, past ev_key, as Control In Actions does.
-#define KEY_DISPATCH_AT 0x400a0336
+// core-ar2's page cycle (LFO RND), on the release. The module replays a tap it held
+// back (the press, then the release) through core-ar2's core_key: every ev_key
+// handler, then Brain::key (0x400a0336), each event built by 0x40071e7c.
 #define KEY_EVENT_CTOR_AT 0x40071e7c    // (event, key, flags, 0, 127)
 #define KEY_EVENT_DTOR_AT 0x4018984e
 #define KEY_EVENT_BYTES 24

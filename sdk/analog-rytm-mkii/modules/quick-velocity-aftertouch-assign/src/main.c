@@ -60,7 +60,6 @@ typedef void (*end_lock_edit_t)(word_t ui);
 typedef void (*set_value_t)(word_t set, int id, int value, int a, int b, int c);
 typedef void (*event_ctor_t)(void *event, int key, int flags, int when, int velocity);
 typedef void (*event_dtor_t)(void *event);
-typedef int (*dispatch_t)(void *brain, void *event);
 typedef int (*enc_delta_t)(void *event, int step, int pushed_step);
 typedef int (*enc_accumulate_t)(void *state, int knob, int delta, void *profile, int pushed);
 
@@ -92,7 +91,6 @@ typedef int (*enc_accumulate_t)(void *state, int knob, int delta, void *profile,
 #define PARAM_RECORD ((word1_t)PARAM_RECORD_AT)
 #define EVENT_CTOR ((event_ctor_t)KEY_EVENT_CTOR_AT)
 #define EVENT_DTOR ((event_dtor_t)KEY_EVENT_DTOR_AT)
-#define DISPATCH ((dispatch_t)KEY_DISPATCH_AT)
 #define ENC_DELTA ((enc_delta_t)ENC_DELTA_AT)
 #define ENC_ACCUMULATE ((enc_accumulate_t)ENC_ACCUMULATE_AT)
 
@@ -142,6 +140,12 @@ static int redraw;                  // ev_tick asks for a redraw
 static int shown = NONE;            // the kind our locker shows, NONE when not set
 static unsigned lfo_flags;          // the LFO press held back, for its replay
 static int lfo_swallowed;           // that press was held back and its release not seen yet
+static int replaying;               // the held-back tap is going round the key chain now
+
+// core-ar2's ev_key site (core.s): every mod's ev_key handler in order, then
+// stock's Brain::key, as for a key from the panel. Every core-ar2 0.7 and
+// Modwerk base build exports it.
+extern int core_key(void *brain, void *event);
 
 // What is on screen: the top view's class, past the popups, which pass keys on.
 static word_t top_view(void)
@@ -658,14 +662,26 @@ const struct {
 
 // ---- Keys, encoders, the tick and the draw -------------------------------------
 
-// The LFO press held back, played to stock's key path now: past ev_key, so
-// no mod sees it twice. Its release then reaches stock as the real one.
-static void replay_lfo(void *brain)
+// A plain LFO tap: the press held back and then this release, played now
+// through the whole key chain, so the mods after this one (Loop Sync's page
+// tracking, the base's send pages) and stock see them as they would have. This
+// mod lets both pass, and the real release then stops here. The mods before
+// this one saw the real press and release already and see the pair again, so
+// every mod ends with the key up.
+static void replay_key(void *brain, int key, unsigned flags)
 {
     long event[KEY_EVENT_BYTES / 4 + 2];
-    EVENT_CTOR(event, KEY_LFO, lfo_flags, 0, 127);
-    DISPATCH(brain, event);
+    EVENT_CTOR(event, key, flags, 0, 127);
+    core_key(brain, event);
     EVENT_DTOR(event);
+}
+
+static void replay_lfo(void *brain, unsigned release_flags)
+{
+    replaying = 1;
+    replay_key(brain, KEY_LFO, lfo_flags);
+    replay_key(brain, KEY_LFO, release_flags);
+    replaying = 0;
 }
 
 int quick_velocity_aftertouch_assign_key(void *brain, void *event)
@@ -675,6 +691,8 @@ int quick_velocity_aftertouch_assign_key(void *brain, void *event)
     int down = flags & PRESSED, k;
     struct hold *h;
     word_t locker_now;
+    if (replaying)
+        return 0;                       // our own replayed LFO tap: the rest of the chain's
     views = *(void **)((char *)brain + BRAIN_VIEWS);
     if (key == KEY_FIX)
         k = VEL;
@@ -715,8 +733,8 @@ int quick_velocity_aftertouch_assign_key(void *brain, void *event)
         if (k == LFO) {
             if (turned)
                 return 1;               // the page stays
-            replay_lfo(brain);          // a plain tap: stock's page, then its release
-            return 0;
+            replay_lfo(brain, flags);   // a plain tap: stock's page, then its release
+            return 1;
         }
         return turned;                  // SAMPLER: a tap's release opens stock's recorder
     }
