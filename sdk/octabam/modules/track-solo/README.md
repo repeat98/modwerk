@@ -50,6 +50,7 @@ The proposed shared PERSONALIZE table is not a dependency.
 
 ## Compatibility and limitations
 
+- USB only. Track Solo runs only on the Modwerk base, loaded over USB, on an Octatrack with OS 1.40C. Its key, tick and encoder events and its SEQUENCER row all come from the base, and card firmware has no base, so card firmware cannot include it: take it out of a set before building card firmware.
 - OS 1.40C. Functional hardware report on one unit recorded as MKII; MKI is
   untested. MIDI mode is excluded.
 - OFF is the initial state on boot, installation and package replacement. The

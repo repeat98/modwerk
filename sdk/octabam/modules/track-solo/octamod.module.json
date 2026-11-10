@@ -38,6 +38,7 @@
       "key:TRACK+TRACK"
     ],
     "limitations": [
+      "USB only: needs the Modwerk base for its key, tick and encoder events and its SEQUENCER row, so card firmware cannot include it.",
       "Functional hardware report on package 1895ceec, Track Solo alone. Not tested on hardware: other modules alongside, MKI, all eight anchors, external MIDI, arranger rows, Pickup recording, K09 modifier orderings, self-test, Keep and power cycles. See TESTING.md.",
       "TRACK SOLO is OFF on startup and after package replacement; its enable setting and solo groups are not saved.",
       "MIDI mode is excluded. When T8 is master, include it with the source tracks in the temporary group; T8 alone has no source audio.",

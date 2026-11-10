@@ -38,6 +38,8 @@ async function privateHash(key: string, purpose: string) {
   const secret = await crypto.subtle.importKey('raw',new TextEncoder().encode(key),{name:'HMAC',hash:'SHA-256'},false,['sign'])
   return Array.from(new Uint8Array(await crypto.subtle.sign('HMAC',secret,new TextEncoder().encode('octamod-usage-v1:' + purpose))),b=>b.toString(16).padStart(2,'0')).join('')
 }
+/** A keyed IP digest, shared by every count route, limits abuse in rate_limits and expires within the hour. */
+const throttleAddress = async (request: Request, db: Database, secret: string, today: string) => throttle(db,'usage-count:' + await privateHash(secret,today + ':count-rate:' + (request.headers.get('CF-Connecting-IP') ?? 'local')),300,3600)
 /** No guest account, IP, user agent, referrer, module list or firmware enters these tables. */
 export async function recordUsage(request: Request, env: Env, db: Database) {
   if (request.headers.get('DNT') === '1' || request.headers.get('Sec-GPC') === '1') return new Response(null,{status:204})
@@ -54,6 +56,7 @@ export async function recordUsage(request: Request, env: Env, db: Database) {
   // Purpose separation: backend-only key material never becomes a browser identifier or API response.
   const visitor = await privateHash(secret,today + ':visitor:' + body.visitor), identity = await privateHash(secret,today + ':event:' + body.visitor + ':' + body.eventId)
   await throttle(db,'usage:' + visitor,200,3600)
+  await throttleAddress(request,db,secret,today) // visitor IDs are chosen by the caller
   const metric = columns[event] // Selected only from the closed enum above, never from arbitrary SQL input.
   await db.batch([
     db.prepare('INSERT INTO usage_events(day,event_hash) VALUES(?,?) ON CONFLICT DO NOTHING').bind(today,identity),
@@ -101,7 +104,7 @@ export async function recordAnonymousCount(request: Request, env: Env, db: Datab
   const device = moduleCount || announcementCount ? null : deviceOf(body,body.event as UsageEvent), page = pageOf(body)
   if (device === undefined || page === undefined) throw new HttpError(400,'Invalid usage count.')
   const now = new Date(), today = day(now)
-  await throttle(db,'usage-count:' + await privateHash(secret,today + ':count-rate:' + (request.headers.get('CF-Connecting-IP') ?? 'local')),300,3600)
+  await throttleAddress(request,db,secret,today)
   if (octatrackCount) {
     await db.prepare('INSERT INTO octatrack_beta_daily(day,event,count) VALUES(?,?,1) ON CONFLICT(day,event) DO UPDATE SET count=count+1').bind(today,body.event).run()
     return response({ok:true}) // No visitor/session/module/device identity, including no unique-visitor digest.
@@ -191,6 +194,7 @@ export async function recordModuleDownload(request: Request, env: Env, db: Datab
   // Rate-limit digests are separate from deduplication. Neither table links a module to a visitor.
   const visitor = await privateHash(secret,today + ':module-rate:' + body.visitor), identity = await privateHash(secret,today + ':module-event:' + body.eventId)
   await throttle(db,'module-download:' + visitor,200,3600)
+  await throttleAddress(request,db,secret,today) // visitor IDs are chosen by the caller
   await db.batch([
     db.prepare('INSERT INTO module_download_events(day,event_hash) VALUES(?,?) ON CONFLICT DO NOTHING').bind(today,identity),
     db.prepare('INSERT INTO module_downloads(module_id,downloads,first_download_at) SELECT ?,1,? WHERE EXISTS(SELECT 1 FROM module_download_events WHERE day=? AND event_hash=? AND counted=0) ON CONFLICT(module_id) DO UPDATE SET downloads=downloads+1').bind(body.moduleId,now.toISOString(),today,identity),

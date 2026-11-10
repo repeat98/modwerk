@@ -335,7 +335,7 @@
       ]
     }
   ],
-  "sourceCommit": "5ff4d0e439013ddf623164a3bdefd98f9634bdc1",
+  "sourceCommit": "2d12bd022913f930f1d5b178c515cafa71d89a30",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -373,7 +373,6 @@
     "tuner": "0.1.0-experimental",
     "slow-lfo": "0.1.0-experimental",
     "bar-led": "0.1.0-experimental",
-    "stem-rec": "0.1.0-experimental",
-    "track-solo": "0.2.3-experimental"
+    "stem-rec": "0.1.0-experimental"
   }
 }

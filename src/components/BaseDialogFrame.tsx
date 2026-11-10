@@ -66,7 +66,7 @@ export function StagePlan({ stages, run, progressLabel }: { stages: readonly (re
     const active = !!run && index === run.at && !run.done && !run.failed
     return <li key={title} className={state} aria-current={active ? 'step' : undefined}>
       <span className="base-update-mark" aria-hidden="true">{state === 'is-complete' ? <Icon name="check" size={13} /> : state === 'is-failed' ? '!' : index + 1}</span>
-      <strong>{title}</strong>
+      <strong>{title}{state === 'is-complete' && <span className="sr-only"> (done)</span>}</strong>
       <p>{text}</p>
       {active && run.fraction !== undefined && run.fraction < 1 && <progress max={1} value={run.fraction} aria-label={title} />}
     </li>

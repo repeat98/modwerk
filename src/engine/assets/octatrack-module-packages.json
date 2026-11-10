@@ -571,7 +571,8 @@
       "name": "Track Solo",
       "module": "f92f5dae",
       "bytes": 2128,
-      "sha256": "1895ceecbfa74cd00cf07b2557ddbdf4668e32327d7c03fcf5c9f529547a5677"
+      "sha256": "1895ceecbfa74cd00cf07b2557ddbdf4668e32327d7c03fcf5c9f529547a5677",
+      "usbOnly": true
     }
   ]
 }
