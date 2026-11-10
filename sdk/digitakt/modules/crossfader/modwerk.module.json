@@ -1,0 +1,221 @@
+{
+  "schemaVersion": 3,
+  "id": "crossfader",
+  "name": "Crossfader",
+  "version": "0.1.0-experimental",
+  "machine": "digitakt",
+  "category": "scenes",
+  "exclusive": false,
+  "author": {
+    "github": "draadpiraat",
+    "credits": [
+      "draadpiraat — design and code"
+    ]
+  },
+  "maintainers": [
+    "draadpiraat"
+  ],
+  "presentation": {
+    "label": "CROSSFADER",
+    "family": "Performance",
+    "summary": "A crossfader between two groups of tracks and inputs, on LEVEL on the Internal Mixer, on the tracks you choose, or a CC.",
+    "overview": "Every audio track and both inputs (IN L, IN R) can go in group A, group B or neither on SETTINGS > CROSSFADER. One fader fades between the groups with an equal-power curve: at one end group A plays at its own level and group B is silent, at the other end the reverse. The fader is LEVEL on the Internal Mixer page, LEVEL on the pages of the tracks you put on FADER ON, or a CC of your choice on FX CONTROL CH. It is the last layer on each channel's level, and the delay and reverb sends follow it.",
+    "highlights": [
+      "An equal-power fade between two groups of tracks and inputs; the sends follow it.",
+      "LEVEL is the fader on the Internal Mixer and on the tracks you choose; FUNC + LEVEL jumps to the middle.",
+      "A CC on FX CONTROL CH moves it from a controller.",
+      "Groups and settings are saved on the +Drive for the whole unit."
+    ],
+    "usage": [
+      "Press SETTINGS, go down to CROSSFADER (the last row) and press YES.",
+      "Put some tracks in group A and others in group B with LEFT and RIGHT; press NO to leave.",
+      "Press FUNC + LFO twice for the Internal Mixer and turn LEVEL: group A fades out as group B fades in.",
+      "FUNC + LEVEL jumps to the middle, where both groups play at -3 dB."
+    ]
+  },
+  "access": {
+    "location": "SETTINGS > CROSSFADER; LEVEL on the Internal Mixer (FUNC + LFO, 2/3) and on FADER ON tracks' pages",
+    "steps": [
+      "Press SETTINGS, go down to CROSSFADER and press YES.",
+      "Set each track and input to A, B or – with LEFT and RIGHT; tick tracks on FADER ON with their trig keys.",
+      "Press FUNC + LFO twice for the Internal Mixer and turn LEVEL."
+    ],
+    "screenshots": [
+      "media/crossfader-groups.png",
+      "media/crossfader-fader-on.png",
+      "media/internal-mixer.png",
+      "media/track-fader.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "SETTINGS > CROSSFADER",
+      "default": null,
+      "doc": "Each track and input in group A, B or – (neither); FADER CC (a CC number on FX CONTROL CH, or OFF); FADER ON (the tracks whose pages make LEVEL the fader, toggled with trig keys 1-16). Saved for the whole unit on the +Drive.",
+      "labels": null
+    },
+    {
+      "name": "LEVEL (fader pages)",
+      "default": 0,
+      "doc": "The crossfader, 0 (group A) to 127 (group B), equal-power. Turns as a stock knob: pushed for big steps, FUNC + LEVEL jumps to the middle, then to the end. Pushing LEVEL alone there does nothing.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.54"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for OS 1.54 only, on Core 2.1.",
+      "The groups, the fader CC and FADER ON are saved for the whole unit, not per project or pattern; the fader position is not saved.",
+      "It is the last layer on each channel's level: track levels and the External Mixer still apply, and the delay and reverb sends follow the fade."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "2.1",
+    "build": "build.json",
+    "events": [
+      "ev_draw",
+      "ev_enc",
+      "ev_key",
+      "ev_settings",
+      "ev_tick"
+    ],
+    "claims": [
+      "settings:CROSSFADER",
+      "ui:Internal Mixer page:LEVEL (the fader)",
+      "ui:track pages:LEVEL on FADER ON tracks (the fader)",
+      "ui:Internal Mixer page:LEVEL push",
+      "ui:track pages:LEVEL push on FADER ON tracks",
+      "midi:FX CONTROL CH:the fader CC",
+      "drive:/cfw/xfade.a",
+      "drive:/cfw/xfade.b"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 4844,
+    "fastBytes": 0,
+    "load": {
+      "display": "Adds 0.5-0.7% of an audio block over stock (emulator)",
+      "method": "emulator",
+      "conditions": "Emulator: OS 1.54, Core 2.1, demo pattern playing; 3,000 blocks with the MCF5441x timing model at 250 MHz, zero-wait memory. Core alone 60.3% mean, 62.0% worst block; with Crossfader and no groups 60.8% and 62.5%; with all ten channels in groups and the fader at 64, 61.0% and 62.8%. Not a hardware measurement."
+    }
+  },
+  "evidence": {
+    "tier": "emulator",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": "63172f54d98bfe0083bca644df2f6d6029d1352b52359342922d2ed9dc790f8f",
+    "reports": [
+      "TESTING.md",
+      "evidence/emulator-testing.json",
+      "evidence/source-identity.json"
+    ],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Emulator (digiemu, OS 1.54, CF01): the CROSSFADER page, groups, FADER ON, the fader on the Internal Mixer and on a FADER ON track, load measured. Before the split, the combined LF03 build passed every crossfader check on draadpiraat's Digitakt I; the hardware run of CF01 is pending.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial: fade between two groups",
+        "steps": [
+          "Press SETTINGS, go down to CROSSFADER (the last row) and press YES.",
+          "Put some tracks in group A and others in group B with LEFT and RIGHT; press NO to leave.",
+          "Press FUNC + LFO twice for the Internal Mixer and turn LEVEL: group A fades out as group B fades in.",
+          "FUNC + LEVEL jumps to the middle, where both groups play at -3 dB."
+        ]
+      },
+      "screenshots": [
+        "media/crossfader-groups.png",
+        "media/crossfader-fader-on.png",
+        "media/internal-mixer.png",
+        "media/track-fader.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by draadpiraat."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Crossfader thumbnail",
+      "alt": "Two groups of tracks, A and B, meeting at a crossfader.",
+      "credit": "draadpiraat",
+      "license": "GPL-3.0-or-later",
+      "source": "Original illustration"
+    },
+    {
+      "path": "media/crossfader-groups.png",
+      "kind": "screenshot",
+      "caption": "SETTINGS > CROSSFADER: TRACK 1 in group A, TRACK 2 in group B",
+      "alt": "The CROSSFADER page: SOURCE and GROUP columns, TRACK 1 in A, TRACK 2 in B (selected), TRACK 3 with a dash; POS 0 at the top.",
+      "credit": "Modwerk documentation capture; Elektron interface; draadpiraat module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.54",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "3419f57266d48b8d28416a99dd766654b31b9cd9a1f7673ba488f3d899076c1c",
+        "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project, no audio (the sequencer does not run). No audio or cycle-timing qualification."
+      }
+    },
+    {
+      "path": "media/crossfader-fader-on.png",
+      "kind": "screenshot",
+      "caption": "FADER ON with track 2 ticked",
+      "alt": "The CROSSFADER page further down: INPUT R with a dash, FADER CC OFF, and FADER ON with sixteen boxes, the second ticked; TRIG 1-16 at the top.",
+      "credit": "Modwerk documentation capture; Elektron interface; draadpiraat module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.54",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "3419f57266d48b8d28416a99dd766654b31b9cd9a1f7673ba488f3d899076c1c",
+        "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project, no audio (the sequencer does not run). No audio or cycle-timing qualification."
+      }
+    },
+    {
+      "path": "media/internal-mixer.png",
+      "kind": "screenshot",
+      "caption": "The Internal Mixer with the fader box at the lower left",
+      "alt": "Internal Mixer (2/3): eight track level bars, the MIX box, and at the lower left the fader at 14 between A and B.",
+      "credit": "Modwerk documentation capture; Elektron interface; draadpiraat module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.54",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "3419f57266d48b8d28416a99dd766654b31b9cd9a1f7673ba488f3d899076c1c",
+        "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project, no audio (the sequencer does not run). No audio or cycle-timing qualification."
+      }
+    },
+    {
+      "path": "media/track-fader.png",
+      "kind": "screenshot",
+      "caption": "Track 2's AMP page with the fader over the level bar",
+      "alt": "Track 2's Amplitude page: the envelope, DEL, REV, PAN and VOL, and at the lower left the fader at 14 between A and B in place of the level bar.",
+      "credit": "Modwerk documentation capture; Elektron interface; draadpiraat module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.54",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "3419f57266d48b8d28416a99dd766654b31b9cd9a1f7673ba488f3d899076c1c",
+        "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project, no audio (the sequencer does not run). No audio or cycle-timing qualification."
+      }
+    }
+  ]
+}
