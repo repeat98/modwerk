@@ -267,7 +267,14 @@ messages and `ZoomLink.flashBase` sends them. Recovery: update mode and Zoom's
   `ZOOM_MS70CDR_APP` set, the browser's `hello` flash must send the recorded
   messages byte for byte. On 9 November 2026 the page flashed `hello` onto
   the owner's MS-70CDR, which booted with MOD 0.1. The boot picture step (a release's `Preset.bin`) is
-  not in the recording.
+  not in the recording. On 10 November 2026 the owner flashed MIDISTOMP V2.0.1
+  from the page's dialog in update mode: the pedal booted, answers `M201`, and
+  kept its effects. On the same pedal the link removed Loop (free space
+  89,980 to 118,610 bytes), the pedal booted without it, the page installed
+  Loop again at its ID 8/467, and it loaded and played after a power cycle
+  (reported by the owner; the file list was read back each time). A backup of
+  all 166 files took 2 min 55 s. Not tried on a pedal: a failed write's
+  rollback and write-back, and two tabs.
 
 ## Plan
 
