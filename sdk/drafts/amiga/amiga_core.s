@@ -639,7 +639,7 @@ amiga_start:
 	jsr view_open
 	move.l 16(%fp),-(%sp)
 	mvz.w #168,%d2
-	mvz.w #16520,%d3
+	mvz.w #8328,%d3
 	move.l 12(%fp),-(%sp)
 	move.l 8(%fp),-(%sp)
 	jsr 1073804368
@@ -1004,7 +1004,7 @@ amiga_blend:
 .L194:
 	move.l %d1,%d0
 	move.l %d1,%d2
-	and.l #4095,%d0
+	and.l #2047,%d0
 	mvs.w (%a1),%d4
 	mvs.w (%a2),%d3
 	addq.l #1,%d1
@@ -1029,11 +1029,11 @@ amiga_blend:
 	cmp.l 108(%a0),%a3
 	jcs .L191
 	move.l %a3,%d2
-	add.l #4096,%d2
+	add.l #2048,%d2
 	cmp.l 104(%a0),%d2
 	jls .L191
 	move.l %a3,%d2
-	and.l #4095,%d2
+	and.l #2047,%d2
 	move.l %d2,%a3
 	lea (34,%a3),%a3
 	lea (%a0,%a3.l*4),%a3
@@ -1120,7 +1120,7 @@ amiga_seek:
 	cmp.l %d1,%d0
 	jhi .L207
 	move.l %d0,%a1
-	lea (4096,%a1),%a1
+	lea (2048,%a1),%a1
 	cmp.l %d1,%a1
 	jcc .L206
 .L207:
@@ -1638,12 +1638,12 @@ amiga_stretch:
 	add.l %d0,%a1
 	cmp.l %d2,%a1
 	jls .L276
-	cmp.l #4096,%a1
+	cmp.l #2048,%a1
 	jcc .L282
-	move.w #4096,%a1
+	move.w #2048,%a1
 .L282:
 	move.l 108(%a0),%d2
-	lea (-4096,%a1),%a1
+	lea (-2048,%a1),%a1
 	cmp.l %a1,%d2
 	jls .L283
 	move.l %d2,%a1
@@ -1760,7 +1760,7 @@ amiga_render:
 	add.l #2147482352,%d0
 	sub.l %a0,%d0
 	muls.l %d3,%d2
-	mvz.w #16520,%d3
+	mvz.w #8328,%d3
 	move.b -3(%fp),-32(%fp)
 	move.l %d2,-48(%fp)
 	move.l 8(%fp),%d2
@@ -1949,7 +1949,7 @@ amiga_render:
 	jra .L404
 .L403:
 	move.l %d0,%a1
-	lea (4096,%a1),%a1
+	lea (2048,%a1),%a1
 	cmp.l -60(%fp),%a1
 	jcc .L390
 .L400:
@@ -2076,7 +2076,7 @@ amiga_render:
 	add.l #voices,%a0
 	move.l 104(%a0),%a2
 	clr.l %d0
-	move.w #4096,%a1
+	move.w #2048,%a1
 	clr.l 48(%a0)
 	move.l %a2,-60(%fp)
 	clr.l 52(%a0)
@@ -2309,4 +2309,4 @@ knobs:
 	.string	"BITS"
 	.zero	1
 	.local	voices
-	.comm	voices,132160,2
+	.comm	voices,66624,2

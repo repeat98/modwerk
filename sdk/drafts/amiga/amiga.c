@@ -40,9 +40,9 @@ typedef struct {
     uint32_t fade, jump;
     uint32_t hi, floor;     /* `hist` holds the frames read, from `floor` (or the last HIST) up to `hi`, counted from the note's start */
     uint32_t mix_from, mix_len, mix_wait, mix_k, mix_step, planned; /* the fade into the next grain, out of `hist` */
-    int16_t hist[4096][2];
+    int16_t hist[2048][2]; /* with the code, eight of these stay under the loader's 128 KiB a module */
 } AmigaVoice;
-#define HIST 4096u
+#define HIST 2048u
 #define ONE 0x10000u /* Q16: one stored sample */
 #define KEEP (-1)
 #define OVER (-2)

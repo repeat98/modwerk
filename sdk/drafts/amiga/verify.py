@@ -30,7 +30,7 @@ class Voice(ctypes.Structure):
                     'pos', 'window', 'grain', 'played', 'since', 'got', 'first', 'length', 'sample', 'flags')] + [
                 ('last', ctypes.c_int32 * 2), ('off', ctypes.c_int32 * 2)] + [(name, ctypes.c_uint32) for name in (
                     'fade', 'jump', 'hi', 'floor', 'mix_from', 'mix_len', 'mix_wait', 'mix_k', 'mix_step', 'planned')] + [
-                ('hist', ctypes.c_int16 * 8192)]
+                ('hist', ctypes.c_int16 * 4096)]
 
 
 with tempfile.TemporaryDirectory() as tmp:

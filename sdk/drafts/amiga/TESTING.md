@@ -51,4 +51,4 @@ Not tested.
 
 ## Performance
 
-Not measured. A render call adds up to three passes over at most a frame's source samples, and each cycle two divisions and one call of stock's START. The eight voices' memories take 131 KB of RAM.
+Not measured. A render call adds up to three passes over at most a frame's source samples, and each cycle two divisions and one call of stock's START. The eight voices' memories take 66 KB of RAM (the loader allows a module 128 KiB; 16 KB a voice was refused on the unit as malformed).
