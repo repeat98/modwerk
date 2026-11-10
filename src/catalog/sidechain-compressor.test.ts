@@ -94,9 +94,11 @@ describe('Sidechain Compressor native evidence on the shared builder', () => {
     const current = () => parseModuleDocument(JSON.parse(JSON.stringify(manifest)))
     expect(() => requireModuleQualificationForPublication(current())).not.toThrow()
     expect(current().tests.hardwareStatus).toBe('reported')
-    expect(current().tests.qualification?.hardware).toMatchObject({ kind: 'functional', status: 'reported', model: 'MKI', imageSha256: 'fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc' })
-    // The pinned image is the one the hardware report names.
-    expect(composition.proofs.find(proof => key(proof.moduleIds, proof.keepStockFx2) === key(['sidechain-compressor'], true))!.sha256).toBe(current().tests.qualification!.imageSha256)
+    // 0.2.2's report is the author's run with the ColdFire units in the DRAM runtime, beside Direct Jump (#1175).
+    expect(current().tests.qualification?.hardware).toMatchObject({ kind: 'functional', status: 'reported', model: 'MKI', imageSha256: 'e77ec14bd2f8f4d1586a3d2366207835485521cc6ce3ee941dc353a66963548a' })
+    expect(current().tests.qualification!.imageSha256).toBe(current().tests.qualification!.hardware!.imageSha256)
+    // The module alone (cave placement) still builds the image 0.2.1's report ran, which the screenshots show.
+    expect(composition.proofs.find(proof => key(proof.moduleIds, proof.keepStockFx2) === key(['sidechain-compressor'], true))!.sha256).toBe('fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc')
     // The owner's 5 October waiver covered 0.1.1 only.
     const waived = current()
     waived.tests.qualification!.hardware = { kind: 'owner-waived', status: 'waived', approvedBy: 'repeat98', approvedOn: '2026-10-05', reason: 'reuse', report: 'evidence/software.json' }
