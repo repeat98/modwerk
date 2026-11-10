@@ -27,6 +27,9 @@
         .equ V_SUB,      144            | view: the sub-page shown
         .equ SEL1,       33             | SEL1-8: local parameter ids 33-40
         .equ VAL1_CC,    70             | the CC stock reads as VAL1
+        .equ HELD,       0x400d399c     | f(key) -> nonzero (low byte) while the key is held
+        .equ KEY_REC,    9              | key ids: RECORD, PLAY, STOP are 9-11
+        .equ KEY_AMP,    22
 
         .text
 
@@ -175,6 +178,39 @@ ccm_title:
         lea     12(%sp), %sp
         rts
 8:      jmp     STR_COPY
+
+| ---------------- page copy, paste and clear on CC RECEIVE (ev_key) ----------------
+| Holding the page key with RECORD, STOP or PLAY copies, pastes or clears the page shown.
+| On CC RECEIVE those would act on the receive table through ccm_get/ccm_set, so a copy
+| taken there and pasted on CC SELECT wrote receive numbers into SEL1-8. While CC RECEIVE
+| is on screen and AMP is held, the three keys are taken and do nothing; everywhere else,
+| and without AMP held, they are stock. f(brain, event): event +12 the key id.
+        .balign 2
+        .globl  ccm_key
+ccm_key:
+        move.l  ccm_view, %d0
+        beq.s   9f
+        movea.l %d0, %a0
+        tst.l   V_SHOWN(%a0)
+        beq.s   9f
+        moveq   #1, %d0
+        cmp.l   V_SUB(%a0), %d0
+        bne.s   9f                      | CC RECEIVE is not on screen
+        movea.l 8(%sp), %a0
+        move.l  12(%a0), %d0
+        subi.l  #KEY_REC, %d0
+        moveq   #3, %d1
+        cmp.l   %d1, %d0
+        bcc.s   9f                      | not RECORD, PLAY or STOP
+        pea     KEY_AMP.w
+        jsr     HELD
+        addq.l  #4, %sp
+        andi.l  #255, %d0
+        beq.s   9f                      | AMP is not held: transport as stock
+        moveq   #1, %d0
+        rts
+9:      moveq   #0, %d0
+        rts
 
         .data
         .globl  ccm_rx

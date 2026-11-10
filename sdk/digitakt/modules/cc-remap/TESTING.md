@@ -4,7 +4,7 @@ Module version 0.1.0-experimental, Digitakt I OS 1.54 (stock file SHA-256 `f78ba
 
 ## Evidence tier
 
-Author hardware: the three builds of section 5 on the author’s Digitakt I with an Allen & Heath Xone:1D, plus the emulator results below.
+Emulator for the current source. The author's hardware results of section 5 (29 October 2026) were on the source before the page copy/paste fix of section 6; they are kept below and in [evidence/hardware-testing.json](evidence/hardware-testing.json), and the current build's hardware run is in section 7.
 
 ## How it works (OS 1.54)
 
@@ -76,6 +76,27 @@ Builds: module alone `eaa72c8c…c85079`, with FX Track `5196ccac…dd5c74`, wit
 
 **Author’s results (draadpiraat, 29 October 2026, Allen & Heath Xone:1D):** 1 works perfect; 2, 3 and 4 confirmed; 5 “different channels work and follow its own channel”; 6 (with FX Track) “fx track seems to work exactly as described”; 7 (with CC Assignment Names) “confirmed everything works”; 8 confirmed each time. Also noticed: copying an entire MIDI track does not copy its CC Receive table. Tested for about 20 minutes. Details in [evidence/hardware-testing.json](evidence/hardware-testing.json).
 
+## 6. Who reads SEL1–8 while CC Receive is on screen (pinned digiemu c1b5735)
+
+The owner asked whether any stock path reads SEL1–8 through the module's getter while CC Receive is on screen. Checked on 7 November 2026 with a probe that logs every parameter read and write by caller, with trigs on the MIDI track, the pattern playing and remapped CCs arriving:
+
+- **MIDI OUT** still carries the CC SELECT numbers when a remapped CC or a trig sets a VAL: the send path does not go through the swapped read.
+- **Pattern and track copy, paste and clear** (FUNC + RECORD, STOP, PLAY) are unaffected.
+- **Page copy, paste and clear** (hold AMP + RECORD, STOP, PLAY) were: a page copy on CC Receive took the receive table, and a page paste on CC SELECT then wrote the receive numbers into SEL1–8 (SEL `6, 8, 0…` became `60, 61, 72…`).
+
+**Fix (10 November 2026):** while CC Receive is on screen and AMP is held, RECORD, STOP and PLAY are taken and do nothing (`ccm_key`, an `ev_key` handler); everywhere else they are stock. The same probe on the fixed build: every page copy, paste and clear on CC Receive leaves the table, and SEL1–8 stays `6, 8, 0…` through a later paste on CC SELECT; a copy taken on CC SELECT and pasted on CC SELECT is stock.
+
+## 7. Hardware steps for the fixed build (for the author)
+
+Builds: module alone `1818236a…822a7c` (`cc-remap-0.1.0-fix1-os1.54.syx`), with CC Recall `c7fbb2c4…1b420b0d` (`cc-remap-0.1.0-fix1+cc-recall-os1.54.syx`).
+
+1. Module alone: repeat section 5's steps 1–3 and 8.
+2. On CC Receive hold AMP and press RECORD, then PLAY, then STOP: nothing happens, and the table and CC SELECT are unchanged.
+3. On CC SELECT, hold AMP and press RECORD, then STOP on another pattern: stock page copy and paste.
+4. With CC Recall, CC RECALL ticked: open CC Receive on a MIDI track and reload the pattern (or change to another pattern and back) while it is on screen. CC Recall's sends go out with the CC SELECT numbers, and the table and SEL1–8 are unchanged.
+
+Not run yet.
+
 ## Stock flows compared
 
 | Flow | Result |
@@ -85,6 +106,8 @@ Builds: module alone `eaa72c8c…c85079`, with FX Track `5196ccac…dd5c74`, wit
 | Other parameter pages, audio tracks | Stock |
 | Saved data | Unchanged; the table is not saved |
 | Power cycle | 70–77 again (author’s unit, each time) |
+| Page copy, paste, clear on CC Receive | Do nothing (emulator, fixed build) |
+| Page copy, paste, clear on CC SELECT | Stock (emulator, fixed build) |
 | Copying a MIDI track | Copies the track’s data; the CC Receive table stays with the track slot (author’s unit) |
 
 ## Still to test

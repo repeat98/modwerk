@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "algorithm": "sha256 of canonical sorted JSON {sources,build}; UTF-8, compact separators",
-  "sha256": "2a8ffcbb977becf6e5a2cde726f1e82e4b914504343963a5edc1729823db2354",
+  "algorithm": "sha256 of canonical sorted JSON {sources,build}; UTF-8, compact separators; sources: every file under src/",
+  "sha256": "790f3dca8e390ae479b932498c96e8909c71d7c08d7bb8f0ba2e22ed92edf2d6",
   "sources": {
-    "src/ccremap.s": "6dff118451f3cb3aaac6ba6256e9526a7b803d688cdb7b6ce588864808c410a3"
+    "src/ccremap.s": "060de20e90caf2936c34cdb0b229edab6f3a9bcfd9d7b93e354319b13b01f588"
   },
   "build": {
     "schemaVersion": 1,
@@ -13,13 +13,20 @@
     "defsym": {},
     "cflags": [],
     "weak": [],
-    "subscribe": [],
+    "subscribe": [
+      {
+        "event": "ev_key",
+        "fn": "ccm_key",
+        "order": 50
+      }
+    ],
     "contribute": [],
     "collections": {},
     "copied": [],
     "regions": [],
     "claims": [
-      "ui:MIDI track AMP page:AMP twice"
+      "ui:MIDI track AMP page:AMP twice",
+      "ui:CC RECEIVE page:AMP + RECORD/PLAY/STOP (page copy, paste, clear) do nothing"
     ],
     "requires": [],
     "derive": null,

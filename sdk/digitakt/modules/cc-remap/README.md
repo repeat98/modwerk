@@ -58,9 +58,10 @@ Requires Core 2.1. Built for OS 1.54 only.
 - **The track’s own channel only.** A CC on the auto channel reaches the active track as stock, without the table.
 - **Consumed numbers.** A CC whose number is in a track’s table no longer reaches that track as itself; MIDI THRU and other tracks are unaffected.
 - **Two slots with the same number.** The first slot wins.
+- **Page copy, paste and clear** (hold AMP + RECORD, STOP or PLAY) do nothing on CC Receive, so a copy taken there can never be pasted into CC SELECT; on CC SELECT they are stock.
 - **The popup while turning** still reads "CC1 Select=…": it shows the receive number on CC Receive.
-- **What it patches.** Four 6-byte `jsr` sites on OS 1.54: the entry of the per-track incoming-CC handler (0x400d6c80), which renames a remapped CC; the parameter read (0x4000fe10) and write (0x40010b62) a page uses, which use the table for SEL1–8 while CC Receive is on screen; and the title copy of the parameter pages (0x40030954), which shows the CC Receive title and, the first time the AMP page opens, gives that page its second sub-page. They overlap no other Modwerk module’s bytes. CC Assignment Names replaces the page key handler; CC Remap leaves it alone and uses the stock sub-page stepping.
-- **Stock flows.** It takes `ui:MIDI track AMP page:AMP twice` and changes no saved data. With every slot at 70–77 the MIDI input is stock.
+- **What it patches.** Four 6-byte `jsr` sites on OS 1.54: the entry of the per-track incoming-CC handler (0x400d6c80), which renames a remapped CC; the parameter read (0x4000fe10) and write (0x40010b62) a page uses, which use the table for SEL1–8 while CC Receive is on screen; and the title copy of the parameter pages (0x40030954), which shows the CC Receive title and, the first time the AMP page opens, gives that page its second sub-page. It also takes RECORD, STOP and PLAY while AMP is held on CC Receive (`ev_key`). They overlap no other Modwerk module’s bytes. CC Assignment Names replaces the page key handler; CC Remap leaves it alone and uses the stock sub-page stepping.
+- **Stock flows.** It takes `ui:MIDI track AMP page:AMP twice` and AMP + RECORD/STOP/PLAY on CC Receive, and changes no saved data. With every slot at 70–77 the MIDI input is stock.
 
 ## Tests and measurements
 

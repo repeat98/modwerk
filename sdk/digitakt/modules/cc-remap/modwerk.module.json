@@ -80,9 +80,12 @@
     "kind": "elemod",
     "core": "2.1",
     "build": "build.json",
-    "events": [],
+    "events": [
+      "ev_key"
+    ],
     "claims": [
-      "ui:MIDI track AMP page:AMP twice"
+      "ui:MIDI track AMP page:AMP twice",
+      "ui:CC RECEIVE page:AMP + RECORD/PLAY/STOP (page copy, paste, clear) do nothing"
     ]
   },
   "resources": {
@@ -95,31 +98,20 @@
     }
   },
   "evidence": {
-    "tier": "author-hardware",
+    "tier": "emulator",
     "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": "2a8ffcbb977becf6e5a2cde726f1e82e4b914504343963a5edc1729823db2354",
+    "sourceSha256": "790f3dca8e390ae479b932498c96e8909c71d7c08d7bb8f0ba2e22ed92edf2d6",
     "reports": [
       "evidence/hardware-testing.json",
       "evidence/source-identity.json",
       "TESTING.md"
     ],
-    "hardware": {
-      "model": "Digitakt I",
-      "release": "1.54",
-      "testedOn": "2026-10-29",
-      "tester": "draadpiraat",
-      "durationMinutes": 20,
-      "summary": "draadpiraat tested CC Remap on their Digitakt I, OS 1.54, with an Allen & Heath Xone:1D: AMP toggles CC Receive (2/2) and back; untouched, CC 70–77 work as stock; with the table set to the Xone’s pots each pot moves its VAL slot and the synth receives the slot’s CC SELECT number; the table holds across pattern changes; two MIDI tracks each follow their own channel and table; the table is back at 70–77 after every power cycle. With FX Track a pot moves the effect; with CC Assignment Names both modules work.",
-      "limitations": [
-        "The auto channel, USB MIDI input and a CC flood were not tested.",
-        "Copying a MIDI track does not copy its CC Receive table."
-      ]
-    },
+    "hardware": null,
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Author hardware (Digitakt I, OS 1.54, Allen & Heath Xone:1D): AMP toggles CC Receive and back; with the table set to the controller’s pots each pot moves its VAL slot and the slot’s CC SELECT number goes out; the table holds across pattern changes; each MIDI track follows its own channel; 70–77 again after a power cycle; works with FX Track and with CC Assignment Names. Emulator: also the message map, other channels untouched and the load figures.",
+    "summary": "Emulator (digiemu): the remap, CC Receive, MIDI OUT and every copy/paste path checked, including the page copy/paste fix (TESTING.md section 6). Author hardware on the source before that fix (Xone:1D, alone, with FX Track and with CC Assignment Names); the fixed build's hardware run, with CC Recall, is pending (section 7).",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial: play a MIDI track’s VAL knobs from a fixed-CC controller",
