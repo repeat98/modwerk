@@ -25,6 +25,7 @@ import { judgeRecord, ownerWaivedPerformanceRow } from './perf-audit-analysis.mj
 import { LINK_DEVICES } from '../src/engine/elektron/elemod.ts'
 import { stageDraft } from './draft-stage.mjs'
 import { requireZdlBinary, zdlPath } from './zdl-binaries.mjs'
+import { moduleCardless } from '../src/catalog/usb-only.ts'
 
 // Modules first listed on or after this day carry a measured performance record (docs/MODULE_PERFORMANCE.md); earlier ones keep their qualification evidence.
 const PERFORMANCE_REQUIRED_FROM = '2026-10-07'
@@ -135,9 +136,10 @@ function octatrack(id) {
   else ok('module rules', 'versions, documentation, tutorial, screenshots, qualification, resource gauges (npm run modules:check)')
 
   const build = json('src/engine/assets/module-build.json'), buildable = document.build?.status !== 'pending'
-  // A C runtime module (its USB package row has "sources") has no card form: only its USB package is built.
-  const usbRow = json('src/engine/assets/octatrack-module-packages.json').packages.find(row => row.id === id), cOnly = Boolean(usbRow?.sources)
-  if (cOnly && usbRow.version === document.version) ok('packages', 'USB package at ' + document.version + ' (a C runtime module, no card form)')
+  // A C runtime module (its USB package row has "sources") or one marked "usbOnly" has no card form: only its USB package
+  // is built. The same rule as the card build's and the native comparison test's (src/catalog/usb-only.ts).
+  const usbRow = json('src/engine/assets/octatrack-module-packages.json').packages.find(row => row.id === id), cOnly = moduleCardless(id)
+  if (cOnly && usbRow.version === document.version) ok('packages', 'USB package at ' + document.version + ' (' + (usbRow.sources ? 'a C runtime' : 'a USB-only') + ' module, no card form)')
   else if (cOnly) fail('packages', 'the USB package is ' + usbRow.version + ', not ' + document.version, 'npm run octatrack:module-packages, then -- --check')
   else if (!buildable) info('packages', 'build status is pending, so the packages do not include it yet')
   else if (build.moduleVersions?.[id] !== document.version) fail('packages', 'the committed packages lack ' + id + '@' + document.version, 'rebuild and import the packages (docs/ADD_A_MODULE.md, step 4)')
