@@ -17,3 +17,4 @@ export { findVendorInterface, UsbVendorTransport } from '../src/engine/elekloade
 export { buildBase } from '../src/engine/elekloader/octatrack-base'
 export { apiFetch, setAdminSession } from '../src/community/api'
 export { DSP_LOADER } from '../src/engine/protocol'
+export { ZoomLink } from '../src/engine/zoom/zoom-link'

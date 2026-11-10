@@ -113,6 +113,9 @@ project's Patch Editor backup, the effect list apart (changed on the pedal in be
 removing the project's RingT test effect worked on the same pedal (27 October): it appeared in its category
 after a power cycle and was gone after removal, with everything else unchanged.
 
+An agent drives the same link from Node: `npm run zoom -- status | list | backup | install | remove` and the
+developer MCP's `zoom_*` tools ([A Zoom pedal over MIDI](FRONTEND_MCP.md#a-zoom-pedal-over-midi)).
+
 ## Contract changes
 
 Done (22 October 2026):
