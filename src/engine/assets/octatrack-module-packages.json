@@ -466,7 +466,7 @@
       "name": "Analog BD",
       "module": "abdb1445",
       "bytes": 26172,
-      "sha256": "7b92194168d47ba58525f5d441cec5fef36bef344020280bd025f7cb34d91122",
+      "sha256": "9a7eb8144ad3a92e3c1908911176d9ebbcdf64304c1c2e49b0b10cd8ac226d40",
       "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
       "requiredBase": "500cdb6fd81bfc9c2b18737e7487f3ec2264c1c00c5ebef833e7f751e325d1b7",
       "requires": 0,

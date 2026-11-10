@@ -3919,7 +3919,7 @@
             "shows": "location-and-controls",
             "firmware": "1.40C",
             "moduleVersion": "0.1.7-experimental",
-            "imageSha256": "a5c4798bb8b699d2444ee71acd46826dac7a21c8b3a1403cc1795d72e23109d4",
+            "imageSha256": "794ae30ca349fa48b12e37e12c395f97394a5d1e5e1ec0e0405650cbbb1798b8",
             "setup": "Headless ot_emu; MKII panel, stopped transport; native card build of this 0.1.7 source with Analog BD alone, empty scratch card; 128×64 LCD at integer scale 6."
           }
         },
@@ -3936,7 +3936,7 @@
             "shows": "controls",
             "firmware": "1.40C",
             "moduleVersion": "0.1.7-experimental",
-            "imageSha256": "a5c4798bb8b699d2444ee71acd46826dac7a21c8b3a1403cc1795d72e23109d4",
+            "imageSha256": "794ae30ca349fa48b12e37e12c395f97394a5d1e5e1ec0e0405650cbbb1798b8",
             "setup": "Headless ot_emu; MKII panel, stopped transport; native card build of this 0.1.7 source with Analog BD alone, empty scratch card; 128×64 LCD at integer scale 6."
           }
         },
@@ -3953,7 +3953,7 @@
             "shows": "controls",
             "firmware": "1.40C",
             "moduleVersion": "0.1.7-experimental",
-            "imageSha256": "a5c4798bb8b699d2444ee71acd46826dac7a21c8b3a1403cc1795d72e23109d4",
+            "imageSha256": "794ae30ca349fa48b12e37e12c395f97394a5d1e5e1ec0e0405650cbbb1798b8",
             "setup": "Headless ot_emu; MKII panel, stopped transport; native card build of this 0.1.7 source with Analog BD alone, empty scratch card; 128×64 LCD at integer scale 6."
           }
         },
