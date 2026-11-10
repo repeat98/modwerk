@@ -7,7 +7,7 @@
   "mods": [
     {
       "file": "cc-remap-0.1.0-experimental-os1.54.elemod",
-      "sha256": "81d9fd8d105214ee0bb1daf95da8fb004900ae0b109be07ca2c26a459f2f81f1",
+      "sha256": "32e1e805e8c075fe800b7ac9f6b66a784c6cc74b3ae3dd9464b540431574be6c",
       "id": "cc-remap",
       "version": "0.1.0-experimental",
       "device": "digitakt-mk1",
@@ -15,7 +15,7 @@
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "143f366da5099a3a2a9124870430d8ba4fe01fba",
+        "commit": "2f54fdee10ff37f9f7c3e032ee6b0a82da542c86",
         "path": "sdk/imports/packages/cc-remap/cc-remap-0.1.0-experimental-os1.54.elemod"
       },
       "title": "CC Remap",
