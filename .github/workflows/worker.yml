@@ -17,6 +17,9 @@ jobs:
   scope:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
     outputs:
       worker: ${{ steps.scope.outputs.worker }}
     steps:
@@ -29,12 +32,14 @@ jobs:
           node-version: 24
       - id: scope
         env:
-          BEFORE: ${{ github.event.before }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          if [ "${{ github.event_name }}" = workflow_dispatch ] || [ -z "$BEFORE" ] || [ "$BEFORE" = 0000000000000000000000000000000000000000 ]; then
-            echo 'worker=true' >> "$GITHUB_OUTPUT"
+          # Compare with the last successful run, not the previous push, so a cancelled or failed Worker deploy is never skipped.
+          last=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow worker.yml --branch main --status success --limit 1 --json headSha --jq '.[0].headSha // ""')
+          if [ "${{ github.event_name }}" != workflow_dispatch ] && [ -n "$last" ] && git cat-file -e "$last^{commit}" 2>/dev/null; then
+            node scripts/change-scope.mjs --base "$last" --head HEAD >> "$GITHUB_OUTPUT"
           else
-            node scripts/change-scope.mjs --base "$BEFORE" --head HEAD >> "$GITHUB_OUTPUT"
+            echo 'worker=true' >> "$GITHUB_OUTPUT"
           fi
   deploy:
     needs: scope
