@@ -17,6 +17,13 @@ class Qualify(unittest.TestCase):
             with self.assertRaises(SystemExit) as c: qualify.main()
         self.assertIn('--keeps-ok', str(c.exception))
 
+    def test_it_finds_the_chooser_name_of_a_package(self):
+        names = ['FILTER', 'SPECTRUM79', 'RINGMOD_SC', 'BBD_DELAY']
+        self.assertEqual(qualify.chooser_name(names, 'BBD Delay'), 'BBD_DELAY')
+        self.assertEqual(qualify.chooser_name(names, 'Spectrum'), 'SPECTRUM79')
+        self.assertEqual(qualify.chooser_name(names, 'SC Ringmod'), 'RINGMOD_SC')  # the words in another order
+        self.assertEqual(qualify.chooser_name(names, 'Mini Verb'), 'MINI_VERB')  # not listed: as the package says
+
     def test_the_entry_says_what_ran_and_what_it_leaves_out(self):
         reading = dict(cpu=40, core1=300, core1_peak=420, core0=0, core0_peak=0, admit_ms=180)
         result = dict(args=['--keeps-ok', 'everb.mwrm'], crash=False, failures=[], parts=[2, 3, 4, 1, -2],

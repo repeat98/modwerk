@@ -375,10 +375,10 @@ stays byte-identical; only its feature split moves (KEYBUS, bit 8, out of SIDECH
   carries the tap and no instance. "Installed, on no track" measures nothing on an on-demand base (above). Core 1's
   meter is not calibrated.
 
-**Resets.** KEYBUS resets the window ($33dfe / $3bdfe, $202 words) and then the bus (Y $800, $200 words), 1,026 words
-per core, when it is placed: the window first, so the first chunk zeroes the seed mark and counter. Once it is let go
+**Resets.** KEYBUS resets the window ($33dfe / $3bdfe, $202 words) and then the bus (Y $7e00, $200 words), 1,026 words
+per core, when it is placed: the window first, so the first chunk zeroes the seed and counter. Once let go
 after a run, the board sends that one chunk again (the scrub) while it still holds the window, so a stale mark never
-outlives the bus. Sidechain keeps its exact reset (1,042 words: Y $7f0+$210 and the window), so its contract and
+outlives the bus. Sidechain keeps its exact reset (1,042 words: Y $ff0+$10, the window, Y $7e00+$200), so its contract and
 DSP stay byte-identical; a held Sidechain holds KEYBUS, which the base places, resets and enables first. Side effect:
 installing or reinstalling Sidechain while a reader is live re-zeroes the bus and the window once, so that reader hears
 up to about a block of silent key while the tap re-adopts its counter by #640's rule.
