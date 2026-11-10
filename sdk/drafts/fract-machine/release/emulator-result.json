@@ -1,7 +1,225 @@
 {
-  "result": "NOT_RUN_FOR_THIS_PACKAGE",
+  "result": "PASS_EMULATOR_ONLY",
   "version": "0.1.2-experimental",
   "packageSha256": "6ff37fdcdbfead903a4857482d0f7bd50905175b55c877e62ad7c51422ef5874",
+  "baseIdentity": "72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6",
+  "captured": "2026-11-11",
+  "setup": "Full octemu with actual DSPs, real frame guard and --guest-clock. Historical private card/NVRAM fixture. No physical USB.",
+  "startPass": true,
+  "playPass": true,
+  "snapshots": [
+    {
+      "label": "selected",
+      "owner": 8,
+      "selectedTrack": 0,
+      "signature": "465201",
+      "nativeVoice": 0,
+      "heads": [
+        {
+          "cursor": 0,
+          "age": 0,
+          "length": 0
+        },
+        {
+          "cursor": 0,
+          "age": 0,
+          "length": 0
+        },
+        {
+          "cursor": 0,
+          "age": 0,
+          "length": 0
+        }
+      ],
+      "errors": 0,
+      "rejected": [
+        0,
+        0
+      ],
+      "residencyFailures": 0,
+      "frames": 93115,
+      "sheds": 0,
+      "startRefused": 0,
+      "descriptorFlags": 771
+    },
+    {
+      "label": "playing-a",
+      "owner": 0,
+      "selectedTrack": 0,
+      "signature": "465201",
+      "nativeVoice": 255,
+      "heads": [
+        {
+          "cursor": 27142,
+          "age": 8659,
+          "length": 38039
+        },
+        {
+          "cursor": 52502,
+          "age": 34019,
+          "length": 38039
+        },
+        {
+          "cursor": 39822,
+          "age": 21339,
+          "length": 38039
+        }
+      ],
+      "errors": 0,
+      "rejected": [
+        0,
+        0
+      ],
+      "residencyFailures": 0,
+      "frames": 101630,
+      "sheds": 0,
+      "startRefused": 0,
+      "descriptorFlags": 771
+    },
+    {
+      "label": "playing-b",
+      "owner": 0,
+      "selectedTrack": 0,
+      "signature": "465201",
+      "nativeVoice": 255,
+      "heads": [
+        {
+          "cursor": 20707,
+          "age": 2224,
+          "length": 38039
+        },
+        {
+          "cursor": 46067,
+          "age": 27584,
+          "length": 38039
+        },
+        {
+          "cursor": 33387,
+          "age": 14904,
+          "length": 38039
+        }
+      ],
+      "errors": 0,
+      "rejected": [
+        0,
+        0
+      ],
+      "residencyFailures": 0,
+      "frames": 103291,
+      "sheds": 0,
+      "startRefused": 0,
+      "descriptorFlags": 771
+    },
+    {
+      "label": "retriggered",
+      "owner": 0,
+      "selectedTrack": 0,
+      "signature": "465201",
+      "nativeVoice": 255,
+      "heads": [
+        {
+          "cursor": 46828,
+          "age": 28345,
+          "length": 38039
+        },
+        {
+          "cursor": 34148,
+          "age": 15665,
+          "length": 38039
+        },
+        {
+          "cursor": 21468,
+          "age": 2985,
+          "length": 38039
+        }
+      ],
+      "errors": 0,
+      "rejected": [
+        0,
+        0
+      ],
+      "residencyFailures": 0,
+      "frames": 114660,
+      "sheds": 0,
+      "startRefused": 0,
+      "descriptorFlags": 771
+    },
+    {
+      "label": "stopped",
+      "owner": 0,
+      "selectedTrack": 0,
+      "signature": "465201",
+      "nativeVoice": 255,
+      "heads": [
+        {
+          "cursor": 52737,
+          "age": 34254,
+          "length": 38039
+        },
+        {
+          "cursor": 40057,
+          "age": 21574,
+          "length": 38039
+        },
+        {
+          "cursor": 27377,
+          "age": 8894,
+          "length": 38039
+        }
+      ],
+      "errors": 0,
+      "rejected": [
+        0,
+        0
+      ],
+      "residencyFailures": 0,
+      "frames": 118969,
+      "sheds": 0,
+      "startRefused": 0,
+      "descriptorFlags": 771
+    }
+  ],
+  "loaderBefore": {
+    "dl_frames": 49628,
+    "dl_errors": 0,
+    "dl_accepted": [
+      20,
+      20
+    ],
+    "dl_rejected": [
+      0,
+      0
+    ],
+    "dl_residency_failures": 0,
+    "dl_modal_shown": 0
+  },
+  "loaderAfter": {
+    "dl_frames": 119001,
+    "dl_errors": 0,
+    "dl_accepted": [
+      20,
+      20
+    ],
+    "dl_rejected": [
+      0,
+      0
+    ],
+    "dl_residency_failures": 0,
+    "dl_modal_shown": 0
+  },
+  "captureRecord": "../media/capture.json",
+  "earlierAttempts": [
+    {
+      "case": "host-clock emulator without --guest-clock",
+      "result": "FAILED_EMULATOR_CLOCK_MODEL",
+      "observed": "Frame guard shed rendering; no moving grains. Retained privately. Guard was not disabled."
+    },
+    {
+      "case": "same exact artifact with --guest-clock",
+      "result": "PASS_EMULATOR_ONLY",
+      "observed": "Native FLEX voice active, all three grain cursors advance, retrigger succeeds, no loader errors/rejections/residency failures or sheds."
+    }
+  ],
   "historicalReport": "history/20261106/emulator-result.json",
-  "note": "Earlier emulator and hardware observations are bound to package54ca; not transferred to this image."
+  "limits": "No emulator timer, processor load or nominal microsecond value qualifies physical performance. Hardware functional results are recorded separately; timing/stress/companions and owner approval remain pending."
 }

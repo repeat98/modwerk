@@ -19,7 +19,8 @@ import word, no firmware bytes, and passes byte-exact reconstruction and both
 unchanged strict scans locally. Resident extent is 31,424 bytes and the own
 callback stack bound is 712 bytes. The [hardware report](hardware-20261110.md)
 records this exact candidate's functional checks, including physical reboot and
-USB restoration readback. Full-emulator and timing/stress qualification remain
+USB restoration readback. Exact-package full-emulator START/three-head/retrigger
+and UI capture checks also pass; hardware timing/stress qualification remains
 pending. Earlier package54ca observations remain in
 `history/20261106/` and the historical section of TESTING.md.
 
@@ -32,8 +33,9 @@ pending. Earlier package54ca observations remain in
 3. Supply the named-build performance record: worst own render/block versus
    budget, matched native-FLEX frame/idle comparison, audio stress. Nulls have
    reasons; the owner's first-release waiver decision is pending.
-4. Finish required screenshots and provenance, stock-flow/companion evidence,
-   and the qualification record; retain every untested case and reload incident.
+4. Retain the current screenshots and provenance in `media/`; finish
+   stock-flow/companion evidence and the qualification record, retaining every
+   untested case and reload incident.
 5. After qualification, move sources to sdk/octabam/modules, activate catalogue
    and package rows and community release notes, reproduce the final bytes,
    run doctor/pr:ready and isolated release builds, and obtain owner's approval.

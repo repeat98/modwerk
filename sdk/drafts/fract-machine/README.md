@@ -1,6 +1,6 @@
 # FRACT source draft
 
-Version 0.1.1-experimental · author @ex1010
+Version 0.1.2-experimental · author @ex1010
 
 ## Overview
 
@@ -42,7 +42,7 @@ active SPACE processor or FX2 effect.
 On a compatible private paired build, select one track T1–T4, open SRC SETUP and
 choose FRACT. Open its sample browser and select a loaded FLEX-pool sample.
 Return to MAIN for POS/SIZE and the remaining controls. Only one FRACT owner is
-admitted at a time. The instructions describe the private prototype interface;
+admitted at a time. These controls are present in the tested private candidate;
 this source draft cannot be installed from the public configurator.
 
 ## Quick tutorial
@@ -68,10 +68,11 @@ TESTING.md. The current 0.1.2 candidate follows the merged base-aware builder
 and has a named-build functional hardware report; timing/stress and full release
 qualification remain pending. Publication remains incomplete.
 
-Historical 0.1.1 install, explicit Undo, Keep/removal/reinstall, installed-Part reload
-and cold boot are recorded in TESTING.md. Missing-module reload is unconfirmed;
-explicit project reload, live-trigger deletion, stress, resource bounds and
-companion-module qualification remain open.
+Historical 0.1.1 results remain in TESTING.md. The current candidate's Part and
+project reload, lifecycle and cold boot are scoped in
+[the 10 November report](release/hardware-20261110.md). Standalone missing-module
+Part reload, live-trigger deletion, full timing/stress and companion-module
+qualification remain open.
 
 ## Tests and measurements
 
@@ -114,12 +115,19 @@ independence is limited to the frozen implementation files.
 
 ## Screens and audio
 
-[Artwork and three emulator previews](../../../docs/media/fract/README.md) show
-selection, sample loading and playback. These private-prototype captures do not
-qualify this source tree or hardware audio. Artwork is MIT; screenshots retain
-the underlying interface rights described beside them. No sample audio is
-included. Full release capture provenance and all required control pages remain
-pending; the manifest's screenshot list is intentionally empty for this draft.
+The current candidate has three actual emulator captures:
+[SRC SETUP and selection](media/ot-setup.png), [MAIN](media/ot-main.png) and
+[playing MAIN](media/ot-playing.png). Follow the captions in the manifest and
+the Quick tutorial above. SETUP includes PAN/SRNG; MAIN includes all six grain
+controls. The stored fixture shows SIZE 106 and PTCH +3.0, not fresh defaults;
+neutral PTCH is raw 64, displayed 0.0.
+
+[Capture provenance](media/capture.json) binds these pixels to package6ff/base72
+and records the completed real renderer before export. The original
+[artwork and prototype previews](../../../docs/media/fract/README.md) remain
+historical. Artwork is MIT; the capture declaration preserves underlying
+interface rights. No sample audio is included. UI evidence does not qualify
+hardware sound or timing.
 
 ## USB release candidate — 10 November 2026
 
@@ -134,8 +142,9 @@ The new `0.1.2-experimental` package has canonical runtime identity `fract-machi
 The private `grnyv1` package must be replaced as a controlled set; do not install
 both identities together. The historical package54ca test remains in TESTING.md.
 The [named-build hardware report](release/hardware-20261110.md) records functional
-checks and exact-set restoration after a physical reboot. Full-emulator and
-performance qualification remain pending.
+checks and exact-set restoration after a physical reboot. The full emulator
+also exercises START, three moving heads and retrigger on these exact bytes;
+hardware performance and remaining release qualification are pending.
 
 ```sh
 python3.12 -B scripts/source-runtime-package.py --recipe sdk/drafts/fract-machine/runtime-build.json --check
@@ -146,3 +155,7 @@ Tests cover source confinement, current exports, actual-machine base relinking,
 absence of embedded IDs, requiredBase/proof agreement and exact package
 reproduction without firmware. Original-OS reconstruction and both strict scans
 also pass locally. Resource and remaining release work are in release/README.md.
+
+[The offline measurement kit](qualification/README.md) documents the separate
+private probe, matched project generator, read-only collector and their limits.
+Preparing these tools does not install them or supply physical timing results.

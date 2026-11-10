@@ -56,3 +56,10 @@ The generic MIDI-flood audit is not a measurement of FRACT's audio path. Its
 unfilled audit must not be represented as passed. The owner will decide any
 first-release waiver; no waiver has been granted. The earlier unexplained
 PROJECT RELOAD stall remains in TESTING.md and is not dismissed by this audit.
+
+The [offline measurement kit](../qualification/README.md) now prepares a private
+wrapper and matched project cases. Original executable sections remain identical
+and the normal package reproduces exactly. The probe's six decoded emulator
+windows validate its data path only: their clock model does not qualify hardware
+microseconds. Its base frame peak is since boot, not a reset window maximum;
+this read-only method's limitation remains explicit for owner review.

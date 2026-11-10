@@ -24,7 +24,7 @@
   "stockVerification": "PASS",
   "hardware": "FUNCTIONAL_OWNER_REPORT_AND_USB_READBACK",
   "version": "0.1.2-experimental",
-  "qualification": "PENDING_TIMING_STRESS_MEDIA_INTEGRATION_AND_FIRST_RELEASE_APPROVAL",
+  "qualification": "PENDING_TIMING_STRESS_INTEGRATION_AND_FIRST_RELEASE_APPROVAL",
   "previousHardwarePackage": "54ca8f6b1a30e2f4811129e082ce18881148654b00c97c026508460a6cf7272e",
   "hardwareReport": "hardware-20261110.md"
 }

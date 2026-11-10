@@ -8,7 +8,7 @@
     "static": null,
     "measured": null,
     "budget": null,
-    "method": "NOT MEASURED. Worst own render per 16-frame audio block versus its runtime guard budget is required. Production base lacks supported per-render timing reads; compiler stack/instruction counts and historical CPU percentages are not timing. Owner accepted this audio-path method on PR1274; first-release waiver is undecided."
+    "method": "NOT MEASURED. Required: observed own render per 16-sample audio block versus the whole-interrupt guard, with its shared base/other-track work explicitly retained. qualification/build_probe.py prepares a separate private wrapper package without changing original renderer instruction sections; it adds timer/call overhead and reports inclusive peaks, not a static worst-case bound or CPU cycles. Hardware capture and owner decision remain pending."
   },
   "load": {
     "frameUs": 362.8,
@@ -16,7 +16,7 @@
     "moduleLongestUs": null,
     "stockIdlePercent": null,
     "moduleIdlePercent": null,
-    "method": "NOT MEASURED. Use matched native FLEX and FRACT projects on the same base/page; record cfmeter longest frame and idle with the same sample, controls and event splits. No matched captures exist for this package."
+    "method": "NOT MEASURED. Match native FLEX and FRACT on the same base, sample, pitch, tempo, track activity and page. The private read-only probe exposes idle deltas and the base frame peak since boot; that peak is not a reset window maximum. Compare matched fresh-boot cases, retain the upload receipt and clock consistency check, and keep this limitation in owner review. No physical timing captures exist for this package."
   },
   "stress": {
     "floodMessagesPerSecond": null,
@@ -33,6 +33,6 @@
     "baseIdentity": "72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6",
     "ownerMethod": "https://github.com/repeat98/modwerk/pull/1274#issuecomment-6705531953",
     "waiver": "NOT_GRANTED",
-    "hardware": "NOT_RUN_FOR_THIS_PACKAGE"
+    "hardware": "TIMING_AND_STRESS_NOT_RUN; exact-package functional hardware checks recorded separately in release/hardware-20261110.md"
   }
 }

@@ -12,7 +12,7 @@
   },
   "build": {
     "status": "pending",
-    "reason": "Base-following candidate has named-build functional hardware evidence. Timing/stress, media, release integration and owner approval remain pending; historical PROJECT RELOAD stall unresolved."
+    "reason": "Base-following candidate has named-build functional hardware evidence. Timing/stress and release integration and owner approval remain pending; historical PROJECT RELOAD stall unresolved."
   },
   "author": {
     "github": "ex1010",
@@ -30,7 +30,7 @@
     "highlights": [
       "Three grains; SIZE expands around POS and wraps sample edges.",
       "Native pitch at MAIN F, neutral 64.",
-      "One owner on T1\u2013T4; no active SPACE or FX2 effect."
+      "One owner on T1–T4; no active SPACE or FX2 effect."
     ],
     "usage": [
       "On a compatible private paired build, choose FRACT in SRC SETUP on T1 and load a FLEX sample.",
@@ -45,7 +45,11 @@
       "Open MAIN, keep PTCH at 64, move POS, then increase SIZE to expand the span around the center.",
       "Play the track, try SPRD and REVS, then stop playback and select a stock machine to leave FRACT."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/ot-setup.png",
+      "media/ot-main.png",
+      "media/ot-playing.png"
+    ]
   },
   "controls": [
     {
@@ -116,7 +120,7 @@
     "uiClaims": [],
     "limitations": [
       "Unlisted source draft; not offered by the public configurator.",
-      "Eight registry slots exist; FRACT admits only one owner on T1\u2013T4.",
+      "Eight registry slots exist; FRACT admits only one owner on T1–T4.",
       "USB package requires the base identified by requiredBase; compatible base rebuilds relink imports.",
       "Candidate functional lifecycle recorded; full resource, stress and companion qualification pending."
     ]
@@ -142,7 +146,7 @@
       "source": "TESTING.md"
     },
     "impact": {
-      "conditions": "One FRACT owner on T1\u2013T4, three grain heads, moving controls and native-pitch packet splits. Stock sample pages are reused. Replacement temporarily retains two module extents.",
+      "conditions": "One FRACT owner on T1–T4, three grain heads, moving controls and native-pitch packet splits. Stock sample pages are reused. Replacement temporarily retains two module extents.",
       "cpu": {
         "level": "high",
         "basis": "source-estimate",
@@ -170,12 +174,80 @@
     "gates": [
       "modules/fract-machine/verify.py"
     ],
-    "evidenceRevision": "b4c69ecdfd62a1cb6b3d6a313191518c86bcd8ca"
+    "evidenceRevision": "b4c69ecdfd62a1cb6b3d6a313191518c86bcd8ca",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "On a compatible private paired build, choose FRACT in SRC SETUP on T1 and load a FLEX sample.",
+          "Open MAIN, keep PTCH at 64, move POS, then increase SIZE to expand the span around the center.",
+          "Play the track, try SPRD and REVS, then stop playback and select a stock machine to leave FRACT."
+        ]
+      },
+      "screenshots": [
+        "media/ot-setup.png",
+        "media/ot-main.png",
+        "media/ot-playing.png"
+      ],
+      "screenshotStyle": "black-and-white"
+    }
   },
   "license": {
     "spdx": "MIT AND GPL-3.0-or-later",
     "file": "LICENSE",
     "declaration": "Retain MIT licence and third-party notices plus file-level GPL-3.0-or-later notices. No firmware, extracted stock routines, samples or built images are distributed."
   },
-  "media": []
+  "media": [
+    {
+      "path": "media/ot-setup.png",
+      "captureType": "emulator",
+      "caption": "Select T1, hold FUNC and press SRC, then choose FRACT and confirm with YES. This same SETUP page provides PAN for random stereo width and SRNG for FULL or LOCAL source range.",
+      "alt": "SRC SETUP with FRACT highlighted below FLEX, THRU, NEIGHBOR and PICKUP; PAN and SRNG at the right.",
+      "credit": "ex1010/toli (actual emulator framebuffer capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SRC SETUP",
+        "shows": "location-and-controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "223363ef249ca4f3c9aa4a8807b37a1192ebccd51bd7748e6a3cae70dd2c2dc1",
+        "setup": "Headless octemu, MKII panel, DSPs and guarded frame renderer, --guest-clock; private historical card/NVRAM fixture, not factory defaults. Only emulator USB was used."
+      }
+    },
+    {
+      "path": "media/ot-main.png",
+      "captureType": "emulator",
+      "caption": "Load a sample from the FLEX pool, then press SRC for MAIN. Turn A (POS) to move the grain center and B (SIZE) to widen the span; set F (PTCH) to 64 for neutral pitch, displayed 0.0—the pictured stored setting is +3.0.",
+      "alt": "Stopped FRACT MAIN with the PLUCKS1 waveform, POS 18, SIZE 106, REVS 127, SPRD 0, SHPE 64 and PTCH +3.0.",
+      "credit": "ex1010/toli (actual emulator framebuffer capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SRC MAIN",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "223363ef249ca4f3c9aa4a8807b37a1192ebccd51bd7748e6a3cae70dd2c2dc1",
+        "setup": "Headless octemu, MKII panel, DSPs and guarded frame renderer, --guest-clock; private historical card/NVRAM fixture, not factory defaults. Only emulator USB was used."
+      }
+    },
+    {
+      "path": "media/ot-playing.png",
+      "captureType": "emulator",
+      "caption": "Place a sample trig and press PLAY to follow the three grain markers. Try D (SPRD) for displaced centers and C (REVS) for reverse grains, then press STOP twice; to leave FRACT, select a stock machine in SRC SETUP.",
+      "alt": "FRACT MAIN with the play indicator, three grain markers over the PLUCKS1 waveform, horizontal span bars and SIZE 106.",
+      "credit": "ex1010/toli (actual emulator framebuffer capture)",
+      "license": "LicenseRef-OT-UI-Documentation",
+      "source": "original",
+      "otUi": {
+        "page": "SRC MAIN playing",
+        "shows": "controls",
+        "firmware": "1.40C",
+        "moduleVersion": "0.1.2-experimental",
+        "imageSha256": "223363ef249ca4f3c9aa4a8807b37a1192ebccd51bd7748e6a3cae70dd2c2dc1",
+        "setup": "Headless octemu, MKII panel, DSPs and guarded frame renderer, --guest-clock; private historical card/NVRAM fixture, not factory defaults. Only emulator USB was used."
+      }
+    }
+  ]
 }

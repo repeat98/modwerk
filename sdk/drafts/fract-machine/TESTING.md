@@ -138,12 +138,23 @@ No firmware, card/NVRAM images, samples or USB memory dumps are included.
 
 ## OT UI capture evidence
 
-The three images in `docs/media/fract/screenshots/` were supplied by ex1010 from
-the private prototype in octemu. They show selection, sample loading and playing;
-the screenshot README records rights and preview limitations. They do not prove
-public source identity, hardware operation or listening qualification. Additional
-release control-page captures and exact image/emulator/setup provenance remain
-pending. No source sample, firmware, raw framebuffer, card or NVRAM is included.
+The historical images in `docs/media/fract/screenshots/` remain prototype
+previews. Current `media/ot-setup.png`, `ot-main.png` and `ot-playing.png` were
+captured on 11 November from exact package6ff/base72 in the reviewed octemu,
+with DSPs, the real frame guard and `--guest-clock`. The SETUP capture covers
+both location and PAN/SRNG; MAIN covers POS/SIZE/REVS/SPRD/SHPE/PTCH. A duplicate
+SETUP image is retained privately, not repeated in the gallery.
+
+`media/capture.json` records source/package/base/image/emulator identities,
+panel steps, source hashes, original pixel hashes and exported PNG hashes.
+The actual `module_draw` entry and return were observed before framebuffer
+export; the image was not reconstructed. Integer scale 6 preserves 128x64
+pixels in gray 24/240. All three images were visually reviewed, including
+stored SIZE 106 and PTCH +3.0; captions do not present them as fresh defaults.
+The fixture is historical, not a pristine factory project. ex1010/toli is the
+capture author; underlying Elektron interface and mark rights remain reserved.
+No sample, firmware, raw framebuffer, card/NVRAM or private log is included.
+These are emulator UI observations, not hardware sound/timing qualification.
 
 ## Listed USB release candidate — 6 November 2026
 

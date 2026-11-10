@@ -12,12 +12,16 @@ row sets base:true to participate. requiredBase matches the named receipt, indep
 of future committed base changes. No current base identity is embedded.
 Original local Octatrack1.40C reconstruction is byte-exact; both unchanged strict
 stock-free scans pass, with nine bounded copy references. No OS is distributed.
-The current host/source suite reports47 tests,4 historical transport skips.
+The current host/source suite reports49 tests,4 historical transport skips.
 The source-only check and reproducible memory/callback-stack audit also pass.
 
 Experimental draft doctor is green. Listing checks remain pending: catalogue,
-qualification/performance, complete hardware coverage, native comparison, active USB
+qualification/performance, complete hardware coverage, active USB
 row/fingerprints and pair table. No gate was weakened to hide those gaps.
+This is a USB-only C runtime: the separate card/native comparison and card-pair
+table are not applicable once the prospective USB row is active. The actual
+source-recipe wrapper/check fixture and exact original-OS reconstruction cover
+the build route; no card form or gate exception is invented.
 Performance audit correctly reports three missing groups; the owner accepted
 the audio-path method but has not granted its first-release waiver.
 
@@ -39,6 +43,44 @@ requiredBase admission replaces the old gate; actual-machine and actual-wrapper
 base-refresh tests cover the replacement. All eight historical files were
 compared byte-for-byte with the prior committed candidate. New hardware/emulator
 results are scoped separately in [the hardware report](hardware-20261110.md);
-full-emulator status remains untested. Deferred declarations/metadata and replacement tests were
+exact-package full-emulator results are in `emulator-result.json`. Deferred declarations/metadata and replacement tests were
 manually inspected; that does not erase their API deferral. No confirmed defect
 was found or classifier flag suppressed.
+
+## Offline qualification tools — 11 November
+
+The [preparation record](offline-preparation.json) scopes the unchanged normal
+package, separate private probe, eight generated matched projects and current
+UI evidence. Both isolated original-OS scans pass; normal package6ff and probe
+package6020 reproduce, with all eleven original executable units unchanged.
+The host suite passes49 tests with4 historical skips; seven Node decoder/CLI
+tests pass. FR16M loaded through the emulator's actual PROJECT RELOAD and
+played with its generated BENCH source and three moving heads. The other
+seven projects have file validation only. An attempted A06 selection was not
+independently confirmed; it supplies no stress pass.
+
+The offline tools received14 additional API requests across deliberately bounded
+Jev pages/rechecks. The final source snapshot has12/110 classified/cached
+fragments, zero flags and11 uncertainties investigated;98 fragments remain
+deferred and10 documentation/image files are excluded/static-only. Both
+configured checks pass. The later scalar preparation record was manually
+checked outside that snapshot. This remains partial advisory coverage.
+
+Investigation checked renderer-IRQ ownership, volatile odd/even sequencing and
+one bounded UI snapshot attempt; no base writes or interrupt masking exist.
+Host tests exercise wrapped timers, two split calls, peak context and invalid
+window flags, while the real probe emulator run decoded six complete banks.
+The private builder's new-output guard, named base/symbol bounds, unchanged
+original code and strict stock scans were checked against actual isolated
+receipts. Project mutations were checked against the reviewed upstream file
+layout, all128 generated banks, saved/current Part equality, checksums, cleared
+MIDI masks and identical paired sample bytes; originals stayed unchanged.
+Capture metadata was matched to the exact installed emulator artifact and
+observed renderer return, with all PNGs inspected. Performance fields remain
+null and the previous hardware report is preserved. The collector validates its
+explicit mode/base, reserves output before connecting, preserves failure data,
+closes its socket, checks counter continuity and rejects a hardware clock/frame
+mismatch. CLI failure/overwrite/dry-run cases and pure decoder boundaries pass.
+Deferred declarations, renderer bookkeeping, decoder and protocol constants
+were manually inspected; that does not erase their API deferral or confer
+hardware qualification. No physical USB operation occurred in this preparation.
