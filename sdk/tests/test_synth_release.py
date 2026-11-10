@@ -59,8 +59,8 @@ class SynthRelease(unittest.TestCase):
         self.assertTrue((APP/'sdk/octabam/modules/synth').exists())
         for name in ['sdk/catalog.json','src/catalog/module-documents.json']:
             self.assertIn('synth', {item['id'] for item in json.loads((APP/name).read_text())['modules']})
-        self.assertNotIn('synth', {item['id'] for item in json.loads((APP/'sdk/module-qualification-baseline.json').read_text())['modules']})
-        approval = json.loads((APP/'sdk/synth-build-approval.json').read_text())
+        self.assertNotIn('synth', {item['id'] for item in json.loads((APP/'sdk/approvals/module-qualification-baseline.json').read_text())['modules']})
+        approval = json.loads((APP/'sdk/approvals/synth-build-approval.json').read_text())
         self.assertEqual(approval['kind'], 'owner-approved-update')
         self.assertEqual(approval['version'], doc['version'])
         self.assertEqual(set(approval['waived']), {'current-build-hardware', 'chip-worst-case-cycles', 'complete-memory-bounds'})

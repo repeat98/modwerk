@@ -1,3 +1,4 @@
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
@@ -58,10 +59,15 @@ describe('Digitakt II research preview', () => {
 })
 
 describe('Analog Rytm MKII library', () => {
-  it('lists Filter Hz and Loop Sync and leaves the core build preview once a module is in the library', () => {
+  // Derived from the module folders, so two Rytm module pull requests never conflict on a hand-kept list.
+  it('lists every Rytm module folder at its version for OS 1.74, and leaves the core build preview once a module is in the library', () => {
     expect(DEVICES_BY_ID['analog-rytm-mkii'].status).toBe('preview')
     expect(isCoreBuildPreview('analog-rytm-mkii')).toBe(false)
-    expect(DIGI_MODS.filter(mod => mod.device === 'analog-rytm-mkii').map(mod => [mod.id, mod.version, mod.releases])).toEqual([['filter-hz', '1.2.0', ['1.74']], ['loop-sync', '0.3.2', ['1.74']]])
+    const folder = 'sdk/analog-rytm-mkii/modules/'
+    const folders = readdirSync(folder).filter(id => existsSync(folder + id + '/modwerk.module.json')).sort()
+      .map(id => [id, (JSON.parse(readFileSync(folder + id + '/modwerk.module.json', 'utf8')) as { version: string }).version.replace(/-experimental$/, ''), ['1.74']])
+    expect(folders.length).toBeGreaterThan(20)
+    expect(DIGI_MODS.filter(mod => mod.device === 'analog-rytm-mkii').map(mod => [mod.id, mod.version, mod.releases])).toEqual(folders)
   })
 })
 

@@ -1,10 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { CLOSE_AFTER_DAYS, NEEDS_WORK, ONE_AT_A_TIME, decide, newestRuns, queuedPulls } from './pr-triage.mjs'
+import { CLOSE_AFTER_DAYS, NEEDS_WORK, ONE_AT_A_TIME, decide, isModulePull, newestRuns, queuedPulls } from './pr-triage.mjs'
 
 const day = 86400000, now = Date.parse('2026-10-25T12:00:00Z'), ago = days => new Date(now - days * day).toISOString()
 const base = { red: false, labels: [], labeledAt: undefined, headDate: ago(30), now, queued: false }
 
 describe('PR triage policy', () => {
+  it('counts a draft under sdk/drafts as a module PR, as it does a machine module folder', () => {
+    expect(isModulePull(['sdk/drafts/drummap/octamod.module.json'])).toBe(true)
+    expect(isModulePull(['sdk/octabam/modules/euclid/README.md', 'docs/x.md'])).toBe(true)
+    expect(isModulePull(['sdk/analog-rytm-mkii/modules/_submissions/chorus/src/main.c'])).toBe(true)
+    expect(isModulePull(['sdk/machines/octatrack/events.json', 'docs/module-guides/README.md'])).toBe(false)
+  })
   it('labels a red PR once and unlabels it when the checks go green', () => {
     expect(decide({ ...base, red: true })).toEqual([{ add: NEEDS_WORK }])
     expect(decide({ ...base, red: true, labels: [NEEDS_WORK], labeledAt: ago(1) })).toEqual([])

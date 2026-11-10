@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "machine": "digitakt",
+  "moduleId": "midi-expression",
+  "moduleVersion": "0.13.0-experimental",
+  "capturedAt": "2026-11-07",
+  "firmware": "1.54",
+  "imageSha256": "8abc2a681841a9f78d0938a1e2b7b72a8e61c55115d2ea7eddb84b6e40df3a02",
+  "stockSha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6",
+  "source": {
+    "repository": "https://github.com/tekomelu/Digi-Expression",
+    "revision": "86c7bd3edbe3c7e9274213ad71f089c724641fd8",
+    "path": "module/midi-expression"
+  },
+  "build": {
+    "modules": [
+      {
+        "id": "core",
+        "version": "2.1"
+      },
+      {
+        "id": "midi-expression",
+        "version": "0.13.0-experimental"
+      }
+    ],
+    "linker": "Modwerk engine (scripts/link-image.mjs) from this module's build.json and the author's own OS 1.54 file"
+  },
+  "emulator": {
+    "repository": "https://github.com/irpina/digiemu",
+    "revision": "c1b5735835923e328f8b4950d6ba927875e5b669",
+    "unicorn": {
+      "version": "2.1.4"
+    },
+    "python": "3.12.16",
+    "platform": "Linux arm64",
+    "hle": false,
+    "audioRecording": false
+  },
+  "capture": {
+    "script": "scripts/capture-digi-module-ui.py",
+    "sandbox": "none: a Linux VM with no macOS sandbox-exec; the script ran with the emulator only",
+    "frameSelection": "Most populated actual LCD frame within the final 250 ms after the latest panel action; 6x integer scaling.",
+    "scale": 6,
+    "fixtureLoop": false
+  },
+  "setup": "Disposable first-boot project made by the script; only panel input from capture-plan.txt. No RAM, menu or parameter state written. The emulator's knobs lag behind real time, so the plan waits after each turn.",
+  "captures": [
+    {
+      "path": "media/settings-row.png",
+      "sha256": "7e21c09120890a8bfa7c76a1da73989d1058da3eb1239bbfaa74bedb18b42b56",
+      "atMs": 8101.4,
+      "plan": "wait 1000\ntap GLOBAL\nwait 800\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\nwait 400\nsnap settings-row\ntap YES\nwait 800\npress FUNC 100\nturn A 1 300\nturn A 1 300\nrelease FUNC 200\npress FUNC 100\nturn C 1 300\nturn C 1 300\nrelease FUNC 200\npress FUNC 100\nturn D 1 300\nturn D 1 300\nrelease FUNC 200\nwait 2500\nsnap page-audio\npress TRK 100\ntap 9\nrelease TRK 300\nwait 800\nturn A 1 300\nwait 2500\nsnap page-midi\ntap A 3000 1500\nsnap presets\n"
+    },
+    {
+      "path": "media/page-audio.png",
+      "sha256": "1556f168ca79046cf0b9ef9eb67262f5a051e1d508a880b01bb009448360a43e",
+      "atMs": 14501.6,
+      "plan": "wait 1000\ntap GLOBAL\nwait 800\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\nwait 400\nsnap settings-row\ntap YES\nwait 800\npress FUNC 100\nturn A 1 300\nturn A 1 300\nrelease FUNC 200\npress FUNC 100\nturn C 1 300\nturn C 1 300\nrelease FUNC 200\npress FUNC 100\nturn D 1 300\nturn D 1 300\nrelease FUNC 200\nwait 2500\nsnap page-audio\npress TRK 100\ntap 9\nrelease TRK 300\nwait 800\nturn A 1 300\nwait 2500\nsnap page-midi\ntap A 3000 1500\nsnap presets\n"
+    },
+    {
+      "path": "media/page-midi.png",
+      "sha256": "a0c569f7795037006ade32da3f792884258cf3a4511b6eade7a01d144c819dcc",
+      "atMs": 18668.4,
+      "plan": "wait 1000\ntap GLOBAL\nwait 800\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\nwait 400\nsnap settings-row\ntap YES\nwait 800\npress FUNC 100\nturn A 1 300\nturn A 1 300\nrelease FUNC 200\npress FUNC 100\nturn C 1 300\nturn C 1 300\nrelease FUNC 200\npress FUNC 100\nturn D 1 300\nturn D 1 300\nrelease FUNC 200\nwait 2500\nsnap page-audio\npress TRK 100\ntap 9\nrelease TRK 300\nwait 800\nturn A 1 300\nwait 2500\nsnap page-midi\ntap A 3000 1500\nsnap presets\n"
+    },
+    {
+      "path": "media/presets.png",
+      "sha256": "1ec825d7a030afb2ca86f40552a4864d33a6cecd05f0961ee7c21cbf5df3cb1c",
+      "atMs": 23160.0,
+      "plan": "wait 1000\ntap GLOBAL\nwait 800\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\ntap DOWN\nwait 150\nwait 400\nsnap settings-row\ntap YES\nwait 800\npress FUNC 100\nturn A 1 300\nturn A 1 300\nrelease FUNC 200\npress FUNC 100\nturn C 1 300\nturn C 1 300\nrelease FUNC 200\npress FUNC 100\nturn D 1 300\nturn D 1 300\nrelease FUNC 200\nwait 2500\nsnap page-audio\npress TRK 100\ntap 9\nrelease TRK 300\nwait 800\nturn A 1 300\nwait 2500\nsnap page-midi\ntap A 3000 1500\nsnap presets\n"
+    }
+  ]
+}

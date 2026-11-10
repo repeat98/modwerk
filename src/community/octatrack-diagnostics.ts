@@ -194,8 +194,10 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
   }
   async function tick() {
     syncSiteCollection()
+    // Without a connected unit there is nothing to read, so no consent read either: it was 35% of all API requests
+    // (every member's tab, every 30 s). The choice is read on mount and when the tab comes back into view.
+    if (link?.getState().status !== 'ready') { logAt = 0; lastTicks = undefined; return } // the next connection reads the log first
     if (!await refresh()) return // Never use a stale choice while another refresh is still pending.
-    if (link?.getState().status !== 'ready') { logAt = 0; lastTicks = undefined } // the next connection reads the log first
     if (!allowed() || reading || !link || link.getState().status !== 'ready') return
     reading = true
     const controller = healthRead = new AbortController()
@@ -207,9 +209,12 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
   }
   void refresh()
   const timer = setInterval(() => { void tick() }, 30_000)
+  // A choice changed in another tab or on another device shows here once this tab is looked at again.
+  const visible = () => { if (globalThis.document?.visibilityState === 'visible') void refresh() }
+  globalThis.document?.addEventListener('visibilitychange', visible)
   // shortcut: a report still sending when the tab closes holds the readings back, so they are lost; a queue on disk would keep them.
   globalThis.addEventListener?.('pagehide', flushLoad)
-  return () => { stopped = true; requests.abort(); clearInterval(timer); globalThis.removeEventListener?.('pagehide', flushLoad); unsubscribe?.(); stopPreference(); siteCleanup?.(); if (generation === currentGeneration) { transfer?.abort(); healthRead?.abort(); owner = null; accountApi = undefined; publish({accountId:null,available:false,enabled:false,ready:false}) } }
+  return () => { stopped = true; requests.abort(); clearInterval(timer); globalThis.document?.removeEventListener('visibilitychange', visible); globalThis.removeEventListener?.('pagehide', flushLoad); unsubscribe?.(); stopPreference(); siteCleanup?.(); if (generation === currentGeneration) { transfer?.abort(); healthRead?.abort(); owner = null; accountApi = undefined; publish({accountId:null,available:false,enabled:false,ready:false}) } }
 }
 
 const chunks = <T>(items: T[], size: number) => Array.from({ length: Math.ceil(items.length / size) }, (_, i) => items.slice(i * size, (i + 1) * size))

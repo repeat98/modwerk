@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "about": "Modwerk's Analog Rytm MKII base, built by npm run machine:base -- analog-rytm-mkii: core-ar2 0.7's source unchanged (sdk/imports/core-ar2-source-fb58292.json), with Modwerk's own sources in base/ added on top (add): the FX track's lock words, and the send bus with its return, its pages and the FX list (mw_fx) send effects contribute to. A site names the stock bytes it replaces by length and SHA-256; the build fills them from the user's OS.",
+  "about": "Modwerk's Analog Rytm MKII base, built by npm run machine:base -- analog-rytm-mkii: core-ar2 0.7's source unchanged (sdk/imports/core-ar2-source-fb58292.json), with Modwerk's own sources in base/ added on top: in every variant (common) the machine list's sections (mw_machine_sections) and the FX track's edit save of words 38 to 41, which stock writes over the delay's TIME (base/fxguard.s), and in send-bus (add) the FX track's lock words, and the send bus with its return, its pages and the FX list (mw_fx) send effects contribute to. A site names the stock bytes it replaces by length and SHA-256; the build fills them from the user's OS. It comes in two variants: send-bus (the default, with add) and plain (core-ar2 0.7's source with common alone, for a build with no send effect, which then pays none of add's cost).",
   "core": "core-ar2",
   "include": "sdk/machines/analog-rytm-mkii/include",
   "os": "1.74",
@@ -8,6 +8,72 @@
     "cross": "m68k-elf-",
     "gcc": "16.2.0",
     "binutils": "2.47"
+  },
+  "variants": {
+    "send-bus": {
+      "add": true
+    },
+    "plain": {
+      "add": false
+    }
+  },
+  "common": {
+    "sources": [
+      "../base/sections.c",
+      "../base/amp.s",
+      "../base/fxguard.s"
+    ],
+    "sites": [
+      {
+        "addr": "0x400df664",
+        "len": 6,
+        "stockSha256": "33e777eec749a004190d598c002f6c8a8fb0e35cb10db9a99a20694f4cf43394",
+        "op": "jmp",
+        "target": "mw_section_of"
+      },
+      {
+        "addr": "0x400bdc5e",
+        "len": 8,
+        "stockSha256": "4dff1786ea9ca040dc988b6c398e4e383751f93cbf51fbd57090d717bb2bc6ab",
+        "op": "jmp",
+        "target": "mw_section_before"
+      },
+      {
+        "addr": "0x400bde1c",
+        "len": 8,
+        "stockSha256": "4dff1786ea9ca040dc988b6c398e4e383751f93cbf51fbd57090d717bb2bc6ab",
+        "op": "jmp",
+        "target": "mw_section_before"
+      },
+      {
+        "addr": "0x40109c24",
+        "len": 18,
+        "stockSha256": "e09bfacff6d86befa58348d345369597ddb8ce5b5060d26a8ae973684d1a62fe",
+        "op": "jmp",
+        "target": "mw_amp_record"
+      },
+      {
+        "addr": "0x400a56ee",
+        "len": 6,
+        "stockSha256": "d0402ab9708e0813aef1ef6bd5201ad121798936916b20540d23573fab2978e3",
+        "op": "jsr",
+        "target": "mw_fx_map_load"
+      },
+      {
+        "addr": "0x400a575a",
+        "len": 6,
+        "stockSha256": "d0402ab9708e0813aef1ef6bd5201ad121798936916b20540d23573fab2978e3",
+        "op": "jsr",
+        "target": "mw_fx_map_load"
+      }
+    ],
+    "cflags": [
+      "-DMACHINE_SECTION_AT=0x40257d70"
+    ],
+    "collections": {
+      "mw_machine_sections": 4,
+      "ev_amp_record": 4
+    }
   },
   "reference": {
     "file": "vendor/elekloader/catalog/core-ar2-0.7.elemod",
@@ -30,6 +96,7 @@
     "sources": [
       "../base/locks.c",
       "../base/locks.s",
+      "../base/clock.c",
       "../base/sendbus.c",
       "../base/sendbus.s"
     ],
@@ -108,7 +175,15 @@
       "-DLOCK_GUARD_AT=0x4018a6da",
       "-DUNLOCK_GUARD_AT=0x4017f536",
       "-DFOOTER_DRAW_AT=0x4003f59e",
-      "-DTITLE_DRAW_AT=0x40037300"
+      "-DTITLE_DRAW_AT=0x40037300",
+      "-DMCLOCK_AT=0x8000fe54",
+      "-DSEQ_PULSE_AT=0x405c8b20",
+      "-DSEQ_STEP_AT=0x405c8c94",
+      "-DSEQ_PULSE_N_AT=0x405c8c96",
+      "-DSEQ_PLAYING_AT=0x405c8cf8",
+      "-DSEQ_PATTERN_AT=0x405c8d04",
+      "-DPATTERNS_AT=0x407dd8e3",
+      "-DSPEED_PULSES_AT=0x401db6f8"
     ],
     "defsym": {
       "mw_send_resume": "0x4010ee6c"

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/control-in-actions",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-03",
+  "changes": [
+    "First library release for Analog Rytm MKII OS 1.74, on core-ar2 0.7. Stock's hidden footswitch mode in GLOBAL > CONTROL > CONTROL INPUT 1 and 2 becomes ACTION: a footswitch or a 0 to 5 V gate holds or toggles the MUTE screen or live recording, or holds or latches FILL, with bars beside the menu and ACTION LEARN; NO in either learn keeps the saved levels."
+  ],
+  "runtimeSourceSha256": "95399321432c633a0f73122044fb7f2e46e793bf4350bba3ea53e2408f053cbf",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/control-in-actions/control-in-actions-0.1.0-experimental-os1.74.elemod",
+      "sha256": "d480b544be2ff5945078482b9003502d86bab2980f8f2247836a171b3969466b"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/control-in-actions/TESTING.md",
+  "requires": []
+}

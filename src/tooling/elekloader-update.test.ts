@@ -129,12 +129,11 @@ describe('the elekloader update', () => {
     expect(cut.leftOut).toEqual(['digitakt/digislicer'])
     expect(DEVICES['digitakt-mk2']).toBe('digitakt-ii')
   })
-  it('ships the kit NOTICE without its section on the replaced files, and refuses one that credits another file', () => {
+  it('ships the kit NOTICE whole, keeping its credit for the code the replaced files stand in for', () => {
     const notice = readFileSync(join(ROOT, 'vendor/elekloader/kit/NOTICE'), 'utf8'), shipped = kitNotice(notice)
-    expect(shipped).not.toContain('Code from other projects')
-    expect(shipped).toContain('The TypeScript engine')
+    expect(shipped.endsWith(notice)).toBe(true)
+    expect(shipped).toContain('Code from other projects')
     expect(shipped).toContain("replaced by Modwerk's own implementation")
-    expect(() => kitNotice(notice.replace('  elekloader/isa/coldfire.py', '  elekloader/other.py  elsewhere\n  elekloader/isa/coldfire.py'))).toThrow('not exactly the files Modwerk replaces')
   })
   it('adds pinned site packages to the existing catalog without replacement and fingerprints the result', () => {
     const pin = (id: string, device: string, file: string, sha256: string) => ({
@@ -158,6 +157,9 @@ describe('the elekloader update', () => {
     expect(merged.revision).toMatch(/^[a-f0-9]{64}$/)
     expect(mergeCatalogOverlay(merged, overlay)).toEqual(merged)
     expect(() => mergeCatalogOverlay(base, { ...overlay, cores: [pin('core', 'digitakt-mk2', 'core-2.1.elemod', 'd'.repeat(64))] })).toThrow('changes the existing file')
+    const forked = { ...overlay.mods[0], source: { repo: 'someone/modwerk', commit: 'f'.repeat(40), path: 'sdk/imports/packages/perform-direct/perform-direct-1.0.elemod' } }
+    expect(() => mergeCatalogOverlay(base, { ...overlay, mods: [forked] })).toThrow('so source.repo is repeat98/modwerk, not someone/modwerk')
+    expect(mergeCatalogOverlay(base, { ...overlay, mods: [{ ...forked, source: { ...forked.source, repo: 'repeat98/modwerk' } }] }).mods).toHaveLength(1)
   })
 })
 
@@ -178,7 +180,7 @@ function fixture() {
     mkdirSync(dirname(join(root, path)), { recursive: true })
     cpSync(join(ROOT, path), join(root, path), { recursive: true })
   }
-  for (const path of [...noticePaths, 'LICENSE', 'LICENSES', 'docs/USB_AUDIO_ATTRIBUTION.txt', 'scripts/elekloader-update.ts', 'scripts/elekloader-vendor.ts', 'scripts/licenses.mjs', 'scripts/license-notices.mjs', 'src/engine/elektron/codec']) copy(path)
+  for (const path of [...noticePaths, 'LICENSE', 'LICENSES', 'scripts/elekloader-update.ts', 'scripts/elekloader-vendor.ts', 'scripts/licenses.mjs', 'scripts/license-notices.mjs', 'src/engine/elektron/codec']) copy(path)
   // The module records that add Modwerk-built pins to the upstream catalog.
   for (const name of readdirSync(join(ROOT, 'sdk/imports')).filter(name => /^elekloader-.*\.json$/.test(name))) copy('sdk/imports/' + name)
   const manifest = JSON.parse(readFileSync(join(root, 'sdk/octabam/licenses/manifest.json'), 'utf8')) as { moduleComponents: Record<string, string[]> }

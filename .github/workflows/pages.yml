@@ -119,6 +119,17 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      # tsc's incremental state, saved on main so a pull request's first check run starts from it. The paths are
+      # module-pr.yml's, since a cache restores only for the same path list; sdk:check runs in sdk-check, which saves none.
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            node_modules/.cache/eslint
+            node_modules/.cache/sdk-check-times.json
+            node_modules/.tmp
+            node_modules/.vite/vitest
+          key: check-cache-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: check-cache-${{ runner.os }}-
       - if: needs.approval.outputs.modules == 'true'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
@@ -137,8 +148,8 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           OCTAMOD_APPROVER_ID: ${{ vars.MODULE_APPROVER_GITHUB_ID }}
       # The pull request already ran lint and every test (module-pr.yml). A release re-verifies what must hold at release
-      # time (generated files, licences, machine and module records, source integrity), then type-checks and bundles.
-      - run: npm run licenses:check && npm run machines:check && npm run modules:check && npm run elekloader:check && npm run sdk:check
+      # time (generated files, licences, machine and module records; source integrity in sdk-check), then type-checks and bundles.
+      - run: npm run licenses:check && npm run machines:check && npm run modules:check && npm run elekloader:check
       - run: npm run build
         env:
           # Followers hear about an author's own release 48 hours after it goes live (server/module-updates.ts).
@@ -155,9 +166,27 @@ jobs:
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: dist
+  # The SDK suite runs module manifests (Python an author's update may change), so it runs here, apart from the job that
+  # builds the site. It uploads no artifact and saves no cache; the deploy only waits for it to pass.
+  sdk-check:
+    needs: approval
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - run: npm ci
+      - run: npm run sdk:check
   deploy:
-    needs: frontend
-    if: ${{ !cancelled() && needs.frontend.result == 'success' }}
+    needs: [frontend, sdk-check]
+    if: ${{ !cancelled() && needs.frontend.result == 'success' && needs.sdk-check.result == 'success' }}
     runs-on: ubuntu-24.04
     permissions:
       contents: read

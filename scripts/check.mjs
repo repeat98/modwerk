@@ -1,11 +1,13 @@
-import { spawn } from 'node:child_process'
+import { execFileSync, spawn } from 'node:child_process'
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { performance } from 'node:perf_hooks'
 import { fileURLToPath } from 'node:url'
 import { readChangeScope } from './change-scope.mjs'
 import { checkChangelog } from './changelog.mjs'
 import { checkDocs } from './docs.mjs'
+import { takeSlot, workersFor } from './machine-slots.mjs'
 import { checkModuleChangelogs } from './module-changelogs.mjs'
+import { moduleScopeProblems } from './pr-ready.mjs'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const npmCli = process.env.npm_execpath
@@ -19,7 +21,7 @@ for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => {
   process.exitCode = signal === 'SIGINT' ? 130 : 143
 })
 
-async function run(name, args = []) {
+async function run(name, args = [], env = {}) {
   if (interrupted) return false
   const key = [name, ...args].join(' ')
   if (carried.has(key) && !WRITES.has(name)) {
@@ -32,6 +34,7 @@ async function run(name, args = []) {
     // Use npm's current CLI and Node runtime, preserving each script's flags and lifecycle hooks.
     const child = spawn(process.execPath, [npmCli, 'run', name, ...(args.length ? ['--', ...args] : [])], {
       cwd: root,
+      env: { ...process.env, ...env },
       stdio: ['inherit', 'pipe', 'pipe'],
     })
     children.add(child)
@@ -61,8 +64,12 @@ async function build() {
   return await run('typecheck') && await run('build:bundle')
 }
 
-const started = performance.now()
 const buildOnly = process.argv.includes('--build')
+// One full check at a time per slot on this computer, whichever worktree or session starts it (scripts/machine-slots.mjs);
+// then Vitest gets as many workers as the free memory carries, unless MODWERK_TEST_WORKERS says.
+await takeSlot(buildOnly ? 'npm run build' : 'npm run check')
+process.env.MODWERK_TEST_WORKERS ??= String(workersFor({ most: 4, each: 700 * 1024 ** 2, keep: 2 * 1024 ** 3 }))
+const started = performance.now()
 const baseIndex = process.argv.indexOf('--base'), base = baseIndex < 0 ? null : process.argv[baseIndex + 1]
 if (baseIndex >= 0 && !base) throw new Error('--base requires a Git commit/ref')
 // --rerun-failed skips the checks that passed in the last run against the same base. Steps that write files always run, since later
@@ -81,7 +88,7 @@ const sdkSuite = !scope || scope.sdk || !!process.env.CI
 async function changelogs() {
   let passed = true
   try {
-    const notes = await checkModuleChangelogs(root)
+    const notes = await checkModuleChangelogs(root, base)
     console.log(`Module changelogs: ${notes.modules} modules, ${notes.releases} releases`)
   } catch (error) { console.error(`Module changelogs: ${error.message}`); passed = false }
   try {
@@ -114,16 +121,32 @@ if (!buildOnly && !documentationOnly && passed) passed = await all(() => run('el
 if (passed && !documentationOnly) passed = await run('licenses:generate') && await run('machines:generate') && await run('modules:generate')
 // Every path, including documentation-only checks and release builds, requires current-version notes and documents within their size.
 if (passed) passed = await changelogs()
+// In a pull request's CI run, a contributor's module pull request carries no check that judges modules and no base change;
+// pr:ready says the same to everyone before they push.
+if (passed && base && process.env.GITHUB_EVENT_PATH) {
+  const pull = (() => { try { return JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8')).pull_request ?? null } catch { return null } })()
+  const files = execFileSync('git', ['diff', '--name-only', '--no-renames', base + '...HEAD'], { cwd: root, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 }).split('\n').filter(Boolean)
+  const problems = pull ? moduleScopeProblems(files, { author: pull.user?.login, owner: process.env.GITHUB_REPOSITORY_OWNER, openedAt: pull.created_at }) : []
+  for (const problem of problems) console.error('Module scope: ' + problem)
+  if (problems.length) passed = false
+}
 // The agent board's claims (docs/AGENT_BOARD.md): a module, hook or migration this branch adds that someone else holds fails it;
 // an unreachable board only warns, so an outage never blocks a pull request.
 if (passed && base) passed = await run('board', ['check', '--base', base])
 // Documentation uses the same import policy as publication without running firmware gates. The catalogue tests read Markdown
 // (the module guides' links, the agent files, the pull request template), so a prose-only change can break them and must run them.
 if (passed && documentationOnly) passed = await run('sdk:imports:check') && await run('test', ['src/catalog'])
+// module:doctor --draft copies a draft under sdk/octabam/modules/ for its run, where the SDK suite, the other test files and the
+// build would read it as a listed module. Its test waits out that parallel stage and runs alone after it.
+const DRAFT_DOCTOR = ['scripts/module-doctor.test.mjs', '-t', 'checks a draft where every gate looks']
 if (passed && !documentationOnly) {
   const results = buildOnly
     ? [await build()]
-    : await Promise.all([sdkSuite ? run('sdk:check') : skip('sdk:check', 'no changed path reaches it; CI runs it'), run('lint'), run('test'), build()])
+    // The SDK suite starts once the app tests are done, whatever their result: its processes beside Vitest's workers starved
+    // Vitest's five-second tests.
+    : await Promise.all([run('lint'), run('test', [], { MODWERK_DEFER_DRAFT_DOCTOR: '1' }).then(async tested =>
+      (sdkSuite ? await run('sdk:check') : skip('sdk:check', 'no changed path reaches it; CI runs it')) && tested), build()])
+  if (!buildOnly) results.push(await run('test', DRAFT_DOCTOR))
   passed = results.every(Boolean) && !interrupted
 }
 const passedNow = [...carried, ...[...results].filter(([, ok]) => ok).map(([key]) => key)].filter(key => results.get(key) !== false)

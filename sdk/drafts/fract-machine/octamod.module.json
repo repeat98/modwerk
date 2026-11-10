@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 2,
+  "id": "fract-machine",
+  "key": "FRACT",
+  "name": "FRACT",
+  "version": "0.1.0-experimental",
+  "category": "machines",
+  "source": {
+    "repository": "https://github.com/ex1010/modwerk",
+    "revision": "5b5aa328c1bbed129ab6b1a65efb9353b93ede8f",
+    "path": "sdk/drafts/fract-machine"
+  },
+  "build": {
+    "status": "pending",
+    "reason": "Private source baseline plus accepted centered-SIZE/UI and consolidation edits; see README. No listed USB/card package or exact-public hardware qualification; the private paired builder refuses unsupported bases."
+  },
+  "author": {
+    "github": "ex1010",
+    "credits": [
+      "ex1010/toli: FRACT machine, granular engine, UI, tests and original artwork.",
+      "Octabam references and licences are retained in THIRD_PARTY_NOTICES.md."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "Three-grain source draft",
+    "family": "Granular track machine",
+    "summary": "Three overlapping grains with centered SIZE, wrapping POS and native FLEX pitch. Unlisted source draft.",
+    "overview": "A private-prototype track machine staged for review; public build integration and exact-build qualification remain pending.",
+    "highlights": [
+      "Three grains; SIZE expands around POS and wraps sample edges.",
+      "Native pitch at MAIN F, neutral 64.",
+      "One owner on T1\u2013T4; no active SPACE or FX2 effect."
+    ],
+    "usage": [
+      "On a compatible private paired build, choose FRACT in SRC SETUP on T1 and load a FLEX sample.",
+      "Open MAIN, keep PTCH at 64, move POS, then increase SIZE to expand the span around the center.",
+      "Play the track, try SPRD and REVS, then stop playback and select a stock machine to leave FRACT."
+    ]
+  },
+  "access": {
+    "location": "SRC SETUP > FRACT on a compatible private paired build",
+    "steps": [
+      "On a compatible private paired build, choose FRACT in SRC SETUP on T1 and load a FLEX sample.",
+      "Open MAIN, keep PTCH at 64, move POS, then increase SIZE to expand the span around the center.",
+      "Play the track, try SPRD and REVS, then stop playback and select a stock machine to leave FRACT."
+    ],
+    "screenshots": []
+  },
+  "controls": [
+    {
+      "name": "POS",
+      "default": 18,
+      "count": 128,
+      "doc": "Grain center from left to right across the source.",
+      "labels": null
+    },
+    {
+      "name": "SIZE",
+      "default": 86,
+      "count": 128,
+      "doc": "Grain duration and centered span; wraps source edges.",
+      "labels": null
+    },
+    {
+      "name": "REVS",
+      "default": 127,
+      "count": 128,
+      "doc": "Forward probability: 127 forward, 0 reverse; intermediate values mix at grain births.",
+      "labels": null
+    },
+    {
+      "name": "SPRD",
+      "default": 0,
+      "count": 128,
+      "doc": "Random displacement of grain centers around POS.",
+      "labels": null
+    },
+    {
+      "name": "SHPE",
+      "default": 64,
+      "count": 128,
+      "doc": "Grain window shape, constrained by short sizes.",
+      "labels": null
+    },
+    {
+      "name": "PTCH",
+      "default": 64,
+      "count": 128,
+      "doc": "Native FLEX pitch; saved 64 is neutral, with native bounded editor and formatter.",
+      "labels": null
+    },
+    {
+      "name": "PAN",
+      "default": 0,
+      "count": 128,
+      "doc": "Random grain stereo width; zero is balanced.",
+      "labels": null
+    },
+    {
+      "name": "SRNG",
+      "default": 0,
+      "count": 2,
+      "doc": "FULL uses the source span; LOCAL caps spread extent at 88,200 source frames.",
+      "labels": [
+        "FULL",
+        "LOCAL"
+      ]
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "effectId": null,
+    "location": "Track machine",
+    "conflicts": [],
+    "uiClaims": [],
+    "limitations": [
+      "Unlisted source draft; not offered by the public configurator.",
+      "Eight registry slots exist; FRACT admits only one owner on T1\u2013T4.",
+      "Private build requires an exact compatible paired base with FR:1 boot preservation.",
+      "No public lifecycle, stress, companion or exact-build hardware qualification."
+    ]
+  },
+  "resources": {
+    "recorded": "4 November 2026; source-draft limits",
+    "storage": {
+      "label": "Public package memory",
+      "display": "Unmeasured for the public build",
+      "value": null,
+      "unit": "bytes",
+      "method": "unmeasured",
+      "conditions": "Exact code/state/buffer/stack inventory not yet measured.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "Worst-case ColdFire work",
+      "display": "Unmeasured for the public build",
+      "value": null,
+      "unit": "cycles/block",
+      "method": "unmeasured",
+      "conditions": "Private reported CPU about 80% is not an isolated cost measurement.",
+      "source": "TESTING.md"
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Firmware-free source check and host fixtures are provided. Only a short private hardware audition is reported; exact-public audio, lifecycle and stress remain untested.",
+    "hardwareStatus": "historical",
+    "evidenceRevision": "5b5aa328c1bbed129ab6b1a65efb9353b93ede8f",
+    "gates": [
+      "modules/fract-machine/verify.py"
+    ]
+  },
+  "license": {
+    "spdx": "MIT AND GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Retain MIT licence and third-party notices plus file-level GPL-3.0-or-later notices. No firmware, extracted stock routines, samples or built images are distributed."
+  },
+  "media": []
+}

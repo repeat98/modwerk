@@ -12,7 +12,7 @@ description: Change, fix or update a Modwerk module the developer wrote or maint
 4. **Build and test.** Build the exact private image and give the developer concrete steps for it on their unit (`/modwerk-try-on-unit`).
    - Record only the results they report: several instances, slot and core isolation, and persistence where it applies.
    - Emulator results never count as hardware evidence.
-5. **Release,** once the developer says testing is done (until then, commit without pushing). Run `/modwerk-pr-ready` (with `-- --author <login>`), then open the pull request.
+5. **Release,** once the developer says testing is done (until then, commit without pushing). Review the change as the owner would, against the pull request worker's checklist (`docs/MAINTENANCE.md#pull-request-worker`), and fix what applies. Run `/modwerk-pr-ready` (with `-- --author <login>`), then open the pull request.
    - A registered author checks the release boxes only after verifying the evidence personally; never check them for them. Missing, failed or untested required checks block automatic publication.
    - Link a report with `Related to #<number>`, never a closing keyword.
    - Tell them that publishing notifies the module's followers, by email too unless they opted out.

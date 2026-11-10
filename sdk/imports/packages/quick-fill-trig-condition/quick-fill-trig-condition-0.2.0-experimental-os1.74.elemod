@@ -1,0 +1,141 @@
+{
+ "elemod": 2,
+ "id": "quick-fill-trig-condition",
+ "version": "0.2.0-experimental",
+ "title": "Quick Trig Conditions",
+ "description": "Hold a trig in GRID RECORDING: FILL locks FILL, NOT FILL, then no lock; UP and DOWN set a ratio such as 3:8.",
+ "category": "system",
+ "author": "npp1993",
+ "license": "GPL-3.0-or-later",
+ "target": {
+  "device": "analog-rytm-mk2",
+  "product": "Analog Rytm MKII",
+  "os": "1.74",
+  "syx_sha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "section3_sha256": "34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b",
+  "section3_len": 3005432
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 1212,
+   "parts": [
+    [
+     "hex",
+     "2f2f00042f0a4eba038c508f7202b28067024e7576014ef94003e2382f022f0a4eba03d0508f7202b28067064ef9400367c676014ef94003e2382f027016222f0008b081670a7417b481670a241f4e75241f70174e75241f70ff4e752f0370022f02226f000c24005382c5c02202e281204106810000001d41e8001c2608d680b2896e04b6896c1052807209b28066d6241f701e261f4e757208b280671a71c093c82042241f41f00a00261f2008e28043f1081c20094e75241f70ff261f4e75598f2f2f000c206f000c2f68006c00044eb940071f90588f4a0066282f174eb94003625c588f4a00671a2f174eb9400363bc588f4a00660c20572028015c80a8015866064280588f4e75226f00082069002c206800182268000820110c80401d70c86612206800042268000820110c80401d70c867ee0c804023502c67280c80401e26c467200c80401e305c67180c80401e2bbc67100c80401e139457c071004480588f4e757001588f4e754fefffcc48d77cfc246f00387efe266f003c42af002c262a00742c6a006c42af00302f034eb9400b693e2f2a006824004eb9400af0ac2f022f004eb9400ab29e2f03428328004eb9400b6b2a2f042a004eb9400c0e6ee98d4fef00183a40710024402f034eb940081c28588f4a80677424057001d483b08a67000100703fb0826562701fb0826d000142203c0000015c7c1fcc82203608000d0067482f022f044eb9400bff7e508f4a0066102f022f044eb9400c000e508f4a0067284a8b670000ae70feb087670000c42f072f022f044eb9400c03d6ea824fef000c7001eda881b72c2c52837010b0836600ff7654874a87670000e07d0d4282701fb0826d0000c0203c0000015c721fc282263608002002e68802800003fffc030367302037082c030066287001b0866712700fc0822f004eb940081c28588f4a80661042a72f022f0e4eb9400368c04fef000c52827040b08266a4487800012f0e4eb94003613a2f0e4eb9400362384fef000c4cd77cfc70014fef00344e752f022f044eb9400c12ae508f75006000fef22f022f044eb9400c039671002f004e934fef000c2e002f072f022f044eb9400c03d6ea824fef000c7001eda881b72c2c6000ff26203c000001586000ff40203c000001586000febe4cd77cfc42804fef00344e752f027202206f000820015380c1c1e280224006800000001d43e9001c2409d481b0886e04b4886c0e52817009b08166d8241f701e4e75200890894c41080243f12801241f20094e75598f2f2f000c4eb940071fa0588f73804a0066062001588f4e752f2f000c2f2f000c2f4100084ebafd04508f22174a8067e2487afc722f2f000c2f4100084ebafd98508f22174a8067ca2f2f000c4eb940071eac588f72022001588f4e75518f2f0274012f2f00144eb940071efc588f22000680ffffffbeb4806408241f4280508f4e752f2f0014206f00142f6800b0000c2f082f41000c4ebafc92508f222f00044a8067d64aaf000867182f2f00082f4100084eb940078662588f222f00044a0066b82f2f00142f4100084eb940071fa0588f4a00673a7042b0af0004672a203c000000002f002f2f00144ebafcea508f4a8067862f2f00144eb940071eac588f241f7002508f4e75203c0000000060d442a72f2f00144ebafcbe508f241fd080508f4e750000"
+    ]
+   ]
+  }
+ },
+ "symbols": {
+  "next_fill": [
+   ".run",
+   58
+  ],
+  "next_m": [
+   ".run",
+   92
+  ],
+  "may_write": [
+   ".run",
+   192
+  ],
+  "write_held": [
+   ".run",
+   364
+  ],
+  "next_n": [
+   ".run",
+   844
+  ],
+  "quick_fill_gate": [
+   ".run",
+   0
+  ],
+  "quick_fill_key": [
+   ".run",
+   916
+  ],
+  "quick_ratio_gate": [
+   ".run",
+   28
+  ],
+  "quick_ratio_key": [
+   ".run",
+   1010
+  ]
+ },
+ "exports": [
+  "quick_fill_gate",
+  "quick_fill_key",
+  "quick_ratio_gate",
+  "quick_ratio_key"
+ ],
+ "imports": [],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   1142,
+   "abs32",
+   "sec:.run",
+   92
+  ],
+  [
+   ".run",
+   1184,
+   "abs32",
+   "sec:.run",
+   844
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x4003cfa0",
+   "len": 6,
+   "stock_sha256": "87161bd9e197c8b40b6a38327205fcf078fb26e4a93a371f5df2a80ccd8a1cf8",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:quick_fill_gate",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4003d36c",
+   "len": 6,
+   "stock_sha256": "82a9f344a8c9fa7db51fba9431657af1ba35b66376fba9f54a0e1fd42725f73f",
+   "new": "4eb900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:quick_ratio_gate",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {},
+ "contribute": [],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [
+   "ui:TRIG + FILL",
+   "ui:TRIG + UP",
+   "ui:TRIG + DOWN"
+  ],
+  "core": "0.7"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}

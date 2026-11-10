@@ -10,7 +10,8 @@ export const ZOOM_DEVICE_IDS: Record<string, number> = { 'zoom-ms-70cdr': 0x61, 
 /** Universal identity request. */
 export const IDENTITY_REQUEST = [0xf0, 0x7e, 0x00, 0x06, 0x01, 0xf7]
 
-export type ZoomIdentity = { deviceId: number; model: string; firmware: string }
+/** `midistomp`: what the base said to the hello, when it answered one. */
+export type ZoomIdentity = { deviceId: number; model: string; firmware: string; midistomp?: MidistompHello }
 
 /** The pedal's identity reply: F0 7E ch 06 02 52 <device id> 00 00 00 <four firmware characters> F7. */
 export function parseIdentity(m: number[]): ZoomIdentity | undefined {
@@ -29,9 +30,9 @@ const fileName = (name: string) => [...Array.from(name, c => c.charCodeAt(0)), 0
 
 /** 8 bytes into 7-bit MIDI data: each group of up to 7 bytes is led by their high bits, first byte's highest. */
 export function pack7(bytes: ArrayLike<number>): number[] {
-  const out: number[] = []
-  for (let i = 0; i < bytes.length; i += 7) {
-    const group = Array.from(bytes).slice(i, i + 7)
+  const out: number[] = [], all = Array.from(bytes)
+  for (let i = 0; i < all.length; i += 7) {
+    const group = all.slice(i, i + 7)
     let high = 0
     group.forEach((b, j) => { if (b & 0x80) high |= 1 << (6 - j) })
     out.push(high, ...group.map(b => b & 0x7f))
@@ -139,9 +140,37 @@ export function listWithout(list: number[], name: string): number[] | undefined 
 /** A name the pedal accepts: at most 8 letters, digits or underscores, then .ZDL (it shortens longer ones, and two that shorten alike freeze it). */
 export const validEffectName = (name: string) => /^[A-Z0-9_]{1,8}\.ZDL$/.test(name)
 
-/** Effects this page may install or remove: added ones (group 8, IDs 403-957, the ranges in the ID ledger,
- * docs/ZDL_MODULE_CONTRACT.md) until modules settle it. Zoom's own effects are never offered for removal. */
-export const isAddedEffect = (effect?: { gid: number; fxid: number }) => !!effect && effect.gid === 8 && effect.fxid >= 403 && effect.fxid <= 957
+/** Effects this page may install or remove: added ones (group 8, IDs 403-1023; a patch stores 10 bits of ID, and an
+ * MS-70CDR 2.10 ran, saved and recalled effects at 917, 1000 and 1023). Zoom's own effects are never offered for removal. */
+export const isAddedEffect = (effect?: { gid: number; fxid: number }) => !!effect && effect.gid === 8 && effect.fxid >= 403 && effect.fxid <= 1023
+
+/** Group 8 IDs no collection ships on (docs/ZDL_MODULE_CONTRACT.md): an effect whose ID is already taken on the pedal
+ * is moved here when it is installed. The ID is only in the header (group at 0x3C and 0x43, ID at 0x40), with no
+ * checksum over it, so moving it rebuilds nothing. */
+export const LOCAL_IDS = { gid: 8, first: 958, last: 1023 }
+export const isLocalId = (effect?: { gid: number; fxid: number }) => !!effect && effect.gid === LOCAL_IDS.gid && effect.fxid >= LOCAL_IDS.first && effect.fxid <= LOCAL_IDS.last
+
+/** The effect file with its ID changed; nothing else in it. */
+export function withEffectId(data: ArrayLike<number>, fxid: number): number[] {
+  const out = Array.from(data)
+  out[0x40] = fxid & 0xff
+  out[0x41] = fxid >> 8
+  return out
+}
+
+/** A free local ID for `name`: the same one for the same file name wherever there's room, so a patch made on one
+ * pedal finds the effect on another, then the next free one. `taken` is every ID in use on the pedal, `avoid` the ones
+ * this browser has given other effects before (a stored patch may still point at one). */
+export function localIdFor(name: string, taken: Set<number>, avoid: Set<number> = new Set()): number | undefined {
+  const size = LOCAL_IDS.last - LOCAL_IDS.first + 1
+  let hash = 0
+  for (const c of name.toUpperCase()) hash = (hash * 31 + c.charCodeAt(0)) >>> 0
+  for (let i = 0; i < size; i++) {
+    const fxid = LOCAL_IDS.first + (hash + i) % size
+    if (!taken.has(fxid) && !avoid.has(fxid)) return fxid
+  }
+  return undefined
+}
 
 /** Effect IDs two collections shipped for different effects. Swapping one for the other froze an MS-70CDR at boot
  * until its ROM was reprogrammed (repeat98/ZoomMultistompZDL issue 8), and a pedal can't say what it had before,
@@ -153,7 +182,82 @@ export function installRefusal(name: string, data: ArrayLike<number>): string | 
   const info = effectInfo(data), id = info && info.gid + '/' + info.fxid
   if (!validEffectName(name.toUpperCase())) return name + ': the pedal needs a name of at most 8 letters, digits or underscores, then .ZDL.'
   if (!info) return name + ' is not an effect file.'
-  if (!isAddedEffect(info)) return name + ' has effect ID ' + id + ': only added effects (group 8, IDs 403 to 957) are installed. Zoom’s own effects stay as they are.'
+  if (!isAddedEffect(info)) return name + ' has effect ID ' + id + ': only added effects (group 8, IDs 403 to 1023) are installed. Zoom’s own effects stay as they are.'
   const clash = CLASHING_EFFECT_IDS.find(c => c.gid === info.gid && c.fxid === info.fxid)
   if (clash) return name + ' uses effect ID ' + id + ', which older builds of ' + clash.files + ' both used. Swapping one for the other has frozen a pedal at boot, so it isn’t installed. ' + clash.moved + ': get the current file.'
+}
+
+/** The base the pedal page installs on an MS-70CDR, and the version its identity reply gives then (MIDISTOMP's
+ * identity-tag patch). Kept here so pages don't load MIDISTOMP's patches (277 KB); zoom-base.test.ts checks they agree. */
+export const ZOOM_BASE = { name: 'MIDISTOMP V2.0.1', tag: 'M201' } as const
+
+/** MIDISTOMP's own SysEx, on the non-commercial id 7D so Zoom's parser drops it (stock firmware never answers):
+ * F0 7D 'M' 'S' 'T' <command> <nonce> … F7; replies are numbered from 41 in the order the commands came, with the
+ * request's nonce (MIDISTOMP PR #64, its docs/dev/modwerk-research.md section 1). Hello 01 answers 41 (major, minor,
+ * patch) and 42 (feature bits, 7 a byte); 02 to 05 (MIXER and PERFORM entries, 43 to 46) aren't used here; load 06 answers 47. */
+export const MST = { hello: 0x01, version: 0x41, features: 0x42, load: 0x06, loadReply: 0x47 } as const
+export const mstSysex = (command: number, nonce: number, args: number[] = []) => [0xf0, 0x7d, 0x4d, 0x53, 0x54, command, nonce & 0x7f, ...args, 0xf7]
+export const isMstReply = (m: number[]) => m[1] === 0x7d && m[2] === 0x4d && m[3] === 0x53 && m[4] === 0x54
+/** The hello's feature bits, low bit first. */
+export const MIDISTOMP_FEATURES = ['MIDI CC', 'MIDI clock and transport', 'MIDI settings', 'Tempo hold', 'Looper services', 'Mixer', 'PERFORM', 'MASTER', 'KALEIDO', 'SYSTEM meters', 'DSP limit 300']
+export type MidistompHello = { version: string; features: string[] }
+export function parseHello(version: number[], status: number[]): MidistompHello {
+  const bits = status[7] | status[8] << 7 | status[9] << 14
+  return { version: version.slice(7, 10).join('.'), features: MIDISTOMP_FEATURES.filter((_, bit) => bits & 1 << bit) }
+}
+/** One window (0.74 s) of the SYSTEM screen's numbers: CPU parts in tenths of a percent of an audio block, DSP in
+ * tenths of the effects' declared units (limit 300), late = blocks that started late, the CPU being full. */
+export type MidistompLoad = {
+  window: number; cpu: number; audio: number; audioMax: number; perform: number; midi: number; system: number; late: number; lateTotal: number; dsp: number
+  slots: { name: string; cpu: number; dsp: number }[]
+}
+/** Load 06 (built for MIDISTOMP on top of its PR #64, not in a release yet): keeps the SYSTEM screen's timing on for
+ * 5 s and answers 47 <nonce> + 120 bytes packed 8-into-7: the window's 14 words as diag.c keeps them (per, ch, chmax,
+ * own, cyc[7], late, win, midi; cycles of a block), then late total, all 32-bit; each slot's DSP in tenths (16-bit);
+ * each slot's name in 8 bytes, ended by a 0 when shorter ('-' empty, '?' loading). Cycles become tenths of a percent
+ * as its pc() does: an 8-frame block at 300 MHz is 54,422 cycles. */
+export function parseLoad(m: number[]): MidistompLoad | undefined {
+  if (!isMstReply(m) || m[5] !== MST.loadReply || m.length !== 146) return undefined
+  const b = unpack7(m.slice(7, -1)), word = (k: number) => (b[4 * k] | b[4 * k + 1] << 8 | b[4 * k + 2] << 16 | b[4 * k + 3] << 24) >>> 0
+  const tenths = (k: number) => Math.round(word(k) * 1000 / 54422)
+  const slots = Array.from({ length: 6 }, (_, s) => ({ name: String.fromCharCode(...b.slice(72 + 8 * s, 80 + 8 * s)).replace(/\0[^]*$/, ''), cpu: tenths(5 + s), dsp: b[60 + 2 * s] | b[61 + 2 * s] << 8 }))
+  return { window: word(12), cpu: tenths(0), audio: tenths(1), audioMax: tenths(2), system: tenths(3), perform: tenths(4), late: word(11), midi: tenths(13), lateTotal: word(14), dsp: slots.reduce((sum, slot) => sum + slot.dsp, 0), slots }
+}
+
+/** Update mode (hold Up and Down while plugging in USB): the MS-70CDR's bootloader answers the identity request with
+ * version 1.1x and takes the flash commands below. */
+export const isUpdateMode = (identity?: ZoomIdentity) => !!identity && identity.deviceId === 0x61 && identity.firmware.startsWith('1.1')
+/** Where installing and removing effect files may write: the MS-70CDR on Zoom's 2.10, where they were proven, or on
+ * the base (Zoom's 2.10, patched). Every other pedal or firmware is only read. */
+export const canWriteFiles = (identity?: ZoomIdentity) => identity?.deviceId === ZOOM_DEVICE_IDS['zoom-ms-70cdr'] && (identity.firmware === '2.10' || identity.firmware === ZOOM_BASE.tag)
+/** The bootloader's answer to a flash command: F0 52 00 <id> 00 <status> F7, 00 done, 08 a write's checksum failed. */
+export const isFlashReply = (m: number[], deviceId: number) => m.length === 7 && m[1] === 0x52 && m[3] === deviceId && m[4] === 0x00
+export const FLASH_OK = 0x00, FLASH_BAD_CRC = 0x08
+const n7 = (n: number, groups: number) => Array.from({ length: groups }, (_, i) => Math.floor(n / 128 ** i) & 0x7f)
+/** Flash command bodies, numbers in 7-bit groups, least significant first; as recorded from zoomms' MS-70CDR updater. */
+export const FLASH = {
+  start: [0x01],
+  erase: (address: number, length: number) => [0x0a, ...n7(address, 5), ...n7(length, 5)],
+  /** One block: address, length, the data packed 8-into-7, CRC32 ^ 0xFFFFFFFF. */
+  write: (address: number, block: ArrayLike<number>) => [0x02, ...n7(address, 5), ...n7(block.length, 2), ...pack7(block), ...n7((crc32(block) ^ 0xffffffff) >>> 0, 5)],
+  finish: [0x04],
+}
+export const FLASH_BLOCK = 2048
+const OS = { trailer: 0x0ef000, at: 0x040000, length: 0xb0000 }, PRESET = { at: 0x3fd000, length: 0x3000 }
+
+/** The MS-70CDR flash, every message body in order: Zoom's updater script with zoomms' skips (zoomms/macapp.py), so
+ * never the bootloader (0x000000) or the effects (0x0F0000). The OS trailer is erased first, so an interrupted flash
+ * shows; Preset.bin (the boot logo block) only when the base changes it. */
+export function flashSteps(main: Uint8Array, preset?: Uint8Array): number[][] {
+  if (main.length !== OS.length) throw new Error('Main.bin must be ' + OS.length + ' bytes, not ' + main.length + '.')
+  if (preset && preset.length !== PRESET.length) throw new Error('Preset.bin must be ' + PRESET.length + ' bytes, not ' + preset.length + '.')
+  const writes = (at: number, data: Uint8Array) => Array.from({ length: data.length / FLASH_BLOCK }, (_, i) => FLASH.write(at + i * FLASH_BLOCK, data.subarray(i * FLASH_BLOCK, (i + 1) * FLASH_BLOCK)))
+  return [
+    FLASH.start,
+    FLASH.erase(OS.trailer, 0x1000),
+    ...preset ? [FLASH.erase(PRESET.at, PRESET.length), ...writes(PRESET.at, preset)] : [],
+    FLASH.erase(OS.at, OS.length),
+    ...writes(OS.at, main),
+    FLASH.finish,
+  ]
 }

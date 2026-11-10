@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "moduleVersion": "0.1.0-experimental",
+  "status": "candidate_ui_observed_reference_comparison_unavailable",
+  "captureDate": "2026-10-26",
+  "captureRecord": "../media/capture.json",
+  "nativeBuildEvidence": "native-build.json",
+  "candidateBuiltAgainst": "916ce01bbfc60f3aedd7156066354fedb521e6f4",
+  "currentDraftBase": "98f17ed6e19ca6a81f12372b9ea3b435c736443d",
+  "exactCurrentDraftBuild": false,
+  "toolingSubstitution": {
+    "source_revision": "5581c68532f55c4325445c9e49c332e9c8e765c2",
+    "emulator_sha256": "7ab0cc133ce493fc6f4f0e3b39bdac3ccc496f0946adc2a7edb1188417129621",
+    "description": "The same existing source-built emulator with numeric-only fault diagnostics was substituted for retained 07a7c08e on both images. No firmware fix or binary equivalence to 07a7c08e is claimed."
+  },
+  "candidate": {
+    "imageSha256": "91bf159ee5a25c1d6b9356fe3eb0f43d8985f569bbfdeee3a7f85ba0da3770b3",
+    "emulatorExitCode": 0,
+    "screenshots": {
+      "01-track-page.png": "b28d825b71eb0b1f7e2b639fe1150392d59d0346d38dc5c9e81d24c4d59a1603",
+      "02-tuner-open.png": "75a29882708c9b6884bc9b379018bd5f15bbf95ba472ffeec1b8e593386dcf58",
+      "03-closed-no.png": "b28d825b71eb0b1f7e2b639fe1150392d59d0346d38dc5c9e81d24c4d59a1603",
+      "04-closed-yes.png": "b28d825b71eb0b1f7e2b639fe1150392d59d0346d38dc5c9e81d24c4d59a1603",
+      "05-closed-tempo.png": "b28d825b71eb0b1f7e2b639fe1150392d59d0346d38dc5c9e81d24c4d59a1603",
+      "06-normal-tempo.png": "deda2848b3ef0d1c22eb408f68e94fe728fbecab1d8f0a957089bcf3809eac04",
+      "07-func-tempo.png": "c9a4f2081c337b80ed01a44f05e1178d4daf35486c22a7155723a81b49053243"
+    },
+    "visualReview": "All seven original candidate PNGs reviewed; tuner opens with unpopulated pitch readout, close states restore track page, ordinary tempo routes are visible.",
+    "livePitchQualified": false,
+    "audioQualified": false
+  },
+  "standaloneReference": {
+    "imageSha256": "2db6a88885f39250ba2b8eb2727ba8937d351948abc1a80eca0c0b5ea84246af",
+    "emulatorExitCode": 1,
+    "captureCommands": 0,
+    "screenshots": 0,
+    "equivalenceEstablished": false,
+    "reason": "Process exited before UI commands; the cause is unresolved and no retry was performed."
+  },
+  "limits": [
+    "The preserved candidate was not rebuilt from the current draft base or new hash-guard wrapper.",
+    "The source-built emulator was substituted as tooling; no firmware fix or equivalence to the retained emulator is claimed.",
+    "The old emulator fault is localized to its DSP write callback. Which image property triggers it remains unresolved.",
+    "No real hardware, pitch accuracy, needle response, audio continuity, maximum-load timing or current release qualification is established."
+  ]
+}

@@ -22,6 +22,19 @@ def bases():
         yield path.parts[-3], json.loads(path.read_text())
 
 
+def imported_recipe(machine, config):
+    """The core's mod.json as imported: in the machine's own folder, or in the one its base names as source."""
+    return APP / "sdk/machines" / config.get("source", machine) / "elekloader" / config["core"] / "mod.json"
+
+
+def binding_of(machine, config):
+    """The machine's base-binding.json, or None while its base.json says why it cannot be built yet."""
+    path = APP / "sdk/machines" / machine / "base-binding.json"
+    if not path.exists() and config.get("pending"):
+        return None
+    return json.loads(path.read_text())
+
+
 class MachineBases(unittest.TestCase):
     def test_rytm_base_is_core_ar2_0_7_source_unchanged(self):
         record = json.loads((APP / "sdk/imports/core-ar2-source-fb58292.json").read_text())
@@ -69,11 +82,13 @@ class MachineBases(unittest.TestCase):
 
     def test_bindings_name_what_they_were_built_from(self):
         for machine, config in bases():
-            binding = json.loads((APP / "sdk/machines" / machine / "base-binding.json").read_text())
+            binding = binding_of(machine, config)
+            self.assertEqual(sha(APP / config["reference"]["file"]), config["reference"]["sha256"], machine)
+            if binding is None:
+                continue
             self.assertRegex(binding["identity"], r"^[0-9a-f]{64}$")
             self.assertEqual(binding["built"]["toolchain"], config["toolchain"], machine)
             self.assertEqual(binding["built"]["stock"], machine_base.stock_sha(machine, config["os"]), machine)
-            self.assertEqual(sha(APP / config["reference"]["file"]), config["reference"]["sha256"], machine)
 
     def test_staging_lays_out_every_source_and_header_mod_json_names(self):
         for machine, config in bases():
@@ -87,23 +102,70 @@ class MachineBases(unittest.TestCase):
 
     def test_staging_adds_modwerk_sources_and_leaves_the_imported_recipe_exact(self):
         for machine, config in bases():
-            imported = (APP / "sdk/machines" / machine / "elekloader" / config["core"] / "mod.json").read_bytes()
+            imported = imported_recipe(machine, config).read_bytes()
             with tempfile.TemporaryDirectory() as work:
                 core = machine_base.stage(machine, config, pathlib.Path(work))
                 mod = json.loads((core / "mod.json").read_text())
-                for source in config.get("add", {}).get("sources", []):
+                for source in config.get("add", {}).get("sources", []) + config.get("recipe", {}).get("sources", []):
                     self.assertIn(source, mod["sources"])
-            self.assertEqual((APP / "sdk/machines" / machine / "elekloader" / config["core"] / "mod.json").read_bytes(), imported)
+            self.assertEqual(imported_recipe(machine, config).read_bytes(), imported)
+
+    def test_variants_stage_with_or_without_add_and_bindings_record_each(self):
+        for machine, config in bases():
+            names = [name for name, _ in machine_base.variants(config)]
+            binding = binding_of(machine, config)
+            if "variants" in config and binding is not None:
+                self.assertEqual(list(binding["variants"]), names, machine)
+                self.assertEqual(binding["identity"], binding["variants"][names[0]], machine)
+            for name, add in machine_base.variants(config):
+                with tempfile.TemporaryDirectory() as work:
+                    core = machine_base.stage(machine, config, pathlib.Path(work), add=add)
+                    staged = (core / "mod.json").read_bytes()
+                imported = imported_recipe(machine, config).read_bytes()
+                if "recipe" in config:
+                    mod = json.loads(staged)
+                    self.assertEqual(mod["device"], config["recipe"]["device"], name)
+                    self.assertEqual(mod["defsym"], config["recipe"]["defsym"], name)
+                elif add:
+                    self.assertNotEqual(staged, imported, name)
+                elif config.get("common"):
+                    # common alone: the imported recipe with common's parts, and none of add's
+                    mod = json.loads(staged)
+                    for source in config["common"].get("sources", []):
+                        self.assertIn(source, mod["sources"], name)
+                    for source in config.get("add", {}).get("sources", []):
+                        self.assertNotIn(source, mod["sources"], name)
+                else:
+                    self.assertEqual(staged, imported, name)
 
     def test_every_added_site_is_guarded_by_a_hash_not_stock_bytes(self):
         for machine, config in bases():
-            for site in config.get("add", {}).get("sites", []):
+            sites = config.get("common", {}).get("sites", []) + config.get("add", {}).get("sites", [])
+            for site in sites + config.get("recipe", {}).get("sites", []):
                 self.assertNotIn("stock", site, site["addr"])
                 self.assertRegex(site["stockSha256"], r"^[0-9a-f]{64}$")
-                if site.get("kind") == "data":
+                if site["op"] == "bytes":
                     self.assertEqual(len(site["new"]), 2 * site["len"], site["addr"])
                 else:
                     self.assertTrue(site["len"] >= 6 and site["len"] % 2 == 0, site["addr"])
+
+    def test_copies_name_an_unchanged_original_and_refuse_a_changed_one(self):
+        for machine, config in bases():
+            source = APP / "sdk/machines" / config.get("source", machine) / "elekloader"
+            for copy in config.get("copies", []):
+                self.assertEqual(sha(source / copy["from"]), copy["sha256"], copy["path"])
+                self.assertTrue((APP / "sdk/machines" / machine / "elekloader/copies" / copy["path"]).is_file(), copy["path"])
+            if config.get("copies"):
+                stale = dict(config, copies=[dict(config["copies"][0], sha256="0" * 64)])
+                with tempfile.TemporaryDirectory() as work, self.assertRaisesRegex(ValueError, "redo the copy"):
+                    machine_base.stage(machine, stale, pathlib.Path(work))
+
+    def test_retarget_replaces_the_recipe_and_refuses_anything_else(self):
+        mod = {"device": "a", "defsym": {"X": "1"}, "sites": [{"a": 1}], "sources": ["a.s"]}
+        out = machine_base.retarget(dict(mod), {"device": "b", "defsym": {"Y": "2"}, "sites": [], "sources": ["b.s"]}, [{"b": 2}])
+        self.assertEqual(out, {"device": "b", "defsym": {"Y": "2"}, "sites": [{"b": 2}], "sources": ["a.s", "b.s"]})
+        with self.assertRaises(ValueError):
+            machine_base.retarget(dict(mod), {"exports": []}, [])
 
     def test_merge_extends_lists_and_refuses_a_redefined_name(self):
         mod = {"sources": ["a.s"], "defsym": {"X": "1"}}
@@ -117,6 +179,14 @@ class MachineBases(unittest.TestCase):
             machine_base.merge(dict(mod), {"defsym": {"X": "3"}}, [])
         with self.assertRaises(ValueError):
             machine_base.merge(dict(mod), {"description": "no"}, [])
+
+    def test_parts_put_common_before_add_and_refuse_a_name_in_both(self):
+        config = {"common": {"sources": ["c.c"], "collections": {"t": 4}}, "add": {"sources": ["a.c"], "collections": {"u": 4}}}
+        self.assertEqual(machine_base.parts(config), {"sources": ["c.c", "a.c"], "collections": {"t": 4, "u": 4}})
+        self.assertEqual(machine_base.parts(config, add=False), {"sources": ["c.c"], "collections": {"t": 4}})
+        self.assertEqual(machine_base.parts({"add": {"sources": ["a.c"]}}, add=False), {})
+        with self.assertRaises(ValueError):
+            machine_base.parts({"common": {"collections": {"t": 4}}, "add": {"collections": {"t": 4}}})
 
     def test_keeps_wants_every_item_of_the_release_and_allows_additions(self):
         reference = {"id": "core", "sites": [1, 2], "build": {"sources": {"x": "1"}}}

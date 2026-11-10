@@ -332,6 +332,22 @@
       "usedIn": [
         "modules/dejavu"
       ]
+    },
+    {
+      "id": "tim-hastie-tuner",
+      "name": "Tim Hastie Tuner",
+      "spdx": "MIT",
+      "noticeFile": "tuner.txt",
+      "sources": [
+        {
+          "url": "https://github.com/timhastie/octatrick-modules/blob/fd18f5530989be348e6aa4c6e38f93beba555e6d/LICENSE",
+          "revision": "fd18f5530989be348e6aa4c6e38f93beba555e6d",
+          "path": "LICENSE"
+        }
+      ],
+      "usedIn": [
+        "modules/tuner"
+      ]
     }
   ],
   "moduleComponents": {
@@ -377,6 +393,9 @@
     ],
     "dejavu": [
       "jankolkmeier-dejavu"
+    ],
+    "tuner": [
+      "tim-hastie-tuner"
     ]
   }
 }

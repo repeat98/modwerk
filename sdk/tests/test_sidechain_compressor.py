@@ -130,7 +130,7 @@ class SidechainCompressor(unittest.TestCase):
         for path in ['sdk/catalog.json', 'src/catalog/module-documents.json']:
             entries = json.loads((APP / path).read_text())['modules']
             self.assertIn('sidechain-compressor', {entry['id'] for entry in entries})
-        for path in ['sdk/module-qualification-baseline.json', 'sdk/module-release-waivers.json']:
+        for path in ['sdk/approvals/module-qualification-baseline.json', 'sdk/approvals/module-release-waivers.json']:
             entries = json.loads((APP / path).read_text())['modules']
             self.assertNotIn('sidechain-compressor', {entry['id'] for entry in entries})
         document = json.loads((FOLDER / 'octamod.module.json').read_text())

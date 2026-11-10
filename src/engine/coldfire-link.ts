@@ -6,6 +6,9 @@ import type { RuntimeCatalog } from './runtime-catalog.ts'
 export type CfLinkInput = { label: string; object: CfObject }
 export type CfRuntimeLink = { bytes: Uint8Array; symbols: Map<string, number>; placements: Map<string, Map<number, CfPlacement>>; sections: { name: string; address: number; size: number }[]; memoryEnd: number }
 const MAX_IMAGE = 16 * 1024 * 1024, PAGE = 0x2000
+// A bound on the work one link does, not a native limit: GNU ld takes any number of objects, and the fullest selections of
+// the catalogue need more than 32 units. Native refuses those for free space, so the browser must reach the same check.
+export const MAX_LINK_INPUTS = 256
 const align = (address: number, alignment: number) => Math.ceil(address / alignment) * alignment
 function fail(message: string): never { throw new Error('The ColdFire runtime ' + message + '.') }
 type InputSection = { input: CfLinkInput; section: CfSection }
@@ -44,7 +47,7 @@ function mergeStrings(parts: readonly InputSection[]): Merge {
 }
 
 export function linkColdFireRuntime(inputs: readonly CfLinkInput[], base: number, externals: ReadonlyMap<string, number> = new Map()): CfRuntimeLink {
-  if (!inputs.length || inputs.length > 32 || !Number.isInteger(base) || base < 0 || base > 0xffffffff || base % 4) fail('has an invalid base or input count')
+  if (!inputs.length || inputs.length > MAX_LINK_INPUTS || !Number.isInteger(base) || base < 0 || base > 0xffffffff || base % 4) fail('has an invalid base or input count')
   // GNU treats a zero architecture flag as neutral (data-only assembly).
   const architectures = new Set(inputs.map(input => input.object.flags).filter(flags => flags !== 0))
   if (architectures.size > 1) fail('mixes incompatible CPU object flags')
