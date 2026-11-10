@@ -118,9 +118,9 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host gate on the engine (verify.py). Not run in the emulator or on a unit.",
+    "summary": "Host gate on the engine (verify.py, 49 checks) and an emulator count of its instructions (bench.py). An earlier build of the stretch played as a RAM trial on the owner's MKII; this build's controls have not run on a unit.",
     "hardwareStatus": "untested",
-    "evidenceRevision": "da373d10f0f92ccf2ac3f3a5c218c546fbd878fa",
+    "evidenceRevision": "35d0879573bf16babfcdc13d2295035b42804bc0",
     "gates": [
       "Worst-case cycles under parameter modulation and maximum load",
       "Exact memory region and maximum-instance totals",
