@@ -6,7 +6,13 @@
   "defsym": {},
   "cflags": [],
   "weak": [],
-  "subscribe": [],
+  "subscribe": [
+    {
+      "event": "ev_tick",
+      "fn": "silent_pad_trig_tick",
+      "order": 50
+    }
+  ],
   "contribute": [],
   "collections": {},
   "copied": [],
@@ -118,6 +124,20 @@
           "stockSha256": "5e6d3d67283ab1d4d3dc3e4b139e7f9f0a4fa7c6d0965061a2e4bc32c2de575a",
           "op": "jmp",
           "target": "silent_pad_trig_on_chro_gate"
+        },
+        {
+          "addr": "0x40120a66",
+          "len": 6,
+          "stockSha256": "3aae1148f6e5b024e6309e3a019218763f277627d512f92739018842e1d1c926",
+          "op": "jsr",
+          "target": "silent_pad_trig_engine_gate"
+        },
+        {
+          "addr": "0x4012155a",
+          "len": 6,
+          "stockSha256": "55e0de62adab1830b94e7bc51f94626af920808911d1cf98b802ab828f37b8dd",
+          "op": "jsr",
+          "target": "silent_pad_trig_glow"
         }
       ]
     }

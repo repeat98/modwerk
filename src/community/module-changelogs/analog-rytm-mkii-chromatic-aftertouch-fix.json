@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.2.0-experimental",
+    "date": "2026-11-06",
+    "changes": [
+      "Renamed Pad Pressure Fix: it now fixes pad pressure during retrig rolls too.",
+      "Hold a pad in a roll (RTRG held or ALWAYS ON) and its aftertouch targets and MIDI poly pressure follow your pressure, as on a plain held pad.",
+      "With VEL.CUR OFF, pressure still sets the roll's velocity as before; set VEL.CUR for aftertouch alone.",
+      "With RTRG held and VEL.CUR set, stock sent pressure nowhere; it now reaches aftertouch.",
+      "CHROMATIC pads still send their aftertouch on the note they played."
+    ]
+  },
+  {
     "version": "0.1.0-experimental",
     "date": "2026-11-02",
     "changes": [

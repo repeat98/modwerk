@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "ctrl-in-perf",
+  "moduleVersion": "0.1.0-experimental",
+  "firmware": "1.74",
+  "capturedAt": "2026-11-08T21:19:00Z",
+  "imageSha256": "f154018ef7c671b4d59a428e71fa78dac1662c0e2746e50cc51b0f4c7f8708b9",
+  "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "build": "Modwerk's linker (scripts/link-image.mjs): the Modwerk base for core-ar2 0.7 (plain variant ba530f45, the site builder's pick for this module) + this folder's Ctrl In Perf, built as 1.0.0-experimental from the same source as 0.1.0-experimental, materialised against stock OS 1.74, --version CP02",
+  "emulator": {
+    "name": "analog-emu",
+    "repository": "https://github.com/trigcondition/analog-emu",
+    "revision": "4c07ed3",
+    "binary": "dtboot (cargo build --release)",
+    "settings": "a fresh card (no card image); key presses held 12M (NO 80M); DTBOOT_STEPS=1 (a frame 40M after each key release)"
+  },
+  "conditions": "Headless cold boot of CP02. NO at 4503M, 5303M, 6103M and 6903M (held 80M) clear the missing-calibration notices; GLOBAL at 7503M; DOWN x6 from 8003M, one every 300M (CONTROL); YES at 10003M (CONTROL); YES at 10503M (CONTROL INPUT 1, MODE OFF); RIGHT at 11003M (MODE CV); DOWN x3 from 11403M, one every 300M (PERF DEST). The same plan on an image linked with irpina's core-ar2 0.7 release (CP01) gives byte-identical frames.",
+  "captures": [
+    {
+      "path": "media/perf-dest-off.png",
+      "frame": "step17_DOWN.png",
+      "plan": "the conditions' plan, ending on the third DOWN: PERF DEST, the last row, at OFF",
+      "sha256": "2179b200afabacd4ac53b001c8f1d4e08720b345d91cf359a2d7f79209c70691"
+    },
+    {
+      "path": "media/perf-dest-pf1.png",
+      "frame": "step18_RIGHT.png",
+      "plan": "as perf-dest-off.png, then RIGHT at 12303M: PERF DEST PF1",
+      "sha256": "4fb796b1381c07305faf577bed8f0016a10ea433270602a8cc59d8a2db5573cd"
+    }
+  ]
+}

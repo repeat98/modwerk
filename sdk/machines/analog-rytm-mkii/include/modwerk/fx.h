@@ -7,7 +7,8 @@
 #define MODWERK_FX_H
 
 #define MW_FX_ABI 1
-#define MW_FX_WORK 8192         /* words of the work area the base lends the effect that runs */
+#define MW_FX_WORK 8192         /* the most words of work area an effect may ask for; the base lends them from the
+                                   mods' RAM the set leaves free, so a set that leaves less does not list it */
 #define MW_FX_N24 16            /* a 24 kHz effect's samples a block (32 at 48 kHz) */
 
 /* mw_fx.flags */
@@ -34,11 +35,11 @@ struct mw_fx {
     unsigned char slot;         /* the send: 0 */
     unsigned char flags;        /* MW_FX_24K, MW_FX_LIFT */
     unsigned short trim;        /* the return's level against the chorus's at one LEV, Q8 (256: the same) */
-    unsigned work;              /* words of the work area it uses, at most MW_FX_WORK */
+    unsigned work;              /* words of the work area it uses, at most MW_FX_WORK; 0 for none */
     const char *name;           /* the chooser's row and the page's title */
     struct mw_fx_control c[8];  /* A-D on the top row, E-H below */
-    /* A clean state: when it is chosen, after two seconds with nothing sent, and at a project load. The work area
-     * is cleared by the base, a step a block, before render first runs. */
+    /* A clean state: when it is chosen, after two seconds with nothing sent, and at a project load. Its words of
+     * the work area are cleared by the base, a step a block, before render first runs. */
     void (*reset)(int *work);
     /* One block of the audio interrupt: x the send (16 samples at 24 kHz, else 32; within +-2^16), l and r the
      * return, par A-H as they play (a lock, else the knob). Keep it short: no call that can block. */

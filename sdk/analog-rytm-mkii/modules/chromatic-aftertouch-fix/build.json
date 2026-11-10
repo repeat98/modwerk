@@ -12,7 +12,9 @@
   "copied": [],
   "regions": [],
   "claims": [
-    "midi:CHROMATIC pad poly pressure note on MIDI out"
+    "midi:CHROMATIC pad poly pressure note on MIDI out",
+    "midi:pad pressure during pad retrigs on MIDI out",
+    "ui:pad pressure during pad retrigs (RTRG held, ALWAYS ON)"
   ],
   "requires": [],
   "derive": null,
@@ -27,6 +29,30 @@
           "stockSha256": "eb8c3b4455860d7a405903deb4a71d861baed698a9ab2fbb8c1166d596dffcd1",
           "op": "jsr",
           "target": "chromatic_aftertouch_fix_pressure_out"
+        },
+        {
+          "addr": "0x400e2924",
+          "len": 2,
+          "stockSha256": "a8e774a529ecac8cd402f40263e3be8f3998c6a4fd734961cf0ad590e2926d6a",
+          "op": "bytes",
+          "new": "7000",
+          "kind": "code"
+        },
+        {
+          "addr": "0x400c755a",
+          "len": 4,
+          "stockSha256": "0e4a2031c12bcd049eb2737a1b852fc71ee88d3cfcdef80cbdf3829739dae732",
+          "op": "bytes",
+          "new": "4e714e71",
+          "kind": "code"
+        },
+        {
+          "addr": "0x400c6228",
+          "len": 2,
+          "stockSha256": "5c1c81956ea56ef91a593bbb23f800b4f506699661623acf9944ad0d0da4ac21",
+          "op": "bytes",
+          "new": "4e71",
+          "kind": "code"
         }
       ]
     }

@@ -1,0 +1,1 @@
+Development: the publication gate for new Digitakt, Digitone and Rytm library versions read module paths with Windows separators on the Windows check, so it judged every library module as new and failed pull requests that touch no module. It now reads them the same on every system, and a change to the script that holds the gate runs the Windows check.

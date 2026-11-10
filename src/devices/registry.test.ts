@@ -66,10 +66,37 @@ describe('digi combination estimate', () => {
     const estimate = estimateCombination('digitakt', ['digineighbor', 'digisophie'])
     expect(estimate.fits).toBe(true)
     expect(estimate.compatibleReleases).toEqual([])
+    // Since SOPHIE 1.2.0 their firmware changes meet in Machine Pages, which this estimate does not expand; the declared conflict refuses them.
     expect(estimate.clashes).toEqual([
       { claim: 'marked as incompatible by their authors', mods: ['NEIGHBOR', 'SOPHIE'] },
-      { claim: 'overlapping firmware changes in OS 1.53', mods: ['NEIGHBOR', 'SOPHIE'] },
-      { claim: 'overlapping firmware changes in OS 1.54', mods: ['NEIGHBOR', 'SOPHIE'] },
+    ])
+  })
+
+  it('refuses a pair whose dependencies conflict: Digi Mono builds on digichain, STRING on machine pages (#1306)', () => {
+    const estimate = estimateCombination('digitakt', ['digimono', 'digistring'])
+    expect(estimate.fits).toBe(true)
+    expect(estimate.compatibleReleases).toEqual([])
+    expect(estimate.clashes).toEqual([
+      { claim: 'Digi Mono builds on digichain and STRING builds on machine pages, and digichain and machine pages are marked as incompatible by their authors', mods: ['Digi Mono', 'STRING'] },
+    ])
+    expect(estimateCombination('digitakt', ['digichain', 'digistring']).clashes).toEqual([
+      { claim: 'STRING builds on machine pages, and digichain and machine pages are marked as incompatible by their authors', mods: ['digichain', 'STRING'] },
+    ])
+  })
+
+  it('combines mods whose dependencies do not conflict', () => {
+    // Both build on machine pages, and both on digichain.
+    expect(estimateCombination('digitakt', ['digistring', 'ram-machines'])).toMatchObject({ clashes: [], compatibleReleases: ['1.53', '1.54'] })
+    expect(estimateCombination('digitakt', ['digimono', 'digipoly'])).toMatchObject({ clashes: [], compatibleReleases: ['1.53', '1.54'] })
+  })
+
+  it('refuses two mods whose own firmware changes overlap', () => {
+    const estimate = estimateCombination('digitakt', ['digislicer', 'sample-tools'])
+    expect(estimate.compatibleReleases).toEqual([])
+    expect(estimate.clashes).toEqual([
+      { claim: 'marked as incompatible by their authors', mods: ['DIGISLICER', 'Sample Snap and Crossfade'] },
+      { claim: 'overlapping firmware changes in OS 1.53', mods: ['DIGISLICER', 'Sample Snap and Crossfade'] },
+      { claim: 'overlapping firmware changes in OS 1.54', mods: ['DIGISLICER', 'Sample Snap and Crossfade'] },
     ])
   })
 

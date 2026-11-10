@@ -13,6 +13,7 @@ import importlib.util
 import json
 from pathlib import Path
 import re
+import struct
 import subprocess
 import sys
 import tempfile
@@ -113,46 +114,81 @@ def declaration(root, filename):
 
 
 def base_binding(root, spec):
-    if set(spec) != {'identity', 'packageSha256', 'runOrigin', 'imports', 'identityHeader'}:
+    """Resolve reviewed export names against the currently committed base.
+
+    Identity/hash are provenance, never module admission pins. In particular no
+    generated C header embeds the current base identities in a runtime image.
+    """
+    if set(spec) != {'runOrigin', 'imports'}:
         raise ValueError('Invalid base binding fields')
     binding_file = root / 'sdk/machines/octatrack/base-binding.json'
     package_file = root / 'src/engine/assets/octatrack-base.elemod'
     binding = json.loads(binding_file.read_text())
-    if spec['identity'] != binding['identity'] or spec['packageSha256'] != sha(package_file):
-        raise ValueError('Base changed; review and recapture this module binding')
     package = json.loads(package_file.read_text())
     origin = spec['runOrigin']
-    if type(origin) is not int or not 0x40000400 <= origin < 0x41000000:
+    length = package['sections']['.run']['len']
+    if (type(origin) is not int or not 0x40000400 <= origin < 0x41000000
+            or type(length) is not int or not 0 < length <= 0x41000000 - origin):
         raise ValueError('Invalid reviewed base runtime origin')
     def address(name):
         if not isinstance(name, str) or not SYMBOL.fullmatch(name) or name not in package['exports']:
             raise ValueError('A base import must be a published export')
-        section, offset = package['symbols'][name]
-        if section != '.run' or type(offset) is not int or not 0 <= offset < package['sections']['.run']['len']:
+        section, offset = package['symbols'].get(name, (None, None))
+        if section != '.run' or type(offset) is not int or not 0 <= offset < length:
             raise ValueError('A base import must be inside its runtime')
         return origin + offset
-    if not isinstance(spec['imports'], list) or len(set(spec['imports'])) != len(spec['imports']):
+    if (not isinstance(spec['imports'], list)
+            or any(not isinstance(n, str) or not SYMBOL.fullmatch(n) for n in spec['imports'])
+            or len(set(spec['imports'])) != len(spec['imports'])):
         raise ValueError('Invalid import list')
     imports = {name: address(name) for name in spec['imports']}
-    header = spec['identityHeader']
-    if set(header) != {'filename', 'addressDefine', 'bytesName', 'symbol'}:
-        raise ValueError('Invalid identity header declaration')
-    if (not re.fullmatch(r'[A-Za-z_][A-Za-z_0-9]*\.h', header['filename'])
-            or any(not SYMBOL.fullmatch(header[k]) for k in ('addressDefine', 'bytesName', 'symbol'))):
-        raise ValueError('Invalid generated header identifier')
-    identities = sorted(set([binding['identity'], *binding.get('variants', {}).values()]))
-    if any(not isinstance(i, str) or not re.fullmatch(r'[0-9a-f]{64}', i) for i in identities):
-        raise ValueError('Invalid base variant identity')
-    values = ','.join('0x' + i[n:n + 2] for i in identities for n in range(0, 64, 2))
-    text = ('#define %s 0x%xu\nstatic const uint8_t %s[%d] = {%s};\n' %
-            (header['addressDefine'], address(header['symbol']), header['bytesName'], 32 * len(identities), values))
-    return imports, header['filename'], text, package, identities, [binding_file, package_file]
+    identity = binding['identity']
+    if not isinstance(identity, str) or not re.fullmatch(r'[0-9a-f]{64}', identity):
+        raise ValueError('Invalid committed base identity')
+    provenance = {'identity': identity, 'packageSha256': sha(package_file),
+                  'runOrigin': origin, 'imports': imports}
+    return imports, package, provenance, [binding_file, package_file]
+
+
+def import_relocations(pack, cross, work, objects, image, imports, self_relocations):
+    """Read GNU linker's retained import relocations, never guess from bytes."""
+    script, elf, binary = (work / n for n in ('imports-map.ld', 'imports-map.elf', 'imports-map.bin'))
+    script.write_text(pack.SCRIPT % 0)
+    run = lambda argv: subprocess.run(list(map(str, argv)), check=True, capture_output=True)
+    run([cross + 'ld', '--emit-relocs', '--orphan-handling=error', '--no-warn-rwx-segments',
+         '-T', script, '-o', elf, *objects])
+    run([cross + 'objcopy', '-O', 'binary', '-j', '.image', elf, binary])
+    if binary.read_bytes() != image:
+        raise ValueError('Retaining import relocation metadata changed the image')
+    records, section = [], None
+    for line in run([cross + 'readelf', '--relocs', '--wide', elf]).stdout.decode().splitlines():
+        match = re.match(r"Relocation section '([^']+)'", line)
+        if match:
+            section = match[1]
+        fields = line.split()
+        if len(fields) < 5 or fields[4] not in imports:
+            continue
+        if (section != '.rela.image' or len(fields) != 7 or fields[2] != 'R_68K_32'
+                or fields[5] not in ('+', '-')):
+            raise ValueError('Unsupported base-import relocation: ' + line.strip())
+        at = int(fields[0], 16)
+        addend = int(fields[6], 16) * (-1 if fields[5] == '-' else 1)
+        if (at & 1 or at < 0 or at + 4 > len(image)
+                or any(at < other + 4 and other < at + 4 for other in self_relocations)
+                or any(at < r['offset'] + 4 and r['offset'] < at + 4 for r in records)):
+            raise ValueError('Overlapping or out-of-image base-import relocation')
+        expected = (imports[fields[4]] + addend) & 0xffffffff
+        if struct.unpack_from('>I', image, at)[0] != expected:
+            raise ValueError('Base-import relocation differs from linked bytes')
+        records.append({'offset': at, 'name': fields[4], 'addend': addend})
+    if {record['name'] for record in records} != imports.keys():
+        raise ValueError('Missing linked relocation metadata for a base import')
+    return sorted(records, key=lambda record: record['offset'])
 
 
 def compile_image(root, filename, cross, work):
     doc, folder, units, includes, runtime_path, runtime, pack = declaration(root, filename)
-    imports, header, text, base, identities, base_files = base_binding(root, doc['base'])
-    (work / header).write_text(text)
+    imports, base, binding, base_files = base_binding(root, doc['base'])
     codegen = load('source_runtime_codegen', root / 'sdk/runtime/m68k_codegen.py')
     run = lambda argv: subprocess.run(list(map(str, argv)), check=True, capture_output=True)
     objects = []
@@ -176,6 +212,9 @@ def compile_image(root, filename, cross, work):
     stub.write_text('\n'.join('.global %s\n.set %s,0x%x' % (n, n, imports[n]) for n in sorted(unresolved)) + '\n')
     run([cross + 'as', '-mcpu=54455', stub, '-o', work / 'imports.o'])
     image, names, bss, relocs = pack.link_units([kept, work / 'imports.o'], cross, 0, work, anywhere=True)
+    binding['relocations'] = import_relocations(
+        pack, cross, work, [kept, work / 'imports.o'], image,
+        {name: imports[name] for name in unresolved}, relocs)
     if any(name.startswith(tuple(doc['forbiddenPrefixes'])) for name in names):
         raise ValueError('A forbidden legacy entry or state survived pruning')
     hooks = pack.subscribe([], pack.entries(runtime), names, raises=runtime.get('raise', ()))
@@ -185,18 +224,45 @@ def compile_image(root, filename, cross, work):
         paths.update(include.rglob('*.h'))
     inputs = {(('module/' + str(p.relative_to(folder))) if p.is_relative_to(folder)
                else str(p.relative_to(root))): sha(p) for p in sorted(paths)}
-    return doc, folder, pack, image, names, bss, relocs, hooks, inputs, base, identities
+    return doc, folder, pack, image, names, bss, relocs, hooks, inputs, base, binding
 
 
-def validate_copies(pack, recipe_api, image, relocs, recipe, inputs, base):
-    replaced, copies, fills = recipe_api.apply(image, relocs, recipe, inputs)
+def reviewed_image(image, binding):
+    """Only explicit linked abs32 import words vary with a base rebuild."""
+    reviewed = bytearray(image)
+    for record in binding['relocations']:
+        reviewed[record['offset']:record['offset'] + 4] = bytes(4)
+    return bytes(reviewed)
+
+
+def reviewed_inputs(root, folder, doc, inputs):
+    # Module source/recipe and explicitly compiled shared units stay pinned.
+    # Generated base artifacts and transitive SDK headers are build provenance;
+    # their code effects still have to match the reviewed normalized image.
+    units = {str(source_path(root, folder, unit['path']).relative_to(root))
+             for unit in doc['sources'] if unit['path'].startswith('@/')}
+    return {name: digest for name, digest in inputs.items()
+            if name.startswith('module/') or name in units}
+
+
+def validate_copies(pack, recipe_api, image, relocs, recipe, inputs, base, binding):
+    if recipe.get('baseImports') != binding['relocations']:
+        raise ValueError('Reviewed base-import names, addends or offsets changed')
+    imports = [r['offset'] for r in binding['relocations']]
+    replaced, copies, fills = recipe_api.apply(reviewed_image(image, binding), relocs, recipe, inputs)
+    for item in [*recipe.get('copies', []), *recipe.get('fills', [])]:
+        if any(item['offset'] < at + 4 and at < item['offset'] + item['length'] for at in imports):
+            raise ValueError('Reconstruction overlaps a dynamic base-import word')
     pack.unevented([], copies)
     for _, address, n, _ in copies:
         if not 0x40000400 <= address < 0x400de1e0 or n > 0x400de1e0 - address:
             raise ValueError('Reconstruction copy outside runtime-readable stock')
         if any(address < int(s['addr'], 16) + s['len'] and int(s['addr'], 16) < address + n for s in base['sites']):
             raise ValueError('Reconstruction copy overlaps the base')
-    return replaced, copies, fills
+    output = bytearray(replaced)
+    for at in imports:
+        output[at:at + 4] = image[at:at + 4]
+    return bytes(output), copies, fills
 
 
 def bounded_capture(recipe, image, stock, main_load, base, registry):
@@ -240,26 +306,30 @@ def build(root, filename, output, cross='m68k-elf-', stock=None, upstream=None, 
         firmware_codec.use_elekloader(Path(upstream).resolve())
     with tempfile.TemporaryDirectory(prefix='source-runtime-') as tmp:
         work = Path(tmp)
-        doc, folder, pack, image, names, bss, relocs, hooks, inputs, base, identities = compile_image(root, filename, cross, work)
+        doc, folder, pack, image, names, bss, relocs, hooks, inputs, base, binding = compile_image(root, filename, cross, work)
+        reviewed_sources = reviewed_inputs(root, folder, doc, inputs)
         recipe_api = load('source_runtime_stock_recipe', root / 'sdk/machines/octatrack/module-adapters/stock_recipe.py')
         recipe_path = path_in(folder, doc['reconstruction']) if capture is None else Path(capture)
         if capture is not None:
             if not stock or not upstream or recipe_path.exists():
                 raise ValueError('Capture needs original stock, upstream tools and a new recipe path')
             args = argparse.Namespace(stock=Path(stock), upstream=Path(upstream))
-            recipe = pack.capture_machine_recipe(doc['id'], image, relocs, inputs, args)
+            normalized = reviewed_image(image, binding)
+            excluded = [*relocs, *[r['offset'] for r in binding['relocations']]]
+            recipe = pack.capture_machine_recipe(doc['id'], normalized, excluded, reviewed_sources, args)
+            recipe['baseImports'] = binding['relocations']
             from elekloader import formats
             parsed, device, release = formats.load(str(stock))
             stock_main = formats.main_image(parsed, device)
-            recipe = bounded_capture(recipe, image, stock_main, device.main_load, base, pack.site_events())
+            recipe = bounded_capture(recipe, normalized, stock_main, device.main_load, base, pack.site_events())
             # Capture is evidence for review, never a publish/scan waiver.
-            validate_copies(pack, recipe_api, image, relocs, recipe, inputs, base)
+            validate_copies(pack, recipe_api, image, relocs, recipe, reviewed_sources, base, binding)
             recipe_path.parent.mkdir(parents=True, exist_ok=True)
             recipe_path.write_text(json.dumps(recipe, indent=2) + '\n')
             return None, {'status': 'CAPTURED_REVIEW_REQUIRED', 'recipe': str(recipe_path)}
         recipe = json.loads(recipe_path.read_text())
         authored = image
-        image, copies, fills = validate_copies(pack, recipe_api, image, relocs, recipe, inputs, base)
+        image, copies, fills = validate_copies(pack, recipe_api, image, relocs, recipe, reviewed_sources, base, binding)
         data = pack.package(image, bss, hooks, relocs, name=doc['id'], abi=8, hashed=True,
                             title=doc['title'], layout=doc['layout'], copies=copies, fills=fills)
         if stock:
@@ -293,7 +363,9 @@ def build(root, filename, output, cross='m68k-elf-', stock=None, upstream=None, 
         report = {'schema': 1, 'id': doc['id'], 'bytes': len(data), 'imageBytes': len(image),
                   'bssBytes': bss, 'relocations': len(relocs), 'eventWords': len(hooks),
                   'sha256': hashlib.sha256(data).hexdigest(), 'authoredImageSha256': hashlib.sha256(authored).hexdigest(),
-                  'baseIdentity': doc['base']['identity'], 'baseVariants': identities,
+                  'reviewedImageSha256': hashlib.sha256(reviewed_image(authored, binding)).hexdigest(),
+                  'baseIdentity': binding['identity'], 'basePackageSha256': binding['packageSha256'],
+                  'baseRunOrigin': binding['runOrigin'], 'baseImports': binding['relocations'],
                   'stockCopies': len(copies), 'stockFills': len(fills), 'sources': inputs,
                   'stockVerification': 'PASS' if stock else 'NOT_RUN', 'hardware': 'NOT_RUN'}
         return data, report
@@ -302,16 +374,26 @@ def build(root, filename, output, cross='m68k-elf-', stock=None, upstream=None, 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--recipe', type=Path, required=True)
-    parser.add_argument('--output', type=Path, required=True)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument('--output', type=Path)
+    mode.add_argument('--check', action='store_true', help='Rebuild/validate against the committed base without writing output')
     parser.add_argument('--cross', default='m68k-elf-')
     parser.add_argument('--stock', type=Path)
     parser.add_argument('--upstream', type=Path)
     parser.add_argument('--capture-stock-recipe', type=Path)
     args = parser.parse_args()
+    if args.check and args.capture_stock_recipe:
+        parser.error('--check cannot capture or write a reconstruction recipe')
     try:
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        _, report = build(ROOT, args.recipe, args.output, args.cross, args.stock, args.upstream, args.capture_stock_recipe)
-        args.output.with_suffix('.proofs.json').write_text(json.dumps(report, indent=2) + '\n')
+        if args.check:
+            sys.dont_write_bytecode = True
+            with tempfile.TemporaryDirectory(prefix='source-runtime-check-') as directory:
+                _, report = build(ROOT, args.recipe, Path(directory) / 'check.mwrm', args.cross,
+                                  args.stock, args.upstream)
+        else:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            _, report = build(ROOT, args.recipe, args.output, args.cross, args.stock, args.upstream, args.capture_stock_recipe)
+            args.output.with_suffix('.proofs.json').write_text(json.dumps(report, indent=2) + '\n')
         print(json.dumps({k: v for k, v in report.items() if k != 'sources'}))
     except subprocess.CalledProcessError as error:
         sys.exit(error.stderr.decode() if isinstance(error.stderr, bytes) else error.stderr or str(error))

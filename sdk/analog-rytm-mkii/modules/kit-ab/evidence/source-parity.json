@@ -1,0 +1,28 @@
+{
+  "sourceCommit": "d3889b54c5bf7f5242baf0b8b771938d86e91d8a",
+  "cases": [
+    {
+      "machine": "analog-rytm-mkii",
+      "id": "kit-ab",
+      "release": "1.74",
+      "version": "1.0.0",
+      "compiler": {
+        "gcc": "m68k-elf-gcc (GCC) 16.2.0",
+        "assembler": "GNU assembler (GNU Binutils) 2.47.20260726",
+        "linker": "GNU ld (GNU Binutils) 2.47.20260726",
+        "node": "v24.21.0"
+      },
+      "artifactSha256": "0a3ddd75d6adbfbb1dbce3bbb1bea69164a4e680ba44100f3745c2bc977930f1",
+      "authorObjectSha256": "4e36608c9745c985a7b99ab9ab43f25e518451b53c6ba184f517d631c96daa64",
+      "ownSha256": "11f2ad04bebfd1aac6e865f38087089182b834a989f0a6d8fdcb7db6485152ca",
+      "referenceSha256": "11f2ad04bebfd1aac6e865f38087089182b834a989f0a6d8fdcb7db6485152ca",
+      "status": "byte-parity",
+      "sections": {
+        ".run": 340
+      },
+      "referenceSections": {
+        ".run": 340
+      }
+    }
+  ]
+}
