@@ -1,10 +1,10 @@
 """AMIGA -- a track machine: the track's Flex sample as an 8-bit tracker plays it, with a cyclic stretch.
 
 Stock's FLEX reader plays the sample; the machine's render reworks the source
-PCM in the frame packet before the DSP repitches it (SRR: sample-and-hold,
+PCM in the frame packet before the DSP repitches it (RATE: sample-and-hold,
 BITS: 4 to 16, LED: a fixed lowpass) and restarts the reader every cycle where
-the sample would be at speed SPD, as stock's retrig restarts a note. SRC slots
-3 to 5 hold SPD, GRN and SRR instead of RATE, RTRG and RTIM.
+the sample would be at the length STCH asks, as stock's retrig restarts a note. SRC slots
+3 to 5 hold STCH, CYL and RATE instead of stock RATE, RTRG and RTIM.
 
 No stock code is patched: the machine joins the base's machine list and START
 dispatch through runtime.json (ot_machines, ot_machine_starts).

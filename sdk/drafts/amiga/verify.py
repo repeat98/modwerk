@@ -27,7 +27,7 @@ def check(name, ok, detail=''):
 class Voice(ctypes.Structure):
     _fields_ = [('l', ctypes.c_int32), ('r', ctypes.c_int32), ('phase', ctypes.c_uint32), ('al', ctypes.c_int32), ('ar', ctypes.c_int32),
                 ('count', ctypes.c_uint32), ('ic', ctypes.c_int32 * 4)] + [(name, ctypes.c_uint32) for name in (
-                    'pos', 'window', 'grain', 'played', 'since', 'got', 'first', 'length', 'sample', 'flags')] + [
+                    'pos', 'frac', 'window', 'grain', 'played', 'since', 'got', 'first', 'length', 'sample', 'flags')] + [
                 ('last', ctypes.c_int32 * 2), ('off', ctypes.c_int32 * 2)] + [(name, ctypes.c_uint32) for name in (
                     'fade', 'jump', 'hi', 'floor', 'mix_from', 'mix_len', 'mix_wait', 'mix_k', 'mix_step', 'planned')] + [
                 ('hist', ctypes.c_int16 * 4096)]
@@ -37,12 +37,12 @@ with tempfile.TemporaryDirectory() as tmp:
     so = pathlib.Path(tmp) / 'amiga.so'
     subprocess.run(['cc', '-O2', '-shared', '-fPIC', '-DAMIGA_HOST', '-o', str(so), str(HERE / 'amiga.c')], check=True)
     lib = ctypes.CDLL(str(so))
-    lib.amiga_strt.restype = lib.amiga_frame.restype = ctypes.c_uint32
+    lib.amiga_strt.restype = lib.amiga_frame.restype = lib.amiga_rate.restype = ctypes.c_uint32
 
     def crunch(samples, srr, bits, led=0, voice=None):
         voice = voice or Voice(phase=0x10000)
         a = (ctypes.c_int32 * len(samples))(*samples)
-        lib.amiga_crunch(ctypes.byref(voice), a, len(samples) // 2, srr, bits, led)
+        lib.amiga_crunch(ctypes.byref(voice), a, len(samples) // 2, 16 * 65536 // (16 + srr), bits, led)  # srr: 16/(16+srr) of the rate
         return list(a)
 
     ramp = [((i * 0x01234567) & 0x7fffffff) - 0x40000000 for i in range(64)]
@@ -68,7 +68,7 @@ with tempfile.TemporaryDirectory() as tmp:
         check(f'split into two calls it renders the same (LED {led})', whole == parts)
     garbage = Voice(0x5a5a5a5a, 0x5a5a5a5a, 0xa5a5a5a5)
     check('a garbage state takes a sample at once', crunch(ramp, 127, 12, 0, garbage)[:2] == ramp[:2])
-    check('out-of-range controls are clamped', crunch(ramp, 255, 255) == crunch(ramp, 127, 12))
+    check('out-of-range controls are clamped', crunch(ramp, 10 ** 6, 255) == crunch(ramp, 240, 12))
 
     def tone(hz, n=4096, amp=0.5):
         return [int(amp * 0x7fffffff * math.sin(2 * math.pi * hz * (i // 2) / 44100)) for i in range(2 * n)]
@@ -109,7 +109,7 @@ with tempfile.TemporaryDirectory() as tmp:
                 lib.amiga_blend(ctypes.byref(v), a, src)
                 lib.amiga_declick(ctypes.byref(v), a, src)
             stream.extend(a[0::2])
-            at = lib.amiga_stretch(ctypes.byref(v), 16, src, spd, grn, loop)
+            at = lib.amiga_stretch(ctypes.byref(v), 16, src, spd * 64, 96 + grn * grn // 4, loop)  # spd 64: the note's own speed
             if at == OVER:
                 return restarts, n + 1, stream
             if at != KEEP:
@@ -154,6 +154,17 @@ with tempfile.TemporaryDirectory() as tmp:
     a = (ctypes.c_int32 * 4)(-0x80000000, 0x7fffffff, 0, 0)
     lib.amiga_declick(ctypes.byref(v), a, 2)
     check('a full-scale step neither wraps nor overflows', a[0] > 0x70000000 and a[1] < -0x70000000, f'{a[0]:x} {a[1]:x}')
+    pct = [lib.amiga_percent(v) for v in range(128)]
+    check('STCH reads 50 to 2100 percent, rising, then HOLD', pct[0] == 50 and pct[32] == 100 and pct[52] == 200 and pct[126] == 2100
+          and pct[127] == 0 and all(b > a for a, b in zip(pct, pct[1:127])), str(pct[:4]))
+    check('CYL reads 100 to 4132 samples, 1000 at 60', [lib.amiga_cycle(v) for v in (0, 60, 127, 999)] == [100, 1000, 4132, 4132])
+    hz = [lib.amiga_hz(v) for v in range(38)]
+    check('RATE reads a tracker\'s note rates, then the sample\'s own', hz[0] == 4143 and hz[29] == 22168 and hz[35] == 31388 and hz[36] == hz[37] == 44100
+          and all(abs(b / a - 2 ** (1 / 12)) < 0.01 for a, b in zip(hz, hz[1:36])), str(hz[:3]))
+    check('and stores at that share of 44.1 kHz', all(abs(lib.amiga_rate(v) / 65536 - hz[v] / 44100) < 1e-4 for v in range(38)))
+    check('PCH shifts a semitone for each twelfth root of two of length', all(abs(lib.amiga_shift(round(100 * 2 ** (k / 12))) - 1280 * k) <= 130 for k in range(13))
+          and lib.amiga_shift(200) == 15360 and lib.amiga_shift(2100) == 15360 and lib.amiga_shift(100) == 0 and lib.amiga_shift(50) == -15360
+          and lib.amiga_shift(0) == 0 and abs(lib.amiga_shift(71) + 7680) <= 200, str([lib.amiga_shift(x) for x in (100, 141, 200, 71, 50)]))
     for length in (200, 44100, 65536, 10_000_000, 44_860_416):
         worst = max(abs(lib.amiga_strt(at, length) * length / 32768 - at) for at in range(0, length - length // 100, max(1, length // 997)))
         check(f'STRT for a frame lands within the knob\'s step ({length} frames)', worst <= length / 32768 * 2 + 1, f'{worst:.0f}')

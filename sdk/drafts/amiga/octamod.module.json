@@ -16,39 +16,39 @@
     "label": "8-bit sampler",
     "family": "Sample track machine",
     "summary": "Plays a Flex sample like an 8-bit tracker: gritty, held samples and a cyclic stretch that pulls pitch and time apart.",
-    "overview": "Amiga is a track machine modelled on how a home computer's 8-bit sound chip and its tracker software played samples. It plays the track's Flex sample through the stock reader, reduces its word length and storage rate before the Octatrack repitches it, and can restart the sample every few milliseconds a little further on, so PTCH changes the pitch and SPD the speed. The track's filter, AMP, LFOs and effects follow as for any sample.",
+    "overview": "Amiga is a track machine modelled on how a home computer's 8-bit sound chip and its tracker software played samples. It plays the track's Flex sample through the stock reader, reduces its word length and storage rate before the Octatrack repitches it, and can restart the sample every few milliseconds a little further on, so PTCH changes the pitch and STCH the length. The track's filter, AMP, LFOs and effects follow as for any sample.",
     "highlights": [
-      "SPD and GRN stretch the sample in cycles, faded into each other: freeze it, halve its speed or double it, at any pitch.",
-      "BITS from 4 to 16, 8 by default, and SRR lowers the stored sample rate down to about a ninth.",
-      "LED switches a fixed lowpass on the stored sample.",
-      "SPD, GRN and SRR take parameter locks, LFOs and scenes like any SRC knob."
+      "STCH sets the length in percent and CYL the cycle in samples: stretch to 200, shrink to 50 or hold the sound, at any pitch.",
+      "STR can turn the stretch into a pitch shift of up to an octave either way.",
+      "RATE stores the sample at a tracker's note rates from 4143 to 31388 Hz, BITS at 4 to 16 bits (8 by default), LED adds a fixed lowpass.",
+      "STCH, CYL and RATE take parameter locks, LFOs and scenes like any SRC knob."
     ],
     "usage": [
       "Double-tap a track key, choose AMIGA in the machine list and press YES, then pick a Flex sample.",
-      "On SRC, turn PTCH: the pitch moves and the length stays. Turn SPD (knob D) for the speed and GRN (knob E) for the flutter.",
-      "Turn SRR (knob F) up for a lower sample rate. LED, STR and BITS are on SRC SETUP."
+      "On SRC, turn PTCH: the pitch moves and the length stays. Turn STCH (knob D) for the length and CYL (knob E) for the flutter.",
+      "Turn RATE (knob F) down for a lower sample rate. LED, STR and BITS are on SRC SETUP."
     ]
   },
   "controls": [
     {
-      "name": "SPD",
-      "default": 64,
+      "name": "STCH",
+      "default": 32,
       "count": 128,
-      "doc": "Stretch speed: 0 holds the sample, 64 is its own speed, 127 about twice. SRC knob D.",
+      "doc": "The note's length in percent of its own, 50 to 2100, then HOLD; 100 by default. SRC knob D.",
       "labels": null
     },
     {
-      "name": "GRN",
-      "default": 64,
+      "name": "CYL",
+      "default": 60,
       "count": 128,
-      "doc": "Cycle length of the stretch, from about 2 ms to 94 ms. SRC knob E.",
+      "doc": "Cycle length of the stretch in samples, 100 to 4132; 1000 by default. SRC knob E.",
       "labels": null
     },
     {
-      "name": "SRR",
-      "default": 0,
-      "count": 128,
-      "doc": "Storage rate: 0 keeps every sample, 127 stores about one in nine. SRC knob F.",
+      "name": "RATE",
+      "default": 36,
+      "count": 37,
+      "doc": "Storage rate in Hz on 36 tracker note rates from 4143 to 31388, then FULL, the default. SRC knob F.",
       "labels": null
     },
     {
@@ -64,11 +64,12 @@
     {
       "name": "STR",
       "default": 1,
-      "count": 2,
-      "doc": "The stretch. OFF plays the sample as FLEX does: pitch changes its length. SRC SETUP knob E.",
+      "count": 3,
+      "doc": "The stretch: OFF plays as FLEX, ON stretches, PCH shifts the pitch by STCH at the note's own length. SRC SETUP knob E.",
       "labels": [
         "OFF",
-        "ON"
+        "ON",
+        "PCH"
       ]
     },
     {
@@ -85,11 +86,11 @@
     "conflicts": [],
     "uiClaims": [],
     "limitations": [
-      "Draft: the engine passes its host gate; the machine has not run in the emulator or on a unit.",
-      "RATE, RTRG and RTIM are not available on an Amiga track, so no reverse play: SPD, GRN and SRR take their knobs.",
+      "Draft: an earlier build of the stretch played on the owner's MKII; the reworked controls (STCH, CYL, RATE, PCH) have not run on a unit.",
+      "Stock's RATE, RTRG and RTIM are not available on an Amiga track, so no reverse play: STCH, CYL and RATE take their knobs.",
       "Stock's own time-stretch (TSTR) is off on an Amiga track.",
       "A sliced track (SLIC on) is not stretched.",
-      "A project opened without the module plays Amiga tracks as FLEX and reads SPD, GRN and SRR as RATE, RTRG and RTIM.",
+      "A project opened without the module plays Amiga tracks as FLEX and reads STCH, CYL and RATE as stock's RATE, RTRG and RTIM.",
       "Leaving Amiga for another machine puts the track's SRC settings back to FLEX defaults."
     ],
     "effectId": null
@@ -136,8 +137,8 @@
     "location": "The track's machine list (double-tap TRACK, or SRC SETUP)",
     "steps": [
       "Double-tap a track key, choose AMIGA in the machine list and press YES, then pick a Flex sample.",
-      "On SRC, turn PTCH: the pitch moves and the length stays. Turn SPD (knob D) for the speed and GRN (knob E) for the flutter.",
-      "Turn SRR (knob F) up for a lower sample rate. LED, STR and BITS are on SRC SETUP."
+      "On SRC, turn PTCH: the pitch moves and the length stays. Turn STCH (knob D) for the length and CYL (knob E) for the flutter.",
+      "Turn RATE (knob F) down for a lower sample rate. LED, STR and BITS are on SRC SETUP."
     ],
     "screenshots": []
   }

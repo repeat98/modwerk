@@ -4,7 +4,7 @@ Version 0.1.0-experimental · by Jannik Aßfalg (@repeat98) · a draft: the engi
 
 ## Overview
 
-Amiga is a track machine modelled on how a home computer's 8-bit sound chip and its tracker software played samples. It plays the track's Flex sample, reduces its word length and its storage rate before the Octatrack repitches it, and stretches it in cycles, as the samplers of that time did: every few milliseconds the sample restarts a little further on, faded into what is already sounding. PTCH then changes the pitch and SPD the speed, each without the other, with that metallic flutter.
+Amiga is a track machine modelled on how a home computer's 8-bit sound chip and its tracker software played samples. It plays the track's Flex sample, reduces its word length and its storage rate before the Octatrack repitches it, and stretches it in cycles, as the samplers of that time did: every few milliseconds the sample restarts a little further on, faded into what is already sounding. PTCH then changes the pitch and STCH the length, each without the other, with that metallic flutter.
 
 The track's filter, AMP, LFOs and effects follow as for any sample.
 
@@ -12,48 +12,48 @@ The track's filter, AMP, LFOs and effects follow as for any sample.
 
 On the SRC page. PTCH, STRT and LEN (knobs A–C) are stock FLEX's.
 
-| Knob | Control | Range | Default | What it does |
+| Knob | Control | Shows | Default | What it does |
 | --- | --- | --- | --- | --- |
-| D | SPD | 0–127 | 64 | Stretch speed. 0 holds the sample where it is, 32 is half speed, 64 its own speed, 127 about twice. |
-| E | GRN | 0–127 | 64 | Cycle length, from about 2 ms (a buzz) through 25 ms at 64 to 94 ms (a stutter). |
-| F | SRR | 0–127 | 0 | Storage rate. 0 keeps every sample; 16 stores every second one, 127 about one in nine (near 5 kHz for a 44.1 kHz sample). Each stored sample is the average of those it replaces, then held. |
+| D | STCH | 50–2100, HOLD | 100 | The note's length in percent of its own: 200 is twice as long, 50 half. HOLD keeps the sound where it is. Steps of about 2 below 100, 5 up to 255, 10 up to 570, 50 above. |
+| E | CYL | 100–4132 | 1000 | Cycle length in samples: about 2 ms (a buzz) through 23 ms at 1000 to 94 ms (a stutter). |
+| F | RATE | 4143–31388, FULL | FULL | Storage rate in Hz for a 44.1 kHz sample, on the 36 note rates of a tracker's three octaves. Each stored sample is the average of those it replaces, then held. It moves one step every few detents. |
 
 On SRC SETUP. LOOP, SLIC and LEN (knobs A–C) are stock FLEX's.
 
-| Knob | Control | Range | Default | What it does |
+| Knob | Control | Shows | Default | What it does |
 | --- | --- | --- | --- | --- |
 | D | LED | OFF, ON | OFF | A fixed lowpass (two poles, about 3.3 kHz at PTCH 0) on the stored sample. It moves with PTCH. |
-| E | STR | OFF, ON | ON | The stretch. OFF plays as FLEX does: pitch changes the length, and SPD and GRN do nothing. |
+| E | STR | OFF, ON, PCH | ON | The stretch. OFF plays as FLEX does: pitch changes the length, and STCH and CYL do nothing. PCH turns it into a pitch shift: the length stays and STCH moves the pitch instead, 200 an octave up, 50 an octave down, no further, and never past PTCH's own range. |
 | F | BITS | 4–16 | 8 | Word length. 16 leaves the sample untouched. It moves one step every few detents. |
 
-SPD, GRN and SRR take parameter locks, LFOs and scenes. A turn of SRR is heard at once; SPD and GRN act from the next cycle.
+STCH, CYL and RATE take parameter locks, LFOs and scenes. A turn of RATE is heard at once; STCH and CYL act from the next cycle.
 
-With STR on, SPD 64 and PTCH 0 nothing is restarted. With SRR 0, BITS 16 and LED off as well, the track plays exactly as FLEX.
+With STR on, STCH 100 and PTCH 0 nothing is restarted. With RATE FULL, BITS 16 and LED off as well, the track plays exactly as FLEX.
 
 ## Usage
 
 1. Double-tap a track key (or open SRC SETUP), move to AMIGA in the machine list and press YES.
 2. Pick a sample from the Flex pool, as for a Flex track.
-3. Open SRC: knob D is SPD, E is GRN, F is SRR.
+3. Open SRC: knob D is STCH, E is CYL, F is RATE.
 
 ## Quick tutorial
 
 1. Put a drum loop on an Amiga track and play it. At the defaults it is the loop at 8 bits.
-2. Turn PTCH up a few semitones: the loop keeps its length and starts to flutter. Turn GRN for the size of the flutter.
-3. Turn SPD down to 32 for half speed at the same pitch, or to 0 to hold the sound where it is.
-4. Put an LFO on SPD or GRN.
-5. Turn SRR up to about 30 for a grainy, folded top end.
+2. Turn PTCH up a few semitones: the loop keeps its length and starts to flutter. Turn CYL for the size of the flutter.
+3. Turn STCH up to 200 for half speed at the same pitch, or all the way to HOLD to keep the sound where it is.
+4. Put an LFO on STCH or CYL.
+5. Turn RATE down to about 10000 for a grainy, folded top end.
 
 ## Compatibility and limitations
 
-- No RATE, RTRG or RTIM on an Amiga track, so no reverse play: SPD, GRN and SRR take their knobs.
+- No stock RATE, RTRG or RTIM on an Amiga track, so no reverse play: STCH, CYL and RATE take their knobs.
 - Stock's own time-stretch (TSTR) is off on an Amiga track.
 - The SRC page's title reads A500: the title holds four letters.
-- A sliced track (SLIC on) is not stretched; SRR, BITS and LED still work.
+- A sliced track (SLIC on) is not stretched; RATE, BITS and LED still work.
 - The cycle length is in milliseconds, not tied to the tempo.
 - The fade between cycles works when the next cycle starts behind the playing one: slowing down, or pitching up at the same speed. Speeding up past the pitch, long cycles at high pitch, and a loop's wrap restart with a short fade-out of the step instead.
-- A stretched note that is not looped ends when SPD has carried it to the end of the sample, even if LEN would stop a FLEX note sooner by time.
-- A project opened without the module plays Amiga tracks as FLEX and reads SPD, GRN and SRR as RATE, RTRG and RTIM. Set them to 127, 0 and 64 before you go back to the stock OS.
+- A stretched note that is not looped ends when STCH has carried it to the end of the sample, even if LEN would stop a FLEX note sooner by time.
+- A project opened without the module plays Amiga tracks as FLEX and reads STCH, CYL and RATE as stock's RATE, RTRG and RTIM. Leave the tracks for FLEX before you go back to the stock OS.
 - Leaving Amiga for another machine puts the track's SRC settings back to FLEX defaults.
 - It needs a base with `ot_machine_starts` (the START dispatch) and patches no stock code. It takes no key gesture and no stock screen.
 
