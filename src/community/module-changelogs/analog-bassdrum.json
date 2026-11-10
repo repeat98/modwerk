@@ -3,9 +3,9 @@
     "version": "0.1.7-experimental",
     "date": "2026-11-10",
     "changes": [
-      "909: refitted to Skee Mask's recorded TR-909. The body follows the recorded cycle, the click comes just after the body opens, the attack noise is louder and longer, and each hit's pitch sweep varies slightly (FIXD ON keeps every hit the same).",
+      "909: refitted to Skee Mask's recorded TR-909: body from the recorded cycle, click just after the body opens, louder and longer attack noise, slight per-hit sweep variation (FIXD ON: none).",
       "909 PITCH and DECAY have new ranges: PITCH spans one octave (64 is the recorded 909) and DECAY 15 ms to 600 ms (80 is the recording). Saved 909 kicks sound different: set PITCH and DECAY again.",
-      "The 909 needs about half the DSP work it did and the 808 about three quarters. Each Analog BD track still reserves the same DSP room until a later update measures the new engine, so DSP FULL appears where it did.",
+      "The 909 needs about half the DSP work and the 808 about three quarters. Each track still reserves the same DSP room until the new engine is measured, so DSP FULL appears where it did.",
       "LOW and HIGH now weight their bands instead of saturating them; SAT still drives the desk. At LOW and HIGH 64 the 808 sounds as before.",
       "Not yet tested on a unit."
     ]
