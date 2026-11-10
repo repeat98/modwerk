@@ -78,9 +78,7 @@ def die(msg):
 
 
 def layout():
-    # X:$2840 itself stays unused: on a Modwerk USB base core 1's load meter counts its wait for core 0 there every pass
-    # (sdk/machines/octatrack/elekloader/dsp_receiver.asm, c1wait), which turned PITCH 0's 909 step into that count.
-    lay = dsp909.default_layout(TABLES + 1)
+    lay = dsp909.default_layout(TABLES)
     end = max(a + n for a, n in ((lay[k], len(v)) for k, v in
                                   list(dsp909.tables()[0].items()) + list(dsp909.tables()[2].items())))
     vbase = (end + 0x3F) & ~0x3F
@@ -110,8 +108,8 @@ def x_image(lay, vbase):
             words[lay[name] - TABLES + i] = dsp909.q24(v)
     for k in range(4):
         b = vbase - TABLES + k * VOICE_STRIDE
-        words[b + dsp909.OFF["BC"]] = 0x7FFFFF
-        words[b + dsp909.OFF["PP"]] = dsp909.addresses(lay)["CEND"]
+        words[b + dsp909.OFF["C"]] = 0x7FFFFF
+        words[b + dsp909.OFF["KLPF"]] = 0x7FFFFF
         words[b + dsp909.OFF["LCG"]] = dsp909.SEED
     for k in range(4):
         words[VOICES808 - TABLES + k * VOICE_STRIDE + 0x16] = 0x7fffff

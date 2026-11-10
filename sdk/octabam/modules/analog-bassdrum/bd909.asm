@@ -139,7 +139,7 @@ zq09:
         move    a1,n1
         move    #>@T_LPF@,r1
         move    x:(r1+n1),x0
-        move    x0,x:(r5+@KLPF@)
+        move    x0,x:(r5+@KLP@)
  ; The cycle's shape above its fundamental follows the sweep and the VCA.
         move    x:(r5+@EP@),x0
         move    #>@KLE@,y0
@@ -417,7 +417,7 @@ zq0h:
         add     x0,b
         move    b,x:(r5)+                       ;@ ENV
         move    b,x0
-        mac     x0,y1,a         x:(r5)+,y0      ;@ KLPF
+        mac     x0,y1,a         x:(r5)+,y0      ;@ KLP
 ; (8) the output network: yl += klpf*(y - yl); klpf $7fffff passes y
         move    x:(r5),x0                       ;@ YL
         tfr     x0,a            a,x1            ; x1 = y, limited: the one clip point

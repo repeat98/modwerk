@@ -38,7 +38,7 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/CPU.md",
       "sourceSha256": "b20288ccf080f0f3409479b228dea7ca4f3b3e40a7a0727a285df6cbcd637385",
-      "vendoredSha256": "9d4b92a1eb095152a58dfc66b4e02429f45b2be729b4cd42234a5b4566c06bf9",
+      "vendoredSha256": "cff1003baa434e5eb7bbd0e17260c78e9c64b7d42c3def69fdfed3eb8d1412f1",
       "localUpdates": [
         {
           "moduleVersion": "0.1.3-experimental",
@@ -91,7 +91,7 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/README.md",
       "sourceSha256": "4876d9613e5e65de0aefeef7ddd60ef6d0d5642c61b1fde60b97fc0f72255f68",
-      "vendoredSha256": "633b1ce73404df85ab177ffe062d71dd42cc7552958e562aae6f6798166650a5",
+      "vendoredSha256": "9092969c1bcc041d6a30e0d80504a52b91ade507268b768f62f0c4c29257989a",
       "importedVendoredSha256": "57743ee073204e2a1b51ed7abad7ddf44eae95faddc90d397ca707d30a2bdfed",
       "adaptation": " Octamod 0.1.1 version and native verification evidence appended; imported fingerprint retained.",
       "localDocumentationUpdate": {
@@ -210,7 +210,7 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/bd909.asm",
       "sourceSha256": "db1b2871957bb89bfd4184fc7556e5e46c44f3be1a889ba11fc1a679c4b1841e",
-      "vendoredSha256": "396eef7d53c2907c63bcc059e55435b968294bedd77d4199f0d269d82a78e424",
+      "vendoredSha256": "885dd37bcb4c129da196f7e0941ef48490e8307c8aa2e3e0046062152b3871a7",
       "localUpdates": [
         {
           "moduleVersion": "0.1.3-experimental",
@@ -295,7 +295,7 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/dsp909.py",
       "sourceSha256": "c45ef4357cd66369181523784de0f5b328b8b18a58f3c19c60983d1173dd3195",
-      "vendoredSha256": "2979a031ed7459496ce92464707b936942aa5a0670957155c8a6ecdbfbd9441c",
+      "vendoredSha256": "5082cda7778b7baee4ad66d9ab1dc183d0651291dbba1eecd7b734243830156f",
       "localUpdates": [
         {
           "moduleVersion": "0.1.3-experimental",

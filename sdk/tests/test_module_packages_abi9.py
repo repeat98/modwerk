@@ -49,7 +49,7 @@ class PublishedAbi9(unittest.TestCase):
     def test_an_abi_10_engine_reads_with_its_entries_and_its_words_are_scanned(self):
         """A base-bound controller's engine (hook_engines.py): its entry count in the manifest, and its words and
         initial words both in the stock-free scan."""
-        published = (ROOT / 'public/octatrack-modules/analog-bassdrum/0.1.6-experimental.mwrm').read_bytes()
+        published = (ROOT / 'public/octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm').read_bytes()
         capabilities, dsp_words = entry.engines(builder.capabilities, builder.dsp_words)  # the host entry point's
         self.assertEqual({k: capabilities(published)[k] for k in ('abi', 'requires', 'claims', 'entries')},
                          dict(abi=10, requires=0, claims=1, entries=1))

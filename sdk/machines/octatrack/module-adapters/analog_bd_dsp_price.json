@@ -76,12 +76,12 @@
  ],
  "sourcePins": {
   "sdk/octabam/modules/analog-bassdrum/ab_glue.asm": "223822a05b1133c4fcaff146bf8734f271570812d04db0fedced215e633720cc",
-  "sdk/octabam/modules/analog-bassdrum/bd909.asm": "396eef7d53c2907c63bcc059e55435b968294bedd77d4199f0d269d82a78e424",
+  "sdk/octabam/modules/analog-bassdrum/bd909.asm": "885dd37bcb4c129da196f7e0941ef48490e8307c8aa2e3e0046062152b3871a7",
   "sdk/octabam/modules/analog-bassdrum/bd808.asm": "08a47b594138a3aa96bb8ff2859a088304289777c2d9f9b036bf61d6e9460275",
-  "sdk/octabam/modules/analog-bassdrum/dsp909.py": "2979a031ed7459496ce92464707b936942aa5a0670957155c8a6ecdbfbd9441c",
+  "sdk/octabam/modules/analog-bassdrum/dsp909.py": "5082cda7778b7baee4ad66d9ab1dc183d0651291dbba1eecd7b734243830156f",
   "sdk/octabam/modules/analog-bassdrum/dsp808.py": "56b7dd65cf3cc2991214bd4f51c1350bbbf5ed816a9536791f3eb4d59a51cd6d",
   "sdk/octabam/modules/analog-bassdrum/fit909.json": "fc3b9b92fdab1b606a4b800a75907e199b6b94ef0cea02e8cc4de13112e21284",
-  "sdk/octabam/tools/build/ab_image.py": "c824fbf8c4812aa1adaab148457a94abfaeef5463aedd51673acaf7a094ffeb1",
+  "sdk/octabam/tools/build/ab_image.py": "c4573d4e0715961f7081dc1d5a0639d42ac63313ccc9e50a0737ac0685e2fc14",
   "sdk/octabam/tools/build/ab_records.py": "71f44c4c54b281b5c813ffbab3abb98501620ad980582367004a1daeb2eeca45",
   "sdk/octabam/modules/analog-bassdrum/evidence/909-reference-costs.json": "292991dce859c0cbff2527d1946d2b911e84d70707faea5b5ef6e119524c57a3"
  },

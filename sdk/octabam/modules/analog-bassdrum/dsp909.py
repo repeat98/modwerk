@@ -83,6 +83,9 @@ OFF = {name: k for k, name in enumerate(WALK)}
 _free = list(range(len(WALK), KNOBS_AT)) + [61, 62, 63]
 assert len(EXTRA) <= len(_free), 'the voice block is full'
 OFF.update(zip(EXTRA, _free))
+# tools/build/ab_image.py's initial voice words, by the names it writes: C ($7fffff) is the block count, so a voice
+# starts long past its last hit; KLPF ($7fffff) is the click table's position, which zq04 clamps to the silent rows.
+OFF.update(C=OFF['BC'], KLPF=OFF['PP'])
 SWORDS = KNOBS_AT
 
 
@@ -519,8 +522,11 @@ def data_lines(layout):
 
 
 def default_layout(base=0x1000):
+    # The first word stays unused: on a Modwerk USB base core 1's load meter counts its wait for core 0 at X:$2840
+    # (tools/build/ab_image.py's TABLES; sdk/machines/octatrack/elekloader/dsp_loader.py CORE1_METER), which turned
+    # PITCH 0's 909 step into that count.
     tab, _, lists, _ = tables()
-    lay, a = {}, base
+    lay, a = {}, base + 1
     for name, vals in list(tab.items()) + list(lists.items()):
         lay[name] = a
         a += len(vals)
