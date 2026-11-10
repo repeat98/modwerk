@@ -26,5 +26,6 @@
   "features": 130,
   "sites": 0,
   "copies": 9,
-  "fills": 0
+  "fills": 0,
+  "base": true
 }

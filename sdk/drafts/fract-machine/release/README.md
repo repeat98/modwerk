@@ -3,7 +3,8 @@
 This unlisted USB-only candidate consumes the merged source-runtime adapter
 (PR1274). No base firmware, active catalogue row or shared SDK code changes.
 `catalog-entry.json` and `package-entry.json` are prospective release rows.
-The package row declares `requiredBase: 72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6`; its bytes/hash match
+The package row sets `base: true` so `--base-only` rebuilds it, and declares
+`requiredBase: 72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6`; its bytes/hash match
 `candidate-proof.json`. The site must admit that base before installation.
 
 The recipe pins only `mw_stock_pool_open` and the fixed run origin. Identity,

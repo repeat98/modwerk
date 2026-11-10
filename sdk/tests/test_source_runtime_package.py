@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -74,6 +75,7 @@ class SourceRecipe(unittest.TestCase):
         row = json.loads((MODULE / 'release/package-entry.json').read_text())
         proof = json.loads((MODULE / 'release/candidate-proof.json').read_text())
         manifest = json.loads((MODULE / 'octamod.module.json').read_text())
+        self.assertIs(row['base'], True)
         self.assertEqual(row['requiredBase'], proof['baseIdentity'])
         self.assertEqual(row['sha256'], proof['sha256'])
         self.assertEqual(row['bytes'], proof['bytes'])
@@ -135,6 +137,26 @@ class FollowingBase(unittest.TestCase):
             self.assertEqual(first['baseImports'], second['baseImports'])
             self.assertNotIn(bytes.fromhex(first['baseIdentity']), after)
             self.assertNotIn(bytes.fromhex(second['baseIdentity']), after)
+            # Exercise the real base-refresh command on prospective promoted
+            # rows, entirely inside this fixture. No existing public package is
+            # supplied: without base:true the base-only skip would fail.
+            promoted = root / 'sdk/octabam/modules/fract-machine'
+            shutil.copytree(root / 'sdk/drafts/fract-machine', promoted)
+            for name in ('octatrack-module-packages.py', 'runtime_private_paths.py'):
+                shutil.copyfile(ROOT / 'scripts' / name, root / 'scripts' / name)
+            row = json.loads((promoted / 'release/package-entry.json').read_text())
+            manifest = root / 'src/engine/assets/octatrack-module-packages.json'
+            manifest.write_text(json.dumps({'packages': [row]}))
+            (root / 'src/engine/assets/dsp-packages.json').write_text('{"packages": []}')
+            (root / 'sdk/catalog.json').write_text(json.dumps({
+                'modules': [{'id': row['id'], 'version': row['version']}]}))
+            command = [sys.executable, '-B', str(root / 'scripts/octatrack-module-packages.py'), '--base-only']
+            subprocess.run(command, cwd=root, check=True, capture_output=True)
+            refreshed = json.loads(manifest.read_text())['packages'][0]
+            self.assertEqual(refreshed['requiredBase'], second['baseIdentity'])
+            self.assertEqual(refreshed['sha256'], second['sha256'])
+            self.assertEqual((root / 'public' / refreshed['path']).read_bytes(), after)
+            subprocess.run([*command, '--check'], cwd=root, check=True, capture_output=True)
             del base['symbols']['mw_stock_pool_open']
             base_file.write_text(json.dumps(base))
             with self.assertRaisesRegex(ValueError, 'inside its runtime'):
