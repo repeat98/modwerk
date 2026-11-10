@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-10",
+    "changes": [
+      "First release for Digitakt I OS 1.54: a live looper on one track (the LOOP&FADE machine) and a crossfader between two groups of tracks and inputs, as one module.",
+      "CAPT and ONCE catch the loop playing now with FILL or UP; PICK keeps it playing through pattern changes with no trigs, and PTCH or WARP follow the tempo.",
+      "The crossfader sits on LEVEL on the Internal Mixer and on the tracks you choose, and on a CC on FX CONTROL CH. Settings are on SETTINGS > CROSSFADER.",
+      "Based on sumedho's RAM Machines, with its own single LOOP&FADE machine; it cannot be combined with RAM Machines or Digi Health.",
+      "Known issues: the loop is lost at power-off; a small click ends each take; changing PLAY mode mid-play restarts the loop; an open Overbridge instance slows the unit."
+    ]
+  }
+]

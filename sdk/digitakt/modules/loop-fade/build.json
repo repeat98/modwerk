@@ -1,0 +1,213 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/loop.c",
+    "src/loop.s",
+    "src/xfade_glue.s",
+    "src/xfade.c",
+    "src/xfade_store.c"
+  ],
+  "defsym": {},
+  "cflags": [
+    "-DDT_LINKABLE=1",
+    "-std=c99",
+    "-Os",
+    "-msoft-float",
+    "-fno-common",
+    "-fno-asynchronous-unwind-tables",
+    "-Wextra",
+    "-Werror"
+  ],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_tick",
+      "fn": "ram_tick",
+      "order": 30
+    },
+    {
+      "event": "ev_key",
+      "fn": "ram_key",
+      "order": 10
+    },
+    {
+      "event": "ev_render_voices",
+      "fn": "ram_gate",
+      "order": 80
+    },
+    {
+      "event": "ev_draw",
+      "fn": "ram_draw",
+      "order": 85
+    },
+    {
+      "event": "ev_enc",
+      "fn": "ram_enc",
+      "order": 70
+    },
+    {
+      "event": "ev_settings",
+      "fn": "cxf_settings",
+      "order": 60
+    },
+    {
+      "event": "ev_draw",
+      "fn": "cxf_draw",
+      "order": 60
+    },
+    {
+      "event": "ev_tick",
+      "fn": "cxf_uitick",
+      "order": 60
+    },
+    {
+      "event": "ev_key",
+      "fn": "cxf_key",
+      "order": 60
+    },
+    {
+      "event": "ev_enc",
+      "fn": "cxf_enc",
+      "order": 60
+    }
+  ],
+  "contribute": [
+    {
+      "to": "core_machines",
+      "order": 50,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:ram_play_machine",
+          0
+        ]
+      ]
+    }
+  ],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "sample:private:131",
+    "ui:SRC:LOOP&FADE waveform override",
+    "machine:122",
+    "settings:CROSSFADER",
+    "ui:Internal Mixer:LEVEL"
+  ],
+  "requires": [
+    "machine-pages"
+  ],
+  "derive": null,
+  "releases": {
+    "1.54": {
+      "defsym": {
+        "DT_OS154": 1
+      },
+      "cflags": [
+        "-DDT_OS154=1"
+      ],
+      "sites": [
+        {
+          "addr": "0x40184be4",
+          "op": "ptr",
+          "target": "ram_src_draw",
+          "len": 4,
+          "stockSha256": "7e54079f260eda74a8c97c0c99a6f6c92a80a5d69d4f1d8782a3ea8866407833"
+        },
+        {
+          "addr": "0x40077f8e",
+          "op": "jsr",
+          "target": "ram_audio",
+          "len": 6,
+          "stockSha256": "0c96a362d7ed186efff320fa0e511fec27bca812eaeacb302cb8135234e40c22"
+        },
+        {
+          "addr": "0x400782cc",
+          "op": "jsr",
+          "target": "ram_capture",
+          "len": 6,
+          "stockSha256": "4e8160db8e8362bbffb40afea26dbe1eca4973e9721160642e75f39887f2f233"
+        },
+        {
+          "addr": "0x4007814a",
+          "op": "jsr",
+          "target": "ram_mix",
+          "len": 6,
+          "stockSha256": "df1b3bb51fe6696251fe98dbd089906b898d4e209f28a28aa3aaf804edd6b235"
+        },
+        {
+          "addr": "0x400751ea",
+          "op": "jsr",
+          "target": "ram_lookup",
+          "len": 6,
+          "stockSha256": "05e2da2d63224933dca6b6ef35c31fdab1ca9e63a3beea07aacf6d431863b94e"
+        },
+        {
+          "addr": "0x40075934",
+          "op": "jsr",
+          "target": "ram_lookup",
+          "len": 6,
+          "stockSha256": "05e2da2d63224933dca6b6ef35c31fdab1ca9e63a3beea07aacf6d431863b94e"
+        },
+        {
+          "addr": "0x400225ca",
+          "op": "jmp",
+          "target": "ram_set",
+          "len": 8,
+          "stockSha256": "1a241bd7b3090391ae8bfc0352ae22425a70817ccd477fa5d7aba231b95b8bc9"
+        },
+        {
+          "addr": "0x40084c00",
+          "op": "jmp",
+          "target": "ram_new",
+          "len": 8,
+          "stockSha256": "a04973fb79ed0896aa768e97902a85f61a10ad9d106955b3fe7a112c76d0e51f"
+        },
+        {
+          "addr": "0x4001ac20",
+          "op": "jmp",
+          "target": "ram_load",
+          "len": 8,
+          "stockSha256": "757fbde3cb1eb7e84e6e8585255783de8dc9f5b00b7c66a8e337c1b8709417a9"
+        },
+        {
+          "addr": "0x4007211c",
+          "op": "jsr",
+          "target": "ram_comp",
+          "len": 6,
+          "stockSha256": "e7e3022192d56ac17b81ed09077c47e423304f66a3ff8866f339e3f8e158ef2a"
+        },
+        {
+          "addr": "0x40030930",
+          "len": 6,
+          "stockSha256": "e84f69da3752f168fb13858328ab536865283d736440546f4342eef7bf447df4",
+          "op": "jsr",
+          "target": "cxf_titlehook"
+        },
+        {
+          "addr": "0x400d4cec",
+          "len": 6,
+          "stockSha256": "122f9ea763ec1094a64dcf753a7b1b4a3bf87de4491f8cc0b6700a4d2b5e3e83",
+          "op": "jsr",
+          "target": "cxf_cchook"
+        },
+        {
+          "addr": "0x40071d86",
+          "len": 6,
+          "stockSha256": "66b0f0098720f74dbe53e27cae7abf5bae08e27ebc7ba86d4691c8be4d3887d6",
+          "op": "jsr",
+          "target": "cxf_mixhook"
+        },
+        {
+          "addr": "0x400c9ce4",
+          "len": 6,
+          "stockSha256": "b61f0b51edb18e2f814611848bb0f9c01922a7ff3cd7840cbe1ed79299284d8c",
+          "op": "jsr",
+          "target": "cxf_showhook"
+        }
+      ]
+    }
+  }
+}
