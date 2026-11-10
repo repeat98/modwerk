@@ -21,6 +21,40 @@
     "load": "done",
     "mods": "open"
   },
+  "sdk": {
+    "platform": "zdl",
+    "modules": "sdk/zoom/modules",
+    "catalog": null,
+    "guide": "sdk/machines/zoom-ms-70cdr/README.md",
+    "core": null,
+    "toolchain": "TI's C6000 compiler 8.5.0.LTS and ZoomMultistompZDL's linker with Leemuzhko's runtime (own_runtime), so a built effect carries no code from Zoom's effects.",
+    "budgets": [
+      {
+        "name": "Patch DSP",
+        "unit": "percent",
+        "value": 225,
+        "note": "The DSP cost the pedal adds up per patch: Zoom's 2.10 refuses an effect between 224.4 and 228.4 (measured); MIDISTOMP 2.0 raises the limit to 300."
+      },
+      {
+        "name": "Effect slots",
+        "unit": "slots",
+        "value": 6,
+        "note": "Effects in one patch."
+      },
+      {
+        "name": "Effect file",
+        "unit": "bytes",
+        "value": 32126,
+        "note": "The largest effect file proven to load on the MS-70CDR 2.10."
+      },
+      {
+        "name": "Code and constants",
+        "unit": "bytes",
+        "value": 30032,
+        "note": "An effect's .text and .const together: the measured load boundary (Leemuzhko's findings)."
+      }
+    ]
+  },
   "research": [
     {
       "label": "ZoomMultistompZDL",
