@@ -1,1 +1,1 @@
-The module doctor now treats a package marked `usbOnly` like a C runtime module: no card packages, native comparison or card pairs are asked of it, as the card build and the native comparison test already did.
+The module doctor and two tests now treat a package marked `usbOnly` like a C runtime module, as the card build already did: the doctor asks no card packages, native comparison or card pairs of it, the USB-only test expects it to be USB-only, and the release-scope test leaves it out of the card scope.
