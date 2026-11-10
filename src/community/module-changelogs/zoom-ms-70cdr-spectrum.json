@@ -1,0 +1,10 @@
+[
+  {
+    "version": "0.2.0",
+    "date": "2026-11-10",
+    "changes": [
+      "First Modwerk release for the MS-70CDR: Manro's Spectrum, built with no code from Zoom's effects. A live spectrum analyzer on the pedal screen, 40 Hz to 16 kHz, with peak hold.",
+      "Add it to your set and sync it from the pedal page over USB, or install the file with Zoom Effect Manager."
+    ]
+  }
+]

@@ -541,6 +541,23 @@
       "module": "31282ae5",
       "bytes": 2852,
       "sha256": "0b54a734258945acbf74551b8920ee4bfa760d390964bd04d2877e4382e990b9"
+    },
+    {
+      "id": "track-solo",
+      "octabam": true,
+      "unitName": "Track Solo",
+      "version": "0.2.4-experimental",
+      "path": "octatrack-modules/track-solo/0.2.4-experimental.mwrm",
+      "abi": 8,
+      "features": 129,
+      "sites": 7,
+      "copies": 0,
+      "fills": 0,
+      "name": "Track Solo",
+      "module": "f92f5dae",
+      "bytes": 2156,
+      "sha256": "50f64eb63cfe62b534988bda28baa4c575eb9d9a6dbc7a81035e7d95cd01cf89",
+      "usbOnly": true
     }
   ]
 }

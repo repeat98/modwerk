@@ -24,7 +24,22 @@ describe('elemod SDK scaffold', () => {
       }
       const refused = spawnSync(process.execPath, ['scripts/scaffold-module.mjs', 'proof-x', '--machine', 'syntakt', '--author', 'example-author', '--output', output], { encoding: 'utf8' })
       expect(refused.status).not.toBe(0)
-      expect(refused.stderr).toContain('no elemod SDK yet')
+      expect(refused.stderr).toContain('no module SDK yet')
+    } finally { rmSync(output, { recursive: true, force: true }) }
+  })
+
+  it('creates a Zoom effect (zdl) with its 8.3 file, an MIT licence and no source or build here', () => {
+    const output = mkdtempSync(resolve(tmpdir(), 'modwerk-scaffold-test.'))
+    try {
+      execFileSync(process.execPath, ['scripts/scaffold-module.mjs', 'tape-shimmer-delay', '--machine', 'zoom-ms-70cdr', '--author', 'example-author', '--output', output])
+      const folder = resolve(output, 'tape-shimmer-delay')
+      const document = parseModwerkModule(JSON.parse(readFileSync(resolve(folder, 'modwerk.module.json'), 'utf8')), MACHINES as MachineProfile[])
+      expect(document).toMatchObject({ machine: 'zoom-ms-70cdr', category: 'effects', platform: { kind: 'zdl', file: 'TapeShim.ZDL', pedals: [{ machine: 'zoom-ms-70cdr', status: 'untested' }] } })
+      expect(() => requireModwerkPublication(document)).toThrow()
+      for (const file of ['README.md', 'TESTING.md', 'LICENSE', 'media/thumbnail.svg']) expect(existsSync(resolve(folder, file))).toBe(true)
+      for (const file of ['build.json', 'src']) expect(existsSync(resolve(folder, file))).toBe(false)
+      expect(readFileSync(resolve(folder, 'LICENSE'), 'utf8')).toMatch(/MIT License\n\nCopyright \(c\) \d{4} example-author/)
+      expect(readFileSync(resolve(folder, 'README.md'), 'utf8')).toContain('sdk/machines/zoom-ms-70cdr/README.md')
     } finally { rmSync(output, { recursive: true, force: true }) }
   })
 })

@@ -1,0 +1,46 @@
+[
+  {
+    "version": "0.2.2-experimental",
+    "date": "2026-11-03",
+    "changes": [
+      "Shorten the solo activation hold from one second to 0.5 seconds."
+    ]
+  },
+  {
+    "version": "0.2.1-experimental",
+    "date": "2026-11-02",
+    "changes": [
+      "Shorten the solo activation hold from two seconds to one second.",
+      "The anchor still must be held alone during the countdown."
+    ]
+  },
+  {
+    "version": "0.2.0-experimental",
+    "date": "2026-11-01",
+    "changes": [
+      "Keep temporary solo through parameter editing, scenes and same-project navigation.",
+      "Use transport and stock shortcuts while the held anchor stays invisible to combinations.",
+      "Show the temporary group on TRACK lamps: normal brightness for members, dim for excluded tracks.",
+      "Apply panel, MIDI and arranger mute/solo edits underneath until the anchor is released.",
+      "Private prototype; physical-unit qualification is pending."
+    ]
+  },
+  {
+    "version": "0.1.1-experimental",
+    "date": "2026-10-30",
+    "changes": [
+      "Let the selected Mute Mode handle temporary solo, including FX tails and trig mutes.",
+      "Restore the underlying mute and solo state after each audio frame.",
+      "Unreleased: save integrity is unresolved; do not load this prototype on a unit."
+    ]
+  },
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-10-30",
+    "changes": [
+      "Prototype momentary track solo with a two-second hold and press-to-toggle group selection.",
+      "Releasing the original track returns to the existing mute and solo state.",
+      "Hardware, companion behavior, performance and broader save/load qualification remain pending."
+    ]
+  }
+]

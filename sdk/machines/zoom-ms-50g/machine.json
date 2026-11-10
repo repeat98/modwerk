@@ -40,7 +40,7 @@
     {
       "label": "MIDISTOMP",
       "url": "https://github.com/matujuice/zoom-ms-midistomp",
-      "note": "MIT, by Luca Matturro, and Modwerk's planned base. Custom firmware built from Zoom's MS-70CDR 2.10 for the MS-70CDR, MS-50G and MS-60B; v2.0 (November 2026) raises the patch DSP limit from 225 to 300 and adds parallel routing, a perform mode, a looper and MIDI clock sync."
+      "note": "MIT, by Luca Matturro, and Modwerk's base. Its releases are built from the MS-70CDR's 2.10 and answer as one, so Modwerk never flashes them onto this pedal (no firmware flips) and waits for a build from its own OS. v2.0 raises the patch DSP limit to 300 and adds routing, a looper and MIDI clock."
     },
     {
       "label": "Matujuice ZDL effects pack",

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 192" role="img" aria-label="Eight tracks with tracks two and three selected for temporary solo">
+<rect width="320" height="192" fill="#101a1d"/>
+<g stroke="#b6c9cc" opacity=".07"><path d="M0 52H320M0 97H320M0 142H320M64 0V192M128 0V192M192 0V192M256 0V192"/></g>
+<g stroke="#72c8be" fill="none" stroke-width="1.5" opacity=".22"><path d="M48 45H273M48 83H273M48 102H273M48 121H273M48 140H273M48 159H273"/></g>
+<g stroke="#72c8be" fill="none" stroke-width="2"><path d="M48 64H273M48 83H150V64" opacity=".9"/><path d="M48 83H273" opacity=".85"/><circle cx="150" cy="64" r="4" fill="#72c8be"/></g>
+<g fill="#aac2c2" font-family="monospace" font-size="8" letter-spacing="1"><text x="24" y="48">T1</text><text x="24" y="67">T2</text><text x="24" y="86">T3</text><text x="24" y="105">T4</text><text x="24" y="124">T5</text><text x="24" y="143">T6</text><text x="24" y="162">T7</text><text x="24" y="181">T8</text><text x="185" y="25">HOLD + JOIN</text></g>
+<path d="M48 178H273" stroke="#72c8be" stroke-width="1.5" opacity=".22"/>
+</svg>
