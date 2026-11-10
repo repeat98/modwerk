@@ -33,6 +33,8 @@ export function ZoomSidebarStatus({ link, onInstall }: { link: ZoomLink; onInsta
   if (status !== 'ready' || identity?.deviceId !== 0x61 || identity.firmware === ZOOM_BASE.tag) return null
   return <button type="button" className="instrument-action" title={isUpdateMode(identity) ? 'In update mode: the base can go on now.' : 'Zoom’s firmware 2.10. Flash the base once over USB.'} onClick={onInstall}><span>Install the base</span><Icon name="arrow" size={14} /></button>
 }
+// What was last read from each link's pedal; `key` names the pedal it was read from.
+const pedalReads = new WeakMap<ZoomLink, { key: string; files: ZoomFile[]; free?: number }>()
 const kb = (bytes: number) => Math.round(bytes / 1024) + ' KB'
 const count = (n: number, one: string, many: string) => n + ' ' + (n === 1 ? one : many)
 const isCapture = (name: string) => /^(NAM|C)\d/i.test(name)
@@ -64,7 +66,8 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
   const canBase = device.id === 'zoom-ms-70cdr' && !!onInstall, onBase = connected && identity?.deviceId === 0x61 && identity.firmware === ZOOM_BASE.tag
   // What was read belongs to the pedal it was read from: gone when that pedal is.
   const pedalKey = connected && identity ? identity.deviceId + ':' + identity.firmware : ''
-  const [onPedal, setOnPedal] = useState<{ key: string; files: ZoomFile[]; free?: number }>()
+  // Kept with the link, so it outlives this page: coming back from the library or a set shows it at once.
+  const [, redraw] = useState(0), onPedal = link ? pedalReads.get(link) : undefined
   const files = onPedal && onPedal.key === pedalKey ? onPedal.files : undefined, free = files ? onPedal!.free : undefined
   const [backup, setBackup] = useState<{ url: string; name: string; files: number }>(), [error, setError] = useState<string>()
   useEffect(() => () => { if (backup) URL.revokeObjectURL(backup.url) }, [backup])
@@ -74,7 +77,7 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
   // A failed change to the effect list still offers the list from before (the error's previousList) for saving, and
   // one a failed rollback couldn't write back (`unrestored`) for writing again.
   const run = (work: () => Promise<void>) => { setError(undefined); work().catch(e => { if (!alive.current) return; setError((e as Error).message); const { previousList, unrestored } = e as { previousList?: number[]; unrestored?: number[] }, list = keepList(previousList); if (list || unrestored) setChanged({ text: '', list, unrestored }) }) }
-  const readPedal = async (link: ZoomLink) => { const files = await link.listFiles({ versions: true }), free = await link.freeSpace(); if (alive.current) setOnPedal({ key: pedalKey, files, free }); return { files, free } }
+  const readPedal = async (link: ZoomLink) => { const files = await link.listFiles({ versions: true }), free = await link.freeSpace(); pedalReads.set(link, { key: pedalKey, files, free }); if (alive.current) redraw(n => n + 1); return { files, free } }
   const read = () => run(async () => { if (link) await readPedal(link) })
   // Installing and removing: confirm, offer the effect list from before for saving, then read again.
   const [changed, setChanged] = useState<{ text: string; list?: { url: string; name: string }; unrestored?: number[] }>()
@@ -145,9 +148,13 @@ export function ZoomHub({ device, view, link, header, onInstall, sets, selectedI
     if (alive.current) setChanged({ text: file.name + ' removed. Power-cycle the pedal.', list: keepList(result.previousList) })
     await read()
   })
-  // Status reads what's on the pedal by itself, once per pedal; Read again is in its cell.
-  const asked = useRef('')
-  useEffect(() => { if (view === 'status' && status === 'ready' && pedalKey && !updating && !other && asked.current !== pedalKey) { asked.current = pedalKey; read() } })
+  // Every view reads what's on the pedal by itself, once each time the pedal connects (a power cycle too); what was
+  // read before shows meanwhile, and the link remembers each effect's header, so a second read is short.
+  const asked = useRef(onPedal?.key ?? '')
+  useEffect(() => {
+    if (!pedalKey) asked.current = ''
+    else if (status === 'ready' && !updating && !other && asked.current !== pedalKey) { asked.current = pedalKey; read() }
+  })
   const save = () => run(async () => {
     if (!link) return
     const { files: count, zip } = await link.backup(), stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')
