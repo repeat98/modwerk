@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/comp-preview",
+  "version": "1.1.0",
+  "date": "2026-11-08",
+  "changes": [
+    "First library release, for Analog Rytm MKII OS 1.74 on core-ar2 0.7: press AMP again on the FX track for a scrolling estimate of the master compressor's gain reduction; the preview is listed through core-ar2's page lists (core_view_pages)."
+  ],
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/comp-preview/comp-preview-1.1.0-os1.74.elemod",
+      "sha256": "cfc26a7dd919a00a30743cdeb6cb1dfff472ed6f070d4518c5c46617675ac925"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/comp-preview/TESTING.md",
+  "requires": []
+}

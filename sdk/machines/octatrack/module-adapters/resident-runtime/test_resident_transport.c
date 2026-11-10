@@ -31,27 +31,27 @@ int main(void) {
     assert(!dl_hook_reset_start(0,16,0,1,words));
     assert(!dl_hook_reset_start(0,8,513,2,words)); /* the key bus: one owned range per chunk, the window's 514 then 512 */
     assert(!dl_hook_reset_start(1,8,1026,1,words) && !dl_hook_reset_start(1,8,1020,7,words));
-    assert(!dl_hook_reset_start(0,1,527,2,words));
+    assert(!dl_hook_reset_start(0,1,15,2,words) && !dl_hook_reset_start(0,1,529,2,words)); /* Sidechain: MON 16, window 514, bus 512 */
     assert(!dl_hook_reset_start(0,1,1042,1,words));
     words[0]=0x1000000u;
     assert(!dl_hook_reset_start(0,4,0,1,words)); words[0]=0x123456u;
     for(unsigned core=0;core<2;++core) {
-        assert(dl_hook_reset_start(core,1,528,24,words));
+        assert(dl_hook_reset_start(core,1,530,24,words));
         assert(!dl_command_start(core,10,0,1,0));
         dl_frame(); checksum(core);
         assert(dl_tx[core][2]==11u && dl_tx[core][3]==core && dl_tx[core][4]==24u);
-        assert(dl_tx[core][5]==528u && dl_tx[core][7]==1u);
+        assert(dl_tx[core][5]==530u && dl_tx[core][7]==1u);
         for(unsigned i=0;i<24;++i)
             assert((((uint32_t)dl_tx[core][8+2*i]<<8)|dl_tx[core][9+2*i])==words[i]);
         assert(dl_job_status(core)==0); dl_job_release(core);
         assert(dl_job_status(core)==0); /* release cannot abandon a pending ACK */
         answer(core,0); assert(dl_job_status(core)==1); dl_job_release(core);
         /* One job, several packets: one a frame, each with its own offset, done once the last is answered. */
-        assert(dl_hook_reset_start(core,1,528,50,words));
+        assert(dl_hook_reset_start(core,1,530,50,words));
         for(unsigned k=0;k<3;++k) {
             unsigned n=k<2 ? 24u:2u;
             dl_frame(); checksum(core);
-            assert(dl_tx[core][2]==11u && dl_tx[core][4]==n && dl_tx[core][5]==528u+24u*k && dl_tx[core][7]==1u);
+            assert(dl_tx[core][2]==11u && dl_tx[core][4]==n && dl_tx[core][5]==530u+24u*k && dl_tx[core][7]==1u);
             for(unsigned i=0;i<n;++i)
                 assert((((uint32_t)dl_tx[core][8+2*i]<<8)|dl_tx[core][9+2*i])==words[24u*k+i]);
             assert(dl_job_status(core)==0);

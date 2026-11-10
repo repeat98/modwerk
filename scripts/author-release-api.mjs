@@ -45,7 +45,12 @@ export async function mergeAuthorPull(api, repository, number, head, base, scope
   const result = await api('/pulls/' + number + '/merge', 'PUT', { sha: head, merge_method: 'merge' })
   if (!result.merged) throw new Error('GitHub refused this author release; the existing release remains available.')
   const commit = await api('/git/commits/' + result.sha)
-  if (commit.parents?.length !== 2 || commit.parents[0].sha !== base || commit.parents[1].sha !== head) throw new Error('Main moved during merge; publication requires fresh checks and owner review.')
+  if (commit.parents?.length !== 2 || commit.parents[0].sha !== base || commit.parents[1].sha !== head) {
+    // The merge stays on main, so tell the owner now: the caller's notice runs only after a clean merge.
+    await api('/issues/' + number + '/comments', 'POST', { body: '@' + repository.split('/')[0] + ' ' + scope.modules.join(', ') + ' was merged without owner review, but main moved during the merge, so publication stopped. The merge stays on main; review it before the next release: https://github.com/' + repository + '/compare/' + base + '...' + head })
+      .catch(error => console.log('::warning::Could not comment on PR #' + number + ': ' + error.message))
+    throw new Error('Main moved during merge; publication requires fresh checks and owner review.')
+  }
   await publishAuthorMerge(api)
   return runId
 }

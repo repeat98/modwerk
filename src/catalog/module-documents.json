@@ -2481,7 +2481,7 @@
       "id": "bbd",
       "key": "BBD",
       "name": "BBD Delay",
-      "version": "0.1.1-experimental",
+      "version": "0.1.2-experimental",
       "category": "effects",
       "access": {
         "location": "Audio track FX2 SETUP: BBD DELAY at the end of the effect chooser.",
@@ -2599,9 +2599,7 @@
         "firmware": "1.40C",
         "effectId": 14,
         "location": "FX2",
-        "conflicts": [
-          "sidechain-compressor"
-        ],
+        "conflicts": [],
         "uiClaims": [],
         "limitations": [
           "Hardware: on the owner's MKII over USB (15 October 2026): install, both cores, two instances on core 1, Part switches, removal and reinstall, the stop kill and its release, chip load. MKI, MIDI load, project save and reload and a power cycle on this version, and the card build's stop-kill hook on hardware are untested.",
@@ -2660,9 +2658,9 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "Render gates pass on a native image (52): exact dry at MIX 0, the DSP against its float reference across every control including HPF, trig splits, STGS changes with TIME still and moving, the stop-kill input, freeze, idle tails and the LIM level, eight-instance isolation under guard and dirty start, garbage start and no zipper. Matched benchmark: 399.31 executed instructions/sample with trig splits (0.1.0: 439.44), 363.06 unsplit; output bit-identical to 0.1.0 in all 45 benchmark cases. On the owner's MKII over USB: installed, picked on T1, T2 and T5, Part switches, removal and reinstall, self-test, the stop kill cutting the tail to -132 dBFS and its release; 453-527 chip cycles a sample measured.",
+        "summary": "0.1.2 declares the 8,250 buffer words BBD uses instead of the whole 16,384-word FX2 slot (as octabam since #783), so it stays clear of the beta base's key bus in the first internal FX2 slot's tail; the DSP and ColdFire code and the native card image of BBD alone are unchanged from 0.1.1, whose render gates, benchmarks and stress runs stand. Reported working beside Sidechain Compressor 0.2.1 on an MKI from the card (30 October 2026).",
         "hardwareStatus": "reported",
-        "evidenceRevision": "ef7e1aa362af829a2479385769d6987390f55ccd",
+        "evidenceRevision": "1a37637a73c274d92c3b3f9e85e89dbe8dba67c9",
         "gates": [
           "verify.py: init rules, static cycles, native placement, exact dry, reference match (HPF at 1, 64, 127), splits, stages (TIME still and moving), the stop-kill input, freeze, idle and LIM level, eight-instance isolation (-guard -dirty), garbage start, zipper census",
           "evidence/performance.json: perf.py bench (stock benchmark under matched cases) and a 32 s eight-instance stress render",
@@ -2702,9 +2700,9 @@
             ],
             "screenshotStyle": "black-and-white"
           },
-          "moduleVersion": "0.1.1-experimental",
-          "sourceSha256": "6ba6aacfebb93bcf851f73d575ef24a7e7881eea57e42d773c3be1d38dbb53bb",
-          "imageSha256": "bf2ab8a545421109740dbd28553ae04fad4724c87bd22ccd063bbe381b34b591",
+          "moduleVersion": "0.1.2-experimental",
+          "sourceSha256": "4d3a63d0dc46429fc83a590afbc0a17b30e19f80d6139bd2a978fab9a1a9726b",
+          "imageSha256": "c234d13ce64efdf96a8843065feaf1c400f4d9ada081a680d557d639d112019f",
           "cycles": [
             {
               "processor": "dsp",
@@ -2759,11 +2757,11 @@
                 "scope": "instance"
               },
               {
-                "name": "Reserved stock FX2 Y buffer: ring up to 4,095 words, 58 coefficient words",
+                "name": "Stock FX2 Y buffer it uses: ring up to 4,095 words at +$0, 58 coefficient words up to +$2039",
                 "space": "dsp-y",
-                "words": 16384,
+                "words": 8250,
                 "wordBits": 24,
-                "bytes": 49152,
+                "bytes": 24750,
                 "scope": "instance"
               },
               {
@@ -2799,28 +2797,28 @@
                 "scope": "shared"
               }
             ],
-            "perInstanceBytes": 49920,
+            "perInstanceBytes": 25518,
             "sharedBytes": 7246,
             "maxInstances": 8,
-            "totalBytes": 406606,
-            "conditions": "The stock 256-word X block and 16,384-word Y buffer per FX2 instance, including unused padding; code shared once per core. No authored heap or SDRAM arena; the stop kill's ColdFire code is a straight-line hook or event handler with no stack of its own. The system stack is bounded by the rotation's do, a bsr and its divide's do on each core. Logical 24-bit DSP words; flash descriptors use byte accounting. Guarded eight-instance software evidence does not claim hardware canaries.",
+            "totalBytes": 211390,
+            "conditions": "The stock 256-word X block per FX2 instance, including unused padding, and the 8,250 words of the stock 16,384-word FX2 Y buffer it uses (+$0..+$2039, since 0.1.2); code shared once per core. No authored heap or SDRAM arena; the stop kill's ColdFire code is a straight-line hook or event handler with no stack of its own. The system stack is bounded by the rotation's do, a bsr and its divide's do on each core. Logical 24-bit DSP words; flash descriptors use byte accounting. Guarded eight-instance software evidence does not claim hardware canaries.",
             "report": "evidence/release-bounds.md"
           },
           "hardware": {
             "kind": "functional",
             "status": "reported",
-            "model": "MKII",
-            "testedOn": "2026-10-15",
-            "tester": "repeat98's unit, driven over USB by Claude Code",
-            "sourceRevision": "ef7e1aa362af829a2479385769d6987390f55ccd",
-            "imageSha256": "bf2ab8a545421109740dbd28553ae04fad4724c87bd22ccd063bbe381b34b591",
-            "summary": "The USB package (614bf23b...) on a RAM-booted development twin of the beta base with ev_tail_kill (e429b787..., MAIN bf2ab8a5...), on the owner's MKII: installed (stage, trial, keep); picked on T1 and T2 (core 1) and T5 (core 0); a second instance on core 0 refused by the DSP budget as designed; a Part switch away and back keeps every knob; removal refused while in use, taken when not, the Part then plays dry with BBD listed missing, and a reinstall restores it; the base's self-test passed; STOP, STOP, STOP zeroed BBD's slot 11 in the track's frame record and cut a ringing tail to -132 dBFS, released by the track's next trig; one instance cost 453-469 chip cycles a sample at the defaults and 527 at the dearest settings.",
+            "model": "MKI",
+            "testedOn": "2026-10-30",
+            "tester": "Zac Kyoti",
+            "sourceRevision": "1a37637a73c274d92c3b3f9e85e89dbe8dba67c9",
+            "imageSha256": "c234d13ce64efdf96a8843065feaf1c400f4d9ada081a680d557d639d112019f",
+            "summary": "Modwerk's native card image of BBD Delay 0.1.2 with Sidechain Compressor 0.2.1 (MAIN OS c234d13c, MW_BBDSC) on an Octatrack MKI, flashed and played by Sidechain Compressor's author: BBD on T1 and T5 FX2, the slots whose buffer tail now holds the key bus, and on T3 FX2, beside a keyed COMPRESSOR, at maximum TIME, STGS 4096 and FRZ: clean, no key-bus noise in the line, and the compressor still ducks. BBD's own firmware is unchanged by 0.1.2: its native card image alone is the same before and after (bd2015f2).",
             "limitations": [
-              "Driven by an agent with the owner's permission; the owner was not asked to listen. Audio was checked from USB recordings.",
-              "No project save and reload or power cycle on this version (RAM-booted base, owner's project not saved); MKI, MIDI load and the card build's stop-kill hook on hardware are untested.",
-              "Chip cycles come from the base's idle counters at steady settings with the transport stopped; a trig split's worst block was not measured on the chip."
+              "A functional report by another module's author, confirmed as a whole; duration and material were not reported.",
+              "MKI and the card build only: the USB package and the beta base were not run on a unit in this version.",
+              "No project save and reload or power cycle on this version; no chip timing (0.1.1's measurements stand: the DSP code is unchanged)."
             ],
-            "report": "evidence/usb-hardware.md"
+            "report": "evidence/sidechain-pair-hardware.md"
           }
         }
       },
@@ -2842,8 +2840,8 @@
             "page": "FX2 SETUP",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.1-experimental",
-            "imageSha256": "e648cee078b70174f250ae61830f644a151ab07f3d553578ae6577c5a1ffa1b9",
+            "moduleVersion": "0.1.2-experimental",
+            "imageSha256": "bd2015f269010c19a8f080e743bb2962f949e8320b687a515140db568b6f9bb0",
             "setup": "Headless ot_emu; MKII panel; stopped transport; empty scratch card; 128×64 LCD at integer scale 6."
           }
         },
@@ -2859,8 +2857,8 @@
             "page": "FX2 main",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.1-experimental",
-            "imageSha256": "e648cee078b70174f250ae61830f644a151ab07f3d553578ae6577c5a1ffa1b9",
+            "moduleVersion": "0.1.2-experimental",
+            "imageSha256": "bd2015f269010c19a8f080e743bb2962f949e8320b687a515140db568b6f9bb0",
             "setup": "Headless ot_emu; MKII panel; stopped transport; empty scratch card; 128×64 LCD at integer scale 6."
           }
         },
@@ -2876,8 +2874,8 @@
             "page": "FX2 main",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.1-experimental",
-            "imageSha256": "e648cee078b70174f250ae61830f644a151ab07f3d553578ae6577c5a1ffa1b9",
+            "moduleVersion": "0.1.2-experimental",
+            "imageSha256": "bd2015f269010c19a8f080e743bb2962f949e8320b687a515140db568b6f9bb0",
             "setup": "Headless ot_emu; MKII panel; stopped transport; empty scratch card; 128×64 LCD at integer scale 6."
           }
         }
@@ -3296,7 +3294,7 @@
       "id": "ring-sc",
       "key": "RING_SC",
       "name": "Sidechain Ringmod",
-      "version": "0.2.0-experimental",
+      "version": "0.2.1-experimental",
       "category": "effects",
       "access": {
         "location": "FUNC + FX1 or FUNC + FX2 SETUP on an audio track: the effect chooser (LEVEL selects, YES assigns).",
@@ -3438,7 +3436,7 @@
           "value": 351,
           "unit": "words",
           "method": "static",
-          "conditions": "Assembled with dsp_asm: 351 words, both payloads (one source). State is 22 words of the instance's existing r7 block. The key bus is the base's (Y $800-$9FF on each core and $202 words at the end of each core's half of the shared window); the package declares reads of them as its DSP claims and writes nothing outside its state. A 9-value KEY formatter, a MODE formatter with its renames and the shared wide dial are ColdFire data in its page recipe.",
+          "conditions": "Assembled with dsp_asm: 351 words, both payloads (one source). State is 22 words of the instance's existing r7 block. The key bus is the base's (Y $7E00-$7FFF on each core since 0.2.1 and $202 words at the end of each core's half of the shared window); the package declares reads of them as its DSP claims and writes nothing outside its state. A 9-value KEY formatter, a MODE formatter with its renames and the shared wide dial are ColdFire data in its page recipe.",
           "source": "TESTING.md"
         },
         "processing": {
@@ -3474,9 +3472,9 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "The assembled module matches a reference model within 1.8e-07 of full scale in both modes (the key's low-pass, RECT and SLEW's level in exact integers), passes the input bit for bit when the key bus is not live, and equals 0.1.0 sample for sample in DUCK and in RING with S&H, RECT and SLEW at 0; SLEW crosses 0 without a click and S&H turned down cuts its hold short. On 22 October 2026 its USB package 2ba32a49 ran on the author's MKII on a RAM-booted development twin of the beta base: DUCK, plain RING, RECT, SLEW through 0 and S&H by ear, two instances on both cores and slots, Part and project reload, every install and removal order beside Sidechain Compressor, and the base's self-test passed. Not run on a unit: parameter locks and LFOs, scenes, eight instances a core, a power cycle.",
+        "summary": "The assembled module matches a reference model within 1.8e-07 of full scale in both modes (the key's low-pass, RECT and SLEW's level in exact integers), passes the input bit for bit when the key bus is not live, and equals 0.1.0 sample for sample in DUCK and in RING with S&H, RECT and SLEW at 0; SLEW crosses 0 without a click and S&H turned down cuts its hold short. On 22 October 2026 its USB package 2ba32a49 ran on the author's MKII on a RAM-booted development twin of the beta base: DUCK, plain RING, RECT, SLEW through 0 and S&H by ear, two instances on both cores and slots, Part and project reload, every install and removal order beside Sidechain Compressor, and the base's self-test passed. On 10 November 2026 0.2.1's package 91281f07 ran on the owner's MKII on a development twin of beta base dd3827f0, with the key bus at Y $7E00: DUCK keyed from the same and the other core and RING, measured from the unit's USB audio, beside BBD Delay on T1 and T5 FX2 and a keyed Sidechain Compressor; self-test, removal in use refused, a trial's rollback and npm run device:qualify passed. Not run on a unit: parameter locks and LFOs, scenes, eight instances a core, a power cycle.",
         "hardwareStatus": "reported",
-        "evidenceRevision": "60d3ac179ff293ceac9604c802574da47f6fba36",
+        "evidenceRevision": "4925f19d83312006e88635eac88dda84497bd37e",
         "gates": [
           "verify.py: bit-exact passthrough (KEY OFF, DPTH 0, no key bus), DUCK and RING against the model over 576 settings, ATK, a steady and a decaying key, both key paths, trig splits, the mode fade, the memory guard, knob steps, and RING's carrier: S&H's hold, SLEW's level, RECT's rectification, SLEW across 0 once and every eight blocks without a click, S&H 127 to 0 taking a new key at once",
           "compare02 (dsp_host) against 0.1.0: DUCK and RING with S&H, RECT and SLEW at 0 identical over 864 + 36 settings, the key paths, splits, mode switches and sweeps (TESTING.md)",
@@ -3506,9 +3504,9 @@
             ],
             "screenshotStyle": "black-and-white"
           },
-          "moduleVersion": "0.2.0-experimental",
-          "sourceSha256": "ed5235cb47d34f8efbabd9cd9a41ad3f8eb2994d34c6261de1d590892a54120e",
-          "imageSha256": "712666cb0f464ed324c77aca2d7210643fdc41c18e640797030f9a90878013bd",
+          "moduleVersion": "0.2.1-experimental",
+          "sourceSha256": "8f8fe4e186d93e08eebab9e681195230e7a8d0bc2e69eb8e0c435adff81dc7a5",
+          "imageSha256": "b0d749170f74b234f19d10538fcef8ed2e80932c6590e211ea1097d2f6ea4578",
           "cycles": [
             {
               "processor": "dsp",
@@ -3559,24 +3557,23 @@
             "sharedBytes": 2974,
             "maxInstances": 16,
             "totalBytes": 4030,
-            "conditions": "From the USB package (2,416 bytes: 351 DSP words with four relocations, the 868-byte page recipe as sdk/runtime/loader/build.py lays it out, its claims and header) and the source's r7 block ($00-$15, zeroed by init). Sixteen instances are FX1 and FX2 of all eight tracks. No Y memory, no delay buffer, heap or ColdFire code of its own. The key bus's memory (Y $800-$9FF on each core and the last $202 words of each core's half of the shared window) is the base's, as are its tap and engine.",
+            "conditions": "From the USB package (2,416 bytes: 351 DSP words with four relocations, the 868-byte page recipe as sdk/runtime/loader/build.py lays it out, its claims and header) and the source's r7 block ($00-$15, zeroed by init). Sixteen instances are FX1 and FX2 of all eight tracks. No Y memory, no delay buffer, heap or ColdFire code of its own. The key bus's memory (Y $7E00-$7FFF on each core since 0.2.1 and the last $202 words of each core's half of the shared window) is the base's, as are its tap and engine.",
             "report": "TESTING.md"
           },
           "hardware": {
             "kind": "functional",
             "status": "reported",
             "model": "MKII",
-            "testedOn": "2026-10-22",
-            "tester": "npp1993",
-            "sourceRevision": "60d3ac179ff293ceac9604c802574da47f6fba36",
-            "imageSha256": "712666cb0f464ed324c77aca2d7210643fdc41c18e640797030f9a90878013bd",
-            "summary": "Over USB on an Octatrack MKII, OS 1.40C, RAM-booted development twin 53ddaf60 of main's beta base with the module select step and key bus reader admission fixes (MAIN 712666cb..., never flashed); package 2ba32a49. By ear with a kick on T1 as KEY: DUCK, plain RING, RECT swept, SLEW through 0 turned quickly and slowly without a click, S&H 127 to 0 stopping at once; the names follow MODE; KEY steps cleanly on the first visit. Two instances (T4 FX1 DUCK, T5 FX2 RING) on both cores and slots, independent. Part SAVE/RELOAD and project save/load restore them with the bus live. Over USB: install alone and beside Sidechain Compressor share one bus; every removal order returns the bus and arena; removal in use refused (loader refusal 7). The base's self-test passed with Sidechain (CPU 52.8 %, T1-4 27.7 %, T5-8 37.5 %, longest frame 401 us) and with two instances (CPU 66.7 %, T1-4 21.8 %, T5-8 39.5 %, 384 us) (evidence/hardware.md).",
+            "testedOn": "2026-11-10",
+            "tester": "repeat98",
+            "sourceRevision": "4925f19d83312006e88635eac88dda84497bd37e",
+            "imageSha256": "b0d749170f74b234f19d10538fcef8ed2e80932c6590e211ea1097d2f6ea4578",
+            "summary": "Over USB on an Octatrack MKII, OS 1.40C, RAM-booted development twin 5015d2a7 of beta base dd3827f0 (the key bus at Y $7E00; MAIN b0d74917..., never flashed); package 91281f07. Measured from the unit's per-track USB audio, a kick on T1 as KEY, folded on its 17-22 onsets: DUCK keyed from the other core (T5 FX1 from T1) took T5 from about -13 dB to -97 dB within 5-10 ms of each kick; from the same core (T2 FX2 from T1, T6 FX1 from T5) to about -110 and -105 dB; KEY OFF left the track untouched; RING made T5 follow the kick (-84 dB between kicks, -14 dB on them) and the knobs read SLEW, S&H and RECT. Beside BBD Delay 0.1.2 on T1 and T5 FX2 and Sidechain Compressor 0.2.1 keyed from T1, both keyed paths kept working and the compressor ducked T6 6-12 dB more than self-keyed. Self-test passed with all three (CPU 66.1 %, T1-4 54.1 %, T5-8 50.2 %, longest frame 391 us); removal in use refused (loader refusal 7); a 25 s trial rolled back by itself (Undo) and left NONE in the slot; npm run device:qualify passed: alone on T1 and T5 FX2, four instances beside four BBD instances while playing, 12 Part switches, 120 s soak (highest core peak 749 per mille), removal (evidence/hardware.md).",
             "limitations": [
-              "Parameter locks and LFOs (a lock or LFO on SLEW through 0 included), scenes and the crossfader, the stale-seed install while playing, the window and buffer reads and the missing-module message were not run on a unit for any 0.2.0 build.",
-              "The key latency (T4 0, T2 16, T5 32 samples) is carried from the 21 October key bus re-check, not re-measured through this module.",
-              "A power cycle cannot be tested on a RAM-booted twin; not tested. The flashed main base was not used for this source.",
-              "The twin carries two base fixes that were still in review; eight instances a core and MKI were not run.",
-              "One MKII, one session, by the module's author; by ear, nothing on the unit recorded or measured."
+              "Parameter locks and LFOs, scenes and the crossfader, eight instances a core and MKI were not run on a unit. One slot of the test project (T2 FX1) carries the project's own FX1 locks (DPTH and the next knobs locked to 0 on its trigs) and did not duck; it was left out of the results.",
+              "Key latency was not measured to the sample: the duck lands within one 5 ms analysis window of the kick's onset on both paths.",
+              "A power cycle cannot be tested on a RAM-booted twin; not tested. The flashed base was not used for this source.",
+              "One MKII, one session, driven over USB by the owner's coordinating session; audio measured from the unit's USB outputs, nothing judged by ear."
             ],
             "report": "evidence/hardware.md"
           }
@@ -3600,9 +3597,9 @@
             "page": "FX1 SETUP",
             "shows": "location",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.0-experimental",
-            "imageSha256": "491f0ff0b933b52f3b9dc4f4c8118ff8f6788763bc36c596545026545a6bd596",
-            "setup": "Headless ot_emu (MKII panel) on 1.40C, a private card image carrying RINGMOD SC 0.2.0-experimental (local remix x_rmsc02: RINGMOD SC alone on the FX1 chooser, stock effects loaded on demand, RINGSC20); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
+            "moduleVersion": "0.2.1-experimental",
+            "imageSha256": "b9d02d3a0dd6f6cf52f6501ec7026d4abac4505bedd0e02266bcae29aafa286d",
+            "setup": "Headless ot_emu (MKII panel) on 1.40C, Modwerk's native card image of RINGMOD SC 0.2.1-experimental alone with the stock effects kept (MAIN OS b9d02d3a; the FX1 chooser lists the stock FX1 effects above it); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
           }
         },
         {
@@ -3617,9 +3614,9 @@
             "page": "FX1 main",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.0-experimental",
-            "imageSha256": "491f0ff0b933b52f3b9dc4f4c8118ff8f6788763bc36c596545026545a6bd596",
-            "setup": "Headless ot_emu (MKII panel) on 1.40C, a private card image carrying RINGMOD SC 0.2.0-experimental (local remix x_rmsc02: RINGMOD SC alone on the FX1 chooser, stock effects loaded on demand, RINGSC20); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
+            "moduleVersion": "0.2.1-experimental",
+            "imageSha256": "b9d02d3a0dd6f6cf52f6501ec7026d4abac4505bedd0e02266bcae29aafa286d",
+            "setup": "Headless ot_emu (MKII panel) on 1.40C, Modwerk's native card image of RINGMOD SC 0.2.1-experimental alone with the stock effects kept (MAIN OS b9d02d3a; the FX1 chooser lists the stock FX1 effects above it); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
           }
         },
         {
@@ -3634,9 +3631,9 @@
             "page": "FX1 main",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.0-experimental",
-            "imageSha256": "491f0ff0b933b52f3b9dc4f4c8118ff8f6788763bc36c596545026545a6bd596",
-            "setup": "Headless ot_emu (MKII panel) on 1.40C, a private card image carrying RINGMOD SC 0.2.0-experimental (local remix x_rmsc02: RINGMOD SC alone on the FX1 chooser, stock effects loaded on demand, RINGSC20); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
+            "moduleVersion": "0.2.1-experimental",
+            "imageSha256": "b9d02d3a0dd6f6cf52f6501ec7026d4abac4505bedd0e02266bcae29aafa286d",
+            "setup": "Headless ot_emu (MKII panel) on 1.40C, Modwerk's native card image of RINGMOD SC 0.2.1-experimental alone with the stock effects kept (MAIN OS b9d02d3a; the FX1 chooser lists the stock FX1 effects above it); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
           }
         },
         {
@@ -3651,9 +3648,9 @@
             "page": "FX1 SETUP",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.0-experimental",
-            "imageSha256": "491f0ff0b933b52f3b9dc4f4c8118ff8f6788763bc36c596545026545a6bd596",
-            "setup": "Headless ot_emu (MKII panel) on 1.40C, a private card image carrying RINGMOD SC 0.2.0-experimental (local remix x_rmsc02: RINGMOD SC alone on the FX1 chooser, stock effects loaded on demand, RINGSC20); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
+            "moduleVersion": "0.2.1-experimental",
+            "imageSha256": "b9d02d3a0dd6f6cf52f6501ec7026d4abac4505bedd0e02266bcae29aafa286d",
+            "setup": "Headless ot_emu (MKII panel) on 1.40C, Modwerk's native card image of RINGMOD SC 0.2.1-experimental alone with the stock effects kept (MAIN OS b9d02d3a; the FX1 chooser lists the stock FX1 effects above it); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
           }
         },
         {
@@ -3668,9 +3665,9 @@
             "page": "FX1 main",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.0-experimental",
-            "imageSha256": "491f0ff0b933b52f3b9dc4f4c8118ff8f6788763bc36c596545026545a6bd596",
-            "setup": "Headless ot_emu (MKII panel) on 1.40C, a private card image carrying RINGMOD SC 0.2.0-experimental (local remix x_rmsc02: RINGMOD SC alone on the FX1 chooser, stock effects loaded on demand, RINGSC20); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
+            "moduleVersion": "0.2.1-experimental",
+            "imageSha256": "b9d02d3a0dd6f6cf52f6501ec7026d4abac4505bedd0e02266bcae29aafa286d",
+            "setup": "Headless ot_emu (MKII panel) on 1.40C, Modwerk's native card image of RINGMOD SC 0.2.1-experimental alone with the stock effects kept (MAIN OS b9d02d3a; the FX1 chooser lists the stock FX1 effects above it); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
           }
         }
       ]
@@ -5723,11 +5720,11 @@
       "id": "sidechain-compressor",
       "key": "SIDECHAIN_COMPRESSOR",
       "name": "Sidechain Compressor",
-      "version": "0.2.0-experimental",
+      "version": "0.2.1-experimental",
       "category": "effects",
       "source": {
         "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
-        "revision": "b0d49bf32d3fcc2e3ce7e9cec67f4fbb2619e511",
+        "revision": "8868867d02b15b5368a7e54772aff0c1c0387c81",
         "path": "modwerk-modules/sidechain-compressor"
       },
       "access": {
@@ -5898,7 +5895,7 @@
         ]
       },
       "resources": {
-        "recorded": "2026-10-24; emulator load measurement, static ColdFire bound and exact memory inventory",
+        "recorded": "2026-10-24 (0.2.1 runs the same code): emulator load, static ColdFire bound, exact memory",
         "storage": {
           "label": "Declared DSP reservation",
           "display": "26,288 logical bytes / 16 instances",
@@ -5941,9 +5938,9 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "Native octabam builds 0.2.0 alone and in 965 of the suites' selections (648 of 1,024 visible, 171 of 512 historical, 146 of 212 with Analog BD); both ColdFire units equal the author's references; the beta base's resident engine and controller pass the resident-engine, controller, registry and stock-free checks; emulator load of eight keyed instances a core; static ColdFire bound and exact memory inventory.",
+        "summary": "0.2.1 moves the key bus to Y $7e00..$7fff and the MON words to Y $ff0..$fff; the DSP code is 0.2.0's, so 0.2.0's load, static ColdFire bound and memory inventory carry over (the image differs from 0.2.0's in the 12 address bytes only). Native octabam builds 0.2.1 alone and in 933 of the suites' selections (618 of 1,024 visible, 169 of 512 historical, 146 of 212 with Analog BD: the same selections build as with 0.2.0 on the same main); the beta base's resident engine passes the resident-engine checks at the new addresses (the key two blocks late whatever the enable order). On his MKI (30 October 2026) the author flashed the native image of this version alone and beside BBD Delay and reported both working.",
         "hardwareStatus": "reported",
-        "evidenceRevision": "b0d49bf32d3fcc2e3ce7e9cec67f4fbb2619e511",
+        "evidenceRevision": "8868867d02b15b5368a7e54772aff0c1c0387c81",
         "gates": [
           "Native octabam and browser composition compared on the module's coverage set, with and without stock FX2",
           "Native suites regenerated: 512 selections of the original eight modules, 1,024 of the nine visible modules and 212 Analog BD selections",
@@ -5972,9 +5969,9 @@
             ],
             "screenshotStyle": "black-and-white"
           },
-          "moduleVersion": "0.2.0-experimental",
-          "sourceSha256": "9e7fdbf0f6ac6447c99efe7d60db56fed1d3bff8d23bd77103705f2a6cf41426",
-          "imageSha256": "131142e1839bf1a62b48929dee396cc23b1f2f27f33595a9e6f39bf57f7be22e",
+          "moduleVersion": "0.2.1-experimental",
+          "sourceSha256": "b7ca44bfa979b0a4c75efc90262dbd4ab049e8b43e8beba1f8732bf94314def8",
+          "imageSha256": "fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc",
           "cycles": [
             {
               "processor": "dsp",
@@ -6038,7 +6035,7 @@
                 "scope": "shared"
               },
               {
-                "name": "Two core-private Y keybus/MON regions",
+                "name": "Two core-private Y keybus/MON regions (keybus Y $7e00..$7fff, MON Y $ff0..$fff, on each core)",
                 "space": "dsp-y",
                 "words": 1056,
                 "wordBits": 24,
@@ -6129,15 +6126,15 @@
             "kind": "functional",
             "status": "reported",
             "model": "MKI",
-            "testedOn": "2026-10-26",
-            "tester": "Zac-Kyoti",
-            "sourceRevision": "b0d49bf32d3fcc2e3ce7e9cec67f4fbb2619e511",
-            "imageSha256": "131142e1839bf1a62b48929dee396cc23b1f2f27f33595a9e6f39bf57f7be22e",
-            "summary": "The author flashed Modwerk's native image of this source, the module alone (MW_SC021), on an Octatrack MKI and reported it working: KBAS and KWID across their range with MON on and off, MON's OFF/ON switch and its OFF on older projects, KEY's pressed turn, the MON and KEY fades, and a MON ON project across a power cycle.",
+            "testedOn": "2026-10-30",
+            "tester": "Zac Kyoti",
+            "sourceRevision": "8868867d02b15b5368a7e54772aff0c1c0387c81",
+            "imageSha256": "fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc",
+            "summary": "The author flashed Modwerk's native image of this source, the module alone (MAIN OS fb7c5e31, OS VERSION MW_SC021), on an Octatrack MKI and reported it working as expected: a same-core key (T2 keyed from T1) and cross-core keys (T6 from T1, T2 from T5) duck; MON ON plays the filtered key and OFF returns to the track, KBAS and KWID audible on MON; stock reverbs and delays on T1 and T5 FX2 beside a keyed compressor carry no other track; project reload and a power cycle keep the settings. He also flashed the native image with BBD Delay (MAIN OS c234d13c, MW_BBDSC): BBD on T1, T5 and T3 FX2 beside a keyed compressor, at maximum TIME, STGS 4096 and FRZ, clean, and the compressor still ducks.",
             "limitations": [
               "A functional report: duration, project, material and tempo were not reported, and the checklist was confirmed as a whole.",
-              "No measured chip timing, memory canary, recording, recovery or stress test; cross-core key latency was not measured.",
-              "The flashed image is the module alone; the Modwerk download (with the core logger), the USB beta base and selections with other modules were not flashed."
+              "No measured chip timing, memory canary, recording, recovery or stress test; cross-core key latency was not measured on the unit (the emulator's resident-engine check gives two blocks).",
+              "The flashed images are this module alone and beside BBD Delay; the Modwerk download (with the core logger), the USB beta base and Sidechain Ringmod were not run on a unit."
             ],
             "report": "evidence/hardware.md"
           }
@@ -6161,8 +6158,8 @@
             "page": "FX1 SETUP",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.0-experimental",
-            "imageSha256": "131142e1839bf1a62b48929dee396cc23b1f2f27f33595a9e6f39bf57f7be22e",
+            "moduleVersion": "0.2.1-experimental",
+            "imageSha256": "fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc",
             "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card; no project loaded."
           }
         },
@@ -6178,8 +6175,8 @@
             "page": "FX1 main",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.0-experimental",
-            "imageSha256": "131142e1839bf1a62b48929dee396cc23b1f2f27f33595a9e6f39bf57f7be22e",
+            "moduleVersion": "0.2.1-experimental",
+            "imageSha256": "fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc",
             "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card; no project loaded."
           }
         },
@@ -6195,8 +6192,8 @@
             "page": "FX1 SETUP",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.0-experimental",
-            "imageSha256": "131142e1839bf1a62b48929dee396cc23b1f2f27f33595a9e6f39bf57f7be22e",
+            "moduleVersion": "0.2.1-experimental",
+            "imageSha256": "fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc",
             "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card; no project loaded."
           }
         }

@@ -14,9 +14,10 @@ function fixture(options = {}) {
     if (path === '/pulls/9/merge') return { merged: options.refused ? false : true, sha: merged }
     if (path === '/git/commits/' + merged) return { parents: [{ sha: options.mergedBase ?? base }, { sha: head }] }
     if (path.endsWith('/dispatches')) return null
+    if (path === '/issues/9/comments') { if (options.commentFails) throw new Error('HTTP 502'); return {} }
     throw new Error('Unexpected API path ' + path)
   }
-  return { api, calls, execute: expectedRunId => mergeAuthorPull(api, repository, 9, head, base, { octatrack: true, packages: false, elemodCompile: false }, expectedRunId) }
+  return { api, calls, execute: expectedRunId => mergeAuthorPull(api, repository, 9, head, base, { octatrack: true, packages: false, elemodCompile: false, modules: ['tapehead'] }, expectedRunId) }
 }
 describe('author merge and publication transaction', () => {
   it('merges the expected head and dispatches both deployments after verifying merge parents', async () => {
@@ -35,9 +36,16 @@ describe('author merge and publication transaction', () => {
     await expect(f.execute(77)).rejects.toThrow()
     expect(f.calls.every(call => call.method === 'GET')).toBe(true)
   })
-  it.each([{ refused: true }, { mergedBase: head }])('does not publish a refused merge or an untested concurrent base: %j', async options => {
-    const f = fixture(options)
+  it('does not publish a refused merge', async () => {
+    const f = fixture({ refused: true })
     await expect(f.execute(77)).rejects.toThrow()
     expect(f.calls.some(call => call.method === 'POST')).toBe(false)
+  })
+  it.each([{}, { commentFails: true }])('tells the owner on the PR, without publishing, when main moved during the merge: %j', async options => {
+    const f = fixture({ mergedBase: head, ...options })
+    await expect(f.execute(77)).rejects.toThrow('Main moved during merge')
+    const posts = f.calls.filter(call => call.method === 'POST')
+    expect(posts.map(call => call.path)).toEqual(['/issues/9/comments'])
+    expect(posts[0].data.body).toMatch(/^@repeat98 tapehead was merged without owner review, .*\/compare\/b{40}\.\.\.a{40}$/)
   })
 })

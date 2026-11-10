@@ -1,0 +1,849 @@
+{
+ "elemod": 2,
+ "id": "comp-preview",
+ "version": "1.1.0",
+ "title": "Compressor Preview",
+ "description": "One more compressor page with a scrolling estimate of the master compressor's gain reduction, reached by pressing the compressor page key again.",
+ "category": "system",
+ "author": "Iced-Cream",
+ "license": "GPL-2.0-only",
+ "target": {
+  "device": "analog-rytm-mk2",
+  "product": "Analog Rytm MKII",
+  "os": "1.74",
+  "syx_sha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "section3_sha256": "34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b",
+  "section3_len": 3005432
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 3912,
+   "parts": [
+    [
+     "hex",
+     "4fefffc448d77fff53b9000000006b0003942039000000004a3a0f1c67120c80000000e16400037e42390000000060140c80000000f3630c700113c00000000060000362203941943f587208b0816e0003542079419f28987000b1c067102228003cb2a8002c6706203a0b0c528023c0000000000c80000001776e000328721eb0816f0e203941943f587206b0816c00031449fa0e6247f9401ef48043f9800063ca41f94029113828398000ed6c6c0628398000ee5845fa03f87a00261be78b7000720075b058000504662871d173e90010d280671e740fe5a84c4100002203e48973f218004c010000e4a89280740de5a8e5a92980380029813804548952857008ba806db64eba0b3471f98000fbd043fa03b8720b610003f6223c000016a24c01080023c0000000004eba061c23c00000000071f98000fbd043fa03b0720b610003cc23c00000000043f98000fbce71d143fa036c720d610003b4484042402800203942fb4ab4223ccc58168ca2000800a1c5203942fb4ab8223c90ec8f71a2000800a1c0284047f980007b4441f9800074482e3a09d82244780f2c3c010fee9a4bfa05a44aba09ba67044bfa020e45fa0d44221a2010a29a1800a21a180020280004a29a1800a21a180020280008a29a1800a21a18002028000ca29a1800a21a180020280010a29a1800a21a180020280014a29a1800a21a180020280018a29a1800a21a18002028001ca29a1800a21a18002013a8400800202b0004a8c00800202b0100aa000800202b0104aa80080047eb0010a1c0a2400800a1c04e954eba0a562600a3c0a2400800a1c04e954eba0a4ab083640220034a806a02448090876b04de806008ac000800a1c0de8041e8006053846a00ff3823c7000000002007610001e4068300002a25d6ba0ad6d6ba08d84eba0ad20c83ffffba006f06610001586002700043f98000fbd673d1e08943f98000fbda75d1e08a2601e78b43f98000fbd879d1e08cd684e58bd68243fa07b075b1380052824c020800e0804eba0978243a088cb0826f1a43fa056cd2813231180073c190824c010800e080e080d480602e43fa053045f98000fbd873d2e089d2813231180073c126024c01380006830000ffffe083e0839483b4806c02240023c200000000203a083eb4806f0623c200000000203a0834528043fa0836739143fa083373b11800b0816d00003e7000223a081442b900000000ec89243c000000ffb2826f02220243fa0804241145fa0838158128004eba09ea5282223c00000080b4816d024282228223c0000000004cd77fff4fef003c588f428143f98000e5084ef940121416d0ba07a44eba038690ba07a04e7541f98000fbda73d0e089e78941fa07c441f0180043f98000fbd471d1e08872409081c1fc0f49e880321048c1d0814e7561ce2803988071e800044c040800ee80ee806100002879e800024c040800e08079e800064c040800e080e8800c80000023e06f06203c000023e04e752a004a806a0244800c80000008006d084a856a1a7a00601643fa041a7208610000b85080e8804a856a027a00da8020054e754a80673c7a00243c40000000b0826406d080528560f69082e088ec8843fa03c2720d610000825285e18de98d9085223c000006054c010800e080e88026004e75263cffffa0004e757fff7ff57fff7f7d7ed5731470bf7d2510002da6488b5f2772a40b8507f206ff065605a2045902b601300000feb0fd71fbdafa6ff961f88af76ff66bf713f7e3fa60fc7efe41ff0ffff9ff920000ff94ff6eff15fe69fd22fb2df8dbf6762400e2aa2602e3ab9083d4823631280048c33431280248c294834c020800e2a0d0834e75206f00042028008c670c2268007c720bb2b10c0067064ef94003978272074a3a06366702720023c100000000702feb8823c0000000004fefffe048d70cfc246f00282f0a2f2f002861000300508f6100fe4823c00000000041fa05f628107a0041fa062871b0480073ba05ebe2a8d0ba0850721bb0816f0220012c004fefff80264f741f2604d685223c00000080b6816d02968141fa05f471b0380073ba05b7e2a8d0ba081c721bb0816f02200122062c00b081670e6d0a52812e002001220760025381548054817e02e3af53877201e1a95381b3874aba07e8671841fa07e671f03a004eba0792b1870802000067040847000926c7528353826a8c2005068000000000204f610000224fef0080068500000020203c00000080ba806d00ff5e4cd70cfc4fef00204e7526004fefffe4224f2f082f0848780020487800202f094eb94006fa2e4fef001442a7487800102f032f092f0a4eb9400716e04fef00144fef001c4e75206f00042028008c67682268007c720bb2b10c00665c226f000808290000001367502029000cb0a8008866047004600c0480000000407203b08162362f00487800804eb940081c28588f221f4a8067227004b2806622226f00087008c0a90010664a41fa048c085000004239417e32b9603a4ef94003a54441fa0474327c00050c8100000002650e41fa0465327c000455810841000071904a8166084a80670a53806006b08964025280108070014e7522006a0c44810c8100825cbc650a600a0c81007b1eb264024e754feffff048d7041c283c00f63d64243c0000428976004a806a104480283c0104b979243c00003ed776012204e589b0816508203c00003fff601a7209e2a84c0200007211e2a80c8000003fff6306203c00003fff22007409e4a9d2810280000001ff45fa003075f2180073f2180292824c001800e081e281d2822004e0884c010000ec884a83670244804cd7041c4fef00104e750000080010001800200027fd2fe037263c683ed93fa63fe23ff63ffc3ffe3fff4000400040004000400040004000400040004000400040004000400040004000400003c4013d00ce007200390015010700c3000002b80527075a095c0b350ceb0e831000ffffffade4427c913303108305a005a00b170503020800c7004a001c000a000400014fefffc848ef3cfc0010246f003c286f004041f98000fbd443fa06a647fa01c87403719312300800b2116714128123cb000000002039fc07000c23c0000000005289508b53826ada72ff203a0678672420402039fc07000c90ba066e0c8007bfa480650842b900000000600873a800012f48000c2f4100042e0a068700000090740020522f022f0a2068009c4e90508f2a006700013c4257486f0001486f00042f052f0a4eb9400396084fef001026402f022f074eb94006f3e4508f7d802f022f074eb94006f1d2508f280076014a2f0001660277977003c082eb880680000000102a40703d0802000267027018b4af0004660000b2260004830000000d206f000c43f98000fbd4719071b108004a28000267044480568022680004e5882f31080048794023faa74878001041ef00144eb94002b0ac4fef000c4878ffff486f000c4879417e389c4eb940071da24fef000c2800220d2004e28092806a027200203c000000809084b2806f02220028014879417e389c4eb940071be8588f2f2f00084878ffff2f032f042f002f0c4eb9400712d84fef0018486f00084eb9401bb540588f602a2052226800944a17670422680098487800012f062f032f042f0b2f052f002f0d2f0c2f0a4e914fef002852827008b4806d00feaa4cef3cfc00104fef00384e7502010000401ec6e004020000401ec6c006040000401ec70c08050000401ec6fcfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffdfffffffefffffffffffffffffffffffffffffffffffffffefffffffefffffefafffffffdfffffffefffffffffffffffffffffffffffffefcfffffffdfefefbf1fffffdf9fffffefbfffffffefffffffffffffffffffffdf7fffffefafdfbf3dffefefbf0fffefcf5fffffefcfffffffefffffffefefdf9ecfffefcf4f5eedfb9fcfaf2dbfefcf7e6fffffdf7fffffefcfffffefcfbf8edd2fdfcf5e3dbc7b686f4eddeb7f9f5e9cbfefefaedfffffdf8fffffdf8efe5d3a8f8f3e6c5000000000000000000000000000000000000000000000000000000000000000000000000030200562b160b050300000000080000000b00000000c81a008080000c6cc565008080000bd1bf42008080000aa0b8ca01da22910833000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000071f98000fbdce088c0fc001c4dfa0092ddc0202e001823c0000000004e7577f98000fbdce08b2403e78a9483d48143fa001075b12800e98a90826a0270004e750004080c1115190000000000000000070f161e252c0009131c252e3845fa00b22216a292180024c0242e0004a2922801242e0008a4010800a1c024c0242e000ca4000800242e0010a2922801242e0014a4010800a1c024c04a806a0244804e7521767139df3d88cf7f4c015b7c8cace0ef90759713e018ec00000000018eb9bdffeda6d97e8395ac4e97ea2afc62283335040237000006b279ee653688725feb7182340a7a71963ffa5d98030b2dd423fffff75379f146978b0668716ef0fc13555fb4c3cf7f45fc05e3dc3c000002c800000000000000000000000000000000000000000000000000000000b6ba00806f0623c3000000004e752f092f00203a006e0480ffffba006e08203c0000ffff6002ec8043fa006433802a00203c8000000023c000000000201f225f4e750c800000ffff6734ed880680ffffba0090ba0032ec8073bafdc5e2a044805e806a027000721cb0816c1254807201e1a95381203c3fffffffb3804e7570004e75800000000000000000000007ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    ]
+   ]
+  }
+ },
+ "symbols": {
+  "CAL_HASH": [
+   "abs",
+   3263349363
+  ],
+  "CAL_DELAY": [
+   "abs",
+   3428325004
+  ],
+  "CAL_REVERB": [
+   "abs",
+   2431422321
+  ],
+  "SAT_CP": [
+   "abs",
+   16137572
+  ],
+  "SAT_CN": [
+   "abs",
+   17086841
+  ],
+  "SAT_RP": [
+   "abs",
+   17033
+  ],
+  "SAT_RN": [
+   "abs",
+   16087
+  ],
+  "SYM_K": [
+   "abs",
+   5794
+  ],
+  "DET_ALPHA_H": [
+   "abs",
+   17821338
+  ],
+  "SILENCE_Q8": [
+   "abs",
+   4294949376
+  ],
+  "THR_K": [
+   "abs",
+   3913
+  ],
+  "GR_CAP": [
+   "abs",
+   9184
+  ],
+  "P_CAL": [
+   "abs",
+   0
+  ],
+  "P_NOEST": [
+   "abs",
+   0
+  ],
+  "P_PROF": [
+   "abs",
+   0
+  ],
+  "P_TELEM": [
+   "abs",
+   0
+  ],
+  "RXBUF": [
+   "abs",
+   2147513408
+  ],
+  "RXSTRIDE": [
+   "abs",
+   48
+  ],
+  "VCA_L": [
+   "abs",
+   2147509194
+  ],
+  "VCA_R": [
+   "abs",
+   2147509210
+  ],
+  "MAIN_OFF": [
+   "abs",
+   2147544428
+  ],
+  "MAIN_OFF_G": [
+   "abs",
+   2147544664
+  ],
+  "VOICE_OWNER": [
+   "abs",
+   1076433208
+  ],
+  "SLOT_MAP": [
+   "abs",
+   1075770496
+  ],
+  "FX_REVERB": [
+   "abs",
+   2147515204
+  ],
+  "FX_DELAY": [
+   "abs",
+   2147515460
+  ],
+  "G_DELAY": [
+   "abs",
+   1123764916
+  ],
+  "G_REVERB": [
+   "abs",
+   1123764920
+  ],
+  "DIST": [
+   "abs",
+   2147548110
+  ],
+  "DIST_HEADROOM": [
+   "abs",
+   4624
+  ],
+  "P_THR": [
+   "abs",
+   2147548116
+  ],
+  "P_ATK": [
+   "abs",
+   2147548118
+  ],
+  "P_REL": [
+   "abs",
+   2147548120
+  ],
+  "P_RAT": [
+   "abs",
+   2147548122
+  ],
+  "P_SEQ": [
+   "abs",
+   2147548124
+  ],
+  "NCOLS": [
+   "abs",
+   128
+  ],
+  "CHUNK": [
+   "abs",
+   32
+  ],
+  "BARH": [
+   "abs",
+   32
+  ],
+  "TRACE_X": [
+   "abs",
+   0
+  ],
+  "TRACE_Y": [
+   "abs",
+   16
+  ],
+  "TRACE_R0": [
+   "abs",
+   2
+  ],
+  "TRACE_ROWS": [
+   "abs",
+   28
+  ],
+  "TRACE_THR": [
+   "abs",
+   7
+  ],
+  "DECIM": [
+   "abs",
+   2
+  ],
+  "CURVE_REF": [
+   "abs",
+   0
+  ],
+  "CAL_Q8": [
+   "abs",
+   10789
+  ],
+  "VOICE_CAL": [
+   "abs",
+   5394
+  ],
+  "VOICE_TRIM": [
+   "abs",
+   0
+  ],
+  "DB_FLOOR": [
+   "abs",
+   4294942720
+  ],
+  "COLSEED": [
+   "abs",
+   0
+  ],
+  "SYMSEL": [
+   "abs",
+   1
+  ],
+  "VIEW_SELPAGE": [
+   "abs",
+   140
+  ],
+  "VIEW_PAGEKEY": [
+   "abs",
+   136
+  ],
+  "VIEW_PAGES": [
+   "abs",
+   124
+  ],
+  "PAGE_COMP": [
+   "abs",
+   11
+  ],
+  "CYCLE_ARMED": [
+   "abs",
+   1098789561
+  ],
+  "DTCN0": [
+   "abs",
+   4228317196
+  ],
+  "UI_QUEUE": [
+   "abs",
+   1100234580
+  ],
+  "QUEUE_MAX": [
+   "abs",
+   8
+  ],
+  "QUEUE_BUSY": [
+   "abs",
+   6
+  ],
+  "LOAD_OFF": [
+   "abs",
+   243
+  ],
+  "LOAD_ON": [
+   "abs",
+   225
+  ],
+  "BGWORKER_P": [
+   "abs",
+   1100949656
+  ],
+  "BG_WAIT": [
+   "abs",
+   375
+  ],
+  "BG_NUDGE": [
+   "abs",
+   30
+  ],
+  "BITMAP_CTOR": [
+   "abs",
+   1074199086
+  ],
+  "BITMAP_BLIT": [
+   "abs",
+   1074206432
+  ],
+  "PARAM_DRAW": [
+   "abs",
+   1073977218
+  ],
+  "AUDIO_RESUME": [
+   "abs",
+   1074926614
+  ],
+  "comp_probe": [
+   ".run",
+   0
+  ],
+  "seen": [
+   ".run",
+   3896
+  ],
+  "probe_out": [
+   ".run",
+   932
+  ],
+  "aud_off": [
+   ".run",
+   3894
+  ],
+  "bg_wait": [
+   ".run",
+   2934
+  ],
+  "coef": [
+   ".run",
+   3830
+  ],
+  "trimtab": [
+   ".run",
+   1200
+  ],
+  "sc_block": [
+   ".run",
+   3132
+  ],
+  "symbias": [
+   ".run",
+   1226
+  ],
+  "interp": [
+   ".run",
+   1294
+  ],
+  "sym_b": [
+   ".run",
+   2914
+  ],
+  "satur": [
+   ".run",
+   1864
+  ],
+  "sym_sb": [
+   ".run",
+   2918
+  ],
+  "symgain": [
+   ".run",
+   1260
+  ],
+  "sym_g": [
+   ".run",
+   2922
+  ],
+  "disttab": [
+   ".run",
+   1216
+  ],
+  "peak": [
+   ".run",
+   2926
+  ],
+  "satur_sym": [
+   ".run",
+   956
+  ],
+  "sidech_l": [
+   ".run",
+   3224
+  ],
+  "sidech": [
+   ".run",
+   3228
+  ],
+  "to_db": [
+   ".run",
+   1128
+  ],
+  "sc_off": [
+   ".run",
+   3428
+  ],
+  "lvl_track": [
+   ".run",
+   3432
+  ],
+  "static_gr": [
+   ".run",
+   1018
+  ],
+  "atkscale": [
+   ".run",
+   2690
+  ],
+  "seqatk_loss": [
+   ".run",
+   3162
+  ],
+  "grstate": [
+   ".run",
+   2930
+  ],
+  "atktab": [
+   ".run",
+   2138
+  ],
+  "reltab": [
+   ".run",
+   2104
+  ],
+  "colmax": [
+   ".run",
+   2938
+  ],
+  "phase": [
+   ".run",
+   2942
+  ],
+  "hres": [
+   ".run",
+   2950
+  ],
+  "hrestab": [
+   ".run",
+   2953
+  ],
+  "trace_idx": [
+   ".run",
+   2946
+  ],
+  "trace_ring": [
+   ".run",
+   3004
+  ],
+  "lvl_close": [
+   ".run",
+   3446
+  ],
+  "thr_point": [
+   ".run",
+   970
+  ],
+  "rattab": [
+   ".run",
+   2972
+  ],
+  "softplus": [
+   ".run",
+   1078
+  ],
+  "softtab": [
+   ".run",
+   2154
+  ],
+  "log2tab": [
+   ".run",
+   2120
+  ],
+  "comp_draw": [
+   ".run",
+   1330
+  ],
+  "grmode": [
+   ".run",
+   2952
+  ],
+  "gr_row0": [
+   ".run",
+   3570
+  ],
+  "draw_labels": [
+   ".run",
+   2172
+  ],
+  "thr_mid": [
+   ".run",
+   3566
+  ],
+  "vres": [
+   ".run",
+   2951
+  ],
+  "lvl_ring": [
+   ".run",
+   3574
+  ],
+  "lvl_fill": [
+   ".run",
+   3498
+  ],
+  "draw_seg": [
+   ".run",
+   1628
+  ],
+  "STOCK_KEYS": [
+   "abs",
+   1073980740
+  ],
+  "IS_KEY_HELD": [
+   "abs",
+   1074273320
+  ],
+  "HRES_MAX": [
+   "abs",
+   5
+  ],
+  "VRES_MAX": [
+   "abs",
+   4
+  ],
+  "comp_keys": [
+   ".run",
+   1688
+  ],
+  "sattab": [
+   ".run",
+   2038
+  ],
+  "LBL_Y_TOP": [
+   "abs",
+   61
+  ],
+  "LBL_Y_BOTTOM": [
+   "abs",
+   24
+  ],
+  "SHOW_TICKS": [
+   "abs",
+   130000000
+  ],
+  "enum_last": [
+   ".run",
+   3900
+  ],
+  "enum_map": [
+   ".run",
+   2658
+  ],
+  "enum_k": [
+   ".run",
+   3904
+  ],
+  "enum_t": [
+   ".run",
+   3908
+  ],
+  "SCSEC": [
+   "abs",
+   12
+  ],
+  "SCROW": [
+   "abs",
+   28
+  ],
+  "sctab": [
+   ".run",
+   3292
+  ],
+  "seqatk": [
+   ".run",
+   3196
+  ],
+  "sc_st": [
+   ".run",
+   3404
+  ],
+  "LVL_FLOOR": [
+   "abs",
+   4294949376
+  ],
+  "lvlcol": [
+   ".run",
+   3562
+  ],
+  "comp_preview_comp_keys": [
+   ".run",
+   1688
+  ],
+  "comp_preview_comp_probe": [
+   ".run",
+   0
+  ],
+  "comp_preview_comp_draw": [
+   ".run",
+   1330
+  ],
+  "comp_preview_view_page": [
+   ".run",
+   2960
+  ]
+ },
+ "exports": [
+  "comp_preview_comp_draw",
+  "comp_preview_comp_keys",
+  "comp_preview_comp_probe",
+  "comp_preview_view_page"
+ ],
+ "imports": [
+  "core_audio_load"
+ ],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   10,
+   "abs32",
+   "sec:.run",
+   3896
+  ],
+  [
+   ".run",
+   20,
+   "abs32",
+   "sym:core_audio_load",
+   0
+  ],
+  [
+   ".run",
+   42,
+   "abs32",
+   "sec:.run",
+   3894
+  ],
+  [
+   ".run",
+   60,
+   "abs32",
+   "sec:.run",
+   3894
+  ],
+  [
+   ".run",
+   112,
+   "abs32",
+   "sec:.run",
+   2934
+  ],
+  [
+   ".run",
+   294,
+   "abs32",
+   "sec:.run",
+   2914
+  ],
+  [
+   ".run",
+   304,
+   "abs32",
+   "sec:.run",
+   2918
+  ],
+  [
+   ".run",
+   326,
+   "abs32",
+   "sec:.run",
+   2922
+  ],
+  [
+   ".run",
+   636,
+   "abs32",
+   "sec:.run",
+   2926
+  ],
+  [
+   ".run",
+   822,
+   "abs32",
+   "sec:.run",
+   2930
+  ],
+  [
+   ".run",
+   836,
+   "abs32",
+   "sec:.run",
+   2938
+  ],
+  [
+   ".run",
+   874,
+   "abs32",
+   "sec:.run",
+   2938
+  ],
+  [
+   ".run",
+   928,
+   "abs32",
+   "sec:.run",
+   2942
+  ],
+  [
+   ".run",
+   1370,
+   "abs32",
+   "sec:.run",
+   3570
+  ],
+  [
+   ".run",
+   1380,
+   "abs32",
+   "sec:.run",
+   3896
+  ],
+  [
+   ".run",
+   1414,
+   "abs32",
+   "sec:.run",
+   3566
+  ],
+  [
+   ".run",
+   2220,
+   "abs32",
+   "sec:.run",
+   3904
+  ],
+  [
+   ".run",
+   2232,
+   "abs32",
+   "sec:.run",
+   3908
+  ],
+  [
+   ".run",
+   2274,
+   "abs32",
+   "sec:.run",
+   3904
+  ],
+  [
+   ".run",
+   3156,
+   "abs32",
+   "sec:.run",
+   3428
+  ],
+  [
+   ".run",
+   3440,
+   "abs32",
+   "sec:.run",
+   3562
+  ],
+  [
+   ".run",
+   3488,
+   "abs32",
+   "sec:.run",
+   3562
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x4012140c",
+   "len": 10,
+   "stock_sha256": "fc8947b953d7ee01c0c1af709539effe9f1b97ae3dded616fb965fc2ede8b61f",
+   "new": "4ef9000000004e714e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:comp_preview_comp_probe",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x401e1460",
+   "len": 4,
+   "stock_sha256": "635b8c136d2dd923292fba076c7982e65e615a31b686d15dbbe2fc238436292d",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:comp_preview_comp_keys",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x401e1468",
+   "len": 4,
+   "stock_sha256": "61a1e381a7586627a1af26881c2009a7d1a371f9b82a42b79d41728f92dc7cff",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:comp_preview_comp_draw",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {},
+ "contribute": [
+  {
+   "to": "core_view_pages",
+   "order": 20,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:comp_preview_view_page",
+     0
+    ]
+   ],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [
+   "ui:COMP view page list (preview page)",
+   "ui:compressor page draw and keys",
+   "audio:master compressor gain-reduction estimate each block"
+  ],
+  "core": "0.7"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}

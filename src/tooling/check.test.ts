@@ -20,7 +20,7 @@ function check(failure = '', buildOnly = false) {
   try {
     const result = spawnSync(process.execPath, [runner, ...(buildOnly ? ['--build'] : [])], {
       encoding: 'utf8',
-      env: { ...process.env, npm_execpath: npm, CHECK_TEST_LOG: log, CHECK_TEST_FAIL: failure },
+      env: { ...process.env, npm_execpath: npm, CHECK_TEST_LOG: log, CHECK_TEST_FAIL: failure, MODWERK_SLOTS: '0' },
     })
     return { ...result, scripts: readFileSync(log, 'utf8').trim().split('\n') }
   } finally {
@@ -103,7 +103,8 @@ function documentationCheck(missingNotes = false, failure = '', changelogEntry =
   const application = new URL('../../scripts/changelog.mjs', import.meta.url).href
   const docs = new URL('../../scripts/docs.mjs', import.meta.url).href
   const ready = new URL('../../scripts/pr-ready.mjs', import.meta.url).href
-  writeFileSync(join(scripts, 'check.mjs'), readFileSync(runner, 'utf8').replace("'./change-scope.mjs'", JSON.stringify(scope)).replace("'./module-changelogs.mjs'", JSON.stringify(changelogs)).replace("'./changelog.mjs'", JSON.stringify(application)).replace("'./docs.mjs'", JSON.stringify(docs)).replace("'./pr-ready.mjs'", JSON.stringify(ready)))
+  const slots = new URL('../../scripts/machine-slots.mjs', import.meta.url).href
+  writeFileSync(join(scripts, 'check.mjs'), readFileSync(runner, 'utf8').replace("'./change-scope.mjs'", JSON.stringify(scope)).replace("'./module-changelogs.mjs'", JSON.stringify(changelogs)).replace("'./changelog.mjs'", JSON.stringify(application)).replace("'./docs.mjs'", JSON.stringify(docs)).replace("'./pr-ready.mjs'", JSON.stringify(ready)).replace("'./machine-slots.mjs'", JSON.stringify(slots)))
   writeFileSync(npm, `import { appendFileSync } from 'node:fs'; appendFileSync(process.env.CHECK_TEST_LOG, process.argv[3] + '\\n'); process.exitCode = process.env.CHECK_TEST_FAIL === process.argv[3] ? 1 : 0`)
   mkdirSync(join(folder, 'src/catalog'), { recursive: true })
   mkdirSync(join(folder, 'src/community/module-changelogs'), { recursive: true })
@@ -122,7 +123,7 @@ function documentationCheck(missingNotes = false, failure = '', changelogEntry =
       writeFileSync(notesPath, readFileSync(notesPath, 'utf8').replace('Correct the clock reset during playback.', 'Documentation-only: clarify the playback reset guide.'))
     }
     const result = spawnSync(process.execPath, [join(scripts, 'check.mjs'), '--base', 'HEAD'], {
-      encoding: 'utf8', env: { ...process.env, npm_execpath: npm, CHECK_TEST_LOG: log, CHECK_TEST_FAIL: failure },
+      encoding: 'utf8', env: { ...process.env, npm_execpath: npm, CHECK_TEST_LOG: log, CHECK_TEST_FAIL: failure, MODWERK_SLOTS: '0' },
     })
     return { ...result, scripts: readFileSync(log, 'utf8').trim().split('\n') }
   } finally { rmSync(folder, { recursive: true, force: true }) }
