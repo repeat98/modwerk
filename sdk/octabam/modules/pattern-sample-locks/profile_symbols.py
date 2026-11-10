@@ -16,7 +16,7 @@ def main():
     p.add_argument('--object',type=Path,required=True)
     p.add_argument('--package',type=Path,required=True)
     p.add_argument('--out',type=Path,required=True)
-    a=p.parse_args();root=Path(__file__).resolve().parents[3]
+    a=p.parse_args();root=Path(__file__).resolve().parents[4]
     tree=ast.parse((root/'sdk/runtime/loader/build.py').read_text())
     script=next(ast.literal_eval(n.value) for n in tree.body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='SCRIPT' for t in n.targets))
     parser_spec=importlib.util.spec_from_file_location('psl_recipe',root/'sdk/runtime/loader/verify_static.py')

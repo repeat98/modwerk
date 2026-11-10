@@ -556,6 +556,24 @@
       "module": "31282ae5",
       "bytes": 2852,
       "sha256": "0b54a734258945acbf74551b8920ee4bfa760d390964bd04d2877e4382e990b9"
+    },
+    {
+      "id": "pattern-sample-locks",
+      "octabam": true,
+      "reconstruction": true,
+      "usbOnly": true,
+      "version": "0.1.8-experimental",
+      "path": "octatrack-modules/pattern-sample-locks/0.1.8-experimental.mwrm",
+      "name": "SAMPLE LOCKS",
+      "unitName": "SAMPLE LOCKS",
+      "abi": 8,
+      "features": 3,
+      "sites": 3,
+      "copies": 9,
+      "fills": 0,
+      "module": "4bdbfbf9",
+      "bytes": 10048,
+      "sha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79"
     }
   ]
 }

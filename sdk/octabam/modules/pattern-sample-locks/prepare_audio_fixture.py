@@ -15,7 +15,7 @@ import struct
 import sys
 import wave
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[4]
 SDK = ROOT / 'sdk/octabam'
 sys.path.insert(0, str(SDK / 'tools'))
 import toolpath  # noqa: E402,F401

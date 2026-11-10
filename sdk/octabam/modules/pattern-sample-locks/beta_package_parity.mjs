@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url'
 import { createServer } from 'vite'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
-const root = path.resolve(here, '../../..')
+const root = path.resolve(here, '../../../..')
 const directory = path.resolve(process.argv[2] ?? '')
 assert(process.argv[2], 'Usage: node beta_package_parity.mjs PRIVATE_CANDIDATE_DIRECTORY')
 assert(!directory.startsWith(root + path.sep), 'Artifacts must stay outside Git')

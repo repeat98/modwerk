@@ -196,6 +196,11 @@
       "id": "tiempos",
       "version": "0.1.0-experimental",
       "addedAt": "2026-10-30T12:00:00Z"
+    },
+    {
+      "id": "pattern-sample-locks",
+      "version": "0.1.8-experimental",
+      "addedAt": "2026-11-10T12:00:00Z"
     }
   ]
 }

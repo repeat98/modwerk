@@ -40,8 +40,9 @@
       "screen:PART EDIT"
     ],
     "limitations": [
-      "Experimental prototype; MKII live edits passed, but full lifecycle and worst-case hardware qualification remain incomplete.",
+      "Experimental: tested on one MKII over USB; no MKI, no audio checks on this base.",
       "Under a high-load development run, SAMPLE fields on one pattern changed without explanation; the cause is unknown.",
+      "On a unit that had run a long session, the menu rows once did not appear until a power cycle; cause not found.",
       "Clear removes all SAMPLE locks on selected tracks, including manual locks.",
       "Lock preserves all existing SAMPLE locks by default, including those written by a previous Lock action.",
       "No ownership storage, origin tracking or custom lifecycle event is used.",
@@ -50,10 +51,10 @@
     "effectId": null
   },
   "resources": {
-    "recorded": "Exact source-derived runtime-pool allocation; complete stack demand unqualified",
+    "recorded": "Author's MKII, 8 Nov 2026; emulator 8 Nov 2026; exact package extent",
     "storage": {
       "label": "Storage",
-      "display": "10,832 bytes per installed package; 21,664 bytes for two copies",
+      "display": "10,832 bytes",
       "value": 10832,
       "unit": "bytes",
       "method": "static",
@@ -62,12 +63,12 @@
     },
     "processing": {
       "label": "CPU / DSP load",
-      "display": "Hardware cost unqualified",
+      "display": "Dearest press 333,805 instructions in the emulator",
       "value": null,
       "unit": "unknown",
-      "method": "unmeasured",
-      "conditions": "Unchanged candidate has scoped MKII audio/data/load evidence. A distinct probe observed maximum Clear commit-body elapsed time of 8.36 ms with USB recording, including interrupts and probe overhead; this is not an uninstrumented worst-case bound. Cached whole-instrument CPU reached 93.7%. The source-derived key-path stack subtotal is 916 bytes from system-task entry, including traced stock callees but excluding the incoming task return word and interrupts. Isolated module cost and complete system bounds remain unqualified; see TESTING.md.",
-      "source": "TESTING.md"
+      "method": "emulator",
+      "conditions": "ot_emu, exact package 3e13c46f on base 9b3ba417: one Clear on 512 SAMPLE fields, entry to return of module_key, stock callees and interrupts included. A one-shot edit on the UI task; nothing in the audio frame or on the DSP. On the MKII a separate probe measured the Clear commit body at 8.36 ms with USB recording. See evidence/performance.json and TESTING.md.",
+      "source": "evidence/performance.json"
     },
     "impact": {
       "conditions": "One USB-installed MKII 1.40C instance per module ID. Normal dispatch includes module_tick at 60/s and module_draw on each composed frame: while CLOSED, key checks code/consumed bits then normally returns, encoder exits at its phase check, tick writes api->value, and draw exits. In an open Part Edit popup, ticks check popup/source, draws paint the menu/overlay each composed frame, and key/encoder events update bounded state and request redraw. Also includes one maximum explicit Lock or Clear at a time over up to eight selected Flex/Static tracks × 64 steps (512 SAMPLE fields), stopped or playing; live/sampler recording refuses. Playback is stock; no DSP/frame callback is added. Candidate occupies the shared pool; 21,664 bytes assumes an equally sized old extent. Upload stage, base ledgers and task stack are shared; other combinations, MKI, card and high-load extremes are outside scope. Complete memory/stack qualification remains open.",
@@ -93,38 +94,113 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "On a unit reporting configuration SHA-256 `9680e9ac861ff9313ce4f7a710a37ad2aa8e9b50b2cf8c043dafa2a0b78cdffc` (no physical MAIN hash/readback was recorded), the author-reported MKII RAM trial of 0.1.8 passed: Replace OFF preserved an existing SAMPLE lock and filled an empty field; Clear removed selected manual SAMPLE locks while preserving non-SAMPLE locks and unselected data. Rollback restored the active digest and all 17 live modules; no Keep, project save, flash or power cycle. A separate high-load development report records SAMPLE fields on one pattern changing without explanation; the cause remains unknown. The 10,832-byte runtime-pool extent and the 21,664-byte total for two copies are documented. Prior lifecycle/audio/load reports retain their stated limits. Worst-case cycle bounds, complete memory accounting including shared stack demand, and first-release owner review remain open.",
+    "summary": "On the author's MKII (OS 1.40C, public beta base 9b3ba417) over USB, 8 Nov 2026, exact package 3e13c46f: with 20 kept published modules plus Sample Locks, FUNC + PART showed both actions; Lock on two patterns wrote SAMPLE locks and kept a manual SAMPLE lock and a non-SAMPLE lock; native save and reload kept both; Keep of the 21-module set survived a physical power cycle with both patterns' locks; Clear on one pattern removed its SAMPLE locks, kept the non-SAMPLE lock and stayed clear after save and reload. Earlier the same day the menu rows did not appear on a long-running unit until a power cycle (cause not found). 3 Nov: Replace OFF kept an existing lock and filled an empty field; Clear kept non-SAMPLE locks. Emulator: dearest press (Clear on 512 fields) 333,805 instructions; 40 presses while playing, no hang. Not run: MKI, audio, live-recording refusal on this base, a static cycle or stack bound. Known issue: one unexplained SAMPLE change in a high-load development run.",
     "hardwareStatus": "reported",
     "gates": [
-      "Worst-case cycles under parameter modulation and maximum load",
-      "Complete memory accounting including shared stack demand; runtime-pool extent and two-copy example documented",
-      "Owner-reviewed real-hardware evidence with actual coverage and limitations"
+      "modules/pattern-sample-locks/verify.py"
     ],
-    "documentation": {
-      "tutorial": {
-        "title": "Quick tutorial",
-        "steps": [
-          "Create a disposable pattern with sample trigs and an existing SAMPLE lock.",
-          "Open Lock, select a track and leave Replace existing OFF. Confirm: empty SAMPLE fields on sample trigs receive the Part assignment; existing locks remain unchanged.",
-          "Open Clear and select tracks. Review **INCLUDES MANUAL LOCKS** and the counts. Confirm to remove every selected SAMPLE lock. Other parameter locks remain.",
-          "Use ordinary Save Project to save the pattern. Nothing saves implicitly."
-        ]
-      },
-      "screenshots": [
-        "media/mkii-part-menu.png",
-        "media/mkii-lock-replace-on.png",
-        "media/live-removal-open-tracks.png",
-        "media/v018-mkii-live512-confirm.png",
-        "media/live-512-clear-confirm.png"
+    "evidenceRevision": "5a15ac390dac2475df3fb3b2ef64154e174b4182",
+    "qualification": {
+      "moduleVersion": "0.1.8-experimental",
+      "sourceSha256": "800a3ac6a6ac8c523ffa9d19232fc358372bed8697e0b71bbdf77418d62abdcd",
+      "imageSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+      "cycles": [
+        {
+          "processor": "coldfire",
+          "worstCase": 333805,
+          "maxConfiguration": 333805,
+          "maxInstances": 1,
+          "budget": 26600000,
+          "unit": "cycles/event",
+          "method": "emulator",
+          "conditions": {
+            "parameterExtremes": "The dearest input: CLEAR SAMPLE LOCKS confirmed on 8 tracks x 64 steps, 512 SAMPLE fields. Five cases measured (2, 64 and three 512-field fixtures); the next dearest was 326,556.",
+            "parameterModulation": "Not applicable: no continuous parameters. Encoders and arrows change bounded UI state; each change costs one redraw.",
+            "modeSwitching": "Lock and Clear, Replace existing on and off, stopped and playing; 20 rounds of Lock then Clear on 512 fields while playing, with STOP and a Part change between (40 events, no hang).",
+            "maxLoad": "One instance per module ID. The event is one module_key call on the UI task, not an interrupt. Budget: the key-press template's 26,600,000 cycles (100 ms at 266 MHz), owner-waived static bound for this version.",
+            "inputConditions": "ot_emu, executed instructions from entry to return of module_key, stock callees and interrupts included, DSP running; exact package 3e13c46f on base 9b3ba417. Instructions, not cycles: the figure is a count of executed instructions; even at ten cycles each it stays under 13 % of the budget. Not measured on hardware."
+          },
+          "report": "evidence/performance.json"
+        }
       ],
-      "screenshotStyle": "black-and-white"
-    },
-    "evidenceRevision": "5a15ac390dac2475df3fb3b2ef64154e174b4182"
+      "memory": {
+        "regions": [
+          {
+            "name": "ColdFire code and initialized data (package image)",
+            "space": "sdram",
+            "words": 8748,
+            "wordBits": 8,
+            "bytes": 8748,
+            "scope": "shared"
+          },
+          {
+            "name": "State (bss): menu, selections and edit plan",
+            "space": "sdram",
+            "words": 1328,
+            "wordBits": 8,
+            "bytes": 1328,
+            "scope": "shared"
+          },
+          {
+            "name": "Runtime module header, three site records and alignment in the base's pool",
+            "space": "sdram",
+            "words": 756,
+            "wordBits": 8,
+            "bytes": 756,
+            "scope": "shared"
+          }
+        ],
+        "perInstanceBytes": 0,
+        "sharedBytes": 10832,
+        "maxInstances": 1,
+        "totalBytes": 10832,
+        "conditions": "From the exact package 3e13c46f (10,048 bytes, 167 relocations) and the base's loader layout: one 10,832-byte extent in the shared 768 KiB runtime pool; during a replacement the old and new extents can both be held (21,664 bytes for two copies of this package). No DSP memory, no heap, no battery storage, no card files. Stack: the key path's source-derived subtotal is 916 bytes on the shared sys task, excluding interrupts; not measured on hardware.",
+        "report": "TESTING.md"
+      },
+      "hardware": {
+        "kind": "functional",
+        "status": "reported",
+        "model": "MKII",
+        "testedOn": "2026-11-08",
+        "tester": "twwwy",
+        "sourceRevision": "5a15ac390dac2475df3fb3b2ef64154e174b4182",
+        "imageSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+        "summary": "The author's MKII, OS 1.40C, flashed public Modwerk beta base 9b3ba417, driven over USB by Claude Code with whole-set offers. 8 Nov 2026, exact package 3e13c46f beside the 20 published modules the unit keeps (set 42fcda34): FUNC + PART on a Flex track's SRC page showed LOCK SAMPLES TO PATTERN and CLEAR SAMPLE LOCKS; Lock on two patterns wrote SAMPLE locks and kept a manual SAMPLE lock and a non-SAMPLE lock; native save and reload kept both; Keep of the 21-module set (self-test 21 intact, 6 DSP effects ran, 0 failed) then a physical power cycle restored all 21 records and both patterns' locks; Clear on one pattern removed its SAMPLE locks, kept the non-SAMPLE lock, and stayed clear after native save and reload while the other pattern kept its locks. 3 Nov 2026, same package in a RAM trial: Replace OFF kept an existing manual SAMPLE lock and filled an empty field; Clear removed selected SAMPLE locks and kept a non-SAMPLE lock; rollback restored the set.",
+        "limitations": [
+          "One MKII; no MKI.",
+          "Panel results are the author's reports; the USB readings (set identity, self-test, status word) were observed by the session.",
+          "Earlier on 8 Nov, on a unit that had run a long session, FUNC + PART showed only the stock rows in three trials until a power cycle, while Beat Slicer's tick signature stayed in the shared status word after its removal; cause not found, not reproduced in the emulator.",
+          "In one high-load development run, SAMPLE fields on one pattern changed without explanation; cause unknown.",
+          "Not run on this base: audio checks, live or sampler recording refusal, Apply while playing on the unit, maximum-size edits on the unit.",
+          "Cost measured in the emulator in instructions, not cycles; no static cycle bound or measured stack depth (owner-waived for this version)."
+        ],
+        "report": "TESTING.md"
+      },
+      "documentation": {
+        "tutorial": {
+          "title": "Quick tutorial",
+          "steps": [
+            "Create a disposable pattern with sample trigs and an existing SAMPLE lock.",
+            "Open Lock, select a track and leave Replace existing OFF. Confirm: empty SAMPLE fields on sample trigs receive the Part assignment; existing locks remain unchanged.",
+            "Open Clear and select tracks. Review **INCLUDES MANUAL LOCKS** and the counts. Confirm to remove every selected SAMPLE lock. Other parameter locks remain.",
+            "Use ordinary Save Project to save the pattern. Nothing saves implicitly."
+          ]
+        },
+        "screenshots": [
+          "media/mkii-part-menu.png",
+          "media/mkii-lock-replace-on.png",
+          "media/live-removal-open-tracks.png",
+          "media/v018-mkii-live512-confirm.png",
+          "media/live-512-clear-confirm.png"
+        ],
+        "screenshotStyle": "black-and-white"
+      }
+    }
   },
   "license": {
     "spdx": "MIT",
     "file": "LICENSE",
-    "declaration": "Original MIT source by twwwy. Original small lettering reused from twwwy\u2019s Beat Slicer under MIT. No stock firmware or extracted tables are included."
+    "declaration": "Original MIT source by twwwy. Original small lettering reused from twwwy’s Beat Slicer under MIT. No stock firmware or extracted tables are included."
   },
   "media": [
     {
@@ -273,7 +349,7 @@
       "For Lock, C sets Replace existing; OFF preserves every existing SAMPLE lock. Clear always includes all SAMPLE locks.",
       "YES opens level 3. Review per-track change counts; YES applies and closes on success, NO returns to level 2. Errors remain visible.",
       "NO in level 2 closes the popup. Apply keeps playback as it was; active live or sampler recording refuses the edit.",
-      "Successful operations remember each action\u2019s tracks and cursor, plus Lock replacement policy. Cancelling keeps the previous settings. Module reload or power cycling resets them."
+      "Successful operations remember each action’s tracks and cursor, plus Lock replacement policy. Cancelling keeps the previous settings. Module reload or power cycling resets them."
     ],
     "screenshots": [
       "media/v018-mkii-live512-confirm.png",

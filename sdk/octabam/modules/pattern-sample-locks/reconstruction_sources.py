@@ -8,7 +8,7 @@ from pathlib import Path
 
 from prepare_beta_candidate import load
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[4]
 HASH = lambda data: hashlib.sha256(data).hexdigest()
 
 
