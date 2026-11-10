@@ -94,6 +94,36 @@
       "path": "octatrack-modules/lofi2/0.1.1-experimental.mwrm"
     },
     {
+      "id": "ring-sc",
+      "unitName": "SC Ringmod",
+      "slots": "both",
+      "cycles": 81,
+      "cyclesKind": "executed",
+      "state": 22,
+      "requiresFeatures": [
+        "keybus"
+      ],
+      "dspClaims": [
+        "y:0:r:0x7e00:0x200",
+        "y:1:r:0x7e00:0x200",
+        "y:0:r:0x33dfe:0x202",
+        "y:1:r:0x3bdfe:0x202"
+      ],
+      "abi": 9,
+      "features": 0,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "requires": 8,
+      "claims": 4,
+      "version": "0.2.1-experimental",
+      "name": "SC Ringmod",
+      "module": "773c84aa",
+      "bytes": 2416,
+      "sha256": "91281f075b8515cf5587c308afa0bf6dad41eb25429e965682c5f3443babc803",
+      "path": "octatrack-modules/ring-sc/0.2.1-experimental.mwrm"
+    },
+    {
       "id": "previewvol",
       "octabam": true,
       "abi": 7,
@@ -245,6 +275,27 @@
       "path": "octatrack-modules/euclid/0.1.4-experimental.mwrm"
     },
     {
+      "id": "bbd",
+      "slots": "fx2",
+      "cycles": 400,
+      "cyclesKind": "executed",
+      "state": 91,
+      "buffer": 8250,
+      "octabam": true,
+      "pinned": true,
+      "abi": 8,
+      "features": 128,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "version": "0.1.2-experimental",
+      "name": "BBD Delay",
+      "module": "16332a40",
+      "bytes": 5322,
+      "sha256": "58b770699e28b5536ef77b2b78094a191f8855c5ab75fba4364aa528f8c13fbc",
+      "path": "octatrack-modules/bbd/0.1.2-experimental.mwrm"
+    },
+    {
       "id": "playmodes",
       "octabam": true,
       "standalone": true,
@@ -276,6 +327,22 @@
       "bytes": 2754,
       "sha256": "d8b871e39733ca38101c5fc42b37f3984c38a577eab393d85e3f3a6fa1f1dd00",
       "path": "octatrack-modules/mute-modes/0.2.2-experimental.mwrm"
+    },
+    {
+      "id": "sidechain-compressor",
+      "base": true,
+      "abi": 8,
+      "features": 131,
+      "sites": 2,
+      "copies": 8,
+      "fills": 0,
+      "version": "0.2.1-experimental",
+      "name": "SIDECHAIN COMP",
+      "module": "95cff696",
+      "bytes": 2636,
+      "sha256": "fd275bf2f8eb1340228d12224b3b84560584038c6637e6ed9775e50c60914f09",
+      "path": "octatrack-modules/sidechain-compressor/0.2.1-experimental.mwrm",
+      "requiredBase": "dd3827f0126b3f76b8cbc63d754c401ba84605106166fac4737ae81f486043ec"
     },
     {
       "id": "output-matrix",
@@ -489,73 +556,6 @@
       "module": "31282ae5",
       "bytes": 2852,
       "sha256": "0b54a734258945acbf74551b8920ee4bfa760d390964bd04d2877e4382e990b9"
-    },
-    {
-      "id": "ring-sc",
-      "unitName": "SC Ringmod",
-      "slots": "both",
-      "cycles": 81,
-      "cyclesKind": "executed",
-      "state": 22,
-      "requiresFeatures": [
-        "keybus"
-      ],
-      "dspClaims": [
-        "y:0:r:0x7e00:0x200",
-        "y:1:r:0x7e00:0x200",
-        "y:0:r:0x33dfe:0x202",
-        "y:1:r:0x3bdfe:0x202"
-      ],
-      "abi": 9,
-      "features": 0,
-      "sites": 0,
-      "copies": 0,
-      "fills": 0,
-      "requires": 8,
-      "claims": 4,
-      "version": "0.2.1-experimental",
-      "name": "SC Ringmod",
-      "module": "773c84aa",
-      "bytes": 2416,
-      "sha256": "91281f075b8515cf5587c308afa0bf6dad41eb25429e965682c5f3443babc803",
-      "path": "octatrack-modules/ring-sc/0.2.1-experimental.mwrm"
-    },
-    {
-      "id": "bbd",
-      "slots": "fx2",
-      "cycles": 400,
-      "cyclesKind": "executed",
-      "state": 91,
-      "buffer": 8250,
-      "octabam": true,
-      "pinned": true,
-      "abi": 8,
-      "features": 128,
-      "sites": 0,
-      "copies": 0,
-      "fills": 0,
-      "version": "0.1.2-experimental",
-      "name": "BBD Delay",
-      "module": "16332a40",
-      "bytes": 5322,
-      "sha256": "58b770699e28b5536ef77b2b78094a191f8855c5ab75fba4364aa528f8c13fbc",
-      "path": "octatrack-modules/bbd/0.1.2-experimental.mwrm"
-    },
-    {
-      "id": "sidechain-compressor",
-      "base": true,
-      "abi": 8,
-      "features": 131,
-      "sites": 2,
-      "copies": 8,
-      "fills": 0,
-      "version": "0.2.1-experimental",
-      "name": "SIDECHAIN COMP",
-      "module": "95cff696",
-      "bytes": 2636,
-      "sha256": "fd275bf2f8eb1340228d12224b3b84560584038c6637e6ed9775e50c60914f09",
-      "path": "octatrack-modules/sidechain-compressor/0.2.1-experimental.mwrm",
-      "requiredBase": "dd3827f0126b3f76b8cbc63d754c401ba84605106166fac4737ae81f486043ec"
     }
   ]
 }
