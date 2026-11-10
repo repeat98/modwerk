@@ -1,27 +1,21 @@
 {
   "schemaVersion": 1,
   "algorithm": "sha256 of canonical sorted JSON {sources,build}; UTF-8, compact separators; sources: every file under src/",
-  "sha256": "8b5700ff5d40c73b0a4331c6a1d24b50b4662b508f0b8d2910e4648424e32e3b",
+  "sha256": "786050a3f04ab70b5474947c93cf5c3e675b6ed96a4affa1dbe2fc00f4536dde",
   "sources": {
     "src/core21.h": "c4d31ee8d6d8699ed0ea2b2197712d00b3433b8a5b03865806788fea5ecc265c",
     "src/digitakt-mk1/core3.h": "9ad3512ee2ced8f9eaadcb48e5633547d861d7a71f5443d5e9f759d0b790de26",
     "src/digitakt-mk1/stock_knob.h": "4603423988cda7fa13e9344dda1b9bb606d65bf3e31d4978661a4e8ba8ae5171",
     "src/euclidean.h": "ad57a044a339510972bc566dd05a3cba890aba5200b99b7d7ae3be86e3639674",
     "src/firmware.h": "31fbe86139cc1fdcedc73bea998d1f9ae5414cc5bae765074a23ff871096ff71",
-    "src/loop.c": "ae79cac8cf652743f9910c0d527ae3d0264243c9bdfeb9998f8373d4afcc833c",
-    "src/loop.s": "b7d6b1ba1c5af5d95d014e418abbf42fcb654f9e05dcd156c25db9cff6af0f3c",
-    "src/xfade.c": "81246a9137f69e906f3d540d316130d85729b2f7e76088ce13260bd0a82cdf94",
-    "src/xfade_glue.s": "9e25e8603b719a2ebbce96b298956275452532fa369b6b96e8ab0e4f66c52b9c",
-    "src/xfade_store.c": "0ab7d8f4446d74234f37ed8151f668aef7fd7ad0f7af5a8890f470909bc364e3"
+    "src/loop.c": "689160acdf03f5723ca22f8a85325e3810df3ce511e0ca2e1da137d0b86b2980",
+    "src/loop.s": "b7d6b1ba1c5af5d95d014e418abbf42fcb654f9e05dcd156c25db9cff6af0f3c"
   },
   "build": {
     "schemaVersion": 1,
     "sources": [
       "src/loop.c",
-      "src/loop.s",
-      "src/xfade_glue.s",
-      "src/xfade.c",
-      "src/xfade_store.c"
+      "src/loop.s"
     ],
     "defsym": {},
     "cflags": [
@@ -60,31 +54,6 @@
         "event": "ev_enc",
         "fn": "ram_enc",
         "order": 70
-      },
-      {
-        "event": "ev_settings",
-        "fn": "cxf_settings",
-        "order": 60
-      },
-      {
-        "event": "ev_draw",
-        "fn": "cxf_draw",
-        "order": 60
-      },
-      {
-        "event": "ev_tick",
-        "fn": "cxf_uitick",
-        "order": 60
-      },
-      {
-        "event": "ev_key",
-        "fn": "cxf_key",
-        "order": 60
-      },
-      {
-        "event": "ev_enc",
-        "fn": "cxf_enc",
-        "order": 60
       }
     ],
     "contribute": [
@@ -106,11 +75,15 @@
     "copied": [],
     "regions": [],
     "claims": [
-      "sample:private:131",
-      "ui:SRC:LOOP&FADE waveform override",
       "machine:122",
-      "settings:CROSSFADER",
-      "ui:Internal Mixer:LEVEL"
+      "sample:private:131",
+      "ui:SRC page:LOOPER waveform override",
+      "ui:SRC page:second page, SRC pressed again on a LOOPER track",
+      "ui:SRC page:UP on a LOOPER track (capture button)",
+      "ui:SRC page:push D on a LOOPER track (trim editor)",
+      "ui:FILL:capture button while MODE is ONCE or CAPT",
+      "drive:/cfw/ramloop.a",
+      "drive:/cfw/ramloop.b"
     ],
     "requires": [
       "machine-pages"
@@ -194,34 +167,6 @@
             "target": "ram_comp",
             "len": 6,
             "stockSha256": "e7e3022192d56ac17b81ed09077c47e423304f66a3ff8866f339e3f8e158ef2a"
-          },
-          {
-            "addr": "0x40030930",
-            "len": 6,
-            "stockSha256": "e84f69da3752f168fb13858328ab536865283d736440546f4342eef7bf447df4",
-            "op": "jsr",
-            "target": "cxf_titlehook"
-          },
-          {
-            "addr": "0x400d4cec",
-            "len": 6,
-            "stockSha256": "122f9ea763ec1094a64dcf753a7b1b4a3bf87de4491f8cc0b6700a4d2b5e3e83",
-            "op": "jsr",
-            "target": "cxf_cchook"
-          },
-          {
-            "addr": "0x40071d86",
-            "len": 6,
-            "stockSha256": "66b0f0098720f74dbe53e27cae7abf5bae08e27ebc7ba86d4691c8be4d3887d6",
-            "op": "jsr",
-            "target": "cxf_mixhook"
-          },
-          {
-            "addr": "0x400c9ce4",
-            "len": 6,
-            "stockSha256": "b61f0b51edb18e2f814611848bb0f9c01922a7ff3cd7840cbe1ed79299284d8c",
-            "op": "jsr",
-            "target": "cxf_showhook"
           }
         ]
       }

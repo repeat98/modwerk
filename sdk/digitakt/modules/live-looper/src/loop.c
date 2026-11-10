@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
-/* Loop & Fade's looper, Digitakt I OS 1.54. Based on sumedho's RAM Machines (GPL-2.0-or-later):
+/* Live Looper, Digitakt I OS 1.54. Based on sumedho's RAM Machines (GPL-2.0-or-later):
  * one volatile input/main recorder, native ONESHOT playback.
  * Only the UI task allocates. The audio interrupt owns capture/publication.
  * A private descriptor avoids taking a user sample or the audition slots. */
@@ -18,7 +18,7 @@ static void ram_unlock(u32 sr){__asm__ volatile("move.w %0,%%sr"::"d"(sr):"memor
 #include "digitakt-mk1/stock_knob.h"
 #endif
 
-#define RAM_P 122                      /* Loop & Fade's machine (RAM Machines has 120-121) */
+#define RAM_P 122                      /* Live Looper's machine (RAM Machines has 120-121) */
 #define CAPACITY 1584000UL
 #define VOICE_ACTIVE(t) (*(volatile u8 *)(0x8000edecUL+94UL*(t)))
 enum { EMPTY, RECORDING, READY, NO_MEMORY, EDITING };
@@ -786,7 +786,7 @@ static const struct cm_ui play_ui={
  .abi=cm_ui_v3,.page_from=0,.group="LOOP PLAY",
  .knob={{0},{0},{0},HIDDEN,{0},{0},{0},{0}}
 };
-const struct cm_machine ram_play_machine={RAM_P,"LOOP&FADE","L&F",0,0,0,CM_UI_TAG,&play_ui};
+const struct cm_machine ram_play_machine={RAM_P,"LOOPER","LOOP",0,0,0,CM_UI_TAG,&play_ui};
 #ifndef DT_LINKABLE
 const struct cm_machine *const core_machines[]={&ram_play_machine,0};
 void (*const ev_render_voices[])(s32 *)={ram_gate,0};

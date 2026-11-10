@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "module": "digitakt/live-looper",
+  "moduleVersion": "0.1.0-experimental",
+  "sourceSha256": "786050a3f04ab70b5474947c93cf5c3e675b6ed96a4affa1dbe2fc00f4536dde",
+  "date": "2026-11-10",
+  "tester": "draadpiraat (run by Claude Code)",
+  "emulator": {
+    "name": "digiemu",
+    "revision": "c1b5735835923e328f8b4950d6ba927875e5b669",
+    "unicornLibrarySha256": "ec37f2a15f263c085eec8a2016d60f8006d77a3bd53dd28998f1145635050c47",
+    "hle": false
+  },
+  "build": {
+    "release": "1.54",
+    "modules": [
+      "core 2.1",
+      "machine-pages 1.2",
+      "live-looper 0.1.0-experimental"
+    ],
+    "linker": "Modwerk engine linkMods (scripts/link-image.mjs), no other mods",
+    "imageSha256": "39a045c7ffa10671223cb46b909a7d4a9db546e9fa57044949119f0cb5813fcb",
+    "note": "LL01"
+  },
+  "checks": [
+    {
+      "name": "machine list",
+      "result": "passed",
+      "detail": "LOOPER appears after SLICE in FUNC + SRC; YES twice puts machine 122 on track 2 (core_track_machine reads 0x7a)."
+    },
+    {
+      "name": "page 2",
+      "result": "passed",
+      "detail": "SRC on the looper's SRC page opens page 2 (MODE, MAX, SRCE, RLEV, BTN, GLOB, PLAY, LOOP); its knobs turn through the stock knob routines (MODE to CAPT, MAX to 16, PLAY to PICK)."
+    },
+    {
+      "name": "ONCE capture",
+      "result": "passed",
+      "detail": "Audio on, demo pattern playing: UP on the SRC page arms (stage 1), the next loop records (stage 2) and is handed over and locked after 64 steps (ram_locked 1, 470,208 samples)."
+    },
+    {
+      "name": "audio-block load",
+      "result": "measured",
+      "detail": "3,000 blocks, instruction-timing model at 250 MHz: core and Machine Pages alone 60.3% mean / 62.0% worst; with Live Looper idle 61.2% / 62.9%; CAPT + PICK loop, GLOB ALL 63.7% / 65.3%; CAPT + WARP 65.3% / 66.8%."
+    },
+    {
+      "name": "shared memory",
+      "result": "measured",
+      "detail": "14,632 bytes of the 128 KiB shared mod area (ramSpare 125,076 without the module, 110,444 with it)."
+    }
+  ],
+  "notTested": [
+    "Hardware: LL01 not yet run on a unit (the combined LF03 build was; see TESTING.md).",
+    "Audio content: the emulator's recording path is not checked for level, clicks or noise."
+  ]
+}

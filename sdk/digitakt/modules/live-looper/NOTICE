@@ -1,7 +1,6 @@
-Loop & Fade (Digitakt I, OS 1.54)
+Live Looper (Digitakt I, OS 1.54)
 
-The crossfader (src/xfade.c, src/xfade_store.c, src/xfade_glue.s) and the
-looper's live features are by draadpiraat, GPL-3.0-or-later (LICENSE).
+The looper's live features are by draadpiraat, GPL-3.0-or-later (LICENSE).
 
 The looper (src/loop.c, src/loop.s and the headers beside them) is based on
 sumedho's RAM Machines, GPL-2.0-or-later (LICENSE.GPL-2.0):
