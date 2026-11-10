@@ -44,7 +44,9 @@
   "claims": [
     "ui:FIX + knob on the sound pages",
     "ui:SAMPLER + knob on the sound pages",
-    "ui:FIX tap toggles fixed velocity on the release"
+    "ui:FIX tap toggles fixed velocity on the release",
+    "ui:LFO + knob on the sound pages and the FX track",
+    "ui:LFO page key shows its page on the release"
   ],
   "requires": [],
   "derive": null,

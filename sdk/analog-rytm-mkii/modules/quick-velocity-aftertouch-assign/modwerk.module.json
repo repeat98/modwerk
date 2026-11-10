@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "quick-velocity-aftertouch-assign",
   "name": "Quick Velocity+Aftertouch Assign",
-  "version": "0.1.0-experimental",
+  "version": "0.2.0-experimental",
   "machine": "analog-rytm-mkii",
   "category": "system",
   "exclusive": false,
@@ -72,7 +72,9 @@
     "claims": [
       "ui:FIX + knob on the sound pages",
       "ui:SAMPLER + knob on the sound pages",
-      "ui:FIX tap toggles fixed velocity on the release"
+      "ui:FIX tap toggles fixed velocity on the release",
+      "ui:LFO + knob on the sound pages and the FX track",
+      "ui:LFO page key shows its page on the release"
     ]
   },
   "resources": {

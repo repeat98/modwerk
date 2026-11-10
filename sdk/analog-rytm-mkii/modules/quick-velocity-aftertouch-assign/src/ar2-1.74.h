@@ -59,6 +59,57 @@
 #define LOCKER_RELATIVE_AT 0x40199202     // PerformanceParamLocker: relative values
 #define LOCKER_LOCKABLE_AT 0x400acca8     // PerformanceParamLocker: lockable(id)
 
+// The LFO: a sound's (or the FX track's) parameters 64..71 in its parameter
+// set. DST holds the destination's parameter index << 8 (the index the mod
+// slots store; 0 none); DEP 0..32767, 16384 for 0 (shown -128.00..+127.99).
+// Stock's LFO destination list (0x400aa602 -> 0x400aa280) offers the set's
+// parameters whose flags hold every bit of LFO_DEST_MASK.
+#define LFO_DEST_MASK 0x600
+#define ID_LFO_FIRST 64
+#define ID_LFO_DST 67
+#define ID_LFO_DEP 71
+#define ID_LFO_LAST 71
+#define DEP_CENTRE 16384
+#define DEP_MAX 32767
+#define SET_READ 0x28                   // parameter set: read(set, id)
+#define SET_VALUE_AT 0x400a906c         // (set, id, value, -1, 0, 1): stock's setter, clamped, with its notice
+
+// A turn, as a page view makes it (0x4003a028..0x4003a10e): the encoder
+// event (+12 the knob, +16 its clicks, +20 pushed) times the parameter's step
+// (0x4006efca: record + 4, or + 8 pushed), then the view's knob accumulator
+// at view + 144, 0x4006f1fa(accumulator, knob, delta, profile, pushed), with
+// a copy of the 28-byte turn profile the record points to at + 16; it answers
+// the parameter's change (0 for none). The accumulator keeps each knob's speed
+// and is a timer that slows it down every 10 ms (0x4006f088). The record is
+// 0x400ff5c2(id).
+#define PARAM_RECORD_AT 0x400ff5c2
+#define ENC_DELTA_AT 0x4006efca
+#define ENC_ACCUMULATE_AT 0x4006f1fa
+#define RECORD_STEP 4
+#define RECORD_STEP_PUSHED 8
+#define RECORD_PROFILE 16               // record + 16: the turn profile's address
+#define PROFILE_BYTES 28
+#define ENC_KNOB 12
+#define ENC_PUSHED 20
+#define KNOBS 8                         // the parameter knobs A..H, 0..7
+#define VIEW_ACCUMULATOR 144
+
+// The page holder, the bottom view (MainView): its key handler (vtable + 8,
+// 0x400cc928) shows a sound's pages, which it keeps as shared pointers; the
+// LFO page's view at + 248, its DEP on knob H.
+#define HOLDER_VTABLE 0x401e20d4
+#define HOLDER_LFO_VIEW 248
+#define KNOB_DEP 7
+
+// The LFO page key. Its press shows the LFO page (the page holder's key
+// handler, 0x400cc928, calls 0x400cbbd6 on a fresh press); a second press on
+// that page steps its pages on the release. The module replays a press it held
+// back through Brain::key, past ev_key, as Control In Actions does.
+#define KEY_DISPATCH_AT 0x400a0336
+#define KEY_EVENT_CTOR_AT 0x40071e7c    // (event, key, flags, 0, 127)
+#define KEY_EVENT_DTOR_AT 0x4018984e
+#define KEY_EVENT_BYTES 24
+
 #define POPUP_VTABLE 0x401d70c8
 #define PAGES_TOP_VTABLE 0x4023502c
 #define PERF_VTABLE 0x401e26c4           // PerformanceView
