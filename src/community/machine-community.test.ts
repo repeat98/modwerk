@@ -93,6 +93,15 @@ describe('machine-aware community',()=>{
     const mine=await(await call('/issues/mine','GET',undefined,reporter.token)).json();expect(mine).toHaveLength(2)
     expect(mine.every((report:{maintainer_sharing:number})=>report.maintainer_sharing===1)).toBe(true)
   })
+  it('refuses a member past their report limit before counting the address or the site',async()=>{
+    const {call,member,db}=await fixture(),reporter=await member(),post=()=>call('/modules/digitakt-digihealth/issues','POST',{...details,context},reporter.token)
+    for(let sent=0;sent<10;sent++)expect((await post()).status).toBe(201)
+    const bucket=Math.floor(Date.now()/3600000),count=async(key:string)=>db.prepare('SELECT count FROM rate_limits WHERE key=?').get(await digest(key+':'+bucket))
+    db.prepare('DELETE FROM rate_limits WHERE key=?').run(await digest('issue-ip:192.0.2.1:'+bucket)) // as if from a fresh address
+    expect((await post()).status).toBe(429)
+    expect(await count('issue-global')).toEqual({count:10})
+    expect(await count('issue-ip:192.0.2.1')).toBeUndefined()
+  })
 })
 describe('GitHub developer claims and private report access',()=>{
   it('rejects verified GitHub handles absent from the reviewed catalog before creating developer identities or sessions',async()=>{
@@ -108,7 +117,7 @@ describe('GitHub developer claims and private report access',()=>{
     const {call,githubLogin,db}=await fixture(),login=await githubLogin('IRPINA')
     expect((await(await call('/developer/auth/session','GET',undefined,'',login.token)).json()).user).toEqual({login:'irpina'})
     const user=String(db.prepare('SELECT id FROM users WHERE github_id IS NOT NULL').get()!.id),code='c'.repeat(64)
-    db.prepare('INSERT INTO developer_auth_codes VALUES(?,?,?,?)').run(await digest(code),user,await digest(login.verifier),Math.floor(Date.now()/1000)+60)
+    db.prepare('INSERT INTO developer_auth_codes(code_hash,user_id,browser_challenge,expires) VALUES(?,?,?,?)').run(await digest(code),user,await digest(login.verifier),Math.floor(Date.now()/1000)+60)
     const modules=COMMUNITY_MODULES.filter(module=>module.maintainers.includes('irpina'))
     const saved=modules.map(module=>[...module.maintainers])
     try {
@@ -153,10 +162,10 @@ describe('GitHub developer claims and private report access',()=>{
   it('rejects a wrong browser proof and expired handoffs, and permanently revokes sessions on suspension',async()=>{
     const {call,githubLogin,db}=await fixture(),login=await githubLogin()
     const user=String(db.prepare('SELECT id FROM users WHERE github_id IS NOT NULL').get()!.id),code='c'.repeat(64)
-    db.prepare('INSERT INTO developer_auth_codes VALUES(?,?,?,?)').run(await digest(code),user,await digest(login.verifier),Math.floor(Date.now()/1000)+60)
+    db.prepare('INSERT INTO developer_auth_codes(code_hash,user_id,browser_challenge,expires) VALUES(?,?,?,?)').run(await digest(code),user,await digest(login.verifier),Math.floor(Date.now()/1000)+60)
     expect((await call('/developer/auth/complete','POST',{code,verifier:'b'.repeat(64)})).status).toBe(400)
     expect((await call('/developer/auth/complete','POST',{code,verifier:login.verifier})).status).toBe(200)
-    db.prepare('INSERT INTO developer_auth_codes VALUES(?,?,?,0)').run(await digest(code),user,await digest(login.verifier))
+    db.prepare('INSERT INTO developer_auth_codes(code_hash,user_id,browser_challenge,expires) VALUES(?,?,?,0)').run(await digest(code),user,await digest(login.verifier))
     expect((await call('/developer/auth/complete','POST',{code,verifier:login.verifier})).status).toBe(400)
     const admin=(await(await call('/auth/admin','POST',{key:'e'.repeat(64)})).json()).token
     for(const value of [true,false])expect((await call('/admin/forum/users/'+user,'PATCH',{action:'suspended',value,reason:'Synthetic moderation'},'','',admin)).status).toBe(200)

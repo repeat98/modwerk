@@ -2,7 +2,10 @@
 
 How to work a real Octatrack MKII running a Modwerk development base (`build_core.py --dsp-loader --dev`) over
 USB: start the link, send steps, read the unit, change things without harming the owner's project, and keep
-runs short. Everything here was done on the owner's MKII on 11 October 2026. Why things fail is in
+runs short. The flashed beta base refuses these steps; a twin of it is `build_core.py` with the flags that
+`scripts/octatrack-base.mjs` passes for `--beta`, without the controller rows, plus `--dev` and an `--output` outside Git,
+then `npm run device -- boot` that folder. The rows are left out because Analog BD's reviewed recipe refuses a twin's
+layout, so test the base-bound modules (Analog BD, Sidechain, Output Matrix) on the tester image instead. Everything here was done on the owner's MKII on 11 October 2026. Why things fail is in
 [OCTATRACK_HARDWARE_TRAPS.md](OCTATRACK_HARDWARE_TRAPS.md).
 
 ## The rules
@@ -28,7 +31,18 @@ runs short. Everything here was done on the owner's MKII on 11 October 2026. Why
   replace both, and after the power cycle the flashed base starts with no modules (23 October 2026, MKII, flashed
   `a408c505`, twin `8dc7692c`). Before a twin, note the flashed set (`inventory`) and where its packages are; base-bound
   ones (Analog BD, Output Matrix) must be the copies bound to that base, from the commit that built it. Afterwards,
-  power-cycle and `try` each again.
+  power-cycle and `try` each again. `npm run device -- lifecycle` is such a pair too: it accepts a test module, then
+  its removal. It is not a read; never run it on a unit whose kept set matters (30 October 2026, MKII, twin `04e94075`).
+  The flashed base can also come back short of a machine with no Keep at all (30 October 2026, MKII, flashed
+  `b30d9b09`, after a twin `04e94075` whose `try` ended needs-recovery): the boot's restore loaded FM Synth but refused
+  SYNTIZ as busy while the project played (`diaglog`'s set record names the refused module; code 5), and every later
+  submission was refused ("The device kept refusing the submission"; `recover` found nothing). A RAM boot of the
+  flashed base's own image, transport stopped, restored both. Check `inventory` after any twin and any power cycle,
+  and leave the transport stopped for the first seconds after a boot.
+  To listen to a machine on a twin, start its `try` first, then load the project: a project loaded while the machine
+  was absent keeps its tracks drawn as FLEX until a trig or a Part change. Listen during the trial, and load a project
+  without the machine before it ends. A machine's trial that ends while tracks name it answers needs-recovery, and
+  what plays afterwards is not the module's sound (30 October 2026, MKII, twin `04e94075`).
 - Verify an Undo's active identity and inventory after the reply; a ready host UI alone is insufficient. On a contributor's MKII (25 October 2026, private base `52c291c2…`), a 12-module timed Undo left recovery/active unknown and standard
   rollback retries still returned needs-recovery. Stop installing and ask the owner to power-cycle when recovery cannot finish.
 - After a crash restart, or finding the unit on the flashed base with no power cycle you know of, ask for a power
@@ -44,24 +58,35 @@ before reporting success.
 
 ## Start the link
 
+**One Elektron device on the Mac's USB.** The bridge opens the first device with Elektron's vendor id that offers the Modwerk interface; before 27 October 2026 it opened the first Elektron device of any kind, so an Analog Rytm on Overbridge plugged in beside the Octatrack made every request fail ("unit went away", "no unit running the test base"). Unplug other Elektron devices before a RAM boot or a flash all the same: on that day a RAM boot staged with a Rytm attached failed part-way and hung at the logo, and the retry with the Rytm unplugged came back. Other USB audio gear too: on 10 November 2026 a RAM boot with a Zoom pedal on another hub started but never came back on USB, and with the pedal unplugged every boot did (cause not separated).
+
+**The unit must run a Modwerk base.** A unit on the stock OS or an octabam card remix offers only USB mass storage (interface class 8), so `serve` says "No unit running the test base (Modwerk vendor interface) on USB" whatever the cable, hub or other devices. Check before debugging cables: `ioreg -r -c IOUSBHostInterface -l -w0 | grep -E '"(USB Product Name|bInterfaceClass)" ='` shows the Octatrack with class 255 (the Modwerk interface) only under a base; class 8 alone means no base.
+
 Keep emulator socket paths short, including the host path behind a container bind mount. A long host output path can fail with `usb: cannot listen` even when its container alias is short.
 
 ```sh
 export PATH=~/.nvm/versions/node/v24.21.0/bin:$PATH   # Node 24; the default node is 18 and cannot load .ts
-while :; do npm run device -- serve; sleep 1; done
+while [ -f scripts/device.mjs ]; do npm run device -- serve; sleep 1; done
 ```
 
 Run it in a terminal of the owner's, or in a background task: those stop after two hours. Start it from a checkout
-that stays, not a pull request's worktree: once that is removed, the next restart (after a `boot` hands over) fails
-with `process.cwd failed`, so the link is gone and the loop fails every second (28 October 2026). It starts the USB
+that stays, not a pull request's worktree: once that is removed, the link is gone and the loop ends (a `while :` loop
+failed every second instead and held the unit, 28 October 2026). It starts the USB
 bridge, keeps one connection open, pings every 4 s (so MODWERK CONNECTED shows once) and comes back after a
 RAM boot. One process at a time: a second `serve` or a one-shot `npm run device` fights it for the bridge. To let the
 frontend MCP use the unit beside the session, start it with `serve --share /tmp/modwerk-share.sock` and the MCP with
 `--device-socket /tmp/modwerk-share.sock`: each MCP control transfer runs between the session's. Then only one of them
 stages modules at a time (the MCP's sync, or the session's `try`/`remove`); the session reads and presses keys.
-The session’s `try FILE` accepts immediately. For a temporary trial, use the MCP’s review/self-test/Undo flow or
+The session’s `try FILE` accepts immediately. For a temporary trial, use the MCP’s review/trial/Undo flow or
 the one-shot `npm run device -- try FILE` without `--accept`; do not use session `try` as an automatic Undo test.
 A private module-only trial does not inherit the flashed base's kept module set. To test companions, prepare copies bound to the exact temporary base and review/trial the complete set; a Keep on the twin is not an inventory-recovery step. A host client's own trial timer can also remove the set while its USB keepalive is still healthy. State the timeout and distinguish it from a RAM clear or restart.
+
+Keep one uploader owner throughout a retained trial. A second
+`UploadSession.connect` sends HELLO and advances the vendor sequence, while the
+first transport retains its cached counter. That can make its next ENTER reuse
+the second client's sequence and receive a stale HELLO result. Shared observers
+may read identity, inventory and load or drive panel requests; do not SUBMIT
+another upload frame while the first client retains ownership.
 
 After an unplug, a crash restart or a RAM boot, the bridge can hold a dead handle; `pkill -f usb_bridge;
 pkill -f '^node scripts/device.mjs serve'` and the loop starts both again. Anchor the pattern: without `^` it also
@@ -79,7 +104,7 @@ bridge runs in Windows Python and serves TCP; with WSL's mirrored networking (`n
 # characters cannot be passed from WSL). Then, each time:
 #   "%LOCALAPPDATA%\modwerk-usb\venv\Scripts\python.exe" -B octatrack-usb-bridge.py 47811
 # WSL:
-while :; do node scripts/device.mjs serve --socket 47811; sleep 1; done
+while [ -f scripts/device.mjs ]; do node scripts/device.mjs serve --socket 47811; sleep 1; done
 ```
 
 The bridge runs from a copy of `octatrack-usb-bridge.py` on the Windows side. Stop it with PowerShell's `Stop-Process` (find
@@ -124,7 +149,30 @@ error and moves on. macOS `nc -U` hangs up before the reply, so use the script.
 | `flash DIR` | after `boot DIR`: that base writes its own container (`DIR/NOT_FLASH_CANDIDATE.bin` deciphered) to NOR with stock's routines, verifies it and restarts on it; refuses any other base's. Not yet run on a unit; the owner's call ([traps](OCTATRACK_HARDWARE_TRAPS.md#writing-nor-over-usb)) |
 | `boot DIR`, `boot DIR 4096` | RAM boot a `build_core.py` output; the session restarts on the new base. From the flashed `usbtest9` on macOS add 4096 (bytes a frame): it times out on the default 4,095-byte frames ([traps](OCTATRACK_HARDWARE_TRAPS.md#usb-and-ep0)) |
 
+STATE's `recording` bit reports sampler recorders. Check live-sequencer recording
+separately when qualifying an edit's recording refusal; that bit alone does not
+establish whether live recording started or stopped.
+
 ## The panel, as it behaves
+
+For automated panel tests, a KEY reply confirms posted bytes, not the resulting
+stock action. Check the observed menu/transport transition and key release;
+advancing UI/DSP counters and zero DSP errors do not prove responsive controls.
+After a navigation timeout, stop sending test gestures and inspect held-key rows
+(`boot.c`'s `modwerk_post_key`) before retrying. A physical STOP acting as paste
+was observed with FUNC absent from those rows; row readback alone does not
+establish that stock's modifier state is clear.
+
+The development input helper currently splices remote packets into the physical
+panel's byte stream. A no-module emulator on base `20ed7910…` reproduced held
+TRIG5–7 and a lost FUNC release when a USB KEY arrived between a fader report's
+two bytes ([base issue #1110](https://github.com/repeat98/modwerk/issues/1110)).
+Serialize input at complete physical-report boundaries before using
+concurrent physical movement and remote injection for qualification; a still
+slider does not clear a fault left by an earlier attempt. A later fresh-RAM-boot,
+empty-inventory hardware probe also misdelivered FUNC. Initial released rows and
+a fresh boot do not establish input delivery: verify each held-row transition
+and stock modifier release, and stop on a mismatch.
 
 - **Effects.** FUNC+FX1/FX2 opens the chooser (the left list; its right side are the effect's setup knobs).
   Moving the cursor does not pick; YES does. NO closes. LEVEL scrolls. `pick:` does all of it.
@@ -174,7 +222,7 @@ To compare a Part's working and saved copies: `mem:` both addresses with length 
   inventory` lists what is installed (a contributor's MKII, beta bases `38a0bde1…` and `99336d35…`, 15 October 2026).
 - Before a test: `ui`, the bank and Part bytes, the Part's working-equals-saved check. After: restore and
   read them again.
-- Long runs (`scripts/octatrack-qualify.py`, benchmarks) in the background with a progress log; look at the
+- Long runs (`npm run device:qualify`, benchmarks) in the background with a progress log; look at the
   log instead of waiting.
 - If the screen does not change for a minute, the run is stuck: kill it, restart the session, read `ui`.
 - Audio: `~/.cache/modwerk-octatrack/tools/rec SECONDS OUT.wav Octatrack` records MAIN and CUE over USB

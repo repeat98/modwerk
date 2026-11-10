@@ -24,6 +24,9 @@ describe('perf audit', () => {
       expect(result.status).toBe(1)
       expect(result.stdout).toContain('cfmeter.py')
       expect(judgeRecord(templateRecord('dsp')).filter(line => line.state === 'fail').length).toBe(3)
+      const key = audit('template', 'key')
+      expect(key.status).toBe(0)
+      expect(JSON.parse(key.stdout)).toMatchObject({ kind: 'coldfire', trigger: 'key' })
     } finally { rmSync(dir, { recursive: true, force: true }) }
   })
 

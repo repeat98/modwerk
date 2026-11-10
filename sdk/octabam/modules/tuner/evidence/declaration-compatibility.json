@@ -1,0 +1,51 @@
+{
+  "command": [
+    "npm",
+    "run",
+    "modules:compat",
+    "--",
+    "tuner",
+    "--json"
+  ],
+  "cwd": "/Users/timothyhastie/Documents/Codex/2026-10-22/i/work/relay-062/compat-app",
+  "baseline_commit": "916ce01bbfc60f3aedd7156066354fedb521e6f4",
+  "attempt": 1,
+  "exit_code": 0,
+  "status": "PASS",
+  "duration_seconds": 1.5330357500351965,
+  "finished_utc": "2026-10-25T18:21:55.648312+00:00",
+  "stdout_bytes": 343,
+  "stdout_sha256": "a7d6b3e2f0ceaca5b968d6c6c47b9ab58f13cd8ea419a62ca1d155e399d16a50",
+  "stderr_bytes": 0,
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "combined_output_bytes": 343,
+  "combined_output_sha256": "a7d6b3e2f0ceaca5b968d6c6c47b9ab58f13cd8ea419a62ca1d155e399d16a50",
+  "raw_output_disposition": "Discarded after in-memory JSON parsing.",
+  "diagnostics": {
+    "summary": {
+      "active": 28,
+      "pairs": 378,
+      "relations": 0,
+      "events": 72,
+      "problems": 0,
+      "seconds": 1.01,
+      "notActive": [],
+      "full": [
+        {
+          "event": "ot_machines",
+          "room": 4,
+          "modules": [
+            "analog-bassdrum",
+            "poly8",
+            "synth",
+            "vector"
+          ]
+        }
+      ],
+      "pending": []
+    },
+    "problems": []
+  },
+  "retention_error": null,
+  "qualification": "Declaration compatibility only; private catalogue entry does not register or qualify a production module."
+}

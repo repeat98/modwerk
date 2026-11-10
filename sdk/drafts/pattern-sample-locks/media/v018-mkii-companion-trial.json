@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "moduleVersion": "0.1.8-experimental",
+  "packageSha256": "28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d",
+  "base": "a542a515c1955b9264712073bb40c81a492f1a993bfa991640d111eb03aaa130",
+  "hardware": "Octatrack MKII, OS 1.40C",
+  "dateLocal": "2026-10-30",
+  "started": "2026-10-29T18:39:56.842Z",
+  "finished": "2026-10-29T18:43:47.721Z",
+  "trialModules": 19,
+  "existingModulesPreserved": 18,
+  "selftest": {
+    "status": "accepted-with-load-advisory",
+    "record": {
+      "state": 3,
+      "failed": 256,
+      "modules": 19,
+      "dsp": 7,
+      "intact": 19,
+      "ran": 7,
+      "peaks": {
+        "tracks1to4": 758,
+        "tracks5to8": 855,
+        "cpu": 902
+      },
+      "done": 9,
+      "total": 9,
+      "frameGap": 65467,
+      "saved": 1,
+      "savedCount": 18,
+      "live": 19,
+      "culprit": 1019141276,
+      "culpritName": "Mini Verb",
+      "refusal": 0
+    },
+    "hardFaultBits": 0,
+    "loadAdvisoryBits": 256,
+    "interpretation": "All 19 modules intact, all 7 DSP modules ran. CPU peaked at 90.2%; shared selftest.ts treats load-only bits as advisories. This is not isolated Sample Locks cost or a zero-failure stress pass."
+  },
+  "userChoice": "Undo the addition",
+  "keepPerformed": false,
+  "flashPerformed": false,
+  "savedFilesChangedByKeep": false,
+  "undo": {
+    "verified": true,
+    "restoredModules": 18,
+    "activeIdentity": "a542a515c1955b9264712073bb40c81a492f1a993bfa991640d111eb03aaa130",
+    "wholeSetIdentity": "04a677a407a662ce743d753c1e0464c7957525eb39440f7aee58a760c152a1fd",
+    "normalKnownState": true
+  },
+  "initialHarnessAttempt": {
+    "undoVerified": true,
+    "explanation": "The first host attempt queried whole-set identity during a retained trial, where the base deliberately refuses it. Rollback restored the original 18. The repeat used the acknowledged immutable offer identity and preserved inventory; no unconfirmed command was repeated, and retry began from the verified restored baseline."
+  },
+  "limitations": [
+    "No Keep, kept physical restart or hardware preference-reset attestation.",
+    "The author selected Undo; no replacement-policy result is inferred from that choice.",
+    "Self-test load advisory cannot be attributed to Sample Locks from this measurement.",
+    "The original set was restored without changing the flashed base."
+  ]
+}

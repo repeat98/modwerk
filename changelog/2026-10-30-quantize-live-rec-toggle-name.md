@@ -1,0 +1,1 @@
+Octatrack: Quantize Live Recording is now named Quantize Live Rec Toggle, its author's name for it, on the site and in the docs. The unit's module list still shows it as Quant Live Rec, and the package is unchanged.

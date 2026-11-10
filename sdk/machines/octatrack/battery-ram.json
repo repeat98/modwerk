@@ -1,0 +1,14 @@
+{
+ "schema": 1,
+ "about": "Who holds which part of the battery RAM stock leaves free (0x100f859c-0x100fff00): it keeps its contents through a power cycle. Ranges are [from, to). sdk/tests/test_battery_ram.py checks that no two overlap, and that every address the base, a module or a draft names in that span lies in a range here: the base's in any range (it reads the others' records), a module's or draft's in one its owner (the folder's name) holds. The base's per-module store is planned, not built (docs/OCTATRACK_API.md, Keeping state); a range here is how a module keeps settings through a power cycle until then.",
+ "free": ["0x100f859c", "0x100fff00"],
+ "ranges": [
+  {"from": "0x100f8600", "to": "0x100f8f06", "owner": "playmodes", "what": "'PMNV': each pattern's play mode, 256 rows of 9 bytes and a 16-bit sum"},
+  {"from": "0x100f8ffc", "to": "0x100f9800", "owner": "micro-timing", "what": "the draft's magic long and its 2048-byte table"},
+  {"from": "0x100fc000", "to": "0x100fe000", "owner": "base", "what": "diag.c's log"},
+  {"from": "0x100fe000", "to": "0x100ff800", "owner": "base", "what": "fxmap.c's map of module effect handles"},
+  {"from": "0x100ff800", "to": "0x100ff900", "owner": "base", "what": "crash.c's record"},
+  {"from": "0x100ff900", "to": "0x100ffb00", "owner": "base", "what": "dsp.c's stall record"},
+  {"from": "0x100ffb00", "to": "0x100ffb30", "owner": "base", "what": "modset.c's boot guard"}
+ ]
+}

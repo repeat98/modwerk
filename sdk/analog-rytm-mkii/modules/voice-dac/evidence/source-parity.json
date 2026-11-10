@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "tool": "scripts/verify-elemod-source-parity.mjs",
+  "note": "Modwerk's compiled package for this folder (modwerk-source-tools: m68k-elf GCC 16.2.0, binutils 2.47), materialised against the owner's stock OS 1.74 and linked with elekloader's released core-ar2 0.7 (the core Modwerk's base is built from), compared with the same core linked with rytm2_mods v1.4's release object voice-dac-1.4-os1.74.elemod. Firmware stayed local; only hashes are recorded.",
+  "stock": {
+    "1.74": {
+      "syxSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+      "mainSha256": "34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b"
+    }
+  },
+  "testedBuilds": {},
+  "sourceSha256Method": "sha256 of `sha256sum include/ar2-1.74.inc shared/shared.s src/voice-dac.s` output (manifest evidence.sourceSha256)",
+  "cases": [
+    {
+      "machine": "analog-rytm-mkii",
+      "id": "voice-dac",
+      "release": "1.74",
+      "version": "1.4.0",
+      "compiler": {
+        "gcc": "m68k-elf-gcc (GCC) 16.2.0",
+        "assembler": "GNU assembler (GNU Binutils) 2.47.20260726",
+        "linker": "GNU ld (GNU Binutils) 2.47.20260726",
+        "node": "v24.21.0"
+      },
+      "artifactSha256": "57a88e59fbaac8c38bec5cd81fbf07ecf358f2e711902eff9128f42ced6ffccc",
+      "authorObjectSha256": "9649ce2a1fad2f0f3b7dbd4bceffdb5df44c5a3ff0075961acdc846d312a960c",
+      "ownSha256": "ac5b3353cf6401854890c38e9d3763b558c81120217480a0af200ad2e166a2a0",
+      "referenceSha256": "ac5b3353cf6401854890c38e9d3763b558c81120217480a0af200ad2e166a2a0",
+      "status": "byte-parity",
+      "sections": {
+        ".run": 11080
+      },
+      "referenceSections": {
+        ".run": 11080
+      },
+      "equalsTestedBuild": false,
+      "core": {
+        "id": "core",
+        "version": "0.7",
+        "release": "elekloader core-ar2-v0.7 (fb58292)",
+        "elemodSha256": "f1e9cb2c39eb52af15e7cf8ad25596e46f550e4f748bc9dd60d63a44da2dd9c1"
+      }
+    }
+  ]
+}

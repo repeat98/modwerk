@@ -37,6 +37,11 @@
       "label": "toonst's Digitakt II perform mods 1.0",
       "url": "https://github.com/toonst/digitakt2-perform/releases/tag/v1.0",
       "note": "Released core, perform-direct and perform-levels packages for OS 1.17. The author reports individual hardware results, including an earlier perform-direct version; the combined build is not hardware-tested. Modwerk listings remain to be added."
+    },
+    {
+      "label": "core-dt2 1.1 source (toonst's elekloader fork)",
+      "url": "https://github.com/toonst/elekloader/tree/3d7c2e3c955a73ad8c8cc9ad6daf83c1a5993f08/mods/core-dt2",
+      "note": "Adds frame values, key LEDs and project and kit data to core 1.0's events; its author reports emulator runs only. Copied unchanged into sdk/machines/digitakt-ii/elekloader/ as the base's start; the site builds core 1.0 until the base ships."
     }
   ],
   "sdk": {

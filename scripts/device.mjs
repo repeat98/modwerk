@@ -5,7 +5,7 @@
 //
 //   ~/.cache/modwerk-upstream/venv/bin/python -B scripts/octatrack-usb-bridge.py /tmp/modwerk-ot.sock &
 //   npm run device -- status
-//   while :; do npm run device -- serve [--share /tmp/modwerk-share.sock]; sleep 1; done   # one long-lived link (starts the bridge
+//   while [ -f scripts/device.mjs ]; do npm run device -- serve [--share /tmp/modwerk-share.sock]; sleep 1; done   # one long-lived link (starts the bridge
 //       if needed; --share lets the frontend MCP use the unit through it, --device-socket that path); send it
 //       scripts/device-send.py part2 pick:T1:FX2:E-Verb stats png:/tmp/s.png   # or 'try FILE', 'remove FILE', 'boot DIR'
 //   npm run device -- try MODULE.mwrm [--seconds 5] [--accept]
@@ -46,6 +46,7 @@ import { OCTATRACK } from '../vendor/elekloader/kit/src/devices.ts'
 import { UploadSession } from '../src/engine/elekloader/upload-session.ts'
 import { findVendorInterface, UsbVendorTransport } from '../src/engine/elekloader/upload-usb.ts'
 import { DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, DEVICE_LOG_REQUEST, parseDeviceLog } from '../src/engine/elekloader/device-log.ts'
+import { DSP_REPORT_NAMES as REPORT_NAMES } from '../src/community/octatrack-diagnostics-contract.ts'
 import { diagnostics, removal, runLifecycle } from '../src/dev/octatrack-usb-lifecycle.ts'
 import { Bench, benchEndpoint, device, enumerate, shareBench } from './usb-bench.mjs'
 
@@ -270,16 +271,8 @@ async function pick(track, slot, wanted) {
   if (!ok) throw new Error(wanted + ' was not admitted on T' + (track + 1) + ' FX' + slot + ' within 5 s.')
   console.log(`T${track + 1} FX${slot} ${wanted} (running ${took} ms after YES)`)
 }
-/** The loader's report words (dsp.c modwerk_dsp_report, version 11), and those printed in hex. */
-const REPORT_NAMES = ['version', 'frames', 'phase', 'job0', 'job1', 'hostFlags', 'accepted0', 'accepted1', 'rejected0', 'rejected1',
-  'errors', 'stalls', 'drained', 'residencyEnabled', 'manager', 'watchTicks', 'probesSent', 'probesAnswered', 'probesTimedOut',
-  'selRequested', 'selCompleted', 'selRefused', 'selCancelled', 'resCommits', 'resFailures', 'resRollbacks',
-  'words0', 'words1', 'earlyVisits', 'parked', 'reinit', 'missing', 'used', 'dry',
-  'frameState', 'frameBusy', 'intcIprl', 'intcImrl', 'eportPinFlagSelect', 'edmaIntErr', 'csr0csr1', 'edmaEs',
-  'edmaErrors', 'edmaEsSeen', 'missCore', 'missBits', 'missCheck', 'miss0', 'miss1', 'miss2', 'pin7', 'straddles', 'core1Sent',
-  'meterCore', 'meterBits', 'meterSerial', 'idleLeast', 'idleMost', 'idleSum', 'missed', 'mapGeneration', 'mapRead', 'mapWritten', 'setGeneration', 'setModules', 'setResult',
-  'cpu', 'dsp0Mean', 'dsp0Peak', 'dsp1Mean', 'dsp1Peak', 'buffers', 'poolUsed', 'modules', 'idleWrap', 'arenas', 'idleSum0', 'idleSum1']
 const named = w => REPORT_NAMES.map((name, i) => name + '=' + (REPORT_HEX.has(name) ? '0x' + w(i).toString(16) : ['job0', 'job1', 'missCore', 'meterCore'].includes(name) ? w(i) | 0 : w(i))).join(' ')
+/** The loader's report words printed in hex (the names: octatrack-diagnostics-contract.ts DSP_REPORT_NAMES). */
 const REPORT_HEX = new Set(['buffers', 'arenas', 'hostFlags', 'manager', 'used', 'dry', 'intcIprl', 'intcImrl', 'eportPinFlagSelect', 'edmaIntErr', 'csr0csr1', 'edmaEs', 'edmaEsSeen', 'missCheck', 'miss0', 'miss1', 'miss2'])
 /** The report, at the length the base sends: 78 words, or 81 past 32 effect ids (version 12: the used and dry
  * masks' second words and a pad at the end; fxids.h). The base answers only its own length. */
@@ -315,7 +308,9 @@ async function missing() {
 /** One connection for a whole sequence: KEY or KEY+KEY (with *N to repeat), w300 (wait ms), encC+3, fader128, ui, screen, state,
  * stats (one line: CPU, each core's mean/peak per mille and idle passes a frame), png:FILE, mem:0xADDR:LEN, part1-4, pick:T1:FX2:NAME,
  * +KEY / -KEY (press, release), crash (the last crash's record), crashtest (development bases: crash on purpose),
- * stall (the last DSP stall's record), stalltest (development bases: write one now), selftest (PROJ > MODWERK > SELF TEST, about 15 s)
+ * stall (the last DSP stall's record), stalltest (development bases: write one now), guardtest / guardtest:0 (development
+ * bases: the next start leaves the set's first module out, or holds every module, as after a crash in its restore),
+ * saved (the card set's result, modset.c: 1 restored, 10 left out, 11 held; development bases), selftest (PROJ > MODWERK > SELF TEST, about 15 s)
  * hold:N (development bases: host frames wait N seconds, as after a boot), missing (modules the project names, not installed),
  * inventory (the installed modules, INVENTORY),
  * reload (the current Part from its saved copy, through the Part menu), gap (the longest time between frames since the last gap),
@@ -345,6 +340,7 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
     }
     else if (step === 'report') console.log(named(await statusWords())) // the loader's full report (dsp.c modwerk_dsp_report)
     else if (step === 'stalltest') await devIn(18, 0, 1) // development bases: write the stall record now, nothing recovered
+    else if (step.startsWith('guardtest')) await devIn(40, step === 'guardtest:0' ? 0 : 1, 1) // development bases: the next start acts as after a crash in its restore
     else if ((m = /^storm([01])$/.exec(step))) await devIn(19, Number(m[1]), 1) // development bases: a finished PEEK goes again at once
     else if ((m = /^mask:(\d+)$/.exec(step))) await devIn(20, Math.min(Number(m[1]), 65535), 1) // development bases: interrupts off for N microseconds
     else if (step === 'missing') console.log(await missing())
@@ -392,6 +388,10 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
     // RELOAD from the Part menu, which keeps its cursor and stops at RENAME. Never PART+FUNC+PLAY: that is CLEAR.
     else if (step === 'reload') await run('FUNC+PART w600 UP w150 UP w150 UP w150 DOWN w200 YES w1000')
     else if ((m = /^hold:(\d)$/.exec(step))) await devIn(22, Number(m[1]), 1) // development bases: host frames wait N seconds, as after a boot
+    else if (step === 'saved') { // the self-test record's card set, read without starting a test (modset.c's result)
+      const b = Buffer.from(await devIn(21, 0, 96))
+      console.log(`card set ${b.readUInt32BE(60)}, ${b.readUInt32BE(64)} modules saved, ${b.readUInt32BE(68)} live`)
+    }
     else if (step === 'selftest' || step === 'selftest:trace') { // dsp.c's self-test (PROJ > MODWERK > SELF TEST): started, then read until it is done
       // :trace prints each read beside the CPU meter's latest half-second window (development bases), to see what a peak was
       const trace = step.endsWith(':trace') && (async (r, t0) => { const w = await statusWords(); console.log(`  ${((Date.now() - t0) / 1000).toFixed(1)} s phase ${r.phase} done ${r.done}/${r.total} ran ${r.ran} cpu now ${w(66)} recorded ${r.cpu} T1-4 ${w(70)} T5-8 ${w(68)}`) })

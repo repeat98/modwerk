@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "chromatic-aftertouch-fix",
+  "moduleVersion": "0.2.0-experimental",
+  "firmware": "1.74",
+  "capturedAt": "2026-11-06T12:00:00Z",
+  "imageSha256": "c1b0e115235dca9674cafc90b74bb4f95551cf5dde93bf2d423bec1d8435f319",
+  "build": "Modwerk's linker: core-ar2 0.7 + this folder's Pad Pressure Fix 0.2.0-experimental, materialised against stock OS 1.74, --version PF01",
+  "emulator": {
+    "name": "rytm-emu",
+    "repository": "https://github.com/trigcondition/rytm-emu",
+    "binary": "dtboot",
+    "settings": "rytm-emu 2ac0f1f, card image made by the boot run, JIT on"
+  },
+  "conditions": "Headless cold boot to 11000M on a fresh card with four held NO presses (8101M, 8601M, 9101M, 9601M, 12M each), saved as a snapshot; each capture resumes it. Frames are dtboot's firmware-rendered 128x64 screen at 3x, unmodified.",
+  "captures": [
+    {
+      "path": "media/port-config.png",
+      "frame": "step16_DOWN.png",
+      "plan": "DTBOOT_STEPS=1 dtboot PF01.syx --load PF01.snap --card PF01.img --instr 5500M --every 1000M --press GLOBAL@11303M, DOWN at 11703M 11953M 12203M, YES@12553M, DOWN@12903M, YES@13253M, then DOWN every 250M from 13603M, ten times (12M presses). Byte-identical to 0.1.0's CA02 capture.",
+      "sha256": "189c44b61ef9e055830c78ffda7ff5e05b657021e1b00f2b9b1d8a4e92a6999a"
+    },
+    {
+      "path": "media/retrig-menu.png",
+      "frame": "step05_YES.png",
+      "plan": "DTBOOT_STEPS=1 dtboot PF01.syx --load PF01.snap --card PF01.img --instr 1900M --every 1850M --press RTRG@11051M:800M, DOWN@11201M, DOWN@11301M, RIGHT@11401M, DOWN@11501M, YES@11601M (12M presses)",
+      "sha256": "eae5ac24d01ac34a6f55969a9856eec77d353564b72f6928df4d209db05bccaa"
+    }
+  ]
+}

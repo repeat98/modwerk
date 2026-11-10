@@ -1,0 +1,38 @@
+{
+  "captured": "2026-11-03",
+  "moduleId": "micro-timing",
+  "moduleVersion": "0.1.0-experimental",
+  "firmware": "1.40C",
+  "imageSha256": "2388ec30162fa38aae071704c6f65f6312b96c879e3175003a1ba17276b884cf",
+  "imageBuilt": "2026-11-03T00:21:03Z",
+  "emulatorSha256": "54cc5664b893b68dd12fc52678d8cd8b0c11dea7ca907b804b606b89842e46f0",
+  "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6.",
+  "palette": {
+    "on": [240, 240, 240],
+    "off": [24, 24, 24]
+  },
+  "keyMs": 150,
+  "plan": [
+    { "wait": 2000 },
+    { "press": ["YES"] },
+    { "wait": 1500 },
+    { "press": ["NO"] },
+    { "wait": 500 },
+    { "press": ["REC"] },
+    { "wait": 400 },
+    { "press": ["FUNC", "BANK"] },
+    { "wait": 600 },
+    { "press": ["DOWN"] },
+    { "wait": 300 },
+    { "capture": "ot-micro-t.png" },
+    { "press": ["DOWN"] },
+    { "press": ["DOWN"] },
+    { "press": ["DOWN"] },
+    { "wait": 300 },
+    { "capture": "ot-rec-trg.png" }
+  ],
+  "screenshots": {
+    "ot-micro-t.png": "a9dee93f6e25c7e5f9193da6905546fd3fe8f6ba6e89c913ac5e342abccc9c7c",
+    "ot-rec-trg.png": "f1b86065b6c973d103fa06adf22c5e6df3d050a9175e42d91d1381f457070afb"
+  }
+}

@@ -62,6 +62,7 @@ async function fixture(){
  db.exec(readFileSync(new URL('../../migrations/0068_report_triage.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0021_social_onboarding.sql',import.meta.url),'utf8'))
  db.exec(readFileSync(new URL('../../migrations/0063_github_actions.sql',import.meta.url),'utf8'))
+ db.exec(readFileSync(new URL('../../migrations/0087_shared_read_cache.sql',import.meta.url),'utf8'))
  const env:Env={DB:adapter(db),APP_URL:'https://octamod.test',ADMIN_KEY_SHA256:await digest(adminKey)}
  const objects=new Map<string,ArrayBuffer>()
  env.MEDIA={async put(key,bytes){objects.set(key,bytes)},async get(key){const bytes=objects.get(key);return bytes?{body:new ReadableStream({start(controller){controller.enqueue(new Uint8Array(bytes));controller.close()}})}:null},async delete(key){objects.delete(key)}}
@@ -517,6 +518,15 @@ describe('private aggregate usage statistics',()=>{
   expect((await call('/usage/events','POST',usageEvent())).status).toBe(429)
   expect(db.prepare('SELECT visitors,page_views FROM usage_daily').get()).toEqual({visitors:1,page_views:200})
  },15000) // 201 requests through the service; past 5 s on a busy CI runner
+ it('limits one address however many visitor IDs it sends',async()=>{
+  const {call,db}=await fixture()
+  expect((await call('/usage/events','POST',usageEvent('page_view',crypto.randomUUID()))).status).toBe(200)
+  db.exec('UPDATE rate_limits SET count=300') // this address's hour is used up
+  expect((await call('/usage/events','POST',usageEvent('page_view',crypto.randomUUID()))).status).toBe(429)
+  expect((await call('/usage/module-downloads','POST',{...moduleDownload(),visitor:crypto.randomUUID()})).status).toBe(429)
+  expect(db.prepare('SELECT page_views FROM usage_daily').get()).toEqual({page_views:1})
+  expect(db.prepare('SELECT COUNT(*) AS n FROM module_downloads').get()).toEqual({n:0})
+ })
 })
 
 describe('page-level traffic',()=>{
@@ -611,7 +621,7 @@ describe('public module popularity',()=>{
    const detail=await (await call('/modules/'+module.id)).json()
    expect(detail).toMatchObject({ratings:{average:value,count:1},likes:1,downloads:2})
   }
-  const updated=await (await call('/community/summary')).json()
+  const updated=await (await call('/community/summary?fresh=1')).json()
   const insights=await (await call('/admin/insights','GET',undefined,'',undefined,admin)).json()
   for(const [index,module] of digi.entries()){
    expect(updated.find((item:{module_id:string})=>item.module_id===module.id)).toMatchObject({average:index%5+1,count:1,likes:1,downloads:2})
@@ -640,7 +650,16 @@ describe('public module popularity',()=>{
   expect(db.prepare('SELECT COUNT(*) AS n FROM usage_daily').get()).toEqual({n:0})
   expect(db.prepare("SELECT COUNT(*) AS n FROM users WHERE id<>'modwerk'").get()).toEqual({n:3})
   expect((await call('/modules/miniverb/like','POST',{liked:false},'octamod_session='+tokens.author)).status).toBe(200)
-  expect((await (await call('/community/summary')).json()).find((item:{module_id:string})=>item.module_id==='miniverb').likes).toBe(0)
+  expect((await (await call('/community/summary')).json()).find((item:{module_id:string})=>item.module_id==='miniverb').likes).toBe(1) // the shared answer holds for a minute
+  expect((await (await call('/community/summary?fresh=1')).json()).find((item:{module_id:string})=>item.module_id==='miniverb').likes).toBe(0) // the member's own change asks for a fresh one
+  expect((await (await call('/community/summary')).json()).find((item:{module_id:string})=>item.module_id==='miniverb').likes).toBe(0) // which everyone then gets
+  db.prepare("UPDATE shared_read_cache SET computed_at=computed_at-60000").run()
+  db.prepare("INSERT INTO likes(module_id,user_id) VALUES('miniverb','author')").run()
+  expect((await (await call('/community/summary')).json()).find((item:{module_id:string})=>item.module_id==='miniverb').likes).toBe(1) // a minute later anyone's read counts again
+  for(let fresh=1;fresh<30;fresh++)expect((await call('/community/summary?fresh=1')).status).toBe(200) // 30 fresh recounts an hour per address
+  db.prepare("DELETE FROM likes WHERE module_id='miniverb'").run()
+  expect((await (await call('/community/summary?fresh=1')).json()).find((item:{module_id:string})=>item.module_id==='miniverb').likes).toBe(1) // past them, the shared answer
+  expect(String(db.prepare('SELECT body FROM shared_read_cache').get()!.body)).not.toMatch(/visitor|event_hash|eventId|configuration|email|author/i) // counts only
  })
  it('adds open and latest issue reports and the first download for the stability grade, but nothing from the reports',async()=>{
   const {call,db}=await fixture()

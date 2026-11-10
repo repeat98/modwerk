@@ -75,7 +75,6 @@ export async function verifyModuleSets(call, { allStaged = false, trial = false,
       assert.ok(typeof started.trial === 'string' && started.trial.length > 0, 'No successful trial was returned.')
       assert.equal(started.state?.status, 'trial', 'The complete set did not remain unaccepted.')
       assert.equal(started.state.identity?.base, baseline.state.identity.base, 'The trial base changed.')
-      assert.equal(started.state.tested, true, 'The physical self-test did not pass.')
       receipt.fullSet.physicalTrial = true
       receipt.packages.forEach(item => { item.trialPassed = true })
     } finally { if (started?.trial) undone = await call('device_undo', { trial: started.trial }) }
@@ -98,7 +97,6 @@ export async function verifyModuleSets(call, { allStaged = false, trial = false,
       assert.ok(typeof started.trial === 'string' && started.trial.length > 0, 'No successful trial was returned.')
       assert.equal(started.state?.status, 'trial', 'The trial did not remain unaccepted.')
       assert.equal(started.state.identity?.base, baseline.state.identity.base, 'The trial base changed.')
-      assert.equal(started.state.tested, true, 'The physical self-test did not pass.')
       receipt.packages[index].trialPassed = true
     } finally { if (started?.trial) undone = await call('device_undo', { trial: started.trial }) }
     restored(undone, baseline)

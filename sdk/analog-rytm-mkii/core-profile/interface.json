@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "machine": "analog-rytm-mkii",
   "interface": "0.7",
-  "status": "Upstream elekloader core-ar2 0.7 for Analog Rytm MKII OS 1.74 (the core-ar2-v0.7 pre-release): the Digitakt mk1 core with the Rytm's addresses, mod storage (0.3), parameter pages and the page keys' lists (0.4), mod machines (0.5), page functions (0.6), and write-through and the OS upgrade's restart (0.7). OS 1.74 only. Mods built for 0.3 that patch a parameter page's entry or a page key's list themselves (rytm2_mods v1.2's lfo-rnd, voice-dac, euclid-accents, velocity-humanise and comp-preview 1.0) overlap core's page sites and are refused at link; their 0.4 versions contribute entries instead.",
+  "status": "Modwerk's Analog Rytm MKII base for OS 1.74 (sdk/machines/analog-rytm-mkii/base-binding.json), built from elekloader core-ar2 0.7's source (the core-ar2-v0.7 pre-release), which gives the Digitakt mk1 core with the Rytm's addresses, mod storage (0.3), parameter pages and the page keys' lists (0.4), mod machines (0.5), page functions (0.6), and write-through and the OS upgrade's restart (0.7). Both variants add the machine list's sections (mw_machine_sections), the amp envelope's record (ev_amp_record) and a guard on the FX track's edit save, which keeps a stock-setter edit of FX words 38 to 41 in the kit's storage instead of the delay's TIME. Its send-bus variant adds the FX list mw_fx and the mw_fx_ exports, and the site builds a set holding a send effect on it; any other set builds on the plain variant, core-ar2 0.7's source with the sections alone. OS 1.74 only. Mods built for 0.3 that patch a parameter page's entry or a page key's list themselves (rytm2_mods v1.2's lfo-rnd, voice-dac, euclid-accents, velocity-humanise and comp-preview 1.0) overlap core's page sites and are refused at link; their 0.4 versions contribute entries instead.",
   "events": [
     {
       "name": "ev_tick",
@@ -70,6 +70,21 @@
       "name": "core_machines",
       "entry": 4,
       "purpose": "Pointers to struct core_machine {slot, engine, home, voices, name, label, knobs[8]} (analog-rytm-mk2/machines.h): a mod's machine in a hidden machine slot, 34 to 43 (0.5)."
+    },
+    {
+      "name": "mw_fx",
+      "entry": 4,
+      "purpose": "Pointers to struct mw_fx (modwerk/fx.h): a send effect in the Modwerk base's FX list, chosen on the FX track's SEND FX page; the base lists the first 16 valid records (Modwerk base)."
+    },
+    {
+      "name": "mw_machine_sections",
+      "entry": 4,
+      "purpose": "Four bytes, contributed as data with no relocation: a core_machines slot (34 to 43), the machine list section it files under (1 BD, 2 SD, 4 CP, 5 BT, 6 RS, 7 HH, 8 CY, 9 CB, 10 UT, 11 SY) and two zero bytes. Without one the machine sorts above BD, as on core-ar2; SY machines sort after stock's (Modwerk base, both variants)."
+    },
+    {
+      "name": "ev_amp_record",
+      "entry": 4,
+      "purpose": "Assembly entries the base calls once a voice an audio block, lowest order first, before stock's amp record stores (0x40109c24): d0 rate word and d2 level word in and out, d3 voice, a2 state, a3 frame, a4 sound slice; d1/d4/a0 free, every other register kept (modwerk/amp.h; Modwerk base, both variants). Rewriters order 10-39, followers 60-89."
     }
   ],
   "exports": [
@@ -92,6 +107,26 @@
       "name": "core_audio_load",
       "prototype": "extern volatile uint32_t core_audio_load",
       "purpose": "The audio block's load, 0-255 of a block, as core measures it (analog-rytm-mk2/load.h, 0.4)."
+    },
+    {
+      "name": "mw_fx_rate",
+      "prototype": "extern const unsigned mw_fx_rate[128]",
+      "purpose": "An LFO's phase step a frame at 48 kHz, 0.02 to 10 Hz for a 0-127 control (modwerk/fx.h, Modwerk base)."
+    },
+    {
+      "name": "mw_fx_onepole",
+      "prototype": "extern const unsigned short mw_fx_onepole[128]",
+      "purpose": "One-pole filter coefficients (Q15 at 48 kHz) for a 0-127 cutoff control (modwerk/fx.h, Modwerk base)."
+    },
+    {
+      "name": "mw_fx_tempo",
+      "prototype": "int mw_fx_tempo(void)",
+      "purpose": "The project tempo in 1/120 BPM; 120 BPM when stock's word holds no plausible value (modwerk/fx.h, Modwerk base)."
+    },
+    {
+      "name": "mw_fx_clock",
+      "prototype": "const struct mw_fx_clock *mw_fx_clock(void)",
+      "purpose": "The Rytm sequencer's time for the render: pulses from PLAY, the pattern's speed and SWING, the swung step and phase (modwerk/fx.h, Modwerk base)."
     }
   ],
   "claims": [

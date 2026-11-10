@@ -3,11 +3,21 @@
   "purpose": "Developer checkouts of upstream tooling, kept outside Git by scripts/upstream-tools.py. Not release source: nothing in them enters a Modwerk build, catalogue or release fingerprint.",
   "octabam": {
     "repository": "https://github.com/sambanks/octabam.git",
-    "commit": "bc1445238541e120fbb0ad72e90c89caf97f4d24",
-    "updated": "2026-10-29"
+    "commit": "190f5c459014b7dbc200b76116946e70337d1192",
+    "updated": "2026-11-06"
   },
   "elekloader": {
     "repository": "https://github.com/irpina/elekloader.git",
     "commitFrom": "vendor/elekloader/kit/kit.json"
+  },
+  "rytm-emu": {
+    "repository": "https://github.com/trigcondition/rytm-emu.git",
+    "commit": "2ac0f1f09e0c126d314b87de494f8da2848cfa8b",
+    "updated": "2026-11-02"
+  },
+  "ziddle": {
+    "archive": "https://berbasoft.com/ziddle/ziddle-1793487371.zip",
+    "sha256": "c45f11a0ffa51c327169c3c8c6965043882d39b4a8f5f0ac624603e5941579a3",
+    "updated": "2026-11-08"
   }
 }

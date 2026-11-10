@@ -17,7 +17,7 @@ import { communityModule, moduleThreadId } from '../src/community/modules'
 import { ensureDiscussionThread, ensureModuleThreadsOnce } from './module-threads'
 import { validateDigiIssueContext } from '../src/community/digi-issue-context'
 import { recordAnonymousCount, recordUsage, recordModuleDownload, usageStatistics } from './usage'
-import { moduleStatistics } from './module-statistics'
+import { sharedModuleStatistics } from './module-statistics'
 import { worksReportCount } from './hardware-reports'
 import { workingReportRoute } from './working-reports'
 import { membersOnline, sitePresenceRoute } from './presence'
@@ -38,6 +38,7 @@ import { publicIssueReplies } from './issue-replies'
 import { createConfigurationReport } from './configuration-reports'
 import { octatrackDiagnosticRoutes } from './octatrack-diagnostics'
 import { remoteSessionRoutes } from './remote-sessions'
+import { agentBoardRoutes } from './agent-board'
 import { IssueInputError, validateIssueContext, validateLogMissing } from '../src/community/issue-context'
 import { OT_LOG_MAX_BYTES, OtLogError, parseOtLog } from '../src/community/ot-log'
 
@@ -82,7 +83,7 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     if (path === '/api/usage/module-downloads' && request.method === 'POST') return await recordModuleDownload(request,env,db)
     if (path === '/api/usage/count' && request.method === 'POST') return await recordAnonymousCount(request,env,db)
     if (path === '/api/catalog' && request.method === 'GET') return response((await db.prepare("SELECT s.module_id,s.title,s.repository_url,s.description,s.usage,s.resource_notes,s.test_report_url,s.reviewed_at,strftime('%Y-%m-%dT%H:%M:%SZ',s.reviewed_at) AS updated_at,(SELECT strftime('%Y-%m-%dT%H:%M:%SZ', MIN(first.reviewed_at)) FROM submissions first WHERE first.module_id=s.module_id AND first.status='approved') AS added_at,u.github_login AS author FROM module_publications p JOIN submissions s ON s.id=p.submission_id JOIN users u ON u.id=s.owner_id ORDER BY s.reviewed_at DESC").all()).results)
-    if(path==='/api/community/summary'&&request.method==='GET')return response(await moduleStatistics(db))
+    if(path==='/api/community/summary'&&request.method==='GET')return response(await sharedModuleStatistics(db,url.searchParams.get('fresh')==='1'&&await throttle(db,'summary-fresh:'+(request.headers.get('CF-Connecting-IP')??'local'),30).then(()=>true,()=>false))) // past the limit, the shared answer
     if(path==='/api/community/online'&&request.method==='GET')return response(await membersOnline(db))
     if (path === '/api/announcements' && request.method === 'GET') return response({ items: await publicAnnouncementItems(db) })
     const developerAuth = await developerAuthentication(request,env,db)
@@ -100,6 +101,8 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
     if (diagnostics) return diagnostics
     const remote = await remoteSessionRoutes(request,env,db,user,adminId)
     if (remote) return remote
+    const board = await agentBoardRoutes(request,env,db,adminId)
+    if (board) return board
     const push = await pushRoutes(request,env,db,user,admin)
     if(push)return push
     const signedDeveloper = await developerUser(request,env,db)
@@ -218,6 +221,8 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
       const context=issueInput(()=>digi?validateDigiIssueContext(body.context,module.machine):validateIssueContext(body.context,log?.summary??null))
       // The log is optional; older clients may still say why there is none.
       const missing=digi||log||body.logMissing===undefined?null:issueInput(()=>validateLogMissing(body.logMissing,context as import('../src/community/issue-context').OctatrackIssueContext))
+      // Member first, so one member's refused reports never fill the address's or the site's counter.
+      await throttle(db,'issue-member:'+owner.id,10)
       await throttle(db,'issue-ip:'+(request.headers.get('CF-Connecting-IP')??'local'),10)
       // Bound stored reports across the site as well as per IP and member.
       await throttle(db,'issue-global',60)
@@ -226,7 +231,6 @@ export async function handleApi(request: Request, env: Env): Promise<Response> {
       const published=core||recipe?null:await db.prepare("SELECT u.github_login FROM module_publications p JOIN submissions s ON s.id=p.submission_id JOIN users u ON u.id=s.owner_id WHERE p.module_id=?").bind(match[1]).first<{github_login:string}>()
       const author=module?.author??core?.author??recipe?.author??published?.github_login
       if(!author)throw new HttpError(400,'No author is registered for this module.')
-      await throttle(db,'issue-member:'+owner.id,10)
       const id=crypto.randomUUID(),details=[['Steps to reproduce',steps],['Expected',expected],['Actual',actual]].filter(([,text])=>text).map(([label,text])=>label+':\n'+text).join('\n\n')
       // With GitHub configured, a public report becomes a GitHub issue and gets no forum thread of its own.
       const github=!!publicReport&&!!githubConfig(env)

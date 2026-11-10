@@ -2,12 +2,14 @@
 // Octatrack manifests' declarations, read by the cross-compatibility gate.
 //
 //   npm run module:doctor -- <module-id>
-//   npm run module:doctor -- --draft <id>  # a draft under sdk/drafts/, copied under sdk/octabam/modules/ for the run and removed after
+//   npm run module:doctor -- --draft <id>  # a draft under sdk/drafts/, copied under sdk/octabam/modules/ for the run and removed after:
+//                                          # its experimental lines (try it, share it), with the release lines listed as still to do
+//   npm run module:doctor -- --draft <id> --release  # the same draft judged as a release: every line counts
 //   npm run module:doctor -- --all        # every catalog module and every Digitakt/Digitone module; CI runs this
 //
 // Each line is a point where a module meets an existing workflow, with the command that fixes it when it fails. Run it until
 // it is green, then walk the checklist in docs/module-guides/<category>.md, which covers what a program cannot see.
-import { cpSync, existsSync, readFileSync, readdirSync, rmSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -18,10 +20,14 @@ import { COMPARED_BEFORE_RECORDS, NOT_COMPOSED } from './module-coverage.mjs'
 import { moduleSourceFingerprint } from './module-source.mjs'
 import { ANALOG_BD_DSP_COMPANIONS } from '../src/engine/analog-bd-layout.ts'
 import { moduleNativeSourceSha256 } from './module-qualification.mjs'
+import { USB_CARD_ONLY_PATH, parseUsbCardOnly } from './retained-evidence.mjs'
 import { judgeRecord, ownerWaivedPerformanceRow } from './perf-audit-analysis.mjs'
 import { LINK_DEVICES } from '../src/engine/elektron/elemod.ts'
+import { stageDraft } from './draft-stage.mjs'
+import { requireZdlBinary, zdlPath } from './zdl-binaries.mjs'
+import { moduleCardless } from '../src/catalog/usb-only.ts'
 
-// Modules first listed on or after this day carry a measured performance record (docs/module-guides/README.md, "Performance"); earlier ones keep their qualification evidence.
+// Modules first listed on or after this day carry a measured performance record (docs/MODULE_PERFORMANCE.md); earlier ones keep their qualification evidence.
 const PERFORMANCE_REQUIRED_FROM = '2026-10-07'
 // Modules first listed on or after this day declare the key gestures and screens they take (compatibility.uiClaims).
 const UI_CLAIMS_REQUIRED_FROM = '2026-10-14'
@@ -29,24 +35,25 @@ const UI_CLAIMS_REQUIRED_FROM = '2026-10-14'
 // USB lifecycle"); the card-only ones listed before it need a reviewed migration before USB rollout. CI's package --check sees a stale package, not a missing one.
 const USB_PACKAGE_REQUIRED_FROM = '2026-10-02'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const args = process.argv.slice(2), all = args.includes('--all'), draft = args.includes('--draft'), ids = args.filter(arg => !arg.startsWith('--'))
-if ((all && ids.length) || (!all && ids.length !== 1) || (all && draft)) throw new Error('Usage: npm run module:doctor -- <module-id>   or   npm run module:doctor -- --draft <id>   or   npm run module:doctor -- --all')
+const args = process.argv.slice(2), all = args.includes('--all'), draft = args.includes('--draft'), release = args.includes('--release'), ids = args.filter(arg => !arg.startsWith('--'))
+if ((all && ids.length) || (!all && ids.length !== 1) || (all && draft) || (release && !draft)) throw new Error('Usage: npm run module:doctor -- <module-id>   or   npm run module:doctor -- --draft <id> [--release]   or   npm run module:doctor -- --all')
 const json = path => JSON.parse(readFileSync(resolve(root, path), 'utf8'))
 const exists = path => existsSync(resolve(root, path))
 // A draft is checked where every gate looks: its folder is copied under sdk/octabam/modules/ for this run and removed when the run ends,
 // so nobody copies it by hand and forgets the copy. The listing lines (catalog entry, packages, native comparison, pair table) stay red for a draft.
-if (draft) {
-  const source = resolve(root, 'sdk/drafts', ids[0]), copy = resolve(root, 'sdk/octabam/modules', ids[0])
-  if (!existsSync(source)) { console.error('No draft named ' + ids[0] + ' under sdk/drafts.'); process.exit(2) }
-  if (existsSync(copy)) { console.error('sdk/octabam/modules/' + ids[0] + ' exists: check the listed module instead, or rename the draft.'); process.exit(2) }
-  cpSync(source, copy, { recursive: true })
-  process.on('exit', () => rmSync(copy, { recursive: true, force: true }))
-  for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => process.exit(signal === 'SIGINT' ? 130 : 143))
+if (draft) stageDraft(root, ids[0])
+// The owner's card-only OKs, each for one exact version of a module that would otherwise need a USB package.
+const cardOnly = exists(USB_CARD_ONLY_PATH) ? parseUsbCardOnly(json(USB_CARD_ONLY_PATH)) : []
+const catalog = json('sdk/catalog.json'), machineModules = ['digitakt', 'digitone', 'analog-rytm-mkii', 'analog-four-mkii'].flatMap(machine => exists('sdk/' + machine + '/modules') ? readdirSync(resolve(root, 'sdk', machine, 'modules'), { withFileTypes: true }).filter(entry => entry.isDirectory() && !entry.name.startsWith('_')).map(entry => ({ id: entry.name, machine, folder: 'sdk/' + machine + '/modules/' + entry.name })) : [])
+// Zoom effects (zdl) share one folder for the pedal family; each names the pedal it is developed on.
+if (exists('sdk/zoom/modules')) for (const entry of readdirSync(resolve(root, 'sdk/zoom/modules'), { withFileTypes: true })) if (entry.isDirectory() && !entry.name.startsWith('_')) {
+  const folder = 'sdk/zoom/modules/' + entry.name
+  machineModules.push({ id: entry.name, machine: exists(folder + '/modwerk.module.json') ? json(folder + '/modwerk.module.json').machine : 'zoom-ms-70cdr', folder, zdl: true })
 }
-const catalog = json('sdk/catalog.json'), machineModules = ['digitakt', 'digitone', 'analog-rytm-mkii', 'analog-four-mkii'].flatMap(machine => exists('sdk/' + machine + '/modules') ? readdirSync(resolve(root, 'sdk', machine, 'modules'), { withFileTypes: true }).filter(entry => entry.isDirectory() && !entry.name.startsWith('_')).map(entry => ({ id: entry.name, machine })) : [])
+const MODULE_FOLDERS = 'sdk/octabam/modules, sdk/digitakt/modules, sdk/digitone/modules, sdk/analog-rytm-mkii/modules, sdk/analog-four-mkii/modules or sdk/zoom/modules'
 
 // An unknown id is answered before any check runs: the rules below take seconds on a large catalogue.
-if (!all && !exists('sdk/octabam/modules/' + ids[0]) && !machineModules.some(item => item.id === ids[0])) { console.error('No module named ' + ids[0] + ' under sdk/octabam/modules, sdk/digitakt/modules, sdk/digitone/modules, sdk/analog-rytm-mkii/modules or sdk/analog-four-mkii/modules.'); process.exit(2) }
+if (!all && !exists('sdk/octabam/modules/' + ids[0]) && !machineModules.some(item => item.id === ids[0])) { console.error('No module named ' + ids[0] + ' under ' + MODULE_FOLDERS + '.'); process.exit(2) }
 
 // The module and catalog rules every PR already enforces (versions, documentation, qualification, gauges, media): run once.
 const rules = spawnSync(process.execPath, ['scripts/modules.mjs'], { cwd: root, encoding: 'utf8' })
@@ -94,12 +101,14 @@ function octatrack(id) {
   }
 
   // Cycles, a benchmark against stock and a stress run. Required for a module listed from PERFORMANCE_REQUIRED_FROM; older modules are told.
-  const approvalPath = 'sdk/' + id + '-build-approval.json'
+  const approvalPath = 'sdk/approvals/' + id + '-build-approval.json'
   const hardwareApproval = exists(approvalPath) ? json(approvalPath) : null
   const performanceRequired = entry && (entry.addedAt ?? '').slice(0, 10) >= PERFORMANCE_REQUIRED_FROM
   if (exists(folder + '/evidence/performance.json')) {
     const record = json(folder + '/evidence/performance.json'), rows = judgeRecord(record)
     // An ot_emu stress run stands in for dsp_host only where there is no dispatched instance: code reached through stock hooks.
+    // A key-press record has no flood, so a module with a MIDI path or ColdFire sound work cannot take it.
+    if (record.trigger === 'key' && ['midi-usb', 'machines'].includes(document.category)) fail('performance', "a key-press record (trigger: 'key') is for a module with no MIDI path and no frame-interrupt work, not a " + document.category + ' module', 'npm run perf:audit -- template coldfire, and measure under the flood')
     if (record.stress?.harness === 'ot_emu' && document.compatibility?.effectId != null) fail('performance', 'stress: an ot_emu run is for code reached only through stock hooks; an effect with id ' + document.compatibility.effectId + ' renders under dsp_host -guard -dirty', 'python3 tools/harness/stress_project.py, then tools/harness/pressure.py render')
     if (record.module !== id || record.version !== document.version) fail('performance', 'evidence/performance.json is for ' + record.module + '@' + record.version + ', not ' + id + '@' + document.version, 'measure again for this version, then npm run perf:audit -- check ' + folder + '/evidence/performance.json')
     else for (const row of rows.filter(item => item.state === 'fail')) {
@@ -107,7 +116,7 @@ function octatrack(id) {
       else fail('performance', row.name + ': ' + row.detail, row.fix ?? 'npm run perf:audit -- check ' + folder + '/evidence/performance.json')
     }
     if (!lines.some(line => line.name === 'performance')) ok('performance', rows.filter(item => item.name !== 'record' && !ownerWaivedPerformanceRow(record, item, hardwareApproval, nativeHashes.get(id))).map(item => item.name + ' ' + item.state).join(', ') + ' (npm run perf:audit)')
-  } else if (performanceRequired) fail('performance', 'a new module needs ' + folder + '/evidence/performance.json: worst-case cycles, a benchmark against stock and a stress run', 'npm run perf:audit -- template dsp|coldfire, measure (docs/module-guides/README.md, "Performance"), then npm run perf:audit -- check')
+  } else if (performanceRequired) fail('performance', 'a new module needs ' + folder + '/evidence/performance.json: worst-case cycles, a benchmark against stock and a stress run', 'npm run perf:audit -- template dsp|coldfire, measure (docs/MODULE_PERFORMANCE.md), then npm run perf:audit -- check')
   else info('performance', 'no evidence/performance.json. Not required before ' + PERFORMANCE_REQUIRED_FROM + '; npm run perf:audit measures the same three things')
 
   const art = readFileSync(resolve(root, 'src/components/ModulePreview.tsx'), 'utf8')
@@ -127,9 +136,10 @@ function octatrack(id) {
   else ok('module rules', 'versions, documentation, tutorial, screenshots, qualification, resource gauges (npm run modules:check)')
 
   const build = json('src/engine/assets/module-build.json'), buildable = document.build?.status !== 'pending'
-  // A C runtime module (its USB package row has "sources") has no card form: only its USB package is built.
-  const usbRow = json('src/engine/assets/octatrack-module-packages.json').packages.find(row => row.id === id), cOnly = Boolean(usbRow?.sources)
-  if (cOnly && usbRow.version === document.version) ok('packages', 'USB package at ' + document.version + ' (a C runtime module, no card form)')
+  // A C runtime module (its USB package row has "sources") or one marked "usbOnly" has no card form: only its USB package
+  // is built. The same rule as the card build's and the native comparison test's (src/catalog/usb-only.ts).
+  const usbRow = json('src/engine/assets/octatrack-module-packages.json').packages.find(row => row.id === id), cOnly = moduleCardless(id)
+  if (cOnly && usbRow.version === document.version) ok('packages', 'USB package at ' + document.version + ' (' + (usbRow.sources ? 'a C runtime' : 'a USB-only') + ' module, no card form)')
   else if (cOnly) fail('packages', 'the USB package is ' + usbRow.version + ', not ' + document.version, 'npm run octatrack:module-packages, then -- --check')
   else if (!buildable) info('packages', 'build status is pending, so the packages do not include it yet')
   else if (build.moduleVersions?.[id] !== document.version) fail('packages', 'the committed packages lack ' + id + '@' + document.version, 'rebuild and import the packages (docs/ADD_A_MODULE.md, step 4)')
@@ -137,11 +147,21 @@ function octatrack(id) {
   // The USB package beside the card build: required of every module listed from USB_PACKAGE_REQUIRED_FROM (Track Mutes and Play Start were sent back for it, #931, #947).
   if (!cOnly) {
     const usbRequired = !entry || (entry.addedAt ?? '').slice(0, 10) >= USB_PACKAGE_REQUIRED_FROM
+    const cardOnlyOk = cardOnly.find(item => item.module === id && item.version === document.version)
     if (usbRow?.version === document.version) ok('usb package', 'at ' + document.version + ' (npm run octatrack:module-packages -- --check)')
     else if (usbRow?.lagsBehind === document.version) info('usb package', 'kept at ' + usbRow.version + ' by a declared lag: ' + usbRow.lagReason)
     else if (usbRow) fail('usb package', 'the USB package is ' + usbRow.version + ', not ' + document.version, 'npm run octatrack:module-packages, then -- --check')
-    else if (usbRequired) fail('usb package', 'none. A new Octatrack module ships its USB package beside the card build: install, self-test, Keep/Undo and removal, tested on a unit', 'build it as docs/ADD_A_MODULE.md#octatrack-base-and-usb-lifecycle describes, then npm run octatrack:module-packages')
+    else if (usbRequired && cardOnlyOk) info('usb package', 'none: card-only at ' + document.version + ' by the owner\'s record in ' + USB_CARD_ONLY_PATH + ' until ' + cardOnlyOk.until + ': ' + cardOnlyOk.reason)
+    else if (usbRequired) fail('usb package', 'none. A new Octatrack module ships its USB package beside the card build: install, Keep/Undo and removal, tested on a unit', 'build it as docs/ADD_A_MODULE.md#octatrack-base-and-usb-lifecycle describes, then npm run octatrack:module-packages')
     else info('usb package', 'none: card-only, listed before ' + USB_PACKAGE_REQUIRED_FROM + '; a reviewed migration comes before USB rollout')
+  }
+
+  // The hardware record against the package that ships. A base relink rebuilds a package without new source, so a mismatch is a line
+  // to read, never a red one: run the shipped package, or say in TESTING.md why the earlier run covers it (Bar LED, #1173).
+  const hardware = document.tests?.qualification?.hardware
+  if (hardware?.status === 'reported' && usbRow?.version === document.version) {
+    if (hardware.imageSha256 === usbRow.sha256) ok('tested package', 'the hardware record names the shipped USB package (' + usbRow.sha256.slice(0, 8) + ')')
+    else info('tested package', 'the hardware record names ' + hardware.imageSha256.slice(0, 8) + ', the shipped USB package is ' + usbRow.sha256.slice(0, 8) + ': run the shipped one (npm run device:qualify), or say in TESTING.md why the earlier run covers it')
   }
 
   if (cOnly) info('native comparison', 'no card form to compare; npm run octatrack:module-packages -- --check rebuilds its USB package')
@@ -184,15 +204,25 @@ function octatrack(id) {
   return lines
 }
 
-function machineModule({ id, machine }) {
-  const lines = [], folder = 'sdk/' + machine + '/modules/' + id
+function machineModule({ id, machine, folder, zdl = false }) {
+  const lines = []
   const manifest = exists(folder + '/modwerk.module.json') ? json(folder + '/modwerk.module.json') : null
   if (!manifest) lines.push({ state: 'fail', name: 'manifest', detail: folder + '/modwerk.module.json is missing', fix: 'npm run module:new -- <id> --machine ' + machine + ' --author <login>' })
   else {
     lines.push({ state: 'ok', name: 'manifest', detail: manifest.version })
     if (!LIBRARY_CATEGORIES.includes(manifest.category)) lines.push({ state: 'fail', name: 'category guide', detail: 'category ' + manifest.category + ' is not a library category', fix: 'use one of ' + LIBRARY_CATEGORIES.join(', ') })
     else if (!exists('docs/module-guides/' + manifest.category + '.md')) lines.push({ state: 'fail', name: 'category guide', detail: 'docs/module-guides/' + manifest.category + '.md is missing', fix: 'write the guide for this category' })
-    else lines.push({ state: 'ok', name: 'category guide', detail: 'walk docs/module-guides/' + manifest.category + '.md, and the Digitakt and Digitone section in it' })
+    else lines.push({ state: 'ok', name: 'category guide', detail: 'walk docs/module-guides/' + manifest.category + '.md' + (zdl ? ' and "Create an effect" in sdk/machines/' + machine + '/README.md' : ', and the Digitakt and Digitone section in it') })
+  }
+  // A Zoom effect installs from its pinned release file, vendored without Zoom code (npm run zdl:vendor).
+  if (zdl) {
+    let problem = null
+    try { if (manifest) requireZdlBinary(root, folder, manifest) } catch (error) { problem = error.message }
+    if (manifest && !problem) lines.push({ state: 'ok', name: 'effect file', detail: zdlPath(manifest) + ' is the pinned release file' })
+    else lines.push({ state: 'fail', name: 'effect file', detail: problem ?? 'no manifest', fix: 'npm run zdl:vendor -- ' + id + ' --checker <ZoomMultistompZDL checkout> --stock-dir <your stock blobs> (docs/ZDL_MODULE_CONTRACT.md)' })
+    if (rulesProblem) lines.push({ state: 'fail', name: 'module rules', detail: 'npm run modules:check fails: ' + rulesProblem.slice(0, 220), fix: 'fix what it names' })
+    else lines.push({ state: 'ok', name: 'module rules', detail: 'contract v3 (zdl), evidence tier, documentation (npm run modules:check)' })
+    return lines
   }
   // The browser builds only from the files elekloader's catalog pins (vendor/elekloader/catalog/catalog.json); a mod's id is its catalog id.
   // elekloader names the Rytm's and the Four's devices analog-rytm-mk2 and analog-four-mk2, which their machine ids do not start with.
@@ -205,16 +235,34 @@ function machineModule({ id, machine }) {
   return lines
 }
 
-const symbol = { ok: '✓', fail: '✗', info: '·' }
-function report(title, lines) {
+// Two tiers. A draft is experimental: to try it on your unit and share it with testers, it needs these lines green (it is what it
+// says it is, it follows the category's rules and DSP traps, it installs beside every other module and the base, and nobody else
+// holds it). Every other line is what listing it needs; for a draft they read as still to do (○) until --release.
+const EXPERIMENTAL = new Set(['category guide', 'category', 'sound quality', 'dsp sources', 'cross-compatibility', 'hook migration', 'ui claims', 'conflicts', 'board claim', 'board messages'])
+const symbol = { ok: '✓', fail: '✗', info: '·', later: '○' }
+const print = line => {
+  console.log('  ' + symbol[line.state] + ' ' + line.name.padEnd(20) + line.detail)
+  if (line.fix) console.log('    ' + ''.padEnd(20) + 'fix: ' + line.fix)
+}
+function report(title, lines, tiered = false) {
   console.log('\n' + title)
-  for (const line of lines) {
-    console.log('  ' + symbol[line.state] + ' ' + line.name.padEnd(20) + line.detail)
-    if (line.fix) console.log('    ' + ''.padEnd(20) + 'fix: ' + line.fix)
+  if (!tiered) lines.forEach(print)
+  else {
+    const now = lines.filter(line => EXPERIMENTAL.has(line.name)), later = lines.filter(line => !EXPERIMENTAL.has(line.name))
+    console.log('  Experimental: to try it on your unit and share it')
+    now.forEach(print)
+    print({ state: 'info', name: 'dev build', detail: 'npm run module:dev -- ' + title.split(' ')[0] + ' builds it and tries it on your unit over USB (--watch: on every save)' })
+    console.log('  Release: before it is listed (--release judges these too)')
+    later.map(line => line.state === 'fail' ? { ...line, state: 'later' } : line).forEach(print)
+    return now.every(line => line.state !== 'fail')
   }
   return lines.every(line => line.state !== 'fail')
 }
 
+// The agent board (docs/AGENT_BOARD.md): one read per run; a new module needs your claim, and someone else's claim stops it.
+// Open questions and findings on the module or its machine are a line to read, never a red one.
+const board = await import('./agent-board.mjs'), boardView = await board.boardSnapshot({ kind: 'module' }, { messages: {} })
+const boardLines = (machine, id, folder) => [board.moduleClaimLine({ root, machine, id, folder, ...boardView }), board.moduleMessagesLine({ machine, id, ...boardView })].filter(Boolean)
 let green = true
 const octatrackIds = all ? catalog.modules.map(item => item.id) : ids.filter(id => exists('sdk/octabam/modules/' + id))
 for (const id of octatrackIds) {
@@ -226,10 +274,13 @@ const fingerprintOk = !octatrackIds.length || (await moduleSourceFingerprint(roo
 for (const id of octatrackIds) {
   const lines = octatrack(id)
   if (!fingerprintOk) lines.push({ state: 'fail', name: 'package fingerprint', detail: 'the committed packages were built from different module code', fix: 'rebuild and import the packages (docs/ADD_A_MODULE.md, step 4)' })
-  green = report(id + ' (Octatrack)', lines) && green
+  lines.push(...boardLines('octatrack', id, draft ? 'sdk/drafts/' + id : 'sdk/octabam/modules/' + id))
+  green = report(id + ' (Octatrack)', lines, draft && !release) && green
 }
 const machineIds = all ? machineModules : machineModules.filter(item => ids.includes(item.id))
-for (const item of machineIds) green = report(item.id + ' (' + item.machine + ')', machineModule(item)) && green
-if (!all && !octatrackIds.length && !machineIds.length) { console.error('No module named ' + ids[0] + ' under sdk/octabam/modules, sdk/digitakt/modules, sdk/digitone/modules, sdk/analog-rytm-mkii/modules or sdk/analog-four-mkii/modules.'); process.exit(2) }
-console.log(green ? '\nEvery integration point is green. Now walk the category checklist in docs/module-guides/.' : '\nFix the lines marked ✗, then run this again.')
+for (const item of machineIds) green = report(item.id + ' (' + item.machine + ')', [...machineModule(item), ...boardLines(item.machine, item.id, item.folder)]) && green
+if (!all && !octatrackIds.length && !machineIds.length) { console.error('No module named ' + ids[0] + ' under ' + MODULE_FOLDERS + '.'); process.exit(2) }
+const tiered = draft && !release
+if (tiered) console.log(green ? '\nThe experimental lines are green: try it with npm run module:dev, and share the branch; a tester runs the same command on it. The ○ lines are what listing it needs.' : '\nFix the lines marked ✗, then run this again. The ○ lines can wait until you list it.')
+else console.log(green ? '\nEvery integration point is green. Now walk the category checklist in docs/module-guides/.' : '\nFix the lines marked ✗, then run this again.')
 process.exitCode = green ? 0 : 1

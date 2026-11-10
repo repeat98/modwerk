@@ -1,7 +1,7 @@
 # Sophie for Digitakt
 
 Sophie is a metallic percussion synth machine for the original Digitakt
-(Mk1), OS 1.53. It began as a fixed-point adaptation of
+(Mk1), OS 1.53 and 1.54. It began as a fixed-point adaptation of
 [Sophie for Schwung](https://github.com/mestela/schwung-sophie) by [mestela](https://github.com/mestela) and evolved
 into four different models: FUSE, BOOM, PIPE
 and SHARD. It uses Digitakt's regular AMP,
@@ -10,10 +10,30 @@ is what this repository distributes.
 
 ## Changelog
 
+- **1.2.0:** SOPHIE's SRC and LFO pages are now drawn by elekloader's
+  **machine-pages** mod (core 3.0), from a page SOPHIE describes, and its
+  sound enters through machine-pages' render event. SOPHIE no longer patches
+  those firmware places itself (1.1.13 patched 17), so it shares a build with
+  the other machines made for machine-pages (checked: NEIGHBOR 0.7,
+  DIGISLICER 2.3 and digi1_mods' Digi Mono, Digi Macro and Digi Poly, with
+  digihealth, on OS 1.53 and 1.54). The pages, the knobs, their
+  ranges, defaults and value texts, and the LFO page's names are as before.
+  The render loop is also about 7 % smaller: `ds_render_core` drops from
+  936 to 863 M68k instructions and from 1,226 to 1,142 static estimated
+  cycles, with output identical sample for sample on the golden corpus.
+  These are static toolchain measurements; two active voices remain the
+  practical limit without FAST AUDIO. SOPHIE is still machine 7: projects
+  keep their SOPHIE tracks. Needs core 3.0 or later and machine-pages 1.1,
+  both in elekloader's mod shop.
+- **OS 1.54:** SOPHIE and the optional diagnostic also build for Digitakt
+  OS 1.54, from the same source and with the same behavior: one
+  `.elemod` for each OS. Needs elekloader 0.4.0 or later.
 - **S031:** BR is replaced with Sophie’s FOLD wavefolder.
 
-Get the current `.elemod` and release notes from the
-[v1.1.13 release](https://github.com/soejrd/digisophie/releases/tag/v1.1.13).
+The current `.elemod` files are in [release/](release/); 1.1.13's stay
+there for an elekloader without core 3.0 and machine-pages (it builds alone,
+as before, but not beside other machines). The 1.2.0 files are generated
+from the current sources for OS 1.53 and 1.54.
 
 ---
 
@@ -50,24 +70,30 @@ octave-step behavior (-60 to +24); ordinary turning reaches the complete
 
 ## Install: no compiler required
 
-You need only the prebuilt
-[Sophie mod](release/digisophie-1.1.13.elemod),
-[elekloader](https://github.com/irpina/elekloader/releases/latest), and your
-own original Digitakt Mk1 OS 1.53 `.syx`
+You need only the prebuilt Sophie mod for your OS
+([OS 1.53](release/digisophie-1.2.0.elemod),
+[OS 1.54](release/digisophie-1.2.0-os1.54.elemod)),
+[elekloader](https://github.com/irpina/elekloader/releases/latest)
+(0.4.0 or later for OS 1.54), and your own original Digitakt Mk1 OS 1.53 or
+1.54 `.syx`
 The `.elemod` contains this project's code, **not** Elektron's firmware.
 You do not need ColdFire tools, Python, or a source checkout to install it.
 
 1. Open elekloader and select your stock OS using **Change stock firmware**.
-2. Choose **Install from file** and select `digisophie-1.1.13.elemod`.
-   Enable SOPHIE. elekloader's built-in **core 2.1** should enable with it.
-   If your elekloader has an older core or shows a dependency error, update
-   elekloader before building.
-3. Optional: install and enable the bundled
-   [digihealth diagnostic](release/digihealth-1.0.1.elemod) too. This is
+2. Choose **Install from file** and select `digisophie-1.2.0.elemod` (OS 1.53)
+   or `digisophie-1.2.0-os1.54.elemod` (OS 1.54); elekloader refuses the
+   file made for the other OS.
+   Enable SOPHIE. It needs **core 3.0** or later and **machine-pages**, which
+   draws its pages: tick machine-pages in elekloader's mod shop (core 3.0
+   comes with it). If your elekloader shows a dependency error, update it
+   before building.
+3. Optional: install and enable the bundled digihealth diagnostic for your OS
+   ([OS 1.53](release/digihealth-1.0.1.elemod),
+   [OS 1.54](release/digihealth-1.0.1-os1.54.elemod)) too. This is
    the configuration used for the earlier S027 hardware test. It adds SYSTEM INFO
    and an opt-in FAST AUDIO setting; without it Sophie still works.
 4. Wait for elekloader's **Ready to build** check, set the four-character
-   OS version to `S033`, then choose **Build Firmware**. Save the generated
+   OS version to `S034`, then choose **Build Firmware**. Save the generated
    `.syx` on your computer.
 5. Send that `.syx` to the Digitakt with Elektron Transfer
 
@@ -81,29 +107,40 @@ ColdFire tools are needed only to change or recompile the mod. You need
 Python 3.9+, a source checkout of
 [elekloader](https://github.com/irpina/elekloader), a ColdFire cross-toolchain
 (`m68k-linux-gnu-` or `m68k-elf-` assembler, GCC and linker), and your own
-stock OS 1.53 file. From this repository:
+stock OS 1.53 or 1.54 file. From this repository:
 
 ```sh
 ELEKLOADER_CROSS=m68k-elf- sh scripts/build.sh \
-  /path/to/your/Digitakt_OS1.53.syx /path/to/elekloader
+  /path/to/your/Digitakt_OS1.54.syx /path/to/elekloader
 ```
 
-This builds core 2.1, Sophie and the optional diagnostic from source,
-lints the combination, and writes the verified custom OS to
-`out/Digitakt_OS1.53_SOPHIE_S033.syx`. To test DSP alone, run `make test`;
-`make cross-check` additionally compiles for ColdFire. Optional emulator
+This builds core, machine-pages, Sophie and the optional diagnostic from source for the
+OS of the file you give it, lints the combination, and writes the verified
+custom OS to `out/Digitakt_OS1.54_SOPHIE_S034.syx` (`1.53` for a 1.53
+file). To test DSP alone, run `make test`;
+`make cross-check ELEKLOADER=/path/to/elekloader` additionally compiles for
+ColdFire (the page uses elekloader's SDK header `digitakt-mk1/core3.h`). Optional emulator
 probes in `tests/` require [digiemu](https://github.com/irpina/digiemu).
 
 ## Use and recovery
 
 This changes firmware on the instrument. Back up projects and sounds first,
-check that your stock OS is OS 1.53 for the *original* Digitakt, and keep
+check that your stock OS is OS 1.53 or 1.54 for the *original* Digitakt, and keep
 that stock file for recovery. If you install the optional diagnostic,
 FAST AUDIO is off by default; SYSTEM INFO and FAST AUDIO can be enabled
 separately in SETTINGS. See [diagnostics](diagnostics/README.md) for the monitor.
 
 Sophie is independent of, and not endorsed by, Elektron or the estate of
 SOPHIE. It contains no Elektron firmware or samples.
+
+## Source layout
+
+The Digitakt addresses the mod uses are kept apart from the code that uses
+them: `os153.inc` / `os154.inc` for `glue.s`, `os153.h` / `os154.h` for
+`digitakt.c`. The OS 1.54 build defines `OS154` (`mod.json`, under
+`ports`), which picks the 1.54 files; the OS 1.53 build is the same code.
+Since 1.2.0 the only firmware address left is the Bitmap vtable of the
+machine menu's icon: the pages and the render point are machine-pages'.
 
 ## Source and licenses
 

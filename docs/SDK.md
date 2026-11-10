@@ -97,13 +97,13 @@ Every version records one evidence tier, bound to that version and its tested so
 | `author-hardware` | The author ran it on a real unit | the hardware report: model, OS release, date, tester, duration, summary, limitations |
 | `owner-verified` | The owner checked the actual reports on hardware | as above, plus the verifying owner |
 
-To publish, a version needs at least `author-hardware`, measured memory and load, and actual screenshots of where the mod appears. `owner-verified` is a badge shown to users, not a gate.
+To publish, a version needs at least `author-hardware`, measured memory and load, and actual screenshots of where the mod appears. CI checks it for every new library version; versions published before 9 November 2026 keep their place until their next update. `owner-verified` is a badge shown to users, not a gate.
 
 The Octatrack keeps its stricter qualification contract ([MODULE_QUALIFICATION.md](MODULE_QUALIFICATION.md)) for contract v2 modules.
 
 ## Checks
 
-`npm run check` runs machine-profile validation, the module checks for every machine, licence notices, lint, tests, type checking and the production build. Checks read manifests and text only: they never execute submitted source or read firmware. Module folders reject firmware images, dumps, build outputs, binaries, symlinks and paths that leave the folder.
+`npm run check` runs machine-profile validation, the module checks for every machine, licence notices, lint, tests, type checking and the production build. Checks never read firmware, but they do run Python from module folders: the compatibility checks and the SDK suite load every `manifest.py`, so a release runs the SDK suite in a job apart from the one that builds the site. Module folders reject firmware images, dumps, build outputs, binaries, symlinks and paths that leave the folder.
 
 ## Contributions
 

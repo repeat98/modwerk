@@ -1,0 +1,310 @@
+{
+ "elemod": 2,
+ "id": "phaser",
+ "version": "0.1.0-experimental",
+ "title": "Phaser",
+ "description": "A stereo phaser for the Rytm's send bus: 2 to 8 all-pass stages swept by an LFO you can square and slow.",
+ "category": "effects",
+ "author": "stigmagit",
+ "license": "GPL-3.0-or-later",
+ "target": {
+  "device": "analog-rytm-mk2",
+  "product": "Analog Rytm MKII",
+  "os": "1.74",
+  "syx_sha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "section3_sha256": "34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b",
+  "section3_len": 3005432
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 1547,
+   "parts": [
+    [
+     "hex",
+     "2f0a41f90000000045f90000000043f9000000004299429ab3fc0000000066f442b90000000042b90000000042b90000000043f90000000042984299b1fc0000000066f442b90000000042b900000000245f42b9000000004e754fefffbc48d77cfc206f0054203c010204082639000000002c4345f90000000042af00382f43002c43f90000000049f9000000007ba8000673a800077fa8000475a80001cbfc00034c0018002a47c5fc006679a800037da8000520057b90c9fcff06ddc1720f0686ffffffc026457a7f4c4508002a32bc00068400007fffe28d47ef003c45f9000000002f400034707f4c402802200dd0807fa800022f47003042872a402003e2a80680ffff00004a806d0001a00680ffff800020404a806d0001a2223c0001800092884c001800202f00302059484148c14c010800e880d0810c80ffff80016c0001a8203cffff800190884c040800720fe2a02202d0884c0018002340fffc700fe0a141f5181a2008b1fc000000ff6f0001b2203c000000ff71740a0090926b000100e880538726804a87660001062205283c00000000eb8941f900000000242f00342a3c0000000042af00342e39000000002a46e78a2039000000002f470030266f004c246f0048d28323c100000000222f00342e2f004806870000004049f9000000002c42ddfc0000000026371c3c242f00302f4800382c0dd4834c0608002c3c000001b822442045221ae4814c0608007c0feca0d0812c002006220690907c0f4c020800eca02c00dc9122c120c6bdc866e620060c86ffffc0016c0000fa203cffffc001222afffce281204141f00a0026c8be8a66a0e98b206f00382c0d2140fffc7001d6af00302943fffcb0af0034660000ec4cd77cfc4fef00444e7506800000000fe880538726804a876700fefe720f588a200ee2a8588b7e010680ffff00004a806c00fe6444800680ffff800020404a806c00fe62220044812041223c0001800092884c001800202f00302059484148c14c010800e880d0810c80ffff80016d00fe5c0c8000007fff6f00fe58203c00007fff720f90884c040800e2a02202d0884c0018002340fffc700fe0a141f5181a2008b1fc000000ff6e00fe524a886c00fe52428071740a0090926a00fe506000ff4a0c8600003fff6f00ff06222afffce281203c00003fff204141f00a0026c8be8a6600fe9e6000fefa720158882f410034222f00340685000000202f4800382f5c0030598820180684000000204dee002026371c3c266f00502a46246f0048242f00306000fe5c000100030003010000000000000000005350440000000132004445500000000350005348500000000100004c41470000000100004652455100000a50004644424b00000b600153544700000008320057445448000004400000000000000000000000000080578059805b805e8060806380668069806b806e807180748078807b807e808280858089808c809080948098809c80a180a580a980ae80b380b880bd80c280c780cc80d280d880de80e480ea80f080f780fe8104810c8113811a8122812a8132813a8143814c8155815e81688171817b81868190819b81a681b281be81ca81d681e381f081fe820c821a8228823782478257826782788289829a82ad82bf82d282e682fa830e8324833983508367837e839683af83c983e383fe8419843684538471848f84af84cf84f0851285358559857e85a385ca85f2861b86458670869c86c986f787278758878a87bd87f28828885f889888d3890f894c898b89cb8a0e8a518a978ade8b288b738bbf8c0e8c5f8cb28d078d5e8db78e128e6f8ecf8f318f968ffd906690d2914191b29226929d9317939394139495951a95a3962f96be975097e5987e991b99bb9a5f9b069bb19c609d129dc99e849f42a005a0cca197a267a33ba413a4f0a5d2a6b8a7a3a893a988aa82ab81ac85ad8eae9cafb0b0c9b1e7b30cb435b565b69ab7d5b917ba5ebbabbcffbe59bfb9c120c28ec402c57ec700c889ca1acbb2cd51cef8d0a8d25fd41ed5e6d7b6d98fdb71dd5ddf52e152e35be56fe78fe9baebf0ee33f084f2e2f54ef7c9fa54fcefff9d025d0531081a0b1a0e32116414b318201bae1f60233a273e2b722fdb347d39613e8d440b49e650484153455200"
+    ]
+   ]
+  },
+  ".bss": {
+   "align": 4,
+   "size": 156
+  }
+ },
+ "symbols": {
+  "reset": [
+   ".run",
+   0
+  ],
+  "ap_y": [
+   ".bss",
+   28
+  ],
+  "ap_x": [
+   ".bss",
+   92
+  ],
+  "ap_a": [
+   ".bss",
+   20
+  ],
+  "ph_last": [
+   ".bss",
+   4
+  ],
+  "ph_lag": [
+   ".bss",
+   12
+  ],
+  "render": [
+   ".run",
+   90
+  ],
+  "phase": [
+   ".bss",
+   0
+  ],
+  "allpass_a": [
+   ".run",
+   1028
+  ],
+  "phaser_fx": [
+   ".run",
+   928
+  ]
+ },
+ "exports": [
+  "phaser_fx"
+ ],
+ "imports": [
+  "mw_fx_rate"
+ ],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   4,
+   "abs32",
+   "sec:.bss",
+   60
+  ],
+  [
+   ".run",
+   10,
+   "abs32",
+   "sec:.bss",
+   92
+  ],
+  [
+   ".run",
+   16,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   26,
+   "abs32",
+   "sec:.bss",
+   60
+  ],
+  [
+   ".run",
+   34,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   40,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   46,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   52,
+   "abs32",
+   "sec:.bss",
+   124
+  ],
+  [
+   ".run",
+   62,
+   "abs32",
+   "sec:.bss",
+   92
+  ],
+  [
+   ".run",
+   70,
+   "abs32",
+   "sec:.bss",
+   24
+  ],
+  [
+   ".run",
+   76,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   84,
+   "abs32",
+   "sec:.bss",
+   16
+  ],
+  [
+   ".run",
+   110,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   118,
+   "abs32",
+   "sym:mw_fx_rate",
+   0
+  ],
+  [
+   ".run",
+   132,
+   "abs32",
+   "sec:.bss",
+   12
+  ],
+  [
+   ".run",
+   138,
+   "abs32",
+   "sec:.run",
+   1028
+  ],
+  [
+   ".run",
+   224,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   404,
+   "abs32",
+   "sec:.bss",
+   92
+  ],
+  [
+   ".run",
+   412,
+   "abs32",
+   "sec:.bss",
+   8
+  ],
+  [
+   ".run",
+   422,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   432,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   442,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   462,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   482,
+   "abs32",
+   "sec:.bss",
+   24
+  ],
+  [
+   ".run",
+   490,
+   "abs32",
+   "sec:.bss",
+   36
+  ],
+  [
+   ".run",
+   940,
+   "abs32",
+   "sec:.run",
+   1540
+  ],
+  [
+   ".run",
+   1016,
+   "abs32",
+   "sec:.run",
+   0
+  ],
+  [
+   ".run",
+   1020,
+   "abs32",
+   "sec:.run",
+   90
+  ]
+ ],
+ "sites": [],
+ "collections": {},
+ "contribute": [
+  {
+   "to": "mw_fx",
+   "order": 30,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:phaser_fx",
+     0
+    ]
+   ],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [],
+  "core": "0.7"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}

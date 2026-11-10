@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 import { compareModuleVersions } from '../catalog/versions'
 import { DEVICES_BY_ID } from '../devices/registry'
-import { FLASH_STATES, IssueInputError, type DigiIssueContext } from './issue-context'
+import { DIGI_FLASH_CHOICES, IssueInputError, type DigiIssueContext } from './issue-context'
 import { nativeModule } from './modules'
 
 /** New machines submit structured text only; the Octatrack log contract does not apply. */
@@ -13,7 +13,7 @@ export function validateDigiIssueContext(value: unknown, machine: string): DigiI
   if (!profile || !['digitakt','digitone'].includes(machine) || item.machine !== machine) return fail('The report belongs to a different machine.')
   if (Object.keys(item).some(key => !['machine','model','flash','os','moduleVersion','modules','keepStockFx2','build'].includes(key))) return fail('Unexpected report context field. Files and firmware are not accepted.')
   if (typeof item.model !== 'string' || !(profile.variants ?? [profile.name]).includes(item.model)) return fail('Choose your machine model.')
-  if (typeof item.flash !== 'string' || !Object.hasOwn(FLASH_STATES,item.flash)) return fail('Choose what the machine is running.')
+  if (!(DIGI_FLASH_CHOICES as readonly unknown[]).includes(item.flash)) return fail('Choose what the machine is running.')
   if (typeof item.os !== 'string' || !profile.firmware?.releases.includes(item.os)) return fail('Choose a supported base OS release.')
   const version = (value: unknown) => { if (typeof value !== 'string' || value.length > 80) return fail('Include the module version.'); try { compareModuleVersions(value,value) } catch { return fail('The module version is unreadable.') } return value }
   const moduleVersion = version(item.moduleVersion)

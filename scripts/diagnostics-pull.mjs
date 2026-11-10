@@ -12,6 +12,7 @@ import { chmodSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { DSP_REPORT_NAMES } from '../src/community/octatrack-diagnostics-contract.ts'
 
 const ROOT = new URL('..', import.meta.url)
 const SERVICE = 'modwerk-diagnostics-read'
@@ -46,13 +47,14 @@ const line = ({ createdAt, username, data }) => [when(createdAt), '@' + username
   data.live?.cpu && 'cpu ' + data.live.cpu.map(percent).join('/'), data.modules?.map(module => module.id + '@' + module.catalogVersion).join(',')].filter(Boolean).join(' ')
 function percent(permille) { return (permille / 10).toFixed(1) + '%' }
 /** The loader's refusals (loader.h runtime_refusal), as a restore's set record names its first refused package's (modset.c). */
-const REFUSALS = ['no refusal', 'malformed', 'module memory', 'conflict', 'no free handle', 'busy', 'DSP time', 'in use', 'stock bytes differ', 'a base event', 'a base feature down']
+const REFUSALS = Object.assign(['no refusal', 'malformed', 'module memory', 'conflict', 'no free handle', 'busy', 'DSP time', 'in use', 'stock bytes differ', 'a base event', 'a base feature down'],
+  { 0x100: 'the last start crashed or froze loading it' }) // modset.c's boot guard, past the loader's codes
 /** An incident from the unit's own log (diag.c): when in its session, what, and what the unit was doing. */
 const ids = r => [...r.machines, ...r.fx, ...r.keys].slice(0, 4 * r.a).map((b, i, all) => i % 4 ? '' : all.slice(i, i + 4).map(x => x.toString(16).padStart(2, '0')).join('')).filter(Boolean)
 const STATELESS = ['crash', 'stall', 'set', 'base'] // records that carry no cpu, keys or screen
 const incident = r => `#${r.seq} start ${r.boot} +${Math.floor(r.second / 60)}m${r.second % 60}s ${r.kind}` +
   (r.kind === 'base' ? ` ${r.a.toString(16).padStart(8, '0')}` : r.kind === 'set' ? ` ${r.a} installed: ${ids(r).map(id => MODULE_NAMES.get(id) ?? id).join(', ') || 'none'}` +
-    (r.screen ? `; refused ${MODULE_NAMES.get(r.screen.toString(16).padStart(8, '0')) ?? r.screen.toString(16).padStart(8, '0')} (${REFUSALS[r.tempo24] ?? 'refusal ' + r.tempo24})` : '') : '') +
+    (r.tempo24 === 0x101 ? '; all held: the last start crashed or froze' : r.screen ? `; refused ${MODULE_NAMES.get(r.screen.toString(16).padStart(8, '0')) ?? r.screen.toString(16).padStart(8, '0')} (${REFUSALS[r.tempo24] ?? 'refusal ' + r.tempo24})` : '') : '') +
   (r.kind === 'freeze' ? (r.a ? ` ${(r.a * 16 / 44100).toFixed(1)} s` : ' until a restart') : r.kind === 'hot' ? ` (${r.a} half-seconds at 90 %+)` : r.kind === 'crash' ? ` pc 0x${r.a.toString(16)}` : r.kind === 'stall' ? ` reason ${r.a}` : r.kind === 'shed' ? ` ${r.a & 0xffffff} renders skipped, tracks ${[...Array(8).keys()].filter(t => r.a >>> 24 >> t & 1).map(t => t + 1).join(',')}` : '') +
   (STATELESS.includes(r.kind) ? '' : `, cpu ${percent(r.cpu)} T1-4 ${percent(r.dsp1to4)} T5-8 ${percent(r.dsp5to8)}, ${r.playing ? 'playing' : 'stopped'} at ${(r.tempo24 / 24).toFixed(1)} BPM, screen 0x${r.screen.toString(16)}` +
     `, keys ${r.keys.filter(k => k !== 255).map(k => k.toString(16)).join(' ') || '-'}, fx ${r.fx.map(f => f.toString(16)).join(' ')}, machines ${r.machines.join(' ')}`)
@@ -63,7 +65,17 @@ const logBase = (incidents, epoch) => {
   const mine = incidents.filter(r => r.epoch === epoch), first = mine.find(r => r.kind === 'base')
   return first ? first.a.toString(16).padStart(8, '0') : mine[0]?.upload?.slice(0, 8) ?? 'unknown'
 }
-const PROJ = 0x1c, RIGHT = 0x21, YES = 0x31 // stock key codes (scripts/device.mjs)
+const PROJ = 0x1c, DOWN = 0x20, RIGHT = 0x21, YES = 0x31, UP = 0x33 // stock key codes (scripts/device.mjs)
+/** RIGHT then YES on the same row: a DOWN and an UP between them cancel, any other key or a net move breaks it. */
+const rightYes = keys => {
+  let walk = keys.map(k => k === RIGHT ? 'R' : k === YES ? 'Y' : k === UP ? 'U' : k === DOWN ? 'D' : '-').join('')
+  while (/UD|DU/.test(walk)) walk = walk.replace(/UD|DU/g, '')
+  return walk.includes('RY')
+}
+/** The stall record's report words that help triage (dsp.c modwerk_dsp_report); cpu is per mille. */
+const STALL_WORDS = ['frames', 'watchTicks', 'rejected0', 'rejected1', 'errors', 'edmaErrors', 'missed', 'setModules', 'cpu']
+const stallWords = report => STALL_WORDS.map(name => [name, report[DSP_REPORT_NAMES.indexOf(name)]]).filter(([, word]) => word !== undefined)
+  .map(([name, word]) => name + ' ' + (name === 'cpu' ? percent(word) : word)).join(', ')
 
 /** The unit's last incidents, oldest first, each log's in turn; an earlier log's name the base they ran on. A stall
  * found at a start that runs another base than the session before is an OS upgrade (stock halts the DSPs for it while
@@ -80,7 +92,7 @@ export function unitLines(incidents) {
     const last = all.findLast(p => at(p) === at(r, r.boot - 1) && !STATELESS.includes(p.kind))
     const set = all.findLast(p => p.epoch === r.epoch && p.seq < r.seq && p.kind === 'set')
     const keys = last?.keys.filter(k => k !== 255) ?? [], from = keys.lastIndexOf(PROJ), walk = from >= 0 ? keys.slice(from) : keys.length === 16 ? keys : []
-    return last?.cpu >= 950 && !last.playing && walk.some((k, i) => k === RIGHT && walk[i + 1] === YES) && set?.a === 0
+    return last?.cpu >= 950 && !last.playing && rightYes(walk) && set?.a === 0
   }
   const latest = Math.max(...all.map(r => r.epoch)), on = r => base.has(at(r)) ? base.get(at(r)).toString(16).padStart(8, '0') : logBase(all, r.epoch)
   return all.filter(r => r.kind !== 'start').slice(-12).map(r => '  unit: ' + incident(r) +
@@ -89,7 +101,8 @@ export function unitLines(incidents) {
 }
 
 /** The base's saved-set result (modset.c) as a reading's `saved` reports it; 1-6 are what a boot's restore found. */
-const SAVED = ['', 'RESTORED', 'nothing saved', 'skipped (FUNC held)', 'another base’s set', 'damaged', 'refused', 'saved', 'save failed', 'too big']
+const SAVED = ['', 'RESTORED', 'nothing saved', 'skipped (FUNC held)', 'another base’s set', 'damaged', 'refused', 'saved', 'save failed', 'too big',
+  'left out after a failed start', 'held after a failed start']
 
 /** Each member's records in order: the bases, set reloads, the last finished self-test and the event counts. */
 export function members(events) {
@@ -104,9 +117,9 @@ export function members(events) {
     else if (member.connected && data.reading) {
       member.connected = false
       const { saved, savedCount, live } = data.reading, last = member.reloads.at(-1)
-      // A refused restore (6) names what it dropped: the modules the site saw before, missing now.
-      const missing = saved === 6 && data.modules?.length && member.modules ? member.modules.filter(id => !data.modules.some(m => m.id === id)) : []
-      if (saved >= 1 && saved <= 6 && !(last && last.saved === saved && last.savedCount === savedCount && last.live === live))
+      // A refused restore (6, or 10 the boot guard's) names what it dropped: the modules the site saw before, missing now.
+      const missing = (saved === 6 || saved === 10) && data.modules?.length && member.modules ? member.modules.filter(id => !data.modules.some(m => m.id === id)) : []
+      if ((saved >= 1 && saved <= 6 || saved === 10 || saved === 11) && !(last && last.saved === saved && last.savedCount === savedCount && last.live === live))
         member.reloads.push({ at: createdAt, saved, savedCount, live, missing })
     }
     if (data.modules?.length) member.modules = data.modules.map(m => m.id)
@@ -160,7 +173,7 @@ function restarts(member) {
   })
 }
 
-export function summary({ events, counts }, { base = '', reports = new Map() } = {}) {
+export function summary({ events, counts }, { base = '', layouts = {}, reports = new Map() } = {}) {
   const found = members(events)
   // The configuration page checks the card build on every module change: a refused selection is not a failure.
   const selection = ({ data }) => data.event === 'build_failed' && data.error === 'selection'
@@ -168,7 +181,9 @@ export function summary({ events, counts }, { base = '', reports = new Map() } =
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   const checks = Object.entries(Object.groupBy(events.filter(selection), entry => entry.username)).sort((a, b) => b[1].length - a[1].length)
   const days = Map.groupBy(counts, row => row.day)
-  const baseName = hash => hash.slice(0, 8) + (!base ? '' : hash === base ? ' (the site’s current base)' : ' (older than the site’s ' + base.slice(0, 8) + ')')
+  // A unit on another output layout of the current base (base-binding.json's variants) runs the current base too.
+  const layout = hash => Object.keys(layouts).find(name => layouts[name] === hash)
+  const baseName = hash => hash.slice(0, 8) + (!base ? '' : hash === base ? ' (the site’s current base)' : layout(hash) ? ` (the site’s current base, ${layout(hash)} layout)` : ' (older than the site’s ' + base.slice(0, 8) + ')')
   return [
     `${events.length} records from ${found.size} members (last 30 days; times are this computer's)`,
     ...[...found].sort((a, b) => b[1].last.localeCompare(a[1].last)).flatMap(([name, member]) => [
@@ -182,7 +197,8 @@ export function summary({ events, counts }, { base = '', reports = new Map() } =
       ...member.loads?.size ? [`  unit's load log: ${member.loads.size} five-minute records, CPU peak ${percent(Math.max(...[...member.loads.values()].map(r => r.cpu[1])))}, mean ${percent([...member.loads.values()].reduce((a, r) => a + r.cpu[0], 0) / member.loads.size)}`] : [],
       ...(member.loads && [...member.loads.values()].some(r => r.frameGap !== undefined) ? [`  longest frame gap ${Math.max(...[...member.loads.values()].map(r => r.frameGap ?? 0))} us (frames are 363, DSPs starve past about 515), longest UI-tick gap ${Math.max(...[...member.loads.values()].map(r => r.tickGap ?? 0))} frames (freeze at 13,781)`] : []),
       ...member.crash ? [`  crash record ${member.crash.count}: vector ${member.crash.vector} pc 0x${member.crash.pc.toString(16)} code ${member.crash.code.map(w => w.toString(16).padStart(8, '0')).join(' ')} uncached ${member.crash.memory.map(w => w.toString(16).padStart(8, '0')).join(' ')}`] : [],
-      ...member.stall ? [`  stall record ${member.stall.count}: reason ${member.stall.reason} (1 frames stopped, 2 eDMA refused) at tick ${member.stall.ticks}`] : [],
+      ...member.stall ? [`  stall record ${member.stall.count}: reason ${member.stall.reason} (1 frames stopped, 2 eDMA refused) at tick ${member.stall.ticks}`,
+        ...member.stall.report?.length ? ['    report: ' + stallWords(member.stall.report)] : []] : [],
       ...unitLines([...member.incidents?.values() ?? []]),
       '  ' + Object.entries(member.kinds).map(([kind, n]) => kind + ' ' + n).join(', '),
     ]),
@@ -230,13 +246,13 @@ async function main() {
   let binding
   try { binding = execFileSync('git', ['show', 'origin/main:sdk/machines/octatrack/base-binding.json'], { cwd: fileURLToPath(ROOT), encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }) }
   catch { binding = readFileSync(new URL('sdk/machines/octatrack/base-binding.json', ROOT), 'utf8') }
-  const base = JSON.parse(binding).identity
+  const { identity: base, variants: layouts } = JSON.parse(binding)
   let reports = new Map(), note = ''
   try {
     reports = reportsByMember(JSON.parse(execFileSync('gh', ['issue', 'list', '--label', 'issue-report', '--state', 'all', '--limit', '300',
       '--search', 'created:>=' + from.slice(0, 10), '--json', 'number,title,state,body'], { cwd: fileURLToPath(ROOT), encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] })))
   } catch (error) { note = '\n\nGitHub reports not matched: ' + (error.stderr?.toString().trim() || error.message) }
-  console.log(summary(data, { base, reports }) + note + '\n\nEvery record: ' + file)
+  console.log(summary(data, { base, layouts, reports }) + note + '\n\nEvery record: ' + file)
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

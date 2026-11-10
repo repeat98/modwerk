@@ -1,8 +1,10 @@
-/* The Zoom pedal page (ZoomHub.tsx): the Octatrack page's layout (octatrack-link.css), plus its file list. */
-.zoom-files { list-style: none; margin: 10px 0 14px; padding: 0; columns: 3 160px; column-gap: 18px; }
-.zoom-files li { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; break-inside: avoid; font-size: 13px; }
-.zoom-files small { color: var(--muted); }
-.zoom-hub .hub-error { color: var(--danger, #e8868e); margin: 0 0 12px; }
+/* The Zoom pedal page (ZoomHub.tsx): the Octatrack page's layout and Status console (octatrack-link.css), with the
+ * pedal's effect files in the console's unit cell. */
+.zoom-files small { display: flex; align-items: center; gap: 6px; }
+.zoom-files button { min-height: 0; font-size: 12px; }
+.zoom-hub .hub-cell-head > span { display: flex; gap: 12px; }
+.zoom-hub .hub-cell .hub-cell-note { margin: 8px 0 0; line-height: 1.5; }
+.zoom-hub .hub-error { color: var(--danger, #e8868e); margin: 0 0 12px; font-size: 13px; }
 /* The pedal illustration (ZoomPedalArt, an SVG) in the hero: sized like the Octatrack's photo, which the hero's own rule covers. */
 .zoom-hub .hub-hero .device-art { width: 180px; height: auto; max-height: 120px; flex: none; }
 /* Setup: the firmware routes side by side. */
@@ -10,3 +12,5 @@
 .zoom-firmware caption { text-align: left; color: var(--muted); padding-bottom: 6px; }
 .zoom-firmware th, .zoom-firmware td { text-align: left; vertical-align: top; padding: 8px 10px 8px 0; border-top: 1px solid var(--line); }
 .zoom-firmware thead th { color: var(--muted); font-weight: 500; border-top: 0; }
+.zoom-pick { cursor: pointer; }
+.zoom-pick.is-disabled { opacity: .5; pointer-events: none; }

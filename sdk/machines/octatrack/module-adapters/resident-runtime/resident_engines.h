@@ -70,9 +70,10 @@ void mw_engines_package(unsigned feature, uint32_t generation, const struct mw_e
  * the key bus) take their region in one claim and live FX code there moves once, in one evacuation. */
 void mw_engines_want(unsigned features);
 /* Drive placement of `feature` on `cores` for a controller generation: 1 placed everywhere, 0 not yet (a job in
- * flight, the sequencer playing, the manager busy, an evacuation running or waiting, no room), -1 never this boot (an
- * uncertain PLACE). A core whose `busy` entry is set (the board's own job holds it) is left alone. Live FX code in the
- * region is moved below it first (the manager's evacuation), only while QUIET, two seconds after the last key and
+ * flight, a pattern change queued, the manager busy, an evacuation or trim running or waiting, no room), -1 never this
+ * boot (an uncertain PLACE). A core whose `busy` entry is set (the board's own job holds it) is left alone. It places
+ * while the sequencer plays when the engine fits in free words. Live FX code in the region is moved below it first
+ * (the manager's evacuation), and cached code retired (a trim), only while QUIET, two seconds after the last key and
  * with no pick waiting. */
 int mw_engines_place(unsigned feature, unsigned cores, uint32_t generation, const uint8_t busy[2],
                      const uint8_t mask[2], unsigned known);

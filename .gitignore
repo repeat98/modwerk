@@ -1,4 +1,4 @@
-node_modules/
+node_modules
 dist/
 .wrangler/
 coverage/
@@ -40,6 +40,7 @@ sdk/octabam/out/
 # Local agent state and internal session notes stay off the public repository.
 # AGENTS.md, CLAUDE.md and the project skills are public contributor guidance and are tracked.
 .codex/
+.impeccable/
 .agents/*
 !.agents/skills/
 .claude/*

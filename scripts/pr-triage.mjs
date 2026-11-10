@@ -7,7 +7,7 @@ import { githubApi, pages } from './author-release-api.mjs'
 export const NEEDS_WORK = 'needs-work', ONE_AT_A_TIME = 'one-at-a-time', CLOSE_AFTER_DAYS = 14
 const MARKER = '<!-- modwerk-triage -->'
 export const MESSAGES = {
-  [NEEDS_WORK]: MARKER + '\nA required check failed, so this pull request is out of the review queue for now. Run `npm run pr:ready` (a registered author: `npm run pr:ready -- --author <login>`) until it says Ready, then push: the label goes away by itself once the checks are green. If nothing changes for ' + CLOSE_AFTER_DAYS + ' days it is closed, and you can reopen it whenever it is green. See [Make it mergeable](https://github.com/repeat98/modwerk/blob/main/docs/DEVELOPER_WORKFLOW.md#make-it-mergeable).',
+  [NEEDS_WORK]: MARKER + '\nA required check failed, so this pull request is out of the review queue for now. Run `npm run pr:ready` (a registered author: `npm run pr:ready -- --author <login>`) until it says Ready, then push. If the failed check is the description check, edit the description instead. The label goes away by itself once the checks are green. If nothing changes for ' + CLOSE_AFTER_DAYS + ' days it is closed, and you can reopen it whenever it is green. See [Make it mergeable](https://github.com/repeat98/modwerk/blob/main/docs/DEVELOPER_WORKFLOW.md#make-it-mergeable).',
   [ONE_AT_A_TIME]: MARKER + '\nThanks for this. Until your first module is published, one module pull request is reviewed at a time, so this one waits until your earlier one is merged or closed. Nothing to do: the label goes away by itself.',
   close: MARKER + '\nClosing this because its checks have been red for ' + CLOSE_AFTER_DAYS + ' days without a new commit. Nothing is lost: push a fix and reopen it whenever `npm run pr:ready` says Ready.',
 }
@@ -23,6 +23,21 @@ export function decide({ red, labels, labeledAt, headDate, now, queued }) {
   if (red && has.has(NEEDS_WORK) && stale) actions.push({ close: true })
   return actions
 }
+
+/** The newest run of each check name: a failed or cancelled earlier run beside its green rerun (each rerun
+ * of a workflow is a new check suite, which `filter=latest` does not merge) must not count. Newest = started
+ * last (a run not started yet counts as newest), then the higher id. */
+export function newestRuns(runs) {
+  const newest = new Map(), started = run => Date.parse(run.started_at ?? '') || Infinity
+  for (const run of runs) {
+    const kept = newest.get(run.name)
+    if (!kept || started(run) > started(kept) || (started(run) === started(kept) && run.id > kept.id)) newest.set(run.name, run)
+  }
+  return [...newest.values()]
+}
+
+/** A module PR adds or changes a module folder: one under a machine's modules/ (and its _submissions/), or a draft under sdk/drafts/. */
+export const isModulePull = files => files.some(file => /^sdk\/(?:[^/]+\/modules|drafts)\//.test(file))
 
 /** Contributors without a published module get one module PR reviewed at a time: every newer one waits. */
 export function queuedPulls(pulls, registered) {
@@ -40,7 +55,7 @@ async function main() {
   const write = process.env.PR_TRIAGE_DRY_RUN === '1' ? async (path, method) => console.log('dry run: ' + method + ' ' + path) : api
   // Anyone with a published module (author or maintainer) or release authority skips the queue.
   const json = path => JSON.parse(readFileSync(new URL('../' + path, import.meta.url), 'utf8'))
-  const documents = [...json('src/catalog/module-documents.json').modules, ...['digitakt', 'digitone', 'analog-rytm-mkii'].flatMap(machine => {
+  const documents = [...json('src/catalog/module-documents.json').modules, ...['digitakt', 'digitone', 'analog-rytm-mkii', 'zoom'].flatMap(machine => {
     const folder = 'sdk/' + machine + '/modules/'
     return readdirSync(new URL('../' + folder, import.meta.url)).filter(id => existsSync(new URL('../' + folder + id + '/modwerk.module.json', import.meta.url))).map(id => json(folder + id + '/modwerk.module.json'))
   })]
@@ -53,12 +68,12 @@ async function main() {
   const pulls = []
   for (const pr of open) {
     const files = await pages(api, '/pulls/' + pr.number + '/files')
-    pulls.push({ pr, number: pr.number, author: pr.user.login.toLowerCase(), module: files.some(file => /^sdk\/[^/]+\/modules\//.test(file.filename)) })
+    pulls.push({ pr, number: pr.number, author: pr.user.login.toLowerCase(), module: isModulePull(files.map(file => file.filename)) })
   }
   const queued = queuedPulls(pulls, registered), now = Date.now()
   for (const { pr } of pulls) {
     const runs = await pages(api, '/commits/' + pr.head.sha + '/check-runs?filter=latest', 'check_runs')
-    const red = runs.some(run => ['failure', 'timed_out', 'startup_failure'].includes(run.conclusion))
+    const red = newestRuns(runs).some(run => ['failure', 'timed_out', 'startup_failure'].includes(run.conclusion))
     const labeled = (await pages(api, '/issues/' + pr.number + '/events')).filter(event => event.event === 'labeled' && event.label?.name === NEEDS_WORK).at(-1)
     const actions = decide({ red, labels: pr.labels.map(label => label.name), labeledAt: labeled?.created_at, headDate: (await api('/commits/' + pr.head.sha)).commit.committer.date, now, queued: queued.has(pr.number) })
     for (const action of actions) {

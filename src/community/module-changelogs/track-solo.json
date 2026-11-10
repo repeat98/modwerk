@@ -1,0 +1,10 @@
+[
+  {
+    "version": "0.2.4-experimental",
+    "date": "2026-11-10",
+    "changes": [
+      "First Modwerk release: hold one TRACK button to solo it temporarily while editing, then tap other tracks to join or leave the group.",
+      "Release the held track to end the audition and return to normal track behavior."
+    ]
+  }
+]

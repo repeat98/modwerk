@@ -71,6 +71,8 @@ uint32_t modwerk_machine_reference(uint32_t value)
 #ifdef MODWERK_HOST
 int modwerk_test_stopped = 1;
 int modwerk_machine_stopped(void) { return modwerk_test_stopped; }
+int modwerk_test_usb_disk;
+int modwerk_machine_usb_disk(void) { return modwerk_test_usb_disk; }
 void *modwerk_machine_uncached(void *p) { return p; }
 void modwerk_machine_invalidate_code(void) {}
 uint8_t *modwerk_machine_code(uint32_t address) { (void)address; return 0; }
@@ -91,6 +93,10 @@ int modwerk_machine_stopped(void)
     for (unsigned i = 0; i < 16; ++i) if (U8(0x80006500u + i) || U8(0x80004f1eu + i * 84u)) return 0;
     return U32(0x800065b8u) == 0;
 }
+/* Stock's USB DISK MODE is open (its flag, 1 while it is): stock holds the DSP frames still there and starts them
+ * again with the project it loads on the way out. dsp.c's stall watchdog stays out: its recovery, run inside the
+ * mode, left the frames stopped after it until a power cycle (finding 72; an MKII, 10 November 2026). */
+int modwerk_machine_usb_disk(void) { return U32(0x460e76a0u) != 0; }
 void *modwerk_machine_uncached(void *p) { return (void *)((uintptr_t)p + 0x08000000u); }
 /* Every stock CACR write uses 0xa40ce000 (boot write guarded by usb_base.py),
  * which already sets BCINVA; bit 8 adds ICINVA. The data cache is untouched. */
@@ -241,15 +247,20 @@ static uintptr_t hook(unsigned position, enum runtime_event e)
  * (controller_board.c): since effects load at the pick (#796), Sidechain's KEY page lands on COMPRESSOR while FX1
  * SETUP is already drawn from the stock page (#882). That drawer leaves an open FX SETUP window alone, so once the
  * shared popup slot (0x460d175c) is that window, open, in SETUP's geometry, its own draw callback runs too, as
- * octabam's PLOCKS P2 refreshes it (plk_refresh_setup). */
+ * octabam's PLOCKS P2 refreshes it (plk_refresh_setup).
+ * The header (the bottom-left SRC label and the track's numbers) is stock's 0x4004d780, which the track screen's drawer
+ * does not call: a track select and SRC SETUP's commit (0x4005a900) do. A restored module machine's track kept stock's
+ * "SRC > FLEX" (a module machine is FLEX underneath) until the track was tapped (Nathaniel's MKII, 28 October 2026,
+ * Analog BD on T1 after a cold boot), so the header is drawn again here too. */
 volatile uint8_t modwerk_runtime_redraw_wanted;
 #ifdef MODWERK_HOST
-unsigned modwerk_test_redraws;
-#define REDRAW() (++modwerk_test_redraws)
+unsigned modwerk_test_redraws, modwerk_test_headers;
+#define REDRAW() (++modwerk_test_redraws, ++modwerk_test_headers)
 #else
 static void REDRAW(void)
 {
     ((void (*)(int))0x4004d948u)(-1);
+    ((void (*)(void))0x4004d780u)(); /* the header: SRC's machine name, as a track select draws it */
     uint32_t page = U32(0x460d1684u), setup = page == 3u ? 0x400bc25au : 0x400bc484u, w; /* FX1, FX2 SETUP */
     if (U32(0x80000012u) || (page != 3u && page != 4u)) return; /* a MIDI track, or another page */
     w = U32(setup + 8u);

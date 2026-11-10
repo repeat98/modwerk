@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-11-08",
+  "source": "Run T210 on Iced-Cream's own unit: an elkbench run of the scene-mutes plans under Iced-Cream's go, with one power cycle by Iced-Cream, and Iced-Cream's own listening check of its audio takes",
+  "reporter": "Iced-Cream",
+  "statement": "Hardware, OS 1.74, build SMH1 (2026-11-08): with SCENE + FUNC + T1, T2 setting scene 1's mask, engaging scene 1 silenced BD and SD (-83 dBFS) while RS (-10) and CH (-11) played; CH muted by hand while engaged went silent; disengaging brought BD and SD back (-17, -14) and CH stayed muted. After a power cycle scene 1 still silenced BD and SD and the hand mute of CH was kept; <CLEAR> showed CLEARED and afterwards scene 1 muted nothing. Iced-Cream listened to the takes.",
+  "status": "hardware-tested-author-reported",
+  "scope": "scene-mutes 0.1.0-experimental alone on the Modwerk base for core-ar2 0.7, with analoghealth 1.3 as the remote-key harness.",
+  "modules": [
+    {
+      "id": "scene-mutes",
+      "version": "0.1.0-experimental"
+    },
+    {
+      "id": "core",
+      "version": "0.7"
+    }
+  ],
+  "builds": [
+    {
+      "label": "SMH1",
+      "testedOn": "2026-11-08",
+      "os": "1.74",
+      "syxSha256": "7bec08468757ca5ef2e9ad0afd9a1ee1d3c9922ad0adb3c6734b361d57d66740",
+      "packageSha256": {
+        "scene-mutes-0.1.0-experimental-os1.74.elemod": "8b8ebc1ecdf6ad34399b7615a96d720fb3e716afac964e36f7c6004f2dcda3e2",
+        "modwerk-base-analog-rytm-mkii-ba530f45.elemod": "ba530f45d0cd33791d9098d87c1867ef74f6a210953f60d2a97a7548379d20fe"
+      },
+      "content": "The Modwerk base for core-ar2 0.7 (plain variant), this module from e5317b15, and analoghealth 1.3 as the remote-key harness (not under test). Driven over USB by elkbench in a ~T test project in slot 121; outputs recorded over USB audio; each flash passed the emulator gate first; stock 1.74 restored after the run.",
+      "results": [
+        "Scene 1 engaged: BD and SD silent (-83 dBFS), RS and CH played.",
+        "CH muted by hand while engaged: silent; kept after disengaging.",
+        "Disengaged: BD and SD back (-17, -14 dBFS).",
+        "After a power cycle the mask still muted BD and SD and the hand mute was kept.",
+        "<CLEAR>: CLEARED, then scene 1 muted nothing.",
+        "CPU 74 % before the keys, 82 % at the end; heap flat; no freeze."
+      ]
+    }
+  ],
+  "coverageDetails": {
+    "deviceDetails": "Analog Rytm MKII",
+    "testDate": "2026-11-08",
+    "duration": null,
+    "durationMinutes": null,
+    "individualTestResults": [
+      "Scene mask set with SCENE + FUNC + trig",
+      "Engaging the scene sets the mutes",
+      "Hand mute while engaged goes into the saved mutes",
+      "Disengaging restores the mutes",
+      "Mask kept through a power cycle",
+      "<CLEAR> drops the mask"
+    ]
+  },
+  "contextNote": "Main OS hash not recorded; the .syx hash is the build's, not read back from the device. Not tested on a unit: <CLEAR ALL>, scene engage by CC 92, NRPN or Overbridge, kit changes.",
+  "modwerkPipelineQualified": false,
+  "authorGithub": "Iced-Cream"
+}

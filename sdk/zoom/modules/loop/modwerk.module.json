@@ -1,0 +1,243 @@
+{
+  "schemaVersion": 3,
+  "id": "loop",
+  "name": "Loop",
+  "version": "0.3.0",
+  "machine": "zoom-ms-70cdr",
+  "category": "effects",
+  "exclusive": false,
+  "author": {
+    "github": "themanro",
+    "name": "Roman Rusinov",
+    "credits": [
+      "Roman Rusinov (Manro): Loop, its DSP and its screen",
+      "Leemuzhko: the effect runtime it is built with (zui and Dll_)",
+      "Jannik Aßfalg: the ZoomMultistompZDL toolchain"
+    ]
+  },
+  "maintainers": [
+    "themanro",
+    "repeat98"
+  ],
+  "source": {
+    "repository": "https://github.com/repeat98/ZoomMultistompZDL",
+    "revision": "32f3d6877d892409c6defeeeec57040ad004d31f",
+    "path": "src/custom/loop"
+  },
+  "presentation": {
+    "label": "LOOP",
+    "family": "Looper",
+    "summary": "A looper on the footswitch: record, play, overdub, undo and redo, with tempo-quantized loops and a click.",
+    "overview": "Loop records what comes into its slot, plays it back, and lets you overdub, undo and redo, all from the footswitch, which becomes the looper's button. Fade lets older layers die away like a delay's feedback. Set Tempo and Beats before recording and the loop snaps to whole bars, with an optional click on the output only. Its screen shows the state, the time and the loop's waveform with a playhead.",
+    "highlights": [
+      "Record, play, overdub, undo and redo from the footswitch",
+      "Fade older layers on each overdub lap",
+      "Snap loops to whole bars at a set tempo, with a click that is never recorded",
+      "A live screen: state, time and the waveform with a playhead"
+    ],
+    "usage": [
+      "Put Loop in the last slot of a patch, so it records everything before it, and press the footswitch to start recording.",
+      "Press it again to close the loop: it plays from the top. Press once more to overdub, and again to go back to playing.",
+      "Double press to stop. Double press again while it is stopped to clear the loop."
+    ]
+  },
+  "access": {
+    "location": "The pedal's effect list, Delay group, as Loop.",
+    "steps": [
+      "Add Loop to a patch from the effect list (Delay group).",
+      "Put it in the last slot so it records everything before it.",
+      "Its knobs are on three pages: Loop, Dry, Fade; Undo, Long, Tempo; Beats, Click."
+    ],
+    "screenshots": [
+      "media/loop-play.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "Loop",
+      "default": 100,
+      "doc": "Loop playback level.",
+      "labels": null
+    },
+    {
+      "name": "Dry",
+      "default": 100,
+      "doc": "Your live signal.",
+      "labels": null
+    },
+    {
+      "name": "Fade",
+      "default": 100,
+      "doc": "How much of the loop survives each overdub lap: 100 keeps everything, lower values let older layers fade.",
+      "labels": null
+    },
+    {
+      "name": "Undo",
+      "default": 0,
+      "doc": "Flip it either way to undo the last overdub, then again to redo. Flipping it during an overdub throws that overdub away.",
+      "labels": null
+    },
+    {
+      "name": "Long",
+      "default": 0,
+      "doc": "1 = experimental long loops in extra RAM, on Zoom's 2.10 without MIDISTOMP only. Switches over while the looper is empty.",
+      "labels": [
+        "Off",
+        "On"
+      ]
+    },
+    {
+      "name": "Tempo",
+      "default": 120,
+      "doc": "BPM for quantize and the click, 40 to 250. Taken when recording starts.",
+      "labels": null
+    },
+    {
+      "name": "Beats",
+      "default": 0,
+      "doc": "Beats per bar: Off = free length, 1 = snap to beats, 2 to 12 = snap to bars of that many beats. Taken when recording starts.",
+      "labels": [
+        "Off",
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12"
+      ]
+    },
+    {
+      "name": "Click",
+      "default": 50,
+      "doc": "Metronome level, 0 = silent; only with Beats set. On the output only, never recorded.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "2.10"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built with the init path off: a recalled patch plays the knobs' defaults until you touch a knob.",
+      "Long (extra RAM) is for Zoom's 2.10 without MIDISTOMP; this release was tested on MIDISTOMP V2.0.1 with Long off.",
+      "There is no external sync: the tempo is the Tempo knob's."
+    ]
+  },
+  "platform": {
+    "kind": "zdl",
+    "file": "Loop.ZDL",
+    "effectId": {
+      "gid": 8,
+      "fxid": 467
+    },
+    "effectVersion": "0.03",
+    "dspCost": 8,
+    "binary": {
+      "sha256": "696623f79f1d895b317c5230309c00b0058a2b984f4437021455bc19fe1624da",
+      "bytes": 26546,
+      "release": {
+        "repository": "https://github.com/repeat98/ZoomMultistompZDL",
+        "tag": "loop-0.03",
+        "asset": "Loop.ZDL"
+      }
+    },
+    "screen": "live",
+    "pedals": [
+      {
+        "machine": "zoom-ms-70cdr",
+        "firmware": "2.10",
+        "status": "confirmed",
+        "report": "TESTING.md"
+      }
+    ]
+  },
+  "resources": {
+    "memoryBytes": 26546,
+    "fastBytes": null,
+    "load": {
+      "display": "DSP 8 of 225 per patch",
+      "method": "static",
+      "conditions": "The cost Loop declares in its descriptor, which the pedal adds up per patch; not read from the DSP meter."
+    }
+  },
+  "evidence": {
+    "tier": "owner-verified",
+    "moduleVersion": "0.3.0",
+    "sourceSha256": "696623f79f1d895b317c5230309c00b0058a2b984f4437021455bc19fe1624da",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Zoom MS-70CDR",
+      "release": "2.10+MIDISTOMP 2.0.1",
+      "testedOn": "2026-11-09",
+      "tester": "Jannik Aßfalg",
+      "durationMinutes": null,
+      "summary": "The release file, installed over USB from the pedal page, booted: Loop showed with its eight knobs on three pages, on/off and every knob worked on screen and in the sound, and it recorded and played a loop. A saved patch recalled after a power cycle with its values on the screen.",
+      "limitations": [
+        "One pass of the checks in TESTING.md, reported by the tester as working; nothing measured.",
+        "Built with the init path off: the sound takes saved knob values only once a knob is touched.",
+        "MIDISTOMP V2.0.1 on Zoom's 2.10, not Zoom's 2.10 alone."
+      ]
+    },
+    "verifiedBy": "repeat98"
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "The release file has no code from Zoom's effects (check_no_stock.py), passes Ziddle's loader check, renders in Ziddle with audio identical to the earlier build, and ran on an MS-70CDR.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Put Loop in the last slot of a patch, so it records everything before it, and press the footswitch to start recording.",
+          "Press it again to close the loop: it plays from the top. Press once more to overdub, and again to go back to playing.",
+          "Double press to stop. Double press again while it is stopped to clear the loop."
+        ]
+      },
+      "screenshots": [
+        "media/loop-play.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "MIT AND BSD-3-Clause",
+    "file": "LICENSE",
+    "declaration": "ZoomMultistompZDL's MIT licence (Roman Rusinov, Jannik Aßfalg). Leemuzhko's runtime inside the file is MIT; its three call helpers are TI's RTS source, BSD-3-Clause."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Loop thumbnail",
+      "alt": "A loop drawn as a circle of layered waves, with the footswitch's record, play and overdub steps",
+      "credit": "Modwerk",
+      "license": "MIT",
+      "source": "Original illustration for Modwerk's library."
+    },
+    {
+      "path": "media/loop-play.png",
+      "kind": "screenshot",
+      "caption": "Loop's screen while it plays",
+      "alt": "Pedal screen: PLAY and the loop length at the top, the loop's waveform with a playhead, and the Loop, Dry and Fade knobs",
+      "credit": "Roman Rusinov's Loop, rendered by Modwerk",
+      "license": "MIT",
+      "source": "Rendered from Loop's source at 32f3d68 by ZoomMultistompZDL's zvis_host.py",
+      "capture": {
+        "type": "emulator",
+        "release": "2.10",
+        "moduleVersion": "0.3.0",
+        "imageSha256": "696623f79f1d895b317c5230309c00b0058a2b984f4437021455bc19fe1624da",
+        "setup": "ZoomMultistompZDL at 32f3d68 (the release source): python3 src/custom/common/zvis_host.py src/custom/loop <out> --signal pluck --seconds 3 --frames 3 --presses 0.5, frame 1. Loop's own screen code on the host, not the pedal."
+      }
+    }
+  ]
+}

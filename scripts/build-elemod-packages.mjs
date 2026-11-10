@@ -3,7 +3,9 @@
 // patches and FAST AUDIO fixups are materialized by the local browser engine.
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
+import { rmSync } from 'node:fs'
+import { mkdir, mkdtemp, readdir, readFile, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseMachineProfile } from '../src/devices/machine-contract.ts'
@@ -65,6 +67,9 @@ function fastStubs(derive) {
 await mkdir(output, { recursive: true })
 // A stale successful inventory must never survive a failed rebuild. build-elemod-isolated.sh mounts a new, empty directory.
 if ((await readdir(output)).length) throw new Error('The output directory must be empty: ' + output)
+// Each build compiles in its own folder: two builds at once must never share object files.
+const scratch = await mkdtemp(resolve(tmpdir(), 'modwerk-compile-'))
+process.once('exit', () => rmSync(scratch, { recursive: true, force: true }))
 for (const machine of machines.filter(item => item.sdk?.platform === 'elemod')) {
   const folderRoot = resolve(root, machine.sdk.modules)
   const roots = [folderRoot, ...(includeDrafts ? [resolve(folderRoot, '_submissions')] : [])]
@@ -78,6 +83,8 @@ for (const machine of machines.filter(item => item.sdk?.platform === 'elemod')) 
   for (const moduleRoot of roots) for (const entry of (await listing(moduleRoot)).sort((a, b) => a.name.localeCompare(b.name))) {
     if (!entry.isDirectory() || entry.name.startsWith('_')) continue
     if (inputs.some(input => input.document.id === entry.name)) throw new Error('Module duplicates a dependency: ' + entry.name)
+    // A chosen build needs only the chosen modules: another's manifest must not stop it.
+    if (selection.length && !selection.includes(machine.id + ':' + entry.name)) continue
     const folder = resolve(moduleRoot, entry.name)
     const document = parseModwerkModule(await json(await resolveModuleFile(folder, 'modwerk.module.json')), machines)
     if (document.machine !== machine.id || document.id !== entry.name || document.exclusive) throw new Error('Expected a linkable module in its machine folder')
@@ -92,7 +99,7 @@ for (const machine of machines.filter(item => item.sdk?.platform === 'elemod')) 
     for (const [release, port] of Object.entries(build.releases)) {
       const identity = device.releases.find(item => item.version === release)
       if (!identity) throw new Error('No stock identity for ' + machine.id + ' ' + release)
-      const work = resolve('/tmp', 'modwerk-compile', machine.id, document.id, release)
+      const work = resolve(scratch, machine.id, document.id, release)
       await mkdir(work, { recursive: true })
       const defines = Object.entries({ ...build.defsym, ...port.defsym }).flatMap(([name, value]) => ['--defsym', name + '=' + value])
       const extraFlags = [...build.cflags, ...port.cflags]
@@ -142,5 +149,5 @@ for (const machine of machines.filter(item => item.sdk?.platform === 'elemod')) 
 }
 // Written last: a failed compilation never creates a complete package inventory.
 if (selection.some(id => !found.has(id))) throw new Error('Selected module not found')
-if (!selection.length) for (const stage of ['boot-probe', 'ui-hook-probe', 'event-hook-probe']) await buildCoreProbes({ root, output, sourceCommit, compiler, cflags, ldScript, run, stage })
+if (!selection.length) for (const stage of ['boot-probe', 'ui-hook-probe', 'event-hook-probe']) await buildCoreProbes({ root, output, scratch, sourceCommit, compiler, cflags, ldScript, run, stage })
 await writeFile(resolve(output, 'elemod-build.json'), JSON.stringify({ schemaVersion: 1, sourceCommit, compiler, includesDrafts: includeDrafts, scope: selection.length ? 'selected-modules' : 'all-modules-and-core-probes', selection, artifacts }, null, 2) + '\n')

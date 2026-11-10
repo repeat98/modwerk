@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Runtime-module lifecycle against the private Octatrack base, shared by the
 // emulator check (scripts/verify-octatrack-vendor-client.mjs) and the Chrome
-// test page (dev/octatrack-usb.html). Developer tooling: not part of the site.
+// test page (src/dev/octatrack-usb.html). Developer tooling: not part of the site.
 import { sha } from '../../vendor/elekloader/kit/src/bytes.ts'
 import { UploadSession, type UploadPackage } from '../engine/elekloader/upload-session.ts'
 import { UsbVendorTransport, type ControlDevice } from '../engine/elekloader/upload-usb.ts'

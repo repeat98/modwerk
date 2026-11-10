@@ -62,7 +62,7 @@ MODULE = Module(
     dsp=DspSection(asm="modules/bbd/bbd.asm", priority=16,
                    bus_role=BusRole.NONE, ybase=YBase.NEVER,
                    r7_latch_slot=None, gate_label=None),
-    claims=Claims(stock_instance_buffer=True, buffer_words=16384),
+    claims=Claims(stock_instance_buffer=True, buffer_words=0x203A),   # 8,250: up to the FREQ bandpass at +$2039 (as octabam since #783)
     linked=(Linked("bbd", "modules/bbd/stopkill.s", cpu="5475", dram=True),),
     detours=(
         Detour(0x40004d0c, stock_guard(0x40004d0c, 10, "3b007d2a1b16afbbff30a9df6d28c030691b4f5b3c32626a87be0a7b712408eb"), "bbd",

@@ -19,6 +19,9 @@ describe('documentation and firmware scheduling', () => {
   it.each(['scripts/frontend-mcp.mjs', 'scripts/frontend-mcp-private-host.mjs', 'sdk/tests/test_frontend_mcp_host.py'])('checks actual native Windows MCP refusal for %s without firmware compilation', path => {
     expect(scope(change(path))).toMatchObject({ documentation: false, windows: true, modules: false, elemod: false })
   })
+  it.each(['scripts/modules.mjs', 'scripts/machine-modules.mjs', 'scripts/module-qualification.mjs'])('runs the Windows module path check for %s, which modules:check runs', path => {
+    expect(scope(change(path))).toMatchObject({ windows: true })
+  })
   it.each(['scripts/prepare-runtime-spans.py', 'scripts/runtime_private_paths.py', 'sdk/tests/test_runtime_spans.py'])('runs native Windows privacy checks for %s without firmware compilation', path => {
     expect(scope(change(path))).toMatchObject({ documentation: false, windows: true, modules: false, elemod: false })
   })
@@ -194,6 +197,18 @@ describe('module version rule', () => {
     expect(isVersionNeutralChange(change(modulePath, flagged, { ...flagged, compatibility: { ...flagged.compatibility, releases: ['1.53', '1.54'] } }))).toBe(false)
     expect(isVersionNeutralChange(change(modulePath, flagged, { ...flagged, platform: { build: 'other.json' } }))).toBe(false)
     expect(isVersionNeutralChange(change('sdk/digitakt/modules/demo/src/demo.c'))).toBe(false)
+  })
+  it('needs no new version for a new display name or author credit', () => {
+    const credited = { ...digi, license: { spdx: 'MIT', file: 'LICENSE', declaration: 'Original code by author.' } }
+    const renamed = { ...credited, name: 'Demo Two', author: { github: 'author', name: 'Author Name', credits: ['Author Name: the module.'] },
+      license: { ...credited.license, declaration: 'Original code by Author Name (@author).' } }
+    expect(isVersionNeutralChange(change(modulePath, credited, renamed))).toBe(true)
+  })
+  it('still needs one for a new author login, maintainer or licence', () => {
+    const credited = { ...digi, license: { spdx: 'MIT', file: 'LICENSE', declaration: 'Original code by author.' } }
+    expect(isVersionNeutralChange(change(modulePath, credited, { ...credited, author: { github: 'other' } }))).toBe(false)
+    expect(isVersionNeutralChange(change(modulePath, credited, { ...credited, maintainers: ['author', 'other'] }))).toBe(false)
+    expect(isVersionNeutralChange(change(modulePath, credited, { ...credited, license: { ...credited.license, spdx: 'GPL-3.0-only' } }))).toBe(false)
   })
 })
 

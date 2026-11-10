@@ -1839,7 +1839,7 @@ def main():
                                    if usb_functions else usb.assembly(args.dev))
     if usb_functions:
         (source/'usbmidi.s').write_text(usb_functions.midi_source((usb.OCTABAM / 'platform/usb-midi/usbmidi.s').read_text()))
-        (source/'usbmidi_rx.s').write_text((HERE / 'usbmidi_rx.s').read_text())
+        (source/'usbmidi_rx.s').write_text(usb_functions.receiver_source((HERE / 'usbmidi_rx.s').read_text()))
         if usb_profiles:
             spec = importlib.util.spec_from_file_location('modwerk_other_usb_descriptors',
                 usb.AUDIO_DESCRIPTORS if args.usb_audio == usb_post.LAYOUT else usb.POST_AUDIO_DESCRIPTORS)

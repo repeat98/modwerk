@@ -4,8 +4,9 @@
 //   npm run pr:ready -- --author <login>    # a registered author's update: also the bot's merge scope
 //   npm run pr:ready -- --remote upstream   # the remote that holds Modwerk's main (default: upstream, else origin)
 //
-// It reads and writes only this checkout: no push, no GitHub API. CI repeats the same checks against
-// the PR's base, and the author-update bot runs the same scope inspection (scripts/author-update-git.mjs).
+// It reads and writes only this checkout, plus the agent board's claims and inbox (docs/AGENT_BOARD.md): no push, no GitHub API.
+// CI repeats the same checks against the PR's base, and the author-update bot runs the same scope inspection
+// (scripts/author-update-git.mjs).
 import { execFileSync, spawnSync } from 'node:child_process'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
@@ -20,10 +21,43 @@ export function gateEdits(files) {
   return files.some(file => MODULE_FOLDER.test(file)) ? files.filter(file => GATE.test(file)) : []
 }
 
+// The base: its hooks and tables, the shared services and adapter code, its loader and the committed base image. A base change is its own
+// owner-reviewed pull request, merged before a module uses it (docs/module-guides/README.md#propose-a-hook). The per-module recipe
+// files beside the adapters (*.json, *.py) are a module's own and stay in its pull request.
+const BASE = /^(?:sdk\/machines\/[^/]+\/(?:events\.json$|site-events\.json$|dsp-sites\.json$|base-binding\.json$|HOOKS\.md$|include\/|elekloader\/|module-adapters\/[^/]+\.(?:c|h|cpp|s)$)|src\/engine\/assets\/[a-z0-9-]+-base(?:[.-]|$))/
+/** The base files a change edits while it also adds or changes a module; [] when it changes no module. */
+export function baseEdits(files) {
+  return files.some(file => MODULE_FOLDER.test(file)) ? files.filter(file => BASE.test(file)) : []
+}
+
+// CI refuses both in contributors' module pull requests opened from this day; earlier ones and the owner's are judged in review.
+export const MODULE_SCOPE_REQUIRED_FROM = '2026-11-09'
+/** CI's refusals for one pull request: [] for the owner's, for one opened before MODULE_SCOPE_REQUIRED_FROM, or for one in scope. */
+export function moduleScopeProblems(files, { author = null, owner = null, openedAt = null } = {}) {
+  if (!author || author.toLowerCase() === owner?.toLowerCase() || (openedAt ?? '').slice(0, 10) < MODULE_SCOPE_REQUIRED_FROM) return []
+  const problems = [], gates = gateEdits(files), base = baseEdits(files)
+  if (gates.length) problems.push(gateProblem(gates))
+  if (base.length) problems.push(baseProblem(base))
+  return problems
+}
+const gateProblem = files => 'This pull request changes a module and also ' + files.join(', ') + ': a check that judges modules. A red check names the fix; never change the check to pass it. If the check itself is wrong, send the correction as its own Fix: pull request for the owner to review, and let the module wait for it.'
+const baseProblem = files => 'This pull request changes a module and also the base: ' + files.join(', ') + '. A base change is its own owner-reviewed pull request, merged before the module uses it (docs/module-guides/README.md#propose-a-hook). Move these files to a pull request of their own, then base the module on main once it has merged.'
+
+/** Why the checks cannot run on this Python, or null. npm run check runs the module gates in Python 3.10+: an older python3
+ * (macOS's own is 3.9) crashes inside scripts/module-pairs.py while it loads the Octatrack manifests, with no word on why. */
+export function pythonProblem({ command = 'python3', version = null, error = null } = {}) {
+  const [major, minor] = (version ?? '').split('.').map(Number)
+  if (!error && (major > 3 || (major === 3 && minor >= 10))) return null
+  const found = error ? `${command} did not run (${error})` : `${command} is ${version || 'an unknown version'}`
+  return `npm run check needs Python 3.10 or newer, and ${found}. Install Python 3.10+ and put it first on PATH, then run this again.`
+}
+
 /** The verdict from what was found; every problem says what to do. */
-export function readiness({ dirty = [], behind = false, remote = 'upstream', regenerated = [], checkPassed = true, author = null, scope = null, guideEdits = [], gateEdits = [], compiled = null }) {
-  const problems = [], notes = []
-  if (gateEdits.length) problems.push('This pull request changes a module and also ' + gateEdits.join(', ') + ': a check that judges modules. A red check names the fix; never change the check to pass it. If the check itself is wrong, send the correction as its own Fix: pull request for the owner to review, and let the module wait for it.')
+export function readiness({ python = null, dirty = [], behind = false, remote = 'upstream', regenerated = [], checkPassed = true, author = null, scope = null, guideEdits = [], gateEdits = [], baseEdits = [], compiled = null, board = null }) {
+  const problems = [...board?.problems ?? []], notes = [...board?.notes ?? []]
+  if (python) problems.push(python)
+  if (gateEdits.length) problems.push(gateProblem(gateEdits))
+  if (baseEdits.length) problems.push(baseProblem(baseEdits))
   if (dirty.length) problems.push('Commit or discard these changes first; only commits reach the PR: ' + dirty.join(', '))
   if (behind) problems.push(`Your branch does not contain current main. Merge it (git merge ${remote}/main), resolve any conflict, then run this again.`)
   if (regenerated.length) problems.push('The generated files were stale. They are regenerated now; commit them: ' + regenerated.join(', '))
@@ -37,10 +71,38 @@ export function readiness({ dirty = [], behind = false, remote = 'upstream', reg
   if (compiled?.elemod) notes.push('CI rebuilds the Digitakt, Digitone, Rytm and Four packages (elemod-source) and requires the committed ones to match. pr:ready cannot run that: before you push, run bash scripts/build-elemod-isolated.sh and node scripts/verify-elemod-release-exports.mjs <dir> from a clean, committed tree ("Compiled packages" in docs/DEVELOPER_WORKFLOW.md).')
   // The guides are the context every later agent reads, so each PR says what they lacked or got wrong (AGENTS.md, "Fold what you learn back").
   notes.push('What did the guides lack or get wrong while you did this? ' + (guideEdits.length
-    ? 'Guide edits on this branch: ' + guideEdits.join(', ') + '. Say in the PR what they fix.'
+    ? 'Guide edits on this branch: ' + guideEdits.join(', ') + '. Say in the PR what they fix. If a developer working now could hit it before this merges, post it on the agent board yourself: npm run board -- finding <topic> <key> "…" --pr <n>.'
     : 'No guide edit is on this branch: fix it where a reader would look (docs/, AGENTS.md, the machine guide; for a module release, a separate Docs: PR), or write "nothing" in the PR.'))
-  notes.push('Then push, open or update the PR, and watch it: gh pr checks <number> --watch. If main moves before the merge, run this again and push.')
+  notes.push('Then push, open or update the PR with a description in the template\'s shape (CI checks it says what changed and answers the guides question), and watch it: gh pr checks <number> --watch. If main moves before the merge, run this again and push.')
   return { ok: problems.length === 0, problems, notes }
+}
+
+/** Claim on the agent board what this branch adds (a module, a hook or table index, a migration), so two developers never
+ * take the same one. Someone else's claim stops Ready; an unreachable board is a note, never a stop. */
+export async function boardClaims(root, base, board) {
+  const needed = board.neededClaims({ root, base })
+  if (!needed.length) return null
+  const problems = [], notes = []
+  let login, compared
+  try { login = await board.whoami(); compared = await board.compareClaims(needed, login) } catch (error) {
+    if (error instanceof board.BoardUnavailable) return { problems, notes: ['Board: claims not checked. ' + error.message + ' Run this again before you push once it answers.'] }
+    throw error
+  }
+  for (const item of compared.others) problems.push(`${item.kind} ${item.key} (${item.why}) is claimed by ${board.describeClaim(item.claim)} on the agent board. Never work around a claim: ask them yourself (npm run board -- ask ${item.kind} ${item.key} "…"), or renumber or rename yours (docs/AGENT_BOARD.md).`)
+  const open = [...compared.free, ...compared.unknown, ...compared.mine]
+  if (!login && open.length) problems.push('This branch adds ' + open.map(item => item.kind + ' ' + item.key).join(', ') + ', which need your claim on the agent board. Sign in once with npm run board -- login, then run this again.')
+  else for (const item of open) {
+    try {
+      // A claim says what the work is; a note its holder wrote by hand stays, and one the server refuses never costs the claim.
+      const request = { kind: item.kind, key: item.key, branch: board.currentBranch(root) }, note = item.claim?.note ? '' : item.note
+      const result = note ? await board.claim({ ...request, note }).catch(error => { if (error instanceof board.BoardError && error.status === 400) return board.claim(request); throw error }) : await board.claim(request)
+      notes.push((result.renewed ? 'Board: renewed your claim on ' : 'Board: claimed ') + item.kind + ' ' + item.key + ' for @' + login + '.')
+    } catch (error) {
+      if (error instanceof board.BoardUnavailable) { notes.push('Board: could not claim ' + item.kind + ' ' + item.key + '. ' + error.message); continue }
+      problems.push('Board: ' + item.kind + ' ' + item.key + ': ' + error.message)
+    }
+  }
+  return { problems, notes }
 }
 
 async function main(argv) {
@@ -63,12 +125,21 @@ async function main(argv) {
   const dirty = tracked()
   let behind = false
   try { git('merge-base', '--is-ancestor', base, head) } catch { behind = true }
+  // The same interpreter the gates call (scripts/modules.mjs).
+  const pythonCommand = process.platform === 'win32' ? 'python' : 'python3'
+  const probe = spawnSync(pythonCommand, ['-c', 'import sys; print("%d.%d.%d" % sys.version_info[:3])'], { cwd: root, encoding: 'utf8' })
+  const python = pythonProblem({ command: pythonCommand, version: probe.stdout?.trim() || null, error: probe.error?.message ?? (probe.status ? (probe.stderr || '').trim().split('\n').pop() || 'exit ' + probe.status : null) })
   // Each step runs only when the ones before it passed, so the first problem is the one to fix.
   let regenerated = [], checkPassed = true, scope = null
-  if (!dirty.length && !behind) {
-    for (const args of GENERATORS) if (!npm(...args)) throw new Error('npm run ' + args.join(' ') + ' failed')
-    regenerated = tracked()
-    if (!regenerated.length) checkPassed = npm('check', '--', '--base', base)
+  if (!python && !dirty.length && !behind) {
+    // A passing check proved every generated file current, so the generators run only after a failure: stale files are then
+    // the first problem to fix, and the next run checks the rest. A generator that fails leaves the check's own report.
+    checkPassed = npm('check', '--', '--base', base)
+    if (!checkPassed) {
+      for (const args of GENERATORS) if (!npm(...args)) break
+      regenerated = tracked()
+      if (regenerated.length) checkPassed = true
+    }
   }
   if (author && !behind) scope = await authorScope(root, git, base, head, author)
   const changed = git('diff', '--name-only', base + '...' + head).split('\n').filter(Boolean)
@@ -79,7 +150,11 @@ async function main(argv) {
     const changes = readChangeScope({ root, base, head })
     compiled = { octatrack: changes.modules, elemod: changes.elemod }
   }
-  const verdict = readiness({ dirty, behind, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), compiled })
+  // The agent board: claim what the branch adds, and say what waits in the developer's board inbox.
+  const boardModule = !dirty.length && !behind ? await import('./agent-board.mjs') : null
+  const claimed = boardModule && await boardClaims(root, base, boardModule), waiting = boardModule ? await boardModule.inboxNotes() : []
+  const board = claimed || waiting.length ? { problems: claimed?.problems ?? [], notes: [...claimed?.notes ?? [], ...waiting] } : null
+  const verdict = readiness({ python, dirty, behind, remote, regenerated, checkPassed, author, scope, guideEdits, gateEdits: gateEdits(changed), baseEdits: baseEdits(changed), compiled, board })
   console.log('')
   for (const line of verdict.problems) console.log('✗ ' + line)
   for (const line of verdict.notes) console.log('· ' + line)

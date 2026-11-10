@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 3,
+  "id": "qperf",
+  "name": "QPER Live Rec",
+  "version": "0.2.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "scenes",
+  "exclusive": false,
+  "author": {
+    "github": "npp1993",
+    "name": "Nathaniel Pavel",
+    "credits": [
+      "Nathaniel Pavel"
+    ]
+  },
+  "maintainers": [
+    "npp1993"
+  ],
+  "presentation": {
+    "label": "QPER LIVE REC",
+    "family": "Performance",
+    "summary": "Set performance locks by holding QPER and turning knobs, apply them to the kit, and record performance moves in LIVE RECORDING.",
+    "overview": "Hold QPER and turn a knob: it edits that parameter's offset in the performance linked to QPER, and the knob inverts and shows it as it does for a held performance pad. QPER + PLAY clears it and PLAY again undoes that. QPER + RECORD and STOP copy and paste it. QPER + YES writes what you hear into the kit and removes those locks. In LIVE RECORDING the pads, the QPER knob and MIDI performance moves are kept in a quick perf rec that loops with the pattern; RECORD + YES writes it into the pattern as locks, RECORD + NO clears it.",
+    "highlights": [
+      "Sets a lock in the linked performance with one turn",
+      "QPER + PLAY clears the linked performance",
+      "QPER + YES moves them into the kit",
+      "Records pad and QPER knob moves in LIVE RECORDING and plays them back, 8 points a step"
+    ],
+    "usage": [
+      "Hold QPER, press pad 1 to link its performance, and keep holding.",
+      "Turn FLTR's cutoff up and the resonance a little, and let go of QPER.",
+      "Sweep the QPER knob. Both moves come in together.",
+      "When a position sounds right, hold QPER and press YES to keep it in the kit.",
+      "Hold QPER and press RECORD, press pad 2, then STOP to start another performance from this one.",
+      "Press PERF, hold RECORD and press PLAY. While the pattern plays, press and squeeze pads 1 and 2. Let go and listen to the next pass.",
+      "Hold RECORD and press YES to write the moves into the pattern."
+    ]
+  },
+  "access": {
+    "location": "The QPER key, on the sound pages and in PERF, SCNE, MUTE and CHRO.",
+    "steps": [
+      "Hold QPER and press a pad to link that one performance.",
+      "Keep QPER held and turn a knob to set its offset.",
+      "QPER + PLAY clears the linked performance; press PLAY again to undo. QPER + RECORD copies it, QPER + STOP pastes.",
+      "QPER + YES moves them into the kit.",
+      "In PERF mode, hold RECORD and press PLAY, then play the pads: the moves loop. RECORD + YES writes them into the pattern; RECORD + NO empties them, NO again undoes."
+    ],
+    "screenshots": [
+      "media/apply-quick-perf-rec.png",
+      "media/clear-quick-perf-rec.png"
+    ]
+  },
+  "controls": [],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "A press with QPER held leaves one link, unlike stock. A kit with several keeps them until then, and shows MORE THAN ONE LINKED.",
+      "The gestures work on the sound pages and in PERF, SCNE, MUTE and CHRO, not in menus.",
+      "Until the QPER knob moves after power on, QPER + YES uses the amounts stock holds.",
+      "Replaces stock's QPER + PLAY, which starts the sequencer.",
+      "Recorded performance moves live in RAM until QPER + YES writes them: a pattern change, project load or power off drops them.",
+      "The move lane holds 64 steps; a track at its own speed gets no locks from it."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [
+      "ev_key",
+      "ev_tick",
+      "ev_project",
+      "ev_render_out"
+    ],
+    "claims": [
+      "ui:QPER + knob",
+      "ui:QPER + pads and trigs",
+      "ui:QPER + PLAY",
+      "ui:QPER + YES",
+      "ui:QPER + RECORD",
+      "ui:QPER + STOP",
+      "ui:RECORD + YES",
+      "ui:RECORD + NO",
+      "ui:live recording of performance moves"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 17824,
+    "fastBytes": 0,
+    "load": {
+      "display": "About 0.8 % of the audio block idle (the audio handler, measured on a unit)",
+      "method": "hardware",
+      "conditions": "Measured on an Analog Rytm MKII with a private telemetry base, sequencer stopped, in the author's 16-module set: the audio handler took 8.7 us a block (1.3 %) before its idle early return and 5.1 us (0.8 %) after; removing the whole module lowered the idle block from 72.9 % to 70.9 %. With moves to record, a pad held or a take playing back it runs in full each block."
+    }
+  },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "0.2.0-experimental",
+    "sourceSha256": null,
+    "reports": [],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "The author's Analog Rytm MKII, with a USB MIDI trace for the quick perf rec, and rytm-emu. TESTING.md names each build.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Hold QPER, press pad 1 to link its performance, and keep holding.",
+          "Turn FLTR's cutoff up and the resonance a little, and let go of QPER.",
+          "Sweep the QPER knob. Both moves come in together.",
+          "When a position sounds right, hold QPER and press YES to keep it in the kit.",
+          "Hold QPER and press RECORD, press pad 2, then STOP to start another performance from this one.",
+          "Press PERF, hold RECORD and press PLAY. While the pattern plays, press and squeeze pads 1 and 2. Let go and listen to the next pass.",
+          "Hold RECORD and press YES to write the moves into the pattern."
+        ]
+      },
+      "screenshots": [
+        "media/apply-quick-perf-rec.png",
+        "media/clear-quick-perf-rec.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by the author."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "QPER Live Rec: a QPER knob move recorded and written onto the steps",
+      "alt": "The QPER knob draws a curve that loops; RECORD + YES turns it into lock bars on the steps",
+      "credit": "npp1993",
+      "license": "GPL-3.0-or-later",
+      "source": "Original signal-art illustration in the library style."
+    },
+    {
+      "path": "media/apply-quick-perf-rec.png",
+      "kind": "screenshot",
+      "caption": "Main screen after RECORD + YES: the APPLY QUICK PERF REC message.",
+      "alt": "Main screen of kit K001 RYTMLINJE with an APPLY QUICK PERF REC message box over the parameter page.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "a8a2dea0238e0630958f4ca18645db5ddcad3930b50aa2bbc9a8b28d23a8b40b",
+        "setup": "Headless rytm-emu (dtboot) running QL19: the Modwerk base for core-ar2 0.7 and this folder's QPERF 0.2.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit K001 and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/clear-quick-perf-rec.png",
+      "kind": "screenshot",
+      "caption": "Main screen after RECORD + NO: the CLEAR QUICK PERF REC message.",
+      "alt": "Main screen of kit K001 RYTMLINJE with a CLEAR QUICK PERF REC message box over the parameter page.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "a8a2dea0238e0630958f4ca18645db5ddcad3930b50aa2bbc9a8b28d23a8b40b",
+        "setup": "Headless rytm-emu (dtboot) running QL19: the Modwerk base for core-ar2 0.7 and this folder's QPERF 0.2.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit K001 and pattern A01. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    }
+  ]
+}

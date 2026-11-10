@@ -32,23 +32,15 @@ export const replacementText = (path: string, from = '../'.repeat(path.split('/'
   '// SPDX-License-Identifier: GPL-3.0-or-later\n'
   + '// Modwerk replaces this kit file with its own implementation (vendor/elekloader/README.md, "Replaced kit files").\n'
   + `export * from '${from}'\n`
-/** The upstream files the kit's NOTICE credits in its "Code from other projects" section, all ported into the replaced files. */
-const REPLACED_ORIGINS = ['elekloader/codec/aplib.py', 'elekloader/codec/elz.py', 'elekloader/codec/transport.py', 'elekloader/isa/coldfire.py']
-/** The kit's NOTICE as Modwerk ships it: that section is left out, since its files' code is not included, and a note says
- * which files are replaced. Throws when the section credits any other file, so a new one never loses its notice. */
+/** The kit's NOTICE as Modwerk ships it: whole, after a note naming the replaced files. Its "Code from other projects"
+ * section stays, since the replacements keep those files' formats and were checked against outputs recorded from them. */
 export function kitNotice(notice: string) {
-  const heading = '\nCode from other projects\n------------------------\n', at = notice.indexOf(heading)
   const replaced = Object.keys(KIT_REPLACEMENTS).join(', ')
-  const note = `Modwerk ships this kit with ${replaced} replaced by Modwerk's own implementation (vendor/elekloader/README.md).\n\n`
-  if (at < 0) return note + notice
-  const next = notice.slice(at + heading.length).search(/\n\n[^\n]+\n-{3,}\n/)
-  const section = next < 0 ? notice.slice(at + heading.length) : notice.slice(at + heading.length, at + heading.length + next)
-  const files = [...section.matchAll(/^ {2}(\S+\.py)\s/gm)].map(match => match[1]).sort()
-  if (files.join() !== [...REPLACED_ORIGINS].sort().join())
-    throw new Error(`The kit NOTICE's "Code from other projects" section credits ${files.join(', ') || 'no file'}, not exactly the files Modwerk replaces (${REPLACED_ORIGINS.join(', ')}): review it and scripts/elekloader-vendor.ts kitNotice().`)
-  return note + notice.slice(0, at).trimEnd() + (next < 0 ? '\n' : notice.slice(at + heading.length + next))
+  return `Modwerk ships this kit with ${replaced} replaced by Modwerk's own implementation (vendor/elekloader/README.md). `
+    + 'They keep the formats of the code credited under "Code from other projects" below and were checked against outputs '
+    + 'recorded from it, so that credit stays.\n\n' + notice
 }
-type Pin = { file: string; sha256: string; id: string; version: string; device: string; os: string; requires?: string[] }
+type Pin = { file: string; sha256: string; id: string; version: string; device: string; os: string; requires?: string[]; source?: { repo?: string; path?: string } }
 export type CatalogFile = { schema?: number; kind?: string; about?: string; revision: string; cores: Pin[]; mods: Pin[] }
 const sha = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex')
 
@@ -60,6 +52,9 @@ export function mergeCatalogOverlay(base: CatalogFile, overlay: CatalogFile): Ca
   const cores = [...base.cores], mods = [...base.mods]
   const append = (target: Pin[], pins: Pin[]) => {
     for (const pin of pins) {
+      // A package built here is fetched from this repository, also when the author's fork pins the commit (#1286, #1296).
+      if (pin.source?.path?.startsWith('sdk/') && pin.source.repo !== 'repeat98/modwerk')
+        throw new Error(`${pin.file}: source.path ${pin.source.path} is a file in this repository, so source.repo is repeat98/modwerk, not ${pin.source.repo}. elekloader:update fetches it from there once the pull request is open.`)
       const existing = names.get(pin.file)
       if (existing) {
         if (existing.sha256 !== pin.sha256) throw new Error(`Catalog overlay changes the existing file ${pin.file}.`)

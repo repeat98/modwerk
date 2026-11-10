@@ -503,6 +503,7 @@ void modwerk_ep0_bus_reset(void)
  * or trial is open is handled as unplugged (mv_tick). */
 #define HOST_TIMEOUT_TICKS 600u
 int modwerk_modset_due(void); /* modset.c: a kept set waits for its save */
+void modwerk_modset_notice_tick(void); /* modset.c: "MODULES LOADED" once the restored engines run */
 void modwerk_ep0_tick(void);
 static void ep0_tick(void);
 void modwerk_ep0_tick(void)
@@ -511,6 +512,7 @@ void modwerk_ep0_tick(void)
 }
 static void ep0_tick(void)
 {
+    modwerk_modset_notice_tick();
 #ifdef MODWERK_RUNTIME_VOLATILE_JOURNAL
     if(volatile_started && modwerk_volatile_tick(VOLATILE_SERVICE,modwerk_runtime_ticks)) wake();
 #endif

@@ -151,7 +151,7 @@
   },
   "vector": {
    "sources": {
-    "sdk/octabam/modules/vector/control.s": "c4f829e437ffbde1275c00827031b694a86011013d37269077e4696818323471",
+    "sdk/octabam/modules/vector/control.s": "1939a627870464126d138522173d0465d1abc790cdb4ad4bc29a15501484faf5",
     "sdk/octabam/modules/vector/manifest.py": "4d921f24256038797a99671534885b0bb9a27eaa79261b11136cf0a95a75af21"
    },
    "contribute": [
@@ -531,12 +531,14 @@
   },
   "quantizer": {
    "sources": {
-    "sdk/octabam/modules/quantizer/manifest.py": "0cb4a79f7cd68e1881cd1076a0f6ba2e132b1c199da3a2d4923906b443797602",
-    "sdk/octabam/modules/quantizer/upstream/quantizer/core.s": "2992b6c85cff440de03ae84eb22dee8b8a83a84f23e94b699404d28940b6f958",
+    "sdk/octabam/modules/quantizer/manifest.py": "e0841437a471b000b448ce8417c8fd25cba1cf155aec488d08d2888f4c249394",
+    "sdk/octabam/modules/quantizer/upstream/quantizer/core.s": "655bf8cb893ecbe8ec167633322491ae89fdf498c818e172ad6ba34c3fc992c8",
     "sdk/octabam/modules/quantizer/upstream/quantizer/keys.s": "e2ffdbfae34b0828794a4eb4cc229e3efcaed25dc953bf7c05c13f6e37f65587",
-    "sdk/octabam/modules/quantizer/upstream/quantizer/manifest.py": "e637e3718e4b65320b847ef0758e0d46800f8be6b8020290f89192c798c535ef",
-    "sdk/octabam/modules/quantizer/upstream/quantizer/quantizer.s": "b14f214cc8236c19b8881d1113ea42359052a6d7ef0e9e0f02aaa88279da64a9",
-    "sdk/octabam/modules/quantizer/upstream/quantizer/scale.s": "82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64"
+    "sdk/octabam/modules/quantizer/upstream/quantizer/manifest.py": "9550382938153ec1c6fe5a262612c5a4daad1d71aca68da7c0b6a4c55e801aa8",
+    "sdk/octabam/modules/quantizer/upstream/quantizer/panel_transaction.inc.s": "e51d5d035e8561b27671ac751957756831988786b5b25163688cc066c36b9c79",
+    "sdk/octabam/modules/quantizer/upstream/quantizer/quantizer.s": "6883dce6058cfc42eca1cb4c51a1d7d2318579a5adb5e84ae4202d7570c26abb",
+    "sdk/octabam/modules/quantizer/upstream/quantizer/scale.s": "82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64",
+    "sdk/octabam/modules/quantizer/upstream/quantizer/stock_guard.py": "5f1fe08ef5a4eb05cd772c9b65ee9f54c2371914a8360c8589109a9ce4308c2d"
    },
    "subscribe": [
     {
@@ -749,6 +751,16 @@
       "qz_lbl_glide",
       "qz_get_glide",
       "qz_set_glide"
+     ],
+     [
+      "qz_lbl_trk",
+      "qz_get_trk",
+      "qz_set_trk"
+     ],
+     [
+      "qz_lbl_fol",
+      "qz_get_fol",
+      "qz_set_fol"
      ]
     ],
     "tables": [
@@ -762,7 +774,7 @@
     "SEQUENCER getters",
     "SEQUENCER setters"
    ],
-   "why": "Every Scale Quantizer site is a take event (order 50) or the SEQUENCER table"
+   "why": "Every Scale Quantizer site that FM Synth's bundled copy and POLY8 also hook is a take event (order 50) or the SEQUENCER table; the source's other hooks (qz_mknob, qz_mplock, qz_mkey, qz_mnote, qz_atrig, qz_mprev, qz_heldmark, and 2.21's qz_panel_stage, qz_panel_commit) meet no base event or site and stay guarded patches. The source brings five SEQUENCER rows (SCALE, ROOT, GLIDE, TRACK, FOLLOW), inside the table's eight contributed rows"
   },
   "analog-bassdrum": {
    "sources": {

@@ -16,7 +16,8 @@ export async function sendAccountEmail(env: Env, db: Database, to: string, purpo
   if (!emailReady(env)) throw new HttpError(503, 'Account email is not connected yet. Please try again later.')
   const record=(outcome:MailOutcome)=>recordMail(db,purpose,outcome)
   try{
-    await reserveMailBudget(env, db, 'account')
+    // Password resets have their own budget, so a flood of sign-ups cannot leave members locked out.
+    await reserveMailBudget(env, db, purpose === 'reset' ? 'reset' : 'account')
   }catch(error){if(error instanceof HttpError&&error.status===429){await record('limited');throw new AccountMailError(429,'Account email is temporarily limited.')}throw error}
   const url = new URL(env.APP_URL!)
   url.hash = 'account/' + purpose + '/' + value

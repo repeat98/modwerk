@@ -60,6 +60,17 @@ describe('Octatrack firmware boot name', () => {
     expect(replies.at(-1)).toMatchObject({ type: 'error' })
     expect(compose.mock.calls.slice(classic).map(call => call[4])).toEqual([false])
   })
+  it('tries the classic startup before the compact FX2 menu, and reports that menu', async () => {
+    const firmware = synthetic(), replies: EngineResponse[] = []
+    const handle = createEngineSession(response => { replies.push(response) })
+    await handle({ id: 1, type: 'inspect', name: 'synthetic.bin', buffer: new Uint8Array(encodeFirmware(firmware, firmware.mainOs, 'STOCK')).buffer })
+    const compose = vi.mocked(composeSelection), before = compose.mock.calls.length
+    compose.mockRejectedValueOnce(new Error('PERSONALIZE setters does not fit in the available menu and patch space (68 bytes needed, 60 bytes available)'))
+    compose.mockImplementationOnce(async (original: Uint8Array) => ({ bytes: original.slice(), chooser: { fx1: [], fx2: [], hidden: [] }, runtime: { bytes: 0, reservedBytes: 0 }, compactFx2: true } as unknown as Awaited<ReturnType<typeof composeSelection>>))
+    await handle({ id: 2, type: 'validate', moduleIds: ['repitch'], keepStockFx2: false })
+    expect(compose.mock.calls.slice(before).map(call => [call[4], call[5]])).toEqual([[true, false], [false, true]])
+    expect(replies.at(-1)).toMatchObject({ type: 'validated', report: { startupAnimation: 'classic', startupFallback: true, compactFx2: true } })
+  })
   it('uses only the panel boot font letter range', () => {
     expect(FIRMWARE_VERSION).toMatch(/^[A-Z0-9. ]{1,10}$/)
   })

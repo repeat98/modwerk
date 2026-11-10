@@ -123,11 +123,15 @@ export function modulePages(): Plugin {
       const html = String(index.source)
       this.emitFile({ type: 'asset', fileName: '404.html', source: notFoundPageHtml(html, config.base) })
       const stylesheet = readFileSync(resolve(config.root, 'src/styles.css'), 'utf8')
-      for (const module of MODULES) {
-        const thumbnail = await moduleThumbnail(module.id, stylesheet)
+      const thumbnails = await Promise.all(MODULES.map(module => moduleThumbnail(module.id, stylesheet)))
+      const cards = await Promise.all(DIGI_MODS.map(digiModuleThumbnail))
+      for (const [index, module] of MODULES.entries()) {
+        const thumbnail = thumbnails[index]
         const hash = createHash('sha256').update(thumbnail).digest('hex').slice(0, 12)
         const imagePath = `module-thumbnails/${module.id}-${hash}.jpg`
         this.emitFile({ type: 'asset', fileName: imagePath, source: thumbnail })
+        // The weekly news digest links each module's card by its community ID (server/news-mail.ts).
+        this.emitFile({ type: 'asset', fileName: `module-thumbnails/${module.id}.jpg`, source: thumbnail })
         const page = modulePageHtml(html, module, imagePath, config.base)
         this.emitFile({ type: 'asset', fileName: modulePath(module.id) + 'index.html', source: page })
         // Keep existing links loadable; startRouting replaces them with the public canonical URL.
@@ -135,10 +139,11 @@ export function modulePages(): Plugin {
           this.emitFile({ type: 'asset', fileName: `module/${module.id}/index.html`, source: page })
         }
       }
-      for (const mod of DIGI_MODS) {
-        const card = await digiModuleThumbnail(mod)
+      for (const [index, mod] of DIGI_MODS.entries()) {
+        const card = cards[index]
         const imagePath = `module-thumbnails/${mod.device}-${mod.id}-${createHash('sha256').update(card).digest('hex').slice(0, 12)}.jpg`
         this.emitFile({ type: 'asset', fileName: imagePath, source: card })
+        this.emitFile({ type: 'asset', fileName: `module-thumbnails/${mod.device}-${mod.id}.jpg`, source: card })
         this.emitFile({ type: 'asset', fileName: `${mod.device}/module/${mod.id}/index.html`, source: digiModulePageHtml(html, mod, imagePath, config.base) })
       }
     },
