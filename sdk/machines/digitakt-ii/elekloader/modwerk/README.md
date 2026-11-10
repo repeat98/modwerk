@@ -1,5 +1,31 @@
 # Proposed Digitakt II sequencer note hook
 
+## Playback grid prototype
+
+`ev_seq_grid` observes the audio constructor before stock tests for a trig. It uses the existing playback detour and returns immediately when the collection is empty. The callback receives the originating pattern, track and step plus four adjacent deadlines in stock musical time. The base derives these from the stock tick, lookahead, speed table and per-step swing flags. The callback is read-only.
+
+The prototype covers ordinary audio tracks during playback. On initial PLAY, the existing queue bridge publishes step zero when stock created an audio source event. It skips mapped and Euclidean tracks, non-pattern sources, and pending pattern switches. The four read-only callbacks run in subscription order in the sequencer context. The collection uses an Elekloader symbol.
+
+Digikit `d6de4d0` reported 50 windows at swung 2× and 26 at straight 1×, including the PLAY source and rests. All 40 captured playback notes matched their grid onset. The empty, observer and renderer builds preserved the stock relative queue deadlines in the swung 2× fixture. The renderer used the Chord Arp engine at 1/32 and generated 174 checked note requests. It submitted no events. The renderer image SHA-256 was `570640af06a9fa642badb5c7515bb911df98da467720e25a326d6f0fe1010190`.
+
+## Audio phrase proposal
+
+```c
+void observe(const struct dt2_seq_grid_window *window);
+uint32_t phrase(const struct dt2_seq_grid_window *window, uint32_t pitch,
+                uint32_t velocity, struct dt2_seq_phrase_note *notes);
+```
+
+`ev_seq_grid` observes the existing PLAY and audio constructor bridges listed below. `ev_seq_audio_phrase` runs at the existing PLAY bridge and at the stock audio submission call on OS 1.17, address `0x400d82f8`, one instruction and six bytes, SHA-256 `74cb3c143b6a825d695e48fbac2bca8e5ce59700baca9721a368828f7bbba81e`. Both collections run synchronously on stock sequencer deadlines. Chord Arp's private diagnostic now subscribes to the draft collections. The existing Euclidean pitch callback keeps its current interface and path.
+
+The base calls up to four phrase subscribers in subscription order. Zero passes the source through to the next subscriber. A return of `DT2_SEQ_PHRASE_REST` consumes the source trig. A valid count from one to eight requests replacement with bounded note-on and release pairs. The first valid request owns the source. Invalid requests pass through and an allocation refusal preserves stock. The base reserves queue space and event records before committing. The module never sees a stock queue pointer or takes ownership of an event record.
+
+Ordinary trigs use the stock pitch and velocity fields, including explicit per-trig values. Initial PLAY can replace a source whose startup payload is empty. The base allocates its own payload for those generated notes. Pending switches, microtimed trigs, MIDI, and playback through source rests fall back to stock. The empty collection takes the stock submission path.
+
+Digikit fixtures exercised PLAY and subsequent loops, two concurrent tracks, 2× swing, stock tempo nudging, STOP, mute and pattern changes. At simultaneous pressure on all 16 tracks, six received complete eight-hit phrases at each tested window and ten retained their stock trigs. Hardware qualification of this proposal remains open.
+
+## Pitch callback
+
 `ev_seq_note` is a pitch-only callback for the OS 1.17 sequencer. The base calls it after stock constructs the note and before the event enters the stock queue. PLAY and subsequent steps use the same callback contract. The base passes the pattern that generated the note, the sounding track, the stock step, root and a twelve-bit scale mask relative to that root. The base sets `DT2_SEQ_NOTE_EUCLIDEAN` for the verified Euclidean event shape on the audio path.
 
 Subscribers receive a read-only context and the current pitch. The linker orders the callbacks by subscription order. Each receives the previous callback's accepted result. A result outside 0–127 retains the current pitch. There are four slots, and an empty collection preserves the incoming pitch. The dispatcher does no allocation or timing work and changes no pattern records.
@@ -37,5 +63,11 @@ The pinned base repeated the stock comparisons above in digikit `d6de4d0`: all 5
 `project-generation.h` exposes a read-only generation for modules with temporary project state. Capture the generation when populating that state and compare it for equality before reading the state again. Saving the project does not replace the active project.
 
 Two guarded OS 1.17 sites cover loading a saved project and initializing a new project. Both check that stock is operating on the active project and replay the displaced stock operations. The generation lives in RAM and adds no data to the project format.
+
+The project-replacement entry points also clear each contributed kit-data block and notify its `changed(kit, 0)` callback. A saved load fills the blocks from its kit records. A new project starts with empty blocks even if it is saved before the UI ticks. `core_project_kitdata_generation` exposes the same generation on bases that provide this guarantee.
+
+Two isolated pinned builds produced base SHA-256 `c4992eba731456afa6254e28a3f51e681e98ce97bae2a6d919e0053cf4f49583`. The base retains the previous 18 sites and exports and links with both Perform modules separately and together. In digikit, Euclidean Scale restored its kit data on saved-project reload and cleared it on Create New. The combined image reached ColdFire and SHARC ready with zero missing blocks and no halt.
+
+On 2026-11-08, Claptom-music reported that the combined K117 image `185fc6dbb84bb99f5477d22cead24ff7fc3e7f2e60c703168b83a207bf24bcf3` booted on their Digitakt II and restored the saved SCF switch and reroll melody after a scratch-project reload. Create New was verified in digikit.
 
 Two isolated builds with GCC 16.2.0 and binutils 2.47 reproduced [the same base package](../../base-binding.json). The base kept the preceding package's sites and interface entries and linked with both released Perform modules, separately and together. In digikit `d6de4d0`, the exact build incremented the generation once on saved-project reload and once on **Create New**. Save and cancelled load kept the same generation. The base linked with Euclidean Scale reached ColdFire and SHARC ready after 7,750 DSP frames with no missing blocks or halt. Physical-unit verification is pending.

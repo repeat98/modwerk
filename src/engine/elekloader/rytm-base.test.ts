@@ -43,8 +43,8 @@ describe('the Rytm sets\' Modwerk base', () => {
   })
   it('takes the send-bus variant for every module that contributes to the FX list', () => {
     const root = new URL('../../../sdk/analog-rytm-mkii/modules/', import.meta.url)
-    const folders = [...readdirSync(root).filter(name => !name.startsWith('_')).map(name => new URL(name + '/', root)),
-      ...readdirSync(new URL('_submissions/', root)).map(name => new URL('_submissions/' + name + '/', root))]
+    // _submissions/ takes no modules since #1170, and Git drops it once the last one moves out.
+    const folders = readdirSync(root).filter(name => !name.startsWith('_')).map(name => new URL(name + '/', root))
     const effects = folders.filter(folder => existsSync(new URL('build.json', folder)) &&
       JSON.parse(readFileSync(new URL('build.json', folder), 'utf8')).contribute.some((entry: { to: string }) => entry.to === 'mw_fx'))
       .map(folder => folder.pathname.split('/').at(-2)!)

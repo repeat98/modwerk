@@ -16,7 +16,7 @@ describe('module author release authority', () => {
   })
   it('uses immutable IDs from the trusted registry and supports case changes', () => {
     expect(authorizeAuthorUpdate(registry, { ...author, login: 'Devilfish707' }, modules, update()).modules).toEqual(['tapehead'])
-    for (const account of [{ ...author, id: 1 }, { ...author, type: 'Bot' }, { ...author, login: 'other' }]) expect(() => authorizeAuthorUpdate(registry, account, modules, update())).toThrow('registered')
+    for (const account of [{ ...author, id: 1 }, { ...author, type: 'Bot' }, { ...author, login: 'other' }, { login: 'other', type: 'User' }, { type: 'User' }]) expect(() => authorizeAuthorUpdate(registry, account, modules, update())).toThrow('registered')
     expect(ACTIONS_BOT_ID).toBe(41898282)
     expect(() => parseAuthorRegistry({ ...registry, accounts: { devilfish707: '86663946' } })).toThrow('immutable')
   })

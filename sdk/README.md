@@ -7,6 +7,9 @@ To add, port or update a module, follow [Add or port a module](../docs/ADD_A_MOD
 | Octatrack MKI/MKII | octabam | [machines/octatrack](machines/octatrack/README.md) |
 | Digitakt mk1 | elemod (preview) | [machines/digitakt](machines/digitakt/README.md) |
 | Digitone mk1 and Keys | elemod (preview) | [machines/digitone](machines/digitone/README.md) |
+| Analog Rytm MKII | elemod (preview) | [machines/analog-rytm-mkii](machines/analog-rytm-mkii/README.md) |
+| Analog Four MKII | elemod (research) | [machines/analog-four-mkii](machines/analog-four-mkii/README.md) |
+| Digitakt II | elemod (research) | [machines/digitakt-ii](machines/digitakt-ii/README.md) |
 | Every other machine | — | [Add a machine](../docs/ADD_A_MACHINE.md) |
 
 ## Layout

@@ -70,7 +70,8 @@ jobs:
       # Qualification records, complete docs/tutorials and monochrome screenshots are mandatory.
       # First release: owner reviews actual evidence. Later releases: registered author
       # verifies it and explicitly requests automatic publication within the trusted scope.
-      # Metadata checks never execute submitted Python or run firmware gates.
+      # npm run check runs no firmware gates, but it executes submitted manifest.py files: modules:compat, modules:pairs
+      # and sdk:check load every module's manifest as Python.
   module-paths-windows:
     needs: scope
     if: needs.scope.outputs.windows == 'true'

@@ -167,6 +167,12 @@ describe('a report about a whole configuration', () => {
     f.db.exec("UPDATE users SET email_verified=1 WHERE id='reporter'")
     for (let sent = 0; sent < 10; sent++) expect((await f.post(report(undefined, { visibility: undefined }))).status).toBe(201)
     expect((await f.post()).status).toBe(429)
+    // Refused for the member, even from a fresh address, the report counts toward neither the address nor the site.
+    const bucket = Math.floor(Date.now() / 3600000), count = async (key: string) => f.db.prepare('SELECT count FROM rate_limits WHERE key=?').get(await digest(key + ':' + bucket))
+    f.db.prepare('DELETE FROM rate_limits WHERE key=?').run(await digest('issue-ip:192.0.2.1:' + bucket))
+    expect((await f.post()).status).toBe(429)
+    expect(await count('issue-global')).toEqual({ count: 10 })
+    expect(await count('issue-ip:192.0.2.1')).toBeUndefined()
   })
 
   it('does not count against a module’s own issue totals or stability grade', async () => {
