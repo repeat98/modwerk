@@ -55,6 +55,8 @@
     "fx:audit": "node scripts/fx-audit.mjs",
     "perf:audit": "node scripts/perf-audit.mjs",
     "sdk:check": "node scripts/sdk-check.mjs",
+    "slots": "node scripts/machine-slots.mjs status",
+    "lane": "node scripts/lane.mjs",
     "sdk:imports:check": "node scripts/sdk-imports.mjs",
     "modules:build": "python3 -B scripts/build-module-packages.py",
     "modules:build:elemod": "node scripts/build-elemod-packages.mjs",

@@ -163,7 +163,8 @@ export async function accountRoutes(request: Request, env: Env, db: Database, pa
       if(env.SESSION_TRANSPORT!=='bearer')for(const value of result.headers.getSetCookie())out.headers.append('Set-Cookie',value)
       return out
     }
-    await throttle(db,'auth-ip:'+(headers.get('CF-Connecting-IP')??'local'),30,900)
+    const ip=headers.get('CF-Connecting-IP')??'local'
+    await throttle(db,'auth-ip:'+ip,30,900)
     const body=await jsonBody(request)
     if(action==='verify'||action==='reset'){
       if(typeof body.token!=='string'||body.token.length<20||body.token.length>2000)throw new HttpError(400,'This link is invalid or expired.')
@@ -184,7 +185,9 @@ export async function accountRoutes(request: Request, env: Env, db: Database, pa
       return response({ok:true,message:'Password updated. All previous sessions have ended. Sign in with your new password.'})
     }
     const email=emailAddress(body.email)
-    await throttle(db,(action==='login'?'auth-login:':'auth-mail:')+email,action==='login'?10:3,900)
+    await throttle(db,(action==='login'?'auth-login:'+ip+':':'auth-mail:')+email,action==='login'?10:3,900)
+    // A higher ceiling per address alone, so guesses from elsewhere cannot lock its owner out.
+    if(action==='login')await throttle(db,'auth-login:'+email,50,900)
     if(action!=='login'&&!emailReady(env))throw new HttpError(503,'Account email is not connected yet. Please try again later.')
     if(action==='login'){
       if(typeof body.password!=='string'||body.password.length>128)throw new HttpError(400,'Enter your password.')
@@ -197,6 +200,8 @@ export async function accountRoutes(request: Request, env: Env, db: Database, pa
       if(typeof body.username!=='string'||!/^[a-zA-Z0-9_]{3,24}$/.test(body.username))throw new HttpError(400,'Use 3–24 letters, numbers or underscores for your username.')
       if(typeof body.password!=='string')throw new HttpError(400,'Enter a password.')
       if(body.newsletter!==undefined&&typeof body.newsletter!=='boolean')throw new HttpError(400,'Choose whether to receive news emails.')
+      // Each sign-up sends a verification email; this bounds how fast addresses spread over many IPs can spend that budget.
+      await throttle(db,'auth-register',30,3600)
       const created=await auth.api.signUpEmail({body:{name:body.username.toLowerCase(),username:body.username.toLowerCase(),email,password:body.password},headers})
       await initializeNewsPreference(db,created.user.id,body.newsletter===true)
     }else if(action==='forgot')await auth.api.requestPasswordReset({body:{email},headers})
