@@ -31,8 +31,10 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 ## Module reference
 
 - [SDK.md](SDK.md): machine profiles, module contract v3, evidence tiers and the shared commands.
+- [OCTATRACK_API.md](OCTATRACK_API.md): what an Octatrack module builds against: entry points, hooks, state, what stays stable.
 - [MODULE_REPOSITORIES.md](MODULE_REPOSITORIES.md): the module folder and its manifest fields.
 - [MODULE_QUALIFICATION.md](MODULE_QUALIFICATION.md): qualification gates: cycles, memory, hardware, exceptions.
+- [MODULE_PERFORMANCE.md](MODULE_PERFORMANCE.md): how to measure a module before it is listed: worst-case cycles, a benchmark against stock and a stress run.
 - [MODULE_RESOURCE_GAUGES.md](MODULE_RESOURCE_GAUGES.md): the CPU, DSP and memory gauges a release needs.
 - [MODULE_UI_CAPTURES.md](MODULE_UI_CAPTURES.md): screenshots and the capture tool.
 - [MODULE_AUDIO_PREVIEWS.md](MODULE_AUDIO_PREVIEWS.md): a module's audio clip.
@@ -60,7 +62,7 @@ Every document in `docs/`, one line each. [AGENTS.md](../AGENTS.md) says which t
 
 ## Other machines and research
 
-- [SYNTAKT_OS_RESEARCH.md](SYNTAKT_OS_RESEARCH.md), [TONVERK_OS_RESEARCH.md](TONVERK_OS_RESEARCH.md), [DIGITONE_II_OS_RESEARCH.md](DIGITONE_II_OS_RESEARCH.md): what each stock OS has shown so far.
+- [SYNTAKT_OS_RESEARCH.md](SYNTAKT_OS_RESEARCH.md), [TONVERK_OS_RESEARCH.md](TONVERK_OS_RESEARCH.md), [DIGITONE_II_OS_RESEARCH.md](DIGITONE_II_OS_RESEARCH.md), [RYTM_MKI_OS_RESEARCH.md](RYTM_MKI_OS_RESEARCH.md): what each stock OS has shown so far.
 - [LXR_02.md](LXR_02.md): the Erica Synths LXR-02, in research.
 - [ZOOM_MULTISTOMP.md](ZOOM_MULTISTOMP.md) and [ZDL_MODULE_CONTRACT.md](ZDL_MODULE_CONTRACT.md): proposals for Zoom MultiStomp pedals and their effect files.
 - [ZOOM_ZD2.md](ZOOM_ZD2.md): the Zoom G1 FOUR and its ZD2 effects, in research.

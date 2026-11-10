@@ -59,8 +59,8 @@ affiliated with Elektron.
 at one corner, where an apricot ninth tile, the mod, slides in. The artwork embeds
 `modwerk-mark.svg` as-is twice: to the left of the wordmark and at the branch
 junction. The mark files are unchanged from the supplied redesign branch. A change
-to the mark changes the preview on its next export. `public/favicon.svg` is still
-the Octamod mark; switching it belongs to the rebrand.
+to the mark changes the preview on its next export. `public/favicon.svg` is the
+retired Octamod mark, kept for the v1 artwork only.
 
 ### Source and export
 
@@ -171,7 +171,13 @@ the build is hosted under a Pages project path.
 
 ## Modwerk integration
 
-The app logo and favicon use `public/modwerk-mark.svg`. The homepage Open Graph
+The app logo uses `public/modwerk-mark.svg`. Browser tabs and search results use
+`public/modwerk-icon.svg`, the same mark on its own dark tile, because the bare
+mark's light lines vanish on a light tab bar. `public/favicon.ico` carries 16, 32
+and 48 pixel versions for crawlers and older browsers; its 16 pixel image comes
+from `public/modwerk-icon-16.svg`, drawn on the pixel grid without the frame,
+which blurs into the tiles at that size. After changing either SVG, run
+`node scripts/render-favicon.mjs`. The homepage Open Graph
 and Twitter cards use `https://modwerk.app/modwerk-social-preview-v2.jpg`, a
 1200 × 630 JPEG showing the mod library, firmware builder, community forum and
 developer SDK. Both assets are the unchanged redesign from

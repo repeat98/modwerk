@@ -1,0 +1,11 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-08",
+    "changes": [
+      "First release, for Analog Rytm MKII OS 1.74: browse the machine list without loading each machine.",
+      "UP, DOWN and the knobs A-H move the outline only; YES loads the outlined machine, NO changes nothing.",
+      "FUNC + DOWN jumps to the next section of the list (BD, SY, SD and so on); FUNC + UP to the top of this section, then of the one above."
+    ]
+  }
+]

@@ -606,14 +606,14 @@
         {
           "name": "Core image",
           "unit": "bytes",
-          "value": 11996,
-          "note": "Modwerk's base, plain variant (ba530f45), for a set with no send effect: 10,628 bytes .run plus 1,368 bytes .bss in the shared area, and a 94-byte .boot copier. The link check measures each selected module set."
+          "value": 12160,
+          "note": "Modwerk's base, plain variant (1c14b6b0), for a set with no send effect: 10,792 bytes .run plus 1,368 bytes .bss in the shared area, and a 94-byte .boot copier. The link check measures each selected module set."
         },
         {
           "name": "Core image with the send bus",
           "unit": "bytes",
-          "value": 31410,
-          "note": "The base's send-bus variant (c338266c), for a set with a send effect: 28,702 bytes .run plus 2,708 bytes .bss. It reserves no work area: the effect that runs works in the shared area the modules leave free (CHORUS and FLANGER ask for 16 KB, PHASER none)."
+          "value": 31574,
+          "note": "The base's send-bus variant (73f3668c), for a set with a send effect: 28,866 bytes .run plus 2,708 bytes .bss. It reserves no work area: the effect that runs works in the shared area the modules leave free (CHORUS and FLANGER ask for 16 KB, PHASER none)."
         }
       ]
     }
@@ -624,13 +624,13 @@
     "order": 90,
     "name": "Analog Rytm",
     "family": "elektron",
-    "status": "open",
-    "summary": "The original Rytm. No public firmware research yet.",
+    "status": "research",
+    "summary": "OS 1.74 rebuilt in the browser builder (ELE2); marked builds boot, stock restores, DIN recovery works; the MKII base built for the MKI passed on a unit.",
     "steps": {
-      "format": "open",
-      "rebuild": "open",
-      "boot": "open",
-      "core": "open",
+      "format": "done",
+      "rebuild": "done",
+      "boot": "done",
+      "core": "started",
       "mods": "open"
     },
     "art": {
@@ -641,6 +641,33 @@
     },
     "variants": [
       "MKI"
+    ],
+    "firmware": {
+      "releases": [
+        {
+          "version": "1.74",
+          "files": [
+            {
+              "name": "Analog-Rytm_OS1.74.syx",
+              "sha256": "4f0d59051b4b3ac01f336639918ceb8186e0ae1a1abf2ed9bc028b8718514cff"
+            }
+          ]
+        }
+      ],
+      "flash": "Elektron Transfer over USB: set MIDI IN and OUT to the device, drop the .syx on and press YES on the device. It restarts by itself.",
+      "recovery": "Recovery mode is MIDI DIN ONLY: the startup menu does not take USB. Hold FUNC at power-on, TRIG 4 (OS UPGRADE), and send the owner's stock .syx over MIDI DIN from a USB-MIDI interface plugged straight into the Rytm's MIDI IN (Transfer cannot send in the startup menu; a paced sender works, docs/RYTM_MKI_OS_RESEARCH.md)."
+    },
+    "research": [
+      {
+        "label": "rytm-emu MK1 port notes",
+        "url": "https://github.com/trigcondition/rytm-emu/blob/main/docs/MK1-PORT.md",
+        "note": "Rytm MKI OS 1.74 and A4 MKI 1.56 in an emulator: ELE2 header, MCF5441x, NOR flash, 122x32 LCD, full-speed USB. Boots stock 1.74 to the main screen. No firmware hosted."
+      },
+      {
+        "label": "elektron-firmware-tool",
+        "url": "https://github.com/mischa85/elektron-firmware-tool",
+        "note": "Documents the SysEx transport, ELE2 container and aPLib codec that Modwerk's ele2.ts reads and rebuilds (docs/RYTM_MKI_OS_RESEARCH.md). No firmware hosted."
+      }
     ]
   },
   {

@@ -2,7 +2,7 @@
   "schema": 1,
   "revision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
   "license": "/licenses/octabam.txt",
-  "sourceCommit": "d8b451823973693f40983bd46917662b8ca1b816",
+  "sourceCommit": "898ac30d6a716eaee665f08c4176a51a3e1ee9db",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -25,7 +25,7 @@
     "previewvol": "0.1.2-experimental",
     "cc-map": "0.1.2-experimental",
     "sidechain-compressor": "0.2.0-experimental",
-    "vector": "0.2.5-experimental",
+    "vector": "0.3.1-experimental",
     "playmodes": "0.2.0-experimental",
     "mute-modes": "0.2.2-experimental",
     "recorder-loop-fix": "0.1.0-experimental",
@@ -40,8 +40,7 @@
     "tuner": "0.1.0-experimental",
     "slow-lfo": "0.1.0-experimental",
     "bar-led": "0.1.0-experimental",
-    "stem-rec": "0.1.0-experimental",
-    "track-solo": "0.2.3-experimental"
+    "stem-rec": "0.1.0-experimental"
   },
   "packages": [
     {

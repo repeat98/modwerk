@@ -157,6 +157,9 @@ describe('the elekloader update', () => {
     expect(merged.revision).toMatch(/^[a-f0-9]{64}$/)
     expect(mergeCatalogOverlay(merged, overlay)).toEqual(merged)
     expect(() => mergeCatalogOverlay(base, { ...overlay, cores: [pin('core', 'digitakt-mk2', 'core-2.1.elemod', 'd'.repeat(64))] })).toThrow('changes the existing file')
+    const forked = { ...overlay.mods[0], source: { repo: 'someone/modwerk', commit: 'f'.repeat(40), path: 'sdk/imports/packages/perform-direct/perform-direct-1.0.elemod' } }
+    expect(() => mergeCatalogOverlay(base, { ...overlay, mods: [forked] })).toThrow('so source.repo is repeat98/modwerk, not someone/modwerk')
+    expect(mergeCatalogOverlay(base, { ...overlay, mods: [{ ...forked, source: { ...forked.source, repo: 'repeat98/modwerk' } }] }).mods).toHaveLength(1)
   })
 })
 
@@ -177,7 +180,7 @@ function fixture() {
     mkdirSync(dirname(join(root, path)), { recursive: true })
     cpSync(join(ROOT, path), join(root, path), { recursive: true })
   }
-  for (const path of [...noticePaths, 'LICENSE', 'LICENSES', 'docs/USB_AUDIO_ATTRIBUTION.txt', 'scripts/elekloader-update.ts', 'scripts/elekloader-vendor.ts', 'scripts/licenses.mjs', 'scripts/license-notices.mjs', 'src/engine/elektron/codec']) copy(path)
+  for (const path of [...noticePaths, 'LICENSE', 'LICENSES', 'scripts/elekloader-update.ts', 'scripts/elekloader-vendor.ts', 'scripts/licenses.mjs', 'scripts/license-notices.mjs', 'src/engine/elektron/codec']) copy(path)
   // The module records that add Modwerk-built pins to the upstream catalog.
   for (const name of readdirSync(join(ROOT, 'sdk/imports')).filter(name => /^elekloader-.*\.json$/.test(name))) copy('sdk/imports/' + name)
   const manifest = JSON.parse(readFileSync(join(root, 'sdk/octabam/licenses/manifest.json'), 'utf8')) as { moduleComponents: Record<string, string[]> }

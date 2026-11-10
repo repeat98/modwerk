@@ -9,7 +9,7 @@ import { requireModuleDocumentation } from './module-documentation.mjs'
 import { AVAILABLE_MODULES } from '../src/catalog/availability.ts'
 import { MODULES, resolveSelection } from '../src/catalog/modules.ts'
 const json=async p=>JSON.parse(await readFile(resolve(p),'utf8'))
-const baseline=await json('sdk/module-qualification-baseline.json'),waiverRecord=await json('sdk/module-release-waivers.json')
+const baseline=await json('sdk/approvals/module-qualification-baseline.json'),waiverRecord=await json('sdk/approvals/module-release-waivers.json')
 const waivers=parseReleaseWaivers(waiverRecord),catalog=await json('sdk/catalog.json')
 
 describe('owner-approved utility releases',()=>{

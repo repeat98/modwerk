@@ -12,7 +12,7 @@ import { compareModuleVersions } from '../src/catalog/versions.ts'
 import { requireModuleDocumentation } from './module-documentation.mjs'
 
 const assets = 'src/engine/assets'
-export const USB_WAIVERS_PATH = 'sdk/usb-package-waivers.json'
+export const USB_WAIVERS_PATH = 'sdk/approvals/usb-package-waivers.json'
 const USB_MANIFEST = assets + '/octatrack-module-packages.json'
 const git = (root, ...args) => execFileSync('git', args, { cwd: root, maxBuffer: 32 * 1024 * 1024 })
 const text = (root, ...args) => git(root, ...args).toString('utf8')
@@ -98,7 +98,7 @@ function ownRows(value, id) {
   return { version: value?.moduleVersions?.[id] ?? null, rows }
 }
 
-// The owner's hash-bound USB package waivers (sdk/usb-package-waivers.json): at most one for this exact version.
+// The owner's hash-bound USB package waivers (sdk/approvals/usb-package-waivers.json): at most one for this exact version.
 export function parseUsbPackageWaivers(value) {
   const fields = ['module', 'version', 'path', 'sha256', 'approval', 'hardware', 'emulator']
   if (!value || value.schemaVersion !== 1 || typeof value.about !== 'string' || !Array.isArray(value.waivers) || Object.keys(value).sort().join() !== 'about,schemaVersion,waivers')
@@ -113,9 +113,9 @@ export function parseUsbPackageWaivers(value) {
   }
   return value.waivers
 }
-// The owner's card-only OKs (sdk/usb-card-only.json): one exact Octatrack module version listed without the USB package
+// The owner's card-only OKs (sdk/approvals/usb-card-only.json): one exact Octatrack module version listed without the USB package
 // module-doctor requires, each with its reason and the issue or pull request that ends it. It waives no evidence.
-export const USB_CARD_ONLY_PATH = 'sdk/usb-card-only.json'
+export const USB_CARD_ONLY_PATH = 'sdk/approvals/usb-card-only.json'
 export function parseUsbCardOnly(value) {
   if (!value || value.schemaVersion !== 1 || typeof value.about !== 'string' || !Array.isArray(value.modules) || Object.keys(value).sort().join() !== 'about,modules,schemaVersion')
     throw new Error(USB_CARD_ONLY_PATH + ' is malformed')

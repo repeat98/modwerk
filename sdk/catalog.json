@@ -109,7 +109,7 @@
     },
     {
       "id": "vector",
-      "version": "0.2.5-experimental",
+      "version": "0.3.1-experimental",
       "addedAt": "2026-10-06T08:02:00Z"
     },
     {
@@ -191,6 +191,11 @@
       "id": "stem-rec",
       "version": "0.1.0-experimental",
       "addedAt": "2026-11-05T15:55:00Z"
+    },
+    {
+      "id": "tiempos",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-10-30T12:00:00Z"
     },
     {
       "id": "track-solo",

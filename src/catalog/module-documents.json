@@ -6207,7 +6207,7 @@
       "id": "vector",
       "key": "VECTOR",
       "name": "VECTOR",
-      "version": "0.2.5-experimental",
+      "version": "0.3.1-experimental",
       "category": "machines",
       "source": {
         "repository": "https://github.com/repeat98/modwerk",
@@ -6477,8 +6477,8 @@
             ],
             "screenshotStyle": "black-and-white"
           },
-          "moduleVersion": "0.2.5-experimental",
-          "sourceSha256": "1255e99133cbd8d6d2587c95f93462ea80fccbd169462a2acb02aedbd346cbd3",
+          "moduleVersion": "0.3.1-experimental",
+          "sourceSha256": "27eca33a8d42bc0b5c56010864915454684d8d61df1a074403a66dda1e3d9a42",
           "imageSha256": "a753ddf67b0fe64e3742b4c89ecf141071eb30757b170173215e92b1b4794d24",
           "cycles": [
             {
@@ -6578,7 +6578,7 @@
               "The base was the development twin of the release base, not the b1b2ca58 build itself, nor the base this release commits.",
               "Not tested: the FLEX, THRU and PICKUP setups; a POLY8 or Analog BD track's SRC SETUP; VECTOR 0.2.4 on the new base; whether the SRC main page regenerates the phrase.",
               "Not tested: saving and reloading, a power cycle with VECTOR kept, and listening; no chip timing or stress.",
-              "One MKII; no MKI. The card build is 0.2.4's and was not run for this version."
+              "One MKII; no MKI. The card build was not run on a unit: 0.2.4's card source, and 0.3.1's (0.2.6's code: st_setup_page without its row-5 test, for POLY8 sets, #1119) only in ot_emu. 0.3.1 keeps publishing this 0.2.5 USB package; its control unit source is byte-identical."
             ],
             "report": "TESTING.md"
           }
@@ -6602,7 +6602,7 @@
             "page": "SRC SETUP machine chooser",
             "shows": "location",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.5-experimental",
+            "moduleVersion": "0.3.1-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6619,7 +6619,7 @@
             "page": "SRC generator",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.5-experimental",
+            "moduleVersion": "0.3.1-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6636,7 +6636,7 @@
             "page": "SRC after Generate",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.5-experimental",
+            "moduleVersion": "0.3.1-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6653,7 +6653,7 @@
             "page": "SRC sample editor",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.5-experimental",
+            "moduleVersion": "0.3.1-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6670,7 +6670,7 @@
             "page": "SRC SETUP",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.5-experimental",
+            "moduleVersion": "0.3.1-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6687,7 +6687,7 @@
             "page": "Backing-pool choice",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.5-experimental",
+            "moduleVersion": "0.3.1-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6704,7 +6704,7 @@
             "page": "Static sample pool",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.5-experimental",
+            "moduleVersion": "0.3.1-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6721,7 +6721,7 @@
             "page": "Flex sample pool",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.5-experimental",
+            "moduleVersion": "0.3.1-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -11757,45 +11757,44 @@
     },
     {
       "schemaVersion": 2,
-      "id": "track-solo",
-      "key": "TRACK SOLO",
-      "name": "Track Solo",
-      "version": "0.2.3-experimental",
+      "id": "tiempos",
+      "key": "TIEMPOS",
+      "name": "Tiempos",
+      "version": "0.1.0-experimental",
       "category": "system",
       "access": {
-        "location": "PROJECT > CONTROL > SEQUENCER > TRACK SOLO",
+        "location": "Any screen: hold CUE and press MIDI.",
         "steps": [
-          "Install Track Solo over USB.",
-          "Open PROJECT > CONTROL > SEQUENCER and choose HOLD for TRACK SOLO.",
-          "Close the menu, hold one TRACK button alone for 30 instrument UI ticks (about 0.5 seconds), then tap others to toggle their solo.",
-          "Release the original TRACK button to end solo; choose OFF to disable the gesture."
+          "Install Tiempos with the Modwerk base over USB.",
+          "Load samples on some tracks and press PLAY.",
+          "Hold CUE and press MIDI. Hold CUE and press MIDI again, or press NO, to return to the page you were on."
         ],
         "screenshots": [
-          "media/track-solo-off.png",
-          "media/track-solo-hold.png"
+          "media/ot-tiempos-open.png",
+          "media/ot-tiempos-last-30s.png"
         ]
       },
       "author": {
-        "github": "twwwy",
+        "github": "imdantelo",
         "credits": [
-          "twwwy"
+          "Diego Antelo Barba (design and specification)"
         ]
       },
       "nativeManifest": "manifest.py",
       "presentation": {
-        "label": "TRACK SOLO",
-        "family": "Track audition",
-        "summary": "Momentary solo: hold a track for 0.5 seconds, tap others to join, then release to restore.",
-        "overview": "A session-only audition while editing. The held anchor is hidden from stock shortcuts; underlying mute and solo changes apply when the audition ends.",
+        "label": "TIME LEFT",
+        "family": "Display",
+        "summary": "One screen with the time left on all eight tracks, for playing long samples like a DJ.",
+        "overview": "Hold CUE and press MIDI to show every track on one screen: a bar of what is left to play, the real time left and the total length. The time left is measured from how fast each voice really plays, so it follows timestretch, repitch and tempo changes. It only reads and draws: no effect slot, no knob, and nothing in the project changes.",
         "highlights": [
-          "Hold one TRACK button for 0.5 seconds to start a temporary solo.",
-          "Toggle other audio tracks into the group with one press.",
-          "Release the anchor to return to the underlying mute and solo state."
+          "Time left for all eight tracks at once",
+          "Follows timestretch, repitch and tempo changes",
+          "The time left flashes in the last 30 seconds",
+          "Playback keys, track keys, encoders and the crossfader keep working while it shows"
         ],
         "usage": [
-          "Open PROJECT > CONTROL > SEQUENCER and set TRACK SOLO to HOLD.",
-          "Hold T2 alone for 0.5 seconds, then press T3 to add or remove it.",
-          "Release T2 to end the temporary solo."
+          "Hold CUE and press MIDI from any screen; do the same, or press NO, to close it.",
+          "LEFT or RIGHT switches the right column between total length and time played."
         ]
       },
       "controls": [],
@@ -11805,107 +11804,102 @@
         "location": "Audio tracks",
         "conflicts": [],
         "uiClaims": [
-          "key:TRACK",
-          "key:TRACK+TRACK"
+          "key:CUE+MIDI"
         ],
         "limitations": [
-          "Functional hardware report on package 1895ceec, Track Solo alone. Not tested on hardware: other modules alongside, MKI, all eight anchors, external MIDI, arranger rows, Pickup recording, K09 modifier orderings, self-test, Keep and power cycles. See TESTING.md.",
-          "TRACK SOLO is OFF on startup and after package replacement; its enable setting and solo groups are not saved.",
-          "MIDI mode is excluded. When T8 is master, include it with the source tracks in the temporary group; T8 alone has no source audio.",
-          "Mute Modes is optional. Paired emulator audio passed for OT, OTFX, OTFX-T and DT-T on the 0.2.2 package; physical Mute Modes behavior is untested.",
-          "USB settings use the existing shared row table; native card settings integration is pending."
+          "Needs the Modwerk base over USB: it uses the base's draw and key events.",
+          "Tested on one MKI with the Modwerk bases 24a0ed57 and 9b3ba417 (install, Keep, power cycle and Undo of the published package). Not tested yet: an MKII, Part changes and project reloads with the screen open, timestretch modes other than NORMAL, and other modules installed at the same time.",
+          "CUE + MIDI no longer switches to MIDI tracks while Tiempos is installed; MIDI alone still does.",
+          "A track that loops shows the time left to the end of the sample, not to the end of the loop.",
+          "A track playing backwards (RATE below 0) shows as empty once it reaches its start: the unit clears the voice there.",
+          "Until a track has played for half a second, its time is shown at the sample's original speed.",
+          "Thru, Neighbor and Pickup tracks show no time."
         ]
       },
       "resources": {
-        "recorded": "2026-11-06",
+        "recorded": "Developer's MKI, 30 Oct 2026; emulator 30 Oct 2026",
         "storage": {
           "label": "Storage",
-          "display": "1500 bytes linked code/data; zero BSS",
-          "value": 1500,
+          "display": "2,892 bytes",
+          "value": 2892,
           "unit": "bytes",
           "method": "static",
-          "conditions": "Exact ABI 8 package SHA-256 1895ceecbfa74cd00cf07b2557ddbdf4668e32327d7c03fcf5c9f529547a5677: 2,128-byte package, 1,500-byte linked image, zero BSS, 24 relocations, seven guarded sites.",
-          "source": "evidence/resource-accounting.md"
+          "conditions": "From the USB package 8c886466: 2,588 bytes of ColdFire code and data and 304 of bss, one instance. No DSP memory, no heap, no card files.",
+          "source": "TESTING.md"
         },
         "processing": {
-          "label": "ColdFire, per event",
-          "display": "2,615 of 9,577 cycles worst case (static)",
-          "value": 2615,
-          "unit": "cycles/event",
-          "method": "static",
-          "conditions": "Module-owned instructions only: the dearest UI tick transition plus the active frame path, at 2.49216 cycles an instruction. Stock callees, cache and bus waits are excluded. Not measured on a chip. Measured in ot_emu: 674 module instructions, about 1,680 cycles, at the dearest event.",
+          "label": "CPU load",
+          "display": "No change on the unit's LOAD page, open or closed",
+          "value": null,
+          "unit": "unknown",
+          "method": "hardware",
+          "conditions": "Developer's MKI, released base, three tracks playing: CPU 62 % just after a minute with the screen open against a 64 % peak without Tiempos; the base's five-minute records 51.1 % mean with it, 51.3 % without; DSP load and space unchanged. In the emulator the open screen's draw took about 0.3 ms a UI tick with empty rows, estimated at most 4.3 ms with all eight rows playing.",
           "source": "evidence/performance.json"
         },
         "impact": {
-          "conditions": "One global instance with HOLD on and a group active. Estimates come from source and static counts, not measured hardware headroom. Loader allocation is included in memory.",
+          "conditions": "The Tiempos screen open with tracks playing; closed, it only reads eight voice records each UI tick.",
           "cpu": {
-            "level": "minimal",
-            "basis": "source-estimate",
-            "rationale": "At most 21 module instructions in a frame, 8 when idle. The dearest work is a UI-tick transition updating sixteen lamps, about 1,028 instructions, only when a hold starts or the group changes. Chip load is not measured.",
+            "level": "low",
+            "basis": "measured-comparison",
+            "rationale": "Only while its screen is open: no change on the MKI's LOAD page or in the base's five-minute records with three tracks playing. In the emulator the draw took about 0.3 ms a UI tick with empty rows; scaled by pixel count, at most 4.3 ms with eight playing rows, an overstatement. Closed, about 3 us a tick. Nothing in the frame interrupt.",
             "source": "evidence/performance.json"
           },
           "dsp": {
             "level": "minimal",
-            "basis": "source-estimate",
-            "rationale": "No DSP program, effect slot or DSP state is added. The temporary mute word uses the stock mute path.",
-            "source": "manifest.py"
+            "basis": "measured-comparison",
+            "rationale": "No DSP code. DSP load (33 % / 42 %) and DSP space (32 % / 37 %) read the same with and without Tiempos on the MKI.",
+            "source": "TESTING.md"
           },
           "memory": {
             "level": "minimal",
             "basis": "source-estimate",
-            "rationale": "A 1,500-byte image with 44 writable bytes, zero BSS, and a 2,544-byte loader extent, with no buffers or per-track allocation.",
-            "source": "evidence/resource-accounting.md"
+            "rationale": "2,892 bytes of ColdFire code, data and state in DRAM, from the package header.",
+            "source": "TESTING.md"
           }
         }
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "Author functional report on real hardware, 6 November 2026: package 1895ceec alone ran 300 s on base 462fbd2b with the setting, hold, join and leave, audio, lamps and editing working, and rollback read back. Emulator control (18/18) and audio suites passed on 0.2.3; wider emulator results are for the 0.2.2 package. Frame load and stress not measured. See TESTING.md.",
+        "summary": "On the developer's MKI (OS 1.40C, released base 24a0ed57) over USB, 28-30 Oct 2026: timed trials of the exact package 0506a245 and its predecessor showed the time left, totals and elapsed time of whole, trimmed and Flex tracks against a stopwatch at 120 and 140 BPM, the last-30-seconds flash, a retrigger, tempo changes the double press that closes it, and (package 8c886466) reverse playback with RATE below 0; a Keep survived a power cycle and Undo removed it; LOAD showed no CPU or DSP change. Host tests 24/24. Not run: an MKII, Part changes and reloads with the screen open, other modules beside it, a static cycle bound.",
         "hardwareStatus": "reported",
-        "evidenceRevision": "35ec1ddfdf39f41f86a94ae1c3afdfa35c1a8eee",
+        "evidenceRevision": "b711e14055b6c46658a9a44ca0ff21580ead55f6",
         "gates": [
-          "python3 -B verify.py",
-          "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-control>",
-          "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-audio> --audio",
-          "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-paired> --audio --paired",
-          "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-save> --audio --save",
-          "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-paired-save> --audio --paired --save",
-          "python3 -B cycle_count.py --inputs <private-inputs> --output <new-private-output>"
+          "modules/tiempos/verify.py"
         ],
         "qualification": {
           "documentation": {
             "tutorial": {
-              "title": "Quick tutorial: audition tracks while editing",
+              "title": "Quick tutorial",
               "steps": [
-                "Install Track Solo over USB. Open PROJECT > CONTROL > SEQUENCER, set TRACK SOLO to HOLD, close the menu, and let any stock notification clear.",
-                "Hold T2 alone for 0.5 seconds. While continuing to hold T2, press and release T3: T2 and T3 are now in the temporary group. Press T3 again to remove it.",
-                "Release T2. The underlying mute and solo state applies again. Select OFF to disable the gesture completely."
+                "**Open it.** Load a sample on track 1, press PLAY, hold CUE and press MIDI. Row 1 shows a filled number, a bar and the time left.",
+                "**Read the speed.** Change the project tempo. Within two seconds the time left on track 1 changes with it; with timestretch on, a faster tempo leaves less time.",
+                "**Switch the column and close.** Press RIGHT: the notice says ELAPSED and the right column shows the time played. Press NO: the page you were on comes back."
               ]
             },
             "screenshots": [
-              "media/track-solo-off.png",
-              "media/track-solo-hold.png"
+              "media/ot-tiempos-open.png",
+              "media/ot-tiempos-last-30s.png"
             ],
             "screenshotStyle": "black-and-white"
           },
-          "moduleVersion": "0.2.3-experimental",
-          "sourceSha256": "17aac1f026274c66a473794cfcf8239f55edbbae2e40e3e6c681a81c46c08544",
-          "imageSha256": "1895ceecbfa74cd00cf07b2557ddbdf4668e32327d7c03fcf5c9f529547a5677",
+          "moduleVersion": "0.1.0-experimental",
+          "sourceSha256": "45e53efc39e6aba499d312e8e0b26995d2110a6657cbff8f06dc3aaaa9c1f035",
+          "imageSha256": "0b54a734258945acbf74551b8920ee4bfa760d390964bd04d2877e4382e990b9",
           "cycles": [
             {
               "processor": "coldfire",
-              "worstCase": 2615,
-              "maxConfiguration": 2615,
+              "worstCase": 1133300,
+              "maxConfiguration": 1133300,
               "maxInstances": 1,
-              "budget": 9577,
+              "budget": 4330000,
               "unit": "cycles/event",
-              "method": "static",
+              "method": "emulator",
               "conditions": {
-                "parameterExtremes": "One setting, OFF or HOLD. Counted: inactive frame path (4 + 4 instructions), active frame path (12 + 9), tick transition with the longest callees, including activation updating all sixteen lamps.",
-                "parameterModulation": "No parameter, lock, LFO, scene or MIDI CC reaches this code. The equivalent path is the live mute word changing underneath a hold, which adds no module work: each frame reads the word once.",
-                "modeSwitching": "Activation, group change and release are the dearest transitions and are the tick bound. PROJECT, project load and MIDI mode cancel through ts_cancel, included in that bound.",
-                "maxLoad": "One global instance. The bound sums mutually exclusive branches and both lamp updates, so it exceeds any single path. Measured in ot_emu with frames and both DSP cores running: 674 module instructions, 1,680 cycles (evidence/performance.json).",
-                "inputConditions": "Audio content is not read; cost does not depend on the signal. Membership changes the path only through the eight-track loops, counted at their bound."
+                "parameterExtremes": "Not applicable: no parameters. The dearest layout, eight playing rows in their last 30 s, is estimated from the host build's pixel count (4,653 writes against 341 for eight empty rows).",
+                "parameterModulation": "Not applicable: LEFT and RIGHT switch the right column; the draw cost does not depend on it.",
+                "modeSwitching": "Closed and open, stopped and playing, in the emulator; opened and closed while three tracks played on the MKI.",
+                "maxLoad": "One instance. The cost is the screen's draw on the UI task, once per composed frame while open; closed it draws nothing. Budget: one UI tick, 16.4 ms at 61 ticks a second, 4,330,000 cycles at 264 MHz.",
+                "inputConditions": "ot_emu with development base 6a44c813: modwerk_cost[22] (runtime module draw) 314.6 us a tick open and playing with eight empty rows, scaled by the pixel count to 4,293 us (1,133,300 cycles at 264 MHz), an overstatement. No static bound; not measured on hardware."
               },
               "report": "evidence/performance.json"
             }
@@ -11913,109 +11907,88 @@
           "memory": {
             "regions": [
               {
-                "name": "Linked code, tables and read-only data",
+                "name": "ColdFire code and data (tiempos.c, deck_font.h, DRAM)",
                 "space": "sdram",
-                "words": 1456,
+                "words": 2588,
                 "wordBits": 8,
-                "bytes": 1456,
+                "bytes": 2588,
                 "scope": "shared"
               },
               {
-                "name": "Writable state inside the image: session state, pointers, overlay and frame words",
+                "name": "State (bss): eight track records, screen and key state",
                 "space": "sdram",
-                "words": 44,
+                "words": 304,
                 "wordBits": 8,
-                "bytes": 44,
-                "scope": "shared"
-              },
-              {
-                "name": "Loader object and seven site descriptors, rounded to 16",
-                "space": "sdram",
-                "words": 1040,
-                "wordBits": 8,
-                "bytes": 1040,
-                "scope": "shared"
-              },
-              {
-                "name": "Image rounding to 16",
-                "space": "sdram",
-                "words": 4,
-                "wordBits": 8,
-                "bytes": 4,
-                "scope": "shared"
-              },
-              {
-                "name": "Largest module-owned stack path before stock replay (caller stack)",
-                "space": "sdram",
-                "words": 56,
-                "wordBits": 8,
-                "bytes": 56,
+                "bytes": 304,
                 "scope": "shared"
               }
             ],
             "perInstanceBytes": 0,
-            "sharedBytes": 2600,
+            "sharedBytes": 2892,
             "maxInstances": 1,
-            "totalBytes": 2600,
-            "conditions": "ABI 8 package, zero BSS, one instance. Loader figures come from an ABI 10 probe with RUNTIME_MODULES=128. Stock callee stack, transition peaks during replacement and hardware canaries are not measured.",
-            "report": "evidence/resource-accounting.md"
+            "totalBytes": 2892,
+            "conditions": "From the USB package 8c886466 (published titled as 0b54a734, 2,852 bytes) (2,588 bytes of code and data, 304 of bss, 43 relocations). Reads OS memory only; writes no stock code or data. No DSP memory, no heap. Stack use is the UI task's and was not measured.",
+            "report": "TESTING.md"
           },
           "hardware": {
             "kind": "functional",
             "status": "reported",
-            "model": "MKII",
-            "testedOn": "2026-11-06",
-            "tester": "twwwy",
-            "sourceRevision": "35ec1ddfdf39f41f86a94ae1c3afdfa35c1a8eee",
-            "imageSha256": "1895ceecbfa74cd00cf07b2557ddbdf4668e32327d7c03fcf5c9f529547a5677",
-            "summary": "The author ran this exact package over USB as a 300-second RAM trial on base 462fbd2b, OS 1.40C, Track Solo alone, in a disposable project. They reported the TRACK SOLO row and HOLD setting working; holding a track soloing it with playback running; taps joining and leaving once each; clean audio on release; excluded lamps dim but lit; pages, encoders, MIXER and PLAY/STOP working during a hold. Rollback was read back: phase normal, empty inventory, set identity unchanged.",
+            "model": "MKI",
+            "testedOn": "2026-11-07",
+            "tester": "imdantelo",
+            "sourceRevision": "b711e14055b6c46658a9a44ca0ff21580ead55f6",
+            "imageSha256": "0b54a734258945acbf74551b8920ee4bfa760d390964bd04d2877e4382e990b9",
+            "summary": "The developer's MKI, OS 1.40C, released Modwerk base 24a0ed57 built from a local checkout, driven over USB by Claude Code. With package 0506a245: a timed trial (single and double presses of track keys, the stock QUICK ASSIGN after a double press), an install with Keep that survived a power cycle and opened with CUE + MIDI, an Undo back to the empty set, and a seven-minute trial with three tracks playing (CPU 62 % just after a minute open against a 64 % peak without it; DSP load and space unchanged; no stall). With the previous package 225a0170 (same timing code): totals 2:08 at 120 BPM and 1:49 at 140 BPM on three 64-bar tones at 100, 120 and 140 BPM, a trimmed Static and a Flex track, 1:25 left and 0:24 elapsed at stopwatch 0:24.28, the flash under 30 s and a hand retrigger. With package 8c886466 (reverse playback): a trial with track 1 at RATE below 0 counted down to 0:00 with the stopwatch, restarted from the end on a trig, measured -10,749 and +7,440 frames a second as RATE changed; tracks 2 and 3 as before. The install with Keep, power cycle and Undo were run with 0506a245, not repeated with 8c886466. With the published package 0b54a734 (the same source titled as ABI 8 by octatrack:module-packages), on a base rebuilt from current main (9b3ba417): install with Keep, the inventory naming it \"tiempos\", CUE + MIDI opening TIEMPOS, the set restored after a power cycle with TIEMPOS opening again, and Undo back to the empty set.",
             "limitations": [
-              "Author-reported panel observations with no audio measurement or timing.",
-              "One 300-second run on one unit, alone. The USB identity does not state the model; MKII comes from earlier records of this unit.",
-              "Not tested: other modules alongside, all eight anchors, external MIDI, arranger rows, Pickup recording, K09 orderings, self-test, Keep, power cycles, MKI, the card build."
+              "One MKI; no MKII.",
+              "The stopwatch figures come from the developer's photos and readings; the voice fields were not read directly (a released base answers no mem request).",
+              "Part changes, project reloads, timestretch modes other than NORMAL and other modules beside Tiempos were not run.",
+              "Draw cost estimated in the emulator, not measured on the unit; no static bound and no MIDI flood.",
+              "Reverse playback: one trial; no stopwatch figure written down for the reversed track; RATE 0 on an active voice covered by the host test only.",
+              "Timing, reverse and load checks ran on the earlier base 24a0ed57 with packages of the same or earlier sources; on base 9b3ba417 only the install, power cycle and Undo."
             ],
             "report": "TESTING.md"
           }
         }
       },
       "license": {
-        "spdx": "MIT",
+        "spdx": "GPL-3.0-or-later",
         "file": "LICENSE",
-        "declaration": "Original Track Solo source by twwwy, MIT. No stock firmware, extracted code, tables, projects or memory dumps are distributed."
+        "declaration": "Original code by the author, GPL-3.0-or-later. The 3x5 font is original. No Elektron firmware, extracted routines or tables."
       },
       "media": [
         {
-          "path": "media/track-solo-off.png",
-          "captureType": "emulator",
-          "caption": "Find TRACK SOLO under PROJECT > CONTROL > SEQUENCER. OFF preserves stock track-button behavior.",
-          "alt": "Octatrack SEQUENCER menu with TRACK SOLO set to OFF.",
-          "credit": "twwwy; underlying Octatrack UI by Elektron",
+          "path": "media/ot-tiempos-open.png",
+          "captureType": "hardware",
+          "caption": "Hold CUE and press MIDI from any page. Each row is one track: a filled number plays, an outlined one is loaded and stopped, a dotted one is empty. The bar shows what is left, then the time left and the total at the current tempo.",
+          "alt": "Tiempos screen on an Octatrack: tracks 1 to 3 with full bars, 1:48 left and 1:49 total each; tracks 4 to 8 dotted with --:--.",
+          "credit": "imdantelo; Elektron Octatrack UI",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
           "otUi": {
-            "page": "PROJECT / CONTROL / SEQUENCER",
-            "shows": "location",
+            "page": "TIEMPOS",
+            "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.3-experimental",
-            "imageSha256": "124548dc353b2f9cd41ba0a27113ae441e82b68a16d10a1b9509920c61839587",
-            "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.3 package installed through the real runtime backend; panel_test.py --menu; empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo."
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "739c9d4f228d58bd542563d2d35ccb6f84828f0c87cd914c0505912e42259c89",
+            "setup": "Phone photograph of the LCD of the developer's Octatrack MKI (OS 1.40C, released Modwerk base 24a0ed57), cropped to the screen and not otherwise edited; three 64-bar test tones at 100, 120 and 140 BPM on tracks 1-3, project at 140 BPM, 30 October 2026. Taken with package 225a0170; package 0506a245 changes only key handling (the double press), and tiempos.c's drawing code is the same in both. Just after PLAY."
           }
         },
         {
-          "path": "media/track-solo-hold.png",
-          "captureType": "emulator",
-          "caption": "Press YES to choose HOLD. Close the menu and wait for stock notifications to clear before holding a track for 0.5 seconds.",
-          "alt": "Octatrack SEQUENCER menu with TRACK SOLO set to HOLD.",
-          "credit": "twwwy; underlying Octatrack UI by Elektron",
+          "path": "media/ot-tiempos-last-30s.png",
+          "captureType": "hardware",
+          "caption": "In a track's last 30 seconds its time left flashes inverted. Track 1 was retriggered by hand, so it shows 1:15 left while tracks 2 and 3 are almost at the end. LEFT or RIGHT switches the last column between total and elapsed time.",
+          "alt": "Tiempos screen: track 1 at 1:15 left of 1:49; tracks 2 and 3 with their time left shown inverted; tracks 4 to 8 empty.",
+          "credit": "imdantelo; Elektron Octatrack UI",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
           "otUi": {
-            "page": "PROJECT / CONTROL / SEQUENCER",
+            "page": "TIEMPOS",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.3-experimental",
-            "imageSha256": "124548dc353b2f9cd41ba0a27113ae441e82b68a16d10a1b9509920c61839587",
-            "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.3 package installed through the real runtime backend; panel_test.py --menu; empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo."
+            "moduleVersion": "0.1.0-experimental",
+            "imageSha256": "739c9d4f228d58bd542563d2d35ccb6f84828f0c87cd914c0505912e42259c89",
+            "setup": "Phone photograph of the LCD of the developer's Octatrack MKI (OS 1.40C, released Modwerk base 24a0ed57), cropped to the screen and not otherwise edited; three 64-bar test tones at 100, 120 and 140 BPM on tracks 1-3, project at 140 BPM, 30 October 2026. Taken with package 225a0170; package 0506a245 changes only key handling (the double press), and tiempos.c's drawing code is the same in both. At stopwatch 1:22, during the flash."
           }
         }
       ]

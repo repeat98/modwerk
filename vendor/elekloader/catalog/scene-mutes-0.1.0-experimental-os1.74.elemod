@@ -1,0 +1,495 @@
+{
+ "elemod": 2,
+ "id": "scene-mutes",
+ "version": "0.1.0-experimental",
+ "title": "Scene Mutes",
+ "description": "Each scene can carry its own track mutes: engage the scene and the mutes change with it.",
+ "category": "scenes",
+ "author": "Iced-Cream",
+ "license": "GPL-2.0-only",
+ "target": {
+  "device": "analog-rytm-mk2",
+  "product": "Analog Rytm MKII",
+  "os": "1.74",
+  "syx_sha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "section3_sha256": "34cd0c4da8e4b810d1b25284475a99ea53821e2ab7d30a978bf15dc578251f3b",
+  "section3_len": 3005432
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 1004,
+   "parts": [
+    [
+     "hex",
+     "206f00082028000c720cb28065262228001008010001671c08010000671208010003660c2f002f2f00086100000e508f70014e754ef9400d13784feffff448d7040c246f0010242f0014262a00c04eba02be67343228083207c13141083220036100013a3210054130812f2a00b04eb9400a6fdc588fb083660e4eba02d62003610001344eba03064cd7040c4fef000c4e75206f00087001c090676e487800804eb940081c28588f4a80675e4feffff448d7040c206f0010202800c0610000f826004eb9401822f6244074000503670e4878000f4878000648780001600642a742a742a72f022f0a4eb9400a05aa4fef001452827010b08266d2206f001470fec1904cd7040c4fef000c4ef9400d0c464feffff848d70404206f000c20502450242a00c04eba01cc058067203140083220026100006842502f2a00b04eb9400a6fdc588fb08266044eba022e4cd704044fef00084ef9400d0e404feffff848d70404206f000c205024504eba01862400671c4228090c2f2a00b04eb9400a6fdc588f4a806b08010267044eba01ec4cd704044fef00084ef9400d0edad080720eb08165080680000008f46006068000000834d1c04e752f004eba0138221f0300670c20016100ffd6700030104e7570004e754feffff448d7040c246f00102f0a4eb9400a6fdc588f26006a0a4239000000006100015e2f2f00182f2f00182f2f00186100004a4fef000c2f0a4eb9400a6fdc588fb083672c24006b1e610000d4050067106100012c20024ebaff8a6100015c601061000142600a6100013c4239000000004cd7040c4fef000c4e754fefffe448d73c1c4ef9400a7d784a390000000066484a39000000006740202f0008720cb28065364eb94017fa0a2f004eb9400ae4ca2e804eb9400a6fdc588f4a806b1a202f000822390000000001814a2f000f670201c123c1000000004e56ffd048d73c7c4ef9400b78e04eb94017fa0a204041e801602f0822502269006c4e91588f727fb2806514223c00000a324c01000006804076631b20404e75700020404e756100ffc667121228090c0c01005366087000302808324e7570004e756100ffaa67281228090c0c010053671e43e80832700f421953806afa43e809027009421953806afa72531141090c20084e754eb94017fa0a2f004eb9400ae492588f4e754a3900000000661c6100ffe42f004eb9400b6d64588f23c000000000700113c0000000004e754a3900000000670a203900000000610000044e754feffff048d7041c26006100ffa824402f0a4eb9400b6d64588f2800b784700113c00000000074000504671a42a770000503670270012f002f022f0a4eb9400b78d84fef00105282700db08266da4239000000004cd7041c4fef00104e750000"
+    ]
+   ]
+  },
+  ".bss": {
+   "align": 4,
+   "size": 6
+  }
+ },
+ "symbols": {
+  "LED_REGION_TRIGS": [
+   "abs",
+   1
+  ],
+  "KEY_FUNC": [
+   "abs",
+   128
+  ],
+  "PROJECT_WORKING_KIT": [
+   "abs",
+   352
+  ],
+  "KIT_SPARE_A": [
+   "abs",
+   2098
+  ],
+  "KIT_SPARE_B": [
+   "abs",
+   2306
+  ],
+  "STORED_KITS": [
+   "abs",
+   1692667
+  ],
+  "STORED_KIT_SIZE": [
+   "abs",
+   2610
+  ],
+  "is_key_held": [
+   "abs",
+   1074273320
+  ],
+  "led_set": [
+   "abs",
+   1074398634
+  ],
+  "kit_scene_active": [
+   "abs",
+   1074425820
+  ],
+  "kit_scene_set_active": [
+   "abs",
+   1074429296
+  ],
+  "kit_scene_set_active_body": [
+   "abs",
+   1074429304
+  ],
+  "track_selection": [
+   "abs",
+   1074455698
+  ],
+  "project_kit": [
+   "abs",
+   1074455754
+  ],
+  "mute_mask_get": [
+   "abs",
+   1074490724
+  ],
+  "track_mute_set": [
+   "abs",
+   1074493656
+  ],
+  "track_mute_set_body": [
+   "abs",
+   1074493664
+  ],
+  "scene_edit_leds": [
+   "abs",
+   1074596934
+  ],
+  "scene_edit_clear_invoker": [
+   "abs",
+   1074597440
+  ],
+  "scene_edit_clear_all_invoker": [
+   "abs",
+   1074597594
+  ],
+  "scene_edit_keys": [
+   "abs",
+   1074598776
+  ],
+  "project_singleton": [
+   "abs",
+   1075313162
+  ],
+  "led_manager": [
+   "abs",
+   1075323638
+  ],
+  "PROJECT_IMAGE": [
+   "abs",
+   1079807776
+  ],
+  "EDITED_SCENE": [
+   "abs",
+   192
+  ],
+  "EDIT_KIT": [
+   "abs",
+   176
+  ],
+  "TRACKS": [
+   "abs",
+   13
+  ],
+  "LED_ON_MODE": [
+   "abs",
+   1
+  ],
+  "LED_ON_COLOUR": [
+   "abs",
+   6
+  ],
+  "LED_ON_LEVEL": [
+   "abs",
+   15
+  ],
+  "MARKS_OFF": [
+   "abs",
+   2098
+  ],
+  "MASKS_A": [
+   "abs",
+   2100
+  ],
+  "MASKS_B": [
+   "abs",
+   2292
+  ],
+  "TAG_OFF": [
+   "abs",
+   2316
+  ],
+  "TAG": [
+   "abs",
+   83
+  ],
+  "KIT_INDEX_VT": [
+   "abs",
+   108
+  ],
+  "sm_keys": [
+   ".run",
+   0
+  ],
+  "sm_toggle": [
+   ".run",
+   58
+  ],
+  "sm_open": [
+   ".run",
+   782
+  ],
+  "sm_mask_ptr": [
+   ".run",
+   412
+  ],
+  "sm_ensure_saved": [
+   ".run",
+   850
+  ],
+  "sm_mask_of": [
+   ".run",
+   438
+  ],
+  "sm_apply": [
+   ".run",
+   908
+  ],
+  "sm_leds": [
+   ".run",
+   146
+  ],
+  "sm_clear": [
+   ".run",
+   272
+  ],
+  "sm_marks": [
+   ".run",
+   754
+  ],
+  "sm_restore": [
+   ".run",
+   888
+  ],
+  "sm_clear_all": [
+   ".run",
+   346
+  ],
+  "ksa_hook": [
+   ".run",
+   466
+  ],
+  "sm_valid": [
+   ".bss",
+   4
+  ],
+  "ksa_stock": [
+   ".run",
+   590
+  ],
+  "tms_hook": [
+   ".run",
+   604
+  ],
+  "sm_busy": [
+   ".bss",
+   5
+  ],
+  "sm_saved": [
+   ".bss",
+   0
+  ],
+  "sm_record": [
+   ".run",
+   698
+  ],
+  "sm_settings": [
+   ".run",
+   832
+  ],
+  "scene_mutes_ksa": [
+   ".run",
+   466
+  ],
+  "scene_mutes_keys": [
+   ".run",
+   0
+  ],
+  "scene_mutes_clear_all": [
+   ".run",
+   346
+  ],
+  "scene_mutes_leds": [
+   ".run",
+   146
+  ],
+  "scene_mutes_tms": [
+   ".run",
+   604
+  ],
+  "scene_mutes_clear": [
+   ".run",
+   272
+  ]
+ },
+ "exports": [
+  "scene_mutes_clear",
+  "scene_mutes_clear_all",
+  "scene_mutes_keys",
+  "scene_mutes_ksa",
+  "scene_mutes_leds",
+  "scene_mutes_tms"
+ ],
+ "imports": [],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   494,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   576,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   606,
+   "abs32",
+   "sec:.bss",
+   5
+  ],
+  [
+   ".run",
+   614,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   664,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   680,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   852,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   874,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   882,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   890,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   898,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   942,
+   "abs32",
+   "sec:.bss",
+   5
+  ],
+  [
+   ".run",
+   988,
+   "abs32",
+   "sec:.bss",
+   5
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x401e2ef0",
+   "len": 4,
+   "stock_sha256": "da60c2717c5d346627a0c46eb9259bf53e3c15633ac179df175bfe612ce654f8",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:scene_mutes_keys",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x401e2efc",
+   "len": 4,
+   "stock_sha256": "6cfd50feb01ea00f8c2d4233c18e133f556758905afb7fb477afb0f18b4bfe9d",
+   "new": "00000000",
+   "kind": "data",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:scene_mutes_leds",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400d0a74",
+   "len": 6,
+   "stock_sha256": "aaa20c34b3e3858707146896a6ad298423fc1353dab5508d53ade55c81df053d",
+   "new": "203c00000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:scene_mutes_clear",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400d0afc",
+   "len": 6,
+   "stock_sha256": "86fb8046df5fa8c4fb4c998d7f7ccf45391683aa1bf84d6d4f74be826ae9327e",
+   "new": "203c00000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:scene_mutes_clear_all",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400a7d70",
+   "len": 8,
+   "stock_sha256": "57ce6a873a72d55110bfba4569069ecc773810ea4134eb9191e9c6c1ccaa0714",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:scene_mutes_ksa",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400b78d8",
+   "len": 8,
+   "stock_sha256": "aaff1dcf4a6b082bef582cb2f262b54c23b5593aa9cda754e9df72b8f6745bb5",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:scene_mutes_tms",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {},
+ "contribute": [],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [
+   "ui:FUNC + trig 1..13 in scene edit (SCENE held)",
+   "ui:trig LEDs while FUNC is held in scene edit"
+  ],
+  "core": "0.7"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}

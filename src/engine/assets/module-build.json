@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "kind": "source-packages",
-  "sourceCommit": "d8b451823973693f40983bd46917662b8ca1b816",
+  "sourceCommit": "898ac30d6a716eaee665f08c4176a51a3e1ee9db",
   "nativeRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceTreeSha256": "baf5c50394190f1d7cef419d950c96c6003cf14b822333a09c0f833400a5b88a",
-  "compilerSha256": "c800a688db1f0da42594a03eb826e6608e695cc56bdda5ccf32625049d6af571",
+  "sourceTreeSha256": "2aceb3fea62265b84e722cfba2336e1e98575cba6a3009fe7bd4eaca0169b133",
+  "compilerSha256": "4c7b4a227737ef0686e3eafd320c7f7271003f9a19d02d72dbbe3b36aa10f702",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -27,7 +27,7 @@
     "previewvol": "0.1.2-experimental",
     "cc-map": "0.1.2-experimental",
     "sidechain-compressor": "0.2.0-experimental",
-    "vector": "0.2.5-experimental",
+    "vector": "0.3.1-experimental",
     "playmodes": "0.2.0-experimental",
     "mute-modes": "0.2.2-experimental",
     "recorder-loop-fix": "0.1.0-experimental",
@@ -42,53 +42,52 @@
     "tuner": "0.1.0-experimental",
     "slow-lfo": "0.1.0-experimental",
     "bar-led": "0.1.0-experimental",
-    "stem-rec": "0.1.0-experimental",
-    "track-solo": "0.2.3-experimental"
+    "stem-rec": "0.1.0-experimental"
   },
   "files": {
     "dsp-packages.json": {
-      "bytes": 92080,
-      "sha256": "db39affabab95ec1e3c9ac67c32b1dfe1f3063af546d0ea5ff42ca2786f35251"
+      "bytes": 92040,
+      "sha256": "a477e6ee507f9e4bea803b2ed6d5d11806d8c43f3ffe54a6f1abab8c2731330d"
     },
     "resident-dsp.json": {
-      "bytes": 25485,
-      "sha256": "211636b1de56993531487eba84f21237922fd62a2b00166e5ead3523a4a88cfb"
+      "bytes": 25445,
+      "sha256": "860903a993c59c6b1b6b34540498ea0edeb62119d50cc318a69c8053db572dae"
     },
     "coldfire-packages.json": {
-      "bytes": 354378,
-      "sha256": "0af872ef729825d8ae9c847b7cdd4db27b3c96e08b3bb8906a121ee62de01048"
+      "bytes": 354338,
+      "sha256": "775669761df740ae11394b5907a12eb91625d12fd7775d408228b2b531beb431"
     },
     "rom-packages.json": {
-      "bytes": 33636,
-      "sha256": "6d4d42c850e8189124fae9903f4f33c320e2cf7bf09c8597fd2bce1bc40df68d"
+      "bytes": 33596,
+      "sha256": "77c8a166715cf2f433c343911a8710a4f86e05fc0536588275a411fbab79129f"
     },
     "bootstrap-package.json": {
-      "bytes": 4219,
-      "sha256": "0607d73b750497503596ef3910c95e9585cac0a401faf8724ed8f60ed20842ce"
+      "bytes": 4179,
+      "sha256": "0ca5e7d02876b3d9d329cfe5606f8d58f8662df8894b101918b37763b962f6f5"
     },
     "menu-recipes.json": {
-      "bytes": 37878,
-      "sha256": "48ba393d33fb8960c6163b47c1713e66be4859e632b5bd880fa7f2d324441db6"
+      "bytes": 37838,
+      "sha256": "268efd2d3fe89c88eced1dc7e367ebc76625d1686ce7186af66e7020081b6089"
     },
     "descriptor-recipes.json": {
-      "bytes": 85503,
-      "sha256": "018e15dfebc0485b3f608c0d16fac6269ba8a562764875697967b3f68dc528a4"
+      "bytes": 85463,
+      "sha256": "6a4b25c14d6b0375a1df64916d83a2483f92c451fdda696cf4d37cd3dc3e22c9"
     },
     "platform-writes.json": {
-      "bytes": 17962,
-      "sha256": "9f4c2d5db62996ccfe40ba993f3479bd4fcf76c6b112f119e0193dce1588cb4b"
+      "bytes": 17922,
+      "sha256": "24dc6205d500b184fa93e05b70070ef214280b75e3fc4ebaaf9bd530517a2caa"
     },
     "requested-packages.json": {
-      "bytes": 1339025,
-      "sha256": "27c2067ffc7ca3d6f3a36c6d067c2dc350a300632b15440fedbbde1d54e7f4d8"
+      "bytes": 1324992,
+      "sha256": "9576e7109ba862aaac205909a50d15543e7ce81b53feee7d1c42a22f691f04c8"
     },
     "utility-packages.json": {
-      "bytes": 13347,
-      "sha256": "a75d608b9e598db1d2e592c2bde730f8ca6b02e2b6d7778bbc3b564e90169106"
+      "bytes": 13307,
+      "sha256": "5ec4905b9c50524a96fafd24f7c90365f838e8e18337b56b36fc0e3e93d5a49c"
     },
     "usb-audio-packages.json": {
-      "bytes": 737989,
-      "sha256": "dd7ada2afb4ba071059c0c91a92279df17c788586fb916b4975d57cd2b9c0d9c"
+      "bytes": 737949,
+      "sha256": "1c5b132d73eb21fd708614cb367703061711bedb40924b27cef373b0fede47f8"
     }
   },
   "approval": null,

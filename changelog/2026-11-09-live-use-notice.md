@@ -1,0 +1,1 @@
+Site: every page now carries a small "Playing live? Take care" note at the bottom left. Open it for why mods can still crash or cut the sound mid-set, and how to play safe: try your exact set at home first, keep the official OS ready, and play shows that can't go wrong on the official OS.

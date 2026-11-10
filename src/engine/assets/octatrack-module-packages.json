@@ -198,7 +198,9 @@
       "module": "b0d51c58",
       "bytes": 18354,
       "sha256": "45c962ca3a202ac697e3d33d97e4b3b94052706a390189e5baf923fa829de577",
-      "path": "octatrack-modules/vector/0.2.5-experimental.mwrm"
+      "path": "octatrack-modules/vector/0.2.5-experimental.mwrm",
+      "lagsBehind": "0.3.1-experimental",
+      "lagReason": "0.3.1 is 0.2.6's code, rolling back 0.3.0 (the MIDI generator becomes its own module): it changes only the card build, whose st_setup_page no longer tests for row 5, which VECTOR's USB adapter already dropped (#972, #1119); the package's control unit source is byte-identical to 0.2.5's"
     },
     {
       "id": "synth",
@@ -340,7 +342,7 @@
       "bytes": 2636,
       "sha256": "eadf2382bc71fc75a4e911c405f394ac505cc94932a1fa2ea9ce159e658b6447",
       "path": "octatrack-modules/sidechain-compressor/0.2.0-experimental.mwrm",
-      "requiredBase": "9b3ba41715140d5fae07868a8b2adc6d89c3ec0272d8ab34c332461cf990a14c"
+      "requiredBase": "72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6"
     },
     {
       "id": "output-matrix",
@@ -356,7 +358,7 @@
       "bytes": 3740,
       "sha256": "65a311c38c64652e1730426e62bed9e7c97c390d378e535a2848e660ae85dcca",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "9b3ba41715140d5fae07868a8b2adc6d89c3ec0272d8ab34c332461cf990a14c"
+      "requiredBase": "72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6"
     },
     {
       "id": "cc-map",
@@ -372,7 +374,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "9b3ba41715140d5fae07868a8b2adc6d89c3ec0272d8ab34c332461cf990a14c"
+      "requiredBase": "72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -450,7 +452,7 @@
       "bytes": 1818,
       "sha256": "180b52c68018f34a0fbadb0ad518972c4dc70dc621e3ab730beab33b7a081137",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "9b3ba41715140d5fae07868a8b2adc6d89c3ec0272d8ab34c332461cf990a14c"
+      "requiredBase": "72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6"
     },
     {
       "id": "analog-bassdrum",
@@ -466,7 +468,7 @@
       "bytes": 26190,
       "sha256": "6272600408466c3e3d313e943fc3f57beb06a55c61aab25720fce4b833eb53b0",
       "path": "octatrack-modules/analog-bassdrum/0.1.6-experimental.mwrm",
-      "requiredBase": "9b3ba41715140d5fae07868a8b2adc6d89c3ec0272d8ab34c332461cf990a14c",
+      "requiredBase": "72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6",
       "requires": 0,
       "claims": 1,
       "entries": 1
@@ -537,6 +539,23 @@
       "module": "9b41cd3d",
       "bytes": 196,
       "sha256": "de7f9caed60bffecc47a33144a223125500c4c8bcbd76e5022d1dc2ee9393600"
+    },
+    {
+      "id": "tiempos",
+      "sources": [
+        "sdk/octabam/modules/tiempos/tiempos.c"
+      ],
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/tiempos/0.1.0-experimental.mwrm",
+      "abi": 8,
+      "features": 0,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "tiempos",
+      "module": "31282ae5",
+      "bytes": 2852,
+      "sha256": "0b54a734258945acbf74551b8920ee4bfa760d390964bd04d2877e4382e990b9"
     },
     {
       "id": "track-solo",

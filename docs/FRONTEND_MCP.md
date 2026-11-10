@@ -180,7 +180,7 @@ client. Never adopt or release unknown work, or translate partial publication
 into unchanged state. The board must independently retain and restore its
 journal after timeout/disconnect. Read-only status never renews the lease;
 visible owner renewal is bounded and cannot extend the absolute trial limit.
-The [private framing contract](../dev/volatile-batch-wire.md) describes the
+The [private framing contract](../src/dev/volatile-batch-wire.md) describes the
 proposed service. Synthetic host or native fixtures are preparation evidence,
 not proof of the actual board's acknowledgments, audio, recovery or persistence.
 

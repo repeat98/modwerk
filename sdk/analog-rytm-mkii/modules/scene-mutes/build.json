@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/scene-mutes.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:FUNC + trig 1..13 in scene edit (SCENE held)",
+    "ui:trig LEDs while FUNC is held in scene edit"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x401e2ef0",
+          "len": 4,
+          "stockSha256": "da60c2717c5d346627a0c46eb9259bf53e3c15633ac179df175bfe612ce654f8",
+          "op": "ptr",
+          "target": "scene_mutes_keys"
+        },
+        {
+          "addr": "0x401e2efc",
+          "len": 4,
+          "stockSha256": "6cfd50feb01ea00f8c2d4233c18e133f556758905afb7fb477afb0f18b4bfe9d",
+          "op": "ptr",
+          "target": "scene_mutes_leds"
+        },
+        {
+          "addr": "0x400d0a74",
+          "len": 6,
+          "stockSha256": "aaa20c34b3e3858707146896a6ad298423fc1353dab5508d53ade55c81df053d",
+          "op": "bytes",
+          "new": "203c00000000",
+          "kind": "code",
+          "relocs": [{ "at": 2, "target": "scene_mutes_clear" }]
+        },
+        {
+          "addr": "0x400d0afc",
+          "len": 6,
+          "stockSha256": "86fb8046df5fa8c4fb4c998d7f7ccf45391683aa1bf84d6d4f74be826ae9327e",
+          "op": "bytes",
+          "new": "203c00000000",
+          "kind": "code",
+          "relocs": [{ "at": 2, "target": "scene_mutes_clear_all" }]
+        },
+        {
+          "addr": "0x400a7d70",
+          "len": 8,
+          "stockSha256": "57ce6a873a72d55110bfba4569069ecc773810ea4134eb9191e9c6c1ccaa0714",
+          "op": "jmp",
+          "target": "scene_mutes_ksa"
+        },
+        {
+          "addr": "0x400b78d8",
+          "len": 8,
+          "stockSha256": "aaff1dcf4a6b082bef582cb2f262b54c23b5593aa9cda754e9df72b8f6745bb5",
+          "op": "jmp",
+          "target": "scene_mutes_tms"
+        }
+      ]
+    }
+  }
+}

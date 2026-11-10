@@ -62,6 +62,15 @@ describe('the board client', () => {
     expect([compared.mine, compared.others, compared.free].map(list => list.map(item => item.key))).toEqual([['0084'], ['octatrack/37'], ['octatrack/tape-echo']])
     expect((await board.compareClaims(needed, null, { fetch })).unknown).toHaveLength(2)
   })
+  it('fails an unclaimed item only in a pull request run, and someone else\'s claim always', () => {
+    const free = { mine: [], others: [], unknown: [], free: [{ kind: 'module', key: 'octatrack/drummap', why: 'new module' }] }
+    expect(board.branchVerdict(free).ok).toBe(true)
+    const required = board.branchVerdict(free, { requireClaims: true })
+    expect(required.ok).toBe(false)
+    expect(required.lines[0]).toMatch(/^✗ module octatrack\/drummap .*unclaimed.*npm run pr:ready/)
+    expect(board.branchVerdict({ ...free, free: [], mine: free.free }, { requireClaims: true }).ok).toBe(true)
+    expect(board.branchVerdict({ ...free, free: [], others: [{ ...free.free[0], claim: claimRow('module', 'octatrack/drummap', 'bo') }] }).ok).toBe(false)
+  })
   it('treats an undeployed or failing board as unavailable, and a refusal as an answer', async () => {
     await expect(board.listClaims({}, { fetch: answer(404, { error: 'API route not found.' }) })).rejects.toBeInstanceOf(board.BoardUnavailable)
     await expect(board.listClaims({}, { fetch: answer(503, { error: 'down' }) })).rejects.toBeInstanceOf(board.BoardUnavailable)
