@@ -25,8 +25,9 @@ attributes and leaves out the divide routine. The init path is off.
 | Ziddle `effect check` | PASS: 8 parameters, 11 handlers resolve, 71 relocations safe |
 | Ziddle `effect render`, pluck and sine input, Dry moved to 40 at 1 s | renders; audio byte-identical to the stock-runtime build of the same source |
 | Hardware: MS-70CDR, MIDISTOMP V2.0.1 (Zoom's 2.10 underneath), installed over USB from the pedal page | reported working by the tester: boots, Loop with eight knobs on three pages, on/off, each knob on screen and in the sound, records and plays a loop, a saved patch recalled after a power cycle with its values on the screen |
+| Hardware, 10 November 2026: the same pedal after MIDISTOMP V2.0.1 was flashed from the pedal page; Loop removed over USB, the pedal power-cycled, Loop installed again from the pedal page | file list read back: `LOOP.ZDL`, 26,546 bytes, ID 8/467, version 0.03; reported by the tester: boots without Loop, then Loop loads and plays after a power cycle |
 
-The hardware pass is one run of those checks, reported by the tester, with no
+Each hardware pass is one run of those checks, reported by the tester, with no
 measurements. The emulator results are not hardware evidence.
 
 ## Not tested
