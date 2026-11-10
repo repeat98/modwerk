@@ -107,6 +107,7 @@ export async function composeModuleMenus(original: Uint8Array, ids: readonly str
     const descriptor = baseline.descriptors.find(descriptor => descriptor.id === 'spectrum')!
     const address = 0x400c45b0, linked = linkRomText(await readRomPackage('spectrum-shape'), address, new Map([['CLONE_SPECTRUM', descriptor.address]]))
     await cave(address, linked.bytes, 'Spectrum SHPE formatter')
+    exported(linked.symbols)
     const view = new DataView(descriptor.bytes.buffer); view.setUint32(0xca + 7 * 4, address); view.setUint32(0xfa + 7 * 4, 0)
   }
   if (modules.some(module => module.id === 'tapeecho')) {
@@ -114,6 +115,7 @@ export async function composeModuleMenus(original: Uint8Array, ids: readonly str
     const inside = address + linked.bytes.length <= caveLimit
     if (!inside) { address = align(overflow, 4); linked = linkRomText(await readRomPackage('tape-time'), address) }
     await cave(address, linked.bytes, 'Tape TIME formatter')
+    exported(linked.symbols)
     const descriptor = baseline.descriptors.find(descriptor => descriptor.id === 'tapeecho')!
     const view = new DataView(descriptor.bytes.buffer); view.setUint32(0xca, address); view.setUint32(0xfa, 0)
     if (inside) cursor = address + linked.bytes.length

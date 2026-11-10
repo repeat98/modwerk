@@ -31,7 +31,8 @@ export async function planStaticOs(original: Uint8Array, ids: readonly string[],
   // The menus place the ROM units after the DRAM link (their caves start past its reserve, and their hooks name runtime
   // code), so a DRAM unit that names a ROM symbol is linked once more with it. Only relocated values change: the menus'
   // writes, which name runtime addresses, stay valid. Native resolves the same names (build_bus.py, _dram_rom_externals).
-  if (runtime.romRefs.some(name => menus.romSymbols.has(name))) runtime = sameLayout(runtime, await createStaticColdFireRuntime(ids, original, undefined, usbAudio, betaAccess, undefined, menus.romSymbols))
+  // Whenever one is open, so the final link refuses a strong reference no ROM unit defines, as native ld does.
+  if (runtime.romRefs.length) runtime = sameLayout(runtime, await createStaticColdFireRuntime(ids, original, undefined, usbAudio, betaAccess, undefined, menus.romSymbols))
   if (usbAudio) menus.writes = await replaceUsbAudioHooks(original, menus.writes, runtime)
   const logging = await installCoreLogger(runtime, original, ids, menus.chooser, betaAccess ? BETA_STARTUP_IDENTITY : undefined)
   const platform = createPlatformOsWrites(runtime, ids, { loader: false, reserveBytes: runtime.reserveBytes })
