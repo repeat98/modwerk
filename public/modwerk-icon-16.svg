@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges">
+  <title>Modwerk</title>
+  <!-- 16-pixel favicon: modwerk-icon.svg drawn on the pixel grid without the frame, which blurs into the tiles at this size. -->
+  <rect width="16" height="16" rx="3" fill="#19191c" shape-rendering="auto"/>
+  <g fill="#ececf1">
+    <rect x="2" y="2" width="3" height="3"/><rect x="6" y="2" width="3" height="3"/><rect x="10" y="2" width="3" height="3"/>
+    <rect x="2" y="6" width="3" height="3"/><rect x="6" y="6" width="3" height="3"/><rect x="10" y="6" width="3" height="3"/>
+    <rect x="2" y="10" width="3" height="3"/><rect x="6" y="10" width="3" height="3"/>
+  </g>
+  <rect x="10" y="10" width="4" height="4" fill="#d0a46a"/>
+</svg>
