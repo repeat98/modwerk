@@ -3,9 +3,9 @@
     "version": "0.2.2-experimental",
     "date": "2026-11-03",
     "changes": [
-      "Builds with more modules beside it: when another module in the set already runs code from DRAM, Sidechain Compressor's own menu code goes there too, leaving room for the stock FX2 effects. No change to how it sounds or works.",
-      "A set with FM Synth and Mute Modes no longer loses every stock FX2 effect for lack of space (#1175).",
-      "On its own, or beside modules without DRAM code, it builds exactly as before and takes no sample memory."
+      "Fits beside more modules: when your set already runs code from DRAM, its menu code goes there too, leaving room for the stock FX2 effects.",
+      "Fixes sets with FM Synth and Mute Modes losing every stock FX2 effect (#1175).",
+      "On its own, or without other DRAM code, it builds as before and costs no sample memory. Sound and controls are unchanged."
     ]
   },
   {
