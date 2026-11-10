@@ -1,7 +1,7 @@
 # Zoom MultiStomp pedals (ZDL effects)
 
-Status: **the MS-70CDR is in preview, with Loop, Scope, Spectrum, Scorch and
-Stasis in the library.** The four pedals have profiles in `sdk/machines/zoom-*/`
+Status: **the MS-70CDR is in preview, with Loop, Scope, Spectrum, Scorch,
+Stasis and Mangle in the library.** The four pedals have profiles in `sdk/machines/zoom-*/`
 (family `zoom`; the MS-50G, MS-60B and G1on series still in research) and
 machine pages on the site. What is left is in the [Plan](#plan); the other
 pedals come up by [Another ZDL pedal](#another-zdl-pedal).
@@ -364,8 +364,8 @@ install throughout.
    runtime (`own_runtime`, [settled](ZDL_MODULE_CONTRACT.md#settled-first));
    Loop built so ran on the owner's MS-70CDR (9 November 2026). The `zdl`
    module contract is in force on the MS-70CDR, and Loop is its first module,
-   which puts the pedal in preview; Scope, Spectrum, Scorch and Stasis
-   followed (10 November 2026). Next: `divf` from TI's RTS source, the
+   which puts the pedal in preview; Scope, Spectrum, Scorch, Stasis
+   and Mangle followed (10 November 2026). Next: `divf` from TI's RTS source, the
    effect-ID ledger and the DSP limit of 300 under MIDISTOMP 2.
 8. The other pedals: [Another ZDL pedal](#another-zdl-pedal).
 9. Later: the Windows `.exe` as input (a port of `zoomms/parts.py`), loading
