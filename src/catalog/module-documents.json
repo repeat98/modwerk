@@ -5720,11 +5720,11 @@
       "id": "sidechain-compressor",
       "key": "SIDECHAIN_COMPRESSOR",
       "name": "Sidechain Compressor",
-      "version": "0.2.1-experimental",
+      "version": "0.2.2-experimental",
       "category": "effects",
       "source": {
         "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
-        "revision": "8868867d02b15b5368a7e54772aff0c1c0387c81",
+        "revision": "ad7ecd2e85fc9622007601b56a7d18b6c031d7c2",
         "path": "modwerk-modules/sidechain-compressor"
       },
       "access": {
@@ -5940,7 +5940,7 @@
         "report": "TESTING.md",
         "summary": "0.2.1 moves the key bus to Y $7e00..$7fff and the MON words to Y $ff0..$fff; the DSP code is 0.2.0's, so 0.2.0's load, static ColdFire bound and memory inventory carry over (the image differs from 0.2.0's in the 12 address bytes only). Native octabam builds 0.2.1 alone and in 933 of the suites' selections (618 of 1,024 visible, 169 of 512 historical, 146 of 212 with Analog BD: the same selections build as with 0.2.0 on the same main); the beta base's resident engine passes the resident-engine checks at the new addresses (the key two blocks late whatever the enable order). On his MKI (30 October 2026) the author flashed the native image of this version alone and beside BBD Delay and reported both working.",
         "hardwareStatus": "reported",
-        "evidenceRevision": "8868867d02b15b5368a7e54772aff0c1c0387c81",
+        "evidenceRevision": "ad7ecd2e85fc9622007601b56a7d18b6c031d7c2",
         "gates": [
           "Native octabam and browser composition compared on the module's coverage set, with and without stock FX2",
           "Native suites regenerated: 512 selections of the original eight modules, 1,024 of the nine visible modules and 212 Analog BD selections",
@@ -5969,9 +5969,9 @@
             ],
             "screenshotStyle": "black-and-white"
           },
-          "moduleVersion": "0.2.1-experimental",
-          "sourceSha256": "b7ca44bfa979b0a4c75efc90262dbd4ab049e8b43e8beba1f8732bf94314def8",
-          "imageSha256": "fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc",
+          "moduleVersion": "0.2.2-experimental",
+          "sourceSha256": "6ad5997cd57ab8b188a9680bea2c970b4a44ed6b777912026d9eff27ea04ddfe",
+          "imageSha256": "e77ec14bd2f8f4d1586a3d2366207835485521cc6ce3ee941dc353a66963548a",
           "cycles": [
             {
               "processor": "dsp",
@@ -6075,7 +6075,7 @@
                 "scope": "shared"
               },
               {
-                "name": "ColdFire authored code (sc_cf 698 B, sc_ui 616 B)",
+                "name": "ColdFire authored code (sc_cf 698 B, sc_ui 616 B; in the DRAM runtime instead when the set carries one)",
                 "space": "cpu-flash",
                 "words": 1314,
                 "wordBits": 8,
@@ -6126,15 +6126,15 @@
             "kind": "functional",
             "status": "reported",
             "model": "MKI",
-            "testedOn": "2026-10-30",
+            "testedOn": "2026-11-03",
             "tester": "Zac Kyoti",
-            "sourceRevision": "8868867d02b15b5368a7e54772aff0c1c0387c81",
-            "imageSha256": "fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc",
-            "summary": "The author flashed Modwerk's native image of this source, the module alone (MAIN OS fb7c5e31, OS VERSION MW_SC021), on an Octatrack MKI and reported it working as expected: a same-core key (T2 keyed from T1) and cross-core keys (T6 from T1, T2 from T5) duck; MON ON plays the filtered key and OFF returns to the track, KBAS and KWID audible on MON; stock reverbs and delays on T1 and T5 FX2 beside a keyed compressor carry no other track; project reload and a power cycle keep the settings. He also flashed the native image with BBD Delay (MAIN OS c234d13c, MW_BBDSC): BBD on T1, T5 and T3 FX2 beside a keyed compressor, at maximum TIME, STGS 4096 and FRZ, clean, and the compressor still ducks.",
+            "sourceRevision": "ad7ecd2e85fc9622007601b56a7d18b6c031d7c2",
+            "imageSha256": "e77ec14bd2f8f4d1586a3d2366207835485521cc6ce3ee941dc353a66963548a",
+            "summary": "The author flashed two images of this source composed by Modwerk's builder with the stock FX2 effects kept, both with the module's ColdFire code in the DRAM runtime: beside Direct Jump (MAIN OS e77ec14b, OS VERSION MWSCDJ) and with the six modules of #1175, FM Synth, Play Modes, Mute Modes, Apply Scene and Direct Jump (ebaf5116, MW1175), on an Octatrack MKI, and reported all tests passing: the FX2 chooser lists every stock FX2 effect; COMPRESSOR on FX1 and FX2 draws page 2 (MON, KEY, KGN, KBAS, KWID); a same-core and a cross-core key duck; MON's switch, KEY's pressed turn, KBAS and KWID; a direct jump; project reload and a power cycle keep the settings. The module alone (cave placement) builds the image 0.2.1's hardware report covers (fb7c5e31, 30 October 2026), byte for byte.",
             "limitations": [
               "A functional report: duration, project, material and tempo were not reported, and the checklist was confirmed as a whole.",
-              "No measured chip timing, memory canary, recording, recovery or stress test; cross-core key latency was not measured on the unit (the emulator's resident-engine check gives two blocks).",
-              "The flashed images are this module alone and beside BBD Delay; the Modwerk download (with the core logger), the USB beta base and Sidechain Ringmod were not run on a unit."
+              "No measured chip timing, memory canary, recording, recovery or stress test.",
+              "The images were composed from this source before the isolated package build. The published packages compose MAIN OS 7c0e4658 and ed0b3de5, which differ from the flashed ones only in the core logger's identity text (the module's version label and build hashes); every OS write and runtime unit is the same (TESTING.md). The USB beta base and Sidechain Ringmod were not run on a unit."
             ],
             "report": "evidence/hardware.md"
           }
@@ -6158,7 +6158,7 @@
             "page": "FX1 SETUP",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.1-experimental",
+            "moduleVersion": "0.2.2-experimental",
             "imageSha256": "fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc",
             "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card; no project loaded."
           }
@@ -6175,7 +6175,7 @@
             "page": "FX1 main",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.1-experimental",
+            "moduleVersion": "0.2.2-experimental",
             "imageSha256": "fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc",
             "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card; no project loaded."
           }
@@ -6192,7 +6192,7 @@
             "page": "FX1 SETUP",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.1-experimental",
+            "moduleVersion": "0.2.2-experimental",
             "imageSha256": "fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc",
             "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card; no project loaded."
           }
