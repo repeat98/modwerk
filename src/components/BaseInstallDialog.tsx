@@ -153,17 +153,14 @@ export function BaseInstallDialog({ link, launch = false, layout, firmwareReady,
       // will happen, then where it is, then where it stopped.
       const step = usb && 'step' in usb ? usb : undefined, failed = usb && 'error' in usb ? usb : undefined
       const at = step ? stageOf(step.step) : failed ? failed.at : -1
-      const sending = step?.fraction !== undefined && step.fraction < 1
       const save = usbStages.findIndex(([title]) => title === 'Save')
       return <>
         <h3 id="base-stage-title" data-stage-title tabIndex={-1}>Update over USB</h3>
         {!usb && <p>It takes a minute or two{layout ? <>, with {layoutName(layout)}</> : ''}. Your Octatrack restarts once.</p>}
         <StagePlan stages={usbStages} progressLabel="Update progress" run={usb ? { at, done: step?.step === 'done', failed: !!failed, fraction: step?.fraction } : undefined} />
-        {step && <>
-          {/* While it saves, the line is the warning itself. */}
-          <p className={usbStages[at]?.[0] === 'Save' ? 'base-install-warning' : step.step === 'done' ? 'success-note' : 'base-install-note'} role="status">{updating && <span className="status-dot is-updating" />}{USB_STEPS[step.step]}{sending ? ` (${Math.round(100 * step.fraction!)} %)` : ''}{step.step === 'done' ? '' : '…'}</p>
-          {updating && <p className="link-hint">Keep this page open until it says Done.</p>}
-        </>}
+        {/* While it saves, the line is the warning itself. Mounted before the update starts so screen readers hear its first step; the progress bar carries the percentage. */}
+        <p className={!step ? undefined : usbStages[at]?.[0] === 'Save' ? 'base-install-warning' : step.step === 'done' ? 'success-note' : 'base-install-note'} role="status">{step && <>{updating && <span className="status-dot is-updating" />}{USB_STEPS[step.step]}{step.step === 'done' ? '' : '…'}</>}</p>
+        {step && updating && <p className="link-hint">Keep this page open until it says Done.</p>}
         {failed && <div className="file-error base-update-error" role="alert">
           <strong>The update stopped.</strong>
           <p>{failed.error}{failed.at < save ? ' Nothing was saved: your Octatrack keeps its current base.' : ''}</p>
