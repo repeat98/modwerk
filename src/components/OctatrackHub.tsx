@@ -13,6 +13,7 @@ import { DeviceImage } from '../devices/DeviceImage'
 import { DEVICES_BY_ID } from '../devices/registry'
 import type { OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { useOctatrackHealth } from '../hooks/useOctatrackHealth'
+import { DSP_STOPPED, useOctatrackLoad } from '../hooks/useOctatrackLoad'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
 import { HubSetHead, HubSetList, SetMenu, type SetAction } from './HubSets'
 import { Icon, type IconName } from './Icon'
@@ -104,13 +105,15 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
   const needsBase = review?.problem instanceof BaseUpdateRequired || connected && baseOutdated(identity?.base)
   const wantedLayout = review?.problem instanceof BaseLayoutRequired ? review.problem.layout : undefined
   const model = identity?.model ? identity.model.replace('OCTATRACK', 'Octatrack') : 'Octatrack'
-  const led = connected ? 'on' : busy ? 'load' : 'off'
+  const { stopped } = useOctatrackLoad(link)
+  const led = connected && !stopped ? 'on' : busy ? 'load' : 'off'
   const health = useOctatrackHealth(link)
   const onUnit = sets.find(same), lastSync = lastSuccessfulSync(identity?.base ?? last?.base)
   const lastName = onUnit?.name ?? (last && lastSync && sameModules(last.moduleIds, lastSync.moduleIds) ? lastSync.name : undefined)
   // The hero: the unit's state in one line and the one action it needs, on every page.
   const [line, action]: [ReactNode, ReactNode] = !usb ? ['This browser can’t use USB. Open this page in Chrome or Edge on a computer, or install from the card in Setup.', null]
     : busy ? [state.module || status !== 'testing' ? 'Syncing…' : 'Self-test running…', null]
+    : connected && stopped ? [DSP_STOPPED, null]
     : connected ? [<>Connected · {inventory ? modules(inventory.moduleIds.length) + ' on it' : 'reading what’s on it…'}{onUnit && <> · same as <b>{onUnit.name}</b></>}</>, null]
     : status === 'connecting' ? ['Looking for your Octatrack…', null]
     : status === 'busy' ? ['Another browser window or app is using your Octatrack. This page connects by itself once it’s free.', <button key="retry" className="button button-quiet" onClick={() => void link?.retry()}>Try again</button>]
