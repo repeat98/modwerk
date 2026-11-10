@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 2,
+  "id": "amiga",
+  "key": "AMIGA",
+  "name": "Amiga",
+  "version": "0.1.0-experimental",
+  "category": "machines",
+  "author": {
+    "github": "repeat98",
+    "credits": [
+      "Jannik Aßfalg: design, ColdFire code and host tests (MIT)."
+    ]
+  },
+  "nativeManifest": "manifest.py",
+  "presentation": {
+    "label": "8-bit sampler",
+    "family": "Sample track machine",
+    "summary": "Plays a Flex sample like an 8-bit tracker: gritty, held samples and a cyclic stretch that pulls pitch and time apart.",
+    "overview": "Amiga is a track machine modelled on how a home computer's 8-bit sound chip and its tracker software played samples. It plays the track's Flex sample through the stock reader, reduces its word length and storage rate before the Octatrack repitches it, and can restart the sample every few milliseconds a little further on, so PTCH changes the pitch and SPD the speed. The track's filter, AMP, LFOs and effects follow as for any sample.",
+    "highlights": [
+      "SPD and GRN stretch the sample in cycles: freeze it, halve its speed or double it, at any pitch.",
+      "BITS from 4 to 16, 8 by default, and SRR lowers the stored sample rate down to about a ninth.",
+      "LED switches a fixed lowpass on the stored sample.",
+      "SPD, GRN and SRR take parameter locks, LFOs and scenes like any SRC knob."
+    ],
+    "usage": [
+      "Double-tap a track key, choose AMIGA in the machine list and press YES, then pick a Flex sample.",
+      "On SRC, turn PTCH: the pitch moves and the length stays. Turn SPD (knob D) for the speed and GRN (knob E) for the flutter.",
+      "Turn SRR (knob F) up for a lower sample rate. LED, STR and BITS are on SRC SETUP."
+    ]
+  },
+  "controls": [
+    {
+      "name": "SPD",
+      "default": 64,
+      "count": 128,
+      "doc": "Stretch speed: 0 holds the sample, 64 is its own speed, 127 about twice. SRC knob D.",
+      "labels": null
+    },
+    {
+      "name": "GRN",
+      "default": 64,
+      "count": 128,
+      "doc": "Cycle length of the stretch, from about 2 ms to 185 ms. SRC knob E.",
+      "labels": null
+    },
+    {
+      "name": "SRR",
+      "default": 0,
+      "count": 128,
+      "doc": "Storage rate: 0 keeps every sample, 127 stores about one in nine. SRC knob F.",
+      "labels": null
+    },
+    {
+      "name": "LED",
+      "default": 1,
+      "count": 2,
+      "doc": "A fixed two-pole lowpass on the stored sample. SRC SETUP knob D.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    },
+    {
+      "name": "STR",
+      "default": 1,
+      "count": 2,
+      "doc": "The stretch. OFF plays the sample as FLEX does: pitch changes its length. SRC SETUP knob E.",
+      "labels": [
+        "OFF",
+        "ON"
+      ]
+    },
+    {
+      "name": "BITS",
+      "default": 4,
+      "count": 13,
+      "doc": "Word length from 4 to 16 bits; the saved value is bits minus 4. SRC SETUP knob F.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "firmware": "1.40C",
+    "location": "Track machine",
+    "conflicts": [],
+    "uiClaims": [],
+    "limitations": [
+      "Draft: the engine passes its host gate; the machine has not run in the emulator or on a unit.",
+      "RATE, RTRG and RTIM are not available on an Amiga track, so no reverse play: SPD, GRN and SRR take their knobs.",
+      "Stock's own time-stretch (TSTR) is off on an Amiga track.",
+      "A sliced track (SLIC on) is not stretched.",
+      "A project opened without the module plays Amiga tracks as FLEX and reads SPD, GRN and SRR as RATE, RTRG and RTIM.",
+      "Leaving Amiga for another machine puts the track's SRC settings back to FLEX defaults."
+    ],
+    "effectId": null
+  },
+  "resources": {
+    "recorded": "Not measured",
+    "storage": {
+      "label": "Storage",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
+      "source": "TESTING.md"
+    },
+    "processing": {
+      "label": "CPU / DSP load",
+      "display": "Not measured",
+      "value": null,
+      "unit": "unknown",
+      "method": "unmeasured",
+      "conditions": "No measurements exist yet. Add exact conditions and source evidence when available.",
+      "source": "TESTING.md"
+    }
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Host gate on the engine (verify.py). Not run in the emulator or on a unit.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "da373d10f0f92ccf2ac3f3a5c218c546fbd878fa",
+    "gates": [
+      "Worst-case cycles under parameter modulation and maximum load",
+      "Exact memory region and maximum-instance totals",
+      "Owner-reviewed real-hardware evidence with actual coverage and limitations"
+    ]
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "Original code by Jannik Aßfalg under MIT. No firmware, extracted stock routines or tables, samples or third-party code. Amiga names the discontinued home computer whose sound this models; the module is not affiliated with or endorsed by the owners of that name."
+  },
+  "media": [],
+  "access": {
+    "location": "The track's machine list (double-tap TRACK, or SRC SETUP)",
+    "steps": [
+      "Double-tap a track key, choose AMIGA in the machine list and press YES, then pick a Flex sample.",
+      "On SRC, turn PTCH: the pitch moves and the length stays. Turn SPD (knob D) for the speed and GRN (knob E) for the flutter.",
+      "Turn SRR (knob F) up for a lower sample rate. LED, STR and BITS are on SRC SETUP."
+    ],
+    "screenshots": []
+  }
+}
