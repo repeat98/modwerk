@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "version": "0.1.6-experimental",
+  "version": "0.1.7-experimental",
   "nativeManifest": "manifest.py",
   "media": [
     {
@@ -101,14 +101,14 @@
       "name": "PTCH",
       "default": 64,
       "count": 128,
-      "doc": "808 body pitch; 909 body frequency spans approximately 30–100 Hz.",
+      "doc": "Body pitch. 909: one octave, 32.7 Hz at 0, the recorded 909 at 64, 65.4 Hz at 127.",
       "labels": null
     },
     {
       "name": "DCAY",
       "default": 80,
       "count": 128,
-      "doc": "Body decay, with a different response for each model.",
+      "doc": "Body decay. 909: 15 ms at 0, the recording (247 ms) at 80, 600 ms at 127; the 808 keeps its own law.",
       "labels": null
     },
     {
@@ -143,7 +143,7 @@
       "name": "FIXD",
       "default": 0,
       "count": 2,
-      "doc": "SRC SETUP top middle, OFF/ON switch on both models. OFF varies every hit slightly (909: click strength and noise; 808: trigger transient strength); ON makes every hit open identically. On the 808, ON is the 0.1.5 sound.",
+      "doc": "SRC SETUP top middle, OFF/ON switch on both models. OFF varies every hit slightly (909: sweep depth, click strength and noise; 808: trigger transient strength); ON makes every hit open identically. On the 808, ON is the 0.1.5 sound.",
       "labels": [
         "OFF",
         "ON"
@@ -160,14 +160,14 @@
       "name": "LOW",
       "default": 64,
       "count": 128,
-      "doc": "Desk low band; 64 is neutral.",
+      "doc": "Desk low band; 64 is neutral. Weighted, not saturated on its own.",
       "labels": null
     },
     {
       "name": "HIGH",
       "default": 64,
       "count": 128,
-      "doc": "Desk high band; 64 is neutral.",
+      "doc": "Desk high band; 64 is neutral. Weighted, not saturated on its own.",
       "labels": null
     },
     {
@@ -223,9 +223,9 @@
         "source": "TESTING.md"
       },
       "dsp": {
-        "level": "high",
+        "level": "medium",
         "basis": "measured-comparison",
-        "rationale": "0.1.6 schedules both engines tighter with bit-identical audio and state (dsp_host, 52 scenarios plus the exact-render cases): the SAT interpolation is skipped once SAT has settled, immediate loads ride in parallel-move slots and filter histories stay in registers. Peak 909 374.94 and 808 252.13 executed instructions/sample (was 408.4 and 266.3 in the same set): peaks about 8% and 5% lower, about 15% fewer executed instructions on average (emulator count). Executed instructions, not chip timing; the declared price of 411 per voice is unchanged.",
+        "rationale": "0.1.7: peak 909 184 and 808 177 executed DSP instructions per sample (375 and 252 in 0.1.6) in the bd909_host gate cases (moving knobs, retriggers at every frame offset, SAT/LOW/HIGH extremes); a resting voice 3. The 909 walks its state in read order, plays its click from a filter-response table and moves its noise envelope and slews once a block; the desk keeps two curves of four. Executed instructions, not chip timing; the declared price of 411 per voice is unchanged until the new engine is measured.",
         "source": "CPU.md"
       },
       "memory": {
@@ -256,7 +256,7 @@
         "title": "Compare the 909 direct-out response",
         "steps": [
           "In a disposable project, hold FUNC and press SRC for SRC SETUP, choose ANALOG BD and press YES. Turn the top-left TYPE switch to the right for the 909. Set LOW/HIGH to 64 and SAT to 0.",
-          "For the direct-out reference, set PTCH 49, DCAY 100, TUNE 0, TDEP 64, ACNT 72 and LPF 127 (OFF). Trigger repeated hits at 70 BPM and sweep ATK alone through 0–127, then hold it at one value to hear the small strength/noise differences.",
+          "For the direct-out reference, set PTCH 64, DCAY 80, TUNE 0, TDEP 64, ACNT 72 and LPF 127 (OFF). Trigger repeated hits at 70 BPM and sweep ATK alone through 0–127, then hold it at one value to hear the small strength/noise differences.",
           "Hold ATK at 0 and sweep TUNE through its endpoints separately. Return SAT to 0 and TDEP to 64, then press STOP and let the tail finish. Turn TYPE to the left to compare the 808; its saved knob values remain intact."
         ]
       },
