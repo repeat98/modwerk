@@ -399,7 +399,7 @@
         "limitations": [
           "A functional report: duration, project, material and tempo were not reported, and the checklist was confirmed as a whole.",
           "No measured chip timing, memory canary, recording, recovery or stress test.",
-          "The images were composed from this source before the isolated package build. The published packages compose MAIN OS 7c0e4658 and ed0b3de5, which differ from the flashed ones only in the core logger's identity text (the module's version label and build hashes); every OS write and runtime unit is the same (TESTING.md). The USB beta base and Sidechain Ringmod were not run on a unit."
+          "The images were composed from this source before the isolated package build. The published packages compose MAIN OS c025c706 beside Direct Jump, which differs from the flashed one only in the core logger's identity text (the module's version label and build hashes); every OS write and runtime unit is the same. The #1175 set (f82e5ada) also carries Mute Modes 0.2.2, released after the run (TESTING.md). The USB beta base and Sidechain Ringmod were not run on a unit."
         ],
         "report": "evidence/hardware.md"
       },

@@ -23,9 +23,11 @@ same-core and a cross-core key duck; MON's switch, KEY's pressed turn, KBAS
 and KWID; a direct jump; project reload and a power cycle keep the settings.
 In the #1175 image: the FX2 chooser and a keyed compressor.
 
-The released packages compose these two sets as MAIN OS `7c0e4658…` and
-`ed0b3de5…`: the same OS writes and runtime units, with only the core
-logger's identity text changed (version label, build hashes; TESTING.md).
+The released packages compose these two sets as MAIN OS `c025c706…` and
+`f82e5ada…`: beside Direct Jump the same OS writes and runtime units, with only
+the core logger's identity text changed (version label, build hashes); in
+the #1175 set also Mute Modes' own unit, which is 0.2.2 on `main` now
+(TESTING.md).
 The module alone builds 0.2.1's image (below) byte for byte.
 
 ## 0.2.1-experimental
