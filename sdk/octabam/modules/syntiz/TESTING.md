@@ -230,6 +230,24 @@ for good, the complete set holds. One A/B, mechanism unknown: an installed modul
 frame share, or its placement may slow SYNTIZ. Worth knowing before judging SYNTIZ's margin on a unit with other
 modules kept.
 
+## On Modwerk's beta base, 9 November 2026: stopped at the first step
+
+The owner's run on the release pull request, on the author's MKII, package `f501a6a4`. It stopped at the first step.
+The owner asked for it to be recorded as it stands and not retried until he has looked at the base and the loader.
+
+- Base: the beta base built by the local development site from `main` `f4c1a3f6` (status `72defb09b9d463fe…`, the
+  beta base testers have), installed with the site's "Update over USB" from the author's flashed base `86388105`.
+- Try, then Undo (`npm run device -- try … --seconds 60`), twice. Both trials ran 60 s, then the rollback was refused
+  with `needs-recovery` and the unit stayed in `recovery, generation 1, active unknown`, still 40 s later and after
+  10 s with USB unplugged; a power cycle recovered it. The first project had SYNTIZ tracks; the second had none,
+  transport stopped.
+- During both trials the diaglog holds a `hot` record with the transport stopped: CPU 98.9 %, T1-4 38 %, T5-8
+  39.8 %. Not explained.
+- The base update did not stay. The first one ended "Done", but `72defb09` stalled at +0 s on its first start and the
+  next start was back on `86388105`, before any trial. A second update held through one power cycle (inventory
+  empty). After the second failed Undo and a power cycle the unit started `86388105` again, with no stall recorded.
+- Not tested: Keep and a minute of play, a power cycle with SYNTIZ kept, removal while a Part uses it.
+
 ## Qualification record
 
 `evidence/performance.json` carries the 7 November figures as the audit asks (`npm run perf:audit -- check`): the
