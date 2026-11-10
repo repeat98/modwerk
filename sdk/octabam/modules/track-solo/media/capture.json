@@ -1,10 +1,10 @@
 {
   "firmware": "1.40C",
-  "moduleVersion": "0.2.3-experimental",
+  "moduleVersion": "0.2.4-experimental",
   "imageSha256": "124548dc353b2f9cd41ba0a27113ae441e82b68a16d10a1b9509920c61839587",
-  "packageSha256": "1895ceecbfa74cd00cf07b2557ddbdf4668e32327d7c03fcf5c9f529547a5677",
+  "packageSha256": "50f64eb63cfe62b534988bda28baa4c575eb9d9a6dbc7a81035e7d95cd01cf89",
   "emulatorSha256": "b087c97f3031f075551b3336afcd75a407ca4d3476e04a9d5cfaa059b1d40363",
-  "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.3 package installed through the real runtime backend; panel_test.py --menu; empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo.",
+  "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.4 package installed through the real runtime backend; panel_test.py --menu; empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo.",
   "palette": {
     "on": [
       24,

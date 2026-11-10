@@ -51,20 +51,20 @@
     "recorded": "2026-11-06",
     "storage": {
       "label": "Storage",
-      "display": "1500 bytes linked code/data; zero BSS",
-      "value": 1500,
+      "display": "1528 bytes linked code/data; zero BSS",
+      "value": 1528,
       "unit": "bytes",
       "method": "static",
-      "conditions": "Exact ABI 8 package SHA-256 1895ceecbfa74cd00cf07b2557ddbdf4668e32327d7c03fcf5c9f529547a5677: 2,128-byte package, 1,500-byte linked image, zero BSS, 24 relocations, seven guarded sites.",
+      "conditions": "Exact ABI 8 package SHA-256 50f64eb63cfe62b534988bda28baa4c575eb9d9a6dbc7a81035e7d95cd01cf89: 2,156-byte package, 1,528-byte linked image, zero BSS, 24 relocations, seven guarded sites.",
       "source": "evidence/resource-accounting.md"
     },
     "processing": {
       "label": "ColdFire, per event",
-      "display": "2,615 of 9,577 cycles worst case (static)",
-      "value": 2615,
+      "display": "2,622 of 9,577 cycles worst case (static)",
+      "value": 2622,
       "unit": "cycles/event",
       "method": "static",
-      "conditions": "Module-owned instructions only: the dearest UI tick transition plus the active frame path, at 2.49216 cycles an instruction. Stock callees, cache and bus waits are excluded. Not measured on a chip. Measured in ot_emu: 674 module instructions, about 1,680 cycles, at the dearest event.",
+      "conditions": "Module-owned instructions only: the dearest UI tick transition plus the active frame path, at 2.49216 cycles an instruction. Stock callees, cache and bus waits are excluded. Not measured on a chip. Measured in ot_emu: 677 module instructions, about 1,687 cycles, at the dearest event.",
       "source": "evidence/performance.json"
     },
     "impact": {
@@ -72,7 +72,7 @@
       "cpu": {
         "level": "minimal",
         "basis": "source-estimate",
-        "rationale": "At most 21 module instructions in a frame, 8 when idle. The dearest work is a UI-tick transition updating sixteen lamps, about 1,028 instructions, only when a hold starts or the group changes. Chip load is not measured.",
+        "rationale": "At most 24 module instructions in a frame, 8 when idle. The dearest work is a UI-tick transition updating sixteen lamps, about 1,028 instructions, only when a hold starts or the group changes. Chip load is not measured.",
         "source": "evidence/performance.json"
       },
       "dsp": {
@@ -91,7 +91,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Author functional report on real hardware, 6 November 2026: package 1895ceec alone ran 300 s on base 462fbd2b with the setting, hold, join and leave, audio, lamps and editing working, and rollback read back. Emulator control (18/18) and audio suites passed on 0.2.3; wider emulator results are for the 0.2.2 package. Frame load and stress not measured. See TESTING.md.",
+    "summary": "Author functional report on real hardware, 6 November 2026, for 0.2.2 and 0.2.3. 0.2.4 changes the frame-end restore; its emulator control (18/18) and audio suites passed, measured worst event 1,687 cycles. Current beta base hardware run: see TESTING.md. Stock benchmark and stress waived by the owner for this version (no MIDI path).",
     "hardwareStatus": "reported",
     "gates": [
       "python3 -B verify.py",
@@ -106,21 +106,21 @@
     "qualification": {
       "moduleVersion": "0.2.4-experimental",
       "sourceSha256": "17aac1f026274c66a473794cfcf8239f55edbbae2e40e3e6c681a81c46c08544",
-      "imageSha256": "1895ceecbfa74cd00cf07b2557ddbdf4668e32327d7c03fcf5c9f529547a5677",
+      "imageSha256": "50f64eb63cfe62b534988bda28baa4c575eb9d9a6dbc7a81035e7d95cd01cf89",
       "cycles": [
         {
           "processor": "coldfire",
-          "worstCase": 2615,
-          "maxConfiguration": 2615,
+          "worstCase": 2622,
+          "maxConfiguration": 2622,
           "maxInstances": 1,
           "budget": 9577,
           "unit": "cycles/event",
           "method": "static",
           "conditions": {
-            "parameterExtremes": "One setting, OFF or HOLD. Counted: inactive frame path (4 + 4 instructions), active frame path (12 + 9), tick transition with the longest callees, including activation updating all sixteen lamps.",
+            "parameterExtremes": "One setting, OFF or HOLD. Counted: inactive frame path (4 + 4 instructions), active frame path (12 + 12), tick transition with the longest callees, including activation updating all sixteen lamps.",
             "parameterModulation": "No parameter, lock, LFO, scene or MIDI CC reaches this code. The equivalent path is the live mute word changing underneath a hold, which adds no module work: each frame reads the word once.",
             "modeSwitching": "Activation, group change and release are the dearest transitions and are the tick bound. PROJECT, project load and MIDI mode cancel through ts_cancel, included in that bound.",
-            "maxLoad": "One global instance. The bound sums mutually exclusive branches and both lamp updates, so it exceeds any single path. Measured in ot_emu with frames and both DSP cores running: 674 module instructions, 1,680 cycles (evidence/performance.json).",
+            "maxLoad": "One global instance. The bound sums mutually exclusive branches and both lamp updates, so it exceeds any single path. Measured in ot_emu with frames and both DSP cores running: 677 module instructions, 1,687 cycles (evidence/performance.json).",
             "inputConditions": "Audio content is not read; cost does not depend on the signal. Membership changes the path only through the eight-track loops, counted at their bound."
           },
           "report": "evidence/performance.json"
@@ -227,9 +227,9 @@
         "page": "PROJECT / CONTROL / SEQUENCER",
         "shows": "location",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.3-experimental",
+        "moduleVersion": "0.2.4-experimental",
         "imageSha256": "124548dc353b2f9cd41ba0a27113ae441e82b68a16d10a1b9509920c61839587",
-        "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.3 package installed through the real runtime backend; panel_test.py --menu; empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo."
+        "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.4 package installed through the real runtime backend; panel_test.py --menu; empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo."
       }
     },
     {
@@ -244,9 +244,9 @@
         "page": "PROJECT / CONTROL / SEQUENCER",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.3-experimental",
+        "moduleVersion": "0.2.4-experimental",
         "imageSha256": "124548dc353b2f9cd41ba0a27113ae441e82b68a16d10a1b9509920c61839587",
-        "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.3 package installed through the real runtime backend; panel_test.py --menu; empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo."
+        "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.4 package installed through the real runtime backend; panel_test.py --menu; empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo."
       }
     }
   ],

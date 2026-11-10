@@ -1,5 +1,30 @@
 # Track Solo testing
 
+## 0.2.4 — 10 November 2026
+
+**What changed.** At frame end, `ts_frame_leave` and `ts_scope_end` restore the
+snapshot only when the live mute word is still the one Track Solo wrote. If
+stock wrote the word during the frame, an arranger row for example, that word
+is kept. Asked for in the owner's review of #1383. Track Solo is now USB-only,
+out of the card build.
+
+Package `50f64eb63cfe62b534988bda28baa4c575eb9d9a6dbc7a81035e7d95cd01cf89`
+(2,156 bytes, 1,528-byte image), emulator evidence on base MAIN `124548dc…9587`:
+
+- `ux_test.py`: passed, 18 checks.
+- `ux_test.py --audio`: passed, including a real MIDI mute surviving the frame
+  override and active removal restoring the seven guarded sites.
+- `panel_test.py --menu`: the OFF long-press and SEQUENCER row checks passed and
+  produced the screenshots, byte-identical to 0.2.3's; it then stopped at the
+  same line 259 assertion as on 0.2.2 and 0.2.3, which predates the 0.5 s hold.
+- `cycle_count.py`: dearest tick 653 module instructions (504 calls), frame
+  enter 12 and leave 12 (23,190 frames), key 149 (120 calls). Worst event 677
+  instructions, about 1,687 cycles. Static bound 1,052 instructions, about 2,622
+  cycles. Frame leave rose from 9 to 12 instructions with the new check.
+
+Not yet run on 0.2.4: hardware. The 6 November results below are for 0.2.2 and
+0.2.3.
+
 ## Hardware results — 6 November 2026
 
 **Evidence type:** functional RAM trials on a real Octatrack, reported by the

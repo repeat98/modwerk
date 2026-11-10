@@ -2,12 +2,11 @@
 
 Version `0.2.4-experimental` · author `twwwy`.
 
-**Evidence:** package `1895ceec…` was tested by the author on a real Octatrack
-over USB on 6 November 2026: the setting, the hold, join and leave, audio, lamps
-and editing all worked, and the rollback was read back from the unit. That is a
-functional report on Track Solo alone, not a stress or timing run. The control
-and audio emulator suites passed on `0.2.3`; the wider emulator results are for
-the `0.2.2` package, which differs in one detour site. See [TESTING.md](TESTING.md).
+**Evidence:** 0.2.2 and 0.2.3 were tested by the author on a real Octatrack over
+USB on 6 November 2026: the setting, the hold, join and leave, audio, lamps and
+editing all worked, and the rollback was read back from the unit. 0.2.4 changes
+only the frame-end restore; its control and audio emulator suites passed. See
+[TESTING.md](TESTING.md).
 
 ## Overview
 
