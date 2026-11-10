@@ -162,9 +162,11 @@ static const Part *slot(unsigned t) { return part0() + 0x22 + t; }
 /* The guard as at boot (machine_registry.c's statics: this file includes it). */
 static void fresh(void)
 {
-    late = timed = before = 0; made = 0; credit = 0; mw_frame_max = mw_frame_late_max = mw_frame_busy = mw_frame_count = 0;
+    late = timed = before = 0; made = 0; credit = 0; frame_seen = 0; mw_frame_max = mw_frame_late_max = mw_frame_busy = mw_frame_count = 0;
     for (unsigned k = 0; k < 16u; ++k) cost[k] = after[k] = end_at[k] = 0, skipped[k] = 0, place[k] = next[k] = 0;
 }
+/* The track's render in a later frame than the last one: the lookup reads the Part again (mw_frame_exit ends a frame). */
+static int later(unsigned track) { frame_seen = 0; return mw_source_render_impl(track, 0, 0, 1); }
 /* One frame interrupt: its entry, `pre` counts of stock work, the track's render, `tail` counts more, its exit. */
 static int frame(unsigned track, uint32_t pre, uint32_t tail)
 {
@@ -564,7 +566,7 @@ int main(void)
     sram[60 + 90] = 'A';
     CHECK(mw_assign(part0(), 3, 1) == 1 && part0()[0x2a + 90 + 6] == 0x40 && sram[0x2a + 90 + 6] == 0x40);
     CHECK(part0()[0x1da + 90 + 11] == 0x40 && part0()[60 + 90] == 0 && sram[60 + 90] == 0 && part0()[62 + 90] == 0);
-    CHECK(mw_source_render_impl(3, 0, 0, 1) == -7);
+    CHECK(later(3) == -7);
     /* So does a machine taking it: its own defaults and signature, never the absent machine's bytes. */
     for (unsigned k = 0; k < 12; ++k) part0()[(k < 6 ? 0x2a : 0x1da) + 90 + 6 + k % 6] = (uint8_t)(0x70 + k);
     part0()[60 + 90] = 'A'; part0()[61 + 90] = 'B'; part0()[62 + 90] = 1;
@@ -647,7 +649,7 @@ int main(void)
         CHECK(mw_source_render_impl(4, 0, 0, 1) == -7 && *t4 == 1 && r4[1] == 0x4000); /* VECTOR renders inside stock's */
         /* The Part changes under the track (no mw_assign): FLEX again, its voice and retrig as the machine left them. */
         part0()[60 + 90] = 0; part0()[61 + 90] = 0; part0()[62 + 90] = 0;
-        CHECK(mw_source_render_impl(3, 0, 0, 1) == -7 && *t3 == 0 && r3[1] == 0);
+        CHECK(later(3) == -7 && *t3 == 0 && r3[1] == 0);
         *t3 = 1; r3[1] = 3; CHECK(mw_source_render_impl(3, 0, 0, 1) == -7 && *t3 == 1 && r3[1] == 3); /* its FLEX trig */
         /* An absent machine's track renders stock's silent source and keeps both stopped, too. */
         rows(0, 0, 0, 0);
@@ -744,7 +746,8 @@ int main(void)
     rows(0, 0, 0, 0);
 
     /* The render keeps what it worked out for a track while the Part, the type byte and the signature it read stand,
-     * and works it out again when one of them changes or the rows do. (Rows never change without
+     * and works it out again when one of them changes or the rows do. It reads them once a frame: a change shows in the
+     * next frame, and nothing below the interrupt can make one inside a frame. (Rows never change without
      * modwerk_machine_tables_changed on a unit; emptying one behind its back here shows the table is not walked.) */
     {
         const void *a_only[] = {&A};
@@ -754,26 +757,32 @@ int main(void)
         int a0 = a_renders, flex = stock_renders, silent = silent_renders;
         CHECK(mw_source_render_impl(3, 0, 0, 1) == a0 + 1);
         machine_row[0] = 0;
-        CHECK(mw_source_render_impl(3, 0, 0, 1) == a0 + 2 && mw_source_render_impl(6, 0, 0, 1) == -7);
+        CHECK(later(3) == a0 + 2 && mw_source_render_impl(6, 0, 0, 1) == -7);
         part0()[62 + 90] = 2;                                                  /* another revision: nobody's */
+        CHECK(mw_source_render_impl(3, 0, 0, 1) == a0 + 3);                    /* the same frame: not read again */
+        mw_frame_exit(); mw_frame_t0 = host_timer;                             /* the frame's exit ends it */
         CHECK(mw_source_render_impl(3, 0, 0, 1) == -7 && stock_renders == flex + 2);
         part0()[62 + 90] = 1;                                                  /* A's again, and A's row is empty */
-        CHECK(mw_source_render_impl(3, 0, 0, 1) == -9 && silent_renders == silent + 1);
-        rows(a_only, 1, 0, 0);
-        CHECK(mw_source_render_impl(3, 0, 0, 1) == a0 + 3);
-        part0()[PART_STRIDE + 0x22 + 3] = 1; misc[0x0f] = 1;                   /* Part 2: T4 is plain FLEX there */
-        CHECK(mw_source_render_impl(3, 0, 0, 1) == -7);
-        misc[0x0f] = 0;
+        CHECK(later(3) == -9 && silent_renders == silent + 1);
+        rows(a_only, 1, 0, 0);                                                 /* the rows changed: at once */
         CHECK(mw_source_render_impl(3, 0, 0, 1) == a0 + 4);
+        part0()[PART_STRIDE + 0x22 + 3] = 1; misc[0x0f] = 1;                   /* Part 2: T4 is plain FLEX there */
+        CHECK(later(3) == -7);
+        misc[0x0f] = 0;
+        CHECK(later(3) == a0 + 5);
         part0()[0x22 + 3] = 2;                                                 /* THRU: no machine track */
-        CHECK(mw_source_render_impl(3, 0, 0, 1) == -7);
+        CHECK(later(3) == -7);
         part0()[0x22 + 3] = 1;
+        put_u32(BANK, 0);                                                      /* no bank: stock's render */
+        CHECK(later(3) == -7);
+        put_u32(BANK, 0x46000000u);
+        CHECK(later(3) == a0 + 6);
         /* An unowned FLEX track goes to the RENDER_FLEX machine the rows name now, not the one they named before. */
         const void *f_only2[] = {&F};
         rows(f_only2, 1, 0, 0); f_cost = 0;
         CHECK(mw_source_render_impl(6, 0, 0, 1) > 100);
         rows(a_only, 1, 0, 0);
-        CHECK(mw_source_render_impl(6, 0, 0, 1) == -7 && mw_source_render_impl(3, 0, 0, 1) == a0 + 5);
+        CHECK(mw_source_render_impl(6, 0, 0, 1) == -7 && mw_source_render_impl(3, 0, 0, 1) == a0 + 7);
         CHECK(mw_assign(part0(), 3, 1) == 1);
         rows(0, 0, 0, 0);
     }

@@ -242,12 +242,18 @@ enum { NOBODY, OWNED, ORPHAN };
 static struct { const Part *part; uint32_t bytes; const Machine *who; unsigned kind; } looked[8];
 static const Machine *flex_machine; /* the first RENDER_FLEX machine with a render: it takes unowned FLEX tracks */
 static uint32_t looked_up;          /* bit t: looked[t] stands; bit 8: flex_machine does */
+/* Those bytes are slow to read: the Part index is in battery RAM, about half a microsecond a read, and the bank's
+ * are uncached (an MKII, 10 November 2026: with every answer kept, checking them on each render still took 4 points of
+ * a frame on eight FLEX tracks). Nothing below the frame interrupt runs inside it, so within one frame they cannot
+ * change: the Part is read once a frame and each track is checked once a frame. mw_frame_exit ends the frame. */
+static const Part *frame_part;      /* the current Part this frame, 0 without a bank */
+static uint32_t frame_seen;         /* bit t: looked[t] was checked this frame; bit 8: frame_part was read */
 
 /* Masked, right after the loader rewrote the rows (loader.h): nothing stock reads may still name a module that left. */
 void modwerk_machine_tables_changed(void)
 {
     unsigned n = 0;
-    looked_up = 0;
+    looked_up = 0, frame_seen = 0;
     for (uintptr_t volatile *row = modwerk_runtime_event_row[MACHINES]; *row && n < ROWS - 5u; ++row)
         n += ((const Machine *)*row)->abi == MODWERK_MACHINE_ABI;
     for (unsigned t = 0; t < 8; ++t) { /* a machine that left frees its voices and engine before its memory goes */
@@ -658,8 +664,9 @@ void mw_frame_exit(void)
     int32_t c = credit + (int32_t)mw_frame_share - (int32_t)d;
     credit = c > (int32_t)BURST ? (int32_t)BURST : c < -(int32_t)FRAME ? -(int32_t)FRAME : c;
     mw_frame_busy += d >> 8, mw_frame_count = mw_frame_count + 1u;
-    for (unsigned k = 0; k < 16u; ++k) if (timed >> k & 1u) after[k] = now - end_at[k], place[k] = next[k];
+    if (timed) for (unsigned k = 0; k < 16u; ++k) if (timed >> k & 1u) after[k] = now - end_at[k], place[k] = next[k];
     before = timed, timed = 0, made = 0;
+    frame_seen = 0;
 }
 /* Whether a render dearer than k, and dear enough to make up `over` alone, is still to come in this frame. */
 static unsigned dearer_later(unsigned k, uint32_t over)
@@ -723,12 +730,17 @@ static unsigned render_rows(const Machine **m)
  * looked[] while the Part, the type byte and the signature are the ones it was worked out from. */
 static unsigned look(unsigned t, const Machine **who)
 {
-    const Part *part = current_part(), *s = part + SIG + 30 * t;
-    uint32_t bytes = (uint32_t)part[0x22 + t] << 24 | (uint32_t)s[0] << 16 | (uint32_t)s[1] << 8 | s[2];
-    if (!(looked_up >> t & 1u) || looked[t].part != part || looked[t].bytes != bytes) {
-        const Machine *m[ROWS - 5u]; unsigned n = render_rows(m);
-        looked[t].kind = owner(m, n, part, t, &looked[t].who) ? OWNED : orphan(part, t) ? ORPHAN : NOBODY;
-        looked[t].part = part, looked[t].bytes = bytes, looked_up |= 1u << t;
+    if (!(frame_seen >> t & 1u) || !(looked_up >> t & 1u)) {
+        if (!(frame_seen >> 8 & 1u)) frame_part = valid_bank() ? current_part() : 0, frame_seen |= 1u << 8;
+        const Part *part = frame_part, *s = part + SIG + 30 * t;
+        if (!part) return NOBODY;
+        uint32_t bytes = (uint32_t)part[0x22 + t] << 24 | (uint32_t)s[0] << 16 | (uint32_t)s[1] << 8 | s[2];
+        if (!(looked_up >> t & 1u) || looked[t].part != part || looked[t].bytes != bytes) {
+            const Machine *m[ROWS - 5u]; unsigned n = render_rows(m);
+            looked[t].kind = owner(m, n, part, t, &looked[t].who) ? OWNED : orphan(part, t) ? ORPHAN : NOBODY;
+            looked[t].part = part, looked[t].bytes = bytes, looked_up |= 1u << t;
+        }
+        frame_seen |= 1u << t;
     }
     *who = looked[t].who;
     return looked[t].kind;
@@ -736,7 +748,7 @@ static unsigned look(unsigned t, const Machine **who)
 int mw_source_render_impl(unsigned track, unsigned ping, unsigned start, unsigned end)
 {
     const Machine *who = 0;
-    unsigned kind = track < 8u && valid_bank() ? look(track, &who) : NOBODY;
+    unsigned kind = track < 8u ? look(track, &who) : NOBODY;
     if (kind == OWNED) {
         int native_flex = who->render &&
             (who->flags & (MODWERK_MACHINE_NATIVE_FLEX | MODWERK_MACHINE_START)) ==
