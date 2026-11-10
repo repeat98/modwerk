@@ -1,6 +1,6 @@
 # Analog BD 0.1.7 — the recorded-909 engine at half the DSP work
 
-10 November 2026. Package `68a41ed8` (`public/octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm`), for the same base as 0.1.6 (`requiredBase 500cdb6f`); its controller is unchanged, so the base's trust row admits it and no base changes. **Not run on a unit.** Every result below is from the emulator host or the source.
+10 November 2026. Package `7b921941` (`public/octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm`), for the same base as 0.1.6 (`requiredBase 500cdb6f`); its controller is unchanged, so the base's trust row admits it and no base changes. **Not run on a unit.** Every result below is from the emulator host or the source.
 
 ## What changed
 
@@ -8,7 +8,7 @@
 - **909 engine.** One pointer walks the voice block in the order the loop reads it, so most loads and stores ride on arithmetic instructions (`dsp909.walk` reads the order from the `;@` tags in `bd909.asm`). The click is played from a 128-row table of its filters' response with two decaying tails; it, the phase release and the end of the hold are block events at the trig's own frame offset (16, 48 and 2880 samples after it; the refit's hold was 2885). The noise envelope is stepped once a block and ramped between; TDEP's depth, the thump and SAT move a quarter of the way each block; the thump state is 24-bit. A voice with no trig, past 181 blocks and its envelope below -96 dB rests (output 0).
 - **Desk (both models).** The input coupling, SAT's drive curve, the three-band split, the output curve and the make-up stay; the two band curves go, so LOW and HIGH weight their bands. Both engines call one copy.
 - **808.** Its own code is unchanged; it gets the new desk.
-- **Registers.** n4 and n5 are left as found (stock effects read them; the voice saves n5 in its block). r4 is free: the stock loop sets it after the seam (payload A P:0x45f) before reading it.
+- **Registers.** n4 and n5 are left as found (stock effects read them; the voice saves n5 in its block). r4 is free: the stock loop sets it after the seam (payload A P:0x45f) before reading it. The glue makes m1 and m4 linear once for both engines.
 
 ## Software results
 
@@ -17,14 +17,15 @@
 - **Against the recordings** (level matched by tail RMS, LPF OFF, PTCH 64, DCAY 80, ACNT 80), first 25 ms per band 20-80/80-250/250-1k/1-4k/4-12k Hz: TUNE 0 ATK 0 -0.2/+0.3/-0.3/+1.1/+0.4 dB; TUNE 0 ATK 127 -0.1/+0.4/-1.5/-0.4/-0.1; TUNE 127 -3.0/0.0/-0.3/-1.2/+2.6. The body (30-330 ms) is within 0.5 dB below 1 kHz, 1.2-1.6 dB low at 1-4 kHz and 6.4-6.7 dB low above 4 kHz in all three.
 - **808 vs 0.1.6's 808 model** (FIXD ON): default -80.6 dB, SAT 64 -67.3, SAT 127 -61.6, LOW 127 -80.4, HIGH 127 -79.2, LOW 0 -79.1, SAT 100 LOW 110 HIGH 100 -45.4; level unchanged in all.
 - **Exact render.** `exact-render.json` holds 0.1.7's 16 audio and state hashes; `verify_analog_bd_exact.py` passes (including the 808's exact post-desk trim).
-- **Instruction forms.** Every form in the assembled image (ALU and parallel-move halves taken separately; Tcc and register-to-register moves by class) occurs in the original OS's DSP payloads or in 0.1.6's engine, both of which run on the chip.
+- **Instruction forms.** Every form in the assembled image (ALU and parallel-move halves taken separately; short and long immediates apart; Tcc and register-to-register moves by class) occurs in the original OS's DSP payloads or in 0.1.6's engine, both of which run on the chip.
 - **Cost.** In [CPU.md](CPU.md).
-- **Packages.** Card packages built in `modwerk-source-tools` (`build-modules-isolated.sh`) and imported; the USB package rebuilt with `octatrack:module-packages --base-only --stock` (largest run shared with the stock OS: 11 bytes, limit 12) and `--check` identical. Engine 1025 P words (1009 in 0.1.6), 6 relocations.
+- **Packages.** Card packages built in `modwerk-source-tools` (`build-modules-isolated.sh`) and imported; the USB package rebuilt with `octatrack:module-packages --base-only --stock` (largest run shared with the stock OS: 11 bytes, limit 12) and `--check` identical. Engine 1004 P words (1009 in 0.1.6), 6 relocations; the card image 1003 (1008).
+- **Composition proofs.** The Analog BD suite re-exported natively (4 shards): all 212 profiles have 0.1.6's chooser menus and the same 66 refusals; the 146 built images change with the engine. A first export at 1024 words dropped PLATE REV in the seven Tape Echo + Analog BD profiles with stock FX2 kept; 21 words were then saved with bit-identical output (`verify_analog_bd_exact.py` unchanged).
+- **UI captures.** Re-captured on the native card build of this source with `scripts/capture-module-ui.py` and 0.1.6's panel plan: all three PNGs are byte-identical to 0.1.6's.
 
 ## Not tested
 
 - Anything on a unit: sound, install over USB, Keep and Undo, several voices on both cores, save/reload and a power cycle, a 0.1.6 project loaded into 0.1.7.
-- The engine's placement in the base's free P memory with other on-demand effects (it is 16 words larger).
 - Chip cycles and full-chain loads; the declared price (411 per voice) is unchanged, so admission is as in 0.1.6.
 
 # Analog BD 0.1.6 — TYPE and FIXD switches

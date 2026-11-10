@@ -15,9 +15,9 @@
         "page": "SRC SETUP",
         "shows": "location-and-controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.6-experimental",
-        "imageSha256": "9a52d642e1280c704789dfcca11876a7086cd170424aa8417988ceff442895f7",
-        "setup": "Headless ot_emu; MKII panel, stopped transport; native card build of this 0.1.6 source with Analog BD alone, empty scratch card; 128×64 LCD at integer scale 6."
+        "moduleVersion": "0.1.7-experimental",
+        "imageSha256": "a5c4798bb8b699d2444ee71acd46826dac7a21c8b3a1403cc1795d72e23109d4",
+        "setup": "Headless ot_emu; MKII panel, stopped transport; native card build of this 0.1.7 source with Analog BD alone, empty scratch card; 128×64 LCD at integer scale 6."
       }
     },
     {
@@ -32,9 +32,9 @@
         "page": "909 SRC main",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.6-experimental",
-        "imageSha256": "9a52d642e1280c704789dfcca11876a7086cd170424aa8417988ceff442895f7",
-        "setup": "Headless ot_emu; MKII panel, stopped transport; native card build of this 0.1.6 source with Analog BD alone, empty scratch card; 128×64 LCD at integer scale 6."
+        "moduleVersion": "0.1.7-experimental",
+        "imageSha256": "a5c4798bb8b699d2444ee71acd46826dac7a21c8b3a1403cc1795d72e23109d4",
+        "setup": "Headless ot_emu; MKII panel, stopped transport; native card build of this 0.1.7 source with Analog BD alone, empty scratch card; 128×64 LCD at integer scale 6."
       }
     },
     {
@@ -49,9 +49,9 @@
         "page": "808 SRC main",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.6-experimental",
-        "imageSha256": "9a52d642e1280c704789dfcca11876a7086cd170424aa8417988ceff442895f7",
-        "setup": "Headless ot_emu; MKII panel, stopped transport; native card build of this 0.1.6 source with Analog BD alone, empty scratch card; 128×64 LCD at integer scale 6."
+        "moduleVersion": "0.1.7-experimental",
+        "imageSha256": "a5c4798bb8b699d2444ee71acd46826dac7a21c8b3a1403cc1795d72e23109d4",
+        "setup": "Headless ot_emu; MKII panel, stopped transport; native card build of this 0.1.7 source with Analog BD alone, empty scratch card; 128×64 LCD at integer scale 6."
       }
     },
     {
@@ -225,7 +225,7 @@
       "dsp": {
         "level": "moderate",
         "basis": "measured-comparison",
-        "rationale": "0.1.7: peak 909 187 and 808 184 executed DSP instructions per sample (377 and 255 for 0.1.6 on the same cases), shipping configuration in bd909_host: defaults, FIXD, ATK/ACNT/DECAY/SAT/LOW/HIGH extremes, a trig at every frame offset, retriggers, moving knobs; a resting voice 3. The 909 reads its body and click from tables, walks its state in read order and moves its noise envelope and slews once a block; the desk keeps two curves of four. Executed instructions, not chip timing; the declared price of 411 per voice is unchanged until the new engine is measured.",
+        "rationale": "0.1.7: peak 909 186 and 808 184 executed DSP instructions per sample (377 and 255 for 0.1.6 on the same cases), shipping configuration in bd909_host: defaults, FIXD, ATK/ACNT/DECAY/SAT/LOW/HIGH extremes, a trig at every frame offset, retriggers, moving knobs; a resting voice 3. The 909 reads its body and click from tables, walks its state in read order and moves its noise envelope and slews once a block; the desk keeps two curves of four. Executed instructions, not chip timing; the declared price of 411 per voice is unchanged until the new engine is measured.",
         "source": "CPU.md"
       },
       "memory": {
