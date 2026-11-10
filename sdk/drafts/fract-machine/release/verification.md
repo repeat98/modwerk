@@ -60,7 +60,7 @@ seven projects have file validation only. An attempted A06 selection was not
 independently confirmed; it supplies no stress pass.
 
 The offline tools received14 additional API requests across deliberately bounded
-Jev pages/rechecks. The final source snapshot has12/110 classified/cached
+Jev pages/rechecks. The pre-merge source snapshot has12/110 classified/cached
 fragments, zero flags and11 uncertainties investigated;98 fragments remain
 deferred and10 documentation/image files are excluded/static-only. Both
 configured checks pass. The later scalar preparation record was manually
@@ -84,3 +84,12 @@ mismatch. CLI failure/overwrite/dry-run cases and pure decoder boundaries pass.
 Deferred declarations, renderer bookkeeping, decoder and protocol constants
 were manually inspected; that does not erase their API deferral or confer
 hardware qualification. No physical USB operation occurred in this preparation.
+
+After merging main, lint required explicit Node builtin imports in the two
+collector scripts. Seven Node tests and lint pass after that correction. The
+requested Jev recheck used zero additional API requests; its inherited-base
+collection also includes upstream changes (765 chunks,12 cached,762 deferred
+including nine upstream parser/size blockers,101 static-only files). No upstream
+API review is claimed. Both configured checks pass; zero flags and11 previously
+investigated uncertainties remain. This broader collection does not replace or
+expand the bounded FRACT-only review above.

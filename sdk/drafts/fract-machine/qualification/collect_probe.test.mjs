@@ -4,8 +4,9 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import process from 'node:process';
 import { test } from 'node:test';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, URL } from 'node:url';
 
 test('collector dry-run, validation, write reservation and failed socket preserve evidence', () => {
   const dir = mkdtempSync(join(tmpdir(), 'fract-collector-'));

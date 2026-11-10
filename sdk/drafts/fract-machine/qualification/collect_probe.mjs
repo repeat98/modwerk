@@ -3,7 +3,11 @@
 // HELLO, uploads, keys, Keep, removal or a NOR write. Hardware enumeration only
 // reads descriptors; emulator enumeration also initializes its simulated USB bus.
 import assert from 'node:assert/strict';
+import console from 'node:console';
 import { closeSync, openSync, writeFileSync } from 'node:fs';
+import { performance } from 'node:perf_hooks';
+import process from 'node:process';
+import { setTimeout } from 'node:timers';
 import { parseArgs } from 'node:util';
 import { Bench, device, enumerate } from '../../../../scripts/usb-bench.mjs';
 import { UsbVendorTransport, findVendorInterface } from '../../../../src/engine/elekloader/upload-usb.ts';
