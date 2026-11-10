@@ -1,5 +1,40 @@
 # FRACT testing
 
+## Current candidate — 10 November 2026
+
+Unlisted `0.1.2-experimental`, SHA-256 `6ff37fdcdbfead903a4857482d0f7bd50905175b55c877e62ad7c51422ef5874`, required base `72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6`.
+The merged SDK builder now follows committed base exports. Only the old runtime
+base-ID gate was removed; engine/controls/UI remain unchanged. The package row
+carries requiredBase, matching the exact build proof. Firmware-free reproduction
+and full-machine synthetic base-change tests pass; original-OS reconstruction
+and both unchanged strict stock-free scans pass locally. No OS is distributed.
+
+Resource accounting is specific to this image: 31,424 resident bytes and
+712 own stack bytes per callback; see release/resources.md and its audit.
+The earlier hardware/USB readings apply only to package54ca below. This image
+has not been installed or run on hardware or in the full emulator. Install,
+Keep/Undo/removal, missing-module fallback, Part/project reload, reboot, audio
+quality, companions and stress require exact-build evidence before promotion.
+The historical PROJECT RELOAD stall remains unresolved.
+
+The owner accepted a ColdFire audio-path performance record on 7 November:
+worst own render/block against budget, matched native-FLEX longest-frame/idle,
+and audio stress instead of MIDI flood. `evidence/performance.json` uses nulls
+with reasons for unmeasured fields. No timing pass or owner waiver is claimed.
+
+```sh
+python3.12 -B -m unittest discover -s sdk/tests -p 'test_source_runtime_package.py'
+python3.12 -B sdk/drafts/fract-machine/check_source.py
+python3.12 -B sdk/drafts/fract-machine/qualification/resources.py --output /tmp/fract-resource-audit.json
+```
+
+## Historical 0.1.1 evidence — 6 November 2026
+
+Everything below names the previous package. Its positive observations and
+unresolved incident are retained, not promoted to the new candidate. References
+to release/resources.md and release/verification.md in this historical text now
+resolve to the archived versions in release/history/20261106/.
+
 ## Commands and exact revision
 
 This is the unlisted `0.1.1-experimental` candidate, exact package SHA-256

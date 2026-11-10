@@ -1,4 +1,4 @@
-"""Confined build declarations, exported imports and all-layout admission."""
+"""FRACT source confinement, base-following builds and package admission metadata."""
 import importlib.util
 import json
 from pathlib import Path
@@ -21,9 +21,11 @@ class SourceRecipe(unittest.TestCase):
         self.assertTrue({'ot_machines', 'ot_machine_starts', 'module_tick', 'module_draw'} <= events)
         self.assertEqual(sum(p.suffix == '.c' for p, _ in units), 10)
         self.assertEqual(sum(p.suffix == '.s' for p, _ in units), 1)
-        imports, _, _, _, identities, _ = runtime.base_binding(ROOT, doc['base'])
+        imports, _, provenance, _ = runtime.base_binding(ROOT, doc['base'])
         self.assertEqual(set(imports), {'mw_stock_pool_open'})
-        self.assertEqual(len(identities), 7)
+        self.assertEqual(set(doc['base']), {'runOrigin', 'imports'})
+        binding = json.loads((ROOT / 'sdk/machines/octatrack/base-binding.json').read_text())
+        self.assertEqual(provenance['identity'], binding['identity'])
 
     def test_sources_cannot_escape_or_borrow_another_module(self):
         for value in ('../machine.c', '/tmp/machine.c', '@/sdk/octabam/modules/poly8/pool.c'):
@@ -35,9 +37,9 @@ class SourceRecipe(unittest.TestCase):
             with self.assertRaises(ValueError):
                 runtime.path_in(folder, 'link')
 
-    def test_stale_base_and_nonexported_import_refuse(self):
+    def test_identity_pins_and_nonexported_import_refuse(self):
         base = json.loads((MODULE / 'runtime-build.json').read_text())['base']
-        with self.assertRaisesRegex(ValueError, 'Base changed'):
+        with self.assertRaisesRegex(ValueError, 'Invalid base binding fields'):
             runtime.base_binding(ROOT, dict(base, identity='0' * 64))
         with self.assertRaisesRegex(ValueError, 'published export'):
             runtime.base_binding(ROOT, dict(base, imports=['not_a_published_export']))
@@ -68,50 +70,75 @@ class SourceRecipe(unittest.TestCase):
         self.assertEqual(made['copies'][0]['address'], 0x40000430)
         self.assertEqual(made['copies'][0]['sha256'], item['sha256'])
 
+    def test_release_row_matches_named_receipt_without_claiming_hardware(self):
+        row = json.loads((MODULE / 'release/package-entry.json').read_text())
+        proof = json.loads((MODULE / 'release/candidate-proof.json').read_text())
+        manifest = json.loads((MODULE / 'octamod.module.json').read_text())
+        self.assertEqual(row['requiredBase'], proof['baseIdentity'])
+        self.assertEqual(row['sha256'], proof['sha256'])
+        self.assertEqual(row['bytes'], proof['bytes'])
+        self.assertEqual(row['version'], proof['version'])
+        self.assertEqual(row['version'], manifest['version'])
+        self.assertEqual(proof['hardware'], 'NOT_RUN')
+        self.assertEqual(manifest['tests']['hardwareStatus'], 'untested')
+
     @unittest.skipUnless(shutil.which('m68k-elf-gcc'), 'ColdFire compiler unavailable')
-    def test_public_candidate_reproduces_without_firmware(self):
+    def test_machine_build_follows_committed_base_without_firmware(self):
         row = json.loads((MODULE / 'release/package-entry.json').read_text())
         with tempfile.TemporaryDirectory() as tmp:
             data, proof = runtime.build(ROOT, MODULE / 'runtime-build.json', Path(tmp) / 'candidate.mwrm')
-        self.assertEqual(proof['sha256'], row['sha256'])
-        self.assertEqual(len(data), row['bytes'])
+        recipe = json.loads((MODULE / 'release/reconstruction.json').read_text())
+        self.assertEqual(proof['reviewedImageSha256'], recipe['imageSha256'])
+        # A draft receipt describes one build. A later base refresh may relink
+        # the import word without manually refreshing an unlisted receipt.
+        if row['requiredBase'] == proof['baseIdentity']:
+            self.assertEqual(proof['sha256'], row['sha256'])
+            self.assertEqual(len(data), row['bytes'])
         self.assertEqual(data[28:32].hex(), row['module'])
         self.assertEqual(proof['stockVerification'], 'NOT_RUN')
         self.assertEqual(proof['stockCopies'], 9)
-        self.assertEqual(len(proof['baseVariants']), 7)
-
-
-@unittest.skipUnless(shutil.which('cc'), 'host compiler unavailable')
-class BaseAdmission(unittest.TestCase):
-    def test_each_layout_admits_and_partial_digest_matches_refuse(self):
         binding = json.loads((ROOT / 'sdk/machines/octatrack/base-binding.json').read_text())
-        identities = sorted(set([binding['identity'], *binding['variants'].values()]))
-        values = ','.join(str(v) for digest in identities for v in bytes.fromhex(digest))
+        self.assertEqual(proof['baseIdentity'], binding['identity'])
+        self.assertEqual(proof['baseImports'], [{'offset': 14660, 'name': 'mw_stock_pool_open', 'addend': 0}])
+        self.assertNotIn(bytes.fromhex(proof['baseIdentity']), data)
+
+
+@unittest.skipUnless(shutil.which('m68k-elf-gcc'), 'ColdFire compiler unavailable')
+class FollowingBase(unittest.TestCase):
+    def test_full_machine_relinks_without_recipe_recapture(self):
+        # Copy only committed build inputs; no firmware, device or global file
+        # mutations. The engine and its reviewed reconstruction stay identical.
         with tempfile.TemporaryDirectory() as tmp:
-            folder = Path(tmp)
-            (folder / 'base_identity.h').write_text(
-                'extern uint8_t test_digest[32];\n#define OG_BASE_DIGEST_ADDRESS ((uintptr_t)test_digest)\n'
-                'static const uint8_t og_expected_base_digest[] = {' + values + '};\n')
-            (folder / 'main.c').write_text('''#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-uint8_t test_digest[32];
-#include "base_identity.h"
-int og_machine_base_ready(void);
-int main(int argc, char **argv) {
-    if (argc != 2) return 90;
-    unsigned index = (unsigned)strtoul(argv[1], 0, 10);
-    memcpy(test_digest, og_expected_base_digest + 32 * (index % 7), 32);
-    if (index >= 7) test_digest[index == 7 ? 0 : 31] ^= 1;
-    return og_machine_base_ready() == (index < 7) ? 0 : 1;
-}
-''')
-            binary = folder / 'admission'
-            subprocess.run(['cc', '-std=c11', '-Wall', '-Wextra', '-Werror', '-DOG_MACHINE_BASE_BOUND', '-I' + str(folder),
-                            MODULE / 'base_binding.c', folder / 'main.c', '-o', binary], check=True, capture_output=True)
-            for layout in range(9):
-                with self.subTest(layout=layout):
-                    subprocess.run([binary, str(layout)], check=True, capture_output=True)
+            root = Path(tmp)
+            for relative in ('sdk/runtime', 'sdk/firmware_codec', 'sdk/machines/octatrack', 'sdk/drafts/fract-machine'):
+                shutil.copytree(ROOT / relative, root / relative,
+                                ignore=shutil.ignore_patterns('__pycache__'))
+            for relative in ('scripts/source-runtime-package.py', 'src/engine/assets/octatrack-base.elemod'):
+                target = root / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(ROOT / relative, target)
+            recipe = root / 'sdk/drafts/fract-machine/runtime-build.json'
+            before, first = runtime.build(root, recipe, root / 'before.mwrm')
+            metadata = root / 'sdk/machines/octatrack/base-binding.json'
+            binding = json.loads(metadata.read_text())
+            binding['identity'] = 'a' * 64
+            metadata.write_text(json.dumps(binding))
+            base_file = root / 'src/engine/assets/octatrack-base.elemod'
+            base = json.loads(base_file.read_text())
+            base['symbols']['mw_stock_pool_open'][1] += 4
+            base_file.write_text(json.dumps(base))
+            after, second = runtime.build(root, recipe, root / 'after.mwrm')
+            self.assertNotEqual(before, after)
+            self.assertNotEqual(first['basePackageSha256'], second['basePackageSha256'])
+            self.assertEqual(second['baseIdentity'], 'a' * 64)
+            self.assertEqual(first['reviewedImageSha256'], second['reviewedImageSha256'])
+            self.assertEqual(first['baseImports'], second['baseImports'])
+            self.assertNotIn(bytes.fromhex(first['baseIdentity']), after)
+            self.assertNotIn(bytes.fromhex(second['baseIdentity']), after)
+            del base['symbols']['mw_stock_pool_open']
+            base_file.write_text(json.dumps(base))
+            with self.assertRaisesRegex(ValueError, 'inside its runtime'):
+                runtime.build(root, recipe, root / 'missing.mwrm')
 
 
 if __name__ == '__main__':

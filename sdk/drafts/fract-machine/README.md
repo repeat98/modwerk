@@ -63,11 +63,11 @@ superseded by that consolidation. The base keeps FR:1 at boot (`known[]`, added 
 the owner completed the short physical check on base `9b3ba417` with a private
 paired FRACT build; USB confirmed that exact base and module set after power-on.
 See TESTING.md for identities, reported observations and limits. No catalogue
-entry, listed USB/card package or compatibility pair proof exists. The new
-candidate has the 6 November functional hardware report in TESTING.md; full
-resource and publication qualification remains incomplete.
+entry, listed USB/card package or compatibility pair proof exists. The earlier 0.1.1 candidate has the 6 November functional hardware report in
+TESTING.md. The current 0.1.2 candidate follows the merged base-aware builder
+and has no hardware qualification yet; publication remains incomplete.
 
-Candidate install, explicit Undo, Keep/removal/reinstall, installed-Part reload
+Historical 0.1.1 install, explicit Undo, Keep/removal/reinstall, installed-Part reload
 and cold boot are recorded in TESTING.md. Missing-module reload is unconfirmed;
 explicit project reload, live-trigger deletion, stress, resource bounds and
 companion-module qualification remain open.
@@ -120,27 +120,26 @@ the underlying interface rights described beside them. No sample audio is
 included. Full release capture provenance and all required control pages remain
 pending; the manifest's screenshot list is intentionally empty for this draft.
 
-## USB release candidate — 6 November 2026
+## USB release candidate — 10 November 2026
 
-`runtime-build.json` describes the C/assembly build through the shared host
-recipe compiler, `scripts/source-runtime-package.py`. It contributes the same
-machine and START records through `runtime.json`; the granular engine, controls
-and UI are unchanged. The reviewed base-export guard accepts all seven published
-USB layouts whose runtime addresses match. Older or unknown bases refuse the
-machine callbacks. This candidate has the canonical runtime identity
-`fract-machine`; the earlier private `grnyv1` package is a separate module and
-must be replaced as a controlled set, not installed alongside it.
+`runtime-build.json` consumes the merged host recipe compiler. Base imports
+follow the committed base; the recipe reviews only import names/run origin.
+No base digest is compiled or read by the machine. The prospective package row
+carries `requiredBase`, matching base `72defb09` for this build. A base refresh
+relinks imports through the same reviewed reconstruction recipe. The machine
+and START records, grain engine, controls and UI are unchanged.
 
-From the repository root:
+The new `0.1.2-experimental` package has canonical runtime identity `fract-machine`.
+The private `grnyv1` package must be replaced as a controlled set; do not install
+both identities together. The historical package54ca test remains in TESTING.md.
+This new image has no hardware or full-emulator result yet.
 
 ```sh
-python3 -B scripts/source-runtime-package.py --recipe sdk/drafts/fract-machine/runtime-build.json --output /path/outside/git/fract-machine.mwrm
-python3 -B -m unittest discover -s sdk/tests -p 'test_source_runtime_package.py'
+python3.12 -B scripts/source-runtime-package.py --recipe sdk/drafts/fract-machine/runtime-build.json --check
+python3.12 -B -m unittest discover -s sdk/tests -p 'test_source_runtime_package.py'
 ```
 
-The second command checks recipe confinement, exported imports, each of the
-seven allowed base IDs, wrong-digest refusals and source-only reproducibility.
-Original-OS reconstruction and both strict stock-free scans were additionally
-run locally; no OS file is included. The candidate's exact-package functional
-hardware results are in TESTING.md; resource qualification, remaining release
-integration and the first-release owner's approval are still pending.
+Tests cover source confinement, current exports, actual-machine base relinking,
+absence of embedded IDs, requiredBase/proof agreement and exact package
+reproduction without firmware. Original-OS reconstruction and both strict scans
+also pass locally. Resource and remaining release work are in release/README.md.

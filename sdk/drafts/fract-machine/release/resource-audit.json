@@ -1,24 +1,24 @@
 {
   "schema": 1,
   "status": "OWN_MEMORY_AND_CALLBACK_STACK_ACCOUNTED",
-  "packageSha256": "54ca8f6b1a30e2f4811129e082ce18881148654b00c97c026508460a6cf7272e",
-  "authoredImageSha256": "4ad64eda75610e2a5de44f9255aff5a2b0e51d50244e77dc0e15175201b4a790",
+  "packageSha256": "6ff37fdcdbfead903a4857482d0f7bd50905175b55c877e62ad7c51422ef5874",
+  "authoredImageSha256": "611191d7ad91ff5ac536d9b3aec7b4a9c5e00cc33483e87a26282274a46af5a2",
   "compiler": "m68k-elf-gcc (GCC) 16.2.0",
   "loaderInputs": {
     "sdk/runtime/loader/loader.h": "1a1181510e5a6ba000ad57b51daad9bf0a6aa4fb27d41792ddc7e94a9b3de9e9",
     "sdk/runtime/loader/loader.c": "e6c210a6fc954a0558837c7d0dca6149c3c5fec35446c64853c3f3636ededf63"
   },
   "loaderAggregateAlignment": "2 bytes (base default; explicit -mno-align-int probe)",
-  "imageBytes": 30596,
-  "bssBytes": 640,
-  "packageBytes": 32120,
-  "relocations": 225,
+  "imageBytes": 30260,
+  "bssBytes": 636,
+  "packageBytes": 31772,
+  "relocations": 222,
   "memory": {
     "runtimeHeaderBytes": 528,
     "headerAlignmentBytes": 0,
-    "imageBssAlignmentBytes": 12,
-    "residentPoolExtentBytes": 31776,
-    "sameCandidateReplacementPeakPoolBytes": 63552,
+    "imageBssAlignmentBytes": 0,
+    "residentPoolExtentBytes": 31424,
+    "sameCandidateReplacementPeakPoolBytes": 62848,
     "dspCodeWordsAdded": 0,
     "dspStateWordsAdded": 0,
     "sampleArenaBytesAllocated": 0,
@@ -165,14 +165,14 @@
         ]
       },
       "og_machine_admit": {
-        "bytesIncludingEntryReturnPC": 28,
+        "bytesIncludingEntryReturnPC": 12,
         "chain": [
           "og_machine_admit",
           "og_machine_base_ready"
         ]
       },
       "og_machine_base_ready": {
-        "bytesIncludingEntryReturnPC": 20,
+        "bytesIncludingEntryReturnPC": 4,
         "chain": [
           "og_machine_base_ready"
         ]
@@ -186,7 +186,7 @@
         ]
       },
       "og_machine_leave": {
-        "bytesIncludingEntryReturnPC": 28,
+        "bytesIncludingEntryReturnPC": 12,
         "chain": [
           "og_machine_leave",
           "og_machine_base_ready"
@@ -202,7 +202,7 @@
         "bytesIncludingEntryReturnPC": 76,
         "chain": [
           "og_machine_page",
-          "og_machine_base_ready"
+          "page_text"
         ]
       },
       "og_machine_render": {
@@ -215,7 +215,7 @@
         ]
       },
       "og_machine_start": {
-        "bytesIncludingEntryReturnPC": 96,
+        "bytesIncludingEntryReturnPC": 80,
         "chain": [
           "og_machine_start",
           "og_machine_base_ready"
@@ -281,10 +281,10 @@
         ]
       },
       "og_pool_open": {
-        "bytesIncludingEntryReturnPC": 48,
+        "bytesIncludingEntryReturnPC": 36,
         "chain": [
           "og_pool_open",
-          "og_machine_base_ready"
+          "og_pool_signed"
         ]
       },
       "og_pool_signed": {
@@ -423,9 +423,9 @@
   "worstCaseColdFireCycles": null,
   "cycleStatus": "NOT_MEASURED; compiler frames and instruction counts are not hardware timing",
   "nativeInputs": {
-    "scripts/source-runtime-package.py": "845230615fd66f28c6548bee7d1116c0a4f130615fbdfde2dff2e535909371a1",
-    "module/base_binding.c": "fd9da5a389be0ff54fa1b912c955b481a7cece6168cd00bed99841f02f399a85",
-    "module/base_binding.h": "8d88996b9703b95de1a4197fb80e1c36c9cf9dd189ddc43b68ddad9c21a36397",
+    "scripts/source-runtime-package.py": "e6d2c49233ecf0cca6bcbe8dafbbbdf42264179f44993988fc0ff8d2633f0696",
+    "module/base_binding.c": "217dc052fbdffd80733c852550596fa6f1207d7921647a25f89077a23f5bbf7e",
+    "module/base_binding.h": "ba584ceb7b5616a819db330303fc89228f75254aa9cd2158a77fd550a4a05e61",
     "module/control_layout.h": "4085f97129fbaf36fe808fba8081bdfbe5b5d175dd47f857d08bc2e98d2e708f",
     "module/cpu_profile.h": "4fc9ced2fa683f30d3f3c59516a769b41b5dab85ff2f3dacb9126d9aa113ee20",
     "module/engine/grain.c": "2d5233909b681098810c4a0f3b6f85ddcf3cfbc5179749d6f0ac5452822081d1",
@@ -441,7 +441,7 @@
     "module/registration.c": "3f9ffc31540e5a47da3fad1128ec17c28bb9816d930dd6d2062a97f7b558b34f",
     "module/render.c": "fa4cff0f3b0aa8df3db966bbb9d777b874e39052c12679a814b11d3968f134ce",
     "module/render.h": "2c81a00122910d8ec71d44917246e5b69fd6ca68e53772700f3c6672d3ffa773",
-    "module/runtime-build.json": "3c44e409185e5346f7f9a6a8f2fbccf52d570d2200877144457d549fcb287195",
+    "module/runtime-build.json": "28458553c69014d31c67cfae3dfff72d96cd16392db749ad03e80e0e5c6c3b97",
     "module/runtime.json": "10e2234c9a3fcceda4407f51a546bf29b206d298cd7ea0c50e846b0cc046a204",
     "module/sample_pool.h": "157769f26f7ff4f8b0fb5f1cf42701a95e31616312c9ab234e958080e864b5e9",
     "module/selection.h": "f2869ec9179878a3ba7020472725219602c0de3c1b331c8069dec68d6272b0ba",
@@ -453,10 +453,10 @@
     "module/support/sizes.h": "0e82d939929976de7aa3f0c17e014c34a45bbdc4ea68e92a30c58d40b17081bb",
     "module/support/source.h": "75bbfd34bc9da1bf315650516eb3118c6472d6a845a56f471d3b39cd70d54771",
     "module/support/window.h": "963478023953646d95e089110dae034de29aeb4c6c964d8e45ff39f3e9aeb34a",
-    "sdk/machines/octatrack/base-binding.json": "5fd132a438e3c040f4aa9ce1d0def1c5af4072a4953baa0f097c3d711e44fce2",
-    "sdk/machines/octatrack/events.json": "0b75b47895ff85dfcce22cedf46addb0018d7c38893757e8997247280ca0d614",
+    "sdk/machines/octatrack/base-binding.json": "4bb77f94df46bbe89a60e2dbc828669bc450a80c7f11b805ec59368fd8b6fc10",
+    "sdk/machines/octatrack/events.json": "35c45bcc2971a808c61bd5e633231bae1b26c10580ab8e1b72a5988a6efab4ae",
     "sdk/machines/octatrack/events.py": "4dd1da3aaa03d72cd36283388ba23a19d07d65588e415aa773c4ac1301c5d78d",
-    "sdk/machines/octatrack/include/modwerk_events.h": "93ce05fdce9743f773a8fed7aa8298c4203e9d5b76f5f6c0f74008a6a9c00127",
+    "sdk/machines/octatrack/include/modwerk_events.h": "de68bd469a5fda319fdb901e6b1688e3bdd34012a755a4e40c20bd11fc8e0633",
     "sdk/machines/octatrack/include/modwerk_sample_editor.h": "48c0aa9a2227cc59cc6a88fadc7712b48f3fd999b46d263f30975986ae66db12",
     "sdk/machines/octatrack/module-adapters/resident-runtime/dsp_ledger.h": "4b25ee7a43a40ab8e6181373810731a6f90e3bd84c351575d215bd35089b9c6d",
     "sdk/machines/octatrack/module-adapters/resident-runtime/resident_engines.h": "9991ef756302106b30fe0d70bbdba1e7949cb2c3950ac9dbcf1e6832edf1c161",
@@ -477,6 +477,6 @@
     "sdk/runtime/upload/upload.h": "4717f5f55c48e7d3f1d045aee72b5cf5e1194f707eb4a9da2bef0ca48b22ef6b",
     "sdk/runtime/upload/vendor.h": "e6cd2ffd6137f668c6939a2c4a3990848cf05e92e3f84d04c862bc23e229b363",
     "sdk/runtime/upload/wire.h": "781b3dc8cd4e59ffdd4e2c60b1b1f99356050be58c3c529b945d82e60e768829",
-    "src/engine/assets/octatrack-base.elemod": "9b9ef905230d34eebbfb55046be074363082fba059e0b7abe10457d10afac1fd"
+    "src/engine/assets/octatrack-base.elemod": "722ff28f693fa58854e669f94087bc8dde513b345a814ad50baaa13cba74e51e"
   }
 }

@@ -3,7 +3,7 @@
   "id": "fract-machine",
   "key": "FRACT",
   "name": "FRACT",
-  "version": "0.1.1-experimental",
+  "version": "0.1.2-experimental",
   "category": "machines",
   "source": {
     "repository": "https://github.com/ex1010/modwerk",
@@ -12,7 +12,7 @@
   },
   "build": {
     "status": "pending",
-    "reason": "Candidate USB lifecycle and stopped-state project reload reported; one earlier PROJECT RELOAD audio stall remains unexplained. Timing qualification, release integration and first-release approval remain pending."
+    "reason": "Migrated to merged base-following SDK. New package has no hardware or full-emulator evidence yet. Timing/stress, media, release integration and owner approval remain pending; historical PROJECT RELOAD stall unresolved."
   },
   "author": {
     "github": "ex1010",
@@ -117,16 +117,16 @@
     "limitations": [
       "Unlisted source draft; not offered by the public configurator.",
       "Eight registry slots exist; FRACT admits only one owner on T1\u2013T4.",
-      "Private build requires an exact compatible paired base with FR:1 boot preservation.",
+      "USB package requires the base identified by requiredBase; compatible base rebuilds relink imports.",
       "Candidate functional lifecycle recorded; full resource, stress and companion qualification pending."
     ]
   },
   "resources": {
-    "recorded": "6 November 2026; exact candidate memory and own callback stack; timing pending",
+    "recorded": "10 November 2026; new candidate memory/own stack only; hardware and timing pending",
     "storage": {
       "label": "Public package memory",
-      "display": "31,776 resident pool bytes; 712 own stack bytes per callback",
-      "value": 31776,
+      "display": "31,424 resident pool bytes; 712 own stack bytes per callback",
+      "value": 31424,
       "unit": "bytes",
       "method": "static",
       "conditions": "One owner, three heads; includes loader header, image/BSS and alignment. Stack separately bounded; samples reuse stock arena.",
@@ -158,19 +158,19 @@
       "memory": {
         "level": "low",
         "basis": "source-estimate",
-        "rationale": "31,776 resident pool bytes for code/tables/state/header, up to 712 own stack bytes per callback, no independent sample buffer; replacement retains two extents.",
+        "rationale": "31,424 resident pool bytes and up to 712 own stack bytes per callback; no independent sample buffer. Replacement retains two extents.",
         "source": "release/resources.md"
       }
     }
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Candidate USB lifecycle and reboot checked; installed-Part reload and one stopped-state PROJECT RELOAD reported successful. Earlier PROJECT RELOAD stopped audio frames and required a power cycle; root cause unresolved. Timing and full qualification pending.",
-    "hardwareStatus": "reported",
-    "evidenceRevision": "7bfced003145d8641792e91747f7f63ea5aac2e1",
+    "summary": "New base-following candidate passes source/recipe and stock reconstruction checks; hardware/emulator/timing/stress pending. Earlier package54ca functional checks and unresolved reload stall remain historical.",
+    "hardwareStatus": "untested",
     "gates": [
       "modules/fract-machine/verify.py"
-    ]
+    ],
+    "evidenceRevision": "7bfced003145d8641792e91747f7f63ea5aac2e1"
   },
   "license": {
     "spdx": "MIT AND GPL-3.0-or-later",

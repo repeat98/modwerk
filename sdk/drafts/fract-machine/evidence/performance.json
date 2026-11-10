@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "module": "fract-machine",
+  "version": "0.1.2-experimental",
+  "kind": "coldfire",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": null,
+    "budget": null,
+    "method": "NOT MEASURED. Worst own render per 16-frame audio block versus its runtime guard budget is required. Production base lacks supported per-render timing reads; compiler stack/instruction counts and historical CPU percentages are not timing. Owner accepted this audio-path method on PR1274; first-release waiver is undecided."
+  },
+  "load": {
+    "frameUs": 362.8,
+    "stockLongestUs": null,
+    "moduleLongestUs": null,
+    "stockIdlePercent": null,
+    "moduleIdlePercent": null,
+    "method": "NOT MEASURED. Use matched native FLEX and FRACT projects on the same base/page; record cfmeter longest frame and idle with the same sample, controls and event splits. No matched captures exist for this package."
+  },
+  "stress": {
+    "floodMessagesPerSecond": null,
+    "clockBpm": null,
+    "seconds": null,
+    "stuckNotes": null,
+    "hangs": null,
+    "dropped": null,
+    "droppedExplanation": "",
+    "method": "NOT RUN. FRACT has no MIDI path: use an audio stress project with its supported one owner, three heads, moving controls, p-locks, LFOs, STOP and Part/project reload. MIDI flood fields stay null and do not claim a test. Owner accepted audio stress in PR1274; no waiver granted."
+  },
+  "scope": {
+    "packageSha256": "6ff37fdcdbfead903a4857482d0f7bd50905175b55c877e62ad7c51422ef5874",
+    "baseIdentity": "72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6",
+    "ownerMethod": "https://github.com/repeat98/modwerk/pull/1274#issuecomment-6705531953",
+    "waiver": "NOT_GRANTED",
+    "hardware": "NOT_RUN_FOR_THIS_PACKAGE"
+  }
+}

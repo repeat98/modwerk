@@ -18,9 +18,9 @@ import tempfile
 
 MODULE = Path(__file__).resolve().parents[1]
 ROOT = MODULE.parents[2]
-IMAGE_SHA = '4ad64eda75610e2a5de44f9255aff5a2b0e51d50244e77dc0e15175201b4a790'
-PACKAGE_SHA = '54ca8f6b1a30e2f4811129e082ce18881148654b00c97c026508460a6cf7272e'
-# Compared with the local native proof for base 9b3ba417. These files govern
+IMAGE_SHA = '611191d7ad91ff5ac536d9b3aec7b4a9c5e00cc33483e87a26282274a46af5a2'
+PACKAGE_SHA = '6ff37fdcdbfead903a4857482d0f7bd50905175b55c877e62ad7c51422ef5874'
+# Compared with the local native proof for base 72defb09. These files govern
 # the struct layout/allocation formula but need not change the module image.
 LOADER_INPUTS = {
     'sdk/runtime/loader/loader.h': '1a1181510e5a6ba000ad57b51daad9bf0a6aa4fb27d41792ddc7e94a9b3de9e9',
@@ -44,8 +44,8 @@ INDIRECT = {
     0x4712: ('fract_ui_pool_title_context',),
     0x472c: ('fract_ui_pool_title_context',),
     0x4788: ('og_machine_owns',), 0x4798: ('fract_ui_machine_icon',),
-    0x48b8: ('og_pan_root',), 0x48c4: ('og_pan_root',),
-    0x5488: ('og_mix_span', 'og_mix_span_reverse',
+    0x484a: ('og_pan_root',), 0x4856: ('og_pan_root',),
+    0x541a: ('og_mix_span', 'og_mix_span_reverse',
              'og_join_span', 'og_join_span_reverse'),
 }
 EXTERNAL = {
@@ -54,7 +54,7 @@ EXTERNAL = {
     0x4004d948: 'native browser redraw',
     0x40054cd8: 'native parameter publication',
     0x4007893c: 'native browser leave',
-    0x40ad0508: 'base stock-pool open',
+    0x40ad05a8: 'base stock-pool open',
 }
 ASM_FRAMES = {'og_mix_span': 48, 'og_mix_span_reverse': 48,
               'og_join_span': 56, 'og_join_span_reverse': 56}
@@ -163,7 +163,7 @@ def measure(cross, work):
     package = work / 'fract-machine.mwrm'
     _, proof = builder.build(ROOT, MODULE / 'runtime-build.json', package, cross)
     if proof['sha256'] != PACKAGE_SHA:
-        raise ValueError('Package differs from the hardware-tested candidate')
+        raise ValueError('Package differs from the named untested candidate')
     layout = work / 'layout.c'
     layout.write_text('#include <stddef.h>\n#include "loader.h"\n'
                       'const uint32_t measured_layout[] = {'

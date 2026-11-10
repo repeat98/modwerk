@@ -1,7 +1,7 @@
 [
   {
-    "version": "0.1.1-experimental",
-    "date": "2026-11-06",
+    "version": "0.1.2-experimental",
+    "date": "2026-11-10",
     "changes": [
       "Adds the FRACT three-grain sample machine with centered SIZE and wrapping POS.",
       "Uses native FLEX pitch, with three overlapping grain markers on the display.",

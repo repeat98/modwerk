@@ -1,4 +1,4 @@
-/* Reviewed base-export binding; host fixtures supply controlled APIs. */
+/* Adapter readiness hook; package metadata admits the linked base. */
 #ifndef OG_MACHINE_BASE_BINDING_H
 #define OG_MACHINE_BASE_BINDING_H
 #ifdef OG_MACHINE_BASE_BOUND

@@ -57,18 +57,10 @@
   ],
   "runtime": "runtime.json",
   "base": {
-    "identity": "9b3ba41715140d5fae07868a8b2adc6d89c3ec0272d8ab34c332461cf990a14c",
-    "packageSha256": "9b9ef905230d34eebbfb55046be074363082fba059e0b7abe10457d10afac1fd",
     "runOrigin": 1084839424,
     "imports": [
       "mw_stock_pool_open"
-    ],
-    "identityHeader": {
-      "filename": "base_identity.h",
-      "addressDefine": "OG_BASE_DIGEST_ADDRESS",
-      "bytesName": "og_expected_base_digest",
-      "symbol": "modwerk_base_digest"
-    }
+    ]
   },
   "reconstruction": "release/reconstruction.json",
   "forbiddenPrefixes": [
