@@ -175,7 +175,14 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/ab_glue.asm",
       "sourceSha256": "c78dc31dfcfc7a0c6f10ae24b39744a88bed5211346bcae4f6931e2e6489223c",
-      "vendoredSha256": "c78dc31dfcfc7a0c6f10ae24b39744a88bed5211346bcae4f6931e2e6489223c"
+      "vendoredSha256": "223822a05b1133c4fcaff146bf8734f271570812d04db0fedced215e633720cc",
+      "localUpdates": [
+        {
+          "moduleVersion": "0.1.7-experimental",
+          "previousVendoredSha256": "c78dc31dfcfc7a0c6f10ae24b39744a88bed5211346bcae4f6931e2e6489223c",
+          "reason": "Analog BD 0.1.7: the recorded-909 engine at half the DSP work (body and click from tables, one pointer walking the state, per-block envelope and slews, a lighter shared desk) and matching release documentation; original import and source fingerprints retained."
+        }
+      ]
     },
     {
       "path": "modules/analog-bassdrum/bd808.asm",
@@ -183,12 +190,17 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/bd808.asm",
       "sourceSha256": "e7306bd284e9bca067cffc54dcbfb18ae7a0fc7b3a27253a246e58898ae9ee92",
-      "vendoredSha256": "36af2b6bb961f7667260e83dff9e229ad7fbe071a849ffb16c11a03f83d4cbc9",
+      "vendoredSha256": "08a47b594138a3aa96bb8ff2859a088304289777c2d9f9b036bf61d6e9460275",
       "localUpdates": [
         {
           "moduleVersion": "0.1.6-experimental",
           "previousVendoredSha256": "e7306bd284e9bca067cffc54dcbfb18ae7a0fc7b3a27253a246e58898ae9ee92",
           "reason": "Analog BD 0.1.6: TYPE/FIXD switches and bit-identical DSP efficiency work; original import and source fingerprints retained."
+        },
+        {
+          "moduleVersion": "0.1.7-experimental",
+          "previousVendoredSha256": "36af2b6bb961f7667260e83dff9e229ad7fbe071a849ffb16c11a03f83d4cbc9",
+          "reason": "Analog BD 0.1.7: the recorded-909 engine at half the DSP work (body and click from tables, one pointer walking the state, per-block envelope and slews, a lighter shared desk) and matching release documentation; original import and source fingerprints retained."
         }
       ]
     },
@@ -198,7 +210,7 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/bd909.asm",
       "sourceSha256": "db1b2871957bb89bfd4184fc7556e5e46c44f3be1a889ba11fc1a679c4b1841e",
-      "vendoredSha256": "fbd865f238538469bad2abd7eb7ed4ec3ec79eb57a361cf9cde607e08dd97ad9",
+      "vendoredSha256": "396eef7d53c2907c63bcc059e55435b968294bedd77d4199f0d269d82a78e424",
       "localUpdates": [
         {
           "moduleVersion": "0.1.3-experimental",

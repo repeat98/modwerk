@@ -38,6 +38,7 @@
 ;   knobs: 0 PITCH  1 DECAY  2 TUNE  3 ATK  4 TDEP  5 SAT  6 TYPE  7 FIXD
 ;          8 ACNT  9 LOW  10 HIGH  11 LPF (SETUP: TYPE FIXD ACNT / LOW HIGH LPF)
 ; zq02, init: clears the state block at r5 and seeds the noise.
+; m0, m1 and m4 arrive linear (ab_glue.asm sets them for both engines).
 ; r1, r4, n1 and both accumulators are used; r5, r6, n5 and n7 are kept (n5
 ; walks the block and is put back: stock code reads it after the source).
 ; Every instruction form here is one stock or 0.1.6 already runs on the chip.
@@ -48,9 +49,6 @@
 ; ---------------------------------------------------------------------------
 
 zq01:
-        move    #>$ffffff,m0
-        move    #>$ffffff,m1
-        move    #>$ffffff,m4
 ; ---- a voice at rest: no trig, the hit long over, the VCA closed ----------
         move    x:(r6+$c),a
         tst     a
@@ -84,8 +82,7 @@ zq0c:
         move    #>@T_GT@,r1
         move    x:(r1+n1),y0            ; gt(TUNE)
  ; The recorded Tune endpoints also shift the settled VCO frequency.
-        move    #>@KTFB0@,x1
-        add     x1,b
+        add     #>@KTFB0@,b
         move    #>@KTFB@,x1
         mac     x1,y0,b
         move    b,x:(r5+@INCB@)
@@ -98,9 +95,8 @@ zq0c:
         move    a1,n1
         move    #>@T_GD@,r1
         move    x:(r1+n1),y0            ; gd(TDEP)
-        mpyr    y0,x0,a                 ; q = ap*gt*gd, 0..1
+        mpyr    y0,x0,a         #>@KA_INC@,y0 ; q = ap*gt*gd, 0..1 (the load reads after)
         move    a,x0
-        move    #>@KA_INC@,y0
         mpyr    y0,x0,b                 ; the sweep's target, q * K_A
         asr     #$10,a,a                ; thump index, q * 128
         move    a1,n1
@@ -112,9 +108,8 @@ zq0c:
         mpy     x0,x0,a
         move    a,y0
         mpyr    x1,y0,a
-        asr     a
+        asr     a               #>@K_BODY@,x0
         move    a,y1                    ; the thump's target / 2
-        move    #>@K_BODY@,x0
         mpyr    y0,x0,a
         move    a,x:(r5+@GBODY@)
  ; The sweep and the thump follow their knobs a quarter of the way each block
@@ -157,7 +152,7 @@ zq09:
  ; The phase runs from the fourth block after the trig; DECAY takes over from
  ; the hold's droop NHOLDB blocks after it.
         move    x:(r5+@BC@),a
-        cmp     #>$000004,a
+        cmp     #<$4,a
         blt     zq0e
         move    x:(r5+@INCB@),x0
         move    x0,x:(r5+@AINCB@)
@@ -258,10 +253,10 @@ zd04:
 ; ---- the block, in segments around the click, the release and the trig -----
         clr     a
         move    a,x:(r5+@SEG@)
-        move    x:(r5+@BC@),b
-        cmp     #>$000001,b
+        move    x:(r5+@BC@),a
+        cmp     #<$1,a
         beq     zq10                    ; the click, one block after the trig
-        cmp     #>$000003,b
+        cmp     #<$3,a
         bne     zq12                    ; (3: the phase is released)
 zq10:
         move    x:(r6+$c),a
@@ -275,8 +270,8 @@ zq11:
         move    x:(r5+@T0@),a
         move    a,x:(r5+@SEG@)
         bsr     zq04
-        move    x:(r5+@BC@),b
-        cmp     #>$000001,b
+        move    x:(r5+@BC@),a
+        cmp     #<$1,a
         bne     zq13
         bsr     zq1c
         bra     zq12
@@ -298,7 +293,7 @@ zq03:
         sub     x0,a
         bsr     zq04                    ; the rest of the block
         move    x:(r5+@BC@),a           ; blocks since the trig, saturating
-        add     #>$000001,a
+        add     #<$1,a
         move    a,x:(r5+@BC@)
         move    x:(r5+@SAVN5@),a
         move    a1,n5
@@ -562,18 +557,15 @@ zq1d:
         mpy     y0,x0,b
         asl     b
         asl     b
-        move    #>@KN0X@,y0
-        add     y0,b
+        add     #>@KN0X@,b
         move    b,y0
         mpy     y1,y0,b
         move    b,x:(r5+@GN16@)
-        mpyr    x0,y1,a
+        mpyr    x0,y1,a         #>@KFDR@,y0
         move    a,x0                    ; gp
-        move    #>@KFDR@,y0
         mpy     y0,x0,b
         asl     b
-        asl     b
-        move    #>@KGS@,y0
+        asl     b               #>@KGS@,y0
         mac     y1,y0,b
         move    b,y0                    ; gs
         mpy     x1,x0,a
@@ -585,15 +577,13 @@ zq1d:
         mpy     x1,y0,a
         asl     a
         asl     a
-        neg     a
+        neg     a               #>@KA1@,y1
         move    a,y0
         move    y0,x:(r5+@G2@)
-        move    #>@KA1@,y1
         mpy     x0,y1,a
         move    a,x:(r5+@G3@)
         move    #>@KB1@,y1
-        mpy     x0,y1,a
-        move    #>@KB2@,x1
+        mpy     x0,y1,a         #>@KB2@,x1
         mac     x1,y0,a
         move    a,x:(r5+@G4@)
         move    #>$7fffff,x0
