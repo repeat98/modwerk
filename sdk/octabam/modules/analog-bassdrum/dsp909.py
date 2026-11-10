@@ -16,6 +16,7 @@ No plugin state, recording or Elektron byte is used or written.
 """
 from __future__ import annotations
 
+import functools
 import json
 import math
 import pathlib
@@ -29,7 +30,7 @@ FIT = json.loads((HERE / 'fit909.json').read_text())
 RATE = 44100
 OUT = 0.4                     # output scale: Drumazon's init peak 0.98 -> 0.39
 OUTPUT_GAIN = 4                # +12.04 dB after the desk, before stock AMP
-VBS = 1.62                    # T_VB = vb/VBS <= 1 at ACCNT 127
+VLAW = (128 / 100) ** 2        # body level (ACCNT/100)^2 = (ACCNT/128)^2 * VLAW
 VAS = 1.92                    # T_VA = va/VAS
 SHIFT = 16                    # the attack path's final x16 (four asl)
 NODES = FIT['nodes']
@@ -38,19 +39,51 @@ PU = FIT['pulse']
 NZ = FIT['noise']
 MK = FIT['mackie']
 
-# State block: X words at r5+k. The 48-bit states are hi/lo pairs (LMH/LML the
-# VCA, THH/THL the thump, HPH/HPL the desk's coupling): X only, no Y.
-STATE = ['EP', 'U', 'O', 'C', 'PULSE', 'R8', 'UPPREV', 'HP', 'BX1', 'BX2',
-         'BY1', 'BY2', 'LPU', 'LCG', 'NPREV', 'NH', 'N1', 'N2', 'E2', 'E3',
-         'YL', 'ACC', 'PT', 'SEG', 'INCB', 'INCA', 'DKP', 'DKD', 'GBODY',
-         'GDC', 'GP', 'GN', 'KLPF', 'LMH', 'LML', 'THH', 'THL',
-         'TIN', 'PAD', 'GB', 'OB', 'GH', 'OH', 'LB', 'M2', 'KHP', 'HPH', 'HPL']
-OFF = {name: k for k, name in enumerate(STATE)}
-# Reuse the per-sample scratch words for depth history; scratch moves into
-# MODEL/hidden-control transport slots after the glue has consumed MODEL.
-OFF.update(SINCA=OFF['ACC'], SGDC=OFF['PT'], ACC=54, PT=59,
-           SSAT=61, FAST=62, GS=63)
-SWORDS = len(STATE)
+# The voice block: X words at r5+k. The loop walks its words in the order of
+# bd909.asm's ;@ NAME tags (read x:(r5), written back x:(r5)+), so the order
+# is read from the source; the words only the block control uses follow, the
+# last three above the knob block. The 48-bit states are hi/lo pairs (MH/ML
+# the VCA, THH/THL the thump, HPH/HPL the desk's coupling): X only, no Y.
+_ACCESS = re.compile(r'x:\((?:r5|@D@)\)(\+|-|@DEND@|)(?=[,\s]).*?;@ (\w+)')
+EXTRA = ['INCB', 'SINCA', 'SSAT', 'BC', 'T0', 'SEG', 'PP', 'GN16', 'E2N', 'E3N', 'SAVN5']
+KNOBS_AT = 0x30
+
+
+def walk(text):
+    """The loop's words in walking order, and the desk stage's among them."""
+    loop = text[text.index('do      a1,zq07'):text.index('\nzq07:')]
+    order, pos, desk, in_desk, closed = [], 0, [], False, False
+    for line in loop.splitlines():
+        if line.startswith(';<desk>'):
+            in_desk = True
+        code = line.split(';')[0]
+        m = _ACCESS.search(line)
+        assert bool(m) == bool(re.search(r'x:\((r5|@D@)\)', code)), f'untagged walk access: {line}'
+        if not m:
+            continue
+        mode, name = m.groups()
+        assert not closed, f'access after the walk closed: {line}'
+        if pos == len(order):
+            assert name not in order, f'{name} is walked twice'
+            order.append(name)
+            if in_desk:
+                desk.append(name)
+        assert order[pos] == name, f'the walk stands on {order[pos]}, the source says {name}'
+        if mode == '@DEND@':
+            assert pos == len(order) - 1
+            closed = True
+        else:
+            pos += {'+': 1, '-': -1, '': 0}[mode]
+    assert closed and order[-len(desk):] == desk
+    return order, desk
+
+
+WALK, DESK = walk((HERE / 'bd909.asm').read_text())
+OFF = {name: k for k, name in enumerate(WALK)}
+_free = list(range(len(WALK), KNOBS_AT)) + [61, 62, 63]
+assert len(EXTRA) <= len(_free), 'the voice block is full'
+OFF.update(zip(EXTRA, _free))
+SWORDS = KNOBS_AT
 
 
 def u_of(i):
@@ -86,7 +119,35 @@ GT = _pchip(NODES, _LOG([a / A_REF for a in FIT['tune']['A_hz']]))
 TAUP = _pchip(NODES, _LOG(FIT['tune']['tau_s']))
 _GD = _pchip(NODES, _LOG([a / A_REF for a in FIT['depth']['A_hz']]))
 TAUD = _pchip(NODES, _LOG(FIT['decay']['tau_s']))
+PK, DK = FIT['pitch']['knob'], FIT['decay']['knob']
+
+
+def fb_hz(i):
+    """PITCH i: one octave, exponential, 64 on the recorded 909."""
+    lo, hi = (PK['min_hz'], i / 64) if i <= 64 else (PK['max_hz'], (127 - i) / 63)
+    return lo * (PK['ref_hz'] / lo) ** hi
+
+
+def a_hz(i):
+    """PITCH i's sweep excursion: the nodes' A at the knob position with the same settled pitch."""
+    target, lo, hi = math.log(fb_hz(i)), 0.0, 1.0
+    for _ in range(60):
+        mid = (lo + hi) / 2
+        lo, hi = (mid, hi) if FB(mid) < target else (lo, mid)
+    return math.exp(AP(lo))
+
+
+def tau_decay(i):
+    """DECAY i: log-linear through min_s, ref_s at ref_knob, max_s."""
+    r = DK['ref_knob']
+    lo, hi = (DK['min_s'], i / r) if i <= r else (DK['max_s'], (127 - i) / (127 - r))
+    return lo * (DK['ref_s'] / lo) ** hi
 VA = _pchip(FIT['velocity']['attack_v'], FIT['velocity']['attack_gain'])
+# The click (pulse and noise gate) fires DCLK samples after the trig, so the
+# opening body leads it as in the recordings; the sweep depth varies per hit.
+DCLK = FIT['pulse']['delay_samples']
+KEJIT = FIT['pitch']['sweep_jitter']
+KEBASE = 1 - KEJIT - 2 ** -22
 
 
 def GD(u):
@@ -172,66 +233,179 @@ def mk_sat(v):
 
 def tables():
     """Every table and constant, as floats. q24() quantises for the DSP."""
-    ap = [math.exp(AP(u_of(i))) for i in range(128)]
-    gt = [math.exp(GT(u_of(i))) for i in range(128)]
+    ap = [a_hz(i) for i in range(128)]
+    # The body releases DCLK samples later while ep already decays: scale the
+    # excursion by exp(DCLK/tau) so the released sweep is unchanged.
+    gt = [math.exp(GT(u_of(i)) + DCLK / (math.exp(TAUP(u_of(i))) * RATE)) for i in range(128)]
     gd = [GD(u_of(i)) for i in range(128)]
     # a hair above each maximum: a 24-bit fraction cannot hold 1.0
     ap_max, gt_max, gd_max = (max(v) * (1 + 2 ** -20) for v in (ap, gt, gd))
     a_max = ap_max * gt_max * gd_max
-    k_inc = 2 * a_max / RATE
+    k_inc = 2 * a_max / RATE / KEBASE   # ep starts at KEBASE on average
     assert k_inc < 1
     t = dict(
-        T_INCB=[2 * math.exp(FB(u_of(i))) / RATE for i in range(128)],
+        T_INCB=[2 * fb_hz(i) / RATE for i in range(128)],
         T_AP=[a / ap_max for a in ap],
         T_GT=[g / gt_max for g in gt],
         T_GD=[g / gd_max for g in gd],
         T_DKP=[1 - k_exp(math.exp(TAUP(u_of(i)))) for i in range(128)],
-        T_DKD=[1 - k_exp(math.exp(TAUD(u_of(i)))) for i in range(128)],
+        T_DKD=[1 - k_exp(tau_decay(i)) for i in range(128)],
         # thump level by sweep size: index = floor(q*128), A = mid-bin
-        T_THS=[OUT * B['k_dc'] * thump((i + .5) / 128 * a_max) * VBS for i in range(128)],
-        T_VB=[(max(i, 1) / 100) ** 2 / VBS for i in range(128)],
+        # level tables carry (128/100)^2: the block's body level is (ACCNT/128)^2
+        T_THS=[OUT * B['k_dc'] * thump((i + .5) / 128 * a_max) * VLAW for i in range(128)],
         T_VA=[VA(max(i, 1)) / VAS for i in range(128)],
         T_ATP=[OUT * (B['k0'] + u_of(i)) * VAS / PU['gain_scale'] for i in range(128)],
-        # the noise chain runs at half scale: its HP swings (w - prev), up to 2
-        T_ATN=[2 * OUT * (NZ['attack_floor'] + (1-NZ['attack_floor'])*u_of(i)) * NZ['g'] / NOISE_RMS * VAS / SHIFT for i in range(128)],
         T_LPF=[1 - k_pole(f) for f in LPF_HZ[1:]] + [1 - 2 ** -23],  # 0.1.6: 0..126 = 500 Hz..18 kHz, 127 = OFF
         # SAT: drive / stage / 32 (five asl) and the make-up / 2 (one asl)
         T_TIN=[mk_drive(i) / MK['stage'] / 32 for i in range(128)],
         T_PAD=[mk_pad(i) / 2 for i in range(128)],
-        T_KHP=[MK['k_hp'] * min(1.0, i / MK['hp_full']) for i in range(128)],
-        # LOW / HIGH: the band's drive / 4 (two asl; u = 1 clamps a hair
-        # under 4) and its output, stage / 16 folded in
-        T_GB=[min(u_of(i) ** 2, 1 - 2 ** -23) for i in range(128)],
-        T_OB=[math.sqrt(2 * u_of(i)) * MK['stage'] / 16 for i in range(128)],
+        # LOW / HIGH: the band's weight 4u^2 * sqrt(2u) * stage/16, halved (the
+        # decode doubles it; u = 1 clamps a hair under 1)
+        T_GLH=[4 * u_of(i) ** 2 * math.sqrt(2 * u_of(i)) * MK['stage'] / 32 for i in range(128)],
     )
+    # Noise gain follows Attack on the same line as T_ATP, so it is decoded as
+    # KN0 + KN1 * T_ATP. The noise chain runs at half scale: its HP swings
+    # (w - prev), up to 2.
+    p0, p1 = OUT * B['k0'] * VAS / PU['gain_scale'], OUT * VAS / PU['gain_scale']
+    n0, n1 = (2 * OUT * w * NZ['g'] / NOISE_RMS * VAS / SHIFT
+              for w in (NZ['attack_floor'], 1 - NZ['attack_floor']))
+    kn1 = n1 / p1
+    kn0 = n0 - kn1 * p0
+    assert all(0 < kn0 + kn1 * v < 1 for v in t['T_ATP'])
     tfb=2*FIT['tune']['base_delta_hz']/RATE/(t['T_GT'][-1]-t['T_GT'][0])
     b0, b1, b2, a1, a2 = biquad_lp(PU['f0'], PU['q'])
     ahp, anh = k_pole(PU['f_hp']), k_pole(NZ['f_hp'])
     c = dict(
         KTFB=tfb,KTFB0=-tfb*t['T_GT'][0],
-        KA_INC=k_inc, K_BODY=4 * OUT * B['G'] * VBS,
-        NREL=math.ceil(B['t_r'] * RATE), FRAC=B.get('release_fraction', 1 - (math.ceil(B['t_r'] * RATE) - B['t_r'] * RATE)),
+        KA_INC=k_inc, K_BODY=4 * OUT * B['G'] * VLAW,
+        NREL=math.ceil(B['t_r'] * RATE) + DCLK, DCLK=DCLK,
+        # the click and the noise rest once below -90 dB, 100 ms after the trig
+        NEND=round(0.1 * RATE), KEBASE=KEBASE, KEJIT=KEJIT, FRAC=B.get('release_fraction', 1 - (math.ceil(B['t_r'] * RATE) - B['t_r'] * RATE)),
         U0=B.get('phase_reset', -0.5 + B['x_r'] / 2), THETA=FIT['theta'], NHOLD=round(B['t_h'] * RATE),
         KA=1 - k_exp(B['tau_a']), DKDROOP=1 - k_exp(B['tau_droop']), KTH=1 - k_exp(B['tau_dc']),
-        KPR=k_exp(PU['tau_decay']), KPLP=1-k_pole(PU['f_output']),
+        KPR=k_exp(PU['tau_decay']),
         KPBASE=PU['jitter_base'], KPJIT=PU['jitter_depth'],
         KFAST=k_exp(PU['fast_tau']), KGS=PU['fast_gain']*OUT*VAS/PU['gain_scale'], KFDR=PU['fast_depth']/4,
         AHP=ahp, BHP=(1 + ahp) / 2, KU=1 - k_pole(PU['f_u']),
         KW16=PU['k_w'] / 128, KU16=PU['k_u'] / 128,
+        KN0=kn0, KN1=kn1, KN0X=SHIFT * kn0, KN1Q=SHIFT * kn1 / 4,
+        NIDLE=NIDLE, NHOLDB=NHOLDB, WLAST=len(WALK) - 1, KHP8=8 * MK['k_hp'],
+        K2B=k_exp(NZ['t2']) ** 16, K3B=(k_exp(NZ['t2']) * k_exp(NZ['t1'])) ** 16,
+        # the shape scales, halved: lR/2 = KL0 + KLE*ep - KLM*m, (lF - lR)/2 = 1/2 + KKF*ep - lR/2
+        KL0=SS['L0'] / 2, KLE=-SS['LE'] / 2, KLM=SS['LM'] / 2, KKF=SS['KF'] / 2,
         ANH=anh, BNH=(1 + anh) / 4, KL1=1 - k_pole(NZ['f_lp1']), KL2=1 - k_pole(NZ['f_lp2']),
         K2=k_exp(NZ['t2']), K3=k_exp(NZ['t2']) * k_exp(NZ['t1']),
         LCGK=LCG_K, LCGC=LCG_C, SEED=SEED,
         KSAT=MK['k_sat'], KB=MK['kb'], KM=MK['km'], KMS=2 * MK['stage'] / 16,
     )
-    # S/16 in Horner order; the two asl bring the result back to S/4.
-    # Check every partial sum after refitting, not only the final output.
-    cpoly = [x / 16 for x in list(B['c'])[::-1]] + [B['c0'] / 16]
-    cquad=[x/16 for x in B['quadrature'][::-1]]
-    assert horner_ok(cpoly) < 1 and horner_ok(cquad)<1, 'Horner partial sum overflows'
-    cbiq = [b0, b1, b2, -a1 / 2, -a2]
-    for name, v in list(t.items()) + [('CPOLY', cpoly), ('CQUAD',cquad), ('CBIQ', cbiq)]:
+    cbody, cfund = body_table(), body_fundamental()
+    ctd = [w - f for w, f in zip(cbody, cfund)]
+    cclk, c['KA1'], c['KB1'], c['KB2'] = click_table(c, biquad_lp(PU['f0'], PU['q']))
+    for name, v in list(t.items()) + [('CTD', ctd), ('CF', cfund), ('CCLK', cclk)]:
         assert all(-1 <= x < 1 for x in v), name
-    return t, c, dict(CPOLY=cpoly, CQUAD=cquad, CBIQ=cbiq), dict(a_max=a_max, k_inc=k_inc)
+    assert 0 < c['K_BODY'] < 1 and c['FRAC'] == 0 and 0.5 + abs(c['KKF']) < 1
+    assert DCLK == 16 and c['NREL'] == 48, 'the click and the release are block events: 1 and 3 blocks after the trig'
+    assert abs(c['NHOLD'] - 16 * NHOLDB) < 16
+    va, atp = max(t['T_VA']), max(t['T_ATP'])
+    assert 4 * va * atp < 1 and max(abs(4 * v * (c['KGS'] + 4 * a * c['KFDR']))
+                                    for v in t['T_VA'] for a in t['T_ATP']) < 1
+    assert 0 < c['KN0X'] + 4 * c['KN1Q'] * min(t['T_ATP']) and c['KN0X'] + 4 * c['KN1Q'] * atp < 1
+    for ep in (0, 1):
+        for m in (0, 1):
+            lr = c['KL0'] + c['KLE'] * ep - c['KLM'] * m
+            assert 0 < lr < 1, 'shape scale leaves the fraction range'
+    return t, c, dict(CTD=ctd, CF=cfund, CCLK=cclk), dict(a_max=a_max, k_inc=k_inc)
+
+
+NIDLE = 181                    # blocks after a trig before a closed voice may rest
+NHOLDB = 180                   # blocks of hold (65.3 ms; the fit's t_h is 65.4)
+CLK_N = 128                    # click table rows; then 16 silent ones, so a block
+CLK_PAD = 16                   # that starts on any row before them ends inside them
+
+
+def click_table(c, biq):
+    """The click's filters as a table, and their two slow modes as gains.
+
+    The trigger pulse is two discharges, KPR^n and KFAST^n, through HP, the
+    resonant LP and the parallel LP. Per discharge the response h[n] is a
+    table column; what outlasts the table is the discharge itself (KPR only:
+    KFAST is gone within it) and the HP's own mode AHP^n, which the voice
+    keeps as two decaying words E1, E2. Returns the interleaved columns
+    D[n] = h1 - A1*KPR^n - B1*AHP^n and H[n] = h2 - B2*AHP^n, then A1, B1, B2.
+    """
+    b0, b1, b2, a1, a2 = biq
+
+    def response(k, n_all=3200):
+        e, lpu, hp, upp, bx1, bx2, by1, by2, out = 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, []
+        for _ in range(n_all):
+            up, e = e, e * k
+            lpu += c['KU'] * (up - lpu)
+            hp = c['AHP'] * hp + c['BHP'] * (up - upp)
+            upp = up
+            w = b0 * hp + b1 * bx1 + b2 * bx2 - a1 * by1 - a2 * by2
+            bx2, bx1, by2, by1 = bx1, hp, by1, w
+            out.append(c['KW16'] * w + c['KU16'] * lpu)   # y takes -4 * (gp*h1 + gs*h2)
+        return out
+    h1, h2 = response(c['KPR']), response(c['KFAST'])
+    n0 = 3000
+    ka1 = h1[n0] / c['KPR'] ** n0
+    at = 220                    # the HP mode alone is left there
+    kb1 = (h1[at] - ka1 * c['KPR'] ** at) / c['AHP'] ** at
+    kb2 = h2[at] / c['AHP'] ** at
+    rows = [(h1[n] - ka1 * c['KPR'] ** n - kb1 * c['AHP'] ** n, h2[n] - kb2 * c['AHP'] ** n) for n in range(CLK_N)]
+    peak = max(abs(v) for r in rows for v in r)
+    assert max(map(abs, rows[-1])) < peak * 10 ** (-55 / 20), 'the click table ends above -55 dB'
+    rows += [(0.0, 0.0)] * CLK_PAD
+    return [v for r in rows for v in r], ka1, kb1, kb2
+
+
+BODY_N = FIT['body']['table_points']
+SS = FIT['body']['shape_scale']
+assert BODY_N == 128, 'bd909.asm indexes the body table as (u + 1) * 64'
+
+
+@functools.lru_cache(maxsize=None)
+def body_table():
+    """S/4 over one cycle, u = -1 + 2k/BODY_N, and k = 0 again for interpolation.
+
+    The polynomial wave (c0, c, quadrature) keeps its own harmonics above the
+    measured ones; its H1..len(cycle) are replaced by the recorded cycle's
+    (relative to H1, H1 a pure cosine), so the DC and fundamental, and with
+    them the fitted body gain and thump, are unchanged. Each harmonic is
+    raised against linear interpolation's sinc^2 droop; none above BODY_N/2."""
+    m, n, cyc = 2048, BODY_N, B['cycle']
+    us = [2 * j / m - 1 for j in range(m)]
+
+    def wave(u):
+        x = 1 - 2 * abs(u)
+        return (sum(cf * x ** k for k, cf in enumerate([B['c0']] + B['c'])) +
+                u * (1 + x) * sum(cf * x ** k for k, cf in enumerate(B['quadrature'])))
+    ys = [wave(u) for u in us]
+    harm = [(sum(ys) / m, 0.0)]
+    for h in range(1, n // 2):
+        harm.append((2 / m * sum(y * math.cos(h * math.pi * u) for y, u in zip(ys, us)),
+                     2 / m * sum(y * math.sin(h * math.pi * u) for y, u in zip(ys, us))))
+    fund = harm[1][0]
+    for h, (sym, asym) in enumerate(zip(cyc['sym'], cyc['asym']), 1):
+        harm[h] = (fund * sym, fund * asym)
+    table = []
+    for k in range(n):
+        ph = math.pi * (2 * k / n - 1)
+        table.append((harm[0][0] + sum((a * math.cos(h * ph) + b * math.sin(h * ph)) /
+                                       (math.sin(math.pi * h / n) / (math.pi * h / n)) ** 2
+                                       for h, (a, b) in enumerate(harm[1:], 1))) / 4)
+    return tuple(table + table[:1])
+
+
+@functools.lru_cache(maxsize=None)
+def body_fundamental():
+    """The body table's own H1 alone, at the same points: the part the sweep scales separately."""
+    table, n = body_table(), BODY_N
+    phases = [math.pi * (2 * k / n - 1) for k in range(n)]
+    a = 2 / n * sum(v * math.cos(p) for v, p in zip(table, phases))
+    b = 2 / n * sum(v * math.sin(p) for v, p in zip(table, phases))
+    out = [a * math.cos(p) + b * math.sin(p) for p in phases]
+    return tuple(out + out[:1])
 
 
 def q24(x):
@@ -240,61 +414,31 @@ def q24(x):
     return v & 0xffffff
 
 
-def horner_ok(cpoly):
-    """Every Horner partial sum stays inside the 24-bit register it moves to."""
-    worst = 0.0
-    for k in range(-1000, 1001):
-        x = k / 1000
-        h = cpoly[0]
-        for cf in cpoly[1:]:
-            h = cf + h * x
-            worst = max(worst, abs(h))
-    return worst
+INTS = ('NREL', 'NHOLD', 'DCLK', 'NEND', 'NIDLE', 'NHOLDB', 'WLAST')
+WORDS = ('LCGK', 'LCGC', 'SEED')
 
 
-def source(layout, *, output_gain=True, shared_desk=False, include_desk=True):
-    """bd909.asm with its placeholders filled. layout: table and list bases."""
+def addresses(layout):
+    """The table addresses bd909.asm names: the body tables from their middle cell, the click table's ends."""
+    return dict(TD=layout['CTD'] + BODY_N // 2, TD1=layout['CTD'] + BODY_N // 2 + 1,
+                CF=layout['CF'] + BODY_N // 2, CF1=layout['CF'] + BODY_N // 2 + 1,
+                CSTART=layout['CCLK'], CEND=layout['CCLK'] + 2 * CLK_N)
+
+
+def fill(text, layout, off):
     tab, con, lists, _ = tables()
-    text = (HERE / 'bd909.asm').read_text()
-    if shared_desk:
-        # Both engines call the same unboosted desk. Gain stays at each output.
-        helpers = []
-        for tag, label in (('desk-decode', 'zd01'), ('desk', 'zd02')):
-            start, end = text.index(';<' + tag + '>'), text.index(';</' + tag + '>')
-            body = text[start:end]
-            if tag == 'desk':
-                body = body[:body.index('        move    a,x:(r0)+')]
-                call = '        bsr     >' + label + '\n' + '        move    a,x:(r0)+\n' * 2
-            else:
-                call = '        bsr     >' + label + '\n'
-            helpers.append(label + ':\n' + body + '        rts\n')
-            text = text[:start] + call + text[end:]
-        if include_desk:
-            text += '\n' + '\n'.join(helpers)
-    if output_gain:
-        assert OUTPUT_GAIN > 0 and OUTPUT_GAIN & (OUTPUT_GAIN - 1) == 0
-        # Read the original limited 24-bit sample before applying gain. The
-        # final stores limit overloads; none of the voice/desk states change.
-        store = '        move    a,x:(r0)+'
-        stage = ('        move    a,x0\n'
-                 '        move    x0,a\n' +
-                 '        asl     a\n' * (OUTPUT_GAIN.bit_length() - 1))
-        assert text.count(store) == 2
-        text = text.replace(store, stage + store, 1)
-    subs = {name: f'${k:x}' for name, k in OFF.items()}
-    subs['SWORDS'] = f'${SWORDS:x}'
+    subs = {name: f'${k:x}' for name, k in off.items()}
     for name in list(tab) + list(lists):
         subs[name] = f"${layout[name]:x}"
+    subs.update({name: f'${k:x}' for name, k in addresses(layout).items()})
     for name, v in con.items():
-        if name in ('NREL', 'NHOLD'):
+        if name in INTS:
             subs[name] = f'${int(v):x}'
-        elif name in ('LCGK', 'LCGC', 'SEED'):
+        elif name in WORDS:
             subs[name] = f'${int(v) & 0xffffff:06x}'
         else:
             subs[name] = f'${q24(v):06x}'
     out = re.sub(r'@([A-Z0-9_]+)@', lambda m: subs[m.group(1)], text)
-    left = re.findall(r'@[A-Z0-9_]+@', out)
-    assert not left, left
     labels = re.findall(r'^(\w+):', out, re.M)
     for a in labels:
         for b in labels:
@@ -302,22 +446,67 @@ def source(layout, *, output_gain=True, shared_desk=False, include_desk=True):
     return out
 
 
+def desk_text(tag, walker, end):
+    """One of the two desk passages of bd909.asm, for the pointer `walker`."""
+    text = (HERE / 'bd909.asm').read_text()
+    body = text[text.index(';<' + tag + '>'):text.index(';</' + tag + '>')]
+    return body.replace('@D@', walker).replace('@DEND@', end)
+
+
+DESK_TAIL = '        asl     a                               ; (the make-up is stored halved)\n'
+
+
+def desk_call(before='', after=''):
+    """The loop's desk passage as a call to the shared copy (zd0s), which walks with r5 and leaves it on the last word."""
+    passage = desk_text('desk', 'r5', '')
+    return before + '        bsr     >zd0s\n' + after + passage[passage.index(DESK_TAIL):]
+
+
+def source(layout, *, output_gain=True, shared_desk=False, include_desk=True):
+    """bd909.asm with its placeholders filled. layout: table and list bases.
+    shared_desk: both engines call one copy of the desk's two passages
+    (shared_desk_source), which costs three instructions a sample and saves
+    the second copy's P words; otherwise the passages stay in the loop."""
+    text = (HERE / 'bd909.asm').read_text()
+    if shared_desk:
+        for tag, call in (('desk-decode', '        bsr     >zd0d\n'),
+                          ('desk', desk_call(after='        move    (r5)-n5\n'))):
+            start, end = text.index(';<' + tag + '>'), text.index(';</' + tag + '>')
+            text = text[:start] + call + text[end:]
+    text = text.replace('@D@', 'r5').replace('@DEND@', '-n5')
+    if output_gain:
+        assert OUTPUT_GAIN > 0 and OUTPUT_GAIN & (OUTPUT_GAIN - 1) == 0
+        # The stores limit overloads at full scale, as the 24-bit sample
+        # limited before the gain did.
+        store = DESK_TAIL + '        move    a,x:(r0)+\n'
+        assert text.count(store) == 1
+        shift = OUTPUT_GAIN.bit_length()
+        text = text.replace(store, f'        asl     #${shift:x},a,a                       ; the make-up, halved, and the output gain\n'
+                                   '        move    a,x:(r0)+\n')
+    assert CLK_PAD >= 16, 'a segment of up to 16 samples starting before CEND must end in the silent rows'
+    return fill(text, layout, OFF)
+
+
 def shared_desk_source(layout):
-    """Place both shared routines after the engines (forward relative calls)."""
-    full = source(layout, output_gain=False, shared_desk=True)
-    return full[full.index('zd01:'):]
+    """The desk's two passages once, for both engines: zd0d decodes (r5 the
+    voice block, r6 its knobs), zd0s is the loop's stage (r5 on the desk's
+    first word, left on its last; the sample in and out in a)."""
+    stage = desk_text('desk', 'r5', '')
+    text = ('zd0d:\n' + desk_text('desk-decode', '', '') + '        rts\n'
+            'zd0s:\n' + stage[:stage.index(DESK_TAIL)] + '        rts\n')
+    return fill(text, layout, OFF)
 
 
 def desk_source(layout):
     """The desk stage alone, for the stage gate: zt01 decodes SAT/LOW/HIGH
-    from r6 like zq01, then runs step 12 on each input sample at x:(r0),
+    from r6 like zq01, then runs step 9 on each input sample at x:(r0),
     writing it back as L,R. The text is bd909.asm's own, between markers."""
-    full = source(layout)
-    cut = lambda tag: full[full.index(f';<{tag}>'):full.index(f';</{tag}>')]
-    return ('zt01:\n        move    #>$ffffff,m0\n        move    #>$ffffff,m1\n'
-            '        move    #>$ffffff,m4\n' + cut('desk-decode') +
-            '        do      n7,zt02\n        move    x:(r0),a\n' +
-            cut('desk') + 'zt02:\n        rts\n')
+    first = OFF[DESK[0]]
+    text = ('zt01:\n        move    #>$ffffff,m0\n        move    #>$ffffff,m1\n'
+            '        move    #>$ffffff,m4\n' + desk_text('desk-decode', '', '') +
+            '        do      n7,zt02\n' + f'        lua     (r5+${first:x}),r4\n' + '        move    x:(r0),a\n' +
+            desk_text('desk', 'r4', '+') + 'zt02:\n        rts\n')
+    return fill(text, layout, OFF)
 
 
 def data_lines(layout):
@@ -401,16 +590,22 @@ def fl24(x):
     return math.floor(x * 8388608) / 8388608
 
 
-def slew24(current, target):
-    """The native signed 24-bit 1/64 slew; downward steps use arithmetic shift."""
-    value, dest = round(current * 8388608), round(target * 8388608)
-    return (value + ((dest - value) >> 6)) / 8388608
+def slew(current, target, shift):
+    """The native signed 24-bit slew by 2^-shift; downward steps use arithmetic shift."""
+    value, dest = math.floor(current * 8388608), math.floor(target * 8388608)
+    return (value + ((dest - value) >> shift)) / 8388608
+
+
+def _signed(word):
+    return (word - (1 << 24) if word & 0x800000 else word) / 8388608
 
 
 class Voice:
-    """Float reference with the engine's structure, block by block. The
-    phase path (control products, ep, inc) is quantised as the DSP does it:
-    its drift is otherwise the largest DSP-vs-reference difference."""
+    """Float reference with the engine's structure, block by block. Words the
+    DSP stores as 24 bits are truncated here where that matters (the phase
+    path, the envelopes); the rest is left in floats."""
+
+    TOP = 1 - 2 ** -23
 
     def __init__(self, quantized=True, *, output_gain=True):
         self.output_gain = OUTPUT_GAIN if output_gain else 1
@@ -419,139 +614,179 @@ class Voice:
             f = lambda v: ((q24(v) ^ 0x800000) - 0x800000) / 8388608
             self.t = {k: [f(v) for v in vals] for k, vals in self.t.items()}
             self.lists = {k: [f(v) for v in vals] for k, vals in self.lists.items()}
-            self.c = {k: (v if k in ('NREL', 'NHOLD', 'LCGK', 'LCGC', 'SEED') else f(v))
-                      for k, v in self.c.items()}
+            self.c = {k: (v if k in INTS + WORDS else f(v)) for k, v in self.c.items()}
         self.ep = self.u = self.o = self.m = self.th = 0.0
-        self.cnt = (1 << 23) - 1
-        self.pulse = self.fast = 0.0
-        self.r = self.upp = self.hp = self.lpu = 0.0
-        self.bx1 = self.bx2 = self.by1 = self.by2 = 0.0
+        self.bc, self.t0 = (1 << 23) - 1, 0
+        self.incb = self.sinca = self.sgdch = self.aincb = self.asinca = 0.0
+        self.dkp = self.dkm = self.lr = self.gbody = 0.0
+        self.g1 = self.g2 = self.g3 = self.g4 = self.e1 = self.e2 = 0.0
+        self.pp = None                    # the click table's row; None: past it
         self.lcg = SEED
         self.nprev = self.nh = self.n1 = self.n2 = 0.0
-        self.e2 = self.e3 = 0.0
-        self.yl = 0.0
-        self.lb = self.m2 = self.hps = 0.0
-        self.sat_position = self.depth_values = None
+        self.e2n = self.e3n = self.gn16 = self.env = self.denv = 0.0
+        self.klpf = self.yl = 0.0
+        self.ssat = 0
+        self.tin = self.pad = self.dtin = self.dpad = self.khp = 0.0
+        self.gl = self.gh = self.hps = self.lb = self.m2 = 0.0
 
+    # ---- once a block ------------------------------------------------------
     def block(self, k, trig=None, frames=16):
         t, c = self.t, self.c
-        inc_b = fl24(t['T_INCB'][k[0]]+c['KTFB0']+c['KTFB']*t['T_GT'][k[2]])
+        if trig is None and self.bc >= c['NIDLE'] and self.m < 2 ** -16:
+            self.pad = 0.0                # at rest; the next hit starts from its own knobs
+            return [0.0] * frames
+        self.incb = fl24(t['T_INCB'][k[0]] + c['KTFB0'] + c['KTFB'] * t['T_GT'][k[2]])
         q = rnd24(rnd24(t['T_AP'][k[0]] * t['T_GT'][k[2]]) * t['T_GD'][k[4]])
         inc_a = rnd24(q * c['KA_INC'])
-        dkp, dkd = t['T_DKP'][k[2]], t['T_DKD'][k[1]]
-        vb = t['T_VB'][k[8]]
-        gdc = vb * t['T_THS'][min(127, int(q * 128))]
-        gbody = vb * c['K_BODY']
-        va = t['T_VA'][k[8]]
-        gp = va * t['T_ATP'][k[3]]
-        gs = va * c['KGS'] + 4*gp*c['KFDR']
-        gn = va * t['T_ATN'][k[3]]
-        klpf = t['T_LPF'][k[11]]
-        targets = (inc_a, rnd24(gdc))
-        if self.depth_values is None:
-            self.depth_values = targets
+        vb = fl24((k[8] / 128) ** 2)
+        gdc_half = fl24(rnd24(vb * t['T_THS'][min(127, int(q * 128))]) / 2)
+        self.gbody = rnd24(vb * c['K_BODY'])
+        if self.pad == 0:
+            self.sinca, self.sgdch = inc_a, gdc_half
+        self.sinca, self.sgdch = slew(self.sinca, inc_a, 2), slew(self.sgdch, gdc_half, 2)
+        self.dkp, self.klpf = t['T_DKP'][k[2]], t['T_LPF'][k[11]]
+        self.lr = fl24(c['KL0'] + c['KLE'] * self.ep - c['KLM'] * fl24(self.m))
+        if self.bc >= 4:
+            self.aincb, self.asinca = self.incb, self.sinca
+        if self.bc >= c['NHOLDB']:
+            self.dkm = t['T_DKD'][k[1]]
+        self.noise_ramp()
         self.desk_knobs(k)
-        b0, b1, b2, na1h, na2 = self.lists['CBIQ']
-        cp = self.lists['CPOLY']; cq=self.lists['CQUAD']
+        event = self.t0 if self.bc in (1, 3) and (trig is None or self.t0 < trig) else None
         out = []
         for i in range(frames):
-            if trig is not None and i == trig:
-                self.ep = self.e2 = self.e3 = 1 - 2 ** -23
-                if k[7]:
-                    self.lcg = SEED
-                    self.pulse = rnd24(c['KPBASE'])
-                else:
-                    white = (self.lcg - (1 << 24) if self.lcg & 0x800000 else self.lcg) / 8388608
-                    self.pulse = rnd24(c['KPBASE'] + c['KPJIT'] * white)
-                self.fast = self.pulse
-                self.o = 0.0
-                self.cnt = 0
-                self.m = 1.0
-                self.u = fl24(c['U0'] - c['FRAC'] * (inc_b + self.depth_values[0]))
-            self.depth_values = tuple(slew24(v, target) for v, target in zip(self.depth_values, targets))
-            inc_a, gdc = self.depth_values
-            inc = fl24(inc_b + inc_a * self.ep)
-            self.ep = fl24(self.ep - self.ep * dkp)
-            if self.cnt >= c['NREL']:
-                self.u += inc
-                if self.u >= 1:
-                    self.u -= 2
-            x = 1 - 2 * abs(self.u)
-            x = min(x, 1 - 2 ** -23)
-            h = cp[0]
-            for cf in cp[1:]:
-                h = cf + h * x
-            qh=cq[0]
-            for cf in cq[1:]: qh=cf+qh*x
-            s4=4*(h+self.u*(1+x)*qh)
-            self.o += c['KA'] * (1 - self.o)
-            self.m -= self.m * (c['DKDROOP'] if self.cnt < c['NHOLD'] else dkd)
-            g = self.o * self.m
-            body = gbody * g * s4
-            self.th += c['KTH'] * (g - self.th)
-            body -= gdc * self.th
-            up8 = -(self.pulse * gp + self.fast * gs) / 4
-            self.fast = fl24(self.fast * c['KFAST'])
-            self.pulse = fl24(self.pulse * c['KPR'])
-            self.lpu += c['KU'] * (up8 - self.lpu)
-            self.hp = c['AHP'] * self.hp + c['BHP'] * (up8 - self.upp)
-            self.upp = up8
-            w8 = b0 * self.hp + b1 * self.bx1 + b2 * self.bx2 + 2 * na1h * self.by1 + na2 * self.by2
-            self.bx2, self.bx1, self.by2, self.by1 = self.bx1, self.hp, self.by1, w8
-            pulse_term = c['KW16'] * w8 + c['KU16'] * self.lpu
-            self.r += c['KPLP'] * (pulse_term - self.r)
-            pt = self.r
-            self.lcg = (self.lcg * LCG_M + LCG_C) & 0xffffff
-            wn = (self.lcg - (1 << 24) if self.lcg & 0x800000 else self.lcg) / 8388608
-            self.nh = c['ANH'] * self.nh + c['BNH'] * (wn - self.nprev)
-            self.nprev = wn
-            self.n1 += c['KL1'] * (self.nh - self.n1)
-            self.n2 += c['KL2'] * (self.n1 - self.n2)
-            self.e2 *= c['K2']; self.e3 *= c['K3']
-            nt = gn * (self.e2 - self.e3) * self.n2
-            y = body + SHIFT * (pt + nt)
-            y = max(-1.0, min(1 - 2 ** -23, y))
-            self.yl += klpf * (y - self.yl)
-            out.append(self.desk(self.yl))
-            self.cnt = min(self.cnt + 1, (1 << 23) - 1)
+            if i == event:
+                self.click(k) if self.bc == 1 else self.release()
+            if i == trig:
+                self.trig(k, i)
+            out.append(self.sample())
+        self.bc = min(self.bc + 1, (1 << 23) - 1)
         return out
 
+    def trig(self, k, at):
+        c = self.c
+        if k[7]:                          # FIXD: every hit opens the same way
+            self.lcg = SEED
+            self.ep = fl24(c['KEBASE'])
+        else:
+            self.ep = fl24(c['KEBASE'] + c['KEJIT'] * _signed(self.lcg))
+        self.bc, self.t0 = 0, at
+        self.o, self.m, self.u = 0.0, 1.0, c['U0']
+        self.aincb = self.asinca = 0.0    # the crest is held until the release
+        self.dkm = c['DKDROOP']
+
+    def release(self):
+        self.aincb, self.asinca = self.incb, self.sinca
+
+    def click(self, k):
+        t, c = self.t, self.c
+        j = fl24(c['KPBASE'] + (0.0 if k[7] else c['KPJIT'] * _signed(self.lcg)))
+        va, atp = t['T_VA'][k[8]], t['T_ATP'][k[3]]
+        self.gn16 = fl24(va * fl24(c['KN0X'] + 4 * c['KN1Q'] * atp))
+        gp = rnd24(va * atp)
+        gs = fl24(va * c['KGS'] + 4 * gp * c['KFDR'])
+        self.g1, self.g2 = fl24(-4 * j * gp), fl24(-4 * j * gs)
+        self.g3 = fl24(self.g1 * c['KA1'])
+        self.g4 = fl24(self.g1 * c['KB1'] + self.g2 * c['KB2'])
+        self.e1 = self.e2 = self.e2n = self.e3n = self.TOP
+        self.pp = 0
+        self.noise_ramp()
+
+    def noise_ramp(self):
+        """ENV2 = e2 - e3 a block on, with its gain, and the ramp that reaches it."""
+        c = self.c
+        self.e2n, self.e3n = fl24(self.e2n * c['K2B']), fl24(self.e3n * c['K3B'])
+        target = fl24(self.gn16 * (self.e2n - self.e3n))
+        self.denv = math.floor((target - self.env) * 8388608 / 16) / 8388608
+
+    # ---- every sample ------------------------------------------------------
+    def sample(self):
+        c, cl = self.c, self.lists
+        inc = self.aincb + self.asinca * self.ep
+        self.ep = fl24(self.ep - self.ep * self.dkp)
+        word = (math.floor(self.u * 8388608) + math.floor(inc * 8388608)) & 0xffffff
+        self.u = _signed(word)
+        cell, frac = (word ^ 0x800000) >> 17, (word & 0x1ffff) / 131072   # cell 0..127 from u = -1
+        lfp = fl24(0.5 + c['KKF'] * self.ep)
+        td = cl['CTD'][cell] + frac * (cl['CTD'][cell + 1] - cl['CTD'][cell])
+        fu = cl['CF'][cell] + frac * (cl['CF'][cell + 1] - cl['CF'][cell])
+        s8 = fl24(td) * self.lr + lfp * fl24(fu)
+        self.o = fl24(self.o + c['KA'] - c['KA'] * self.o)
+        self.m -= fl24(self.m) * self.dkm
+        g = fl24(self.o * fl24(self.m))
+        y = self.gbody * fl24(g * fl24(s8))
+        self.th = fl24(self.th + c['KTH'] * (g - self.th))
+        y = 2 * (y - self.sgdch * self.th)
+        if self.pp is not None:
+            y += self.g1 * cl['CCLK'][2 * self.pp] + self.g2 * cl['CCLK'][2 * self.pp + 1]
+            self.pp += 1
+        y += self.g3 * self.e1 + self.g4 * self.e2
+        self.e1, self.e2 = fl24(self.e1 * c['KPR']), fl24(self.e2 * c['AHP'])
+        self.lcg = (self.lcg * LCG_M + LCG_C) & 0xffffff
+        white = _signed(self.lcg)
+        self.nh = fl24(c['ANH'] * self.nh + c['BNH'] * (white - self.nprev))
+        self.nprev = white
+        self.n1 = fl24(self.n1 + c['KL1'] * (self.nh - self.n1))
+        self.n2 = fl24(self.n2 + c['KL2'] * (self.n1 - self.n2))
+        self.env += self.denv
+        y += self.env * self.n2
+        y = max(-1.0, min(self.TOP, y))
+        self.yl += self.klpf * (fl24(y) - fl24(self.yl))
+        return self.desk(self.yl)
+
+    def segment_end(self):
+        """After a run of samples: a click table past its rows rests on its last, silent one."""
+        if self.pp is not None and self.pp >= CLK_N:
+            self.pp = None
+
+    # ---- the desk ----------------------------------------------------------
     def desk_knobs(self, k):
-        t = self.t
-        self.sat_target = k[5] << 16
-        if self.sat_position is None:
-            self.sat_position = self.sat_target
-        self.dk = (t['T_TIN'][k[5]], t['T_PAD'][k[5]], t['T_KHP'][k[5]],
-                   t['T_GB'][k[9]], t['T_OB'][k[9]], t['T_GB'][k[10]], t['T_OB'][k[10]])
+        t, c = self.t, self.c
+        self.segment_end()
+        pos = k[5] << 16
+        moving = True
+        if self.pad != 0:
+            step = (pos - self.ssat) >> 2
+            moving = step != 0
+            pos = self.ssat + step
+        if not moving:
+            self.dtin = self.dpad = 0.0
+        else:
+            first = self.pad == 0
+            self.ssat = pos
+            index, fraction = pos >> 16, (pos & 65535) / 65536
+            at = lambda name: fl24(t[name][index] + fraction * (t[name][min(127, index + 1)] - t[name][index]))
+            tin, pad = at('T_TIN'), at('T_PAD')
+            if first:
+                self.tin, self.pad, self.dtin, self.dpad = tin, pad, 0.0, 0.0
+            else:
+                self.dtin = math.floor((tin - self.tin) * 8388608 / 16) / 8388608
+                self.dpad = math.floor((pad - self.pad) * 8388608 / 16) / 8388608
+            self.khp = fl24(min(pos / 8388608, 0.125) * c['KHP8'])
+        self.gl = min(2 * t['T_GLH'][k[9]], self.TOP)
+        self.gh = min(2 * t['T_GLH'][k[10]], self.TOP)
 
     def desk(self, y):
-        """The Mackie stage, one sample; the scalings are bd909.asm step 12's."""
+        """The desk stage, one sample; the scalings are bd909.asm step 9's."""
         c = self.c
-        self.sat_position += (self.sat_target - self.sat_position) >> 6
-        index, fraction = self.sat_position >> 16, (self.sat_position & 65535) / 65536
-        values = []
-        for table in ('T_TIN', 'T_PAD', 'T_KHP'):
-            lo = self.t[table][index]
-            hi = self.t[table][min(127, index + 1)]
-            values.append(fl24(lo + fraction * (hi - lo)))
-        tin, pad, khp = values
-        gb, ob, gh, oh = self.dk[3:]
-        clip = lambda v: max(-1.0, min(1 - 2 ** -23, v))
+        clip = lambda v: max(-1.0, min(self.TOP, v))
         sat = lambda v: clip(v) - c['KSAT'] * clip(v) ** 5
-        self.hps += khp * (y - self.hps)
-        x = sat(32 * tin * (y - self.hps))
-        self.lb += c['KB'] * (x - self.lb)
+        self.hps += self.khp * (fl24(y) - fl24(self.hps))
+        self.tin += self.dtin
+        x = sat(32 * self.tin * fl24(clip(y - fl24(self.hps))))
+        self.lb = fl24(self.lb + c['KB'] * (fl24(x) - self.lb))
         rest2 = (x - self.lb) / 2
-        self.m2 += c['KM'] * (rest2 - self.m2)
-        high2 = rest2 - self.m2
-        acc = ob * sat(4 * gb * self.lb) + oh * sat(8 * gh * high2) + c['KMS'] * self.m2
-        y = clip(2 * pad * sat(16 * acc))
+        self.m2 = fl24(self.m2 + c['KM'] * (fl24(rest2) - self.m2))
+        high2 = fl24(rest2 - self.m2)
+        acc = c['KMS'] * self.m2 + self.gl * self.lb + 2 * self.gh * high2
+        self.pad += self.dpad
+        y = clip(2 * self.pad * fl24(sat(16 * acc)))
         return clip(self.output_gain * fl24(y)) if self.output_gain != 1 else y
 
 
 if __name__ == '__main__':
     t, c, lists, meta = tables()
     print(f"A max {meta['a_max']:.1f} Hz, K_A {meta['k_inc']:.4f}, noise rms {NOISE_RMS:.4f}, "
-          f"Horner worst |h| {horner_ok(lists['CPOLY']):.3f}")
+          f"walk {len(WALK)} words, block {max(OFF.values()) + 1}")
     for k in ('K_BODY', 'NREL', 'FRAC', 'U0', 'NHOLD', 'KW16', 'KU16'):
         print(k, c[k])
