@@ -18,7 +18,7 @@
     "summary": "Plays a Flex sample like an 8-bit tracker: gritty, held samples and a cyclic stretch that pulls pitch and time apart.",
     "overview": "Amiga is a track machine modelled on how a home computer's 8-bit sound chip and its tracker software played samples. It plays the track's Flex sample through the stock reader, reduces its word length and storage rate before the Octatrack repitches it, and can restart the sample every few milliseconds a little further on, so PTCH changes the pitch and SPD the speed. The track's filter, AMP, LFOs and effects follow as for any sample.",
     "highlights": [
-      "SPD and GRN stretch the sample in cycles: freeze it, halve its speed or double it, at any pitch.",
+      "SPD and GRN stretch the sample in cycles, faded into each other: freeze it, halve its speed or double it, at any pitch.",
       "BITS from 4 to 16, 8 by default, and SRR lowers the stored sample rate down to about a ninth.",
       "LED switches a fixed lowpass on the stored sample.",
       "SPD, GRN and SRR take parameter locks, LFOs and scenes like any SRC knob."
@@ -41,7 +41,7 @@
       "name": "GRN",
       "default": 64,
       "count": 128,
-      "doc": "Cycle length of the stretch, from about 2 ms to 185 ms. SRC knob E.",
+      "doc": "Cycle length of the stretch, from about 2 ms to 94 ms. SRC knob E.",
       "labels": null
     },
     {
@@ -53,7 +53,7 @@
     },
     {
       "name": "LED",
-      "default": 1,
+      "default": 0,
       "count": 2,
       "doc": "A fixed two-pole lowpass on the stored sample. SRC SETUP knob D.",
       "labels": [
