@@ -225,7 +225,7 @@
       "dsp": {
         "level": "moderate",
         "basis": "measured-comparison",
-        "rationale": "0.1.7: peak 909 184 and 808 177 executed DSP instructions per sample (375 and 252 in 0.1.6) in the bd909_host gate cases (moving knobs, retriggers at every frame offset, SAT/LOW/HIGH extremes); a resting voice 3. The 909 walks its state in read order, plays its click from a filter-response table and moves its noise envelope and slews once a block; the desk keeps two curves of four. Executed instructions, not chip timing; the declared price of 411 per voice is unchanged until the new engine is measured.",
+        "rationale": "0.1.7: peak 909 187 and 808 184 executed DSP instructions per sample (377 and 255 for 0.1.6 on the same cases), shipping configuration in bd909_host: defaults, FIXD, ATK/ACNT/DECAY/SAT/LOW/HIGH extremes, a trig at every frame offset, retriggers, moving knobs; a resting voice 3. The 909 reads its body and click from tables, walks its state in read order and moves its noise envelope and slews once a block; the desk keeps two curves of four. Executed instructions, not chip timing; the declared price of 411 per voice is unchanged until the new engine is measured.",
         "source": "CPU.md"
       },
       "memory": {
@@ -238,9 +238,9 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Restore twelve borrowed SRC bytes before removing AB/1 in both Part copies. 512 compiled assignment cases, reselection/destination checks and actual-panel CS1-only fresh emulator restarts pass; 0.1.4 rejects the bank. Owner reports FLEX persists on AB015FIX01 and instructs merge/publication. Both DSP cores are byte-identical to 0.1.4. Broader hardware/maximum-load, chip timing and memory limits remain under a new exact-source owner approval; Output Matrix halt is unverified.",
-    "hardwareStatus": "reported",
-    "evidenceRevision": "e7fe4fb745e610a63ab9fe390f330334369995c2",
+    "summary": "0.1.7: the recorded-909 engine (October refit) at half the 909's DSP work and about three quarters of the 808's, with a lighter shared desk. DSP matches its float model at -85 dB or better in the shipping configuration; the new 909 model matches the refit's at -63 dB with equal band levels; exact-render pins and the instruction-form precedent check pass; card and USB packages rebuilt (USB package identical on --check, same base and trust row). Not run on a unit: sound, install, several voices, persistence and chip timing are untested; the declared price is unchanged.",
+    "hardwareStatus": "untested",
+    "evidenceRevision": "62e9a424b7a08d7fcbbf321124ba6ef10f63d852",
     "gates": [
       "sdk/drafts/analog-bassdrum-909-reference/run.py",
       "sdk/drafts/analog-bassdrum-909-reference/qualification/multi-test.py",

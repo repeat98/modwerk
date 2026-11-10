@@ -38,7 +38,7 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/CPU.md",
       "sourceSha256": "b20288ccf080f0f3409479b228dea7ca4f3b3e40a7a0727a285df6cbcd637385",
-      "vendoredSha256": "6cee9e962705413905d2dd7444759c036a8ceede844471eb603b8c7f040aaae0",
+      "vendoredSha256": "9d4b92a1eb095152a58dfc66b4e02429f45b2be729b4cd42234a5b4566c06bf9",
       "localUpdates": [
         {
           "moduleVersion": "0.1.3-experimental",
@@ -54,6 +54,11 @@
           "moduleVersion": "0.1.5-experimental",
           "previousVendoredSha256": "86a594d80cf4e6c23422c2d1296ae2daceb793d1e9e061f3447d3ea3b4aff91a",
           "reason": "Restore stock SRC defaults in both Part copies on departure; exact AB015FIX01 promoted after reported physical FLEX persistence and owner merge/publication instruction. Updated release documentation retains broader unverified limits."
+        },
+        {
+          "moduleVersion": "0.1.7-experimental",
+          "previousVendoredSha256": "6cee9e962705413905d2dd7444759c036a8ceede844471eb603b8c7f040aaae0",
+          "reason": "Analog BD 0.1.7: the recorded-909 engine at half the DSP work (body and click from tables, one pointer walking the state, per-block envelope and slews, a lighter shared desk) and matching release documentation; original import and source fingerprints retained."
         }
       ]
     },
@@ -71,7 +76,14 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/DSP909.md",
       "sourceSha256": "bde115d77eff4cb940003bf96ad27af83af01da1407a51fb5ad4928be4f58a4b",
-      "vendoredSha256": "bde115d77eff4cb940003bf96ad27af83af01da1407a51fb5ad4928be4f58a4b"
+      "vendoredSha256": "51f007ad943acaac5e6b317c5b67797e71f9f88f06203f34aff24f7ce9c94e58",
+      "localUpdates": [
+        {
+          "moduleVersion": "0.1.7-experimental",
+          "previousVendoredSha256": "bde115d77eff4cb940003bf96ad27af83af01da1407a51fb5ad4928be4f58a4b",
+          "reason": "Analog BD 0.1.7: the recorded-909 engine at half the DSP work (body and click from tables, one pointer walking the state, per-block envelope and slews, a lighter shared desk) and matching release documentation; original import and source fingerprints retained."
+        }
+      ]
     },
     {
       "path": "modules/analog-bassdrum/README.md",
@@ -79,7 +91,7 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/README.md",
       "sourceSha256": "4876d9613e5e65de0aefeef7ddd60ef6d0d5642c61b1fde60b97fc0f72255f68",
-      "vendoredSha256": "ea128dba44925c29ad172d19cee817e95c774ff2b477015e7e9d505a0a51bbc5",
+      "vendoredSha256": "633b1ce73404df85ab177ffe062d71dd42cc7552958e562aae6f6798166650a5",
       "importedVendoredSha256": "57743ee073204e2a1b51ed7abad7ddf44eae95faddc90d397ca707d30a2bdfed",
       "adaptation": " Octamod 0.1.1 version and native verification evidence appended; imported fingerprint retained.",
       "localDocumentationUpdate": {
@@ -125,6 +137,11 @@
           "moduleVersion": "0.1.6-experimental",
           "previousVendoredSha256": "d4d2900174dc66de7aa8c2b13e4a9a8155eb310e0d5c0b4ddc33e32f6f166dfb",
           "reason": "Analog BD 0.1.6: FIXED switch in the 909's SRC SETUP page (identical hits when ON; OFF is the 0.1.5 sound); original import and source fingerprints retained."
+        },
+        {
+          "moduleVersion": "0.1.7-experimental",
+          "previousVendoredSha256": "ea128dba44925c29ad172d19cee817e95c774ff2b477015e7e9d505a0a51bbc5",
+          "reason": "Analog BD 0.1.7: the recorded-909 engine at half the DSP work (body and click from tables, one pointer walking the state, per-block envelope and slews, a lighter shared desk) and matching release documentation; original import and source fingerprints retained."
         }
       ]
     },
@@ -181,7 +198,7 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/bd909.asm",
       "sourceSha256": "db1b2871957bb89bfd4184fc7556e5e46c44f3be1a889ba11fc1a679c4b1841e",
-      "vendoredSha256": "939e0601dcc51ac2450446665ce8b92e3fe1667d31738c47a3fb1aa52ad5b392",
+      "vendoredSha256": "fbd865f238538469bad2abd7eb7ed4ec3ec79eb57a361cf9cde607e08dd97ad9",
       "localUpdates": [
         {
           "moduleVersion": "0.1.3-experimental",
@@ -197,6 +214,11 @@
           "moduleVersion": "0.1.6-experimental",
           "previousVendoredSha256": "9c86c3bd06e95a998fbe4e0db5a05b9ff65e988686c81f98f6d6c9f4c3b8ee2f",
           "reason": "Analog BD 0.1.6: FIXED switch in the 909's SRC SETUP page (identical hits when ON; OFF is the 0.1.5 sound); original import and source fingerprints retained."
+        },
+        {
+          "moduleVersion": "0.1.7-experimental",
+          "previousVendoredSha256": "939e0601dcc51ac2450446665ce8b92e3fe1667d31738c47a3fb1aa52ad5b392",
+          "reason": "Analog BD 0.1.7: the recorded-909 engine at half the DSP work (body and click from tables, one pointer walking the state, per-block envelope and slews, a lighter shared desk) and matching release documentation; original import and source fingerprints retained."
         }
       ]
     },
@@ -236,7 +258,7 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/dsp808.py",
       "sourceSha256": "6500cfffad2be75c0be43f57bb91a5582b7406fe0bb36be120d412884d23da28",
-      "vendoredSha256": "f3c5ac8321c104ada7b7f4cfd1914eb70d3707cb86d1b26cbac6d53dd0423b3d",
+      "vendoredSha256": "56b7dd65cf3cc2991214bd4f51c1350bbbf5ed816a9536791f3eb4d59a51cd6d",
       "localUpdates": [
         {
           "moduleVersion": "0.1.3-experimental",
@@ -247,6 +269,11 @@
           "moduleVersion": "0.1.6-experimental",
           "previousVendoredSha256": "3d61ba9c258c319d90d7beb47f6cbc7dafb7336c49d8386912478d284cef603d",
           "reason": "Analog BD 0.1.6: TYPE/FIXD switches, SETUP order and LPF direction, and bit-identical DSP efficiency work; original import and source fingerprints retained."
+        },
+        {
+          "moduleVersion": "0.1.7-experimental",
+          "previousVendoredSha256": "f3c5ac8321c104ada7b7f4cfd1914eb70d3707cb86d1b26cbac6d53dd0423b3d",
+          "reason": "Analog BD 0.1.7: the recorded-909 engine at half the DSP work (body and click from tables, one pointer walking the state, per-block envelope and slews, a lighter shared desk) and matching release documentation; original import and source fingerprints retained."
         }
       ]
     },
@@ -256,7 +283,7 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/dsp909.py",
       "sourceSha256": "c45ef4357cd66369181523784de0f5b328b8b18a58f3c19c60983d1173dd3195",
-      "vendoredSha256": "0a9f0ea98c5a01572138781ef2e13bbb36b6cf30299deffe8d3e0dede0bf23df",
+      "vendoredSha256": "2979a031ed7459496ce92464707b936942aa5a0670957155c8a6ecdbfbd9441c",
       "localUpdates": [
         {
           "moduleVersion": "0.1.3-experimental",
@@ -272,6 +299,11 @@
           "moduleVersion": "0.1.6-experimental",
           "previousVendoredSha256": "d31d2fd1340e9c5055389a37f20959ebccd78d45636daec824ae3e1e84f4d67d",
           "reason": "Analog BD 0.1.6: FIXED switch in the 909's SRC SETUP page (identical hits when ON; OFF is the 0.1.5 sound); original import and source fingerprints retained."
+        },
+        {
+          "moduleVersion": "0.1.7-experimental",
+          "previousVendoredSha256": "0a9f0ea98c5a01572138781ef2e13bbb36b6cf30299deffe8d3e0dede0bf23df",
+          "reason": "Analog BD 0.1.7: the recorded-909 engine at half the DSP work (body and click from tables, one pointer walking the state, per-block envelope and slews, a lighter shared desk) and matching release documentation; original import and source fingerprints retained."
         }
       ]
     },
@@ -319,12 +351,17 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/exact-render.json",
       "sourceSha256": "41a17cba7c5c40ab2f32973ee4427da74d023e70cc502074f047a9b2d9900a09",
-      "vendoredSha256": "307d76d4c2492e00b0f3809d65908680cd232d2fb3d363d743545779aab41bc4",
+      "vendoredSha256": "3a91f2cf6fe2cdf6a328ded013c27ba91519c49d39625c67dca8e5be5bea7acf",
       "localUpdates": [
         {
           "moduleVersion": "0.1.6-experimental",
           "previousVendoredSha256": "41a17cba7c5c40ab2f32973ee4427da74d023e70cc502074f047a9b2d9900a09",
           "reason": "Analog BD 0.1.6: TYPE/FIXD switches, SETUP order and LPF direction, and bit-identical DSP efficiency work; original import and source fingerprints retained."
+        },
+        {
+          "moduleVersion": "0.1.7-experimental",
+          "previousVendoredSha256": "307d76d4c2492e00b0f3809d65908680cd232d2fb3d363d743545779aab41bc4",
+          "reason": "Analog BD 0.1.7: the recorded-909 engine at half the DSP work (body and click from tables, one pointer walking the state, per-block envelope and slews, a lighter shared desk) and matching release documentation; original import and source fingerprints retained."
         }
       ]
     },
@@ -334,12 +371,17 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/fit909.json",
       "sourceSha256": "e1e97b493b6c232bf6602ca224212e19f2aef3cff65fff404e7876648d228390",
-      "vendoredSha256": "6917d613b5033069f226b9f6a440f6eefd935e596452546d5bc27b73c5e3dd08",
+      "vendoredSha256": "fc3b9b92fdab1b606a4b800a75907e199b6b94ef0cea02e8cc4de13112e21284",
       "localUpdates": [
         {
           "moduleVersion": "0.1.4-experimental",
           "previousVendoredSha256": "e1e97b493b6c232bf6602ca224212e19f2aef3cff65fff404e7876648d228390",
           "reason": "Owner-auditioned 909 direct-out reference update and matching release documentation; fresh physical/timing/memory qualification explicitly waived for this exact source. Original upstream fingerprints retained."
+        },
+        {
+          "moduleVersion": "0.1.7-experimental",
+          "previousVendoredSha256": "6917d613b5033069f226b9f6a440f6eefd935e596452546d5bc27b73c5e3dd08",
+          "reason": "Analog BD 0.1.7: the recorded-909 engine at half the DSP work (body and click from tables, one pointer walking the state, per-block envelope and slews, a lighter shared desk) and matching release documentation; original import and source fingerprints retained."
         }
       ]
     },

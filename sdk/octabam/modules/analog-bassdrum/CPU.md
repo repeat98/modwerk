@@ -1,3 +1,18 @@
+# 0.1.7: the recorded-909 engine
+
+Executed DSP instructions per sample, from `bd909_host`, in the shipping configuration (glue excluded; both engines and the one shared desk, assembled as `ab_image` and `hook_engines` do). 0.1.6 is `main`'s source run on the same nine cases per model (defaults, FIXD, ATK/ACNT 127, DECAY 127, SAT/LOW/HIGH 127, LPF 63, a trig at every frame offset, a retrigger roll, moving knobs):
+
+| | 0.1.6 peak | 0.1.7 peak | 0.1.6 mean | 0.1.7 mean |
+|---|---:|---:|---:|---:|
+| 909 | 377.0 | 187.1 (-50 %) | 345.5 | 152.4 (-56 %) |
+| 808 | 255.4 | 183.7 (-28 %) | 203.6 | 158.6 (-22 %) |
+
+A resting voice (no trig, past 181 blocks, envelope below -96 dB) runs 48 instructions a block, 3 per sample. Glue and both engines take 1024 P words per core in the card build (1008 in 0.1.6) and 1025 in the USB package's engine (1009). The 909's tables (2210 X words from $2841) and four voice blocks end at $3200, as before; the 808's are unchanged.
+
+Where the 909's work went: the body reads two tables instead of a degree-11 polynomial and its quadrature; the click plays a table and two decaying words instead of running an HP, a biquad and two one-poles; the noise envelope and the depth, thump and SAT slews move once a block; the desk drops its two band curves; and one pointer walking the state block in read order lets most loads and stores ride in parallel-move slots.
+
+These are emulator counts, not chip cycles or full-chain headroom. The declared price (411 per voice, from 0.1.5's full-chain emulator measurement) is unchanged and over-states the cost; a new full-chain or chip measurement is needed before it is lowered.
+
 # 0.1.5 assignment-only correction
 
 The 0.1.5 fix changes ColdFire machine assignment by restoring twelve borrowed bytes in both Part copies before clearing AB/1. Runtime code grows by 36 bytes; no DSP code or DSP uploads change. The copy does not execute per sample. Chip timing and complete memory/stack bounds remain unmeasured under the new exact-version owner approval. The measurements below apply to the unchanged 0.1.4 DSP source, not a new 0.1.5 hardware benchmark.

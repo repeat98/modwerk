@@ -1,3 +1,32 @@
+# Analog BD 0.1.7 — the recorded-909 engine at half the DSP work
+
+10 November 2026. Package `68a41ed8` (`public/octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm`), for the same base as 0.1.6 (`requiredBase 500cdb6f`); its controller is unchanged, so the base's trust row admits it and no base changes. **Not run on a unit.** Every result below is from the emulator host or the source.
+
+## What changed
+
+- **909 model.** The October refit, approved by ear by the owner on 22 October and never released: the body from the recorded cycle (128-point tables, up to H40), its shape above the fundamental following the sweep and the envelope; the click 16 samples after the trig; the attack noise refit (about 10 dB louder, 7.9 ms decay); the sweep depth varied per hit (±1.45 %); PITCH 0..64..127 = 32.7/45.6/65.4 Hz, DECAY 0..80..127 = 15/247/600 ms. On 0.1.6's SETUP layout (TYPE, FIXD, ACNT / LOW, HIGH, LPF); FIXD ON fixes the sweep depth and click strength and restarts the noise.
+- **909 engine.** One pointer walks the voice block in the order the loop reads it, so most loads and stores ride on arithmetic instructions (`dsp909.walk` reads the order from the `;@` tags in `bd909.asm`). The click is played from a 128-row table of its filters' response with two decaying tails; it, the phase release and the end of the hold are block events at the trig's own frame offset (16, 48 and 2880 samples after it; the refit's hold was 2885). The noise envelope is stepped once a block and ramped between; TDEP's depth, the thump and SAT move a quarter of the way each block; the thump state is 24-bit. A voice with no trig, past 181 blocks and its envelope below -96 dB rests (output 0).
+- **Desk (both models).** The input coupling, SAT's drive curve, the three-band split, the output curve and the make-up stay; the two band curves go, so LOW and HIGH weight their bands. Both engines call one copy.
+- **808.** Its own code is unchanged; it gets the new desk.
+- **Registers.** n4 and n5 are left as found (stock effects read them; the voice saves n5 in its block). r4 is free: the stock loop sets it after the seam (payload A P:0x45f) before reading it.
+
+## Software results
+
+- **DSP vs its float model** (`bd909_host`, `dsp909.Voice`, `dsp808.Voice`), shipping configuration (both engines and one shared desk, as `ab_image` and `hook_engines` assemble them), 9 cases per model (defaults, FIXD, ATK/ACNT 127, DECAY 127, SAT/LOW/HIGH 127, LPF 63, a trig at every frame offset, a retrigger roll down to 10 samples apart, moving knobs): worst 909 -88.7 dB, 808 -84.8 dB. The non-shared host build: worst -72.5 dB over 13 cases (LOW 0 HIGH 127 SAT 40).
+- **New 909 model vs the refit's**, FIXD ON: -63 dB typical, the same level (0.0 dB) in five bands from 20 Hz to 12 kHz in the first 25 ms and the body; DECAY 20 -50 dB (the hold's end 5 samples earlier); SAT/LOW/HIGH at 127 together -56 dB (the dropped band curves).
+- **Against the recordings** (level matched by tail RMS, LPF OFF, PTCH 64, DCAY 80, ACNT 80), first 25 ms per band 20-80/80-250/250-1k/1-4k/4-12k Hz: TUNE 0 ATK 0 -0.2/+0.3/-0.3/+1.1/+0.4 dB; TUNE 0 ATK 127 -0.1/+0.4/-1.5/-0.4/-0.1; TUNE 127 -3.0/0.0/-0.3/-1.2/+2.6. The body (30-330 ms) is within 0.5 dB below 1 kHz, 1.2-1.6 dB low at 1-4 kHz and 6.4-6.7 dB low above 4 kHz in all three.
+- **808 vs 0.1.6's 808 model** (FIXD ON): default -80.6 dB, SAT 64 -67.3, SAT 127 -61.6, LOW 127 -80.4, HIGH 127 -79.2, LOW 0 -79.1, SAT 100 LOW 110 HIGH 100 -45.4; level unchanged in all.
+- **Exact render.** `exact-render.json` holds 0.1.7's 16 audio and state hashes; `verify_analog_bd_exact.py` passes (including the 808's exact post-desk trim).
+- **Instruction forms.** Every form in the assembled image (ALU and parallel-move halves taken separately; Tcc and register-to-register moves by class) occurs in the original OS's DSP payloads or in 0.1.6's engine, both of which run on the chip.
+- **Cost.** In [CPU.md](CPU.md).
+- **Packages.** Card packages built in `modwerk-source-tools` (`build-modules-isolated.sh`) and imported; the USB package rebuilt with `octatrack:module-packages --base-only --stock` (largest run shared with the stock OS: 11 bytes, limit 12) and `--check` identical. Engine 1025 P words (1009 in 0.1.6), 6 relocations.
+
+## Not tested
+
+- Anything on a unit: sound, install over USB, Keep and Undo, several voices on both cores, save/reload and a power cycle, a 0.1.6 project loaded into 0.1.7.
+- The engine's placement in the base's free P memory with other on-demand effects (it is 16 words larger).
+- Chip cycles and full-chain loads; the declared price (411 per voice) is unchanged, so admission is as in 0.1.6.
+
 # Analog BD 0.1.6 — TYPE and FIXD switches
 
 Current as of 28 October 2026. This pull request now publishes package `f83c7f81` on beta base `6483508a`, rebuilt after `main` took #943 and new bases (#1017, #1026, #1030); the module source is the one tested on 27 October as package `a2def725` on base `64ce4825` (below), and only the base link differs. This rebuild is not yet tested on hardware; every result below names the build it ran on.
