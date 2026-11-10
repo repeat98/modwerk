@@ -736,7 +736,7 @@ static unsigned look(unsigned t, const Machine **who)
 {
     if (!(frame_seen >> t & 1u) || !(looked_up >> t & 1u)) {
         if (!(frame_seen >> 8 & 1u)) frame_part = valid_bank() ? current_part() : 0, frame_seen |= 1u << 8;
-        const Part *part = frame_part, *s = part + SIG + 30 * t;
+        const Part *part = frame_part, *s = part ? part + SIG + 30 * t : 0; /* no offset from a null Part */
         if (!part) return NOBODY;
         uint32_t bytes = (uint32_t)part[0x22 + t] << 24 | (uint32_t)s[0] << 16 | (uint32_t)s[1] << 8 | s[2];
         if (!(looked_up >> t & 1u) || looked[t].part != part || looked[t].bytes != bytes) {
