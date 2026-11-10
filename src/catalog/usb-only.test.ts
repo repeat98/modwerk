@@ -30,9 +30,10 @@ describe('modules that need the Modwerk base', () => {
   it('follows the published packages', () => {
     expect(moduleUsbOnly('ring-sc')).toBe(true) // RINGMOD SC: its package requires the key bus
     expect(moduleUsbOnly('beat-slicer')).toBe(true) // a C runtime module of the base's sample-editor service
-    for (const entry of packages.packages as { id: string; requires?: number; sources?: string[] }[]) {
-      expect(moduleUsbOnly(entry.id)).toBe(!!entry.requires || !!entry.sources)
-      if (!entry.requires && !entry.sources) expect(cardBuildError([entry.id])).toBe('')
+    for (const entry of packages.packages as { id: string; requires?: number; sources?: string[]; usbOnly?: boolean }[]) {
+      const usbOnly = !!entry.requires || !!entry.sources || entry.usbOnly === true
+      expect(moduleUsbOnly(entry.id)).toBe(usbOnly)
+      if (!usbOnly) expect(cardBuildError([entry.id])).toBe('')
     }
   })
 
