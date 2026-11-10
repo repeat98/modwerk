@@ -215,7 +215,10 @@ too) first: the pedal answers every MIDI client, so another client's replies
 end up in this link's operations, and this link's file commands in theirs.
 On 9 November 2026 `status` read the owner's MS-70CDR on MIDISTOMP 2.0.1
 (identity, features and load) over CoreMIDI; `list` stopped after four files
-because a pedal page in another worktree's dev server was reading the pedal.
+because a pedal page in another worktree's dev server was reading the pedal. On
+10 November 2026 the CLI read the same pedal's 166 files, backed them up
+(2 min 55 s), removed one added effect and installed three, each read back and
+listed at its own ID; the pedal booted after each change (owner's report).
 
 ```sh
 npm run zoom -- status | list | backup [OUT.zip]
