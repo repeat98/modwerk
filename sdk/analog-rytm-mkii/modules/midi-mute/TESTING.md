@@ -181,6 +181,10 @@ Stock's note-on routine plays notes 0-11 as the pads' drum map and 12-59 chromat
 
 PORT CONFIG shows MUTE MIDI IN as its last row, after RECEIVE CC/NRPN, unchecked on a fresh card; YES checks it, LEFT unchecks it and RIGHT checks it again, each redrawn at once ([port-config-off.png](media/port-config-off.png), [port-config-on.png](media/port-config-on.png)). The checked state then drove cases B to C. MUTE mode's pads set the project mute mask on this build as on the core alone (MIDI OUT `B0 5E 01`).
 
+## Library package (9 November 2026)
+
+On 2026-11-09 the folder moved from `_submissions/` into the library. The code is unchanged since MM04 (the solo commit `8e6c4d47`); the manifest's load method now reads `hardware`, with the author's OK on #1067. `scripts/build-elemod-isolated.sh` compiled it in Modwerk's pinned `modwerk-source-tools` image (GCC 16.2.0, binutils 2.47, from `sdk/build/Dockerfile`) from a clean checkout, and `scripts/package-elemod-recipe.mjs` exported `sdk/imports/packages/midi-mute/midi-mute-0.1.0-experimental-os1.74.elemod`: 1,321 bytes of `.run` and 476 of `.bss`, 1,797 bytes in all, the manifest's memory. The evidence's `sourceSha256` is the SHA-256 of the JSON map from `build.json` and each `src/` file to its own SHA-256. This package's own bytes have not been linked against a stock OS file or run on a unit, and were not compared with the author's MM04 image.
+
 ## Not tested
 
 - **The unit, still open.** How the worst UI tick (about 2 ms) splits between the module, stock's release calls and interruptions.

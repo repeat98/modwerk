@@ -59,7 +59,7 @@ int main(void) {
     claimant.dsp.claims=&live_claim; claimant.dsp.claim_count=1; with_claimant=1;
     assert(!modwerk_dsp_buffer_permitted(0,0,1,32) && modwerk_dsp_buffer_permitted(1,0,1,32) && modwerk_dsp_buffer_permitted(0,0,0,32));
     with_claimant=0; assert(modwerk_dsp_buffer_permitted(0,0,1,32));
-    struct runtime_dsp_claim bus={0x800u,0x200u,2u,1u,RUNTIME_CLAIM_READ,0},mine={0x7a0u,16u,2u,0u,RUNTIME_CLAIM_WRITE,0};
+    struct runtime_dsp_claim bus={0x7e00u,0x200u,2u,1u,RUNTIME_CLAIM_READ,0},mine={0x7a0u,16u,2u,0u,RUNTIME_CLAIM_WRITE,0};
     assert(modwerk_machine_dsp_claims_admit(0,0,0)==RUNTIME_OK);
     assert(modwerk_machine_dsp_claims_admit(8u,&bus,1)==RUNTIME_OK && modwerk_machine_dsp_claims_admit(0,&bus,1)==RUNTIME_CONFLICT);
     bus.access=RUNTIME_CLAIM_WRITE; assert(modwerk_machine_dsp_claims_admit(8u,&bus,1)==RUNTIME_CONFLICT);

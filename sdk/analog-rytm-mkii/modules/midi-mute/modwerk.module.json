@@ -81,20 +81,34 @@
     ]
   },
   "resources": {
-    "memoryBytes": null,
-    "fastBytes": null,
+    "memoryBytes": 1797,
+    "fastBytes": 0,
     "load": {
       "display": "About 3 µs per incoming note on the unit; none per audio block",
-      "method": "measured",
+      "method": "hardware",
       "conditions": "Measured on the author's Rytm MKII with a timing build (DMA timer 0, 132 MHz) under two 60 s floods over USB and DIN: 3.3 µs average per Note On/Off, 588 µs worst including interruptions; worst UI tick 1.99 ms after a mute or solo change, stock's release calls and interruptions included. See TESTING.md."
     }
   },
   "evidence": {
-    "tier": "none",
+    "tier": "author-hardware",
     "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": null,
-    "reports": [],
-    "hardware": null,
+    "sourceSha256": "477e1d17ee3b43612f86c178090cc56e91735edd5206dc750c4e7916bde5d7c8",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-10-30",
+      "tester": "michaelkollmann",
+      "durationMinutes": null,
+      "summary": "michaelkollmann (the author) ran builds MM03 and MM04, MM04 being this source, on an Analog Rytm MKII, OS 1.74, with a bench script that sent MIDI over USB and over DIN and judged each step from the Rytm’s USB audio. With MUTE MIDI IN checked, notes for a muted track, or one left out of a solo, stayed silent on the AUTO and track channels; held notes stopped 50-130 ms after a mute or solo; and 60 s floods with mutes, solos and pattern changes left nothing sounding. Unchecked, every step matched stock OS 1.74 run on the same unit. The setting survived a save, reload and power cycle, and CREATE NEW starts unchecked. The author reports that a live session with mutes and solos behaved as expected. A timing build read 3.3 µs per incoming note on average.",
+      "limitations": [
+        "Author-reported results on the author’s own builds, compiled with the same GCC 16.2.0 and binutils 2.47; the released package, built in Modwerk’s pinned toolchain, has not run on a unit itself, and its bytes were not compared with the author’s images.",
+        "Save, reload, power cycle and the pad mutes were checked by hand on MM03, before solo support; they were not repeated on MM04.",
+        "How the worst UI tick, about 2 ms, splits between the module, stock’s release calls and interruptions was not measured."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {

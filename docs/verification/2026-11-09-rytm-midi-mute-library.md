@@ -1,0 +1,10 @@
+# Analog Rytm MKII: MIDI Mute 0.1.0-experimental in the library — 9 November 2026
+
+michaelkollmann's MIDI Mute, merged into `_submissions/` with #1067, moves into the library as 0.1.0-experimental (same version, same code). Muted tracks, and tracks left out of a solo, drop incoming MIDI notes from USB and DIN, and a note MIDI holds is released when its track is silenced; MUTE MIDI IN in GLOBAL > MIDI CONFIG > PORT CONFIG turns it on. Its source-only OS 1.74 package is pinned in `sdk/imports/elekloader-midi-mute-2026-11-09.json` (commit `5bc570df`).
+
+- **Manifest:** the load method `measured`, which the contract does not take and which stopped `machine-modules.mjs --drafts`, is now `hardware`, with the author's OK on [#1067](https://github.com/repeat98/modwerk/pull/1067). The evidence tier is now `author-hardware`, from the unit runs TESTING.md already recorded (MM04, this source, 30 October 2026), and the memory is the package's 1,797 bytes (`.run` 1,321, `.bss` 476).
+- **Build:** `scripts/build-elemod-isolated.sh` in `modwerk-source-tools` (image `28323550…`, from `sdk/build/Dockerfile`, unchanged since 5 October) from clean checkouts of `6b316cf6` and `5bc570df`. The export reproduces with `package-elemod-recipe.mjs --check`, and `verify-elemod-release-exports.mjs` reproduced all 60 current exports.
+- **Package:** `midi-mute-0.1.0-experimental-os1.74.elemod` `f83da7ac…0a5c`, fetched into the vendored catalogue through its pin by `npm run elekloader:update -- --overlay`.
+- **Code:** unchanged since the solo commit `8e6c4d47` of #1067, the source of the author's MM04.
+- **Linking:** `planBuild` plans it beside Filter Hz, Loop Sync and MIDI Feedback on the plain base (`src/engine/elekloader/digi-build.test.ts`).
+- **On a unit:** the author's Analog Rytm MKII ran MM03 and MM04 over USB and DIN, as [TESTING.md](../../sdk/analog-rytm-mkii/modules/midi-mute/TESTING.md) records. This package's bytes have not been linked against a stock OS file, flashed from the site or run on a unit.

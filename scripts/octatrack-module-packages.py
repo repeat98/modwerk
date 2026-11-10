@@ -24,6 +24,13 @@ def lag_guard(builder, check):
     that left its USB package behind. Kept here, not in the builder, whose source
     the base pins."""
     manifest = json.loads(builder.MANIFEST.read_text())
+    rows = {}
+    for entry in manifest['packages']:
+        rows.setdefault(entry['id'], []).append(entry['version'])
+    twice = {name: found for name, found in rows.items() if len(found) > 1}
+    if twice:  # a merge that keeps both sides' rows; the builder would stop later on a reused work folder
+        sys.exit('octatrack-module-packages.json lists a module more than once (%s): keep only the current version\'s row.'
+                 % '; '.join('%s %s' % (name, ', '.join(found)) for name, found in sorted(twice.items())))
     versions = {m['id']: m['version'] for m in json.loads((APP / 'sdk/catalog.json').read_text())['modules']}
     held, failed = {}, 0
     for at, entry in enumerate(manifest['packages']):
