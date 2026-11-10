@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "module": "digitakt/live-looper",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-10",
+  "upstream": {
+    "repository": "https://github.com/draadpiraat/modwerk",
+    "revision": "1e291d625705a7aba3ef7c38d47e4e73a9c6ecdd",
+    "path": "sdk/digitakt/modules/live-looper",
+    "license": "GPL-3.0-or-later"
+  },
+  "changes": [
+    "First Modwerk release for Digitakt I OS 1.54, on Core 2.1 with Machine Pages: the LOOPER machine, a live looper on one track, based on sumedho's RAM Machines 1.3.1.",
+    "Source-only export compiled in the pinned GCC 16.2 Docker toolchain; it links to the same image (LL01, 39a045c7…) as the locally compiled recipe used for the emulator checks."
+  ],
+  "runtimeSourceSha256": "2d46ff08de67b51fa2e0c53923e503db43c6daafef553714cc8e0a6b591f3af8",
+  "packages": [
+    {
+      "os": "1.54",
+      "path": "sdk/imports/packages/live-looper/live-looper-0.1.0-experimental-os1.54.elemod",
+      "sha256": "3dd093099cc63db62c34d32d45d4ede0af75bb678c8769b09f63aab37ddcc440"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/digitakt/modules/live-looper/evidence/emulator-testing.json",
+  "requires": [
+    "machine-pages"
+  ]
+}
