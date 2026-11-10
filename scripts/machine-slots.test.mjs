@@ -22,6 +22,8 @@ describe('machine slots', () => {
 
   it('reads the memory Linux can still give, and fits workers to it', () => {
     expect(availableMemory('MemTotal: 7864320 kB\nMemFree: 100 kB\nMemAvailable: 3145728 kB\n')).toBe(3 * GB)
+    // macOS: what the cache gives back counts, as vm_stat prints it (16 KB pages).
+    expect(availableMemory(null, 'Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:    4995.\nPages active:    237388.\nPages inactive:    232076.\nPages speculative:    4669.\nPages wired down:    164926.\nPages purgeable:    2952.\n')).toBe(16384 * (4995 + 232076 + 4669 + 2952))
     expect(workersFor({ most: 4, each: GB, keep: GB, available: 3.5 * GB, cores: 12 })).toBe(2)
     expect(workersFor({ most: 4, each: GB, keep: GB, available: 0.5 * GB, cores: 12 })).toBe(1)
     expect(workersFor({ most: 4, each: GB, keep: GB, available: 64 * GB, cores: 2 })).toBe(2)
