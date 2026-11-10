@@ -1,10 +1,17 @@
 # FRACT candidate resources — 10 November 2026
 
 Version `0.1.2-experimental`, SHA-256 `6ff37fdcdbfead903a4857482d0f7bd50905175b55c877e62ad7c51422ef5874`, base `72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6`.
-This is a new, uninstalled package. The earlier 6 November hardware report is
-preserved in [history](history/20261106/resources.md) and does not qualify it.
+This package has a [named-build functional hardware report](hardware-20261110.md).
+It does not establish timing or a complete resource qualification. The earlier
+6 November report is preserved in [history](history/20261106/resources.md).
 
 ## Reproduce without firmware
+
+Run the exact named audit from revision
+`c2671568bb3b684934ad9c55e100b8276093e12d`, which retains its base72 loader/export
+inputs. A later checkout follows its newer committed base and can produce a
+different package; the audit deliberately refuses to reuse the named hash then.
+The completed source audit is retained in resource-audit.json.
 
 ```sh
 python3.12 -B sdk/drafts/fract-machine/qualification/resources.py \

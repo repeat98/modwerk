@@ -16,7 +16,7 @@ The current host/source suite reports47 tests,4 historical transport skips.
 The source-only check and reproducible memory/callback-stack audit also pass.
 
 Experimental draft doctor is green. Listing checks remain pending: catalogue,
-qualification/performance, exact-build hardware, native comparison, active USB
+qualification/performance, complete hardware coverage, native comparison, active USB
 row/fingerprints and pair table. No gate was weakened to hide those gaps.
 Performance audit correctly reports three missing groups; the owner accepted
 the audio-path method but has not granted its first-release waiver.
@@ -38,6 +38,7 @@ ID-refusal tests, and current versus archived receipt semantics. Package-row
 requiredBase admission replaces the old gate; actual-machine and actual-wrapper
 base-refresh tests cover the replacement. All eight historical files were
 compared byte-for-byte with the prior committed candidate. New hardware/emulator
-status stays untested. Deferred declarations/metadata and replacement tests were
+results are scoped separately in [the hardware report](hardware-20261110.md);
+full-emulator status remains untested. Deferred declarations/metadata and replacement tests were
 manually inspected; that does not erase their API deferral. No confirmed defect
 was found or classifier flag suppressed.

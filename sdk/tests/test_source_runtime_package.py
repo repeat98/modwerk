@@ -71,7 +71,7 @@ class SourceRecipe(unittest.TestCase):
         self.assertEqual(made['copies'][0]['address'], 0x40000430)
         self.assertEqual(made['copies'][0]['sha256'], item['sha256'])
 
-    def test_release_row_matches_named_receipt_without_claiming_hardware(self):
+    def test_release_row_matches_named_receipt_and_scoped_hardware_report(self):
         row = json.loads((MODULE / 'release/package-entry.json').read_text())
         proof = json.loads((MODULE / 'release/candidate-proof.json').read_text())
         manifest = json.loads((MODULE / 'octamod.module.json').read_text())
@@ -81,8 +81,13 @@ class SourceRecipe(unittest.TestCase):
         self.assertEqual(row['bytes'], proof['bytes'])
         self.assertEqual(row['version'], proof['version'])
         self.assertEqual(row['version'], manifest['version'])
-        self.assertEqual(proof['hardware'], 'NOT_RUN')
-        self.assertEqual(manifest['tests']['hardwareStatus'], 'untested')
+        self.assertEqual(proof['hardware'], 'FUNCTIONAL_OWNER_REPORT_AND_USB_READBACK')
+        self.assertEqual(manifest['tests']['hardwareStatus'], 'reported')
+        report = (MODULE / 'release' / proof['hardwareReport']).read_text()
+        self.assertIn(proof['sha256'], report)
+        self.assertIn(proof['baseIdentity'], report)
+        self.assertIn(manifest['source']['revision'], report)
+        self.assertIn('not complete release qualification', report)
 
     @unittest.skipUnless(shutil.which('m68k-elf-gcc'), 'ColdFire compiler unavailable')
     def test_machine_build_follows_committed_base_without_firmware(self):

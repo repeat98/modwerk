@@ -17,16 +17,18 @@ recipe. Tests exercise the actual full machine under a synthetic base change.
 The reviewed reconstruction has nine bounded stock-copy references, one proven
 import word, no firmware bytes, and passes byte-exact reconstruction and both
 unchanged strict scans locally. Resident extent is 31,424 bytes and the own
-callback stack bound is 712 bytes. Hardware and full emulator testing have
-**not run for this new image**. Earlier package54ca observations remain in
+callback stack bound is 712 bytes. The [hardware report](hardware-20261110.md)
+records this exact candidate's functional checks, including physical reboot and
+USB restoration readback. Full-emulator and timing/stress qualification remain
+pending. Earlier package54ca observations remain in
 `history/20261106/` and the historical section of TESTING.md.
 
 ## Before promotion
 
 1. Finish software checks and review for the migrated candidate.
-2. Run the exact candidate on a compatible base: install/self-test, Undo, Keep,
-   controlled replacement, removal/missing-module behavior, saved-state reload
-   and physical reboot. Preserve the old package and set for recovery.
+2. Retain the completed named-build functional hardware report. Finish untested
+   stock flows, companion/stress and active replacement cases required for
+   qualification; do not transfer package6ff/base72 evidence to other builds.
 3. Supply the named-build performance record: worst own render/block versus
    budget, matched native-FLEX frame/idle comparison, audio stress. Nulls have
    reasons; the owner's first-release waiver decision is pending.

@@ -11,11 +11,15 @@ and both unchanged strict stock-free scans pass locally. No OS is distributed.
 
 Resource accounting is specific to this image: 31,424 resident bytes and
 712 own stack bytes per callback; see release/resources.md and its audit.
-The earlier hardware/USB readings apply only to package54ca below. This image
-has not been installed or run on hardware or in the full emulator. Install,
-Keep/Undo/removal, missing-module fallback, Part/project reload, reboot, audio
-quality, companions and stress require exact-build evidence before promotion.
-The historical PROJECT RELOAD stall remains unresolved.
+Named-build functional checks on the author's physical Octatrack MKII now cover
+install/integrity, Keep/readback, exact Undo, removal/reinstall, saved Part and
+project reload, absent-module project fallback to FLEX, audio/POS/SIZE and a
+physical reboot with independent exact-set restoration readback. See the
+[10 November hardware report](release/hardware-20261110.md) for source/package/base
+identities, attributed observations, refused attempts and limits. Full-emulator,
+timing/stress, companion and complete stock-flow qualification remain pending.
+The historical PROJECT RELOAD stall remains unresolved; a controlled repeat on
+this candidate passed without assigning the old cause.
 
 The owner accepted a ColdFire audio-path performance record on 7 November:
 worst own render/block against budget, matched native-FLEX longest-frame/idle,
@@ -25,6 +29,7 @@ with reasons for unmeasured fields. No timing pass or owner waiver is claimed.
 ```sh
 python3.12 -B -m unittest discover -s sdk/tests -p 'test_source_runtime_package.py'
 python3.12 -B sdk/drafts/fract-machine/check_source.py
+# Exact package6ff resource audit: run at c2671568 (base72 inputs), see release/resources.md.
 python3.12 -B sdk/drafts/fract-machine/qualification/resources.py --output /tmp/fract-resource-audit.json
 ```
 

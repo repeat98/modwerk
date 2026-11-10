@@ -65,7 +65,8 @@ paired FRACT build; USB confirmed that exact base and module set after power-on.
 See TESTING.md for identities, reported observations and limits. No catalogue
 entry, listed USB/card package or compatibility pair proof exists. The earlier 0.1.1 candidate has the 6 November functional hardware report in
 TESTING.md. The current 0.1.2 candidate follows the merged base-aware builder
-and has no hardware qualification yet; publication remains incomplete.
+and has a named-build functional hardware report; timing/stress and full release
+qualification remain pending. Publication remains incomplete.
 
 Historical 0.1.1 install, explicit Undo, Keep/removal/reinstall, installed-Part reload
 and cold boot are recorded in TESTING.md. Missing-module reload is unconfirmed;
@@ -132,7 +133,9 @@ and START records, grain engine, controls and UI are unchanged.
 The new `0.1.2-experimental` package has canonical runtime identity `fract-machine`.
 The private `grnyv1` package must be replaced as a controlled set; do not install
 both identities together. The historical package54ca test remains in TESTING.md.
-This new image has no hardware or full-emulator result yet.
+The [named-build hardware report](release/hardware-20261110.md) records functional
+checks and exact-set restoration after a physical reboot. Full-emulator and
+performance qualification remain pending.
 
 ```sh
 python3.12 -B scripts/source-runtime-package.py --recipe sdk/drafts/fract-machine/runtime-build.json --check

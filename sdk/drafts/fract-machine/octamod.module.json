@@ -12,7 +12,7 @@
   },
   "build": {
     "status": "pending",
-    "reason": "Migrated to merged base-following SDK. New package has no hardware or full-emulator evidence yet. Timing/stress, media, release integration and owner approval remain pending; historical PROJECT RELOAD stall unresolved."
+    "reason": "Base-following candidate has named-build functional hardware evidence. Timing/stress, media, release integration and owner approval remain pending; historical PROJECT RELOAD stall unresolved."
   },
   "author": {
     "github": "ex1010",
@@ -122,7 +122,7 @@
     ]
   },
   "resources": {
-    "recorded": "10 November 2026; new candidate memory/own stack only; hardware and timing pending",
+    "recorded": "10 November 2026; own memory/stack accounted; functional hardware reported; timing pending",
     "storage": {
       "label": "Public package memory",
       "display": "31,424 resident pool bytes; 712 own stack bytes per callback",
@@ -165,8 +165,8 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "New base-following candidate passes source/recipe and stock reconstruction checks; hardware/emulator/timing/stress pending. Earlier package54ca functional checks and unresolved reload stall remain historical.",
-    "hardwareStatus": "untested",
+    "summary": "Named package6ff/base72 passed functional install/Keep/Undo/removal/reinstall, Part/project reload and physical reboot with exact USB set restoration. Timing/stress/companions/full qualification pending; historical reload stall unresolved.",
+    "hardwareStatus": "reported",
     "gates": [
       "modules/fract-machine/verify.py"
     ],

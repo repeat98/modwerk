@@ -22,6 +22,6 @@
   "worstCaseColdFireCycles": null,
   "dspCodeWordsAdded": 0,
   "dspStateWordsAdded": 0,
-  "hardware": "NOT_RUN_FOR_THIS_PACKAGE",
+  "hardware": "FUNCTIONAL_CHECK_RECORDED; TIMING_MEASUREMENTS_PENDING",
   "details": "resources.md"
 }
