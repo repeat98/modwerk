@@ -22,8 +22,28 @@ Package `50f64eb63cfe62b534988bda28baa4c575eb9d9a6dbc7a81035e7d95cd01cf89`
   instructions, about 1,687 cycles. Static bound 1,052 instructions, about 2,622
   cycles. Frame leave rose from 9 to 12 instructions with the new check.
 
-Not yet run on 0.2.4: hardware. The 6 November results below are for 0.2.2 and
-0.2.3.
+### Hardware on the current beta base — 10 November 2026
+
+Tester: twwwy, reporting from the panel. Unit: Octatrack, OS 1.40C, MKII per
+earlier records. Package `50f64eb6…` (source `4faa4023`). Disposable project.
+Client: `scripts/device.mjs` over `scripts/octatrack-usb-bridge.py`.
+
+| Step | Reported at the panel | Read back from the device |
+| --- | --- | --- |
+| Base update on modwerk.app | Came back by itself | Base `72defb09b9d463fe…`, two slots confirmed, nothing installed, set `87f28e38…` |
+| Try, 90 s, then Undo | Row there, HOLD set, holding T2 solos it | Rolled back: empty, set `87f28e38…`, no refused requests |
+| Try and Keep, then about a minute of playing | Solo, join and leave, audio, lamps, release and a second anchor all worked | Track Solo installed, set `0e2b45df…` |
+| Power cycle | Booted normally; TRACK SOLO row back, reading OFF | Same base, Track Solo installed, set `0e2b45df…` |
+| Play Modes 0.1.1 tried beside it, 300 s | First gesture wins: UP or DOWN within half a second changes the Play Modes mode and Track Solo does not arm; a longer hold starts Track Solo and UP or DOWN no longer change the mode | Rolled back to Track Solo only, set `0e2b45df…`, no refused requests |
+| Remove | — | Empty, set `87f28e38…`, as at the start |
+
+The diagnostic value word stayed `0x0` throughout the first trial, although the
+tester set HOLD, and read `0x10000` during the removal. Not investigated; the
+panel report stands for that step.
+
+Not tested on hardware: other modules beside it apart from Play Modes, all eight
+anchors, external MIDI, arranger rows, Pickup recording, the K09 orderings,
+self-test, MKI. The 6 November results below are for 0.2.2 and 0.2.3.
 
 ## Hardware results — 6 November 2026
 

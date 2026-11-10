@@ -39,11 +39,12 @@
     ],
     "limitations": [
       "USB only: needs the Modwerk base for its key, tick and encoder events and its SEQUENCER row, so card firmware cannot include it.",
-      "Functional hardware report on package 1895ceec, Track Solo alone. Not tested on hardware: other modules alongside, MKI, all eight anchors, external MIDI, arranger rows, Pickup recording, K09 modifier orderings, self-test, Keep and power cycles. See TESTING.md.",
+      "Functional hardware report on package 50f64eb6 on beta base 72defb09, mostly alone and once beside Play Modes. Not tested on hardware: other modules, MKI, all eight anchors, external MIDI, arranger rows, Pickup recording, K09 modifier orderings, self-test. See TESTING.md.",
       "TRACK SOLO is OFF on startup and after package replacement; its enable setting and solo groups are not saved.",
       "MIDI mode is excluded. When T8 is master, include it with the source tracks in the temporary group; T8 alone has no source audio.",
       "Mute Modes is optional. Paired emulator audio passed for OT, OTFX, OTFX-T and DT-T on the 0.2.2 package; physical Mute Modes behavior is untested.",
-      "USB settings use the existing shared row table; native card settings integration is pending."
+      "USB settings use the existing shared row table; native card settings integration is pending.",
+      "With Play Modes: whichever TRACK gesture starts first wins. Press UP or DOWN within half a second of holding TRACK to change a Play Modes mode; hold longer and Track Solo starts instead."
     ],
     "effectId": null
   },
@@ -91,7 +92,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Author functional report on real hardware, 6 November 2026, for 0.2.2 and 0.2.3. 0.2.4 changes the frame-end restore; its emulator control (18/18) and audio suites passed, measured worst event 1,687 cycles. Current beta base hardware run: see TESTING.md. Stock benchmark and stress waived by the owner for this version (no MIDI path).",
+    "summary": "Author functional report on real hardware, 10 November 2026: this package on beta base 72defb09, try and Undo, Keep with a minute of playing, power cycle, Play Modes beside it, removal, all read back from the device. Emulator control (18/18) and audio suites passed; measured worst event 1,687 cycles. Stock benchmark and stress waived by the owner for this version (no MIDI path). See TESTING.md.",
     "hardwareStatus": "reported",
     "gates": [
       "python3 -B verify.py",
@@ -102,10 +103,10 @@
       "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-paired-save> --audio --paired --save",
       "python3 -B cycle_count.py --inputs <private-inputs> --output <new-private-output>"
     ],
-    "evidenceRevision": "35ec1ddfdf39f41f86a94ae1c3afdfa35c1a8eee",
+    "evidenceRevision": "4faa4023b2cf29012abedfad2aed7b02e59519d5",
     "qualification": {
       "moduleVersion": "0.2.4-experimental",
-      "sourceSha256": "17aac1f026274c66a473794cfcf8239f55edbbae2e40e3e6c681a81c46c08544",
+      "sourceSha256": "f37562d53f0f901e09cca4d42d1a73730dfc92caa2563298dc960f45eb37f2cc",
       "imageSha256": "50f64eb63cfe62b534988bda28baa4c575eb9d9a6dbc7a81035e7d95cd01cf89",
       "cycles": [
         {
@@ -180,15 +181,15 @@
         "kind": "functional",
         "status": "reported",
         "model": "MKII",
-        "testedOn": "2026-11-06",
+        "testedOn": "2026-11-10",
         "tester": "twwwy",
-        "sourceRevision": "35ec1ddfdf39f41f86a94ae1c3afdfa35c1a8eee",
-        "imageSha256": "1895ceecbfa74cd00cf07b2557ddbdf4668e32327d7c03fcf5c9f529547a5677",
-        "summary": "The author ran this exact package over USB as a 300-second RAM trial on base 462fbd2b, OS 1.40C, Track Solo alone, in a disposable project. They reported the TRACK SOLO row and HOLD setting working; holding a track soloing it with playback running; taps joining and leaving once each; clean audio on release; excluded lamps dim but lit; pages, encoders, MIXER and PLAY/STOP working during a hold. Rollback was read back: phase normal, empty inventory, set identity unchanged.",
+        "sourceRevision": "4faa4023b2cf29012abedfad2aed7b02e59519d5",
+        "imageSha256": "50f64eb63cfe62b534988bda28baa4c575eb9d9a6dbc7a81035e7d95cd01cf89",
+        "summary": "The author updated the unit to Modwerk beta base 72defb09 from the site, then ran this exact package over USB, OS 1.40C, disposable project: a 90-second trial and Undo; a trial and Keep, then about a minute of playing; a power cycle; a 300-second trial of Play Modes 0.1.1 beside it; then removal. They reported the TRACK SOLO row and HOLD working, solo, join and leave, audio, lamps and release behaving, the row back at OFF after the power cycle, and with Play Modes the first gesture wins: TRACK plus UP or DOWN within half a second changes the Play Modes mode, a longer hold starts Track Solo instead. Read back from the device: empty after Undo, Track Solo installed after Keep and after the power cycle, only Track Solo after Play Modes rolled back, empty after removal, set identity back to the start.",
         "limitations": [
           "Author-reported panel observations with no audio measurement or timing.",
-          "One 300-second run on one unit, alone. The USB identity does not state the model; MKII comes from earlier records of this unit.",
-          "Not tested: other modules alongside, all eight anchors, external MIDI, arranger rows, Pickup recording, K09 orderings, self-test, Keep, power cycles, MKI, the card build."
+          "About ten minutes on one unit. The USB identity does not state the model; MKII comes from earlier records of this unit.",
+          "Not tested: other modules alongside except the Play Modes trial, all eight anchors, external MIDI, arranger rows, Pickup recording, the K09 orderings, self-test, MKI, the card build (Track Solo is USB-only)."
         ],
         "report": "TESTING.md"
       },

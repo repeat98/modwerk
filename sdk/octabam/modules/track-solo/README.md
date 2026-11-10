@@ -4,9 +4,10 @@ Version `0.2.4-experimental` · author `twwwy`.
 
 **Evidence:** 0.2.2 and 0.2.3 were tested by the author on a real Octatrack over
 USB on 6 November 2026: the setting, the hold, join and leave, audio, lamps and
-editing all worked, and the rollback was read back from the unit. 0.2.4 changes
-only the frame-end restore; its control and audio emulator suites passed. See
-[TESTING.md](TESTING.md).
+editing all worked, and the rollback was read back from the unit. 0.2.4 was then
+tested on 10 November on the current beta base through the full USB lifecycle:
+try and Undo, Keep and play, power cycle, beside Play Modes, removal. Its control
+and audio emulator suites passed too. See [TESTING.md](TESTING.md).
 
 ## Overview
 
@@ -49,6 +50,7 @@ The proposed shared PERSONALIZE table is not a dependency.
 
 ## Compatibility and limitations
 
+- With Play Modes, whichever TRACK gesture starts first wins. Both hold a TRACK key: press UP or DOWN within half a second to change a Play Modes mode; hold the TRACK key longer and Track Solo starts instead, and UP and DOWN no longer reach Play Modes until you let go. Tested on a unit with both installed.
 - USB only. Track Solo runs only on the Modwerk base, loaded over USB, on an Octatrack with OS 1.40C. Its key, tick and encoder events and its SEQUENCER row all come from the base, and card firmware has no base, so card firmware cannot include it: take it out of a set before building card firmware.
 - OS 1.40C. Functional hardware report on one unit recorded as MKII; MKI is
   untested. MIDI mode is excluded.
