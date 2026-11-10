@@ -7,7 +7,7 @@
   "category": "machines",
   "source": {
     "repository": "https://github.com/ex1010/modwerk",
-    "revision": "5b5aa328c1bbed129ab6b1a65efb9353b93ede8f",
+    "revision": "b4c69ecdfd62a1cb6b3d6a313191518c86bcd8ca",
     "path": "sdk/drafts/fract-machine"
   },
   "build": {
@@ -170,7 +170,7 @@
     "gates": [
       "modules/fract-machine/verify.py"
     ],
-    "evidenceRevision": "7bfced003145d8641792e91747f7f63ea5aac2e1"
+    "evidenceRevision": "b4c69ecdfd62a1cb6b3d6a313191518c86bcd8ca"
   },
   "license": {
     "spdx": "MIT AND GPL-3.0-or-later",
