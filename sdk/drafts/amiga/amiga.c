@@ -94,6 +94,14 @@ static inline int32_t lowpass(int32_t *ic, int32_t in)
 void amiga_blend(AmigaVoice *v, int32_t *a, unsigned n)
 {
     uint32_t at = v->grain + v->played;
+    if (!v->mix_len) { /* most frames: only remember (the frame interrupt pays for every instruction here) */
+        for (; n; --n, ++at, a += 2) {
+            int16_t *h = v->hist[at & (HIST - 1u)];
+            h[0] = (int16_t)(a[0] >> 16); h[1] = (int16_t)(a[1] >> 16);
+        }
+        if (at > v->hi) v->hi = at;
+        return;
+    }
     for (; n; --n, ++at, a += 2) {
         int16_t *h = v->hist[at & (HIST - 1u)];
         h[0] = (int16_t)(a[0] >> 16); h[1] = (int16_t)(a[1] >> 16);
@@ -176,6 +184,15 @@ void amiga_crunch(AmigaVoice *v, int32_t *a, unsigned n, uint32_t inc, unsigned 
     if (inc == ONE && bits >= 12 && !led) return;
     uint32_t mask = bits >= 12 ? 0xffffffffu : 0xffffffffu << (28u - bits);
     int32_t half = (int32_t)(~mask >> 1); /* round to nearest, not down */
+    if (inc == ONE && !led) { /* every sample kept: only the word */
+        if (!n) return;
+        for (; n; --n, a += 2) {
+            a[0] = (int32_t)((uint32_t)(a[0] > INT32_MAX - half ? a[0] : a[0] + half) & mask);
+            a[1] = (int32_t)((uint32_t)(a[1] > INT32_MAX - half ? a[1] : a[1] + half) & mask);
+        }
+        v->l = a[-2]; v->r = a[-1]; v->phase = ONE; v->count = 0; v->al = v->ar = 0;
+        return;
+    }
     uint32_t mac = led ? MAC_ENTER() : 0;
     if (v->phase > 2u * ONE || v->count > 16u) v->phase = ONE, v->count = 0, v->al = v->ar = 0; /* a state nobody set */
     int same = v->l == v->r; /* a mono sample pays for one channel of filter */

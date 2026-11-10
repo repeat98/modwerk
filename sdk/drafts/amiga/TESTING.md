@@ -61,4 +61,21 @@ Not tested.
 
 ## Performance
 
-Not measured. A render call adds up to three passes over at most a frame's source samples, and each cycle two divisions and one call of stock's START. The eight voices' memories take 66 KB of RAM (the loader allows a module 128 KiB; 16 KB a voice was refused on the unit as malformed).
+### In the emulator (10 November 2026, this commit's source; not a chip)
+
+`python3 -B bench.py --emulator <ot_emu> --main <the twin 9fb63bca's MAIN image> --output <folder>`: the engine compiled as the package is, called in ot_emu the way the render calls it, for 160 frames of a note of stereo noise (so the lowpass runs on both channels). Counted: the instructions between each engine function's entry and return, the module's own code only. Not counted: stock's reader and START, which the render also calls. Time is 9.44 ns an instruction, which prices a division or a multiply-accumulate like a move, so read it as a floor. A frame is 362.8 us.
+
+| One track | Mean instructions a frame | Worst | Worst time | Worst share of a frame |
+| --- | --- | --- | --- | --- |
+| Plain: STCH 100, RATE FULL, BITS 16 | 393 | 416 | 3.9 us | 1.1 % |
+| The defaults: 8 bits | 715 | 738 | 7.0 us | 1.9 % |
+| Stretched to 200, 8 bits | 1,288 | 1,594 | 15.0 us | 4.1 % |
+| An octave up at its own length, 8 bits | 2,068 | 2,922 | 27.6 us | 7.6 % |
+| The same with RATE 22168 and LED | 4,918 | 6,758 | 63.8 us | 17.6 % |
+| An octave up, STCH 200, CYL 100, RATE 31388, LED | 5,564 | 5,885 | 55.6 us | 15.3 % |
+
+Eight tracks at once, added up from these (not run): 15 % of a frame at the defaults, 61 % all an octave up and stretched, 141 % all with RATE and LED as well. The base's frame guard gives the frame interrupt 80 % and renders stock's silent source for a machine track that would overdraw it, so the last case would drop tracks, not freeze. A mono sample runs one channel of lowpass; that was not counted.
+
+### On the unit
+
+Not measured. The eight voices' memories take 66 KB of RAM (the loader allows a module 128 KiB; 16 KB a voice was refused on the unit as malformed).
