@@ -1,6 +1,7 @@
 // The Zoom MultiStomp's MIDI file commands (normal mode), as proven on the MS-70CDR 2.10 by the
 // ZoomMultistompZDL project (docs/EFFECT-INSTALL-PROTOCOL.md there; docs/ZOOM_MULTISTOMP.md here).
 // Pure functions only: the messages to send and how to read the replies. ZoomLink does the talking.
+import { CLASHING_EFFECT_IDS, LOCAL_IDS } from '../../catalog/zoom-effect-ids.ts'
 
 /** Device ids the pedals answer with in their identity reply. */
 export const ZOOM_MODELS: Record<number, string> = { 0x61: 'MS-70CDR', 0x58: 'MS-50G', 0x5f: 'MS-60B' }
@@ -144,10 +145,7 @@ export const validEffectName = (name: string) => /^[A-Z0-9_]{1,8}\.ZDL$/.test(na
  * MS-70CDR 2.10 ran, saved and recalled effects at 917, 1000 and 1023). Zoom's own effects are never offered for removal. */
 export const isAddedEffect = (effect?: { gid: number; fxid: number }) => !!effect && effect.gid === 8 && effect.fxid >= 403 && effect.fxid <= 1023
 
-/** Group 8 IDs no collection ships on (docs/ZDL_MODULE_CONTRACT.md): an effect whose ID is already taken on the pedal
- * is moved here when it is installed. The ID is only in the header (group at 0x3C and 0x43, ID at 0x40), with no
- * checksum over it, so moving it rebuilds nothing. */
-export const LOCAL_IDS = { gid: 8, first: 958, last: 1023 }
+export { CLASHING_EFFECT_IDS, LOCAL_IDS }
 export const isLocalId = (effect?: { gid: number; fxid: number }) => !!effect && effect.gid === LOCAL_IDS.gid && effect.fxid >= LOCAL_IDS.first && effect.fxid <= LOCAL_IDS.last
 
 /** The effect file with its ID changed; nothing else in it. */
@@ -172,10 +170,6 @@ export function localIdFor(name: string, taken: Set<number>, avoid: Set<number> 
   return undefined
 }
 
-/** Effect IDs two collections shipped for different effects. Swapping one for the other froze an MS-70CDR at boot
- * until its ROM was reprogrammed (repeat98/ZoomMultistompZDL issue 8), and a pedal can't say what it had before,
- * so neither is installed, even after both effects moved to new IDs. */
-export const CLASHING_EFFECT_IDS = [{ gid: 8, fxid: 409, files: 'Spool.ZDL and TEcho4.ZDL', moved: 'Spool is now 914 and TEcho4 946' }]
 
 /** Why an effect file can't be installed, or undefined when it can: the name, an effect header, an added effect, no known clash. */
 export function installRefusal(name: string, data: ArrayLike<number>): string | undefined {

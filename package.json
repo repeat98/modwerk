@@ -31,6 +31,7 @@
     "domain:check": "node scripts/domain-check.mjs",
     "deploy:pages": "npm run build && wrangler pages deploy",
     "machines:generate": "node scripts/machines.mjs --write",
+    "zdl:vendor": "node scripts/zdl-vendor.ts",
     "machines:check": "node scripts/machines.mjs",
     "elekloader:check": "node scripts/elekloader-vendor.ts",
     "elekloader:update": "node scripts/elekloader-update.ts",

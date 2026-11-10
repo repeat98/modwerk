@@ -1,0 +1,1 @@
+Octatrack base (beta): leaving USB DISK MODE no longer leaves the unit silent until a power cycle. The base took the pause stock makes in that mode for a stalled DSP and its recovery kept the audio stopped (finding 72).
