@@ -102,8 +102,9 @@
 #define KNOB_DEP 7
 
 // The LFO page key. Its press shows the LFO page (the page holder's key
-// handler, 0x400cc928, calls 0x400cbbd6 on a fresh press); a second press on
-// that page steps its pages on the release. The module replays a press it held
+// handler, 0x400cc928, calls 0x400cbbd6 on a fresh press). Stock has one LFO
+// page; a second press steps only to a page a module adds behind it through
+// core-ar2's page cycle (LFO RND), on the release. The module replays a press it held
 // back through Brain::key, past ev_key, as Control In Actions does.
 #define KEY_DISPATCH_AT 0x400a0336
 #define KEY_EVENT_CTOR_AT 0x40071e7c    // (event, key, flags, 0, 127)

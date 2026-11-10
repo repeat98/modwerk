@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
   "id": "quick-velocity-aftertouch-assign",
-  "name": "Quick Velocity+Aftertouch Assign",
+  "name": "Quick Mod Assign",
   "version": "0.2.0-experimental",
   "machine": "analog-rytm-mkii",
   "category": "system",
@@ -17,12 +17,12 @@
     "npp1993"
   ],
   "presentation": {
-    "label": "QUICK VELOCITY+AFTERTOUCH ASSIGN",
+    "label": "QUICK MOD ASSIGN",
     "family": "Performance",
-    "summary": "Link a parameter to velocity or aftertouch by holding FIX or SAMPLER and turning its knob.",
+    "summary": "Link a parameter to velocity, aftertouch or the LFO by holding FIX, SAMPLER or LFO and turning its knob.",
     "overview": "Hold FIX and turn any knob on a sound page: that parameter is linked to velocity, and the turn sets how much. Hold SAMPLER and turn to link it to aftertouch instead. While either key is held, every linked knob shows its amount the way stock shows a performance or scene lock. It fills stock's own four velocity and four aftertouch slots of the selected sound, so the links save with the kit, show in SOUND SETTINGS as usual and keep playing on a unit without the mod.",
     "highlights": [
-      "Velocity or aftertouch to any parameter in one gesture",
+      "Velocity, aftertouch or the LFO to any parameter in one gesture",
       "Stays on the page you are playing",
       "Uses stock's slots, saved with the kit"
     ],
@@ -125,8 +125,8 @@
     {
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
-      "caption": "Quick Velocity+Aftertouch Assign",
-      "alt": "FIX plus a knob turn fills the first of four velocity mod slots with +20; SAMPLER plus a knob turn fills the first of four aftertouch slots with +10. A knob press sets a link to 0, and the links save with the kit.",
+      "caption": "Quick Mod Assign",
+      "alt": "FIX plus a knob turn fills the first of four velocity mod slots with +20; SAMPLER plus a knob turn fills the first of four aftertouch slots with +10; LFO plus a knob turn makes SWT the LFO's destination with depth +12. A knob press sets a link to 0, and the links save with the kit.",
       "credit": "Nathaniel Pavel",
       "license": "GPL-3.0-or-later",
       "source": "Original conceptual illustration in the shared signal-art style; not a device screenshot."

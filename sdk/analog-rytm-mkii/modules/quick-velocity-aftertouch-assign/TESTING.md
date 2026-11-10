@@ -1,4 +1,4 @@
-# Quick Velocity+Aftertouch Assign testing
+# Quick Mod Assign testing
 
 The rytm-emu runs below were observed on the named build; the emulator is not hardware evidence. The unit results are the author's reports, labelled as reported.
 

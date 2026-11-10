@@ -1,13 +1,14 @@
-# Quick Velocity+Aftertouch Assign
+# Quick Mod Assign
 
 An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.1.0-experimental, OS 1.74 with core-ar2 0.7.
 
 ## Overview
 
-Linking velocity or aftertouch to a parameter on stock takes a trip through SOUND SETTINGS: FUNC + FLTR, down to VELOCITY MOD, YES, scroll a long list for the destination, turn the amount, then NO, NO back to the page. Quick Velocity+Aftertouch Assign does it from the page you are playing:
+Linking velocity or aftertouch to a parameter on stock takes a trip through SOUND SETTINGS: FUNC + FLTR, down to VELOCITY MOD, YES, scroll a long list for the destination, turn the amount, then NO, NO back to the page. Quick Mod Assign does it from the page you are playing:
 
 - **Hold FIX and turn a knob**: that parameter is linked to velocity, and the turn sets the amount.
 - **Hold SAMPLER and turn a knob**: the same for aftertouch.
+- **Hold LFO and turn a knob**: that parameter becomes the LFO's destination, and further turns set its depth (0.2.0, being tested).
 
 While either key is held, every knob already linked shows its amount the way stock shows a performance or scene lock (an inverted box with +n), since an amount is an offset as theirs are. Envelope graphics follow the amount as they do for a lock. The mod fills stock's own four velocity and four aftertouch slots of the selected sound, so the links save with the kit, show in SOUND SETTINGS as usual and keep playing on a unit without the mod.
 
