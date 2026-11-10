@@ -1,13 +1,22 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { DeviceImage } from '../devices/DeviceImage'
 import { zoomHubHref, type ZoomHubView } from '../devices/zoom-hub-route'
-import type { DeviceProfile } from '../devices/registry'
+import { deviceHref, type DeviceProfile } from '../devices/registry'
+import { ZOOM_EFFECTS, fetchZoomEffect, zoomSyncPlan, type ZoomEffect } from '../devices/zoom-effects'
+import type { Configuration } from '../config/workspace'
 import type { ZoomFile, ZoomLink } from '../engine/zoom/zoom-link'
-import { ZOOM_BASE, ZOOM_DEVICE_IDS, effectInfo, installRefusal, isAddedEffect, isUpdateMode } from '../engine/zoom/zoom-protocol'
+import { EFFECT_LIST, EFFECT_LIST_SIZE, ZOOM_BASE, ZOOM_DEVICE_IDS, canWriteFiles, effectInfo, installRefusal, isAddedEffect, isUpdateMode } from '../engine/zoom/zoom-protocol'
 import { useMobileWorkspace } from '../hooks/useMobileWorkspace'
 import { useZoomLink } from '../hooks/useZoomLink'
+import { avoidFor, rememberId } from '../engine/zoom/local-ids'
 import { Icon, type IconName } from './Icon'
 import { ZoomLoad } from './ZoomLoad'
+import { HubSetHead, HubSetList, type SetAction } from './HubSets'
+import { ModuleGrid } from './ModuleGrid'
+import { ZoomEffectPreview } from '../devices/ZoomEffectDetail'
+
+// A pedal set has no JSON backup yet (its format is still to come); the other actions work as on the Octatrack.
+const SET_ACTIONS: SetAction[] = ['rename', 'duplicate', 'share', 'delete']
 import './octatrack-link.css'
 import './zoom-hub.css'
 
@@ -24,43 +33,60 @@ export function ZoomSidebarStatus({ link, onInstall }: { link: ZoomLink; onInsta
   if (status !== 'ready' || identity?.deviceId !== 0x61 || identity.firmware === ZOOM_BASE.tag) return null
   return <button type="button" className="instrument-action" title={isUpdateMode(identity) ? 'In update mode: the base can go on now.' : 'Zoom’s firmware 2.10. Flash the base once over USB.'} onClick={onInstall}><span>Install the base</span><Icon name="arrow" size={14} /></button>
 }
+// What was last read from each link's pedal; `key` names the pedal it was read from.
+const pedalReads = new WeakMap<ZoomLink, { key: string; files: ZoomFile[]; free?: number }>()
 const kb = (bytes: number) => Math.round(bytes / 1024) + ' KB'
 const count = (n: number, one: string, many: string) => n + ' ' + (n === 1 ? one : many)
 const isCapture = (name: string) => /^(NAM|C)\d/i.test(name)
-// Local IDs this browser has given out, by file name: a stored patch may still point at one after its effect is
-// removed, so another effect never gets it. Lost with the browser's storage; then only the pedal's own IDs count.
-const LOCAL_ID_KEY = 'modwerk-zoom-local-ids'
-const givenIds = (): Record<string, string> => { try { return JSON.parse(localStorage.getItem(LOCAL_ID_KEY) || '{}') } catch { return {} } }
-const rememberId = (fxid: number, name: string) => { try { localStorage.setItem(LOCAL_ID_KEY, JSON.stringify({ ...givenIds(), [fxid]: name })) } catch { /* storage off: nothing to keep */ } }
 
 /**
- * Your Zoom pedal: the Octatrack page (OctatrackHub.tsx) for a Zoom MultiStomp, beta only. The pedal's own
+ * Your Zoom pedal: the Octatrack page (OctatrackHub.tsx) for a Zoom MultiStomp, open to everyone where the library lists
+ * its effects (the MS-70CDR, base install included) and beta on the other pedals (App.tsx). The pedal's own
  * pages on the leading side, the selected one on the trailing side, over the Web MIDI link (zoom-link.ts).
  * It identifies the pedal, lists what's on it, backs it up, and installs or removes added effect files (the link
  * refuses Zoom's own and known ID clashes). On the MS-70CDR it offers the base (`onInstall` opens ZoomBaseDialog), as the Octatrack's page does.
  * Status is the Octatrack's console: the base's load (ZoomLoad), the firmware, and the effects on the pedal, read by itself.
  */
-export function ZoomHub({ device, view, link, header, onInstall }: { device: DeviceProfile; view: ZoomHubView; link: ZoomLink | null; header?: ReactNode; onInstall?: () => void }) {
+/** `listed`: the library's effects for this pedal. */
+export function ZoomHub({ device, view, link, header, onInstall, sets, selectedId, onSelect, onNew, onSetAction, onToggle, listed = ZOOM_EFFECTS.filter(effect => effect.machine === device.id) }: {
+  device: DeviceProfile; view: ZoomHubView; link: ZoomLink | null; header?: ReactNode; onInstall?: () => void
+  /** The pedal's module sets beside its own pages, as on the Octatrack's: opening one makes it the set you edit, Sync brings the pedal to it. */
+  sets?: Configuration[]; selectedId?: string; onSelect?: (id: string) => void; onNew?: () => void; onSetAction?: (id: string, action: SetAction) => void
+  /** Takes an effect out of the open set, or keeps one the next sync would remove. */
+  onToggle?: (id: string) => void
+  listed?: readonly ZoomEffect[]
+}) {
   const mobile = useMobileWorkspace()
   const state = useZoomLink(link), { status, identity, notice, progress } = state
   const connected = status === 'ready' || status === 'reading' || status === 'writing', busy = status === 'reading' || status === 'writing' || status === 'connecting'
   const expected = ZOOM_DEVICE_IDS[device.id], other = connected && identity && expected !== undefined && identity.deviceId !== expected
   const model = identity?.model ?? device.name, updating = connected && isUpdateMode(identity)
+  const writable = canWriteFiles(identity), readOnly = writable ? undefined : 'Installing and removing effects is tested only on the MS-70CDR with Zoom’s firmware 2.10 or the base.'
   // The base answers the identity request with its tag; an MS-70CDR without it can have it installed.
   const canBase = device.id === 'zoom-ms-70cdr' && !!onInstall, onBase = connected && identity?.deviceId === 0x61 && identity.firmware === ZOOM_BASE.tag
   // What was read belongs to the pedal it was read from: gone when that pedal is.
   const pedalKey = connected && identity ? identity.deviceId + ':' + identity.firmware : ''
-  const [onPedal, setOnPedal] = useState<{ key: string; files: ZoomFile[]; free?: number }>()
+  // Kept with the link, so it outlives this page: coming back from the library or a set shows it at once.
+  const [, redraw] = useState(0), onPedal = link ? pedalReads.get(link) : undefined
   const files = onPedal && onPedal.key === pedalKey ? onPedal.files : undefined, free = files ? onPedal!.free : undefined
   const [backup, setBackup] = useState<{ url: string; name: string; files: number }>(), [error, setError] = useState<string>()
   useEffect(() => () => { if (backup) URL.revokeObjectURL(backup.url) }, [backup])
   // Work keeps going on the link after the page closes; its result is then dropped.
   const alive = useRef(true)
   useEffect(() => { alive.current = true; return () => { alive.current = false } }, [])
-  const run = (work: () => Promise<void>) => { setError(undefined); work().catch(e => { if (alive.current) setError((e as Error).message) }) }
-  const read = () => run(async () => { if (!link) return; const listed = await link.listFiles({ versions: true }), space = await link.freeSpace(); if (alive.current) setOnPedal({ key: pedalKey, files: listed, free: space }) })
+  // A failed change to the effect list still offers the list from before (the error's previousList) for saving, and
+  // one a failed rollback couldn't write back (`unrestored`) for writing again.
+  const run = (work: () => Promise<void>) => { setError(undefined); work().catch(e => { if (!alive.current) return; setError((e as Error).message); const { previousList, unrestored } = e as { previousList?: number[]; unrestored?: number[] }, list = keepList(previousList); if (list || unrestored) setChanged({ text: '', list, unrestored }) }) }
+  const readPedal = async (link: ZoomLink) => { const files = await link.listFiles({ versions: true }), free = await link.freeSpace(); pedalReads.set(link, { key: pedalKey, files, free }); if (alive.current) redraw(n => n + 1); return { files, free } }
+  const read = () => run(async () => { if (link) await readPedal(link) })
   // Installing and removing: confirm, offer the effect list from before for saving, then read again.
-  const [changed, setChanged] = useState<{ text: string; list?: { url: string; name: string } }>()
+  const [changed, setChanged] = useState<{ text: string; list?: { url: string; name: string }; unrestored?: number[] }>()
+  const restore = (list: number[]) => run(async () => {
+    if (!link) return
+    await link.restoreList(list)
+    if (alive.current) setChanged({ text: 'The effect list from before is back on the pedal.' })
+    await read()
+  })
   useEffect(() => () => { if (changed?.list) URL.revokeObjectURL(changed.list.url) }, [changed])
   const keepList = (list?: number[]) => list && { url: URL.createObjectURL(new Blob([Uint8Array.from(list)])), name: 'pedal-FLST_SEQ-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-') + '.ZDT' }
   const install = (file: File) => run(async () => {
@@ -69,23 +95,66 @@ export function ZoomHub({ device, view, link, header, onInstall }: { device: Dev
     if (refused) throw new Error(refused)
     const info = effectInfo(data)!
     if (!window.confirm('Install ' + name + ' (version ' + info.version + ', effect ID ' + info.gid + '/' + info.fxid + ', ' + kb(data.length) + ')? If another effect on the pedal has that ID, this one gets a free ID from 958 to 1023 instead. It is written, read back and added to the pedal’s effect list. Don’t touch the pedal or the cable until it’s done.')) return
-    const given = givenIds(), avoid = new Set(Object.keys(given).filter(id => given[id] !== name).map(Number))
-    const result = await link.installFile(name, data, { avoid }), moved = result.moved
+    const result = await link.installFile(name, data, { avoid: avoidFor(name) }), moved = result.moved
     if (moved) rememberId(moved.to, name)
     const done = result.unchanged ? name + ' is already this exact file.' : name + ' installed and read back identical. Power-cycle the pedal to load it.'
-    const where = !moved ? '' : 'clash' in moved ? ' ' + moved.clash + ' already has ID ' + info.gid + '/' + moved.from + ', so ' + name + ' is ' + info.gid + '/' + moved.to + ' on this pedal. Patches made elsewhere with ' + name + ' won’t find it here.' : ' It keeps ID ' + info.gid + '/' + moved.to + ', which it was given when it was installed, so your patches still find it.'
+    const where = !moved ? '' : 'clash' in moved ? ' ' + (moved.clash ? moved.clash + ' already has' : 'An effect removed from this pedal had') + ' ID ' + info.gid + '/' + moved.from + ', so ' + name + ' is ' + info.gid + '/' + moved.to + ' on this pedal. Patches made elsewhere with ' + name + ' won’t find it here.' : ' It keeps ID ' + info.gid + '/' + moved.to + ', which it was given when it was installed, so your patches still find it.'
     if (alive.current) setChanged({ text: done + where, list: keepList(result.previousList) })
+    await read()
+  })
+  // Sync: the pedal to the set, as the Octatrack's: the set's effects in, listed effects it dropped out; nothing else is touched.
+  const selected = sets?.find(item => item.id === selectedId) ?? sets?.[0]
+  const plan = selected && files ? zoomSyncPlan(listed, selected.moduleIds, files) : undefined
+  // installFile keeps 8 KB free when it writes a new file; removals go first.
+  const fitsIn = (plan?: { install: unknown[]; adds: number }, free?: number) => !plan?.install.length || free === undefined || free >= plan.adds + 8192, fits = fitsIn(plan, free)
+  const [syncing, setSyncing] = useState<{ what: string; step: number; steps: number }>()
+  // A set's LED: the pedal holds exactly its effects (current) and no other listed ones.
+  const holdsSet = (item: Configuration) => !!files && item.moduleIds.length > 0 && (({ install, remove }) => !install.length && !remove.length)(zoomSyncPlan(listed, item.moduleIds, files))
+  const names = (item: Pick<Configuration, 'moduleIds'>) => listed.filter(effect => item.moduleIds.includes(effect.id)).map(effect => effect.name).join(' · ')
+  const sync = () => run(async () => {
+    if (!link || !selected) return
+    // Plan from the pedal as it is now, not as it was last read.
+    const now = await readPedal(link), plan = zoomSyncPlan(listed, selected.moduleIds, now.files)
+    if (!plan.install.length && !plan.remove.length) return
+    if (!fitsIn(plan, now.free)) throw new Error('Not enough space on your ' + model + ' for this set.')
+    const names = (effects: readonly ZoomEffect[]) => effects.map(effect => effect.name).join(', ')
+    if (!window.confirm('Sync your set to the ' + model + '? ' + (plan.install.length ? 'Installs ' + names(plan.install) + '. ' : '') + (plan.remove.length ? 'Removes ' + names(plan.remove) + ', which your set no longer has. ' : '') + 'Every write is read back, and the effect list from before is kept. Don’t touch the pedal or the cable until it’s done.')) return
+    let previousList: number[] | undefined, step = 0, what = ''
+    const steps = plan.remove.length + plan.install.length, say = (next: string) => { what = next; step++; if (alive.current) setSyncing({ what, step, steps }) }
+    try {
+      for (const effect of plan.remove) {
+        say('Removing ' + effect.name)
+        const result = await link.removeFile(effect.platform.file)
+        rememberId(result.removed.fxid, effect.platform.file.toUpperCase())   // stored patches may still open that ID
+        previousList ??= result.previousList
+      }
+      for (const effect of plan.install) {
+        say('Installing ' + effect.name)
+        const file = effect.platform.file.toUpperCase(), result = await link.installFile(file, await fetchZoomEffect(effect), { avoid: avoidFor(file) })
+        if (result.moved) rememberId(result.moved.to, file)
+        previousList ??= result.previousList
+      }
+    } catch (error) {
+      // A failed step stops the sync and the steps before it stay done: say which, and offer the effect list from before the sync.
+      throw Object.assign(new Error(what + ' failed (step ' + step + ' of ' + steps + (step > 1 ? '; the steps before it are done' : '') + '). ' + (error as Error).message, { cause: error }), { previousList: previousList ?? (error as { previousList?: number[] }).previousList, unrestored: (error as { unrestored?: number[] }).unrestored })
+    } finally { if (alive.current) setSyncing(undefined) }
+    if (alive.current) setChanged({ text: 'Your ' + model + ' has your set. Power-cycle the pedal to load it.', list: keepList(previousList) })
     await read()
   })
   const uninstall = (file: ZoomFile) => run(async () => {
     if (!link || !window.confirm('Remove ' + file.name + ' from the pedal? Patches that use it will show an empty slot.')) return
     const result = await link.removeFile(file.name)
+    rememberId(result.removed.fxid, file.name.toUpperCase())   // stored patches may still open that ID
     if (alive.current) setChanged({ text: file.name + ' removed. Power-cycle the pedal.', list: keepList(result.previousList) })
     await read()
   })
-  // Status reads what's on the pedal by itself, once per pedal; Read again is in its cell.
-  const asked = useRef('')
-  useEffect(() => { if (view === 'status' && status === 'ready' && pedalKey && !updating && !other && asked.current !== pedalKey) { asked.current = pedalKey; read() } })
+  // Every view reads what's on the pedal by itself, once each time the pedal connects (a power cycle too); what was
+  // read before shows meanwhile, and the link remembers each effect's header, so a second read is short.
+  const asked = useRef(onPedal?.key ?? '')
+  useEffect(() => {
+    if (!pedalKey) asked.current = ''
+    else if (status === 'ready' && !updating && !other && asked.current !== pedalKey) { asked.current = pedalKey; read() }
+  })
   const save = () => run(async () => {
     if (!link) return
     const { files: count, zip } = await link.backup(), stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-')
@@ -102,7 +171,11 @@ export function ZoomHub({ device, view, link, header, onInstall }: { device: Dev
   const action = status === 'idle' ? <button className="button button-quiet" onClick={() => void link?.connect()}>Connect</button>
     : canBase && connected && !onBase && !other ? <button className="button button-primary" disabled={busy} onClick={onInstall}>Install base</button> : null
   const led = connected ? 'on' : busy ? 'load' : 'off'
-  const panel = (name: ZoomHubView, content: ReactNode) => <section key={name} className={'hub-view hub-view-' + name} hidden={view !== name} aria-label={VIEWS.find(item => item.view === name)!.title}>{content}</section>
+  const panel = (name: ZoomHubView, content: ReactNode) => <section key={name} className={'hub-view hub-view-' + name} hidden={view !== name} aria-label={name === 'set' ? selected?.name ?? 'Module set' : VIEWS.find(item => item.view === name)!.title}>{content}</section>
+  const note = changed && <p role="status" className="hub-cell-note">{changed.text}{changed.list && <> <a className="text-button" href={changed.list.url} download={changed.list.name}>Save the effect list from before</a></>}{changed.unrestored && <> <button type="button" className="text-button" disabled={busy || !writable} onClick={() => restore(changed.unrestored!)}>Write the effect list back</button></>}</p>
+  // An install or removal cut short can leave the effect list deleted or short; the pedal shouldn't be power-cycled then.
+  const listFile = files?.find(f => f.name.toUpperCase() === EFFECT_LIST)
+  const listAlert = files && listFile?.size !== EFFECT_LIST_SIZE && <p role="alert" className="hub-error">The pedal’s effect list ({EFFECT_LIST}) is {listFile ? listFile.size + ' bytes, not ' + EFFECT_LIST_SIZE : 'missing'}: an install or removal was cut short. Don’t power-cycle the pedal. {changed?.unrestored ? 'Write the effect list back here, or, failing that, run' : 'Run'} Zoom Effect Manager 2.3.3 with the pedal in update mode, which rewrites its whole effect file system.</p>
   const effects = files?.filter(f => /\.zdl$/i.test(f.name)) ?? [], captures = effects.filter(f => isCapture(f.name))
 
   if (mobile) return <div className="configuration-page">{header}<p>Connecting a Zoom pedal needs Chrome or Edge on a computer.</p></div>
@@ -122,6 +195,8 @@ export function ZoomHub({ device, view, link, header, onInstall }: { device: Dev
           <h2 className="hub-nav-label">{device.name}</h2>
           <ul className="hub-nav-list">{VIEWS.map(item => <li key={item.view}><a className="hub-nav-item" href={zoomHubHref(device.id, item.view)} aria-current={view === item.view ? 'page' : undefined}><Icon name={item.icon} size={16} /><span>{item.title}</span></a></li>)}</ul>
         </div>
+        {sets && onSelect && onNew && onSetAction && <HubSetList sets={sets} selected={selected} open={view === 'set'} contents={names} onSelect={onSelect} onNew={onNew} onSetAction={onSetAction} actions={SET_ACTIONS}
+          state={item => { const on = connected && holdsSet(item); return { on, label: on ? 'On your ' + model : undefined } }} />}
       </nav>
       <div className="hub-pane">
         {panel('status', <div className="hub-console">
@@ -138,11 +213,11 @@ export function ZoomHub({ device, view, link, header, onInstall }: { device: Dev
           <section className="hub-cell hub-cell-unit" aria-labelledby="zoom-onit-title">
             <div className="hub-cell-head"><h3 id="zoom-onit-title">On your pedal{files && <> · {effects.length}</>}</h3>
               {files && <span><button type="button" className="text-button" disabled={busy} onClick={read}>Read again</button>
-                <label className={'text-button zoom-pick' + (busy ? ' is-disabled' : '')}><input type="file" accept=".zdl,.ZDL" hidden disabled={busy} onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) install(file) }} />Install a .ZDL</label></span>}</div>
+                <label className={'text-button zoom-pick' + (busy || !writable ? ' is-disabled' : '')} title={readOnly}><input type="file" accept=".zdl,.ZDL" hidden disabled={busy || !writable} onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; if (file) install(file) }} />Install a .ZDL</label></span>}</div>
             {error && <p role="alert" className="hub-error">{error}</p>}
-            {changed && <p role="status" className="hub-cell-note">{changed.text}{changed.list && <> <a className="text-button" href={changed.list.url} download={changed.list.name}>Save the effect list from before</a></>}</p>}
+            {listAlert}{note}
             {files ? <>
-              <ul className="hub-unit-modules zoom-files">{effects.map(f => <li key={f.name}><span className="unit-led is-on" aria-hidden="true" /><strong>{f.name}</strong><small>{f.effect?.version ?? ''} · {kb(f.size)}{isAddedEffect(f.effect) && <button type="button" className="text-button" disabled={busy} onClick={() => uninstall(f)}>Remove</button>}</small></li>)}</ul>
+              <ul className="hub-unit-modules zoom-files">{effects.map(f => <li key={f.name}><span className="unit-led is-on" aria-hidden="true" /><strong>{f.name}</strong><small>{f.effect?.version ?? ''} · {kb(f.size)}{isAddedEffect(f.effect) && <button type="button" className="text-button" disabled={busy || !writable} title={readOnly} onClick={() => uninstall(f)}>Remove</button>}</small></li>)}</ul>
               <p className="hub-cell-note">{count(effects.length - captures.length, 'effect', 'effects')}{captures.length ? <> · {count(captures.length, 'capture or cab', 'captures and cabs')}</> : null}{free !== undefined && <> · {kb(free)} free</>}. <strong>Two added effects must never share an effect ID</strong>: swapping one for another with the same ID has frozen a pedal at boot, and recovering it needed a ROM programmer. Installing refuses the IDs it knows about but can’t see what the pedal had before, so back up all files first.</p>
             </> : <p className="hub-empty">{!connected ? 'Connect your pedal to see what’s on it.' : updating ? 'Plug it in normally to see its files.' : other ? '' : busy ? 'Reading what’s on it…' : 'Not read yet.'}</p>}
             {connected && !files && !updating && !other && !busy && <button type="button" className="text-button" onClick={read}>Read the pedal</button>}
@@ -185,6 +260,22 @@ export function ZoomHub({ device, view, link, header, onInstall }: { device: Dev
             <p><strong>In use by another app:</strong> close Zoom Effect Manager and other editors, then connect again.</p>
           </section>
         </>)}
+        {sets && panel('set', selected ? <>
+          <HubSetHead set={selected} kicker={'Module set · ' + count(selected.moduleIds.length, 'effect', 'effects')} onSetAction={onSetAction!} actions={SET_ACTIONS} />
+          <div className="hub-sync" role="group" aria-label="Module set sync">
+            <p>{!connected ? 'Connect your pedal to sync this set.' : updating ? 'The pedal is in update mode: plug it in normally to sync this set.'
+              : !plan ? busy ? 'Reading what’s on your pedal…' : <>Read the pedal to see what a sync does. <button type="button" className="text-button" onClick={read}>Read the pedal</button></>
+              : syncing ? <><strong>{syncing.what} · {syncing.step} of {syncing.steps}</strong>{progress && <> · {progress.label}{progress.total ? <> {progress.done} of {progress.total}</> : '…'}</>}<br />Don’t unplug or touch the pedal until it’s done.</>
+              : plan.install.length || plan.remove.length ? <>Installs {plan.install.length} · Removes {plan.remove.length}{free !== undefined && <> · {plan.adds > 0 && <>needs {Math.ceil(plan.adds / 1024)} KB of </>}{kb(free)} free</>}{!fits && <><br />Not enough space on your {model}: take effects out of the set, or remove effects you added by hand.</>}</>
+              : selected.moduleIds.length ? <span className="hub-insync"><span className="unit-led is-on" aria-hidden="true" />Already on your {model}{free !== undefined && <> · {kb(free)} free</>}</span> : 'No effects in this set.'}</p>
+            <button type="button" className="button button-primary" disabled={!plan || busy || !writable || !fits || (!plan.install.length && !plan.remove.length)} title={readOnly} onClick={sync}><Icon name="download" size={16} />Sync to {model}</button>
+          </div>
+          {error && <p role="alert" className="hub-error">{error}</p>}
+          {listAlert}{note}
+          <ModuleGrid ids={selected.moduleIds} inventory={plan && { moduleIds: [...plan.keep, ...plan.remove].map(effect => effect.id), removedStockFx: [] }} describe={id => listed.find(effect => effect.id === id)?.presentation.summary ?? ''}
+            module={id => { const effect = listed.find(item => item.id === id); return effect && { name: effect.name, preview: <ZoomEffectPreview effect={effect} compact />, href: deviceHref(effect.machine, 'module/' + effect.id) } }}
+            onRemove={id => onToggle?.(id)} onKeep={id => onToggle?.(id)} add={{ href: deviceHref(device.id), label: 'Add effects' }} />
+        </> : <div className="hub-empty-set"><h2 className="hub-view-title">No module sets yet</h2><p>Start one, then add effects from the library.</p><button type="button" className="button button-primary" onClick={onNew}><Icon name="plus" size={16} />New module set</button></div>)}
       </div>
     </div>
   </div>

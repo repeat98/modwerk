@@ -3,7 +3,7 @@ import { act, createElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { OctatrackLoad } from './OctatrackLoad'
-import { recordLoad } from '../hooks/useOctatrackLoad'
+import { DSP_STOPPED, FROZEN_READINGS, LOAD_INTERVAL, recordLoad } from '../hooks/useOctatrackLoad'
 import { loadPath } from '../config/octatrack-load'
 import type { LinkState, OctatrackLink } from '../engine/elekloader/octatrack-link'
 import type { LoadReading } from '../engine/elekloader/upload-wire'
@@ -12,12 +12,12 @@ const reading = (ticks = 120): LoadReading => ({ ticks, frames: ticks * 50, cpu:
 let container: HTMLDivElement, root: ReturnType<typeof createRoot>, stops: (() => void)[] = []
 beforeEach(() => { vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true); vi.useFakeTimers(); vi.setSystemTime(0); stops = []; container = document.createElement('div'); document.body.append(container); root = createRoot(container) })
 afterEach(async () => { stops.forEach(stop => stop()); await act(() => root.unmount()); container.remove(); vi.useRealTimers(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
-function device(implementation: () => Promise<LoadReading | undefined> = async () => reading()) {
-  const load = vi.fn(implementation)
+function device(implementation: () => Promise<LoadReading | undefined> = async () => reading(), log: () => Promise<unknown> = async () => undefined) {
+  const load = vi.fn(implementation), deviceLog = vi.fn(log)
   let state: LinkState = { status: 'ready', identity: { base: 'a'.repeat(64), canSubmit: true, model: 'OT' } }
   const listeners = new Set<() => void>()
-  const link = { liveLoad: load, start: () => () => {}, getState: () => state, subscribe: (fn: () => void) => { listeners.add(fn); return () => listeners.delete(fn) } } as unknown as OctatrackLink
-  return { link, load, update(next: LinkState) { state = next; for (const listener of listeners) listener() } }
+  const link = { liveLoad: load, deviceLog, start: () => () => {}, getState: () => state, subscribe: (fn: () => void) => { listeners.add(fn); return () => listeners.delete(fn) } } as unknown as OctatrackLink
+  return { link, load, deviceLog, update(next: LinkState) { state = next; for (const listener of listeners) listener() } }
 }
 const record = (link: OctatrackLink) => act(() => { stops.push(recordLoad(link)) })
 const render = async (link: OctatrackLink | null, active = true) => { if (link && !stops.length) await record(link); await act(() => root.render(createElement(OctatrackLoad, { link, active }))) }
@@ -81,4 +81,21 @@ it('shows one line instead of empty meters while no unit is connected', async ()
   expect(unit.load).not.toHaveBeenCalled()
   expect(container.textContent).toContain('Connect your Octatrack over USB')
   expect(container.querySelectorAll('.load-meter strong')).toHaveLength(3); expect(container.querySelector('svg')).toBeNull()
+})
+it('reads the unit’s stall record once readings stay frozen, and asks for a power cycle only when its DSP stopped', async () => {
+  const stalled = { stallSeen: 1, stall: { count: 2, reason: 1, ticks: 0, report: [] } }
+  const frozen = async (log: () => Promise<unknown>) => {
+    const unit = device(async () => reading(7), log); await render(unit.link)
+    await act(() => vi.advanceTimersByTimeAsync(LOAD_INTERVAL * FROZEN_READINGS - 1)); expect(unit.deviceLog).not.toHaveBeenCalled()
+    await act(() => vi.advanceTimersByTimeAsync(1)); expect(unit.deviceLog).toHaveBeenCalledTimes(1)
+    const text = container.textContent!; stops.pop()!(); return { unit, text }
+  }
+  // An earlier start's stall, or another tab holding the unit, is no reason; a stall since this start or a failed transfer is.
+  expect((await frozen(async () => ({ ...stalled, stallSeen: 2 }))).text).not.toContain(DSP_STOPPED)
+  expect((await frozen(() => Promise.reject(new Error('busy')))).text).not.toContain(DSP_STOPPED)
+  expect((await frozen(() => Promise.reject(new Error('busy', { cause: new Error('transfer') })))).text).toContain(DSP_STOPPED)
+  const { unit, text } = await frozen(async () => stalled)
+  expect(text).toContain(DSP_STOPPED)
+  // The next poll (the unit back after its power cycle) starts without it.
+  await record(unit.link); expect(container.textContent).not.toContain(DSP_STOPPED)
 })

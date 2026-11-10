@@ -3,7 +3,7 @@ import { api, post } from './api'
 import { useCommunity } from './context'
 
 export type BoardClaim = { id: string; kind: 'module' | 'hook' | 'migration' | 'dsp-region' | 'machine-id'; key: string; holder: string; branch: string | null; pullRequest: number | null; note: string; createdAt: string; expiresAt: string | null; releasedAt?: string; releasedReason?: string }
-export type BoardThread = { id: string; kind: 'question' | 'finding'; topic: { kind: BoardClaim['kind'] | 'machine'; key: string }; author: string; to: string | null; body: string; pullRequest: number | null; createdAt: string; endsAt?: string; replies: { id: string; author: string; body: string; createdAt: string }[] }
+export type BoardThread = { id: string; kind: 'question' | 'finding' | 'wanted'; topic: { kind: BoardClaim['kind'] | 'machine' | 'site'; key: string }; author: string; to: string | null; body: string; pullRequest: number | null; createdAt: string; endsAt?: string; replies: { id: string; author: string; body: string; createdAt: string }[] }
 export type BoardActivity = { days: number; developers: { signedIn: number; active: number }; claims: { active: number; made: number }; questions: { open: number }; findings: { active: number }; posts: number }
 const KIND = { module: 'Module', hook: 'Hook or table', migration: 'Migration', 'dsp-region': 'DSP region', 'machine-id': 'Machine id', machine: 'Machine' } as const
 const ENDED = { holder: 'released', administrator: 'released by an administrator', merged: 'merged', closed: 'pull request closed', expired: 'lapsed', suspended: 'account suspended' } as Record<string, string>
@@ -56,10 +56,10 @@ export function AgentBoard({ repository }: { repository: string }) {
       <h3 className="agent-board-subtitle">Questions and findings</h3>
       <ul className="agent-board-list agent-board-threads">
         {threads.map(thread => <li key={thread.id}>
-          <div className="agent-board-claim"><span className="agent-board-kind">{thread.kind === 'question' ? 'Question' : 'Finding'}</span><strong>{thread.topic.key}</strong></div>
+          <div className="agent-board-claim"><span className="agent-board-kind">{{ question: 'Question', finding: 'Finding', wanted: 'Wanted' }[thread.kind]}</span><strong>{thread.topic.key}</strong></div>
           <div className="agent-board-meta">
-            <span>@{thread.author}{thread.to && ' to @' + thread.to}</span>
-            {thread.pullRequest ? <span>folds into a guide in {pull(thread.pullRequest)}</span> : thread.endsAt && <span>open until {day(thread.endsAt)}</span>}
+            <span>@{thread.author}{thread.to && (thread.kind === 'wanted' ? ' taken by @' : ' to @') + thread.to}</span>
+            {thread.pullRequest ? <span>{thread.kind === 'finding' ? 'folds into a guide in' : 'ends with'} {pull(thread.pullRequest)}</span> : thread.endsAt && <span>open until {day(thread.endsAt)}</span>}
             {session.admin && <button type="button" className="text-button" onClick={() => void act('Close this ' + thread.kind + ' by @' + thread.author + '?', '/agent-board/messages/' + thread.id + '/close', 'POST', 'The thread could not be closed.')}>Close</button>}
             {session.admin && <button type="button" className="text-button" onClick={() => void act('Delete this ' + thread.kind + ' by @' + thread.author + ' and its replies?', '/agent-board/messages/' + thread.id, 'DELETE', 'The thread could not be deleted.')}>Delete</button>}
           </div>

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "spectrum",
+  "moduleVersion": "0.2.0",
+  "imageSha256": "c4b79a0c1c28f5e23dd186884399a38c30a2da1b9e64efe6f4c09d4b501f6edb",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/spectrum-screen.png",
+      "sha256": "02302942c5ed680491392771dc00002e72e8a83e5af9753f191b54780c0410a8",
+      "plan": "python3 src/custom/common/zvis_host.py src/custom/spectrum <out> --signal pluck --seconds 2 --frames 2 (ZoomMultistompZDL at 32f3d68), frame 1"
+    }
+  ]
+}

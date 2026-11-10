@@ -4,15 +4,39 @@ import { readBetaStartup, BETA_STARTUP_ACTIVE_ADDRESS } from './beta-startup.ts'
 import { readRequestedObject, requestedFacts, selectedRequestedGroups, requestedObjectSelected, requestedObjectDram } from './requested-modules.ts'
 import { resolveSelection } from '../catalog/modules.ts'
 import { readColdFirePackage, PLATFORM_UNITS } from './coldfire-package.ts'
-import { linkColdFireRuntime, runtimeCatalogObject } from './coldfire-link.ts'
+import { linkColdFireRuntime, runtimeCatalogObject, type CfLinkInput } from './coldfire-link.ts'
 import { createDynamicRuntimeCatalog } from './runtime-catalog.ts'
 import type { StockDspCore } from './stock-dsp.ts'
 import { readUsbAudioObjects } from './usb-audio.ts'
 import { USB_AUDIO_MODULE, type UsbAudioConfiguration } from '../config/usb-audio.ts'
 // Native arena.BASE. All accepted selections reserve the platform at its bottom.
 export const PLATFORM_RUNTIME_BASE = 0x40a955e0
-/** Loader-free runtime with the core logger in every configuration. */
-export async function createStaticColdFireRuntime(ids: readonly string[], original?: Uint8Array, base = PLATFORM_RUNTIME_BASE, usbAudio?: UsbAudioConfiguration, betaAccess = false, startupRomAddress = BETA_STARTUP_ACTIVE_ADDRESS - 76) {
+/** The references DRAM units make that no unit and no platform symbol or region defines (weak ones included), sorted.
+ *  They resolve from the ROM units' global symbols, as a ROM unit's do natively (build_bus.py, _dram_rom_externals). */
+export function romReferences(units: readonly CfLinkInput[], externals: ReadonlyMap<string, number>) {
+  const wanted = new Set<string>(), defined = new Set<string>()
+  for (const { object } of units) for (const symbol of object.symbols) {
+    if (!symbol.name || (symbol.binding !== 1 && symbol.binding !== 2)) continue
+    if (symbol.section === 0) wanted.add(symbol.name)
+    else defined.add(symbol.name)
+  }
+  return [...wanted].filter(name => !defined.has(name) && !externals.has(name)).sort()
+}
+/** Adds to `externals` what each open reference resolves to: the ROM unit's symbol, or with 'provisional' the base for a
+ *  strong reference (a weak one stays 0 until the ROM symbols are known). Returns every open reference. */
+export function resolveRomReferences(units: readonly CfLinkInput[], externals: Map<string, number>, rom: ReadonlyMap<string, number> | 'provisional' | null, base: number) {
+  const refs = romReferences(units, externals)
+  for (const name of refs) {
+    const strong = units.some(unit => unit.object.symbols.some(symbol => symbol.name === name && symbol.section === 0 && symbol.binding === 1))
+    if (rom === 'provisional') { if (strong) externals.set(name, base) }
+    else if (rom?.has(name)) externals.set(name, rom.get(name)!)
+  }
+  return refs
+}
+/** Loader-free runtime with the core logger in every configuration. `rom`: the ROM units' global symbols, once the menus
+ *  have placed them (composeModuleMenus' romSymbols), or 'provisional' to link before that with each reference a DRAM unit
+ *  leaves open held at the base; the layout is the same either way, since only relocated values change. */
+export async function createStaticColdFireRuntime(ids: readonly string[], original?: Uint8Array, base = PLATFORM_RUNTIME_BASE, usbAudio?: UsbAudioConfiguration, betaAccess = false, startupRomAddress = BETA_STARTUP_ACTIVE_ADDRESS - 76, rom: ReadonlyMap<string, number> | 'provisional' | null = null) {
   const units = []
   const selected = selectedRequestedGroups(ids)
   for (const module of resolveSelection(ids)) {
@@ -35,6 +59,7 @@ export async function createStaticColdFireRuntime(ids: readonly string[], origin
     if (externals.has(region.symbol)) throw new Error('A DRAM region shadows a platform symbol.')
     externals.set(region.symbol, region.address)
   }
+  const romRefs = resolveRomReferences(units, externals, rom, base)
   const link = linkColdFireRuntime(units, base, externals)
   for (const unit of units) if (requestedFacts.objects.some(p => p.label === unit.label) || (usbAudio && unit.label === 'usbmidi_rx')) {
     for (const symbol of unit.object.symbols) {
@@ -47,7 +72,7 @@ export async function createStaticColdFireRuntime(ids: readonly string[], origin
       } else link.symbols.set(unit.label + '::' + symbol.name, placement.address + symbol.value)
     }
   }
-  return { ...link, base, reserveBytes, regions, units: units.map(unit => unit.label) }
+  return { ...link, base, reserveBytes, regions, units: units.map(unit => unit.label), romRefs }
 }
 export async function createColdFireRuntime(cores: readonly StockDspCore[], ids: readonly string[], betaAccess = false) {
   const selection = resolveSelection(ids), catalog = await createDynamicRuntimeCatalog(cores, ids, 0)
