@@ -1,0 +1,13 @@
+{
+  "kind": "owner-approved-update",
+  "id": "track-solo",
+  "version": "0.2.4-experimental",
+  "approvedBy": "repeat98",
+  "approvedOn": "2026-11-10",
+  "ownerStatement": "I'll add the approval record for the waived benchmark and stress rows once the points below are in, since it pins the source hash. (https://github.com/repeat98/modwerk/pull/1383#issuecomment-6763276021)",
+  "reason": "First release, USB only. No MIDI path, so no cfmeter benchmark or flood was run. Cycles were counted in the Octatrack emulator and labelled as such: worst event 677 of the module's instructions, about 1,687 of 9,577 cycles. The author's MKII ran this exact package (50f64eb6) on beta base 72defb09: try and Undo, Keep with a minute of play, power cycle, removal. Hardware timing is not claimed verified. Limits are in TESTING.md and compatibility.limitations.",
+  "sourceSha256": "f37562d53f0f901e09cca4d42d1a73730dfc92caa2563298dc960f45eb37f2cc",
+  "waived": [
+    "current-build-hardware"
+  ]
+}
