@@ -1,0 +1,1 @@
+The module doctor now treats a package marked `usbOnly` like a C runtime module: no card packages, native comparison or card pairs are asked of it, as the card build and the native comparison test already did.
