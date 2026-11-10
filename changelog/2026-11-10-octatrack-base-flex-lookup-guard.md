@@ -1,0 +1,1 @@
+Octatrack base (beta): tracks with module machines cost the CPU a little less, and a machine track that the frame guard silenced after one slow moment comes back within half a second instead of staying quiet. When the CPU runs out, the guard now drops the most expensive machine track, not the first one in track order.
