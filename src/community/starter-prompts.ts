@@ -1,6 +1,6 @@
 /** Copyable prompts that start a coding agent on a new module in a contributor's fork. */
 import { INSTRUMENT_STEPS } from './developer-guidance'
-import { DEVICES, DEVICES_BY_ID, deviceTitle, type DeviceProfile } from '../devices/registry'
+import { DEVICES, DEVICES_BY_ID, deviceTitle, isZd2Pedal, type DeviceProfile } from '../devices/registry'
 
 export type StarterMachine = DeviceProfile['id']
 
@@ -74,13 +74,21 @@ function analogStarters(example: Partial<Record<string, string>>): Starter[] {
 const RYTM = analogStarters({ workflow: 'Loop Sync, Filter Hz' })
 const FOUR = analogStarters({})
 
+// Zoom pedals with the zdl platform: an effect file built in ZoomMultistompZDL and released on GitHub (docs/ZDL_MODULE_CONTRACT.md).
+const ZOOM: Starter[] = [
+  { id: 'effect', title: 'An effect', summary: 'A delay, reverb, modulation, looper or any audio effect for the pedal.', guides: ['effects.md'], example: 'MS-70CDR: Loop',
+    task: 'Build a Zoom effect (.ZDL): {idea}\nWrite and build it in ZoomMultistompZDL with the linker\'s own runtime, stay inside the patch DSP, file and control budgets, and say what it costs.' },
+  { id: 'port', title: 'List a released effect', summary: 'Bring an effect released on GitHub to Modwerk with its author\'s credit.', guides: ['effects.md'], port: true, example: '',
+    task: 'List this released Zoom effect on Modwerk: {idea}\nIt must be built with the linker\'s own runtime, with no stock Zoom code; pin its GitHub release in platform.binary, keep the author\'s credit and licence, and vendor it with npm run zdl:vendor.' },
+]
+
 const INTEGRATION: Starter[] = [{
   id: 'integration', title: 'Instrument integration', summary: 'Research and qualify SDK/builder support before writing a module.', guides: [], example: '',
   task: 'Research and prepare Modwerk support for this instrument: {idea}',
 }]
 
 export function startersFor(machine: StarterMachine) {
-  return machine === 'octatrack' ? OCTATRACK : machine === 'analog-rytm-mkii' ? RYTM : machine === 'analog-four-mkii' ? FOUR : DEVICES_BY_ID[machine]?.sdk ? DIGI : INTEGRATION
+  return machine === 'octatrack' ? OCTATRACK : machine === 'analog-rytm-mkii' ? RYTM : machine === 'analog-four-mkii' ? FOUR : DEVICES_BY_ID[machine]?.sdk ? (DEVICES_BY_ID[machine].family === 'zoom' ? ZOOM : DIGI) : INTEGRATION
 }
 
 const REPOSITORY = 'https://github.com/repeat98/modwerk'
@@ -117,12 +125,48 @@ const PORT_PLACEHOLDER = '<name the module and link its source>'
 /** The shared guides every module skill reads; prompts add only the files for their starter. */
 const GENERAL_READING = ['AGENTS.md', 'docs/DEVELOPER_WORKFLOW.md', 'docs/ADD_A_MODULE.md', 'docs/module-guides/README.md']
 
+/** The Zoom ZDL pedals' own reading: where the work stands and the module contract. */
+const ZOOM_READING = ['docs/ZOOM_MULTISTOMP.md', 'docs/ZDL_MODULE_CONTRACT.md']
+/** The ZD2 pedals' own reading: their research report, which says what of the ZDL work does not carry over. */
+const ZD2_READING = ['docs/ZOOM_ZD2.md']
+
 /** The files a module starter needs read, relative to the repository root. */
 export function starterReading(machine: StarterMachine, starter: Starter) {
   const files = [...GENERAL_READING, ...starter.guides.map(guide => 'docs/module-guides/' + guide)]
+  const zdl = DEVICES_BY_ID[machine]?.family === 'zoom' && !isZd2Pedal(DEVICES_BY_ID[machine])
   return machine === 'octatrack' ? [...files, 'sdk/octabam/AGENTS.md'] : DEVICES_BY_ID[machine]?.sdk
-    ? [...files, DEVICES_BY_ID[machine].sdk!]
-    : [...files, 'docs/ADD_A_MACHINE.md', 'sdk/machines/README.md', 'sdk/machines/' + machine + '/machine.json']
+    ? [...files, ...(zdl ? ZOOM_READING : []), DEVICES_BY_ID[machine].sdk!]
+    : [...files, 'docs/ADD_A_MACHINE.md', 'sdk/machines/README.md', ...(DEVICES_BY_ID[machine]?.family === 'zoom' ? isZd2Pedal(DEVICES_BY_ID[machine]) ? ZD2_READING : ZOOM_READING : []), 'sdk/machines/' + machine + '/machine.json']
+}
+
+/** The pedals MIDISTOMP, the Zoom base, runs on; the G1on series has none yet. */
+const MIDISTOMP_PEDALS: StarterMachine[] = ['zoom-ms-70cdr', 'zoom-ms-50g', 'zoom-ms-60b']
+
+/** Zoom pedals take effect files on their own firmware, so the Elektron road (OS rebuild, boot, core) does not apply; this says what does. */
+function zoomGuidance(machine: StarterMachine) {
+  if (isZd2Pedal(DEVICES_BY_ID[machine])) return zd2Guidance()
+  return [
+    DEVICES_BY_ID[machine]?.sdk
+      ? 'Where the Zoom work stands: the `zdl` module contract is in force here. Follow "Create an effect" in ' + DEVICES_BY_ID[machine].sdk + ' (build with the own runtime, check, try on my pedal, release, list). Open steps: docs/ZOOM_MULTISTOMP.md#plan.'
+      : 'Where the Zoom work stands: the MS-70CDR has the whole stack (its pedal page backs up, installs and removes effects over USB, syncs module sets and flashes the MIDISTOMP base; its effects are in the library under the `zdl` module contract, docs/ZDL_MODULE_CONTRACT.md). This pedal comes up the same road, one step per pull request with evidence from this pedal, in docs/ZOOM_MULTISTOMP.md#another-zdl-pedal; its beta pedal page only reads it so far. Pick up its next open step rather than a parallel one, and check the agent board and open pull requests first.',
+    MIDISTOMP_PEDALS.includes(machine)
+      ? 'The base is Luca Matturro\'s MIDISTOMP (MIT), pinned in sdk/imports/ (DSP limit 300, parallel routing, a shared transport). Building it needs the stock updater on my computer, never in the repository or CI; effects also run without it.' + (machine === 'zoom-ms-70cdr' ? '' : ' Its releases are built from the MS-70CDR\'s OS, so never flash one onto this pedal (the modding guidelines allow no firmware flips): this pedal\'s base is MIDISTOMP built from its own updater.')
+      : 'MIDISTOMP, the base of the MultiStomp pedals, does not run on this pedal, so its effects install on the stock firmware.',
+    'Anything Modwerk lists carries no stock Zoom code: build with the linker\'s own runtime (ZDL_OWN_RUNTIME=1), never its stock knob handlers, check the file with build/check_no_stock.py there, and graft nothing onto and build nothing from a stock effect.',
+    // With an SDK the pedal's guide covers trying an effect on the pedal and recovery.
+    ...DEVICES_BY_ID[machine]?.sdk ? [] : ['Test on my own pedal over USB through the pedal page and its link (src/engine/zoom/); Zoom Effect Manager stays the fallback install. Every write is persistent, so back the pedal up first and keep the recovery from its profile at hand.'],
+    'For fast iteration without a pedal, use Ziddle (https://berbasoft.com/ziddle/), Berbasoft\'s Rust emulator and CLI for Zoom pedals. It is a developer tool: its results are never hardware evidence, and the site never offers it to musicians.',
+    'The Plus and Four pedals (MS-70CDR+, G1 FOUR and others) load ZD2 effects and are not covered here.',
+  ]
+}
+
+/** The ZD2 pedals (docs/ZOOM_ZD2.md): effect files on the stock firmware, but none of the ZDL family's pedal page, base or contract. */
+function zd2Guidance() {
+  return [
+    'Where the ZD2 work stands: this pedal loads .ZD2 effects, not the ZDL family\'s .ZDL files, so the pedal page, its link, MIDISTOMP and the proposed `zdl` module contract do not apply. docs/ZOOM_ZD2.md separates hardware results, firmware readings and unknowns and ends with the open steps; pick up the next one rather than starting a parallel one, and check the agent board and open pull requests first.',
+    'Anything Modwerk lists carries no stock Zoom code: no effect grafted onto, patched into or built from a stock one, and no knob handlers taken from a stock effect. Build on the clean-room route the report describes (Stomphacks\' pipeline plus one header change), which runs on this pedal.',
+    'Install over USB MIDI with the pedal\'s own file commands (zoom-zt2); Zoom\'s Guitar Lab stays the fallback. Every write is persistent: back the pedal up first, keep autosave off, keep custom effects out of saved patches and keep the recovery from its profile at hand.',
+  ]
 }
 
 export function starterPrompt(machine: StarterMachine, starter: Starter, idea = '', login = '', repository = REPOSITORY) {
@@ -134,14 +178,16 @@ export function starterPrompt(machine: StarterMachine, starter: Starter, idea = 
   const reading = starterReading(machine, starter).filter(file => !GENERAL_READING.includes(file)).map(file => '- ' + file + (file === 'sdk/octabam/AGENTS.md' ? ' (the DSP and ColdFire traps)' : file === DEVICES_BY_ID[machine]?.sdk ? ' (its Modwerk stack section first)' : ''))
   const scaffold = machine === 'octatrack' ? 'npm run module:new -- <id> --kind dsp|coldfire --author ' + author : 'npm run module:new -- <id> --machine ' + machine + ' --author ' + author
   const create = starter.port ? 'Create the module folder as the guide describes for a port.' : 'When you scaffold it, use `' + scaffold + '`.'
+  const zoom = DEVICES_BY_ID[machine]?.family === 'zoom'
   return withSetup([
-    'I am working in my fork of Modwerk, which builds custom firmware modules for Elektron instruments. Help me make a module for the ' + name + '.',
+    zoom ? 'I am working in my fork of Modwerk, which lists effects for Zoom MultiStomp pedals. Help me make an effect for the ' + name + '.' : 'I am working in my fork of Modwerk, which builds custom firmware modules for Elektron instruments. Help me make a module for the ' + name + '.',
     '',
     starter.task.replace('{idea}', description),
     '',
     skillHandoff('modwerk-new-module'),
     '',
     'For this module, also read:', ...reading,
+    ...(zoom ? ['', ...zoomGuidance(machine), ''] : []),
     create + ' My GitHub login is ' + author + ', the module author.',
   ], repository, login)
 }
@@ -163,6 +209,7 @@ export function updatePrompt(machine: StarterMachine, module = '', idea = '', is
 function integrationPrompt(machine: StarterMachine, idea = '', login = '', module = '', issue = '', repository = REPOSITORY) {
   const device = DEVICES_BY_ID[machine]
   const name = deviceTitle(device)
+  const zoom = device.family === 'zoom'
   return withSetup([
     'I am working in my Modwerk fork. Help me research and prepare instrument support for the ' + name + '.',
     'Goal: ' + (idea.trim() || '<describe the module or instrument support you want>'),
@@ -177,7 +224,8 @@ function integrationPrompt(machine: StarterMachine, idea = '', login = '', modul
     '',
     'Instrument integration workflow:', ...INSTRUMENT_STEPS.map((step, index) => `${index + 1}. ${step.title}: ${step.summary}`),
     '',
-    'Use Node 24 and npm ci. Establish what is known about the stock format, exact rebuild, recovery/boot, hooks/core and module support. Separate confirmed evidence, public research and unknowns. Propose a scoped integration plan and wait for my approval before implementation. Shared SDK/builder changes need owner review; the automatic author-update path does not apply to instrument integration.',
+    ...(zoom ? [...zoomGuidance(machine), ''] : []),
+    'Use Node 24 and npm ci. Establish what is known about ' + (zoom ? 'the effect format, loading on the stock firmware, recovery, the base' : 'the stock format, exact rebuild, recovery/boot, hooks/core') + ' and module support. Separate confirmed evidence, public research and unknowns. Propose a scoped integration plan and wait for my approval before implementation. Shared SDK/builder changes need owner review; the automatic author-update path does not apply to instrument integration.',
     'Follow docs/ADD_A_MACHINE.md for profile, platform, toolchain, compatibility and browser integration. Keep stock firmware and extracted bytes private; do not mark unsupported milestones done or invent hardware results. Regenerate the machine registry through npm run machines:generate; never edit generated files by hand.',
     'Only after the platform is integrated and qualified may we scaffold, build or publish a module; the module workflow in docs/DEVELOPER_WORKFLOW.md applies from then on. It does not establish present support.',
   ], repository, login)

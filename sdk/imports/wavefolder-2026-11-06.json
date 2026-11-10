@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/wavefolder",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-06",
+  "changes": [
+    "First library release for Analog Rytm MKII OS 1.74, on the Modwerk base's send-bus variant: a wavefolder on the send bus, a new design by its author, with effect id 4."
+  ],
+  "runtimeSourceSha256": "6cc42991b690994f8bb4dacc4a72255dce8ae565f3d640a0ed56c822c53a073f",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/wavefolder/wavefolder-0.1.0-experimental-os1.74.elemod",
+      "sha256": "3b5621c0ed3608c0931d2d1bd41998e9832560fbdafaa07dc1c3e0ae4ff90795"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/wavefolder/TESTING.md",
+  "requires": []
+}

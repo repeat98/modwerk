@@ -74,6 +74,9 @@ describe('after a firmware download', () => {
     expect(html).toMatch(/<input[^>]*required=""[^>]*name="title"/)
     expect(html).toContain('name="actual" required=""')
     expect(html).toContain('Post report')
+    // A downloaded build is card firmware; the reporter can still say USB.
+    expect(html).toContain('<option value="card" selected="">Running Modwerk firmware from the card</option>')
+    expect(html).toContain('<option value="usb">Running modules loaded over USB</option>')
   })
   it('prefills machine-specific reports with native IDs and the downloaded OS and version', () => {
     const module = communityModule('digitakt-digihealth')!
@@ -83,5 +86,6 @@ describe('after a firmware download', () => {
     expect(html).toContain('<option selected="">1.54</option>')
     expect(html).toContain('name="moduleVersion"')
     expect(html).toContain('value="0.1.0"')
+    expect(html).not.toContain('value="usb"')
   })
 })

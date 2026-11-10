@@ -1,31 +1,34 @@
 {
   "schemaVersion": 1,
-  "captured": "2026-10-11",
+  "captured": "2026-10-29",
   "moduleId": "quantizer",
-  "moduleVersion": "0.1.3-experimental",
+  "moduleVersion": "0.1.4-experimental",
   "firmware": "1.40C",
-  "imageSha256": "1ceba9f613dcf0d6bb6c32b0ae18e82a399e42644a89b2f76d9088c18c255c15",
-  "emulatorSha256": "2e388ae83925016f06785a4f62728c9e33ed5a1ea9be976c0be719f706e26e4b",
+  "imageSha256": "22541cd628f8064cb6d12e81a0481b17ffad9e737fd968454ae6eb419bb735e8",
+  "emulatorSha256": "07a7c08e3d4562f7b51ee5985bd2595cced383f1b8090995f1dfecfb404f092d",
   "imageProfile": {
     "modules": [
       "SCALE QUANTIZER"
     ],
-    "keepStockFx2": false
+    "keepStockFx2": true
   },
   "sourceFiles": {
-    "manifest.py": "0cb4a79f7cd68e1881cd1076a0f6ba2e132b1c199da3a2d4923906b443797602",
-    "upstream/quantizer/core.s": "2992b6c85cff440de03ae84eb22dee8b8a83a84f23e94b699404d28940b6f958",
+    "manifest.py": "e0841437a471b000b448ce8417c8fd25cba1cf155aec488d08d2888f4c249394",
+    "upstream/quantizer/core.s": "655bf8cb893ecbe8ec167633322491ae89fdf498c818e172ad6ba34c3fc992c8",
     "upstream/quantizer/keys.s": "e2ffdbfae34b0828794a4eb4cc229e3efcaed25dc953bf7c05c13f6e37f65587",
-    "upstream/quantizer/manifest.py": "e637e3718e4b65320b847ef0758e0d46800f8be6b8020290f89192c798c535ef",
-    "upstream/quantizer/quantizer.s": "b14f214cc8236c19b8881d1113ea42359052a6d7ef0e9e0f02aaa88279da64a9",
-    "upstream/quantizer/scale.s": "82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64"
+    "upstream/quantizer/manifest.py": "9550382938153ec1c6fe5a262612c5a4daad1d71aca68da7c0b6a4c55e801aa8",
+    "upstream/quantizer/panel_transaction.inc.s": "e51d5d035e8561b27671ac751957756831988786b5b25163688cc066c36b9c79",
+    "upstream/quantizer/quantizer.s": "6883dce6058cfc42eca1cb4c51a1d7d2318579a5adb5e84ae4202d7570c26abb",
+    "upstream/quantizer/scale.s": "82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64",
+    "upstream/quantizer/stock_guard.py": "5f1fe08ef5a4eb05cd772c9b65ee9f54c2371914a8360c8589109a9ce4308c2d"
   },
   "accessSteps": [
     "On the MKII panel, press PROJ to open the project menu.",
     "Use UP/DOWN to select CONTROL, then press RIGHT to enter its list.",
     "Select SEQUENCER with UP/DOWN and press YES.",
     "Scroll DOWN to SCALE and turn LEVEL to choose a scale. OFF restores stock pitch behavior.",
-    "Scroll to ROOT and turn LEVEL to select the key. GLIDE is the next row; its effect depends on the track\u2019s LEG setting."
+    "Scroll to ROOT and turn LEVEL to select the key. GLIDE is the next row; its effect depends on the track\u2019s LEG setting.",
+    "Below GLIDE, TRACK picks a track (AUDIO 1..8, MIDI 1..8) and FOLLOW switches it: turn LEVEL left on FOLLOW for OFF (that track stays stock), right for ON."
   ],
   "screenshots": [
     {
@@ -49,6 +52,11 @@
       "page": "CONTROL SEQUENCER: GLIDE"
     },
     {
+      "path": "media/ot-track-rows.png",
+      "sha256": "aaa8c176d6f133a92ee986c0437414a3fe3404e8598787b5a64bc04c101b2539",
+      "page": "CONTROL SEQUENCER: FOLLOW"
+    },
+    {
       "path": "media/ot-midi-trig-mode.png",
       "sha256": "91b5a59f01d172c012cbc7036c82b83db4a185a0f676cc143b950e28ccb0b776",
       "page": "MIDI trig mode"
@@ -56,7 +64,7 @@
   ],
   "reproduction": {
     "script": "scripts/capture-module-ui.py",
-    "setup": "Headless ot_emu; MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware.",
+    "setup": "Headless ot_emu (macOS build); MKII panel; stopped transport; 128\u00d764 LCD at integer scale 6. Empty disposable card; no samples, user projects or physical hardware.",
     "keyMs": 150,
     "plan": [
       {
@@ -155,6 +163,41 @@
       },
       {
         "press": [
+          "DOWN"
+        ]
+      },
+      {
+        "press": [
+          "DOWN"
+        ]
+      },
+      {
+        "press": [
+          "UP"
+        ]
+      },
+      {
+        "encoder": {
+          "name": "LEVEL",
+          "delta": 7
+        }
+      },
+      {
+        "press": [
+          "DOWN"
+        ]
+      },
+      {
+        "encoder": {
+          "name": "LEVEL",
+          "delta": -1
+        }
+      },
+      {
+        "capture": "ot-track-rows.png"
+      },
+      {
+        "press": [
           "NO"
         ]
       },
@@ -209,11 +252,12 @@
       "media/ot-scale.png": "ot-scale.png",
       "media/ot-root.png": "ot-root.png",
       "media/ot-glide.png": "ot-glide.png",
+      "media/ot-track-rows.png": "ot-track-rows.png",
       "media/ot-midi-trig-mode.png": "ot-midi-trig-mode.png"
     }
   },
   "limitations": [
     "Rendered emulator interface only; physical hardware, audio, physical reboot, chip timing and complete memory bounds untested.",
-    "The release exception is recorded separately against this exact version/source; it does not turn unobserved behavior into a hardware pass."
+    "The five screens that 0.1.3 also shows are pixel-identical to its captures; ot-track-rows.png is new."
   ]
 }

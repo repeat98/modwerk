@@ -136,8 +136,8 @@ static unsigned owner(const Machine *const *m, unsigned n, const Part *part, uns
  * (beta finding 24). An absent machine's track renders stock's silent source, never stock FLEX reading its bytes.
  * A native machine module (not a port) is listed by name, never by a pattern: a FLEX track whose NEIGHBOR bytes
  * merely looked like a signature would go silent. WV 1-15: SYNTIZ (sdk/drafts/syntiz), its model in the version
- * byte (six used, the rest kept for more). */
-static const struct { uint8_t sig[2], lo, hi; } known[] = {{{'A', 'B'}, 1, 1}, {{'F', 'M'}, 1, 1}, {{'W', 'V'}, 1, 15}};
+ * byte (six used, the rest kept for more). FR 1: FRACT (sdk/drafts/fract-machine). */
+static const struct { uint8_t sig[2], lo, hi; } known[] = {{{'A', 'B'}, 1, 1}, {{'F', 'M'}, 1, 1}, {{'W', 'V'}, 1, 15}, {{'F', 'R'}, 1, 1}};
 static unsigned orphan(const Part *part, unsigned t)
 {
     if (t >= 8 || part[0x22 + t] > 1) return 0;
@@ -233,10 +233,27 @@ static unsigned sequencer(void)
     return n - 3u;
 }
 
+/* What the FLEX render (mw_source_render_impl) last worked out for each track, kept while the bytes it came from
+ * stand: the current Part, and the track's type byte and signature. The render runs about twice a frame for every
+ * FLEX track; walking the machine table and comparing every machine's signature each time was most of its own cost.
+ * Written in the frame interrupt only. The descriptors it names are the rows': looked_up is cleared masked when the
+ * rows change (modwerk_machine_tables_changed), before a machine that left loses its memory. */
+enum { NOBODY, OWNED, ORPHAN };
+static struct { const Part *part; uint32_t bytes; const Machine *who; unsigned kind; } looked[8];
+static const Machine *flex_machine; /* the first RENDER_FLEX machine with a render: it takes unowned FLEX tracks */
+static uint32_t looked_up;          /* bit t: looked[t] stands; bit 8: flex_machine does */
+/* Those bytes are slow to read: the Part index is in battery RAM, about half a microsecond a read, and the bank's
+ * are uncached (an MKII, 10 November 2026: with every answer kept, checking them on each render still took 4 points of
+ * a frame on eight FLEX tracks). Nothing below the frame interrupt runs inside it, so within one frame they cannot
+ * change: the Part is read once a frame and each track is checked once a frame. mw_frame_exit ends the frame. */
+static const Part *frame_part;      /* the current Part this frame, 0 without a bank */
+static uint32_t frame_seen;         /* bit t: looked[t] was checked this frame; bit 8: frame_part was read */
+
 /* Masked, right after the loader rewrote the rows (loader.h): nothing stock reads may still name a module that left. */
 void modwerk_machine_tables_changed(void)
 {
     unsigned n = 0;
+    looked_up = 0, frame_seen = 0;
     for (uintptr_t volatile *row = modwerk_runtime_event_row[MACHINES]; *row && n < ROWS - 5u; ++row)
         n += ((const Machine *)*row)->abi == MODWERK_MACHINE_ABI;
     for (unsigned t = 0; t < 8; ++t) { /* a machine that left frees its voices and engine before its memory goes */
@@ -551,16 +568,23 @@ unsigned mw_setup_knob(unsigned row, unsigned index, int delta)
  * mw_frame_exit (machine_registry.s). Each render of a machine's track is timed, and so is the work after it up to the
  * exit; before the next frame's same render the guard predicts the frame's length from those. When it would overdraw,
  * the track renders stock's silent source this time instead: a dropout on that track, never a frozen unit. Tracks only
- * stock renders, and priced machines' (their voice is the DSP's), always render, and so does a FLEX track no machine
- * owns that goes to a RENDER_FLEX machine's render (guarded, FM Synth's render skipped ordinary sample tracks, #999).
- * A skipped render comes back when the budget has room for its last cost, or, every PROBE frames, when it would
- * overdraw by at most SLACK: its cost is measured again. */
+ * stock renders, and priced machines' (their voice is the DSP's), always render. A FLEX track no machine owns that
+ * goes to a RENDER_FLEX machine's render is guarded too, with stock's FLEX render in its place: an ordinary sample
+ * track keeps playing (#999: with the silent source the guard dropped such tracks), and the machine's share of it
+ * cannot stop the DSP (an MKII, 10 November 2026: FM Synth installed on no track, eight FLEX tracks, PLAY: a frame of
+ * 141 % within 0.2 s and no frames after it).
+ * Where a dearer render is still to come in the frame (by the last frame's order) and skipping that one alone would
+ * make the room, this one runs and the dearer one is skipped when it comes: one track drops out, not the first in
+ * track order whatever it costs. A skipped render comes back when the budget has room for its last cost, or as a
+ * probe after PROBE skips, however far over it stands: the probe's time is its new cost, so one slow render (a pattern
+ * change) costs a track at most PROBE frames, where an estimate that only fell by an eighth a render kept it nearly
+ * silent for seconds, and one too far over to be probed for good. A probe that is still too dear makes one long frame
+ * in PROBE, which the DSP takes (OCTATRACK_HARDWARE_TRAPS.md: one long frame does not stop the DSP). */
 #ifndef DTCN3
 #define DTCN3 (*(volatile uint32_t *)0xfc07c00cu) /* the frame timer: 132 MHz, free-running */
 #endif
 #define FRAME 47891u /* 16 samples at 44.1 kHz, in DTCN3 counts */
 #define BURST (FRAME / 2u)
-#define SLACK (FRAME / 10u)
 #define PROBE 1024u  /* frames, about 0.37 s */
 typedef int Render(unsigned track, unsigned ping, unsigned start, unsigned end);
 typedef int SourceStart(unsigned track, unsigned sample, unsigned flags);
@@ -632,6 +656,8 @@ volatile uint32_t mw_frame_max, mw_frame_late_max, mw_frame_busy, mw_frame_count
 static int32_t credit;
 static uint32_t late, cost[16], after[16], end_at[16], timed; /* [track], then a track's second render [8 + track] */
 static uint16_t skipped[16];
+static uint32_t before;            /* the renders the last frame made (bit k), skipped or not */
+static uint8_t place[16], next[16], made; /* a render's place in the last frame's order, and in this frame's so far */
 void mw_frame_exit(void)
 {
     uint32_t now = DTCN3, d = now - mw_frame_t0, due = d + late;
@@ -641,31 +667,42 @@ void mw_frame_exit(void)
     int32_t c = credit + (int32_t)mw_frame_share - (int32_t)d;
     credit = c > (int32_t)BURST ? (int32_t)BURST : c < -(int32_t)FRAME ? -(int32_t)FRAME : c;
     mw_frame_busy += d >> 8, mw_frame_count = mw_frame_count + 1u;
-    for (unsigned k = 0; k < 16u; ++k) if (timed >> k & 1u) after[k] = now - end_at[k];
-    timed = 0;
+    if (timed) for (unsigned k = 0; k < 16u; ++k) if (timed >> k & 1u) after[k] = now - end_at[k], place[k] = next[k];
+    before = timed, timed = 0, made = 0;
+    frame_seen = 0;
 }
-static int guarded(Render *f, unsigned track, unsigned ping, unsigned start, unsigned end)
+/* Whether a render dearer than k, and dear enough to make up `over` alone, is still to come in this frame. */
+static unsigned dearer_later(unsigned k, uint32_t over)
+{
+    if (!(before >> k & 1u)) return 0;
+    for (unsigned j = 0; j < 16u; ++j)
+        if (before >> j & 1u && !(timed >> j & 1u) && place[j] > place[k] && cost[j] > cost[k] && cost[j] >= over) return 1;
+    return 0;
+}
+/* f, or `instead` when f would overdraw the frame. */
+static int guarded(Render *f, Render *instead, unsigned track, unsigned ping, unsigned start, unsigned end)
 {
     if (track >= 8u) return f(track, ping, start, end);
     unsigned k = track + 8u * (timed >> track & 1u);
     uint32_t at = DTCN3; int r;
     int32_t over = (int32_t)(at - mw_frame_t0 + cost[k] + after[k]) - credit - (int32_t)mw_frame_share;
-    if (over > 0 && (over > (int32_t)SLACK || ++skipped[k] < PROBE)) {
+    if (over > 0 && !dearer_later(k, (uint32_t)over) && ++skipped[k] < PROBE) {
         mw_frame_sheds = mw_frame_sheds + 1u, mw_frame_shed_tracks |= 1u << track;
-        r = STOCK(Render *, 0x400047f0u)(track, ping, start, end);
+        r = instead(track, ping, start, end);
     } else {
+        unsigned back = skipped[k] != 0;
         skipped[k] = 0;
         r = f(track, ping, start, end);
         uint32_t c = DTCN3 - at, fall = cost[k] - (cost[k] >> 3);
-        cost[k] = c > fall ? c : fall; /* a rise at once, a fall by an eighth a frame */
+        cost[k] = back || c > fall ? c : fall; /* a rise at once, a fall by an eighth a frame; after skips, as measured */
     }
-    end_at[k] = DTCN3, timed |= 1u << k;
+    end_at[k] = DTCN3, timed |= 1u << k, next[k] = made++;
     return r;
 }
 /* The FLEX renderer, in the audio render: no mask. The row is read once, a word at a time; a module that left
  * stays in memory while the render holds it (the paused-task scan).
- * A track a machine renders itself (or that renders stock's silent source in its place) keeps stock's FLEX retrig and
- * voice stopped, every render. A module machine is FLEX underneath: on each of its trigs the frame builder starts
+ * By default a track a machine renders itself keeps stock's FLEX retrig and voice stopped every render. A module
+ * machine is FLEX underneath: on each of its trigs the frame builder starts
  * stock's FLEX voice (byte 0 of 0x800049d8 + 168 * track, see hush()) and latches the track's RTRG into its render
  * state (0x80004898 + 40 * track, +4), both from the machine's bytes read as FLEX settings, and nothing advances them.
  * When the track renders as FLEX again without passing mw_assign (a bank, pattern or Part change, a project load),
@@ -675,7 +712,8 @@ static int guarded(Render *f, unsigned track, unsigned ping, unsigned start, uns
  * ot_emu, 29 October 2026: Analog BD on T1 in bank B, FLEX in bank C, cold boot, PLAY, B -> C; #1051). FM Synth's own
  * render already clears the RTRG count; this does it for every machine with a render of its own. Stopped, nothing
  * overruns: stock's render restarts the voice at most once, and the next trig as FLEX starts both from FLEX's own
- * settings. */
+ * settings. A NATIVE_FLEX machine explicitly consumes that native voice with translating START/render callbacks:
+ * keep the voice, still clear retrigs, and stop both if START or DSP admission refuses it. */
 #define RENDER_STATE 0x80004898u
 #define RENDER_STATE_STRIDE 40u
 static void stop_stock(unsigned track)
@@ -683,27 +721,69 @@ static void stop_stock(unsigned track)
     U8(VOICE + VOICE_STRIDE * track) = 0;
     *(volatile uint32_t *)AT(RENDER_STATE + RENDER_STATE_STRIDE * track + 4u) = 0; /* the RTRG count: no run of retrigs */
 }
-int mw_source_render_impl(unsigned track, unsigned ping, unsigned start, unsigned end)
+static unsigned render_rows(const Machine **m)
 {
-    const Machine *m[ROWS - 5u], *who = 0; unsigned n = 0;
+    unsigned n = 0;
     for (uintptr_t volatile *row = modwerk_runtime_event_row[MACHINES]; n < ROWS - 5u; ++row) {
         uintptr_t v = *row; if (!v) break;
         if (((const Machine *)v)->abi == MODWERK_MACHINE_ABI) m[n++] = (const Machine *)v;
     }
-    if (valid_bank() && owner(m, n, current_part(), track, &who)) {
-        if (who->render) stop_stock(track); /* POLY8's voices (no render of its own) are stock's */
-        if (start_refused[track] == who)
+    return n;
+}
+/* Track t's machine in the current Part (OWNED), an absent known machine's signature (ORPHAN) or neither, from
+ * looked[] while the Part, the type byte and the signature are the ones it was worked out from. */
+static unsigned look(unsigned t, const Machine **who)
+{
+    if (!(frame_seen >> t & 1u) || !(looked_up >> t & 1u)) {
+        if (!(frame_seen >> 8 & 1u)) frame_part = valid_bank() ? current_part() : 0, frame_seen |= 1u << 8;
+        const Part *part = frame_part, *s = part ? part + SIG + 30 * t : 0; /* no offset from a null Part */
+        if (!part) return NOBODY;
+        uint32_t bytes = (uint32_t)part[0x22 + t] << 24 | (uint32_t)s[0] << 16 | (uint32_t)s[1] << 8 | s[2];
+        if (!(looked_up >> t & 1u) || looked[t].part != part || looked[t].bytes != bytes) {
+            const Machine *m[ROWS - 5u]; unsigned n = render_rows(m);
+            looked[t].kind = owner(m, n, part, t, &looked[t].who) ? OWNED : orphan(part, t) ? ORPHAN : NOBODY;
+            looked[t].part = part, looked[t].bytes = bytes, looked_up |= 1u << t;
+        }
+        frame_seen |= 1u << t;
+    }
+    *who = looked[t].who;
+    return looked[t].kind;
+}
+int mw_source_render_impl(unsigned track, unsigned ping, unsigned start, unsigned end)
+{
+    const Machine *who = 0;
+    unsigned kind = track < 8u ? look(track, &who) : NOBODY;
+    if (kind == OWNED) {
+        int native_flex = who->render &&
+            (who->flags & (MODWERK_MACHINE_NATIVE_FLEX | MODWERK_MACHINE_START)) ==
+            (MODWERK_MACHINE_NATIVE_FLEX | MODWERK_MACHINE_START);
+        if (who->render) {
+            if (native_flex) /* translated native reader: keep its voice, never stale RTRG */
+                *(volatile uint32_t *)AT(RENDER_STATE + RENDER_STATE_STRIDE * track + 4u) = 0;
+            else stop_stock(track); /* independent voices keep the existing stale-voice protection */
+        }
+        if (start_refused[track] == who) {
+            if (native_flex) stop_stock(track);
             return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
-        if (who->source_kind && charged[track] != who) /* uncharged: stock's silent source, never an unpaid voice */
+        }
+        if (who->source_kind && charged[track] != who) { /* never an unpaid voice */
+            if (native_flex) stop_stock(track);
             return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
+        }
         Render *f = who->render ? who->render : STOCK(Render *, 0x40004008u); /* POLY8's voices render inside stock's */
-        return who->source_kind ? f(track, ping, start, end) : guarded(f, track, ping, start, end);
-    } else if (valid_bank() && orphan(current_part(), track)) { /* its bytes are the absent machine's, not FLEX's */
+        return who->source_kind ? f(track, ping, start, end) : guarded(f, STOCK(Render *, 0x400047f0u), track, ping, start, end);
+    } else if (kind == ORPHAN) { /* its bytes are the absent machine's, not FLEX's */
         stop_stock(track);
         return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
     }
-    else /* unguarded: mostly stock's own FLEX render; FM Synth also plays a legacy FMSYNTH-named sample as FM here (#999) */
-        for (unsigned k = 0; k < n; ++k)
-            if (m[k]->flags & MODWERK_MACHINE_RENDER_FLEX && m[k]->render) return m[k]->render(track, ping, start, end);
+    /* Mostly stock's own FLEX render; FM Synth also plays a legacy FMSYNTH-named sample as FM here (#999). */
+    if (!(looked_up >> 8 & 1u)) {
+        const Machine *m[ROWS - 5u]; unsigned n = render_rows(m);
+        flex_machine = 0;
+        for (unsigned k = 0; k < n && !flex_machine; ++k)
+            if (m[k]->flags & MODWERK_MACHINE_RENDER_FLEX && m[k]->render) flex_machine = m[k];
+        looked_up |= 1u << 8;
+    }
+    if (flex_machine) return guarded(flex_machine->render, STOCK(Render *, 0x40004008u), track, ping, start, end);
     return STOCK(Render *, 0x40004008u)(track, ping, start, end);
 }

@@ -122,14 +122,14 @@ def maximal_cliques(nodes, clean_pair):
 def not_composed():
     """Modules that build only on their own (scripts/module-coverage.mjs NOT_COMPOSED): the standalone rule refuses
     every companion, so they have no pairs."""
-    found = re.search(r'export const NOT_COMPOSED = \[([^\]]*)\]', (APP / 'scripts/module-coverage.mjs').read_text())
+    found = re.search(r'export const NOT_COMPOSED = \[([^\]]*)\]', (APP / 'scripts/module-coverage.mjs').read_text(encoding='utf-8'))
     if not found:
         raise SystemExit('scripts/module-coverage.mjs: cannot read NOT_COMPOSED; update scripts/module-pairs.py')
     return set(re.findall(r"'([^']+)'", found.group(1)))
 
 
 def build(check, known, supplied_by):
-    catalog = json.loads((APP / 'sdk/catalog.json').read_text())
+    catalog = json.loads((APP / 'sdk/catalog.json').read_text(encoding='utf-8'))
     standalone = not_composed()
     modules = sorted(row['id'] for row in catalog['modules'] if row['id'] not in standalone)
     missing = [i for i in modules if i not in known]
@@ -179,7 +179,7 @@ def flags(table):
     """Pairs the ledger refuses in some context that neither module names in compatibility.conflicts."""
     declared = set()
     for i in table['modules']:
-        document = json.loads((APP / 'sdk/octabam/modules' / i / 'octamod.module.json').read_text())
+        document = json.loads((APP / 'sdk/octabam/modules' / i / 'octamod.module.json').read_text(encoding='utf-8'))
         declared |= {frozenset((i, other)) for other in document['compatibility'].get('conflicts', [])}
     out = []
     for context, found in table['clashes'].items():
@@ -200,7 +200,7 @@ def main(argv):
     failures, runs = prove(table, problems, contexts)
     unflagged = flags(table)
     text = json.dumps(table, indent=1, sort_keys=False) + '\n'
-    stale = TABLE.read_text() != text if TABLE.exists() else True
+    stale = TABLE.read_text(encoding='utf-8') != text if TABLE.exists() else True
     for line in failures:
         print('✗ pairs do not decide this selection: ' + line)
         print('    fix: the ledger gained a rule that reads whole selections; extend contexts_for() in scripts/module-pairs.py')
@@ -209,7 +209,7 @@ def main(argv):
         print('    fix: move one module to a base event or table, or other free bytes; if the clash is deliberate, add the '
               'other module to compatibility.conflicts (' + GUIDE + ')')
     if '--write' in argv and not failures:
-        TABLE.write_text(text)
+        TABLE.write_text(text, encoding='utf-8', newline='\n')
     elif stale:
         print('✗ src/catalog/compatibility-pairs.json is stale: run npm run modules:pairs -- --write')
     pairs = len(table['modules']) * (len(table['modules']) - 1) // 2

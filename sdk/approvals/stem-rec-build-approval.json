@@ -1,0 +1,14 @@
+{
+  "kind": "owner-approved-update",
+  "id": "stem-rec",
+  "version": "0.1.0-experimental",
+  "approvedBy": "repeat98",
+  "approvedOn": "2026-11-06",
+  "ownerStatement": "I'll waive chip-worst-case-cycles and current-build-hardware for this version on your MKII figures and write the approval record myself, so no flood comparison first. (https://github.com/repeat98/modwerk/pull/1258#issuecomment-6683679161)",
+  "reason": "Card-only first release. The frame hook was timed on the author's MKII on image STEMMW1 (53 us at most over two eleven-file 24-bit takes, 13,992 of 95,782 cycles a block); there is no static bound because its cost is mostly uncached ring stores and cache misses. No cfmeter benchmark or flood was run: Stem Rec has no MIDI path. The exact library build has not run on a unit, and hardware is not claimed verified. Limits are in TESTING.md and compatibility.limitations.",
+  "sourceSha256": "caa5d4355c9e3ae0eb8e4d0b4c11117693ebaf837fdde50e0d74bc484a9d7b1e",
+  "waived": [
+    "chip-worst-case-cycles",
+    "current-build-hardware"
+  ]
+}

@@ -1,0 +1,1 @@
+- Site: the beta invitation, the join prompt and the base install dialog no longer say the USB beta needs an Octatrack MKII. It works on the MKI too.

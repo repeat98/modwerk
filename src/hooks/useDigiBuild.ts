@@ -4,6 +4,7 @@ import { requireBuildAccount } from '../community/member-access'
 import { captureSiteDiagnosticContext, emitSiteDiagnosticEvent, isExpectedDiagnosticCancellation } from '../community/site-diagnostic-events'
 import { trackUsage } from '../community/usage'
 import { buildStep, buildWithLock, builtLock, createMachineBuilder, prepareBuild, type Builder } from '../engine/elekloader/machine-build'
+import { PREFLIGHT_MACHINES, PreflightError, preflightBuiltFile, type PreflightFacts } from '../engine/elekloader/digi-preflight'
 import type { StorageLock } from '../config/workspace'
 import type { BuilderCheck, BuilderDevice, BuilderMachine, BuilderResult } from '../engine/elekloader/protocol'
 import type { BuildProgress } from '../engine/protocol'
@@ -14,8 +15,8 @@ export type DigiBuildState =
   | { phase: 'ready'; key: string; enabled: string[]; check: BuilderCheck; device: BuilderDevice }
   | { phase: 'blocked'; key: string; error: string; check?: BuilderCheck }
   | { phase: 'building'; key: string; enabled: string[]; device: BuilderDevice; log: string; step: BuildProgress }
-  | { phase: 'built'; key: string; enabled: string[]; device: BuilderDevice; moduleIds: readonly string[]; result: Extract<BuilderResult, { ok: true }> }
-  | { phase: 'failed'; key: string; enabled: string[]; device: BuilderDevice; error: string; result?: Extract<BuilderResult, { ok: false }> }
+  | { phase: 'built'; key: string; enabled: string[]; device: BuilderDevice; moduleIds: readonly string[]; result: Extract<BuilderResult, { ok: true }>; preflight?: PreflightFacts }
+  | { phase: 'failed'; key: string; enabled: string[]; device: BuilderDevice; error: string; result?: Extract<BuilderResult, { ok: false }>; problems?: string[] }
 
 const message = (error: unknown, fallback: string) => error instanceof Error ? error.message : fallback
 
@@ -83,7 +84,20 @@ export function useDigiBuild(machine: BuilderMachine, file: File | undefined, re
       if (lock && storage && JSON.stringify(lock) !== JSON.stringify(storage.lock)) storage.save(lock)
       if (operation.current !== request) return
       if (!result.ok) emitSiteDiagnosticEvent({ event: 'build_failed', phase: step, buildKind: 'elekloader', error: 'build' }, context)
-      setView(result.ok ? { phase: 'built', key, enabled, device, moduleIds: [...moduleIds], result } : { phase: 'failed', key, enabled, device, error: result.error, result })
+      // A second, independent check before the page offers the file (digi-preflight.ts): a refusal is a failed build.
+      let preflight: PreflightFacts | undefined
+      if (result.ok && file && (PREFLIGHT_MACHINES as readonly string[]).includes(machine)) {
+        setView({ phase: 'building', key, enabled, device, log: 'Checking the build against the stock file…', step: 'verifying' })
+        try { preflight = await preflightBuiltFile(machine, file, enabled, result.files) } catch (error) {
+          if (operation.current !== request) return
+          emitSiteDiagnosticEvent({ event: 'build_failed', phase: 'verifying', buildKind: 'elekloader', error: 'build' }, context)
+          setView({ phase: 'failed', key, enabled, device, error: 'The build did not pass the preflight check, so it is not offered.', problems: error instanceof PreflightError ? error.problems : [message(error, 'The preflight could not run.')] })
+          trackUsage('build_failed', usageMachine)
+          return
+        }
+        if (operation.current !== request) return
+      }
+      setView(result.ok ? { phase: 'built', key, enabled, device, moduleIds: [...moduleIds], result, preflight } : { phase: 'failed', key, enabled, device, error: result.error, result })
       trackUsage(result.ok ? 'build_succeeded' : 'build_failed', usageMachine)
     } catch (error) {
       if (operation.current !== request) return

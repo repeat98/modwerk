@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "scorch",
+  "moduleVersion": "2.0.0",
+  "imageSha256": "da68b74d1e01486d1deb175ef10705d4f2991fb8df0acc31eec37f6a656a7353",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/scorch-screen.png",
+      "sha256": "a81b8fae2578b7dbcb3c20fc66bfcdf0840c8ce610f4c3c25d88c536c0809654",
+      "plan": "the cover picture at the start of .const in the built Scorch.ZDL (ZDL_OWN_RUNTIME=1 ZDL_MATERIALIZE_INIT=0 at 32f3d68), Zoom RLE decoded and drawn as zvis_host.py draws frames"
+    }
+  ]
+}

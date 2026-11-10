@@ -29,7 +29,7 @@ describe('units that join the DRAM runtime', () => {
     expect(runtime.reserveBytes).toBe(1707 * 6144 + LOGGER_RESERVE_BYTES)
     for (const symbol of ['mon_fmt', 'key_step', 'sc_norm', 'sw9_widget', 'clip_knob']) expect(runtime.symbols.has(symbol)).toBe(true)
     // While stock FX2 stays, Sidechain Compressor replaces COMPRESSOR in place and native links it first.
-    const leading = await createStaticColdFireRuntime(['tapeecho', 'sidechain-compressor'], undefined, undefined, undefined, false, undefined, ['sidechain-compressor'])
+    const leading = await createStaticColdFireRuntime(['tapeecho', 'sidechain-compressor'], undefined, undefined, undefined, false, undefined, null, ['sidechain-compressor'])
     expect(leading.units).toEqual(['sc_cf', 'sc_ui', 'tapeecho', 'octamod-core-logger'])
   })
 })

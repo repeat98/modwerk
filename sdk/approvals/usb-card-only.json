@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "about": "Octatrack module versions the owner admitted card-only although they were listed from 2026-10-02, when a USB package became required (USB_PACKAGE_REQUIRED_FROM in scripts/module-doctor.mjs). Each record covers one exact version until the issue or pull request in until gives it a USB package; any other version follows the rule. It is no hardware or emulator evidence.",
+  "modules": [
+    {
+      "module": "tuner",
+      "version": "0.1.0-experimental",
+      "approval": "repeat98, 2 Nov 2026: card-only is fine for 0.1.0 (https://github.com/repeat98/modwerk/pull/1148#issuecomment-6577984286).",
+      "reason": "its USB package waits on a base lifetime hook for ordinary modules with their own window (evidence/usb-admission.md)",
+      "until": "#1162"
+    },
+    {
+      "module": "stem-rec",
+      "version": "0.1.0-experimental",
+      "approval": "repeat98, 6 Nov 2026: card-only for 0.1.0-experimental (https://github.com/repeat98/modwerk/pull/1258#issuecomment-6683679161).",
+      "reason": "its 8 MiB take ring and writer task don't fit the USB pool",
+      "until": "#1268"
+    },
+    {
+      "module": "temp-save",
+      "version": "0.1.0-experimental",
+      "approval": "repeat98, 10 Nov 2026: take the USB package off the site until it carries no stock bytes (https://github.com/repeat98/modwerk/issues/1391).",
+      "reason": "its published USB package repeats a 51-byte stock call sequence, which the stock-free scan refuses; the card build is made from the musician's own OS file",
+      "until": "#1391"
+    }
+  ]
+}

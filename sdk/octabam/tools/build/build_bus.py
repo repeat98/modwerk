@@ -246,6 +246,28 @@ def plain_slots(m) -> tuple[int, ...]:
                  if p.formatter is Formatter.PLAIN and p.active is not False)
 
 
+def _dram_rom_externals(dram, unit_defs, exports, taken):
+    """dram_rom_refs.rom_externals over the DRAM units, each assembled as remix.platform_build.link_runtime
+    assembles it (cached), so these are the symbol tables that link sees."""
+    from remix.compile_cache import assemble_coldfire
+    from remix.platform_build import ROOT as _proot, promote_symbols
+    from dram_rom_refs import rom_externals
+    work = pathlib.Path("out/platform/rom-refs").resolve()
+    work.mkdir(parents=True, exist_ok=True)
+    objects = []
+    for i, (_m, u) in enumerate(dram):
+        obj, inc = work / f"{i:02d}_{u.label}.o", None
+        if u.include is not None:
+            inc = work / f"{i:02d}_{u.label}.inc"
+            inc.mkdir(exist_ok=True)
+            (inc / "remix.inc").write_text(u.include({_k: remix_modules()[_k] for _k in REMIX.modules}))
+        assemble_coldfire(_proot / u.source, '54455', obj, incdir=str(inc) if inc else None, cwd=work,
+                          defsyms=tuple(unit_defs.get(u.label, ())))
+        promote_symbols(obj, u.exports)
+        objects.append(obj)
+    return rom_externals(objects, exports, taken)
+
+
 def floating_cave_at(cave_top: int, ovf_top: int, need: int, cave_limit: int) -> int | None:
     """Where a floating cave of `need` bytes goes: the next 128-byte boundary
     in the clone window if it fits whole below `cave_limit`, else the next
@@ -1543,6 +1565,14 @@ def main():
         _unit_defs[_u.label] = _mine
     _pdefs = dict(_dram_defs)
     _pdefs.update(_defsym_ovr)
+    # A DRAM unit's reference that no DRAM unit, payload or DRAM region defines resolves from the ROM
+    # units' global symbols (_exports), as a ROM unit's references do above. The configurator follows
+    # the same rule (src/engine/coldfire-runtime.ts, romExternals): a module's DRAM code can read a
+    # byte its own ROM unit owns. A build that worked before has no such reference: ld refused it.
+    if _dram:
+        _pdefs.update(_dram_rom_externals(_dram, _unit_defs, _exports, set(_pdefs)
+            | {k for _p in _payloads for k in _p.get("symbols", {})}
+            | {r.symbol for k in REMIX.modules for r in remix_modules()[k].dram_regions}))
 
     if _dram or _payloads:
         from remix import platform_build

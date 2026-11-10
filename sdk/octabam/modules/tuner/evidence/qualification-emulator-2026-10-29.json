@@ -1,0 +1,719 @@
+{
+ "status": "emulator measurement; hardware pending",
+ "date": "2026-10-29",
+ "identities": {
+  "emulator": {
+   "path": "ot_emu",
+   "sha256": "c81d13dc70f9012cd1431b115a13d0804a47d0b7ebae6eacfca8329b7e32bff9"
+  },
+  "image_bus": {
+   "name": "mainos_bus.bin (tuner-keep.bin)",
+   "bytes": 1114801,
+   "sha256": "91bf159ee5a25c1d6b9356fe3eb0f43d8985f569bbfdeee3a7f85ba0da3770b3"
+  },
+  "card_image": {
+   "name": "OCTATRACK_MWTUN0.1.bin",
+   "bytes": 448024,
+   "sha256": "b87ab778e69ed59988ba710dac655abc37cd04e97102f5f416e73c56aa0232d6",
+   "note": "canonical card whose MAIN OS is the bus above"
+  },
+  "runtime_elf": {
+   "sha256": "492f1b52bc304280f8ad0dc5a956a79362737a8f5cc781d9f0f84e92b29f7b2e",
+   "note": ".text in emulated RAM compared equal (2,830 B) before measuring"
+  },
+  "fixture_card": {
+   "name": "tuner-load8",
+   "sha256": "90bef7e18ca2552944a3dfbd8f2eef4f645ad02f0317681061826f546b27bbb6",
+   "layout": "T1-T7 FLEX playing SINE16M.wav with stock FX1/FX2 on every track (FX1 4,18,24,4,18,24,4,4; FX2 8,22,22,21,8,22,20,8), T8 THRU input A, 120 BPM, trigs + retrigs on steps 4 and 12 of every track"
+  },
+  "built_source": "promotion ab3db4f570f1ad869686ad20d03fd227bb97de22 (upstream tuner fd18f553, identical tuner/ files in v2.21)"
+ },
+ "method": {
+  "tap": "tuner.s tu_frame (lines 97-127): RB_BASE 0x80003190 + bank(0x800000e4)*1024 + track(0x80000000 & 7)*128, 16 x (L,R) 32-bit words per block, (L>>1)+(R>>1), top 16 bits into tu_ring",
+  "signal": "ot_emu --audio-in tones.wav --audio-in-from-boot: a 4-channel 16-bit WAV, the same signal on RX0 slots 0-3, 0.5 FS; scheduled segments 440 / 82.41 / 445 / 110 Hz sines, white noise, silence; selected track T8 (THRU, input A) with the fixture playing. No firmware or memory was changed; the tone reaches the tap through the stock input -> THRU -> FX -> read-back path.",
+  "counting": "PC watch (emulator instruction counter) on tu_frame entry/exit (0x40a95608/0x40a95670), tu_tick entry/exit (0x40a95676/0x40a956b0), tu_analyse (0x40a9572e; exits 0x40a95bcc ok, 0x40a95bd4 rejected), tu_draw (0x40a95c82/0x40a95e7e) and the stock frame-interrupt body (0x4000aad8/0x4000d9a6). Counts are inclusive of the exit instruction. UI spans are reported exclusive of nested frame-interrupt bodies; other (non-frame) interrupts nested in a UI span stay inside the count, so the exclusive figure is an upper bound.",
+  "model": {
+   "ns_per_instruction": 9.44,
+   "core_hz": 264000000.0,
+   "cycles_per_instruction": 2.49216,
+   "block_cycles": 95779,
+   "module_budget_cycles": 9577,
+   "block": "16 samples at 44.1 kHz = 362.8 us",
+   "label": "instruction-count model: emulated ColdFire instructions x 9.44 ns at 264 MHz (CF METER calibration); not opcode cycles, not chip wall-clock"
+  }
+ },
+ "readings": {
+  "440 Hz": {
+   "readings": [
+    [
+     "A4 +0c 440.0Hz",
+     "live"
+    ],
+    [
+     "A4 +0c 440.0Hz",
+     "live"
+    ],
+    [
+     "A4 +0c 440.0Hz",
+     "live"
+    ],
+    [
+     "A4 +0c 440.0Hz",
+     "live"
+    ],
+    [
+     "A4 +0c 440.0Hz",
+     "live"
+    ]
+   ],
+   "ring_peak": 184
+  },
+  "82.41 Hz": {
+   "readings": [
+    [
+     "E2 +0c 82.4Hz",
+     "live"
+    ],
+    [
+     "E2 +0c 82.4Hz",
+     "live"
+    ],
+    [
+     "E2 +0c 82.4Hz",
+     "live"
+    ],
+    [
+     "E2 +0c 82.4Hz",
+     "live"
+    ],
+    [
+     "E2 +0c 82.4Hz",
+     "live"
+    ]
+   ],
+   "ring_peak": 273
+  },
+  "445 Hz": {
+   "readings": [
+    [
+     "A4 +19c 445.0Hz",
+     "live"
+    ],
+    [
+     "A4 +19c 445.0Hz",
+     "live"
+    ],
+    [
+     "A4 +19c 445.0Hz",
+     "live"
+    ],
+    [
+     "A4 +19c 445.0Hz",
+     "live"
+    ],
+    [
+     "A4 +19c 445.0Hz",
+     "live"
+    ]
+   ],
+   "ring_peak": 240
+  },
+  "110 Hz": {
+   "readings": [
+    [
+     "A2 -1c 109.9Hz",
+     "live"
+    ],
+    [
+     "A2 -1c 109.9Hz",
+     "live"
+    ],
+    [
+     "A2 -1c 109.9Hz",
+     "live"
+    ]
+   ],
+   "ring_peak": 119
+  },
+  "white noise 0.3 FS": {
+   "readings": [
+    [
+     "A2 +43c 112.7Hz",
+     "live"
+    ],
+    [
+     "A2 -3c 109.8Hz",
+     "HOLD"
+    ],
+    [
+     "A2 -3c 109.8Hz",
+     "HOLD"
+    ]
+   ],
+   "ring_peak": 114
+  },
+  "silence": {
+   "readings": [
+    [
+     "A2 -3c 109.8Hz",
+     "HOLD"
+    ],
+    [
+     "A2 -3c 109.8Hz",
+     "HOLD"
+    ],
+    [
+     "A2 -3c 109.8Hz",
+     "HOLD"
+    ]
+   ],
+   "ring_peak": 15
+  },
+  "440 Hz again": {
+   "readings": [
+    [
+     "A4 +0c 440.0Hz",
+     "live"
+    ],
+    [
+     "A4 +0c 440.0Hz",
+     "live"
+    ],
+    [
+     "A4 +0c 440.0Hz",
+     "live"
+    ]
+   ],
+   "ring_peak": 163
+  },
+  "T2 FLEX fixture sample (DC offset)": {
+   "readings": [
+    [
+     "A4 +0c 440.0Hz",
+     "HOLD"
+    ],
+    [
+     "A4 +0c 440.0Hz",
+     "HOLD"
+    ],
+    [
+     "A4 +0c 440.0Hz",
+     "HOLD"
+    ],
+    [
+     "A4 +0c 440.0Hz",
+     "HOLD"
+    ],
+    [
+     "A4 +0c 440.0Hz",
+     "HOLD"
+    ]
+   ],
+   "ring_peak": 3977
+  }
+ },
+ "cost": {
+  "model": {
+   "ns_per_instruction": 9.44,
+   "core_hz": 264000000.0,
+   "cycles_per_instruction": 2.49216,
+   "block_cycles": 95779,
+   "module_budget_cycles": 9577,
+   "block": "16 samples at 44.1 kHz = 362.8 us",
+   "label": "instruction-count model: emulated ColdFire instructions x 9.44 ns at 264 MHz (CF METER calibration); not opcode cycles, not chip wall-clock"
+  },
+  "windows": {
+   "closed_load8": {
+    "window_ms": 3000.1,
+    "blocks": 8276,
+    "frame_hook": {
+     "n": 8276,
+     "mean": 4,
+     "max": 4,
+     "min": 4
+    },
+    "ui_hook_not_due": {
+     "n": 324,
+     "mean": 4,
+     "max": 4,
+     "min": 4
+    },
+    "ui_visits_per_s": 108.0,
+    "analysis_and_draw_excl": null,
+    "analysis_and_draw_incl": null,
+    "analyse": null,
+    "analyse_exit": [],
+    "draw": null,
+    "frame_body_incl": {
+     "n": 8276,
+     "mean": 25157.9,
+     "max": 40890,
+     "min": 24068
+    },
+    "unmatched_boundary": 0
+   },
+   "closed_stopped": {
+    "window_ms": 2000.0,
+    "blocks": 5517,
+    "frame_hook": {
+     "n": 5517,
+     "mean": 4,
+     "max": 4,
+     "min": 4
+    },
+    "ui_hook_not_due": {
+     "n": 216,
+     "mean": 4,
+     "max": 4,
+     "min": 4
+    },
+    "ui_visits_per_s": 108.0,
+    "analysis_and_draw_excl": null,
+    "analysis_and_draw_incl": null,
+    "analyse": null,
+    "analyse_exit": [],
+    "draw": null,
+    "frame_body_incl": {
+     "n": 5517,
+     "mean": 24295.5,
+     "max": 24338,
+     "min": 24146
+    },
+    "unmatched_boundary": 0
+   },
+   "open_load8_110": {
+    "window_ms": 2001.0,
+    "blocks": 5520,
+    "frame_hook": {
+     "n": 5520,
+     "mean": 195,
+     "max": 195,
+     "min": 195
+    },
+    "ui_hook_not_due": {
+     "n": 202,
+     "mean": 7,
+     "max": 7,
+     "min": 7
+    },
+    "ui_visits_per_s": 107.9,
+    "analysis_and_draw_excl": {
+     "n": 14,
+     "mean": 997739.6,
+     "max": 998127,
+     "min": 997531
+    },
+    "analysis_and_draw_incl": {
+     "n": 14,
+     "mean": 1656656.9,
+     "max": 1699611,
+     "min": 1605352
+    },
+    "analyse": {
+     "n": 14,
+     "mean": 992187.1,
+     "max": 992575,
+     "min": 991979
+    },
+    "analyse_exit": [
+     "an_ok"
+    ],
+    "draw": {
+     "n": 14,
+     "mean": 5538.6,
+     "max": 5542,
+     "min": 5538
+    },
+    "frame_body_incl": {
+     "n": 5520,
+     "mean": 25414.0,
+     "max": 41041,
+     "min": 24261
+    },
+    "unmatched_boundary": 0
+   },
+   "open_load8_440": {
+    "window_ms": 5002.0,
+    "blocks": 13799,
+    "frame_hook": {
+     "n": 13799,
+     "mean": 195,
+     "max": 195,
+     "min": 195
+    },
+    "ui_hook_not_due": {
+     "n": 505,
+     "mean": 7,
+     "max": 7,
+     "min": 7
+    },
+    "ui_visits_per_s": 108.0,
+    "analysis_and_draw_excl": {
+     "n": 35,
+     "mean": 1000340.5,
+     "max": 1008258,
+     "min": 999565
+    },
+    "analysis_and_draw_incl": {
+     "n": 35,
+     "mean": 1664272.3,
+     "max": 1702235,
+     "min": 1607997
+    },
+    "analyse": {
+     "n": 35,
+     "mean": 994806.9,
+     "max": 1002725,
+     "min": 994032
+    },
+    "analyse_exit": [
+     "an_ok"
+    ],
+    "draw": {
+     "n": 35,
+     "mean": 5519.5,
+     "max": 5538,
+     "min": 5519
+    },
+    "frame_body_incl": {
+     "n": 13799,
+     "mean": 25422.5,
+     "max": 41039,
+     "min": 24263
+    },
+    "unmatched_boundary": 0
+   },
+   "open_load8_445": {
+    "window_ms": 2000.8,
+    "blocks": 5519,
+    "frame_hook": {
+     "n": 5520,
+     "mean": 195,
+     "max": 195,
+     "min": 195
+    },
+    "ui_hook_not_due": {
+     "n": 202,
+     "mean": 7,
+     "max": 7,
+     "min": 7
+    },
+    "ui_visits_per_s": 108.0,
+    "analysis_and_draw_excl": {
+     "n": 14,
+     "mean": 1000499.1,
+     "max": 1007233,
+     "min": 999827
+    },
+    "analysis_and_draw_incl": {
+     "n": 14,
+     "mean": 1662314.1,
+     "max": 1701002,
+     "min": 1611632
+    },
+    "analyse": {
+     "n": 14,
+     "mean": 994868.5,
+     "max": 1001595,
+     "min": 994197
+    },
+    "analyse_exit": [
+     "an_ok"
+    ],
+    "draw": {
+     "n": 14,
+     "mean": 5616.6,
+     "max": 5624,
+     "min": 5616
+    },
+    "frame_body_incl": {
+     "n": 5519,
+     "mean": 25405.0,
+     "max": 40949,
+     "min": 24307
+    },
+    "unmatched_boundary": 1
+   },
+   "open_load8_82": {
+    "window_ms": 2001.0,
+    "blocks": 5520,
+    "frame_hook": {
+     "n": 5520,
+     "mean": 195,
+     "max": 195,
+     "min": 195
+    },
+    "ui_hook_not_due": {
+     "n": 203,
+     "mean": 7,
+     "max": 7,
+     "min": 7
+    },
+    "ui_visits_per_s": 107.9,
+    "analysis_and_draw_excl": {
+     "n": 13,
+     "mean": 998150.8,
+     "max": 1004830,
+     "min": 997415
+    },
+    "analysis_and_draw_incl": {
+     "n": 13,
+     "mean": 1663355.2,
+     "max": 1698073,
+     "min": 1655291
+    },
+    "analyse": {
+     "n": 13,
+     "mean": 992718.5,
+     "max": 999398,
+     "min": 991983
+    },
+    "analyse_exit": [
+     "an_ok"
+    ],
+    "draw": {
+     "n": 13,
+     "mean": 5418.3,
+     "max": 5422,
+     "min": 5418
+    },
+    "frame_body_incl": {
+     "n": 5520,
+     "mean": 25407.1,
+     "max": 40947,
+     "min": 24307
+    },
+    "unmatched_boundary": 0
+   },
+   "open_load8_noise": {
+    "window_ms": 4001.8,
+    "blocks": 11039,
+    "frame_hook": {
+     "n": 11040,
+     "mean": 195,
+     "max": 195,
+     "min": 195
+    },
+    "ui_hook_not_due": {
+     "n": 405,
+     "mean": 7,
+     "max": 7,
+     "min": 7
+    },
+    "ui_visits_per_s": 108.0,
+    "analysis_and_draw_excl": {
+     "n": 27,
+     "mean": 926408.9,
+     "max": 935298,
+     "min": 924135
+    },
+    "analysis_and_draw_incl": {
+     "n": 27,
+     "mean": 1539156.3,
+     "max": 1577742,
+     "min": 1487923
+    },
+    "analyse": {
+     "n": 27,
+     "mean": 920531.9,
+     "max": 929421,
+     "min": 918258
+    },
+    "analyse_exit": [
+     "an_nosig"
+    ],
+    "draw": {
+     "n": 27,
+     "mean": 5863,
+     "max": 5863,
+     "min": 5863
+    },
+    "frame_body_incl": {
+     "n": 11039,
+     "mean": 25416.3,
+     "max": 41039,
+     "min": 24277
+    },
+    "unmatched_boundary": 1
+   },
+   "open_load8_silence": {
+    "window_ms": 2000.8,
+    "blocks": 5519,
+    "frame_hook": {
+     "n": 5520,
+     "mean": 195,
+     "max": 195,
+     "min": 195
+    },
+    "ui_hook_not_due": {
+     "n": 203,
+     "mean": 7.0,
+     "max": 11,
+     "min": 7
+    },
+    "ui_visits_per_s": 108.0,
+    "analysis_and_draw_excl": {
+     "n": 13,
+     "mean": 49653.8,
+     "max": 56115,
+     "min": 48826
+    },
+    "analysis_and_draw_incl": {
+     "n": 13,
+     "mean": 82390.6,
+     "max": 110361,
+     "min": 74102
+    },
+    "analyse": {
+     "n": 13,
+     "mean": 43776.8,
+     "max": 50238,
+     "min": 42949
+    },
+    "analyse_exit": [
+     "an_nosig"
+    ],
+    "draw": {
+     "n": 14,
+     "mean": 5863,
+     "max": 5863,
+     "min": 5863
+    },
+    "frame_body_incl": {
+     "n": 5519,
+     "mean": 25389.6,
+     "max": 41085,
+     "min": 24277
+    },
+    "unmatched_boundary": 3
+   },
+   "open_load8_t2flex": {
+    "window_ms": 2000.0,
+    "blocks": 5517,
+    "frame_hook": {
+     "n": 5518,
+     "mean": 195,
+     "max": 195,
+     "min": 195
+    },
+    "ui_hook_not_due": {
+     "n": 202,
+     "mean": 7,
+     "max": 7,
+     "min": 7
+    },
+    "ui_visits_per_s": 108.0,
+    "analysis_and_draw_excl": {
+     "n": 14,
+     "mean": 928090.9,
+     "max": 928665,
+     "min": 927844
+    },
+    "analysis_and_draw_incl": {
+     "n": 14,
+     "mean": 1546910.4,
+     "max": 1581171,
+     "min": 1490451
+    },
+    "analyse": {
+     "n": 14,
+     "mean": 922232.9,
+     "max": 922807,
+     "min": 921986
+    },
+    "analyse_exit": [
+     "an_nosig"
+    ],
+    "draw": {
+     "n": 14,
+     "mean": 5844,
+     "max": 5844,
+     "min": 5844
+    },
+    "frame_body_incl": {
+     "n": 5517,
+     "mean": 25494.4,
+     "max": 41219,
+     "min": 24411
+    },
+    "unmatched_boundary": 1
+   },
+   "open_stopped": {
+    "window_ms": 3000.1,
+    "blocks": 8275,
+    "frame_hook": {
+     "n": 8276,
+     "mean": 195,
+     "max": 195,
+     "min": 195
+    },
+    "ui_hook_not_due": {
+     "n": 304,
+     "mean": 7,
+     "max": 7,
+     "min": 7
+    },
+    "ui_visits_per_s": 108.0,
+    "analysis_and_draw_excl": {
+     "n": 20,
+     "mean": 999613,
+     "max": 1005617,
+     "min": 999103
+    },
+    "analysis_and_draw_incl": {
+     "n": 20,
+     "mean": 1609399.9,
+     "max": 1616132,
+     "min": 1607982
+    },
+    "analyse": {
+     "n": 20,
+     "mean": 994079.1,
+     "max": 1000084,
+     "min": 993570
+    },
+    "analyse_exit": [
+     "an_ok"
+    ],
+    "draw": {
+     "n": 20,
+     "mean": 5519.9,
+     "max": 5538,
+     "min": 5519
+    },
+    "frame_body_incl": {
+     "n": 8275,
+     "mean": 24392.0,
+     "max": 24439,
+     "min": 24337
+    },
+    "unmatched_boundary": 1
+   }
+  },
+  "worst": {
+   "frame_hook_instr": 195,
+   "analysis_event_instr": 1008258,
+   "analysis_event_cycles": 2512740,
+   "analysis_event_us": 9518.0,
+   "ui_not_due_instr": 7,
+   "ui_visits_per_s_max": 108.0,
+   "amortized_instr_per_block": 2715.9,
+   "amortized_cycles_per_block": 6768.5,
+   "frame_hook_cycles_per_block": 486.0,
+   "closed_frame_instr": 4,
+   "closed_ui_instr": 4,
+   "closed_cycles_per_block": 10.4
+  }
+ },
+ "stack": {
+  "ui_loop_head_sp": "0x460d59a8 (UI task, tu_tick entry)",
+  "own_frames_static": 172,
+  "measured_peak_below_loop_head": 236,
+  "detail": "Deepest UI-task stack write inside tu_draw spans (writes trace, tcb filtered, nested interrupt chains excluded): 236 B below the loop-head SP (TEXT internals, 0x40012bdc); own frames 172 B (tu_tick 44 + bsr 4 + tu_draw 92 + helper bsr 4 + 24 B of TEXT arguments + jsr 4); tu_analyse adds 4 (no pushes). Key path (UP+TEMPO -> tu_open -> tu_draw) measured 124 B below the tu_tempo entry SP at watched calls (+ TEXT internals 64 = 188 B), plus the stock window creation the stock TEMPO opener performs anyway. Frame path: tu_frame uses registers only (0 B). Non-frame interrupt chains reach up to 528 B below the loop head with or without the Tuner (stock)."
+ },
+ "lifecycle": {
+  "open_instr": 13749,
+  "close_instr": 5968,
+  "note": "UP+TEMPO entry to the end of the first draw (key task); TEMPO close through tu_close. One-off events in the key handler."
+ }
+}

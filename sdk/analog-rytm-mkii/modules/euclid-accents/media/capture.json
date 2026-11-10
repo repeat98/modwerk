@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "euclid-accents",
+  "moduleVersion": "1.2.0",
+  "firmware": "1.74",
+  "capturedAt": "2026-11-07T13:40:00Z",
+  "imageSha256": "c18fca9b6f1889adffe901f848ede19230781af17d279c94e292bba64feb41e3",
+  "mainSha256": null,
+  "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "build": "Modwerk's linker (scripts/link-image.mjs in modwerk-source-tools): the Modwerk base for core-ar2 0.7 (plain variant ba530f45, vendored) + this folder's euclid-accents 1.2.0, materialised against stock OS 1.74 (cb0f99d6…e123), --version EA12",
+  "emulator": {
+    "name": "analog-emu (trigcondition's Rytm and A4 emulator built on rytm-emu; its history holds rytm-emu c5732f0, 951dcbc and e914f46)",
+    "repository": "https://github.com/trigcondition/analog-emu",
+    "revision": "4c07ed3",
+    "binary": "dtboot (cargo build --release, Windows)",
+    "settings": "no card image, JIT on, --every 1000M; DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out"
+  },
+  "conditions": "Headless cold boot; four held NO presses clear the missing-calibration notices; two short TRIG presses (12M) open BD's EUCLIDEAN page; one value step on EUC and five on PL1; then thirty-two value steps on OP (encoder 7), each followed 150M later by a zero-count turn only to take a frame. OP passes OR, XOR, AND and SUB, then shows OR* (turn20), XOR* (turn22), AND* (turn25) and SUB* (turn27). Stock 1.74 with the same input shows the same EUCLIDEAN page (step06_TRIG.png byte-identical) and stops at SUB. The 12M presses follow MODULE_UI_CAPTURES.md: from rytm-emu e914f46 a 40M press reads as a hold.",
+  "captures": [
+    {
+      "path": "media/euclidean-page.png",
+      "sha256": "59e5ccce51f893093791c7e639869ec6408c2222f3b47246531ab1c16ceb7f4b",
+      "frame": "step06_TRIG.png",
+      "plan": "dtboot ea12.syx --instr 20000M --every 1000M --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press TRIG@7503M:12M --press TRIG@8003M:12M --nudge 3:1@8403M --nudge 0:1@8803Mx5/100M --turn 3:0@9403Mx1 --nudge 7:1@9603Mx32/300M --turn 7:0@9753Mx32/300M"
+    },
+    {
+      "path": "media/op-or-accent.png",
+      "sha256": "601cbb9e9e5f49945dbf21be20bfcfd248487c6ed753a34186dcfe3d9e1ce712",
+      "frame": "turn20.png",
+      "plan": "dtboot ea12.syx --instr 20000M --every 1000M --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press TRIG@7503M:12M --press TRIG@8003M:12M --nudge 3:1@8403M --nudge 0:1@8803Mx5/100M --turn 3:0@9403Mx1 --nudge 7:1@9603Mx32/300M --turn 7:0@9753Mx32/300M"
+    },
+    {
+      "path": "media/op-and-accent.png",
+      "sha256": "e0d28fef410ff8ded50985edc21c412f2e9be75d7206b3f082611791e78e5f6c",
+      "frame": "turn25.png",
+      "plan": "dtboot ea12.syx --instr 20000M --every 1000M --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press TRIG@7503M:12M --press TRIG@8003M:12M --nudge 3:1@8403M --nudge 0:1@8803Mx5/100M --turn 3:0@9403Mx1 --nudge 7:1@9603Mx32/300M --turn 7:0@9753Mx32/300M"
+    }
+  ]
+}

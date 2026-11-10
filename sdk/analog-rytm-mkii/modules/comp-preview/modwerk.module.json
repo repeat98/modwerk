@@ -1,0 +1,222 @@
+{
+  "schemaVersion": 3,
+  "id": "comp-preview",
+  "name": "Compressor Preview",
+  "version": "1.1.0",
+  "machine": "analog-rytm-mkii",
+  "category": "system",
+  "exclusive": false,
+  "author": {
+    "github": "Iced-Cream",
+    "credits": [
+      "MrScruff — the original mod, 0006-comp-preview in rytm-mods, its design, calibration and code; published in rytm-mods-src with permission.",
+      "Iced-Cream — the elemod port (rytm2_mods) and this Modwerk module.",
+      "irpina — Elekloader and core-ar2, the core it links with."
+    ]
+  },
+  "maintainers": [
+    "Iced-Cream"
+  ],
+  "source": {
+    "repository": "https://github.com/Iced-Cream/rytm2_mods",
+    "revision": "e029f7540c2df2a5185620ca68b4c08579e120c6",
+    "path": "comp-preview"
+  },
+  "presentation": {
+    "label": "COMP PREVIEW",
+    "family": "Display",
+    "summary": "One more compressor page with a scrolling estimate of the master compressor's gain reduction, reached by pressing the compressor page key again.",
+    "overview": "Compressor Preview adds a page behind the compressor page key on the FX track: a scrolling trace of the estimated gain reduction of the master compressor, so you can see what THR, ratio and attack do before you hear it. Pressing the key again returns to the stock page. FUNC + the page key switches the layout: level, threshold and gain reduction together, or gain reduction alone with 0 dB at the top; FUNC + LEFT/RIGHT sets the scroll speed and FUNC + UP/DOWN the vertical scale. The estimate is built from the voices, the PRE delay and reverb returns, the master distortion and each SEQ's sidechain, with a peak detector, a static curve that THR slides along and one attack/release pole. It is an estimate: the compressor has no gain-reduction readback. It is an elemod port of MrScruff's rytm-mods 0006-comp-preview with his code unchanged; the preview is listed in the compressor view through core-ar2's page lists (core_view_pages), so other modules' pages can sit beside it.",
+    "highlights": [
+      "A scrolling estimate of the master compressor's gain reduction on its own page.",
+      "Two layouts, scroll speed and vertical scale on FUNC combinations.",
+      "Listed through core-ar2's page lists, so another module's page can sit beside it.",
+      "Display only: it changes no setting and no sound."
+    ],
+    "usage": [
+      "On the FX track, open the AMP page (the compressor). Press AMP again: the preview page, a scrolling trace of estimated gain reduction.",
+      "Play a pattern and turn THR down: the gain-reduction line dips below the dotted threshold row. If the trace sits at the bottom of the screen, hold FUNC and press UP once or twice (the vertical scale). FUNC + AMP switches to gain reduction alone and back; FUNC + LEFT/RIGHT sets the scroll speed.",
+      "Press AMP again to return to the stock compressor page. Build without the module and the page is stock."
+    ]
+  },
+  "access": {
+    "location": "FX track, AMP page (the compressor): press AMP again.",
+    "steps": [
+      "Select the FX track and open its AMP page.",
+      "Press AMP again for the preview."
+    ],
+    "screenshots": [
+      "media/preview.png",
+      "media/preview-gr-only.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "AMP, pressed again (FX track)",
+      "default": null,
+      "doc": "Steps from the stock compressor page to the preview and back. With another module's page on the same key the key steps through the stock page, this preview, then that page.",
+      "labels": null
+    },
+    {
+      "name": "FUNC + AMP (preview)",
+      "default": null,
+      "doc": "Switches the layout: level, threshold and gain reduction together, or gain reduction alone with 0 dB at the top.",
+      "labels": null
+    },
+    {
+      "name": "FUNC + LEFT / RIGHT (preview)",
+      "default": null,
+      "doc": "Sets the scroll speed.",
+      "labels": null
+    },
+    {
+      "name": "FUNC + UP / DOWN (preview)",
+      "default": null,
+      "doc": "Sets the vertical scale.",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for OS 1.74 only, on core-ar2 0.4 or later (Modwerk's base is core-ar2 0.7). 1.0 listed the compressor view's pages itself and does not link with core-ar2 0.4 or later.",
+      "The trace is an estimate, not a measurement: 1.6 dB rms from the measured reduction on random drum-pattern settings, 0.56 dB for a steady tone (author's calibration). DIST symmetry away from 64, reduction past 36 dB, POST returns and unusual crest factors read off.",
+      "The estimate runs in the audio interrupt and costs 4 to 5 points of CPU. It pauses while core-ar2's audio load reads over 95 % and resumes below 88 %. Stock alone peaks near 84 % on a unit.",
+      "At very low THR (around 24) the estimate holds a large reduction between hits, so the trace is a nearly flat line even on a raised vertical scale. At THR 41 one or two FUNC + UP presses bring the full trace back (unit run T217).",
+      "Keeps its settings in memory only; nothing is saved with a project."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [],
+    "claims": [
+      "ui:COMP view page list (preview page)",
+      "ui:compressor page draw and keys",
+      "audio:master compressor gain-reduction estimate each block"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 3912,
+    "fastBytes": 0,
+    "load": {
+      "display": "Moderate: a 32-frame estimate each audio block, 4 to 5 points of CPU",
+      "method": "static",
+      "conditions": "The author's unit measurements: the estimate costs 4 to 5 points of CPU, and the load guard pauses it above 95 % audio load. Not a measurement on Modwerk's base."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "1.1.0",
+    "sourceSha256": "a36fa34530ef0809810ceff82f117667849af2de944796ce5aab511018ad0cb7",
+    "reports": [
+      "evidence/hardware-testing.json",
+      "evidence/source-parity.json"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-09",
+      "tester": "Iced-Cream",
+      "durationMinutes": null,
+      "summary": "Iced-Cream reports that on an Analog Rytm MKII with OS 1.74 and this package on Modwerk's base (core-ar2 0.7) with analoghealth 1.3 for remote keys and stats: on build CPH2 (plain variant 1c14b6b0, 2026-11-09, run T217) the full layout at THR 41 showed little on its starting scale, and one or two FUNC + UP presses brought the trace back; at THR 24 it stayed a nearly flat line; CPU 85.2 % playing with the preview open. On build CPH1 (plain variant ba530f45, 2026-11-08, run T205): AMP again opened the preview and returned to the stock page (screen checks), FUNC + AMP, LEFT/RIGHT and UP/DOWN changed layout, speed and scale (judged from shots), CPU 84.8 % playing. Earlier, on core-ar2 0.4 (2026-10-21), the load guard paused the trace rather than the audio.",
+      "limitations": [
+        "CPH2: .syx 1e6005836d86f499afb0f8c2d3b28c9076dd4501d1d0ce29bed0b7f629a0abe8 on the plain base 1c14b6b0 (main after the AMP record hook); CPH1: .syx c443e91e087bb1f2b1481150fa59cfa16b97b1eff077dc91b45149cc521ba152 on ba530f45. Both built by scripts/link-image.mjs from this folder; firmware was not read back.",
+        "Both builds also carried analoghealth 1.3 (remote keys and stats; no site shared with this module).",
+        "CPU read 85.2 % (CPH2) and 84.8 % (CPH1) with BD playing and the preview open; busier sets were not measured on this base.",
+        "Layout, scroll speed, scale and the low-THR traces were judged from shots; the trace was not compared with a measured reduction.",
+        "Duration was not recorded."
+      ]
+    },
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Hardware on Modwerk's base: CPH2 (plain 1c14b6b0, 2026-11-09): at THR 41 FUNC + UP brings the trace back, at THR 24 it stays nearly flat; CPH1 (ba530f45, 2026-11-08): the preview opens behind AMP and returns to the stock page, its FUNC keys change layout, speed and scale; CPU about 85 % playing with the preview open. Hardware, core-ar2 0.4 (2026-10-21): the load guard pauses the trace rather than the audio. Modwerk's package linked with core-ar2 0.7 gives a main OS byte-identical to the rytm2_mods v1.3 release object linked with it.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "On the FX track, open the AMP page (the compressor). Press AMP again: the preview page, a scrolling trace of estimated gain reduction.",
+          "Play a pattern and turn THR down: the gain-reduction line dips below the dotted threshold row. If the trace sits at the bottom of the screen, hold FUNC and press UP once or twice (the vertical scale). FUNC + AMP switches to gain reduction alone and back; FUNC + LEFT/RIGHT sets the scroll speed.",
+          "Press AMP again to return to the stock compressor page. Build without the module and the page is stock."
+        ]
+      },
+      "screenshots": [
+        "media/compressor-page.png",
+        "media/preview.png",
+        "media/preview-gr-only.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-2.0-only",
+    "file": "LICENSE",
+    "declaration": "MrScruff's rytm-mods code and Iced-Cream's elemod port, under GPL-2.0-only as rytm-mods-src. src/calib.inc holds calibration constants and tables of the model. The sources name firmware routines and RAM by address only; the patch preconditions are addresses, lengths and SHA-256s."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Compressor Preview",
+      "alt": "Original illustration of a scrolling gain-reduction trace under a dotted threshold line",
+      "credit": "Iced-Cream",
+      "license": "GPL-2.0-only",
+      "source": "Original vector illustration; not a device screenshot."
+    },
+    {
+      "path": "media/compressor-page.png",
+      "kind": "screenshot",
+      "caption": "On the FX track, press AMP: the stock compressor page.",
+      "alt": "COMPRESSOR page with THR, ATK, REL and MUP above RAT, SEQ, MIX and VOL.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.1.0",
+        "imageSha256": "55dafc3b527e1bb83c2f62b8a61c27cf9d1c6102a06bfee7ac796223dc94ec47",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running CP11, the Modwerk base for core-ar2 0.7 (plain variant) and comp-preview 1.1.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/preview.png",
+      "kind": "screenshot",
+      "caption": "Press AMP again: the preview. THR 64: the trace runs below the dotted threshold row; a BD hit pulls it down and it recovers. The header shows the kit after a pad press. Stock stays on COMPRESSOR.",
+      "alt": "Preview page: knob names at top and bottom, a dotted threshold row and a trace that drops at the right and curves back up.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.1.0",
+        "imageSha256": "55dafc3b527e1bb83c2f62b8a61c27cf9d1c6102a06bfee7ac796223dc94ec47",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running CP11, the Modwerk base for core-ar2 0.7 (plain variant) and comp-preview 1.1.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/preview-gr-only.png",
+      "kind": "screenshot",
+      "caption": "Hold FUNC and press AMP: gain reduction alone, 0 dB at the top. A BD hit pulls the line down and it recovers.",
+      "alt": "Preview page in its second layout: a line near the top that drops at the right and curves back up.",
+      "credit": "Iced-Cream documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.1.0",
+        "imageSha256": "55dafc3b527e1bb83c2f62b8a61c27cf9d1c6102a06bfee7ac796223dc94ec47",
+        "setup": "Headless analog-emu 4c07ed3 (dtboot) running CP11, the Modwerk base for core-ar2 0.7 (plain variant) and comp-preview 1.1.0, built from the owner's stock OS 1.74; firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    }
+  ]
+}

@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "moduleId": "sidechain-compressor",
-  "moduleVersion": "0.2.2-experimental",
-  "moduleSourceSha256": "6ad5997cd57ab8b188a9680bea2c970b4a44ed6b777912026d9eff27ea04ddfe",
+  "moduleVersion": "0.2.1-experimental",
+  "moduleSourceSha256": "b7ca44bfa979b0a4c75efc90262dbd4ab049e8b43e8beba1f8732bf94314def8",
   "revision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
   "originalOsSha256": "164f31224bf61181e3f50e7dec40df9afcae5b16dbf6e4c0d0cc5e986af0a84e",
   "pool": [
@@ -38,10 +38,10 @@
   ],
   "summary": {
     "selections": 162,
-    "built": 64,
+    "built": 62,
     "identicalOutright": 28,
-    "identicalOutsidePlatformWrites": 36,
-    "refused": 98,
+    "identicalOutsidePlatformWrites": 34,
+    "refused": 100,
     "mismatches": 0
   },
   "selections": [
@@ -225,9 +225,9 @@
         ]
       },
       "native": {
-        "bytes": 1215902,
-        "osSha256": "1c2c6819cf5d98d35a00043a66c66d2ff3d1fd1d4824069a119520c5267a5dc8",
-        "maskedOsSha256": "e40121ab643a11702c6c7cd724e7b60e3e43d27578d2e23bb494f33b0032ee0c"
+        "bytes": 1215110,
+        "osSha256": "5296004d99a0284b1c87b72ca18edfd406f507ec7ac686d84c3bad84e423a542",
+        "maskedOsSha256": "407b01196e98cdee6b625828b1d8468693a6cc2a62c3e1b94a230729af4b201f"
       },
       "result": "masked"
     },
@@ -256,9 +256,9 @@
         ]
       },
       "native": {
-        "bytes": 1215914,
-        "osSha256": "939a5a6776fbc72027cb592b37956ca87c4191c512c3a7ade6c9f6399c762a8e",
-        "maskedOsSha256": "db703f0d3569c125b471264e1085221ef4165234d44d37e5d8f32ae583321af0"
+        "bytes": 1215110,
+        "osSha256": "b2123554ffc945f5b7ab5f772a51e8569e873402a4cce15ea0ab1a8963c843cf",
+        "maskedOsSha256": "9c6c91d46029e7ba976065654cffb270d0f3b1b53ce9b90e14a4079009ea37fd"
       },
       "result": "masked"
     },
@@ -299,9 +299,9 @@
         ]
       },
       "native": {
-        "bytes": 1115779,
-        "osSha256": "09a11fa67f9dfb83cdbe86adacc258307a0f76b20d56478e32d091fa355601e7",
-        "maskedOsSha256": "af42abe0d8e9750d9bcb94ddc7714b523a772a828103841a677bd3bf88794a92"
+        "bytes": 1114986,
+        "osSha256": "14fd1d625a817f4124a1437601937afa3a68c05e7d4ebfea8076b761cc585ece",
+        "maskedOsSha256": "a8e9a0d8cf89a0561209adbc57ee80471951000e12778ac46779143b01ef8ba3"
       },
       "result": "masked"
     },
@@ -331,9 +331,9 @@
         ]
       },
       "native": {
-        "bytes": 1115803,
-        "osSha256": "91f1777c64a1d9e88b0bf8bb4b3d6419cad95daa88edcba21b2e795bcc533fe2",
-        "maskedOsSha256": "fcac80c1b1ba79d4bafbafbf8eb91bd05e5bc83afe3014178d8285ea73b90e53"
+        "bytes": 1114986,
+        "osSha256": "965732fc3cc859433160f63b4b7c6936aea3f277500d08a15d60fe396aa47288",
+        "maskedOsSha256": "384473698c599a1e6b572a74522858c9051de61755712084f522d9f8231e6ee0"
       },
       "result": "masked"
     },
@@ -665,9 +665,9 @@
         ]
       },
       "native": {
-        "bytes": 1113661,
-        "osSha256": "a89c866d857c2d91d50b6ac76f4e8bfe4b9d5084bd9d61d5e7d313e9913a0757",
-        "maskedOsSha256": "78a0e8bd09eb57d8bb4080f9853c3d1fdaf29dab1f1825f6f1744da818f53553"
+        "bytes": 1112843,
+        "osSha256": "ef9e49af3b27b14c4ae447f3ac9bb54b88aa2b054e53b9dff32ad80741f8c367",
+        "maskedOsSha256": "aa33c83ab2dbde190a5ae6198ac169455db489a0c44f5a33598ab54d8a387974"
       },
       "result": "masked"
     },
@@ -696,9 +696,9 @@
         ]
       },
       "native": {
-        "bytes": 1113664,
-        "osSha256": "945e49691c12058618a4de8ce1c1223c8e54bd43b77c8708535e187b7eb2724f",
-        "maskedOsSha256": "52e48bea953f6281fe9d6fe8353709ee1f9ea3cef71b7370227f816ab7c9ee0b"
+        "bytes": 1112843,
+        "osSha256": "56bc5aeff6c05b147b8ece8b235345587ff80ca36fc4445023c2cb84a3dc2ea1",
+        "maskedOsSha256": "2a2a1ac6fdec9a80a0414b46c0987eddbd5b1796d4b12c06fd95df6390c654c9"
       },
       "result": "masked"
     },
@@ -885,9 +885,9 @@
         ]
       },
       "native": {
-        "bytes": 1267657,
-        "osSha256": "a2948d7b0725df50d229e59ccad6670160e63aefbbc1ba795f3d2dd78b492dad",
-        "maskedOsSha256": "8a9b888589aabd1df91d5a7fbda6d9383ea17828601842cca98f7dafc2ad3f9b"
+        "bytes": 1266885,
+        "osSha256": "e05ec2ccd64ad7a3d92ac571df67cd20e72837c08e65f71baf3ded615cacf9aa",
+        "maskedOsSha256": "35a2a2c7d68d520c35f0d6a723b8c02cd04339812581a394d4fc83f355abaeae"
       },
       "result": "masked"
     },
@@ -915,9 +915,9 @@
         ]
       },
       "native": {
-        "bytes": 1267669,
-        "osSha256": "d0388449f86336ef9840b1862632619502720ab383dad876861da2788e561e87",
-        "maskedOsSha256": "09695caf8e403f7b97acc583f440ece925e252e4bd059a5568b15f6fded1e950"
+        "bytes": 1266885,
+        "osSha256": "dc7065b5397fcf557ccab0659c20909ec614c40f430d0576da0871bdbdfefc98",
+        "maskedOsSha256": "a6eede8a61de4c4b6a917c5bdc13c8312e52bea7aa1b2f9f0b4184d8f64c0c46"
       },
       "result": "masked"
     },
@@ -957,9 +957,9 @@
         ]
       },
       "native": {
-        "bytes": 1116304,
-        "osSha256": "d9e8180c4b074cf797b8cce4e48c8dbce954f9ec7172876b32ad6b7ade534405",
-        "maskedOsSha256": "be9cf4c07fa30b79ca237d778a26a8e7330edacf5d954141775124460ef20777"
+        "bytes": 1115534,
+        "osSha256": "91fa5e069d0293a596067fb1e4e13907fb9d135d08d61e3ced2b78f559fc3c96",
+        "maskedOsSha256": "629e2404e2bb93ed30238176f79246d4933e15540408f1ba526454388155339f"
       },
       "result": "masked"
     },
@@ -987,9 +987,9 @@
         ]
       },
       "native": {
-        "bytes": 1116326,
-        "osSha256": "c6a266615416afa26a64101be8f7c25b3aa6b7696c5ad341b5d7d7bffa6ee247",
-        "maskedOsSha256": "bdd6c961c94d37cd57049970cb992c06bd76df329575981ba6b5f3d48ddae547"
+        "bytes": 1115534,
+        "osSha256": "0db46c4837118f9243f296774061dff20333e5e3cfd49df35c2703142c168a59",
+        "maskedOsSha256": "d55c8fcfc09edf77b7d4a8fa172a1e19184873fe0ab6fa3d75ca853873f540ad"
       },
       "result": "masked"
     },
@@ -1029,9 +1029,9 @@
         ]
       },
       "native": {
-        "bytes": 1115840,
-        "osSha256": "5adb6ca24a886ad94e650e2b38cce49e9fb6a9ca8118cc67351e5d5fc1abe850",
-        "maskedOsSha256": "a4d3c0a4b59f6e12009115fa15b2a98cd011fb434db6504b29e7856e571b8dd0"
+        "bytes": 1115065,
+        "osSha256": "d9dbecfc36f33d3a9f4bac40f7706d1aee90ca24f2a583bcbc656e5d4be41b3e",
+        "maskedOsSha256": "9bafc451fdcf79377312fdb55fdc65cefded21bc8008c7e6c3f47f8bf4e3aa00"
       },
       "result": "masked"
     },
@@ -1059,9 +1059,9 @@
         ]
       },
       "native": {
-        "bytes": 1115850,
-        "osSha256": "e8ba5500ed3f2a1bc080e07a56eb8109aae11fcbfbaf892d36c6e30527f7a060",
-        "maskedOsSha256": "52ba7eb1a72f925c719cca25df0e884fb6420993515434cdc046685101a6d195"
+        "bytes": 1115065,
+        "osSha256": "44f48b16ca83f8732f56fdf80dfd354f0aa536b3d6b0769859294aeca646cad0",
+        "maskedOsSha256": "f5f3241092a4eae04820bf2d0f2b04dfe6ae0f8976c2f31b983ded99513adf14"
       },
       "result": "masked"
     },
@@ -1101,9 +1101,9 @@
         ]
       },
       "native": {
-        "bytes": 1126008,
-        "osSha256": "6874e2c6892a393a23f985fd9933593a1a09519c9bbd490e6f74534bea9fb830",
-        "maskedOsSha256": "7c265b87d5a4453d46eaea97d464aa5a8e0196f4876aab536245929fbc4bf24d"
+        "bytes": 1125240,
+        "osSha256": "fc6e4d201f4e3b63e5c5efa9d1bb2588d033888289aa1364d8f71c85244f5247",
+        "maskedOsSha256": "746b0a67d96bf7e6a053c4b89cbfe4f3158a2e20a739d9ecbdc085b571aa5bb8"
       },
       "result": "masked"
     },
@@ -1131,9 +1131,9 @@
         ]
       },
       "native": {
-        "bytes": 1125993,
-        "osSha256": "ed76f62625cbecbb427f918f62676afe7cb4bf780a52ac9d9be1c73a40ac8257",
-        "maskedOsSha256": "8a9ce3690dadbbe6c3150f61beef7b9792071286c30787ec48c56df19dc5b325"
+        "bytes": 1125240,
+        "osSha256": "bc54defe3399456e6032558fe851d2d103198107219f6cd6f063452fae04370d",
+        "maskedOsSha256": "2264b4f88c07725ae154ef31925a30c3bb2f177b1ddebcee8769857dc64c398b"
       },
       "result": "masked"
     },
@@ -1317,9 +1317,9 @@
         ]
       },
       "native": {
-        "bytes": 1121860,
-        "osSha256": "06ec826dae5be1dcff39d01ccfc1b5cfc8add2b68e94770f335da5b185c33c2a",
-        "maskedOsSha256": "d8a9291bec9ae04a52f84d9e97af08b859cc64d254abf07bc064ce9b77eb512f"
+        "bytes": 1121076,
+        "osSha256": "caee80c2ee521a238821659d0d553df4f9d4d3dd5305607b023abf32b6541259",
+        "maskedOsSha256": "8c820153f15212a6f0a91672965409d2d8fd2a7bab311d75128927257a576c68"
       },
       "result": "masked"
     },
@@ -1347,9 +1347,9 @@
         ]
       },
       "native": {
-        "bytes": 1121860,
-        "osSha256": "1a144f06c653a05b6de1d578d660b7a9822b473366ba03493a2b24711943a6a3",
-        "maskedOsSha256": "65a8e3a4d7a528ac3c028b96515821287031601021728f9bff298f431969414c"
+        "bytes": 1121076,
+        "osSha256": "fc371c7c68f1c7d178c95e6fee128cb6d371572ed6cd2480b99b75e08a26c9e6",
+        "maskedOsSha256": "8d011dcce600a9c14c0cf0ddd1288e6ccf998855b3a2728884069f450a1be38e"
       },
       "result": "masked"
     },
@@ -1389,9 +1389,9 @@
         ]
       },
       "native": {
-        "bytes": 1119594,
-        "osSha256": "c558819d3bde40c6da320591c6bd8d0d94661af2d75ab2246fbc62360de1aa15",
-        "maskedOsSha256": "a4b001a7f8c6f8cb9708e0b78b25ea8727a881ab8e28c542c41f526c260dc8a2"
+        "bytes": 1118800,
+        "osSha256": "9a9bed02b24077ba33696cb10f44e0969ded27a34d6d46c418a15ab8c8deea7c",
+        "maskedOsSha256": "8d6108793c61e50f45f2885e0c02d7e9e141b0e723fc5e31894bacf5e22e70ce"
       },
       "result": "masked"
     },
@@ -1419,9 +1419,9 @@
         ]
       },
       "native": {
-        "bytes": 1119594,
-        "osSha256": "3feba51bd4b47b77601ddbfc6dcc2127bd52e680c8d41c4c75f6ad3a63a3cb1a",
-        "maskedOsSha256": "16dc609be20999b085cedbdf9c0b5ec1a7153913f5c775e8b6b7781d39c57df3"
+        "bytes": 1118800,
+        "osSha256": "ec13752fa9f1befb6c0a6f62c42075cf21d5b5f589997c81beba91ec2e5d2361",
+        "maskedOsSha256": "98062fbe04958b7622ff1539b48a525645fb64917205ed2c397f5155c41a4a68"
       },
       "result": "masked"
     },
@@ -1607,9 +1607,9 @@
         ]
       },
       "native": {
-        "bytes": 1127304,
-        "osSha256": "4e7a9d3a5c22902a0cd335d8c772c2c8ed4d0ed74bfc1172afb1a417286474fd",
-        "maskedOsSha256": "1a6ccd67da4c0cf3fa58882dc003e8284c174118dbdb84469f35e51e08005190"
+        "bytes": 1126521,
+        "osSha256": "dbe0738325cfdf66ebeab1a5916a1cbf3942174a30de65c32e825931fcb61376",
+        "maskedOsSha256": "541f79a31cceac27131637ae335c4912f03b29265838cc050707a37c95f86286"
       },
       "result": "masked"
     },
@@ -1637,9 +1637,9 @@
         ]
       },
       "native": {
-        "bytes": 1127304,
-        "osSha256": "5c8abc0c61fe6f7d01f500cebc65bca6bfff581e985d9cb0ebfbf67cf534231b",
-        "maskedOsSha256": "30dfc9abc62ee744d2739293b4e06c6a6f96c7ec8b25385d614cf7daa8f91f6d"
+        "bytes": 1126521,
+        "osSha256": "d0ea8e862b115839ec5b92277baab5566122d076863b768c919d559e7707eb50",
+        "maskedOsSha256": "9e8628fbdbbe9cb0eaa941a82e9de497d8229206ff7ba8c9afc4d3f31fe5cbcd"
       },
       "result": "masked"
     },
@@ -1678,9 +1678,9 @@
         ]
       },
       "native": {
-        "bytes": 1114834,
-        "osSha256": "026c71ce7c68ce91a28b2a9ddcffa4994b4c417e60e6d4cc07c37f13c49845ed",
-        "maskedOsSha256": "2da07fee2ebd1bec2163368a34d842fa87d7b61e1f78aa1259a98bc2de153f80"
+        "bytes": 1114061,
+        "osSha256": "7f5d9a97cb49a974762b0d28a28b1eeb5bf0399179bd16bc69ab3bc960aceb81",
+        "maskedOsSha256": "2887d3c706f68233103cff848dd88602a5275560d19ed08eb85ba3253fc262e3"
       },
       "result": "masked"
     },
@@ -1708,9 +1708,9 @@
         ]
       },
       "native": {
-        "bytes": 1114834,
-        "osSha256": "75f04cefadfb9f7032b193d7cc5b2fca19e9e5ac1858698823686587ad1506bc",
-        "maskedOsSha256": "6ed8502b3cca5f5d59ee3427c5788b380fcff9bda109a96f32501f092803aa92"
+        "bytes": 1114061,
+        "osSha256": "060f4c140dba236e7e88626586d8744b480001c79e3865d44eb1b72615c874e6",
+        "maskedOsSha256": "2ea691b5d83d82107f006ecf75cc1735d5bb7c2f42dfc52c9d8d9ab646df9533"
       },
       "result": "masked"
     },
@@ -1822,9 +1822,9 @@
         ]
       },
       "native": {
-        "bytes": 1114932,
-        "osSha256": "7511e1998dec6ef5d9477036571c275f42fde3e1d5c48bb8c4b40868ba39a78b",
-        "maskedOsSha256": "06c5fe733441b50d6ff6b3542a9e2f99e21bd9c71a02ae6d072190c49ce74875"
+        "bytes": 1114162,
+        "osSha256": "026026dc65adc4177f059466502dc9f383823a73bb84ba53fcd6e879d096e6f5",
+        "maskedOsSha256": "70c302121e4e8966692cac49f6668323e4cbf8c9279fd5cb841661b044c903bd"
       },
       "result": "masked"
     },
@@ -1852,9 +1852,9 @@
         ]
       },
       "native": {
-        "bytes": 1114932,
-        "osSha256": "b1ffbc25fc2902e7179278e499f62fb276636c3c59bd1026626ea1e4d748b3fa",
-        "maskedOsSha256": "63e500a433e2f780f985b11cfda4c9429e976a73522f0949b1c11818c6042c94"
+        "bytes": 1114162,
+        "osSha256": "f92bdf229b416ec80c4e3d2a1b5d4b1964518822944e37629b351af78a81b494",
+        "maskedOsSha256": "2a0d7fdf67c93852aed42393f823e876d080b9d67404666f95f1d24d54f68997"
       },
       "result": "masked"
     },
@@ -1894,9 +1894,9 @@
         ]
       },
       "native": {
-        "bytes": 1115033,
-        "osSha256": "4b73f2551ea56c03242d64b92b2f53af44ff8a09642225924068fb68043fcf57",
-        "maskedOsSha256": "d2a245240494ef954e6699887e7d7ade61a6b93f2e79af1d3ed6c77b9d4d0de6"
+        "bytes": 1114242,
+        "osSha256": "2aa5533a2650ce56868b679ca512c81a78c44929e8a149acd3f5bc75d616765a",
+        "maskedOsSha256": "09cb70a9ae814d6a8c35a35a1e355a0b012a433bed0dd5a5353df2e3e5bb2cac"
       },
       "result": "masked"
     },
@@ -1924,9 +1924,9 @@
         ]
       },
       "native": {
-        "bytes": 1115033,
-        "osSha256": "c00b56419aff4724a11383aa80e099fbd93538a5f8f5575fbf6acd3a764bd110",
-        "maskedOsSha256": "b1628d8e2512359dafac9842ce10fd2c7ae95c011e7617f66071c3756cc233b7"
+        "bytes": 1114242,
+        "osSha256": "7861f1b72b66bbe47109be7cd4e7188b1065556818847c8d8858e57322376387",
+        "maskedOsSha256": "5697585b32408490476e03d030a19387fcc560d92c0dd51ede342a6986d353a3"
       },
       "result": "masked"
     },
@@ -1966,9 +1966,9 @@
         ]
       },
       "native": {
-        "bytes": 1115267,
-        "osSha256": "381dea4afcd8170e375d7b681ead12ef5ace4eb92e4ea019b9fae6ff6458c6fa",
-        "maskedOsSha256": "f25d405871f33a208f30702fc82a1995d1a1331ed3ba804739465d01ce5db8a6"
+        "bytes": 1114469,
+        "osSha256": "a06ec05576356738237b2dd27ae59421616679b5683d96d732c33b6d1ba49f11",
+        "maskedOsSha256": "c5ef87cca07406c62bfcbabf2e98f1475f636dcdc3747a551cd706ca9a3a4870"
       },
       "result": "masked"
     },
@@ -1996,9 +1996,9 @@
         ]
       },
       "native": {
-        "bytes": 1115267,
-        "osSha256": "c9fb225925f3ac260732add37715572db1f26e4d88b246e9e85fbc14a0731033",
-        "maskedOsSha256": "0607a03a5340134aab1e884eeb10b727d93a924bc1631b6a2bb541b295bbb62f"
+        "bytes": 1114469,
+        "osSha256": "2612c2642b5417a8d27a0ac4edc2d89d0b1cae07abf9a36091d9c3bb9ca27cbf",
+        "maskedOsSha256": "c4438569e9f12dedcc7d0b3a06924bbb36d2cb3b50cc9de606016e25d6a400e3"
       },
       "result": "masked"
     },
@@ -2038,9 +2038,9 @@
         ]
       },
       "native": {
-        "bytes": 1116740,
-        "osSha256": "ef37382a3b7a3ddb18d71bd4989f735e16f801be87673815d5073fc02865a3f5",
-        "maskedOsSha256": "fda194f2b9ce1ca1c80d1021d74310c259dc202a44ac74008d3ccd77ade0d0df"
+        "bytes": 1115936,
+        "osSha256": "b6e9c5f66005aae5aeca035dd0a2caf7907ae1f4ec78ee046584ecb1cf9d7233",
+        "maskedOsSha256": "109bf0f58853d04e576861dc9a5c45b9d852f20eb68bcc154daaf293f01d3f07"
       },
       "result": "masked"
     },
@@ -2068,9 +2068,9 @@
         ]
       },
       "native": {
-        "bytes": 1116740,
-        "osSha256": "b776526d286ae9a3f88573917c6265a0329958ebba9ba76884ba280aedaf58e0",
-        "maskedOsSha256": "e8474f61faa2b6cf7572eddcefc22aa1b4375571d62dce85dbced8b1c636785f"
+        "bytes": 1115936,
+        "osSha256": "09460f6238ad8fa379dd10ca0c0dfff1817ec39c01a801fbdcd0e4ef5f77b5be",
+        "maskedOsSha256": "970ddd6e30205a7b2bf4062a8acfb6b1da3dbadccd69d25ba590ab0452cf0c98"
       },
       "result": "masked"
     },
@@ -2218,7 +2218,7 @@
         ]
       },
       "native": {
-        "refused": "SYNTH MACHINE fm_qzc at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -2358,7 +2358,7 @@
         ]
       },
       "native": {
-        "refused": "MUTE_MODES mm_menu at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7a00 not free"
       },
       "result": "refused"
     },
@@ -2422,7 +2422,7 @@
         ]
       },
       "native": {
-        "refused": "MUTE_MODES mm_menu at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -2496,7 +2496,7 @@
         ]
       },
       "native": {
-        "refused": "MUTE_MODES mm_menu at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7a00 not free"
       },
       "result": "refused"
     },
@@ -2560,7 +2560,7 @@
         ]
       },
       "native": {
-        "refused": "MUTE_MODES mm_menu at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -2633,7 +2633,7 @@
         ]
       },
       "native": {
-        "refused": "MUTE_MODES mm_menu at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7a00 not free"
       },
       "result": "refused"
     },
@@ -2696,7 +2696,7 @@
         ]
       },
       "native": {
-        "refused": "MUTE_MODES mm_menu at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -2768,6 +2768,71 @@
           "BBD",
           "LOFI2",
           "RING_SC"
+        ]
+      },
+      "native": {
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
+      },
+      "result": "refused"
+    },
+    {
+      "moduleIds": [
+        "miniverb",
+        "tapeecho",
+        "euclid",
+        "tapehead",
+        "airwindows-chorus",
+        "everb",
+        "bbd",
+        "lofi2",
+        "ring-sc",
+        "usb-audio-out-tracks-main-cue",
+        "quantizer",
+        "synth",
+        "previewvol",
+        "cc-map",
+        "sidechain-compressor",
+        "vector",
+        "playmodes",
+        "mute-modes",
+        "recorder-loop-fix",
+        "poly8",
+        "output-matrix",
+        "quantize-live-rec-toggle",
+        "apply-scene",
+        "direct-jump-kyoti",
+        "dejavu",
+        "arp-key-locks",
+        "beat-slicer"
+      ],
+      "keepStockFx2": false,
+      "menu": {
+        "fx1": [
+          "FILTER",
+          "EQUALIZER",
+          "DJ EQ",
+          "PHASER",
+          "FLANGER",
+          "CHORUS",
+          "SPATIALIZER",
+          "COMB FILTER",
+          "SIDECHAIN_COMPRESSOR",
+          "LO-FI",
+          "EUCLID",
+          "TAPEHEAD",
+          "RING_SC"
+        ],
+        "fx2": [
+          "MINIVERB",
+          "TAPE ECHO",
+          "EUCLID",
+          "TAPEHEAD",
+          "AIR CHORUS",
+          "EVERB",
+          "BBD",
+          "LOFI2",
+          "RING_SC",
+          "SIDECHAIN_COMPRESSOR"
         ]
       },
       "native": {
@@ -2780,71 +2845,6 @@
         "miniverb",
         "tapeecho",
         "euclid",
-        "tapehead",
-        "airwindows-chorus",
-        "everb",
-        "bbd",
-        "lofi2",
-        "ring-sc",
-        "usb-audio-out-tracks-main-cue",
-        "quantizer",
-        "synth",
-        "previewvol",
-        "cc-map",
-        "sidechain-compressor",
-        "vector",
-        "playmodes",
-        "mute-modes",
-        "recorder-loop-fix",
-        "poly8",
-        "output-matrix",
-        "quantize-live-rec-toggle",
-        "apply-scene",
-        "direct-jump-kyoti",
-        "dejavu",
-        "arp-key-locks",
-        "beat-slicer"
-      ],
-      "keepStockFx2": false,
-      "menu": {
-        "fx1": [
-          "FILTER",
-          "EQUALIZER",
-          "DJ EQ",
-          "PHASER",
-          "FLANGER",
-          "CHORUS",
-          "SPATIALIZER",
-          "COMB FILTER",
-          "SIDECHAIN_COMPRESSOR",
-          "LO-FI",
-          "EUCLID",
-          "TAPEHEAD",
-          "RING_SC"
-        ],
-        "fx2": [
-          "MINIVERB",
-          "TAPE ECHO",
-          "EUCLID",
-          "TAPEHEAD",
-          "AIR CHORUS",
-          "EVERB",
-          "BBD",
-          "LOFI2",
-          "RING_SC",
-          "SIDECHAIN_COMPRESSOR"
-        ]
-      },
-      "native": {
-        "refused": "SYNTH MACHINE fm_qzc at 0x400d7b80 not free"
-      },
-      "result": "refused"
-    },
-    {
-      "moduleIds": [
-        "miniverb",
-        "tapeecho",
-        "euclid",
         "repitch",
         "airwindows-chorus",
         "everb",
@@ -2909,7 +2909,7 @@
         ]
       },
       "native": {
-        "refused": "MUTE_MODES mm_menu at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7a00 not free"
       },
       "result": "refused"
     },
@@ -2972,7 +2972,7 @@
         ]
       },
       "native": {
-        "refused": "MUTE_MODES mm_menu at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -3046,7 +3046,7 @@
         ]
       },
       "native": {
-        "refused": "MUTE_MODES mm_menu at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7a00 not free"
       },
       "result": "refused"
     },
@@ -3110,7 +3110,7 @@
         ]
       },
       "native": {
-        "refused": "MUTE_MODES mm_menu at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -3184,7 +3184,7 @@
         ]
       },
       "native": {
-        "refused": "MUTE_MODES mm_menu at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7a00 not free"
       },
       "result": "refused"
     },
@@ -3248,7 +3248,7 @@
         ]
       },
       "native": {
-        "refused": "MUTE_MODES mm_menu at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -3322,7 +3322,7 @@
         ]
       },
       "native": {
-        "refused": "MUTE_MODES mm_menu at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7a00 not free"
       },
       "result": "refused"
     },
@@ -3386,7 +3386,7 @@
         ]
       },
       "native": {
-        "refused": "MUTE_MODES mm_menu at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -3460,7 +3460,7 @@
         ]
       },
       "native": {
-        "refused": "MUTE_MODES mm_menu at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7a00 not free"
       },
       "result": "refused"
     },
@@ -3524,7 +3524,7 @@
         ]
       },
       "native": {
-        "refused": "MUTE_MODES mm_menu at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -3597,7 +3597,7 @@
         ]
       },
       "native": {
-        "refused": "MUTE_MODES mm_menu at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7a00 not free"
       },
       "result": "refused"
     },
@@ -3660,7 +3660,7 @@
         ]
       },
       "native": {
-        "refused": "MUTE_MODES mm_menu at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -3735,7 +3735,7 @@
         ]
       },
       "native": {
-        "refused": "SYNTH MACHINE fm_qzc at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -3875,7 +3875,7 @@
         ]
       },
       "native": {
-        "refused": "SYNTH MACHINE fm_qzc at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -4012,6 +4012,71 @@
           "BBD",
           "LOFI2",
           "RING_SC"
+        ]
+      },
+      "native": {
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
+      },
+      "result": "refused"
+    },
+    {
+      "moduleIds": [
+        "miniverb",
+        "tapeecho",
+        "euclid",
+        "repitch",
+        "tapehead",
+        "airwindows-chorus",
+        "everb",
+        "bbd",
+        "lofi2",
+        "ring-sc",
+        "usb-audio-out-tracks-main-cue",
+        "quantizer",
+        "previewvol",
+        "cc-map",
+        "sidechain-compressor",
+        "vector",
+        "playmodes",
+        "mute-modes",
+        "recorder-loop-fix",
+        "poly8",
+        "output-matrix",
+        "quantize-live-rec-toggle",
+        "apply-scene",
+        "direct-jump-kyoti",
+        "dejavu",
+        "arp-key-locks",
+        "beat-slicer"
+      ],
+      "keepStockFx2": false,
+      "menu": {
+        "fx1": [
+          "FILTER",
+          "EQUALIZER",
+          "DJ EQ",
+          "PHASER",
+          "FLANGER",
+          "CHORUS",
+          "SPATIALIZER",
+          "COMB FILTER",
+          "SIDECHAIN_COMPRESSOR",
+          "LO-FI",
+          "EUCLID",
+          "TAPEHEAD",
+          "RING_SC"
+        ],
+        "fx2": [
+          "MINIVERB",
+          "TAPE ECHO",
+          "EUCLID",
+          "TAPEHEAD",
+          "AIR CHORUS",
+          "EVERB",
+          "BBD",
+          "LOFI2",
+          "RING_SC",
+          "SIDECHAIN_COMPRESSOR"
         ]
       },
       "native": {
@@ -4033,71 +4098,6 @@
         "ring-sc",
         "usb-audio-out-tracks-main-cue",
         "quantizer",
-        "previewvol",
-        "cc-map",
-        "sidechain-compressor",
-        "vector",
-        "playmodes",
-        "mute-modes",
-        "recorder-loop-fix",
-        "poly8",
-        "output-matrix",
-        "quantize-live-rec-toggle",
-        "apply-scene",
-        "direct-jump-kyoti",
-        "dejavu",
-        "arp-key-locks",
-        "beat-slicer"
-      ],
-      "keepStockFx2": false,
-      "menu": {
-        "fx1": [
-          "FILTER",
-          "EQUALIZER",
-          "DJ EQ",
-          "PHASER",
-          "FLANGER",
-          "CHORUS",
-          "SPATIALIZER",
-          "COMB FILTER",
-          "SIDECHAIN_COMPRESSOR",
-          "LO-FI",
-          "EUCLID",
-          "TAPEHEAD",
-          "RING_SC"
-        ],
-        "fx2": [
-          "MINIVERB",
-          "TAPE ECHO",
-          "EUCLID",
-          "TAPEHEAD",
-          "AIR CHORUS",
-          "EVERB",
-          "BBD",
-          "LOFI2",
-          "RING_SC",
-          "SIDECHAIN_COMPRESSOR"
-        ]
-      },
-      "native": {
-        "refused": "SCALE QUANTIZER qzc at 0x400d7b80 not free"
-      },
-      "result": "refused"
-    },
-    {
-      "moduleIds": [
-        "miniverb",
-        "tapeecho",
-        "euclid",
-        "repitch",
-        "tapehead",
-        "airwindows-chorus",
-        "everb",
-        "bbd",
-        "lofi2",
-        "ring-sc",
-        "usb-audio-out-tracks-main-cue",
-        "quantizer",
         "synth",
         "cc-map",
         "sidechain-compressor",
@@ -4155,7 +4155,7 @@
         ]
       },
       "native": {
-        "refused": "SYNTH MACHINE fm_qzc at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -4295,7 +4295,7 @@
         ]
       },
       "native": {
-        "refused": "SYNTH MACHINE fm_qzc at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -4435,7 +4435,7 @@
         ]
       },
       "native": {
-        "refused": "SYNTH MACHINE fm_qzc at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -4575,7 +4575,7 @@
         ]
       },
       "native": {
-        "refused": "SYNTH MACHINE fm_qzc at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -4715,7 +4715,7 @@
         ]
       },
       "native": {
-        "refused": "SYNTH MACHINE fm_qzc at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -4855,7 +4855,7 @@
         ]
       },
       "native": {
-        "refused": "SYNTH MACHINE fm_qzc at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -5135,7 +5135,7 @@
         ]
       },
       "native": {
-        "refused": "SYNTH MACHINE fm_qzc at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -5275,7 +5275,7 @@
         ]
       },
       "native": {
-        "refused": "SYNTH MACHINE fm_qzc at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -5415,7 +5415,7 @@
         ]
       },
       "native": {
-        "refused": "SYNTH MACHINE fm_qzc at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -5555,7 +5555,7 @@
         ]
       },
       "native": {
-        "refused": "SYNTH MACHINE fm_qzc at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -5695,7 +5695,7 @@
         ]
       },
       "native": {
-        "refused": "SYNTH MACHINE fm_qzc at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -5835,7 +5835,7 @@
         ]
       },
       "native": {
-        "refused": "SYNTH MACHINE fm_qzc at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -5975,7 +5975,7 @@
         ]
       },
       "native": {
-        "refused": "SYNTH MACHINE fm_qzc at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -6099,7 +6099,7 @@
         ]
       },
       "native": {
-        "refused": "SCALE QUANTIZER table SEQUENCER getters at 0x400d7c00 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_ui at 0x400d7980 not free"
       },
       "result": "refused"
     },
@@ -6148,7 +6148,7 @@
         ]
       },
       "native": {
-        "refused": "SCALE QUANTIZER table SEQUENCER setters at 0x400d7c80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7a80 not free"
       },
       "result": "refused"
     },
@@ -6218,7 +6218,7 @@
         ]
       },
       "native": {
-        "refused": "MUTE_MODES mm_menu at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7a00 not free"
       },
       "result": "refused"
     },
@@ -6278,7 +6278,7 @@
         ]
       },
       "native": {
-        "refused": "MUTE_MODES mm_menu at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -6343,7 +6343,7 @@
         ]
       },
       "native": {
-        "refused": "QUANTIZE_LIVE_REC_TOGGLE qlr at 0x400d7b00 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_ui at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -6398,7 +6398,7 @@
         ]
       },
       "native": {
-        "refused": "QUANTIZE_LIVE_REC_TOGGLE qlr at 0x400d7b00 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7a00 not free"
       },
       "result": "refused"
     },
@@ -6559,7 +6559,7 @@
         ]
       },
       "native": {
-        "refused": "payload A: LOFI2 overruns the region (2866 > 2724 words)"
+        "refused": "MUTE_MODES table PERSONALIZE labels at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -6604,7 +6604,7 @@
         ]
       },
       "native": {
-        "refused": "payload A: LOFI2 overruns the region (2866 > 2724 words)"
+        "refused": "MUTE_MODES table PERSONALIZE getters at 0x400d7c00 not free"
       },
       "result": "refused"
     },
@@ -6672,7 +6672,7 @@
         ]
       },
       "native": {
-        "refused": "CC->FX2/FX1 page-2 cave + dispatch repoint: 724 B fits neither the clone window (from 0x400d7b00) nor the overflow run"
+        "refused": "SIDECHAIN_COMPRESSOR sc_ui at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -6730,7 +6730,7 @@
         ]
       },
       "native": {
-        "refused": "CC->FX2/FX1 page-2 cave + dispatch repoint: 724 B fits neither the clone window (from 0x400d7b00) nor the overflow run"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7a00 not free"
       },
       "result": "refused"
     },
@@ -6777,9 +6777,9 @@
         ]
       },
       "native": {
-        "bytes": 1153605,
-        "osSha256": "0e45c560ff04d737a608eed203b32a12f2d791a7757fb183d789d28d257685ce",
-        "maskedOsSha256": "7c1273aa532dad7f006be9fd5fec731ab7d7a451c314f56d28a6630127e44b93"
+        "bytes": 1152860,
+        "osSha256": "0b04395867f537d56fae94012079d28510ae912013d029f2e40ebbce369e6ff1",
+        "maskedOsSha256": "025215ada154f08560f99da239e299421a74c16b37ecf2dcdefc77b0eb677711"
       },
       "result": "masked"
     },
@@ -6815,9 +6815,9 @@
         ]
       },
       "native": {
-        "bytes": 1153625,
-        "osSha256": "4b2ffbfae9856329711dd1878c7bcb46d68e23d8acb14fb6a672b99a741a0ae5",
-        "maskedOsSha256": "1c61ae348267d249e00a3b01dfae018a7dc3724f84539b46e1f379ae3de254b3"
+        "bytes": 1152860,
+        "osSha256": "76e3e8f1cf2337a8801a18a11d174139dddacc467f83ba038d99f35cb544b7c2",
+        "maskedOsSha256": "85cdf22cfcff1f930b3b98aa4ee35506ddf7882813de2666704be8be99c5449e"
       },
       "result": "masked"
     },
@@ -6880,7 +6880,7 @@
         ]
       },
       "native": {
-        "refused": "CC->FX2/FX1 page-2 cave + dispatch repoint: 724 B fits neither the clone window (from 0x400d7b00) nor the overflow run"
+        "refused": "SIDECHAIN_COMPRESSOR sc_ui at 0x400d7980 not free"
       },
       "result": "refused"
     },
@@ -6933,7 +6933,7 @@
         ]
       },
       "native": {
-        "refused": "CC->FX2/FX1 page-2 cave + dispatch repoint: 724 B fits neither the clone window (from 0x400d7b00) nor the overflow run"
+        "refused": "SIDECHAIN_COMPRESSOR sc_ui at 0x400d7b00 not free"
       },
       "result": "refused"
     },
@@ -7186,7 +7186,7 @@
         ]
       },
       "native": {
-        "refused": "MUTE_MODES mm_softmute at 0x400d7a80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_ui at 0x400d7980 not free"
       },
       "result": "refused"
     },
@@ -7239,7 +7239,7 @@
         ]
       },
       "native": {
-        "refused": "MUTE_MODES mm_softmute at 0x400d7a80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7a80 not free"
       },
       "result": "refused"
     },
@@ -7292,7 +7292,7 @@
         ]
       },
       "native": {
-        "refused": "MUTE_MODES table PERSONALIZE labels at 0x400d7b80 not free"
+        "refused": "MUTE_MODES mm_softmute at 0x400d7a80 not free"
       },
       "result": "refused"
     },
@@ -7335,7 +7335,7 @@
         ]
       },
       "native": {
-        "refused": "MUTE_MODES table PERSONALIZE getters at 0x400d7c00 not free"
+        "refused": "MUTE_MODES mm_softmute at 0x400d7a80 not free"
       },
       "result": "refused"
     },
@@ -7400,7 +7400,7 @@
         ]
       },
       "native": {
-        "refused": "CC->FX2/FX1 page-2 cave + dispatch repoint: 724 B fits neither the clone window (from 0x400d7b00) nor the overflow run"
+        "refused": "SIDECHAIN_COMPRESSOR sc_ui at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -7455,7 +7455,7 @@
         ]
       },
       "native": {
-        "refused": "CC->FX2/FX1 page-2 cave + dispatch repoint: 724 B fits neither the clone window (from 0x400d7b00) nor the overflow run"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7a00 not free"
       },
       "result": "refused"
     },
@@ -7529,7 +7529,7 @@
         ]
       },
       "native": {
-        "refused": "SYNTH MACHINE fm_qzc at 0x400d7b80 not free"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -7639,11 +7639,9 @@
         ]
       },
       "native": {
-        "bytes": 1133085,
-        "osSha256": "6e45a4a8086b98a8becb01554d2c36247bb00687768324cc88d3ad13cd8642a2",
-        "maskedOsSha256": "78dd6c343d76a0a9ed5fdce80d41b8aa5d458c9998b02bdca05ec28620c30a95"
+        "refused": "MUTE_MODES mm_softmute at 0x400d7780 not free"
       },
-      "result": "masked"
+      "result": "refused"
     },
     {
       "moduleIds": [
@@ -7676,11 +7674,9 @@
         ]
       },
       "native": {
-        "bytes": 1133066,
-        "osSha256": "c7ed5741e36114bf5081e4d55da1a376d44bd4f0770174f12cce830683d3f9ad",
-        "maskedOsSha256": "185a7f62e749cea0e95519a461d164c7e57c74a1368dfaa6451da641800ae4f6"
+        "refused": "MUTE_MODES mm_menu at 0x400d7c00 not free"
       },
-      "result": "masked"
+      "result": "refused"
     },
     {
       "moduleIds": [
@@ -7927,7 +7923,7 @@
         ]
       },
       "native": {
-        "refused": "FX1 chooser list of 13 rows needs 56 B; the clone window ends at 0x400d7bbc and the overflow run at 0x400d2ce0"
+        "refused": "SIDECHAIN_COMPRESSOR sc_ui at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -7975,7 +7971,7 @@
         ]
       },
       "native": {
-        "refused": "FX1 chooser list of 13 rows needs 56 B; the clone window ends at 0x400d7bbc and the overflow run at 0x400d2ce0"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7b00 not free"
       },
       "result": "refused"
     },
@@ -8162,7 +8158,7 @@
         ]
       },
       "native": {
-        "refused": "payload A: LOFI2 does not fit any harvested run -- 274 words are free across 1 separate runs but the largest single opening has only 274; harvest an effect BETWEEN two runs to join them into one"
+        "refused": "QUANTIZE_LIVE_REC_TOGGLE qlr at 0x400d7b00 not free"
       },
       "result": "refused"
     },
@@ -8207,7 +8203,7 @@
         ]
       },
       "native": {
-        "refused": "payload A: LOFI2 does not fit any harvested run -- 274 words are free across 1 separate runs but the largest single opening has only 274; harvest an effect BETWEEN two runs to join them into one"
+        "refused": "DEJAVU table LFO WAVE labels + DJV at 0x400d7c00 not free"
       },
       "result": "refused"
     },
@@ -8393,7 +8389,7 @@
         ]
       },
       "native": {
-        "refused": "CC->FX2/FX1 page-2 cave + dispatch repoint: 724 B fits neither the clone window (from 0x400d7b80) nor the overflow run"
+        "refused": "SIDECHAIN_COMPRESSOR sc_ui at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -8453,7 +8449,7 @@
         ]
       },
       "native": {
-        "refused": "CC->FX2/FX1 page-2 cave + dispatch repoint: 724 B fits neither the clone window (from 0x400d7b80) nor the overflow run"
+        "refused": "SIDECHAIN_COMPRESSOR sc_cf at 0x400d7980 not free"
       },
       "result": "refused"
     },
@@ -8501,7 +8497,7 @@
         ]
       },
       "native": {
-        "refused": "MUTE_MODES table PERSONALIZE setters at 0x400d7b80 not free"
+        "refused": "MUTE_MODES mm_softmute at 0x400d7800 not free"
       },
       "result": "refused"
     },
@@ -8538,7 +8534,7 @@
         ]
       },
       "native": {
-        "refused": "label formatters do not fit: RING_SC slot 6 needs 172 B; the clone window ends at 0x400d7c3c and the overflow run at 0x400d2ce0 (next free 0x400d2ce0)"
+        "refused": "MUTE_MODES mm_softmute at 0x400d7800 not free"
       },
       "result": "refused"
     },
@@ -8595,7 +8591,7 @@
         ]
       },
       "native": {
-        "refused": "label formatters do not fit: EUCLID slot 4 needs 352 B; the clone window ends at 0x400d7bbc and the overflow run at 0x400d2ce0 (next free 0x400d2ce0)"
+        "refused": "QUANTIZE_LIVE_REC_TOGGLE qlr at 0x400d7b80 not free"
       },
       "result": "refused"
     },
@@ -8642,7 +8638,7 @@
         ]
       },
       "native": {
-        "refused": "label formatters do not fit: EUCLID slot 4 needs 352 B; the clone window ends at 0x400d7c3c and the overflow run at 0x400d2ce0 (next free 0x400d2ce0)"
+        "refused": "QUANTIZE_LIVE_REC_TOGGLE qlr at 0x400d7b80 not free"
       },
       "result": "refused"
     }

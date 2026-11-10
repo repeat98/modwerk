@@ -1,0 +1,1 @@
+SDK: `npm run octatrack:module-packages` refuses a package list that names a module twice, and says which rows to keep. A merge could keep main's row for an earlier version beside the branch's new one, and the run then stopped later with a message about a private work folder.

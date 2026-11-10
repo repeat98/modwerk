@@ -9,7 +9,7 @@ export const FFT_SIZE = 32768
 export const WARMUP = 16384                  // samples of the tone before the analysed window, so a compressor or filter settles
 export const TONES_HZ = [1100, 2700, 5300, 9100]
 export const LEVELS_DBFS = [-12, -1]
-export const LIMITS = { alias: -60, dc: -60, idle: -90 }   // audit defaults (dBc, dBFS, dBFS), not repository rules; the CLI can override each
+export const LIMITS = { alias: -60, dc: -60, idle: -90, mono: -6 }   // audit defaults (dBc, dBFS, dBFS, dB), not repository rules; the CLI can override each
 const LOBE = 4                               // half-width of a 4-term Blackman-Harris main lobe, in bins
 const MAX_HARMONIC = 128
 const RAIL = 0.9999                          // verify_knob_clicks.py's "a sample on the store's limit"
@@ -159,6 +159,17 @@ export function analyzeTone(channel, tone) {
   }
 }
 
+/** How far a stereo tone render's mono sum, (L+R)/2, falls below its two sides over the analysed frame, in dB: 0 for identical
+ *  sides, about -3 for unrelated ones, -Infinity for one side inverted. A silent render reads 0. */
+export function monoFoldDb(left, right) {
+  let sum = 0, sides = 0
+  for (let n = WARMUP; n < WARMUP + FFT_SIZE; n++) {
+    const mono = (left[n] + right[n]) / 2
+    sum += mono * mono; sides += (left[n] * left[n] + right[n] * right[n]) / 2
+  }
+  return !sides ? 0 : !sum ? -Infinity : db(sum / sides)
+}
+
 /** One channel of the idle render: the last IDLE_WINDOW_SECONDS, after the burst and the tail the plan allowed. */
 export function analyzeIdle(channel) {
   const window = channel.subarray(Math.max(channel.length - Math.round(IDLE_WINDOW_SECONDS * SAMPLE_RATE), Math.round(IDLE_BURST_SECONDS * SAMPLE_RATE)))
@@ -178,6 +189,8 @@ export function judgeTone(result, limits = LIMITS) {
   lines.push({ name: 'aliasing', state: result.aliasDbc > limits.alias ? 'fail' : 'ok', detail: result.aliasDbc.toFixed(1) + ' dBc (limit ' + limits.alias + ')' })
   lines.push({ name: 'DC', state: result.dcDbfs > limits.dc ? 'fail' : 'ok', detail: result.dcDbfs.toFixed(1) + ' dBFS (limit ' + limits.dc + ')' })
   if (result.rails) lines.push({ name: 'clipping', state: 'note', detail: result.rails + ' samples on the store limit: confirm this is the effect limiting, not a wrap' })
+  // A note, not a fail: a delay between the sides can put one test tone in a comb notch. A flipped side shows on every tone.
+  if (result.monoDb < limits.mono) lines.push({ name: 'mono', state: 'note', detail: 'the sides ' + (result.monoDb < -100 ? 'cancel completely' : 'lose ' + (-result.monoDb).toFixed(1) + ' dB') + ' summed to mono (limit ' + limits.mono + '): a flipped side, or a delay or phase offset between them' })
   return lines
 }
 
@@ -191,11 +204,11 @@ export function judgeIdle(result, limits = LIMITS) {
 export const SAME_LIMIT = -60     // dB of the difference to the louder render; at or below it two renders count as the same (audit default)
 const SILENT_DBFS = -100
 
-/** Two renders (channel arrays) sample for sample over their common length, worst channel. `same` for two settings of one knob means the
+/** Two renders (channel arrays) sample for sample over their common length, worst channel, and b's level against a's over all channels. `same` for two settings of one knob means the
  *  knob does nothing to this signal; for two presets, that they are one sound. Two silent renders prove nothing, so they are `silent`. */
 export function compareRenders(a, b, sameLimit = SAME_LIMIT) {
   const frames = Math.min(...a.map(c => c.length), ...b.map(c => c.length))
-  let ratio = 0, loudest = 0, peak = 0, first = -1
+  let ratio = 0, loudest = 0, peak = 0, first = -1, energyA = 0, energyB = 0
   for (let c = 0; c < Math.min(a.length, b.length); c++) {
     let sa = 0, sb = 0, sd = 0
     for (let n = 0; n < frames; n++) {
@@ -203,6 +216,7 @@ export function compareRenders(a, b, sameLimit = SAME_LIMIT) {
       sa += x * x; sb += y * y; sd += d * d
       if (d) { peak = Math.max(peak, Math.abs(d)); if (first < 0 || n < first) first = n }
     }
+    energyA += sa; energyB += sb
     const louder = Math.max(sa, sb)
     loudest = Math.max(loudest, louder)
     if (louder) ratio = Math.max(ratio, sd / louder)
@@ -210,7 +224,8 @@ export function compareRenders(a, b, sameLimit = SAME_LIMIT) {
   const identical = first < 0 && a.length === b.length && a.every((c, i) => c.length === b[i].length)
   const differenceDb = first < 0 ? -Infinity : db(ratio)
   const verdict = dbfs(Math.sqrt(loudest / Math.max(frames, 1))) < SILENT_DBFS ? 'silent' : identical ? 'identical' : differenceDb <= sameLimit ? 'same' : 'differs'
-  return { verdict, differenceDb, peakDbfs: peak ? dbfs(peak) : -Infinity, firstSeconds: first < 0 ? null : first / SAMPLE_RATE, frames: [a[0].length, b[0].length] }
+  const levelDb = energyA && energyB ? db(energyB / energyA) : null // b's level against a's; null when either is silent
+  return { verdict, differenceDb, levelDb, peakDbfs: peak ? dbfs(peak) : -Infinity, firstSeconds: first < 0 ? null : first / SAMPLE_RATE, frames: [a[0].length, b[0].length] }
 }
 
 // ---- writing and reading files -------------------------------------------------
@@ -296,6 +311,12 @@ export function selfTest() {
   const hot = analyzeTone(input.map(v => Math.max(-1, Math.min(1, v * 3))), tone)
   row('clipping at the store limit is noted', judgeTone(hot).some(line => line.name === 'clipping' && line.state === 'note'), hot.rails + ' samples on the limit')
 
+  const half = input.map(v => v * 0.5), monoNoted = monoDb => judgeTone({ ...clean, monoDb }).some(line => line.name === 'mono' && line.state === 'note')
+  row('identical sides lose nothing in mono', monoFoldDb(half, half) === 0 && !monoNoted(0), monoFoldDb(half, half).toFixed(2) + ' dB')
+  const quadrature = Float64Array.from(half, (_, n) => 0.5 * 10 ** (level / 20) * Math.cos(2 * Math.PI * tone.m * n / FFT_SIZE))
+  row('sides a quarter cycle apart lose 3 dB and pass', Math.abs(monoFoldDb(half, quadrature) + 3.01) < 0.05 && !monoNoted(monoFoldDb(half, quadrature)), monoFoldDb(half, quadrature).toFixed(2) + ' dB')
+  row('a flipped side is noted', monoFoldDb(half, half.map(v => -v)) === -Infinity && monoNoted(-Infinity), 'cancels completely')
+
   const idle = idleSamples(3), burst = Math.round(IDLE_BURST_SECONDS * SAMPLE_RATE)
   const zero = Float64Array.from(idle, (v, n) => n < burst ? v / FULL_SCALE : 0)
   row('an effect that goes silent is ok', judgeIdle(analyzeIdle(zero)).state === 'ok', 'digital silence')
@@ -309,6 +330,8 @@ export function selfTest() {
   compared('the same render twice is identical', [noise[0].slice()], 'identical')
   compared('a one-LSB rounding difference is the same', [noise[0].map((v, n) => n % 2 ? v + 1 / FULL_SCALE : v)], 'same')
   compared('a 1 dB level change differs', [noise[0].map(v => v * 10 ** (-1 / 20))], 'differs')
+  const halved = compareRenders(noise, [noise[0].map(v => v / 2)]).levelDb
+  row('half the amplitude reads -6.0 dB of level', Math.abs(halved + 6.02) < 0.01, halved.toFixed(2) + ' dB')
   let state = 0
   compared('a low-pass differs', [noise[0].map(v => (state += 0.2 * (v - state)))], 'differs')
   const quiet = [new Float64Array(noise[0].length)]

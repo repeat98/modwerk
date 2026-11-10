@@ -7,7 +7,24 @@ The base's key bus moves from Y $800-$9FF to Y $7E00-$7FFF on each core (the tai
 - Checked: the base's claim rule admits the new reads only inside the bus (`test_stock_hook_resources`, `test_stock_hook_binding`); the resident tap writes the bus at the new address (`test_resident_engines`, and the emulator on a card image with Sidechain Compressor: Y $7E00-$7FFF written, Y $800-$9FF not).
 - Screens: `scripts/capture-module-ui.py` with `ot_emu` `21b159be…` and 0.2.0's plan on Modwerk's native card image of this version alone (MAIN OS `b9d02d3a…`, stock effects kept). Three are byte-identical to 0.2.0's; the two SETUP screens now show the stock FX1 effects above RINGMOD SC in the chooser (0.2.0's private remix listed NONE and RINGMOD SC only).
 - Performance: `evidence/performance.json` carries 0.2.0's figures to this version (the changed instruction keeps its form and length, so the loop's instructions and cycles are the same). `module:verify`: 60 native module-owned images match, 102 matching refusals, 0 mismatches, of 162 selections.
-- **Hardware: not run on a unit.** The module reads the bus only over USB on the beta base; the owner's MKII run of the regenerated base is to follow in review.
+- **Hardware (10 November 2026, the owner's MKII):** package `91281f07…` over USB on a RAM-booted development twin `5015d2a7…` of beta base `dd3827f0…` (MAIN `b0d74917…`, never flashed), built from `4925f19d` (#1098 with `main` merged). DUCK keyed from the other core and from the same core on both cores, RING, beside BBD Delay 0.1.2 on T1 and T5 FX2 and a keyed Sidechain Compressor 0.2.1, all measured from the unit's per-track USB audio; self-test, removal in use, a trial's rollback and the qualification run below. Details in [evidence/hardware.md](evidence/hardware.md).
+
+### Qualification run, 10 November 2026
+
+Command: `npm run device:qualify -- --keeps-ok --seconds 30 --soak 120 --testing-entry run.md` with the three packages below, on bank B of the test project with one trig on every track.
+
+- Package `ring-sc/0.2.1-experimental.mwrm`, SC Ringmod, SHA-256 `91281f075b8515cf5587c308afa0bf6dad41eb25429e965682c5f3443babc803`
+- Package `sidechain-compressor.mwrm` (Sidechain Compressor 0.2.1 bound to the twin), SIDECHAIN COMP, SHA-256 `fbdaad289eca88cf8a8a1fa746c4f76cc6084404f5808e425af1a3fc896f2f0a`
+- Package `bbd/0.1.2-experimental.mwrm`, BBD Delay, SHA-256 `58b770699e28b5536ef77b2b78094a191f8855c5ab75fba4364aa528f8c13fbc`
+- RINGMOD_SC on FX2 alone: T1 peak 418 per mille of a frame, admitted in 117 ms, T5 peak 525 per mille of a frame, admitted in 117 ms
+- BBD_DELAY on FX2 alone: T1 peak 521 per mille of a frame, admitted in 118 ms, T5 peak 606 per mille of a frame, admitted in 118 ms
+- All at once, playing (RINGMOD_SC, BBD_DELAY, RINGMOD_SC, BBD_DELAY, RINGMOD_SC, BBD_DELAY, RINGMOD_SC, BBD_DELAY): CPU 851, T1-4 peak 660, T5-8 peak 745 per mille
+- Part switches: 12 of 12 ran their own effects within 3 s
+- Soak: 120 s, highest core peak 749 per mille
+- Crash test: not run
+- Result: passed
+
+Not covered by this run: listening to the sound, the power cycle and what survives it, MIDI, scenes and recording, modules beside other installed modules. The keyed measurements in the hardware report cover the sound.
 
 ## 0.2.0-experimental: RING's SLEW, S&H and RECT (21 October 2026)
 

@@ -10,13 +10,13 @@ An Elektron machine moves through five steps:
 4. **Core with hooks.** A small core reserves memory and gives mods shared hooks, so several mods run together.
 5. **First mods.** Reviewed modules with documentation, licences and evidence.
 
-A Zoom MultiStomp pedal (`family: "zoom"`) loads separate effect files on its stock OS, which is never modified, so it has no image to rebuild or core to boot. It moves through three steps, `format`, `load` and `mods`:
+A Zoom MultiStomp pedal (`family: "zoom"`) loads separate effect files on its stock OS, so it has no image to rebuild or core to boot; its base, MIDISTOMP, is a patched Zoom OS flashed once from the pedal page. It moves through three steps, `format`, `load` and `mods`:
 
 1. **Effect file understood.** The ZDL container, its ELF and the calling convention for the audio and knob code are documented.
 2. **Own effect runs.** An effect built from original source loads on the stock firmware, plays and is removed again.
 3. **First mods.** Reviewed effects with documentation, licences and evidence.
 
-A Zoom firmware release lists its version with `"files": []`: Zoom ships its OS as an updater app and no mod touches it. A Zoom pedal stays locked for modules until a `zdl` module contract exists ([proposal](ZOOM_MULTISTOMP.md)). MultiStomp profiles use the `pedal` art body (an upright stompbox) and the G1on series uses `floor` (two footswitch plates).
+A Zoom firmware release lists its version with `"files": []`: Zoom ships its OS as an updater app and no mod touches it. The `zdl` module contract is in force on the MS-70CDR, and the other ZDL pedals come up by the road it took ([another ZDL pedal](ZOOM_MULTISTOMP.md#another-zdl-pedal)). The ZD2 pedals (the Plus and Four series) take the same three steps with `.ZD2` files; list them in `isZd2Pedal` (`src/devices/registry.ts`), since the ZDL pedal page, base and contract do not apply to them ([G1 FOUR](ZOOM_ZD2.md)). MultiStomp profiles use the `pedal` art body (an upright stompbox) and the G1on series uses `floor` (two footswitch plates).
 
 An Erica Synths machine (`family: "erica"`) has published firmware source (the LXR-02, GPL-3.0), so mods are changes to that source and nothing is reverse-engineered or rebuilt from a stock image. It moves through four steps, `source`, `boot`, `core` and `mods`:
 
@@ -55,6 +55,7 @@ What the Syntakt research turned up that applies to every ColdFire machine (the 
 - A region with no static reference is not free. On the Syntakt, hardware showed runtime page writes into memory nothing in the image names (Synthack-OS issue #4). Prove a range two ways, static and allocator, in every supported release, and offer mods only what both proofs cover.
 - Check where the image's BSS starts before appending code: on the Syntakt everything after the initialised data, including an appended tail, lies inside the range the OS zeroes at reset, so a core must hook before the clear and move its payload first.
 - The repository's packer may store the main OS more densely than Elektron's, which narrows the in-place depack margin rather than widening it; check the margin of the actual build, not of the stock file.
+- The packed OS stream's end marker is an offset gamma that wraps to the bias only in 32 bits. A decoder written with unbounded integers (Python, for example) reads it as a huge offset and concludes the stream has no end marker; decode with the repository's `unpackSection` or wrap explicitly.
 
 ## Research a Linux-class OS image
 

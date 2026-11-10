@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "sample-rate",
+  "moduleVersion": "0.1.1-experimental",
+  "firmware": "1.74",
+  "capturedAt": "2026-11-06T19:00:00Z",
+  "imageSha256": "59efe41469ce121a43c9f9d3ed7dd11292487e02615baaf0c0b9f5d949443ac1",
+  "build": "Modwerk's linker: the vendored core-ar2 0.7 + this folder's Sample Playback Rate 0.1.1-experimental, materialised against stock OS 1.74, --version SR07",
+  "emulator": {
+    "name": "rytm-emu",
+    "repository": "https://github.com/trigcondition/rytm-emu",
+    "binary": "dtboot",
+    "settings": "card image with one generated 23,777-frame ramp, RAMP.wav, added with dtcard; JIT on",
+    "revision": "c5732f0"
+  },
+  "conditions": "SETUP: a card holding one generated 23,777-frame ramp from -26,000 to +26,000 (RAMP.wav, dtcard add), then Ping Pong Loop's media/capture.json SETUP run with sr07.syx --save setup.snap (BD on the ramp, LOP ON, SAMPLE page). ROW: dtboot sr07.syx --load setup.snap --instr 3400M --every 100M --press FUNC@14903M:150M --press MUTE@14953M:30M, DOWN x4 (20M presses 200M apart from 15203M), YES@16003M, DOWN x7 from 16303M, RIGHT@17703M, DTBOOT_STEPS=1 --save row.snap. SMPL: --load row.snap --instr 1600M --press NO@18303M, NO@18603M, NO@18903M, SMPL@19303M (20M each) --save smpl.snap; then --load smpl.snap --press SMPL@19903M:20M --save knob.snap. Recaptured on SR07 (0.1.1) on 6 Nov 2026 in rytm-emu c5732f0: all five frames byte-identical to SR06's.",
+  "captures": [
+    {
+      "path": "media/row-off.png",
+      "frame": "step14_DOWN.png",
+      "plan": "the ROW run, DTBOOT_STEPS=1",
+      "sha256": "db2a40b3e589333f039488588607ab009e3ccb0440698a790e92ff896ca561a7"
+    },
+    {
+      "path": "media/row-on.png",
+      "frame": "step15_RIGHT.png",
+      "plan": "the ROW run, DTBOOT_STEPS=1",
+      "sha256": "5ad4f42eb3e5a285137db21d996931d835d77bac2d79cda5ad275783fbcfa0fb"
+    },
+    {
+      "path": "media/knob-rate.png",
+      "frame": "step01_SMPL.png",
+      "plan": "DTBOOT_STEPS=1 dtboot sr07.syx --load smpl.snap --instr 600M --every 100M --press SMPL@19903M:20M",
+      "sha256": "c7508ae391f351e12f732dc60669b0ca4000bc4824c0f38eac147eaa12dbbf78"
+    },
+    {
+      "path": "media/value-rate.png",
+      "frame": "turn13.png",
+      "plan": "DTBOOT_TURN_PNG=out dtboot sr07.syx --load knob.snap --instr 2500M --every 100M --turn 1:-8@21003Mx20/50M",
+      "sha256": "00e01b26de0f0ebdb42e5a82eabbccddde8c96c2e54393df23f102047dc106cb"
+    },
+    {
+      "path": "media/other-track-fin.png",
+      "frame": "step02_TRK.png",
+      "plan": "DTBOOT_STEPS=1 dtboot sr07.syx --load smpl.snap --instr 800M --every 100M --press TRK@19903M:200M --press SD@19953M:30M",
+      "sha256": "11264bb3d1231d8872de33b71b44a99349dcfed8922317537d7db4ab78245369"
+    }
+  ]
+}

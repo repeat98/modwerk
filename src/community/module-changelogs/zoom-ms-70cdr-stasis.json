@@ -1,0 +1,10 @@
+[
+  {
+    "version": "1.2.0",
+    "date": "2026-11-10",
+    "changes": [
+      "First Modwerk release for the MS-70CDR: Manro's Stasis, built with no code from Zoom's effects. A footswitch freeze: turn it on and the note you just played holds while you play over it.",
+      "Add it to your set and sync it from the pedal page over USB, or install the file with Zoom Effect Manager."
+    ]
+  }
+]

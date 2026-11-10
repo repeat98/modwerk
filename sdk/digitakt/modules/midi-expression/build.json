@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/expr.c",
+    "src/audio.c",
+    "src/page.c",
+    "src/settings.s",
+    "src/send.s",
+    "src/render.s",
+    "src/lfo.s",
+    "src/vel.s",
+    "src/task.s",
+    "src/midilfo.s",
+    "src/store.c",
+    "src/store.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_settings",
+      "fn": "me_settings",
+      "order": 50
+    },
+    {
+      "event": "ev_tick",
+      "fn": "me_tick",
+      "order": 50
+    },
+    {
+      "event": "ev_draw",
+      "fn": "me_page_draw",
+      "order": 50
+    },
+    {
+      "event": "ev_key",
+      "fn": "me_page_key",
+      "order": 50
+    },
+    {
+      "event": "ev_enc",
+      "fn": "me_page_enc",
+      "order": 50
+    }
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "settings:EXPRESSION",
+    "drive:/cfw/expression"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.54": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x401b8e00",
+          "len": 4,
+          "stockSha256": "b3b51b9b7f1db16f5c8e630103f865a79091277aa7af1fbc8c227e346caf4cdf",
+          "op": "ptr",
+          "target": "me_control_change"
+        },
+        {
+          "addr": "0x401b8e08",
+          "len": 4,
+          "stockSha256": "1829f227ecfe2cd9f2a93f8f33123931a47255643557c5c89a3c6acfba1bba7c",
+          "op": "ptr",
+          "target": "me_aftertouch"
+        },
+        {
+          "addr": "0x401b8e0c",
+          "len": 4,
+          "stockSha256": "37e61de8713c438b0ba60815fcf2e70015cec54871b189d684dc09b3de0d0c6c",
+          "op": "ptr",
+          "target": "me_pitch_bend"
+        },
+        {
+          "addr": "0x400e0ddc",
+          "len": 8,
+          "stockSha256": "93c277eff201aa4134d6da0d4d80fa9dac2728da3e8b05ce07869a2756a3f47d",
+          "op": "jmp",
+          "target": "me_send_entry"
+        },
+        {
+          "addr": "0x40077eea",
+          "len": 6,
+          "stockSha256": "f2c0d49818da2ca50f42f9b7fec5ef9d19b3e936903fb2b04eccfde2c434a85c",
+          "op": "jsr",
+          "target": "me_render_hook"
+        },
+        {
+          "addr": "0x400ed766",
+          "len": 8,
+          "stockSha256": "2f00d9fdb64f51c6d0127dfa877aafe06a2b563333fd0cf980219fbddab7e663",
+          "op": "jmp",
+          "target": "me_lfo_entry"
+        },
+        {
+          "addr": "0x40077a60",
+          "len": 8,
+          "stockSha256": "fb36fd2b15c562e8ab9e8efdd41c3e00b91ac29480ef517a1731156cf1161d6b",
+          "op": "jsr",
+          "target": "me_voice_hook"
+        },
+        {
+          "addr": "0x400e1002",
+          "len": 6,
+          "stockSha256": "e6b06970da8d0dabdfd08f7c0353dc1622c2235a32b1e74fd4668006e519d33e",
+          "op": "jmp",
+          "target": "me_noteout_entry"
+        },
+        {
+          "addr": "0x400e1dbe",
+          "len": 6,
+          "stockSha256": "96a01ce03e91f73d58c09abfbc50fe76956388f1a10d0b7d296062ecba010bdc",
+          "op": "jsr",
+          "target": "me_task_hook"
+        },
+        {
+          "addr": "0x400ed438",
+          "len": 8,
+          "stockSha256": "af4f568eeb9318ab8f13f58caf9a702396a3e356920226dfa75c2ccc8eaff2f5",
+          "op": "jmp",
+          "target": "me_midi_lfo_entry"
+        },
+        {
+          "addr": "0x4004da62",
+          "len": 6,
+          "stockSha256": "89a4609c26f61725941af230de02fab3aa52c859d8fc34108e5b984f0c5046d9",
+          "op": "jsr",
+          "target": "me_saving_hook"
+        },
+        {
+          "addr": "0x4004fe28",
+          "len": 6,
+          "stockSha256": "89a4609c26f61725941af230de02fab3aa52c859d8fc34108e5b984f0c5046d9",
+          "op": "jsr",
+          "target": "me_loading_hook"
+        },
+        {
+          "addr": "0x4004fcbc",
+          "len": 6,
+          "stockSha256": "48ab02b8e6eab6b4daf45f62a8c7c3f8afc80bac3fd372599acbd2ec2e108a82",
+          "op": "jsr",
+          "target": "me_creating_hook"
+        }
+      ]
+    }
+  }
+}
