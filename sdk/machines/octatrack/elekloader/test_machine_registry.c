@@ -731,12 +731,17 @@ int main(void)
     }
     CHECK(one[0] > 100 && two[0] > 100 && one[1] > 100 && two[1] == -9);
     CHECK(one[2] > 100 && two[2] == -9 && one[3] > 100 && two[3] == -9);
-    /* A FLEX track no machine owns goes to F's RENDER_FLEX render unguarded, however late the frame (#999: the guard
-     * skipped such tracks as it skips F's own). */
-    fresh(); f_cost = 70000;
+    /* A FLEX track no machine owns goes to F's RENDER_FLEX render while the frame has room; when F's share would
+     * overdraw it, stock's FLEX render takes the track instead, never the silent source (#999: the guard dropped such
+     * tracks as it skips F's own), and F's comes back when there is room. */
+    fresh(); f_cost = 5000;
+    int unowned_silent = silent_renders, unowned_flex = stock_renders;
+    for (unsigned i = 0; i < 3u; ++i) CHECK(frame(6, 20000, 5000) > 100);
     uint32_t unowned_sheds = mw_frame_sheds;
-    for (unsigned i = 0; i < 3u; ++i) CHECK(frame(6, 40000, 10000) > 100);
-    CHECK(mw_frame_sheds == unowned_sheds && !(mw_frame_shed_tracks & 1u << 6));
+    f_cost = 70000; CHECK(frame(6, 20000, 5000) > 100);                        /* its cost rises: seen once */
+    for (unsigned i = 0; i < 3u; ++i) CHECK(frame(6, 20000, 5000) == -7);
+    CHECK(mw_frame_sheds == unowned_sheds + 3u && mw_frame_shed_tracks & 1u << 6);
+    CHECK(silent_renders == unowned_silent && stock_renders == unowned_flex + 3);
     f_cost = 1000;
     /* A track only stock renders always renders, however late the frame. */
     const void *v_only2[] = {&V};

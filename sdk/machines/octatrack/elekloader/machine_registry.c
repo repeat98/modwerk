@@ -568,8 +568,11 @@ unsigned mw_setup_knob(unsigned row, unsigned index, int delta)
  * mw_frame_exit (machine_registry.s). Each render of a machine's track is timed, and so is the work after it up to the
  * exit; before the next frame's same render the guard predicts the frame's length from those. When it would overdraw,
  * the track renders stock's silent source this time instead: a dropout on that track, never a frozen unit. Tracks only
- * stock renders, and priced machines' (their voice is the DSP's), always render, and so does a FLEX track no machine
- * owns that goes to a RENDER_FLEX machine's render (guarded, FM Synth's render skipped ordinary sample tracks, #999).
+ * stock renders, and priced machines' (their voice is the DSP's), always render. A FLEX track no machine owns that
+ * goes to a RENDER_FLEX machine's render is guarded too, with stock's FLEX render in its place: an ordinary sample
+ * track keeps playing (#999: with the silent source the guard dropped such tracks), and the machine's share of it
+ * cannot stop the DSP (an MKII, 10 November 2026: FM Synth installed on no track, eight FLEX tracks, PLAY: a frame of
+ * 141 % within 0.2 s and no frames after it).
  * Where a dearer render is still to come in the frame (by the last frame's order) and skipping that one alone would
  * make the room, this one runs and the dearer one is skipped when it comes: one track drops out, not the first in
  * track order whatever it costs. A skipped render comes back when the budget has room for its last cost, or as a
@@ -676,7 +679,8 @@ static unsigned dearer_later(unsigned k, uint32_t over)
         if (before >> j & 1u && !(timed >> j & 1u) && place[j] > place[k] && cost[j] > cost[k] && cost[j] >= over) return 1;
     return 0;
 }
-static int guarded(Render *f, unsigned track, unsigned ping, unsigned start, unsigned end)
+/* f, or `instead` when f would overdraw the frame. */
+static int guarded(Render *f, Render *instead, unsigned track, unsigned ping, unsigned start, unsigned end)
 {
     if (track >= 8u) return f(track, ping, start, end);
     unsigned k = track + 8u * (timed >> track & 1u);
@@ -684,7 +688,7 @@ static int guarded(Render *f, unsigned track, unsigned ping, unsigned start, uns
     int32_t over = (int32_t)(at - mw_frame_t0 + cost[k] + after[k]) - credit - (int32_t)mw_frame_share;
     if (over > 0 && !dearer_later(k, (uint32_t)over) && ++skipped[k] < PROBE) {
         mw_frame_sheds = mw_frame_sheds + 1u, mw_frame_shed_tracks |= 1u << track;
-        r = STOCK(Render *, 0x400047f0u)(track, ping, start, end);
+        r = instead(track, ping, start, end);
     } else {
         unsigned back = skipped[k] != 0;
         skipped[k] = 0;
@@ -767,12 +771,12 @@ int mw_source_render_impl(unsigned track, unsigned ping, unsigned start, unsigne
             return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
         }
         Render *f = who->render ? who->render : STOCK(Render *, 0x40004008u); /* POLY8's voices render inside stock's */
-        return who->source_kind ? f(track, ping, start, end) : guarded(f, track, ping, start, end);
+        return who->source_kind ? f(track, ping, start, end) : guarded(f, STOCK(Render *, 0x400047f0u), track, ping, start, end);
     } else if (kind == ORPHAN) { /* its bytes are the absent machine's, not FLEX's */
         stop_stock(track);
         return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
     }
-    /* Unguarded: mostly stock's own FLEX render; FM Synth also plays a legacy FMSYNTH-named sample as FM here (#999). */
+    /* Mostly stock's own FLEX render; FM Synth also plays a legacy FMSYNTH-named sample as FM here (#999). */
     if (!(looked_up >> 8 & 1u)) {
         const Machine *m[ROWS - 5u]; unsigned n = render_rows(m);
         flex_machine = 0;
@@ -780,6 +784,6 @@ int mw_source_render_impl(unsigned track, unsigned ping, unsigned start, unsigne
             if (m[k]->flags & MODWERK_MACHINE_RENDER_FLEX && m[k]->render) flex_machine = m[k];
         looked_up |= 1u << 8;
     }
-    if (flex_machine) return flex_machine->render(track, ping, start, end);
+    if (flex_machine) return guarded(flex_machine->render, STOCK(Render *, 0x40004008u), track, ping, start, end);
     return STOCK(Render *, 0x40004008u)(track, ping, start, end);
 }
