@@ -939,7 +939,7 @@ targeted cases without native changes. It passes both corrected
 transition cases and its 240 frame-progress observations. MIDI program changes
 reach bank/pattern 0/1, 0/2 and 1/0, with engine bank/Part 0/1, 0/2 and 1/0;
 the T2 overlay remains active and release preserves the current word. MIDI,
-PART, PATTERN, BANK, RECORD and STOP each cancel the overlay. The diagnostic
+PART, PATTERN, BANK, RECORD and STOP each cancelled the overlay in that prototype. Since 0.2.0 only PROJECT and MIDI cancel an active solo; those keys continue it, as the README says. The diagnostic
 shows MIDI mode remains off after the MIDI action, so the original test's
 unconditional cleanup tap was inappropriate. No native code was changed.
 The direct recorder-buffer repeat also passes: ordinary/held MAIN RMS is

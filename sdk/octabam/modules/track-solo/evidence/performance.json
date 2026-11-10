@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "module": "track-solo",
-  "version": "0.2.3-experimental",
+  "version": "0.2.4-experimental",
   "kind": "coldfire",
   "cycles": {
     "unit": "cycles/event",

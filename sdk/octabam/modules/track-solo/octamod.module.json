@@ -3,7 +3,7 @@
   "id": "track-solo",
   "key": "TRACK SOLO",
   "name": "Track Solo",
-  "version": "0.2.3-experimental",
+  "version": "0.2.4-experimental",
   "category": "system",
   "author": {
     "github": "twwwy",
@@ -104,7 +104,7 @@
     ],
     "evidenceRevision": "35ec1ddfdf39f41f86a94ae1c3afdfa35c1a8eee",
     "qualification": {
-      "moduleVersion": "0.2.3-experimental",
+      "moduleVersion": "0.2.4-experimental",
       "sourceSha256": "17aac1f026274c66a473794cfcf8239f55edbbae2e40e3e6c681a81c46c08544",
       "imageSha256": "1895ceecbfa74cd00cf07b2557ddbdf4668e32327d7c03fcf5c9f529547a5677",
       "cycles": [

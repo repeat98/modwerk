@@ -14,7 +14,7 @@ MODULE = Module(
     name="track-solo", key="TRACK SOLO", kind=Kind.CF_PATCH,
     category=Category.FIXES, author="twwwy", author_url="https://github.com/twwwy",
     doc="Hold a track for 0.5 seconds, tap other tracks to join, release to restore.",
-    proof=Proof.UNTESTED, proof_note="Local prototype; no hardware qualification.",
+    proof=Proof.HARDWARE, proof_note="USB package only; ran on Octatrack units over USB on the Modwerk base, with units, bases and dates in TESTING.md.",
     linked=(Linked("ts_core", str(HERE / "core.s"), dram=True),
             Linked("ts_gate", str(HERE / "gate.s"), dram=True),
             Linked("ts_input", str(HERE / "input.s"), dram=True)),

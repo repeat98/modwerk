@@ -16,6 +16,8 @@
 | No helper calls on the frame path. OFF uses only a test and branch per
 | site, with no stack or state write. Active uses one saved register.
 | The replayed stock MOVE supplies CCR; no instruction here changes X.
+| If stock wrote the live word during the scope (an arranger row, say), the
+| leave keeps that word instead of restoring the snapshot over it.
         .macro TS_BEGIN
         tst.l ts_overlay
         beq 8f
@@ -34,9 +36,12 @@
         tst.l ts_frame_active
         beq 9f
         move.l %d0,-(%sp)
+        move.l 0x80000008,%d0
+        cmp.l ts_frame_active,%d0
+        bne 7f                      | stock wrote a new word this frame: keep it
         move.l ts_frame_saved,%d0
         move.l %d0,0x80000008
-        clr.l ts_frame_active
+7:      clr.l ts_frame_active
         move.l (%sp)+,%d0
 9:
         .endm

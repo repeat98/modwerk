@@ -1,6 +1,6 @@
 # Track Solo
 
-Version `0.2.3-experimental` · author `twwwy`.
+Version `0.2.4-experimental` · author `twwwy`.
 
 **Evidence:** package `1895ceec…` was tested by the author on a real Octatrack
 over USB on 6 November 2026: the setting, the hold, join and leave, audio, lamps
