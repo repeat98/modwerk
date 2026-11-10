@@ -10,15 +10,16 @@ on:
     branches: [main]
 permissions:
   contents: read
-concurrency:
-  # Serialize merges so one author cannot advance main during another author's check.
-  group: module-author-updates
-  cancel-in-progress: false
 jobs:
   author-release:
     if: >-
       (github.event_name == 'workflow_run' && github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success') ||
       (github.event_name == 'pull_request_target' && github.event.pull_request.state == 'open' && !github.event.pull_request.draft && github.event.pull_request.base.ref == 'main')
+    # On the job, not the workflow: a skipped run must not queue here, where a third event cancels the pending release.
+    concurrency:
+      # Serialize merges so one author cannot advance main during another author's check.
+      group: module-author-updates
+      cancel-in-progress: false
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:

@@ -84,9 +84,14 @@ int main(void) {
     assert(!mw_hook_ranges_idle(1,&span,1,0,0,3)); /* shared alias, other core and memory space */
     assert(!mw_hook_ranges_idle(1,0,0,&span,1,3)); /* pending init is equally held */
     span=(struct mw_hook_span){0x3bdfe,1,0,MW_HOOK_P}; assert(!mw_hook_ranges_idle(1,&span,1,0,0,3));
-    span=(struct mw_hook_span){0x7f0,1,1,MW_HOOK_Y}; assert(!mw_hook_ranges_idle(1,&span,1,0,0,3));
-    span=(struct mw_hook_span){0x7f0,8,1,MW_HOOK_Y}; assert(mw_hook_ranges_idle(8,&span,1,0,0,3)); /* MON: Sidechain's, not the bus's */
-    span=(struct mw_hook_span){0x9ff,1,0,MW_HOOK_Y}; assert(!mw_hook_ranges_idle(8,&span,1,0,0,3) && !mw_hook_ranges_idle(1,&span,1,0,0,3));
+    span=(struct mw_hook_span){0xff0,1,1,MW_HOOK_Y}; assert(!mw_hook_ranges_idle(1,&span,1,0,0,3));
+    span=(struct mw_hook_span){0xff0,0x10,1,MW_HOOK_Y}; assert(mw_hook_ranges_idle(8,&span,1,0,0,3)); /* MON: Sidechain's, not the bus's */
+    span=(struct mw_hook_span){0x7fff,1,0,MW_HOOK_Y}; assert(!mw_hook_ranges_idle(8,&span,1,0,0,3) && !mw_hook_ranges_idle(1,&span,1,0,0,3));
+    span=(struct mw_hook_span){0x7e00,1,1,MW_HOOK_Y}; assert(!mw_hook_ranges_idle(8,&span,1,0,0,3) && !mw_hook_ranges_idle(1,&span,1,0,0,3));
+    span=(struct mw_hook_span){0x7a5,0x84b,1,MW_HOOK_Y}; /* Y $7a5..$fef, a DSP machine's voice: no feature's since the move */
+    for(unsigned f=1;f<=8;f<<=1) assert(mw_hook_ranges_idle(f,&span,1,0,0,3));
+    span.core=0; assert(mw_hook_ranges_idle(1,&span,1,0,0,3) && mw_hook_ranges_idle(8,&span,1,0,0,3));
+    assert(!mw_hook_ranges_idle(2,&span,1,0,0,3)); /* Output Matrix's Y $c00+$c1 on core A */
     span=(struct mw_hook_span){0x3bdfe,1,0,MW_HOOK_Y}; assert(!mw_hook_ranges_idle(8,&span,1,0,0,3));
     span=(struct mw_hook_span){0xa00,1,0,MW_HOOK_Y}; assert(mw_hook_ranges_idle(8,&span,1,0,0,3));
     assert(!mw_hook_ranges_idle(16,0,0,0,0,3) && !mw_hook_ranges_idle(9,0,0,0,0,3)); /* one known feature at a time */
@@ -95,8 +100,12 @@ int main(void) {
     span=(struct mw_hook_span){0x2840,0xec0,0,MW_HOOK_Y}; assert(mw_hook_ranges_idle(4,&span,1,0,0,3));
     span.space=MW_HOOK_X; assert(!mw_hook_ranges_idle(4,&span,1,0,0,3));
     span.core=1; assert(!mw_hook_ranges_idle(4,&span,1,0,0,3));
-    span=(struct mw_hook_span){0x4000,16384,0,MW_HOOK_Y}; assert(mw_hook_ranges_idle(1,&span,1,0,0,3));
+    span=(struct mw_hook_span){0x4000,0x3dfe,0,MW_HOOK_Y}; assert(mw_hook_ranges_idle(1,&span,1,0,0,3)); /* a +$3DFD ring */
+    assert(mw_hook_ranges_idle(8,&span,1,0,0,3));
     assert(!mw_hook_ranges_idle(1,&span,1,0,0,1)); /* incomplete second-core ledger */
+    span.words=16384; assert(!mw_hook_ranges_idle(1,&span,1,0,0,3) && !mw_hook_ranges_idle(8,&span,1,0,0,3)); /* reaches the bus */
+    span.words=0x3e00; assert(mw_hook_ranges_idle(8,&span,1,0,0,3)); span.words=0x3e01; assert(!mw_hook_ranges_idle(8,&span,1,0,0,3));
+    span=(struct mw_hook_span){0x8000,16384,1,MW_HOOK_Y}; assert(mw_hook_ranges_idle(1,&span,1,0,0,3)); /* the second slot is whole */
     span.address=0x3ffff; span.words=2; assert(!mw_hook_ranges_idle(1,&span,1,0,0,3));
     span.address=0x2ffff; assert(!mw_hook_ranges_idle(1,&span,1,0,0,3));
     assert(!mw_hook_ranges_idle(3,0,0,0,0,3));
@@ -113,11 +122,12 @@ int main(void) {
         span.words=0x3dffu; assert(!mw_hook_ranges_idle(1,&span,1,0,0,3)); /* one word into the key window */
     }
     /* ABI 9 claims: reads wholly inside a feature the package requires; nothing else of a base feature, held or not. */
-    span=(struct mw_hook_span){0x800,0x200,0,MW_HOOK_Y};
+    span=(struct mw_hook_span){0x7e00,0x200,0,MW_HOOK_Y};
     assert(mw_hook_claim_permitted(MW_DSP_KEYBUS,&span,0) && !mw_hook_claim_permitted(MW_DSP_KEYBUS,&span,1));
     assert(!mw_hook_claim_permitted(0,&span,0) && !mw_hook_claim_permitted(MW_DSP_MATRIX,&span,0));
     assert(mw_hook_claim_permitted(MW_DSP_SIDECHAIN,&span,0)); /* Sidechain implies the bus */
-    span=(struct mw_hook_span){0x7f0,0x20,1,MW_HOOK_Y}; assert(!mw_hook_claim_permitted(MW_DSP_KEYBUS,&span,0)); /* MON words */
+    span=(struct mw_hook_span){0xff0,0x10,1,MW_HOOK_Y}; assert(!mw_hook_claim_permitted(MW_DSP_KEYBUS,&span,0)); /* MON words */
+    span=(struct mw_hook_span){0x800,0x200,1,MW_HOOK_Y}; assert(mw_hook_claim_permitted(0,&span,1)); /* the old bus: no feature's */
     span=(struct mw_hook_span){0x3bdfe,0x202,1,MW_HOOK_Y}; assert(mw_hook_claim_permitted(MW_DSP_KEYBUS,&span,0));
     span.core=0; span.space=MW_HOOK_X; assert(mw_hook_claim_permitted(MW_DSP_KEYBUS,&span,0)); /* one window, any view */
     span=(struct mw_hook_span){0x3bdfd,2,1,MW_HOOK_Y}; assert(!mw_hook_claim_permitted(MW_DSP_KEYBUS,&span,0)); /* past it */

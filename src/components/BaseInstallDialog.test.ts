@@ -54,6 +54,8 @@ describe('the base dialog for a unit on an older base', () => {
     expect([...container.querySelectorAll('.base-update-plan strong')].map(item => item.textContent)).toEqual(['Send', 'Restart', 'Save'])
     expect(container.textContent).toContain('Your Octatrack restarts once')
     expect(container.textContent).toContain('Save your project and stop playback first.')
+    const status = container.querySelector('[role="status"]')! // in place before the update, so its first step is announced
+    expect(status.textContent).toBe('')
     let resume = () => {}
     update.mockImplementation(async (_bin, _base, report) => {
       report?.('starting')
@@ -69,7 +71,11 @@ describe('the base dialog for a unit on an older base', () => {
     expect(container.querySelector('.base-install-intro code')!.textContent).toBe('cc'.repeat(4))
     expect(container.querySelector('.base-update-plan .is-active strong')!.textContent).toBe('Save')
     expect(container.querySelectorAll('.base-update-plan .is-complete')).toHaveLength(2)
-    expect(container.querySelector('[role="status"]')!.className).toBe('base-install-warning')
+    expect(container.querySelector('[role="status"]')).toBe(status)
+    expect(status.className).toBe('base-install-warning')
+    expect(status.textContent).not.toContain('%') // the progress bar carries the value; the status changes only with the step
+    expect(container.querySelector('.base-update-plan progress')).not.toBeNull()
+    expect([...container.querySelectorAll('.base-update-plan .is-complete .sr-only')].map(item => item.textContent)).toEqual([' (done)', ' (done)'])
     expect(container.querySelector('.base-install-recovery')).toBeNull() // the before-start notes give way to the progress
     expect(container.querySelector('.base-install-close')).toBeNull()
     expect(buttonNamed('Continue')).toBeUndefined()
