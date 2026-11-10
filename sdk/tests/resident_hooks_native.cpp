@@ -59,9 +59,10 @@ int main(int argc, char **argv) {
         }
         return execute(reset);
     };
-    auto complete=[&](TWord feature,TWord length,TWord split) {
+    auto complete=[&](TWord feature,TWord length,std::initializer_list<TWord> splits) {
         for(TWord offset=0;offset<length;) {
-            TWord end=split && offset<split ? split:length;
+            TWord end=length;
+            for(TWord split:splits) if(offset<split) { end=split; break; }
             TWord count=std::min<TWord>(24,end-offset);
             require(chunk(feature,offset,count)); offset+=count;
         }
@@ -69,16 +70,23 @@ int main(int argc, char **argv) {
     require(memory.get(MemArea_P,state)==0 && memory.get(MemArea_P,ready)==0);
     require(!cas(0,1)); // no caller can manufacture an initialized state
     require(!chunk(1,0,25) && !chunk(1,7,1));
-    memory.set(MemArea_Y,0x7ef,0x5abc);
-    memory.set(MemArea_Y,0xa00,0x5abc);
+    memory.set(MemArea_Y,0xfef,0x5abc);
+    memory.set(MemArea_Y,0x1000,0x5abc);
+    memory.set(MemArea_Y,0x7dff,0x5abc);
+    memory.set(MemArea_Y,0x8000,0x5abc);
+    memory.set(MemArea_Y,0x7f0,0x5abc); // the old MON words and bus: a DSP machine's voice now
+    memory.set(MemArea_Y,0x9ff,0x5abc);
     memory.set(MemArea_Y,shared-1,0x5abc);
     memory.set(MemArea_Y,shared+514,0x5abc);
-    require(chunk(1,0,24));
-    require(!chunk(1,25,1)); // exact sequence, not arbitrary owned-memory writes
+    require(!chunk(1,0,17)); // one owned range per chunk: the MON words are 16
+    require(chunk(1,0,16));
+    require(!chunk(1,17,1)); // exact sequence, not arbitrary owned-memory writes
     require(!cas(0,1)); // a partial reset is still unavailable
-    complete(1,1042,528);
+    complete(1,1042,{16,530});
     require(memory.get(MemArea_P,ready)&1);
-    require(memory.get(MemArea_Y,0x7ef)==0x5abc && memory.get(MemArea_Y,0xa00)==0x5abc);
+    require(memory.get(MemArea_Y,0xfef)==0x5abc && memory.get(MemArea_Y,0x1000)==0x5abc);
+    require(memory.get(MemArea_Y,0x7dff)==0x5abc && memory.get(MemArea_Y,0x8000)==0x5abc);
+    require(memory.get(MemArea_Y,0x7f0)==0x5abc && memory.get(MemArea_Y,0x9ff)==0x5abc);
     require(memory.get(MemArea_Y,shared-1)==0x5abc && memory.get(MemArea_Y,shared+514)==0x5abc);
     require(cas(0,1));
     for(auto row:rows) require(memory.get(MemArea_P,row.operand)==(row.owner==1 ? row.on:row.off));
@@ -90,12 +98,12 @@ int main(int argc, char **argv) {
     memory.set(MemArea_X,0x283f,0x5abc);
     memory.set(MemArea_X,0x3700,0x5abc);
     memory.set(MemArea_X,0x7fff,0x5abc); // relocated wait counter remains outside AB's range
-    complete(4,3776,0);
+    complete(4,3776,{});
     require(cas(0,4));
     require(memory.get(MemArea_X,0x283f)==0x5abc && memory.get(MemArea_X,0x3700)==0x5abc);
     require(memory.get(MemArea_X,0x7fff)==0x5abc);
     require(cas(4,0) && !cas(0,4));
-    if(allowed&2) { complete(2,193,0); require(cas(0,2)); require(cas(2,0)); }
+    if(allowed&2) { complete(2,193,{}); require(cas(0,2)); require(cas(2,0)); }
     else require(!chunk(2,0,1) && !cas(0,2));
     require(!cas(0,0x80));
     return 0;
