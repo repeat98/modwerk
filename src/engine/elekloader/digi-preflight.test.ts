@@ -11,9 +11,11 @@ import { PreflightError, appendLimit, parseBuildMods, preflightBuild } from './d
 // its trailer. No Elektron firmware is involved.
 const LOAD = 0x40000400, DT2 = LINK_DEVICES.find(device => device.machine === 'digitakt-ii')!
 const sha = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex')
-const stockMain = Uint8Array.from({ length: 4096 }, (_, i) => (i % 2 ? 0x71 : 0x4e))
-const framing = (count: number) => Uint8Array.from([0xf0, 0x00, 0x20, 0x3c, 0x14, 0x00, 0x7d, 0x00, 0x10, 0x01, 0x02, 0x03, (count >> 14) & 0x7f, (count >> 7) & 0x7f, count & 0x7f, 0xf7])
 const filler = (length: number, seed: number) => Uint8Array.from({ length }, (_, i) => (i * seed + (i >> 5)) & 0xff)
+// NOPs where the tests patch, filler after: packing anything appended to 4 KB of one repeated word takes the compressor
+// seconds, which timed the tests out on CI.
+const stockMain = Uint8Array.from({ length: 4096 }, (_, i) => i < 0x400 ? (i % 2 ? 0x71 : 0x4e) : (i * 5 + (i >> 5)) & 0xff)
+const framing = (count: number) => Uint8Array.from([0xf0, 0x00, 0x20, 0x3c, 0x14, 0x00, 0x7d, 0x00, 0x10, 0x01, 0x02, 0x03, (count >> 14) & 0x7f, (count >> 7) & 0x7f, count & 0x7f, 0xf7])
 
 function syx(main: Uint8Array, { section4 = filler(300, 7), version = 'TEST' } = {}) {
   const sections = [{ id: 2, data: filler(64, 3) }, { id: 3, data: packSection(main) }, { id: 4, data: section4 }]
