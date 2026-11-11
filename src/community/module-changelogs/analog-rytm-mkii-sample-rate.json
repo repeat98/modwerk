@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.4.0-experimental",
+    "date": "2026-11-11",
+    "changes": [
+      "Renamed Improved SMPL.",
+      "The SMPL key always opens the waveform view; the knob-only view is gone.",
+      "The knobs still work there, each value showing while it turns."
+    ]
+  },
+  {
     "version": "0.3.0-experimental",
     "date": "2026-11-11",
     "changes": [

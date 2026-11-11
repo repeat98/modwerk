@@ -1,4 +1,4 @@
-# Fine Tune + Sample Rate (sample-rate) — test report
+# Improved SMPL (sample-rate) — test report
 
 Everything below was observed in rytm-emu on the named build. Nothing has run on a unit, and the emulator is not hardware evidence: the Hardware section is empty until the author reports from one.
 
@@ -28,6 +28,16 @@ Everything below was observed in rytm-emu on the named build. Nothing has run on
 - Build SP13 (as SR15, with Pipo Loop `b0ed4fe7`; test image only): `.syx` `221e94bca82b49a56f4179a51df6e01ed472cdcff311475b1ea38a3c86834d5d`.
 - A core-only image, same stock and core, for comparison.
 - Emulator: rytm-emu `c5732f0`, headless `dtboot`, JIT on. One generated sample, RAMP, 23,777 frames (odd, so STA and END fall on no round multiple), on BD with LOP ON. Audio is dtboot's `--wav`. Voice words are read with `DTBOOT_PEEK`: step at rec + 12, position at rec + 4, effective FIN at 0x8000f7cc. A click means a sample-to-sample step over 40, or six times the median, on a ramp whose normal step is below 2; each run also flags the trig's own attack, which is not counted.
+
+## 0.4.0: the SMPL key shows the waveform only (2026-11-11)
+
+rytm-emu (`c5732f0`) unless it says unit; emulator results are not hardware evidence.
+
+- SR42/SR43 (vendored core-ar2 0.7 + this source; SR43 `0a12166c…`): with the SAMPLE page left on its knob view, the view turns to SMPL WAVEFORM by itself; a second SMPL press stays there (stock toggles to the knobs); AMP then SMPL opens the waveform; SMPL held + PLAY still clears the page (CLEAR PAGE SMPL WAVEFORM, RATE back to +63). SR41, which made the list {5} with index 0, showed the waveform's title over the knob view: the view draws by index, so 0.4.0 keeps the list {4, 5}, counts one page and shows index 1.
+- Rig cases on SG04 (`aa073d83…`, the author's private test base + this source), emulator: all six pass, the new sample-rate-smpl-waveform among them (three SMPL presses, the same waveform body each time); the screen references were recorded again in the waveform view.
+- Source (0.4.0-experimental): fingerprint `2c8ec3bf…1270` (`evidence.sourceSha256`).
+- Hardware, 11 Nov 2026: npp1993's Analog Rytm MKII (OS 1.74, RB08 flashed), scratch project, SG04 (`aa073d83…`, image CRC `a04e51b5`) booted from RAM, flash untouched, run by the author's automated rig with the author's go: 7 cases pass in two runs in a row (one recording the unit references, now compared on the label row only, as the rate-default case clears BD's sample slot): sample-rate-smpl-waveform (three SMPL presses, SMPL WAVEFORM each time), rate-always, rate-default, fine-tun, coarse-tun, func-tun and fine-lock, all on the waveform view.
+- Independent code review: no crash, memory or bounds problem; every stock reader of the page list (page key, title, knob ids, CLEAR PAGE, draw, destructor) checked. Noted, not changed: if the change lands while the SAMPLE page is on screen, the header keeps the knob page's title until the next SMPL press; it normally lands at boot.
 
 ## 0.3.0: FIN is RATE on every sound (2026-11-11)
 
