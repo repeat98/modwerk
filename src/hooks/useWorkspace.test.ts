@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { newConfiguration } from '../config/workspace'
 import { deviceStore, openDeviceDatabase } from '../storage/device'
 import { useWorkspace } from './useWorkspace'
-import { AVAILABLE_MODULES } from '../catalog/availability'
+import { AVAILABLE_MODULES, isBetaModule, isModulePaused } from '../catalog/availability'
 import { SET_MODULE_LIMIT } from '../catalog/set-limit'
 import { USB_AUDIO_MODULE } from '../config/usb-audio'
 
@@ -72,6 +72,17 @@ describe('the module limit of an Octatrack set', () => {
     await act(() => workspace.addModules(ids.slice(0, over)))
     expect(workspace.active?.moduleIds).toEqual(ids.slice(0, over))
     expect(Object.keys(workspace.active!.moduleVersions).sort()).toEqual(ids.slice(0, over).sort())
+    await vi.waitFor(() => expect(workspace.saving).toBe(false))
+  })
+  it('leaves out of that fill what isn’t available here, as adding one by one does: a paused module, and a beta one without beta access', async () => {
+    expect(isModulePaused('spectrum')).toBe(true); expect(isBetaModule('airwindows-chorus')).toBe(true)
+    await act(async () => root.render(createElement(Probe, { onRender: value => { workspace = value } })))
+    await vi.waitFor(() => expect(workspace.ready).toBe(true))
+    await act(() => { workspace.importConfiguration('Empty', []) })
+    await act(() => workspace.addModules(['everb', 'spectrum', 'airwindows-chorus', 'tapehead']))
+    expect(workspace.active?.moduleIds).toEqual(['everb', 'tapehead'])
+    await act(() => workspace.toggleModule('spectrum'))
+    expect(workspace.active?.moduleIds).toEqual(['everb', 'tapehead'])
     await vi.waitFor(() => expect(workspace.saving).toBe(false))
   })
 })

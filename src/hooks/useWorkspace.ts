@@ -157,9 +157,12 @@ export function useWorkspace() {
     if(!current.moduleIds.length&&moduleIds.length)trackConfigurationStarted(current.id)
   }
   /** Adds every one of `ids` to the active set at once, as an import takes a set: one over the limit (set-limit.ts)
-   * still holds them all, and says why it can't be synced or built until trimmed. */
+   * still holds them all, and says why it can't be synced or built until trimmed. As toggleModule, it leaves out a
+   * module that isn't available here (paused, or beta without beta access) and USB Audio, which comes with its setup. */
   function addModules(ids: readonly string[], device = DEFAULT_DEVICE) {
-    const current = configurationFor(device), moduleIds = [...new Set([...current.moduleIds, ...ids])]
+    const current = configurationFor(device)
+    const adding = device === DEFAULT_DEVICE ? ids.filter(id => id !== USB_AUDIO_MODULE && isModuleAvailable(id, betaAccess)) : ids
+    const moduleIds = [...new Set([...current.moduleIds, ...adding])]
     if (moduleIds.length === current.moduleIds.length) return
     const moduleVersions = Object.fromEntries(moduleIds.map(selected=>[selected,current.moduleVersions[selected]??pinModuleVersions([selected],device)[selected]]))
     updateActive({ moduleIds, moduleVersions })
