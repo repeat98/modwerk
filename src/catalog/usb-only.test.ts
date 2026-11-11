@@ -9,8 +9,11 @@ describe('modules that need the Modwerk base', () => {
     expect(moduleUsbOnly('tapehead', published)).toBe(false)
     expect(cardBuildError(['tapehead'], true, published)).toBe('')
     expect(cardBuildError(['tapehead', 'repitch'], true, published)).toMatch(/^Repitch needs the Modwerk base, so card firmware cannot include it\. Sync this set over USB/)
-    // Without USB sync (the Octatrack base path) it does not point at a sync the member cannot start.
-    expect(cardBuildError(['repitch'], false, published)).toBe('Repitch needs the Modwerk base, so card firmware cannot include it. Loading modules over USB isn’t open to everyone yet; take it out to build card firmware.')
+    // Without USB sync here it does not point at a sync the member cannot start: before the release, USB isn't open to
+    // them; after it, this browser (Firefox, Safari, a phone) can't reach the unit.
+    expect(cardBuildError(['repitch'], false, published, false)).toBe('Repitch needs the Modwerk base, so card firmware cannot include it. Loading modules over USB isn’t open to everyone yet; take it out to build card firmware.')
+    expect(cardBuildError(['repitch'], false, published, true)).toBe('Repitch needs the Modwerk base, so card firmware cannot include it. This browser can’t reach the base: open Modwerk in Chrome or Edge on a computer to sync over USB, or take it out to build card firmware.')
+    expect(cardBuildError(['repitch'], true, published, true)).toMatch(/Sync this set over USB/)
     expect(() => cardBuildError(['unknown'], true, published)).toThrow('Unknown module')
   })
 
@@ -44,6 +47,6 @@ describe('modules that need the Modwerk base', () => {
     expect(moduleUsbOnly('tapehead', published)).toBe(false)
     expect(moduleCardless('tapehead', published)).toBe(false)
     expect(cardBuildError(['arp-key-locks'], true, published)).toMatch(/Sync this set over USB/)
-    expect(cardBuildError(['arp-key-locks'], false, published)).toMatch(/isn’t open to everyone yet; take it out to build card firmware\.$/)
+    expect(cardBuildError(['arp-key-locks'], false, published, false)).toMatch(/isn’t open to everyone yet; take it out to build card firmware\.$/)
   })
 })

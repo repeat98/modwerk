@@ -19,6 +19,11 @@ export function hasBetaUi(session: Session, released = USB_LINK) {
 export function hasOctatrackBase(session: Session, released = OCTATRACK_BASE_RELEASED || USB_LINK) {
   return released || hasBetaAccess(session)
 }
+/** Whether this browser can reach a unit over USB at all: WebUSB in a secure context, on a computer (not a phone or a
+ * touch-only tablet). Firefox, Safari and phones can't, whatever the session allows. */
+export function browserHasUsb(touchOnly: boolean, mobile = false) {
+  return !touchOnly && !mobile && typeof window !== 'undefined' && window.isSecureContext && typeof navigator !== 'undefined' && 'usb' in navigator
+}
 /** The Octatrack USB link, its status, the update flow and the base install prompt: the Octatrack base path on a computer. */
 export function hasUsbLinkAccess(session: Session, touchOnly: boolean, released = OCTATRACK_BASE_RELEASED || USB_LINK) {
   return !touchOnly && hasOctatrackBase(session, released)

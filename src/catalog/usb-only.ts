@@ -7,6 +7,7 @@
 import packages from '../engine/assets/octatrack-module-packages.json' with { type: 'json' }
 import { resolveSelection } from './modules.ts'
 import { overLimitMessage } from './set-limit.ts'
+import { OCTATRACK_BASE_RELEASED } from '../config/octatrack-base.ts'
 
 export type PackageList = { packages: readonly { id: string; requires?: number; sources?: readonly string[]; usbOnly?: boolean; version?: string; lagsBehind?: string; lagReason?: string }[] }
 export function moduleUsbOnly(id: string, published: PackageList = packages) {
@@ -23,14 +24,17 @@ export function usbLagNote(id: string, published: PackageList = packages) {
   return entry ? 'Over USB this installs ' + entry.version + (entry.lagReason ? ': ' + entry.lagReason : '.') : ''
 }
 
-/** Why card firmware cannot include these modules. `usb` says whether this member can sync over USB (the Octatrack
- * base path, hasOctatrackBase): without it (the switch off, not a tester) the refusal says USB isn't open to them yet. A set over the
- * module limit (set-limit.ts) is refused too, with its count. */
-export function cardBuildError(ids: readonly string[], usb = true, published: PackageList = packages): string {
+/** Why card firmware cannot include these modules. `usb` says whether this member can sync over USB here: the Octatrack
+ * base path is open to them (hasOctatrackBase) and this browser can reach the unit (browserHasUsb). Without it, the
+ * refusal says to open Modwerk where USB works once the path is `released` to everyone, and that USB isn't open to them
+ * yet before. A set over the module limit (set-limit.ts) is refused too, with its count. */
+export function cardBuildError(ids: readonly string[], usb = true, published: PackageList = packages, released = OCTATRACK_BASE_RELEASED): string {
   const usbOnly = resolveSelection(ids).filter(module => moduleUsbOnly(module.id, published)), one = usbOnly.length === 1
   if (!usbOnly.length) return overLimitMessage(ids, 'build')
   const names = usbOnly.map(module => module.name).join(', '), them = one ? 'it' : 'them'
   // Card firmware is the classic build: it has no Modwerk base, so a module that needs the base cannot be in it.
   return names + (one ? ' needs' : ' need') + ' the Modwerk base, so card firmware cannot include ' + them + '. ' +
-    (usb ? 'Sync this set over USB, or take ' + them + ' out to build card firmware.' : 'Loading modules over USB isn’t open to everyone yet; take ' + them + ' out to build card firmware.')
+    (usb ? 'Sync this set over USB, or take ' + them + ' out to build card firmware.'
+      : released ? 'This browser can’t reach the base: open Modwerk in Chrome or Edge on a computer to sync over USB, or take ' + them + ' out to build card firmware.'
+      : 'Loading modules over USB isn’t open to everyone yet; take ' + them + ' out to build card firmware.')
 }

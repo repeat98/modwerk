@@ -7,7 +7,7 @@ import { CompatibilityPanel } from '../components/CompatibilityPanel'
 import { MachineLibrary } from '../devices/MachinePages'
 import { DEVICES_BY_ID } from '../devices/registry'
 import { prepareModuleSet, ModuleSetError, USB_MODULE_IDS } from '../engine/elekloader/module-set'
-import { cardFallbackReason, libraryCompatibility, moduleCardOnly } from './library-compatibility'
+import { cardFallbackReason, libraryCompatibility, moduleCardOnly, usbOnlyBlock } from './library-compatibility'
 import { isModulePaused } from './availability'
 import cardOnlyApprovals from '../../sdk/approvals/usb-card-only.json' with { type: 'json' }
 
@@ -59,6 +59,10 @@ describe('USB library feedback and card admission stay separate', () => {
 
 describe('a module only the Modwerk base can load (usb-only.ts)', () => {
   const published = { packages: [{ id: 'everb', requires: 8 }] }
+  it('says where USB works in a browser that can’t reach the unit, once the base path is open to everyone', () => {
+    expect(usbOnlyBlock('everb', true)).toMatchObject({ kind: 'usb-only', reason: 'USB only', detail: 'E-Verb needs the Modwerk base, which this browser can’t reach. Open Modwerk in Chrome or Edge on a computer.' })
+    expect(usbOnlyBlock('everb', false).detail).toBe('E-Verb needs the Modwerk base, loaded over USB. Card firmware has no base, so it cannot include E-Verb.')
+  })
   it('cannot be added without USB sync, and is offered as usual in the beta USB library', () => {
     expect(libraryCompatibility(true, [], false, ['everb'], published).blocks).toEqual({})
     const { blocks } = libraryCompatibility(false, ['analog-bassdrum'], false, ['everb'], published)

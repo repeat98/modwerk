@@ -37,7 +37,7 @@ import { libraryCompatibility } from './catalog/library-compatibility'
 import { addAllMessage, withSetLimit } from './catalog/set-limit'
 import { useCommunity } from './community/context'
 import { accountHref } from './community/member-access'
-import { hasBetaAccess, hasBetaUi, hasOctatrackBase, hasUsbLinkAccess } from './community/beta-access'
+import { browserHasUsb, hasBetaAccess, hasBetaUi, hasOctatrackBase, hasUsbLinkAccess } from './community/beta-access'
 import { BetaUi, setWords } from './community/beta-ui'
 import { SubmissionPage } from './community/SubmissionPage'
 import { AdminPage } from './community/AdminPage'
@@ -195,6 +195,9 @@ export default function App() {
   // of the beta (the beta-only Zoom pedal pages): beta testers, verified administrators and dev builds; else main's.
   const octatrackUi = hasOctatrackBase(session), betaUi = hasBetaUi(session), w = setWords(octatrackUi)
   const usbAllowed = !mobileWorkspace && hasUsbLinkAccess(session, touchOnly) && !usbLinkPreview && usbPreview !== 'diagnostics'
+  // This member can sync over USB here: the base path is open to them and this browser reaches the unit (not Firefox,
+  // Safari or a phone). Without it, a USB-only module can't be added and the card build says where USB works.
+  const usbBrowser = browserHasUsb(touchOnly, mobileWorkspace), usbHere = usbBrowser && hasUsbLinkAccess(session, touchOnly)
   // The Zoom pedal link (beta chunk): made on the first visit to a pedal page, kept while the site is open.
   const [zoomLink, setZoomLink] = useState<ZoomLink | null>(null), [zoomInstall, setZoomInstall] = useState(false)
   // A connected Zoom pedal (its link exists once a pedal page was opened): the sidebar shows it, as it shows a connected Octatrack.
@@ -304,7 +307,7 @@ export default function App() {
   function setClassicStartup(value: boolean) { ensureActive(active); workspace.setClassicStartup(value) }
   function toggleMachineModule(id: string) { workspace.toggleModule(id, currentDevice.id) }
   const selectedIds = active?.moduleIds ?? []
-  const firmwareBuild = useFirmwareBuild(workspace.firmwareClient, active, mobileWorkspace ? null : firmware)
+  const firmwareBuild = useFirmwareBuild(workspace.firmwareClient, active, mobileWorkspace ? null : firmware, usbHere)
   const builtSha = firmwareBuild.state === 'built' ? firmwareBuild.result?.sha256 ?? '' : ''
   useEffect(() => {
     // Issue reports name the active configuration or another one saved here and, once built here, the image hash (never the image).
@@ -378,7 +381,7 @@ export default function App() {
   const selection = resolveSelection(selectedIds)
   const availabilityError = moduleAvailabilityError(selectedIds, betaAccess)
   const stockFx2Kept = DSP_LOADER && (active?.keepStockFx2 ?? true)
-  const { conflicts, blocks: addBlockMap } = withSetLimit(libraryCompatibility(octatrackUi, selectedIds, stockFx2Kept, accessibleModules.map(module => module.id)), selectedIds)
+  const { conflicts, blocks: addBlockMap } = withSetLimit(libraryCompatibility(usbHere, selectedIds, stockFx2Kept, accessibleModules.map(module => module.id)), selectedIds)
   const libraryFilter = allRoute ? allCategory ?? 'all' : filter
   const libraryFamily = allRoute || accessibleModules.some(module=>DETAILS[module.id].family===family) ? family : 'all'
   const visibleModules = accessibleModules.filter((module) =>
@@ -569,7 +572,7 @@ export default function App() {
       {/* The beta note is required: everywhere but the pages it and the diagnostics step link to, and the account (export, deletion). */}
       {remoteSessionSeen && session.user?.verified && <Suspense fallback={null}><RemoteSessionGate key={session.user.id} /></Suspense>}
       {/* While an administrator keeps the public round open: the beta runs over USB, so only on a computer. */}
-      {welcome.open && <Suspense fallback={null}><OctatrackWelcome link={usbLink ?? null} usbBrowser={!touchOnly && !mobileWorkspace && window.isSecureContext && 'usb' in navigator} phone={mobileWorkspace} savedSets={configurationsFor('octatrack').some(set => set.moduleIds.length > 0)}
+      {welcome.open && <Suspense fallback={null}><OctatrackWelcome link={usbLink ?? null} usbBrowser={usbBrowser} phone={mobileWorkspace} savedSets={configurationsFor('octatrack').some(set => set.moduleIds.length > 0)}
         onLater={welcome.close} onSetUp={() => { welcome.close(); window.location.hash = 'octatrack'; setBaseInstall('manual') }}
         onCard={() => { welcome.close(); setCardOpen(true); window.location.hash = 'octatrack/setup' }} /></Suspense>}
       {session.available && !sessionLoading && !betaAccess && !welcome.due && !welcome.shown && !touchOnly && !mobileWorkspace && !accountRoute && !faqRoute && !['privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route) && <Suspense fallback={null}><BetaJoinPrompt /></Suspense>}

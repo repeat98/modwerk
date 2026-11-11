@@ -1,4 +1,4 @@
-import { hasBetaAccess, hasOctatrackBase } from '../community/beta-access'
+import { hasBetaAccess } from '../community/beta-access'
 import { useCommunity } from '../community/context'
 import { requireBuildAccount } from '../community/member-access'
 import { trackUsage } from '../community/usage'
@@ -20,11 +20,13 @@ export type BuildView = { key: string; state: 'empty' | 'validating' | 'valid' |
 function failedBuild(key: string, error: unknown): BuildView {
   return { key, state: 'error', error: error instanceof Error ? error.message : 'Could not prepare this firmware.', ...(error instanceof FirmwareBuildError && error.conflict ? { conflict: error.conflict } : {}) }
 }
-export function useFirmwareBuild(client: RefObject<FirmwareClient | null>, active: Configuration | undefined, firmware: FirmwareInspection | null) {
+/** `usb`: this member can sync over USB here (App.tsx usbHere), so the card build's refusal of a USB-only module points
+ * to USB sync; otherwise to a browser that can reach the unit. */
+export function useFirmwareBuild(client: RefObject<FirmwareClient | null>, active: Configuration | undefined, firmware: FirmwareInspection | null, usb = true) {
   const {session}=useCommunity(),memberId=session.user?.verified&&session.user.username?session.user.id:null
   const betaAccess = hasBetaAccess(session)
   const ids = active?.moduleIds ?? [], keepStock = DSP_LOADER && (active?.keepStockFx2 ?? true), startup: StartupAnimation = active?.classicStartup ? 'classic' : 'docking'
-  const configurationError=moduleAvailabilityError(ids,betaAccess)||cardBuildError(ids,hasOctatrackBase(session))||selectionConflictError(ids,keepStock)||moduleBuildError(ids)||usbAudioBuildError(active?.usbAudio)
+  const configurationError=moduleAvailabilityError(ids,betaAccess)||cardBuildError(ids,usb)||selectionConflictError(ids,keepStock)||moduleBuildError(ids)||usbAudioBuildError(active?.usbAudio)
   const key = JSON.stringify([active?.id, ids, active?.moduleVersions, active?.usbAudio, keepStock, startup, firmware?.sha256, memberId, betaAccess])
   const [view, setView] = useState<BuildView>({ key: '', state: 'empty' })
   const operation = useRef(0), building = useRef(false)

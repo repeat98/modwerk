@@ -5,22 +5,26 @@ import { isModulePaused } from './availability'
 import { MODULES } from './modules'
 import packages from '../engine/assets/octatrack-module-packages.json' with { type: 'json' }
 import { USB_AUDIO_MODULE } from '../config/usb-audio'
+import { OCTATRACK_BASE_RELEASED } from '../config/octatrack-base'
 
 /** Baked/card placement belongs to the card checkout. USB sets use published
  * package checks and the unit's resource/ownership admission when they sync.
  * This changes library feedback only; it never authorizes a package or load.
- * Without the Octatrack base path (no USB sync) a USB-only module cannot be added at all. */
-export function libraryCompatibility(beta: boolean, ids: readonly string[], keepStockFx2: boolean, candidates: readonly string[], published?: PackageList): { conflicts: SelectionConflict[]; blocks: Record<string, AddBlock> } {
-  if (beta) return { conflicts: [], blocks: {} }
+ * `usb`: this member can sync over USB here (the Octatrack base path, in a browser that reaches the unit). Without it
+ * a USB-only module cannot be added at all. */
+export function libraryCompatibility(usb: boolean, ids: readonly string[], keepStockFx2: boolean, candidates: readonly string[], published?: PackageList): { conflicts: SelectionConflict[]; blocks: Record<string, AddBlock> } {
+  if (usb) return { conflicts: [], blocks: {} }
   const blocks = addBlocks(ids, keepStockFx2, candidates)
   for (const id of candidates) if (!ids.includes(id) && moduleUsbOnly(id, published)) blocks[id] = usbOnlyBlock(id)
   return { conflicts: selectionConflicts(ids, keepStockFx2), blocks }
 }
 
-export function usbOnlyBlock(id: string): AddBlock {
+/** Once the base path is `released` to everyone, a USB-only module is out of reach only in a browser without USB. */
+export function usbOnlyBlock(id: string, released = OCTATRACK_BASE_RELEASED): AddBlock {
   const name = MODULES.find(module => module.id === id)?.name ?? id
   return { kind: 'usb-only', withIds: [], reason: 'USB only', key: 'usb-only:' + id,
-    detail: name + ' needs the Modwerk base, loaded over USB. Card firmware has no base, so it cannot include ' + name + '.' }
+    detail: released ? name + ' needs the Modwerk base, which this browser can’t reach. Open Modwerk in Chrome or Edge on a computer.'
+      : name + ' needs the Modwerk base, loaded over USB. Card firmware has no base, so it cannot include ' + name + '.' }
 }
 
 type PublishedPackages = { packages: readonly { id: string }[]; groups?: readonly { variants: readonly { current?: boolean; members: readonly { id: string }[] }[] }[] }
