@@ -4,7 +4,8 @@ SYNTIZ was called WAVE until 29 October 2026, renamed so as not to be confused w
 The dated records below keep the names the screens and files had then (WAVE, `wave.mwrm`); the Part
 signature `WV` and the sound are unchanged, so they still apply.
 
-Engine only, on the host and under qemu. No Octatrack, emulator, panel, Part or USB result exists yet.
+The first sections are the engine on the host and under qemu; the emulator and the author's units follow, each
+dated with its package.
 
 ## Host checks
 
@@ -170,4 +171,121 @@ not hardware evidence.
 - The limit: `wave_admit_track` admits at most three SYNTIZ tracks in a Part. Package `f501a6a4`, the release branch
   with this function, tried and kept on `b30d9b09` over USB; reported by the author: choosing SYNTIZ for a fourth
   track is refused. The function, copied from `machine.c`, passed a host check (an empty Part, three tracks, a model
-  change, another machine's leftover signature, a Part saved with seven). The draft's own package is not built here.
+  change, another machine's leftover signature, a Part saved with seven). `f501a6a4` is this source's package, rebuilt
+  byte for byte by `verify.py` and `npm run octatrack:module-packages -- --check`.
+
+## Load on the author's MKII, 3 to 6 November 2026
+
+All on package `f501a6a4` (this source), the base's frame guard with its 80 % share, 120 s a run, one run per case
+unless said. The twins are RAM-booted development builds of the author's private base, not Modwerk's beta base.
+Figures are the share of each frame spent in the frame interrupt; "without SYNTIZ" is the same project before the
+package loads.
+
+- 3 November, test Part MESURE3 (three SYNTIZ tracks at maximum settings), twin `8af4f9a3`: 28.4 % without, about
+  82 % with, longest frame 113.7 %, 45,323 renders dropped. The machine's fixed cost is about 5 points for three
+  tracks, the engine about 16 points a heavy track. On the older twin `04e94075` the same project gave about 76 %
+  and 2 dropped: the current base costs about 6 points more for the same three tracks (one run each).
+- 3 November, the author's Part MESURE7 (three heavy tracks, T2 SAW, T3 ENS with four notes, T4 SAW, and four long
+  samples): 67-69 % while SYNTIZ plays, on three twins, longest 108-112 %, 24 to 75 renders dropped a run on T2-T4,
+  and a crackle reported by the author. Two SYNTIZ tracks with the four samples: 0 dropped.
+- Where the cuts come from (diag twins `acaaf5c0`, `81fc8424`, which time stock's work and each render): stock's
+  work in a trig frame rises to 50-60 % before the renders; a render that follows it in the same frame costs up to
+  2.25 times a first render (33.6 % against 14.9 % of a frame); the guard's credit empties over a few such frames,
+  then it cuts a render that was 3-4 % over. The cause of the dearer second render was not found: a build with half
+  the code (helpers turned into calls) cost more, not less (486 dropped); stock's START is never called on a SYNTIZ
+  track (counter 0).
+- Lighter builds, none shipped (the source is unchanged): helpers forced inline (same golden fingerprint on the
+  host) took 5.6 points off MESURE3 and nothing off MESURE7; the half-size code was worse; on 30 October a lighter
+  output stage and shortcuts that keep every sample gained nothing on the unit. A guard reserve of two frames
+  instead of half a frame (4 November, a private base) did not help: the load stays above 80 % for long stretches,
+  not in short bursts.
+- 4 to 6 November: builds that play SAW, PULSE and ENS on the DSP were tried on the author's private base, outside
+  Modwerk. They are not this module and are not published.
+
+## The author's live set, 7 November 2026
+
+Twin `7bce173d` (diag v3) of the author's flashed base `86388105`, package `f501a6a4`, guard share 80 %, 120 s a run.
+A frame is 362.8 us, 47,891 counts of the 132 MHz timer. A RAM boot or a trial is refused with `unsafe` while the
+sequencer plays. After the runs, two power cycles were needed before the flashed base listed its kept set again
+(`do inventory`: `syntiz` alone, nothing missing).
+
+| Run | Set | Without SYNTIZ | With SYNTIZ | Longest frame | Dropped | First / second render, max |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1, pattern started over USB | reference set: T1 THRU, T2-T3 samples, T4 THRU, T5 SAW with both pairs, both subs, filter and chorus, T6 TABLE with filter and chorus, T7 NEIGHBOR with flanger, T8 master compressor | 34.1 % | 60.3 % | 94.5 % | 0 | 15.2 % / 27.7 % |
+| 2, the author's PLAY | the same | 33.9 % | 60.3 % | 93.4 % | 0 | 15.0 % / 34.2 % |
+| 3, the author playing live (STOP/PLAY, scenes, encoders) | the same | 33.9 % | 69.3 % | 111.2 % | 0 | 15.5 % / 36.9 % |
+| 4, the author playing live, long notes | complete set: a third sample on T4 | 36.3 % (longest 103.7 %) | 73.8 % | 114.1 % | 259 on T5 and T6 | 16.2 % / 37.1 % |
+
+Reported by the author: runs 2 and 3 clean, and run 4 clean too: the 259 drops (about two a second, 16 samples each,
+on held notes) were not heard. In runs 3 and 4 stock's own work before the first render reached 84 % of a frame at
+transitions: frames over 100 % come from stock's peaks with SYNTIZ on top, and the guard's credit (up to 50 %) lets
+them through. In run 4 the credit ran out at moments (minimum -2.6 %); the last cut was a T5 second render forecast
+at 88.4 % against 86.8 % allowed. The third sample costs about 4.5 points while playing; a fourth sample or an ENS
+does not fit this set.
+
+Earlier that day, on the flashed base with FM Synth 0.1.2 installed beside SYNTIZ and never played, the author heard
+a very light crackle on T5 and T6, and the third sample did not fit. The same set on the twin with SYNTIZ alone was
+clean; back on the flashed base the crackle returned; with FM Synth removed for a 180 s trial it was gone; removed
+for good, the complete set holds. One A/B, mechanism unknown: an installed module that never runs may still cost a
+frame share, or its placement may slow SYNTIZ. Worth knowing before judging SYNTIZ's margin on a unit with other
+modules kept.
+
+## On Modwerk's beta base, 9 November 2026: stopped at the first step
+
+The owner's run on the release pull request, on the author's MKII, package `f501a6a4`. It stopped at the first step.
+The owner asked for it to be recorded as it stands and not retried until he has looked at the base and the loader.
+
+- Base: the beta base built by the local development site from `main` `f4c1a3f6` (status `72defb09b9d463fe…`, the
+  beta base testers have), installed with the site's "Update over USB" from the author's flashed base `86388105`.
+- Try, then Undo (`npm run device -- try … --seconds 60`), twice. Both trials ran 60 s, then the rollback was refused
+  with `needs-recovery` and the unit stayed in `recovery, generation 1, active unknown`, still 40 s later and after
+  10 s with USB unplugged; a power cycle recovered it. The first project had SYNTIZ tracks; the second had none,
+  transport stopped.
+- During both trials the diaglog holds a `hot` record with the transport stopped: CPU 98.9 %, T1-4 38 %, T5-8
+  39.8 %. Not explained.
+- The base update did not stay. The first one ended "Done", but `72defb09` stalled at +0 s on its first start and the
+  next start was back on `86388105`, before any trial. A second update held through one power cycle (inventory
+  empty). After the second failed Undo and a power cycle the unit started `86388105` again, with no stall recorded.
+- Not tested: Keep and a minute of play, a power cycle with SYNTIZ kept, removal while a Part uses it.
+
+## On the owner's MKII, 11 November 2026
+
+Package `f501a6a4`, by the release session for the owner, on his MKII with 19 other modules kept.
+
+- **The live beta base** (`4854b76c…`, its `off` layout, identity `d891acb3…`). Try for 30 s, then Undo, with no
+  SYNTIZ tracks: rolled back, `normal`, the 19 modules as before. Try, then Keep: 20 modules, generation 3. After the
+  power cycle that ended the twin below, the unit started this base with all 20 modules, SYNTIZ among them. Playing
+  and the removal were not done on this base.
+- **A development twin of the same base** (`d3736d62…`, `--dev`, no controller rows), SYNTIZ alone in a trial, a
+  blank test Part, four trigs a track, the base's frame guard at 80 %, about 10 s a reading:
+
+  | Set | Frame interrupt | Longest frame | Renders dropped |
+  | --- | --- | --- | --- |
+  | No SYNTIZ, or SYNTIZ installed and not chosen | 23 % | 30-34 % | 0 |
+  | T1 heavy SAW (DET 124, both subs 100, DRIV 127) | 37 % | 68-77 % | 0 |
+  | T1 in each of the six models, knobs high | 33-37 % | 64-67 % | 0 |
+  | T1, all six SRC knobs swept for about 10 s | 39 % | 70 % | 0 |
+  | T1 CHOIR + T2 ENS, both heavy | 66 % | 85 % | 0 |
+  | T1 + T2 + T3 heavy SAW | 77 % | 106-108 % | 3-16 a second |
+  | The same, T1's knobs swept | 78 % | 99 % | 45-60 a second |
+
+  All six models switched while playing. Choosing SYNTIZ for a fourth track left it on STATIC, with no message.
+- **Held notes.** The test Part, never edited, had AMP HOLD and REL at 127 (INF). A SYNTIZ note then never ends: after a double STOP the three voices still rendered (77 % with the transport stopped).
+- **Undo while tracks use it.** Ending the trial with those three tracks holding notes answered `needs-recovery`,
+  the unit stayed in `recovery, generation 1, active unknown`, and `recover` was still refused after the three
+  tracks were back on STATIC and their renders had stopped. The twin needed a power cycle. This matches the first
+  Undo of 9 November above.
+- Not heard: the twin's `off` layout has no USB audio. Not tested: the MKI, a MIDI flood, an LFO on a SYNTIZ control.
+
+## Qualification record
+
+`evidence/performance.json` carries the 7 November figures as the audit asks (`npm run perf:audit -- check`): the
+dearest render, 35,536 cycles of a 95,782-cycle frame, with no static bound; the longest-frame rise (37.8 us, 10.4 %
+of a frame) and the idle fall (37.5 points) against the same set without SYNTIZ; no MIDI flood. The audit's limits
+were not changed: the record fails its static-bound, 10 % and stress rules. The owner (repeat98) decided on the
+release pull request on 8 November 2026: the rows `chip-worst-case-cycles` and `current-build-hardware` are waived for
+0.1.0-experimental and this exact source, as for POLY8, and he adds `sdk/syntiz-build-approval.json` last, once the
+pull request is in order. The waiver covers rows with no numbers, so the load and stress fields are `null` and the
+measurements stay in their `method` text and here. The manifest's
+`tests.qualification` records one render as the event (at most three a frame; their worst sum exceeds the frame and
+is left to the base's guard), the exact package memory, and the functional hardware report.
