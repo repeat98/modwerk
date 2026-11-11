@@ -531,10 +531,8 @@ catalogue module patches or keeps (`catalogue_overlaps`).
 `-mcpu=5475` emitted scale-eight indexed LEA in text drawing; the unit restarted with vector 3
 at that exact instruction. MCF54455 rejects scale-eight and word-sized indexes with address
 errors ([reference manual, 3.3.4.2](https://www.nxp.com/docs/en/reference-manual/MCF54455RM.pdf)).
-The emulator accepted it. Keep the machine SDK's target flags and audit final code; emulator
-execution is not an ISA-compatibility check. `python3 -B sdk/runtime/coldfire_isa.py` assembles every hand-written
-Octatrack source for the MCF54455 and names each instruction it lacks; `sdk:check` runs it where the
-toolchain is installed. Probe history is
+The emulator accepted it. Keep the SDK's target flags; `npm run coldfire:isa` holds
+hand-written assembly to that CPU, as the build holds C. Probe history is
 in [Beat Slicer's testing record](../sdk/octabam/modules/beat-slicer/TESTING.md).
 
 **GCC 16.2 at -O2 can store one byte late.** Its late-combine pass turned
