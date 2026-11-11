@@ -166,7 +166,7 @@
     {
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
-      "caption": "Fine Tune + Sample Rate",
+      "caption": "Improved SMPL",
       "alt": "A sample's play position climbs, slows to a stop at RATE 64, then runs backward.",
       "credit": "Nathaniel Pavel",
       "license": "GPL-3.0-or-later",
@@ -175,8 +175,8 @@
     {
       "path": "media/knob-fine-tun.png",
       "kind": "screenshot",
-      "caption": "TUN turned one cent up reads +0.01, beside RATE on FIN's knob.",
-      "alt": "SAMPLE page knobs: TUN reading +0.01, RATE, BR, SMP, STA, END, LOP, LEV.",
+      "caption": "TUN turned one cent up reads +0.01, beside RATE, in the waveform view.",
+      "alt": "SMPL WAVEFORM view: TUN reading +0.01, RATE, BR, SMP above a waveform, STA, END, LOP, LEV below.",
       "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
@@ -184,15 +184,15 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.4.0-experimental",
-        "imageSha256": "6c18ceadc01da2ded2094b6111bd2649f4cff91588c1bc4ce698c2d1572ab107",
-        "setup": "Headless rytm-emu (dtboot) running SR32: core-ar2 0.7 and this folder's Fine Tune + Sample Rate 0.3.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "0a12166cfba89b519f9d8654cb46cf9fd7539e909be123ef773ecd144a43934b",
+        "setup": "Headless rytm-emu (dtboot) running SR43: core-ar2 0.7 and this folder's Improved SMPL 0.4.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
       "path": "media/knob-rate.png",
       "kind": "screenshot",
-      "caption": "FIN's knob reads RATE on every sound.",
-      "alt": "SAMPLE page knobs: TUN, RATE, BR, SMP, STA, END, LOP, LEV.",
+      "caption": "SMPL opens the waveform view, with FIN's knob named RATE.",
+      "alt": "SMPL WAVEFORM view: TUN, RATE, BR, SMP above a ramp waveform; STA, END, LOP, LEV below.",
       "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
@@ -200,15 +200,15 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.4.0-experimental",
-        "imageSha256": "6c18ceadc01da2ded2094b6111bd2649f4cff91588c1bc4ce698c2d1572ab107",
-        "setup": "Headless rytm-emu (dtboot) running SR32: core-ar2 0.7 and this folder's Fine Tune + Sample Rate 0.3.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "0a12166cfba89b519f9d8654cb46cf9fd7539e909be123ef773ecd144a43934b",
+        "setup": "Headless rytm-emu (dtboot) running SR43: core-ar2 0.7 and this folder's Improved SMPL 0.4.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
       "path": "media/value-rate.png",
       "kind": "screenshot",
-      "caption": "While it turns the header reads RATE and the knob shows its value, +63 to -64.",
-      "alt": "SAMPLE page with RATE in the header and the knob showing a signed value.",
+      "caption": "While RATE turns, the header reads RATE and the knob its value.",
+      "alt": "SMPL WAVEFORM view with RATE in the header and +45 in place of the knob name.",
       "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
@@ -216,8 +216,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.4.0-experimental",
-        "imageSha256": "6c18ceadc01da2ded2094b6111bd2649f4cff91588c1bc4ce698c2d1572ab107",
-        "setup": "Headless rytm-emu (dtboot) running SR32: core-ar2 0.7 and this folder's Fine Tune + Sample Rate 0.3.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "0a12166cfba89b519f9d8654cb46cf9fd7539e909be123ef773ecd144a43934b",
+        "setup": "Headless rytm-emu (dtboot) running SR43: core-ar2 0.7 and this folder's Improved SMPL 0.4.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -232,8 +232,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.4.0-experimental",
-        "imageSha256": "6c18ceadc01da2ded2094b6111bd2649f4cff91588c1bc4ce698c2d1572ab107",
-        "setup": "Headless rytm-emu (dtboot) running SR32: core-ar2 0.7 and this folder's Fine Tune + Sample Rate 0.3.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "0a12166cfba89b519f9d8654cb46cf9fd7539e909be123ef773ecd144a43934b",
+        "setup": "Headless rytm-emu (dtboot) running SR43: core-ar2 0.7 and this folder's Improved SMPL 0.4.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]

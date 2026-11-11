@@ -16,7 +16,7 @@ The SMPL key always opens the waveform view (SMPL WAVEFORM), and a second press 
 
 RATE starts at +63 on a new or cleared sound. A sound saved with FIN at +0, stock's default and every sound saved before 0.3.0 without SMP RATE, loads with RATE 0 and does not play until RATE is turned up.
 
-![FIN's knob reading RATE](media/knob-rate.png)
+![SMPL opens the waveform view, with FIN's knob named RATE](media/knob-rate.png)
 
 ## Controls
 
