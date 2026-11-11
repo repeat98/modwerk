@@ -37,7 +37,7 @@ typedef struct {
     uint32_t phase;         /* Q16 position within a stored sample */
     int32_t al, ar;         /* the input since the last stored sample, summed (>> 4) */
     uint32_t count;
-    int32_t ic[2][2];       /* the output filter: channel, two integrators (Q8) */
+    int32_t ic[2][2];       /* the lowpass: channel, its low output and its band, a quarter of the sample's scale */
     uint32_t pos, frac;     /* the stretch: where the sample should be by now, in frames from the note's start, and Q12 of one */
     uint32_t window;        /* the note's length in frames (STRT to its end); 0: this note is not stretched */
     uint32_t grain, played; /* where the reader last started, and the frames it has read since */
@@ -48,18 +48,13 @@ typedef struct {
     uint32_t fade, jump;
     uint32_t hi, floor;     /* `hist` holds the frames read, from `floor` (or the last HIST) up to `hi`, counted from the note's start */
     uint32_t mix_from, mix_len, mix_wait, mix_k, mix_step, planned; /* the fade into the next grain, out of `hist` */
-    int16_t hist[2048][2]; /* with the code, eight of these stay under the loader's 128 KiB a module */
+    uint32_t hist[2048];   /* a frame a long, left in its top word: one access a frame. With the code, eight of these stay under the loader's 128 KiB a module */
 } AmigaVoice;
 #define HIST 2048u
 #define ONE 0x10000u /* Q16: one stored sample */
 #define KEEP (-1)
 #define OVER (-2)
 #define FADE 32u
-
-/* The lowpass: two poles, Butterworth, about 3.3 kHz for a 44.1 kHz sample. tan(pi fc / 44100) and 1/Q in Q13. */
-#define LED_TAN 1962
-#define LED_G (LED_TAN << 18)
-#define LED_A1 (((1 << 26) / (8192 + ((LED_TAN * (LED_TAN + 11585)) >> 13))) << 18) /* Q31 */
 
 /* x * c for a Q31 c. The ColdFire has no 64-bit product in C, and two 32-bit ones a multiply are dear in the
  * frame interrupt (S950's filter, MKII, 10 November 2026), so the target uses its multiply-accumulate unit:
@@ -85,15 +80,30 @@ static inline uint32_t mac_enter(void)
 #define MAC_ENTER() mac_enter()
 #define MAC_LEAVE(saved) __asm__("move.l %0,%%macsr" : : "d"(saved))
 #endif
-/* A two-pole lowpass (a trapezoidal state-variable filter). The signal is 15 bits and 8 more below the point. */
-static inline int32_t lowpass(int32_t *ic, int32_t in)
+/* x times 4, full scale staying full scale. */
+#ifdef AMIGA_HOST
+static inline int32_t times4(int32_t x) { return x > 0x1fffffff ? INT32_MAX : x < -0x20000000 ? INT32_MIN : x * 4; }
+#else
+static inline int32_t times4(int32_t x)
 {
-    int32_t v1 = scale(ic[0] + scale(in - ic[1], LED_G), LED_A1);
-    int32_t v2 = ic[1] + scale(v1, LED_G);
-    ic[0] = 2 * v1 - ic[0]; ic[1] = 2 * v2 - ic[1];
-    v2 = (v2 + 128) >> 8;
-    return (v2 > 16383 ? 16383 : v2 < -16384 ? -16384 : v2) * 131072;
+    __asm__("add.l %0,%0\n\tsats.l %0\n\tadd.l %0,%0\n\tsats.l %0" : "+d"(x));
+    return x;
 }
+#endif
+/* The lowpass: two poles, close to Butterworth at about 3.3 kHz for a 44.1 kHz sample (-2.9 dB there, -11.3 dB at
+ * 6.6 kHz), as a state-variable filter with f = 13/32 and 1/Q = 5/4. Shifts and adds only: on the unit the multiply
+ * unit's three products a channel cost as much as the rest of a track (MKII, 11 November 2026). `low` and `band`
+ * are a quarter of the sample's scale, which leaves room for the overshoot and for the sum before it. */
+#define LED_F(x) (((x) >> 2) + ((x) >> 3) + ((x) >> 5))
+#define LOWPASS(low, band, in) do { \
+        int32_t high_; \
+        (low) += LED_F(band); \
+        high_ = (in) - (low) - (band) - ((band) >> 2); \
+        (band) += LED_F(high_); \
+    } while (0)
+/* 1/n in Q31 for the average of n stored inputs, 2 to 16. */
+static const int32_t reciprocal[17] = {0, 0, 0x40000000, 0x2aaaaaaa, 0x20000000, 0x19999999, 0x15555555, 0x12492492, 0x10000000,
+                                       0x0e38e38e, 0x0ccccccc, 0x0ba2e8ba, 0x0aaaaaaa, 0x09d89d89, 0x09249249, 0x08888888, 0x08000000};
 
 /* The frame interrupt pays for every instruction below (eight tracks at the defaults took 13 points of it on an
  * MKII, 11 November 2026), so the common cases are short: state in registers for a loop, no work for a control at rest. */
@@ -104,43 +114,61 @@ static inline int16_t top(const int32_t *a) { return (int16_t)(*a >> 16); }
 typedef int16_t __attribute__((may_alias)) Top;
 static inline int16_t top(const int32_t *a) { return *(const Top *)a; }
 #endif
-static inline void remember(int16_t (*h)[2], const int32_t *a, unsigned n)
+static inline uint32_t frame(int32_t l, int32_t r) { return (uint32_t)l << 16 | (uint16_t)r; }
+static inline void remember(uint32_t *h, const int32_t *a, unsigned n)
 {
-    for (; n; --n, ++h, a += 2) (*h)[0] = top(a), (*h)[1] = top(a + 1);
+    for (; n; --n, a += 2) *h++ = frame(top(a), top(a + 1));
 }
 
 /* Remember the n frames read, and once a fade is planned (amiga_stretch) mix the next grain in from that
  * memory, so the restart at the cycle's end continues what is already sounding. First of the three. */
+/* n frames into the memory from frame `at`, in one run or the two around its end. */
+static inline void remember_at(AmigaVoice *v, const int32_t *a, unsigned n, uint32_t at)
+{
+    unsigned k = at & (HIST - 1u), run = HIST - k;
+    if (run > n) run = n;
+    remember(v->hist + k, a, run);
+    if (n > run) remember(v->hist, a + 2u * run, n - run);
+}
+/* A fade is planned or under way: wait out what is left before it, then mix the next grain in from the memory. Whether
+ * the memory holds that grain is settled once for the call: the grain and the reader move together, so it cannot
+ * change in between. */
 static __attribute__((noinline)) void blend_mix(AmigaVoice *v, int32_t *a, unsigned n, uint32_t at)
 {
-    uint32_t hi = v->hi, len = v->mix_len, wait = v->mix_wait, k = v->mix_k;
-    const uint32_t first = v->mix_from, floor = v->floor, step = v->mix_step;
-    for (; n; --n, ++at, a += 2) {
-        int16_t *h = v->hist[at & (HIST - 1u)];
-        h[0] = top(a); h[1] = top(a + 1);
-        if (at >= hi) hi = at + 1u;
-        if (!len) continue;
-        if (wait) { --wait; continue; }
-        uint32_t from = first + k;
-        if (from >= at || from < floor || from + HIST <= hi) { len = 0; v->jump = 1; continue; } /* not in the memory */
-        const int16_t *g = v->hist[from & (HIST - 1u)];
-        int32_t w = k < len ? (int32_t)(k * step >> 16) : 32767; /* Q15; past the fade, the next grain alone */
-        a[0] = (h[0] + (((g[0] - h[0]) * w) >> 15)) * 65536;
-        a[1] = (h[1] + (((g[1] - h[1]) * w) >> 15)) * 65536;
-        ++k;
+    uint32_t hi = v->hi, wait = v->mix_wait;
+    if (wait) {
+        unsigned m = wait < n ? wait : n;
+        remember_at(v, a, m, at);
+        at += m; a += 2u * m; n -= m; v->mix_wait = wait - m;
+        if (at > hi) hi = at;
+        if (!n) { v->hi = hi; return; }
     }
-    v->hi = hi; v->mix_len = len; v->mix_wait = wait; v->mix_k = k;
+    uint32_t k = v->mix_k, from = v->mix_from + k;
+    const uint32_t len = v->mix_len, step = v->mix_step;
+    if (from >= at || from < v->floor || from + HIST <= hi || from + HIST <= at + 1u) { /* not in the memory */
+        remember_at(v, a, n, at);
+        at += n;
+        v->hi = at > hi ? at : hi; v->mix_len = 0; v->jump = 1;
+        return;
+    }
+    uint32_t weight = k * step;
+    for (; n; --n, ++at, ++from, a += 2) {
+        const uint32_t g = v->hist[from & (HIST - 1u)];
+        int32_t l = top(a), r = top(a + 1);
+        v->hist[at & (HIST - 1u)] = frame(l, r);
+        int32_t w = k < len ? (int32_t)(weight >> 16) : 32767; /* Q15; past the fade, the next grain alone */
+        a[0] = (l + ((((int16_t)(g >> 16) - l) * w) >> 15)) * 65536;
+        a[1] = (r + ((((int16_t)g - r) * w) >> 15)) * 65536;
+        ++k; weight += step;
+    }
+    v->hi = at > hi ? at : hi; v->mix_k = k;
 }
 void amiga_blend(AmigaVoice *v, int32_t *a, unsigned n)
 {
     uint32_t at = v->grain + v->played;
     if (at > v->hi) v->floor = at; /* frames nobody remembered lie before it: amiga_render skips this call while nothing can restart */
     if (v->mix_len) { blend_mix(v, a, n, at); return; }
-    /* Most frames: only remember, in one run or the two around the memory's end. */
-    unsigned k = at & (HIST - 1u), run = HIST - k;
-    if (run > n) run = n;
-    remember(v->hist + k, a, run);
-    if (n > run) remember(v->hist, a + 2u * run, n - run);
+    remember_at(v, a, n, at); /* most frames: only remember */
     at += n;
     if (at > v->hi) v->hi = at;
 }
@@ -208,9 +236,35 @@ int amiga_shift(unsigned percent)
  * sample, stored at a lower rate (inc: Q16 stored samples a frame, ONE keeps every one) in a 4- to 16-bit word (bits
  * 0-12; 12 keeps the source's word) and held, then through the lowpass (led). All three off leaves the
  * PCM untouched. */
-static __attribute__((noinline)) void crunch_stored(AmigaVoice *v, int32_t *a, unsigned n, uint32_t inc, uint32_t mask, unsigned led)
+/* Every sample kept, through the lowpass. */
+static __attribute__((noinline)) void crunch_led(AmigaVoice *v, int32_t *a, unsigned n, uint32_t mask)
 {
-    uint32_t mac = led ? MAC_ENTER() : 0;
+    int same = 1; /* a mono sample pays for one channel of filter */
+    for (unsigned i = 0; same && i < n; ++i) same = a[2 * i] == a[2 * i + 1];
+    int32_t l0 = v->ic[0][0], b0 = v->ic[0][1];
+    if (same) {
+        for (; n; --n, a += 2) {
+            LOWPASS(l0, b0, (int32_t)((uint32_t)a[0] & mask) >> 2);
+            a[0] = a[1] = times4(l0);
+        }
+        v->ic[1][0] = l0; v->ic[1][1] = b0;
+    } else {
+        int32_t l1 = v->ic[1][0], b1 = v->ic[1][1];
+        for (; n; --n, a += 2) {
+            LOWPASS(l0, b0, (int32_t)((uint32_t)a[0] & mask) >> 2);
+            LOWPASS(l1, b1, (int32_t)((uint32_t)a[1] & mask) >> 2);
+            a[0] = times4(l0); a[1] = times4(l1);
+        }
+        v->ic[1][0] = l1; v->ic[1][1] = b1;
+    }
+    v->ic[0][0] = l0; v->ic[0][1] = b0;
+    v->held = 0;
+}
+/* Stored at a lower rate: each stored sample the average of the inputs it replaces, cut to the word and held; `led`
+ * is a constant where this is called, so each of the two loops is compiled without the other's work. */
+static inline __attribute__((always_inline)) void stored(AmigaVoice *v, int32_t *a, unsigned n, uint32_t inc, uint32_t mask, const int led)
+{
+    uint32_t mac = MAC_ENTER();
     if (!v->held || v->phase > 2u * ONE || v->count > 16u) { /* stale, or a state nobody set: it takes its first sample at once */
         v->phase = ONE; v->count = 0; v->al = v->ar = 0;
         if (!v->held) v->l = v->r = 0;
@@ -220,29 +274,31 @@ static __attribute__((noinline)) void crunch_stored(AmigaVoice *v, int32_t *a, u
     for (unsigned i = 0; same && i < n; ++i) same = a[2 * i] == a[2 * i + 1];
     uint32_t phase = v->phase, count = v->count; /* the state in registers for the loop: a store to the PCM could be any of it */
     int32_t al = v->al, ar = v->ar, hl = v->l, hr = v->r;
-    int32_t f0[2] = {v->ic[0][0], v->ic[0][1]}, f1[2] = {v->ic[1][0], v->ic[1][1]};
-    const int average = inc < ONE;
+    int32_t l0 = v->ic[0][0], b0 = v->ic[0][1], l1 = v->ic[1][0], b1 = v->ic[1][1];
     for (; n; --n, a += 2) {
-        if (average) al += a[0] >> 4, ar += a[1] >> 4, ++count;
+        al += a[0] >> 4; ar += a[1] >> 4; ++count;
         if (phase >= ONE) {
             phase -= ONE;
             int32_t l = a[0], r = a[1];
-            if (count > 1) l = (al / (int32_t)count) << 4, r = (ar / (int32_t)count) << 4;
+            if (count > 1) { int32_t c = reciprocal[count]; l = scale(al, c) << 4; r = scale(ar, c) << 4; }
             al = ar = 0; count = 0;
             hl = (int32_t)((uint32_t)l & mask); hr = (int32_t)((uint32_t)r & mask);
         }
         phase += inc;
         if (led) {
-            int32_t l = lowpass(f0, (hl >> 17) * 256);
-            a[0] = l;
-            a[1] = same ? l : lowpass(f1, (hr >> 17) * 256);
+            LOWPASS(l0, b0, hl >> 2);
+            a[0] = times4(l0);
+            if (same) a[1] = a[0];
+            else { LOWPASS(l1, b1, hr >> 2); a[1] = times4(l1); }
         } else a[0] = hl, a[1] = hr;
     }
-    if (same) f1[0] = f0[0], f1[1] = f0[1];
+    if (led && same) l1 = l0, b1 = b0;
     v->phase = phase; v->count = count; v->al = al; v->ar = ar; v->l = hl; v->r = hr;
-    v->ic[0][0] = f0[0]; v->ic[0][1] = f0[1]; v->ic[1][0] = f1[0]; v->ic[1][1] = f1[1];
-    if (led) MAC_LEAVE(mac);
+    if (led) v->ic[0][0] = l0, v->ic[0][1] = b0, v->ic[1][0] = l1, v->ic[1][1] = b1;
+    MAC_LEAVE(mac);
 }
+static __attribute__((noinline)) void crunch_rate(AmigaVoice *v, int32_t *a, unsigned n, uint32_t inc, uint32_t mask) { stored(v, a, n, inc, mask, 0); }
+static __attribute__((noinline)) void crunch_rate_led(AmigaVoice *v, int32_t *a, unsigned n, uint32_t inc, uint32_t mask) { stored(v, a, n, inc, mask, 1); }
 void amiga_crunch(AmigaVoice *v, int32_t *a, unsigned n, uint32_t inc, unsigned bits, unsigned led)
 {
     if (inc > ONE) inc = ONE;
@@ -250,7 +306,8 @@ void amiga_crunch(AmigaVoice *v, int32_t *a, unsigned n, uint32_t inc, unsigned 
     if (inc == ONE && bits >= 12 && !led) return;
     /* The word keeps its top bits, as a sample cut to a shorter word is; silence stays silence. */
     uint32_t mask = bits >= 12 ? 0xffffffffu : 0xffffffffu << (28u - bits);
-    if (inc != ONE || led) { crunch_stored(v, a, n, inc, mask, led); return; }
+    if (inc != ONE) { if (led) crunch_rate_led(v, a, n, inc, mask); else crunch_rate(v, a, n, inc, mask); return; }
+    if (led) { crunch_led(v, a, n, mask); return; }
     if (!n) return;
     /* Every sample kept: only the word, one instruction a sample. */
     for (int32_t *end = a + 2u * n; a != end; ++a) *a = (int32_t)((uint32_t)*a & mask);

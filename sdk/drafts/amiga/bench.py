@@ -34,6 +34,8 @@ CASES = {  # pitch in semitones, STCH, CYL, RATE, BITS (saved value), LED, STR, 
     'defaults: 8 bits': dict(pitch=0, stch=32, cyl=60, rate=36, bits=4, led=0),
     'stretch to 200, 8 bits': dict(pitch=0, stch=52, cyl=60, rate=36, bits=4, led=0),
     'an octave up at its own length, 8 bits': dict(pitch=12, stch=32, cyl=60, rate=36, bits=4, led=0),
+    'RATE 22168 alone, 8 bits': dict(pitch=0, stch=32, cyl=60, rate=29, bits=4, led=0),
+    'LED alone, 8 bits': dict(pitch=0, stch=32, cyl=60, rate=36, bits=4, led=1),
     'the same with RATE 22168 and LED': dict(pitch=12, stch=32, cyl=60, rate=29, bits=4, led=1),
     'dearest found: an octave up, CYL 100, RATE 31388, LED': dict(pitch=12, stch=52, cyl=0, rate=35, bits=4, led=1),
 }
