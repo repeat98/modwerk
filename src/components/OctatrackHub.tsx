@@ -13,8 +13,9 @@ import { DeviceImage } from '../devices/DeviceImage'
 import { DEVICES_BY_ID } from '../devices/registry'
 import type { OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { useOctatrackHealth } from '../hooks/useOctatrackHealth'
+import { DSP_STOPPED, useOctatrackLoad } from '../hooks/useOctatrackLoad'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
-import { useActionsMenu } from '../hooks/useActionsMenu'
+import { HubSetHead, HubSetList, SetMenu, type SetAction } from './HubSets'
 import { Icon, type IconName } from './Icon'
 import { OctatrackBackups } from './OctatrackBackups'
 import { OctatrackDiagnosticsSettings } from './OctatrackDiagnostics'
@@ -29,7 +30,7 @@ const BUSY = ['sending', 'testing', 'trial', 'finishing']
 const when = (at: string) => new Date(at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
 
 export type HubView = 'status' | 'backups' | 'samples' | 'setup' | 'set'
-export type SetAction = 'rename' | 'duplicate' | 'export' | 'share' | 'delete'
+export type { SetAction }
 /** The Octatrack's own pages, in the list above the module sets; `#configuration` is the set you edit. */
 const UNIT_VIEWS: { view: Exclude<HubView, 'set'>; title: string; href: string; icon: IconName }[] = [
   { view: 'status', title: 'Status', href: '#octatrack', icon: 'grid' },
@@ -37,18 +38,6 @@ const UNIT_VIEWS: { view: Exclude<HubView, 'set'>; title: string; href: string; 
   { view: 'samples', title: 'Samples', href: '#octatrack/samples', icon: 'wave' },
   { view: 'setup', title: 'Setup', href: '#octatrack/setup', icon: 'sliders' },
 ]
-
-/** One set's actions, in its row and above its modules. */
-function SetMenu({ set, onAction }: { set: Configuration; onAction: (id: string, action: SetAction) => void }) {
-  const { open, setOpen, buttonRef, panelRef, panelId, moveFocus, choose } = useActionsMenu()
-  const item = (action: SetAction, label: string) => <button type="button" className={action === 'delete' ? 'is-danger' : undefined} onClick={() => choose(() => onAction(set.id, action))}>{label}</button>
-  return <div className="configuration-menu hub-set-menu">
-    <button ref={buttonRef} type="button" className="icon-button" aria-label={set.name + ' actions'} title="Module set actions" aria-expanded={open} aria-controls={open ? panelId : undefined} onClick={() => setOpen(value => !value)}><Icon name="more" size={17} /></button>
-    {open && <div ref={panelRef} id={panelId} className="configuration-menu-panel" role="group" aria-label={set.name + ' actions'} onKeyDown={moveFocus}>
-      {item('rename', 'Rename')}{item('duplicate', 'Duplicate')}{item('export', 'Export JSON')}{item('share', 'Share in forum')}<hr />{item('delete', 'Delete')}
-    </div>}
-  </div>
-}
 
 /**
  * Your Octatrack: the configuration page of the beta. A list on the leading side holds the Octatrack's own pages
@@ -116,13 +105,15 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
   const needsBase = review?.problem instanceof BaseUpdateRequired || connected && baseOutdated(identity?.base)
   const wantedLayout = review?.problem instanceof BaseLayoutRequired ? review.problem.layout : undefined
   const model = identity?.model ? identity.model.replace('OCTATRACK', 'Octatrack') : 'Octatrack'
-  const led = connected ? 'on' : busy ? 'load' : 'off'
+  const { stopped } = useOctatrackLoad(link)
+  const led = connected && !stopped ? 'on' : busy ? 'load' : 'off'
   const health = useOctatrackHealth(link)
   const onUnit = sets.find(same), lastSync = lastSuccessfulSync(identity?.base ?? last?.base)
   const lastName = onUnit?.name ?? (last && lastSync && sameModules(last.moduleIds, lastSync.moduleIds) ? lastSync.name : undefined)
   // The hero: the unit's state in one line and the one action it needs, on every page.
   const [line, action]: [ReactNode, ReactNode] = !usb ? ['This browser can’t use USB. Open this page in Chrome or Edge on a computer, or install from the card in Setup.', null]
     : busy ? [state.module || status !== 'testing' ? 'Syncing…' : 'Self-test running…', null]
+    : connected && stopped ? [DSP_STOPPED, null]
     : connected ? [<>Connected · {inventory ? modules(inventory.moduleIds.length) + ' on it' : 'reading what’s on it…'}{onUnit && <> · same as <b>{onUnit.name}</b></>}</>, null]
     : status === 'connecting' ? ['Looking for your Octatrack…', null]
     : status === 'busy' ? ['Another browser window or app is using your Octatrack. This page connects by itself once it’s free.', <button key="retry" className="button button-quiet" onClick={() => void link?.retry()}>Try again</button>]
@@ -162,22 +153,8 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
           <h2 className="hub-nav-label">Octatrack</h2>
           <ul className="hub-nav-list">{UNIT_VIEWS.map(item => <li key={item.view}><a className="hub-nav-item" href={item.href} aria-current={view === item.view ? 'page' : undefined}><Icon name={item.icon} size={16} /><span>{item.title}</span>{item.view === 'samples' && <span className="samples-wip">WIP</span>}</a></li>)}</ul>
         </div>
-        <div className="hub-nav-group">
-          <div className="hub-nav-label"><h2 id="hub-sets-title">Module sets</h2><span className="subtle">{sets.length}</span><button type="button" className="icon-button" aria-label="New module set" title="New module set" onClick={onNew}><Icon name="plus" size={16} /></button></div>
-          <ul className="hub-set-list" aria-labelledby="hub-sets-title">
-            {sets.map(set => { const isSelected = set.id === selected?.id, on = same(set)
-              return <li key={set.id} className={'hub-set' + (isSelected ? ' is-selected' : '')}>
-                <button type="button" className="hub-set-open" aria-current={view === 'set' && isSelected ? 'page' : undefined} onClick={() => onSelect(set.id)}>
-                  <span className={'unit-led is-' + (on && connected ? 'on' : 'off')} aria-hidden="true" />
-                  <strong>{set.name}</strong><b>{set.moduleIds.length}</b>
-                  <small>{set.moduleIds.map(moduleName).join(' · ') || 'No modules yet'}</small>
-                  {(on || isSelected) && <em>{[isSelected && 'Editing', on && (connected ? 'On your Octatrack' : 'Last seen on your Octatrack')].filter(Boolean).join(' · ')}</em>}
-                </button>
-                <SetMenu set={set} onAction={onSetAction} />
-              </li> })}
-          </ul>
-        </div>
-        <p className="hub-nav-foot"><button type="button" className="text-button" onClick={onNew}><Icon name="plus" size={14} />New module set</button><button type="button" className="text-button" onClick={onImport}>Import JSON</button><a className="text-button" href="#module-sets">Starting points</a></p>
+        <HubSetList sets={sets} selected={selected} open={view === 'set'} contents={set => set.moduleIds.map(moduleName).join(' · ')} onSelect={onSelect} onNew={onNew} onImport={onImport} onSetAction={onSetAction}
+          state={set => { const on = same(set); return { on: on && connected, label: on ? (connected ? 'On your Octatrack' : 'Last seen on your Octatrack') : undefined } }} />
       </nav>
       <div className="hub-pane">
         {panel('status', <OctatrackOverview link={link} inventory={inventory} sets={sets} needs={needs} health={health} active={view === 'status'} selected={selected} onOpen={onSelect} onSync={onSync} onSaveUnit={onSaveUnit} onReport={onReport} />)}
@@ -207,10 +184,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
           <OctatrackDiagnosticsSettings username={username} />
         </>)}
         {panel('set', selected ? <>
-          <header className="hub-editor-head">
-            <div><span className="guide-eyebrow">Module set · {modules(selected.moduleIds.length)}</span><h2 className="hub-view-title">{selected.name}</h2></div>
-            <SetMenu set={selected} onAction={onSetAction} />
-          </header>
+          <HubSetHead set={selected} kicker={'Module set · ' + modules(selected.moduleIds.length)} onSetAction={onSetAction} />
           <div className="hub-sync" role="group" aria-label="Module set sync">
             <p>{syncLine}</p>
             {usb && <button type="button" className="button button-primary" disabled={!review || !needsBase && (!review.needsSync || !!review.problem)} onClick={() => { onSync(selected.id); if (needsBase) onInstall(wantedLayout) }}><Icon name="download" size={16} />{wantedLayout ? 'Install base with this layout' : needsBase ? 'Install latest base' : 'Sync to Octatrack'}</button>}

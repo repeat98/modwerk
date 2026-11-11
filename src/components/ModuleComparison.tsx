@@ -49,7 +49,11 @@ export function ModuleComparison({ betaAccess = false, ids, onClose, onToggle, s
       },
     })),
   ].filter(module => ids.includes(module.key))
-  useEffect(() => { ref.current?.showModal() }, [])
+  useEffect(() => {
+    const element = ref.current, previousFocus = document.activeElement
+    element?.showModal()
+    return () => { element?.close(); if (previousFocus instanceof HTMLElement) previousFocus.focus() }
+  }, [])
   return <dialog ref={ref} className="comparison-dialog" aria-labelledby="comparison-title" onCancel={onClose} onClick={event => { if (event.target === event.currentTarget) onClose() }}>
     <div className="section-title"><h2 id="comparison-title">Compare modules</h2><button className="icon-button" onClick={onClose} aria-label="Close comparison">×</button></div>
     <div className="comparison-scroll" tabIndex={0} role="region" aria-label="Module comparison table"><table>

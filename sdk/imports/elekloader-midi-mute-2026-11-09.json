@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "midi-mute-2026-11-09",
+  "about": "Modwerk source-only MIDI Mute package for Analog Rytm MKII OS 1.74, compiled from sdk/analog-rytm-mkii/modules/midi-mute.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "midi-mute-0.1.0-experimental-os1.74.elemod",
+      "sha256": "f83da7acba1869d70b6ebc1e53f004112db2dfe60ae948f0f9e36841bd640a5c",
+      "id": "midi-mute",
+      "version": "0.1.0-experimental",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-3.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "5bc570df5d6341abb64a5cd502d182bdf9f47921",
+        "path": "sdk/imports/packages/midi-mute/midi-mute-0.1.0-experimental-os1.74.elemod"
+      },
+      "title": "MIDI Mute",
+      "requires": ["core"],
+      "conflicts": [],
+      "summary": "Muted tracks also ignore MIDI notes coming in over USB and DIN, and a held note stops when its track is muted.",
+      "description": "Muted tracks, and tracks left out of a solo, drop incoming MIDI Note Ons from USB and DIN; a note MIDI holds is released when its track is silenced. Off by default: MUTE MIDI IN in GLOBAL > MIDI CONFIG > PORT CONFIG.",
+      "category": "midi-usb",
+      "author": "michaelkollmann",
+      "needs_core": "0.7",
+      "on_unit": "This source (MM04) ran on the author's Analog Rytm MKII on OS 1.74 over USB and DIN, as reported in TESTING.md; this package has not run on a unit itself."
+    }
+  ]
+}

@@ -3,7 +3,7 @@
   "id": "ring-sc",
   "key": "RING_SC",
   "name": "Sidechain Ringmod",
-  "version": "0.2.0-experimental",
+  "version": "0.2.1-experimental",
   "category": "effects",
   "author": {
     "github": "npp1993",
@@ -128,7 +128,7 @@
       "value": 351,
       "unit": "words",
       "method": "static",
-      "conditions": "Assembled with dsp_asm: 351 words, both payloads (one source). State is 22 words of the instance's existing r7 block. The key bus is the base's (Y $800-$9FF on each core and $202 words at the end of each core's half of the shared window); the package declares reads of them as its DSP claims and writes nothing outside its state. A 9-value KEY formatter, a MODE formatter with its renames and the shared wide dial are ColdFire data in its page recipe.",
+      "conditions": "Assembled with dsp_asm: 351 words, both payloads (one source). State is 22 words of the instance's existing r7 block. The key bus is the base's (Y $7E00-$7FFF on each core since 0.2.1 and $202 words at the end of each core's half of the shared window); the package declares reads of them as its DSP claims and writes nothing outside its state. A 9-value KEY formatter, a MODE formatter with its renames and the shared wide dial are ColdFire data in its page recipe.",
       "source": "TESTING.md"
     },
     "processing": {
@@ -164,9 +164,9 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "The assembled module matches a reference model within 1.8e-07 of full scale in both modes (the key's low-pass, RECT and SLEW's level in exact integers), passes the input bit for bit when the key bus is not live, and equals 0.1.0 sample for sample in DUCK and in RING with S&H, RECT and SLEW at 0; SLEW crosses 0 without a click and S&H turned down cuts its hold short. On 22 October 2026 its USB package 2ba32a49 ran on the author's MKII on a RAM-booted development twin of the beta base: DUCK, plain RING, RECT, SLEW through 0 and S&H by ear, two instances on both cores and slots, Part and project reload, every install and removal order beside Sidechain Compressor, and the base's self-test passed. Not run on a unit: parameter locks and LFOs, scenes, eight instances a core, a power cycle.",
+    "summary": "The assembled module matches a reference model within 1.8e-07 of full scale in both modes (the key's low-pass, RECT and SLEW's level in exact integers), passes the input bit for bit when the key bus is not live, and equals 0.1.0 sample for sample in DUCK and in RING with S&H, RECT and SLEW at 0; SLEW crosses 0 without a click and S&H turned down cuts its hold short. On 22 October 2026 its USB package 2ba32a49 ran on the author's MKII on a RAM-booted development twin of the beta base: DUCK, plain RING, RECT, SLEW through 0 and S&H by ear, two instances on both cores and slots, Part and project reload, every install and removal order beside Sidechain Compressor, and the base's self-test passed. On 10 November 2026 0.2.1's package 91281f07 ran on the owner's MKII on a development twin of beta base dd3827f0, with the key bus at Y $7E00: DUCK keyed from the same and the other core and RING, measured from the unit's USB audio, beside BBD Delay on T1 and T5 FX2 and a keyed Sidechain Compressor; self-test, removal in use refused, a trial's rollback and npm run device:qualify passed. Not run on a unit: parameter locks and LFOs, scenes, eight instances a core, a power cycle.",
     "hardwareStatus": "reported",
-    "evidenceRevision": "60d3ac179ff293ceac9604c802574da47f6fba36",
+    "evidenceRevision": "4925f19d83312006e88635eac88dda84497bd37e",
     "gates": [
       "verify.py: bit-exact passthrough (KEY OFF, DPTH 0, no key bus), DUCK and RING against the model over 576 settings, ATK, a steady and a decaying key, both key paths, trig splits, the mode fade, the memory guard, knob steps, and RING's carrier: S&H's hold, SLEW's level, RECT's rectification, SLEW across 0 once and every eight blocks without a click, S&H 127 to 0 taking a new key at once",
       "compare02 (dsp_host) against 0.1.0: DUCK and RING with S&H, RECT and SLEW at 0 identical over 864 + 36 settings, the key paths, splits, mode switches and sweeps (TESTING.md)",
@@ -176,9 +176,9 @@
       "npm run module:verify -- ring-sc: the native comparison of every chooser selection (TESTING.md)"
     ],
     "qualification": {
-      "moduleVersion": "0.2.0-experimental",
-      "sourceSha256": "ed5235cb47d34f8efbabd9cd9a41ad3f8eb2994d34c6261de1d590892a54120e",
-      "imageSha256": "712666cb0f464ed324c77aca2d7210643fdc41c18e640797030f9a90878013bd",
+      "moduleVersion": "0.2.1-experimental",
+      "sourceSha256": "8f8fe4e186d93e08eebab9e681195230e7a8d0bc2e69eb8e0c435adff81dc7a5",
+      "imageSha256": "b0d749170f74b234f19d10538fcef8ed2e80932c6590e211ea1097d2f6ea4578",
       "cycles": [
         {
           "processor": "dsp",
@@ -229,24 +229,23 @@
         "sharedBytes": 2974,
         "maxInstances": 16,
         "totalBytes": 4030,
-        "conditions": "From the USB package (2,416 bytes: 351 DSP words with four relocations, the 868-byte page recipe as sdk/runtime/loader/build.py lays it out, its claims and header) and the source's r7 block ($00-$15, zeroed by init). Sixteen instances are FX1 and FX2 of all eight tracks. No Y memory, no delay buffer, heap or ColdFire code of its own. The key bus's memory (Y $800-$9FF on each core and the last $202 words of each core's half of the shared window) is the base's, as are its tap and engine.",
+        "conditions": "From the USB package (2,416 bytes: 351 DSP words with four relocations, the 868-byte page recipe as sdk/runtime/loader/build.py lays it out, its claims and header) and the source's r7 block ($00-$15, zeroed by init). Sixteen instances are FX1 and FX2 of all eight tracks. No Y memory, no delay buffer, heap or ColdFire code of its own. The key bus's memory (Y $7E00-$7FFF on each core since 0.2.1 and the last $202 words of each core's half of the shared window) is the base's, as are its tap and engine.",
         "report": "TESTING.md"
       },
       "hardware": {
         "kind": "functional",
         "status": "reported",
         "model": "MKII",
-        "testedOn": "2026-10-22",
-        "tester": "npp1993",
-        "sourceRevision": "60d3ac179ff293ceac9604c802574da47f6fba36",
-        "imageSha256": "712666cb0f464ed324c77aca2d7210643fdc41c18e640797030f9a90878013bd",
-        "summary": "Over USB on an Octatrack MKII, OS 1.40C, RAM-booted development twin 53ddaf60 of main's beta base with the module select step and key bus reader admission fixes (MAIN 712666cb..., never flashed); package 2ba32a49. By ear with a kick on T1 as KEY: DUCK, plain RING, RECT swept, SLEW through 0 turned quickly and slowly without a click, S&H 127 to 0 stopping at once; the names follow MODE; KEY steps cleanly on the first visit. Two instances (T4 FX1 DUCK, T5 FX2 RING) on both cores and slots, independent. Part SAVE/RELOAD and project save/load restore them with the bus live. Over USB: install alone and beside Sidechain Compressor share one bus; every removal order returns the bus and arena; removal in use refused (loader refusal 7). The base's self-test passed with Sidechain (CPU 52.8 %, T1-4 27.7 %, T5-8 37.5 %, longest frame 401 us) and with two instances (CPU 66.7 %, T1-4 21.8 %, T5-8 39.5 %, 384 us) (evidence/hardware.md).",
+        "testedOn": "2026-11-10",
+        "tester": "repeat98",
+        "sourceRevision": "4925f19d83312006e88635eac88dda84497bd37e",
+        "imageSha256": "b0d749170f74b234f19d10538fcef8ed2e80932c6590e211ea1097d2f6ea4578",
+        "summary": "Over USB on an Octatrack MKII, OS 1.40C, RAM-booted development twin 5015d2a7 of beta base dd3827f0 (the key bus at Y $7E00; MAIN b0d74917..., never flashed); package 91281f07. Measured from the unit's per-track USB audio, a kick on T1 as KEY, folded on its 17-22 onsets: DUCK keyed from the other core (T5 FX1 from T1) took T5 from about -13 dB to -97 dB within 5-10 ms of each kick; from the same core (T2 FX2 from T1, T6 FX1 from T5) to about -110 and -105 dB; KEY OFF left the track untouched; RING made T5 follow the kick (-84 dB between kicks, -14 dB on them) and the knobs read SLEW, S&H and RECT. Beside BBD Delay 0.1.2 on T1 and T5 FX2 and Sidechain Compressor 0.2.1 keyed from T1, both keyed paths kept working and the compressor ducked T6 6-12 dB more than self-keyed. Self-test passed with all three (CPU 66.1 %, T1-4 54.1 %, T5-8 50.2 %, longest frame 391 us); removal in use refused (loader refusal 7); a 25 s trial rolled back by itself (Undo) and left NONE in the slot; npm run device:qualify passed: alone on T1 and T5 FX2, four instances beside four BBD instances while playing, 12 Part switches, 120 s soak (highest core peak 749 per mille), removal (evidence/hardware.md).",
         "limitations": [
-          "Parameter locks and LFOs (a lock or LFO on SLEW through 0 included), scenes and the crossfader, the stale-seed install while playing, the window and buffer reads and the missing-module message were not run on a unit for any 0.2.0 build.",
-          "The key latency (T4 0, T2 16, T5 32 samples) is carried from the 21 October key bus re-check, not re-measured through this module.",
-          "A power cycle cannot be tested on a RAM-booted twin; not tested. The flashed main base was not used for this source.",
-          "The twin carries two base fixes that were still in review; eight instances a core and MKI were not run.",
-          "One MKII, one session, by the module's author; by ear, nothing on the unit recorded or measured."
+          "Parameter locks and LFOs, scenes and the crossfader, eight instances a core and MKI were not run on a unit. One slot of the test project (T2 FX1) carries the project's own FX1 locks (DPTH and the next knobs locked to 0 on its trigs) and did not duck; it was left out of the results.",
+          "Key latency was not measured to the sample: the duck lands within one 5 ms analysis window of the kick's onset on both paths.",
+          "A power cycle cannot be tested on a RAM-booted twin; not tested. The flashed base was not used for this source.",
+          "One MKII, one session, driven over USB by the owner's coordinating session; audio measured from the unit's USB outputs, nothing judged by ear."
         ],
         "report": "evidence/hardware.md"
       },
@@ -290,9 +289,9 @@
         "page": "FX1 SETUP",
         "shows": "location",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "491f0ff0b933b52f3b9dc4f4c8118ff8f6788763bc36c596545026545a6bd596",
-        "setup": "Headless ot_emu (MKII panel) on 1.40C, a private card image carrying RINGMOD SC 0.2.0-experimental (local remix x_rmsc02: RINGMOD SC alone on the FX1 chooser, stock effects loaded on demand, RINGSC20); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
+        "moduleVersion": "0.2.1-experimental",
+        "imageSha256": "b9d02d3a0dd6f6cf52f6501ec7026d4abac4505bedd0e02266bcae29aafa286d",
+        "setup": "Headless ot_emu (MKII panel) on 1.40C, Modwerk's native card image of RINGMOD SC 0.2.1-experimental alone with the stock effects kept (MAIN OS b9d02d3a; the FX1 chooser lists the stock FX1 effects above it); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
       }
     },
     {
@@ -307,9 +306,9 @@
         "page": "FX1 main",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "491f0ff0b933b52f3b9dc4f4c8118ff8f6788763bc36c596545026545a6bd596",
-        "setup": "Headless ot_emu (MKII panel) on 1.40C, a private card image carrying RINGMOD SC 0.2.0-experimental (local remix x_rmsc02: RINGMOD SC alone on the FX1 chooser, stock effects loaded on demand, RINGSC20); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
+        "moduleVersion": "0.2.1-experimental",
+        "imageSha256": "b9d02d3a0dd6f6cf52f6501ec7026d4abac4505bedd0e02266bcae29aafa286d",
+        "setup": "Headless ot_emu (MKII panel) on 1.40C, Modwerk's native card image of RINGMOD SC 0.2.1-experimental alone with the stock effects kept (MAIN OS b9d02d3a; the FX1 chooser lists the stock FX1 effects above it); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
       }
     },
     {
@@ -324,9 +323,9 @@
         "page": "FX1 main",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "491f0ff0b933b52f3b9dc4f4c8118ff8f6788763bc36c596545026545a6bd596",
-        "setup": "Headless ot_emu (MKII panel) on 1.40C, a private card image carrying RINGMOD SC 0.2.0-experimental (local remix x_rmsc02: RINGMOD SC alone on the FX1 chooser, stock effects loaded on demand, RINGSC20); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
+        "moduleVersion": "0.2.1-experimental",
+        "imageSha256": "b9d02d3a0dd6f6cf52f6501ec7026d4abac4505bedd0e02266bcae29aafa286d",
+        "setup": "Headless ot_emu (MKII panel) on 1.40C, Modwerk's native card image of RINGMOD SC 0.2.1-experimental alone with the stock effects kept (MAIN OS b9d02d3a; the FX1 chooser lists the stock FX1 effects above it); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
       }
     },
     {
@@ -341,9 +340,9 @@
         "page": "FX1 SETUP",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "491f0ff0b933b52f3b9dc4f4c8118ff8f6788763bc36c596545026545a6bd596",
-        "setup": "Headless ot_emu (MKII panel) on 1.40C, a private card image carrying RINGMOD SC 0.2.0-experimental (local remix x_rmsc02: RINGMOD SC alone on the FX1 chooser, stock effects loaded on demand, RINGSC20); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
+        "moduleVersion": "0.2.1-experimental",
+        "imageSha256": "b9d02d3a0dd6f6cf52f6501ec7026d4abac4505bedd0e02266bcae29aafa286d",
+        "setup": "Headless ot_emu (MKII panel) on 1.40C, Modwerk's native card image of RINGMOD SC 0.2.1-experimental alone with the stock effects kept (MAIN OS b9d02d3a; the FX1 chooser lists the stock FX1 effects above it); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
       }
     },
     {
@@ -358,9 +357,9 @@
         "page": "FX1 main",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "491f0ff0b933b52f3b9dc4f4c8118ff8f6788763bc36c596545026545a6bd596",
-        "setup": "Headless ot_emu (MKII panel) on 1.40C, a private card image carrying RINGMOD SC 0.2.0-experimental (local remix x_rmsc02: RINGMOD SC alone on the FX1 chooser, stock effects loaded on demand, RINGSC20); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
+        "moduleVersion": "0.2.1-experimental",
+        "imageSha256": "b9d02d3a0dd6f6cf52f6501ec7026d4abac4505bedd0e02266bcae29aafa286d",
+        "setup": "Headless ot_emu (MKII panel) on 1.40C, Modwerk's native card image of RINGMOD SC 0.2.1-experimental alone with the stock effects kept (MAIN OS b9d02d3a; the FX1 chooser lists the stock FX1 effects above it); stopped transport; actual LCD pixels. A card image has no key bus, so these show the pages, not the effect."
       }
     }
   ],

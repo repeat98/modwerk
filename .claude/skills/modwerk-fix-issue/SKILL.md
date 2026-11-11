@@ -11,6 +11,9 @@ Who is asking decides the flow:
   - Release steps wait for their actual hardware results.
   - After live verification they post `/modwerk resolve <version> verified-download` on the issue.
 - **Anyone else:** ask the module's author first (`docs/DEVELOPER_WORKFLOW.md#ask-the-author-first`). A fix to shared code is its own `Fix:` pull request.
+  - With their OK linked and the author @mentioned, the fix is an ordinary pull request the owner reviews (`docs/DEVELOPER_WORKFLOW.md#update-or-fix-an-approved-module`).
+  - Record results from your own unit as yours, on the named build; never attest for the author.
+  - Resolving the report is for the module's registered author (`/modwerk resolve`) or the owner's flow, once the live download is verified.
 
 Then, in every flow:
 1. **Read the report in full** (`gh issue view <n> --json body,comments`). Reproduce it where possible, and keep a confirmed fix apart from a mitigation.

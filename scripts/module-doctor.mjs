@@ -24,6 +24,8 @@ import { USB_CARD_ONLY_PATH, parseUsbCardOnly } from './retained-evidence.mjs'
 import { judgeRecord, ownerWaivedPerformanceRow } from './perf-audit-analysis.mjs'
 import { LINK_DEVICES } from '../src/engine/elektron/elemod.ts'
 import { stageDraft } from './draft-stage.mjs'
+import { requireZdlBinary, zdlPath } from './zdl-binaries.mjs'
+import { moduleCardless } from '../src/catalog/usb-only.ts'
 
 // Modules first listed on or after this day carry a measured performance record (docs/MODULE_PERFORMANCE.md); earlier ones keep their qualification evidence.
 const PERFORMANCE_REQUIRED_FROM = '2026-10-07'
@@ -42,10 +44,16 @@ const exists = path => existsSync(resolve(root, path))
 if (draft) stageDraft(root, ids[0])
 // The owner's card-only OKs, each for one exact version of a module that would otherwise need a USB package.
 const cardOnly = exists(USB_CARD_ONLY_PATH) ? parseUsbCardOnly(json(USB_CARD_ONLY_PATH)) : []
-const catalog = json('sdk/catalog.json'), machineModules = ['digitakt', 'digitone', 'analog-rytm-mkii', 'analog-four-mkii'].flatMap(machine => exists('sdk/' + machine + '/modules') ? readdirSync(resolve(root, 'sdk', machine, 'modules'), { withFileTypes: true }).filter(entry => entry.isDirectory() && !entry.name.startsWith('_')).map(entry => ({ id: entry.name, machine })) : [])
+const catalog = json('sdk/catalog.json'), machineModules = ['digitakt', 'digitone', 'analog-rytm-mkii', 'analog-four-mkii'].flatMap(machine => exists('sdk/' + machine + '/modules') ? readdirSync(resolve(root, 'sdk', machine, 'modules'), { withFileTypes: true }).filter(entry => entry.isDirectory() && !entry.name.startsWith('_')).map(entry => ({ id: entry.name, machine, folder: 'sdk/' + machine + '/modules/' + entry.name })) : [])
+// Zoom effects (zdl) share one folder for the pedal family; each names the pedal it is developed on.
+if (exists('sdk/zoom/modules')) for (const entry of readdirSync(resolve(root, 'sdk/zoom/modules'), { withFileTypes: true })) if (entry.isDirectory() && !entry.name.startsWith('_')) {
+  const folder = 'sdk/zoom/modules/' + entry.name
+  machineModules.push({ id: entry.name, machine: exists(folder + '/modwerk.module.json') ? json(folder + '/modwerk.module.json').machine : 'zoom-ms-70cdr', folder, zdl: true })
+}
+const MODULE_FOLDERS = 'sdk/octabam/modules, sdk/digitakt/modules, sdk/digitone/modules, sdk/analog-rytm-mkii/modules, sdk/analog-four-mkii/modules or sdk/zoom/modules'
 
 // An unknown id is answered before any check runs: the rules below take seconds on a large catalogue.
-if (!all && !exists('sdk/octabam/modules/' + ids[0]) && !machineModules.some(item => item.id === ids[0])) { console.error('No module named ' + ids[0] + ' under sdk/octabam/modules, sdk/digitakt/modules, sdk/digitone/modules, sdk/analog-rytm-mkii/modules or sdk/analog-four-mkii/modules.'); process.exit(2) }
+if (!all && !exists('sdk/octabam/modules/' + ids[0]) && !machineModules.some(item => item.id === ids[0])) { console.error('No module named ' + ids[0] + ' under ' + MODULE_FOLDERS + '.'); process.exit(2) }
 
 // The module and catalog rules every PR already enforces (versions, documentation, qualification, gauges, media): run once.
 const rules = spawnSync(process.execPath, ['scripts/modules.mjs'], { cwd: root, encoding: 'utf8' })
@@ -128,9 +136,10 @@ function octatrack(id) {
   else ok('module rules', 'versions, documentation, tutorial, screenshots, qualification, resource gauges (npm run modules:check)')
 
   const build = json('src/engine/assets/module-build.json'), buildable = document.build?.status !== 'pending'
-  // A C runtime module (its USB package row has "sources") has no card form: only its USB package is built.
-  const usbRow = json('src/engine/assets/octatrack-module-packages.json').packages.find(row => row.id === id), cOnly = Boolean(usbRow?.sources)
-  if (cOnly && usbRow.version === document.version) ok('packages', 'USB package at ' + document.version + ' (a C runtime module, no card form)')
+  // A C runtime module (its USB package row has "sources") or one marked "usbOnly" has no card form: only its USB package
+  // is built. The same rule as the card build's and the native comparison test's (src/catalog/usb-only.ts).
+  const usbRow = json('src/engine/assets/octatrack-module-packages.json').packages.find(row => row.id === id), cOnly = moduleCardless(id)
+  if (cOnly && usbRow.version === document.version) ok('packages', 'USB package at ' + document.version + ' (' + (usbRow.sources ? 'a C runtime' : 'a USB-only') + ' module, no card form)')
   else if (cOnly) fail('packages', 'the USB package is ' + usbRow.version + ', not ' + document.version, 'npm run octatrack:module-packages, then -- --check')
   else if (!buildable) info('packages', 'build status is pending, so the packages do not include it yet')
   else if (build.moduleVersions?.[id] !== document.version) fail('packages', 'the committed packages lack ' + id + '@' + document.version, 'rebuild and import the packages (docs/ADD_A_MODULE.md, step 4)')
@@ -195,15 +204,25 @@ function octatrack(id) {
   return lines
 }
 
-function machineModule({ id, machine }) {
-  const lines = [], folder = 'sdk/' + machine + '/modules/' + id
+function machineModule({ id, machine, folder, zdl = false }) {
+  const lines = []
   const manifest = exists(folder + '/modwerk.module.json') ? json(folder + '/modwerk.module.json') : null
   if (!manifest) lines.push({ state: 'fail', name: 'manifest', detail: folder + '/modwerk.module.json is missing', fix: 'npm run module:new -- <id> --machine ' + machine + ' --author <login>' })
   else {
     lines.push({ state: 'ok', name: 'manifest', detail: manifest.version })
     if (!LIBRARY_CATEGORIES.includes(manifest.category)) lines.push({ state: 'fail', name: 'category guide', detail: 'category ' + manifest.category + ' is not a library category', fix: 'use one of ' + LIBRARY_CATEGORIES.join(', ') })
     else if (!exists('docs/module-guides/' + manifest.category + '.md')) lines.push({ state: 'fail', name: 'category guide', detail: 'docs/module-guides/' + manifest.category + '.md is missing', fix: 'write the guide for this category' })
-    else lines.push({ state: 'ok', name: 'category guide', detail: 'walk docs/module-guides/' + manifest.category + '.md, and the Digitakt and Digitone section in it' })
+    else lines.push({ state: 'ok', name: 'category guide', detail: 'walk docs/module-guides/' + manifest.category + '.md' + (zdl ? ' and "Create an effect" in sdk/machines/' + machine + '/README.md' : ', and the Digitakt and Digitone section in it') })
+  }
+  // A Zoom effect installs from its pinned release file, vendored without Zoom code (npm run zdl:vendor).
+  if (zdl) {
+    let problem = null
+    try { if (manifest) requireZdlBinary(root, folder, manifest) } catch (error) { problem = error.message }
+    if (manifest && !problem) lines.push({ state: 'ok', name: 'effect file', detail: zdlPath(manifest) + ' is the pinned release file' })
+    else lines.push({ state: 'fail', name: 'effect file', detail: problem ?? 'no manifest', fix: 'npm run zdl:vendor -- ' + id + ' --checker <ZoomMultistompZDL checkout> --stock-dir <your stock blobs> (docs/ZDL_MODULE_CONTRACT.md)' })
+    if (rulesProblem) lines.push({ state: 'fail', name: 'module rules', detail: 'npm run modules:check fails: ' + rulesProblem.slice(0, 220), fix: 'fix what it names' })
+    else lines.push({ state: 'ok', name: 'module rules', detail: 'contract v3 (zdl), evidence tier, documentation (npm run modules:check)' })
+    return lines
   }
   // The browser builds only from the files elekloader's catalog pins (vendor/elekloader/catalog/catalog.json); a mod's id is its catalog id.
   // elekloader names the Rytm's and the Four's devices analog-rytm-mk2 and analog-four-mk2, which their machine ids do not start with.
@@ -259,8 +278,8 @@ for (const id of octatrackIds) {
   green = report(id + ' (Octatrack)', lines, draft && !release) && green
 }
 const machineIds = all ? machineModules : machineModules.filter(item => ids.includes(item.id))
-for (const item of machineIds) green = report(item.id + ' (' + item.machine + ')', [...machineModule(item), ...boardLines(item.machine, item.id, 'sdk/' + item.machine + '/modules/' + item.id)]) && green
-if (!all && !octatrackIds.length && !machineIds.length) { console.error('No module named ' + ids[0] + ' under sdk/octabam/modules, sdk/digitakt/modules, sdk/digitone/modules, sdk/analog-rytm-mkii/modules or sdk/analog-four-mkii/modules.'); process.exit(2) }
+for (const item of machineIds) green = report(item.id + ' (' + item.machine + ')', [...machineModule(item), ...boardLines(item.machine, item.id, item.folder)]) && green
+if (!all && !octatrackIds.length && !machineIds.length) { console.error('No module named ' + ids[0] + ' under ' + MODULE_FOLDERS + '.'); process.exit(2) }
 const tiered = draft && !release
 if (tiered) console.log(green ? '\nThe experimental lines are green: try it with npm run module:dev, and share the branch; a tester runs the same command on it. The ○ lines are what listing it needs.' : '\nFix the lines marked ✗, then run this again. The ○ lines can wait until you list it.')
 else console.log(green ? '\nEvery integration point is green. Now walk the category checklist in docs/module-guides/.' : '\nFix the lines marked ✗, then run this again.')

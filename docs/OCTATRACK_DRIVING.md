@@ -2,7 +2,10 @@
 
 How to work a real Octatrack MKII running a Modwerk development base (`build_core.py --dsp-loader --dev`) over
 USB: start the link, send steps, read the unit, change things without harming the owner's project, and keep
-runs short. Everything here was done on the owner's MKII on 11 October 2026. Why things fail is in
+runs short. The flashed beta base refuses these steps; a twin of it is `build_core.py` with the flags that
+`scripts/octatrack-base.mjs` passes for `--beta`, without the controller rows, plus `--dev` and an `--output` outside Git,
+then `npm run device -- boot` that folder. The rows are left out because Analog BD's reviewed recipe refuses a twin's
+layout, so test the base-bound modules (Analog BD, Sidechain, Output Matrix) on the tester image instead. Everything here was done on the owner's MKII on 11 October 2026. Why things fail is in
 [OCTATRACK_HARDWARE_TRAPS.md](OCTATRACK_HARDWARE_TRAPS.md).
 
 ## The rules
@@ -55,7 +58,7 @@ before reporting success.
 
 ## Start the link
 
-**One Elektron device on the Mac's USB.** The bridge opens the first device with Elektron's vendor id that offers the Modwerk interface; before 27 October 2026 it opened the first Elektron device of any kind, so an Analog Rytm on Overbridge plugged in beside the Octatrack made every request fail ("unit went away", "no unit running the test base"). Unplug other Elektron devices before a RAM boot or a flash all the same: on that day a RAM boot staged with a Rytm attached failed part-way and hung at the logo, and the retry with the Rytm unplugged came back.
+**One Elektron device on the Mac's USB.** The bridge opens the first device with Elektron's vendor id that offers the Modwerk interface; before 27 October 2026 it opened the first Elektron device of any kind, so an Analog Rytm on Overbridge plugged in beside the Octatrack made every request fail ("unit went away", "no unit running the test base"). Unplug other Elektron devices before a RAM boot or a flash all the same: on that day a RAM boot staged with a Rytm attached failed part-way and hung at the logo, and the retry with the Rytm unplugged came back. Other USB audio gear too: on 10 November 2026 a RAM boot with a Zoom pedal on another hub started but never came back on USB, and with the pedal unplugged every boot did (cause not separated).
 
 **The unit must run a Modwerk base.** A unit on the stock OS or an octabam card remix offers only USB mass storage (interface class 8), so `serve` says "No unit running the test base (Modwerk vendor interface) on USB" whatever the cable, hub or other devices. Check before debugging cables: `ioreg -r -c IOUSBHostInterface -l -w0 | grep -E '"(USB Product Name|bInterfaceClass)" ='` shows the Octatrack with class 255 (the Modwerk interface) only under a base; class 8 alone means no base.
 

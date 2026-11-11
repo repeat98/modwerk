@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "module": "ring-sc",
-  "version": "0.2.0-experimental",
+  "version": "0.2.1-experimental",
   "kind": "dsp",
   "cycles": {
     "unit": "instructions/sample",
