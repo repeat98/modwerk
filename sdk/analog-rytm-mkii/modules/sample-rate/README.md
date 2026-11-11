@@ -6,7 +6,7 @@ An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.3.0-experimenta
 
 TUN on the SAMPLE page turns in cents: a plain turn moves 1 cent a step, faster as you spin it, and a press and turn moves whole semitones and keeps the cents. The value reads with two places, as LFO depth does: +3.07, +3.00, and (0) at zero. The cents are kept in TUN's own value, which stock's engine already plays and stock's sound, kit and SysEx already save, so a saved sound plays the same pitch on stock OS, which shows only the whole number.
 
-![TUN reading +0.02 beside RATE](media/knob-fine-tun.png)
+![TUN reading +0.01 beside RATE](media/knob-fine-tun.png)
 
 FIN's knob is RATE on every sound: a pure speed control, the Octatrack's RATE with its setting on PTCH. No time stretch, just the sample played faster or slower, down to a stop and on into reverse. Stock's pitch stops at a quarter of the speed. RATE carries on to zero. +63 plays at normal speed, 0 stops the sample, -64 plays it backward at normal speed, and the speed scales in a straight line between them. TUN stays as it is and multiplies RATE, up to stock's 4x. The knob, the header and the LFO destinations all call it RATE.
 
@@ -42,7 +42,7 @@ RATE replaces FIN in the sample's pitch. TUN, the trig's note on a chromatic tra
 - With LOP ON the sample loops the way it is going. With LOP OFF it plays once and stops at STA.
 - At 0 the voice holds its last value while the AMP envelope is open, like a stopped tape.
 
-![The LFO destination list reads SAMP:Rate](media/lfo-rate.png)
+![The LFO destination list names it SAMP:Rate](media/lfo-rate.png)
 
 ### Changes to stock flows
 

@@ -143,7 +143,8 @@
       "screenshots": [
         "media/knob-fine-tun.png",
         "media/knob-rate.png",
-        "media/value-rate.png"
+        "media/value-rate.png",
+        "media/lfo-rate.png"
       ],
       "captureRecord": "media/capture.json"
     }
@@ -166,8 +167,8 @@
     {
       "path": "media/knob-fine-tun.png",
       "kind": "screenshot",
-      "caption": "TUN turned two cents up reads +0.02, beside RATE on FIN's knob.",
-      "alt": "SAMPLE page knobs: TUN reading +0.02, RATE, BR, SMP, STA, END, LOP, LEV.",
+      "caption": "TUN turned one cent up reads +0.01, beside RATE on FIN's knob.",
+      "alt": "SAMPLE page knobs: TUN reading +0.01, RATE, BR, SMP, STA, END, LOP, LEV.",
       "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
@@ -175,15 +176,15 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.3.0-experimental",
-        "imageSha256": "46124bc99b8b935cdf583e6e90c2cd801de7bbb59edd132489b7f35242ae4b43",
-        "setup": "Headless rytm-emu (dtboot) running SF09: core-ar2 0.7 and this folder's Fine Tune + Sample Rate 0.2.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "6c18ceadc01da2ded2094b6111bd2649f4cff91588c1bc4ce698c2d1572ab107",
+        "setup": "Headless rytm-emu (dtboot) running SR32: core-ar2 0.7 and this folder's Fine Tune + Sample Rate 0.3.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
       "path": "media/knob-rate.png",
       "kind": "screenshot",
-      "caption": "On the SAMPLE page FIN's knob reads RATE.",
-      "alt": "SAMPLE page knobs: TUN, RATE at full right, BR, SMP, STA, END, LOP, LEV.",
+      "caption": "FIN's knob reads RATE on every sound.",
+      "alt": "SAMPLE page knobs: TUN, RATE, BR, SMP, STA, END, LOP, LEV.",
       "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
@@ -191,8 +192,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.3.0-experimental",
-        "imageSha256": "46124bc99b8b935cdf583e6e90c2cd801de7bbb59edd132489b7f35242ae4b43",
-        "setup": "Headless rytm-emu (dtboot) running SF09: core-ar2 0.7 and this folder's Fine Tune + Sample Rate 0.2.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "6c18ceadc01da2ded2094b6111bd2649f4cff91588c1bc4ce698c2d1572ab107",
+        "setup": "Headless rytm-emu (dtboot) running SR32: core-ar2 0.7 and this folder's Fine Tune + Sample Rate 0.3.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -207,8 +208,24 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.3.0-experimental",
-        "imageSha256": "46124bc99b8b935cdf583e6e90c2cd801de7bbb59edd132489b7f35242ae4b43",
-        "setup": "Headless rytm-emu (dtboot) running SF09: core-ar2 0.7 and this folder's Fine Tune + Sample Rate 0.2.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "6c18ceadc01da2ded2094b6111bd2649f4cff91588c1bc4ce698c2d1572ab107",
+        "setup": "Headless rytm-emu (dtboot) running SR32: core-ar2 0.7 and this folder's Fine Tune + Sample Rate 0.3.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/lfo-rate.png",
+      "kind": "screenshot",
+      "caption": "The LFO destination list names it SAMP:Rate.",
+      "alt": "LFO destination list with SAMP:Tune, SAMP:Rate, SAMP:Sample Slot and SAMP:Bit Reduction.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.3.0-experimental",
+        "imageSha256": "6c18ceadc01da2ded2094b6111bd2649f4cff91588c1bc4ce698c2d1572ab107",
+        "setup": "Headless rytm-emu (dtboot) running SR32: core-ar2 0.7 and this folder's Fine Tune + Sample Rate 0.3.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]
