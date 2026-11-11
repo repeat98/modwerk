@@ -45,6 +45,7 @@
       "Or press FUNC + FILTER, choose SOUND SETTINGS, go to SMP RATE and press RIGHT: the box is checked."
     ],
     "screenshots": [
+      "media/knob-fine-tun.png",
       "media/row-on.png",
       "media/knob-rate.png"
     ]
@@ -162,6 +163,7 @@
         ]
       },
       "screenshots": [
+        "media/knob-fine-tun.png",
         "media/row-on.png",
         "media/row-off.png",
         "media/knob-rate.png",
@@ -180,11 +182,27 @@
     {
       "path": "media/thumbnail.svg",
       "kind": "thumbnail",
-      "caption": "Sample Playback Rate",
+      "caption": "Fine Tune + Sample Rate",
       "alt": "A sample's play position climbs, slows to a stop at RATE 64, then runs backward.",
       "credit": "Nathaniel Pavel",
       "license": "GPL-3.0-or-later",
       "source": "Original conceptual illustration in the shared signal-art style; not a device screenshot."
+    },
+    {
+      "path": "media/knob-fine-tun.png",
+      "kind": "screenshot",
+      "caption": "TUN turned two cents up reads +0.02, beside RATE on FIN's knob.",
+      "alt": "SAMPLE page knobs: TUN reading +0.02, RATE, BR, SMP, STA, END, LOP, LEV.",
+      "credit": "Nathaniel Pavel documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "c2a983ffa8cdad53f3dbbf0f5c992b96fd201112ac44ff0bfc426fe972c7f252",
+        "setup": "Headless rytm-emu (dtboot) running SF07: core-ar2 0.7 and this folder's Fine Tune + Sample Rate 0.2.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
     },
     {
       "path": "media/row-on.png",
@@ -197,9 +215,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.1.1-experimental",
-        "imageSha256": "59efe41469ce121a43c9f9d3ed7dd11292487e02615baaf0c0b9f5d949443ac1",
-        "setup": "Headless rytm-emu (dtboot) running SR07: core-ar2 0.7 and this folder's Sample Playback Rate 0.1.1-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "c2a983ffa8cdad53f3dbbf0f5c992b96fd201112ac44ff0bfc426fe972c7f252",
+        "setup": "Headless rytm-emu (dtboot) running SF07: core-ar2 0.7 and this folder's Fine Tune + Sample Rate 0.2.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -213,9 +231,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.1.1-experimental",
-        "imageSha256": "59efe41469ce121a43c9f9d3ed7dd11292487e02615baaf0c0b9f5d949443ac1",
-        "setup": "Headless rytm-emu (dtboot) running SR07: core-ar2 0.7 and this folder's Sample Playback Rate 0.1.1-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "c2a983ffa8cdad53f3dbbf0f5c992b96fd201112ac44ff0bfc426fe972c7f252",
+        "setup": "Headless rytm-emu (dtboot) running SF07: core-ar2 0.7 and this folder's Fine Tune + Sample Rate 0.2.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -229,9 +247,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.1.1-experimental",
-        "imageSha256": "59efe41469ce121a43c9f9d3ed7dd11292487e02615baaf0c0b9f5d949443ac1",
-        "setup": "Headless rytm-emu (dtboot) running SR07: core-ar2 0.7 and this folder's Sample Playback Rate 0.1.1-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "c2a983ffa8cdad53f3dbbf0f5c992b96fd201112ac44ff0bfc426fe972c7f252",
+        "setup": "Headless rytm-emu (dtboot) running SF07: core-ar2 0.7 and this folder's Fine Tune + Sample Rate 0.2.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -245,9 +263,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.1.1-experimental",
-        "imageSha256": "59efe41469ce121a43c9f9d3ed7dd11292487e02615baaf0c0b9f5d949443ac1",
-        "setup": "Headless rytm-emu (dtboot) running SR07: core-ar2 0.7 and this folder's Sample Playback Rate 0.1.1-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "c2a983ffa8cdad53f3dbbf0f5c992b96fd201112ac44ff0bfc426fe972c7f252",
+        "setup": "Headless rytm-emu (dtboot) running SF07: core-ar2 0.7 and this folder's Fine Tune + Sample Rate 0.2.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -261,9 +279,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.1.1-experimental",
-        "imageSha256": "59efe41469ce121a43c9f9d3ed7dd11292487e02615baaf0c0b9f5d949443ac1",
-        "setup": "Headless rytm-emu (dtboot) running SR07: core-ar2 0.7 and this folder's Sample Playback Rate 0.1.1-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "c2a983ffa8cdad53f3dbbf0f5c992b96fd201112ac44ff0bfc426fe972c7f252",
+        "setup": "Headless rytm-emu (dtboot) running SF07: core-ar2 0.7 and this folder's Fine Tune + Sample Rate 0.2.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]

@@ -6,6 +6,8 @@ An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.2.0-experimenta
 
 TUN on the SAMPLE page turns in cents: a plain turn moves 1 cent a step, faster as you spin it, and a press and turn moves whole semitones and keeps the cents. The value reads +3.07; whole semitones read as stock, +3. The cents are kept in TUN's own value, which stock's engine already plays and stock's sound, kit and SysEx already save, so a saved sound plays the same pitch on stock OS, which shows only the whole number. This works on every sound, RATE or not.
 
+![TUN reading +0.02 beside RATE](media/knob-fine-tun.png)
+
 RATE gives a sample a pure speed control, the Octatrack's RATE with its setting on PTCH: no time stretch, just the sample played faster or slower, down to a stop and on into reverse. Stock's pitch stops at a quarter of the speed. RATE carries on to zero.
 
 Switch it on for a sound with SMP RATE in SOUND SETTINGS, or by tapping FIN's knob on the SAMPLE page. The knob then reads RATE, +63 to -64. +63 plays at normal speed, 0 stops the sample, -64 plays it backward at normal speed, and the speed scales in a straight line between them. TUN stays as it is and multiplies RATE, up to stock's 4x.
@@ -27,14 +29,14 @@ Switching on takes a FIN at its rest (+0) to RATE +63, so the sound keeps playin
 
 ## Usage
 
-Select a track whose sound plays a sample. Press SMPL and tap encoder B: the knob reads RATE. Or press FUNC + FILTER, choose SOUND SETTINGS, go to SMP RATE and press RIGHT.
+Select a track whose sound plays a sample and press SMPL. Turn encoder A for TUN in cents, press and turn it for semitones. Tap encoder B: the knob reads RATE. Or press FUNC + FILTER, choose SOUND SETTINGS, go to SMP RATE and press RIGHT.
 
 ### Quick tutorial
 
-1. Put a long sample on a track, with LOP ON. Press SMPL and tap encoder B: FIN's knob reads RATE.
-2. Play the pad. Turn RATE down from +63: the sample slows like a stopping turntable and rests at 0.
-3. Keep turning below 0: it runs backward, smoothly through the stop. A new trig now starts from END.
-4. Hold a trig in GRID RECORDING and turn RATE to lock it on that step: a trig at -63 plays backward from END, and the next trig plays forward again.
+1. Press SMPL and turn TUN slowly: it moves 1 cent a step and reads +0.01, +0.02. Spin it faster to cover more ground.
+2. Press TUN's knob and turn: whole semitones, the cents kept.
+3. Put a long sample on a track, with LOP ON. Tap encoder B: FIN's knob reads RATE. Play the pad and turn RATE down from +63: the sample slows like a stopping turntable and rests at 0.
+4. Keep turning below 0: it runs backward, smoothly through the stop. A new trig now starts from END.
 
 ![RATE's value and name while it turns](media/value-rate.png)
 
@@ -84,6 +86,6 @@ Original code by Nathaniel Pavel (@npp1993), GPL-3.0-or-later ([LICENSE](LICENSE
 
 ## Screens and audio
 
-Screenshots are rytm-emu captures of build SR06 and SR07 (0.1.x) ([media/capture.json](media/capture.json)). No audio preview yet.
+Screenshots are rytm-emu captures of build SF07 (0.2.0) ([media/capture.json](media/capture.json)). No audio preview yet.
 
 ![SMP RATE clear](media/row-off.png) ![Another track's sound keeps FIN](media/other-track-fin.png)
