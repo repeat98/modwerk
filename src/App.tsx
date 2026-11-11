@@ -11,7 +11,7 @@ import { PublicAnnouncement } from './community/PublicAnnouncement'
 import { useMembersOnline } from './community/useMembersOnline'
 import { MembersOnlineChip } from './community/MembersOnline'
 import { DeveloperPage } from './community/DeveloperPage'
-import { MemberGate } from './community/MemberGate'
+import { MemberGate, useBuildGate } from './community/MemberGate'
 import { ForumPage } from './community/ForumPage'
 import { ForumShoutbox } from './community/ForumShoutbox'
 import './community/forum.css'
@@ -248,6 +248,17 @@ export default function App() {
   const baseGuideDiagnosticsStep: ReactNode = guideOffersDiagnostics ? <Suspense fallback={null}><DiagnosticsGuideStep /></Suspense>
     : guideOpen && session.available && !session.user?.verified ? <Suspense fallback={null}><DiagnosticsGuideAccount account={session.user ? 'unverified' : 'visitor'} /></Suspense> : undefined
   const onBaseGuideStage = (stage: BaseGuideStage, detail?: BaseGuideFailure) => countBaseGuide(stage, detail, !baseInstall)
+  // The base guide's download and USB update sit behind the firmware build gate, as the card build does (MemberGate.tsx).
+  // Whoever leaves the guide to sign in comes back into it: set aside here, and opened again at its steps once they are
+  // back on the page they left, with the USB Audio layout they had asked for.
+  const buildGate = useBuildGate(), guideResume = useRef<{ route: string; layout?: BaseLayout; away: boolean } | null>(null)
+  const leaveGuideForAccount = () => { guideResume.current = { route, layout: baseLayoutWanted, away: false }; setBaseLayoutWanted(undefined); setBaseInstall(null); baseInstallPrompt.pause() }
+  useEffect(() => {
+    const resume = guideResume.current
+    if (!resume) return
+    if (accountRoute) resume.away = true
+    else if (resume.away) { guideResume.current = null; if (route === resume.route) { setBaseLayoutWanted(resume.layout); setBaseInstall('manual') } }
+  }, [route, accountRoute])
   useEffect(()=>{if(developerRoute&&!route.startsWith('developer/complete')&&developer&&!developer.user)window.location.replace('#account/developer')},[developerRoute,route,developer])
   const communityRoute = developerRoute || forumRoute || accountRoute || route === 'review' || route === 'admin' || route.startsWith('submit') || !!communityModule
   const allCategory = route.startsWith(ALL_MACHINES + '/') && LIBRARY_CATEGORIES.includes(route.slice(4) as ModuleCategory) ? route.slice(4) as ModuleCategory : undefined
@@ -591,7 +602,7 @@ export default function App() {
         const state = unitState(openModule, selectedIds, inventory)
         return module && <ModuleDialog title={module.name} index={index >= 0 ? index : undefined} total={order.length} prev={step(index - 1)} next={step(index + 1)} status={state && <StateChip state={state}>{UNIT_STATE[state]}</StateChip>} actions={<ShareModuleButton id={module.id} title={module.name} />} onClose={() => setOpenModule(undefined)}><ModuleDetail key={module.id} modal module={module} selected={selectedIds.includes(module.id)} addBlock={addBlockMap[module.id]} onSwap={removeIds => swapModule(module.id, removeIds)} usbAudio={active?.usbAudio} configurationName={active?.name} configurationId={active?.id} onConfigureUsbAudio={configureUsbAudio} onToggle={() => toggleModule(module.id)} /></ModuleDialog> })()}
       {usbKit && loadingTarget && !baseInstall && !baseInstallPrompt.open && <LoadDialog key={loadingTarget.id} link={usbKit.link} set={{ name: loadingTarget.name, moduleIds: loadingTarget.moduleIds, removedStockFx: loadingTarget.removedStockFx, usbAudio: loadingTarget.usbAudio }} putBack={putBackId === loadingTarget.id} inventory={inventory} prepareUpdate={usbKit.prepareUpdate} onClose={() => { setLoadingSet(undefined); setPutBackId(undefined) }} onInstallBase={layout => { setBaseLayoutWanted(layout); setBaseInstall('manual') }} onEdit={() => { setLoadingSet(undefined); changeConfiguration(loadingTarget.id) }} onCard={() => { setLoadingSet(undefined); setCardOpen(true); workspace.selectConfiguration(loadingTarget.id); window.location.hash = 'octatrack/setup' }} onReport={() => { setLoadingSet(undefined); setReportingConfiguration({ machine: 'octatrack', id: loadingTarget.id }) }} />}
-      {usbLink && (baseInstall || baseInstallPrompt.open) && <BaseInstallDialog link={usbLink} returnSetId={loadingSet} launch={baseInstall ? baseInstall === 'preview' : !baseInstallPrompt.update} account={!session.user ? 'visitor' : !session.user.verified ? 'unverified' : undefined} diagnosticsStep={baseGuideDiagnosticsStep} onStage={onBaseGuideStage} firmwareReady={!!firmware} firmwareError={fileError} onChooseFirmware={file => void readFile(file)} layout={baseLayoutWanted} set={loadingTarget ?? active} buildBase={layout => workspace.firmwareClient.current?.buildBase(layout) ?? Promise.reject(new Error('Reload the page.'))} onClose={() => { setBaseLayoutWanted(undefined); if (baseInstall) setBaseInstall(null); else baseInstallPrompt.close() }} onReady={() => { setBaseLayoutWanted(undefined); setBaseInstall(null); baseInstallPrompt.close(); window.location.hash = 'configuration' }}/>}
+      {usbLink && (baseInstall || baseInstallPrompt.open) && <BaseInstallDialog link={usbLink} returnSetId={loadingSet} launch={baseInstall ? baseInstall === 'preview' : !baseInstallPrompt.update} account={!session.user ? 'visitor' : !session.user.verified ? 'unverified' : undefined} gate={buildGate.passed ? undefined : { next: route, skip: buildGate.skip }} onAccount={leaveGuideForAccount} diagnosticsStep={baseGuideDiagnosticsStep} onStage={onBaseGuideStage} firmwareReady={!!firmware} firmwareError={fileError} onChooseFirmware={file => void readFile(file)} layout={baseLayoutWanted} set={loadingTarget ?? active} buildBase={layout => workspace.firmwareClient.current?.buildBase(layout) ?? Promise.reject(new Error('Reload the page.'))} onClose={() => { setBaseLayoutWanted(undefined); if (baseInstall) setBaseInstall(null); else baseInstallPrompt.close() }} onReady={() => { setBaseLayoutWanted(undefined); setBaseInstall(null); baseInstallPrompt.close(); window.location.hash = 'configuration' }}/>}
       {zoomLink && zoomInstall && <ZoomBaseDialog link={zoomLink} device={DEVICES_BY_ID['zoom-ms-70cdr']} onClose={() => setZoomInstall(false)} />}
       </Suspense>
       {supportOpen && <SupportDialog url={SUPPORT_URL} onClose={() => setSupportOpen(false)} />}

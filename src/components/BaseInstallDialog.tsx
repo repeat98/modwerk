@@ -11,6 +11,7 @@ import { setLayout } from '../engine/elekloader/module-set'
 import type { InventoryTarget } from '../config/inventory'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
 import { accountHref } from '../community/member-access'
+import { LoginPromptDialog } from '../community/LoginPromptDialog'
 import { RiskAcceptance } from './ConfigurationLayout'
 import { Icon } from './Icon'
 import { LinkHero } from './LinkHero'
@@ -84,9 +85,10 @@ function keepStage(stage: CardStage | null) {
  * as the fallback. The Connect stage completes by itself when the unit comes back with the downloaded base, and the
  * guide resumes there (or at the card step it left) after a reload. `buildBase` is the builder's seam, absent until the
  * browser can build the base. `account` leads a visitor or an unverified member to their account first, without
- * holding up the install.
+ * holding up the install. `gate` is the firmware build gate (MemberGate.tsx useBuildGate) for whoever has not passed
+ * it: Download base .bin and Update over USB then open the card build's sign-in prompt first, which a guest may skip.
  */
-export function BaseInstallDialog({ link, launch = false, layout, set, firmwareReady, firmwareError, onChooseFirmware, buildBase, returnSetId, account, diagnosticsStep, onStage, onClose, onReady }: {
+export function BaseInstallDialog({ link, launch = false, layout, set, firmwareReady, firmwareError, onChooseFirmware, buildBase, returnSetId, account, gate, onAccount, diagnosticsStep, onStage, onClose, onReady }: {
   link: OctatrackLink
   launch?: boolean
   firmwareReady: boolean
@@ -103,6 +105,11 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
   returnSetId?: string
   /** Not a verified member yet: the first view leads to signing in (`visitor`) or to the account (`unverified`). */
   account?: 'visitor' | 'unverified'
+  /** Present until the build gate is passed: `next` is where signing in returns to, `skip` lets a guest pass it. */
+  gate?: { next: string; skip: () => void }
+  /** A link to the account was followed (the first view's, the sign-in prompt's): whoever shows the guide sets it aside
+   * and brings it back afterwards. */
+  onAccount?: () => void
   /** Shown as its own last step once the unit first connects on the downloaded base; skipped entirely when absent. It
    * never holds up finishing: Continue stays available. */
   diagnosticsStep?: ReactNode
@@ -114,7 +121,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
 }) {
   const fileRef = useRef<HTMLInputElement>(null), finished = useRef(false), reported = useRef(new Set<BaseGuideStage>())
   const state = useOctatrackLink(link)
-  const [accepted, setAccepted] = useState(false)
+  const [accepted, setAccepted] = useState(false), [signIn, setSignIn] = useState(false)
   // A failed update keeps the stage it stopped in (`at`), so the window shows where, and whether anything was saved.
   const [usb, setUsb] = useState<{ step: BaseUpdateStep; fraction?: number } | { error: string; at: number } | null>(null)
   const [card, setCard] = useState(false), [outdated, setOutdated] = useState(false)
@@ -172,6 +179,10 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
     finished.current = true; onClose(true)
   }, [alreadyCurrent, onClose])
   function finish() { finished.current = true; onClose(true) }
+  /** Leaving for the account is not an answer to the guide: nothing is reported as closed. */
+  function leave() { finished.current = true; onAccount?.() }
+  /** The build gate, as the card build has it: whoever has not passed it meets the sign-in prompt instead of `run`. */
+  const gated = (run: () => void) => () => { if (gate) setSignIn(true); else run() }
   async function updateOverUsb() {
     if (await siteUpdated()) return setOutdated(true)
     setBegan(live); setUsb({ step: 'staging' })
@@ -209,13 +220,13 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
   const skipHint = MODULE_SKIP_HINT ? ' ' + MODULE_SKIP_HINT : ''
 
   // Closing the page mid-update leaves a save that failed its check unrepeated, and the user unaware of it: `busy`.
-  return <BaseDialogFrame intro={view === 'intro'} canClose={canClose} busy={updating} focus={view + stage} finishedRef={finished} onClose={onClose} footer={footer()}>
+  return <><BaseDialogFrame intro={view === 'intro'} canClose={canClose} busy={updating} focus={view + stage} finishedRef={finished} onClose={onClose} footer={footer()}>
     {view === 'intro' ? <><BaseIntro hero={<LinkHero label="USB" />} title="Install the Modwerk base" promises={ALSO_NEW} beta={false}
       intro={<>Install the Modwerk base on your Octatrack once. After that, modules go from this page to your Octatrack over USB, without the card and without a restart. The original OS has no USB link for Modwerk, so this first install goes through the card in four steps: download the base, copy it to the card, install it with OS UPGRADE, then connect. Later base updates go over USB.</>}
       needs={BASE_INSTALL_NEEDS}
       missing={state.status === 'unsupported' ? 'This browser can’t talk to USB devices. Open this page in Chrome or Edge on a computer.' : undefined} />
-      {account === 'visitor' ? <p className="base-install-note base-install-account">Signing in is optional: it lets you report problems, share diagnostics if you choose, and have the site remember that your Octatrack has the base. Your module sets stay in this browser. <a className="text-button" href={accountHref('login', 'octatrack')}>Sign in</a> · <a className="text-button" href={accountHref('register', 'octatrack')}>Create account</a></p>
-        : account === 'unverified' ? <p className="base-install-note base-install-account">Verifying your email is optional: it lets you report problems, share diagnostics if you choose, and have the site remember that your Octatrack has the base. <a className="text-button" href="#account">Open account</a></p> : null}
+      {account === 'visitor' ? <p className="base-install-note base-install-account">{gate ? 'Before the download you’re asked to sign in or create a free account; you can skip that. An account lets you' : 'Signing in is optional: it lets you'} report problems, share diagnostics if you choose, and have the site remember that your Octatrack has the base. Your module sets stay in this browser. <a className="text-button" href={accountHref('login', 'octatrack')} onClick={leave}>Sign in</a> · <a className="text-button" href={accountHref('register', 'octatrack')} onClick={leave}>Create account</a></p>
+        : account === 'unverified' ? <p className="base-install-note base-install-account">{gate ? 'Before the download you’re asked to sign in with a verified account; you can skip that. Verifying your email lets you' : 'Verifying your email is optional: it lets you'} report problems, share diagnostics if you choose, and have the site remember that your Octatrack has the base. <a className="text-button" href="#account" onClick={leave}>Open account</a></p> : null}
       {!['unsupported', 'ready', 'stock'].includes(state.status) && <p className="link-hint">Already installed the base? Connect your Octatrack, and this guide closes by itself.</p>}
     </> : view === 'done' ? <>
       <header className="base-install-header"><h2 id="base-install-title" tabIndex={-1}>The Modwerk base is installed</h2></header>
@@ -293,6 +304,9 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
     </section>}
     </>}
   </BaseDialogFrame>
+  {/* The card build's own prompt, above the guide. Signing in sets the guide aside (onAccount); Skip for now passes the gate, and the button then does its work. */}
+  {signIn && gate && <LoginPromptDialog next={gate.next} onClose={() => setSignIn(false)} onSkip={() => { gate.skip(); setSignIn(false) }} onAccount={leave} />}
+  </>
 
   function footer() {
     return <>
@@ -305,8 +319,8 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
         <button type="button" className="button button-quiet" disabled={stageIndex === 0 && !canClose || download === 'building'} onClick={() => stageIndex ? setStage(stages[stageIndex - 1]) : finish()}>{stageIndex ? 'Back' : 'Close'}</button>
         {overUsb && usb && 'error' in usb && <button type="button" className="button button-quiet" onClick={() => { setUsb(null); setCard(true) }}>Update from the card</button>}
         {overUsb && usb && 'step' in usb && usb.step === 'done' ? <button type="button" className="button button-primary" onClick={() => { finished.current = true; onReady() }}>Continue<Icon name="arrow" size={16}/></button>
-        : overUsb && (firmwareReady ? <button type="button" className="button button-primary" disabled={!buildBase || !accepted || updating || state.status !== 'ready'} onClick={() => void updateOverUsb()}><Icon name="arrow" size={16}/>{updating ? 'Updating…' : usb && 'error' in usb ? 'Try again' : 'Update over USB'}</button> : <button type="button" className="button button-primary" onClick={() => fileRef.current?.click()}><Icon name="file" size={16}/>Choose OS 1.40C file</button>)}
-        {stage === 'download' && !overUsb && (firmwareReady ? <button type="button" className="button button-primary" disabled={!buildBase || !accepted || download === 'building'} onClick={() => void downloadBase()}><Icon name="download" size={16}/>{download === 'building' ? 'Building the base…' : 'Download base .bin'}</button> : <button type="button" className="button button-primary" onClick={() => fileRef.current?.click()}><Icon name="file" size={16}/>Choose OS 1.40C file</button>)}
+        : overUsb && (firmwareReady ? <button type="button" className="button button-primary" disabled={!buildBase || !accepted || updating || state.status !== 'ready'} aria-haspopup={gate ? 'dialog' : undefined} onClick={gated(() => void updateOverUsb())}><Icon name="arrow" size={16}/>{updating ? 'Updating…' : usb && 'error' in usb ? 'Try again' : 'Update over USB'}</button> : <button type="button" className="button button-primary" onClick={() => fileRef.current?.click()}><Icon name="file" size={16}/>Choose OS 1.40C file</button>)}
+        {stage === 'download' && !overUsb && (firmwareReady ? <button type="button" className="button button-primary" disabled={!buildBase || !accepted || download === 'building'} aria-haspopup={gate ? 'dialog' : undefined} onClick={gated(() => void downloadBase())}><Icon name="download" size={16}/>{download === 'building' ? 'Building the base…' : 'Download base .bin'}</button> : <button type="button" className="button button-primary" onClick={() => fileRef.current?.click()}><Icon name="file" size={16}/>Choose OS 1.40C file</button>)}
         {stage === 'copy' && <button type="button" className="button button-primary" onClick={() => setStage('install')}>File copied <Icon name="arrow" size={16}/></button>}
         {stage === 'install' && <button type="button" className="button button-primary" onClick={() => setStage('connect')}>Octatrack has started <Icon name="arrow" size={16}/></button>}
         {stage === 'connect' && state.status !== 'unsupported' && <button type="button" className={'button ' + (pending ? 'button-primary' : 'button-quiet')} disabled={state.status === 'connecting' || found} onClick={() => void link.retry()}>{state.status === 'connecting' ? 'Connecting…' : 'Connect Octatrack'}</button>}

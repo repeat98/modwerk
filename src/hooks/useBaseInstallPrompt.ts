@@ -67,5 +67,7 @@ export function useBaseInstallPrompt(memberId: string | null, enabled: boolean, 
     update: unit === 'older',
     /** Gone for this visit only, so the prompt returns on the next one while it is still wanted. */
     close() { setQuiet(true); setOpen(false) },
+    /** Set aside while the member signs in (the guide's build gate): not an answer, so it opens again while still wanted. */
+    pause() { setOpen(false) },
   }
 }
