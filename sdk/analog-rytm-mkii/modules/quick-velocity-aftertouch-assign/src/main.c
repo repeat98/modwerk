@@ -808,10 +808,10 @@ static void keep_locker(void)
 // rytm-emu): on a knob shown by its label, a box 27 x 7 at the label (x 3 + 32
 // per column, top-down rows 25..31 or 47..53); on a knob shown as a widget (OVR,
 // DEL, REV, PAN, VOL), a block 19 x 15 over the widget (x 7 + 32 per column, rows
-// 10..24 or 32..46). The new box keeps the found one's rows and centres on the
-// knob's column: 27 wide for five characters, the whole column (32) from
-// +-10.00, as the LFO page's own +127.99 takes 30 columns of it. A depth of 0
-// keeps stock's 0, and a popup over the box hides it from the search.
+// 10..24 or 32..46). The new box keeps the found one's rows and fills the knob's
+// column, 32 wide whatever the digits, as the LFO page's own +127.99 takes 30
+// columns of it; a depth of 0 reads (0), as the LFO page writes it. A popup over
+// the box hides it from the search.
 typedef void (*text_draw_t)(void *bmp, void *font, int x, int y, int centred, int a5,
                             const char *width, const char *fmt, ...);
 #define TEXT_DRAW ((text_draw_t)TEXT_DRAW_AT)
@@ -886,8 +886,9 @@ void quick_velocity_aftertouch_assign_draw(void *bmp, void *ctrl)
     if (shown != LFO || !ours() || !on_pages())
         return;
     track = selected_track();
-    if (!kind_track(LFO, track) || lfo_dest(track) <= 0 || !(v = lfo_shown(track)))
+    if (!kind_track(LFO, track) || lfo_dest(track) <= 0)
         return;
+    v = lfo_shown(track);
     bm_w = *(int *)((char *)bmp + 4);
     bm_h = *(int *)((char *)bmp + 8);
     bm_stride = *(int *)((char *)bmp + 12);
@@ -911,23 +912,27 @@ void quick_velocity_aftertouch_assign_draw(void *bmp, void *ctrl)
     }
     if (!b)
         return;
-    *p++ = v < 0 ? '-' : '+';
-    h = (v < 0 ? -v : v) * 100 / 256;
-    n = h / 100;
-    if (n >= 100) *p++ = (char)('0' + n / 100);
-    if (n >= 10) *p++ = (char)('0' + n / 10 % 10);
-    *p++ = (char)('0' + n % 10);
-    *p++ = '.';
-    *p++ = (char)('0' + h / 10 % 10);
-    *p++ = (char)('0' + h % 10);
+    if (!v) {                           // the LFO page's 0 (0x402589c3)
+        *p++ = '('; *p++ = '0'; *p++ = ')';
+    } else {
+        *p++ = v < 0 ? '-' : '+';
+        h = (v < 0 ? -v : v) * 100 / 256;
+        n = h / 100;
+        if (n >= 100) *p++ = (char)('0' + n / 100);
+        if (n >= 10) *p++ = (char)('0' + n / 10 % 10);
+        *p++ = (char)('0' + n % 10);
+        *p++ = '.';
+        *p++ = (char)('0' + h / 10 % 10);
+        *p++ = (char)('0' + h % 10);
+    }
     *p = 0;
     // The template centres on digits of one width, so the text does not move as
     // they change.
     for (i = 0; text[i]; i++)
         width[i] = text[i] >= '0' && text[i] <= '9' ? '0' : text[i];
     width[i] = 0;
-    w = p - text > 5 ? 32 : 27;
-    x0 = 32 * (k & 3) + 16 - w / 2;      // centred on x 16 of the column, as stock's 27-wide box (3..29)
+    w = 32;                             // one width, the knob's column, whatever the digits
+    x0 = 32 * (k & 3);
     y0 = b->top[k >> 2];
     // The old box cleared (the new one covers it), the text drawn white, then the
     // new box turned over: white with black text.
