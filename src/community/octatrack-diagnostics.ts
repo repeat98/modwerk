@@ -45,12 +45,12 @@ export async function changeDiagnosticSharing(enabled: boolean) {
 /** The running collector's way to record a failure before a link exists; nothing while none runs or without consent. */
 let linkFailures: ((failure: PreLinkFailure) => void) | undefined
 /** Why connecting to the Octatrack failed before a link existed, as a fixed category, for a member who shares
- * diagnostics; otherwise nothing happens. The collector already records a device that couldn't be opened
- * (`open-failed`) or claimed (`claim-failed`) from the link's state; call this where the reason is known first:
- * `no-webusb` when the member asks to connect in a browser without WebUSB, `no-device` when the device picker closes
- * without an Octatrack, `permission-denied` when opening it is refused (a SecurityError or NotAllowedError) and
- * `link-timeout` when the unit doesn't answer in time. The link (octatrack-link.ts) can report the same as its own
- * diagnostic, `{event: 'link_failed', failure}`. Each category is recorded at most once in ten minutes. */
+ * diagnostics; otherwise nothing happens. The collector records a device that couldn't be opened (`open-failed`) or
+ * claimed (`claim-failed`) from the link's state, and the link (octatrack-link.ts) reports the reasons it knows first
+ * as its own diagnostic, `{event: 'link_failed', failure}`: `no-webusb` when the member asks to connect or opens the
+ * install guide in a browser without WebUSB, `no-device` when the device picker closes without an Octatrack and
+ * `permission-denied` when opening it is refused (a SecurityError or NotAllowedError). Each category is recorded at
+ * most once in ten minutes. */
 export function reportLinkFailure(failure: PreLinkFailure) { try { linkFailures?.(failure) } catch { /* Diagnostics never affect USB work. */ } }
 
 /** One collector per authenticated member page. No persistent trace queue, arbitrary errors, extra device identifiers,

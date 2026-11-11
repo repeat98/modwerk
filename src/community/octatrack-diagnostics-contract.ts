@@ -34,8 +34,9 @@ export const INVITATION_COUNTS: Record<DiagnosticInvitationOutcome, OctatrackSte
 export const DIAGNOSTIC_BROWSERS = ['chrome', 'edge', 'opera', 'brave', 'samsung', 'firefox', 'safari', 'other'] as const
 export const DIAGNOSTIC_SYSTEMS = ['windows', 'macos', 'linux', 'chromeos', 'android', 'ios', 'other'] as const
 export interface DiagnosticClient { browser: typeof DIAGNOSTIC_BROWSERS[number]; major?: number; os: typeof DIAGNOSTIC_SYSTEMS[number] }
-/** `link_failed`: why connecting to the Octatrack failed before a link existed. */
-export const PRE_LINK_FAILURES = ['no-webusb', 'no-device', 'permission-denied', 'open-failed', 'claim-failed', 'link-timeout'] as const
+/** `link_failed`: why connecting to the Octatrack failed before a link existed. No timeout: until the link exists,
+ * nothing the page waits for has one (octatrack-link.ts opening). */
+export const PRE_LINK_FAILURES = ['no-webusb', 'no-device', 'permission-denied', 'open-failed', 'claim-failed'] as const
 export type PreLinkFailure = typeof PRE_LINK_FAILURES[number]
 export const DIAGNOSTIC_USB_EVENTS = ['connected', 'disconnected', 'sync_started', 'sync_failed', 'selftest', 'health', 'kept', 'undone', 'load', 'unresponsive', 'device_log'] as const
 /** The part of the site a browser error happened on, from the page's route: a fixed name, never the address. */

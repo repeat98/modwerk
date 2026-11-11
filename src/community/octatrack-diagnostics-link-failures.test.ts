@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { LinkDiagnostic, LinkState, OctatrackLink } from '../engine/elekloader/octatrack-link'
+import { OctatrackLink, type LinkDiagnostic, type LinkState } from '../engine/elekloader/octatrack-link'
+import { fakeSession, fakeUnit } from '../dev/octatrack-link-fake'
 import { collectOctatrackDiagnostics, changeDiagnosticSharing, reportLinkFailure } from './octatrack-diagnostics'
 import { api, apiFetch, post } from './api'
 import { OCTATRACK_DIAGNOSTICS_VERSION as version } from './octatrack-diagnostics-contract'
@@ -23,7 +24,7 @@ beforeEach(() => {
   vi.mocked(apiFetch).mockResolvedValue(Response.json({ ok: true, stored: true }))
 })
 afterEach(() => { cleanup?.(); cleanup = undefined; vi.useRealTimers() })
-async function collect() { cleanup = collectOctatrackDiagnostics('member', link, () => ({ moduleIds: ['everb'], removedStockFx: [] })); await vi.advanceTimersByTimeAsync(0) }
+async function collect(from: OctatrackLink = link) { cleanup = collectOctatrackDiagnostics('member', from, () => ({ moduleIds: ['everb'], removedStockFx: [] })); await vi.advanceTimersByTimeAsync(0) }
 
 describe('failures before a link exists', () => {
   it('sends nothing without consent', async () => {
@@ -65,7 +66,50 @@ describe('failures before a link exists', () => {
   it('does nothing once the collector has stopped', async () => {
     await collect(); await changeDiagnosticSharing(true)
     cleanup!(); cleanup = undefined
-    reportLinkFailure('link-timeout'); await vi.advanceTimersByTimeAsync(0)
+    reportLinkFailure('claim-failed'); await vi.advanceTimersByTimeAsync(0)
     expect(apiFetch).not.toHaveBeenCalled()
+  })
+})
+
+describe('failures the link reports itself', () => {
+  async function sharing(usb: ReturnType<typeof fakeUnit> | null) {
+    const real = new OctatrackLink(usb ? usb.usb : null, usb ? fakeSession(usb) : undefined, 0)
+    await collect(real); await changeDiagnosticSharing(true)
+    return real
+  }
+  it('no-device when the device picker closes without an Octatrack', async () => {
+    const real = await sharing(fakeUnit('none'))
+    await real.connect(); await vi.advanceTimersByTimeAsync(0)
+    expect(sent()).toEqual([{ id: expect.any(String), event: 'link_failed', phase: 'idle', failure: 'no-device', client: diagnosticClient() }])
+    expect(real.getState().status).toBe('idle')
+  })
+  it('permission-denied, and no open-failed besides, when the browser or the system refuses to open it', async () => {
+    const unit = fakeUnit('base'), [device] = await unit.usb.getDevices()
+    device.open = async () => { throw new DOMException('Access denied.', 'SecurityError') }
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const real = await sharing(unit)
+    await real.connect(); await vi.advanceTimersByTimeAsync(0)
+    expect(sent().map(data => data.failure)).toEqual(['permission-denied'])
+    expect(real.getState()).toMatchObject({ status: 'idle', notice: { tone: 'error' } })
+  })
+  it('open-failed for any other reason it couldn’t be opened', async () => {
+    const unit = fakeUnit('base'), [device] = await unit.usb.getDevices()
+    device.open = async () => { throw new DOMException('Device busy.', 'NetworkError') }
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    const real = await sharing(unit)
+    await real.connect(); await vi.advanceTimersByTimeAsync(0)
+    expect(sent().map(data => data.failure)).toEqual(['open-failed'])
+  })
+  it('no-webusb when the member asks for USB in a browser without it, never on its own', async () => {
+    const real = await sharing(null)
+    await vi.advanceTimersByTimeAsync(0)
+    expect(sent()).toEqual([])
+    await real.connect(); real.noWebUsb(); await vi.advanceTimersByTimeAsync(0)
+    expect(sent()).toEqual([{ id: expect.any(String), event: 'link_failed', phase: 'unsupported', failure: 'no-webusb', client: diagnosticClient() }])
+  })
+  it('nothing for a browser with WebUSB asked the same', async () => {
+    const real = await sharing(fakeUnit('none'))
+    real.noWebUsb(); await vi.advanceTimersByTimeAsync(0)
+    expect(sent()).toEqual([])
   })
 })

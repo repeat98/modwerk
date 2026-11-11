@@ -144,7 +144,8 @@ export function BaseInstallDialog({ link, launch = false, layout, firmwareReady,
     reported.current.add(reached); onStage?.(reached, detail)
   }
   useEffect(() => { report('opened') }, []) // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { if (state.status === 'unsupported') report('failed', 'no-webusb') }, [state.status]) // eslint-disable-line react-hooks/exhaustive-deps
+  // The guide opens in such a browser only when the member asks for it (useBaseInstallPrompt), so this is an attempt.
+  useEffect(() => { if (state.status === 'unsupported') { report('failed', 'no-webusb'); link.noWebUsb() } }, [state.status]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (outdated) report('failed', 'site-outdated') }, [outdated]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (wrongBase) report('failed', 'wrong-base') }, [wrongBase]) // eslint-disable-line react-hooks/exhaustive-deps
   // A page from before a deploy knows an older base: it would call the current one older, or send its own.

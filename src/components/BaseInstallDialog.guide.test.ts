@@ -123,6 +123,17 @@ describe('the guided first install, for a member on the original OS', () => {
   })
 })
 
+describe('a browser without WebUSB', () => {
+  it('lets the member prepare the base, and reports the missing WebUSB once as the guide’s failure and the link’s', async () => {
+    const link = new OctatrackLink(null), seen: string[] = []
+    link.subscribeDiagnostics(event => seen.push(event.event + ':' + event.failure))
+    const guide = open({ link }); await guide.render(); await settle()
+    expect(container.textContent).toContain('You can prepare the base here.')
+    expect(guide.onStage.mock.calls).toEqual([['opened', undefined], ['failed', 'no-webusb']])
+    expect(seen).toEqual(['link_failed:no-webusb'])
+  })
+})
+
 describe('a later base update', () => {
   it('goes over USB in one step, and reports each failure category once per run', async () => {
     const { link } = await connected('base', 'cc'.repeat(32))

@@ -41,6 +41,7 @@ const setBudget = (rows: number) => Math.max(10000, 500 * rows)
 /** How often a unit another window or app holds is tried again, so it connects once they let go. */
 const BUSY_RETRY_MS = 3000
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+const errorName = (error: unknown) => error instanceof Error || error instanceof DOMException ? error.name : ''
 
 // lib.dom has no WebUSB types; only what the link calls.
 export interface LinkDevice extends ControlDevice {
@@ -221,13 +222,19 @@ export class OctatrackLink {
     if (this.usb) this.set({ status: 'idle' })
     void this.serial(() => this.release(true))
   }
-  /** Chrome's device picker; call from a click. */
+  /** Chrome's device picker; call from a click. A picker closed without an Octatrack is a pre-link diagnostic
+   * (`no-device`), as is a browser without WebUSB (`no-webusb`). */
   async connect() {
     const connection = this.connection
+    if (!this.usb) return this.noWebUsb()
     let device: LinkDevice
-    try { device = await this.usb!.requestDevice({ filters: [{ vendorId: ELEKTRON_VENDOR_ID }] }) } catch { return } // picker closed
+    try { device = await this.usb.requestDevice({ filters: [{ vendorId: ELEKTRON_VENDOR_ID }] }) }
+    catch (error) { if (errorName(error) === 'NotFoundError') this.diagnostic('link_failed', { failure: 'no-device' }); return } // picker closed
     if (connection === this.connection) await this.open(device)
   }
+  /** The member asked for something that needs USB (connecting, the base install guide) in a browser without WebUSB:
+   * reported as a pre-link diagnostic, nothing else happens. */
+  noWebUsb() { if (!this.usb) this.diagnostic('link_failed', { failure: 'no-webusb' }) }
   /** After another tab or app let go of the unit. */
   retry() { const device = this.device; return device ? this.open(device) : this.connect() }
   // An Octatrack restarting after its OS upgrade comes back here, so the install guide's last step completes by itself.
@@ -297,6 +304,8 @@ export class OctatrackLink {
       if (connection !== this.connection) { if (device.opened) await device.close().catch(() => {}); return }
       console.error(error)
       this.device = undefined
+      // Refused by the browser or the system: that reason, standing in for the open failure the state shows next.
+      if (['SecurityError', 'NotAllowedError'].includes(errorName(error))) this.diagnostic('link_failed', { failure: 'permission-denied' })
       this.set({ status: 'idle', notice: { tone: 'error', text: openFailure() } })
     }
   }
