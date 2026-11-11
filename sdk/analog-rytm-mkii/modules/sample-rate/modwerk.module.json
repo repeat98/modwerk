@@ -106,7 +106,7 @@
   "evidence": {
     "tier": "author-hardware",
     "moduleVersion": "0.3.0-experimental",
-    "sourceSha256": "6837e13d9143f56e5426eb50b087b537f272a93d20e78139f35c5503940621a0",
+    "sourceSha256": "8b335547e344631ca0965be3a5b267aac1d30ae5d46e2d8cfdfb80e575799144",
     "reports": [
       "TESTING.md"
     ],
@@ -116,20 +116,19 @@
       "testedOn": "2026-11-11",
       "tester": "npp1993",
       "durationMinutes": null,
-      "summary": "0.2.0 (this source) ran on npp1993's Analog Rytm MKII, OS 1.74, as test image SF08 booted from RAM over USB (flash untouched), driven by the author's automated test rig with the author's go: 6 cases, all passing in two runs in a row (the earlier SF06, without the two-place text, passed three). Measured on the unit: plain turns of TUN move 1 cent a step, as many steps as stock's semitones (TUN words 0x400a, 0x3ffa, 0x4000); press and turn moves whole semitones keeping the cents (0x420a, 0x410a); FUNC + turn still jumps to +24 (0x5800); CC 24 clears the cents; a held trig's lock reads +0.05; screens read +0.04, -0.02, (0), +2.04 and RATE +63; FIN's smoother state is exactly at its new value right after each tap (0x7f000000 on, 0x40000000 off), and a FIN off rest keeps its value. The same cases on the 0.1.1 build (SO05, same session) failed each changed check: semitone steps, and FIN still gliding (0x770f…, 0x4a71…). Earlier versions: SP03 to SP13 and LF01, as reported by the author (TESTING.md).",
+      "summary": "0.3.0 (this source) ran on npp1993's Analog Rytm MKII, OS 1.74, as test image SG02 booted from RAM over USB (flash untouched), driven by the author's automated test rig with the author's go: 6 cases, all passing in two runs in a row. Measured on the unit: FIN's knob reads RATE with no switch; CC 25 sets it (0x7f00, 0x4000) and a tap of encoder B changes nothing; clearing the SAMPLE page sets it to +63 (0x7f00); TUN turns 1 cent a step (0x400a, 0x3ffa), pressed whole semitones keeping the cents (0x420a, 0x410a), FUNC + turn jumps to +24; a held trig's lock reads +0.05; screens read +0.04, -0.02, (0), +2.04. Earlier versions: 0.2.0 on the same rig (SF06, SF08), 0.1.x as SP03 to SP13 and LF01, as reported by the author (TESTING.md).",
       "limitations": [
-        "0.2.0's results are the rig's measurements on the unit (memory words and screens), not a person playing; nobody listened to the switch or the cents.",
-        "Not run on a unit for 0.2.0: pattern save and reload of TUN locks in cents (the fine lane is read in stock's code only), stock OS loading a sound saved with cents, NRPN, pads.",
-        "LOAD TO TRACK in SOUND MANAGER often gave ERROR on the unit (0.1.x), on sounds with nothing to do with RATE too, and the one load that worked came back with the setting clear; stock was not compared.",
-        "Not tested on a unit: two voices together, performance and scene locks by ear, CPU load alone.",
-        "Image SF08 contains the author's private rig base (the USB test link); the library build uses the published base, not run on the unit."
+        "0.3.0's results are the rig's measurements on the unit (memory words and screens), not a person playing; nobody listened to RATE or the cents on this build.",
+        "Not run on a unit for 0.3.0: the RATE speeds by ear (emulator only), the LFO destination name (emulator only), pattern save and reload of TUN locks in cents, stock OS loading a sound saved with cents, NRPN, pads.",
+        "Not tested on a unit: two voices together, performance and scene locks by ear, CPU load.",
+        "Image SG02 contains the author's private rig base (the USB test link); the library build uses the published base, not run on the unit."
       ]
     },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu on OS 1.74: the switch keeps 1x through both taps (loop period 0.4954 s; 0.1.1 lost 25 ms and gained 13 ms), TUN turns in cents, pressed in semitones; rig cases pass on SF06 and fail on 0.1.1 where behaviour changed. Unit (0.2.0, rig): SF08 passes 6 cases twice in a row (SF06 three times); 0.1.1 fails them there too. Earlier, as reported by the author: SP03 to SP13, LF01 (TESTING.md).",
+    "summary": "rytm-emu on OS 1.74: RATE on every sound, +63 1x, 0 stops, -64 -1x; names RATE and SAMP:Rate; a cleared SAMPLE page gives +63; TUN turns in cents. Unit (0.3.0, the author's automated rig, SG02): 6 cases pass twice in a row. Earlier: 0.2.0 on the rig, 0.1.x SP03 to SP13 and LF01, as reported by the author (TESTING.md).",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",

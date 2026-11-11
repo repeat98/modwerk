@@ -38,6 +38,20 @@ Everything in this section ran in rytm-emu (`c5732f0`, RAMP on BD, LOP ON) unles
 - Default: clearing the SAMPLE page (SMPL held, PLAY) sets BD's FIN target to 0x7f00 on SR31; SR07 (0.1.1) sets 0x4000.
 - Rig cases on SG02 (`3b9aba2d…`, the author's private test base + this source), emulator: fine-tun, coarse-tun, fine-lock, rate-always (label RATE, CC 25, a tap of encoder B changes nothing) and rate-default pass; func-tun is unit only. In rytm-emu stock's undo of a page clear did not undo it.
 - Independent code review: no defect in the link or audio path; one change taken (a track's STA and END swap once a block even if two voices were its own).
+- Source (0.3.0-experimental): fingerprint `8b335547…9144` (`evidence.sourceSha256`).
+
+Hardware, 11 Nov 2026: npp1993's Analog Rytm MKII (OS 1.74, RB08 flashed again by the author), scratch project, SG02 (`3b9aba2d…`, image CRC `38dd88f8`) booted from RAM, flash untouched, run by the author's automated rig over USB with the author's go; no person at the unit. 6 cases pass in two runs in a row (one recording the unit references):
+
+| Case (unit) | Measured |
+| --- | --- |
+| sample-rate-rate-always | knob B reads RATE at rest; CC 25 127 and 64 give 0x7f00 and 0x4000; a tap of encoder B leaves 0x7f00 and the screen as it was |
+| sample-rate-rate-default | from 0x4000, clearing the SAMPLE page gives 0x7f00 |
+| sample-rate-fine-tun | 0x400a, 0x3ffa, 0x4000; +0.04, -0.02, (0); CC 24 back to 0x4000 |
+| sample-rate-coarse-tun | 0x420a, 0x410a; +2.04 |
+| sample-rate-func-tun | 0x5800 (stock's jump to +24) |
+| sample-rate-fine-lock | the held trig's lock reads +0.05, inverted |
+
+Not covered by the rig: how RATE and the cents sound, the LFO list on the unit, pads, a pattern save and reload, stock OS loading a sound saved with cents, NRPN, two voices, CPU load.
 
 ## 0.2.0: fine TUNE and the switch without a glide (2026-11-11)
 
