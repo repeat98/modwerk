@@ -125,5 +125,6 @@ describe('the Octatrack base path for a member who is not a beta tester', () => 
     await open('octatrack', visitor)
     await vi.waitFor(() => expect(container.querySelector('.hub-account-note')).not.toBeNull())
     expect(container.querySelector('.hub-account-note a')?.getAttribute('href')).toBe('#account/login?next=octatrack')
+    expect(container.querySelector('.hub-account-note')?.textContent).toContain('Your module sets stay in this browser.')
   })
 })
