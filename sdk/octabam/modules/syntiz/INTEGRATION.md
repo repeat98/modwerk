@@ -1,6 +1,7 @@
 # SYNTIZ as a track machine: what the integration builds on
 
-Working notes for the machine glue (not written yet), from the sources cited. Confidence is marked.
+The notes the machine glue (`machine.c`) was written from, kept for the sources they cite: the stock RAM and ROM it
+reads are the ones Analog BD and FM Synth read the same way. Confidence is marked.
 
 ## How a machine joins the base
 
