@@ -101,7 +101,7 @@ export function unitLines(incidents) {
 }
 
 /** The base's saved-set result (modset.c) as a reading's `saved` reports it; 1-6 are what a boot's restore found. */
-const SAVED = ['', 'RESTORED', 'nothing saved', 'skipped (FUNC held)', 'another base’s set', 'damaged', 'refused', 'saved', 'save failed', 'too big',
+const SAVED = ['', 'RESTORED', 'nothing saved', 'skipped (PROJ or FUNC held)', 'another base’s set', 'damaged', 'refused', 'saved', 'save failed', 'too big',
   'left out after a failed start', 'held after a failed start']
 
 /** Each member's records in order: the bases, set reloads, the last finished self-test and the event counts. */

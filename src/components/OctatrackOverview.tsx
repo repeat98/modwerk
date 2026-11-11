@@ -24,7 +24,7 @@ function cardLine(health: DiagnosticReading) {
     : health.saved === 6 ? { text: `Not all loaded at startup · ${modules(health.savedCount)} running. Sync your modules to put the rest back.`, led: 'leaving' }
     : health.saved === 10 ? { text: `Not all loaded at startup: the last start crashed or froze while loading one, so it was left out · ${modules(health.savedCount)} running. Sync your modules to try it again.`, led: 'leaving' }
     : health.saved === 11 ? { text: 'Held at startup: the last start crashed or froze while loading your modules. They load at the next start.', led: 'leaving' }
-    : health.saved === 3 ? { text: 'Skipped at startup on purpose. The saved modules load at the next start.', led: 'off' }
+    : health.saved === 3 ? { text: 'Skipped at startup (PROJ or FUNC held). The saved modules load at the next start.', led: 'off' }
     : health.saved === 5 ? { text: 'The saved modules couldn’t be read, so none loaded. Sync your modules again.', led: 'leaving' }
     : health.saved === 8 || health.saved === 9 ? { text: 'Saving failed. The modules run until you switch the Octatrack off.', led: 'leaving' }
     : health.saved === SAVED_BY_ANOTHER_BASE ? { text: 'Saved by another base, so not loaded. Sync your modules again.', led: 'leaving' } : { text: 'Nothing saved on it yet', led: 'off' }
