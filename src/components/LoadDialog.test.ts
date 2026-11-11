@@ -35,10 +35,10 @@ beforeEach(async () => {
   link = { getState: () => state, subscribe: () => () => {}, start: () => () => {}, update: vi.fn(async () => {}), health: async () => undefined } as unknown as OctatrackLink
 })
 afterEach(async () => { await act(() => root.unmount()); container.remove(); stop(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
-async function open(set: ReturnType<typeof newConfiguration>, session: Session = emptySession, onEdit = vi.fn()) {
+async function open(set: ReturnType<typeof newConfiguration>, session: Session = emptySession, onEdit = vi.fn(), putBack = false) {
   const prepareUpdate = vi.fn(async () => ({ name: set.name, changes: [] }))
   await act(() => root.render(createElement(CommunityContext.Provider, { value: { session, developer: null, catalog: [], refresh: async () => {}, refreshDeveloper: async () => {} } },
-    createElement(LoadDialog, { link, set, inventory, prepareUpdate, onInstallBase() {}, onClose() {}, onEdit, onCard() {}, onReport() {} }))))
+    createElement(LoadDialog, { link, set, inventory, putBack, prepareUpdate, onInstallBase() {}, onClose() {}, onEdit, onCard() {}, onReport() {} }))))
   return { prepareUpdate, onEdit }
 }
 
@@ -61,6 +61,15 @@ describe('syncing a set over the module limit', () => {
     expect(button('Sync to Octatrack')?.disabled).toBe(false)
     await act(async () => button('Sync to Octatrack')!.click())
     expect(second.prepareUpdate).toHaveBeenCalledWith(trimmed)
+  })
+
+  it('says why the modules a unit held past the limit before a base update can’t all be put back', async () => {
+    review.mockImplementation(target => ({ changes: { ...noChanges, add: target.moduleIds }, updates: [], needsSync: true, problem: undefined }))
+    const { onEdit } = await open(newConfiguration('From my Octatrack', ids.slice(0, over)), emptySession, vi.fn(), true)
+    expect(container.querySelector('.load-blocked[role="alert"] p')?.textContent).toBe(`Your Octatrack had ${over} modules before the update; ${SET_MODULE_LIMIT} is the limit for now. Choose which to put back.`)
+    expect(button('Sync to Octatrack')?.disabled).toBe(true)
+    await act(async () => button('Edit From my Octatrack')!.click())
+    expect(onEdit).toHaveBeenCalled()
   })
 
   it('still syncs a smaller set to a unit that holds more than the limit, removing the rest', async () => {

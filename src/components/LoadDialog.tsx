@@ -9,7 +9,7 @@ import { useOctatrackLink } from '../hooks/useOctatrackLink'
 import { MODULES } from '../catalog/modules'
 import { isModuleAvailable } from '../catalog/availability'
 import { usbLagNote } from '../catalog/usb-only'
-import { overLimitMessage } from '../catalog/set-limit'
+import { limitedCount, overLimitMessage, SET_MODULE_LIMIT } from '../catalog/set-limit'
 import { hasBetaAccess } from '../community/beta-access'
 import { useCommunity } from '../community/context'
 import { StateChip } from './ModuleGrid'
@@ -60,6 +60,8 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
   const paused = changes ? changes.add.filter(id => !isModuleAvailable(id, betaAccess)) : []
   // A set over the module limit (set-limit.ts) still opens here; it only cannot be synced until trimmed.
   const tooMany = review && !review.needsSync ? '' : overLimitMessage(set.moduleIds, 'sync')
+  // After a base change the unit starts empty: a set it held past the limit is put back only once trimmed.
+  const tooManyToPutBack = putBack && tooMany ? `Your Octatrack had ${limitedCount(set.moduleIds)} modules before the update; ${SET_MODULE_LIMIT} is the limit for now. Choose which to put back.` : ''
   useEffect(() => {
     const element = dialog.current, previousFocus = document.activeElement
     element?.showModal()
@@ -140,7 +142,7 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
           </div>}
         </>}
       {tooMany && <div className="load-blocked" role="alert">
-        <p>{tooMany}</p>
+        <p>{tooManyToPutBack || tooMany}</p>
         <p><button type="button" className="text-button" onClick={onEdit}>Edit {set.name}</button></p>
       </div>}
       {problem && !(problem instanceof SetLimitError) && <p className="file-error" role="alert">{problem.message}</p>}
