@@ -2,42 +2,54 @@
   "schemaVersion": 1,
   "machine": "analog-rytm-mkii",
   "moduleId": "quick-velocity-aftertouch-assign",
-  "moduleVersion": "0.1.0-experimental",
+  "moduleVersion": "0.2.0-experimental",
   "firmware": "1.74",
-  "capturedAt": "2026-11-03T16:20:00Z",
-  "imageSha256": "7ef00e24371b1d572da3ec60ca21be4d059b32decfe15f3a334c75486788e3f9",
-  "build": "Modwerk's linker: Modwerk base for core-ar2 0.7 + this folder's Quick Velocity+Aftertouch Assign 0.1.0-experimental, materialised against stock OS 1.74, --version QM11",
+  "capturedAt": "2026-11-10T23:30:00Z",
+  "imageSha256": "6c1482e2725daac1d0eece1c9c6daedf37f2581abf84081021e15dcf1b5c8dae",
+  "build": "Modwerk's linker: Modwerk base 73f3668c (send-bus) for core-ar2 0.7 + this folder's Quick Mod Assign 0.2.0 source (linked under its 0.1.0 label, since the packager refuses a version without its screenshots), materialised against stock OS 1.74, --version QM20",
   "emulator": {
     "name": "rytm-emu",
     "repository": "https://github.com/trigcondition/rytm-emu",
     "binary": "dtboot",
-    "settings": "revision 2ac0f1f; a fresh card; JIT on; DTBOOT_END_PNG at the end of each run"
+    "settings": "revision 2ac0f1f with a private RAM-boot model that a plain boot does not use; a fresh card; DTBOOT_END_PNG at the end of each run"
   },
-  "conditions": "SETUP: boot QM11 on a fresh card for 8000M, NO eight times to close the calibration notices, snapshot. Each capture loads that snapshot (the default kit, BD PLASTIC on track 1, SYNTH page) and runs the listed --press and --nudge events, off the --every grid.",
+  "conditions": "SETUP: boot QM20 on a fresh card to clock 8000M, NO eight times (from 4503M, 400M apart) to close the calibration notices, snapshot at 8000M. Each capture loads that snapshot (the default kit, BD PLASTIC on track 1, SYNTH page) and runs the listed events at absolute clocks (200M a second), with --every 500M.",
   "captures": [
     {
       "path": "media/fix-filter.png",
       "frame": "end.png",
-      "plan": "--press FLTR, --press FIX held, --nudge 4:1 x20",
-      "sha256": "856e0e3c8236669df5fe7147a457d63ed655714df1fea3146889ec5e88615407"
+      "plan": "--press FLTR@8020000000:12000000 --press FIX@8120000000:1200000000 --nudge 4:1@8240000000x20/30000000",
+      "sha256": "c1836b90ddd9024b2f98defcb98c4009d03a14bce5b979b0fd3d7a1c723ed665"
     },
     {
       "path": "media/sampler-amp.png",
       "frame": "end.png",
-      "plan": "--press AMP, --press SAMPLER held, --nudge 2:1 x12",
-      "sha256": "46ecb14e9a45167f569820f0f1d1e38c97b28270a0d411c266d0538d0f3e542f"
+      "plan": "--press AMP@8020000000:12000000 --press SAMPLER@8120000000:900000000 --nudge 2:1@8240000000x12/30000000",
+      "sha256": "7d3e22ecde0424e91df3ed3728e7c265b1a916082e87d456f7d3a30d9cf17665"
     },
     {
       "path": "media/mods-full.png",
       "frame": "end.png",
-      "plan": "--press FIX held, --nudge 1, 2, 3, 0, then 5, three clicks each",
+      "plan": "--press FIX@8060000000:1800000000 --nudge 1:1@8180000000x3/30000000 --nudge 2:1@8480000000x3/30000000 --nudge 3:1@8780000000x3/30000000 --nudge 0:1@9080000000x3/30000000 --nudge 5:1@9380000000x3/30000000",
       "sha256": "9d7e1954c18ac7766dcb9c032490441aa00c4aad154d1d0cac04da08c6a22247"
     },
     {
       "path": "media/mod-setup.png",
       "frame": "end.png",
-      "plan": "--press FIX held, --nudge 1:1 x10; release; FUNC + FLTR, DOWN x2, YES",
-      "sha256": "1128c35de350ea465ba0cd4d389d3804cc4e839bd7d7644c753f591c1b127476"
+      "plan": "--press FIX@8060000000:600000000 --nudge 1:1@8180000000x10/30000000 --press FUNC@8800000000:80000000 --press FLTR@8830000000:12000000 --press DOWN@9000000000:12000000 --press DOWN@9060000000:12000000 --press DOWN@9120000000:12000000 --press DOWN@9180000000:12000000 --press YES@9260000000:12000000",
+      "sha256": "8b1ec96605ddc28a9a243444efcbd3bfae6217afeb762edaf148ffdb7f1d006c"
+    },
+    {
+      "path": "media/lfo-filter.png",
+      "frame": "end.png",
+      "plan": "--press FLTR@8020000000:12000000 --press LFO@8120000000:1200000000 --nudge 4:1@8240000000x1/30000000 --turn 4:6@8400000000x16/4000000",
+      "sha256": "4dd4e46876980bddf65d293268a0b57722f398642f3199325742366df2ebe4eb"
+    },
+    {
+      "path": "media/lfo-page.png",
+      "frame": "end.png",
+      "plan": "--press FLTR@8020000000:12000000 --press LFO@8120000000:600000000 --nudge 4:1@8240000000x1/30000000 --turn 4:6@8400000000x16/4000000 --press LFO@9300000000:12000000",
+      "sha256": "67d6690707e88a95f0b55fe71e05c462c3850de2a6c2deb34532b17b89980a89"
     }
   ]
 }

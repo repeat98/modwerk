@@ -1,6 +1,6 @@
 # Quick Mod Assign
 
-An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.1.0-experimental, OS 1.74 with core-ar2 0.7.
+An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.2.0-experimental, OS 1.74 with core-ar2 0.7.
 
 ## Overview
 
@@ -8,7 +8,7 @@ Linking velocity or aftertouch to a parameter on stock takes a trip through SOUN
 
 - **Hold FIX and turn a knob**: that parameter is linked to velocity, and the turn sets the amount.
 - **Hold SAMPLER and turn a knob**: the same for aftertouch.
-- **Hold LFO and turn a knob**: that parameter becomes the LFO's destination, and further turns set its depth (0.2.0, being tested).
+- **Hold LFO and turn a knob**: that parameter becomes the LFO's destination, and further turns set its depth.
 
 While either key is held, every knob already linked shows its amount the way stock shows a performance or scene lock (an inverted box with +n), since an amount is an offset as theirs are. Envelope graphics follow the amount as they do for a lock. The mod fills stock's own four velocity and four aftertouch slots of the selected sound, so the links save with the kit, show in SOUND SETTINGS as usual and keep playing on a unit without the mod.
 
@@ -21,14 +21,17 @@ While either key is held, every knob already linked shows its amount the way sto
 | SAMPLER held | as above | The same for aftertouch. A new kit links aftertouch to FILT FRQ at +16, so that box shows on the FILTER page. |
 | FIX tap | anywhere stock takes it | Toggles fixed velocity as on stock, on the release instead of the press. |
 | SAMPLER tap | anywhere | Opens the recorder, as on stock. After a hold with a turn it does not. |
+| LFO held | SYNTH, SAMPLE, FILTER and AMP pages of a sound track, the FX track's pages, PERF, SCNE, MUTE and CHRO | Shows the LFO's destination knob as a box with its depth. Turning a knob makes that parameter the LFO's destination (DST) at depth 0; further turns of the same knob set the depth (DEP), with the same steps and speed as stock's DEP knob. The parameter's own value does not move. |
+| LFO held, press the destination's knob | as above | Sets the LFO's depth to 0. |
+| LFO tap | anywhere | Opens the LFO page, as on stock, on the release instead of the press. After a hold with a turn the page stays. |
 
-A parameter already linked keeps its mod slot. A new one takes the first slot, left to right, with no destination or an amount of 0; turning a link back to 0 frees its slot. A link at 0 still shows as 0 while the key is held (a new kit links FILT FRQ and FILT RES to velocity at 0, so those are the first taken). With all four slots holding other parameters a popup says `VELOCITY MODS FULL` (`AFTERTOUCH MODS FULL`) and nothing changes. A parameter that is not in stock's destination list says `NOT A VELOCITY TARGET` (`NOT AN AFTERTOUCH TARGET`) and nothing changes. Each knob event moves the amount at least one step, more when turned fast, whatever the parameter's own resolution.
+A parameter already linked keeps its mod slot. A new one takes the first slot, left to right, with no destination or an amount of 0; turning a link back to 0 frees its slot. A link at 0 still shows as 0 while the key is held (a new kit links FILT FRQ and FILT RES to velocity at 0, so those are the first taken). With all four slots holding other parameters a popup says `VELOCITY MODS FULL` (`AFTERTOUCH MODS FULL`) and nothing changes. A parameter that is not in stock's destination list says `NOT A VELOCITY TARGET` (`NOT AN AFTERTOUCH TARGET`, `NOT AN LFO TARGET`) and nothing changes; the LFO's own parameters are no LFO destination. Each knob event moves the amount at least one step, more when turned fast, whatever the parameter's own resolution.
 
-FUNC + FIX (stock's FIXED VELOCITY), the FX track (FIX and SAMPLER there are stock's, and selecting it during a hold hands its knobs back to stock), and a performance or scene pad or a trig that holds stock's lock edit keep stock's behaviour: a pad pressed in PERF or SCNE during a hold makes a performance or scene lock as usual, and the links show again when it is let go. During a hold the other key does nothing.
+FUNC + FIX (stock's FIXED VELOCITY), the FX track (FIX and SAMPLER there are stock's, and selecting it during a hold hands its knobs back to stock), and a performance or scene pad or a trig that holds stock's lock edit keep stock's behaviour: a pad pressed in PERF or SCNE during a hold makes a performance or scene lock as usual, and the links show again when it is let go. During a hold the other two keys do nothing. FUNC + LFO, and LFO while a pad, a trig or QPER holds stock's lock edit, stay stock's.
 
 ## Usage
 
-Hold FIX or SAMPLER on any sound page and turn the knob you want to move with velocity or pad pressure. SOUND SETTINGS, VELOCITY MOD and AFTERTOUCH show the same links for fine-tuning.
+Hold FIX or SAMPLER on any sound page and turn the knob you want to move with velocity or pad pressure. SOUND SETTINGS, VELOCITY MOD and AFTERTOUCH show the same links for fine-tuning. Hold LFO and turn a knob to send the LFO there; keep turning it to set how far.
 
 ### Quick tutorial
 
@@ -36,6 +39,7 @@ Hold FIX or SAMPLER on any sound page and turn the knob you want to move with ve
 2. Keep FIX held and turn FRQ to the right: its box counts up and FRQ itself does not move. Play soft and hard hits: harder ones open the filter.
 3. Press AMP, hold SAMPLER and turn DEC: pad pressure now lengthens the decay.
 4. Hold FIX and press FRQ's knob: the link goes back to 0, and its slot is free for another parameter.
+5. Press FLTR, hold LFO and turn FRQ: the LFO now moves the filter. Keep turning to set the depth, then let go and tap LFO: the LFO page shows DST FRQ.
 
 ## Changes to stock flows
 
@@ -43,14 +47,20 @@ Hold FIX or SAMPLER on any sound page and turn the knob you want to move with ve
 - **SAMPLER held with a turn does not open the recorder.** Stock opens it on SAMPLER's release, also after a knob turn; with this mod a turn during the hold makes it an assignment instead. A tap opens the recorder as before, and on the FX track SAMPLER is stock's. Checked in rytm-emu.
 - **FIX or SAMPLER held changes what a knob turn does.** What changes: on a sound page, a turn sets a mod slot instead of the parameter, drawn as a performance lock. Why: that is the mod. Stock does nothing special with FIX or SAMPLER held and a knob turned (checked in rytm-emu: the knob edits as normal). It applies while the key is held only.
 - **During a hold, some knobs do nothing.** What changes: with FIX or SAMPLER held, the TRIG page's knobs, a knob turned with a trig held, and FUNC + a knob no longer edit (stock's lock edit, which the hold switches on, refuses TRIG parameters, and the mod refuses a link with a trig held so none is made by accident). Why: the hold is for links; a trig edit or a fine FUNC edit can wait until the key is let go. What you see: the knob does not move. Considered: passing these turns to stock, which stock's lock edit does not allow without a patch of its own. Checked in rytm-emu: TRIG page, a trig held, both key orders.
+- **LFO's page opens on the release.** What changes: on the pages and pad screens of a sound or the FX track, an LFO press is held back until the release; a tap then plays the press and the release to stock and to every other mod, so the LFO page opens as before, a little later. A hold with a turn leaves the page where it is. Why: as for FIX, the press cannot know whether a turn follows. Checked: on the author's unit by the test rig (plain taps from the FILTER, LFO and SAMPLE pages give stock's screens, and Loop Sync sees the page change), and in rytm-emu with LFO RND's page behind LFO.
+- **LFO held changes what a knob turn does.** What changes: a turn sets the LFO's destination and depth instead of the parameter. Stock does nothing special with LFO held: its press has already opened the LFO page. It applies while the key is held only.
 - **The other key does nothing during a hold.** What changes: FIX pressed during a SAMPLER hold does not toggle fixed velocity, and SAMPLER pressed during a FIX hold does not open the recorder. Why: a key brushed mid-assignment should not change the sound or leave the page. Checked in rytm-emu.
 
 ## Compatibility and limitations
 
 - OS 1.74 only, with core-ar2 0.7. No other module is needed.
+- The LFO's DST and DEP are the sound's own (the FX track's on the FX track), written through stock's own writers, so they save with the kit and play on a unit without the mod. A tap's replay goes through the core's `core_key`, so every key mod sees it.
+- During an LFO hold the box shows the depth rounded down: +1.93 shows +1, -1.93 shows -2. The LFO page shows the exact value.
+- After a knob press in an LFO hold, the other knobs do nothing until LFO is let go. On the LFO page itself, LFO held shows no NOT AN LFO TARGET popup until a turn would move a value.
 - It patches no stock site. It sets its own locker in stock's parameter UI while a key is held, as QPER Live Rec does with QPER, and adds a `core_params` entry for every parameter id with only a turn function (order 5) for a turn that reaches stock's parameter edit. It subscribes to `ev_key`, `ev_enc` and `ev_tick`. No storage.
 - A performance or scene pad, or a trig, that holds stock's locker when FIX or SAMPLER goes down or during the hold keeps it; the mod shows its amounts again within a tick of it letting go.
 - Stock's LFO DST knob opens its list rather than turning, so FIX + DST does nothing.
+- On a unit, run by the test rig on the author's MKII (not by a person): 0.2.0's LFO assign, LFO taps and FIX links pass in QL02 and QL05 (with Loop Sync), and the same cases on the set without this mod show the tap is stock's: see [TESTING.md](TESTING.md). Not run there: how the LFO sounds, pads, the FX track's LFO, kit save and a power cycle.
 - On a unit, by the author's report: QM06 (FIX + knob, the FIX key, save and power cycle) RC18's QM10 (SAMPLER aftertouch links, the lock-style display, envelopes following, mods full, kit save and reload, power cycle) RC19's QM11 and QM12 alone (the FX track, and the checks above again) pass: see [TESTING.md](TESTING.md).
 
 ## Tests and measurements
@@ -63,8 +73,10 @@ Original code by Nathaniel Pavel (@npp1993), GPL-3.0-or-later ([LICENSE](LICENSE
 
 ## Screens and audio
 
-Screenshots are rytm-emu captures of build QM11 ([media/capture.json](media/capture.json)). No audio preview yet.
+Screenshots are rytm-emu captures of build QM20 ([media/capture.json](media/capture.json)). No audio preview yet.
 
-![FILTER page with FIX held: FRQ +20 and RES 0](media/fix-filter.png) ![AMP page with SAMPLER held: DEC +10](media/sampler-amp.png)
+![FILTER page with FIX held: FRQ +19 and RES 0](media/fix-filter.png) ![AMP page with SAMPLER held: DEC +11](media/sampler-amp.png)
 
 ![VELOCITY MODS FULL](media/mods-full.png) ![Stock's MODULATION SETUP showing the link](media/mod-setup.png)
+
+![FILTER page with LFO held: FRQ is the LFO's destination at depth +45](media/lfo-filter.png) ![The LFO page after the hold: DST FRQ](media/lfo-page.png)

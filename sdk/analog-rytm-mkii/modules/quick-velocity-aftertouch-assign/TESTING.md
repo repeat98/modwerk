@@ -63,6 +63,19 @@ Fixed velocity read from stock's flag every 100M instructions; screens compared 
 | FILTER page, FIX held, FX track selected, FDB turned | FDB does not move | FDB edits as without FIX |
 | Faults | 0 | 0 |
 
+## rytm-emu (0.2.0, LFO assign; QL02 to QL05 and QM20)
+
+| Check | Result |
+| --- | --- |
+| FLTR, LFO held, FRQ turned | FRQ boxed at 0 (DST FRQ, DEP 0); further turns move the box; the page stays on release |
+| DEP through the hold against stock's DEP knob, same raw turns | equal: +1.96 and -1.96 |
+| Fast turns, another knob, the destination's knob pressed | +127; DST moves to the new knob at 0; DEP back to 0 |
+| LFO held on the LFO page, WAV turned three steps | NOT AN LFO TARGET, WAV unmoved |
+| Plain LFO tap with Loop Sync: SMPL, LFO tap, FUNC + knob A | stock's SPD step (before the replay through `core_key`: Loop Sync's box) |
+| Plain LFO taps with LFO RND | the second tap reaches LFO RND's page, the third returns |
+| FX track, LFO held, TIM turned | TIM becomes the FX LFO's destination |
+| FIX + FRQ, FUNC + LFO, FLTR then LFO tap then a turn | as 0.1 / as stock |
+
 ## Hardware
 
 **RC17 (QM06 inside), reported by the author, 3 Nov 2026:**
