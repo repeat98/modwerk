@@ -42,7 +42,9 @@
         "sample_rate_vt_perf": "0x401e26c4",
         "sample_rate_string_end": "0x401bb540",
         "sample_rate_header": "0x40035fe8",
-        "sample_rate_long_name": "0x400a9022"
+        "sample_rate_long_name": "0x400a9022",
+        "sample_rate_targets": "0x8000e5b0",
+        "sample_rate_smooth": "0x8000eeec"
       },
       "cflags": [
         "-DPARAMS_EFF_AT=0x8000f7a8",

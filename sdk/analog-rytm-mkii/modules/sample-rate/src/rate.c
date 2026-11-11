@@ -21,6 +21,12 @@
 #include "analog-rytm-mk2/store.h"
 
 #define EFF(t, i) (*(volatile short *)(PARAMS_EFF_AT + (t) * 84 + (i) * 2))
+// Stock glides every parameter to its target: a one-pole a block, state in 16.16
+// (0x40120cfa). EFF is its output, plus modulation, rebuilt every block.
+extern volatile short sample_rate_targets[];   // 42 words a track, as EFF
+extern volatile int sample_rate_smooth[];      // 42 longs a track
+#define TARGET(t, i) (sample_rate_targets[(t) * 42 + (i)])
+#define SMOOTH(t, i) (sample_rate_smooth[(t) * 42 + (i)])
 #define IDX_FIN 18
 #define IDX_STA 21
 #define IDX_END 22
@@ -39,12 +45,14 @@
 #define TURN_LAG 14         // going down, the voice reads this many frames below the same position
 #define EDGE 32             // frames from STA or END where a change of direction waits
 #define MIN_WAIT 141        // shortest loop stock plays: below it no position is clear of both
+#define SNAP_BLOCKS 160     // blocks (about 0.1 s) FIN skips the glide after a switch
 
 STORE_FIELD(sample_rate_on);
 
 unsigned char sample_rate_voices;               // one bit a voice: audio.s scales its step
 
 static volatile unsigned char track_on[TRACKS]; // one byte a track: written from the UI and the audio interrupt
+static volatile unsigned char snap[TRACKS];     // blocks left in which FIN skips stock's glide
 
 static unsigned char going_down[VOICES];        // the way each voice went last block
 static unsigned char going_any;                  // any of them going down
@@ -81,11 +89,32 @@ static int turn_round(int v, int t, int trig)
     return trig || !(EFF(t, IDX_LOP) >> 8) || hi - lo < MIN_WAIT;
 }
 
+// A switch moves FIN between +0 and +63 (set_on) in the same moment the meaning
+// changes, and stock would glide FIN there over about 50 ms: switching on, the
+// sample dipped towards a stop and came back; switching off, the pitch slid a
+// semitone. For a while after a switch FIN takes its value at once. Which value
+// follows the setting as the audio side sees it, so the order in which the new
+// setting and the new FIN arrive does not matter: on, a FIN still at rest is
+// heard as 1x, and off, a FIN still at 1x as rest. Modulation stays on top.
+static void snap_fin(int t)
+{
+    int target = TARGET(t, IDX_FIN), was = (SMOOTH(t, IDX_FIN) + 0x8000) >> 16;
+    if (track_on[t] ? target == STOP : target >= FULL)
+        target = track_on[t] ? FULL : STOP;
+    SMOOTH(t, IDX_FIN) = target << 16;
+    EFF(t, IDX_FIN) = (short)(EFF(t, IDX_FIN) + target - was);
+}
+
 // Each block, before the prefetch
 void sample_rate_block(void)
 {
     unsigned char mask = 0, down_now = 0;
     int v;
+    for (v = 0; v < TRACKS; v++)
+        if (snap[v]) {
+            snap[v]--;
+            snap_fin(v);
+        }
     // No track with RATE on and no voice still going down: the loop below would change
     // nothing, so skip it (the audio interrupt runs this every block).
     if (!going_any) {
@@ -203,6 +232,7 @@ static void set_on(int on)
     int fin;
     if (!pick(&p) || (int)core_store_get(STORE(sample_rate_on), p.sound, 0) == on)
         return;
+    snap[p.track] = SNAP_BLOCKS;
     core_store_set(STORE(sample_rate_on), p.sound, 0, (unsigned)on);
     ((void (*)(uint32_t, void *))*(uint32_t *)(*(uint32_t *)p.wrapper + NOTIFY_OF_WRAPPER))(p.wrapper, &info);
     fin = *(short *)(p.sound + LIVE_SOUND_FIN);
