@@ -65,7 +65,7 @@ Hold FIX or SAMPLER on any sound page and turn the knob you want to move with ve
 
 ## Tests and measurements
 
-rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)), and the author's unit on combined images with builds QM10 and QM11 and on QM12 alone; QM13, this package, is QM12 compiled with the default `-O2`. Memory (build QM13's link map): 3,540 bytes of code and initialised data and 44 bytes of `.bss` in the 128 KiB shared mod area. Load: UI only, on key events and knob turns; nothing runs in the audio path.
+rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)), the author's unit on combined images with builds QM10 and QM11 and on QM12 alone, and for 0.2.0 the test rig on the author's unit (QL02, QL05). Memory (0.2.0 package): 5,889 bytes of code and initialised data and 60 bytes of `.bss` in the 128 KiB shared mod area. Load: UI only, on key events and knob turns; nothing runs in the audio path.
 
 ## Authorship and licences
 

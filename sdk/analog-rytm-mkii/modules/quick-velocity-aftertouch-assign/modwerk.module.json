@@ -79,7 +79,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 3584,
+    "memoryBytes": 5952,
     "fastBytes": 0,
     "load": {
       "display": "Not measured yet",
@@ -88,11 +88,26 @@
     }
   },
   "evidence": {
-    "tier": "none",
-    "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": null,
-    "reports": [],
-    "hardware": null,
+    "tier": "author-hardware",
+    "moduleVersion": "0.2.0-experimental",
+    "sourceSha256": "67feeea49a1c71682f9bb6d49e1a4feac96bda26700d79af5d70b6255392e498",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-10",
+      "tester": "npp1993",
+      "durationMinutes": null,
+      "summary": "On npp1993's Analog Rytm MKII with OS 1.74, with npp1993's go for each run, Modwerk's test rig (key presses and knob turns sent over USB, screens read back) ran six cases on this source in QL02 and QL05: LFO held and a knob turned makes that parameter the LFO's destination at depth 0 and the page stays; further turns set DEP exactly as the same turns of stock's DEP knob (+1.96 and -1.96); a fast turn reaches +127, another knob takes the LFO at 0, a knob press sets DEP to 0, and the parameters themselves do not move; NOT AN LFO TARGET on the LFO page; FIX links as before; plain LFO taps give stock's screens and Loop Sync follows them. All passed (QL02: three runs; QL05: once, the NOT AN LFO TARGET case on a second run after its compare was narrowed to the popup, since an earlier stock run had turned SPH under it). The same cases on the set without this mod fail except the tap case, which passes against the same references.",
+      "limitations": [
+        "Run by the test rig on the author's unit, not by a person playing it: nobody listened to the LFO's effect, and no pads were played.",
+        "Tested beside Loop Sync on a development base with the test link (QL02, QL05), RAM-booted from the flashed OS; not alone, not flashed, no kit save, reload or power cycle on 0.2.0.",
+        "The FX track's LFO and PERF, SCNE, MUTE and CHRO screens were checked in rytm-emu only.",
+        "Built under the manifest's 0.1.0 label (the packager refuses a version without its screenshots); the code was this source's."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
