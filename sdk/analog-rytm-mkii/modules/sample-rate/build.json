@@ -19,14 +19,29 @@
       "order": 50
     }
   ],
-  "contribute": [],
+  "contribute": [
+    {
+      "to": "core_params",
+      "order": 50,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:sample_rate_tun_param",
+          0
+        ]
+      ]
+    }
+  ],
   "collections": {},
   "copied": [],
   "regions": [],
   "claims": [
     "ui:SOUND SETTINGS row SMP RATE, after SMP:",
     "ui:a tap on the SAMPLE page's FIN knob (encoder B)",
-    "param:FIN (id 40) label while SMP RATE is on"
+    "param:FIN (id 40) label while SMP RATE is on",
+    "param:TUN (id 39) turn and value text: fine in cents"
   ],
   "requires": [],
   "derive": null,
@@ -44,7 +59,8 @@
         "sample_rate_header": "0x40035fe8",
         "sample_rate_long_name": "0x400a9022",
         "sample_rate_targets": "0x8000e5b0",
-        "sample_rate_smooth": "0x8000eeec"
+        "sample_rate_smooth": "0x8000eeec",
+        "sample_rate_add_resume": "0x400a88f2"
       },
       "cflags": [
         "-DPARAMS_EFF_AT=0x8000f7a8",
@@ -120,6 +136,21 @@
           "stockSha256": "5cb2061dc8e4b71f74f2b6b6ddf6db701a4167e0047a6e5fced6fac9948bc766",
           "op": "jsr",
           "target": "sample_rate_knob_gate"
+        },
+        {
+          "addr": "0x400a88ea",
+          "len": 8,
+          "stockSha256": "2562fc04b5ba15cc5bf8909a85a59aa833d1e7e54127597742c740853b77bbc4",
+          "op": "jmp",
+          "target": "sample_rate_add_gate"
+        },
+        {
+          "addr": "0x401c03c8",
+          "op": "bytes",
+          "len": 4,
+          "new": "00000001",
+          "kind": "data",
+          "stockSha256": "df3f619804a92fdb4057192dc43dd748ea778adc52bc498ce80524c014b81119"
         }
       ]
     }

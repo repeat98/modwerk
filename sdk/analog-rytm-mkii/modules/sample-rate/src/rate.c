@@ -19,6 +19,7 @@
 
 #include <stdint.h>
 #include "analog-rytm-mk2/store.h"
+#include "analog-rytm-mk2/pages.h"
 
 #define EFF(t, i) (*(volatile short *)(PARAMS_EFF_AT + (t) * 84 + (i) * 2))
 // Stock glides every parameter to its target: a one-pole a block, state in 16.16
@@ -349,9 +350,77 @@ void sample_rate_knob(void *view, int id, const char *event)
     }
 }
 
+// Fine TUNE. TUN's value is an 8.8 word, and stock's engine, sound, kit, SysEx and
+// scene and performance locks keep its low byte: a fraction of a semitone plays,
+// saves and loads on stock OS too, which only shows the whole number. A plain turn
+// of TUN moves 1 cent a count, with stock's acceleration; a press and turn moves
+// whole semitones and keeps the cents, as stock's STA and END turn fine and
+// coarse. Stock adds every turn of TUN, the sound's or a held trig's lock, at one
+// place (0x400a88ea, audio.s): there a plain turn's count becomes cents.
+#define ID_TUN 39
+#define TUN_REST 0x4000
+#define REC_TUN (0x419a4888 + 84 * ID_TUN)   // TUN's RAM parameter record
+#define REC_STEP 4          // its turn: factor plain, factor pressed, 0, profile
+#define ENC_PRESSED 20      // the event's byte, set while the knob is held down
+
+static int fine_turn;       // the UI tick's turn is a plain one (no knob held down)
+
+// A knob's turn profile (stock's, 0x4006eb06): three flags, then the plain and
+// the pressed curve, each {acceleration, counts a step, units a step}. TUN's own
+// sets both rounding flags, so every step is a whole semitone; this one rounds
+// only pressed turns, so a plain step is the record's factor in raw units, and
+// takes STA's acceleration (0x4006ead8) on the plain curve, so a quick spin
+// covers ground.
+static struct {
+    unsigned char on, whole, whole_pressed, pad;
+    int32_t plain[3], pressed[3];
+} fine_profile = {1, 0, 1, 0, {18, 3, 1}, {2, 3, 1}};
+
+// Cents from TUN's word, rounded to the nearest
+static int cents_of(int word)
+{
+    int d = (word - TUN_REST) * 100;
+    return d >= 0 ? (d + 128) / 256 : -((-d + 128) / 256);
+}
+
+static int word_of(int cents)
+{
+    int d = cents * 256;
+    return TUN_REST + (d >= 0 ? (d + 50) / 100 : -((-d + 50) / 100));
+}
+
+// From the gate at the add: the delta stock is about to add to TUN's value cur
+int sample_rate_tun_delta(int cur, int delta)
+{
+    if (!fine_turn)
+        return delta;
+    return word_of(cents_of(cur) + delta) - cur;
+}
+
+// TUN's value text: whole semitones as stock, else two places, "+3.07"
+static int tun_text(struct core_text *t)
+{
+    int c = cents_of(t->value), a = c < 0 ? -c : c;
+    char *b = t->buf;
+    if (a % 100 == 0)
+        return CORE_TEXT_PASS;
+    *b++ = c < 0 ? '-' : '+';
+    if (a >= 1000)
+        *b++ = (char)('0' + a / 1000);
+    *b++ = (char)('0' + a / 100 % 10);
+    *b++ = '.';
+    *b++ = (char)('0' + a / 10 % 10);
+    *b++ = (char)('0' + a % 10);
+    *b = 0;
+    return CORE_TEXT_DONE;
+}
+
+const struct core_param sample_rate_tun_param = {ID_TUN, ID_TUN, 0, 0, tun_text};
+
 int sample_rate_turn(void *brain, char *event)
 {
     (void)brain;
+    fine_turn = !event[ENC_PRESSED];
     if (*(int *)(event + 12) != ENC_FIN || tap_ticks < 0)
         return 0;
     if (++tap_turns < TAP_TURNS)
@@ -362,7 +431,15 @@ int sample_rate_turn(void *brain, char *event)
 
 void sample_rate_tick(void *ctrl)
 {
+    volatile uint32_t *rec = (volatile uint32_t *)(REC_TUN + REC_STEP);
     (void)ctrl;
+    fine_turn = 0;
+    // A plain step is 1 unit (a cent, at the add), a pressed one a whole semitone.
+    // Stock fills the record at boot; written each tick, it holds whatever ran since.
+    rec[0] = 1;
+    rec[1] = 1;
+    rec[2] = 0;
+    rec[3] = (uint32_t)&fine_profile;
     if (tap_ticks >= 0 && ++tap_ticks > TAP_TICKS)
         tap_ticks = -1;
 }

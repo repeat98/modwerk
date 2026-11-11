@@ -99,7 +99,8 @@
     "claims": [
       "ui:SOUND SETTINGS row SMP RATE, after SMP:",
       "ui:a tap on the SAMPLE page's FIN knob (encoder B)",
-      "param:FIN (id 40) label while SMP RATE is on"
+      "param:FIN (id 40) label while SMP RATE is on",
+      "param:TUN (id 39) turn and value text: fine in cents"
     ]
   },
   "resources": {
