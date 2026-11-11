@@ -189,6 +189,11 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
 /* A module this member cannot load (USB only, in the beta): the add is disabled, the reason is on the chip. */
 .add-button.is-blocked, .module-configure-action.is-blocked { color: var(--muted); cursor: not-allowed; opacity: .7; }
 .add-button.is-blocked:hover { background: var(--surface-hover); }
+/* A lock alone explains nothing: the blocked button says why (Full, USB only), and a full set says so above the grid. */
+.add-button.is-blocked { display: inline-flex; gap: 5px; width: auto; padding: 0 9px; font-size: 12px; opacity: 1; }
+.add-button.is-blocked span { display: inline; }
+.library-limit-note { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 16px; padding: 12px 14px; border: 1px solid var(--control-border); border-radius: 8px; background: var(--surface-raised); color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
+.library-limit-note svg { flex: none; margin-top: 2px; color: var(--muted); }
 .add-block-detail { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
 .module-card { position: relative; }
 /* The note replaces the type line on a card and the prompt floats over it, so a conflict never changes a card's height. */

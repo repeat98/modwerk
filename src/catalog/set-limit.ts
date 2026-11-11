@@ -27,8 +27,8 @@ export const atLimit = (ids: readonly string[], device = 'octatrack') => limitAp
 export const canAdd = (ids: readonly string[], id: string, device = 'octatrack') =>
   ids.includes(id) || !countsTowardLimit(id) || !atLimit(ids, device)
 
-/** Why another module cannot be added. */
-export const LIMIT_REACHED = `${SET_MODULE_LIMIT} modules for now. Remove one to add another.`
+/** Why another module cannot be added: said wherever an add is unavailable, so nobody is left with a bare lock. */
+export const LIMIT_REACHED = `Your set is full. ${SET_MODULE_LIMIT} modules per set is a temporary limit while larger sets are made stable on every Octatrack. Remove one to add another.`
 
 /** Why a set over the limit cannot be synced or built, with its count; '' within the limit. */
 export function overLimitMessage(ids: readonly string[], action: 'sync' | 'build', device = 'octatrack') {
@@ -46,7 +46,7 @@ export function addAllMessage(ids: readonly string[], adding: readonly string[],
 
 /** The library's note for a module that would go over the limit: its add button is unavailable, with the reason. */
 export function limitBlock(id: string): AddBlock {
-  return { kind: 'limit', withIds: [], reason: `${SET_MODULE_LIMIT} modules for now`, detail: LIMIT_REACHED, key: 'limit:' + id }
+  return { kind: 'limit', withIds: [], reason: `Set full: ${SET_MODULE_LIMIT} modules for now`, detail: LIMIT_REACHED, key: 'limit:' + id }
 }
 
 /** The library's add notes with the limit on top: once the set is full, every module not in it gets the limit's. */
