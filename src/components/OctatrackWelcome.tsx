@@ -31,7 +31,7 @@ export function OctatrackWelcome({ link, usbBrowser, phone = false, savedSets = 
 }) {
   const finished = useRef(false), { status } = useOctatrackLink(link), usb = usbBrowser && (!link || status !== 'unsupported')
   const card = !phone && <button type="button" className={'button ' + (usb ? 'button-quiet' : 'button-primary')} onClick={() => { finished.current = true; onCard() }}>{usb ? 'Build card firmware instead' : 'Build card firmware'}</button>
-  return <BaseDialogFrame canClose busy={false} focus="welcome" finishedRef={finished} onClose={onLater} footer={<>
+  return <BaseDialogFrame intro canClose busy={false} focus="welcome" finishedRef={finished} onClose={onLater} footer={<>
     <div className="base-install-actions">
       <button type="button" className="button button-quiet" onClick={() => { finished.current = true; onLater() }}>Later</button>
       {card}

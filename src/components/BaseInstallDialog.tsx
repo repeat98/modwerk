@@ -209,7 +209,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
   const skipHint = MODULE_SKIP_HINT ? ' ' + MODULE_SKIP_HINT : ''
 
   // Closing the page mid-update leaves a save that failed its check unrepeated, and the user unaware of it: `busy`.
-  return <BaseDialogFrame canClose={canClose} busy={updating} focus={view + stage} finishedRef={finished} onClose={onClose} footer={footer()}>
+  return <BaseDialogFrame intro={view === 'intro'} canClose={canClose} busy={updating} focus={view + stage} finishedRef={finished} onClose={onClose} footer={footer()}>
     {view === 'intro' ? <><BaseIntro hero={<LinkHero label="USB" />} title="Install the Modwerk base" promises={ALSO_NEW} beta={false}
       intro={<>Install the Modwerk base on your Octatrack once. After that, modules go from this page to your Octatrack over USB, without the card and without a restart. The original OS has no USB link for Modwerk, so this first install goes through the card in four steps: download the base, copy it to the card, install it with OS UPGRADE, then connect. Later base updates go over USB.</>}
       needs={BASE_INSTALL_NEEDS}
