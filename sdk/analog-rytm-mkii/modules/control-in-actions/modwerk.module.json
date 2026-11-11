@@ -83,16 +83,29 @@
   }
  },
  "evidence": {
-  "tier": "none",
+  "tier": "author-hardware",
   "moduleVersion": "0.1.4-experimental",
-  "sourceSha256": null,
-  "reports": [],
-  "hardware": null,
+  "sourceSha256": "9c46c683f3b44693632626135fb3f3bace00d8252047d2cc5bfacc54a82863e6",
+  "reports": [
+   "TESTING.md"
+  ],
+  "hardware": {
+   "model": "Analog Rytm MKII",
+   "release": "1.74",
+   "testedOn": "2026-11-11",
+   "tester": "npp1993",
+   "durationMinutes": null,
+   "summary": "npp1993 reports that on an Analog Rytm MKII with OS 1.74, in CK01 (this source with Loop Sync 0.3.2, QPER Live Rec 0.2.0, Quick Mod Assign 0.2.0 and Audio In Routing 0.1.0, booted from RAM over the flashed OS), a footswitch on CONTROL INPUT 1 played MUTE TGL, MUTE HLD, REC TGL, REC HLD, FILL HLD and FILL LAT as the panel's keys do, and REC TGL with QPER held on the SRC page started live recording rather than QPER Live Rec's clear. All passed.",
+   "limitations": [
+    "Duration was not recorded.",
+    "Tested in a five-mod set only, not alone; CONTROL INPUT 2, a gate source and a power cycle not run on 0.1.4. That Loop Sync, Audio In Routing and the base's send pages now see the keys was observed in rytm-emu only: their page flags draw nothing on the unit's screens. Firmware was not read back from the device."
+   ]
+  },
   "verifiedBy": null
  },
  "tests": {
   "report": "TESTING.md",
-  "summary": "Author's unit, builds alone: CI06 and CI07 passed every action, both learns with YES and NO, REVERSE DIRECTION and a power cycle; CI09 the bars, both learns' NO and a hold action. CI11 (0.1.1) reads the jacks in the audio interrupt: in rytm-emu every action played within 0.02 to 1.12 ms of the edge (0.1.0: 4 to 49 ms); works great on the unit, as reported. 0.1.2 in LP01, a 16-module set: actions play, ACTION OFF plays nothing, and with both jacks at ACTION OFF the handler takes 0.8 µs a block (0.1.1: 3.6 µs). Not run alone on a unit. 0.1.3: RC36 pass. 0.1.4: emulator only.",
+  "summary": "Author's unit, builds alone: CI06 and CI07 passed every action, both learns with YES and NO, REVERSE DIRECTION and a power cycle; CI09 the bars, both learns' NO and a hold action. CI11 (0.1.1) reads the jacks in the audio interrupt: in rytm-emu every action played within 0.02 to 1.12 ms of the edge (0.1.0: 4 to 49 ms); works great on the unit, as reported. 0.1.2 in LP01, a 16-module set: actions play, ACTION OFF plays nothing, and with both jacks at ACTION OFF the handler takes 0.8 µs a block (0.1.1: 3.6 µs). Not run alone on a unit. 0.1.3: RC36 pass. 0.1.4: CK01, a five-mod set, every action by footswitch as from the panel, as reported.",
   "documentation": {
    "tutorial": {
     "title": "Quick tutorial",

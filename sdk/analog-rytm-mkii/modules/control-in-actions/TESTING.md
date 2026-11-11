@@ -16,7 +16,20 @@ Source (0.1.4-experimental): fingerprint (`sha256` of `sha256sum build.json src/
 | REC TGL with QPER held on a sound page, input high | CQ21: no live recording (QPER took PLAY) | CQ22: live recording on, as 0.1.3 |
 
 - CI17 (vendored core-ar2 0.7 + this source, `929e6f57…d7b3`): boots, and its three media frames are byte-identical to CI15's.
-- Not run on a unit yet.
+- Rebased onto main after Quick Mod Assign 0.2.0 (#1429): this source unchanged (fingerprint as above), core-ar2 and the base unchanged since CI17. CK01 (below) boots and answers in rytm-emu.
+
+**On the author's unit, by hand, reported by the author, 11 November 2026.** Analog Rytm MKII, OS 1.74. Build CK01 (`.syx` `033073fb…cbd41`): core-ar2 0.7 send-bus base with Modwerk's development additions, this source, Loop Sync 0.3.2, QPER Live Rec 0.2.0, Quick Mod Assign 0.2.0 and Audio In Routing 0.1.0, RAM-booted over the flashed OS (flash not written), scratch project. A momentary footswitch in EXP/CV IN 1, MODE ACTION, ACTION LEARN with YES.
+
+| Action | Result |
+| --- | --- |
+| MUTE TGL | Tap opens MUTE mode, tap again leaves it, as the panel's MUTE twice. From SCNE mode the second tap goes to play mode, not back to SCNE: the panel's MUTE does the same. Pass |
+| MUTE HLD | MUTE mode while held, back on release. Pass |
+| REC TGL | Tap starts live recording, tap again ends it. Pass |
+| REC HLD | Live recording while held, off on release. Pass |
+| FILL HLD, FILL LAT | FILL while held; tap latches, tap again unlatches. Pass |
+| REC TGL with QPER held, on the SRC page | Live recording starts (QPER Live Rec does not take it as QPER + PLAY); the panel's PLAY with QPER held then shows CLEAR PERFORMANCE, QPER Live Rec's own gesture; the panel's PLAY ended live recording. Pass |
+
+Not seen on the unit: whether Loop Sync, Audio In Routing and the base's send pages note the page left (their flags draw nothing on these screens; rytm-emu above). Not run: alone on a unit, a power cycle, CONTROL INPUT 2, a gate source. Duration not recorded.
 
 ## 0.1.3: back to grid or step recording after live recording (8 November 2026)
 
