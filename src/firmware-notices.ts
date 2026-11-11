@@ -11,4 +11,4 @@ export const BETA_REPORTING_NOTICE = 'Report bugs in beta modules and beta pages
 /** How to start the Octatrack without loading its modules. The only place this is said: the base install guide and the
  * Your Octatrack page show it when it is not empty. Not yet confirmed on hardware with the base that brings it; set it to
  * '' to take it off the site. */
-export const MODULE_SKIP_HINT: string ='If the Octatrack doesn’t start with your modules, hold PROJ while you switch it on: it starts without loading them, and loads them again at the next start.'
+export const MODULE_SKIP_HINT: string = 'If the Octatrack doesn’t start with your modules, hold PROJ while you switch it on: it starts without loading them, and loads them again at the next start.'
