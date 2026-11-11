@@ -95,6 +95,25 @@ describe('the install guide’s diagnostics step', () => {
     await act(async () => { button('Share diagnostics').click(); await flush() })
     expect(onDone).not.toHaveBeenCalled(); expect(button('Not now')).toBeTruthy()
   })
+  it('is the answer to the first-connection invitation too: it doesn’t follow the guide, on this visit or the next', async () => {
+    await render(createElement(DiagnosticsGuideStep, {}))
+    await act(async () => { button('Not now').click(); await flush() })
+    await act(async () => root.unmount()); root = createRoot(container)
+    await render(createElement(DiagnosticsInvitationGate, { memberId: 'member', link, eligible: true }))
+    expect(dialog()).toBeNull()
+    await act(async () => root.unmount()); root = createRoot(container); resetReask() // the next visit
+    await render(createElement(DiagnosticsInvitationGate, { memberId: 'member', link, eligible: true }))
+    expect(dialog()).toBeNull()
+    expect(mocked.count.mock.calls).toEqual([['shown', 'guide'], ['not-now', 'guide']])
+  })
+  it('without an answer in the guide, the first-connection invitation still comes once', async () => {
+    await render(createElement(DiagnosticsInvitationGate, { memberId: 'member', link, eligible: true }))
+    expect(dialog()?.textContent).toContain('Help us find bugs')
+    await act(async () => { button('Not now').click(); await flush() })
+    await act(async () => root.unmount()); root = createRoot(container); resetReask()
+    await render(createElement(DiagnosticsInvitationGate, { memberId: 'member', link, eligible: true }))
+    expect(dialog()).toBeNull()
+  })
   it('renders nothing for a member who already shares, and where sharing isn’t possible', async () => {
     for (const state of [{ enabled: true, hasChoice: true }, { accountId: null }, { ready: true, available: false }]) {
       mocked.state = { ...mocked.state, enabled: false, accountId: 'member', available: true, ...state }

@@ -16,6 +16,7 @@ import { ForumPage } from './community/ForumPage'
 import { ForumShoutbox } from './community/ForumShoutbox'
 import './community/forum.css'
 import { countBaseInstall, trackPageView, trackUsage } from './community/usage'
+import { useDiagnosticsStepNeeded } from './community/diagnostics-sharing'
 import { LegalPage } from './legal/LegalPage'
 import { PrivacyPage } from './community/PrivacyPage'
 import { INDEPENDENCE_NOTICE } from './firmware-notices'
@@ -125,6 +126,7 @@ const BaseInstallDialog = lazy(() => beta().then(module => ({ default: module.Ba
 const PutBackModules = lazy(() => beta().then(module => ({ default: module.PutBackModules })))
 const OctatrackDiagnosticsCollector = lazy(() => import('./components/OctatrackDiagnostics').then(module => ({ default: module.OctatrackDiagnosticsCollector })))
 const DiagnosticsInvitationGate = lazy(() => import('./components/DiagnosticsInvitation').then(module => ({ default: module.DiagnosticsInvitationGate })))
+const DiagnosticsGuideStep = lazy(() => import('./components/DiagnosticsInvitation').then(module => ({ default: module.DiagnosticsGuideStep })))
 const RemoteSessionGate = lazy(() => import('./components/RemoteSession').then(module => ({ default: module.RemoteSessionGate })))
 const OwnerNoteGate = lazy(() => import('./components/OwnerNote').then(module => ({ default: module.OwnerNoteGate })))
 const OwnerNotePreview = lazy(() => import('./components/OwnerNote').then(module => ({ default: module.OwnerNotePreview })))
@@ -222,7 +224,13 @@ export default function App() {
   // Integration points for the diagnostics stream, connected here and nowhere else: the base install guide's last step,
   // shown once the unit first connects on the new base (skipped while undefined; it never holds up finishing), and where
   // each run of the guide got to (BaseGuideStage, with a BaseGuideFailure for 'failed'), counted without any identifier.
-  const baseGuideDiagnosticsStep: ReactNode = undefined
+  // The step is for a member who doesn't share diagnostics; once offered it stays until the guide closes, so the answer
+  // stays in view above Continue. Its Not now also counts as the answer to the first-connection invitation.
+  const guideOpen = !!usbLink && (!!baseInstall || baseInstallPrompt.open), diagnosticsStepNeeded = useDiagnosticsStepNeeded()
+  const [guideOffersDiagnostics, setGuideOffersDiagnostics] = useState(false)
+  const guideStepWanted = guideOpen && (guideOffersDiagnostics || diagnosticsStepNeeded)
+  if (guideStepWanted !== guideOffersDiagnostics) setGuideOffersDiagnostics(guideStepWanted)
+  const baseGuideDiagnosticsStep: ReactNode = guideOffersDiagnostics ? <Suspense fallback={null}><DiagnosticsGuideStep /></Suspense> : undefined
   const onBaseGuideStage: (stage: BaseGuideStage, detail?: BaseGuideFailure) => void = countBaseInstall
   useEffect(()=>{if(developerRoute&&!route.startsWith('developer/complete')&&developer&&!developer.user)window.location.replace('#account/developer')},[developerRoute,route,developer])
   const communityRoute = developerRoute || forumRoute || accountRoute || route === 'review' || route === 'admin' || route.startsWith('submit') || !!communityModule

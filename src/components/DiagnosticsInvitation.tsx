@@ -82,7 +82,8 @@ export function DiagnosticsGuideStep({onDone}: {onDone?: (shared: boolean) => vo
     if (!await changeDiagnosticSharing(true) || !live.current) return
     count('shared'); setAnswer('shared'); onDone?.(true)
   }
-  function notNow() { count('not-now'); declineForThisVisit(state.accountId); setAnswer('not-now'); onDone?.(false) }
+  // Not now here answers the first-connection invitation too, so it doesn't follow the guide.
+  function notNow() { count('not-now'); declineForThisVisit(state.accountId); if (state.accountId) rememberDismissal(state.accountId); setAnswer('not-now'); onDone?.(false) }
   if (answer) return <section className="diagnostics-step" aria-label="Diagnostics"><p role="status">{answer === 'shared' ? 'Thanks. Diagnostics sharing is on.' : 'Nothing is shared. You can turn diagnostics on any time under Setup in Your Octatrack.'}</p></section>
   if (!offer) return null
   return <section className="diagnostics-step" aria-labelledby="diagnostics-step-title">
@@ -97,6 +98,7 @@ export function DiagnosticsGuideStep({onDone}: {onDone?: (shared: boolean) => vo
 
 const invitationKey=(memberId:string)=>`modwerk.diagnostics.invitation:${OCTATRACK_DIAGNOSTICS_VERSION}:${memberId}`
 function dismissed(memberId:string){try{return localStorage.getItem(invitationKey(memberId))==='dismissed'}catch{return false}}
+function rememberDismissal(memberId:string){try{localStorage.setItem(invitationKey(memberId),'dismissed')}catch{/* still dismissed for this visit */}}
 const RUNNING = ['connecting','sending','testing','trial','finishing']
 /** Invite after the account's first compatible USB connection and any current dialog. Dismissal remains account/version scoped.
  * It also asks once more after a failure (diagnostics-reask.ts): a failed sync or self-test and a unit that started its
@@ -145,9 +147,8 @@ export function DiagnosticsInvitationGate({memberId,link,eligible,blocked=false,
     observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['open']})
     return ()=>observer.disconnect()
   },[reask,asking,knownNo,eligible,blocked,running,memberId,state.accountId,state.ready,openFor,preview])
-  function remember(){try{localStorage.setItem(invitationKey(memberId),'dismissed')}catch{/* still dismissed for this visit */}}
-  function close(){skipped.current=memberId;setOpenFor(undefined);if(!preview)remember()}
-  function answered(shared?:boolean){if(!shared)pauseReask(memberId);skipped.current=memberId;remember();setAsking(undefined);settleReask()}
+  function close(){skipped.current=memberId;setOpenFor(undefined);if(!preview)rememberDismissal(memberId)}
+  function answered(shared?:boolean){if(!shared)pauseReask(memberId);skipped.current=memberId;rememberDismissal(memberId);setAsking(undefined);settleReask()}
   if(askingNow && reask)return <DiagnosticsInvitation placement="after-failure" reason={REASK_REASONS[reask.reason]} onClose={answered}/>
   return openFor===memberId && afterConnection && eligible && !blocked && possible ? <DiagnosticsInvitation preview={preview} placement="hub" onClose={close}/> : null
 }

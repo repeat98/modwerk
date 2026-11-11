@@ -7,6 +7,9 @@ import App from './App'
 import { CommunityContext } from './community/context'
 import type { Session } from './community/api'
 import { fakeUnit } from './dev/octatrack-link-fake'
+import { waitForBaseInstall } from './config/octatrack-progress'
+import { OCTATRACK_DIAGNOSTICS_VERSION } from './community/octatrack-diagnostics-contract'
+import baseBinding from '../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
 
 // A production build with the Octatrack base path released, for a member who is not a beta tester, on a computer whose
 // browser has WebUSB and an Octatrack on the original OS plugged in.
@@ -76,6 +79,31 @@ describe('the Octatrack base path for a member who is not a beta tester', () => 
     expect(card.textContent).toContain('For browsers without USB (Firefox, Safari, iPad and phones) and for modules that have no USB version yet (')
     expect(container.textContent).not.toContain('#beta-testers')
   })
+  it('ends a first install with the diagnostics question for a member who doesn’t share, and keeps the answer in view', async () => {
+    const unit = fakeUnit('stock')
+    Object.defineProperty(navigator, 'usb', { value: unit.usb, configurable: true })
+    let sharing = false
+    vi.mocked(fetch).mockImplementation(async (url: string | URL | Request, options?: RequestInit) => {
+      if (String(url).includes('base-install-prompt')) return Response.json({ show: true })
+      if (!String(url).includes('/octatrack/diagnostics/consent')) return new Response('{}', { status: 404 })
+      if (options?.method === 'PUT') sharing = JSON.parse(String(options.body)).enabled
+      return Response.json({ accountId: 'plain', enabled: sharing, version: OCTATRACK_DIAGNOSTICS_VERSION, changedAt: sharing ? new Date().toISOString() : null, expiresAt: sharing ? new Date(Date.now() + 86400000).toISOString() : null })
+    })
+    waitForBaseInstall('ab'.repeat(32), baseBinding.identity) // the base was downloaded and installed from the card
+    await open('octatrack')
+    await vi.waitFor(() => expect(guide()?.textContent).toContain('Waiting for your Octatrack'), { timeout: 5000 })
+    unit.base = baseBinding.identity; unit.unplug(); unit.plug('base')
+    await vi.waitFor(() => expect(guide()?.textContent).toContain('Share diagnostics?'), { timeout: 5000 })
+    expect(guide()!.querySelector('h2')?.textContent).toBe('The Modwerk base is installed')
+    const share = [...guide()!.querySelectorAll('button')].find(button => button.textContent === 'Share diagnostics')!
+    await vi.waitFor(() => expect(share.disabled).toBe(false))
+    await act(async () => { share.click() })
+    // Sharing is on now; the guide keeps its last view with the answer and Continue.
+    await vi.waitFor(() => expect(guide()?.textContent).toContain('Thanks. Diagnostics sharing is on.'))
+    expect(guide()!.querySelector('h2')?.textContent).toBe('The Modwerk base is installed')
+    expect([...guide()!.querySelectorAll('button')].some(button => button.textContent === 'Continue')).toBe(true)
+    expect(document.querySelector('dialog.diagnostics-invitation')).toBeNull()
+  }, 15000)
   it('leads a signed-out visitor on Your Octatrack to sign in', async () => {
     await open('octatrack', visitor)
     await vi.waitFor(() => expect(container.querySelector('.hub-account-note')).not.toBeNull())
