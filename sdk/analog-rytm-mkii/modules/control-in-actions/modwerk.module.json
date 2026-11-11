@@ -105,7 +105,7 @@
  },
  "tests": {
   "report": "TESTING.md",
-  "summary": "Author's unit, builds alone: CI06 and CI07 passed every action, both learns with YES and NO, REVERSE DIRECTION and a power cycle; CI09 the bars, both learns' NO and a hold action. CI11 (0.1.1) reads the jacks in the audio interrupt: in rytm-emu every action played within 0.02 to 1.12 ms of the edge (0.1.0: 4 to 49 ms); works great on the unit, as reported. 0.1.2 in LP01, a 16-module set: actions play, ACTION OFF plays nothing, and with both jacks at ACTION OFF the handler takes 0.8 µs a block (0.1.1: 3.6 µs). Not run alone on a unit. 0.1.3: RC36 pass. 0.1.4: CK01, a five-mod set, every action by footswitch as from the panel, as reported.",
+  "summary": "Author's unit: CI06, CI07 and CI09 alone passed every action, both learns, REVERSE DIRECTION, the bars and a power cycle. 0.1.1 reads the jacks in the audio interrupt (rytm-emu: 0.02 to 1.12 ms from edge to action). 0.1.2 in LP01, a 16-module set: ACTION OFF plays nothing, 0.8 µs a block. 0.1.3: grid and step return, RC36 pass. 0.1.4: in CK01, a five-mod set, every action by footswitch as from the panel, and REC TGL with QPER held still records, as reported.",
   "documentation": {
    "tutorial": {
     "title": "Quick tutorial",
