@@ -24,7 +24,7 @@ export function usbLagNote(id: string, published: PackageList = packages) {
 }
 
 /** Why card firmware cannot include these modules. `usb` says whether this member can sync over USB (the Octatrack
- * base path, hasOctatrackBase): without it the refusal does not point at a sync they cannot start. A set over the
+ * base path, hasOctatrackBase): without it (the switch off, not a tester) the refusal says USB isn't open to them yet. A set over the
  * module limit (set-limit.ts) is refused too, with its count. */
 export function cardBuildError(ids: readonly string[], usb = true, published: PackageList = packages): string {
   const usbOnly = resolveSelection(ids).filter(module => moduleUsbOnly(module.id, published)), one = usbOnly.length === 1
@@ -32,5 +32,5 @@ export function cardBuildError(ids: readonly string[], usb = true, published: Pa
   const names = usbOnly.map(module => module.name).join(', '), them = one ? 'it' : 'them'
   // Card firmware is the classic build: it has no Modwerk base, so a module that needs the base cannot be in it.
   return names + (one ? ' needs' : ' need') + ' the Modwerk base, so card firmware cannot include ' + them + '. ' +
-    (usb ? 'Sync this set over USB, or take ' + them + ' out to build card firmware.' : 'Take ' + them + ' out to build card firmware.')
+    (usb ? 'Sync this set over USB, or take ' + them + ' out to build card firmware.' : 'Loading modules over USB isn’t open to everyone yet; take ' + them + ' out to build card firmware.')
 }
