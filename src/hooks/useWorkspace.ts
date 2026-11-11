@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react'
 import { afterDeleting, newConfiguration, cleanName, pinModuleVersions, configurationDevice, DEFAULT_DEVICE, removedSettings, startupSettings, storageSettings } from '../config/workspace'
 import { DEVICES_BY_ID } from '../devices/registry'
 import { isModuleAvailable } from '../catalog/availability'
+import { canAdd } from '../catalog/set-limit'
 import type { Configuration, StorageLock } from '../config/workspace'
 import { deviceStore, openDeviceDatabase } from '../storage/device'
 import type { DeviceStore } from '../storage/device'
@@ -148,6 +149,8 @@ export function useWorkspace() {
     // USB is added atomically with the user's setup through configureUsbAudio.
     if (device === DEFAULT_DEVICE && id === USB_AUDIO_MODULE && !current.moduleIds.includes(id)) return
     if (!current.moduleIds.includes(id) && device === DEFAULT_DEVICE && !isModuleAvailable(id, betaAccess)) return
+    // A full Octatrack set takes no further module (set-limit.ts); the library shows why before anyone gets here.
+    if (!canAdd(current.moduleIds, id, configurationDevice(current))) return
     const moduleIds = current.moduleIds.includes(id) ? current.moduleIds.filter(value => value !== id) : [...current.moduleIds, id]
     const moduleVersions = Object.fromEntries(moduleIds.map(selected=>[selected,current.moduleVersions[selected]??pinModuleVersions([selected],device)[selected]]))
     updateActive({ moduleIds, moduleVersions, ...(id === USB_AUDIO_MODULE && !moduleIds.includes(id) ? { usbAudio: undefined } : {}) })

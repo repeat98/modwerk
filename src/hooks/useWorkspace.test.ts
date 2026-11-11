@@ -6,6 +6,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { newConfiguration } from '../config/workspace'
 import { deviceStore, openDeviceDatabase } from '../storage/device'
 import { useWorkspace } from './useWorkspace'
+import { AVAILABLE_MODULES } from '../catalog/availability'
+import { SET_MODULE_LIMIT } from '../catalog/set-limit'
+import { USB_AUDIO_MODULE } from '../config/usb-audio'
 
 // The saved firmware record cannot be read, as when the browser refuses that one store.
 vi.mock('../storage/device', async original => {
@@ -36,5 +39,29 @@ describe('opening the workspace', () => {
     const reopened = await openDeviceDatabase()
     expect((await deviceStore(reopened).listConfigurations()).map(item => item.name)).toEqual(['Live', 'Studio B'])
     reopened.close()
+  })
+})
+
+describe('the module limit of an Octatrack set', () => {
+  it('loads a longer set whole, refuses any further module, and takes one again once trimmed below the limit', async () => {
+    const ids = AVAILABLE_MODULES.map(module => module.id).filter(id => id !== USB_AUDIO_MODULE), over = SET_MODULE_LIMIT + 3
+    await act(async () => root.render(createElement(Probe, { onRender: value => { workspace = value } })))
+    await vi.waitFor(() => expect(workspace.ready).toBe(true))
+    // A shared or saved set past the limit still opens with every module in it.
+    await act(() => { workspace.importConfiguration('Shared', ids.slice(0, over)) })
+    expect(workspace.active?.moduleIds).toHaveLength(over)
+    await act(() => workspace.toggleModule(ids[over]))
+    expect(workspace.active?.moduleIds).toHaveLength(over)
+    for (const id of ids.slice(SET_MODULE_LIMIT, over)) await act(() => workspace.toggleModule(id))
+    expect(workspace.active?.moduleIds).toEqual(ids.slice(0, SET_MODULE_LIMIT))
+    // Full: the 21st is refused, USB Audio's setup does not count.
+    await act(() => workspace.toggleModule(ids[over]))
+    expect(workspace.active?.moduleIds).toEqual(ids.slice(0, SET_MODULE_LIMIT))
+    await act(() => workspace.configureUsbAudio(undefined))
+    expect(workspace.active?.moduleIds).toEqual([...ids.slice(0, SET_MODULE_LIMIT), USB_AUDIO_MODULE])
+    await act(() => workspace.toggleModule(ids[0]))
+    await act(() => workspace.toggleModule(ids[over]))
+    expect(workspace.active?.moduleIds).toEqual([...ids.slice(1, SET_MODULE_LIMIT), USB_AUDIO_MODULE, ids[over]])
+    await vi.waitFor(() => expect(workspace.saving).toBe(false))
   })
 })

@@ -2,13 +2,16 @@ import { useEffect, useRef, useState } from 'react'
 import { loadStep, type Inventory, type InventoryTarget } from '../config/inventory'
 import { recordSync, rememberSuccessfulSync } from '../config/octatrack-progress'
 import { LinkBusyError, type OctatrackLink } from '../engine/elekloader/octatrack-link'
-import { BaseLayoutRequired, BaseUpdateRequired, baseOutdated, ModuleSetError, moduleSetReview, setLayout, USB_MODULE_IDS } from '../engine/elekloader/module-set'
+import { BaseLayoutRequired, BaseUpdateRequired, baseOutdated, ModuleSetError, moduleSetReview, setLayout, SetLimitError, USB_MODULE_IDS } from '../engine/elekloader/module-set'
 import { baseLayout, layoutName, type BaseLayout } from '../engine/elekloader/base-variants'
 import { USB_AUDIO_MODULE } from '../config/usb-audio'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
 import { MODULES } from '../catalog/modules'
 import { isModuleAvailable } from '../catalog/availability'
 import { usbLagNote } from '../catalog/usb-only'
+import { overLimitMessage } from '../catalog/set-limit'
+import { hasBetaAccess } from '../community/beta-access'
+import { useCommunity } from '../community/context'
 import { StateChip } from './ModuleGrid'
 import { ModulePreview } from './ModulePreview'
 import { Icon } from './Icon'
@@ -32,6 +35,7 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
   onInstallBase: (layout?: BaseLayout) => void; onEdit: () => void; onCard: () => void; onReport: () => void
 }) {
   const dialog = useRef<HTMLDialogElement>(null), title = useRef<HTMLHeadingElement>(null)
+  const betaAccess = hasBetaAccess(useCommunity().session)
   const state = useOctatrackLink(link), { status, progress = 0, notice } = state
   const [started, setStarted] = useState(false), [preparing, setPreparing] = useState(false)
   const [error, setError] = useState('')
@@ -52,8 +56,10 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
   const audio = setLayout(set), audioOn = audio !== undefined && baseLayout(state.identity?.base) === audio
   const stays = inventory ? set.moduleIds.filter(id => (id === USB_AUDIO_MODULE ? audioOn : inventory.moduleIds.includes(id)) && !updates.includes(id)) : []
   const cardOnly = changes ? changes.add.filter(id => !USB_MODULE_IDS.includes(id)) : []
-  // Only beta testers reach this dialog. A paused module can still be removed, never added.
-  const paused = changes ? changes.add.filter(id => !isModuleAvailable(id, true)) : []
+  // A paused module can still be removed, never added; a beta module (Air Chorus) is added only for a beta tester.
+  const paused = changes ? changes.add.filter(id => !isModuleAvailable(id, betaAccess)) : []
+  // A set over the module limit (set-limit.ts) still opens here; it only cannot be synced until trimmed.
+  const tooMany = review && !review.needsSync ? '' : overLimitMessage(set.moduleIds, 'sync')
   useEffect(() => {
     const element = dialog.current, previousFocus = document.activeElement
     element?.showModal()
@@ -70,7 +76,7 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
   }, [step, started, error, notice, set])
 
   async function load() {
-    if (!prepareUpdate || !review?.needsSync || problem) return
+    if (!prepareUpdate || !review?.needsSync || problem || tooMany) return
     const preparedFor = link.getState()
     // Fetching packages may outlive this dialog or the exact set and connection the user reviewed.
     const stale = () => {
@@ -133,7 +139,11 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
             <p><button type="button" className="text-button" onClick={onEdit}>Edit {set.name}</button></p>
           </div>}
         </>}
-      {problem && <p className="file-error" role="alert">{problem.message}</p>}
+      {tooMany && <div className="load-blocked" role="alert">
+        <p>{tooMany}</p>
+        <p><button type="button" className="text-button" onClick={onEdit}>Edit {set.name}</button></p>
+      </div>}
+      {problem && !(problem instanceof SetLimitError) && <p className="file-error" role="alert">{problem.message}</p>}
       {error && <p className="file-error" role="alert">{error}</p>}
     </> : step === 'done' ? <p className={'base-install-intro ' + (error || notice?.tone === 'error' ? 'file-error' : 'success-note')} role={error || notice?.tone === 'error' ? 'alert' : 'status'}>{error || notice?.text || (status === 'busy' ? 'Another browser window or app is using your Octatrack, so nothing was sent.' : 'Done.')}</p>
     : <>
@@ -144,12 +154,12 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
       {step === 'trial' && notice?.tone === 'error' && <p className="file-error" role="alert">{notice.text}</p>}
     </>}
     <footer className="base-install-footer">
-      {step === 'review' && connected && review?.needsSync && !problem && !cardOnly.length && !paused.length
+      {step === 'review' && connected && review?.needsSync && !problem && !cardOnly.length && !paused.length && !tooMany
         ? <p className="link-hint">Syncing stops playback on the Octatrack.</p> : <span />}
       <div className="base-install-actions">
         {step === 'review' && <><button type="button" className="button button-quiet" onClick={onClose}>Cancel</button>
           {needsBase ? <button type="button" className="button button-primary" onClick={() => onInstallBase(problem instanceof BaseLayoutRequired ? problem.layout : undefined)}><Icon name="download" size={16} />{problem instanceof BaseLayoutRequired ? 'Install base with this layout' : 'Install latest base'}</button>
-            : <button type="button" className="button button-primary" disabled={!connected || !review?.needsSync || !!problem || cardOnly.length > 0 || paused.length > 0 || !prepareUpdate} onClick={() => void load()}><Icon name="download" size={16} />Sync to Octatrack</button>}</>}
+            : <button type="button" className="button button-primary" disabled={!connected || !review?.needsSync || !!problem || cardOnly.length > 0 || paused.length > 0 || !!tooMany || !prepareUpdate} onClick={() => void load()}><Icon name="download" size={16} />Sync to Octatrack</button>}</>}
         {step === 'loading' && !preparing && progress < 1 && <button type="button" className="button button-quiet" onClick={() => link.cancel()}>Cancel</button>}
         {status === 'trial' && notice?.tone === 'error' && <button type="button" className="button button-primary" onClick={() => void keep()}>Try again</button>}
         {step === 'done' && (error || notice?.tone === 'error') && <button type="button" className="button button-quiet" aria-haspopup="dialog" onClick={onReport}><Icon name="message" size={16} />Report a problem</button>}

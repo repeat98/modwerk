@@ -18,6 +18,7 @@
     "src/catalog/module-links.ts",
     "src/catalog/module-releases.ts",
     "src/catalog/modules.ts",
+    "src/catalog/set-limit.ts",
     "src/catalog/versions.ts",
     "src/community/configuration-report.ts",
     "src/community/creator-support.ts",
