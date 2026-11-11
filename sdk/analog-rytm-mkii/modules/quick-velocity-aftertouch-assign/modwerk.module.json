@@ -82,9 +82,9 @@
     "memoryBytes": 5952,
     "fastBytes": 0,
     "load": {
-      "display": "Not measured yet",
-      "method": "unmeasured",
-      "conditions": "UI only: runs on key events and knob turns, never in the audio path."
+      "display": "UI only",
+      "method": "static",
+      "conditions": "Read from the code: it subscribes to ev_key, ev_enc and ev_tick only, never to the audio path. Each UI tick it checks whether FIX, SAMPLER or LFO is held and whether its locker is still set, a few compares; a held key's knob turns walk the sound's four mod slots. Not measured on a unit."
     }
   },
   "evidence": {
