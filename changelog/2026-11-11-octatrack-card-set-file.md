@@ -1,0 +1,1 @@
+Octatrack, for developers: the site's code can now write a module set as the file the Modwerk base restores from the card at power-on, the same packages a USB sync installs. It is the first step to making the card a second way to load the same thing as USB; nothing changes on the site until it has run on a unit. `node scripts/octatrack-card-set.mjs` writes one for that test.

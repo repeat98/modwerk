@@ -6,8 +6,10 @@ import { MODULES } from '../catalog/modules'
 import { CompatibilityPanel } from '../components/CompatibilityPanel'
 import { MachineLibrary } from '../devices/MachinePages'
 import { DEVICES_BY_ID } from '../devices/registry'
-import { prepareModuleSet, ModuleSetError } from '../engine/elekloader/module-set'
-import { libraryCompatibility } from './library-compatibility'
+import { prepareModuleSet, ModuleSetError, USB_MODULE_IDS } from '../engine/elekloader/module-set'
+import { cardFallbackReason, libraryCompatibility, moduleCardOnly, usbOnlyBlock } from './library-compatibility'
+import { isModulePaused } from './availability'
+import cardOnlyApprovals from '../../sdk/approvals/usb-card-only.json' with { type: 'json' }
 
 const noop = () => {}
 const everb = MODULES.find(module => module.id === 'everb')!
@@ -57,10 +59,15 @@ describe('USB library feedback and card admission stay separate', () => {
 
 describe('a module only the Modwerk base can load (usb-only.ts)', () => {
   const published = { packages: [{ id: 'everb', requires: 8 }] }
+  it('says where USB works in a browser that can’t reach the unit, once the base path is open to everyone', () => {
+    expect(usbOnlyBlock('everb', true)).toMatchObject({ kind: 'usb-only', reason: 'USB only', detail: 'E-Verb needs the Modwerk base, which this browser can’t reach. Open Modwerk in Chrome or Edge on a computer.' })
+    expect(usbOnlyBlock('everb', false).detail).toBe('E-Verb needs the Modwerk base, loaded over USB. Card firmware has no base, so it cannot include E-Verb.')
+  })
   it('cannot be added without USB sync, and is offered as usual in the beta USB library', () => {
     expect(libraryCompatibility(true, [], false, ['everb'], published).blocks).toEqual({})
     const { blocks } = libraryCompatibility(false, ['analog-bassdrum'], false, ['everb'], published)
-    expect(blocks.everb).toMatchObject({ kind: 'usb-only', reason: 'USB only, in the beta' })
+    expect(blocks.everb).toMatchObject({ kind: 'usb-only', reason: 'USB only' })
+    expect(blocks.everb.detail).not.toMatch(/beta/)
     expect(libraryCompatibility(false, ['everb'], false, ['everb'], published).blocks.everb).toBeUndefined() // in the set already: removable
     const html = renderToStaticMarkup(createElement(BetaUi, { value: false }, createElement(MachineLibrary, {
       device: DEVICES_BY_ID.octatrack, query: '', octatrackModules: [everb], octatrackSelected: [], onToggleOctatrack: noop,
@@ -69,6 +76,32 @@ describe('a module only the Modwerk base can load (usb-only.ts)', () => {
       viewedModuleVersions: {}, moduleBaseline: [],
     })))
     expect(html).toMatch(/<button[^>]*class="add-button is-blocked"[^>]*disabled/)
-    expect(html).toContain('USB only, in the beta')
+    expect(html).toContain('USB only')
+    expect(html).not.toContain('in the beta')
+  })
+})
+
+describe('a module with no USB package (card only)', () => {
+  const marked = (beta: boolean, id: string) => renderToStaticMarkup(createElement(BetaUi, { value: beta }, createElement(MachineLibrary, {
+    device: DEVICES_BY_ID.octatrack, query: '', octatrackModules: [MODULES.find(module => module.id === id)!], octatrackSelected: [], onToggleOctatrack: noop,
+    digiSelected: { digitakt: [], 'digitakt-ii': [], digitone: [], 'analog-rytm-mkii': [] }, onToggleDigi: noop, family: 'all', onFamilyChange: noop, sort: 'collection',
+    onSortChange: noop, statistics: [], octatrackConflicts: [], octatrackBlocks: {}, comparison: [], onCompare: noop, onOpenComparison: noop,
+    viewedModuleVersions: {}, moduleBaseline: [],
+  })))
+  it('is the sync dialog’s card-only list, and the owner’s card-only approvals', () => {
+    const cardOnly = MODULES.filter(module => moduleCardOnly(module.id)).map(module => module.id).sort()
+    expect(cardOnly).toEqual(MODULES.filter(module => !isModulePaused(module.id) && !USB_MODULE_IDS.includes(module.id)).map(module => module.id).sort())
+    expect(cardOnly).toEqual(cardOnlyApprovals.modules.map(record => record.module).sort())
+    expect(cardFallbackReason()).toContain('for modules that have no USB version yet (')
+  })
+  it('says Card only on its library card on the Octatrack base path, and nothing extra without it', () => {
+    const id = MODULES.find(module => moduleCardOnly(module.id))!.id
+    const html = marked(true, id)
+    expect(html).toContain('add-block-chip is-card-only')
+    expect(html).toContain('Card only')
+    expect(html).toContain('has no USB version yet')
+    expect(html).not.toContain('is-blocked') // it can still be added, for the card build
+    expect(marked(false, id)).not.toContain('Card only')
+    expect(marked(true, 'miniverb')).not.toContain('Card only')
   })
 })

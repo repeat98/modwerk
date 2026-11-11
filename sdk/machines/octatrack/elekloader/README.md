@@ -102,7 +102,9 @@ entry) also needs this regeneration.
 USB Audio is part of the base: its output layout sets the USB descriptors, so each layout is its own base, sent over
 USB like any base update when a module set asks for another layout (`src/engine/elekloader/base-variants.ts`). The
 command above builds the twenty-channel default and, with `--usb-audio-variants`, the five other layouts and USB MIDI
-alone (`off`). `build_core.py` links the USB sources last and pads them to a fixed reserve (`USB_RESERVE`: 8 KiB of
+alone (`off`). The committed package stays the twenty-channel layout, which every other layout is a patch against, but the
+site installs `off` when no module set asks for a layout (`MEMBER_LAYOUT`, owner, 11 November 2026): `off` patches four
+stock audio sites fewer, so as the package it would fail the rule below. `build_core.py` links the USB sources last and pads them to a fixed reserve (`USB_RESERVE`: 8 KiB of
 code, 2.5 KiB of data, 96 KiB of bss), so every layout links everything else at the same addresses and one set of
 base-bound packages fits each. For every variant the script proves it: the controller packages encode byte for byte
 as on the default, `base_bound.py bind` gives the same binding but for the identity, the variant patches no stock site
