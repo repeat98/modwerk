@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.3.0-experimental",
+    "date": "2026-11-11",
+    "changes": [
+      "FIN's knob is now RATE on every sound, and is called RATE everywhere, LFO destinations too.",
+      "No more SMP RATE row or knob tap: fine tuning lives on TUN.",
+      "RATE starts at +63 (normal speed) on a new or cleared sound.",
+      "Sounds saved with FIN at +0 now load stopped: turn RATE up to +63."
+    ]
+  },
+  {
     "version": "0.2.0-experimental",
     "date": "2026-11-11",
     "changes": [

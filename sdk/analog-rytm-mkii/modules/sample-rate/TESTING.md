@@ -29,6 +29,34 @@ Everything below was observed in rytm-emu on the named build. Nothing has run on
 - A core-only image, same stock and core, for comparison.
 - Emulator: rytm-emu `c5732f0`, headless `dtboot`, JIT on. One generated sample, RAMP, 23,777 frames (odd, so STA and END fall on no round multiple), on BD with LOP ON. Audio is dtboot's `--wav`. Voice words are read with `DTBOOT_PEEK`: step at rec + 12, position at rec + 4, effective FIN at 0x8000f7cc. A click means a sample-to-sample step over 40, or six times the median, on a ramp whose normal step is below 2; each run also flags the trig's own attack, which is not counted.
 
+## 0.3.0: FIN is RATE on every sound (2026-11-11)
+
+Everything in this section ran in rytm-emu (`c5732f0`, RAMP on BD, LOP ON) unless it says unit. Emulator results are not hardware evidence.
+
+- SR30/SR31/SR32 (vendored core-ar2 0.7 + this source as it grew; SR32 `6c18cead…`): with no switch, BD's saved FIN +0 plays as a stop (step word 0); CC 25 127 gives 1x (0x08000000), CC 25 0 gives -1x (0xf8000000), CC 25 64 a stop again.
+- Names: FIN's row now points at RATE and Rate, and the two name gates are gone: the SAMPLE page knob and the header while turning read RATE, and the LFO destination list reads SAMP:Rate (0.2.0 read SAMP:Fine Tune there).
+- Default: clearing the SAMPLE page (SMPL held, PLAY) sets BD's FIN target to 0x7f00 on SR31; SR07 (0.1.1) sets 0x4000.
+- Rig cases on SG02 (`3b9aba2d…`, the author's private test base + this source), emulator: fine-tun, coarse-tun, fine-lock, rate-always (label RATE, CC 25, a tap of encoder B changes nothing) and rate-default pass; func-tun is unit only. In rytm-emu stock's undo of a page clear did not undo it.
+- Independent code review: no defect in the link or audio path; one change taken (a track's STA and END swap once a block even if two voices were its own).
+- Source (0.3.0-experimental): fingerprint `8b335547…9144` (`evidence.sourceSha256`).
+
+Hardware, 11 Nov 2026: npp1993's Analog Rytm MKII (OS 1.74, RB08 flashed again by the author), scratch project, SG02 (`3b9aba2d…`, image CRC `38dd88f8`) booted from RAM, flash untouched, run by the author's automated rig over USB with the author's go; no person at the unit. 6 cases pass in two runs in a row (one recording the unit references):
+
+| Case (unit) | Measured |
+| --- | --- |
+| sample-rate-rate-always | knob B reads RATE at rest; CC 25 127 and 64 give 0x7f00 and 0x4000; a tap of encoder B leaves 0x7f00 and the screen as it was |
+| sample-rate-rate-default | from 0x4000, clearing the SAMPLE page gives 0x7f00 |
+| sample-rate-fine-tun | 0x400a, 0x3ffa, 0x4000; +0.04, -0.02, (0); CC 24 back to 0x4000 |
+| sample-rate-coarse-tun | 0x420a, 0x410a; +2.04 |
+| sample-rate-func-tun | 0x5800 (stock's jump to +24) |
+| sample-rate-fine-lock | the held trig's lock reads +0.05, inverted |
+
+Playhead, the rig on SG02 the same day (no checks, judged by eye from screens and BD's voice position, voice 0 record +4 of 0x2cf9 frames): with the scratch kit's sample looping, RATE set by CC 25, SMPL WAVEFORM's line sat where the voice was: 30 % at 1x (voice 30 %), about 8 % at 0.125x (voice 9 %), and moving back in reverse at -0.5x; at a stop the voice held 0x2cc0 for 1.5 s, at 99.5 %, where the line is hidden by the edge dots. An LFO on RATE moves the same word; in rytm-emu with an LFO on SAMP:Rate the line matched the voice at eight reads.
+
+Lock in cents across a save, as reported by the author on SG02, 11 Nov 2026: a trig on BD with TUN locked to +0.04, the project saved, SG02 booted from RAM again, the project reloaded: the lock reads +0.04. (The rig's own try kept no unsaved edit: a RAM boot reloads the project as last saved.) The author also reports hearing an LFO on RATE change the speed, and, on SG02, SMPL WAVEFORM's playhead moving with an LFO on RATE. Before that, a QPERF performance setup in the scratch project held RATE (and the FILTER page) still, so neither the LFO nor the knobs moved them; performance and scene values are written into the effective words after stock's glide, so a lock on RATE hides everything else on it. Clearing it brought both back.
+
+Not covered: how RATE and the cents sound beyond that report, pads, stock OS loading a sound saved with cents, NRPN, two voices, CPU load.
+
 ## 0.2.0: fine TUNE and the switch without a glide (2026-11-11)
 
 Everything in this section ran in rytm-emu unless it says unit. Emulator results are not hardware evidence.
