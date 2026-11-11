@@ -1,10 +1,12 @@
-# Sample Playback Rate
+# Fine Tune + Sample Rate
 
-An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.1.0-experimental, OS 1.74 with core-ar2 0.7.
+An Analog Rytm MKII mod by Nathaniel Pavel (@npp1993). Version 0.2.0-experimental, OS 1.74 with core-ar2 0.7. Called Sample Playback Rate before 0.2.0; its id stays `sample-rate`.
 
 ## Overview
 
-Sample Playback Rate gives a sample a pure speed control, the Octatrack's RATE with its setting on PTCH: no time stretch, just the sample played faster or slower, down to a stop and on into reverse. Stock's pitch stops at a quarter of the speed. RATE carries on to zero.
+TUN on the SAMPLE page turns in cents: a plain turn moves 1 cent a step, faster as you spin it, and a press and turn moves whole semitones and keeps the cents. The value reads +3.07; whole semitones read as stock, +3. The cents are kept in TUN's own value, which stock's engine already plays and stock's sound, kit and SysEx already save, so a saved sound plays the same pitch on stock OS, which shows only the whole number. This works on every sound, RATE or not.
+
+RATE gives a sample a pure speed control, the Octatrack's RATE with its setting on PTCH: no time stretch, just the sample played faster or slower, down to a stop and on into reverse. Stock's pitch stops at a quarter of the speed. RATE carries on to zero.
 
 Switch it on for a sound with SMP RATE in SOUND SETTINGS, or by tapping FIN's knob on the SAMPLE page. The knob then reads RATE, +63 to -64. +63 plays at normal speed, 0 stops the sample, -64 plays it backward at normal speed, and the speed scales in a straight line between them. TUN stays as it is and multiplies RATE, up to stock's 4x.
 
@@ -16,11 +18,12 @@ The setting belongs to the sound: it saves with it and it is off by default. A s
 
 | Control | Where | Values |
 | --- | --- | --- |
+| TUN | SAMPLE page, encoder A | -24.00 to +24.00 semitones. Turn: 1 cent a step, with acceleration. Press and turn: whole semitones, cents kept. FUNC + turn: stock's jump to -24, 0 or +24. |
 | SMP RATE | SOUND SETTINGS, under SMP: | A checkbox. Clear: stock. Checked: FIN is RATE on this sound. LEFT and RIGHT set it, YES turns it over. |
 | Tap of encoder B | SAMPLE page, either view | Turns SMP RATE over for the selected sound: press and let go within about 0.4 s. The first two encoder steps of a press are ignored, so a click that nudges the knob still counts. Stock's press and hold are otherwise unchanged. |
 | RATE | SAMPLE page, encoder B (FIN's knob) | +63 to -64. +63 is 1x, +32 is 0.5x, 0 stops, -32 is -0.5x, -64 is -1x. |
 
-Switching on takes a FIN at its rest (+0) to RATE +63, so the sound keeps playing at normal speed. Switching off takes RATE +63 back to FIN +0. Any other value stays as it is, so turning the row off and on again keeps a RATE you set, and a sound with a real detune keeps that number. A detuned sound therefore starts slow: FIN +10 reads RATE +10, 0.16x.
+Switching on takes a FIN at its rest (+0) to RATE +63, so the sound keeps playing at normal speed. Switching off takes RATE +63 back to FIN +0. Both happen at once: for about 0.1 s after a switch FIN skips stock's glide, so the speed does not dip and the pitch does not slide. Any other value stays as it is, so turning the row off and on again keeps a RATE you set, and a sound with a real detune keeps that number. A detuned sound therefore starts slow: FIN +10 reads RATE +10, 0.16x.
 
 ## Usage
 
@@ -45,6 +48,7 @@ RATE replaces FIN in the sample's pitch. TUN, the trig's note on a chromatic tra
 
 ### Changes to stock flows
 
+- **TUN's turn.** What changes: a plain turn of TUN moves 1 cent a step instead of a semitone, and a press and turn moves one semitone a step instead of stock's fast turn. Why: a sample needs tuning between semitones, and with RATE on FIN no longer detunes. The knob turns as stock's STA and END do, fine plain and coarse pressed. What you see: the value with two places when it is between semitones. FUNC + turn, CC 24 and every other way to set TUN are stock's. It applies only in a build with this mod. Loop Sync takes FUNC + TUN's counts in `ev_enc`, before stock turns them (read in its code, not run beside it).
 - **A new row in SOUND SETTINGS.** What changes: SMP RATE sits after SMP:, with LEGACY FX SEND one row lower. Why: the setting belongs to the sound, as ENV RESET and CHROMATIC do, and SOUND SETTINGS is where those live; taking FIN's knob for good, or a FUNC gesture on it, was considered, but Loop Sync holds FUNC + TUN and FIN, and a sound must keep playing as stock until asked. What you see: one more row, a clear checkbox like LEGACY FX SEND's. It applies only in a build with this mod. Checked beside it: the list scrolls, the rows above it stay stock's, and LEFT, RIGHT and YES act on this row alone. Env Reset Amp was not run beside it.
 - **FIN's name and value on a sound with RATE on.** What changes: on the SAMPLE page FIN's label and the header read RATE, and the value keeps stock's -64 to +63. Why: the knob no longer does what FIN says. It follows the selected track's sound, and a sound with the row off shows stock. LFO destination lists and other screens still say FIN, and a held trig's sound lock shows the track's own name for the knob.
 - **A tap of FIN's knob.** What changes: on the SAMPLE page a short press of encoder B turns SMP RATE over. The first two encoder steps of any plain press of that knob are ignored, so a press and turn starts two steps later than on stock. Why: switching FIN and RATE while working on a sound beats a menu trip. What you see: the label and value change at once; stock's press still shows the parameter. It applies only in a build with this mod, and SOUND SETTINGS does the same job. A press with a trig, FUNC or NO held, with a pad held in scene or performance mode, one held past about 0.4 s, or one in running live recording stays stock's, so clearing locks is untouched. Checked beside it: other knobs, press and turn, the sequencer playing. This takes a stock gesture's tap, so it needs the owner's agreement.
@@ -54,7 +58,8 @@ RATE replaces FIN in the sample's pitch. TUN, the trig's note on a chromatic tra
 
 - OS 1.74 only, with core-ar2 0.7. No other module is needed. It links beside Pipo Loop, Silent Pad+Trig, Loop Sync and Filter Hz, with no shared sites.
 - With LOP PIPO, Pipo Loop's turns stayed exact in rytm-emu at every RATE tried, forward, backward and below one frame a block; a unit has to confirm it.
-- Sites: the audio interrupt just before the sample prefetch (0x4012112c), TUN and FIN's read and the step's write in the prefetch's rate loop (0x4011c644, 0x4011c686), the routine that applies a sound's settings to a track (0x4011f642), the parameter short and long name routines (0x400a9000, 0x400a9022) and SoundSetupMenuView's constructor after its SMP: row (0x400ef51c) and stock's sound page key handler on a knob press (0x4003a5fc). It subscribes to `ev_tick` and `ev_enc` to time the tap. Storage: one sound-scope bit.
+- Sites, fine TUNE: stock's add of a turn to a value (0x400a88ea), where a plain turn of TUN becomes cents; one data word, TUN's fine-lock flag in its parameter row (0x401c03c8); TUN's turn profile in its RAM record (written each UI tick); the value text through core-ar2's `core_params`.
+- Sites, RATE: the audio interrupt just before the sample prefetch (0x4012112c), TUN and FIN's read and the step's write in the prefetch's rate loop (0x4011c644, 0x4011c686), the routine that applies a sound's settings to a track (0x4011f642), the parameter short and long name routines (0x400a9000, 0x400a9022) and SoundSetupMenuView's constructor after its SMP: row (0x400ef51c) and stock's sound page key handler on a knob press (0x4003a5fc). It subscribes to `ev_tick` and `ev_enc` to time the tap. Storage: one sound-scope bit.
 - RATE never goes above 1x by itself, as on the Octatrack. TUN does: stock's ceiling of about 4x either way stands, set by its 140-frame read window.
 - Below 0 the module swaps the effective STA and END before stock's prefetch reads them, so stock plays the sample backward. A change of direction on a looping voice waits until it is 32 frames clear of STA and END: about 0.7 ms at 1x, longer as RATE nears zero (53 ms at 1/64x). A trig does not wait.
 - With LOP OFF, once the sample has played out, changing RATE does not bring it back: trig again.
@@ -63,7 +68,9 @@ RATE replaces FIN in the sample's pitch. TUN, the trig's note on a chromatic tra
 - The row's setting is written to the stored kit at once, as all core-ar2 mod storage is; FIN follows stock's own kit save.
 - The setting is kept only by builds with the same storage layout: a module added to a configuration later keeps it, a fresh layout loads it as OFF.
 - Saving to and loading from SOUND MANAGER is not confirmed on a unit. Stored sounds often gave ERROR on LOAD TO TRACK there, sounds with nothing to do with RATE included, and the one load that worked came back with SMP RATE clear. Stock has not been compared. In rytm-emu a sound stored to an empty slot keeps the setting. Kits, power cycles and track copies keep it on a unit.
-- Switching on while a sample plays can dip its speed for a moment: RATE starts at once, and FIN takes stock's glide of about 22 ms to reach +63. This is from the code, not heard.
+- MIDI CC 24 sets TUN in whole semitones and clears the cents, as stock's CC does. NRPN keeps them to 1/128 semitone.
+- TUN's cents are shown on the SAMPLE page only: LFO destinations, a sound lock's list and stock OS show the whole number. The pitch is the same everywhere.
+- A TUN lock in cents keeps its cents through a pattern save because TUN's row now carries stock's fine-lock flag, as STA and END do: the pattern saves one more lock lane for that track, of stock's 72, and stock OS loads it. A pattern saved by a build without this mod drops the cents of such locks.
 - A RATE of 0 reads as a FIN at rest, so switching off and on takes it to +63.
 - Not tested on a unit: see [TESTING.md](TESTING.md).
 
@@ -77,6 +84,6 @@ Original code by Nathaniel Pavel (@npp1993), GPL-3.0-or-later ([LICENSE](LICENSE
 
 ## Screens and audio
 
-Screenshots are rytm-emu captures of build SR06 ([media/capture.json](media/capture.json)). No audio preview yet.
+Screenshots are rytm-emu captures of build SR06 and SR07 (0.1.x) ([media/capture.json](media/capture.json)). No audio preview yet.
 
 ![SMP RATE clear](media/row-off.png) ![Another track's sound keeps FIN](media/other-track-fin.png)

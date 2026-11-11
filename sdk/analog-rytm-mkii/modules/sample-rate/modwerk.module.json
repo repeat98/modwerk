@@ -1,8 +1,8 @@
 {
   "schemaVersion": 3,
   "id": "sample-rate",
-  "name": "Sample Playback Rate",
-  "version": "0.1.1-experimental",
+  "name": "Fine Tune + Sample Rate",
+  "version": "0.2.0-experimental",
   "machine": "analog-rytm-mkii",
   "category": "playback",
   "exclusive": false,
@@ -17,28 +17,30 @@
     "npp1993"
   ],
   "presentation": {
-    "label": "SAMPLE PLAYBACK RATE",
+    "label": "FINE TUNE + SAMPLE RATE",
     "family": "Sample playback",
-    "summary": "FIN's knob becomes RATE, sound by sound: pure sample speed down to a stop and into reverse, like the Octatrack's RATE on PTCH. Tap the knob to switch.",
-    "overview": "Sample Playback Rate gives a sample a pure speed control: no time stretch, just the sample played faster or slower, down to a stop and on into reverse. Switch it on for a sound in SOUND SETTINGS with SMP RATE, and FIN's knob on the SAMPLE page reads RATE, +63 to -64: +63 plays at normal speed, 0 stops, -64 plays backward at normal speed, in a straight line between them, as the Octatrack's RATE with its setting on PTCH. Stock's pitch stops at a quarter of the speed. A trig below 0 starts from END. The setting saves with the sound and is off by default, so a sound plays stock until you ask.",
+    "summary": "TUN turns in cents, press and turn for semitones; FIN's knob can become RATE, pure sample speed down to a stop and into reverse. Tap the knob to switch.",
+    "overview": "Fine Tune + Sample Rate gives a sample's pitch and speed finer control on the SAMPLE page. TUN turns 1 cent a step, faster as you spin it; press and turn for whole semitones, which keep the cents. The value reads +3.07, and whole semitones read as stock. The cents are kept in TUN itself, so a saved sound plays the same pitch on stock OS, which only shows the whole number. RATE is a pure speed control: switch it on for a sound with SMP RATE in SOUND SETTINGS, or tap FIN's knob, and FIN's knob reads RATE, +63 to -64: +63 plays at normal speed, 0 stops, -64 plays backward at normal speed, in a straight line between them, as the Octatrack's RATE with its setting on PTCH. Stock's pitch stops at a quarter of the speed. A trig below 0 starts from END. The setting saves with the sound and is off by default.",
     "highlights": [
+      "Tune a sample in cents: turn TUN, press and turn for semitones.",
+      "Fine tuning saves in the sound itself and plays the same on stock OS.",
       "Slow a sample to a dead stop and run it backward from one knob.",
       "Exactly the Octatrack's range: +63 is 1x, 0 stops, -64 is -1x.",
-      "Per sound, saved with it, off by default: every other sound stays stock.",
-      "Takes parameter locks: one trig backward from END, the next forward.",
+      "Switching between FIN and RATE is instant, with no dip in speed or slide in pitch.",
       "Works beside LOP PIPO from Pipo Loop, without needing it."
     ],
     "usage": [
-      "Put a long sample on a track, with LOP ON. Press SMPL and tap encoder B: FIN's knob reads RATE.",
-      "Play the pad. Turn RATE down from +63: the sample slows like a stopping turntable and rests at 0.",
-      "Keep turning below 0: it runs backward, smoothly through the stop. A new trig now starts from END.",
-      "Hold a trig in GRID RECORDING and turn RATE to lock it on that step: a trig at -63 plays backward from END, and the next trig plays forward again."
+      "Press SMPL and turn TUN slowly: it moves 1 cent a step and reads +0.01, +0.02. Spin it faster to cover more ground.",
+      "Press TUN's knob and turn: whole semitones, the cents kept.",
+      "Put a long sample on a track, with LOP ON. Tap encoder B: FIN's knob reads RATE. Play the pad and turn RATE down from +63: the sample slows like a stopping turntable and rests at 0.",
+      "Keep turning below 0: it runs backward, smoothly through the stop. A new trig now starts from END."
     ]
   },
   "access": {
-    "location": "SOUND SETTINGS: SMP RATE, under SMP:. Or tap FIN's knob (encoder B) on the SAMPLE page.",
+    "location": "SAMPLE page: TUN (encoder A) for fine tuning. For RATE, SOUND SETTINGS: SMP RATE, under SMP:, or tap FIN's knob (encoder B).",
     "steps": [
       "Select a track whose sound plays a sample, and press SMPL.",
+      "Turn encoder A (TUN) for cents; press and turn it for semitones.",
       "Tap encoder B: the knob reads RATE and the value stays where it was unless FIN was +0, which goes to +63.",
       "Or press FUNC + FILTER, choose SOUND SETTINGS, go to SMP RATE and press RIGHT: the box is checked."
     ],
@@ -48,6 +50,12 @@
     ]
   },
   "controls": [
+    {
+      "name": "TUN",
+      "default": 0,
+      "doc": "SAMPLE page, encoder A. -24.00 to +24.00 semitones. A plain turn moves 1 cent a step, with acceleration; press and turn moves whole semitones and keeps the cents. FUNC + turn jumps -24, 0, +24 as stock. Held trigs' locks take cents the same way. Whole values read as stock (+3), others with two places (+3.07).",
+      "labels": null
+    },
     {
       "name": "SMP RATE",
       "default": 0,
@@ -78,14 +86,17 @@
     "conflicts": [],
     "limitations": [
       "Built for OS 1.74 only, with core-ar2 0.7.",
-      "Run on a unit by the author as SP03 to SP13 (TESTING.md); two voices together, performance and scene locks and sound browser load are from rytm-emu or not run there.",
+      "Run on a unit by the author as SP03 to SP13 (0.1.x, TESTING.md); 0.2.0 by the author's automated rig on the unit (TESTING.md). Two voices together, performance and scene locks and sound browser load are from rytm-emu or not run there.",
+      "MIDI CC 24 sets TUN in whole semitones and clears its cents, as stock's CC does; NRPN keeps them to 1/128 semitone.",
+      "Other screens (LFO destinations, a sound lock's list) and stock OS show TUN as a whole number.",
+      "A pattern with TUN locks in cents saves one more lock lane per track, of stock's 72; stock OS loads those locks with their cents.",
       "Saving to and loading from SOUND MANAGER is not confirmed on a unit: stored sounds often gave ERROR there, RATE or not, and one that loaded came back with SMP RATE clear (README).",
       "RATE never goes above 1x by itself; TUN does, to stock's ceiling of about 4x.",
       "On stock OS a saved sound plays FIN as FIN: RATE +63 is about a semitone sharp.",
       "With LOP OFF, once the sample has played out, changing RATE does not bring it back: trig again.",
       "A change of direction on a looping voice waits until it is 32 frames clear of STA and END; a trig does not wait.",
       "LFO destination lists and other screens still say FIN.",
-      "Sound locks, scene locks and performance locks have not been run."
+      "Sound locks, scene locks and performance locks on RATE have not been run."
     ]
   },
   "platform": {

@@ -1,4 +1,4 @@
-# Sample Playback Rate (sample-rate) — test report
+# Fine Tune + Sample Rate (sample-rate) — test report
 
 Everything below was observed in rytm-emu on the named build. Nothing has run on a unit, and the emulator is not hardware evidence: the Hardware section is empty until the author reports from one.
 
@@ -28,6 +28,30 @@ Everything below was observed in rytm-emu on the named build. Nothing has run on
 - Build SP13 (as SR15, with Pipo Loop `b0ed4fe7`; test image only): `.syx` `221e94bca82b49a56f4179a51df6e01ed472cdcff311475b1ea38a3c86834d5d`.
 - A core-only image, same stock and core, for comparison.
 - Emulator: rytm-emu `c5732f0`, headless `dtboot`, JIT on. One generated sample, RAMP, 23,777 frames (odd, so STA and END fall on no round multiple), on BD with LOP ON. Audio is dtboot's `--wav`. Voice words are read with `DTBOOT_PEEK`: step at rec + 12, position at rec + 4, effective FIN at 0x8000f7cc. A click means a sample-to-sample step over 40, or six times the median, on a ramp whose normal step is below 2; each run also flags the trig's own attack, which is not counted.
+
+## 0.2.0: fine TUNE and the switch without a glide (2026-11-11)
+
+Everything in this section ran in rytm-emu unless it says unit. Emulator results are not hardware evidence.
+
+The switch glide, measured. Build SR07 (0.1.1, `59efe414…`) against SF01 (core-ar2 0.7 + this module with the snap alone, `8602953a…`), rytm-emu `c5732f0`, BD on the 23,777-frame RAMP, LOP ON, BD held, encoder B tapped on, then off, `DTBOOT_PEEK` every 1M instructions (5 ms):
+
+| | 0.1.1 (SR07) | 0.2.0 (SF01) |
+| --- | --- | --- |
+| FIN's effective word after the tap on | 0x4da0, 0x571b, 0x5fbb ... 0x7efe after about 200 ms | 0x7f00 at the first read |
+| Step word (1x = 0x08000000) after the tap on | 0x01b40000 (0.21x), back over the glide | 0x08000000 throughout |
+| Loop period through the tap on (WAV, ramp wraps) | 0.5201 s (0.4954 s elsewhere: 25 ms lost) | 0.4954 s |
+| Loop period through the tap off | 0.4941 s (13 ms gained: the pitch slide) | 0.4954 s |
+
+Fine TUNE, raw dtboot on SF04 (`cfd2f464…`): turns of 4 counts at 100M took TUN's word 0x4000, 0x4003, 0x4005, 0x4008, 0x400a (+1 cent a step, each on the cent grid); with encoder A pressed, 0x4008 to 0x4108 and back (a semitone, cents kept); the knob read +0.02; a held trig's lock in GRID RECORDING read +0.01.
+
+Rig cases, `tools/cases/sample-rate/` on the author's private rig (not in this repository), emulator `rytm-emu-ramboot`, image SF05 (`0cb4620e…`: the rig's base with the link + this source) against SO05 (`f2bea70c…`: the same with 0.1.1):
+
+| Case | SF05 | SO05 (0.1.1) |
+| --- | --- | --- |
+| sample-rate-fine-tun: nudges +3, -5, +2 on TUN | +4, -6, +2 cents: words 0x400a, 0x3ffb, 0x4000; reads +0.04, -0.02 | +4, -6 semitones (the same steps) |
+| sample-rate-coarse-tun: pressed +2, -1 from +0.04 | 0x420a, 0x410a (+2.04, +1.04) | 0x5800, 0x5000 (8 semitones a step) |
+| sample-rate-fine-lock: held trig, second nudge | reads +0.05, inverted | not compared |
+| sample-rate-switch-snap: FIN read right after each tap | 0x7f00, 0x4000: pass | 0x782e, 0x40b2: fail (mid-glide) |
 
 ## 0.1.1: idle CPU (2026-11-06)
 
