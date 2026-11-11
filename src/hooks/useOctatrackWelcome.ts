@@ -19,9 +19,12 @@ function rememberWelcome() { try { localStorage.setItem(KEY, 'seen') } catch { /
  * visible and no other dialog is open (checked every 1.5 s, as the guide's prompt is), and is answered for good in this browser by any choice (`close`).
  * - `due`: it is still to be shown (also while a member's record is being read), so other prompts wait.
  * - `shown`: it opened on this visit, so other prompts keep away until the next one.
+ * Someone who opens the install guide by themselves (`guideOpen`) is past it: it counts as answered.
  */
-export function useOctatrackWelcome(memberId: string | null, released: boolean, here: boolean, link: OctatrackLink | null) {
+export function useOctatrackWelcome(memberId: string | null, released: boolean, here: boolean, link: OctatrackLink | null, guideOpen = false) {
   const [seen, setSeen] = useState(welcomeSeen), [open, setOpen] = useState(false), [shown, setShown] = useState(false)
+  if (guideOpen && !seen) setSeen(true)
+  useEffect(() => { if (guideOpen) rememberWelcome() }, [guideOpen])
   // The member's record: whether their units never reported a base (true), read once per member.
   const [record, setRecord] = useState<{ memberId: string; never: boolean }>(), never = record && record.memberId === memberId ? record.never : undefined
   const unit = useSyncExternalStore(link?.subscribe ?? noSubscription, () => unitForPrompt(link?.getState()), () => 'none')

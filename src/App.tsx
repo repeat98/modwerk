@@ -227,7 +227,7 @@ export default function App() {
   // on the visit it opened, the guide and the beta invitation keep away.
   const welcomeHere = !sessionLoading && !usbLinkPreview && (route === 'octatrack' || route.startsWith('octatrack/') || route === 'configuration' || route === 'library'
     || LIBRARY_CATEGORIES.includes(route as ModuleCategory) || route === 'module-sets' || route.startsWith('module-set/') || !!detailModule)
-  const welcome = useOctatrackWelcome(session.user?.verified ? session.user.id : null, OCTATRACK_BASE_RELEASED && !sessionLoading, welcomeHere, usbLink ?? null)
+  const welcome = useOctatrackWelcome(session.user?.verified ? session.user.id : null, OCTATRACK_BASE_RELEASED && !sessionLoading, welcomeHere, usbLink ?? null, !!baseInstall)
   const baseInstallPrompt = useBaseInstallPrompt(session.user?.verified ? session.user.id : null, !welcome.due && !welcome.shown && !sessionLoading && !!usbLink && !usbLinkPreview && !accountRoute && !developerRoute && !route.startsWith('submit') && !['admin', 'review', 'privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route), usbLink ?? null,
     octatrackUi && (route === 'octatrack' || route.startsWith('octatrack/') || route === 'configuration'))
   // Integration points for the diagnostics stream, connected here and nowhere else: the base install guide's last step,

@@ -114,6 +114,18 @@ describe('the welcome to modules over USB', () => {
     await vi.waitFor(() => expect(guide()).toBeDefined(), { timeout: 4000 })
     expect(welcome()).toBeUndefined()
   }, 20000)
+  it('counts as answered once the member opens the install guide by themselves', async () => {
+    await open('library')
+    const install = await vi.waitFor(() => { const action = container.querySelector<HTMLButtonElement>('.instrument-action'); expect(action?.textContent).toBe('Install the base'); return action! })
+    expect(welcome()).toBeUndefined() // the sidebar's button before the welcome's first look, 1.5 s in
+    await act(async () => install.click())
+    await vi.waitFor(() => expect(guide()).toBeDefined())
+    await act(async () => guide()!.querySelector<HTMLButtonElement>('.base-install-close')!.click())
+    await wait(2000)
+    expect(welcome()).toBeUndefined()
+    await reload('library'); await wait(2000)
+    expect(welcome()).toBeUndefined()
+  }, 15000)
   it('in a browser without WebUSB, says so and makes the card firmware the way', async () => {
     delete (navigator as { usb?: unknown }).usb
     await open('library')
