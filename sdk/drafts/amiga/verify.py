@@ -25,9 +25,9 @@ def check(name, ok, detail=''):
 
 
 class Voice(ctypes.Structure):
-    _fields_ = [(name, ctypes.c_uint32) for name in ('rest', 'idle', 'left', 'held')] + [('l', ctypes.c_int32), ('r', ctypes.c_int32), ('phase', ctypes.c_uint32), ('al', ctypes.c_int32), ('ar', ctypes.c_int32),
+    _fields_ = [(name, ctypes.c_uint32) for name in ('rest', 'left', 'rem', 'back')] + [('l', ctypes.c_int32), ('r', ctypes.c_int32), ('phase', ctypes.c_uint32), ('al', ctypes.c_int32), ('ar', ctypes.c_int32),
                 ('count', ctypes.c_uint32), ('ic', ctypes.c_int32 * 4)] + [(name, ctypes.c_uint32) for name in (
-                    'pos', 'frac', 'window', 'grain', 'played', 'since', 'got', 'first', 'length', 'sample', 'flags')] + [
+                    'pos', 'window', 'grain', 'played', 'since', 'got', 'first', 'length', 'sample', 'flags', 'origin', 'end')] + [
                 ('last', ctypes.c_int32 * 2), ('off', ctypes.c_int32 * 2)] + [(name, ctypes.c_uint32) for name in (
                     'fade', 'jump', 'hi', 'floor', 'mix_from', 'mix_len', 'mix_wait', 'mix_k', 'mix_step', 'planned')] + [
                 ('hist', ctypes.c_int16 * 4096)]
@@ -37,19 +37,19 @@ with tempfile.TemporaryDirectory() as tmp:
     so = pathlib.Path(tmp) / 'amiga.so'
     subprocess.run(['cc', '-O2', '-shared', '-fPIC', '-DAMIGA_HOST', '-o', str(so), str(HERE / 'amiga.c')], check=True)
     lib = ctypes.CDLL(str(so))
-    lib.amiga_strt.restype = lib.amiga_frame.restype = lib.amiga_rate.restype = ctypes.c_uint32
+    lib.amiga_strt.restype = lib.amiga_frame.restype = ctypes.c_uint32
 
     def crunch(samples, srr, bits, led=0, voice=None):
         voice = voice or Voice(phase=0x10000)
         a = (ctypes.c_int32 * len(samples))(*samples)
-        lib.amiga_crunch(ctypes.byref(voice), a, len(samples) // 2, 16 * 65536 // (16 + srr), bits, led)  # srr: 16/(16+srr) of the rate
+        lib.amiga_crunch(ctypes.byref(voice), a, len(samples) // 2, srr, bits, led)
         return list(a)
 
     ramp = [((i * 0x01234567) & 0x7fffffff) - 0x40000000 for i in range(64)]
     check('SRR 0, BITS 16, LED off leaves every sample as it was', crunch(ramp, 0, 12) == ramp)
     out = crunch(ramp, 0, 4)
     check('BITS 8 keeps the top 8 bits', all(v & 0xffffff == 0 for v in out))
-    check('BITS 8 keeps the top 8 bits (below the input by less than a step)', all(0 <= i - o < 0x1000000 for o, i in zip(out, ramp)))
+    check('BITS 8 rounds to nearest (within half a step)', all(abs(o - i) <= 0x800000 for o, i in zip(out, ramp)))
     check('BITS 4 keeps the top 4 bits', all(v & 0x0fffffff == 0 for v in crunch(ramp, 0, 0)))
     top = crunch([0x7fffffff, -0x80000000], 0, 4)
     check('full scale does not wrap', top[0] > 0 and top[1] == -0x80000000, str(top))
@@ -66,9 +66,9 @@ with tempfile.TemporaryDirectory() as tmp:
         whole = crunch(ramp, 40, 4, led)
         parts = crunch(ramp[:22], 40, 4, led, v) + crunch(ramp[22:], 40, 4, led, v)
         check(f'split into two calls it renders the same (LED {led})', whole == parts)
-    garbage = Voice(held=0x5a5a5a5a, l=0x5a5a5a5a, r=0x5a5a5a5a, phase=0xa5a5a5a5)
+    garbage = Voice(l=0x5a5a5a5a, r=0x5a5a5a5a, phase=0xa5a5a5a5)
     check('a garbage state takes a sample at once', crunch(ramp, 127, 12, 0, garbage)[:2] == ramp[:2])
-    check('out-of-range controls are clamped', crunch(ramp, 10 ** 6, 255) == crunch(ramp, 240, 12))
+    check('out-of-range controls are clamped', crunch(ramp, 255, 255) == crunch(ramp, 127, 12))
 
     def tone(hz, n=4096, amp=0.5):
         return [int(amp * 0x7fffffff * math.sin(2 * math.pi * hz * (i // 2) / 44100)) for i in range(2 * n)]
@@ -99,22 +99,25 @@ with tempfile.TemporaryDirectory() as tmp:
         Returns (restarts, calls until OVER, the frames handed to the DSP)."""
         v = Voice()
         lib.amiga_note(ctypes.byref(v), window)
-        restarts, read, reader, stream, rested = [], 0.0, 0, [], 0
+        restarts, read, reader, stream = [], 0.0, 0, []
         play.rested = 0
         for n in range(calls):
             src = int(read + 16 * pitch) - int(read)
             read += 16 * pitch
             a = (ctypes.c_int32 * (2 * src))(*[wave_[(reader + i // 2) % W] for i in range(2 * src)])
             reader += src
-            if lib.amiga_rest(ctypes.byref(v), 16, src, spd * 64):  # as amiga_render: a note at rest skips the three
-                stream.extend(a[0::2])
-                play.rested += 1
-                continue
-            if smooth:
+            rest = lib.amiga_rest(ctypes.byref(v), 16, src, spd)  # as amiga_render: a note at rest only remembers and counts
+            if smooth and rest != 2:
                 lib.amiga_blend(ctypes.byref(v), a, src)
+            if smooth and not rest:
                 lib.amiga_declick(ctypes.byref(v), a, src)
             stream.extend(a[0::2])
-            at = lib.amiga_stretch(ctypes.byref(v), 16, src, spd * 64, 96 + grn * grn // 4, loop)  # spd 64: the note's own speed
+            if rest:
+                play.rested += 1
+                if rest == 1:
+                    lib.amiga_pass(ctypes.byref(v), 16, grn)
+                continue
+            at = lib.amiga_stretch(ctypes.byref(v), 16, src, spd, grn, loop)
             if at == OVER:
                 return restarts, n + 1, stream
             if at != KEEP:
@@ -128,9 +131,7 @@ with tempfile.TemporaryDirectory() as tmp:
     check('speed 1 at pitch 0 never restarts the reader', restarts == [], str(restarts[:3]))
     check('and hands the DSP the sample untouched', stream[:W] == wave_)
     check('and ends at the note\'s end', over is not None and abs(over * 16 - W) <= 2400, str(over))
-    check('and rests through nearly all of it', play.rested > 0.95 * W / 16, str(play.rested))
     restarts, over, stream = play(W, 64, 64, pitch=2.0)
-    check('an octave up it never rests', play.rested == 0, str(play.rested))
     cycle = 96 + 64 * 64 // 4
     check('an octave up, speed 1 restarts every cycle', len(restarts) > 10 and all(b[0] - a[0] in range(cycle, cycle + 17) for a, b in zip(restarts, restarts[1:])))
     check('each restart is where the sample would be at pitch 0', all(abs(at - t) <= 48 for t, at in restarts), str(restarts[:3]))
@@ -148,9 +149,51 @@ with tempfile.TemporaryDirectory() as tmp:
     check('a looped note wraps and never ends', over is None and restarts and all(0 <= at < W for _, at in restarts))
     restarts, over, stream = play(W, 64, 64, loop=1)
     check('a looped note at speed 1 and pitch 0 is left to stock\'s own loop', over is None and restarts == [], str(restarts[:3]))
-    check('and rests', play.rested > 19000, str(play.rested))
     check('a note that was not measured is left alone', play(0, 0, 0, pitch=2.0, calls=500)[:2] == ([], None))
     check('and rests whatever its pitch', play.rested >= 498, str(play.rested))
+
+    # A note at rest: speed 64 at the sample's own pitch, the reader where the note should be.
+    restarts, over, stream = play(W, 64, 64)
+    check('a note at its own speed and pitch rests through nearly all of it', restarts == [] and play.rested > 0.95 * W / 16, str(play.rested))
+    check('and still ends at its end', over is not None and abs(over * 16 - W) <= 2400, str(over))
+    play(W, 64, 64, pitch=2.0)
+    check('an octave up it never rests', play.rested == 0, str(play.rested))
+    play(W, 63, 64)
+    check('nor at any other speed', play.rested == 0, str(play.rested))
+
+    # RATE: the reader runs at rate/full of its speed, either way, and the place with it.
+    def rated(spd, rate, full, per, level, back=0, calls=20000):
+        v = Voice()
+        lib.amiga_note(ctypes.byref(v), W)
+        v.back = back
+        restarts, read = [], 0.0
+        for n in range(calls):
+            src = int(read + 16 * per) - int(read)
+            read += 16 * per
+            at = lib.amiga_stretch_rate(ctypes.byref(v), 16, src, spd, 64, 0, rate, full, level)
+            if at == OVER:
+                return restarts, n + 1
+            if at != KEEP:
+                restarts.append(at)
+                lib.amiga_seek(ctypes.byref(v), at)
+        return restarts, None
+    restarts, over = rated(64, 0x1f80, 0x3f00, 0.5, 1)
+    check('at half RATE the note lasts twice as long and nothing restarts', restarts == [] and over is not None and abs(over * 16 - 2 * W) <= 2400, f'{len(restarts)} {over}')
+    restarts, over = rated(64, 0x1f80, 0x3f00, 1.0, 0)
+    check('at half RATE an octave up it restarts every cycle and still lasts twice as long', len(restarts) > 20 and over is not None and abs(over * 16 - 2 * W) <= 2400, f'{len(restarts)} {over}')
+    restarts, over = rated(32, 0x4000, 0x4000, 1.0, 0, back=1)
+    check('backwards at half speed the note lasts twice as long too', len(restarts) > 20 and over is not None and abs(over * 16 - 2 * W) <= 2400, f'{len(restarts)} {over}')
+    v = Voice()
+    lib.amiga_note(ctypes.byref(v), W)
+    for _ in range(100):
+        lib.amiga_stretch(ctypes.byref(v), 16, 16, 64, 64, 0)
+    turned = lib.amiga_face(ctypes.byref(v), 1, 0)
+    check('a reader that turns round goes on from where it is, counted from the other end',
+          turned == 1 and v.back == 1 and v.grain == W - 1600 and v.played == 0 and v.pos == (W - 1600) << 6 and v.hi == v.floor == v.grain,
+          f'{turned} {v.grain} {v.pos >> 6}')
+    check('and one that does not turn changes nothing', lib.amiga_face(ctypes.byref(v), 1, 0) == 0 and v.grain == W - 1600)
+    check('PCH shifts a semitone for each twelfth root of two of length', all(abs(lib.amiga_shift(round(100 * 2 ** (k / 12))) - 1280 * k) <= 130 for k in range(13)))
+    check('PCH: half the length is an octave down, and never further than an octave', lib.amiga_shift(50) == -15360 and lib.amiga_shift(25) == -15360 and lib.amiga_shift(400) == 15360 and lib.amiga_shift(100) == 0 and lib.amiga_shift(0) == 0)
     restarts, over, stream = play(W, 64, 127, pitch=4.0)
     check('a long cycle two octaves up, beyond the memory, still restarts on time', len(restarts) > 5 and over is not None and abs(over * 16 - W) <= 5000, str(over))
 
@@ -163,17 +206,6 @@ with tempfile.TemporaryDirectory() as tmp:
     a = (ctypes.c_int32 * 4)(-0x80000000, 0x7fffffff, 0, 0)
     lib.amiga_declick(ctypes.byref(v), a, 2)
     check('a full-scale step neither wraps nor overflows', a[0] > 0x70000000 and a[1] < -0x70000000, f'{a[0]:x} {a[1]:x}')
-    pct = [lib.amiga_percent(v) for v in range(128)]
-    check('STCH reads 50 to 2100 percent, rising, then HOLD', pct[0] == 50 and pct[32] == 100 and pct[52] == 200 and pct[126] == 2100
-          and pct[127] == 0 and all(b > a for a, b in zip(pct, pct[1:127])), str(pct[:4]))
-    check('CYL reads 100 to 4132 samples, 1000 at 60', [lib.amiga_cycle(v) for v in (0, 60, 127, 999)] == [100, 1000, 4132, 4132])
-    hz = [lib.amiga_hz(v) for v in range(38)]
-    check('RATE reads a tracker\'s note rates, then the sample\'s own', hz[0] == 4143 and hz[29] == 22168 and hz[35] == 31388 and hz[36] == hz[37] == 44100
-          and all(abs(b / a - 2 ** (1 / 12)) < 0.01 for a, b in zip(hz, hz[1:36])), str(hz[:3]))
-    check('and stores at that share of 44.1 kHz', all(abs(lib.amiga_rate(v) / 65536 - hz[v] / 44100) < 1e-4 for v in range(38)))
-    check('PCH shifts a semitone for each twelfth root of two of length', all(abs(lib.amiga_shift(round(100 * 2 ** (k / 12))) - 1280 * k) <= 130 for k in range(13))
-          and lib.amiga_shift(200) == 15360 and lib.amiga_shift(2100) == 15360 and lib.amiga_shift(100) == 0 and lib.amiga_shift(50) == -15360
-          and lib.amiga_shift(0) == 0 and abs(lib.amiga_shift(71) + 7680) <= 200, str([lib.amiga_shift(x) for x in (100, 141, 200, 71, 50)]))
     for length in (200, 44100, 65536, 10_000_000, 44_860_416):
         worst = max(abs(lib.amiga_strt(at, length) * length / 32768 - at) for at in range(0, length - length // 100, max(1, length // 997)))
         check(f'STRT for a frame lands within the knob\'s step ({length} frames)', worst <= length / 32768 * 2 + 1, f'{worst:.0f}')
