@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "quick-velocity-aftertouch-assign-2026-11-11",
+  "about": "Modwerk source-only quick-velocity-aftertouch-assign package for Analog Rytm MKII OS 1.74, compiled from sdk/analog-rytm-mkii/modules/quick-velocity-aftertouch-assign.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "quick-velocity-aftertouch-assign-0.2.0-experimental-os1.74.elemod",
+      "sha256": "3bf4c38ed928656c2aceed148d9f8ecedfd84b25ffc626277a8bba3191527992",
+      "id": "quick-velocity-aftertouch-assign",
+      "version": "0.2.0-experimental",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-3.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "bd5068046a745670e78bcc4f229056070345bd96",
+        "path": "sdk/imports/packages/quick-velocity-aftertouch-assign/quick-velocity-aftertouch-assign-0.2.0-experimental-os1.74.elemod"
+      },
+      "title": "Quick Mod Assign",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [],
+      "summary": "Hold FIX, SAMPLER or LFO and turn a knob to link that parameter to velocity, aftertouch or the LFO.",
+      "description": "Hold FIX and turn a knob on a sound page to link that parameter to velocity, SAMPLER for aftertouch, or LFO to make it the LFO's destination; further turns set the amount or the LFO's depth. It fills the sound's own four velocity and four aftertouch mod slots and its LFO destination and depth, and while the key is held each linked knob shows its amount as a performance lock does.",
+      "category": "Performance",
+      "author": "npp1993",
+      "needs_core": "0.7",
+      "on_unit": "On an Analog Rytm MKII on OS 1.74, as reported by the author: 0.1 passed links, display, kit save, reload and power cycle (RC18, RC19, QM12 alone). 0.2.0's source (this package's) passed the test rig's six cases in QL13 beside Loop Sync and the author's hand checks of the LFO assign; this package itself has not run on a unit."
+    }
+  ]
+}
