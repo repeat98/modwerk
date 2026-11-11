@@ -177,12 +177,12 @@
     ]
   },
   "resources": {
-    "memoryBytes": 18572,
+    "memoryBytes": 26776,
     "fastBytes": 0,
     "load": {
-      "display": "Not measured yet",
-      "method": "unmeasured",
-      "conditions": "Measure with every track playing, parameters modulated and all eight macros assigned and moving."
+      "display": "Perform page within about a point of a stock page (DSP 97% vs 96% under heavy load)",
+      "method": "hardware",
+      "conditions": "Author's Digitakt I, OS 1.54, core 2.1, DigiChain 1.6, Digi Mono 0.13.3 and digihealth 1.0 (SYSTEM INFO, FAST AUDIO off), Overbridge connected, a MONO ENS note playing, 2026-11-10/11: stock page 96%, Perform page while turning an assigned knob 97%, no delay heard. Readings vary by a few points; read, not timed."
     }
   },
   "evidence": {
@@ -195,7 +195,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Built and linked by Modwerk’s vendored elekloader builder for OS 1.53 and 1.54; emulator checks of the pages on both releases; the author’s own observations on a unit are in TESTING.md. The evidence tier stays none until a version-matched hardware report is filed; audio timing, CPU load and project persistence across a power cycle are not qualified.",
+    "summary": "Built and linked by Modwerk’s vendored elekloader builder for OS 1.53 and 1.54; emulator checks of the pages on both releases; the author’s own observations on a unit are in TESTING.md. The evidence tier stays none until a version-matched hardware report is filed; the author's DSP readings under heavy load are in TESTING.md; audio timing and project persistence across a power cycle are not qualified.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial: move a track’s pitch from the Perform page",
@@ -243,7 +243,7 @@
         "type": "emulator",
         "release": "1.54",
         "moduleVersion": "0.1.3-experimental",
-        "imageSha256": "d7e22d37174e7f276f7805371a4f207c4d702631d179c8f51a89293709ede9c0",
+        "imageSha256": "76cd3b079851bd6f57e8d2d94424cae8a9ef96cec6b7040ee3c1f84d36da0d00",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     },
@@ -259,15 +259,15 @@
         "type": "emulator",
         "release": "1.54",
         "moduleVersion": "0.1.3-experimental",
-        "imageSha256": "d7e22d37174e7f276f7805371a4f207c4d702631d179c8f51a89293709ede9c0",
+        "imageSha256": "76cd3b079851bd6f57e8d2d94424cae8a9ef96cec6b7040ee3c1f84d36da0d00",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     },
     {
       "path": "media/assigned.png",
       "kind": "screenshot",
-      "caption": "Seven knobs assigned: A to D move a parameter of all tracks, E to G one track’s",
-      "alt": "Knobs A to D show the letter A for all tracks, with TUNE, SAMP, LOOP and F.FRQ under them; E, F and G show the track numbers 3, 2 and 3 with PLAY, PLAY and STRT; knob H is empty, on the Digitakt monochrome LCD",
+      "caption": "Seven knobs assigned: A, C and D move a parameter of all tracks, B and E to G one track’s",
+      "alt": "Knobs A, C and D show the letter A for all tracks, with TUNE, LOOP and F.TYP under them; B, E, F and G show the track numbers 8, 3, 2 and 2 with SAMP, PLAY, PLAY and SAMP; knob H is empty, on the Digitakt monochrome LCD",
       "credit": "Modwerk documentation capture; Elektron interface; ROMsets module",
       "license": "LicenseRef-Digi-UI-Documentation",
       "source": "original",
@@ -275,7 +275,7 @@
         "type": "emulator",
         "release": "1.54",
         "moduleVersion": "0.1.3-experimental",
-        "imageSha256": "d7e22d37174e7f276f7805371a4f207c4d702631d179c8f51a89293709ede9c0",
+        "imageSha256": "76cd3b079851bd6f57e8d2d94424cae8a9ef96cec6b7040ee3c1f84d36da0d00",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     },
@@ -291,15 +291,15 @@
         "type": "emulator",
         "release": "1.54",
         "moduleVersion": "0.1.3-experimental",
-        "imageSha256": "d7e22d37174e7f276f7805371a4f207c4d702631d179c8f51a89293709ede9c0",
+        "imageSha256": "76cd3b079851bd6f57e8d2d94424cae8a9ef96cec6b7040ee3c1f84d36da0d00",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     },
     {
       "path": "media/perform-edit.png",
       "kind": "screenshot",
-      "caption": "Perform Edit lists the knobs: A to D move one parameter of all tracks, E and F of tracks 3 and 2, all direction +",
-      "alt": "Perform Mode Edit with rows A to D set to ALL with SRC.TUNE, SRC.SAMP, SRC.LOOP and FLT.FREQ, row E to T3 SRC.PLAY and row F to T2 SRC.PLAY, all with +, on the Digitakt monochrome LCD",
+      "caption": "Perform Edit lists the knobs: A, C and D move one parameter of all tracks, B, E and F of tracks 8, 3 and 2, all direction +",
+      "alt": "Perform Mode Edit with rows A, C and D set to ALL with SRC.TUNE, SRC.LOOP and FLT.TYPE, row B to T8 SRC.SAMP, row E to T3 SRC.PLAY and row F to T2 SRC.PLAY, all with +, on the Digitakt monochrome LCD",
       "credit": "Modwerk documentation capture; Elektron interface; ROMsets module",
       "license": "LicenseRef-Digi-UI-Documentation",
       "source": "original",
@@ -307,7 +307,7 @@
         "type": "emulator",
         "release": "1.54",
         "moduleVersion": "0.1.3-experimental",
-        "imageSha256": "d7e22d37174e7f276f7805371a4f207c4d702631d179c8f51a89293709ede9c0",
+        "imageSha256": "76cd3b079851bd6f57e8d2d94424cae8a9ef96cec6b7040ee3c1f84d36da0d00",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     }

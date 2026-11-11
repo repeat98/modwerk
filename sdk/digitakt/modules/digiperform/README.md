@@ -103,14 +103,14 @@ The Perform page: TRIG pressed again on the TRIG page.
 
 Perform Quick Assign: FUNC and a knob’s push, then turn to choose the track.
 
-![Knobs A to D for all tracks (TUNE, SAMP, LOOP, F.FRQ), E to G for tracks 3, 2 and 3, H empty](media/assigned.png)
+![Knobs A, C and D for all tracks (TUNE, LOOP, F.TYP), B and E to G for tracks 8, 3, 2 and 2, H empty](media/assigned.png)
 
-Seven knobs assigned: A to D move a parameter of all tracks, E to G one track’s.
+Seven knobs assigned: A, C and D move a parameter of all tracks, B and E to G one track’s.
 
 ![The SETTINGS list with the PERFORM EDIT row selected](media/settings.png)
 
 SETTINGS > PERFORM EDIT is the last row of the SETTINGS list.
 
-![Perform Mode Edit with rows A to D set to ALL, row E to T3 SRC.PLAY and row F to T2 SRC.PLAY](media/perform-edit.png)
+![Perform Mode Edit with rows A, C and D set to ALL, row B to T8 SRC.SAMP, row E to T3 SRC.PLAY and row F to T2 SRC.PLAY](media/perform-edit.png)
 
-Perform Edit lists the knobs: A to D move one parameter of all tracks, E and F of tracks 3 and 2, all direction +.
+Perform Edit lists the knobs: A, C and D move one parameter of all tracks, B, E and F of tracks 8, 3 and 2, all direction +.
