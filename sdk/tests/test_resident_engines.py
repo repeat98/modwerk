@@ -58,13 +58,11 @@ STUBS = {resident_dsp.SIDECHAIN: ('hsc_det', 'hsc_commit', 'hsc_init'), resident
 # r6 = $6280): Sidechain's track 3 with KEY 3 and its monitor on, MATRIX selected, an Analog BD source record.
 ACTIVE = {resident_dsp.SIDECHAIN: ('X 1056 3', 'X %d %d' % (0x628d, 0x30000), 'Y %d %d' % (0x7f6, 0x10000)),
           resident_dsp.MATRIX: ('X %d %d' % (0x205, 0x1000), 'X %d 1' % 0x103b),
-          resident_dsp.ANALOG_BD: tuple('X %d 0' % a for a in range(0x5000, 0x5040)) +  # a quiet record: the rest zero
-          ('X %d %d' % (0x209, 0x5000), 'X %d %d' % (0x5000, 0xab09), 'X %d %d' % (0x5002, 0x0909)),
+          # A quiet record (the rest zero), and X:$418, the voice stock is rendering: the glue's voice block is
+          # VBASE + 2 * X:$418, so a filled (random) word there sent core A's block outside the interpreter's memory.
+          resident_dsp.ANALOG_BD: tuple('X %d 0' % a for a in range(0x5000, 0x5040)) +
+          ('X %d 0' % 0x418, 'X %d %d' % (0x209, 0x5000), 'X %d %d' % (0x5000, 0xab09), 'X %d %d' % (0x5002, 0x0909)),
           resident_dsp.KEYBUS: ('X 1056 6', 'Y %d %d' % (0x33dfe, 0x10000), 'Y %d %d' % (0x3bdfe, 0x10000))}  # T7, both seeded
-# Analog BD's working path on core A then points its voice block (r5) at X:$f598xx, which the interpreter has no
-# memory for (it faults, in the resident build as in the placed one): compare its first 160 instructions, to the
-# voice loop. The dormant path and core B's working path run to the end.
-LIMIT = {('A', resident_dsp.ANALOG_BD): 160}
 # Each on-demand unit's words. Sidechain 0.2.0's 710 before the key bus split: its detector, MON commit, init and table
 # now, and the one-pass tap (with #640's phase rule) as the key bus's own unit.
 UNIT_WORDS = {1: 613, 2: 675, 4: 1009, 8: 97}  # 613 + 97 = 710: no word added or lost
@@ -320,7 +318,7 @@ class ResidentEngines(unittest.TestCase):
                             # Each stub from the same memory twice: as filled (mostly the early return), then from
                             # the feature's reset state, steered down its working path.
                             out = []
-                            for limit, pokes in ((400000, ()), (LIMIT.get((tag, feature), 400000), reset + list(ACTIVE[feature]))):
+                            for limit, pokes in ((400000, ()), (400000, reset + list(ACTIVE[feature]))):
                                 out += memory() + list(pokes)
                                 out += sum((['GO %d %d %d' % (labels[s], limit, RECEIVER_ORIGIN)] + observe() for s in STUBS[feature]), [])
                             return out
@@ -362,9 +360,8 @@ class ResidentEngines(unittest.TestCase):
                         ran = [line.split() for line in mine if line.startswith('S ')]
                         if os.environ.get('RESIDENT_ENGINES_VERBOSE'):
                             print(tag, feature, hex(base), [(s, n, how) for s, (_, n, how, _) in zip(STUBS[feature] * 2, ran)])
-                        # Returned, or left for stock code (or stopped at the limit above).
-                        self.assertTrue(all(how in ('1', '2') or ((tag, feature) in LIMIT and n == str(LIMIT[tag, feature]))
-                                            for _, n, how, _ in ran), ran)
+                        # Returned, or left for stock code.
+                        self.assertTrue(all(how in ('1', '2') for _, n, how, _ in ran), ran)
                         self.assertGreater(max(int(n) for _, n, _, _ in ran), 10, ran)        # more than a replay ran
                         # Disable, then unplace: the base word goes back to 0.
                         tail = run(image(d_words, RECEIVER_ORIGIN) + image(demand['words'], demand['origin']) +
@@ -374,7 +371,6 @@ class ResidentEngines(unittest.TestCase):
                         self.assertEqual(tail[:5], ['A 1', 'A 1', 'A 1', 'A 1', 'P %d 0' % hwbase])
 
 
-    @unittest.skipUnless(all(p.is_file() for p in LIBS) and shutil.which('c++'), 'vendored dsp56300 build unavailable')
     @unittest.skipUnless(all(p.is_file() for p in LIBS) and shutil.which('c++'), 'vendored dsp56300 build unavailable')
     def test_two_packaged_engines_share_a_chain_site(self):
         """Site 5 hosting Analog BD and a second packaged member (made up here: feature 16, a small engine that sees
@@ -412,8 +408,7 @@ class ResidentEngines(unittest.TestCase):
                 record = {'ab': ACTIVE[resident_dsp.ANALOG_BD],
                           'member': ACTIVE[resident_dsp.ANALOG_BD][:-2] + ('X %d %d' % (0x5000, 0x3303), 'X %d %d' % (0x5002, 0x0909)),
                           'stock': ACTIVE[resident_dsp.ANALOG_BD][:-2]}
-                cases = [('ab', 2, 0, 0), ('member', 2, 1, 0x5a5a5a), ('stock', 1, 1, 0)] if tag == 'B' else \
-                    [('member', 2, 1, 0x5a5a5a), ('stock', 1, 1, 0)]  # core A's Analog BD voice faults here (LIMIT)
+                cases = [('ab', 2, 0, 0), ('member', 2, 1, 0x5a5a5a), ('stock', 1, 1, 0)]
                 later = [('PKT %d %d %d 0' % (control, resident_dsp.ANALOG_BD | member, member)),  # Analog BD off
                          ('ab', 1, 1, 0), ('member', 2, 1, 0x5a5a5a),
                          ('PKT %d %d 0 0' % (control, member)), ('member', 1, 0, 0)]                # the site dormant
@@ -447,6 +442,7 @@ class ResidentEngines(unittest.TestCase):
                         if how == 2:
                             self.assertEqual(int(ran[3]), stock)
 
+    @unittest.skipUnless(all(p.is_file() for p in LIBS) and shutil.which('c++'), 'vendored dsp56300 build unavailable')
     def test_disabling_one_engine_leaves_another_engines_base_word_alone(self):
         """Two on-demand engines placed and enabled on core A, then one disabled: the other's base word (where its
         stubs jump) must stay exactly as PLACE wrote it, and the disabled one must need a new RESET before it can be
