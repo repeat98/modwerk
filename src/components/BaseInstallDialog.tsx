@@ -13,6 +13,7 @@ import { RiskAcceptance } from './ConfigurationLayout'
 import { Icon } from './Icon'
 import { LinkHero } from './LinkHero'
 import type { BaseInstallFailure } from '../community/octatrack-diagnostics-contract'
+import { offerDiagnostics } from '../community/diagnostics-reask'
 
 export interface BaseImage { buffer: ArrayBuffer; sha256: string; base: string }
 /** Where a guide run got to, for whoever listens (`onStage`): each at most once per run of the guide. */
@@ -175,6 +176,7 @@ export function BaseInstallDialog({ link, launch = false, layout, firmwareReady,
     } catch (error) {
       console.error(error)
       report('failed', error instanceof UploadUnconfirmedError ? 'link-lost' : error instanceof UploadDeviceError ? 'update-refused' : 'update-failed')
+      offerDiagnostics('base-update-failed') // DiagnosticsInvitationGate may ask about it once this window is closed
       // A transport error's own text is for developers ("hello was not confirmed; …"): say it in the link's words.
       const transport = error instanceof UploadUnconfirmedError || error instanceof UploadDeviceError
       setUsb({ error: transport ? explainLinkError(error) : error instanceof Error ? error.message : 'The update did not finish.', at })

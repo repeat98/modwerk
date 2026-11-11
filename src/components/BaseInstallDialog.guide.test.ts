@@ -7,6 +7,7 @@ import { OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { UploadUnconfirmedError } from '../engine/elekloader/upload-session'
 import { pendingBaseInstall, waitForBaseInstall } from '../config/octatrack-progress'
 import { BaseInstallDialog } from './BaseInstallDialog'
+import { pendingReask, resetReask } from '../community/diagnostics-reask'
 import baseBinding from '../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
 
 // The browser's download of the .bin; the guide's own steps are what is tested here.
@@ -20,7 +21,7 @@ beforeEach(() => {
   HTMLElement.prototype.scrollTo = () => {}
   container = document.createElement('div'); document.body.append(container); root = createRoot(container)
 })
-afterEach(async () => { await act(() => root.unmount()); container.remove(); vi.unstubAllGlobals(); vi.restoreAllMocks(); sessionStorage.clear() })
+afterEach(async () => { await act(() => root.unmount()); container.remove(); vi.unstubAllGlobals(); vi.restoreAllMocks(); sessionStorage.clear(); resetReask() })
 const click = (element: Element) => act(() => { element.dispatchEvent(new MouseEvent('click', { bubbles: true })) })
 const buttonNamed = (text: string) => [...container.querySelectorAll('button')].find(button => button.textContent?.includes(text))
 const settle = () => act(() => new Promise(resolve => setTimeout(resolve, 0)))
@@ -134,6 +135,8 @@ describe('a later base update', () => {
     expect(update).toHaveBeenCalledTimes(2)
     expect(guide.onStage.mock.calls).toEqual([['opened', undefined], ['failed', 'link-lost']])
     expect(buttonNamed('Update from the card')).toBeDefined()
+    // A member who doesn't share diagnostics is asked once more after the guide closes (diagnostics-reask.ts).
+    expect(pendingReask()?.reason).toBe('base-update-failed')
   })
   it('says when it is done', async () => {
     const { link } = await connected('base', 'cc'.repeat(32))

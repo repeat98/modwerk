@@ -1,6 +1,6 @@
 import { useMobileWorkspace } from '../hooks/useMobileWorkspace'
 import { ConfigurationHandoff } from './ConfigurationHandoff'
-import { useLayoutEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react'
 import { MODULES } from '../catalog/modules'
 import { moduleUsbOnly } from '../catalog/usb-only'
 import { lastInventory, sameModules, type Inventory } from '../config/inventory'
@@ -23,6 +23,7 @@ import { OctatrackOverview } from './OctatrackOverview'
 import { OctatrackSamples } from './OctatrackSamples'
 import { MissingNote, type ProjectNeeds } from './OctatrackUpdate'
 import { MODULE_SKIP_HINT } from '../firmware-notices'
+import { offerDiagnostics } from '../community/diagnostics-reask'
 import './octatrack-link.css'
 
 const moduleName = (id: string) => MODULES.find(module => module.id === id)?.name ?? id
@@ -107,6 +108,10 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
   const wantedLayout = review?.problem instanceof BaseLayoutRequired ? review.problem.layout : undefined
   const model = identity?.model ? identity.model.replace('OCTATRACK', 'Octatrack') : 'Octatrack'
   const { stopped } = useOctatrackLoad(link)
+  // The audio stopped on a connected unit: a member who doesn't share diagnostics is asked once more, once for each
+  // base and running set it happens on (diagnostics-reask.ts decides whether and when).
+  const stall = connected && stopped && identity ? 'stall:' + identity.base + ':' + (state.active ?? '') : undefined
+  useEffect(() => { if (stall) offerDiagnostics('stall', stall) }, [stall])
   const led = connected && !stopped ? 'on' : busy ? 'load' : 'off'
   const health = useOctatrackHealth(link)
   const onUnit = sets.find(same), lastSync = lastSuccessfulSync(identity?.base ?? last?.base)
