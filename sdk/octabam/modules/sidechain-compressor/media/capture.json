@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "moduleId": "sidechain-compressor",
-  "moduleVersion": "0.2.1-experimental",
+  "moduleVersion": "0.2.2-experimental",
   "capturedOn": "2026-10-30",
   "firmware": "1.40C",
   "imageSha256": "fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc",
