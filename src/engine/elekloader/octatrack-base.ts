@@ -71,8 +71,43 @@ export function baseIdentity(filledPackage: string): string {
   return identity
 }
 
-/** The base's .bin from the user's original OCTATRACK_OS1.40C.bin. */
-export async function buildBase(stock: Uint8Array, packageText: string, fills: readonly BaseFill[]): Promise<{ bin: Uint8Array; sha256: string; base: string }> {
+/** The room the base's image keeps for a module set: modset.c's modwerk_flashed_set (build_core.py FLASHED_SET_BYTES). */
+export const FLASHED_SET_BYTES = 256 * 1024
+/** The largest container a flash slot holds (slots.h SLOT_CONTAINER_MAX): a .bin with modules stays within it. */
+const SLOT_CONTAINER_MAX = 0xf0000 - 0x100
+const TOO_LARGE = 'These modules are too large to put into the .bin. Choose fewer, or install them over USB.'
+
+/** The package with a module set (card-set.ts, for this base) in the image's room for it: the flashed base installs it
+ * at its first start and saves it to the card (modset.c). The room is all zero in the package, and stays where it is. */
+export function embedSet(text: string, set: Uint8Array): string {
+  const doc = JSON.parse(text) as { symbols: Record<string, [string, number]>; sections: Record<string, { parts: Part[] }> }
+  const symbol = doc.symbols?.modwerk_flashed_set
+  if (!symbol) throw new Error('This base cannot carry modules in its .bin.')
+  const used = set.length >= 84 ? new DataView(set.buffer, set.byteOffset, set.byteLength).getUint32(16) : 0
+  if (used < 84 || used > set.length) throw new Error('The module set is not a whole set file.')
+  if (used > FLASHED_SET_BYTES) throw new Error(TOO_LARGE)
+  const [section, offset] = symbol
+  let at = 0
+  for (const part of doc.sections[section]?.parts ?? []) {
+    const length = part[0] === 'hex' ? part[1].length / 2 : part[2]
+    if (offset >= at && offset + FLASHED_SET_BYTES <= at + length && part[0] === 'hex') {
+      const from = (offset - at) * 2
+      if (/[^0]/.test(part[1].slice(from, from + FLASHED_SET_BYTES * 2))) break
+      part[1] = part[1].slice(0, from) + Array.from(set.subarray(0, used), b => b.toString(16).padStart(2, '0')).join('') + part[1].slice(from + used * 2)
+      return JSON.stringify(doc)
+    }
+    at += length
+  }
+  throw new Error('The base package does not leave room for a module set.')
+}
+
+/** The base's .bin from the user's original OCTATRACK_OS1.40C.bin; with `set`, a module set for this base in its image. */
+export async function buildBase(stock: Uint8Array, packageText: string, fills: readonly BaseFill[], set?: Uint8Array): Promise<{ bin: Uint8Array; sha256: string; base: string }> {
+  const built = await buildImage(stock, set ? embedSet(packageText, set) : packageText, fills)
+  if (set && built.bin.length > SLOT_CONTAINER_MAX) throw new Error(TOO_LARGE)
+  return built
+}
+async function buildImage(stock: Uint8Array, packageText: string, fills: readonly BaseFill[]): Promise<{ bin: Uint8Array; sha256: string; base: string }> {
   if (sha(stock) !== BASE_FIRMWARE.sha256) throw new Error('The base builds only from the original Octatrack OS 1.40C file. Choose an unmodified ' + BASE_FIRMWARE.filename + '.')
   const [parsed, device] = await formats.load(stock)
   const cores = await recoverStockDsp(formats.mainImage(parsed, device))

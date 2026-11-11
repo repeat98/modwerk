@@ -4,7 +4,8 @@ import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { loadAny } from '../../../vendor/elekloader/kit/src/patch.ts'
 import metadata from '../assets/stock-dsp-metadata.json' with { type: 'json' }
 import type { StockDspCore } from '../stock-dsp.ts'
-import { baseIdentity, buildBase, fillBase, type BaseFill } from './octatrack-base.ts'
+import { baseIdentity, buildBase, embedSet, fillBase, FLASHED_SET_BYTES, type BaseFill } from './octatrack-base.ts'
+import { encodeCardSet } from './card-set.ts'
 
 const cores = [{ tag: 'A', shared: [{ destination: 0x7d1, words: Uint32Array.of(0x0a0b0c, 0x0d0e0f) }],
   packages: [{ fxId: 4, words: Uint32Array.of(0x123456, 0xabcdef, 0x000001) }] }] as unknown as StockDspCore[]
@@ -21,6 +22,23 @@ describe('the Octatrack base from the stock file', () => {
     expect(() => baseIdentity(packageText([['hex', '00'.repeat(4)], ['stock', '0x40000400', 32]]))).toThrow('authored USB identity')
     expect(() => baseIdentity(packageText([['hex', '00'.repeat(4) + digest.slice(0, 60)]]))).toThrow('invalid USB identity')
     expect(() => baseIdentity('{}')).toThrow('no USB identity')
+  })
+
+  it('puts a module set into the image’s room for it, in place, and refuses a package without the room', () => {
+    const module = new Uint8Array(48); module.set([0x4d, 0x57, 0x52, 0x4d, 0, 4]); module[11] = 4; module[31] = 7
+    const set = encodeCardSet('01'.repeat(32), [module], 1000), used = new DataView(set.buffer).getUint32(16)
+    const room = (parts: unknown[]) => JSON.stringify({ symbols: { modwerk_flashed_set: ['.run', 2] }, sections: { '.run': { parts } } })
+    const text = embedSet(room([['hex', 'aabb' + '00'.repeat(FLASHED_SET_BYTES) + 'cc']]), set)
+    const hex = (JSON.parse(text) as { sections: Record<string, { parts: [string, string][] }> }).sections['.run'].parts[0][1]
+    expect(hex).toHaveLength(2 * (FLASHED_SET_BYTES + 3))
+    expect(hex.slice(0, 4 + 2 * used)).toBe('aabb' + Buffer.from(set.subarray(0, used)).toString('hex'))
+    expect(/^0+cc$/.test(hex.slice(4 + 2 * used))).toBe(true)
+    expect(() => embedSet('{"symbols":{},"sections":{}}', set)).toThrow('cannot carry modules')
+    expect(() => embedSet(room([['hex', 'aabb' + '00'.repeat(FLASHED_SET_BYTES - 1)]]), set)).toThrow('does not leave room')
+    expect(() => embedSet(room([['hex', 'aabb' + '00'.repeat(FLASHED_SET_BYTES - 1) + '01']]), set)).toThrow('does not leave room')
+    expect(() => embedSet(room([['hex', 'aabb' + '00'.repeat(FLASHED_SET_BYTES)]]), set.subarray(0, 50))).toThrow('whole set file')
+    const large = new Uint8Array(FLASHED_SET_BYTES + 512); large.set(set.subarray(0, 84)); new DataView(large.buffer).setUint32(16, FLASHED_SET_BYTES + 4)
+    expect(() => embedSet(room([['hex', 'aabb' + '00'.repeat(FLASHED_SET_BYTES)]]), large)).toThrow('too large')
   })
 
   it('puts stock words back where the package left them out, ColdFire copies big-endian, DSP sites little-endian', () => {
