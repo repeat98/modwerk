@@ -64,3 +64,18 @@ Image sha256 afba203f35a293ffeb47a060d08d9a519bf17a2b02b4ffef66f3affd94c87437 (c
 - After the wrap (positions 0, 1, 4): still 2 toggles, 1 apply, so the wrap fallback did not apply a second time.
 - Header "MUTES ARMED" and PREP MUTES screens are unchanged (screenshots recaptured on this image, byte-identical).
 - Not tested on a unit: that a track comes in exactly on a kick at step 1, and whether muting on the last step cuts or lets ring that step's note. The author is asked to check both.
+
+## Loop build, view check (emulator)
+
+Image sha256 f9c5077602350efc836800ad3eef8357fcf1247ea96c049ed93ebb9ef255f248 (core 1.0 + this folder built with Debian-style m68k-linux-gnu-gcc 13, not the pinned toolchain; no patched stock site). 128-step pattern, TRIG 1 and 3 chosen, run stopped at chosen times:
+- One press: 2 toggles, 1 apply at the last step. Two presses: 0 toggles after the first pass, 2 toggles and 1 apply after the second.
+- Header: MUTES ARMED with the loop icon and 1, 2, 3, 4 for one to four presses and 1 again for the fifth (see `media/`); the message stays past the stock time-out and goes when the mutes switch.
+- The PREP MUTES view object: the same address (0x450b0750) in four FUNC sessions and after leaving and re-entering Mute Mode; the view-stack node is freed on leaving Mute Mode. Armed, then FUNC+TRK to leave Mute Mode, then a whole pass: 0 toggles, 0 applies (the choice is dropped). Armed, left and re-entered, armed again: 2 toggles, 1 apply.
+- Not tested: pattern change while armed, a missed last-step tick (the wrap fallback) on a long pattern at high tempo, SETTINGS and other views opened while armed.
+
+## Hardware (reported by the author, crisp909), later builds
+
+Digitakt II, OS 1.17, images linked with Elekloader from core 1.0, built with Debian-style m68k-linux-gnu-gcc 13 (not the pinned toolchain), reported by the author as working as intended and not measured here:
+- `mute-latch-0.1.0-loop-pr-os1.17.elemod` (sha256 8d8a71e24c7a3896f1193c221435a057be559bd764fd9b3c811fb65e41f80db5): one to four PERFORM presses, MUTES ARMED with the loop icon and the countdown, no LEDs.
+- A personal variant of the same build with armed tracks' TRIG LEDs (sha256 4b79a25b4de4e45eade574d27b56fd3f8f9aecb68508f7b6b6a435a58191dfb0), which patches the key-LED frame and is not part of this module.
+- The submitted build adds the view-stack check; it has not been run on a unit. The pinned-toolchain build with a kick on step 1 is still to be recorded here.

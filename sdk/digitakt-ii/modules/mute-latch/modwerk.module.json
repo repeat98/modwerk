@@ -48,12 +48,12 @@
     "requires": [],
     "conflicts": [],
     "limitations": [
-      "Hardware: the author reports the previous build (PERFORM, MUTES ARMED and lit TRIG LEDs) working on a Digitakt II, OS 1.17. This build, which applies on the last step and has no LEDs, is not yet tested on a unit; see TESTING.md.",
+      "Hardware: the author reports two earlier builds working on a Digitakt II, OS 1.17: the loop build (1 to 4 PERFORM presses, loop icon) and a personal variant with TRIG LEDs. The build submitted here adds the view check and was built in the pinned toolchain; it is not yet tested on a unit. See TESTING.md.",
       "Works while the sequencer plays; when it is stopped PREP MUTES keeps its stock behaviour.",
       "With Scale per track the longest track's last step ends the pattern.",
-      "Switches on the first UI tick (about 30 Hz) that sees the last step, not sample-accurately; the wrap is the fallback.",
+      "Switches on the first UI tick (about 30 Hz) that sees the last step of the last counted pass, not sample-accurately; the wrap is the fallback.",
       "Armed tracks are shown only by the MUTES ARMED header message, not by their TRIG LEDs.",
-      "FUNC+PERFORM opens a stock view over PREP MUTES: while PREP MUTES is open, tracks are chosen and the pattern plays, the module takes that key press, so that stock sub-function is not available then."
+      "FUNC+PERFORM opens a stock view over PREP MUTES: while PREP MUTES is open, tracks are chosen or something is armed, and the pattern plays, the module takes that key press, so that stock sub-function is not available then."
     ]
   },
   "platform": {
@@ -61,6 +61,7 @@
     "core": "1.0",
     "build": "build.json",
     "events": [
+      "ev_draw",
       "ev_key",
       "ev_tick"
     ],
@@ -87,7 +88,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Previous build reported working on a Digitakt II by the author; this build tested in the emulator only. See TESTING.md."
+    "summary": "Two earlier builds reported working on a Digitakt II by the author; the submitted build is tested in the emulator only until it runs on a unit. See TESTING.md."
   },
   "license": {
     "spdx": "GPL-3.0-or-later",
@@ -116,15 +117,15 @@
         "type": "emulator",
         "release": "1.17",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "afba203f35a293ffeb47a060d08d9a519bf17a2b02b4ffef66f3affd94c87437",
+        "imageSha256": "f9c5077602350efc836800ad3eef8357fcf1247ea96c049ed93ebb9ef255f248",
         "setup": "digikit panel_drive, ColdFire only; core 1.0 + this module, Mute Mode with TRIG 1 and 3 chosen while playing. UI documentation only."
       }
     },
     {
       "path": "media/mutes-armed.png",
       "kind": "screenshot",
-      "caption": "The header after one PERFORM press (emulator capture)",
-      "alt": "Digitakt II screen showing the header message MUTES ARMED",
+      "caption": "The header after one PERFORM press: MUTES ARMED, the loop icon and the passes left (emulator capture)",
+      "alt": "Digitakt II screen showing MUTES ARMED, a loop icon and the number 1 in the header",
       "credit": "crisp909",
       "license": "GPL-3.0-or-later",
       "source": "Captured from the digikit emulator with this module; no firmware content other than the screen.",
@@ -132,7 +133,23 @@
         "type": "emulator",
         "release": "1.17",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "afba203f35a293ffeb47a060d08d9a519bf17a2b02b4ffef66f3affd94c87437",
+        "imageSha256": "f9c5077602350efc836800ad3eef8357fcf1247ea96c049ed93ebb9ef255f248",
+        "setup": "digikit panel_drive, ColdFire only; core 1.0 + this module, Mute Mode with TRIG 1 and 3 chosen while playing. UI documentation only."
+      }
+    },
+    {
+      "path": "media/mutes-armed-3.png",
+      "kind": "screenshot",
+      "caption": "After three PERFORM presses the header counts three passes (emulator capture)",
+      "alt": "Digitakt II screen showing MUTES ARMED, a loop icon and the number 3 in the header",
+      "credit": "crisp909",
+      "license": "GPL-3.0-or-later",
+      "source": "Captured from the digikit emulator with this module; no firmware content other than the screen.",
+      "capture": {
+        "type": "emulator",
+        "release": "1.17",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "f9c5077602350efc836800ad3eef8357fcf1247ea96c049ed93ebb9ef255f248",
         "setup": "digikit panel_drive, ColdFire only; core 1.0 + this module, Mute Mode with TRIG 1 and 3 chosen while playing. UI documentation only."
       }
     }

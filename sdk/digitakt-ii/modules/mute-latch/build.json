@@ -16,6 +16,11 @@
       "event": "ev_key",
       "fn": "mod_key",
       "order": 50
+    },
+    {
+      "event": "ev_draw",
+      "fn": "mod_draw",
+      "order": 50
     }
   ],
   "contribute": [],
@@ -39,7 +44,8 @@
         "-DMLK_SEQ_STATE=1125535636",
         "-DMLK_EV_DOWN=1074874920",
         "-DMLK_TOAST=1074115130",
-        "-DMLK_UI_STATES=1075419328"
+        "-DMLK_UI_STATES=1075419328",
+        "-DMLK_FILLRECT=1074868654"
       ],
       "sites": []
     }
