@@ -462,6 +462,7 @@ static void lfo_turn(int track, int index)
         lfo_write(track, ID_LFO_DEP, DEP_CENTRE);
         dep_drop();                     // the grabbing turn sets no depth
         dest_knob = last_knob;
+        redraw = 1;
         return;
     }
     dest_knob = last_knob;
@@ -561,8 +562,10 @@ static void locker_clear(void *self, int track, int param)
     if (kind == NONE || param <= 0)
         return;
     if (kind == LFO) {
-        if (lfo_dest(track) == param)
+        if (lfo_dest(track) == param) {
             lfo_write(track, ID_LFO_DEP, DEP_CENTRE);
+            redraw = 1;                 // the depth's box is ours to redraw
+        }
         return;
     }
     set = slots_of(track, kind);
@@ -837,26 +840,33 @@ static void bm_put(int x, int r, int on)
     *w = on ? *w | bit : *w & ~bit;
 }
 
-// A full white box border with its top row at r (rows count from the bottom).
+// Stock's lock box with its top row at r (rows count from the bottom): a full
+// white border with black text inside, so a plain white area is no box.
 static int box_at(int x0, int r)
 {
-    int i;
+    int i, j;
     for (i = 0; i < BOX_W; i++)
         if (!bm_get(x0 + i, r) || !bm_get(x0 + i, r - BOX_H + 1))
             return 0;
     for (i = 1; i < BOX_H - 1; i++)
         if (!bm_get(x0, r - i) || !bm_get(x0 + BOX_W - 1, r - i))
             return 0;
-    return 1;
+    for (i = 1; i < BOX_W - 1; i++)
+        for (j = 1; j < BOX_H - 1; j++)
+            if (!bm_get(x0 + i, r - j))
+                return 1;
+    return 0;
 }
 
 void quick_velocity_aftertouch_assign_draw(void *bmp, void *ctrl)
 {
     static const int rows[2] = { 38, 16 };
-    char text[8], *p = text;
-    int track, v, h, k, x0, r, x, y, n, w;
+    char text[8], width[8], *p = text;
+    int track, v, h, k, x0, r, x, y, n, w, i;
     (void)ctrl;
-    if (shown != LFO)
+    // Only our own locker's box: with LFO held, a pad, a trig or QPER can hold
+    // stock's locker, whose boxes are its locks, not the depth.
+    if (shown != LFO || !ours() || !on_pages())
         return;
     track = selected_track();
     if (!kind_track(LFO, track) || lfo_dest(track) <= 0 || !(v = lfo_shown(track)))
@@ -867,14 +877,25 @@ void quick_velocity_aftertouch_assign_draw(void *bmp, void *ctrl)
     bm_words = *(unsigned **)((char *)bmp + 16);
     if (bm_w < 128 || bm_h < 64)
         return;
-    for (k = 0; k < KNOBS; k++) {
-        x0 = 3 + 32 * (k & 3);
-        r = rows[k >> 2];
-        if (box_at(x0, r))
-            break;
+    // The destination's knob when a turn has shown it; otherwise the one box on
+    // the page (none, or more than one, and nothing is drawn).
+    if (dest_knob >= 0 && dest_knob < KNOBS) {
+        k = dest_knob;
+        if (!box_at(3 + 32 * (k & 3), rows[k >> 2]))
+            return;
+    } else {
+        for (k = 0, n = -1; k < KNOBS; k++)
+            if (box_at(3 + 32 * (k & 3), rows[k >> 2])) {
+                if (n >= 0)
+                    return;
+                n = k;
+            }
+        if (n < 0)
+            return;
+        k = n;
     }
-    if (k == KNOBS)
-        return;
+    x0 = 3 + 32 * (k & 3);
+    r = rows[k >> 2];
     *p++ = v < 0 ? '-' : '+';
     h = (v < 0 ? -v : v) * 100 / 256;
     n = h / 100;
@@ -886,17 +907,22 @@ void quick_velocity_aftertouch_assign_draw(void *bmp, void *ctrl)
     *p++ = (char)('0' + h % 10);
     *p = 0;
     // Five characters fit stock's box (+1.96 takes 20 of its 25 inside columns).
-    // From +10.00 on, the box takes the knob's whole column, 32 wide, as the LFO
-    // page's own +127.99 does (30 columns): it stays inside that knob's column.
+    // From +10.00 on, the box fills the knob's column (x 32 * column .. + 31): its
+    // border around an inside of 30, the columns the LFO page's own +127.99
+    // takes, so it never reaches the next knob's column. The template centres
+    // on digits of one width, so the text does not move as they change.
     w = BOX_W;
     if (p - text > 5) {
         x0 = 32 * (k & 3);
         w = 32;
     }
+    for (i = 0; text[i]; i++)
+        width[i] = text[i] >= '0' && text[i] <= '9' ? '0' : text[i];
+    width[i] = 0;
     for (x = x0; x < x0 + w; x++)                   // the box white, its inside black,
         for (y = r; y > r - BOX_H; y--)             //   the text white, then the inside
             bm_put(x, y, x == x0 || x == x0 + w - 1 || y == r || y == r - BOX_H + 1);   // turned over
-    TEXT_DRAW(bmp, (void *)TEXT_FONT(TEXT_CTX_AT), x0 + w / 2, r - BOX_H + 2, 1, 0, text, "%s", text);   // y: the text's bottom row
+    TEXT_DRAW(bmp, (void *)TEXT_FONT(TEXT_CTX_AT), x0 + w / 2, r - BOX_H + 2, 1, 0, width, "%s", text);   // y: the text's bottom row
     for (x = x0 + 1; x < x0 + w - 1; x++)
         for (y = r - 1; y > r - BOX_H + 1; y--)
             bm_put(x, y, !bm_get(x, y));
