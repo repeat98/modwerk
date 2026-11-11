@@ -2,7 +2,7 @@
 import { act, createElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, expect, it, vi } from 'vitest'
-import { OwnerNote, OwnerNoteGate, ownerNoteSeen } from './OwnerNote'
+import { closeOwnerNote, leaveBeta, OwnerNote, OwnerNoteGate, ownerNoteSeen } from './OwnerNote'
 
 const posted = vi.hoisted(() => [] as string[])
 vi.mock('../community/api', () => ({ api: async () => ({ show: true }), post: async (path: string) => { posted.push(path); return {} } }))
@@ -71,4 +71,28 @@ it('opens again when the browser closes it without a choice, as Chrome does on a
   await act(() => root.unmount())
   dialog.dispatchEvent(new Event('close'))
   expect(dialog.open).toBe(false)
+})
+
+it('offers diagnostics after the note with Not now, never Leave beta, and lets the tester go on without sharing', async () => {
+  vi.useFakeTimers(); vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
+  HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', '') }
+  HTMLDialogElement.prototype.close = function () { this.removeAttribute('open') }
+  closeOwnerNote() // accepted on an earlier visit; the consent lapsed since, so only the offer comes back
+  const container = document.createElement('div'); document.body.append(container)
+  const root = createRoot(container)
+  await act(() => root.render(createElement(OwnerNoteGate, { enabled: true })))
+  await act(() => { vi.advanceTimersByTime(1500) })
+  const offer = document.querySelector('dialog.diagnostics-invitation[open]')!
+  const buttons = [...offer.querySelectorAll('button')].map(button => button.textContent)
+  expect(buttons).toContain('Not now'); expect(buttons).not.toContain('Leave beta')
+  await act(() => [...offer.querySelectorAll('button')].find(button => button.textContent === 'Not now')!.click())
+  for (let second = 0; second < 10; second++) await act(() => { vi.advanceTimersByTime(1000) })
+  expect(document.querySelector('dialog[open]')).toBeNull()
+  await act(() => root.unmount())
+})
+
+it('says what leaving the beta takes away, before and after the Octatrack base path is released', () => {
+  expect(leaveBeta(true)).toContain('Beta modules and the beta-only pages go away')
+  expect(leaveBeta(true)).toContain('Your Octatrack page, the base and USB sync stay')
+  expect(leaveBeta(false)).toContain('the Octatrack USB page go away')
 })
