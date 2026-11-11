@@ -3,8 +3,8 @@
     "version": "0.1.4-experimental",
     "date": "2026-11-10",
     "changes": [
-      "MUTE HLD (and the mode it returns to), MUTE TGL, FILL HLD and FILL LAT now reach the other mods as well as the Rytm, as a panel press does. Before, a mod that follows those keys, such as Loop Sync or the send effects' pages, missed them.",
-      "REC HLD and REC TGL, and every action's result on the Rytm, are as in 0.1.3."
+      "MUTE HLD, MUTE TGL, FILL HLD and FILL LAT now reach other mods as a panel press does, so mods that follow pages, such as Loop Sync and the send effects' pages, see them.",
+      "REC HLD and REC TGL, and what each action does on the Rytm, stay as in 0.1.3."
     ]
   },
   {
