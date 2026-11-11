@@ -23,8 +23,8 @@ describe('device registry', () => {
     for (const device of zoom) {
       expect(device.steps.core).toBeUndefined()
       expect(device.firmware?.file).toBeUndefined()
-      // No zdl module contract yet: the pedals stay locked even where an effect loads.
-      expect(readyForMods(device)).toBe(false)
+      // The zdl module contract opens the MS-70CDR for its first module; the others wait for their SDK even where an effect loads.
+      expect(readyForMods(device)).toBe(device.id === 'zoom-ms-70cdr')
     }
     // An Erica Synths machine needs its Modwerk base and a module contract (an SDK) before it takes mods.
     expect(readyForMods(DEVICES_BY_ID['lxr-02'])).toBe(false)
@@ -70,6 +70,24 @@ describe('digi combination estimate', () => {
     expect(estimate.clashes).toEqual([
       { claim: 'marked as incompatible by their authors', mods: ['NEIGHBOR', 'SOPHIE'] },
     ])
+  })
+
+  it('refuses a pair whose dependencies conflict: Digi Mono builds on digichain, STRING on machine pages (#1306)', () => {
+    const estimate = estimateCombination('digitakt', ['digimono', 'digistring'])
+    expect(estimate.fits).toBe(true)
+    expect(estimate.compatibleReleases).toEqual([])
+    expect(estimate.clashes).toEqual([
+      { claim: 'Digi Mono builds on digichain and STRING builds on machine pages, and digichain and machine pages are marked as incompatible by their authors', mods: ['Digi Mono', 'STRING'] },
+    ])
+    expect(estimateCombination('digitakt', ['digichain', 'digistring']).clashes).toEqual([
+      { claim: 'STRING builds on machine pages, and digichain and machine pages are marked as incompatible by their authors', mods: ['digichain', 'STRING'] },
+    ])
+  })
+
+  it('combines mods whose dependencies do not conflict', () => {
+    // Both build on machine pages, and both on digichain.
+    expect(estimateCombination('digitakt', ['digistring', 'ram-machines'])).toMatchObject({ clashes: [], compatibleReleases: ['1.53', '1.54'] })
+    expect(estimateCombination('digitakt', ['digimono', 'digipoly'])).toMatchObject({ clashes: [], compatibleReleases: ['1.53', '1.54'] })
   })
 
   it('refuses two mods whose own firmware changes overlap', () => {

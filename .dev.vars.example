@@ -27,7 +27,8 @@ EMAIL_FROM=
 # Separate daily budgets; these defaults total 100/day for the free plan.
 # Production uses the paid 50,000/month plan and explicit monthly budgets in wrangler.worker.jsonc.
 # An omitted *_MAIL_MONTHLY_LIMIT defaults to 30 times that purpose's daily limit.
-ACCOUNT_MAIL_DAILY_LIMIT=60
+ACCOUNT_MAIL_DAILY_LIMIT=40
+RESET_MAIL_DAILY_LIMIT=20
 WELCOME_MAIL_DAILY_LIMIT=20
 ACTIVITY_MAIL_DAILY_LIMIT=15
 NEWS_MAIL_DAILY_LIMIT=5

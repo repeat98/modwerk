@@ -24,7 +24,7 @@
 ; docs/OCTATRACK_PACKAGE_DSP_HOOKS.md), which the package requires: while a
 ; reader is installed the base's tap copies every track's 32 words of audio,
 ; as they enter FX1, on every block, to
-;   this core's bus   Y:$800 + track*$40
+;   this core's bus   Y:$7e00 + track*$40
 ;   the shared window  base + (local*4 + gen)*$20
 ; with four generations a track, base Y:$33e00 on the tracks 5-8 core and
 ; Y:$3be00 on the tracks 1-4 core; gen is each core's own counter at base-1,
@@ -184,7 +184,7 @@ rq82:
 ; same core: this core's bus (a = the track, clean)
         asl     #6,a,a
         add     x1,a
-        add     #>$800,a
+        add     #>$7e00,a
         bra     rq11
 rq10:
 ; other core: its publish region in the shared window, two generations behind

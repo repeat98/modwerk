@@ -125,7 +125,7 @@ static void identity_and_submission_negatives(void) {
     f.blocked=1; assert(mw_controller_start(&r,&b,&j)==MW_CTL_CLOSED); assert(!f.starts);
     f.blocked=0;f.resources=0; assert(mw_controller_start(&r,&b,&j)==MW_CTL_CLOSED); assert(!f.starts);
     f.resources=1; f.complete=0; assert(mw_controller_start(&r,&b,&j)==MW_CTL_CLOSED); /* unknown ledger */
-    f.complete=3; f.live[0]=(struct mw_hook_span){0x7f0u,1,1,MW_HOOK_Y}; f.live_count=1;
+    f.complete=3; f.live[0]=(struct mw_hook_span){0xff0u,1,1,MW_HOOK_Y}; f.live_count=1;
     assert(mw_controller_start(&r,&b,&j)==MW_CTL_CLOSED); /* kept / outgoing core-1 private Y */
     f.live_count=0; f.target[0]=(struct mw_hook_span){0x30000u,16384,0,MW_HOOK_Y}; f.target_count=1;
     assert(mw_controller_start(&r,&b,&j)==MW_CTL_CLOSED); /* target / future whole ring includes SC tail */

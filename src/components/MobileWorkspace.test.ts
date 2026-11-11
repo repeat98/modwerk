@@ -107,3 +107,12 @@ describe('mobile configuration workspaces', () => {
     expect(MOBILE_WORKSPACE).toContain('(hover: none) and (pointer: coarse)')
   })
 })
+
+describe('the MS-70CDR pedal page without the beta', () => {
+  it('offers to install the base', async () => {
+    media.mobile = false
+    window.location.hash = 'zoom-ms-70cdr/pedal/setup'
+    await act(async () => root.render(createElement(App)))
+    await vi.waitFor(() => expect(button('Install the base')).toBeDefined(), { timeout: 4_000 })
+  })
+})

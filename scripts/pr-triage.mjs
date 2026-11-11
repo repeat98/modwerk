@@ -55,7 +55,7 @@ async function main() {
   const write = process.env.PR_TRIAGE_DRY_RUN === '1' ? async (path, method) => console.log('dry run: ' + method + ' ' + path) : api
   // Anyone with a published module (author or maintainer) or release authority skips the queue.
   const json = path => JSON.parse(readFileSync(new URL('../' + path, import.meta.url), 'utf8'))
-  const documents = [...json('src/catalog/module-documents.json').modules, ...['digitakt', 'digitone', 'analog-rytm-mkii'].flatMap(machine => {
+  const documents = [...json('src/catalog/module-documents.json').modules, ...['digitakt', 'digitone', 'analog-rytm-mkii', 'zoom'].flatMap(machine => {
     const folder = 'sdk/' + machine + '/modules/'
     return readdirSync(new URL('../' + folder, import.meta.url)).filter(id => existsSync(new URL('../' + folder + id + '/modwerk.module.json', import.meta.url))).map(id => json(folder + id + '/modwerk.module.json'))
   })]

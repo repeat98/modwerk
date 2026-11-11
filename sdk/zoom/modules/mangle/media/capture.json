@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "mangle",
+  "moduleVersion": "9.0.0",
+  "imageSha256": "2838303ac0ac2714ed1fffef1890e05dd8b7e86db1cc179b77cf6273781aec59",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/mangle-screen.png",
+      "sha256": "cbf4e0f408e9f5725271e42312212061e796f45c5b7cf62d1c87f5863ab4b719",
+      "plan": "the cover picture at the start of .const in the built Mangle.ZDL (ZDL_OWN_RUNTIME=1 ZDL_MATERIALIZE_INIT=0 at 32f3d68), Zoom RLE decoded and drawn as zvis_host.py draws frames"
+    }
+  ]
+}
