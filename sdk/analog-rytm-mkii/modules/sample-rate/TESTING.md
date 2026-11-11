@@ -53,6 +53,25 @@ Rig cases, `tools/cases/sample-rate/` on the author's private rig (not in this r
 | sample-rate-fine-lock: held trig, second nudge | reads +0.05, inverted | not compared |
 | sample-rate-switch-snap: FIN read right after each tap | 0x7f00, 0x4000: pass | 0x782e, 0x40b2: fail (mid-glide) |
 
+Hardware, 11 Nov 2026: npp1993's Analog Rytm MKII (OS 1.74, flash RB08), scratch project, run by the author's automated rig over USB with the author's go; no person at the unit. Results are the rig's: memory words and screens, nobody listened.
+
+- Source (0.2.0-experimental): fingerprint `cbbe1dc7…a0ef` (`evidence.sourceSha256`).
+- SF06 (`12fbe1bc…9533`, the rig's base with the USB link + this source), booted from RAM (image CRC `829dd163`), flash untouched. SO05 (`f2bea70c…fe91`, the same with 0.1.1), booted from RAM in the same session.
+- The first unit runs found two faults in the cases, not the module: BD's FIN on the scratch project is modulated, so its effective word moved by itself (the cases now read FIN's smoother state, 0x8000ef34, and its target, 0x8000e5d4); and pressing SMPL on its own page toggled the knob and waveform views between cases (the cases now press AMP first). The references are the unit's waveform view.
+
+| Case (unit) | SF06, three runs | SO05 (0.1.1), one run |
+| --- | --- | --- |
+| sample-rate-fine-tun | pass: 0x400a, 0x3ffa, 0x4000; +0.04, -0.02, 0; CC 24 back to 0x4000 | fail: 0x4400, 0x3e00 (semitones) |
+| sample-rate-coarse-tun | pass: 0x420a, 0x410a; +2.04 | fail: 0x5800, 0x5000 |
+| sample-rate-func-tun | pass: 0x5800 (stock's jump to +24), CC 24 back to 0x4000 | pass (unchanged) |
+| sample-rate-fine-lock | pass: the held trig's lock reads +0.05, inverted | fail (screen) |
+| sample-rate-switch-snap | pass: smoother state 0x7f000000 right after the tap on, 0x40000000 after the tap off; label FIN, then RATE +63 | fail: 0x770f31fe, 0x4a71e633 (mid-glide) |
+| sample-rate-switch-keep | pass: FIN +10 stays 0x4a00 through both taps | pass (unchanged) |
+
+SO05's screen checks also differ because it came up in the other SAMPLE view after its boot; its memory checks are the comparison.
+
+Not covered by the rig: how the switch and the cents sound, pads, a pattern save and reload of TUN locks (the +Drive stays untouched), stock OS loading a sound saved with cents, NRPN, two voices together, CPU load.
+
 ## 0.1.1: idle CPU (2026-11-06)
 
 0.1.0's block handler walked all eight voices every block before the prefetch, with no track's RATE on too. 0.1.1 returns at once when no track has RATE on and no voice is still going down (`going_any`, kept at the end of the full pass); otherwise the pass runs as before. The two gates in the step loop are unchanged.

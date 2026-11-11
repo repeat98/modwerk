@@ -127,31 +127,30 @@
   "evidence": {
     "tier": "author-hardware",
     "moduleVersion": "0.2.0-experimental",
-    "sourceSha256": "22e0fea103717c7b342de1ed5b19ab8bd45ab6b8c6a36e8005bb1b33614b0050",
+    "sourceSha256": "cbbe1dc7ba3b86709b9d23d96096f34809733a1295455b3639cd08336fd7a0ef",
     "reports": [
       "TESTING.md"
     ],
     "hardware": {
       "model": "Analog Rytm MKII",
       "release": "1.74",
-      "testedOn": "2026-11-06",
+      "testedOn": "2026-11-11",
       "tester": "npp1993",
       "durationMinutes": null,
-      "summary": "npp1993 (the author) flashed test builds SP03 to SP13 on an Analog Rytm MKII, OS 1.74, each with Pipo Loop 0.1.1 from its local branch, and reports: the SOUND SETTINGS row and checkbox work; the knob reads RATE on that sound and FIN on others; RATE 1x, slowing to a stop, and reverse; a trig below 0 starts from END; LOP OFF; a locked trig backward and a plain trig forward; LOP PIPO turns with no clicks at fixed RATE and by hand; an LFO to Fine Tune passing through a stop (SP04, after a Pipo Loop fix); kit save and power cycle; track copy; a sound lock onto a row-off track; the tap of encoder B, which flips reliably and fast, and does not flip with a trig, FUNC or NO held, a pad held in scene or performance mode, in running live recording, on a long hold or a press and turn. 0.1.1 (this source) in LF01, the author's 16-module set on a private telemetry base: RATE still slows, stops and reverses, as reported; with Ping Pong Loop's and QPERF's idle fixes the idle audio block fell from 72.9 % to 71.1 %.",
+      "summary": "0.2.0 (this source) ran on npp1993's Analog Rytm MKII, OS 1.74, as test image SF06 booted from RAM over USB (flash untouched), driven by the author's automated test rig with the author's go: 6 cases, all passing in three runs in a row. Measured on the unit: plain turns of TUN move 1 cent a step, as many steps as stock's semitones (TUN words 0x400a, 0x3ffa, 0x4000); press and turn moves whole semitones keeping the cents (0x420a, 0x410a); FUNC + turn still jumps to +24 (0x5800); CC 24 clears the cents; a held trig's lock reads +0.05; screens read +0.04, -0.02, 0 and RATE +63; FIN's smoother state is exactly at its new value right after each tap (0x7f000000 on, 0x40000000 off), and a FIN off rest keeps its value. The same cases on the 0.1.1 build (SO05, same session) failed each changed check: semitone steps, and FIN still gliding (0x770f…, 0x4a71…). Earlier versions: SP03 to SP13 and LF01, as reported by the author (TESTING.md).",
       "limitations": [
-        "Results are as reported by the author, not itemized measurements; duration not recorded.",
-        "LOAD TO TRACK in SOUND MANAGER often gave ERROR on the unit, on sounds with nothing to do with RATE too, and the one load that worked came back with the setting clear; stock was not compared.",
-        "Tested with Pipo Loop in the image; this module alone was not flashed.",
+        "0.2.0's results are the rig's measurements on the unit (memory words and screens), not a person playing; nobody listened to the switch or the cents.",
+        "Not run on a unit for 0.2.0: pattern save and reload of TUN locks in cents (the fine lane is read in stock's code only), stock OS loading a sound saved with cents, NRPN, pads.",
+        "LOAD TO TRACK in SOUND MANAGER often gave ERROR on the unit (0.1.x), on sounds with nothing to do with RATE too, and the one load that worked came back with the setting clear; stock was not compared.",
         "Not tested on a unit: two voices together, performance and scene locks by ear, CPU load alone.",
-        "Final test build SP13 c.f. TESTING.md; firmware was not read back from the device.",
-        "0.1.1 ran on a unit only in LF01 (a6d85a85, combined image with a private telemetry base), not alone; its own idle saving was not separated from Ping Pong Loop's and QPERF's."
+        "Image SF06 contains the author's private rig base (the USB test link); the library build uses the published base, not run on the unit."
       ]
     },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu on OS 1.74, 23,777-frame ramp: rate word exact at every RATE tried, trig below 0 starts from END, row off sample-identical to the core alone, with Pipo Loop no clicks at any speed or across flips and sweeps; the tap's cases. Hardware, as reported by the author: SP03 to SP13, and LF01 (0.1.1 in a 16-module set: RATE works; idle block 72.9 % -> 71.1 % with two other modules' fixes) (TESTING.md).",
+    "summary": "rytm-emu on OS 1.74: the switch keeps 1x through both taps (loop period 0.4954 s; 0.1.1 lost 25 ms and gained 13 ms), TUN turns in cents, pressed in semitones; rig cases pass on SF06 and fail on 0.1.1 where behaviour changed. Unit (0.2.0, rig, SF06): 6 cases pass three runs in a row; 0.1.1 fails them there too. Earlier, as reported by the author: SP03 to SP13, LF01 (TESTING.md).",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
