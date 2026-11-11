@@ -55,6 +55,8 @@ type OctatrackHubProps = {
   onInstall: (layout?: BaseLayout) => void
   onNew: () => void; onImport: () => void; onSetAction: (id: string, action: SetAction) => void
   onFill: (ids: string[]) => void; onSaveUnit: () => void; onReport: (id?: string) => void
+  /** Shows the welcome to modules over USB again (OctatrackWelcome), from Setup. */
+  onWelcome?: () => void
   header: ReactNode; grid: ReactNode; card: ReactNode
 }
 
@@ -76,7 +78,7 @@ function MobileModuleSets({ sets, selectedId, onSelect, onNew, onImport, onSetAc
   </div>
 }
 
-function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, username, onSelect, onSync, onInstall, onNew, onImport, onSetAction, onFill, onSaveUnit, onReport, header, grid, card }: OctatrackHubProps) {
+function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, username, onSelect, onSync, onInstall, onNew, onImport, onSetAction, onFill, onSaveUnit, onReport, onWelcome, header, grid, card }: OctatrackHubProps) {
   const state = useOctatrackLink(link), { status, identity } = state
   // The page fits the window, so it never scrolls as a whole: the split gets the height left in the app's main area.
   // shortcut: measured when the window or main area resizes and when the page changes, not when a banner above appears.
@@ -179,6 +181,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
             {usb && <button type="button" className={'button ' + (status === 'stock' || needsBase || status === 'ready' && !connected ? 'button-primary' : 'button-quiet')} onClick={() => onInstall(wantedLayout)}><Icon name="download" size={16} />{wantedLayout ? 'Install base with this layout' : needsBase ? 'Install latest base' : status === 'stock' ? 'Install the base' : connected ? 'Install the base again' : 'Open the install guide'}</button>}
             {usb && MODULE_SKIP_HINT && <p className="link-hint">{MODULE_SKIP_HINT}</p>}
             <p className="link-hint">Going back to the original OS works from the card: <a className="text-button" href="#faq">FAQ & flashing guide</a></p>
+            {onWelcome && <p className="link-hint"><button type="button" className="text-button" onClick={onWelcome}>What’s new: modules over USB</button></p>}
           </section>
           {usb && <section className="hub-section" aria-labelledby="setup-connect-title">
             <h3 id="setup-connect-title">Can’t connect?</h3>

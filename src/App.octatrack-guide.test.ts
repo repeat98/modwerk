@@ -7,12 +7,14 @@ import App from './App'
 import { CommunityContext } from './community/context'
 import type { Session } from './community/api'
 import { fakeUnit } from './dev/octatrack-link-fake'
+import { OCTATRACK_WELCOME_KEY } from './hooks/useOctatrackWelcome'
 import { waitForBaseInstall } from './config/octatrack-progress'
 import { OCTATRACK_DIAGNOSTICS_VERSION } from './community/octatrack-diagnostics-contract'
 import baseBinding from '../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
 
 // A production build with the Octatrack base path released, for a member who is not a beta tester, on a computer whose
-// browser has WebUSB and an Octatrack on the original OS plugged in.
+// browser has WebUSB and an Octatrack on the original OS plugged in. They answered the welcome to modules over USB
+// already (App.octatrack-welcome.test.ts), so Your Octatrack opens the guide.
 const release = vi.hoisted(() => {
   window.matchMedia = (query: string) => ({ matches: false, media: query, onchange: null, addListener: () => {}, removeListener: () => {}, addEventListener: () => {}, removeEventListener: () => {}, dispatchEvent: () => true }) as unknown as MediaQueryList
   return { on: true }
@@ -26,6 +28,7 @@ let root: Root, container: HTMLDivElement
 beforeEach(() => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
   vi.stubGlobal('isSecureContext', true)
+  localStorage.setItem(OCTATRACK_WELCOME_KEY, 'seen')
   Object.defineProperty(navigator, 'usb', { value: fakeUnit('stock').usb, configurable: true })
   vi.stubGlobal('fetch', vi.fn(async (url: string) => String(url).includes('base-install-prompt') ? Response.json({ show: true }) : new Response('{}', { status: 404 })))
   HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', '') }

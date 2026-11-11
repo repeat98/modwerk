@@ -17,6 +17,8 @@ import { ForumShoutbox } from './community/ForumShoutbox'
 import './community/forum.css'
 import { countBaseInstall, trackPageView, trackUsage } from './community/usage'
 import { useDiagnosticsStepNeeded } from './community/diagnostics-sharing'
+import { useOctatrackWelcome } from './hooks/useOctatrackWelcome'
+import { OCTATRACK_BASE_RELEASED } from './config/octatrack-base'
 import { LegalPage } from './legal/LegalPage'
 import { PrivacyPage } from './community/PrivacyPage'
 import { INDEPENDENCE_NOTICE } from './firmware-notices'
@@ -130,6 +132,7 @@ const DiagnosticsGuideStep = lazy(() => import('./components/DiagnosticsInvitati
 const RemoteSessionGate = lazy(() => import('./components/RemoteSession').then(module => ({ default: module.RemoteSessionGate })))
 const OwnerNoteGate = lazy(() => import('./components/OwnerNote').then(module => ({ default: module.OwnerNoteGate })))
 const OwnerNotePreview = lazy(() => import('./components/OwnerNote').then(module => ({ default: module.OwnerNotePreview })))
+const OctatrackWelcome = lazy(() => import('./components/OctatrackWelcome').then(module => ({ default: module.OctatrackWelcome })))
 const BetaJoinPrompt = lazy(() => import('./components/BetaJoinPrompt').then(module => ({ default: module.BetaJoinPrompt })))
 const BetaModuleSets = lazy(() => beta().then(module => ({ default: module.BetaModuleSets })))
 const FirmwareFeedbackPreview = import.meta.env.DEV ? lazy(() => import('./components/FirmwareFeedbackPreview')) : () => null
@@ -219,7 +222,13 @@ export default function App() {
   // a base; the update prompt wherever the connected unit runs an older one. Never on account, sign-in, admin and legal
   // pages, and not before the session is known (a member's hint is the account's, a visitor's this browser's).
   const remoteSessionSeen = useRemoteSessionSeen()
-  const baseInstallPrompt = useBaseInstallPrompt(session.user?.verified ? session.user.id : null, !sessionLoading && !!usbLink && !usbLinkPreview && !accountRoute && !developerRoute && !route.startsWith('submit') && !['admin', 'review', 'privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route), usbLink ?? null,
+  // The welcome to modules over USB, once, for whoever never had the base, on the Octatrack's own pages: the library,
+  // a module, the module sets and Your Octatrack, where every build and sync button leads. Until it was answered, and
+  // on the visit it opened, the guide and the beta invitation keep away.
+  const welcomeHere = !sessionLoading && !usbLinkPreview && (route === 'octatrack' || route.startsWith('octatrack/') || route === 'configuration' || route === 'library'
+    || LIBRARY_CATEGORIES.includes(route as ModuleCategory) || route === 'module-sets' || route.startsWith('module-set/') || !!detailModule)
+  const welcome = useOctatrackWelcome(session.user?.verified ? session.user.id : null, OCTATRACK_BASE_RELEASED && !sessionLoading, welcomeHere, usbLink ?? null)
+  const baseInstallPrompt = useBaseInstallPrompt(session.user?.verified ? session.user.id : null, !welcome.due && !welcome.shown && !sessionLoading && !!usbLink && !usbLinkPreview && !accountRoute && !developerRoute && !route.startsWith('submit') && !['admin', 'review', 'privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route), usbLink ?? null,
     octatrackUi && (route === 'octatrack' || route.startsWith('octatrack/') || route === 'configuration'))
   // Integration points for the diagnostics stream, connected here and nowhere else: the base install guide's last step,
   // shown once the unit first connects on the new base (skipped while undefined; it never holds up finishing), and where
@@ -483,7 +492,7 @@ export default function App() {
   // The beta's Octatrack page (#configuration and #octatrack): the sets beside the unit, with the configuration page's
   // header, module grid and card route in it, so nothing the page had is lost.
   const hubPage = <Suspense fallback={null}><OctatrackHub view={hubView} link={usbLink ?? null} inventory={inventory} sets={configurationsFor('octatrack')} selectedId={active?.id} needs={projectNeeds} username={session.user?.username} onSelect={changeConfiguration} onSync={setLoadingSet} onInstall={layout => { setBaseLayoutWanted(layout); setBaseInstall('manual') }}
-    onNew={() => newConfiguration('octatrack')} onImport={() => importRef.current?.click()} onSetAction={setAction} onSaveUnit={saveUnitAsSet}
+    onNew={() => newConfiguration('octatrack')} onImport={() => importRef.current?.click()} onSetAction={setAction} onSaveUnit={saveUnitAsSet} onWelcome={OCTATRACK_BASE_RELEASED ? welcome.show : undefined}
     onFill={ids => { workspace.addModules(ids); setSaved(false); setRiskAccepted({key:'',accepted:false}) }}
     onReport={id => { const target = id ?? active?.id; if (target) setReportingConfiguration({ machine: 'octatrack', id: target }) }}
     header={<><header className="page-heading configuration-heading"><div><p className="page-kicker">YOUR WORKSPACE</p><h1>Your Octatrack</h1><p>{mobileWorkspace ? 'Edit and share your module sets. Module sets are saved in this browser.' : 'See what’s on your Octatrack, edit and sync your module sets, and keep backups. Module sets are saved in this browser.'}</p>
@@ -507,7 +516,7 @@ export default function App() {
       {startupOptions}
       <div ref={setBuildResultsSlot} className="build-results" />
     </div><div className="configuration-checkout">{compatibilityPanel}<div className="checkout-card">{riskAcceptance}<MemberGate action="build firmware" next={route}>{firmwareBuildPanel}</MemberGate></div></div></div></CardInstall>} /></Suspense>
-  const dialogOpen = !!baseInstall || baseInstallPrompt.open || !!loadingTarget || !!openModule || !!configDialog || configurationsOpen || compareOpen || !!reportingConfiguration
+  const dialogOpen = !!baseInstall || baseInstallPrompt.open || welcome.open || !!loadingTarget || !!openModule || !!configDialog || configurationsOpen || compareOpen || !!reportingConfiguration
   return (
     <BetaUi.Provider value={octatrackUi}><OctatrackLinkContext.Provider value={usbLink ?? null}>
       {session.user?.verified && !usbLinkPreview && usbPreview !== 'diagnostics' && <Suspense fallback={null}><OctatrackDiagnosticsCollector memberId={session.user.id} link={usbLink ?? null} inventory={inventory}/></Suspense>}
@@ -559,7 +568,10 @@ export default function App() {
       {/* The beta note is required: everywhere but the pages it and the diagnostics step link to, and the account (export, deletion). */}
       {remoteSessionSeen && session.user?.verified && <Suspense fallback={null}><RemoteSessionGate key={session.user.id} /></Suspense>}
       {/* While an administrator keeps the public round open: the beta runs over USB, so only on a computer. */}
-      {session.available && !sessionLoading && !betaAccess && !touchOnly && !mobileWorkspace && !accountRoute && !faqRoute && !['privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route) && <Suspense fallback={null}><BetaJoinPrompt /></Suspense>}
+      {welcome.open && <Suspense fallback={null}><OctatrackWelcome link={usbLink ?? null} usbBrowser={!touchOnly && !mobileWorkspace && window.isSecureContext && 'usb' in navigator} phone={mobileWorkspace} savedSets={configurationsFor('octatrack').some(set => set.moduleIds.length > 0)}
+        onLater={welcome.close} onSetUp={() => { welcome.close(); window.location.hash = 'octatrack'; setBaseInstall('manual') }}
+        onCard={() => { welcome.close(); setCardOpen(true); window.location.hash = 'octatrack/setup' }} /></Suspense>}
+      {session.available && !sessionLoading && !betaAccess && !welcome.due && !welcome.shown && !touchOnly && !mobileWorkspace && !accountRoute && !faqRoute && !['privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route) && <Suspense fallback={null}><BetaJoinPrompt /></Suspense>}
       {betaAccess && <Suspense fallback={null}><OwnerNoteGate key={session.user!.id} enabled={!accountRoute && !faqRoute && !['privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route)} /></Suspense>}
       {import.meta.env.DEV && usbPreview === 'beta-note' && <Suspense fallback={null}><OwnerNotePreview /></Suspense>}
       <Suspense fallback={null}>

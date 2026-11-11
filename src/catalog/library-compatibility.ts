@@ -35,6 +35,10 @@ export function moduleCardOnly(id: string, published: PublishedPackages = packag
 export const cardOnlyModuleNames = () => MODULES.filter(module => moduleCardOnly(module.id)).map(module => module.name)
 /** What a card-only module's mark on its library card says. */
 export const cardOnlyDetail = (name: string) => name + ' has no USB version yet. It goes onto the Octatrack only as card firmware: a whole firmware file, without the Modwerk base, that you install from the card.'
+/** The same in one line, beside the welcome's Build card firmware instead (OctatrackWelcome.tsx). */
+export function cardInsteadReason(names = cardOnlyModuleNames()) {
+  return 'Card firmware, without the base, is for browsers without USB' + (names.length ? ' and for modules with no USB version yet (' + names.join(', ') + ')' : '') + '.'
+}
 /** When the whole-image card build is the way to go: a browser without WebUSB, or a module with no USB version. */
 export function cardFallbackReason(names = cardOnlyModuleNames()) {
   return 'For browsers without USB (Firefox, Safari, iPad and phones)' + (names.length ? ' and for modules that have no USB version yet (' + names.join(', ') + ')' : '') +
