@@ -11,6 +11,10 @@ export const REPORT_PROBLEMS = 'Report problems with Report a problem on the You
 // Where beta bugs go, shown wherever a tester joins or reports.
 export const BETA_REPORTING_NOTICE = 'Report bugs in beta modules and beta pages only in #beta-testers on Discord, not through the report forms on this site.'
 /** How to start the Octatrack without loading its modules. The only place this is said: the base install guide and the
- * Your Octatrack page show it when it is not empty. Not yet confirmed on hardware with the base that brings it; set it to
- * '' to take it off the site. */
-export const MODULE_SKIP_HINT: string = 'If the Octatrack doesn’t start with your modules, hold PROJ while you switch it on: it starts without loading them, and loads them again at the next start.'
+ * Your Octatrack page show it when it is not empty; set it to '' to take it off the site. On the owner's MKII
+ * (docs/OCTATRACK_MODULE_EDGE_CASES.md, case 15): FUNC pressed once the startup animation began skipped the restore on
+ * the flashed beta (12 October 2026); PROJ held through a RAM boot of a development twin of the base that brings PROJ
+ * showed MODULES SKIPPED (11 November 2026), and PROJ held at power-on on the earlier flashed base did not open
+ * Elektron's Startup Menu. Not confirmed: PROJ held from a cold power-on on that base flashed, and anything on an MKI,
+ * which has no PROJ key (FUNC is its gesture). */
+export const MODULE_SKIP_HINT: string = 'If the Octatrack doesn’t start with your modules, hold PROJ while you switch it on (on an MKI: press and hold FUNC as soon as the startup animation begins): it starts without loading them, and loads them again at the next start.'
