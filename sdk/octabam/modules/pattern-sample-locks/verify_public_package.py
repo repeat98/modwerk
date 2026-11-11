@@ -10,7 +10,7 @@ import subprocess
 import sys
 
 HERE = Path(__file__).resolve().parent
-ROOT = HERE.parents[2]
+ROOT = HERE.parents[3]
 HASH = lambda data: hashlib.sha256(data).hexdigest()
 
 
@@ -27,7 +27,7 @@ def main():
     print('Staging independent SDK/catalogue fixture outside Git', flush=True)
     shutil.copytree(ROOT / 'sdk', stage / 'sdk', ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
     folder = stage / 'sdk/octabam/modules/pattern-sample-locks'
-    shutil.copytree(HERE, folder, ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
+    shutil.copytree(HERE, folder, ignore=shutil.ignore_patterns('__pycache__', '*.pyc'), dirs_exist_ok=True)
     (stage / 'scripts').mkdir()
     for name in ('octatrack-module-packages.py', 'octatrack-reconstruction.py'):
         shutil.copy2(ROOT / 'scripts' / name, stage / 'scripts' / name)
@@ -35,6 +35,7 @@ def main():
         target = stage / name; target.parent.mkdir(parents=True, exist_ok=True); shutil.copy2(ROOT / name, target)
     catalog_path = stage / 'sdk/catalog.json'
     catalog = json.loads(catalog_path.read_text())
+    catalog['modules'] = [row for row in catalog['modules'] if row['id'] != 'pattern-sample-locks']
     catalog['modules'].append(dict(id='pattern-sample-locks', version='0.1.8-experimental', addedAt='2026-10-30T00:00:00Z'))
     catalog_path.write_text(json.dumps(catalog))
     manifest = stage / 'src/engine/assets/octatrack-module-packages.json'

@@ -9,7 +9,7 @@ from pathlib import Path
 import subprocess
 
 HERE = Path(__file__).resolve().parent
-ROOT = HERE.parents[2]
+ROOT = HERE.parents[3]
 ASSEMBLY_SHA256 = '837e44f48fa137444e14755d96011731c8fde29a73fa877ffc35edac3510473f'
 
 

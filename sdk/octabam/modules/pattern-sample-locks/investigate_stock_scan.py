@@ -15,7 +15,7 @@ import subprocess
 import sys
 
 HERE = Path(__file__).resolve().parent
-ROOT = HERE.parents[2]
+ROOT = HERE.parents[3]
 SOURCES = ('translation.c', 'native.c', 'engine.c', 'engine.h', 'ui.c', 'ui.h', 'font.c', 'font.h')
 
 

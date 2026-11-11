@@ -7,9 +7,9 @@ import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createServer } from 'vite'
-import { compiledModuleVersions, moduleSourceFingerprint, moduleSourcePaths } from '../../../scripts/module-source.mjs'
+import { compiledModuleVersions, moduleSourceFingerprint, moduleSourcePaths } from '../../../../scripts/module-source.mjs'
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..')
 assert(process.argv[2], 'Usage: node usb_beta_scope.mjs PRIVATE_PUBLIC_PATH_DIRECTORY')
 const directory = path.resolve(process.argv[2])
 assert(directory !== root && !directory.startsWith(root + path.sep))
@@ -22,7 +22,7 @@ const published = await json(path.join(root, 'src/engine/assets/octatrack-module
 const entry = manifest.packages[0]
 assert.equal(entry.id, 'pattern-sample-locks')
 assert.equal(entry.usbOnly, true)
-const source = await json(path.join(root, 'sdk/drafts/pattern-sample-locks/octamod.module.json'))
+const source = await json(path.join(root, 'sdk/octabam/modules/pattern-sample-locks/octamod.module.json'))
 const server = await createServer({ root, configFile: false, logLevel: 'error', server: { middlewareMode: true } })
 try {
   const { MODULES } = await server.ssrLoadModule('/src/catalog/modules.ts')

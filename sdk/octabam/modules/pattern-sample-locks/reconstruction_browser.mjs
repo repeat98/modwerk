@@ -8,7 +8,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createServer } from 'vite'
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..')
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..')
 assert(process.argv[2] && process.argv[3], 'Usage: node reconstruction_browser.mjs PRIVATE_OUTPUT STOCK_OS')
 const directory = path.resolve(process.argv[2]), stockPath = path.resolve(process.argv[3])
 assert(!directory.startsWith(root + path.sep))
@@ -18,7 +18,7 @@ const server = await createServer({ root, configFile: false, logLevel: 'error', 
 try {
   const { sha } = await server.ssrLoadModule('/vendor/elekloader/kit/src/bytes.ts')
   const { MODULES } = await server.ssrLoadModule('/src/catalog/modules.ts')
-  const source = await json(path.join(root, 'sdk/drafts/pattern-sample-locks/octamod.module.json'))
+  const source = await json(path.join(root, 'sdk/octabam/modules/pattern-sample-locks/octamod.module.json'))
   assert(!MODULES.some(module => module.id === source.id))
   MODULES.push({ id: source.id, key: source.key, name: source.name, category: source.category,
     author: source.author.github, version: source.version })

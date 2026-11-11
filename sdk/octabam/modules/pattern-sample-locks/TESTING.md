@@ -1,6 +1,29 @@
 # Testing: Pattern Sample Locks 0.1.8-experimental
 
-31 October 2026 (Taipei) · twwwy · prototype hardware follow-up; no release approval.
+10 November 2026 (Taipei) · twwwy · first release, submitted for owner review.
+
+## Release record — 10 November 2026
+
+0.1.8-experimental moves out of `sdk/drafts/` as published USB package
+`3e13c46f…` (10,048 bytes), the exact package of the MKII owner checks below.
+On `main` at `74c9eb25`, the normal public wrapper rebuilt it byte for byte and
+`--check` passed with both stock scans (`verify_public_package.py`). The
+module's runtime sources are unchanged since `5a15ac39`; this release moved the
+folder and corrected the helper scripts' paths to the repository root, which
+moves the folder's native-source hash (`800a3ac6…`) but no build input the
+reconstruction recipe pins.
+
+The owner's first-release answers (agent board, 6–8 November): no aggregate
+base bounds are needed; a measured worst event in the emulator replaces a static
+cycle bound, which is waived; the stock benchmark and MIDI flood are waived
+because the module has no MIDI path; and the hardware checks are the standard
+USB steps plus the save, reload and power-cycle checks below. All three were
+recorded in #1313.
+
+Still open and listed in the manifest's limitations: the unexplained SAMPLE
+change in one high-load development run, and the long-session case below in
+which the menu rows did not appear until a power cycle.
+
 
 ## Current scope
 

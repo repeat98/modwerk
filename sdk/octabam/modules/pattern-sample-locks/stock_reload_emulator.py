@@ -15,7 +15,7 @@ def main():
         parser.add_argument('--'+name,type=Path,required=True)
     parser.add_argument('--stock-main',type=Path,help='Diagnostic: original stock MAIN, with no Modwerk base')
     args=parser.parse_args();out=args.out.resolve()
-    root=Path(__file__).resolve().parents[3]
+    root=Path(__file__).resolve().parents[4]
     assert out!=root and root not in out.parents
     out.mkdir(parents=True,exist_ok=False)
     prior=json.loads(args.receipt.read_text())

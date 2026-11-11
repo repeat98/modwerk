@@ -14,12 +14,13 @@ The subsequent [final qualification attempt](FINAL_QUALIFICATION.md) confirms
 public-package parity and the authored stack audit. Remote input also failed
 with no modules in the later fresh-boot test, so lifecycle automation is stopped;
 the later [public-base lifecycle run](MKII_PUBLIC_LIFECYCLE.md) passed scoped
-selector Undo and exact-package Keep/reboot/removal. Complete stack qualification
-and first-release approval remain open.
+selector Undo and exact-package Keep/reboot/removal. The owner's first-release
+checks of 8 November (save, reload and power cycle on the MKII; the worst key
+press in the emulator) passed, and the owner waived a static cycle bound and the
+MIDI benchmark for 0.1.8. See TESTING.md.
 
 **The first beta is scoped to USB loading through the Modwerk base.** Card
-firmware is unsupported and must refuse this module. Card support is deferred;
-this scope was selected by the author and still needs first-release review.
+firmware is unsupported and must refuse this module. Card support is deferred.
 
 ## Controls
 
@@ -84,7 +85,7 @@ Run python3 -B verify.py for planner/UI sanitizer regressions. The pinned MCF544
 
 [Local beta preparation](BETA_PREPARATION.md) records reproducible package,
 stack and browser-component checks, the remaining publication blockers and a
-future supervised MKII checklist. The candidate remains private and unqualified.
+future supervised MKII checklist, as they stood then.
 
 [Private reconstruction](RECONSTRUCTION.md) packages the identical runtime with
 hash-guarded copies and records scanner, source-boundary and loader checks.
