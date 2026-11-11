@@ -6,7 +6,7 @@
   "changes": [
     "Renamed Quick Mod Assign. Hold LFO and turn a knob: that parameter becomes the sound's LFO destination at depth 0, and further turns of the same knob set the LFO's depth with stock's DEP steps, shown in the knob's box as the LFO page writes DEP; pressing that knob sets the depth to 0. An LFO tap opens the LFO page on the release and is played to every other mod through core_key. The popups say DEST."
   ],
-  "runtimeSourceSha256": "6707f631ce798cb30dc42ad27c0f5c2d761b320c5c409796ad6d815c30cd0483",
+  "runtimeSourceSha256": "0f934d0d13a7685cd7f7c0d8bc57c9eae1a5ad1ccdcd08870b28c4258ce8a2bc",
   "packages": [
     {
       "os": "1.74",
