@@ -6,7 +6,7 @@ import { socialProviders } from './social-config'
 import { socialRoutes } from './social'
 import { profileRoutes } from './profile'
 import { betaInvitationRoutes } from './beta-invitations'
-import { memberBetaAccess } from './beta-testers'
+import { memberBetaAccess, memberOctatrackBase } from './beta-testers'
 import { moduleAvailabilityError } from '../src/catalog/availability'
 import { DISCORD_INVITE_CAMPAIGN } from '../src/config/development-discord'
 import { discordInvitationClaim } from './discord-invitations'
@@ -78,10 +78,11 @@ export async function authentication(request:Request,env:Env,path:string):Promis
  }
  // Due until the member's unit has reported any Modwerk base; the site records it then. Base updates are prompted from the
  // connected unit (src/hooks/useBaseInstallPrompt.ts), not from this record, so a new base needs no migration.
- // Due only to beta testers and verified administrators while USB loading is a beta (src/engine/protocol.ts USB_LINK).
+ // Due to beta testers and verified administrators, and to every verified member once the Octatrack base path is
+ // released (memberOctatrackBase, src/config/octatrack-base.ts).
  if(path==='/api/auth/base-install-prompt'){
   const member=needMember(await accountUser(request,env,db))
-  if(request.method==='GET')return response({show:(memberBetaAccess(member)||await isAdmin(request,env,db))&&!await db.prepare('SELECT 1 FROM member_base_install_prompts WHERE user_id=?').bind(member.id).first()})
+  if(request.method==='GET')return response({show:(memberOctatrackBase(member)||await isAdmin(request,env,db))&&!await db.prepare('SELECT 1 FROM member_base_install_prompts WHERE user_id=?').bind(member.id).first()})
   if(request.method!=='POST')throw new HttpError(405,'Use GET or POST for the base install prompt.')
   await db.prepare('INSERT OR IGNORE INTO member_base_install_prompts(user_id) VALUES(?)').bind(member.id).run()
   return response({ok:true})

@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react'
 
-/** Whether this page shows the beta interface (hasBetaUi); App provides it, and anything rendered outside sees main's. */
+/** Whether this page shows the Octatrack base path's interface (hasOctatrackBase), module sets and their words
+ * included; App provides it, and anything rendered outside sees main's. */
 export const BetaUi = createContext(false)
 export const useBetaUi = () => useContext(BetaUi)
 const WORDS = {

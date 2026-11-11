@@ -22,8 +22,8 @@ export function usbLagNote(id: string, published: PackageList = packages) {
   return entry ? 'Over USB this installs ' + entry.version + (entry.lagReason ? ': ' + entry.lagReason : '.') : ''
 }
 
-/** Why card firmware cannot include these modules. `usb` says whether this member can sync over USB (the beta
- * interface, hasBetaUi): without it the refusal does not point at a sync they cannot start. */
+/** Why card firmware cannot include these modules. `usb` says whether this member can sync over USB (the Octatrack
+ * base path, hasOctatrackBase): without it the refusal does not point at a sync they cannot start. */
 export function cardBuildError(ids: readonly string[], usb = true, published: PackageList = packages): string {
   const usbOnly = resolveSelection(ids).filter(module => moduleUsbOnly(module.id, published)), one = usbOnly.length === 1
   if (!usbOnly.length) return ''

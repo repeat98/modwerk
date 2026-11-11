@@ -1,4 +1,4 @@
-import { hasBetaAccess, hasBetaUi } from '../community/beta-access'
+import { hasBetaAccess, hasOctatrackBase } from '../community/beta-access'
 import { useCommunity } from '../community/context'
 import { requireBuildAccount } from '../community/member-access'
 import { trackUsage } from '../community/usage'
@@ -24,7 +24,7 @@ export function useFirmwareBuild(client: RefObject<FirmwareClient | null>, activ
   const {session}=useCommunity(),memberId=session.user?.verified&&session.user.username?session.user.id:null
   const betaAccess = hasBetaAccess(session)
   const ids = active?.moduleIds ?? [], keepStock = DSP_LOADER && (active?.keepStockFx2 ?? true), startup: StartupAnimation = active?.classicStartup ? 'classic' : 'docking'
-  const configurationError=moduleAvailabilityError(ids,betaAccess)||cardBuildError(ids,hasBetaUi(session))||selectionConflictError(ids,keepStock)||moduleBuildError(ids)||usbAudioBuildError(active?.usbAudio)
+  const configurationError=moduleAvailabilityError(ids,betaAccess)||cardBuildError(ids,hasOctatrackBase(session))||selectionConflictError(ids,keepStock)||moduleBuildError(ids)||usbAudioBuildError(active?.usbAudio)
   const key = JSON.stringify([active?.id, ids, active?.moduleVersions, active?.usbAudio, keepStock, startup, firmware?.sha256, memberId, betaAccess])
   const [view, setView] = useState<BuildView>({ key: '', state: 'empty' })
   const operation = useRef(0), building = useRef(false)
