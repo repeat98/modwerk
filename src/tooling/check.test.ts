@@ -7,7 +7,7 @@ import { expect, it } from 'vitest'
 
 const runner = fileURLToPath(new URL('../../scripts/check.mjs', import.meta.url))
 
-function check(failure = '', buildOnly = false) {
+function check(failure = '', buildOnly = false, args: string[] = []) {
   const folder = mkdtempSync(join(tmpdir(), 'octamod-check-test.'))
   const log = join(folder, 'scripts.log')
   const npm = join(folder, 'npm.mjs')
@@ -18,7 +18,7 @@ function check(failure = '', buildOnly = false) {
     process.exitCode = process.env.CHECK_TEST_FAIL === name ? 1 : 0
   `)
   try {
-    const result = spawnSync(process.execPath, [runner, ...(buildOnly ? ['--build'] : [])], {
+    const result = spawnSync(process.execPath, [runner, ...(buildOnly ? ['--build'] : []), ...args], {
       encoding: 'utf8',
       env: { ...process.env, npm_execpath: npm, CHECK_TEST_LOG: log, CHECK_TEST_FAIL: failure, MODWERK_SLOTS: '0' },
     })
@@ -57,6 +57,17 @@ it.each(['sdk:check', 'lint', 'test', 'build:bundle', ''])('keeps every independ
   expect(result.scripts.indexOf('sdk:check')).toBeGreaterThan(result.scripts.indexOf('test'))
   // The module doctor's draft test copies a draft under sdk/octabam/modules/, so it runs alone once the parallel stage is done.
   expect(result.scripts.at(-1)).toBe('test')
+})
+
+it('runs as CI\'s parallel parts, which together start every script of the whole check once', () => {
+  const whole = check().scripts, generate = ['prepare', 'licenses:generate', 'machines:generate', 'modules:generate']
+  const contract = check('', false, ['--part', 'contract']).scripts, sdk = check('', false, ['--part', 'sdk']).scripts, shard = check('', false, ['--part', 'test:1/2']).scripts
+  expect(sdk).toEqual([...generate, 'sdk:check'])
+  expect(shard).toEqual([...generate, 'test'])
+  // The contract part keeps the draft doctor's own test run, last; the shards carry the other.
+  expect(contract.filter(name => name === 'test')).toEqual(['test'])
+  expect(contract.at(-1)).toBe('test')
+  expect([...contract, 'sdk:check', 'test'].sort()).toEqual([...whole].sort())
 })
 
 it('refuses stale or unflagged native pairs before generation or any dependent check can run', () => {
