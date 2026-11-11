@@ -78,9 +78,9 @@
     "memoryBytes": 1342,
     "fastBytes": null,
     "load": {
-      "display": "Not measured yet",
-      "method": "unmeasured",
-      "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+      "display": "No audio-path code; bounded UI work",
+      "method": "static",
+      "conditions": "Read from the code, not measured on a unit. Nothing runs per audio sample or in the sequencer: the module works in the 30 Hz UI tick (a scan of 16 track lengths and at most 32 view-stack nodes) and, only while a choice is armed, in the screen draw (about 40 stock rectangle calls). To measure on a unit: the Digitakt II's CPU reading with a choice armed, every track playing."
     }
   },
   "evidence": {
