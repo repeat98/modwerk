@@ -31,6 +31,9 @@ import { moduleCardless } from '../src/catalog/usb-only.ts'
 const PERFORMANCE_REQUIRED_FROM = '2026-10-07'
 // Modules first listed on or after this day declare the key gestures and screens they take (compatibility.uiClaims).
 const UI_CLAIMS_REQUIRED_FROM = '2026-10-14'
+// Octatrack modules first listed on or after this day, and every draft judged as a release, build a machine page's controls with modwerk_page_control()
+// (sdk/machines/octatrack/include/modwerk_page.h), which gives a control stock's widget for its number of values.
+const PAGE_CONTROLS_REQUIRED_FROM = '2026-11-11'
 // Octatrack modules first listed on or after this day ship a USB package beside the card build (docs/ADD_A_MODULE.md, "Octatrack base and
 // USB lifecycle"); the card-only ones listed before it need a reviewed migration before USB rollout. CI's package --check sees a stale package, not a missing one.
 const USB_PACKAGE_REQUIRED_FROM = '2026-10-02'
@@ -122,6 +125,14 @@ function octatrack(id) {
   const art = readFileSync(resolve(root, 'src/components/ModulePreview.tsx'), 'utf8')
   if (exists(folder + '/presentation/thumbnail.svg') || new RegExp("^\\s+'?" + id + "'?: \\(\\) =>", 'm').test(art)) ok('thumbnail', 'the library card has art')
   else fail('thumbnail', 'no presentation/thumbnail.svg and no hand-drawn art', 'add a 320x192 presentation/thumbnail.svg that shows what the module does')
+
+  // A page descriptor written by hand is where a short list ends up as a knob: the widget word (desc+0x132) beside the count (desc+0xd2).
+  const sources = readdirSync(resolve(root, folder), { recursive: true, encoding: 'utf8' }).filter(name => /\.(c|h|py)$/.test(name)).map(name => [name, readFileSync(resolve(root, folder, name), 'utf8')])
+  const byHand = sources.filter(([, text]) => !text.includes('modwerk_page.h') && /0x132\b/i.test(text) && /0xd2\b/i.test(text)).map(([name]) => name)
+  const pageFix = 'fill each slot with modwerk_page_control() from modwerk_page.h (docs/module-guides/machines.md, "A control with few values is a switch")'
+  if (byHand.length && (draft || !entry || (entry.addedAt ?? '').slice(0, 10) >= PAGE_CONTROLS_REQUIRED_FROM)) fail('page controls', byHand.join(', ') + ' writes a page descriptor by hand, so nothing picks stock\'s switch for a control with two to five values', pageFix)
+  else if (byHand.length) info('page controls', byHand.join(', ') + ' writes its page descriptor by hand (listed before ' + PAGE_CONTROLS_REQUIRED_FROM + '). At its next page change: ' + pageFix)
+  else if (sources.some(([, text]) => text.includes('modwerk_page.h'))) ok('page controls', 'built with modwerk_page_control(): two to five values draw as stock\'s switch, more as a knob')
 
   // The two DSP source gates (octabam's norep and nolabelprefix, sdk/octabam/docs/TRAPS.md): a label prefix is always refused; a rep is refused in a module listed from 2026-10-23.
   const gates = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', 'scripts/dsp-source-gates.py', '--json', id], { cwd: root, encoding: 'utf8' })
