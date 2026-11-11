@@ -88,6 +88,19 @@ Fixed velocity read from stock's flag every 100M instructions; screens compared 
 - FILTER page, FIX held, FX track selected: FDB edits, no boxes shown.
 - FILTER page FIX links, AMP page SAMPLER links and the recorder tap, the FIX key and FUNC + FIX, VELOCITY MODS FULL, kit save and power cycle, as before.
 
+**0.2.0 LFO assign, run by the test rig on the author's unit (not by a person), 10 Nov 2026.** Build QL02: this branch's 0.2.0 code with Loop Sync 0.3.2, RAM-booted over the flashed OS, scratch project. Six screen cases, each also run on QS02 (the same set without this mod):
+
+| Case | QL02 (with the mod) | QS02 (stock) |
+| --- | --- | --- |
+| LFO held, FRQ turned on the FILTER page: FRQ boxed at 0, the page stays, LFO page shows DST FRQ | pass | fails, as it should |
+| Further turns set DEP as the same turns of stock's DEP knob: +1.96 and -1.96 both ways | pass | fails, as it should |
+| Fast turn to +127, another knob takes the LFO at 0, a knob press sets DEP to 0; FRQ and RES themselves unmoved | pass | fails, as it should |
+| LFO held on the LFO page, WAV turned: NOT AN LFO TARGET, WAV unmoved | pass | fails (WAV moves) |
+| FIX held, FRQ turned: velocity link +21, FRQ unmoved; a knob press sets it to 0 | pass | fails, as it should |
+| Plain LFO taps (FILTER, LFO, SAMPLE pages), then FUNC + knob A steps SPD (Loop Sync saw the replayed tap) | pass | pass (same screens) |
+
+Not covered by the rig: how the LFO sounds, pads, the FX track's LFO, kit save and reload, a power cycle. Seen in the run: during the hold the box rounds DEP down (+1.93 shows +1, -1.93 shows -2).
+
 The source-only package itself has not run on a unit. Steps for a unit run of it, alone or in a combined image:
 
 1. FILTER page, hold FIX: FRQ and RES shown as `0` boxes, nothing in the corner. Turn FRQ: its box counts up, FRQ itself does not move. Soft and hard pad hits differ. SOUND SETTINGS, VELOCITY MOD shows FILT FRQ.
