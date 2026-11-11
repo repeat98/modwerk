@@ -204,7 +204,7 @@ export default function App() {
   useEffect(() => { if (import.meta.env.DEV && usbLinkPreview) void import('./dev/octatrack-link-fake').then(fake => setUsbKit(fake.previewKit())) }, [])
   // A beta chunk that did not arrive already shows PageError through the sidebar's parts from it; this catch keeps it out of the diagnostics as an unhandled rejection.
   useEffect(() => { if (usbAllowed && !unitKit) void beta().then(module => setUsbKit(kit => kit ?? module.createUsbKit())).catch(console.error) }, [usbAllowed, unitKit])
-  // Beta only: without access every USB view unmounts, and the link lets go of the unit.
+  // The base path on a computer only (hasUsbLinkAccess): without it every USB view unmounts, and the link lets go of the unit.
   const usbKit = !mobileWorkspace && (usbLinkPreview || usbAllowed) ? unitKit : null
   const usbLink = usbKit?.link
   const inventory = useInventory(usbLink, usbKit?.readInventory), missingOnUnit = useMissing(usbLink)
@@ -295,7 +295,7 @@ export default function App() {
   const zoomSelected = Object.fromEntries(DEVICES.filter(device => isZoomSetDevice(device.id)).map(device => [device.id, activeFor(device.id)?.moduleIds ?? []]))
   // Keep Configuration available in All machines and on machines without mods.
   const configurationTarget = machineCanConfigure ? currentDevice.id : storedActive ? configurationDevice(storedActive) : 'octatrack'
-  // A Zoom pedal's set lives on its pedal page, as the Octatrack beta's on the Octatrack page.
+  // A Zoom pedal's set lives on its pedal page, as the Octatrack's on Your Octatrack.
   const configurationHref = isZoomSetDevice(configurationTarget) ? zoomHubHref(configurationTarget, 'set') : deviceHref(configurationTarget, 'configuration')
   const configurationCount = activeFor(configurationTarget)?.moduleIds.length ?? 0
   function ensureActive(item?: Configuration) { if (item && storedActive?.id !== item.id) workspace.selectConfiguration(item.id) }
@@ -455,7 +455,7 @@ export default function App() {
     else if (configDialog === 'rename') workspace.renameConfiguration(name)
     else workspace.createConfiguration(name, configDialog === 'duplicate', targetDevice)
     setSaved(false); setRiskAccepted({key:'',accepted:false})
-    // On the beta's Octatrack page a rename or delete keeps you where you are; a new set opens.
+    // On Your Octatrack a rename or delete keeps you where you are; a new set opens.
     if (!(hubRoute && targetDevice === 'octatrack' && (configDialog === 'rename' || configDialog === 'delete'))) openEditedSet(targetDevice)
   }
   // A module set's ⋯ menu in the Octatrack page's list: it acts on that set, which becomes the one you edit.
@@ -489,7 +489,7 @@ export default function App() {
   const compatibilityPanel = <LazyPanel name="Compatibility details"><CompatibilityPanel ids={selectedIds} keepStockFx2={DSP_LOADER && (active?.keepStockFx2??true)} buildState={firmwareBuild.state} buildError={firmwareBuild.error} buildConflict={firmwareBuild.conflict} onFix={fixConflict}/></LazyPanel>
   const startupOptions = <section className="configuration-section chooser-options"><h2>Startup</h2><label><input type="checkbox" checked={!!active?.classicStartup} onChange={event=>setClassicStartup(event.target.checked)}/><span><strong>Classic startup</strong><small>Keep the 2.8-second startup of earlier builds instead of the docking animation.</small></span></label></section>
   const riskAcceptance = <RiskAcceptance checked={riskAccepted.key===firmwareBuild.key&&riskAccepted.accepted} onChange={accepted => setRiskAccepted({key:firmwareBuild.key,accepted})}/>
-  // The beta's Octatrack page (#configuration and #octatrack): the sets beside the unit, with the configuration page's
+  // Your Octatrack (#configuration and #octatrack), on the base path: the sets beside the unit, with the configuration page's
   // header, module grid and card route in it, so nothing the page had is lost.
   const hubPage = <Suspense fallback={null}><OctatrackHub view={hubView} link={usbLink ?? null} inventory={inventory} sets={configurationsFor('octatrack')} selectedId={active?.id} needs={projectNeeds} username={session.user?.username} onSelect={changeConfiguration} onSync={setLoadingSet} onInstall={layout => { setBaseLayoutWanted(layout); setBaseInstall('manual') }}
     onNew={() => newConfiguration('octatrack')} onImport={() => importRef.current?.click()} onSetAction={setAction} onSaveUnit={saveUnitAsSet} onWelcome={OCTATRACK_BASE_RELEASED ? welcome.show : undefined}

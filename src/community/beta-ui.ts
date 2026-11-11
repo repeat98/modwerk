@@ -8,6 +8,6 @@ const WORDS = {
   classic: { set: 'configuration', sets: 'configurations', Set: 'Configuration', Sets: 'Configurations' },
   beta: { set: 'module set', sets: 'module sets', Set: 'Module set', Sets: 'Module sets' },
 }
-/** The beta calls configurations module sets; everyone else keeps main's word. */
+/** The Octatrack base path calls configurations module sets; everyone else keeps main's word. */
 export const setWords = (beta: boolean) => WORDS[beta ? 'beta' : 'classic']
 export const useSetWords = () => setWords(useBetaUi())

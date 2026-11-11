@@ -17,7 +17,7 @@ const when = (at: string) => new Date(at).toLocaleString(undefined, { dateStyle:
 const OUTCOME: Record<SyncRecord['outcome'], [string, string]> = { kept: ['Kept', 'on'], undone: ['Undone', 'off'], failed: ['Failed', 'leaving'] }
 
 /** What the card holds, from the self-test record (modset.c: 7 saved and read back, 1 restored at startup, 6 some refused
- * at startup, 10 some left out and 11 all held because the last start crashed or froze while loading them, 3 FUNC held,
+ * at startup, 10 some left out and 11 all held because the last start crashed or froze while loading them, 3 the skip key held,
  * 5 damaged, 8 and 9 save failed, 4 another base's, 2 nothing saved). */
 function cardLine(health: DiagnosticReading) {
   return health.saved === 7 ? { text: `Saved and checked · ${modules(health.savedCount)}`, led: 'on' } : health.saved === 1 ? { text: `Restored at startup · ${modules(health.savedCount)}`, led: 'on' }
