@@ -100,7 +100,7 @@
     "load": {
       "display": "Near nothing while no track's RATE is below 0; with one below 0, as 0.1.0 (about 0.8 % idle, measured)",
       "method": "hardware",
-      "conditions": "Measured on an Analog Rytm MKII with a private telemetry base, sequencer stopped: removing 0.1.0 from the author's 16-module set lowered the idle block from 72.9 % to 72.1 %. 0.1.0's block handler walked all eight voices every block; 0.1.1 returns at once when no track has RATE on and no voice is still going down. The two gates in the step loop stay, about 10 instructions a voice; with RATE on, the handler and gates run as in 0.1.0. 0.3.0: the handler returns at once when no track's RATE is below 0 and no voice is still going down; the step-loop gates run on every voice (about 10 instructions each). Not measured for 0.3.0."
+      "conditions": "Measured for 0.1.0 on an Analog Rytm MKII with a private telemetry base, sequencer stopped: removing it from the author's 16-module set lowered the idle block from 72.9 % to 72.1 %; that handler walked all eight voices every block. 0.3.0's handler returns at once while no track's RATE is below 0 and no voice is still going down; the two step-loop gates run on every voice, about 10 instructions each. Not measured for 0.3.0."
     }
   },
   "evidence": {
