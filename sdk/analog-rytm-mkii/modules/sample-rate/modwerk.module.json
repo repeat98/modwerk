@@ -155,10 +155,10 @@
       "tutorial": {
         "title": "Quick tutorial",
         "steps": [
-          "Put a long sample on a track, with LOP ON. Press SMPL and tap encoder B: FIN's knob reads RATE.",
-          "Play the pad. Turn RATE down from +63: the sample slows like a stopping turntable and rests at 0.",
-          "Keep turning below 0: it runs backward, smoothly through the stop. A new trig now starts from END.",
-          "Hold a trig in GRID RECORDING and turn RATE to lock it on that step: a trig at -63 plays backward from END, and the next trig plays forward again."
+          "Press SMPL and turn TUN slowly: it moves 1 cent a step and reads +0.01, +0.02. Spin it faster to cover more ground.",
+          "Press TUN's knob and turn: whole semitones, the cents kept.",
+          "Put a long sample on a track, with LOP ON. Tap encoder B: FIN's knob reads RATE. Play the pad and turn RATE down from +63: the sample slows like a stopping turntable and rests at 0.",
+          "Keep turning below 0: it runs backward, smoothly through the stop. A new trig now starts from END."
         ]
       },
       "screenshots": [
