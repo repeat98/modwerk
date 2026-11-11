@@ -408,7 +408,8 @@ export const prepareModuleSet = catalogue.prepare
  * sync onto the published base, whose loader takes every package the site publishes, and that loader checks each
  * package again when it restores the file. */
 export async function prepareCardSet(target: InventoryTarget, load = fetchPackage, now = Date.now()) {
-  const layout = setLayout(target) ?? MEMBER_LAYOUT, base = layoutIdentity(layout)
+  const layout = setLayout(target) ?? MEMBER_LAYOUT, base = layoutIdentity(layout), limit = overLimitMessage(target.moduleIds, 'build')
+  if (limit) throw new SetLimitError(limit)
   if (!base) throw new ModuleSetError(`${layoutName(layout)} has no published Modwerk base yet.`)
   const published: RuntimeCapabilities = { abi: SET_MAX_ABI, features: 0xffff, maxSites: 0xffff, maxCopies: 0xffff }
   const { changes } = await catalogue.prepare(target, { moduleIds: [], removedStockFx: [] }, load, published, base)

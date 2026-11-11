@@ -122,6 +122,7 @@ const ZoomSidebarStatus = lazy(() => beta().then(module => ({ default: module.Zo
 const ZoomBaseDialog = lazy(() => beta().then(module => ({ default: module.ZoomBaseDialog })))
 const LoadDialog = lazy(() => beta().then(module => ({ default: module.LoadDialog })))
 const CardInstall = lazy(() => beta().then(module => ({ default: module.CardInstall })))
+const CardSetDownload = lazy(() => beta().then(module => ({ default: module.CardSetDownload })))
 const OctatrackStatus = lazy(() => beta().then(module => ({ default: module.OctatrackStatus })))
 const OctatrackSidebarStatus = lazy(() => beta().then(module => ({ default: module.OctatrackSidebarStatus })))
 const OctatrackActivity = lazy(() => beta().then(module => ({ default: module.OctatrackActivity })))
@@ -519,7 +520,7 @@ export default function App() {
       <div className="configuration-heading-actions"><button className="button button-quiet module-issue-action" disabled={!selectedIds.length} aria-haspopup="dialog" onClick={() => active && setReportingConfiguration({ machine: 'octatrack', id: active.id })}><Icon name="message" size={16} />Report a problem</button></div></header>
       <input ref={importRef} type="file" accept="application/json,.json" hidden onChange={event=>void importSelection(event)} aria-label="Import module set backup"/>{importError&&<p className="file-error" role="alert">{importError}</p>}</>}
     grid={<>{availabilityError && <p className="file-error" role="alert">{availabilityError}</p>}<ModuleGrid ids={selectedIds} inventory={inventory} describe={id => id === USB_AUDIO_MODULE && active?.usbAudio ? usbAudioLayout(active.usbAudio.layout).name + ' · 0.2 experimental' : !isModuleAvailable(id, betaAccess) ? 'Temporarily unavailable' : MODULES.find(module => module.id === id)?.detail ?? ''} onOpen={setOpenModule} onRemove={toggleModule} onKeep={toggleModule} onSaveUnit={saveUnitAsSet} /></>}
-    card={<CardInstall setName={active?.name} open={cardOpen} onOpened={() => setCardOpen(false)}><input ref={inputRef} type="file" accept=".bin" onChange={chooseFile} hidden aria-label="Choose base firmware" /><div className="configuration-layout"><div className="configuration-main">
+    card={<><CardSetDownload set={active && { name: active.name, moduleIds: active.moduleIds, removedStockFx: active.removedStockFx, usbAudio: active.usbAudio }} /><CardInstall setName={active?.name} open={cardOpen} onOpened={() => setCardOpen(false)}><input ref={inputRef} type="file" accept=".bin" onChange={chooseFile} hidden aria-label="Choose base firmware" /><div className="configuration-layout"><div className="configuration-main">
       <section className="configuration-section" aria-labelledby="firmware-title"><div className="section-title"><h2 id="firmware-title">Base firmware</h2><span className="subtle">Read locally</span></div>
       <div className={'firmware-drop ' + (dragging ? 'is-dragging ' : '') + (fileState === 'ready' ? 'is-verified' : '')} onDragOver={(event) => event.preventDefault()} onDragEnter={() => setDragging(true)} onDragLeave={() => setDragging(false)} onDrop={dropFile} aria-busy={fileState === 'reading'}>
       <span className="file-symbol"><Icon name={firmware ? 'check' : 'file'} size={26} /></span>
@@ -534,7 +535,7 @@ export default function App() {
       {DSP_LOADER && <section className="configuration-section chooser-options"><h2>Effect menus</h2><label><input type="checkbox" checked={active?.keepStockFx2??true} onChange={event=>setKeepStockFx2(event.target.checked)}/><span><strong>Keep stock FX2 effects</strong><small>Keep the original FX2 effects alongside your modules.</small></span></label></section>}
       {startupOptions}
       <div ref={setBuildResultsSlot} className="build-results" />
-    </div><div className="configuration-checkout">{compatibilityPanel}<div className="checkout-card">{riskAcceptance}<MemberGate action="build firmware" next={route}>{firmwareBuildPanel}</MemberGate></div></div></div></CardInstall>} /></Suspense>
+    </div><div className="configuration-checkout">{compatibilityPanel}<div className="checkout-card">{riskAcceptance}<MemberGate action="build firmware" next={route}>{firmwareBuildPanel}</MemberGate></div></div></div></CardInstall></>} /></Suspense>
   const dialogOpen = !!baseInstall || baseInstallPrompt.open || welcome.open || !!loadingTarget || !!openModule || !!configDialog || configurationsOpen || compareOpen || !!reportingConfiguration
   return (
     <BetaUi.Provider value={octatrackUi}><OctatrackLinkContext.Provider value={usbLink ?? null}>

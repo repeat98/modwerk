@@ -290,6 +290,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 /* Setup: the base, the card route, diagnostics. */
 .hub-view .card-install.is-open { margin: 22px 0 0; padding-top: 18px; border-top: 1px solid var(--line); }
 .card-install-set { margin: 0 0 18px; color: var(--muted); font-size: 13px; }
+.card-set-steps { margin: 10px 0; padding-left: 20px; color: var(--text-secondary); font-size: 13px; line-height: 1.7; }
 /* The whole-image card build is the fallback: a labelled, foldable section under Setup. */
 .card-install > summary { cursor: pointer; list-style: none; }
 .card-install > summary::-webkit-details-marker { display: none; }
