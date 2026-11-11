@@ -103,7 +103,7 @@
       "durationMinutes": null,
       "summary": "On npp1993's Analog Rytm MKII with OS 1.74: the package's own image on the plain base beside LFO RND (QP02 and QP03, flashed), by npp1993's hand: holding LFO on the LFO page shows the page's values as stock; LFO taps step to LFO RND's page and back; LFO + FRQ on FILTER makes FRQ the LFO destination, the depth in hundredths, the page stays; FIX and SAMPLER links as before; after a kit save and a power cycle the links and LFO destinations are kept. All pass, as did the same steps on QP01; QP03 (this package) then passed the FX track's LFO page, PERF over the LFO page, the FILTER assign and the taps through LFO RND. Before that, Modwerk's test rig (key presses and knob turns over USB, screens read back, with npp1993's go) ran six cases on QL13: DEP set exactly as stock's DEP knob, the depth box, a new destination at 0, a knob press to 0, plain taps as stock with Loop Sync following, FIX links. All pass; in rytm-emu QL16 (this source) passes them, with the LFO-page case now checking that the LFO page's key is stock's.",
       "limitations": [
-        "The rig's unit run was on QL13, before the LFO page was left to stock; QP02 (this package) was checked by hand.",
+        "The rig's unit run was on QL13, before the LFO page was left to stock; QP02 and QP03 (this package) were checked by hand.",
         "Duration not recorded. SCNE, MUTE and CHRO with LFO held: rytm-emu only; PERF and the PERF pad case by hand on QL13."
       ]
     },
