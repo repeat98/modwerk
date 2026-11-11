@@ -7,6 +7,7 @@ import { browserRequestsPrivacy, countDiagnosticsInvitation } from '../community
 import type { OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
 import { Icon } from './Icon'
+import { accountHref } from '../community/member-access'
 import './diagnostics.css'
 
 export function DiagnosticDetails() {
@@ -71,6 +72,20 @@ export function DiagnosticsInvitation({onClose,preview=false,placement,reason}: 
 /** The base install guide's last step (BaseInstallDialog's `diagnosticsStep`). It never blocks: Share diagnostics and
  * Not now both finish it (`onDone`), and the guide's own buttons work whatever is chosen. Renders nothing for a member
  * who already shares under the current consent version, or where sharing isn't possible. */
+/** The install guide's last step for someone without a verified account: sharing belongs to an account (the consent
+ * and the reports are the member's), so the step says so and leads there. Nothing is asked or shared here; after signing
+ * in, the ordinary invitation asks. Never shown under a browser privacy signal. */
+export function DiagnosticsGuideAccount({account}: {account: 'visitor' | 'unverified'}) {
+  if (browserRequestsPrivacy()) return null
+  return <section className="diagnostics-step" aria-labelledby="diagnostics-step-title">
+    <h3 id="diagnostics-step-title">Share diagnostics?</h3>
+    <p>Running modules over USB is new for most Octatracks. If something goes wrong, a diagnostics report lets us find the problem and fix it.</p>
+    <p>Sharing is optional and everything works either way. It needs an account, because the choice and the reports are yours to turn off and delete.{' '}
+      {account === 'visitor' ? <><a className="text-button" href={accountHref('login', 'octatrack')}>Sign in</a> · <a className="text-button" href={accountHref('register', 'octatrack')}>Create account</a></>
+        : <a className="text-button" href="#account">Verify your email</a>}, and you’re asked once.</p>
+    <DiagnosticDetails/>
+  </section>
+}
 export function DiagnosticsGuideStep({onDone}: {onDone?: (shared: boolean) => void}) {
   const state = useSyncExternalStore(subscribeDiagnosticPreference,diagnosticPreference,diagnosticPreference)
   const [answer,setAnswer] = useState<'shared' | 'not-now'>()

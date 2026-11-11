@@ -110,6 +110,20 @@ describe('the Octatrack base path for a member who is not a beta tester', () => 
     expect([...guide()!.querySelectorAll('button')].some(button => button.textContent === 'Continue')).toBe(true)
     expect(document.querySelector('dialog.diagnostics-invitation')).toBeNull()
   }, 15000)
+  it('ends a visitor’s first install by saying sharing diagnostics needs an account, with the way there and nothing to answer', async () => {
+    const unit = fakeUnit('stock')
+    Object.defineProperty(navigator, 'usb', { value: unit.usb, configurable: true })
+    waitForBaseInstall('ab'.repeat(32), baseBinding.identity)
+    await open('octatrack', visitor)
+    await vi.waitFor(() => expect(guide()?.textContent).toContain('Waiting for your Octatrack'), { timeout: 5000 })
+    unit.base = baseBinding.identity; unit.unplug(); unit.plug('base')
+    await vi.waitFor(() => expect(guide()?.textContent).toContain('Share diagnostics?'), { timeout: 5000 })
+    expect(guide()!.querySelector('h2')?.textContent).toBe('The Modwerk base is installed')
+    expect(guide()!.textContent).toContain('It needs an account')
+    expect([...guide()!.querySelectorAll('a')].map(link => link.textContent)).toEqual(expect.arrayContaining(['Sign in', 'Create account']))
+    expect([...guide()!.querySelectorAll('button')].some(button => button.textContent === 'Share diagnostics')).toBe(false)
+    expect([...guide()!.querySelectorAll('button')].some(button => button.textContent === 'Continue')).toBe(true)
+  }, 15000)
   it('updates a unit on the previous base in the layout of the member’s set with the USB Audio module, in one update', async () => {
     const unit = fakeUnit('base'); unit.base = '500cdb6fd81bfc9c2b18737e7487f3ec2264c1c00c5ebef833e7f751e325d1b7'
     Object.defineProperty(navigator, 'usb', { value: unit.usb, configurable: true })

@@ -129,6 +129,7 @@ const PutBackModules = lazy(() => beta().then(module => ({ default: module.PutBa
 const OctatrackDiagnosticsCollector = lazy(() => import('./components/OctatrackDiagnostics').then(module => ({ default: module.OctatrackDiagnosticsCollector })))
 const DiagnosticsInvitationGate = lazy(() => import('./components/DiagnosticsInvitation').then(module => ({ default: module.DiagnosticsInvitationGate })))
 const DiagnosticsGuideStep = lazy(() => import('./components/DiagnosticsInvitation').then(module => ({ default: module.DiagnosticsGuideStep })))
+const DiagnosticsGuideAccount = lazy(() => import('./components/DiagnosticsInvitation').then(module => ({ default: module.DiagnosticsGuideAccount })))
 const RemoteSessionGate = lazy(() => import('./components/RemoteSession').then(module => ({ default: module.RemoteSessionGate })))
 const OwnerNoteGate = lazy(() => import('./components/OwnerNote').then(module => ({ default: module.OwnerNoteGate })))
 const OwnerNotePreview = lazy(() => import('./components/OwnerNote').then(module => ({ default: module.OwnerNotePreview })))
@@ -243,7 +244,9 @@ export default function App() {
   const [guideOffersDiagnostics, setGuideOffersDiagnostics] = useState(false)
   const guideStepWanted = guideOpen && (guideOffersDiagnostics || diagnosticsStepNeeded)
   if (guideStepWanted !== guideOffersDiagnostics) setGuideOffersDiagnostics(guideStepWanted)
-  const baseGuideDiagnosticsStep: ReactNode = guideOffersDiagnostics ? <Suspense fallback={null}><DiagnosticsGuideStep /></Suspense> : undefined
+  // Without a verified account there is no choice to make yet: the step says sharing needs one and leads there.
+  const baseGuideDiagnosticsStep: ReactNode = guideOffersDiagnostics ? <Suspense fallback={null}><DiagnosticsGuideStep /></Suspense>
+    : guideOpen && session.available && !session.user?.verified ? <Suspense fallback={null}><DiagnosticsGuideAccount account={session.user ? 'unverified' : 'visitor'} /></Suspense> : undefined
   const onBaseGuideStage = (stage: BaseGuideStage, detail?: BaseGuideFailure) => countBaseGuide(stage, detail, !baseInstall)
   useEffect(()=>{if(developerRoute&&!route.startsWith('developer/complete')&&developer&&!developer.user)window.location.replace('#account/developer')},[developerRoute,route,developer])
   const communityRoute = developerRoute || forumRoute || accountRoute || route === 'review' || route === 'admin' || route.startsWith('submit') || !!communityModule
