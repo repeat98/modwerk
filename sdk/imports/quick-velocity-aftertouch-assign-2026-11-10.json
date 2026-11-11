@@ -6,12 +6,12 @@
   "changes": [
     "Renamed Quick Mod Assign. Hold LFO and turn a knob: that parameter becomes the sound's LFO destination at depth 0, and further turns of the same knob set the LFO's depth with stock's DEP steps, shown in the knob's box as the LFO page writes DEP; pressing that knob sets the depth to 0. An LFO tap opens the LFO page on the release and is played to every other mod through core_key. The popups say DEST."
   ],
-  "runtimeSourceSha256": "96d4f0f996f10b32c23f198ffb168d1ff1e1492dc145b334e43045a81d5486ad",
+  "runtimeSourceSha256": "d77904bbbe84f137c70b6d055cbe40019ea119851de3ffd1551f4612dd4d7301",
   "packages": [
     {
       "os": "1.74",
       "path": "sdk/imports/packages/quick-velocity-aftertouch-assign/quick-velocity-aftertouch-assign-0.2.0-experimental-os1.74.elemod",
-      "sha256": "3bf4c38ed928656c2aceed148d9f8ecedfd84b25ffc626277a8bba3191527992"
+      "sha256": "26c6dce92ea7d43ae4db169215bda780a8363601b488cba630d65eedf058b50c"
     }
   ],
   "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
