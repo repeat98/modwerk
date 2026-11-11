@@ -138,8 +138,9 @@ the configurator offers one or the other.
   were not resolved. Another unit may differ slightly. HLD is counted by the OS and matched within 2 ms.
 - AMP DEC under about 5 ms is blurred by the VCA's own slew (~0.8 ms): DEC 1..8 all measure 1-2 ms.
   FILTER DEC and REL under 15 ms were not resolved on the unit (TESTING.md).
-- OVR's curve comes from one unit's overdrive, measured with one sound; it has not been judged by ear
-  yet (TESTING.md).
+- OVR's curve comes from one unit's overdrive, measured with one sound. On the unit its level rise
+  follows the design (8 gives stock's 1, 64 stock's 12, the ends unchanged); it has not been judged by
+  ear yet (TESTING.md).
 - A module that times a note by AMP DEC's table must read the table address the OS code holds at
   0x40109bf0, not stock's 0x401ee61c: with this module that address points at the new table.
 - On stock firmware a sound saved here plays the stock way: HLD 0 = AUTO, the old curves, and ENV
@@ -152,8 +153,13 @@ The envelope curves and the pre-fade were measured on the author's Analog Rytm M
 builds (EV04 to EN05), with rytm-emu for the screens ([TESTING.md](TESTING.md)): AMP DEC within 0.7 %
 of its text from 5 ms, AMP HLD within 0.1 ms, FILTER ATK within 0.3 %, FILTER DEC and REL 1.5 % (the
 method's); with ENV RESET AMP every one of 493 sequenced hits and retrigs fell to silence before its
-trig. This version's own build has run in rytm-emu only: HLD in steps, OVR's curve, sound-locked trigs
-and the fade for swung trigs are not yet tested on a unit.
+trig. This version ran on the same unit on 9 and 10 November 2026 under the author's automated USB test
+rig (image IL02: this source on a development base with a USB test link, loaded to RAM), 25 cases: the
+screens with HLD in steps at three tempos and track speeds, lengths by DEC, HLD and AUTO, OVR's level
+curve and the FILTER times beside the same base without the module, and ENV RESET AMP's fade before
+sequenced trigs, retrigs, swung, micro-timed and sound-locked trigs, with none for MIDI notes, muted
+trigs, lock trigs and trigs whose condition fails. Not run on a unit: this package's own image, pads, a
+power cycle, a boot from flash, an external MIDI clock, a pattern change inside a fade.
 Memory: 7,868 bytes of the shared mod area (the plain base alone leaves 119,004, with this module 111,136).
 Load: the amp record entries run every block for every voice; an idle voice makes no C call there, and
 the trig scan runs once a block.

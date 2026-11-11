@@ -6,7 +6,136 @@ Improved Envelopes (symbols `envelopes_*`, now `improved_amp_*`; HLD then read i
 pre-fade" records the pre-fade's builds from before it moved into this module. The test builds' `.syx`
 files stayed on the tester's computer.
 
-## This version: IA08 (rytm-emu only), 9 Nov 2026
+## This version on a unit: IL02, 9 and 10 Nov 2026
+
+The author's Analog Rytm MKII, OS 1.74. Image IL02 (sha256 `a569c9f5…284c`): a development build of the
+Modwerk base (core-ar2 0.7) that adds a USB test link, and this module alone, built from this folder's
+`build.json` and `src/` (0.1.0-experimental; fingerprint, the `sha256` of `sha256sum build.json
+src/amp-write.s src/improved-amp.c src/ovr.s src/pre-fade.c src/pre-fade.s`: `54f0d4b9…b4b4`,
+`evidence.sourceSha256`). It was loaded to RAM over USB: the unit's flash was not written, and a power
+cycle ends it. IS01 (sha256 `c08c226d…ee90`) is the same base and link without the module, for the
+columns marked stock.
+
+Run hands off by the author's automated test rig, as reported in the rig's run record; the figures below
+are copied from it. The link presses keys, turns knobs and reads the screen; USB MIDI sends CCs and notes
+on the auto channel; the BD voice's USB audio channel (OVERBRIDGE mode) is recorded at 48 kHz. Scratch
+project, kit 1, pattern A01, 120.0 BPM, the BD track playing a sample at 1043.5 Hz, unless said. 25
+cases; each passed in its last run on the unit. Measures, in ms: `len20` is from the hit's onset to where
+it stays 20 dB under its peak; a dip is the voice falling 30 dB under the peak and coming back, from
+within 10 dB of the peak, inside 20 ms on each side: a fade before a trig while the voice still rings.
+
+Screens:
+
+| Read | Shown |
+| --- | --- |
+| AMP ATK at 0, 1, 25, 45 | 0, 0.2ms, 5.0ms, 15.0ms |
+| AMP DEC at 0, 1, 25, 55, 89, 126, 127 | 0, 0.2ms, 5.0ms, 25ms, 300ms, 39.4s, INF |
+| AMP OVR at 0, 1, 64, 127 | 0, 1, 64, 127 |
+| AMP HLD at 0, 1, 6, 7, 15, 42, 126, 127, 120 BPM | 0, 0.005, 0.032, 0.037, 0.080, 1.00, 124, AUTO |
+| The same at 139.0 BPM (9 Nov) | 0, 0.006, 0.037, 0.043, 0.093, 1.16, 144, AUTO |
+| HLD 42 at 90 BPM; at track speed 1x, 3/2x, 3/4x, 1x | 0.75; 1.00, 1.50, 0.75, 1.00 |
+| FUNC + turn on HLD, from 7 | 1.00 (139 BPM: 1.16), AUTO, back to 1.00, 0 |
+| FILTER ATK, DEC, REL at 25; DEC, REL at 127 | 5.0ms; 45.0s |
+| SOUND SETTINGS, ENV RESET | OFF, AMP, FILTER, AMP+FILT, stopping at both ends |
+| HLD 42 and ENV RESET AMP saved with the kit, changed to 10 and OFF, kit reloaded | 42 and AMP again |
+
+Sound, one MIDI note a take, ATK 0 and DEC 55 unless set:
+
+| Measure | Read |
+| --- | --- |
+| `len20` by DEC | 10.0 at 55, 102.5 at 89, 2941.5 at 127 (INF, a 3 s take) |
+| ATK 45 | attack 15.5 (1.0 at ATK 0), the peak -12.43 dBFS against -12.48 |
+| `len20` by HLD | 10.5 at 0, 20.0 at 15, 61.0 at 31, 134.5 at 42, 307.5 at 57 |
+| HLD 42 | 134.5 for a 50 ms and for a 500 ms note, at 90 BPM, and at track speed 3/2x: a time, not steps or the note |
+| HLD AUTO | 109.0 for a 100 ms note, 508.0 for a 500 ms note: the note's length |
+
+OVR, the hit's peak against the same hit at OVR 0, in dB (-12.43 dBFS at 0 and -3.79 at 127 on both
+images; `len20` 134.5 to 135.0 at every value):
+
+| OVR | 1 | 2 | 8 | 12 | 16 | 32 | 48 | 64 | 96 | 112 | 126 | 127 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| stock (IS01) | +1.29 | +2.50 | +5.86 | +6.47 | +6.84 | | | +8.17 | | | | +8.64 |
+| module (IL02) | +0.14 | | +1.25 | | +2.50 | +4.63 | +5.77 | +6.48 | +7.51 | +8.00 | +8.56 | +8.64 |
+
+So the ends are stock's, and the module's 8 gives stock's 1, 16 stock's 2 and 64 stock's 12. Three runs
+read OVR 64 as +6.37, +6.48 and +6.51.
+
+FILTER envelope as sound, the lowpass closed and opened fully by the envelope, `len20` (DEC: a held
+note, SUS 0; REL: a short note, SUS at the top):
+
+| Value | 23 | 65 | 75 | 85 | 89 |
+| --- | --- | --- | --- | --- | --- |
+| stock DEC | 37.0 | 336.0 | 528.5 | 826.5 | 985.5 |
+| module DEC | | 7.0 | 13.5 | 25.0 | 36.5 |
+| stock REL | 85.5 | 385.0 | 580.0 | 882.5 | 1045.5 |
+| module REL | | 56.0 | 61.5 | 73.5 | 85.5 |
+
+The module's 89 is stock's 23, as the tables are built.
+
+ENV RESET's fade. HLD 57 holds each hit into the next, so a fade shows as a dip:
+
+| Pattern on the BD track | ENV RESET AMP | OFF |
+| --- | --- | --- |
+| A trig on every second step, 19 trigs | 18 dips (AMP+FILT: 18; FILTER: 0) | 0 |
+| Eight MIDI notes 250 ms apart, no pattern | 0 | 0 |
+| A note rings, PLAY, the trig on step 1 strikes it; stopped before step 3, and after it | 0 dips, the note longer (493.5 against 307.5); 1 dip | |
+| Two trigs with a retrig lock (RATE 1/16, LEN 1/4), 5 trigs played | 15 dips | 0 |
+| A retrig lock on step 1 and a note trig on step 3, which ends the series; three times round | 6 dips; first hit 557.5 | 0; 557.5 |
+| The same retrig lock at 200 BPM, three times round | 9 dips, the shortest 74.5 apart | 0 |
+| Note trigs on 1 and 3, a lock trig without a note on 2; three times round | 3 dips (none for the lock trig) | |
+| A retrig lock on 1, a lock trig on 3 with RTRG at 1/32; three times round | 15 dips, the shortest 61.0 apart; first hit 745.0 | 0; 745.0 |
+| Trigs on 1, 2, 3; then step 2 on FILL (FILL mode off); then on 2:2; three times round each | 6, 3 and 4 dips, 3 hits each | |
+| Trigs on 1, 3, 5, 7, step 3 late and step 5 early by 5/384 | 3 dips a time round, 197.5 and 276.5 apart | |
+| A trig on each of steps 1 to 15, swing 50 %, then 66 % | 14 dips: 124.5 to 125.5 apart, then 85.5 and 164.5 in turn | |
+| A trig on every second step; five play, the track is muted by CC 94 for 1.5 s, five more play | 8 dips, 2 hits; the hit before the mute 1307.5 long, as in a take stopped there instead | 0 dips, 2 hits; 1307.5 |
+| ENV RESET edited in SOUND SETTINGS while the pattern plays: OFF, AMP, OFF | 0 dips, 8 in the 2 s after AMP, 0 | |
+
+Sound locks, trigs on steps 1, 3 and 5 (the first after PLAY is never faded for): the kit's sound at AMP
+2 dips; step 3 locked to a pool sound at OFF 1; the kit's sound at OFF 0; step 3 locked to a pool sound
+at AMP 1. In each take's first 520 ms, which end between steps 3 and 5: 1, 0, 0, 1. So a sound-locked
+trig is judged by its own sound, and the kit's sound's trig after it by the kit's.
+
+The first eleven cases, run again against their kept references: every hit's length within 1 ms and
+its peak within 0.03 dB of the first run's, the dips equal.
+
+Seen on the way, as the rig's record has it:
+
+- The first note after loading an image to RAM came out near silent in some boots (about -62 dBFS
+  against -12.4, no 1 kHz tone on the BD voice or on MAIN); the second and third notes were at full level
+  in all of them. IL02: 10 of 18 boots with the note about a second after the unit answered again, 0 of
+  3 with 3 s before the note. IS01, without the module: 1 of 7. So it happens without the module; whether
+  the module makes it more likely, whether the wait cures it and whether a boot from flash shows it are
+  not decided. In five kept takes the quiet note's level moves at the trig and again 126 ms later, where
+  HLD 42 ends: the amp envelope ran on time and the sample did not sound.
+- Two whole runs did not pass: one failed the DEC and ATK sound case on a late audio stream (next
+  line), one stopped at a screen read that got no reply. The run after each passed.
+- The rig's audio stream now and then begins one 85.3 ms block late; onsets then read about 142 ms
+  instead of 58 ms on either image, with lengths, peaks and dips unchanged.
+- Kit values meet the new curves at once: the kit's BD, untouched, read `len20` 642.5 on IS01 and 9.5 to
+  10 on IL02 (one boot each), as "Changes to stock flows" in the README says.
+
+Not run on a unit in this version:
+
+- This package's own image, IA08 (this module on the plain base, no link), and a boot from flash.
+- A power cycle, a project save and load, a sound stored to the Sound pool or the +Drive and loaded again
+  (a kit save and reload was run, above).
+- Pads: a pad hit, and a pad roll let go just before its next hit (the tail is expected to be cut: README).
+- An external MIDI clock: a late tick, and a retrig series' end there. Read in the code only.
+- A pattern change inside a fade (read in the code in part), and probability conditions.
+- A lock trig without a note shortly before a trig of the same kit, when the kit's sound and the track's
+  sound differ in ENV RESET: stock loads the kit's sound again after a trig with parameter locks, and a
+  lock trig still queued is not counted (`src/pre-fade.c`), so the fade can come late or not at all there.
+- A mute during a running retrig roll; two events of one track due in the same block; a retrig hit
+  shortly before the track's next trig; an RTRG rate outside the knob's range in a pattern's data. Read
+  in the code and run as a host test of the scan's model.
+- Above 187.5 BPM, a retrig tick moved a block by a queued event that fires inside the series (the
+  200 BPM take has no such event).
+- OVR's curve by ear, and with another sound or unit; the FILTER times against their texts (the takes
+  above compare them with stock's).
+- The screen lag once reported on trig + RTRG (ER05), with and without the module.
+- Memory and audio load on the unit: `resources` are read from the link and the code.
+
+## This version in rytm-emu: IA08, 9 Nov 2026
 
 Build IA08: the plain Modwerk base and this module alone, linked on stock OS 1.74 by
 `scripts/link-image.mjs`; sha256 0c5420f573e80245192fe9414f678e8d993033efbd9e636ef0edf2ee1d3625c1, ramSpare 111,136 (the base alone: 119,004). rytm-emu
@@ -60,38 +189,7 @@ Build IA08: the plain Modwerk base and this module alone, linked on stock OS 1.7
   two events in one block, lock trigs and rates, the series' end, sound locks, the kit's sound, held and muted
   tracks).
 
-Not tested on a unit in this version:
-
-- HLD's number in steps on the unit's screen, and against a tempo or track-speed change.
-- OVR's new curve, by ear and by measurement.
-- ENV RESET AMP on a trig with a sound lock (track sound on AMP and the trig locked to a FILTER or OFF
-  sound, and the reverse). The lookup was read in the code only.
-- A trig of the track's own kit sound after an ENV RESET edit (the edit is expected to count at
-  once), and after a sound lock on the step before (the kit's sound is loaded again). Read in the code
-  and run as a host test of the scan's model.
-- A lock trig without a note shortly before a trig of the same kit, when the kit's sound and the
-  track's sound differ in ENV RESET: stock loads the kit's sound again after a trig with parameter
-  locks, and a lock trig still queued is not counted (`src/pre-fade.c`), so the fade can come late or
-  not at all there.
-- A mute during a running retrig roll; trig conditions and probability (rytm-emu: only trigs that fire
-  are queued).
-- A trig with RTRG and a retrig length (the tail after the last hit of the series), and a trig that
-  plays a note inside another trig's retrig length. The series' end was read in the code and run in
-  rytm-emu on a pad roll only, with the length word set by hand.
-- A pad roll let go just before its next hit (the tail is expected to be cut: README).
-- Swing and micro timing on the unit: a trig queued while the one before still waits. Run in rytm-emu
-  only (above).
-- A lock trig on the step of a retrig hit (the retrig's tick is stepped a block later), a lock trig
-  without a note that changes a running series' RTRG rate, two events of one track due in the same
-  block, a retrig hit shortly before the track's next trig, an RTRG rate outside the knob's range in a
-  pattern's data, and retrigs above 187.5 BPM (a block is then longer than half a retrig tick). All
-  read in the code and run as a host test of the scan's model, not in rytm-emu.
-- A retrig series' end on external MIDI clock, and a pattern change inside a fade. Read in the code
-  only, the pattern change in part.
-- Saving a sound with AMP, reloading it, a power cycle.
-- The screen lag once reported on trig + RTRG (ER05), with and without the module.
-- FUNC + turn on HLD (0, 42, AUTO) on the unit.
-- Memory and audio load on the unit: `resources` are read from the link and the code.
+IA08 itself has not run on a unit; the unit runs of this source are above.
 
 ## Unit, EN05 (envelopes on the amp record hook), 9 Nov 2026
 

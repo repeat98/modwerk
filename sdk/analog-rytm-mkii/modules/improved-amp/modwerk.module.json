@@ -146,16 +146,32 @@
     }
   },
   "evidence": {
-    "tier": "none",
+    "tier": "author-hardware",
     "moduleVersion": "0.1.0-experimental",
-    "reports": [],
-    "hardware": null,
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-10",
+      "tester": "npp1993",
+      "durationMinutes": null,
+      "summary": "Run hands off by npp1993's (the author's) automated USB test rig on their Analog Rytm MKII, OS 1.74, on 9 and 10 November 2026, as the rig's run record reports: image IL02 (sha256 a569c9f5), this source alone on a development build of the Modwerk base with a USB test link, loaded to RAM. 25 cases passed. Screens: ATK, DEC and FILTER times, HLD in steps at 90, 120 and 139 BPM and three track speeds, FUNC + turn on HLD, ENV RESET's four values, a kit save and reload. Sound on the BD voice over USB audio: lengths by DEC, HLD and AUTO; OVR's level curve and the FILTER times beside the same base without the module; ENV RESET AMP's fade before sequenced trigs, retrigs, swung and micro-timed trigs and sound-locked trigs, and none for MIDI notes, the first trig after PLAY, muted trigs, lock trigs and trigs whose condition fails.",
+      "limitations": [
+        "Run by an automated rig, not by hand or by ear; pads were not played.",
+        "Loaded to RAM beside a development USB test link: this package's own image (IA08) and a boot from flash were not run.",
+        "No power cycle, project save and load, Sound pool or +Drive sound, external MIDI clock, pattern change or probability condition.",
+        "The first note after loading an image to RAM was near silent in some boots, also on the image without the module (1 of 7 boots; 10 of 18 with it); cause not found.",
+        "Memory and audio load were not measured on the unit. Duration not recorded."
+      ]
+    },
     "verifiedBy": null,
-    "sourceSha256": null
+    "sourceSha256": "54f0d4b9e2ff15806e135be50dfd3af0f32ef4b9a9b291e9633b000c0d99b4b4"
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu runs of this version's build, and the author's measurements of the envelope curves and the pre-fade on an Analog Rytm MKII over USB in earlier builds (EV04 to EN05). HLD in steps, the OVR curve and sound-locked trigs are not yet tested on a unit.",
+    "summary": "On the author's Analog Rytm MKII (OS 1.74), run by their automated USB test rig on 9 and 10 November 2026, as reported: 25 cases pass on IL02, this source on a development base with a USB test link, loaded to RAM: the AMP and FILTER screens, HLD in steps, lengths by DEC and HLD, OVR's curve and the FILTER times beside stock's, and ENV RESET AMP's fade across sequenced trigs, retrigs, swing, micro timing, sound locks, mutes and trig conditions. rytm-emu runs of this package's own build (IA08). Not run: pads, a power cycle, a boot from flash, an external clock. See TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
