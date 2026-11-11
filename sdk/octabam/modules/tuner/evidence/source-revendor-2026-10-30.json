@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "operation": "Exact re-vendor of the Tuner with the DC-removal fix (tuner.s stage A: the ring mean taken off before the gate and the analysis; upstream README step 1); LICENSE unchanged",
+  "modwerk_base": "a0d35e2bed9969617257c08c7dc9777cb1842524",
+  "upstream": {
+    "repository": "https://github.com/timhastie/octatrick-modules",
+    "revision": "03202050464576b58961093bcc09de783be1f7bd",
+    "parent": "9e4d34a (release-2.21, tag v2.21)",
+    "published": false,
+    "note": "The fix commit is on Tim's local branch tuner-dc; it is not pushed or tagged. Repin to the published tag when Tim releases it."
+  },
+  "previous": "evidence/source-revendor.json (v2.20 fd18f553; tuner/ identical in v2.21)",
+  "files": [
+    {
+      "path": "upstream/README.md",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "03202050464576b58961093bcc09de783be1f7bd",
+      "branch": "tuner-dc (local, not yet published)",
+      "sourcePath": "tuner/README.md",
+      "sourceBytes": 9149,
+      "sourceGitBlob": "560f84bd2ad6816fd8f9ddbc9b7f4b78b8378c5c",
+      "sourceSha256": "f521df1ba93e84c212b5035deb761a6dd5a434ed60c6117edf2ebfb34aa8e8e3",
+      "vendoredSha256": "f521df1ba93e84c212b5035deb761a6dd5a434ed60c6117edf2ebfb34aa8e8e3"
+    },
+    {
+      "path": "upstream/manifest.py",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "03202050464576b58961093bcc09de783be1f7bd",
+      "branch": "tuner-dc (local, not yet published)",
+      "sourcePath": "tuner/manifest.py",
+      "sourceBytes": 2848,
+      "sourceGitBlob": "cb0215a8ba4d2b78946849200ec7e7eb9ec4efb8",
+      "sourceSha256": "b09bf9776197b92d1e511076a6ed3b13d501568b38e6d9ceeeaf4992997534cc",
+      "vendoredSha256": "b09bf9776197b92d1e511076a6ed3b13d501568b38e6d9ceeeaf4992997534cc"
+    },
+    {
+      "path": "upstream/stock_guard.py",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "03202050464576b58961093bcc09de783be1f7bd",
+      "branch": "tuner-dc (local, not yet published)",
+      "sourcePath": "tuner/stock_guard.py",
+      "sourceBytes": 1111,
+      "sourceGitBlob": "f1c59f7a844beb091b784c6b77d42a401ca554c9",
+      "sourceSha256": "5f1fe08ef5a4eb05cd772c9b65ee9f54c2371914a8360c8589109a9ce4308c2d",
+      "vendoredSha256": "5f1fe08ef5a4eb05cd772c9b65ee9f54c2371914a8360c8589109a9ce4308c2d"
+    },
+    {
+      "path": "upstream/tuner.s",
+      "repository": "https://github.com/timhastie/octatrick-modules",
+      "revision": "03202050464576b58961093bcc09de783be1f7bd",
+      "branch": "tuner-dc (local, not yet published)",
+      "sourcePath": "tuner/tuner.s",
+      "sourceBytes": 31787,
+      "sourceGitBlob": "0acf2d030a50b7565e81ad4951bfbea44b35559b",
+      "sourceSha256": "48a3349940266479dd52e0bb171307f0c719f1b9707a05b65c46fee08149c7f2",
+      "vendoredSha256": "48a3349940266479dd52e0bb171307f0c719f1b9707a05b65c46fee08149c7f2"
+    }
+  ],
+  "changed": [
+    "upstream/tuner.s",
+    "upstream/README.md"
+  ],
+  "unchanged": [
+    "upstream/manifest.py",
+    "upstream/stock_guard.py",
+    "LICENSE"
+  ]
+}

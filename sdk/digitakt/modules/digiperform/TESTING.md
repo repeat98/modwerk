@@ -2,19 +2,21 @@
 
 ## In Modwerk
 
-Evidence tier: `none`. Nothing here is a filed hardware report; the author's own observations on a unit are listed below as they were reported.
+Evidence tier: `author-hardware` for 0.1.3-experimental: the author's report is [evidence/hardware-testing.json](evidence/hardware-testing.json), bound to the source by [evidence/source-identity.json](evidence/source-identity.json). The author's observations on a unit are listed below as they were reported.
 
-Source: `sdk/digitakt/modules/digiperform/src` at commit `2c7acf00242ae3cecfe4a095cb3712b7ef6051cf`. Modwerk's pinned toolchain compiled the source twice and produced the source-only packages in `sdk/imports/packages/digiperform/` (no stock bytes: addresses, lengths and SHA-256 guards only). The vendored elekloader builder (kit 0.6.0) then linked core 2.1 and Digi Perform into a local image on each release, with the owner's stock OS files, which stay on the author's computer:
+Source: `sdk/digitakt/modules/digiperform/src` at commit `97edcfc34c04eb114b273768ea6e8bf96df491a3`. Modwerk's pinned toolchain compiled the source twice and produced the source-only packages in `sdk/imports/packages/digiperform/` (no stock bytes: addresses, lengths and SHA-256 guards only). The vendored elekloader builder (kit 0.6.0) then linked core 2.1 and Digi Perform into a local image on each release, with the owner's stock OS files, which stay on the author's computer:
 
-- OS 1.54: core 2.1 and Digi Perform 0.1.1-experimental, built and verified; Digi Perform package SHA-256 `dc9652bd879ce40a0f200f80423278c82aa83654c5dd46cc8b737708c3a9fa9e`. The image the author tested on a unit (build `3.0h`, SHA-256 `f9e9ffdba779f04cc2f68592088387adebd506f8d1571bd1b09b7100f2c4d2cb`) was linked from the same source with a package that differs from this one only in the version number (one byte).
-- OS 1.53: core 2.1 and Digi Perform 0.1.1-experimental, built and verified; Digi Perform package SHA-256 `5875ae39ba103a97c6e3baa7d962bb7d1dcf9163633b63fd0d2dc6c594c16e4c`. The image the author tested on a unit (build `3.0h`, SHA-256 `bd6f8e8e738430c3b0be515141c76be1f330de3387dc99fd22f5b36380bb973d`) was linked from the same source with a package that differs from this one only in the version number (one byte).
+- OS 1.54: core 2.1 and Digi Perform 0.1.3-experimental, built and verified; Digi Perform package SHA-256 `6ac7c2301d97131145d3f8734d5d7e7146cb850922dbddc41ff82be334139e93`.
+- OS 1.53: core 2.1 and Digi Perform 0.1.3-experimental, built and verified; Digi Perform package SHA-256 `d9774e0e8a6d3d3476b65043ae96d22751e503837449707e33d71650ac57058d`.
 
-The local images carry the build label `3.0h`. Both are build checks; the author's hardware observations are listed below.
+The images the author tested on a unit (build `4.3h`, with the module sets listed under "SRC names and Overbridge load (0.1.3)") were linked from packages that are byte for byte the same as these apart from the version text (compared on both releases).
+
+Both are build checks; the author's hardware observations are listed below.
 
 ## Resources
 
-- Memory: 18,264 B per release: 17,438 B in `.run`, 806 B in `.bss` and 20 B of table contributions (five core events). No FAST AUDIO bytes. This is the object's size, from the package; it excludes the shared core and linker alignment.
-- Load: not measured. The engine hook runs once per audio block and adds up to eight offsets to the smoothed parameter words; the cost has not been timed on a unit or in a cycle-accurate run.
+- Memory: 26,776 B per release: 22,306 B in `.run`, 4,450 B in `.bss` and 20 B of table contributions (five core events). No FAST AUDIO bytes. This is the object's size, from the package; it excludes the shared core and linker alignment.
+- Load, reported by the author on a unit (OS 1.54, build `4.3h` with DigiChain 1.6, Digi Mono 0.13.3 and digihealth 1.0; digihealth's SYSTEM INFO DSP reading, FAST AUDIO unticked after boot, samples loaded, Overbridge connected, a MONO ENS note playing): stock page 96%, Perform page while turning an assigned knob 97%, no delay. Readings vary by a few points; they are read off the screen, not timed. The audio hook returns at once while no knob is moved; with one moved it adds and clamps a list of parameter words the UI prepares. Emulator per-block cost (never hardware evidence) is under "SRC names and Overbridge load (0.1.3)".
 
 ## Combinations
 
@@ -53,7 +55,7 @@ Emulator only (digiemu, OS 1.54, build 3.0f; never hardware evidence). Build 3.0
 
 Build 3.0a decoded all eight assignments bit by bit on every audio block. The author reported (OS 1.54, Digitakt connected to Overbridge, after switching patterns) a noticeable delay between turning an assigned knob and the parameter changing, not seen on the earlier submitted version and not seen with Overbridge disconnected. Build 3.0c decoded the pool only when its 92 bits had changed; the author reported "very much improved" (OS 1.54 with Overbridge; reported, not timed). The author then reported that the delay when switching patterns, and the value indicators showing the current values, had come back, less than before but still noticeable. Build 3.0d keeps a separate decoded copy for the UI and for the audio hook (3.0c shared one, which could be overwritten by the other side while a pattern change was pending) and syncs once per audio block. A host test compared the new decode with the old bit-by-bit decode on 200,000 random states, cache reused, and found no difference; it says nothing about speed or timing. The cost per block was not measured on a unit or in a cycle-accurate run, and no build was run side by side with another on one unit. 3.0d was not exercised in the emulator beyond the page drawing and a pattern switch while playing.
 
-Known limitation, reported by the author: the knob labels on the Perform page are the stock parameter names. When a mod such as Digi Mono changes the SRC page's names for its machines, the Perform page follows the values but keeps the stock names; the author plans to pick the names up on the fly in the next release. Not tested beyond that report.
+Fixed in 0.1.3: the knob labels on SRC slots now follow the track's machine (see "SRC names and Overbridge load (0.1.3)").
 
 Known limitation, reported by the author: when a new pattern starts to play, the value indicators briefly show the previous pattern's value and then update to the new pattern's. The cause is not confirmed; the engine's smoothed parameter words probably still run from the old sound to the new one when the knobs pick them up. A build that read the new sound's stored value instead (3.0e) made, in the author's words, "not much difference", and was dropped. The flash could not be reproduced in the emulator.
 
@@ -62,6 +64,38 @@ Known limitation, reported by the author: when a new pattern starts to play, the
 Found by the author on a unit: FLT.BASE moved the filter width and FLT.WDTH moved nothing. Emulator (digiemu, OS 1.54, build 3.0g; never hardware evidence): turning each knob of the stock Filter 2/2 page and watching the smoothed parameter words showed the sound's slots 33 to 37 are BASE, WDTH, DEL, SRR and ROUT; the module had DEL, BASE, WDTH. The same check on LFO 1, LFO 2, SRC, Filter 1/2 and AMP found their slots in the module's order. Fixed in 0.1.1; a saved assignment keeps its slot number, so one that played as width and was named BASE now shows as WDTH.
 
 Reported by the author (ROMsets): build `3.0h` tested on a unit on OS 1.54 and on OS 1.53, and the fix works ("good to roll out"). The reports give no further step-by-step detail, so the pass is recorded only as that.
+
+## Screen saver (0.1.2)
+
+Found by the author on a unit: when the screen saver turned the display off while the Perform page was open, the stock header went but the Perform page stayed drawn. Read from the OS 1.54 code (static, never run on a unit): the saver is not a view. The application object keeps an idle counter and a state (0 awake, 1 dimmed after 5 minutes, 2 off after 60 minutes, thresholds as in the user manual); the dim is only a brightness command to the display, and at state 2 the firmware blanks its own screen. The page kept drawing into the frame and set the view's dirty flag on every tick, so it painted over the blank screen. Fixed in 0.1.2: while the state is 2 the page neither draws nor asks for a frame. The state's address was found for OS 1.54; the OS 1.53 address was found by the same code pattern in the raw image and has not been checked by reading the 1.53 code.
+
+Emulator (digiemu, OS 1.54, never hardware evidence): with the unfixed build `3.0h`, after 66 emulated minutes idle on the Perform page the stock header was gone and the Perform page was still drawn, and after a FUNC press the page returned without its header. With a debug variant of the fixed logic (same code plus debug text, not the 3.0i image itself) at the same point the frame was black, and after a FUNC press the page and header returned. The emulator does not draw the 5-minute dim.
+
+Reported by the author (ROMsets): build `3.0i` tested on a unit on OS 1.54 and on OS 1.53, and the fix works ("That works"). On OS 1.53 the author saw the stock TRIG page after waking, not the Perform page; on OS 1.54 the author tested the wake and did not notice that. The idle time, and TRIG hold and the knobs after it, were not reported in detail, so the pass is recorded only as that. Known minor issue, reported by the author: on OS 1.53, waking from the saver may show the TRIG page instead of the Perform page. Not investigated.
+
+## SRC names and Overbridge load (0.1.3)
+
+What changed: a knob on an SRC slot takes the track's machine's own short and long name, value text, range and step from the stock SRC page's routines, asked for the knob's track with interrupts off while that track is made the active one, and cached per track and machine. Those routines are reached through stock call sites that CC Names (0x40030daa), Digi Mono (0x40030daa, 0x40032d36, 0x40032d16), DigiChain and DIGISLICER (0x4000f534) patch; Digi Perform calls them and patches none of them, so on its own it gets the stock answers. A knob on a slot the machine does not have is unassigned. The audio hook works only while a knob is moved, frames are asked for only when the page's content changes, and the TRIG page's body is not drawn under the Perform page (new site 0x400368e0, a `jsr` in the TRIG view's draw on both releases, claimed in `platform.claims`; one forced frame redraws the TRIG page when the Perform page is left).
+
+Reported by the author (ROMsets) on a unit, OS 1.53 and 1.54, about 2 hours in all, with test images of these sets: alone, mono (DigiChain 1.6, Digi Mono 0.13.3), monohealth (the same with digihealth 1.0), neighbor (Digi Neighbor 0.6), poly (DigiChain 1.6, Digi Poly 2.0), ram (Machine Pages 1.2, RAM Machines 1.3.1), slicer (DIGISLICER 2.1), sophie (Digi Sophie 1.1.13) and string (Machine Pages 1.2, STRING 0.9.0):
+
+- Build 4.3h, the checklist given for this version: knobs moving the sound including an ALL and a negative knob, FUNC and push resetting a knob, a pattern change letting the knobs go, assigning and clearing while playing, fast turns against the SRC page, knob G push and turn, machine-menu scrolling, leaving the page every way (TRIG, SRC, FLTR, AMP, LFO, menus, FUNC chords) with the stock page drawn in full, and a pass with each set above, Digi Poly's LEV display on a POLY track included. The author reported it good ("I'm happy with the testing"). Reported as a whole; the steps were not itemised.
+- Overbridge delay: the author found a delay between a turn and the sound with Overbridge connected and Digi Mono's ENS, VO or POLY SIN playing, on the Perform page only. With the earlier builds the DSP reading reached 100% while turning on the Perform page. Build 4.3h: stock page 96%, Perform page while turning 97%, no delay (conditions under Resources). With digihealth's FAST AUDIO on, an earlier build (4.3g) read stock 88%, Perform idle 79%, turning about 90%.
+- Not reported separately: which checks ran on which OS release (the DSP readings are OS 1.54), and combinations other than the sets above.
+
+Emulator (pinned digiemu, OS 1.54, audio engine on; never hardware evidence): per audio block, normalised to the render's own call count, an idle Perform page cost the same as the SRC page, and a turning knob added 0.0285 against 0.0348 for a turn on the stock SRC page. The engine's parameter word for a turned knob followed the turns and returned to its stored value on leaving. After leaving the Perform page by the emulator plan's routes, the stock pages drew in full in the mono and poly sets.
+
+## Saved project and power cycle (0.1.3)
+
+Reported by the author (ROMsets) on a unit, 11 November 2026, build 4.3h (this source) and the published 0.1.2-experimental package (image label 012a, core 2.1 only):
+
+- Assign knobs, SAVE PROJECT, power cycle: the assignments are not there ("I save the project after assigning knobs, restart the device and the knob assignments are no longer there").
+- Then LOAD PROJECT of the same project: "load project brings them back".
+- A stock edit before the power cycle does not keep them: "stock edit does not keep".
+- SAVE PROJECT, load a different project, load this one back: the assignments come back.
+- 0.1.2-experimental: "the save behaviour is the same in 0.1.2".
+
+So the saved project holds the assignments, and only the state the unit starts from at power-on lacks them. The storage is unchanged since 0.1.2-experimental. Emulator (never hardware evidence): after SAVE PROJECT a cold boot from the same card came back with all the sound records' spare bytes cleared, a stock parameter written directly into the kit lost too, while LOAD PROJECT right after the save kept them. Not fixed in this version; the README states it as a known problem.
 
 ## Author's hardware observations
 
@@ -75,26 +109,26 @@ Reported by the author (ROMsets) while testing local builds on a unit, build lab
 - Overall, "hardware looks pretty good"; a slight delay in the knob indicators after a pattern change was reported, and a change to show the new values at the switch followed (2.3a, not re-reported).
 - OS 1.53: a final smoke test on a unit (build 2.3c) that the author describes as covering a good part of the main functionality: the page opening, Perform Quick Assign, setting and editing assignments in Perform Edit, and changing assigned parameter values with the knobs. Not a full pass.
 
-Not tested on a unit, or not reported step by step: the current storage layout's checklist above was reported only as a whole, so each step (power-cycle persistence, sound loads onto tracks 5 to 8 and 1 to 4, the all-tracks setting) has no item of its own; a project saved with assignments loaded on a build without the module; CPU load (never timed), every combination with other mods, and the stock flows compared side by side beyond the screens above.
+Not tested on a unit, or not reported step by step: the current storage layout's checklist above was reported only as a whole, so each step (sound loads onto tracks 5 to 8 and 1 to 4, the all-tracks setting) has no item of its own; a project saved with assignments loaded on a build without the module; CPU load (never timed), every combination with other mods, and the stock flows compared side by side beyond the screens above.
 
 ## Category checklist (system)
 
 - Put the setting where it belongs: PERFORM EDIT is a row in SETTINGS; the page is the second page of TRIG. Done.
 - A way to turn it off that restores stock: leaving the page puts every parameter back; not installing the module restores stock. Compared on the emulator for the screens above only.
 - Defaults are stock behaviour: no assignment exists in a new project, so nothing moves until one is made. Emulator only.
-- Persistence: stored in the sound records' spare bytes. Pattern and kit copy carry it in the emulator; power-cycle survival is not tested.
+- Persistence: stored in the sound records' spare bytes. Pattern and kit copy carry it in the emulator; SAVE PROJECT and LOAD PROJECT keep it on a unit, but a power cycle does not restore it (see "Saved project and power cycle").
 - A project with assignments loaded without the module: not tested.
 - Affected: the original Digitakt on OS 1.53 and 1.54, audio tracks 1–8; existing projects are unchanged until an assignment is made.
 
-## Documentation capture — 30 October 2026
+## Documentation capture — 11 November 2026
 
-Documentation version: `0.1.1-experimental`. Source revision: `2c7acf00242ae3cecfe4a095cb3712b7ef6051cf` (`sdk/digitakt/modules/digiperform`). The OS 1.54 image above was captured through real panel inputs in the pinned digiemu with firmware-native drawing (`hle=False`) and a disposable first-boot project. The capture script runs without the audio engine, so the knobs show their assignment but not live values. Only complete, unmodified LCD frames were kept at 6× integer scale, and every image was opened for review. The record is [capture.json](media/capture.json); the plan is [capture-plan.txt](media/capture-plan.txt).
+Documentation version: `0.1.3-experimental`. Source revision: `97edcfc34c04eb114b273768ea6e8bf96df491a3` (`sdk/digitakt/modules/digiperform`). An OS 1.54 image with core 2.1 and this version's package (build label `3.1a`, image SHA-256 `76cd3b079851bd6f57e8d2d94424cae8a9ef96cec6b7040ee3c1f84d36da0d00`) was captured through real panel inputs in the pinned digiemu with firmware-native drawing (`hle=False`) and a disposable first-boot project. The capture script runs without the audio engine, so the knobs show their assignment but not live values. Only complete, unmodified LCD frames were kept at 6× integer scale, and every image was opened for review. The record is [capture.json](media/capture.json); the plan is [capture-plan.txt](media/capture-plan.txt). The plan sets knobs A to G through Perform Quick Assign with bursts of turns, whose steps are chosen by the emulator's turn handling, so the plan is only reproducible as written; this run landed on other choices than the 0.1.2 run.
 
 - The Perform page with eight empty knobs.
 - Perform Quick Assign: choosing the track for knob A.
-- Knob A assigned to track 1's TUNE.
+- Seven knobs assigned: A, C and D for all tracks (TUNE, LOOP, F.TYP), B for track 8 (SAMP), E to G for tracks 3, 2 and 2 (PLAY, PLAY, SAMP), H empty.
 - SETTINGS > PERFORM EDIT.
-- Perform Edit with row A set.
+- Perform Edit with rows A to F set.
 
 UI-only documentation; no hardware, audio, timing, persistence or stress qualification. Reproduce with your own OS file, keeping firmware and emulator outputs outside the checkout:
 

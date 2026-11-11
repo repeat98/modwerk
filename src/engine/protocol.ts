@@ -12,6 +12,8 @@ export type BuildReport = {
   startupAnimation?: StartupAnimation
   // Docking was asked for, but this selection composes only with the classic startup.
   startupFallback?: true
+  // The longer FX2 list left too little menu space, so FX2 lists only the modules' effects; the page asks before building.
+  compactFx2?: true
 }
 export type BuildProgress = 'composing' | 'packing' | 'verifying'
 export type EngineRequest =
@@ -36,8 +38,8 @@ export const DOWNLOADS_ENABLED = true
 // The dynamic DSP loader (stock effects and modules uploaded on demand) has not been proven on hardware.
 // Off: stock DSP code stays built in and modules use the space of stock effects left off both menus.
 export const DSP_LOADER = false
-// Loading modules over USB is a beta: outside dev builds, only beta testers and verified administrators get the
-// USB link and base install (hasUsbLinkAccess). True releases it to everyone, together with the server's prompt check.
+// Dev builds show every beta interface, the USB link and base install included (hasBetaUi, hasOctatrackBase). Releasing
+// the Octatrack base path to everyone is OCTATRACK_BASE_RELEASED (src/config/octatrack-base.ts), not this.
 export const USB_LINK = import.meta.env?.DEV ?? false // plain Node (scripts/module-verify.mjs) has no import.meta.env
 // The ELEK update name appears on the resident bootloader's screen.
 // The panel boot font has uppercase letters; lowercase codes draw symbols.

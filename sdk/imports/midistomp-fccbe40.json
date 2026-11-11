@@ -1,0 +1,450 @@
+{
+  "schemaVersion": 1,
+  "recorded": "2026-11-08",
+  "decision": "MIDISTOMP (Luca Matturro, MIT) as the Zoom MultiStomp base: LICENSE, models/ and asm/ copied unchanged; its patches converted by scripts/midistomp-import.ts into vendor/midistomp/midistomp.json with every guard on Zoom's bytes kept as a sha256 and every run they repeat from Zoom's files as a copy from the user's own, so no Zoom bytes are in the repository.",
+  "repository": "https://github.com/matujuice/zoom-ms-midistomp",
+  "revision": "fccbe400413b1a787f8213095319903a3befd084",
+  "license": "MIT",
+  "files": [
+    {
+      "from": "LICENSE",
+      "to": "vendor/midistomp/LICENSE",
+      "sha256": "ae91fadf6258ab01d71517d77d2a8ff18fd004f100627cd9b6f76c10b92cdf37"
+    },
+    {
+      "from": "asm/common/draw.h",
+      "to": "vendor/midistomp/asm/common/draw.h",
+      "sha256": "af494b212b225237b8b84121d70f56bcb6c7ce43b2b0c9ed6c2df9a23a1bdaeb"
+    },
+    {
+      "from": "asm/common/fonts.h",
+      "to": "vendor/midistomp/asm/common/fonts.h",
+      "sha256": "8526aee5c507ffccdea611610fda8afc4053ba392f56441429bfc53f48fb4189"
+    },
+    {
+      "from": "asm/diag/diag.c",
+      "to": "vendor/midistomp/asm/diag/diag.c",
+      "sha256": "f4689036169923b3fe4778343fb72a8f9c2d8cb1c1ab90c2c59425eea13d5a3c"
+    },
+    {
+      "from": "asm/diag/diag_vec.asm",
+      "to": "vendor/midistomp/asm/diag/diag_vec.asm",
+      "sha256": "c1831943f77c19883725bb4ddd004d918de3505f1afb67d0ff62af3cf8eb148d"
+    },
+    {
+      "from": "asm/fx_category/fxcat.S",
+      "to": "vendor/midistomp/asm/fx_category/fxcat.S",
+      "sha256": "e026d0ccd21003e770353e9cc8f9b2bbbcb0af06bb813e24eeb80a56d826bf3f"
+    },
+    {
+      "from": "asm/looper/block.S",
+      "to": "vendor/midistomp/asm/looper/block.S",
+      "sha256": "0e98d7ff240c93f87f8d1c49e3e6ad061155c8a1f4c70e75aafd6478857a5561"
+    },
+    {
+      "from": "asm/looper/cc_trampoline.S",
+      "to": "vendor/midistomp/asm/looper/cc_trampoline.S",
+      "sha256": "cc965a86f6337fc4d9cdd5c036c35fbf0a9531556765fa9bdf0b9b08dc637803"
+    },
+    {
+      "from": "asm/looper/hold_trampoline.S",
+      "to": "vendor/midistomp/asm/looper/hold_trampoline.S",
+      "sha256": "dc3f4e59fa1df35a1c1f06f9a97321c54e9ff107412ce2910346e47e5568d159"
+    },
+    {
+      "from": "asm/looper/lbox.c",
+      "to": "vendor/midistomp/asm/looper/lbox.c",
+      "sha256": "6ca878a3557f2d5bded44f8580343f5f340d270c26493427644b170e8ffcdbf1"
+    },
+    {
+      "from": "asm/looper/lbox_vec.asm",
+      "to": "vendor/midistomp/asm/looper/lbox_vec.asm",
+      "sha256": "3e9eab3c5bd3b714389a6e89f3d91305647876b9d14bfc894e948c802402dbad"
+    },
+    {
+      "from": "asm/looper/looper.S",
+      "to": "vendor/midistomp/asm/looper/looper.S",
+      "sha256": "15b2fffee75b70652d9e9149df34aed74ec586fd717ef90be9d1893de3bf384c"
+    },
+    {
+      "from": "asm/looper/poll_trampoline.S",
+      "to": "vendor/midistomp/asm/looper/poll_trampoline.S",
+      "sha256": "cf15c309754e2d519aa3c75e77e5c869353ade3a4c3790ed0d05ba8ed086b3b4"
+    },
+    {
+      "from": "asm/looper/services.inc",
+      "to": "vendor/midistomp/asm/looper/services.inc",
+      "sha256": "e245a12b0726887c1e7a9b59a9b64b7cce1b3dc6e69d226b75791ee3bf1f9e27"
+    },
+    {
+      "from": "asm/looper/toggle_trampoline.S",
+      "to": "vendor/midistomp/asm/looper/toggle_trampoline.S",
+      "sha256": "51a1013d5bd360287448548f877e38cc9da0185a4808d9a13422470083a13cd5"
+    },
+    {
+      "from": "asm/m0_probe/chain_jump.S",
+      "to": "vendor/midistomp/asm/m0_probe/chain_jump.S",
+      "sha256": "2a704ad4fc9e52334f745284fe852e5715c79e73b24e0c6860f6c47d2dabc0e1"
+    },
+    {
+      "from": "asm/m0_probe/dsp_limit.S",
+      "to": "vendor/midistomp/asm/m0_probe/dsp_limit.S",
+      "sha256": "663c4c3c355e00c6e9987bd697b73251ab48d55d8dd8dd285f60ea4683b2d5ce"
+    },
+    {
+      "from": "asm/m0_probe/end_stub.S",
+      "to": "vendor/midistomp/asm/m0_probe/end_stub.S",
+      "sha256": "2609b77e5634e67ea4318eec4c54e9a67c2324b3724bc4e15d943013d49a963d"
+    },
+    {
+      "from": "asm/m0_probe/probe.S",
+      "to": "vendor/midistomp/asm/m0_probe/probe.S",
+      "sha256": "07e9aa2d8ea5626c0acbf0b299d7e152c07e05523e7d92c2b430d239c5a83ff8"
+    },
+    {
+      "from": "asm/m0_probe/start_stub.S",
+      "to": "vendor/midistomp/asm/m0_probe/start_stub.S",
+      "sha256": "b7ff693ebd281d0d31a02d2623d76f96a4a22b0ca5b7606e66eeb89dadc24dc9"
+    },
+    {
+      "from": "asm/master/master.c",
+      "to": "vendor/midistomp/asm/master/master.c",
+      "sha256": "c226d5639b3e0435b2e6a9ec1516822aa1440fe621ed868b7b8b206f430a36c5"
+    },
+    {
+      "from": "asm/master/master.h",
+      "to": "vendor/midistomp/asm/master/master.h",
+      "sha256": "203de6a62698cde5925d4f5abc25ecf20e0dac2d4e2b46b0de15d1b8e1809897"
+    },
+    {
+      "from": "asm/master/master_vec.asm",
+      "to": "vendor/midistomp/asm/master/master_vec.asm",
+      "sha256": "f31ef8098f5b78c865a9ebf84e9504e31650f2cce892cc3f444c87aaf742fe8a"
+    },
+    {
+      "from": "asm/midi_cc/handler.S",
+      "to": "vendor/midistomp/asm/midi_cc/handler.S",
+      "sha256": "391ed14fb2f4b30c2436289231b9cce160da181bbf04ebf8eefdafefcf30a7b4"
+    },
+    {
+      "from": "asm/midi_cc/step.S",
+      "to": "vendor/midistomp/asm/midi_cc/step.S",
+      "sha256": "bf7f493e79cb886c7b9fce5de7a0226ac6822fa794c579b28387ed35e9b21734"
+    },
+    {
+      "from": "asm/midi_cc/trampoline.S",
+      "to": "vendor/midistomp/asm/midi_cc/trampoline.S",
+      "sha256": "92ccd95d9cffaa838941487d4fdcd75453917c86d23b3c8950b4024002e994da"
+    },
+    {
+      "from": "asm/midi_clock/clock.S",
+      "to": "vendor/midistomp/asm/midi_clock/clock.S",
+      "sha256": "51f33c5112d6b6cfd5a67dfba843cc3590f31c0a421fcf15617ad74b2ce4e1ff"
+    },
+    {
+      "from": "asm/midi_clock/diag.S",
+      "to": "vendor/midistomp/asm/midi_clock/diag.S",
+      "sha256": "c8eb25175744ef1dbfad5542b00c982110ee06bcb2288a9587f23a4f6af1e72b"
+    },
+    {
+      "from": "asm/midi_clock/diag2.S",
+      "to": "vendor/midistomp/asm/midi_clock/diag2.S",
+      "sha256": "ffca699412764a8e7c8df5a4eebe3a438f180cd817139cbc4c6717c88e928195"
+    },
+    {
+      "from": "asm/midi_clock/poll.S",
+      "to": "vendor/midistomp/asm/midi_clock/poll.S",
+      "sha256": "5dba7e1637d75ef71be890c9f01b4070bc9f31bceeef4b1c97079ab94f95fd86"
+    },
+    {
+      "from": "asm/midi_clock/poll_trampoline.S",
+      "to": "vendor/midistomp/asm/midi_clock/poll_trampoline.S",
+      "sha256": "0a9ee373f299e76d9ef8bcaaacf9d92c2ce7940a56cf9ba130ed9fddf76dd805"
+    },
+    {
+      "from": "asm/midi_clock/trampoline.S",
+      "to": "vendor/midistomp/asm/midi_clock/trampoline.S",
+      "sha256": "5cfed7d9cac3a5e3bb5ebe7c7747f5b30b080badc29fb42c46e719f2b9649c45"
+    },
+    {
+      "from": "asm/midi_clock/transport.inc",
+      "to": "vendor/midistomp/asm/midi_clock/transport.inc",
+      "sha256": "4fa83833beb0904d8bb4dd24268ff7cfef524c8a97cd2f5c8799b19d4057cef0"
+    },
+    {
+      "from": "asm/midi_settings/gate_trampoline.S",
+      "to": "vendor/midistomp/asm/midi_settings/gate_trampoline.S",
+      "sha256": "ed580e255c84d8fbd36a95626844178dc99a13651e7b266448fe5907aa9d6910"
+    },
+    {
+      "from": "asm/midi_settings/menu_draw_trampoline.S",
+      "to": "vendor/midistomp/asm/midi_settings/menu_draw_trampoline.S",
+      "sha256": "688f688c7230e8c6ad8c90d346e4f833507737d7a2f7558801707b6fce2e55c6"
+    },
+    {
+      "from": "asm/midi_settings/menu_keys_trampoline.S",
+      "to": "vendor/midistomp/asm/midi_settings/menu_keys_trampoline.S",
+      "sha256": "b364d4297e4fbfde501da103c5e08f50553ccce39c040dc82c135fac8452e59c"
+    },
+    {
+      "from": "asm/midi_settings/pack_trampoline.S",
+      "to": "vendor/midistomp/asm/midi_settings/pack_trampoline.S",
+      "sha256": "8f230f94959e1c6f5b3f45007e75f4a7cb8a1fb18a0c33bad67a71efa558f693"
+    },
+    {
+      "from": "asm/midi_settings/rec_load_trampoline.S",
+      "to": "vendor/midistomp/asm/midi_settings/rec_load_trampoline.S",
+      "sha256": "c514c9a151a0bd2210e3617a2052335c1d28c46441a1b96aa4e65b83e52ff9a0"
+    },
+    {
+      "from": "asm/midi_settings/rec_save_trampoline.S",
+      "to": "vendor/midistomp/asm/midi_settings/rec_save_trampoline.S",
+      "sha256": "7c0123669875a2780178192a5a81c78358cadf0f370e9e2e05bd75f371b2889f"
+    },
+    {
+      "from": "asm/midi_settings/settings.S",
+      "to": "vendor/midistomp/asm/midi_settings/settings.S",
+      "sha256": "7cb7b5e64a9958931ae9b6e5b18de7beb6c17764fb7f5f0117e5c383398865ef"
+    },
+    {
+      "from": "asm/midi_settings/unpack_trampoline.S",
+      "to": "vendor/midistomp/asm/midi_settings/unpack_trampoline.S",
+      "sha256": "f6f70d2bf25f7a7f791048899ead44a82aa1eae8085e350dd88f016ab0fcc15a"
+    },
+    {
+      "from": "asm/mixer/cc_link.S",
+      "to": "vendor/midistomp/asm/mixer/cc_link.S",
+      "sha256": "273d411eaba42eb508b30041ad120b9dfabbb23f7de860a7e55b28c7232fd707"
+    },
+    {
+      "from": "asm/mixer/chain.h",
+      "to": "vendor/midistomp/asm/mixer/chain.h",
+      "sha256": "5db5becfd2be9d38b28db55327f375b456076ad847cf358aa16c9de38c31005d"
+    },
+    {
+      "from": "asm/mixer/chain_draw.c",
+      "to": "vendor/midistomp/asm/mixer/chain_draw.c",
+      "sha256": "f767ad77723d9ac56f0b24b9e0ac2d3cfdda65a1a31fdab697f55600958a144c"
+    },
+    {
+      "from": "asm/mixer/chain_draw_stub.c",
+      "to": "vendor/midistomp/asm/mixer/chain_draw_stub.c",
+      "sha256": "33308b5db47a55183ccaeb0a4d4a64fab1ed9fb2bbaa452cc72949b760af0ce0"
+    },
+    {
+      "from": "asm/mixer/chain_jump.S",
+      "to": "vendor/midistomp/asm/mixer/chain_jump.S",
+      "sha256": "2badf6ea4ae741f6e38154a2b0681fac818955c6a0aee1930759b946e8c14663"
+    },
+    {
+      "from": "asm/mixer/chain_keys.c",
+      "to": "vendor/midistomp/asm/mixer/chain_keys.c",
+      "sha256": "d6baf73a57110bc85cfec03e4dc68aa50ebe1a86f3ad8b0dc91a74cedeb7a4a3"
+    },
+    {
+      "from": "asm/mixer/chain_vec.asm",
+      "to": "vendor/midistomp/asm/mixer/chain_vec.asm",
+      "sha256": "b3f444b3d6448e078ad9d9a7b79260ea4b9766752f15e4107d031a1b1a9d7aa6"
+    },
+    {
+      "from": "asm/mixer/engine.c",
+      "to": "vendor/midistomp/asm/mixer/engine.c",
+      "sha256": "3b4cae144c67449396abbaef6ff11385acd7d19c24193c5ad291f47c12c83c41"
+    },
+    {
+      "from": "asm/mixer/knob_step.h",
+      "to": "vendor/midistomp/asm/mixer/knob_step.h",
+      "sha256": "6c3e3ed926f7d9583d756e2c165a3cb6d1f033a85443ffa889478176a5143a1e"
+    },
+    {
+      "from": "asm/mixer/menu_draw.S",
+      "to": "vendor/midistomp/asm/mixer/menu_draw.S",
+      "sha256": "b811ee3dbfad5da0cb33b7d9471ae50cb8856d0afdb0fc0fb51ab64f65b6f0bf"
+    },
+    {
+      "from": "asm/mixer/menu_enter.S",
+      "to": "vendor/midistomp/asm/mixer/menu_enter.S",
+      "sha256": "d69bb7c0459acf91280b2b0987eae23b3590794b22b57d27869e8613a32cd5cf"
+    },
+    {
+      "from": "asm/mixer/menu_scroll.S",
+      "to": "vendor/midistomp/asm/mixer/menu_scroll.S",
+      "sha256": "97a2f06c2bd2aa2f37df13f3a918455ecbf6321c7ba0b4e249c04ca63c2340aa"
+    },
+    {
+      "from": "asm/mixer/mixer.S",
+      "to": "vendor/midistomp/asm/mixer/mixer.S",
+      "sha256": "c709862168f6c4dd75dfd7d1e66c9a4573131507d0d7b46e83612a9a2a310671"
+    },
+    {
+      "from": "asm/mixer/pack_trampoline.S",
+      "to": "vendor/midistomp/asm/mixer/pack_trampoline.S",
+      "sha256": "3640857c272e883833f422981f28e3cd47eb7b979f91ab93dc37a08a6fa12244"
+    },
+    {
+      "from": "asm/mixer/pages.c",
+      "to": "vendor/midistomp/asm/mixer/pages.c",
+      "sha256": "d370c665e801421b1a0aa3c854b2e0677bbd3755cd3b519020a8bfdd8ada4e03"
+    },
+    {
+      "from": "asm/mixer/pedal_in.c",
+      "to": "vendor/midistomp/asm/mixer/pedal_in.c",
+      "sha256": "9083ba78763983c47c2be5d8e4c266f3d9bc62fc570b25a18681cd9a678fe3fb"
+    },
+    {
+      "from": "asm/mixer/poll_trampoline.S",
+      "to": "vendor/midistomp/asm/mixer/poll_trampoline.S",
+      "sha256": "892103a9aaa62f011ea75ee9bb6ffd77b08652e2fd058886884a3f78f98af7ff"
+    },
+    {
+      "from": "asm/mixer/rec_save_jump.S",
+      "to": "vendor/midistomp/asm/mixer/rec_save_jump.S",
+      "sha256": "d2f700a6e56d04b04dc5b5aa9e39093cd03112057237a27039a92dd11b11bfce"
+    },
+    {
+      "from": "asm/mixer/stock.h",
+      "to": "vendor/midistomp/asm/mixer/stock.h",
+      "sha256": "97e063eb7c862f8d2828978e58ba1a920afb4c6fc5196a324b5d40df1b04fc97"
+    },
+    {
+      "from": "asm/mixer/unpack_trampoline.S",
+      "to": "vendor/midistomp/asm/mixer/unpack_trampoline.S",
+      "sha256": "210cbb6317884329e9390579bfe257a149a48fa7dfbb10f6a9c1a4ae02d0b17f"
+    },
+    {
+      "from": "asm/perform/perform.h",
+      "to": "vendor/midistomp/asm/perform/perform.h",
+      "sha256": "2d15fc9c397b40be0f260eec682d9659c8ec5ade5b806fb6a26de6ead65c8e41"
+    },
+    {
+      "from": "asm/perform/perform_draw.c",
+      "to": "vendor/midistomp/asm/perform/perform_draw.c",
+      "sha256": "b3fe0add90b270a069428d02c8ffc488f140ef6193323269f94aa2fa89f4daaf"
+    },
+    {
+      "from": "asm/perform/perform_engine.c",
+      "to": "vendor/midistomp/asm/perform/perform_engine.c",
+      "sha256": "536f0b176e061337ad6f756e111c35424827067f40a92180f3be9d674a4080a6"
+    },
+    {
+      "from": "asm/perform/perform_keys.c",
+      "to": "vendor/midistomp/asm/perform/perform_keys.c",
+      "sha256": "47a46cf9e1baaf3c6ca64ce1b4b9469470048dcbe67a69a7e8053fbe78abb21a"
+    },
+    {
+      "from": "asm/perform/perform_store.c",
+      "to": "vendor/midistomp/asm/perform/perform_store.c",
+      "sha256": "390414115d7dcf7bd6f17258aa17ef23a2f773511c54a9ec30dde87cd452fdfb"
+    },
+    {
+      "from": "asm/perform/perform_ui_stub.c",
+      "to": "vendor/midistomp/asm/perform/perform_ui_stub.c",
+      "sha256": "3bcd0e3daf26363aecc1d069b58471f00baa9bc2cdec7ddb9115445d8ce1ba63"
+    },
+    {
+      "from": "asm/ram_test/ramtest.S",
+      "to": "vendor/midistomp/asm/ram_test/ramtest.S",
+      "sha256": "69f2199a0df14fd26453e4a990845e8db89f58a17d56a04218fcde0d9b041706"
+    },
+    {
+      "from": "asm/scroll/scroll.S",
+      "to": "vendor/midistomp/asm/scroll/scroll.S",
+      "sha256": "5490f91382c0ee70453c19dacb1dead3f84ac0c96214f4bbda96f66247a4e120"
+    },
+    {
+      "from": "asm/tempo_hold/combo_trampoline.S",
+      "to": "vendor/midistomp/asm/tempo_hold/combo_trampoline.S",
+      "sha256": "674a384570edcc4c0ed217ee2175e6a697d56917baeb4d51380da67c2695ca63"
+    },
+    {
+      "from": "asm/tempo_hold/dirty_trampoline.S",
+      "to": "vendor/midistomp/asm/tempo_hold/dirty_trampoline.S",
+      "sha256": "be4f8f5bf875e469b207b4ee8ad943f5bcc62c59f700ec4ab225c37398593c39"
+    },
+    {
+      "from": "asm/tempo_hold/hold.S",
+      "to": "vendor/midistomp/asm/tempo_hold/hold.S",
+      "sha256": "7f280db2ff599391611c5fb88404a2ad2e430ae44372f76fc23b9e977d46c484"
+    },
+    {
+      "from": "asm/tempo_hold/hold.inc",
+      "to": "vendor/midistomp/asm/tempo_hold/hold.inc",
+      "sha256": "bea123d05dc1f76f11c9047933e3af0919d3956d5297e6007f3264c7065feb23"
+    },
+    {
+      "from": "asm/tempo_hold/hold2.S",
+      "to": "vendor/midistomp/asm/tempo_hold/hold2.S",
+      "sha256": "2d7056cae9b5082a34dc73b44f183e2ba92ddde4f93ad29be0b2bcefef12528e"
+    },
+    {
+      "from": "asm/tempo_hold/hold_trampoline.S",
+      "to": "vendor/midistomp/asm/tempo_hold/hold_trampoline.S",
+      "sha256": "e4d898ca3f151cf0fde359bafeb850d91e0135c65a0f2071bb9b357497c85ca2"
+    },
+    {
+      "from": "asm/tempo_hold/knob_accel.S",
+      "to": "vendor/midistomp/asm/tempo_hold/knob_accel.S",
+      "sha256": "ed0c1987aa58308e8f7c3cb9b6f6af572afacdb89f4a29bb7460b6efb36d2545"
+    },
+    {
+      "from": "asm/tempo_hold/knob_trampoline.S",
+      "to": "vendor/midistomp/asm/tempo_hold/knob_trampoline.S",
+      "sha256": "2921f53be1119c7ca6b4a938419a6aeacf5ab2751d7c5bff96baba72a3bc9847"
+    },
+    {
+      "from": "asm/tempo_hold/release_trampoline.S",
+      "to": "vendor/midistomp/asm/tempo_hold/release_trampoline.S",
+      "sha256": "ad3371957f73911f1b07bf3b33a04f36f5b6b86e472940f808857492bd6d0761"
+    },
+    {
+      "from": "asm/tempo_hold/swallow_trampoline.S",
+      "to": "vendor/midistomp/asm/tempo_hold/swallow_trampoline.S",
+      "sha256": "8d1f2a85d7e5513172b37c53cb6ecb616b7b160726744ba2851e174e2889d090"
+    },
+    {
+      "from": "asm/tempo_hold/tap_trampoline.S",
+      "to": "vendor/midistomp/asm/tempo_hold/tap_trampoline.S",
+      "sha256": "faf99255bc4c7470c6b04d069d080036076c3bd72b0005e067a9e6b193808a3b"
+    },
+    {
+      "from": "asm/tempo_hold/tempo_draw_trampoline.S",
+      "to": "vendor/midistomp/asm/tempo_hold/tempo_draw_trampoline.S",
+      "sha256": "384a11fb0c2dd7a71099cc4ca211907a6a5e2864fd94aa541cde4fcfd9ceb8ad"
+    },
+    {
+      "from": "asm/tempo_hold/toggle_trampoline.S",
+      "to": "vendor/midistomp/asm/tempo_hold/toggle_trampoline.S",
+      "sha256": "03792e2a3bfc045933ded24814783a3a08fc911ef97d2a8ff9c5490b7e019b0d"
+    },
+    {
+      "from": "asm/tempo_hold/tuner_exit.S",
+      "to": "vendor/midistomp/asm/tempo_hold/tuner_exit.S",
+      "sha256": "37abb17fcd4325f5072c2f0813040eacc198bcfc35e356755363aa1445d75819"
+    },
+    {
+      "from": "asm/tempo_hold/tuner_exit_trampoline.S",
+      "to": "vendor/midistomp/asm/tempo_hold/tuner_exit_trampoline.S",
+      "sha256": "ce89ae539f56cfa1cda595362f6da59edeb05318e1795b990eab2d3b852125aa"
+    },
+    {
+      "from": "asm/tempo_hold/tuner_label_trampoline.S",
+      "to": "vendor/midistomp/asm/tempo_hold/tuner_label_trampoline.S",
+      "sha256": "7bd6081d9f375cbe8c2f4a270673718e000641dc8c0328ce8b5187fb485cba26"
+    },
+    {
+      "from": "models/ms50g.yaml",
+      "to": "vendor/midistomp/models/ms50g.yaml",
+      "sha256": "2535fd6b6eecb5435a067c4e1008139f4129765f3294a0626b6da5ca8753e7ba"
+    },
+    {
+      "from": "models/ms60b.yaml",
+      "to": "vendor/midistomp/models/ms60b.yaml",
+      "sha256": "123f97cb1388210e1d20110fa62b04155219a510bf2b07b6cb71e9c6ecba9edf"
+    },
+    {
+      "from": "models/ms70cdr.yaml",
+      "to": "vendor/midistomp/models/ms70cdr.yaml",
+      "sha256": "2d1564433ac8423dfb50db96a6fe9e92682b7b777f30ab39a07c4d23f3029b5e"
+    }
+  ]
+}

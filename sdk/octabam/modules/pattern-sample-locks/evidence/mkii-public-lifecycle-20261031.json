@@ -1,0 +1,213 @@
+{
+  "schema": 1,
+  "date": "2026-10-31",
+  "hardware": true,
+  "model": "MKII",
+  "firmware": "1.40C",
+  "status": "Scoped public-base lifecycle, persistence and restoration checks passed; full release qualification remains incomplete",
+  "moduleVersion": "0.1.8-experimental",
+  "packageSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+  "bytes": 10048,
+  "publicBase": "2aa35c3965d13087e7b83ff6f29d17bd6e6b7a59c7ed443e8720684b2b6d157b",
+  "sourceRevision": "1d54c0ae0381cb2d50f3a5c5beba4d221912593b",
+  "runtimeChanged": false,
+  "published": false,
+  "method": {
+    "singleUploaderOwnerPerRetainedTrial": true,
+    "remotePanelEvents": 0,
+    "nativeSelectorOpenedByAuthor": true,
+    "stoppedTransport": "Author followed stopped-fixture instructions; no public dev STATE/MEM request used",
+    "selectorPhaseAfterHoldIndependentlyRead": false,
+    "directSiteReadback": false,
+    "audioOrLoadStressRepeated": false,
+    "selftestStarted": false,
+    "savedStatusReadOnly": true
+  },
+  "selectorUndo": {
+    "selectorOpen": "author reported",
+    "undoConfirmed": true,
+    "normalPhaseRestored": true,
+    "activeIdentityRestored": "2aa35c3965d13087e7b83ff6f29d17bd6e6b7a59c7ed443e8720684b2b6d157b",
+    "inventoryAfter": [],
+    "wholeSetIdentityAfter": "87f28e38d5fe18c3f6133158ddb0369f9b62f2a46b0ada8c8fc19de1ca9885e8",
+    "sameCandidateReinstallSucceeded": true,
+    "normalScreenAfterSequence": "author reported Closed and restarted; exact retirement instant not observed"
+  },
+  "keep": {
+    "keepAcknowledged": true,
+    "savedAndReadbackConfirmed": true,
+    "inventory": [
+      {
+        "handle": 255,
+        "layout": 1,
+        "module": "4bdbfbf9",
+        "name": "SAMPLE LOCKS"
+      }
+    ],
+    "wholeSetIdentity": "a07a27b7633301dd9d9fd74907910a754c923ae2fff525040fc88972d24aae46",
+    "saved": {
+      "saved": 7,
+      "savedCount": 1,
+      "live": 1
+    }
+  },
+  "keptRestart": {
+    "inventory": [
+      {
+        "handle": 255,
+        "layout": 1,
+        "module": "4bdbfbf9",
+        "name": "SAMPLE LOCKS"
+      }
+    ],
+    "setIdentity": "a07a27b7633301dd9d9fd74907910a754c923ae2fff525040fc88972d24aae46",
+    "saved": {
+      "saved": 1,
+      "savedCount": 1,
+      "live": 1
+    },
+    "framesBefore": 37736,
+    "framesAfter": 39113
+  },
+  "removal": {
+    "packageSha256": "397033ae4747c1da05ca420b6f42315aba6fa159223e19a4ce82100a5f3acd35",
+    "bytes": 32,
+    "removalKeepAcknowledged": true,
+    "savedAndReadbackConfirmed": true,
+    "inventory": [],
+    "wholeSetIdentity": "87f28e38d5fe18c3f6133158ddb0369f9b62f2a46b0ada8c8fc19de1ca9885e8",
+    "saved": {
+      "saved": 7,
+      "savedCount": 0,
+      "live": 0
+    }
+  },
+  "removalRestart": {
+    "inventory": [],
+    "setIdentity": "87f28e38d5fe18c3f6133158ddb0369f9b62f2a46b0ada8c8fc19de1ca9885e8",
+    "saved": {
+      "saved": 1,
+      "savedCount": 0,
+      "live": 0
+    },
+    "framesBefore": 57029,
+    "framesAfter": 58407
+  },
+  "cardVerification": {
+    "time": "2026-10-30T20:15:36.584052+00:00",
+    "testSavedFiles": [
+      {
+        "filename": "MODWERK0.SET",
+        "bytes": 512,
+        "usedBytes": 84,
+        "sha256": "03bbcd4563753dbadfff2348050216a4b811466fe16ab034c0aef4757f3d3340",
+        "base": "2aa35c3965d13087e7b83ff6f29d17bd6e6b7a59c7ed443e8720684b2b6d157b",
+        "generation": 2,
+        "count": 0,
+        "modules": [],
+        "checksumVerified": true,
+        "hostBackupReadbackVerified": true
+      },
+      {
+        "filename": "MODWERK1.SET",
+        "bytes": 10240,
+        "usedBytes": 10140,
+        "sha256": "a404de0bacb04bfeb2bb96d4a004f8d7de38c1fd137fe438bc4c222049ca822a",
+        "base": "2aa35c3965d13087e7b83ff6f29d17bd6e6b7a59c7ed443e8720684b2b6d157b",
+        "generation": 1,
+        "count": 1,
+        "modules": [
+          {
+            "moduleId": "4bdbfbf9",
+            "packageSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+            "bytes": 10048
+          }
+        ],
+        "checksumVerified": true,
+        "hostBackupReadbackVerified": true
+      }
+    ],
+    "exactCandidatePersistedOnCard": true,
+    "newestTestGenerationEmpty": true,
+    "fixtureFileCount": 60,
+    "fixtureFilesByteIdentical": true,
+    "fixtureDifferences": [],
+    "originalSavedFiles": [
+      {
+        "filename": "MODWERK0.SET",
+        "sha256": "32fb9a3daa144275b7d9469ea4952c2c754aeb1d1f1e6469284db7c7a69e7694",
+        "bytes": 224768,
+        "originalBase": "a542a515c1955b9264712073bb40c81a492f1a993bfa991640d111eb03aaa130",
+        "originalCount": 19,
+        "byteIdenticalToOriginal": true
+      },
+      {
+        "filename": "MODWERK1.SET",
+        "sha256": "5ce3f2713d6d9b4dfb4d9313edb86f072ff1565367996c65981f30a47ac45b37",
+        "bytes": 215552,
+        "originalBase": "a542a515c1955b9264712073bb40c81a492f1a993bfa991640d111eb03aaa130",
+        "originalCount": 18,
+        "byteIdenticalToOriginal": true
+      }
+    ],
+    "originalSavedFilesRestored": true,
+    "temporaryCardArchiveRemoved": true,
+    "projectSave": false,
+    "flash": false
+  },
+  "finalRestoration": {
+    "identity": {
+      "canSubmit": true,
+      "base": "2aa35c3965d13087e7b83ff6f29d17bd6e6b7a59c7ed443e8720684b2b6d157b",
+      "model": "OCTATRACK 1.40C"
+    },
+    "phase": "normal",
+    "inventory": [],
+    "setIdentity": "87f28e38d5fe18c3f6133158ddb0369f9b62f2a46b0ada8c8fc19de1ca9885e8",
+    "saved": {
+      "saved": 4,
+      "savedCount": 0,
+      "live": 0
+    },
+    "framesBefore": 62544,
+    "framesAfter": 63921,
+    "originalSavedFilesByteIdentical": true,
+    "usbReleased": true,
+    "projectSave": false,
+    "flash": false
+  },
+  "authorReports": {
+    "selectorOpen": {
+      "answer": "selector open",
+      "scope": "Author-reported native selector state before Undo"
+    },
+    "selectorClosedAndKeptRestart": {
+      "answer": "Closed and restarted",
+      "scope": "Author reported normal screen after Undo/reinstall/Keep sequence, then performed power cycle"
+    },
+    "removalRestart": {
+      "answer": "restarted",
+      "scope": "Author power cycle after saved removal"
+    }
+  },
+  "limitations": [
+    "Selector was reported open before hold/Undo; its state after ENTER and the exact close/retirement instant were not independently sampled",
+    "Public base has no dev memory readback; no new direct stock-site, BSS/preference or held-key memory check claimed",
+    "Stopped lifecycle test only; no new playback, audio or high-load qualification",
+    "Complete system stack bound and owner first-release approval remain outstanding"
+  ],
+  "privateArtifactSha256": {
+    "public-selector-keep.private.mjs": "91d5fea6545bcf817a2fb3e866f2a56951baa01cc9d4cc5b8fff000e6ac45505",
+    "public-keep.private.json": "4610a3792ea176f49bb6588367f218d9fba3754ecb135984723040ca05fba4f6",
+    "public-selector-keep.private.log": "db099ba7f7c4d8164b9538aab90c9368a1fda0647118298283d6bf2ecef7db55",
+    "public-lifecycle-user-reports.private.json": "997eb412a9a92effe8e89821dae80ebb9b70e1efb691ec516e4bf7aa3ce590e8",
+    "public-kept-restart.private.json": "b67f14741703d61855a3713b53567f8a3b2c033b176b4b0acb125b2326ab50f2",
+    "public-removal.private.mjs": "6389a0b119c2cda8016290fe2387f9263baf6c3476c5301877c110325450f4fd",
+    "public-removal.private.json": "dddf0d0c937f4b5352440f46d3b523dc4f5d81c2c8f8df32ce7a6e7020df8b77",
+    "public-empty-restart.private.json": "f20228a7f178a30ebf1effc50ec1439c9a36342558183b1a43f8cfc78b627bf0",
+    "saved-sets-restored.private.json": "d733da128392044791ee6da98e024217f97e34c6f552c98aaa2ce3d90fac1b82",
+    "restore-saved-sets.private.py": "377b580a37df28477bc57525e49ca1ccdd9c2ebda21ddb02a8033b2f7db0320f",
+    "public-final-restored.private.json": "7df71e554e814cb691e68b9cc3ec8fdb6c4ad5a8d8fddc0ec5cc28c9cb3b1468",
+    "card-archive.private.json": "61bd35fe71c056b386a18cf72e6fd43bcbdeb362fb6c6131213872c49f2e240a"
+  }
+}

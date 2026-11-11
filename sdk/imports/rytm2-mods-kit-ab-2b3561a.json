@@ -1,0 +1,45 @@
+{
+ "schemaVersion": 1,
+ "recorded": "2026-11-08",
+ "decision": "Analog Rytm MKII module: rytm2_mods' elemod port of MrScruff's rytm-mods 0010-kit-ab, for OS 1.74, imported under GPL-2.0-only with attribution. rytm-mods-src is published with MrScruff's permission.",
+ "modules": [
+  {
+   "module": "analog-rytm-mkii/kit-ab",
+   "version": "1.0.0",
+   "repository": "https://github.com/Iced-Cream/rytm2_mods",
+   "revision": "2b3561a78bb716f92c879080d53b262a8d5869a1",
+   "license": "GPL-2.0-only",
+   "files": [
+    {
+     "from": "kit-ab/os1.74/kit-ab.s",
+     "to": "src/kit-ab.s",
+     "sha256": "b549c21470a24aabf88a91cbe8102537015aa1584ee63668957ce1f57a3adda8"
+    },
+    {
+     "from": "include/ar2-1.74.inc",
+     "to": "include/ar2-1.74.inc",
+     "sha256": "c57431f7b678c68cc007d2a180339edfcb395e9a40b753fe53ea649364e0874b"
+    },
+    {
+     "from": "LICENSE",
+     "to": "LICENSE",
+     "sha256": "8177f97513213526df2cf6184d8ff986c675afb514d4e68a404010521b880643"
+    },
+    {
+     "from": "kit-ab/README.md",
+     "to": "upstream/README.md",
+     "sha256": "5f98ac130b9b0c410f8f045ffcfa72a36ba412ab172d461269f6bdbfe7adb4ea"
+    }
+   ],
+   "excluded": [
+    "kit-ab/mod.json",
+    "kit-ab/kit-ab.s"
+   ],
+   "transformations": [
+    "mod.json's four OS 1.74 port sites became address, length and SHA-256 guards in build.json's 1.74 release. Its keep2 sites, which keep a stock opcode word, are written as the equivalent authored instructions: the two jsr sites as jsr sites (opcode 4eb9), the two pea sites (opcode 4879) as bytes sites with the address relocated to kit_ab_kab_msg.",
+    "The OS 1.73 source and sites are not imported: core-ar2 0.3 is for OS 1.74 only.",
+    "include/ar2-1.74.inc keeps its path relative to the source, so the .include line in src/kit-ab.s is unchanged."
+   ]
+  }
+ ]
+}

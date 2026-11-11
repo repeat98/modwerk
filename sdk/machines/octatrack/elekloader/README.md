@@ -102,7 +102,9 @@ entry) also needs this regeneration.
 USB Audio is part of the base: its output layout sets the USB descriptors, so each layout is its own base, sent over
 USB like any base update when a module set asks for another layout (`src/engine/elekloader/base-variants.ts`). The
 command above builds the twenty-channel default and, with `--usb-audio-variants`, the five other layouts and USB MIDI
-alone (`off`). `build_core.py` links the USB sources last and pads them to a fixed reserve (`USB_RESERVE`: 8 KiB of
+alone (`off`). The committed package stays the twenty-channel layout, which every other layout is a patch against, but the
+site installs `off` when no module set asks for a layout (`MEMBER_LAYOUT`, owner, 11 November 2026): `off` patches four
+stock audio sites fewer, so as the package it would fail the rule below. `build_core.py` links the USB sources last and pads them to a fixed reserve (`USB_RESERVE`: 8 KiB of
 code, 2.5 KiB of data, 96 KiB of bss), so every layout links everything else at the same addresses and one set of
 base-bound packages fits each. For every variant the script proves it: the controller packages encode byte for byte
 as on the default, `base_bound.py bind` gives the same binding but for the identity, the variant patches no stock site
@@ -482,7 +484,7 @@ is recovered from the Startup Menu over DIN MIDI.
 1. Build with `build_core.py` (above) and install `NOT_FLASH_CANDIDATE.syx`
    or `.bin` the way you install any test OS.
 2. Leave USB disk mode, stop playback and recording, and connect USB.
-3. Run `npm run dev` and open `http://localhost:5173/dev/octatrack-usb.html`
+3. Run `npm run dev` and open `http://localhost:5173/src/dev/octatrack-usb.html`
    in Chrome. **Run lifecycle** claims only the vendor interface, loads a
    test module, replaces and rolls it back, removes it, and reads each
    effect back through the base's read-only DIAG request. The slot is empty

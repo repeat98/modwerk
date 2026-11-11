@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "voice-dac",
+  "moduleVersion": "1.4.0",
+  "firmware": "1.74",
+  "capturedAt": "2026-11-08T21:20:00Z",
+  "imageSha256": "1ed6899821da549678a63dde001c402f0054e85932b81da836530a4aa519432e",
+  "mainSha256": null,
+  "stockSha256": "cb0f99d620edde994fb860c0e79cc2464e427d06882828cfdfb00fc53700e123",
+  "build": "Modwerk's linker (scripts/link-image.mjs): the Modwerk base for core-ar2 0.7 (plain variant ba530f45, vendored) + this folder's voice-dac 1.4.0 package, materialised against stock OS 1.74 (cb0f99d6…e123), --version VD14",
+  "emulator": {
+    "name": "analog-emu (trigcondition's Rytm and A4 emulator built on rytm-emu; its history holds rytm-emu c5732f0, 951dcbc and e914f46)",
+    "repository": "https://github.com/trigcondition/analog-emu",
+    "revision": "4c07ed3",
+    "binary": "dtboot (cargo build --release, Windows)",
+    "settings": "no card image, JIT on, --every 1000M; DTBOOT_STEPS=1 DTBOOT_PNG_DIR=out DTBOOT_TURN_PNG=out"
+  },
+  "conditions": "Headless cold boot; four held NO presses clear the missing-calibration notices. GLOBAL, twelve UP and five DOWN presses and YES open AUDIO ROUTING; twenty DOWN presses reach its last row and RIGHT sets DAC SUM ON; two NO presses return home; TRIG, then FLTR twice, opens DAC FILTER on BD. Encoder 2 (knob C, TYP) turns +4 ten times 100M apart (OFF to LP2), a NO press redraws the settled page, then twelve more turns (LP2 to LP1) and a NO press. Stock 1.74 with the same input gives byte-identical frames until AUDIO ROUTING opens; there its list ends at USB TO MAIN, and FLTR pressed twice stays on stock's FILTER page. Playback was not judged in the emulator: its analog voices are stubbed.",
+  "captures": [
+    {
+      "path": "media/dac-sum-on.png",
+      "sha256": "0d142aba0ae9f6679a3b77f2235557e1fbaa09ed7b36b77ef89f268344f363d0",
+      "frame": "step44_RIGHT.png",
+      "plan": "dtboot vd14.syx --instr 16523M --every 1000M --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press GLOBAL@7503M:12M --press UP@7703M:12M --press UP@7763M:12M --press UP@7823M:12M --press UP@7883M:12M --press UP@7943M:12M --press UP@8003M:12M --press UP@8063M:12M --press UP@8123M:12M --press UP@8183M:12M --press UP@8243M:12M --press UP@8303M:12M --press UP@8363M:12M --press DOWN@8423M:12M --press DOWN@8483M:12M --press DOWN@8543M:12M --press DOWN@8603M:12M --press DOWN@8663M:12M --press YES@8723M:12M --press DOWN@8923M:12M --press DOWN@8983M:12M --press DOWN@9043M:12M --press DOWN@9103M:12M --press DOWN@9163M:12M --press DOWN@9223M:12M --press DOWN@9283M:12M --press DOWN@9343M:12M --press DOWN@9403M:12M --press DOWN@9463M:12M --press DOWN@9523M:12M --press DOWN@9583M:12M --press DOWN@9643M:12M --press DOWN@9703M:12M --press DOWN@9763M:12M --press DOWN@9823M:12M --press DOWN@9883M:12M --press DOWN@9943M:12M --press DOWN@10003M:12M --press DOWN@10063M:12M --press RIGHT@10323M:12M --press NO@10623M:12M --press NO@10823M:12M --press TRIG@11223M:12M --press FLTR@11723M:12M --press FLTR@12223M:12M --turn 2:4@12823Mx10/100M --press NO@14223M:12M --turn 2:4@14623Mx12/100M --press NO@16223M:12M"
+    },
+    {
+      "path": "media/dac-filter-off.png",
+      "sha256": "21d822f2e928813c27493a9b2f0f779663d0c4fa6f9c766afd77384d14c5ad46",
+      "frame": "step49_FLTR.png",
+      "plan": "dtboot vd14.syx --instr 16523M --every 1000M --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press GLOBAL@7503M:12M --press UP@7703M:12M --press UP@7763M:12M --press UP@7823M:12M --press UP@7883M:12M --press UP@7943M:12M --press UP@8003M:12M --press UP@8063M:12M --press UP@8123M:12M --press UP@8183M:12M --press UP@8243M:12M --press UP@8303M:12M --press UP@8363M:12M --press DOWN@8423M:12M --press DOWN@8483M:12M --press DOWN@8543M:12M --press DOWN@8603M:12M --press DOWN@8663M:12M --press YES@8723M:12M --press DOWN@8923M:12M --press DOWN@8983M:12M --press DOWN@9043M:12M --press DOWN@9103M:12M --press DOWN@9163M:12M --press DOWN@9223M:12M --press DOWN@9283M:12M --press DOWN@9343M:12M --press DOWN@9403M:12M --press DOWN@9463M:12M --press DOWN@9523M:12M --press DOWN@9583M:12M --press DOWN@9643M:12M --press DOWN@9703M:12M --press DOWN@9763M:12M --press DOWN@9823M:12M --press DOWN@9883M:12M --press DOWN@9943M:12M --press DOWN@10003M:12M --press DOWN@10063M:12M --press RIGHT@10323M:12M --press NO@10623M:12M --press NO@10823M:12M --press TRIG@11223M:12M --press FLTR@11723M:12M --press FLTR@12223M:12M --turn 2:4@12823Mx10/100M --press NO@14223M:12M --turn 2:4@14623Mx12/100M --press NO@16223M:12M"
+    },
+    {
+      "path": "media/dac-filter-lp2.png",
+      "sha256": "3fed3dc3cdb08e7e30cd0ee0ba5e3b7b4624a7cad320a47d55824807d561958a",
+      "frame": "step60_NO.png",
+      "plan": "dtboot vd14.syx --instr 16523M --every 1000M --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press GLOBAL@7503M:12M --press UP@7703M:12M --press UP@7763M:12M --press UP@7823M:12M --press UP@7883M:12M --press UP@7943M:12M --press UP@8003M:12M --press UP@8063M:12M --press UP@8123M:12M --press UP@8183M:12M --press UP@8243M:12M --press UP@8303M:12M --press UP@8363M:12M --press DOWN@8423M:12M --press DOWN@8483M:12M --press DOWN@8543M:12M --press DOWN@8603M:12M --press DOWN@8663M:12M --press YES@8723M:12M --press DOWN@8923M:12M --press DOWN@8983M:12M --press DOWN@9043M:12M --press DOWN@9103M:12M --press DOWN@9163M:12M --press DOWN@9223M:12M --press DOWN@9283M:12M --press DOWN@9343M:12M --press DOWN@9403M:12M --press DOWN@9463M:12M --press DOWN@9523M:12M --press DOWN@9583M:12M --press DOWN@9643M:12M --press DOWN@9703M:12M --press DOWN@9763M:12M --press DOWN@9823M:12M --press DOWN@9883M:12M --press DOWN@9943M:12M --press DOWN@10003M:12M --press DOWN@10063M:12M --press RIGHT@10323M:12M --press NO@10623M:12M --press NO@10823M:12M --press TRIG@11223M:12M --press FLTR@11723M:12M --press FLTR@12223M:12M --turn 2:4@12823Mx10/100M --press NO@14223M:12M --turn 2:4@14623Mx12/100M --press NO@16223M:12M"
+    },
+    {
+      "path": "media/dac-filter-lp1.png",
+      "sha256": "77266bde95f604aa84f8b594e5a9ee5d704e71c96471655b2b33b04a7e81cbe3",
+      "frame": "step73_NO.png",
+      "plan": "dtboot vd14.syx --instr 16523M --every 1000M --press NO@4503M:80M --press NO@5303M:80M --press NO@6103M:80M --press NO@6903M:80M --press GLOBAL@7503M:12M --press UP@7703M:12M --press UP@7763M:12M --press UP@7823M:12M --press UP@7883M:12M --press UP@7943M:12M --press UP@8003M:12M --press UP@8063M:12M --press UP@8123M:12M --press UP@8183M:12M --press UP@8243M:12M --press UP@8303M:12M --press UP@8363M:12M --press DOWN@8423M:12M --press DOWN@8483M:12M --press DOWN@8543M:12M --press DOWN@8603M:12M --press DOWN@8663M:12M --press YES@8723M:12M --press DOWN@8923M:12M --press DOWN@8983M:12M --press DOWN@9043M:12M --press DOWN@9103M:12M --press DOWN@9163M:12M --press DOWN@9223M:12M --press DOWN@9283M:12M --press DOWN@9343M:12M --press DOWN@9403M:12M --press DOWN@9463M:12M --press DOWN@9523M:12M --press DOWN@9583M:12M --press DOWN@9643M:12M --press DOWN@9703M:12M --press DOWN@9763M:12M --press DOWN@9823M:12M --press DOWN@9883M:12M --press DOWN@9943M:12M --press DOWN@10003M:12M --press DOWN@10063M:12M --press RIGHT@10323M:12M --press NO@10623M:12M --press NO@10823M:12M --press TRIG@11223M:12M --press FLTR@11723M:12M --press FLTR@12223M:12M --turn 2:4@12823Mx10/100M --press NO@14223M:12M --turn 2:4@14623Mx12/100M --press NO@16223M:12M"
+    }
+  ]
+}

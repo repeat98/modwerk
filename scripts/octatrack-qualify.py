@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Qualification run for a module set on a development base, over `npm run device -- serve`.
 
-  scripts/octatrack-qualify.py [--seconds 30] [--soak 1800] [--crash] PKG.mwrm ...
+  npm run device:qualify -- --keeps-ok [--seconds 30] [--soak SECONDS] [--crash] [--testing-entry FILE] PKG.mwrm ...
 
 Run it on a bank and Part whose working copy equals its saved one (docs/OCTATRACK_DRIVING.md), transport stopped.
 Installs the set, puts each DSP module alone on T1 (core 1) and T5 (core 0) and reads the load meters, then all
@@ -12,8 +12,13 @@ and back, an optional soak with a meter line every 10 s, and an optional deliber
 when the loader rejects a packet, errs or rolls back, a crash or DSP stall is recorded (other than --crash's),
 frames stop, a pick or switch is refused or late, or a core's peak passes 90 % of a frame. Then it reloads the
 Part from its saved copy (checked byte for byte), goes back to the bank and pattern it started on and removes the
-set. Prints one JSON summary; exit status 1 on a failure. The power cycle of the plan stays the owner's."""
-import argparse, json, os, re, socket, subprocess, sys, time
+set. Prints one JSON summary; exit status 1 on a failure. The power cycle of the plan stays the owner's.
+
+Each install and removal is a Keep, which rewrites the card's kept set. On a RAM-booted development base the flashed
+base then starts with no modules after a power cycle, so the run starts only with --keeps-ok, once you have noted the
+flashed set (the session's `inventory`) and where its packages are (docs/OCTATRACK_DRIVING.md). --testing-entry FILE
+writes what the run saw as a TESTING.md entry: the packages and their SHA-256, the readings and what it does not cover."""
+import argparse, datetime, hashlib, json, os, re, socket, subprocess, sys, time
 
 SOCKET = os.environ.get('MODWERK_DEV_SOCKET', '/tmp/modwerk-dev.sock')
 PEAK_LIMIT = 900  # per mille of a frame
@@ -22,7 +27,32 @@ def package(path):
     data = open(path, 'rb').read()
     abi = int.from_bytes(data[4:6], 'big')
     if data[:4] != b'MWRM' or abi < 6: raise SystemExit(path + ': not an ABI 6 runtime module')
-    return dict(path=path, name=data[50:65].split(b'\0')[0].decode('latin1'), slots=data[39], dsp=int.from_bytes(data[32:36], 'big') > 0)
+    return dict(path=path, name=data[50:65].split(b'\0')[0].decode('latin1'), slots=data[39], dsp=int.from_bytes(data[32:36], 'big') > 0,
+                sha256=hashlib.sha256(data).hexdigest())
+
+
+NOT_COVERED = ('listening to the sound', 'the power cycle and what survives it', 'MIDI, scenes and recording',
+               'modules beside other installed modules')
+
+
+def testing_entry(result, day):
+    """The run as a TESTING.md entry: only what it measured, and what it leaves to the developer."""
+    lines = ['### Qualification run, %s' % day, '',
+             'Command: `npm run device:qualify -- %s`' % ' '.join(result['args']), '']
+    lines += ['- Package `%s`, %s, SHA-256 `%s`' % (p['file'], p['name'], p['sha256']) for p in result['packages']]
+    for m in result['modules']:
+        alone = ', '.join('%s %s' % (track, 'refused' if r == 'refused' else 'peak %d per mille of a frame, admitted in %d ms' % (
+            r['core1_peak'] if track == 'T1' else r['core0_peak'], r['admit_ms'])) for track, r in m.items() if track in ('T1', 'T5'))
+        lines.append('- %s on %s alone: %s' % (m['name'], m['slot'], alone))
+    if result.get('together'):
+        g = result['together']
+        lines.append('- All at once, playing (%s): CPU %d, T1-4 peak %d, T5-8 peak %d per mille' % (', '.join(n or 'refused' for n in g['placed']), g['cpu'], g['core1_peak'], g['core0_peak']))
+    if result.get('parts'): lines.append('- Part switches: %d of %d ran their own effects within 3 s' % (sum(n > 0 for n in result['parts']), len(result['parts'])))
+    if result.get('soak'): lines.append('- Soak: %d s, highest core peak %d per mille' % (10 * len(result['soak']), max(max(m['core0_peak'], m['core1_peak']) for m in result['soak'])))
+    lines.append('- Crash test: %s' % ('run, the unit came back' if result.get('crash') and not any('crash' in f for f in result['failures']) else 'run' if result.get('crash') else 'not run'))
+    lines.append('- Result: ' + ('passed' if not result['failures'] else 'failed: ' + '; '.join(result['failures'])))
+    lines += ['', 'Not covered by this run: ' + ', '.join(NOT_COVERED) + '.', '']
+    return '\n'.join(lines)
 
 
 def log(*a): print(*a, file=sys.stderr, flush=True)
@@ -59,9 +89,12 @@ def chooser_names(slot):  # every effect's name in a chooser table (128 ids at m
     table = mem(u32(FX_IDS[slot]), 4 * 128)
     return [fx_name(slot, fx) for fx in range(128) if int.from_bytes(table[4 * fx:4 * fx + 4], 'big')]
 def chooser_name(names, name):
-    """The chooser's name for an installed package: its page may say more than the package (Spectrum79 for Spectrum)."""
+    """The chooser's name for an installed package: its page may say more than the package (Spectrum79 for Spectrum),
+    or the same words in another order (RINGMOD SC for SC Ringmod)."""
     want = name.upper().replace(' ', '_')
-    return want if want in names else next((n for n in names if n.startswith(want)), want)
+    words = sorted(want.split('_'))
+    return want if want in names else next((n for n in names if n.startswith(want)),
+                                           next((n for n in names if sorted(n.split('_')) == words), want))
 
 
 def restore_part(part, saved):
@@ -106,12 +139,19 @@ def _alive():
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--seconds', type=int, default=30)
-    ap.add_argument('--soak', type=int, default=0, help='seconds of soak with everything placed, playing (1800 before a release)')
+    ap.add_argument('--soak', type=int, default=0, help='seconds of soak with everything placed, playing')
     ap.add_argument('--crash', action='store_true', help='end with a deliberate crash and check the restart')
+    ap.add_argument('--keeps-ok', action='store_true', help='each install and removal Keeps: noted the flashed set, and a RAM-booted base may replace it')
+    ap.add_argument('--testing-entry', metavar='FILE', help='also write what the run saw as a TESTING.md entry to FILE')
     ap.add_argument('packages', nargs='+')
     args = ap.parse_args()
+    if not args.keeps_ok:
+        raise SystemExit('Each install and removal in this run is a Keep, which rewrites the card\'s kept set; on a RAM-booted base the flashed base '
+                         'then starts with no modules after a power cycle. Note the flashed set first (the session\'s inventory step, '
+                         'docs/OCTATRACK_DRIVING.md), then run again with --keeps-ok.')
     pkgs = [package(p) for p in args.packages]
-    failures, result = [], dict(base=None, modules=[], together=None)
+    failures, result = [], dict(base=None, modules=[], together=None, crash=args.crash, args=sys.argv[1:],
+                                packages=[dict(file=os.path.basename(p['path']), name=p['name'], sha256=p['sha256']) for p in pkgs])
     if 'stopped' not in send('state'): raise SystemExit('Stop the transport first.')
     if not part_saved_equal(): raise SystemExit('The current Part differs from its saved copy: run on one that does not.')
     saved_start = part_copy(mem(PART, 1)[0], saved=True)  # what the reload at the end must bring back, in both copies
@@ -214,6 +254,9 @@ def main():
     if after['stalls'] != before['stalls']: failures.append('a DSP stall was recorded (the session\'s stall step shows it)')
     result['failures'] = failures
     print(json.dumps(result, indent=1))
+    if args.testing_entry:
+        with open(args.testing_entry, 'w') as f: f.write(testing_entry(result, datetime.date.today().isoformat()))
+        log('TESTING.md entry written to ' + args.testing_entry)
     sys.exit(1 if failures else 0)
 
 

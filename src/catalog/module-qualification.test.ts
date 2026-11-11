@@ -5,7 +5,7 @@ import { resolve } from 'node:path'
 import { parseModuleDocument, requireModuleQualificationForPublication, type ModuleQualification } from './module-contract'
 import { moduleFolderSha256, moduleNativeSourceSha256, parseQualificationBaseline, requireFolderQualification } from '../../scripts/module-qualification.mjs'
 import example from '../../public/module-repository.example.json'
-import baseline from '../../sdk/module-qualification-baseline.json'
+import baseline from '../../sdk/approvals/module-qualification-baseline.json'
 import catalog from './module-documents.json'
 
 import { qualificationFixture, qualificationMedia, qualificationReadme, qualificationPng } from './test-fixtures/qualification'
@@ -89,17 +89,17 @@ describe('module qualification hard gates',()=>{
       // Generated web documents include display-only baseline resource estimates.
       // Qualify the source manifest, as publication validation does.
       const source = parseModuleDocument(JSON.parse(readFileSync(resolve(folder, 'octamod.module.json'), 'utf8')))
-      expect(await requireFolderQualification(folder, source, frozen)).toBe(unchanged ? 'retained' : source.tests.retainedEvidence ? 'retained-evidence' : ['midi-scenes', 'miniverb', 'synth', 'usb-audio-out-tracks-main-cue', 'euclid', 'mute-modes', 'recorder-loop-fix', 'analog-bassdrum', 'airwindows-chorus', 'poly8', 'quantizer', 'everb', 'repitch', 'playmodes', 'tapeecho'].includes(module.id) ? 'owner-approved-update' : 'qualified')
+      expect(await requireFolderQualification(folder, source, frozen)).toBe(unchanged ? 'retained' : source.tests.retainedEvidence ? 'retained-evidence' : ['midi-scenes', 'miniverb', 'synth', 'usb-audio-out-tracks-main-cue', 'euclid', 'recorder-loop-fix', 'analog-bassdrum', 'airwindows-chorus', 'poly8', 'quantizer', 'everb', 'repitch', 'playmodes', 'tapeecho'].includes(module.id) ? 'owner-approved-update' : 'qualified')
     })
   }
   it('binds an owner-approved update to its exact version and native source, never to verified hardware',async()=>{
     const root=mkdtempSync(resolve(tmpdir(),'octamod-owner-update.')),folder=resolve(root,'module')
     try {
-      mkdirSync(resolve(root,'sdk')); mkdirSync(folder)
+      mkdirSync(resolve(root,'sdk','approvals'),{recursive:true}); mkdirSync(folder)
       writeFileSync(resolve(folder,'manifest.py'),'raise AssertionError("never execute module source")\n')
       const document=parseModuleDocument(JSON.parse(readFileSync('sdk/octabam/modules/usb-audio-out-tracks-main-cue/octamod.module.json','utf8')))
       const approval={kind:'owner-approved-update',id:document.id,version:document.version,sourceSha256:await moduleNativeSourceSha256(folder,document),approvedBy:'repeat98',approvedOn:'2026-10-07',waived:['current-build-hardware','chip-worst-case-cycles','complete-memory-bounds','release-documentation'],ownerStatement:'Approved.',reason:'Test.'}
-      const write=(value:object)=>writeFileSync(resolve(root,'sdk',document.id+'-build-approval.json'),JSON.stringify(value))
+      const write=(value:object)=>writeFileSync(resolve(root,'sdk','approvals',document.id+'-build-approval.json'),JSON.stringify(value))
       const check=(doc=document)=>requireFolderQualification(folder,doc,new Map(),new Map(),{root})
       write(approval)
       expect(await check()).toBe('owner-approved-update')
@@ -114,11 +114,11 @@ describe('module qualification hard gates',()=>{
   it('retains historical UI only for an exact owner-approved update with the documentation waiver',async()=>{
     const root=mkdtempSync(resolve(tmpdir(),'octamod-retained-ui.')),folder=resolve(root,'module')
     try {
-      mkdirSync(resolve(root,'sdk'));mkdirSync(folder)
+      mkdirSync(resolve(root,'sdk','approvals'),{recursive:true});mkdirSync(folder)
       writeFileSync(resolve(folder,'manifest.py'),'SOURCE = 1\n')
       const document=parseModuleDocument(JSON.parse(readFileSync('sdk/octabam/modules/euclid/octamod.module.json','utf8')))
       const approval={kind:'owner-approved-update',id:document.id,version:document.version,sourceSha256:await moduleNativeSourceSha256(folder,document),approvedBy:'repeat98',approvedOn:'2026-10-07',waived:['current-build-hardware','chip-worst-case-cycles','complete-memory-bounds','release-documentation'],ownerStatement:'Approved.',reason:'Test.',retainedUiVersion:'0.1.3-experimental'}
-      const write=(value:object)=>writeFileSync(resolve(root,'sdk',document.id+'-build-approval.json'),JSON.stringify(value))
+      const write=(value:object)=>writeFileSync(resolve(root,'sdk','approvals',document.id+'-build-approval.json'),JSON.stringify(value))
       const check=()=>requireFolderQualification(folder,document,new Map(),new Map(),{root})
       write(approval);expect(await check()).toBe('owner-approved-update')
       write({...approval,retainedUiVersion:document.version});await expect(check()).rejects.toThrow('earlier version')

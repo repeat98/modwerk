@@ -93,6 +93,15 @@ describe('machine-aware community',()=>{
     const mine=await(await call('/issues/mine','GET',undefined,reporter.token)).json();expect(mine).toHaveLength(2)
     expect(mine.every((report:{maintainer_sharing:number})=>report.maintainer_sharing===1)).toBe(true)
   })
+  it('refuses a member past their report limit before counting the address or the site',async()=>{
+    const {call,member,db}=await fixture(),reporter=await member(),post=()=>call('/modules/digitakt-digihealth/issues','POST',{...details,context},reporter.token)
+    for(let sent=0;sent<10;sent++)expect((await post()).status).toBe(201)
+    const bucket=Math.floor(Date.now()/3600000),count=async(key:string)=>db.prepare('SELECT count FROM rate_limits WHERE key=?').get(await digest(key+':'+bucket))
+    db.prepare('DELETE FROM rate_limits WHERE key=?').run(await digest('issue-ip:192.0.2.1:'+bucket)) // as if from a fresh address
+    expect((await post()).status).toBe(429)
+    expect(await count('issue-global')).toEqual({count:10})
+    expect(await count('issue-ip:192.0.2.1')).toBeUndefined()
+  })
 })
 describe('GitHub developer claims and private report access',()=>{
   it('rejects verified GitHub handles absent from the reviewed catalog before creating developer identities or sessions',async()=>{

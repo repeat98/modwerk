@@ -66,7 +66,7 @@ function list(value: unknown, path: string, maximum: number): unknown[] {
 function texts(value: unknown, path: string, maximum: number): string[] { return list(value,path,maximum).map((v,i)=>text(v,path+'['+i+']')) }
 // What a module may claim in compatibility.uiClaims (docs/module-guides/README.md#ui-claims): panel keys, encoder turns
 // (A-F, LEVEL), TRACK and TRIG for any of their keys.
-const UI_KEYS=['FUNC','YES','NO','UP','DOWN','LEFT','RIGHT','PROJ','PART','AED','ARR','MIXER','MIDI','CUE','REC1','REC2','REC3','PLAY','STOP','TEMPO','BANK','PATTERN','PAGE','SCENEA','SCENEB','SRC','AMP','LFO','FX1','FX2','TRACK','TRIG','A','B','C','D','E','F','LEVEL']
+const UI_KEYS=['FUNC','YES','NO','UP','DOWN','LEFT','RIGHT','PROJ','PART','AED','ARR','MIXER','MIDI','CUE','REC','REC1','REC2','REC3','PLAY','STOP','TEMPO','BANK','PATTERN','PAGE','SCENEA','SCENEB','SRC','AMP','LFO','FX1','FX2','TRACK','TRIG','A','B','C','D','E','F','LEVEL']
 function uiClaim(value: unknown, path: string): string {
   const claim=text(value,path,80), key=/^key:([A-Z0-9+]+)(?:@[A-Z0-9][A-Z0-9 ]*)?$/.exec(claim)
   if(key?key[1].split('+').every(name=>UI_KEYS.includes(name)):/^screen:[A-Z0-9][A-Z0-9 ]*$/.test(claim)) return claim
@@ -105,10 +105,10 @@ function releaseWaiver(value: unknown): ModuleReleaseWaiver {
   const moduleVersion=text(q.moduleVersion,path+'.moduleVersion',80); compareModuleVersions(moduleVersion,moduleVersion)
   return {moduleVersion,sourceSha256:sha256(q.sourceSha256,path+'.sourceSha256'),imageSha256:sha256(q.imageSha256,path+'.imageSha256'),approvedBy:enumeration(q.approvedBy,path+'.approvedBy',['repeat98']),approvedOn:enumeration(q.approvedOn,path+'.approvedOn',['2026-10-02','2026-10-03','2026-10-06']),reason:text(q.reason,path+'.reason'),report:qualificationReport(q.report,path+'.report'),documentation:qualificationDocumentation(q.documentation,path)}
 }
-function qualification(value: unknown): ModuleQualification {
+function qualification(value: unknown, noUi=false): ModuleQualification {
   const path='tests.qualification', q=object(value,path,['moduleVersion','sourceSha256','imageSha256','cycles','memory','hardware','documentation'])
   const moduleVersion=text(q.moduleVersion,path+'.moduleVersion',80); compareModuleVersions(moduleVersion,moduleVersion)
-  const documentation=qualificationDocumentation(q.documentation,path)
+  const documentation=qualificationDocumentation(q.documentation,path,noUi)
   const cycles=list(q.cycles,path+'.cycles',2).map((value,i):ModuleQualification['cycles'][number]=>{
     const p=path+'.cycles['+i+']', c=object(value,p,['processor','worstCase','maxConfiguration','maxInstances','budget','unit','method','conditions','report'])
     const worstCase=integer(c.worstCase,p+'.worstCase',1), maxConfiguration=integer(c.maxConfiguration,p+'.maxConfiguration',1), budget=integer(c.budget,p+'.budget',1)
@@ -190,22 +190,12 @@ export function parseModuleDocument(value: unknown): ModuleDocument {
   const authorName={...('name' in a ? { name:text(a.name,'author.name',100) } : {}),...('contributors' in a ? {contributors:parseModuleContributors(a.contributors,github,'author.contributors')} : {})}
   const p=object(d.presentation,'presentation',['label','family','summary','overview','highlights','usage'])
   const c=object(d.compatibility,'compatibility',['firmware','effectId','location','conflicts','limitations'],['uiClaims'])
+  const uiClaims='uiClaims' in c?list(c.uiClaims,'compatibility.uiClaims',16).map((v,i)=>uiClaim(v,'compatibility.uiClaims['+i+']')):undefined
   if(c.effectId!==null&&(typeof c.effectId!=='number'||!Number.isInteger(c.effectId)||c.effectId<4||c.effectId>31))fail('compatibility.effectId','expected a valid effect ID or null for contributions without an effect slot')
   if(c.firmware!=='1.40C') fail('compatibility.firmware','only 1.40C is supported')
   const r=object(d.resources,'resources',['recorded','storage','processing'],['impact'])
   const impact='impact' in r?parseModuleResourceImpact(r.impact):undefined
   const t=object(d.tests,'tests',['report','summary','hardwareStatus','evidenceRevision','gates'],['qualification','releaseWaiver','retainedEvidence','documentation'])
-  let retainedEvidence: ModuleDocument['tests']['retainedEvidence']
-  if ('retainedEvidence' in t) {
-    const p='tests.retainedEvidence', value=object(t.retainedEvidence,p,['commit','moduleVersion','documentation'])
-    const commit=text(value.commit,p+'.commit',40), moduleVersion=text(value.moduleVersion,p+'.moduleVersion',80)
-    if(!/^[a-f0-9]{40}$/.test(commit)) fail(p+'.commit','expected a full approved Git commit SHA')
-    compareModuleVersions(moduleVersion,moduleVersion)
-    retainedEvidence={commit,moduleVersion,documentation:qualificationDocumentation(value.documentation,p)}
-  }
-  const proof='qualification' in t?qualification(t.qualification):undefined
-  const waiver='releaseWaiver' in t?releaseWaiver(t.releaseWaiver):undefined
-  if(proof&&waiver) fail('tests','use measured qualification or an owner release waiver, never both')
   const evidenceRevision=text(t.evidenceRevision,'tests.evidenceRevision',40)
   if(!/^[a-f0-9]{40}$/.test(evidenceRevision)) fail('tests.evidenceRevision','pin the exact evidence source commit')
   const l=object(d.license,'license',['spdx','file','declaration'])
@@ -246,11 +236,24 @@ export function parseModuleDocument(value: unknown): ModuleDocument {
     if(new Set(screenshots).size!==screenshots.length) fail('access.screenshots','screenshot paths must be unique')
     for(const path of screenshots) if(!media.some(item=>item.path===path&&item.otUi)) fail('access.screenshots','reference declared OT UI images in media: '+path)
     const noUiReason='noUiReason' in a?text(a.noUiReason,'access.noUiReason',1000):undefined
-    if(noUiReason&&(controls.length||c.effectId!==null||c.location!=='USB'||screenshots.length)) fail('access.noUiReason','only automatic USB modules without OT controls or screenshots may declare no dedicated OT UI')
+    // Draws nothing of its own: no control page, no effect slot (FX chooser row and page), no stock screen taken; any location.
+    if(noUiReason&&(controls.length||c.effectId!==null||uiClaims?.some(claim=>claim.startsWith('screen:'))||screenshots.length)) fail('access.noUiReason','only a module that draws nothing of its own (no controls, effect slot, screen: claim or screenshots) may declare no dedicated OT UI')
     access={location:text(a.location,'access.location',300),steps,screenshots,...(noUiReason?{noUiReason}:{})}
   }
-  const documentation='documentation' in t?qualificationDocumentation(t.documentation,'tests',!!access?.noUiReason):undefined
-  return {schemaVersion:2,id,key:text(d.key,'key',60),name:text(d.name,'name',100),version,category:enumeration(d.category,'category',MODULE_CATEGORIES),...(source?{source}:{}),...(build?{build}:{}),...(access?{access}:{}),author:{github,...authorName,credits:texts(a.credits,'author.credits',30)},nativeManifest,presentation:{label:text(p.label,'presentation.label',80),family:text(p.family,'presentation.family',80),summary:text(p.summary,'presentation.summary',300),overview:text(p.overview,'presentation.overview'),highlights:texts(p.highlights,'presentation.highlights',12),usage:texts(p.usage,'presentation.usage',12)},controls,compatibility:{firmware:'1.40C',effectId:c.effectId as number|null,location:enumeration(c.location,'compatibility.location',['FX1','FX2','FX1 / FX2','Flex / Static','Track machine','Audio tracks','MIDI tracks','Project sequencer','USB']),conflicts:texts(c.conflicts,'compatibility.conflicts',64),...('uiClaims' in c?{uiClaims:list(c.uiClaims,'compatibility.uiClaims',16).map((v,i)=>uiClaim(v,'compatibility.uiClaims['+i+']'))}:{}),limitations:texts(c.limitations,'compatibility.limitations',24)},resources:{recorded:text(r.recorded,'resources.recorded',100),storage:metric(r.storage,'resources.storage'),processing:metric(r.processing,'resources.processing'),...(impact?{impact}:{})},tests:{report:modulePath(t.report,'tests.report'),summary:text(t.summary,'tests.summary'),hardwareStatus:enumeration(t.hardwareStatus,'tests.hardwareStatus',['untested','historical','reported','verified']),evidenceRevision,gates:texts(t.gates,'tests.gates',64),...(documentation?{documentation}:{}),...(proof?{qualification:proof}:{}),...(waiver?{releaseWaiver:waiver}:{}),...(retainedEvidence?{retainedEvidence}:{})},license:{spdx:text(l.spdx,'license.spdx',100),file:modulePath(l.file,'license.file'),declaration:text(l.declaration,'license.declaration')},media}
+  const noUi=!!access?.noUiReason
+  let retainedEvidence: ModuleDocument['tests']['retainedEvidence']
+  if ('retainedEvidence' in t) {
+    const p='tests.retainedEvidence', value=object(t.retainedEvidence,p,['commit','moduleVersion','documentation'])
+    const commit=text(value.commit,p+'.commit',40), moduleVersion=text(value.moduleVersion,p+'.moduleVersion',80)
+    if(!/^[a-f0-9]{40}$/.test(commit)) fail(p+'.commit','expected a full approved Git commit SHA')
+    compareModuleVersions(moduleVersion,moduleVersion)
+    retainedEvidence={commit,moduleVersion,documentation:qualificationDocumentation(value.documentation,p,noUi)}
+  }
+  const proof='qualification' in t?qualification(t.qualification,noUi):undefined
+  const waiver='releaseWaiver' in t?releaseWaiver(t.releaseWaiver):undefined
+  if(proof&&waiver) fail('tests','use measured qualification or an owner release waiver, never both')
+  const documentation='documentation' in t?qualificationDocumentation(t.documentation,'tests',noUi):undefined
+  return {schemaVersion:2,id,key:text(d.key,'key',60),name:text(d.name,'name',100),version,category:enumeration(d.category,'category',MODULE_CATEGORIES),...(source?{source}:{}),...(build?{build}:{}),...(access?{access}:{}),author:{github,...authorName,credits:texts(a.credits,'author.credits',30)},nativeManifest,presentation:{label:text(p.label,'presentation.label',80),family:text(p.family,'presentation.family',80),summary:text(p.summary,'presentation.summary',300),overview:text(p.overview,'presentation.overview'),highlights:texts(p.highlights,'presentation.highlights',12),usage:texts(p.usage,'presentation.usage',12)},controls,compatibility:{firmware:'1.40C',effectId:c.effectId as number|null,location:enumeration(c.location,'compatibility.location',['FX1','FX2','FX1 / FX2','Flex / Static','Track machine','Audio tracks','MIDI tracks','Project sequencer','USB']),conflicts:texts(c.conflicts,'compatibility.conflicts',64),...(uiClaims?{uiClaims}:{}),limitations:texts(c.limitations,'compatibility.limitations',24)},resources:{recorded:text(r.recorded,'resources.recorded',100),storage:metric(r.storage,'resources.storage'),processing:metric(r.processing,'resources.processing'),...(impact?{impact}:{})},tests:{report:modulePath(t.report,'tests.report'),summary:text(t.summary,'tests.summary'),hardwareStatus:enumeration(t.hardwareStatus,'tests.hardwareStatus',['untested','historical','reported','verified']),evidenceRevision,gates:texts(t.gates,'tests.gates',64),...(documentation?{documentation}:{}),...(proof?{qualification:proof}:{}),...(waiver?{releaseWaiver:waiver}:{}),...(retainedEvidence?{retainedEvidence}:{})},license:{spdx:text(l.spdx,'license.spdx',100),file:modulePath(l.file,'license.file'),declaration:text(l.declaration,'license.declaration')},media}
 }
 
 /** New modules and updates need real UI evidence; unchanged legacy publications remain readable. */

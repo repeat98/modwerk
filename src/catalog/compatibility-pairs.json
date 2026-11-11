@@ -6,6 +6,7 @@
   "analog-bassdrum",
   "apply-scene",
   "arp-key-locks",
+  "bar-led",
   "bbd",
   "beat-slicer",
   "cc-map",
@@ -19,6 +20,7 @@
   "modulation",
   "mute-modes",
   "output-matrix",
+  "pattern-sample-locks",
   "playmodes",
   "poly8",
   "previewvol",
@@ -28,10 +30,17 @@
   "repitch",
   "ring-sc",
   "sidechain-compressor",
+  "slow-lfo",
   "spectrum",
+  "stem-rec",
   "synth",
+  "syntiz",
   "tapeecho",
   "tapehead",
+  "temp-save",
+  "tiempos",
+  "track-solo",
+  "tuner",
   "usb-audio-out-tracks-main-cue",
   "vector"
  ],
@@ -99,10 +108,6 @@
     "poke site: analog-bassdrum (poke machine chooser highlights AB) and vector (poke VECTOR is machine chooser row six) both claim 0x400786ce -- both rewrite the same bytes",
     "poke site: analog-bassdrum (poke machine chooser persists AB) and vector (poke VECTOR is machine chooser row six) both claim 0x40079904 -- both rewrite the same bytes"
    ],
-   "bbd+sidechain-compressor": [
-    "FX2 buffer meets a declared range: bbd's FX2 buffer (+$0..+$3fff) and sidechain-compressor's the cross-core key window: GSEED, GCNT, 4 tracks x 4 generations x 32 words both claim shared 0x33dfe..0x33fff",
-    "FX2 buffer meets a declared range: bbd's FX2 buffer (+$0..+$3fff) and sidechain-compressor's the cross-core key window: GSEED, GCNT, 4 tracks x 4 generations x 32 words both claim shared 0x3bdfe..0x3bfff"
-   ],
    "quantizer+synth": [
     "ColdFire cave: quantizer's linked unit qzk and synth's linked unit fm_qzk both claim 0x400d2cb0",
     "ColdFire cave: quantizer's linked unit qzs and synth's linked unit fm_qzs both claim 0x400d2ca8",
@@ -131,7 +136,7 @@
     "poke site: quantizer (table ref SEQUENCER setters) and synth (table ref SEQUENCER setters) both claim 0x40065d3e -- both rewrite the same bytes",
     "poke site: quantizer (table ref SEQUENCER setters) and synth (table ref SEQUENCER setters) both claim 0x40065d58 -- both rewrite the same bytes",
     "poke site: quantizer (table ref SEQUENCER setters) and synth (table ref SEQUENCER setters) both claim 0x40065d72 -- both rewrite the same bytes",
-    "poke site: quantizer (poke SEQUENCER window: 3 -> 6 rows (SCALE, ROOT, GLIDE; 3 visible, scrolls)) and synth (poke SEQUENCER window: 3 -> 6 rows (SCALE, ROOT, GLIDE; 3 visible, scrolls)) both claim 0x40065c7c -- both rewrite the same bytes",
+    "poke site: quantizer (poke SEQUENCER window: 3 -> 8 rows (SCALE, ROOT, GLIDE, TRACK, FOLLOW (2.22); 3 visible, scrolls)) and synth (poke SEQUENCER window: 3 -> 6 rows (SCALE, ROOT, GLIDE; 3 visible, scrolls)) both claim 0x40065c7c -- both rewrite the same bytes",
     "grown table: quantizer's SEQUENCER labels and synth's SEQUENCER labels both claim stock array 0x400b27d0 -- each would relocate its own copy and repoint different refs",
     "grown table: quantizer's SEQUENCER getters and synth's SEQUENCER getters both claim stock array 0x400b27dc -- each would relocate its own copy and repoint different refs",
     "grown table: quantizer's SEQUENCER setters and synth's SEQUENCER setters both claim stock array 0x400b282c -- each would relocate its own copy and repoint different refs"
@@ -164,20 +169,12 @@
    "airwindows-chorus+sidechain-compressor": [
     "FX2 buffer meets a declared range: airwindows-chorus's FX2 buffer (+$0..+$3fff) and sidechain-compressor's the cross-core key window: GSEED, GCNT, 4 tracks x 4 generations x 32 words both claim shared 0x33dfe..0x33fff",
     "FX2 buffer meets a declared range: airwindows-chorus's FX2 buffer (+$0..+$3fff) and sidechain-compressor's the cross-core key window: GSEED, GCNT, 4 tracks x 4 generations x 32 words both claim shared 0x3bdfe..0x3bfff"
-   ],
-   "bbd+sidechain-compressor": [
-    "FX2 buffer meets a declared range: bbd's FX2 buffer (+$0..+$3fff) and sidechain-compressor's the cross-core key window: GSEED, GCNT, 4 tracks x 4 generations x 32 words both claim shared 0x33dfe..0x33fff",
-    "FX2 buffer meets a declared range: bbd's FX2 buffer (+$0..+$3fff) and sidechain-compressor's the cross-core key window: GSEED, GCNT, 4 tracks x 4 generations x 32 words both claim shared 0x3bdfe..0x3bfff"
    ]
   },
   "poly8+synth": {
    "airwindows-chorus+sidechain-compressor": [
     "FX2 buffer meets a declared range: airwindows-chorus's FX2 buffer (+$0..+$3fff) and sidechain-compressor's the cross-core key window: GSEED, GCNT, 4 tracks x 4 generations x 32 words both claim shared 0x33dfe..0x33fff",
     "FX2 buffer meets a declared range: airwindows-chorus's FX2 buffer (+$0..+$3fff) and sidechain-compressor's the cross-core key window: GSEED, GCNT, 4 tracks x 4 generations x 32 words both claim shared 0x3bdfe..0x3bfff"
-   ],
-   "bbd+sidechain-compressor": [
-    "FX2 buffer meets a declared range: bbd's FX2 buffer (+$0..+$3fff) and sidechain-compressor's the cross-core key window: GSEED, GCNT, 4 tracks x 4 generations x 32 words both claim shared 0x33dfe..0x33fff",
-    "FX2 buffer meets a declared range: bbd's FX2 buffer (+$0..+$3fff) and sidechain-compressor's the cross-core key window: GSEED, GCNT, 4 tracks x 4 generations x 32 words both claim shared 0x3bdfe..0x3bfff"
    ]
   }
  }

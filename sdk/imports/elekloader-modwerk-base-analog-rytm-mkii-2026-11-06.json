@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "modwerk-base-analog-rytm-mkii-2026-11-06",
+  "about": "Modwerk's Analog Rytm MKII base for OS 1.74, built by npm run machine:base -- analog-rytm-mkii from core-ar2 0.7's source (sdk/imports/core-ar2-source-fb58292.json) and, in the send-bus variant, Modwerk's base/ sources. Two variants, each identified by its SHA-256 in sdk/machines/analog-rytm-mkii/base-binding.json: plain (1c14b6b0, the source with the machine list's sections, the amp envelope's record and the FX track's edit save of words 38 to 41) and send-bus (73f3668c, with the FX track's lock words, the send bus, whose effects work in the mod RAM the set leaves free, and the sequencer's time as well). The site builds a Rytm set on send-bus when it holds a send effect (sdk/machines/analog-rytm-mkii/fx-ids.json) and on plain otherwise. Stock-free: each site names its stock bytes by length and SHA-256, and the build fills them from the owner's OS.",
+  "cores": [
+    {
+      "file": "modwerk-base-analog-rytm-mkii-1c14b6b0.elemod",
+      "sha256": "1c14b6b058d473ca20ba93a128ca39fe74a69f0b08603ca566ee0300933713b6",
+      "id": "core",
+      "version": "0.7",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "d1b38b8a1980d27304e43aab22f8656164127c21",
+        "path": "sdk/imports/packages/modwerk-base-analog-rytm-mkii/modwerk-base-analog-rytm-mkii-1c14b6b0.elemod"
+      }
+    },
+    {
+      "file": "modwerk-base-analog-rytm-mkii-73f3668c.elemod",
+      "sha256": "73f3668c9617d25b01dd17ac1b72c70897edd29688524d12a038c754f8d68296",
+      "id": "core",
+      "version": "0.7",
+      "device": "analog-rytm-mk2",
+      "os": "1.74",
+      "license": "GPL-3.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "fa4d4a8c8f8627d125c4e096b176b37cc49a27c9",
+        "path": "sdk/imports/packages/modwerk-base-analog-rytm-mkii/modwerk-base-analog-rytm-mkii-73f3668c.elemod"
+      }
+    }
+  ],
+  "mods": []
+}

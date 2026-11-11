@@ -9,7 +9,7 @@ Existing published module authors may use the [automatic author-update workflow]
 - a hardware report: a functional report that gives the model, date, tester, summary and limitations is enough, with no minimum duration or track count;
 - its tutorial and screenshot paths.
 
-All of it is bound to the module version, its native-source SHA-256 and the SHA-256 of the local image it was tested with. A change to documentation or media alone uses `tests.retainedEvidence` instead. The steps are in [Add or port a module](ADD_A_MODULE.md). The rest of this page is the field reference and the record of owner exceptions.
+All of it is bound to the module version, its native-source SHA-256 and the SHA-256 of the local image it was tested with. A change to documentation or media alone uses `tests.retainedEvidence` instead. Bound only the module's own code and memory: when a number would need analysis of stock firmware, record it as not measured and ask the owner the same day ([Performance](module-guides/README.md#performance)). The steps are in [Add or port a module](ADD_A_MODULE.md). The rest of this page is the field reference and the record of owner exceptions.
 
 From 2 October 2026, new modules and updates affecting runtime behavior, stability, cycles, memory or load must provide **worst-case cycle counts, exact memory accounting, attributed real-hardware test evidence and complete documentation**. These are publication requirements. Missing measurements, nominal/average CPU percentages, emulator-only evidence, historical evidence for another source and failed detailed hardware checks cannot qualify a submission. On 2 October 2026 the owner removed the mandatory 60-minute, eight-track stress run. A clearly labelled functional hardware report is accepted alongside the cycle, memory, source, UI and integration evidence below.
 
@@ -36,7 +36,7 @@ to a persistence or multiple-instance pass.
 
 ## Persistence audit — 8 October 2026
 
-[The control-state audit](persistence-check-2026-10-08.json) binds the results to
+[The control-state audit](verification/persistence-check-2026-10-08.json) binds the results to
 exact firmware image hashes. The tested images include local development
 compositions; the results apply only to those hashes. Analog BD and eight FX
 modules (MiniVerb, Tape Echo, Euclid, Tapehead, Sidechain Compressor, Spectrum,
@@ -50,7 +50,7 @@ include assignments, source/sample/engine settings and both FX parameter pages.
 
 The private POLY32T01 image failed actual machine assignment followed by reboot:
 its live `PL/1` marker was copied one byte too far forward in battery RAM.
-PROJECT SAVE preserved the wrong battery marker. A [source correction](poly-marker-copy-2026-10-08.patch)
+PROJECT SAVE preserved the wrong battery marker. A [source correction](verification/poly-marker-copy-2026-10-08.patch)
 reads all three bytes before writing the mirror. The corrected private build
 passed the same two-track assignment/reboot check and the full save/reload
 matrix. POLY is outside the current public module catalog; this patch records a
@@ -65,7 +65,7 @@ memory dumps remain outside the repository.
 
 ## Existing modules
 
-The eleven module folders present when this policy was requested remain included at their current versions, with their existing measurements and historical/status labels intact. [The frozen baseline](../sdk/module-qualification-baseline.json) records each exact version and complete folder SHA-256. This preserves the owner's acceptance of the existing tests without inventing cycle counts or changing earlier qualification claims. Existing availability, build and download restrictions remain intact.
+The eleven module folders present when this policy was requested remain included at their current versions, with their existing measurements and historical/status labels intact. [The frozen baseline](../sdk/approvals/module-qualification-baseline.json) records each exact version and complete folder SHA-256. This preserves the owner's acceptance of the existing tests without inventing cycle counts or changing earlier qualification claims. Existing availability, build and download restrictions remain intact.
 
 The original baseline exemption applies only while **every file in that module folder and its version are unchanged**. Runtime-impacting updates require a new qualification record. Editorial updates can retain the original evidence through the separate, checked path below; they still need a semantic version increase, complete documentation, actual UI/media provenance and owner or scoped registered-author approval. New IDs cannot inherit an exemption. PR checks reject changes to the baseline once it exists on the base branch. Do not add modules to it or regenerate it as a way of making a failed gate pass.
 
@@ -103,13 +103,13 @@ PR validation anchors approval to the exact `--base` commit. Local generation/re
 
 Release validation also requires a complete README, TESTING report, licence/attribution, descriptions of every control, compatibility/limitations, a short practical tutorial and real documentation screenshots. Draft placeholders do not qualify; the reviewer verifies factual completeness and usability alongside the source. The release build runs the same gate as PR/local validation, including OT UI access/capture validation even without a Git base.
 
-Record `documentation` inside `tests.qualification`: `tutorial.title`, at least three ordered `tutorial.steps`, nonempty `screenshots` paths and `screenshotStyle: "black-and-white"`. The tutorial covers setup and selection/enable, a useful control example, and the expected result plus stop/reset/bypass. Its heading and steps must appear in the same order in README. Module pages display these steps under the access instructions.
+Record `documentation` inside `tests.qualification`: `tutorial.title`, at least three ordered `tutorial.steps`, nonempty `screenshots` paths (empty only with `access.noUiReason`, below) and `screenshotStyle: "black-and-white"`. The tutorial covers setup and selection/enable, a useful control example, and the expected result plus stop/reset/bypass. Its heading and steps must appear in the same order in README. Module pages display these steps under the access instructions.
 
 README must have populated Overview, Controls, Usage, Compatibility and limitations, Tests and measurements, Authorship and licences, and Screens and audio sections. Link or embed each declared documentation screenshot. Explain inactive controls and known limitations explicitly; cross-reference the measured costs and TESTING results. Synchronize the public manifest, README, tutorial, native controls, captions and version/build provenance. The reviewer verifies that the complete documentation covers the real behavior, including all relevant pages and controls.
 
 Use the same **black-and-white/gray style as the online modules**, with readable integer scaling. Release validation decodes the actual PNG pixels and rejects yellow or colored captures; it accepts ordinary noninterlaced PNGs up to 2048×2048. Preserve real captured LCD content. Capture with a monochrome display/renderer rather than drawing replacement labels or substituting illustrations. Every referenced OT UI capture must still show the actual selection/enable location and relevant controls with exact button/menu steps and version/build/setup provenance. Screenshots must be declared hardware/emulator PNG media with captions, alt text, credits and rights.
 
-An automatic USB module's reviewed `access.noUiReason` removes only the nonexistent OT LCD requirement. It still needs documentation screenshots of its actual host connection/routing controls and a short setup/use/verification tutorial. Existing exact baseline modules remain retained; future versions must meet all of these requirements.
+A module that changes stock behaviour and draws nothing of its own (no controls, no effect slot, no `screen:` claim) gives `access.noUiReason`, one sentence naming what it changes, in place of screenshots, whatever its location ([rule](MODULE_UI_CAPTURES.md#manifest-contract)). It still needs the README tutorial of at least three steps; owner review checks that it draws nothing. Existing exact baseline modules remain retained; future versions must meet all of these requirements.
 
 ## Record in the module manifest
 
@@ -133,7 +133,7 @@ console.log(await moduleNativeSourceSha256(folder, document))
 JS
 ```
 
-For this command, fill all fields with actual results first, including a valid temporary source hash, then replace that hash with the output. The fingerprint is SHA-256 of a sorted JSON object mapping relative source paths to file SHA-256 values. It excludes the website manifest, Markdown documentation, licence files, `media/`, the incomplete `qualification.example.json` template, declared text evidence reports and OS/Python cache files. All other regular files, including native manifests, native verification code and text runtime data, contribute. The complete-folder legacy fingerprint includes documentation, reports, metadata and media too. Symlinks and special files are rejected.
+For this command, fill all fields with actual results first, including a valid temporary source hash, then replace that hash with the output. The fingerprint is SHA-256 of a sorted JSON object mapping relative source paths to file SHA-256 values. It excludes the website manifest, Markdown documentation, licence files, `media/`, the incomplete `qualification.example.json` template, declared text evidence reports and OS/Python cache files. All other regular files, including native manifests, native verification code and text runtime data, contribute: a change to the module's own probe (`qualification/probe.cpp`, its runner) alone moves the fingerprint and needs the evidence re-pinned like any source change. The complete-folder legacy fingerprint includes documentation, reports, metadata and media too. Symlinks and special files are rejected.
 
 ## Worst-case cycle counts
 
@@ -151,7 +151,9 @@ The five required condition fields, separately for cycle measurements and hardwa
 
 For inapplicable mechanisms, explain why they cannot affect this module and which equivalent control path was exercised. Blank strings fail. The reviewer checks substantive coverage: writing “N/A” or copying a stock benchmark is insufficient.
 
-The local report must include commands/tool versions, the measured maximum and where it occurred, the parameter/mode matrix, branch coverage, sample/block/event basis, budget derivation and limitations. `static` counts need a defensible upper bound; emulator instruction counts without contention are not chip wall-clock cycles. State that limitation, account for contention/overhead and retain the actual hardware operation report. Average or nominal load does not meet this requirement.
+The local report must include commands/tool versions, the measured maximum and where it occurred, the parameter/mode matrix, branch coverage, sample/block/event basis, budget derivation and limitations. `static` counts need a defensible upper bound; emulator instruction counts without contention are not chip wall-clock cycles. State that limitation, account for contention/overhead and retain the actual hardware operation report. Average or nominal load does not meet this requirement. ColdFire code that runs only on a key press needs no static bound: its dearest press, measured in `ot_emu` or on the unit, is its worst case ([Performance](module-guides/README.md#performance)).
+
+A probe that compiles and runs native code in the toolchain container (Mute Modes' `qualification/run.py`) needs the emulator build's vendor directory with mc68k mounted (the image lacks mc68k; `npm run upstream:tools` checks it out) and an exec-enabled temporary directory, `--tmpfs /tmp:rw,exec,nosuid,nodev,size=128m`: Docker mounts a tmpfs `noexec` by default, and the compiled probe cannot start. The module's TESTING.md gives its exact command.
 
 ## Exact memory
 
@@ -204,7 +206,7 @@ Keep firmware, extracted stock, LCD/RAM dumps, cards and private raw logs local 
 
 ## Owner-approved CC Map / Preview Vol exception — 2 October 2026
 
-The owner explicitly approved `cc-map` and `previewvol` version `0.1.2-experimental` with software verification and real-chip timing marked unmeasured because physical hardware runs are unavailable. `sdk/module-release-waivers.json` binds only these two complete folder/native-source hashes. It is separate from the unchanged eleven-module baseline and immutable after this PR. Both manifests retain `hardwareStatus: "untested"`, null chip cycles, actual LCD provenance, complete tutorials and source-bound software reports. Ordinary submission validation still requires full measured qualification; a contributor cannot grant a waiver in metadata. Any folder/version change invalidates the exception. Source-only release compilation reproduces the locally native-parity-verified packages without firmware.
+The owner explicitly approved `cc-map` and `previewvol` version `0.1.2-experimental` with software verification and real-chip timing marked unmeasured because physical hardware runs are unavailable. `sdk/approvals/module-release-waivers.json` binds only these two complete folder/native-source hashes. It is separate from the unchanged eleven-module baseline and immutable after this PR. Both manifests retain `hardwareStatus: "untested"`, null chip cycles, actual LCD provenance, complete tutorials and source-bound software reports. Ordinary submission validation still requires full measured qualification; a contributor cannot grant a waiver in metadata. Any folder/version change invalidates the exception. Source-only release compilation reproduces the locally native-parity-verified packages without firmware.
 
 ## MIDI Scenes standalone approval, 3 October 2026
 
@@ -224,7 +226,7 @@ baseline and two utility waivers are unchanged.
 ## MIDI Scenes 0.2.5 owner-approved update, 10 October 2026
 
 The owner approved `midi-scenes` `0.2.5-experimental` (Scene A/B mute) "without
-concrete hardware evidence". `../sdk/midi-scenes-build-approval.json` is an
+concrete hardware evidence". `../sdk/approvals/midi-scenes-build-approval.json` is an
 `owner-approved-update` that waives only current-build hardware evidence, bound to
 this version and its native source. The contributor's MKII report ran on the
 pre-#392 shared runtime, so hardware stays `reported`, not verified, and timing
@@ -233,11 +235,11 @@ version needs its own record.
 
 ## Sidechain Compressor hardware-only exception
 
-On 5 October 2026 the owner explicitly approved sidechain-compressor@0.1.1-experimental without fresh physical hardware evidence. `sdk/sidechain-compressor-build-approval.json` binds that exception to the exact version, source and image, and `scripts/module-qualification.mjs` refuses it for anything else. Documentation and media are not part of the binding, so editing them needs no new approval. Both processor cycle bounds, sixteen-instance memory accounting, the composition comparison with native octabam, rejection checks, licensing and actual LCD documentation remain mandatory. Hardware status stays historical; no chip wall-clock timing or current-image hardware pass is claimed.
+On 5 October 2026 the owner explicitly approved sidechain-compressor@0.1.1-experimental without fresh physical hardware evidence. `sdk/approvals/sidechain-compressor-build-approval.json` binds that exception to the exact version, source and image, and `scripts/module-qualification.mjs` refuses it for anything else. Documentation and media are not part of the binding, so editing them needs no new approval. Both processor cycle bounds, sixteen-instance memory accounting, the composition comparison with native octabam, rejection checks, licensing and actual LCD documentation remain mandatory. Hardware status stays historical; no chip wall-clock timing or current-image hardware pass is claimed.
 
 ## FM Synth exact experimental release exception
 
-On 6 October 2026 the owner explicitly approved synth@0.1.1-experimental without current hardware evidence, worst-case chip timing or complete stack/memory bounds. The exact statements are in the module’s evidence/owner-hardware.md; sdk/synth-build-approval.json binds this separate exception to its version, native-source SHA-256, runtime declarations and tested common-builder image. Hardware stays untested, and chip timing/complete lifetime bounds stay null. It grants no exception to later versions or other modules.
+On 6 October 2026 the owner explicitly approved synth@0.1.1-experimental without current hardware evidence, worst-case chip timing or complete stack/memory bounds. The exact statements are in the module’s evidence/owner-hardware.md; sdk/approvals/synth-build-approval.json binds this separate exception to its version, native-source SHA-256, runtime declarations and tested common-builder image. Hardware stays untested, and chip timing/complete lifetime bounds stay null. It grants no exception to later versions or other modules.
 
 Publication still requires the 94-case native/browser comparison (37 builds, 57 refusals, zero mismatches), the common worker’s packaging and changed-base/refusal checks, sample-free playback and double-STOP silence on that exact image, source/stock isolation, licensing and actual monochrome LCD documentation. scripts/synth-release.mjs checks these records without executing submitted code. The frozen baseline and existing exceptions remain unchanged.
 
@@ -245,12 +247,12 @@ The additive compiler/engine integration has a separate exact infrastructure bin
 
 ## VECTOR 0.2.4 hardware-only exception — 9 October 2026
 
-For issue #349, the owner explicitly approved: “Approve release and closure with hardware reboot/audio unverified”, after receiving the exact private 0.2.4 firmware and source patch. The new `sdk/vector-build-approval.json` binds only this version/native source and tested image; it does not extend the 0.2.3 exception to new source. Fresh sanitizer, native resource, UI, composition and two-instance Part/project/battery-RAM restart evidence are in [the reboot regression report](vector-reboot-2026-10-09.json) and the module TESTING.md. Hardware status stays untested. Physical reboot, working audio after transitions and maximum audio load remain unverified; closure must state those limits and how to reopen.
+For issue #349, the owner explicitly approved: “Approve release and closure with hardware reboot/audio unverified”, after receiving the exact private 0.2.4 firmware and source patch. The new `sdk/approvals/vector-build-approval.json` binds only this version/native source and tested image; it does not extend the 0.2.3 exception to new source. Fresh sanitizer, native resource, UI, composition and two-instance Part/project/battery-RAM restart evidence are in [the reboot regression report](vector-reboot-2026-10-09.json) and the module TESTING.md. Hardware status stays untested. Physical reboot, working audio after transitions and maximum audio load remain unverified; closure must state those limits and how to reopen.
 
 ## POLY8 exact experimental release exception — 8 October 2026
 
-The owner approved POLY8@0.2.5-experimental with current-build physical hardware, chip worst-case timing and complete memory-bound qualification explicitly waived, and subsequently verified a Modwerk-builder launch in Octemu. `sdk/poly8-build-approval.json` binds the exception to the exact native source. Missing measurements remain null and hardware remains untested. The 114-selection native/browser comparison, stock-free package replay/rejection guards, stock DSP preservation, documentation, actual LCD captures and owner-reviewed publication remain required. Historical T03/T04 physical failures and T06 native results keep their original image identities. This exception grants no approval to another source or version.
+The owner approved POLY8@0.2.5-experimental with current-build physical hardware, chip worst-case timing and complete memory-bound qualification explicitly waived, and subsequently verified a Modwerk-builder launch in Octemu. `sdk/approvals/poly8-build-approval.json` binds the exception to the exact native source. Missing measurements remain null and hardware remains untested. The 114-selection native/browser comparison, stock-free package replay/rejection guards, stock DSP preservation, documentation, actual LCD captures and owner-reviewed publication remain required. Historical T03/T04 physical failures and T06 native results keep their original image identities. This exception grants no approval to another source or version.
 
 ## POLY8 0.2.6 exact experimental release exception — 9 October 2026
 
-The owner reported “works like a charm” on the exact POLY8T10 MKII image and explicitly approved “Approve this scoped experimental release” for 0.2.6-experimental. [The source-bound report](../sdk/octabam/modules/poly8/evidence/owner-release-t10.md) retains the delivered image hashes, actual statement and unreported coverage. `sdk/poly8-build-approval.json` now binds only the exact T10 native source. Chip worst-case timing, complete memory-bound qualification and separately reported Part/project/reboot tests remain waived and unverified. The historical 0.2.5 approval remains in Git history and the report; it does not authorize this update. Documentation, licence, native/browser parity and release checks remain mandatory.
+The owner reported “works like a charm” on the exact POLY8T10 MKII image and explicitly approved “Approve this scoped experimental release” for 0.2.6-experimental. [The source-bound report](../sdk/octabam/modules/poly8/evidence/owner-release-t10.md) retains the delivered image hashes, actual statement and unreported coverage. `sdk/approvals/poly8-build-approval.json` now binds only the exact T10 native source. Chip worst-case timing, complete memory-bound qualification and separately reported Part/project/reboot tests remain waived and unverified. The historical 0.2.5 approval remains in Git history and the report; it does not authorize this update. Documentation, licence, native/browser parity and release checks remain mandatory.

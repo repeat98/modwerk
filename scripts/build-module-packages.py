@@ -11,7 +11,7 @@ APP = Path(__file__).resolve().parents[1]
 ORDER = ['spectrum', 'modulation', 'character', 'miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'airwindows-chorus', 'everb', 'bbd', 'lofi2', 'ring-sc']
 # DSP code that stock code reaches through hooks. Output Matrix has no FX menu entry and is also a requested ColdFire module.
 HOOKED = ['sidechain-compressor', 'output-matrix']
-REQUESTED = ['analog-bassdrum', 'midi-scenes', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector', 'playmodes', 'mute-modes', 'recorder-loop-fix', 'poly8', 'output-matrix', 'quantize-live-rec-toggle', 'apply-scene', 'direct-jump-kyoti', 'dejavu', 'arp-key-locks']
+REQUESTED = ['analog-bassdrum', 'midi-scenes', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector', 'playmodes', 'mute-modes', 'recorder-loop-fix', 'poly8', 'output-matrix', 'quantize-live-rec-toggle', 'apply-scene', 'direct-jump-kyoti', 'dejavu', 'arp-key-locks', 'temp-save', 'tuner', 'slow-lfo', 'bar-led', 'stem-rec']
 UTILITIES = ['previewvol', 'cc-map']
 ASSET_NAMES = ['dsp-packages.json', 'coldfire-packages.json', 'resident-dsp.json', 'rom-packages.json',
                'bootstrap-package.json', 'menu-recipes.json', 'descriptor-recipes.json', 'platform-writes.json', 'requested-packages.json', 'utility-packages.json', 'usb-audio-packages.json']
@@ -71,6 +71,11 @@ def source_hashes(root, cardless=()):
             if re.fullmatch(r'modules/[^/]+/octamod\.module\.json', relative): files[relative] = HASH(manifest_build_fields(path.read_text(encoding='utf-8')).encode())
             else: files[relative] = HASH(path.read_bytes())
     return files
+
+
+def cardless_modules(manifest):
+    """The card source scope, shared with module-source.mjs and usb-only.ts."""
+    return {row['id'] for row in manifest['packages'] if row.get('sources') or row.get('usbOnly') is True}
 
 
 def fingerprint(reference, address):
@@ -261,8 +266,8 @@ def main():
             parser.error('Untracked source is not allowed in a release build')
     if args.include_requested and args.source_commit: parser.error('Pending modules may be compiled only for local development verification')
     sdk = APP / 'sdk/octabam'
-    # A C runtime module (its USB package row has "sources") has no card form: src/catalog/usb-only.ts. Mirrors scripts/module-source.mjs.
-    usb_only = {row['id'] for row in json_file(APP / 'src/engine/assets/octatrack-module-packages.json')['packages'] if row.get('sources')}
+    # Source runtimes and explicit USB-only packages have no card form.
+    usb_only = cardless_modules(json_file(APP / 'src/engine/assets/octatrack-module-packages.json'))
     sources = source_hashes(sdk, usb_only)
     baseline = {name: json_file(APP / 'src/engine/assets' / name) for name in ASSET_NAMES}
     catalog = json_file(APP / 'sdk/catalog.json')
@@ -460,6 +465,24 @@ def main():
                 compiled_cf.append({'label': unit.label, 'moduleId': module.name, 'version': versions.get(module.name),
                     'key': module.key, 'author': module.author, 'cpu': '54455', 'dram': True, 'source': unit.source,
                     'sources': hashes(unit.source, manifest), 'bytes': len(data), 'code': data.hex(), 'sha256': HASH(data)})
+        # Units a module lets join the DRAM runtime when another module carries one
+        # (modules/<id>/placement.json): the same source, assembled for the runtime's ISA.
+        from runtime_join import JOIN
+        for name, labels in JOIN.items():
+            module = byid[name]
+            manifest, rule = f'modules/{name}/manifest.py', f'modules/{name}/placement.json'
+            if not (module.menu and module.menu.stock_dsp): raise ValueError(f'{name}: only a stock-DSP effect\'s descriptor units can join the runtime')
+            for unit in module.linked:
+                if unit.label not in labels: continue
+                if unit.dram or unit.include is not None or unit.defsyms or unit.stock_copies:
+                    raise ValueError(f'{name} {unit.label}: a joining unit links one variant with no includes, defsyms or stock copies')
+                validate_source((root / unit.source).read_text())
+                obj = root / (unit.label + '.join.o')
+                run(['m68k-elf-as', '-mcpu=54455', '-o', obj, unit.source], root)
+                data = obj.read_bytes()
+                compiled_cf.append({'label': unit.label, 'moduleId': name, 'version': versions.get(name),
+                    'key': module.key, 'author': module.author, 'cpu': '54455', 'dram': True, 'joinRuntime': True, 'source': unit.source,
+                    'sources': hashes(unit.source, manifest, rule), 'bytes': len(data), 'code': data.hex(), 'sha256': HASH(data)})
         products['coldfire-packages.json'] = dict(baseline['coldfire-packages.json'], **provenance, packages=compiled_cf)
 
         rom = []

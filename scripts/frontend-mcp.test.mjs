@@ -6,6 +6,7 @@ import { createFrontendTools, createProtocol, validateApiPath, formatMcpLog } fr
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
 import { fileURLToPath } from 'node:url'
+import { DSP_LOADER } from '../src/engine/protocol.ts'
 
 const persistence = vi.hoisted(() => ({ fail: false }))
 vi.mock('node:fs/promises', async importOriginal => {
@@ -67,6 +68,8 @@ describe('frontend MCP protocol and isolated site workflows', () => {
     expect(catalogue.machines.some(item => item.id === 'octatrack')).toBe(true)
     expect((await service.call('site_module', { id: 'everb' })).controls.length).toBeGreaterThan(0)
     expect((await service.call('site_selection', { moduleIds: ['vector', 'analog-bassdrum'] })).conflicts.length).toBeGreaterThan(0)
+    // Like the site, Keep stock FX2 only counts when the DSP loader is on.
+    expect((await service.call('site_selection', { moduleIds: ['analog-bassdrum'], keepStockFx2: true })).conflicts.some(conflict => conflict.id === 'stock-fx2-space')).toBe(DSP_LOADER)
     const usb = catalogue.modules.filter(module => module.usb).map(module => module.id)
     expect(usb.length).toBeGreaterThanOrEqual(4)
     expect(usb).toContain('usb-audio-out-tracks-main-cue')

@@ -162,9 +162,11 @@ static const Part *slot(unsigned t) { return part0() + 0x22 + t; }
 /* The guard as at boot (machine_registry.c's statics: this file includes it). */
 static void fresh(void)
 {
-    late = timed = 0; credit = 0; mw_frame_max = mw_frame_late_max = mw_frame_busy = mw_frame_count = 0;
-    for (unsigned k = 0; k < 16u; ++k) cost[k] = after[k] = end_at[k] = 0, skipped[k] = 0;
+    late = timed = before = 0; made = 0; credit = 0; frame_seen = 0; mw_frame_max = mw_frame_late_max = mw_frame_busy = mw_frame_count = 0;
+    for (unsigned k = 0; k < 16u; ++k) cost[k] = after[k] = end_at[k] = 0, skipped[k] = 0, place[k] = next[k] = 0;
 }
+/* The track's render in a later frame than the last one: the lookup reads the Part again (mw_frame_exit ends a frame). */
+static int later(unsigned track) { frame_seen = 0; return mw_source_render_impl(track, 0, 0, 1); }
 /* One frame interrupt: its entry, `pre` counts of stock work, the track's render, `tail` counts more, its exit. */
 static int frame(unsigned track, uint32_t pre, uint32_t tail)
 {
@@ -310,6 +312,76 @@ static void check_source_starts(void)
     rows(0, 0, 0, 0);
     for (unsigned t = 0; t < 10u; ++t) start_row[t] = 0;
     for (unsigned t = 0; t < 8u; ++t) memset((void *)(part0() + SIG + 30u * t), 0, 3);
+}
+
+/* A synthetic native sample reader, using the exact voice byte stop_stock writes.
+ * An inactive voice emits no PCM; a second fake voice array would hide this regression. */
+static unsigned native_reads, native_pcm;
+static int render_native(unsigned t, unsigned p, unsigned s, unsigned e)
+{
+    (void)p; ++native_reads;
+    if (!U8(VOICE + VOICE_STRIDE * t)) return 0;
+    native_pcm += e - s;
+    return (int)(e - s);
+}
+static int start_native(unsigned t, unsigned sample, unsigned flags)
+{
+    (void)sample; (void)flags;
+    U8(VOICE + VOICE_STRIDE * t) = 255;
+    return 1;
+}
+static void check_native_flex_voice(void)
+{
+    struct modwerk_machine native = A;
+    native.flags |= MODWERK_MACHINE_NATIVE_FLEX | MODWERK_MACHINE_START;
+    native.render = render_native;
+    const struct modwerk_machine_start entry = {MODWERK_MACHINE_START_ABI, sizeof entry, &native, start_native};
+    const void *one[] = {&native};
+    rows(one, 1, 0, 0); start_row[0] = (uintptr_t)&entry; start_row[1] = 0;
+    for (unsigned t = 0; t < 8u; ++t) {
+        part0()[0x22u + t] = 1;
+        memcpy((void *)(part0() + SIG + 30u * t), "AB\1", 3);
+        stock_voices[168u * t] = 0;
+        CHECK(selected_start(t, 0, 0, fallback_start) == 1);
+        CHECK(stock_voices[168u * t] == 255);
+        /* Both segments of a frame consume the active native voice. */
+        fresh(); mw_frame_t0 = host_timer;
+        unsigned before = native_pcm;
+        for (unsigned segment = 0; segment < 2; ++segment) {
+            render_states[10u * t + 1u] = 77;
+            CHECK(mw_source_render_impl(t, 0, segment * 8u, segment * 8u + 8u) == 8);
+            CHECK(stock_voices[168u * t] == 255 && !render_states[10u * t + 1u]);
+        }
+        CHECK(native_pcm == before + 16u);
+
+        start_refused[t] = &native;
+        stock_voices[168u * t] = 255; render_states[10u * t + 1u] = 77;
+        before = native_reads;
+        CHECK(mw_source_render_impl(t, 0, 0, 1) == -9 && native_reads == before);
+        CHECK(!stock_voices[168u * t] && !render_states[10u * t + 1u]);
+        CHECK(selected_start(t, 0, 0, fallback_start) == 1); /* accepted START releases the refusal */
+        CHECK(!start_refused[t]);
+
+        native.source_kind = 1; native.source_voice = 411; charged[t] = 0;
+        stock_voices[168u * t] = 255; render_states[10u * t + 1u] = 77;
+        CHECK(mw_source_render_impl(t, 0, 0, 1) == -9 && native_reads == before);
+        CHECK(!stock_voices[168u * t] && !render_states[10u * t + 1u]);
+        native.source_kind = 0; native.source_voice = 0;
+
+        /* Default own-render machines, and malformed direct tables without
+         * START, still stop the native voice before their renderer is called. */
+        native.flags &= ~MODWERK_MACHINE_NATIVE_FLEX;
+        for (unsigned invalid = 0; invalid < 2; ++invalid) {
+            stock_voices[168u * t] = 255; render_states[10u * t + 1u] = 77;
+            fresh(); mw_frame_t0 = host_timer;
+            CHECK(mw_source_render_impl(t, 0, 0, 1) == 0);
+            CHECK(!stock_voices[168u * t] && !render_states[10u * t + 1u]);
+            native.flags |= MODWERK_MACHINE_NATIVE_FLEX;
+            native.flags &= ~MODWERK_MACHINE_START;
+        }
+        native.flags |= MODWERK_MACHINE_START;
+    }
+    start_row[0] = 0; rows(0, 0, 0, 0);
 }
 
 int main(void)
@@ -494,7 +566,7 @@ int main(void)
     sram[60 + 90] = 'A';
     CHECK(mw_assign(part0(), 3, 1) == 1 && part0()[0x2a + 90 + 6] == 0x40 && sram[0x2a + 90 + 6] == 0x40);
     CHECK(part0()[0x1da + 90 + 11] == 0x40 && part0()[60 + 90] == 0 && sram[60 + 90] == 0 && part0()[62 + 90] == 0);
-    CHECK(mw_source_render_impl(3, 0, 0, 1) == -7);
+    CHECK(later(3) == -7);
     /* So does a machine taking it: its own defaults and signature, never the absent machine's bytes. */
     for (unsigned k = 0; k < 12; ++k) part0()[(k < 6 ? 0x2a : 0x1da) + 90 + 6 + k % 6] = (uint8_t)(0x70 + k);
     part0()[60 + 90] = 'A'; part0()[61 + 90] = 'B'; part0()[62 + 90] = 1;
@@ -577,7 +649,7 @@ int main(void)
         CHECK(mw_source_render_impl(4, 0, 0, 1) == -7 && *t4 == 1 && r4[1] == 0x4000); /* VECTOR renders inside stock's */
         /* The Part changes under the track (no mw_assign): FLEX again, its voice and retrig as the machine left them. */
         part0()[60 + 90] = 0; part0()[61 + 90] = 0; part0()[62 + 90] = 0;
-        CHECK(mw_source_render_impl(3, 0, 0, 1) == -7 && *t3 == 0 && r3[1] == 0);
+        CHECK(later(3) == -7 && *t3 == 0 && r3[1] == 0);
         *t3 = 1; r3[1] = 3; CHECK(mw_source_render_impl(3, 0, 0, 1) == -7 && *t3 == 1 && r3[1] == 3); /* its FLEX trig */
         /* An absent machine's track renders stock's silent source and keeps both stopped, too. */
         rows(0, 0, 0, 0);
@@ -620,8 +692,35 @@ int main(void)
     unsigned stays = 0;
     for (unsigned i = 0; i < 10u; ++i) stays += frame(3, 6000, 10000) > 100;
     CHECK(ran >= 10u && stays == 10u);
+    /* One slow render (90,000, as at a pattern change) is no sentence: too far over for the budget ever to have room
+     * for it, the track is probed after 1,024 skips, the probe's time is its cost again and it stays. */
+    fresh(); f_cost = 10000;
+    for (unsigned i = 0; i < 4u; ++i) CHECK(frame(3, 10000, 10000) > 100);
+    f_cost = 90000; CHECK(frame(3, 10000, 10000) > 100);
+    f_cost = 10000; ran = 0;
+    for (unsigned i = 0; i < 1023u; ++i) ran += frame(3, 10000, 10000) > 100;
+    CHECK(!ran && cost[3] == 90000);
+    CHECK(frame(3, 10000, 10000) > 100 && cost[3] == 10000);
+    stays = 0;
+    for (unsigned i = 0; i < 10u; ++i) stays += frame(3, 10000, 10000) > 100;
+    CHECK(stays == 10u);
+    /* Two machine tracks, T3 (3,000) before T4 (20,000). When the frame would overdraw and skipping T4 alone makes
+     * the room, T3 runs and T4 is skipped when it comes; when T4's cost would not make it, T3 is skipped at once. */
+    CHECK(mw_assign(part0(), 2, 5) == 1);
+    fresh();
+    for (unsigned i = 0; i < 7u; ++i) {
+        uint32_t pre = i < 4u ? 10000u : i < 6u ? 20000u + 25000u * (i - 4u) : 70000u;
+        mw_frame_t0 = host_timer; host_timer += pre;
+        f_cost = 3000; int light = mw_source_render_impl(2, 0, 0, 1);
+        f_cost = 20000; int dear = mw_source_render_impl(3, 0, 0, 1);
+        host_timer += 5000; mw_frame_exit();
+        CHECK(i < 4u ? light > 100 && dear > 100 : i < 6u ? light > 100 && dear == -9 : light == -9 && dear == -9);
+    }
+    CHECK(mw_frame_shed_tracks == (1u << 2 | 1u << 3) && cost[2] == 3000 && cost[3] == 20000);
+    CHECK(mw_assign(part0(), 2, 1) == 1);
     /* A track's second render in a frame has its own estimate: once measured, the heavy second render skips and the
-     * light first one runs (the frame after the first long one skips both: it starts 25,109 late). */
+     * light first one runs (also in the frame after the first long one, which starts 25,109 late: skipping the heavy
+     * render makes the room, so the light one is not skipped in its place). */
     fresh(); f_cost = 1000;
     int one[4], two[4];
     for (unsigned i = 0; i < 4u; ++i) {
@@ -630,14 +729,19 @@ int main(void)
         f_cost = 70000; two[i] = mw_source_render_impl(3, 0, 0, 1); f_cost = 1000;
         host_timer += 1000; mw_frame_exit();
     }
-    CHECK(one[0] > 100 && two[0] > 100 && one[1] == -9 && two[1] == -9);
+    CHECK(one[0] > 100 && two[0] > 100 && one[1] > 100 && two[1] == -9);
     CHECK(one[2] > 100 && two[2] == -9 && one[3] > 100 && two[3] == -9);
-    /* A FLEX track no machine owns goes to F's RENDER_FLEX render unguarded, however late the frame (#999: the guard
-     * skipped such tracks as it skips F's own). */
-    fresh(); f_cost = 70000;
+    /* A FLEX track no machine owns goes to F's RENDER_FLEX render while the frame has room; when F's share would
+     * overdraw it, stock's FLEX render takes the track instead, never the silent source (#999: the guard dropped such
+     * tracks as it skips F's own), and F's comes back when there is room. */
+    fresh(); f_cost = 5000;
+    int unowned_silent = silent_renders, unowned_flex = stock_renders;
+    for (unsigned i = 0; i < 3u; ++i) CHECK(frame(6, 20000, 5000) > 100);
     uint32_t unowned_sheds = mw_frame_sheds;
-    for (unsigned i = 0; i < 3u; ++i) CHECK(frame(6, 40000, 10000) > 100);
-    CHECK(mw_frame_sheds == unowned_sheds && !(mw_frame_shed_tracks & 1u << 6));
+    f_cost = 70000; CHECK(frame(6, 20000, 5000) > 100);                        /* its cost rises: seen once */
+    for (unsigned i = 0; i < 3u; ++i) CHECK(frame(6, 20000, 5000) == -7);
+    CHECK(mw_frame_sheds == unowned_sheds + 3u && mw_frame_shed_tracks & 1u << 6);
+    CHECK(silent_renders == unowned_silent && stock_renders == unowned_flex + 3);
     f_cost = 1000;
     /* A track only stock renders always renders, however late the frame. */
     const void *v_only2[] = {&V};
@@ -645,6 +749,48 @@ int main(void)
     uint32_t sheds = mw_frame_sheds;
     CHECK(frame(6, 90000, 10000) == -7 && mw_frame_sheds == sheds);
     rows(0, 0, 0, 0);
+
+    /* The render keeps what it worked out for a track while the Part, the type byte and the signature it read stand,
+     * and works it out again when one of them changes or the rows do. It reads them once a frame: a change shows in the
+     * next frame, and nothing below the interrupt can make one inside a frame. (Rows never change without
+     * modwerk_machine_tables_changed on a unit; emptying one behind its back here shows the table is not walked.) */
+    {
+        const void *a_only[] = {&A};
+        rows(a_only, 1, 0, 0);
+        CHECK(mw_assign(part0(), 3, 5) == 1);
+        fresh(); mw_frame_t0 = host_timer;
+        int a0 = a_renders, flex = stock_renders, silent = silent_renders;
+        CHECK(mw_source_render_impl(3, 0, 0, 1) == a0 + 1);
+        machine_row[0] = 0;
+        CHECK(later(3) == a0 + 2 && mw_source_render_impl(6, 0, 0, 1) == -7);
+        part0()[62 + 90] = 2;                                                  /* another revision: nobody's */
+        CHECK(mw_source_render_impl(3, 0, 0, 1) == a0 + 3);                    /* the same frame: not read again */
+        mw_frame_exit(); mw_frame_t0 = host_timer;                             /* the frame's exit ends it */
+        CHECK(mw_source_render_impl(3, 0, 0, 1) == -7 && stock_renders == flex + 2);
+        part0()[62 + 90] = 1;                                                  /* A's again, and A's row is empty */
+        CHECK(later(3) == -9 && silent_renders == silent + 1);
+        rows(a_only, 1, 0, 0);                                                 /* the rows changed: at once */
+        CHECK(mw_source_render_impl(3, 0, 0, 1) == a0 + 4);
+        part0()[PART_STRIDE + 0x22 + 3] = 1; misc[0x0f] = 1;                   /* Part 2: T4 is plain FLEX there */
+        CHECK(later(3) == -7);
+        misc[0x0f] = 0;
+        CHECK(later(3) == a0 + 5);
+        part0()[0x22 + 3] = 2;                                                 /* THRU: no machine track */
+        CHECK(later(3) == -7);
+        part0()[0x22 + 3] = 1;
+        put_u32(BANK, 0);                                                      /* no bank: stock's render */
+        CHECK(later(3) == -7);
+        put_u32(BANK, 0x46000000u);
+        CHECK(later(3) == a0 + 6);
+        /* An unowned FLEX track goes to the RENDER_FLEX machine the rows name now, not the one they named before. */
+        const void *f_only2[] = {&F};
+        rows(f_only2, 1, 0, 0); f_cost = 0;
+        CHECK(mw_source_render_impl(6, 0, 0, 1) > 100);
+        rows(a_only, 1, 0, 0);
+        CHECK(mw_source_render_impl(6, 0, 0, 1) == -7 && mw_source_render_impl(3, 0, 0, 1) == a0 + 7);
+        CHECK(mw_assign(part0(), 3, 1) == 1);
+        rows(0, 0, 0, 0);
+    }
 
     /* SRC SETUP: the SETUP_PAGE machine S (row 6, after A) draws and edits its own rows while the cursor is on its row and
      * the current track is its own; N (row 7, no flag), A and stock rows keep stock's page and editor. */
@@ -683,6 +829,7 @@ int main(void)
     rows(0, 0, 0, 0);
     CHECK(counts_now() == (5u << 24 | 5u << 16 | 4u << 8 | 3u) && !masked && clamp_now() == 5);
     check_source_starts();
+    check_native_flex_voice();
     if (failures) { fprintf(stderr, "%u registry checks failed\n", failures); return 1; }
     puts("Machine registry: rows by table order, admission before mutation, signatures and defaults in both copies, absent "
          "machines as stock, the validator's protection and wrapper chain, render routing, keyed SEQUENCER rows, chooser "

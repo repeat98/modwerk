@@ -6,7 +6,13 @@
   "defsym": {},
   "cflags": [],
   "weak": [],
-  "subscribe": [],
+  "subscribe": [
+    {
+      "event": "ev_tick",
+      "fn": "silent_pad_trig_tick",
+      "order": 50
+    }
+  ],
   "contribute": [],
   "collections": {},
   "copied": [],
@@ -18,7 +24,7 @@
       "bits": 1
     },
     {
-      "sym": "silent_live_rec_on",
+      "sym": "silent_pt_live_rec_on",
       "scope": "global",
       "bits": 1
     },
@@ -30,8 +36,9 @@
   ],
   "claims": [
     "ui:pad press outside CHROMATIC mode",
-    "ui:TRIG 1-12 press",
+    "ui:TRIG 1-13 press",
     "ui:FUNC + pad",
+    "ui:FUNC + TRIG 1-13",
     "ui:GLOBAL > CONTROL > SEQUENCER CONFIG row after AUTO TRK SWITCH"
   ],
   "requires": [],
@@ -68,6 +75,13 @@
           "stockSha256": "3159335e2f50174cdc7c9d9b3500c090f7310ce7875aaf74c04760a58644790d",
           "op": "jmp",
           "target": "silent_pad_trig_func_gate"
+        },
+        {
+          "addr": "0x400c7ce0",
+          "len": 6,
+          "stockSha256": "e6dd4b00e0c56b1f25a799131c72a5869b004fa867e8eabb950c76180e620646",
+          "op": "jsr",
+          "target": "silent_pad_trig_func_trig"
         },
         {
           "addr": "0x400ec184",
@@ -110,6 +124,20 @@
           "stockSha256": "5e6d3d67283ab1d4d3dc3e4b139e7f9f0a4fa7c6d0965061a2e4bc32c2de575a",
           "op": "jmp",
           "target": "silent_pad_trig_on_chro_gate"
+        },
+        {
+          "addr": "0x40120a66",
+          "len": 6,
+          "stockSha256": "3aae1148f6e5b024e6309e3a019218763f277627d512f92739018842e1d1c926",
+          "op": "jsr",
+          "target": "silent_pad_trig_engine_gate"
+        },
+        {
+          "addr": "0x4012155a",
+          "len": 6,
+          "stockSha256": "55e0de62adab1830b94e7bc51f94626af920808911d1cf98b802ab828f37b8dd",
+          "op": "jsr",
+          "target": "silent_pad_trig_glow"
         }
       ]
     }

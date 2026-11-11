@@ -1,6 +1,43 @@
 # Sidechain Compressor verification
 
-Version **0.2.0-experimental**, recorded **25 October 2026**. Built by Modwerk's shared firmware builder, beside any other module that fits, and over USB part of the beta base. The DSP figures are emulator measurements, not chip timing; the hardware record is below. The 0.1.2 and 0.1.1 records follow as history.
+Version **0.2.2-experimental**, recorded **3 November 2026** (0.2.1: 30 October 2026; 0.2.0: 25 October 2026). Built by Modwerk's shared firmware builder, beside any other module that fits, and over USB part of the beta base. The DSP figures are emulator measurements, not chip timing; the hardware record is below. The 0.1.2 and 0.1.1 records follow as history.
+
+## 0.2.2-experimental
+
+### What changed
+
+`placement.json` names the module's two ColdFire units, `sc_cf` and `sc_ui` (1,314 B). Modwerk's builder links them into the DRAM runtime when another selected module already carries one, and into the menu cave otherwise ([#1175](https://github.com/repeat98/modwerk/issues/1175): FM Synth, this module and Mute Modes with the stock FX2 effects kept ran 8 bytes short of cave, and the build fell back to an FX2 chooser with this module only). The runtime is a fixed reservation of sample memory, so the module never starts one: on its own or beside modules without DRAM code it builds as 0.2.1 did. The DSP and ColdFire sources are 0.2.1's, byte for byte; both units assemble to the same code for the cave's and the runtime's ISA.
+
+The builders follow one rule for this (owner review): native `tools/build/runtime_join.py` sets the units' `dram` right after `compose_map` (outside `tools/remix`, so the reviewed pins over it do not move), and the raw descriptor words resolve after the platform runtime link; the browser links them at the module's place in native order (this module first while the stock FX2 effects stay, as it replaces COMPRESSOR in place) and resolves its formatters, widgets and detours from the runtime.
+
+### Results
+
+- **Module alone:** the composed image is 0.2.1's, byte for byte (the cave placement is unchanged).
+- **Screenshots:** the 30 October captures of that image (MAIN OS `fb7c5e31…`), unchanged; only their version label moves to 0.2.2.
+- **`npm run module:verify -- sidechain-compressor`:** 162 selections, 64 native module-owned images match, 98 matching refusals, 0 mismatches. Two selections that 0.2.1 refused for cave space now build; none newly refused.
+- **The #1175 set** (FM Synth, Play Modes, Mute Modes, Apply Scene, Direct Jump and this module, stock FX2 kept): builds with all 13 FX2 rows; the cave ends at 0x400d7674, 1,352 B before the long chooser list.
+- **Emulator** (`scripts/capture-module-ui.py`, MKI panel): that image and the module alone show the same pixels on the FX1 chooser, COMPRESSOR's main page and page 2 with KEY selected; the FX2 chooser lists the stock effects.
+- **Hardware:** below and in [evidence/hardware.md](evidence/hardware.md): beside Direct Jump and in the #1175 set, both with the units in the DRAM runtime, on the author's MKI, 3 November 2026.
+- **The flashed images and this release:** the images were composed from this source before the isolated package build (MAIN OS `e77ec14b…` and `ebaf5116…`; both rebuild exactly from the commit before the version bump). The published packages, on `main` after #1098 and #1343, compose `c025c706e193c4fbf210115aceb3ea36d0e00a4bb7e0db646330df7fa44505a2` (beside Direct Jump) and `f82e5ada344aee2f6c70e9c572b8aa5cdc41dc0857eb4602e8aa4d2e1961d948` (the #1175 set). Beside Direct Jump, every OS write set (menus, DSP, logger hooks, platform, startup) is identical to the flashed image's, the runtime links the same units at the same addresses, and its only differing bytes are the core logger's identity text (137 bytes in `olog_source`, `olog_configuration`, `olog_modules`, `olog_build`: this module's version and the build hashes). In the #1175 set the same holds except for Mute Modes, which is 0.2.2 on `main` now (0.2.1 when flashed): its cave unit grows from 1,086 to 1,106 bytes at the same address and its five jumps follow it. This module's code, placement and both joining objects are the flashed ones byte for byte.
+
+## 0.2.1-experimental
+
+### What changed
+
+The key bus moves from Y $800-$9FF to Y $7E00-$7FFF, the tail of the first internal FX2 slot (+$3E00, past every +$3DFD ring and stock's +$3DA2), and the MON words from Y $7F0-$7FF to Y $FF0-$FFF. Y $7F0-$9FF is then free for a DSP machine's voice (BlackPyramids, [#1064](https://github.com/repeat98/modwerk/issues/1064)). Only the manifest's three address tokens change (`@KEYB@` $7e00, `@KEYB1@` $7e20, `@MONB@` $ff0) and its declared ranges; the DSP and ColdFire sources are 0.2.0's, byte for byte. The standalone and KYOTI builds have used the same key bus address since 15 October 2026.
+
+The beta base moves with it (owner review): `dsp-sites.json` gives feature 1 three regions (MON $FF0+$10, the window, the bus $7E00+$200) and feature 8 the window and the bus at $7E00; a reset chunk now stops at every region's end from the ledger (`MW_DSP_RESET_END`), where the board and the driver assumed at most two regions. Sidechain Ringmod reads the bus at the new address in the same change.
+
+### Results
+
+- **Image:** Modwerk's native build of the module alone with the stock FX2 effects kept: MAIN OS `fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc`. Against 0.2.0's `131142e1…` it differs in 12 bytes, six per DSP payload: the four key bus references ($08xx to $7Exx) and the two MON references ($07F0 to $0FF0).
+- **Free memory (emulator, stock OS):** every stock effect through FX1 and FX2 on all eight tracks (rotated, 60 frames each, 902 frames, both cores): no write to Y $F00-$FFF or Y $7E00-$7FFF; no writer of Y $FF8 at all, zeros included.
+- **This image (emulator):** COMPRESSOR on every track's FX1: the tap writes Y $7E00-$7EFF on core 1 (T1-T4) and Y $7F00-$7FFF on core 0 (T5-T8), nothing at Y $800-$9FF.
+- **Resident engine:** `test_resident_engines` (the base's engine in the DSP simulator) gives the cross-core key exactly two blocks late for every enable order and core skew, and a same-core key 0 or 1 block, as 0.2.0.
+- **Free-slot rule:** a buffer of 15,870 words ($3DFE, Mini Verb and E-Verb) or BBD's 8,250 (0x203A) fits in the first internal FX2 slot beside the bus; 16,384 does not (`test_stock_hook_resources`, `test_resident_stock_dsp`).
+- **Composition suites** (`export-composition-proofs.py --suite sidechain / sidechain-visible / analog-bd`, static stock): 169 of 512, 618 of 1,024 and 146 of 212 selections build, exactly the selections that build with 0.2.0 on the same main; only selections containing this module changed.
+- **Load, static bound, memory:** unchanged from 0.2.0 (the same instructions; 528 private Y words a core, now 512 + 16).
+- **Hardware:** below and in [evidence/hardware.md](evidence/hardware.md): the module alone and beside BBD Delay on the author's MKI, 30 October 2026.
 
 ## 0.2.0-experimental
 

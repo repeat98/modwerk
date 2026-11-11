@@ -6,6 +6,7 @@ import { composeSelection } from './compose-os'
 import { FIRMWARE_VERSION, type EngineResponse } from './protocol'
 import { isModulePaused } from '../catalog/availability'
 import { buildBase } from './elekloader/octatrack-base'
+import { DEFAULT_LAYOUT, variantPackage, type BaseVariants } from './elekloader/base-variants'
 
 // Exercise the real session/report/packaging boundary with synthetic bytes.
 // Stock verification and the composer are covered by their separate tests and
@@ -59,6 +60,17 @@ describe('Octatrack firmware boot name', () => {
     await handle({ id: 3, type: 'validate', moduleIds: ['repitch'], keepStockFx2: false, startup: 'classic' })
     expect(replies.at(-1)).toMatchObject({ type: 'error' })
     expect(compose.mock.calls.slice(classic).map(call => call[4])).toEqual([false])
+  })
+  it('tries the classic startup before the compact FX2 menu, and reports that menu', async () => {
+    const firmware = synthetic(), replies: EngineResponse[] = []
+    const handle = createEngineSession(response => { replies.push(response) })
+    await handle({ id: 1, type: 'inspect', name: 'synthetic.bin', buffer: new Uint8Array(encodeFirmware(firmware, firmware.mainOs, 'STOCK')).buffer })
+    const compose = vi.mocked(composeSelection), before = compose.mock.calls.length
+    compose.mockRejectedValueOnce(new Error('PERSONALIZE setters does not fit in the available menu and patch space (68 bytes needed, 60 bytes available)'))
+    compose.mockImplementationOnce(async (original: Uint8Array) => ({ bytes: original.slice(), chooser: { fx1: [], fx2: [], hidden: [] }, runtime: { bytes: 0, reservedBytes: 0 }, compactFx2: true } as unknown as Awaited<ReturnType<typeof composeSelection>>))
+    await handle({ id: 2, type: 'validate', moduleIds: ['repitch'], keepStockFx2: false })
+    expect(compose.mock.calls.slice(before).map(call => [call[4], call[5]])).toEqual([[true, false], [false, true]])
+    expect(replies.at(-1)).toMatchObject({ type: 'validated', report: { startupAnimation: 'classic', startupFallback: true, compactFx2: true } })
   })
   it('uses only the panel boot font letter range', () => {
     expect(FIRMWARE_VERSION).toMatch(/^[A-Z0-9. ]{1,10}$/)
@@ -127,9 +139,11 @@ describe('placement diagnosis', () => {
 })
 
 describe('the Modwerk base', () => {
-  it('asks for the OS file first, then builds from the verified file with the committed package', async () => {
+  it('asks for the OS file first, then builds from the verified file: USB Audio off unless a layout is asked for', async () => {
     const text = readFileSync(new URL('./assets/octatrack-base.elemod', import.meta.url), 'utf8')
-    const fetched = vi.fn(async (url: string) => (url.endsWith('octatrack-base.elemod') ? new Response(text) : new Response(null, { status: 404 })))
+    const layouts = readFileSync(new URL('./assets/octatrack-base-variants.json', import.meta.url), 'utf8')
+    const fetched = vi.fn(async (url: string) => (url.endsWith('octatrack-base.elemod') ? new Response(text)
+      : url.includes('octatrack-base-variants') ? new Response(layouts) : new Response(null, { status: 404 })))
     vi.stubGlobal('fetch', fetched)
     onTestFinished(() => { vi.unstubAllGlobals() })
     const replies: EngineResponse[] = [], handle = createEngineSession(response => { replies.push(response) })
@@ -141,10 +155,18 @@ describe('the Modwerk base', () => {
     const reply = replies.at(-1) as Extract<EngineResponse, { type: 'base' }>
     expect(reply).toMatchObject({ type: 'base', sha256: 'b', base: 'c'.repeat(64) })
     expect([...new Uint8Array(reply.buffer)]).toEqual([1, 2, 3])
+    // No layout: the owner's default for members, USB MIDI alone (11 November 2026), patched from the committed package.
+    const off = variantPackage(text, JSON.parse(layouts) as BaseVariants, 'off')!
     const [stock, fetchedText, fills] = vi.mocked(buildBase).mock.calls[0]
     expect(stock).toEqual(input)
-    expect(fetchedText).toBe(text)
-    expect(fetched).toHaveBeenCalledOnce()
-    expect(fills.length).toBeGreaterThan(0)
+    expect(fetchedText).toBe(off.text)
+    expect(fills).toEqual(off.fills)
+    expect(fetched).toHaveBeenCalledTimes(2)
+    // The committed package's own layout, asked for by a module set, is that package as it is.
+    await handle({ id: 4, type: 'base', layout: DEFAULT_LAYOUT })
+    const [, ownText, ownFills] = vi.mocked(buildBase).mock.calls[1]
+    expect(ownText).toBe(text)
+    expect(ownFills.length).toBeGreaterThan(0)
+    expect(fetched).toHaveBeenCalledTimes(3)
   })
 })

@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { SubmissionPage } from './SubmissionPage'
 import { cloneCommands, skillHandoff, STARTER_MACHINES, starterPrompt, starterReading, startersFor, updatePrompt } from './starter-prompts'
-import { DEVICES } from '../devices/registry'
+import { DEVICES, isZd2Pedal } from '../devices/registry'
 
 const all = STARTER_MACHINES.flatMap(machine => startersFor(machine.id).map(starter => ({ machine: machine.id, starter })))
 
@@ -138,6 +138,36 @@ describe('starter prompts', () => {
     }
     expect(starterPrompt('digitakt', startersFor('digitakt')[0])).toContain('- sdk/machines/digitakt/README.md (its Modwerk stack section first)')
     expect(starterPrompt('octatrack', startersFor('octatrack')[0])).not.toContain('Modwerk stack section')
+  })
+
+  it('sends the Zoom pedals down their own road: the ZDL docs and plan, MIDISTOMP where it runs, Ziddle only for development, no stock code', () => {
+    const zoom = DEVICES.filter(device => device.family === 'zoom' && !isZd2Pedal(device))
+    expect(zoom.length).toBeGreaterThan(0)
+    for (const device of zoom) {
+      const prompt = starterPrompt(device.id, startersFor(device.id)[0])
+      expect(prompt).toContain('- docs/ZOOM_MULTISTOMP.md')
+      expect(prompt).toContain('- docs/ZDL_MODULE_CONTRACT.md')
+      // A pedal still coming up follows the MS-70CDR's road, not the MS-70CDR's own plan.
+      expect(prompt).toContain(device.sdk ? 'docs/ZOOM_MULTISTOMP.md#plan' : 'docs/ZOOM_MULTISTOMP.md#another-zdl-pedal')
+      // MIDISTOMP's releases are the MS-70CDR's OS: no flashing them onto another pedal (modding guidelines).
+      if (device.id === 'zoom-ms-50g' || device.id === 'zoom-ms-60b') expect(prompt).toContain('never flash one onto this pedal')
+      expect(prompt).toContain('no stock Zoom code')
+      expect(prompt).toContain('never hardware evidence, and the site never offers it to musicians')
+      expect(prompt).toContain('load ZD2 effects and are not covered here')
+      expect(prompt).not.toContain('exact rebuild, recovery/boot, hooks/core')
+      expect(prompt).toContain(device.id === 'zoom-g1on' ? 'does not run on this pedal' : 'The base is Luca Matturro\'s MIDISTOMP')
+    }
+    expect(readFileSync('docs/ZOOM_MULTISTOMP.md', 'utf8')).toContain('## Plan')
+    expect(readFileSync('docs/ZOOM_MULTISTOMP.md', 'utf8')).toContain('## Another ZDL pedal')
+    // A ZD2 pedal reads its own report, not the ZDL plan, base or contract.
+    const zd2 = starterPrompt('zoom-g1-four', startersFor('zoom-g1-four')[0])
+    expect(zd2).toContain('- docs/ZOOM_ZD2.md')
+    expect(zd2).not.toContain('docs/ZOOM_MULTISTOMP.md')
+    expect(zd2).not.toContain('docs/ZDL_MODULE_CONTRACT.md')
+    expect(zd2).not.toContain('MIDISTOMP (MIT)')
+    expect(zd2).toContain('no stock Zoom code')
+    expect(readFileSync('docs/ZOOM_ZD2.md', 'utf8')).toContain('## Next steps')
+    expect(starterPrompt('lxr-02', startersFor('lxr-02')[0])).not.toContain('Ziddle')
   })
 
   it('names the module, the change, the report and the login in the update prompt', () => {

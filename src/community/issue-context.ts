@@ -11,7 +11,10 @@
 import type { OtLogSummary } from './ot-log'
 
 export const OT_MODELS = { mk2: 'Octatrack MKII', mk1: 'Octatrack MKI', unknown: 'Not sure' } as const
-export const FLASH_STATES = { flashed: 'Running an Octamod build', 'not-flashed': 'Not flashed yet (website/build problem)', stock: 'Back on the stock OS' } as const
+export const FLASH_STATES = { card: 'Running Modwerk firmware from the card', usb: 'Running modules loaded over USB', flashed: 'Running a Modwerk build', 'not-flashed': 'Not flashed yet (website/build problem)', stock: 'Back on the stock OS' } as const
+/** Maintainers ask an Octatrack reporter whether it was a card build or a USB sync, so the form asks; `flashed` stays readable for older reports and is what Digitakt and Digitone flash. */
+export const OT_FLASH_CHOICES = ['card', 'usb', 'not-flashed', 'stock'] as const
+export const DIGI_FLASH_CHOICES = ['flashed', 'not-flashed', 'stock'] as const
 export const LOG_MISSING_REASONS = {
   'logger-not-in-build': 'I am using an older build without logging',
   'device-does-not-boot': 'The Octatrack does not boot',
@@ -56,8 +59,9 @@ export const CONFIGURATION_REQUIRED = 'Choose the configuration the Octatrack ru
 export function validateIssueContext(value: unknown, log: Pick<OtLogSummary, 'version' | 'modules' | 'os' | 'stockFx2'> | null = null): OctatrackIssueContext {
   if (!isRecord(value)) fail('Report context is missing.')
   const { model, flash, os, modules, keepStockFx2, build } = value
-  if (typeof model !== 'string' || !(model in OT_MODELS)) fail('Choose your Octatrack model.')
-  if (typeof flash !== 'string' || !(flash in FLASH_STATES)) fail('Choose what the Octatrack is running.')
+  if (typeof model !== 'string' || !Object.hasOwn(OT_MODELS, model)) fail('Choose your Octatrack model.')
+  // `flashed` is still accepted: a tab opened before the card/USB split sends it.
+  if (typeof flash !== 'string' || !Object.hasOwn(FLASH_STATES, flash)) fail('Choose what the Octatrack is running.')
   if (typeof os !== 'string' || !/^[0-9A-Za-z.]{1,16}$/.test(os)) fail('The base OS version is unreadable.')
   if (!Array.isArray(modules) || modules.length > 64) fail('The configuration module list is unreadable.')
   const seen = new Set<string>()
@@ -83,6 +87,6 @@ export function validateLogMissing(value: unknown, context: OctatrackIssueContex
   const note = typeof value.note === 'string' ? value.note.trim() : ''
   if (note.length > 500) fail('Keep the reason under 500 characters.')
   if (reason === 'other' && note.length < 10) fail('Describe in a few words why you cannot attach OCTAMOD.LOG.')
-  if (reason === 'not-flashed' && context.flash === 'flashed') fail('You said the Octatrack runs an Octamod build. Attach OCTAMOD.LOG, or choose another reason.')
+  if (reason === 'not-flashed' && (context.flash === 'flashed' || context.flash === 'card' || context.flash === 'usb')) fail('You said the Octatrack runs a Modwerk build. Attach OCTAMOD.LOG, or choose another reason.')
   return { reason, note }
 }

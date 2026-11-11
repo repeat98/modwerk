@@ -1,5 +1,5 @@
 import { BackLink } from './BackLink'
-import { INDEPENDENCE_NOTICE, FLASHING_RISKS, BETA_RECOVERY_NOTICE, BETA_REPORTING_NOTICE } from '../firmware-notices'
+import { INDEPENDENCE_NOTICE, FLASHING_RISKS, BASE_RECOVERY_NOTICE, BETA_REPORTING_NOTICE, REPORT_PROBLEMS } from '../firmware-notices'
 import { isValidElement, useState } from 'react'
 import type { ReactNode } from 'react'
 import { BASE_FIRMWARE } from '../engine/base'
@@ -42,7 +42,7 @@ const SECTIONS: FaqSection[] = [
         answer: <>
           <p><strong>Octatrack MKI and MKII:</strong> the original OS {BASE_FIRMWARE.version} .bin. {DOWNLOADS_ENABLED ? 'Builds and downloads are available.' : 'Downloads are paused.'} Review each module’s test records for your model.</p>
           <p><strong>Digitakt mk1:</strong> OS 1.53 or 1.54 .syx. <strong>Digitone mk1 and Digitone Keys:</strong> OS 1.43 or 1.44 .syx. These machines are in preview: builds and .syx downloads are available, and their module libraries are still growing. This does not include Digitakt II or Digitone II.</p>
-          <p><strong>Analog Rytm MKII:</strong> OS 1.74 .syx, in preview. Builds run in your browser so you can check a combination; downloads open once its release is approved.</p>
+          <p><strong>Analog Rytm MKII:</strong> OS 1.74 .syx, in preview: builds and .syx downloads are available, and its module library is still growing. Recovery needs a MIDI DIN interface, because the startup menu never appears over USB.</p>
           <p><strong>Digitakt II:</strong> OS 1.17, in research. Its page offers a core build in the browser for local checks; there are no Modwerk downloads yet.</p>
           <p>Other machines, such as the Digitone II, Syntakt, Analog Keys, Model:Cycles, Zoom multi-effects pedals and the Erica Synths LXR-02, have research pages or an invitation to contribute. A machine page does not mean firmware builds are available. Check the machine’s status and each module’s supported releases before choosing an OS file.</p>
         </>,
@@ -87,9 +87,9 @@ const SECTIONS: FaqSection[] = [
             <li>Open that machine’s Configuration page and choose the original OS file it requests. For Octatrack, use <code>{BASE_FIRMWARE.filename}</code>.</li>
             <li>Review compatibility messages and use the suggested fixes to resolve any errors before building.</li>
             <li>Read the flashing risks, tick the acknowledgement and choose <strong>Build firmware</strong>. You can sign in or choose <strong>Skip for now</strong> to build as a guest. Keep the tab open until it finishes.</li>
-            <li>Confirm that you know how to get back to the original OS, then download the file: <strong>{DOWNLOADS_ENABLED ? 'Download .bin' : 'downloads are paused'}</strong> for Octatrack, <strong>Download .syx</strong> for Digitakt and Digitone.</li>
+            <li>Confirm that you know how to get back to the original OS, then download the file: <strong>{DOWNLOADS_ENABLED ? 'Download .bin' : 'downloads are paused'}</strong> for Octatrack, <strong>Download .syx</strong> for Digitakt, Digitone and Analog Rytm MKII.</li>
           </ol>
-          <p>Analog Rytm MKII and Digitakt II builds run in your browser for checks only. Modwerk offers their firmware files once a release is approved.</p>
+          <p>Digitakt II builds run in your browser for checks only. Modwerk offers its firmware files once a release is approved.</p>
           <p><strong>Export configuration</strong> saves a JSON backup of your choices. It is not a firmware file and cannot be flashed.</p>
         </>,
       },
@@ -164,12 +164,14 @@ const SECTIONS: FaqSection[] = [
         </>,
       },
       {
-        id: 'usb-beta',
+        id: 'usb-base',
         title: 'Can I load Octatrack modules over USB instead of flashing?',
-        keywords: 'usb beta tester base module set trial keep undo chrome edge diagnostics discord join invitation mkii',
+        keywords: 'usb base module set sync trial keep undo chrome edge install guide card update os upgrade usb disk mode mki mkii beta tester',
         answer: <>
-          <p>In the Modwerk beta. Beta testers install the Modwerk base once, then send module sets from this site to the Octatrack over USB without reflashing. You need an Octatrack MKII, your original OS {BASE_FIRMWARE.version} file, a USB cable and Chrome or Edge on a computer. Diagnostics stay on while you are in the beta.</p>
-          <p>Places are limited. When a round is open, the site shows <strong>Join the beta</strong>. {BETA_RECOVERY_NOTICE} {BETA_REPORTING_NOTICE}</p>
+          <p>Yes, with the Modwerk base. Install it once, then send module sets from this site to the Octatrack over USB without reflashing. You need an Octatrack MKI or MKII, your original OS {BASE_FIRMWARE.version} file, a USB cable and Chrome or Edge on a computer.</p>
+          <p>The first install always goes through the card: the original OS has no USB link for Modwerk. Open <strong>Your Octatrack</strong> and follow the guide. You download the base .bin, copy it to the card over the cable in <strong>USB DISK MODE</strong> or with a card reader, then install it with <strong>PROJECT → SYSTEM → OS UPGRADE</strong>. Every later base update goes over USB, with the card as the fallback.</p>
+          <p>In a browser without USB (Firefox, Safari, iPad, phones), and for modules that have no USB version yet, build card firmware instead: one firmware file for the card, without the base. {BASE_RECOVERY_NOTICE} {REPORT_PROBLEMS}</p>
+          <p>Beta testers try new modules before everyone else. When a round is open, the site shows <strong>Join the beta</strong>. {BETA_REPORTING_NOTICE}</p>
         </>,
       },
     ],
@@ -182,7 +184,7 @@ const SECTIONS: FaqSection[] = [
         title: 'What does preview mean for Digitakt, Digitone and Analog Rytm MKII?',
         keywords: 'digitakt digitone analog rytm preview available build verification download module combinations memory conflicts standalone',
         answer: <>
-          <p>Their module libraries are smaller and still growing. On the Digitakt and Digitone you can build and download a .syx. On the Analog Rytm MKII the build runs in your browser for checks, and downloads open once its release is approved. Read each module’s test records before flashing.</p>
+          <p>Their module libraries are smaller and still growing. On the Digitakt, Digitone and Analog Rytm MKII you can build and download a .syx. Read each module’s test records before flashing.</p>
           <p>Two modules may need the same machine slot, control, memory area or firmware change. Follow the conflict message and remove one of the affected modules. A standalone firmware module must be used on its own. A combination that fits is not proof that it works on hardware.</p>
         </>,
       },
@@ -225,7 +227,7 @@ const SECTIONS: FaqSection[] = [
         keywords: 'paused disabled missing ready built hardware audio effects load failed preview digitakt digitone analog rytm recovery',
         answer: <>
           <p>{DOWNLOADS_ENABLED ? 'The download button appears only after a successful build. Choose the original base firmware, add supported modules, resolve configuration errors and acknowledge the flashing risks first. Once the build finishes, confirm that you know how to get back to the original OS.' : 'Firmware downloads are paused. The built-in logger is undergoing verification. Downloads will resume after the updated builds have passed review.'}</p>
-          <p>Digitakt and Digitone builds offer <strong>Download .syx</strong> the same way. Analog Rytm MKII and Digitakt II builds run for checks only, and Modwerk offers their files once a release is approved.</p>
+          <p>Digitakt, Digitone and Analog Rytm MKII builds offer <strong>Download .syx</strong> the same way. Digitakt II builds run for checks only, and Modwerk offers its files once a release is approved.</p>
           <p>A build that fits and passes local file checks is not proof that it will work on hardware. You can still export your configuration as JSON.</p>
         </>,
       },

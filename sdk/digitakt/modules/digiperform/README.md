@@ -1,12 +1,12 @@
 # Digi Perform
 
-Modwerk metadata version: `0.1.1-experimental`.
+Modwerk metadata version: `0.1.3-experimental`.
 
 ## Overview
 
 Digi Perform adds a Perform page to the original Digitakt, modelled on the Analog Four’s performance macros. It is the second page of the TRIG page: press TRIG again. Knobs A–H each move one parameter of one track, or the same parameter of all eight audio tracks, as an offset added on top of the sound. The knobs feel like the stock parameter knobs: the same acceleration, push and turn for larger steps, and FUNC and turn to jump between the parameter’s own snap values. A knob picks up the parameter’s current value when the page opens, so nothing jumps.
 
-The eight assignments live in the pattern, so each pattern has its own and they are saved with the project (save the project to keep them; see Saved projects). They are made on the page itself with Perform Quick Assign (FUNC and a knob’s push), or in SETTINGS > PERFORM EDIT (Perform Edit).
+The eight assignments live in the pattern, so each pattern has its own and they are saved with the project (save the project to keep them; see Saved projects). After a power cycle, load the project again to get them back (see Known problem below). They are made on the page itself with Perform Quick Assign (FUNC and a knob’s push), or in SETTINGS > PERFORM EDIT (Perform Edit).
 
 The change is added after the engine has smoothed and modulated the parameter. It is never a parameter lock and never changes the stored value: leaving the page, opening Perform Edit or reloading the pattern puts every parameter back to what the sound stores. With the sequencer playing, selecting another pattern leaves the offsets in place until that pattern starts; then they let go and the knobs show the new pattern’s values.
 
@@ -59,21 +59,24 @@ TRIG page, press TRIG again; Perform Edit in SETTINGS > PERFORM EDIT
 Digi Perform needs core 2.1 and is built for OS 1.53 and 1.54.
 
 - It cannot be installed with Digi Matrix: both patch the render site after the LFOs (0x40077eb2), so the configurator never offers them together.
-- Parameters are the sound’s slots 1–45, named as the Digitakt’s own pages name them (a mod that renames a page’s knobs for its machines, Digi Mono for example, is not followed yet); ranges come from the firmware’s own table. FLT.DEL to FLT.ROUT are the filter’s second page.
+- Parameters are the sound’s slots 1–45. A knob on an SRC slot uses the track’s machine’s own parameter, as the SRC page shows it: its short name under the knob, its long name and value text in the header, its range and step size, in Perform Quick Assign and Perform Edit too. This covers ONESHOT, WERP, REPITCH, SLICE and module machines (Digi Mono, SOPHIE, NEIGHBOR, POLY, STRING, DIGISLICER, RAM). The module asks the stock SRC page’s own routines for the knob’s track, so a mod that renames a machine’s knobs there is named here too; it patches none of those routines. A knob on an SRC slot the machine does not have is unassigned. ALL-tracks knobs move each track’s parameter by the knob’s position, each within its own range, and skip tracks with nothing in that slot. The other pages’ parameters keep the stock names and the firmware’s own ranges. FLT.DEL to FLT.ROUT are the filter’s second page.
+- The header shows Trk1–8 or All, then name=value. When the long name does not fit beside the value, the knob’s short name is used.
+- CPU: heavy Digi Mono machines (ENS, VO, POLY SIN) with Overbridge connected load the Digitakt close to its limit, on stock pages too. The author’s readings there (digihealth’s SYSTEM INFO, FAST AUDIO off): stock page 96%, Perform page while turning a knob 97%, no delay. digihealth’s FAST AUDIO gives more headroom (TESTING.md).
 - One assignment for each knob A–H, and a track’s parameter can belong to one knob only. The assignments are kept in bits of tracks 5 to 8’s spare sound bytes that no other mod here uses.
 - Selecting another pattern while the sequencer is stopped reloads the offsets at once; while it plays, the new pattern’s knobs take over when it starts. This is detected from the audio engine’s own pattern bytes; the author has seen it work on a unit.
 - After the stock chord, metronome, scale, microtiming or retrig screens, press TRIG twice to open the Perform page again.
 - The Perform page opens from the audio tracks’ TRIG page; on a MIDI track TRIG keeps its stock job. SETTINGS > PERFORM EDIT works from any track.
-- The assignments are kept in bytes of each sound record that the firmware saves and loads but does not use itself. Like any other sound edit they are kept only when you save the project: a power cycle without a save brings back the last saved state. The author reported the save and power-cycle check as a whole (TESTING.md).
+- The assignments are kept in bytes of each sound record that the firmware saves and loads but does not use itself. They are kept only when you save the project. Known problem: the assignments are written into the saved project, but the Digitakt does not bring them back when it starts. After a power cycle they are missing until you load the project again (SETTINGS > PROJECT > LOAD PROJECT), which restores them. The author found this on a unit; 0.1.2-experimental behaves the same, and a fix is being worked on.
 
 ### Changes to stock behaviour
 
 With Digi Perform installed every stock flow works as before, except for these listed changes. Nothing changes until you press TRIG a second time or add an assignment, and no assignment exists in a new project.
 
 - **A tap of TRIG on the TRIG page** (stock: nothing happens; holding it keeps its stock job, the values and copy, paste and clear) opens the Perform page. This is needed because the page replaces no stock screen; a new key or an own top-level page would have taken a key the Digitakt already uses. TRIG again, or any other page key, leaves it. It is hooked on the TRIG page of the audio tracks only; on a MIDI track TRIG keeps its stock job.
+- **The TRIG page’s body is not drawn while the Perform page is open over it**, which the Perform page covers anyway. This saves the drawing time; the TRIG page draws again as soon as the Perform page is left, with another mod’s TRIG page (Digi Poly’s) too.
 - **A PERFORM EDIT row in SETTINGS**, after the stock rows. YES opens Perform Edit; NO goes back to the SETTINGS list.
 - **Inside the Perform page** the knobs A–H, FUNC and a knob’s push, and hold TRIG + REC / STOP / PLAY work as described above. FUNC + TRK, FUNC + PTN, FUNC + PAGE and a held step with an arrow leave the page, so the stock chord setup, metronome, scale, microtiming and retrig screens are the stock ones, unchanged.
-- **Saved projects:** save the project to keep your assignments. They are stored with the pattern's sounds, so a power cycle without a save brings back the last saved state, the same as for other sound edits. The assignments are kept in spare bits of the sounds on tracks 5 to 8 (byte 3 bits 0–6, bytes 4 and 5), which the firmware saves and loads but does not use itself. These bytes travel with the sound: a sound saved from track 5–8 to the pool, or copied onto another track, carries the bits along. Loading a sound onto tracks 5–8 puts the pattern’s assignments back, and the module checks its own marker before it trusts the bits; on tracks 1–4 Digi EQ and Digi Poly guard their own bytes the same way. A project saved with assignments and loaded on a build without Digi Perform should ignore them. Neither the copy case nor the build change is tested yet.
+- **Saved projects:** save the project to keep your assignments. They are stored with the pattern's sounds. At power-on they are not restored: load the project again after starting (the known problem above). The assignments are kept in spare bits of the sounds on tracks 5 to 8 (byte 3 bits 0–6, bytes 4 and 5), which the firmware saves and loads but does not use itself. These bytes travel with the sound: a sound saved from track 5–8 to the pool, or copied onto another track, carries the bits along. Loading a sound onto tracks 5–8 puts the pattern’s assignments back, and the module checks its own marker before it trusts the bits; on tracks 1–4 Digi EQ and Digi Poly guard their own bytes the same way. A project saved with assignments and loaded on a build without Digi Perform should ignore them. Neither the copy case nor the build change is tested yet.
 
 The effect on a parameter is never stored: removing the module or leaving the page puts every parameter back to what the sound stores.
 
@@ -100,14 +103,14 @@ The Perform page: TRIG pressed again on the TRIG page.
 
 Perform Quick Assign: FUNC and a knob’s push, then turn to choose the track.
 
-![Knob A with track number 1 and the name TUNE under it](media/assigned.png)
+![Knobs A, C and D for all tracks (TUNE, LOOP, F.TYP), B and E to G for tracks 8, 3, 2 and 2, H empty](media/assigned.png)
 
-Knob A assigned to track 1’s TUNE.
+Seven knobs assigned: A, C and D move a parameter of all tracks, B and E to G one track’s.
 
 ![The SETTINGS list with the PERFORM EDIT row selected](media/settings.png)
 
 SETTINGS > PERFORM EDIT is the last row of the SETTINGS list.
 
-![Perform Mode Edit with row A set to T1 SRC.TUNE + and rows B to F empty](media/perform-edit.png)
+![Perform Mode Edit with rows A, C and D set to ALL, row B to T8 SRC.SAMP, row E to T3 SRC.PLAY and row F to T2 SRC.PLAY](media/perform-edit.png)
 
-Perform Edit lists all eight knobs: A moves SRC.TUNE of track 1, direction +.
+Perform Edit lists the knobs: A, C and D move one parameter of all tracks, B, E and F of tracks 8, 3 and 2, all direction +.

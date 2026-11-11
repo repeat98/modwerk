@@ -1,0 +1,15 @@
+{
+  "kind": "owner-approved-update",
+  "id": "quantizer",
+  "version": "0.1.4-experimental",
+  "sourceSha256": "26e51a9c0a88d7852ba3062fe3f888a1e5c19a2faa2d90abe3587ffa20e49a02",
+  "approvedBy": "repeat98",
+  "approvedOn": "2026-11-04",
+  "waived": [
+    "current-build-hardware",
+    "chip-worst-case-cycles",
+    "complete-memory-bounds"
+  ],
+  "ownerStatement": "Approve this exact experimental update with the limits disclosed",
+  "reason": "The owner approved Scale Quantizer 0.1.4-experimental source 26e51a9c0a88d7852ba3062fe3f888a1e5c19a2faa2d90abe3587ffa20e49a02 (#1147) after its software checks. The author reports this source's card image passing his test sheet on his MKI: TEST2 on 30 October 2026 and its byte-identical TEST3 rebuild on 1 November 2026 (TESTING.md). Nobody has run its USB package on a unit, and the owner has run neither the USB package nor the card build on hardware. Chip timing and complete memory bounds remain unmeasured."
+}

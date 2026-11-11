@@ -2,19 +2,19 @@
   "schemaVersion": 1,
   "machine": "digitakt",
   "moduleId": "digiperform",
-  "moduleVersion": "0.1.1-experimental",
-  "capturedAt": "2026-10-30",
+  "moduleVersion": "0.1.3-experimental",
+  "capturedAt": "2026-11-11",
   "firmware": "1.54",
-  "imageSha256": "be8ff932982d5b137f8e4b160a87c532108e1162b6938055c1c0f35710502da4",
+  "imageSha256": "76cd3b079851bd6f57e8d2d94424cae8a9ef96cec6b7040ee3c1f84d36da0d00",
   "stockSha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6",
   "source": {
     "repository": "https://github.com/repeat98/modwerk",
-    "revision": "2c7acf00242ae3cecfe4a095cb3712b7ef6051cf",
+    "revision": "97edcfc34c04eb114b273768ea6e8bf96df491a3",
     "path": "sdk/digitakt/modules/digiperform"
   },
   "kit": {
-    "version": "0.6.0",
-    "lockSha256": "2e1453b609d568674fd546e909cbe67095f35713e1a1596ba523848dd2ea0bc6"
+    "version": "0.7.0",
+    "lockSha256": "b8b330328071092fe6e64fab5f55ddc25dd027e41ac8c9f0584dab95814a8e85"
   },
   "catalog": {
     "revision": "0da420d6532225851c0fb0ae7da58638054406c134bd34889a00c624e4a17687",
@@ -31,11 +31,11 @@
       },
       {
         "id": "digiperform",
-        "version": "0.1.1-experimental",
-        "sha256": "dc9652bd879ce40a0f200f80423278c82aa83654c5dd46cc8b737708c3a9fa9e"
+        "version": "0.1.3-experimental",
+        "sha256": "6ac7c2301d97131145d3f8734d5d7e7146cb850922dbddc41ff82be334139e93"
       }
     ],
-    "outputVersion": "3.0a",
+    "outputVersion": "3.1a",
     "verified": true
   },
   "emulator": {
@@ -70,147 +70,1487 @@
   },
   "inputs": [
     [
-      1000.0,
+      1000.003,
       "press 19"
     ],
     [
-      1100.0,
+      1100.004,
       "release 19"
     ],
     [
-      1414.234,
+      1400.005,
       "press 19"
     ],
     [
-      1514.237,
+      1500.006,
       "release 19"
     ],
     [
-      2314.261,
+      2300.008,
       "press 1"
     ],
     [
-      2414.264,
+      2500.009,
       "press 40"
     ],
     [
-      2514.266,
+      2700.01,
       "release 40"
     ],
     [
-      2614.269,
+      2900.01,
       "release 1"
     ],
     [
-      3014.281,
+      4600.017,
+      "turn 1 +4"
+    ],
+    [
+      4646.128,
+      "turn 1 +4"
+    ],
+    [
+      4686.128,
+      "turn 1 +4"
+    ],
+    [
+      4726.129,
+      "turn 1 +4"
+    ],
+    [
+      4766.684,
+      "turn 1 +4"
+    ],
+    [
+      4820.462,
+      "turn 1 +4"
+    ],
+    [
+      4866.128,
+      "turn 1 +4"
+    ],
+    [
+      4906.128,
+      "turn 1 +4"
+    ],
+    [
+      4946.128,
+      "turn 1 +4"
+    ],
+    [
+      4986.129,
+      "turn 1 +4"
+    ],
+    [
+      5033.352,
+      "turn 1 +4"
+    ],
+    [
+      5086.128,
+      "turn 1 +4"
+    ],
+    [
+      5126.128,
+      "turn 1 +4"
+    ],
+    [
+      5166.128,
+      "turn 1 +4"
+    ],
+    [
+      5206.128,
+      "turn 1 +4"
+    ],
+    [
+      5246.128,
+      "turn 1 +4"
+    ],
+    [
+      5286.566,
+      "turn 1 +4"
+    ],
+    [
+      5333.353,
+      "turn 1 +4"
+    ],
+    [
+      5386.128,
+      "turn 1 +4"
+    ],
+    [
+      5433.353,
+      "turn 1 +4"
+    ],
+    [
+      5486.128,
+      "turn 1 +4"
+    ],
+    [
+      5526.128,
+      "turn 1 +4"
+    ],
+    [
+      5566.129,
+      "turn 1 +4"
+    ],
+    [
+      5620.485,
+      "turn 1 +4"
+    ],
+    [
+      5666.128,
+      "turn 1 +4"
+    ],
+    [
+      5706.128,
+      "turn 1 +4"
+    ],
+    [
+      5746.129,
+      "turn 1 +4"
+    ],
+    [
+      5786.566,
+      "turn 1 +4"
+    ],
+    [
+      5833.355,
+      "turn 1 +4"
+    ],
+    [
+      5886.128,
+      "turn 1 +4"
+    ],
+    [
+      5926.128,
+      "turn 1 +4"
+    ],
+    [
+      5966.128,
+      "turn 1 +4"
+    ],
+    [
+      6006.128,
+      "turn 1 +4"
+    ],
+    [
+      6046.128,
+      "turn 1 +4"
+    ],
+    [
+      6086.129,
+      "turn 1 +4"
+    ],
+    [
+      6133.356,
+      "turn 1 +4"
+    ],
+    [
+      6186.129,
+      "turn 1 +4"
+    ],
+    [
+      6233.356,
+      "turn 1 +4"
+    ],
+    [
+      6286.129,
+      "turn 1 +4"
+    ],
+    [
+      6333.357,
+      "turn 1 +4"
+    ],
+    [
+      7186.128,
       "press 40"
     ],
     [
-      3114.284,
+      7286.128,
       "release 40"
     ],
     [
-      3714.302,
+      9187.255,
       "press 40"
     ],
     [
-      3814.304,
+      9287.258,
       "release 40"
     ],
     [
-      6614.386,
+      10387.29,
+      "press 19"
+    ],
+    [
+      10487.293,
+      "release 19"
+    ],
+    [
+      11587.325,
+      "press 19"
+    ],
+    [
+      11687.328,
+      "release 19"
+    ],
+    [
+      12787.36,
+      "press 1"
+    ],
+    [
+      12987.366,
+      "press 41"
+    ],
+    [
+      13187.372,
+      "release 41"
+    ],
+    [
+      13387.377,
+      "release 1"
+    ],
+    [
+      15087.427,
+      "turn 2 +4"
+    ],
+    [
+      15133.388,
+      "turn 2 +4"
+    ],
+    [
+      15186.129,
+      "turn 2 +4"
+    ],
+    [
+      15233.389,
+      "turn 2 +4"
+    ],
+    [
+      15286.129,
+      "turn 2 +4"
+    ],
+    [
+      15333.389,
+      "turn 2 +4"
+    ],
+    [
+      15386.128,
+      "turn 2 +4"
+    ],
+    [
+      15426.128,
+      "turn 2 +4"
+    ],
+    [
+      15466.128,
+      "turn 2 +4"
+    ],
+    [
+      15506.128,
+      "turn 2 +4"
+    ],
+    [
+      15554.107,
+      "turn 2 +4"
+    ],
+    [
+      15600.057,
+      "turn 2 +4"
+    ],
+    [
+      15646.128,
+      "turn 2 +4"
+    ],
+    [
+      15686.129,
+      "turn 2 +4"
+    ],
+    [
+      15733.391,
+      "turn 2 +4"
+    ],
+    [
+      15786.128,
+      "turn 2 +4"
+    ],
+    [
+      15826.128,
+      "turn 2 +4"
+    ],
+    [
+      15866.724,
+      "turn 2 +4"
+    ],
+    [
+      15920.784,
+      "turn 2 +4"
+    ],
+    [
+      15966.128,
+      "turn 2 +4"
+    ],
+    [
+      16006.128,
+      "turn 2 +4"
+    ],
+    [
+      16054.122,
+      "turn 2 +4"
+    ],
+    [
+      16100.059,
+      "turn 2 +4"
+    ],
+    [
+      16146.128,
+      "turn 2 +4"
+    ],
+    [
+      16186.128,
+      "turn 2 +4"
+    ],
+    [
+      16226.128,
+      "turn 2 +4"
+    ],
+    [
+      16266.129,
+      "turn 2 +4"
+    ],
+    [
+      16320.796,
+      "turn 2 +4"
+    ],
+    [
+      16366.129,
+      "turn 2 +4"
+    ],
+    [
+      16406.129,
+      "turn 2 +4"
+    ],
+    [
+      16454.133,
+      "turn 2 +4"
+    ],
+    [
+      16500.06,
+      "turn 2 +4"
+    ],
+    [
+      16546.128,
+      "turn 2 +4"
+    ],
+    [
+      16586.128,
+      "turn 2 +4"
+    ],
+    [
+      16626.129,
+      "turn 2 +4"
+    ],
+    [
+      16666.727,
+      "turn 2 +4"
+    ],
+    [
+      16720.807,
+      "turn 2 +4"
+    ],
+    [
+      16766.128,
+      "turn 2 +4"
+    ],
+    [
+      16806.128,
+      "turn 2 +4"
+    ],
+    [
+      16846.128,
+      "turn 2 +4"
+    ],
+    [
+      17687.503,
+      "press 41"
+    ],
+    [
+      17787.506,
+      "release 41"
+    ],
+    [
+      18887.537,
+      "turn 2 +4"
+    ],
+    [
+      18933.403,
+      "turn 2 +4"
+    ],
+    [
+      18986.128,
+      "turn 2 +4"
+    ],
+    [
+      19026.128,
+      "turn 2 +4"
+    ],
+    [
+      19066.129,
+      "turn 2 +4"
+    ],
+    [
+      19106.129,
+      "turn 2 +4"
+    ],
+    [
+      19154.212,
+      "turn 2 +4"
+    ],
+    [
+      19200.07,
+      "turn 2 +4"
+    ],
+    [
+      19246.128,
+      "turn 2 +4"
+    ],
+    [
+      19286.128,
+      "turn 2 +4"
+    ],
+    [
+      19326.128,
+      "turn 2 +4"
+    ],
+    [
+      19366.737,
+      "turn 2 +4"
+    ],
+    [
+      20220.909,
+      "press 41"
+    ],
+    [
+      20320.912,
+      "release 41"
+    ],
+    [
+      21420.944,
+      "press 19"
+    ],
+    [
+      21520.947,
+      "release 19"
+    ],
+    [
+      22620.98,
+      "press 19"
+    ],
+    [
+      22720.982,
+      "release 19"
+    ],
+    [
+      23821.015,
+      "press 1"
+    ],
+    [
+      24021.02,
+      "press 42"
+    ],
+    [
+      24221.026,
+      "release 42"
+    ],
+    [
+      24421.032,
+      "release 1"
+    ],
+    [
+      26121.081,
+      "turn 3 +4"
+    ],
+    [
+      26166.128,
+      "turn 3 +4"
+    ],
+    [
+      26206.128,
+      "turn 3 +4"
+    ],
+    [
+      26246.128,
+      "turn 3 +4"
+    ],
+    [
+      26287.753,
+      "turn 3 +4"
+    ],
+    [
+      26333.429,
+      "turn 3 +4"
+    ],
+    [
+      26386.128,
+      "turn 3 +4"
+    ],
+    [
+      26433.43,
+      "turn 3 +4"
+    ],
+    [
+      26486.128,
+      "turn 3 +4"
+    ],
+    [
+      26526.129,
+      "turn 3 +4"
+    ],
+    [
+      26566.763,
+      "turn 3 +4"
+    ],
+    [
+      26621.096,
+      "turn 3 +4"
+    ],
+    [
+      26666.128,
+      "turn 3 +4"
+    ],
+    [
+      26706.128,
+      "turn 3 +4"
+    ],
+    [
+      26746.128,
+      "turn 3 +4"
+    ],
+    [
+      26787.767,
+      "turn 3 +4"
+    ],
+    [
+      26833.431,
+      "turn 3 +4"
+    ],
+    [
+      26886.128,
+      "turn 3 +4"
+    ],
+    [
+      26926.128,
+      "turn 3 +4"
+    ],
+    [
+      26966.128,
+      "turn 3 +4"
+    ],
+    [
+      27006.128,
+      "turn 3 +4"
+    ],
+    [
+      27046.128,
+      "turn 3 +4"
+    ],
+    [
+      27086.129,
+      "turn 3 +4"
+    ],
+    [
+      27133.432,
+      "turn 3 +4"
+    ],
+    [
+      27186.129,
+      "turn 3 +4"
+    ],
+    [
+      27233.433,
+      "turn 3 +4"
+    ],
+    [
+      27286.129,
+      "turn 3 +4"
+    ],
+    [
+      27333.433,
+      "turn 3 +4"
+    ],
+    [
+      27386.128,
+      "turn 3 +4"
+    ],
+    [
+      27426.128,
+      "turn 3 +4"
+    ],
+    [
+      27466.128,
+      "turn 3 +4"
+    ],
+    [
+      27506.128,
+      "turn 3 +4"
+    ],
+    [
+      27546.128,
+      "turn 3 +4"
+    ],
+    [
+      27587.791,
+      "turn 3 +4"
+    ],
+    [
+      27633.434,
+      "turn 3 +4"
+    ],
+    [
+      27686.128,
+      "turn 3 +4"
+    ],
+    [
+      27726.128,
+      "turn 3 +4"
+    ],
+    [
+      27766.128,
+      "turn 3 +4"
+    ],
+    [
+      27806.128,
+      "turn 3 +4"
+    ],
+    [
+      27846.128,
+      "turn 3 +4"
+    ],
+    [
+      28686.129,
+      "press 42"
+    ],
+    [
+      28786.129,
+      "release 42"
+    ],
+    [
+      29887.857,
+      "turn 3 +4"
+    ],
+    [
+      29933.442,
+      "turn 3 +4"
+    ],
+    [
+      29986.128,
+      "turn 3 +4"
+    ],
+    [
+      30026.129,
+      "turn 3 +4"
+    ],
+    [
+      30066.776,
+      "turn 3 +4"
+    ],
+    [
+      30121.197,
+      "turn 3 +4"
+    ],
+    [
+      30166.128,
+      "turn 3 +4"
+    ],
+    [
+      30206.128,
+      "turn 3 +4"
+    ],
+    [
+      30246.128,
+      "turn 3 +4"
+    ],
+    [
+      30287.869,
+      "turn 3 +4"
+    ],
+    [
+      30333.444,
+      "turn 3 +4"
+    ],
+    [
+      30386.129,
+      "turn 3 +4"
+    ],
+    [
+      30426.129,
+      "turn 3 +4"
+    ],
+    [
+      30466.778,
+      "turn 3 +4"
+    ],
+    [
+      30521.209,
+      "turn 3 +4"
+    ],
+    [
+      30566.129,
+      "turn 3 +4"
+    ],
+    [
+      30621.212,
+      "turn 3 +4"
+    ],
+    [
+      30666.128,
+      "turn 3 +4"
+    ],
+    [
+      30706.128,
+      "turn 3 +4"
+    ],
+    [
+      30746.129,
+      "turn 3 +4"
+    ],
+    [
+      31587.907,
+      "press 42"
+    ],
+    [
+      31687.91,
+      "release 42"
+    ],
+    [
+      32787.942,
+      "press 19"
+    ],
+    [
+      32887.945,
+      "release 19"
+    ],
+    [
+      33987.977,
+      "press 19"
+    ],
+    [
+      34087.979,
+      "release 19"
+    ],
+    [
+      35188.012,
+      "press 1"
+    ],
+    [
+      35388.018,
+      "press 43"
+    ],
+    [
+      35588.023,
+      "release 43"
+    ],
+    [
+      35788.029,
+      "release 1"
+    ],
+    [
+      37488.078,
+      "turn 4 +4"
+    ],
+    [
+      37533.47,
+      "turn 4 +4"
+    ],
+    [
+      37586.129,
+      "turn 4 +4"
+    ],
+    [
+      37633.47,
+      "turn 4 +4"
+    ],
+    [
+      37686.129,
+      "turn 4 +4"
+    ],
+    [
+      37733.471,
+      "turn 4 +4"
+    ],
+    [
+      37786.129,
+      "turn 4 +4"
+    ],
+    [
+      37833.471,
+      "turn 4 +4"
+    ],
+    [
+      37886.128,
+      "turn 4 +4"
+    ],
+    [
+      37926.128,
+      "turn 4 +4"
+    ],
+    [
+      37966.128,
+      "turn 4 +4"
+    ],
+    [
+      38006.128,
+      "turn 4 +4"
+    ],
+    [
+      38046.128,
+      "turn 4 +4"
+    ],
+    [
+      38088.096,
+      "turn 4 +4"
+    ],
+    [
+      38133.472,
+      "turn 4 +4"
+    ],
+    [
+      38186.128,
+      "turn 4 +4"
+    ],
+    [
+      38226.128,
+      "turn 4 +4"
+    ],
+    [
+      38266.128,
+      "turn 4 +4"
+    ],
+    [
+      38306.128,
+      "turn 4 +4"
+    ],
+    [
+      38346.128,
+      "turn 4 +4"
+    ],
+    [
+      38386.129,
+      "turn 4 +4"
+    ],
+    [
+      38433.473,
+      "turn 4 +4"
+    ],
+    [
+      38486.128,
+      "turn 4 +4"
+    ],
+    [
+      38526.128,
+      "turn 4 +4"
+    ],
+    [
+      38566.129,
+      "turn 4 +4"
+    ],
+    [
+      38606.129,
+      "turn 4 +4"
+    ],
+    [
+      38654.779,
+      "turn 4 +4"
+    ],
+    [
+      38700.141,
+      "turn 4 +4"
+    ],
+    [
+      38746.128,
+      "turn 4 +4"
+    ],
+    [
+      38786.128,
+      "turn 4 +4"
+    ],
+    [
+      38826.129,
+      "turn 4 +4"
+    ],
+    [
+      38866.808,
+      "turn 4 +4"
+    ],
+    [
+      38921.453,
+      "turn 4 +4"
+    ],
+    [
+      38966.128,
+      "turn 4 +4"
+    ],
+    [
+      39006.128,
+      "turn 4 +4"
+    ],
+    [
+      39046.129,
+      "turn 4 +4"
+    ],
+    [
+      39088.125,
+      "turn 4 +4"
+    ],
+    [
+      39133.475,
+      "turn 4 +4"
+    ],
+    [
+      39186.128,
+      "turn 4 +4"
+    ],
+    [
+      39226.129,
+      "turn 4 +4"
+    ],
+    [
+      40066.812,
+      "press 43"
+    ],
+    [
+      40166.813,
+      "release 43"
+    ],
+    [
+      41266.817,
+      "turn 4 +4"
+    ],
+    [
+      41321.524,
+      "turn 4 +4"
+    ],
+    [
+      41366.128,
+      "turn 4 +4"
+    ],
+    [
+      41421.526,
+      "turn 4 +4"
+    ],
+    [
+      41466.128,
+      "turn 4 +4"
+    ],
+    [
+      41506.128,
+      "turn 4 +4"
+    ],
+    [
+      41546.128,
+      "turn 4 +4"
+    ],
+    [
+      41588.198,
+      "turn 4 +4"
+    ],
+    [
+      41633.485,
+      "turn 4 +4"
+    ],
+    [
+      41686.128,
+      "turn 4 +4"
+    ],
+    [
+      41726.128,
+      "turn 4 +4"
+    ],
+    [
+      41766.128,
+      "turn 4 +4"
+    ],
+    [
+      41806.128,
+      "turn 4 +4"
+    ],
+    [
+      41846.129,
+      "turn 4 +4"
+    ],
+    [
+      41888.207,
+      "turn 4 +4"
+    ],
+    [
+      41933.486,
+      "turn 4 +4"
+    ],
+    [
+      41986.129,
+      "turn 4 +4"
+    ],
+    [
+      42033.487,
+      "turn 4 +4"
+    ],
+    [
+      42086.128,
+      "turn 4 +4"
+    ],
+    [
+      42126.128,
+      "turn 4 +4"
+    ],
+    [
+      42166.128,
+      "turn 4 +4"
+    ],
+    [
+      42206.128,
+      "turn 4 +4"
+    ],
+    [
+      42254.884,
+      "turn 4 +4"
+    ],
+    [
+      42300.154,
+      "turn 4 +4"
+    ],
+    [
+      42346.128,
+      "turn 4 +4"
+    ],
+    [
+      42388.221,
+      "turn 4 +4"
+    ],
+    [
+      42433.488,
+      "turn 4 +4"
+    ],
+    [
+      42486.128,
+      "turn 4 +4"
+    ],
+    [
+      42526.128,
+      "turn 4 +4"
+    ],
+    [
+      42566.822,
+      "turn 4 +4"
+    ],
+    [
+      43421.585,
+      "press 43"
+    ],
+    [
+      43521.588,
+      "release 43"
+    ],
+    [
+      44621.62,
+      "press 19"
+    ],
+    [
+      44721.622,
+      "release 19"
+    ],
+    [
+      45821.654,
+      "press 19"
+    ],
+    [
+      45921.657,
+      "release 19"
+    ],
+    [
+      47021.689,
+      "press 1"
+    ],
+    [
+      47221.695,
+      "press 44"
+    ],
+    [
+      47421.701,
+      "release 44"
+    ],
+    [
+      47621.707,
+      "release 1"
+    ],
+    [
+      49321.756,
+      "turn 5 +4"
+    ],
+    [
+      49366.128,
+      "turn 5 +4"
+    ],
+    [
+      49406.128,
+      "turn 5 +4"
+    ],
+    [
+      49446.128,
+      "turn 5 +4"
+    ],
+    [
+      49488.428,
+      "turn 5 +4"
+    ],
+    [
+      49533.513,
+      "turn 5 +4"
+    ],
+    [
+      50388.454,
+      "press 44"
+    ],
+    [
+      50488.456,
+      "release 44"
+    ],
+    [
+      51588.489,
+      "turn 5 +4"
+    ],
+    [
+      51633.521,
+      "turn 5 +4"
+    ],
+    [
+      51686.129,
+      "turn 5 +4"
+    ],
+    [
+      52533.524,
+      "press 44"
+    ],
+    [
+      52633.525,
+      "release 44"
+    ],
+    [
+      53733.529,
+      "press 19"
+    ],
+    [
+      53833.529,
+      "release 19"
+    ],
+    [
+      54933.534,
+      "press 19"
+    ],
+    [
+      55033.534,
+      "release 19"
+    ],
+    [
+      56133.538,
+      "press 1"
+    ],
+    [
+      56333.538,
+      "press 45"
+    ],
+    [
+      56533.539,
+      "release 45"
+    ],
+    [
+      56733.54,
+      "release 1"
+    ],
+    [
+      58433.546,
+      "turn 6 +4"
+    ],
+    [
+      58486.128,
+      "turn 6 +4"
+    ],
+    [
+      58526.128,
+      "turn 6 +4"
+    ],
+    [
+      58566.128,
+      "turn 6 +4"
+    ],
+    [
+      58606.128,
+      "turn 6 +4"
+    ],
+    [
+      58646.129,
+      "turn 6 +4"
+    ],
+    [
+      58688.696,
+      "turn 6 +4"
+    ],
+    [
+      59533.55,
+      "press 45"
+    ],
+    [
+      59633.55,
+      "release 45"
+    ],
+    [
+      60733.554,
+      "turn 6 +4"
+    ],
+    [
+      60786.128,
+      "turn 6 +4"
+    ],
+    [
+      60826.128,
+      "turn 6 +4"
+    ],
+    [
+      60866.129,
+      "turn 6 +4"
+    ],
+    [
+      60906.129,
+      "turn 6 +4"
+    ],
+    [
+      61755.451,
+      "press 45"
+    ],
+    [
+      61855.454,
+      "release 45"
+    ],
+    [
+      62955.486,
+      "press 19"
+    ],
+    [
+      63055.489,
+      "release 19"
+    ],
+    [
+      64155.521,
+      "press 19"
+    ],
+    [
+      64255.524,
+      "release 19"
+    ],
+    [
+      65355.556,
+      "press 1"
+    ],
+    [
+      65555.561,
+      "press 46"
+    ],
+    [
+      65755.567,
+      "release 46"
+    ],
+    [
+      65955.574,
+      "release 1"
+    ],
+    [
+      67655.623,
+      "turn 7 +4"
+    ],
+    [
+      67700.247,
+      "turn 7 +4"
+    ],
+    [
+      67746.128,
+      "turn 7 +4"
+    ],
+    [
+      67786.128,
+      "turn 7 +4"
+    ],
+    [
+      67826.129,
+      "turn 7 +4"
+    ],
+    [
+      67866.913,
+      "turn 7 +4"
+    ],
+    [
+      67922.297,
+      "turn 7 +4"
+    ],
+    [
+      67966.128,
+      "turn 7 +4"
+    ],
+    [
+      68806.128,
+      "press 46"
+    ],
+    [
+      68906.128,
+      "release 46"
+    ],
+    [
+      70022.358,
+      "turn 7 +4"
+    ],
+    [
+      70066.128,
+      "turn 7 +4"
+    ],
+    [
+      70122.361,
+      "turn 7 +4"
+    ],
+    [
+      70166.129,
+      "turn 7 +4"
+    ],
+    [
+      70206.129,
+      "turn 7 +4"
+    ],
+    [
+      70255.698,
+      "turn 7 +4"
+    ],
+    [
+      70300.256,
+      "turn 7 +4"
+    ],
+    [
+      70346.129,
+      "turn 7 +4"
+    ],
+    [
+      71189.059,
+      "press 46"
+    ],
+    [
+      71289.061,
+      "release 46"
+    ],
+    [
+      72389.094,
+      "press 19"
+    ],
+    [
+      72489.097,
+      "release 19"
+    ],
+    [
+      73589.128,
+      "press 19"
+    ],
+    [
+      73689.131,
+      "release 19"
+    ],
+    [
+      74789.163,
       "press 6"
     ],
     [
-      6714.388,
+      74889.167,
       "release 6"
     ],
     [
-      7514.412,
+      75689.19,
       "press 15"
     ],
     [
-      7614.415,
+      75789.192,
       "release 15"
     ],
     [
-      7914.423,
+      76089.201,
       "press 15"
     ],
     [
-      8014.427,
+      76189.205,
       "release 15"
     ],
     [
-      8314.435,
+      76489.213,
       "press 15"
     ],
     [
-      8414.438,
+      76589.216,
       "release 15"
     ],
     [
-      8714.447,
+      76889.225,
       "press 15"
     ],
     [
-      8814.45,
+      76989.228,
       "release 15"
     ],
     [
-      9114.458,
+      77289.236,
       "press 15"
     ],
     [
-      9214.461,
+      77389.239,
       "release 15"
     ],
     [
-      9514.47,
+      77689.248,
       "press 15"
     ],
     [
-      9614.473,
+      77789.25,
       "release 15"
     ],
     [
-      9914.482,
+      78089.26,
       "press 15"
     ],
     [
-      10014.485,
+      78189.263,
       "release 15"
     ],
     [
-      10314.494,
+      78489.271,
       "press 15"
     ],
     [
-      10414.496,
+      78589.274,
       "release 15"
     ],
     [
-      10714.505,
+      78889.283,
       "press 15"
     ],
     [
-      10814.508,
+      78989.286,
       "release 15"
     ],
     [
-      11114.517,
+      79289.294,
       "press 15"
     ],
     [
-      11214.52,
+      79389.297,
       "release 15"
     ],
     [
-      11514.528,
+      79689.306,
       "press 12"
     ],
     [
-      11614.531,
+      79789.309,
       "release 12"
     ]
   ],
@@ -218,37 +1558,37 @@
     {
       "path": "media/perform-page.png",
       "sha256": "5f155f08ba73af7b64a8bfe743ad14235b60d0c6a0d75f23dcc13c9f330690c4",
-      "plan": "wait 1000\ntap TRIG\ntap TRIG\nwait 500\nsnap perform-page\npress FUNC\npress #40\nrelease #40\nrelease FUNC\nwait 300\nsnap assign-track\ntap #40\nwait 300\ntap #40\nwait 2500\nsnap assigned\ntap GLOBAL\nwait 500\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings\ntap YES\nwait 500\nsnap perform-edit\n",
-      "atMs": 2097.5878205128206,
-      "requestedAtMs": 2314.2606837606836
+      "plan": "wait 1000\ntap TRIG\ntap TRIG\nwait 500\nsnap perform-page\npress FUNC 200\npress #40 200\nrelease #40 200\nrelease FUNC 200\nwait 1500\nsnap assign-track\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nwait 800\ntap #40\nwait 800\nwait 800\ntap #40\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #41 200\nrelease #41 200\nrelease FUNC 200\nwait 1500\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nwait 800\ntap #41\nwait 800\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nwait 800\ntap #41\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #42 200\nrelease #42 200\nrelease FUNC 200\nwait 1500\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nwait 800\ntap #42\nwait 800\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nwait 800\ntap #42\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #43 200\nrelease #43 200\nrelease FUNC 200\nwait 1500\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nwait 800\ntap #43\nwait 800\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nwait 800\ntap #43\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #44 200\nrelease #44 200\nrelease FUNC 200\nwait 1500\nturn E +1 40\nturn E +1 40\nturn E +1 40\nturn E +1 40\nturn E +1 40\nturn E +1 40\nwait 800\ntap #44\nwait 800\nturn E +1 40\nturn E +1 40\nturn E +1 40\nwait 800\ntap #44\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #45 200\nrelease #45 200\nrelease FUNC 200\nwait 1500\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nwait 800\ntap #45\nwait 800\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nwait 800\ntap #45\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #46 200\nrelease #46 200\nrelease FUNC 200\nwait 1500\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 800\ntap #46\nwait 800\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 800\ntap #46\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\nsnap assigned\ntap GLOBAL\nwait 500\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings\ntap YES\nwait 500\nsnap perform-edit\n",
+      "atMs": 2300.0081196581195,
+      "requestedAtMs": 2300.0081196581195
     },
     {
       "path": "media/assign-track.png",
       "sha256": "a62fe4fbb94a716c40f58460e27aeb97336ff98e4166c3cf7be65a7d93aba6c3",
-      "plan": "wait 1000\ntap TRIG\ntap TRIG\nwait 500\nsnap perform-page\npress FUNC\npress #40\nrelease #40\nrelease FUNC\nwait 300\nsnap assign-track\ntap #40\nwait 300\ntap #40\nwait 2500\nsnap assigned\ntap GLOBAL\nwait 500\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings\ntap YES\nwait 500\nsnap perform-edit\n",
-      "atMs": 2797.6081196581194,
-      "requestedAtMs": 3014.2805555555556
+      "plan": "wait 1000\ntap TRIG\ntap TRIG\nwait 500\nsnap perform-page\npress FUNC 200\npress #40 200\nrelease #40 200\nrelease FUNC 200\nwait 1500\nsnap assign-track\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nwait 800\ntap #40\nwait 800\nwait 800\ntap #40\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #41 200\nrelease #41 200\nrelease FUNC 200\nwait 1500\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nwait 800\ntap #41\nwait 800\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nwait 800\ntap #41\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #42 200\nrelease #42 200\nrelease FUNC 200\nwait 1500\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nwait 800\ntap #42\nwait 800\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nwait 800\ntap #42\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #43 200\nrelease #43 200\nrelease FUNC 200\nwait 1500\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nwait 800\ntap #43\nwait 800\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nwait 800\ntap #43\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #44 200\nrelease #44 200\nrelease FUNC 200\nwait 1500\nturn E +1 40\nturn E +1 40\nturn E +1 40\nturn E +1 40\nturn E +1 40\nturn E +1 40\nwait 800\ntap #44\nwait 800\nturn E +1 40\nturn E +1 40\nturn E +1 40\nwait 800\ntap #44\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #45 200\nrelease #45 200\nrelease FUNC 200\nwait 1500\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nwait 800\ntap #45\nwait 800\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nwait 800\ntap #45\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #46 200\nrelease #46 200\nrelease FUNC 200\nwait 1500\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 800\ntap #46\nwait 800\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 800\ntap #46\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\nsnap assigned\ntap GLOBAL\nwait 500\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings\ntap YES\nwait 500\nsnap perform-edit\n",
+      "atMs": 4446.128418803419,
+      "requestedAtMs": 4600.017094017094
     },
     {
       "path": "media/assigned.png",
-      "sha256": "f8fa69dccbbc1b288f82882d58907fcd6201c6ed3932f82e7b28a552c0ae75cb",
-      "plan": "wait 1000\ntap TRIG\ntap TRIG\nwait 500\nsnap perform-page\npress FUNC\npress #40\nrelease #40\nrelease FUNC\nwait 300\nsnap assign-track\ntap #40\nwait 300\ntap #40\nwait 2500\nsnap assigned\ntap GLOBAL\nwait 500\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings\ntap YES\nwait 500\nsnap perform-edit\n",
-      "atMs": 6397.71282051282,
-      "requestedAtMs": 6614.385683760684
+      "sha256": "10a416e2ec4162e83e116b408f24ff7b6a754c088af6719b707cbc7cc2309e00",
+      "plan": "wait 1000\ntap TRIG\ntap TRIG\nwait 500\nsnap perform-page\npress FUNC 200\npress #40 200\nrelease #40 200\nrelease FUNC 200\nwait 1500\nsnap assign-track\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nwait 800\ntap #40\nwait 800\nwait 800\ntap #40\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #41 200\nrelease #41 200\nrelease FUNC 200\nwait 1500\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nwait 800\ntap #41\nwait 800\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nwait 800\ntap #41\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #42 200\nrelease #42 200\nrelease FUNC 200\nwait 1500\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nwait 800\ntap #42\nwait 800\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nwait 800\ntap #42\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #43 200\nrelease #43 200\nrelease FUNC 200\nwait 1500\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nwait 800\ntap #43\nwait 800\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nwait 800\ntap #43\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #44 200\nrelease #44 200\nrelease FUNC 200\nwait 1500\nturn E +1 40\nturn E +1 40\nturn E +1 40\nturn E +1 40\nturn E +1 40\nturn E +1 40\nwait 800\ntap #44\nwait 800\nturn E +1 40\nturn E +1 40\nturn E +1 40\nwait 800\ntap #44\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #45 200\nrelease #45 200\nrelease FUNC 200\nwait 1500\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nwait 800\ntap #45\nwait 800\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nwait 800\ntap #45\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #46 200\nrelease #46 200\nrelease FUNC 200\nwait 1500\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 800\ntap #46\nwait 800\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 800\ntap #46\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\nsnap assigned\ntap GLOBAL\nwait 500\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings\ntap YES\nwait 500\nsnap perform-edit\n",
+      "atMs": 74706.12841880342,
+      "requestedAtMs": 74789.16324786325
     },
     {
       "path": "media/settings.png",
       "sha256": "7cfb7f7622ff1ca7c35b9356d1e81793529d680d7834eeab619770df89c94a5a",
-      "plan": "wait 1000\ntap TRIG\ntap TRIG\nwait 500\nsnap perform-page\npress FUNC\npress #40\nrelease #40\nrelease FUNC\nwait 300\nsnap assign-track\ntap #40\nwait 300\ntap #40\nwait 2500\nsnap assigned\ntap GLOBAL\nwait 500\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings\ntap YES\nwait 500\nsnap perform-edit\n",
-      "atMs": 11514.528205128205,
-      "requestedAtMs": 11514.528205128205
+      "plan": "wait 1000\ntap TRIG\ntap TRIG\nwait 500\nsnap perform-page\npress FUNC 200\npress #40 200\nrelease #40 200\nrelease FUNC 200\nwait 1500\nsnap assign-track\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nwait 800\ntap #40\nwait 800\nwait 800\ntap #40\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #41 200\nrelease #41 200\nrelease FUNC 200\nwait 1500\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nwait 800\ntap #41\nwait 800\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nwait 800\ntap #41\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #42 200\nrelease #42 200\nrelease FUNC 200\nwait 1500\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nwait 800\ntap #42\nwait 800\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nwait 800\ntap #42\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #43 200\nrelease #43 200\nrelease FUNC 200\nwait 1500\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nwait 800\ntap #43\nwait 800\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nwait 800\ntap #43\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #44 200\nrelease #44 200\nrelease FUNC 200\nwait 1500\nturn E +1 40\nturn E +1 40\nturn E +1 40\nturn E +1 40\nturn E +1 40\nturn E +1 40\nwait 800\ntap #44\nwait 800\nturn E +1 40\nturn E +1 40\nturn E +1 40\nwait 800\ntap #44\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #45 200\nrelease #45 200\nrelease FUNC 200\nwait 1500\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nwait 800\ntap #45\nwait 800\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nwait 800\ntap #45\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #46 200\nrelease #46 200\nrelease FUNC 200\nwait 1500\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 800\ntap #46\nwait 800\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 800\ntap #46\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\nsnap assigned\ntap GLOBAL\nwait 500\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings\ntap YES\nwait 500\nsnap perform-edit\n",
+      "atMs": 79689.3061965812,
+      "requestedAtMs": 79689.3061965812
     },
     {
       "path": "media/perform-edit.png",
-      "sha256": "21a7d8976b98c282be5662c3a64156402de8960ff5d1726a7bee9d9d5b480c96",
-      "plan": "wait 1000\ntap TRIG\ntap TRIG\nwait 500\nsnap perform-page\npress FUNC\npress #40\nrelease #40\nrelease FUNC\nwait 300\nsnap assign-track\ntap #40\nwait 300\ntap #40\nwait 2500\nsnap assigned\ntap GLOBAL\nwait 500\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings\ntap YES\nwait 500\nsnap perform-edit\n",
-      "atMs": 12199.999786324786,
-      "requestedAtMs": 12414.554059829059
+      "sha256": "e504e975e65d21466cf3b9ee5ef29c1ce123c85c6c68da91fce4ca373383fe10",
+      "plan": "wait 1000\ntap TRIG\ntap TRIG\nwait 500\nsnap perform-page\npress FUNC 200\npress #40 200\nrelease #40 200\nrelease FUNC 200\nwait 1500\nsnap assign-track\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nwait 800\ntap #40\nwait 800\nwait 800\ntap #40\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #41 200\nrelease #41 200\nrelease FUNC 200\nwait 1500\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nwait 800\ntap #41\nwait 800\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nturn B +1 40\nwait 800\ntap #41\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #42 200\nrelease #42 200\nrelease FUNC 200\nwait 1500\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nwait 800\ntap #42\nwait 800\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nturn C +1 40\nwait 800\ntap #42\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #43 200\nrelease #43 200\nrelease FUNC 200\nwait 1500\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nwait 800\ntap #43\nwait 800\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nturn D +1 40\nwait 800\ntap #43\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #44 200\nrelease #44 200\nrelease FUNC 200\nwait 1500\nturn E +1 40\nturn E +1 40\nturn E +1 40\nturn E +1 40\nturn E +1 40\nturn E +1 40\nwait 800\ntap #44\nwait 800\nturn E +1 40\nturn E +1 40\nturn E +1 40\nwait 800\ntap #44\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #45 200\nrelease #45 200\nrelease FUNC 200\nwait 1500\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nwait 800\ntap #45\nwait 800\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nturn F +1 40\nwait 800\ntap #45\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\npress FUNC 200\npress #46 200\nrelease #46 200\nrelease FUNC 200\nwait 1500\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 800\ntap #46\nwait 800\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 800\ntap #46\nwait 800\ntap TRIG\nwait 800\ntap TRIG\nwait 800\nsnap assigned\ntap GLOBAL\nwait 500\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings\ntap YES\nwait 500\nsnap perform-edit\n",
+      "atMs": 80589.33205128205,
+      "requestedAtMs": 80589.33205128205
     }
   ],
   "limitations": [
