@@ -7,6 +7,7 @@ import { api, post } from '../community/api'
 import { useCommunity } from '../community/context'
 import { diagnosticPreference, subscribeDiagnosticPreference, type DiagnosticPreference } from '../community/octatrack-diagnostics'
 import { browserRequestsPrivacy } from '../community/usage'
+import { invitationAnswered, rememberInvitationAnswer } from '../community/diagnostics-sharing'
 import { OCTATRACK_BASE_RELEASED } from '../config/octatrack-base'
 
 // A new note needs a new id here and in server/auth.ts (OWNER_NOTE).
@@ -79,8 +80,9 @@ export function OwnerNote({ username, onJoin, onLeave }: { username: string; onJ
 
 /** Beta testers only (App.tsx), on every device until they accept the note and join Discord, or leave the beta.
  * It can't be put off: it opens on top of any other dialog as soon as the tab is visible, on every page but the FAQ, the account and the legal pages.
- * The diagnostics step follows as an offer (Not now, no Leave beta); after a new consent version it is offered once more
- * per visit, without the note. Nothing on the site depends on the answer. */
+ * The diagnostics step follows as an offer (Not now, no Leave beta); after a new consent version it is offered once more,
+ * without the note, as the ordinary invitation: a Not now to it, or to the invitation anywhere else, is remembered in this
+ * browser (invitationAnswered). Nothing on the site depends on the answer. */
 export function OwnerNoteGate({ enabled }: { enabled: boolean }) {
   const { session, refresh } = useCommunity(), memberId = session.user!.id
   const [step, setStep] = useState<'note' | 'diagnostics'>(), [serverDue, setServerDue] = useState<boolean>()
@@ -95,7 +97,7 @@ export function OwnerNoteGate({ enabled }: { enabled: boolean }) {
   const due = serverDue === true && !ownerNoteSeen()
   // Not now ends the offer for this visit, so it never comes back every second.
   const [declined, setDeclined] = useState(false)
-  const lapsed = !due && !declined && (ownerNoteSeen() || serverDue === false) && diagnosticsLapsed(preference, memberId, browserRequestsPrivacy())
+  const lapsed = !due && !declined && (ownerNoteSeen() || serverDue === false) && diagnosticsLapsed(preference, memberId, browserRequestsPrivacy()) && !invitationAnswered(memberId)
   useEffect(() => {
     if (!enabled || step || !due && !lapsed) return
     const show = () => { if (document.visibilityState === 'visible') setStep(due ? 'note' : 'diagnostics') }
@@ -109,7 +111,7 @@ export function OwnerNoteGate({ enabled }: { enabled: boolean }) {
     try { await post('/auth/beta-leave', {}) } catch (failure) { window.alert(failure instanceof Error ? failure.message : 'Couldn’t leave the beta. Please try again.'); return }
     setStep(undefined); await refresh()
   }
-  if (step === 'diagnostics') return <DiagnosticsInvitation onClose={() => { setDeclined(true); done() }} />
+  if (step === 'diagnostics') return <DiagnosticsInvitation onClose={shared => { if (!shared) rememberInvitationAnswer(memberId); setDeclined(true); done() }} />
   return step === 'note' ? <OwnerNote username={session.user!.username!} onLeave={() => void leave()} onJoin={() => {
     // Accepting is recorded at once: a reload or a failed share before diagnostics are on brings back only the diagnostics step (lapsed), never the note.
     closeOwnerNote(); void post('/auth/owner-note', {}).catch(() => {}); void post('/auth/beta-discord-invite', {}).catch(() => {})

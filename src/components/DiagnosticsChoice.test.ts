@@ -44,7 +44,7 @@ afterEach(async () => { await act(async () => root.unmount()); container.remove(
 async function render(element: ReturnType<typeof createElement>) { await act(async () => { root.render(element); await flush() }) }
 
 describe('a free choice', () => {
-  it('without onLeave offers Not now beside Share diagnostics with equal weight and no beta condition', async () => {
+  it('offers Not now beside Share diagnostics with equal weight and no beta condition', async () => {
     const onClose = vi.fn()
     await render(createElement(DiagnosticsInvitation, { onClose, placement: 'hub' }))
     expect(container.textContent).not.toMatch(/beta/i)

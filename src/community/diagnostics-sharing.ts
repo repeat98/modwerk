@@ -2,7 +2,7 @@
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 import { useSyncExternalStore } from 'react'
 import { diagnosticPreference, subscribeDiagnosticPreference, type DiagnosticPreference } from './octatrack-diagnostics'
-import { DIAGNOSTIC_INVITATION_PLACEMENTS } from './octatrack-diagnostics-contract'
+import { DIAGNOSTIC_INVITATION_PLACEMENTS, OCTATRACK_DIAGNOSTICS_VERSION } from './octatrack-diagnostics-contract'
 import { browserRequestsPrivacy } from './usage'
 
 /** Whether the install guide has a diagnostics step to show: a signed-in member who doesn't share under the current
@@ -12,6 +12,12 @@ export const diagnosticsStepNeeded = (state: DiagnosticPreference, privacy = bro
 export function useDiagnosticsStepNeeded() {
   return diagnosticsStepNeeded(useSyncExternalStore(subscribeDiagnosticPreference,diagnosticPreference,diagnosticPreference))
 }
+
+const invitationKey = (memberId: string) => `modwerk.diagnostics.invitation:${OCTATRACK_DIAGNOSTICS_VERSION}:${memberId}`
+/** Whether this member answered the invitation under the current consent version in this browser (Not now or closed,
+ * anywhere it is asked: the first connection, the install guide, the beta note), so it isn't asked again by itself. */
+export function invitationAnswered(memberId: string) { try { return localStorage.getItem(invitationKey(memberId)) === 'dismissed' } catch { return false } }
+export function rememberInvitationAnswer(memberId: string) { try { localStorage.setItem(invitationKey(memberId), 'dismissed') } catch { /* still answered for this visit */ } }
 
 export type StepRow = {day:string;event:string;detail:string;count:number}
 /** The last 30 days of the base install guide's steps and the invitation's answers, summed over the days. */

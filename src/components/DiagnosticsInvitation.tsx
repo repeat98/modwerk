@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { changeDiagnosticSharing, diagnosticPreference, subscribeDiagnosticPreference } from '../community/octatrack-diagnostics'
-import { diagnosticsStepNeeded } from '../community/diagnostics-sharing'
-import { OCTATRACK_DIAGNOSTICS_VERSION, type DiagnosticInvitationOutcome, type DiagnosticInvitationPlacement } from '../community/octatrack-diagnostics-contract'
+import { diagnosticsStepNeeded, invitationAnswered, rememberInvitationAnswer } from '../community/diagnostics-sharing'
+import { type DiagnosticInvitationOutcome, type DiagnosticInvitationPlacement } from '../community/octatrack-diagnostics-contract'
 import { declinedThisVisit, declineForThisVisit, offerDiagnostics, pauseReask, pendingReask, REASK_REASONS, REASK_STALE_MS, reaskPaused, settleReask, subscribeReask } from '../community/diagnostics-reask'
 import { browserRequestsPrivacy, countDiagnosticsInvitation } from '../community/usage'
 import type { OctatrackLink } from '../engine/elekloader/octatrack-link'
@@ -32,9 +32,8 @@ function useInvitationCounts(placement: DiagnosticInvitationPlacement | undefine
 
 /** One explicit choice, separate from installation and sync. No collection is enabled by opening or dismissing it.
  * Share diagnostics and Not now carry equal weight, and closing it is Not now. `onClose(true)` after sharing.
- * `onLeave` is the beta tester note's required step (OwnerNote.tsx): the only other way out is leaving the beta.
  * `reason` opens it with what just failed; `placement` names where it was shown for the anonymous answer counts. */
-export function DiagnosticsInvitation({onClose,onLeave,preview=false,placement,reason}: {onClose:(shared?:boolean)=>void;onLeave?:()=>void;preview?:boolean;placement?:DiagnosticInvitationPlacement;reason?:string}) {
+export function DiagnosticsInvitation({onClose,preview=false,placement,reason}: {onClose:(shared?:boolean)=>void;preview?:boolean;placement?:DiagnosticInvitationPlacement;reason?:string}) {
   const state = useSyncExternalStore(subscribeDiagnosticPreference,diagnosticPreference,diagnosticPreference)
   const dialog = useRef<HTMLDialogElement>(null), live = useRef(true)
   const privacy = browserRequestsPrivacy()
@@ -50,8 +49,8 @@ export function DiagnosticsInvitation({onClose,onLeave,preview=false,placement,r
     if(await changeDiagnosticSharing(true) && live.current){count('shared');onClose(true)}
   }
   function notNow() { if(!preview){count('not-now');declineForThisVisit(state.accountId)} onClose(false) }
-  return <dialog ref={dialog} className="diagnostics-invitation" aria-labelledby="diagnostics-title" aria-describedby="diagnostics-intro" onCancel={event=>{event.preventDefault();if(!onLeave)notNow()}} onClose={event=>{const element=event.currentTarget;if(onLeave&&live.current&&element.isConnected&&!element.open)element.showModal()}}>
-    {!onLeave && <button type="button" className="icon-button diagnostics-close" aria-label="Close diagnostics invitation" onClick={notNow}><Icon name="close"/></button>}
+  return <dialog ref={dialog} className="diagnostics-invitation" aria-labelledby="diagnostics-title" aria-describedby="diagnostics-intro" onCancel={event=>{event.preventDefault();notNow()}}>
+    <button type="button" className="icon-button diagnostics-close" aria-label="Close diagnostics invitation" onClick={notNow}><Icon name="close"/></button>
     <div className="diagnostics-heading-icon" aria-hidden="true"><Icon name="wave" size={24}/></div>
     <h2 id="diagnostics-title" tabIndex={-1}>Help us find bugs</h2>
     {preview && <p className="diagnostics-preview">Preview · no data is shared</p>}
@@ -62,10 +61,10 @@ export function DiagnosticsInvitation({onClose,onLeave,preview=false,placement,r
     </ul>
     <p className="diagnostics-connected">Using your Octatrack over USB? Keep this page open and your Octatrack connected so we can receive a report if something fails.</p>
     <DiagnosticDetails/>
-    <p className="diagnostics-choice">{onLeave ? 'Needed for the beta – the rest of the site works without it.' : 'Optional.'} Sharing applies to your signed-in sessions for 90 days. You can turn it off and delete reports in Account → Diagnostics anytime.{!onLeave && ' Builds and syncing work either way.'}</p>
+    <p className="diagnostics-choice">Optional. Sharing applies to your signed-in sessions for 90 days. You can turn it off and delete reports in Account → Diagnostics anytime. Builds and syncing work either way.</p>
     {privacy && <p className="diagnostics-choice" role="status">Your browser requests privacy, so automatic diagnostics stay off here.</p>}
     {!preview && state.error && <p className="file-error" role="alert">{state.error}</p>}
-    <footer className="diagnostics-actions"><button type="button" className="button button-quiet" onClick={onLeave ?? notNow}>{onLeave ? 'Leave beta' : 'Not now'}</button><button type="button" className={'button ' + (onLeave ? 'button-primary' : 'button-quiet')} disabled={privacy || !preview && (!state.ready || state.busy)} onClick={()=>void share()}>{state.busy && !preview ? 'Saving…' : 'Share diagnostics'}</button></footer>
+    <footer className="diagnostics-actions"><button type="button" className="button button-quiet" onClick={notNow}>Not now</button><button type="button" className="button button-quiet" disabled={privacy || !preview && (!state.ready || state.busy)} onClick={()=>void share()}>{state.busy && !preview ? 'Saving…' : 'Share diagnostics'}</button></footer>
   </dialog>
 }
 
@@ -83,7 +82,7 @@ export function DiagnosticsGuideStep({onDone}: {onDone?: (shared: boolean) => vo
     count('shared'); setAnswer('shared'); onDone?.(true)
   }
   // Not now here answers the first-connection invitation too, so it doesn't follow the guide.
-  function notNow() { count('not-now'); declineForThisVisit(state.accountId); if (state.accountId) rememberDismissal(state.accountId); setAnswer('not-now'); onDone?.(false) }
+  function notNow() { count('not-now'); declineForThisVisit(state.accountId); if (state.accountId) rememberInvitationAnswer(state.accountId); setAnswer('not-now'); onDone?.(false) }
   if (answer) return <section className="diagnostics-step" aria-label="Diagnostics"><p role="status">{answer === 'shared' ? 'Thanks. Diagnostics sharing is on.' : 'Nothing is shared. You can turn diagnostics on any time under Setup in Your Octatrack.'}</p></section>
   if (!offer) return null
   return <section className="diagnostics-step" aria-labelledby="diagnostics-step-title">
@@ -96,9 +95,6 @@ export function DiagnosticsGuideStep({onDone}: {onDone?: (shared: boolean) => vo
   </section>
 }
 
-const invitationKey=(memberId:string)=>`modwerk.diagnostics.invitation:${OCTATRACK_DIAGNOSTICS_VERSION}:${memberId}`
-function dismissed(memberId:string){try{return localStorage.getItem(invitationKey(memberId))==='dismissed'}catch{return false}}
-function rememberDismissal(memberId:string){try{localStorage.setItem(invitationKey(memberId),'dismissed')}catch{/* still dismissed for this visit */}}
 const RUNNING = ['connecting','sending','testing','trial','finishing']
 /** Invite after the account's first compatible USB connection and any current dialog. Dismissal remains account/version scoped.
  * It also asks once more after a failure (diagnostics-reask.ts): a failed sync or self-test and a unit that started its
@@ -115,7 +111,7 @@ export function DiagnosticsInvitationGate({memberId,link,eligible,blocked=false,
   const possible=preview || state.accountId===memberId && state.available && !state.hasChoice && !state.enabled && !browserRequestsPrivacy()
   useEffect(()=>{
     if(!afterConnection || !eligible || blocked || !possible || skipped.current===memberId || askingNow)return
-    const invite=()=>{if(skipped.current!==memberId && (preview || !dismissed(memberId) && !declinedThisVisit(memberId)) && !document.querySelector('dialog[open]'))setOpenFor(memberId)}
+    const invite=()=>{if(skipped.current!==memberId && (preview || !invitationAnswered(memberId) && !declinedThisVisit(memberId)) && !document.querySelector('dialog[open]'))setOpenFor(memberId)}
     invite()
     const observer=new MutationObserver(invite)
     observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['open']})
@@ -147,8 +143,8 @@ export function DiagnosticsInvitationGate({memberId,link,eligible,blocked=false,
     observer.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['open']})
     return ()=>observer.disconnect()
   },[reask,asking,knownNo,eligible,blocked,running,memberId,state.accountId,state.ready,openFor,preview])
-  function close(){skipped.current=memberId;setOpenFor(undefined);if(!preview)rememberDismissal(memberId)}
-  function answered(shared?:boolean){if(!shared)pauseReask(memberId);skipped.current=memberId;rememberDismissal(memberId);setAsking(undefined);settleReask()}
+  function close(){skipped.current=memberId;setOpenFor(undefined);if(!preview)rememberInvitationAnswer(memberId)}
+  function answered(shared?:boolean){if(!shared)pauseReask(memberId);skipped.current=memberId;rememberInvitationAnswer(memberId);setAsking(undefined);settleReask()}
   if(askingNow && reask)return <DiagnosticsInvitation placement="after-failure" reason={REASK_REASONS[reask.reason]} onClose={answered}/>
   return openFor===memberId && afterConnection && eligible && !blocked && possible ? <DiagnosticsInvitation preview={preview} placement="hub" onClose={close}/> : null
 }

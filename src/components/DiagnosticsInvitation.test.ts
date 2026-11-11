@@ -117,24 +117,6 @@ describe('diagnostics invitation without collection side effects', () => {
     await act(async () => { finish(true); await flush() })
     expect(onClose).not.toHaveBeenCalled(); expect(container.querySelector('dialog[open]')).not.toBeNull()
   })
-  it('as the beta requirement, offers only Share diagnostics or Leave beta and ignores Escape', async () => {
-    const onClose = vi.fn(), onLeave = vi.fn()
-    await act(async () => { root.render(createElement(DiagnosticsInvitation, { onClose, onLeave })); await flush() })
-    expect(container.textContent).toContain('Needed for the beta')
-    expect(container.textContent).not.toContain('Builds and syncing work either way')
-    expect(container.querySelector('[aria-label="Close diagnostics invitation"]')).toBeNull()
-    expect(() => button('Not now')).toThrow()
-    await act(async () => { container.querySelector('dialog')!.dispatchEvent(new Event('cancel', { cancelable: true })); await flush() })
-    expect(onClose).not.toHaveBeenCalled()
-    // Chrome closes it on a second Escape anyway; it opens again.
-    const dialog = container.querySelector('dialog')!
-    await act(async () => { dialog.close(); dialog.dispatchEvent(new Event('close')); await flush() })
-    expect(dialog.open).toBe(true); expect(onClose).not.toHaveBeenCalled()
-    await act(async () => button('Leave beta').click())
-    expect(onLeave).toHaveBeenCalledTimes(1); expect(mocked.share).not.toHaveBeenCalled()
-    await act(async () => { button('Share diagnostics').click(); await flush() })
-    expect(mocked.share).toHaveBeenCalledWith(true); expect(onClose).toHaveBeenCalledTimes(1)
-  })
   it('keeps a refused choice open and shows the store error without treating dismissal as consent', async () => {
     mocked.share.mockResolvedValueOnce(false)
     await render({ memberId: 'member', eligible: true })

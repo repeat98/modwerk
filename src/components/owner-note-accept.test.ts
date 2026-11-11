@@ -85,10 +85,19 @@ it('offers diagnostics after the note with Not now, never Leave beta, and lets t
   const offer = document.querySelector('dialog.diagnostics-invitation[open]')!
   const buttons = [...offer.querySelectorAll('button')].map(button => button.textContent)
   expect(buttons).toContain('Not now'); expect(buttons).not.toContain('Leave beta')
+  expect(offer.querySelector('[aria-label="Close diagnostics invitation"]')).not.toBeNull()
+  expect(offer.textContent).not.toMatch(/beta/i)
   await act(() => [...offer.querySelectorAll('button')].find(button => button.textContent === 'Not now')!.click())
   for (let second = 0; second < 10; second++) await act(() => { vi.advanceTimersByTime(1000) })
   expect(document.querySelector('dialog[open]')).toBeNull()
   await act(() => root.unmount())
+  // Once: the next visit doesn't ask again.
+  const again = createRoot(container)
+  await act(() => again.render(createElement(OwnerNoteGate, { enabled: true })))
+  for (let second = 0; second < 5; second++) await act(() => { vi.advanceTimersByTime(1000) })
+  expect(document.querySelector('dialog[open]')).toBeNull()
+  await act(() => again.unmount())
+  localStorage.clear()
 })
 
 it('says what leaving the beta takes away, before and after the Octatrack base path is released', () => {
