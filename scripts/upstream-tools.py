@@ -3,10 +3,12 @@
 """Keep verified developer checkouts of upstream Octabam, Elekloader, rytm-emu and Ziddle outside Git.
 
     npm run upstream:tools                 # check out the pinned commits
-    npm run upstream:tools -- --update     # move Octabam and rytm-emu to upstream main first
+    npm run upstream:tools -- --update     # move rytm-emu to upstream main first
     npm run upstream:tools -- --dir DIR    # default ~/.cache/modwerk-upstream
 
-Octabam and rytm-emu are pinned in sdk/upstream-tools.json; Elekloader follows
+Octabam and rytm-emu are pinned in sdk/upstream-tools.json. Octabam's pin is
+frozen: Modwerk no longer follows it, and the checkout stays for its DSP
+assembler, emulator and hardware tools. Elekloader follows
 the vendored kit's commit, so the browser builder and the Python SDK cannot
 drift apart. rytm-emu is the Analog Rytm MKII emulator the capture guide uses;
 a hand-made clone falls behind its fixes, so take it from here. Ziddle,
@@ -140,24 +142,6 @@ def fetch_archive(entry, base):
     return tree
 
 
-def update_octabam(pins_path, base, today=None):
-    """Move the Octabam pin to upstream main, unless a repaired tool changed upstream."""
-    pins = json.loads(pins_path.read_text())
-    entry = pins['octabam']
-    path = sync('octabam', entry['repository'], entry['commit'], base, True)
-    head = git(path, 'ls-remote', 'origin', 'refs/heads/main').split()[0]
-    if head == entry['commit']:
-        return head, False
-    git(path, 'fetch', '-q', '--filter=blob:none', 'origin', 'main')
-    for name in adapter.TOOLS:
-        # Raises when Sam changed a repaired tool: review the repairs before moving.
-        adapter.repair(name, git_bytes(path, 'show', head + ':tools/hw/' + name))
-    entry['commit'] = head
-    entry['updated'] = today or datetime.date.today().isoformat()
-    pins_path.write_text(json.dumps(pins, indent=2) + '\n')
-    return head, True
-
-
 def update_plain(pins_path, name, base, today=None):
     """Move a pin that carries no repairs (rytm-emu) to upstream main."""
     pins = json.loads(pins_path.read_text())
@@ -176,15 +160,13 @@ def update_plain(pins_path, name, base, today=None):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--dir', type=Path, default=DEFAULT_DIR)
-    parser.add_argument('--update', action='store_true', help='Move the Octabam and rytm-emu pins to upstream main first.')
+    parser.add_argument('--update', action='store_true', help='Move the rytm-emu pin to upstream main first.')
     args = parser.parse_args()
     base = args.dir.expanduser().resolve()
     try:
         outside_git(base)
         base.mkdir(parents=True, exist_ok=True)
         if args.update:
-            head, moved = update_octabam(PINS, base)
-            print('Octabam pin %s %s.' % ('moved to' if moved else 'already at', head[:7]))
             head, moved = update_plain(PINS, 'rytm-emu', base)
             print('rytm-emu pin %s %s.' % ('moved to' if moved else 'already at', head[:7]))
         pins = json.loads(PINS.read_text())
