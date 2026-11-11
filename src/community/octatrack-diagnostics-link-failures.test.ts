@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { LinkState, OctatrackLink } from '../engine/elekloader/octatrack-link'
+import type { LinkDiagnostic, LinkState, OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { collectOctatrackDiagnostics, changeDiagnosticSharing, reportLinkFailure } from './octatrack-diagnostics'
 import { api, apiFetch, post } from './api'
 import { OCTATRACK_DIAGNOSTICS_VERSION as version } from './octatrack-diagnostics-contract'
@@ -12,7 +12,8 @@ vi.mock('./usage', () => ({ browserRequestsPrivacy: () => false, countOctatrackA
 let cleanup: undefined | (() => void), enabled = false, state: LinkState
 const listeners = new Set<() => void>()
 const consent = () => ({ accountId: 'member', enabled, version, changedAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 86400000).toISOString() })
-const link = { subscribe: (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener) } }, subscribeDiagnostics: () => () => {}, getState: () => state } as unknown as OctatrackLink
+let forward: ((event: LinkDiagnostic) => void) | undefined
+const link = { subscribe: (listener: () => void) => { listeners.add(listener); return () => { listeners.delete(listener) } }, subscribeDiagnostics: (listener: (event: LinkDiagnostic) => void) => { forward = listener; return () => { forward = undefined } }, getState: () => state } as unknown as OctatrackLink
 const move = async (next: LinkState) => { state = next; listeners.forEach(listener => listener()); await vi.advanceTimersByTimeAsync(0) }
 const sent = () => vi.mocked(apiFetch).mock.calls.map(([, options]) => JSON.parse(String(options!.body)).data)
 beforeEach(() => {
@@ -55,6 +56,11 @@ describe('failures before a link exists', () => {
     await vi.advanceTimersByTimeAsync(600_000)
     reportLinkFailure('permission-denied'); await vi.advanceTimersByTimeAsync(0)
     expect(sent().map(data => data.failure)).toEqual(['permission-denied', 'permission-denied'])
+  })
+  it('takes the same report from the link itself, through the same once-in-ten-minutes rule', async () => {
+    await collect(); await changeDiagnosticSharing(true)
+    forward!({ event: 'link_failed', phase: 'idle', failure: 'no-device' }); reportLinkFailure('no-device'); await vi.advanceTimersByTimeAsync(0)
+    expect(sent()).toEqual([{ id: expect.any(String), event: 'link_failed', phase: 'idle', failure: 'no-device', client: diagnosticClient() }])
   })
   it('does nothing once the collector has stopped', async () => {
     await collect(); await changeDiagnosticSharing(true)

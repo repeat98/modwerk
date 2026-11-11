@@ -49,7 +49,8 @@ let linkFailures: ((failure: PreLinkFailure) => void) | undefined
  * (`open-failed`) or claimed (`claim-failed`) from the link's state; call this where the reason is known first:
  * `no-webusb` when the member asks to connect in a browser without WebUSB, `no-device` when the device picker closes
  * without an Octatrack, `permission-denied` when opening it is refused (a SecurityError or NotAllowedError) and
- * `link-timeout` when the unit doesn't answer in time. Each category is recorded at most once in ten minutes. */
+ * `link-timeout` when the unit doesn't answer in time. The link (octatrack-link.ts) can report the same as its own
+ * diagnostic, `{event: 'link_failed', failure}`. Each category is recorded at most once in ten minutes. */
 export function reportLinkFailure(failure: PreLinkFailure) { try { linkFailures?.(failure) } catch { /* Diagnostics never affect USB work. */ } }
 
 /** One collector per authenticated member page. No persistent trace queue, arbitrary errors, extra device identifiers,
@@ -122,6 +123,7 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
   }
   const unsubscribe = link?.subscribeDiagnostics(event => {
     if (!current()) return
+    if (event.event === 'link_failed') { if (event.failure) linkFailed(event.failure); return } // the link's own report of the same
     if (event.event === 'sync_started') { activeSync = true; countOctatrackAction('usb_sync_started') }
     else if (activeSync && ['kept','undone','sync_failed','disconnected'].includes(event.event)) {
       countOctatrackAction(event.event === 'kept' ? 'usb_sync_kept' : event.event === 'undone' ? 'usb_sync_undone' : 'usb_sync_failed'); activeSync = false
