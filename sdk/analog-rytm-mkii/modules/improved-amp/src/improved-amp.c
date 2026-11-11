@@ -30,6 +30,7 @@
 // scale); the stored value and the hold's timing are the same ms as ever, only the text follows.
 
 #include <stdint.h>
+#include "hot.h"
 #include "analog-rytm-mk2/pages.h"
 
 typedef uint32_t word_t;
@@ -255,13 +256,9 @@ __attribute__((noinline)) static void follow(struct amp *a, uint32_t rate, uint3
     a->level = d < 0 ? a->target + (int32_t)ad : a->target - (int32_t)ad;
 }
 
-// The writer's skip state (amp-write.s reads it for every voice every block), kept together so a
-// voice with nothing to do touches three 16-byte lines: [0] the voices whose last record left the
-// level follower unchanged, [4 + v] and [12 + v] that record's rate and level words.
-volatile uint32_t improved_amp_gate[20] __attribute__((aligned(16)));
-#define GATE_STILL improved_amp_gate[0]
-#define GATE_RATE(v) improved_amp_gate[4 + (v)]
-#define GATE_LW(v) improved_amp_gate[12 + (v)]
+// The writer's skip state (amp-write.s reads it for every voice every block) is in hot.h:
+// GATE_STILL the voices whose last record left the level follower unchanged, GATE_RATE and GATE_LW
+// that record's two words, GATE_ZERO the voices among them whose record was 0/0.
 
 // Called by improved_amp_write (amp-write.s) for every voice every block, after stock's state
 // machine and before the record is stored; returns the rate word to store. st[0] is the
@@ -296,8 +293,14 @@ uint32_t improved_amp_voice(int32_t v, volatile int32_t *st, const volatile int8
         GATE_RATE(v & 7) = rate;
         GATE_LW(v & 7) = lw;
         GATE_STILL |= bit;
+        // An idle voice's record is 0/0: the writer tells that from the two words alone.
+        if (rate == 0 && lw == 0)
+            GATE_ZERO |= bit;
+        else
+            GATE_ZERO &= ~bit;
     } else {
         GATE_STILL &= ~bit;
+        GATE_ZERO &= ~bit;
     }
     return rate;
 }

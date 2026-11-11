@@ -83,6 +83,7 @@
 // longer than a fade.
 
 #include <stdint.h>
+#include "hot.h"
 
 #define TRACKS 12
 #define FADE_BLOCKS 10                  // a voice fades from 10 blocks (6.7 ms) before its trig fires
@@ -91,6 +92,7 @@
 #define TEMPO (*(volatile int32_t *)0x40287ffc)     // BPM x 120
 #define SLOTS 3                         // queued events a track; a fourth slot takes pads and MIDI at once
 #define EVENT(t, s) (*(volatile int32_t *)(0x8000fd50 + 12 * (t) + 4 * (s)))   // a slot's event's time
+#define EVENT_TIMES ((volatile int32_t *)0x8000fd50)    // the same, [SLOTS * track + slot]
 #define SLOT(t, s) (*(volatile int32_t *)(0x42ac5fb0 + 224 * (t) + 56 * (s)))  // 0 free, 2 let go, else queued
 #define SLOT_FLAGS(t, s) (*(volatile int32_t *)(0x42ac5fc4 + 224 * (t) + 56 * (s)))  // & PLAYS: restarts the amp
 #define PLAYS 0x180
@@ -100,6 +102,9 @@
 #define RTRG_ON 2                       // in a slot's flags: its RTRG is on
 #define NO_RATE 0x100                   // in rates[]: the event leaves the series' rate alone
 #define HORIZON (2 * (FADE_BLOCKS + 1)) // blocks looked ahead
+// An event's time, from this block's start, outside what the scan counts: too far ahead, or past by more
+// than the slots can hold it up.
+#define NOT_NEAR(at, block) ((at) >= HORIZON * (block) || (at) < -(SLOTS + 1) * (block))
 #define POOL_SOUND(i) ((const volatile uint8_t *)0x41313c47 + 152 * (i))  // the live pool
 #define KIT_SOUND(k, t) ((const volatile uint8_t *)0x4125590d + 2531 * (k) + 152 * (t))  // a live kit's
 #define SOUND_ENV_RESET 0x6c                // a sound's ENV RESET byte
@@ -113,6 +118,7 @@
 #define SOLOS (*(volatile uint32_t *)0x8000ed9c)
 #define LIVE_MUTES (*(volatile uint16_t *)0x8000fc90)
 #define ENV_RESET ((volatile uint8_t *)0x8000ea30)  // [track] bit 0 amp
+#define ENV_RESET_WORDS ((volatile uint32_t *)0x8000ea30)   // the 12 bytes as three words
 #define TRACK_VOICE ((const uint8_t *)0x4025a3a0)   // [track] physical voice
 #define TICK 90000                      // clock units in a 240 PPQN tick
 #define RT_TRIG(t) (*(volatile int32_t *)(0x42ac6b48 + 56 * (t)))    // nonzero: a series runs
@@ -123,8 +129,7 @@
 #define RT_DEADLINE ((volatile int32_t *)0x8000fdec)    // [track] its next tick's time
 #define RT_FIRES ((const volatile uint16_t *)0x402909b8)  // [count] bit RATE-1: fires
 
-volatile uint32_t amp_prefade_mask;     // voices to fade this block
-volatile uint32_t amp_prefade_started;  // of those, the voices whose ramp has been started (pre-fade.s)
+volatile uint32_t improved_amp_hot[24] __attribute__((aligned(16)));    // hot.h
 
 // The block (this one 0) track t's next retrig fires in, as stock counts it, or -1
 // when none fires within the fade. A series that fires again sooner than twice the
@@ -198,56 +203,42 @@ static int queued_env_reset(int t, int s)
     return ENV_RESET[t];                // the track's sound as it stands
 }
 
-// Called by the amp writer for voice 0, once a block: the voices whose sound
-// restarts its amp envelope on a scheduled trig or retrig within FADE_BLOCKS.
-void amp_prefade_scan(void)
+// The voices whose sound restarts its amp envelope on a scheduled trig or retrig within
+// FADE_BLOCKS: every track's queued events and retrig series. An event fires in the block its
+// time falls in; the clock is this block's start, and block its length on the clock.
+__attribute__((noinline)) static void scan_tracks(int32_t clock, int32_t tempo, int32_t block)
 {
-    static int32_t last_clock;
-    static uint8_t stood;
     uint32_t mask = 0, muted;
-    int32_t block, tempo = TEMPO, clock = CLOCK;
     int t;
-
-    if (clock != last_clock) {
-        last_clock = clock;
-        stood = 0;
-    } else if (stood > FADE_BLOCKS + 1) {       // the clock has stopped: let every voice go
-        amp_prefade_mask = 0;
-        amp_prefade_started = 0;
-        return;
-    } else {
-        stood++;
-    }
 
     // As stock decides at the trig (0x4011ffde): solo mutes every other track.
     muted = SOLOS ? ~SOLOS & ~0x1000u : MUTES;
     muted |= LIVE_MUTES;
-    // An event fires in the block its time falls in; the clock is this block's start.
-    block = 2 * tempo;
-    if (block <= 0) {                           // no tempo to count in
-        amp_prefade_mask = 0;
-        amp_prefade_started = 0;
-        return;
-    }
     for (t = 0; t < TRACKS; t++) {
         int32_t ahead = -1, until = HORIZON, last = 0, due[SLOTS], turns[SLOTS], rates[SLOTS];
         int s, n = 0, pending = 0;
 
         if (muted >> t & 1)
             continue;
-        for (s = 0; s < SLOTS && !TRACK_HELD(t); s++) {
-            int32_t state = SLOT(t, s), at;
+        // A slot counts when its time is inside the window, it is queued and the track is not
+        // held. The three are read in that order, the cheapest first: the times are in the on-chip
+        // RAM, and a slot's state and the track's held word, far apart in the DDR, are read only
+        // for a time inside the window.
+        for (s = 0; s < SLOTS; s++) {
+            int32_t at = (int32_t)((uint32_t)EVENT(t, s) - (uint32_t)clock), state;
 
-            if (state == 0 || state == 2)       // as stock sorts them (0x4011ff6e, 0x4011ff90)
-                continue;
-            at = (int32_t)((uint32_t)EVENT(t, s) - (uint32_t)clock);
             // Stock fires an event past its time in the next block it has free; one left longer than
             // the slots can hold it up is a state that was not read, and is not waited for.
-            if (at >= HORIZON * block || at < -(SLOTS + 1) * block)
+            if (NOT_NEAR(at, block))
+                continue;
+            state = SLOT(t, s);
+            if (state == 0 || state == 2)       // as stock sorts them (0x4011ff6e, 0x4011ff90)
                 continue;
             due[s] = at < block ? 1 : at / block;
             pending |= 1 << s;
         }
+        if (pending && TRACK_HELD(t))           // a held track drops its queued trigs
+            pending = 0;
         // The blocks stock handles them in: one a block, the lowest slot of those due.
         while (pending) {
             int32_t in = HORIZON;
@@ -271,7 +262,7 @@ void amp_prefade_scan(void)
             turns[n] = in;
             rates[n++] = SLOT_FLAGS(t, pick) & RTRG_ON ? SLOT_RATE(t, pick) : NO_RATE;
         }
-        if ((ahead < 0 || ahead > FADE_BLOCKS) && RT_TRIG(t) && (RT_FLAGS(t) & PLAYS) && (ENV_RESET[t] & 1)) {
+        if ((ahead < 0 || ahead > FADE_BLOCKS) && (ENV_RESET[t] & 1) && RT_TRIG(t) && (RT_FLAGS(t) & PLAYS)) {
             int32_t left = RT_LEFT[t];
 
             // Stock steps the series in block k (this one 0) while left - (k - 1) x TEMPO > 0.
@@ -284,4 +275,48 @@ void amp_prefade_scan(void)
     }
     amp_prefade_started &= mask;
     amp_prefade_mask = mask;
+}
+
+// Called by the amp writer for voice 0, once a block (pre-fade.s).
+void amp_prefade_scan(void)
+{
+    int32_t block, tempo = TEMPO, clock = CLOCK;
+    int i;
+
+    if ((uint32_t)clock != SCAN_CLOCK) {
+        SCAN_CLOCK = (uint32_t)clock;
+        SCAN_STOOD = 0;
+    } else if (SCAN_STOOD > FADE_BLOCKS + 1) {  // the clock has stopped: let every voice go
+        amp_prefade_mask = 0;
+        amp_prefade_started = 0;
+        return;
+    } else {
+        SCAN_STOOD = SCAN_STOOD + 1;
+    }
+    block = 2 * tempo;
+    if (block <= 0) {                           // no tempo to count in
+        amp_prefade_mask = 0;
+        amp_prefade_started = 0;
+        return;
+    }
+    // Nothing near: no slot's time inside the window, whatever its state, and no track with AMP
+    // in its own ENV RESET, which a retrig series needs. scan_tracks would then mark no voice, so
+    // it is not run. The clock runs while the sequencer is stopped, so with no track at AMP this
+    // is every idle block: 36 times and 12 bytes, all in the on-chip RAM. With a track at AMP
+    // scan_tracks runs, and reads the DDR only for that track's series and for a time inside
+    // the window.
+    if (!((ENV_RESET_WORDS[0] | ENV_RESET_WORDS[1] | ENV_RESET_WORDS[2]) & 0x01010101u)) {
+        for (i = 0; i < TRACKS * SLOTS; i++) {
+            int32_t at = (int32_t)((uint32_t)EVENT_TIMES[i] - (uint32_t)clock);
+
+            if (!NOT_NEAR(at, block))
+                break;
+        }
+        if (i == TRACKS * SLOTS) {
+            amp_prefade_mask = 0;
+            amp_prefade_started = 0;
+            return;
+        }
+    }
+    scan_tracks(clock, tempo, block);
 }

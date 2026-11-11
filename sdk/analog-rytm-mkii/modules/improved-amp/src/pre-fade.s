@@ -30,6 +30,8 @@
         .equ    FADE_GO_ON,     0x3006a7ec        | the same ramp, continued
         .equ    FADE_LEVEL,     0x00000080        | to -128
         .equ    ENV_RESET,      0x8000ea30        | per track, byte: bit 0 AMP (12 tracks)
+        .equ    HOT_MASK,       0                 | hot.h: amp_prefade_mask
+        .equ    HOT_STARTED,    4                 | amp_prefade_started
 
         .text
 
@@ -41,7 +43,8 @@
         | For voice 0 it first runs amp_prefade_scan (pre-fade.c), which marks
         | the voices a scheduled trig with AMP in its ENV RESET will restart
         | within the fade. The scan runs every block: a sound lock can bring
-        | AMP to a track whose own sound has it off.
+        | AMP to a track whose own sound has it off. With nothing near it
+        | returns after reading the queue's times (pre-fade.c).
         | For a marked voice that is sounding and was not
         | trigged this block, it sends a linear ramp to -128 instead of the
         | state's command: the ramp (mode B) in its first block, then mode 3 with
@@ -55,19 +58,21 @@
         | It uses d1, d4 and a0, as the hook allows, and keeps a1.
         | ------------------------------------------------------------------
         .globl  amp_prefade_write
-        .align  2
+        .balign 16
 amp_prefade_write:
         tst.l   %d3
-        bne.s   1f
-        lea     -16(%sp),%sp                      | once a block, for voice 0
+        beq.s   0f                                | voice 0: the scan first
+1:      move.l  improved_amp_hot+HOT_MASK,%d1
+        btst    %d3,%d1
+        bne.s   3f
+        rts                                       | not marked: 16 bytes of code, one word of data
+0:      lea     -16(%sp),%sp                      | once a block
         movem.l %d0-%d1/%a0-%a1,(%sp)
         jsr     amp_prefade_scan
         movem.l (%sp),%d0-%d1/%a0-%a1
         lea     16(%sp),%sp
-1:      move.l  amp_prefade_mask,%d1
-        btst    %d3,%d1
-        beq.s   9f
-        tst.l   (%a2)
+        bra.s   1b
+3:      tst.l   (%a2)
         bmi.s   8f                                | idle
         lea     VOICE_TRACK,%a0
         mvz.b   (%a0,%d3.l),%d1
@@ -77,14 +82,14 @@ amp_prefade_write:
         beq.s   8f                                | trigged this block
         move.l  #FADE_LEVEL,%d2
         move.l  #FADE_GO_ON,%d0
-        move.l  amp_prefade_started,%d1
+        move.l  improved_amp_hot+HOT_STARTED,%d1
         bset    %d3,%d1
         bne.s   9f                                | its ramp is running
         move.l  #FADE_START,%d0
-        move.l  %d1,amp_prefade_started
+        move.l  %d1,improved_amp_hot+HOT_STARTED
 9:      rts
-8:      move.l  amp_prefade_started,%d1           | no ramp out: the next one starts afresh
+8:      move.l  improved_amp_hot+HOT_STARTED,%d1  | no ramp out: the next one starts afresh
         bclr    %d3,%d1
         beq.s   9b
-        move.l  %d1,amp_prefade_started
+        move.l  %d1,improved_amp_hot+HOT_STARTED
         rts

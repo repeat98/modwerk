@@ -1,7 +1,7 @@
         | SPDX-License-Identifier: GPL-2.0-only
         | Envelopes - the amp envelope record write (OS 1.74), Nathaniel Pavel.
         |
-        | Every voice's record goes to improved_amp_voice (envelopes.c), which puts
+        | Every voice's record goes to improved_amp_voice (improved-amp.c), which puts
         | this module's ATK rate into the attack's records, follows the voice's
         | amp level and decides when the hold ends (HOLD 0 = no hold, 127 =
         | AUTO, never before the attack's top).
@@ -17,23 +17,36 @@
         | before the followers (60-89), which see its ATK rewrite.
         |
         | It calls improved_amp_voice unless the voice's record is the one it last
-        | took and that one left the voice as it was (improved_amp_gate,
-        | envelopes.c): an idle voice (rate and level words 0) and a decay that
-        | has reached its end get the same record every block, so an idle unit
-        | makes no C call.
+        | took and that one left the voice as it was (GATE_STILL, hot.h): an
+        | idle voice (rate and level words 0) and a decay that has reached its
+        | end get the same record every block, so an idle unit makes no C call.
+        | A 0/0 record is checked first, against GATE_ZERO alone: an idle voice
+        | then reads one word of the module's data, in the line the pre-fade's
+        | entry has just read (amp_prefade_mask), and none of the stored records.
         |
         | d0 the rate word, d2 the level word, d3 the voice, a2 its state (-1
         | idle; +4 the hold counter), a3 the frame at the voice's record, a4 the
         | track's sound slice (+0 ATK, +2 HLD, +4 DEC). It uses d1 and a0, as the
         | hook allows, and keeps every other register.
         | ------------------------------------------------------------------
+        .equ    HOT_ZERO,       8                 | hot.h: GATE_ZERO
+        .equ    HOT_STILL,      12                | GATE_STILL
+        .equ    HOT_RATE,       32                | GATE_RATE(0); GATE_LW(v) is 32 further
+
         .globl  improved_amp_write
-        .align  2
+        .balign 16
 improved_amp_write:
-        move.l  improved_amp_gate,%d1                | the voices left as they were
+        move.l  %d0,%d1
+        or.l    %d2,%d1
+        bne.s   3f
+        move.l  improved_amp_hot+HOT_ZERO,%d1     | a 0/0 record: was the one taken 0/0 too?
         btst    %d3,%d1
         beq.s   5f
-        lea     improved_amp_gate+16,%a0
+        rts                                       | idle, as it was
+3:      move.l  improved_amp_hot+HOT_STILL,%d1    | the voices left as they were
+        btst    %d3,%d1
+        beq.s   5f
+        lea     improved_amp_hot+HOT_RATE,%a0
         cmp.l   (%a0,%d3.l*4),%d0                 | the same rate word
         bne.s   5f
         cmp.l   32(%a0,%d3.l*4),%d2               | and level word: nothing changes
