@@ -36,7 +36,7 @@ export function OctatrackDiagnosticsSettings({username}: {username?: string | nu
   </section>
 }
 type AdminDiagnostics = {events:DiagnosticEntry[];counts:{day:string;event:string;count:number}[];steps?:StepRow[]}
-const STEP_NAMES: Record<string, string> = {base_guide_opened:'Guide opened',base_file_downloaded:'Base file downloaded',base_first_connection:'First connection on the base',base_usb_update_done:'USB base update done'}
+const STEP_NAMES: Record<string, string> = {base_guide_opened:'Guide openings, not people (one that opened by itself counts once per browser and base)',base_file_downloaded:'Base file downloaded',base_first_connection:'First connection on the base',base_usb_update_done:'USB base update done'}
 export function OctatrackDiagnosticsAdmin() {
   const [data,setData] = useState<AdminDiagnostics>(),[error,setError]=useState('')
   async function load() { try {setData(await api('/admin/octatrack/diagnostics'));setError('')} catch(error) {setError(error instanceof Error?error.message:'Couldn’t read diagnostics.')} }

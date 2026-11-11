@@ -4,6 +4,7 @@ import type { AnnouncementCountEvent, UsageDevice, UsageEvent } from './usage-co
 import { usagePage } from './usage-pages'
 import { USAGE_CONSENT_VERSION } from '../legal/policy'
 import { canTrackModuleDownload } from './module-downloads'
+import baseBinding from '../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
 const preferenceKey = 'octamod.usage.consent', visitorKey = 'octamod.usage.daily-visitor', configurationsKey = 'octamod.usage.started-configurations'
 let withdrawnForThisPage=false
 /** Saved only when a visitor objects to identifier-free counts; nothing is stored while they are allowed. */
@@ -50,6 +51,20 @@ export function countBaseInstall(stage: BaseInstallStage, detail?: string) {
   const event = BASE_INSTALL_COUNTS[stage]
   if (!event || !anonymousCountsAllowed()) return
   countAnonymously(stage === 'failed' ? {event, detail: (BASE_INSTALL_FAILURES as readonly string[]).includes(detail ?? '') ? detail : 'other'} : {event})
+}
+const GUIDE_COUNTED = 'modwerk.octatrack.base-guide-counted'
+let guideCountedHere = ''
+/** The guide's steps as App reports them. The guide opens by itself (`automatic`) on each visit until this browser reads
+ * a unit with a base, or the unit's base is older: such an opening counts once per browser and published base, one the
+ * member opened always. The counts are openings, not people. */
+export function countBaseGuide(stage: BaseInstallStage, detail: string | undefined, automatic: boolean, base = baseBinding.identity) {
+  if (stage === 'opened' && automatic) {
+    let counted = guideCountedHere
+    try { counted = localStorage.getItem(GUIDE_COUNTED) ?? counted; localStorage.setItem(GUIDE_COUNTED, base) } catch { /* once per visit */ }
+    guideCountedHere = base
+    if (counted === base) return
+  }
+  countBaseInstall(stage, detail)
 }
 /** The diagnostics invitation's answers by where it was shown, so the share rate can be read without knowing who. */
 export function countDiagnosticsInvitation(outcome: DiagnosticInvitationOutcome, placement: DiagnosticInvitationPlacement) {

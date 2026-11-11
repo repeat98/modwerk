@@ -36,6 +36,13 @@ describe('identifier-free install-guide and invitation counts in the browser', (
     expect(sent().map(([, body]) => body.detail)).toEqual([...Object.keys(guide), 'other'])
     expect([...BASE_INSTALL_FAILURES].sort()).toEqual([...Object.keys(guide), 'other'].sort())
   })
+  it('counts a guide that opened by itself once per browser and base, and every one the member opened', () => {
+    usage.countBaseGuide('opened', undefined, true, 'aa'); usage.countBaseGuide('opened', undefined, true, 'aa')
+    usage.countBaseGuide('opened', undefined, false, 'aa'); usage.countBaseGuide('file-downloaded', undefined, true, 'aa')
+    usage.countBaseGuide('opened', undefined, true, 'bb') // a newer base: its update prompt counts once again
+    expect(sent().map(([, body]) => body.event)).toEqual(['base_guide_opened', 'base_guide_opened', 'base_file_downloaded', 'base_guide_opened'])
+    expect(values.get('modwerk.octatrack.base-guide-counted')).toBe('bb')
+  })
   it('counts invitation answers by placement and stops for an objection or a browser privacy signal', () => {
     usage.countDiagnosticsInvitation('shown', 'guide'); usage.countDiagnosticsInvitation('not-now', 'after-failure')
     usage.countDiagnosticsInvitation('shared', 'nowhere' as never)

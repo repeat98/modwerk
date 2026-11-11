@@ -15,7 +15,7 @@ import { MemberGate } from './community/MemberGate'
 import { ForumPage } from './community/ForumPage'
 import { ForumShoutbox } from './community/ForumShoutbox'
 import './community/forum.css'
-import { countBaseInstall, trackPageView, trackUsage } from './community/usage'
+import { countBaseGuide, trackPageView, trackUsage } from './community/usage'
 import { useDiagnosticsStepNeeded } from './community/diagnostics-sharing'
 import { useOctatrackWelcome } from './hooks/useOctatrackWelcome'
 import { OCTATRACK_BASE_RELEASED } from './config/octatrack-base'
@@ -244,7 +244,7 @@ export default function App() {
   const guideStepWanted = guideOpen && (guideOffersDiagnostics || diagnosticsStepNeeded)
   if (guideStepWanted !== guideOffersDiagnostics) setGuideOffersDiagnostics(guideStepWanted)
   const baseGuideDiagnosticsStep: ReactNode = guideOffersDiagnostics ? <Suspense fallback={null}><DiagnosticsGuideStep /></Suspense> : undefined
-  const onBaseGuideStage: (stage: BaseGuideStage, detail?: BaseGuideFailure) => void = countBaseInstall
+  const onBaseGuideStage = (stage: BaseGuideStage, detail?: BaseGuideFailure) => countBaseGuide(stage, detail, !baseInstall)
   useEffect(()=>{if(developerRoute&&!route.startsWith('developer/complete')&&developer&&!developer.user)window.location.replace('#account/developer')},[developerRoute,route,developer])
   const communityRoute = developerRoute || forumRoute || accountRoute || route === 'review' || route === 'admin' || route.startsWith('submit') || !!communityModule
   const allCategory = route.startsWith(ALL_MACHINES + '/') && LIBRARY_CATEGORIES.includes(route.slice(4) as ModuleCategory) ? route.slice(4) as ModuleCategory : undefined
