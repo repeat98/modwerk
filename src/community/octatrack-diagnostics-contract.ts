@@ -122,5 +122,8 @@ export interface OctatrackDiagnostic {
   client?: DiagnosticClient
   failure?: PreLinkFailure
 }
+/** The `accountId` of a visitor who shares without an account: their reports are kept under a random ID their browser
+ * made when they agreed (sent as X-Modwerk-Diagnostics-Guest; the server stores only its SHA-256). */
+export const DIAGNOSTICS_GUEST = 'guest'
 export interface DiagnosticConsent { accountId: string; enabled: boolean; version: string; changedAt: string | null; expiresAt: string | null }
 export interface DiagnosticEntry { eventId: string; createdAt: string; data: OctatrackDiagnostic; username?: string }

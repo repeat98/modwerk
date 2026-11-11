@@ -130,7 +130,7 @@ describe('the guided first install, for a member on the original OS', () => {
     await open({ link, launch: true, account: 'visitor' }).render()
     expect(container.querySelector('.base-install-account a')?.getAttribute('href')).toBe('#account/login?next=octatrack')
     // Signing in is not needed for the install, and the account doesn't hold the module sets: they stay in this browser.
-    expect(container.textContent).toContain('Signing in is optional: it lets you report problems, share diagnostics if you choose, and have the site remember that your Octatrack has the base. Your module sets stay in this browser.')
+    expect(container.textContent).toContain('Signing in is optional: it lets you report problems and have the site remember that your Octatrack has the base. Your module sets stay in this browser.')
     expect(container.textContent).not.toMatch(/with your account/)
     expect(buttonNamed('Show me how')?.disabled).toBe(false)
     await open({ link, launch: true, account: 'unverified' }).render()

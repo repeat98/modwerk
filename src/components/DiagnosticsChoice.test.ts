@@ -44,12 +44,12 @@ afterEach(async () => { await act(async () => root.unmount()); container.remove(
 async function render(element: ReturnType<typeof createElement>) { await act(async () => { root.render(element); await flush() }) }
 
 describe('a free choice', () => {
-  it('offers Not now beside Share diagnostics with equal weight and no beta condition', async () => {
+  it('offers Not now beside Share diagnostics, the main button, with no beta condition', async () => {
     const onClose = vi.fn()
     await render(createElement(DiagnosticsInvitation, { onClose, placement: 'hub' }))
     expect(container.textContent).not.toMatch(/beta/i)
     expect(container.textContent).toContain('Builds and syncing work either way')
-    expect(button('Not now').className).toBe(button('Share diagnostics').className)
+    expect(button('Share diagnostics').className).toBe('button button-primary'); expect(button('Not now').className).toBe('button button-quiet')
     expect(container.querySelectorAll('input[type="checkbox"]')).toHaveLength(0)
     await act(async () => { button('Not now').click(); await flush() })
     expect(onClose).toHaveBeenCalledWith(false); expect(mocked.share).not.toHaveBeenCalled()
@@ -72,7 +72,7 @@ describe('the install guide’s diagnostics step', () => {
   it('offers Share and Not now to a member who doesn’t share, and Not now finishes the step', async () => {
     const onDone = vi.fn()
     await render(createElement(DiagnosticsGuideStep, { onDone }))
-    expect(container.textContent).toContain('Share diagnostics?'); expect(container.textContent).toContain('What gets shared')
+    expect(container.textContent).toContain('Help make this work on every Octatrack'); expect(container.textContent).toContain('What gets shared')
     expect(container.textContent).toContain('under Setup in Your Octatrack')
     expect(container.querySelector('dialog')).toBeNull() // a part of the guide, not a dialog over it
     await act(async () => { button('Not now').click(); await flush() })

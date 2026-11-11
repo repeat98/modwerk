@@ -17,10 +17,15 @@
 .diagnostics-actions .button { min-height: 44px; flex: 1; }
 .diagnostics-preview { margin: 8px 0 0; color: var(--muted); font-size: 12px; }
 .diagnostics-step { margin: 20px 0 0; padding-top: 16px; border-top: 1px solid var(--line); font-size: 13px; line-height: 1.6; color: var(--text-secondary); }
-.diagnostics-step h3 { margin: 0 0 6px; font-size: 15px; color: var(--text); }
+.diagnostics-step h3 { margin: 0 0 6px; font-size: 22px; line-height: 1.25; letter-spacing: -.35px; color: var(--text); }
 .diagnostics-step p { margin: 8px 0; }
+.diagnostics-step .diagnostics-step-lead { margin: 8px 0 20px; font-size: 15px; line-height: 1.65; }
+.diagnostics-step .diagnostics-facts p { margin: 4px 0 0; }
+.diagnostics-step .diagnostics-choice { margin: 4px 0 0; }
+/* While the step asks, its two buttons are the way on: the guide's Continue comes back with the answer. */
+.base-install-dialog:has(.diagnostics-step-actions) .base-install-footer { display: none; }
 .diagnostics-step-actions { display: flex; gap: 12px; margin-top: 14px; }
-.diagnostics-step-actions .button { min-height: 44px; flex: 1; }
+.diagnostics-step-actions .button { min-height: 48px; flex: 1; font-size: 15px; }
 .octatrack-diagnostics { margin: 20px 0; padding: 16px 0; border-top: 1px solid var(--line); font-size: 13px; line-height: 1.6; }
 .octatrack-diagnostics h3 { margin: 0 0 6px; font-size: 15px; }
 .octatrack-diagnostics p { margin: 8px 0; }

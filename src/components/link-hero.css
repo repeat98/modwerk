@@ -38,10 +38,10 @@
    and in a short window the features keep only their headlines and the picture gives way (it shrinks, then goes). */
 .is-intro .base-install-stage { min-height: 0; }
 @media (min-width: 601px) {
-  .base-install-dialog.is-intro[open] { display: flex; flex-direction: column; padding: 24px 28px; }
+  .base-install-dialog.is-intro[open] { display: flex; flex-direction: column; width: min(820px, calc(100% - 32px)); padding: 24px 28px; }
   .is-intro > * { flex: none; }
   .is-intro > .module-preview.link-hero { flex: 0 1 auto; min-height: 0; margin: -24px -28px 16px; overflow: hidden; }
-  .is-intro .link-hero .link-hero-art { flex: 0 1 100px; min-height: 0; height: auto; aspect-ratio: auto; padding: 0 24px 8px; }
+  .is-intro .link-hero .link-hero-art { flex: 0 1 270px; min-height: 0; height: auto; aspect-ratio: auto; padding: 0 24px 8px; }
   .is-intro .link-title { font-size: 24px; letter-spacing: -.5px; }
   .is-intro .base-install-intro { margin: 8px 0 16px; line-height: 1.6; }
   .is-intro .link-promises { gap: 10px 20px; margin-bottom: 14px; font-size: 13px; line-height: 1.45; }

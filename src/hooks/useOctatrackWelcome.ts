@@ -22,7 +22,7 @@ function rememberWelcome() { try { localStorage.setItem(KEY, 'seen') } catch { /
  * Someone who opens the install guide by themselves (`guideOpen`) is past it: it counts as answered.
  */
 export function useOctatrackWelcome(memberId: string | null, released: boolean, here: boolean, link: OctatrackLink | null, guideOpen = false) {
-  const [seen, setSeen] = useState(welcomeSeen), [open, setOpen] = useState(false), [shown, setShown] = useState(false)
+  const [seen, setSeen] = useState(welcomeSeen), [open, setOpen] = useState(false), [shown, setShown] = useState(false), [asked, setAsked] = useState(false)
   if (guideOpen && !seen) setSeen(true)
   useEffect(() => { if (guideOpen) rememberWelcome() }, [guideOpen])
   // The member's record: whether their units never reported a base (true), read once per member.
@@ -46,11 +46,11 @@ export function useOctatrackWelcome(memberId: string | null, released: boolean, 
     return () => window.clearInterval(timer)
   }, [ready, here, open])
   return {
-    // A unit read meanwhile with a base ends it: it was never for them.
-    open: open && !hasBase, due, shown: shown && !hasBase,
+    // A unit read meanwhile with a base ends it: it was never for them. Asked for (`show`), it opens whatever the unit runs.
+    open: open && (asked || !hasBase), due, shown: shown && !hasBase,
     /** Any answer: it doesn't come back by itself, in this browser. */
-    close() { rememberWelcome(); setSeen(true); setOpen(false) },
+    close() { rememberWelcome(); setSeen(true); setOpen(false); setAsked(false) },
     /** From the hub's Setup: shown again on request, whatever was answered before. */
-    show() { setOpen(true); setShown(true) },
+    show() { setAsked(true); setOpen(true); setShown(true) },
   }
 }

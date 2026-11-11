@@ -1,13 +1,12 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { changeDiagnosticSharing, diagnosticPreference, subscribeDiagnosticPreference } from '../community/octatrack-diagnostics'
 import { diagnosticsStepNeeded, invitationAnswered, rememberInvitationAnswer } from '../community/diagnostics-sharing'
-import { type DiagnosticInvitationOutcome, type DiagnosticInvitationPlacement } from '../community/octatrack-diagnostics-contract'
+import { DIAGNOSTICS_GUEST, type DiagnosticInvitationOutcome, type DiagnosticInvitationPlacement } from '../community/octatrack-diagnostics-contract'
 import { declinedThisVisit, declineForThisVisit, offerDiagnostics, pauseReask, unitBusy, pendingReask, REASK_REASONS, REASK_STALE_MS, reaskPaused, settleReask, subscribeReask } from '../community/diagnostics-reask'
 import { browserRequestsPrivacy, countDiagnosticsInvitation } from '../community/usage'
 import type { OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
 import { Icon } from './Icon'
-import { accountHref } from '../community/member-access'
 import './diagnostics.css'
 
 export function DiagnosticDetails() {
@@ -18,7 +17,7 @@ export function DiagnosticDetails() {
     <p>The Octatrack also keeps a small log of its own, also while this site is closed: its load and whether it was playing, overloads, freezes and crashes, and at such a moment each track’s machine type and effects, playing or stopped, the tempo, the screen that was open and the last 16 keys pressed. The site sends that log the next time you connect.</p>
     <p>Every report except that log also names your browser with its main version and your operating system, such as Chrome 131 on Windows, never the full browser identification.</p>
     <p>No firmware, samples, audio, project, sample or set names, device serial numbers, raw memory or crash dumps. Reports use Modwerk’s Cloudflare service and aren’t posted to GitHub or shared with module authors. I may have an AI assistant (Anthropic’s Claude) help me read them; for that, they are sent to Anthropic.</p>
-    <p>Consent is optional under GDPR Article 6(1)(a). You can stop sharing and delete reports in Account → Diagnostics. Your account data download includes them. Reports are hidden after 30 days and deleted by hourly cleanup, with at most 1,000 entries per account. <a href="#privacy" target="_blank" rel="noreferrer">Privacy and your rights</a>.</p>
+    <p>Consent is optional under GDPR Article 6(1)(a). You can stop sharing and delete reports under Setup in Your Octatrack. Signed in, your account data download includes them; without an account they are kept under a random ID stored in this browser. Reports are hidden after 30 days and deleted by hourly cleanup, with at most 1,000 entries per account or browser. <a href="#privacy" target="_blank" rel="noreferrer">Privacy and your rights</a>.</p>
     <p>Separate daily counts of sync actions, base install steps and answers to this invitation contain no account, device, module or session identifier. They last 30 days and follow your usage-count preference and browser privacy signals.</p>
   </details>
 }
@@ -32,12 +31,12 @@ function useInvitationCounts(placement: DiagnosticInvitationPlacement | undefine
 }
 
 /** One explicit choice, separate from installation and sync. No collection is enabled by opening or dismissing it.
- * Share diagnostics and Not now carry equal weight, and closing it is Not now. `onClose(true)` after sharing.
+ * Share diagnostics is the main button (owner, 11 November 2026); Not now sits beside it, the same size, and closing it is Not now. `onClose(true)` after sharing.
  * `reason` opens it with what just failed; `placement` names where it was shown for the anonymous answer counts. */
 export function DiagnosticsInvitation({onClose,preview=false,placement,reason}: {onClose:(shared?:boolean)=>void;preview?:boolean;placement?:DiagnosticInvitationPlacement;reason?:string}) {
   const state = useSyncExternalStore(subscribeDiagnosticPreference,diagnosticPreference,diagnosticPreference)
   const dialog = useRef<HTMLDialogElement>(null), live = useRef(true)
-  const privacy = browserRequestsPrivacy()
+  const privacy = browserRequestsPrivacy(), guest = state.accountId === DIAGNOSTICS_GUEST
   const count = useInvitationCounts(preview ? undefined : placement, true)
   useEffect(()=>{
     live.current=true
@@ -58,34 +57,21 @@ export function DiagnosticsInvitation({onClose,preview=false,placement,reason}: 
     <p id="diagnostics-intro" className="diagnostics-intro">{reason ?? 'If a build or sync fails, a technical report helps us see where it went wrong and fix the problem.'}</p>
     <ul className="diagnostics-facts">
       <li><Icon name="search" size={19}/><div><strong>What went wrong</strong><p>Browser and build failure categories, why a connection failed, your browser and system, plus sync results, load, freezes and what your Octatrack was doing at the time.</p></div></li>
-      <li><Icon name="lock" size={19}/><div><strong>Private, for 30 days</strong><p>Reports are linked to your account and visible only to you and site administrators.</p></div></li>
+      <li><Icon name="lock" size={19}/><div><strong>Private, for 30 days</strong><p>{guest ? 'Reports are kept under a random ID stored in this browser, not under your name, and only site administrators can read them.' : 'Reports are linked to your account and visible only to you and site administrators.'}</p></div></li>
     </ul>
     <p className="diagnostics-connected">Using your Octatrack over USB? Keep this page open and your Octatrack connected so we can receive a report if something fails.</p>
     <DiagnosticDetails/>
-    <p className="diagnostics-choice">Optional. Sharing applies to your signed-in sessions for 90 days. You can turn it off and delete reports in Account → Diagnostics anytime. Builds and syncing work either way.</p>
+    <p className="diagnostics-choice">Optional. Sharing applies to {guest ? 'this browser' : 'your signed-in sessions'} for 90 days. You can turn it off and delete reports under Setup in Your Octatrack anytime. Builds and syncing work either way.</p>
     {privacy && <p className="diagnostics-choice" role="status">Your browser requests privacy, so automatic diagnostics stay off here.</p>}
     {!preview && state.error && <p className="file-error" role="alert">{state.error}</p>}
-    <footer className="diagnostics-actions"><button type="button" className="button button-quiet" onClick={notNow}>Not now</button><button type="button" className="button button-quiet" disabled={privacy || !preview && (!state.ready || state.busy)} onClick={()=>void share()}>{state.busy && !preview ? 'Saving…' : 'Share diagnostics'}</button></footer>
+    <footer className="diagnostics-actions"><button type="button" className="button button-quiet" onClick={notNow}>Not now</button><button type="button" className="button button-primary" disabled={privacy || !preview && (!state.ready || state.busy)} onClick={()=>void share()}>{state.busy && !preview ? 'Saving…' : 'Share diagnostics'}</button></footer>
   </dialog>
 }
 
-/** The base install guide's last step (BaseInstallDialog's `diagnosticsStep`). It never blocks: Share diagnostics and
- * Not now both finish it (`onDone`), and the guide's own buttons work whatever is chosen. Renders nothing for a member
- * who already shares under the current consent version, or where sharing isn't possible. */
-/** The install guide's last step for someone without a verified account: sharing belongs to an account (the consent
- * and the reports are the member's), so the step says so and leads there. Nothing is asked or shared here; after signing
- * in, the ordinary invitation asks. Never shown under a browser privacy signal. */
-export function DiagnosticsGuideAccount({account}: {account: 'visitor' | 'unverified'}) {
-  if (browserRequestsPrivacy()) return null
-  return <section className="diagnostics-step" aria-labelledby="diagnostics-step-title">
-    <h3 id="diagnostics-step-title">Share diagnostics?</h3>
-    <p>Running modules over USB is new for most Octatracks. If something goes wrong, a diagnostics report lets us find the problem and fix it.</p>
-    <p>Sharing is optional and everything works either way. It needs an account, because the choice and the reports are yours to turn off and delete.{' '}
-      {account === 'visitor' ? <><a className="text-button" href={accountHref('login', 'octatrack')}>Sign in</a> · <a className="text-button" href={accountHref('register', 'octatrack')}>Create account</a></>
-        : <a className="text-button" href="#account">Verify your email</a>}, and you’re asked once.</p>
-    <DiagnosticDetails/>
-  </section>
-}
+/** The base install guide's last step (BaseInstallDialog's `diagnosticsStep`): why a report helps, what is and is never
+ * sent, and one free choice. Share diagnostics is the main button, Not now beside it the same size; both finish it (`onDone`); the guide's
+ * Continue waits for one of them. Renders nothing for a member who already shares under the current consent version, or
+ * where sharing isn't possible. */
 export function DiagnosticsGuideStep({onDone}: {onDone?: (shared: boolean) => void}) {
   const state = useSyncExternalStore(subscribeDiagnosticPreference,diagnosticPreference,diagnosticPreference)
   const [answer,setAnswer] = useState<'shared' | 'not-now'>()
@@ -101,16 +87,22 @@ export function DiagnosticsGuideStep({onDone}: {onDone?: (shared: boolean) => vo
   if (answer) return <section className="diagnostics-step" aria-label="Diagnostics"><p role="status">{answer === 'shared' ? 'Thanks. Diagnostics sharing is on.' : 'Nothing is shared. You can turn diagnostics on any time under Setup in Your Octatrack.'}</p></section>
   if (!offer) return null
   return <section className="diagnostics-step" aria-labelledby="diagnostics-step-title">
-    <h3 id="diagnostics-step-title">Share diagnostics?</h3>
-    <p>Running modules over USB is new for most Octatracks. If something goes wrong, a diagnostics report lets us find the problem and fix it.</p>
-    <p>Sharing is optional and everything works either way. It applies to your signed-in sessions for 90 days, and you can turn it off and delete reports any time under Setup in Your Octatrack.</p>
+    <div className="diagnostics-heading-icon" aria-hidden="true"><Icon name="wave" size={24}/></div>
+    <h3 id="diagnostics-step-title">Help make this work on every Octatrack</h3>
+    <p className="diagnostics-step-lead">Modules over USB are new, and every Octatrack setup is different. If something goes wrong on yours, a diagnostics report shows us what happened, so it gets fixed for you and for everyone else.</p>
+    <ul className="diagnostics-facts">
+      <li><Icon name="search" size={19}/><div><strong>Technical readings only</strong><p>Sync results, CPU and DSP load, freezes and crashes with what your Octatrack was doing at that moment, your browser and system.</p></div></li>
+      <li><Icon name="lock" size={19}/><div><strong>Never your music</strong><p>No samples, audio, projects or their names, no firmware and no serial number. Reports are private and hidden after 30 days.</p></div></li>
+      <li><Icon name="check" size={19}/><div><strong>Yours to switch off</strong><p>Stop sharing and delete your reports any time under Setup in Your Octatrack. Everything works either way.</p></div></li>
+    </ul>
     <DiagnosticDetails/>
+    <p className="diagnostics-choice">Optional. Sharing applies to {state.accountId === DIAGNOSTICS_GUEST ? 'this browser, under a random ID kept here instead of an account,' : 'your signed-in sessions'} for 90 days.</p>
     {state.error && <p className="file-error" role="alert">{state.error}</p>}
-    <div className="diagnostics-step-actions"><button type="button" className="button button-quiet" onClick={notNow}>Not now</button><button type="button" className="button button-quiet" disabled={!state.ready || state.busy} onClick={()=>void share()}>{state.busy ? 'Saving…' : 'Share diagnostics'}</button></div>
+    <div className="diagnostics-step-actions"><button type="button" className="button button-quiet" onClick={notNow}>Not now</button><button type="button" className="button button-primary" disabled={!state.ready || state.busy} onClick={()=>void share()}>{state.busy ? 'Saving…' : 'Share diagnostics'}</button></div>
   </section>
 }
 
-/** Invite after the account's first compatible USB connection and any current dialog. Dismissal remains account/version scoped.
+/** Invite after the first compatible USB connection of the member, or of the visitor (`memberId` DIAGNOSTICS_GUEST), and any current dialog. Dismissal remains account/version scoped.
  * It also asks once more after a failure (diagnostics-reask.ts): a failed sync or self-test and a unit that started its
  * previous base are seen here; other places call offerDiagnostics. That question waits until nothing runs on the unit
  * and no other dialog is open (at most REASK_STALE_MS), and isn't asked while sharing, after turning sharing off under

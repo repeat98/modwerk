@@ -213,6 +213,10 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-section h3, .hub-cell h3, .hub-view .card-install > summary > h3 { margin: 0 0 10px; color: var(--muted); font-size: 12px; font-weight: 600; }
 .hub-section p { margin: 6px 0; color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
 .hub-section .button { min-height: 40px; }
+.hub-section.hub-base { padding: 20px; border: 1px solid var(--control-border); border-radius: 12px; background: var(--surface-raised); }
+.hub-base h3 { color: var(--text); font-size: 18px; letter-spacing: -.2px; }
+.hub-base > p:first-of-type { color: var(--text); font-size: 15px; }
+.hub-base > .button { min-height: 44px; margin: 8px 0 6px; }
 .hub-section .hub-code { margin: 8px 0; padding: 10px 12px; overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; font: 12px/1.6 var(--mono); white-space: pre; user-select: all; }
 .hub-view p.hub-empty { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
 /* Status: a control room's panel, divided by hairlines. Its rows are fixed; long lists scroll in their cell. */

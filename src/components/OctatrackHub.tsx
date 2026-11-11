@@ -40,6 +40,8 @@ const UNIT_VIEWS: { view: Exclude<HubView, 'set'>; title: string; href: string; 
   { view: 'samples', title: 'Samples', href: '#octatrack/samples', icon: 'wave' },
   { view: 'setup', title: 'Setup', href: '#octatrack/setup', icon: 'sliders' },
 ]
+// Samples is unfinished: its panel stays (and keeps its tests), but nothing leads to it until it is ready.
+const NAV_VIEWS = UNIT_VIEWS.filter(item => item.view !== 'samples')
 
 /**
  * Your Octatrack: the Octatrack's configuration page on the base path (hasOctatrackBase). A list on the leading side holds the Octatrack's own pages
@@ -155,12 +157,12 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
       </header>
       <nav className="hub-nav" aria-label="Your Octatrack">
         <select className="hub-set-picker" aria-label="Show" value={view === 'set' && selected ? 'set:' + selected.id : view} onChange={event => { const value = event.target.value; if (value.startsWith('set:')) onSelect(value.slice(4)); else window.location.hash = UNIT_VIEWS.find(item => item.view === value)!.href }}>
-          <optgroup label={model}>{UNIT_VIEWS.map(item => <option key={item.view} value={item.view}>{item.title}</option>)}</optgroup>
+          <optgroup label={model}>{NAV_VIEWS.map(item => <option key={item.view} value={item.view}>{item.title}</option>)}</optgroup>
           {sets.length > 0 && <optgroup label="Module sets">{sets.map(set => <option key={set.id} value={'set:' + set.id}>{set.name} · {modules(set.moduleIds.length)}</option>)}</optgroup>}
         </select>
         <div className="hub-nav-group">
           <h2 className="hub-nav-label">Octatrack</h2>
-          <ul className="hub-nav-list">{UNIT_VIEWS.map(item => <li key={item.view}><a className="hub-nav-item" href={item.href} aria-current={view === item.view ? 'page' : undefined}><Icon name={item.icon} size={16} /><span>{item.title}</span>{item.view === 'samples' && <span className="samples-wip">WIP</span>}</a></li>)}</ul>
+          <ul className="hub-nav-list">{NAV_VIEWS.map(item => <li key={item.view}><a className="hub-nav-item" href={item.href} aria-current={view === item.view ? 'page' : undefined}><Icon name={item.icon} size={16} /><span>{item.title}</span></a></li>)}</ul>
         </div>
         <HubSetList sets={sets} selected={selected} open={view === 'set'} contents={set => set.moduleIds.map(moduleName).join(' · ')} onSelect={onSelect} onNew={onNew} onImport={onImport} onSetAction={onSetAction}
           state={set => { const on = same(set); return { on: on && connected, label: on ? (connected ? 'On your Octatrack' : 'Last seen on your Octatrack') : undefined } }} />
@@ -171,7 +173,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
         {panel('samples', <OctatrackSamples active={view === 'samples'} />)}
         {panel('setup', <>
           <h2 className="hub-view-title">Setup</h2>
-          <section className="hub-section" aria-labelledby="setup-base-title">
+          <section className="hub-section hub-base" aria-labelledby="setup-base-title">
             <h3 id="setup-base-title">Modwerk base</h3>
             <p>{!usb ? 'This browser can’t use USB, so it can’t sync module sets. Open this page in Chrome or Edge on a computer to install the base, or build card firmware below.'
               : connected ? <>Your {model} runs the Modwerk base <code>{identity!.base.slice(0, 8)}</code>.{needsBase && (wantedLayout ? ' Your set needs it in another USB Audio layout.' : ' This site needs a newer one to sync your set.')}</>

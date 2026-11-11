@@ -17,6 +17,7 @@ import { ForumShoutbox } from './community/ForumShoutbox'
 import './community/forum.css'
 import { countBaseGuide, trackPageView, trackUsage } from './community/usage'
 import { useDiagnosticsStepNeeded } from './community/diagnostics-sharing'
+import { DIAGNOSTICS_GUEST } from './community/octatrack-diagnostics-contract'
 import { useOctatrackWelcome } from './hooks/useOctatrackWelcome'
 import { OCTATRACK_BASE_RELEASED } from './config/octatrack-base'
 import { LegalPage } from './legal/LegalPage'
@@ -129,7 +130,6 @@ const PutBackModules = lazy(() => beta().then(module => ({ default: module.PutBa
 const OctatrackDiagnosticsCollector = lazy(() => import('./components/OctatrackDiagnostics').then(module => ({ default: module.OctatrackDiagnosticsCollector })))
 const DiagnosticsInvitationGate = lazy(() => import('./components/DiagnosticsInvitation').then(module => ({ default: module.DiagnosticsInvitationGate })))
 const DiagnosticsGuideStep = lazy(() => import('./components/DiagnosticsInvitation').then(module => ({ default: module.DiagnosticsGuideStep })))
-const DiagnosticsGuideAccount = lazy(() => import('./components/DiagnosticsInvitation').then(module => ({ default: module.DiagnosticsGuideAccount })))
 const RemoteSessionGate = lazy(() => import('./components/RemoteSession').then(module => ({ default: module.RemoteSessionGate })))
 const OwnerNoteGate = lazy(() => import('./components/OwnerNote').then(module => ({ default: module.OwnerNoteGate })))
 const OwnerNotePreview = lazy(() => import('./components/OwnerNote').then(module => ({ default: module.OwnerNotePreview })))
@@ -236,17 +236,18 @@ export default function App() {
   const baseInstallPrompt = useBaseInstallPrompt(session.user?.verified ? session.user.id : null, !welcome.due && !welcome.shown && !sessionLoading && !!usbLink && !usbLinkPreview && !accountRoute && !developerRoute && !route.startsWith('submit') && !['admin', 'review', 'privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route), usbLink ?? null,
     octatrackUi && (route === 'octatrack' || route.startsWith('octatrack/') || route === 'configuration'))
   // Integration points for the diagnostics stream, connected here and nowhere else: the base install guide's last step,
-  // shown once the unit first connects on the new base (skipped while undefined; it never holds up finishing), and where
+  // shown once the unit first connects on the new base (skipped while undefined; either answer or Close finishes it), and where
   // each run of the guide got to (BaseGuideStage, with a BaseGuideFailure for 'failed'), counted without any identifier.
   // The step is for a member who doesn't share diagnostics; once offered it stays until the guide closes, so the answer
-  // stays in view above Continue. Its Not now also counts as the answer to the first-connection invitation.
+  // stays in view above Continue, which waits for an answer (diagnostics.css). Its Not now also counts as the answer to the first-connection invitation.
   const guideOpen = !!usbLink && (!!baseInstall || baseInstallPrompt.open), diagnosticsStepNeeded = useDiagnosticsStepNeeded()
   const [guideOffersDiagnostics, setGuideOffersDiagnostics] = useState(false)
   const guideStepWanted = guideOpen && (guideOffersDiagnostics || diagnosticsStepNeeded)
   if (guideStepWanted !== guideOffersDiagnostics) setGuideOffersDiagnostics(guideStepWanted)
-  // Without a verified account there is no choice to make yet: the step says sharing needs one and leads there.
-  const baseGuideDiagnosticsStep: ReactNode = guideOffersDiagnostics ? <Suspense fallback={null}><DiagnosticsGuideStep /></Suspense>
-    : guideOpen && session.available && !session.user?.verified ? <Suspense fallback={null}><DiagnosticsGuideAccount account={session.user ? 'unverified' : 'visitor'} /></Suspense> : undefined
+  const baseGuideDiagnosticsStep: ReactNode = guideOffersDiagnostics ? <Suspense fallback={null}><DiagnosticsGuideStep /></Suspense> : undefined
+  // Who the diagnostics choice and reports belong to: the verified member, or without one the visitor, under a random
+  // ID kept in this browser (DIAGNOSTICS_GUEST). Nobody while the session is unknown or the community service is away.
+  const diagnosticsSubject = session.user?.verified ? session.user.id : !sessionLoading && session.available ? DIAGNOSTICS_GUEST : null
   const onBaseGuideStage = (stage: BaseGuideStage, detail?: BaseGuideFailure) => countBaseGuide(stage, detail, !baseInstall)
   // The base guide's download and USB update sit behind the firmware build gate, as the card build does (MemberGate.tsx).
   // Whoever leaves the guide to sign in comes back into it: set aside here, and opened again at its steps once they are
@@ -272,7 +273,7 @@ export default function App() {
   const filter = LIBRARY_CATEGORIES.find(category => category === route) ?? 'all'
   const hubRoute = octatrackUi && (route === 'octatrack' || route.startsWith('octatrack/') || route === 'configuration')
   // The Octatrack page's list: the unit's own pages (#octatrack is Status), and #configuration for the set you edit.
-  const hubView: HubView = route === 'configuration' ? 'set' : (['backups', 'samples', 'setup'] as const).find(view => route === 'octatrack/' + view) ?? 'status'
+  const hubView: HubView = route === 'configuration' ? 'set' : (['backups', 'setup'] as const).find(view => route === 'octatrack/' + view) ?? 'status'
   useEffect(() => {
     // Wait for access/catalog resolution; redirecting unit routes do not render a page.
     if (!sessionLoading && !((route === 'octatrack' || route.startsWith('octatrack/')) && !octatrackUi)) trackPageView(route, missingRoute && !pausedModule)
@@ -514,7 +515,7 @@ export default function App() {
     onFill={ids => { workspace.addModules(ids); setSaved(false); setRiskAccepted({key:'',accepted:false}) }}
     onReport={id => { const target = id ?? active?.id; if (target) setReportingConfiguration({ machine: 'octatrack', id: target }) }}
     header={<><header className="page-heading configuration-heading"><div><p className="page-kicker">YOUR WORKSPACE</p><h1>Your Octatrack</h1><p>{mobileWorkspace ? 'Edit and share your module sets. Module sets are saved in this browser.' : 'See what’s on your Octatrack, edit and sync your module sets, and keep backups. Module sets are saved in this browser.'}</p>
-      {session.available && !sessionLoading && !session.user && <p className="hub-account-note">Sign in to report problems, share diagnostics if you choose, and have the site remember that your Octatrack has the base. Your module sets stay in this browser. <a className="text-button" href={accountHref('login', route)}>Sign in</a> · <a className="text-button" href={accountHref('register', route)}>Create account</a></p>}</div>
+      {session.available && !sessionLoading && !session.user && <p className="hub-account-note">Sign in to report problems and have the site remember that your Octatrack has the base. Your module sets stay in this browser. <a className="text-button" href={accountHref('login', route)}>Sign in</a> · <a className="text-button" href={accountHref('register', route)}>Create account</a></p>}</div>
       <div className="configuration-heading-actions"><button className="button button-quiet module-issue-action" disabled={!selectedIds.length} aria-haspopup="dialog" onClick={() => active && setReportingConfiguration({ machine: 'octatrack', id: active.id })}><Icon name="message" size={16} />Report a problem</button></div></header>
       <input ref={importRef} type="file" accept="application/json,.json" hidden onChange={event=>void importSelection(event)} aria-label="Import module set backup"/>{importError&&<p className="file-error" role="alert">{importError}</p>}</>}
     grid={<>{availabilityError && <p className="file-error" role="alert">{availabilityError}</p>}<ModuleGrid ids={selectedIds} inventory={inventory} describe={id => id === USB_AUDIO_MODULE && active?.usbAudio ? usbAudioLayout(active.usbAudio.layout).name + ' · 0.2 experimental' : !isModuleAvailable(id, betaAccess) ? 'Temporarily unavailable' : MODULES.find(module => module.id === id)?.detail ?? ''} onOpen={setOpenModule} onRemove={toggleModule} onKeep={toggleModule} onSaveUnit={saveUnitAsSet} /></>}
@@ -537,8 +538,8 @@ export default function App() {
   const dialogOpen = !!baseInstall || baseInstallPrompt.open || welcome.open || !!loadingTarget || !!openModule || !!configDialog || configurationsOpen || compareOpen || !!reportingConfiguration
   return (
     <BetaUi.Provider value={octatrackUi}><OctatrackLinkContext.Provider value={usbLink ?? null}>
-      {session.user?.verified && !usbLinkPreview && usbPreview !== 'diagnostics' && <Suspense fallback={null}><OctatrackDiagnosticsCollector memberId={session.user.id} link={usbLink ?? null} inventory={inventory}/></Suspense>}
-      {session.user?.verified && !usbLinkPreview && <Suspense fallback={null}><DiagnosticsInvitationGate key={session.user.id} memberId={session.user.id} link={usbLink ?? null} eligible={hubRoute || configuration || machineView === 'configuration'} blocked={dialogOpen} preview={import.meta.env.DEV && usbPreview === 'diagnostics'}/></Suspense>}
+      {diagnosticsSubject && !usbLinkPreview && usbPreview !== 'diagnostics' && <Suspense fallback={null}><OctatrackDiagnosticsCollector memberId={diagnosticsSubject} link={usbLink ?? null} inventory={inventory}/></Suspense>}
+      {diagnosticsSubject && !usbLinkPreview && <Suspense fallback={null}><DiagnosticsInvitationGate key={diagnosticsSubject} memberId={diagnosticsSubject} link={usbLink ?? null} eligible={hubRoute || configuration || machineView === 'configuration'} blocked={dialogOpen} preview={import.meta.env.DEV && usbPreview === 'diagnostics'}/></Suspense>}
       {usbLink && <Suspense fallback={null}><PutBackModules link={usbLink} inventory={inventory} waiting={dialogOpen} onPutBack={putBack}/></Suspense>}
     <div className={'app-shell' + (phoneLayout ? (libraryNav ? ' has-library-nav' : '') + (toolbarHidden ? ' is-toolbar-hidden' : '') + (libraryDock ? ' has-library-dock' : '') : '')}>
       <a className="skip-link" href="#main-content" onClick={(event) => { event.preventDefault(); mainRef.current?.focus() }}>Skip to content</a>

@@ -110,8 +110,9 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
   /** A link to the account was followed (the first view's, the sign-in prompt's): whoever shows the guide sets it aside
    * and brings it back afterwards. */
   onAccount?: () => void
-  /** Shown as its own last step once the unit first connects on the downloaded base; skipped entirely when absent. It
-   * never holds up finishing: Continue stays available. */
+  /** Shown as its own last step once the unit first connects on the downloaded base; skipped entirely when absent. While
+   * it asks (DiagnosticsGuideStep's two buttons) Continue is hidden, so the question is answered either way first
+   * (diagnostics.css); Close still leaves without an answer. */
   diagnosticsStep?: ReactNode
   /** Told where this run of the guide got to, each stage at most once per run (see BaseGuideStage, BaseGuideFailure). */
   onStage?: (stage: BaseGuideStage, detail?: BaseGuideFailure) => void
@@ -225,8 +226,8 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
       intro={<>Install the Modwerk base on your Octatrack once. After that, modules go from this page to your Octatrack over USB, without the card and without a restart. The original OS has no USB link for Modwerk, so this first install goes through the card in four steps: download the base, copy it to the card, install it with OS UPGRADE, then connect. Later base updates go over USB.</>}
       needs={BASE_INSTALL_NEEDS}
       missing={state.status === 'unsupported' ? 'This browser can’t talk to USB devices. Open this page in Chrome or Edge on a computer.' : undefined} />
-      {account === 'visitor' ? <p className="base-install-note base-install-account">{gate ? 'Before the download you’re asked to sign in or create a free account; you can skip that. An account lets you' : 'Signing in is optional: it lets you'} report problems, share diagnostics if you choose, and have the site remember that your Octatrack has the base. Your module sets stay in this browser. <a className="text-button" href={accountHref('login', 'octatrack')} onClick={leave}>Sign in</a> · <a className="text-button" href={accountHref('register', 'octatrack')} onClick={leave}>Create account</a></p>
-        : account === 'unverified' ? <p className="base-install-note base-install-account">{gate ? 'Before the download you’re asked to sign in with a verified account; you can skip that. Verifying your email lets you' : 'Verifying your email is optional: it lets you'} report problems, share diagnostics if you choose, and have the site remember that your Octatrack has the base. <a className="text-button" href="#account" onClick={leave}>Open account</a></p> : null}
+      {account === 'visitor' ? <p className="base-install-note base-install-account">{gate ? 'Before the download you’re asked to sign in or create a free account; you can skip that. An account lets you' : 'Signing in is optional: it lets you'} report problems and have the site remember that your Octatrack has the base. Your module sets stay in this browser. <a className="text-button" href={accountHref('login', 'octatrack')} onClick={leave}>Sign in</a> · <a className="text-button" href={accountHref('register', 'octatrack')} onClick={leave}>Create account</a></p>
+        : account === 'unverified' ? <p className="base-install-note base-install-account">{gate ? 'Before the download you’re asked to sign in with a verified account; you can skip that. Verifying your email lets you' : 'Verifying your email is optional: it lets you'} report problems and have the site remember that your Octatrack has the base. <a className="text-button" href="#account" onClick={leave}>Open account</a></p> : null}
       {!['unsupported', 'ready', 'stock'].includes(state.status) && <p className="link-hint">Already installed the base? Connect your Octatrack, and this guide closes by itself.</p>}
     </> : view === 'done' ? <>
       <header className="base-install-header"><h2 id="base-install-title" tabIndex={-1}>The Modwerk base is installed</h2></header>

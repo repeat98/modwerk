@@ -99,7 +99,7 @@ describe('the Octatrack base path for a member who is not a beta tester', () => 
     await open('octatrack')
     await vi.waitFor(() => expect(guide()?.textContent).toContain('Waiting for your Octatrack'), { timeout: 5000 })
     unit.base = baseBinding.identity; unit.unplug(); unit.plug('base')
-    await vi.waitFor(() => expect(guide()?.textContent).toContain('Share diagnostics?'), { timeout: 5000 })
+    await vi.waitFor(() => expect(guide()?.textContent).toContain('Help make this work on every Octatrack'), { timeout: 5000 })
     expect(guide()!.querySelector('h2')?.textContent).toBe('The Modwerk base is installed')
     const share = [...guide()!.querySelectorAll('button')].find(button => button.textContent === 'Share diagnostics')!
     await vi.waitFor(() => expect(share.disabled).toBe(false))
@@ -110,19 +110,28 @@ describe('the Octatrack base path for a member who is not a beta tester', () => 
     expect([...guide()!.querySelectorAll('button')].some(button => button.textContent === 'Continue')).toBe(true)
     expect(document.querySelector('dialog.diagnostics-invitation')).toBeNull()
   }, 15000)
-  it('ends a visitor’s first install by saying sharing diagnostics needs an account, with the way there and nothing to answer', async () => {
+  it('asks a visitor the same question at the end of a first install, and shares under a random ID made only then', async () => {
     const unit = fakeUnit('stock')
     Object.defineProperty(navigator, 'usb', { value: unit.usb, configurable: true })
+    let sharing = false; const guests: (string | null)[] = []
+    vi.mocked(fetch).mockImplementation(async (url: string | URL | Request, options?: RequestInit) => {
+      if (!String(url).includes('/octatrack/diagnostics/consent')) return new Response('{}', { status: 404 })
+      guests.push(new Headers(options?.headers).get('X-Modwerk-Diagnostics-Guest'))
+      if (options?.method === 'PUT') sharing = JSON.parse(String(options.body)).enabled
+      return Response.json({ accountId: 'guest', enabled: sharing, version: OCTATRACK_DIAGNOSTICS_VERSION, changedAt: sharing ? new Date().toISOString() : null, expiresAt: sharing ? new Date(Date.now() + 86400000).toISOString() : null })
+    })
     waitForBaseInstall('ab'.repeat(32), baseBinding.identity)
     await open('octatrack', visitor)
     await vi.waitFor(() => expect(guide()?.textContent).toContain('Waiting for your Octatrack'), { timeout: 5000 })
     unit.base = baseBinding.identity; unit.unplug(); unit.plug('base')
-    await vi.waitFor(() => expect(guide()?.textContent).toContain('Share diagnostics?'), { timeout: 5000 })
-    expect(guide()!.querySelector('h2')?.textContent).toBe('The Modwerk base is installed')
-    expect(guide()!.textContent).toContain('It needs an account')
-    expect([...guide()!.querySelectorAll('a')].map(link => link.textContent)).toEqual(expect.arrayContaining(['Sign in', 'Create account']))
-    expect([...guide()!.querySelectorAll('button')].some(button => button.textContent === 'Share diagnostics')).toBe(false)
-    expect([...guide()!.querySelectorAll('button')].some(button => button.textContent === 'Continue')).toBe(true)
+    await vi.waitFor(() => expect(guide()?.textContent).toContain('Help make this work on every Octatrack'), { timeout: 5000 })
+    expect(guide()!.textContent).toContain('this browser, under a random ID kept here instead of an account')
+    expect(guests).toEqual([]); expect(localStorage.getItem('modwerk.diagnostics.guest')).toBeNull() // nothing before the answer
+    const share = [...guide()!.querySelectorAll('button')].find(button => button.textContent === 'Share diagnostics')!
+    await vi.waitFor(() => expect(share.disabled).toBe(false))
+    await act(async () => { share.click() })
+    await vi.waitFor(() => expect(guide()?.textContent).toContain('Thanks. Diagnostics sharing is on.'))
+    expect(guests[0]).toMatch(/^[a-f0-9]{64}$/); expect(localStorage.getItem('modwerk.diagnostics.guest')).toBe(guests[0])
   }, 15000)
   it('updates a unit on the previous base in the layout of the member’s set with the USB Audio module, in one update', async () => {
     const unit = fakeUnit('base'); unit.base = '500cdb6fd81bfc9c2b18737e7487f3ec2264c1c00c5ebef833e7f751e325d1b7'
