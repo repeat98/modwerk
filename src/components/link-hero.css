@@ -7,7 +7,8 @@
 .base-install-intro { margin: 12px 0 26px; color: var(--text-secondary); font-size: 14px; line-height: 1.75; }
 .base-install-footer { position: sticky; bottom: -28px; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 22px -32px -28px; padding: 16px 32px; border-top: 1px solid var(--line); background: var(--surface); }
 .base-install-footer .button { min-width: 120px; }
-.base-install-actions { display: flex; gap: 8px; }
+.base-install-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.base-install-footer > .base-install-actions:only-child { margin-left: auto; }
 .base-install-close { position: absolute; top: 14px; right: 14px; z-index: 1; }
 .base-install-header { padding-right: 40px; }
 .module-preview.link-hero { height: auto; margin: -28px -32px 26px; border-bottom: 1px solid var(--line); border-radius: 14px 14px 0 0; }

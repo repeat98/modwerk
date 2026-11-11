@@ -32,7 +32,6 @@ export function OctatrackWelcome({ link, usbBrowser, phone = false, savedSets = 
   const finished = useRef(false), { status } = useOctatrackLink(link), usb = usbBrowser && (!link || status !== 'unsupported')
   const card = !phone && <button type="button" className={'button ' + (usb ? 'button-quiet' : 'button-primary')} onClick={() => { finished.current = true; onCard() }}>{usb ? 'Build card firmware instead' : 'Build card firmware'}</button>
   return <BaseDialogFrame canClose busy={false} focus="welcome" finishedRef={finished} onClose={onLater} footer={<>
-    {usb && !phone && <p className="link-hint">{cardInsteadReason()}</p>}
     <div className="base-install-actions">
       <button type="button" className="button button-quiet" onClick={() => { finished.current = true; onLater() }}>Later</button>
       {card}
@@ -49,6 +48,7 @@ export function OctatrackWelcome({ link, usbBrowser, phone = false, savedSets = 
       <p className="link-hint">Later base updates go over USB.</p>
       {savedSets && <p className="base-install-note">Your saved configurations are here as module sets, and card firmware is still there as the fallback.</p>}
       <details className="base-install-recovery"><summary>Before you install</summary><p>{BASE_RECOVERY_NOTICE}</p></details>
+      {usb && !phone && <p className="link-hint">{cardInsteadReason()}</p>}
     </section>
   </BaseDialogFrame>
 }
