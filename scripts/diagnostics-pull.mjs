@@ -12,7 +12,6 @@ import { chmodSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { REFUSAL_LABELS } from './loader-refusals.mjs'
 import { DSP_REPORT_NAMES } from '../src/community/octatrack-diagnostics-contract.ts'
 
 const ROOT = new URL('..', import.meta.url)
@@ -47,8 +46,8 @@ const line = ({ createdAt, username, data }) => [when(createdAt), '@' + username
   data.buildKind, data.area && 'area=' + data.area, data.kind && 'type=' + data.kind, data.reason && 'reason=' + data.reason,
   data.live?.cpu && 'cpu ' + data.live.cpu.map(percent).join('/'), data.modules?.map(module => module.id + '@' + module.catalogVersion).join(',')].filter(Boolean).join(' ')
 function percent(permille) { return (permille / 10).toFixed(1) + '%' }
-/** The loader's refusals (loader-refusals.mjs), as a restore's set record names its first refused package's (modset.c). */
-const REFUSALS = Object.assign([...REFUSAL_LABELS],
+/** The loader's refusals (loader.h runtime_refusal), as a restore's set record names its first refused package's (modset.c). */
+const REFUSALS = Object.assign(['no refusal', 'malformed', 'module memory', 'conflict', 'no free handle', 'busy', 'DSP time', 'in use', 'stock bytes differ', 'a base event', 'a base feature down'],
   { 0x100: 'the last start crashed or froze loading it' }) // modset.c's boot guard, past the loader's codes
 /** An incident from the unit's own log (diag.c): when in its session, what, and what the unit was doing. */
 const ids = r => [...r.machines, ...r.fx, ...r.keys].slice(0, 4 * r.a).map((b, i, all) => i % 4 ? '' : all.slice(i, i + 4).map(x => x.toString(16).padStart(2, '0')).join('')).filter(Boolean)
