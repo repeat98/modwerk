@@ -106,6 +106,17 @@ OS 1.74, read from the code; the values and the fill behaviour were checked in r
 - **A page change ends every hold.** `0x400b7d10` clears the mask, and PAGE moves the page on its release, so with PAGE held the hold stands. A pattern of one page does not end it.
 - **rytm-emu.** A hold of about 80M counts as a long press and a trig stays, so tap for 20M. Two keys released on one clock leave one held.
 
+## Queued trigs: looking ahead
+
+OS 1.74, read from the code for Improved AMP's fade before a trig (#1419: its `src/pre-fade.c` has the detail, its TESTING.md what was checked in rytm-emu and on a unit). A module that must act before a trig fires reads the sequencer's queue:
+
+- **Three slots a track.** The sequencer queues a track's next trig a step ahead, its probability already rolled (a trig that will not play is not queued: rytm-emu at 50 %, a unit for FILL and 2:2), in the lowest free of the track's three event slots (`0x4009b5f2`): state at `0x42ac5fb0 + 224 * track + 56 * slot` (0 free), the time it fires at `0x8000fd50 + 12 * track + 4 * slot`, on the clock at `0x8000fe54`, which moves 2 x tempo (`0x40287ffc`, BPM x 120) a block. A trig queued while an earlier one still waits (swing, micro timing) sits in the second or third slot, so read all three. A fourth slot takes pads and MIDI notes at once: those cannot be seen ahead, nor can the first trig after PLAY.
+- **One event a track a block.** Stock fires the lowest due slot (`0x4011fe82`, `0x4011ff54`..`0x401204fa`); two events due in one block take that block and the next. Count blocks as stock does, not clock time.
+- **Queued is not played.** A mute and a track's held word are applied when the trig fires (`0x4012001e`, `0x40120018`): the trig is queued all the same and dropped. An event restarts the amp envelope only when its flags (slot + 0x14) have a bit of 0x180; a lock trig without a note has none.
+- **The sound it will play** is picked when it fires (`0x401201f8`..`0x40120308`): a sound lock (slot + 0x18, -1 for none) plays that pool sound, otherwise the slot's kit (+ 0x1c) plays its sound for the track, and stock skips the copy while the track still holds that kit's sound.
+- **Retrigs are not queued.** A series runs on its own tick counter, stepped once a tick (`0x4012089a`); it ends when its length runs out or when the track's next note trig fires. A queued event that fires takes its track's turn for that block, so a retrig tick due then is stepped a block later.
+- **Not read to the end:** a pattern change clears queued events from the change on (`0x4009bc60`, `0x4009b6e0`). On external MIDI clock the clock can move less than a block's worth, or stand.
+
 ## Performance locks and the QPER knob
 
 OS 1.74, read from the code unless marked.
