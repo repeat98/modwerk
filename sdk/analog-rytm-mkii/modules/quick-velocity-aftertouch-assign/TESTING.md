@@ -70,7 +70,7 @@ Fixed velocity read from stock's flag every 100M instructions; screens compared 
 | FLTR, LFO held, FRQ turned | FRQ boxed at 0 (DST FRQ, DEP 0); further turns move the box; the page stays on release |
 | DEP through the hold against stock's DEP knob, same raw turns | equal: +1.96 and -1.96 |
 | Fast turns, another knob, the destination's knob pressed | +127; DST moves to the new knob at 0; DEP back to 0 |
-| LFO held on the LFO page, WAV turned three steps | NOT AN LFO TARGET, WAV unmoved |
+| LFO held on the LFO page, WAV turned three steps | NOT AN LFO TARGET, WAV unmoved (until QL13; from QL14 the LFO page's key is stock's: the hold shows the values and WAV moves, as on stock, on a sound's and on the FX track's LFO page, QL16) |
 | Plain LFO tap with Loop Sync: SMPL, LFO tap, FUNC + knob A | stock's SPD step (before the replay through `core_key`: Loop Sync's box) |
 | Plain LFO taps with LFO RND | the second tap reaches LFO RND's page, the third returns |
 | FX track, LFO held, TIM turned | TIM becomes the FX LFO's destination |
@@ -108,7 +108,7 @@ Fixed velocity read from stock's flag every 100M instructions; screens compared 
 | LFO held, FRQ turned on the FILTER page: FRQ boxed at 0, the page stays, LFO page shows DST FRQ | pass | fails, as it should |
 | Further turns set DEP as the same turns of stock's DEP knob: +1.96 and -1.96 both ways | pass | fails, as it should |
 | Fast turn to +127, another knob takes the LFO at 0, a knob press sets DEP to 0; FRQ and RES themselves unmoved | pass | fails, as it should |
-| LFO held on the LFO page, WAV turned: NOT AN LFO TARGET, WAV unmoved | pass | fails (WAV moves) |
+| LFO held on the LFO page, WAV turned: NOT AN LFO TARGET, WAV unmoved (replaced from QL14 by qma-lfo-on-lfo-page: the hold is stock's, WAV moves, the same screens as on QS02) | pass | fails (WAV moves) |
 | FIX held, FRQ turned: velocity link +21, FRQ unmoved; a knob press sets it to 0 | pass | fails, as it should |
 | Plain LFO taps (FILTER, LFO, SAMPLE pages), then FUNC + knob A steps SPD (Loop Sync saw the replayed tap) | pass | pass (same screens) |
 

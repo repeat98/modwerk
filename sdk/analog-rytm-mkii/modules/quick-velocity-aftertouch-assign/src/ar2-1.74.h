@@ -105,6 +105,7 @@
 // LFO page's view at + 248, its DEP on knob H.
 #define HOLDER_VTABLE 0x401e20d4
 #define HOLDER_LFO_VIEW 248
+#define HOLDER_FX_LFO_VIEW 296           // the FX track's LFO page view: (32 + 5) * 8
 #define KNOB_DEP 7
 
 // The LFO page key. Its press shows the LFO page (the page holder's key

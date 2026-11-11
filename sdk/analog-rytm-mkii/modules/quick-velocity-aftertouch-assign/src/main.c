@@ -376,8 +376,8 @@ static int lfo_shown(int track)
 // each encoder event of an LFO hold through the LFO page's own accumulator,
 // at DEP's knob, with DEP's step and turn profile, as that page does when DEP
 // is turned there (0x4003a028), so speed and acceleration are stock's, its
-// 10 ms slow-down included. Only a hold begun on the LFO page itself shares
-// that knob with stock, and there DEP is no destination. Once a turn has shown which knob is the
+// 10 ms slow-down included (no hold begins on the LFO page itself: its key is
+// stock's there). Once a turn has shown which knob is the
 // destination's (dest_knob), ev_enc writes DEP at once; before that, the
 // change waits in dep_pending for the locker's call. Any key pressed during
 // the hold (a page key) forgets the knob.
@@ -405,28 +405,35 @@ static void *lfo_accumulator(void)
     return 0;
 }
 
-// The LFO page is the page shown: the holder's LFO view is on the view stack.
-// There the LFO key stays stock's, so holding it shows the page's values as
-// holding any page key does, and its taps step to a module's page behind it.
+// The LFO page is the page shown: no screen (PERF, SCNE, MUTE, CHRO) above the
+// pages, and the holder's LFO view, a sound's (+ 248) or the FX track's (+ 296;
+// the holder keeps a sound's page views at (26 + page) * 8 and the FX track's at
+// (32 + page) * 8, 0x400cbbd6), is on the view stack. There the LFO key stays
+// stock's, so holding it shows the page's values as holding any page key does,
+// and its taps step to a module's page behind it.
 static int lfo_page_shown(void)
 {
-    char *sentinel, *node;
-    word_t lfo = 0;
-    if (!views)
+    char *sentinel, *node, *holder = 0;
+    word_t lfo, fx_lfo;
+    if (!views || top_view() != PAGES_TOP_VTABLE)
         return 0;
     sentinel = (char *)views + MANAGER_LIST;
     for (node = *(char **)((char *)views + MANAGER_LAST); node && node != sentinel;
-         node = *(char **)(node + NODE_PREV)) {
-        char *holder = *(char **)(node + NODE_VIEW);
-        if (*(word_t *)holder == HOLDER_VTABLE)
-            lfo = *(word_t *)(holder + HOLDER_LFO_VIEW);
-    }
-    if (!lfo)
-        return 0;
-    for (node = *(char **)((char *)views + MANAGER_LAST); node && node != sentinel;
          node = *(char **)(node + NODE_PREV))
-        if (*(word_t *)(node + NODE_VIEW) == lfo)
+        if (**(word_t **)(node + NODE_VIEW) == HOLDER_VTABLE) {
+            holder = *(char **)(node + NODE_VIEW);
+            break;                      // the top-most, as lfo_accumulator takes it
+        }
+    if (!holder)
+        return 0;
+    lfo = *(word_t *)(holder + HOLDER_LFO_VIEW);
+    fx_lfo = *(word_t *)(holder + HOLDER_FX_LFO_VIEW);
+    for (node = *(char **)((char *)views + MANAGER_LAST); node && node != sentinel;
+         node = *(char **)(node + NODE_PREV)) {
+        word_t view = *(word_t *)(node + NODE_VIEW);
+        if (view && (view == lfo || view == fx_lfo))
             return 1;
+    }
     return 0;
 }
 
@@ -961,11 +968,8 @@ void quick_velocity_aftertouch_assign_draw(void *bmp, void *ctrl)
     w = 32;                             // one width, the knob's column, whatever the digits
     x0 = 32 * (k & 3);
     y0 = b->top[k >> 2];
-    // The old box cleared (the new one covers it), the text drawn white, then the
+    // The column cleared (it covers the old box), the text drawn white, then the
     // new box turned over: white with black text.
-    for (x = b->x + 32 * (k & 3); x < b->x + 32 * (k & 3) + b->w; x++)
-        for (y = y0; y < y0 + b->h; y++)
-            bm_put(x, y, 0);
     for (x = x0; x < x0 + w; x++)
         for (y = y0; y < y0 + b->h; y++)
             bm_put(x, y, 0);
