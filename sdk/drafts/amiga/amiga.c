@@ -27,6 +27,12 @@
 #include <stdint.h>
 
 typedef struct {
+    /* All a note at rest touches, in one cache line: on an MKII the frame interrupt's time went with the memory a track
+     * touched, not with its instructions (11 November 2026: half the instructions, a fifth less time). */
+    uint32_t rest;          /* the note plays at its own length and pitch, in step, nothing fading: amiga_rest takes the call */
+    uint32_t idle;          /* output samples (and frames) passed at rest, not yet in pos, played, since and got */
+    uint32_t left;          /* output samples at rest until the note's end; ~0: this note is not stretched at all */
+    uint32_t held;          /* 0: the stored sample and its phase are stale (every sample was kept), start them afresh */
     int32_t l, r;           /* the stored sample being held */
     uint32_t phase;         /* Q16 position within a stored sample */
     int32_t al, ar;         /* the input since the last stored sample, summed (>> 4) */
@@ -89,33 +95,54 @@ static inline int32_t lowpass(int32_t *ic, int32_t in)
     return (v2 > 16383 ? 16383 : v2 < -16384 ? -16384 : v2) * 131072;
 }
 
+/* The frame interrupt pays for every instruction below (eight tracks at the defaults took 13 points of it on an
+ * MKII, 11 November 2026), so the common cases are short: state in registers for a loop, no work for a control at rest. */
+/* A sample's top 16 bits. The target is big-endian: they are the long's first word. */
+#ifdef AMIGA_HOST
+static inline int16_t top(const int32_t *a) { return (int16_t)(*a >> 16); }
+#else
+typedef int16_t __attribute__((may_alias)) Top;
+static inline int16_t top(const int32_t *a) { return *(const Top *)a; }
+#endif
+static inline void remember(int16_t (*h)[2], const int32_t *a, unsigned n)
+{
+    for (; n; --n, ++h, a += 2) (*h)[0] = top(a), (*h)[1] = top(a + 1);
+}
+
 /* Remember the n frames read, and once a fade is planned (amiga_stretch) mix the next grain in from that
  * memory, so the restart at the cycle's end continues what is already sounding. First of the three. */
+static __attribute__((noinline)) void blend_mix(AmigaVoice *v, int32_t *a, unsigned n, uint32_t at)
+{
+    uint32_t hi = v->hi, len = v->mix_len, wait = v->mix_wait, k = v->mix_k;
+    const uint32_t first = v->mix_from, floor = v->floor, step = v->mix_step;
+    for (; n; --n, ++at, a += 2) {
+        int16_t *h = v->hist[at & (HIST - 1u)];
+        h[0] = top(a); h[1] = top(a + 1);
+        if (at >= hi) hi = at + 1u;
+        if (!len) continue;
+        if (wait) { --wait; continue; }
+        uint32_t from = first + k;
+        if (from >= at || from < floor || from + HIST <= hi) { len = 0; v->jump = 1; continue; } /* not in the memory */
+        const int16_t *g = v->hist[from & (HIST - 1u)];
+        int32_t w = k < len ? (int32_t)(k * step >> 16) : 32767; /* Q15; past the fade, the next grain alone */
+        a[0] = (h[0] + (((g[0] - h[0]) * w) >> 15)) * 65536;
+        a[1] = (h[1] + (((g[1] - h[1]) * w) >> 15)) * 65536;
+        ++k;
+    }
+    v->hi = hi; v->mix_len = len; v->mix_wait = wait; v->mix_k = k;
+}
 void amiga_blend(AmigaVoice *v, int32_t *a, unsigned n)
 {
     uint32_t at = v->grain + v->played;
-    if (!v->mix_len) { /* most frames: only remember (the frame interrupt pays for every instruction here) */
-        for (; n; --n, ++at, a += 2) {
-            int16_t *h = v->hist[at & (HIST - 1u)];
-            h[0] = (int16_t)(a[0] >> 16); h[1] = (int16_t)(a[1] >> 16);
-        }
-        if (at > v->hi) v->hi = at;
-        return;
-    }
-    for (; n; --n, ++at, a += 2) {
-        int16_t *h = v->hist[at & (HIST - 1u)];
-        h[0] = (int16_t)(a[0] >> 16); h[1] = (int16_t)(a[1] >> 16);
-        if (at >= v->hi) v->hi = at + 1u;
-        if (!v->mix_len) continue;
-        if (v->mix_wait) { --v->mix_wait; continue; }
-        uint32_t from = v->mix_from + v->mix_k;
-        if (from >= at || from < v->floor || from + HIST <= v->hi) { v->mix_len = 0; v->jump = 1; continue; } /* not in the memory */
-        const int16_t *g = v->hist[from & (HIST - 1u)];
-        int32_t w = v->mix_k < v->mix_len ? (int32_t)(v->mix_k * v->mix_step >> 16) : 32767; /* Q15; past the fade, the next grain alone */
-        a[0] = (h[0] + (((g[0] - h[0]) * w) >> 15)) * 65536;
-        a[1] = (h[1] + (((g[1] - h[1]) * w) >> 15)) * 65536;
-        ++v->mix_k;
-    }
+    if (at > v->hi) v->floor = at; /* frames nobody remembered lie before it: amiga_render skips this call while nothing can restart */
+    if (v->mix_len) { blend_mix(v, a, n, at); return; }
+    /* Most frames: only remember, in one run or the two around the memory's end. */
+    unsigned k = at & (HIST - 1u), run = HIST - k;
+    if (run > n) run = n;
+    remember(v->hist + k, a, run);
+    if (n > run) remember(v->hist, a + 2u * run, n - run);
+    at += n;
+    if (at > v->hi) v->hi = at;
 }
 /* The reader was restarted at `frame` of the note. */
 void amiga_seek(AmigaVoice *v, uint32_t frame)
@@ -126,9 +153,8 @@ void amiga_seek(AmigaVoice *v, uint32_t frame)
 
 /* A restart makes the sample step, which clicks. Carry the step as an offset that runs out over FADE
  * frames instead: the first frame after it continues where the last one was. After amiga_blend, before amiga_crunch. */
-void amiga_declick(AmigaVoice *v, int32_t *a, unsigned n)
+static __attribute__((noinline)) void declick_fade(AmigaVoice *v, int32_t *a, unsigned n)
 {
-    if (!n) return;
     if (v->jump) {
         v->jump = 0; v->fade = FADE;
         v->off[0] = (v->last[0] >> 9) - (a[0] >> 9); v->off[1] = (v->last[1] >> 9) - (a[1] >> 9);
@@ -139,6 +165,11 @@ void amiga_declick(AmigaVoice *v, int32_t *a, unsigned n)
             int32_t s = (a[2 * i + c] >> 2) + v->off[c] * (int32_t)(v->fade * 128u / FADE); /* off * fade / FADE, a quarter of it: no overflow */
             a[2 * i + c] = (s > 0x1fffffff ? 0x1fffffff : s < -0x20000000 ? -0x20000000 : s) * 4;
         }
+}
+void amiga_declick(AmigaVoice *v, int32_t *a, unsigned n)
+{
+    if (!n) return;
+    if (v->jump || v->fade) declick_fade(v, a, n); /* rarely: most frames only note where the sample is */
     v->last[0] = a[2 * n - 2]; v->last[1] = a[2 * n - 1];
 }
 
@@ -177,51 +208,59 @@ int amiga_shift(unsigned percent)
  * sample, stored at a lower rate (inc: Q16 stored samples a frame, ONE keeps every one) in a 4- to 16-bit word (bits
  * 0-12; 12 keeps the source's word) and held, then through the lowpass (led). All three off leaves the
  * PCM untouched. */
+static __attribute__((noinline)) void crunch_stored(AmigaVoice *v, int32_t *a, unsigned n, uint32_t inc, uint32_t mask, unsigned led)
+{
+    uint32_t mac = led ? MAC_ENTER() : 0;
+    if (!v->held || v->phase > 2u * ONE || v->count > 16u) { /* stale, or a state nobody set: it takes its first sample at once */
+        v->phase = ONE; v->count = 0; v->al = v->ar = 0;
+        if (!v->held) v->l = v->r = 0;
+        v->held = 1;
+    }
+    int same = led && v->l == v->r; /* a mono sample pays for one channel of filter */
+    for (unsigned i = 0; same && i < n; ++i) same = a[2 * i] == a[2 * i + 1];
+    uint32_t phase = v->phase, count = v->count; /* the state in registers for the loop: a store to the PCM could be any of it */
+    int32_t al = v->al, ar = v->ar, hl = v->l, hr = v->r;
+    int32_t f0[2] = {v->ic[0][0], v->ic[0][1]}, f1[2] = {v->ic[1][0], v->ic[1][1]};
+    const int average = inc < ONE;
+    for (; n; --n, a += 2) {
+        if (average) al += a[0] >> 4, ar += a[1] >> 4, ++count;
+        if (phase >= ONE) {
+            phase -= ONE;
+            int32_t l = a[0], r = a[1];
+            if (count > 1) l = (al / (int32_t)count) << 4, r = (ar / (int32_t)count) << 4;
+            al = ar = 0; count = 0;
+            hl = (int32_t)((uint32_t)l & mask); hr = (int32_t)((uint32_t)r & mask);
+        }
+        phase += inc;
+        if (led) {
+            int32_t l = lowpass(f0, (hl >> 17) * 256);
+            a[0] = l;
+            a[1] = same ? l : lowpass(f1, (hr >> 17) * 256);
+        } else a[0] = hl, a[1] = hr;
+    }
+    if (same) f1[0] = f0[0], f1[1] = f0[1];
+    v->phase = phase; v->count = count; v->al = al; v->ar = ar; v->l = hl; v->r = hr;
+    v->ic[0][0] = f0[0]; v->ic[0][1] = f0[1]; v->ic[1][0] = f1[0]; v->ic[1][1] = f1[1];
+    if (led) MAC_LEAVE(mac);
+}
 void amiga_crunch(AmigaVoice *v, int32_t *a, unsigned n, uint32_t inc, unsigned bits, unsigned led)
 {
     if (inc > ONE) inc = ONE;
     if (inc < ONE / 16u) inc = ONE / 16u;
     if (inc == ONE && bits >= 12 && !led) return;
+    /* The word keeps its top bits, as a sample cut to a shorter word is; silence stays silence. */
     uint32_t mask = bits >= 12 ? 0xffffffffu : 0xffffffffu << (28u - bits);
-    int32_t half = (int32_t)(~mask >> 1); /* round to nearest, not down */
-    if (inc == ONE && !led) { /* every sample kept: only the word */
-        if (!n) return;
-        for (; n; --n, a += 2) {
-            a[0] = (int32_t)((uint32_t)(a[0] > INT32_MAX - half ? a[0] : a[0] + half) & mask);
-            a[1] = (int32_t)((uint32_t)(a[1] > INT32_MAX - half ? a[1] : a[1] + half) & mask);
-        }
-        v->l = a[-2]; v->r = a[-1]; v->phase = ONE; v->count = 0; v->al = v->ar = 0;
-        return;
-    }
-    uint32_t mac = led ? MAC_ENTER() : 0;
-    if (v->phase > 2u * ONE || v->count > 16u) v->phase = ONE, v->count = 0, v->al = v->ar = 0; /* a state nobody set */
-    int same = v->l == v->r; /* a mono sample pays for one channel of filter */
-    for (unsigned i = 0; same && i < n; ++i) same = a[2 * i] == a[2 * i + 1];
-    for (; n; --n, a += 2) {
-        if (inc < ONE) v->al += a[0] >> 4, v->ar += a[1] >> 4, ++v->count;
-        if (v->phase >= ONE) {
-            v->phase -= ONE;
-            int32_t l = a[0], r = a[1];
-            if (v->count > 1) l = (v->al / (int32_t)v->count) << 4, r = (v->ar / (int32_t)v->count) << 4;
-            v->al = v->ar = 0; v->count = 0;
-            v->l = (int32_t)((uint32_t)(l > INT32_MAX - half ? l : l + half) & mask);
-            v->r = (int32_t)((uint32_t)(r > INT32_MAX - half ? r : r + half) & mask);
-        }
-        v->phase += inc;
-        int32_t l = v->l, r = v->r;
-        if (led) {
-            l = lowpass(v->ic[0], (l >> 17) * 256);
-            if (same) v->ic[1][0] = v->ic[0][0], v->ic[1][1] = v->ic[0][1], r = l;
-            else r = lowpass(v->ic[1], (r >> 17) * 256);
-        }
-        a[0] = l; a[1] = r;
-    }
-    if (led) MAC_LEAVE(mac);
+    if (inc != ONE || led) { crunch_stored(v, a, n, inc, mask, led); return; }
+    if (!n) return;
+    /* Every sample kept: only the word, one instruction a sample. */
+    for (int32_t *end = a + 2u * n; a != end; ++a) *a = (int32_t)((uint32_t)*a & mask);
+    v->held = 0;
 }
 
 /* A new note of `window` frames. */
 void amiga_note(AmigaVoice *v, uint32_t window)
 {
+    v->rest = v->idle = v->left = 0;
     v->phase = ONE; /* it takes its first sample at once */
     v->count = 0; v->al = v->ar = 0;
     v->pos = v->frac = v->grain = v->played = v->since = v->got = v->fade = v->jump = v->hi = v->floor = v->mix_len = v->planned = 0;
@@ -234,7 +273,7 @@ void amiga_note(AmigaVoice *v, uint32_t window)
  * frame it really started at); KEEP; or OVER at the note's end. A reader within 16 frames of the place
  * is left alone, so speed 1 at pitch 0 is plain playback. A quarter into a cycle it plans the fade
  * into the next grain, when that lies behind the reader, where the memory will hold it. */
-int32_t amiga_stretch(AmigaVoice *v, unsigned out, unsigned src, uint32_t speed, uint32_t cycle, unsigned loop)
+static int32_t stretch_step(AmigaVoice *v, unsigned out, unsigned src, uint32_t speed, uint32_t cycle, unsigned loop)
 {
     if (!v->window) return KEEP;
     if (speed > 8192u) speed = 8192u;
@@ -274,6 +313,33 @@ int32_t amiga_stretch(AmigaVoice *v, unsigned out, unsigned src, uint32_t speed,
     }
     v->jump = 1;
     return (int32_t)at;
+}
+
+/* And it notes whether the next call can rest: nothing to restart, fade or remember while the sample is read at the
+ * note's own speed, one frame an output sample, and the reader is where the note should be. */
+int32_t amiga_stretch(AmigaVoice *v, unsigned out, unsigned src, uint32_t speed, uint32_t cycle, unsigned loop)
+{
+    int32_t at = stretch_step(v, out, src, speed, cycle, loop);
+    v->rest = 0;
+    if (at != KEEP || v->mix_len || v->jump || v->fade) return at;
+    if (!v->window) { v->rest = 1; v->left = 0xffffffffu; return at; }
+    if (speed != 4096u || v->frac || v->pos >= v->window) return at;
+    uint32_t reader = v->grain + v->played;
+    if (reader == v->pos || (loop && reader % v->window == v->pos)) v->rest = 1, v->left = v->window - v->pos;
+    return at;
+}
+/* A render call of `out` output samples that read `src` frames: 1 when the note rests through it (then skip
+ * amiga_blend, amiga_declick and amiga_stretch), else 0 with what passed at rest counted in. Before the three. */
+int amiga_rest(AmigaVoice *v, unsigned out, unsigned src, uint32_t speed)
+{
+    if (v->rest && out < v->left && (v->left == 0xffffffffu || (speed == 4096u && src == out))) {
+        v->idle += out;
+        if (v->left != 0xffffffffu) v->left -= out;
+        return 1;
+    }
+    if (v->idle) { v->pos += v->idle; v->played += v->idle; v->since += v->idle; v->got += v->idle; v->idle = 0; }
+    v->rest = 0;
+    return 0;
 }
 
 /* STRT (0-0x7fff: the fraction of a `length`-frame sample) that starts the reader at frame `at`. */
@@ -383,14 +449,14 @@ int amiga_render(unsigned track, unsigned ping, unsigned start, unsigned end)
         int32_t *pcm = 0;
         unsigned sources = packet(track, fp, before, &pcm);
         int stretch = w.str && !U8(fp + 25u);
+        unsigned percent = amiga_percent(w.stch >> 8); /* PCH keeps the note's own length: the shifted pitch is all it undoes */
+        uint32_t speed = w.str >= 2u ? 4096u : percent ? 409600u / percent : 0;
+        int rest = stretch && pcm && amiga_rest(v, end - start, sources, speed);
         if (pcm) {
-            if (stretch) amiga_blend(v, pcm, sources);
-            amiga_declick(v, pcm, sources);
+            if (stretch && !rest) { amiga_blend(v, pcm, sources); amiga_declick(v, pcm, sources); }
             amiga_crunch(v, pcm, sources, amiga_rate(w.tail >> 8 & 255u), w.bits, w.led);
         }
-        if (stretch) {
-            unsigned percent = amiga_percent(w.stch >> 8); /* PCH keeps the note's own length: the shifted pitch is all it undoes */
-            uint32_t speed = w.str >= 2u ? 4096u : percent ? 409600u / percent : 0;
+        if (stretch && !rest) {
             int32_t at = amiga_stretch(v, end - start, sources, speed, amiga_cycle(w.tail >> 24), U8(fp + 24u) == 1);
             if (at == OVER) U8(voice) = 0; /* stock's fetch writes silence until the next trig */
             else if (at >= 0) { /* as stock's retrig restarts a note, from our place */

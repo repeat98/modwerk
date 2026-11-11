@@ -25,7 +25,7 @@ def check(name, ok, detail=''):
 
 
 class Voice(ctypes.Structure):
-    _fields_ = [('l', ctypes.c_int32), ('r', ctypes.c_int32), ('phase', ctypes.c_uint32), ('al', ctypes.c_int32), ('ar', ctypes.c_int32),
+    _fields_ = [(name, ctypes.c_uint32) for name in ('rest', 'idle', 'left', 'held')] + [('l', ctypes.c_int32), ('r', ctypes.c_int32), ('phase', ctypes.c_uint32), ('al', ctypes.c_int32), ('ar', ctypes.c_int32),
                 ('count', ctypes.c_uint32), ('ic', ctypes.c_int32 * 4)] + [(name, ctypes.c_uint32) for name in (
                     'pos', 'frac', 'window', 'grain', 'played', 'since', 'got', 'first', 'length', 'sample', 'flags')] + [
                 ('last', ctypes.c_int32 * 2), ('off', ctypes.c_int32 * 2)] + [(name, ctypes.c_uint32) for name in (
@@ -49,7 +49,7 @@ with tempfile.TemporaryDirectory() as tmp:
     check('SRR 0, BITS 16, LED off leaves every sample as it was', crunch(ramp, 0, 12) == ramp)
     out = crunch(ramp, 0, 4)
     check('BITS 8 keeps the top 8 bits', all(v & 0xffffff == 0 for v in out))
-    check('BITS 8 rounds to nearest (within half a step)', all(abs(o - i) <= 0x800000 for o, i in zip(out, ramp)))
+    check('BITS 8 keeps the top 8 bits (below the input by less than a step)', all(0 <= i - o < 0x1000000 for o, i in zip(out, ramp)))
     check('BITS 4 keeps the top 4 bits', all(v & 0x0fffffff == 0 for v in crunch(ramp, 0, 0)))
     top = crunch([0x7fffffff, -0x80000000], 0, 4)
     check('full scale does not wrap', top[0] > 0 and top[1] == -0x80000000, str(top))
@@ -66,7 +66,7 @@ with tempfile.TemporaryDirectory() as tmp:
         whole = crunch(ramp, 40, 4, led)
         parts = crunch(ramp[:22], 40, 4, led, v) + crunch(ramp[22:], 40, 4, led, v)
         check(f'split into two calls it renders the same (LED {led})', whole == parts)
-    garbage = Voice(0x5a5a5a5a, 0x5a5a5a5a, 0xa5a5a5a5)
+    garbage = Voice(held=0x5a5a5a5a, l=0x5a5a5a5a, r=0x5a5a5a5a, phase=0xa5a5a5a5)
     check('a garbage state takes a sample at once', crunch(ramp, 127, 12, 0, garbage)[:2] == ramp[:2])
     check('out-of-range controls are clamped', crunch(ramp, 10 ** 6, 255) == crunch(ramp, 240, 12))
 
@@ -99,12 +99,17 @@ with tempfile.TemporaryDirectory() as tmp:
         Returns (restarts, calls until OVER, the frames handed to the DSP)."""
         v = Voice()
         lib.amiga_note(ctypes.byref(v), window)
-        restarts, read, reader, stream = [], 0.0, 0, []
+        restarts, read, reader, stream, rested = [], 0.0, 0, [], 0
+        play.rested = 0
         for n in range(calls):
             src = int(read + 16 * pitch) - int(read)
             read += 16 * pitch
             a = (ctypes.c_int32 * (2 * src))(*[wave_[(reader + i // 2) % W] for i in range(2 * src)])
             reader += src
+            if lib.amiga_rest(ctypes.byref(v), 16, src, spd * 64):  # as amiga_render: a note at rest skips the three
+                stream.extend(a[0::2])
+                play.rested += 1
+                continue
             if smooth:
                 lib.amiga_blend(ctypes.byref(v), a, src)
                 lib.amiga_declick(ctypes.byref(v), a, src)
@@ -123,7 +128,9 @@ with tempfile.TemporaryDirectory() as tmp:
     check('speed 1 at pitch 0 never restarts the reader', restarts == [], str(restarts[:3]))
     check('and hands the DSP the sample untouched', stream[:W] == wave_)
     check('and ends at the note\'s end', over is not None and abs(over * 16 - W) <= 2400, str(over))
+    check('and rests through nearly all of it', play.rested > 0.95 * W / 16, str(play.rested))
     restarts, over, stream = play(W, 64, 64, pitch=2.0)
+    check('an octave up it never rests', play.rested == 0, str(play.rested))
     cycle = 96 + 64 * 64 // 4
     check('an octave up, speed 1 restarts every cycle', len(restarts) > 10 and all(b[0] - a[0] in range(cycle, cycle + 17) for a, b in zip(restarts, restarts[1:])))
     check('each restart is where the sample would be at pitch 0', all(abs(at - t) <= 48 for t, at in restarts), str(restarts[:3]))
@@ -141,7 +148,9 @@ with tempfile.TemporaryDirectory() as tmp:
     check('a looped note wraps and never ends', over is None and restarts and all(0 <= at < W for _, at in restarts))
     restarts, over, stream = play(W, 64, 64, loop=1)
     check('a looped note at speed 1 and pitch 0 is left to stock\'s own loop', over is None and restarts == [], str(restarts[:3]))
+    check('and rests', play.rested > 19000, str(play.rested))
     check('a note that was not measured is left alone', play(0, 0, 0, pitch=2.0, calls=500)[:2] == ([], None))
+    check('and rests whatever its pitch', play.rested >= 498, str(play.rested))
     restarts, over, stream = play(W, 64, 127, pitch=4.0)
     check('a long cycle two octaves up, beyond the memory, still restarts on time', len(restarts) > 5 and over is not None and abs(over * 16 - W) <= 5000, str(over))
 

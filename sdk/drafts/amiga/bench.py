@@ -4,7 +4,7 @@
     python3 -B bench.py --emulator <ot_emu> --main <a MAIN image the emulator boots> --output <new private folder>
 
 amiga.c is compiled for the ColdFire as the package is, placed in free emulator RAM, and its engine is
-called the way amiga_render calls it: blend, declick, crunch, stretch, and seek at a restart, for the two
+called the way amiga_render calls it: rest, then blend, declick, crunch, stretch, and seek at a restart, for the two
 render calls of every frame of a note, with the frame interrupt off. A PC watch at each function's entry
 and at its return gives the instructions in between. It is the module's own code only: stock's reader and
 START, which the render also calls, are the instrument's (docs/MODULE_PERFORMANCE.md). Instructions become
@@ -83,27 +83,38 @@ def run(a):
             call('amiga_note', VOICE, window)
             percent, cycle, inc = get('amiga_percent', c['stch']), get('amiga_cycle', c['cyl']), get('amiga_rate', c['rate'])
             speed, ratio, read, frames, restarts = 409600 // percent, 2 ** (c['pitch'] / 12), 0.0, [], 0
+            parts = {}
             for _ in range(a.frames):
                 cost = 0
                 for out in (9, 7):  # a frame's two render calls
                     n = int(read + out * ratio) - int(read)
                     read += out * ratio
                     e.write(PCM, struct.pack(f'>{2 * n}i', *[rng.randrange(-2 ** 30, 2 ** 30) for _ in range(2 * n)]))
+                    rest, used = call('amiga_rest', VOICE, out, n, speed)  # as amiga_render: a note at rest skips the three
+                    cost += used
+                    parts['amiga_rest'] = parts.get('amiga_rest', 0) + used
+                    d0 = (1 << 32) - 1  # KEEP
                     for name, args in (('amiga_blend', (VOICE, PCM, n)), ('amiga_declick', (VOICE, PCM, n)),
                                        ('amiga_crunch', (VOICE, PCM, n, inc, c['bits'], c['led'])),
                                        ('amiga_stretch', (VOICE, out, n, speed, cycle, 1))):
-                        d0, used = call(name, *args)
+                        if rest and name != 'amiga_crunch':
+                            continue
+                        result, used = call(name, *args)
+                        if name == 'amiga_stretch':
+                            d0 = result
                         cost += used
+                        parts[name] = parts.get(name, 0) + used
                     at = d0 - (1 << 32) if d0 >> 31 else d0
                     if at >= 0:
                         restarts += 1
                         cost += call('amiga_seek', VOICE, at)[1]
                 frames.append(cost)
             report[label] = dict(settings=c, frames=len(frames), restarts=restarts, meanInstructions=round(sum(frames) / len(frames)),
+                                 meanByFunction={name[6:]: round(total / len(frames)) for name, total in parts.items()},
                                  worstInstructions=max(frames), worstMicroseconds=round(max(frames) * NS / 1000, 1),
                                  worstShareOfFramePercent=round(max(frames) * NS / 1000 / FRAME_US * 100, 1))
             print(f"{label}: mean {report[label]['meanInstructions']}, worst {max(frames)} instructions a frame = "
-                  f"{report[label]['worstMicroseconds']} us, {report[label]['worstShareOfFramePercent']} % of a frame; {restarts} restarts")
+                  f"{report[label]['worstMicroseconds']} us, {report[label]['worstShareOfFramePercent']} % of a frame; {restarts} restarts; by function {report[label]['meanByFunction']}")
         (a.output / 'report.json').write_text(json.dumps(dict(
             method='ot_emu PC-watch instruction counts of the engine functions, entry to return, frame interrupt off; 9.44 ns an instruction',
             hardwareTested=False, cases=report), indent=2) + '\n')
