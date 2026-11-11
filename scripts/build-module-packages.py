@@ -465,6 +465,24 @@ def main():
                 compiled_cf.append({'label': unit.label, 'moduleId': module.name, 'version': versions.get(module.name),
                     'key': module.key, 'author': module.author, 'cpu': '54455', 'dram': True, 'source': unit.source,
                     'sources': hashes(unit.source, manifest), 'bytes': len(data), 'code': data.hex(), 'sha256': HASH(data)})
+        # Units a module lets join the DRAM runtime when another module carries one
+        # (modules/<id>/placement.json): the same source, assembled for the runtime's ISA.
+        from runtime_join import JOIN
+        for name, labels in JOIN.items():
+            module = byid[name]
+            manifest, rule = f'modules/{name}/manifest.py', f'modules/{name}/placement.json'
+            if not (module.menu and module.menu.stock_dsp): raise ValueError(f'{name}: only a stock-DSP effect\'s descriptor units can join the runtime')
+            for unit in module.linked:
+                if unit.label not in labels: continue
+                if unit.dram or unit.include is not None or unit.defsyms or unit.stock_copies:
+                    raise ValueError(f'{name} {unit.label}: a joining unit links one variant with no includes, defsyms or stock copies')
+                validate_source((root / unit.source).read_text())
+                obj = root / (unit.label + '.join.o')
+                run(['m68k-elf-as', '-mcpu=54455', '-o', obj, unit.source], root)
+                data = obj.read_bytes()
+                compiled_cf.append({'label': unit.label, 'moduleId': name, 'version': versions.get(name),
+                    'key': module.key, 'author': module.author, 'cpu': '54455', 'dram': True, 'joinRuntime': True, 'source': unit.source,
+                    'sources': hashes(unit.source, manifest, rule), 'bytes': len(data), 'code': data.hex(), 'sha256': HASH(data)})
         products['coldfire-packages.json'] = dict(baseline['coldfire-packages.json'], **provenance, packages=compiled_cf)
 
         rom = []

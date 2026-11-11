@@ -31,6 +31,11 @@ export function defaultChoosers(ids: readonly string[], keepStockFx2 = true, loa
   const donors = stockFx2Donors(ids, kept, ids.includes('analog-bassdrum') ? [ANALOG_BD_DONOR] : [])
   return { fx1, fx2: kept.fx2.filter(key => !donors.includes(key)) }
 }
+/** Modules that replace a stock effect in place lead the placement order while stock FX2 rows stay (native puts them first). */
+export function leadingModules(ids: readonly string[], profile: ChooserProfile) {
+  const selected = resolveSelection(ids), own = metadata.modules.filter(module => selected.some(entry => entry.id === module.id))
+  return profile.fx2.some(key => metadata.stockEffects.some(effect => effect.key === key)) ? own.filter(module => 'replaces' in module).map(module => module.id) : []
+}
 export function validateChoosers(ids: readonly string[], profile: ChooserProfile) {
   if (metadata.schema !== 1 || metadata.revision !== CATALOG_SOURCE.revision) throw new Error('Chooser metadata does not match the pinned catalog.')
   const selected = resolveSelection(ids), own = metadata.modules.filter(module => selected.some(entry => entry.id === module.id))
@@ -55,7 +60,7 @@ export async function composeChoosers(original: Uint8Array, ids: readonly string
   if (await hash(original) !== metadata.sourceSha256) throw new Error('Chooser composition needs the original OS fingerprint.')
   const listAddress = (profile.fx2.length + 2) * 4 <= 32 ? layout.NEW_LIST : layout.LONG_LIST
   // A module replacing a stock effect takes that effect's FX2 slot while the stock rows stay, so it leads the placement order.
-  const leading = profile.fx2.some(key => metadata.stockEffects.some(effect => effect.key === key)) ? own.filter(module => 'replaces' in module).map(module => module.id) : []
+  const leading = leadingModules(ids, profile)
   const menus = await composeModuleMenus(original, ids, listAddress === layout.NEW_LIST ? MENU_CAVE_END : MENU_LONG_LIST, runtime, leading, betaStartup ? 80 : 0)
   const writes: OsWrite[] = [...menus.writes], view = new DataView(original.buffer, original.byteOffset, original.byteLength)
   const read = (address: number) => view.getUint32(address - OS_LOAD_ADDRESS)

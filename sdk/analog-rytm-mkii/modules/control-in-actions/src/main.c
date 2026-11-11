@@ -53,7 +53,6 @@ typedef unsigned word_t;
 typedef void (*settings_t)(int port, void *record);
 typedef void (*event_ctor_t)(void *event, int key, int flags, int when, int velocity);
 typedef void (*event_dtor_t)(void *event);
-typedef int (*dispatch_t)(void *brain, void *event);
 typedef word_t (*singleton_t)(void);
 typedef unsigned char (*live_rec_t)(void *app);
 typedef void (*grid_rec_set_t)(void *app, int on);
@@ -62,6 +61,7 @@ typedef void (*hline_t)(void *screen, int x1, int y, int x2, int colour);
 typedef void (*vline_t)(void *screen, int x, int y1, int y2, int colour);
 typedef void (*invalidate_t)(void *view);
 typedef long (*to_result_t)(int port, int mv);
+typedef int (*dispatch_t)(void *brain, void *event);
 typedef void *(*queue_t)(void);
 typedef void (*post_t)(void *queue, const void *message);
 
@@ -153,6 +153,19 @@ static void *brain(void)
     return *(void **)BRAIN_AT;
 }
 
+// core-ar2's ev_key site (core.s): every mod's ev_key handler in order, then
+// stock's Brain::key, as for a key from the panel. Every core-ar2 0.7 and
+// Modwerk base build exports it.
+extern int core_key(void *brain, void *event);
+
+static int sending;                         // a key of ours is going round the key chain
+
+// A key as from the panel. MUTE, the mode keys and FILL go through the whole
+// key chain, so the mods that follow pages and held keys (Loop Sync's page,
+// the base's send pages, Quick Mod Assign) see them too; this mod's own
+// handler lets them pass. PLAY, the transport, goes to stock alone: a mod that
+// takes PLAY as part of a gesture (QPER + PLAY clears in QPER Live Rec) must
+// not read the input's PLAY as the musician's.
 static void press(int key, int flags)
 {
     long event[KEY_EVENT_BYTES / 4 + 2];
@@ -160,7 +173,13 @@ static void press(int key, int flags)
     if (!b)
         return;
     EVENT_CTOR(event, key, flags, 0, 127);
-    DISPATCH(b, event);
+    if (key == KEY_PLAY)
+        DISPATCH(b, event);
+    else {
+        sending++;
+        core_key(b, event);
+        sending--;
+    }
     EVENT_DTOR(event);
 }
 
@@ -589,6 +608,8 @@ int control_in_actions_key(void *brain, char *event)
     int port;
     long key = *(long *)(event + EV_KEY);
     (void)brain;
+    if (sending)
+        return 0;                           // our own key, for the rest of the chain
     if (key == KEY_REC)
         record_key(*(unsigned *)(event + EV_FLAGS));
     if (key != CIA_KEY)
