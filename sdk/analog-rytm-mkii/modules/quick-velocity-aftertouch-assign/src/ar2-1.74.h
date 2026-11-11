@@ -14,6 +14,12 @@
 #define IS_KEY_HELD_AT 0x40081c28
 #define STRING_FROM_CSTR_AT 0x401bcff0
 #define STRING_DTOR_AT 0x401bb540
+// Stock's text drawing (as the Modwerk base's send pages use it): printf-style
+// text in the parameter labels' font, white, at x (centred when asked) and y,
+// both counted as the bitmap counts rows, from the bottom.
+#define TEXT_DRAW_AT 0x4007154c
+#define TEXT_FONT_AT 0x40071be8
+#define TEXT_CTX_AT 0x417e389c
 #define MEM_NEW_AT 0x40082a40
 #define POPUP_CTOR_AT 0x40076754
 #define SHARED_PTR_CTOR_AT 0x401832ec

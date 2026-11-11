@@ -21,6 +21,11 @@
       "event": "ev_tick",
       "fn": "quick_velocity_aftertouch_assign_tick",
       "order": 50
+    },
+    {
+      "event": "ev_draw",
+      "fn": "quick_velocity_aftertouch_assign_draw",
+      "order": 50
     }
   ],
   "contribute": [

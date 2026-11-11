@@ -310,8 +310,8 @@ static int dest_id(int kind, int track, int index)
 
 static void not_a_destination(int kind)
 {
-    show(kind == VEL ? "NOT A VELOCITY TARGET"
-        : kind == AT ? "NOT AN AFTERTOUCH TARGET" : "NOT AN LFO TARGET");
+    show(kind == VEL ? "NOT A VELOCITY DEST"   // DEST, as stock's menus abbreviate it
+        : kind == AT ? "NOT AN AFTERTOUCH DEST" : "NOT AN LFO DEST");
 }
 
 // Changes the amount (8.8) of the destination logical on track by change, in
@@ -795,6 +795,111 @@ static void keep_locker(void)
         locker_remove();
     if (kind != NONE && !ours() && !GET_LOCKER(PARAM_UI()) && on_pages())
         locker_install(kind);
+}
+
+// ---- The LFO depth's box at DEP's own resolution --------------------------------
+// Stock draws the destination knob's box with a whole number, as for any lock on
+// that knob, while the LFO page shows DEP as +1.96 (0x400fbbe8: sign, hundredths
+// of the 8.8 value, cut, not rounded). ev_draw finds that box (27 x 7, white, at a
+// knob's label: x 3 + 32 per column, the top row's from the bitmap's row 38, the
+// bottom row's from row 16) and writes the depth into it as the LFO page does. A
+// depth of 0 keeps stock's 0, and a popup over the box hides it from the search.
+typedef void (*text_draw_t)(void *bmp, void *font, int x, int y, int centred, int a5,
+                            const char *width, const char *fmt, ...);
+#define TEXT_DRAW ((text_draw_t)TEXT_DRAW_AT)
+#define TEXT_FONT ((word1_t)TEXT_FONT_AT)
+#define BOX_W 27
+#define BOX_H 7
+
+static unsigned *bm_words;
+static int bm_w, bm_h, bm_stride;
+
+static unsigned *bm_word(int x, int r, unsigned *bit)
+{
+    *bit = 0x80000000u >> (r & 31);
+    return bm_words + x * bm_stride + (r >> 5);
+}
+
+static int bm_get(int x, int r)
+{
+    unsigned bit;
+    if (x < 0 || x >= bm_w || r < 0 || r >= bm_h)
+        return 0;
+    return (*bm_word(x, r, &bit) & bit) != 0;
+}
+
+static void bm_put(int x, int r, int on)
+{
+    unsigned bit, *w;
+    if (x < 0 || x >= bm_w || r < 0 || r >= bm_h)
+        return;
+    w = bm_word(x, r, &bit);
+    *w = on ? *w | bit : *w & ~bit;
+}
+
+// A full white box border with its top row at r (rows count from the bottom).
+static int box_at(int x0, int r)
+{
+    int i;
+    for (i = 0; i < BOX_W; i++)
+        if (!bm_get(x0 + i, r) || !bm_get(x0 + i, r - BOX_H + 1))
+            return 0;
+    for (i = 1; i < BOX_H - 1; i++)
+        if (!bm_get(x0, r - i) || !bm_get(x0 + BOX_W - 1, r - i))
+            return 0;
+    return 1;
+}
+
+void quick_velocity_aftertouch_assign_draw(void *bmp, void *ctrl)
+{
+    static const int rows[2] = { 38, 16 };
+    char text[8], *p = text;
+    int track, v, h, k, x0, r, x, y, n, w;
+    (void)ctrl;
+    if (shown != LFO)
+        return;
+    track = selected_track();
+    if (!kind_track(LFO, track) || lfo_dest(track) <= 0 || !(v = lfo_shown(track)))
+        return;
+    bm_w = *(int *)((char *)bmp + 4);
+    bm_h = *(int *)((char *)bmp + 8);
+    bm_stride = *(int *)((char *)bmp + 12);
+    bm_words = *(unsigned **)((char *)bmp + 16);
+    if (bm_w < 128 || bm_h < 64)
+        return;
+    for (k = 0; k < KNOBS; k++) {
+        x0 = 3 + 32 * (k & 3);
+        r = rows[k >> 2];
+        if (box_at(x0, r))
+            break;
+    }
+    if (k == KNOBS)
+        return;
+    *p++ = v < 0 ? '-' : '+';
+    h = (v < 0 ? -v : v) * 100 / 256;
+    n = h / 100;
+    if (n >= 100) *p++ = (char)('0' + n / 100);
+    if (n >= 10) *p++ = (char)('0' + n / 10 % 10);
+    *p++ = (char)('0' + n % 10);
+    *p++ = '.';
+    *p++ = (char)('0' + h / 10 % 10);
+    *p++ = (char)('0' + h % 10);
+    *p = 0;
+    // Five characters fit stock's box (+1.96 takes 20 of its 25 inside columns).
+    // From +10.00 on, the box takes the knob's whole column, 32 wide, as the LFO
+    // page's own +127.99 does (30 columns): it stays inside that knob's column.
+    w = BOX_W;
+    if (p - text > 5) {
+        x0 = 32 * (k & 3);
+        w = 32;
+    }
+    for (x = x0; x < x0 + w; x++)                   // the box white, its inside black,
+        for (y = r; y > r - BOX_H; y--)             //   the text white, then the inside
+            bm_put(x, y, x == x0 || x == x0 + w - 1 || y == r || y == r - BOX_H + 1);   // turned over
+    TEXT_DRAW(bmp, (void *)TEXT_FONT(TEXT_CTX_AT), x0 + w / 2, r - BOX_H + 2, 1, 0, text, "%s", text);   // y: the text's bottom row
+    for (x = x0 + 1; x < x0 + w - 1; x++)
+        for (y = r - 1; y > r - BOX_H + 1; y--)
+            bm_put(x, y, !bm_get(x, y));
 }
 
 // Stock's popup for the module's messages, opened from ev_tick so repeats open

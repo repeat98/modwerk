@@ -68,7 +68,8 @@
     "events": [
       "ev_key",
       "ev_enc",
-      "ev_tick"
+      "ev_tick",
+      "ev_draw"
     ],
     "claims": [
       "ui:FIX + knob on the sound pages",
