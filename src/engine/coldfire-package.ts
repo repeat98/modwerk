@@ -3,6 +3,10 @@ import { CATALOG_SOURCE, MODULES } from '../catalog/modules.ts'
 import packages from './assets/coldfire-packages.json' with { type: 'json' }
 import { parseColdFireObject } from './coldfire-elf.ts'
 export const PLATFORM_UNITS = ['dltransfer','dlhooks','dlselection','dlallocator','dlpublication','dlpublishhooks','dlpreflight','dlbuffers','dlmanager'] as const
+/** Units a module lets join the DRAM runtime when another selected module carries one (placement.json). */
+export function joiningUnits(moduleId: string): string[] {
+  return packages.packages.filter(pkg => pkg.moduleId === moduleId && (pkg as { joinRuntime?: boolean }).joinRuntime === true).map(pkg => pkg.label)
+}
 export async function readColdFirePackage(label: string) {
   if (packages.schema !== 1 || packages.revision !== CATALOG_SOURCE.revision) throw new Error('ColdFire packages do not match the pinned catalog.')
   const pkg = packages.packages.find(pkg => pkg.label === label)
