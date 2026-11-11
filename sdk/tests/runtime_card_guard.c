@@ -70,7 +70,7 @@ static void reset(void)
     owners = slot = 0; prepared = held = 0; candidate = previous = 0; refusal = RUNTIME_OK;
     memset(set, 0, sizeof set); restored = pending = card_slot = 0; card_candidate = 0;
     modwerk_modset_result = 0; modwerk_modset_count = 0; modwerk_test_ticks = 200;
-    modwerk_test_held = 0; modwerk_test_gate = 1; reads = writes = 0;
+    memset(modwerk_test_keys, 0, sizeof modwerk_test_keys); modwerk_test_gate = 1; reads = writes = 0;
 }
 static void make_card(const uint8_t *package, uint32_t n)
 {

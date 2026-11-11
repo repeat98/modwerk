@@ -1,5 +1,14 @@
 [
   {
+    "version": "0.2.2-experimental",
+    "date": "2026-11-03",
+    "changes": [
+      "Fits beside more modules: when your set already runs code from DRAM, its menu code goes there too, leaving room for the stock FX2 effects.",
+      "Fixes sets with FM Synth and Mute Modes losing every stock FX2 effect (#1175).",
+      "On its own, or without other DRAM code, it builds as before and costs no sample memory. Sound and controls are unchanged."
+    ]
+  },
+  {
     "version": "0.2.1-experimental",
     "date": "2026-10-30",
     "changes": [

@@ -16,7 +16,7 @@ const load = (seq: number): DeviceLoad => ({ seq, boot: 1, minute: seq * 5, cpu:
 const incident = (seq: number): DeviceIncident => ({ seq, boot: 1, second: seq, kind: 'freeze', a: 0, cpu: 950, dsp1to4: 0, dsp5to8: 0,
   machines: Array(24).fill(0), fx: Array(16).fill(0), keys: Array(16).fill(255), screen: 0x400cbf2c, tempo24: 2880, playing: true })
 function unit(log = { nonce: 7, boot: 1, seq: 3, loads: [load(1), load(3)], incidents: [incident(2)] }) {
-  return { getState: () => ({ status: 'ready', identity: { base: 'a'.repeat(64) }, active: 'b'.repeat(64) }), subscribeDiagnostics: (() => () => {}) as (listener: (event: LinkDiagnostic) => void) => () => void,
+  return { getState: () => ({ status: 'ready', identity: { base: 'a'.repeat(64) }, active: 'b'.repeat(64) }), subscribe: () => () => {}, subscribeDiagnostics: (() => () => {}) as (listener: (event: LinkDiagnostic) => void) => () => void,
     health: vi.fn(async () => undefined), liveLoad: vi.fn(async () => reading()), deviceLog: vi.fn(async () => log) }
 }
 beforeEach(async () => {

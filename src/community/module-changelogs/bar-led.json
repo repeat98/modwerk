@@ -6,7 +6,8 @@
       "First version: the tempo LED flashes green on the pattern's 1 while playing.",
       "Every other beat stays red, and stopped it is stock.",
       "Follows the pattern's length; nothing to set.",
-      "Known issue: not yet tested on the MKII."
+      "Known issue: not yet tested on the MKII.",
+      "Documentation only: the page says to watch the [TEMPO] key's LED, not the four by [SCALE]."
     ]
   }
 ]

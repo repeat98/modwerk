@@ -20,6 +20,35 @@ async function fixture() {
   const send=(body:unknown=data(),token='a'.repeat(64))=>server.call('/octatrack/diagnostics','POST',{version,data:body},token)
   return {...server,admin,data,consent,send}
 }
+describe('diagnostics from a visitor without an account',()=>{
+  it('shares under the hash of a random ID, shows the owner, and deletes everything on stopping',async()=>{
+    const {db,env,admin,call,data}=await fixture(), guest='9'.repeat(64)
+    const as=(path:string,method:string,body?:unknown,id=guest,more:Record<string,string>={})=>handleCommunity(new Request('https://api.example.test/api'+path,{method,headers:{Origin:'https://octamod.test','CF-Connecting-IP':'192.0.2.9','Content-Type':'application/json','X-Modwerk-Diagnostics-Guest':id,...more},body:body===undefined?undefined:JSON.stringify(body)}),env)
+    const preflight=await handleCommunity(new Request('https://api.example.test/api/octatrack/diagnostics',{method:'OPTIONS',headers:{Origin:'https://octamod.test','Access-Control-Request-Method':'POST','Access-Control-Request-Headers':'content-type,x-modwerk-diagnostics-guest'}}),env)
+    expect(preflight.status).toBe(204) // the browser may send the ID from the site's own origin
+    expect((await as('/octatrack/diagnostics','POST',{version,data:data()},'not-an-id')).status).toBe(401) // no ID, no account
+    expect((await as('/octatrack/diagnostics','POST',{version,data:data()})).status).toBe(403) // an ID alone is no consent
+    expect(await(await as('/octatrack/diagnostics/consent','PUT',{enabled:true,version})).json()).toMatchObject({accountId:'guest',enabled:true,version})
+    expect((await as('/octatrack/diagnostics','POST',{version,data:{id:'x',event:'made-up'}})).status).toBe(400) // the same strict fields
+    expect(await(await as('/octatrack/diagnostics','POST',{version,data:data()},guest,{'Sec-GPC':'1'})).json()).toEqual({ok:true,stored:false})
+    expect(await(await as('/octatrack/diagnostics','POST',{version,data:data()})).json()).toEqual({ok:true,stored:true})
+    expect(db.prepare('SELECT guest_id FROM octatrack_guest_diagnostic_events').all()).toEqual([{guest_id:await digest(guest)}]) // never the ID itself
+    expect(db.prepare('SELECT count(*) AS n FROM octatrack_diagnostic_events').get()).toEqual({n:0})
+    const listed=await(await call('/admin/octatrack/diagnostics','GET',undefined,'',admin)).json()
+    expect(listed.events.map((entry:{username:string})=>entry.username)).toEqual(['guest:'+(await digest(guest)).slice(0,8)])
+    // A verified member's own choice wins over a leftover ID.
+    expect(await(await as('/octatrack/diagnostics/consent','GET',undefined,guest,{Authorization:'Bearer '+'c'.repeat(64)})).json()).toMatchObject({accountId:'member'})
+    expect(await(await as('/octatrack/diagnostics/consent','PUT',{enabled:false,version})).json()).toMatchObject({accountId:'guest',enabled:false,changedAt:null})
+    for(const table of ['octatrack_guest_diagnostic_events','octatrack_guest_diagnostic_consent'])expect(db.prepare(`SELECT count(*) AS n FROM ${table}`).get()).toEqual({n:0})
+  })
+  it('drops a visitor’s consent and reports once the consent has expired',async()=>{
+    const {db,env}=await fixture(), id=await digest('8'.repeat(64)), old=new Date(Date.now()-91*86400000).toISOString()
+    db.prepare('INSERT INTO octatrack_guest_diagnostic_consent(guest_id,enabled,version,changed_at) VALUES(?,1,?,?)').run(id,version,old)
+    db.prepare("INSERT INTO octatrack_guest_diagnostic_events(guest_id,event_id,consent_version,data_json,created_at) VALUES(?,'e',?,'{}',?)").run(id,version,new Date().toISOString())
+    await cleanupOctatrackDiagnostics(env.DB!)
+    for(const table of ['octatrack_guest_diagnostic_events','octatrack_guest_diagnostic_consent'])expect(db.prepare(`SELECT count(*) AS n FROM ${table}`).get()).toEqual({n:0})
+  })
+})
 describe('private consented Octatrack diagnostics',()=>{
   it('requires current explicit consent from verified members; never publishes reports',async()=>{
     const {call,db,consent,send}=await fixture()

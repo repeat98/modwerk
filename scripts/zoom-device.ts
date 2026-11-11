@@ -34,8 +34,8 @@ export async function nodeMidiAccess(native?: Native): Promise<MidiAccessLike & 
     return ['out-' + index, { id: 'out-' + index, name, state: 'connected', send(data, timestamp = 0) {
       // Web MIDI sends at `timestamp` (performance.now()): ZoomLink paces long messages 22 ms apart that way.
       queue = queue.then(async () => {
-        const wait = timestamp - performance.now()
-        if (wait > 0) await new Promise(done => setTimeout(done, wait))
+        // setTimeout truncates the delay and can fire up to a millisecond early: wait until the timestamp has passed.
+        for (let wait; (wait = timestamp - performance.now()) > 0;) await new Promise(done => setTimeout(done, Math.ceil(wait)))
         if (!port) { port = new Output(); port.openPort(index); open.push(port) }
         port.sendMessage(data)
       }).catch(error => console.error('MIDI send to ' + name + ' failed: ' + (error as Error).message))

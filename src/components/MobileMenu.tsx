@@ -9,7 +9,7 @@ import { useSetWords } from '../community/beta-ui'
 
 type MenuLink = { href: string; label: string; icon: IconName; current: boolean; count?: number; online?: number | null; tag?: string }
 
-// Phone-width home for the destinations the desktop sidebar lists under Configurations (Module sets in the beta), Community and Help.
+// Phone-width home for the destinations the desktop sidebar lists under Configurations (Module sets on the Octatrack base path), Community and Help.
 // It opens as a bottom sheet, within thumb reach, and renders outside the app bar so the bar's stacking never clips it.
 export function MobileMenu({ route, online, selectedCount, configurationHref, admin, developer, highlightDevelop = false, onSupport, onConfigurations }: { route: string; online?: number | null; selectedCount: number; configurationHref?: string; admin: boolean; developer?: boolean; highlightDevelop?: boolean; onSupport?: () => void; onConfigurations?: () => void }) {
   const w = useSetWords()
