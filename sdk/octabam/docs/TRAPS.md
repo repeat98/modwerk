@@ -693,6 +693,19 @@ gives a stock field a new value, find that field's cap in `0x40002318` (and in
 the pattern validator `0x4009a670` for pattern bytes) and raise it in the same
 module.**
 
+Some fields are held to one value, not capped. The validator sets every
+track's XVOL (Part `+0x125 + 0x18t`, AMP page 1 slot 5) back to 127, stock's only
+value (`beq.s` at `0x40002d24`). A remix that kept a per-track width there
+(11 Nov 2026) lost it to 127 on every load. A power-up on a bank holding
+another value refused that bank: the screen said BANK UNAVAILABLE (the bank's
+flag at `0x4017d516 + bank * 0x9b340`, read at `0x4007b2fc`) until a power-up on
+another bank read it back from the card. `beq.s` -> `bra.s` (`6708` -> `6008`)
+keeps the value; the power-up then passes under `ot_emu`, the pattern
+validator leaving locks of that slot alone. To find which check refused a
+bank, boot `ot_emu` with that run's CS1 (`--cs1-in FILE --no-post`) and
+`--watch-pc` on every `addql #1,%d2` in `0x40002318..0x40002df0`. Each fix
+counts there, and `hits` names the PC and the Part (a0).
+
 <a name="trap-dsp-host-layout"></a>
 
 ### `dsp_host` can crash on the code's layout alone
