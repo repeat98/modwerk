@@ -1,0 +1,466 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-11-11",
+  "source": "Direct statements by the module author after flashing each build",
+  "reporter": "ROMsets",
+  "statement": "4.3h with Overbridge, FAST AUDIO off, MONO ENS playing: \"stock 96%, perform twist 97%, no lag\". After the 4.3h checklist (ALL and negative knobs, FUNC+push reset, pattern change, assign and clear while playing, fast turns against the SRC page, knob G push+turn, machine-menu scrolling, leaving the page every way, each module set): \"Okay I'm happy with the testing.\" About 2 hours in all, on OS 1.53 and 1.54.",
+  "status": "hardware-tested-author-reported",
+  "model": "Digitakt 1",
+  "release": "1.53 and 1.54",
+  "durationMinutes": 120,
+  "packages": {
+    "note": "The tested images were linked from packages byte for byte the same as the released 0.1.3-experimental packages apart from the version text (the tested ones read 0.1.2-experimental).",
+    "released": {
+      "1.53": "d9774e0e8a6d3d3476b65043ae96d22751e503837449707e33d71650ac57058d",
+      "1.54": "6ac7c2301d97131145d3f8734d5d7e7146cb850922dbddc41ff82be334139e93"
+    }
+  },
+  "builds": [
+    {
+      "file": "4.3h-153-alone.syx",
+      "release": "1.53",
+      "syxSha256": "ea400966fc8f789b298387f91c11ee405a342397791a5eee2f15c46a698f5614",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "f38b0c193677a060b3fdb28fe71b9332be8a5e7d36ecaf91a3c86a61bab558eb"
+        },
+        {
+          "id": "digiperform",
+          "version": "0.1.2-experimental",
+          "sha256": "25824c30c573e0a575834d23280519203c0b29a1a5c73c062b7653ed59a53304"
+        }
+      ]
+    },
+    {
+      "file": "4.3h-153-mono.syx",
+      "release": "1.53",
+      "syxSha256": "b15b4f36b245822e255bffc384d2df43eef31b3e35b4432d867aff82327bb3d3",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "f38b0c193677a060b3fdb28fe71b9332be8a5e7d36ecaf91a3c86a61bab558eb"
+        },
+        {
+          "id": "digichain",
+          "version": "1.6",
+          "sha256": "819f6045b5ad4deaa720c74f0126d078cc15c019dfcb07710112ac453b65d47d"
+        },
+        {
+          "id": "digimono",
+          "version": "0.13.3-experimental",
+          "sha256": "2800a2b948c074346bfd5b9ba9c081c192c8778d463f358171ebb4d68f920388"
+        },
+        {
+          "id": "digiperform",
+          "version": "0.1.2-experimental",
+          "sha256": "25824c30c573e0a575834d23280519203c0b29a1a5c73c062b7653ed59a53304"
+        }
+      ]
+    },
+    {
+      "file": "4.3h-153-monohealth.syx",
+      "release": "1.53",
+      "syxSha256": "38417858369bd497fc450d6694afd834c9b9b6414243b80c3f3132789cd81dab",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "f38b0c193677a060b3fdb28fe71b9332be8a5e7d36ecaf91a3c86a61bab558eb"
+        },
+        {
+          "id": "digichain",
+          "version": "1.6",
+          "sha256": "819f6045b5ad4deaa720c74f0126d078cc15c019dfcb07710112ac453b65d47d"
+        },
+        {
+          "id": "digimono",
+          "version": "0.13.3-experimental",
+          "sha256": "2800a2b948c074346bfd5b9ba9c081c192c8778d463f358171ebb4d68f920388"
+        },
+        {
+          "id": "digihealth",
+          "version": "1.0",
+          "sha256": "aba9413ee205e1368ec3997172a84e59eaa4e787d267bc7a3e94a161b4fcd0f1"
+        },
+        {
+          "id": "digiperform",
+          "version": "0.1.2-experimental",
+          "sha256": "25824c30c573e0a575834d23280519203c0b29a1a5c73c062b7653ed59a53304"
+        }
+      ]
+    },
+    {
+      "file": "4.3h-153-neighbor.syx",
+      "release": "1.53",
+      "syxSha256": "7bfc352b00fef54d1a6f03c61692accc09e567d91305197476479f97622ff559",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "f38b0c193677a060b3fdb28fe71b9332be8a5e7d36ecaf91a3c86a61bab558eb"
+        },
+        {
+          "id": "digineighbor",
+          "version": "0.6",
+          "sha256": "380837f86c05cf6d0aba2dfc930a4309cc6b2e99b2e8c6a450f0abe6e844dccd"
+        },
+        {
+          "id": "digiperform",
+          "version": "0.1.2-experimental",
+          "sha256": "25824c30c573e0a575834d23280519203c0b29a1a5c73c062b7653ed59a53304"
+        }
+      ]
+    },
+    {
+      "file": "4.3h-153-poly.syx",
+      "release": "1.53",
+      "syxSha256": "834324eb0001b77f60ee0e9552ce306ebd013c3910a93f774a07497599bd0c90",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "f38b0c193677a060b3fdb28fe71b9332be8a5e7d36ecaf91a3c86a61bab558eb"
+        },
+        {
+          "id": "digichain",
+          "version": "1.6",
+          "sha256": "819f6045b5ad4deaa720c74f0126d078cc15c019dfcb07710112ac453b65d47d"
+        },
+        {
+          "id": "digipoly",
+          "version": "2.0",
+          "sha256": "1d2615c58e0a944c1ca49741739be4e1b3cc26cf8d94ce3ab1cd6af78c47ebac"
+        },
+        {
+          "id": "digiperform",
+          "version": "0.1.2-experimental",
+          "sha256": "25824c30c573e0a575834d23280519203c0b29a1a5c73c062b7653ed59a53304"
+        }
+      ]
+    },
+    {
+      "file": "4.3h-153-ram.syx",
+      "release": "1.53",
+      "syxSha256": "c6667030f2bfd38d4566a707aeb81ba321314265e2d0a096509e98223ac20403",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "f38b0c193677a060b3fdb28fe71b9332be8a5e7d36ecaf91a3c86a61bab558eb"
+        },
+        {
+          "id": "machine-pages",
+          "version": "1.2",
+          "sha256": "93092ba38bf65583a3d436e3d8c560b0df0480477f81127fe9de7a3264ba38c6"
+        },
+        {
+          "id": "ram-machines",
+          "version": "1.3.1",
+          "sha256": "75cad6c7148709ea1e9188def89ebae200497ad78b295d9762a4af83dca15a6d"
+        },
+        {
+          "id": "digiperform",
+          "version": "0.1.2-experimental",
+          "sha256": "25824c30c573e0a575834d23280519203c0b29a1a5c73c062b7653ed59a53304"
+        }
+      ]
+    },
+    {
+      "file": "4.3h-153-slicer.syx",
+      "release": "1.53",
+      "syxSha256": "5f8ced144ceba1535cc028db23f0622571dbd30faf368453e55e6c4c79d77cbe",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "f38b0c193677a060b3fdb28fe71b9332be8a5e7d36ecaf91a3c86a61bab558eb"
+        },
+        {
+          "id": "digislicer",
+          "version": "2.1",
+          "sha256": "351bfb3a7c8bbbc8f925e085d77ee136114ad7edb90beeed9a6ea351f2cde51f"
+        },
+        {
+          "id": "digiperform",
+          "version": "0.1.2-experimental",
+          "sha256": "25824c30c573e0a575834d23280519203c0b29a1a5c73c062b7653ed59a53304"
+        }
+      ]
+    },
+    {
+      "file": "4.3h-153-sophie.syx",
+      "release": "1.53",
+      "syxSha256": "bc45acdbd2d0f2031c2581c47c0df9ca2ca7f8c58e36e4082080adf6b37785e7",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "f38b0c193677a060b3fdb28fe71b9332be8a5e7d36ecaf91a3c86a61bab558eb"
+        },
+        {
+          "id": "digisophie",
+          "version": "1.1.13",
+          "sha256": "6eadc29d581b24ff84fe3fe32399b998a91375ee06182631ab499109b4a003a5"
+        },
+        {
+          "id": "digiperform",
+          "version": "0.1.2-experimental",
+          "sha256": "25824c30c573e0a575834d23280519203c0b29a1a5c73c062b7653ed59a53304"
+        }
+      ]
+    },
+    {
+      "file": "4.3h-153-string.syx",
+      "release": "1.53",
+      "syxSha256": "2564d8ab1b1120752052960b78bd79ff5fd0fdd460aead15ab1aeba4d7dc748d",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "f38b0c193677a060b3fdb28fe71b9332be8a5e7d36ecaf91a3c86a61bab558eb"
+        },
+        {
+          "id": "machine-pages",
+          "version": "1.2",
+          "sha256": "93092ba38bf65583a3d436e3d8c560b0df0480477f81127fe9de7a3264ba38c6"
+        },
+        {
+          "id": "digistring",
+          "version": "0.9.0",
+          "sha256": "9e3ca5570ec7e3521e2e2c3df576db08287f3329624dee9373808fa7fe63bc8f"
+        },
+        {
+          "id": "digiperform",
+          "version": "0.1.2-experimental",
+          "sha256": "25824c30c573e0a575834d23280519203c0b29a1a5c73c062b7653ed59a53304"
+        }
+      ]
+    },
+    {
+      "file": "4.3h-154-alone.syx",
+      "release": "1.54",
+      "syxSha256": "ab8dc7aec3beb925f92f219a1abd0e69b948cf07c414a75c00ee5127990eb705",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "8c1fe78ccd1427d6a93f181eaad9f064efb65cf6dd683192dbcc33e83dc548b9"
+        },
+        {
+          "id": "digiperform",
+          "version": "0.1.2-experimental",
+          "sha256": "1b3cb0c47476e2062e62e449b043a0788bf3ed1698fb16e7ae976c6300de8c71"
+        }
+      ]
+    },
+    {
+      "file": "4.3h-154-mono.syx",
+      "release": "1.54",
+      "syxSha256": "a464cc0c3cc79da0803d4dc5a34912ad75b560a346301b7dd98814dffe9b1041",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "8c1fe78ccd1427d6a93f181eaad9f064efb65cf6dd683192dbcc33e83dc548b9"
+        },
+        {
+          "id": "digichain",
+          "version": "1.6",
+          "sha256": "5d4910f597874ac2f5348e2cd76bea7e34b9ea0060c9bcf1406dd317a7af9e42"
+        },
+        {
+          "id": "digimono",
+          "version": "0.13.3-experimental",
+          "sha256": "c7f1b44f4cc613cf0f16f276fa64732626088f92a0ee0e0425c4e1a9ae50f991"
+        },
+        {
+          "id": "digiperform",
+          "version": "0.1.2-experimental",
+          "sha256": "1b3cb0c47476e2062e62e449b043a0788bf3ed1698fb16e7ae976c6300de8c71"
+        }
+      ]
+    },
+    {
+      "file": "4.3h-154-monohealth.syx",
+      "release": "1.54",
+      "syxSha256": "215fb3ce932c2fd1977774c96345b378bdde5bf5f744dc0fc85e6b514bef9881",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "8c1fe78ccd1427d6a93f181eaad9f064efb65cf6dd683192dbcc33e83dc548b9"
+        },
+        {
+          "id": "digichain",
+          "version": "1.6",
+          "sha256": "5d4910f597874ac2f5348e2cd76bea7e34b9ea0060c9bcf1406dd317a7af9e42"
+        },
+        {
+          "id": "digimono",
+          "version": "0.13.3-experimental",
+          "sha256": "c7f1b44f4cc613cf0f16f276fa64732626088f92a0ee0e0425c4e1a9ae50f991"
+        },
+        {
+          "id": "digihealth",
+          "version": "1.0",
+          "sha256": "b8a49c1137fb3f2a06338f71f0d5730812481a0ce1cef362144334fe55b11c5a"
+        },
+        {
+          "id": "digiperform",
+          "version": "0.1.2-experimental",
+          "sha256": "1b3cb0c47476e2062e62e449b043a0788bf3ed1698fb16e7ae976c6300de8c71"
+        }
+      ]
+    },
+    {
+      "file": "4.3h-154-neighbor.syx",
+      "release": "1.54",
+      "syxSha256": "78718ad94814b7f205b4cc0f5da6586898d217409174679428b047f089b2833b",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "8c1fe78ccd1427d6a93f181eaad9f064efb65cf6dd683192dbcc33e83dc548b9"
+        },
+        {
+          "id": "digineighbor",
+          "version": "0.6",
+          "sha256": "664cb3286b1f7b18ee757ce67c3d38d878741f8ebf6920da21d1eb576a6aeec0"
+        },
+        {
+          "id": "digiperform",
+          "version": "0.1.2-experimental",
+          "sha256": "1b3cb0c47476e2062e62e449b043a0788bf3ed1698fb16e7ae976c6300de8c71"
+        }
+      ]
+    },
+    {
+      "file": "4.3h-154-poly.syx",
+      "release": "1.54",
+      "syxSha256": "a6fc186e18626f969ea3a2878ba8805ee6e89f8fd496962bf89f0027d716e24f",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "8c1fe78ccd1427d6a93f181eaad9f064efb65cf6dd683192dbcc33e83dc548b9"
+        },
+        {
+          "id": "digichain",
+          "version": "1.6",
+          "sha256": "5d4910f597874ac2f5348e2cd76bea7e34b9ea0060c9bcf1406dd317a7af9e42"
+        },
+        {
+          "id": "digipoly",
+          "version": "2.0",
+          "sha256": "4cc14624253150776b2eedd8e02b8b86b378888b1459cd2f0a0b49148b48263e"
+        },
+        {
+          "id": "digiperform",
+          "version": "0.1.2-experimental",
+          "sha256": "1b3cb0c47476e2062e62e449b043a0788bf3ed1698fb16e7ae976c6300de8c71"
+        }
+      ]
+    },
+    {
+      "file": "4.3h-154-ram.syx",
+      "release": "1.54",
+      "syxSha256": "19489edae0a91abf6bcb6e6e5c37181f927333b31d53a8ebc5f0d0f9b4a347d5",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "8c1fe78ccd1427d6a93f181eaad9f064efb65cf6dd683192dbcc33e83dc548b9"
+        },
+        {
+          "id": "machine-pages",
+          "version": "1.2",
+          "sha256": "1ab853a2ff628dd60b8fa0c5693f3babac64b95c456b331162797aac1526b1a0"
+        },
+        {
+          "id": "ram-machines",
+          "version": "1.3.1",
+          "sha256": "0e6d4ca589b84da505b29e3b245b326635c1148730a86d87a93c8ff0dad221eb"
+        },
+        {
+          "id": "digiperform",
+          "version": "0.1.2-experimental",
+          "sha256": "1b3cb0c47476e2062e62e449b043a0788bf3ed1698fb16e7ae976c6300de8c71"
+        }
+      ]
+    },
+    {
+      "file": "4.3h-154-slicer.syx",
+      "release": "1.54",
+      "syxSha256": "ed344350e4715d0cebc5e68b0f137525b42980aa4700db3e6eb46a720b2b6677",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "8c1fe78ccd1427d6a93f181eaad9f064efb65cf6dd683192dbcc33e83dc548b9"
+        },
+        {
+          "id": "digislicer",
+          "version": "2.1",
+          "sha256": "b484401eac741c72dbc334e11dd7e0df6b799237cafd9581d020b43e06a0a277"
+        },
+        {
+          "id": "digiperform",
+          "version": "0.1.2-experimental",
+          "sha256": "1b3cb0c47476e2062e62e449b043a0788bf3ed1698fb16e7ae976c6300de8c71"
+        }
+      ]
+    },
+    {
+      "file": "4.3h-154-sophie.syx",
+      "release": "1.54",
+      "syxSha256": "0704d9f5008678ee49f9b6aef88caedfb0f1498a55b9206ba799da34cb9125dd",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "8c1fe78ccd1427d6a93f181eaad9f064efb65cf6dd683192dbcc33e83dc548b9"
+        },
+        {
+          "id": "digisophie",
+          "version": "1.1.13",
+          "sha256": "51cd3aca3652e1926b6be0213269ac0b54b3c44655f06af4a79270db371b58fa"
+        },
+        {
+          "id": "digiperform",
+          "version": "0.1.2-experimental",
+          "sha256": "1b3cb0c47476e2062e62e449b043a0788bf3ed1698fb16e7ae976c6300de8c71"
+        }
+      ]
+    },
+    {
+      "file": "4.3h-154-string.syx",
+      "release": "1.54",
+      "syxSha256": "c18b68b9df24dddcdca7a4a05acd150c471aa19d7f4e5a0b55194df6cebde53a",
+      "modules": [
+        {
+          "id": "core",
+          "version": "2.1",
+          "sha256": "8c1fe78ccd1427d6a93f181eaad9f064efb65cf6dd683192dbcc33e83dc548b9"
+        },
+        {
+          "id": "machine-pages",
+          "version": "1.2",
+          "sha256": "1ab853a2ff628dd60b8fa0c5693f3babac64b95c456b331162797aac1526b1a0"
+        },
+        {
+          "id": "digistring",
+          "version": "0.9.0",
+          "sha256": "247aba7f6d56f1081a94677b2c665322e5e3754a1b420bf12760f4762f4ccf0b"
+        },
+        {
+          "id": "digiperform",
+          "version": "0.1.2-experimental",
+          "sha256": "1b3cb0c47476e2062e62e449b043a0788bf3ed1698fb16e7ae976c6300de8c71"
+        }
+      ]
+    }
+  ]
+}
