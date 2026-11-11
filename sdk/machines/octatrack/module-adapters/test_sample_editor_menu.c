@@ -8,14 +8,15 @@
 #define CHECK(x) do {if(!(x)){printf("FAIL line %u\n",(unsigned)__LINE__);return 1;}}while(0)
 struct mw_sample_editor mw_sample_editor;
 volatile uint32_t modwerk_runtime_ticks;
-static uintptr_t entries[]={0x20000040u,0};
+static uintptr_t entries[]={0x20000040u,0,0};
 uintptr_t volatile *const modwerk_runtime_event_row[RUNTIME_SITE_EVENTS]={
     [MODWERK_OT_SAMPLE_EDITOR_ACTIONS-RUNTIME_EVENTS]=entries
 };
 static struct runtime_owner fixture_owner;
 static struct mw_sample_capture source;
 static unsigned held,bad,available,live,opens,prompts,writes,refreshes,menu_rows,menu_selected;
-static unsigned stale_publish;
+static unsigned stale_publish,grid_opens,grid_closes;
+static unsigned analysis_reads,analysis_posts,analysis_failure;
 static uint32_t menu_active,menu_names,menu_actions,cursor,window_flags,window_callback;
 static uint32_t task,kind,slot,generation,opened_token;
 static void (*native_answer)(uint32_t);
@@ -28,9 +29,21 @@ void modwerk_machine_unlock(uint32_t old){if(held!=old+1)bad=1;held=old;}
 uint32_t modwerk_machine_mask(void){return modwerk_machine_lock();}
 void modwerk_machine_unmask(uint32_t old){modwerk_machine_unlock(old);}
 int modwerk_runtime_owner_at(uintptr_t at,struct runtime_owner *out)
-{if(!live || at!=entries[0])return 0;*out=fixture_owner;return 1;}
+{
+    if(!live)return 0;
+    if(at==entries[0]){*out=fixture_owner;return 1;}
+    if(entries[1] && at==entries[1]){*out=fixture_owner;++out->module;
+        out->owned_extent=0x21000000;return 1;}
+    return 0;
+}
 int mw_sample_owner_current_locked(const struct runtime_owner *o)
-{return held && live && !memcmp(o,&fixture_owner,sizeof *o);}
+{
+    struct runtime_owner expected;
+    if(!held || !live)return 0;
+    for(unsigned i=0;i<2 && entries[i];++i)
+        if(modwerk_runtime_owner_at(entries[i],&expected) && !memcmp(o,&expected,sizeof *o))return 1;
+    return 0;
+}
 int mw_sample_action_decode(const uint8_t *p,uint32_t n,uint32_t at,uint32_t base,unsigned encoded,
                            struct mw_sample_action_view *out)
 {
@@ -77,7 +90,11 @@ void mw_sample_menu_host_question(const char *s,void (*cb)(uint32_t))
     ++prompts;native_answer=cb;window_flags=32;window_callback=(uint32_t)(uintptr_t)cb;
 }
 void mw_sample_menu_host_open_action(uintptr_t at,uint32_t token,const struct modwerk_sample_editor_api *api)
-{if(!held || at!=0x20000020u || api!=&mw_sample_editor_api)bad=1;++opens;opened_token=token;}
+{if(!held || (at!=0x20000020u && at!=0x21000020u) || api!=&mw_sample_editor_api)bad=1;++opens;opened_token=token;}
+void mw_sample_menu_host_close_grid(void)
+{if(held || !stock_grid())bad=1;++grid_closes;menu_active=0;}
+void mw_sample_menu_host_open_grid(void)
+{if(held)bad=1;++grid_opens;menu_active=1;menu_names=0x400cec34u;menu_actions=0x400cec08u;}
 void mw_sample_refresh_ui(void){++refreshes;}
 static int ready(void *p){(void)p;return available;}
 static int owner(void *p,const struct runtime_owner *o){(void)p;return mw_sample_owner_current_locked(o);}
@@ -93,7 +110,7 @@ static unsigned publish(void *p,const struct mw_sample_capture *before,const str
     ++writes;source.view.count=edit->count;memcpy(source.view.records,edit->records,sizeof edit->records);
     return MODWERK_SAMPLE_APPLIED;
 }
-static const struct mw_sample_backend backend={0,lock,unlock,ready,owner,capture,publish};
+static const struct mw_sample_backend backend={0,lock,unlock,ready,owner,capture,publish,0};
 void mw_sample_editor_bootstrap(void)
 {if(!mw_sample_editor.initialized && !mw_sample_editor_init(&mw_sample_editor,&backend))bad=1;}
 static unsigned api_copy(uint32_t t,struct modwerk_sample_view *v){return mw_sample_editor_copy(&mw_sample_editor,t,v);}
@@ -102,6 +119,14 @@ static unsigned api_replace(uint32_t t,const struct modwerk_sample_grid *g){retu
 static void api_cancel(uint32_t t){mw_sample_editor_cancel(&mw_sample_editor,t);}
 const struct modwerk_sample_editor_api mw_sample_editor_api={MODWERK_SAMPLE_EDITOR_ABI,sizeof mw_sample_editor_api,
     api_copy,api_confirm,api_cancel,api_replace};
+const struct modwerk_sample_editor_api *mw_sample_editor_public_api(void){return &mw_sample_editor_api;}
+void mw_sample_analysis_queue(void){++analysis_posts;}
+static int read_pair(void *unused,const struct mw_sample_capture *before,uint32_t at,int32_t *left,int32_t *right)
+{
+    (void)unused;(void)before;(void)at;++analysis_reads;
+    left[0]=left[1]=right[0]=right[1]=0;return !analysis_failure;
+}
+static const struct mw_sample_backend analysis_backend={0,lock,unlock,ready,owner,capture,publish,read_pair};
 static void reset(void)
 {
     memset(&mw_sample_editor,0,sizeof mw_sample_editor);memset(&source,0,sizeof source);
@@ -109,6 +134,11 @@ static void reset(void)
     binding_count=stock_count=action_at=serial=root_task=root_kind=root_slot=0;
     pending_at=pending_kind=pending_slot=pending_generation=0;
     question_token=question_active=question_pending=yes_down=0;
+    analysis_token=analysis_reads=analysis_posts=analysis_failure=0;
+    memset(&shortcut_from,0,sizeof shortcut_from);
+    shortcut_kind=shortcut_slot=shortcut_generation=shortcut_task=0;
+    func_down=aed_down=aed_fresh=aed_taken=0;grid_opens=grid_closes=0;
+    entries[0]=0x20000040u;entries[1]=entries[2]=0;
     select_active=select_armed=select_serial=select_row=select_task=select_sp=select_return=0;select_callback=0;
     held=bad=opens=prompts=writes=refreshes=stale_publish=0;available=live=1;
     menu_active=menu_names=menu_actions=cursor=window_flags=window_callback=0;
@@ -148,6 +178,68 @@ static int closed(void)
     CHECK(!question_active && !question_pending && !question_token && !pending.live &&
           !select_active && !select_armed && !yes_down && !held && !bad);
     CHECK(mw_sample_editor.state==MW_SAMPLE_CLOSED);return 0;
+}
+/* Model the real order: early observer, package key handler, late consumer,
+ * then stock only when no hook took the key. Beat Slicer cancels on FUNC/AED. */
+static int key(int code,int pressed)
+{
+    int took=mw_sample_ui_key(code,pressed);
+    if(!took && pressed && (code==FUNC || code==AED) && mw_sample_editor.state==MW_SAMPLE_OPEN)
+        api_cancel(opened_token);
+    if(!took)took=mw_sample_ui_shortcut_key(code,pressed);
+    if(!took && code==AED && pressed && func_down)mw_sample_menu_host_open_grid();
+    return took;
+}
+static void chord(void)
+{(void)key(FUNC,1);(void)key(AED,1);(void)key(AED,0);(void)key(FUNC,0);mw_sample_ui_tick();}
+static int shortcuts(void)
+{
+    reset();chord();CHECK(grid_opens==1 && !grid_closes && !opens && stock_grid());
+    chord();CHECK(grid_closes==1 && opens==1 && !menu_active && mw_sample_editor.state==MW_SAMPLE_OPEN);
+    chord();CHECK(grid_opens==2 && stock_grid() && mw_sample_editor.state==MW_SAMPLE_CLOSED && !writes);
+    chord();CHECK(opens==2 && mw_sample_editor.state==MW_SAMPLE_OPEN && !writes && !bad);
+    /* Holding FUNC while re-tapping AED works too; duplicate down events do not toggle. */
+    reset();(void)key(FUNC,1);CHECK(!key(AED,1) && stock_grid());(void)key(AED,0);
+    CHECK(key(AED,1) && !menu_active);CHECK(key(AED,1) && !menu_active && pending.live);
+    (void)key(AED,0);mw_sample_ui_tick();CHECK(opens==1 && mw_sample_editor.state==MW_SAMPLE_OPEN);
+    CHECK(key(AED,1) && stock_grid());(void)key(AED,0);(void)key(FUNC,0);
+    CHECK(!held && !bad && !writes);
+    /* Bare AED, unrelated native lists and no subscribers keep their stock path. */
+    reset();CHECK(!key(AED,1) && !opens && !grid_opens);(void)key(AED,0);
+    reset();entries[0]=0;chord();chord();CHECK(grid_opens==2 && !grid_closes && !opens && !bad);
+    reset();menu_active=1;menu_names=0x1234;menu_actions=0x5678;
+    (void)mw_sample_ui_key(FUNC,1);(void)mw_sample_ui_key(AED,1);
+    CHECK(!mw_sample_ui_shortcut_key(AED,1) && !grid_closes && menu_names==0x1234 && !bad);
+    /* A busy source gets a bounded, cancelable fresh open, not a marker write. */
+    reset();chord();available=0;chord();CHECK(pending.live && !opens);
+    mw_sample_ui_key(0x32,1);available=1;mw_sample_ui_tick();CHECK(!pending.live && !opens && !writes && !bad);
+    reset();chord();available=0;chord();modwerk_runtime_ticks=180;mw_sample_ui_tick();
+    CHECK(!pending.live && !opens && !writes && !bad);
+    /* Source/owner changes after an action closes cannot reuse its shortcut context. */
+    for(unsigned why=0;why<3;++why) {
+        reset();chord();chord();CHECK(opens==1);
+        (void)key(FUNC,1);CHECK(shortcut_from.live && mw_sample_editor.state==MW_SAMPLE_CLOSED);
+        if(why==0)++generation;else if(why==1)++task;else live=0;
+        (void)mw_sample_ui_key(AED,1);CHECK(!mw_sample_ui_shortcut_key(AED,1));
+        CHECK(grid_opens==1 && !pending.live && !writes && !bad);
+    }
+    /* A foreign dialog that appears after FUNC cancels the captured transition. */
+    for(unsigned foreign=0;foreign<2;++foreign) {
+        reset();chord();chord();(void)key(FUNC,1);CHECK(shortcut_from.live);
+        if(foreign){window_flags=32;window_callback=0x12345678;}
+        else {menu_active=1;menu_names=0x1234;menu_actions=0x5678;}
+        (void)mw_sample_ui_key(AED,1);CHECK(!mw_sample_ui_shortcut_key(AED,1));
+        CHECK(grid_opens==1 && !pending.live && !writes && !bad);
+    }
+    /* A final stock confirmation is never treated as an options dialog. */
+    reset();open_menu(6);CHECK(!select_grid() && !prompt());
+    (void)mw_sample_ui_key(FUNC,1);(void)mw_sample_ui_key(AED,1);
+    CHECK(!mw_sample_ui_shortcut_key(AED,1) && question_active && !grid_opens && !writes && !bad);
+    /* The shared cycle follows contribution order, then returns to stock. */
+    reset();entries[1]=0x21000040u;chord();chord();CHECK(mw_sample_editor.owner.module==17);
+    chord();CHECK(mw_sample_editor.owner.module==18 && opens==2 && !menu_active);
+    chord();CHECK(stock_grid() && grid_opens==2 && !writes && !bad);
+    return 0;
 }
 int main(void)
 {
@@ -201,6 +293,33 @@ int main(void)
         available=1;mw_sample_ui_tick();CHECK(!opens && !bad);
         open_menu(6);CHECK(menu_rows==7);
     }
-    puts("PASS: actual menu selection, prompt ownership, busy confirmation, cancellation and orphan cleanup");
+    for(unsigned action=0;action<10;++action) {
+        reset();source.channels=3;open_menu(6);CHECK(!select_grid());
+        mw_sample_editor.backend=&analysis_backend;
+        struct modwerk_sample_grid grid={2,{0,22050}};
+        CHECK(mw_sample_editor_replace_options(&mw_sample_editor,opened_token,&grid,1)==MODWERK_SAMPLE_CONFIRMING);
+        mw_sample_ui_key(YES,1);mw_sample_ui_tick();CHECK(!question_active);
+        mw_sample_ui_key(YES,0);mw_sample_ui_tick();CHECK(question_active && prompts==1);
+        native_close(1);CHECK(analysis_token==opened_token && analysis_posts==1 && !analysis_reads && !writes);
+        if(action==1)CHECK(mw_sample_ui_key(0x32,1)==1);
+        if(action==2)CHECK(mw_sample_ui_enc(2,4)==0);
+        if(action==3)CHECK(mw_sample_ui_key(0x10,1)==0);
+        if(action==4){window_flags=32;window_callback=0x12345678;}
+        if(action==5)mw_sample_editor_changed_locked(&mw_sample_editor);
+        if(action==6)analysis_failure=1;
+        if(action==7)mw_sample_editor.snap.reads=MW_SNAP_READ_LIMIT;
+        if(action==8)CHECK(!key(FUNC,1));
+        if(action==9)chord();
+        if(!action || action==6 || action==7)(void)mw_sample_editor_analyze_step(&mw_sample_editor);
+        mw_sample_ui_tick();CHECK(!analysis_token && !question_active && !bad && !held);
+        if(!action)CHECK(writes==1 && refreshes==1 && analysis_reads==2 && mw_sample_editor.completion==MODWERK_SAMPLE_APPLIED);
+        else CHECK(!writes && (action!=4 || (window_flags==32 && window_callback==0x12345678)));
+        if(action==6)CHECK(!strcmp(notice,"SNAP FAILED") && mw_sample_editor.completion==MODWERK_SAMPLE_ANALYSIS_FAILED);
+        if(action==7)CHECK(!strcmp(notice,"SNAP LIMIT") && mw_sample_editor.completion==MODWERK_SAMPLE_ANALYSIS_LIMIT);
+        if(action>=8)CHECK(!analysis_reads && mw_sample_editor.completion==MODWERK_SAMPLE_NO_CHANGE &&
+            grid_opens==(action==9) && !grid_closes);
+    }
+    CHECK(!shortcuts());
+    puts("PASS: actual menu selection, prompt ownership, busy confirmation, cancellation, bounded analysis UI and orphan cleanup");
     return 0;
 }
