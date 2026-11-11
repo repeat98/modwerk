@@ -85,7 +85,7 @@
     "load": {
       "display": "UI only",
       "method": "static",
-      "conditions": "Read from the code: it subscribes to ev_key, ev_enc and ev_tick only, never to the audio path. Each UI tick it checks whether FIX, SAMPLER or LFO is held and whether its locker is still set, a few compares; a held key's knob turns walk the sound's four mod slots. Not measured on a unit."
+      "conditions": "Read from the code: it subscribes to ev_key, ev_enc, ev_tick and ev_draw only, never to the audio path. Each UI tick it checks whether FIX, SAMPLER or LFO is held and whether its locker is still set, a few compares; a held key's knob turns walk the sound's four mod slots. ev_draw returns at once unless LFO is held with its own locker set, and then redraws one knob's box. Not measured on a unit."
     }
   },
   "evidence": {
