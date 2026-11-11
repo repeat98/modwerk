@@ -140,9 +140,9 @@
     "memoryBytes": 7868,
     "fastBytes": null,
     "load": {
-      "display": "Small: a short C call per voice while its amp envelope moves, and a 12-track scan a block with ENV RESET AMP in use",
+      "display": "Small: a short C call per voice while its amp envelope moves, and a scan of the 12 tracks' queued trigs every block",
       "method": "static",
-      "conditions": "Read in the code: the amp record write skips a voice whose record repeats and changed nothing, so an idle voice makes no C call; with no AMP in any track's ENV RESET the pre-fade reads the 12 ENV RESET bytes once a block and skips its scan; the OVR reader adds one table lookup a voice a block. On the author's MKII an earlier build of the envelope code in a 16-module set (LR03, private telemetry base, sequencer stopped) read 70.37 % of the audio block idle, against 70.84 % before that skip (LR01); the module's own share was not separated, and this version's build was not measured."
+      "conditions": "Read in the code: the amp record write skips a voice whose record repeats and changed nothing, so an idle voice makes no C call; the pre-fade's scan runs every block, AMP in use or not (a sound lock can bring AMP to a track): 12 tracks, three event slots each and the retrig series; the OVR reader adds one table lookup a voice a block. On the author's MKII an earlier build of the envelope code in a 16-module set (LR03, sequencer stopped) read 70.37 % of the audio block idle, against 70.84 % before the idle-voice skip (LR01); the module's share was not separated, and this build was not measured."
     }
   },
   "evidence": {
