@@ -29,6 +29,14 @@ Everything below was observed in rytm-emu on the named build. Nothing has run on
 - A core-only image, same stock and core, for comparison.
 - Emulator: rytm-emu `c5732f0`, headless `dtboot`, JIT on. One generated sample, RAMP, 23,777 frames (odd, so STA and END fall on no round multiple), on BD with LOP ON. Audio is dtboot's `--wav`. Voice words are read with `DTBOOT_PEEK`: step at rec + 12, position at rec + 4, effective FIN at 0x8000f7cc. A click means a sample-to-sample step over 40, or six times the median, on a ramp whose normal step is below 2; each run also flags the trig's own attack, which is not counted.
 
+## 0.4.0: the SMPL key shows the waveform only (2026-11-11)
+
+rytm-emu (`c5732f0`) unless it says unit; emulator results are not hardware evidence.
+
+- SR42/SR43 (vendored core-ar2 0.7 + this source; SR43 `0a12166c…`): with the SAMPLE page left on its knob view, the view turns to SMPL WAVEFORM by itself; a second SMPL press stays there (stock toggles to the knobs); AMP then SMPL opens the waveform; SMPL held + PLAY still clears the page (CLEAR PAGE SMPL WAVEFORM, RATE back to +63). SR41, which made the list {5} with index 0, showed the waveform's title over the knob view: the view draws by index, so 0.4.0 keeps the list {4, 5}, counts one page and shows index 1.
+- Rig cases on SG04 (`aa073d83…`, the author's private test base + this source), emulator: all six pass, the new sample-rate-smpl-waveform among them (three SMPL presses, the same waveform body each time); the screen references were recorded again in the waveform view.
+- Independent code review: no crash, memory or bounds problem; every stock reader of the page list (page key, title, knob ids, CLEAR PAGE, draw, destructor) checked. Noted, not changed: if the change lands while the SAMPLE page is on screen, the header keeps the knob page's title until the next SMPL press; it normally lands at boot.
+
 ## 0.3.0: FIN is RATE on every sound (2026-11-11)
 
 Everything in this section ran in rytm-emu (`c5732f0`, RAMP on BD, LOP ON) unless it says unit. Emulator results are not hardware evidence.
