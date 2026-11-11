@@ -31,6 +31,7 @@ import { compareModules, DEFAULT_MODULE_SORT, MODULE_STATISTICS_CHANGED, type Mo
 import { ModulePopularity } from './community/ModulePopularity'
 import type { ConflictFix } from './catalog/selection-conflicts'
 import { libraryCompatibility } from './catalog/library-compatibility'
+import { withSetLimit } from './catalog/set-limit'
 import { useCommunity } from './community/context'
 import { accountHref } from './community/member-access'
 import { hasBetaAccess, hasBetaUi, hasOctatrackBase, hasUsbLinkAccess } from './community/beta-access'
@@ -359,7 +360,7 @@ export default function App() {
   const selection = resolveSelection(selectedIds)
   const availabilityError = moduleAvailabilityError(selectedIds, betaAccess)
   const stockFx2Kept = DSP_LOADER && (active?.keepStockFx2 ?? true)
-  const { conflicts, blocks: addBlockMap } = libraryCompatibility(octatrackUi, selectedIds, stockFx2Kept, accessibleModules.map(module => module.id))
+  const { conflicts, blocks: addBlockMap } = withSetLimit(libraryCompatibility(octatrackUi, selectedIds, stockFx2Kept, accessibleModules.map(module => module.id)), selectedIds)
   const libraryFilter = allRoute ? allCategory ?? 'all' : filter
   const libraryFamily = allRoute || accessibleModules.some(module=>DETAILS[module.id].family===family) ? family : 'all'
   const visibleModules = accessibleModules.filter((module) =>

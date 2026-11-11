@@ -8,6 +8,7 @@ import { profileRoutes } from './profile'
 import { betaInvitationRoutes } from './beta-invitations'
 import { memberBetaAccess, memberOctatrackBase } from './beta-testers'
 import { moduleAvailabilityError } from '../src/catalog/availability'
+import { overLimitMessage } from '../src/catalog/set-limit'
 import { DISCORD_INVITE_CAMPAIGN } from '../src/config/development-discord'
 import { discordInvitationClaim } from './discord-invitations'
 /** Fixed actor row for administrator history; the administrator is not a visitor account. */
@@ -104,6 +105,8 @@ export async function authentication(request:Request,env:Env,path:string):Promis
    let error:string
    try{error=moduleAvailabilityError(body.moduleIds,betaAccess)}catch{throw new HttpError(400,'Unknown module.')}
    if(error)throw new HttpError(403,error)
+   // A set over the module limit (src/catalog/set-limit.ts) is not built until trimmed, whichever page asks.
+   const limit=overLimitMessage(body.moduleIds,'build');if(limit)throw new HttpError(403,limit)
   }
   return response({ok:true})
  }

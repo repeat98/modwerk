@@ -6,6 +6,7 @@
 // against the selected version: the published package is the only one the site offers.
 import packages from '../engine/assets/octatrack-module-packages.json' with { type: 'json' }
 import { resolveSelection } from './modules.ts'
+import { overLimitMessage } from './set-limit.ts'
 
 export type PackageList = { packages: readonly { id: string; requires?: number; sources?: readonly string[]; usbOnly?: boolean; version?: string; lagsBehind?: string; lagReason?: string }[] }
 export function moduleUsbOnly(id: string, published: PackageList = packages) {
@@ -23,11 +24,13 @@ export function usbLagNote(id: string, published: PackageList = packages) {
 }
 
 /** Why card firmware cannot include these modules. `usb` says whether this member can sync over USB (the Octatrack
- * base path, hasOctatrackBase): without it the refusal does not point at a sync they cannot start. */
+ * base path, hasOctatrackBase): without it the refusal does not point at a sync they cannot start. A set over the
+ * module limit (set-limit.ts) is refused too, with its count. */
 export function cardBuildError(ids: readonly string[], usb = true, published: PackageList = packages): string {
   const usbOnly = resolveSelection(ids).filter(module => moduleUsbOnly(module.id, published)), one = usbOnly.length === 1
-  if (!usbOnly.length) return ''
+  if (!usbOnly.length) return overLimitMessage(ids, 'build')
   const names = usbOnly.map(module => module.name).join(', '), them = one ? 'it' : 'them'
+  // Card firmware is the classic build: it has no Modwerk base, so a module that needs the base cannot be in it.
   return names + (one ? ' needs' : ' need') + ' the Modwerk base, so card firmware cannot include ' + them + '. ' +
-    (usb ? 'Sync this set over USB, or take ' + them + ' out to build card firmware.' : 'Loading the base over USB is in the beta for now; take ' + them + ' out to build card firmware.')
+    (usb ? 'Sync this set over USB, or take ' + them + ' out to build card firmware.' : 'Take ' + them + ' out to build card firmware.')
 }
