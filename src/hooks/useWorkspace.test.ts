@@ -64,4 +64,14 @@ describe('the module limit of an Octatrack set', () => {
     expect(workspace.active?.moduleIds).toEqual([...ids.slice(1, SET_MODULE_LIMIT), USB_AUDIO_MODULE, ids[over]])
     await vi.waitFor(() => expect(workspace.saving).toBe(false))
   })
+  it('fills a set from what’s on the Octatrack whole, as an import does, past the limit too', async () => {
+    const ids = AVAILABLE_MODULES.map(module => module.id).filter(id => id !== USB_AUDIO_MODULE), over = SET_MODULE_LIMIT + 3
+    await act(async () => root.render(createElement(Probe, { onRender: value => { workspace = value } })))
+    await vi.waitFor(() => expect(workspace.ready).toBe(true))
+    await act(() => { workspace.importConfiguration('Empty', []) })
+    await act(() => workspace.addModules(ids.slice(0, over)))
+    expect(workspace.active?.moduleIds).toEqual(ids.slice(0, over))
+    expect(Object.keys(workspace.active!.moduleVersions).sort()).toEqual(ids.slice(0, over).sort())
+    await vi.waitFor(() => expect(workspace.saving).toBe(false))
+  })
 })

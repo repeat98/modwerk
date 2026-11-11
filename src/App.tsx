@@ -32,7 +32,7 @@ import { compareModules, DEFAULT_MODULE_SORT, MODULE_STATISTICS_CHANGED, type Mo
 import { ModulePopularity } from './community/ModulePopularity'
 import type { ConflictFix } from './catalog/selection-conflicts'
 import { libraryCompatibility } from './catalog/library-compatibility'
-import { withSetLimit } from './catalog/set-limit'
+import { addAllMessage, withSetLimit } from './catalog/set-limit'
 import { useCommunity } from './community/context'
 import { accountHref } from './community/member-access'
 import { hasBetaAccess, hasBetaUi, hasOctatrackBase, hasUsbLinkAccess } from './community/beta-access'
@@ -389,10 +389,11 @@ export default function App() {
     }
     workspace.toggleModule(id); setSaved(false); setRiskAccepted({key:'',accepted:false})
   }
-  // What the unit's project names that the unit lacks; "Add to set" adds the ones this set does not have yet.
-  const neededIds = unitNeeds.ids.filter(id => !selectedIds.includes(id))
+  // What the unit's project names that the unit lacks; "Add to set" adds the ones this set does not have yet, all of
+  // them or, past the module limit, none, with the reason.
+  const neededIds = unitNeeds.ids.filter(id => !selectedIds.includes(id)), neededOverLimit = addAllMessage(selectedIds, neededIds)
   const projectNeeds = { names: unitNeeds.ids.map(id => MODULES.find(module => module.id === id)?.name ?? id), unknown: unitNeeds.unknown,
-    add: neededIds.length ? () => neededIds.forEach(toggleModule) : undefined }
+    add: neededIds.length && !neededOverLimit ? () => neededIds.forEach(toggleModule) : undefined, limit: neededIds.length ? neededOverLimit || undefined : undefined }
   // The set the guided sync is open for.
   const loadingTarget = loadingSet ? workspace.configurations.find(item => item.id === loadingSet) : undefined
   // After a base change the unit starts without its modules: their sync, from a set with exactly them or a new one.
@@ -483,7 +484,7 @@ export default function App() {
   // header, module grid and card route in it, so nothing the page had is lost.
   const hubPage = <Suspense fallback={null}><OctatrackHub view={hubView} link={usbLink ?? null} inventory={inventory} sets={configurationsFor('octatrack')} selectedId={active?.id} needs={projectNeeds} username={session.user?.username} onSelect={changeConfiguration} onSync={setLoadingSet} onInstall={layout => { setBaseLayoutWanted(layout); setBaseInstall('manual') }}
     onNew={() => newConfiguration('octatrack')} onImport={() => importRef.current?.click()} onSetAction={setAction} onSaveUnit={saveUnitAsSet}
-    onFill={ids => { for (const id of ids) if (!selectedIds.includes(id)) workspace.toggleModule(id); setSaved(false); setRiskAccepted({key:'',accepted:false}) }}
+    onFill={ids => { workspace.addModules(ids); setSaved(false); setRiskAccepted({key:'',accepted:false}) }}
     onReport={id => { const target = id ?? active?.id; if (target) setReportingConfiguration({ machine: 'octatrack', id: target }) }}
     header={<><header className="page-heading configuration-heading"><div><p className="page-kicker">YOUR WORKSPACE</p><h1>Your Octatrack</h1><p>{mobileWorkspace ? 'Edit and share your module sets. Module sets are saved in this browser.' : 'See what’s on your Octatrack, edit and sync your module sets, and keep backups. Module sets are saved in this browser.'}</p>
       {session.available && !sessionLoading && !session.user && <p className="hub-account-note">Sign in to keep your Octatrack’s setup with your account and to report problems. <a className="text-button" href={accountHref('login', route)}>Sign in</a> · <a className="text-button" href={accountHref('register', route)}>Create account</a></p>}</div>

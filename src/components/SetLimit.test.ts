@@ -16,6 +16,7 @@ import { useFirmwareBuild } from '../hooks/useFirmwareBuild'
 import { ModuleCard } from './ModuleCard'
 import { ModuleComparison } from './ModuleComparison'
 import { ModuleGrid } from './ModuleGrid'
+import { MissingNote } from './OctatrackUpdate'
 
 const ids = AVAILABLE_MODULES.map(module => module.id).filter(id => id !== USB_AUDIO_MODULE && !moduleUsbOnly(id))
 const over = SET_MODULE_LIMIT + 3, next = ids[over]
@@ -80,5 +81,15 @@ describe('the card build of a saved set over the limit', () => {
     expect(validate).not.toHaveBeenCalled()
     await act(() => root.render(createElement(Probe, { moduleIds: ids.slice(0, SET_MODULE_LIMIT) })))
     expect(build?.error ?? '').not.toContain('is the limit for now')
+  })
+})
+
+describe('adding the modules a project needs to a set that can’t take them all', () => {
+  it('shows the reason instead of Add to set, and adds none of them', () => {
+    const note = (limit?: string) => renderToStaticMarkup(createElement(MissingNote, { needs: { names: ['A', 'B'], unknown: [], add: limit ? undefined : none, limit }, onSync: none }))
+    expect(note()).toContain('>Add to set<')
+    const refused = note(`Adding them would make 22 modules; ${SET_MODULE_LIMIT} is the limit for now. Remove 2 first.`)
+    expect(refused).toContain(`Adding them would make 22 modules; ${SET_MODULE_LIMIT} is the limit for now. Remove 2 first.`)
+    expect(refused).not.toContain('>Add to set<'); expect(refused).not.toContain('>Sync to Octatrack<')
   })
 })

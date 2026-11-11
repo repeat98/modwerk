@@ -37,6 +37,13 @@ export function overLimitMessage(ids: readonly string[], action: 'sync' | 'build
   return `This set has ${count} modules; ${SET_MODULE_LIMIT} is the limit for now. Remove ${count - SET_MODULE_LIMIT} to ${action}.`
 }
 
+/** Why several modules can't be added together, which is all or none: '' when they fit. */
+export function addAllMessage(ids: readonly string[], adding: readonly string[], device = 'octatrack') {
+  const count = limitedCount([...ids, ...adding])
+  if (!limitApplies(device) || count <= SET_MODULE_LIMIT) return ''
+  return `Adding ${adding.length === 1 ? 'it' : 'them'} would make ${count} modules; ${SET_MODULE_LIMIT} is the limit for now. Remove ${count - SET_MODULE_LIMIT} first.`
+}
+
 /** The library's note for a module that would go over the limit: its add button is unavailable, with the reason. */
 export function limitBlock(id: string): AddBlock {
   return { kind: 'limit', withIds: [], reason: `${SET_MODULE_LIMIT} modules for now`, detail: LIMIT_REACHED, key: 'limit:' + id }

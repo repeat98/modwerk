@@ -156,6 +156,15 @@ export function useWorkspace() {
     updateActive({ moduleIds, moduleVersions, ...(id === USB_AUDIO_MODULE && !moduleIds.includes(id) ? { usbAudio: undefined } : {}) })
     if(!current.moduleIds.length&&moduleIds.length)trackConfigurationStarted(current.id)
   }
+  /** Adds every one of `ids` to the active set at once, as an import takes a set: one over the limit (set-limit.ts)
+   * still holds them all, and says why it can't be synced or built until trimmed. */
+  function addModules(ids: readonly string[], device = DEFAULT_DEVICE) {
+    const current = configurationFor(device), moduleIds = [...new Set([...current.moduleIds, ...ids])]
+    if (moduleIds.length === current.moduleIds.length) return
+    const moduleVersions = Object.fromEntries(moduleIds.map(selected=>[selected,current.moduleVersions[selected]??pinModuleVersions([selected],device)[selected]]))
+    updateActive({ moduleIds, moduleVersions })
+    if(!current.moduleIds.length)trackConfigurationStarted(current.id)
+  }
   function configureUsbAudio(usbAudio: UsbAudioConfiguration | undefined) {
     const current = configurationFor(DEFAULT_DEVICE)
     const moduleIds = current.moduleIds.includes(USB_AUDIO_MODULE) ? current.moduleIds : [...current.moduleIds, USB_AUDIO_MODULE]
@@ -200,5 +209,5 @@ export function useWorkspace() {
     persist(store => store.forgetFirmware())
     void clientRef.current?.clear().catch(() => setFileError('The firmware reader stopped. Reload the page.'))
   }
-  return { firmwareClient: clientRef, setKeepStockFx2: (keepStockFx2: boolean) => updateActive({ keepStockFx2 }), setClassicStartup: (classicStartup: boolean) => updateActive({ classicStartup }), setRemovedStockFx: (keys: string[]) => updateActive({ removedStockFx: normalizeRemovedStockFx(keys) }), configureUsbAudio, importConfiguration, saveStorageLock, configurations, active, ready, saving, storageError, unreadable, selectConfiguration, createConfiguration, renameConfiguration, deleteConfiguration, toggleModule, firmware, fileState, fileError, setFileError, firmwareSaved, readFile, clearFile }
+  return { firmwareClient: clientRef, setKeepStockFx2: (keepStockFx2: boolean) => updateActive({ keepStockFx2 }), setClassicStartup: (classicStartup: boolean) => updateActive({ classicStartup }), setRemovedStockFx: (keys: string[]) => updateActive({ removedStockFx: normalizeRemovedStockFx(keys) }), configureUsbAudio, importConfiguration, saveStorageLock, configurations, active, ready, saving, storageError, unreadable, selectConfiguration, createConfiguration, renameConfiguration, deleteConfiguration, toggleModule, addModules, firmware, fileState, fileError, setFileError, firmwareSaved, readFile, clearFile }
 }

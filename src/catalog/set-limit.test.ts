@@ -4,7 +4,7 @@ import { USB_AUDIO_MODULE } from '../config/usb-audio'
 import { addBlock, refusesAdd } from './add-blocks'
 import { isModuleAvailable } from './availability'
 import { cardBuildError, moduleUsbOnly } from './usb-only'
-import { atLimit, canAdd, limitApplies, limitBlock, limitedCount, LIMIT_REACHED, overLimit, overLimitMessage, SET_MODULE_LIMIT, withSetLimit } from './set-limit'
+import { addAllMessage, atLimit, canAdd, limitApplies, limitBlock, limitedCount, LIMIT_REACHED, overLimit, overLimitMessage, SET_MODULE_LIMIT, withSetLimit } from './set-limit'
 
 // Modules a card build takes (no base needed), so the limit is the only reason left to refuse a long set.
 const cardIds = MODULES.map(module => module.id).filter(id => id !== USB_AUDIO_MODULE && isModuleAvailable(id) && !moduleUsbOnly(id))
@@ -44,6 +44,14 @@ describe('the module limit of an Octatrack set', () => {
     expect(overLimitMessage(first(SET_MODULE_LIMIT), 'sync')).toBe('')
     expect(overLimitMessage(first(over), 'sync')).toBe(`This set has ${over} modules; ${SET_MODULE_LIMIT} is the limit for now. Remove 3 to sync.`)
     expect(overLimitMessage([...first(over), USB_AUDIO_MODULE], 'build')).toBe(`This set has ${over} modules; ${SET_MODULE_LIMIT} is the limit for now. Remove 3 to build.`)
+  })
+
+  it('adds several modules all or none, and says how many are too many', () => {
+    expect(addAllMessage(first(SET_MODULE_LIMIT - 2), cardIds.slice(SET_MODULE_LIMIT - 2, SET_MODULE_LIMIT))).toBe('')
+    expect(addAllMessage(first(SET_MODULE_LIMIT - 2), cardIds.slice(SET_MODULE_LIMIT - 2, over))).toBe(`Adding them would make ${over} modules; ${SET_MODULE_LIMIT} is the limit for now. Remove 3 first.`)
+    expect(addAllMessage(first(SET_MODULE_LIMIT), [cardIds[SET_MODULE_LIMIT]])).toBe(`Adding it would make ${SET_MODULE_LIMIT + 1} modules; ${SET_MODULE_LIMIT} is the limit for now. Remove 1 first.`)
+    expect(addAllMessage(first(SET_MODULE_LIMIT), [USB_AUDIO_MODULE])).toBe('')
+    expect(addAllMessage(first(over), [cardIds[over]], 'digitakt')).toBe('')
   })
 
   it('marks every other module in the library unavailable once the set is full, over any conflict note', () => {
