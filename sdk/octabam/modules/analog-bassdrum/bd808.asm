@@ -1,9 +1,7 @@
 ; 808 DSP voice. Same ABI and desk state offsets as bd909.asm.
 ; Original coefficient model: dsp808.py. No samples embedded.
+; m0, m1 and m4 arrive linear (ab_glue.asm).
 zv01:
-        move #>$ffffff,m0
-        move #>$ffffff,m1
-        move #>$ffffff,m4
         move x:(r6+$0),a
         move a1,n1
         move #>@B_INC@,r1

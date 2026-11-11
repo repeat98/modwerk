@@ -3677,7 +3677,7 @@
       "id": "analog-bassdrum",
       "key": "ANALOG BD",
       "name": "Analog BD",
-      "version": "0.1.6-experimental",
+      "version": "0.1.7-experimental",
       "category": "machines",
       "source": {
         "repository": "https://github.com/sambanks/octabam",
@@ -3733,14 +3733,14 @@
           "name": "PTCH",
           "default": 64,
           "count": 128,
-          "doc": "808 body pitch; 909 body frequency spans approximately 30–100 Hz.",
+          "doc": "Body pitch. 909: one octave, 32.7 Hz at 0, the recorded 909 at 64, 65.4 Hz at 127.",
           "labels": null
         },
         {
           "name": "DCAY",
           "default": 80,
           "count": 128,
-          "doc": "Body decay, with a different response for each model.",
+          "doc": "Body decay. 909: 15 ms at 0, the recording (247 ms) at 80, 600 ms at 127; the 808 keeps its own law.",
           "labels": null
         },
         {
@@ -3775,7 +3775,7 @@
           "name": "FIXD",
           "default": 0,
           "count": 2,
-          "doc": "SRC SETUP top middle, OFF/ON switch on both models. OFF varies every hit slightly (909: click strength and noise; 808: trigger transient strength); ON makes every hit open identically. On the 808, ON is the 0.1.5 sound.",
+          "doc": "SRC SETUP top middle, OFF/ON switch on both models. OFF varies every hit slightly (909: sweep depth, click strength and noise; 808: trigger transient strength); ON makes every hit open identically. On the 808, ON is the 0.1.5 sound.",
           "labels": [
             "OFF",
             "ON"
@@ -3792,14 +3792,14 @@
           "name": "LOW",
           "default": 64,
           "count": 128,
-          "doc": "Desk low band; 64 is neutral.",
+          "doc": "Desk low band; 64 is neutral. Weighted, not saturated on its own.",
           "labels": null
         },
         {
           "name": "HIGH",
           "default": 64,
           "count": 128,
-          "doc": "Desk high band; 64 is neutral.",
+          "doc": "Desk high band; 64 is neutral. Weighted, not saturated on its own.",
           "labels": null
         },
         {
@@ -3855,9 +3855,9 @@
             "source": "TESTING.md"
           },
           "dsp": {
-            "level": "high",
+            "level": "moderate",
             "basis": "measured-comparison",
-            "rationale": "0.1.6 schedules both engines tighter with bit-identical audio and state (dsp_host, 52 scenarios plus the exact-render cases): the SAT interpolation is skipped once SAT has settled, immediate loads ride in parallel-move slots and filter histories stay in registers. Peak 909 374.94 and 808 252.13 executed instructions/sample (was 408.4 and 266.3 in the same set): peaks about 8% and 5% lower, about 15% fewer executed instructions on average (emulator count). Executed instructions, not chip timing; the declared price of 411 per voice is unchanged.",
+            "rationale": "0.1.7: peak 909 186 and 808 184 executed DSP instructions per sample (377 and 255 for 0.1.6 on the same cases), shipping configuration in bd909_host: defaults, FIXD, ATK/ACNT/DECAY/SAT/LOW/HIGH extremes, a trig at every frame offset, retriggers, moving knobs; a resting voice 3. The 909 reads its body and click from tables, walks its state in read order and moves its noise envelope and slews once a block; the desk keeps two curves of four. Executed instructions, not chip timing; the declared price of 411 per voice is unchanged until the new engine is measured.",
             "source": "CPU.md"
           },
           "memory": {
@@ -3870,9 +3870,9 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "Restore twelve borrowed SRC bytes before removing AB/1 in both Part copies. 512 compiled assignment cases, reselection/destination checks and actual-panel CS1-only fresh emulator restarts pass; 0.1.4 rejects the bank. Owner reports FLEX persists on AB015FIX01 and instructs merge/publication. Both DSP cores are byte-identical to 0.1.4. Broader hardware/maximum-load, chip timing and memory limits remain under a new exact-source owner approval; Output Matrix halt is unverified.",
-        "hardwareStatus": "reported",
-        "evidenceRevision": "e7fe4fb745e610a63ab9fe390f330334369995c2",
+        "summary": "0.1.7: the recorded-909 engine (October refit) at half the 909's DSP work and about three quarters of the 808's, with a lighter shared desk. DSP matches its float model at -85 dB or better in the shipping configuration; the new 909 model matches the refit's at -63 dB with equal band levels; exact-render pins and the instruction-form precedent check pass; card and USB packages rebuilt (USB package identical on --check, same base and trust row). Not run on a unit: sound, install, several voices, persistence and chip timing are untested; the declared price is unchanged.",
+        "hardwareStatus": "untested",
+        "evidenceRevision": "62e9a424b7a08d7fcbbf321124ba6ef10f63d852",
         "gates": [
           "sdk/drafts/analog-bassdrum-909-reference/run.py",
           "sdk/drafts/analog-bassdrum-909-reference/qualification/multi-test.py",
@@ -3888,7 +3888,7 @@
             "title": "Compare the 909 direct-out response",
             "steps": [
               "In a disposable project, hold FUNC and press SRC for SRC SETUP, choose ANALOG BD and press YES. Turn the top-left TYPE switch to the right for the 909. Set LOW/HIGH to 64 and SAT to 0.",
-              "For the direct-out reference, set PTCH 49, DCAY 100, TUNE 0, TDEP 64, ACNT 72 and LPF 127 (OFF). Trigger repeated hits at 70 BPM and sweep ATK alone through 0–127, then hold it at one value to hear the small strength/noise differences.",
+              "For the direct-out reference, set PTCH 64, DCAY 80, TUNE 0, TDEP 64, ACNT 72 and LPF 127 (OFF). Trigger repeated hits at 70 BPM and sweep ATK alone through 0–127, then hold it at one value to hear the small strength/noise differences.",
               "Hold ATK at 0 and sweep TUNE through its endpoints separately. Return SAT to 0 and TDEP to 64, then press STOP and let the tail finish. Turn TYPE to the left to compare the 808; its saved knob values remain intact."
             ]
           },
@@ -3918,9 +3918,9 @@
             "page": "SRC SETUP",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.6-experimental",
-            "imageSha256": "9a52d642e1280c704789dfcca11876a7086cd170424aa8417988ceff442895f7",
-            "setup": "Headless ot_emu; MKII panel, stopped transport; native card build of this 0.1.6 source with Analog BD alone, empty scratch card; 128×64 LCD at integer scale 6."
+            "moduleVersion": "0.1.7-experimental",
+            "imageSha256": "794ae30ca349fa48b12e37e12c395f97394a5d1e5e1ec0e0405650cbbb1798b8",
+            "setup": "Headless ot_emu; MKII panel, stopped transport; native card build of this 0.1.7 source with Analog BD alone, empty scratch card; 128×64 LCD at integer scale 6."
           }
         },
         {
@@ -3935,9 +3935,9 @@
             "page": "909 SRC main",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.6-experimental",
-            "imageSha256": "9a52d642e1280c704789dfcca11876a7086cd170424aa8417988ceff442895f7",
-            "setup": "Headless ot_emu; MKII panel, stopped transport; native card build of this 0.1.6 source with Analog BD alone, empty scratch card; 128×64 LCD at integer scale 6."
+            "moduleVersion": "0.1.7-experimental",
+            "imageSha256": "794ae30ca349fa48b12e37e12c395f97394a5d1e5e1ec0e0405650cbbb1798b8",
+            "setup": "Headless ot_emu; MKII panel, stopped transport; native card build of this 0.1.7 source with Analog BD alone, empty scratch card; 128×64 LCD at integer scale 6."
           }
         },
         {
@@ -3952,9 +3952,9 @@
             "page": "808 SRC main",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.6-experimental",
-            "imageSha256": "9a52d642e1280c704789dfcca11876a7086cd170424aa8417988ceff442895f7",
-            "setup": "Headless ot_emu; MKII panel, stopped transport; native card build of this 0.1.6 source with Analog BD alone, empty scratch card; 128×64 LCD at integer scale 6."
+            "moduleVersion": "0.1.7-experimental",
+            "imageSha256": "794ae30ca349fa48b12e37e12c395f97394a5d1e5e1ec0e0405650cbbb1798b8",
+            "setup": "Headless ot_emu; MKII panel, stopped transport; native card build of this 0.1.7 source with Analog BD alone, empty scratch card; 128×64 LCD at integer scale 6."
           }
         },
         {

@@ -17,6 +17,11 @@ describe('module doctor', () => {
     for (const id of ['miniverb', 'sidechain-compressor', 'analog-bassdrum', 'midi-scenes', 'digihealth']) expect(result.stdout).toContain(id)
   // The full catalogue shares CPU with app checks; this is an integration check, not a five-second performance gate.
   }, catalogCheckTimeout + 5000)
+  // A machine page's controls come from modwerk_page_control(), which picks stock's switch for two to five values; a page written
+  // by hand before the helper existed is told, not refused.
+  it('tells a module that writes its page descriptor by hand about the shared helper', () => {
+    expect(doctor('analog-bassdrum').stdout).toMatch(/· page controls\s+control\.c writes its page descriptor by hand/)
+  }, catalogCheckTimeout + 5000)
   // The draft's copy under sdk/octabam/modules/ is visible to anything reading that folder while it runs, so npm run check defers
   // this test from its parallel stage (SDK suite, other test files, build) and runs it alone afterwards.
   it.skipIf(process.env.MODWERK_DEFER_DRAFT_DOCTOR === '1')('checks a draft where every gate looks and leaves no copy behind', () => {
