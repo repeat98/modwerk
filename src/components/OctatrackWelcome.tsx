@@ -49,6 +49,7 @@ export function OctatrackWelcome({ link, usbBrowser, phone = false, savedSets = 
       {savedSets && <p className="base-install-note">Your saved configurations are here as module sets, and card firmware is still there as the fallback.</p>}
       <details className="base-install-recovery"><summary>Before you install</summary><p>{BASE_RECOVERY_NOTICE}</p></details>
       {usb && !phone && <p className="link-hint">{cardInsteadReason()}</p>}
+      <p className="link-hint">No Octatrack? Close this and it won’t come back.</p>
     </section>
   </BaseDialogFrame>
 }

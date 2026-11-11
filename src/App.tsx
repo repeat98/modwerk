@@ -222,11 +222,11 @@ export default function App() {
   // a base; the update prompt wherever the connected unit runs an older one. Never on account, sign-in, admin and legal
   // pages, and not before the session is known (a member's hint is the account's, a visitor's this browser's).
   const remoteSessionSeen = useRemoteSessionSeen()
-  // The welcome to modules over USB, once, for whoever never had the base, on the Octatrack's own pages: the library,
-  // a module, the module sets and Your Octatrack, where every build and sync button leads. Until it was answered, and
-  // on the visit it opened, the guide and the beta invitation keep away.
-  const welcomeHere = !sessionLoading && !usbLinkPreview && (route === 'octatrack' || route.startsWith('octatrack/') || route === 'configuration' || route === 'library'
-    || LIBRARY_CATEGORIES.includes(route as ModuleCategory) || route === 'module-sets' || route.startsWith('module-set/') || !!detailModule)
+  // The welcome to modules over USB, once, for whoever never had the base, on every machine's pages (the release is
+  // announced to everyone; whoever has no Octatrack closes it for good). Until it was answered, and on the visit it
+  // opened, the guide and the beta invitation keep away.
+  const welcomeHere = !sessionLoading && !usbLinkPreview && !accountRoute && !developerRoute && !route.startsWith('submit')
+    && !['admin', 'review', 'privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route)
   const welcome = useOctatrackWelcome(session.user?.verified ? session.user.id : null, OCTATRACK_BASE_RELEASED && !sessionLoading, welcomeHere, usbLink ?? null, !!baseInstall)
   const baseInstallPrompt = useBaseInstallPrompt(session.user?.verified ? session.user.id : null, !welcome.due && !welcome.shown && !sessionLoading && !!usbLink && !usbLinkPreview && !accountRoute && !developerRoute && !route.startsWith('submit') && !['admin', 'review', 'privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route), usbLink ?? null,
     octatrackUi && (route === 'octatrack' || route.startsWith('octatrack/') || route === 'configuration'))

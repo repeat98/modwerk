@@ -77,6 +77,15 @@ describe('the welcome to modules over USB', () => {
     await reload('library', visitor); await wait(2000)
     expect(welcome()).toBeUndefined()
   }, 15000)
+  it('greets on another machine’s pages too, with a way out for whoever has no Octatrack, but not on account pages', async () => {
+    await open('digitakt')
+    await vi.waitFor(() => expect(welcome()).toBeDefined(), { timeout: 4000 })
+    expect(welcome()!.textContent).toContain('No Octatrack? Close this and it won’t come back.')
+    await act(async () => button(welcome()!, 'Later')!.click())
+    localStorage.clear()
+    await reload('account'); await wait(2000)
+    expect(welcome()).toBeUndefined()
+  }, 15000)
   it('is not there while the switch is off', async () => {
     release.on = false
     await open('library'); await wait(2000)
