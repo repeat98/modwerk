@@ -55,7 +55,7 @@ Rig cases, `tools/cases/sample-rate/` on the author's private rig (not in this r
 
 Hardware, 11 Nov 2026: npp1993's Analog Rytm MKII (OS 1.74, flash RB08), scratch project, run by the author's automated rig over USB with the author's go; no person at the unit. Results are the rig's: memory words and screens, nobody listened.
 
-- Source (0.2.0-experimental): fingerprint `cbbe1dc7…a0ef` (`evidence.sourceSha256`).
+- Source (0.2.0-experimental): fingerprint `6837e13d…21a0` (`evidence.sourceSha256`), run as SF08; SF06 (`cbbe1dc7…a0ef`) was the same but for TUN's text, which then dropped the two places on whole semitones.
 - SF06 (`12fbe1bc…9533`, the rig's base with the USB link + this source), booted from RAM (image CRC `829dd163`), flash untouched. SO05 (`f2bea70c…fe91`, the same with 0.1.1), booted from RAM in the same session.
 - The first unit runs found two faults in the cases, not the module: BD's FIN on the scratch project is modulated, so its effective word moved by itself (the cases now read FIN's smoother state, 0x8000ef34, and its target, 0x8000e5d4); and pressing SMPL on its own page toggled the knob and waveform views between cases (the cases now press AMP first). The references are the unit's waveform view.
 
@@ -69,6 +69,8 @@ Hardware, 11 Nov 2026: npp1993's Analog Rytm MKII (OS 1.74, flash RB08), scratch
 | sample-rate-switch-keep | pass: FIN +10 stays 0x4a00 through both taps | pass (unchanged) |
 
 SO05's screen checks also differ because it came up in the other SAMPLE view after its boot; its memory checks are the comparison.
+
+SF08 (`2768bf1e…f1f2f`, the rig's base + this source: TUN always with two places, (0) at zero), 11 Nov 2026, booted from RAM after RB08 was flashed again by the author: 6 cases pass in two runs in a row. Screens recorded in the knob view: +0.04, -0.02, (0), +2.04, a held trig's lock +0.05, FIN then RATE +63.
 
 Not covered by the rig: how the switch and the cents sound, pads, a pattern save and reload of TUN locks (the +Drive stays untouched), stock OS loading a sound saved with cents, NRPN, two voices together, CPU load.
 
