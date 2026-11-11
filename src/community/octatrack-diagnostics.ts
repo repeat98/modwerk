@@ -4,9 +4,25 @@ import type { Inventory } from '../config/inventory'
 import type { OctatrackLink, LinkDiagnostic } from '../engine/elekloader/octatrack-link'
 import type { LoadReading } from '../engine/elekloader/upload-wire'
 import { browserRequestsPrivacy, countOctatrackAction } from './usage'
-import { OCTATRACK_DIAGNOSTICS_VERSION, DIAGNOSTIC_USB_EVENTS, DEVICE_LOG_INCIDENTS, DEVICE_LOG_LOADS, type SiteDiagnosticEvent, type DiagnosticConsent, type DiagnosticLive, type OctatrackDiagnostic } from './octatrack-diagnostics-contract'
+import { diagnosticClient } from './diagnostic-client'
+import { OCTATRACK_DIAGNOSTICS_VERSION, DIAGNOSTICS_GUEST, DIAGNOSTIC_USB_EVENTS, type PreLinkFailure, DEVICE_LOG_INCIDENTS, DEVICE_LOG_LOADS, type SiteDiagnosticEvent, type DiagnosticConsent, type DiagnosticLive, type OctatrackDiagnostic } from './octatrack-diagnostics-contract'
 import { subscribeSiteDiagnosticEvents, collectBrowserDiagnosticEvents } from './site-diagnostic-events'
 
+/** A visitor's random ID (DIAGNOSTICS_GUEST): made only when they agree to share, removed when they stop, kept in this
+ * browser alone. Sent with the diagnostics requests of someone without a verified account. */
+const GUEST_KEY = 'modwerk.diagnostics.guest'
+function guestId(make = false) {
+  try {
+    let value = localStorage.getItem(GUEST_KEY) ?? ''
+    if (!/^[a-f0-9]{64}$/.test(value)) {
+      if (!make) return ''
+      value = [...crypto.getRandomValues(new Uint8Array(32))].map(byte => byte.toString(16).padStart(2, '0')).join('')
+      localStorage.setItem(GUEST_KEY, value)
+    }
+    return value
+  } catch { return '' }
+}
+const guestHeaders = (member: string | null): Record<string, string> => member === DIAGNOSTICS_GUEST ? {'X-Modwerk-Diagnostics-Guest': guestId()} : {}
 export interface DiagnosticPreference { accountId: string | null; available: boolean; enabled: boolean; ready: boolean; busy: boolean; error: string; notice: string; hasChoice: boolean; saved: boolean; lastSent: string | null }
 const listeners = new Set<() => void>()
 const locallyStopped = new Set<string>()
@@ -28,10 +44,12 @@ export async function changeDiagnosticSharing(enabled: boolean) {
   if (!enabled) { locallyStopped.add(member); blocked = true; transfer?.abort(); healthRead?.abort(); publish({enabled:false}) }
   publish({busy:true,error:'',notice:''})
   try {
-    const saved = await client.request<DiagnosticConsent>('/octatrack/diagnostics/consent',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled,version:OCTATRACK_DIAGNOSTICS_VERSION})})
+    if (member === DIAGNOSTICS_GUEST && !guestId(enabled)) { if (enabled) throw new Error('Enable site storage to share diagnostics without an account.'); publish({notice:'Sharing stopped. Your shared diagnostics were deleted.'}); return true }
+    const saved = await client.request<DiagnosticConsent>('/octatrack/diagnostics/consent',{method:'PUT',headers:{'Content-Type':'application/json',...guestHeaders(member)},body:JSON.stringify({enabled,version:OCTATRACK_DIAGNOSTICS_VERSION})})
     if (!current()) return false
     if (saved.accountId !== member || !enabled && saved.enabled || enabled && (!saved.enabled || saved.version !== OCTATRACK_DIAGNOSTICS_VERSION || !(Date.parse(saved.expiresAt ?? '') > Date.now()))) throw new Error('Your sign-in or diagnostic choice changed in another tab. Refresh and try again.')
     if (enabled && saved.enabled) locallyStopped.delete(member)
+    if (member === DIAGNOSTICS_GUEST && !saved.enabled) try { localStorage.removeItem(GUEST_KEY) } catch { /* the server holds nothing under it any more */ }
     blocked = !saved.enabled; expires = Date.parse(saved.expiresAt ?? '')
     publish({enabled:saved.enabled,ready:true,available:true,...choice(saved),notice:saved.enabled?'Diagnostics sharing is on.':'Sharing stopped. Your shared diagnostics were deleted.',...(!saved.enabled ? {lastSent:null} : {})})
     return true
@@ -41,7 +59,18 @@ export async function changeDiagnosticSharing(enabled: boolean) {
   return false
 }
 
-/** One collector per authenticated member page. No persistent trace queue, arbitrary errors, extra device identifiers,
+/** The running collector's way to record a failure before a link exists; nothing while none runs or without consent. */
+let linkFailures: ((failure: PreLinkFailure) => void) | undefined
+/** Why connecting to the Octatrack failed before a link existed, as a fixed category, for a member who shares
+ * diagnostics; otherwise nothing happens. The collector records a device that couldn't be opened (`open-failed`) or
+ * claimed (`claim-failed`) from the link's state, and the link (octatrack-link.ts) reports the reasons it knows first
+ * as its own diagnostic, `{event: 'link_failed', failure}`: `no-webusb` when the member asks to connect or opens the
+ * install guide in a browser without WebUSB, `no-device` when the device picker closes without an Octatrack and
+ * `permission-denied` when opening it is refused (a SecurityError or NotAllowedError). Each category is recorded at
+ * most once in ten minutes. */
+export function reportLinkFailure(failure: PreLinkFailure) { try { linkFailures?.(failure) } catch { /* Diagnostics never affect USB work. */ } }
+
+/** One collector per page, for the verified member or, without one, the visitor (`memberId` DIAGNOSTICS_GUEST). No persistent trace queue, arbitrary errors, extra device identifiers,
  * project references or diagnostic reads before consent. Unsent events are dropped; USB work never awaits the network. */
 export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLink | null, inventory: () => Inventory | undefined) {
   let stopped = false, refreshing = false, reading = false, activeSync = false, lastHealth = '', sent = 0, budgetAt = Date.now(), sending = false
@@ -66,7 +95,9 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
     refreshing = true
     const revision = preferenceRevision
     try {
-      const saved = await client.request<DiagnosticConsent>('/octatrack/diagnostics/consent',{signal:requests.signal})
+      // A visitor who never agreed has no ID, and nothing is asked of the server.
+      if (memberId === DIAGNOSTICS_GUEST && !guestId()) { expires = 0; publish({enabled:false,ready:true,available:true,hasChoice:false,saved:false}); return true }
+      const saved = await client.request<DiagnosticConsent>('/octatrack/diagnostics/consent',{signal:requests.signal,headers:guestHeaders(memberId)})
       if (!current() || snapshot.busy || preferenceRevision !== revision) return false
       if (saved.accountId !== memberId) { publish({enabled:false,ready:false,error:'Your sign-in changed. Refresh this page to manage diagnostics.'}); return false }
       expires = Date.parse(saved.expiresAt ?? '')
@@ -81,7 +112,7 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
     if (!allowed() || event.event === 'health' && sending) return
     const usbEvent=(DIAGNOSTIC_USB_EVENTS as readonly string[]).includes(event.event) && event.event !== 'device_log'
     const modules = usbEvent ? inventory()?.moduleIds.flatMap(id => { const module = MODULES.find(item => item.id === id); return module ? [{id:module.id,catalogVersion:module.version}] : [] }) : undefined
-    const data = {id,...event,...(modules ? {modules} : {})} as OctatrackDiagnostic
+    const data = {id,...event,...(modules ? {modules} : {}),...(event.event !== 'device_log' ? {client:diagnosticClient()} : {})} as OctatrackDiagnostic
     if (queue.length >= 16) queue.shift()
     if (stored) onStored.set(data, stored)
     queue.push(data); void drain()
@@ -96,7 +127,7 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
         const data = queue.shift()!, controller = transfer = new AbortController()
         sent++
         try {
-          const result = await client.fetch('/octatrack/diagnostics',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({version:OCTATRACK_DIAGNOSTICS_VERSION,data}),signal:controller.signal,keepalive:true})
+          const result = await client.fetch('/octatrack/diagnostics',{method:'POST',headers:{'Content-Type':'application/json',...guestHeaders(memberId)},body:JSON.stringify({version:OCTATRACK_DIAGNOSTICS_VERSION,data}),signal:controller.signal,keepalive:true})
           if (!current() || controller.signal.aborted) break
           if (result.status === 403) { publish({enabled:false}); break }
           if (result.ok) {
@@ -111,12 +142,31 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
   }
   const unsubscribe = link?.subscribeDiagnostics(event => {
     if (!current()) return
+    if (event.event === 'link_failed') { if (event.failure) linkFailed(event.failure); return } // the link's own report of the same
     if (event.event === 'sync_started') { activeSync = true; countOctatrackAction('usb_sync_started') }
     else if (activeSync && ['kept','undone','sync_failed','disconnected'].includes(event.event)) {
       countOctatrackAction(event.event === 'kept' ? 'usb_sync_kept' : event.event === 'undone' ? 'usb_sync_undone' : 'usb_sync_failed'); activeSync = false
     }
     if (['sync_started','kept','undone','sync_failed','disconnected'].includes(event.event)) flushLoad()
     void send(event)
+  })
+  /* Failures before a link exists: one per category in ten minutes. `permission-denied` reported for an attempt
+   * stands for the `open-failed` the link's state then shows. */
+  const failedAt = new Map<PreLinkFailure, number>()
+  const linkFailed = (failure: PreLinkFailure) => {
+    if (!current() || Date.now() - (failedAt.get(failure) ?? -Infinity) < 600_000) return
+    failedAt.set(failure, Date.now())
+    if (failure === 'permission-denied') failedAt.set('open-failed', Date.now())
+    send({event:'link_failed',phase:link?.getState().status ?? 'unsupported',failure})
+  }
+  linkFailures = linkFailed
+  let lastStatus = link?.getState().status
+  const unwatch = link?.subscribe(() => {
+    const state = link.getState(), before = lastStatus
+    lastStatus = state.status
+    if (before !== 'connecting' || state.status === 'connecting') return
+    if (state.status === 'busy') linkFailed('claim-failed')
+    else if (state.status === 'idle' && state.notice?.tone === 'error') linkFailed('open-failed')
   })
   const unit = () => { const state = link!.getState(); return {phase:state.status,...(state.identity ? {base:state.identity.base} : {}),...(state.active ? {active:state.active} : {})} }
   async function health(signal: AbortSignal) {
@@ -214,7 +264,7 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
   globalThis.document?.addEventListener('visibilitychange', visible)
   // shortcut: a report still sending when the tab closes holds the readings back, so they are lost; a queue on disk would keep them.
   globalThis.addEventListener?.('pagehide', flushLoad)
-  return () => { stopped = true; requests.abort(); clearInterval(timer); globalThis.document?.removeEventListener('visibilitychange', visible); globalThis.removeEventListener?.('pagehide', flushLoad); unsubscribe?.(); stopPreference(); siteCleanup?.(); if (generation === currentGeneration) { transfer?.abort(); healthRead?.abort(); owner = null; accountApi = undefined; publish({accountId:null,available:false,enabled:false,ready:false}) } }
+  return () => { stopped = true; unwatch?.(); if (linkFailures === linkFailed) linkFailures = undefined; requests.abort(); clearInterval(timer); globalThis.document?.removeEventListener('visibilitychange', visible); globalThis.removeEventListener?.('pagehide', flushLoad); unsubscribe?.(); stopPreference(); siteCleanup?.(); if (generation === currentGeneration) { transfer?.abort(); healthRead?.abort(); owner = null; accountApi = undefined; publish({accountId:null,available:false,enabled:false,ready:false}) } }
 }
 
 const chunks = <T>(items: T[], size: number) => Array.from({ length: Math.ceil(items.length / size) }, (_, i) => items.slice(i * size, (i + 1) * size))

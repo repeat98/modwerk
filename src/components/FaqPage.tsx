@@ -1,5 +1,5 @@
 import { BackLink } from './BackLink'
-import { INDEPENDENCE_NOTICE, FLASHING_RISKS, BETA_RECOVERY_NOTICE, BETA_REPORTING_NOTICE } from '../firmware-notices'
+import { INDEPENDENCE_NOTICE, FLASHING_RISKS, BASE_RECOVERY_NOTICE, BETA_REPORTING_NOTICE, REPORT_PROBLEMS } from '../firmware-notices'
 import { isValidElement, useState } from 'react'
 import type { ReactNode } from 'react'
 import { BASE_FIRMWARE } from '../engine/base'
@@ -164,12 +164,14 @@ const SECTIONS: FaqSection[] = [
         </>,
       },
       {
-        id: 'usb-beta',
+        id: 'usb-base',
         title: 'Can I load Octatrack modules over USB instead of flashing?',
-        keywords: 'usb beta tester base module set trial keep undo chrome edge diagnostics discord join invitation mkii',
+        keywords: 'usb base module set sync trial keep undo chrome edge install guide card update os upgrade usb disk mode mki mkii beta tester',
         answer: <>
-          <p>In the Modwerk beta. Beta testers install the Modwerk base once, then send module sets from this site to the Octatrack over USB without reflashing. You need an Octatrack MKII, your original OS {BASE_FIRMWARE.version} file, a USB cable and Chrome or Edge on a computer. Diagnostics stay on while you are in the beta.</p>
-          <p>Places are limited. When a round is open, the site shows <strong>Join the beta</strong>. {BETA_RECOVERY_NOTICE} {BETA_REPORTING_NOTICE}</p>
+          <p>Yes, with the Modwerk base. Install it once, then send module sets from this site to the Octatrack over USB without reflashing. You need an Octatrack MKI or MKII, your original OS {BASE_FIRMWARE.version} file, a USB cable and Chrome or Edge on a computer.</p>
+          <p>The first install always goes through the card: the original OS has no USB link for Modwerk. Open <strong>Your Octatrack</strong> and follow the guide. You download the base .bin, copy it to the card over the cable in <strong>USB DISK MODE</strong> or with a card reader, then install it with <strong>PROJECT → SYSTEM → OS UPGRADE</strong>. Every later base update goes over USB, with the card as the fallback.</p>
+          <p>In a browser without USB (Firefox, Safari, iPad, phones), and for modules that have no USB version yet, build card firmware instead: one firmware file for the card, without the base. {BASE_RECOVERY_NOTICE} {REPORT_PROBLEMS}</p>
+          <p>Beta testers try new modules before everyone else. When a round is open, the site shows <strong>Join the beta</strong>. {BETA_REPORTING_NOTICE}</p>
         </>,
       },
     ],

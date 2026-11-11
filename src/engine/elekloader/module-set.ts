@@ -13,6 +13,7 @@ import type { OctatrackLink, SetChange } from './octatrack-link.ts'
 import { RuntimeFeature, type MissingModule, type RuntimeCapabilities } from './upload-usb.ts'
 import { USB_AUDIO_MODULE } from '../../config/usb-audio.ts'
 import { baseLayout, isPublishedBase, layoutIdentity, layoutName, type BaseLayout } from './base-variants.ts'
+import { overLimitMessage } from '../../catalog/set-limit.ts'
 
 /** Why a set cannot be loaded over USB, in the user's words. */
 export class ModuleSetError extends Error {}
@@ -49,6 +50,9 @@ export class BaseLayoutRequired extends BaseUpdateRequired {
     this.layout = layout
   }
 }
+/** A set over the site's module limit (src/catalog/set-limit.ts): it still loads and shows, but is not synced until
+ * trimmed. Only the site's review and sync apply it; the catalogue itself, which the developer MCP uses, stays unlimited. */
+export class SetLimitError extends ModuleSetError {}
 /** The base the site publishes (sdk/machines/octatrack/base-binding.json), in each USB Audio layout. While USB sync is a
  * beta every tester runs it (owner, 15 October 2026): the site syncs nothing to an older base and guides the update instead. */
 export const CURRENT_BASE: string = baseBinding.identity
@@ -390,7 +394,11 @@ const catalogue = createRuntimeCatalogue(manifest)
 export const USB_MODULE_IDS = catalogue.ids
 export const inventoryFrom = catalogue.inventory
 export const moduleSetProblem = catalogue.problem
-export const moduleSetReview = catalogue.review
+/** The site's review of a sync: the catalogue's, and a set over the module limit that needs a sync cannot have one. */
+export function moduleSetReview(target: InventoryTarget, current: Inventory, capabilities?: RuntimeCapabilities, base?: string) {
+  const review = catalogue.review(target, current, capabilities, base), limit = overLimitMessage(target.moduleIds, 'sync')
+  return limit && review.needsSync && !review.problem ? { ...review, problem: new SetLimitError(limit) as ModuleSetError } : review
+}
 export const prepareModuleSet = catalogue.prepare
 
 /** The link's builder and inventory for the site's checkout card. */
@@ -402,6 +410,8 @@ export function moduleSetKit(link: OctatrackLink) {
     return inventoryFrom(modules)
   }
   return { readInventory, prepareUpdate: async (target: InventoryTarget) => {
+    const limit = overLimitMessage(target.moduleIds, 'sync')
+    if (limit) throw new SetLimitError(limit)
     const inventory = await readInventory(), identity = link.getState().identity
     return prepareModuleSet(target, inventory, fetchPackage, identity?.capabilities, identity?.base)
   } }

@@ -27,7 +27,7 @@ function Preview({ sample, active }: { sample: LocalSample; active: boolean }) {
   </section>
 }
 
-/** Frontend-only beta workspace. Does not require or access an Octatrack connection. */
+/** Frontend-only workspace, a work in progress. Does not require or access an Octatrack connection. */
 export function OctatrackSamples({ active = true }: { active?: boolean }) {
   const [samples, setSamples] = useState<LocalSample[]>([]), [selected, setSelected] = useState<LocalSample>(), [notice, setNotice] = useState('')
   const files = useRef<HTMLInputElement>(null), folder = useRef<HTMLInputElement>(null)
@@ -39,7 +39,7 @@ export function OctatrackSamples({ active = true }: { active?: boolean }) {
   function choose(event: ChangeEvent<HTMLInputElement>) { add(event.target.files ?? []); event.target.value = '' }
   function drop(event: DragEvent) { event.preventDefault(); add(event.dataTransfer.files) }
   return <section className="octatrack-samples" aria-labelledby="samples-title">
-    <header><div><h2 id="samples-title">Samples <span className="samples-wip">Beta · work in progress</span></h2><p>Organize and preview a local selection. Octatrack transfer is still in development.</p></div></header>
+    <header><div><h2 id="samples-title">Samples <span className="samples-wip">Work in progress</span></h2><p>Organize and preview a local selection. Octatrack transfer is still in development.</p></div></header>
     <div className="samples-drop" onDragOver={event => event.preventDefault()} onDrop={drop}>
       <p>Drop audio files here, or choose files or a folder.</p>
       <div className="samples-actions"><button type="button" className="button button-quiet" onClick={() => files.current?.click()}>Choose files</button><button type="button" className="button button-quiet" onClick={() => folder.current?.click()}>Choose folder</button></div>
