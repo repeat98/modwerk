@@ -41,11 +41,12 @@ export function BaseDialogFrame({ canClose, busy, focus, finishedRef, onClose, f
 /** What the base brings: icon, lead, rest (the rest hidden on phones unless the fourth is true). */
 export type BasePromise = [IconName, string, string, boolean?]
 
-/** The first view: a picture, the title, what the base brings and what the install needs (`missing`: why this browser can't). */
-export function BaseIntro({ hero, title, intro, promises, needs, missing }: { hero: ReactNode; title: ReactNode; intro: ReactNode; promises: BasePromise[]; needs: string; missing?: string }) {
+/** The first view: a picture, the title, what the base brings and what the install needs (`missing`: why this browser
+ * can't). `beta` marks a machine whose base is still in the beta (the Zoom pedals'); the Octatrack's is released. */
+export function BaseIntro({ hero, title, intro, promises, needs, missing, beta = true }: { hero: ReactNode; title: ReactNode; intro: ReactNode; promises: BasePromise[]; needs: string; missing?: string; beta?: boolean }) {
   return <>
     {hero}
-    <h2 id="base-install-title" className="link-title" tabIndex={-1}>{title} <span className="module-beta-badge">Beta</span></h2>
+    <h2 id="base-install-title" className="link-title" tabIndex={-1}>{title}{beta && <> <span className="module-beta-badge">Beta</span></>}</h2>
     <p id="base-install-intro" className="base-install-intro">{intro}</p>
     <ul className="link-promises">{promises.map(([icon, lead, rest, explainOnPhone]) => <li key={lead}><span className="link-feature-icon" aria-hidden="true"><Icon name={icon} size={18} /></span><span><strong>{lead}</strong><span className={explainOnPhone ? undefined : 'link-feature-rest'}>{rest}</span></span></li>)}</ul>
     <p className={'link-needs' + (missing ? ' is-missing' : '')}>{needs}</p>
