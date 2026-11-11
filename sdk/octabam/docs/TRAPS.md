@@ -47,9 +47,6 @@ sites are counted per module in `build_bus.MPYSU_AUDITED`, and since 23 Sep
 stops on any other mismatch or on a count that differs from the table). `mpysu` treats the SECOND operand as unsigned, so
 a negative multiplier there is silently corrupted. `mpy x0,y1` and
 `mpy y0,x0` encode signed. Both assemble clean and do the wrong thing.
-`mac` has the same hole (8 Nov 2026): `mac x0,y0` and `mac -x0,y0` came out
-wrong while `mac y0,x0` and `mac x1,y0` are right, and `mpy y1,y1` came out as
-`mpysu` (use `mpy y0,y0`); the round-trip check stopped the build on each.
 **Disassemble what you assemble** when a result surprises you — and always
 for a new `mpy` whose second operand can go negative. A related family bit
 us in shipping code: `cmp a,b` had encoded as `max a,b`, which updates only
@@ -668,57 +665,6 @@ clamps"), so a stored byte loaded from the card does not reach play outside
 its count; and with such bytes stamped, the page drawn and the DSPs
 running, the sequencer advanced as on a clean project. What stalled the
 unit is open; the stamp before play stays the rule.
-
-<a name="trap-part-validator-fields"></a>
-
-### The Part validator caps stock fields too, and the bank file read applies it silently
-
-**THE PART VALIDATOR CAPS STOCK FIELDS TOO, AND THE BANK FILE READ APPLIES IT
-SILENTLY.** `0x40002318` checks more than effect slots. In the recorder setup
-it caps LOOP (Part `+0x607 + 12t`) at 1 (`moveq #1` at `0x40002cd2`) and SRC3
-(`+0x606 + 12t`) at 10 (`moveq #10` at `0x40002cb2`). A personal remix that
-gave LOOP four overdub values (2..5) and SRC3 two bus sources (11, 12) was hit
-twice (8 Nov 2026). The bank file read (`0x4008cea0`: LOAD PROJECT, a bank
-change) calls the validator and ignores its result, so every load turned the
-new values back into ON and CUE without a word, while the kits kept them: the
-Part and its kit disagreed and a track stopped replaying the buffer its kit
-named. At power-up the battery restore (`0x40025770`) took the same correction
-as a failure and dropped the whole current bank (see "The boot validates the
-bank" in `docs/OCTATRACK_HARDWARE_TRAPS.md` at the repository root): empty
-patterns and default Parts, even right after SAVE PROJECT. Raising the two caps
-(`7201` -> `7205`, `720a` -> `720c`) fixed both under `ot_emu`: the affected
-project reloads with no byte changed, and a power cycle with `--cs1-in
---no-post` restores the bank. Not yet checked on hardware. **Before a module
-gives a stock field a new value, find that field's cap in `0x40002318` (and in
-the pattern validator `0x4009a670` for pattern bytes) and raise it in the same
-module.**
-
-Some fields are held to one value, not capped. The validator sets every
-track's XVOL (Part `+0x125 + 0x18t`, AMP page 1 slot 5) back to 127, stock's only
-value (`beq.s` at `0x40002d24`). A remix that kept a per-track width there
-(11 Nov 2026) lost it to 127 on every load. A power-up on a bank holding
-another value refused that bank: the screen said BANK UNAVAILABLE (the bank's
-flag at `0x4017d516 + bank * 0x9b340`, read at `0x4007b2fc`) until a power-up on
-another bank read it back from the card. `beq.s` -> `bra.s` (`6708` -> `6008`)
-keeps the value; the power-up then passes under `ot_emu`, the pattern
-validator leaving locks of that slot alone. To find which check refused a
-bank, boot `ot_emu` with that run's CS1 (`--cs1-in FILE --no-post`) and
-`--watch-pc` on every `addql #1,%d2` in `0x40002318..0x40002df0`. Each fix
-counts there, and `hits` names the PC and the Part (a0).
-
-<a name="trap-dsp-host-layout"></a>
-
-### `dsp_host` can crash on the code's layout alone
-
-**`DSP_HOST` CAN CRASH ON THE CODE'S LAYOUT ALONE.** On 8 Nov 2026 an effect
-change that passed every other case made `dsp_host` segfault in
-`op_ResolveCache` on one case only (one mode, core 1), with the PC outside P
-memory. One added `nop` and no other change made the same case run,
-bit-exact against the effect's reference model; the same had happened once
-before on the same effect. When `dsp_host` crashes in its cache code on an
-effect whose other cases match the model, shift the code by one word before
-hunting a bug in the effect, and comment the padding so nobody removes it as
-dead code. Not seen on hardware; an image places the code elsewhere anyway.
 
 <a name="trap-otemu-part"></a>
 
