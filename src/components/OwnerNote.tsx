@@ -9,6 +9,8 @@ import { diagnosticPreference, subscribeDiagnosticPreference, type DiagnosticPre
 import { browserRequestsPrivacy } from '../community/usage'
 import { invitationAnswered, rememberInvitationAnswer } from '../community/diagnostics-sharing'
 import { OCTATRACK_BASE_RELEASED } from '../config/octatrack-base'
+import { mayAsk } from '../community/diagnostics-reask'
+import type { OctatrackLink } from '../engine/elekloader/octatrack-link'
 
 // A new note needs a new id here and in server/auth.ts (OWNER_NOTE).
 const KEY = 'modwerk.owner-note:2026-10-16-beta-3'
@@ -82,8 +84,10 @@ export function OwnerNote({ username, onJoin, onLeave }: { username: string; onJ
  * It can't be put off: it opens on top of any other dialog as soon as the tab is visible, on every page but the FAQ, the account and the legal pages.
  * The diagnostics step follows as an offer (Not now, no Leave beta); after a new consent version it is offered once more,
  * without the note, as the ordinary invitation: a Not now to it, or to the invitation anywhere else, is remembered in this
- * browser (invitationAnswered). Nothing on the site depends on the answer. */
-export function OwnerNoteGate({ enabled }: { enabled: boolean }) {
+ * browser (invitationAnswered). That offer waits, as the welcome and the re-ask do, while another dialog is open or
+ * something runs on the unit (`link`): a lapsed consent and a due base update come on the same visit. Nothing on the
+ * site depends on the answer. */
+export function OwnerNoteGate({ enabled, link = null }: { enabled: boolean; link?: OctatrackLink | null }) {
   const { session, refresh } = useCommunity(), memberId = session.user!.id
   const [step, setStep] = useState<'note' | 'diagnostics'>(), [serverDue, setServerDue] = useState<boolean>()
   useEffect(() => {
@@ -100,11 +104,12 @@ export function OwnerNoteGate({ enabled }: { enabled: boolean }) {
   const lapsed = !due && !declined && (ownerNoteSeen() || serverDue === false) && diagnosticsLapsed(preference, memberId, browserRequestsPrivacy()) && !invitationAnswered(memberId)
   useEffect(() => {
     if (!enabled || step || !due && !lapsed) return
-    const show = () => { if (document.visibilityState === 'visible') setStep(due ? 'note' : 'diagnostics') }
+    // The note opens over anything; the offer alone waits its turn (mayAsk).
+    const show = () => { if (due ? document.visibilityState === 'visible' : mayAsk(link?.getState())) setStep(due ? 'note' : 'diagnostics') }
     show()
     const timer = window.setInterval(show, 1000)
     return () => window.clearInterval(timer)
-  }, [enabled, step, due, lapsed])
+  }, [enabled, step, due, lapsed, link])
   const done = () => setStep(undefined)
   async function leave() {
     if (!window.confirm(leaveBeta())) return

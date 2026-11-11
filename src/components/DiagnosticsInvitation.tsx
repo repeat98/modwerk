@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { changeDiagnosticSharing, diagnosticPreference, subscribeDiagnosticPreference } from '../community/octatrack-diagnostics'
 import { diagnosticsStepNeeded, invitationAnswered, rememberInvitationAnswer } from '../community/diagnostics-sharing'
 import { type DiagnosticInvitationOutcome, type DiagnosticInvitationPlacement } from '../community/octatrack-diagnostics-contract'
-import { declinedThisVisit, declineForThisVisit, offerDiagnostics, pauseReask, pendingReask, REASK_REASONS, REASK_STALE_MS, reaskPaused, settleReask, subscribeReask } from '../community/diagnostics-reask'
+import { declinedThisVisit, declineForThisVisit, offerDiagnostics, pauseReask, unitBusy, pendingReask, REASK_REASONS, REASK_STALE_MS, reaskPaused, settleReask, subscribeReask } from '../community/diagnostics-reask'
 import { browserRequestsPrivacy, countDiagnosticsInvitation } from '../community/usage'
 import type { OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
@@ -95,7 +95,6 @@ export function DiagnosticsGuideStep({onDone}: {onDone?: (shared: boolean) => vo
   </section>
 }
 
-const RUNNING = ['connecting','sending','testing','trial','finishing']
 /** Invite after the account's first compatible USB connection and any current dialog. Dismissal remains account/version scoped.
  * It also asks once more after a failure (diagnostics-reask.ts): a failed sync or self-test and a unit that started its
  * previous base are seen here; other places call offerDiagnostics. That question waits until nothing runs on the unit
@@ -130,7 +129,7 @@ export function DiagnosticsInvitationGate({memberId,link,eligible,blocked=false,
     const stopState=link.subscribe(fellBack)
     return ()=>{stopEvents();stopState()}
   },[link,preview])
-  const running=RUNNING.includes(connection.status) || !!connection.baseUpdate && connection.baseUpdate!=='done'
+  const running=unitBusy(connection)
   // A member who turned sharing off under the current text (hasChoice) made that choice: not asked again.
   const knownNo=state.accountId===memberId && state.ready && (state.enabled || state.hasChoice || !state.available) || browserRequestsPrivacy() || declinedThisVisit(memberId) || reaskPaused(memberId)
   useEffect(()=>{

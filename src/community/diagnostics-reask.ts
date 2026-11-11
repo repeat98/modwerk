@@ -3,6 +3,15 @@
 // Asking a member who doesn't share diagnostics once more, right after a failure they would help explain. The
 // question itself is DiagnosticsReask (DiagnosticsInvitation.tsx), shown by DiagnosticsInvitationGate.
 
+import type { LinkState } from '../engine/elekloader/octatrack-link'
+
+/** Something runs on the unit (a connection, a sync, a self-test, a trial, a base update): no question opens over it. */
+export const unitBusy = (state: Pick<LinkState, 'status' | 'baseUpdate'>) =>
+  ['connecting', 'sending', 'testing', 'trial', 'finishing'].includes(state.status) || !!state.baseUpdate && state.baseUpdate !== 'done'
+/** Whether a question may open now: the page is visible, no other dialog is open and nothing runs on the unit. */
+export const mayAsk = (state?: Pick<LinkState, 'status' | 'baseUpdate'>) =>
+  document.visibilityState === 'visible' && !document.querySelector('dialog[open]') && !(state && unitBusy(state))
+
 /** What failed, each with the sentence the invitation opens with. */
 export const REASK_REASONS = {
   'sync-failed': 'This sync failed. Sharing diagnostics would let us see why.',

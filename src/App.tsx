@@ -576,7 +576,7 @@ export default function App() {
         onLater={welcome.close} onSetUp={() => { welcome.close(); window.location.hash = 'octatrack'; setBaseInstall('manual') }}
         onCard={() => { welcome.close(); setCardOpen(true); window.location.hash = 'octatrack/setup' }} /></Suspense>}
       {session.available && !sessionLoading && !betaAccess && !welcome.due && !welcome.shown && !touchOnly && !mobileWorkspace && !accountRoute && !faqRoute && !['privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route) && <Suspense fallback={null}><BetaJoinPrompt /></Suspense>}
-      {betaAccess && <Suspense fallback={null}><OwnerNoteGate key={session.user!.id} enabled={!accountRoute && !faqRoute && !['privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route)} /></Suspense>}
+      {betaAccess && <Suspense fallback={null}><OwnerNoteGate key={session.user!.id} link={usbLink ?? null} enabled={!accountRoute && !faqRoute && !['privacy', 'impressum', 'community-rules', 'modding-guidelines', 'report-content'].includes(route)} /></Suspense>}
       {import.meta.env.DEV && usbPreview === 'beta-note' && <Suspense fallback={null}><OwnerNotePreview /></Suspense>}
       <Suspense fallback={null}>
       {usbLink && !hubRoute && !loadingTarget && <OctatrackActivity link={usbLink}/>}

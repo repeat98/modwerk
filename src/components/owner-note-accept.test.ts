@@ -3,6 +3,7 @@ import { act, createElement } from 'react'
 import { createRoot } from 'react-dom/client'
 import { afterEach, expect, it, vi } from 'vitest'
 import { closeOwnerNote, leaveBeta, OwnerNote, OwnerNoteGate, ownerNoteSeen } from './OwnerNote'
+import type { OctatrackLink } from '../engine/elekloader/octatrack-link'
 
 const posted = vi.hoisted(() => [] as string[])
 vi.mock('../community/api', () => ({ api: async () => ({ show: true }), post: async (path: string) => { posted.push(path); return {} } }))
@@ -97,6 +98,29 @@ it('offers diagnostics after the note with Not now, never Leave beta, and lets t
   for (let second = 0; second < 5; second++) await act(() => { vi.advanceTimersByTime(1000) })
   expect(document.querySelector('dialog[open]')).toBeNull()
   await act(() => again.unmount())
+  localStorage.clear()
+})
+
+it('keeps the lapsed-consent offer back while another dialog is open or something runs on the unit', async () => {
+  vi.useFakeTimers(); vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
+  HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', '') }
+  HTMLDialogElement.prototype.close = function () { this.removeAttribute('open') }
+  closeOwnerNote(); localStorage.clear() // the note was accepted before; the consent lapsed since
+  const update = document.createElement('dialog'); update.className = 'base-install-dialog'; update.setAttribute('open', ''); document.body.append(update)
+  const state: { status: string; baseUpdate?: string } = { status: 'ready' }
+  const link = { getState: () => state } as unknown as OctatrackLink
+  const container = document.createElement('div'); document.body.append(container)
+  const root = createRoot(container)
+  await act(() => root.render(createElement(OwnerNoteGate, { enabled: true, link })))
+  for (let second = 0; second < 4; second++) await act(() => { vi.advanceTimersByTime(1000) })
+  expect(document.querySelector('dialog.diagnostics-invitation')).toBeNull() // the base update's window is open
+  update.remove(); state.status = 'sending'; state.baseUpdate = 'writing'
+  for (let second = 0; second < 4; second++) await act(() => { vi.advanceTimersByTime(1000) })
+  expect(document.querySelector('dialog.diagnostics-invitation')).toBeNull() // the unit is busy
+  state.status = 'ready'; state.baseUpdate = 'done'
+  await act(() => { vi.advanceTimersByTime(1000) })
+  expect(document.querySelector('dialog.diagnostics-invitation[open]')).not.toBeNull()
+  await act(() => root.unmount())
   localStorage.clear()
 })
 
