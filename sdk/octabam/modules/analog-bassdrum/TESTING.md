@@ -1,6 +1,6 @@
 # Analog BD 0.1.7 — the recorded-909 engine at half the DSP work
 
-10 November 2026. Package `7b921941` (`public/octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm`), for the same base as 0.1.6 (`requiredBase 500cdb6f`); its controller is unchanged, so the base's trust row admits it and no base changes. **Not run on a unit.** Every result below is from the emulator host or the source.
+10 November 2026. Package `7b921941` (`public/octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm`), for the same base as 0.1.6 (`requiredBase 500cdb6f`); its controller is unchanged, so the base's trust row admits it and no base changes. Run on the owner's MKII on 11 November 2026 ([Hardware](#hardware-mkii-11-november-2026)); the software results come from the emulator host or the source.
 
 ## What changed
 
@@ -23,10 +23,37 @@
 - **Composition proofs.** The Analog BD suite re-exported natively (4 shards): all 212 profiles have 0.1.6's chooser menus and the same 66 refusals; the 146 built images change with the engine. A first export at 1024 words dropped PLATE REV in the seven Tape Echo + Analog BD profiles with stock FX2 kept; 21 words were then saved with bit-identical output (`verify_analog_bd_exact.py` unchanged).
 - **UI captures.** Re-captured on the native card build of this source with `scripts/capture-module-ui.py` and 0.1.6's panel plan: all three PNGs are byte-identical to 0.1.6's.
 
+## Hardware (MKII, 11 November 2026)
+
+Run by an agent over USB on the owner's MKII; the owner power-cycled. Two images:
+
+- **Flashed beta base `500cdb6f`, this package (`9a7eb814`).** A 15-second trial rolled back to an empty inventory (Undo). Then installed and kept: inventory `Analog BD` (`abdb1445`). After a power cycle, and the twin below, it was installed and kept again.
+- **A `--dev` twin of that base (`d8fae687`, RAM-booted),** so the session could press keys and read the screen. Its Analog BD package was built by `base_bound.build` against the twin's binding. It is byte-identical to this package except the two controller write-lease addresses (4 bytes), so its engine and controller are this package's.
+
+Sound, on T1 (core 1), with every track effect off. Each take was T1's direct USB channel at 131 BPM with trigs on steps 1 and 9, so every hit after the first retriggers on the previous tail, at a different frame offset each time. Each take was compared with one `dsp909.Voice` / `dsp808.Voice` playing the same trigs, with one gain for the whole take (the track's AMP and level, 0.254). Residual per hit, FIXD ON, the last hit (cut by STOP) left out:
+
+| Model | Knobs (PTCH DCAY TUNE ATK TDEP SAT / ACNT LOW HIGH LPF) | Residual per hit |
+|---|---|---|
+| 909 | defaults (64 80 80 64 64 0 / 64 64 64 OFF) | -98.5 to -98.7 dB |
+| 909 | 0 0 127 127 127 127 / defaults | -99.6 to -101.8 dB (first hit -85.3: SAT still settling from the knob move) |
+| 909 | 127 127 0 0 0 0 / defaults | -84.1 dB (first hit -80.3) |
+| 909 | 127 127 0 0 0 0 / 127 127 0 0 (500 Hz) | -98.3 to -98.8 dB |
+| 808 | defaults, after SRC + PLAY (CLEAR PAGE) | -95.9 dB |
+| 808 | 127 127 0 0 0 0 / 127 127 0 0 | -105.8 dB |
+
+So the chip plays the new engines as the float model does. The one weaker case (909, PTCH and DCAY 127, LPF OFF) differs only in the first 2 ms of each hit; from 3 ms on its residual is -108 to -116 dB. Whether that is the float model's own limit there was not checked against `bd909_host`.
+
+- **Panel (twin).** The machine list's ANALOG BD row previews TYPE / FIXD / ACNT / LOW / HIGH / LPF, and YES assigns it as 808, FIXD OFF. TYPE and FIXD switch, encoder E moves HIGH, and LPF reads 500 at 0 and 18000 one step below OFF. SRC + PLAY shows CLEAR PAGE and gives the defaults (audio above). Analog BD → FLEX restores FLEX's stock SETUP (LOOP AUTO, SLIC OFF, LEN OFF, RATE PTCH, TSTR AUTO).
+- **Save, power cycle, reload.** All twelve values were set away from their defaults (909, FIXD ON, ACNT 127, LOW 127, HIGH 0, LPF 500 Hz, the main page 127 127 0 0 0 0), checked (-98.6 dB) and saved with PROJECT > SAVE. After a power cycle and a new RAM boot of the twin with Analog BD in a trial, PROJECT > RELOAD gave SETUP 909 / FIXD ON, and T1 played the saved values at -98.9 to -99.1 dB. T1 was set back to FLEX before the trial rolled back (inventory empty, no needs-recovery).
+- **Self-test (twin):** passed, modules 1/1 intact, longest frame 371 µs, card set 1/1.
+- **Admission.** With the voice on T1, a second voice on T5 (core 2) was refused: DSP FULL, "ANALOG BD NEEDS +23%", DSP 60 %, MEM 12 %. This is the unchanged price, as expected. A voice on T5 was also refused with T1 back on FLEX and every core-2 effect slot off (core 2's code arena held only a preloaded FILTER), while T1 admitted one again. T6-T8 were not tried, nor 0.1.6 on the same base.
+- **DSP load.** Not measured. `stats`' per-core figures stayed flat whether stopped, muted, 808 or 909 on all 16 steps, and `meter 0|1` did not answer on this base.
+
 ## Not tested
 
-- Anything on a unit: sound, install over USB, Keep and Undo, several voices on both cores, save/reload and a power cycle, a 0.1.6 project loaded into 0.1.7.
-- Chip cycles and full-chain loads; the declared price (411 per voice) is unchanged, so admission is as in 0.1.6.
+- Several voices, and a voice on core 2 (refused by admission, above); a 0.1.6 project loaded into 0.1.7; moving knobs on the unit.
+- That the kept set restores the module by itself after a power cycle on the flashed base (kept there at the end of the run; the owner had not cycled since).
+- Chip cycles and full-chain loads. The declared price (411 per voice) is unchanged, so admission is as in 0.1.6.
 
 # Analog BD 0.1.6 — TYPE and FIXD switches
 
