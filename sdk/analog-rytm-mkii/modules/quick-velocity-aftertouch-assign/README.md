@@ -72,10 +72,10 @@ Original code by Nathaniel Pavel (@npp1993), GPL-3.0-or-later ([LICENSE](LICENSE
 
 ## Screens and audio
 
-Screenshots are rytm-emu captures of build QM20 ([media/capture.json](media/capture.json)). No audio preview yet.
+Screenshots are rytm-emu captures of build QM21 ([media/capture.json](media/capture.json)). No audio preview yet.
 
 ![FILTER page with FIX held: FRQ +19 and RES 0](media/fix-filter.png) ![AMP page with SAMPLER held: DEC +11](media/sampler-amp.png)
 
 ![VELOCITY MODS FULL](media/mods-full.png) ![Stock's MODULATION SETUP showing the link](media/mod-setup.png)
 
-![FILTER page with LFO held: FRQ is the LFO's destination at depth +45](media/lfo-filter.png) ![The LFO page after the hold: DST FRQ](media/lfo-page.png)
+![FILTER page with LFO held: FRQ is the LFO's destination at depth +45.14](media/lfo-filter.png) ![The LFO page after the hold: DST FRQ](media/lfo-page.png)

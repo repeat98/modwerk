@@ -162,8 +162,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "6c1482e2725daac1d0eece1c9c6daedf37f2581abf84081021e15dcf1b5c8dae",
-        "setup": "Headless rytm-emu (dtboot) running QM20: the Modwerk base for core-ar2 0.7 and this folder's Quick Mod Assign 0.2.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "bbf9d4e51d0727c4db4ff42b3850d5202a8f63043f53bb8f8ba58c1cc1dceb76",
+        "setup": "Headless rytm-emu (dtboot) running QM21: the Modwerk base for core-ar2 0.7 and this folder's Quick Mod Assign 0.2.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -178,8 +178,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "6c1482e2725daac1d0eece1c9c6daedf37f2581abf84081021e15dcf1b5c8dae",
-        "setup": "Headless rytm-emu (dtboot) running QM20: the Modwerk base for core-ar2 0.7 and this folder's Quick Mod Assign 0.2.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "bbf9d4e51d0727c4db4ff42b3850d5202a8f63043f53bb8f8ba58c1cc1dceb76",
+        "setup": "Headless rytm-emu (dtboot) running QM21: the Modwerk base for core-ar2 0.7 and this folder's Quick Mod Assign 0.2.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -194,8 +194,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "6c1482e2725daac1d0eece1c9c6daedf37f2581abf84081021e15dcf1b5c8dae",
-        "setup": "Headless rytm-emu (dtboot) running QM20: the Modwerk base for core-ar2 0.7 and this folder's Quick Mod Assign 0.2.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "bbf9d4e51d0727c4db4ff42b3850d5202a8f63043f53bb8f8ba58c1cc1dceb76",
+        "setup": "Headless rytm-emu (dtboot) running QM21: the Modwerk base for core-ar2 0.7 and this folder's Quick Mod Assign 0.2.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -210,15 +210,15 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "6c1482e2725daac1d0eece1c9c6daedf37f2581abf84081021e15dcf1b5c8dae",
-        "setup": "Headless rytm-emu (dtboot) running QM20: the Modwerk base for core-ar2 0.7 and this folder's Quick Mod Assign 0.2.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "bbf9d4e51d0727c4db4ff42b3850d5202a8f63043f53bb8f8ba58c1cc1dceb76",
+        "setup": "Headless rytm-emu (dtboot) running QM21: the Modwerk base for core-ar2 0.7 and this folder's Quick Mod Assign 0.2.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
       "path": "media/lfo-filter.png",
       "kind": "screenshot",
-      "caption": "FILTER page with LFO held: FRQ made the LFO's destination, its depth turned to +45.",
-      "alt": "FILTER page; FRQ's label replaced by an inverted +45 box, the LFO's depth, while the bar itself is unchanged.",
+      "caption": "FILTER page with LFO held: FRQ made the LFO's destination, its depth turned to +45.14.",
+      "alt": "FILTER page; FRQ's label replaced by a white box across its column reading +45.14, the LFO's depth, while the bar itself is unchanged.",
       "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
@@ -226,8 +226,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "6c1482e2725daac1d0eece1c9c6daedf37f2581abf84081021e15dcf1b5c8dae",
-        "setup": "Headless rytm-emu (dtboot) running QM20: the Modwerk base for core-ar2 0.7 and this folder's Quick Mod Assign 0.2.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "bbf9d4e51d0727c4db4ff42b3850d5202a8f63043f53bb8f8ba58c1cc1dceb76",
+        "setup": "Headless rytm-emu (dtboot) running QM21: the Modwerk base for core-ar2 0.7 and this folder's Quick Mod Assign 0.2.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -242,8 +242,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "6c1482e2725daac1d0eece1c9c6daedf37f2581abf84081021e15dcf1b5c8dae",
-        "setup": "Headless rytm-emu (dtboot) running QM20: the Modwerk base for core-ar2 0.7 and this folder's Quick Mod Assign 0.2.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "bbf9d4e51d0727c4db4ff42b3850d5202a8f63043f53bb8f8ba58c1cc1dceb76",
+        "setup": "Headless rytm-emu (dtboot) running QM21: the Modwerk base for core-ar2 0.7 and this folder's Quick Mod Assign 0.2.0-experimental, linked by Modwerk on stock OS 1.74, the default kit. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]

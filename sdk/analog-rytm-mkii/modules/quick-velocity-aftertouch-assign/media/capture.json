@@ -4,16 +4,16 @@
   "moduleId": "quick-velocity-aftertouch-assign",
   "moduleVersion": "0.2.0-experimental",
   "firmware": "1.74",
-  "capturedAt": "2026-11-10T23:30:00Z",
-  "imageSha256": "6c1482e2725daac1d0eece1c9c6daedf37f2581abf84081021e15dcf1b5c8dae",
-  "build": "Modwerk's linker: Modwerk base 73f3668c (send-bus) for core-ar2 0.7 + this folder's Quick Mod Assign 0.2.0 source (linked under its 0.1.0 label, since the packager refuses a version without its screenshots), materialised against stock OS 1.74, --version QM20",
+  "capturedAt": "2026-11-11T17:00:00Z",
+  "imageSha256": "bbf9d4e51d0727c4db4ff42b3850d5202a8f63043f53bb8f8ba58c1cc1dceb76",
+  "build": "Modwerk's linker: Modwerk base 73f3668c (send-bus) for core-ar2 0.7 + this folder's Quick Mod Assign 0.2.0-experimental, materialised against stock OS 1.74, --version QM21",
   "emulator": {
     "name": "rytm-emu",
     "repository": "https://github.com/trigcondition/rytm-emu",
     "binary": "dtboot",
     "settings": "revision 2ac0f1f with a private RAM-boot model that a plain boot does not use; a fresh card; DTBOOT_END_PNG at the end of each run"
   },
-  "conditions": "SETUP: boot QM20 on a fresh card to clock 8000M, NO eight times (from 4503M, 400M apart) to close the calibration notices, snapshot at 8000M. Each capture loads that snapshot (the default kit, BD PLASTIC on track 1, SYNTH page) and runs the listed events at absolute clocks (200M a second), with --every 500M.",
+  "conditions": "SETUP: boot QM21 on a fresh card to clock 8000M, NO eight times (from 4503M, 400M apart) to close the calibration notices, snapshot at 8000M. Each capture loads that snapshot (the default kit, BD PLASTIC on track 1, SYNTH page) and runs the listed events at absolute clocks (200M a second), with --every 500M.",
   "captures": [
     {
       "path": "media/fix-filter.png",
@@ -43,7 +43,7 @@
       "path": "media/lfo-filter.png",
       "frame": "end.png",
       "plan": "--press FLTR@8020000000:12000000 --press LFO@8120000000:1200000000 --nudge 4:1@8240000000x1/30000000 --turn 4:6@8400000000x16/4000000",
-      "sha256": "4dd4e46876980bddf65d293268a0b57722f398642f3199325742366df2ebe4eb"
+      "sha256": "346573186222244b959cc6ba1e70e8f793466db099c692b82dc32e5da01e0583"
     },
     {
       "path": "media/lfo-page.png",
