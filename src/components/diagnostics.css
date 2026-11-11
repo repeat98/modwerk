@@ -16,6 +16,11 @@
 .diagnostics-actions { position: sticky; bottom: -28px; display: flex; justify-content: space-between; gap: 12px; margin: 22px -28px -28px; padding: 16px 28px; border-top: 1px solid var(--line); background: var(--surface); }
 .diagnostics-actions .button { min-height: 44px; flex: 1; }
 .diagnostics-preview { margin: 8px 0 0; color: var(--muted); font-size: 12px; }
+.diagnostics-step { margin: 20px 0 0; padding-top: 16px; border-top: 1px solid var(--line); font-size: 13px; line-height: 1.6; color: var(--text-secondary); }
+.diagnostics-step h3 { margin: 0 0 6px; font-size: 15px; color: var(--text); }
+.diagnostics-step p { margin: 8px 0; }
+.diagnostics-step-actions { display: flex; gap: 12px; margin-top: 14px; }
+.diagnostics-step-actions .button { min-height: 44px; flex: 1; }
 .octatrack-diagnostics { margin: 20px 0; padding: 16px 0; border-top: 1px solid var(--line); font-size: 13px; line-height: 1.6; }
 .octatrack-diagnostics h3 { margin: 0 0 6px; font-size: 15px; }
 .octatrack-diagnostics p { margin: 8px 0; }
