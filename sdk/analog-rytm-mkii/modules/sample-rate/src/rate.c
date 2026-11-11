@@ -191,7 +191,9 @@ int sample_rate_turn(void *brain, char *event)
 // one page counted the SMPL key has nothing to cycle to, the view draws the
 // waveform, and page 5 still sits at index 1 for any reader. A list a mod has
 // added pages to is left as it is. The view sits in the view manager's stack below the screen's overlays,
-// so the whole stack is searched, each tick until it is found and changed.
+// so the whole stack is searched, every tick: stock builds the views once, but
+// would build them again (with the knob page) if every holder let them go. The
+// change normally lands at boot, before the first SMPL press sets the header.
 #define BRAIN (*(char *volatile *)BRAIN_AT)
 #define BRAIN_VIEWS 32      // the brain's view manager
 #define MANAGER_LIST 20     // the manager's sentinel node

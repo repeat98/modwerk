@@ -1,4 +1,4 @@
-# Fine Tune + Sample Rate (sample-rate) — test report
+# Improved SMPL (sample-rate) — test report
 
 Everything below was observed in rytm-emu on the named build. Nothing has run on a unit, and the emulator is not hardware evidence: the Hardware section is empty until the author reports from one.
 
