@@ -18,15 +18,20 @@
   "presentation": {
     "label": "MUTE LATCH",
     "family": "Performance workflow",
-    "summary": "Press PERFORM while choosing tracks in PREP MUTES and the mutes wait for the pattern's first step.",
-    "overview": "PREP MUTES normally mutes the chosen tracks the moment FUNC is let go. With Mute Latch, pressing PERFORM once while FUNC is held and tracks are chosen arms the choice (MUTES ARMED) instead: let go of FUNC and every other key and the mutes switch at the pattern's next first step, so both hands are free for a synth or effects in the meantime. Without a choice or without the pattern playing, PERFORM keeps its stock the stock PERFORM sub-function, and PREP MUTES works exactly as before.",
+    "summary": "Press PERFORM while choosing tracks in PREP MUTES and the mutes wait for the end of the pattern, for up to four passes.",
+    "overview": "PREP MUTES normally mutes the chosen tracks the moment FUNC is let go. With Mute Latch, pressing PERFORM once while FUNC is held and tracks are chosen arms the choice (MUTES ARMED) instead: let go of FUNC and every other key and the mutes switch at the pattern's next first step, so both hands are free for a synth or effects in the meantime. Each further PERFORM press waits one more pass, up to four, and the header shows a loop icon and the passes left. Without a choice or without the pattern playing, PERFORM keeps its stock behaviour, and PREP MUTES works exactly as before.",
     "highlights": [
-      "Parks the PREP MUTES choice until the pattern starts again",
+      "Arms the PREP MUTES choice until the pattern comes round again, for one to four passes",
+      "Header message MUTES ARMED with a loop icon and the passes left",
       "Takes only the PERFORM key press inside an open PREP MUTES session while the pattern plays",
       "Takes no sequencer hook: it follows the instrument's own step position"
     ],
     "usage": [
-      "Play a pattern, enter Mute Mode (FUNC+TRK), hold FUNC, press the TRIG keys of the tracks to switch, press PERFORM, then let go of all keys; the tracks switch at the next first step."
+      "Install a build that contains Mute Latch for the Digitakt II on OS 1.17.",
+      "Start the sequencer with PLAY and enter Mute Mode with FUNC+TRK.",
+      "Hold FUNC and press the TRIG keys of the tracks to switch, then press PERFORM once.",
+      "Let go of everything. The tracks switch when the pattern comes round to its first step.",
+      "To wait longer, press PERFORM again with FUNC held: each press adds a pass, up to four."
     ]
   },
   "access": {
@@ -70,7 +75,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": null,
+    "memoryBytes": 1342,
     "fastBytes": null,
     "load": {
       "display": "Not measured yet",
@@ -88,7 +93,25 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Two earlier builds reported working on a Digitakt II by the author; the submitted build is tested in the emulator only until it runs on a unit. See TESTING.md."
+    "summary": "Two earlier builds reported working on a Digitakt II by the author; the submitted build is tested in the emulator only until it runs on a unit. See TESTING.md.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Install a build that contains Mute Latch for the Digitakt II on OS 1.17.",
+          "Start the sequencer with PLAY and enter Mute Mode with FUNC+TRK.",
+          "Hold FUNC and press the TRIG keys of the tracks to switch, then press PERFORM once.",
+          "Let go of everything. The tracks switch when the pattern comes round to its first step.",
+          "To wait longer, press PERFORM again with FUNC held: each press adds a pass, up to four."
+        ]
+      },
+      "screenshots": [
+        "media/prep-mutes.png",
+        "media/mutes-armed.png",
+        "media/mutes-armed-3.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
   },
   "license": {
     "spdx": "GPL-3.0-or-later",

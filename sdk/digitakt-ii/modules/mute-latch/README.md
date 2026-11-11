@@ -29,23 +29,18 @@ Armed tracks toggle their mute state, as PREP MUTES does: a track that is muted 
 
 ## Usage
 
-### Where to find it
+- Location: Mute Mode (FUNC+TRK), PREP MUTES (FUNC held). Nothing else in the instrument moves.
+- Play a pattern first: the module works while the sequencer plays.
+- For a longer break, press PERFORM again with FUNC held: the header counts the passes left.
+- Example: to mute the drums on TRIG 1 and TRIG 2 for three passes, choose them with FUNC held, press PERFORM three times (the header counts 3, 2, 1) and let go; at the end of the third pass the two tracks switch. Repeat the gesture to bring them back in.
 
-Location: Mute Mode (FUNC+TRK), PREP MUTES (FUNC held).
+### Quick tutorial
 
 1. Install a build that contains Mute Latch for the Digitakt II on OS 1.17.
 2. Start the sequencer with PLAY and enter Mute Mode with FUNC+TRK.
 3. Hold FUNC and press the TRIG keys of the tracks to switch, then press PERFORM once.
 4. Let go of everything. The tracks switch when the pattern comes round to its first step.
 5. To wait longer, press PERFORM again with FUNC held: each press adds a pass, up to four.
-
-### Quick tutorial: mute the drums for the next pass
-
-1. Play a pattern that loops and enter Mute Mode.
-2. Hold FUNC, press TRIG 1 and TRIG 2, the tracks that carry the drums, then press PERFORM.
-3. Let go of every key and move to your synth. The drums keep playing.
-4. At the pattern's first step the two tracks switch. Repeat the gesture to bring them back in.
-5. For a break of three passes, press PERFORM three times (the header counts 3, 2, 1) and let go.
 
 ## Compatibility and limitations
 
@@ -83,8 +78,16 @@ Original work by @crisp909, GPL-3.0-or-later ([LICENSE](LICENSE)). It uses Elekl
 
 ## Screens and audio
 
-- `media/prep-mutes.png`: PREP MUTES with two tracks chosen (emulator capture).
-- `media/mutes-armed.png`: the header after one PERFORM press: MUTES ARMED, the loop icon and the passes left (emulator capture).
-- `media/mutes-armed-3.png`: the header after three presses (emulator capture).
+![PREP MUTES with two tracks chosen](media/prep-mutes.png)
+
+PREP MUTES with two tracks chosen (emulator capture).
+
+![MUTES ARMED with the loop icon and 1](media/mutes-armed.png)
+
+The header after one PERFORM press: MUTES ARMED, the loop icon and the passes left (emulator capture).
+
+![MUTES ARMED with the loop icon and 3](media/mutes-armed-3.png)
+
+The header after three presses (emulator capture).
 
 The module makes no sound of its own. Provenance is in `media/capture.json`.
