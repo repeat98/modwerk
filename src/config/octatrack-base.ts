@@ -6,4 +6,4 @@
  * verified administrators and dev builds. On releases them to everyone on the site; the base install prompt, which needs
  * an account, reaches every verified member. Beta modules, the beta-only Zoom pedal pages and the tester flag stay on the
  * beta gate (`hasBetaAccess`, `hasBetaUi`) either way. */
-export const OCTATRACK_BASE_RELEASED = false
+export const OCTATRACK_BASE_RELEASED = true
