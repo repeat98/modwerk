@@ -186,16 +186,32 @@
     }
   },
   "evidence": {
-    "tier": "none",
+    "tier": "author-hardware",
     "moduleVersion": "0.1.3-experimental",
-    "sourceSha256": null,
-    "reports": [],
-    "hardware": null,
+    "sourceSha256": "51b6554169d24c3877510b9aa03bdc68711bc6c5b33975c6f95eb49ec43935fd",
+    "reports": [
+      "evidence/hardware-testing.json",
+      "evidence/source-identity.json",
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Digitakt 1",
+      "release": "1.53 and 1.54",
+      "testedOn": "2026-11-11",
+      "tester": "ROMsets",
+      "durationMinutes": 120,
+      "summary": "ROMsets flashed build 4.3h (core 2.1 and this source, alone and beside DigiChain, Digi Mono, digihealth, Digi Neighbor, Digi Poly, Machine Pages, RAM Machines, DIGISLICER, Digi Sophie and STRING) on OS 1.53 and 1.54, about 2 hours: SRC knobs take each machine's names, values and ranges; ALL and negative knobs, FUNC and push reset, pattern changes, assigning and clearing while playing, fast turns, machine-menu scrolling and leaving the page every way work, and the stock pages draw in full after it. With Overbridge, a MONO ENS note and FAST AUDIO off, digihealth read 96% on a stock page and 97% on the Perform page while turning, with no delay.",
+      "limitations": [
+        "Reported as a whole after a checklist; the steps were not itemised.",
+        "The tested packages differ from the released ones only in the version text.",
+        "DSP readings with digihealth in the same image; digihealth is not part of this module. Readings vary by a few points."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Built and linked by Modwerk’s vendored elekloader builder for OS 1.53 and 1.54; emulator checks of the pages on both releases; the author’s own observations on a unit are in TESTING.md. The evidence tier stays none until a version-matched hardware report is filed; the author's DSP readings under heavy load are in TESTING.md; audio timing and project persistence across a power cycle are not qualified.",
+    "summary": "Hardware (author, OS 1.53 and 1.54, about 2 hours, alone and beside nine module sets): SRC names, values and ranges per machine, knob behaviour, pattern changes and leaving the page work; with Overbridge and a MONO ENS note the Perform page read 97% DSP against 96% on a stock page, no delay. Source-only packages compiled in the pinned toolchain; emulator captures on OS 1.54. Project persistence across a power cycle is not re-tested for this version.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial: move a track’s pitch from the Perform page",
