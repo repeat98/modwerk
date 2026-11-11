@@ -15,7 +15,7 @@ import { MemberGate } from './community/MemberGate'
 import { ForumPage } from './community/ForumPage'
 import { ForumShoutbox } from './community/ForumShoutbox'
 import './community/forum.css'
-import { trackPageView, trackUsage } from './community/usage'
+import { countBaseInstall, trackPageView, trackUsage } from './community/usage'
 import { LegalPage } from './legal/LegalPage'
 import { PrivacyPage } from './community/PrivacyPage'
 import { INDEPENDENCE_NOTICE } from './firmware-notices'
@@ -221,9 +221,9 @@ export default function App() {
     octatrackUi && (route === 'octatrack' || route.startsWith('octatrack/') || route === 'configuration'))
   // Integration points for the diagnostics stream, connected here and nowhere else: the base install guide's last step,
   // shown once the unit first connects on the new base (skipped while undefined; it never holds up finishing), and where
-  // each run of the guide got to (BaseGuideStage, with a BaseGuideFailure for 'failed'). Both are placeholders for now.
+  // each run of the guide got to (BaseGuideStage, with a BaseGuideFailure for 'failed'), counted without any identifier.
   const baseGuideDiagnosticsStep: ReactNode = undefined
-  const onBaseGuideStage: ((stage: BaseGuideStage, detail?: BaseGuideFailure) => void) | undefined = undefined
+  const onBaseGuideStage: (stage: BaseGuideStage, detail?: BaseGuideFailure) => void = countBaseInstall
   useEffect(()=>{if(developerRoute&&!route.startsWith('developer/complete')&&developer&&!developer.user)window.location.replace('#account/developer')},[developerRoute,route,developer])
   const communityRoute = developerRoute || forumRoute || accountRoute || route === 'review' || route === 'admin' || route.startsWith('submit') || !!communityModule
   const allCategory = route.startsWith(ALL_MACHINES + '/') && LIBRARY_CATEGORIES.includes(route.slice(4) as ModuleCategory) ? route.slice(4) as ModuleCategory : undefined

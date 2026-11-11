@@ -11,8 +11,9 @@ export type OctatrackCount = typeof OCTATRACK_COUNTS[number]
 /** The base install guide's steps, counted per day without any identifier like the sync actions (usage.ts countBaseInstall). */
 export const BASE_INSTALL_STAGES = ['opened', 'file-downloaded', 'first-connection', 'usb-update-done', 'failed'] as const
 export type BaseInstallStage = typeof BASE_INSTALL_STAGES[number]
-/** Why the guide failed; the server stores any other reason as `other`. */
-export const BASE_INSTALL_FAILURES = ['no-webusb', 'build-failed', 'link-timeout', 'update-refused', 'other'] as const
+/** Why the guide failed: the reasons it can report (BaseInstallDialog's BaseGuideFailure), and `other`, which the
+ * browser and the server store for any reason not in this list. */
+export const BASE_INSTALL_FAILURES = ['no-webusb', 'site-outdated', 'build-failed', 'link-lost', 'update-refused', 'update-failed', 'wrong-base', 'other'] as const
 export type BaseInstallFailure = typeof BASE_INSTALL_FAILURES[number]
 /** Where the diagnostics invitation was shown: the install guide's last step, after a failure, on the first connection
  * in the hub or workspace (DiagnosticsInvitationGate), or opened by the member from the Diagnostics settings. */

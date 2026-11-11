@@ -60,6 +60,9 @@ describe('the Octatrack base path for a member who is not a beta tester', () => 
     expect(guide()!.querySelector('h2')?.textContent).toBe('Install the Modwerk base')
     expect(guide()!.textContent).not.toMatch(/beta/i)
     expect(guide()!.textContent).toContain('goes through the card')
+    // Each run of the guide is counted without any identifier: here, that it opened.
+    const counts = vi.mocked(fetch).mock.calls.filter(([url]) => String(url).endsWith('/usage/count')).map(([, options]) => JSON.parse(String(options?.body)))
+    expect(counts).toContainEqual({ event: 'base_guide_opened' })
   }, 15000)
   it('shows Your Octatrack and its Setup without beta framing, with the card build as a labelled, folded fallback', async () => {
     await open('octatrack/setup')

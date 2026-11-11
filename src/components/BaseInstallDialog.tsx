@@ -12,6 +12,7 @@ import { accountHref } from '../community/member-access'
 import { RiskAcceptance } from './ConfigurationLayout'
 import { Icon } from './Icon'
 import { LinkHero } from './LinkHero'
+import type { BaseInstallFailure } from '../community/octatrack-diagnostics-contract'
 
 export interface BaseImage { buffer: ArrayBuffer; sha256: string; base: string }
 /** Where a guide run got to, for whoever listens (`onStage`): each at most once per run of the guide. */
@@ -23,8 +24,9 @@ export type BaseGuideStage = 'opened' | 'file-downloaded' | 'first-connection' |
  * - `link-lost`: the Octatrack stopped answering during a USB update (UploadUnconfirmedError);
  * - `update-refused`: the Octatrack refused a USB update (UploadDeviceError);
  * - `update-failed`: a USB update stopped for another reason (a restart that didn't come back, the wrong base after it);
- * - `wrong-base`: after the card install, the unit connected on a base that is neither the downloaded one nor its old one. */
-export type BaseGuideFailure = 'no-webusb' | 'site-outdated' | 'build-failed' | 'link-lost' | 'update-refused' | 'update-failed' | 'wrong-base'
+ * - `wrong-base`: after the card install, the unit connected on a base that is neither the downloaded one nor its old one.
+ * The anonymous install counts take exactly these (BASE_INSTALL_FAILURES in octatrack-diagnostics-contract.ts). */
+export type BaseGuideFailure = Exclude<BaseInstallFailure, 'other'>
 /** The update over USB in three stages and one restart (owner, 25 October 2026), told before it starts and tracked
  * while it runs: the unit starts the new base from RAM, which saves itself and keeps the old one as the fallback, on
  * two slots as well (octatrack-link.ts updateBase). */

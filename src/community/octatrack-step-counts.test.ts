@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { DatabaseSync } from 'node:sqlite'
 import { testServer } from './test-server'
 import { cleanupOctatrackDiagnostics } from '../../server/octatrack-diagnostics'
-import { BASE_INSTALL_STAGES, DIAGNOSTIC_INVITATION_PLACEMENTS } from './octatrack-diagnostics-contract'
+import { BASE_INSTALL_FAILURES, BASE_INSTALL_STAGES, DIAGNOSTIC_INVITATION_PLACEMENTS } from './octatrack-diagnostics-contract'
+import type { BaseGuideFailure } from '../components/BaseInstallDialog'
 import { handleCommunity } from '../../server/transport'
 
 describe('identifier-free install-guide and invitation counts in the browser', () => {
@@ -28,6 +29,13 @@ describe('identifier-free install-guide and invitation counts in the browser', (
     for (const [, options] of request.mock.calls) { expect(options).toMatchObject({ method: 'POST', credentials: 'omit', referrerPolicy: 'no-referrer', headers: { 'Content-Type': 'application/json' } }) }
     expect(values.size).toBe(0)
   })
+  it('takes every reason the install guide can report as itself, and nothing else', () => {
+    const guide: Record<BaseGuideFailure, true> = { 'no-webusb': true, 'site-outdated': true, 'build-failed': true, 'link-lost': true, 'update-refused': true, 'update-failed': true, 'wrong-base': true }
+    for (const reason of Object.keys(guide)) usage.countBaseInstall('failed', reason)
+    usage.countBaseInstall('failed', 'link-timeout')
+    expect(sent().map(([, body]) => body.detail)).toEqual([...Object.keys(guide), 'other'])
+    expect([...BASE_INSTALL_FAILURES].sort()).toEqual([...Object.keys(guide), 'other'].sort())
+  })
   it('counts invitation answers by placement and stops for an objection or a browser privacy signal', () => {
     usage.countDiagnosticsInvitation('shown', 'guide'); usage.countDiagnosticsInvitation('not-now', 'after-failure')
     usage.countDiagnosticsInvitation('shared', 'nowhere' as never)
@@ -47,7 +55,7 @@ describe('identifier-free install-guide and invitation counts on the server', ()
   it('accepts the fixed steps and placements, maps an unknown failure reason to other and rejects anything else', async () => {
     const { call, db } = await server()
     for (const event of ['base_guide_opened', 'base_file_downloaded', 'base_first_connection', 'base_usb_update_done']) expect((await call('/usage/count', 'POST', { event })).status).toBe(200)
-    for (const detail of ['no-webusb', 'build-failed', 'link-timeout', 'update-refused', 'other', 'something new']) expect((await call('/usage/count', 'POST', { event: 'base_install_failed', detail })).status).toBe(200)
+    for (const detail of [...BASE_INSTALL_FAILURES, 'link-timeout', 'something new']) expect((await call('/usage/count', 'POST', { event: 'base_install_failed', detail })).status).toBe(200)
     for (const placement of DIAGNOSTIC_INVITATION_PLACEMENTS) for (const event of ['diagnostics_invite_shown', 'diagnostics_invite_shared', 'diagnostics_invite_not_now'])
       expect((await call('/usage/count', 'POST', { event, detail: placement })).status).toBe(200)
     for (const bad of [
@@ -57,8 +65,9 @@ describe('identifier-free install-guide and invitation counts on the server', ()
     ]) expect((await call('/usage/count', 'POST', bad)).status, JSON.stringify(bad)).toBe(400)
     const rows = db.prepare('SELECT event,detail,count FROM octatrack_count_daily ORDER BY event,detail').all() as { event: string; detail: string; count: number }[]
     expect(rows.filter(row => row.event === 'base_install_failed')).toEqual([
-      { event: 'base_install_failed', detail: 'build-failed', count: 1 }, { event: 'base_install_failed', detail: 'link-timeout', count: 1 },
-      { event: 'base_install_failed', detail: 'no-webusb', count: 1 }, { event: 'base_install_failed', detail: 'other', count: 2 }, { event: 'base_install_failed', detail: 'update-refused', count: 1 }])
+      { event: 'base_install_failed', detail: 'build-failed', count: 1 }, { event: 'base_install_failed', detail: 'link-lost', count: 1 },
+      { event: 'base_install_failed', detail: 'no-webusb', count: 1 }, { event: 'base_install_failed', detail: 'other', count: 3 }, { event: 'base_install_failed', detail: 'site-outdated', count: 1 },
+      { event: 'base_install_failed', detail: 'update-failed', count: 1 }, { event: 'base_install_failed', detail: 'update-refused', count: 1 }, { event: 'base_install_failed', detail: 'wrong-base', count: 1 }])
     expect(rows.find(row => row.event === 'base_guide_opened')).toEqual({ event: 'base_guide_opened', detail: '', count: 1 })
     expect(rows.filter(row => row.event.startsWith('diagnostics_invite_'))).toHaveLength(12)
   })
