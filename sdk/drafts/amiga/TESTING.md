@@ -2,80 +2,90 @@
 
 Record what you ran, on which build and which unit, and what you saw. "Not tested" is a valid answer; never write a result you did not observe, and keep emulator runs apart from hardware ones.
 
-## Host (10 November 2026, version 0.1.0-experimental, source of this commit)
+Version 0.1.0-experimental. The unit is the owner's MKII on development twin `d8fae687` of the base (RAM-booted), 11 November 2026, driven over USB; every load was a RAM trial that was rolled back.
 
-`python3 -B verify.py`: 49 checks pass. They cover the engine only:
+## Host
+
+`python3 -B verify.py`: 56 checks pass. They cover the engine only:
 
 - `amiga_crunch`: bypass at SRR 0 / BITS 16 / LED off, the word mask and rounding, full scale, the averaged hold at SRR 16 and 127, the same output when a buffer is split across calls, a garbage state, clamped controls, and the lowpass (flat at 800 Hz, about -3 dB at 3.3 kHz, about -12 dB at 6.6 kHz, stereo, full scale, silence).
-- `amiga_stretch`, `amiga_blend` and `amiga_declick`, against a model reader: no restart and an untouched sample at speed 1 and pitch 0, a restart every cycle an octave up with the note keeping its length, half speed doubling it, speed 0 holding the first grain, looped notes wrapping, stock's own loop left alone, a cycle longer than the memory, and no step in the frames handed on where the restarts were.
-- `amiga_strt` and `amiga_frame`: the STRT value for a frame and back, for samples from 200 frames to the longest.
-- `amiga_percent`, `amiga_cycle`, `amiga_hz`, `amiga_rate` and `amiga_shift`: what STCH, CYL, RATE and PCH read and do, end to end of each range.
+- `amiga_stretch`, `amiga_blend` and `amiga_declick`, against a model reader: no restart and an untouched sample at speed 64 and pitch 0, a restart every cycle an octave up with the note keeping its length, half speed doubling it, speed 0 holding the first grain, looped notes wrapping, stock's own loop left alone, a cycle longer than the memory, and no step in the frames handed on where the restarts were.
+- `amiga_rest` and `amiga_pass`: a note at its own speed and pitch rests through nearly all of it and still ends at its end; it never rests an octave up or at another speed; a note that is not stretched rests whatever its pitch.
+- `amiga_stretch_rate` and `amiga_face`: at half RATE the note lasts twice as long, without a restart at its own pitch and with one every cycle an octave up; backwards at half speed it lasts twice as long too; a reader that turns round goes on from where it is, counted from the note's other end.
+- `amiga_strt`, `amiga_frame` and `amiga_shift`: the STRT value for a frame and back, and PCH's pitch for a length.
 - `amiga_core.s` is what `amiga.c` generates.
 
-## Against the Amigo plug-in (10 November 2026, host only)
+`python3 -B reference/compare_engine.py <amiga.c of commit c5543f12>`: 400 notes of random length, loop, pitch and controls that change while the note sounds, 5,234,566 frames, through the engine of commit c5543f12 (the first build played on a unit, which runs every step on every call) and through this one as `amiga_render` drives it. Every frame handed on and every restart is the same. It runs at full forward RATE; the RATE paths are newer than that build and have only the checks above.
 
-The owner's installed Amigo 1.0.2 Audio Unit, hosted offline as a black box (no code or preset inspection beyond pointing its saved state at a test sample), against a host model of this draft: the engine above, a model reader and a linear-interpolation repitch standing in for the Octatrack's. One synthetic chord stab, 1.5 s.
+## Emulator (not hardware)
 
-| Clip | Amigo | Draft model | Note lasts (Amigo / model) | Energy by band, largest difference |
-| --- | --- | --- | --- | --- |
-| 8 bit at 22168 Hz, no stretch | S.RATE 22168 | RATE 22168, BITS 8 | 1.49 s / 1.49 s | 0.6 dB |
-| Stretch to 200 % | LEN 200 %, CYL 1000 | STCH 200, CYL 1000 | 2.97 s / 2.99 s | 2.0 dB |
-| Stretch to 400 % | LEN 400 % | STCH 400 | 5.92 s / 5.98 s | 2.4 dB |
-| An octave up at the same length | LEN 200 %, PCH on | STCH 200, STR PCH | 1.48 s / 1.49 s | 8.2 dB less below 250 Hz, 1.5 dB above |
+`python3 -B bench.py --emulator <ot_emu> --main <the twin's MAIN image> --output <folder>` counts the instructions the engine's own functions execute per audio frame of a note of stereo noise, in ot_emu. It does not count stock's reader and START. On the unit the time did not follow these counts: a division and a multiply-accumulate cost far more than a move there. Read them for which path is dearer, not for time.
 
-Bands: 0-250 Hz, 250 Hz-1 kHz, 1-4, 4-8, 8-11, 11-16 and 16-22 kHz, each against the clip's total. Both stretches put sidebands about 39 Hz apart around each partial. In the last clip the model has 8.2 dB less below 250 Hz, where such a sideband of the lowest partial (262 Hz) falls; why is not found. What the plug-in showed and the draft took over: the cycles are faded into each other, not cut, the default cycle of 1000 samples, the tracker note rates, the length in percent and the PCH mode. Not compared: by ear, on other material, or anything on the instrument. The Octatrack's repitch is not linear interpolation, so its aliasing will differ from the model's.
+| One track | Mean instructions a frame | Worst |
+| --- | --- | --- |
+| Plain: SPD 64, SRR 0, BITS 16 | 300 | 381 |
+| The defaults: 8 bits | 576 | 658 |
+| SPD 32, 8 bits | 1,025 | 1,502 |
+| An octave up at its own length, 8 bits | 1,531 | 2,563 |
+| SRR 16 alone | 981 | 1,071 |
+| LED alone | 2,165 | 2,258 |
+| An octave up with SRR 16 and LED | 4,603 | 5,646 |
+| An octave up, SPD 32, GRN 0, SRR 6, LED | 5,355 | 6,501 |
 
-## Emulator
-
-Not tested.
+The machine was not run in the emulator: the virtual panel started this base without sound (both DSP modes failed to boot it) and the base refused the module's install there.
 
 ## On the unit
 
-An earlier build (commit c5543f12, controls SPD, GRN and SRR, no PCH) ran as a 30-minute RAM trial on the owner's MKII on 10 November 2026, on development twin `9fb63bca` (main da373d10 plus the STATIC render entry of `improvement/static-machine-render`), package 6,656 bytes of code and data, 67,116 of bss:
+Seen on the build of this source (trials of package `e9730e24…`, the same code as this commit):
 
-- The trial ran 15 minutes with the loader reporting no refusal, until the owner ended it.
-- Reported by the owner, who played it: everything worked. No list of what was tried; treat every item below as open.
-- A first package with 16 KB of memory a voice (139 KB in all) was refused at verify as malformed (loader refusal 1): a module's image and bss may take 128 KiB.
-- Ending the trial was refused as needs-recovery, and the unit then left USB; whether a track still named the machine was not read. The guide warns of exactly this (docs/OCTATRACK_DRIVING.md).
+- The machine list shows AMIGA; YES assigns it; SRC reads PTCH, STRT, LEN, RATE, SPD, GRN and SRC SETUP reads LOOP, SLIC, LED (a switch), SRR, STR (a three-position switch reading OFF, ON, PCH) and BITS. RATE reads -64 to +63 with stock's own words. The page's status line reads `8 BIT▸AMIGA`.
+- Backwards with the stretch (RATE -64, PTCH +12, SPD 64, read from stock's voice record five times a second): the reader restarts every cycle at the frame asked for and runs down from it; the place moves through the sample at 43,000 to 47,000 frames a second, where an unstretched reader at that pitch runs at 88,000. So the note keeps its length backwards an octave up.
+- The owner played it by ear over USB audio for about four minutes (one track, a drum loop; RATE both ways with the stretch on) and called it "great". No list of what was tried.
+- Ending a trial with every Amiga track back on FLEX rolls back cleanly, every time. Ending one while a track still named the machine was refused as needs-recovery (once on this day, once on 10 November); putting the track on FLEX and running the session's `recover` restored the unit without a power cycle.
+- A track left on Amiga across a power cycle came back as Amiga, with its knob settings, at the next install.
 
-This build's controls have not run on a unit. Open, in this order:
+Seen on earlier builds of the day whose page and sample-pool code is this build's (the controls then read differently):
 
-- the machine list shows AMIGA, YES assigns it, and the Flex pool opens from its row;
-- SRC shows STCH (percent, HOLD), CYL (samples) and RATE (Hz, FULL) on D, E and F, each readable in the knob's field; SRC SETUP shows LED as an OFF/ON switch, STR reading OFF, ON, PCH and BITS reading 4–16;
-- RATE's value in the lane, with a lock and an LFO on it, stays 0–36 as the page counts it;
-- PCH: STCH 200 sounds an octave up and 141 a tritone, at the note's own length (the shift assumes five SRC units of PTCH a semitone);
-- the stretch: the reader restarts where the engine asks (it restarts a sounding note through stock's START with a moved STRT, as stock's retrig does, which nothing has shown to work yet), without a stuck or silent voice, at PTCH up and down, STCH 50, 200 and HOLD, CYL 100 and 4132;
-- a stretched note ends at the sample's end, and a looped one wraps;
-- STR on with STCH 100 and PTCH 0, RATE FULL, BITS 16, LED off plays as FLEX at the same level (`npm run fx:audit -- compare`);
-- RATE, BITS and LED change the sound;
-- a neighbouring Flex track with RTRG and RATE still retrigs and reverses;
-- locks, LFOs and scenes on STCH, CYL and RATE;
-- slices and loops on an Amiga track;
-- Amiga to FLEX and back while playing; save and reload; the project without the module;
-- Keep, Undo and removal;
-- `npm run device -- guard` in a busy pattern with Amiga on all eight tracks, CYL 100 (the most restarts).
+- A double tap on the track key opens the Flex list on an Amiga track; YES assigns the sample; the list stays open until NO. Whether a FLEX track's list closes on YES was not compared.
+- PCH at half the note's speed: -12.0 semitones at 1.02 times the length (measured from a recording).
+- A stretch to twice the length measured 2.00 times, to half 0.50 times, with the pitch unchanged.
+
+Not tested on the unit:
+
+- RATE crossing 0 while a note sounds; looped notes backwards; a note trigged with RATE below 0 at other speeds.
+- RATE between 1 and 62 with the stretch (heard by the owner, not measured), and whether stock's RATE scale is the straight line the module assumes.
+- Locks, LFOs and scenes on RATE, SPD and GRN.
+- Whether LED, which sits in the byte stock uses for SETUP's LEN switch, changes how long notes last.
+- A sliced track; LOOP's settings; STRT and LEN locks on an Amiga track.
+- SRR, LED and BITS by ear on this build (their code is the first build's, sample for sample).
+- Saving and reloading a project; the project opened without the module.
+- A sequencer trig against a hand-played one: the owner heard a difference on an earlier build of the day; it was not looked into.
 
 ## Stock flows
 
-Not tested.
+Not tested beyond the above: with the module installed and no track on Amiga, eight FLEX tracks read the same frame-interrupt share and CPU as without it (65.1 % and about 81 % both ways, an earlier build of the day).
 
 ## Performance
 
-### In the emulator (10 November 2026, this commit's source; not a chip)
-
-`python3 -B bench.py --emulator <ot_emu> --main <the twin 9fb63bca's MAIN image> --output <folder>`: the engine compiled as the package is, called in ot_emu the way the render calls it, for 160 frames of a note of stereo noise (so the lowpass runs on both channels). Counted: the instructions between each engine function's entry and return, the module's own code only. Not counted: stock's reader and START, which the render also calls. Time is 9.44 ns an instruction, which prices a division or a multiply-accumulate like a move, so read it as a floor. A frame is 362.8 us.
-
-| One track | Mean instructions a frame | Worst | Worst time | Worst share of a frame |
-| --- | --- | --- | --- | --- |
-| Plain: STCH 100, RATE FULL, BITS 16 | 393 | 416 | 3.9 us | 1.1 % |
-| The defaults: 8 bits | 715 | 738 | 7.0 us | 1.9 % |
-| Stretched to 200, 8 bits | 1,288 | 1,594 | 15.0 us | 4.1 % |
-| An octave up at its own length, 8 bits | 2,068 | 2,922 | 27.6 us | 7.6 % |
-| The same with RATE 22168 and LED | 4,918 | 6,758 | 63.8 us | 17.6 % |
-| An octave up, STCH 200, CYL 100, RATE 31388, LED | 5,564 | 5,885 | 55.6 us | 15.3 % |
-
-Eight tracks at once, added up from these (not run): 15 % of a frame at the defaults, 61 % all an octave up and stretched, 141 % all with RATE and LED as well. The base's frame guard gives the frame interrupt 80 % and renders stock's silent source for a machine track that would overdraw it, so the last case would drop tracks, not freeze. A mono sample runs one channel of lowpass; that was not counted.
-
 ### On the unit
 
-Not measured. The eight voices' memories take 66 KB of RAM (the loader allows a module 128 KiB; 16 KB a voice was refused on the unit as malformed).
+`guard` and `stats` over USB, five seconds of a pattern at 131 BPM with eight tracks playing loops on four trigs each, no USB recording, this build. The base's frame guard gives the frame interrupt 80 % and skips a machine track's render where it would overdraw (a dropout on that track).
+
+| T1 beside seven FLEX tracks | Frame interrupt | Longest frame | CPU | T1's renders skipped |
+| --- | --- | --- | --- | --- |
+| FLEX (no Amiga track) | 63.7 % | 106.7 % | 76.1 % | none |
+| Amiga at the defaults | 69.2 % | 110.8 % | 81.8 % | none |
+| and PTCH +12 | 72.8 % | 118.5 % | 85.6 % | none |
+| and SRR raised | 74.8 % | 115.6 % | 87.6 % | 6 of 233,632 |
+| and LED on | 77.5 % | 127.6 % | 90.3 % | 0.3 % |
+| Amiga on all eight tracks at the defaults | 79.2 % | 135.3 % | 86.0 % | 16.9 % of all eight |
+
+One reading each; readings of the same state on the day differed by about half a point. The first Amiga track costs more than each further one (earlier builds of the day: about 4 points, then about 1 to 2 a track).
+
+With a USB recording running as well, one Amiga track at PTCH +12 with SRR and LED on beside seven FLEX tracks froze the unit (it left USB until a power cycle; no crash or stall record). The same setting without the recording read 94 % CPU and played. The recording costs CPU on the unit itself, and the base's guard holds the frame interrupt, not the whole CPU.
+
+Memory: 10,604 bytes of code and data and 67,308 of bss in the package, most of it the eight voices' frame memories (8 KB each). The loader allows a module 128 KiB.
+
+### Keep, Undo, removal, reload
+
+See the qualification run below.

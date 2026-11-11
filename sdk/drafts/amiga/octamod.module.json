@@ -31,41 +31,48 @@
   },
   "controls": [
     {
-      "name": "STCH",
-      "default": 32,
-      "count": 128,
-      "doc": "The note's length in percent of its own, 50 to 2100, then HOLD; 100 by default. SRC knob D.",
-      "labels": null
-    },
-    {
-      "name": "CYL",
-      "default": 60,
-      "count": 128,
-      "doc": "Cycle length of the stretch in samples, 100 to 4132; 1000 by default. SRC knob E.",
-      "labels": null
-    },
-    {
       "name": "RATE",
-      "default": 36,
-      "count": 37,
-      "doc": "Storage rate in Hz on 36 tracker note rates from 4143 to 31388, then FULL, the default. SRC knob F.",
+      "default": 127,
+      "count": 128,
+      "doc": "Stock's RATE, -64 to +63: speed and pitch together, backwards below 0. The stretch follows it both ways. SRC knob D.",
+      "labels": null
+    },
+    {
+      "name": "SPD",
+      "default": 64,
+      "count": 128,
+      "doc": "How fast the note moves through the sample, whatever the pitch: 64 is its own speed, 32 half, 0 holds. SRC knob E.",
+      "labels": null
+    },
+    {
+      "name": "GRN",
+      "default": 64,
+      "count": 128,
+      "doc": "The stretch's cycle, 96 to 4128 samples; 1120 by default. SRC knob F.",
       "labels": null
     },
     {
       "name": "LED",
       "default": 0,
       "count": 2,
-      "doc": "A fixed two-pole lowpass on the stored sample. SRC SETUP knob D.",
+      "doc": "A fixed two-pole lowpass on the stored sample. SRC SETUP knob C.",
       "labels": [
         "OFF",
         "ON"
       ]
     },
     {
+      "name": "SRR",
+      "default": 0,
+      "count": 128,
+      "doc": "Storage rate: 16/(16+SRR) of the sample's own, each stored sample an average, then held. SRC SETUP knob D.",
+      "labels": null
+    },
+    {
       "name": "STR",
       "default": 1,
       "count": 3,
-      "doc": "The stretch: OFF plays as FLEX, ON stretches, PCH shifts the pitch by STCH at the note's own length. SRC SETUP knob E.",
+      "doc": "The stretch: OFF plays as FLEX, ON stretches, PCH shifts the pitch by SPD at the note's own length. SRC SETUP knob E.",
       "labels": [
         "OFF",
         "ON",
@@ -118,7 +125,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host gate on the engine (verify.py, 49 checks) and an emulator count of its instructions (bench.py). An earlier build of the stretch played as a RAM trial on the owner's MKII; this build's controls have not run on a unit.",
+    "summary": "Host gate on the engine (verify.py, 56 checks), sample-for-sample comparison with the first build played on a unit, an emulator count of its instructions (bench.py), and RAM trials on the owner's MKII on a development base: pages, the stretch both ways, cost beside seven FLEX tracks. TESTING.md lists what was not tried.",
     "hardwareStatus": "untested",
     "evidenceRevision": "35d0879573bf16babfcdc13d2295035b42804bc0",
     "gates": [
@@ -136,9 +143,9 @@
   "access": {
     "location": "The track's machine list (double-tap TRACK, or SRC SETUP)",
     "steps": [
-      "Double-tap a track key, choose AMIGA in the machine list and press YES, then pick a Flex sample.",
-      "On SRC, turn PTCH: the pitch moves and the length stays. Turn STCH (knob D) for the length and CYL (knob E) for the flutter.",
-      "Turn RATE (knob F) down for a lower sample rate. LED, STR and BITS are on SRC SETUP."
+      "Double-tap a track key, choose AMIGA in the machine list and press YES, then double-tap again and pick a Flex sample.",
+      "On SRC, turn PTCH: the pitch moves and the length stays. Turn SPD (knob E) for the length and GRN (knob F) for the flutter; RATE (knob D) is stock's, backwards below 0.",
+      "On SRC SETUP, raise SRR for a lower sample rate. LED, STR and BITS are beside it."
     ],
     "screenshots": []
   }

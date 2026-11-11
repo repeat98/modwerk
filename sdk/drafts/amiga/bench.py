@@ -4,7 +4,7 @@
     python3 -B bench.py --emulator <ot_emu> --main <a MAIN image the emulator boots> --output <new private folder>
 
 amiga.c is compiled for the ColdFire as the package is, placed in free emulator RAM, and its engine is
-called the way amiga_render calls it: rest, then blend, declick, crunch, stretch, and seek at a restart, for the two
+called the way amiga_render calls it: rest, then blend, declick, crunch, and stretch or pass, and seek at a restart, for the two
 render calls of every frame of a note, with the frame interrupt off. A PC watch at each function's entry
 and at its return gives the instructions in between. It is the module's own code only: stock's reader and
 START, which the render also calls, are the instrument's (docs/MODULE_PERFORMANCE.md). Instructions become
@@ -29,15 +29,15 @@ CODE, VOICE, PCM = 0x47031000, 0x47038000, 0x4703c000
 NS, FRAME_US = 9.44, 362.8
 FLAGS = ['-mcpu=5475', '-msoft-float', '-O2', '-ffreestanding', '-fno-builtin', '-fno-common', '-fno-jump-tables',
          '-fno-asynchronous-unwind-tables', '-fno-ident', '-fomit-frame-pointer', '-I', str(SDK / 'machines/octatrack/include')]
-CASES = {  # pitch in semitones, STCH, CYL, RATE, BITS (saved value), LED, STR, as the page counts them
-    'plain: STCH 100, RATE FULL, BITS 16': dict(pitch=0, stch=32, cyl=60, rate=36, bits=12, led=0),
-    'defaults: 8 bits': dict(pitch=0, stch=32, cyl=60, rate=36, bits=4, led=0),
-    'stretch to 200, 8 bits': dict(pitch=0, stch=52, cyl=60, rate=36, bits=4, led=0),
-    'an octave up at its own length, 8 bits': dict(pitch=12, stch=32, cyl=60, rate=36, bits=4, led=0),
-    'RATE 22168 alone, 8 bits': dict(pitch=0, stch=32, cyl=60, rate=29, bits=4, led=0),
-    'LED alone, 8 bits': dict(pitch=0, stch=32, cyl=60, rate=36, bits=4, led=1),
-    'the same with RATE 22168 and LED': dict(pitch=12, stch=32, cyl=60, rate=29, bits=4, led=1),
-    'dearest found: an octave up, CYL 100, RATE 31388, LED': dict(pitch=12, stch=52, cyl=0, rate=35, bits=4, led=1),
+CASES = {  # pitch in semitones, SPD, GRN, SRR, BITS (saved value), LED, as the page counts them; RATE full forward
+    'plain: SPD 64, SRR 0, BITS 16': dict(pitch=0, spd=64, grn=64, srr=0, bits=12, led=0),
+    'defaults: 8 bits': dict(pitch=0, spd=64, grn=64, srr=0, bits=4, led=0),
+    'SPD 32 (twice as long), 8 bits': dict(pitch=0, spd=32, grn=64, srr=0, bits=4, led=0),
+    'an octave up at its own length, 8 bits': dict(pitch=12, spd=64, grn=64, srr=0, bits=4, led=0),
+    'SRR 16 alone, 8 bits': dict(pitch=0, spd=64, grn=64, srr=16, bits=4, led=0),
+    'LED alone, 8 bits': dict(pitch=0, spd=64, grn=64, srr=0, bits=4, led=1),
+    'an octave up with SRR 16 and LED': dict(pitch=12, spd=64, grn=64, srr=16, bits=4, led=1),
+    'dearest found: an octave up, GRN 0, SRR 6, LED': dict(pitch=12, spd=32, grn=0, srr=6, bits=4, led=1),
 }
 
 
@@ -83,8 +83,7 @@ def run(a):
                 e.write(VOICE + off, bytes(2048))
             window = 44100
             call('amiga_note', VOICE, window)
-            percent, cycle, inc = get('amiga_percent', c['stch']), get('amiga_cycle', c['cyl']), get('amiga_rate', c['rate'])
-            speed, ratio, read, frames, restarts = 409600 // percent, 2 ** (c['pitch'] / 12), 0.0, [], 0
+            ratio, read, frames, restarts = 2 ** (c['pitch'] / 12), 0.0, [], 0
             parts = {}
             for _ in range(a.frames):
                 cost = 0
@@ -92,15 +91,17 @@ def run(a):
                     n = int(read + out * ratio) - int(read)
                     read += out * ratio
                     e.write(PCM, struct.pack(f'>{2 * n}i', *[rng.randrange(-2 ** 30, 2 ** 30) for _ in range(2 * n)]))
-                    rest, used = call('amiga_rest', VOICE, out, n, speed)  # as amiga_render: a note at rest skips the three
+                    rest, used = call('amiga_rest', VOICE, out, n, c['spd'])  # as amiga_render: a note at rest only remembers and counts
                     cost += used
                     parts['amiga_rest'] = parts.get('amiga_rest', 0) + used
                     d0 = (1 << 32) - 1  # KEEP
-                    for name, args in (('amiga_blend', (VOICE, PCM, n)), ('amiga_declick', (VOICE, PCM, n)),
-                                       ('amiga_crunch', (VOICE, PCM, n, inc, c['bits'], c['led'])),
-                                       ('amiga_stretch', (VOICE, out, n, speed, cycle, 1))):
-                        if rest and name != 'amiga_crunch':
-                            continue
+                    steps = [('amiga_crunch', (VOICE, PCM, n, c['srr'], c['bits'], c['led']))]
+                    if rest != 2:
+                        steps.insert(0, ('amiga_blend', (VOICE, PCM, n)))
+                    if not rest:
+                        steps.insert(1, ('amiga_declick', (VOICE, PCM, n)))
+                    steps.append(('amiga_pass', (VOICE, out, c['grn'])) if rest == 1 else ('amiga_stretch', (VOICE, out, n, c['spd'], c['grn'], 1)))
+                    for name, args in steps:
                         result, used = call(name, *args)
                         if name == 'amiga_stretch':
                             d0 = result
