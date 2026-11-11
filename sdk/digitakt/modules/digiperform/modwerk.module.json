@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "digiperform",
   "name": "Digi Perform",
-  "version": "0.1.2-experimental",
+  "version": "0.1.3-experimental",
   "machine": "digitakt",
   "category": "system",
   "exclusive": false,
@@ -147,11 +147,12 @@
     ],
     "limitations": [
       "Cannot be installed with Digi Matrix: both patch the render site after the LFOs (0x40077eb2), so the configurator never offers them together.",
-      "Parameters are the sound’s slots 1-45, named as the Digitakt’s own pages name them (a mod that renames a page’s knobs for its machines, Digi Mono for example, is not followed yet); ranges come from the firmware’s own table. FLT.DEL to FLT.ROUT are the filter’s second page.",
+      "Parameters are the sound’s slots 1-45. A knob on an SRC slot takes the name, value text and range the track’s machine gives that slot on the SRC page, also for module machines; a slot the machine does not have is unassigned. FLT.DEL to FLT.ROUT are the filter’s second page.",
       "One assignment for each knob A-H, and a track’s parameter can belong to one knob only; the assignments are kept in bits of tracks 5 to 8’s spare sound bytes that no other mod here uses.",
       "Selecting another pattern while the sequencer is stopped reloads the offsets at once; while it plays, the new pattern’s knobs take over when it starts. This is detected from the audio engine’s own pattern bytes, and the author has seen it work on a unit.",
       "After the stock chord, metronome, scale, microtiming or retrig screens, press TRIG twice to open the Perform page again.",
       "The Perform page opens from the audio tracks’ TRIG page; on a MIDI track TRIG keeps its stock job. SETTINGS > PERFORM EDIT works from any track.",
+      "Heavy Digi Mono machines (ENS, VO, POLY SIN) with Overbridge connected load the Digitakt close to its limit, on stock pages too; the author measured the Perform page within about a point of a stock page there. digihealth’s FAST AUDIO gives more headroom.",
       "Built for OS 1.53 and 1.54. The author’s hardware observations, with the OS release each was made on, are in TESTING.md."
     ]
   },
@@ -171,7 +172,8 @@
       "sound:slot 49 of tracks 5-8 (marker)",
       "sound:spare bytes 3 (bits 0-6), 4 and 5 of tracks 5-8 (macro pool)",
       "ui:PERFORM page:TRIG+REC/PLAY/STOP, FUNC+push, NO",
-      "ui:TRIG page:second page, TRIG pressed again"
+      "ui:TRIG page:second page, TRIG pressed again",
+      "ui:TRIG page:its body is not drawn while the PERFORM page is open over it"
     ]
   },
   "resources": {
@@ -185,7 +187,7 @@
   },
   "evidence": {
     "tier": "none",
-    "moduleVersion": "0.1.2-experimental",
+    "moduleVersion": "0.1.3-experimental",
     "sourceSha256": null,
     "reports": [],
     "hardware": null,
