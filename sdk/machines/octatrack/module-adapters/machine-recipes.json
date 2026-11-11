@@ -479,18 +479,18 @@
   },
   "analog-bassdrum": {
    "schema": 1,
-   "imageSha256": "6d3a27ab353aaaf85c7f943149c8e23e36501d76bf8e73176df375126900e9b8",
+   "imageSha256": "44ac9e075170da8c34ebb156ee50e3fd390608c65eb5e2131d9203fc7d2fa901",
    "sources": {
     "sdk/machines/octatrack/module-adapters/analog_bd_runtime.py": "b9c0e0f96632a0d0ab5283387edaae1b604e4e82e27e26b3fdc1666867d31daf",
     "sdk/machines/octatrack/module-adapters/analog_bd_write_lease.py": "3e6a3766f32176e9be69627ef2b71272970f2d02a2088e77673946b640d365c7",
-    "sdk/machines/octatrack/module-adapters/machine-ports.json": "eefb1c8b6586d6b43d204235d376ee7a2b9902601254a2447257e96f38cad725",
+    "sdk/machines/octatrack/module-adapters/machine-ports.json": "4b8e1febecc1f3791d5d6dd50917410ddc3081cbb6b7c06c865c31c0d33951a1",
     "sdk/machines/octatrack/module-adapters/machine_ports.py": "bbb91f0c54c27043b54a9156cad01053531f2ef78fb13cc73e2b45f7fc7e8d6f",
     "sdk/machines/octatrack/module-adapters/stock_hook_write_lease.h": "ab14679a5faae84ef47d1ca37e46b3171da45252d12310e0b4458228be8334be",
     "sdk/octabam/modules/analog-bassdrum/control.s": "463dacf528e4996c7f21e97533391583329a2e3aabda95c87b7cd020dee7adb6",
     "sdk/octabam/modules/analog-bassdrum/engine.s": "a6ff5f2fe90dbe5570512bbe54dede4c8c8f86c4ef4656fce4c57a9b600c4805",
     "sdk/octabam/modules/analog-bassdrum/machine.s": "a33e4d36da6a14e7e856c7c7088be2820a40c7fb7014917983c729931eed55a3",
     "sdk/octabam/modules/analog-bassdrum/manifest.py": "20fa1f744630354b3986a3ad82ac6a41744345796dc783891a4c9f0bd81c787e",
-    "sdk/runtime/loader/build.py": "5131901224dcd037c07f0233cadabd67eec2a952878bef5a92274dd3d6236c7d"
+    "sdk/runtime/loader/build.py": "0f4b14caaa1e070f1ba0bc707e7c3e1a519a2e3456ce08ed0c5fec84480afe2e"
    },
    "copies": [
     {
