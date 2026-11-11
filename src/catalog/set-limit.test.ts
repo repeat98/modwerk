@@ -40,7 +40,7 @@ describe('the module limit of an Octatrack set', () => {
   })
 
   it('says how many a set has and how many to remove, from the one constant', () => {
-    expect(LIMIT_REACHED).toBe(`${SET_MODULE_LIMIT} modules for now. Remove one to add another.`)
+    expect(LIMIT_REACHED).toBe(`Your set is full. ${SET_MODULE_LIMIT} modules per set is a temporary limit while larger sets are made stable on every Octatrack. Remove one to add another.`)
     expect(overLimitMessage(first(SET_MODULE_LIMIT), 'sync')).toBe('')
     expect(overLimitMessage(first(over), 'sync')).toBe(`This set has ${over} modules; ${SET_MODULE_LIMIT} is the limit for now. Remove 3 to sync.`)
     expect(overLimitMessage([...first(over), USB_AUDIO_MODULE], 'build')).toBe(`This set has ${over} modules; ${SET_MODULE_LIMIT} is the limit for now. Remove 3 to build.`)
