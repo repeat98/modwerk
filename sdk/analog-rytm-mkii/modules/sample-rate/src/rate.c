@@ -66,6 +66,7 @@ static int turn_round(int v, int t, int trig)
 void sample_rate_block(void)
 {
     unsigned char down_now = 0;
+    unsigned swapped = 0;       // one bit a track: EFF is a track's, so swap it once a block
     int v;
     // No track below 0 and no voice still going down: the loop below would change
     // nothing, so skip it (the audio interrupt runs this every block).
@@ -89,8 +90,9 @@ void sample_rate_block(void)
             else
                 down = going_down[v];
         }
-        if (down) {
+        if (down && !(swapped >> t & 1)) {
             short sta = EFF(t, IDX_STA);
+            swapped |= 1u << t;
             EFF(t, IDX_STA) = EFF(t, IDX_END);
             EFF(t, IDX_END) = sta;
         }
