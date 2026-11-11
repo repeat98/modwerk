@@ -53,7 +53,7 @@ class PublishedAbi9(unittest.TestCase):
         capabilities, dsp_words = entry.engines(builder.capabilities, builder.dsp_words)  # the host entry point's
         self.assertEqual({k: capabilities(published)[k] for k in ('abi', 'requires', 'claims', 'entries')},
                          dict(abi=10, requires=0, claims=1, entries=1))
-        self.assertEqual(len(dsp_words(published)[0]), 3 * (1009 + 3776))  # its engine and its X tables, both scanned
+        self.assertEqual(len(dsp_words(published)[0]), 3 * (1004 + 3776))  # its engine and its X tables, both scanned
         # Its controller, as the ABI 8 package it was before its engine joined it.
         controller = published[:4] + (8).to_bytes(2, 'big') + published[6:32] + bytes(18) + published[50:76] + \
             published[80:abi9._claims_end(published)]

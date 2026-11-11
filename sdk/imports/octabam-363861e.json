@@ -363,7 +363,7 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/exact-render.json",
       "sourceSha256": "41a17cba7c5c40ab2f32973ee4427da74d023e70cc502074f047a9b2d9900a09",
-      "vendoredSha256": "3a91f2cf6fe2cdf6a328ded013c27ba91519c49d39625c67dca8e5be5bea7acf",
+      "vendoredSha256": "3d5fb897f7e5458cadf240595a520b725d98fb38caf30af38e20c8b33288ea1a",
       "localUpdates": [
         {
           "moduleVersion": "0.1.6-experimental",
