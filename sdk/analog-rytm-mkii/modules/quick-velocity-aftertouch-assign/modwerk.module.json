@@ -80,7 +80,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 7480,
+    "memoryBytes": 7520,
     "fastBytes": 0,
     "load": {
       "display": "UI only",
@@ -91,7 +91,7 @@
   "evidence": {
     "tier": "author-hardware",
     "moduleVersion": "0.2.0-experimental",
-    "sourceSha256": "67feeea49a1c71682f9bb6d49e1a4feac96bda26700d79af5d70b6255392e498",
+    "sourceSha256": "5b2e24714fdf681a71adfd6110aca3896e7371eb2ac807b14855d2492f51c625",
     "reports": [
       "TESTING.md"
     ],
