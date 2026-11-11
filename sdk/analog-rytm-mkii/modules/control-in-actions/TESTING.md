@@ -1,5 +1,23 @@
 # Control In Actions testing
 
+## 0.1.4: the keys an action plays reach the other mods (10 November 2026)
+
+Source (0.1.4-experimental): fingerprint (`sha256` of `sha256sum build.json src/ar2-1.74.h src/draw.S src/main.c`) `9c46c683…2863e6`.
+
+0.1.3 played its keys straight into stock's `Brain::key` (0x400a0336). Its `ev_key` handler runs at order 10, so every handler after it never saw them: Quick Mod Assign (30), QPER Live Rec and Improved Machine Browser (40), Loop Sync, Audio In Routing and the base's send pages (50). A mod that follows pages or held keys through `ev_key` then went wrong after MUTE HLD, MUTE TGL or FILL, as it would not after the same panel key. 0.1.4 plays MUTE, the mode key it goes back to and FILL through core-ar2's exported `core_key` (core.s, the `ev_key` site itself: every handler in order, then `Brain::key`), and its own handler lets them pass. PLAY, the transport key REC HLD and REC TGL play, still goes to stock alone: QPER Live Rec takes PLAY while QPER is held (QPER + PLAY clears), and an input's PLAY is not that gesture. Keys played from the UI tick (an edge the key message has not played yet, or a hold ended by a change of MODE or ACTION) now reach those handlers from the tick too; the ones that look at MUTE, a mode key or FILL (Loop Sync, Audio In Routing, the base's send pages) only note that the page was left. Because PLAY still goes to stock alone, REC HLD and REC TGL leave Audio In Routing's page as 0.1.3 did, where the panel's PLAY would close it.
+
+- rytm-emu `2ac0f1f`, test builds with `-DCIA_EMU`, CONTROL INPUT 1 in ACTION mode, the level poked. With Loop Sync 0.2.0 (CO21: 0.1.3's code; CN22: this source), Loop Sync's SAMPLE page flag peeked. With QPER Live Rec 0.2.0 (CQ21: an earlier draft that sent PLAY through the chain too; CQ22: this source):
+
+| Steps | Before (CO21 is 0.1.3; CQ21 is the draft) | 0.1.4 |
+| --- | --- | --- |
+| MUTE TGL: SMPL, input high (MUTE mode opens), low, high (closes) | CO21: the same screens; Loop Sync still on the SAMPLE page after MUTE | The same screens; Loop Sync off the SAMPLE page at MUTE, as after the panel's MUTE |
+| REC TGL: input high, low, high, low | CO21: live recording on, then off | The same |
+| FILL LAT: input high, low, high, low | CO21: fill latched, then unlatched | The same |
+| REC TGL with QPER held on a sound page, input high | CQ21: no live recording (QPER took PLAY) | CQ22: live recording on, as 0.1.3 |
+
+- CI17 (vendored core-ar2 0.7 + this source, `929e6f57…d7b3`): boots, and its three media frames are byte-identical to CI15's.
+- Not run on a unit yet.
+
 ## 0.1.3: back to grid or step recording after live recording (8 November 2026)
 
 Source (0.1.3-experimental): fingerprint (`sha256` of `sha256sum build.json src/ar2-1.74.h src/draw.S src/main.c`) `46649100…00a9a` (`evidence.sourceSha256`), the source RC36 carried.
