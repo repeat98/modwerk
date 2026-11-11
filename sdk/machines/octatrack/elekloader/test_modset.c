@@ -83,6 +83,15 @@ static void boot(void) { modwerk_test_guard.armed = 0; cut(); } /* after a start
 static void run(unsigned ticks) { while (ticks--) ++modwerk_test_ticks, ++modwerk_test_frames, modwerk_modset_notice_tick(); }
 static void stand(unsigned ticks) { while (ticks--) ++modwerk_test_ticks, modwerk_modset_notice_tick(); } /* frames stopped */
 static uint8_t named[2][72];
+/* A whole set of one package in the base's own image, as the site puts it there (card-set.ts). */
+static void flash_set(uint32_t generation, uint32_t id)
+{
+    uint8_t *f = modwerk_flashed_set;
+    make(4, id, 0); memset(f, 0, 512); memcpy(f, "MWST", 4);
+    put32(f + 4, 1), put32(f + 8, generation), put32(f + 12, 1), put32(f + 16, HEADER + 56u); memcpy(f + 20, modwerk_base_digest, 32);
+    put32(f + HEADER, id), put32(f + HEADER + 4, 48); memcpy(f + HEADER + 8, package[4], 48);
+    mu_sha256(f + HEADER, 56, f + 52);
+}
 static void make_named(unsigned k, uint32_t id, const char *name) /* ABI 6: its name at 50 */
 {
     memset(named[k], 0, 72); memcpy(named[k], "MWRM", 4); named[k][5] = 6;
@@ -297,8 +306,34 @@ int main(void)
     HOLD(FUNC); cut(); modwerk_modset_service(); LET_GO();
     CHECK(modwerk_modset_result == SKIPPED && !installed);
     boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == LEFT_OUT && installed == 2);
+    /* A set in the base's own image, on a card that holds none: installed, then saved to the card as it is. */
+    memset(&modwerk_test_guard, 0, sizeof modwerk_test_guard); card_bytes[0] = card_bytes[1] = 0;
+    flash_set(1000u, 0x201u); written = writes; boot(); modwerk_modset_service();
+    CHECK(modwerk_modset_result == RESTORED && installed == 1 && ids[0] == 0x201u && pending);
+    modwerk_modset_service();
+    CHECK(!pending && writes == written + 1 && modwerk_modset_result == SAVED && be32(card[1] + 8) == 1000u && !card_bytes[0]);
+    /* The next start takes the card's copy and writes nothing. */
+    written = writes; boot(); modwerk_modset_service(); modwerk_modset_service();
+    CHECK(modwerk_modset_result == RESTORED && installed == 1 && writes == written);
+    /* A change made on the unit outranks the image's set from then on. */
+    accept(1, 40); modwerk_modset_service(); CHECK(be32(card[0] + 8) == 1001u);
+    boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 2);
+    /* A newer image (the base flashed again with another set) wins, and goes to the file that is not the card's newest. */
+    flash_set(2000u, 0x202u); boot(); modwerk_modset_service();
+    CHECK(modwerk_modset_result == RESTORED && installed == 1 && ids[0] == 0x202u);
+    modwerk_modset_service(); CHECK(be32(card[1] + 8) == 2000u && be32(card[0] + 8) == 1001u);
+    /* An image set for another base, or a damaged one, is not there: the card's set. */
+    flash_set(3000u, 0x203u); modwerk_flashed_set[20] ^= 1u; written = writes; boot(); modwerk_modset_service(); modwerk_modset_service();
+    CHECK(modwerk_modset_result == RESTORED && installed == 1 && ids[0] == 0x202u && writes == written);
+    flash_set(3000u, 0x203u); modwerk_flashed_set[HEADER + 9] ^= 1u; boot(); modwerk_modset_service(); modwerk_modset_service();
+    CHECK(modwerk_modset_result == RESTORED && installed == 1 && ids[0] == 0x202u && writes == written);
+    /* PROJ held skips it too, and keeps its generation so a later save wins over it. */
+    flash_set(3000u, 0x203u); HOLD(PROJ); boot(); modwerk_modset_service(); LET_GO();
+    CHECK(modwerk_modset_result == SKIPPED && !installed && be32(set + 8) == 3000u && writes == written);
+    memset(modwerk_flashed_set, 0, 512);
     if (failures) { fprintf(stderr, "%u module set checks failed\n", failures); return 1; }
     puts("Octatrack module set: saved in turn, removals dropped, the newest whole set restored, damaged and foreign sets and a held PROJ or FUNC refused, "
-         "a Keep joined only as the trial's identity and reported unsaved until saved, a start that crashed or stopped while restoring guarded.");
+         "a Keep joined only as the trial's identity and reported unsaved until saved, a start that crashed or stopped while restoring guarded, "
+         "a set in the base's image restored and saved when it is the newest.");
     return 0;
 }

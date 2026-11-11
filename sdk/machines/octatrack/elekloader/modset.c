@@ -12,6 +12,11 @@
  * A volatile Keep (volatile_service.c) adds its fresh installs to this set only when the set and they are exactly
  * the trial's whole-set identity (journal.h), and is refused otherwise; the set is then saved the same way.
  *
+ * A set the site put into this base's own image (modwerk_flashed_set, all zero when it put none) is a third candidate
+ * beside the card's two files: the newest generation wins, and when that is the image's, it is installed and then
+ * saved to the card like any change, so the card holds it from then on (owner, 11 November 2026: the .bin flashed
+ * from the card carries the modules, as a USB sync does).
+ *
  * Set (big-endian): "MWST", version 1, generation, count, bytes used (header included), the base's
  * configuration hash, the SHA-256 of what follows, then per module its id, its length and its package,
  * padded to 4. Design: docs/OCTATRACK_ELEKLOADER_MIGRATION.md, "Keeping the module set across power cycles". */
@@ -82,6 +87,15 @@ extern int olog_stock_write(struct file_object *, const void *, unsigned);
 extern int olog_stock_close(struct file_object *);
 #endif
 
+#ifndef MODWERK_FLASHED_SET_BYTES
+#define MODWERK_FLASHED_SET_BYTES 0x40000u /* the room the image keeps for a set: 256 KB of packages */
+#endif
+#ifdef MODWERK_HOST
+uint8_t modwerk_flashed_set[MODWERK_FLASHED_SET_BYTES];
+#else
+extern const uint8_t modwerk_flashed_set[MODWERK_FLASHED_SET_BYTES]; /* its own unit, so no read of it is folded to zero */
+#endif
+typedef char flashed_set_fits[MODWERK_FLASHED_SET_BYTES >= HEADER && MODWERK_FLASHED_SET_BYTES <= SET_BYTES ? 1 : -1];
 static uint8_t set[SET_BYTES] __attribute__((aligned(4)));
 static const uint8_t *candidate; /* the package the host staged, until it is accepted or dropped */
 static uint32_t candidate_bytes;
@@ -305,15 +319,22 @@ static int store(unsigned which)
 }
 #endif
 
-/* A loaded slot that this base wrote whole: 1, else 0 (another base's set is FOREIGN). */
-static int whole(int n)
+/* `n` bytes at `p` are a set this base wrote whole: 1, else 0 (another base's set is FOREIGN). */
+static int whole_at(const uint8_t *p, int n)
 {
     uint8_t digest[MU_DIGEST_BYTES];
-    if (n < (int)HEADER || be32(set + 4) != 1u || be32(set + 16) != (uint32_t)n) return 0;
-    for (unsigned i = 0; i < 32u; ++i) if (set[20 + i] != modwerk_base_digest[i]) { modwerk_modset_result = FOREIGN; return 0; }
-    mu_sha256(set + HEADER, (uint32_t)n - HEADER, digest);
-    for (unsigned i = 0; i < MU_DIGEST_BYTES; ++i) if (digest[i] != set[52 + i]) return 0;
+    if (n < (int)HEADER || be32(p + 4) != 1u || be32(p + 16) != (uint32_t)n) return 0;
+    for (unsigned i = 0; i < 32u; ++i) if (p[20 + i] != modwerk_base_digest[i]) { modwerk_modset_result = FOREIGN; return 0; }
+    mu_sha256(p + HEADER, (uint32_t)n - HEADER, digest);
+    for (unsigned i = 0; i < MU_DIGEST_BYTES; ++i) if (digest[i] != p[52 + i]) return 0;
     return 1;
+}
+static int whole(int n) { return whole_at(set, n); } /* a loaded slot */
+/* The image's own set: its bytes when the site put a whole one there for this base, else 0. */
+static uint32_t flashed(void)
+{
+    uint32_t n = be32(modwerk_flashed_set) == 0x4d575354u ? be32(modwerk_flashed_set + 16) : 0;
+    return n <= MODWERK_FLASHED_SET_BYTES && whole_at(modwerk_flashed_set, (int)n) ? n : 0;
 }
 /* A package the loader refuses BUSY (it names every switch it could not make so) is tried again every half second,
  * ten seconds at most, before it is left out: at power-on Ring SC, the key bus reader, was refused BUSY while a sync
@@ -427,26 +448,31 @@ static void restore(void)
     uint32_t ga = wa ? be32(set + 8) : 0;
     int b = load(1), wb = whole(b);
     uint32_t gb = wb ? be32(set + 8) : 0;
-    int hold = guard_check(ga > gb ? ga : gb);
+    /* The image's set counts only when it is newer than both files: once saved, the card's copy has its generation. */
+    uint32_t nf = flashed(), gf = nf ? be32(modwerk_flashed_set + 8) : 0;
+    if (gf <= ga || gf <= gb) nf = 0, gf = 0;
+    int hold = guard_check(gf ? gf : ga > gb ? ga : gb);
     /* PROJ or FUNC held, or the guard holds: nothing installed, but the card's newest generation and slot are kept, so a
      * later save wins over it. */
-    if (held || (hold && (wa || wb))) {
+    if (held || (hold && (wa || wb || nf))) {
         slot = wb && (!wa || gb > ga) ? 1u : 0u;
         for (unsigned i = 0; i < HEADER; ++i) set[i] = 0;
-        put32(set + 8, ga > gb ? ga : gb);
+        put32(set + 8, gf ? gf : ga > gb ? ga : gb);
         if (held) { modwerk_modset_result = SKIPPED; SAY("MODULES SKIPPED"); return; }
         modwerk_modset_result = HELD, notice_at = TICKS, notice_after = GUARD_NOTICE, notice = "MODULES HELD";
         modwerk_diag_refused(0, GUARD_HELD), modwerk_diag_set();
         return;
     }
-    if (!wa && !wb) {
+    if (!wa && !wb && !nf) {
         if (modwerk_modset_result != FOREIGN) modwerk_modset_result = a || b ? DAMAGED : NONE_SAVED;
         for (unsigned i = 0; i < HEADER; ++i) set[i] = 0;
         modwerk_diag_set(); /* nothing restored: the log says so */
         return;
     }
     slot = wb && (!wa || gb > ga) ? 1u : 0u; /* the newer one; the next save goes to the other */
-    if (!slot && (int)load(0) != a) { modwerk_modset_result = DAMAGED; return; }
+    /* The image's set, as it is: its save goes to the other file than the card's newest, which stays until it is whole. */
+    if (nf) { for (uint32_t i = 0; i < nf; ++i) set[i] = modwerk_flashed_set[i]; pending = 1, retry_at = 0; }
+    else if (!slot && (int)load(0) != a) { modwerk_modset_result = DAMAGED; return; }
     for (unsigned i = 0; i < RUNTIME_MODULES; ++i) restore_outcome[i] = 0;
     restored = 0, left_out = left_why = 0;
     restore_pass();
