@@ -59,12 +59,12 @@ Hold FIX or SAMPLER on any sound page and turn the knob you want to move with ve
 - It patches no stock site. It sets its own locker in stock's parameter UI while a key is held, as QPER Live Rec does with QPER, and adds a `core_params` entry for every parameter id with only a turn function (order 5) for a turn that reaches stock's parameter edit. It subscribes to `ev_key`, `ev_enc`, `ev_tick` and `ev_draw` (the LFO depth's box, in stock's label font). No storage.
 - A performance or scene pad, or a trig, that holds stock's locker when FIX or SAMPLER goes down or during the hold keeps it; the mod shows its amounts again within a tick of it letting go.
 - Stock's LFO DST knob opens its list rather than turning, so FIX + DST does nothing.
-- On a unit, run by the test rig on the author's MKII (not by a person): 0.2.0's LFO assign, LFO taps and FIX links pass in QL02 and QL05 (with Loop Sync), and the same cases on the set without this mod show the tap is stock's: see [TESTING.md](TESTING.md). Not run there: how the LFO sounds, pads, the FX track's LFO, kit save and a power cycle.
+- On a unit, run by the test rig on the author's MKII (not by a person): 0.2.0's LFO assign, the depth box, LFO taps and FIX links pass in QL13 (with Loop Sync), and the same cases on the set without this mod show the tap is stock's: see [TESTING.md](TESTING.md). Not run there: how the LFO sounds, pads, the FX track's LFO, kit save and a power cycle.
 - On a unit, by the author's report: QM06 (FIX + knob, the FIX key, save and power cycle) RC18's QM10 (SAMPLER aftertouch links, the lock-style display, envelopes following, mods full, kit save and reload, power cycle) RC19's QM11 and QM12 alone (the FX track, and the checks above again) pass: see [TESTING.md](TESTING.md).
 
 ## Tests and measurements
 
-rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)), the author's unit on combined images with builds QM10 and QM11 and on QM12 alone, and for 0.2.0 the test rig on the author's unit (QL02, QL05). Memory (0.2.0 package): 7,446 bytes of code and initialised data and 72 bytes of `.bss` in the 128 KiB shared mod area. Load: UI only, on key events and knob turns; nothing runs in the audio path.
+rytm-emu on OS 1.74 ([TESTING.md](TESTING.md)), the author's unit on combined images with builds QM10 and QM11 and on QM12 alone, and for 0.2.0 the test rig and the author's hand checks on the author's unit (QL02 to QL13). Memory (0.2.0 package): 7,446 bytes of code and initialised data and 72 bytes of `.bss` in the 128 KiB shared mod area. Load: UI only, on key events and knob turns; nothing runs in the audio path.
 
 ## Authorship and licences
 
