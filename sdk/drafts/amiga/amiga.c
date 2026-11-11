@@ -3,58 +3,64 @@
  *
  * AMIGA: a track machine that plays the track's Flex sample the way a home
  * computer's 8-bit sound chip and its tracker software did. Stock's FLEX reader
- * fetches the sample (PTCH, STRT, LEN, slices, loops as stock). Before the DSP
- * repitches it, this reworks the source PCM in the frame packet: held at a lower
- * storage rate (RATE), in a word of 4 to 16 bits (BITS), through
- * a fixed two-pole lowpass (LED). And it stretches in cycles, as the samplers of
- * that time did: every cycle (CYL) it restarts the reader where the sample would
- * be at the length STCH asks, whatever PTCH is, the way stock's own retrig restarts it, and
- * while a cycle ends it fades into the next one out of the frames it has already
- * read. So pitch and time come apart, with that flutter.
+ * fetches the sample (PTCH, STRT, LEN, RATE, slices, loops as stock). Before the
+ * DSP repitches it, this reworks the source PCM in the frame packet: held at a
+ * lower storage rate (SRR), in a word of 4 to 16 bits (BITS), through a fixed
+ * two-pole lowpass (LED). And it stretches in cycles, as the samplers of that time
+ * did: every cycle (GRN) it restarts the reader where the sample would be at speed
+ * SPD, whatever PTCH is, the way stock's own retrig restarts it, and while a cycle
+ * ends it fades into the next one out of the frames it has already read. So pitch
+ * and time come apart, with that flutter.
  *
- * STCH, CYL and RATE sit on SRC slots 3, 4 and 5, where FLEX has RATE, RTRG and
- * RTIM; LED, STR and BITS on SRC SETUP's last three bytes (RATE, TSTR, TSNS).
- * They read as the plug-ins of this kind do: the stretched length in percent,
- * the cycle in samples, the storage rate in Hz on a tracker's note rates.
- * Stock must never read them as its own: START and render show stock a plain
- * forward FLEX for the call and put the bytes back (the base's NATIVE_FLEX
+ * SPD and GRN sit on SRC slots 4 and 5, where FLEX has RTRG and RTIM; slot 3 stays
+ * stock's RATE (forwards, backwards, slower), which the stretch follows. LED, SRR, STR and BITS are SRC SETUP's last four bytes (LEN, RATE, TSTR,
+ * TSNS). Stock must never read ours as its own: START and render show stock a
+ * plain FLEX for the call and put the bytes back (the base's NATIVE_FLEX
  * contract, sdk/machines/octatrack/HOOKS.md ot_machines / ot_machine_starts).
  *
  * No stock code is patched and no stock bytes are stored: the page is cloned
  * from stock's FLEX page at run time, as the other source machines do.
- * generate.py compiles this into amiga_core.s; verify.py runs amiga_crunch and
- * amiga_stretch on the host. */
+ * generate.py compiles this into amiga_core.s; verify.py runs the engine on the
+ * host. What the engine hands the DSP is, sample for sample, what the build of
+ * commit c5543f12 handed it (reference/compare_engine.py): the frame interrupt
+ * pays for every instruction and every line of memory here, so the common cases
+ * are short, but none of them may change the sound. */
 #include <stdint.h>
 
 typedef struct {
-    /* All a note at rest touches, in one cache line: on an MKII the frame interrupt's time went with the memory a track
-     * touched, not with its instructions (11 November 2026: half the instructions, a fifth less time). */
-    uint32_t rest;          /* the note plays at its own length and pitch, in step, nothing fading: amiga_rest takes the call */
-    uint32_t idle;          /* output samples (and frames) passed at rest, not yet in pos, played, since and got */
-    uint32_t left;          /* output samples at rest until the note's end; ~0: this note is not stretched at all */
-    uint32_t held;          /* 0: the stored sample and its phase are stale (every sample was kept), start them afresh */
+    /* What a note at rest touches first, in one cache line. */
+    uint32_t rest;          /* 1: the note plays at its own speed and pitch, in step, nothing fading (amiga_rest takes the call); 2: it is not stretched at all */
+    uint32_t left;          /* output samples until a note at rest reaches its end */
+    uint32_t rem;           /* the place's remainder below a Q6 frame while RATE slows the note (in 1/0x3f00) */
+    uint32_t back;          /* the reader runs backwards (RATE below 0): every frame here is then counted from the note's end, so the reader still counts up */
     int32_t l, r;           /* the stored sample being held */
     uint32_t phase;         /* Q16 position within a stored sample */
     int32_t al, ar;         /* the input since the last stored sample, summed (>> 4) */
     uint32_t count;
-    int32_t ic[2][2];       /* the lowpass: channel, its low output and its band, a quarter of the sample's scale */
-    uint32_t pos, frac;     /* the stretch: where the sample should be by now, in frames from the note's start, and Q12 of one */
+    int32_t ic[2][2];       /* the output filter: channel, two integrators (Q8) */
+    uint32_t pos;           /* the stretch: where the sample should be by now, Q6 frames from the note's start */
     uint32_t window;        /* the note's length in frames (STRT to its end); 0: this note is not stretched */
     uint32_t grain, played; /* where the reader last started, and the frames it has read since */
     uint32_t since, got;    /* output samples since the last cycle, and the frames read in them */
     uint32_t first, length; /* the note's start within the sample, and the sample's length, in frames */
     uint32_t sample, flags; /* the trig's START arguments, for the restarts */
+    uint32_t origin, end;   /* the note's first and last frame as stock counts them: a restart moves one of them, and the reader needs it back */
     int32_t last[2], off[2]; /* the last frame read, and the step a restart left (>> 9), which runs out over `fade` frames */
     uint32_t fade, jump;
     uint32_t hi, floor;     /* `hist` holds the frames read, from `floor` (or the last HIST) up to `hi`, counted from the note's start */
     uint32_t mix_from, mix_len, mix_wait, mix_k, mix_step, planned; /* the fade into the next grain, out of `hist` */
-    uint32_t hist[2048];   /* a frame a long, left in its top word: one access a frame. With the code, eight of these stay under the loader's 128 KiB a module */
+    int16_t hist[2048][2]; /* with the code, eight of these stay under the loader's 128 KiB a module */
 } AmigaVoice;
 #define HIST 2048u
 #define ONE 0x10000u /* Q16: one stored sample */
 #define KEEP (-1)
 #define OVER (-2)
 #define FADE 32u
+
+/* The lowpass: two poles, Butterworth, about 3.3 kHz for a 44.1 kHz sample. tan(pi fc / 44100) and 1/Q in Q13. */
+#define LED_TAN 1962
+#define LED_G (LED_TAN << 18)
+#define LED_A1 (((1 << 26) / (8192 + ((LED_TAN * (LED_TAN + 11585)) >> 13))) << 18) /* Q31 */
 
 /* x * c for a Q31 c. The ColdFire has no 64-bit product in C, and two 32-bit ones a multiply are dear in the
  * frame interrupt (S950's filter, MKII, 10 November 2026), so the target uses its multiply-accumulate unit:
@@ -80,33 +86,16 @@ static inline uint32_t mac_enter(void)
 #define MAC_ENTER() mac_enter()
 #define MAC_LEAVE(saved) __asm__("move.l %0,%%macsr" : : "d"(saved))
 #endif
-/* x times 4, full scale staying full scale. */
-#ifdef AMIGA_HOST
-static inline int32_t times4(int32_t x) { return x > 0x1fffffff ? INT32_MAX : x < -0x20000000 ? INT32_MIN : x * 4; }
-#else
-static inline int32_t times4(int32_t x)
+/* A two-pole lowpass (a trapezoidal state-variable filter). The signal is 15 bits and 8 more below the point. */
+static inline int32_t lowpass(int32_t *ic, int32_t in)
 {
-    __asm__("add.l %0,%0\n\tsats.l %0\n\tadd.l %0,%0\n\tsats.l %0" : "+d"(x));
-    return x;
+    int32_t v1 = scale(ic[0] + scale(in - ic[1], LED_G), LED_A1);
+    int32_t v2 = ic[1] + scale(v1, LED_G);
+    ic[0] = 2 * v1 - ic[0]; ic[1] = 2 * v2 - ic[1];
+    v2 = (v2 + 128) >> 8;
+    return (v2 > 16383 ? 16383 : v2 < -16384 ? -16384 : v2) * 131072;
 }
-#endif
-/* The lowpass: two poles, close to Butterworth at about 3.3 kHz for a 44.1 kHz sample (-2.9 dB there, -11.3 dB at
- * 6.6 kHz), as a state-variable filter with f = 13/32 and 1/Q = 5/4. Shifts and adds only: on the unit the multiply
- * unit's three products a channel cost as much as the rest of a track (MKII, 11 November 2026). `low` and `band`
- * are a quarter of the sample's scale, which leaves room for the overshoot and for the sum before it. */
-#define LED_F(x) (((x) >> 2) + ((x) >> 3) + ((x) >> 5))
-#define LOWPASS(low, band, in) do { \
-        int32_t high_; \
-        (low) += LED_F(band); \
-        high_ = (in) - (low) - (band) - ((band) >> 2); \
-        (band) += LED_F(high_); \
-    } while (0)
-/* 1/n in Q31 for the average of n stored inputs, 2 to 16. */
-static const int32_t reciprocal[17] = {0, 0, 0x40000000, 0x2aaaaaaa, 0x20000000, 0x19999999, 0x15555555, 0x12492492, 0x10000000,
-                                       0x0e38e38e, 0x0ccccccc, 0x0ba2e8ba, 0x0aaaaaaa, 0x09d89d89, 0x09249249, 0x08888888, 0x08000000};
 
-/* The frame interrupt pays for every instruction below (eight tracks at the defaults took 13 points of it on an
- * MKII, 11 November 2026), so the common cases are short: state in registers for a loop, no work for a control at rest. */
 /* A sample's top 16 bits. The target is big-endian: they are the long's first word. */
 #ifdef AMIGA_HOST
 static inline int16_t top(const int32_t *a) { return (int16_t)(*a >> 16); }
@@ -114,15 +103,21 @@ static inline int16_t top(const int32_t *a) { return (int16_t)(*a >> 16); }
 typedef int16_t __attribute__((may_alias)) Top;
 static inline int16_t top(const int32_t *a) { return *(const Top *)a; }
 #endif
-static inline uint32_t frame(int32_t l, int32_t r) { return (uint32_t)l << 16 | (uint16_t)r; }
-static inline void remember(uint32_t *h, const int32_t *a, unsigned n)
+/* x rounded to the word `mask` keeps (half: half its last bit), full scale staying full scale. */
+#ifdef AMIGA_HOST
+static inline int32_t rounded(int32_t x, int32_t half, uint32_t mask) { return (int32_t)((uint32_t)(x > INT32_MAX - half ? x : x + half) & mask); }
+#else
+static inline int32_t rounded(int32_t x, int32_t half, uint32_t mask)
 {
-    for (; n; --n, a += 2) *h++ = frame(top(a), top(a + 1));
+    __asm__("add.l %1,%0\n\tsats.l %0" : "+d"(x) : "d"(half)); /* an overflow saturates, which the mask then cuts to the top word */
+    return (int32_t)((uint32_t)x & mask);
 }
-
-/* Remember the n frames read, and once a fade is planned (amiga_stretch) mix the next grain in from that
- * memory, so the restart at the cycle's end continues what is already sounding. First of the three. */
+#endif
 /* n frames into the memory from frame `at`, in one run or the two around its end. */
+static inline void remember(int16_t (*h)[2], const int32_t *a, unsigned n)
+{
+    for (; n; --n, ++h, a += 2) (*h)[0] = top(a), (*h)[1] = top(a + 1);
+}
 static inline void remember_at(AmigaVoice *v, const int32_t *a, unsigned n, uint32_t at)
 {
     unsigned k = at & (HIST - 1u), run = HIST - k;
@@ -131,8 +126,8 @@ static inline void remember_at(AmigaVoice *v, const int32_t *a, unsigned n, uint
     if (n > run) remember(v->hist, a + 2u * run, n - run);
 }
 /* A fade is planned or under way: wait out what is left before it, then mix the next grain in from the memory. Whether
- * the memory holds that grain is settled once for the call: the grain and the reader move together, so it cannot
- * change in between. */
+ * the memory holds that grain is settled at the fade's first frame of the call: the grain and the reader move together,
+ * so it cannot change before the call ends. */
 static __attribute__((noinline)) void blend_mix(AmigaVoice *v, int32_t *a, unsigned n, uint32_t at)
 {
     uint32_t hi = v->hi, wait = v->mix_wait;
@@ -153,20 +148,22 @@ static __attribute__((noinline)) void blend_mix(AmigaVoice *v, int32_t *a, unsig
     }
     uint32_t weight = k * step;
     for (; n; --n, ++at, ++from, a += 2) {
-        const uint32_t g = v->hist[from & (HIST - 1u)];
+        int16_t *h = v->hist[at & (HIST - 1u)];
+        const int16_t *g = v->hist[from & (HIST - 1u)];
         int32_t l = top(a), r = top(a + 1);
-        v->hist[at & (HIST - 1u)] = frame(l, r);
+        h[0] = (int16_t)l; h[1] = (int16_t)r;
         int32_t w = k < len ? (int32_t)(weight >> 16) : 32767; /* Q15; past the fade, the next grain alone */
-        a[0] = (l + ((((int16_t)(g >> 16) - l) * w) >> 15)) * 65536;
-        a[1] = (r + ((((int16_t)g - r) * w) >> 15)) * 65536;
+        a[0] = (l + (((g[0] - l) * w) >> 15)) * 65536;
+        a[1] = (r + (((g[1] - r) * w) >> 15)) * 65536;
         ++k; weight += step;
     }
     v->hi = at > hi ? at : hi; v->mix_k = k;
 }
+/* Remember the n frames read, and once a fade is planned (amiga_stretch) mix the next grain in from that
+ * memory, so the restart at the cycle's end continues what is already sounding. First of the three. */
 void amiga_blend(AmigaVoice *v, int32_t *a, unsigned n)
 {
     uint32_t at = v->grain + v->played;
-    if (at > v->hi) v->floor = at; /* frames nobody remembered lie before it: amiga_render skips this call while nothing can restart */
     if (v->mix_len) { blend_mix(v, a, n, at); return; }
     remember_at(v, a, n, at); /* most frames: only remember */
     at += n;
@@ -201,148 +198,97 @@ void amiga_declick(AmigaVoice *v, int32_t *a, unsigned n)
     v->last[0] = a[2 * n - 2]; v->last[1] = a[2 * n - 1];
 }
 
-/* The controls as the page shows them. STCH 0-127: the note's length in percent of its own, 50 to 2100
- * (32 is 100, 52 is 200), 127 holds the sample where it is (0). */
-unsigned amiga_percent(unsigned v)
-{
-    return v < 32u ? 50u + v * 50u / 32u : v < 64u ? 100u + (v - 32u) * 5u : v < 96u ? 260u + (v - 64u) * 10u :
-        v < 127u ? 600u + (v - 96u) * 50u : 0u;
-}
-/* CYL 0-127: the cycle in output samples, 100 to 4132 (60 is 1000). */
-unsigned amiga_cycle(unsigned v) { if (v > 127u) v = 127u; return 100u + v * v / 4u; }
-/* RATE 0-36: the storage rate as a Q16 share of 44.1 kHz. 0-35 are a tracker's three octaves of note rates
- * (3546895 / period: 4143 to 31388 Hz), 36 and above the sample's own rate (ONE). */
-#define RATES 36u
-static const uint16_t period[RATES] = {856, 808, 762, 720, 678, 640, 604, 570, 538, 508, 480, 453, 428, 404, 381, 360, 339, 320,
-                                       302, 285, 269, 254, 240, 226, 214, 202, 190, 180, 170, 160, 151, 143, 135, 127, 120, 113};
-unsigned amiga_hz(unsigned v) { return v < RATES ? 3546895u / period[v] : 44100u; }
-uint32_t amiga_rate(unsigned v) { return v < RATES ? (amiga_hz(v) << 16) / 44100u : 0x10000u; }
-/* STR's PCH: the stretch as a pitch shift. The PTCH offset for a length in percent, in SRC units (256 a
- * knob step, five steps a semitone), an octave either way at most: 200 is +12 semitones, 50 is -12. */
-int amiga_shift(unsigned percent)
-{
-    static const uint8_t semitone[13] = {100, 106, 112, 119, 126, 133, 141, 150, 159, 168, 178, 189, 200};
-    int down = percent < 100u;
-    if (!percent) return 0;
-    if (down) percent *= 2u;
-    if (percent < 100u) percent = 100u;
-    if (percent >= 200u) return down ? 0 : 15360;
-    unsigned k = 0;
-    while (semitone[k + 1] <= percent) ++k;
-    return (int)(k * 1280u + (percent - semitone[k]) * 1280u / (semitone[k + 1] - semitone[k])) - (down ? 15360 : 0);
-}
-
 /* n stereo frames, L then R longs, the sample in the high bits: the input is averaged over each stored
- * sample, stored at a lower rate (inc: Q16 stored samples a frame, ONE keeps every one) in a 4- to 16-bit word (bits
+ * sample, stored at a lower rate (srr 0-127: 16/(16+srr) of the source's) in a 4- to 16-bit word (bits
  * 0-12; 12 keeps the source's word) and held, then through the lowpass (led). All three off leaves the
  * PCM untouched. */
-/* Every sample kept, through the lowpass. */
-static __attribute__((noinline)) void crunch_led(AmigaVoice *v, int32_t *a, unsigned n, uint32_t mask)
+static __attribute__((noinline)) void crunch_stored(AmigaVoice *v, int32_t *a, unsigned n, unsigned srr, uint32_t mask, unsigned led)
 {
-    int same = 1; /* a mono sample pays for one channel of filter */
-    for (unsigned i = 0; same && i < n; ++i) same = a[2 * i] == a[2 * i + 1];
-    int32_t l0 = v->ic[0][0], b0 = v->ic[0][1];
-    if (same) {
-        for (; n; --n, a += 2) {
-            LOWPASS(l0, b0, (int32_t)((uint32_t)a[0] & mask) >> 2);
-            a[0] = a[1] = times4(l0);
-        }
-        v->ic[1][0] = l0; v->ic[1][1] = b0;
-    } else {
-        int32_t l1 = v->ic[1][0], b1 = v->ic[1][1];
-        for (; n; --n, a += 2) {
-            LOWPASS(l0, b0, (int32_t)((uint32_t)a[0] & mask) >> 2);
-            LOWPASS(l1, b1, (int32_t)((uint32_t)a[1] & mask) >> 2);
-            a[0] = times4(l0); a[1] = times4(l1);
-        }
-        v->ic[1][0] = l1; v->ic[1][1] = b1;
-    }
-    v->ic[0][0] = l0; v->ic[0][1] = b0;
-    v->held = 0;
-}
-/* Stored at a lower rate: each stored sample the average of the inputs it replaces, cut to the word and held; `led`
- * is a constant where this is called, so each of the two loops is compiled without the other's work. */
-static inline __attribute__((always_inline)) void stored(AmigaVoice *v, int32_t *a, unsigned n, uint32_t inc, uint32_t mask, const int led)
-{
-    uint32_t mac = MAC_ENTER();
-    if (!v->held || v->phase > 2u * ONE || v->count > 16u) { /* stale, or a state nobody set: it takes its first sample at once */
-        v->phase = ONE; v->count = 0; v->al = v->ar = 0;
-        if (!v->held) v->l = v->r = 0;
-        v->held = 1;
-    }
-    int same = led && v->l == v->r; /* a mono sample pays for one channel of filter */
+    const uint32_t inc = (16u * ONE) / (16u + srr);
+    const int32_t half = (int32_t)(~mask >> 1); /* round to nearest, not down */
+    uint32_t mac = led ? MAC_ENTER() : 0;
+    if (v->phase > 2u * ONE || v->count > 16u) v->phase = ONE, v->count = 0, v->al = v->ar = 0; /* a state nobody set */
+    int same = v->l == v->r; /* a mono sample pays for one channel of filter */
     for (unsigned i = 0; same && i < n; ++i) same = a[2 * i] == a[2 * i + 1];
     uint32_t phase = v->phase, count = v->count; /* the state in registers for the loop: a store to the PCM could be any of it */
     int32_t al = v->al, ar = v->ar, hl = v->l, hr = v->r;
-    int32_t l0 = v->ic[0][0], b0 = v->ic[0][1], l1 = v->ic[1][0], b1 = v->ic[1][1];
+    int32_t f0[2] = {v->ic[0][0], v->ic[0][1]}, f1[2] = {v->ic[1][0], v->ic[1][1]};
     for (; n; --n, a += 2) {
-        al += a[0] >> 4; ar += a[1] >> 4; ++count;
+        if (srr) al += a[0] >> 4, ar += a[1] >> 4, ++count;
         if (phase >= ONE) {
             phase -= ONE;
             int32_t l = a[0], r = a[1];
-            if (count > 1) { int32_t c = reciprocal[count]; l = scale(al, c) << 4; r = scale(ar, c) << 4; }
+            if (count > 1) l = (al / (int32_t)count) << 4, r = (ar / (int32_t)count) << 4;
             al = ar = 0; count = 0;
-            hl = (int32_t)((uint32_t)l & mask); hr = (int32_t)((uint32_t)r & mask);
+            hl = rounded(l, half, mask); hr = rounded(r, half, mask);
         }
         phase += inc;
         if (led) {
-            LOWPASS(l0, b0, hl >> 2);
-            a[0] = times4(l0);
-            if (same) a[1] = a[0];
-            else { LOWPASS(l1, b1, hr >> 2); a[1] = times4(l1); }
+            int32_t l = lowpass(f0, (hl >> 17) * 256);
+            a[0] = l;
+            if (same) f1[0] = f0[0], f1[1] = f0[1], a[1] = l;
+            else a[1] = lowpass(f1, (hr >> 17) * 256);
         } else a[0] = hl, a[1] = hr;
     }
-    if (led && same) l1 = l0, b1 = b0;
     v->phase = phase; v->count = count; v->al = al; v->ar = ar; v->l = hl; v->r = hr;
-    if (led) v->ic[0][0] = l0, v->ic[0][1] = b0, v->ic[1][0] = l1, v->ic[1][1] = b1;
-    MAC_LEAVE(mac);
+    if (led) {
+        v->ic[0][0] = f0[0]; v->ic[0][1] = f0[1]; v->ic[1][0] = f1[0]; v->ic[1][1] = f1[1];
+        MAC_LEAVE(mac);
+    }
 }
-static __attribute__((noinline)) void crunch_rate(AmigaVoice *v, int32_t *a, unsigned n, uint32_t inc, uint32_t mask) { stored(v, a, n, inc, mask, 0); }
-static __attribute__((noinline)) void crunch_rate_led(AmigaVoice *v, int32_t *a, unsigned n, uint32_t inc, uint32_t mask) { stored(v, a, n, inc, mask, 1); }
-void amiga_crunch(AmigaVoice *v, int32_t *a, unsigned n, uint32_t inc, unsigned bits, unsigned led)
+void amiga_crunch(AmigaVoice *v, int32_t *a, unsigned n, unsigned srr, unsigned bits, unsigned led)
 {
-    if (inc > ONE) inc = ONE;
-    if (inc < ONE / 16u) inc = ONE / 16u;
-    if (inc == ONE && bits >= 12 && !led) return;
-    /* The word keeps its top bits, as a sample cut to a shorter word is; silence stays silence. */
+    if (srr > 127) srr = 127;
+    if (!srr && bits >= 12 && !led) return;
     uint32_t mask = bits >= 12 ? 0xffffffffu : 0xffffffffu << (28u - bits);
-    if (inc != ONE) { if (led) crunch_rate_led(v, a, n, inc, mask); else crunch_rate(v, a, n, inc, mask); return; }
-    if (led) { crunch_led(v, a, n, mask); return; }
-    if (!n) return;
-    /* Every sample kept: only the word, one instruction a sample. */
-    for (int32_t *end = a + 2u * n; a != end; ++a) *a = (int32_t)((uint32_t)*a & mask);
-    v->held = 0;
+    if (srr || led || v->phase != ONE || v->count > 16u || !n) { crunch_stored(v, a, n, srr, mask, led); return; }
+    /* Every sample kept and stored at once: only the word, in place. */
+    const int32_t half = (int32_t)(~mask >> 1);
+    for (int32_t *end = a + 2u * n; a != end; ++a) *a = rounded(*a, half, mask);
+    v->l = a[-2]; v->r = a[-1]; v->count = 0; v->al = v->ar = 0;
 }
 
 /* A new note of `window` frames. */
 void amiga_note(AmigaVoice *v, uint32_t window)
 {
-    v->rest = v->idle = v->left = 0;
+    v->rest = v->left = v->rem = v->back = 0;
     v->phase = ONE; /* it takes its first sample at once */
     v->count = 0; v->al = v->ar = 0;
-    v->pos = v->frac = v->grain = v->played = v->since = v->got = v->fade = v->jump = v->hi = v->floor = v->mix_len = v->planned = 0;
+    v->pos = v->grain = v->played = v->since = v->got = v->fade = v->jump = v->hi = v->floor = v->mix_len = v->planned = 0;
     v->window = window;
 }
+/* Which way the reader runs in this call. When it turns, the note goes on from where the reader is, counted from
+ * the note's other end, with nothing remembered: 1 then, else 0. */
+int amiga_face(AmigaVoice *v, int back, unsigned loop)
+{
+    if (!v->window || (v->back != 0u) == (back != 0)) return 0;
+    uint32_t reader = v->grain + v->played;
+    if (loop) reader %= v->window;
+    else if (reader > v->window) reader = v->window;
+    v->back = back != 0;
+    v->grain = v->window - reader; v->played = 0;
+    v->pos = v->grain << 6; v->rem = 0; v->since = v->got = 0; v->planned = 0; v->mix_len = 0; v->jump = 0; v->fade = 0;
+    v->floor = v->hi = v->grain; v->rest = 0;
+    return 1;
+}
 
-/* One render call made `out` output samples from `src` source frames. Each cycle (
- * `cycle` output samples) the sample should be speed (Q12) frames a sample further on, whatever the pitch read.
+/* One render call made `out` output samples from `src` source frames. Each cycle (96 samples to 94 ms,
+ * grn 0-127) the sample should be spd/64 output samples a sample further on, whatever the pitch read.
  * Returns the frame, from the note's start, to restart the reader at (then call amiga_seek with the
  * frame it really started at); KEEP; or OVER at the note's end. A reader within 16 frames of the place
  * is left alone, so speed 1 at pitch 0 is plain playback. A quarter into a cycle it plans the fade
  * into the next grain, when that lies behind the reader, where the memory will hold it. */
-static int32_t stretch_step(AmigaVoice *v, unsigned out, unsigned src, uint32_t speed, uint32_t cycle, unsigned loop)
+static int32_t stretch_step(AmigaVoice *v, unsigned out, unsigned src, uint32_t advance, unsigned spd, unsigned grn, unsigned loop)
 {
     if (!v->window) return KEEP;
-    if (speed > 8192u) speed = 8192u;
-    if (cycle < 64u) cycle = 64u;
-    v->frac += speed * out; v->pos += v->frac >> 12; v->frac &= 4095u;
-    v->played += src; v->since += out; v->got += src;
-    uint32_t reader = v->grain + v->played;
+    if (grn > 127) grn = 127;
+    v->pos += advance; v->played += src; v->since += out; v->got += src;
+    uint32_t cycle = 96u + grn * grn / 4u, reader = v->grain + v->played;
     if (v->since < cycle) {
         if (!v->planned && v->since >= cycle / 4u) {
             v->planned = 1;
             uint32_t left = cycle - v->since, ahead = v->got * left / v->since; /* frames the reader has yet to read */
-            uint32_t next = v->pos + ((v->frac + speed * left) >> 12), end = reader + ahead;
+            uint32_t next = (v->pos + spd * left) >> 6, end = reader + ahead;
             if (next < v->window && next + 16u < end) {
                 uint32_t low = end > HIST ? end - HIST : 0; /* what the memory still holds when the cycle ends */
                 if (low < v->floor) low = v->floor;
@@ -355,10 +301,10 @@ static int32_t stretch_step(AmigaVoice *v, unsigned out, unsigned src, uint32_t 
         return KEEP;
     }
     v->since = v->got = 0; v->planned = 0;
-    uint32_t at = v->pos;
+    uint32_t at = v->pos >> 6;
     if (at >= v->window) {
         if (!loop) { v->window = 0; v->mix_len = 0; return OVER; }
-        at %= v->window; v->pos = at;
+        at %= v->window; v->pos = at << 6 | (v->pos & 63u);
     }
     if (v->mix_len) { /* continue the grain the fade brought in */
         at = v->mix_from + v->mix_k; v->mix_len = 0;
@@ -372,31 +318,70 @@ static int32_t stretch_step(AmigaVoice *v, unsigned out, unsigned src, uint32_t 
     return (int32_t)at;
 }
 
-/* And it notes whether the next call can rest: nothing to restart, fade or remember while the sample is read at the
- * note's own speed, one frame an output sample, and the reader is where the note should be. */
-int32_t amiga_stretch(AmigaVoice *v, unsigned out, unsigned src, uint32_t speed, uint32_t cycle, unsigned loop)
+/* And it notes whether the next calls can rest: at speed 64, a frame read for every output sample, the reader where
+ * the note should be and nothing fading, a cycle changes nothing but its own count. */
+int32_t amiga_stretch(AmigaVoice *v, unsigned out, unsigned src, unsigned spd, unsigned grn, unsigned loop)
 {
-    int32_t at = stretch_step(v, out, src, speed, cycle, loop);
+    if (spd > 127) spd = 127;
+    int32_t at = stretch_step(v, out, src, spd * out, spd, grn, loop);
     v->rest = 0;
-    if (at != KEEP || v->mix_len || v->jump || v->fade) return at;
-    if (!v->window) { v->rest = 1; v->left = 0xffffffffu; return at; }
-    if (speed != 4096u || v->frac || v->pos >= v->window) return at;
-    uint32_t reader = v->grain + v->played;
-    if (reader == v->pos || (loop && reader % v->window == v->pos)) v->rest = 1, v->left = v->window - v->pos;
+    if (!v->window) { v->rest = 2; return at; }
+    if (at != KEEP || spd != 64u || v->mix_len || v->jump || v->fade || v->got != v->since || (v->pos & 63u)) return at;
+    uint32_t place = v->pos >> 6, reader = v->grain + v->played;
+    /* A looped note's reader counts on past the end; a fade is then never planned once the note is longer than the memory. */
+    if (place < v->window && (reader == place || (loop && v->window >= HIST && reader % v->window == place)))
+        v->rest = 1, v->left = v->window - place;
     return at;
 }
-/* A render call of `out` output samples that read `src` frames: 1 when the note rests through it (then skip
- * amiga_blend, amiga_declick and amiga_stretch), else 0 with what passed at rest counted in. Before the three. */
-int amiga_rest(AmigaVoice *v, unsigned out, unsigned src, uint32_t speed)
+/* The same while RATE runs the reader at rate/full of its speed, either way: the place moves that much slower too, so
+ * RATE changes speed and pitch together as on a FLEX track and SPD stretches on top. `level`: SPD is 64 and the pitch
+ * is the sample's own, so the place is simply where the reader is, whatever stock's exact rate. */
+int32_t amiga_stretch_rate(AmigaVoice *v, unsigned out, unsigned src, unsigned spd, unsigned grn, unsigned loop, uint32_t rate, uint32_t full, int level)
 {
-    if (v->rest && out < v->left && (v->left == 0xffffffffu || (speed == 4096u && src == out))) {
-        v->idle += out;
-        if (v->left != 0xffffffffu) v->left -= out;
-        return 1;
+    if (spd > 127) spd = 127;
+    if (!full) full = 1;
+    if (rate > full) rate = full;
+    uint32_t advance = (uint32_t)src << 6, slowed = spd * rate / full;
+    if (!level) {
+        uint32_t sum = v->rem + spd * out * rate;
+        advance = sum / full; v->rem = sum % full;
     }
-    if (v->idle) { v->pos += v->idle; v->played += v->idle; v->since += v->idle; v->got += v->idle; v->idle = 0; }
+    v->rest = 0;
+    return stretch_step(v, out, src, advance, slowed, grn, loop);
+}
+/* Before the three, for a render call of `out` output samples that read `src` frames. 1: the note rests through it:
+ * skip amiga_declick, and call amiga_pass where amiga_stretch would be (amiga_blend still remembers the frames, for
+ * the fade a later turn of a knob may ask for). 2: the note is not stretched: skip all three. 0: go on as usual. */
+int amiga_rest(AmigaVoice *v, unsigned out, unsigned src, unsigned spd)
+{
+    if (v->rest == 2u) return 2;
+    if (v->rest && spd == 64u && src == out && out < v->left) return 1;
     v->rest = 0;
     return 0;
+}
+/* A call at rest counted as amiga_stretch would have counted it: the place, the frames read and the cycle. */
+void amiga_pass(AmigaVoice *v, unsigned out, unsigned grn)
+{
+    if (grn > 127) grn = 127;
+    uint32_t cycle = 96u + grn * grn / 4u;
+    v->pos += 64u * out; v->played += out; v->since += out; v->got += out; v->left -= out;
+    if (v->since >= cycle) v->since = v->got = 0, v->planned = 0;
+    else if (v->since >= cycle / 4u) v->planned = 1;
+}
+
+/* STR's PCH: the stretch as a pitch shift. The PTCH offset for a length in percent, in SRC units (256 a
+ * knob step, five steps a semitone), an octave either way at most: 200 is +12 semitones, 50 is -12. */
+int amiga_shift(unsigned percent)
+{
+    static const uint8_t semitone[13] = {100, 106, 112, 119, 126, 133, 141, 150, 159, 168, 178, 189, 200};
+    int down = percent < 100u;
+    if (!percent) return 0;
+    if (down) percent *= 2u;
+    if (percent < 100u) percent = 100u;
+    if (percent >= 200u) return down ? 0 : 15360;
+    unsigned k = 0;
+    while (semitone[k + 1] <= percent) ++k;
+    return (int)(k * 1280u + (percent - semitone[k]) * 1280u / (semitone[k + 1] - semitone[k])) - (down ? 15360 : 0);
 }
 
 /* STRT (0-0x7fff: the fraction of a `length`-frame sample) that starts the reader at frame `at`. */
@@ -420,7 +405,6 @@ uint32_t amiga_frame(uint32_t strt, uint32_t length) { return (length >> 15) * s
 #define FP_PTR 0x800062a8u     /* the track's live parameter lane this frame */
 #define CURSOR 0x80001c80u     /* the frame packer's write position */
 #define VOICE 0x800049d8u      /* stock's voice records, 168 bytes a track: +0 sounding, +8 its sample's record, +40/+44 the note's first and last frame */
-#define STOCK_RATE 0x7f00u     /* SRC word 3 as stock sees it: forward, full rate */
 #define STOCK_RTRG 0x00004000u /* SRC words 4 and 5: RTRG 0, RTIM centre */
 
 static AmigaVoice voices[8];
@@ -432,23 +416,27 @@ static uintptr_t lane(unsigned track)
     return track < 8 && (fp == at || fp == at + 384u) ? fp : 0;
 }
 
-/* Our controls, taken out of the lane (locks, LFOs and scenes applied) while stock reads a plain FLEX there. */
-typedef struct { uint16_t ptch, strt, stch; uint32_t tail; uint8_t led, str, bits; } View;
+/* Our controls, taken out of the lane (locks, LFOs and scenes applied) while stock reads a plain FLEX there: no retrig
+ * where SPD and GRN sit, and its own SETUP defaults. RATE stays in its own slot: stock reads it between our calls too,
+ * and a note runs backwards only when stock sees it there all the time (MKII, 11 November 2026: with RATE shown to
+ * stock only during START and render, a backward reader crawled). */
+typedef struct { uint16_t ptch, strt, rate; uint32_t tail; uint8_t led, srr, str, bits; } View;
 static void view_open(uintptr_t fp, View *w)
 {
-    w->ptch = U16(fp); w->strt = U16(fp + 2u); w->stch = U16(fp + 6u); w->tail = U32(fp + 8u);
-    w->led = U8(fp + 27u); w->str = U8(fp + 28u); w->bits = U8(fp + 29u);
+    w->ptch = U16(fp); w->strt = U16(fp + 2u); w->rate = U16(fp + 6u); w->tail = U32(fp + 8u);
+    w->led = U8(fp + 26u); w->srr = U8(fp + 27u); w->str = U8(fp + 28u); w->bits = U8(fp + 29u);
     if (w->str >= 2u) { /* PCH: stock reads the pitch with the stretch's shift on it, inside the knob's range */
-        int ptch = (int)w->ptch + amiga_shift(amiga_percent(w->stch >> 8));
+        unsigned spd = w->tail >> 24;
+        int ptch = (int)w->ptch + amiga_shift(spd ? 6400u / spd : 0u);
         U16(fp) = (uint16_t)(ptch < 0x0400 ? 0x0400 : ptch > 0x7c00 ? 0x7c00 : ptch);
     }
-    U16(fp + 6u) = STOCK_RATE; U32(fp + 8u) = STOCK_RTRG;
-    U8(fp + 27u) = 0; U8(fp + 28u) = 0; U8(fp + 29u) = U8(0x400d320cu + 11u); /* RATE by pitch, TSTR off, TSNS as FLEX starts */
+    U32(fp + 8u) = STOCK_RTRG;
+    U8(fp + 26u) = U8(0x400d320cu + 8u); U8(fp + 27u) = 0; U8(fp + 28u) = 0; U8(fp + 29u) = U8(0x400d320cu + 11u); /* LEN as FLEX starts, RATE by pitch, TSTR off, TSNS as FLEX starts */
 }
 static void view_close(uintptr_t fp, const View *w)
 {
-    U16(fp) = w->ptch; U16(fp + 2u) = w->strt; U16(fp + 6u) = w->stch; U32(fp + 8u) = w->tail;
-    U8(fp + 27u) = w->led; U8(fp + 28u) = w->str; U8(fp + 29u) = w->bits;
+    U16(fp) = w->ptch; U16(fp + 2u) = w->strt; U32(fp + 8u) = w->tail;
+    U8(fp + 26u) = w->led; U8(fp + 27u) = w->srr; U8(fp + 28u) = w->str; U8(fp + 29u) = w->bits;
 }
 
 int amiga_start(unsigned track, unsigned sample, unsigned flags)
@@ -472,6 +460,8 @@ int amiga_start(unsigned track, unsigned sample, unsigned flags)
         }
     }
     amiga_note(v, window);
+    v->origin = U32(voice + 40u); v->end = U32(voice + 44u);
+    v->back = w.rate < 0x4000u; /* RATE below 0: stock starts the note at its end, where a backward note counts from */
     return result;
 }
 
@@ -504,23 +494,44 @@ int amiga_render(unsigned track, unsigned ping, unsigned start, unsigned end)
     int result = FLEX_RENDER(track, ping, start, end);
     if (U8(voice)) { /* a voice is sounding */
         int32_t *pcm = 0;
-        unsigned sources = packet(track, fp, before, &pcm);
-        int stretch = w.str && !U8(fp + 25u);
-        unsigned percent = amiga_percent(w.stch >> 8); /* PCH keeps the note's own length: the shifted pitch is all it undoes */
-        uint32_t speed = w.str >= 2u ? 4096u : percent ? 409600u / percent : 0;
-        int rest = stretch && pcm && amiga_rest(v, end - start, sources, speed);
+        unsigned sources = packet(track, fp, before, &pcm), out = end - start;
+        unsigned spd = w.str >= 2u ? 64u : w.tail >> 24, grn = w.tail >> 8 & 255u; /* PCH keeps the note's own length: the shifted pitch is all it undoes */
+        unsigned rate = w.rate, loop = U8(fp + 24u) == 1; /* RATE: 0x4000 stands still, 0x7f00 is full forward, 0 full backward */
+        int stretch = w.str && !U8(fp + 25u), full = rate >= 0x7f00u, back = rate < 0x4000u;
+        /* A reader that turns round runs back over the note's own start, which a restart had moved up to itself. */
+        if (stretch && amiga_face(v, back, loop) && back) U32(voice + 40u) = U32(voice + 48u) = v->origin;
+        int rest = !stretch ? 0 : full ? amiga_rest(v, out, sources, spd) : v->rest == 2u ? 2 : 0;
         if (pcm) {
-            if (stretch && !rest) { amiga_blend(v, pcm, sources); amiga_declick(v, pcm, sources); }
-            amiga_crunch(v, pcm, sources, amiga_rate(w.tail >> 8 & 255u), w.bits, w.led);
+            if (stretch && rest != 2) amiga_blend(v, pcm, sources);
+            if (!rest) amiga_declick(v, pcm, sources);
+            amiga_crunch(v, pcm, sources, w.srr, w.bits, w.led);
         }
-        if (stretch && !rest) {
-            int32_t at = amiga_stretch(v, end - start, sources, speed, amiga_cycle(w.tail >> 24), U8(fp + 24u) == 1);
+        if (rest == 1) amiga_pass(v, out, grn);
+        else if (stretch && !rest) {
+            int32_t at = full ? amiga_stretch(v, out, sources, spd, grn, loop) :
+                amiga_stretch_rate(v, out, sources, spd, grn, loop, back ? 0x4000u - rate : rate - 0x4000u, back ? 0x4000u : 0x3f00u,
+                                   spd == 64u && U16(fp) == 0x4000u);
             if (at == OVER) U8(voice) = 0; /* stock's fetch writes silence until the next trig */
             else if (at >= 0) { /* as stock's retrig restarts a note, from our place */
-                uint32_t strt = amiga_strt(v->first + (uint32_t)at, v->length), frame = amiga_frame(strt, v->length);
-                U16(fp + 2u) = (uint16_t)strt;
-                FLEX_START(track, v->sample, v->flags);
-                amiga_seek(v, frame > v->first ? frame - v->first : 0);
+                uint32_t window = v->window, rel = back ? window - (uint32_t)at : (uint32_t)at;
+                uintptr_t record = U32(voice + 8u);
+                if (!back) {
+                    uint32_t strt = amiga_strt(v->first + rel, v->length), frame = amiga_frame(strt, v->length);
+                    U16(fp + 2u) = (uint16_t)strt;
+                    FLEX_START(track, v->sample, v->flags);
+                    amiga_seek(v, frame > v->first ? frame - v->first : 0);
+                } else if (record >> 20 == 0x100u) {
+                    /* Backwards, stock starts a note at its end, wherever STRT is. So for this one START the sample
+                     * ends at our frame; then the sample and the note have their own ends again, which a loop wraps to. */
+                    uint32_t to = U32(record + 304u), place = v->origin + rel;
+                    U32(record + 304u) = place < to ? place : to;
+                    FLEX_START(track, v->sample, v->flags);
+                    U32(record + 304u) = to;
+                    uint32_t reader = U32(voice + 68u); /* where it put the reader */
+                    U32(voice + 44u) = v->end;
+                    if (reader < v->origin || reader > v->end) reader = place;
+                    amiga_seek(v, window > reader - v->origin ? window - (reader - v->origin) : 0);
+                }
             }
         }
     }
@@ -528,7 +539,7 @@ int amiga_render(unsigned track, unsigned ping, unsigned start, unsigned end)
     return result;
 }
 
-/* SRC D, E, F and SRC SETUP D, E, F, and the words their values show as. */
+/* SRC E and F, SRC SETUP C to F, and the words their values show as. SRC D stays stock's own RATE. */
 static void number(char *out, unsigned n)
 {
     char digit[6]; unsigned k = 0;
@@ -537,22 +548,12 @@ static void number(char *out, unsigned n)
     *out = 0;
 }
 static void word(char *out, const char *text) { while ((*out++ = *text++)) {} }
-static unsigned knob(int value, unsigned top) { return value < 0 ? 0 : (unsigned)value > top ? top : (unsigned)value; }
-static void stch_text(char *out, int value)
-{
-    unsigned percent = amiga_percent(knob(value, 127));
-    if (percent) number(out, percent); else word(out, "HOLD");
-}
-static void cyl_text(char *out, int value) { number(out, amiga_cycle(knob(value, 127))); }
-static void rate_text(char *out, int value)
-{
-    if (knob(value, RATES) < RATES) number(out, amiga_hz((unsigned)value)); else word(out, "FULL");
-}
 static void str_text(char *out, int value) { word(out, value <= 0 ? "OFF" : value == 1 ? "ON" : "PCH"); }
-static void bits_text(char *out, int value) { number(out, 4u + knob(value, 12)); }
-static const struct { uint8_t slot, start, count; char name[6]; void (*text)(char *, int); } knobs[6] = {
-    {3, 32, 128, "STCH", stch_text}, {4, 60, 128, "CYL", cyl_text}, {5, RATES, RATES + 1u, "RATE", rate_text},
-    {9, 0, 2, "LED", 0}, {10, 1, 3, "STR", str_text}, {11, 4, 13, "BITS", bits_text}};
+static void bits_text(char *out, int value) { number(out, 4u + (unsigned)(value < 0 ? 0 : value > 12 ? 12 : value)); }
+#define KNOBS 6u
+static const struct { uint8_t slot, start, count; char name[6]; void (*text)(char *, int); } knobs[KNOBS] = {
+    {4, 64, 128, "SPD", 0}, {5, 64, 128, "GRN", 0},
+    {8, 0, 2, "LED", 0}, {9, 0, 128, "SRR", 0}, {10, 1, 3, "STR", str_text}, {11, 4, 13, "BITS", bits_text}};
 static uint8_t defaults[12];
 static uint8_t page[0x1ca] __attribute__((aligned(4)));
 static uint32_t page_built;
@@ -570,15 +571,15 @@ static uint32_t amiga_page(const volatile uint8_t *slot)
         for (unsigned i = 0; i < sizeof page; ++i) page[i] = U8(0x400d3176u + i); /* stock's FLEX page */
         for (unsigned i = 0; i < 5; ++i) page[0x3c + i] = (uint8_t)title[i];
         for (unsigned i = 0; i < 13; ++i) page[0x41 + i] = (uint8_t)kind[i];
-        for (unsigned k = 0; k < 6; ++k) {
+        for (unsigned k = 0; k < KNOBS; ++k) {
             unsigned s = knobs[k].slot, sw = knobs[k].count == 2;
             for (unsigned i = 0; i < 6; ++i) page[0x4e + 6 * s + i] = (uint8_t)knobs[k].name[i];
             page[0x96 + s] = knobs[k].start;
             put32(0xa2 + 4 * s, 0);
             put32(0xd2 + 4 * s, knobs[k].count);
-            /* A switch is stock's own, as AMP SETUP's SYNC: its OFF/ON words and widget (docs/module-guides/machines.md). */
+            /* A control with few values is stock's own switch: two as AMP SETUP's SYNC with its OFF/ON words, three
+             * or four as LOOP and TSTR on this page with our words (docs/module-guides/machines.md). */
             put32(0x102 + 4 * s, sw ? 0x4003c14cu : (uint32_t)(uintptr_t)knobs[k].text);
-            /* A list of three or four words is stock's own too, as LOOP and TSTR on this page: the same widget, our words. */
             put32(0x132 + 4 * s, sw ? 0x40046f10u : knobs[k].count <= 4 ? 0x40046c28u : 0); /* or stock's ordinary knob */
             put32(0x162 + 4 * s, 0);                    /* and bounded editor */
         }
@@ -586,14 +587,14 @@ static uint32_t amiga_page(const volatile uint8_t *slot)
     }
     return (uint32_t)(uintptr_t)(page + 0x38);
 }
-/* SRC SETUP on an AMIGA track shows our page, so its last three knobs read LED, STR and BITS; stock edits the bytes. */
+/* SRC SETUP on an AMIGA track shows our page, so its last four knobs read LED, SRR, STR and BITS; stock edits the bytes. */
 static uint32_t amiga_setup_page(uint32_t stock) { (void)stock; return amiga_page(0); }
 /* Called before the base copies defaults: stock's FLEX defaults, then ours. */
 static unsigned amiga_admit(const volatile uint8_t *part, unsigned track)
 {
     (void)part; (void)track;
     for (unsigned k = 0; k < 12; ++k) defaults[k] = U8(0x400d320cu + k);
-    for (unsigned k = 0; k < 6; ++k) defaults[knobs[k].slot] = knobs[k].start;
+    for (unsigned k = 0; k < KNOBS; ++k) defaults[knobs[k].slot] = knobs[k].start;
     return 1;
 }
 
