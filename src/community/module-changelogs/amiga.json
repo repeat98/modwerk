@@ -7,7 +7,7 @@
       "SPD sets how fast the note moves through the sample and GRN the cycle, so PTCH changes the pitch and SPD the length. STR can make it a pitch shift.",
       "RATE is stock's own: forwards, backwards and slower, with the stretch following both ways.",
       "On SRC SETUP: SRR lowers the storage rate, BITS the word from 16 to 4 bits, and LED adds a fixed lowpass.",
-      "Known limits: no RTRG or RTIM on an Amiga track, a sliced track is not stretched, and eight Amiga tracks at once overrun the unit (count on a few)."
+      "Known issue: USB only, no card build. No RTRG or RTIM on an Amiga track, a sliced track is not stretched, and eight Amiga tracks at once overrun the unit (count on a few)."
     ]
   }
 ]

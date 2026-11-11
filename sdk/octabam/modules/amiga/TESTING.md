@@ -95,4 +95,16 @@ Memory: 10,604 bytes of code and data and 67,308 of bss in the package, most of 
 
 ### Keep, Undo, removal, reload
 
-See the qualification run below.
+On the owner's MKII, development twin `d8fae687` (RAM-booted), 11 November 2026, package SHA-256 `e9730e24b83cf6f8865d30c8917b7a541e7f3c5155dbe6011e53757607cc5294` (`npm run module:dev -- amiga --build-only`), over the USB session:
+
+- **Install and Keep** (`try`, accepted): the inventory lists Amiga; the loader reports 20 of 20 packets accepted, none rejected, no errors, no rollback.
+- **Self-test** with it kept, transport stopped: passed, 1 of 1 modules intact, card set written (1 of 1).
+- **Playing kept**, T1 on Amiga at the defaults beside seven FLEX tracks: frame interrupt 69.2 %, longest frame 112.1 %, no render skipped, CPU 81.9 %.
+- **Removal while a track uses it**: refused (loader refusal 7, a track plays it); the unit stayed normal with the module in place.
+- **Removal** with the track back on FLEX: accepted; the inventory is empty; the same pattern on FLEX then read 63.8 % and 75.8 % CPU, as before the install.
+- **Undo**: every RAM trial of the day ended in a rollback (`try` without accept), clean whenever no track named the machine.
+- **Without the module**: after a power cycle onto the flashed base, which does not have it, a track still marked as Amiga showed and played as a FLEX track; at the next install on the twin it was an Amiga track again with its settings.
+- No crash or stall record was written during the run.
+
+`npm run device:qualify` was not run: it needs a Part whose working copy equals its saved one, and this project's bank had none; it also exercises DSP effects, which this module has none of. Not tested: a kept Amiga through a power cycle (a set kept on a RAM-booted twin is not loaded by the flashed base, and nothing was flashed), a project saved with Amiga tracks and reloaded, Part and bank switches with Amiga tracks, and the module beside other installed modules.
+
