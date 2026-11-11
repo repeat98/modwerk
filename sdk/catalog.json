@@ -69,7 +69,7 @@
     },
     {
       "id": "analog-bassdrum",
-      "version": "0.1.6-experimental",
+      "version": "0.1.7-experimental",
       "addedAt": "2026-10-01T09:19:37Z"
     },
     {
@@ -201,6 +201,11 @@
       "id": "track-solo",
       "version": "0.2.4-experimental",
       "addedAt": "2026-11-04T17:16:39Z"
+    },
+    {
+      "id": "pattern-sample-locks",
+      "version": "0.1.8-experimental",
+      "addedAt": "2026-11-10T12:00:00Z"
     }
   ]
 }

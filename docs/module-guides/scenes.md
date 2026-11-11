@@ -27,6 +27,8 @@ Read [the module guides index](README.md) first.
 
 `verify_midiscenes.py`, `verify_scenesp2.py` and the emulator scenario in `scripts/midi-scenes-emulator/` are the patterns: a fresh project, project load, eight active tracks, panel scenarios and instrumentation parity.
 
+**Drive the panel while the scene key is held.** On the Octatrack, pressing a scene key writes stock's scene-lock knob handler into every encoder slot, over whatever the open page installed ([the trap](../../sdk/octabam/docs/TRAPS.md#trap-scene-encoders)). A hook in a page's own editor never sees a turn made with a scene held, and a test that calls the editor directly still passes. Hook the scene-lock handler itself, and test the gesture with a scripted panel run (`--live-script`): hold the scene key, turn the encoder, check the lock.
+
 ## Digitakt and Digitone
 
 No scene contract is documented for these machines yet. Start from the [Digitakt guide](../../sdk/machines/digitakt/README.md), use the core's hooks, and record how you tested recall and morphing.

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/sambanks/octabam",
+  "revision": "f7d7290663135ff8bc4ea18aa45d2854a7b332c1",
+  "kind": "docs-backport",
+  "modules": [],
+  "files": [
+    {
+      "path": "docs/TRAPS.md",
+      "sourcePath": "docs/contributing/TRAPS.md",
+      "sourceSha256": "eeb998d1e482bea24d664bd6b44fce4c49d4aed3fba70c39cb0b454524c7d297",
+      "vendoredSha256": "eeb998d1e482bea24d664bd6b44fce4c49d4aed3fba70c39cb0b454524c7d297"
+    },
+    {
+      "path": "docs/FAILURE_MODES.md",
+      "sourcePath": "docs/contributing/FAILURE_MODES.md",
+      "sourceSha256": "609e7848c2bdd5cce3087601a093e493d1da840450c1c3072905cff24fb2c0e5",
+      "vendoredSha256": "609e7848c2bdd5cce3087601a093e493d1da840450c1c3072905cff24fb2c0e5"
+    }
+  ],
+  "localAdaptations": [
+    "None: both files are upstream byte for byte, replacing the copies the 54200264 record pinned. HARDWARE_MATRIX.md (one added line) and MIDI_TRACKS.md (moved upstream) stay pinned by the earlier records. CHIP.md is not taken."
+  ],
+  "review": [
+    "Stock-free scan against the original 1.40C MAIN image (MAIN sha 164f3122..., local, nothing written): TRAPS.md has no hex string of 8 bytes or more; FAILURE_MODES.md has four, and no 8-byte window of any of them occurs in MAIN. The scanner found 9 windows of planted stock bytes in an in-memory probe.",
+    "No objdump listing and no instruction encoding. The new TRAPS.md entries name stock routines and a dispatch table by address and instructions by mnemonic (lsll, lsrl); the FAILURE_MODES.md additions are soak results on a tester's unit with build hashes and counts."
+  ],
+  "limitations": [
+    "Documentation only: no code, build input or module source changes; the tool pin in sdk/upstream-tools.json moves in the same pull request but is not part of this record. Of the new entries, three reach Modwerk and are listed in docs/OCTATRACK_HARDWARE_TRAPS.md: a call into stock returns with a0, a1, d0 and d1 changed; a held scene key replaces every encoder's handler (also in docs/module-guides/scenes.md); bit 31 of the stock icon blit's column is the bottom row. The FAILURE_MODES.md soak concerns upstream's demand loader beside STEM REC: Modwerk carries the same stem-rec source with its own loader, so the entry is not evidence for or against Modwerk's packages."
+  ]
+}

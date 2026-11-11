@@ -15,8 +15,8 @@
   "presentation": {
     "label": "Tempo LED marks the pattern's 1",
     "family": "Transport",
-    "summary": "The tempo LED flashes green on the pattern's 1 while the sequencer plays; every other beat stays red.",
-    "overview": "A visual downbeat for players who can't use the click track, for example when the cue outputs feed external effects. While the sequencer plays, the tempo LED flashes green on the first beat of each pass of the pattern and red on every other beat, as stock does. It reads the sequencer's own step, so it follows the pattern length. Stopped, it is stock. Nothing to set: install it and press PLAY.",
+    "summary": "The tempo LED, on the [TEMPO] key, flashes green on the pattern's 1 while the sequencer plays; every other beat stays red.",
+    "overview": "A visual downbeat for players who can't use the click track, for example when the cue outputs feed external effects. While the sequencer plays, the tempo LED (on the [TEMPO] key) flashes green on the first beat of each pass of the pattern and red on every other beat, as stock does. It reads the sequencer's own step, so it follows the pattern length. The four LEDs by [SCALE] stay as stock, and stopped, so does the tempo LED. Nothing to set: install it and press PLAY.",
     "highlights": [
       "Green on the pattern's 1, stock red on every other beat.",
       "Reads the sequencer's master step: the green follows the pattern's length.",

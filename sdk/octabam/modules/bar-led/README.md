@@ -6,7 +6,7 @@ Version: 0.1.0-experimental · author: @nathangroth
 
 ## Overview
 
-While the sequencer plays, the tempo LED flashes **green on the pattern's 1** and red on every other beat, as stock does. It is a visual downbeat for players who can't use the click track: when the cue outputs feed external effects, the click would go with them.
+While the sequencer plays, the tempo LED (the LED on the [TEMPO] key) flashes **green on the pattern's 1** and red on every other beat, as stock does. The four LEDs by [SCALE] stay as stock. It is a visual downbeat for players who can't use the click track: when the cue outputs feed external effects, the click would go with them.
 
 It reads the sequencer's own step, so the green follows the pattern's length. Stopped, the LED is stock. There is nothing to set.
 
@@ -16,7 +16,7 @@ None. No menu row, no knob and no effect slot.
 
 ## Usage
 
-Install it, press [PLAY] and watch the tempo LED.
+Install it, press [PLAY] and watch the LED on the [TEMPO] key, not the four LEDs by [SCALE].
 
 ### Quick tutorial
 

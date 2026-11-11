@@ -11,6 +11,7 @@ import { OctatrackHub, type HubView } from './OctatrackHub'
 import { OctatrackActivity } from './OctatrackStatus'
 import { recordLoad } from '../hooks/useOctatrackLoad'
 import baseBinding from '../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
+import { MODULE_SKIP_HINT } from '../firmware-notices'
 
 vi.mock('./OctatrackDiagnostics', () => ({ OctatrackDiagnosticsSettings: () => null }))
 vi.mock('../engine/elekloader/module-set', async original => ({ ...await original<typeof import('../engine/elekloader/module-set')>(), moduleSetReview: vi.fn() }))
@@ -35,7 +36,7 @@ describe('the Octatrack page', () => {
     vi.mocked(moduleSetReview).mockReturnValue({ changes: { add: ['synth'], remove: ['miniverb'], stockOff: [], stockOn: [] }, updates: [], needsSync: true, problem: undefined })
     const render = (view: HubView, selectedId = first.id) => act(() => root.render(createElement(OctatrackHub, { ...props, view, link, inventory, sets: [first, second], selectedId, header: null, grid: createElement('p', null, 'Module grid'), card: null })))
     await render('status')
-    expect([...container.querySelectorAll('.hub-nav-item')].map(item => item.textContent)).toEqual(['Status', 'Backups', 'SamplesWIP', 'Setup'])
+    expect([...container.querySelectorAll('.hub-nav-item')].map(item => item.textContent)).toEqual(['Status', 'Backups', 'Setup'])
     expect(container.querySelector('.hub-nav-item[aria-current="page"]')?.textContent).toBe('Status')
     expect(container.querySelectorAll('.hub-view:not([hidden])')).toHaveLength(1)
     expect(container.querySelector('.hub-set.is-selected em')?.textContent).toBe('Editing · On your Octatrack')
@@ -169,5 +170,31 @@ describe('link results outside the sync dialog', () => {
     await act(() => { state = { ...ready, status: 'trial', module: 'Studio' }; listeners.forEach(listener => listener()) })
     await act(() => { state = { ...ready, notice: { tone: 'success', text: 'Synced. Studio stays on your Octatrack, also after a restart.' } }; listeners.forEach(listener => listener()) })
     expect(container.querySelector('.octatrack-activity')?.textContent).toContain('Synced. Studio stays')
+  })
+})
+
+describe('the way to the base install guide', () => {
+  it('stays in Setup: the first install from the card, later updates over USB, and the guide again before a unit connects', async () => {
+    const props = callbacks()
+    await act(() => root.render(createElement(OctatrackHub, { ...props, view: 'setup', link: unit({ status: 'stock' }), sets: [], header: null, grid: null, card: null })))
+    expect(open().textContent).toContain('Install the base once from the card to sync module sets over USB. Later base updates go over USB.')
+    if (MODULE_SKIP_HINT) expect(open().textContent).toContain(MODULE_SKIP_HINT)
+    // FUNC held from power-on opens Elektron's Startup Menu: Setup names FUNC only in the skip hint, for the MKI, and
+    // only once the startup animation has begun.
+    expect(open().textContent!.replace(MODULE_SKIP_HINT || '\u0000', '')).not.toContain('FUNC')
+    if (MODULE_SKIP_HINT.includes('FUNC')) expect(MODULE_SKIP_HINT).toContain('on an MKI: press and hold FUNC as soon as the startup animation begins')
+    await act(() => button('Install the base').click())
+    expect(props.onInstall).toHaveBeenCalledOnce()
+    await act(() => root.render(createElement(OctatrackHub, { ...props, view: 'setup', link: unit({ status: 'idle' }), sets: [], header: null, grid: null, card: null })))
+    expect(open().textContent).toContain('Installing the base for the first time? The guide takes you through it.')
+    await act(() => button('Open the install guide').click())
+    expect(props.onInstall).toHaveBeenCalledTimes(2)
+  })
+  it('does not point a browser that can use USB at the card build to sync a set', async () => {
+    const set = newConfiguration('Live', ['miniverb'])
+    await act(() => root.render(createElement(OctatrackHub, { ...callbacks(), view: 'set', link: unit({ status: 'idle' }), sets: [set], selectedId: set.id, header: null, grid: null, card: null })))
+    expect(open().querySelector('.hub-sync')?.textContent).toBe('Connect your Octatrack to sync this set.Sync to Octatrack')
+    await act(() => root.render(createElement(OctatrackHub, { ...callbacks(), view: 'set', link: null, sets: [set], selectedId: set.id, header: null, grid: null, card: null })))
+    expect(open().querySelector('.hub-sync a')?.textContent).toBe('Build card firmware')
   })
 })
