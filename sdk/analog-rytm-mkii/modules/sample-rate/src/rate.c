@@ -54,6 +54,7 @@ unsigned char sample_rate_voices;               // one bit a voice: audio.s scal
 
 static volatile unsigned char track_on[TRACKS]; // one byte a track: written from the UI and the audio interrupt
 static volatile unsigned char snap[TRACKS];     // blocks left in which FIN skips stock's glide
+static volatile unsigned char snap_map[TRACKS]; // and FIN's +0 and +63 follow the switch (set_on's)
 
 static unsigned char going_down[VOICES];        // the way each voice went last block
 static unsigned char going_any;                  // any of them going down
@@ -64,8 +65,13 @@ void sample_rate_frames(int sta, int end, unsigned frames, int *out);
 // From the gate in stock's routine that applies a sound to a track, audio side
 void sample_rate_applied(void *sound, int track)
 {
-    if (track >= 0 && track < TRACKS)
-        track_on[track] = (unsigned char)core_store_get(STORE(sample_rate_on), sound, 0);
+    unsigned char on;
+    if (track < 0 || track >= TRACKS)
+        return;
+    on = (unsigned char)core_store_get(STORE(sample_rate_on), sound, 0);
+    if (on != track_on[track])
+        snap[track] = SNAP_BLOCKS;      // a kit, sound or sound lock that switches: FIN as it comes
+    track_on[track] = on;
 }
 
 // RATE's sign changes on this voice. Going down the voice reads TURN_LAG frames
@@ -96,11 +102,13 @@ static int turn_round(int v, int t, int trig)
 // semitone. For a while after a switch FIN takes its value at once. Which value
 // follows the setting as the audio side sees it, so the order in which the new
 // setting and the new FIN arrive does not matter: on, a FIN still at rest is
-// heard as 1x, and off, a FIN still at 1x as rest. Modulation stays on top.
+// heard as 1x, and off, a FIN still at 1x as rest. Modulation stays on top. A
+// kit, sound or sound lock that switches snaps too, to FIN as it comes: there a
+// FIN at rest with RATE on is a stop the sound was saved with.
 static void snap_fin(int t)
 {
     int target = TARGET(t, IDX_FIN), was = (SMOOTH(t, IDX_FIN) + 0x8000) >> 16;
-    if (track_on[t] ? target == STOP : target >= FULL)
+    if (snap_map[t] && (track_on[t] ? target == STOP : target >= FULL))
         target = track_on[t] ? FULL : STOP;
     SMOOTH(t, IDX_FIN) = target << 16;
     EFF(t, IDX_FIN) = (short)(EFF(t, IDX_FIN) + target - was);
@@ -113,7 +121,8 @@ void sample_rate_block(void)
     int v;
     for (v = 0; v < TRACKS; v++)
         if (snap[v]) {
-            snap[v]--;
+            if (!--snap[v])
+                snap_map[v] = 0;
             snap_fin(v);
         }
     // No track with RATE on and no voice still going down: the loop below would change
@@ -233,7 +242,8 @@ static void set_on(int on)
     int fin;
     if (!pick(&p) || (int)core_store_get(STORE(sample_rate_on), p.sound, 0) == on)
         return;
-    snap[p.track] = SNAP_BLOCKS;
+    snap[p.track] = SNAP_BLOCKS;        // first: a snap that ends now cannot clear the map
+    snap_map[p.track] = 1;
     core_store_set(STORE(sample_rate_on), p.sound, 0, (unsigned)on);
     ((void (*)(uint32_t, void *))*(uint32_t *)(*(uint32_t *)p.wrapper + NOTIFY_OF_WRAPPER))(p.wrapper, &info);
     fin = *(short *)(p.sound + LIVE_SOUND_FIN);
@@ -383,10 +393,12 @@ static int cents_of(int word)
     return d >= 0 ? (d + 128) / 256 : -((-d + 128) / 256);
 }
 
+// On even words only: a lock save keeps bits 15 to 1 (0x40009216), so an odd
+// word would come back a cent off. 1/128 semitone still gives every cent its word.
 static int word_of(int cents)
 {
-    int d = cents * 256;
-    return TUN_REST + (d >= 0 ? (d + 50) / 100 : -((-d + 50) / 100));
+    int d = cents * 128;
+    return TUN_REST + 2 * (d >= 0 ? (d + 50) / 100 : -((-d + 50) / 100));
 }
 
 // From the gate at the add: the delta stock is about to add to TUN's value cur

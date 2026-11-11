@@ -48,7 +48,7 @@ Rig cases, `tools/cases/sample-rate/` on the author's private rig (not in this r
 
 | Case | SF05 | SO05 (0.1.1) |
 | --- | --- | --- |
-| sample-rate-fine-tun: nudges +3, -5, +2 on TUN | +4, -6, +2 cents: words 0x400a, 0x3ffb, 0x4000; reads +0.04, -0.02 | +4, -6 semitones (the same steps) |
+| sample-rate-fine-tun: nudges +3, -5, +2 on TUN | +4, -6, +2 cents: words 0x400a, 0x3ffa, 0x4000; reads +0.04, -0.02 | +4, -6 semitones (the same steps) |
 | sample-rate-coarse-tun: pressed +2, -1 from +0.04 | 0x420a, 0x410a (+2.04, +1.04) | 0x5800, 0x5000 (8 semitones a step) |
 | sample-rate-fine-lock: held trig, second nudge | reads +0.05, inverted | not compared |
 | sample-rate-switch-snap: FIN read right after each tap | 0x7f00, 0x4000: pass | 0x782e, 0x40b2: fail (mid-glide) |
