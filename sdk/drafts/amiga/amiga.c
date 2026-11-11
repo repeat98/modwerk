@@ -455,7 +455,8 @@ static uint32_t amiga_page(const volatile uint8_t *slot)
             put32(0xd2 + 4 * s, knobs[k].count);
             /* A switch is stock's own, as AMP SETUP's SYNC: its OFF/ON words and widget (docs/module-guides/machines.md). */
             put32(0x102 + 4 * s, sw ? 0x4003c14cu : (uint32_t)(uintptr_t)knobs[k].text);
-            put32(0x132 + 4 * s, sw ? 0x40046f10u : 0); /* or stock's ordinary knob */
+            /* A list of three or four words is stock's own too, as LOOP and TSTR on this page: the same widget, our words. */
+            put32(0x132 + 4 * s, sw ? 0x40046f10u : knobs[k].count <= 4 ? 0x40046c28u : 0); /* or stock's ordinary knob */
             put32(0x162 + 4 * s, 0);                    /* and bounded editor */
         }
         page_built = BUILT;
