@@ -13,18 +13,19 @@ vi.mock('../community/octatrack-diagnostics', () => ({
   subscribeDiagnosticPreference: (listener: () => void) => { mocked.listeners.add(listener); return () => { mocked.listeners.delete(listener) } },
   changeDiagnosticSharing: mocked.share,
 }))
-vi.mock('../community/usage', () => ({ browserRequestsPrivacy: () => mocked.privacy }))
+vi.mock('../community/usage', () => ({ browserRequestsPrivacy: () => mocked.privacy, countDiagnosticsInvitation: vi.fn() }))
+import { resetReask } from '../community/diagnostics-reask'
 let root: Root, container: HTMLDivElement, previous: HTMLButtonElement
 let linkState: LinkState
 const linkListeners = new Set<() => void>()
 const identity = { canSubmit: true, base: 'a'.repeat(64), model: 'OCTATRACK MKII' }
-const link = { getState: () => linkState, subscribe: (listener: () => void) => { linkListeners.add(listener); return () => { linkListeners.delete(listener) } }, start: () => () => {} } as unknown as OctatrackLink
+const link = { getState: () => linkState, subscribeDiagnostics: () => () => {}, subscribe: (listener: () => void) => { linkListeners.add(listener); return () => { linkListeners.delete(listener) } }, start: () => () => {} } as unknown as OctatrackLink
 const flush = () => new Promise(resolve => setTimeout(resolve, 0))
 beforeEach(() => {
   vi.clearAllMocks(); vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true); mocked.privacy = false
   linkState = { status: 'ready', identity }; linkListeners.clear()
   mocked.state = { accountId: 'member', available: true, enabled: false, ready: true, busy: false, error: '', notice: '', hasChoice: false, saved: false, lastSent: null }
-  mocked.share.mockResolvedValue(true); localStorage.clear()
+  mocked.share.mockResolvedValue(true); localStorage.clear(); resetReask()
   HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', '') }
   HTMLDialogElement.prototype.close = function () { this.removeAttribute('open') }
   previous = document.createElement('button'); document.body.append(previous); previous.focus()

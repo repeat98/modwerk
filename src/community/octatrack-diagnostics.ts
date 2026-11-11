@@ -4,7 +4,8 @@ import type { Inventory } from '../config/inventory'
 import type { OctatrackLink, LinkDiagnostic } from '../engine/elekloader/octatrack-link'
 import type { LoadReading } from '../engine/elekloader/upload-wire'
 import { browserRequestsPrivacy, countOctatrackAction } from './usage'
-import { OCTATRACK_DIAGNOSTICS_VERSION, DIAGNOSTIC_USB_EVENTS, DEVICE_LOG_INCIDENTS, DEVICE_LOG_LOADS, type SiteDiagnosticEvent, type DiagnosticConsent, type DiagnosticLive, type OctatrackDiagnostic } from './octatrack-diagnostics-contract'
+import { diagnosticClient } from './diagnostic-client'
+import { OCTATRACK_DIAGNOSTICS_VERSION, DIAGNOSTIC_USB_EVENTS, type PreLinkFailure, DEVICE_LOG_INCIDENTS, DEVICE_LOG_LOADS, type SiteDiagnosticEvent, type DiagnosticConsent, type DiagnosticLive, type OctatrackDiagnostic } from './octatrack-diagnostics-contract'
 import { subscribeSiteDiagnosticEvents, collectBrowserDiagnosticEvents } from './site-diagnostic-events'
 
 export interface DiagnosticPreference { accountId: string | null; available: boolean; enabled: boolean; ready: boolean; busy: boolean; error: string; notice: string; hasChoice: boolean; saved: boolean; lastSent: string | null }
@@ -40,6 +41,17 @@ export async function changeDiagnosticSharing(enabled: boolean) {
   } finally { if (preferenceRevision === revision) publish({busy:false}) }
   return false
 }
+
+/** The running collector's way to record a failure before a link exists; nothing while none runs or without consent. */
+let linkFailures: ((failure: PreLinkFailure) => void) | undefined
+/** Why connecting to the Octatrack failed before a link existed, as a fixed category, for a member who shares
+ * diagnostics; otherwise nothing happens. The collector already records a device that couldn't be opened
+ * (`open-failed`) or claimed (`claim-failed`) from the link's state; call this where the reason is known first:
+ * `no-webusb` when the member asks to connect in a browser without WebUSB, `no-device` when the device picker closes
+ * without an Octatrack, `permission-denied` when opening it is refused (a SecurityError or NotAllowedError) and
+ * `link-timeout` when the unit doesn't answer in time. The link (octatrack-link.ts) can report the same as its own
+ * diagnostic, `{event: 'link_failed', failure}`. Each category is recorded at most once in ten minutes. */
+export function reportLinkFailure(failure: PreLinkFailure) { try { linkFailures?.(failure) } catch { /* Diagnostics never affect USB work. */ } }
 
 /** One collector per authenticated member page. No persistent trace queue, arbitrary errors, extra device identifiers,
  * project references or diagnostic reads before consent. Unsent events are dropped; USB work never awaits the network. */
@@ -81,7 +93,7 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
     if (!allowed() || event.event === 'health' && sending) return
     const usbEvent=(DIAGNOSTIC_USB_EVENTS as readonly string[]).includes(event.event) && event.event !== 'device_log'
     const modules = usbEvent ? inventory()?.moduleIds.flatMap(id => { const module = MODULES.find(item => item.id === id); return module ? [{id:module.id,catalogVersion:module.version}] : [] }) : undefined
-    const data = {id,...event,...(modules ? {modules} : {})} as OctatrackDiagnostic
+    const data = {id,...event,...(modules ? {modules} : {}),...(event.event !== 'device_log' ? {client:diagnosticClient()} : {})} as OctatrackDiagnostic
     if (queue.length >= 16) queue.shift()
     if (stored) onStored.set(data, stored)
     queue.push(data); void drain()
@@ -111,12 +123,31 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
   }
   const unsubscribe = link?.subscribeDiagnostics(event => {
     if (!current()) return
+    if (event.event === 'link_failed') { if (event.failure) linkFailed(event.failure); return } // the link's own report of the same
     if (event.event === 'sync_started') { activeSync = true; countOctatrackAction('usb_sync_started') }
     else if (activeSync && ['kept','undone','sync_failed','disconnected'].includes(event.event)) {
       countOctatrackAction(event.event === 'kept' ? 'usb_sync_kept' : event.event === 'undone' ? 'usb_sync_undone' : 'usb_sync_failed'); activeSync = false
     }
     if (['sync_started','kept','undone','sync_failed','disconnected'].includes(event.event)) flushLoad()
     void send(event)
+  })
+  /* Failures before a link exists: one per category in ten minutes. `permission-denied` reported for an attempt
+   * stands for the `open-failed` the link's state then shows. */
+  const failedAt = new Map<PreLinkFailure, number>()
+  const linkFailed = (failure: PreLinkFailure) => {
+    if (!current() || Date.now() - (failedAt.get(failure) ?? -Infinity) < 600_000) return
+    failedAt.set(failure, Date.now())
+    if (failure === 'permission-denied') failedAt.set('open-failed', Date.now())
+    send({event:'link_failed',phase:link?.getState().status ?? 'unsupported',failure})
+  }
+  linkFailures = linkFailed
+  let lastStatus = link?.getState().status
+  const unwatch = link?.subscribe(() => {
+    const state = link.getState(), before = lastStatus
+    lastStatus = state.status
+    if (before !== 'connecting' || state.status === 'connecting') return
+    if (state.status === 'busy') linkFailed('claim-failed')
+    else if (state.status === 'idle' && state.notice?.tone === 'error') linkFailed('open-failed')
   })
   const unit = () => { const state = link!.getState(); return {phase:state.status,...(state.identity ? {base:state.identity.base} : {}),...(state.active ? {active:state.active} : {})} }
   async function health(signal: AbortSignal) {
@@ -214,7 +245,7 @@ export function collectOctatrackDiagnostics(memberId: string, link: OctatrackLin
   globalThis.document?.addEventListener('visibilitychange', visible)
   // shortcut: a report still sending when the tab closes holds the readings back, so they are lost; a queue on disk would keep them.
   globalThis.addEventListener?.('pagehide', flushLoad)
-  return () => { stopped = true; requests.abort(); clearInterval(timer); globalThis.document?.removeEventListener('visibilitychange', visible); globalThis.removeEventListener?.('pagehide', flushLoad); unsubscribe?.(); stopPreference(); siteCleanup?.(); if (generation === currentGeneration) { transfer?.abort(); healthRead?.abort(); owner = null; accountApi = undefined; publish({accountId:null,available:false,enabled:false,ready:false}) } }
+  return () => { stopped = true; unwatch?.(); if (linkFailures === linkFailed) linkFailures = undefined; requests.abort(); clearInterval(timer); globalThis.document?.removeEventListener('visibilitychange', visible); globalThis.removeEventListener?.('pagehide', flushLoad); unsubscribe?.(); stopPreference(); siteCleanup?.(); if (generation === currentGeneration) { transfer?.abort(); healthRead?.abort(); owner = null; accountApi = undefined; publish({accountId:null,available:false,enabled:false,ready:false}) } }
 }
 
 const chunks = <T>(items: T[], size: number) => Array.from({ length: Math.ceil(items.length / size) }, (_, i) => items.slice(i * size, (i + 1) * size))

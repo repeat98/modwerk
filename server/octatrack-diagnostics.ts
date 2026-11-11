@@ -2,7 +2,7 @@ import type { Database, User } from './platform'
 import { needMember, sameDigest, throttle } from './auth'
 import { boundedBody, digest, HttpError, response } from './security'
 import { MODULES } from '../src/catalog/modules'
-import { DEVICE_INCIDENTS, DEVICE_LOG_INCIDENTS, DEVICE_LOG_LOADS, DIAGNOSTIC_CONSENT_DAYS, DIAGNOSTIC_BUILD_ERRORS, DIAGNOSTIC_BUILD_KINDS, DIAGNOSTIC_BUILD_PHASES, DIAGNOSTIC_ERROR_KINDS, DIAGNOSTIC_ERRORS, DIAGNOSTIC_EVENTS, DIAGNOSTIC_PHASES, DIAGNOSTIC_RESULTS, DIAGNOSTIC_RETENTION_DAYS, DIAGNOSTIC_SITE_AREAS, DIAGNOSTIC_UNRESPONSIVE, DIAGNOSTIC_USB_ERRORS, DIAGNOSTIC_USB_PHASES, OCTATRACK_DIAGNOSTICS_VERSION, type DiagnosticConsent, type OctatrackDiagnostic } from '../src/community/octatrack-diagnostics-contract'
+import { DEVICE_INCIDENTS, DEVICE_LOG_INCIDENTS, DEVICE_LOG_LOADS, DIAGNOSTIC_CONSENT_DAYS, DIAGNOSTIC_BUILD_ERRORS, DIAGNOSTIC_BUILD_KINDS, DIAGNOSTIC_BUILD_PHASES, DIAGNOSTIC_ERROR_KINDS, DIAGNOSTIC_ERRORS, DIAGNOSTIC_EVENTS, DIAGNOSTIC_PHASES, DIAGNOSTIC_RESULTS, DIAGNOSTIC_RETENTION_DAYS, DIAGNOSTIC_SITE_AREAS, DIAGNOSTIC_UNRESPONSIVE, DIAGNOSTIC_USB_ERRORS, DIAGNOSTIC_USB_PHASES, DIAGNOSTIC_BROWSERS, DIAGNOSTIC_SYSTEMS, PRE_LINK_FAILURES, OCTATRACK_DIAGNOSTICS_VERSION, type DiagnosticConsent, type OctatrackDiagnostic } from '../src/community/octatrack-diagnostics-contract'
 
 const since = (now: Date, days: number) => new Date(now.getTime() - days * 86400000).toISOString()
 const hash = (v: unknown) => typeof v === 'string' && /^[a-f0-9]{64}$/.test(v)
@@ -47,6 +47,11 @@ function deviceLog(v: unknown) {
     && v.loads.length + v.incidents.length + Number('crash' in v) + Number('stall' in v) > 0 && (!('crash' in v) || deviceCrash(v.crash)) && (!('stall' in v) || deviceStall(v.stall))
     && v.loads.length <= DEVICE_LOG_LOADS && v.loads.every(deviceLoad) && v.incidents.length <= DEVICE_LOG_INCIDENTS && v.incidents.every(deviceIncident)
 }
+/** A browser and OS family, and at most the browser's main version: never more of the user agent. */
+function client(v: unknown) {
+  return object(v) && fields(v, ['browser','major','os']) && DIAGNOSTIC_BROWSERS.some(browser => browser === v.browser) && DIAGNOSTIC_SYSTEMS.some(os => os === v.os)
+    && (!('major' in v) || typeof v.major === 'number' && Number.isInteger(v.major) && v.major >= 1 && v.major <= 999)
+}
 /** Which of the newer fields each USB event may carry; any other USB event carries none of them. */
 const USB_EXTRAS: Record<string, { allowed: string[]; required: string[] }> = {
   load: { allowed: ['live'], required: ['live'] },
@@ -55,7 +60,8 @@ const USB_EXTRAS: Record<string, { allowed: string[]; required: string[] }> = {
 }
 export function validateDiagnostic(value: unknown): OctatrackDiagnostic {
   const readingKeys = ['state','failed','modules','dsp','intact','ran','cpu','tracks1to4','tracks5to8','frameGap','saved','savedCount','live','culprit','refusal']
-  const valid = object(value) && fields(value, ['id','event','phase','base','active','error','result','refusal','reading','modules','packages','buildKind','live','reason','log','area','kind'])
+  const valid = object(value) && fields(value, ['id','event','phase','base','active','error','result','refusal','reading','modules','packages','buildKind','live','reason','log','area','kind','client','failure'])
+    && (!('client' in value) || value.event !== 'device_log' && client(value.client)) && (!('failure' in value) || value.event === 'link_failed')
     && (!('live' in value) || live(value.live)) && (!('reason' in value) || DIAGNOSTIC_UNRESPONSIVE.some(reason => reason === value.reason))
     && (!('log' in value) || deviceLog(value.log))
     && typeof value.id === 'string' && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(value.id)
@@ -68,11 +74,14 @@ export function validateDiagnostic(value: unknown): OctatrackDiagnostic {
       && MODULES.some(known => known.id === module.id) && typeof module.catalogVersion === 'string' && /^[0-9][0-9A-Za-z.+-]{0,63}$/.test(module.catalogVersion)) && new Set(value.modules.map(module => module.id)).size === value.modules.length)
     && (!('packages' in value) || Array.isArray(value.packages) && value.packages.length <= 64 && value.packages.every(pack => object(pack) && Object.keys(pack).sort().join(',') === 'bytes,sha256' && hash(pack.sha256) && uint(pack.bytes)))
   const extras = valid ? USB_EXTRAS[value.event as string] ?? { allowed: [], required: [] } : undefined
-  const eventFields = valid && (value.event === 'browser_error' || value.event === 'unhandled_rejection'
-    ? Object.keys(value).sort().join(',') === 'area,event,id,kind,phase' && value.phase === 'browser'
+  const keys = valid ? Object.keys(value).filter(key => key !== 'client').sort().join(',') : ''
+  const eventFields = valid && (value.event === 'link_failed'
+    ? keys === 'event,failure,id,phase' && DIAGNOSTIC_USB_PHASES.some(phase => phase === value.phase) && PRE_LINK_FAILURES.some(failure => failure === value.failure)
+    : value.event === 'browser_error' || value.event === 'unhandled_rejection'
+    ? keys === 'area,event,id,kind,phase' && value.phase === 'browser'
       && DIAGNOSTIC_SITE_AREAS.some(area => area === value.area) && DIAGNOSTIC_ERROR_KINDS.some(kind => kind === value.kind)
     : value.event === 'build_failed'
-      ? Object.keys(value).sort().join(',') === 'buildKind,error,event,id,phase' && DIAGNOSTIC_BUILD_KINDS.some(kind => kind === value.buildKind)
+      ? keys === 'buildKind,error,event,id,phase' && DIAGNOSTIC_BUILD_KINDS.some(kind => kind === value.buildKind)
         && DIAGNOSTIC_BUILD_PHASES.some(phase => phase === value.phase) && DIAGNOSTIC_BUILD_ERRORS.some(error => error === value.error)
       : !('buildKind' in value) && !('area' in value) && DIAGNOSTIC_USB_PHASES.some(phase => phase === value.phase)
         && (!('kind' in value) || value.event === 'sync_failed' && value.error === 'unknown' && DIAGNOSTIC_ERROR_KINDS.some(kind => kind === value.kind))
@@ -93,6 +102,7 @@ export async function cleanupOctatrackDiagnostics(db: Database, now = new Date()
   await db.batch([
     db.prepare('DELETE FROM octatrack_diagnostic_events WHERE created_at<? OR user_id IN (SELECT user_id FROM octatrack_diagnostic_consent WHERE enabled=0 OR changed_at<=?) OR user_id IN (SELECT id FROM users WHERE suspended=1 OR email_verified=0)').bind(since(now, DIAGNOSTIC_RETENTION_DAYS), since(now, DIAGNOSTIC_CONSENT_DAYS)),
     db.prepare('DELETE FROM octatrack_beta_daily WHERE day<=?').bind(since(now, DIAGNOSTIC_RETENTION_DAYS).slice(0,10)),
+    db.prepare('DELETE FROM octatrack_count_daily WHERE day<=?').bind(since(now, DIAGNOSTIC_RETENTION_DAYS).slice(0,10)),
   ])
 }
 /** The owner's agents read diagnostics with this key (`npm run diagnostics:pull`); it opens no other route. */
@@ -111,7 +121,9 @@ export async function octatrackDiagnosticRoutes(request: Request, db: Database, 
     const order = after === null ? 'DESC,e.rowid DESC LIMIT 100' : 'ASC,e.rowid ASC LIMIT 500'
     const rows = (await db.prepare('SELECT e.event_id AS eventId,e.created_at AS createdAt,e.data_json,u.username FROM octatrack_diagnostic_events e JOIN users u ON u.id=e.user_id JOIN octatrack_diagnostic_consent c ON c.user_id=e.user_id WHERE e.created_at>=? AND e.created_at>=? AND c.enabled=1 AND c.changed_at>? AND c.changed_at<=? AND u.suspended=0 AND u.email_verified=1 ORDER BY e.created_at '+order).bind(cutoff,after??cutoff,since(now,DIAGNOSTIC_CONSENT_DAYS),now.toISOString()).all<{ data_json: string }>()).results
     const counts = (await db.prepare('SELECT day,event,count FROM octatrack_beta_daily WHERE day>? ORDER BY day DESC,event').bind(cutoff.slice(0,10)).all()).results
-    return response({ events: rows.map(({data_json,...row}) => ({...row,data:JSON.parse(data_json)})), counts })
+    // The base install guide's steps and the invitation's answers (usage.ts), identifier-free like `counts`.
+    const steps = (await db.prepare('SELECT day,event,detail,count FROM octatrack_count_daily WHERE day>? ORDER BY day DESC,event,detail').bind(cutoff.slice(0,10)).all()).results
+    return response({ events: rows.map(({data_json,...row}) => ({...row,data:JSON.parse(data_json)})), counts, steps })
   }
   if (!['/api/octatrack/diagnostics','/api/octatrack/diagnostics/consent'].includes(path)) return null
   const member = needMember(user)
