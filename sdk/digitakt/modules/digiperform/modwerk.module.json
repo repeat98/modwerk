@@ -242,7 +242,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "0.1.2-experimental",
+        "moduleVersion": "0.1.3-experimental",
         "imageSha256": "d7e22d37174e7f276f7805371a4f207c4d702631d179c8f51a89293709ede9c0",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
@@ -258,7 +258,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "0.1.2-experimental",
+        "moduleVersion": "0.1.3-experimental",
         "imageSha256": "d7e22d37174e7f276f7805371a4f207c4d702631d179c8f51a89293709ede9c0",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
@@ -274,7 +274,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "0.1.2-experimental",
+        "moduleVersion": "0.1.3-experimental",
         "imageSha256": "d7e22d37174e7f276f7805371a4f207c4d702631d179c8f51a89293709ede9c0",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
@@ -290,7 +290,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "0.1.2-experimental",
+        "moduleVersion": "0.1.3-experimental",
         "imageSha256": "d7e22d37174e7f276f7805371a4f207c4d702631d179c8f51a89293709ede9c0",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
@@ -306,7 +306,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "0.1.2-experimental",
+        "moduleVersion": "0.1.3-experimental",
         "imageSha256": "d7e22d37174e7f276f7805371a4f207c4d702631d179c8f51a89293709ede9c0",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }

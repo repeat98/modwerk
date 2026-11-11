@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "machine": "digitakt",
   "moduleId": "digiperform",
-  "moduleVersion": "0.1.2-experimental",
+  "moduleVersion": "0.1.3-experimental",
   "capturedAt": "2026-11-02",
   "firmware": "1.54",
   "imageSha256": "d7e22d37174e7f276f7805371a4f207c4d702631d179c8f51a89293709ede9c0",
