@@ -20,7 +20,7 @@
     "label": "FINE TUNE + SAMPLE RATE",
     "family": "Sample playback",
     "summary": "TUN turns in cents, press and turn for semitones; FIN's knob can become RATE, pure sample speed down to a stop and into reverse. Tap the knob to switch.",
-    "overview": "Fine Tune + Sample Rate gives a sample's pitch and speed finer control on the SAMPLE page. TUN turns 1 cent a step, faster as you spin it; press and turn for whole semitones, which keep the cents. The value reads +3.07, and whole semitones read as stock. The cents are kept in TUN itself, so a saved sound plays the same pitch on stock OS, which only shows the whole number. RATE is a pure speed control: switch it on for a sound with SMP RATE in SOUND SETTINGS, or tap FIN's knob, and FIN's knob reads RATE, +63 to -64: +63 plays at normal speed, 0 stops, -64 plays backward at normal speed, in a straight line between them, as the Octatrack's RATE with its setting on PTCH. Stock's pitch stops at a quarter of the speed. A trig below 0 starts from END. The setting saves with the sound and is off by default.",
+    "overview": "Fine Tune + Sample Rate gives a sample's pitch and speed finer control on the SAMPLE page. TUN turns 1 cent a step, faster as you spin it; press and turn for whole semitones, which keep the cents. The value reads with two places, as LFO depth does: +3.07, +3.00. The cents are kept in TUN itself, so a saved sound plays the same pitch on stock OS, which only shows the whole number. RATE is a pure speed control: switch it on for a sound with SMP RATE in SOUND SETTINGS, or tap FIN's knob, and FIN's knob reads RATE, +63 to -64: +63 plays at normal speed, 0 stops, -64 plays backward at normal speed, in a straight line between them, as the Octatrack's RATE with its setting on PTCH. Stock's pitch stops at a quarter of the speed. A trig below 0 starts from END. The setting saves with the sound and is off by default.",
     "highlights": [
       "Tune a sample in cents: turn TUN, press and turn for semitones.",
       "Fine tuning saves in the sound itself and plays the same on stock OS.",
@@ -54,7 +54,7 @@
     {
       "name": "TUN",
       "default": 0,
-      "doc": "SAMPLE page, encoder A. -24.00 to +24.00 semitones. A plain turn moves 1 cent a step, with acceleration; press and turn moves whole semitones and keeps the cents. FUNC + turn jumps -24, 0, +24 as stock. Held trigs' locks take cents the same way. Whole values read as stock (+3), others with two places (+3.07).",
+      "doc": "SAMPLE page, encoder A. -24.00 to +24.00 semitones. A plain turn moves 1 cent a step, with acceleration; press and turn moves whole semitones and keeps the cents. FUNC + turn jumps -24, 0, +24 as stock. Held trigs' locks take cents the same way. The value reads with two places, as LFO depth: +3.07, +3.00, and (0) at zero.",
       "labels": null
     },
     {

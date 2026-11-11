@@ -409,20 +409,25 @@ int sample_rate_tun_delta(int cur, int delta)
     return word_of(cents_of(cur) + delta) - cur;
 }
 
-// TUN's value text: whole semitones as stock, else two places, "+3.07"
+// TUN's value text, as stock's LFO depth (0x400fbbda, "%c%d.%02d"): a sign and
+// two places, "+3.00", "-0.02", and "(0)" at zero
 static int tun_text(struct core_text *t)
 {
     int c = cents_of(t->value), a = c < 0 ? -c : c;
     char *b = t->buf;
-    if (a % 100 == 0)
-        return CORE_TEXT_PASS;
-    *b++ = c < 0 ? '-' : '+';
-    if (a >= 1000)
-        *b++ = (char)('0' + a / 1000);
-    *b++ = (char)('0' + a / 100 % 10);
-    *b++ = '.';
-    *b++ = (char)('0' + a / 10 % 10);
-    *b++ = (char)('0' + a % 10);
+    if (!c) {
+        *b++ = '(';
+        *b++ = '0';
+        *b++ = ')';
+    } else {
+        *b++ = c < 0 ? '-' : '+';
+        if (a >= 1000)
+            *b++ = (char)('0' + a / 1000);
+        *b++ = (char)('0' + a / 100 % 10);
+        *b++ = '.';
+        *b++ = (char)('0' + a / 10 % 10);
+        *b++ = (char)('0' + a % 10);
+    }
     *b = 0;
     return CORE_TEXT_DONE;
 }
