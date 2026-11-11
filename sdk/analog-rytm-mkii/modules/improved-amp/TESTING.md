@@ -20,9 +20,10 @@ Run hands off by the author's automated test rig, as reported in the rig's run r
 are copied from it. The link presses keys, turns knobs and reads the screen; USB MIDI sends CCs and notes
 on the auto channel; the BD voice's USB audio channel (OVERBRIDGE mode) is recorded at 48 kHz. Scratch
 project, kit 1, pattern A01, 120.0 BPM, the BD track playing a sample at 1043.5 Hz, unless said. 25
-cases; each passed in its last run on the unit. Measures, in ms: `len20` is from the hit's onset to where
-it stays 20 dB under its peak; a dip is the voice falling 30 dB under the peak and coming back, from
-within 10 dB of the peak, inside 20 ms on each side: a fade before a trig while the voice still rings.
+cases; each passed in its last run on the unit. Measures, in ms: `len20` is from the first hit's onset
+to where it falls 20 dB under the take's peak; a dip is the voice falling 30 dB under the peak for 1 ms
+or more inside a hit and coming back, from within 10 dB of the peak and inside 20 ms on each side: a
+fade before a trig while the voice still rings.
 
 Screens:
 
@@ -46,11 +47,11 @@ Sound, one MIDI note a take, ATK 0 and DEC 55 unless set:
 | `len20` by DEC | 10.0 at 55, 102.5 at 89, 2941.5 at 127 (INF, a 3 s take) |
 | ATK 45 | attack 15.5 (1.0 at ATK 0), the peak -12.43 dBFS against -12.48 |
 | `len20` by HLD | 10.5 at 0, 20.0 at 15, 61.0 at 31, 134.5 at 42, 307.5 at 57 |
-| HLD 42 | 134.5 for a 50 ms and for a 500 ms note, at 90 BPM, and at track speed 3/2x: a time, not steps or the note |
+| HLD 42 | 134.5 for a short and for a longer note (the case plays 100 and 400 ms; the record's table says 50 and 500), at 90 BPM, and at track speed 3/2x: a time, not steps or the note |
 | HLD AUTO | 109.0 for a 100 ms note, 508.0 for a 500 ms note: the note's length |
 
 OVR, the hit's peak against the same hit at OVR 0, in dB (-12.43 dBFS at 0 and -3.79 at 127 on both
-images; `len20` 134.5 to 135.0 at every value):
+images; on IL02 an earlier run read `len20` 134.5 to 135.0 at eleven values from 0 to 127):
 
 | OVR | 1 | 2 | 8 | 12 | 16 | 32 | 48 | 64 | 96 | 112 | 126 | 127 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -88,7 +89,7 @@ ENV RESET's fade. HLD 57 holds each hit into the next, so a fade shows as a dip:
 | Trigs on 1, 3, 5, 7, step 3 late and step 5 early by 5/384 | 3 dips a time round, 197.5 and 276.5 apart | |
 | A trig on each of steps 1 to 15, swing 50 %, then 66 % | 14 dips: 124.5 to 125.5 apart, then 85.5 and 164.5 in turn | |
 | A trig on every second step; five play, the track is muted by CC 94 for 1.5 s, five more play | 8 dips, 2 hits; the hit before the mute 1307.5 long, as in a take stopped there instead | 0 dips, 2 hits; 1307.5 |
-| ENV RESET edited in SOUND SETTINGS while the pattern plays: OFF, AMP, OFF | 0 dips, 8 in the 2 s after AMP, 0 | |
+| ENV RESET edited in SOUND SETTINGS while the pattern plays: OFF, AMP, OFF | 0 dips, 8 in 2 s from 0.5 s after the edit, 0 | |
 
 Sound locks, trigs on steps 1, 3 and 5 (the first after PLAY is never faded for): the kit's sound at AMP
 2 dips; step 3 locked to a pool sound at OFF 1; the kit's sound at OFF 0; step 3 locked to a pool sound
@@ -98,27 +99,30 @@ trig is judged by its own sound, and the kit's sound's trig after it by the kit'
 The first eleven cases, run again against their kept references: every hit's length within 1 ms and
 its peak within 0.03 dB of the first run's, the dips equal.
 
-Seen on the way, as the rig's record has it:
+Seen on the way, as the rig's record has it (the five takes' reading and the kit's BD lengths are
+from the kept takes themselves, not from the record):
 
 - The first note after loading an image to RAM came out near silent in some boots (about -62 dBFS
   against -12.4, no 1 kHz tone on the BD voice or on MAIN); the second and third notes were at full level
-  in all of them. IL02: 10 of 18 boots with the note about a second after the unit answered again, 0 of
-  3 with 3 s before the note. IS01, without the module: 1 of 7. So it happens without the module; whether
+  in all of them. IL02: 10 of 18 boots without a wait before the first note, 0 of 3 with 3 s before
+  it. IS01, without the module: 1 of 7. So it happens without the module; whether
   the module makes it more likely, whether the wait cures it and whether a boot from flash shows it are
   not decided. In five kept takes the quiet note's level moves at the trig and again 126 ms later, where
   HLD 42 ends: the amp envelope ran on time and the sample did not sound.
-- Two whole runs did not pass: one failed the DEC and ATK sound case on a late audio stream (next
-  line), one stopped at a screen read that got no reply. The run after each passed.
-- The rig's audio stream now and then begins one 85.3 ms block late; onsets then read about 142 ms
-  instead of 58 ms on either image, with lengths, peaks and dips unchanged.
+- Not every run passed. Runs failed on screen references kept at another tempo (139.0 against 135.7
+  BPM), on a case's own fault (the SOUND SETTINGS row it started from), on a late audio stream (next
+  line) and once on a screen read that got no reply; one was stopped by a touch of the panel, as the
+  rig is meant to. Each case's last run passed.
+- In two whole runs the rig's audio stream began one 85.3 ms block late: onsets read about 142 ms
+  instead of 58 ms, with lengths, peaks and dips unchanged. The recorder was corrected for it.
 - Kit values meet the new curves at once: the kit's BD, untouched, read `len20` 642.5 on IS01 and 9.5 to
   10 on IL02 (one boot each), as "Changes to stock flows" in the README says.
 
 Not run on a unit in this version:
 
 - This package's own image, IA08 (this module on the plain base, no link), and a boot from flash.
-- A power cycle, a project save and load, a sound stored to the Sound pool or the +Drive and loaded again
-  (a kit save and reload was run, above).
+- A power cycle, a project save and load, a sound stored to the +Drive and loaded again (a kit save and
+  reload was run, and pool sounds stored by hand played through sound locks, above).
 - Pads: a pad hit, and a pad roll let go just before its next hit (the tail is expected to be cut: README).
 - An external MIDI clock: a late tick, and a retrig series' end there. Read in the code only.
 - A pattern change inside a fade (read in the code in part), and probability conditions.
