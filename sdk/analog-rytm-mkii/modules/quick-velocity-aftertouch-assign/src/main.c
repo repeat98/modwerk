@@ -29,7 +29,8 @@
 // on the release. SAMPLER released with no turn opens the recorder as stock
 // does; after a turn its release is the module's. LFO released with no turn
 // shows the LFO page as stock does (on the release, not the press); after a
-// turn the page stays. During one key's hold the other two do nothing. FUNC + FIX
+// turn the page stays; on the LFO page itself the key is stock's. During one
+// key's hold the other two do nothing. FUNC + FIX
 // (stock's FIXED VELOCITY), FUNC + LFO, FIX and SAMPLER on the FX track, and
 // a performance or scene pad or a trig that holds stock's locker stay stock.
 //
@@ -404,6 +405,31 @@ static void *lfo_accumulator(void)
     return 0;
 }
 
+// The LFO page is the page shown: the holder's LFO view is on the view stack.
+// There the LFO key stays stock's, so holding it shows the page's values as
+// holding any page key does, and its taps step to a module's page behind it.
+static int lfo_page_shown(void)
+{
+    char *sentinel, *node;
+    word_t lfo = 0;
+    if (!views)
+        return 0;
+    sentinel = (char *)views + MANAGER_LIST;
+    for (node = *(char **)((char *)views + MANAGER_LAST); node && node != sentinel;
+         node = *(char **)(node + NODE_PREV)) {
+        char *holder = *(char **)(node + NODE_VIEW);
+        if (*(word_t *)holder == HOLDER_VTABLE)
+            lfo = *(word_t *)(holder + HOLDER_LFO_VIEW);
+    }
+    if (!lfo)
+        return 0;
+    for (node = *(char **)((char *)views + MANAGER_LAST); node && node != sentinel;
+         node = *(char **)(node + NODE_PREV))
+        if (*(word_t *)(node + NODE_VIEW) == lfo)
+            return 1;
+    return 0;
+}
+
 static void dep_add(int track, int change)
 {
     int dep;
@@ -754,7 +780,8 @@ int quick_velocity_aftertouch_assign_key(void *brain, void *event)
         h->ignored = 1;                 // during another key's hold: nothing
         return 1;
     }
-    if (IS_KEY_HELD(KEY_FUNC) || !on_pages() || !kind_track(k, selected_track()))
+    if (IS_KEY_HELD(KEY_FUNC) || !on_pages() || !kind_track(k, selected_track())
+        || (k == LFO && lfo_page_shown()))
         return 0;                       // FUNC (+ FIX: FIXED VELOCITY), another screen, or the FX track for FIX and SAMPLER
     if (k == LFO) {
         // The page key stays stock while a pad, a trig or QPER holds the locker.
