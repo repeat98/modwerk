@@ -14,6 +14,7 @@ import { OCTATRACK } from '../../../vendor/elekloader/kit/src/devices.ts'
 import type { OctatrackDiagnostic, DiagnosticReading } from '../../community/octatrack-diagnostics-contract'
 import { encodeModuleSet } from './set-package.ts'
 import { diagnosticErrorKind } from '../../community/site-diagnostic-events'
+import loaderRefusals from '../../../sdk/runtime/loader-refusals.json' with { type: 'json' }
 
 export type LinkDiagnostic = Omit<OctatrackDiagnostic, 'id' | 'modules'>
 /** Numeric status fields only; exclude the device's free-text culprit name. */
@@ -103,17 +104,10 @@ const REFUSED: Partial<Record<UploadResultName, string>> = {
   hash: 'The module arrived damaged. Nothing changed; send it again.',
   rejected: 'The Octatrack can’t run this module file.',
 }
-/** Why the loader rejected a module (sdk/runtime/loader/loader.h runtime_refusal), read from the base after a "rejected". */
-const REJECTED: Partial<Record<number, string>> = {
-  2: 'There isn’t enough module memory left on the Octatrack. Remove a module, then try again.',
-  3: 'This module changes the same part of the Octatrack as one that’s already installed.',
-  4: 'The Octatrack has no room for another module. Remove one, then try again.',
-  5: 'The Octatrack is still loading module code. Try again in a moment.',
-  6: 'This module needs more DSP time than an effect slot has.',
-  7: 'A track is playing this module’s effect, so the Octatrack can’t change it now. Pick another effect on that track, then try again.',
-  9: 'This version of the module changes a part of the Octatrack that the base now shares between modules. Install its newer version.',
-  10: 'The Octatrack can’t start the key bus this module needs until it restarts. Turn it off and on, then sync again.',
-}
+/** Why the loader rejected a module, read from the base after a "rejected": the musician's text for each of the
+ * loader's refusals (sdk/runtime/loader-refusals.json). A code without one shows the plain text above. */
+const REJECTED: Partial<Record<number, string>> = Object.fromEntries(
+  loaderRefusals.refusals.flatMap(refusal => 'musician' in refusal && refusal.musician ? [[refusal.code, refusal.musician]] : []))
 const UNPLUG = 'Unplug the USB cable to undo anything unfinished, then plug it back in.'
 /** The boot stub started the previous base after the new one failed to start three times (BaseSlots.fellBack). */
 const FELL_BACK = 'The last base update didn’t start, so your Octatrack went back to its previous base. Nothing was lost. Try the update again, and report it in #beta-testers on Discord.'
