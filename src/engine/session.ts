@@ -15,7 +15,7 @@ import { buildBase, type BaseFill } from './elekloader/octatrack-base'
 // A file of its own, fetched when a base is built: the worker bundle inlines imports, and the package is 600 KB.
 import basePackage from './assets/octatrack-base.elemod?url'
 import baseVariants from './assets/octatrack-base-variants.json?url'
-import { variantPackage, type BaseVariants } from './elekloader/base-variants'
+import { DEFAULT_LAYOUT, MEMBER_LAYOUT, variantPackage, type BaseVariants } from './elekloader/base-variants'
 import baseFills from './assets/octatrack-base-fills.json'
 import { DOWNLOADS_ENABLED, DSP_LOADER, FIRMWARE_VERSION, USB_LINK, type BuildReport, type EngineRequest, type EngineResponse, type StartupAnimation } from './protocol'
 export function createEngineSession(reply: (response: EngineResponse, transfer?: Transferable[]) => void) {
@@ -37,12 +37,14 @@ export function createEngineSession(reply: (response: EngineResponse, transfer?:
         if (!original) throw new Error('Choose and verify your OS 1.40C file first.')
         const response = await fetch(basePackage)
         if (!response.ok) throw new Error('The base package did not load. Reload the page and try again.')
-        // Another USB Audio layout is the default package with its reviewed patch (base-variants.ts).
+        // Another USB Audio layout is the default package with its reviewed patch (base-variants.ts). Without a layout
+        // from a module set, a member gets MEMBER_LAYOUT: USB MIDI alone.
         let text = await response.text(), fills = baseFills as BaseFill[]
-        if (request.layout) {
+        const layout = request.layout ?? MEMBER_LAYOUT
+        if (layout !== DEFAULT_LAYOUT) {
           const layouts = await fetch(baseVariants)
           if (!layouts.ok) throw new Error('The base layouts did not load. Reload the page and try again.')
-          const variant = variantPackage(text, await layouts.json() as BaseVariants, request.layout)
+          const variant = variantPackage(text, await layouts.json() as BaseVariants, layout)
           if (variant) ({ text, fills } = variant)
         }
         const built = await buildBase(original, text, fills)

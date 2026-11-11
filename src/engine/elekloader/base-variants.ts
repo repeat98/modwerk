@@ -17,6 +17,10 @@ export interface BaseVariants { schema: 1; packageSha256: string; variants: Base
 /** Each layout's base identity (what IDENTIFY reports); the default layout's is base-binding.json's identity. */
 const VARIANTS: Partial<Record<BaseLayout, string>> = (baseBinding as { variants?: Partial<Record<BaseLayout, string>> }).variants ?? {}
 export const DEFAULT_LAYOUT: BaseLayout = (Object.entries(VARIANTS).find(([, identity]) => identity === baseBinding.identity)?.[0] as BaseLayout | undefined) ?? 'tracks-main-cue'
+/** The layout a base install or update gets when no module set asks for one (owner, 11 November 2026): USB MIDI alone.
+ * A set with the USB Audio module asks for its layout (module-set.ts setLayout). DEFAULT_LAYOUT stays the committed
+ * package's, which every other layout is a patch against. */
+export const MEMBER_LAYOUT: BaseLayout = 'off'
 const IDENTITIES = new Map<string, BaseLayout>([[baseBinding.identity, DEFAULT_LAYOUT], ...Object.entries(VARIANTS).map(([layout, identity]) => [identity, layout as BaseLayout] as const)])
 
 /** The layout a published base runs, by its identity; undefined for an older or unknown base. */
