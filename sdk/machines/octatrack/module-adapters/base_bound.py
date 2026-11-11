@@ -30,6 +30,7 @@ import candidate_packages  # noqa: E402
 import cave_runtime  # noqa: E402
 import hook_engines  # noqa: E402
 import runtime_candidate  # noqa: E402
+import machine_ports  # noqa: E402
 import stock_hook_controllers  # noqa: E402
 
 BINDING = APP / 'sdk/machines/octatrack/base-binding.json'
@@ -40,8 +41,10 @@ DSP_ASM = Path.home() / '.cache/modwerk-upstream/octabam/vendor/dsp56300/build/s
 # the slot that tells Sidechain the base raises ev_mute_keep.
 SYMBOLS = (*stock_hook_controllers.LEASE_IMPORTS, stock_hook_controllers.BASE_OWNED_MARK,
            'modwerk_raise_' + stock_hook_controllers.MUTE_KEEP['event'])
-# Machines whose renderer writes under the board's lease (machine-ports.json "controller"), and their feature.
-MACHINES = {'analog-bassdrum': 4}
+# Machines whose renderer writes under the board's lease (machine-ports.json "controller"), with their "lease": the
+# packaged feature, and the functions holding the renderer's Begin call and its End call.
+LEASES = {name: entry['lease'] for name, entry in machine_ports.ports().items() if entry.get('controller')}
+MACHINES = {name: lease['feature'] for name, lease in LEASES.items()}
 MODULES = (*stock_hook_controllers.UNITS, *MACHINES, *cave_runtime.PORTS)
 
 
@@ -89,10 +92,12 @@ def machine(module, symbols, upstream, work, lease=False):
     work = Path(work); work.mkdir(parents=True, exist_ok=True)
     (work / 'base-symbols.json').write_text(json.dumps(symbols))
     out = work / (module + '.mwrm')
-    subprocess.run([sys.executable, '-B', str(BUILD), '--octabam-machine', module, '--upstream', str(upstream),
-                    '--base-symbols', str(work / 'base-symbols.json'), '-o', str(out)] +
-                   (['--lease-policy', str(work / 'lease.json')] if lease else []),
-                   check=True, capture_output=True, text=True, cwd=APP)
+    built = subprocess.run([sys.executable, '-B', str(BUILD), '--octabam-machine', module, '--upstream', str(upstream),
+                            '--base-symbols', str(work / 'base-symbols.json'), '-o', str(out)] +
+                           (['--lease-policy', str(work / 'lease.json')] if lease else []),
+                           capture_output=True, text=True, cwd=APP)
+    if built.returncode:
+        raise ValueError('%s: build.py failed against these base symbols:\n%s' % (module, (built.stderr or built.stdout)[-2000:]))
     data = out.read_bytes()
     if module in hook_engines.PACKAGES:
         (work / 'engine').mkdir(exist_ok=True)
@@ -102,8 +107,8 @@ def machine(module, symbols, upstream, work, lease=False):
 
 def machine_row(module, data, lease, builder):
     """Its trust row: the package, its renderer's lease continuations and a source policy over its reviewed inputs."""
-    feature = MACHINES[module]
-    entries = {'ab_render': dict(entry=lease['entry'], beginReturn=lease['beginReturn'], endReturn=lease['endReturn'])}
+    feature, entry_name = MACHINES[module], LEASES[module]['functions'][0]
+    entries = {entry_name: dict(entry=lease['entry'], beginReturn=lease['beginReturn'], endReturn=lease['endReturn'])}
     policy = dict(schema=1, module=module, feature=feature, revisions=list(stock_hook_controllers.REVISIONS),
                   sourceHashes=builder.machine_inputs(module, HERE), entries=entries)
     if lease['imageBytes'] != int.from_bytes(data[8:12], 'big'):
@@ -112,7 +117,7 @@ def machine_row(module, data, lease, builder):
                 sourcePolicySha256=hashlib.sha256(json.dumps(policy, sort_keys=True, separators=(',', ':')).encode()).hexdigest(),
                 revisions=list(stock_hook_controllers.REVISIONS), feature=feature,
                 requiredCores=stock_hook_controllers.REQUIRED_CORES[feature], version=1, imageBytes=lease['imageBytes'],
-                entryName='ab_render', **entries['ab_render'])
+                entryName=entry_name, **entries[entry_name])
 
 
 def rows(symbols_path, upstream, out):

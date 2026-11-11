@@ -87,19 +87,22 @@ def unit(tag, feature, n):
     return result
 
 
+CHAIN_EXIT = {'A': 0x1ff9, 'B': 0x1ffa}  # site 5's exit trampoline per core in these made-up blocks (the real ones' places)
+
+
 def bundles():
     out = {}
     for tag in 'AB':
         engines = {f: unit(tag, f, n) for (t, f), n in SIZES.items() if t == tag}
-        out[tag] = dict(onDemand=sum(engines) | resident_dsp.PACKAGED, engines=engines)
+        out[tag] = dict(onDemand=sum(engines) | resident_dsp.PACKAGED, engines=engines, labels={'hcx5': CHAIN_EXIT[tag]})
     return out
 
 
 def ab_relocated(seed, core, base):
-    """Analog BD's package engine at absolute P `base` on a core, its exit pointed at its site's continuation there."""
+    """Analog BD's package engine at absolute P `base` on a core, its exit pointed at its chain's trampoline there."""
     words, relocations, exit = board.ab_engine(seed, AB_SIZES[seed])
     out = resident_dsp.relocate(dict(words=words, relocations=relocations), base)
-    out[exit] = (board.AB_EXITS[core] - (base + exit - 1)) & 0xffffff
+    out[exit] = (CHAIN_EXIT['AB'[core]] - (base + exit - 1)) & 0xffffff
     return out
 
 
@@ -457,8 +460,8 @@ static const struct mw_engine_unit *unit_for(unsigned c, unsigned f)
 {
     static struct mw_engine_unit ab[2];
     if (f != 4u) return &mw_engine_units[c][K(f)];
-    ab[c] = ab_seed ? (struct mw_engine_unit){ab_engine_words_1, ab_engine_relocations_1, AB_COUNT_1, AB_RELOCATIONS_1, AB_EXIT_1, c ? 0x221u : 0x426u}
-                    : (struct mw_engine_unit){ab_engine_words_0, ab_engine_relocations_0, AB_COUNT_0, AB_RELOCATIONS_0, AB_EXIT_0, c ? 0x221u : 0x426u};
+    ab[c] = ab_seed ? (struct mw_engine_unit){ab_engine_words_1, ab_engine_relocations_1, AB_COUNT_1, AB_RELOCATIONS_1, AB_EXIT_1, c ? 0x1ffau : 0x1ff9u}
+                    : (struct mw_engine_unit){ab_engine_words_0, ab_engine_relocations_0, AB_COUNT_0, AB_RELOCATIONS_0, AB_EXIT_0, c ? 0x1ffau : 0x1ff9u}; /* the chain's trampoline */
     return &ab[c];
 }
 /* Each core's Analog BD reset wrote its package's initial words (the seed's), whole. */

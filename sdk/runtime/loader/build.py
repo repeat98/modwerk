@@ -800,10 +800,12 @@ def octabam_machine(args):
             subprocess.run([args.cross + 'as', '-mcpu=54455', str(bound), '-o', str(objects[-1])], check=True, capture_output=True)
         image, symbols, bss, offsets = link_units(objects, args.cross, 0, work, anywhere=True)
         if args.lease_policy:  # its controller's write-lease offsets, for the base's trust row (base_bound.py)
-            if (machine_ports.port(m.name) or {}).get('controller') != 'analog_bd_write_lease':
+            entry = machine_ports.port(m.name) or {}
+            if not entry.get('controller') or len(entry.get('lease', {}).get('functions', ())) != 2:
                 raise ValueError('%s has no reviewed write lease.' % m.name)
-            import analog_bd_lease_policy
-            lease = analog_bd_lease_policy.policy_offsets(work / '0.elf', 0, {n: base[n] for n in wanted}, args.cross)
+            import machine_lease_policy
+            lease = machine_lease_policy.policy_offsets(work / '0.elf', 0, {n: base[n] for n in wanted}, args.cross,
+                                                        tuple(entry['lease']['functions']))
     def pointer(symbol, addend=0):
         if symbol not in symbols:
             raise ValueError('%s names %s, which its units do not define.' % (m.name, symbol))

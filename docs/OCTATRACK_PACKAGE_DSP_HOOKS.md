@@ -1,13 +1,10 @@
 # Package-carried stock-DSP hooks and DSP memory claims (design, for owner review)
 
-Status, 20 October 2026: a proposal, implemented locally with option B (the base-owned key bus) chosen: first on
-`claude/package-dsp-hooks` (old main, 15-16 October), now redone on `claude/keybus` from main `e370b78e` after the
-review below. The owner has not reviewed it: the questions at the end are open, and the base, the loader ABI and the
-receiver change only on that branch until he does. Hardware facts are quoted from the documents named, except the
-key bus's own run on an MKII (20 October 2026, "On the unit" below).
+Status, 3 November 2026: the key bus (option B) is merged (#737), Phase 1 is built for Analog BD, and site 5 is a
+chain (#1098); the owner's answers are under "Open questions". Hardware facts are quoted from the documents named,
+except the key bus's own run on an MKII (20 October 2026, "On the unit" below).
 
-Update, 22 October 2026: the owner ruled that no module is tied to the base; the plan that follows from it is the
-next section, for his review before any of it is built.
+Update, 22 October 2026: the owner ruled that no module is tied to the base; the plan follows.
 
 ## Owner decision and plan, 22 October 2026
 
@@ -58,9 +55,10 @@ Analog BD as the example; Sidechain Compressor and Output Matrix are tied the sa
 stay base data (Phase 3).
 
 - **The site.** `dsp-sites.json` site 5, `dsp_track_source` (P:$39c / P:$1a2, the stock `move a,x:>$20e`, its guard
-  checked against the stub the base assembles), with an **exit** per payload (P:$426 / P:$221): the stock code after
-  the source, where Analog BD's glue leaves when it rendered the track. Feature 4 is `"packaged"`: its engine is its
-  controller's package's, its region (X:$2840, $ec0 words on both cores) stays the base's.
+  checked against the stub the base assembles), a **chain** with an **exit** per payload (P:$426 / P:$221). Its stub
+  calls each enabled member's engine (`bsr`, `"features"` order): one that returns passes the track to the next, then
+  stock; one that renders leaves through its exit, aimed by the base at the chain's trampoline (drops the site's return,
+  then the stock exit). Feature 4 is `"packaged"`: its engine is its package's, its region (X:$2840, $ec0) the base's.
 - **The package (ABI 10).** `module-adapters/hook_engines.py` assembles Analog BD's engine from the module's own sources
   (glue, 909, 808, desk), as `resident_dsp` did, but as one unit for both cores: its one jump to the continuation is the
   site's exit, a long branch whose displacement the base writes per core (`mw_engine_relocate`). Proven: each core's own
@@ -75,7 +73,7 @@ stay base data (Phase 3).
   voice, 3 a core) stays in the machine record (`machine-ports.json`): a price change is a controller change until
   Phase 2.
 - **Admission.** The loader asks `modwerk_machine_dsp_engine_admit` (the board) for an engine: a trusted controller of a
-  packaged feature, one entry at the feature's one site on its cores, entered at word 0, an exit exactly where the site
+  packaged feature, one entry at its chain site on its cores, entered at word 0, an exit exactly where the site
   has one, claims exactly the feature's regions with initial words, at most 2,048 words. A trusted controller of a
   packaged feature must bring one. Everything is checked at PREPARE: a refusal at the loader's switch is reported as
   `RUNTIME_BUSY`, which the host retries for good, so the long branch before an exit is checked by the package's build.
@@ -218,7 +216,7 @@ A registry like `events.json`: `sdk/machines/octatrack/dsp-sites.json`, with `ev
 - when it runs (for example "per track per block, before FX1, X:$420 = the track"), and the register contract: the
   registers a subscriber may clobber (for the FX1 dispatcher: a, b, r0, r1, n1, x0, which stock reloads right after);
 - kind: **exclusive** (one subscriber; the base refuses a second) or **chain** (a fixed room of N subscribers, called in
-  order). Start with exclusive only; chaining costs cycles at the hottest site and has no user yet.
+  order). Site 5 is a chain (owner, 3 November 2026, #1098): BlackPyramids renders there beside Analog BD.
 
 The base build installs the JSR and a dormant stub at every catalogued site, as it does for today's resident features.
 The stub's on path becomes `jsr <placed entry>`, then the displaced instruction, then `rts`: **the base replays the
@@ -568,7 +566,7 @@ reviewed change.
 ## Open questions for the owner
 
 Answered by the owner's decision of 22 October 2026 (above), as read for his review: 1 B (merged as the key bus,
-#737); 2 yes, structural rules plus the publication path; 3 exclusive sites (no chaining user yet); 4 yes (Phase 2);
+#737); 2 yes, structural rules plus the publication path; 3 exclusive, site 5 a chain (#1098); 4 yes (Phase 2);
 5 yes, all three move (Phases 1 and 3).
 
 1. Option A or B for Sidechain and RINGMOD SC?

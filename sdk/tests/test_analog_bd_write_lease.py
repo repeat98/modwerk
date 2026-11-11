@@ -53,7 +53,7 @@ class AnalogBdWriteLeaseTests(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which('m68k-elf-gcc'), 'native ColdFire toolchain required')
     def test_policy_offsets_have_one_begin_and_one_end_continuation(self):
-        import analog_bd_lease_policy as policy
+        import machine_lease_policy as policy
         imports = {'modwerk_controller_write_begin': 0x40a994c0, 'modwerk_controller_write_end': 0x40a994dc}
         def link(folder, origin, text=None):
             from unittest.mock import patch

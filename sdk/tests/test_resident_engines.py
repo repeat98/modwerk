@@ -27,6 +27,7 @@ is not the chip: this proves the relocation and the receiver's arithmetic, never
 from contextlib import contextmanager
 import hashlib
 import importlib.util
+import json
 import os
 from pathlib import Path
 import re
@@ -52,7 +53,7 @@ LIBS = [EMU / 'build/source' / part for part in ('dsp56kEmu/libdsp56kEmu.a', 'ds
 VTUNE = EMU / 'build/source/vtuneSdk/libvtuneSdk.a'  # the JIT's profiling hooks, where the build has them
 RECEIVER_ORIGIN = 0x400
 STUBS = {resident_dsp.SIDECHAIN: ('hsc_det', 'hsc_commit', 'hsc_init'), resident_dsp.MATRIX: ('hom_mix', 'hom_phn'),
-         resident_dsp.ANALOG_BD: ('hab_source',), resident_dsp.KEYBUS: ('hsc_tap',)}
+         resident_dsp.ANALOG_BD: ('hch5',), resident_dsp.KEYBUS: ('hsc_tap',)}  # hch5: site 5's chain
 # Words that steer each engine down its working path rather than its early return (on the fixed registers below,
 # r6 = $6280): Sidechain's track 3 with KEY 3 and its monitor on, MATRIX selected, an Analog BD source record.
 ACTIVE = {resident_dsp.SIDECHAIN: ('X 1056 3', 'X %d %d' % (0x628d, 0x30000), 'Y %d %d' % (0x7f6, 0x10000)),
@@ -89,16 +90,58 @@ def fresh(ob, tag, feature, base, work, assemble):
     return table + words
 
 
-def placed(unit, tag, base):
-    """A unit's words at `base` on a payload: the build's (resident_dsp.relocate), or a package's with its exit."""
-    return hook_engines.placed(unit, base, CONT[tag]) if 'exit' in unit else resident_dsp.relocate(unit, base)
+def placed(unit, tag, base, exit=None):
+    """A unit's words at `base` on a payload: the build's (resident_dsp.relocate), or a package's with its exit aimed
+    at `exit` (the chain's trampoline, as the board aims it), or at the stock continuation."""
+    return hook_engines.placed(unit, base, exit or CONT[tag]) if 'exit' in unit else resident_dsp.relocate(unit, base)
+
+
+# The made-up second member's engine (test_two_packaged_engines_share_a_chain_site), word 0 its entry: it replays the
+# displaced instruction, counts the call, and renders (a mark, then the chain's exit) only a record signed $3303.
+# Formatted with its two X words and the trampoline. No label is a prefix of another (dsp_asm substitutes text).
+MEMBER_ENGINE = '''        move    a,x:>$20e
+        move    x:>$%x,b
+        add     #>1,b
+        move    b1,x:>$%x
+        move    x:>$209,r4
+        move    #>$003303,x0
+        move    x:(r4),b
+        and     #>$ffff,b
+        cmp     x0,b
+        beq     mzx01
+        rts
+mzx01:
+        move    #>$5a5a5a,x0
+        move    x0,x:>$%x
+        move    ssh,x0
+        jmp     $%x
+'''
+
+
+@contextmanager
+def second_member(bit):
+    """resident_dsp with a made-up packaged feature `bit` as site 5's second chain member (X:$6000, 16 words)."""
+    names = ('LEDGER', 'FEATURES', 'PACKAGED', 'NAMES', 'ALLOWED')
+    saved = {name: getattr(resident_dsp, name) for name in names}
+    ledger = json.loads(json.dumps(saved['LEDGER']))
+    ledger['features'].append(dict(bit=bit, name='second-member', cores=['A', 'B'], implies=[], packaged=True))
+    next(s for s in ledger['sites'] if s['kind'] == 'chain')['features'].append(bit)
+    ledger['regions'].append(dict(feature=bit, space='x', cores=['A', 'B'], start='0x6000', words='0x10'))
+    resident_dsp.LEDGER, resident_dsp.FEATURES, resident_dsp.PACKAGED = ledger, saved['FEATURES'] + (bit,), saved['PACKAGED'] | bit
+    resident_dsp.NAMES = {**saved['NAMES'], bit: 'second-member'}
+    resident_dsp.ALLOWED = {tag: mask | bit for tag, mask in saved['ALLOWED'].items()}
+    try:
+        yield ledger
+    finally:
+        for name, value in saved.items():
+            setattr(resident_dsp, name, value)
 
 
 def c_relocated(units, bases, work):
     """mw_engine_relocate's words for every (tag, feature) unit at every base, from resident_engines.data_c's data."""
     units = {key: u for key, u in units.items() if not key[1] & resident_dsp.PACKAGED}  # a package's: not build data
     bundles = {tag: dict(onDemand=sum(f for (t, f) in units if t == tag) | resident_dsp.PACKAGED,
-                         engines={f: u for (t, f), u in units.items() if t == tag}) for tag in 'AB'}
+                         engines={f: u for (t, f), u in units.items() if t == tag}, labels={'hcx5': 0x1ff0}) for tag in 'AB'}
     (work / 'data.c').write_text(resident_engines.data_c(bundles))
     order = sorted(units)
     main = ['#include <stdio.h>', '#include "resident_engines.h"', 'int main(void) {',
@@ -251,10 +294,11 @@ class ResidentEngines(unittest.TestCase):
                 for offset in (d_table - n, 64 + 333):  # the arena's top (directly under the block), and lower down
                     base = d_labels['dltable'] + offset
                     with self.subTest(tag=tag, feature=feature, base=hex(base)):
-                        hwbase = demand['labels']['hwbase%d' % feature]
+                        hwbase = demand['labels'][resident_dsp.base_label(feature)]
                         control = d_labels['hookcontrol']
                         steps = image(d_words, RECEIVER_ORIGIN) + image(demand['words'], demand['origin'])
-                        steps += image(placed(unit, tag, base), base)
+                        exit = resident_dsp.chain_exits(demand)[5] if feature & packaged else None
+                        steps += image(placed(unit, tag, base, exit), base)
                         steps += ['P %d %d' % (d_labels['hookready'], allowed),   # every reset complete
                                   'PKT %d 0 %d 0' % (control, feature),           # enable before PLACE: refused
                                   'PKT %d %d %d %d' % (control, feature, offset, n),  # PLACE: word 7 its words
@@ -287,7 +331,7 @@ class ResidentEngines(unittest.TestCase):
                             # No resident build: the reference is the same engine at the arena's top.
                             at = d_labels['dltable'] + d_table - n
                             steps = image(d_words, RECEIVER_ORIGIN) + image(demand['words'], demand['origin']) + \
-                                image(placed(unit, tag, at), at) + ['P %d %d' % (d_labels['hookready'], allowed),
+                                image(placed(unit, tag, at, exit), at) + ['P %d %d' % (d_labels['hookready'], allowed),
                                                                     'PKT %d %d %d %d' % (control, feature, d_table - n, n),
                                                                     'PKT %d 0 %d 0' % (control, feature)]
                             reference = run(steps + go(demand['labels']))
@@ -331,6 +375,78 @@ class ResidentEngines(unittest.TestCase):
 
 
     @unittest.skipUnless(all(p.is_file() for p in LIBS) and shutil.which('c++'), 'vendored dsp56300 build unavailable')
+    @unittest.skipUnless(all(p.is_file() for p in LIBS) and shutil.which('c++'), 'vendored dsp56300 build unavailable')
+    def test_two_packaged_engines_share_a_chain_site(self):
+        """Site 5 hosting Analog BD and a second packaged member (made up here: feature 16, a small engine that sees
+        every call, as BlackPyramids' must, and renders only a record signed $3303). The receiver places and
+        switches both; the chain calls them in the catalogue's order, a member that renders skips every later one and
+        the stock source, a disabled member's call is skipped, a dormant site runs only the replay; every path leaves
+        the system stack as it found it (an engine leaves through the trampoline, which drops the site's return)."""
+        loader, work, harness, member = resident_source.load_loader(), Path(self.work.name), self.harness(), 16
+        seen, mark = 0x6000, 0x6001  # the made-up member's X words: calls it saw, and its render mark
+        with second_member(member):
+            for tag in 'AB':
+                allowed = resident_dsp.ALLOWED[tag]
+                demand = resident_dsp.place_resident(self.ob, tag, 0x2000, str(work), self.packages.assemble, allowed)
+                text = lambda table: loader.receiver_source(  # noqa: E731
+                    loader.RECEIVER.read_text(), (0x7c8, 0x7c9), table, tag=tag, ids=128,
+                    hook_control=resident_dsp.receiver_control(demand), hook_reset=resident_dsp.receiver_reset(demand))
+                _, sized = self.packages.assemble(text(1200), RECEIVER_ORIGIN, str(work))
+                table = demand['origin'] - sized['dltable']
+                r_words, r_labels = self.packages.assemble(text(table), RECEIVER_ORIGIN, str(work))
+                exit, control = resident_dsp.chain_exits(demand)[5], r_labels['hookcontrol']
+                stock = int(resident_dsp.LEDGER['sites'][5]['exit'][tag], 16)  # GO stops below it: the stock exit is 2
+                n_ab = len(self.ab['words'])
+                at_ab, at_m = table - n_ab, 64 + 400  # Analog BD at the arena's top, the member lower down
+                base_ab, base_m = r_labels['dltable'] + at_ab, r_labels['dltable'] + at_m
+                m_words, _ = resident_dsp.assemble_authored(MEMBER_ENGINE % (seen, seen, mark, exit), base_m, str(work),
+                                                            self.packages.assemble)
+                steps = ['P %d %d' % (RECEIVER_ORIGIN + i, w) for i, w in enumerate(r_words)]
+                steps += ['P %d %d' % (demand['origin'] + i, w) for i, w in enumerate(demand['words'])]
+                steps += ['P %d %d' % (base_ab + i, w) for i, w in enumerate(placed(self.ab, tag, base_ab, exit))]
+                steps += ['P %d %d' % (base_m + i, w) for i, w in enumerate(m_words)]
+                steps += ['P %d %d' % (r_labels['hookready'], allowed),
+                          'PKT %d %d %d %d' % (control, resident_dsp.ANALOG_BD, at_ab, n_ab),  # PLACE each
+                          'PKT %d %d %d %d' % (control, member, at_m, len(m_words)),
+                          'PKT %d 0 %d 0' % (control, resident_dsp.ANALOG_BD | member)]       # enable both
+                record = {'ab': ACTIVE[resident_dsp.ANALOG_BD],
+                          'member': ACTIVE[resident_dsp.ANALOG_BD][:-2] + ('X %d %d' % (0x5000, 0x3303), 'X %d %d' % (0x5002, 0x0909)),
+                          'stock': ACTIVE[resident_dsp.ANALOG_BD][:-2]}
+                cases = [('ab', 2, 0, 0), ('member', 2, 1, 0x5a5a5a), ('stock', 1, 1, 0)] if tag == 'B' else \
+                    [('member', 2, 1, 0x5a5a5a), ('stock', 1, 1, 0)]  # core A's Analog BD voice faults here (LIMIT)
+                later = [('PKT %d %d %d 0' % (control, resident_dsp.ANALOG_BD | member, member)),  # Analog BD off
+                         ('ab', 1, 1, 0), ('member', 2, 1, 0x5a5a5a),
+                         ('PKT %d %d 0 0' % (control, member)), ('member', 1, 0, 0)]                # the site dormant
+                expect = []
+                for case in cases + later:
+                    if isinstance(case, str):
+                        steps.append(case)
+                        continue
+                    name = case[0]
+                    steps += ['FILL x 0 32768 11', 'FILL y 0 32768 23', 'X %d 0' % seen, 'X %d 0' % mark] + \
+                        ['R r %d %d' % (i, 0x6100 + 0x40 * i) for i in range(8)] + \
+                        ['R n %d %d' % (i, i + 1) for i in range(8)] + ['R m %d %d' % (i, 0xffffff) for i in range(8)] + \
+                        ['ZERO'] + list(record[name]) + \
+                        ['SP', 'GO %d 400000 %d' % (demand['labels']['hch5'], stock + 1), 'SP',
+                         'DUMP x %d %d' % (seen, mark + 1)]
+                    expect.append(case)
+                path = work / 'chain.txt'
+                path.write_text('\n'.join(steps) + '\n')
+                result = subprocess.run([str(harness), str(path)], capture_output=True, text=True, timeout=600)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                lines = [line.split() for line in result.stdout.split('\n') if line.split(' ')[0] in ('A', 'SP', 'S', 'D')]
+                self.assertEqual([x[1] for x in lines[:3]], ['1', '1', '1'], (tag, 'PLACE, PLACE, enable'))
+                answers, lines = [x for x in lines[3:] if x[0] == 'A'], [x for x in lines[3:] if x[0] != 'A']
+                self.assertEqual([x[1] for x in answers], ['1', '1'], (tag, 'Analog BD off, then the member off'))
+                for (name, how, calls, rendered), k in zip(expect, range(0, len(lines), 4)):
+                    sp0, ran, sp1, dump = lines[k:k + 4]
+                    with self.subTest(tag=tag, record=name, k=k):
+                        self.assertEqual(ran[2], str(how), ran)                     # 1 back to the caller, 2 the stock exit
+                        self.assertEqual(sp1[1], sp0[1])                             # the stack as it was
+                        self.assertEqual(dump[3:], [str(calls), str(rendered)])      # who saw the track, who rendered
+                        if how == 2:
+                            self.assertEqual(int(ran[3]), stock)
+
     def test_disabling_one_engine_leaves_another_engines_base_word_alone(self):
         """Two on-demand engines placed and enabled on core A, then one disabled: the other's base word (where its
         stubs jump) must stay exactly as PLACE wrote it, and the disabled one must need a new RESET before it can be
@@ -364,14 +480,14 @@ class ResidentEngines(unittest.TestCase):
         steps += ['PKT %d %d %d %d' % (control, f, o, len(units[f]['words'])) for f, o in offsets.items()]  # PLACE both
         steps += ['PKT %d 0 %d 0' % (control, sc | ab),                            # enable both
                   'PKT %d %d %d 0' % (control, sc | ab, ab),                       # disable Sidechain, keep Analog BD
-                  'RP %d' % demand['labels']['hwbase%d' % ab], 'RP %d' % ready,
+                  'RP %d' % demand['labels'][resident_dsp.base_label(ab)], 'RP %d' % ready,
                   'PKT %d %d %d 0' % (control, ab, sc | ab)]                       # Sidechain again, with no RESET
         (work / 'two.txt').write_text('\n'.join(steps) + '\n')
         result = subprocess.run([str(harness), str(work / 'two.txt')], capture_output=True, text=True, timeout=600)
         self.assertEqual(result.returncode, 0, result.stderr)
         out = [line for line in result.stdout.split('\n') if line.split(' ')[0] in ('A', 'P')]
         self.assertEqual(out, ['A 1', 'A 1', 'A 1', 'A 1',
-                               'P %d %d' % (demand['labels']['hwbase%d' % ab], labels['dltable'] + offsets[ab]),
+                               'P %d %d' % (demand['labels'][resident_dsp.base_label(ab)], labels['dltable'] + offsets[ab]),
                                'P %d %d' % (ready, allowed & ~sc), 'A 0'])
 
     @unittest.skipUnless(all(p.is_file() for p in LIBS) and shutil.which('c++'), 'vendored dsp56300 build unavailable')
@@ -404,7 +520,7 @@ class ResidentEngines(unittest.TestCase):
                 at += len(units[feature]['words']) + 8
             self.assertLess(labels['dltable'] + at, demand['origin'])
             base = {f: labels['dltable'] + o for f, o in offsets.items()}
-            hw = {f: demand['labels']['hwbase%d' % f] for f in offsets}
+            hw = {f: demand['labels'][resident_dsp.base_label(f)] for f in offsets}
             steps = ['P %d %d' % (RECEIVER_ORIGIN + i, w) for i, w in enumerate(words)]
             steps += ['P %d %d' % (demand['origin'] + i, w) for i, w in enumerate(demand['words'])]
             for feature, offset in offsets.items():

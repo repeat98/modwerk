@@ -16,15 +16,19 @@ import re
 import sys
 
 SIDECHAIN, MATRIX, ANALOG_BD, KEYBUS = 1, 2, 4, 8
-FEATURES = (SIDECHAIN, MATRIX, ANALOG_BD, KEYBUS)
-# Features whose engine and initial words are their controller's package's (ABI 10, dsp-sites.json "packaged"): the
-# base keeps only their stubs, base words and regions, so their DSP changes ship as packages. Always on demand.
-PACKAGED = ANALOG_BD
 SITES = Path(__file__).resolve().parents[1] / 'dsp-sites.json'
-NAMES = {SIDECHAIN: 'sidechain', MATRIX: 'matrix', ANALOG_BD: 'analog-bd', KEYBUS: 'keybus'}
+LEDGER = json.loads(SITES.read_text())
+FEATURES = tuple(f['bit'] for f in LEDGER['features'])
+# Features whose engine and initial words are their controller's package's (ABI 10, dsp-sites.json "packaged"): the
+# base keeps only their stubs, base words and regions, so their DSP changes ship as packages. Always on demand. Each
+# is a member of a chain site (dsp-sites.json "chain"): the base's stub calls every enabled member's engine in turn.
+PACKAGED = sum(f['bit'] for f in LEDGER['features'] if f.get('packaged'))
+NAMES = {f['bit']: f['name'] for f in LEDGER['features']}
 ENGINE_ORIGINS = (0x100000, 0x200000)  # long forms only: every relocated word is a whole address or displacement
 ENGINE_PROOFS = (0x1000, 0x1333, 0x17ff, 0x1c01)
-ALLOWED = {'A': SIDECHAIN | MATRIX | ANALOG_BD | KEYBUS, 'B': SIDECHAIN | ANALOG_BD | KEYBUS}
+ALLOWED = {tag: sum(f['bit'] for f in LEDGER['features'] if tag in f['cores']) for tag in ('A', 'B')}
+if FEATURES[:4] != (SIDECHAIN, MATRIX, ANALOG_BD, KEYBUS) or ALLOWED['A'] & 15 != 15 or ALLOWED['B'] & 15 != 13:
+    raise ValueError('dsp-sites.json: the base features moved')
 SOURCES = {
     'modules/sidechain-compressor/manifest.py': 'ad3a66d0644a61a8b388f4ca75cd59987e61f527c26c603c71e96bd1ecce7418',
     'modules/sidechain-compressor/patch_sc_dsp3.asm': '11022dbd84e1fffa71946aa19e8d8f0a51b1f25371c5b6b794066c855012ddf8',
@@ -232,8 +236,10 @@ def resource_ranges(tag):
     shared = 0x33dfe if tag == 'A' else 0x3bdfe
     ranges = [dict(owner=SIDECHAIN, space='y', address=0xff0, words=0x10),
               dict(owner=SIDECHAIN, space='y', address=shared, words=0x202),
-              dict(owner=SIDECHAIN, space='y', address=0x7e00, words=0x200),
-              dict(owner=ANALOG_BD, space='x', address=0x2840, words=0x3700 - 0x2840)]
+              dict(owner=SIDECHAIN, space='y', address=0x7e00, words=0x200)]
+    # A packaged feature's regions are the ledger's, in its order (its package's claims must equal them).
+    ranges += [dict(owner=r['feature'], space=r['space'], address=int(r['start'], 16), words=int(r['words'], 16))
+               for r in LEDGER['regions'] if r['feature'] & PACKAGED and tag in r.get('cores', ())]
     if tag == 'A':
         ranges.append(dict(owner=MATRIX, space='y', address=0xc00, words=0xc1))
     # The key bus: inside what Sidechain always owned (its reset keeps its 1,042 words); its own reset is 1,026. The
@@ -364,14 +370,15 @@ def assemble_resident(ob, tag, origin, work, assemble, on_demand=0):
         entries += [('hom_mix', 'omx_mix', MATRIX,
                      'btst #10,a\nbcs hom_stockm\nrts\nhom_stockm:\nmove ssh,x0\njmp $292'),
                     ('hom_phn', 'omx_phn', MATRIX, 'move x:>$205,r0\nrts')]
-    entries.append(('hab_source', 'zg01', ANALOG_BD, 'move a,x:>$20e\nrts'))
     # Forwarding branches change no register or CCR. The frame receiver may rewrite
     # only the second word, before this frame reaches any track's source/FX.
     shims = '\n'.join('%s:\njmp %s_off\n%s_off:\n%s\n' % (stub, stub, stub, off)
                        for stub, _, _, off in entries)
+    chains = [chain_layout(site, tag) for site in LEDGER['sites'] if site['kind'] == 'chain']
+    shims += '\n' + '\n'.join(c['text'] for c in chains)
     # An on-demand feature keeps one P word here: the absolute P address of its
     # placed engine, 0 while unplaced (the boot upload's zero). Only the receiver writes it.
-    bases = ''.join('hwbase%d:\n        nop\n' % feature for feature in FEATURES if on_demand & feature)
+    bases = ''.join(base_label(feature) + ':\n        nop\n' for feature in FEATURES if on_demand & feature)
     words, labels = assemble_authored(shims + '\n' + bases + '\n'.join(texts), origin + len(table), work, assemble)
     words = table + words
     if origin + len(words) > 0x2000:
@@ -386,10 +393,10 @@ def assemble_resident(ob, tag, origin, work, assemble, on_demand=0):
         if owner & on_demand:
             # A packaged engine is entered at its first word (the board checks its package's hook entry).
             at = 0 if owner & PACKAGED else engines[owner]['entries'].get(on)
-            if at is None or labels['hwbase%d' % owner] - origin >= len(words):
+            if at is None or labels[base_label(owner)] - origin >= len(words):
                 raise ValueError('An on-demand engine lost its entry or base word')
             descriptors.append(dict(owner=owner, operand=labels[stub] + 1, off=labels[stub + '_off'], on=None,
-                                    entry=labels[stub], base=labels['hwbase%d' % owner],
+                                    entry=labels[stub], base=labels[base_label(owner)],
                                     onOffset=at, offValue=(labels[stub + '_off'] - labels[stub]) & 0xffffff,
                                     onValue=None))
             continue
@@ -406,18 +413,75 @@ def assemble_resident(ob, tag, origin, work, assemble, on_demand=0):
                     'omx_mix': 'hom_mix', 'omx_phn': 'hom_phn'}[hook.label]
             guards.append(dict(module=name, site=hook.site_on(tag), expectedSha256=hook.stock.sha256,
                                entry=labels[stub], relocated=RELOCATED.get(hook.label, False)))
-    # Analog BD's seam: the catalogue's site (dsp-sites.json), whose guard is the displaced instruction the stub replays.
-    site = next(s for s in json.loads(SITES.read_text())['sites'] if s['feature'] == ANALOG_BD)
-    at = labels['hab_source_off'] - origin
-    if hashlib.sha256(b''.join(w.to_bytes(3, 'big') for w in words[at:at + 2])).hexdigest() != site['guardSha256']:
-        raise ValueError('Analog BD\'s dormant replay differs from its catalogued guard')
-    guards.append(dict(module='analog-bassdrum', site=int(site[tag], 16), expectedSha256=site['guardSha256'],
-                       entry=labels['hab_source'], relocated=False))
+    for chain in chains:
+        descriptors += chain_descriptors(chain, labels, words, origin, on_demand)
+        # The catalogue's site (dsp-sites.json), whose guard is the displaced instruction the stub replays.
+        site, stub = chain['site'], chain['stub']
+        at = labels[stub + '_off'] - origin
+        if hashlib.sha256(b''.join(w.to_bytes(3, 'big') for w in words[at:at + 2])).hexdigest() != site['guardSha256']:
+            raise ValueError('A chain\'s dormant replay differs from its catalogued guard')
+        guards.append(dict(module=site['module'], site=int(site[tag], 16), expectedSha256=site['guardSha256'],
+                           entry=labels[stub], relocated=False))
     result = dict(tag=tag, origin=origin, words=words, labels=labels, descriptors=descriptors,
                   allowed=ALLOWED[tag], guards=guards, resources=resource_ranges(tag), sources=sources)
     if on_demand:
         result.update(onDemand=on_demand, engines=engines)
     return result
+
+
+# The instruction each chain site's stub replays for the stock one the site's JSR displaced: authored, the catalogue
+# holds only its guard (dsp-sites.json), which the dormant replay's words must equal.
+CHAIN_REPLAY = {'dsp_track_source': 'move a,x:>$20e'}
+BRA_LONG, BSR_LONG = 0x0d10c0, 0x0d1080  # the two-word PC-relative forms: the receiver writes only the second word
+
+
+def chain_layout(site, tag):
+    """A chain site's stub on payload `tag` (dsp-sites.json "chain").
+
+    The site's JSR lands on a dormant branch to the replay, which the receiver points at the members while any of them
+    is enabled. Each member this core carries then has one long bsr, dormant to a lone rts, which the receiver points at
+    its placed engine: an engine that returns (not its track) comes back for the next member, then the replay runs the
+    stock source; one that renders drops that return and leaves through its exit to the trampoline, which drops the
+    site's JSR return as well and continues at the stock exit. The members' order is the catalogue's.
+    """
+    # dsp_asm substitutes labels as text: no label here is a prefix of the one a bsr names (hcr<site>).
+    n, stub = site['index'], 'hch%d' % site['index']
+    members = [f for f in site['features'] if f & ALLOWED[tag]]
+    lines = ['%s:' % stub, 'jmp %s_off' % stub, 'hcn%d:' % n]
+    for f in members:
+        lines += ['hcm%dx%03d:' % (n, f), 'bsr >hcr%d' % n]
+    lines += ['%s_off:' % stub, CHAIN_REPLAY[site['name']], 'rts', 'hcr%d:' % n, 'rts',
+              'hcx%d:' % n, 'move ssh,x0', 'jmp $%x' % int(site['exit'][tag], 16)]
+    return dict(site=site, stub=stub, members=members, text='\n'.join(lines) + '\n')
+
+
+def chain_descriptors(chain, labels, words, origin, on_demand):
+    """The receiver's rows for a chain: the site's branch (owner: every member; on while any is enabled), then one per
+    member's call (its packaged engine at word 0, from its base word)."""
+    stub = chain['stub']
+    def disp(to, at): return (to - at) & 0xffffff
+    def form(at, op, to):
+        if words[at - origin] != op or words[at - origin + 1] != disp(to, at):
+            raise ValueError('A chain\'s dormant branch is not a long PC-relative form with its displacement')
+    mask = sum(chain['members'])
+    if not mask or mask & ~on_demand:
+        raise ValueError('A chain member is not on demand (a packaged engine is its package\'s)')
+    n = chain['site']['index']
+    entry, off, run, ret = labels[stub], labels[stub + '_off'], labels['hcn%d' % n], labels['hcr%d' % n]
+    form(entry, BRA_LONG, off)
+    rows = [dict(owner=mask, chain=True, operand=entry + 1, off=off, on=run, entry=entry,
+                 offValue=disp(off, entry), onValue=disp(run, entry))]
+    for f in chain['members']:
+        at = labels['hcm%dx%03d' % (n, f)]
+        form(at, BSR_LONG, ret)
+        rows.append(dict(owner=f, operand=at + 1, off=ret, on=None, entry=at, base=labels[base_label(f)],
+                         onOffset=0, offValue=disp(ret, at), onValue=None))
+    return rows
+
+
+def chain_exits(bundle):
+    """{site index: the trampoline's P address} on this bundle's core: where a member's engine leaves (its exit)."""
+    return {s['index']: bundle['labels']['hcx%d' % s['index']] for s in LEDGER['sites'] if s['kind'] == 'chain'}
 
 
 def place_resident(ob, tag, end, work, assemble, on_demand=0):
@@ -540,7 +604,7 @@ def receiver_control(bundle):
     before any executable word changes. State resets/publication stay caller-owned.
     """
     tag = bundle['tag']
-    if bundle['allowed'] != ALLOWED[tag] or len(bundle['descriptors']) != (7 if tag == 'A' else 5):
+    if bundle['allowed'] != ALLOWED[tag] or len(bundle['descriptors']) != descriptor_count(tag):
         raise ValueError('Resident hook descriptor layout changed')
     on_demand = bundle.get('onDemand', 0)
     if not isinstance(on_demand, int) or on_demand & ~ALLOWED[tag] or bool(on_demand) != ('engines' in bundle):
@@ -556,8 +620,8 @@ def receiver_control(bundle):
     for feature in FEATURES:
         if feature & on_demand:
             base = _base_word(bundle, feature, end)
-            lines += ['btst #%d,x1' % (feature.bit_length() - 1), 'bcc hwchk%d' % feature,
-                      'move #>$%x,r3' % base, 'move p:(r3),a', 'tst a', 'beq badsaved', 'hwchk%d:' % feature]
+            lines += ['btst #%d,x1' % (feature.bit_length() - 1), 'bcc hwchk%03d' % feature,
+                      'move #>$%x,r3' % base, 'move p:(r3),a', 'tst a', 'beq badsaved', 'hwchk%03d:' % feature]
     # A disable invalidates that feature's initialized state. A complete fixed
     # reset sequence must restore it before the receiver accepts another enable.
     # r3 points at hookready again: the check above left it on a base word.
@@ -567,12 +631,15 @@ def receiver_control(bundle):
         if not feature & ALLOWED[tag]:
             continue
         bit = feature.bit_length() - 1
-        lines += ['btst #%d,x0' % bit, 'bcc hreadykeep%d' % bit, 'btst #%d,x1' % bit,
-                  'bcs hreadykeep%d' % bit, 'move p:(r3),a', 'and #>$%x,a' % (0xffffff ^ feature),
-                  'move a1,p:(r3)', 'hreadykeep%d:' % bit]
+        lines += ['btst #%d,x0' % bit, 'bcc hreadykeep%03d' % bit, 'btst #%d,x1' % bit,
+                  'bcs hreadykeep%03d' % bit, 'move p:(r3),a', 'and #>$%x,a' % (0xffffff ^ feature),
+                  'move a1,p:(r3)', 'hreadykeep%03d:' % bit]
     for i, row in enumerate(bundle['descriptors']):
-        placed = row['owner'] & on_demand
-        if row['owner'] not in FEATURES or not row['owner'] & ALLOWED[tag] or \
+        # A chain's own branch (owner: its members) goes to its fixed run of calls; each member's call, to its engine.
+        chain = row.get('chain', False)
+        placed = not chain and row['owner'] & on_demand
+        if (row['owner'] & ~(PACKAGED & ALLOWED[tag] & on_demand) or not row['owner'] if chain else
+                row['owner'] not in FEATURES or not row['owner'] & ALLOWED[tag]) or \
                 not all(bundle['origin'] <= row[k] < end for k in ('operand', 'off') + (() if placed else ('on',))):
             raise ValueError('A resident hook escapes its owned P block')
         if row['offValue'] != (row['off'] - row['entry']) & 0xffffff or (not placed and row['onValue'] != (row['on'] - row['entry']) & 0xffffff):
@@ -588,8 +655,10 @@ def receiver_control(bundle):
                   'add #>$%x,a' % ((row['onOffset'] - row['entry']) & 0xffffff), 'move a1,x0']
         else:
             on = ['move #>$%x,x0' % row['onValue']]
-        lines += ['move #>$%x,x0' % row['offValue'], 'btst #%d,x1' % (row['owner'].bit_length() - 1),
-                  'bcc hkeep%d' % i] + on + ['hkeep%d:' % i,
+        # On while its owner's bit is set in the desired mask; a chain's branch while any member's is.
+        test = (['move x1,a', 'and #>$%x,a' % row['owner'], 'beq hkeep%03d' % i] if chain else
+                ['btst #%d,x1' % (row['owner'].bit_length() - 1), 'bcc hkeep%03d' % i])
+        lines += ['move #>$%x,x0' % row['offValue']] + test + on + ['hkeep%03d:' % i,
                   'move #>$%x,r3' % row['operand'], 'move x0,p:(r3)']
     lines += ['move x1,p:(r1)', 'bra accepted']
     if on_demand:
@@ -597,8 +666,21 @@ def receiver_control(bundle):
     return '\n'.join('        ' + line if not line.endswith(':') else line for line in lines) + '\n'
 
 
+def base_label(feature):
+    """The P word holding a placed on-demand engine's address. Labels carry the feature at a fixed width: dsp_asm
+    substitutes labels as text, so feature 1's label must never be a prefix of feature 16's."""
+    return 'hwbase%03d' % feature
+
+
+def descriptor_count(tag):
+    """Rows the receiver switches on payload `tag`: each base stub, then each chain's branch and its members' calls."""
+    base = 6 if tag == 'A' else 4
+    return base + sum(1 + len([f for f in s['features'] if f & ALLOWED[tag]])
+                      for s in LEDGER['sites'] if s['kind'] == 'chain')
+
+
 def _base_word(bundle, feature, end):
-    base = bundle['labels']['hwbase%d' % feature]
+    base = bundle['labels'][base_label(feature)]
     if not bundle['origin'] <= base < end or bundle['words'][base - bundle['origin']] != 0:
         raise ValueError('An on-demand base word escapes its owned P block')
     return base
@@ -621,10 +703,10 @@ def receiver_place(bundle, end):
              'move #>hookstate,r1', 'move p:(r1),a', 'and x0,a', 'bne badsaved', 'move x0,a']
     features = [feature for feature in FEATURES if feature & on_demand]
     for feature in features:
-        lines += ['cmp #>%d,a' % feature, 'beq hwfeat%d' % feature]
+        lines += ['cmp #>%d,a' % feature, 'beq hwfeat%03d' % feature]
     lines += ['bra badsaved']
     for feature in features:
-        lines += ['hwfeat%d:' % feature, 'move #>$%x,r3' % _base_word(bundle, feature, end)]
+        lines += ['hwfeat%03d:' % feature, 'move #>$%x,r3' % _base_word(bundle, feature, end)]
         if feature != features[-1]:
             lines += ['bra hwshared']
     lines += ['hwshared:', 'move p:(r3),a', 'tst a', 'bne hwplaced',
@@ -651,27 +733,27 @@ def receiver_reset(bundle):
              'cmp #>24,a', 'bgt badsaved', 'move a1,x1', 'move x:(r0+7),a', 'and #>$ffff,a']
     features = [feature for feature in FEATURES if feature & ALLOWED[tag]]
     for feature in features:
-        lines += ['cmp #>%d,a' % feature, 'beq hreset%d' % feature]
+        lines += ['cmp #>%d,a' % feature, 'beq hreset%03d' % feature]
     lines += ['bra badsaved']
     for feature in features:
         ranges = [row for row in bundle['resources'] if row['owner'] == feature]
         total = sum(row['words'] for row in ranges)
-        lines += ['hreset%d:' % feature, 'move #>hookstate,r1', 'move p:(r1),a',
+        lines += ['hreset%03d:' % feature, 'move #>hookstate,r1', 'move p:(r1),a',
                   'btst #%d,a' % (feature.bit_length() - 1), 'bcs badsaved',
-                  'move x:(r0+5),a', 'and #>$ffff,a', 'move #>hookpos%d,r1' % feature,
-                  'tst a', 'beq hresetfirst%d' % feature, 'move p:(r1),x0', 'cmp x0,a',
-                  'bne badsaved', 'bra hresetbounds%d' % feature, 'hresetfirst%d:' % feature,
+                  'move x:(r0+5),a', 'and #>$ffff,a', 'move #>hookpos%03d,r1' % feature,
+                  'tst a', 'beq hresetfirst%03d' % feature, 'move p:(r1),x0', 'cmp x0,a',
+                  'bne badsaved', 'bra hresetbounds%03d' % feature, 'hresetfirst%03d:' % feature,
                   'move #>hookready,r3', 'move p:(r3),a', 'and #>$%x,a' % (0xffffff ^ feature),
-                  'move a1,p:(r3)', 'move #>0,a', 'hresetbounds%d:' % feature,
+                  'move a1,p:(r3)', 'move #>0,a', 'hresetbounds%03d:' % feature,
                   'move r1,x:(r0+62)', 'move #>%d,x0' % total, 'move x0,x:(r0+58)']
         logical = 0
         for i, row in enumerate(ranges):
             end = logical + row['words']
-            lines += ['cmp #>%d,a' % end, 'bge hresetnext%d_%d' % (feature, i),
+            lines += ['cmp #>%d,a' % end, 'bge hresetnext%03d_%d' % (feature, i),
                       'add x1,a', 'cmp #>%d,a' % end, 'bgt badsaved', 'move a1,x:(r0+60)',
                       'sub x1,a', 'sub #>%d,a' % logical, 'add #>$%x,a' % row['address'],
                       'move a,r3', 'move #>%d,x0' % (1 if row['space'] == 'x' else 2),
-                      'move x0,x:(r0+61)', 'bra hresetwrite', 'hresetnext%d_%d:' % (feature, i)]
+                      'move x0,x:(r0+61)', 'bra hresetwrite', 'hresetnext%03d_%d:' % (feature, i)]
             logical = end
         lines += ['bra badsaved']
     lines += ['hresetwrite:', 'move #>0,x0', 'move x0,x:(r0+59)', 'move r0,a', 'add #>8,a',
@@ -688,4 +770,7 @@ def receiver_reset(bundle):
               'move x:(r0+62),r1', 'move x:(r0+60),a', 'move a1,p:(r1)',
               'move x:(r0+58),x0', 'cmp x0,a', 'bne accepted', 'move #>hookready,r1',
               'move p:(r1),a', 'move x:(r0+7),x0', 'or x0,a', 'move a1,p:(r1)', 'bra accepted']
+    # Each feature's reset cursor: one P word, never executed (after the last branch), 0 from the upload.
+    for feature in features:
+        lines += ['hookpos%03d:' % feature, 'nop']
     return '\n'.join('        ' + line if not line.endswith(':') else line for line in lines) + '\n'
