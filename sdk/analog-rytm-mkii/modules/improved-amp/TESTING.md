@@ -40,15 +40,16 @@ Screens:
 | SOUND SETTINGS, ENV RESET | OFF, AMP, FILTER, AMP+FILT, stopping at both ends |
 | HLD 42 and ENV RESET AMP saved with the kit, changed to 10 and OFF, kit reloaded | 42 and AMP again |
 
-Sound, one MIDI note a take, ATK 0 and DEC 55 unless set:
+Sound, one MIDI note a take, ATK 0 and DEC 55 unless set (lengths by DEC and HLD: the range over six
+runs that day):
 
 | Measure | Read |
 | --- | --- |
-| `len20` by DEC | 10.0 at 55, 102.5 at 89, 2941.5 at 127 (INF, a 3 s take) |
+| `len20` by DEC | 9.5 to 10.0 at 55, 102.5 at 89, 2941.0 to 2942.5 at 127 (INF, a 3 s take; 2858.0 in the run with the late stream, below) |
 | ATK 45 | attack 15.5 (1.0 at ATK 0), the peak -12.43 dBFS against -12.48 |
-| `len20` by HLD | 10.5 at 0, 20.0 at 15, 61.0 at 31, 134.5 at 42, 307.5 at 57 |
-| HLD 42 | 134.5 for a short and for a longer note (the case plays 100 and 400 ms; the record's table says 50 and 500), at 90 BPM, and at track speed 3/2x: a time, not steps or the note |
-| HLD AUTO | 109.0 for a 100 ms note, 508.0 for a 500 ms note: the note's length |
+| `len20` by HLD | 10.0 at 0, 20.0 to 20.5 at 15, 61.0 to 61.5 at 31, 134.5 at 42, 307.5 to 308.0 at 57 |
+| HLD 42 | 134.5 to 135.0 for a 100 ms and for a 400 ms note and at 90 BPM, 134.5 at track speed 3/2x: a time, not steps or the note |
+| HLD AUTO | 108.0 to 109.5 for a 100 ms note, 509.0 to 509.5 for a 500 ms note: the note's length |
 
 OVR, the hit's peak against the same hit at OVR 0, in dB (-12.43 dBFS at 0 and -3.79 at 127 on both
 images; on IL02 an earlier run read `len20` 134.5 to 135.0 at eleven values from 0 to 127):
@@ -104,9 +105,9 @@ from the kept takes themselves, not from the record):
 
 - The first note after loading an image to RAM came out near silent in some boots (about -62 dBFS
   against -12.4, no 1 kHz tone on the BD voice or on MAIN); the second and third notes were at full level
-  in all of them. IL02: 10 of 18 boots without a wait before the first note, 0 of 3 with 3 s before
-  it. IS01, without the module: 1 of 7. So it happens without the module; whether
-  the module makes it more likely, whether the wait cures it and whether a boot from flash shows it are
+  in all of them. One case, the note about a second after the unit answered again: IL02 7 of 12
+  boots, IS01 (without the module) 3 of 11. With 3 s before the first note: 0 of 7 (IL02 4, IS01 3). So
+  it happens without the module, and the wait avoided it each time; its cause and a boot from flash are
   not decided. In five kept takes the quiet note's level moves at the trig and again 126 ms later, where
   HLD 42 ends: the amp envelope ran on time and the sample did not sound.
 - Not every run passed. Runs failed on screen references kept at another tempo (139.0 against 135.7

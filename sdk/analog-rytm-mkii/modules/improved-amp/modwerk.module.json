@@ -162,7 +162,7 @@
         "Run by an automated rig, not by hand or by ear; pads were not played.",
         "Loaded to RAM beside a development USB test link: this package's own image (IA08) and a boot from flash were not run.",
         "No power cycle, project save and load, +Drive sound, external MIDI clock, pattern change or probability condition.",
-        "The first note after loading an image to RAM was near silent in some boots, also on the image without the module (1 of 7 boots; 10 of 18 with it); cause not found.",
+        "The first note sent about a second after loading an image to RAM was near silent in some boots, with the module (7 of 12) and without it (3 of 11); never after a 3 s wait (0 of 7). Cause not found.",
         "Memory and audio load were not measured on the unit. Duration not recorded."
       ]
     },
