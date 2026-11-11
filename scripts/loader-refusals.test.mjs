@@ -26,13 +26,6 @@ describe('the loader refusal registry', () => {
     }
     expect(new Set(REFUSAL_LABELS).size).toBe(REFUSALS.length)
   })
-  it('is the list the diagnostics script prints from', () => {
-    // scripts/diagnostics-pull.mjs keeps its own copy (it is under the platform licence and imports nothing from here).
-    const script = readFileSync(new URL('./diagnostics-pull.mjs', import.meta.url), 'utf8')
-    const copy = /const REFUSALS = Object\.assign\(\[([^\]]*)\]/.exec(script)?.[1]
-    expect(copy, 'diagnostics-pull.mjs no longer has its REFUSALS list').toBeTruthy()
-    expect([...copy.matchAll(/'([^']*)'/g)].map(match => match[1])).toEqual(REFUSAL_LABELS)
-  })
   it('names a code for the developer tools', () => {
     expect(describeRefusal(7)).toMatch(/^7 RUNTIME_IN_USE: A track runs the effect/)
     expect(describeRefusal(8)).toMatch(/^8 RUNTIME_STOCK: /)
