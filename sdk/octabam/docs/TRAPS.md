@@ -622,7 +622,7 @@ mask a page word with `and #>$7f0000` before any shift, compare, select or
 `asr` then leaves a clean low word. After `and`, store from `a1`/`b1`
 (`move a1,x:`), not `move a,x:` (the A2-staleness trap above). The
 `dsp_host -pword k:off=hex` option writes a raw word after `-params`, and
-`verify_wave` / `verify_one_bus` render dirty words.
+`verify_wave` (removed with the DSP WAVE: `git show 755a02ac:tools/verify/verify_wave.py`) / `verify_one_bus` render dirty words.
 
 <a name="trap-name-nul"></a>
 
@@ -1309,6 +1309,28 @@ UART stream decoded by `tools/panel/panel_link.py`, not against the
 plane. `verify_screen` does this with the boot popup and MIXER up,
 on an empty card.
 
+<a id="trap-icon-bit31"></a>
+### Stock icon blit: bit 31 is the bottom row
+
+**Seen:** CX OSC SETUP icons (6 Nov 2026, flashes CX 24–28). Agents
+nudged FDBK with `lsrl` expecting “down”, and the icon climbed the box;
+`lsll` moved it down. DEC HOLD filled the column or used row h=11 and
+read as a white square / clipped top stroke on SETUP.
+
+**Cost:** five remix flashes chasing one pixel of vertical position and
+a hollow HOLD line, because screen-y intuition was applied to the blit
+word.
+
+**Rule:** the column long for blit `0x400128a8` (mask `0xfff80000`, 13
+rows) has **bit 31 = bottom**, bit 19 = top. `pg_vline`-style row `0` is
+that bottom bit; higher row indices are higher on the LCD. On a column
+long, **`lsll` moves content down**, **`lsrl` moves it up**. Do not
+invert from “y grows up on the page”. CX OSC settled values (unit OK on
+CX 28): FDBK after Tim art + loop OR → `lsll #1`; DEC HOLD → single
+hollow line at **h=10** (not h=11, not a fill). Documented in
+`modules/cxosc/page.s` (header + `pg_ic_fdbk` / `pg_ic_decay`) and
+`modules/cxosc/README.md`.
+
 <a name="trap-movem-sp"></a>
 
 ### `moveml %sp@` is the mode-2 form: it stores at sp and leaves sp unchanged
@@ -1658,3 +1680,39 @@ them all, and STORE's prompt came up at every load. Rule: while a file is open, 
 file layer; write from anything else. **Gate:** `verify_plocks_p2`'s save
 case stages a bank with no `p2lkNN.work` and checks the header SAVE PROJECT
 gives its `.strd`.
+
+<a id="trap-stock-scratch-regs"></a>
+
+### A stock call returns with a0, a1, d0 and d1 changed
+
+**A REGISTER KEPT ACROSS A `jsr` INTO STOCK IS ONLY SAFE IF THE CALLEE SAVES
+IT.** MIDI SCENES' `mix` held the trig-snapshot pointer `scn_snap` in a1 for
+the whole track × flat loop and called the stock CC sender `0x4009eec8`
+inside it, which saves d2-d7/a2-a5 only (`docs/firmware/MIDI_SCENES.md`
+section 4). After the first CC a pass sent, a1 was garbage (`0xffffffba` at
+the next track, measured under the port, 5 Nov 2026), and every later
+unlocked side read its "snapshot" from wherever that pointed. A user saw it
+as a jump in a scene fade with CC locks on two channels: on one track the
+first send comes after the reads, so the oracle comparisons (`b7`, `tg`, `tg2`,
+one MIDI track) never saw it. Under the port T2's CC 1 went 31, **0**, 30 at
+the unlocked end. Rule: after a call into stock, reload a0, a1, d0 and d1
+before using them, or save them around the call. **Gate:** `verify_scenes`'s
+`tt` scenario (two tracks, scene B locks only, a fader sweep): each channel's
+CC 1 must fall monotonically to its Part value.
+
+<a id="trap-scene-encoders"></a>
+
+### A held scene replaces every encoder's handler: a window's editor never sees the turn
+
+**PRESSING A SCENE KEY WRITES STOCK'S SCENE-LOCK KNOB HANDLER `0x40053498` INTO
+EVERY ENCODER SLOT** of the dispatch table `0x46c7dede + 20·encoder`
+(`0x40031944` jumps through it; the writer is `0x40031406`), over whatever the
+open window installed. SCENES P2 hooked the FX SETUP page-2 editors
+(`0x4003a9dc`, `0x4003abe4`) and checked "scene held" inside them, and its gate
+called the editor directly, so it passed while no panel turn with a scene held
+ever reached it: zero calls with SCENE A held, three without (`--watch-pc`, 5
+Nov 2026). The user report was "trig locks on FX page 2 work but not scene
+lock". The fix detours `0x40053498` itself. Rule: a gate for a panel gesture
+drives the panel (`--live-script`), not the routine you think it reaches; and
+in FX SETUP the first encoder event only shows the readout, the next ones
+edit. **Gate:** `verify_scenes_p2`'s `panel` scenario.

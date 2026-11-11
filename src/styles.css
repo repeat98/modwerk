@@ -189,6 +189,11 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
 /* A module this member cannot load (USB only, in the beta): the add is disabled, the reason is on the chip. */
 .add-button.is-blocked, .module-configure-action.is-blocked { color: var(--muted); cursor: not-allowed; opacity: .7; }
 .add-button.is-blocked:hover { background: var(--surface-hover); }
+/* A lock alone explains nothing: the blocked button says why (Full, USB only), and a full set says so above the grid. */
+.add-button.is-blocked { display: inline-flex; gap: 5px; width: auto; padding: 0 9px; font-size: 12px; opacity: 1; }
+.add-button.is-blocked span { display: inline; }
+.library-limit-note { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 16px; padding: 12px 14px; border: 1px solid var(--control-border); border-radius: 8px; background: var(--surface-raised); color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
+.library-limit-note svg { flex: none; margin-top: 2px; color: var(--muted); }
 .add-block-detail { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
 .module-card { position: relative; }
 /* The note replaces the type line on a card and the prompt floats over it, so a conflict never changes a card's height. */
@@ -2128,4 +2133,27 @@ button.signal-tile[aria-pressed="true"] > svg { fill: currentColor; }
   .sidebar .develop-card { margin-bottom: 12px; }
   .sidebar .community-label { padding-top: 10px; }
   .sidebar-account-row { min-height: 48px; padding-block: 6px; }
+}
+
+/* The permanent live-use reminder: a pill at the bottom left of the page, clear of the right-hand prompts and docks. */
+.live-use-notice { position: fixed; z-index: 34; left: calc(var(--sidebar-width) + 18px); bottom: 50px; }
+.live-use-toggle { display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 7px 13px; border: 1px solid #6b5a45; border-radius: 20px; background: #2d2721; color: #e6c398; box-shadow: 0 5px 20px #0005; font-size: 12px; font-weight: 600; cursor: pointer; }
+.live-use-toggle:hover, .live-use-toggle[aria-expanded="true"] { background: #382d23; }
+.live-use-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.live-use-panel { position: absolute; left: 0; bottom: calc(100% + 10px); width: min(340px, calc(100vw - 32px)); padding: 0 16px 16px; border: 1px solid #715235; border-radius: 12px; background: #2d2721; color: #f0c792; box-shadow: 0 12px 40px #0008; }
+.live-use-panel[hidden] { display: none; }
+.live-use-panel > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 -16px 12px; padding: 10px 10px 10px 16px; border-bottom: 1px solid #715235; }
+.live-use-panel h2 { font-size: 14px; }
+.live-use-panel .icon-button { flex-shrink: 0; min-width: 36px; min-height: 36px; }
+.live-use-panel p, .live-use-panel li { color: #d0bca4; font-size: 12px; line-height: 1.6; }
+.live-use-panel ul { display: grid; gap: 4px; margin: 10px 0 0; padding-left: 18px; }
+.workspace-content { padding-bottom: 76px; }
+@media (max-width: 600px) {
+  .live-use-notice { left: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); }
+  .app-shell.has-library-dock .live-use-notice { bottom: calc(88px + env(safe-area-inset-bottom)); }
+  .live-use-toggle { justify-content: center; width: 44px; height: 44px; padding: 0; border-radius: 50%; }
+  .live-use-toggle span { display: none; }
+  .live-use-panel .icon-button { min-width: 44px; min-height: 44px; }
+  .workspace-content { padding-bottom: 36px; }
+  .phone-footer { padding-bottom: calc(76px + env(safe-area-inset-bottom)); }
 }

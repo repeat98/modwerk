@@ -15,7 +15,7 @@
   </p>
   <p>
     <a href="#get-started"><img src="https://img.shields.io/badge/Node.js-24-417e38?logo=nodedotjs&amp;logoColor=white" alt="Node.js 24" /></a>
-    <a href="sdk/README.md#octatrack-native-development"><img src="https://img.shields.io/badge/Python-3.10%2B-3776ab?logo=python&amp;logoColor=white" alt="Python 3.10 or newer" /></a>
+    <a href="sdk/README.md#octatrack-native-development"><img src="https://img.shields.io/badge/Python-3.12%2B-3776ab?logo=python&amp;logoColor=white" alt="Python 3.12 or newer" /></a>
     <a href="sdk/octabam/docs/remixer/MODULES.md"><img src="https://img.shields.io/badge/Assembly-DSP56300_%2F_ColdFire-5755c5" alt="DSP56300 and ColdFire assembly" /></a>
   </p>
 </div>
@@ -38,16 +38,17 @@ Music Tribe and Behringer, and the AI agents that work for them: the owner does 
 
 ## Get started
 
-Requires **Git, Node.js 24 and Python 3.10+**. Clone the repository, or your fork when contributing:
+Requires **Git, Node.js 24 and Python 3.12+**. Clone the repository, or your fork when contributing:
 
 ```sh
 git clone https://github.com/repeat98/modwerk.git
 cd modwerk
 npm ci
 npm run module:new -- my-effect --kind dsp --author your-github-login
+npm run module:dev -- my-effect --watch   # build it and try it on your unit on every save
 ```
 
-Use `--kind coldfire` for a CPU module. Open `sdk/octabam/modules/my-effect/`:
+Use `--kind coldfire` for a CPU module. Open the draft in `sdk/drafts/my-effect/`:
 
 ```text
 engine.asm           DSP source (unit.s for ColdFire)
@@ -60,7 +61,7 @@ LICENSE              Licence and attribution
 media/               Original or properly licensed captures
 ```
 
-The scaffold is untested: choose an unused effect ID for DSP modules and replace the deliberately failing verification gate. It does not enter the catalog automatically.
+The scaffold is untested: choose an unused effect ID for DSP modules and replace the deliberately failing verification gate. It does not enter the catalog automatically. What a module can hook into, and where it keeps state, is in [the Octatrack API](docs/OCTATRACK_API.md).
 
 ## Develop and validate
 

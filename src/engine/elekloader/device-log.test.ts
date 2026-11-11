@@ -61,6 +61,7 @@ describe('the unit’s diagnostics log, version 2', () => {
       view.setUint32(V2_END, 0x4d574352); view.setUint32(V2_END + 4, 12); view.setUint32(V2_END + 8, 4 << 18 | 0x2000); view.setUint32(V2_END + 12, 0x40c52322)
       view.setUint32(V2_END + 116, 0x4fefffd4); view.setUint32(V2_END + 148, 0)
       view.setUint32(V2_END + 180, 0x4d575354); view.setUint32(V2_END + 184, 2); view.setUint32(V2_END + 188, 1); view.setUint32(V2_END + 192, 17328); view.setUint32(V2_END + 196, 2); view.setUint32(V2_END + 200, 806180)
+      view.setUint32(32, 1) // stall_seen: the unit started after the first stall, so the second is this start's
     }))!
     expect(parsed.version).toBe(2)
     expect(parsed.loads[0]).toMatchObject({ seq: 5, frameGap: 2000, tickGap: 10 })
@@ -68,7 +69,7 @@ describe('the unit’s diagnostics log, version 2', () => {
     expect(parsed.incidents[0].a).toBe(0x320fc454)
     expect(parsed.incidents[1]).toMatchObject({ a: 2 }); expect(parsed.incidents[1].machines.slice(0, 8)).toEqual([0x95, 0xcf, 0xf6, 0x96, 0xbc, 0xf0, 0xd6, 0x74])
     expect(parsed.crash).toMatchObject({ count: 12, vector: 4, sr: 0x2000, pc: 0x40c52322 }); expect(parsed.crash!.code[0]).toBe(0x4fefffd4); expect(parsed.crash!.memory[0]).toBe(0)
-    expect(parsed.stall).toMatchObject({ count: 2, reason: 1, ticks: 17328 }); expect(parsed.stall!.report).toEqual([806180, 0])
+    expect(parsed.stall).toMatchObject({ count: 2, reason: 1, ticks: 17328 }); expect(parsed.stallSeen).toBe(1); expect(parsed.stall!.report).toEqual([806180, 0])
     // The site uploads these records as they are read here; the Worker refused version 2 loads and the records until 8 November 2026.
     const upload = (log: object) => () => validateDiagnostic({ id: crypto.randomUUID(), event: 'device_log', phase: 'ready', log })
     expect(upload({ loads: parsed.loads, incidents: [] })).not.toThrow()

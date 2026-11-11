@@ -89,9 +89,12 @@ def chooser_names(slot):  # every effect's name in a chooser table (128 ids at m
     table = mem(u32(FX_IDS[slot]), 4 * 128)
     return [fx_name(slot, fx) for fx in range(128) if int.from_bytes(table[4 * fx:4 * fx + 4], 'big')]
 def chooser_name(names, name):
-    """The chooser's name for an installed package: its page may say more than the package (Spectrum79 for Spectrum)."""
+    """The chooser's name for an installed package: its page may say more than the package (Spectrum79 for Spectrum),
+    or the same words in another order (RINGMOD SC for SC Ringmod)."""
     want = name.upper().replace(' ', '_')
-    return want if want in names else next((n for n in names if n.startswith(want)), want)
+    words = sorted(want.split('_'))
+    return want if want in names else next((n for n in names if n.startswith(want)),
+                                           next((n for n in names if sorted(n.split('_')) == words), want))
 
 
 def restore_part(part, saved):

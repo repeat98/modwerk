@@ -1,7 +1,10 @@
 import type { LoadReading } from '../engine/elekloader/upload-wire'
 
+/** Tenths of a percent as the load cells show them. */
+export const percent = (value: number | null | undefined) => value == null ? '—' : `${(value / 10).toFixed(1)}%`
 export interface LoadPoint { at: number; reading: LoadReading | null }
-export function loadPath(points: LoadPoint[], key: 'cpu' | 'tracks1to4' | 'tracks5to8', now: number) {
+/** A line through the readings of `key` (tenths of a percent) in the last five minutes, broken where one is missing. */
+export function loadPath<K extends string>(points: { at: number; reading: Partial<Record<K, number | null>> | null }[], key: K, now: number) {
   let path = '', connected = false, previous = 0
   for (const point of points) {
     const value = point.reading?.[key]

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "machine": "zoom-ms-70cdr",
+  "moduleId": "scope",
+  "moduleVersion": "0.3.0",
+  "imageSha256": "90470754e1933e8f5c6819197c3054b75a6ffa92a11d70b93278c80c5c282c34",
+  "firmware": "2.10",
+  "captures": [
+    {
+      "path": "media/scope-screen.png",
+      "sha256": "47085f1837c21f0a533dca425a01b1394b28e39d5198f82b1ba1e8c56697c21a",
+      "plan": "python3 src/custom/common/zvis_host.py src/custom/scope <out> --signal pluck --seconds 2 --frames 2 (ZoomMultistompZDL at 32f3d68), frame 1"
+    }
+  ]
+}

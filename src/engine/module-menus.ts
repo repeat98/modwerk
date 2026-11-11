@@ -28,6 +28,10 @@ export async function composeModuleMenus(original: Uint8Array, ids: readonly str
   const writes: OsWrite[] = [...baseline.writes], regions: { address: number; bytes: number; note: string }[] = []
   const formatters: { id: string; slot: number; address: number; bytes: number; wideMaximum: number | null }[] = []
   let cursor = baseline.caveCursor, overflow = OVERFLOW_START
+  // The ROM units' global symbols, for the DRAM link (createStaticColdFireRuntime): native build_bus's _exports at its
+  // DRAM link, every cloned descriptor's CLONE_<key> address and the globals of the units placed here.
+  const romSymbols = new Map<string, number>()
+  const exported = (symbols: ReadonlyMap<string, number>) => { for (const [name, value] of symbols) if (!name.includes(':')) romSymbols.set(name, value) }
   async function cave(address: number, bytes: Uint8Array, note: string) {
     if (!Number.isInteger(address) || address % 2 || !bytes.length) throw new Error('Invalid module menu placement.')
     const end = address >= baseline.caveCursor ? caveLimit : address >= OVERFLOW_START && address < OVERFLOW_END ? OVERFLOW_END : address === 0x400c45b0 ? 0x400c4702 : address
@@ -44,11 +48,17 @@ export async function composeModuleMenus(original: Uint8Array, ids: readonly str
     if (!recipe.rawPointers) return
     const symbols = new Map<string, number>()
     for (const unit of [...new Set(recipe.rawPointers.map(pointer => pointer.unit))]) {
+      // A unit that joined the DRAM runtime (createStaticColdFireRuntime) is named by its global symbols there.
+      if ((runtime as { units?: readonly string[] } | null)?.units?.includes(unit)) {
+        for (const symbol of (await readRomPackage(unit)).symbols) if (symbol.name && runtime!.symbols.has(symbol.name)) symbols.set(unit + ':' + symbol.name, runtime!.symbols.get(symbol.name)!)
+        continue
+      }
       let address = align(cursor, 128), linked = linkRomText(await readRomPackage(unit), address)
       const inside = address + linked.bytes.length <= caveLimit
       if (!inside) { address = align(overflow, 4); linked = linkRomText(await readRomPackage(unit), address) }
       await cave(address, linked.bytes, descriptor.id + ' ' + unit + ' ROM unit')
       for (const [name, value] of linked.symbols) symbols.set(unit + ':' + name, value)
+      exported(linked.symbols)
       if (inside) cursor = address + linked.bytes.length
       else overflow = align(address + linked.bytes.length, 4)
     }
@@ -70,6 +80,7 @@ export async function composeModuleMenus(original: Uint8Array, ids: readonly str
   if (!ids.includes('poly8') && modules.some(module => module.id === 'repitch')) {
     const address = align(cursor, 128), linked = linkRomText(await readRomPackage('repitch'), address)
     await cave(address, linked.bytes, 'Repitch ROM unit'); cursor = address + linked.bytes.length
+    exported(linked.symbols)
     for (const patch of recipes.repitchPatches) {
       let bytes: Uint8Array
       if (patch.kind === 'poke') {
@@ -89,18 +100,19 @@ export async function composeModuleMenus(original: Uint8Array, ids: readonly str
     }
   }
   const rom = await requestedRom(ids, cursor, overflow, caveLimit, cave)
-  cursor = rom.cursor; overflow = rom.overflow
+  cursor = rom.cursor; overflow = rom.overflow; exported(rom.symbols)
   const utilityUnits = await composeUtilityRom(ids, cursor, overflow, caveLimit, cave, 'linked')
-  cursor = utilityUnits.cursor; overflow = utilityUnits.overflow; writes.push(...utilityUnits.writes)
+  cursor = utilityUnits.cursor; overflow = utilityUnits.overflow; writes.push(...utilityUnits.writes); exported(utilityUnits.symbols)
   // Catalog order puts a replacing module after the requested and utility modules, so its units follow theirs unless it leads.
   for (const descriptor of baseline.descriptors) if (!leading.includes(descriptor.id)) await placeRawPointers(descriptor)
   const lateRom = await requestedRom(ids, cursor, overflow, caveLimit, cave, true)
-  cursor = lateRom.cursor; overflow = lateRom.overflow
+  cursor = lateRom.cursor; overflow = lateRom.overflow; exported(lateRom.symbols)
   const requestedSymbols = new Map([...(runtime?.symbols ?? []), ...rom.symbols, ...lateRom.symbols])
   if (modules.some(module => module.id === 'spectrum')) {
     const descriptor = baseline.descriptors.find(descriptor => descriptor.id === 'spectrum')!
     const address = 0x400c45b0, linked = linkRomText(await readRomPackage('spectrum-shape'), address, new Map([['CLONE_SPECTRUM', descriptor.address]]))
     await cave(address, linked.bytes, 'Spectrum SHPE formatter')
+    exported(linked.symbols)
     const view = new DataView(descriptor.bytes.buffer); view.setUint32(0xca + 7 * 4, address); view.setUint32(0xfa + 7 * 4, 0)
   }
   if (modules.some(module => module.id === 'tapeecho')) {
@@ -108,15 +120,16 @@ export async function composeModuleMenus(original: Uint8Array, ids: readonly str
     const inside = address + linked.bytes.length <= caveLimit
     if (!inside) { address = align(overflow, 4); linked = linkRomText(await readRomPackage('tape-time'), address) }
     await cave(address, linked.bytes, 'Tape TIME formatter')
+    exported(linked.symbols)
     const descriptor = baseline.descriptors.find(descriptor => descriptor.id === 'tapeecho')!
     const view = new DataView(descriptor.bytes.buffer); view.setUint32(0xca, address); view.setUint32(0xfa, 0)
     if (inside) cursor = address + linked.bytes.length
     else overflow = align(address + linked.bytes.length, 4)
   }
   const utilityCaves = await composeUtilityRom(ids, cursor, overflow, caveLimit, cave, 'caves')
-  cursor = utilityCaves.cursor; overflow = utilityCaves.overflow; writes.push(...utilityCaves.writes)
+  cursor = utilityCaves.cursor; overflow = utilityCaves.overflow; writes.push(...utilityCaves.writes); exported(utilityCaves.symbols)
   const caves = await requestedCaves(ids, cursor, overflow, caveLimit, cave, 0x40a955e0 + ((runtime as (CfRuntimeLink & { reserveBytes?: number }) | null)?.reserveBytes ?? 0))
-  cursor = caves.cursor; overflow = caves.overflow
+  cursor = caves.cursor; overflow = caves.overflow; exported(caves.symbols)
   for (const [name, value] of caves.symbols) requestedSymbols.set(name, value)
   const tables = await requestedTables(original, ids, cursor, cave, requestedSymbols)
   cursor = tables.cursor; writes.push(...tables.writes)
@@ -151,5 +164,6 @@ export async function composeModuleMenus(original: Uint8Array, ids: readonly str
   // Verify free-space and stock-site guards as one transaction. Clones are
   // private copies; failed placement never changes the caller's OS.
   await applyGuardedOsWrites(original, writes)
-  return { ...baseline, writes, regions, formatters, caveCursor: cursor, overflowCursor: overflow, caveLimit }
+  for (const descriptor of baseline.descriptors) romSymbols.set('CLONE_' + modules.find(module => module.id === descriptor.id)!.key.replace(/\W/g, '_'), descriptor.address)
+  return { ...baseline, writes, regions, formatters, caveCursor: cursor, overflowCursor: overflow, caveLimit, romSymbols }
 }

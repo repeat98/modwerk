@@ -1,5 +1,22 @@
 [
   {
+    "version": "0.2.2-experimental",
+    "date": "2026-11-03",
+    "changes": [
+      "Fits beside more modules: when your set already runs code from DRAM, its menu code goes there too, leaving room for the stock FX2 effects.",
+      "Fixes sets with FM Synth and Mute Modes losing every stock FX2 effect (#1175).",
+      "On its own, or without other DRAM code, it builds as before and costs no sample memory. Sound and controls are unchanged."
+    ]
+  },
+  {
+    "version": "0.2.1-experimental",
+    "date": "2026-10-30",
+    "changes": [
+      "Moves its DSP memory so a DSP machine can run beside it: the key bus and the MON words now sit at other addresses. No change to how it sounds or works.",
+      "An FX2 effect on T1 or T5 that fills its whole delay buffer can no longer run there while Sidechain Compressor is installed. Every stock effect, Mini Verb, E-Verb and BBD Delay still fit."
+    ]
+  },
+  {
     "version": "0.2.0-experimental",
     "date": "2026-10-25",
     "changes": [
