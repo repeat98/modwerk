@@ -526,7 +526,7 @@
       "sha256": "09effec7437266b693e358d43f0ba0f3de2b0b35fe4d81e7b76ba90cf388bde8"
     }
   ],
-  "sourceCommit": "7ec79036ddda8cf21e82602b4968ac7a314d2984",
+  "sourceCommit": "ceda08fd3ffc2485e01b02b9c000e3a2ffa99768",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -541,14 +541,14 @@
     "bbd": "0.1.2-experimental",
     "lofi2": "0.1.1-experimental",
     "ring-sc": "0.2.1-experimental",
-    "analog-bassdrum": "0.1.6-experimental",
+    "analog-bassdrum": "0.1.7-experimental",
     "midi-scenes": "0.2.5-experimental",
     "usb-audio-out-tracks-main-cue": "0.2.0-experimental",
     "quantizer": "0.1.4-experimental",
     "synth": "0.1.2-experimental",
     "previewvol": "0.1.2-experimental",
     "cc-map": "0.1.2-experimental",
-    "sidechain-compressor": "0.2.1-experimental",
+    "sidechain-compressor": "0.2.2-experimental",
     "vector": "0.3.1-experimental",
     "playmodes": "0.2.0-experimental",
     "mute-modes": "0.2.2-experimental",

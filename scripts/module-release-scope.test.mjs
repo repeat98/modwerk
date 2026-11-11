@@ -15,11 +15,15 @@ scope, retain = r['requested_release_scope'], r['retain_pending_requested']
 describe('source compilation with standalone MIDISC2.0', () => {
   it('excludes the local-stock recipe from compilation while retaining the reviewed requested modules', () => {
     const actual = metadataCheck(`catalog = json.load(open('sdk/catalog.json'))
-usb_only = {row['id'] for row in json.load(open('src/engine/assets/octatrack-module-packages.json'))['packages'] if row.get('sources')}
+usb_only = r['cardless_modules'](json.load(open('src/engine/assets/octatrack-module-packages.json')))
 ids = [m['id'] for m in catalog['modules'] if json.load(open('sdk/octabam/modules/' + m['id'] + '/octamod.module.json')).get('build', {}).get('status') != 'pending' and m['id'] not in usb_only]
 print(json.dumps(scope(ids)))
 `)
     expect(JSON.parse(actual)).toEqual(['analog-bassdrum', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector', 'playmodes', 'mute-modes', 'recorder-loop-fix', 'poly8', 'output-matrix', 'quantize-live-rec-toggle', 'apply-scene', 'direct-jump-kyoti', 'dejavu', 'arp-key-locks', 'temp-save', 'tuner', 'slow-lfo', 'bar-led', 'stem-rec'])
+  })
+  it('leaves explicitly USB-only packages out of the card scope, as the build does', () => {
+    // The build reads the card scope from cardless_modules; a check that kept only C sources would refuse the first usbOnly module.
+    expect(JSON.parse(metadataCheck(`print(json.dumps(sorted(r['cardless_modules'](dict(packages=[dict(id='c-runtime', sources=['x.c']), dict(id='usb-asm', usbOnly=True), dict(id='card', usbOnly=False), dict(id='plain')])))))`))).toEqual(['c-runtime', 'usb-asm'])
   })
   it('removes legacy 8.2 objects and preserves the other authored package inventory', () => {
     expect(metadataCheck(`baseline = json.load(open('src/engine/assets/requested-packages.json'))

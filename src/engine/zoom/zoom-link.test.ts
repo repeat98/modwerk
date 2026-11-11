@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { fakeEffect, fakeZoomPedal } from '../../dev/zoom-pedal-fake'
+import { fakeEffect, fakeEffectList, fakeZoomPedal } from '../../dev/zoom-pedal-fake'
 import { ZoomLink } from './zoom-link'
 import { MIDISTOMP_FEATURES, crc32, effectInfo, pack7, parseIdentity, parseLoad, unpack7 } from './zoom-protocol'
 
@@ -48,6 +48,11 @@ describe('the Zoom link', () => {
     expect(listed.map(f => [f.name, f.size, f.effect?.fxid])).toEqual([['LOOP.ZDL', 1200, 480], ['DELAY.ZDL', 1200, 16], ['FLST_SEQ.ZDT', 4108, undefined]])
     expect(await link.freeSpace()).toBe(123_456)
     expect(link.getState().status).toBe('ready')
+  })
+  it('reads the headers of effects the effect list puts in group 8 or doesn’t name, not the others', async () => {
+    const files = [fakeEffect('LOOP.ZDL', 8, 480, '0.03'), fakeEffect('DELAY.ZDL', 7, 16, '1.00'), fakeEffect('HAND.ZDL', 8, 500, '0.01'), fakeEffectList({ 7: ['DELAY.ZDL'], 8: ['LOOP.ZDL'] })]
+    const link = await connected(fakeZoomPedal({ files }))
+    expect((await link.listFiles({ versions: true })).map(f => [f.name, f.effect?.fxid])).toEqual([['LOOP.ZDL', 480], ['DELAY.ZDL', undefined], ['HAND.ZDL', 500], ['FLST_SEQ.ZDT', undefined]])
   })
   it('backs up every file whole, and sends nothing that writes', async () => {
     const files = [fakeEffect('LOOP.ZDL', 8, 480, '0.03', 3000), { name: 'FLST_SEQ.ZDT', data: Array.from({ length: 4108 }, (_, i) => i & 0xff) }]

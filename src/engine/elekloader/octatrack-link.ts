@@ -14,6 +14,7 @@ import { OCTATRACK } from '../../../vendor/elekloader/kit/src/devices.ts'
 import type { OctatrackDiagnostic, DiagnosticReading } from '../../community/octatrack-diagnostics-contract'
 import { encodeModuleSet } from './set-package.ts'
 import { diagnosticErrorKind } from '../../community/site-diagnostic-events'
+import loaderRefusals from '../../../sdk/runtime/loader-refusals.json' with { type: 'json' }
 
 export type LinkDiagnostic = Omit<OctatrackDiagnostic, 'id' | 'modules'>
 /** Numeric status fields only; exclude the device's free-text culprit name. */
@@ -40,6 +41,7 @@ const setBudget = (rows: number) => Math.max(10000, 500 * rows)
 /** How often a unit another window or app holds is tried again, so it connects once they let go. */
 const BUSY_RETRY_MS = 3000
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+const errorName = (error: unknown) => error instanceof Error || error instanceof DOMException ? error.name : ''
 
 // lib.dom has no WebUSB types; only what the link calls.
 export interface LinkDevice extends ControlDevice {
@@ -103,20 +105,13 @@ const REFUSED: Partial<Record<UploadResultName, string>> = {
   hash: 'The module arrived damaged. Nothing changed; send it again.',
   rejected: 'The Octatrack can’t run this module file.',
 }
-/** Why the loader rejected a module (sdk/runtime/loader/loader.h runtime_refusal), read from the base after a "rejected". */
-const REJECTED: Partial<Record<number, string>> = {
-  2: 'There isn’t enough module memory left on the Octatrack. Remove a module, then try again.',
-  3: 'This module changes the same part of the Octatrack as one that’s already installed.',
-  4: 'The Octatrack has no room for another module. Remove one, then try again.',
-  5: 'The Octatrack is still loading module code. Try again in a moment.',
-  6: 'This module needs more DSP time than an effect slot has.',
-  7: 'A track is playing this module’s effect, so the Octatrack can’t change it now. Pick another effect on that track, then try again.',
-  9: 'This version of the module changes a part of the Octatrack that the base now shares between modules. Install its newer version.',
-  10: 'The Octatrack can’t start the key bus this module needs until it restarts. Turn it off and on, then sync again.',
-}
+/** Why the loader rejected a module, read from the base after a "rejected": the musician's text for each of the
+ * loader's refusals (sdk/runtime/loader-refusals.json). A code without one shows the plain text above. */
+const REJECTED: Partial<Record<number, string>> = Object.fromEntries(
+  loaderRefusals.refusals.flatMap(refusal => 'musician' in refusal && refusal.musician ? [[refusal.code, refusal.musician]] : []))
 const UNPLUG = 'Unplug the USB cable to undo anything unfinished, then plug it back in.'
 /** The boot stub started the previous base after the new one failed to start three times (BaseSlots.fellBack). */
-const FELL_BACK = 'The last base update didn’t start, so your Octatrack went back to its previous base. Nothing was lost. Try the update again, and report it in #beta-testers on Discord.'
+const FELL_BACK = 'The last base update didn’t start, so your Octatrack went back to its previous base. Nothing was lost. Try the update again, and if it happens again, report it with Report a problem on the Your Octatrack page.'
 const RECOVERED = 'The Octatrack missed a reply, so nothing changed. Try again.'
 
 /** The unit changed between planning a load and sending it (another tab loaded first). */
@@ -227,13 +222,19 @@ export class OctatrackLink {
     if (this.usb) this.set({ status: 'idle' })
     void this.serial(() => this.release(true))
   }
-  /** Chrome's device picker; call from a click. */
+  /** Chrome's device picker; call from a click. A picker closed without an Octatrack is a pre-link diagnostic
+   * (`no-device`), as is a browser without WebUSB (`no-webusb`). */
   async connect() {
     const connection = this.connection
+    if (!this.usb) return this.noWebUsb()
     let device: LinkDevice
-    try { device = await this.usb!.requestDevice({ filters: [{ vendorId: ELEKTRON_VENDOR_ID }] }) } catch { return } // picker closed
+    try { device = await this.usb.requestDevice({ filters: [{ vendorId: ELEKTRON_VENDOR_ID }] }) }
+    catch (error) { if (errorName(error) === 'NotFoundError') this.diagnostic('link_failed', { failure: 'no-device' }); return } // picker closed
     if (connection === this.connection) await this.open(device)
   }
+  /** The member asked for something that needs USB (connecting, the base install guide) in a browser without WebUSB:
+   * reported as a pre-link diagnostic, nothing else happens. */
+  noWebUsb() { if (!this.usb) this.diagnostic('link_failed', { failure: 'no-webusb' }) }
   /** After another tab or app let go of the unit. */
   retry() { const device = this.device; return device ? this.open(device) : this.connect() }
   // An Octatrack restarting after its OS upgrade comes back here, so the install guide's last step completes by itself.
@@ -303,6 +304,8 @@ export class OctatrackLink {
       if (connection !== this.connection) { if (device.opened) await device.close().catch(() => {}); return }
       console.error(error)
       this.device = undefined
+      // Refused by the browser or the system: that reason, standing in for the open failure the state shows next.
+      if (['SecurityError', 'NotAllowedError'].includes(errorName(error))) this.diagnostic('link_failed', { failure: 'permission-denied' })
       this.set({ status: 'idle', notice: { tone: 'error', text: openFailure() } })
     }
   }

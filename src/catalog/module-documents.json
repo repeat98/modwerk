@@ -3677,7 +3677,7 @@
       "id": "analog-bassdrum",
       "key": "ANALOG BD",
       "name": "Analog BD",
-      "version": "0.1.6-experimental",
+      "version": "0.1.7-experimental",
       "category": "machines",
       "source": {
         "repository": "https://github.com/sambanks/octabam",
@@ -3733,14 +3733,14 @@
           "name": "PTCH",
           "default": 64,
           "count": 128,
-          "doc": "808 body pitch; 909 body frequency spans approximately 30–100 Hz.",
+          "doc": "Body pitch. 909: one octave, 32.7 Hz at 0, the recorded 909 at 64, 65.4 Hz at 127.",
           "labels": null
         },
         {
           "name": "DCAY",
           "default": 80,
           "count": 128,
-          "doc": "Body decay, with a different response for each model.",
+          "doc": "Body decay. 909: 15 ms at 0, the recording (247 ms) at 80, 600 ms at 127; the 808 keeps its own law.",
           "labels": null
         },
         {
@@ -3775,7 +3775,7 @@
           "name": "FIXD",
           "default": 0,
           "count": 2,
-          "doc": "SRC SETUP top middle, OFF/ON switch on both models. OFF varies every hit slightly (909: click strength and noise; 808: trigger transient strength); ON makes every hit open identically. On the 808, ON is the 0.1.5 sound.",
+          "doc": "SRC SETUP top middle, OFF/ON switch on both models. OFF varies every hit slightly (909: sweep depth, click strength and noise; 808: trigger transient strength); ON makes every hit open identically. On the 808, ON is the 0.1.5 sound.",
           "labels": [
             "OFF",
             "ON"
@@ -3792,14 +3792,14 @@
           "name": "LOW",
           "default": 64,
           "count": 128,
-          "doc": "Desk low band; 64 is neutral.",
+          "doc": "Desk low band; 64 is neutral. Weighted, not saturated on its own.",
           "labels": null
         },
         {
           "name": "HIGH",
           "default": 64,
           "count": 128,
-          "doc": "Desk high band; 64 is neutral.",
+          "doc": "Desk high band; 64 is neutral. Weighted, not saturated on its own.",
           "labels": null
         },
         {
@@ -3855,9 +3855,9 @@
             "source": "TESTING.md"
           },
           "dsp": {
-            "level": "high",
+            "level": "moderate",
             "basis": "measured-comparison",
-            "rationale": "0.1.6 schedules both engines tighter with bit-identical audio and state (dsp_host, 52 scenarios plus the exact-render cases): the SAT interpolation is skipped once SAT has settled, immediate loads ride in parallel-move slots and filter histories stay in registers. Peak 909 374.94 and 808 252.13 executed instructions/sample (was 408.4 and 266.3 in the same set): peaks about 8% and 5% lower, about 15% fewer executed instructions on average (emulator count). Executed instructions, not chip timing; the declared price of 411 per voice is unchanged.",
+            "rationale": "0.1.7: peak 909 186 and 808 184 executed DSP instructions per sample (377 and 255 for 0.1.6 on the same cases), shipping configuration in bd909_host: defaults, FIXD, ATK/ACNT/DECAY/SAT/LOW/HIGH extremes, a trig at every frame offset, retriggers, moving knobs; a resting voice 3. The 909 reads its body and click from tables, walks its state in read order and moves its noise envelope and slews once a block; the desk keeps two curves of four. Executed instructions, not chip timing; the declared price of 411 per voice is unchanged until the new engine is measured.",
             "source": "CPU.md"
           },
           "memory": {
@@ -3870,9 +3870,9 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "Restore twelve borrowed SRC bytes before removing AB/1 in both Part copies. 512 compiled assignment cases, reselection/destination checks and actual-panel CS1-only fresh emulator restarts pass; 0.1.4 rejects the bank. Owner reports FLEX persists on AB015FIX01 and instructs merge/publication. Both DSP cores are byte-identical to 0.1.4. Broader hardware/maximum-load, chip timing and memory limits remain under a new exact-source owner approval; Output Matrix halt is unverified.",
-        "hardwareStatus": "reported",
-        "evidenceRevision": "e7fe4fb745e610a63ab9fe390f330334369995c2",
+        "summary": "0.1.7: the recorded-909 engine (October refit) at half the 909's DSP work and about three quarters of the 808's, with a lighter shared desk. DSP matches its float model at -85 dB or better in the shipping configuration; the new 909 model matches the refit's at -63 dB with equal band levels; exact-render pins and the instruction-form precedent check pass; card and USB packages rebuilt (USB package identical on --check, same base and trust row). Not run on a unit: sound, install, several voices, persistence and chip timing are untested; the declared price is unchanged.",
+        "hardwareStatus": "untested",
+        "evidenceRevision": "62e9a424b7a08d7fcbbf321124ba6ef10f63d852",
         "gates": [
           "sdk/drafts/analog-bassdrum-909-reference/run.py",
           "sdk/drafts/analog-bassdrum-909-reference/qualification/multi-test.py",
@@ -3888,7 +3888,7 @@
             "title": "Compare the 909 direct-out response",
             "steps": [
               "In a disposable project, hold FUNC and press SRC for SRC SETUP, choose ANALOG BD and press YES. Turn the top-left TYPE switch to the right for the 909. Set LOW/HIGH to 64 and SAT to 0.",
-              "For the direct-out reference, set PTCH 49, DCAY 100, TUNE 0, TDEP 64, ACNT 72 and LPF 127 (OFF). Trigger repeated hits at 70 BPM and sweep ATK alone through 0–127, then hold it at one value to hear the small strength/noise differences.",
+              "For the direct-out reference, set PTCH 64, DCAY 80, TUNE 0, TDEP 64, ACNT 72 and LPF 127 (OFF). Trigger repeated hits at 70 BPM and sweep ATK alone through 0–127, then hold it at one value to hear the small strength/noise differences.",
               "Hold ATK at 0 and sweep TUNE through its endpoints separately. Return SAT to 0 and TDEP to 64, then press STOP and let the tail finish. Turn TYPE to the left to compare the 808; its saved knob values remain intact."
             ]
           },
@@ -3918,9 +3918,9 @@
             "page": "SRC SETUP",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.6-experimental",
-            "imageSha256": "9a52d642e1280c704789dfcca11876a7086cd170424aa8417988ceff442895f7",
-            "setup": "Headless ot_emu; MKII panel, stopped transport; native card build of this 0.1.6 source with Analog BD alone, empty scratch card; 128×64 LCD at integer scale 6."
+            "moduleVersion": "0.1.7-experimental",
+            "imageSha256": "794ae30ca349fa48b12e37e12c395f97394a5d1e5e1ec0e0405650cbbb1798b8",
+            "setup": "Headless ot_emu; MKII panel, stopped transport; native card build of this 0.1.7 source with Analog BD alone, empty scratch card; 128×64 LCD at integer scale 6."
           }
         },
         {
@@ -3935,9 +3935,9 @@
             "page": "909 SRC main",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.6-experimental",
-            "imageSha256": "9a52d642e1280c704789dfcca11876a7086cd170424aa8417988ceff442895f7",
-            "setup": "Headless ot_emu; MKII panel, stopped transport; native card build of this 0.1.6 source with Analog BD alone, empty scratch card; 128×64 LCD at integer scale 6."
+            "moduleVersion": "0.1.7-experimental",
+            "imageSha256": "794ae30ca349fa48b12e37e12c395f97394a5d1e5e1ec0e0405650cbbb1798b8",
+            "setup": "Headless ot_emu; MKII panel, stopped transport; native card build of this 0.1.7 source with Analog BD alone, empty scratch card; 128×64 LCD at integer scale 6."
           }
         },
         {
@@ -3952,9 +3952,9 @@
             "page": "808 SRC main",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.6-experimental",
-            "imageSha256": "9a52d642e1280c704789dfcca11876a7086cd170424aa8417988ceff442895f7",
-            "setup": "Headless ot_emu; MKII panel, stopped transport; native card build of this 0.1.6 source with Analog BD alone, empty scratch card; 128×64 LCD at integer scale 6."
+            "moduleVersion": "0.1.7-experimental",
+            "imageSha256": "794ae30ca349fa48b12e37e12c395f97394a5d1e5e1ec0e0405650cbbb1798b8",
+            "setup": "Headless ot_emu; MKII panel, stopped transport; native card build of this 0.1.7 source with Analog BD alone, empty scratch card; 128×64 LCD at integer scale 6."
           }
         },
         {
@@ -5720,11 +5720,11 @@
       "id": "sidechain-compressor",
       "key": "SIDECHAIN_COMPRESSOR",
       "name": "Sidechain Compressor",
-      "version": "0.2.1-experimental",
+      "version": "0.2.2-experimental",
       "category": "effects",
       "source": {
         "repository": "https://github.com/Zac-Kyoti/octatrack-kyoti-fw",
-        "revision": "8868867d02b15b5368a7e54772aff0c1c0387c81",
+        "revision": "ad7ecd2e85fc9622007601b56a7d18b6c031d7c2",
         "path": "modwerk-modules/sidechain-compressor"
       },
       "access": {
@@ -5940,7 +5940,7 @@
         "report": "TESTING.md",
         "summary": "0.2.1 moves the key bus to Y $7e00..$7fff and the MON words to Y $ff0..$fff; the DSP code is 0.2.0's, so 0.2.0's load, static ColdFire bound and memory inventory carry over (the image differs from 0.2.0's in the 12 address bytes only). Native octabam builds 0.2.1 alone and in 933 of the suites' selections (618 of 1,024 visible, 169 of 512 historical, 146 of 212 with Analog BD: the same selections build as with 0.2.0 on the same main); the beta base's resident engine passes the resident-engine checks at the new addresses (the key two blocks late whatever the enable order). On his MKI (30 October 2026) the author flashed the native image of this version alone and beside BBD Delay and reported both working.",
         "hardwareStatus": "reported",
-        "evidenceRevision": "8868867d02b15b5368a7e54772aff0c1c0387c81",
+        "evidenceRevision": "ad7ecd2e85fc9622007601b56a7d18b6c031d7c2",
         "gates": [
           "Native octabam and browser composition compared on the module's coverage set, with and without stock FX2",
           "Native suites regenerated: 512 selections of the original eight modules, 1,024 of the nine visible modules and 212 Analog BD selections",
@@ -5969,9 +5969,9 @@
             ],
             "screenshotStyle": "black-and-white"
           },
-          "moduleVersion": "0.2.1-experimental",
-          "sourceSha256": "b7ca44bfa979b0a4c75efc90262dbd4ab049e8b43e8beba1f8732bf94314def8",
-          "imageSha256": "fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc",
+          "moduleVersion": "0.2.2-experimental",
+          "sourceSha256": "6ad5997cd57ab8b188a9680bea2c970b4a44ed6b777912026d9eff27ea04ddfe",
+          "imageSha256": "e77ec14bd2f8f4d1586a3d2366207835485521cc6ce3ee941dc353a66963548a",
           "cycles": [
             {
               "processor": "dsp",
@@ -6075,7 +6075,7 @@
                 "scope": "shared"
               },
               {
-                "name": "ColdFire authored code (sc_cf 698 B, sc_ui 616 B)",
+                "name": "ColdFire authored code (sc_cf 698 B, sc_ui 616 B; in the DRAM runtime instead when the set carries one)",
                 "space": "cpu-flash",
                 "words": 1314,
                 "wordBits": 8,
@@ -6126,15 +6126,15 @@
             "kind": "functional",
             "status": "reported",
             "model": "MKI",
-            "testedOn": "2026-10-30",
+            "testedOn": "2026-11-03",
             "tester": "Zac Kyoti",
-            "sourceRevision": "8868867d02b15b5368a7e54772aff0c1c0387c81",
-            "imageSha256": "fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc",
-            "summary": "The author flashed Modwerk's native image of this source, the module alone (MAIN OS fb7c5e31, OS VERSION MW_SC021), on an Octatrack MKI and reported it working as expected: a same-core key (T2 keyed from T1) and cross-core keys (T6 from T1, T2 from T5) duck; MON ON plays the filtered key and OFF returns to the track, KBAS and KWID audible on MON; stock reverbs and delays on T1 and T5 FX2 beside a keyed compressor carry no other track; project reload and a power cycle keep the settings. He also flashed the native image with BBD Delay (MAIN OS c234d13c, MW_BBDSC): BBD on T1, T5 and T3 FX2 beside a keyed compressor, at maximum TIME, STGS 4096 and FRZ, clean, and the compressor still ducks.",
+            "sourceRevision": "ad7ecd2e85fc9622007601b56a7d18b6c031d7c2",
+            "imageSha256": "e77ec14bd2f8f4d1586a3d2366207835485521cc6ce3ee941dc353a66963548a",
+            "summary": "The author flashed two images of this source composed by Modwerk's builder with the stock FX2 effects kept, both with the module's ColdFire code in the DRAM runtime: beside Direct Jump (MAIN OS e77ec14b, OS VERSION MWSCDJ) and with the six modules of #1175, FM Synth, Play Modes, Mute Modes, Apply Scene and Direct Jump (ebaf5116, MW1175), on an Octatrack MKI, and reported all tests passing: the FX2 chooser lists every stock FX2 effect; COMPRESSOR on FX1 and FX2 draws page 2 (MON, KEY, KGN, KBAS, KWID); a same-core and a cross-core key duck; MON's switch, KEY's pressed turn, KBAS and KWID; a direct jump; project reload and a power cycle keep the settings. The module alone (cave placement) builds the image 0.2.1's hardware report covers (fb7c5e31, 30 October 2026), byte for byte.",
             "limitations": [
               "A functional report: duration, project, material and tempo were not reported, and the checklist was confirmed as a whole.",
-              "No measured chip timing, memory canary, recording, recovery or stress test; cross-core key latency was not measured on the unit (the emulator's resident-engine check gives two blocks).",
-              "The flashed images are this module alone and beside BBD Delay; the Modwerk download (with the core logger), the USB beta base and Sidechain Ringmod were not run on a unit."
+              "No measured chip timing, memory canary, recording, recovery or stress test.",
+              "The images were composed from this source before the isolated package build. The published packages compose MAIN OS c025c706 beside Direct Jump, which differs from the flashed one only in the core logger's identity text (the module's version label and build hashes); every OS write and runtime unit is the same. The #1175 set (f82e5ada) also carries Mute Modes 0.2.2, released after the run (TESTING.md). The USB beta base and Sidechain Ringmod were not run on a unit."
             ],
             "report": "evidence/hardware.md"
           }
@@ -6158,7 +6158,7 @@
             "page": "FX1 SETUP",
             "shows": "location-and-controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.1-experimental",
+            "moduleVersion": "0.2.2-experimental",
             "imageSha256": "fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc",
             "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card; no project loaded."
           }
@@ -6175,7 +6175,7 @@
             "page": "FX1 main",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.1-experimental",
+            "moduleVersion": "0.2.2-experimental",
             "imageSha256": "fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc",
             "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card; no project loaded."
           }
@@ -6192,7 +6192,7 @@
             "page": "FX1 SETUP",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.1-experimental",
+            "moduleVersion": "0.2.2-experimental",
             "imageSha256": "fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc",
             "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card; no project loaded."
           }
@@ -11078,8 +11078,8 @@
       "presentation": {
         "label": "Tempo LED marks the pattern's 1",
         "family": "Transport",
-        "summary": "The tempo LED flashes green on the pattern's 1 while the sequencer plays; every other beat stays red.",
-        "overview": "A visual downbeat for players who can't use the click track, for example when the cue outputs feed external effects. While the sequencer plays, the tempo LED flashes green on the first beat of each pass of the pattern and red on every other beat, as stock does. It reads the sequencer's own step, so it follows the pattern length. Stopped, it is stock. Nothing to set: install it and press PLAY.",
+        "summary": "The tempo LED, on the [TEMPO] key, flashes green on the pattern's 1 while the sequencer plays; every other beat stays red.",
+        "overview": "A visual downbeat for players who can't use the click track, for example when the cue outputs feed external effects. While the sequencer plays, the tempo LED (on the [TEMPO] key) flashes green on the first beat of each pass of the pattern and red on every other beat, as stock does. It reads the sequencer's own step, so it follows the pattern length. The four LEDs by [SCALE] stay as stock, and stopped, so does the tempo LED. Nothing to set: install it and press PLAY.",
         "highlights": [
           "Green on the pattern's 1, stock red on every other beat.",
           "Reads the sequencer's master step: the green follows the pattern's length.",
@@ -12667,6 +12667,638 @@
             "moduleVersion": "0.1.0-experimental",
             "imageSha256": "8963b03acccb3e8aea2c7f5f8a9a2f7c12692609eb3a189245e94672693fe8d5",
             "setup": "Headless adapted ot_emu with DSP and frame enabled, MKII panel, the repository's template card. This branch's beta base, SYNTIZ 0.1.0-experimental installed and kept over emulated USB, track 1 assigned from SRC SETUP. Actual pixels, stopped transport, rendered in two grays at scale 6. UI capture only."
+          }
+        }
+      ]
+    },
+    {
+      "schemaVersion": 2,
+      "id": "track-solo",
+      "key": "TRACK SOLO",
+      "name": "Track Solo",
+      "version": "0.2.4-experimental",
+      "category": "system",
+      "access": {
+        "location": "PROJECT > CONTROL > SEQUENCER > TRACK SOLO",
+        "steps": [
+          "Install Track Solo over USB.",
+          "Open PROJECT > CONTROL > SEQUENCER and choose HOLD for TRACK SOLO.",
+          "Close the menu, hold one TRACK button alone for 30 instrument UI ticks (about 0.5 seconds), then tap others to toggle their solo.",
+          "Release the original TRACK button to end solo; choose OFF to disable the gesture."
+        ],
+        "screenshots": [
+          "media/track-solo-off.png",
+          "media/track-solo-hold.png"
+        ]
+      },
+      "author": {
+        "github": "twwwy",
+        "credits": [
+          "twwwy"
+        ]
+      },
+      "nativeManifest": "manifest.py",
+      "presentation": {
+        "label": "TRACK SOLO",
+        "family": "Track audition",
+        "summary": "Momentary solo: hold a track for 0.5 seconds, tap others to join, then release to restore.",
+        "overview": "A session-only audition while editing. The held anchor is hidden from stock shortcuts; underlying mute and solo changes apply when the audition ends.",
+        "highlights": [
+          "Hold one TRACK button for 0.5 seconds to start a temporary solo.",
+          "Toggle other audio tracks into the group with one press.",
+          "Release the anchor to return to the underlying mute and solo state."
+        ],
+        "usage": [
+          "Open PROJECT > CONTROL > SEQUENCER and set TRACK SOLO to HOLD.",
+          "Hold T2 alone for 0.5 seconds, then press T3 to add or remove it.",
+          "Release T2 to end the temporary solo."
+        ]
+      },
+      "controls": [],
+      "compatibility": {
+        "firmware": "1.40C",
+        "effectId": null,
+        "location": "Audio tracks",
+        "conflicts": [],
+        "uiClaims": [
+          "key:TRACK",
+          "key:TRACK+TRACK"
+        ],
+        "limitations": [
+          "USB only: needs the Modwerk base for its key, tick and encoder events and its SEQUENCER row, so card firmware cannot include it.",
+          "Functional hardware report on package 50f64eb6 on beta base 72defb09, mostly alone and once beside Play Modes. Not tested on hardware: other modules, MKI, all eight anchors, external MIDI, arranger rows, Pickup recording, K09 modifier orderings, self-test. See TESTING.md.",
+          "TRACK SOLO is OFF on startup and after package replacement; its enable setting and solo groups are not saved.",
+          "MIDI mode is excluded. When T8 is master, include it with the source tracks in the temporary group; T8 alone has no source audio.",
+          "Mute Modes is optional. Paired emulator audio passed for OT, OTFX, OTFX-T and DT-T on the 0.2.2 package; physical Mute Modes behavior is untested.",
+          "USB settings use the existing shared row table; native card settings integration is pending.",
+          "With Play Modes: whichever TRACK gesture starts first wins. Press UP or DOWN within half a second of holding TRACK to change a Play Modes mode; hold longer and Track Solo starts instead."
+        ]
+      },
+      "resources": {
+        "recorded": "2026-11-06",
+        "storage": {
+          "label": "Storage",
+          "display": "1528 bytes linked code/data; zero BSS",
+          "value": 1528,
+          "unit": "bytes",
+          "method": "static",
+          "conditions": "Exact ABI 8 package SHA-256 50f64eb63cfe62b534988bda28baa4c575eb9d9a6dbc7a81035e7d95cd01cf89: 2,156-byte package, 1,528-byte linked image, zero BSS, 24 relocations, seven guarded sites.",
+          "source": "evidence/resource-accounting.md"
+        },
+        "processing": {
+          "label": "ColdFire, per event",
+          "display": "2,622 of 9,577 cycles worst case (static)",
+          "value": 2622,
+          "unit": "cycles/event",
+          "method": "static",
+          "conditions": "Module-owned instructions only: the dearest UI tick transition plus the active frame path, at 2.49216 cycles an instruction. Stock callees, cache and bus waits are excluded. Not measured on a chip. Measured in ot_emu: 677 module instructions, about 1,687 cycles, at the dearest event.",
+          "source": "evidence/performance.json"
+        },
+        "impact": {
+          "conditions": "One global instance with HOLD on and a group active. Estimates come from source and static counts, not measured hardware headroom. Loader allocation is included in memory.",
+          "cpu": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "At most 24 module instructions in a frame, 8 when idle. The dearest work is a UI-tick transition updating sixteen lamps, about 1,028 instructions, only when a hold starts or the group changes. Chip load is not measured.",
+            "source": "evidence/performance.json"
+          },
+          "dsp": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "No DSP program, effect slot or DSP state is added. The temporary mute word uses the stock mute path.",
+            "source": "manifest.py"
+          },
+          "memory": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "A 1,500-byte image with 44 writable bytes, zero BSS, and a 2,544-byte loader extent, with no buffers or per-track allocation.",
+            "source": "evidence/resource-accounting.md"
+          }
+        }
+      },
+      "tests": {
+        "report": "TESTING.md",
+        "summary": "Author functional report on real hardware, 10 November 2026: this package on beta base 72defb09, try and Undo, Keep with a minute of playing, power cycle, Play Modes beside it, removal, all read back from the device. Emulator control (18/18) and audio suites passed; measured worst event 1,687 cycles. Stock benchmark and stress waived by the owner for this version (no MIDI path). See TESTING.md.",
+        "hardwareStatus": "reported",
+        "evidenceRevision": "4faa4023b2cf29012abedfad2aed7b02e59519d5",
+        "gates": [
+          "python3 -B verify.py",
+          "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-control>",
+          "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-audio> --audio",
+          "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-paired> --audio --paired",
+          "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-save> --audio --save",
+          "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-paired-save> --audio --paired --save",
+          "python3 -B cycle_count.py --inputs <private-inputs> --output <new-private-output>"
+        ],
+        "qualification": {
+          "documentation": {
+            "tutorial": {
+              "title": "Quick tutorial: audition tracks while editing",
+              "steps": [
+                "Install Track Solo over USB. Open PROJECT > CONTROL > SEQUENCER, set TRACK SOLO to HOLD, close the menu, and let any stock notification clear.",
+                "Hold T2 alone for 0.5 seconds. While continuing to hold T2, press and release T3: T2 and T3 are now in the temporary group. Press T3 again to remove it.",
+                "Release T2. The underlying mute and solo state applies again. Select OFF to disable the gesture completely."
+              ]
+            },
+            "screenshots": [
+              "media/track-solo-off.png",
+              "media/track-solo-hold.png"
+            ],
+            "screenshotStyle": "black-and-white"
+          },
+          "moduleVersion": "0.2.4-experimental",
+          "sourceSha256": "f37562d53f0f901e09cca4d42d1a73730dfc92caa2563298dc960f45eb37f2cc",
+          "imageSha256": "50f64eb63cfe62b534988bda28baa4c575eb9d9a6dbc7a81035e7d95cd01cf89",
+          "cycles": [
+            {
+              "processor": "coldfire",
+              "worstCase": 2622,
+              "maxConfiguration": 2622,
+              "maxInstances": 1,
+              "budget": 9577,
+              "unit": "cycles/event",
+              "method": "static",
+              "conditions": {
+                "parameterExtremes": "One setting, OFF or HOLD. Counted: inactive frame path (4 + 4 instructions), active frame path (12 + 12), tick transition with the longest callees, including activation updating all sixteen lamps.",
+                "parameterModulation": "No parameter, lock, LFO, scene or MIDI CC reaches this code. The equivalent path is the live mute word changing underneath a hold, which adds no module work: each frame reads the word once.",
+                "modeSwitching": "Activation, group change and release are the dearest transitions and are the tick bound. PROJECT, project load and MIDI mode cancel through ts_cancel, included in that bound.",
+                "maxLoad": "One global instance. The bound sums mutually exclusive branches and both lamp updates, so it exceeds any single path. Measured in ot_emu with frames and both DSP cores running: 677 module instructions, 1,687 cycles (evidence/performance.json).",
+                "inputConditions": "Audio content is not read; cost does not depend on the signal. Membership changes the path only through the eight-track loops, counted at their bound."
+              },
+              "report": "evidence/performance.json"
+            }
+          ],
+          "memory": {
+            "regions": [
+              {
+                "name": "Linked code, tables and read-only data",
+                "space": "sdram",
+                "words": 1456,
+                "wordBits": 8,
+                "bytes": 1456,
+                "scope": "shared"
+              },
+              {
+                "name": "Writable state inside the image: session state, pointers, overlay and frame words",
+                "space": "sdram",
+                "words": 44,
+                "wordBits": 8,
+                "bytes": 44,
+                "scope": "shared"
+              },
+              {
+                "name": "Loader object and seven site descriptors, rounded to 16",
+                "space": "sdram",
+                "words": 1040,
+                "wordBits": 8,
+                "bytes": 1040,
+                "scope": "shared"
+              },
+              {
+                "name": "Image rounding to 16",
+                "space": "sdram",
+                "words": 4,
+                "wordBits": 8,
+                "bytes": 4,
+                "scope": "shared"
+              },
+              {
+                "name": "Largest module-owned stack path before stock replay (caller stack)",
+                "space": "sdram",
+                "words": 56,
+                "wordBits": 8,
+                "bytes": 56,
+                "scope": "shared"
+              }
+            ],
+            "perInstanceBytes": 0,
+            "sharedBytes": 2600,
+            "maxInstances": 1,
+            "totalBytes": 2600,
+            "conditions": "ABI 8 package, zero BSS, one instance. Loader figures come from an ABI 10 probe with RUNTIME_MODULES=128. Stock callee stack, transition peaks during replacement and hardware canaries are not measured.",
+            "report": "evidence/resource-accounting.md"
+          },
+          "hardware": {
+            "kind": "functional",
+            "status": "reported",
+            "model": "MKII",
+            "testedOn": "2026-11-10",
+            "tester": "twwwy",
+            "sourceRevision": "4faa4023b2cf29012abedfad2aed7b02e59519d5",
+            "imageSha256": "50f64eb63cfe62b534988bda28baa4c575eb9d9a6dbc7a81035e7d95cd01cf89",
+            "summary": "The author updated the unit to Modwerk beta base 72defb09 from the site, then ran this exact package over USB, OS 1.40C, disposable project: a 90-second trial and Undo; a trial and Keep, then about a minute of playing; a power cycle; a 300-second trial of Play Modes 0.1.1 beside it; then removal. They reported the TRACK SOLO row and HOLD working, solo, join and leave, audio, lamps and release behaving, the row back at OFF after the power cycle, and with Play Modes the first gesture wins: TRACK plus UP or DOWN within half a second changes the Play Modes mode, a longer hold starts Track Solo instead. Read back from the device: empty after Undo, Track Solo installed after Keep and after the power cycle, only Track Solo after Play Modes rolled back, empty after removal, set identity back to the start.",
+            "limitations": [
+              "Author-reported panel observations with no audio measurement or timing.",
+              "About ten minutes on one unit. The USB identity does not state the model; MKII comes from earlier records of this unit.",
+              "Not tested: other modules alongside except the Play Modes trial, all eight anchors, external MIDI, arranger rows, Pickup recording, the K09 orderings, self-test, MKI, the card build (Track Solo is USB-only)."
+            ],
+            "report": "TESTING.md"
+          }
+        }
+      },
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE",
+        "declaration": "Original Track Solo source by twwwy, MIT. No stock firmware, extracted code, tables, projects or memory dumps are distributed."
+      },
+      "media": [
+        {
+          "path": "media/track-solo-off.png",
+          "captureType": "emulator",
+          "caption": "Find TRACK SOLO under PROJECT > CONTROL > SEQUENCER. OFF preserves stock track-button behavior.",
+          "alt": "Octatrack SEQUENCER menu with TRACK SOLO set to OFF.",
+          "credit": "twwwy; underlying Octatrack UI by Elektron",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "PROJECT / CONTROL / SEQUENCER",
+            "shows": "location",
+            "firmware": "1.40C",
+            "moduleVersion": "0.2.4-experimental",
+            "imageSha256": "124548dc353b2f9cd41ba0a27113ae441e82b68a16d10a1b9509920c61839587",
+            "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.4 package installed through the real runtime backend; panel_test.py --menu; empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo."
+          }
+        },
+        {
+          "path": "media/track-solo-hold.png",
+          "captureType": "emulator",
+          "caption": "Press YES to choose HOLD. Close the menu and wait for stock notifications to clear before holding a track for 0.5 seconds.",
+          "alt": "Octatrack SEQUENCER menu with TRACK SOLO set to HOLD.",
+          "credit": "twwwy; underlying Octatrack UI by Elektron",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "PROJECT / CONTROL / SEQUENCER",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.2.4-experimental",
+            "imageSha256": "124548dc353b2f9cd41ba0a27113ae441e82b68a16d10a1b9509920c61839587",
+            "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.4 package installed through the real runtime backend; panel_test.py --menu; empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo."
+          }
+        }
+      ]
+    },
+    {
+      "schemaVersion": 2,
+      "id": "pattern-sample-locks",
+      "key": "PATTERN SAMPLE LOCKS",
+      "name": "Pattern Sample Locks",
+      "version": "0.1.8-experimental",
+      "category": "system",
+      "access": {
+        "location": "MKII: Part Edit",
+        "steps": [
+          "FUNC + PART opens level 1; select an action with YES.",
+          "Level 2 always shows T1-4 left and T5-8 right. Arrows skip greyed-out non-Flex/Static tracks.",
+          "Turn A clockwise to select all eligible tracks or counterclockwise to clear selection. B sets the highlighted track in the same way.",
+          "For Lock, C sets Replace existing; OFF preserves every existing SAMPLE lock. Clear always includes all SAMPLE locks.",
+          "YES opens level 3. Review per-track change counts; YES applies and closes on success, NO returns to level 2. Errors remain visible.",
+          "NO in level 2 closes the popup. Apply keeps playback as it was; active live or sampler recording refuses the edit.",
+          "Successful operations remember each action’s tracks and cursor, plus Lock replacement policy. Cancelling keeps the previous settings. Module reload or power cycling resets them."
+        ],
+        "screenshots": [
+          "media/v018-mkii-live512-confirm.png",
+          "media/mkii-part-menu.png",
+          "media/mkii-lock-replace-on.png",
+          "media/live-removal-open-tracks.png",
+          "media/live-lock-confirm.png",
+          "media/live-clear-confirm.png",
+          "media/live-512-lock-confirm.png",
+          "media/live-512-clear-confirm.png"
+        ]
+      },
+      "author": {
+        "github": "twwwy",
+        "credits": [
+          "twwwy"
+        ]
+      },
+      "nativeManifest": "manifest.py",
+      "presentation": {
+        "label": "SAMPLE LOCKS",
+        "family": "Pattern editing",
+        "summary": "Lock Part sample choices into pattern trigs, or clear SAMPLE locks.",
+        "overview": "Two explicit native SAMPLE-lock actions in Part Edit. Lock preserves existing SAMPLE locks by default. Clear removes every SAMPLE lock on selected tracks. Playback keeps its current state; successful settings are remembered while the module stays loaded.",
+        "highlights": [
+          "All eight tracks appear; only Flex and Static tracks are selectable.",
+          "Select all eligible tracks or a subset.",
+          "Keep existing sample locks by default.",
+          "Clear removes every SAMPLE lock on selected tracks, including manual locks.",
+          "Recall separate Lock/Clear selections and Lock replacement policy during the current module session."
+        ],
+        "usage": [
+          "MKII: FUNC + PART, then choose either sample-lock action.",
+          "Level 2: arrows navigate eligible tracks; A selects all, B selects the highlighted track. Turn clockwise ON, counterclockwise OFF.",
+          "C sets Replace existing for Lock; Clear always includes every SAMPLE lock.",
+          "YES opens level 3 with per-track change counts. NO returns to level 2; NO in level 2 closes."
+        ]
+      },
+      "controls": [],
+      "compatibility": {
+        "firmware": "1.40C",
+        "effectId": null,
+        "location": "Flex / Static",
+        "conflicts": [],
+        "uiClaims": [
+          "screen:PART EDIT"
+        ],
+        "limitations": [
+          "Experimental: tested on one MKII over USB; no MKI, no audio checks on this base.",
+          "Under a high-load development run, SAMPLE fields on one pattern changed without explanation; the cause is unknown.",
+          "On a unit that had run a long session, the menu rows once did not appear until a power cycle; cause not found.",
+          "Clear removes all SAMPLE locks on selected tracks, including manual locks.",
+          "Lock preserves all existing SAMPLE locks by default, including those written by a previous Lock action.",
+          "No ownership storage, origin tracking or custom lifecycle event is used.",
+          "First-beta scope is USB-only through the Modwerk base; card firmware is unsupported. Contributed-machine combinations remain unqualified."
+        ]
+      },
+      "resources": {
+        "recorded": "Author's MKII, 8 Nov 2026; emulator 8 Nov 2026; exact package extent",
+        "storage": {
+          "label": "Storage",
+          "display": "10,832 bytes",
+          "value": 10832,
+          "unit": "bytes",
+          "method": "static",
+          "conditions": "Exact extent in the Octatrack base's shared 768 KiB runtime pool: one active copy per module ID. Replacement can retain both old and new extents; 21,664 bytes assumes both are this candidate. Reclamation depends on reachability. Excludes complete shared sys-task stack demand. See TESTING.md.",
+          "source": "TESTING.md"
+        },
+        "processing": {
+          "label": "CPU / DSP load",
+          "display": "Dearest press 333,805 instructions in the emulator",
+          "value": null,
+          "unit": "unknown",
+          "method": "emulator",
+          "conditions": "ot_emu, exact package 3e13c46f on base 9b3ba417: one Clear on 512 SAMPLE fields, entry to return of module_key, stock callees and interrupts included. A one-shot edit on the UI task; nothing in the audio frame or on the DSP. On the MKII a separate probe measured the Clear commit body at 8.36 ms with USB recording. See evidence/performance.json and TESTING.md.",
+          "source": "evidence/performance.json"
+        },
+        "impact": {
+          "conditions": "One USB-installed MKII 1.40C instance per module ID. Normal dispatch includes module_tick at 60/s and module_draw on each composed frame: while CLOSED, key checks code/consumed bits then normally returns, encoder exits at its phase check, tick writes api->value, and draw exits. In an open Part Edit popup, ticks check popup/source, draws paint the menu/overlay each composed frame, and key/encoder events update bounded state and request redraw. Also includes one maximum explicit Lock or Clear at a time over up to eight selected Flex/Static tracks × 64 steps (512 SAMPLE fields), stopped or playing; live/sampler recording refuses. Playback is stock; no DSP/frame callback is added. Candidate occupies the shared pool; 21,664 bytes assumes an equally sized old extent. Upload stage, base ledgers and task stack are shared; other combinations, MKI, card and high-load extremes are outside scope. Complete memory/stack qualification remains open.",
+          "cpu": {
+            "level": "low",
+            "basis": "source-estimate",
+            "rationale": "Low remains a relative source estimate for this mixed workload, not an exclusively one-shot or zero-idle-cost rating. With the popup closed, key/encoder hooks do brief input/phase checks, tick makes one api->value update at 60/s, and draw exits each composed frame. While open, ticks check popup/source state and each composed frame paints a fixed-size menu/track overlay; key/encoder paths update bounded UI state. These hooks persist but add no audio-frame processing. For maximum 8×64 Clear, a source-mapped, path-conditional envelope counts 5,502,242 candidate ColdFire instructions in the transaction core but excludes the ui.c wrapper/state-capture/redraw work, stock callees, interrupts and scheduler; it is not a full callback bound, cycle count, latency or hardware measurement. Apply Scene's Low tier covers a measured one-press path up to 11.1 million emulator instructions with nothing between presses, so it is only a coarse ordinal reference and does not include these persistent hooks. See ui.c, TESTING.md and the instruction-envelope report.",
+            "source": "evidence/candidate-instruction-envelope-20261105.md"
+          },
+          "dsp": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "The package adds no DSP program or audio-frame callback. Lock/Clear writes ordinary SAMPLE fields that the instrument's existing playback path consumes. Minimal describes the absent added DSP path, not zero whole-instrument DSP load; playback continuity and full-load qualification remain separate.",
+            "source": "TESTING.md"
+          },
+          "memory": {
+            "level": "low",
+            "basis": "source-estimate",
+            "rationale": "One active copy occupies an exact 10,832-byte extent in the shared runtime pool: 8,748 initialized bytes, 1,328 BSS bytes, 528-byte runtime header and 216 site-record bytes plus alignment. Apply Scene's 2,062-byte code/state is a minimal-tier reference; Temp Save's 42,892-byte buffer is moderate. The 10,048-byte package occupies existing shared upload staging, not another module allocation. The complete shared-task/interrupt stack remains unresolved, so this is not a total-memory qualification; the 21,664-byte overlap assumes two equal candidate extents.",
+            "source": "evidence/memory-lifetimes-20261105.md"
+          }
+        }
+      },
+      "tests": {
+        "report": "TESTING.md",
+        "summary": "On the author's MKII (OS 1.40C, public beta base 9b3ba417) over USB, 8 Nov 2026, exact package 3e13c46f: with 20 kept published modules plus Sample Locks, FUNC + PART showed both actions; Lock on two patterns wrote SAMPLE locks and kept a manual SAMPLE lock and a non-SAMPLE lock; native save and reload kept both; Keep of the 21-module set survived a physical power cycle with both patterns' locks; Clear on one pattern removed its SAMPLE locks, kept the non-SAMPLE lock and stayed clear after save and reload. Earlier the same day the menu rows did not appear on a long-running unit until a power cycle (cause not found). 3 Nov: Replace OFF kept an existing lock and filled an empty field; Clear kept non-SAMPLE locks. Emulator: dearest press (Clear on 512 fields) 333,805 instructions; 40 presses while playing, no hang. Not run: MKI, audio, live-recording refusal on this base, a static cycle or stack bound. Known issue: one unexplained SAMPLE change in a high-load development run.",
+        "hardwareStatus": "reported",
+        "evidenceRevision": "5a15ac390dac2475df3fb3b2ef64154e174b4182",
+        "gates": [
+          "modules/pattern-sample-locks/verify.py"
+        ],
+        "qualification": {
+          "documentation": {
+            "tutorial": {
+              "title": "Quick tutorial",
+              "steps": [
+                "Create a disposable pattern with sample trigs and an existing SAMPLE lock.",
+                "Open Lock, select a track and leave Replace existing OFF. Confirm: empty SAMPLE fields on sample trigs receive the Part assignment; existing locks remain unchanged.",
+                "Open Clear and select tracks. Review **INCLUDES MANUAL LOCKS** and the counts. Confirm to remove every selected SAMPLE lock. Other parameter locks remain.",
+                "Use ordinary Save Project to save the pattern. Nothing saves implicitly."
+              ]
+            },
+            "screenshots": [
+              "media/mkii-part-menu.png",
+              "media/mkii-lock-replace-on.png",
+              "media/live-removal-open-tracks.png",
+              "media/v018-mkii-live512-confirm.png",
+              "media/live-512-clear-confirm.png"
+            ],
+            "screenshotStyle": "black-and-white"
+          },
+          "moduleVersion": "0.1.8-experimental",
+          "sourceSha256": "800a3ac6a6ac8c523ffa9d19232fc358372bed8697e0b71bbdf77418d62abdcd",
+          "imageSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+          "cycles": [
+            {
+              "processor": "coldfire",
+              "worstCase": 333805,
+              "maxConfiguration": 333805,
+              "maxInstances": 1,
+              "budget": 26600000,
+              "unit": "cycles/event",
+              "method": "emulator",
+              "conditions": {
+                "parameterExtremes": "The dearest input: CLEAR SAMPLE LOCKS confirmed on 8 tracks x 64 steps, 512 SAMPLE fields. Five cases measured (2, 64 and three 512-field fixtures); the next dearest was 326,556.",
+                "parameterModulation": "Not applicable: no continuous parameters. Encoders and arrows change bounded UI state; each change costs one redraw.",
+                "modeSwitching": "Lock and Clear, Replace existing on and off, stopped and playing; 20 rounds of Lock then Clear on 512 fields while playing, with STOP and a Part change between (40 events, no hang).",
+                "maxLoad": "One instance per module ID. The event is one module_key call on the UI task, not an interrupt. Budget: the key-press template's 26,600,000 cycles (100 ms at 266 MHz), owner-waived static bound for this version.",
+                "inputConditions": "ot_emu, executed instructions from entry to return of module_key, stock callees and interrupts included, DSP running; exact package 3e13c46f on base 9b3ba417. Instructions, not cycles: the figure is a count of executed instructions; even at ten cycles each it stays under 13 % of the budget. Not measured on hardware."
+              },
+              "report": "evidence/performance.json"
+            }
+          ],
+          "memory": {
+            "regions": [
+              {
+                "name": "ColdFire code and initialized data (package image)",
+                "space": "sdram",
+                "words": 8748,
+                "wordBits": 8,
+                "bytes": 8748,
+                "scope": "shared"
+              },
+              {
+                "name": "State (bss): menu, selections and edit plan",
+                "space": "sdram",
+                "words": 1328,
+                "wordBits": 8,
+                "bytes": 1328,
+                "scope": "shared"
+              },
+              {
+                "name": "Runtime module header, three site records and alignment in the base's pool",
+                "space": "sdram",
+                "words": 756,
+                "wordBits": 8,
+                "bytes": 756,
+                "scope": "shared"
+              }
+            ],
+            "perInstanceBytes": 0,
+            "sharedBytes": 10832,
+            "maxInstances": 1,
+            "totalBytes": 10832,
+            "conditions": "From the exact package 3e13c46f (10,048 bytes, 167 relocations) and the base's loader layout: one 10,832-byte extent in the shared 768 KiB runtime pool; during a replacement the old and new extents can both be held (21,664 bytes for two copies of this package). No DSP memory, no heap, no battery storage, no card files. Stack: the key path's source-derived subtotal is 916 bytes on the shared sys task, excluding interrupts; not measured on hardware.",
+            "report": "TESTING.md"
+          },
+          "hardware": {
+            "kind": "functional",
+            "status": "reported",
+            "model": "MKII",
+            "testedOn": "2026-11-08",
+            "tester": "twwwy",
+            "sourceRevision": "5a15ac390dac2475df3fb3b2ef64154e174b4182",
+            "imageSha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79",
+            "summary": "The author's MKII, OS 1.40C, flashed public Modwerk beta base 9b3ba417, driven over USB by Claude Code with whole-set offers. 8 Nov 2026, exact package 3e13c46f beside the 20 published modules the unit keeps (set 42fcda34): FUNC + PART on a Flex track's SRC page showed LOCK SAMPLES TO PATTERN and CLEAR SAMPLE LOCKS; Lock on two patterns wrote SAMPLE locks and kept a manual SAMPLE lock and a non-SAMPLE lock; native save and reload kept both; Keep of the 21-module set (self-test 21 intact, 6 DSP effects ran, 0 failed) then a physical power cycle restored all 21 records and both patterns' locks; Clear on one pattern removed its SAMPLE locks, kept the non-SAMPLE lock, and stayed clear after native save and reload while the other pattern kept its locks. 3 Nov 2026, same package in a RAM trial: Replace OFF kept an existing manual SAMPLE lock and filled an empty field; Clear removed selected SAMPLE locks and kept a non-SAMPLE lock; rollback restored the set.",
+            "limitations": [
+              "One MKII; no MKI.",
+              "Panel results are the author's reports; the USB readings (set identity, self-test, status word) were observed by the session.",
+              "Earlier on 8 Nov, on a unit that had run a long session, FUNC + PART showed only the stock rows in three trials until a power cycle, while Beat Slicer's tick signature stayed in the shared status word after its removal; cause not found, not reproduced in the emulator.",
+              "In one high-load development run, SAMPLE fields on one pattern changed without explanation; cause unknown.",
+              "Not run on this base: audio checks, live or sampler recording refusal, Apply while playing on the unit, maximum-size edits on the unit.",
+              "Cost measured in the emulator in instructions, not cycles; no static cycle bound or measured stack depth (owner-waived for this version)."
+            ],
+            "report": "TESTING.md"
+          }
+        }
+      },
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE",
+        "declaration": "Original MIT source by twwwy. Original small lettering reused from twwwy’s Beat Slicer under MIT. No stock firmware or extracted tables are included."
+      },
+      "media": [
+        {
+          "path": "media/v018-mkii-live512-confirm.png",
+          "captureType": "hardware",
+          "caption": "After selecting tracks, press YES to review planned Lock changes. This actual MKII screen lists 64 per track with existing locks kept; press YES to apply or NO to return. It is a pre-apply confirmation, not an edit result.",
+          "alt": "Physical Octatrack Lock confirmation with 64 planned changes on each of eight tracks and existing locks kept.",
+          "credit": "twwwy; Elektron Octatrack UI",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "Live maximum Lock confirmation",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.8-experimental",
+            "imageSha256": "c0b988cbff0050b19961590d1203f5263b0a3d298216e234361bf0fdc3c1c28c",
+            "setup": "Actual MKII LCD read over the development USB interface on temporary RAM base 9056dbbd2a84c80051eee33f97d6407ecf079c51f27bd682243d44c9344777d2. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d. Disposable A03, 120 BPM, 64 trigs on each of eight tracks. Receipt media/v018-mkii-qualification.json; no Keep or flash."
+          }
+        },
+        {
+          "path": "media/mkii-part-menu.png",
+          "captureType": "hardware",
+          "caption": "Press FUNC + PART, then choose Lock Samples to Pattern or Clear Sample Locks with YES. Both actions appear below the four stock Part Edit rows.",
+          "alt": "Physical Octatrack Part Edit menu with Lock Samples to Pattern and Clear Sample Locks.",
+          "credit": "twwwy; Elektron Octatrack UI",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "Part Edit",
+            "shows": "location",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.8-experimental",
+            "imageSha256": "c0b988cbff0050b19961590d1203f5263b0a3d298216e234361bf0fdc3c1c28c",
+            "setup": "Actual MKII on RAM development base 9056dbbd; hardware receipt media/v018-mkii-qualification.json. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
+          }
+        },
+        {
+          "path": "media/mkii-lock-replace-on.png",
+          "captureType": "hardware",
+          "caption": "Use arrows to move among eligible tracks. Turn A clockwise to select all and counterclockwise to clear them; B clockwise selects the highlighted track and counterclockwise clears it. This actual MKII screen shows C: Replace existing ON; turn it OFF to keep every existing SAMPLE lock.",
+          "alt": "Lock track selector with T1 selected and C: Replace existing ON.",
+          "credit": "twwwy; Elektron Octatrack UI",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "Lock selection",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.8-experimental",
+            "imageSha256": "c0b988cbff0050b19961590d1203f5263b0a3d298216e234361bf0fdc3c1c28c",
+            "setup": "Actual MKII on RAM development base 9056dbbd; hardware receipt media/v018-mkii-qualification.json. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
+          }
+        },
+        {
+          "path": "media/live-removal-open-tracks.png",
+          "captureType": "emulator",
+          "caption": "Turn A clockwise to select all eligible tracks or counterclockwise to clear them; turn B clockwise/counterclockwise to select/clear the highlighted track. Arrows skip non-Flex/Static tracks; Clear has no replacement setting and includes manual SAMPLE locks. This is an emulator capture.",
+          "alt": "Clear track selector, all eight tracks selected, A: All and B: Track.",
+          "credit": "twwwy; Elektron Octatrack UI",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "Clear selection",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.8-experimental",
+            "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
+            "setup": "Actual DSP-enabled MKII emulator on base 4ed92776; receipt media/emulator-0.1.8.json. Emulator evidence does not qualify hardware or audio. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
+          }
+        },
+        {
+          "path": "media/live-lock-confirm.png",
+          "captureType": "emulator",
+          "caption": "On the Lock confirmation, press YES to apply 63 planned changes on T1 or NO to return to selection. Existing locks are kept in this emulator example.",
+          "alt": "Lock confirmation with 63 changes on T1 and Existing locks: Keep.",
+          "credit": "twwwy; Elektron Octatrack UI",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "Lock confirmation, T1",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.8-experimental",
+            "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
+            "setup": "Actual DSP-enabled MKII emulator on base 4ed92776; receipt media/emulator-0.1.8.json. Emulator evidence does not qualify hardware or audio. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
+          }
+        },
+        {
+          "path": "media/live-clear-confirm.png",
+          "captureType": "emulator",
+          "caption": "On the Clear confirmation, the 64 T1 count includes manual locks; press YES to remove them or NO to return. This emulator screen shows the plan, not a completed edit.",
+          "alt": "Clear confirmation with 64 changes on T1 and Includes manual locks.",
+          "credit": "twwwy; Elektron Octatrack UI",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "Clear confirmation, T1",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.8-experimental",
+            "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
+            "setup": "Actual DSP-enabled MKII emulator on base 4ed92776; receipt media/emulator-0.1.8.json. Emulator evidence does not qualify hardware or audio. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
+          }
+        },
+        {
+          "path": "media/live-512-lock-confirm.png",
+          "captureType": "emulator",
+          "caption": "The Lock confirmation lists 64 planned changes per track with Replace existing: Yes. Press YES to apply or NO to return; this is an emulator pre-apply screen.",
+          "alt": "Lock confirmation with 64 changes on each track and Replace existing: Yes.",
+          "credit": "twwwy; Elektron Octatrack UI",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "Lock confirmation, all tracks",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.8-experimental",
+            "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
+            "setup": "Actual DSP-enabled MKII emulator on base 4ed92776; receipt media/emulator-0.1.8.json. Emulator evidence does not qualify hardware or audio. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
+          }
+        },
+        {
+          "path": "media/live-512-clear-confirm.png",
+          "captureType": "emulator",
+          "caption": "Clear's confirmation lists 64 planned removals per track and warns that manual locks are included. Press YES to apply or NO to return; this screenshot is from the emulator.",
+          "alt": "Clear confirmation with 64 removals on each track and Includes manual locks.",
+          "credit": "twwwy; Elektron Octatrack UI",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "Clear confirmation, all tracks",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.1.8-experimental",
+            "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
+            "setup": "Actual DSP-enabled MKII emulator on base 4ed92776; receipt media/emulator-0.1.8.json. Emulator evidence does not qualify hardware or audio. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
           }
         }
       ]

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-3.0-or-later
  * Host check of modset.c with a pretend card: accepted packages are saved to the two files in turn, a
  * removal drops its module, the newest whole set is installed after a boot, a damaged newer file leaves the
- * older one, and another base's set or a held FUNC installs nothing. A Keep joins the set only as exactly the
+ * older one, and another base's set or a held PROJ or FUNC installs nothing. A Keep joins the set only as exactly the
  * trial's whole-set identity, and its save reports unsaved and failed until the card has it. A start that crashed,
  * stopped or hung while its restore ran leaves the package it was installing out, or holds the set once. */
 #define MODWERK_RUNTIME_VOLATILE_JOURNAL
@@ -22,6 +22,12 @@ void modwerk_runtime_refused(enum runtime_refusal why) { noted = why; }
 
 static unsigned failures;
 #define CHECK(x) do { if (!(x)) { failures++; fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #x); } } while (0)
+/* Keys as the panel reports them: code row * 8 + bit of the held-key rows (scripts/device.mjs). */
+#define FUNC 0x2du
+#define PROJ 0x1cu
+#define PART 0x1du /* PROJ's neighbour in its row */
+#define HOLD(code) (modwerk_test_keys[(code) >> 3] |= (uint8_t)(1u << ((code) & 7u)))
+#define LET_GO() memset(modwerk_test_keys, 0, sizeof modwerk_test_keys)
 const uint8_t modwerk_base_digest[32] = {1, 2, 3};
 static uint8_t card[2][SET_BYTES];
 static int card_bytes[2];
@@ -147,10 +153,15 @@ int main(void)
     /* The newer file damaged: the older one, with both modules. */
     card[0][HEADER + 9] ^= 1; boot(); modwerk_modset_service();
     CHECK(modwerk_modset_result == RESTORED && installed == 2);
-    /* Nothing installed: FUNC held, or a set another base wrote. */
-    card[0][HEADER + 9] ^= 1; modwerk_test_held = 1; boot(); modwerk_modset_service();
+    /* Nothing installed: FUNC held, PROJ held (from power-on, where FUNC opens the Startup Menu), or a set another
+     * base wrote. PART, beside PROJ in its row, installs as usual. */
+    card[0][HEADER + 9] ^= 1; HOLD(FUNC); boot(); modwerk_modset_service();
     CHECK(modwerk_modset_result == SKIPPED && !installed);
-    modwerk_test_held = 0; card[0][20] ^= 1; card[1][20] ^= 1; boot(); modwerk_modset_service();
+    LET_GO(); HOLD(PROJ); modwerk_test_said = 0; boot(); modwerk_modset_service();
+    CHECK(modwerk_modset_result == SKIPPED && !installed && modwerk_test_said && !strcmp(modwerk_test_said, "MODULES SKIPPED"));
+    LET_GO(); HOLD(PART); boot(); modwerk_modset_service();
+    CHECK(modwerk_modset_result == RESTORED && installed == 1);
+    LET_GO(); card[0][20] ^= 1; card[1][20] ^= 1; boot(); modwerk_modset_service();
     CHECK(modwerk_modset_result == FOREIGN && !installed);
     /* A closed gate waits: no restore, no save. */
     card[0][20] ^= 1; card[1][20] ^= 1; boot(); modwerk_test_gate = 0; modwerk_modset_service();
@@ -196,18 +207,19 @@ int main(void)
     CHECK(modwerk_modset_result == SAVED && !pending && !modwerk_modset_unsaved() && !modwerk_modset_due());
     accept(0, 48); CHECK(modwerk_modset_count == 4); modwerk_modset_service(); /* a legacy install keeps the kept */
     boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 4);
-    /* A FUNC boot installs nothing yet keeps the card's newest generation: what is saved after it wins at the next
+    /* A FUNC or PROJ boot installs nothing yet keeps the card's newest generation: what is saved after it wins at the next
      * boot (it used to save generation 1 and lose to the older set), and with nothing saved the old set returns. */
     unsigned newest = modwerk_modset_generation;
-    modwerk_test_held = 1; boot(); modwerk_modset_service(); modwerk_test_held = 0;
+    HOLD(FUNC); boot(); modwerk_modset_service(); LET_GO();
     CHECK(modwerk_modset_result == SKIPPED && !installed && used() == HEADER && be32(set + 8) == newest);
     boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 4);
-    modwerk_test_held = 1; boot(); modwerk_modset_service(); modwerk_test_held = 0;
+    HOLD(PROJ); boot(); modwerk_modset_service(); LET_GO();
+    CHECK(modwerk_modset_result == SKIPPED && !installed && used() == HEADER && be32(set + 8) == newest);
     CHECK(identity(kept, kept_bytes, 2, want) && modwerk_modset_keep(kept, kept_bytes, 2, want)); /* nothing live: only the kept */
     modwerk_modset_kept(); modwerk_modset_service();
     CHECK(modwerk_modset_result == SAVED && modwerk_modset_generation == newest + 1);
     boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 2);
-    modwerk_test_held = 1; boot(); modwerk_modset_service(); modwerk_test_held = 0;
+    HOLD(FUNC); boot(); modwerk_modset_service(); LET_GO();
     accept(0, 48); modwerk_modset_service(); CHECK(modwerk_modset_result == SAVED && modwerk_modset_generation == newest + 2);
     boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 1);
     /* "MODULES LOADED" waits for the engines the bank uses: half a second at least, ten seconds at most, once. */
@@ -282,11 +294,11 @@ int main(void)
     cut(); modwerk_modset_service(); CHECK(modwerk_modset_result == RESTORED && installed == 3);
     /* FUNC held after a crash skips everything, and the guard still remembers the package for the next start. */
     crash_id = 0x103u; boot(); if (!setjmp(crashed)) { modwerk_modset_service(); CHECK(0); } crash_id = 0;
-    modwerk_test_held = 1; cut(); modwerk_modset_service(); modwerk_test_held = 0;
+    HOLD(FUNC); cut(); modwerk_modset_service(); LET_GO();
     CHECK(modwerk_modset_result == SKIPPED && !installed);
     boot(); modwerk_modset_service(); CHECK(modwerk_modset_result == LEFT_OUT && installed == 2);
     if (failures) { fprintf(stderr, "%u module set checks failed\n", failures); return 1; }
-    puts("Octatrack module set: saved in turn, removals dropped, the newest whole set restored, damaged and foreign sets and a held FUNC refused, "
+    puts("Octatrack module set: saved in turn, removals dropped, the newest whole set restored, damaged and foreign sets and a held PROJ or FUNC refused, "
          "a Keep joined only as the trial's identity and reported unsaved until saved, a start that crashed or stopped while restoring guarded.");
     return 0;
 }

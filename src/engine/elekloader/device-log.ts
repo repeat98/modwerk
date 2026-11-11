@@ -13,7 +13,8 @@ export const DEVICE_LOG_BYTES = logBytes(1)
 export const DEVICE_LOG_IMAGE_BYTES = logBytes(2) + CRASH_BYTES + STALL_BYTES
 export const DEVICE_LOG_PAGES = Math.ceil(DEVICE_LOG_IMAGE_BYTES / DEVICE_LOG_PAGE)
 
-export interface DeviceLog { version: number; nonce: number; boot: number; seq: number; loads: DeviceLoad[]; incidents: DeviceIncident[]; crash?: DeviceCrash; stall?: DeviceStall }
+/** `stallSeen`: the stall record's count when the unit started, so a stall record with another count is from this start. */
+export interface DeviceLog { version: number; nonce: number; boot: number; seq: number; stallSeen: number; loads: DeviceLoad[]; incidents: DeviceIncident[]; crash?: DeviceCrash; stall?: DeviceStall }
 
 function load(view: DataView, at: number, version: number): DeviceLoad {
   const u16 = (i: number) => view.getUint16(at + 12 + 2 * i)
@@ -58,6 +59,6 @@ export function parseDeviceLog(data: Uint8Array): DeviceLog | undefined {
     .filter((record): record is DeviceIncident => !!record?.seq)
   const bySeq = <T extends { seq: number }>(a: T, b: T) => a.seq - b.seq
   const end = logBytes(version)
-  return { version, nonce: view.getUint32(8), boot: view.getUint32(12), seq: view.getUint32(16), loads: loads.sort(bySeq), incidents: incidents.sort(bySeq),
+  return { version, nonce: view.getUint32(8), boot: view.getUint32(12), seq: view.getUint32(16), stallSeen: view.getUint32(32), loads: loads.sort(bySeq), incidents: incidents.sort(bySeq),
     ...(version >= 2 ? { crash: crash(view, end), stall: stall(view, end + CRASH_BYTES) } : {}) }
 }

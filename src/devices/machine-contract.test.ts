@@ -14,7 +14,7 @@ describe('machine profiles', () => {
   it('validates every machine and matches the generated registry', () => {
     const parsed = profiles.map(parseMachineProfile).sort((a, b) => a.order - b.order)
     expect(parsed.map(profile => profile.id)).toEqual(GENERATED.map(profile => profile.id))
-    expect(parsed.filter(profile => profile.sdk).map(profile => profile.id)).toEqual(['octatrack', 'digitakt', 'digitone', 'digitakt-ii', 'analog-rytm-mkii', 'analog-four-mkii'])
+    expect(parsed.filter(profile => profile.sdk).map(profile => profile.id)).toEqual(['octatrack', 'digitakt', 'digitone', 'digitakt-ii', 'analog-rytm-mkii', 'analog-four-mkii', 'zoom-ms-70cdr'])
   })
 
   it('keeps status, steps and SDK claims consistent', () => {
@@ -38,7 +38,7 @@ describe('machine profiles', () => {
   it('reads the family and its step set', () => {
     const zoom = () => structuredClone(profiles.find(profile => profile.id === 'zoom-ms-70cdr'))
     expect(parseMachineProfile(octatrack()).family).toBe('elektron')
-    expect(parseMachineProfile(zoom()).steps).toEqual({ format: 'done', load: 'done', mods: 'open' })
+    expect(parseMachineProfile(zoom()).steps).toEqual({ format: 'done', load: 'done', mods: 'done' })
     expect(() => parseMachineProfile({ ...zoom(), family: 'roland' })).toThrow('machine.family')
     expect(() => parseMachineProfile({ ...zoom(), steps: { ...zoom().steps, core: 'open' } })).toThrow('unknown field')
     expect(() => parseMachineProfile({ ...octatrack(), steps: { ...octatrack().steps, load: 'done' } })).toThrow('unknown field')

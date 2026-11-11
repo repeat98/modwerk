@@ -20,6 +20,7 @@
   "modulation",
   "mute-modes",
   "output-matrix",
+  "pattern-sample-locks",
   "playmodes",
   "poly8",
   "previewvol",
@@ -38,6 +39,7 @@
   "tapehead",
   "temp-save",
   "tiempos",
+  "track-solo",
   "tuner",
   "usb-audio-out-tracks-main-cue",
   "vector"

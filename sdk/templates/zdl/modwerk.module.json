@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 3,
+  "id": "__ID__",
+  "name": "__NAME__",
+  "version": "0.1.0",
+  "machine": "__MACHINE__",
+  "category": "effects",
+  "exclusive": false,
+  "author": { "github": "__AUTHOR__", "credits": ["__AUTHOR__"] },
+  "maintainers": ["__AUTHOR__"],
+  "source": { "repository": "https://github.com/__AUTHOR__/REPLACE", "revision": "0000000000000000000000000000000000000000", "path": "src/custom/__ID__" },
+  "presentation": {
+    "label": "__KEY__",
+    "family": "Replace with the kind of effect",
+    "summary": "Replace with one sentence about what this effect does.",
+    "overview": "Replace with what the effect does, how it sounds, and where it goes in a patch.",
+    "highlights": ["Replace with a real highlight."],
+    "usage": ["Replace with a practical way to use it."]
+  },
+  "access": { "location": "Replace with where the effect is in the pedal's effect list.", "steps": ["Replace with the exact steps to add it to a patch."], "screenshots": [] },
+  "controls": [],
+  "compatibility": { "releases": ["__RELEASE__"], "requires": [], "conflicts": [], "limitations": [] },
+  "platform": {
+    "kind": "zdl",
+    "file": "__FILE__",
+    "effectId": { "gid": 8, "fxid": 403 },
+    "effectVersion": "0.01",
+    "dspCost": 1,
+    "binary": { "sha256": "0000000000000000000000000000000000000000000000000000000000000000", "bytes": 1, "release": { "repository": "https://github.com/__AUTHOR__/REPLACE", "tag": "REPLACE", "asset": "__FILE__" } },
+    "screen": "static",
+    "pedals": [{ "machine": "__MACHINE__", "firmware": "__RELEASE__", "status": "untested", "report": null }]
+  },
+  "resources": {
+    "memoryBytes": null,
+    "fastBytes": null,
+    "load": { "display": "Not measured yet", "method": "unmeasured", "conditions": "The DSP cost the effect declares, and what the pedal's DSP meter shows in a full patch." }
+  },
+  "evidence": { "tier": "none", "moduleVersion": "0.1.0", "sourceSha256": null, "reports": [], "hardware": null, "verifiedBy": null },
+  "tests": { "report": "TESTING.md", "summary": "Not tested yet." },
+  "license": { "spdx": "MIT", "file": "LICENSE", "declaration": "The licence of the repository the effect is released from. Replace both if yours differs." },
+  "media": [
+    { "path": "media/thumbnail.svg", "kind": "thumbnail", "caption": "__NAME__ thumbnail", "alt": "Placeholder thumbnail for __NAME__", "credit": "__AUTHOR__", "license": "MIT", "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork." }
+  ]
+}

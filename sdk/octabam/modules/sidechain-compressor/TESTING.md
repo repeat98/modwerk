@@ -1,6 +1,24 @@
 # Sidechain Compressor verification
 
-Version **0.2.1-experimental**, recorded **30 October 2026** (0.2.0: 25 October 2026). Built by Modwerk's shared firmware builder, beside any other module that fits, and over USB part of the beta base. The DSP figures are emulator measurements, not chip timing; the hardware record is below. The 0.1.2 and 0.1.1 records follow as history.
+Version **0.2.2-experimental**, recorded **3 November 2026** (0.2.1: 30 October 2026; 0.2.0: 25 October 2026). Built by Modwerk's shared firmware builder, beside any other module that fits, and over USB part of the beta base. The DSP figures are emulator measurements, not chip timing; the hardware record is below. The 0.1.2 and 0.1.1 records follow as history.
+
+## 0.2.2-experimental
+
+### What changed
+
+`placement.json` names the module's two ColdFire units, `sc_cf` and `sc_ui` (1,314 B). Modwerk's builder links them into the DRAM runtime when another selected module already carries one, and into the menu cave otherwise ([#1175](https://github.com/repeat98/modwerk/issues/1175): FM Synth, this module and Mute Modes with the stock FX2 effects kept ran 8 bytes short of cave, and the build fell back to an FX2 chooser with this module only). The runtime is a fixed reservation of sample memory, so the module never starts one: on its own or beside modules without DRAM code it builds as 0.2.1 did. The DSP and ColdFire sources are 0.2.1's, byte for byte; both units assemble to the same code for the cave's and the runtime's ISA.
+
+The builders follow one rule for this (owner review): native `tools/build/runtime_join.py` sets the units' `dram` right after `compose_map` (outside `tools/remix`, so the reviewed pins over it do not move), and the raw descriptor words resolve after the platform runtime link; the browser links them at the module's place in native order (this module first while the stock FX2 effects stay, as it replaces COMPRESSOR in place) and resolves its formatters, widgets and detours from the runtime.
+
+### Results
+
+- **Module alone:** the composed image is 0.2.1's, byte for byte (the cave placement is unchanged).
+- **Screenshots:** the 30 October captures of that image (MAIN OS `fb7c5e31…`), unchanged; only their version label moves to 0.2.2.
+- **`npm run module:verify -- sidechain-compressor`:** 162 selections, 64 native module-owned images match, 98 matching refusals, 0 mismatches. Two selections that 0.2.1 refused for cave space now build; none newly refused.
+- **The #1175 set** (FM Synth, Play Modes, Mute Modes, Apply Scene, Direct Jump and this module, stock FX2 kept): builds with all 13 FX2 rows; the cave ends at 0x400d7674, 1,352 B before the long chooser list.
+- **Emulator** (`scripts/capture-module-ui.py`, MKI panel): that image and the module alone show the same pixels on the FX1 chooser, COMPRESSOR's main page and page 2 with KEY selected; the FX2 chooser lists the stock effects.
+- **Hardware:** below and in [evidence/hardware.md](evidence/hardware.md): beside Direct Jump and in the #1175 set, both with the units in the DRAM runtime, on the author's MKI, 3 November 2026.
+- **The flashed images and this release:** the images were composed from this source before the isolated package build (MAIN OS `e77ec14b…` and `ebaf5116…`; both rebuild exactly from the commit before the version bump). The published packages, on `main` after #1098 and #1343, compose `c025c706e193c4fbf210115aceb3ea36d0e00a4bb7e0db646330df7fa44505a2` (beside Direct Jump) and `f82e5ada344aee2f6c70e9c572b8aa5cdc41dc0857eb4602e8aa4d2e1961d948` (the #1175 set). Beside Direct Jump, every OS write set (menus, DSP, logger hooks, platform, startup) is identical to the flashed image's, the runtime links the same units at the same addresses, and its only differing bytes are the core logger's identity text (137 bytes in `olog_source`, `olog_configuration`, `olog_modules`, `olog_build`: this module's version and the build hashes). In the #1175 set the same holds except for Mute Modes, which is 0.2.2 on `main` now (0.2.1 when flashed): its cave unit grows from 1,086 to 1,106 bytes at the same address and its five jumps follow it. This module's code, placement and both joining objects are the flashed ones byte for byte.
 
 ## 0.2.1-experimental
 

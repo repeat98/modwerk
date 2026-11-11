@@ -38,7 +38,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .module-grid-summary { color: var(--muted); font-size: 12px; }
 .module-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(184px, 1fr)); gap: 14px; margin: 0; padding: 0; list-style: none; }
 .module-tile { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-raised); }
-.module-tile-open { display: flex; flex-direction: column; align-items: stretch; width: 100%; padding: 0 0 10px; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.module-tile-open { display: flex; flex-direction: column; align-items: stretch; width: 100%; padding: 0 0 10px; border: 0; background: none; color: inherit; font: inherit; text-align: left; text-decoration: none; cursor: pointer; }
 .module-tile-open:hover strong { color: var(--accent-hover); }
 .module-tile .module-tile-open .compact-preview { width: 100%; height: 112px; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; }
 .module-tile-open strong { margin: 8px 10px 0; font-size: 13px; }
@@ -210,9 +210,13 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-view[hidden] { display: none; }
 .hub-view-title { margin: 0; font-size: 22px; letter-spacing: -.3px; overflow-wrap: anywhere; }
 .hub-section, .hub-view .octatrack-diagnostics { margin: 22px 0 0; padding: 18px 0 0; border-top: 1px solid var(--line); }
-.hub-section h3, .hub-cell h3, .hub-view .card-install > h3 { margin: 0 0 10px; color: var(--muted); font-size: 12px; font-weight: 600; }
+.hub-section h3, .hub-cell h3, .hub-view .card-install > summary > h3 { margin: 0 0 10px; color: var(--muted); font-size: 12px; font-weight: 600; }
 .hub-section p { margin: 6px 0; color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
 .hub-section .button { min-height: 40px; }
+.hub-section.hub-base { padding: 20px; border: 1px solid var(--control-border); border-radius: 12px; background: var(--surface-raised); }
+.hub-base h3 { color: var(--text); font-size: 18px; letter-spacing: -.2px; }
+.hub-base > p:first-of-type { color: var(--text); font-size: 15px; }
+.hub-base > .button { min-height: 44px; margin: 8px 0 6px; }
 .hub-section .hub-code { margin: 8px 0; padding: 10px 12px; overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; font: 12px/1.6 var(--mono); white-space: pre; user-select: all; }
 .hub-view p.hub-empty { margin: 4px 0 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
 /* Status: a control room's panel, divided by hairlines. Its rows are fixed; long lists scroll in their cell. */
@@ -286,6 +290,16 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 /* Setup: the base, the card route, diagnostics. */
 .hub-view .card-install.is-open { margin: 22px 0 0; padding-top: 18px; border-top: 1px solid var(--line); }
 .card-install-set { margin: 0 0 18px; color: var(--muted); font-size: 13px; }
+/* The whole-image card build is the fallback: a labelled, foldable section under Setup. */
+.card-install > summary { cursor: pointer; list-style: none; }
+.card-install > summary::-webkit-details-marker { display: none; }
+.card-install > summary > h3 { display: inline-flex; align-items: center; gap: 8px; }
+.card-install > summary > h3::before { content: '▸'; color: var(--muted); }
+.card-install[open] > summary > h3::before { content: '▾'; }
+.card-fallback-label { padding: 1px 6px; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); font-size: 11px; font-weight: 600; line-height: 1.5; }
+.card-fallback-reason { max-width: 640px; margin: 0 0 14px; color: var(--muted); font-size: 13px; }
+.hub-account-note, .base-install-account { color: var(--muted); font-size: 13px; }
+.base-install-account { margin-top: 12px; }
 .card-install-set b { color: var(--text-secondary); }
 .hub-view .configuration-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .hub-view .configuration-section, .hub-view .checkout-card { padding: 0; border: 0; background: none; }
