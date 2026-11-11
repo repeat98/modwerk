@@ -39,7 +39,7 @@ brought back the baseline exactly. Not yet: another project and back, a real pow
 | # | Case | Today | Status |
 |---|---|---|---|
 | 14 | Power lost while the set is being saved | Two files in turn: the older set stays | built (host test) |
-| 15 | FUNC held at boot skips the restore | Everything the project names is missing; the card's set is left alone, and the next normal boot restores it | done (flashed beta, 12 October 2026; below) |
+| 15 | PROJ held from power-on (or FUNC held while the restore runs) skips the restore | Everything the project names is missing; the card's set is left alone, and the next normal boot restores it. PROJ since 11 November 2026 (owner): FUNC at power-on opens Elektron's Startup Menu, so FUNC had to come after the startup animation began. The MKI has no PROJ key: FUNC stays its gesture | FUNC: done (flashed beta, 12 October 2026; below). PROJ: not yet done on hardware |
 | 16 | A real power cycle into a flashed base that restores | MODULES LOADED, the set back from the card | done (flashed beta, 12 October 2026; below) |
 | 17 | The restore held back past 10 s (playback or USB disk mode right after boot) | Hosts then go ahead, and a late restore could still overwrite a change made before it. Installs need the transport stopped, so this needs the card unavailable or USB disk mode for 10 s after boot while installing | open (rare; shortcut in ep0.c) |
 
@@ -164,7 +164,7 @@ A ColdFire unit with a large `.bss` (Temp Save keeps 42 KB) reaches it by absolu
    manager must retire the old code from the slots running it before the new code binds, as the rebind does).
 4. Case 6: layout numbers, before the first module update that changes its knobs.
 5. Needing the owner at the unit: 11 (SAVE TO NEW, EXPORT TO SET: read project.work in USB disk mode), 19 (the
-   arranger), the site's note in a browser. 15 and 16 are done (12 October 2026).
+   arranger), the site's note in a browser, and 15 with PROJ (FUNC's 15 and 16 are done, 12 October 2026).
 6. Case 9: paste between projects (owner, 11 October 2026: not now).
 
 ## Owner steps for 15 and 16, on the flashed beta (12 October 2026)
@@ -187,16 +187,19 @@ Case 16, a real power cycle restores the set:
 9. Switch it on, holding no key.
 10. About 3 seconds after the project shows, read the message: MODULES LOADED, SOME MODULES FAILED or MODULES NOT LOADED.
 
-Case 15, FUNC skips the restore:
+Case 15, PROJ skips the restore (the gesture since 11 November 2026; not yet done on hardware):
 
 11. Switch off and wait 5 seconds.
-12. Switch on, holding no key.
-13. When the startup animation begins, press and hold FUNC until MODULES SKIPPED shows, then let go. If the Startup
-    Menu appears, FUNC came too early: switch off, wait 5 seconds and repeat from step 12.
-14. Switch off, wait 5 seconds, and switch on holding no key: MODULES LOADED again, because the skip leaves the card's
+12. Hold PROJ, switch on, and keep holding PROJ until MODULES SKIPPED shows (about three seconds after the project
+    shows), then let go.
+13. Switch off, wait 5 seconds, and switch on holding no key: MODULES LOADED again, because the skip leaves the card's
     set alone.
 
-After steps 10, 13 and 14 the agent reads INVENTORY and MISSING over USB and records them here.
+FUNC still skips it too (the 12 October run below): switch on holding no key, and when the startup animation begins,
+press and hold FUNC until MODULES SKIPPED shows. FUNC held from power-on opens the Startup Menu instead. On an MKI,
+which has no PROJ key, FUNC is the only way.
+
+After steps 10, 12 and 13 the agent reads INVENTORY and MISSING over USB and records them here.
 
 ### Results on the owner's MKII (12 October 2026)
 
@@ -214,7 +217,7 @@ The owner flashed `Modwerk-octatrack-beta3.bin`. The agent then read the unit wi
   TapeHead. The restore record said RESTORED, 2 of 2, and INVENTORY listed E-Verb and Mini Verb.
   - HELLO then shows generation 0 and the base's own digest as the active set: a restore installs through the loader,
     not as an upload. INVENTORY, not HELLO, says what is installed.
-- **Case 15:** the owner held FUNC from the start of the startup animation; MODULES SKIPPED showed. The restore record
+- **Case 15 (FUNC, the gesture then):** the owner held FUNC from the start of the startup animation; MODULES SKIPPED showed. The restore record
   said SKIPPED. INVENTORY was empty, and MISSING listed E-Verb, Euclid, Air Chorus and TapeHead (Mini Verb is named by no
   bank).
 - **The next normal power cycle:** MODULES LOADED again; RESTORED, 2 of 2; INVENTORY E-Verb and Mini Verb; MISSING

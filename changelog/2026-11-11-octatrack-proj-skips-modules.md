@@ -1,0 +1,1 @@
+Octatrack base (beta): hold PROJ while you switch the Octatrack on to start it without your modules (MODULES SKIPPED); the next normal start loads them again. FUNC still works once the startup animation runs, and stays the way on an MKI, which has no PROJ key: FUNC held at power-on opens Elektron's Startup Menu.
