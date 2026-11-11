@@ -23,6 +23,9 @@ exactly.
   makes `src/engine/elekloader/octatrack-base.test.ts` fail until the package is regenerated
   (`npm run octatrack:base -- --stock ~/Downloads/OCTATRACK_OS1.40C_dist/OCTATRACK_OS1.40C.bin --beta --write`). Base changes
   therefore live on side branches until the owner OKs a requalification on the unit.
+  After a regeneration, `npm run octatrack:module-packages` re-binds the base-bound packages, except one held at an
+  older version (`lagsBehind`): it leaves that row alone, so when the base script printed that package's committed
+  hash, set its `requiredBase` to the new identity yourself; `test_base_bound.py` rebuilds it and fails on a wrong one.
 - **Hardware.** Only one agent talks to the owner's Octatrack at a time. Read `docs/OCTATRACK_DRIVING.md` and
   `docs/OCTATRACK_HARDWARE_TRAPS.md` first. Never flash, never power-cycle, never SAVE or SYNC the owner's project:
   ask the owner. RAM boots from the flashed base need `npm run device -- boot DIR --chunk 4096` on macOS. After any
