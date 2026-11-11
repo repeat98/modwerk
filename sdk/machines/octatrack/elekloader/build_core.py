@@ -287,6 +287,9 @@ FX_WORDS = (FX_IDS + 31) // 32
 # the set as staged beside it.
 RUNTIME_MODULES = 128
 RUNTIME_POOL_BYTES = 768 * 1024
+# modset.c's modwerk_flashed_set: the room the image keeps for a module set the site puts into the .bin. All zero
+# here; the codec stores the zeros in a few hundred bytes.
+FLASHED_SET_BYTES = 256 * 1024
 DSP_EDITS = {
     # The FX selectors read their chooser list through these LEA operands, which the chooser composer repoints.
     'selection.c': (('static uint8_t paste[6322]={0};', 'static uint8_t paste[6322]; /* in .bss, which the core clears at boot: '
@@ -1532,6 +1535,9 @@ def main():
                              'not the uncached one (sdk/runtime/loader/README.md, "Cached modules"). Off by default.')
     parser.add_argument('--module-sets', action='store_true',
                         help='Private whole-set transaction candidate. Retains every predecessor through Keep/Undo; needs exact hardware qualification.')
+    parser.add_argument('--flashed-set', type=Path,
+                        help='with --dev: a module set file (card-set.ts) for this base, put into the image as the site '
+                             'will; a private test of modset.c\'s restore, not part of the identity.')
     parser.add_argument('--fx-ids', type=int, choices=(32, 128), default=128,
                         help='with --dsp-loader: the base\'s effect ids (fxids.h, the dispatch and chooser tables; '
                              'docs/OCTATRACK_MORE_EFFECT_IDS.md). 32, the old width, only to bisect a fault.')
@@ -2021,6 +2027,11 @@ def main():
                                          for r in range(4))))
         definitions += 'const uint16_t modwerk_dsp_arena[2] = {%d, %d};\n' % tuple(
             dsp_layout[t]['tableWords'] - loader_dsp.SAVED for t in ('A', 'B'))
+    # In this unit, apart from modset.c, so no read of it is folded to the zeros it holds here.
+    flashed = args.flashed_set.read_bytes() if args.flashed_set else b''
+    if flashed and not args.dev or len(flashed) > FLASHED_SET_BYTES:
+        raise ValueError('--flashed-set is a --dev test of at most %d bytes.' % FLASHED_SET_BYTES)
+    definitions += 'const uint8_t modwerk_flashed_set[%d] = {%s};\n' % (FLASHED_SET_BYTES, ','.join(map(str, flashed)) or '0')
     (source/'identity.c').write_text(definitions)
     # Only authored zero placeholders: stock is recovered by format-2 parts.
     spec = importlib.util.spec_from_file_location('modwerk_logger_package', logger/'package.py')
@@ -2062,7 +2073,7 @@ modwerk_retained_end:
                         '-fno-zero-initialized-in-bss', '-fno-tree-loop-distribute-patterns',
                         '-fno-merge-constants', '-fno-asynchronous-unwind-tables', '-fno-unwind-tables',
                         '-Wall', '-Wextra', '-Werror', '-DMODWERK_RUNTIME_METADATA_EXTERNAL', '-DMODWERK_RUNTIME_VOLATILE_JOURNAL', '-DMODWERK_FX_IDS=%du' % FX_IDS] + (['-DMODWERK_DSP_XWATCH'] if args.dsp_probe == 'X' else []) + [
-                        '-DRUNTIME_MODULES=%du' % RUNTIME_MODULES, '-DRUNTIME_POOL_BYTES=%du' % RUNTIME_POOL_BYTES] + (['-DMODWERK_DEV'] if args.dev else []) + (
+                        '-DRUNTIME_MODULES=%du' % RUNTIME_MODULES, '-DRUNTIME_POOL_BYTES=%du' % RUNTIME_POOL_BYTES, '-DMODWERK_FLASHED_SET_BYTES=%du' % FLASHED_SET_BYTES] + (['-DMODWERK_DEV'] if args.dev else []) + (
         ['-DMODWERK_DSP_LOADER', '-DMODWERK_DSP_ALLOWANCE0=%d' % DSP_ALLOWANCE[0], '-DMODWERK_DSP_ALLOWANCE1=%d' % DSP_ALLOWANCE[1],
          '-DMODWERK_DSP_RESERVE=%d' % DSP_RESERVE] +
         ['-DMODWERK_DSP_%s%d=%d' % (key, n, dsp_layout[t][field]) for n, t in enumerate('AB')
