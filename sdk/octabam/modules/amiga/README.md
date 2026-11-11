@@ -60,11 +60,11 @@ With STR on, SPD 64, PTCH 0 and RATE +63 nothing is restarted. With SRR 0, BITS 
 - A project opened without the module plays Amiga tracks as FLEX and reads SPD and GRN as stock's RTRG and RTIM, and LED, SRR, STR and BITS as SETUP's LEN, RATE, TSTR and TSNS. Leave the tracks for FLEX before you go back to the stock OS.
 - Leaving Amiga for another machine puts the track's SRC settings back to FLEX defaults.
 - Before a trial of the module ends or the module is removed, put its tracks on another machine: the base refuses to take a machine away from a track that names it.
-- It needs a base with `ot_machine_starts` (the START dispatch) and patches no stock code. It takes no key gesture and no stock screen.
+- USB only: it loads on the Modwerk base over USB and has no card build. It needs a base with `ot_machine_starts` (the START dispatch) and patches no stock code. It takes no key gesture and no stock screen.
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md).
+See [TESTING.md](TESTING.md). Worst-case cycles are not measured; [evidence/performance.json](evidence/performance.json) says what was measured in their place.
 
 ## Authorship and licences
 
@@ -74,7 +74,19 @@ Original code by Jannik Aßfalg, MIT ([LICENSE](LICENSE)). No firmware, stock ro
 
 ## Screens and audio
 
-The machine list with AMIGA, the SRC page and SRC SETUP, captured from an MKII over USB, are in `media/`.
+Captured from the LCD of an MKII over USB on 11 November 2026; provenance and hashes are in [media/capture.json](media/capture.json).
+
+![SRC SETUP: the machine list with the cursor on AMIGA](media/amiga-machine-list.png)
+
+The machine list: move to AMIGA and press YES.
+
+![The SRC page of an Amiga track: PTCH, STRT, LEN, RATE, SPD and GRN](media/amiga-src.png)
+
+SRC: RATE on knob D, SPD on E, GRN on F.
+
+![SRC SETUP of an Amiga track: LOOP, SLIC, LED, SRR, STR and BITS](media/amiga-src-setup.png)
+
+SRC SETUP: LED, SRR, STR and BITS.
 
 ## Develop
 

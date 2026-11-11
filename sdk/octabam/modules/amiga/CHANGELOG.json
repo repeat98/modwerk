@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-11",
+    "changes": [
+      "First release: a track machine that plays a Flex sample like an 8-bit home computer and its tracker software.",
+      "SPD sets how fast the note moves through the sample and GRN the cycle, so PTCH changes the pitch and SPD the length. STR can make it a pitch shift.",
+      "RATE is stock's own: forwards, backwards and slower, with the stretch following both ways.",
+      "On SRC SETUP: SRR lowers the storage rate, BITS the word from 16 to 4 bits, and LED adds a fixed lowpass.",
+      "Known limits: no RTRG or RTIM on an Amiga track, a sliced track is not stretched, and eight Amiga tracks at once overrun the unit (count on a few)."
+    ]
+  }
+]

@@ -65,7 +65,14 @@ Not tested on the unit:
 
 Not tested beyond the above: with the module installed and no track on Amiga, eight FLEX tracks read the same frame-interrupt share and CPU as without it (65.1 % and about 81 % both ways, an earlier build of the day).
 
+## Screens
+
+`media/amiga-machine-list.png`, `media/amiga-src.png` and `media/amiga-src-setup.png` are the unit's own LCD, read over USB with the development session's `png` step on 11 November 2026 during a trial of package `e9730e24…` on twin `d8fae687` (MAIN image SHA-256 `2d628536…`): 128×64 at scale 2, not edited. The keys that led to each screen were not recorded as a plan. Hashes are in `media/capture.json`.
+
 ## Performance
+
+`evidence/performance.json` holds no number: `npm run perf:audit -- check` fails its three rows (no static bound and no event timed in cycles; no `cfmeter.py` capture under a MIDI flood; no flood). The record says what was measured in their place, which is what follows.
+
 
 ### On the unit
 
