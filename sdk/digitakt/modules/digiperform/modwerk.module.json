@@ -19,7 +19,7 @@
     "label": "Digi Perform",
     "family": "Performance",
     "summary": "Eight performance macros on knobs A-H: each moves one track parameter, or the same parameter of every track, per pattern.",
-    "overview": "Digi Perform adds a Perform page to the original Digitakt, modelled on the Analog Four’s performance macros. It is the second page of the TRIG page (press TRIG again). Knobs A-H each move one parameter of one track, or the same parameter of all eight audio tracks, as an offset added on top of the sound. A knob feels like the stock parameter knobs: the same acceleration, push-and-turn for larger steps, and FUNC and turn to jump between the parameter’s own snap values. A knob picks up the parameter’s current value when the page opens, so nothing jumps. The eight assignments live in the pattern, so each pattern has its own and they are saved with the project. They are made on the page itself with Perform Quick Assign (FUNC and a knob’s push), or in SETTINGS > PERFORM EDIT. The change is added after the engine has smoothed and modulated the parameter, so it is never a parameter lock and never changes the stored value: leaving the page, opening Perform Edit or reloading the pattern puts every parameter back to what the sound stores. With the sequencer playing, selecting another pattern leaves the offsets in place until that pattern starts, then they let go and the knobs show the new pattern’s values.",
+    "overview": "Digi Perform adds a Perform page to the original Digitakt, modelled on the Analog Four’s performance macros. It is the second page of the TRIG page (press TRIG again). Knobs A-H each move one parameter of one track, or the same parameter of all eight audio tracks, as an offset added on top of the sound. A knob feels like the stock parameter knobs: the same acceleration, push-and-turn for larger steps, and FUNC and turn to jump between the parameter’s own snap values. A knob picks up the parameter’s current value when the page opens, so nothing jumps. The eight assignments live in the pattern, so each pattern has its own and they are saved with the project; after a power cycle, load the project again to get them back (a known problem, see the limitations). They are made on the page itself with Perform Quick Assign (FUNC and a knob’s push), or in SETTINGS > PERFORM EDIT. The change is added after the engine has smoothed and modulated the parameter, so it is never a parameter lock and never changes the stored value: leaving the page, opening Perform Edit or reloading the pattern puts every parameter back to what the sound stores. With the sequencer playing, selecting another pattern leaves the offsets in place until that pattern starts, then they let go and the knobs show the new pattern’s values.",
     "highlights": [
       "Eight macros on knobs A-H, each moving one track parameter or the same parameter of all tracks.",
       "Perform Quick Assign on the page itself: FUNC and a knob’s push, then choose the track and the parameter with the knob. Perform Edit in SETTINGS lists all eight and sets each one’s direction, + or -.",
@@ -148,6 +148,7 @@
     "limitations": [
       "Cannot be installed with Digi Matrix: both patch the render site after the LFOs (0x40077eb2), so the configurator never offers them together.",
       "Parameters are the sound’s slots 1-45. A knob on an SRC slot takes the name, value text and range the track’s machine gives that slot on the SRC page, also for module machines; a slot the machine does not have is unassigned. FLT.DEL to FLT.ROUT are the filter’s second page.",
+      "Known problem: the assignments are saved with the project, but the Digitakt does not restore them at power-on; loading the project again (SETTINGS > PROJECT > LOAD PROJECT) brings them back. Found by the author on a unit; 0.1.2-experimental behaves the same. A fix is in progress.",
       "One assignment for each knob A-H, and a track’s parameter can belong to one knob only; the assignments are kept in bits of tracks 5 to 8’s spare sound bytes that no other mod here uses.",
       "Selecting another pattern while the sequencer is stopped reloads the offsets at once; while it plays, the new pattern’s knobs take over when it starts. This is detected from the audio engine’s own pattern bytes, and the author has seen it work on a unit.",
       "After the stock chord, metronome, scale, microtiming or retrig screens, press TRIG twice to open the Perform page again.",
@@ -204,14 +205,15 @@
       "limitations": [
         "Reported as a whole after a checklist; the steps were not itemised.",
         "The tested packages differ from the released ones only in the version text.",
-        "DSP readings with digihealth in the same image; digihealth is not part of this module. Readings vary by a few points."
+        "DSP readings with digihealth in the same image; digihealth is not part of this module. Readings vary by a few points.",
+        "Assignments saved with SAVE PROJECT are missing after a power cycle; loading another project and then this one brings them back. The same on 0.1.2-experimental. Not fixed in this version."
       ]
     },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Hardware (author, OS 1.53 and 1.54, about 2 hours, alone and beside nine module sets): SRC names, values and ranges per machine, knob behaviour, pattern changes and leaving the page work; with Overbridge and a MONO ENS note the Perform page read 97% DSP against 96% on a stock page, no delay. Source-only packages compiled in the pinned toolchain; emulator captures on OS 1.54. Project persistence across a power cycle is not re-tested for this version.",
+    "summary": "Hardware (author, OS 1.53 and 1.54, about 2 hours, alone and beside nine module sets): SRC names, values and ranges per machine, knob behaviour, pattern changes and leaving the page work; with Overbridge and a MONO ENS note the Perform page read 97% DSP against 96% on a stock page, no delay. Source-only packages compiled in the pinned toolchain; emulator captures on OS 1.54. Persistence (author, on a unit): the saved project holds the assignments (loading another project and then this one brings them back), but they are not restored at power-on; 0.1.2-experimental behaves the same.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial: move a track’s pitch from the Perform page",

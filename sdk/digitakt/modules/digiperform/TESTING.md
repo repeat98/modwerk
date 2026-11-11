@@ -85,6 +85,18 @@ Reported by the author (ROMsets) on a unit, OS 1.53 and 1.54, about 2 hours in a
 
 Emulator (pinned digiemu, OS 1.54, audio engine on; never hardware evidence): per audio block, normalised to the render's own call count, an idle Perform page cost the same as the SRC page, and a turning knob added 0.0285 against 0.0348 for a turn on the stock SRC page. The engine's parameter word for a turned knob followed the turns and returned to its stored value on leaving. After leaving the Perform page by the emulator plan's routes, the stock pages drew in full in the mono and poly sets.
 
+## Saved project and power cycle (0.1.3)
+
+Reported by the author (ROMsets) on a unit, 11 November 2026, build 4.3h (this source) and the published 0.1.2-experimental package (image label 012a, core 2.1 only):
+
+- Assign knobs, SAVE PROJECT, power cycle: the assignments are not there ("I save the project after assigning knobs, restart the device and the knob assignments are no longer there").
+- Then LOAD PROJECT of the same project: "load project brings them back".
+- A stock edit before the power cycle does not keep them: "stock edit does not keep".
+- SAVE PROJECT, load a different project, load this one back: the assignments come back.
+- 0.1.2-experimental: "the save behaviour is the same in 0.1.2".
+
+So the saved project holds the assignments, and only the state the unit starts from at power-on lacks them. The storage is unchanged since 0.1.2-experimental. Emulator (never hardware evidence): after SAVE PROJECT a cold boot from the same card came back with all the sound records' spare bytes cleared, a stock parameter written directly into the kit lost too, while LOAD PROJECT right after the save kept them. Not fixed in this version; the README states it as a known problem.
+
 ## Author's hardware observations
 
 Reported by the author (ROMsets) while testing local builds on a unit, build labels in brackets. These builds (2.x) kept the assignments in other bytes of the kit than the current layout (tracks 5 to 8's spare bits, build 3.0a), so none of this, except the first item (3.0a), covers the storage as it now is. Recorded as reported. The author says most of this testing was on OS 1.54; the per-item OS release was not recorded, and none of it is a version-matched hardware report.
@@ -97,14 +109,14 @@ Reported by the author (ROMsets) while testing local builds on a unit, build lab
 - Overall, "hardware looks pretty good"; a slight delay in the knob indicators after a pattern change was reported, and a change to show the new values at the switch followed (2.3a, not re-reported).
 - OS 1.53: a final smoke test on a unit (build 2.3c) that the author describes as covering a good part of the main functionality: the page opening, Perform Quick Assign, setting and editing assignments in Perform Edit, and changing assigned parameter values with the knobs. Not a full pass.
 
-Not tested on a unit, or not reported step by step: the current storage layout's checklist above was reported only as a whole, so each step (power-cycle persistence, sound loads onto tracks 5 to 8 and 1 to 4, the all-tracks setting) has no item of its own; a project saved with assignments loaded on a build without the module; CPU load (never timed), every combination with other mods, and the stock flows compared side by side beyond the screens above.
+Not tested on a unit, or not reported step by step: the current storage layout's checklist above was reported only as a whole, so each step (sound loads onto tracks 5 to 8 and 1 to 4, the all-tracks setting) has no item of its own; a project saved with assignments loaded on a build without the module; CPU load (never timed), every combination with other mods, and the stock flows compared side by side beyond the screens above.
 
 ## Category checklist (system)
 
 - Put the setting where it belongs: PERFORM EDIT is a row in SETTINGS; the page is the second page of TRIG. Done.
 - A way to turn it off that restores stock: leaving the page puts every parameter back; not installing the module restores stock. Compared on the emulator for the screens above only.
 - Defaults are stock behaviour: no assignment exists in a new project, so nothing moves until one is made. Emulator only.
-- Persistence: stored in the sound records' spare bytes. Pattern and kit copy carry it in the emulator; power-cycle survival is not tested.
+- Persistence: stored in the sound records' spare bytes. Pattern and kit copy carry it in the emulator; SAVE PROJECT and LOAD PROJECT keep it on a unit, but a power cycle does not restore it (see "Saved project and power cycle").
 - A project with assignments loaded without the module: not tested.
 - Affected: the original Digitakt on OS 1.53 and 1.54, audio tracks 1–8; existing projects are unchanged until an assignment is made.
 
