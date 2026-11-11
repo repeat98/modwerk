@@ -803,66 +803,83 @@ static void keep_locker(void)
 // ---- The LFO depth's box at DEP's own resolution --------------------------------
 // Stock draws the destination knob's box with a whole number, as for any lock on
 // that knob, while the LFO page shows DEP as +1.96 (0x400fbbe8: sign, hundredths
-// of the 8.8 value, cut, not rounded). ev_draw finds that box (27 x 7, white, at a
-// knob's label: x 3 + 32 per column, the top row's from the bitmap's row 38, the
-// bottom row's from row 16) and writes the depth into it as the LFO page does. A
-// depth of 0 keeps stock's 0, and a popup over the box hides it from the search.
+// of the 8.8 value, cut, not rounded). ev_draw finds that box and writes the
+// depth into it as the LFO page does. Stock draws two kinds (OS 1.74, seen in
+// rytm-emu): on a knob shown by its label, a box 27 x 7 at the label (x 3 + 32
+// per column, top-down rows 25..31 or 47..53); on a knob shown as a widget (OVR,
+// DEL, REV, PAN, VOL), a block 19 x 15 over the widget (x 7 + 32 per column, rows
+// 10..24 or 32..46). The new box keeps the found one's rows and centres on the
+// knob's column: 27 wide for five characters, the whole column (32) from
+// +-10.00, as the LFO page's own +127.99 takes 30 columns of it. A depth of 0
+// keeps stock's 0, and a popup over the box hides it from the search.
 typedef void (*text_draw_t)(void *bmp, void *font, int x, int y, int centred, int a5,
                             const char *width, const char *fmt, ...);
 #define TEXT_DRAW ((text_draw_t)TEXT_DRAW_AT)
 #define TEXT_FONT ((word1_t)TEXT_FONT_AT)
-#define BOX_W 27
-#define BOX_H 7
+
+struct box_kind { int x, w, h, text; int top[2]; };   // top: top-down rows; text: rows from the top to the text's bottom
+static const struct box_kind box_kinds[2] = {
+    { 3, 27, 7, 5, { 25, 47 } },        // a label's box
+    { 7, 19, 15, 9, { 10, 32 } },       // a widget's block
+};
 
 static unsigned *bm_words;
 static int bm_w, bm_h, bm_stride;
 
-static unsigned *bm_word(int x, int r, unsigned *bit)
+// Rows count from the top here; the bitmap keeps row 63 - y.
+static unsigned *bm_word(int x, int y, unsigned *bit)
 {
+    int r = 63 - y;
     *bit = 0x80000000u >> (r & 31);
     return bm_words + x * bm_stride + (r >> 5);
 }
 
-static int bm_get(int x, int r)
+static int bm_get(int x, int y)
 {
     unsigned bit;
-    if (x < 0 || x >= bm_w || r < 0 || r >= bm_h)
+    if (x < 0 || x >= bm_w || y < 0 || y > 63)
         return 0;
-    return (*bm_word(x, r, &bit) & bit) != 0;
+    return (*bm_word(x, y, &bit) & bit) != 0;
 }
 
-static void bm_put(int x, int r, int on)
+static void bm_put(int x, int y, int on)
 {
     unsigned bit, *w;
-    if (x < 0 || x >= bm_w || r < 0 || r >= bm_h)
+    if (x < 0 || x >= bm_w || y < 0 || y > 63)
         return;
-    w = bm_word(x, r, &bit);
+    w = bm_word(x, y, &bit);
     *w = on ? *w | bit : *w & ~bit;
 }
 
-// Stock's lock box with its top row at r (rows count from the bottom): a full
-// white border with black text inside, so a plain white area is no box.
-static int box_at(int x0, int r)
+// Stock's lock box of kind at knob k: a white outline with black text inside,
+// so a plain white area is no box.
+static int box_at(const struct box_kind *b, int k)
 {
-    int i, j;
-    for (i = 0; i < BOX_W; i++)
-        if (!bm_get(x0 + i, r) || !bm_get(x0 + i, r - BOX_H + 1))
+    int x0 = b->x + 32 * (k & 3), y0 = b->top[k >> 2], i, j;
+    for (i = 0; i < b->w; i++)
+        if (!bm_get(x0 + i, y0) || !bm_get(x0 + i, y0 + b->h - 1))
             return 0;
-    for (i = 1; i < BOX_H - 1; i++)
-        if (!bm_get(x0, r - i) || !bm_get(x0 + BOX_W - 1, r - i))
+    for (j = 1; j < b->h - 1; j++)
+        if (!bm_get(x0, y0 + j) || !bm_get(x0 + b->w - 1, y0 + j))
             return 0;
-    for (i = 1; i < BOX_W - 1; i++)
-        for (j = 1; j < BOX_H - 1; j++)
-            if (!bm_get(x0 + i, r - j))
+    for (i = 1; i < b->w - 1; i++)
+        for (j = 1; j < b->h - 1; j++)
+            if (!bm_get(x0 + i, y0 + j))
                 return 1;
     return 0;
 }
 
+// The kind of box knob k shows, or 0.
+static const struct box_kind *box_on(int k)
+{
+    return box_at(&box_kinds[0], k) ? &box_kinds[0] : box_at(&box_kinds[1], k) ? &box_kinds[1] : 0;
+}
+
 void quick_velocity_aftertouch_assign_draw(void *bmp, void *ctrl)
 {
-    static const int rows[2] = { 38, 16 };
     char text[8], width[8], *p = text;
-    int track, v, h, k, x0, r, x, y, n, w, i;
+    const struct box_kind *b = 0;
+    int track, v, h, k, n, w, x0, y0, x, y, i;
     (void)ctrl;
     // Only our own locker's box: with LFO held, a pad, a trig or QPER can hold
     // stock's locker, whose boxes are its locks, not the depth.
@@ -881,21 +898,19 @@ void quick_velocity_aftertouch_assign_draw(void *bmp, void *ctrl)
     // the page (none, or more than one, and nothing is drawn).
     if (dest_knob >= 0 && dest_knob < KNOBS) {
         k = dest_knob;
-        if (!box_at(3 + 32 * (k & 3), rows[k >> 2]))
-            return;
+        b = box_on(k);
     } else {
-        for (k = 0, n = -1; k < KNOBS; k++)
-            if (box_at(3 + 32 * (k & 3), rows[k >> 2])) {
-                if (n >= 0)
+        for (i = 0, k = -1; i < KNOBS; i++)
+            if (box_on(i)) {
+                if (k >= 0)
                     return;
-                n = k;
+                k = i;
             }
-        if (n < 0)
-            return;
-        k = n;
+        if (k >= 0)
+            b = box_on(k);
     }
-    x0 = 3 + 32 * (k & 3);
-    r = rows[k >> 2];
+    if (!b)
+        return;
     *p++ = v < 0 ? '-' : '+';
     h = (v < 0 ? -v : v) * 100 / 256;
     n = h / 100;
@@ -906,25 +921,25 @@ void quick_velocity_aftertouch_assign_draw(void *bmp, void *ctrl)
     *p++ = (char)('0' + h / 10 % 10);
     *p++ = (char)('0' + h % 10);
     *p = 0;
-    // Five characters fit stock's box (+1.96 takes 20 of its 25 inside columns).
-    // From +10.00 on, the box fills the knob's column (x 32 * column .. + 31): its
-    // border around an inside of 30, the columns the LFO page's own +127.99
-    // takes, so it never reaches the next knob's column. The template centres
-    // on digits of one width, so the text does not move as they change.
-    w = BOX_W;
-    if (p - text > 5) {
-        x0 = 32 * (k & 3);
-        w = 32;
-    }
+    // The template centres on digits of one width, so the text does not move as
+    // they change.
     for (i = 0; text[i]; i++)
         width[i] = text[i] >= '0' && text[i] <= '9' ? '0' : text[i];
     width[i] = 0;
-    for (x = x0; x < x0 + w; x++)                   // the box white, its inside black,
-        for (y = r; y > r - BOX_H; y--)             //   the text white, then the inside
-            bm_put(x, y, x == x0 || x == x0 + w - 1 || y == r || y == r - BOX_H + 1);   // turned over
-    TEXT_DRAW(bmp, (void *)TEXT_FONT(TEXT_CTX_AT), x0 + w / 2, r - BOX_H + 2, 1, 0, width, "%s", text);   // y: the text's bottom row
-    for (x = x0 + 1; x < x0 + w - 1; x++)
-        for (y = r - 1; y > r - BOX_H + 1; y--)
+    w = p - text > 5 ? 32 : 27;
+    x0 = 32 * (k & 3) + 16 - w / 2;      // centred on x 16 of the column, as stock's 27-wide box (3..29)
+    y0 = b->top[k >> 2];
+    // The old box cleared (the new one covers it), the text drawn white, then the
+    // new box turned over: white with black text.
+    for (x = b->x + 32 * (k & 3); x < b->x + 32 * (k & 3) + b->w; x++)
+        for (y = y0; y < y0 + b->h; y++)
+            bm_put(x, y, 0);
+    for (x = x0; x < x0 + w; x++)
+        for (y = y0; y < y0 + b->h; y++)
+            bm_put(x, y, 0);
+    TEXT_DRAW(bmp, (void *)TEXT_FONT(TEXT_CTX_AT), x0 + w / 2, 63 - (y0 + b->text), 1, 0, width, "%s", text);
+    for (x = x0; x < x0 + w; x++)
+        for (y = y0; y < y0 + b->h; y++)
             bm_put(x, y, !bm_get(x, y));
 }
 
