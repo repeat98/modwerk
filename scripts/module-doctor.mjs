@@ -26,6 +26,7 @@ import { LINK_DEVICES } from '../src/engine/elektron/elemod.ts'
 import { stageDraft } from './draft-stage.mjs'
 import { requireZdlBinary, zdlPath } from './zdl-binaries.mjs'
 import { moduleCardless } from '../src/catalog/usb-only.ts'
+import { controlProblems } from './module-controls.mjs'
 
 // Modules first listed on or after this day carry a measured performance record (docs/MODULE_PERFORMANCE.md); earlier ones keep their qualification evidence.
 const PERFORMANCE_REQUIRED_FROM = '2026-10-07'
@@ -68,6 +69,9 @@ const rulesProblem = rules.status === 0 ? '' : (ruleLines.find(line => /^\w*Erro
 const withId = !all && exists('sdk/octabam/modules/' + ids[0]) ? ['--with', ids[0]] : []
 const compat = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', 'scripts/module-compat.py', '--json', ...withId], { cwd: root, encoding: 'utf8' })
 const compatResult = (() => { try { return JSON.parse(compat.stdout) } catch { return null } })(), compatProblems = compatResult?.problems
+// Each module's native knob declarations (scripts/module-native-params.py): run once, for the controls line.
+const nativeRun = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', 'scripts/module-native-params.py', ...withId], { cwd: root, encoding: 'utf8' })
+const nativeParams = (() => { try { return JSON.parse(nativeRun.stdout) } catch { return null } })()
 
 // The qualification source hash is async; compute it once per module before the checks run.
 const nativeHashes = new Map()
@@ -94,6 +98,14 @@ function octatrack(id) {
   if (!LIBRARY_CATEGORIES.includes(document.category)) fail('category guide', 'category ' + document.category + ' is not a library category', 'use one of ' + LIBRARY_CATEGORIES.join(', '))
   else if (!exists('docs/module-guides/' + document.category + '.md')) fail('category guide', 'docs/module-guides/' + document.category + '.md is missing', 'write the guide for this category')
   else ok('category guide', 'walk docs/module-guides/' + document.category + '.md (and sequencing.md if it acts in time)')
+  // The knobs the build writes into the instrument (manifest.py) and the ones the site describes (controls[]) are one list.
+  const knobs = nativeParams?.[id]
+  if (!nativeParams) fail('controls', 'the native knob declarations could not be read: ' + (nativeRun.stderr.trim().split('\n').at(-1) ?? 'scripts/module-native-params.py failed').slice(0, 200), 'fix what manifest.py reports, then run this again')
+  else if (knobs?.length) {
+    const problems = controlProblems(knobs, document.controls)
+    if (problems.length) fail('controls', problems.slice(0, 3).join('; ') + (problems.length > 3 ? '; and ' + (problems.length - 3) + ' more' : ''), 'make controls[] in octamod.module.json say what manifest.py declares (name, default, count), then npm run modules:generate')
+    else ok('controls', knobs.length + ' knob' + (knobs.length === 1 ? '' : 's') + ' in manifest.py, the same in controls[]')
+  }
   // No gate can see how an effect sounds, so this only points at the check and says whether TESTING.md already answers it.
   if (document.category === 'effects') {
     const testing = exists(folder + '/TESTING.md') ? readFileSync(resolve(root, folder + '/TESTING.md'), 'utf8') : ''

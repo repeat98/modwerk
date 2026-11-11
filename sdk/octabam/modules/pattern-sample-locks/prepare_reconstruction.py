@@ -14,7 +14,7 @@ import sys
 from prepare_beta_candidate import load, run
 
 HERE = Path(__file__).resolve().parent
-ROOT = HERE.parents[2]
+ROOT = HERE.parents[3]
 REFERENCE = '28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d'
 HASH = lambda data: hashlib.sha256(data).hexdigest()
 NATIVE = ('translation.c', 'native.c', 'engine.c', 'engine.h', 'ui.c', 'ui.h', 'font.c', 'font.h',
