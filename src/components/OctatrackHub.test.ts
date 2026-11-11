@@ -179,7 +179,10 @@ describe('the way to the base install guide', () => {
     await act(() => root.render(createElement(OctatrackHub, { ...props, view: 'setup', link: unit({ status: 'stock' }), sets: [], header: null, grid: null, card: null })))
     expect(open().textContent).toContain('Install the base once from the card to sync module sets over USB. Later base updates go over USB.')
     if (MODULE_SKIP_HINT) expect(open().textContent).toContain(MODULE_SKIP_HINT)
-    expect(open().textContent).not.toContain('FUNC')
+    // FUNC held from power-on opens Elektron's Startup Menu: Setup names FUNC only in the skip hint, for the MKI, and
+    // only once the startup animation has begun.
+    expect(open().textContent!.replace(MODULE_SKIP_HINT || '\u0000', '')).not.toContain('FUNC')
+    if (MODULE_SKIP_HINT.includes('FUNC')) expect(MODULE_SKIP_HINT).toContain('on an MKI: press and hold FUNC as soon as the startup animation begins')
     await act(() => button('Install the base').click())
     expect(props.onInstall).toHaveBeenCalledOnce()
     await act(() => root.render(createElement(OctatrackHub, { ...props, view: 'setup', link: unit({ status: 'idle' }), sets: [], header: null, grid: null, card: null })))
