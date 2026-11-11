@@ -1,9 +1,10 @@
 import { apiUrl } from '../hosting'
-import type { OctatrackCount } from './octatrack-diagnostics-contract'
+import { BASE_INSTALL_COUNTS, BASE_INSTALL_FAILURES, DIAGNOSTIC_INVITATION_PLACEMENTS, INVITATION_COUNTS, type BaseInstallStage, type DiagnosticInvitationOutcome, type DiagnosticInvitationPlacement, type OctatrackCount, type OctatrackStepCount } from './octatrack-diagnostics-contract'
 import type { AnnouncementCountEvent, UsageDevice, UsageEvent } from './usage-contract'
 import { usagePage } from './usage-pages'
 import { USAGE_CONSENT_VERSION } from '../legal/policy'
 import { canTrackModuleDownload } from './module-downloads'
+import baseBinding from '../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
 const preferenceKey = 'octamod.usage.consent', visitorKey = 'octamod.usage.daily-visitor', configurationsKey = 'octamod.usage.started-configurations'
 let withdrawnForThisPage=false
 /** Saved only when a visitor objects to identifier-free counts; nothing is stored while they are allowed. */
@@ -39,11 +40,36 @@ export function anonymousCountsAllowed() {
 export function setAnonymousCountsAllowed(enabled: boolean) {
   try { if(enabled)localStorage.removeItem(anonymousOffKey); else localStorage.setItem(anonymousOffKey,'1'); return true } catch { return false }
 }
-function countAnonymously(body: {event: UsageEvent; device?: UsageDevice; page?: string} | {event: OctatrackCount} | {event: 'module_download'; moduleId: string} | {event: AnnouncementCountEvent; announcementId: string}) {
+function countAnonymously(body: {event: UsageEvent; device?: UsageDevice; page?: string} | {event: OctatrackCount} | {event: OctatrackStepCount; detail?: string} | {event: 'module_download'; moduleId: string} | {event: AnnouncementCountEvent; announcementId: string}) {
   try {void fetch(apiUrl('/usage/count'),{method:'POST',credentials:'omit',redirect:'error',referrerPolicy:'no-referrer',keepalive:true,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).catch(()=>{})} catch { /* Counts never block device work. */ }
 }
 /** A fixed action counter, independent of optional technical diagnostics. Never pass device data here. */
 export function countOctatrackAction(event: OctatrackCount) { if (anonymousCountsAllowed()) countAnonymously({event}) }
+/** The base install guide's steps, through the same identifier-free path: only the step's fixed name and, for
+ * `failed`, one fixed reason (anything else is sent as `other`). Never pass device, module or error text here. */
+export function countBaseInstall(stage: BaseInstallStage, detail?: string) {
+  const event = BASE_INSTALL_COUNTS[stage]
+  if (!event || !anonymousCountsAllowed()) return
+  countAnonymously(stage === 'failed' ? {event, detail: (BASE_INSTALL_FAILURES as readonly string[]).includes(detail ?? '') ? detail : 'other'} : {event})
+}
+const GUIDE_COUNTED = 'modwerk.octatrack.base-guide-counted'
+let guideCountedHere = ''
+/** The guide's steps as App reports them. The guide opens by itself (`automatic`) on each visit until this browser reads
+ * a unit with a base, or the unit's base is older: such an opening counts once per browser and published base, one the
+ * member opened always. The counts are openings, not people. */
+export function countBaseGuide(stage: BaseInstallStage, detail: string | undefined, automatic: boolean, base = baseBinding.identity) {
+  if (stage === 'opened' && automatic) {
+    let counted = guideCountedHere
+    try { counted = localStorage.getItem(GUIDE_COUNTED) ?? counted; localStorage.setItem(GUIDE_COUNTED, base) } catch { /* once per visit */ }
+    guideCountedHere = base
+    if (counted === base) return
+  }
+  countBaseInstall(stage, detail)
+}
+/** The diagnostics invitation's answers by where it was shown, so the share rate can be read without knowing who. */
+export function countDiagnosticsInvitation(outcome: DiagnosticInvitationOutcome, placement: DiagnosticInvitationPlacement) {
+  if (anonymousCountsAllowed() && DIAGNOSTIC_INVITATION_PLACEMENTS.includes(placement)) countAnonymously({event: INVITATION_COUNTS[outcome], detail: placement})
+}
 function visitor() {
   const day = new Date().toISOString().slice(0,10)
   try {
