@@ -39,7 +39,7 @@ brought back the baseline exactly. Not yet: another project and back, a real pow
 | # | Case | Today | Status |
 |---|---|---|---|
 | 14 | Power lost while the set is being saved | Two files in turn: the older set stays | built (host test) |
-| 15 | PROJ held from power-on (or FUNC held while the restore runs) skips the restore | Everything the project names is missing; the card's set is left alone, and the next normal boot restores it. PROJ since 11 November 2026 (owner): FUNC at power-on opens Elektron's Startup Menu, so FUNC had to come after the startup animation began. The MKI has no PROJ key: FUNC stays its gesture | FUNC: done (flashed beta, 12 October 2026; below). PROJ: not yet done on hardware |
+| 15 | PROJ held from power-on (or FUNC held while the restore runs) skips the restore | Everything the project names is missing; the card's set is left alone, and the next normal boot restores it. PROJ since 11 November 2026 (owner): FUNC at power-on opens Elektron's Startup Menu, so FUNC had to come after the startup animation began. The MKI has no PROJ key: FUNC stays its gesture | FUNC: done (flashed beta, 12 October 2026; below). PROJ: in part (11 November 2026, below): MODULES SKIPPED through a RAM boot, not yet from a cold power-on on the flashed base, nor on an MKI |
 | 16 | A real power cycle into a flashed base that restores | MODULES LOADED, the set back from the card | done (flashed beta, 12 October 2026; below) |
 | 17 | The restore held back past 10 s (playback or USB disk mode right after boot) | Hosts then go ahead, and a late restore could still overwrite a change made before it. Installs need the transport stopped, so this needs the card unavailable or USB disk mode for 10 s after boot while installing | open (rare; shortcut in ep0.c) |
 
@@ -164,7 +164,8 @@ A ColdFire unit with a large `.bss` (Temp Save keeps 42 KB) reaches it by absolu
    manager must retire the old code from the slots running it before the new code binds, as the rebind does).
 4. Case 6: layout numbers, before the first module update that changes its knobs.
 5. Needing the owner at the unit: 11 (SAVE TO NEW, EXPORT TO SET: read project.work in USB disk mode), 19 (the
-   arranger), the site's note in a browser, and 15 with PROJ (FUNC's 15 and 16 are done, 12 October 2026).
+   arranger), the site's note in a browser, and 15 with PROJ from a cold power-on on the flashed base (FUNC's 15 and 16 are done,
+   12 October 2026; PROJ in part, 11 November 2026).
 6. Case 9: paste between projects (owner, 11 October 2026: not now).
 
 ## Owner steps for 15 and 16, on the flashed beta (12 October 2026)
@@ -187,7 +188,7 @@ Case 16, a real power cycle restores the set:
 9. Switch it on, holding no key.
 10. About 3 seconds after the project shows, read the message: MODULES LOADED, SOME MODULES FAILED or MODULES NOT LOADED.
 
-Case 15, PROJ skips the restore (the gesture since 11 November 2026; not yet done on hardware):
+Case 15, PROJ skips the restore (the gesture since 11 November 2026; done only in part, 11 November results below):
 
 11. Switch off and wait 5 seconds.
 12. Hold PROJ, switch on, and keep holding PROJ until MODULES SKIPPED shows (about three seconds after the project
@@ -227,3 +228,19 @@ The owner flashed `Modwerk-octatrack-beta3.bin`. The agent then read the unit wi
 for a moment. They are stock popups (`modset.c`, `SAY`), and the MISSING MODULES page covers them half a second after
 its list stops changing, so the owner could hardly read MODULES SKIPPED. Either keep MISSING back for a few seconds
 after the restore's message, or put the restore's result on the MISSING page.
+
+### Results on the owner's MKII (11 November 2026)
+
+Seen by the owner and the orchestrating session; nothing more was tested.
+
+- **PROJ through a RAM boot:** the development twin of the new base (configuration `513be133…`, 20-channel USB
+  Audio) was RAM-booted while the owner held PROJ through the restart. MODULES SKIPPED showed. The key rows read back
+  zero only after PROJ was released, so the key bit itself was not read.
+- **PROJ at power-on on the previously flashed base:** holding PROJ while switching the unit on started it normally:
+  Elektron's bootloader did not open the Startup Menu or react.
+- **The `off` layout** of the new base (identity `d891acb3…`), built through the site's own path, was RAM-booted: it
+  started and answered `status` over the USB link ("normal").
+
+Not done: the new base flashed to the unit (from the card or over USB); PROJ held from a cold power-on on the new base
+(the first two results together are not that test); any MKI (the repository's key tables list no PROJ key code for
+the MKI); audio or MIDI of the `off` layout on a host.
