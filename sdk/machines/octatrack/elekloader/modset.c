@@ -4,9 +4,11 @@
  * turn, with a generation number, so a power loss mid-write keeps the previous set. After a boot the newest
  * complete set this base wrote is installed through the runtime loader, with the same checks as a USB install.
  * Writing and reading use the logger's stock file calls and gate (engine task, card ready, nothing playing or
- * recording, not in USB disk mode). Holding FUNC at boot skips the restore, so a module that breaks the unit
- * cannot lock it out; so does another base's set (its configuration hash differs) or a damaged file. The boot
- * guard below does it without FUNC when the last start crashed or stopped while its restore ran.
+ * recording, not in USB disk mode). PROJ held from power-on, or FUNC held while the restore runs, skips the restore,
+ * so a module that breaks the unit cannot lock it out (owner, 11 November 2026: FUNC held at power-on opens
+ * Elektron's Startup Menu instead; an MKI has no PROJ key); so does another base's set (its configuration hash
+ * differs) or a damaged file. The boot guard below does it without a key when the last start crashed or stopped
+ * while its restore ran.
  * A volatile Keep (volatile_service.c) adds its fresh installs to this set only when the set and they are exactly
  * the trial's whole-set identity (journal.h), and is refused otherwise; the set is then saved the same way.
  *
@@ -37,10 +39,10 @@ void modwerk_diag_refused(uint32_t module, uint32_t refusal); /* diag.c: ... and
 extern const struct mu_backend modwerk_runtime_backend;
 struct file_object { uint32_t word[6]; };
 #ifdef MODWERK_HOST
-uint8_t modwerk_test_held;
+uint8_t modwerk_test_keys[8]; /* the panel's held-key rows */
 int modwerk_test_gate = 1;
 uint32_t modwerk_test_ticks;
-#define HELD_FUNC (modwerk_test_held)
+#define KEY_ROWS modwerk_test_keys
 #define GATE() (modwerk_test_gate)
 #define TICKS (modwerk_test_ticks)
 const char *modwerk_test_said; /* the last notice */
@@ -61,7 +63,7 @@ extern uint8_t octamod_log_retained[];
 #define octamod_log_io ((uint8_t *)((uintptr_t)octamod_log_retained + 6144u + 0x08000000u))
 int octamod_log_can_flush(void);
 extern volatile uint32_t modwerk_runtime_ticks;
-#define HELD_FUNC (*(volatile uint8_t *)(0x46100b18u + (0x2du >> 3)) >> (0x2du & 7u) & 1u) /* the panel's held FUNC */
+#define KEY_ROWS ((volatile const uint8_t *)0x46100b18u) /* the panel's held-key rows, as its last row reports left them */
 #define GATE() octamod_log_can_flush()
 #define TICKS modwerk_runtime_ticks
 #define SAY(text) ((void (*)(const char *, unsigned))0x4005a2b8u)(text, 0xa0)
@@ -70,6 +72,9 @@ __attribute__((weak)) int modwerk_controller_settling(void) { return 0; } /* con
 __attribute__((weak)) int modwerk_status_dialog(void) { return 0; } /* status.c: one of its dialogs shows */
 #define DIALOG() modwerk_status_dialog()
 #endif
+/* A key held: code row * 8 + bit of the rows (status.c's and scripts/device.mjs's codes). FUNC 0x2d, PROJ 0x1c. */
+#define PANEL_HELD(code) (KEY_ROWS[(code) >> 3] >> ((code) & 7u) & 1u)
+#define SKIP_HELD (PANEL_HELD(0x2du) | PANEL_HELD(0x1cu))
 #if !defined MODWERK_HOST || defined MODWERK_HOST_CARD
 extern int olog_stock_open(struct file_object *, const char *, const char *, void *, unsigned);
 extern int olog_stock_read(struct file_object *, void *, unsigned);
@@ -417,13 +422,13 @@ static void restore_pass(void)
 static void restore(void)
 {
     restored = 1;
-    unsigned held = HELD_FUNC;
+    unsigned held = SKIP_HELD;
     int a = load(0), wa = whole(a);
     uint32_t ga = wa ? be32(set + 8) : 0;
     int b = load(1), wb = whole(b);
     uint32_t gb = wb ? be32(set + 8) : 0;
     int hold = guard_check(ga > gb ? ga : gb);
-    /* FUNC held, or the guard holds: nothing installed, but the card's newest generation and slot are kept, so a
+    /* PROJ or FUNC held, or the guard holds: nothing installed, but the card's newest generation and slot are kept, so a
      * later save wins over it. */
     if (held || (hold && (wa || wb))) {
         slot = wb && (!wa || gb > ga) ? 1u : 0u;

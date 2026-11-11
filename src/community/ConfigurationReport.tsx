@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { createPortal } from 'react-dom'
 import { Icon } from '../components/Icon'
 import { DEVICES_BY_ID } from '../devices/registry'
+import { isBetaModule } from '../catalog/availability'
 import { post } from './api'
 import { AuthorExpectations, BetaReportReminder, BugReportSuccess } from './BugReportNotice'
 import { catalogModules, configurationSummary } from './configuration-report'
@@ -78,7 +79,7 @@ export function ConfigurationReportDialog({ machine, configurationId, onClose }:
       <footer className="configuration-report-footer"><div className="dialog-actions"><button type="button" className="button button-primary" onClick={onClose}>Close</button></div></footer>
     </> : !session.user?.verified ? <div className="configuration-report-body"><MemberPrompt /></div> : <form className="community-form configuration-report-form" aria-busy={busy} onSubmit={event => void send(event)}>
       <div className="configuration-report-body">
-        <BetaReportReminder />
+        <BetaReportReminder beta={resolved.modules.some(module => isBetaModule(module.id))} />
         <p className="configuration-report-intro">For a problem in the combination, or when you do not know which module is to blame. If one module clearly misbehaves, report it on that module’s page.</p>
         <AuthorExpectations />
         <section className="configuration-report-config" aria-label="Configuration">

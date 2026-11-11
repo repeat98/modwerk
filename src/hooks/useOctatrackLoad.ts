@@ -42,7 +42,7 @@ function poll(link: OctatrackLink, base: string) {
     try {
       const value = await link.liveLoad(controller.signal, () => live)
       if (!live) return
-      if (!value) { again = false; update(undefined, 'This base does not provide live load yet. A compatible beta base is required.', true); return }
+      if (!value) { again = false; update(undefined, 'This base does not provide live load yet. Install the current Modwerk base to see it.', true); return }
       const last = previous
       previous = { ticks: value.ticks, frames: value.frames }
       // Frozen tick/frame counters indicate unavailable timing, not an idle instrument.
