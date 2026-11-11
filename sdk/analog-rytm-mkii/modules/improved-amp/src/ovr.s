@@ -13,22 +13,42 @@
 
         | ------------------------------------------------------------------
         | improved_amp_ovr: jsr from 0x40109b14 (10 bytes, the linker pads the rest). a4 the
-        | track's amp slice (+6 OVR's live word), a5 the voice's frame (+42 its OVR CV). d0 and
+        | track's amp slice (+6 OVR's live word), a5 the voice's frame (+42 its OVR CV), d3
+        | the voice (amp_env_commands' loop counter from 0x4010994c to 0x40109c36). d0 and
         | d1 are dead after the site (0x40109b1e clears d0; 0x40109b20 loads d1); d2 (just
         | cleared), a0 and a1 are kept.
+        |
+        | The CV depends on the live word alone, so the last pair is kept a voice (OVR_MEMO,
+        | hot.h: the word in the high half, the CV in the low half) and a word that has not
+        | moved, which is every block of an idle unit, takes its CV from there: no table
+        | read and no multiply.
         | ------------------------------------------------------------------
+        .equ    HOT_OVR,        96                | hot.h: OVR_MEMO(0)
+
         .globl  improved_amp_ovr
-        .align  2
+        .balign 16
 improved_amp_ovr:
-        lea     -8(%sp),%sp
-        movem.l %d2/%a0,(%sp)
+        move.l  %a0,-(%sp)
+        lea     improved_amp_hot+HOT_OVR,%a0
         mvs.w   6(%a4),%d0
+        mvs.w   (%a0,%d3.l*4),%d1                 | the word this voice's CV was worked out from
+        cmp.l   %d1,%d0
+        bne.s   2f
+        move.w  2(%a0,%d3.l*4),%d0
+        move.w  %d0,42(%a5)
+        movea.l (%sp)+,%a0
+        rts
+2:      move.l  %d2,-(%sp)
+        move.w  %d0,(%a0,%d3.l*4)                 | the word as read
+        tst.l   %d0
         bpl.s   1f
         moveq   #0,%d0                            | below 0: OVR 0
 1:      move.l  %d0,%d1
         andi.l  #0xff,%d1                         | between two points
         lsr.l   #7,%d0                            | the point, x 2 bytes
         andi.l  #0x1fe,%d0
+        lea     2(%a0,%d3.l*4),%a0                | where its CV is kept
+        move.l  %a0,-(%sp)
         lea     improved_amp_ovr_cv,%a0
         adda.l  %d0,%a0
         mvz.w   (%a0),%d0
@@ -38,8 +58,10 @@ improved_amp_ovr:
         lsr.l   #8,%d2
         add.l   %d2,%d0
         move.w  %d0,42(%a5)
-        movem.l (%sp),%d2/%a0
-        lea     8(%sp),%sp
+        movea.l (%sp)+,%a0
+        move.w  %d0,(%a0)
+        move.l  (%sp)+,%d2
+        movea.l (%sp)+,%a0
         rts
 
         .section .rodata

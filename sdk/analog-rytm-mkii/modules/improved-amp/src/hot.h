@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Improved AMP: the words its two amp record entries read every block for every voice, kept
-// together so an idle block touches one 16-byte cache line of the module's data, and a second
-// one for voice 0. amp-write.s and pre-fade.s name the same offsets (HOT_*): keep them in step.
+// Improved AMP: the words its amp record entries and its OVR reader use every block for every
+// voice, kept together so an idle block touches few 16-byte cache lines of the module's data:
+// line 0 for the two entries, line 1 for voice 0's scan, lines 6 and 7 for the OVR reader.
+// amp-write.s, pre-fade.s and ovr.s name the same offsets (HOT_*): keep them in step.
 #ifndef IMPROVED_AMP_HOT_H
 #define IMPROVED_AMP_HOT_H
 
 #include <stdint.h>
 
-extern volatile uint32_t improved_amp_hot[24];
+extern volatile uint32_t improved_amp_hot[32];
 
 // Line 0: a bit a voice.
 #define amp_prefade_mask improved_amp_hot[0]     // voices to fade this block
@@ -20,5 +21,8 @@ extern volatile uint32_t improved_amp_hot[24];
 // Lines 2 to 5: the record taken, a voice.
 #define GATE_RATE(v) improved_amp_hot[8 + (v)]
 #define GATE_LW(v) improved_amp_hot[16 + (v)]
+// Lines 6 and 7: the OVR reader's last answer, a voice (ovr.s): the live word in the high half, its
+// CV in the low half. Zero at boot, which is a true pair: OVR 0 gives CV 0.
+#define OVR_MEMO(v) improved_amp_hot[24 + (v)]
 
 #endif

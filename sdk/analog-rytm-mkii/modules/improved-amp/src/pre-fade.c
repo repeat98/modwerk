@@ -129,7 +129,7 @@
 #define RT_DEADLINE ((volatile int32_t *)0x8000fdec)    // [track] its next tick's time
 #define RT_FIRES ((const volatile uint16_t *)0x402909b8)  // [count] bit RATE-1: fires
 
-volatile uint32_t improved_amp_hot[24] __attribute__((aligned(16)));    // hot.h
+volatile uint32_t improved_amp_hot[32] __attribute__((aligned(16)));    // hot.h
 
 // The block (this one 0) track t's next retrig fires in, as stock counts it, or -1
 // when none fires within the fade. A series that fires again sooner than twice the
@@ -281,7 +281,8 @@ __attribute__((noinline)) static void scan_tracks(int32_t clock, int32_t tempo, 
 void amp_prefade_scan(void)
 {
     int32_t block, tempo = TEMPO, clock = CLOCK;
-    int i;
+    const volatile int32_t *time;
+    int t;
 
     if ((uint32_t)clock != SCAN_CLOCK) {
         SCAN_CLOCK = (uint32_t)clock;
@@ -299,24 +300,24 @@ void amp_prefade_scan(void)
         amp_prefade_started = 0;
         return;
     }
-    // Nothing near: no slot's time inside the window, whatever its state, and no track with AMP
-    // in its own ENV RESET, which a retrig series needs. scan_tracks would then mark no voice, so
-    // it is not run. The clock runs while the sequencer is stopped, so with no track at AMP this
-    // is every idle block: 36 times and 12 bytes, all in the on-chip RAM. With a track at AMP
-    // scan_tracks runs, and reads the DDR only for that track's series and for a time inside
-    // the window.
-    if (!((ENV_RESET_WORDS[0] | ENV_RESET_WORDS[1] | ENV_RESET_WORDS[2]) & 0x01010101u)) {
-        for (i = 0; i < TRACKS * SLOTS; i++) {
-            int32_t at = (int32_t)((uint32_t)EVENT_TIMES[i] - (uint32_t)clock);
+    // Nothing near: no slot's time inside the window, whatever its state, and no retrig series
+    // on a track with AMP in its own ENV RESET, which a series needs to mark its voice.
+    // scan_tracks would then mark no voice, so it is not run. The clock runs while the sequencer
+    // is stopped, so this is every idle block: 36 times and 12 bytes in the on-chip RAM, and the
+    // series word of each track that has AMP.
+    for (time = EVENT_TIMES; time != EVENT_TIMES + TRACKS * SLOTS; time++) {
+        int32_t at = (int32_t)((uint32_t)*time - (uint32_t)clock);
 
-            if (!NOT_NEAR(at, block))
-                break;
-        }
-        if (i == TRACKS * SLOTS) {
-            amp_prefade_mask = 0;
-            amp_prefade_started = 0;
-            return;
-        }
+        if (!NOT_NEAR(at, block))
+            goto scan;
     }
+    if ((ENV_RESET_WORDS[0] | ENV_RESET_WORDS[1] | ENV_RESET_WORDS[2]) & 0x01010101u)
+        for (t = 0; t < TRACKS; t++)
+            if ((ENV_RESET[t] & 1) && RT_TRIG(t))
+                goto scan;
+    amp_prefade_mask = 0;
+    amp_prefade_started = 0;
+    return;
+scan:
     scan_tracks(clock, tempo, block);
 }
