@@ -152,6 +152,24 @@ sample_rate_knob_gate:
         tst.l   %d4                             | displaced
         rts
 
+| Stock's add of a turn to a value, (obj, id, cur, delta) on the stack, d0-d1/a0-a1
+| free: for TUN the delta becomes cents (rate.c). The site's lea and moveml follow.
+        .globl  sample_rate_add_gate
+        .extern sample_rate_tun_delta, sample_rate_add_resume
+
+sample_rate_add_gate:
+        moveq   #39,%d0                         | TUN's id
+        cmp.l   8(%sp),%d0
+        bne.s   1f
+        move.l  16(%sp),-(%sp)                  | delta
+        move.l  16(%sp),-(%sp)                  | cur
+        jsr     sample_rate_tun_delta
+        addq.l  #8,%sp
+        move.l  %d0,16(%sp)
+1:      lea     -44(%sp),%sp                    | displaced
+        movem.l %d2-%d7/%a2-%a3,(%sp)           | displaced
+        jmp     sample_rate_add_resume
+
 | The row's label, a std::function returning a std::string: the string to
 | build is at a0, and d0 returns a0.
         .globl  sample_rate_row_label

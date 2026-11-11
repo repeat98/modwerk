@@ -19,8 +19,15 @@
 
 #include <stdint.h>
 #include "analog-rytm-mk2/store.h"
+#include "analog-rytm-mk2/pages.h"
 
 #define EFF(t, i) (*(volatile short *)(PARAMS_EFF_AT + (t) * 84 + (i) * 2))
+// Stock glides every parameter to its target: a one-pole a block, state in 16.16
+// (0x40120cfa). EFF is its output, plus modulation, rebuilt every block.
+extern volatile short sample_rate_targets[];   // 42 words a track, as EFF
+extern volatile int sample_rate_smooth[];      // 42 longs a track
+#define TARGET(t, i) (sample_rate_targets[(t) * 42 + (i)])
+#define SMOOTH(t, i) (sample_rate_smooth[(t) * 42 + (i)])
 #define IDX_FIN 18
 #define IDX_STA 21
 #define IDX_END 22
@@ -39,12 +46,15 @@
 #define TURN_LAG 14         // going down, the voice reads this many frames below the same position
 #define EDGE 32             // frames from STA or END where a change of direction waits
 #define MIN_WAIT 141        // shortest loop stock plays: below it no position is clear of both
+#define SNAP_BLOCKS 160     // blocks (about 0.1 s) FIN skips the glide after a switch
 
 STORE_FIELD(sample_rate_on);
 
 unsigned char sample_rate_voices;               // one bit a voice: audio.s scales its step
 
 static volatile unsigned char track_on[TRACKS]; // one byte a track: written from the UI and the audio interrupt
+static volatile unsigned char snap[TRACKS];     // blocks left in which FIN skips stock's glide
+static volatile unsigned char snap_map[TRACKS]; // and FIN's +0 and +63 follow the switch (set_on's)
 
 static unsigned char going_down[VOICES];        // the way each voice went last block
 static unsigned char going_any;                  // any of them going down
@@ -55,8 +65,13 @@ void sample_rate_frames(int sta, int end, unsigned frames, int *out);
 // From the gate in stock's routine that applies a sound to a track, audio side
 void sample_rate_applied(void *sound, int track)
 {
-    if (track >= 0 && track < TRACKS)
-        track_on[track] = (unsigned char)core_store_get(STORE(sample_rate_on), sound, 0);
+    unsigned char on;
+    if (track < 0 || track >= TRACKS)
+        return;
+    on = (unsigned char)core_store_get(STORE(sample_rate_on), sound, 0);
+    if (on != track_on[track])
+        snap[track] = SNAP_BLOCKS;      // a kit, sound or sound lock that switches: FIN as it comes
+    track_on[track] = on;
 }
 
 // RATE's sign changes on this voice. Going down the voice reads TURN_LAG frames
@@ -81,11 +96,35 @@ static int turn_round(int v, int t, int trig)
     return trig || !(EFF(t, IDX_LOP) >> 8) || hi - lo < MIN_WAIT;
 }
 
+// A switch moves FIN between +0 and +63 (set_on) in the same moment the meaning
+// changes, and stock would glide FIN there over about 50 ms: switching on, the
+// sample dipped towards a stop and came back; switching off, the pitch slid a
+// semitone. For a while after a switch FIN takes its value at once. Which value
+// follows the setting as the audio side sees it, so the order in which the new
+// setting and the new FIN arrive does not matter: on, a FIN still at rest is
+// heard as 1x, and off, a FIN still at 1x as rest. Modulation stays on top. A
+// kit, sound or sound lock that switches snaps too, to FIN as it comes: there a
+// FIN at rest with RATE on is a stop the sound was saved with.
+static void snap_fin(int t)
+{
+    int target = TARGET(t, IDX_FIN), was = (SMOOTH(t, IDX_FIN) + 0x8000) >> 16;
+    if (snap_map[t] && (track_on[t] ? target == STOP : target >= FULL))
+        target = track_on[t] ? FULL : STOP;
+    SMOOTH(t, IDX_FIN) = target << 16;
+    EFF(t, IDX_FIN) = (short)(EFF(t, IDX_FIN) + target - was);
+}
+
 // Each block, before the prefetch
 void sample_rate_block(void)
 {
     unsigned char mask = 0, down_now = 0;
     int v;
+    for (v = 0; v < TRACKS; v++)
+        if (snap[v]) {
+            if (!--snap[v])
+                snap_map[v] = 0;
+            snap_fin(v);
+        }
     // No track with RATE on and no voice still going down: the loop below would change
     // nothing, so skip it (the audio interrupt runs this every block).
     if (!going_any) {
@@ -203,6 +242,8 @@ static void set_on(int on)
     int fin;
     if (!pick(&p) || (int)core_store_get(STORE(sample_rate_on), p.sound, 0) == on)
         return;
+    snap[p.track] = SNAP_BLOCKS;        // first: a snap that ends now cannot clear the map
+    snap_map[p.track] = 1;
     core_store_set(STORE(sample_rate_on), p.sound, 0, (unsigned)on);
     ((void (*)(uint32_t, void *))*(uint32_t *)(*(uint32_t *)p.wrapper + NOTIFY_OF_WRAPPER))(p.wrapper, &info);
     fin = *(short *)(p.sound + LIVE_SOUND_FIN);
@@ -319,9 +360,84 @@ void sample_rate_knob(void *view, int id, const char *event)
     }
 }
 
+// Fine TUNE. TUN's value is an 8.8 word, and stock's engine, sound, kit, SysEx and
+// scene and performance locks keep its low byte: a fraction of a semitone plays,
+// saves and loads on stock OS too, which only shows the whole number. A plain turn
+// of TUN moves 1 cent a count, with stock's acceleration; a press and turn moves
+// whole semitones and keeps the cents, as stock's STA and END turn fine and
+// coarse. Stock adds every turn of TUN, the sound's or a held trig's lock, at one
+// place (0x400a88ea, audio.s): there a plain turn's count becomes cents.
+#define ID_TUN 39
+#define TUN_REST 0x4000
+#define REC_TUN (0x419a4888 + 84 * ID_TUN)   // TUN's RAM parameter record
+#define REC_STEP 4          // its turn: factor plain, factor pressed, 0, profile
+#define ENC_PRESSED 20      // the event's byte, set while the knob is held down
+
+static int fine_turn;       // the UI tick's turn is a plain one (no knob held down)
+
+// A knob's turn profile (stock's, 0x4006eb06): three flags, then the plain and
+// the pressed curve, each {acceleration, counts a step, units a step}. TUN's own
+// sets both rounding flags, so every step is a whole semitone; this one rounds
+// only pressed turns, so a plain step is the record's factor in raw units, and
+// takes STA's acceleration (0x4006ead8) on the plain curve, so a quick spin
+// covers ground.
+static struct {
+    unsigned char on, whole, whole_pressed, pad;
+    int32_t plain[3], pressed[3];
+} fine_profile = {1, 0, 1, 0, {18, 3, 1}, {2, 3, 1}};
+
+// Cents from TUN's word, rounded to the nearest
+static int cents_of(int word)
+{
+    int d = (word - TUN_REST) * 100;
+    return d >= 0 ? (d + 128) / 256 : -((-d + 128) / 256);
+}
+
+// On even words only: a lock save keeps bits 15 to 1 (0x40009216), so an odd
+// word would come back a cent off. 1/128 semitone still gives every cent its word.
+static int word_of(int cents)
+{
+    int d = cents * 128;
+    return TUN_REST + 2 * (d >= 0 ? (d + 50) / 100 : -((-d + 50) / 100));
+}
+
+// From the gate at the add: the delta stock is about to add to TUN's value cur
+int sample_rate_tun_delta(int cur, int delta)
+{
+    if (!fine_turn)
+        return delta;
+    return word_of(cents_of(cur) + delta) - cur;
+}
+
+// TUN's value text, as stock's LFO depth (0x400fbbda, "%c%d.%02d"): a sign and
+// two places, "+3.00", "-0.02", and "(0)" at zero
+static int tun_text(struct core_text *t)
+{
+    int c = cents_of(t->value), a = c < 0 ? -c : c;
+    char *b = t->buf;
+    if (!c) {
+        *b++ = '(';
+        *b++ = '0';
+        *b++ = ')';
+    } else {
+        *b++ = c < 0 ? '-' : '+';
+        if (a >= 1000)
+            *b++ = (char)('0' + a / 1000);
+        *b++ = (char)('0' + a / 100 % 10);
+        *b++ = '.';
+        *b++ = (char)('0' + a / 10 % 10);
+        *b++ = (char)('0' + a % 10);
+    }
+    *b = 0;
+    return CORE_TEXT_DONE;
+}
+
+const struct core_param sample_rate_tun_param = {ID_TUN, ID_TUN, 0, 0, tun_text};
+
 int sample_rate_turn(void *brain, char *event)
 {
     (void)brain;
+    fine_turn = !event[ENC_PRESSED];
     if (*(int *)(event + 12) != ENC_FIN || tap_ticks < 0)
         return 0;
     if (++tap_turns < TAP_TURNS)
@@ -332,7 +448,15 @@ int sample_rate_turn(void *brain, char *event)
 
 void sample_rate_tick(void *ctrl)
 {
+    volatile uint32_t *rec = (volatile uint32_t *)(REC_TUN + REC_STEP);
     (void)ctrl;
+    fine_turn = 0;
+    // A plain step is 1 unit (a cent, at the add), a pressed one a whole semitone.
+    // Stock fills the record at boot; written each tick, it holds whatever ran since.
+    rec[0] = 1;
+    rec[1] = 1;
+    rec[2] = 0;
+    rec[3] = (uint32_t)&fine_profile;
     if (tap_ticks >= 0 && ++tap_ticks > TAP_TICKS)
         tap_ticks = -1;
 }

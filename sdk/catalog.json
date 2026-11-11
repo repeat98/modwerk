@@ -198,6 +198,11 @@
       "addedAt": "2026-10-30T12:00:00Z"
     },
     {
+      "id": "syntiz",
+      "version": "0.1.0-experimental",
+      "addedAt": "2026-10-29T21:00:00Z"
+    },
+    {
       "id": "track-solo",
       "version": "0.2.4-experimental",
       "addedAt": "2026-11-04T17:16:39Z"

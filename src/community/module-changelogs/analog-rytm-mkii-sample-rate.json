@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.2.0-experimental",
+    "date": "2026-11-11",
+    "changes": [
+      "Renamed Fine Tune + Sample Rate.",
+      "TUN now turns 1 cent a step; press and turn for whole semitones. Reads like +3.07.",
+      "Fine tuning saves in the sound and plays the same on stock OS.",
+      "Tapping the knob between FIN and RATE no longer dips the speed or slides the pitch."
+    ]
+  },
+  {
     "version": "0.1.1-experimental",
     "date": "2026-11-06",
     "changes": [

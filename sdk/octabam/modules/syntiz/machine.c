@@ -6,7 +6,7 @@
 #include <stdint.h>
 #include "engine.h"
 #include "machine_map.h"
-#include "../../machines/octatrack/include/modwerk_events.h"
+#include "../../../machines/octatrack/include/modwerk_events.h"
 
 #define U8(a) (*(volatile uint8_t *)(uintptr_t)(a))
 #define U32(a) (*(volatile uint32_t *)(uintptr_t)(a))
@@ -23,6 +23,10 @@
 #define FLEX_DESC 0x400d3176u       /* stock's FLEX page record, 0x38 bytes before the page itself */
 #define DESC_BYTES 0x1cau
 #define SETUP_ALL 16u               /* a base with #943 lets encoder E edit SRC SETUP's slot 10; older bases ignore it */
+
+/* The base's raised ev_trig_muted: which tracks' new trigs a mute module drops now (machines.md). The loader puts the
+ * base's entry in this zero word at install; a base without the hook leaves it 0, and every trig plays, as stock. */
+modwerk_ev_trig_muted *raise_ev_trig_muted __attribute__((section(".data"))) = 0;
 
 static uint8_t *part_base(void)
 {
@@ -179,7 +183,8 @@ int wave_render_track(unsigned track, unsigned ping, unsigned start, unsigned en
         WaveControls c;
         wave_controls_of(&c, model_of(part_base(), track), src, setup);
         Wave *w = &voices[track];
-        if (end == 16u && U8(EVENTS + track) & 16u) wave_note(w, &c);
+        if (end == 16u && U8(EVENTS + track) & 16u && !(raise_ev_trig_muted && raise_ev_trig_muted() >> track & 1u))
+            wave_note(w, &c);           /* a trig a mute module drops starts no note */
         int16_t b[16];
         wave_render(w, &c, wave_increment(fp[0], setup[0], setup[1], (const volatile uint32_t *)(uintptr_t)CURVE), b, n);
         for (unsigned k = 0; k < n; ++k) h[4 + 2 * k] = h[5 + 2 * k] = (uint32_t)(uint16_t)b[k] << 16;
