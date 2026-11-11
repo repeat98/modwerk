@@ -248,6 +248,34 @@ The owner asked for it to be recorded as it stands and not retried until he has 
   empty). After the second failed Undo and a power cycle the unit started `86388105` again, with no stall recorded.
 - Not tested: Keep and a minute of play, a power cycle with SYNTIZ kept, removal while a Part uses it.
 
+## On the owner's MKII, 11 November 2026
+
+Package `f501a6a4`, by the release session for the owner, on his MKII with 19 other modules kept.
+
+- **The live beta base** (`4854b76c…`, its `off` layout, identity `d891acb3…`). Try for 30 s, then Undo, with no
+  SYNTIZ tracks: rolled back, `normal`, the 19 modules as before. Try, then Keep: 20 modules, generation 3. Playing,
+  the power cycle with SYNTIZ kept and the removal were not done on this base.
+- **A development twin of the same base** (`d3736d62…`, `--dev`, no controller rows), SYNTIZ alone in a trial, a
+  blank test Part, four trigs a track, the base's frame guard at 80 %, about 10 s a reading:
+
+  | Set | Frame interrupt | Longest frame | Renders dropped |
+  | --- | --- | --- | --- |
+  | No SYNTIZ, or SYNTIZ installed and not chosen | 23 % | 30-34 % | 0 |
+  | T1 heavy SAW (DET 124, both subs 100, DRIV 127) | 37 % | 68-77 % | 0 |
+  | T1 in each of the six models, knobs high | 33-37 % | 64-67 % | 0 |
+  | T1, all six SRC knobs swept for about 10 s | 39 % | 70 % | 0 |
+  | T1 CHOIR + T2 ENS, both heavy | 66 % | 85 % | 0 |
+  | T1 + T2 + T3 heavy SAW | 77 % | 106-108 % | 3-16 a second |
+  | The same, T1's knobs swept | 78 % | 99 % | 45-60 a second |
+
+  All six models switched while playing. Choosing SYNTIZ for a fourth track left it on STATIC, with no message.
+- **Held notes.** The test Part, never edited, had AMP HOLD and REL at 127 (INF). A SYNTIZ note then never ends: after a double STOP the three voices still rendered (77 % with the transport stopped).
+- **Undo while tracks use it.** Ending the trial with those three tracks holding notes answered `needs-recovery`,
+  the unit stayed in `recovery, generation 1, active unknown`, and `recover` was still refused after the three
+  tracks were back on STATIC and their renders had stopped. The twin needed a power cycle. This matches the first
+  Undo of 9 November above.
+- Not heard: the twin's `off` layout has no USB audio. Not tested: the MKI, a MIDI flood, an LFO on a SYNTIZ control.
+
 ## Qualification record
 
 `evidence/performance.json` carries the 7 November figures as the audit asks (`npm run perf:audit -- check`): the

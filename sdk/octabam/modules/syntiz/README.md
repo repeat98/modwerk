@@ -96,6 +96,10 @@ you from the machine list to a first note; the models follow it.
   another installed module that was never played made the SYNTIZ tracks crackle lightly and took a sample track's worth of margin;
   removing it cured both (7 November 2026, one A/B, cause unknown).
 - Its levels differ by model: CHOIR on VOWA is lower than the others, as the shape itself is sparse.
+- Set the track's AMP HOLD and REL below INF. With both at INF, as on an untouched Part, a SYNTIZ note never ends
+  and keeps its share of the CPU, even after STOP.
+- Undo or remove SYNTIZ only while no track in the current Part uses it. Otherwise the unit can stay in recovery
+  until you switch it off and on (11 November 2026).
 
 ## Tests and measurements
 
