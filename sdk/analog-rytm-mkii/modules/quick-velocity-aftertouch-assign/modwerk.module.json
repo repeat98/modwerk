@@ -101,18 +101,17 @@
       "testedOn": "2026-11-11",
       "tester": "npp1993",
       "durationMinutes": null,
-      "summary": "On npp1993's Analog Rytm MKII with OS 1.74, with npp1993's go for each run, Modwerk's test rig (key presses and knob turns sent over USB, screens read back) ran six cases on this source in QL13: LFO held and a knob turned makes that parameter the LFO's destination at depth 0 and the page stays; further turns set DEP exactly as the same turns of stock's DEP knob, and the knob's box shows it as the LFO page does (+1.93, -1.93, +127.99, (0)); another knob takes the LFO at 0, a knob press sets DEP to 0, and the parameters themselves do not move; NOT AN LFO DEST on the LFO page; FIX links as before; plain LFO taps give stock's screens and Loop Sync follows them. All passed (run 1 differed only on the screens changed on purpose, then --record and plain 6 pass). By hand on QL10 to QL13, npp1993 reports: the LFO moves FRQ, TUN and DEC; the FX track's LFO takes a delay or reverb knob; FIX and SAMPLER links and aftertouch as before; the depth box on label and widget knobs, one width; PERF mode assigns the LFO, a PERF pad held during an LFO hold makes stock's performance locks.",
+      "summary": "On npp1993's Analog Rytm MKII with OS 1.74: the package's own image on the plain base beside LFO RND (QP02, flashed), by npp1993's hand: holding LFO on the LFO page shows the page's values as stock; LFO taps step to LFO RND's page and back; LFO + FRQ on FILTER makes FRQ the LFO destination, the depth in hundredths, the page stays; FIX and SAMPLER links as before; after a kit save and a power cycle the links and LFO destinations are kept. All pass, as did the same steps on QP01. Before that, Modwerk's test rig (key presses and knob turns over USB, screens read back, with npp1993's go) ran six cases on QL13: DEP set exactly as stock's DEP knob, the depth box, a new destination at 0, a knob press to 0, plain taps as stock with Loop Sync following, FIX links. All pass; QL15 (this source) passed the same cases in rytm-emu.",
       "limitations": [
-        "Six screen cases by the test rig; the by-hand checks are the author's report.",
-        "Tested beside Loop Sync on a development base with the test link (QL10, QL13), RAM-booted from the flashed OS; not alone, not flashed, no kit save, reload or power cycle on 0.2.0.",
-        "PERF, SCNE, MUTE and CHRO screens with LFO held: PERF by hand only; SCNE, MUTE and CHRO in rytm-emu only."
+        "The rig's unit run was on QL13, before the LFO page was left to stock; QP02 (this package) was checked by hand.",
+        "Duration not recorded. SCNE, MUTE and CHRO with LFO held: rytm-emu only; PERF and the PERF pad case by hand on QL13."
       ]
     },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu on QM11 to QM13 and QM20/QL builds (0.2.0): links, lock-style display, MODS FULL, SAMPLER recorder, FIX toggle, PERF, SCNE, FX track, LFO assign, depth box. Author's unit: RC18, RC19 and QM12 alone (links, save, reload, power cycle) pass. 0.2.0 on the author's unit: the test rig's six cases on QL13 and the author's hand checks on QL10 to QL13 pass.",
+    "summary": "rytm-emu on QM11 to QM13 and QM20/QL builds (0.2.0): links, lock display, MODS FULL, SAMPLER recorder, FIX toggle, PERF, SCNE, FX track, LFO assign, depth box. Author's unit: 0.1 RC18, RC19, QM12 alone (save, reload, power cycle) pass. 0.2.0: the package image QP02 on the plain base with LFO RND by hand (taps, LFO page, assign, save, power cycle) and the rig's six cases on QL13 pass.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
