@@ -22,6 +22,7 @@ import { OctatrackDiagnosticsSettings } from './OctatrackDiagnostics'
 import { OctatrackOverview } from './OctatrackOverview'
 import { OctatrackSamples } from './OctatrackSamples'
 import { MissingNote, type ProjectNeeds } from './OctatrackUpdate'
+import { MODULE_SKIP_HINT } from '../firmware-notices'
 import './octatrack-link.css'
 
 const moduleName = (id: string) => MODULES.find(module => module.id === id)?.name ?? id
@@ -40,7 +41,7 @@ const UNIT_VIEWS: { view: Exclude<HubView, 'set'>; title: string; href: string; 
 ]
 
 /**
- * Your Octatrack: the configuration page of the beta. A list on the leading side holds the Octatrack's own pages
+ * Your Octatrack: the Octatrack's configuration page on the base path (hasOctatrackBase). A list on the leading side holds the Octatrack's own pages
  * (Status, Backups, Samples, Setup) and your module sets; the selected item fills the trailing side. Opening a set
  * makes it the set you edit (the library adds to it, Sync sends it). The page's header (`header`), the set's modules
  * (`grid`) and the card route (`card`: base OS file, checks, build) are App's own parts. Every page stays mounted, so
@@ -111,7 +112,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
   const onUnit = sets.find(same), lastSync = lastSuccessfulSync(identity?.base ?? last?.base)
   const lastName = onUnit?.name ?? (last && lastSync && sameModules(last.moduleIds, lastSync.moduleIds) ? lastSync.name : undefined)
   // The hero: the unit's state in one line and the one action it needs, on every page.
-  const [line, action]: [ReactNode, ReactNode] = !usb ? ['This browser can’t use USB. Open this page in Chrome or Edge on a computer, or install from the card in Setup.', null]
+  const [line, action]: [ReactNode, ReactNode] = !usb ? ['This browser can’t use USB. Open this page in Chrome or Edge on a computer, or build card firmware in Setup.', null]
     : busy ? [state.module || status !== 'testing' ? 'Syncing…' : 'Self-test running…', null]
     : connected && stopped ? [DSP_STOPPED, null]
     : connected ? [<>Connected · {inventory ? modules(inventory.moduleIds.length) + ' on it' : 'reading what’s on it…'}{onUnit && <> · same as <b>{onUnit.name}</b></>}</>, null]
@@ -123,13 +124,14 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
   const panel = (name: HubView, content: ReactNode) => <section key={name} className={'hub-view hub-view-' + name} hidden={view !== name} aria-label={name === 'set' ? selected?.name ?? 'Module set' : UNIT_VIEWS.find(item => item.view === name)!.title}>{content}</section>
   // A set with a module card firmware cannot carry (usb-only.ts) is never pointed at the card.
   const cardable = !selected?.moduleIds.some(id => moduleUsbOnly(id))
-  const syncLine: ReactNode = !usb ? cardable ? <>This browser can’t use USB. <a href="#octatrack/setup">Install it from the card</a> instead.</> : 'This browser can’t use USB, and this set needs it. Open this page in Chrome or Edge on a computer.'
+  // Where this browser can use USB, the card firmware is the fallback the sync dialog offers, not a second way here.
+  const syncLine: ReactNode = !usb ? cardable ? <>This browser can’t use USB. <a href="#octatrack/setup">Build card firmware</a> instead.</> : 'This browser can’t use USB, and this set needs it. Open this page in Chrome or Edge on a computer.'
     : needsBase ? <span role="alert">{(review?.problem ?? new BaseUpdateRequired()).message}</span>
     : review?.problem ? <span role="alert">{review.problem.message}</span>
     : changes ? review?.needsSync ? <>Adds {changes.add.length} · Removes {changes.remove.length}{updates.length > 0 && <> · Updates {updates.length}</>}{!!(changes.stockOff.length + changes.stockOn.length) && <> · Stock effects change</>}</>
       : selected?.moduleIds.length ? <span className="hub-insync"><span className="unit-led is-on" aria-hidden="true" />Already on your Octatrack</span> : 'No modules in this set.'
     : busy ? 'A sync is running.' : status === 'stock' ? 'Install the base to sync this set.' : connected ? 'Reading what’s on your Octatrack…'
-    : cardable ? <>Connect your Octatrack to sync this set, or <a href="#octatrack/setup">install it from the card</a>.</> : 'Connect your Octatrack to sync this set.'
+    : 'Connect your Octatrack to sync this set.'
   return <div className="configuration-page octatrack-hub">
     {header}
     <div className="hub-split" ref={split}>
@@ -164,12 +166,13 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
           <h2 className="hub-view-title">Setup</h2>
           <section className="hub-section" aria-labelledby="setup-base-title">
             <h3 id="setup-base-title">Modwerk base</h3>
-            <p>{!usb ? 'This browser can’t use USB. Install the base from the card below, or open this page in Chrome or Edge on a computer.'
+            <p>{!usb ? 'This browser can’t use USB, so it can’t sync module sets. Open this page in Chrome or Edge on a computer to install the base, or build card firmware below.'
               : connected ? <>Your {model} runs the Modwerk base <code>{identity!.base.slice(0, 8)}</code>.{needsBase && (wantedLayout ? ' Your set needs it in another USB Audio layout.' : ' This site needs a newer one to sync your set.')}</>
-              : status === 'stock' ? <>Your {model} runs the original OS. Install the base once to sync module sets over USB.</>
+              : status === 'stock' ? <>Your {model} runs the original OS. Install the base once from the card to sync module sets over USB. Later base updates go over USB.</>
               : status === 'ready' ? 'Your Octatrack runs a Modwerk base this site can’t talk to. Install the current one.'
-              : 'Connect your Octatrack to see which base it runs.'}</p>
-            {usb && <button type="button" className={'button ' + (status === 'stock' || needsBase || status === 'ready' && !connected ? 'button-primary' : 'button-quiet')} onClick={() => onInstall(wantedLayout)}><Icon name="download" size={16} />{wantedLayout ? 'Install base with this layout' : needsBase ? 'Install latest base' : status === 'stock' ? 'Install the base' : 'Install the base again'}</button>}
+              : 'Connect your Octatrack to see which base it runs. Installing the base for the first time? The guide takes you through it.'}</p>
+            {usb && <button type="button" className={'button ' + (status === 'stock' || needsBase || status === 'ready' && !connected ? 'button-primary' : 'button-quiet')} onClick={() => onInstall(wantedLayout)}><Icon name="download" size={16} />{wantedLayout ? 'Install base with this layout' : needsBase ? 'Install latest base' : status === 'stock' ? 'Install the base' : connected ? 'Install the base again' : 'Open the install guide'}</button>}
+            {usb && MODULE_SKIP_HINT && <p className="link-hint">{MODULE_SKIP_HINT}</p>}
             <p className="link-hint">Going back to the original OS works from the card: <a className="text-button" href="#faq">FAQ & flashing guide</a></p>
           </section>
           {usb && <section className="hub-section" aria-labelledby="setup-connect-title">
