@@ -11,6 +11,9 @@ import { OCTATRACK_WELCOME_KEY } from './hooks/useOctatrackWelcome'
 import { waitForBaseInstall } from './config/octatrack-progress'
 import { OCTATRACK_DIAGNOSTICS_VERSION } from './community/octatrack-diagnostics-contract'
 import baseBinding from '../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
+import { newConfiguration } from './config/workspace'
+import { deviceStore, openDeviceDatabase } from './storage/device'
+import { USB_AUDIO_MODULE, usbAudioPreset } from './config/usb-audio'
 
 // A production build with the Octatrack base path released, for a member who is not a beta tester, on a computer whose
 // browser has WebUSB and an Octatrack on the original OS plugged in. They answered the welcome to modules over USB
@@ -106,6 +109,17 @@ describe('the Octatrack base path for a member who is not a beta tester', () => 
     expect(guide()!.querySelector('h2')?.textContent).toBe('The Modwerk base is installed')
     expect([...guide()!.querySelectorAll('button')].some(button => button.textContent === 'Continue')).toBe(true)
     expect(document.querySelector('dialog.diagnostics-invitation')).toBeNull()
+  }, 15000)
+  it('updates a unit on the previous base in the layout of the member’s set with the USB Audio module, in one update', async () => {
+    const unit = fakeUnit('base'); unit.base = '500cdb6fd81bfc9c2b18737e7487f3ec2264c1c00c5ebef833e7f751e325d1b7'
+    Object.defineProperty(navigator, 'usb', { value: unit.usb, configurable: true })
+    const database = await openDeviceDatabase(), store = deviceStore(database)
+    const live = newConfiguration('Live', ['everb', USB_AUDIO_MODULE], undefined, undefined, undefined, { ...usbAudioPreset('computer'), layout: 'main', outboxPairs: [1, 0, 0, 0] })
+    await store.saveConfiguration(live); await store.setActiveConfiguration(live.id); database.close()
+    await open('library')
+    await vi.waitFor(() => expect(guide()?.querySelector('h2')?.textContent).toBe('Update the Modwerk base'), { timeout: 5000 })
+    expect(guide()!.textContent).toContain('It takes a minute or two, with USB Audio · Main.')
+    expect(guide()!.textContent).not.toContain('USB Audio is off in this base')
   }, 15000)
   it('leads a signed-out visitor on Your Octatrack to sign in', async () => {
     await open('octatrack', visitor)

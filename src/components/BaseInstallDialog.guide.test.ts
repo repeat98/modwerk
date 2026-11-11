@@ -9,6 +9,7 @@ import { pendingBaseInstall, waitForBaseInstall } from '../config/octatrack-prog
 import { BaseInstallDialog } from './BaseInstallDialog'
 import { pendingReask, resetReask } from '../community/diagnostics-reask'
 import baseBinding from '../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
+import { USB_AUDIO_MODULE } from '../config/usb-audio'
 
 // The browser's download of the .bin; the guide's own steps are what is tested here.
 vi.mock('../config/firmware-filename', () => ({ saveFirmware: vi.fn() }))
@@ -81,6 +82,18 @@ describe('the guided first install, for a member on the original OS', () => {
     await open({ link }).render()
     expect(container.querySelector('#base-stage-title')?.textContent).toBe('Install it on your Octatrack')
     expect(pendingBaseInstall()?.expectedBase).toBe(expected)
+  })
+  it('builds the first install in the layout of a set with the USB Audio module, else with USB Audio off, and says nothing of USB Audio going off', async () => {
+    const { link } = await connected('stock')
+    const withAudio = open({ link, set: { name: 'Live', moduleIds: ['everb', USB_AUDIO_MODULE], usbAudio: { layout: 'master' } } }); await withAudio.render()
+    expect(container.textContent).not.toContain('USB Audio is off in this base')
+    click(container.querySelector('.risk-accept input')!); click(buttonNamed('Download base .bin')!); await settle(); await settle()
+    expect(withAudio.buildBase.mock.calls).toEqual([['master']])
+    await act(() => root.unmount()); root = createRoot(container); sessionStorage.clear()
+    const without = open({ link, set: { name: 'Live', moduleIds: ['everb'] } }); await without.render()
+    expect(container.textContent).not.toContain('USB Audio is off in this base')
+    click(container.querySelector('.risk-accept input')!); click(buttonNamed('Download base .bin')!); await settle(); await settle()
+    expect(without.buildBase.mock.calls).toEqual([[undefined]]) // session.ts builds MEMBER_LAYOUT: USB Audio off
   })
   it('ends with the diagnostics step once the unit first connects on the new base, and never waits on it', async () => {
     const { unit, link } = await connected('stock')
