@@ -1,0 +1,1 @@
+SDK: two tests that re-derive which Octatrack modules have no card form (the card build's release scope and the site's published-package check) now also count a USB package marked `usbOnly`, as the build and the site already do, so the first such module no longer fails them.

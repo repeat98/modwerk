@@ -17,8 +17,9 @@
 ;   w3                   1 when this frame carries the track's trig
 ;   w8..w19              the twelve knob bytes, 0..127
 ;
-; The synth path also clobbers a, x1, y0/y1, r0/r1/r5/r6, n1/n7,
+; The synth path also clobbers a, x1, y0/y1, r0/r1/r4/r5/r6, n1/n7,
 ; m0/m1/m4/m5/m6 and condition codes; it continues after the stock source.
+; n4 and n5 are kept (stock effects read them).
 ; An Analog BD track's voice block is X:VBASE + 2*x:$418 (x:$418 = 0/$20/$40/$60,
 ; the track within this core): the engine's state, then its knob block at
 ; +$30. The voice renders into X:0, where the stock source would have put
@@ -77,6 +78,8 @@ zg04:
         lua     (r5+$30),r6
         move    #>$10,n7
         move    #$0,r0
+        move    #>$ffffff,m1            ; both engines index with r1 and r4 linearly
+        move    #>$ffffff,m4
         move    x:(r6+$6),a
         tst     a
         beq     zg05

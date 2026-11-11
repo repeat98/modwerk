@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.1.3-experimental",
+    "date": "2026-11-11",
+    "changes": [
+      "Knobs on SRC parameters now use the track's machine's own names, values and ranges, also for module machines such as Digi Mono, SOPHIE, NEIGHBOR and RAM.",
+      "The header shows the track, the parameter's full name and its value with its unit.",
+      "A knob on an SRC slot the machine doesn't have is unassigned.",
+      "Fixed a delay between turning a knob and the sound changing with Overbridge connected and a heavy machine playing; the page now uses about as much CPU as a stock page."
+    ]
+  },
+  {
     "version": "0.1.2-experimental",
     "date": "2026-11-02",
     "changes": [
