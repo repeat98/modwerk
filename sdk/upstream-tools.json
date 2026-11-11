@@ -4,7 +4,8 @@
   "octabam": {
     "repository": "https://github.com/sambanks/octabam.git",
     "commit": "f7d7290663135ff8bc4ea18aa45d2854a7b332c1",
-    "updated": "2026-11-11"
+    "updated": "2026-11-11",
+    "frozen": "Modwerk no longer follows this upstream; the checkout stays for its DSP assembler, emulator and hardware tools."
   },
   "elekloader": {
     "repository": "https://github.com/irpina/elekloader.git",
