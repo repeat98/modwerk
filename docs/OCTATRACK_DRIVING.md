@@ -25,6 +25,10 @@ layout, so test the base-bound modules (Analog BD, Sidechain, Output Matrix) on 
 - Keep each command short: a few steps, a time limit, its output read at once. A long run goes in the
   background and logs every step, and you look at the log.
 - Never power-cycle on your own; ask the owner. Never flash.
+- A RAM boot takes an image of at most 1.25 MiB (`BOOT_IMAGE_BYTES`), and the base fills all but about 5 KB of it. A base
+  that carries a module set in its image (`build_core.py --dev --flashed-set`) can therefore be RAM-booted only with a
+  set that packs to a few KB: two small effects did (11 November 2026, MKII), twenty modules cannot. A larger one is
+  proven only by a card flash, which is the owner's.
 - A Keep on a RAM-booted base overwrites the owner's kept modules. The kept set lives in two card files,
   `/MODWERK0.SET` and `/MODWERK1.SET`, written alternately and stamped with the writing base's identity
   (`modset.c`); a base loads neither file another base wrote. Two Keeps on a twin (a `try`, then a `remove`)
