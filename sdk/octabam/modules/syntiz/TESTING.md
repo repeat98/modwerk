@@ -253,8 +253,9 @@ The owner asked for it to be recorded as it stands and not retried until he has 
 Package `f501a6a4`, by the release session for the owner, on his MKII with 19 other modules kept.
 
 - **The live beta base** (`4854b76c…`, its `off` layout, identity `d891acb3…`). Try for 30 s, then Undo, with no
-  SYNTIZ tracks: rolled back, `normal`, the 19 modules as before. Try, then Keep: 20 modules, generation 3. Playing,
-  the power cycle with SYNTIZ kept and the removal were not done on this base.
+  SYNTIZ tracks: rolled back, `normal`, the 19 modules as before. Try, then Keep: 20 modules, generation 3. After the
+  power cycle that ended the twin below, the unit started this base with all 20 modules, SYNTIZ among them. Playing
+  and the removal were not done on this base.
 - **A development twin of the same base** (`d3736d62…`, `--dev`, no controller rows), SYNTIZ alone in a trial, a
   blank test Part, four trigs a track, the base's frame guard at 80 %, about 10 s a reading:
 
