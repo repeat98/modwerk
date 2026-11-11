@@ -116,7 +116,7 @@ How much it costs and whether it survives being worked hard: see [Performance](R
 ## Integrate
 
 - [ ] `sdk/catalog.json` has the entry (`id`, `version`, `addedAt`), so the library, the configurator and the module page show it.
-- [ ] The manifest's `controls[]` match the native parameters one for one: name, count, default, description. The README table and tutorial match too.
+- [ ] The manifest's `controls[]` match the native parameters one for one: name, count, default (`module:doctor`'s controls line checks these) and description. The README table and tutorial match too.
 - [ ] `compatibility.location` matches where the native manifest places it (FX1, FX2 or both); `module:verify` compares the chooser with native octabam's.
 - [ ] Declare compatibility for card builds and USB loading separately. A card companion for Analog BD or stock FX needs actual native/browser placement evidence; update its reviewed list (`analogBdCompanions`, `FITS_BESIDE_STOCK_FX2` in `src/catalog/selection-conflicts.ts`) only after that proof. Those lists describe baked card placement, not the USB arena. USB eligibility needs the published package and the base's ownership/resource admission; do not apply card donor-space filters to USB sets.
 - [ ] `npm run module:verify -- <id> --os <your 1.40C>` passes. Refusals for crowded selections are expected; each must match native's.
