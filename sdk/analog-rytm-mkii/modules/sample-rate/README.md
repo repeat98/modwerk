@@ -86,6 +86,6 @@ Original code by Nathaniel Pavel (@npp1993), GPL-3.0-or-later ([LICENSE](LICENSE
 
 ## Screens and audio
 
-Screenshots are rytm-emu captures of build SF07 (0.2.0) ([media/capture.json](media/capture.json)). No audio preview yet.
+Screenshots are rytm-emu captures of build SF09 (0.2.0) ([media/capture.json](media/capture.json)). No audio preview yet.
 
 ![SMP RATE clear](media/row-off.png) ![Another track's sound keeps FIN](media/other-track-fin.png)
