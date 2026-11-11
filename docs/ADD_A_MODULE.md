@@ -19,6 +19,7 @@ Every module follows [the guide for its category](module-guides/README.md): effe
 | Bring an elekloader mod to Digitakt or Digitone | [Digitakt and Digitone](#digitakt-and-digitone) | the author's released `.elemod` files |
 | Write a new Digitakt or Digitone mod | [Digitakt and Digitone](#digitakt-and-digitone) | `npm run module:new -- my-mod --machine digitakt --author <github-login>` |
 | Write or port an Analog Rytm MKII mod | [the Rytm guide](../sdk/machines/analog-rytm-mkii/README.md) | `npm run module:new -- my-mod --machine analog-rytm-mkii --author <github-login>` |
+| Write or list a Zoom MS-70CDR effect | [Zoom MultiStomp](#zoom-multistomp) | "Create an effect" in [the MS-70CDR guide](../sdk/machines/zoom-ms-70cdr/README.md#create-an-effect) |
 
 ## Rules that always apply
 
@@ -147,8 +148,8 @@ For imported files outside the three editable local guides, refresh affected `ve
 
 Its folder, `sdk/<platform>/modules/<id>/`, holds:
 
-- the source and its native declaration: `manifest.py` on the Octatrack, `build.json` on Digitakt and Digitone;
-- the manifest, `octamod.module.json` on the Octatrack or `modwerk.module.json` on Digitakt and Digitone. It lists every control, how to reach the module on the unit, compatibility and conflicts, resource gauges, test evidence, licence and media;
+- the source and its native declaration: `manifest.py` on the Octatrack, `build.json` on Digitakt and Digitone (a Zoom effect's source stays in its author's repository);
+- the manifest, `octamod.module.json` on the Octatrack or `modwerk.module.json` on Digitakt, Digitone and the Zoom pedals. It lists every control, how to reach the module on the unit, compatibility and conflicts, resource gauges, test evidence, licence and media;
 - `README.md` with the sections Overview, Controls, Usage, Compatibility and limitations, Tests and measurements, Authorship and licences, and Screens and audio. It also has a tutorial of at least three steps (set it up and select it, use one control, hear the result and stop or bypass it), which must match the manifest;
 - `TESTING.md` with the commands, the exact source revision and every result;
 - `LICENSE` with every author's terms;
@@ -335,6 +336,16 @@ Every new library version passes the publication gate: at least `author-hardware
 - Modwerk compiles the source in its pinned toolchain ([source builds](ELEMOD_SOURCE_BUILDS.md)).
 - The browser builds only from the `.elemod` files in elekloader's catalog, so to appear in the configurator a new mod needs an `.elemod` release pinned in its own record, `sdk/imports/elekloader-<id>-<date>.json`, and downloaded with `npm run elekloader:update -- --overlay <that record>`. From a fork, run it only once the pull request is open: the record pins your fork's commit, which raw.githubusercontent.com answers 404 for under repeat98/modwerk until a pull request names it ([source builds](ELEMOD_SOURCE_BUILDS.md)). Before that, try the mod in a local image: `node scripts/link-image.mjs --stock <stock.syx> --version XX01 --out test.syx --elemod vendor/elekloader/catalog/<core>.elemod --module <machine>:<id>` compiles it and links it with the core for your OS (`core-2.1.elemod` is the Digitakt's for 1.53). Never edit `vendor/elekloader/catalog/catalog.json`: it is generated from the upstream catalog and the records.
 - `npm run module:doctor -- <id>` checks the module's manifest, category guide, catalog pin and module rules.
+
+## Zoom MultiStomp
+
+A Zoom effect is a `.ZDL` file built and released in its author's repository; Modwerk lists it on contract v3 with the `zdl` platform ([contract](ZDL_MODULE_CONTRACT.md)) and keeps no source or build in `sdk/zoom/modules/<id>/`. [The MS-70CDR guide](../sdk/machines/zoom-ms-70cdr/README.md#create-an-effect) walks the road:
+
+1. Build it in ZoomMultistompZDL with the linker's own runtime, so it carries no Zoom code, and check it with `build/check_no_stock.py` and Ziddle.
+2. Try it on the pedal from the pedal page (Choose a .ZDL file), then release it on GitHub.
+3. `npm run module:new -- <id> --machine zoom-ms-70cdr --author <login>`, pin the release in `platform.binary`, and `npm run zdl:vendor -- <id> --checker <ZoomMultistompZDL checkout> --stock-dir <stock blobs>`, which keeps the file only without Zoom code.
+
+Screenshots of the effect's own screen come from ZoomMultistompZDL's `src/custom/common/zvis_host.py` (emulator captures) or the pedal. Publication needs a confirmed run on the pedal it is listed for.
 
 ## Reference
 
