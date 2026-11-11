@@ -114,6 +114,8 @@ Fixed velocity read from stock's flag every 100M instructions; screens compared 
 
 Not covered by the rig: how the LFO sounds, pads, the FX track's LFO, kit save and reload, a power cycle. Seen in the run: during the hold the box rounds DEP down (+1.93 shows +1, -1.93 shows -2).
 
+**0.2.0 on the author's unit, by hand, reported by the author, 10 Nov 2026 (QL05 from RAM, before the depth box showed hundredths and before the DEST wording):** pass: the LFO moves the filter after LFO + FRQ and the LFO page shows DST FRQ and the depth; LFO + TUN and LFO + DEC take the LFO at depth 0, more turns set the depth, a knob press sets it to 0; on the FX track LFO + a delay or reverb knob takes the FX LFO; an LFO tap opens the LFO page on the release and FUNC + LFO is stock's. Not tried yet: pads with velocity and aftertouch links, PERF and SCNE pad locks during an LFO hold. Asked for: the depth in the box at the LFO page's resolution (it showed whole numbers), DEST rather than TARGET in the popups (both in 5fd99549d).
+
 The source-only package itself has not run on a unit. Steps for a unit run of it, alone or in a combined image:
 
 1. FILTER page, hold FIX: FRQ and RES shown as `0` boxes, nothing in the corner. Turn FRQ: its box counts up, FRQ itself does not move. Soft and hard pad hits differ. SOUND SETTINGS, VELOCITY MOD shows FILT FRQ.
