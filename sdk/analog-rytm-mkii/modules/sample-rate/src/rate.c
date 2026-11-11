@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
-// Fine Tune + Sample Rate for the Analog Rytm MKII: FIN's knob is RATE on every
-// sound, a sample's speed down to a stop and into reverse, as the Octatrack's RATE
-// with its setting on PTCH; and TUN turns in cents.
+// Improved SMPL for the Analog Rytm MKII: FIN's knob is RATE on every sound, a
+// sample's speed down to a stop and into reverse, as the Octatrack's RATE with its
+// setting on PTCH; TUN turns in cents; and the SMPL key opens the waveform view.
 //
 // Stock's sample engine builds each voice's step once a block, in the prefetch,
 // from the note, TUN and FIN, clamped to 0.25x..4x. The gates in audio.s take FIN
@@ -183,6 +183,60 @@ int sample_rate_turn(void *brain, char *event)
     return 0;
 }
 
+// The SMPL key opens the SAMPLE view's waveform page, never its knob page. Every
+// page view keeps its own copy of its page list (core-ar2's pages.s), a vector at
+// +124..+128, and shows the page at index +140; the SAMPLE view's is stock's 4
+// (the knobs) then 5 (the waveform), and it draws by the index. Where the list
+// is exactly that, its end moves back one entry and the index goes to 1: with
+// one page counted the SMPL key has nothing to cycle to, the view draws the
+// waveform, and page 5 still sits at index 1 for any reader. A list a mod has
+// added pages to is left as it is. The view sits in the view manager's stack below the screen's overlays,
+// so the whole stack is searched, each tick until it is found and changed.
+#define BRAIN (*(char *volatile *)BRAIN_AT)
+#define BRAIN_VIEWS 32      // the brain's view manager
+#define MANAGER_LIST 20     // the manager's sentinel node
+#define MANAGER_LAST 24     // its top view's node
+#define NODE_PREV 4
+#define NODE_VIEW 8
+#define VIEW_PAGES 124      // a page view's page ids, begin and end
+#define VIEW_SEL 140        // the index of the page shown
+#define PAGE_KNOBS 4
+#define PAGE_WAVE 5
+#define STACK_MAX 32        // views searched at most
+typedef void (*invalidate_t)(void *);
+#define VIEW_INVALIDATE ((invalidate_t)VIEW_INVALIDATE_AT)
+extern char sample_rate_vt_sample[];    // the SAMPLE view's vtable
+
+static char *sample_view(void)          // the SAMPLE view in the view stack, or 0
+{
+    char *views = BRAIN ? *(char **)(BRAIN + BRAIN_VIEWS) : 0, *node, *view;
+    int n;
+    if (!views)
+        return 0;
+    node = *(char **)(views + MANAGER_LAST);
+    for (n = 0; node && node != views + MANAGER_LIST && n < STACK_MAX; n++) {
+        view = *(char **)(node + NODE_VIEW);
+        if (view && *(char **)view == sample_rate_vt_sample)
+            return view;
+        node = *(char **)(node + NODE_PREV);
+    }
+    return 0;
+}
+
+static void waveform_page(void)
+{
+    char *view = sample_view();
+    int *pages;
+    if (!view)
+        return;
+    pages = *(int **)(view + VIEW_PAGES);
+    if (*(int **)(view + VIEW_PAGES + 4) != pages + 2 || pages[0] != PAGE_KNOBS || pages[1] != PAGE_WAVE)
+        return;
+    *(int **)(view + VIEW_PAGES + 4) = pages + 1;   // one page: the key has nothing to cycle to
+    *(int *)(view + VIEW_SEL) = 1;                   // and the view draws its second, the waveform
+    VIEW_INVALIDATE(view);
+}
+
 void sample_rate_tick(void *ctrl)
 {
     volatile uint32_t *rec = (volatile uint32_t *)(REC_TUN + REC_STEP);
@@ -194,4 +248,5 @@ void sample_rate_tick(void *ctrl)
     rec[1] = 1;
     rec[2] = 0;
     rec[3] = (uint32_t)&fine_profile;
+    waveform_page();
 }

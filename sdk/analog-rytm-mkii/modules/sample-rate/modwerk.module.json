@@ -1,8 +1,8 @@
 {
   "schemaVersion": 3,
   "id": "sample-rate",
-  "name": "Fine Tune + Sample Rate",
-  "version": "0.3.0-experimental",
+  "name": "Improved SMPL",
+  "version": "0.4.0-experimental",
   "machine": "analog-rytm-mkii",
   "category": "playback",
   "exclusive": false,
@@ -17,7 +17,7 @@
     "npp1993"
   ],
   "presentation": {
-    "label": "FINE TUNE + SAMPLE RATE",
+    "label": "IMPROVED SMPL",
     "family": "Sample playback",
     "summary": "TUN turns in cents, press and turn for semitones; FIN's knob is RATE, pure sample speed down to a stop and into reverse, on every sound.",
     "overview": "Fine Tune + Sample Rate gives a sample's pitch and speed finer control on the SAMPLE page. TUN turns 1 cent a step, faster as you spin it; press and turn for whole semitones, which keep the cents. The value reads with two places, as LFO depth does: +3.07, +3.00. The cents are kept in TUN itself, so a saved sound plays the same pitch on stock OS, which only shows the whole number. FIN's knob is RATE on every sound, a pure speed control: +63 plays at normal speed, 0 stops, -64 plays backward at normal speed, in a straight line between them, as the Octatrack's RATE with its setting on PTCH. Stock's pitch stops at a quarter of the speed. A trig below 0 starts from END. RATE starts at +63 on a new or cleared sound; a sound saved with FIN at +0 (stock's default, and every sound saved before 0.3.0) loads stopped: turn RATE up to +63.",
@@ -91,7 +91,8 @@
     ],
     "claims": [
       "param:FIN (id 40) is RATE: its names read RATE and its default is +63",
-      "param:TUN (id 39) turn and value text: fine in cents"
+      "param:TUN (id 39) turn and value text: fine in cents",
+      "screen:SAMPLE knob page (the SMPL key shows SMPL WAVEFORM only)"
     ]
   },
   "resources": {
@@ -105,7 +106,7 @@
   },
   "evidence": {
     "tier": "author-hardware",
-    "moduleVersion": "0.3.0-experimental",
+    "moduleVersion": "0.4.0-experimental",
     "sourceSha256": "8b335547e344631ca0965be3a5b267aac1d30ae5d46e2d8cfdfb80e575799144",
     "reports": [
       "TESTING.md"
@@ -174,7 +175,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.3.0-experimental",
+        "moduleVersion": "0.4.0-experimental",
         "imageSha256": "6c18ceadc01da2ded2094b6111bd2649f4cff91588c1bc4ce698c2d1572ab107",
         "setup": "Headless rytm-emu (dtboot) running SR32: core-ar2 0.7 and this folder's Fine Tune + Sample Rate 0.3.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
@@ -190,7 +191,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.3.0-experimental",
+        "moduleVersion": "0.4.0-experimental",
         "imageSha256": "6c18ceadc01da2ded2094b6111bd2649f4cff91588c1bc4ce698c2d1572ab107",
         "setup": "Headless rytm-emu (dtboot) running SR32: core-ar2 0.7 and this folder's Fine Tune + Sample Rate 0.3.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
@@ -206,7 +207,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.3.0-experimental",
+        "moduleVersion": "0.4.0-experimental",
         "imageSha256": "6c18ceadc01da2ded2094b6111bd2649f4cff91588c1bc4ce698c2d1572ab107",
         "setup": "Headless rytm-emu (dtboot) running SR32: core-ar2 0.7 and this folder's Fine Tune + Sample Rate 0.3.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
@@ -222,7 +223,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "0.3.0-experimental",
+        "moduleVersion": "0.4.0-experimental",
         "imageSha256": "6c18ceadc01da2ded2094b6111bd2649f4cff91588c1bc4ce698c2d1572ab107",
         "setup": "Headless rytm-emu (dtboot) running SR32: core-ar2 0.7 and this folder's Fine Tune + Sample Rate 0.3.0-experimental, linked by Modwerk on stock OS 1.74, BD playing a generated ramp sample, RATE set to +63 by CC 25. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }

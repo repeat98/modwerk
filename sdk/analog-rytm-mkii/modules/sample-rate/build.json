@@ -39,7 +39,8 @@
   "regions": [],
   "claims": [
     "param:FIN (id 40) is RATE: its names read RATE and its default is +63",
-    "param:TUN (id 39) turn and value text: fine in cents"
+    "param:TUN (id 39) turn and value text: fine in cents",
+    "screen:SAMPLE knob page (the SMPL key shows SMPL WAVEFORM only)"
   ],
   "requires": [],
   "derive": null,
@@ -47,13 +48,16 @@
     "1.74": {
       "defsym": {
         "sample_rate_stock_frames": "0x4011bf44",
-        "sample_rate_add_resume": "0x400a88f2"
+        "sample_rate_add_resume": "0x400a88f2",
+        "sample_rate_vt_sample": "0x401e3420"
       },
       "cflags": [
         "-DPARAMS_EFF_AT=0x8000f7a8",
         "-DVOICE_REC_AT=0x80005b30",
         "-DVOICE_OWNER_AT=0x40291138",
-        "-DTRIG_NEXT_AT=0x8000586c"
+        "-DTRIG_NEXT_AT=0x8000586c",
+        "-DBRAIN_AT=0x419f28f8",
+        "-DVIEW_INVALIDATE_AT=0x40078580"
       ],
       "sites": [
         {
