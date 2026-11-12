@@ -71,7 +71,6 @@ describe('independently authored DSP package relocation', () => {
     for (const relocations of [[-1], [0.5], [pkg.words], [0, 0]]) expect(() => relocateDspPackage({ ...pkg, relocations }, 0)).toThrow('relocation')
     const code = 'ffffff' + pkg.code.slice(6)
     expect(() => relocateDspPackage({ ...pkg, code, relocations: [0] }, 0)).toThrow('relocation')
-    await expect(readDspPackage('character')).rejects.toThrow('different native placement')
     await expect(readDspPackage('unknown')).rejects.toThrow('different native placement')
   })
 })

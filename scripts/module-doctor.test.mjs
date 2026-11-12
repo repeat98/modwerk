@@ -14,7 +14,7 @@ describe('module doctor', () => {
     const result = doctor('--all')
     expect(result.stdout + result.stderr).not.toContain('✗')
     expect(result.status).toBe(0)
-    for (const id of ['miniverb', 'sidechain-compressor', 'analog-bassdrum', 'midi-scenes', 'digihealth']) expect(result.stdout).toContain(id)
+    for (const id of ['miniverb', 'sidechain-compressor', 'analog-bassdrum', 'euclid', 'digihealth']) expect(result.stdout).toContain(id)
   // The full catalogue shares CPU with app checks; this is an integration check, not a five-second performance gate.
   }, catalogCheckTimeout + 5000)
   // A machine page's controls come from modwerk_page_control(), which picks stock's switch for two to five values; a page written

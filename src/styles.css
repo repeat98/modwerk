@@ -263,14 +263,11 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
   .hover-info strong { gap: 5px; padding: 5px 9px; border: 1px solid #ffffff1f; border-radius: 6px; background: #18181dcc; color: var(--text-secondary); font-size: 12px; }
 }
 .module-preview { --signal: #b5a0ff; --signal-rgb: 181,160,255; height: 168px; display: flex; flex-direction: column; background: radial-gradient(ellipse at 60% 100%, rgba(var(--signal-rgb), .09), transparent 75%), var(--preview); position: relative; }
-.module-preview[data-module="modulation"] { --signal: #79b5f8; --signal-rgb: 121,181,248; }
-.module-preview[data-module="character"] { --signal: #e9ab83; --signal-rgb: 233,171,131; }
 .module-preview[data-module="miniverb"] { --signal: #83c7bc; --signal-rgb: 131,199,188; }
 .module-preview[data-module="tapeecho"] { --signal: #d5bd96; --signal-rgb: 213,189,150; }
 .module-preview[data-module="euclid"] { --signal: #c09be9; --signal-rgb: 192,155,233; }
 .module-preview[data-module="repitch"] { --signal: #9eb4ed; --signal-rgb: 158,180,237; }
 .module-preview[data-module="analog-bassdrum"] { --signal: #e9ab83; --signal-rgb: 233,171,131; }
-.module-preview[data-module="midi-scenes"] { --signal: #83c7bc; --signal-rgb: 131,199,188; }
 .module-preview[data-module="usb-audio-out-tracks-main-cue"] { --signal: #79b5f8; --signal-rgb: 121,181,248; }
 .module-preview[data-module="quantizer"] { --signal: #c09be9; --signal-rgb: 192,155,233; }
 .preview-label { color: var(--signal); font: 8px var(--mono); letter-spacing: 1px; display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 0; height: 24px; flex-shrink: 0; }

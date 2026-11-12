@@ -9,8 +9,7 @@ import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
 import { compiledModuleVersions, moduleSourcePaths, moduleSourceFingerprint, sourceEntryHash, isDocumentationPath } from './module-source.mjs'
 const root = fileURLToPath(new URL('../', import.meta.url))
 const catalog = JSON.parse(await readFile(resolve(root, 'sdk/catalog.json'), 'utf8'))
-const requested = ['analog-bassdrum', 'midi-scenes', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector']
-const verifiedRequested = requested.filter(id => id !== 'midi-scenes')
+const requested = ['analog-bassdrum', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector']
 describe('release package scope and reviewed source inventory', () => {
   it('keeps the committed release identity bound to the complete SDK source and compiler', async () => {
     const record = JSON.parse(await readFile(resolve(root, 'src/engine/assets/module-build.json'), 'utf8'))
@@ -18,21 +17,18 @@ describe('release package scope and reviewed source inventory', () => {
     expect(record.compilerSha256).toBe(createHash('sha256').update(await readFile(resolve(root, 'scripts/build-module-packages.py'))).digest('hex'))
     expect(record.moduleVersions).toEqual(await compiledModuleVersions(root, catalog))
   })
-  it('binds approved standalone MIDI Scenes without compiling its archived 8.2 port', async () => {
+  it('binds every listed module to the compiled scope', async () => {
     const versions = await compiledModuleVersions(root, catalog), paths = await moduleSourcePaths(root)
-    expect(Object.keys(versions)).toEqual(['spectrum', 'modulation', 'character', 'miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'airwindows-chorus', 'everb', 'bbd', 'lofi2', 'ring-sc', ...requested.filter(id => id !== 'vector'),'previewvol','cc-map','sidechain-compressor','vector','playmodes','mute-modes','recorder-loop-fix','poly8','output-matrix','quantize-live-rec-toggle','apply-scene','direct-jump-kyoti','dejavu', 'arp-key-locks', 'temp-save', 'tuner', 'slow-lfo', 'bar-led', 'stem-rec'])
+    expect(Object.keys(versions)).toEqual(['miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'airwindows-chorus', 'everb', 'bbd', 'lofi2', 'ring-sc', ...requested.filter(id => id !== 'vector'),'previewvol','cc-map','sidechain-compressor','vector','playmodes','mute-modes','recorder-loop-fix','poly8','output-matrix','quantize-live-rec-toggle','apply-scene','direct-jump-kyoti','dejavu', 'arp-key-locks', 'temp-save', 'tuner', 'slow-lfo', 'bar-led', 'stem-rec'])
     for (const id of ['playmodes', 'mute-modes', 'recorder-loop-fix', 'output-matrix', 'quantize-live-rec-toggle','apply-scene','direct-jump-kyoti','dejavu', 'arp-key-locks', 'temp-save', 'tuner', 'slow-lfo', 'bar-led', 'stem-rec']) {
       expect(versions[id]).toBe(id === 'playmodes' ? '0.2.0-experimental' : id === 'mute-modes' ? '0.2.2-experimental' : id === 'output-matrix' ? '0.1.1-experimental' : id === 'apply-scene' ? '0.2.0-experimental' : id === 'quantize-live-rec-toggle' ? '0.1.1-experimental' : id === 'direct-jump-kyoti' ? '0.1.2-experimental' : '0.1.0-experimental')
       expect(paths).toContain('modules/' + id + '/manifest.py')
     }
-    expect(versions['midi-scenes']).toBe('0.2.5-experimental')
     expect(versions.miniverb).toBe('0.2.3-experimental')
-    for (const id of verifiedRequested) {
+    for (const id of requested) {
       expect(versions[id]).toBe(id === 'analog-bassdrum' ? '0.1.7-experimental' : id === 'vector' ? '0.3.1-experimental' : id === 'quantizer' ? '0.1.4-experimental' : id === 'synth' ? '0.1.2-experimental' : id === 'usb-audio-out-tracks-main-cue' ? '0.2.0-experimental' : '0.1.2-experimental')
       expect(paths).toContain('modules/' + id + '/manifest.py')
     }
-    expect(paths).toContain('modules/midi-scenes/recipe.json')
-    expect(paths.some(path=>path.startsWith('modules/midi-scenes/upstream/'))).toBe(false)
     expect(paths).toContain('platform/usb-midi/manifest.py')
   })
   it('refuses stale and duplicate catalog pins for requested imports', async () => {

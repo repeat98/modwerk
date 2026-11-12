@@ -380,7 +380,7 @@ a word:
   saved", "set not mounted", until a power cycle.
 
 A per-sample `rep #21` did this on both cores, and the same loop as DO fixed it.
-In this repository Spectrum (4), Character (5) and Modulation (1) still use
+Spectrum (4), Character (5) and Modulation (1), now removed, used
 `rep`; the report also names busdelay, character-txtr, testgen and vocoder (at
 init only). The base and the modules in today's runs (E-Verb, Mini Verb,
 TapeHead, Euclid, Air Chorus, Tape Echo) have none. Not checked against "Junk on

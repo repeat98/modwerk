@@ -33,17 +33,17 @@ async function fixture(t) {
 
 test('rejects a source subset that omits the adapted component notice', async t => {
   const root = await fixture(t)
-  await writeFile(resolve(root, 'sdk/octatrack/modules/modulation/LICENSE'), await readFile(resolve(project, 'sdk/octabam/LICENSE')))
-  await assert.rejects(renderLicenseNotices(root), /preserve full hera notice/)
+  await writeFile(resolve(root, 'sdk/octatrack/modules/tapehead/LICENSE'), await readFile(resolve(project, 'sdk/octabam/LICENSE')))
+  await assert.rejects(renderLicenseNotices(root), /preserve full jsfxclones notice/)
 })
 
-test('rejects a blanket MIT declaration for the mixed-licence module', async t => {
+test('rejects an SPDX declaration that differs from the module\'s components', async t => {
   const root = await fixture(t)
-  const path = resolve(root, 'sdk/octatrack/modules/modulation/octamod.module.json')
+  const path = resolve(root, 'sdk/octatrack/modules/tapehead/octamod.module.json')
   const document = JSON.parse(await readFile(path, 'utf8'))
-  document.license.spdx = 'MIT'
+  document.license.spdx = 'MIT AND ISC'
   await writeFile(path, JSON.stringify(document))
-  await assert.rejects(renderLicenseNotices(root), /expected SPDX MIT AND ISC AND BSD-3-Clause/)
+  await assert.rejects(renderLicenseNotices(root), /tapehead: expected SPDX MIT$/)
 })
 
 test('rejects a dependency update whose licence differs from the shipped notice', async t => {

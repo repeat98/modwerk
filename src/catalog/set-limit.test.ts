@@ -56,7 +56,7 @@ describe('the module limit of an Octatrack set', () => {
 
   it('marks every other module in the library unavailable once the set is full, over any conflict note', () => {
     const below = first(SET_MODULE_LIMIT - 1), full = first(SET_MODULE_LIMIT), next = cardIds[SET_MODULE_LIMIT]
-    const conflict = { conflicts: [], blocks: { [next]: { kind: 'conflict', withIds: ['analog-bassdrum'], reason: 'Conflicts with Analog BD', detail: 'A conflict note from before the set was full.', key: 'spectrum:analog-bassdrum' } satisfies AddBlock } }
+    const conflict = { conflicts: [], blocks: { [next]: { kind: 'conflict', withIds: ['analog-bassdrum'], reason: 'Conflicts with Analog BD', detail: 'A conflict note from before the set was full.', key: next + ':analog-bassdrum' } satisfies AddBlock } }
     expect(withSetLimit(conflict, below)).toBe(conflict)
     const { blocks } = withSetLimit(conflict, full)
     expect(blocks[next]).toEqual(limitBlock(next))
