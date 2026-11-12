@@ -1,0 +1,48 @@
+{
+  "firmware": "1.40C",
+  "moduleVersion": "0.1.0-experimental",
+  "hardware": true,
+  "model": "MKII",
+  "capturedOn": "2026-11-11",
+  "capturedBy": "repeat98",
+  "imageSha256": "2d6285369ae25b43c2dd93628eb72c35a9ddf9947d4dd78f12624af677450ca6",
+  "baseIdentity": "d8fae6876b5b77060b0819c733dc72111226fedac8ae507ee5bc193a16009b61",
+  "packageSha256": "e9730e24b83cf6f8865d30c8917b7a541e7f3c5155dbe6011e53757607cc5294",
+  "sourceRevision": "66663bdb1fb5e309c7ab25827925c681be57ca09",
+  "setup": "The owner's Octatrack MKII, OS 1.40C, RAM-booted on development twin d8fae687 of the Modwerk base (imageSha256 is that twin's MAIN image; baseIdentity is the identity the unit reported). The module ran as a RAM trial of the package named here, built by npm run module:dev -- amiga --build-only from the source revision named here. Each picture is the unit's own LCD, read over USB by the development session's png step: 128x64 at integer scale 2 (256x128), two grey levels in an 8-bit greyscale PNG, not edited. Hardware captures, not emulator ones. The panel steps that led to each screen were made by hand and by the session and are not recorded as a plan.",
+  "palette": {
+    "on": [
+      24,
+      24,
+      24
+    ],
+    "off": [
+      255,
+      255,
+      255
+    ]
+  },
+  "images": [
+    {
+      "path": "amiga-machine-list.png",
+      "sha256": "b577b563ebfe561f99205a866aa263dd233159b82b9adf6b7bf5625d903289dc",
+      "scale": 2,
+      "page": "SRC SETUP",
+      "state": "Track 1 on FLEX, the cursor on AMIGA in the machine list."
+    },
+    {
+      "path": "amiga-src.png",
+      "sha256": "a24d4d94e9cd046371a3f0b648fd851f40f188b5aa566babd8e299ebc3c6f9fc",
+      "scale": 2,
+      "page": "SRC",
+      "state": "Track 1 on Amiga with a Flex sample, at the defaults."
+    },
+    {
+      "path": "amiga-src-setup.png",
+      "sha256": "2279427a80d5e91f4e4c7af3504da332e9da21abaee9049fc77665e2f37f03c8",
+      "scale": 2,
+      "page": "SRC SETUP",
+      "state": "Track 1 on Amiga, at the defaults."
+    }
+  ]
+}
