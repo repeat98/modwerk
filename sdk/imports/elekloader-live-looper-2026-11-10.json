@@ -32,7 +32,7 @@
       "category": "Sampling",
       "author": "draadpiraat",
       "needs_core": "2.1",
-      "on_unit": "Emulator-checked; the author's hardware run of this build (LL02) is pending. LF03 (with the Crossfader, 2026-11-10) and LL01 (2026-11-12) passed on a Digitakt I, OS 1.54; LL02 has the fixes from LL01's run."
+      "on_unit": "Tested by the author on a Digitakt I, OS 1.54 (LL02, 2026-11-12), after LL01 and the combined LF03 build. Known: the track's trig key retriggers its envelope in PICK."
     }
   ]
 }

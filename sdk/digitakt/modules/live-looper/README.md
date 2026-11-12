@@ -75,7 +75,7 @@ Requires Core 2.1 and Machine Pages. Built for OS 1.54 only.
 - **Changing the machine** on the loop track discards the loop; capture it again.
 - **Tempo.** In PICK a loop is LEN steps long at the tempo it starts in: a tempo change makes the next loop shorter or longer. PTCH and WARP follow the tempo.
 - **PT.LEN** counts the pattern's steps as sixteenths; a pattern scale other than 1x is not taken into account.
-- **The trig key in PICK.** Reported on draadpiraat's unit with LL01: pressing the looper track's trig key restarts the loop in PICK, PTCH and WARP. Not reproduced in the emulator yet; under investigation.
+- **Known bug: the trig key in PICK, PTCH and WARP** retriggers the track's amp envelope, so the loop fades down at the default DEC. Avoid pressing it while the loop plays.
 - **Overbridge.** With a Digitakt instance open (Overbridge standalone or the plugin), the unit gets slow: knobs, the filter and the rest of the UI lag. Close the instance and it is gone. Seen on draadpiraat's unit with LF03 (this looper and the Crossfader together, before the split); whether stock 1.54 does the same with an instance open is not checked yet.
 - **Known bug: changing PLAY mode while the loop plays** restarts the loop mid-way. Change it while stopped, or between loops.
 
@@ -93,7 +93,7 @@ What it patches on OS 1.54: the looper's ten sites (RAM Machines' nine at the sa
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md). draadpiraat ran LF03 (this looper and the Crossfader in one module) for over two hours and LL01 (the looper alone) on a Digitakt I; this version, with the fixes from that run, still needs its own hardware run. In the emulator the looper adds about 0.9% of an audio block idle and 5.3% at its heaviest.
+See [TESTING.md](TESTING.md). draadpiraat ran LF03 (this looper and the Crossfader in one module) for over two hours and LL01 (the looper alone) on a Digitakt I; this version (LL02), with the fixes from that run, then ran without problems. In the emulator the looper adds about 0.9% of an audio block idle and 5.3% at its heaviest.
 
 ## Authorship and licences
 

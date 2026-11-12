@@ -66,11 +66,10 @@
     {
       "name": "trig key in PICK",
       "result": "not reproduced",
-      "detail": "CAPT + PICK, LEN 4 steps, a loop playing: TRK + 2 and the trig key 2 alone gave no start of the loop voice other than the grid's (voice record writes traced)."
+      "detail": "CAPT + PICK, LEN 4 steps, a loop playing: TRK + 2 and the trig key 2 alone gave no start of the loop voice other than the grid's (voice record writes traced). On the author's unit the key does not restart the loop either; it retriggers the amp envelope (ll02-hardware.json)."
     }
   ],
   "notTested": [
-    "Hardware: LL02 not yet run on a unit (LF03 and LL01 were; see TESTING.md).",
     "Audio content: the emulator's recording path is not checked for level, the seam between loops or noise."
   ]
 }

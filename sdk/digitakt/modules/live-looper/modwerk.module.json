@@ -156,7 +156,7 @@
       "One mono loop at a time. PT.LEN counts the pattern’s steps as sixteenths, whatever its scale.",
       "Changing the machine on the loop track discards the loop.",
       "With an Overbridge instance open (standalone or plugin) the unit gets slow; closing the instance ends it. Not yet compared with stock.",
-      "Known bugs: changing PLAY mode while the loop plays restarts the loop mid-way; in PICK, PTCH and WARP the looper track’s trig key restarts the loop (reported with LL01, not yet reproduced in the emulator)."
+      "Known bugs: changing PLAY mode while the loop plays restarts the loop mid-way; in PICK, PTCH and WARP the looper track’s trig key retriggers the amp envelope, so the loop fades down at the default DEC."
     ]
   },
   "platform": {
@@ -192,22 +192,36 @@
     }
   },
   "evidence": {
-    "tier": "emulator",
+    "tier": "author-hardware",
     "moduleVersion": "0.1.0-experimental",
     "sourceSha256": "069d58363aa64d5b7bd7dfab8d37252948847d84d6b7619c7b0b22f4ebd4dc6d",
     "reports": [
+      "evidence/ll02-hardware.json",
       "TESTING.md",
       "evidence/emulator-testing.json",
       "evidence/source-identity.json",
       "evidence/lf03-before-split-hardware.json",
       "evidence/ll01-hardware.json"
     ],
-    "hardware": null,
+    "hardware": {
+      "model": "Digitakt I",
+      "release": "1.54",
+      "testedOn": "2026-11-12",
+      "tester": "draadpiraat",
+      "durationMinutes": 120,
+      "summary": "draadpiraat ran this build (LL02) on their Digitakt I, OS 1.54, after LL01 and the combined LF03 build: “running it right now its perfect”. LL02 has the fixes from the LL01 run: GLOB's filter set, disarming with STOP, an arm made while stopped recording from PLAY, exact loop lengths with a short fade, LEN with PT.LEN, stock SRC paging and header messages. Every earlier check passed on LF03 (two hours or more) and LL01: capture with FILL or UP, the loop through pattern changes, PTCH and WARP with the tempo, the trim editor, settings after a power cycle.",
+      "limitations": [
+        "In PICK, PTCH and WARP the looper track's trig key retriggers the amp envelope: at the default DEC the loop fades down.",
+        "Changing PLAY mode while the loop plays restarts the loop mid-way.",
+        "With an Overbridge instance open the unit lags; not compared with stock.",
+        "LL02's own run time was not stated; the two-hour figure is LF03's session with the same looper code before these fixes."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Emulator (digiemu, OS 1.54, LL02): LOOPER in the machine list, page 2 with stock SRC paging, values on hold and the header message, an ONCE take armed while stopped recorded from PLAY, STOP while stopped calling off the arm, PT.LEN, GLOB ALL carrying the filter across patterns, load measured. On draadpiraat's Digitakt I the combined LF03 build passed every looper check, and LL01 (the looper alone) passed its checklist with the findings fixed here; the hardware run of LL02 is pending.",
+    "summary": "Emulator (digiemu, OS 1.54, LL02): LOOPER in the machine list, page 2 with stock SRC paging, values on hold and the header message, an ONCE take armed while stopped recorded from PLAY, STOP while stopped calling off the arm, PT.LEN, GLOB ALL carrying the filter across patterns, load measured. On draadpiraat's Digitakt I the combined LF03 build passed every looper check, and LL01 (the looper alone) passed its checklist with the findings fixed here; LL02 then ran “perfect” on the same unit.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial: catch a loop and carry it into the next pattern",

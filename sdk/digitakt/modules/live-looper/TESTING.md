@@ -55,11 +55,9 @@ draadpiraat, Digitakt I, OS 1.54, 12 November 2026: every checklist step passed 
 
 ### LL02
 
-Not run yet.
+draadpiraat, Digitakt I, OS 1.54, 12 November 2026: “running it right now its perfect”. The trig key reported with LL01 does not restart the loop: it retriggers the amp envelope, so at the default DEC the loop fades down (a known bug). Run time not stated. Report: [evidence/ll02-hardware.json](evidence/ll02-hardware.json).
 
 ## Not tested
 
-- LL02 on hardware.
-- The trig-key restart in PICK, PTCH and WARP: TRK + the looper's trig key in the emulator gave no extra start of the loop voice; the exact gesture on the unit is to be confirmed.
 - Stock 1.54 with an Overbridge instance open, to tell whether the lag is the module's.
 - Audio content in the emulator: levels, the seam between loops, noise.

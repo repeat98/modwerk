@@ -7,7 +7,7 @@
       "CAPT and ONCE catch the loop playing now with FILL or UP; PICK plays it on through pattern changes, and PTCH or WARP follow the tempo.",
       "LEN sets the loop in steps, or PT.LEN follows the pattern's length; loops are cut to their exact length with a short fade at each end.",
       "STOP while stopped disarms; GLOB keeps the loop track's sends, filter, amp or all of it the same in every pattern; push D keeps a loop as a sample.",
-      "Known issues: the loop is lost at power-off; changing PLAY mode mid-play or the track's trig key restarts the loop; not with RAM Machines or Digi Health."
+      "Known issues: the loop is lost at power-off; changing PLAY mode mid-play restarts the loop; the track's trig key retriggers its envelope in PICK; not with RAM Machines or Digi Health."
     ]
   }
 ]
