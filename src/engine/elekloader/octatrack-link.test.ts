@@ -94,6 +94,16 @@ describe('finding the unit', () => {
     unit.taken = false; await vi.advanceTimersByTimeAsync(3000)
     await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
   })
+  it('stays busy through a retry that finds the unit still held, so the sidebar card does not flicker', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout'] })
+    const unit = fakeUnit(), link = new OctatrackLink(unit.usb, fakeSession(unit))
+    unit.taken = true; link.start()
+    await vi.waitFor(() => expect(link.getState().status).toBe('busy'))
+    const seen: string[] = []; link.subscribe(() => seen.push(link.getState().status))
+    await vi.advanceTimersByTimeAsync(3000)
+    expect(seen.length).toBeGreaterThan(0)
+    expect(seen.every(status => status === 'busy')).toBe(true)
+  })
   it('stays connected while any view still uses it', async () => {
     const unit = fakeUnit(), link = new OctatrackLink(unit.usb, fakeSession(unit))
     const card = link.start(), dialog = link.start(); await settle(); await settle()
@@ -217,14 +227,25 @@ describe('sending a module', () => {
     await link.update('PREVIEW VOL', one)
     expect(link.getState().notice?.text).toBe('Cancelled. Nothing changed on the Octatrack.')
   })
+  it('reports the step a sync failed at', async () => {
+    const { unit, link } = await linked()
+    const failures: unknown[] = []
+    link.subscribeDiagnostics(event => { if (event.event === 'sync_failed') failures.push({ error: event.error, step: event.step, refusal: event.refusal }) })
+    unit.refusal = 7 // the fake unit refuses the package as it is staged
+    await link.update('PREVIEW VOL', one)
+    expect(failures).toEqual([{ error: 'device', step: 'stage', refusal: 7 }])
+  })
   it('says why the Octatrack rejected a module, from the base’s record', async () => {
     const { unit, link } = await linked()
     unit.refusal = 7 // a track plays the effect it would replace
     await link.update('PREVIEW VOL', one)
-    expect(link.getState().notice?.text).toMatch(/A track is playing this module’s effect/)
+    expect(link.getState().notice?.text).toMatch(/A track is using a module this sync changes or removes, as its effect or its machine/)
     unit.refusal = 10 // RUNTIME_FEATURE: the key bus cannot come up this boot
     await link.update('PREVIEW VOL', one)
     expect(link.getState().notice?.text).toMatch(/can’t start the key bus this module needs until it restarts/)
+    unit.refusal = 8 // RUNTIME_STOCK: a site's stock bytes are not the ones the package names
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice?.text).toMatch(/doesn’t match what is running on your Octatrack, so nothing changed/)
     unit.refusal = 1 // malformed: the plain text
     await link.update('PREVIEW VOL', one)
     expect(link.getState().notice?.text).toBe('The Octatrack can’t run this module file.')
@@ -245,7 +266,7 @@ describe('sending a module', () => {
     await link.undo()
     unit.publishRefusal = 7 // anything else stays a refusal, in words
     await link.update('PREVIEW VOL', one)
-    expect(link.getState().notice?.text).toMatch(/A track is playing this module’s effect/)
+    expect(link.getState().notice?.text).toMatch(/A track is using a module this sync changes or removes, as its effect or its machine/)
   })
   it('recovers from a missing reply without asking to unplug', async () => {
     const unit = fakeUnit(), base = fakeSession(unit)

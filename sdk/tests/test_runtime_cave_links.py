@@ -55,7 +55,7 @@ class CavePortTests(unittest.TestCase):
             with self.subTest(resource=resource), self.assertRaisesRegex(ValueError, 'Unported'):
                 cave.validate_manifest(module)
         with self.assertRaisesRegex(ValueError, 'Unported'):
-            cave.validate_manifest(SimpleNamespace(name='midi-scenes', cf_patches=[]))
+            cave.validate_manifest(SimpleNamespace(name='not-ported', cf_patches=[]))
 
     def test_actual_native_links_match_inside_a_runtime_pool(self):
         if not shutil.which('m68k-elf-as'):

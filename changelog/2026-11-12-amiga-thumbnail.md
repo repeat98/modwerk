@@ -1,0 +1,1 @@
+Library: the Amiga module's card now shows the computer it is named after, a wedge-shaped home computer with its keyboard and side floppy slot, in place of the waveform diagram. The same drawing appears on its module page and link previews.

@@ -136,7 +136,7 @@ export async function claim(item, options = {}) {
 
 const git = (root, ...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trimEnd()
 const show = (root, ref, path) => { try { return git(root, 'show', ref + ':' + path) } catch { return null } }
-// Any SDK folder that holds modules (sdk/octabam is the Octatrack's), so a newly unlocked machine needs no edit here.
+// Any SDK folder that holds modules (the Octatrack's is sdk/octatrack), so a newly unlocked machine needs no edit here.
 const MODULE_FOLDERS = /^sdk\/((?!drafts\/)[a-z0-9]+(?:-[a-z0-9]+)*)\/modules\/(?:_submissions\/)?([a-z0-9]+(?:-[a-z0-9]+)*)\/|^sdk\/(drafts)\/([a-z0-9]+(?:-[a-z0-9]+)*)\//
 const INTERFACES = /^sdk\/([a-z0-9-]+)\/(?:core|core-profile)\/interface\.json$/
 
@@ -163,8 +163,9 @@ export function neededClaims({ root, base, head = 'HEAD' }) {
     const match = path.match(MODULE_FOLDERS)
     if (match) {
       // A machine's modules sit in modules/<id> or, until catalogued, modules/_submissions/<id>; a move between them is not new.
-      const folders = match[1] ? ['', '_submissions/'].map(sub => 'sdk/' + match[1] + '/modules/' + sub + match[2]) : ['sdk/drafts/' + match[4]]
-      const machine = match[1] === 'octabam' || match[3] === 'drafts' ? 'octatrack' : match[1], id = match[2] ?? match[4]
+      // An Octatrack module that sat in sdk/octabam/modules/ before the folders moved (12 November 2026) is not new either.
+      const folders = match[1] ? [...['', '_submissions/'].map(sub => 'sdk/' + match[1] + '/modules/' + sub + match[2]), ...(match[1] === 'octatrack' ? ['sdk/octabam/modules/' + match[2]] : [])] : ['sdk/drafts/' + match[4]]
+      const machine = match[3] === 'drafts' ? 'octatrack' : match[1], id = match[2] ?? match[4]
       if (!needed.has('module ' + machine + '/' + id) && folders.every(folder => !existed.has(folder))) {
         const manifest = show(root, head, match[0] + 'modwerk.module.json') ?? show(root, head, match[0] + 'octamod.module.json')
         add('module', machine + '/' + id, 'new module folder ' + match[0].slice(0, -1), { note: summaryNote(manifest) })
@@ -221,7 +222,9 @@ export function moduleClaimLine({ root, machine, id, folder, claims, login, unav
   if (held && login && held.holder === login.toLowerCase()) return { state: 'ok', name, detail: 'module ' + key + ' is yours' + (held.expiresAt ? ' until ' + held.expiresAt.slice(0, 10) : '') }
   if (held && !login) return { state: 'fail', name, detail: 'module ' + key + ' is claimed by ' + describeClaim(held), fix: 'if that is you, npm run board -- login; if not, ask them yourself before you go on: npm run board -- ask module ' + key + ' "…" (docs/AGENT_BOARD.md)' }
   if (held) return { state: 'fail', name, detail: 'module ' + key + ' is claimed by ' + describeClaim(held), fix: 'ask them yourself before you go on, or pick another module: npm run board -- ask module ' + key + ' "…" (docs/AGENT_BOARD.md)' }
-  const onMain = ['origin/main', 'upstream/main'].some(ref => { try { git(root, 'cat-file', '-e', ref + ':' + folder); return true } catch { return false } })
+  // A main from before the Octatrack's folders moved (12 November 2026) holds the module under sdk/octabam/modules/.
+  const folders = [folder, folder.replace(/^sdk\/octatrack\/modules\//, 'sdk/octabam/modules/')]
+  const onMain = ['origin/main', 'upstream/main'].some(ref => folders.some(at => { try { git(root, 'cat-file', '-e', ref + ':' + at); return true } catch { return false } }))
   if (!onMain) return { state: 'fail', name, detail: 'nobody has claimed this new module, so another developer could start the same one', fix: login ? fix : 'npm run board -- login, then ' + fix }
   return { state: 'ok', name, detail: 'nobody else is working on module ' + key }
 }

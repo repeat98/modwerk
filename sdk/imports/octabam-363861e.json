@@ -4,7 +4,6 @@
   "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
   "modules": [
     "analog-bassdrum",
-    "midi-scenes",
     "usb-audio-out-tracks-main-cue",
     "quantizer"
   ],
@@ -14,16 +13,6 @@
     ]
   },
   "authorPins": {
-    "midi-scenes": {
-      "repository": "https://github.com/bkkbrls-del/midisc",
-      "revision": "63ca127bc99638602957f2b05747f8ed3bd9ba52",
-      "version": "1.40MIDISC8.2",
-      "documentation": {
-        "path": "modules/midi-scenes/upstream/README.md",
-        "revision": "4f9a89453fdcdd39a3cd57f010ffa489cac721cd",
-        "version": "MIDISC2.0"
-      }
-    },
     "quantizer": {
       "repository": "https://github.com/timhastie/octatrick-modules",
       "revision": "8f6f564a9c42636ed4c5cc6ad314ee6b7ce69e5c",
@@ -38,7 +27,7 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/CPU.md",
       "sourceSha256": "b20288ccf080f0f3409479b228dea7ca4f3b3e40a7a0727a285df6cbcd637385",
-      "vendoredSha256": "6cee9e962705413905d2dd7444759c036a8ceede844471eb603b8c7f040aaae0",
+      "vendoredSha256": "cff1003baa434e5eb7bbd0e17260c78e9c64b7d42c3def69fdfed3eb8d1412f1",
       "localUpdates": [
         {
           "moduleVersion": "0.1.3-experimental",
@@ -54,6 +43,11 @@
           "moduleVersion": "0.1.5-experimental",
           "previousVendoredSha256": "86a594d80cf4e6c23422c2d1296ae2daceb793d1e9e061f3447d3ea3b4aff91a",
           "reason": "Restore stock SRC defaults in both Part copies on departure; exact AB015FIX01 promoted after reported physical FLEX persistence and owner merge/publication instruction. Updated release documentation retains broader unverified limits."
+        },
+        {
+          "moduleVersion": "0.1.7-experimental",
+          "previousVendoredSha256": "6cee9e962705413905d2dd7444759c036a8ceede844471eb603b8c7f040aaae0",
+          "reason": "Analog BD 0.1.7: the recorded-909 engine at half the DSP work (body and click from tables, one pointer walking the state, per-block envelope and slews, a lighter shared desk) and matching release documentation; original import and source fingerprints retained."
         }
       ]
     },
@@ -71,7 +65,14 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/DSP909.md",
       "sourceSha256": "bde115d77eff4cb940003bf96ad27af83af01da1407a51fb5ad4928be4f58a4b",
-      "vendoredSha256": "bde115d77eff4cb940003bf96ad27af83af01da1407a51fb5ad4928be4f58a4b"
+      "vendoredSha256": "51f007ad943acaac5e6b317c5b67797e71f9f88f06203f34aff24f7ce9c94e58",
+      "localUpdates": [
+        {
+          "moduleVersion": "0.1.7-experimental",
+          "previousVendoredSha256": "bde115d77eff4cb940003bf96ad27af83af01da1407a51fb5ad4928be4f58a4b",
+          "reason": "Analog BD 0.1.7: the recorded-909 engine at half the DSP work (body and click from tables, one pointer walking the state, per-block envelope and slews, a lighter shared desk) and matching release documentation; original import and source fingerprints retained."
+        }
+      ]
     },
     {
       "path": "modules/analog-bassdrum/README.md",
@@ -79,7 +80,7 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/README.md",
       "sourceSha256": "4876d9613e5e65de0aefeef7ddd60ef6d0d5642c61b1fde60b97fc0f72255f68",
-      "vendoredSha256": "ea128dba44925c29ad172d19cee817e95c774ff2b477015e7e9d505a0a51bbc5",
+      "vendoredSha256": "9092969c1bcc041d6a30e0d80504a52b91ade507268b768f62f0c4c29257989a",
       "importedVendoredSha256": "57743ee073204e2a1b51ed7abad7ddf44eae95faddc90d397ca707d30a2bdfed",
       "adaptation": " Octamod 0.1.1 version and native verification evidence appended; imported fingerprint retained.",
       "localDocumentationUpdate": {
@@ -125,6 +126,11 @@
           "moduleVersion": "0.1.6-experimental",
           "previousVendoredSha256": "d4d2900174dc66de7aa8c2b13e4a9a8155eb310e0d5c0b4ddc33e32f6f166dfb",
           "reason": "Analog BD 0.1.6: FIXED switch in the 909's SRC SETUP page (identical hits when ON; OFF is the 0.1.5 sound); original import and source fingerprints retained."
+        },
+        {
+          "moduleVersion": "0.1.7-experimental",
+          "previousVendoredSha256": "ea128dba44925c29ad172d19cee817e95c774ff2b477015e7e9d505a0a51bbc5",
+          "reason": "Analog BD 0.1.7: the recorded-909 engine at half the DSP work (body and click from tables, one pointer walking the state, per-block envelope and slews, a lighter shared desk) and matching release documentation; original import and source fingerprints retained."
         }
       ]
     },
@@ -158,7 +164,14 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/ab_glue.asm",
       "sourceSha256": "c78dc31dfcfc7a0c6f10ae24b39744a88bed5211346bcae4f6931e2e6489223c",
-      "vendoredSha256": "c78dc31dfcfc7a0c6f10ae24b39744a88bed5211346bcae4f6931e2e6489223c"
+      "vendoredSha256": "223822a05b1133c4fcaff146bf8734f271570812d04db0fedced215e633720cc",
+      "localUpdates": [
+        {
+          "moduleVersion": "0.1.7-experimental",
+          "previousVendoredSha256": "c78dc31dfcfc7a0c6f10ae24b39744a88bed5211346bcae4f6931e2e6489223c",
+          "reason": "Analog BD 0.1.7: the recorded-909 engine at half the DSP work (body and click from tables, one pointer walking the state, per-block envelope and slews, a lighter shared desk) and matching release documentation; original import and source fingerprints retained."
+        }
+      ]
     },
     {
       "path": "modules/analog-bassdrum/bd808.asm",
@@ -166,12 +179,17 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/bd808.asm",
       "sourceSha256": "e7306bd284e9bca067cffc54dcbfb18ae7a0fc7b3a27253a246e58898ae9ee92",
-      "vendoredSha256": "36af2b6bb961f7667260e83dff9e229ad7fbe071a849ffb16c11a03f83d4cbc9",
+      "vendoredSha256": "08a47b594138a3aa96bb8ff2859a088304289777c2d9f9b036bf61d6e9460275",
       "localUpdates": [
         {
           "moduleVersion": "0.1.6-experimental",
           "previousVendoredSha256": "e7306bd284e9bca067cffc54dcbfb18ae7a0fc7b3a27253a246e58898ae9ee92",
           "reason": "Analog BD 0.1.6: TYPE/FIXD switches and bit-identical DSP efficiency work; original import and source fingerprints retained."
+        },
+        {
+          "moduleVersion": "0.1.7-experimental",
+          "previousVendoredSha256": "36af2b6bb961f7667260e83dff9e229ad7fbe071a849ffb16c11a03f83d4cbc9",
+          "reason": "Analog BD 0.1.7: the recorded-909 engine at half the DSP work (body and click from tables, one pointer walking the state, per-block envelope and slews, a lighter shared desk) and matching release documentation; original import and source fingerprints retained."
         }
       ]
     },
@@ -181,7 +199,7 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/bd909.asm",
       "sourceSha256": "db1b2871957bb89bfd4184fc7556e5e46c44f3be1a889ba11fc1a679c4b1841e",
-      "vendoredSha256": "939e0601dcc51ac2450446665ce8b92e3fe1667d31738c47a3fb1aa52ad5b392",
+      "vendoredSha256": "885dd37bcb4c129da196f7e0941ef48490e8307c8aa2e3e0046062152b3871a7",
       "localUpdates": [
         {
           "moduleVersion": "0.1.3-experimental",
@@ -197,6 +215,11 @@
           "moduleVersion": "0.1.6-experimental",
           "previousVendoredSha256": "9c86c3bd06e95a998fbe4e0db5a05b9ff65e988686c81f98f6d6c9f4c3b8ee2f",
           "reason": "Analog BD 0.1.6: FIXED switch in the 909's SRC SETUP page (identical hits when ON; OFF is the 0.1.5 sound); original import and source fingerprints retained."
+        },
+        {
+          "moduleVersion": "0.1.7-experimental",
+          "previousVendoredSha256": "939e0601dcc51ac2450446665ce8b92e3fe1667d31738c47a3fb1aa52ad5b392",
+          "reason": "Analog BD 0.1.7: the recorded-909 engine at half the DSP work (body and click from tables, one pointer walking the state, per-block envelope and slews, a lighter shared desk) and matching release documentation; original import and source fingerprints retained."
         }
       ]
     },
@@ -236,7 +259,7 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/dsp808.py",
       "sourceSha256": "6500cfffad2be75c0be43f57bb91a5582b7406fe0bb36be120d412884d23da28",
-      "vendoredSha256": "f3c5ac8321c104ada7b7f4cfd1914eb70d3707cb86d1b26cbac6d53dd0423b3d",
+      "vendoredSha256": "56b7dd65cf3cc2991214bd4f51c1350bbbf5ed816a9536791f3eb4d59a51cd6d",
       "localUpdates": [
         {
           "moduleVersion": "0.1.3-experimental",
@@ -247,6 +270,11 @@
           "moduleVersion": "0.1.6-experimental",
           "previousVendoredSha256": "3d61ba9c258c319d90d7beb47f6cbc7dafb7336c49d8386912478d284cef603d",
           "reason": "Analog BD 0.1.6: TYPE/FIXD switches, SETUP order and LPF direction, and bit-identical DSP efficiency work; original import and source fingerprints retained."
+        },
+        {
+          "moduleVersion": "0.1.7-experimental",
+          "previousVendoredSha256": "f3c5ac8321c104ada7b7f4cfd1914eb70d3707cb86d1b26cbac6d53dd0423b3d",
+          "reason": "Analog BD 0.1.7: the recorded-909 engine at half the DSP work (body and click from tables, one pointer walking the state, per-block envelope and slews, a lighter shared desk) and matching release documentation; original import and source fingerprints retained."
         }
       ]
     },
@@ -256,7 +284,7 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/dsp909.py",
       "sourceSha256": "c45ef4357cd66369181523784de0f5b328b8b18a58f3c19c60983d1173dd3195",
-      "vendoredSha256": "0a9f0ea98c5a01572138781ef2e13bbb36b6cf30299deffe8d3e0dede0bf23df",
+      "vendoredSha256": "5082cda7778b7baee4ad66d9ab1dc183d0651291dbba1eecd7b734243830156f",
       "localUpdates": [
         {
           "moduleVersion": "0.1.3-experimental",
@@ -272,6 +300,11 @@
           "moduleVersion": "0.1.6-experimental",
           "previousVendoredSha256": "d31d2fd1340e9c5055389a37f20959ebccd78d45636daec824ae3e1e84f4d67d",
           "reason": "Analog BD 0.1.6: FIXED switch in the 909's SRC SETUP page (identical hits when ON; OFF is the 0.1.5 sound); original import and source fingerprints retained."
+        },
+        {
+          "moduleVersion": "0.1.7-experimental",
+          "previousVendoredSha256": "0a9f0ea98c5a01572138781ef2e13bbb36b6cf30299deffe8d3e0dede0bf23df",
+          "reason": "Analog BD 0.1.7: the recorded-909 engine at half the DSP work (body and click from tables, one pointer walking the state, per-block envelope and slews, a lighter shared desk) and matching release documentation; original import and source fingerprints retained."
         }
       ]
     },
@@ -319,12 +352,17 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/exact-render.json",
       "sourceSha256": "41a17cba7c5c40ab2f32973ee4427da74d023e70cc502074f047a9b2d9900a09",
-      "vendoredSha256": "307d76d4c2492e00b0f3809d65908680cd232d2fb3d363d743545779aab41bc4",
+      "vendoredSha256": "3d5fb897f7e5458cadf240595a520b725d98fb38caf30af38e20c8b33288ea1a",
       "localUpdates": [
         {
           "moduleVersion": "0.1.6-experimental",
           "previousVendoredSha256": "41a17cba7c5c40ab2f32973ee4427da74d023e70cc502074f047a9b2d9900a09",
           "reason": "Analog BD 0.1.6: TYPE/FIXD switches, SETUP order and LPF direction, and bit-identical DSP efficiency work; original import and source fingerprints retained."
+        },
+        {
+          "moduleVersion": "0.1.7-experimental",
+          "previousVendoredSha256": "307d76d4c2492e00b0f3809d65908680cd232d2fb3d363d743545779aab41bc4",
+          "reason": "Analog BD 0.1.7: the recorded-909 engine at half the DSP work (body and click from tables, one pointer walking the state, per-block envelope and slews, a lighter shared desk) and matching release documentation; original import and source fingerprints retained."
         }
       ]
     },
@@ -334,12 +372,17 @@
       "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
       "sourcePath": "modules/analog-bassdrum/fit909.json",
       "sourceSha256": "e1e97b493b6c232bf6602ca224212e19f2aef3cff65fff404e7876648d228390",
-      "vendoredSha256": "6917d613b5033069f226b9f6a440f6eefd935e596452546d5bc27b73c5e3dd08",
+      "vendoredSha256": "fc3b9b92fdab1b606a4b800a75907e199b6b94ef0cea02e8cc4de13112e21284",
       "localUpdates": [
         {
           "moduleVersion": "0.1.4-experimental",
           "previousVendoredSha256": "e1e97b493b6c232bf6602ca224212e19f2aef3cff65fff404e7876648d228390",
           "reason": "Owner-auditioned 909 direct-out reference update and matching release documentation; fresh physical/timing/memory qualification explicitly waived for this exact source. Original upstream fingerprints retained."
+        },
+        {
+          "moduleVersion": "0.1.7-experimental",
+          "previousVendoredSha256": "6917d613b5033069f226b9f6a440f6eefd935e596452546d5bc27b73c5e3dd08",
+          "reason": "Analog BD 0.1.7: the recorded-909 engine at half the DSP work (body and click from tables, one pointer walking the state, per-block envelope and slews, a lighter shared desk) and matching release documentation; original import and source fingerprints retained."
         }
       ]
     },
@@ -400,29 +443,6 @@
           "reason": "Analog BD 0.1.6: TYPE/FIXD switches, SETUP order and LPF direction, and bit-identical DSP efficiency work; original import and source fingerprints retained."
         }
       ]
-    },
-    {
-      "path": "modules/midi-scenes/README.md",
-      "repository": "https://github.com/sambanks/octabam",
-      "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
-      "sourcePath": "modules/midi-scenes/README.md",
-      "sourceSha256": "6210403449aec741d1f388a525f2b3b2df083a7c762ba4f110f770c070d9b492",
-      "vendoredSha256": "8c99ae784947a6acd32f08c8ae0b7315a693996f874e75964fd67e7e999e7601",
-      "importedVendoredSha256": "bb1b4b9f5babe96ad4455c9d639a1eadcbaa4dd8a7b373f0179369493c2ff078",
-      "adaptation": "Octamod 0.2.0-experimental catalog/docs for standalone MIDISC2.0; original octabam README fingerprint retained; firmware builds pending; native gas remains at the 1.40MIDISC8.2 author pin.",
-      "localDocumentationUpdate": {
-        "moduleVersion": "0.2.1-experimental",
-        "previousVendoredSha256": "988538d0ba5b5fedbd921d916ffafa8cee2b997b59ba1dcd019de48d3fcfdc5d",
-        "reason": "Add actual OT UI access/capture documentation; native import and original upstream fingerprints preserved."
-      }
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "repository": "https://github.com/sambanks/octabam",
-      "revision": "363861e31ee963c478fab2b190a0fabe1d7ce37b",
-      "sourcePath": "modules/midi-scenes/manifest.py",
-      "sourceSha256": "3645942749db209c878d5bca8dbe60990df4a875c1f2fdd3995dfc65c794aa3c",
-      "vendoredSha256": "387bc68fcd8293b291f6ccf89e2af27237934fee6122f381026bce44e5e3078f"
     },
     {
       "path": "modules/usb-audio-out-tracks-main-cue/LEGACY.md",
@@ -556,120 +576,6 @@
       "sourcePath": "modules/usb-midi/usbmidi.s",
       "sourceSha256": "97c7e161711e2a515b97558367e9226d019810ca3c1709e7e75d81289fe3dd6b",
       "vendoredSha256": "97c7e161711e2a515b97558367e9226d019810ca3c1709e7e75d81289fe3dd6b"
-    },
-    {
-      "path": "modules/midi-scenes/upstream/README.md",
-      "repository": "https://github.com/bkkbrls-del/midisc",
-      "revision": "4f9a89453fdcdd39a3cd57f010ffa489cac721cd",
-      "sourcePath": "README.md",
-      "sourceSha256": "d804ce0ae05bf69ffc63537606f9374358cdc1da3e6d864ef0dbdeba250e142e",
-      "vendoredSha256": "d804ce0ae05bf69ffc63537606f9374358cdc1da3e6d864ef0dbdeba250e142e",
-      "assemblyPinRevision": "63ca127bc99638602957f2b05747f8ed3bd9ba52",
-      "adaptation": " Standalone MIDISC2.0 README from bkkbrls-del/midisc@4f9a894; assembly gas files remain pinned at 1.40MIDISC8.2 (63ca127)."
-    },
-    {
-      "path": "modules/midi-scenes/upstream/LICENSE",
-      "repository": "https://github.com/bkkbrls-del/midisc",
-      "revision": "63ca127bc99638602957f2b05747f8ed3bd9ba52",
-      "sourcePath": "LICENSE",
-      "sourceSha256": "2048f5fcd57ceacf696906d3c6e9077b17aa2c91b6afabedb8fabe45b16a1b27",
-      "vendoredSha256": "2048f5fcd57ceacf696906d3c6e9077b17aa2c91b6afabedb8fabe45b16a1b27"
-    },
-    {
-      "path": "modules/midi-scenes/upstream/gas/cave2.s",
-      "repository": "https://github.com/bkkbrls-del/midisc",
-      "revision": "63ca127bc99638602957f2b05747f8ed3bd9ba52",
-      "sourcePath": "gas/cave2.s",
-      "sourceSha256": "08cde1817555e511823b7e57384b4c805f62755e69ed53405d2586a3e921a5f0",
-      "vendoredSha256": "08cde1817555e511823b7e57384b4c805f62755e69ed53405d2586a3e921a5f0"
-    },
-    {
-      "path": "modules/midi-scenes/upstream/gas/code2.s",
-      "repository": "https://github.com/bkkbrls-del/midisc",
-      "revision": "63ca127bc99638602957f2b05747f8ed3bd9ba52",
-      "sourcePath": "gas/code2.s",
-      "sourceSha256": "89e7480718dd0562bdbe3e2387ff63b8889923f627735d71689cd4f3c488a963",
-      "vendoredSha256": "89e7480718dd0562bdbe3e2387ff63b8889923f627735d71689cd4f3c488a963"
-    },
-    {
-      "path": "modules/midi-scenes/upstream/gas/enc_unlock.s",
-      "repository": "https://github.com/bkkbrls-del/midisc",
-      "revision": "63ca127bc99638602957f2b05747f8ed3bd9ba52",
-      "sourcePath": "gas/enc_unlock.s",
-      "sourceSha256": "025657b030854d096db5ee2678d0e63d255f7f62c73b10b432c7bbc434f2e601",
-      "vendoredSha256": "025657b030854d096db5ee2678d0e63d255f7f62c73b10b432c7bbc434f2e601"
-    },
-    {
-      "path": "modules/midi-scenes/upstream/gas/msc.s",
-      "repository": "https://github.com/bkkbrls-del/midisc",
-      "revision": "63ca127bc99638602957f2b05747f8ed3bd9ba52",
-      "sourcePath": "gas/msc.s",
-      "sourceSha256": "e75f2f7283bf3f9da222a1d8dff4db46888c5eabec8956a5569e944fdf2b1bee",
-      "vendoredSha256": "e75f2f7283bf3f9da222a1d8dff4db46888c5eabec8956a5569e944fdf2b1bee"
-    },
-    {
-      "path": "modules/midi-scenes/upstream/gas/project_cave.s",
-      "repository": "https://github.com/bkkbrls-del/midisc",
-      "revision": "63ca127bc99638602957f2b05747f8ed3bd9ba52",
-      "sourcePath": "gas/project_cave.s",
-      "sourceSha256": "a7ce871e51d4ae4944b73ae020b73a81cf2e14a4d88dc9e2380bf7dab618c0d3",
-      "vendoredSha256": "a7ce871e51d4ae4944b73ae020b73a81cf2e14a4d88dc9e2380bf7dab618c0d3"
-    },
-    {
-      "path": "modules/midi-scenes/upstream/gas/reload_cave.s",
-      "repository": "https://github.com/bkkbrls-del/midisc",
-      "revision": "63ca127bc99638602957f2b05747f8ed3bd9ba52",
-      "sourcePath": "gas/reload_cave.s",
-      "sourceSha256": "b3c77bd609143bb7207545f44ac905bbb0c0d6143e9eb2f186ed44379f397fa8",
-      "vendoredSha256": "b3c77bd609143bb7207545f44ac905bbb0c0d6143e9eb2f186ed44379f397fa8"
-    },
-    {
-      "path": "modules/midi-scenes/upstream/gas/safe_cave.s",
-      "repository": "https://github.com/bkkbrls-del/midisc",
-      "revision": "63ca127bc99638602957f2b05747f8ed3bd9ba52",
-      "sourcePath": "gas/safe_cave.s",
-      "sourceSha256": "8b3f06a1c0f8db6ba0070741f091a5974fbfe97e341173f843dbc136ee868657",
-      "vendoredSha256": "8b3f06a1c0f8db6ba0070741f091a5974fbfe97e341173f843dbc136ee868657"
-    },
-    {
-      "path": "modules/midi-scenes/upstream/gas/scene_paste.s",
-      "repository": "https://github.com/bkkbrls-del/midisc",
-      "revision": "63ca127bc99638602957f2b05747f8ed3bd9ba52",
-      "sourcePath": "gas/scene_paste.s",
-      "sourceSha256": "d23106d2aafc8b24cdf81ad1d79bebbbf47b8be2abb922aca3761fd50f8e57d5",
-      "vendoredSha256": "d23106d2aafc8b24cdf81ad1d79bebbbf47b8be2abb922aca3761fd50f8e57d5"
-    },
-    {
-      "path": "modules/midi-scenes/upstream/gas/seam.s",
-      "repository": "https://github.com/bkkbrls-del/midisc",
-      "revision": "63ca127bc99638602957f2b05747f8ed3bd9ba52",
-      "sourcePath": "gas/seam.s",
-      "sourceSha256": "4e8d77dc7c4273668bbb4ca9778070c2f34c9d053622a0b7ffd66c3d36c23c5b",
-      "vendoredSha256": "4e8d77dc7c4273668bbb4ca9778070c2f34c9d053622a0b7ffd66c3d36c23c5b"
-    },
-    {
-      "path": "modules/midi-scenes/upstream/gas/seam_bank.s",
-      "repository": "https://github.com/bkkbrls-del/midisc",
-      "revision": "63ca127bc99638602957f2b05747f8ed3bd9ba52",
-      "sourcePath": "gas/seam_bank.s",
-      "sourceSha256": "5f919bdabbd5ae25a3693b7349525f86fc8ee40c0538f91d0bbe71cb2b81f135",
-      "vendoredSha256": "5f919bdabbd5ae25a3693b7349525f86fc8ee40c0538f91d0bbe71cb2b81f135"
-    },
-    {
-      "path": "modules/midi-scenes/upstream/gas/state.s",
-      "repository": "https://github.com/bkkbrls-del/midisc",
-      "revision": "63ca127bc99638602957f2b05747f8ed3bd9ba52",
-      "sourcePath": "gas/state.s",
-      "sourceSha256": "8804ffe10a450480e34a46107c24a90688777a251b2262bc5fb34900a51f6c8e",
-      "vendoredSha256": "8804ffe10a450480e34a46107c24a90688777a251b2262bc5fb34900a51f6c8e"
-    },
-    {
-      "path": "modules/midi-scenes/upstream/gas/stub.s",
-      "repository": "https://github.com/bkkbrls-del/midisc",
-      "revision": "63ca127bc99638602957f2b05747f8ed3bd9ba52",
-      "sourcePath": "gas/stub.s",
-      "sourceSha256": "8985492aa7878b2f4fb282d850cbb9ceef829c8f71ea6193f67e73bc1e09bc9a",
-      "vendoredSha256": "8985492aa7878b2f4fb282d850cbb9ceef829c8f71ea6193f67e73bc1e09bc9a"
     },
     {
       "path": "modules/quantizer/upstream/README.md",
@@ -967,258 +873,6 @@
       "sha256": "577d7ba37f9786ab02a7dc9eeb612bb55936018179b550b14f4b9f000a89bf20"
     },
     {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1074083022,
-      "bytes": 10,
-      "sha256": "0a34a9dae47506440d691aa67432e14ddd2067beefb8fd0a710b9d2602bd2ab6"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1074081486,
-      "bytes": 10,
-      "sha256": "c48200c62540f2bbf816fc02f6345c909f39c4a82c6e6db5871503b874f94aa6"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1074062152,
-      "bytes": 6,
-      "sha256": "655d6cde4464d3fc4b96a5d4042196495b50b875d84102083b78853d87049b33"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1073955772,
-      "bytes": 6,
-      "sha256": "ef8b9ca3b718a0a3a2211fe3c4f46e8929feb159071ae75a8020b3428fefe195"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1073955934,
-      "bytes": 6,
-      "sha256": "ef8b9ca3b718a0a3a2211fe3c4f46e8929feb159071ae75a8020b3428fefe195"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1073955816,
-      "bytes": 6,
-      "sha256": "a6b7abe55b36f6f401bdf3e42ae6914e7ed8bab6e6c8aeb2679c6bc3d5aa3617"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1073955982,
-      "bytes": 6,
-      "sha256": "6e095c0ed8bb13c8e2f1ed5964cc2aa9e525bc73af9a5e48dce20afec3af21f0"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1073956708,
-      "bytes": 6,
-      "sha256": "a6b7abe55b36f6f401bdf3e42ae6914e7ed8bab6e6c8aeb2679c6bc3d5aa3617"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1073957200,
-      "bytes": 6,
-      "sha256": "a6b7abe55b36f6f401bdf3e42ae6914e7ed8bab6e6c8aeb2679c6bc3d5aa3617"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1073946436,
-      "bytes": 8,
-      "sha256": "ca0e2748da716f189ef5678b1f45efd14403edf3e213734eda507773d491e9b4"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1074017482,
-      "bytes": 6,
-      "sha256": "4fc2250cd387d3091460994656740d63a8f1278f4b4d68e746740952ccfc2f16"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1074089142,
-      "bytes": 6,
-      "sha256": "a94cfc1a5ffc3afea8bb6e6462532b16371415b1f68bf30a7831840c08f56ed8"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1074147108,
-      "bytes": 6,
-      "sha256": "1b5449969cf7d2e5e4ad604545148cb6f6ae52abf834b0ca1cf51be4fbc00e48"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1074147262,
-      "bytes": 6,
-      "sha256": "95a65977926591c138e4e38d6934e763c743f4abc11d2744cbb6ee5fefb074ac"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1074146876,
-      "bytes": 6,
-      "sha256": "17d3a295805f15920e3c1faae63ec3f70244430c108aa6b0e00a461c123db360"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1073932328,
-      "bytes": 6,
-      "sha256": "e0790c8446179e7e7631acc3cce1fc78c56b72899c36ed1272f16a8db3fa769f"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1074084510,
-      "bytes": 10,
-      "sha256": "94cfbe1bad48e5e4815e66723dc09019463cada7a7d6dd797ee097b800be568d"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1074086802,
-      "bytes": 10,
-      "sha256": "99f93dbc184930d7c5fcef6f3b40b01f0d69c1e0992588d311f2f7686dd4c7ed"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1074000802,
-      "bytes": 6,
-      "sha256": "5962065952cddcc9abd772416a3f5a49d83d6bb967439bcdc2e8ff04a048cab3"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1074142840,
-      "bytes": 6,
-      "sha256": "da273da9ea374a8f9bc12ec7e2f622d1d5ce7e78d2d655e93655ae9977286e2d"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1074146354,
-      "bytes": 6,
-      "sha256": "e98feec5aee0adf15225ef81ddf90c904a73d8f3b086fd3aa2eebf4719eb0c96"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1074080480,
-      "bytes": 6,
-      "sha256": "8bba7275f6d14bc415fde1897a16d9e4a95dc8ae741ade0e062abe0a870f6c65"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1074080272,
-      "bytes": 6,
-      "sha256": "8bba7275f6d14bc415fde1897a16d9e4a95dc8ae741ade0e062abe0a870f6c65"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1074090890,
-      "bytes": 8,
-      "sha256": "2d6e09987ff507dbdb14dd2b4e1036b3d9f36c5796205447cf16d47c1b10fb5f"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1074385374,
-      "bytes": 10,
-      "sha256": "b8c681ab6db08000f18dfba4a3641067372a0fb5abc576b2055f49851744e643"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1073929490,
-      "bytes": 6,
-      "sha256": "9baa9fb225a4812b3da68abdc177cb33292fa2cee05d0139476818d7977a194f"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1073929558,
-      "bytes": 6,
-      "sha256": "e3a25614d992a47510ed88acb1be409d15ccd8e17b57bd97863cf48108ac307c"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1074126938,
-      "bytes": 6,
-      "sha256": "e3a25614d992a47510ed88acb1be409d15ccd8e17b57bd97863cf48108ac307c"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1074143914,
-      "bytes": 6,
-      "sha256": "20f4db6e89e2ca275d05fe67bd35c50968fbf1171358af7a97d5210201a230bd"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1074298180,
-      "bytes": 6,
-      "sha256": "20f4db6e89e2ca275d05fe67bd35c50968fbf1171358af7a97d5210201a230bd"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1073871824,
-      "bytes": 6,
-      "sha256": "20f4db6e89e2ca275d05fe67bd35c50968fbf1171358af7a97d5210201a230bd"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1073896098,
-      "bytes": 6,
-      "sha256": "20f4db6e89e2ca275d05fe67bd35c50968fbf1171358af7a97d5210201a230bd"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1074143942,
-      "bytes": 6,
-      "sha256": "afad0d9908862e673b0130a710d92307779db90afc4d4f985f7cc058a5b9f1a9"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1073929428,
-      "bytes": 6,
-      "sha256": "70a7c68740cd38dfb8585d9708da810bc6709b021c989f39012925a23162363d"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1073919386,
-      "bytes": 6,
-      "sha256": "7c8333d86904fe92c238f0bd9ef23551df1f712ec5901abac19f10333dd18692"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1073920248,
-      "bytes": 6,
-      "sha256": "7c8333d86904fe92c238f0bd9ef23551df1f712ec5901abac19f10333dd18692"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1074047228,
-      "bytes": 6,
-      "sha256": "7c8333d86904fe92c238f0bd9ef23551df1f712ec5901abac19f10333dd18692"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1073912568,
-      "bytes": 6,
-      "sha256": "156ec3ed8b04117cf3baac21cf3e71e6d4e9ffed5ff1cdc8858221b9704da891"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1073956692,
-      "bytes": 2,
-      "sha256": "7bdb08fa04994418cc3888650522434eddc440782c695752b17696658db61575"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1073957182,
-      "bytes": 2,
-      "sha256": "a89aad5cb9834d06e8ebfa5695b54d1ac6bdba2c3deb109738472e69db48b911"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1074047408,
-      "bytes": 2,
-      "sha256": "9d6c12aea7e359d0e9e45a0331a6190ace7f782aeb9762700846c8fd5a1af54b"
-    },
-    {
-      "path": "modules/midi-scenes/manifest.py",
-      "address": 1074047630,
-      "bytes": 2,
-      "sha256": "9d6c12aea7e359d0e9e45a0331a6190ace7f782aeb9762700846c8fd5a1af54b"
-    },
-    {
       "path": "platform/usb-midi/manifest.py",
       "address": 1073863114,
       "bytes": 6,
@@ -1488,8 +1142,5 @@
       "bytes": 4,
       "sha256": "a3e547e08c1f288e512f2e52ac9becc3502ccd0dcfcf55e5ab9863859f34e2bc"
     }
-  ],
-  "archivedModules": {
-    "midi-scenes": "sdk/archive/midi-scenes-8.2"
-  }
+  ]
 }

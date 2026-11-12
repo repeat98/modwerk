@@ -43,7 +43,7 @@ with the source commit, base identity and package hashes recorded), **failed** (
 | **U** unit, scripted | Timing, memory, the panel and the DSP on a development base RAM-booted on the owner's MKII | `npm run device -- serve`, `scripts/device-send.py`, `scripts/octatrack-qualify.py`, `-persist.py`, `-movestress.py`, `-movecollide.py`, `-movelisten.py`, `-loadbench.py`, `-measure.py`, `-xwatch.py` |
 | **S** site path | Exactly what a tester's browser sends and reads: the catalogue, the packages and their validator, `OctatrackLink`, the self-test, Keep and Undo | `scripts/frontend-mcp.mjs --device-socket` ([FRONTEND_MCP.md](FRONTEND_MCP.md)), `scripts/verify-octatrack-module-sets.mjs --hardware`, the Vite dev server with the mock API and the pretend units (`?preview=usb-link&unit=base`, `unit=none`, `?preview=base-install`) |
 | **B** browser | What no script reaches: Chrome's device chooser, WebUSB on each operating system, the dialogs, the layout, the pill | The owner or a tester in Chrome against the dev server or the live site, with screenshots |
-| **O** owner at the unit | Power cycles, FUNC at boot, the flash, the arranger, listening | The checklists in Part 3 |
+| **O** owner at the unit | Power cycles, PROJ at boot, the flash, the arranger, listening | The checklists in Part 3 |
 
 ## How a run works: discover, record, fix
 
@@ -143,7 +143,7 @@ and the pretend unit.
 | 1.15 | Windows | Chrome on Windows: WinUSB binds by itself with no driver, frames fit the 4 KiB limit, the chooser lists the Octatrack | B | open |
 | 1.16 | macOS and Linux | The same on macOS. On Linux, whether the user needs device permissions and what the site says when the chooser lists nothing | B | open |
 | 1.17 | A second unit, or the stock OS back on | The site sees stock, says so and offers the dialog. A kept set on the first unit is unaffected | B, U | open |
-| 1.18 | FUNC held at boot | MODULES SKIPPED, everything the project names missing, the next normal boot restores the set (edge case 15) | O | done on beta3; redo on the final image |
+| 1.18 | PROJ held from power-on (MKI: FUNC) | MODULES SKIPPED, the project's modules missing, a normal boot then restores the set (edge case 15) | O | FUNC done on beta3; PROJ open |
 | 1.19 | A base update later | A new tester image: the site says the base is old and leads to the card route. After the update the saved set is refused as another base's and the site reinstalls the set. The project's module map and knob bytes survive | S, O | done for the site's prompt on beta3 (run 1): base-bound and subscriber packages get "Install the latest Modwerk base from the card"; plain FX still review. The card route itself is open |
 
 ### Module sets and the library
@@ -329,7 +329,7 @@ image RAM-booted for the S cases, then the owner flashes it once. Part 1 end to 
 **The power-cycle batch** (owner, about eight, each with a `-persist.py` snapshot before and after):
 
 1. Edge case 16: a normal power cycle restores the set.
-2. FUNC held at boot skips it (1.18).
+2. PROJ held at boot skips it (1.18).
 3. The next normal boot restores it again.
 4. After a Part with machines kept: the signatures and rows back (2G).
 5. MATRIX back (2F.5).
@@ -337,7 +337,7 @@ image RAM-booted for the S cases, then the owner flashes it once. Part 1 end to 
 7. The battery-RAM map and the project file set to disagree (edge case 12): which wins, recorded.
 8. After the crash test (2I.3): the record read.
 
-**Only the owner can do:** the power cycles, FUNC at boot, the flash, the OS upgrade from the card, the arranger
+**Only the owner can do:** the power cycles, PROJ at boot, the flash, the OS upgrade from the card, the arranger
 (2C.8), the Chrome device chooser and every B case, listening where T6 is not enough, the MKI wording (1.12).
 
 ## Before the rollout (as of 15 October 2026)

@@ -13,7 +13,7 @@ A module's category is the `category` field of its manifest (`octamod.module.jso
 | `effects` | [effects.md](effects.md) | processes the audio its FX1 or FX2 slot receives, on the DSP | Mini Verb, Tape Echo, Euclid, Sidechain Compressor |
 | `machines` | [machines.md](machines.md) | makes or replaces a track's sound (a track machine, in `ot_machines`), or changes the sequencer project-wide | Analog BD, POLY8, Scale Quantizer |
 | `playback` | [playback.md](playback.md) | changes how a stock machine plays its sample: pitch, rate, timestretch, preview | Repitch, Preview Vol |
-| `scenes` | [scenes.md](scenes.md) | changes scenes, the crossfader or per-track state recall | MIDI Scenes |
+| `scenes` | [scenes.md](scenes.md) | changes scenes, the crossfader or per-track state recall | Apply Scene |
 | `midi-usb` | [midi-usb.md](midi-usb.md) | makes, changes or maps MIDI (generators in `ot_midi_generators`, MIDI effects), or USB | CC Map, USB Audio |
 | `system` | [system.md](system.md) | changes project and system menus and settings | Mute Modes, Output Matrix |
 | `standalone` | [standalone.md](standalone.md) | replaces the whole OS | none yet |
@@ -26,14 +26,14 @@ A module's category is the `category` field of its manifest (`octamod.module.jso
 3. Walk the guide's checklists: **Behave like the instrument** and **Integrate**, and for an effect **Sound quality** (aliasing, clipping, DC, idle behaviour). Tick an item only when you did it.
 4. Measure the [performance](#performance) and write `evidence/performance.json`: worst-case cycles, a benchmark against stock and a stress run. `npm run perf:audit -- check <that file>` must pass.
 5. Run `npm run module:doctor -- <id>` until every line is green. It reads the repository and the agent board (no firmware runs) and names the fix for each red line: octabam's DSP source gates, a missing performance record, an effect rendering on the ColdFire, someone else's claim.
-6. Run `npm run check`, and `npm run module:verify -- <id> --os <your 1.40C update>` for an Octatrack module.
+6. Run `npm run check`.
 7. If you learned something the next developer needs and no guide says, write it into the guide that fits, as its own docs-only pull request ([Share what you learn](../DEVELOPER_WORKFLOW.md#share-what-you-learn)).
 
 ## Rules for every module
 
-**Integrate with what exists.** A module is built by the shared builder beside other modules, listed from `sdk/catalog.json`, compared with native octabam and released by the same pipeline as every other. Do not write module-specific builder, library or CI code. If your module has a shape no earlier module had, change the shared code once (`src/engine/`, `sdk/octabam/tools/build/build_bus.py`) and let `module:verify` prove it.
+**Integrate with what exists.** A module is built by the shared builder beside other modules, listed from `sdk/catalog.json`, packaged for the Modwerk base and released by the same pipeline as every other. Do not write module-specific builder, library or CI code. If your module has a shape no earlier module had, the shared code changes once, in its own owner-reviewed pull request.
 
-- *Build beside others.* `npm run module:verify` builds your module alone, beside every other offered module, in the fullest selections and in a fixed sample, with and without the stock FX2 effects. A refusal is fine when it is the right one; it must match native octabam's.
+- *Install beside others.* `npm run modules:compat` checks your module's declarations against every other module and the base, and the unit admits each package when a set is synced.
 - *Declare conflicts; never hope.* Put what you cannot share in `compatibility.conflicts` and in the resource claims (FX2 ids, caves, hook sites, DSP data ranges). The ledger refuses collisions by name. A declared conflict never makes an overlap with another module acceptable: the [cross-compatibility gate](#cross-compatibility) refuses it anyway. Analog BD admits only its reviewed DSP companions (`analogBdCompanions`), subject to actual placement; an effect that builds beside the stock FX2 effects is named in `FITS_BESIDE_STOCK_FX2` (`src/catalog/selection-conflicts.ts`). The library reads the same conflicts to flag a module on its card, and offer a swap, before anyone adds it (`src/catalog/add-blocks.ts`), so a declared conflict needs no extra interface work.
 - *Appear everywhere from the manifest.* The `sdk/catalog.json` entry (`id`, `version`, `addedAt`) puts the module in the library, the configurator and its module page. Add `presentation/thumbnail.svg` (320×192) or hand-drawn art in `ModulePreview.tsx`, and `resources.impact`.
 - *Survive saved work.* Saved configurations pin module versions, and saved Octatrack projects store knob bytes. A new version must load what an old one saved, or the README says exactly what breaks and how to migrate.
@@ -90,7 +90,7 @@ The only exceptions are the reviewed entries in `sdk/machines/octatrack/compatib
 
 An entry fails once a named module is no longer active or nothing meets at a listed site, so the file stays exact. A new entry needs owner review, and is the last resort: propose a hook instead. The base's own exceptions are `BASE_OWNS` in `sdk/machines/octatrack/elekloader/build_core.py`.
 
-The gate does not prove runtime behaviour, DSP placement, cycles or hardware compatibility. `module:verify` and the qualification steps still cover those.
+The gate does not prove runtime behaviour, DSP placement, cycles or hardware compatibility. The qualification steps on a unit cover those.
 
 ### Choose how a module hooks in
 
@@ -163,7 +163,6 @@ Build your module to work beside everything else. Machine lists, effect lists an
 
 Collisions are caught automatically, so nothing ships incompatible without its author deciding:
 
-- **Card builds.** `npm run modules:pairs` runs octabam's ledger on every catalogue module alone and beside every other, in each context POLY8's shared machine list creates, and writes `src/catalog/compatibility-pairs.json`. A pair the ledger refuses that neither module flags fails the check. It also refuses an effect whose declared FX2 buffer reaches a range another module declares in that slot (Sidechain Compressor's key window); over USB the base refuses that buffer per block at run time, so only card builds need that flag. The configurator refuses every refused or flagged pair by itself, so no rule is written by hand. The table grows with the square of the number of modules, and the same check proves with the full ledger that pairs decide every larger selection.
 - **USB sets.** `npm run modules:compat` still refuses every byte collision, flagged or not: beta sets install whatever is chosen, so subscribe to a hook or [propose one](#propose-a-hook).
 - **Digitakt and Digitone.** `npm run modules:check` refuses two mods that patch overlapping bytes on a release both support unless one names the other in `compatibility.conflicts`. The website already refused those pairs; the flag makes the author's decision explicit.
 - **Who flags.** The module whose change makes the pair collide flags it in its own manifest: the newer module, or the one being updated, and it fixes the collision instead when that is no big refactor. Nobody edits another author's module to add a flag. A flag names an existing module id of the same machine; the check refuses any other. Changing only `compatibility.conflicts` needs no new module version, but still runs every check and needs a marked note in the module's changelog.
@@ -207,3 +206,5 @@ A module that is slow, or that only works when it is the only thing running, tak
 ## Digitakt and Digitone
 
 Mods there are linked by one core per machine and built by elekloader's builder in the browser, so there is no native octabam comparison. Start from [the Digitakt guide](../../sdk/machines/digitakt/README.md) for the core hooks, budgets and claims, and test a two-mod build, since combinations are the point.
+
+On these machines, the Digitakt II and the Analog Rytm MKII, `npm run elekloader:check` refuses a package whose `jsr` or `jmp` to an absolute address has an odd target: the real CPU stops there with an address error, while the emulators run on. Keep every routine on an even address (`.balign 2` after byte data) and check a stock address you typed; the message names the package, the offset and the target.

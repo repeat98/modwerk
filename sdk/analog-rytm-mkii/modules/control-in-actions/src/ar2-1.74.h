@@ -44,7 +44,8 @@
 #define FLAG_FUNC 2
 #define FLAG_DOUBLE 4
 
-// The panel's key path: Brain::key(brain, event), the core's KEYDISP.
+// The panel's key path: the core's core_key (every ev_key handler), then
+// Brain::key(brain, event), the core's KEYDISP.
 #define BRAIN_AT 0x419f28f8         // *: the brain
 #define KEY_DISPATCH_AT 0x400a0336
 #define KEY_EVENT_CTOR_AT 0x40071e7c // (event, key, flags, 0, 127)

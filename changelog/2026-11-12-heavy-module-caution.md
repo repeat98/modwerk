@@ -1,0 +1,1 @@
+POLY8 and FM Synth now carry a Heavy CPU badge in the library and a warning on their module pages: both are very CPU-intensive and may still be unstable. Try them in a backed-up project first, and report any freeze.

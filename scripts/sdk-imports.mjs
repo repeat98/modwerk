@@ -27,9 +27,10 @@ export function checkSdkImports(root) {
     for (const item of record.files) {
       const parts = item.path.split('/')
       if (parts.some(part => !part || part === '.' || part === '..' || part.includes(':')) || item.path.includes('\\')) throw new Error('Invalid import path: ' + item.path)
-      const base = item.path.startsWith('modules/midi-scenes/') ? 'sdk/archive/midi-scenes-8.2' : 'sdk/octabam'
+      // The records name files as octabam's tree does; its modules/ folder is sdk/octatrack/modules here.
+      const base = parts[0] === 'modules' ? 'sdk/octatrack' : 'sdk/octabam'
       const path = resolve(root, base, item.path)
-      const moduleRoot = parts[0] === 'modules' ? resolve(root, 'sdk/octabam/modules', parts[1]) : null
+      const moduleRoot = parts[0] === 'modules' ? resolve(root, 'sdk/octatrack/modules', parts[1]) : null
       if (verifyImportedFile(path, item.vendoredSha256, moduleRoot)) guides++
       files++
     }

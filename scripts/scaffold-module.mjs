@@ -51,10 +51,10 @@ const document=JSON.parse(await readFile(resolve(root,'public/module-repository.
 document.id=id;document.key=id.toUpperCase().replaceAll('-',' ');document.name=id.split('-').map(word=>word[0]?.toUpperCase()+word.slice(1)).join(' ');document.author={github:author,credits:[author]}
 if(kind==='coldfire'){document.category='playback';document.compatibility.location='Flex / Static';document.compatibility.effectId=null;document.controls=[]}
 parseModuleDocument(document)
-// A new Octatrack module starts as a draft: sdk/octabam/modules/ holds listed modules, and a draft there would block catalogue generation
+// A new Octatrack module starts as a draft: sdk/octatrack/modules/ holds listed modules, and a draft there would block catalogue generation
 // for everyone. module:dev and module:doctor --draft stage it where the builders look while they run.
 const destination=output?resolve(output,id):resolve(root,'sdk/drafts',id)
-if(!output)try{await access(resolve(root,'sdk/octabam/modules',id));throw new Error('A listed module is already called '+id+': update it (docs/MODULE_AUTHOR_UPDATES.md) or pick another id.')}catch(error){if(error.code!=='ENOENT')throw error}
+if(!output)try{await access(resolve(root,'sdk/octatrack/modules',id));throw new Error('A listed module is already called '+id+': update it (docs/MODULE_AUTHOR_UPDATES.md) or pick another id.')}catch(error){if(error.code!=='ENOENT')throw error}
 try{await access(destination);throw new Error('Destination exists; refusing to replace a module: '+destination)}catch(error){if(error.code!=='ENOENT')throw error}
 await mkdir(destination,{recursive:true});await mkdir(resolve(destination,'media'))
 const template=resolve(root,'sdk/templates',kind),placeholder=kind==='dsp'?'_template':'_template_cf'

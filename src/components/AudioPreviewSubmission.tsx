@@ -5,7 +5,6 @@ import { waveformPeaks, type AudioPreviewClip } from './audio-preview'
 import './audio-preview-submission.css'
 
 const MAX_BYTES = 12 * 1024 * 1024
-const MAX_SECONDS = 90
 
 export function AudioPreviewSubmission({ name, onAdd, onClose, persistent = false, initialCredit = '' }: { name: string; onAdd: (clip: AudioPreviewClip, file: File) => void|Promise<void>; onClose: () => void; persistent?: boolean; initialCredit?: string }) {
   const dialog = useRef<HTMLDialogElement>(null)
@@ -39,7 +38,7 @@ export function AudioPreviewSubmission({ name, onAdd, onClose, persistent = fals
       if (selected.size > MAX_BYTES) throw new Error('Choose a recording smaller than 12 MB.')
       const decoded = await new OfflineAudioContext(1, 1, 44100).decodeAudioData(await selected.arrayBuffer())
       if (current !== generation.current.value) return
-      if (!decoded.duration || decoded.duration > MAX_SECONDS) throw new Error('Choose a recording up to 90 seconds long.')
+      if (!decoded.duration) throw new Error('This recording could not be read.')
       const peaks = waveformPeaks(Array.from({ length: decoded.numberOfChannels }, (_, index) => decoded.getChannelData(index)))
       const url = URL.createObjectURL(selected)
       urls.current.push(url)
@@ -67,7 +66,7 @@ export function AudioPreviewSubmission({ name, onAdd, onClose, persistent = fals
     <form onSubmit={event => { event.preventDefault(); void submit() }}>
       <div className="section-title"><h2 id="audio-submission-title">Add audio preview</h2><button type="button" className="icon-button" aria-label="Close audio preview form" onClick={onClose} disabled={saving}><Icon name="close" size={18}/></button></div>
       <p className="audio-submission-module">{name}</p>
-      <label className="audio-submission-file"><Icon name="file" size={22}/><span><strong>{file?.name ?? 'Choose audio file'}</strong><small>WAV / MP3 / Ogg · 12 MB · up to 90 seconds</small></span><input type="file" accept="audio/wav,audio/x-wav,audio/mpeg,audio/ogg,.wav,.mp3,.ogg" aria-label="Choose audio preview file" disabled={saving} onChange={event => { void choose(event.target.files?.[0]) }}/></label>
+      <label className="audio-submission-file"><Icon name="file" size={22}/><span><strong>{file?.name ?? 'Choose audio file'}</strong><small>WAV / MP3 / Ogg · up to 12 MB</small></span><input type="file" accept="audio/wav,audio/x-wav,audio/mpeg,audio/ogg,.wav,.mp3,.ogg" aria-label="Choose audio preview file" disabled={saving} onChange={event => { void choose(event.target.files?.[0]) }}/></label>
       {busy && <p role="status" className="service-note">Preparing recording…</p>}
       {error && <p role="alert" className="file-error">{error}</p>}
       {prepared && <AudioPreviewPlayer key={prepared.id} clip={prepared} name={name}/>}

@@ -27,6 +27,9 @@
     "core": "done",
     "mods": "open"
   },
+  "stack": {
+    "base": "started"
+  },
   "research": [
     {
       "label": "elekloader DTII core and OS 1.17 tests",

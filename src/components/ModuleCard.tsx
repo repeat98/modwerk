@@ -1,5 +1,6 @@
 import { useRef, useState, type ReactNode, type Ref } from 'react'
 import { isBetaModule } from '../catalog/availability'
+import { moduleCaution } from '../catalog/module-cautions'
 import type { AddBlock } from '../catalog/add-blocks'
 import { DETAILS } from '../catalog/details'
 import { moduleBuildPending } from '../catalog/build-support'
@@ -19,6 +20,7 @@ import { useAddBlockPrompt } from './use-add-block-prompt'
 import { useModuleAudioPreviews } from './audio-preview-context'
 import { ModuleAudioCardCover } from './ModuleAudioPreview'
 import { useSetWords } from '../community/beta-ui'
+import { MODULE_COMPARE_ENABLED } from './module-compare'
 
 export type ModuleCardProps = {
   module: FirmwareModule
@@ -41,7 +43,7 @@ export type AddConflict = { block: AddBlock; open: boolean; controls: string; on
 export function AddButton({ name, selected, onToggle, configure = false, conflict, blocked, ref }: { name: string; selected: boolean; onToggle: () => void; configure?: boolean; conflict?: AddConflict; blocked?: AddBlock; ref?: Ref<HTMLButtonElement> }) {
   const w = useSetWords()
   // A module this member cannot load at all (usb-only) cannot be added; the reason stays readable on the button.
-  if (blocked && !selected) return <button ref={ref} className="add-button is-blocked" disabled aria-label={name + ': ' + blocked.reason} title={blocked.detail}><Icon name="lock" size={15} /><span>USB only</span></button>
+  if (blocked && !selected) return <button ref={ref} className="add-button is-blocked" disabled aria-label={name + ': ' + blocked.reason} title={blocked.detail}><Icon name="lock" size={15} /><span>{blocked.kind === 'limit' ? 'Full' : 'USB only'}</span></button>
   // A conflicting add asks first instead of adding. It stays an enabled button so it can be reached by keyboard and touch.
   if (conflict && !selected) {
     const swappable = !!conflict.block.swapRemoveIds
@@ -74,8 +76,14 @@ export function CardProof({ stability, statistics, name, compared, canCompare, o
       {review > 0 && <span className="card-proof-count is-review" title={review.toLocaleString() + ' unconfirmed ' + (review === 1 ? 'report' : 'reports')}><Icon name="message" size={13} />{review.toLocaleString()}<span className="sr-only"> unconfirmed {review === 1 ? 'report' : 'reports'}</span></span>}
       {waiting > 0 && <span className="card-proof-count is-waiting" title={waiting.toLocaleString() + ' waiting for reporter details'}><Icon name="help" size={13} />{waiting.toLocaleString()}<span className="sr-only"> waiting for reporter details</span></span>}
     </span>}
-    <label><input type="checkbox" checked={compared} disabled={!canCompare} onChange={onCompare} />Compare<span className="sr-only"> {name}</span></label>
+    {MODULE_COMPARE_ENABLED && <label><input type="checkbox" checked={compared} disabled={!canCompare} onChange={onCompare} />Compare<span className="sr-only"> {name}</span></label>}
   </div>
+}
+
+// A flagged module (module-cautions.ts) carries a warning badge; the reason is in its title and read out to screen readers.
+export function CautionBadge({ id }: { id: string }) {
+  const caution = moduleCaution(id)
+  return caution ? <span className="module-caution-badge" title={caution.title + '. ' + caution.detail}><Icon name="warn" size={11} />{caution.badge}<span className="sr-only">: {caution.title}. {caution.detail}</span></span> : null
 }
 
 export function ModuleCard({ module, selected, statistics, viewedVersion, baseline, compared, canCompare, onToggle, onCompare, onBrowse, block, onSwap }: ModuleCardProps) {
@@ -91,8 +99,8 @@ export function ModuleCard({ module, selected, statistics, viewedVersion, baseli
     </a>}
     <div className="module-card-body" inert={prompt.open}>
       <div className="module-card-title">
-        <div className="module-card-heading"><a href={moduleHref(module.id)} onClick={onBrowse} onAuxClick={onBrowse}>{module.name}</a>{isBetaModule(module.id) && <span className="module-beta-badge">Beta</span>}<ModuleRelease module={module} viewedVersion={viewedVersion} baseline={baseline} /></div>
-        <AddButton ref={trigger} name={module.name} selected={selected} onToggle={onToggle} configure={module.id === USB_AUDIO_MODULE} conflict={prompt.conflict && { block: prompt.conflict, open: prompt.open, controls: prompt.id, onAsk: prompt.toggle }} blocked={pending?.kind === 'usb-only' ? pending : undefined} />
+        <div className="module-card-heading"><a href={moduleHref(module.id)} onClick={onBrowse} onAuxClick={onBrowse}>{module.name}</a>{isBetaModule(module.id) && <span className="module-beta-badge">Beta</span>}<CautionBadge id={module.id} /><ModuleRelease module={module} viewedVersion={viewedVersion} baseline={baseline} /></div>
+        <AddButton ref={trigger} name={module.name} selected={selected} onToggle={onToggle} configure={module.id === USB_AUDIO_MODULE} conflict={prompt.conflict && { block: prompt.conflict, open: prompt.open, controls: prompt.id, onAsk: prompt.toggle }} blocked={pending?.kind === 'usb-only' || pending?.kind === 'limit' ? pending : undefined} />
       </div>
       {module.id === USB_AUDIO_MODULE && <span className="module-compatibility-badge module-card-compatibility"><Icon name="wave" size={12} />Outbox 8 compatible</span>}
       <div className="card-credit"><ModuleAuthors name={module.authorName} url={module.authorUrl} contributors={module.contributors}/><span>{module.detail}</span></div>

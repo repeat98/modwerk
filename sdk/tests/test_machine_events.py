@@ -47,15 +47,20 @@ class MachineEventTests(unittest.TestCase):
     def test_registry_knows_every_protect_port_signature(self):
         # The validator keeps a known PROTECT machine's 12 bytes while it is absent (the boot's battery restore runs
         # before the saved set reinstalls it: beta finding 24). The list must be exactly the PROTECT ports and the
-        # native PROTECT machine modules named here, each with its signature and version range.
+        # native PROTECT machine modules' declared signatures (their package rows), each with its version range.
         text = (OT / 'elekloader/machine_registry.c').read_text()
         listed = re.search(r'\} known\[\] = \{(.*?)\};', text).group(1)
         known = {(a + b, int(lo), int(hi)) for a, b, lo, hi in re.findall(r"\{\{'(.)', '(.)'\}, (\d+), (\d+)\}", listed)}
         ports = json.loads((ADAPTERS / 'machine-ports.json').read_text())['ports']
         protect = {(p['machine']['sig'], p['machine']['lo'], p['machine']['hi']) for p in ports.values()
                    if 'PROTECT' in p.get('machine', {}).get('flags', [])}
-        native = {('WV', 1, 15),  # SYNTIZ (sdk/drafts/syntiz/machine.c): the model is the version byte, 1-6 used, up to 15 kept
-                  ('FR', 1, 1)}  # FRACT (sdk/drafts/fract-machine/registration.c)
+        # A native machine module declares its signature in its package row (partSignature), not here; a draft
+        # without a package row is still named here.
+        rows = json.loads((ROOT / 'src/engine/assets/octatrack-module-packages.json').read_text())['packages']
+        native = {(r['partSignature']['sig'], r['partSignature']['lo'], r['partSignature']['hi']) for r in rows
+                  if 'PROTECT' in r.get('partSignature', {}).get('flags', [])}
+        self.assertIn(('WV', 1, 15), native)  # SYNTIZ: the model is the version byte, 1-6 used, up to 15 kept
+        native |= {('FR', 1, 1)}  # FRACT (sdk/drafts/fract-machine/registration.c)
         self.assertEqual(known, protect | native)
         self.assertIn(('AB', 1, 1), known)
 
