@@ -2,7 +2,7 @@
 
 Existing published module authors may use the [automatic author-update workflow](MODULE_AUTHOR_UPDATES.md): verified ownership, changes confined to their modules, explicit evidence review and successful checks on the exact source/base permit bot merge and publication. Other changes retain owner review. Existing qualification gates and exact-version owner exceptions are unchanged.
 
-A module is a folder under `sdk/octabam/modules/<id>/` containing native source, `manifest.py`, `octamod.module.json`, README, TESTING, licence and real OT UI screenshots (audio is optional). The steps are in [Add or port a module](ADD_A_MODULE.md); this page is the field reference for `octamod.module.json`. Submissions and all updates use PRs; merging the PR is owner approval. No direct module upload or separate website approval remains.
+A module is a folder under `sdk/octatrack/modules/<id>/` containing native source, `manifest.py`, `octamod.module.json`, README, TESTING, licence and real OT UI screenshots (audio is optional). The steps are in [Add or port a module](ADD_A_MODULE.md); this page is the field reference for `octamod.module.json`. Submissions and all updates use PRs; merging the PR is owner approval. No direct module upload or separate website approval remains.
 
 ## Schema version 2
 

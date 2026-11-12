@@ -19,7 +19,7 @@ export const COMMUNITY_MODULES = [
   ...MODULES.map(module => ({
     id: module.id, moduleId: module.id, machine: 'octatrack', name: module.name,
     version: module.version, author: module.author, authorName: module.authorName, maintainers: activeMaintainers([module.author]),
-    href: '#module/' + moduleSlug(module.id), sourcePath: 'sdk/octabam/modules/' + module.id, summary: module.description,
+    href: '#module/' + moduleSlug(module.id), sourcePath: 'sdk/octatrack/modules/' + module.id, summary: module.description,
     evidence: MODULE_DOCUMENTS_BY_ID[module.id].tests.summary,
   })),
   ...(MACHINE_MODULES.modules as ModwerkModule[]).map(module => ({

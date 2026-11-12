@@ -13,7 +13,7 @@ it('refuses a new module whose tested commit is already on main, and judges no o
   const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim()
   const manifest = (path, evidenceRevision) => { mkdirSync(dirname(join(root, path)), { recursive: true }); writeFileSync(join(root, path), JSON.stringify({ tests: { evidenceRevision } })) }
   git('init', '-q', '-b', 'main'); git('config', 'user.email', 'a@b.c'); git('config', 'user.name', 'a')
-  manifest('sdk/octabam/modules/euclid/octamod.module.json', '0'.repeat(40)); git('add', '.'); git('commit', '-qm', 'main')
+  manifest('sdk/octatrack/modules/euclid/octamod.module.json', '0'.repeat(40)); git('add', '.'); git('commit', '-qm', 'main')
   const main = git('rev-parse', 'HEAD')
   git('checkout', '-qb', 'work')
   // DATAMATIC (#1103): a draft whose tested commit is main's.
@@ -24,7 +24,7 @@ it('refuses a new module whose tested commit is already on main, and judges no o
   expect(evidenceOnBaseProblem({ root, base: main })).toBe(null)
   // A commit from the author's own repository, and a listed module's update, are not judged.
   manifest('sdk/drafts/datamatic/octamod.module.json', 'f'.repeat(40))
-  manifest('sdk/octabam/modules/euclid/octamod.module.json', main)
+  manifest('sdk/octatrack/modules/euclid/octamod.module.json', main)
   expect(evidenceOnBaseProblem({ root, base: main })).toBe(null)
 })
 

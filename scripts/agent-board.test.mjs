@@ -23,13 +23,13 @@ describe('what a branch needs claimed', () => {
   it('finds new module folders, hook and table indices, migrations and machine ids, and nothing that was already there', () => {
     const manifest = (...ids) => JSON.stringify({ platform: { kind: 'elemod', claims: ['ui:x', ...ids.map(id => 'machine:' + id)] } })
     const { root, commit } = repository({
-      'sdk/machines/octatrack/events.json': events([35, 36]), 'migrations/0083_old.sql': '', 'sdk/octabam/modules/echo/README.md': '',
+      'sdk/machines/octatrack/events.json': events([35, 36]), 'migrations/0083_old.sql': '', 'sdk/octatrack/modules/echo/README.md': '',
       'sdk/digitakt/core/interface.json': JSON.stringify({ events: [{ name: 'ev_a' }], tables: [] }),
       'sdk/digitakt/modules/poly/modwerk.module.json': manifest(6), 'sdk/analog-rytm-mkii/modules/chorus/README.md': '',
     })
     commit({
-      'sdk/machines/octatrack/events.json': events([35, 36, 37]), 'migrations/0084_new.sql': '', 'sdk/octabam/modules/echo/LICENSE': '',
-      'sdk/octabam/modules/tape-echo/README.md': '', 'sdk/octabam/modules/tape-echo/src/a.c': '', 'sdk/drafts/slicer/README.md': '', 'sdk/digitone/modules/swarm/README.md': '',
+      'sdk/machines/octatrack/events.json': events([35, 36, 37]), 'migrations/0084_new.sql': '', 'sdk/octatrack/modules/echo/LICENSE': '',
+      'sdk/octatrack/modules/tape-echo/README.md': '', 'sdk/octatrack/modules/tape-echo/src/a.c': '', 'sdk/drafts/slicer/README.md': '', 'sdk/digitone/modules/swarm/README.md': '',
       'sdk/digitakt/core/interface.json': JSON.stringify({ events: [{ name: 'ev_a' }, { name: 'ev_b' }], tables: [{ name: 'core_x' }] }),
       // The Analog Rytm keeps its modules in modules/_submissions/<id>; one moved there is not new.
       'sdk/analog-rytm-mkii/modules/_submissions/temp-save/src/main.c': '', 'sdk/analog-rytm-mkii/modules/_submissions/chorus/README.md': '',
@@ -85,7 +85,7 @@ describe('the board client', () => {
   })
   it('gives the doctor a red line for an unclaimed new module or someone else\'s claim', () => {
     const { root } = repository({ 'README.md': '' })
-    const line = (claims, login) => board.moduleClaimLine({ root, machine: 'octatrack', id: 'tape-echo', folder: 'sdk/octabam/modules/tape-echo', claims, login })
+    const line = (claims, login) => board.moduleClaimLine({ root, machine: 'octatrack', id: 'tape-echo', folder: 'sdk/octatrack/modules/tape-echo', claims, login })
     expect(line([], 'ada')).toMatchObject({ state: 'fail', fix: 'npm run board -- claim module octatrack/tape-echo' })
     expect(line([], null).fix).toMatch(/^npm run board -- login/)
     expect(line([claimRow('module', 'octatrack/tape-echo', 'ada')], 'ada').state).toBe('ok')

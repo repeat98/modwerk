@@ -25,7 +25,7 @@ describe('documentation and firmware scheduling', () => {
   it.each(['scripts/prepare-runtime-spans.py', 'scripts/runtime_private_paths.py', 'sdk/tests/test_runtime_spans.py'])('runs native Windows privacy checks for %s without firmware compilation', path => {
     expect(scope(change(path))).toMatchObject({ documentation: false, windows: true, modules: false, elemod: false })
   })
-  it.each(['octabam', 'digitakt', 'digitone', 'analog-rytm-mkii'])('skips firmware and app checks for %s prose, screenshots and evidence', machine => {
+  it.each(['octatrack', 'digitakt', 'digitone', 'analog-rytm-mkii'])('skips firmware and app checks for %s prose, screenshots and evidence', machine => {
     const actual = scope(...['README.md', 'media/control.png', 'media/capture.json', 'presentation/thumbnail.svg', 'evidence/report.json'].map(path => change(`sdk/${machine}/modules/demo/${path}`)))
     expect(actual).toEqual({ documentation: true, modules: false, elemod: false, windows: false, worker: false, logger: false })
   })
@@ -78,7 +78,7 @@ describe('documentation and firmware scheduling', () => {
     expect(() => scope(change(modulePath, '{}', '{'))).toThrow()
   })
   it('preserves OT compiler identity and isolates app/backend edits from firmware compilation', () => {
-    const path = 'sdk/octabam/modules/demo/octamod.module.json'
+    const path = 'sdk/octatrack/modules/demo/octamod.module.json'
     expect(scope(change(path, ot, { ...ot, presentation: { summary: 'Words' } })).modules).toBe(false)
     expect(scope(change(path, ot, { ...ot, version: '1.0.1' })).modules).toBe(true)
     for (const path of ['src/App.tsx', 'server/api.ts', 'AGENTS.md', 'scripts/change-scope.mjs']) {
