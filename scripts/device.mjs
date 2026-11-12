@@ -389,6 +389,13 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
       const [max, late, busy, frames, skips, tracks, share] = [0, 4, 8, 12, 16, 20, 24].map(at => b.readUInt32BE(at))
       console.log(`frame max ${pc(max)}, latest start ${pc(late)}, in the frame interrupt ${frames ? pc(busy * 256 / frames) : '-'} over ${frames} frames, skipped ${skips} on ${[...Array(8).keys()].filter(t => tracks >> t & 1).map(t => 'T' + (t + 1)).join(' ') || '-'}, share ${pc(share)}`)
     }
+    else if (step === 'cpu' || step.startsWith('cpu:')) { // CPU (dev request 30): cpu:PERCENT sets the CPU budget's allowance
+      const b = Buffer.from(await devIn(30, Number(step.slice(4)) || 0, 76)), pc = n => (n / 478.91).toFixed(1)
+      const tracks = [...Array(8).keys()].filter(t => b.readUInt32BE(8) >> t & 1).map(t => 'T' + (t + 1)).join(' ') || '-'
+      console.log(`allowance ${b.readUInt32BE(0)} %, booked ${b.readUInt32BE(4)} %, refused ${tracks}`)
+      // A machine's price is its track's two passes together, at its worst.
+      console.log('guarded renders, longest since the last read (% of a frame, both passes): ' + [...Array(8).keys()].map(t => `T${t + 1} ${pc(b.readUInt32BE(12 + 4 * t) + b.readUInt32BE(44 + 4 * t))}`).join(', '))
+    }
     else if (step === 'gap') { const g = Buffer.from(await devIn(23, 0, 4)).readUInt32BE(0); console.log(`gap ${g} counts ${(g / 132).toFixed(0)} us`) } // since the last read
     // RELOAD from the Part menu, which keeps its cursor and stops at RENAME. Never PART+FUNC+PLAY: that is CLEAR.
     else if (step === 'reload') await run('FUNC+PART w600 UP w150 UP w150 UP w150 DOWN w200 YES w1000')

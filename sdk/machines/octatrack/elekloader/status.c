@@ -636,6 +636,18 @@ void modwerk_status_machine_refused(unsigned track, const char *label)
     refused_name[16] = 0;
     open = REFUSED, refused_left = 180u;
 }
+/* machine_registry.c's CPU budget: the track's machine would take the Part past what the frame interrupt carries. The
+ * same box, as CPU FULL: what the Part's machines book and what this one adds, per mille of the allowance. */
+void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add)
+{
+    if ((open != CLOSED && open != MEMORY) || track > 7u) return;
+    for (unsigned i = 0; i < 8u; ++i) refused[i] = 0;
+    refused[0] = 4u, refused[1] = track, refused[4] = add, refused_booked = booked;
+    refused_machine = 1u, refused_reason = 4u;
+    for (unsigned i = 0; i < sizeof refused_name; ++i) refused_name[i] = 0;
+    for (unsigned i = 0; label && i < 16u && label[i]; ++i) refused_name[i] = label[i] >= 'a' && label[i] <= 'z' ? (char)(label[i] - 32) : label[i];
+    open = REFUSED, refused_left = 180u;
+}
 static void refused_box(unsigned char *frame)
 {
     for (unsigned i = 0; i < 7u; ++i) surface[i] = ((const volatile uint32_t *)SURFACE)[i];
@@ -645,7 +657,7 @@ static void refused_box(unsigned char *frame)
     unsigned slot = refused[1], c = refused_core;
     char where[8] = {'T', (char)('1' + (slot & 7u)), ' ', 'F', 'X', (char)(slot < 8u ? '1' : '2'), 0};
     if (refused_machine) where[3] = 'S', where[4] = 'R', where[5] = 'C'; /* a machine's voice, not an effect slot */
-    const char *title = refused[0] == 3u ? "NO ROOM" : refused_reason == 3u ? "DSP FULL" : "DSP MEMORY FULL";
+    const char *title = refused[0] == 3u ? "NO ROOM" : refused[0] == 4u ? "CPU FULL" : refused_reason == 3u ? "DSP FULL" : "DSP MEMORY FULL";
     if (TEXT_WIDTH(FONT, -1, title) + TEXT_WIDTH(FONT, -1, where) + 6 > 82) title += 4; /* "MEMORY FULL": clear of the slot */
     label(23u, 15u, title), label((unsigned)(105 - TEXT_WIDTH(FONT, -1, where)), 15u, where);
     fill(frame, 18u, 22u, 109u, 22u, 1);
@@ -667,6 +679,15 @@ static void refused_box(unsigned char *frame)
      * MEM: the core's code words, and the effect's when its code is not on the core yet. Past 100 % is why. Only the
      * bar that refused it carries the effect: the core keeps other Parts' code loaded until it needs the room, so its
      * words plus the effect's can pass 100 % on a DSP FULL that memory never refused (owner's MKII, 20 October 2026). */
+    if (refused[0] == 4u) { /* the CPU budget: one bar, and what makes room */
+        const char *t = " NEEDS ";
+        while (*t) *e++ = *t++;
+        *e++ = '+', e = number(e, (refused[4] + 5u) / 10u), *e++ = '%', *e = 0;
+        label(23u, 26u, need);
+        label(23u, 34u, "CPU"), share_bar(frame, 45u, 34u, 40, 6, refused_booked + refused[4], refused[4]), percent(89u, 34u, refused_booked + refused[4]);
+        label(23u, 42u, "CHANGE ONE FIRST");
+        return;
+    }
     const int32_t add = (int32_t)refused[4];
     const uint32_t dsp_add = add > 0 && refused[0] == 1u ? (uint32_t)add * 1000u / allowance : 0u,
                    mem_add = refused_arena && refused[0] == 2u ? refused[5] * 1000u / refused_arena : 0u;

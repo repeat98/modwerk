@@ -1,0 +1,1 @@
+Octatrack base: machines that render on the CPU are now budgeted like effects on the DSP. Picking one more than the instrument can carry shows a CPU FULL box instead of dropouts, and a loaded Part that asks for too many keeps the later tracks silent and says so.
