@@ -37,11 +37,11 @@ export interface RuntimePackageManifest {
   groups?: { id: string; name: string; variants: MachineVariant[] }[]
 }
 export class BaseUpdateRequired extends ModuleSetError {
-  constructor(message = 'Install the latest Modwerk base from the card to sync this module set. Your selected modules will stay here.') { super(message) }
+  constructor(message = 'Update to the latest Modwerk base to sync this module set. Your selected modules will stay here.') { super(message) }
 }
 /** A key bus reader on a base that may not have the key bus: the same guided update, saying why. */
 export class KeyBusBaseRequired extends BaseUpdateRequired {
-  constructor(module: string) { super(`${module} needs a Modwerk base with the key bus. Install the latest Modwerk base from the card, then sync again. Your selected modules will stay here.`) }
+  constructor(module: string) { super(`${module} needs a Modwerk base with the key bus. Update to the latest Modwerk base, then sync again. Your selected modules will stay here.`) }
 }
 /** USB Audio is part of the base: its layout sets the USB descriptors, so another layout is another base, sent over
  * USB like any base update (base-variants.ts). The set's modules stay; nothing is synced until it runs. */

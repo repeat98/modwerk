@@ -166,6 +166,9 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .instrument-item[aria-current="page"] + .instrument-action { border-color: var(--accent-line); }
 .instrument-action:hover { background: var(--surface-hover); }
 .instrument-action:disabled { color: var(--muted); cursor: wait; }
+/* A base the site no longer syncs to: the one next step that blocks everything else, so it is filled. */
+.instrument-action.is-update { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+.instrument-action.is-update:hover { background: var(--accent-hover); }
 /* The Octatrack page: the unit's hero on top, then a list of its pages and your module sets beside the one open. */
 .octatrack-hub { container: hub / inline-size; }
 /* The page fits the window (--hub-height, measured by OctatrackHub): the hero and list stay put, a long page scrolls in its pane. */
