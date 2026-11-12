@@ -1,0 +1,1 @@
+The FAQ now answers "How do I install mods on my Octatrack?" under Getting started: install the base once from the card, then sync modules over USB in a Chromium browser, or download the card file (MODWERK0.SET) on Setup and copy it to the card.

@@ -4,6 +4,7 @@ import { isValidElement, useState } from 'react'
 import type { ReactNode } from 'react'
 import { BASE_FIRMWARE } from '../engine/base'
 import { DSP_LOADER } from '../engine/protocol'
+import { CARD_SET_FILE } from '../engine/elekloader/card-set'
 import { Icon } from './Icon'
 
 const OFFICIAL_OS = 'https://www.elektron.se/wp-content/uploads/2025/03/OCTATRACK_OS1.40C_dist.zip'
@@ -77,11 +78,31 @@ const SECTIONS: FaqSection[] = [
         </>,
       },
       {
+        id: 'usb-base',
+        title: 'How do I install mods on my Octatrack?',
+        keywords: 'install load add modules mods usb base module set sync chrome edge chromium webusb card set file modwerk0.set setup restart reboot trial keep undo update os upgrade usb disk mode mki mkii firefox safari ipad beta tester',
+        answer: <>
+          <p>Install the Modwerk base once. After that, modules go onto the Octatrack without flashing again. You need an Octatrack MKI or MKII and your original OS {BASE_FIRMWARE.version} file.</p>
+          <ol>
+            <li><strong>Install the base once.</strong> Open <a href="#octatrack/setup">Your Octatrack → Setup</a> and follow the guide. The first install always goes through the card: the original OS has no USB link for Modwerk. You download the base .bin, copy it to the card over the cable in <strong>USB DISK MODE</strong> or with a card reader, then install it with <strong>PROJECT → SYSTEM → OS UPGRADE</strong>. Every later base update goes over USB, with the card as the fallback.</li>
+            <li><strong>Pick modules</strong> from the <a href="#library">library</a> into your module set.</li>
+            <li><strong>Send them to the Octatrack</strong>, in one of two ways:
+              <ul>
+                <li><strong>Over USB:</strong> in Chrome, Edge or another Chromium browser on a computer, connect the Octatrack with a USB cable and choose <strong>Sync to Octatrack</strong> on Setup. The modules load in seconds, without the card and without a restart.</li>
+                <li><strong>From the card:</strong> in any browser, including Firefox, Safari, an iPad or a phone, choose <strong>Load from the card</strong> on Setup. Copy the downloaded <code>{CARD_SET_FILE}</code> to the top folder of the card, then switch the Octatrack off and on.</li>
+              </ul>
+            </li>
+          </ol>
+          <p>{BASE_RECOVERY_NOTICE} {REPORT_PROBLEMS}</p>
+          <p>Beta testers try new modules before everyone else. When a round is open, the site shows <strong>Join the beta</strong>. {BETA_REPORTING_NOTICE}</p>
+        </>,
+      },
+      {
         id: 'build-firmware',
         title: 'How do I prepare a configuration and build firmware?',
         keywords: 'select add modules configuration choose file build download json',
         answer: <>
-          <p><strong>Octatrack:</strong> no firmware is built with modules in it. You install the Modwerk base once, then add modules from the library to a module set and sync it over USB, or load it from the card: see <a href="#faq/usb-base">modules over USB</a>. The steps below are for Digitakt, Digitone and Analog Rytm MKII.</p>
+          <p><strong>Octatrack:</strong> no firmware is built with modules in it. You install the Modwerk base once, then add modules from the library to a module set and sync it over USB, or load it from the card: see <a href="#faq/usb-base">installing mods on an Octatrack</a>. The steps below are for Digitakt, Digitone and Analog Rytm MKII.</p>
           <ol>
             <li>Open your machine’s <a href="#library">module library</a>, read the module pages and add the modules you want. Modules belong to one machine and cannot be combined across devices.</li>
             <li>Open that machine’s Configuration page and choose the original OS file it requests.</li>
@@ -131,7 +152,7 @@ const SECTIONS: FaqSection[] = [
         keywords: 'midi din interface cable sysex transfer format rename',
         answer: <>
           <p>A .bin is for an update from the CompactFlash card. USB DISK MODE lets you copy that file to the card. A .syx is for sending an update through a MIDI interface into the Octatrack’s 5-pin DIN MIDI IN.</p>
-          <p>The Octatrack’s USB port cannot receive a MIDI OS upgrade. Modwerk’s Octatrack download format is .bin; for MIDI recovery, use the original .syx from Elektron’s archive. Renaming a .bin to .syx does not convert it. Loading modules over USB is a separate beta feature, described below.</p>
+          <p>The Octatrack’s USB port cannot receive a MIDI OS upgrade. Modwerk’s Octatrack download format is .bin; for MIDI recovery, use the original .syx from Elektron’s archive. Renaming a .bin to .syx does not convert it. Modules go onto an Octatrack that runs the Modwerk base without a new .bin: see <a href="#faq/usb-base">installing mods on an Octatrack</a>.</p>
           <ManualLinks recovery />
         </>,
       },
@@ -160,17 +181,6 @@ const SECTIONS: FaqSection[] = [
           <p>If the Octatrack boots, install the original <code>{BASE_FIRMWARE.filename}</code> from Elektron using the CompactFlash procedure above. If it does not boot, try the official .syx through the startup menu’s MIDI UPGRADE.</p>
           <p>Keep your backups: projects saved with custom modules may not behave correctly under the original OS. Elektron does not support OS downgrades and warns that user content may be lost.</p>
           <p className="faq-source"><OfficialLink href={RELEASE_NOTES}>Elektron’s update and downgrade guidance</OfficialLink></p>
-        </>,
-      },
-      {
-        id: 'usb-base',
-        title: 'Can I load Octatrack modules over USB instead of flashing?',
-        keywords: 'usb base module set sync trial keep undo chrome edge install guide card update os upgrade usb disk mode mki mkii beta tester',
-        answer: <>
-          <p>Yes, with the Modwerk base. Install it once, then send module sets from this site to the Octatrack over USB without reflashing. You need an Octatrack MKI or MKII, your original OS {BASE_FIRMWARE.version} file, a USB cable and Chrome or Edge on a computer.</p>
-          <p>The first install always goes through the card: the original OS has no USB link for Modwerk. Open <strong>Your Octatrack</strong> and follow the guide. You download the base .bin, copy it to the card over the cable in <strong>USB DISK MODE</strong> or with a card reader, then install it with <strong>PROJECT → SYSTEM → OS UPGRADE</strong>. Every later base update goes over USB, with the card as the fallback.</p>
-          <p>In a browser without USB (Firefox, Safari, iPad, phones), an Octatrack that already runs the base can take your module set from the card instead: Your Octatrack → Setup → Load from the card writes it as one file. {BASE_RECOVERY_NOTICE} {REPORT_PROBLEMS}</p>
-          <p>Beta testers try new modules before everyone else. When a round is open, the site shows <strong>Join the beta</strong>. {BETA_REPORTING_NOTICE}</p>
         </>,
       },
     ],

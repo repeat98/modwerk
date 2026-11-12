@@ -26,7 +26,7 @@ it('opens no extra answer without one, or for an id it does not have', async () 
   expect([...container.querySelectorAll('details[open]')].map(item => item.id)).toEqual(['faq-base-firmware'])
 })
 
-it('answers USB loading for everyone: MKI or MKII, the card for the first install, USB for every later update', async () => {
+it('answers installing mods for everyone: the base once from the card, then a USB sync or the card set file', async () => {
   await act(() => root.render(createElement(FaqPage, {open: 'usb-base'})))
   const text = answer('usb-base')!.textContent!
   expect(answer('usb-base')?.open).toBe(true)
@@ -34,6 +34,11 @@ it('answers USB loading for everyone: MKI or MKII, the card for the first instal
   expect(text).toContain('The first install always goes through the card')
   expect(text).toContain('USB DISK MODE or with a card reader')
   expect(text).toContain('Every later base update goes over USB, with the card as the fallback.')
+  expect(text).toContain('another Chromium browser')
+  expect(text).toContain('Sync to Octatrack')
+  expect(text).toContain('without the card and without a restart')
+  expect(text).toContain('Load from the card')
+  expect(text).toContain('MODWERK0.SET')
   expect(text).toContain('Report a problem on the Your Octatrack page')
   expect(text).not.toContain('In the Modwerk beta')
   expect(text).not.toContain('Diagnostics stay on')
