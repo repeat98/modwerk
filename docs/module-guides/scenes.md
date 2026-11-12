@@ -25,7 +25,7 @@ Read [the module guides index](README.md) first.
 
 ## Test
 
-octabam's `verify_midiscenes.py` and `verify_scenesp2.py` and Apply Scene's `verify.py` are the patterns: a fresh project, project load, eight active tracks, panel scenarios and instrumentation parity.
+octabam's `verify_midiscenes.py` and `verify_scenesp2.py` and Apply Scene's `sdk/octatrack/modules/apply-scene/verify.py` are the patterns: a fresh project, project load, eight active tracks, panel scenarios and instrumentation parity.
 
 **Drive the panel while the scene key is held.** On the Octatrack, pressing a scene key writes stock's scene-lock knob handler into every encoder slot, over whatever the open page installed ([the trap](../../sdk/octabam/docs/TRAPS.md#trap-scene-encoders)). A hook in a page's own editor never sees a turn made with a scene held, and a test that calls the editor directly still passes. Hook the scene-lock handler itself, and test the gesture with a scripted panel run (`--live-script`): hold the scene key, turn the encoder, check the lock.
 
