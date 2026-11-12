@@ -143,7 +143,7 @@ describe('a browser without WebUSB', () => {
     const link = new OctatrackLink(null), seen: string[] = []
     link.subscribeDiagnostics(event => seen.push(event.event + ':' + event.failure))
     const guide = open({ link }); await guide.render(); await settle()
-    expect(container.textContent).toContain('You can prepare the base here.')
+    expect(container.textContent).toContain('You can install the base from here. Afterwards your modules go onto the Octatrack as a file on the card')
     expect(guide.onStage.mock.calls).toEqual([['opened', undefined], ['failed', 'no-webusb']])
     expect(seen).toEqual(['link_failed:no-webusb'])
   })

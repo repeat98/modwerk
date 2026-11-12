@@ -292,7 +292,7 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
     if (changes.stockOff.length || changes.stockOn.length)
       throw new ModuleSetError('The Octatrack can’t take stock effects out of its menus over USB yet. Keep every stock effect in this module set to sync it.')
     const unpublished = changes.add.filter(id => !ids.includes(id))
-    if (unpublished.length) throw new ModuleSetError(`${list(unpublished.map(name))} can’t be loaded over USB yet. Download the .bin for the card instead.`)
+    if (unpublished.length) throw new ModuleSetError(`${list(unpublished.map(name))} can’t be loaded onto the base yet. Take ${unpublished.length === 1 ? 'it' : 'them'} out of the set.`)
     const steps: Step[] = [], updates: string[] = []
     for (const group of groups) {
       const groupMembers = new Set(group.variants.flatMap(variant => variant.members.map(member => member.id)))
@@ -356,7 +356,7 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
   function requireLayout(target: InventoryTarget, base?: string) {
     const layout = setLayout(target)
     if (layout === undefined || base === undefined || baseLayout(base) === layout) return
-    throw layoutIdentity(layout) ? new BaseLayoutRequired(layout) : new ModuleSetError(`${layoutName(layout)} can’t be installed over USB yet. Download the .bin for the card instead.`)
+    throw layoutIdentity(layout) ? new BaseLayoutRequired(layout) : new ModuleSetError(`${layoutName(layout)} can’t be installed over USB yet.`)
   }
   function review(full: InventoryTarget, current: Inventory, capabilities?: RuntimeCapabilities, base?: string) {
     const target = packagedTarget(full), changes = inventoryChanges(current, target)

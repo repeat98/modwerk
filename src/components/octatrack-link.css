@@ -175,6 +175,11 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-hero > div { flex: 1; min-width: 0; }
 .hub-hero p { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 7px; margin: 6px 0 0; color: var(--muted); font-size: 13px; }
 .hub-hero p b { color: var(--text-secondary); font-weight: 600; }
+.hub-browser-note { display: flex; align-items: flex-start; gap: 10px; max-width: 620px; margin-top: 10px; padding: 10px 14px; border: 1px solid var(--accent-line); border-radius: 10px; background: var(--accent-soft); color: var(--accent); }
+.hub-browser-note svg { flex: none; margin-top: 2px; }
+.hub-browser-note > div { display: grid; gap: 2px; min-width: 0; }
+.hub-browser-note strong { color: var(--text); font-size: 14px; }
+.hub-browser-note span { color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
 .hub-hero > .button { flex: none; min-height: 40px; }
 .hub-facts { display: flex; flex-wrap: wrap; gap: 10px 28px; margin: 14px 0 0; }
 .hub-facts dt { color: var(--muted); font-size: 11px; }
@@ -287,6 +292,15 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-empty-set p { color: var(--muted); }
 /* Setup: the base, the module file for the card, diagnostics. */
 .card-set-steps { margin: 10px 0; padding-left: 20px; color: var(--text-secondary); font-size: 13px; line-height: 1.7; }
+.card-set-dialog { width: min(440px, calc(100vw - 32px)); }
+.card-set-plan { display: grid; gap: 16px; margin: 22px 0 18px; padding: 0; list-style: none; }
+.card-set-plan li { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 12px; align-items: start; }
+.card-set-plan li > span { display: grid; place-items: center; width: 26px; height: 26px; border: 1px solid var(--accent-line); border-radius: 50%; color: var(--accent); font-size: 13px; font-weight: 600; }
+.card-set-plan strong { display: block; color: var(--text); font-size: 15px; line-height: 26px; }
+.card-set-plan p { margin: 2px 0 0; color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
+.card-set-base { margin: 0; padding-top: 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12.5px; }
+.card-set-base b { color: var(--text-secondary); font-family: var(--mono, ui-monospace, monospace); font-weight: 500; }
+.card-set-dialog .dialog-actions { margin-top: 18px; }
 .hub-account-note, .base-install-account { color: var(--muted); font-size: 13px; }
 .base-install-account { margin-top: 12px; }
 .hub-view .configuration-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; }

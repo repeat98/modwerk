@@ -195,6 +195,7 @@ describe('the way to the base install guide', () => {
     await act(() => root.render(createElement(OctatrackHub, { ...callbacks(), view: 'set', link: unit({ status: 'idle' }), sets: [set], selectedId: set.id, header: null, grid: null, card: null })))
     expect(open().querySelector('.hub-sync')?.textContent).toBe('Connect your Octatrack to sync this set.Sync to Octatrack')
     await act(() => root.render(createElement(OctatrackHub, { ...callbacks(), view: 'set', link: null, sets: [set], selectedId: set.id, header: null, grid: null, card: null })))
-    expect(open().querySelector('.hub-sync a')?.textContent).toBe('Load this set from the card')
+    expect(open().querySelector('.hub-sync')).toBeNull()
+    expect(container.querySelector('.hub-hero button')?.textContent).toBe('Load from the card')
   })
 })

@@ -188,7 +188,7 @@ export default function App() {
   const octatrackUi = hasOctatrackBase(session), betaUi = hasBetaUi(session), w = setWords(octatrackUi)
   const usbAllowed = !mobileWorkspace && hasUsbLinkAccess(session, touchOnly) && !usbLinkPreview && usbPreview !== 'diagnostics'
   // This member can sync over USB here: the base path is open to them and this browser reaches the unit (not Firefox,
-  // Safari or a phone). Without it, a USB-only module can't be added and the card build says where USB works.
+  // Safari or a phone). Without it the module set goes onto the unit as the card file.
   const usbBrowser = browserHasUsb(touchOnly, mobileWorkspace)
   // The Zoom pedal link (beta chunk): made on the first visit to a pedal page, kept while the site is open.
   const [zoomLink, setZoomLink] = useState<ZoomLink | null>(null), [zoomInstall, setZoomInstall] = useState(false)
