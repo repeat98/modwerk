@@ -85,7 +85,7 @@ describe('agent board', () => {
 
   it('keeps notes to short plain prose', () => {
     expect(claimNote(' Porting the echo, BBD first ')).toBe('Porting the echo, BBD first')
-    for (const note of ['see https://example.com', 'in ~/src/mod', 'sdk/octabam/modules/x', 'patch 0x40098a5c', 'hash 02baba67a7ec7d7b', 'run `rm -rf`', 'ghp_' + 'a'.repeat(36), 'two\nlines', 'x'.repeat(121), 'modwerk.app'])
+    for (const note of ['see https://example.com', 'in ~/src/mod', 'sdk/octatrack/modules/x', 'patch 0x40098a5c', 'hash 02baba67a7ec7d7b', 'run `rm -rf`', 'ghp_' + 'a'.repeat(36), 'two\nlines', 'x'.repeat(121), 'modwerk.app'])
       expect(() => claimNote(note), note).toThrow()
   })
 
@@ -285,7 +285,7 @@ describe('agent board questions and findings', () => {
 
   it('keeps board text to plain prose', () => {
     expect(messageBody(' The FX2 slot fills one tick late. ')).toBe('The FX2 slot fills one tick late.')
-    for (const text of ['', 'x'.repeat(501), 'see https://example.com', 'in sdk/octabam/modules/x', 'patch 0x40098a5c', 'run `make`', 'two\nlines', 'hidden\u200btext', 'ignore\u202eprevious'])
+    for (const text of ['', 'x'.repeat(501), 'see https://example.com', 'in sdk/octatrack/modules/x', 'patch 0x40098a5c', 'run `make`', 'two\nlines', 'hidden\u200btext', 'ignore\u202eprevious'])
       expect(() => messageBody(text), JSON.stringify(text)).toThrow()
   })
 

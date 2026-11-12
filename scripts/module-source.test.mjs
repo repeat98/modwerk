@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { execFileSync } from 'node:child_process'
+import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
 import { compiledModuleVersions, moduleSourcePaths, moduleSourceFingerprint, sourceEntryHash, isDocumentationPath } from './module-source.mjs'
 const root = fileURLToPath(new URL('../', import.meta.url))
 const catalog = JSON.parse(await readFile(resolve(root, 'sdk/catalog.json'), 'utf8'))
@@ -37,9 +38,9 @@ describe('release package scope and reviewed source inventory', () => {
   it('refuses stale and duplicate catalog pins for requested imports', async () => {
     const temporary = await mkdtemp(resolve(tmpdir(), 'octamod-scope-test.'))
     try {
-      const id = requested[0], folder = resolve(temporary, 'sdk/octabam/modules', id)
+      const id = requested[0], folder = resolve(temporary, 'sdk/octatrack/modules', id)
       await mkdir(folder, { recursive: true })
-      await writeFile(resolve(folder, 'octamod.module.json'), await readFile(resolve(root, 'sdk/octabam/modules', id, 'octamod.module.json')))
+      await writeFile(resolve(folder, 'octamod.module.json'), await readFile(resolve(root, 'sdk/octatrack/modules', id, 'octamod.module.json')))
       const entry = catalog.modules.find(module => module.id === id)
       await expect(compiledModuleVersions(temporary, { modules: [{ ...entry, version: '0.1.0-experimental' }] })).rejects.toThrow('Stale catalog module version')
       await expect(compiledModuleVersions(temporary, { modules: [entry, entry] })).rejects.toThrow('Invalid catalog module id')
@@ -53,7 +54,9 @@ describe('the code fingerprint', () => {
   const files = (overrides = {}) => ({ 'modules/demo/manifest.py': 'NAME = "demo"\n', 'modules/demo/demo.asm': ' nop\n', 'modules/demo/octamod.module.json': JSON.stringify(manifest), 'modules/demo/README.md': 'Words.\n', 'modules/demo/TESTING.md': 'Results.\n', 'modules/demo/LICENSE': 'MIT\n', 'modules/demo/media/a.png': 'png', 'modules/demo/presentation/thumbnail.svg': '<svg/>', 'modules/demo/evidence/report.json': '{}', 'modules/demo/upstream/NOTES.md': 'notes', 'platform/p.s': ' nop\n', 'tools/t.py': 'x=1\n', 'dsp/d.asm': ' nop\n', 'licenses/l.txt': 'MIT\n', ...overrides })
   async function tree(overrides) {
     const dir = await mkdtemp(resolve(tmpdir(), 'octamod-fingerprint-'))
-    for (const [path, text] of Object.entries(files(overrides))) { const target = resolve(dir, 'sdk/octabam', path); await mkdir(resolve(target, '..'), { recursive: true }); await writeFile(target, text) }
+    // As in a checkout: the modules in sdk/octatrack/modules, and the mirror octabam's compiler reads.
+    for (const [path, text] of Object.entries(files(overrides))) { const target = resolve(dir, path.startsWith('modules/') ? 'sdk/octatrack' : 'sdk/octabam', path); await mkdir(resolve(target, '..'), { recursive: true }); await writeFile(target, text) }
+    await mkdir(resolve(dir, 'sdk/octabam'), { recursive: true }); mirrorOctatrackModules(dir)
     return dir
   }
   const edit = (change) => JSON.stringify({ ...manifest, ...change })

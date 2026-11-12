@@ -32,6 +32,7 @@ import * as formats from '../vendor/elekloader/kit/src/formats.ts'
 import { buildBase } from '../src/engine/elekloader/octatrack-base.ts'
 import { applyVariantPatch } from '../src/engine/elekloader/base-variants.ts'
 import { USB_AUDIO_LAYOUTS } from '../src/config/usb-audio.ts'
+import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
 
 const { values: args } = parseArgs({ options: {
   stock: { type: 'string' }, upstream: { type: 'string', default: join(homedir(), '.cache/modwerk-upstream/elekloader') },
@@ -57,6 +58,8 @@ if (args.beta) {
   Object.assign(args, BETA)
 } else if (args.write) throw new Error('--write commits the beta base: build it with --beta, not flags of your own.')
 const root = resolve(import.meta.dirname, '..'), here = join(root, 'sdk/machines/octatrack/elekloader')
+// octabam's tools read the untracked mirror of sdk/octatrack/modules; make it current first.
+mirrorOctatrackModules(root)
 const adapters = join(root, 'sdk/machines/octatrack/module-adapters')
 const committed = { package: join(root, 'src/engine/assets/octatrack-base.elemod'), fills: join(root, 'src/engine/assets/octatrack-base-fills.json'),
   sources: join(root, 'src/engine/assets/octatrack-base-sources.json'), binding: join(root, 'sdk/machines/octatrack/base-binding.json'),

@@ -4,7 +4,7 @@ import visibleProofs from '../engine/assets/sidechain-visible-proofs.json'
 import analogProofs from '../engine/assets/sidechain-analog-bd-proofs.json'
 import { CATALOG_SOURCE } from './modules'
 import { parseModuleDocument, requireModuleQualificationForPublication } from './module-contract'
-import manifest from '../../sdk/octabam/modules/sidechain-compressor/octamod.module.json'
+import manifest from '../../sdk/octatrack/modules/sidechain-compressor/octamod.module.json'
 
 const key = (ids: readonly string[], keep: boolean) => [...ids].sort().join('+') + ':' + keep
 const visible = ['miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'usb-audio-out-tracks-main-cue', 'quantizer', 'previewvol', 'cc-map']
