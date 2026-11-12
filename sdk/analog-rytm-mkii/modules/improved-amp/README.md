@@ -3,7 +3,7 @@
 ## Overview
 
 Module for the Analog Rytm MKII, OS 1.74. It reworks the AMP page: HLD runs from no hold to AUTO
-without cutting the attack and reads in steps, ATK, DEC and REL get fine steps at short times (0.2 ms
+without cutting the attack, as a length in steps that follows the tempo, ATK, DEC and REL get fine steps at short times (0.2 ms
 up to 5 ms) and show times, OVR gets a fine low end, and SOUND SETTINGS > ENV RESET gains AMP and
 AMP+FILT, which restart the amp envelope from silence on every sequenced trig without a click. The
 FILTER envelope's ATK, DEC and REL get the same curves and times. It is always on: there is no switch.
@@ -12,13 +12,13 @@ FILTER envelope's ATK, DEC and REL get the same curves and times. It is always o
 
 | Control | Stock | With Improved AMP |
 |---|---|---|
-| AMP HLD | 0 = AUTO, 1..127 = 15.6 ms .. 16 s from the trig, 7.8 ms steps to 250 ms | 0 = no hold, 1..126 = 0.67 ms steps to 10 ms (15), 1.3 ms to 18 ms (21), 3.3 ms to 51 ms (31), 6.7 ms to 151 ms (46), 13 ms to 298 ms (57), then about 6 % a step to 15.5 s, 127 = AUTO. The decay never starts before the attack reaches the top. 0.67 ms is a block, the OS's smallest hold step |
-| AMP HLD's number | 0..127 | the hold in steps of the selected track at the current tempo and track speed, three digits: 0.005, 0.080, 1.00, 2.38, 31.2, 124, AUTO. The hold itself stays a fixed time; the number says how many steps that is now |
+| AMP HLD | 0 = AUTO, 1..127 = 15.6 ms .. 16 s from the trig, 7.8 ms steps to 250 ms | 0 = no hold, 1..126 = a hold in steps of the track, counted on the Rytm's clock, so it follows the tempo, the track's speed and an external clock: 0.005 to 124 steps (0.67 ms to 15.5 s at 120 BPM, 1x), fine at the short end (0.080 steps at 15, 0.411 at 31, 1.21 at 46, 2.38 at 57, then about 6 % a value). Thirteen values sit exactly on 0.125, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 8, 16, 32 and 64 steps. 127 = AUTO. The decay never starts before the attack reaches the top. A hold ends on a block (0.67 ms), the OS's smallest hold step |
+| AMP HLD's number | 0..127 | the hold in steps, three digits: 0.005, 0.080, 0.125, 0.5, 1, 1.05, 2.38, 21.0, 124, AUTO. The same at every tempo and speed, as the hold is |
 | AMP DEC, FILTER DEC, FILTER REL | stock's curve: 7.9 ms at 1, about 8 ms steps at the low end, 300 ms at 23, 45 s at 127 | 0 instant, 0.2 ms steps to 5 ms (25), 0.5 ms to 15 ms (45), 1 ms to 25 ms (55), 2.5 ms to 50 ms (65), 5 ms to 100 ms (75), 10 ms to 200 ms (85), 25 ms to 300 ms (89), then about 14 % a step to 39.4 s (AMP 126) or 45 s (FILTER 127). AMP DEC 127 stays INF |
 | AMP ATK | 0 instant, 1 = 5.3 ms, about 5 ms steps at the low end, 127 = 30 s | 0 instant, 0.2 ms steps to 5 ms (25), 0.5 ms steps to 15 ms (45), then about 10 % a step to 30 s (measured on the unit) |
 | FILTER ATK | stock's curve (as AMP's) | the same new curve as AMP ATK, built for the filter's speed measured on the unit (1.00x the OS model) |
 | AMP ATK, DEC, FILTER ATK, DEC, REL's numbers | 0..127 | times: an attack's full ramp, a decay's or release's time to -60 dB; AMP DEC 127 = INF |
-| FUNC + turn on HLD | jumps to AUTO | steps 0, HLD 42 (124.7 ms: one step at 120 BPM, 1x) and AUTO |
+| FUNC + turn on HLD | jumps to AUTO | stops at 0, 0.125, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 8, 16, 32, 64 steps and AUTO |
 | AMP OVR | the overdrive's control rises evenly with the knob, so most of the distortion arrives in the first few values | the same range, 0 and 127 as stock, spread so the distortion rises evenly: stock's first step takes about eight knob values, stock's 12 sits at 64. The number stays 0..127 |
 | SOUND SETTINGS > ENV RESET | OFF, FILTER | OFF, AMP, FILTER, AMP+FILT. With AMP in the value, the amp envelope restarts from silence on every sequenced trig and retrig: the voice fades out just before the trig |
 
@@ -30,8 +30,8 @@ let a long sound restart cleanly on every step.
 ### Quick tutorial
 
 1. Press AMP. Turn DEC down: the knob shows its time to -60 dB, in 0.2 ms steps below 5 ms.
-2. Turn HLD to 0: the decay starts as soon as the attack peaks. Turn it up: the knob shows the hold in steps at the current tempo (1.00 is one step). At the top it reads AUTO (decay from note-off).
-3. Hold FUNC and turn HLD: it jumps between 0, 124.7 ms (one step at 120 BPM) and AUTO.
+2. Turn HLD to 0: the decay starts as soon as the attack peaks. Turn it up: the knob shows the hold in steps of the track (1 is one step), and the hold follows the tempo. At the top it reads AUTO (decay from note-off).
+3. Hold FUNC and turn HLD: it stops at 0, 0.125, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 8, 16, 32 and 64 steps, then AUTO.
 4. Turn OVR up from 0: the first values add drive gently.
 5. On an analog BD sound set ATK to about 40 and DEC to 100 or more, and place trigs on every second step. Press PLAY: the attack is heard on the first trig only.
 6. Open the SOUND menu (FUNC + MUTE) > SOUND SETTINGS and set ENV RESET to AMP: every trig now fades in at the ATK rate, without a click.
@@ -59,8 +59,17 @@ let a long sound restart cleanly on every step.
   decay at its end): an idle unit makes no C call there. A fade record passes through unchanged.
 - `improved_amp_voice` (`src/improved-amp.c`) follows each voice's amp level from the records sent (the
   level lives in the voice hardware) and sets the state stock moves to: after a trig 1 (gate, AUTO) or
-  2 (timed); in the timed state it ends the hold when the hold time has passed and the level is at the
+  2 (timed); in the timed state it ends the hold when the hold's steps have passed and the level is at the
   top. A one-pole decay is followed slightly fast, so the attack is never thought done early.
+- HLD in steps: once a block the scan reads the musical clock (0x8000fe54: stock moves it by twice
+  the tempo word a block on its own clock, by a master's ticks on an external one, and keeps it
+  running while the sequencer is stopped) and leaves what it moved. `improved_amp_voice` adds that to
+  each holding voice and ends the hold at `improved_amp_hold_steps[HLD]` steps of the voice's track: a
+  step is the pulses of the track's speed (the pattern's, or the track's own in ADVANCED scale; stock's
+  table at 0x401db6f8), 900,000 clock units each. No hold time is worked out from the tempo, so a
+  change of tempo or speed reaches a running hold in the block it happens. A clock that stands for
+  more than 12 blocks (8 ms: a master that stopped) is counted on at the tempo word's rate, and a
+  tempo word that is no tempo as 120 BPM, so a hold always ends.
 - ATK's rates come from `atk_rate` (`tools/atk_table.py`, 16-bit packed): `improved_amp_voice` writes
   them into the attack's records (the trig's and each held block's) as they are sent.
 - FILTER ATK's rates come from `improved_amp_flt_atk` (same script, 32-bit words): a `ptr` site in
@@ -69,10 +78,11 @@ let a long sound restart cleanly on every step.
 - DEC, REL and HLD: `tools/dec_table.py` builds three tables (`improved_amp_amp_dec`,
   `improved_amp_flt_dec`, `improved_amp_hold`, 128 words each) and `ptr` sites point stock's leas at
   them: the amp decay record (0x40109bee), the filter decay and release records (0x4010d342,
-  0x4010d3b2, 0x4010d3da) and the hold compare (0x40109bc2). Stock's tables stay where they are,
-  unread by the OS. The AMP table is built for the VCA's 0.918x decay speed, the filter's for 1.00x.
-  The hold counter moves a block (16 ticks, 0.67 ms) at a time, so every hold is a whole number of
-  blocks.
+  0x4010d3b2, 0x4010d3da) and the hold compare (0x40109bc2), whose end of the hold `improved_amp_voice`
+  overrides. Stock's tables stay where they are, unread by the OS. The AMP table is built for the VCA's
+  0.918x decay speed, the filter's for 1.00x. The same script builds `improved_amp_hold_steps`, the
+  hold in steps x 225,000 (a quarter of the clock's units in a step at one pulse a step). The hold is
+  counted once a block (0.67 ms), so every hold is a whole number of blocks.
 - OVR: `src/ovr.s` replaces stock's reader of the knob's live value (0x40109b14, once a voice a block)
   and looks the overdrive's control up in a 129-point table, interpolated between points so LFOs and
   performance moves stay smooth. `tools/ovr_table.py` builds the table from a sweep of the stage's
@@ -80,22 +90,22 @@ let a long sound restart cleanly on every step.
   whole.
 - ENV RESET's values: two byte sites, as in Env Reset Amp. 0x400bcf8a lets the setter keep the amp
   bit, 0x400ef8d6 makes the menu step by one. The setting is the sound's byte, saved with it.
-- The knob texts come from core-ar2's `core_params` text for ids 50..58. HLD's reads the tempo, the
-  pattern's or track's speed and the selected track each time it is drawn. HLD's FUNC jump is its
-  parameter record's jump function (id 57, +0x4c/+0x50).
+- The knob texts come from core-ar2's `core_params` text for ids 50..58. HLD's is its table value in
+  steps, the same at every tempo. HLD's FUNC jump is its parameter record's jump function (id 57,
+  +0x4c/+0x50).
 
 ## Changes to stock flows
 
 | Change | For whom | Why | Neighbouring flows |
 | --- | --- | --- | --- |
-| AMP HLD 0 is no hold and 127 is AUTO (stock: 0 is AUTO, 127 is 16 s); HLD, ATK, DEC and REL follow new curves. | Anyone with the module installed, including projects made on stock. | A hold that starts at zero and grows with the knob, and resolution at the short end, need the knob's values to mean new times. | Saved sounds and projects play their stored bytes on the new curves (no migration); MIDI CC follows the knob. |
+| AMP HLD 0 is no hold and 127 is AUTO (stock: 0 is AUTO, 127 is 16 s). HLD is a length in steps that follows the tempo and the track's speed (stock: a fixed time). ATK, DEC and REL follow new curves. | Anyone with the module installed, including projects made on stock. | A hold that starts at zero and grows with the knob, a hold that stays the same part of a step when the tempo moves, and resolution at the short end, need the knob's values to mean new lengths. | Saved sounds and projects play their stored bytes on the new curves (no migration); MIDI CC follows the knob. |
 | AMP OVR's values 1..126 give less drive than the same number on stock; 0 and 127 are unchanged. | Anyone with the module installed, including projects made on stock. | Stock packs most of the overdrive's range into the first few values. | Saved sounds keep their OVR byte and play it on the new curve; LFO, velocity and performance depths to OVR move along the same curve. |
-| FUNC + turn on HLD steps 0, 124.7 ms, AUTO (stock: jumps to AUTO). | Anyone who uses the FUNC jump on HLD. | Quick access to the three most used holds. | Other knobs' FUNC jumps are unchanged. |
+| FUNC + turn on HLD stops at 0, 0.125, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 8, 16, 32 and 64 steps, then AUTO (stock: jumps to AUTO). | Anyone who uses the FUNC jump on HLD. | Quick access to holds on the step grid. | Other knobs' FUNC jumps are unchanged. |
 | ENV RESET steps OFF, AMP, FILTER, AMP+FILT (stock: OFF, FILTER). | Anyone who opens SOUND SETTINGS. | The amp envelope's restart is a setting of the sound, beside the filter's. | OFF and FILTER behave as stock. With AMP, a sounding voice is silent for up to about 7 ms before each sequenced trig. |
 
 The module is always on. Saved values keep their bytes and are read the new way: a project made on
-stock plays HLD 0 as no hold (was AUTO) and HLD 127 as AUTO (was 16 s), HLD 1..126, ATK, DEC and REL on
-the new curves (the same byte is a different time, mostly shorter at the low end) and OVR on its new
+stock plays HLD 0 as no hold (was AUTO) and HLD 127 as AUTO (was 16 s), HLD 1..126 as lengths in steps at
+the tempo, ATK, DEC and REL on the new curves (the same byte is a different time, mostly shorter at the low end) and OVR on its new
 curve. MIDI CC follows the knobs. There is no migration: removing the module plays every project as
 before.
 
@@ -129,8 +139,12 @@ the configurator offers one or the other.
   tick 6 ms or more late, the next trig plays as stock. A retrig series' last hit that falls within a
   block (0.67 ms) of the series' end can be judged wrong either way there: faded for and not played,
   or played without a fade.
-- The HLD number counts steps of the selected track at the tempo when it is drawn. The hold is a fixed
-  time: after a tempo or speed change the same hold reads as a different number of steps.
+- HLD counts straight steps on the clock: swing and micro timing do not move a hold's end, and a pad's
+  or MIDI note's hold is counted from that hit. On an external clock a hold follows the master's ticks;
+  when the master stops, the hold runs on, after 8 ms, at the rate of the Rytm's tempo word (read in
+  the code, not run on a unit).
+- A hold ends on a block: a hold shorter than a block (0.67 ms; the lowest values above 120 BPM, or
+  at a speed above 1x) lasts one.
 - AMP ATK and DEC times are calibrated to one Rytm MKII (EV06, 6 Nov 2026): its VCA ran attacks at
   0.957x and decays at 0.918x the OS's timing model, so the ATK table is built for 0.957 and the
   AMP DEC text is scaled by 0.918. The filter envelope, measured through the self-oscillating

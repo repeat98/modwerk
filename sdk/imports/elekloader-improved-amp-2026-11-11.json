@@ -25,8 +25,8 @@
       "conflicts": [
         "env-reset-amp"
       ],
-      "summary": "The AMP page reworked: HLD from no hold to AUTO, shown in steps; ATK, DEC and REL in fine steps from 0.2 ms, shown as times; a finer OVR; and ENV RESET AMP without a click.",
-      "description": "Always on while installed. AMP HLD runs from no hold (0) to AUTO (127), never cuts the attack and reads in steps at the current tempo and track speed. AMP and FILTER ATK, DEC and REL move in 0.2 ms steps up to 5 ms and read as times. AMP OVR keeps its 0 to 127 number and is finer at its low end. SOUND SETTINGS > ENV RESET gains AMP and AMP+FILT: a sequenced trig or retrig of such a sound is faded out just before it, so the envelope restarts from silence without a click. Saved sounds play their HLD, ATK, DEC, REL and OVR values on the new curves while it is installed. It carries Env Reset Amp's ENV RESET values and cannot be installed with it.",
+      "summary": "The AMP page reworked: HLD from no hold to AUTO, in steps that follow the tempo; ATK, DEC and REL in fine steps from 0.2 ms, shown as times; a finer OVR; and ENV RESET AMP without a click.",
+      "description": "Always on while installed. AMP HLD runs from no hold (0) to AUTO (127), never cuts the attack and is a length in steps of the track that follows the tempo and the track's speed; FUNC + turn stops on the step grid from 0.125 to 64 steps. AMP and FILTER ATK, DEC and REL move in 0.2 ms steps up to 5 ms and read as times. AMP OVR keeps its 0 to 127 number and is finer at its low end. SOUND SETTINGS > ENV RESET gains AMP and AMP+FILT: a sequenced trig or retrig of such a sound is faded out just before it, so the envelope restarts from silence without a click. Saved sounds play their HLD, ATK, DEC, REL and OVR values on the new curves while it is installed. It carries Env Reset Amp's ENV RESET values and cannot be installed with it.",
       "category": "Sound",
       "author": "npp1993",
       "needs_core": "0.7",
