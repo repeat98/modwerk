@@ -106,7 +106,19 @@
       "evidence/source-identity.json",
       "TESTING.md"
     ],
-    "hardware": null,
+    "hardware": {
+      "model": "Digitakt I",
+      "release": "1.54",
+      "testedOn": "2026-11-12",
+      "tester": "draadpiraat",
+      "durationMinutes": 20,
+      "summary": "draadpiraat tested CC Remap 0.1.0 on their Digitakt I, OS 1.54, with an Allen & Heath Xone:1D: the layer on AMP, CC Receive moving VAL1–8 with the slot’s CC SELECT number going out, per-track tables on their own channels, the table after pattern changes and 70–77 after each power cycle (about 20 minutes, also beside FX Track and CC Assignment Names). The final build with the page copy fix was then reported as checking out, alone and with CC Recall: page copy, paste and clear do nothing on CC Receive and stay stock on CC SELECT. The author also plays the module in a private live build.",
+      "limitations": [
+        "The final build's run was reported as one statement for the whole checklist, and its duration was not stated; 20 minutes is the first build's session.",
+        "The auto channel, USB MIDI input and a CC flood were not tested.",
+        "Firmware was not read back from the device; the builds are identified by their SysEx hashes."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
