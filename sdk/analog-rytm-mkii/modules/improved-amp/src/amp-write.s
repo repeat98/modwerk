@@ -1,5 +1,5 @@
         | SPDX-License-Identifier: GPL-2.0-only
-        | Envelopes - the amp envelope record write (OS 1.74), Nathaniel Pavel.
+        | Improved AMP - the amp envelope record write (OS 1.74), Nathaniel Pavel.
         |
         | Every voice's record goes to improved_amp_voice (improved-amp.c), which puts
         | this module's ATK rate into the attack's records, follows the voice's

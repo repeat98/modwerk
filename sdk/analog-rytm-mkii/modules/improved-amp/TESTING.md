@@ -6,14 +6,93 @@ Improved Envelopes (symbols `envelopes_*`, now `improved_amp_*`; HLD then read i
 pre-fade" records the pre-fade's builds from before it moved into this module. The test builds' `.syx`
 files stayed on the tester's computer.
 
-## This version on a unit: IL02, 9 and 10 Nov 2026
+## This version on a unit: IL04, IA12 and the idle load, 11 Nov 2026
+
+The author's Analog Rytm MKII, OS 1.74, run hands off by the author's automated test rig, as its reports
+have it. This source (0.1.0-experimental; fingerprint, the `sha256` of `sha256sum build.json src/amp-write.s
+src/hot.h src/improved-amp.c src/ovr.s src/pre-fade.c src/pre-fade.s`: `d2f40562…05d6`,
+`evidence.sourceSha256`) differs from the one of the runs of 9 and 10 November (next section) in what an
+idle audio block costs and in nothing a musician can see or hear; that is what these runs check.
+
+What changed: the words the two amp record entries read every block share one cache line; an idle
+voice leaves both entries without reading the stored records; the trig scan returns early when no
+queued event's time is inside its window and no track has both AMP in ENV RESET and a retrig series
+running; the OVR reader keeps its last answer a voice.
+
+- **The 25 cases.** IL04 (sha256 `662faad7…12b5`): this module alone on the development base with the USB
+  test link, loaded to RAM. All 25 cases pass in one run against the references kept on 10 November.
+  Read in that run: `len20` 9.5, 19.5, 61.0, 134.5 and 308.0 at HLD 0, 15, 31, 42 and 57, 108.5 and 509.5
+  for AUTO with a 100 and a 500 ms note; 10.0, 101.5 and 2943.5 at DEC 55, 89 and 127; OVR's peak over
+  OVR 0 +0.15, +1.26, +2.52, +4.73, +5.92, +6.67, +7.20, +7.72, +8.21, +8.78 and +8.84 dB at 1, 8, 16, 32,
+  48, 64, 80, 96, 112, 126 and 127; FILTER DEC 7.0, 13.5, 25.0 and 37.0 and REL 56.0, 61.5, 73.5 and 85.5
+  at 65, 75, 85 and 89; 18 dips for 19 sequenced trigs at AMP and at AMP+FILT, none at OFF, at FILTER or
+  for MIDI notes; 15 dips for the retrig lock, 6 for the series a note trig ends, 9 at 200 BPM (74.5 ms
+  apart), 3 and 15 with lock trigs (61.0 ms apart), 6, 3 and 4 with the conditions, 3 a time round with
+  micro timing (197.5 ms apart), 14 at swing 50 % and 66 % (124.5 and 85.5 ms apart), 8 around the mute, 0,
+  8 and 0 around the ENV RESET edit, and 2, 1, 0, 1 for the sound locks. Each is within the tolerance of
+  the next section's figure.
+- **The package's own image.** IA12 (sha256 `e28ebdd4…ed3f`): the plain base and this module alone, no
+  link, loaded to RAM. The unit stopped answering the link, as an image without it does. Eleven MIDI
+  notes with CCs on the auto channel, the BD voice recorded: `len20` 9.5, 134.5 and 308.0 at HLD 0, 42
+  and 57; 111.0 and 512.0 for AUTO with a 100 and a 500 ms note; 102.0 at DEC 89; attack 15.5 at ATK 45;
+  OVR's peak +1.25, +6.66 and +8.86 dB at 8, 64 and 127. The same eleven on IL04 just before: 9.5, 134.5,
+  308.0; 113.5, 513.5; 102.5; 15.0; +1.25, +6.66, +8.86. Keys, screens, the sequencer and a boot from
+  flash were not part of it.
+- **Idle load.** A meter built for this test stamps the 132 MHz timer at the audio block's first and
+  last handler and at the amp record hook's first and last entry (88,000 ticks a block). Sequencer
+  stopped, 120 BPM, three windows of 20 s an image, each image the development base, the meter and:
+
+  | Image | Kit | Audio block busy | In the amp record hook |
+  | --- | --- | --- | --- |
+  | nothing more | four tracks on ENV RESET AMP+FILT | 65.75 to 65.82 % | 0.14 % (the meter's own) |
+  | the source of 9 and 10 November | the same kit, reloaded | 67.85 to 67.95 % | 1.29 % |
+  | this source | the same kit, reloaded | 67.27 to 67.29 % | 1.00 to 1.02 % |
+  | the source of 9 and 10 November | no track on AMP | 67.59 % | 1.28 % |
+  | this source | no track on AMP | 67.17 to 67.21 % | 0.92 to 0.94 % |
+
+  So the module took about 1.8 points of the block and takes 0.4 to 0.6 less. The base line was read in
+  the kit's state before its reload, where the earlier source read 67.58 %; it was not read again
+  after. About 0.6 point of what is left is outside the hook and was not traced.
+
+Before the unit: the old scan and the new one gave the same marks on 20 million random states of the
+memory they read, and each of eight deliberate faults put into the new one was caught; 68 written cases
+of the scan pass; rytm-emu, IA12 against IA08: the 112 frames of the AMP page and ENV RESET runs are the
+same byte for byte, and the fade mask, the started bits and the series' words are the same in all 19,400
+readings of the trig, roll, swing, stop and series-end runs (the clock a constant 1,680 units apart);
+the OVR reader's kept pairs read 0x0000, 0x003e, 0x01ef, 0x182f and 0xfe00 for 0, 1, 8, 64 and 127; four
+independent reviews, one of them modelling the OVR reader over every live word.
+
+Runs that did not pass, and why:
+
+- The scratch kit no longer held the test sound: the BD's SAMPLE page had been cleared and the project
+  saved by hand, so the BD played a 50 Hz sample. The first run counted no fades in eight pre-fade
+  cases; the fades were in its recordings (eight stretches 30 dB under the peak, 250 ms apart, in the
+  ENV RESET edit take). The BD was set back over the link: sample 52 looped, TUN +24, level matched to
+  the references' -12.4 dBFS.
+- The kit's active scene held the BD's OVR at 19, and the BD's velocity modulation moved FILTER DEC:
+  the OVR and FILTER sound cases failed until another scene was selected and the three depths were set
+  to 0. With them the three passed, and then all 25 in one run.
+- Five runs stopped at `a person is at the unit` while the link itself swept the tempo; nobody was at
+  the unit. The cases not yet run were run again.
+- One RAM boot fell back to the flashed image, and two came up with the link disarmed.
+
+Not run on a unit in this version:
+
+- A boot of this package's image from flash, and its keys, screens and sequencer (IA12 ran from RAM
+  with notes and CCs only).
+- A power cycle, a project save and load, a sound stored to the +Drive and loaded again.
+- Pads; an external MIDI clock; a pattern change inside a fade; probability conditions.
+- The cases the next section lists as read in the code only.
+- OVR's curve by ear, and with another sound or unit.
+- The audio load while a pattern plays: the meter was read with the sequencer stopped.
+
+## The earlier source of this version on a unit: IL02, 9 and 10 Nov 2026
 
 The author's Analog Rytm MKII, OS 1.74. Image IL02 (sha256 `a569c9f5…284c`): a development build of the
 Modwerk base (core-ar2 0.7) that adds a USB test link, and this module alone, built from this folder's
-`build.json` and `src/` (0.1.0-experimental; fingerprint, the `sha256` of `sha256sum build.json
-src/amp-write.s src/improved-amp.c src/ovr.s src/pre-fade.c src/pre-fade.s`: `54f0d4b9…b4b4`,
-`evidence.sourceSha256`). It was loaded to RAM over USB: the unit's flash was not written, and a power
-cycle ends it. IS01 (sha256 `c08c226d…ee90`) is the same base and link without the module, for the
+`build.json` and `src/` as they stood at commit `2e4ea335` (fingerprint, the `sha256` of `sha256sum
+build.json src/amp-write.s src/improved-amp.c src/ovr.s src/pre-fade.c src/pre-fade.s`: `54f0d4b9…b4b4`).
+It was loaded to RAM over USB: the unit's flash was not written, and a power cycle ends it. IS01 (sha256 `c08c226d…ee90`) is the same base and link without the module, for the
 columns marked stock.
 
 Run hands off by the author's automated test rig, as reported in the rig's run record; the figures below
@@ -119,9 +198,9 @@ from the kept takes themselves, not from the record):
 - Kit values meet the new curves at once: the kit's BD, untouched, read `len20` 642.5 on IS01 and 9.5 to
   10 on IL02 (one boot each), as "Changes to stock flows" in the README says.
 
-Not run on a unit in this version:
+Not run on a unit with this source:
 
-- This package's own image, IA08 (this module on the plain base, no link), and a boot from flash.
+- The package's own image of the time, IA08 (this module on the plain base, no link), and a boot from flash.
 - A power cycle, a project save and load, a sound stored to the +Drive and loaded again (a kit save and
   reload was run, and pool sounds stored by hand played through sound locks, above).
 - Pads: a pad hit, and a pad roll let go just before its next hit (the tail is expected to be cut: README).
@@ -140,7 +219,9 @@ Not run on a unit in this version:
 - The screen lag once reported on trig + RTRG (ER05), with and without the module.
 - Memory and audio load on the unit: `resources` are read from the link and the code.
 
-## This version in rytm-emu: IA08, 9 Nov 2026
+## The earlier source of this version in rytm-emu: IA08, 9 Nov 2026
+
+IA12, this source's own image, was compared with IA08 run for run (first section).
 
 Build IA08: the plain Modwerk base and this module alone, linked on stock OS 1.74 by
 `scripts/link-image.mjs`; sha256 0c5420f573e80245192fe9414f678e8d993033efbd9e636ef0edf2ee1d3625c1, ramSpare 111,136 (the base alone: 119,004). rytm-emu
@@ -194,7 +275,7 @@ Build IA08: the plain Modwerk base and this module alone, linked on stock OS 1.7
   two events in one block, lock trigs and rates, the series' end, sound locks, the kit's sound, held and muted
   tracks).
 
-IA08 itself has not run on a unit; the unit runs of this source are above.
+IA08 itself has not run on a unit; the unit runs are above.
 
 ## Unit, EN05 (envelopes on the amp record hook), 9 Nov 2026
 

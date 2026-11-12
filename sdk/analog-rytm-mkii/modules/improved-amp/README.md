@@ -153,16 +153,22 @@ The envelope curves and the pre-fade were measured on the author's Analog Rytm M
 builds (EV04 to EN05), with rytm-emu for the screens ([TESTING.md](TESTING.md)): AMP DEC within 0.7 %
 of its text from 5 ms, AMP HLD within 0.1 ms, FILTER ATK within 0.3 %, FILTER DEC and REL 1.5 % (the
 method's); with ENV RESET AMP every one of 493 sequenced hits and retrigs fell to silence before its
-trig. This version ran on the same unit on 9 and 10 November 2026 under the author's automated USB test
-rig (image IL02: this source on a development base with a USB test link, loaded to RAM), 25 cases: the
-screens with HLD in steps at three tempos and track speeds, lengths by DEC, HLD and AUTO, OVR's level
-curve and the FILTER times beside the same base without the module, and ENV RESET AMP's fade before
-sequenced trigs, retrigs, swung, micro-timed and sound-locked trigs, with none for MIDI notes, muted
-trigs, lock trigs and trigs whose condition fails. Not run on a unit: this package's own image, pads, a
-power cycle, a boot from flash, an external MIDI clock, a pattern change inside a fade.
-Memory: 7,868 bytes of the shared mod area (the plain base alone leaves 119,004, with this module 111,136).
-Load: the amp record entries run every block for every voice; an idle voice makes no C call there, and
-the trig scan runs once a block.
+trig. This version ran on the same unit under the author's automated USB test rig, 25 cases, on 9 and
+10 November 2026 and, after its idle path was made cheaper, again on 11 November (image IL04: this
+source on a development base with a USB test link, loaded to RAM): the screens with HLD in steps at
+three tempos and track speeds, lengths by DEC, HLD and AUTO, OVR's level curve and the FILTER times
+beside the same base without the module, and ENV RESET AMP's fade before sequenced trigs, retrigs,
+swung, micro-timed and sound-locked trigs, with none for MIDI notes, muted trigs, lock trigs and trigs
+whose condition fails. The package's own image (IA12, the plain base, no link) ran from RAM with MIDI
+notes and CCs only: its hold, decay, attack and OVR read as on IL04. Not run on a unit: a boot of the
+package's image from flash, pads, a power cycle, an external MIDI clock, a pattern change inside a fade.
+Memory: 8,220 bytes of the shared mod area (the plain base alone leaves 119,004, with this module 110,784).
+Load, on the author's unit with the sequencer stopped (TESTING.md): the audio block was 67.2 to 67.3 %
+busy with this module, where the same kit states read 67.6 to 67.9 % before its idle path was made
+cheaper and the base alone 65.8 % in one of them: about 1.4 points, 0.8 to 0.9 of them in the amp record
+entries, which run every block for every voice. An idle voice makes no C call there, the trig scan
+returns after reading the queue's times while nothing is near, and the OVR reader reuses its last
+answer. With a pattern playing it was not measured.
 
 ## Authorship and licences
 
@@ -174,7 +180,7 @@ addresses only; no Elektron firmware is included.
 
 ## Screens and audio
 
-Screenshots are rytm-emu captures of build IA08, this package linked alone on the Modwerk base
+Screenshots are rytm-emu captures of build IA12, this package linked alone on the Modwerk base
 ([media/capture.json](media/capture.json)). No audio preview.
 
 ![AMP DEC reading a time](media/decay-time.png) ![AMP HLD reading steps](media/hold-steps.png) ![ENV RESET at AMP](media/env-reset-amp.png)

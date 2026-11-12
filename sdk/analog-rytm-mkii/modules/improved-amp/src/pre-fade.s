@@ -44,7 +44,8 @@
         | the voices a scheduled trig with AMP in its ENV RESET will restart
         | within the fade. The scan runs every block: a sound lock can bring
         | AMP to a track whose own sound has it off. With nothing near it
-        | returns after reading the queue's times (pre-fade.c).
+        | returns after reading the queue's times and the ENV RESET bytes
+        | (pre-fade.c).
         | For a marked voice that is sounding and was not
         | trigged this block, it sends a linear ramp to -128 instead of the
         | state's command: the ramp (mode B) in its first block, then mode 3 with
