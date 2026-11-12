@@ -33,7 +33,8 @@ Set the groups once; they are kept on the +Drive for the whole unit.
 ## Compatibility and limitations
 
 - Built for OS 1.54 only, on Core 2.1.
-- The groups, the fader CC and FADER ON are kept for the whole unit on the +Drive (`/cfw/xfade.a`, `.b`), not per project or pattern. The fader's position is not saved.
+- The groups, the fader CC and FADER ON are kept for the whole unit on the +Drive (`/cfw/xfade.a`, `.b`), not per project or pattern. The fader's position is not saved: after power-on it is at A.
+- The position line in the fader box is a pixel off centre: at A it runs past the box's edge line, at B it stops short of it.
 - It is the last layer on each channel's level: track levels, the External Mixer and its global setting still apply, and the delay and reverb sends follow the fade.
 
 ### Changes to stock flows

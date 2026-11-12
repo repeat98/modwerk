@@ -44,9 +44,14 @@ draadpiraat, Digitakt I, OS 1.54, 10 November 2026: LF03 (the Crossfader and the
 
 ### CF01
 
-Not run yet: this exact build, the Crossfader alone, needs its own hardware run.
+draadpiraat, Digitakt I, OS 1.54, 12 November 2026: “everything checked out”: the groups, LEVEL on the Internal Mixer and FUNC + LEVEL, the sends following the fade, FADER ON, the fader CC and the settings after a power cycle. Run time not stated. Report: [evidence/hardware-testing.json](evidence/hardware-testing.json).
+
+Noticed on the unit, for the next version:
+
+- After power-on the fader is at A; the author would rather it start in the middle.
+- An optional snap at the middle of the fader was asked for.
+- The position line in the box is a pixel off centre: at A it runs past the edge line, at B it stops short of it.
 
 ## Not tested
 
-- CF01 on hardware.
 - The fader beside other modules that change the mixer.

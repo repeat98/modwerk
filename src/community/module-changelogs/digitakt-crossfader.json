@@ -6,7 +6,7 @@
       "First release for Digitakt I OS 1.54: a crossfader between two groups of audio tracks and inputs, with an equal-power curve.",
       "The fader is LEVEL on the Internal Mixer, LEVEL on the pages of the tracks you put on FADER ON, or a CC on FX CONTROL CH.",
       "Groups and settings are on SETTINGS > CROSSFADER and are kept for the whole unit; the delay and reverb sends follow the fade.",
-      "Known issue: the settings are not per project or pattern, and the fader's position is not saved."
+      "Known issues: the settings are not per project or pattern; the fader's position is not saved, so it is at A after power-on; the position line in the fader box is a pixel off centre."
     ]
   }
 ]

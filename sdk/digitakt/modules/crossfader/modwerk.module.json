@@ -105,15 +105,28 @@
     }
   },
   "evidence": {
-    "tier": "emulator",
+    "tier": "author-hardware",
     "moduleVersion": "0.1.0-experimental",
     "sourceSha256": "63172f54d98bfe0083bca644df2f6d6029d1352b52359342922d2ed9dc790f8f",
     "reports": [
+      "evidence/hardware-testing.json",
       "TESTING.md",
       "evidence/emulator-testing.json",
       "evidence/source-identity.json"
     ],
-    "hardware": null,
+    "hardware": {
+      "model": "Digitakt I",
+      "release": "1.54",
+      "testedOn": "2026-11-12",
+      "tester": "draadpiraat",
+      "durationMinutes": 120,
+      "summary": "draadpiraat ran the Crossfader on their Digitakt I, OS 1.54: first inside LF03 (the Crossfader and the looper as one module) for two hours or more, then this exact build alone (CF01). Everything checked out: groups A and B, LEVEL on the Internal Mixer fading A to B, FUNC + LEVEL to the middle, the delay and reverb following the fade, FADER ON with LEVEL push doing nothing on fader pages and stock elsewhere, the fader CC on FX CONTROL CH, and the settings back after a power cycle.",
+      "limitations": [
+        "The fader starts at A after power-on (its position is not saved).",
+        "The box's position line is drawn slightly off centre: past the edge line at A, short of it at B.",
+        "CF01's own run time was not stated; the two-hour figure is the LF03 session with the same crossfader code."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
