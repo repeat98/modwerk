@@ -13,9 +13,15 @@ spec.loader.exec_module(octatest)
 # A stand-in for `npm run device -- try`: says it runs, then rolls back on SIGINT, or says accepted when told to.
 FAKE_TRIAL = '''
 import signal, sys, time
+# The handler only notes the interrupt: the test sends it as soon as it reads "running", which can be while that
+# line is still being written, and printing from the handler then fails with a reentrant write.
+stop = []
+signal.signal(signal.SIGINT, lambda *a: stop.append(1))
 print('trial: 0123456789abcdef… running', flush=True)
-signal.signal(signal.SIGINT, lambda *a: (print(sys.argv[1], flush=True), sys.exit(0)))
-time.sleep(30)
+deadline = time.monotonic() + 30
+while not stop and time.monotonic() < deadline:
+    time.sleep(0.01)
+print(sys.argv[1], flush=True)
 '''
 
 
