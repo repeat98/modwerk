@@ -19,6 +19,7 @@ import { useAddBlockPrompt } from './use-add-block-prompt'
 import { useModuleAudioPreviews } from './audio-preview-context'
 import { ModuleAudioCardCover } from './ModuleAudioPreview'
 import { useSetWords } from '../community/beta-ui'
+import { MODULE_COMPARE_ENABLED } from './module-compare'
 
 export type ModuleCardProps = {
   module: FirmwareModule
@@ -74,7 +75,7 @@ export function CardProof({ stability, statistics, name, compared, canCompare, o
       {review > 0 && <span className="card-proof-count is-review" title={review.toLocaleString() + ' unconfirmed ' + (review === 1 ? 'report' : 'reports')}><Icon name="message" size={13} />{review.toLocaleString()}<span className="sr-only"> unconfirmed {review === 1 ? 'report' : 'reports'}</span></span>}
       {waiting > 0 && <span className="card-proof-count is-waiting" title={waiting.toLocaleString() + ' waiting for reporter details'}><Icon name="help" size={13} />{waiting.toLocaleString()}<span className="sr-only"> waiting for reporter details</span></span>}
     </span>}
-    <label><input type="checkbox" checked={compared} disabled={!canCompare} onChange={onCompare} />Compare<span className="sr-only"> {name}</span></label>
+    {MODULE_COMPARE_ENABLED && <label><input type="checkbox" checked={compared} disabled={!canCompare} onChange={onCompare} />Compare<span className="sr-only"> {name}</span></label>}
   </div>
 }
 
