@@ -11,6 +11,11 @@
       "event": "ev_settings",
       "fn": "kb_settings",
       "order": 50
+    },
+    {
+      "event": "ev_key",
+      "fn": "kb_key",
+      "order": 50
     }
   ],
   "contribute": [],
@@ -18,7 +23,8 @@
   "copied": [],
   "regions": [],
   "claims": [
-    "settings:KIT PER BANK"
+    "settings:KIT PER BANK",
+    "projdata:KBLK"
   ],
   "requires": [],
   "derive": null,
@@ -75,6 +81,27 @@
           "stockSha256": "f7fddeefeac300af619b7028a954dc595076d9d098da7090973c1cbc1f649ec0",
           "op": "jmp",
           "target": "kb_sndreload"
+        },
+        {
+          "addr": "0x4000eb10",
+          "len": 8,
+          "stockSha256": "52dccc03e103dca3839c839017cffce1d4a1e675d8dfb2804764141e86c63841",
+          "op": "jmp",
+          "target": "kb_projsave"
+        },
+        {
+          "addr": "0x4000e7f4",
+          "len": 8,
+          "stockSha256": "3e47fdc2a5af6492a822beaa4ccd4bb53d5f5b2111c689c9f6f1cca2a3df15e2",
+          "op": "jmp",
+          "target": "kb_projload"
+        },
+        {
+          "addr": "0x4001570e",
+          "len": 8,
+          "stockSha256": "a04973fb79ed0896aa768e97902a85f61a10ad9d106955b3fe7a112c76d0e51f",
+          "op": "jmp",
+          "target": "kb_projnew"
         }
       ]
     }

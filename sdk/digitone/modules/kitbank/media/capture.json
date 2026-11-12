@@ -2,13 +2,13 @@
   "schemaVersion": 1,
   "machine": "digitone",
   "moduleId": "kitbank",
-  "moduleVersion": "0.1.0-experimental",
+  "moduleVersion": "0.2.0-experimental",
   "capturedAt": "2026-11-12",
   "firmware": "1.44",
-  "imageSha256": "13c0595b442bc1c68d78069eea4ee451a917b26f9990c79753037de288762e04",
+  "imageSha256": "fd4cf27d419295343c53893501ee01ee513a57ccb9e7dae533be974f5694fd2b",
   "stockSha256": "d4f200d04484333d82822db7744e6484d0def8f2db8ddf55ee2b780cc13c9659",
   "build": {
-    "tool": "node scripts/link-image.mjs --version XX01",
+    "tool": "node scripts/link-image.mjs --version XX05",
     "modules": [
       {
         "id": "core",
@@ -17,11 +17,11 @@
       },
       {
         "id": "kitbank",
-        "version": "0.1.0-experimental",
+        "version": "0.2.0-experimental",
         "source": "sdk/digitone/modules/kitbank (this folder)"
       }
     ],
-    "outputVersion": "XX01"
+    "outputVersion": "XX05"
   },
   "emulator": {
     "repository": "https://github.com/irpina/digiemu",
@@ -59,7 +59,7 @@
       "release 16"
     ],
     [
-      1800.053,
+      1800.052,
       "press 16"
     ],
     [
@@ -83,7 +83,7 @@
       "release 16"
     ],
     [
-      3000.087,
+      3000.088,
       "press 16"
     ],
     [
@@ -99,7 +99,7 @@
       "release 16"
     ],
     [
-      3800.111,
+      3800.11,
       "press 16"
     ],
     [
@@ -111,7 +111,7 @@
       "press 16"
     ],
     [
-      4300.126,
+      4300.125,
       "release 16"
     ],
     [
@@ -153,25 +153,96 @@
     [
       6300.183,
       "release 13"
+    ],
+    [
+      6600.193,
+      "press 14"
+    ],
+    [
+      6700.195,
+      "release 14"
+    ],
+    [
+      7000.204,
+      "press 14"
+    ],
+    [
+      7100.206,
+      "release 14"
+    ],
+    [
+      7400.215,
+      "press 4"
+    ],
+    [
+      7500.218,
+      "press 26"
+    ],
+    [
+      7600.222,
+      "release 26"
+    ],
+    [
+      7900.23,
+      "release 4"
+    ],
+    [
+      8700.253,
+      "press 4"
+    ],
+    [
+      8800.256,
+      "press 28"
+    ],
+    [
+      8900.259,
+      "release 28"
+    ],
+    [
+      9200.268,
+      "release 4"
+    ],
+    [
+      10000.291,
+      "press 4"
+    ],
+    [
+      10100.294,
+      "press 13"
+    ],
+    [
+      10180.768,
+      "release 13"
+    ],
+    [
+      10380.768,
+      "release 4"
     ]
   ],
   "captures": [
     {
       "path": "media/settings-off.png",
       "sha256": "546fd24aafd699b3d5ac20b25bd47477ca99b7688ca79917bcd2894b452c8444",
-      "plan": "wait 1000\ntap GLOBAL\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings-off\ntap YES\nsnap settings-on\n",
+      "plan": "wait 1000\ntap GLOBAL\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings-off\ntap YES\nsnap settings-on\ntap NO\ntap NO\npress PTN\ntap 1\nrelease PTN\nwait 700\npress PTN\ntap 3\nrelease PTN\nwait 700\npress PTN\ntap YES 80 200\nsnap kit-locked\nrelease PTN\n",
       "atMs": 6200.180769230769,
       "requestedAtMs": 6200.180769230769
     },
     {
       "path": "media/settings-on.png",
       "sha256": "cece0825ac5c705eaba1c122acf9f2ab2bfd379f89ab4554c1440fe1de53475b",
-      "plan": "wait 1000\ntap GLOBAL\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings-off\ntap YES\nsnap settings-on\n",
-      "atMs": 6600.19188034188,
-      "requestedAtMs": 6600.19188034188
+      "plan": "wait 1000\ntap GLOBAL\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings-off\ntap YES\nsnap settings-on\ntap NO\ntap NO\npress PTN\ntap 1\nrelease PTN\nwait 700\npress PTN\ntap 3\nrelease PTN\nwait 700\npress PTN\ntap YES 80 200\nsnap kit-locked\nrelease PTN\n",
+      "atMs": 6600.192521367521,
+      "requestedAtMs": 6600.192521367521
+    },
+    {
+      "path": "media/kit-locked.png",
+      "sha256": "dd7ceebbff05030a5642588ab7e0e39db307397f7e3f557748a669e023df8065",
+      "plan": "wait 1000\ntap GLOBAL\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings-off\ntap YES\nsnap settings-on\ntap NO\ntap NO\npress PTN\ntap 1\nrelease PTN\nwait 700\npress PTN\ntap 3\nrelease PTN\nwait 700\npress PTN\ntap YES 80 200\nsnap kit-locked\nrelease PTN\n",
+      "atMs": 10168.623717948718,
+      "requestedAtMs": 10380.767735042735
     }
   ],
   "limitations": [
-    "UI-only documentation of the SETTINGS row; the kit behaviour is covered by the emulator tests in TESTING.md."
+    "UI documentation of the SETTINGS row and of the KIT LOCKED message (PTN still held, hence the A?? in the corner); the kit behaviour is covered by the emulator tests in TESTING.md."
   ]
 }

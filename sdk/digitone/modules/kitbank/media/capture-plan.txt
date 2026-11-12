@@ -15,3 +15,17 @@ tap DOWN
 snap settings-off
 tap YES
 snap settings-on
+tap NO
+tap NO
+press PTN
+tap 1
+release PTN
+wait 700
+press PTN
+tap 3
+release PTN
+wait 700
+press PTN
+tap YES 80 200
+snap kit-locked
+release PTN
