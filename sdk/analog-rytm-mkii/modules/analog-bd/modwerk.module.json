@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 3,
+  "id": "analog-bd",
+  "name": "Analog BD",
+  "version": "0.2.0-experimental",
+  "machine": "analog-rytm-mkii",
+  "category": "machines",
+  "exclusive": false,
+  "author": {
+    "github": "repeat98",
+    "name": "Jannik Aßfalg",
+    "credits": [
+      "Jannik Aßfalg (repeat98): Analog BD's 808 and 909 models, fits and coefficients (MIT), from the Octatrack module.",
+      "Nathaniel Pavel (npp1993): the port to the Analog Rytm MKII (fixed-point engine, machine, 808/909 tap)."
+    ]
+  },
+  "maintainers": [
+    "repeat98",
+    "npp1993"
+  ],
+  "presentation": {
+    "label": "ANALOG BD",
+    "family": "Machine",
+    "summary": "BD ANALOG: repeat98's 808 and 909 bass drum models from Analog BD, as a Rytm machine on the BD, SD and BT tracks.",
+    "overview": "Plays the 808 and 909 bass drums Jannik Aßfalg (repeat98) modelled for Analog BD on the Octatrack, computed on the Rytm's ColdFire at 48 kHz and sent through the voice's own filter, overdrive and amp. A tap of encoder B switches the sound between 808 and 909; each hit's velocity is the accent.",
+    "highlights": [
+      "The Octatrack Analog BD's 808 and 909 models, at 48 kHz.",
+      "Tap encoder B to switch 808 and 909; the choice saves with the sound.",
+      "Accent follows each hit's velocity: soft hits rounder, hard ones snappier.",
+      "Runs on the BD, SD and BT voices, through their stock filter, AMP and OVR."
+    ],
+    "usage": [
+      "Choose BD ANALOG for the BD track (FUNC + SRC), then shape it with TUN, DEC and the stock AMP page.",
+      "Tap encoder B to hear the 909, and play the pads soft and hard for the accent."
+    ]
+  },
+  "access": {
+    "location": "The machine list of the BD, SD or BT track: BD ANALOG. Its SYNTH page.",
+    "steps": [
+      "Select a track and press FUNC + SRC.",
+      "Choose BD ANALOG and press YES.",
+      "On the SYNTH page, tap encoder B to switch between 808 (TON) and 909 (SWT)."
+    ],
+    "screenshots": []
+  },
+  "controls": [],
+  "compatibility": {
+    "releases": [
+      "1.74"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": []
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "0.7",
+    "build": "build.json",
+    "events": [],
+    "claims": [
+      "ui:SYNTH page of the BD ANALOG machine"
+    ]
+  },
+  "resources": {
+    "memoryBytes": null,
+    "fastBytes": null,
+    "load": {
+      "display": "Not measured yet",
+      "method": "unmeasured",
+      "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+    }
+  },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "0.2.0-experimental",
+    "sourceSha256": null,
+    "reports": [],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Not tested yet."
+  },
+  "license": {
+    "spdx": "MIT",
+    "file": "LICENSE",
+    "declaration": "repeat98's Analog BD models (MIT), ported to the Rytm by npp1993."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Analog BD thumbnail",
+      "alt": "Placeholder thumbnail for Analog BD",
+      "credit": "npp1993",
+      "license": "MIT",
+      "source": "SDK template placeholder, to be replaced with Analog BD artwork."
+    }
+  ]
+}

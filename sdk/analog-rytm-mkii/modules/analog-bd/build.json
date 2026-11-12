@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/machine.c",
+    "src/ab_dsp.c",
+    "src/ab_desk.s",
+    "src/ab_body.s",
+    "src/ab_body808.s",
+    "src/ab_noise.s",
+    "src/ab_click.s",
+    "src/ab_tone808.s",
+    "src/ab_trig808.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [],
+  "contribute": [
+    {
+      "to": "core_machines",
+      "order": 50,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:analog_bd_machine",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "mw_voices",
+      "order": 50,
+      "data": "00000000",
+      "relocs": [
+        [
+          0,
+          "abs32",
+          "sym:analog_bd_voice",
+          0
+        ]
+      ]
+    },
+    {
+      "to": "mw_machine_sections",
+      "order": 50,
+      "data": "24010000",
+      "relocs": []
+    }
+  ],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:SYNTH page of the BD ANALOG machine"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.74": {
+      "defsym": {},
+      "cflags": [],
+      "sites": []
+    }
+  }
+}

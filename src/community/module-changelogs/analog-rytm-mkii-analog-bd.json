@@ -1,0 +1,22 @@
+[
+  {
+    "version": "0.2.0-experimental",
+    "date": "2026-11-11",
+    "changes": [
+      "The 909 follows Analog BD 0.1.7 on the Octatrack: refitted to Skee Mask's recorded TR-909, with its body, a click just after the body opens and a louder, longer attack noise.",
+      "909 TUN now spans one octave (64 is the recorded 909) and DEC 15 ms to 600 ms (80 is the recording). Saved 909 sounds play differently: set TUN and DEC again.",
+      "The 808 sounds as before.",
+      "Tested on an MKII: three 909s hit together play clean, four overran, so BD ANALOG is offered on the BD, SD and BT tracks only."
+    ]
+  },
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-05",
+    "changes": [
+      "First release, for Analog Rytm MKII OS 1.74: BD ANALOG plays Analog BD's 808 and 909 bass drums on any track, through the voice's own filter, AMP and OVR.",
+      "Tap B on the SYNTH page to switch 808 and 909; the type is saved with the sound. Velocity drives the accent.",
+      "About four 808 voices (three to four 909s) can hit at the same instant; more make the busiest blocks click. Hits spread across the beat cost less.",
+      "Ported from repeat98's Octatrack module, with his permission."
+    ]
+  }
+]
