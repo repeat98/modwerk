@@ -2382,7 +2382,8 @@
    "contract": "Contribute one struct modwerk_usb_function. The base checks the whole record at admission (ABI and size, 1-4 interfaces, endpoint 3 alone, four blocks of `length` bytes inside the package's initialized image, the configuration within its 512-byte slot) and refuses the package otherwise; a base that links USB Audio in (a development twin) refuses every function. When the table changes the host has to read the descriptors again, so the base reconnects by itself: it waits until the control endpoint is idle, takes the unit off the bus for half a second, rewrites the four configurations and comes back. A sync or trial stays open across that reconnect (the base's own disconnect undoes nothing), and the host has 20 s to speak to the vendor interface again before it counts as unplugged. A function that leaves has its endpoint flushed and disabled at the switch, before its memory can be reused. Its interrupt, bus-end and class-request work goes through ev_usb_isr, ev_usb_bus_end and ev_usb_control. SET_INTERFACE, GET_INTERFACE and the audio frame are not hooks yet: a function patches those stock sites itself, as its own.",
    "order": "lower first, then module id; the table holds one function.",
    "subscribers": [],
-   "orderEvidence": "One function at a time: the controller has one endpoint left (3) and every authored USB Audio layout uses it, so a second function could not share the configuration. The USB Audio module is the first to contribute; until its package is published no module does."
+   "orderEvidence": "One function at a time: the controller has one endpoint left (3) and every authored USB Audio layout uses it, so a second function could not share the configuration. The USB Audio module is the first to contribute; until its package is published no module does.",
+   "sites": []
   }
  ]
 }
