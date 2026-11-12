@@ -17,7 +17,7 @@ To add, port or update a module, follow [Add or port a module](../docs/ADD_A_MOD
 | Path | What |
 | --- | --- |
 | `octabam/` | octabam's builder, tools and platform runtime, from [octabam](https://github.com/sambanks/octabam) (MIT; credits in `octabam/LICENSE` and `octabam/THIRD_PARTY.md`), pinned in [UPSTREAM.json](UPSTREAM.json) |
-| `octabam/modules/<id>/` | Octatrack modules: source, `manifest.py`, `octamod.module.json`, docs, media |
+| `octatrack/modules/<id>/` | Octatrack modules: source, `manifest.py`, `octamod.module.json`, docs, media. A checkout also holds them as `octabam/modules`, an untracked mirror that `npm run prepare` and the build commands refresh: octabam's tools, the reviewed recipes and the import records name them by that path. Edit the real folder only |
 | `octabam/platform/` | internal stock-loader and USB MIDI infrastructure, not public modules |
 | `digitakt/`, `digitone/`, `elemod/` | Digitakt and Digitone cores and modules |
 | `drafts/<id>/` | modules staged outside the catalog until they qualify |
@@ -25,7 +25,7 @@ To add, port or update a module, follow [Add or port a module](../docs/ADD_A_MOD
 | `imports/` | ported source history: repository, commit and file hashes; code and preserved upstream files stay exact, while local module README, TESTING and CPU guides can be edited without checksum updates |
 | `templates/` | what `npm run module:new` copies |
 | `build/Dockerfile` | the pinned, firmware-free toolchain that compiles module packages |
-| `approvals/` | owner-approved exceptions (`<id>-build-approval.json`, the qualification baseline, release and USB waivers, card-only OKs), each bound to exact versions and hashes ([qualification](../docs/MODULE_QUALIFICATION.md)). Records before 8 November 2026 cite them at `sdk/` itself |
+| `approvals/` | owner-approved exceptions (`<id>-build-approval.json`, the qualification baseline, release and USB waivers), each bound to exact versions and hashes ([qualification](../docs/MODULE_QUALIFICATION.md)). Records before 8 November 2026 cite them at `sdk/` itself |
 
 The shared builder now admits Analog BD with Mini Verb, Tape Echo, Euclid, TapeHead and Sidechain Compressor, subject to actual DSP and menu capacity. The engine and shared reverb helper have explicit reservations on both cores; Tape Echo fits in the remaining Spring Reverb gap, while larger inserts use the fewest additional reverb regions that fit. This supersedes the stock-effects-only restriction in the historical module releases and composition proofs. Module algorithms and versioned hardware evidence are unchanged; these new combinations have composition verification, not new hardware qualification. See [the current verification record](../docs/VERIFICATION.md#analog-bd-with-custom-effects--7-october-2026).
 
@@ -35,20 +35,9 @@ Native work needs Python 3.12+, CMake, the patched DSP56300 assembler and disass
 
 Stock code that modules depend on is described by address, length and SHA-256 guards. `stock_guard.py` reads your own extraction and fails closed when it is missing or altered. `npm run sdk:check` covers those guards with synthetic fixtures, without firmware or an emulator.
 
-### Native verifiers
+### Native comparisons (retired)
 
-Each verifier compares Modwerk's browser builder with native octabam on your own firmware. They run locally, never in CI, and keep no firmware in the checkout.
-
-| Script | Compares |
-| --- | --- |
-| `npm run module:verify -- <id> --os <OS update>` | any module, on its coverage set, in the toolchain image; writes `native-comparisons/<id>.json`. `--all --check` repeats the browser side of every record |
-| `scripts/verify-sdk-native.py --raw-os <MAIN OS> --vendor <tools>` | the original seven modules and the loader |
-| `scripts/verify-requested-native.mjs <OS update> <proofs>` | Analog BD, MIDI Scenes, USB Audio and Scale Quantizer |
-| `scripts/verify-utility-native.mjs <OS update> <proofs> <packaging>` | every subset of the buildable modules with CC Map and Preview Vol |
-| `scripts/verify-tapehead-native.mjs <OS update> [all\|requested\|utilities]` | TapeHead selections |
-| `scripts/verify-sidechain-native.mjs <OS update> [--shard=i/n]` | every selection containing Sidechain Compressor |
-
-Results and their coverage are recorded in each module's `TESTING.md`; those up to 25 October 2026 also in [VERIFICATION.md](../docs/VERIFICATION.md). A matching image is proof of composition, not of hardware safety.
+Until 12 November 2026 Octatrack modules were also built into card firmware, and each was compared with a native octabam build of the same selection. That builder and its verifiers are gone: a module ships as a package for the Modwerk base. The records under `native-comparisons/` stay as history. Results and their coverage are recorded in each module's `TESTING.md`; those up to 25 October 2026 also in [VERIFICATION.md](../docs/VERIFICATION.md). A matching image is proof of composition, not of hardware safety.
 
 ## Versions and approval
 

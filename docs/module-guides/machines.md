@@ -4,14 +4,14 @@ Read [the module guides index](README.md) first. A machine that sequences notes 
 
 **Applies to** modules with manifest `category: machines`. Two shapes exist today.
 
-- **Track machine:** a new entry in a track's machine list. [Analog BD](../../sdk/octabam/modules/analog-bassdrum/README.md) (808 and 909 models).
-- **Project machine:** a project-wide behaviour of the sequencer. [Scale Quantizer](../../sdk/octabam/modules/quantizer/README.md).
+- **Track machine:** a new entry in a track's machine list. [Analog BD](../../sdk/octatrack/modules/analog-bassdrum/README.md) (808 and 909 models).
+- **Project machine:** a project-wide behaviour of the sequencer. [Scale Quantizer](../../sdk/octatrack/modules/quantizer/README.md).
 
 ## Behave like the instrument
 
 ### Track machines
 
-A new machine must be a first-class entry wherever the instrument lists machines. Analog BD shows what that takes: about twenty guarded detours, each named for the place it covers (`sdk/octabam/modules/analog-bassdrum/manifest.py`).
+A new machine must be a first-class entry wherever the instrument lists machines. Analog BD shows what that takes: about twenty guarded detours, each named for the place it covers (`sdk/octatrack/modules/analog-bassdrum/manifest.py`).
 
 - [ ] **The machine chooser.** The track's machine list opens on your machine for a track that uses it, highlights it, and admits it when the choice is committed (`ab_chooser_open`, `ab_chooser_row`, `ab_main_commit`). It shows six rows at a time: stock's draw loop never scrolled, and its five UP/DOWN handlers clamp the cursor to row 5 (`moveq #5` twice each), so with two or more machines the rows past the sixth could be neither seen nor reached. The USB base draws the rows from the list's scroll offset (`mw_chooser_name`, `mw_chooser_row`, #922) and sets the ten clamps to the last row, 4 + n for n machines and never below 5 (`ot_machines` count sites). The chooser takes up to eight contributed machines (`ot_machines`' room in `events.json`, five stock rows plus eight: `ROWS` in `machine_registry.c`); the loader refuses a ninth. Check your row is reachable with every other machine installed: DOWN from the top lands on it and YES assigns it.
 - [ ] **SRC SETUP.** The same machine is selectable there, with its row highlighted, and every commit path admits it (`ab_src_names`, `ab_setup_open`, `ab_setup_row`, `ab_src_commit`, `ab_src_commit2`, `ab_setup_edit6`, `ab_setup_draw6`). Over USB the base owns those seams and SRC SETUP on a module machine's row shows and edits its track's backing pool's setup (FLEX or STATIC). A machine with SETUP rows of its own (VECTOR's page 2: SEED, SPAN, OFST, ROT, RPT, DIR) sets `SETUP_PAGE` and contributes a `struct modwerk_machine_setup`: its `page` returns the page to draw, its `knob` takes encoders A-F before stock edits the pool's byte, both only while the cursor is on its row and the track is its own (`machine-ports.json` `flags` and `setup_page`/`setup_knob`; [HOOKS.md](../../sdk/machines/octatrack/HOOKS.md) `ot_machines`). A card build's `*_setup_draw6`/`*_setup_edit6` that test row 5 or SRC SETUP's cursor against 5 need that test dropped in the port: over USB the machine's row is 5-12.
@@ -56,7 +56,7 @@ Test in layers, as Analog BD does: the DSP engine, the ColdFire glue, the port (
 
 - [ ] `sdk/catalog.json` entry, thumbnail, `resources.impact`, README sections, tutorial and screenshots as in [Add or port a module](../ADD_A_MODULE.md).
 - [ ] Conflicts are declared with actual ownership and placement reasons, in `compatibility.conflicts` and in the ledger. Analog BD supports reviewed custom DSP companions (`analogBdCompanions`), subject to space; inspect both cores rather than inheriting a blanket effect exclusion. A machine that brings its own DSP engine needs the same review. Follow the [base/USB lifecycle requirements](../ADD_A_MODULE.md#octatrack-base-and-usb-lifecycle), including shared machine registration, missing-module behaviour and Keep/Undo. Unavoidable limits require owner review.
-- [ ] `npm run module:verify -- <id> --os <your 1.40C>` and `npm run module:doctor -- <id>` are green.
+- [ ] `npm run module:doctor -- <id>` is green.
 
 ## Digitakt and Digitone
 

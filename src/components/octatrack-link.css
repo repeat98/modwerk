@@ -73,7 +73,6 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .module-tile.is-add strong { color: var(--text); font-size: 13px; }
 .module-grid-save { margin-top: 14px; }
 @media (pointer: coarse), (max-width: 600px) { .module-tile-action.icon-button, .module-tile-action.text-button { min-width: 44px; height: 44px; } }
-.card-install { margin-bottom: 22px; }
 /* Full width while a unit with the base is connected: the grid, then the sticky sync bar. */
 .configuration-layout.is-usb { grid-template-columns: minmax(0, 1fr); }
 .sync-bar { position: sticky; bottom: 12px; z-index: 6; display: flex; align-items: center; gap: 18px; padding: 14px 18px; border: 1px solid var(--accent-line); border-radius: 12px; background: var(--surface-raised); box-shadow: 0 14px 44px #0009; }
@@ -82,7 +81,6 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .sync-bar-status .link-progress { margin-top: 8px; }
 .sync-bar-status .file-error, .sync-bar-status .success-note { margin: 8px 0 0; padding: 8px 12px; }
 .sync-bar-actions { display: flex; flex: none; align-items: center; gap: 8px; }
-.card-install-checkout { display: grid; gap: 16px; max-width: 460px; margin-top: 16px; }
 /* Stock effects as tiles like the modules': the effect's name as art, a click switches it in or out. */
 .stock-tiles { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
 .stock-tile-art { display: flex; align-items: flex-end; justify-content: center; height: 72px; padding-bottom: 14px; border-bottom: 1px solid var(--line); background: radial-gradient(ellipse at 60% 100%, #a5adff18, transparent 75%), var(--preview); color: var(--accent); font: 10px var(--mono); letter-spacing: 1.2px; }
@@ -177,6 +175,11 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-hero > div { flex: 1; min-width: 0; }
 .hub-hero p { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 7px; margin: 6px 0 0; color: var(--muted); font-size: 13px; }
 .hub-hero p b { color: var(--text-secondary); font-weight: 600; }
+.hub-browser-note { display: flex; align-items: flex-start; gap: 10px; max-width: 620px; margin-top: 10px; padding: 10px 14px; border: 1px solid var(--accent-line); border-radius: 10px; background: var(--accent-soft); color: var(--accent); }
+.hub-browser-note svg { flex: none; margin-top: 2px; }
+.hub-browser-note > div { display: grid; gap: 2px; min-width: 0; }
+.hub-browser-note strong { color: var(--text); font-size: 14px; }
+.hub-browser-note span { color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
 .hub-hero > .button { flex: none; min-height: 40px; }
 .hub-facts { display: flex; flex-wrap: wrap; gap: 10px 28px; margin: 14px 0 0; }
 .hub-facts dt { color: var(--muted); font-size: 11px; }
@@ -210,7 +213,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-view[hidden] { display: none; }
 .hub-view-title { margin: 0; font-size: 22px; letter-spacing: -.3px; overflow-wrap: anywhere; }
 .hub-section, .hub-view .octatrack-diagnostics { margin: 22px 0 0; padding: 18px 0 0; border-top: 1px solid var(--line); }
-.hub-section h3, .hub-cell h3, .hub-view .card-install > summary > h3 { margin: 0 0 10px; color: var(--muted); font-size: 12px; font-weight: 600; }
+.hub-section h3, .hub-cell h3 { margin: 0 0 10px; color: var(--muted); font-size: 12px; font-weight: 600; }
 .hub-section p { margin: 6px 0; color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
 .hub-section .button { min-height: 40px; }
 .hub-section.hub-base { padding: 20px; border: 1px solid var(--control-border); border-radius: 12px; background: var(--surface-raised); }
@@ -287,20 +290,19 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-fill .button { min-height: 40px; }
 .hub-view-set .module-tiles { margin-bottom: 4px; }
 .hub-empty-set p { color: var(--muted); }
-/* Setup: the base, the card route, diagnostics. */
-.hub-view .card-install.is-open { margin: 22px 0 0; padding-top: 18px; border-top: 1px solid var(--line); }
-.card-install-set { margin: 0 0 18px; color: var(--muted); font-size: 13px; }
-/* The whole-image card build is the fallback: a labelled, foldable section under Setup. */
-.card-install > summary { cursor: pointer; list-style: none; }
-.card-install > summary::-webkit-details-marker { display: none; }
-.card-install > summary > h3 { display: inline-flex; align-items: center; gap: 8px; }
-.card-install > summary > h3::before { content: '▸'; color: var(--muted); }
-.card-install[open] > summary > h3::before { content: '▾'; }
-.card-fallback-label { padding: 1px 6px; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); font-size: 11px; font-weight: 600; line-height: 1.5; }
-.card-fallback-reason { max-width: 640px; margin: 0 0 14px; color: var(--muted); font-size: 13px; }
+/* Setup: the base, the module file for the card, diagnostics. */
+.card-set-steps { margin: 10px 0; padding-left: 20px; color: var(--text-secondary); font-size: 13px; line-height: 1.7; }
+.card-set-dialog { width: min(440px, calc(100vw - 32px)); }
+.card-set-plan { display: grid; gap: 16px; margin: 22px 0 18px; padding: 0; list-style: none; }
+.card-set-plan li { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 12px; align-items: start; }
+.card-set-plan li > span { display: grid; place-items: center; width: 26px; height: 26px; border: 1px solid var(--accent-line); border-radius: 50%; color: var(--accent); font-size: 13px; font-weight: 600; }
+.card-set-plan strong { display: block; color: var(--text); font-size: 15px; line-height: 26px; }
+.card-set-plan p { margin: 2px 0 0; color: var(--text-secondary); font-size: 13px; line-height: 1.5; }
+.card-set-base { margin: 0; padding-top: 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12.5px; }
+.card-set-base b { color: var(--text-secondary); font-family: var(--mono, ui-monospace, monospace); font-weight: 500; }
+.card-set-dialog .dialog-actions { margin-top: 18px; }
 .hub-account-note, .base-install-account { color: var(--muted); font-size: 13px; }
 .base-install-account { margin-top: 12px; }
-.card-install-set b { color: var(--text-secondary); }
 .hub-view .configuration-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; }
 .hub-view .configuration-section, .hub-view .checkout-card { padding: 0; border: 0; background: none; }
 .hub-view .configuration-section { margin-bottom: 20px; }
@@ -352,6 +354,33 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
   .hub-hero .device-photo { max-width: 160px; }
   .hub-view-set .module-tiles { grid-template-columns: minmax(0, 1fr); }
 }
+/* Your Octatrack on a phone (MobileModuleSets): heading, set picker with its menu, two columns of tiles, then the handoff. */
+.hub-mobile .configuration-heading { margin-bottom: 18px; }
+.hub-mobile .configuration-heading-actions .module-issue-action { min-height: 44px; padding: 0; border: 0; background: none; font-size: 13px; }
+.hub-mobile-sets { margin-bottom: 18px; }
+.hub-mobile-picker { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 6px; }
+.hub-mobile-picker label { display: grid; gap: 6px; min-width: 0; color: var(--muted); font-size: 12px; }
+.hub-mobile-picker select { width: 100%; min-height: 48px; color: var(--text); font-size: 15px; font-weight: 600; }
+.hub-mobile-picker .icon-button { min-width: 48px; min-height: 48px; }
+.hub-mobile-set-actions { display: flex; flex-wrap: wrap; gap: 0 20px; margin: 4px 0 0; }
+.hub-mobile-set-actions .text-button { min-height: 44px; font-size: 13px; }
+.hub-mobile-empty { color: var(--muted); }
+.hub-mobile .module-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.hub-mobile .module-tile .module-tile-open .compact-preview { height: 96px; }
+.hub-mobile .module-tile-open { padding-bottom: 12px; }
+.hub-mobile .module-tile-open strong { font-size: 14px; line-height: 1.35; overflow-wrap: anywhere; }
+.hub-mobile .module-tile-open small { font-size: 12px; }
+.hub-mobile .module-tile.is-add a { min-height: 150px; }
+/* Without a unit state the tile's only control is Remove: it sits beside the name instead of in a row of its own. */
+.hub-mobile .module-tile-controls:has(> .module-tile-action:only-child) { position: absolute; right: 4px; bottom: 4px; min-height: 0; padding: 0; }
+.hub-mobile .module-tile:has(.module-tile-controls > .module-tile-action:only-child) .module-tile-open > :is(strong, small) { margin-right: 50px; }
+.hub-mobile .module-tile-action.icon-button { background: none; color: var(--muted); }
+.hub-mobile .configuration-section { margin: 22px 0 0; }
+.hub-mobile .configuration-section h2 { margin: 0 0 6px; font-size: 16px; }
+.hub-mobile .configuration-section p { margin: 0 0 14px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+.hub-mobile .configuration-section .button { width: 100%; min-height: 44px; justify-content: center; }
+.hub-mobile .configuration-section [role=status] { margin: 12px 0 0; }
+@media (max-width: 360px) { .hub-mobile .module-tiles { grid-template-columns: minmax(0, 1fr); } }
 /* The library's add control names the set it adds to (beta). */
 .unit-strip .button { min-height: 32px; margin-left: 6px; padding: 5px 12px; }
 .toolbar-load { flex-shrink: 0; height: 36px; padding: 0 12px; }
@@ -380,10 +409,6 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .load-change small { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
 .load-change.is-leaving { border-color: #6a3f45; }
 .load-change.is-on { background: none; }
-.load-change.is-card { border-color: #6b5a33; background: #2f2a20; }
-.load-change.is-card small { color: #e8cf9a; }
-.module-tile-state.is-card { color: #e8cf9a; }
-.module-tile-state.is-card i { box-shadow: inset 0 0 0 1.5px #e0b26a; }
 .load-blocked { margin: 14px 0 0; padding: 12px 14px; border: 1px solid #6b5a33; border-radius: 10px; background: #2f2a20; color: #f0dcae; font-size: 13px; line-height: 1.55; }
 .load-blocked p { margin: 0; }
 .load-blocked p + p { display: flex; gap: 16px; margin-top: 6px; }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { LinkState, OctatrackLink } from '../engine/elekloader/octatrack-link'
+import { LINK_BUSY, type LinkState, type OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
 import { Icon } from './Icon'
 import './octatrack-link.css'
@@ -14,7 +14,7 @@ export function OctatrackSidebarStatus({ link, onInstall }: { link: OctatrackLin
   if (baseUpdate || ACTIVE.includes(status) || status === 'ready' && identity?.canSubmit) return null
   const install = status === 'stock' || status === 'ready' || status === 'unsupported'
   const title = install ? 'Install the base' : status === 'connecting' ? 'Connecting…' : status === 'busy' ? 'Try connecting again' : 'Connect Octatrack'
-  const hint = status === 'stock' ? 'Original OS detected. Install once from the card.' : install ? 'Install from the card to get started.' : status === 'busy' ? 'Close the other browser window or app using it. This page connects by itself once it’s free.' : 'Plug in USB, then choose your Octatrack.'
+  const hint = status === 'stock' ? 'Original OS detected. Install once from the card.' : install ? 'Install from the card to get started.' : status === 'busy' ? LINK_BUSY : 'Plug in USB, then choose your Octatrack.'
   return <button type="button" className="instrument-action" title={hint} disabled={status === 'connecting'} onClick={() => { if (install) onInstall(); else void (status === 'busy' ? link.retry() : link.connect()) }}><span>{title}</span><Icon name="arrow" size={14} /></button>
 }
 

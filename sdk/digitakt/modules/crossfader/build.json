@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/xfade_glue.s",
+    "src/xfade.c",
+    "src/xfade_store.c"
+  ],
+  "defsym": {},
+  "cflags": [
+    "-std=c99",
+    "-Os",
+    "-msoft-float",
+    "-fno-common",
+    "-fno-asynchronous-unwind-tables",
+    "-Wextra",
+    "-Werror"
+  ],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_settings",
+      "fn": "cxf_settings",
+      "order": 60
+    },
+    {
+      "event": "ev_draw",
+      "fn": "cxf_draw",
+      "order": 60
+    },
+    {
+      "event": "ev_tick",
+      "fn": "cxf_uitick",
+      "order": 60
+    },
+    {
+      "event": "ev_key",
+      "fn": "cxf_key",
+      "order": 60
+    },
+    {
+      "event": "ev_enc",
+      "fn": "cxf_enc",
+      "order": 60
+    }
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "settings:CROSSFADER",
+    "ui:Internal Mixer page:LEVEL (the fader)",
+    "ui:track pages:LEVEL on FADER ON tracks (the fader)",
+    "ui:Internal Mixer page:LEVEL push",
+    "ui:track pages:LEVEL push on FADER ON tracks",
+    "midi:FX CONTROL CH:the fader CC",
+    "drive:/cfw/xfade.a",
+    "drive:/cfw/xfade.b"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.54": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x40030930",
+          "len": 6,
+          "stockSha256": "e84f69da3752f168fb13858328ab536865283d736440546f4342eef7bf447df4",
+          "op": "jsr",
+          "target": "cxf_titlehook"
+        },
+        {
+          "addr": "0x400d4cec",
+          "len": 6,
+          "stockSha256": "122f9ea763ec1094a64dcf753a7b1b4a3bf87de4491f8cc0b6700a4d2b5e3e83",
+          "op": "jsr",
+          "target": "cxf_cchook"
+        },
+        {
+          "addr": "0x40071d86",
+          "len": 6,
+          "stockSha256": "66b0f0098720f74dbe53e27cae7abf5bae08e27ebc7ba86d4691c8be4d3887d6",
+          "op": "jsr",
+          "target": "cxf_mixhook"
+        },
+        {
+          "addr": "0x400c9ce4",
+          "len": 6,
+          "stockSha256": "b61f0b51edb18e2f814611848bb0f9c01922a7ff3cd7840cbe1ed79299284d8c",
+          "op": "jsr",
+          "target": "cxf_showhook"
+        }
+      ]
+    }
+  }
+}

@@ -73,16 +73,15 @@ describe('the Octatrack base path for a member who is not a beta tester', () => 
     const counts = vi.mocked(fetch).mock.calls.filter(([url]) => String(url).endsWith('/usage/count')).map(([, options]) => JSON.parse(String(options?.body)))
     expect(counts).toContainEqual({ event: 'base_guide_opened' })
   }, 15000)
-  it('shows Your Octatrack and its Setup without beta framing, with the card build as a labelled, folded fallback', async () => {
+  it('shows Your Octatrack and its Setup without beta framing, with the module file for the card and no card build', async () => {
     await open('octatrack/setup')
     await vi.waitFor(() => expect(document.title).toContain('Your Octatrack'))
     expect(container.querySelector('h1')?.textContent).toBe('Your Octatrack')
     expect(container.querySelector('.page-heading .module-beta-badge')).toBeNull()
     expect(container.querySelector('.brand-beta-badge')).toBeNull()
-    const card = container.querySelector<HTMLDetailsElement>('details.card-install')!
-    expect(card.querySelector('summary')?.textContent).toBe('Card firmware without the base Fallback')
-    expect(card.open).toBe(false) // this browser can use USB
-    expect(card.textContent).toContain('For browsers without USB (Firefox, Safari, iPad and phones) and for modules that have no USB version yet (')
+    expect(container.querySelector('details.card-install')).toBeNull()
+    await vi.waitFor(() => expect(container.querySelector('#card-set-title')?.textContent).toBe('Load from the card'))
+    expect(container.textContent).not.toMatch(/card firmware/i)
     expect(container.textContent).not.toContain('#beta-testers')
   })
   it('ends a first install with the diagnostics question for a member who doesn’t share, and keeps the answer in view', async () => {

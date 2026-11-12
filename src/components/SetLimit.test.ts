@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, createElement, useEffect, useRef } from 'react'
+import { act, createElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -9,10 +9,6 @@ import { DIGI_MODS } from '../devices/digi-mods'
 import { moduleUsbOnly } from '../catalog/usb-only'
 import { LIMIT_REACHED, limitBlock, SET_MODULE_LIMIT } from '../catalog/set-limit'
 import { USB_AUDIO_MODULE } from '../config/usb-audio'
-import { newConfiguration } from '../config/workspace'
-import type { FirmwareInspection } from '../engine/base'
-import type { FirmwareClient } from '../engine/client'
-import { useFirmwareBuild } from '../hooks/useFirmwareBuild'
 import { ModuleCard } from './ModuleCard'
 import { ModuleComparison } from './ModuleComparison'
 import { ModuleGrid } from './ModuleGrid'
@@ -60,27 +56,6 @@ describe('adding to a full Octatrack set', () => {
     const below = grid(ids.slice(0, SET_MODULE_LIMIT - 1), [next])
     expect(below).toContain('From the library')
     expect(below).not.toContain('disabled=""')
-  })
-})
-
-describe('the card build of a saved set over the limit', () => {
-  it('cannot be built until trimmed, and is checked again once it is', async () => {
-    const validate = vi.fn(async () => ({}))
-    const client = { validate, cancelBuild: none, build: vi.fn() } as unknown as FirmwareClient
-    const firmware = { sha256: 'a'.repeat(64) } as FirmwareInspection
-    let build: ReturnType<typeof useFirmwareBuild> | undefined
-    function Probe({ moduleIds }: { moduleIds: string[] }) {
-      const ref = useRef<FirmwareClient | null>(client), value = useFirmwareBuild(ref, { ...newConfiguration('Live', moduleIds), id: 'live' }, firmware)
-      useEffect(() => { build = value })
-      return null
-    }
-    await act(() => root.render(createElement(Probe, { moduleIds: ids.slice(0, over) })))
-    expect(build?.state).toBe('error')
-    expect(build?.error).toBe(`This set has ${over} modules; ${SET_MODULE_LIMIT} is the limit for now. Remove 3 to build.`)
-    expect(build?.canRetry).toBe(false)
-    expect(validate).not.toHaveBeenCalled()
-    await act(() => root.render(createElement(Probe, { moduleIds: ids.slice(0, SET_MODULE_LIMIT) })))
-    expect(build?.error ?? '').not.toContain('is the limit for now')
   })
 })
 

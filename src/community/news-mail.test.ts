@@ -235,11 +235,28 @@ describe('news mail campaigns', () => {
     expect(rendered.text).toContain('TITLE\n\nPlain bold code <script>alert(1)</script>\n\nsafe (https://modwerk.app/) unsafe\n\n> quoted\n\n1. one\n2. two\n\n---\n\n    raw < text')
   })
 
+  it('gives news the beta invitation\'s feature panel and button by its markdown alone', () => {
+    const urls = { app: 'https://modwerk.app/', settings: 'https://modwerk.app/#account/notifications' }
+    const body = 'Hey guys,\n\n- **Over USB**\n  No card.\n- **Status**\\\n  CPU and **DSP**.\n\n[Set **up** your Octatrack](https://modwerk.app/#octatrack)\n\n- **Plain** list, no line\n- second\n\nRead [the notes](https://modwerk.app/#changelog) first.\n\n[Do not run](javascript:alert(1))'
+    const rendered = renderNewsEmail({ subject: 'Panel', body }, urls)
+    // One panel, its leads on their own line and no empty line from a hard break; the other list stays a list.
+    expect(rendered.html.match(/bgcolor="#1c1c1f"/g)).toHaveLength(1)
+    expect(rendered.html).toContain('font-weight:bold;">Over USB</span>No card.</td>')
+    expect(rendered.html).toContain('font-weight:bold;">Status</span>CPU and <strong style="color:#f4f4f8;">DSP</strong>.</td>')
+    expect(rendered.html).toContain('<li style="margin:0 0 8px;"><strong style="color:#f4f4f8;">Plain</strong> list, no line</li>')
+    // A safe link alone in its paragraph is a button; one in a sentence and an unsafe one stay as they were.
+    expect(rendered.html.match(/bgcolor="#5f6ac7"/g)).toHaveLength(1)
+    expect(rendered.html).toMatch(/<a href="https:\/\/modwerk.app\/#octatrack" style="display:inline-block;[^>]+>Set <strong style="color:#f4f4f8;">up<\/strong> your Octatrack<\/a>/)
+    expect(rendered.html).toContain('<a href="https://modwerk.app/#changelog" style="color:#c4c9ff;text-decoration:underline;">the notes</a>')
+    expect(rendered.html).not.toContain('javascript:'); expect(rendered.html).toContain('Do not run')
+    expect(rendered.text).toContain('- Over USB\n  No card.\n- Status\n  CPU and DSP.\n\nSet up your Octatrack (https://modwerk.app/#octatrack)')
+  })
+
   it('turns lists that open with the site\'s pictures into module cards, and leaves every other picture out', () => {
     const body = 'Hey guys,\\\nnew modules.\n\n- ![](/news/a.png)\n\n  **[Wide](https://modwerk.app/#module/a/)** Octatrack · by one\\\n  Wide copy.\n- ![](/news/b.png)\n\n  **[Second](https://modwerk.app/#module/b/)** Digitakt\n\n'
       + '## More\n\n- ![](/news/c.png) **[Row](https://modwerk.app/#module/c/)** by two\\\n  Row copy.\n\nBetween.\n\n- ![](https://elsewhere.example/x.png) **Offsite**\n\n![](/news/d.png)'
     const rendered = renderNewsEmail({ subject: 'Cards', body }, { app: 'https://modwerk.app/', settings: 'https://modwerk.app/#account/notifications' })
-    expect(NEWS_EMAIL_VERSION).toBe('modwerk-news-002')
+    expect(NEWS_EMAIL_VERSION).toBe('modwerk-news-003')
     expect(rendered.html.match(/<img [^>]*>/g)?.map(tag => tag.match(/src="([^"]+)"/)![1])).toEqual(['a', 'b', 'c', 'd'].map(name => `https://modwerk.app/news/${name}.png`))
     // Two grid cards and one compact row, each picture linking to its module like the title does.
     expect(rendered.html.match(/max-width:234px/g)).toHaveLength(2)
