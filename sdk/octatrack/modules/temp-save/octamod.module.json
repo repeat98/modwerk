@@ -3,7 +3,7 @@
   "id": "temp-save",
   "key": "TEMP SAVE",
   "name": "Temp Save",
-  "version": "0.1.0-experimental",
+  "version": "0.1.1-experimental",
   "category": "system",
   "author": {
     "github": "npp1993",
