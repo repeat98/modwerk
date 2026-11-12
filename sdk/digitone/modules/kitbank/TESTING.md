@@ -20,7 +20,10 @@ Scripts kept with the author's notes (`re/test_kitbank.py`, `re/test_kitbank_sav
 
 ## Full check against stock
 
-`python -m emu.portable --check <image> --baseline <stock 1.44> --timing`: see the result recorded below.
+`python -m emu.portable --check <image> --baseline <stock 1.44> --timing` (switch at its power-on state, unticked): **PASS**.
+10 of 10 screens identical to stock (start, TRIG/SYN1/SYN2/FLTR/AMP/LFO pages, trig, playing, stopped), **audio identical
+to stock over 8.3 s**, audio render margin 40.5 % and CPU busy 58 % as stock. The stock reference itself is marked FAIL by
+this emulator for a known read at `0x12a`, unrelated to the module.
 
 ## Memory
 
