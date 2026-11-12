@@ -13,7 +13,7 @@ A module's category is the `category` field of its manifest (`octamod.module.jso
 | `effects` | [effects.md](effects.md) | processes the audio its FX1 or FX2 slot receives, on the DSP | Mini Verb, Tape Echo, Euclid, Sidechain Compressor |
 | `machines` | [machines.md](machines.md) | makes or replaces a track's sound (a track machine, in `ot_machines`), or changes the sequencer project-wide | Analog BD, POLY8, Scale Quantizer |
 | `playback` | [playback.md](playback.md) | changes how a stock machine plays its sample: pitch, rate, timestretch, preview | Repitch, Preview Vol |
-| `scenes` | [scenes.md](scenes.md) | changes scenes, the crossfader or per-track state recall | MIDI Scenes |
+| `scenes` | [scenes.md](scenes.md) | changes scenes, the crossfader or per-track state recall | Apply Scene |
 | `midi-usb` | [midi-usb.md](midi-usb.md) | makes, changes or maps MIDI (generators in `ot_midi_generators`, MIDI effects), or USB | CC Map, USB Audio |
 | `system` | [system.md](system.md) | changes project and system menus and settings | Mute Modes, Output Matrix |
 | `standalone` | [standalone.md](standalone.md) | replaces the whole OS | none yet |
@@ -206,3 +206,5 @@ A module that is slow, or that only works when it is the only thing running, tak
 ## Digitakt and Digitone
 
 Mods there are linked by one core per machine and built by elekloader's builder in the browser, so there is no native octabam comparison. Start from [the Digitakt guide](../../sdk/machines/digitakt/README.md) for the core hooks, budgets and claims, and test a two-mod build, since combinations are the point.
+
+On these machines, the Digitakt II and the Analog Rytm MKII, `npm run elekloader:check` refuses a package whose `jsr` or `jmp` to an absolute address has an odd target: the real CPU stops there with an address error, while the emulators run on. Keep every routine on an even address (`.balign 2` after byte data) and check a stock address you typed; the message names the package, the offset and the target.

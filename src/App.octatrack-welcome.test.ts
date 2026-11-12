@@ -59,6 +59,7 @@ describe('the welcome to modules over USB', () => {
     await vi.waitFor(() => expect(welcome()).toBeDefined(), { timeout: 4000 })
     expect(welcome()!.textContent).toContain('Install the base once')
     expect(welcome()!.textContent).toContain('From the card, with your original OS file.')
+    expect(welcome()!.textContent).toContain('Sync over USB or the card') // both ways, in a WebUSB browser too
     expect(welcome()!.textContent).toContain('Base updates over USB after the first install')
     expect(welcome()!.textContent).not.toMatch(/beta/i)
     expect(welcome()!.textContent).not.toMatch(/card firmware/i)
@@ -133,12 +134,13 @@ describe('the welcome to modules over USB', () => {
     await reload('library'); await wait(2000)
     expect(welcome()).toBeUndefined()
   }, 15000)
-  it('in a browser without WebUSB, explains the card way: the base, then the module file', async () => {
+  it('in a browser without WebUSB, still names both ways to sync and says the card is this browser’s', async () => {
     delete (navigator as { usb?: unknown }).usb
     await open('library')
     await vi.waitFor(() => expect(welcome()).toBeDefined(), { timeout: 4000 })
     expect(welcome()!.textContent).toContain('This browser can’t use USB, so modules go onto the card as a file. For USB sync, use Chrome or Edge on a computer.')
-    expect(welcome()!.textContent).toContain('Load them from the card')
+    expect(welcome()!.textContent).toContain('Sync over USB or the card')
+    expect(welcome()!.textContent).toContain('Send them over USB from Chrome or Edge, or copy MODWERK0.SET to the card and restart.')
     expect(button(welcome()!, 'Set up my Octatrack')).toBeDefined()
     expect(welcome()!.textContent).not.toMatch(/card firmware/i)
   }, 15000)

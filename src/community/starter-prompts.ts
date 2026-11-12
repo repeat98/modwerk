@@ -23,7 +23,7 @@ export const STARTER_MACHINES: { id: StarterMachine; name: string; note?: string
 }))
 
 const OCTATRACK: Starter[] = [
-  { id: 'effect', title: 'An effect', summary: 'A new FX1 or FX2 effect on the DSP, such as a filter, delay or distortion.', guides: ['effects.md'], example: 'Mini Verb, Tape Echo, Character',
+  { id: 'effect', title: 'An effect', summary: 'A new FX1 or FX2 effect on the DSP, such as a filter, delay or distortion.', guides: ['effects.md'], example: 'Mini Verb, Tape Echo, TapeHead',
     task: 'Build a new FX1/FX2 effect: {idea}\nStart it as an insert effect (`--kind dsp`) unless it genuinely needs the shared bus, and explain why if it does.' },
   { id: 'machine', title: 'A track machine', summary: 'A new sound engine in the track machine list.', guides: ['machines.md'], example: 'Analog BD, FM Synth',
     task: 'Build a new track machine that appears in the machine chooser and SRC SETUP: {idea}\nAnalog BD (sdk/octatrack/modules/analog-bassdrum/) is the worked example.' },
@@ -33,7 +33,7 @@ const OCTATRACK: Starter[] = [
     task: 'Build a MIDI generator or MIDI effect: {idea}\nUse category midi-usb, location MIDI tracks (or Project sequencer), and scaffold with --kind coldfire. Agree the design with me first: no module generates MIDI notes yet, so there is no worked example.' },
   { id: 'midi', title: 'MIDI & USB', summary: 'Map controllers or change what the unit does over USB.', guides: ['midi-usb.md'], example: 'CC Map, USB Audio',
     task: 'Build a MIDI or USB module: {idea}\nSay exactly which messages it consumes, passes through, maps or sends, and keep everything else behaving as stock. If it generates or transforms notes, use the MIDI generator or MIDI effect starter instead.' },
-  { id: 'workflow', title: 'A workflow tweak', summary: 'Playback, scenes, menus and settings: small changes that make the unit nicer to use.', guides: ['playback.md', 'scenes.md', 'system.md'], example: 'Repitch, Preview Vol, MIDI Scenes',
+  { id: 'workflow', title: 'A workflow tweak', summary: 'Playback, scenes, menus and settings: small changes that make the unit nicer to use.', guides: ['playback.md', 'scenes.md', 'system.md'], example: 'Repitch, Preview Vol, Apply Scene',
     task: 'Build a workflow module: {idea}\nPick the category (playback, scenes or system) whose guide fits best and tell me which one you chose. Defaults must be safe and a project must save and reload unchanged.' },
   { id: 'port', title: 'Port an octabam module', summary: 'Bring an existing octabam module to Modwerk with its author\'s credit.', guides: [], port: true, example: 'Sidechain Compressor',
     task: 'Port this octabam module to Modwerk: {idea}\nCopy it from octabam at an exact commit, record every copied file in sdk/imports/, keep the author\'s credit and full licence text, and compare the result with native octabam as the guide describes.' },

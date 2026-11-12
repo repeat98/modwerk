@@ -6,8 +6,8 @@ directory to modules/<yourname>/ and edit. Directories starting with `_`
 are skipped by the registry, so this file is never built.
 
 modules/repitch/ is a finished one (one linked unit, detours, pokes);
-modules/midi-scenes/ another (units built from the author's repository as
-a submodule). docs/remixer/MODULES.md "Declaring a ColdFire
+modules/quantizer/ another (units built from the author's source, kept
+under upstream/). docs/remixer/MODULES.md "Declaring a ColdFire
 module" is the guide; docs/remixer/PLACEMENT.md says where the bytes go.
 
 Say what the module is, which stock routines it changes, what is measured

@@ -16,9 +16,11 @@ afterEach(async () => { await act(() => root.unmount()); container.remove(); vi.
 const notice = (machine: RecoveryMachine) => act(() => root.render(createElement(RecoveryNotice, {machine, steps: 'Hold FUNC while powering on.', checked: false, onChange: vi.fn()})))
 const link = () => container.querySelector('.recovery-notice a')
 
-it('links every machine to a FAQ answer that exists', async () => {
-  await act(() => root.render(createElement(FaqPage)))
-  for (const id of new Set(Object.values(RECOVERY_FAQ))) expect(container.querySelector('#faq-' + id), id).not.toBeNull()
+it('links every machine to a FAQ answer that exists on that machine’s FAQ, open', async () => {
+  for (const [machine, id] of Object.entries(RECOVERY_FAQ)) {
+    await act(() => root.render(createElement(FaqPage, {key: machine, machine, open: id})))
+    expect(container.querySelector<HTMLDetailsElement>('#faq-' + id)?.open, machine).toBe(true)
+  }
 })
 
 it('sends each machine to its own recovery answer, in a new tab', async () => {

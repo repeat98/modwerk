@@ -79,6 +79,11 @@ export interface DeviceIncident {
 export const DEVICE_LOG_LOADS = 40, DEVICE_LOG_INCIDENTS = 10 /* a record's most, so one fits the 8 KiB request */
 export const DIAGNOSTIC_USB_PHASES = ['unsupported', 'idle', 'connecting', 'stock', 'busy', 'ready', 'sending', 'testing', 'trial', 'finishing'] as const
 export const DIAGNOSTIC_USB_ERRORS = ['device', 'selftest', 'transport', 'cancelled', 'stale', 'save', 'rollback', 'unknown'] as const
+/** `sync_failed`: the step of a sync that failed (octatrack-link.ts load), so a failure with no device refusal still
+ * says where it stopped: opening the session, reading the installed set, packing the set, sending it, the unit
+ * loading it, or starting the trial. */
+export const DIAGNOSTIC_SYNC_STEPS = ['session', 'baseline', 'encode', 'stage', 'activate', 'trial'] as const
+export type DiagnosticSyncStep = typeof DIAGNOSTIC_SYNC_STEPS[number]
 export const DIAGNOSTIC_BUILD_KINDS = ['octatrack-firmware', 'octatrack-base', 'elekloader'] as const
 export const DIAGNOSTIC_BUILD_PHASES = ['preparing', 'composing', 'packing', 'verifying', 'building'] as const
 export const DIAGNOSTIC_BUILD_ERRORS = ['input', 'selection', 'build', 'cancelled', 'unknown'] as const
@@ -115,6 +120,7 @@ export interface OctatrackDiagnostic {
   area?: DiagnosticSiteArea
   /** A browser error's type, or an unclassified (`unknown`) sync failure's; never a message. */
   kind?: DiagnosticErrorKind
+  step?: DiagnosticSyncStep
   live?: DiagnosticLive
   reason?: typeof DIAGNOSTIC_UNRESPONSIVE[number]
   log?: { loads: DeviceLoad[]; incidents: DeviceIncident[]; crash?: DeviceCrash; stall?: DeviceStall }
