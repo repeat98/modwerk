@@ -97,7 +97,8 @@ expand the bounded FRACT-only review above.
 
 ## Review follow-up — 12 November
 
-Current main `18b1ccee` is merged. The [review plan](review-20261112.md) records
+Current main `d6b3fba5` is merged (initial main `18b1ccee`, then the
+DSP source-gate fixture fix #1467). The [review plan](review-20261112.md) records
 repeat98's required base order, matched guard/timing run and companion Part
 reload. Prospective promotion uses `sdk/octatrack/modules`; the host compiler
 retains the older mirror path and the same source confinement. No native FRACT
