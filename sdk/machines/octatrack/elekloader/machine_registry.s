@@ -341,6 +341,29 @@ modwerk_stock_4006d784_8:
         jmp 0x4006d78c
 mw_source_render:
         jmp mw_source_render_impl
+| The frame builder's two renderer calls (jsr (%a0), arguments pushed): stock's own renderers and the base's go
+| straight; a renderer a module put into the slots itself goes through mw_foreign_render (machine_registry.c).
+        .global mw_render_first, mw_render_second
+mw_render_first:
+        bsr mw_render_call
+        .globl modwerk_stock_4000d440_4
+modwerk_stock_4000d440_4:
+        .space 4
+        jmp 0x4000d444
+mw_render_second:
+        bsr mw_render_call
+        .globl modwerk_stock_4000d52e_4
+modwerk_stock_4000d52e_4:
+        .space 4
+        jmp 0x4000d532
+mw_render_call:
+        cmpa.l #0x40010000,%a0          | stock's renderers end at 0x400047f0
+        bcs 1f
+        cmpa.l #mw_source_render,%a0
+        beq 1f
+        move.l %a0,mw_foreign_fn
+        jmp mw_foreign_render
+1:      jmp (%a0)
 | The frame guard's clock (machine_registry.c): the frame interrupt's entry stamps DTCN3 after stock's register save,
 | and its exit times the frame before stock's restore and rte.
         .global mw_frame_entry, mw_frame_leave

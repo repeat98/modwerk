@@ -845,3 +845,23 @@ int mw_source_render_impl(unsigned track, unsigned ping, unsigned start, unsigne
     if (flex_machine) return guarded(flex_machine->render, STOCK(Render *, 0x40004008u), track, ping, start, end);
     return STOCK(Render *, 0x40004008u)(track, ping, start, end);
 }
+/* A renderer a module put into a track's slots itself, from the frame builder's two calls (machine_registry.s).
+ * FM Synth 0.1.2 writes its own over the STATIC entry and at the slot copy (0x4000d514), so its tracks never came
+ * through mw_source_render and neither the frame guard nor the CPU budget saw them (an MKII, 12 November 2026: three
+ * FM Synth tracks beside a busy stock pattern, PLAY, the unit froze). Its machine's track is refused or guarded here
+ * like any other machine's; a STATIC or FLEX track nobody owns keeps stock's sample render when the module's would
+ * overdraw the frame. */
+Render *volatile mw_foreign_fn; /* the renderer of this call, set by mw_render_call */
+int mw_foreign_render(unsigned track, unsigned ping, unsigned start, unsigned end)
+{
+    Render *f = mw_foreign_fn; const Machine *who = 0;
+    if (track >= 8u) return f(track, ping, start, end);
+    unsigned kind = look(track, &who);
+    if (kind == NOBODY) /* THRU, NEIGHBOR and PICKUP have no stand-in here */
+        return frame_part && frame_part[0x22 + track] <= 1u
+            ? guarded(f, STOCK(Render *, 0x40004008u), track, ping, start, end) : f(track, ping, start, end);
+    if (kind == ORPHAN || start_refused[track] == who || mw_cpu_refused >> track & 1u ||
+        (who->source_kind && charged[track] != who))
+        return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
+    return who->source_kind ? f(track, ping, start, end) : guarded(f, STOCK(Render *, 0x400047f0u), track, ping, start, end);
+}
