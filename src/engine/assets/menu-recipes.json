@@ -994,11 +994,8 @@
       "caveLimit": 1074625596
     }
   ],
-  "sourceCommit": "ceda08fd3ffc2485e01b02b9c000e3a2ffa99768",
+  "sourceCommit": "5bf06aa737c4c407c2c01b67f977aa1805f802fb",
   "moduleVersions": {
-    "spectrum": "0.1.1-experimental",
-    "modulation": "0.1.1-experimental",
-    "character": "0.1.1-experimental",
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.6-experimental",
     "euclid": "0.1.4-experimental",
@@ -1010,7 +1007,6 @@
     "lofi2": "0.1.1-experimental",
     "ring-sc": "0.2.1-experimental",
     "analog-bassdrum": "0.1.7-experimental",
-    "midi-scenes": "0.2.5-experimental",
     "usb-audio-out-tracks-main-cue": "0.2.0-experimental",
     "quantizer": "0.1.4-experimental",
     "synth": "0.1.2-experimental",
