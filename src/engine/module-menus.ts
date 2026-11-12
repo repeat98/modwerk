@@ -48,6 +48,11 @@ export async function composeModuleMenus(original: Uint8Array, ids: readonly str
     if (!recipe.rawPointers) return
     const symbols = new Map<string, number>()
     for (const unit of [...new Set(recipe.rawPointers.map(pointer => pointer.unit))]) {
+      // A unit that joined the DRAM runtime (createStaticColdFireRuntime) is named by its global symbols there.
+      if ((runtime as { units?: readonly string[] } | null)?.units?.includes(unit)) {
+        for (const symbol of (await readRomPackage(unit)).symbols) if (symbol.name && runtime!.symbols.has(symbol.name)) symbols.set(unit + ':' + symbol.name, runtime!.symbols.get(symbol.name)!)
+        continue
+      }
       let address = align(cursor, 128), linked = linkRomText(await readRomPackage(unit), address)
       const inside = address + linked.bytes.length <= caveLimit
       if (!inside) { address = align(overflow, 4); linked = linkRomText(await readRomPackage(unit), address) }

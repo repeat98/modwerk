@@ -181,10 +181,10 @@ class ToolSyntax(unittest.TestCase):
 
 # Builder extensions after the Poly8 record, oldest first. Each proves its own exact before/after transition.
 EXTENSIONS = ['air-chorus-split-builder.json', 'plain-formatter-builder.json', 'floating-cave-overflow-builder.json', 'octabam-emulator-gates-5c71bc8c.json',
-              'ptable2-builder.json', 'octabam-emulator-parent-exit-54200264.json', 'dram-rom-symbols-builder.json']
+              'ptable2-builder.json', 'octabam-emulator-parent-exit-54200264.json', 'dram-rom-symbols-builder.json', 'runtime-join-builder.json']
 # Documentation-only imports, oldest first: upstream files byte for byte, no build input.
 DOC_IMPORTS = ['octabam-docs-30fbb8e4.json', 'octabam-docs-dcf93d37.json', 'octabam-docs-6328143e.json', 'octabam-docs-bc144523.json',
-               'octabam-docs-5f8e779f.json', 'octabam-docs-54200264.json']
+               'octabam-docs-5f8e779f.json', 'octabam-docs-54200264.json', 'octabam-docs-f7d72906.json']
 
 class SelectiveImport(unittest.TestCase):
     def assert_current_builder_identity(self, path, historical):
@@ -274,6 +274,18 @@ class SelectiveImport(unittest.TestCase):
         self.assertEqual(set(record['builderAdaptations']), {'tools/build/build_bus.py'})
         for path, change in record['builderAdaptations'].items():
             self.assert_extension_holds('dram-rom-symbols-builder.json', path, change['after'])
+        self.assertEqual(len(record['selections']), 128)
+        for row in record['selections']:
+            self.assertIsNotNone(row['after'])
+            self.assertEqual(row['before'], row['after'])
+
+    def test_runtime_join_keeps_every_image_and_refusal(self):
+        import json
+        record = json.loads((ROOT.parent / 'infrastructure-verification/runtime-join-builder.json').read_text())
+        self.assertEqual(record['kind'], 'runtime-join-builder-regression')
+        self.assertEqual(set(record['builderAdaptations']), {'tools/build/build_bus.py'})
+        for path, change in record['builderAdaptations'].items():
+            self.assert_extension_holds('runtime-join-builder.json', path, change['after'])
         self.assertEqual(len(record['selections']), 128)
         for row in record['selections']:
             self.assertIsNotNone(row['after'])

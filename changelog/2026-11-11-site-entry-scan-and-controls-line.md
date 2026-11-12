@@ -1,0 +1,3 @@
+Octatrack SDK: `npm run stock:branches -- --stock <your OS file>` lists every place where stock code enters a patched site after its first byte: a branch, a call or a table pointer to an instruction a detour displaced, the fault behind the MIDI-track crash of an early Scale Quantizer. It reads your own OS file locally and the sites the base and the modules declare; all 355 of today's sites are clean. It cannot see a target computed at run time.
+
+`npm run module:doctor` has a new controls line: an effect's knobs in `manifest.py` and its `controls[]` in `octamod.module.json` must agree in name, default and count, so the library never describes a knob the unit does not have.
