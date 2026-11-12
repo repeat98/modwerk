@@ -186,8 +186,10 @@ notes and CCs only: 0.125, 0.5, 1, 2 and 4 steps held 16.5, 63.5, 126.0, 250.5 a
 On an external MIDI clock (sequencer stopped) one step held 165.5 ms at 90 BPM and 101.5 ms at 150 BPM.
 Not run on a unit: the sequencer running on an external clock, a tempo change during a hold, NORMAL
 scale mode, a boot of the package's image from flash, pads, a power cycle, a
-pattern change inside a fade. The comparison with stock ran on the earlier source, 10 November.
-Memory: 9,676 bytes of the shared mod area (the plain base alone leaves 119,004, with this module 109,328).
+pattern change inside a fade. The comparison with stock ran on the earlier source, 10 November. On 12
+November, after a review made only the module end a timed hold, the hold and pre-fade cases passed
+again (IL06), and a hold follows HLD turned to or from AUTO during a note.
+Memory: 9,548 bytes of the shared mod area (the plain base alone leaves 119,004, with this module 109,456).
 Load, on the author's unit with the sequencer stopped (TESTING.md): the audio block was 67.4 to 67.5 %
 busy with this module, where the base alone read 65.8 % earlier that day: about 1.6 points, about 1.0 of
 them in the amp record entries, which run every block for every voice (0.1 point more than before the

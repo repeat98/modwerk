@@ -14,7 +14,7 @@ its counter's reach, so only the module's count of steps ends a hold; and a voic
 hold whose record the pre-fade has taken is no longer left to the writer's skip, so its count goes
 on under a fade. Before, stock's compare, still reading a time table, ended a hold early when HLD was
 turned to AUTO late in a long hold at a slow tempo, and could end one during a fade. Fingerprint
-(as below): `{FP}`, `evidence.sourceSha256`.
+(as below): `5d08df1f…7331`, `evidence.sourceSha256`.
 
 - **Before the unit.** A host model of stock's envelope states (read from `amp_env_commands`, OS 1.74),
   the pre-fade's record and the writer's skip, with the source before and after: 400 random scenarios

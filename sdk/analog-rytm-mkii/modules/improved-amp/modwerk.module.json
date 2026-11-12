@@ -137,7 +137,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 9676,
+    "memoryBytes": 9548,
     "fastBytes": null,
     "load": {
       "display": "About 1.6 points of the audio block at idle on the author's unit, about 1.0 of them in the amp record entries",
@@ -154,10 +154,10 @@
     "hardware": {
       "model": "Analog Rytm MKII",
       "release": "1.74",
-      "testedOn": "2026-11-11",
+      "testedOn": "2026-11-12",
       "tester": "npp1993",
       "durationMinutes": null,
-      "summary": "Run hands off by npp1993's (the author's) automated USB test rig on their Analog Rytm MKII, OS 1.74, as the rig's reports have it. 11 November 2026, this source: 25 cases pass on IL05 (sha256 776adbab), the module alone on a development build of the Modwerk base with a USB test link, loaded to RAM; the references of five cases rewritten for the hold were kept in that run after a look. HLD 42 held 125.0 ms at 120 BPM, 166.5 ms at 90 BPM and 83.0 ms with the track at 3/2x, and read 1 each time; FUNC + turn showed 0.125 to 64 and AUTO. On an external MIDI clock, sequencer stopped, it held 165.5 ms at 90 BPM and 101.5 ms at 150 BPM. As before: the screens, ENV RESET's values, a kit save and reload, lengths by DEC and AUTO, OVR's level curve, the FILTER times, and ENV RESET AMP's fade before sequenced trigs, retrigs, swung, micro-timed and sound-locked trigs, with none for MIDI notes, muted trigs, lock trigs and failed conditions. The package's own image IA14 (sha256 c64b0477, plain base, no link) from RAM, MIDI notes and CCs only: 0.125 to 4 steps held within 1 ms of their lengths. Idle load metered. 9 to 11 November: the same cases on earlier sources, and the comparison with stock.",
+      "summary": "Run hands off by npp1993's (the author's) automated USB test rig on their Analog Rytm MKII, OS 1.74, as the rig's reports have it. 11 November 2026: 25 cases pass on IL05 (sha256 776adbab), the module alone on a development build of the Modwerk base with a USB test link, loaded to RAM. HLD 42 held 125.0 ms at 120 BPM, 166.5 ms at 90 BPM, 83.0 ms with the track at 3/2x, and 165.5 and 101.5 ms on an external MIDI clock at 90 and 150 BPM; FUNC + turn showed 0.125 to 64 and AUTO. Also: screens, ENV RESET's values, a kit save and reload, DEC and AUTO lengths, OVR's curve, FILTER times, and ENV RESET AMP's fade before sequenced, retrigged, swung, micro-timed and sound-locked trigs, none for MIDI notes, mutes, lock trigs and failed conditions. The package's image IA14 from RAM by notes and CCs: 0.125 to 4 steps within 1 ms. 12 November, this source (only the module ends a hold) on IL06 (sha256 8f1f4df1): the hold and pre-fade cases pass again; HLD turned to or from AUTO in a note is followed. Idle load metered. 9 to 11 November: earlier sources, and the comparison with stock.",
       "limitations": [
         "Run by an automated rig, not by hand or by ear; pads were not played.",
         "Loaded to RAM: no boot from flash. The package's own image ran with MIDI notes and CCs only, without keys, screens or the sequencer.",
@@ -167,7 +167,7 @@
       ]
     },
     "verifiedBy": null,
-    "sourceSha256": "bceb210fdbe5cb22bac2ff924d03a0fef40246adc8755235283cbd0118193e33"
+    "sourceSha256": "5d08df1fdc9b71df684ad71d254d90c6fe34aa9ab129ede44aec7d10a0d67331"
   },
   "tests": {
     "report": "TESTING.md",
