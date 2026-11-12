@@ -6,7 +6,7 @@
   "changes": [
     "First library release for Analog Rytm MKII OS 1.74, on core-ar2 0.7 and the Modwerk base's amp record hook. The AMP page's HLD runs from no hold to AUTO, in steps that follow the tempo; ATK, DEC and REL move in fine steps and read as times; AMP OVR is finer at its low end; ENV RESET gains AMP and AMP+FILT, faded before the trig."
   ],
-  "runtimeSourceSha256": "323f6f45fe4b32110111017a926b5c2d3f9b696df623d03d6b8562b85819b27d",
+  "runtimeSourceSha256": "88ed007c1dc734769a203e465c6fbc4fb041b344304a19f80569ff60e5306cb2",
   "packages": [
     {
       "os": "1.74",
