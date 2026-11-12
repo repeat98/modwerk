@@ -814,6 +814,17 @@ int main(void)
     for (unsigned i = 0; i < 3u; ++i) CHECK(frame(6, 20000, 5000) == -7);
     CHECK(mw_frame_sheds == unowned_sheds + 3u && mw_frame_shed_tracks & 1u << 6);
     CHECK(silent_renders == unowned_silent && stock_renders == unowned_flex + 3);
+    /* A renderer a module put into the slots itself (mw_foreign_render): its machine's track is guarded with the
+     * silent source and refused past the CPU budget; a track nobody owns falls back to stock's render. */
+    mw_foreign_fn = render_f;
+    for (unsigned t = 3; t <= 6u; t += 3u) {
+        fresh(); f_cost = 70000;
+        mw_frame_t0 = host_timer; CHECK(mw_foreign_render(t, 0, 0, 1) > 100); mw_frame_exit();
+        mw_frame_t0 = host_timer; CHECK(mw_foreign_render(t, 0, 0, 1) == (t == 3u ? -9 : -7)); mw_frame_exit();
+    }
+    fresh(); f_cost = 1000;
+    mw_cpu_refused = 1u << 3; CHECK(mw_foreign_render(3, 0, 0, 1) == -9 && mw_foreign_render(6, 0, 0, 1) > 100);
+    mw_cpu_refused = 0; CHECK(mw_foreign_render(3, 0, 0, 1) > 100);
     f_cost = 1000;
     /* A track only stock renders always renders, however late the frame. */
     const void *v_only2[] = {&V};

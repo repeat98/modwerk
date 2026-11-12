@@ -48,4 +48,4 @@ Read this before you plan a core, a base or the first modules for any machine ot
 | LXR-02 | research | published source | planned: SD-card base, USB-MIDI SysEx link | none | [plan](LXR_02.md) |
 | Tonverk | research | none | closed: signed, encrypted updates | none | nothing without Elektron's agreement |
 
-When a piece moves, update this table and the machine's guide in the same pull request.
+When a piece moves, update this table, the machine's guide and its profile's `stack` ([the pieces](ADD_A_MACHINE.md#aim-for-the-octatracks-interface)) in the same pull request. The machine page shows the `stack`, and a machine is `available` only once all of it is done.
