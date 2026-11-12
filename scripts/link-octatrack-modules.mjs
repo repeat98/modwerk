@@ -21,8 +21,9 @@ export function linkOctatrackModules(root, platform = process.platform) {
     try { points = resolve(dirname(link), readlinkSync(link)) } catch { /* a real folder, handled below */ }
     if (points === target) return 'kept'
     if (points !== null) { unlinkSync(link); state = 'remade' }
-    // A real folder here is a checkout from before the move. Empty folders (Git leaves them behind) go; files stay yours.
-    else if (entry.isDirectory() && readdirSync(link, { recursive: true, withFileTypes: true }).every(item => item.isDirectory())) { rmSync(link, { recursive: true }); state = 'remade' }
+    // A real folder here is a checkout from before the move. What Git and Python leave behind (empty folders, bytecode
+    // caches) goes; any other file stays yours.
+    else if (entry.isDirectory() && readdirSync(link, { recursive: true, withFileTypes: true }).every(item => item.isDirectory() || /\.pyc$|^\.DS_Store$/.test(item.name))) { rmSync(link, { recursive: true }); state = 'remade' }
     else throw new Error(LINK + ' holds files. The modules moved to ' + MODULES + ': move what is yours there, delete ' + LINK + ', then run npm run prepare again.')
   }
   if (platform === 'win32') symlinkSync(target, link, 'junction')

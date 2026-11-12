@@ -56,7 +56,7 @@ separately; failures or unavailable paths remain explicit qualification gaps.
 
 Keep unqualified Octatrack work under `sdk/drafts/<id>/`, with its draft
 release notes in `CHANGELOG.json`; `npm run module:new` starts it there. Every
-folder in `sdk/octabam/modules/` is validated for publication even when absent
+folder in `sdk/octatrack/modules/` is validated for publication even when absent
 from `sdk/catalog.json`, so a draft there blocks catalogue generation for
 everyone. Move it there, and its notes into `src/community/module-changelogs/`,
 only when the publication requirements are met.
@@ -237,7 +237,7 @@ into chunks with their own symbols. Card builds take the same growth as
 `TableGrow`: Modwerk's card builder accepts a stock copy only where it
 replays instructions a detour displaced, and refuses table copies at import.
 Elekloader's port runs a manifest as `octabam_<name>`, so a manifest can
-pick the form by `__name__` (`sdk/octabam/modules/dejavu/manifest.py`).
+pick the form by `__name__` (`sdk/octatrack/modules/dejavu/manifest.py`).
 
 **Strict stock scans can match original output.** Locate runs with
 `module_packages.runs` and `check_stock_free.stock_runs`. Vary ignored bitmap
@@ -279,7 +279,7 @@ the [loader compatibility guide](../sdk/machines/octatrack/elekloader/README.md#
 ## Octatrack
 
 1. **Create the folder.**
-   - *Porting:* copy the module's folder from octabam at an exact commit into `sdk/octabam/modules/<id>/`, and put the author's original files it depends on under `upstream/`. Record every copied file with its source path and SHA-256 in `sdk/imports/<id>-<short-commit>.json`; `sidechain-compressor-f80ecfe.json` is an example. Add the licence to `sdk/octabam/licenses/manifest.json`, then run `npm run licenses:generate`.
+   - *Porting:* copy the module's folder from octabam at an exact commit into `sdk/octatrack/modules/<id>/`, and put the author's original files it depends on under `upstream/`. Record every copied file with its source path and SHA-256 in `sdk/imports/<id>-<short-commit>.json`; `sidechain-compressor-f80ecfe.json` is an example. Add the licence to `sdk/octabam/licenses/manifest.json`, then run `npm run licenses:generate`.
    - *New:* `npm run module:new` creates the draft in `sdk/drafts/<id>/`. Pick a free effect ID, and replace `verify.py`, which fails on purpose until you do.
    - Either way, read the traps in [octabam's AGENTS.md](../sdk/octabam/AGENTS.md) before writing DSP or ColdFire code. The DSP assembler silently mis-encodes some instructions, and several of these traps assemble cleanly into the wrong machine code.
 2. **Fill in the manifest** from [the template](../public/module-repository.example.json): every control, the access steps, compatibility and conflicts. Add the resource gauges (`resources.impact`, see [gauges](MODULE_RESOURCE_GAUGES.md)) and the qualification record (`tests.qualification`, see [fields](MODULE_QUALIFICATION.md)).

@@ -17,7 +17,7 @@ To add, port or update a module, follow [Add or port a module](../docs/ADD_A_MOD
 | Path | What |
 | --- | --- |
 | `octabam/` | octabam's builder, tools and platform runtime, from [octabam](https://github.com/sambanks/octabam) (MIT; credits in `octabam/LICENSE` and `octabam/THIRD_PARTY.md`), pinned in [UPSTREAM.json](UPSTREAM.json) |
-| `octabam/modules/<id>/` | Octatrack modules: source, `manifest.py`, `octamod.module.json`, docs, media |
+| `octatrack/modules/<id>/` | Octatrack modules: source, `manifest.py`, `octamod.module.json`, docs, media. A checkout also shows them as `octabam/modules`, an untracked link that `npm run prepare` makes: octabam's tools, the reviewed recipes and the import records name them by that path |
 | `octabam/platform/` | internal stock-loader and USB MIDI infrastructure, not public modules |
 | `digitakt/`, `digitone/`, `elemod/` | Digitakt and Digitone cores and modules |
 | `drafts/<id>/` | modules staged outside the catalog until they qualify |

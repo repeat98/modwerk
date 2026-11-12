@@ -1,6 +1,6 @@
 # Working in sdk/
 
-You are about to write or change a module: an Octatrack module under `octabam/modules/`, a Digitakt or Digitone mod under `digitakt/modules/` or `digitone/modules/`, or a draft under `drafts/`. Read the rules first.
+You are about to write or change a module: an Octatrack module under `octatrack/modules/`, a Digitakt or Digitone mod under `digitakt/modules/` or `digitone/modules/`, or a draft under `drafts/`. Read the rules first.
 
 @../docs/module-guides/README.md
 

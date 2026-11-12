@@ -222,7 +222,9 @@ export function moduleClaimLine({ root, machine, id, folder, claims, login, unav
   if (held && login && held.holder === login.toLowerCase()) return { state: 'ok', name, detail: 'module ' + key + ' is yours' + (held.expiresAt ? ' until ' + held.expiresAt.slice(0, 10) : '') }
   if (held && !login) return { state: 'fail', name, detail: 'module ' + key + ' is claimed by ' + describeClaim(held), fix: 'if that is you, npm run board -- login; if not, ask them yourself before you go on: npm run board -- ask module ' + key + ' "…" (docs/AGENT_BOARD.md)' }
   if (held) return { state: 'fail', name, detail: 'module ' + key + ' is claimed by ' + describeClaim(held), fix: 'ask them yourself before you go on, or pick another module: npm run board -- ask module ' + key + ' "…" (docs/AGENT_BOARD.md)' }
-  const onMain = ['origin/main', 'upstream/main'].some(ref => { try { git(root, 'cat-file', '-e', ref + ':' + folder); return true } catch { return false } })
+  // A main from before the Octatrack's folders moved (12 November 2026) holds the module under sdk/octabam/modules/.
+  const folders = [folder, folder.replace(/^sdk\/octatrack\/modules\//, 'sdk/octabam/modules/')]
+  const onMain = ['origin/main', 'upstream/main'].some(ref => folders.some(at => { try { git(root, 'cat-file', '-e', ref + ':' + at); return true } catch { return false } }))
   if (!onMain) return { state: 'fail', name, detail: 'nobody has claimed this new module, so another developer could start the same one', fix: login ? fix : 'npm run board -- login, then ' + fix }
   return { state: 'ok', name, detail: 'nobody else is working on module ' + key }
 }

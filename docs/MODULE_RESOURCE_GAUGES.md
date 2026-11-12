@@ -6,7 +6,7 @@ Ratings are estimates backed by source inspection or a documented comparison. Co
 
 ## New modules and updates
 
-Declare `resources.impact` in `sdk/octabam/modules/<id>/octamod.module.json`. Start with [the incomplete template](../public/module-resource-impact.example.json); its null levels intentionally fail validation until assessed. Include:
+Declare `resources.impact` in `sdk/octatrack/modules/<id>/octamod.module.json`. Start with [the incomplete template](../public/module-resource-impact.example.json); its null levels intentionally fail validation until assessed. Include:
 
 - `conditions`: the workload, mode/modulation assumptions, active instance count and treatment of shared allocations.
 - `cpu`, `dsp`, `memory`: each requires a `level` (`minimal`, `low`, `moderate`, `high`), `basis` (`source-estimate` or `measured-comparison`), nonempty `rationale`, and a module-local text `source`.

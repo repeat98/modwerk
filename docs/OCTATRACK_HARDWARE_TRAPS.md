@@ -533,7 +533,7 @@ at that exact instruction. MCF54455 rejects scale-eight and word-sized indexes w
 errors ([reference manual, 3.3.4.2](https://www.nxp.com/docs/en/reference-manual/MCF54455RM.pdf)).
 The emulator accepted it. Keep the SDK's target flags; `npm run coldfire:isa` holds
 hand-written assembly to that CPU. Probe history is
-in [Beat Slicer's testing record](../sdk/octabam/modules/beat-slicer/TESTING.md).
+in [Beat Slicer's testing record](../sdk/octatrack/modules/beat-slicer/TESTING.md).
 
 **GCC 16.2 at -O2 can store one byte late.** Its late-combine pass turned
 the controller board's byte copy into `move.b (%a0)+,(0,%a0,%d0.l)`. The
