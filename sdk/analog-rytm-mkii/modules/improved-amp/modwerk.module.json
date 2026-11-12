@@ -157,11 +157,11 @@
       "testedOn": "2026-11-12",
       "tester": "npp1993",
       "durationMinutes": null,
-      "summary": "Run hands off by npp1993's (the author's) automated USB test rig on their Analog Rytm MKII, OS 1.74, as the rig's reports have it. 11 November 2026: 25 cases pass on IL05 (sha256 776adbab), the module alone on a development build of the Modwerk base with a USB test link, loaded to RAM. HLD 42 held 125.0 ms at 120 BPM, 166.5 ms at 90 BPM, 83.0 ms with the track at 3/2x, and 165.5 and 101.5 ms on an external MIDI clock at 90 and 150 BPM; FUNC + turn showed 0.125 to 64 and AUTO. Also: screens, ENV RESET's values, a kit save and reload, DEC and AUTO lengths, OVR's curve, FILTER times, and ENV RESET AMP's fade before sequenced, retrigged, swung, micro-timed and sound-locked trigs, none for MIDI notes, mutes, lock trigs and failed conditions. The package's image IA14 from RAM by notes and CCs: 0.125 to 4 steps within 1 ms. 12 November, this source (only the module ends a hold) on IL06 (sha256 8f1f4df1): the hold and pre-fade cases pass again; HLD turned to or from AUTO in a note is followed. Idle load metered. 9 to 11 November: earlier sources, and the comparison with stock.",
+      "summary": "Run hands off by npp1993's (the author's) automated USB test rig on their Analog Rytm MKII, OS 1.74, as the rig's reports have it. 11 November 2026: 25 cases pass on IL05 (sha256 776adbab), the module alone on a development build of the Modwerk base with a USB test link, loaded to RAM. HLD 42 held 125.0 ms at 120 BPM, 166.5 ms at 90 BPM, 83.0 ms with the track at 3/2x, and 165.5 and 101.5 ms on an external MIDI clock at 90 and 150 BPM; FUNC + turn showed 0.125 to 64 and AUTO. Also: screens, ENV RESET's values, a kit save and reload, DEC and AUTO lengths, OVR's curve, FILTER times, and ENV RESET AMP's fade before sequenced, retrigged, swung, micro-timed and sound-locked trigs, none for MIDI notes, mutes, lock trigs and failed conditions. The package's image IA14 from RAM by notes and CCs: 0.125 to 4 steps within 1 ms. 12 November, this source (only the module ends a hold) on IL06 (sha256 8f1f4df1): the hold and pre-fade cases pass again; HLD turned to or from AUTO in a note is followed. IA15, the package's image, flashed: a boot, pad hits, a project save and load and a power cycle keep HLD and ENV RESET AMP. Idle load metered. Earlier: the comparison with stock.",
       "limitations": [
-        "Run by an automated rig, not by hand or by ear; pads were not played.",
-        "Loaded to RAM: no boot from flash. The package's own image ran with MIDI notes and CCs only, without keys, screens or the sequencer.",
-        "No sequencer running on an external clock, tempo change during a hold or NORMAL scale mode; no power cycle, project save and load, +Drive sound, pattern change or probability condition.",
+        "Run by an automated rig, and by the author for the flashed image's pads, project and power cycle; not judged by ear.",
+        "The package's own image was flashed and checked for a boot, pad hits, a project save and load and a power cycle; its sequencer was not run.",
+        "No sequencer running on an external clock, tempo change during a hold or NORMAL scale mode; no +Drive sound, pattern change or probability condition.",
         "The comparison with stock (OVR's curve, the FILTER times) was run on the earlier source of this version, 10 November 2026.",
         "The audio load was metered with the sequencer stopped only. Duration not recorded."
       ]
@@ -171,7 +171,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "On the author's Analog Rytm MKII (OS 1.74), by their automated USB test rig, as reported: 25 cases pass on 11 November 2026 on IL05 (this source on a development base with a test link, from RAM): HLD in steps follows the tempo and the track's speed (one step 125.0, 166.5 and 83.0 ms at 120 BPM, 90 BPM and 3/2x) and an external clock, FUNC + turn's stops, the screens, lengths by DEC, OVR's curve, the FILTER times, and ENV RESET AMP's fade. The package's own image from RAM with notes and CCs only. Not run: pads, a power cycle, a boot from flash. See TESTING.md.",
+    "summary": "On the author's Analog Rytm MKII (OS 1.74), by their automated USB test rig, as reported: 25 cases pass on 11 November 2026 on IL05 (this source on a development base with a test link, from RAM): HLD in steps follows the tempo and the track's speed (one step 125.0, 166.5 and 83.0 ms at 120 BPM, 90 BPM and 3/2x) and an external clock, FUNC + turn's stops, the screens, lengths by DEC, OVR's curve, the FILTER times, and ENV RESET AMP's fade. The package's own image from RAM with notes and CCs only. The package's own image flashed: boot, pads, project save and load, power cycle. See TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",

@@ -6,6 +6,27 @@ Improved Envelopes (symbols `envelopes_*`, now `improved_amp_*`; HLD then read i
 pre-fade" records the pre-fade's builds from before it moved into this module. The test builds' `.syx`
 files stayed on the tester's computer.
 
+## The package's own image flashed: IA15, 12 Nov 2026
+
+The author flashed IA15 (sha256 `0d7be506…3105`: the Modwerk base's plain variant `1c14b6b0` and this
+package alone, linked from the committed package, no test link) to their Analog Rytm MKII, OS 1.74,
+and worked in a scratch project; the BD voice was recorded over USB (OVERBRIDGE) and played by MIDI
+notes on the auto channel, the FILTER page set open by CC.
+
+- **Boot.** It booted from flash to the normal screen, as the author reported. Notes at 120 BPM and 1x:
+  `len20` 9.5 at HLD 0, 135.5 at HLD 42 (one step), 510.0 at HLD 66 (four steps), 309.5 for AUTO with a
+  300 ms note.
+- **Pads.** The author hit the BD pad three times with HLD at 42: each hit stayed within 1 dB of its
+  peak for 127.0 to 128.5 ms, where a MIDI note at the same HLD did for 126.0. (A pad hit came out
+  2.2 dB louder than the note at velocity 100, so its `len20` reads longer, 152.5 to 168.5.)
+- **Project save and load.** On the BD, HLD 66 and SOUND SETTINGS > ENV RESET at AMP; the project
+  saved; HLD turned to 0 and ENV RESET to OFF unsaved; the project loaded again: HLD read 4 and ENV
+  RESET AMP, as the author reported, and a note held 509.5 ms, as before the save (509.5). Run twice.
+- **Power cycle.** Off and on, booted into the project: HLD 4 and ENV RESET AMP, as the author
+  reported; a note 509.0 ms, then 134.5 at HLD 42 and 10.0 at HLD 0.
+- **Not run on the flashed image:** the sequencer, so ENV RESET AMP's fade before sequenced trigs (run
+  on IL05 and IL06 above), and a sound saved to the pool.
+
 ## This version on a unit: IL06 and IA15, 12 Nov 2026 (the hold ended by the module alone)
 
 After an independent review of the source below, two changes, both in how a timed hold ends: stock's
