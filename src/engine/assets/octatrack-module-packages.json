@@ -344,7 +344,7 @@
       "path": "octatrack-modules/sidechain-compressor/0.2.1-experimental.mwrm",
       "lagsBehind": "0.2.2-experimental",
       "lagReason": "0.2.2 changes only the card build's placement: its ColdFire units join the DRAM runtime when another module in the set carries one (#1175). The USB package and its controller are 0.2.1's, so 0.2.1 stays the USB package.",
-      "requiredBase": "d377cece61f57b76e177f94e1a73a96292655099e821c7be8e39cd07a394e601"
+      "requiredBase": "bc4ac12b4d2552d2e41e2fa92fd199be28d89b2ec4d3966363887e13f3d2fea7"
     },
     {
       "id": "output-matrix",
