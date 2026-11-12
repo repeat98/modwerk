@@ -2,7 +2,7 @@
 // Octatrack manifests' declarations, read by the cross-compatibility gate.
 //
 //   npm run module:doctor -- <module-id>
-//   npm run module:doctor -- --draft <id>  # a draft under sdk/drafts/, copied under sdk/octabam/modules/ for the run and removed after:
+//   npm run module:doctor -- --draft <id>  # a draft under sdk/drafts/, copied under sdk/octatrack/modules/ for the run and removed after:
 //                                          # its experimental lines (try it, share it), with the release lines listed as still to do
 //   npm run module:doctor -- --draft <id> --release  # the same draft judged as a release: every line counts
 //   npm run module:doctor -- --all        # every catalog module and every Digitakt/Digitone module; CI runs this
@@ -25,6 +25,7 @@ import { stageDraft } from './draft-stage.mjs'
 import { requireZdlBinary, zdlPath } from './zdl-binaries.mjs'
 import { moduleCardless } from '../src/catalog/usb-only.ts'
 import { controlProblems } from './module-controls.mjs'
+import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
 
 // Modules first listed on or after this day carry a measured performance record (docs/MODULE_PERFORMANCE.md); earlier ones keep their qualification evidence.
 const PERFORMANCE_REQUIRED_FROM = '2026-10-07'
@@ -38,19 +39,21 @@ const args = process.argv.slice(2), all = args.includes('--all'), draft = args.i
 if ((all && ids.length) || (!all && ids.length !== 1) || (all && draft) || (release && !draft)) throw new Error('Usage: npm run module:doctor -- <module-id>   or   npm run module:doctor -- --draft <id> [--release]   or   npm run module:doctor -- --all')
 const json = path => JSON.parse(readFileSync(resolve(root, path), 'utf8'))
 const exists = path => existsSync(resolve(root, path))
-// A draft is checked where every gate looks: its folder is copied under sdk/octabam/modules/ for this run and removed when the run ends,
+// A draft is checked where every gate looks: its folder is copied under sdk/octatrack/modules/ for this run and removed when the run ends,
 // so nobody copies it by hand and forgets the copy. The listing lines (catalog entry, packages) stay red for a draft.
 if (draft) stageDraft(root, ids[0])
+// octabam's tools read the untracked mirror of sdk/octatrack/modules; make it current first.
+else mirrorOctatrackModules(root)
 const catalog = json('sdk/catalog.json'), machineModules = ['digitakt', 'digitone', 'analog-rytm-mkii', 'analog-four-mkii'].flatMap(machine => exists('sdk/' + machine + '/modules') ? readdirSync(resolve(root, 'sdk', machine, 'modules'), { withFileTypes: true }).filter(entry => entry.isDirectory() && !entry.name.startsWith('_')).map(entry => ({ id: entry.name, machine, folder: 'sdk/' + machine + '/modules/' + entry.name })) : [])
 // Zoom effects (zdl) share one folder for the pedal family; each names the pedal it is developed on.
 if (exists('sdk/zoom/modules')) for (const entry of readdirSync(resolve(root, 'sdk/zoom/modules'), { withFileTypes: true })) if (entry.isDirectory() && !entry.name.startsWith('_')) {
   const folder = 'sdk/zoom/modules/' + entry.name
   machineModules.push({ id: entry.name, machine: exists(folder + '/modwerk.module.json') ? json(folder + '/modwerk.module.json').machine : 'zoom-ms-70cdr', folder, zdl: true })
 }
-const MODULE_FOLDERS = 'sdk/octabam/modules, sdk/digitakt/modules, sdk/digitone/modules, sdk/analog-rytm-mkii/modules, sdk/analog-four-mkii/modules or sdk/zoom/modules'
+const MODULE_FOLDERS = 'sdk/octatrack/modules, sdk/digitakt/modules, sdk/digitone/modules, sdk/analog-rytm-mkii/modules, sdk/analog-four-mkii/modules or sdk/zoom/modules'
 
 // An unknown id is answered before any check runs: the rules below take seconds on a large catalogue.
-if (!all && !exists('sdk/octabam/modules/' + ids[0]) && !machineModules.some(item => item.id === ids[0])) { console.error('No module named ' + ids[0] + ' under ' + MODULE_FOLDERS + '.'); process.exit(2) }
+if (!all && !exists('sdk/octatrack/modules/' + ids[0]) && !machineModules.some(item => item.id === ids[0])) { console.error('No module named ' + ids[0] + ' under ' + MODULE_FOLDERS + '.'); process.exit(2) }
 
 // The module and catalog rules every PR already enforces (versions, documentation, qualification, gauges, media): run once.
 const rules = spawnSync(process.execPath, ['scripts/modules.mjs'], { cwd: root, encoding: 'utf8' })
@@ -59,7 +62,7 @@ const ruleLines = rules.stderr.trim().split('\n').filter(line => line && !/^\s+a
 const rulesProblem = rules.status === 0 ? '' : (ruleLines.find(line => /^\w*Error: /.test(line))?.replace(/^\w*Error: /, '') ?? ruleLines.at(-1) ?? 'failed')
 // Cross-compatibility of every active Octatrack module with every other and the base (scripts/module-compat.py): run once.
 // A single run also compares the module asked about when the catalogue does not list it yet (a draft, a new folder) or pauses it.
-const withId = !all && exists('sdk/octabam/modules/' + ids[0]) ? ['--with', ids[0]] : []
+const withId = !all && exists('sdk/octatrack/modules/' + ids[0]) ? ['--with', ids[0]] : []
 const compat = spawnSync(process.platform === 'win32' ? 'python' : 'python3', ['-B', 'scripts/module-compat.py', '--json', ...withId], { cwd: root, encoding: 'utf8' })
 const compatResult = (() => { try { return JSON.parse(compat.stdout) } catch { return null } })(), compatProblems = compatResult?.problems
 // Each module's native knob declarations (scripts/module-native-params.py): run once, for the controls line.
@@ -74,7 +77,7 @@ function octatrack(id) {
   const ok = (name, detail) => lines.push({ state: 'ok', name, detail })
   const fail = (name, detail, fix) => lines.push({ state: 'fail', name, detail, fix })
   const info = (name, detail) => lines.push({ state: 'info', name, detail })
-  const folder = 'sdk/octabam/modules/' + id
+  const folder = 'sdk/octatrack/modules/' + id
   const document = parseModuleDocument(json(folder + '/octamod.module.json'))
   const entry = catalog.modules.find(item => item.id === id)
 
@@ -144,7 +147,7 @@ function octatrack(id) {
   const found = gates.status === 0 ? JSON.parse(gates.stdout) : null
   if (!found) fail('dsp sources', 'the gates did not run: ' + (gates.stderr || gates.error?.message || '').trim().split('\n').pop(), 'python3 -B scripts/dsp-source-gates.py --json ' + id)
   else if (found.errors.length) fail('dsp sources', found.errors[0], 'rewrite it as the message says, then npm run modules:check')
-  else if (found.warnings.length) info('dsp sources', found.warnings[0].replace(/^sdk\/octabam\/modules\/[^/]+\//, '') + '. Not refused in a module listed before 2026-10-23; a new rep is')
+  else if (found.warnings.length) info('dsp sources', found.warnings[0].replace(/^sdk\/octatrack\/modules\/[^/]+\//, '') + '. Not refused in a module listed before 2026-10-23; a new rep is')
   else if (found.files) ok('dsp sources', found.files + ' DSP source' + (found.files === 1 ? '' : 's') + ': no rep, no label that prefixes another')
   else info('dsp sources', 'no .asm source (ColdFire-only module)')
 
@@ -257,17 +260,17 @@ function report(title, lines, tiered = false) {
 const board = await import('./agent-board.mjs'), boardView = await board.boardSnapshot({ kind: 'module' }, { messages: {} })
 const boardLines = (machine, id, folder) => [board.moduleClaimLine({ root, machine, id, folder, ...boardView }), board.moduleMessagesLine({ machine, id, ...boardView })].filter(Boolean)
 let green = true
-const octatrackIds = all ? catalog.modules.map(item => item.id) : ids.filter(id => exists('sdk/octabam/modules/' + id))
+const octatrackIds = all ? catalog.modules.map(item => item.id) : ids.filter(id => exists('sdk/octatrack/modules/' + id))
 for (const id of octatrackIds) {
-  const document = parseModuleDocument(json('sdk/octabam/modules/' + id + '/octamod.module.json'))
-  nativeHashes.set(id, await moduleNativeSourceSha256(resolve(root, 'sdk/octabam/modules', id), document))
+  const document = parseModuleDocument(json('sdk/octatrack/modules/' + id + '/octamod.module.json'))
+  nativeHashes.set(id, await moduleNativeSourceSha256(resolve(root, 'sdk/octatrack/modules', id), document))
 }
 // The fingerprint of the compiled packages must match the code too: documentation edits never change it.
 const fingerprintOk = !octatrackIds.length || (await moduleSourceFingerprint(root)) === json('src/engine/assets/module-build.json').sourceTreeSha256
 for (const id of octatrackIds) {
   const lines = octatrack(id)
   if (!fingerprintOk) lines.push({ state: 'fail', name: 'package fingerprint', detail: 'the committed packages were built from different module code', fix: 'rebuild and import the packages (docs/ADD_A_MODULE.md, step 4)' })
-  lines.push(...boardLines('octatrack', id, draft ? 'sdk/drafts/' + id : 'sdk/octabam/modules/' + id))
+  lines.push(...boardLines('octatrack', id, draft ? 'sdk/drafts/' + id : 'sdk/octatrack/modules/' + id))
   green = report(id + ' (Octatrack)', lines, draft && !release) && green
 }
 const machineIds = all ? machineModules : machineModules.filter(item => ids.includes(item.id))

@@ -7,7 +7,7 @@ const base = { red: false, labels: [], labeledAt: undefined, headDate: ago(30), 
 describe('PR triage policy', () => {
   it('counts a draft under sdk/drafts as a module PR, as it does a machine module folder', () => {
     expect(isModulePull(['sdk/drafts/drummap/octamod.module.json'])).toBe(true)
-    expect(isModulePull(['sdk/octabam/modules/euclid/README.md', 'docs/x.md'])).toBe(true)
+    expect(isModulePull(['sdk/octatrack/modules/euclid/README.md', 'docs/x.md'])).toBe(true)
     expect(isModulePull(['sdk/analog-rytm-mkii/modules/_submissions/chorus/src/main.c'])).toBe(true)
     expect(isModulePull(['sdk/machines/octatrack/events.json', 'docs/module-guides/README.md'])).toBe(false)
   })
