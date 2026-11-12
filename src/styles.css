@@ -1408,6 +1408,14 @@ h1 { font-size: 28px; }
 .statistics-issue-ages progress::-webkit-progress-bar { background:var(--line); }
 .statistics-issue-ages progress::-webkit-progress-value { background:var(--accent); }
 .statistics-issue-ages strong { text-align:right; font-variant-numeric:tabular-nums; }
+.octatrack-admin-groups { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 32px; }
+.octatrack-admin-groups .octatrack-admin-counts { max-width:none; }
+.octatrack-admin-counts > div { grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) auto; }
+.octatrack-admin-counts span { overflow-wrap:anywhere; }
+.octatrack-admin-counts code { color:var(--muted); font-size:11px; }
+.octatrack-admin-counts strong small { color:var(--muted); font-weight:400; }
+.octatrack-admin-counts .base-older span { color:var(--muted); }
+@media(max-width:650px) { .octatrack-admin-groups { grid-template-columns:minmax(0,1fr); } }
 .statistics-unanswered { max-width:650px; margin:24px 0; }
 .statistics-unanswered h3 { font-size:14px; margin:0 0 12px; }
 .statistics-unanswered ul { list-style:none; margin:0; padding:0; display:grid; gap:8px; }
