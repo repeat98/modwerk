@@ -5,6 +5,7 @@ import { layoutName, type BaseLayout } from '../engine/elekloader/base-variants'
 import type { InventoryTarget } from '../config/inventory'
 import { USB_AUDIO_MODULE } from '../config/usb-audio'
 import { Icon } from './Icon'
+import { trackModuleDownloads } from '../community/usage'
 import { save } from './OctatrackBackups'
 import './octatrack-link.css'
 
@@ -21,6 +22,7 @@ export function CardSetButton({ set }: { set?: InventoryTarget }) {
     try {
       const made = await prepareCardSet(set)
       save(made.file, CARD_SET_FILE)
+      trackModuleDownloads(set.moduleIds.filter(id => id !== USB_AUDIO_MODULE))
       setState({ written: { base: made.base, layout: made.layout } })
     } catch (error) { setState({ error: error instanceof Error ? error.message : 'Couldn’t write the module file.' }) }
   }

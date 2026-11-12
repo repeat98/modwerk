@@ -12,6 +12,7 @@ import { usbLagNote } from '../catalog/usb-only'
 import { limitedCount, overLimitMessage, SET_MODULE_LIMIT } from '../catalog/set-limit'
 import { hasBetaAccess } from '../community/beta-access'
 import { useCommunity } from '../community/context'
+import { trackModuleDownloads } from '../community/usage'
 import { StateChip } from './ModuleGrid'
 import { ModulePreview } from './ModulePreview'
 import { Icon } from './Icon'
@@ -42,6 +43,8 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
   const [preparationError, setPreparationError] = useState<{ review: string; error: ModuleSetError }>()
   // Whether the sync got as far as keeping, for this browser's sync history; written once when the dialog reaches its result.
   const keeping = useRef(false), logged = useRef(false)
+  // The modules this sync adds or updates, as reviewed when it started: counted as downloads once it is kept.
+  const installing = useRef<string[]>([])
   const step = loadStep(status, started, preparing)
   const connected = !!state.identity?.canSubmit && status === 'ready'
   const review = inventory && moduleSetReview(set, inventory, state.identity?.capabilities, state.identity?.base)
@@ -74,6 +77,7 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
     const failure = error || (notice?.tone === 'error' ? notice.text : '')
     if (!failure && !keeping.current) return
     logged.current = true
+    if (!failure) trackModuleDownloads(installing.current)
     recordSync({ name: set.name, modules: set.moduleIds.length, outcome: failure ? 'failed' : 'kept', ...(failure ? { message: failure.slice(0, 300) } : {}) })
   }, [step, started, error, notice, set])
 
@@ -89,6 +93,7 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
       return true
     }
     setPreparing(true); setError(''); setPreparationError(undefined)
+    installing.current = [...changes?.add ?? [], ...updates]
     let prepared
     try { prepared = await prepareUpdate(set) }
     catch (failure) {

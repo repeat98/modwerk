@@ -10,6 +10,8 @@ import { LoadDialog } from './LoadDialog'
 import { OctatrackHub } from './OctatrackHub'
 
 vi.mock('../engine/elekloader/module-set', async original => ({ ...await original<typeof import('../engine/elekloader/module-set')>(), moduleSetReview: vi.fn() }))
+const counted = vi.hoisted(() => vi.fn())
+vi.mock('../community/usage', async original => ({ ...await original<typeof import('../community/usage')>(), trackModuleDownloads: counted }))
 // No module that has a USB package is paused today: a test pauses one itself.
 const pausedForTest = vi.hoisted(() => new Set<string>())
 vi.mock('../catalog/availability', async original => {
@@ -59,6 +61,7 @@ describe('runtime package upgrade review', () => {
     expect(link.update).toHaveBeenCalledTimes(1)
   })
   it('keeps a synced set at once: no self-test, no Undo', async () => {
+    counted.mockClear()
     const unit = fakeUnit(), real = new OctatrackLink(unit.usb, fakeSession(unit)), release = real.start()
     await vi.waitFor(() => expect(real.getState().status).toBe('ready'))
     const keep = vi.spyOn(real, 'keep'), undo = vi.spyOn(real, 'undo'), selftest = vi.spyOn(real, 'selftest')
@@ -69,6 +72,8 @@ describe('runtime package upgrade review', () => {
     await act(async () => button('Sync to Octatrack').click())
     await vi.waitFor(() => expect(container.textContent).toContain('Synced. Studio stays on your Octatrack, also after a restart.'))
     expect(unit.kept).toEqual(['+0000000b'])
+    // The module the sync updated counts as one download, once it is kept.
+    await vi.waitFor(() => expect(counted).toHaveBeenCalledTimes(1)); expect(counted).toHaveBeenCalledWith(['everb'])
     expect(keep).toHaveBeenCalledTimes(1); expect(undo).not.toHaveBeenCalled(); expect(selftest).not.toHaveBeenCalled()
     release()
   })
