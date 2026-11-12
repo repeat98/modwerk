@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "revision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-  "sourceCommit": "0bc581091cd53bde60d903d78dbe70f10c9a2efd",
+  "sourceCommit": "ceda08fd3ffc2485e01b02b9c000e3a2ffa99768",
   "moduleVersions": {
     "spectrum": "0.1.1-experimental",
     "modulation": "0.1.1-experimental",
@@ -23,7 +23,7 @@
     "synth": "0.1.2-experimental",
     "previewvol": "0.1.2-experimental",
     "cc-map": "0.1.2-experimental",
-    "sidechain-compressor": "0.2.1-experimental",
+    "sidechain-compressor": "0.2.2-experimental",
     "vector": "0.3.1-experimental",
     "playmodes": "0.2.0-experimental",
     "mute-modes": "0.2.2-experimental",

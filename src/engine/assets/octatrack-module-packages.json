@@ -342,7 +342,9 @@
       "bytes": 2636,
       "sha256": "fd275bf2f8eb1340228d12224b3b84560584038c6637e6ed9775e50c60914f09",
       "path": "octatrack-modules/sidechain-compressor/0.2.1-experimental.mwrm",
-      "requiredBase": "500cdb6fd81bfc9c2b18737e7487f3ec2264c1c00c5ebef833e7f751e325d1b7"
+      "lagsBehind": "0.2.2-experimental",
+      "lagReason": "0.2.2 changes only the card build's placement: its ColdFire units join the DRAM runtime when another module in the set carries one (#1175). The USB package and its controller are 0.2.1's, so 0.2.1 stays the USB package.",
+      "requiredBase": "4854b76c2c340e52a6f629853d9292bf40c545c6f2aa6220d137d69f32f4c9f5"
     },
     {
       "id": "output-matrix",
@@ -358,7 +360,7 @@
       "bytes": 3740,
       "sha256": "d905f7e04554d9f49c6e8761feffa9e9b6f6187cb8bd2c263cc209e932de2252",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "500cdb6fd81bfc9c2b18737e7487f3ec2264c1c00c5ebef833e7f751e325d1b7"
+      "requiredBase": "4854b76c2c340e52a6f629853d9292bf40c545c6f2aa6220d137d69f32f4c9f5"
     },
     {
       "id": "cc-map",
@@ -374,7 +376,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "500cdb6fd81bfc9c2b18737e7487f3ec2264c1c00c5ebef833e7f751e325d1b7"
+      "requiredBase": "4854b76c2c340e52a6f629853d9292bf40c545c6f2aa6220d137d69f32f4c9f5"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -452,7 +454,7 @@
       "bytes": 1818,
       "sha256": "39d675efd554e099d525f41e8baf02c071c1c29d38f1f331fb74db2cee3ef870",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "500cdb6fd81bfc9c2b18737e7487f3ec2264c1c00c5ebef833e7f751e325d1b7"
+      "requiredBase": "4854b76c2c340e52a6f629853d9292bf40c545c6f2aa6220d137d69f32f4c9f5"
     },
     {
       "id": "analog-bassdrum",
@@ -468,7 +470,7 @@
       "bytes": 26172,
       "sha256": "9a7eb8144ad3a92e3c1908911176d9ebbcdf64304c1c2e49b0b10cd8ac226d40",
       "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
-      "requiredBase": "500cdb6fd81bfc9c2b18737e7487f3ec2264c1c00c5ebef833e7f751e325d1b7",
+      "requiredBase": "4854b76c2c340e52a6f629853d9292bf40c545c6f2aa6220d137d69f32f4c9f5",
       "requires": 0,
       "claims": 1,
       "entries": 1
@@ -543,6 +545,41 @@
       "sha256": "0b54a734258945acbf74551b8920ee4bfa760d390964bd04d2877e4382e990b9"
     },
     {
+      "id": "syntiz",
+      "sources": [
+        "sdk/octabam/modules/syntiz/engine.c",
+        "sdk/octabam/modules/syntiz/machine_map.c",
+        "sdk/octabam/modules/syntiz/machine.c"
+      ],
+      "subscribe": [
+        "ot_machines:wave_machine:50"
+      ],
+      "raise": [
+        "ev_trig_muted"
+      ],
+      "partSignature": {
+        "sig": "WV",
+        "lo": 1,
+        "hi": 15,
+        "flags": [
+          "PROTECT",
+          "POOL",
+          "SETUP_ALL"
+        ]
+      },
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/syntiz/0.1.0-experimental.mwrm",
+      "abi": 8,
+      "features": 128,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "syntiz",
+      "module": "970f03ad",
+      "bytes": 54416,
+      "sha256": "f501a6a4ea3c8361427b85302fc77274906b9de2e3dfd6f3c81bc1759767c5e8"
+    },
+    {
       "id": "track-solo",
       "octabam": true,
       "unitName": "Track Solo",
@@ -558,6 +595,24 @@
       "bytes": 2156,
       "sha256": "50f64eb63cfe62b534988bda28baa4c575eb9d9a6dbc7a81035e7d95cd01cf89",
       "usbOnly": true
+    },
+    {
+      "id": "pattern-sample-locks",
+      "octabam": true,
+      "reconstruction": true,
+      "usbOnly": true,
+      "version": "0.1.8-experimental",
+      "path": "octatrack-modules/pattern-sample-locks/0.1.8-experimental.mwrm",
+      "name": "SAMPLE LOCKS",
+      "unitName": "SAMPLE LOCKS",
+      "abi": 8,
+      "features": 3,
+      "sites": 3,
+      "copies": 9,
+      "fills": 0,
+      "module": "4bdbfbf9",
+      "bytes": 10048,
+      "sha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79"
     }
   ]
 }

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "module": "analog-rytm-mkii/sample-rate",
+  "version": "0.2.0-experimental",
+  "date": "2026-11-11",
+  "changes": [
+    "Renamed Fine Tune + Sample Rate. TUN's plain turn moves 1 cent a step (cents in TUN's own 8.8 word), a pressed turn whole semitones keeping the cents; TUN's row carries stock's fine-lock flag; the value reads with two places, as LFO depth.",
+    "After a switch of SMP RATE (tap, row, kit, sound or sound lock) FIN's smoother state takes its value at once for about 0.1 s: no speed dip or pitch slide."
+  ],
+  "runtimeSourceSha256": "6837e13d9143f56e5426eb50b087b537f272a93d20e78139f35c5503940621a0",
+  "packages": [
+    {
+      "os": "1.74",
+      "path": "sdk/imports/packages/sample-rate/sample-rate-0.2.0-experimental-os1.74.elemod",
+      "sha256": "115e4ff4fae04dbef6435576106a90d7d712424b78feee2f795dfefa330c294e"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/analog-rytm-mkii/modules/sample-rate/TESTING.md",
+  "requires": []
+}

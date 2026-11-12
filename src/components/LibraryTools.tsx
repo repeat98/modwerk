@@ -23,7 +23,7 @@ export type LibraryToolsProps = {
 }
 
 export function LibraryTools({ family, families, onFamilyChange, sort, onSortChange, comparisonCount, onCompare, buildHref = '#configuration', buildLabel, machine, disabled = false, build = true, buildText }: LibraryToolsProps) {
-  // With the Modwerk base connected (beta), loading happens from the Octatrack hub's guided load, not a .bin;
+  // On the Octatrack base path, loading happens from the Octatrack hub's guided load, not a .bin;
   // #configuration opens it on the set you edit.
   const usb = useOctatrackBase() && buildHref === '#configuration', mobile = useMobileWorkspace()
   return <div className="discovery-tools">

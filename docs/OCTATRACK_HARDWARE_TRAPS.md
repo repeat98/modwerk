@@ -483,9 +483,9 @@ stock path (MIDI TRACK > CHROMATIC) enters directly at `0x400449be`. Audio
 CHROMATIC worked through the detour; the MIDI path skipped the push, the
 formatter popped four bytes too many and returned into the LCD surface
 (`VEC:04` at `0x400bf10a`). Reported from a tester's MKII, 15 October 2026,
-and reproduced on the ColdFire emulator. Before taking a span, look for
-stock branches to every instruction after its first; shorten the detour
-and keep a shared target stock (Quantizer 0.1.3, its TESTING.md).
+and reproduced on the ColdFire emulator. Before taking a span, run `npm run stock:branches`
+(with your OS file); shorten the detour and keep a shared target stock
+(Quantizer 0.1.3, its TESTING.md).
 
 **One copy of the arena base literal is not the arena.** The sample arena's
 stock base address is the operand of 23 instructions. 22 of them are the

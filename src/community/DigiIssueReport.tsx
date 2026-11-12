@@ -6,7 +6,7 @@ import { DIGI_FLASH_CHOICES, FLASH_STATES, type DigiIssueContext, type FlashStat
 import { useWorkspaceReportContext, type WorkspaceReportContext } from './report-context'
 import { communityModule } from './modules'
 import { DEVICES_BY_ID } from '../devices/registry'
-import { AuthorExpectations, BetaReportReminder, BugReportNotice, BugReportSuccess, ExistingIssues } from './BugReportNotice'
+import { AuthorExpectations, BugReportNotice, BugReportSuccess, ExistingIssues } from './BugReportNotice'
 import { ReportNotifications } from './ReportNotifications'
 import { refreshModuleIssues, useIssueTracker, type BugReportResult } from './issue-tracker'
 import { useOpenIssueReport } from './useOpenIssueReport'
@@ -55,7 +55,6 @@ export function DigiIssueReport({ id, openRequest = 0, embedded = false, workspa
   }
   return <details ref={report} className="issue-report" open={embedded || undefined} onToggle={event => { if (event.currentTarget.open) setOpened(true) }}><summary>Report an issue <span>For @{module.author}</span></summary>
     {sent ? <div ref={success} className="issue-report-success" role="status" tabIndex={-1}><BugReportSuccess report={sent} onReportAnother={reportAnother} /></div> : !session.user?.verified ? <MemberPrompt /> : <form key={formKey} className="community-form" aria-busy={busy} onSubmit={event => { event.preventDefault(); void send(event.currentTarget) }}>
-      <BetaReportReminder />
       {!embedded&&<ExistingIssues id={id} tracker={tracker} />}
       {draft && <DiscussionIssueDraft body={draft.body} />}
       <label>Title<input ref={title} name="title" required maxLength={160} defaultValue={draft?.title ?? ''} placeholder="What went wrong, in one line" /></label>

@@ -56,6 +56,7 @@
     "module:doctor": "node scripts/module-doctor.mjs",
     "fx:audit": "node scripts/fx-audit.mjs",
     "perf:audit": "node scripts/perf-audit.mjs",
+    "stock:branches": "node scripts/stock-branches.mjs",
     "coldfire:isa": "python3 -B sdk/runtime/coldfire_isa.py",
     "sdk:check": "node scripts/sdk-check.mjs",
     "slots": "node scripts/machine-slots.mjs status",
