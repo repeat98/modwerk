@@ -7,7 +7,7 @@
   "mods": [
     {
       "file": "improved-amp-0.1.0-experimental-os1.74.elemod",
-      "sha256": "76fb70ef94669ee09274ef6b7531b90592bb87c30f3c6fce2f43814975ad6bfb",
+      "sha256": "92f1e883bbd8a840226e8839e717c0fec9e5ceaa1b1e77be187bc63a4d471a2b",
       "id": "improved-amp",
       "version": "0.1.0-experimental",
       "device": "analog-rytm-mk2",
@@ -15,7 +15,7 @@
       "license": "GPL-2.0-only",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "b75ff60fd774741833c72fe3fcfba088fac502e8",
+        "commit": "77fe816286bd601aca496bcc74caa87d6d9dbd04",
         "path": "sdk/imports/packages/improved-amp/improved-amp-0.1.0-experimental-os1.74.elemod"
       },
       "title": "Improved AMP",
@@ -30,7 +30,7 @@
       "category": "Sound",
       "author": "npp1993",
       "needs_core": "0.7",
-      "on_unit": "On an Analog Rytm MKII on OS 1.74, as reported by the author's automated USB test rig on 9 and 10 November 2026: this package's source on a development build of the Modwerk base with a USB test link, loaded to RAM (IL02), passed 25 cases covering the AMP and FILTER screens, HLD in steps, lengths by DEC and HLD, OVR's curve and the FILTER times beside the same base without the module, and ENV RESET AMP's fade across sequenced trigs, retrigs, swing, micro timing, sound locks, mutes and trig conditions. Not run: pads, a power cycle, a boot from flash. This package's own bytes have not been flashed from the site."
+      "on_unit": "On an Analog Rytm MKII on OS 1.74, as reported by the author's automated USB test rig on 11 November 2026: this package's source on a development build of the Modwerk base with a USB test link, loaded to RAM (IL04), passed 25 cases covering the AMP and FILTER screens, HLD in steps, lengths by DEC and HLD, OVR's curve, the FILTER times, and ENV RESET AMP's fade across sequenced trigs, retrigs, swing, micro timing, sound locks, mutes and trig conditions. This package linked alone (IA12) ran from RAM with MIDI notes and CCs only and read hold, decay, attack and OVR alike. Not run: pads, a power cycle, a boot from flash. This package's own bytes have not been flashed from the site."
     }
   ]
 }
