@@ -13,6 +13,8 @@ import { limitedCount, overLimitMessage, SET_MODULE_LIMIT } from '../catalog/set
 import { hasBetaAccess } from '../community/beta-access'
 import { useCommunity } from '../community/context'
 import { trackModuleDownloads } from '../community/usage'
+import { useDownloadFollows } from '../community/useDownloadFollows'
+import { installedOnOctatrack } from '../community/installed-follow-up'
 import { StateChip } from './ModuleGrid'
 import { ModulePreview } from './ModulePreview'
 import { Icon } from './Icon'
@@ -45,6 +47,7 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
   const keeping = useRef(false), logged = useRef(false)
   // The modules this sync adds or updates, as reviewed when it started: counted as downloads once it is kept.
   const installing = useRef<string[]>([])
+  const { followDownloads, followNotice } = useDownloadFollows()
   const step = loadStep(status, started, preparing)
   const connected = !!state.identity?.canSubmit && status === 'ready'
   const review = inventory && moduleSetReview(set, inventory, state.identity?.capabilities, state.identity?.base)
@@ -77,9 +80,10 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
     const failure = error || (notice?.tone === 'error' ? notice.text : '')
     if (!failure && !keeping.current) return
     logged.current = true
-    if (!failure) trackModuleDownloads(installing.current)
+    // What a downloaded build got: the count, update notifications and the hardware feedback reminder.
+    if (!failure) { trackModuleDownloads(installing.current); followDownloads(installing.current, installedOnOctatrack(installing.current)) }
     recordSync({ name: set.name, modules: set.moduleIds.length, outcome: failure ? 'failed' : 'kept', ...(failure ? { message: failure.slice(0, 300) } : {}) })
-  }, [step, started, error, notice, set])
+  }, [step, started, error, notice, set]) // eslint-disable-line react-hooks/exhaustive-deps -- followDownloads is a new function each render
 
   async function load() {
     if (!prepareUpdate || !review?.needsSync || problem || tooMany) return
@@ -148,7 +152,7 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
       </div>}
       {problem && !(problem instanceof SetLimitError) && <p className="file-error" role="alert">{problem.message}</p>}
       {error && <p className="file-error" role="alert">{error}</p>}
-    </> : step === 'done' ? <p className={'base-install-intro ' + (error || notice?.tone === 'error' ? 'file-error' : 'success-note')} role={error || notice?.tone === 'error' ? 'alert' : 'status'}>{error || notice?.text || (status === 'busy' ? 'Another browser window or app is using your Octatrack, so nothing was sent.' : 'Done.')}</p>
+    </> : step === 'done' ? <><p className={'base-install-intro ' + (error || notice?.tone === 'error' ? 'file-error' : 'success-note')} role={error || notice?.tone === 'error' ? 'alert' : 'status'}>{error || notice?.text || (status === 'busy' ? 'Another browser window or app is using your Octatrack, so nothing was sent.' : 'Done.')}</p>{followNotice && <p className="link-hint" role="status">{followNotice}</p>}</>
     : <>
       {step === 'loading' && !preparing && <progress className="load-progress" max={1} value={progress} aria-label="Syncing" />}
       <p className="base-install-intro" role="status">{step === 'loading' ? (preparing ? 'Preparing your modules…' : progress < 1 ? `Syncing… ${Math.round(progress * 100)}%` : 'Starting…')

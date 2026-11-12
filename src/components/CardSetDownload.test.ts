@@ -3,10 +3,11 @@ import { act, createElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const mocked = vi.hoisted(() => ({ prepare: vi.fn(), save: vi.fn(), count: vi.fn() }))
+const mocked = vi.hoisted(() => ({ prepare: vi.fn(), save: vi.fn(), count: vi.fn(), follow: vi.fn() }))
 vi.mock('../engine/elekloader/module-set', () => ({ prepareCardSet: mocked.prepare }))
 vi.mock('./OctatrackBackups', () => ({ save: mocked.save }))
 vi.mock('../community/usage', () => ({ trackModuleDownloads: mocked.count }))
+vi.mock('../community/useDownloadFollows', () => ({ useDownloadFollows: () => ({ followDownloads: mocked.follow, followNotice: '' }) }))
 import { CardSetDownload } from './UnitPanel'
 
 let root: Root, container: HTMLDivElement
@@ -23,6 +24,8 @@ describe('loading a module set from the card', () => {
     expect(container.textContent).toContain('It needs the Modwerk base on the Octatrack'); expect(container.querySelector('dialog')).toBeNull()
     await act(async () => { button().click() })
     expect(mocked.prepare).toHaveBeenCalledWith(set); expect(mocked.save).toHaveBeenCalledWith(file, 'MODWERK0.SET'); expect(mocked.count).toHaveBeenCalledWith(['everb', 'euclid'])
+    // As a downloaded build did: update notifications and the hardware feedback reminder, for the versions the base packages hold.
+    expect(mocked.follow).toHaveBeenCalledWith(['everb', 'euclid'], { machine: 'Octatrack', os: '1.40C', modules: [expect.objectContaining({ id: 'everb', name: 'E-Verb' }), expect.objectContaining({ id: 'euclid' })] })
     const dialog = container.querySelector('dialog.card-set-dialog')!
     expect(dialog.querySelector('h2')?.textContent).toBe('Put MODWERK0.SET on the card')
     expect([...dialog.querySelectorAll('.card-set-plan li')]).toHaveLength(3)
@@ -34,7 +37,7 @@ describe('loading a module set from the card', () => {
     mocked.prepare.mockRejectedValue(new Error('Tuner can’t be loaded onto the base yet. Take it out of the set.'))
     await act(() => root.render(createElement(CardSetDownload, { set })))
     await act(async () => { button().click() })
-    expect(container.querySelector('[role="alert"]')?.textContent).toContain('Tuner can’t be loaded onto the base yet'); expect(mocked.save).not.toHaveBeenCalled(); expect(mocked.count).not.toHaveBeenCalled()
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain('Tuner can’t be loaded onto the base yet'); expect(mocked.save).not.toHaveBeenCalled(); expect(mocked.count).not.toHaveBeenCalled(); expect(mocked.follow).not.toHaveBeenCalled()
   })
   it('has nothing to write for a set without modules', async () => {
     await act(() => root.render(createElement(CardSetDownload, { set: { ...set, moduleIds: [] } })))
