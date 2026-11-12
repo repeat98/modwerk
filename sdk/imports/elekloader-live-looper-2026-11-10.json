@@ -7,7 +7,7 @@
   "mods": [
     {
       "file": "live-looper-0.1.0-experimental-os1.54.elemod",
-      "sha256": "3dd093099cc63db62c34d32d45d4ede0af75bb678c8769b09f63aab37ddcc440",
+      "sha256": "c2e8c7f4dd88527d054fde1fb9175e88a0ee02c2d1b431d53dcc7dd983a997f1",
       "id": "live-looper",
       "version": "0.1.0-experimental",
       "device": "digitakt-mk1",
@@ -15,7 +15,7 @@
       "license": "GPL-3.0-or-later",
       "source": {
         "repo": "repeat98/modwerk",
-        "commit": "1e291d625705a7aba3ef7c38d47e4e73a9c6ecdd",
+        "commit": "4bae7ac72f190c77036d0c566727ddbd0851de5c",
         "path": "sdk/imports/packages/live-looper/live-looper-0.1.0-experimental-os1.54.elemod"
       },
       "title": "Live Looper",
@@ -32,7 +32,7 @@
       "category": "Sampling",
       "author": "draadpiraat",
       "needs_core": "2.1",
-      "on_unit": "Emulator-checked; the author's hardware run of this build is pending (the combined LF03 build passed on a Digitakt I, OS 1.54, 2026-11-10)."
+      "on_unit": "Emulator-checked; the author's hardware run of this build (LL02) is pending. LF03 (with the Crossfader, 2026-11-10) and LL01 (2026-11-12) passed on a Digitakt I, OS 1.54; LL02 has the fixes from LL01's run."
     }
   ]
 }
