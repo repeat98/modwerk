@@ -190,11 +190,12 @@ describe('the way to the base install guide', () => {
     await act(() => button('Open the install guide').click())
     expect(props.onInstall).toHaveBeenCalledTimes(2)
   })
-  it('does not point a browser that can use USB at the card build to sync a set', async () => {
+  it('points only a browser without USB at the card file to load a set', async () => {
     const set = newConfiguration('Live', ['miniverb'])
     await act(() => root.render(createElement(OctatrackHub, { ...callbacks(), view: 'set', link: unit({ status: 'idle' }), sets: [set], selectedId: set.id, header: null, grid: null, card: null })))
     expect(open().querySelector('.hub-sync')?.textContent).toBe('Connect your Octatrack to sync this set.Sync to Octatrack')
     await act(() => root.render(createElement(OctatrackHub, { ...callbacks(), view: 'set', link: null, sets: [set], selectedId: set.id, header: null, grid: null, card: null })))
-    expect(open().querySelector('.hub-sync a')?.textContent).toBe('Build card firmware')
+    expect(open().querySelector('.hub-sync')).toBeNull()
+    expect(container.querySelector('.hub-hero button')?.textContent).toBe('Load from the card')
   })
 })

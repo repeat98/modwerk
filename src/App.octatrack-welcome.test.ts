@@ -58,10 +58,10 @@ describe('the welcome to modules over USB', () => {
     await open('library')
     await vi.waitFor(() => expect(welcome()).toBeDefined(), { timeout: 4000 })
     expect(welcome()!.textContent).toContain('Install the base once')
-    expect(welcome()!.textContent).toContain('The first install goes through the card: the original OS has no USB link for Modwerk.')
-    expect(welcome()!.textContent).toContain('Later base updates go over USB.')
+    expect(welcome()!.textContent).toContain('From the card, with your original OS file.')
+    expect(welcome()!.textContent).toContain('Base updates over USB after the first install')
     expect(welcome()!.textContent).not.toMatch(/beta/i)
-    expect(button(welcome()!, 'Build card firmware instead')).toBeDefined()
+    expect(welcome()!.textContent).not.toMatch(/card firmware/i)
     await act(async () => button(welcome()!, 'Later')!.click())
     expect(welcome()).toBeUndefined()
     await wait(2000)
@@ -115,9 +115,7 @@ describe('the welcome to modules over USB', () => {
     await reload('configuration')
     await vi.waitFor(() => expect(welcome()).toBeDefined(), { timeout: 4000 })
     expect(guide()).toBeUndefined()
-    await act(async () => button(welcome()!, 'Build card firmware instead')!.click())
-    expect(window.location.hash).toBe('#octatrack/setup')
-    await vi.waitFor(() => expect(container.querySelector<HTMLDetailsElement>('details.card-install')?.open).toBe(true))
+    await act(async () => button(welcome()!, 'Later')!.click())
     // Not again: the next visit to the same button gets the guide, as before the welcome.
     await reload('configuration')
     await vi.waitFor(() => expect(guide()).toBeDefined(), { timeout: 4000 })
@@ -135,16 +133,14 @@ describe('the welcome to modules over USB', () => {
     await reload('library'); await wait(2000)
     expect(welcome()).toBeUndefined()
   }, 15000)
-  it('in a browser without WebUSB, says so and makes the card firmware the way', async () => {
+  it('in a browser without WebUSB, explains the card way: the base, then the module file', async () => {
     delete (navigator as { usb?: unknown }).usb
     await open('library')
     await vi.waitFor(() => expect(welcome()).toBeDefined(), { timeout: 4000 })
-    expect(welcome()!.textContent).toContain('This browser can’t use USB. Open Modwerk in Chrome or Edge on a computer')
-    expect(button(welcome()!, 'Set up my Octatrack')).toBeUndefined()
-    const card = button(welcome()!, 'Build card firmware')!
-    expect(card.className).toContain('button-primary')
-    await act(async () => card.click())
-    expect(window.location.hash).toBe('#octatrack/setup')
+    expect(welcome()!.textContent).toContain('This browser can’t use USB, so modules go onto the card as a file. For USB sync, use Chrome or Edge on a computer.')
+    expect(welcome()!.textContent).toContain('Load them from the card')
+    expect(button(welcome()!, 'Set up my Octatrack')).toBeDefined()
+    expect(welcome()!.textContent).not.toMatch(/card firmware/i)
   }, 15000)
   it('can be read again from Setup', async () => {
     await open('octatrack/setup')

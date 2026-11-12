@@ -122,6 +122,12 @@ export function trackConfigurationStarted(id: string) {
 /** Call only after an enabled download of a completed build, using that build's reported module IDs. */
 export function trackFirmwareDownload(moduleIds: readonly string[], device: UsageDevice) {
   trackUsage('firmware_download_requested', device)
+  trackModuleDownloads(moduleIds)
+}
+/** One download for each of these modules in the public module totals. On the Octatrack a module reaches the unit by a
+ * kept USB sync or in the module file for the card (no firmware file is built since 12 November 2026), so those count:
+ * the modules a sync added or updated, and the modules a card file holds. */
+export function trackModuleDownloads(moduleIds: readonly string[]) {
   if(!usageAllowed()){
     if(anonymousCountsAllowed())for(const moduleId of new Set(moduleIds))if(canTrackModuleDownload(moduleId))countAnonymously({event:'module_download',moduleId})
     return

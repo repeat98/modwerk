@@ -3,10 +3,8 @@ import { act, createElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { FaqPage } from './FaqPage'
-import { FirmwareBuildPanel } from './FirmwareBuildPanel'
 import { RecoveryNotice } from './RecoveryNotice'
 import { RECOVERY_FAQ, type RecoveryMachine } from './recovery-faq'
-import type { useFirmwareBuild } from '../hooks/useFirmwareBuild'
 
 vi.mock('../community/usage', () => ({trackFirmwareDownload: vi.fn()}))
 let root: Root, container: HTMLDivElement
@@ -38,21 +36,4 @@ it('says the card for the Octatrack and keeps the bootloader promise to elekload
   await notice('digitakt')
   expect(container.textContent).toContain('the bootloader is never touched')
   expect(container.textContent).toContain('Elektron Transfer')
-})
-
-const built = (sha256: string) => ({key: 'octatrack-build', state: 'built', phase: undefined, report: undefined, result: {buffer: new ArrayBuffer(4), sha256},
-  build: vi.fn(), cancel: vi.fn(), retry: vi.fn(), canRetry: false}) as unknown as ReturnType<typeof useFirmwareBuild>
-const panel = (sha256: string) => act(() => root.render(createElement(FirmwareBuildPanel, {build: built(sha256), available: true, downloadsEnabled: true, firmwareReady: true,
-  moduleCount: 1, riskAccepted: true, configurationName: 'Live', onExport: vi.fn(), exported: false, results: null})))
-const download = () => [...container.querySelectorAll('button')].find(button => button.textContent?.includes('Download .bin'))!
-
-it('holds the Octatrack .bin until the box is ticked, and asks again for another file', async () => {
-  await panel('a'.repeat(64))
-  expect(link()?.getAttribute('href')).toBe('#faq/recover')
-  expect(container.querySelector('.recovery-notice')?.textContent).toContain('If the custom OS does not start: Hold FUNC while powering on, choose MIDI UPGRADE and send the stock .syx over DIN MIDI.')
-  expect(download().disabled).toBe(true)
-  await act(() => container.querySelector<HTMLInputElement>('.recovery-notice input')!.click())
-  expect(download().disabled).toBe(false)
-  await panel('b'.repeat(64))
-  expect(download().disabled).toBe(true)
 })
