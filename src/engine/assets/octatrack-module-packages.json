@@ -336,15 +336,13 @@
       "sites": 2,
       "copies": 8,
       "fills": 0,
-      "version": "0.2.1-experimental",
+      "version": "0.2.2-experimental",
       "name": "SIDECHAIN COMP",
       "module": "95cff696",
       "bytes": 2636,
-      "sha256": "fd275bf2f8eb1340228d12224b3b84560584038c6637e6ed9775e50c60914f09",
-      "path": "octatrack-modules/sidechain-compressor/0.2.1-experimental.mwrm",
-      "lagsBehind": "0.2.2-experimental",
-      "lagReason": "0.2.2 changes only the card build's placement: its ColdFire units join the DRAM runtime when another module in the set carries one (#1175). The USB package and its controller are 0.2.1's, so 0.2.1 stays the USB package.",
-      "requiredBase": "d377cece61f57b76e177f94e1a73a96292655099e821c7be8e39cd07a394e601"
+      "sha256": "0ded80334b53401f710e0bbcfaa613d2048f520d0996e4b0a1253579d9854c70",
+      "path": "octatrack-modules/sidechain-compressor/0.2.2-experimental.mwrm",
+      "requiredBase": "009c4bc766993d0c44c0f558b7644cb17c1efca5b7f3cf39d74a3c692f7d62bd"
     },
     {
       "id": "output-matrix",
@@ -358,9 +356,9 @@
       "name": "OUTPUT MATRIX",
       "module": "caf158b5",
       "bytes": 3740,
-      "sha256": "d905f7e04554d9f49c6e8761feffa9e9b6f6187cb8bd2c263cc209e932de2252",
+      "sha256": "90b4f2e419777d8500e5008f681aa85d6920ff9cc10e80a94e0b4a1c10be8379",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "d377cece61f57b76e177f94e1a73a96292655099e821c7be8e39cd07a394e601"
+      "requiredBase": "009c4bc766993d0c44c0f558b7644cb17c1efca5b7f3cf39d74a3c692f7d62bd"
     },
     {
       "id": "cc-map",
@@ -376,7 +374,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "d377cece61f57b76e177f94e1a73a96292655099e821c7be8e39cd07a394e601"
+      "requiredBase": "009c4bc766993d0c44c0f558b7644cb17c1efca5b7f3cf39d74a3c692f7d62bd"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -454,7 +452,7 @@
       "bytes": 1818,
       "sha256": "39d675efd554e099d525f41e8baf02c071c1c29d38f1f331fb74db2cee3ef870",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "d377cece61f57b76e177f94e1a73a96292655099e821c7be8e39cd07a394e601"
+      "requiredBase": "009c4bc766993d0c44c0f558b7644cb17c1efca5b7f3cf39d74a3c692f7d62bd"
     },
     {
       "id": "analog-bassdrum",
@@ -468,9 +466,9 @@
       "name": "Analog BD",
       "module": "abdb1445",
       "bytes": 26172,
-      "sha256": "9a7eb8144ad3a92e3c1908911176d9ebbcdf64304c1c2e49b0b10cd8ac226d40",
+      "sha256": "1bdbcbef1ee2281b7797d70c8d22a7bc718d07e018e9056d2f395dc46c875ae2",
       "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
-      "requiredBase": "d377cece61f57b76e177f94e1a73a96292655099e821c7be8e39cd07a394e601",
+      "requiredBase": "009c4bc766993d0c44c0f558b7644cb17c1efca5b7f3cf39d74a3c692f7d62bd",
       "requires": 0,
       "claims": 1,
       "entries": 1
