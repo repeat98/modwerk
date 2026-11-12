@@ -1,0 +1,1 @@
+For developers: a crash record now reads as names. `device -- crash`, `diaglog` and `diagnostics:pull` print the function the program counter was in and what the stack points at, for every base built or started on that computer.
