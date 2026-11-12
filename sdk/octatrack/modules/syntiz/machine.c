@@ -128,9 +128,14 @@ static __attribute__((noinline)) void build_page(unsigned m)
     }
     put32(p + 0x18e, lo), put32(p + 0x18a, hi);
 }
+static __attribute__((noinline)) void build_pages(void)
+{
+    for (unsigned m = 0; m < WAVE_MODELS; ++m) build_page(m);
+    built = 1;
+}
 static uint32_t page_of(unsigned model)
 {
-    if (!built) build_page(0), build_page(1), build_page(2), build_page(3), build_page(4), build_page(5), built = 1;
+    if (!built) build_pages();
     return (uint32_t)(uintptr_t)(desc[model < WAVE_MODELS ? model : 0] + 0x38);
 }
 /* slot is the track's type byte, Part + 0x22 + t, in the current Part; anything else shows SAW's page. */
@@ -214,12 +219,23 @@ static uint32_t list_bank;
 static unsigned list_part, list_track;
 
 static void call0(uint32_t f) { ((void (*)(void))(uintptr_t)f)(); }
+/* Stock routines called with stock's own arguments go through this table, read at run time, so the module's
+ * calls are register-indirect and never repeat stock's own instruction bytes (the stock-free scan, #1470). */
+static const uint32_t stock_fn[] = { 0x4005829cu, 0x40012254u, 0x40027e00u, 0x40012bd8u, 0x4006d754u, 0x400570b8u, 0x40031494u,
+                                     0x400ce0c4u };
+enum { FN_WINDOW, FN_HILITE, FN_REFRESH, FN_TEXT, FN_CLOSE, FN_TITLE, FN_SHOW, SHOW_ARG };
+/* The model list window's size and flags, read at run time for the same reason. */
+static const int8_t window_args[] = { 110, 64, -1, 0, 1 };
+static uint32_t stock(unsigned i) { return ((const volatile uint32_t *)stock_fn)[i]; }
+#define A(i) ((int)((const volatile int8_t *)window_args)[i])
 
 /* The new model: the signature's version byte, the model's own controls back to its defaults (PTCH and
  * SETUP A-D, which every model shares, stay), in both Part copies, the live lane and, for SRC, the DSP
  * halfwords: the lane alone left the render on the old model's values (PULSE played SAW's DET as PW). */
-static void model_select(unsigned model)
+static unsigned picked;
+static void model_select(void)
 {
+    unsigned model = picked;
     if (model >= WAVE_MODELS || U32(BANK) != list_bank || (U8(PART_IDX) & 3u) != list_part ||
         U8(TRACK_NOW) != list_track) return;
     uint8_t *part = part_base();
@@ -239,15 +255,15 @@ static void model_select(unsigned model)
     U8(0x100b145eu) |= (uint8_t)(1u << list_part);
     U32(list_bank + 0x9b332u) = 1;
     U32(0x100f8598u) = 1;
-    call0(0x40027e00u);
+    call0(stock(FN_REFRESH));
     call0(0x4004d948u);
 }
-static void model_saw(void) { model_select(WAVE_SAW); }
-static void model_pulse(void) { model_select(WAVE_PULSE); }
-static void model_ens(void) { model_select(WAVE_ENS); }
-static void model_table(void) { model_select(WAVE_TABLE); }
-static void model_morph(void) { model_select(WAVE_MORPH); }
-static void model_choir(void) { model_select(WAVE_CHOIR); }
+static void model_saw(void) { picked = WAVE_SAW, model_select(); }
+static void model_pulse(void) { picked = WAVE_PULSE, model_select(); }
+static void model_ens(void) { picked = WAVE_ENS, model_select(); }
+static void model_table(void) { picked = WAVE_TABLE, model_select(); }
+static void model_morph(void) { picked = WAVE_MORPH, model_select(); }
+static void model_choir(void) { picked = WAVE_CHOIR, model_select(); }
 
 /* The rows, drawn into the window stock opened; 0 when the open list is not ours. */
 unsigned wave_models_draw(void)
@@ -259,10 +275,10 @@ unsigned wave_models_draw(void)
     int height = (int)U32(window + 0x28);
     for (unsigned row = 0; row < WAVE_MODELS; ++row) {
         int y = height - 23 - 7 * (int)row;
-        ((void (*)(uint32_t, void *, int, int, int, const char *))(uintptr_t)0x40012bd8u)
+        ((void (*)(uint32_t, void *, int, int, int, const char *))(uintptr_t)stock(FN_TEXT))
             (0x400ba876u, surface, 5, y, -1, model_labels[row]);
         if (row == U32(LIST_ROW))
-            ((void (*)(void *, int, int, int, int, int))(uintptr_t)0x40012254u)
+            ((void (*)(void *, int, int, int, int, int))(uintptr_t)stock(FN_HILITE))
                 (surface, 3, y - 1, (int)U32(window + 0x24) - 5, y + 5, -1);
     }
     U32(0x46c7c72cu) = 1;
@@ -281,11 +297,12 @@ void wave_pool_open(void)
     U32(LIST_HANDLERS) = (uint32_t)(uintptr_t)handlers;
     U32(LIST_LABELS) = (uint32_t)(uintptr_t)model_labels;
     U32(0x460e5e34u) = 0;
-    uint32_t window = ((uint32_t (*)(int, int, int, int, int, uint32_t))(uintptr_t)0x4005829cu)(110, 64, -1, 0, 1, 0x4006d754u);
+    uint32_t window = ((uint32_t (*)(int, int, int, int, int, uint32_t))(uintptr_t)stock(FN_WINDOW))
+        (A(0), A(1), A(2), A(3), A(4), stock(FN_CLOSE));
     U32(LIST_WINDOW) = window;
     if (!window) return;
-    ((void (*)(uint32_t, const char *, unsigned))(uintptr_t)0x400570b8u)(window, "\xab MACHINE:SYNTIZ", 0);
-    ((void (*)(uint32_t))(uintptr_t)0x40031494u)(0x400ce0c4u);
+    ((void (*)(uint32_t, const char *, unsigned))(uintptr_t)stock(FN_TITLE))(window, "\xab MACHINE:SYNTIZ", 0);
+    ((void (*)(uint32_t))(uintptr_t)stock(FN_SHOW))(stock(SHOW_ARG));
     wave_models_draw();
 }
 /* LEFT in the model list (the base's choice_left): back to the machine column, as VECTOR's pool choice does
