@@ -380,7 +380,7 @@ a word:
   saved", "set not mounted", until a power cycle.
 
 A per-sample `rep #21` did this on both cores, and the same loop as DO fixed it.
-In this repository Spectrum (4), Character (5) and Modulation (1) still use
+Spectrum (4), Character (5) and Modulation (1), now removed, used
 `rep`; the report also names busdelay, character-txtr, testgen and vocoder (at
 init only). The base and the modules in today's runs (E-Verb, Mini Verb,
 TapeHead, Euclid, Air Chorus, Tape Echo) have none. Not checked against "Junk on
@@ -532,8 +532,8 @@ catalogue module patches or keeps (`catalogue_overlaps`).
 at that exact instruction. MCF54455 rejects scale-eight and word-sized indexes with address
 errors ([reference manual, 3.3.4.2](https://www.nxp.com/docs/en/reference-manual/MCF54455RM.pdf)).
 The emulator accepted it. Keep the SDK's target flags; `npm run coldfire:isa` holds
-hand-written assembly to that CPU. Probe history is
-in [Beat Slicer's testing record](../sdk/octabam/modules/beat-slicer/TESTING.md).
+hand-written assembly to that CPU. Probes are
+in [Beat Slicer's testing record](../sdk/octatrack/modules/beat-slicer/TESTING.md).
 
 **GCC 16.2 at -O2 can store one byte late.** Its late-combine pass turned
 the controller board's byte copy into `move.b (%a0)+,(0,%a0,%d0.l)`. The
@@ -733,7 +733,7 @@ Octabam's register is vendored unchanged: [sdk/octabam/AGENTS.md](../sdk/octabam
 - **A floating cave rounded past the clone window** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-cave-round)): test where a cave ends, as `floating_cave_at` does.
 - **Audio and MIDI keep separate playing-Part latches** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-part-engine-context)): a MIDI-side module reads the MIDI engine's; test with the engines on different Parts.
 - **A byte zero in every project can still be the OS's** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-unused-bytes)): before keeping state there, write a marker, save, reload and diff.
-- **The stock DELAY reads its table across the whole run `0x400d24d0..0x400d2ce0`** (FAILURE_MODES.md, "A cave at 0x400d24d0 changes the stock DELAY"): default settings read its first word, boot its last; code there changes the sound. Card builds still put overflow code there.
+- **The stock DELAY reads its table across the whole run `0x400d24d0..0x400d2ce0`** (FAILURE_MODES.md, "A cave at 0x400d24d0 changes the stock DELAY"): default settings read its first word, boot its last; code there changes the sound. `modules:compat` refuses any write there.
 - **The page plane `0x46c7e0ea` is not the screen** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-page-plane)): it lacks windows and popups. UI captures add them (`lcd_view.py`); a bare `peek` does not.
 - **A file open through the stock layer owns your buffer** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-file-buffer)) until it is closed.
 - **A `jsr` into stock returns with a0, a1, d0 and d1 changed** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-stock-scratch-regs)); **a held scene key takes every encoder** from the open page ([scenes guide](module-guides/scenes.md#test)); **in the icon blit, bit 31 is the bottom row** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-icon-bit31)).

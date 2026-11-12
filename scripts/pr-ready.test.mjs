@@ -49,11 +49,11 @@ describe('pr:ready verdict', () => {
   })
   it('refuses a module pull request that edits a check which judges modules, and lets a module release carry the rest', () => {
     // Track Mutes (#931) edited the compatibility gate to turn it green; its test still found every clash.
-    expect(gateEdits(['sdk/octabam/modules/track-mutes/manifest.py', 'scripts/module-compat.py', 'sdk/tests/test_module_compat.py'])).toEqual(['scripts/module-compat.py', 'sdk/tests/test_module_compat.py'])
+    expect(gateEdits(['sdk/octatrack/modules/track-mutes/manifest.py', 'scripts/module-compat.py', 'sdk/tests/test_module_compat.py'])).toEqual(['scripts/module-compat.py', 'sdk/tests/test_module_compat.py'])
     expect(gateEdits(['sdk/drafts/track-mutes/manifest.py', '.github/workflows/module-pr.yml'])).toEqual(['.github/workflows/module-pr.yml'])
     expect(gateEdits(['sdk/digitakt/modules/digiperform/build.json', 'scripts/modules.mjs', 'sdk/machines/octatrack/compatibility.json'])).toEqual(['scripts/modules.mjs', 'sdk/machines/octatrack/compatibility.json'])
     // What a module release legitimately carries (ARP KEY LOCKS, #954): the package builder's list, assets, the native comparison, test lists.
-    expect(gateEdits(['sdk/octabam/modules/arp-key-locks/manifest.py', 'scripts/build-module-packages.py', 'src/engine/assets/module-build.json', 'sdk/native-comparisons/arp-key-locks.json', 'scripts/module-release-scope.test.mjs', 'sdk/tests/test_arp_key_locks.py'])).toEqual([])
+    expect(gateEdits(['sdk/octatrack/modules/arp-key-locks/manifest.py', 'scripts/build-module-packages.py', 'src/engine/assets/module-build.json', 'sdk/native-comparisons/arp-key-locks.json', 'scripts/module-release-scope.test.mjs', 'sdk/tests/test_arp_key_locks.py'])).toEqual([])
     // A Fix: pull request to the gate itself changes no module.
     expect(gateEdits(['scripts/module-compat.py', 'sdk/tests/test_module_compat.py'])).toEqual([])
     const verdict = readiness({ gateEdits: ['scripts/module-compat.py'] })
@@ -65,9 +65,9 @@ describe('pr:ready verdict', () => {
     // Threshold Slices (#1285) added a shared sample-editor service and a hook beside its draft.
     const threshold = ['sdk/drafts/threshold-slices/README.md', 'sdk/machines/octatrack/events.json', 'sdk/machines/octatrack/include/modwerk_events.h', 'sdk/machines/octatrack/module-adapters/sample_editor_service.c']
     expect(baseEdits(threshold)).toEqual(threshold.slice(1))
-    expect(baseEdits(['sdk/octabam/modules/syntiz/manifest.py', 'src/engine/assets/octatrack-base.elemod', 'src/engine/assets/octatrack-base-sources.json'])).toHaveLength(2)
+    expect(baseEdits(['sdk/octatrack/modules/syntiz/manifest.py', 'src/engine/assets/octatrack-base.elemod', 'src/engine/assets/octatrack-base-sources.json'])).toHaveLength(2)
     // What module releases carried in October and November: package rows, their own recipe rows and runtime helpers.
-    expect(baseEdits(['sdk/octabam/modules/scale-quantizer/manifest.py', 'sdk/machines/octatrack/module-adapters/machine-recipes.json', 'sdk/machines/octatrack/module-adapters/quantizer_runtime.py', 'src/engine/assets/octatrack-module-packages.json'])).toEqual([])
+    expect(baseEdits(['sdk/octatrack/modules/scale-quantizer/manifest.py', 'sdk/machines/octatrack/module-adapters/machine-recipes.json', 'sdk/machines/octatrack/module-adapters/quantizer_runtime.py', 'src/engine/assets/octatrack-module-packages.json'])).toEqual([])
     // A base pull request changes no module folder.
     expect(baseEdits(threshold.slice(1))).toEqual([])
     const verdict = readiness({ baseEdits: threshold.slice(1) })

@@ -9,7 +9,7 @@ const UNREADABLE: Record<Exclude<SavedSetSnapshot['status'], 'ready'>, string> =
   'read-failed': 'The Octatrack couldn’t read it from the card.',
   invalid: 'It isn’t a complete module file.',
 }
-function save(data: Uint8Array, name: string) {
+export function save(data: Uint8Array, name: string) {
   const url = URL.createObjectURL(new Blob([new Uint8Array(data)], { type: 'application/octet-stream' })), link = document.createElement('a')
   link.href = url; link.download = name; link.click()
   setTimeout(() => URL.revokeObjectURL(url), 1000)

@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import type { ModuleStability, StabilityLevel } from '../catalog/module-stability'
 import type { ModuleStatistics } from '../community/module-statistics'
 import { CardProof } from './ModuleCard'
+import { MODULE_COMPARE_ENABLED } from './module-compare'
 
 const noop = () => {}
 const grade = (level: StabilityLevel, label = 'Limited real-world testing'): ModuleStability => ({ level, label, detail: 'Detail for ' + level + '.' })
@@ -37,9 +38,10 @@ describe('library card footer', () => {
     expect(html).toContain('1<span class="sr-only"> waiting for reporter details</span>')
   })
 
-  it('shows no counts when nothing is open, and always offers Compare', () => {
+  it('shows no counts when nothing is open, and offers Compare only while comparing is switched on', () => {
     const html = render(grade('limited'), { unconfirmedIssues: 0, needsInfoIssues: 0 })
     expect(html).not.toContain('card-proof-reports')
-    expect(html).toContain('Compare<span class="sr-only"> Miniverb</span>')
+    if (MODULE_COMPARE_ENABLED) expect(html).toContain('Compare<span class="sr-only"> Miniverb</span>')
+    else expect(html).not.toContain('Compare')
   })
 })

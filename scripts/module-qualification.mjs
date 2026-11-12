@@ -94,15 +94,6 @@ export async function requireFolderQualification(folder, document, baseline, wai
   const existing=baseline.get(document.id)
   if(existing?.version===document.version&&existing.folderSha256===await moduleFolderSha256(folder)) return 'retained'
   const declaration=document.tests.releaseWaiver
-  if(document.id==='midi-scenes'&&document.version==='0.2.4-experimental'&&declaration?.approvedOn==='2026-10-03') {
-    const approval=JSON.parse(await readFile(new URL('../sdk/approvals/midi-scenes-build-approval.json',import.meta.url),'utf8'))
-    if(approval.id!=='midi-scenes'||approval.version!==document.version||approval.approvedBy!=='repeat98'||approval.approvedOn!=='2026-10-03'||JSON.stringify(approval.waived)!==JSON.stringify(['hardware-timing','complete-memory-bounds'])||approval.imageSha256!=='debb24090cada4be00bc70880136f14e813b0d3a9018b516f922d33671bd9b87'||approval.sourceSha256!==declaration.sourceSha256||approval.imageSha256!==declaration.imageSha256||await moduleNativeSourceSha256(folder,document)!==approval.sourceSha256||await moduleFolderSha256(folder)!==approval.folderSha256) throw new Error('MIDI Scenes: owner build approval does not cover this exact source, image and folder')
-    if(document.build||document.tests.qualification||document.tests.hardwareStatus!=='reported'||document.compatibility.conflicts.length!==13) throw new Error('MIDI Scenes: standalone approval requires honest reported status and all companion exclusions')
-    const report=JSON.parse(await readFile(resolve(folder,declaration.report),'utf8'))
-    if(report.moduleVersion!==document.version||report.sourceSha256!==approval.sourceSha256||report.imageSha256!==approval.imageSha256||report.hardwareTiming!==null||report.completeMemoryBounds!==null||report.standaloneOnly!==true||report.sharedWorkerParity?.status!=='passed'||report.sharedWorkerParity.mixedSelectionsRefused!==13||report.sharedWorkerParity.mainSha256!==approval.imageSha256||report.sharedWorkerParity.updateSha256!=='d7c792e0ec9b28e1b674e92526b2fa9a8a8279655dbd66a7b59495e5d5c54007'||report.sharedWorkerParity.changedBaseRefused!==true) throw new Error('MIDI Scenes: incomplete or stale shared-worker verification')
-    await requireModuleDocumentation(folder,document)
-    return 'owner-approved-standalone'
-  }
   if(document.id==='synth'&&document.version==='0.1.1-experimental'&&declaration?.approvedOn==='2026-10-06') return requireSynthRelease(options.root??fileURLToPath(new URL('../',import.meta.url)),folder,document,moduleNativeSourceSha256)
   const waiver=waivers.get(document.id)
   if(waiver?.version===document.version&&declaration) {
@@ -150,12 +141,12 @@ export async function requireFolderQualification(folder, document, baseline, wai
 export function evidenceOnBaseProblem({ root, base }) {
   const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 32 * 1024 * 1024 })
   const succeeds = (...args) => { try { git(...args); return true } catch { return false } }
-  const specs = [':(glob)sdk/drafts/*/octamod.module.json', ':(glob)sdk/octabam/modules/*/octamod.module.json']
+  const specs = [':(glob)sdk/drafts/*/octamod.module.json', ':(glob)sdk/octatrack/modules/*/octamod.module.json']
   const changed = (git('diff', '--name-only', '--diff-filter=AM', base, '--', ...specs) + git('ls-files', '--others', '--exclude-standard', '--', ...specs)).split('\n').filter(Boolean)
   for (const path of new Set(changed)) {
     const id = path.split('/').at(-2), rev = JSON.parse(readFileSync(resolve(root, path), 'utf8')).tests?.evidenceRevision
     if (!/^[a-f0-9]{40}$/.test(rev ?? '')) continue
-    const listedOnBase = ['sdk/drafts/' + id, 'sdk/octabam/modules/' + id].some(folder => succeeds('cat-file', '-e', base + ':' + folder + '/octamod.module.json'))
+    const listedOnBase = ['sdk/drafts/' + id, 'sdk/octatrack/modules/' + id, 'sdk/octabam/modules/' + id].some(folder => succeeds('cat-file', '-e', base + ':' + folder + '/octamod.module.json'))
     if (!listedOnBase && succeeds('merge-base', '--is-ancestor', rev, base)) return path + ': tests.evidenceRevision names ' + rev.slice(0, 8) + ', a commit already on main, which has no ' + id + '. Name the commit your tests ran on: one of this branch\'s, or your own repository\'s (docs/MODULE_QUALIFICATION.md).'
   }
   return null
@@ -165,12 +156,13 @@ export function evidenceOnBaseProblem({ root, base }) {
  * name their current version there, and a report left at the old one reads as evidence for the new. Every machine's manifests and drafts. */
 export function testingVersionProblem({ root, base }) {
   const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 32 * 1024 * 1024 })
-  const specs = [':(glob)sdk/drafts/*/octamod.module.json', ':(glob)sdk/octabam/modules/*/octamod.module.json', ':(glob)sdk/*/modules/*/modwerk.module.json']
+  const specs = [':(glob)sdk/drafts/*/octamod.module.json', ':(glob)sdk/octatrack/modules/*/octamod.module.json', ':(glob)sdk/*/modules/*/modwerk.module.json']
   const changed = (git('diff', '--name-only', '--diff-filter=AM', base, '--', ...specs) + git('ls-files', '--others', '--exclude-standard', '--', ...specs)).split('\n').filter(Boolean)
   for (const path of new Set(changed)) {
     const version = JSON.parse(readFileSync(resolve(root, path), 'utf8')).version
     let before = null
-    try { before = JSON.parse(git('show', base + ':' + path)).version } catch { /* new here */ }
+    // An Octatrack module's manifest sat under sdk/octabam/modules/ before the folders moved (12 November 2026).
+    for (const at of [path, path.replace(/^sdk\/octatrack\/modules\//, 'sdk/octabam/modules/')]) { try { before = JSON.parse(git('show', base + ':' + at)).version; break } catch { /* new here */ } }
     if (version === before || typeof version !== 'string') continue
     const folder = path.slice(0, path.lastIndexOf('/')), report = resolve(root, folder, 'TESTING.md')
     const text = (() => { try { return readFileSync(report, 'utf8') } catch { return '' } })(), short = version.replace(/-experimental$/, '')

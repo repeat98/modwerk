@@ -3,26 +3,23 @@ import { existsSync } from 'node:fs'
 import { readFile, writeFile, mkdir, mkdtemp, rm, stat } from 'node:fs/promises'
 import { basename, resolve, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { build as bundle } from 'vite'
 import { Bridge } from '../vendor/elekloader/kit/src/bridge.ts'
 import { parseCatalog, planBuild } from '../vendor/elekloader/kit/src/kit/catalog.ts'
 import { readFirmwareBuildManifest, sha256 } from './firmware-build-manifest.mjs'
 
 const ROOT = fileURLToPath(new URL('../', import.meta.url))
 const DEVICES = { digitakt: 'digitakt-mk1', digitone: 'digitone-mk1' }
-const KEYS = ['machine', 'os', 'moduleIds', 'version', 'expectedVersions', 'expectedSha256', 'keepStockFx2', 'usbAudio', 'riskAccepted']
+const KEYS = ['machine', 'os', 'moduleIds', 'version', 'expectedVersions', 'expectedSha256', 'riskAccepted']
 const HASH = /^[a-f0-9]{64}$/
 
 export function parseBuildRequest(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).some(key => !KEYS.includes(key))) throw new Error('Unknown build request fields.')
-  if (!['octatrack', ...Object.keys(DEVICES)].includes(value.machine)) throw new Error('Supported machines: octatrack, digitakt, digitone. Digitakt II downloads remain paused.')
+  // The Octatrack has no firmware with modules in it: its modules go through the Modwerk base (USB sync, or the card file).
+  if (!Object.keys(DEVICES).includes(value.machine)) throw new Error('Supported machines: digitakt, digitone. Digitakt II downloads remain paused; Octatrack modules go through the Modwerk base, not a firmware build.')
   if (typeof value.os !== 'string' || !/^\d+\.\d+[A-Za-z]?$/.test(value.os)) throw new Error('Choose a stock OS version.')
   if (!Array.isArray(value.moduleIds) || !value.moduleIds.length || value.moduleIds.length > 32 || value.moduleIds.some(id => typeof id !== 'string' || !/^[a-z0-9-]+$/.test(id)) || new Set(value.moduleIds).size !== value.moduleIds.length) throw new Error('Choose distinct native module IDs.')
   if (value.riskAccepted !== true) throw new Error('Set riskAccepted to true after reviewing the experimental firmware and recovery instructions.')
-  if (value.machine === 'octatrack') {
-    if (value.os !== '1.40C' || value.version !== undefined) throw new Error('Octatrack uses OS 1.40C and its published ELEKLOADER display version.')
-  } else if (typeof value.version !== 'string' || !/^[\x20-\x7e]{4}$/.test(value.version) || value.usbAudio !== undefined || value.keepStockFx2 !== undefined) throw new Error('Digi builds need a four-character ASCII display version and no Octatrack settings.')
-  if (value.keepStockFx2 !== undefined && typeof value.keepStockFx2 !== 'boolean') throw new Error('keepStockFx2 must be a boolean.')
+  if (typeof value.version !== 'string' || !/^[\x20-\x7e]{4}$/.test(value.version)) throw new Error('Digi builds need a four-character ASCII display version.')
   if (value.expectedSha256 !== undefined && !HASH.test(value.expectedSha256)) throw new Error('expectedSha256 must be a lowercase SHA-256.')
   if (value.expectedVersions !== undefined && (!value.expectedVersions || typeof value.expectedVersions !== 'object' || Array.isArray(value.expectedVersions) || Object.entries(value.expectedVersions).some(([id, version]) => !/^[a-z0-9-]+$/.test(id) || typeof version !== 'string' || version.length > 80))) throw new Error('expectedVersions maps native module IDs to exact release versions.')
   return { ...value, moduleIds: [...value.moduleIds] }
@@ -70,13 +67,6 @@ export function verifyPublishedModules(inventory, localModules, machine, ids, ex
   return versions
 }
 
-async function octatrackBuilder(root) {
-  const output = await bundle({ configFile: false, root, logLevel: 'error', build: { ssr: resolve(root, 'src/engine/local-download.ts'), write: false, minify: false, sourcemap: false } })
-  const chunks = output.output.filter(item => item.type === 'chunk')
-  if (chunks.length !== 1 || chunks[0].imports.length || chunks[0].dynamicImports.length) throw new Error('The local Octatrack engine did not bundle into one self-contained module.')
-  return import('data:text/javascript;base64,' + Buffer.from(chunks[0].code).toString('base64'))
-}
-
 /** Builds from deployed inputs, saves private files, then hashes their actual on-disk bytes. */
 export async function buildAndSave(value, { stockPath, outputDir, site = 'https://modwerk.app/', root = ROOT }) {
   const request = parseBuildRequest(value), base = siteBase(site)
@@ -92,17 +82,7 @@ export async function buildAndSave(value, { stockPath, outputDir, site = 'https:
   if (!size || size > 16 * 1024 * 1024) throw new Error('Stock firmware has an unsupported size.')
   const stock = new Uint8Array(await readFile(stockPath)), stockSha256 = sha256(stock)
   let built, files, pins, moduleVersions
-  if (request.machine === 'octatrack') {
-    const modules = JSON.parse(await readFile(resolve(root, 'src/catalog/module-documents.json'), 'utf8')).modules
-    moduleVersions = verifyPublishedModules(inventory, modules, request.machine, request.moduleIds, request.expectedVersions)
-    const engine = await octatrackBuilder(root)
-    built = await engine.buildOctatrack(stock, basename(stockPath), request.moduleIds, request.keepStockFx2 ?? false, request.usbAudio)
-    files = [{ name: 'Modwerk-octatrack-custom.bin', data: built.data }]
-    pins = { modules: request.moduleIds.map(id => {
-      const module = modules.find(item => item.id === id)
-      return { id, version: module.version, source: module.source }
-    }), report: built.report }
-  } else {
+  {
     const catalogBytes = await publicFile(base, 'elekloader/catalog.json')
     if (sha256(catalogBytes) !== localManifest.elekloader.catalogSha256) throw new Error('The published Elekloader catalog differs from the deployed builder fingerprint.')
     const plan = planBuild(parseCatalog(JSON.parse(catalogBytes)), DEVICES[request.machine], request.os, request.moduleIds)

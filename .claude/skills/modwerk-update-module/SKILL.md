@@ -9,8 +9,8 @@ description: Change, fix or update a Modwerk module the developer wrote or maint
    - Read its claim on the agent board (`npm run board -- list module <machine>/<id>`). If someone else holds it, they are changing it already: stop, ask them yourself (`npm run board -- ask module <machine>/<id> "…"`) and tell the developer who and that you asked. Otherwise claim it with a one-line note of the change: `npm run board -- claim module <machine>/<id> --note "…"`. Read the open questions and findings on it (`npm run board -- messages module <machine>/<id>`), answer the ones waiting for you, and use what bears on the change.
 2. **Read** `docs/MODULE_AUTHOR_UPDATES.md`, then the module's README, TESTING, manifest and category guide.
 3. **Change it.** Pick the next semantic version and write that version's own release notes in `src/community/module-changelogs/<id>.json`, keeping the earlier entries.
-4. **Build and test.** Build the exact private image and give the developer concrete steps for it on their unit (`/modwerk-try-on-unit`).
-   - Record only the results they report: several instances, slot and core isolation, and persistence where it applies.
+4. **Build and test.** Build the exact private image and test it with `/modwerk-test-on-unit`: your own tests on their unit first, then concrete steps for the developer.
+   - Record only the results they report as the developer's: several instances, slot and core isolation, and persistence where it applies. Your own readings go in as yours.
    - Emulator results never count as hardware evidence.
 5. **Release,** once the developer says testing is done (until then, commit without pushing). Review the change as the owner would, against the pull request worker's checklist (`docs/MAINTENANCE.md#pull-request-worker`), and fix what applies. Run `/modwerk-pr-ready` (with `-- --author <login>`), then open the pull request.
    - A registered author checks the release boxes only after verifying the evidence personally; never check them for them. Missing, failed or untested required checks block automatic publication.

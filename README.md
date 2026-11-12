@@ -65,7 +65,7 @@ The scaffold is untested: choose an unused effect ID for DSP modules and replace
 
 ## Develop and validate
 
-The whole process, including porting from octabam or elekloader, is in [Add or port a module](docs/ADD_A_MODULE.md). For the native code, follow [Writing a module](sdk/octabam/docs/remixer/MODULES.md), using [Character](sdk/octabam/modules/character/) for a DSP example or [Repitch](sdk/octabam/modules/repitch/) for ColdFire. Keep native controls and module metadata synchronized, and record actual measurements in `TESTING.md`.
+The whole process, including porting from octabam or elekloader, is in [Add or port a module](docs/ADD_A_MODULE.md). For the native code, follow [Writing a module](sdk/octabam/docs/remixer/MODULES.md), using [Mini Verb](sdk/octatrack/modules/miniverb/) for a DSP example or [Repitch](sdk/octatrack/modules/repitch/) for ColdFire. Keep native controls and module metadata synchronized, and record actual measurements in `TESTING.md`.
 
 Run these from the repository root:
 

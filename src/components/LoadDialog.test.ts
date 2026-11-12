@@ -38,7 +38,7 @@ afterEach(async () => { await act(() => root.unmount()); container.remove(); sto
 async function open(set: ReturnType<typeof newConfiguration>, session: Session = emptySession, onEdit = vi.fn(), putBack = false) {
   const prepareUpdate = vi.fn(async () => ({ name: set.name, changes: [] }))
   await act(() => root.render(createElement(CommunityContext.Provider, { value: { session, developer: null, catalog: [], refresh: async () => {}, refreshDeveloper: async () => {} } },
-    createElement(LoadDialog, { link, set, inventory, putBack, prepareUpdate, onInstallBase() {}, onClose() {}, onEdit, onCard() {}, onReport() {} }))))
+    createElement(LoadDialog, { link, set, inventory, putBack, prepareUpdate, onInstallBase() {}, onClose() {}, onEdit, onReport() {} }))))
   return { prepareUpdate, onEdit }
 }
 
