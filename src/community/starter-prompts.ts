@@ -26,7 +26,7 @@ const OCTATRACK: Starter[] = [
   { id: 'effect', title: 'An effect', summary: 'A new FX1 or FX2 effect on the DSP, such as a filter, delay or distortion.', guides: ['effects.md'], example: 'Mini Verb, Tape Echo, Character',
     task: 'Build a new FX1/FX2 effect: {idea}\nStart it as an insert effect (`--kind dsp`) unless it genuinely needs the shared bus, and explain why if it does.' },
   { id: 'machine', title: 'A track machine', summary: 'A new sound engine in the track machine list.', guides: ['machines.md'], example: 'Analog BD, FM Synth',
-    task: 'Build a new track machine that appears in the machine chooser and SRC SETUP: {idea}\nAnalog BD (sdk/octabam/modules/analog-bassdrum/) is the worked example.' },
+    task: 'Build a new track machine that appears in the machine chooser and SRC SETUP: {idea}\nAnalog BD (sdk/octatrack/modules/analog-bassdrum/) is the worked example.' },
   { id: 'sequencer', title: 'A sequencer tool', summary: 'Generative steps, ratchets, quantizing: anything that acts in time.', guides: ['machines.md', 'sequencing.md'], example: 'Euclid, Scale Quantizer',
     task: 'Build a module that acts on the sequencer: {idea}\nFollow the instrument\'s own transport, tempo, track speed, scale, length and swing, as Euclid does. Never keep a clock of your own.' },
   { id: 'midi-fx', title: 'A MIDI generator or MIDI effect', summary: 'An arpeggiator, chord or Euclidean note generator, or a MIDI effect such as transpose, scale mapping, humanise or echo.', guides: ['midi-usb.md', 'sequencing.md'], example: 'none yet',

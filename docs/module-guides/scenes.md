@@ -2,7 +2,7 @@
 
 Read [the module guides index](README.md) first.
 
-**Applies to** modules with manifest `category: scenes`: anything that recalls, locks or morphs state per scene or with the crossfader. [MIDI Scenes](../../sdk/octabam/modules/midi-scenes/README.md) adds scene locks to MIDI tracks.
+**Applies to** modules with manifest `category: scenes`: anything that recalls, locks or morphs state per scene or with the crossfader. [MIDI Scenes](../../sdk/octatrack/modules/midi-scenes/README.md) adds scene locks to MIDI tracks.
 
 **Use the existing scene system.** MIDI Scenes works "through the existing MIDI parameter pages rather than a new effect chooser row" and through the stock scene operations: hold SCENE A or B and press a TRIG key to assign it, hold the scene key while turning the encoder, sweep the crossfader, and use the stock scene clear, copy and paste, Part Save and Reload, and project save and load. Do not build a second scene engine or a new screen where the stock page can carry the control.
 
@@ -26,6 +26,8 @@ Read [the module guides index](README.md) first.
 ## Test
 
 `verify_midiscenes.py`, `verify_scenesp2.py` and the emulator scenario in `scripts/midi-scenes-emulator/` are the patterns: a fresh project, project load, eight active tracks, panel scenarios and instrumentation parity.
+
+**Drive the panel while the scene key is held.** On the Octatrack, pressing a scene key writes stock's scene-lock knob handler into every encoder slot, over whatever the open page installed ([the trap](../../sdk/octabam/docs/TRAPS.md#trap-scene-encoders)). A hook in a page's own editor never sees a turn made with a scene held, and a test that calls the editor directly still passes. Hook the scene-lock handler itself, and test the gesture with a scripted panel run (`--live-script`): hold the scene key, turn the encoder, check the lock.
 
 ## Digitakt and Digitone
 

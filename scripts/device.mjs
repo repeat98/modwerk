@@ -10,6 +10,9 @@
 //       scripts/device-send.py part2 pick:T1:FX2:E-Verb stats png:/tmp/s.png   # or 'try FILE', 'remove FILE', 'boot DIR'
 //   npm run device -- try MODULE.mwrm [--seconds 5] [--accept]
 //   npm run device -- remove [MODULE.mwrm] [--accept]   # that file's module, else module 0
+//   npm run device -- set A.mwrm,B.mwrm,-C.mwrm [--accept]  # one whole-set offer, as the site's Sync sends it: files to install, -FILE
+//       to remove that file's module, +refuse for two test modules of which the base refuses the second (so the set rolls back)
+//   npm run device -- recover                       # a trial or staged set another run left behind: roll it back, leave upload mode
 //   npm run device -- lifecycle
 //   npm run device -- boot BUILD_DIR [--chunk 4096]  # RAM boot: build_core.py's output, no flashing; serve: 'boot DIR 4096'
 //   npm run device -- flash BUILD_DIR               # after `boot BUILD_DIR`: that base writes itself to NOR (two slots: it runs on)
@@ -47,7 +50,9 @@ import { UploadSession } from '../src/engine/elekloader/upload-session.ts'
 import { findVendorInterface, UsbVendorTransport } from '../src/engine/elekloader/upload-usb.ts'
 import { DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, DEVICE_LOG_REQUEST, parseDeviceLog } from '../src/engine/elekloader/device-log.ts'
 import { DSP_REPORT_NAMES as REPORT_NAMES } from '../src/community/octatrack-diagnostics-contract.ts'
-import { diagnostics, removal, runLifecycle } from '../src/dev/octatrack-usb-lifecycle.ts'
+import { encodeModuleSet } from '../src/engine/elekloader/set-package.ts'
+import { diagnostics, removal, runLifecycle, runtimePackage, ENTRY } from '../src/dev/octatrack-usb-lifecycle.ts'
+import { describeRefusal } from './loader-refusals.mjs'
 import { Bench, benchEndpoint, device, enumerate, shareBench } from './usb-bench.mjs'
 
 const { values, positionals: [command, file] } = parseArgs({ allowPositionals: true, options: {
@@ -61,10 +66,10 @@ const { values, positionals: [command, file] } = parseArgs({ allowPositionals: t
   chunk: { type: 'string' }, // boot: bytes a frame (4096 for the flashed usbtest9 on macOS; docs/OCTATRACK_HARDWARE_TRAPS.md)
 } })
 let seconds = Number(values.seconds)
-if (!['serve', 'status', 'stats', 'try', 'remove', 'lifecycle', 'boot', 'flash', 'key', 'screen', 'state', 'enc', 'fader', 'loader', 'report', 'probe', 'meter', 'missing', 'ui', 'do', 'mem'].includes(command) || (['try', 'boot', 'flash', 'key', 'enc', 'fader', 'probe', 'meter', 'do', 'mem'].includes(command) && !file) ||
-  (['serve', 'status', 'stats', 'lifecycle', 'screen', 'state', 'loader', 'report', 'missing', 'ui'].includes(command) && file) ||
+if (!['serve', 'status', 'stats', 'try', 'set', 'recover', 'remove', 'lifecycle', 'boot', 'flash', 'key', 'screen', 'state', 'enc', 'fader', 'loader', 'report', 'probe', 'meter', 'missing', 'ui', 'do', 'mem'].includes(command) || (['try', 'set', 'boot', 'flash', 'key', 'enc', 'fader', 'probe', 'meter', 'do', 'mem'].includes(command) && !file) ||
+  (['serve', 'status', 'stats', 'recover', 'lifecycle', 'screen', 'state', 'loader', 'report', 'missing', 'ui'].includes(command) && file) ||
   !Number.isInteger(seconds) || seconds < 1 || seconds > 3600 || (values.chunk && !(Number(values.chunk) >= 1 && Number(values.chunk) <= 4096 && Number.isInteger(Number(values.chunk))))) {
-  console.error('Usage: device.mjs status | stats | try MODULE.mwrm [--seconds 1-3600] [--accept] | remove [MODULE.mwrm] [--accept] | lifecycle | boot BUILD_DIR [--chunk 1-4096] | flash BUILD_DIR | key NAME[+NAME] | screen | state | loader | report | probe 0|1 | meter 0|1 | missing | ui | do SEQUENCE | mem ADDR LENGTH | enc A+3 | fader 0-255 [--socket PATH] [--emulator]')
+  console.error('Usage: device.mjs status | stats | try MODULE.mwrm [--seconds 1-3600] [--accept] | set FILE,-FILE,… [--accept] | recover | remove [MODULE.mwrm] [--accept] | lifecycle | boot BUILD_DIR [--chunk 1-4096] | flash BUILD_DIR | key NAME[+NAME] | screen | state | loader | report | probe 0|1 | meter 0|1 | missing | ui | do SEQUENCE | mem ADDR LENGTH | enc A+3 | fader 0-255 [--socket PATH] [--emulator]')
   process.exit(2)
 }
 
@@ -475,13 +480,13 @@ async function stopping(step) {
 
 /** Stage, publish and run `pkg` in a trial for `seconds`, then accept or roll back. */
 /** A step the loader refused as busy (refusal 5: DSP code moving, a resident controller quiescing before it leaves) is
- * tried again for 5 s, as the site does; any other refusal is named (loader.h runtime_refusal: 7 a track plays it). */
+ * tried again for 5 s, as the site does; any other refusal is named with its next step (loader-refusals.mjs). */
 async function retried(step) {
   for (const start = Date.now(); ; await wait(300)) {
     try { return await step() } catch (error) {
       const refusal = /rejected|backend/.test(error.message) ? (await transport.selftest(false).catch(() => undefined))?.refusal : undefined
       if (refusal === 5 && Date.now() - start < 5000) continue
-      if (refusal !== undefined) error.message += ` (loader refusal ${refusal})`
+      if (refusal !== undefined) error.message += ` (loader refusal ${describeRefusal(refusal)})`
       throw error
     }
   }
@@ -649,6 +654,25 @@ if (command === 'serve') {
     // shortcut: runtime module files do not name their base yet, so any file is offered to the connected base,
     // whose loader validates it; bind the base once the hook ABI defines module files.
     console.log(state(await retried(() => trial(session, { base: identity.base, data, sha256: sha(data) }))))
+  }
+  if (command === 'recover') {
+    const phase = session.status.phase
+    if (phase === 'receiving' || phase === 'verified') { session.adopt(); await session.cancel() }
+    else if (['pending', 'trial', 'recovery', 'publishing'].includes(phase)) { session.adopt(); if (phase === 'trial') await stopping(() => session.holdTrial()); await stopping(() => session.rollback()) }
+    if (phase !== 'normal') await session.leaveUploadMode()
+    console.log(phase === 'normal' ? 'nothing to recover' : 'recovered from ' + phase, '\n' + state(session.status))
+  }
+  if (command === 'set') {
+    const id = data => { const view = new DataView(data.buffer); if (data.length < 32 || view.getUint32(0) !== 0x4d57524d || view.getUint16(4) < 4) throw new Error('Not an ABI 4+ runtime module.'); return view.getUint32(28) }
+    const tick = [0x20, 0x6f, 0x00, 0x04, 0x20, 0xbc, 0, 0, 0, 0x50, 0x4e, 0x75]
+    const packages = file.split(',').flatMap(name => name === '+refuse'
+      ? [runtimePackage(identity.base, tick, 0x6d770002, [ENTRY]).data, runtimePackage(identity.base, tick, 0x6d770003, [[0x40000402, [0xff, 0xe4]]]).data]
+      : name.startsWith('-') ? [removal(identity.base, id(new Uint8Array(readFileSync(name.slice(1))))).data] : [new Uint8Array(readFileSync(name))])
+    const data = encodeModuleSet(identity.base, await transport.setIdentity(), packages)
+    console.log(`set: ${packages.length} changes, ${data.length} bytes`)
+    try { console.log(state(await retried(() => trial(session, { base: identity.base, data, sha256: sha(data) })))) }
+    catch (error) { console.log('refused: ' + error.message); await session.cancel().catch(() => {}); await session.leaveUploadMode().catch(() => {}); console.log(state(session.status)) }
+    console.log('installed:', (await transport.inventory())?.map(m => m.name).join(', ') || 'none')
   }
   if (command === 'flash') {
     // The base writes its own container to NOR (flash.c): `boot DIR` first, then this on that base. The plain ELEK

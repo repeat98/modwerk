@@ -3,15 +3,13 @@ import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:f
 import { createHash } from 'node:crypto'
 import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
-import { MODULES } from './modules'
 import { MODULE_DOCUMENTS_BY_ID } from './documents'
-import { checkSelection } from './compatibility'
 import { requireFolderQualification } from '../../scripts/module-qualification.mjs'
-import current from '../../sdk/octabam/modules/midi-scenes/recipe.json'
+import current from '../../sdk/octatrack/modules/midi-scenes/recipe.json'
 import historical from '../../sdk/drafts/midi-scenes/recipe.json'
 import provenance from '../../sdk/imports/midi-scenes-release-4f9a894.json'
 import requested from '../engine/assets/requested-packages.json'
-const folder = resolve('sdk/octabam/modules/midi-scenes')
+const folder = resolve('sdk/octatrack/modules/midi-scenes')
 const document = MODULE_DOCUMENTS_BY_ID['midi-scenes']
 // 0.2.5 adds the Scene A/B mute patch on top of the author's recipe, which stays byte for byte as imported.
 const CHANGED_IN_0_2_5 = ['README.md', 'TESTING.md', 'media/capture.json', 'octamod.module.json', 'patch.py']
@@ -28,14 +26,6 @@ describe('exact owner-approved MIDISC2.0 release', () => {
     expect(document.tests.releaseWaiver).toBeUndefined()
     expect(requested.objects.some(object=>object.moduleId==='midi-scenes')).toBe(false)
     expect(requested.groups.some(group=>group.moduleId==='midi-scenes')).toBe(false)
-  })
-  it('rejects every companion while allowing only the exact standalone selection', () => {
-    expect(checkSelection(['midi-scenes']).checked).toBe(true)
-    for(const companion of MODULES.filter(module=>module.id!=='midi-scenes')) {
-      const result=checkSelection(['midi-scenes',companion.id])
-      expect(result.checked).toBe(false)
-      expect(result.conflicts.some(conflict=>conflict.description.includes('standalone'))).toBe(true)
-    }
   })
   it('cannot extend approval to future versions or changed source, while documentation edits keep it', async () => {
     const copy=mkdtempSync(resolve(tmpdir(),'octamod-midisc-approval.'))

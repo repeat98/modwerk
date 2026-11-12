@@ -40,8 +40,8 @@ export function authorReleaseEvent(value: unknown): { head: string; number?: num
   return { head, number: pr.number }
 }
 const packageNames = ['dsp-packages', 'coldfire-packages', 'resident-dsp', 'rom-packages', 'bootstrap-package', 'menu-recipes', 'descriptor-recipes', 'platform-writes', 'requested-packages', 'utility-packages', 'usb-audio-packages', 'module-build']
-function manifestPath(folder: string) { return folder + '/' + (folder.startsWith('sdk/octabam/') ? 'octamod' : 'modwerk') + '.module.json' }
-export function moduleReleaseId(module: AuthorModule) { return module.folder.startsWith('sdk/octabam/') ? String(module.document.id) : String(module.document.machine) + '-' + module.document.id }
+function manifestPath(folder: string) { return folder + '/' + (folder.startsWith('sdk/octatrack/') ? 'octamod' : 'modwerk') + '.module.json' }
+export function moduleReleaseId(module: AuthorModule) { return module.folder.startsWith('sdk/octatrack/') ? String(module.document.id) : String(module.document.machine) + '-' + module.document.id }
 function ownership(document: Record<string, unknown>) { return { id: document.id, machine: document.machine, author: document.author, maintainers: document.maintainers, license: document.license, exclusive: document.exclusive, effectId: object(document.compatibility).effectId } }
 function packageProjection(value: unknown, ids: Set<string>, changedPackages: Set<string>, name: string, depth = 0): unknown {
   if (Array.isArray(value)) return value.filter(item => {
@@ -124,7 +124,7 @@ export function authorizeAuthorUpdate(registry: AuthorRegistry, author: unknown,
     if (object(document.tests).releaseWaiver || object(object(document.tests).qualification).hardware && object(object(object(document.tests).qualification).hardware).kind === 'owner-waived') throw new Error('Owner release waivers require owner review.')
     next.set(moduleReleaseId(module), document)
   }
-  const ids = new Set(touched.map(moduleReleaseId)), octatrack = touched.some(module => module.folder.startsWith('sdk/octabam/'))
+  const ids = new Set(touched.map(moduleReleaseId)), octatrack = touched.some(module => module.folder.startsWith('sdk/octatrack/'))
   const changedPackages = new Set(changes.filter(change => change.path.startsWith('src/engine/assets/')).map(change => change.path.slice('src/engine/assets/'.length)))
   const vendorPaths = authorizeVendor(vendor, changes, ids, next)
   let packages = false
@@ -183,7 +183,7 @@ export function authorizeAuthorUpdate(registry: AuthorRegistry, author: unknown,
     }
     throw new Error('Owner review required for ' + change.path + '.')
   }
-  return { modules: [...ids].sort(), octatrack, packages, elemod: touched.some(module => !module.folder.startsWith('sdk/octabam/')), vendorPackages: vendorPaths.size > 0 }
+  return { modules: [...ids].sort(), octatrack, packages, elemod: touched.some(module => !module.folder.startsWith('sdk/octatrack/')), vendorPackages: vendorPaths.size > 0 }
 }
 
 /** Job names bind CI to the event's base and head, including fork PRs with no API PR association. */

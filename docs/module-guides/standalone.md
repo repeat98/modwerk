@@ -2,7 +2,7 @@
 
 Read [the module guides index](README.md) first.
 
-**Applies to** modules with manifest `category: standalone`: complete firmware that replaces the whole OS. The library describes it as "Complete custom firmware that replaces the whole OS. Use one at a time: it never combines with other mods" (`src/catalog/modules.ts`). No module uses this manifest category yet. [MIDI Scenes](../../sdk/octabam/modules/midi-scenes/README.md) is built on its own and is the nearest example; its `category` is `scenes`.
+**Applies to** modules with manifest `category: standalone`: complete firmware that replaces the whole OS. The library describes it as "Complete custom firmware that replaces the whole OS. Use one at a time: it never combines with other mods" (`src/catalog/modules.ts`). No module uses this manifest category yet. [MIDI Scenes](../../sdk/octatrack/modules/midi-scenes/README.md) is built on its own and is the nearest example; its `category` is `scenes`.
 
 On Digitakt and Digitone a standalone module is `exclusive`, links with no core and is always used on its own ([SDK.md](../SDK.md)).
 

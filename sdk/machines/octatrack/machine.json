@@ -33,7 +33,7 @@
   },
   "sdk": {
     "platform": "octabam",
-    "modules": "sdk/octabam/modules",
+    "modules": "sdk/octatrack/modules",
     "catalog": "sdk/catalog.json",
     "guide": "sdk/machines/octatrack/README.md",
     "core": {

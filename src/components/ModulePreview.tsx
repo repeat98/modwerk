@@ -42,6 +42,32 @@ function polyVoice(voice: number) {
   }).join(' ')
 }
 
+// The Amiga computer seen from the front right: u runs across the case, v from back to front, z up; the top slopes down to the front.
+function amigaPoint(u: number, v: number, z = 26 - 16 * v / 92) {
+  return (75 + .94 * u - .4 * v).toFixed(1) + ' ' + (70 + .11 * u + .4 * v - z).toFixed(1)
+}
+const amigaPath = (points: [number, number, number?][], close = true) => 'M' + points.map(([u, v, z]) => amigaPoint(u, v, z)).join('L') + (close ? 'Z' : '')
+const amigaQuad = ([u0, v0, u1, v1]: number[], gap = 1.6) => amigaPath([[u0, v0], [u1 - gap, v0], [u1 - gap, v1 - gap], [u0, v1 - gap]])
+
+function amigaKeys() {
+  const k = 9, h = 8.2, top = 33, right = 141, cursor = 146, pad = 178, keys = [[6, 24, 15, 30]]
+  for (let i = 0; i < 10; i++) keys.push([22 + (i > 4 ? 64 : 0) + (i % 5) * 12.4, 24, 34.4 + (i > 4 ? 64 : 0) + (i % 5) * 12.4, 30])
+  ;[k, 1.5 * k, 1.75 * k, 2.25 * k].forEach((lead, row) => {
+    const v = top + row * h
+    let u = 6 + lead
+    keys.push([6, v, u, v + h])
+    for (; u + k <= right - (row ? k / 2 : 0) + .01; u += k) keys.push([u, v, u + k, v + h])
+    if (right - u > 2) keys.push([u, v, right, v + h])
+  })
+  for (const [a, b] of [[0, 1.5], [1.5, 2.5], [2.5, 12.5], [12.5, 13.5], [13.5, 15]]) keys.push([6 + a * k, top + 4 * h, 6 + b * k, top + 5 * h])
+  keys.push([cursor, top, cursor + 1.5 * k, top + h], [cursor + 1.5 * k, top, cursor + 3 * k, top + h], [cursor + k, top + 3 * h, cursor + 2 * k, top + 4 * h])
+  for (let i = 0; i < 3; i++) keys.push([cursor + i * k, top + 4 * h, cursor + (i + 1) * k, top + 5 * h])
+  for (let row = 0; row < 4; row++) for (let c = 0; c < 3; c++) keys.push([pad + c * k, top + row * h, pad + (c + 1) * k, top + (row + 1) * h])
+  keys.push([pad, top + 4 * h, pad + 2 * k, top + 5 * h], [pad + 2 * k, top + 4 * h, pad + 3 * k, top + 5 * h])
+  keys.push([pad + 3 * k, top, pad + 4 * k, top + h], [pad + 3 * k, top + h, pad + 4 * k, top + 3 * h], [pad + 3 * k, top + 3 * h, pad + 4 * k, top + 5 * h])
+  return keys.map(key => amigaQuad(key)).join('')
+}
+
 // Hand-drawn art for the catalog modules. A module without an entry shows its presentation/thumbnail.svg.
 const ART: Readonly<Record<string, () => ReactElement>> = {
   poly8: () => <g>
@@ -222,6 +248,21 @@ const ART: Readonly<Record<string, () => ReactElement>> = {
     <path className="signal-main" d={sine(0, 36, 3)} />
     <path className="signal-secondary" d="M29 52H291M29 142H291" strokeDasharray="3 6" />
     <text x="25" y="177">TRACK VOL ↓</text><text x="186" y="177">PREVIEW VOL 0</text>
+  </g>,
+  // The computer itself; presentation/thumbnail.svg stays as it is because the build approval's source hash covers it.
+  amiga: () => <g>
+    <path className="signal-dot" opacity=".04" d={amigaPath([[0, 0], [220, 0], [220, 92], [0, 92]])} />
+    <path className="signal-dot" opacity=".08" d={amigaPath([[0, 92], [220, 92], [220, 92, 0], [0, 92, 0]])} />
+    <path className="signal-dot" opacity=".13" d={amigaPath([[220, 0], [220, 0, 0], [220, 92, 0], [220, 92]])} />
+    <path className="signal-secondary" d={amigaPath([[0, 18], [220, 18]], false)} />
+    <path className="signal-secondary" style={{ strokeWidth: 1 }} d={Array.from({ length: 14 }, (_, i) => amigaPath([[100 + i * 8, 4], [100 + i * 8, 13]], false)).join('')} />
+    <path className="signal-secondary" style={{ strokeWidth: .8 }} d={amigaKeys()} />
+    <path className="signal-dot" opacity=".9" d={amigaQuad([196, 80.5, 202, 83], 0)} />
+    <path className="signal-dot" opacity=".45" d={amigaQuad([205, 80.5, 211, 83], 0)} />
+    <path className="signal-main" style={{ strokeWidth: 1.3 }} d={amigaPath([[220, 26, 15], [220, 62, 15], [220, 62, 11.5], [220, 26, 11.5]])} />
+    <path className="signal-dot" opacity=".6" d={amigaPath([[220, 66, 14], [220, 72, 14], [220, 72, 11], [220, 66, 11]])} />
+    <path className="signal-main" d={amigaPath([[0, 0], [220, 0], [220, 0, 0], [220, 92, 0], [0, 92, 0], [0, 92]]) + amigaPath([[0, 92], [220, 92], [220, 0]], false) + amigaPath([[220, 92], [220, 92, 0]], false)} />
+    <text x="25" y="177">8 BIT</text><text x="235" y="177">SPD 1/2</text>
   </g>,
 }
 

@@ -1,0 +1,7 @@
+{
+  "schema": 1,
+  "contribute": [
+    {"to": "ot_machines", "order": 70, "data": "amiga_machine"},
+    {"to": "ot_machine_starts", "order": 70, "data": "amiga_machine_start"}
+  ]
+}

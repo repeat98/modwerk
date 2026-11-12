@@ -17,11 +17,16 @@ describe('module doctor', () => {
     for (const id of ['miniverb', 'sidechain-compressor', 'analog-bassdrum', 'midi-scenes', 'digihealth']) expect(result.stdout).toContain(id)
   // The full catalogue shares CPU with app checks; this is an integration check, not a five-second performance gate.
   }, catalogCheckTimeout + 5000)
-  // The draft's copy under sdk/octabam/modules/ is visible to anything reading that folder while it runs, so npm run check defers
+  // A machine page's controls come from modwerk_page_control(), which picks stock's switch for two to five values; a page written
+  // by hand before the helper existed is told, not refused.
+  it('tells a module that writes its page descriptor by hand about the shared helper', () => {
+    expect(doctor('analog-bassdrum').stdout).toMatch(/· page controls\s+control\.c writes its page descriptor by hand/)
+  }, catalogCheckTimeout + 5000)
+  // The draft's copy under sdk/octatrack/modules/ is visible to anything reading that folder while it runs, so npm run check defers
   // this test from its parallel stage (SDK suite, other test files, build) and runs it alone afterwards.
   it.skipIf(process.env.MODWERK_DEFER_DRAFT_DOCTOR === '1')('checks a draft where every gate looks and leaves no copy behind', () => {
     // Any draft with a manifest that is not also a listed module; the fast loop keeps unqualified work in sdk/drafts/.
-    const draft = readdirSync(join(root, 'sdk/drafts')).find(name => existsSync(join(root, 'sdk/drafts', name, 'octamod.module.json')) && !existsSync(join(root, 'sdk/octabam/modules', name)))
+    const draft = readdirSync(join(root, 'sdk/drafts')).find(name => existsSync(join(root, 'sdk/drafts', name, 'octamod.module.json')) && !existsSync(join(root, 'sdk/octatrack/modules', name)))
     expect(draft, 'a draft to check').toBeTruthy()
     const result = doctor('--draft', draft)
     expect(result.stdout).toContain(draft + ' (Octatrack)')
@@ -30,12 +35,12 @@ describe('module doctor', () => {
     // The gate compares the draft too, so a clash shows before the catalogue lists it.
     expect(result.stdout).toMatch(/[✓✗] cross-compatibility/)
     expect(result.stdout).not.toContain('once it is listed')
-    expect(existsSync(join(root, 'sdk/octabam/modules', draft))).toBe(false)
+    expect(existsSync(join(root, 'sdk/octatrack/modules', draft))).toBe(false)
     expect(doctor('--draft', 'no-such-draft').status).toBe(2)
   }, catalogCheckTimeout + 5000)
   // Two tiers: a draft is judged on what trying and sharing it needs; what listing it needs reads as still to do until --release.
   it.skipIf(process.env.MODWERK_DEFER_DRAFT_DOCTOR === '1')('judges a draft as experimental, and as a release with --release', () => {
-    const draft = readdirSync(join(root, 'sdk/drafts')).find(name => existsSync(join(root, 'sdk/drafts', name, 'octamod.module.json')) && !existsSync(join(root, 'sdk/octabam/modules', name)))
+    const draft = readdirSync(join(root, 'sdk/drafts')).find(name => existsSync(join(root, 'sdk/drafts', name, 'octamod.module.json')) && !existsSync(join(root, 'sdk/octatrack/modules', name)))
     const experimental = doctor('--draft', draft).stdout
     const [now, later] = experimental.split('  Release: before it is listed')
     expect(now).toContain('Experimental: to try it on your unit and share it')
@@ -47,7 +52,7 @@ describe('module doctor', () => {
     expect(strict.stdout).not.toContain('Experimental:')
     expect(strict.stdout).toMatch(/✗ catalog entry/)
     expect(strict.status).toBe(1)
-    expect(existsSync(join(root, 'sdk/octabam/modules', draft))).toBe(false)
+    expect(existsSync(join(root, 'sdk/octatrack/modules', draft))).toBe(false)
     expect(doctor('miniverb', '--release').status).not.toBe(0)
   }, 2 * catalogCheckTimeout + 5000)
   it('names the failing integration point and the command that fixes it', () => {

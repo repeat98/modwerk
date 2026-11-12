@@ -1,0 +1,31 @@
+The Octatrack update is here
+
+Hey guys,
+
+the Octatrack update the beta testers have been trying for the past four weeks is now open to everyone. Install the Modwerk base once, and from then on your modules go onto your Octatrack straight from the site.
+
+- Modules over USB
+  Pick modules in the library and sync them – no card, no restart. You see what changes before anything is sent.
+- Smarter DSP use
+  Effects load onto the DSP only when a track uses them, and tracks on the same core share one copy.
+- A status page for your Octatrack
+  What’s on it, its CPU and DSP load, and the last self-test.
+- No USB? Use the card
+  Your module set also goes onto the card as one file, from Setup.
+
+The first install goes through the card, since the original OS has no USB link for Modwerk; base updates come over USB after that. You’ll need an Octatrack MKI or MKII, your original OS 1.40C file and a CompactFlash card reader, plus Chrome or Edge on a computer for USB.
+
+Set up your Octatrack (https://modwerk.app/#octatrack)
+
+With this, the old card firmware builder is retired and every module runs on the base. Tuner, Stem Rec and Temp Save are paused until each has a base version. If a module ever gets in the way, hold PROJ while you switch the Octatrack on (on an MKI, FUNC once the startup animation begins) and it starts without your modules.
+
+Problems with the base, a sync or a module go through the report form on the site, so I can see them right away. And a big thank you to everyone who tested the beta – you made this possible!
+
+Thank you,
+Jannik
+
+You’re receiving this because you opted in to Modwerk news. You can turn news emails off in your account settings at any time.
+https://modwerk.app/#account/notifications
+
+Modwerk · https://modwerk.app/
+Need help? support@modwerk.app
