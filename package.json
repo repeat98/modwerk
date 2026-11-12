@@ -44,6 +44,7 @@
     "device": "node scripts/device.mjs",
     "zoom": "node scripts/zoom.ts",
     "device:qualify": "node scripts/mirror-octatrack-modules.mjs && python3 -B scripts/octatrack-qualify.py",
+    "device:test": "python3 -B scripts/octatrack-test.py",
     "modules:generate": "node scripts/modules.mjs --write",
     "modules:check": "node scripts/modules.mjs",
     "modules:compat": "node scripts/mirror-octatrack-modules.mjs && python3 -B scripts/module-compat.py",
