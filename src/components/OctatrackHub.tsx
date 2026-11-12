@@ -69,14 +69,18 @@ export function OctatrackHub(props: OctatrackHubProps) {
 
 function MobileModuleSets({ sets, selectedId, onSelect, onNew, onImport, onSetAction, header, grid }: OctatrackHubProps) {
   const selected = sets.find(set => set.id === selectedId) ?? sets[0]
-  return <div className="configuration-page">
+  // Phone layout: the picker names the open set and carries its menu, so the modules follow it without a second heading.
+  return <div className="configuration-page hub-mobile">
     {header}
-    <section className="configuration-section" aria-label="Module sets">
-      {!!sets.length && <label>Module set<select value={selected?.id} onChange={event => onSelect(event.target.value)}>{sets.map(set => <option key={set.id} value={set.id}>{set.name} · {modules(set.moduleIds.length)}</option>)}</select></label>}
-      <div className="configuration-heading-actions"><button type="button" className="button button-quiet" onClick={onNew}>New module set</button><button type="button" className="button button-quiet" onClick={onImport}>Import JSON</button><a className="text-button" href="#module-sets">Starting points</a></div>
+    <section className="hub-mobile-sets" aria-label="Module sets">
+      {selected && <div className="hub-mobile-picker">
+        <label><span>Module set</span><select value={selected.id} onChange={event => onSelect(event.target.value)}>{sets.map(set => <option key={set.id} value={set.id}>{set.name} · {modules(set.moduleIds.length)}</option>)}</select></label>
+        <SetMenu set={selected} onAction={onSetAction} />
+      </div>}
+      <p className="hub-mobile-set-actions"><button type="button" className="text-button" onClick={onNew}><Icon name="plus" size={14} />New module set</button><button type="button" className="text-button" onClick={onImport}>Import JSON</button><a className="text-button" href="#module-sets">Starting points</a></p>
     </section>
-    {selected ? <><header className="hub-editor-head"><h2>{selected.name}</h2><SetMenu set={selected} onAction={onSetAction} /></header>{grid}<ConfigurationHandoff onExport={() => onSetAction(selected.id, 'export')} exported={false} /></>
-      : <p>Start a module set, then add modules from the library.</p>}
+    {selected ? <>{grid}<ConfigurationHandoff onExport={() => onSetAction(selected.id, 'export')} exported={false} /></>
+      : <p className="hub-mobile-empty">Start a module set, then add modules from the library.</p>}
   </div>
 }
 
