@@ -13,7 +13,7 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { DSP_REPORT_NAMES } from '../src/community/octatrack-diagnostics-contract.ts'
-import { crashNames, namesFor, withName } from './address-names.mjs'
+import { crashNames, namesFor, withName } from '../src/dev/address-names.ts'
 
 const ROOT = new URL('..', import.meta.url)
 const SERVICE = 'modwerk-diagnostics-read'

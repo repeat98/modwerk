@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Elastic-2.0
+// SPDX-License-Identifier: GPL-3.0-or-later OR Elastic-2.0
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 // Names for the addresses a crash record holds, so a program counter reads as a function instead of eight hex digits.
 // Two sources, both on this computer only:
@@ -10,13 +10,14 @@ import { copyFileSync, mkdirSync, readdirSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 
+type Names = (address: number) => string
 const HOME = join(homedir(), '.cache/modwerk-local/octatrack')
 const NEAR = 0x1000 // a name reaches this far past its address: further on, the nearest name below says nothing
 
 /** `name(address)`: "symbol+0x1c", or '' when nothing is named within NEAR below it. Addresses outside main memory
  * (0x40000000-0x40ffffff: absolute constants, registers) are no code or data and are left out. */
-export function addressNames(symbols = {}, notes = {}) {
-  const at = new Map()
+export function addressNames(symbols: Record<string, number> = {}, notes: Record<string, string> = {}): Names {
+  const at = new Map<number, string>()
   for (const [name, address] of Object.entries(symbols)) // the linker lists each symbol twice, once as "core:name"
     if (address >= 0x40000000 && address < 0x41000000 && (!at.has(address) || !name.startsWith('core:'))) at.set(address, name.replace(/^core:/, ''))
   for (const [address, name] of Object.entries(notes)) at.set(Number(address), name)
@@ -30,7 +31,7 @@ export function addressNames(symbols = {}, notes = {}) {
 }
 
 /** Keep a build's symbols under its base's identity (proofs.json's configurationHash), for later crash records. */
-export function keepSymbols(dir, home = HOME) {
+export function keepSymbols(dir: string, home = HOME) {
   const base = JSON.parse(readFileSync(join(dir, 'proofs.json'), 'utf8')).configurationHash
   mkdirSync(join(home, 'symbols'), { recursive: true })
   copyFileSync(join(dir, 'symbols.json'), join(home, 'symbols', base + '.json'))
@@ -38,19 +39,19 @@ export function keepSymbols(dir, home = HOME) {
 
 /** The names for a base, by its identity or the first hex digits of it (a log's base record holds eight): undefined
  * when no build of that base was kept here, so an address is never named from another base's layout. */
-export function namesFor(base, home = HOME) {
-  const read = file => { try { return JSON.parse(readFileSync(file, 'utf8')) } catch { return undefined } }
-  let file
+export function namesFor(base: string | undefined, home = HOME): Names | undefined {
+  const read = (file: string) => { try { return JSON.parse(readFileSync(file, 'utf8')) } catch { return undefined } }
+  let file: string | undefined | ''
   try { file = base && readdirSync(join(home, 'symbols')).find(name => name.startsWith(base)) } catch { /* none kept */ }
   return file ? addressNames(read(join(home, 'symbols', file)), read(join(home, 'addresses.json'))) : undefined
 }
 
 /** " (name+0x1c)" for a line that already prints the address, or ''. */
-export const withName = (names, address) => { const name = names?.(address); return name ? ` (${name})` : '' }
+export const withName = (names: Names | undefined, address: number) => { const name = names?.(address); return name ? ` (${name})` : '' }
 /** A crash record's line of names: where the program counter was and the stack longs that point at something named
  * (return addresses among them, and data), in the stack's order; '' without names for its base. */
-export function crashNames(names, pc, stack) {
+export function crashNames(names: Names | undefined, pc: number, stack: number[]) {
   if (!names) return ''
-  const through = stack.map(names).filter(Boolean)
+  const through = stack.map(address => names(address)).filter(Boolean)
   return `in ${names(pc) || 'nothing named'}` + (through.length ? ', stack holds ' + through.join(', ') : '')
 }

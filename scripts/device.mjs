@@ -53,7 +53,7 @@ import { DSP_REPORT_NAMES as REPORT_NAMES } from '../src/community/octatrack-dia
 import { encodeModuleSet } from '../src/engine/elekloader/set-package.ts'
 import { diagnostics, removal, runLifecycle, runtimePackage, ENTRY } from '../src/dev/octatrack-usb-lifecycle.ts'
 import { describeRefusal } from './loader-refusals.mjs'
-import { crashNames, keepSymbols, namesFor } from './address-names.mjs'
+import { crashNames, keepSymbols, namesFor } from '../src/dev/address-names.ts'
 import { Bench, benchEndpoint, device, enumerate, shareBench } from './usb-bench.mjs'
 
 const { values, positionals: [command, file] } = parseArgs({ allowPositionals: true, options: {
@@ -206,7 +206,7 @@ async function dspmap(seconds) {
     if (seconds) await wait(250)
   } while (Date.now() - t0 < Math.min(seconds, 15) * 1000)
 }
-/** A crash record's names on a line of their own (address-names.mjs), when a build of the running base was kept here. */
+/** A crash record's names on a line of their own (src/dev/address-names.ts), when a build of the running base was kept here. */
 const lined = names => names ? '\n  ' + names : ''
 /** The build `boot DIR` last started, whose symbols.json and proofs.json `profile` reads. */
 const LAST_BOOT = join(homedir(), '.cache/modwerk-octatrack/last-boot')

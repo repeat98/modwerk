@@ -1,10 +1,10 @@
-// SPDX-License-Identifier: Elastic-2.0
+// SPDX-License-Identifier: GPL-3.0-or-later OR Elastic-2.0
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { addressNames, crashNames, keepSymbols, namesFor, withName } from './address-names.mjs'
+import { addressNames, crashNames, keepSymbols, namesFor, withName } from './address-names'
 
 describe('address names', () => {
   const names = addressNames({ 'core:tick': 0x40a00000, tick: 0x40a00000, frame: 0x40a00100, MAGIC: 0, REGISTER: 0xfc07c00c }, { '0x4005a2b8': 'popup' })
@@ -34,7 +34,7 @@ describe('address names', () => {
     writeFileSync(join(build, 'proofs.json'), JSON.stringify({ configurationHash: 'abcdef0123' }))
     writeFileSync(join(build, 'symbols.json'), JSON.stringify({ tick: 0x40a00000 }))
     keepSymbols(build, home)
-    expect(namesFor('abcdef01', home)(0x40a00002)).toBe('tick+0x2')
+    expect(namesFor('abcdef01', home)!(0x40a00002)).toBe('tick+0x2')
     expect(namesFor('12345678', home)).toBeUndefined()
     expect(namesFor('', home)).toBeUndefined()
     expect(namesFor('abcdef01', join(home, 'missing'))).toBeUndefined()
