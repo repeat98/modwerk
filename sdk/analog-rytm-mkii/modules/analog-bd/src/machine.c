@@ -16,7 +16,7 @@
 #define SLOT 36
 
 // The knobs, by sound index (play.knob[i] is index 9 + i). Slot 36's SYNTH page shows
-// A 10, B 13, C 14, D 11 / E 15, F 12, G 16, H 9 (rytm-emu, AB00).
+// A 10, B 13, C 14, D 11 / E 15, F 12, G 16, H 9 (read in rytm-emu).
 enum { K_LEV, K_TUN, K_DEC, K_LOW, K_TON, K_ATK, K_SWP, K_HIGH };
 #define TAP_ENCODER 1               // B
 #define TAP_INDEX 13                // the sound index B shows

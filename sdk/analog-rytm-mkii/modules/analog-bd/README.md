@@ -24,8 +24,7 @@ SYNTH page:
 ## Limits
 
 - Tracks: BD ANALOG is in the machine list of the BD, SD and BT tracks only. On the unit (rig, 11 Nov 2026) three 909s hit together played clean and four overran the audio block, so three voices is the cap.
-- CPU: the Rytm's own audio work takes about two thirds of the audio block with nothing playing. An 808 voice adds about 7 % of the block (its render about 5 %, the base's work under 1 %, stock's for the track about 1 %), so about four 808 voices can hit at the same instant; more make the busiest blocks overrun, heard as clicks. The 0.1.7 909 is not yet measured on a unit; the 0.1.0 909 rendered about a fifth more than the 808, so expect three to four. Hits spread across the beat cost less ([TESTING.md](TESTING.md)).
-- 0.2.0 changed the 909 (Analog BD 0.1.7): sounds saved with 0.1.0 play the 909 differently; set TUN and DEC again.
+- CPU: the Rytm's own audio work takes about two thirds of the audio block with nothing playing. An 808 voice adds about 7 % of the block (its render about 5 %, the base's work under 1 %, stock's for the track about 1 %). Hits spread across the beat cost less than hits at the same instant ([TESTING.md](TESTING.md)).
 - The level into the voice's analog path and how hard it can be driven are not yet measured on a unit.
 
 ## Credits

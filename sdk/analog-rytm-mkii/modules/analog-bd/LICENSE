@@ -3,7 +3,7 @@ MIT License
 Copyright (c) 2026 Jannik Aßfalg (repeat98): the 808 and 909 bass drum models,
 their fits and coefficients (Analog BD for the Octatrack,
 sdk/octabam/modules/analog-bassdrum), which this module's tables are generated from.
-Copyright (c) 2026 Nathaniel Pawelczyk (npp1993): the port to the Analog Rytm MKII.
+Copyright (c) 2026 Nathaniel Pavel (npp1993): the port to the Analog Rytm MKII.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "machine": "analog-rytm-mkii",
+  "moduleId": "analog-bd",
+  "moduleVersion": "0.2.0-experimental",
+  "firmware": "1.74",
+  "capturedAt": "2026-11-11T23:30:00Z",
+  "imageSha256": "122f2c87d41f469a848e05e80ac38d0dfd7a0d649ce47122e88b15660639a4ac",
+  "build": "Modwerk's linker: the Modwerk base's send-bus variant f824d778 (repeat98/modwerk#1447) + this folder's BD ANALOG 0.2.0-experimental, materialised against stock OS 1.74, --version BA20",
+  "emulator": {
+    "name": "rytm-emu",
+    "repository": "https://github.com/trigcondition/rytm-emu",
+    "binary": "dtboot",
+    "settings": "blank card, JIT on",
+    "revision": "2ac0f1f"
+  },
+  "conditions": "CARD: dtboot ba20.syx --every 999G --card card.img --instr 9G --card-save --press YES@3900M:12M --press NO@6001M:12M --press NO@6503M:12M (formats the card, clears the notices). Then the plans below on that card: the four NO presses clear the calibration notices, FUNC + SRC opens BD's machine list on BD HARD, four DOWN presses reach BD ANALOG, YES chooses it, PUSH_B taps encoder B. Frames are dtboot's firmware-rendered 128x64 screen at 3x, unmodified.",
+  "captures": [
+    {
+      "path": "media/machine-list.png",
+      "frame": "step10_DOWN.png",
+      "plan": "DTBOOT_STEPS=1 DTBOOT_PNG_DIR=png dtboot ba20.syx --every 999G --card card.img --instr 16500M --press NO@9201M:12M --press NO@10001M:12M --press NO@10801M:12M --press NO@11601M:12M --press FUNC@13201M:300M --press SRC@13301M:12M --press DOWN@13701M:12M --press DOWN@13801M:12M --press DOWN@13901M:12M --press DOWN@14001M:12M --press YES@14601M:12M --press PUSH_B@15601M:12M",
+      "sha256": "bc947ce72c040fd8a030107a6eac048da6df893f8053635ae69062d491e4cb1a"
+    },
+    {
+      "path": "media/synth-808.png",
+      "frame": "end",
+      "plan": "DTBOOT_END_PNG=end808.png dtboot ba20.syx --every 999G --card card.img --instr 15500M --press NO@9201M:12M --press NO@10001M:12M --press NO@10801M:12M --press NO@11601M:12M --press FUNC@13201M:300M --press SRC@13301M:12M --press DOWN@13701M:12M --press DOWN@13801M:12M --press DOWN@13901M:12M --press DOWN@14001M:12M --press YES@14601M:12M",
+      "sha256": "ffc8dd5a88091b64bff927060527c34937fc71ec0981dc07a659e3332430ba7a"
+    },
+    {
+      "path": "media/synth-909.png",
+      "frame": "step12_PUSH_B.png",
+      "plan": "(the machine-list plan) step 12, after the PUSH_B release",
+      "sha256": "00a46cc4438151b777c4a179edc4402c32fdb9949ba31bafcb85186ef08a0881"
+    }
+  ]
+}

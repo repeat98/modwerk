@@ -2,6 +2,8 @@
 
 ## Builds
 
+The bases named below are development builds of the Modwerk base with the digital voices (and, for BL01, a USB test link), not published and not rebuildable from this repository; the published base is the send-bus variant of repeat98/modwerk#1447 (f824d778), on which this module ran in rytm-emu (BP02, BA20) but not yet on a unit.
+
 - AB16 (0.2.0-experimental, sha256 d7bba966…, solo on Modwerk base 6fca633f): AB15 with BD ANALOG offered on the BD, SD and BT tracks only, after the unit's stress (below). emu_check: all pass, meter unchanged.
 - BP02 (rytm-emu only): this module on the base of the digital voices pull request (send-bus f824d778, repeat98/modwerk#1447): emu_check all pass, mean 3.4 %, dearest block 4.6 % of a block.
 - AB15 (0.2.0-experimental, sha256 f3142d40…, solo on Modwerk base 6fca633f, send-bus with machine-list sections): the 909 of Analog BD 0.1.7 (refitted to the recorded TR-909: body from two tables, the click from a table and two decaying words, the noise envelope ramped, control every 16 samples, the model's rest), and LOW/HIGH as one weight per band for both models. tools/asm_check.py (`--pass` 1-4, machine-list sections base): every routine saves its registers; desk 134,991, bodies 270,542, click 13,156, noise 31,648 blocks checked, 0 differences. emu_check: all pass. rytm-emu meter, 808 then 909, against 0.1.0 with the lite desk on the same base: mean 3.4 % of a block (4.1 %), dearest block 4.6 % (6.5 %). Emulator counts, not unit time: the unit pays roughly three times them. Not on the unit.
@@ -21,7 +23,7 @@
 
 Run by an automated rig on the author's MKII, not by a person: development image BL01 (sha256 25f0415b…, RAM crc f2089275: a development base 6ae06939 with a USB control link, the same digital voices, + this module; a machine list without sections), booted from RAM, scratch project, Kit 1, 120 BPM. Notes on the auto channel (14), MAIN OUT over Overbridge, sweeps judged against src/ab_dsp.c on the host (voice_rig.py).
 
-- Screens (the rig's screen cases, not in this repository): BD ANALOG chosen, B reads TON and the bar 808; a tap gives SWT and 909; a tap back 808. The type is kept with the sound when the machine is chosen again.
+- Screens (screen cases of the author's rig, which is not in this repository): BD ANALOG chosen, B reads TON and the bar 808; a tap gives SWT and 909; a tap back 808. The type is kept with the sound when the machine is chosen again.
 - First: silent, because Kit 1's BD had SYN off on its TRIG page (switched on at the panel). Then a MIDI note and a sequencer trig both play.
 - 808: TUN within 0.0 % of the model; ATK, SWP, LOW and velocity follow it (rho 0.91 to 1.00). DEC rises on the unit (t20 58, 116, 164, 288 ms at 40-127) but the model's t20 dips at 127, so rho 0.80: not passed. TON and HI under the noise floor, not judged (as AB07).
 - 909 (0.1.7 model): TUN within 0.0 % of the model at 16-112 (36.06-60.60 Hz on the unit, 36.04-60.61 in the model): the new one-octave range holds. SWP, ATK (click), LOW, HIGH follow the model (rho 1.00), velocity -> peak 0.95. DEC rises on the unit (t20 168, 342, 364 ms at 70, 100, 127); the model's 1 ms-envelope t20 sits at 104 ms for all three (the 45 Hz wave's zero crossings, its output clipped at velocity 100), so not judged. Velocity -> click fails (rho -0.2): the model clips at 100 and 127 and the Rytm's AMP follows velocity as well.
@@ -89,7 +91,7 @@ The emulator's analog model is not hardware evidence: no sound was judged.
 
 ## The unit rig (tools/rig_plan.json, rig_host.py)
 
-`sdk/machines/analog-rytm-mkii/tools/voice_rig.py` with this plan: 808 and 909 passes of nine sweeps (TUN, DEC, TON, ATK, SWP, LOW, HI, velocity, the 909's click by velocity), against src/ab_dsp.c built for the host. Checked offline before any unit run: on the host model through a stand-in path (-6 dB, an 8 kHz low-pass, noise at -80 dBFS, 44.1 kHz) every sweep passes, but the 808's TON and HI, whose 1-8 kHz attack sits at that noise floor (reported, not judged); with TUN and velocity broken on purpose it fails both, on both types. No unit run yet.
+`sdk/machines/analog-rytm-mkii/tools/voice_rig.py` with this plan: 808 and 909 passes of nine sweeps (TUN, DEC, TON, ATK, SWP, LOW, HI, velocity, the 909's click by velocity), against src/ab_dsp.c built for the host. Checked offline before the unit runs below: on the host model through a stand-in path (-6 dB, an 8 kHz low-pass, noise at -80 dBFS, 44.1 kHz) every sweep passes, but the 808's TON and HI, whose 1-8 kHz attack sits at that noise floor (reported, not judged); with TUN and velocity broken on purpose it fails both, on both types.
 
 ## Unit rig, AB05 (5 November 2026)
 
@@ -187,6 +189,3 @@ The rig's stress over USB, sample layers off on every track, the 909 hit on N vo
 
 AB04, the author on a MKII (5 November 2026): boots; BD ANALOG tops BD's list; velocity, the tap of B (TON/SWT), chromatic mode, other keys leaving the type alone, saving and loading a 909 sound, a 909 sound lock on an 808 track, no buzz on a machine change mid-tail and a sample beside it all worked. SWP still acted as stock's 3-way waveform switch and HI as the transient picker (fixed in AB05). Six voices of BD ANALOG made the unit sluggish, with dropouts.
 
-## Unit (earlier)
-
-Not tested.
