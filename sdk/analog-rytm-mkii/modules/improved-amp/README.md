@@ -149,7 +149,7 @@ the configurator offers one or the other.
   0.957x and decays at 0.918x the OS's timing model, so the ATK table is built for 0.957 and the
   AMP DEC text is scaled by 0.918. The filter envelope, measured through the self-oscillating
   filter's pitch, runs at the OS model's speed, so FILTER times need no factor; attacks under 3 ms
-  were not resolved. Another unit may differ slightly. HLD is counted by the OS and matched within 2 ms.
+  were not resolved. Another unit may differ slightly. HLD is counted on the OS's clock and held its steps within 1 ms.
 - AMP DEC under about 5 ms is blurred by the VCA's own slew (~0.8 ms): DEC 1..8 all measure 1-2 ms.
   FILTER DEC and REL under 15 ms were not resolved on the unit (TESTING.md).
 - OVR's curve comes from one unit's overdrive, measured with one sound. On the unit its level rise
@@ -167,22 +167,25 @@ The envelope curves and the pre-fade were measured on the author's Analog Rytm M
 builds (EV04 to EN05), with rytm-emu for the screens ([TESTING.md](TESTING.md)): AMP DEC within 0.7 %
 of its text from 5 ms, AMP HLD within 0.1 ms, FILTER ATK within 0.3 %, FILTER DEC and REL 1.5 % (the
 method's); with ENV RESET AMP every one of 493 sequenced hits and retrigs fell to silence before its
-trig. This version ran on the same unit under the author's automated USB test rig, 25 cases, on 9 and
-10 November 2026 and, after its idle path was made cheaper, again on 11 November (image IL04: this
-source on a development base with a USB test link, loaded to RAM): the screens with HLD in steps at
-three tempos and track speeds, lengths by DEC, HLD and AUTO, OVR's level curve and the FILTER times
-beside the same base without the module, and ENV RESET AMP's fade before sequenced trigs, retrigs,
+trig. This version ran on the same unit under the author's automated USB test rig, 25 cases, on 9, 10
+and 11 November 2026; this source, with the hold in steps, on the evening of 11 November (image IL05:
+this source on a development base with a USB test link, loaded to RAM). HLD 42 held 125.0 ms at 120
+BPM, 166.5 ms at 90 BPM and 83.0 ms with the track at 3/2x (one step: 125, 166.7, 83.3), and read 1 each
+time; FUNC + turn showed its 13 stops and AUTO. The other cases read as before: lengths by DEC and
+AUTO, OVR's level curve, the FILTER times, and ENV RESET AMP's fade before sequenced trigs, retrigs,
 swung, micro-timed and sound-locked trigs, with none for MIDI notes, muted trigs, lock trigs and trigs
-whose condition fails. The package's own image (IA12, the plain base, no link) ran from RAM with MIDI
-notes and CCs only: its hold, decay, attack and OVR read as on IL04. Not run on a unit: a boot of the
-package's image from flash, pads, a power cycle, an external MIDI clock, a pattern change inside a fade.
-Memory: 8,220 bytes of the shared mod area (the plain base alone leaves 119,004, with this module 110,784).
-Load, on the author's unit with the sequencer stopped (TESTING.md): the audio block was 67.2 to 67.3 %
-busy with this module, where the same kit states read 67.6 to 67.9 % before its idle path was made
-cheaper and the base alone 65.8 % in one of them: about 1.4 points, 0.8 to 0.9 of them in the amp record
-entries, which run every block for every voice. An idle voice makes no C call there, the trig scan
-returns after reading the queue's times while nothing is near, and the OVR reader reuses its last
-answer. With a pattern playing it was not measured.
+whose condition fails. The package's own image (IA14, the plain base, no link) ran from RAM with MIDI
+notes and CCs only: 0.125, 0.5, 1, 2 and 4 steps held 16.5, 63.5, 126.0, 250.5 and 500.5 ms at 120 BPM.
+Not run on a unit: an external MIDI clock (the unit did not take the clock it was sent), a tempo change
+during a hold, NORMAL scale mode, a boot of the package's image from flash, pads, a power cycle, a
+pattern change inside a fade. The comparison with stock ran on the earlier source, 10 November.
+Memory: 9,676 bytes of the shared mod area (the plain base alone leaves 119,004, with this module 109,328).
+Load, on the author's unit with the sequencer stopped (TESTING.md): the audio block was 67.4 to 67.5 %
+busy with this module, where the base alone read 65.8 % earlier that day: about 1.6 points, about 1.0 of
+them in the amp record entries, which run every block for every voice (0.1 point more than before the
+hold in steps, not traced). An idle voice makes no C call there, the trig scan returns after reading
+the queue's times while nothing is near, and the OVR reader reuses its last answer. With a pattern
+playing it was not measured.
 
 ## Authorship and licences
 

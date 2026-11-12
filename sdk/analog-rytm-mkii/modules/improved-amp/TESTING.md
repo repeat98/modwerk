@@ -6,12 +6,107 @@ Improved Envelopes (symbols `envelopes_*`, now `improved_amp_*`; HLD then read i
 pre-fade" records the pre-fade's builds from before it moved into this module. The test builds' `.syx`
 files stayed on the tester's computer.
 
-## This version on a unit: IL04, IA12 and the idle load, 11 Nov 2026
+## This version on a unit: IL05, IA14 and the idle load, 11 Nov 2026 (HLD in steps)
 
 The author's Analog Rytm MKII, OS 1.74, run hands off by the author's automated test rig, as its reports
-have it. This source (0.1.0-experimental; fingerprint, the `sha256` of `sha256sum build.json src/amp-write.s
-src/hot.h src/improved-amp.c src/ovr.s src/pre-fade.c src/pre-fade.s`: `d2f40562…05d6`,
-`evidence.sourceSha256`) differs from the one of the runs of 9 and 10 November (next section) in what an
+have it, in the evening of 11 November 2026. This source (0.1.0-experimental; fingerprint, the `sha256`
+of `sha256sum build.json src/amp-write.s src/hot.h src/improved-amp.c src/ovr.s src/pre-fade.c
+src/pre-fade.s`: `bceb210f…3e33`, `evidence.sourceSha256`) differs from the one of the next section in
+the hold. HLD was a fixed time, shown as steps of the tempo it was drawn at. It is now counted in steps
+of the voice's track on the musical clock, so it follows the tempo and the track's speed; 13 knob
+values sit exactly on the step grid, where FUNC + turn stops; and the knob's text is the same at every
+tempo. ATK, DEC, REL, OVR and the pre-fade are as they were (the trig scan now also leaves what the
+clock moved each block).
+
+- **The 25 cases.** IL05 (sha256 `776adbab…1e82`): this module alone on the development base with the USB
+  test link, loaded to RAM. Five cases were rewritten for the hold in steps (HLD's screens, FUNC + turn,
+  HLD against track speed by screen and by sound, the hold's lengths); their reference screens, and the
+  kit save case's, were kept in this run after a look at each one. The other 20 passed in the first run
+  against the references of 10 November, the five in the run after their references were kept. Read:
+  - Screens. HLD 0, 1, 6, 15, 42, 126 and 127 read 0, 0.005, 0.032, 0.080, 1, 124 and AUTO. HLD 42 reads
+    1 at 120 and at 90 BPM, and with the BD track's scale at 1x, 3/2x and 3/4x (ADVANCED scale mode, the
+    SCALE SETUP screens compared). FUNC + turn from 0 reads 0.125, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 8, 16,
+    32, 64 and AUTO, a turn more stays there, and three turns down read 64, 32 and 16; from HLD 7 (0.037)
+    it reads 0.125 and 0.25 up, 0.125 and 0 down.
+  - The hold by sound: BD hits by MIDI note, ATK 0, DEC 55, the sequencer stopped. `len20` 10.0, 19.5,
+    61.0, 135.0 and 308.0 at HLD 0, 15, 31, 42 and 57 at 120 BPM and 1x: holds of 9.5, 51.0, 125.0 and
+    298.0 ms for 0.080, 0.411, 1 and 2.38 steps (10.0, 51.3, 125.0 and 298.0). The same 135.0 with a 400 ms
+    note. At 90 BPM HLD 42 reads 176.5, a hold of 166.5 ms (one step is 166.7). With the track at 3/2x it
+    reads 93.0, a hold of 83.0 (83.3), and 135.0 again back at 1x. AUTO reads 108.5 and 509.5 for a 100
+    and a 500 ms note. The musical clock, read twice 200 ms apart with the sequencer stopped, had moved
+    8,640,000 units, its rate at 120 BPM: these holds were counted on a running clock, not on the
+    fallback for a standing one.
+  - The rest, as in the sections below: `len20` 9.5, 102.5 and 2943.5 at DEC 55, 89 and 127; OVR's peak over
+    OVR 0 +0.15, +1.26, +2.52, +4.72, +5.91, +6.65, +7.19, +7.70, +8.20, +8.77 and +8.84 dB at 1, 8, 16, 32,
+    48, 64, 80, 96, 112, 126 and 127; FILTER DEC 7.0, 13.0, 25.0 and 37.0 and REL 56.0, 61.5, 73.0 and 85.0
+    at 65, 75, 85 and 89; 18 dips for 19 sequenced trigs at AMP and at AMP+FILT, none at OFF, at FILTER or
+    for MIDI notes; 15 dips for the retrig lock, 6 for the series a note trig ends, 9 at 200 BPM (74.5 ms
+    apart), 3 and 15 with lock trigs (61.5 ms apart), 6, 3 and 4 with the conditions, 3 a time round with
+    micro timing (197.0 ms apart), 14 at swing 50 % and 66 % (124.5 and 85.5 ms apart), 8 around the mute,
+    0, 8 and 0 around the ENV RESET edit, and 2, 1, 0, 1 for the sound locks.
+- **The package's own image.** IA14 (sha256 `c64b0477…cffe`): the plain base and this module alone, no
+  link, loaded to RAM; the package built in isolation links to the same bytes. The unit stopped answering
+  the link, as an image without it does. Fifteen MIDI notes with CCs on the auto channel, which set the
+  BD's AMP page and its FILTER page (lowpass open, no envelope), at the 120 BPM and 1x the cases left
+  (the image has no link to read them by), the BD voice recorded: `len20` 9.5 at HLD 0; 26.0, 73.0, 135.5,
+  260.0 and 510.0 at HLD 19, 33, 42, 53 and 66, holds of 16.5, 63.5, 126.0, 250.5 and 500.5 ms for 0.125,
+  0.5, 1, 2 and 4 steps (15.6, 62.5, 125, 250 and 500); 308.0 at HLD 57; 110.0 and 514.0 for AUTO with a
+  100 and a 500 ms note; 101.5 at DEC 89; attack 15.5 at ATK 45; OVR's peak +1.25, +6.57 and +9.10 dB at
+  8, 64 and 127 (through the filter fully open, not as the kit has it). Keys, screens, the sequencer and
+  a boot from flash were not part of it.
+- **Idle load.** IM05 (sha256 `80ce9b6d…13df`): the development base, the meter of the next section and
+  this source. Sequencer stopped, 120 BPM, the kit with four tracks on ENV RESET AMP+FILT, six windows of
+  20 s: the audio block 67.40 to 67.51 % busy, 1.09 to 1.14 % of it in the amp record hook. The source
+  before read 67.27 to 67.29 % and 1.00 to 1.02 % in that kit (next section's table), so this one costs
+  about 0.1 point more at idle. Where it goes was not traced: in rytm-emu, which counts instructions
+  only, the same meter reads 356 ticks a block in the hook for this source and 348 for the one before.
+
+Before the unit: a host model of the hold decision, old code against new. Of HLD 0 to 126, 114 hold
+exactly as many blocks as before at 120 BPM and 1x, and the 13 on the grid differ by at most 4 % (HLD 19
+24 to 25 blocks, HLD 42 188 to 189, HLD 114 11,695 to 12,001). A step holds 30 to 300 BPM and the seven
+speeds as the arithmetic says (HLD 42 at 1x 189 blocks, at 2x 95, at 1/8x 1,501); a tempo halved 100
+blocks into a one-step hold ends it at block 278; a clock that stands from block 50 on ends it 12
+blocks late, on the fallback; blocks whose record the pre-fade takes are counted. All 127 knob texts
+were printed and read. The scan's 68 written cases pass, and the scan before and after gave the same
+marks on 10 million random states. rytm-emu, IA14 against IA08: the fade mask, the started bits and the
+series' words are the same in all 19,400 readings, the ENV RESET frames are the same bytes, and the AMP
+page's frames differ only where HLD's text shows (HLD 42 reads 1). Two independent reviews: the code,
+and the rig's cases before the unit run (it had the speed screens compared and every FUNC stop looked
+at, and added the read of the clock).
+
+Runs that told nothing, and why:
+
+- External sync. MIDI clock was sent to the unit over USB at 90 and at 150 BPM, without START, and
+  then stopped. The unit's clock and tempo word stayed at 120 BPM throughout (CLOCK RECEIVE off, or the
+  clock not taken), and HLD 42 held 124.5 to 125.0 ms in every phase. No setting was changed to make it
+  follow, so the hold on an external clock, and a master that stops, are not tested.
+- The first run on IA14 recorded the BD 30 dB down and short. The unit boots with the working kit it
+  kept, not the saved one, and that one had the BD's filter closed from a filter case; the flashed
+  build played it the same until the saved kit was reloaded. The run above set the FILTER page by CC.
+- Five cases stopped the first run for want of references (the new texts and screens), not on a
+  failure. The tool that loads an image to RAM hung reopening its MIDI port after three of four boots;
+  the image ran each time.
+
+Not run on a unit in this version:
+
+- An external MIDI clock and a master that stops (above; read in the code and run in the host model).
+- A tempo or speed change during a hold; NORMAL scale mode (the pattern's one scale); speeds other
+  than 3/2x by sound and 3/4x by screen; holds over 4 steps by sound; the hold of a sequenced trig; a
+  hold shorter than a block.
+- A boot of this package's image from flash, and its keys, screens and sequencer (IA14 ran from RAM
+  with notes and CCs only).
+- A power cycle, a project save and load, a sound stored to the +Drive and loaded again.
+- Pads; a pattern change inside a fade; probability conditions.
+- The comparison with stock (OVR's curve, the FILTER times): run on the earlier source, 10 November.
+- OVR's curve by ear, and with another sound or unit.
+- The audio load while a pattern plays: the meter was read with the sequencer stopped.
+
+## The source before the hold in steps, on a unit: IL04, IA12 and the idle load, 11 Nov 2026
+
+The author's Analog Rytm MKII, OS 1.74, run hands off by the author's automated test rig, as its reports
+have it. That source (fingerprint, the `sha256` of `sha256sum build.json src/amp-write.s
+src/hot.h src/improved-amp.c src/ovr.s src/pre-fade.c src/pre-fade.s`: `d2f40562…05d6`; HLD was then a
+fixed time) differs from the one of the runs of 9 and 10 November (next section) in what an
 idle audio block costs and in nothing a musician can see or hear; that is what these runs check.
 
 What changed: the words the two amp record entries read every block share one cache line; an idle
