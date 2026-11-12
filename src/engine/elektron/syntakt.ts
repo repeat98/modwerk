@@ -68,6 +68,14 @@ export const SYNTAKT_BOOT_STUB = {
 /** The 128 KB above the lowered stack. The stack grows down, so the core's staying copy lives here. */
 export const SYNTAKT_STACK_GAP: [number, number] = [hex(stockMap.candidates['ddr-top'].lo), hex(stockMap.candidates['ddr-top'].hi)]
 
+/** OS 1.42 only. The stock-write checker accepts any bytes at a data site, so the build path checks the stack word itself. */
+export function assertSyntaktStackWord(image: Uint8Array): void {
+  const offset = 0x400004f4 - hex(stockMap.mainLoad)
+  if (offset < 0 || offset + 4 > image.length) throw new Error('The built Syntakt image does not contain the stack word at 0x400004f4.')
+  const word = new DataView(image.buffer, image.byteOffset + offset, 4).getUint32(0)
+  if (word !== SYNTAKT_STACK_GAP[0]) throw new Error('The built Syntakt stack word is 0x' + word.toString(16).padStart(8, '0') + ', not 0x' + SYNTAKT_STACK_GAP[0].toString(16) + '.')
+}
+
 // 1.42 only. D0 and A1 are saved because only A0 and D1 start free. The copy is longwords through D0:
 // ColdFire has no memory-to-memory move. The word count is this stub's own length, so the staying copy
 // is the whole glued-on stub. Source and resume addresses are relocations.
@@ -132,6 +140,7 @@ export async function buildSyntaktBootProbe(stockSyx: Uint8Array): Promise<Synta
   const parsed = parseElemod(syntaktBootProbe(release), 'core', [SYNTAKT_DEVICE])
   const linked = await linkMods([parsed], image)
   const writes = await checkStockWrites(image, linked.image, syntaktStockMap(release), syntaktProbeSites(release))
+  if (release === '1.42') assertSyntaktStackWord(linked.image)
   const stockMargin = inplaceDepack(container.stored.get(device.mainSection)!, device).gap
   const syx = writeEle3Syx(container, packMain(linked.image), device, 'MW01')
   const facts = verifyEle3Build(syx, container, linked.image, device, 'MW01')

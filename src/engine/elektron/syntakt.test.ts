@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { createHash } from 'node:crypto'
+import { readFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import probe from '../../../sdk/syntakt/core/probe.json'
 import stockMap from '../../../sdk/syntakt/core/stock-map.json'
 import { ILLEGAL, PCREL, decodeColdFire, readerAt } from './coldfire-isa'
 import { ELE3_DEVICES } from './ele3'
 import { linkMods, parseElemod, type LinkDevice } from './elemod'
 import { checkStockWrites } from './stock-writes'
-import { SYNTAKT_BOOT_STUB, SYNTAKT_DEVICE, SYNTAKT_GAP_STUB, SYNTAKT_RELEASES, SYNTAKT_SRAM_TAIL, SYNTAKT_STACK_GAP, syntaktBootProbe, syntaktProbeSites, syntaktStockMap } from './syntakt'
+import { SYNTAKT_BOOT_STUB, SYNTAKT_DEVICE, SYNTAKT_GAP_STUB, SYNTAKT_RELEASES, SYNTAKT_SRAM_TAIL, SYNTAKT_STACK_GAP, assertSyntaktStackWord, syntaktBootProbe, syntaktProbeSites, syntaktStockMap } from './syntakt'
 
 const hex = (text: string) => Uint8Array.from(text.match(/../g)!, pair => parseInt(pair, 16))
 const sha = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex')
@@ -100,6 +103,7 @@ describe('Syntakt profile', () => {
     expect(view.getUint32(0xb4)).toBe(glued)
     expect(view.getUint16(0xb8)).toBe(0x4e71)
     expect(view.getUint32(0xf4)).toBe(SYNTAKT_STACK_GAP[0])
+    expect(() => assertSyntaktStackWord(linked.image)).not.toThrow()
     expect(linked.image.length).toBe(image.length + 96)
     expect(view.getUint32(image.length + SYNTAKT_GAP_STUB.resumeReloc)).toBe(0x400004ba)
     expect(view.getUint32(image.length + SYNTAKT_GAP_STUB.sourceReloc)).toBe(glued)
@@ -137,4 +141,92 @@ describe('Syntakt profile', () => {
     doc.target = { device: 'syntakt', os: '1.42', syx_sha256: 'b'.repeat(64), section3_sha256: 'c'.repeat(64) }
     expect(() => parseElemod(doc, 'core', [SYNTAKT_DEVICE])).toThrow('firmware Modwerk does not know')
   })
+
+  it('requires the built 1.42 stack word to be the gap start', () => {
+    const image = new Uint8Array(0x100)
+    const view = new DataView(image.buffer)
+    view.setUint32(0xf4, SYNTAKT_STACK_GAP[0])
+    expect(() => assertSyntaktStackWord(image)).not.toThrow()
+    view.setUint32(0xf4, 0x48000000)
+    expect(() => assertSyntaktStackWord(image)).toThrow('0x48000000')
+    view.setUint32(0xf4, 0x40000000)
+    expect(() => assertSyntaktStackWord(image)).toThrow('0x40000000')
+    expect(() => assertSyntaktStackWord(image.subarray(0, 0xf4))).toThrow('does not contain the stack word')
+  })
+
+  it('places the gap 128 KB under the old stack top, above the 1.42 wipe and the reported writer', () => {
+    const lo = Number.parseInt(stockMap.candidates['ddr-top'].lo, 16)
+    const hi = Number.parseInt(stockMap.candidates['ddr-top'].hi, 16)
+    const bssEnd = Number.parseInt(stockMap.releases['1.42'].bssEnd, 16)
+    const heapEnd = Number.parseInt(stockMap.releases['1.42'].heapPool[1], 16)
+    // Research L9: hardware-observed page writes reached 0x47eff000. Not a heap address.
+    const writerTop = 0x47eff000
+    expect(SYNTAKT_STACK_GAP).toEqual([lo, hi])
+    expect(hi).toBe(0x48000000)
+    expect(lo).toBe(0x48000000 - 128 * 1024)
+    expect(lo).toBeGreaterThan(bssEnd)
+    expect(lo).toBeGreaterThan(heapEnd)
+    expect(lo).toBeGreaterThan(writerTop)
+    expect(bssEnd).toBe(0x45566490)
+    expect(heapEnd).toBeLessThan(bssEnd)
+  })
+
+  it('matches boot.s instruction lines to the shipped stub bytes', () => {
+    const source = readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), '../../../sdk/syntakt/core/boot.s'), 'utf8')
+    const marker = source.indexOf('| ----- OS 1.42 continues here.')
+    expect(marker).toBeGreaterThan(0)
+    const shared = sourceLines(source.slice(0, marker))
+    const rest = sourceLines(source.slice(marker))
+    expect(rest.at(-1)?.code).toBe('jmp mw_stock_resume')
+    compareStub(shared.concat(rest.at(-1)!), SYNTAKT_BOOT_STUB.hex)
+    compareStub(shared.concat(rest), SYNTAKT_GAP_STUB.hex)
+  })
 })
+
+type SourceLine = { label: string | null; code: string; mnemonic: string; operands: string }
+
+function sourceLines(region: string): SourceLine[] {
+  const lines: SourceLine[] = []
+  let label: string | null = null
+  for (const raw of region.split('\n')) {
+    const code = raw.replace(/\|.*$/, '').trim().replace(/\s+/g, ' ')
+    if (!code || code.startsWith('.')) continue
+    if (code.endsWith(':')) { label = code.slice(0, -1); continue }
+    const split = code.indexOf(' ')
+    lines.push({ label, code, mnemonic: (split < 0 ? code : code.slice(0, split)).toLowerCase(), operands: split < 0 ? '' : code.slice(split + 1) })
+    label = null
+  }
+  return lines
+}
+
+/** Decoder class for one boot.s line. move.l into an address register is the movea encoding; subq.l shares the decoder's addq class. */
+function stubClass(line: SourceLine): string {
+  if (line.code === 'move.l (%sp)+,%a1') return 'movea'
+  if (line.mnemonic === 'subq.l' && line.operands.replace(/\s+/g, '') === '#1,%d1') return 'addq'
+  if (line.mnemonic === 'beq.s' || line.mnemonic === 'bne.s') return 'bcc'
+  if (line.mnemonic === 'movem.l') return 'movem'
+  if (line.mnemonic === 'move.l') return 'move'
+  if (line.mnemonic === 'tst.l') return 'tst'
+  if (line.mnemonic === 'lea' || line.mnemonic === 'nop' || line.mnemonic === 'jmp') return line.mnemonic
+  throw new Error('boot.s line has no decoder class: ' + line.code)
+}
+
+function compareStub(source: SourceLine[], text: string) {
+  const bytes = hex(text), read = readerAt(bytes, 0)
+  const decoded: { at: number; op: string; length: number; target?: number; raw: Uint8Array }[] = []
+  for (let at = 0; at < bytes.length;) {
+    const instruction = decodeColdFire(read(at), at)
+    decoded.push({ at, op: instruction.op, length: instruction.length, target: instruction.target, raw: bytes.subarray(at, at + instruction.length) })
+    at += instruction.length
+  }
+  expect(source.map(stubClass)).toEqual(decoded.map(instruction => instruction.op))
+  const labels = new Map(source.flatMap((line, index) => line.label ? [[line.label, decoded[index].at] as const] : []))
+  source.forEach((line, index) => {
+    const raw = decoded[index].raw
+    if (line.code === 'move.l (%sp)+,%a1') expect(Buffer.from(raw).toString('hex')).toBe('225f')
+    if (line.mnemonic === 'subq.l') expect(Buffer.from(raw).toString('hex')).toBe('5381')
+    if (line.mnemonic === 'beq.s') expect(raw[0]).toBe(0x67)
+    if (line.mnemonic === 'bne.s') expect(raw[0]).toBe(0x66)
+    if (line.mnemonic === 'beq.s' || line.mnemonic === 'bne.s') expect(decoded[index].target).toBe(labels.get(line.operands))
+  })
+}
