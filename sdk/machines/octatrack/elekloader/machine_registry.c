@@ -60,12 +60,15 @@ int modwerk_dsp_source_claim(unsigned track, uint32_t module, uint32_t voice, ui
 void modwerk_dsp_source_release(unsigned track);
 void modwerk_status_machine_refused(unsigned track, const char *label); /* status.c: the DSP FULL box for a machine */
 void modwerk_dsp_source_engine_off(uint32_t module);
+void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add); /* status.c: the CPU FULL box, per mille of the allowance */
 #ifndef MW_HOST
 __attribute__((weak)) int modwerk_dsp_source_claim(unsigned track, uint32_t module, uint32_t voice, uint32_t engine, uint8_t kind)
 { (void)track; (void)module; (void)voice; (void)engine; (void)kind; return RUNTIME_CYCLES; }
 __attribute__((weak)) void modwerk_dsp_source_release(unsigned track) { (void)track; }
 __attribute__((weak)) void modwerk_status_machine_refused(unsigned track, const char *label) { (void)track; (void)label; }
 __attribute__((weak)) void modwerk_dsp_source_engine_off(uint32_t module) { (void)module; }
+__attribute__((weak)) void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add)
+{ (void)track; (void)label; (void)booked; (void)add; }
 #endif
 /* Each track of the current Part: the priced machine its voice is charged to, or 0. A word each, so the render
  * reads it whole without a mask. */
@@ -127,6 +130,41 @@ static unsigned owner(const Machine *const *m, unsigned n, const Part *part, uns
     for (unsigned k = 0; k < n; ++k)
         if (s[0] == m[k]->sig[0] && s[1] == m[k]->sig[1] && s[2] >= m[k]->sig_lo && s[2] <= m[k]->sig_hi) { *who = m[k]; return 5u + k; }
     return 0;
+}
+/* The CPU budget. A machine that renders on the ColdFire takes its time from the frame interrupt, which the frame
+ * guard below keeps under its share by dropping renders: a dropout nobody was told about. So a Part's machines are
+ * admitted before they play, as the DSP budget admits effects: each track of a machine costs its descriptor's price
+ * (percent of a frame; CPU_DEFAULT for a machine that names none, nothing for a DSP voice that names none), and a Part
+ * carries mw_cpu_allowance of them: the guard's share less the interrupt at rest and a typical load of stock tracks.
+ * Nothing is kept: the bill is the Part's tracks in order, added up again at each pick and each UI tick, so a track
+ * that left makes room at once. A pick past the allowance is refused with the CPU FULL box; a track past it after a
+ * project load, a Part change or a paste renders stock's silent source (cpu_refused) and says so once. The guard
+ * stays for what a price cannot know: stock's own peaks and a machine dearer than it declared.
+ * shortcut: CPU_DEFAULT and the allowance are estimates from the 24 October 2026 MKII runs (rest 23 %, POLY8 at its
+ * cap about 45 %), to be set from `npm run device -- cpu` on a unit before a release. */
+#define CPU_DEFAULT 12u
+volatile uint32_t mw_cpu_allowance = 45u, mw_cpu_booked; /* percent of a frame; development bases may change the allowance */
+volatile uint8_t mw_cpu_refused;    /* the current Part's tracks past the allowance: the frame interrupt reads it whole */
+static uint8_t cpu_warned;          /* ... whose box already showed, as `warned` */
+static unsigned cpu_price(const Machine *m) { return m->reserved[0] ? m->reserved[0] : m->source_kind ? 0u : CPU_DEFAULT; }
+/* The Part's bill without track `skip` (8: none), tracks in order; *over gets the tracks that did not fit. */
+static unsigned cpu_bill(const Machine *const *m, unsigned n, const Part *part, unsigned skip, uint8_t *over)
+{
+    unsigned sum = 0; const Machine *who;
+    *over = 0;
+    for (unsigned t = 0; t < 8; ++t) {
+        unsigned p = t != skip && owner(m, n, part, t, &who) ? cpu_price(who) : 0u;
+        if (sum + p > mw_cpu_allowance) *over |= (uint8_t)(1u << t); else sum += p;
+    }
+    return sum;
+}
+volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* for diagnostics, as the guard's skips */
+static void cpu_refuse(unsigned track, const Machine *who, unsigned booked);
+static uint32_t cpu_mille(unsigned percent) { return mw_cpu_allowance ? percent * 1000u / mw_cpu_allowance : 1000u; }
+static void cpu_refuse(unsigned track, const Machine *who, unsigned booked)
+{
+    mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << track;
+    modwerk_status_cpu_refused(track, who->label, cpu_mille(booked), cpu_mille(cpu_price(who)));
 }
 /* The PROTECT machines this base knows by signature (module-adapters/machine-ports.json; sdk/tests checks the list).
  * Their tracks keep their 12 bytes from stock's validator while the machine is absent too: the boot's battery
@@ -336,6 +374,13 @@ static void charge(const Machine *const *m, unsigned n)
         if (!who) warned &= (uint8_t)~(1u << t);
         if (who ? charged[t] != who && !claim(t, who) : charged[t] != 0) release(t);
     }
+    uint8_t over; unsigned booked = cpu_bill(m, n, part, 8, &over);
+    for (unsigned t = 0; t < 8; ++t)
+        if (over & ~cpu_warned & 1u << t && owner(m, n, part, t, &who)) { /* the first new one: the box shows one at a time */
+            cpu_refuse(t, who, booked);
+            break;
+        }
+    mw_cpu_refused = cpu_warned = over, mw_cpu_booked = booked;
 }
 /* Stock loads a track's live parameters from its Part (0x40001f18: bank, Part, track) where a commit changes the
  * stored type. A module machine is FLEX underneath, so FLEX <-> machine keeps the type and the live copy would stay on
@@ -363,6 +408,13 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
     if (next) {
         if (next->admit_track && !next->admit_track(part, track)) return (unsigned)-1;
         warned &= (uint8_t)~(1u << track); /* a pick is a new ask: say so again if it is refused again */
+        if (old != next && cpu_price(next)) { /* before the DSP claim: nothing to give back */
+            uint8_t over; unsigned booked = cpu_bill(m, n, part, track, &over);
+            if (booked + cpu_price(next) > mw_cpu_allowance) {
+                cpu_refuse(track, next, booked);
+                return (unsigned)-1;
+            }
+        }
         if (next->source_kind && old != next && !claim(track, next)) return (unsigned)-1;
         if (old && old != next) leave(part, mirror, track, old);
         if (absent) flex_defaults(part, mirror, track);
@@ -653,6 +705,7 @@ volatile uint32_t mw_frame_t0, mw_frame_share = FRAME / 5u * 4u; /* development 
 /* For diagnostics: the longest frame interrupt, the latest start past the frame's time, the time spent in it (/256)
  * over its frames, the skips and their tracks. */
 volatile uint32_t mw_frame_max, mw_frame_late_max, mw_frame_busy, mw_frame_count, mw_frame_sheds, mw_frame_shed_tracks;
+volatile uint32_t mw_frame_cost_max[16]; /* each guarded render's longest time since the last read: what a machine's `cpu` is set from */
 static int32_t credit;
 static uint32_t late, cost[16], after[16], end_at[16], timed; /* [track], then a track's second render [8 + track] */
 static uint16_t skipped[16];
@@ -695,6 +748,7 @@ static int guarded(Render *f, Render *instead, unsigned track, unsigned ping, un
         r = f(track, ping, start, end);
         uint32_t c = DTCN3 - at, fall = cost[k] - (cost[k] >> 3);
         cost[k] = back || c > fall ? c : fall; /* a rise at once, a fall by an eighth a frame; after skips, as measured */
+        if (c > mw_frame_cost_max[k]) mw_frame_cost_max[k] = c;
     }
     end_at[k] = DTCN3, timed |= 1u << k, next[k] = made++;
     return r;
@@ -767,6 +821,10 @@ int mw_source_render_impl(unsigned track, unsigned ping, unsigned start, unsigne
             return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
         }
         if (who->source_kind && charged[track] != who) { /* never an unpaid voice */
+            if (native_flex) stop_stock(track);
+            return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
+        }
+        if (mw_cpu_refused >> track & 1u) { /* past the CPU budget (charge()) */
             if (native_flex) stop_stock(track);
             return STOCK(Render *, 0x400047f0u)(track, ping, start, end);
         }
