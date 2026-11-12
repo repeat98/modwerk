@@ -8,7 +8,7 @@ On stock the AUDIO IN jacks reach the sampler, its monitor and USB, and EXT IN j
 
 Two knobs on the FX track's DISTORTION page set where it goes. D (STE, or MNO in mono) puts it in the analog mix before DIST and COMP, beside the drums. E (IFX) sends it to the delay and the reverb at once. They are parallel: what goes to DIST does not reach the effects unless E is up. F stays empty, as on stock.
 
-Both knobs are real stock parameters: they save with the kit and take parameter locks, scene locks and performance locks (QPERF's too) like any FX track parameter. At 0, with nothing locked, the mod changes no audio word.
+Both knobs are real stock parameters: they save with the kit and take parameter locks, scene locks and performance locks (QPER Live Rec's too) like any FX track parameter. At 0, with nothing locked, the mod changes no audio word.
 
 ![The DISTORTION page with STE and IFX on knobs D and E](media/dist-page.png)
 

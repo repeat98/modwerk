@@ -12,7 +12,10 @@ OUTPUT_TRIM=0.215*dsp909.OUTPUT_GAIN
 SWORDS=48
 OFF=dict(U=0,EH=1,EL=2,EP=3,PC=4,PS=5,DC=6,TF=7,INC=8,BEND=9,DE=10,DP=11,KT=12,GAIN=13,VEL=14,ATK=15,SEG=16,LCG8=18,YL=20,KLPF=32)
 KVJ=0.04  # 0.1.6: FIXD OFF scales each hit's trigger transient by 1 + KVJ*white
-OFF.update({k:v for k,v in dsp909.OFF.items() if v>=37})
+# The desk's words sit where the 909 has them, so both engines can call one copy of the desk (dsp909.shared_desk_source).
+OFF.update({k:dsp909.OFF[k] for k in dsp909.DESK+['SSAT']},KLPF=max(dsp909.OFF[k] for k in dsp909.DESK+['SSAT'])+1)
+DESK=dsp909.OFF[dsp909.DESK[0]]
+assert OFF['KLPF']<SWORDS and len(set(OFF.values()))==len(OFF) and not {0x11,0x16}&set(OFF.values())
 def interp(i, vals):
     x=i/127*5; j=min(4,int(x)); return vals[j]+(vals[j+1]-vals[j])*(x-j)
 def tables():
@@ -33,15 +36,18 @@ def data_lines(lay):
     return ''.join('X %x '%lay[k]+' '.join('%06x'%dsp909.q24(v) for v in vs)+'\n' for k,vs in tables().items())
 def source(lay,shared,*,output_trim=True,shared_desk=False):
     text=(HERE/'bd808.asm').read_text()
-    full=dsp909.source(shared,output_gain=False)
     for tag in ('desk-decode','desk'):
-        block=full[full.index(';<' + tag + '>'):full.index(';</' + tag + '>')]
         if shared_desk:
-            block=('        bsr     >zd01\n' if tag=='desk-decode' else
-                   '        bsr     >zd02\n' + '        move    a,x:(r0)+\n'*2)
+            # One copy for both engines: it walks with r5, so point r5 at the desk's words and bring it back.
+            block=('        bsr     >zd0d\n' if tag=='desk-decode' else
+                   dsp909.desk_call(f'        move    r5,r4\n        lua     (r5+${DESK:x}),r5\n','        move    r4,r5\n'))
+        else:
+            # The 909's own passages, on this voice's words: r4 walks the desk's (the 909 walks its whole block with r5).
+            block=dsp909.desk_text(tag,'r4','+').replace('zd0','ze0')
+            if tag=='desk':
+                block=f'        lua     (r5+${DESK:x}),r4\n'+block
         if tag=='desk' and output_trim:
-            # Limit to the same 24-bit sample as the original output store first.
-            # The oscillator, LPF and saturation states are untouched.
+            # Limit to the 24-bit sample first, then trim.
             stores='        move    a,x:(r0)+'
             at=block.index(stores)
             block=block[:at]+('        move    a,x0\n'
@@ -53,7 +59,7 @@ def source(lay,shared,*,output_trim=True,shared_desk=False):
              S1=math.pi/4,S3=-(math.pi/2)**3/12,S5=(math.pi/2)**5/240,S7=-(math.pi/2)**7/10080,S9=(math.pi/2)**9/725760)
     subs.update({k:f'${dsp909.q24(v):06x}' for k,v in con.items()})
     subs.update(LCGK=f'${dsp909.LCG_K & 0xffffff:06x}',LCGC=f'${dsp909.LCG_C & 0xffffff:06x}',SEED=f'${dsp909.SEED & 0xffffff:06x}',KVJ=f'${dsp909.q24(KVJ):06x}')
-    return re.sub(r'@([A-Z0-9_]+)@',lambda m:subs[m[1]],text)
+    return dsp909.fill(re.sub(r'@([A-Z0-9_]+)@',lambda m:subs.get(m[1],m[0]),text),shared,OFF)   # then the desk's tables and constants
 
 class Voice(dsp909.Voice):
     """Independent float reference, with 24-bit phase/control quantization."""

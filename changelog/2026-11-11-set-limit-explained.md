@@ -1,0 +1,1 @@
+Octatrack: a full module set now says why you can't add more. The library shows a note above the modules, and each locked add button reads Full: 20 modules per set is a temporary limit while larger sets are made stable on every Octatrack. Remove one to add another.

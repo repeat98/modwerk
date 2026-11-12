@@ -48,6 +48,7 @@ import { findVendorInterface, UsbVendorTransport } from '../src/engine/elekloade
 import { DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, DEVICE_LOG_REQUEST, parseDeviceLog } from '../src/engine/elekloader/device-log.ts'
 import { DSP_REPORT_NAMES as REPORT_NAMES } from '../src/community/octatrack-diagnostics-contract.ts'
 import { diagnostics, removal, runLifecycle } from '../src/dev/octatrack-usb-lifecycle.ts'
+import { describeRefusal } from './loader-refusals.mjs'
 import { Bench, benchEndpoint, device, enumerate, shareBench } from './usb-bench.mjs'
 
 const { values, positionals: [command, file] } = parseArgs({ allowPositionals: true, options: {
@@ -475,13 +476,13 @@ async function stopping(step) {
 
 /** Stage, publish and run `pkg` in a trial for `seconds`, then accept or roll back. */
 /** A step the loader refused as busy (refusal 5: DSP code moving, a resident controller quiescing before it leaves) is
- * tried again for 5 s, as the site does; any other refusal is named (loader.h runtime_refusal: 7 a track plays it). */
+ * tried again for 5 s, as the site does; any other refusal is named with its next step (loader-refusals.mjs). */
 async function retried(step) {
   for (const start = Date.now(); ; await wait(300)) {
     try { return await step() } catch (error) {
       const refusal = /rejected|backend/.test(error.message) ? (await transport.selftest(false).catch(() => undefined))?.refusal : undefined
       if (refusal === 5 && Date.now() - start < 5000) continue
-      if (refusal !== undefined) error.message += ` (loader refusal ${refusal})`
+      if (refusal !== undefined) error.message += ` (loader refusal ${describeRefusal(refusal)})`
       throw error
     }
   }

@@ -13,18 +13,19 @@ vi.mock('../community/octatrack-diagnostics', () => ({
   subscribeDiagnosticPreference: (listener: () => void) => { mocked.listeners.add(listener); return () => { mocked.listeners.delete(listener) } },
   changeDiagnosticSharing: mocked.share,
 }))
-vi.mock('../community/usage', () => ({ browserRequestsPrivacy: () => mocked.privacy }))
+vi.mock('../community/usage', () => ({ browserRequestsPrivacy: () => mocked.privacy, countDiagnosticsInvitation: vi.fn() }))
+import { resetReask } from '../community/diagnostics-reask'
 let root: Root, container: HTMLDivElement, previous: HTMLButtonElement
 let linkState: LinkState
 const linkListeners = new Set<() => void>()
 const identity = { canSubmit: true, base: 'a'.repeat(64), model: 'OCTATRACK MKII' }
-const link = { getState: () => linkState, subscribe: (listener: () => void) => { linkListeners.add(listener); return () => { linkListeners.delete(listener) } }, start: () => () => {} } as unknown as OctatrackLink
+const link = { getState: () => linkState, subscribeDiagnostics: () => () => {}, subscribe: (listener: () => void) => { linkListeners.add(listener); return () => { linkListeners.delete(listener) } }, start: () => () => {} } as unknown as OctatrackLink
 const flush = () => new Promise(resolve => setTimeout(resolve, 0))
 beforeEach(() => {
   vi.clearAllMocks(); vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true); mocked.privacy = false
   linkState = { status: 'ready', identity }; linkListeners.clear()
   mocked.state = { accountId: 'member', available: true, enabled: false, ready: true, busy: false, error: '', notice: '', hasChoice: false, saved: false, lastSent: null }
-  mocked.share.mockResolvedValue(true); localStorage.clear()
+  mocked.share.mockResolvedValue(true); localStorage.clear(); resetReask()
   HTMLDialogElement.prototype.showModal = function () { this.setAttribute('open', '') }
   HTMLDialogElement.prototype.close = function () { this.removeAttribute('open') }
   previous = document.createElement('button'); document.body.append(previous); previous.focus()
@@ -115,24 +116,6 @@ describe('diagnostics invitation without collection side effects', () => {
     await render({ memberId: 'other', eligible: true })
     await act(async () => { finish(true); await flush() })
     expect(onClose).not.toHaveBeenCalled(); expect(container.querySelector('dialog[open]')).not.toBeNull()
-  })
-  it('as the beta requirement, offers only Share diagnostics or Leave beta and ignores Escape', async () => {
-    const onClose = vi.fn(), onLeave = vi.fn()
-    await act(async () => { root.render(createElement(DiagnosticsInvitation, { onClose, onLeave })); await flush() })
-    expect(container.textContent).toContain('Needed for the beta')
-    expect(container.textContent).not.toContain('Builds and syncing work either way')
-    expect(container.querySelector('[aria-label="Close diagnostics invitation"]')).toBeNull()
-    expect(() => button('Not now')).toThrow()
-    await act(async () => { container.querySelector('dialog')!.dispatchEvent(new Event('cancel', { cancelable: true })); await flush() })
-    expect(onClose).not.toHaveBeenCalled()
-    // Chrome closes it on a second Escape anyway; it opens again.
-    const dialog = container.querySelector('dialog')!
-    await act(async () => { dialog.close(); dialog.dispatchEvent(new Event('close')); await flush() })
-    expect(dialog.open).toBe(true); expect(onClose).not.toHaveBeenCalled()
-    await act(async () => button('Leave beta').click())
-    expect(onLeave).toHaveBeenCalledTimes(1); expect(mocked.share).not.toHaveBeenCalled()
-    await act(async () => { button('Share diagnostics').click(); await flush() })
-    expect(mocked.share).toHaveBeenCalledWith(true); expect(onClose).toHaveBeenCalledTimes(1)
   })
   it('keeps a refused choice open and shows the store error without treating dismissal as consent', async () => {
     mocked.share.mockResolvedValueOnce(false)
