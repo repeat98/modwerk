@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "mute-latch-2026-11-12",
+  "about": "Modwerk source-only Mute Latch package for Digitakt II OS 1.17, compiled from sdk/digitakt-ii/modules/mute-latch with the pinned toolchain.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "mute-latch-0.1.0-experimental-os1.17.elemod",
+      "sha256": "a6938477191aa1101dde69f5725e05eb47ff1443dfd08ae1eacf3e486be523cd",
+      "id": "mute-latch",
+      "version": "0.1.0-experimental",
+      "device": "digitakt-mk2",
+      "os": "1.17",
+      "license": "GPL-3.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "e852e9e9162228a23c6b05e089f2bbda8e13d3c9",
+        "path": "sdk/imports/packages/mute-latch/mute-latch-0.1.0-experimental-os1.17.elemod"
+      },
+      "title": "Mute Latch",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [],
+      "summary": "Press PERFORM while choosing tracks in PREP MUTES and the mutes wait for the end of the pattern, for up to four passes.",
+      "description": "Press PERFORM while choosing tracks in PREP MUTES and the mutes wait for the end of the pattern, for up to four passes.",
+      "category": "System",
+      "author": "crisp909",
+      "needs_core": "1.0",
+      "on_unit": "The author reported earlier builds of this module working on a Digitakt II on OS 1.17 (compiled with GCC 13); this exact package, built with GCC 16.2.0, has not yet run on a unit."
+    }
+  ]
+}

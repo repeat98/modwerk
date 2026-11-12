@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "module": "digitakt-ii/mute-latch",
+  "version": "0.1.0-experimental",
+  "date": "2026-11-12",
+  "changes": [
+    "First release for Digitakt II OS 1.17: in PREP MUTES, press PERFORM to arm the chosen tracks so FUNC can be released; the mutes switch at the end of the pattern, for up to four passes."
+  ],
+  "runtimeSourceSha256": "2f7422b0ec13383515650460b1ae2e587c95b77eda8fbcf21c8ae6620d5fdcbe",
+  "packages": [
+    {
+      "os": "1.17",
+      "path": "sdk/imports/packages/mute-latch/mute-latch-0.1.0-experimental-os1.17.elemod",
+      "sha256": "a6938477191aa1101dde69f5725e05eb47ff1443dfd08ae1eacf3e486be523cd"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/digitakt-ii/modules/mute-latch/TESTING.md",
+  "requires": []
+}
