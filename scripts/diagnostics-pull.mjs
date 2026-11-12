@@ -12,8 +12,7 @@ import { chmodSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { DSP_REPORT_NAMES } from '../src/community/octatrack-diagnostics-contract.ts'
-import { describeStallFrames } from '../src/engine/elekloader/device-log.ts'
+import { DSP_REPORT_NAMES, describeStallFrames } from '../src/community/octatrack-diagnostics-contract.ts'
 
 const ROOT = new URL('..', import.meta.url)
 const SERVICE = 'modwerk-diagnostics-read'

@@ -61,6 +61,13 @@ export interface DeviceCrash { count: number; vector: number; pc: number; sr: nu
  * `frames`: the frames before it, oldest first, two numbers each in µs (diag.h's trace): the time since the frame before
  * began (363 on time) and how long the frame interrupt before it ran. Bases without the trace send none. */
 export interface DeviceStall { count: number; reason: number; ticks: number; report: number[]; frames?: number[] }
+/** A stall's frames in a line: the last gaps, and the longest with the run before it. '' without a trace. */
+export function describeStallFrames(frames: number[] | undefined): string {
+  if (!frames?.length) return ''
+  const gaps = frames.filter((_, i) => i % 2 === 0), runs = frames.filter((_, i) => i % 2 === 1), longest = gaps.indexOf(Math.max(...gaps))
+  return `${gaps.length} frames before it: last gaps ${gaps.slice(-8).join(' ')} us (363 is on time); longest ${gaps[longest]} us, ${gaps.length - 1 - longest} frames before the last, ` +
+    `after a frame interrupt of ${runs[longest]} us (the longest ran ${Math.max(...runs)} us)`
+}
 /** The loader's report words, as the stall record and the development report (scripts/device.mjs) carry them
  * (dsp.c modwerk_dsp_report, version 11; version 12 adds the effect masks' further words and a pad at the end). */
 export const DSP_REPORT_NAMES = ['version', 'frames', 'phase', 'job0', 'job1', 'hostFlags', 'accepted0', 'accepted1', 'rejected0', 'rejected1',

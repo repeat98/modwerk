@@ -46,13 +46,6 @@ function frames(view: DataView, at: number, count: number): { frames?: number[] 
   const first = all.findIndex(value => value)
   return { frames: first < 0 ? [] : all.slice(first - first % 2) }
 }
-/** A stall's frames in a line: the last gaps, and the longest with the run before it. '' without a trace. */
-export function describeStallFrames(frames: number[] | undefined): string {
-  if (!frames?.length) return ''
-  const gaps = frames.filter((_, i) => i % 2 === 0), runs = frames.filter((_, i) => i % 2 === 1), longest = gaps.indexOf(Math.max(...gaps))
-  return `${gaps.length} frames before it: last gaps ${gaps.slice(-8).join(' ')} us (363 is on time); longest ${gaps[longest]} us, ${gaps.length - 1 - longest} frames before the last, ` +
-    `after a frame interrupt of ${runs[longest]} us (the longest ran ${Math.max(...runs)} us)`
-}
 function incident(view: DataView, at: number): DeviceIncident | undefined {
   const kind = DEVICE_INCIDENTS[view.getUint16(at + 16) - 1]
   if (!kind) return undefined

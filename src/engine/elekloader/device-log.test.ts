@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { DEVICE_LOG_BYTES, DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, describeStallFrames, parseDeviceLog } from './device-log'
+import { DEVICE_LOG_BYTES, DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, parseDeviceLog } from './device-log'
+import { describeStallFrames } from '../../community/octatrack-diagnostics-contract'
 import { validateDiagnostic } from '../../../server/octatrack-diagnostics'
 
 /** A log as diag.h lays it out, big-endian: header, freeze slot, 96 loads, 32 incidents. */
