@@ -30,6 +30,9 @@
     "core": "done",
     "mods": "done"
   },
+  "stack": {
+    "base": "started"
+  },
   "research": [
     {
       "label": "rytm-fw-re",
