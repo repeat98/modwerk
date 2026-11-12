@@ -13,6 +13,7 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { DSP_REPORT_NAMES } from '../src/community/octatrack-diagnostics-contract.ts'
+import { describeStallFrames } from '../src/engine/elekloader/device-log.ts'
 
 const ROOT = new URL('..', import.meta.url)
 const SERVICE = 'modwerk-diagnostics-read'
@@ -198,7 +199,8 @@ export function summary({ events, counts }, { base = '', layouts = {}, reports =
       ...(member.loads && [...member.loads.values()].some(r => r.frameGap !== undefined) ? [`  longest frame gap ${Math.max(...[...member.loads.values()].map(r => r.frameGap ?? 0))} us (frames are 363, DSPs starve past about 515), longest UI-tick gap ${Math.max(...[...member.loads.values()].map(r => r.tickGap ?? 0))} frames (freeze at 13,781)`] : []),
       ...member.crash ? [`  crash record ${member.crash.count}: vector ${member.crash.vector} pc 0x${member.crash.pc.toString(16)} code ${member.crash.code.map(w => w.toString(16).padStart(8, '0')).join(' ')} uncached ${member.crash.memory.map(w => w.toString(16).padStart(8, '0')).join(' ')}`] : [],
       ...member.stall ? [`  stall record ${member.stall.count}: reason ${member.stall.reason} (1 frames stopped, 2 eDMA refused) at tick ${member.stall.ticks}`,
-        ...member.stall.report?.length ? ['    report: ' + stallWords(member.stall.report)] : []] : [],
+        ...member.stall.report?.length ? ['    report: ' + stallWords(member.stall.report)] : [],
+        ...member.stall.frames?.length ? ['    ' + describeStallFrames(member.stall.frames)] : []] : [],
       ...unitLines([...member.incidents?.values() ?? []]),
       '  ' + Object.entries(member.kinds).map(([kind, n]) => kind + ' ' + n).join(', '),
     ]),

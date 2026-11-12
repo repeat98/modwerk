@@ -7,11 +7,14 @@ const MAGIC = 0x4d574447, LOADS = 96, INCIDENTS = 32, HEADER = 40, INCIDENT = 92
 /** Version 1 (bases up to a0dd21c4) has 28-byte load records; version 2 adds the window's frame and tick gaps (32
  * bytes) and, after the log, crash.c's record (180 bytes) and dsp.c's stall record (456 bytes). */
 const LOAD_BYTES: Record<number, number> = { 1: 28, 2: 32 }, CRASH_BYTES = 180, STALL_BYTES = 456
+/** After the stall record, on bases that keep it: diag.c's trace of the 128 frames before the stall (magic, the stall's
+ * count, then two 16-bit times a frame in DTIM3 counts / 64). An older base answers zeros there. */
+const TRACE_BYTES = 520, TRACE_FRAMES = 128, TRACE_US = 64 / 132
 const logBytes = (version: number) => HEADER + INCIDENT + LOAD_BYTES[version] * LOADS + INCIDENT * INCIDENTS
 export const DEVICE_LOG_BYTES = logBytes(1)
 /** What a version 2 base pages out: the log and the two records; a version 1 base answers zeros past its log. */
 export const DEVICE_LOG_IMAGE_BYTES = logBytes(2) + CRASH_BYTES + STALL_BYTES
-export const DEVICE_LOG_PAGES = Math.ceil(DEVICE_LOG_IMAGE_BYTES / DEVICE_LOG_PAGE)
+export const DEVICE_LOG_PAGES = Math.ceil((DEVICE_LOG_IMAGE_BYTES + TRACE_BYTES) / DEVICE_LOG_PAGE)
 
 /** `stallSeen`: the stall record's count when the unit started, so a stall record with another count is from this start. */
 export interface DeviceLog { version: number; nonce: number; boot: number; seq: number; stallSeen: number; loads: DeviceLoad[]; incidents: DeviceIncident[]; crash?: DeviceCrash; stall?: DeviceStall }
@@ -34,7 +37,21 @@ function crash(view: DataView, at: number): DeviceCrash | undefined {
 function stall(view: DataView, at: number): DeviceStall | undefined {
   if (view.getUint32(at) !== 0x4d575354) return undefined
   const n = Math.min(view.getUint32(at + 16), 96)
-  return { count: view.getUint32(at + 4), reason: view.getUint32(at + 8), ticks: view.getUint32(at + 12), report: words(view, at + 20, n) }
+  return { count: view.getUint32(at + 4), reason: view.getUint32(at + 8), ticks: view.getUint32(at + 12), report: words(view, at + 20, n), ...frames(view, at + STALL_BYTES, view.getUint32(at + 4)) }
+}
+/** The trace kept with stall record `count`, in µs, without the frames never written (a stall soon after the start). */
+function frames(view: DataView, at: number, count: number): { frames?: number[] } {
+  if (view.byteLength < at + TRACE_BYTES || view.getUint32(at) !== 0x4d574654 || view.getUint32(at + 4) !== count) return {}
+  const all = Array.from({ length: 2 * TRACE_FRAMES }, (_, i) => Math.round(view.getUint16(at + 8 + 2 * i) * TRACE_US))
+  const first = all.findIndex(value => value)
+  return { frames: first < 0 ? [] : all.slice(first - first % 2) }
+}
+/** A stall's frames in a line: the last gaps, and the longest with the run before it. '' without a trace. */
+export function describeStallFrames(frames: number[] | undefined): string {
+  if (!frames?.length) return ''
+  const gaps = frames.filter((_, i) => i % 2 === 0), runs = frames.filter((_, i) => i % 2 === 1), longest = gaps.indexOf(Math.max(...gaps))
+  return `${gaps.length} frames before it: last gaps ${gaps.slice(-8).join(' ')} us (363 is on time); longest ${gaps[longest]} us, ${gaps.length - 1 - longest} frames before the last, ` +
+    `after a frame interrupt of ${runs[longest]} us (the longest ran ${Math.max(...runs)} us)`
 }
 function incident(view: DataView, at: number): DeviceIncident | undefined {
   const kind = DEVICE_INCIDENTS[view.getUint16(at + 16) - 1]
@@ -53,7 +70,7 @@ export function parseDeviceLog(data: Uint8Array): DeviceLog | undefined {
   if (head.getUint32(0) !== MAGIC || !LOAD_BYTES[version]) return undefined
   const LOAD = LOAD_BYTES[version], bytes = version >= 2 ? DEVICE_LOG_IMAGE_BYTES : logBytes(version)
   if (data.byteLength < bytes) return undefined
-  const view = new DataView(data.buffer, data.byteOffset, bytes)
+  const view = new DataView(data.buffer, data.byteOffset, data.byteLength) // past `bytes`: the trace, on bases that keep it
   const loads = Array.from({ length: LOADS }, (_, i) => load(view, HEADER + INCIDENT + LOAD * i, version)).filter(record => record.seq)
   const incidents = Array.from({ length: INCIDENTS }, (_, i) => incident(view, HEADER + INCIDENT + LOAD * LOADS + INCIDENT * i))
     .filter((record): record is DeviceIncident => !!record?.seq)
