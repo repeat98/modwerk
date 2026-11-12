@@ -98,8 +98,8 @@
       {
         "name": "Core image with the send bus",
         "unit": "bytes",
-        "value": 37286,
-        "note": "The base's send-bus variant (f824d778), for a set with a send effect or a digital voice machine: 33,114 bytes .run plus 4,172 bytes .bss. It reserves no work area: the effect that runs works in the shared area the modules leave free (CHORUS and FLANGER ask for 16 KB, PHASER none)."
+        "value": 37178,
+        "note": "The base's send-bus variant (3ece243b), for a set with a send effect or a digital voice machine: 33,006 bytes .run plus 4,172 bytes .bss. It reserves no work area: the effect that runs works in the shared area the modules leave free (CHORUS and FLANGER ask for 16 KB, PHASER none)."
       }
     ]
   },

@@ -286,6 +286,10 @@ void mw_voice_render_out(void)
                 STREAM(v)[k] = 0;
 }
 
+// No voice machine installed: the page, key, tick and apply handlers return at once, so a
+// send-bus set without one behaves as it did before the voices.
+#define NO_VOICES (!mw_voices[0])
+
 // ---------------------------------------------------------------- ev_sound_applied
 
 // From voice.s, at stock's routine that applies a sound to a track (a2 the sound,
@@ -293,7 +297,7 @@ void mw_voice_render_out(void)
 void mw_voice_applied(void *sound, int track)
 {
     void (*const *f)(void *, int);
-    if (sound && (unsigned)track < TRACKS)
+    if (!NO_VOICES && sound && (unsigned)track < TRACKS)
         type_of[track] = (uint8_t)core_store_get(STORE(mw_voice_type), sound, 0);
     for (f = ev_sound_applied; *f; f++)
         (*f)(sound, track);
@@ -356,6 +360,8 @@ static int knob_text(struct core_text *t)
     char *r = RECORD(t->id), *b = t->buf;
     int v = t->value >> 8, n = 0;
     char digits[4];
+    if (NO_VOICES)
+        return CORE_TEXT_PASS;
     asked = 1;
     if (!voice_of_slot(*(int32_t *)r) || *(int32_t *)(r + 4) == 9)
         return CORE_TEXT_PASS;
@@ -419,6 +425,8 @@ void mw_voice_draw(void *bmp, void *ctrl)
     int t;
     const struct mw_voice *mv;
     (void)ctrl;
+    if (NO_VOICES)
+        return;
     if (asked)
         page_up = 1;
     asked = 0;
@@ -443,6 +451,8 @@ void mw_voice_tick(char *ctrl)
 {
     int t;
     const struct mw_voice *mv;
+    if (NO_VOICES)
+        return;
     if (reread) {
         reread = 0;
         reread_types();
@@ -533,7 +543,7 @@ int mw_voice_key(void *brain, char *ev)
 {
     int key = *(int *)(ev + 12), flags = *(int *)(ev + 16), t;
     const struct mw_voice *mv;
-    if (flags & KEY_REPEAT)
+    if (NO_VOICES || (flags & KEY_REPEAT))
         return 0;
     if (key != KEY_FUNC && key > KEY_TRIG_LAST && (key < KEY_PUSH_FIRST || key > KEY_PUSH_LAST)) {
         page_up = 0;                    // any other key may leave the page; the next draw says if not
@@ -562,7 +572,7 @@ int mw_voice_key(void *brain, char *ev)
 int mw_voice_enc(void *brain, char *ev)
 {
     (void)brain;
-    if (tap_ticks < 0 || *(int *)(ev + 12) != tap_enc)
+    if (NO_VOICES || tap_ticks < 0 || *(int *)(ev + 12) != tap_enc)
         return 0;
     if (++tap_turns < TAP_TURNS)
         return 1;
