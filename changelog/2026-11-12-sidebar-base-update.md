@@ -1,0 +1,1 @@
+Site: when the connected Octatrack runs an older Modwerk base, the sidebar shows a filled "Update the base" step under the Octatrack on every page, which opens the update over USB, so an update closed with Later stays one click away. Sync already waits for the new base; its message now says to update the base instead of pointing to the card.
