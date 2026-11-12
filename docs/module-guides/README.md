@@ -206,3 +206,5 @@ A module that is slow, or that only works when it is the only thing running, tak
 ## Digitakt and Digitone
 
 Mods there are linked by one core per machine and built by elekloader's builder in the browser, so there is no native octabam comparison. Start from [the Digitakt guide](../../sdk/machines/digitakt/README.md) for the core hooks, budgets and claims, and test a two-mod build, since combinations are the point.
+
+On these machines, the Digitakt II and the Analog Rytm MKII, `npm run elekloader:check` refuses a package whose `jsr` or `jmp` to an absolute address has an odd target: the real CPU stops there with an address error, while the emulators run on. Keep every routine on an even address (`.balign 2` after byte data) and check a stock address you typed; the message names the package, the offset and the target.
