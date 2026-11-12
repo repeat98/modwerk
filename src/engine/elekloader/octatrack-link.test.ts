@@ -94,6 +94,16 @@ describe('finding the unit', () => {
     unit.taken = false; await vi.advanceTimersByTimeAsync(3000)
     await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
   })
+  it('stays busy through a retry that finds the unit still held, so the sidebar card does not flicker', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout'] })
+    const unit = fakeUnit(), link = new OctatrackLink(unit.usb, fakeSession(unit))
+    unit.taken = true; link.start()
+    await vi.waitFor(() => expect(link.getState().status).toBe('busy'))
+    const seen: string[] = []; link.subscribe(() => seen.push(link.getState().status))
+    await vi.advanceTimersByTimeAsync(3000)
+    expect(seen.length).toBeGreaterThan(0)
+    expect(seen.every(status => status === 'busy')).toBe(true)
+  })
   it('stays connected while any view still uses it', async () => {
     const unit = fakeUnit(), link = new OctatrackLink(unit.usb, fakeSession(unit))
     const card = link.start(), dialog = link.start(); await settle(); await settle()
