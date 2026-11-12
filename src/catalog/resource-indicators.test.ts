@@ -73,7 +73,7 @@ describe('required relative module resource gauges', () => {
 
   it('limits companion estimates to exact versions and hashes in the existing frozen baseline', () => {
     const records = parseRetainedResourceImpacts(retained, baseline.modules)
-    expect(records.size).toBe(7)
+    expect(records.size).toBe(11)
     const record = retained.modules[0]
     for (const change of [{ id: 'new-module' }, { version: '999.0.0' }, { folderSha256: 'f'.repeat(64) }, { extra: true }]) {
       expect(() => parseRetainedResourceImpacts({ ...retained, modules: [{ ...record, ...change }] }, baseline.modules)).toThrow('unchanged existing versions')

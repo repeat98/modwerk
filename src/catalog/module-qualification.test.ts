@@ -76,9 +76,9 @@ describe('module qualification hard gates',()=>{
     hardware.sourceRevision=example.tests.evidenceRevision;hardware.limitations=[]
     expect(reported).toThrow('limits of the reported hardware test')
   })
-  it('retains exactly the existing seven frozen versions', () => {
-    expect(baseline.modules).toHaveLength(7)
-    expect(parseQualificationBaseline(baseline).size).toBe(7)
+  it('retains exactly the existing eleven frozen versions', () => {
+    expect(baseline.modules).toHaveLength(11)
+    expect(parseQualificationBaseline(baseline).size).toBe(11)
   })
   // Give each complete qualification check its own unchanged per-test deadline.
   for (const module of catalog.modules.filter(m => !['cc-map', 'previewvol'].includes(m.id))) {
