@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/kitbank.S"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_settings",
+      "fn": "kb_settings",
+      "order": 50
+    }
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "settings:KIT PER BANK"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.44": {
+      "defsym": {},
+      "cflags": [],
+      "sites": [
+        {
+          "addr": "0x40094f14",
+          "len": 8,
+          "stockSha256": "4997842f477c42235c625d7ba815c13fc3a07a0c57335d4361007e1288ff0795",
+          "op": "jmp",
+          "target": "kb_setpat"
+        },
+        {
+          "addr": "0x4014df66",
+          "len": 6,
+          "stockSha256": "25f6cf58764096a92fba2355b3a003ad25d064d44e1e91102deb6abcadbed9d7",
+          "op": "jmp",
+          "target": "kb_getkit"
+        },
+        {
+          "addr": "0x40095f08",
+          "len": 6,
+          "stockSha256": "e546d4a005b1ba895fcdb1eff85edbca6c362d0359e3ce5ed454b6320228bc21",
+          "op": "jmp",
+          "target": "kb_qact1"
+        },
+        {
+          "addr": "0x40096236",
+          "len": 6,
+          "stockSha256": "e546d4a005b1ba895fcdb1eff85edbca6c362d0359e3ce5ed454b6320228bc21",
+          "op": "jmp",
+          "target": "kb_qact2"
+        },
+        {
+          "addr": "0x400278f0",
+          "len": 8,
+          "stockSha256": "da84c1f842d053771b08911c8ed517551ad95f3019433555c6327cd2698f25d7",
+          "op": "jmp",
+          "target": "kb_save"
+        },
+        {
+          "addr": "0x40027d3a",
+          "len": 8,
+          "stockSha256": "e60937176ed83d52936ca7977d2a4082ed1ac3017ff960831e4d5f7ebb5b9250",
+          "op": "jmp",
+          "target": "kb_reload"
+        },
+        {
+          "addr": "0x40029ada",
+          "len": 8,
+          "stockSha256": "f7fddeefeac300af619b7028a954dc595076d9d098da7090973c1cbc1f649ec0",
+          "op": "jmp",
+          "target": "kb_sndreload"
+        }
+      ]
+    }
+  }
+}

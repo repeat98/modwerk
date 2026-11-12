@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 3,
+  "id": "kitbank",
+  "name": "kitbank",
+  "version": "0.1.0-experimental",
+  "machine": "digitone",
+  "category": "playback",
+  "exclusive": false,
+  "author": {
+    "github": "ZOGV",
+    "credits": [
+      "ZOGV — kitbank design and code",
+      "irpina — digihealth SETTINGS row pattern, elekloader core"
+    ]
+  },
+  "maintainers": [
+    "ZOGV"
+  ],
+  "presentation": {
+    "label": "KIT PER BANK",
+    "family": "Sequencing",
+    "summary": "One kit per bank, like the Octatrack's parts: the 16 patterns of a bank play the kit of its first pattern.",
+    "overview": "With KIT PER BANK ticked in SETTINGS, the 16 patterns of a bank share one kit, the kit of the bank's first pattern: A01 to A16 play A01's kit, B01 to B16 play B01's kit, and so on. Switching patterns inside a bank keeps the same sounds and changes only the notes; a sound edit made on any pattern of the bank is heard on all of them. This covers immediate and queued pattern changes (playback, chains), and the kit save and reload commands act on the bank's kit. Every pattern keeps its own kit in the project, untouched: unticked, each pattern plays its own kit again. Off at power-on.",
+    "highlights": [
+      "Rytm/Octatrack-style shared kits: change pattern inside a bank, keep the sound.",
+      "Edits on any pattern of a bank go to the bank's kit and are heard on all 16 patterns.",
+      "Nothing is rewritten in the project: untick it and every pattern plays its own kit again; the project still opens on the stock OS.",
+      "Off at power-on: existing projects sound as before until you tick it."
+    ],
+    "usage": [
+      "Open SETTINGS, scroll to the bottom and tick KIT PER BANK.",
+      "Select A01 again, set up a bass sound, then go to A02 and program different notes: same sound.",
+      "On A02, open the filter page and turn the cutoff; go back to A01: the cutoff moved there too.",
+      "Press FUNC+YES on A02 to save the bank's kit; FUNC+NO on any pattern of bank A reloads it.",
+      "Untick KIT PER BANK and change pattern: A02 plays its own kit again."
+    ]
+  },
+  "access": {
+    "location": "SETTINGS, last row: KIT PER BANK",
+    "steps": [
+      "Press SETTINGS and scroll to the last row, KIT PER BANK.",
+      "Press YES (or RIGHT) to tick it, YES (or LEFT) to untick it.",
+      "Change pattern, or select the current pattern again: the setting applies from that pattern change."
+    ],
+    "screenshots": [
+      "media/settings-off.png",
+      "media/settings-on.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "KIT PER BANK",
+      "default": 0,
+      "doc": "Ticked: the 16 patterns of a bank play, edit, save and reload the kit of the bank's first pattern. Unticked: every pattern plays its own kit, as on the stock OS. Off at power-on, not saved with the project; it applies from the next pattern change.",
+      "labels": [
+        "off",
+        "on"
+      ]
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.44"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for Digitone OS 1.44 with the vendored core-dn1 2.0a (os1.44); not ported to OS 1.43. The Digitone Keys runs the same OS file but has not been tried.",
+      "The switch is not saved with the project and is off at power-on: core-dn1 2.0a for 1.44 has no project data. It can move to core_projdata when a 1.44 core provides it.",
+      "It patches seven stock OS sites itself (kit selection, queued pattern change, kit save/reload); a mod patching the same bytes cannot be combined. If other mods need kit selection, these sites should become a core hook.",
+      "Pasting a pattern into a bank's first pattern (A01, B01...) replaces the bank's kit with the copied pattern's own kit, as the stock OS replaces that pattern's kit.",
+      "Song mode was not tried; queued changes during playback were."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "2.0a",
+    "build": "build.json",
+    "events": [
+      "ev_settings"
+    ],
+    "claims": [
+      "settings:KIT PER BANK"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 552,
+    "fastBytes": 0,
+    "load": {
+      "display": "None while playing",
+      "method": "static",
+      "conditions": "No audio-rate code: the redirections run only on pattern changes, screen and edit kit lookups, and the pattern menus' kit save and reload."
+    }
+  },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": null,
+    "reports": [],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Emulator only (digiemu, OS 1.44): unticked behaves like the stock OS; ticked, bank kits for immediate and queued changes, edits, kit save/reload; unticking restores each pattern's own kit; full check against stock passed. Not tried on hardware in this Modwerk build.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial: one kit for a whole bank",
+        "steps": [
+          "Open SETTINGS, scroll to the bottom and tick KIT PER BANK.",
+          "Select A01 again, set up a bass sound, then go to A02 and program different notes: same sound.",
+          "On A02, open the filter page and turn the cutoff; go back to A01: the cutoff moved there too.",
+          "Press FUNC+YES on A02 to save the bank's kit; FUNC+NO on any pattern of bank A reloads it.",
+          "Untick KIT PER BANK and change pattern: A02 plays its own kit again."
+        ]
+      },
+      "screenshots": [
+        "media/settings-off.png",
+        "media/settings-on.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by ZOGV. The SETTINGS row follows digihealth's SYSTEM INFO row by irpina (GPL-2.0-or-later), with OS 1.44 addresses."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "kitbank thumbnail",
+      "alt": "Two kit boxes, each feeding a row of sixteen pattern steps.",
+      "credit": "ZOGV",
+      "license": "GPL-3.0-or-later",
+      "source": "Original illustration"
+    },
+    {
+      "path": "media/settings-off.png",
+      "kind": "screenshot",
+      "caption": "SETTINGS: KIT PER BANK unticked (power-on state)",
+      "alt": "SETTINGS menu on the Digitone LCD with the KIT PER BANK row unticked",
+      "credit": "Emulator documentation capture by ZOGV; Elektron interface; kitbank module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.44",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "13c0595b442bc1c68d78069eea4ee451a917b26f9990c79753037de288762e04",
+        "setup": "Disposable first-boot project, network-denied sandbox; see media/capture.json."
+      }
+    },
+    {
+      "path": "media/settings-on.png",
+      "kind": "screenshot",
+      "caption": "SETTINGS: KIT PER BANK ticked",
+      "alt": "SETTINGS menu on the Digitone LCD with the KIT PER BANK row ticked",
+      "credit": "Emulator documentation capture by ZOGV; Elektron interface; kitbank module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.44",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "13c0595b442bc1c68d78069eea4ee451a917b26f9990c79753037de288762e04",
+        "setup": "Disposable first-boot project, network-denied sandbox; see media/capture.json."
+      }
+    }
+  ]
+}
