@@ -41,7 +41,7 @@ enum { MODE_REC, MODE_ONCE, MODE_CAPT };
 volatile u32 ram_mode,ram_locked,ram_once_stage,ram_capt_pending;
 /* The looper's second SRC page (press SRC again) sets MODE, MAX length, SOURCE and LEVEL for the whole
  * unit. FILL, or UP on the looper's SRC pages (BTN, knob E), is the capture/arm button. */
-u32 ram_set_mode,ram_set_source,ram_set_len=6,ram_set_gain=100;   /* MAX: 1<<n steps, 64 by default */
+u32 ram_set_mode,ram_set_source,ram_set_len=6,ram_set_gain=100;   /* LEN: 1<<n steps (64 by default), 8 PT.LEN */
 u32 ram_set_btn;                           /* the capture/arm button: 0 FILL, 1 UP (on the looper's SRC pages), 2 both */
 /* PLAY (page 2, knob G): TRIG, the looper track's sequenced trigs end each loop and play the take, as before;
  * PICK, a pickup machine: loops start on the sequencer's step grid since PLAY, every MAX steps, and the
@@ -70,20 +70,23 @@ static volatile u32 pk_voice,pk_quiet;          /* the voice is set up; silence 
  * for a second after a pattern change (FW_CURRENT_PATTERN or the kit) a change is the new pattern
  * loading, and gets the shared values written over it. */
 u32 ram_set_sends=1;                       /* GLOB: 0 off (stock), 1 SND, 2 FLT, 3 AMP, 4 ALL */
-static const u8 glob_ids[]={42,43, 30,31,32,33,34,35,36,37, 38,39,40,41,44,45,
-                            17,18,19,21,22,23,24, 1,2,3,4,5,6,7,8};
-static const u8 glob_count[]={0,2,10,16,31};  /* how many of glob_ids each GLOB setting takes */
-#define GLOB_N 31
+static const u8 glob_ids[]={42,43, 25,26,27,28,29,30,31,32,33,34,35,36,37, 38,39,40,41,44,45,
+                            17,18,19,21,22,23,24, 1,2,3,4,5,6,7,8};   /* FLTR 25-32, its page 2 33-37 */
+static const u8 glob_count[]={0,2,15,21,36};  /* how many of glob_ids each GLOB setting takes */
+#define GLOB_N 36
 static volatile u16 ram_gval[GLOB_N];      /* the shared values */
 static u32 ram_glob_learned;               /* how many of glob_ids have been learned */
 static u32 ram_kit_tick;                   /* the last pattern (kit) change */
 static u16 ram_seen_send[8][GLOB_N];       /* each track's words as last seen */
-static u32 ram_page2,ram_redraw;           /* the looper's second SRC page is shown; redraw it */
+static u32 ram_redraw;                     /* redraw the looper's second SRC page */
+static u32 ram_loop_na;                    /* LEN is PT.LEN and the pattern's length is INF or over 128 */
 volatile u32 ram_dbg_grid,ram_ui;      /* the UI object (the SRC view's +0x6c), for the grid-recording test */   /* CAPT: hand over the loop now being recorded when it ends */   /* ONCE: 0 idle or locked, 1 armed, 2 recording the loop */
 static short * volatile ram_buf[3];
 static volatile u32 ram_len[3];
 static volatile u32 ram_loop_want,ram_loop_nomem;         /* the audio side wants the loop buffers (ONCE or CAPT) */
 static u32 ram_pub,ram_cur=1,ram_last=2,ram_loop_target,ram_loop_len;
+#define FADE_IN 16
+#define FADE_OUT 64
 static u32 ram_steps[3];                   /* each buffer's loop length in steps (MAX when it ended), for PTCH/WARP */
 static volatile u32 w_restart;                    /* PTCH/WARP: the loop starts on the grid in this block */
 static volatile u32 ram_tune=0x4000;               /* the loop track's TUNE word: 0x4000 is 0, 256 a semitone */
@@ -126,11 +129,20 @@ static void norm_start(u32 gain){
  ram_norm_gain=gain;ram_norm_lo=0;ram_norm_hi=ram_count;norm_step();
 }
 static void norm_cancel(void){ram_norm_hi=ram_norm_lo;}
-static u32 steps_len(u32 index){            /* 1<<index sixteenth steps at the current tempo, in samples */
+/* PT.LEN: the pattern's own length. OS 1.54 keeps it in the pattern (FW_CURRENT_PATTERN): in PER TRACK
+ * mode its M.LEN (1 is INF), in PER PATTERN mode its LENGTH, as one word; a byte beside it is 1 in PER TRACK. */
+static u32 loop_steps(void){                /* LEN in steps; 0 when PT.LEN is N/A */
+ u32 p=R32(0x4199ec38),n;
+ if(ram_set_len<8)return 1UL<<ram_set_len;
+ if(!p)return 0;
+ n=*(volatile u16 *)(p+0x1ec54);
+ if(*(volatile u8 *)(p+0x1ec59)&&n==1)return 0;
+ return n&&n<=128?n:0;
+}
+static u32 steps_len(u32 steps){            /* sixteenth steps at the current tempo, in samples, to the sample */
  u32 tempo=FW(0x400770c8)(),target;
- if(index>7)index=7;
  if(tempo<120)tempo=120;
- target=((1UL<<index)*5760000UL/(tempo*4))*60;
+ target=steps*(86400000UL/tempo)+steps*(86400000UL%tempo)/tempo;
  if(target>CAPACITY)target=CAPACITY;
  if(target<248)target=248;
  return target;
@@ -147,7 +159,10 @@ static void publish(u32 i){                /* the looper plays buffer i from its
  if(ram_last==i){ram_last=old;ram_len[old]=0;}   /* no second hand-over until the next loop ends */
 }
 static void loop_end(void){                /* the loop being recorded is complete */
- ram_loop_len=ram_len[ram_cur];ram_steps[ram_cur]=1UL<<(ram_set_len&7);
+ {short *b=ram_buf[ram_cur];u32 n=ram_len[ram_cur],i;   /* declick: the take fades in and out */
+  if(n>=248){for(i=0;i<FADE_IN;i++)b[i]=(short)(b[i]*(s32)i/FADE_IN);
+   for(i=0;i<FADE_OUT;i++)b[n-1-i]=(short)(b[n-1-i]*(s32)i/FADE_OUT);}}
+ ram_loop_len=ram_len[ram_cur];ram_steps[ram_cur]=loop_steps();
  ram_last=ram_cur;
  ram_cur=3-ram_pub-ram_last;ram_len[ram_cur]=0;
  if(ram_mode==MODE_CAPT&&ram_capt_pending){publish(ram_last);ram_capt_pending=0;}
@@ -221,6 +236,7 @@ static void edit_take(u32 parent){
 static void ram_say(const char *m){if(ram_ui)FW(0x40093ab0)(ram_ui,m);}
 static void ram_button(void){              /* the capture/arm button */
  if(!loop_ready()){ram_say("LOOP: NOT READY YET");return;}
+ if(ram_loop_na){ram_say("LOOP: PT.LEN N/A");return;}
  if(ram_editor_busy){ram_say("LOOP: TAKE IS BEING EDITED");return;}
  if(ram_mode==MODE_CAPT)ram_capt_pending=1;
  else if(ram_mode==MODE_ONCE){
@@ -230,8 +246,6 @@ static void ram_button(void){              /* the capture/arm button */
 /* ---- the looper's second SRC page ----------------------------------------
  * Pressing SRC on the looper track's SRC page switches between the stock page (1/2) and its page 2 (2/2),
  * drawn by ram_draw over the whole screen. Knobs A-D set the loop settings there. */
-static const char *const loop_names[]={"OFF","ONCE","CAPT"};
-static const char *const src_names[]={"MAIN","IN L","IN R","IN LR"};
 static u32 ui_machine(u32 t){u8 *kit=fw_kit;return kit&&t<8?FW_SOUND(kit,t)[FW_SOUND_MACHINE]:0;}   /* the UI side's view: the kit */
 /* ---- page 2 saved on the +Drive ----------------------------------
  * The five RAM Loop settings are kept in /cfw/ramloop.a and .b, written in turn, so a save cut short
@@ -261,7 +275,7 @@ static int rl_read(const char *path){
  if(EK_OPEN(path,"r",&f)!=0)return 0;
  got=EK_READ(&rl_img,sizeof rl_img,&f);EK_CLOSE(&f);
  return got>=(s32)(sizeof rl_img-sizeof rl_img.pad)&&rl_img.magic==RL_MAGIC&&rl_img.size==8&&rl_img.sum==rl_sum(rl_img.v)
-  &&rl_img.v[0]<3&&rl_img.v[1]<8&&rl_img.v[2]<4&&rl_img.v[3]<128&&rl_img.v[4]<3&&rl_img.v[5]<5&&rl_img.v[6]<4;
+  &&rl_img.v[0]<3&&rl_img.v[1]<9&&rl_img.v[2]<4&&rl_img.v[3]<128&&rl_img.v[4]<3&&rl_img.v[5]<5&&rl_img.v[6]<4;
 }
 static void rl_load(void){
  int ok0,ok1,pick;u32 seq0;
@@ -300,11 +314,18 @@ static u32 src_shown(void){                /* the SRC page of the looper track i
  t=FW(0x4001d24e)(R32(v+116));
  return ui_machine(t)==RAM_P;
 }
+/* Page 2 is the SRC view's second page, the one stock pressing SRC again switches to (the file waveform,
+ * which a LOOPER track doesn't draw): the view's page list (+124) holds its kind, 5, at the page index (+144).
+ * SRC itself stays stock, so a short press switches pages, the page is remembered as stock remembers it, and
+ * holding SRC shows the values (+0x190 is set while it does). */
+static u32 page2_on(void){u32 v=ram_src_view;return src_shown()&&R32(R32(v+124)+4*R32(v+144))==5;}
+static u32 values_held(void){return *(volatile u8 *)(ram_src_view+0x190);}
+static u32 p2_turned,p2_turn_tick;          /* the knob last turned (1-7), and when: its label shows the value */
 /* Page 2's knobs turn as on the stock pages (stock_knob.h): the firmware's speed, pushed while turning
  * coarse, FUNC + turn a jump to the default. The values keep a fraction, as stock values do. */
 static dt_knobs ram_knobs;
 static int ram_frac[7];
-static const short p2_hi[7]={2,7,3,127,2,4,3},p2_def[7]={0,6,0,100,0,1,0};
+static const short p2_hi[7]={2,8,3,127,2,4,3},p2_def[7]={0,6,0,100,0,1,0};
 static s32 page2_get(u32 k){
  switch(k){case 0:return ram_set_mode;case 1:return ram_set_len;case 2:return ram_set_source;
  case 3:return ram_set_gain;case 4:return ram_set_btn;case 5:return ram_set_sends;default:return ram_set_play;}
@@ -324,16 +345,43 @@ static void page2_set(u32 k,s32 v){
  }
  ram_redraw=1;rl_dirty=30;               /* save about a second after the last change */
 }
+static void num(char *v,u32 n){u32 i=0,j=0;char t[4];do{t[i++]='0'+n%10;n/=10;}while(n&&i<4);while(i)v[j++]=t[--i];v[j]=0;}
+static const char *const loop_names[]={"OFF","ONCE","CAPT"};
+static const char *const src_names[]={"MAIN","IN L","IN R","IN LR"};
+static const char *const btn_names[]={"FILL","UP","BOTH"};
+static const char *const gn[]={"OFF","SND","FLT","AMP","ALL"};
+static const char *const play_names[]={"TRIG","PICK","PTCH","WARP"};
+static const char *const p2_names[7]={"MODE","LEN","SRCE","RLEV","BTN","GLOB","PLAY"};
+static const char *const p2_long[7]={"Loop Mode","Loop Length","Loop Source","Loop Level","Capture Button","Global Params","Play Mode"};
+static const char *p2_value(u32 k,char *v){   /* knob k's value as text (v: 8 chars) */
+ switch(k){
+ case 0:return loop_names[ram_set_mode%3];
+ case 1:if(ram_set_len<8){num(v,1UL<<ram_set_len);return v;}
+  {u32 n=loop_steps();if(!n)return "N/A";num(v,n);return v;}
+ case 2:return src_names[ram_set_source&3];
+ case 3:num(v,ram_set_gain);return v;
+ case 4:return btn_names[ram_set_btn%3];
+ case 5:return gn[ram_set_sends%5];
+ default:return play_names[ram_set_play&3];
+ }
+}
+static void p2_say(u32 k){                     /* the header message, as stock: "Name=value" */
+ char v[8];
+ if(!ram_ui)return;
+ if(k==1&&ram_set_len==8)FW(0x40093ab0)(ram_ui,"%s=PT.LEN %s",p2_long[k],p2_value(k,v));
+ else FW(0x40093ab0)(ram_ui,"%s=%s",p2_long[k],p2_value(k,v));
+}
 u32 ram_enc(u32 brain,u32 event){
  u32 id=R32(event+12);int d,jump;
  (void)brain;
- if(!ram_page2||!src_shown())return 0;
+ if(!page2_on())return 0;
  if(id<1||id>8)return 0;                   /* LEVEL and the rest stay stock */
  if(id>7)return 1;                         /* H does nothing here */
  d=dt_knob(&ram_knobs,(void *)event,id-1,id==4?DT_KNOB_FINE:DT_KNOB_LIST,&jump);
  if(!d)return 1;
  if(jump){ram_frac[id-1]=0;page2_set(id-1,dt_knob_jump(page2_get(id-1),d,0,p2_hi[id-1],p2_def[id-1]));}
  else page2_set(id-1,dt_knob_apply(page2_get(id-1),&ram_frac[id-1],d,0,p2_hi[id-1]));
+ p2_turned=id;p2_turn_tick=ram_ticks;p2_say(id-1);
  return 1;
 }
 /* the looper's page 2, laid out like the stock second pages (FLTR 2/2): the stock header and left column
@@ -341,6 +389,7 @@ u32 ram_enc(u32 brain,u32 event){
 static const char *short_state(void){
  if(ram_state==NO_MEMORY)return "NRAM";
  if(!loop_ready())return ram_set_mode==MODE_REC?"OFF":ram_loop_nomem?"NRAM":"WAIT";
+ if(ram_loop_na)return "N/A";
  if(ram_mode==MODE_ONCE)return ram_once_stage==1?"ARM":ram_once_stage==2?"REC":ram_locked?"LOCK":"RDY";
  if(ram_mode==MODE_CAPT)return ram_capt_pending?"CAPT":"LOOP";
  return "OFF";
@@ -359,39 +408,36 @@ static void knob_box(void *bmp,int k,const char *val,const char *name){
  LABEL(bmp,x+9-n*2,y+6,val);knob_label(bmp,k,name);
 }
 static void knob_gfx(void *bmp,int k,u32 id,s32 v,const char *name){int x,y;knob_place(k,&x,&y);KNOB_GFX(id,v<<8,bmp,x,y);knob_label(bmp,k,name);}
-static void num(char *v,u32 n){u32 i=0,j=0;char t[4];do{t[i++]='0'+n%10;n/=10;}while(n&&i<4);while(i)v[j++]=t[--i];v[j]=0;}
 static void page2_draw(void *bmp){
- static const char *const btn_names[]={"FILL","UP","BOTH"};
- static const char *const gn[]={"OFF","SND","FLT","AMP","ALL"};
- static const char *const play_names[]={"TRIG","PICK","PTCH","WARP"};
- char v[8];u32 len=ram_loop_len;
+ /* A knob's name gives way to its value while SRC is held, and for the knob last turned while the
+  * header shows its message (about 4 s), as on the stock pages. */
+ char v[7][8],w[8];const char *val[7],*lab[7];u32 k,len=ram_loop_len,all=values_held();
+ for(k=0;k<7;k++){val[k]=p2_value(k,v[k]);lab[k]=all||(p2_turned==k+1&&ram_ticks-p2_turn_tick<120)?val[k]:p2_names[k];}
  fw_fillrect(bmp,17,0,127,53,0);                         /* the knob area; header and left column stay stock */
- knob_box(bmp,0,loop_names[ram_set_mode%3],"MODE");
- knob_gfx(bmp,1,111,(s32)(1UL<<(ram_set_len&7)),"MAX");
- knob_box(bmp,2,src_names[ram_set_source&3],"SRCE");
- knob_gfx(bmp,3,10,(s32)ram_set_gain,"RLEV");
- knob_box(bmp,4,btn_names[ram_set_btn%3],"BTN");
- knob_box(bmp,5,gn[ram_set_sends%5],"GLOB");
- knob_box(bmp,6,play_names[ram_set_play&3],"PLAY");
- if(len>=248){num(v,len/48000);
-  {u32 j=0;while(v[j])j++;v[j]='.';v[j+1]='0'+len%48000*10/48000;v[j+2]=0;}}   /* seconds */
- else{const char *st=short_state();u32 j=0;while(st[j]&&j<7){v[j]=st[j];j++;}v[j]=0;}   /* no loop yet: the state */
- knob_box(bmp,7,v,"LOOP");
+ knob_box(bmp,0,val[0],lab[0]);
+ if(ram_set_len<8)knob_gfx(bmp,1,111,(s32)(1UL<<ram_set_len),lab[1]);
+ else knob_box(bmp,1,"PT.LEN",lab[1]);
+ knob_box(bmp,2,val[2],lab[2]);
+ knob_gfx(bmp,3,10,(s32)ram_set_gain,lab[3]);
+ for(k=4;k<7;k++)knob_box(bmp,k,val[k],lab[k]);
+ if(len>=248){num(w,len/48000);
+  {u32 j=0;while(w[j])j++;w[j]='.';w[j+1]='0'+len%48000*10/48000;w[j+2]=0;}}   /* seconds */
+ else{const char *st=short_state();u32 j=0;while(st[j]&&j<7){w[j]=st[j];j++;}w[j]=0;}   /* no loop yet: the state */
+ knob_box(bmp,7,w,all?w:"LOOP");
 }
 u32 ram_key(u32 brain,u32 event){
  u32 code=R32(event+12),flags=R32(event+16);
- if(code==11&&(flags&9)==1)ram_stop=1;
- if(code==13&&ram_page2&&src_shown())return 1;        /* NO on page 2: nothing, as on the stock 2/2 pages; SRC pages */
- if(code==20&&src_shown()&&!(FW(0x400d399c)(1)&255)){   /* SRC on the looper's SRC page: the other page */
-  if((flags&9)==1){ram_page2=!ram_page2;dt_knobs_reset(&ram_knobs);ram_redraw=1;}
-  return 1;
+ if(code==11&&(flags&9)==1){
+  ram_stop=1;
+  if(SEQ_PLAYING!=1){ram_once_stage=0;ram_capt_pending=0;}   /* STOP while stopped: the arm is off, as stock clears */
  }
+ if(code==13&&page2_on())return 1;        /* NO on page 2: nothing, as on the stock 2/2 pages */
  if(code==14&&ram_set_btn&&ram_mode!=MODE_REC&&src_shown()
     &&!(FW(0x400d399c)(1)&255)&&!(FW(0x400d399c)(2)&255)){   /* UP on the looper's SRC pages: the button */
   if((flags&9)==1)ram_button();
   return 1;
  }
- if(R32(event+12)==43&&(R32(event+16)&3)==1&&!ram_page2&&ram_src_view&&ram_ticks-ram_src_seen<3){  /* the looper: push D (page 1) */
+ if(R32(event+12)==43&&(R32(event+16)&3)==1&&!page2_on()&&ram_src_view&&ram_ticks-ram_src_seen<3){  /* the looper: push D (page 1) */
   u32 track=FW(0x4001d24e)(R32(ram_src_view+116));
   if(ui_machine(track)==RAM_P){edit_take(ram_src_view);return 1;}
  }
@@ -429,7 +475,7 @@ static int banner_wanted(void){
 void ram_draw(void *bmp,void *ctrl){
  u32 num,den,y0;const char *t;int blink=(ram_ticks/8)&1;
  (void)ctrl;
- if(ram_page2&&src_shown())page2_draw(bmp);
+ if(page2_on())page2_draw(bmp);
  if(!ram_ban_y)return;
  y0=64-ram_ban_y;
  fw_fillrect(bmp,17,y0,127,63,0);            /* white on black, like the stock pop-ups */
@@ -438,7 +484,7 @@ void ram_draw(void *bmp,void *ctrl){
   else{
    num=ram_len[ram_cur];den=ram_loop_len>=248?ram_loop_len:ram_loop_target;
    t=ram_once_stage==1?(blink?"":"ARMED"):ram_once_stage==2?"RECORDING":
-     ram_capt_pending?(blink?"":"CAPTURE"):ram_mode==MODE_ONCE?"TAKEN":"CAPTURED";
+     ram_capt_pending?(blink?"":"CAPTURE"):ram_mode==MODE_ONCE?"RECORDED":"CAPTURED";
   }
   if(*t)fw_textf(bmp,fw_font5,19,56,-1,"%s",t);
   {int x0=70,x1=125,w=den?(int)((u32)num*(u32)(x1-x0-1)/den):0;
@@ -521,7 +567,8 @@ u32 ram_tick(u32 ctrl){
   u8 f=FILL_ON;
   if(f&&!fill_was&&ram_set_btn!=1&&ram_mode!=MODE_REC)ram_button();
   fill_was=f;}
- if(ram_page2&&!src_shown()&&ram_src_view&&!R32(ram_src_view+0x2c))ram_page2=0;   /* another page: back to 1/2 next time */
+ {static u32 was;u32 on=page2_on();             /* page 2 opened or closed: knob state afresh */
+  if(on!=was){dt_knobs_reset(&ram_knobs);p2_turned=0;was=on;}}
  if(ram_redraw){ram_redraw=0;*(u8 *)(ctrl+0x20)=1;}
  {static u32 seen_gen;                     /* a loop was handed over: say so */
   if(ram_generation!=seen_gen){
@@ -532,7 +579,7 @@ u32 ram_tick(u32 ctrl){
   if(banner_wanted())y=y+3>10?10:y+3;else y=y>3?y-3:0;
   if(y!=ram_ban_y||(y&&!(ram_ticks%3)))*(u8 *)(ctrl+0x20)=1;   /* moving, or its bar: ~10 redraws/s */
   ram_ban_y=y;}
- if(ram_page2&&src_shown()&&!(ram_ticks%3))*(u8 *)(ctrl+0x20)=1;
+ if(page2_on()&&!(ram_ticks%3))*(u8 *)(ctrl+0x20)=1;
  {u32 key=ram_state|ram_locked<<4|ram_mode<<8|ram_once_stage<<12;
   if(need&&shown!=key){*(u8 *)(ctrl+0x20)=1;shown=key;}}
  return *(u8 *)(ctrl+0x20);
@@ -553,19 +600,24 @@ void ram_audio(u32 params,u32 machines,u32 starts,u32 stops,u32 velocities){
    if(ram_set_play&&k<8)ram_one_track=1;}
   if(ram_one_track){                        /* one-track looping from SETTINGS */
    ram_mode=ram_set_mode;
-   if(ram_mode!=MODE_REC){ram_loop_target=steps_len(ram_set_len);ram_gain=ram_set_gain;ram_source=ram_set_source;ram_loop_want=1;}
+   if(ram_mode!=MODE_REC){u32 n=loop_steps();
+    ram_loop_na=!n;if(n)ram_loop_target=steps_len(n);
+    ram_gain=ram_set_gain;ram_source=ram_set_source;ram_loop_want=1;}
   }
  }
+ {static u32 was;u32 p=SEQ_PLAYING==1;      /* PLAY: the first loop starts now, and an armed take is this one */
+  if(p&&!was&&ram_mode!=MODE_REC&&loop_ready()&&!ram_loop_na){ram_len[ram_cur]=0;if(ram_once_stage==1)ram_once_stage=2;}
+  was=p;}
  {static u32 was_playing,last_step,was_track=8;   /* PICK: the step grid decides where loops start */
   u32 pick=ram_one_track&&ram_set_play&&pick_track<8&&ram_mode!=MODE_REC&&loop_ready();
-  u32 playing=SEQ_PLAYING==1,step=STEP_COUNT,steps=1UL<<(ram_set_len&7),boundary=0;
+  u32 playing=SEQ_PLAYING==1,step=STEP_COUNT,steps=ram_loop_na?0:loop_steps(),boundary=0;
   if(pick){
-   /* The grid ends a loop, not the sample count: let the capture run a little past MAX. */
-   u32 target=ram_loop_target+ram_loop_target/8;
-   ram_loop_target=target>CAPACITY?CAPACITY:target;
+   /* A loop is LEN steps of samples at the tempo, counted to the sample from its start, so it ends where it
+    * should without waiting for the grid (ram_capture). The grid restarts the playback, and ends a loop
+    * still short of its length (the tempo went up); one just ended by the count goes on. */
    if(playing&&!was_playing&&step==0){ram_len[ram_cur]=0;boundary=2;}   /* PLAY: the first loop starts */
-   else if(playing&&step!=last_step&&step%steps==0)boundary=1;
-   if(boundary==1&&ram_len[ram_cur]>=248)loop_end();
+   else if(playing&&steps&&step!=last_step&&step%steps==0)boundary=1;
+   if(boundary==1&&ram_len[ram_cur]>=248&&ram_len[ram_cur]>=ram_loop_target/2)loop_end();
    t=pick_track;
    if(t!=was_track)pk_voice=0;
    /* Until the voice is set up, whatever plays the track (ram_tick's note, or a trig) goes through;
@@ -636,7 +688,8 @@ static void warp_block(s32 *b,u32 t){
   if(d<=(g1>>4)+2)w_gain=g1;
  }
  if(tempo<120)tempo=120;
- if(!steps)steps=1UL<<(ram_set_len&7);
+ if(!steps)steps=loop_steps();
+ if(!steps)steps=64;
  now=1382400000UL/tempo;                       /* samples a step now, Q4 */
  rec=(n<<4)/steps;                             /* samples a step in the loop, Q4 */
  r=udiv_q16(rec,now);if(r>(4UL<<16))r=4UL<<16;if(r<(1UL<<14))r=1UL<<14;
@@ -748,12 +801,13 @@ void ram_capture(u32 external,u32 usb,u32 main,u32 tracks){
  if(ram_state==READY)norm_step();
  mix=(const s32 *)(ram_source?external:main);
  if(ram_mode!=MODE_REC&&loop_ready()){      /* ONCE and CAPT: always recording, loop by loop */
-  short *b=ram_buf[ram_cur];u32 len=ram_len[ram_cur];
   if(ram_pick&&!ram_pick_rec)return;        /* PICK: only while the sequencer plays, on its grid */
-  n=CAPACITY-len;if(n>32)n=32;
-  for(i=0;i<n;i++)b[len+i]=(short)sample_at(mix,i);
-  ram_len[ram_cur]=len+n;
-  if(len+n>=ram_loop_target){ram_stats[9]++;ram_stats[10]=ram_loop_target;loop_end();}   /* no looper trig within MAX steps: the loop ends here */
+  if(ram_loop_na||ram_loop_target<248)return;   /* PT.LEN with no length to take, or not set up yet */
+  for(i=0;i<32;i++){                        /* to the sample: a loop that ends mid-block hands the rest on */
+   u32 len=ram_len[ram_cur];
+   if(len<CAPACITY){ram_buf[ram_cur][len]=(short)sample_at(mix,i);ram_len[ram_cur]=++len;}
+   if(len>=ram_loop_target){ram_stats[9]++;ram_stats[10]=ram_loop_target;loop_end();}   /* LEN reached (TRIG: no looper trig before it) */
+  }
   return;
  }
  if(ram_state!=RECORDING)return;

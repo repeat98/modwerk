@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
   "algorithm": "sha256 of canonical sorted JSON {sources,build}; UTF-8, compact separators; sources: every file under src/",
-  "sha256": "786050a3f04ab70b5474947c93cf5c3e675b6ed96a4affa1dbe2fc00f4536dde",
+  "sha256": "069d58363aa64d5b7bd7dfab8d37252948847d84d6b7619c7b0b22f4ebd4dc6d",
   "sources": {
     "src/core21.h": "c4d31ee8d6d8699ed0ea2b2197712d00b3433b8a5b03865806788fea5ecc265c",
     "src/digitakt-mk1/core3.h": "9ad3512ee2ced8f9eaadcb48e5633547d861d7a71f5443d5e9f759d0b790de26",
     "src/digitakt-mk1/stock_knob.h": "4603423988cda7fa13e9344dda1b9bb606d65bf3e31d4978661a4e8ba8ae5171",
     "src/euclidean.h": "ad57a044a339510972bc566dd05a3cba890aba5200b99b7d7ae3be86e3639674",
     "src/firmware.h": "31fbe86139cc1fdcedc73bea998d1f9ae5414cc5bae765074a23ff871096ff71",
-    "src/loop.c": "689160acdf03f5723ca22f8a85325e3810df3ce511e0ca2e1da137d0b86b2980",
+    "src/loop.c": "bced035066cf306491e2b976ab0fe68ab01b3f9b290cc1996de5a9b74b270fcb",
     "src/loop.s": "b7d6b1ba1c5af5d95d014e418abbf42fcb654f9e05dcd156c25db9cff6af0f3c"
   },
   "build": {

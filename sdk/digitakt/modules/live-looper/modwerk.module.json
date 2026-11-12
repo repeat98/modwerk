@@ -39,9 +39,9 @@
       "Push D to keep a loop as a sample through the stock trim editor."
     ],
     "usage": [
-      "On an empty audio track, press FUNC + SRC, choose LOOPER and confirm with YES. Press SRC again for page 2. Set MODE to CAPT, PLAY to PICK and leave MAX at 64 (four bars).",
+      "On an empty audio track, press FUNC + SRC, choose LOOPER and confirm with YES. Press SRC again for page 2. Set MODE to CAPT, PLAY to PICK and leave LEN at 64 (four bars).",
       "Press PLAY. The looper records MAIN in the background all the time.",
-      "At any moment hold PAGE (fill on) or press UP on the SRC page: the banner says CAPTURE, and when the loop ends it says CAPTURED and the loop plays on the LOOPER track.",
+      "At any moment press PAGE (fill on) or press UP on the SRC page: the banner says CAPTURE, and when the loop ends it says CAPTURED and the loop plays on the LOOPER track.",
       "Change pattern. The loop keeps playing on the beat, through every pattern with LOOPER on that track. Set MODE to OFF or press STOP to stop it."
     ]
   },
@@ -49,7 +49,7 @@
     "location": "FUNC + SRC (LOOPER), SRC again on the looper's track (page 2)",
     "steps": [
       "Select an audio track, press FUNC + SRC, scroll to LOOPER and confirm with YES twice.",
-      "On the looper track's SRC page, press SRC again for page 2: MODE, MAX, SRCE, RLEV, BTN, GLOB, PLAY and LOOP."
+      "On the looper track's SRC page, press SRC again for page 2: MODE, LEN, SRCE, RLEV, BTN, GLOB, PLAY and LOOP."
     ],
     "screenshots": [
       "media/machine-choice.png",
@@ -74,9 +74,9 @@
       ]
     },
     {
-      "name": "Page 2: B — MAX",
+      "name": "Page 2: B — LEN",
       "default": 64,
-      "doc": "The loop length in steps: 1, 2, 4 … 128. A loop holds up to 33 s.",
+      "doc": "The loop length in steps: 1, 2, 4 … 128, or PT.LEN, the pattern’s own length (M.LEN, or LENGTH in PER PATTERN mode); N/A while that is INF or over 128. A loop holds up to 33 s.",
       "labels": null
     },
     {
@@ -153,10 +153,10 @@
       "A kit with RAM Machines' RAM-R1 or RAM-P1 does not turn into LOOPER; choose the machine again.",
       "The looper takes 4 MB of sample memory for the take and 8 MB more for the loop buffers in ONCE or CAPT; with the memory full, page 2 shows NRAM and retries every 3 s.",
       "The take and loops are lost at power-off or project load; page 2's settings are saved for the whole unit, not per project or pattern.",
-      "One mono loop at a time. A small click can be heard at the end of each take.",
+      "One mono loop at a time. PT.LEN counts the pattern’s steps as sixteenths, whatever its scale.",
       "Changing the machine on the loop track discards the loop.",
       "With an Overbridge instance open (standalone or plugin) the unit gets slow; closing the instance ends it. Not yet compared with stock.",
-      "Known bug: changing PLAY mode while the loop plays restarts the loop mid-way."
+      "Known bugs: changing PLAY mode while the loop plays restarts the loop mid-way; in PICK, PTCH and WARP the looper track’s trig key restarts the loop (reported with LL01, not yet reproduced in the emulator)."
     ]
   },
   "platform": {
@@ -183,37 +183,38 @@
     ]
   },
   "resources": {
-    "memoryBytes": 14632,
+    "memoryBytes": 15556,
     "fastBytes": 0,
     "load": {
-      "display": "Adds 0.9% average idle and 5.0% average (4.8% worst block) at its heaviest, of an audio block over stock (emulator)",
+      "display": "Adds 0.9% average idle and 5.3% average (5.2% worst block) at its heaviest, of an audio block over stock (emulator)",
       "method": "emulator",
-      "conditions": "Emulator: OS 1.54, Core 2.1, Machine Pages, demo pattern playing; 3,000 blocks with the MCF5441x timing model at 250 MHz, zero-wait memory. Without the module 60.3% mean, 62.0% worst block; with it idle 61.2% and 62.9%; the looper in CAPT playing a loop in WARP with GLOB ALL: 65.3% and 66.8% (PICK: 63.7%, 65.3%). Loop buffers (4 MB, 8 MB more in ONCE or CAPT) come from sample memory. Not a hardware measurement."
+      "conditions": "Emulator: OS 1.54, Core 2.1, Machine Pages, demo pattern playing; 3,000 blocks with the MCF5441x timing model at 250 MHz, zero-wait memory. Without the module 60.3% mean, 62.0% worst block; with it idle 61.2% and 62.9%; the looper in CAPT playing a loop in WARP with GLOB ALL: 65.6% and 67.2% (PICK: 64.1%, 65.6%). Loop buffers (4 MB, 8 MB more in ONCE or CAPT) come from sample memory. Not a hardware measurement."
     }
   },
   "evidence": {
     "tier": "emulator",
     "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": "786050a3f04ab70b5474947c93cf5c3e675b6ed96a4affa1dbe2fc00f4536dde",
+    "sourceSha256": "069d58363aa64d5b7bd7dfab8d37252948847d84d6b7619c7b0b22f4ebd4dc6d",
     "reports": [
       "TESTING.md",
       "evidence/emulator-testing.json",
       "evidence/source-identity.json",
-      "evidence/lf03-before-split-hardware.json"
+      "evidence/lf03-before-split-hardware.json",
+      "evidence/ll01-hardware.json"
     ],
     "hardware": null,
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Emulator (digiemu, OS 1.54, LL01): LOOPER in the machine list, page 2, an ONCE capture end to end, load measured. Before the split, the combined LF03 build passed every looper check on draadpiraat's Digitakt I; the hardware run of LL01 is pending.",
+    "summary": "Emulator (digiemu, OS 1.54, LL02): LOOPER in the machine list, page 2 with stock SRC paging, values on hold and the header message, an ONCE take armed while stopped recorded from PLAY, STOP while stopped calling off the arm, PT.LEN, GLOB ALL carrying the filter across patterns, load measured. On draadpiraat's Digitakt I the combined LF03 build passed every looper check, and LL01 (the looper alone) passed its checklist with the findings fixed here; the hardware run of LL02 is pending.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial: catch a loop and carry it into the next pattern",
         "steps": [
-          "On an empty audio track, press FUNC + SRC, choose LOOPER and confirm with YES. Press SRC again for page 2. Set MODE to CAPT, PLAY to PICK and leave MAX at 64 (four bars).",
+          "On an empty audio track, press FUNC + SRC, choose LOOPER and confirm with YES. Press SRC again for page 2. Set MODE to CAPT, PLAY to PICK and leave LEN at 64 (four bars).",
           "Press PLAY. The looper records MAIN in the background all the time.",
-          "At any moment hold PAGE (fill on) or press UP on the SRC page: the banner says CAPTURE, and when the loop ends it says CAPTURED and the loop plays on the LOOPER track.",
+          "At any moment press PAGE (fill on) or press UP on the SRC page: the banner says CAPTURE, and when the loop ends it says CAPTURED and the loop plays on the LOOPER track.",
           "Change pattern. The loop keeps playing on the beat, through every pattern with LOOPER on that track. Set MODE to OFF or press STOP to stop it."
         ]
       },
@@ -251,15 +252,15 @@
         "type": "emulator",
         "release": "1.54",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "39a045c7ffa10671223cb46b909a7d4a9db546e9fa57044949119f0cb5813fcb",
+        "imageSha256": "8eb45a154c0e355813e1db5b657700d798e9d6a07b0f7b653a8b043ad5fadc6b",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project, no audio (the sequencer does not run). No audio or cycle-timing qualification."
       }
     },
     {
       "path": "media/loop-page2.png",
       "kind": "screenshot",
-      "caption": "LOOPER page 2: MODE CAPT, MAX 32, PLAY PICK",
-      "alt": "LOOPER page 2: MODE CAPT, MAX 32 in a box, SRCE MAIN, an RLEV fader; BTN FILL, GLOB SND, PLAY PICK and LOOP WAIT.",
+      "caption": "LOOPER page 2: MODE CAPT, LEN 32, PLAY PICK",
+      "alt": "LOOPER page 2 just after PLAY was turned: the header reads Play Mode=PICK; MODE CAPT, LEN 32 in a box, SRCE MAIN, an RLEV fader; BTN FILL, GLOB SND, PLAY PICK with PICK in place of its name, and LOOP WAIT.",
       "credit": "Modwerk documentation capture; Elektron interface; draadpiraat module",
       "license": "LicenseRef-Digi-UI-Documentation",
       "source": "original",
@@ -267,7 +268,7 @@
         "type": "emulator",
         "release": "1.54",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "39a045c7ffa10671223cb46b909a7d4a9db546e9fa57044949119f0cb5813fcb",
+        "imageSha256": "8eb45a154c0e355813e1db5b657700d798e9d6a07b0f7b653a8b043ad5fadc6b",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project, no audio (the sequencer does not run). No audio or cycle-timing qualification."
       }
     }

@@ -5,11 +5,11 @@
  "moduleVersion": "0.1.0-experimental",
  "capturedAt": "2026-11-10",
  "firmware": "1.54",
- "imageSha256": "39a045c7ffa10671223cb46b909a7d4a9db546e9fa57044949119f0cb5813fcb",
+ "imageSha256": "8eb45a154c0e355813e1db5b657700d798e9d6a07b0f7b653a8b043ad5fadc6b",
  "stockSha256": "f78ba80fa7b1da5fb0e1ff61ad61e9e71aafe79f4364fc49679f3651353e3cf6",
  "source": {
   "repository": "https://github.com/repeat98/modwerk",
-  "revision": "uncommitted working tree on 61adba3e0793cbd20186b2d6674538150ea67383, branch module/loop-fade",
+  "revision": "uncommitted working tree on e030632cf3679dfc0fc884913e78b70acac887d1, branch module/loop-fade",
   "path": "sdk/digitakt/modules/live-looper"
  },
  "kit": {
@@ -17,8 +17,8 @@
   "lockSha256": "b8b330328071092fe6e64fab5f55ddc25dd027e41ac8c9f0584dab95814a8e85"
  },
  "catalog": {
-  "revision": "61adba3e0793cbd20186b2d6674538150ea67383",
-  "sha256": "3c84591f2f58994a16d6fbbcf0ac9597998ec24cce210377420f598236ba1582",
+  "revision": "e030632cf3679dfc0fc884913e78b70acac887d1",
+  "sha256": "7f10e01e24980fcbc7c3890aee98c30f0f7c2c35abbb9eef0aff0f4d9e48bb20",
   "cores": 10,
   "mods": 82
  },
@@ -41,7 +41,7 @@
    }
   ],
   "linker": "Modwerk engine linkMods (scripts/link-image.mjs)",
-  "outputVersion": "LL01",
+  "outputVersion": "LL02",
   "verified": true
  },
  "emulator": {
@@ -199,7 +199,7 @@
    "turn 1 +4"
   ],
   [
-   6186.527,
+   6187.44,
    "turn 1 +4"
   ],
   [
@@ -243,7 +243,7 @@
    "turn 2 -4"
   ],
   [
-   8287.501,
+   8286.089,
    "turn 7 +4"
   ],
   [
@@ -271,15 +271,15 @@
   {
    "path": "media/machine-choice.png",
    "sha256": "6691210c1a22624a6d05d212be1b7cbd658769a7800c9e83d6bc338902ff94b0",
-   "plan": "# Live Looper 0.1.0-experimental: digiemu capture plan (OS 1.54, Core 2.1, Machine Pages, Live Looper)\nwait 1000\n# track 2, FUNC + SRC, down to LOOPER\npress TRK\ntap 2\nrelease TRK\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap machine-choice\ntap YES\ntap YES\nwait 800\n# SRC again: page 2; MODE to CAPT, MAX to 16, PLAY to PICK\ntap SRC\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nwait 300\nturn B -1 40\nturn B -1 40\nturn B -1 40\nturn B -1 40\nwait 500\nturn B -1 40\nturn B -1 40\nturn B -1 40\nturn B -1 40\nwait 500\nwait 300\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 500\nwait 1500\nsnap loop-page2\n",
+   "plan": "# Live Looper 0.1.0-experimental: digiemu capture plan (OS 1.54, Core 2.1, Machine Pages, Live Looper)\nwait 1000\n# track 2, FUNC + SRC, down to LOOPER\npress TRK\ntap 2\nrelease TRK\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap machine-choice\ntap YES\ntap YES\nwait 800\n# SRC again: page 2; MODE to CAPT, LEN to 16, PLAY to PICK\ntap SRC\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nwait 300\nturn B -1 40\nturn B -1 40\nturn B -1 40\nturn B -1 40\nwait 500\nturn B -1 40\nturn B -1 40\nturn B -1 40\nturn B -1 40\nwait 500\nwait 300\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 500\nwait 1500\nsnap loop-page2\n",
    "atMs": 3606.0891025641026,
    "requestedAtMs": 3804.0378205128204
   },
   {
    "path": "media/loop-page2.png",
-   "sha256": "d85efcefd32f0a8b2c8d4595f41e22be66c5924baf924107e8e65872e8831015",
-   "plan": "# Live Looper 0.1.0-experimental: digiemu capture plan (OS 1.54, Core 2.1, Machine Pages, Live Looper)\nwait 1000\n# track 2, FUNC + SRC, down to LOOPER\npress TRK\ntap 2\nrelease TRK\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap machine-choice\ntap YES\ntap YES\nwait 800\n# SRC again: page 2; MODE to CAPT, MAX to 16, PLAY to PICK\ntap SRC\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nwait 300\nturn B -1 40\nturn B -1 40\nturn B -1 40\nturn B -1 40\nwait 500\nturn B -1 40\nturn B -1 40\nturn B -1 40\nturn B -1 40\nwait 500\nwait 300\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 500\nwait 1500\nsnap loop-page2\n",
-   "atMs": 10370.895512820513,
+   "sha256": "801ecddd8d0e51bae2d20fbf9ef2192c05f05498c716e7ad832cec3f5657d981",
+   "plan": "# Live Looper 0.1.0-experimental: digiemu capture plan (OS 1.54, Core 2.1, Machine Pages, Live Looper)\nwait 1000\n# track 2, FUNC + SRC, down to LOOPER\npress TRK\ntap 2\nrelease TRK\npress FUNC\ntap SRC\nrelease FUNC\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap machine-choice\ntap YES\ntap YES\nwait 800\n# SRC again: page 2; MODE to CAPT, LEN to 16, PLAY to PICK\ntap SRC\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nturn A +1 40\nwait 300\nturn B -1 40\nturn B -1 40\nturn B -1 40\nturn B -1 40\nwait 500\nturn B -1 40\nturn B -1 40\nturn B -1 40\nturn B -1 40\nwait 500\nwait 300\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nturn G +1 40\nwait 500\nwait 1500\nsnap loop-page2\n",
+   "atMs": 10333.37094017094,
    "requestedAtMs": 10566.705128205129
   }
  ]
