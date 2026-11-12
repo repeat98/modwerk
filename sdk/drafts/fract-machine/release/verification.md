@@ -129,3 +129,35 @@ The deferred prospective-row edit changes source paths only; hashes/base/size
 remain those of the original named-build receipt. These independent checks
 resolve the investigated context questions without erasing classifier
 uncertainties, deferral or earlier coverage limits.
+
+
+The first full `pr:ready` attempt passed application tests (2,961 passed,
+6 skipped), lint/typecheck and the bundle, but found the shell's Python3.11
+parsing newer upstream syntax and stale shared catalogue pins in Tape Echo and
+Euclid. A local Python3.12 command shim fixes the environment without changing
+repository checks. The two failing infrastructure suites then pass (24 and
+14 tests). The catalogue diff since the last pin is only the upstream source
+folder rename; this PR refreshes just that hash in each of the two recipes.
+Their image hashes, stock-copy declarations, authored module inputs and public
+packages stay unchanged. Both packages rebuilt through the normal standalone
+CLI with the original1.40C, passed its stock guards and both strict scanners,
+and matched the published bytes: Tape Echo112,124 bytes/SHA921e7a60…, Euclid10,096
+bytes/SHA649f2670…. The normal whole-catalogue package `--check` also passes.
+
+An additional whole-catalogue `--check --stock` returned1 on unchanged published
+Syntiz and Amiga packages: Syntiz triggers both scanner thresholds and Amiga
+the12-nonzero-byte threshold. Their module sources, recipes, package rows and
+published files are unchanged from main in this PR; neither belongs to the FRACT
+update. This broader stock scan is **not passed** and is not hidden by the
+successful checks of the two refreshed recipes. Private logs retain the full
+results; this record does not grant either package a waiver or qualification.
+
+
+The final `--recheck-flagged` preserves the remaining pass budget and makes no
+new API requests: 5/8 chunks cached, zero flags, three investigated uncertainties,
+three deferred chunks (the prospective row and the two standalone hash blocks),
+seven Markdown files static-only, zero omitted locations and no parser blockers.
+Both configured checks pass. The two new hash blocks were independently checked
+against the one-line upstream catalogue diff and the unchanged compiled-image,
+copy declarations and original-OS/exact-package results above; their API
+coverage remains deferred. The previous5/6 snapshot is retained as its own scope.
