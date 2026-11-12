@@ -396,6 +396,7 @@ uint32_t amiga_frame(uint32_t strt, uint32_t length) { return (length >> 15) * s
 
 #ifndef AMIGA_HOST
 #include "modwerk_events.h"
+#include "modwerk_page.h"
 
 #define U8(a) (*(volatile uint8_t *)(uintptr_t)(a))
 #define U16(a) (*(volatile uint16_t *)(uintptr_t)(a))
@@ -559,10 +560,6 @@ static uint8_t page[0x1ca] __attribute__((aligned(4)));
 static uint32_t page_built;
 #define BUILT 0x414d4947u /* a garbage word is not a built page */
 
-static void put32(unsigned at, uint32_t v)
-{
-    for (unsigned i = 0; i < 4; ++i) page[at + i] = (uint8_t)(v >> (24 - 8 * i));
-}
 static uint32_t amiga_page(const volatile uint8_t *slot)
 {
     (void)slot;
@@ -571,18 +568,9 @@ static uint32_t amiga_page(const volatile uint8_t *slot)
         for (unsigned i = 0; i < sizeof page; ++i) page[i] = U8(0x400d3176u + i); /* stock's FLEX page */
         for (unsigned i = 0; i < 5; ++i) page[0x3c + i] = (uint8_t)title[i];
         for (unsigned i = 0; i < 13; ++i) page[0x41 + i] = (uint8_t)kind[i];
-        for (unsigned k = 0; k < KNOBS; ++k) {
-            unsigned s = knobs[k].slot, sw = knobs[k].count == 2;
-            for (unsigned i = 0; i < 6; ++i) page[0x4e + 6 * s + i] = (uint8_t)knobs[k].name[i];
-            page[0x96 + s] = knobs[k].start;
-            put32(0xa2 + 4 * s, 0);
-            put32(0xd2 + 4 * s, knobs[k].count);
-            /* A control with few values is stock's own switch: two as AMP SETUP's SYNC with its OFF/ON words, three
-             * or four as LOOP and TSTR on this page with our words (docs/module-guides/machines.md). */
-            put32(0x102 + 4 * s, sw ? 0x4003c14cu : (uint32_t)(uintptr_t)knobs[k].text);
-            put32(0x132 + 4 * s, sw ? 0x40046f10u : knobs[k].count <= 4 ? 0x40046c28u : 0); /* or stock's ordinary knob */
-            put32(0x162 + 4 * s, 0);                    /* and bounded editor */
-        }
+        /* A control with few values is stock's own switch, picked by modwerk_page_control() (modwerk_page.h). */
+        for (unsigned k = 0; k < KNOBS; ++k)
+            modwerk_page_control(page, knobs[k].slot, knobs[k].name, knobs[k].start, knobs[k].count, knobs[k].text);
         page_built = BUILT;
     }
     return (uint32_t)(uintptr_t)(page + 0x38);
