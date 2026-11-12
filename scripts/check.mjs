@@ -72,6 +72,11 @@ process.env.MODWERK_TEST_WORKERS ??= String(workersFor({ most: 4, each: 700 * 10
 const started = performance.now()
 const baseIndex = process.argv.indexOf('--base'), base = baseIndex < 0 ? null : process.argv[baseIndex + 1]
 if (baseIndex >= 0 && !base) throw new Error('--base requires a Git commit/ref')
+// CI runs one check as parallel jobs (module-pr.yml): --part contract is everything but the two long suites, --part test:1/2
+// one shard of Vitest, --part sdk the SDK suite. Together they run what a run without --part does, as every local check is.
+const partIndex = process.argv.indexOf('--part'), part = partIndex < 0 ? null : process.argv[partIndex + 1]
+if (partIndex >= 0 && !/^(?:contract|sdk|test:\d+\/\d+)$/.test(part ?? '')) throw new Error('--part is contract, sdk or test:<shard>/<shards>')
+const suiteOnly = !!part && part !== 'contract'
 // --rerun-failed skips the checks that passed in the last run against the same base. Steps that write files always run, since later
 // steps read what they write. A rerun is a shortcut between fixes, never a pass: pr:ready and CI run everything.
 const record = fileURLToPath(new URL('../node_modules/.cache/check-last.json', import.meta.url))
@@ -109,21 +114,21 @@ async function all(...steps) {
 // The combined module list and changelog are generated, never committed; write them as npm ci does before anything reads them.
 let passed = await run('prepare')
 // Reject stale notices/catalog before generation can overwrite the evidence of staleness.
-if (!buildOnly && passed) {
+if (!buildOnly && !suiteOnly && passed) {
   passed = await all(() => run('licenses:check'), () => run('machines:check'), () => run('modules:check', base ? ['--base', base] : []))
   // Report release-note problems with the catalogue's, from the committed catalogue, rather than one push later.
   if (!passed) await changelogs()
 }
 // Every active Octatrack module must still install beside every other (declarations only, no firmware), and the card
 // builder's native pair checks must be current, proved and flagged.
-if (!buildOnly && !documentationOnly && passed) passed = await all(() => run('elekloader:check'), () => run('modules:compat'), () => run('modules:pairs'))
+if (!buildOnly && !suiteOnly && !documentationOnly && passed) passed = await all(() => run('elekloader:check'), () => run('modules:compat'), () => run('modules:pairs'))
 // Finish generated notice/catalog/media writes before lint, tests, typecheck or bundling read them.
 if (passed && !documentationOnly) passed = await run('licenses:generate') && await run('machines:generate') && await run('modules:generate')
 // Every path, including documentation-only checks and release builds, requires current-version notes and documents within their size.
-if (passed) passed = await changelogs()
+if (passed && !suiteOnly) passed = await changelogs()
 // In a pull request's CI run, a contributor's module pull request carries no check that judges modules and no base change;
 // pr:ready says the same to everyone before they push.
-if (passed && base && process.env.GITHUB_EVENT_PATH) {
+if (passed && !suiteOnly && base && process.env.GITHUB_EVENT_PATH) {
   const pull = (() => { try { return JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8')).pull_request ?? null } catch { return null } })()
   const files = execFileSync('git', ['diff', '--name-only', '--no-renames', base + '...HEAD'], { cwd: root, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 }).split('\n').filter(Boolean)
   const problems = pull ? moduleScopeProblems(files, { author: pull.user?.login, owner: process.env.GITHUB_REPOSITORY_OWNER, openedAt: pull.created_at }) : []
@@ -132,21 +137,23 @@ if (passed && base && process.env.GITHUB_EVENT_PATH) {
 }
 // The agent board's claims (docs/AGENT_BOARD.md): a module, hook or migration this branch adds that someone else holds fails it;
 // an unreachable board only warns, so an outage never blocks a pull request.
-if (passed && base) passed = await run('board', ['check', '--base', base])
+if (passed && !suiteOnly && base) passed = await run('board', ['check', '--base', base])
 // Documentation uses the same import policy as publication without running firmware gates. The catalogue tests read Markdown
 // (the module guides' links, the agent files, the pull request template), so a prose-only change can break them and must run them.
-if (passed && documentationOnly) passed = await run('sdk:imports:check') && await run('test', ['src/catalog'])
+if (passed && !suiteOnly && documentationOnly) passed = await run('sdk:imports:check') && await run('test', ['src/catalog'])
 // module:doctor --draft copies a draft under sdk/octabam/modules/ for its run, where the SDK suite, the other test files and the
 // build would read it as a listed module. Its test waits out that parallel stage and runs alone after it.
 const DRAFT_DOCTOR = ['scripts/module-doctor.test.mjs', '-t', 'checks a draft where every gate looks']
 if (passed && !documentationOnly) {
-  const results = buildOnly
-    ? [await build()]
+  const tests = (args = []) => run('test', args, { MODWERK_DEFER_DRAFT_DOCTOR: '1' })
+  const sdk = () => sdkSuite ? run('sdk:check') : skip('sdk:check', 'no changed path reaches it; CI runs it')
+  const results = buildOnly ? [await build()]
+    : part === 'sdk' ? [await sdk()]
+    : suiteOnly ? [await tests(['--shard=' + part.slice(5)])]
     // The SDK suite starts once the app tests are done, whatever their result: its processes beside Vitest's workers starved
     // Vitest's five-second tests.
-    : await Promise.all([run('lint'), run('test', [], { MODWERK_DEFER_DRAFT_DOCTOR: '1' }).then(async tested =>
-      (sdkSuite ? await run('sdk:check') : skip('sdk:check', 'no changed path reaches it; CI runs it')) && tested), build()])
-  if (!buildOnly) results.push(await run('test', DRAFT_DOCTOR))
+    : await Promise.all([run('lint'), part || tests().then(async tested => await sdk() && tested), build()])
+  if (!buildOnly && !suiteOnly) results.push(await run('test', DRAFT_DOCTOR))
   passed = results.every(Boolean) && !interrupted
 }
 const passedNow = [...carried, ...[...results].filter(([, ok]) => ok).map(([key]) => key)].filter(key => results.get(key) !== false)

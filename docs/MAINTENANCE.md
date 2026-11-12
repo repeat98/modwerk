@@ -51,7 +51,7 @@ Aim to close as many issues as you can each pass. List what is new or changed si
 
 ## Upstream worker
 
-- **Refresh** with `npm run upstream:tools -- --update`, which keeps the Octabam and Elekloader checkouts outside Git. List the commits since the newest import record in `sdk/imports/` for each project; with none, report "nothing new" and stop.
+- **Refresh** with `npm run upstream:tools -- --update`, which keeps the upstream checkouts outside Git. Octabam's pin is frozen and its upstream is no longer followed: Modwerk builds its own. List Elekloader's commits since the newest import record in `sdk/imports/`; with none, report "nothing new" and stop.
 - **Say** in a few lines what changed and what is worth taking: infrastructure, docs, tools, fixes to modules Modwerk carries. A module or anyone's own work needs its author's permission. This pass vendors nothing; a pick from the briefing becomes its own pull request, re-synced docs a new docs-only record ([imports](OCTABAM_INFRASTRUCTURE.md)).
 - Keep the titles, bodies and commits of import pull requests free of the upstream project's name and `#` references, which ping the other repository; the import record and licences carry the provenance.
 

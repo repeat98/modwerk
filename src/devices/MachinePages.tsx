@@ -19,6 +19,7 @@ import type { SelectionConflict } from '../catalog/selection-conflicts'
 import type { AddBlock } from '../catalog/add-blocks'
 import { moduleStability, STABILITY_NOTE } from '../catalog/module-stability'
 import { AddButton, CardProof, CardStats, ModuleCard } from '../components/ModuleCard'
+import { LIMIT_REACHED } from '../catalog/set-limit'
 import { SelectionWarning } from '../components/SelectionWarning'
 import { LibraryTools } from '../components/LibraryTools'
 import { LibraryResultsBar } from '../components/LibraryResultsBar'
@@ -206,6 +207,7 @@ export function MachineLibrary({ device, query, category, octatrackModules: octa
       {libraryFamily !== 'all' && <button type="button" aria-label={'Remove type filter ' + libraryFamily} onClick={() => clearFilter(() => onFamilyChange('all'))}><span>Type: {libraryFamily}</span><Icon name="close" size={14} /></button>}
       {term && libraryFamily !== 'all' && onClearSearch && <button type="button" className="filter-clear-all" onClick={() => clearFilter(onClearSearch)}>Clear filters</button>}
     </div>}
+    {(!device || device.id === 'octatrack') && Object.values(octatrackBlocks ?? {}).some(block => block.kind === 'limit') && <p className="library-limit-note" role="status"><Icon name="lock" size={16} /><span>{LIMIT_REACHED}</span></p>}
     {device || !total ? <div className="library-subheading"><span>{term ? 'Results for “' + query.trim() + '”' : 'Explore the collection'}</span><span className="subtle">{device ? device.name + (device.firmware ? ' · OS ' + device.firmware.releases.join(' / ') : ' · no modules yet') : 'All machines'}</span></div> : null}
     {shownGroups.map(group => <section key={group.device.id} className={'machine-section' + (onlyGroup ? ' is-only-group' : '')} aria-labelledby={!device ? 'machine-' + group.device.id : undefined}>
       {!device && <div className="library-subheading"><span id={'machine-' + group.device.id}>{group.device.name} <span className="subtle">· {group.count} {group.count === 1 ? 'module' : 'modules'}{group.device.status === 'preview' ? ' · preview' : ''}</span></span><div className="machine-library-actions"><a className="text-button" href={deviceHref(group.device.id)}>Open {group.device.name} library <Icon name="arrow" size={13} /></a>{group.device.family === 'zoom' && isZoomSetDevice(group.device.id) && <a className="button button-primary" href={zoomHubHref(group.device.id)}><Icon name="sliders" size={16}/>Your {group.device.name}</a>}{group.device.id !== 'octatrack' && group.device.family !== 'zoom' && <a className="button button-primary" href={deviceHref(group.device.id,'configuration')} aria-label={(mobile ? 'Open configuration for ' : 'Build firmware for ') + group.device.name}><Icon name="sliders" size={16}/>{mobile ? 'Open configuration' : 'Build firmware'}</a>}</div></div>}

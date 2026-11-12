@@ -160,7 +160,8 @@ if not (BUILD_TAG.isdigit() and 1 <= len(BUILD_TAG) <= 2):
 # bare synonyms for "no effect". 0x06 is the exact id tools/build/build_dspprobe.py
 # proved runs custom DSP code on real hardware. schema.py enforces the range.
 from remix.machine_composition import compose_map
-_MODS = compose_map(remix_modules(), REMIX.modules)
+from runtime_join import join_map
+_MODS = join_map(compose_map(remix_modules(), REMIX.modules), REMIX.modules)
 remix_modules = lambda: _MODS
 _SEL = [_MODS[k] for k in CARRIED]
 # A STOCK row (tools/remix/stock.py) gets no clone, no code and no words:
@@ -1423,17 +1424,6 @@ def main():
         if _inside:
             _cave_top = _c.cave_addr + _used
 
-    for name in CLONED_ORDER:
-        for slot, param in enumerate(_MODS[name].params):
-            for array, value in zip((0x0ca,0x0fa,0x12a), param.raw_words):
-                if value is None: continue
-                if isinstance(value,tuple):
-                    unit,symbol=value
-                    if unit not in _sym or symbol not in _sym[unit]:
-                        sys.exit(f"{name}: unresolved descriptor {unit}:{symbol}")
-                    value=_sym[unit][symbol]
-                wr32(clone_addr[name]+array+slot*4,value)
-
     # ==== 1c. loader-appended DRAM runtimes (schema.Runtime) =================
     # The third placement class: the OS image GROWS by an append (early
     # loader + stage + packed runtime) and the runtime executes from DRAM.
@@ -1636,6 +1626,19 @@ def main():
               if _reserve else
               f"  platform loader: payloads {', '.join(_pnames)}, "
               f"append {len(_pappend):,} B at 0x{platform_build.LOADER_AT:08x}")
+
+    # Raw descriptor words (a stock-DSP module's own formatters and widgets) resolve after the
+    # platform runtime is linked, so a unit that joined the DRAM runtime is named like a ROM one.
+    for name in CLONED_ORDER:
+        for slot, param in enumerate(_MODS[name].params):
+            for array, value in zip((0x0ca,0x0fa,0x12a), param.raw_words):
+                if value is None: continue
+                if isinstance(value,tuple):
+                    unit,symbol=value
+                    if unit not in _sym or symbol not in _sym[unit]:
+                        sys.exit(f"{name}: unresolved descriptor {unit}:{symbol}")
+                    value=_sym[unit][symbol]
+                wr32(clone_addr[name]+array+slot*4,value)
 
     for _m, _t in [(remix_modules()[_k], _t) for _k in REMIX.modules
                    for _t in getattr(remix_modules()[_k], "tables", ())]:

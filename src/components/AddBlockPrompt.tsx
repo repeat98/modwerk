@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { moduleNameList, type AddBlock } from '../catalog/add-blocks'
+import { moduleNameList, refusesAdd, type AddBlock } from '../catalog/add-blocks'
 import { Icon } from './Icon'
 import { useSetWords } from '../community/beta-ui'
 
@@ -8,7 +8,7 @@ import { useSetWords } from '../community/beta-ui'
 // already there and the prompt floats over it. A conflict never disables the add, because a configuration with
 // conflicts can be saved and fixed later. The prompt offers the swap that avoids it.
 export function AddBlockChip({ block }: { block: AddBlock }) {
-  return <span className={'add-block-chip' + (block.kind === 'conflict' ? ' is-conflict' : '')} title={block.detail}><Icon name={block.kind === 'conflict' ? 'swap' : block.kind === 'usb-only' ? 'lock' : 'sliders'} size={12} /><span className="add-block-label">{block.reason}</span></span>
+  return <span className={'add-block-chip' + (block.kind === 'conflict' ? ' is-conflict' : '')} title={block.detail}><Icon name={block.kind === 'conflict' ? 'swap' : refusesAdd(block) ? 'lock' : 'sliders'} size={12} /><span className="add-block-label">{block.reason}</span></span>
 }
 
 export function AddBlockPrompt({ id, name, block, onSwap, onAddAnyway, onCancel }: { id: string; name: string; block: AddBlock; onSwap: () => void; onAddAnyway: () => void; onCancel: () => void }) {

@@ -1,0 +1,13 @@
+[
+  {
+    "version": "0.1.8-experimental",
+    "date": "2026-11-10",
+    "changes": [
+      "New: FUNC + PART opens Sample Locks. Lock writes each track's Part sample into the pattern's sample trigs as SAMPLE locks; Clear removes them.",
+      "Lock keeps every existing SAMPLE lock unless you turn on Replace existing. Clear removes all SAMPLE locks on the tracks you pick, manual ones too; other locks stay.",
+      "Pick Flex and Static tracks, check the per-track counts, then YES applies. Playback keeps going; nothing is saved until you save the project.",
+      "Needs the Modwerk base loaded over USB, which is in the beta. Card firmware cannot include it. Tested on an MKII only.",
+      "Known issue: in one high-load development run, SAMPLE fields on one pattern changed without explanation; the cause is unknown."
+    ]
+  }
+]

@@ -42,6 +42,7 @@ Octabam names three (`sdk/octabam/docs/remixer/MODULES.md`, "Decide first"). Cho
 - **Draw a knob only if the DSP reads it.** The inverse is also true: a slot can draw a knob and publish nothing.
 - **A MODE select goes on an even slot of page 2** (slot 6 is hardware-confirmed). Declare `mode_slot` and `ModeView` so the knob names and defaults follow the mode.
 - **Claims.** FX2 id (a free, non-stock id; `registry.modules()` refuses duplicates), caves, hook sites, DSP data ranges, `Claims(fx1_only=True)` for an FX1-only station. The ledger refuses collisions by name.
+- **ColdFire units that may move (stock-DSP effects).** List them in `placement.json` (`{"schema": 1, "moduleId": "<id>", "joinRuntime": ["<label>", …]}`): the builder links them into the DRAM runtime when another selected module already carries one, and into the menu cave otherwise. Crowded sets keep their cave, and a set without DRAM code takes no sample memory (the runtime reserves about 10 MB of it). A listed unit has no `include`, `defsyms` or stock copies and assembles the same for both ISAs. Sidechain Compressor's two units are the first (#1175).
 - **`dear`:** every knob at its dearest setting. Pressure renders and the stress project read it.
 - **`gates`:** the verifiers `make check` runs when a remix carries your module.
 
@@ -116,7 +117,7 @@ How much it costs and whether it survives being worked hard: see [Performance](R
 ## Integrate
 
 - [ ] `sdk/catalog.json` has the entry (`id`, `version`, `addedAt`), so the library, the configurator and the module page show it.
-- [ ] The manifest's `controls[]` match the native parameters one for one: name, count, default, description. The README table and tutorial match too.
+- [ ] The manifest's `controls[]` match the native parameters one for one: name, count, default (`module:doctor`'s controls line checks these) and description. The README table and tutorial match too.
 - [ ] `compatibility.location` matches where the native manifest places it (FX1, FX2 or both); `module:verify` compares the chooser with native octabam's.
 - [ ] Declare compatibility for card builds and USB loading separately. A card companion for Analog BD or stock FX needs actual native/browser placement evidence; update its reviewed list (`analogBdCompanions`, `FITS_BESIDE_STOCK_FX2` in `src/catalog/selection-conflicts.ts`) only after that proof. Those lists describe baked card placement, not the USB arena. USB eligibility needs the published package and the base's ownership/resource admission; do not apply card donor-space filters to USB sets.
 - [ ] `npm run module:verify -- <id> --os <your 1.40C>` passes. Refusals for crowded selections are expected; each must match native's.
