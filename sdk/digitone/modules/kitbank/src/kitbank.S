@@ -40,6 +40,8 @@
         .equ PASTE_WRITE, 0x40028146    | return address of the paste routine's getKit before writing the kit
         .equ PASTE_KIT,  0x16121        | the kit inside the clipboard
         .equ KEY_YES,    13
+        .equ KEY_STEP1,  26             | trig keys 1-16: 26..41
+        .equ BRAIN_KEY,  0x40016fc0     | the stock key handler (core-dn1 2.0a hooks its call site, not its entry)
         .equ GAP,        0x1c           | project header bytes the OS keeps: elekloader's ELKP area
         .equ ELKP,       0x454c4b50
         .equ KBLK,       0x4b424c4b
@@ -301,8 +303,9 @@ resolve:
 
 | ---- ev_key(brain, ev): [PTN]+[YES] locks or shares the active pattern while on -------------------------------
 | ev+12 key code, ev+16 flags (bit 0 press, bit 1 FUNC held, bit 3 a held key's repeat). PTN presses and releases
-| go to the OS as usual (they only track whether PTN is held); a YES press while PTN is held is taken. On the stock
-| OS, YES does nothing while PTN is held.
+| go to the OS as usual (they only track whether PTN is held); a YES press while PTN is held is taken, then the
+| active pattern's trig is handed to the OS so that it reselects it and opens no popup when PTN is released. On the
+| stock OS, YES does nothing while PTN is held.
         .globl  kb_key
 kb_key:
         movea.l 8(%sp), %a0
@@ -326,9 +329,55 @@ kb_key:
         btst    #3, %d0
         bne.s   7f                      | a held key's repeat: taken, nothing done
         bsr.w   toggle
+        bsr.w   reselect
 7:      moveq   #1, %d0
         rts
 8:      moveq   #0, %d0
+        rts
+
+| PTN is held and YES was taken: hand the OS a press and a release of the active pattern's trig (KEY_STEP1 + k%16),
+| built from this event in kb_ev, through the stock key handler. The OS reselects the same pattern, as PTN + trig by
+| hand does, and so does not open the SELECT PTN popup when PTN is released. Then the message.
+| at the bsr: 0(sp) back to kb_key, 4(sp) kb_key's return, 8 brain, 12(sp) ev
+reselect:
+        move.l  PAT_ACT, %d0
+        sub.l   #PATS, %d0
+        bcs.s   9f
+        move.l  #PSTRIDE, %d1
+        divu.l  %d1, %d0
+        andi.l  #15, %d0
+        add.l   #KEY_STEP1, %d0
+        move.l  %d0, -(%sp)             | the trig's code
+        movea.l 16(%sp), %a0            | ev
+        lea     kb_ev, %a1
+        moveq   #16, %d1                | two copies of 32 bytes
+1:      move.l  (%a0)+, (%a1)+
+        subq.l  #1, %d1
+        cmp.l   #8, %d1
+        bne.s   2f
+        movea.l 16(%sp), %a0
+2:      tst.l   %d1
+        bne.s   1b
+        move.l  (%sp)+, %d0
+        lea     kb_ev, %a0
+        move.l  %d0, 12(%a0)
+        move.l  %d0, 32+12(%a0)
+        moveq   #1, %d0
+        move.l  %d0, 16(%a0)            | press
+        clr.l   32+16(%a0)              | release
+        pea     kb_ev
+        move.l  12(%sp), -(%sp)         | brain
+        jsr     BRAIN_KEY
+        addq.l  #8, %sp
+        pea     kb_ev+32
+        move.l  12(%sp), -(%sp)
+        jsr     BRAIN_KEY
+        addq.l  #8, %sp
+9:      move.l  kb_msg, -(%sp)          | KIT LOCKED / KIT SHARED / BANK KIT, over the redrawn screen
+        jsr     GET_UI
+        move.l  %d0, -(%sp)
+        jsr     SHOW_MSG
+        addq.l  #8, %sp
         rts
 
 toggle:
@@ -391,10 +440,7 @@ toggle:
         pea     0x250(%a0)
         jsr     KA_LOAD
         lea     16(%sp), %sp
-6:      jsr     GET_UI
-        move.l  %d0, -(%sp)
-        jsr     SHOW_MSG
-        addq.l  #8, %sp
+6:      move.l  (%sp)+, kb_msg          | shown after the reselection (reselect)
 9:      movem.l (%sp), %d2-%d3/%a2-%a3
         lea     16(%sp), %sp
         rts
@@ -477,3 +523,5 @@ kb_on:  .skip 4                         | byte 0: the project's KIT PER BANK swi
 kb_locks: .skip 16                      | 128 bits: pattern k = byte k/8, bit k%8
 kb_live: .skip 4                        | byte 0: the switch as of the last pattern change
 kb_ptn: .skip 4                         | byte 0: PTN held
+kb_msg: .skip 4                         | the last PTN+YES message
+kb_ev:  .skip 64                        | the two trig events handed to the OS

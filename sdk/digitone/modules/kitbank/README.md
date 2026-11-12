@@ -50,11 +50,13 @@ A practical layout: one bank per track (intro, verse, break... as 16 patterns sh
 - The switch and the locks live in the project header: an elekloader-format `ELKP` block tagged `KBLK`, in the bytes 0x1c..0x200 the stock OS keeps as they are. kitbank writes it with its own project save hook, because core-dn1 2.0a for 1.44 has no project data; it leaves the area alone when another tool's data is already there. It can move to `core_projdata` when a 1.44 core provides it.
 - kitbank patches ten stock OS sites itself: immediate pattern change, the kit lookup used by the screen, edits and pastes, two queued-change sites, kit save, kit reload, sound reload (these three only when called from the pattern menus, so the automatic saves after copy, paste and clear keep each pattern's own slot), and project save, load and new. A mod patching the same bytes cannot be combined; if other mods need kit selection or project data, these sites should become core hooks.
 - A pattern pasted into a bank's first pattern replaces the bank's kit, as the stock OS replaces that pattern's kit.
+- After PTN+YES, kitbank hands the OS the active pattern's trig while PTN is still held, so the OS reselects the same pattern and opens no SELECT PTN popup when PTN is released.
+- For under a second after PTN+YES, a knob turn can be ignored while the OS reloads the kit into the tracks (measured in the emulator).
 - Undo of a paste was not tried.
 
 ## Tests and measurements
 
-The Modwerk evidence tier is `none`. [TESTING.md](TESTING.md) records the emulator runs: stock behaviour when unticked, bank kits for immediate and queued pattern changes and song mode, edits, kit save and reload, PTN+YES locks, pastes, the switch and locks through a project save and load, and a full check against the stock OS. Memory: 1,308 B (1,280 B code, 28 B state), excluding the core. No audio-rate work.
+The Modwerk evidence tier is `none`. [TESTING.md](TESTING.md) records the emulator runs: stock behaviour when unticked, bank kits for immediate and queued pattern changes and song mode, edits, kit save and reload, PTN+YES locks, pastes, the switch and locks through a project save and load, and a full check against the stock OS. Memory: 1,528 B (1,432 B code, 96 B state), excluding the core. No audio-rate work.
 
 ## Authorship and licences
 

@@ -27,5 +27,6 @@ release PTN
 wait 700
 press PTN
 tap YES 80 200
-snap kit-locked
 release PTN
+wait 300
+snap kit-locked

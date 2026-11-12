@@ -5,10 +5,10 @@
   "moduleVersion": "0.2.0-experimental",
   "capturedAt": "2026-11-12",
   "firmware": "1.44",
-  "imageSha256": "fd4cf27d419295343c53893501ee01ee513a57ccb9e7dae533be974f5694fd2b",
+  "imageSha256": "7d14c8272d861704983903f36a5018edef5647f708ad3658a8899e8a86e798be",
   "stockSha256": "d4f200d04484333d82822db7744e6484d0def8f2db8ddf55ee2b780cc13c9659",
   "build": {
-    "tool": "node scripts/link-image.mjs --version XX05",
+    "tool": "node scripts/link-image.mjs --version XX06",
     "modules": [
       {
         "id": "core",
@@ -21,7 +21,7 @@
         "source": "sdk/digitone/modules/kitbank (this folder)"
       }
     ],
-    "outputVersion": "XX05"
+    "outputVersion": "XX06"
   },
   "emulator": {
     "repository": "https://github.com/irpina/digiemu",
@@ -223,26 +223,26 @@
     {
       "path": "media/settings-off.png",
       "sha256": "546fd24aafd699b3d5ac20b25bd47477ca99b7688ca79917bcd2894b452c8444",
-      "plan": "wait 1000\ntap GLOBAL\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings-off\ntap YES\nsnap settings-on\ntap NO\ntap NO\npress PTN\ntap 1\nrelease PTN\nwait 700\npress PTN\ntap 3\nrelease PTN\nwait 700\npress PTN\ntap YES 80 200\nsnap kit-locked\nrelease PTN\n",
+      "plan": "wait 1000\ntap GLOBAL\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings-off\ntap YES\nsnap settings-on\ntap NO\ntap NO\npress PTN\ntap 1\nrelease PTN\nwait 700\npress PTN\ntap 3\nrelease PTN\nwait 700\npress PTN\ntap YES 80 200\nrelease PTN\nwait 300\nsnap kit-locked\n",
       "atMs": 6200.180769230769,
       "requestedAtMs": 6200.180769230769
     },
     {
       "path": "media/settings-on.png",
       "sha256": "cece0825ac5c705eaba1c122acf9f2ab2bfd379f89ab4554c1440fe1de53475b",
-      "plan": "wait 1000\ntap GLOBAL\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings-off\ntap YES\nsnap settings-on\ntap NO\ntap NO\npress PTN\ntap 1\nrelease PTN\nwait 700\npress PTN\ntap 3\nrelease PTN\nwait 700\npress PTN\ntap YES 80 200\nsnap kit-locked\nrelease PTN\n",
+      "plan": "wait 1000\ntap GLOBAL\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings-off\ntap YES\nsnap settings-on\ntap NO\ntap NO\npress PTN\ntap 1\nrelease PTN\nwait 700\npress PTN\ntap 3\nrelease PTN\nwait 700\npress PTN\ntap YES 80 200\nrelease PTN\nwait 300\nsnap kit-locked\n",
       "atMs": 6600.192521367521,
       "requestedAtMs": 6600.192521367521
     },
     {
       "path": "media/kit-locked.png",
-      "sha256": "dd7ceebbff05030a5642588ab7e0e39db307397f7e3f557748a669e023df8065",
-      "plan": "wait 1000\ntap GLOBAL\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings-off\ntap YES\nsnap settings-on\ntap NO\ntap NO\npress PTN\ntap 1\nrelease PTN\nwait 700\npress PTN\ntap 3\nrelease PTN\nwait 700\npress PTN\ntap YES 80 200\nsnap kit-locked\nrelease PTN\n",
-      "atMs": 10168.623717948718,
-      "requestedAtMs": 10380.767735042735
+      "sha256": "5f581de32bc59874ae6462dd212d5de28dbc682b6b6943d7e20b859cae0a363c",
+      "plan": "wait 1000\ntap GLOBAL\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings-off\ntap YES\nsnap settings-on\ntap NO\ntap NO\npress PTN\ntap 1\nrelease PTN\nwait 700\npress PTN\ntap 3\nrelease PTN\nwait 700\npress PTN\ntap YES 80 200\nrelease PTN\nwait 300\nsnap kit-locked\n",
+      "atMs": 10783.647435897436,
+      "requestedAtMs": 10783.647435897436
     }
   ],
   "limitations": [
-    "UI documentation of the SETTINGS row and of the KIT LOCKED message (PTN still held, hence the A?? in the corner); the kit behaviour is covered by the emulator tests in TESTING.md."
+    "UI documentation of the SETTINGS row and of the KIT LOCKED message after PTN+YES; the kit behaviour is covered by the emulator tests in TESTING.md."
   ]
 }

@@ -75,6 +75,7 @@
       "The switch and the locks are kept in the project header (an elekloader-format ELKP block tagged KBLK, bytes 0x1c..0x200 the stock OS keeps as they are), written by kitbank's own project save hook because core-dn1 2.0a for 1.44 has no project data. The block is not written when that area already holds another tool's data; it can move to core_projdata when a 1.44 core provides it.",
       "It patches ten stock OS sites itself (kit selection, queued pattern change, kit save/reload/sound reload, project save/load/new); a mod patching the same bytes cannot be combined. If other mods need kit selection or project data, these sites should become core hooks.",
       "A pattern pasted into a bank's first pattern replaces the bank's kit, as the stock OS replaces that pattern's kit. Pasted elsewhere, it never overwrites the bank: it is locked with the pasted sound when that sound differs.",
+      "For under a second after PTN+YES, a knob turn can be ignored while the OS reloads the kit into the tracks (measured in the emulator; the stock OS reselecting a pattern by hand does not do this).",
       "Undo of a paste was not tried."
     ]
   },
@@ -92,7 +93,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 1308,
+    "memoryBytes": 1528,
     "fastBytes": 0,
     "load": {
       "display": "None while playing",
@@ -156,7 +157,7 @@
         "type": "emulator",
         "release": "1.44",
         "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "fd4cf27d419295343c53893501ee01ee513a57ccb9e7dae533be974f5694fd2b",
+        "imageSha256": "7d14c8272d861704983903f36a5018edef5647f708ad3658a8899e8a86e798be",
         "setup": "Disposable first-boot project, network-denied sandbox; see media/capture.json."
       }
     },
@@ -172,7 +173,7 @@
         "type": "emulator",
         "release": "1.44",
         "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "fd4cf27d419295343c53893501ee01ee513a57ccb9e7dae533be974f5694fd2b",
+        "imageSha256": "7d14c8272d861704983903f36a5018edef5647f708ad3658a8899e8a86e798be",
         "setup": "Disposable first-boot project, network-denied sandbox; see media/capture.json."
       }
     },
@@ -188,7 +189,7 @@
         "type": "emulator",
         "release": "1.44",
         "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "fd4cf27d419295343c53893501ee01ee513a57ccb9e7dae533be974f5694fd2b",
+        "imageSha256": "7d14c8272d861704983903f36a5018edef5647f708ad3658a8899e8a86e798be",
         "setup": "Disposable first-boot project, network-denied sandbox; see media/capture.json."
       }
     }

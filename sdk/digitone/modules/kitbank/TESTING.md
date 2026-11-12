@@ -2,7 +2,7 @@
 
 ## In Modwerk
 
-No hardware qualification is claimed for this Modwerk build. Evidence tier: `none`. All runs below are in the digiemu emulator (revision `f57c2f237e84b8ff91bc3adb2a2931bccf9928e9`, not the reviewed `c1b5735…`, see [capture.json](media/capture.json)), on a local image linked with `node scripts/link-image.mjs --version XX05` from the stock OS 1.44 file (`d4f200d0…`), core-dn1 2.0a for 1.44 and this module (0.2.0-experimental). Built-image SHA-256: `fd4cf27d419295343c53893501ee01ee513a57ccb9e7dae533be974f5694fd2b`. Firmware and derived images stay private.
+No hardware qualification is claimed for this Modwerk build. Evidence tier: `none`. All runs below are in the digiemu emulator (revision `f57c2f237e84b8ff91bc3adb2a2931bccf9928e9`, not the reviewed `c1b5735…`, see [capture.json](media/capture.json)), on a local image linked with `node scripts/link-image.mjs --version XX06` from the stock OS 1.44 file (`d4f200d0…`), core-dn1 2.0a for 1.44 and this module (0.2.0-experimental). Built-image SHA-256: `7d14c8272d861704983903f36a5018edef5647f708ad3658a8899e8a86e798be`. Firmware and derived images stay private.
 
 ## Behaviour (emulator, real panel inputs)
 
@@ -21,15 +21,21 @@ The scripts read the live pattern and engine kit pointers (`0x4138f214`, `0x4138
 | Paste A03 (locked, edited) → A07: bank kit untouched, A07 locked with A03's sound; paste B02 → A08: bank A untouched, A08 locked with B01's sound | PASS |
 | Clear A06: bank kit unchanged, A06 still shares it | PASS |
 | Song mode, song A01 → A02 → B01 looping twice: (pattern, kit) = (A01, A01) (A02, A01) (B01, B01); with A02 locked: (A02, A02) | PASS |
+| PTN+YES while playing on A05: A05 keeps playing, locked; again: shared | PASS |
+| After PTN+YES the SELECT PTN popup does not open (the module reselects the active pattern) | PASS (screens) |
 | Every run: no halt | PASS |
 
 ## Full check against stock
 
-`python -m emu.portable --check <image> --baseline <stock 1.44> --timing` (switch at its default, unticked): result recorded below when the run ends.
+`python -m emu.portable --check <image> --baseline <stock 1.44> --timing` (switch at its default, unticked), run on the XX05 build of the same behaviour before the popup fix: **PASS**, 10 of 10 screens identical to stock, **audio identical to stock over 8.3 s**, render margin 40.5 % and CPU busy 58 % as stock. The stock reference itself is marked FAIL by this emulator for a known read at `0x12a`. Unticked, the popup fix adds no code path: the PTN+YES branch is only taken while ticked.
 
 ## Memory
 
-Object sizes: 1,280 B `.run`, 28 B `.bss`: **1,308 B**, excluding the core and linker alignment. No audio-rate code.
+Object sizes: 1,432 B `.run`, 96 B `.bss`: **1,528 B**, excluding the core and linker alignment. No audio-rate code.
+
+## Measured limit
+
+For under a second after PTN+YES, a knob turn can be ignored while the OS reloads the kit into the tracks; the tests wait one second. The stock OS reselecting a pattern by hand does not do this.
 
 ## Not tested
 
