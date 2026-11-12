@@ -25,6 +25,6 @@ export function DigiFirmwarePanel({ name, releases, firmware }: { name: string; 
     {firmware.storageError && <p className="file-error" role="status">{firmware.storageError}</p>}
     <div className="file-footnote"><span>{inspection ? firmware.saved ? 'Saved on this device and verified again each time you return.' : 'Verified for this session.' : 'Saved in this browser after verification. Never uploaded.'}</span>
       {(inspection || busy || firmware.storageError) && <button className="text-button" onClick={() => void firmware.remove()}>Remove from device</button>}</div>
-    <p className="firmware-help"><a href="#faq">Where do I get the .syx? Read the FAQ &amp; flashing guide <Icon name="arrow" size={14}/></a></p>
+    <p className="firmware-help"><a href="#faq/base-firmware">Where do I get the .syx? Read the FAQ <Icon name="arrow" size={14}/></a></p>
   </>
 }

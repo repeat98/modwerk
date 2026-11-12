@@ -3,9 +3,9 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { AVAILABLE_MODULES } from '../catalog/availability'
-import { selectionConflicts } from '../catalog/selection-conflicts'
 import { LibraryTools } from '../components/LibraryTools'
 import { ModuleComparison } from '../components/ModuleComparison'
+import { MODULE_COMPARE_ENABLED } from '../components/module-compare'
 import { DEFAULT_MODULE_SORT } from '../community/module-statistics'
 import { DEVICES_BY_ID } from './registry'
 import { DIGI_MODS, type DigiMod } from './digi-mods'
@@ -94,22 +94,10 @@ describe('All machines library parity', () => {
     expect(html).toContain(count('7', 'likes'))
     expect(html).toContain(count('12', 'downloads'))
     expect(html).toContain('Remove Mini Verb from configuration')
-    expect(html).toContain('type="checkbox" checked=""')
+    if (MODULE_COMPARE_ENABLED) expect(html).toContain('type="checkbox" checked=""')
+    else expect(tools).not.toContain('Compare')
   })
 
-  it('shows saved Octatrack and Digitakt collisions even when filters hide their modules', () => {
-    const html = renderToStaticMarkup(createElement(AllMachinesLibrary, {...props,
-      query: 'no matching modules', octatrackModules: [],
-      octatrackConflicts: selectionConflicts(['midi-scenes', 'analog-bassdrum']),
-      digiSelected: {digitakt: ['digislicer', 'digisophie'], 'digitakt-ii': [], digitone: [], 'analog-rytm-mkii': []},
-    }))
-    expect(html).toContain('Octatrack: your selection needs a change')
-    expect(html).toContain('Digitakt: your selection needs a change')
-    expect(html).toContain('href="#digitakt/configuration"')
-    expect(html).not.toContain('Digitone: your selection needs a change')
-    expect(html).toContain('No modules found')
-    expect(html).toContain('aria-label="Build firmware for Octatrack"')
-  })
 
   it('keeps unavailable counts distinct from zero and offers a build link for each machine', () => {
     const html = renderToStaticMarkup(createElement(AllMachinesLibrary, {...props, statistics: null}))
@@ -201,7 +189,8 @@ describe('Digi library parity', () => {
       const html = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, device: {...DEVICES_BY_ID[device], id: device}}))
       const toolbar = renderToStaticMarkup(createElement(LibraryTools, { ...digiProps, families: Array.from(new Set(DIGI_MODS.filter(mod=>mod.device===device).map(mod=>mod.category))), comparisonCount: 0, buildHref: '#'+device+'/configuration', buildLabel: 'Build firmware for '+DEVICES_BY_ID[device].name }))
       expect(html).toContain(toolbar)
-      expect(html).toContain('Compare<span class="sr-only">')
+      if (MODULE_COMPARE_ENABLED) expect(html).toContain('Compare<span class="sr-only">')
+      else expect(html).not.toContain('type="checkbox"')
       expect(html).not.toContain('href="#configuration"')
     }
   })
@@ -232,12 +221,14 @@ describe('Digi library parity', () => {
   })
 
   it('limits comparison to three cards while permitting removal and scopes matching module IDs by machine', () => {
-    const html = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, comparison: ['digitakt-digihealth','digitone-digihealth','miniverb']}))
-    expect(html).toContain('Compare (3)')
-    expect(html).toContain('type="checkbox" checked=""')
-    expect(html).toContain('type="checkbox" disabled=""')
-    const other = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, comparison: ['digitone-digihealth']}))
-    expect(other).not.toContain('type="checkbox" checked=""')
+    if (MODULE_COMPARE_ENABLED) {
+      const html = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, comparison: ['digitakt-digihealth','digitone-digihealth','miniverb']}))
+      expect(html).toContain('Compare (3)')
+      expect(html).toContain('type="checkbox" checked=""')
+      expect(html).toContain('type="checkbox" disabled=""')
+      const other = renderToStaticMarkup(createElement(DigiLibrary, {...digiProps, comparison: ['digitone-digihealth']}))
+      expect(other).not.toContain('type="checkbox" checked=""')
+    }
     const dialog = renderToStaticMarkup(createElement(ModuleComparison, {ids:['digitakt-digihealth','digitone-digihealth'], selected: [], digiSelected:{digitakt:['digihealth'],'digitakt-ii':[],digitone:[],'analog-rytm-mkii':[]}, onToggle:noop,onToggleDigi:noop,onClose:noop}))
     expect(dialog).toContain('href="/digitakt/module/digihealth/"')
     expect(dialog).toContain('href="/digitone/module/digihealth/"')

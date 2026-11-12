@@ -118,6 +118,9 @@ struct modwerk_machine {
     int (*validate)(uint8_t *part, int (*next)(uint8_t *part));
     uint16_t source_voice, source_engine; /* a DSP voice that replaces its track's stock source: its price per voice */
     uint8_t source_kind, reserved[3];   /* and per core while one runs, of this kind (loader.h runtime_cycles); 0 none */
+    /* reserved[0] is the machine's CPU price (the base's CPU budget): its worst render on one track, both passes of a
+     * frame, in percent of a frame, measured on a unit. 0: the base's default, or nothing for a DSP voice. It stays
+     * in reserved[] so that every descriptor written `{0}` there still compiles: a priced one ends `{PERCENT}`. */
 };
 #define MODWERK_MACHINE_ABI 1u
 #define MODWERK_MACHINE_PROTECT 1u      /* stock's validator never sees its tracks' 12 FLEX bytes */

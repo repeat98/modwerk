@@ -184,6 +184,16 @@ int main(void)
     modwerk_status_key(NO, 1); modwerk_status_key(NO, 0);
     dl_refusal[0] = 1, dl_refusal[1] = 9; CHECK(modwerk_status_refused(3) && !refused_machine); /* an effect's box clears the machine mark */
     for (unsigned i = 0; i < 180u; ++i) memory_tick();
+    /* The CPU budget's refusal: the same box as CPU FULL on "Tn SRC", for three seconds, never over a page. */
+    void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add);
+    modwerk_status_cpu_refused(2, "Poly8", 800, 266);
+    CHECK(open == REFUSED && refused_machine && refused[0] == 4 && refused[1] == 2 && refused_booked == 800 && refused[4] == 266);
+    CHECK(!strcmp(refused_name, "POLY8"));
+    for (unsigned i = 0; i < 180u; ++i) memory_tick();
+    CHECK(open == CLOSED);
+    modwerk_load_menu(0); modwerk_status_cpu_refused(2, "Poly8", 800, 266);
+    CHECK(open == SHOWN);
+    modwerk_status_key(NO, 1); modwerk_status_key(NO, 0);
     modwerk_missing_menu(0);
     missing_check();
     CHECK(open == MISSING);                                            /* asked for: it stays with nothing missing */

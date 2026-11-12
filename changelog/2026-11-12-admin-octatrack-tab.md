@@ -1,0 +1,1 @@
+Admin: a new Octatrack tab shows how many members' units run the Modwerk base (total, today, 7 days, per day), who shares diagnostics and who sent reports, which bases sharers run (current, previous or older), the share of USB syncs kept, and sync, build and connection failures and unit log incidents by kind. The technical diagnostics records moved there from the Accounts tab.

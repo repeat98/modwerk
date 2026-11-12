@@ -8,7 +8,7 @@ import { moduleSetReview } from '../engine/elekloader/module-set'
 import type { LinkState, OctatrackLink } from '../engine/elekloader/octatrack-link'
 import type { DiagnosticReading } from '../community/octatrack-diagnostics-contract'
 import { OctatrackHub, type HubView } from './OctatrackHub'
-import { OctatrackActivity } from './OctatrackStatus'
+import { OctatrackActivity, OctatrackSidebarStatus } from './OctatrackStatus'
 import { recordLoad } from '../hooks/useOctatrackLoad'
 import baseBinding from '../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
 import { MODULE_SKIP_HINT } from '../firmware-notices'
@@ -61,7 +61,7 @@ describe('the Octatrack page', () => {
     const link = unit({ status: 'ready', identity: { canSubmit: true, base: 'a'.repeat(64), model: 'OCTATRACK MKII' } })
     vi.mocked(moduleSetReview).mockReturnValue({ changes: { add: ['miniverb'], remove: [], stockOff: [], stockOn: [] }, updates: [], needsSync: true, problem: undefined })
     await act(() => root.render(createElement(OctatrackHub, { ...props, view: 'set', link, inventory, sets: [set], selectedId: set.id, header: null, grid: null, card: null })))
-    expect(open().querySelector('.hub-sync')?.textContent).toContain('Install the latest Modwerk base')
+    expect(open().querySelector('.hub-sync')?.textContent).toContain('Update to the latest Modwerk base')
     await act(() => button('Install latest base').click())
     expect(props.onInstall).toHaveBeenCalledOnce(); expect(link.update).not.toHaveBeenCalled()
   })
@@ -190,11 +190,25 @@ describe('the way to the base install guide', () => {
     await act(() => button('Open the install guide').click())
     expect(props.onInstall).toHaveBeenCalledTimes(2)
   })
-  it('does not point a browser that can use USB at the card build to sync a set', async () => {
+  it('points only a browser without USB at the card file to load a set', async () => {
     const set = newConfiguration('Live', ['miniverb'])
     await act(() => root.render(createElement(OctatrackHub, { ...callbacks(), view: 'set', link: unit({ status: 'idle' }), sets: [set], selectedId: set.id, header: null, grid: null, card: null })))
     expect(open().querySelector('.hub-sync')?.textContent).toBe('Connect your Octatrack to sync this set.Sync to Octatrack')
     await act(() => root.render(createElement(OctatrackHub, { ...callbacks(), view: 'set', link: null, sets: [set], selectedId: set.id, header: null, grid: null, card: null })))
-    expect(open().querySelector('.hub-sync a')?.textContent).toBe('Build card firmware')
+    expect(open().querySelector('.hub-sync')).toBeNull()
+    expect(container.querySelector('.hub-hero button')?.textContent).toBe('Load from the card')
+  })
+})
+
+describe('the sidebar Octatrack step', () => {
+  it('asks a unit on an older base to update, and says nothing on the current one', async () => {
+    const onInstall = vi.fn(), render = (state: LinkState) => act(() => root.render(createElement(OctatrackSidebarStatus, { link: unit(state), onInstall })))
+    await render({ ...ready, identity: { ...ready.identity!, base: 'a'.repeat(64) } })
+    const step = container.querySelector<HTMLButtonElement>('.instrument-action.is-update')!
+    expect(step.textContent).toBe('Update the base')
+    await act(() => step.click())
+    expect(onInstall).toHaveBeenCalledOnce()
+    await render(ready)
+    expect(container.querySelector('.instrument-action')).toBeNull()
   })
 })

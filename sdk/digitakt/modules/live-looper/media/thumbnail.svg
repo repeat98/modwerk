@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="192" viewBox="0 0 320 192" class="signal-art" fill="none" stroke-linecap="round" stroke-linejoin="round" role="img" aria-labelledby="title description">
+<title id="title">Live Looper</title>
+<desc id="description">A step grid with one loop's length bracketed, captured into a loop that keeps playing across a pattern change. Original conceptual illustration, not an instrument screen or a measured result.</desc>
+<style>.signal-grid{stroke:#fff;opacity:.035;stroke-width:.7}.signal-main{stroke:#9eb4ed;stroke-width:2.7}.signal-secondary{stroke:#9eb4ed;opacity:.65;stroke-width:1.7}.signal-ghost{stroke:#9eb4ed;opacity:.2;stroke-width:1.3}.signal-art text{fill:#9eb4ed;opacity:.8;font:10px monospace;letter-spacing:.7px;stroke:none}.signal-dot{fill:#9eb4ed;stroke:none}</style>
+<rect width="320" height="192" fill="#232328"/>
+<g class="signal-grid"><path d="M20 52H300"></path><path d="M20 97H300"></path><path d="M20 142H300"></path><path d="M64 33V163"></path><path d="M128 33V163"></path><path d="M192 33V163"></path><path d="M256 33V163"></path></g>
+<g>
+<path class="signal-ghost" d="M30 64V72M44 64V72M58 64V72M72 64V72M86 64V72M100 64V72M114 64V72M128 64V72M142 64V72M156 64V72M170 64V72M184 64V72"></path>
+<path class="signal-secondary" d="M58 64V76M86 64V76M114 64V76M142 64V76"></path>
+<path class="signal-main" d="M58 82H142M58 78V86M142 78V86"></path>
+<path class="signal-main" d="M100 86V104"></path>
+<path class="signal-main" d="M76 128A26 16 0 1 0 76 127"></path>
+<path class="signal-main" d="M70 122L76 128L82 122"></path>
+<circle class="signal-dot" cx="128" cy="128" r="3.5"></circle>
+<path class="signal-secondary" d="M128 128H290"></path>
+<path class="signal-ghost" d="M200 112V146" stroke-dasharray="3 5"></path>
+<text x="25" y="44">STEPS · CAPTURE</text>
+<text x="80" y="160">LOOP</text>
+<text x="150" y="108">PTN A</text>
+<text x="216" y="108">PTN B</text>
+<text x="25" y="182">ONE TRACK · PLAYS THROUGH PATTERN CHANGES</text>
+</g>
+</svg>

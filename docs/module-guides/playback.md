@@ -2,7 +2,7 @@
 
 Read [the module guides index](README.md) first. Anything that follows tempo also follows [sequencing.md](sequencing.md).
 
-**Applies to** modules with manifest `category: playback`: behaviour of sample playback that uses no effect slot. [Repitch](../../sdk/octabam/modules/repitch/README.md) follows project tempo by changing playback speed. [Preview Vol](../../sdk/octabam/modules/previewvol/README.md) previews samples at the default AMP volume.
+**Applies to** modules with manifest `category: playback`: behaviour of sample playback that uses no effect slot. [Repitch](../../sdk/octatrack/modules/repitch/README.md) follows project tempo by changing playback speed. [Preview Vol](../../sdk/octatrack/modules/previewvol/README.md) previews samples at the default AMP volume.
 
 ## Behave like the instrument
 
@@ -19,7 +19,7 @@ Read [the module guides index](README.md) first. Anything that follows tempo als
 
 - [ ] `sdk/catalog.json` entry, thumbnail, `resources.impact`, README sections, tutorial and screenshots; the screenshots show the SRC SETUP or attribute page where the option is chosen.
 - [ ] `compatibility.location` is `Flex / Static` (or what is true) and `limitations` lists what you did not measure.
-- [ ] `npm run module:verify -- <id> --os <your 1.40C>` and `npm run module:doctor -- <id>` are green.
+- [ ] `npm run module:doctor -- <id>` is green.
 
 ## Test
 

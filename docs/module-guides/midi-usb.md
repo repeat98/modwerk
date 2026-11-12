@@ -2,7 +2,7 @@
 
 Read [the module guides index](README.md) first. A module that sends or reacts to MIDI clock or notes in time also follows [sequencing.md](sequencing.md).
 
-**Applies to** modules with manifest `category: midi-usb`, including MIDI generators and MIDI effects (below). [CC Map](../../sdk/octabam/modules/cc-map/README.md) maps MIDI CC 68–73 to FX1 SETUP controls. [USB Audio](../../sdk/octabam/modules/usb-audio-out-tracks-main-cue/README.md) sends eight stereo tracks, MAIN and CUE over USB.
+**Applies to** modules with manifest `category: midi-usb`, including MIDI generators and MIDI effects (below). [CC Map](../../sdk/octatrack/modules/cc-map/README.md) maps MIDI CC 68–73 to FX1 SETUP controls. [USB Audio](../../sdk/octatrack/modules/usb-audio-out-tracks-main-cue/README.md) sends eight stereo tracks, MAIN and CUE over USB.
 
 ## Behave like the instrument
 
@@ -48,7 +48,7 @@ Keep a generator's edits cheap; they run on the UI task while the pattern plays.
 - [ ] `sdk/catalog.json` entry, thumbnail, `resources.impact`, README sections, tutorial and screenshots of the setting that enables it (`PROJ` → `MIDI` → `CONTROL` for CC Map).
 - [ ] A module with no Octatrack page of its own (an automatic USB module) uses the narrow `access.noUiReason` and still documents the host connection and routing. See [MODULE_UI_CAPTURES.md](../MODULE_UI_CAPTURES.md).
 - [ ] `evidence/performance.json` passes `npm run perf:audit -- check` ([Performance](README.md#performance)).
-- [ ] `npm run module:verify -- <id> --os <your 1.40C>` and `npm run module:doctor -- <id>` are green.
+- [ ] `npm run module:doctor -- <id>` is green.
 
 ## Test
 

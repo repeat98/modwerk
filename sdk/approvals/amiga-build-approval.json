@@ -1,0 +1,15 @@
+{
+  "kind": "owner-approved-update",
+  "id": "amiga",
+  "version": "0.1.0-experimental",
+  "approvedBy": "repeat98",
+  "approvedOn": "2026-11-12",
+  "ownerStatement": "I approve Amiga 0.1.0-experimental for release with worst-case cycles, current-build hardware evidence and complete memory bounds waived.",
+  "reason": "First release of a new experimental USB-only track machine, approved by the owner as experimental. Worst-case cycles on the chip, hardware evidence on this exact build and complete memory bounds are waived for this source and version. What exists: the module's 56 host checks pass; the engine is identical, sample for sample, to the reference engine over 400 notes and 5,234,566 frames; on the owner's MKII on 11 November 2026 an earlier package of this version (e9730e24, the same engine, the page descriptor still filled by hand) was installed, kept, self-tested, played, refused for removal while a track used it and removed, with frame-interrupt and CPU readings in TESTING.md. On 12 November 2026 the published package (18cef8b2, which differs from e9730e24 only in filling the page descriptor through modwerk_page_control()) ran in one trial on the same unit: both pages read as before, the owner played it for about four minutes, and it rolled back clean. Not done: Keep and removal of this exact package, load measurements on it, a kept set through a power cycle, a project saved and reloaded with Amiga tracks, RATE crossing zero under modulation, loops played backwards, locks, LFOs and scenes on its controls, slices, an MKI, and a bound on the worst case. Hardware is not claimed verified.",
+  "sourceSha256": "cc480f6f6f0e27093e11da1b2698c2a9ccb615c892a2ed777a7194d28223a652",
+  "waived": [
+    "chip-worst-case-cycles",
+    "current-build-hardware",
+    "complete-memory-bounds"
+  ]
+}
