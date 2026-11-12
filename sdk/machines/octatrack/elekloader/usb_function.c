@@ -13,8 +13,16 @@
  *                vendor data stage is open and stock's USB DISK MODE is closed. Then ev_usb_bus_end, USBCMD.RS off
  *                and, at once, the slots and their length rewritten: nothing reads them off the bus
  *   OFF (tick)   half a second off the bus, then RS on again
- *   BACK (tick)  the host enumerates. Its bus reset is the base's own disconnect: ep0.c undoes no open sync or
- *                trial for it, and the host has 20 s to reach the vendor interface before it counts as unplugged
+ *   BACK (tick)  the host resets the bus and enumerates. That reset is the base's own disconnect: ep0.c undoes
+ *                no open sync or trial for it. The reconnect is over when the host, after a reset, reaches the
+ *                vendor interface; without that for 20 s it counts as unplugged
+ *
+ * The base raises ev_usb_isr, ev_usb_bus_end and ev_usb_control by walking their rows here, never through the
+ * loader's dispatch code (runtime_events.s): the loader holds a switch back while any task's stack holds an address
+ * inside that code, and the USB interrupt runs on whichever task it interrupts, so return addresses from there
+ * would stay in stack memory and refuse every later removal (seen in the emulator: a rollback refused for good). The
+ * walk is safe without that rule: a switch rewrites the rows masked and under the stable lock, which holds the USB
+ * interrupt off, so no walk is ever paused part way through a row.
  *
  * A control endpoint that is not idle after ten seconds is not waited for: a pulled cable ends a transfer the same
  * way, and stock's bus reset clears it. The descriptors are copied into the slots; nothing here keeps a pointer
@@ -31,7 +39,7 @@
 #define UF_REG(a) (*(volatile uint32_t *)(uintptr_t)(a))
 #define UF_UNCACHED(p) ((volatile uint8_t *)((uintptr_t)(p) + 0x08000000u))
 #define UF_IMAGE_ADDRESS(p) ((uint32_t)(uintptr_t)(p))
-#define UF_RAISE(entry) (((unsigned (*)(void))(uintptr_t)(entry))())
+#define UF_CALL(handler) (((unsigned (*)(void))(handler))())
 #endif
 int modwerk_machine_usb_disk(void); /* runtime.c: stock's USB DISK MODE is open */
 
@@ -45,6 +53,11 @@ int modwerk_machine_usb_disk(void); /* runtime.c: stock's USB DISK MODE is open 
 #define UF_EP0_STATE 0x460bb3ecu   /* stock's control transfer state: 11 idle */
 #define UF_EP0_AWAITED 0x460bb3f4u /* stock waits for an OUT stage */
 
+#ifdef MODWERK_USB_AUDIO_LINKED /* build_core.py: this base links USB Audio in (a development twin) */
+#define UF_LINKED 1
+#else
+#define UF_LINKED 0
+#endif
 #define UF_TABLE (MODWERK_OT_USB_FUNCTIONS - RUNTIME_EVENTS)
 #define UF_RECORD 32u
 #define UF_SLOT 512u
@@ -68,7 +81,17 @@ static volatile uint32_t row_serial;    /* 0 for none; a new number for every fu
 static volatile uint8_t dirty;
 static uint32_t serials, live_serial;   /* live: the function the slots describe */
 static uint8_t state, reconnects, forced;
+static volatile uint8_t reset_seen; /* BACK: the host has reset the bus since the unit came back */
 static uint16_t timer, waited;
+
+/* Every handler of a hook the base raises, in the row's order (lower first, then module id); their answers OR'd.
+ * From the USB interrupt, or with it held off. */
+static unsigned uf_raise(unsigned hook)
+{
+    unsigned answer = 0;
+    for (uintptr_t volatile *row = modwerk_runtime_event_row[hook - RUNTIME_EVENTS]; *row; ++row) answer |= UF_CALL(*row);
+    return answer;
+}
 
 static uint32_t uf_word(const uint8_t *p)
 { return (uint32_t)p[0] << 24 | (uint32_t)p[1] << 16 | (uint32_t)p[2] << 8 | p[3]; }
@@ -101,9 +124,7 @@ int modwerk_usb_function_admit(const struct runtime_dsp *d, unsigned operation)
     if (!d || !d->present) return RUNTIME_OK;
     uint32_t at = d->hook_offset[MODWERK_OT_USB_FUNCTIONS];
     if (at == RUNTIME_NONE) return RUNTIME_OK;
-#ifdef MODWERK_USB_AUDIO_LINKED
-    return RUNTIME_CONFLICT; /* this base's configuration already holds USB Audio, on the same interfaces and endpoint */
-#else
+    if (UF_LINKED) return RUNTIME_CONFLICT; /* its configuration already holds USB Audio, on these interfaces and this endpoint */
     if (operation != RUNTIME_METADATA_PREPARE && operation != RUNTIME_METADATA_SWITCH) return RUNTIME_MALFORMED;
     if (!d->image || (at & 1u) || at > d->image_bytes || d->image_bytes - at < UF_RECORD) return RUNTIME_MALFORMED;
     const uint8_t *record = d->image + at;
@@ -120,7 +141,6 @@ int modwerk_usb_function_admit(const struct runtime_dsp *d, unsigned operation)
             !uf_block(d->image + (block - base), length, interfaces)) return RUNTIME_MALFORMED;
     }
     return RUNTIME_OK;
-#endif
 }
 
 /* Masked. The bits clear when the controller has let go of the queue; an endpoint that is then disabled is not
@@ -188,7 +208,7 @@ int modwerk_usb_function_tick(int quiet)
         if (row_serial == live_serial) state = UF_SETTLED; /* it came and went before the host saw it */
         else if ((quiet && uf_idle()) || waited >= UF_PATIENCE) {
             if (!(quiet && uf_idle())) ++forced;
-            UF_RAISE(modwerk_raise_ev_usb_bus_end);
+            (void)uf_raise(MODWERK_EV_USB_BUS_END);
             UF_REG(UF_USBCMD) = UF_REG(UF_USBCMD) & ~1u;
             uf_compose();
             state = UF_OFF, timer = UF_DOWN;
@@ -201,6 +221,7 @@ int modwerk_usb_function_tick(int quiet)
         UF_REG(UF_USBCMD) = UF_REG(UF_USBCMD) | 1u;
         modwerk_machine_unlock(lock);
         ++reconnects;
+        reset_seen = 0;
         state = UF_BACK, timer = UF_LEASE;
         break;
     default:
@@ -211,11 +232,17 @@ int modwerk_usb_function_tick(int quiet)
     return 0;
 }
 
-void modwerk_usb_function_host(void) { if (state == UF_BACK) state = UF_SETTLED; }
+/* A request on the vendor interface before the bus reset is not the host coming back: a later reset would
+ * otherwise count as a pulled cable and undo an open trial. */
+void modwerk_usb_function_host(void) { if (state == UF_BACK && reset_seen) state = UF_SETTLED; }
 int modwerk_usb_reconnecting(void) { return state == UF_OFF || state == UF_BACK; }
-void modwerk_usb_function_isr(void) { (void)UF_RAISE(modwerk_raise_ev_usb_isr); }
-void modwerk_usb_function_bus_end(void) { (void)UF_RAISE(modwerk_raise_ev_usb_bus_end); }
-unsigned modwerk_usb_function_control(void) { return UF_RAISE(modwerk_raise_ev_usb_control); }
+void modwerk_usb_function_isr(void) { (void)uf_raise(MODWERK_EV_USB_ISR); }
+void modwerk_usb_function_bus_end(void)
+{
+    if (state == UF_BACK) reset_seen = 1;
+    (void)uf_raise(MODWERK_EV_USB_BUS_END);
+}
+unsigned modwerk_usb_function_control(void) { return uf_raise(MODWERK_EV_USB_CONTROL); }
 
 unsigned modwerk_usb_function_status(uint8_t *out)
 {

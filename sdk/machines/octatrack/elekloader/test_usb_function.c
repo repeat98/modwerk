@@ -3,8 +3,9 @@
  * admission takes a whole, in-range record and refuses every other; a function that arrives is put behind the base's
  * own configuration only while the unit is off the bus, after the grace second and an idle control endpoint; one
  * that leaves has its endpoint flushed and disabled at the switch; USB DISK MODE holds a reconnect back for as long
- * as it is open; a control endpoint that never idles is not waited for past ten seconds; a host that does not come
- * back counts as unplugged once. No stock byte is used. */
+ * as it is open; a control endpoint that never idles is not waited for past ten seconds; the reconnect is over
+ * when the host has reset the bus and reached the vendor interface, and a host that does not counts as unplugged
+ * once. No stock byte is used. */
 #define MW_HOST
 #include <stdint.h>
 #include <stdio.h>
@@ -37,25 +38,31 @@ static volatile uint32_t *host_reg(uint32_t a)
 
 #include "loader.h"
 #include "modwerk_events.h"
-const unsigned char modwerk_raise_ev_usb_isr[1], modwerk_raise_ev_usb_bus_end[1], modwerk_raise_ev_usb_control[1];
-static unsigned isrs, bus_ends, controls, answer;
-static unsigned host_raise(const unsigned char *entry)
+/* The hooks' rows hold handlers; here, numbers the walk hands to host_call. */
+enum { H_ISR = 1, H_BUS_END, H_CONTROL, H_CONTROL_OTHER };
+static unsigned isrs, bus_ends, controls, others, answer;
+static unsigned host_call(uintptr_t handler)
 {
-    if (entry == modwerk_raise_ev_usb_isr) return ++isrs, 0u;
-    if (entry == modwerk_raise_ev_usb_bus_end) return ++bus_ends, 0u;
-    CHECK(entry == modwerk_raise_ev_usb_control);
-    return ++controls, answer;
+    switch (handler) {
+    case H_ISR: return ++isrs, 0u;
+    case H_BUS_END: return ++bus_ends, 0u;
+    case H_CONTROL: return ++controls, answer;
+    case H_CONTROL_OTHER: return ++others, 4u;
+    }
+    fprintf(stderr, "uncalled %#lx\n", (unsigned long)handler); exit(2);
 }
-#define UF_RAISE(entry) host_raise(entry)
+#define UF_CALL(handler) host_call(handler)
 static int locked, usb_disk;
 uint32_t modwerk_machine_lock(void) { CHECK(!locked); locked = 1; return 4; }
 void modwerk_machine_unlock(uint32_t s) { CHECK(locked && s == 4); locked = 0; }
 int modwerk_machine_usb_disk(void) { return usb_disk; }
 uint8_t modwerk_cfg_fs[512], modwerk_cfg_hs[512], modwerk_cfg_os_fs[512], modwerk_cfg_os_hs[512];
 volatile uint32_t modwerk_cfg_len = MODWERK_USB_CFG_BYTES;
-static uintptr_t volatile function_row[2];
+static uintptr_t volatile function_row[2], isr_row[2] = {H_ISR}, bus_end_row[2] = {H_BUS_END}, control_row[3] = {H_CONTROL};
 #define modwerk_runtime_event_row host_rows
-static uintptr_t volatile *const host_rows[RUNTIME_SITE_EVENTS] = {[MODWERK_OT_USB_FUNCTIONS - RUNTIME_EVENTS] = function_row};
+static uintptr_t volatile *const host_rows[RUNTIME_SITE_EVENTS] = {
+    [MODWERK_OT_USB_FUNCTIONS - RUNTIME_EVENTS] = function_row, [MODWERK_EV_USB_ISR - RUNTIME_EVENTS] = isr_row,
+    [MODWERK_EV_USB_BUS_END - RUNTIME_EVENTS] = bus_end_row, [MODWERK_EV_USB_CONTROL - RUNTIME_EVENTS] = control_row};
 #include "usb_function.c"
 #undef modwerk_runtime_event_row
 
@@ -107,6 +114,12 @@ static void admission(void)
     d = candidate(), d.present = 0;
     CHECK(modwerk_usb_function_admit(&d, RUNTIME_METADATA_PREPARE) == RUNTIME_OK); /* a removal */
     package(0);
+#ifdef MODWERK_USB_AUDIO_LINKED /* a base that links USB Audio in: its configuration has no room for a function */
+    CHECK(admit(RUNTIME_METADATA_PREPARE) == RUNTIME_CONFLICT);
+    package(0x40300000u);
+    CHECK(admit(RUNTIME_METADATA_SWITCH) == RUNTIME_CONFLICT);
+    return;
+#endif
     CHECK(admit(RUNTIME_METADATA_PREPARE) == RUNTIME_OK);
     CHECK(admit(RUNTIME_METADATA_SWITCH) == RUNTIME_MALFORMED); /* offsets are not addresses once it is relocated */
     CHECK(admit(0) == RUNTIME_MALFORMED);
@@ -165,12 +178,19 @@ static void describes(int with)
         if (with) CHECK(!memcmp(slot[k] + MODWERK_USB_CFG_BYTES, other[k], BLOCK));
     }
 }
+/* The host is back: its bus reset, then a request on the vendor interface. */
+static void back(void) { modwerk_usb_function_bus_end(); modwerk_usb_function_host(); }
 static void arrive(void) { function_row[0] = (uintptr_t)&function; modwerk_usb_functions_changed(); }
 static void leave(void) { function_row[0] = 0; modwerk_usb_functions_changed(); }
 
 int main(void)
 {
     admission();
+#ifdef MODWERK_USB_AUDIO_LINKED
+    if (failures) return 1;
+    puts("usb function: a base with USB Audio linked in refuses every function");
+    return 0;
+#endif
 
     for (unsigned k = 0; k < 4u; ++k) { memcpy(other[k], block, BLOCK); other[k][BLOCK - 3u] = (uint8_t)(0x40u + k); }
     function = (struct modwerk_usb_function){MODWERK_USB_FUNCTION_ABI, 32u, 2u, BLOCK, 0x00080000u, other[0], other[1], other[2], other[3]};
@@ -200,8 +220,12 @@ int main(void)
     CHECK(!ticks(30, 1) && !attached());                /* half a second off the bus */
     CHECK(!ticks(1, 1) && attached() && status(0) == 3u && status(3) == 1u && modwerk_usb_reconnecting());
     CHECK(!ticks(500, 1) && modwerk_usb_reconnecting()); /* the host enumerates and the site opens the unit again */
-    modwerk_usb_function_host();
-    CHECK(!modwerk_usb_reconnecting() && !status(0) && !ticks(5000, 1) && attached() && bus_ends == 1u && !status(4));
+    modwerk_usb_function_host();                        /* a request before the host reset the bus: not back yet */
+    CHECK(modwerk_usb_reconnecting() && status(0) == 3u);
+    back();
+    CHECK(!modwerk_usb_reconnecting() && !status(0) && !ticks(5000, 1) && attached() && bus_ends == 2u && !status(4));
+    modwerk_usb_function_bus_end();                     /* a reset once it is settled is the host's own */
+    CHECK(!modwerk_usb_reconnecting() && bus_ends == 3u);
     modwerk_usb_functions_changed();                    /* another module's table: the function stayed */
     CHECK(!status(0) && !UF_REG(FLUSH));
 
@@ -212,9 +236,10 @@ int main(void)
     CHECK(status(0) == 1u && status(1) == 1u && !status(2)); /* the host still sees it until the reconnect */
     describes(1);
     UF_REG(FLUSH) = 0, UF_REG(COMPLETE) = 0;
-    CHECK(!ticks(62, 1) && !attached() && bus_ends == 2u);
+    CHECK(!ticks(62, 1) && !attached() && bus_ends == 4u);
     describes(0);
     CHECK(!status(1) && !ticks(31, 1) && attached() && status(3) == 2u);
+    modwerk_usb_function_bus_end();                     /* the host reset the bus and never spoke to the base */
     CHECK(!ticks(1199, 1) && modwerk_usb_reconnecting());
     CHECK(ticks(1, 1) == 1u && !modwerk_usb_reconnecting() && !status(0));
     CHECK(!ticks(5000, 1));
@@ -223,7 +248,7 @@ int main(void)
     arrive(), ticks(30, 1), leave();
     CHECK(UF_REG(FLUSH) == 0x00080000u);
     UF_REG(FLUSH) = 0, UF_REG(COMPLETE) = 0;
-    CHECK(!ticks(5000, 1) && attached() && status(3) == 2u && !status(0) && bus_ends == 2u);
+    CHECK(!ticks(5000, 1) && attached() && status(3) == 2u && !status(0) && bus_ends == 5u);
     describes(0);
 
     /* USB DISK MODE holds a reconnect back for as long as it is open. */
@@ -233,7 +258,8 @@ int main(void)
     CHECK(!ticks(1, 1) && !attached());
     describes(1);
     CHECK(!ticks(31, 1) && attached());
-    modwerk_usb_function_host();
+    back();
+    CHECK(!modwerk_usb_reconnecting());
 
     /* A replaced module (another image) is a function that left and one that arrived: retired, then a reconnect. */
     static struct modwerk_usb_function update;
@@ -249,13 +275,19 @@ int main(void)
     describes(1);
     stock_awaited = 0;
     CHECK(!ticks(31, 1) && attached() && status(3) == 4u);
-    modwerk_usb_function_host();
+    back();
+    CHECK(!modwerk_usb_reconnecting());
 
     /* The interrupt's hooks pass through; a function's answer to a class request reaches ep0.c. */
     modwerk_usb_function_isr(), modwerk_usb_function_bus_end();
-    CHECK(isrs == 1u && bus_ends == 5u && !modwerk_usb_function_control() && controls == 1u);
+    CHECK(isrs == 1u && bus_ends == 10u && !modwerk_usb_function_control() && controls == 1u);
     answer = 1u;
     CHECK(modwerk_usb_function_control() == 1u && !locked);
+    control_row[1] = H_CONTROL_OTHER;                   /* every handler runs, the answers OR'd */
+    CHECK(modwerk_usb_function_control() == 5u && controls == 3u && others == 1u);
+    isr_row[0] = 0;                                     /* nobody subscribes: nothing is called */
+    modwerk_usb_function_isr();
+    CHECK(isrs == 1u);
     if (failures) return 1;
     puts("usb function: admission, slots, reconnect and its holds pass");
     return 0;

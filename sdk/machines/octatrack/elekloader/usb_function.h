@@ -13,7 +13,7 @@ void modwerk_usb_functions_changed(void);
 /* The sys task's 60 Hz tick (ep0.c). quiet: no vendor data stage is open. Returns 1 when the host did not come
  * back to the vendor interface in time after a reconnect: handle it as unplugged. */
 int modwerk_usb_function_tick(int quiet);
-/* The host spoke to the vendor interface (ep0.c): a reconnect is over. */
+/* The host spoke to the vendor interface (ep0.c): after its bus reset, a reconnect is over. */
 void modwerk_usb_function_host(void);
 /* The unit is off the bus or just back by the base's own doing: the bus reset that follows undoes nothing, and
  * the host's silence does not count yet. */
@@ -23,7 +23,7 @@ void modwerk_usb_function_isr(void);
 void modwerk_usb_function_bus_end(void);
 unsigned modwerk_usb_function_control(void);
 /* USB FUNCTION (0xC1, bRequest 41, wValue 0, wLength 8): [0] 0 settled, 1 a reconnect is due, 2 off the bus,
- * 3 back and waiting for the host; [1] 1 while the configuration the host reads holds a function; [2] 1 while a
+ * 3 back on the bus and waiting for the host to reset it and reach this interface; [1] 1 while the configuration the host reads holds a function; [2] 1 while a
  * module contributes one; [3] reconnects made, modulo 256; [4] of them, those that did not wait for an idle
  * control endpoint; [5]-[7] 0. */
 #define MODWERK_USB_FUNCTION_STATUS_BYTES 8u

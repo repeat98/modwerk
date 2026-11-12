@@ -39,14 +39,17 @@ class UsbFunction(unittest.TestCase):
         cc = shutil.which('cc')
         if not cc:
             self.skipTest('no host C compiler')
-        with tempfile.TemporaryDirectory() as temp:
-            subprocess.run([cc, '-std=c99', '-Wall', '-Wextra', '-Werror', '-g', *SANITIZE, '-fno-sanitize-recover=all',
-                            '-DMODWERK_RUNTIME_EVENTS', '-DRUNTIME_MODULES=128u', '-I', OT / 'module-adapters',
-                            '-I', OT / 'elekloader', '-I', OT / 'include', '-I', ROOT / 'sdk/runtime/loader',
-                            '-I', ROOT / 'sdk/runtime/upload', OT / 'elekloader/test_usb_function.c', '-o', temp + '/t'],
-                           check=True, capture_output=True)
-            result = subprocess.run([temp + '/t'], capture_output=True, text=True)
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        # As the base builds it, and as a development twin does (build_core.py: USB Audio linked in).
+        for linked, says in (((), 'admission, slots, reconnect'), (('-DMODWERK_USB_AUDIO_LINKED',), 'refuses every function')):
+            with self.subTest(linked=bool(linked)), tempfile.TemporaryDirectory() as temp:
+                subprocess.run([cc, '-std=c99', '-Wall', '-Wextra', '-Werror', '-g', *SANITIZE, '-fno-sanitize-recover=all',
+                                '-DMODWERK_RUNTIME_EVENTS', '-DRUNTIME_MODULES=128u', *linked, '-I', OT / 'module-adapters',
+                                '-I', OT / 'elekloader', '-I', OT / 'include', '-I', ROOT / 'sdk/runtime/loader',
+                                '-I', ROOT / 'sdk/runtime/upload', OT / 'elekloader/test_usb_function.c', '-o', temp + '/t'],
+                               check=True, capture_output=True)
+                result = subprocess.run([temp + '/t'], capture_output=True, text=True)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertIn(says, result.stdout)
 
     def test_the_base_raises_the_usb_hooks_and_no_package_gets_their_entry(self):
         registry = events.load()
@@ -56,9 +59,13 @@ class UsbFunction(unittest.TestCase):
             self.assertNotIn(name, events.raised(registry))  # runtime.json "raise" cannot name it
         header = events.loader(registry)
         raises = re.search(r'#define RUNTIME_SITE_EVENT_RAISES \{ (.*) \}', header).group(1).split(', ')
-        for name in HOOKS:
+        for name in HOOKS:  # the base walks their rows itself (usb_function.c): no entry in the dispatch code at all
             self.assertEqual(raises[by_name[name]['index'] - events.FIRST], '0')
-            self.assertIn('modwerk_raise_%s:' % name, events.asm(registry))
+            self.assertNotIn('modwerk_raise_%s' % name, events.asm(registry) + header)
+        source = (OT / 'elekloader/usb_function.c').read_text()
+        self.assertNotIn('modwerk_raise_', source.split('*/', 1)[1])
+        for name in HOOKS:
+            self.assertIn('uf_raise(MODWERK_%s)' % name.upper(), source)
         self.assertEqual(raises[by_name['ev_mute_keep']['index'] - events.FIRST], '(uintptr_t)modwerk_raise_ev_mute_keep')
         kinds = {row['event']: row for row in json.loads(events.browser(registry))['events']}
         self.assertEqual([kinds[name]['kind'] for name in HOOKS], ['call'] * 3)  # subscriptions only, on the site too
