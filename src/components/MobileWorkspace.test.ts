@@ -60,6 +60,9 @@ describe('mobile configuration workspaces', () => {
     noFirmware()
     expect(container.querySelector('.hub-view-setup,.hub-view-status,.hub-view-backups,.hub-view-samples')).toBeNull()
     expect(container.textContent).toContain('Live')
+    // The picker names the open set and holds its menu, so the page has no second set heading above the modules.
+    expect(container.querySelector('.hub-mobile-picker [aria-label="Live actions"]')).not.toBeNull()
+    expect(container.querySelector('.hub-editor-head')).toBeNull()
     await act(() => button('Export configuration JSON').click())
     expect(onSetAction).toHaveBeenCalledWith(set.id, 'export')
     await act(() => button('Import JSON').click())
