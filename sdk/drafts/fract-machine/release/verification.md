@@ -17,17 +17,17 @@ The source-only check and reproducible memory/callback-stack audit also pass.
 
 Experimental draft doctor is green. Listing checks remain pending: catalogue,
 qualification/performance, complete hardware coverage, active USB
-row/fingerprints and pair table. No gate was weakened to hide those gaps.
-This is a USB-only C runtime: the separate card/native comparison and card-pair
-table are not applicable once the prospective USB row is active. The actual
+row/fingerprints. No gate was weakened to hide those gaps. The actual
 source-recipe wrapper/check fixture and exact original-OS reconstruction cover
-the build route; no card form or gate exception is invented.
+the package build route.
 Performance audit correctly reports three missing groups; the owner accepted
 the audio-path method but has not granted its first-release waiver.
 
 The older hardware/emulator and partial-review reports are archived in
 history/20261106/ and remain bound to package54ca. No qualification has been
-transferred to this candidate. Full readiness and isolated artifact checks are recorded in the PR description.
+transferred to this candidate. Full readiness and isolated artifact checks are
+recorded here and in the dated preparation records; the PR description links
+to these records.
 
 ## Advisory review scope
 
@@ -93,3 +93,39 @@ including nine upstream parser/size blockers,101 static-only files). No upstream
 API review is claimed. Both configured checks pass; zero flags and11 previously
 investigated uncertainties remain. This broader collection does not replace or
 expand the bounded FRACT-only review above.
+
+
+## Review follow-up — 12 November
+
+Current main `18b1ccee` is merged. The [review plan](review-20261112.md) records
+repeat98's required base order, matched guard/timing run and companion Part
+reload. Prospective promotion uses `sdk/octatrack/modules`; the host compiler
+retains the older mirror path and the same source confinement. No native FRACT
+input or historical hardware identity changed. Final relinking/timing wait for
+#1418 and then #1165; no hardware operation took place in this follow-up.
+
+All 15 source-runtime tests pass, including the full-machine actual-wrapper
+`--base-only`/`--check` promotion from the canonical module folder. FRACT host
+regressions run 49 tests, with four historical skips, and all seven Node probe
+and collector tests pass. Draft doctor's experimental lines are green; its
+listing lines remain open, including qualification/performance, public package
+integration and adoption of the stock page-control helper. The current-source
+compile/link check passes. Generated module, licence and machine records are
+current. Local `pr:ready` and the exact pushed head's CI are checked separately
+before reporting the PR ready; their final receipts stay with the private kit.
+
+The new review scope is only this follow-up against merge `d193c768`, preserving
+the earlier partial review ledgers above. Five new API requests across two
+explicit bounded passes classify/cache 5 of 6 chunks, with zero flags and three
+uncertainties investigated. One package-row chunk remains deferred and seven
+Markdown files are excluded/static-only; zero attention locations were omitted.
+Both configured deterministic checks pass. This is partial advisory coverage.
+The removed offline-record field has no runtime consumer; it only explained
+obsolete card parity. Source confinement still rejects both canonical and
+legacy cross-module paths. The canonical promotion test copies only authored
+fixture inputs and runs the real wrapper, checks the relinked `requiredBase`,
+package hash/bytes and `--check`, and rejects a subsequently missing import.
+The deferred prospective-row edit changes source paths only; hashes/base/size
+remain those of the original named-build receipt. These independent checks
+resolve the investigated context questions without erasing classifier
+uncertainties, deferral or earlier coverage limits.

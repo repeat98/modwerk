@@ -29,7 +29,8 @@ class SourceRecipe(unittest.TestCase):
         self.assertEqual(provenance['identity'], binding['identity'])
 
     def test_sources_cannot_escape_or_borrow_another_module(self):
-        for value in ('../machine.c', '/tmp/machine.c', '@/sdk/octabam/modules/poly8/pool.c'):
+        for value in ('../machine.c', '/tmp/machine.c', '@/sdk/octatrack/modules/poly8/pool.c',
+                      '@/sdk/octabam/modules/poly8/pool.c'):
             with self.subTest(value=value), self.assertRaises(ValueError):
                 runtime.source_path(ROOT, MODULE, value)
         with tempfile.TemporaryDirectory() as tmp:
@@ -145,7 +146,7 @@ class FollowingBase(unittest.TestCase):
             # Exercise the real base-refresh command on prospective promoted
             # rows, entirely inside this fixture. No existing public package is
             # supplied: without base:true the base-only skip would fail.
-            promoted = root / 'sdk/octabam/modules/fract-machine'
+            promoted = root / 'sdk/octatrack/modules/fract-machine'
             shutil.copytree(root / 'sdk/drafts/fract-machine', promoted)
             for name in ('octatrack-module-packages.py', 'runtime_private_paths.py'):
                 shutil.copyfile(ROOT / 'scripts' / name, root / 'scripts' / name)

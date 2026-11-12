@@ -11,7 +11,7 @@ stock/companion and active-replacement cases; it is separate from those results.
 ## Private probe build
 
 `build_probe.py` takes a private archive of source commit `c2671568` preserving
-the named base72 inputs, the owner's original 1.40C and reviewed Elekloader
+the named base72 inputs, the author's original 1.40C and reviewed Elekloader
 tools. Run it in the pinned isolated native toolchain, with source, stock and
 upstream mounted read-only, no network, dropped capabilities, and a new private
 output directory. It never opens a device:
@@ -74,6 +74,11 @@ STOP, change Part and reload. Do not record actions the operator did not perform
 
 ## Later hardware capture
 
+Follow [repeat98’s 12 November review plan](../release/review-20261112.md):
+final relinking and timing wait for base PR #1418 and then #1165. This pinned
+base72 probe is retained for reproduction; it must be rebuilt and reviewed
+against the final base/package before that run.
+
 No hardware operation is part of offline preparation. At the later session,
 retain the normal package, current confirmed set and recovery receipts. Check
 the exact base, stop playback and use a disposable test project before the
@@ -124,7 +129,11 @@ with the same load procedure can delimit comparable since-boot observations;
 they do not turn the record into a steady-state window maximum. A reset-window
 maximum is unavailable in this read-only production-base method. Retain that
 limitation for owner review rather than pretending the requirement is closed.
-The guard share pays for base/other-track work too: it is not free FRACT headroom.
+Also capture the frame interrupt with `npm run device -- guard` on the
+matched cases, as requested in review. Verify that the final base supports the
+read; keep unsupported reads as missing evidence. Do not change the guard share
+or disable it. The guard share pays for base/other-track work too: it is not
+free FRACT headroom.
 132 MHz timer counts are not ColdFire CPU cycles or a static worst-case bound.
 
 The full-emulator probe test decoded six valid banks with real playback,

@@ -9,7 +9,7 @@ left to right; SIZE expands the grain span around that center and wraps at the
 sample edges. It uses native FLEX for pitch and voice playback. This replaces
 the earlier FX2/SPACE proposal in the consolidated draft submission #926.
 
-This folder stages a USB-only release candidate. It is not yet a selectable
+This folder stages an unlisted release candidate. It is not yet a selectable
 module or qualified public download. The prospective package is reproducible
 without firmware; `release/README.md` lists the remaining publication steps.
 The source provenance baseline is ex1010/modwerk commit
@@ -60,10 +60,9 @@ intentional private prototype limit, not eight simultaneous instances.
 START dispatch from #1029 is merged. The inherited native-FLEX reader fix is
 included with the source and media in merged #926; #1108 was closed as
 superseded by that consolidation. The base keeps FR:1 at boot (`known[]`, added in #926). On 5 November 2026,
-the owner completed the short physical check on base `9b3ba417` with a private
+the author completed the short physical check on base `9b3ba417` with a private
 paired FRACT build; USB confirmed that exact base and module set after power-on.
-See TESTING.md for identities, reported observations and limits. No catalogue
-entry, listed USB/card package or compatibility pair proof exists. The earlier 0.1.1 candidate has the 6 November functional hardware report in
+See TESTING.md for identities, reported observations and limits. No active catalogue entry or public package exists. The earlier 0.1.1 candidate has the 6 November functional hardware report in
 TESTING.md. The current 0.1.2 candidate follows the merged base-aware builder
 and has a named-build functional hardware report; timing/stress and full release
 qualification remain pending. Publication remains incomplete.
@@ -129,7 +128,7 @@ historical. Artwork is MIT; the capture declaration preserves underlying
 interface rights. No sample audio is included. UI evidence does not qualify
 hardware sound or timing.
 
-## USB release candidate — 10 November 2026
+## Named-build candidate — 10 November 2026
 
 `runtime-build.json` consumes the merged host recipe compiler. Base imports
 follow the committed base; the recipe reviews only import names/run origin.
@@ -155,6 +154,10 @@ Tests cover source confinement, current exports, actual-machine base relinking,
 absence of embedded IDs, requiredBase/proof agreement and exact package
 reproduction without firmware. Original-OS reconstruction and both strict scans
 also pass locally. Resource and remaining release work are in release/README.md.
+
+[The remaining review work](release/review-20261112.md) follows repeat98’s
+12 November request: final relinking and timing wait for #1418 and then #1165.
+The 10 November evidence stays bound to its original package.
 
 [The offline measurement kit](qualification/README.md) documents the separate
 private probe, matched project generator, read-only collector and their limits.

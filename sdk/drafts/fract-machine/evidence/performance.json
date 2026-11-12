@@ -8,7 +8,7 @@
     "static": null,
     "measured": null,
     "budget": null,
-    "method": "NOT MEASURED. Required: observed own render per 16-sample audio block versus the whole-interrupt guard, with its shared base/other-track work explicitly retained. qualification/build_probe.py prepares a separate private wrapper package without changing original renderer instruction sections; it adds timer/call overhead and reports inclusive peaks, not a static worst-case bound or CPU cycles. Hardware capture and owner decision remain pending."
+    "method": "NOT MEASURED. Required: observed own render per 16-sample audio block versus the whole-interrupt guard, with its shared base/other-track work explicitly retained. qualification/build_probe.py prepares a separate private wrapper package without changing original renderer instruction sections; it adds timer/call overhead and reports inclusive peaks, not a static worst-case bound or CPU cycles. Hardware capture and owner decision remain pending. Final relink and timing follow base PR1418 then PR1165, per the 12 November review; read the whole-interrupt guard with npm run device -- guard."
   },
   "load": {
     "frameUs": 362.8,
@@ -16,7 +16,7 @@
     "moduleLongestUs": null,
     "stockIdlePercent": null,
     "moduleIdlePercent": null,
-    "method": "NOT MEASURED. Match native FLEX and FRACT on the same base, sample, pitch, tempo, track activity and page. The private read-only probe exposes idle deltas and the base frame peak since boot; that peak is not a reset window maximum. Compare matched fresh-boot cases, retain the upload receipt and clock consistency check, and keep this limitation in owner review. No physical timing captures exist for this package."
+    "method": "NOT MEASURED. Match native FLEX and FRACT on the same base, sample, pitch, tempo, track activity and page. The private read-only probe exposes idle deltas and the base frame peak since boot; that peak is not a reset window maximum. Compare matched fresh-boot cases, retain the upload receipt and clock consistency check, and keep this limitation in owner review. The 11 November probe produced only five active transition windows without a matched FLEX-playing reference; this is not a qualified comparison. Final matched timing waits for base PR1418 then PR1165 and includes npm run device -- guard."
   },
   "stress": {
     "floodMessagesPerSecond": null,
@@ -33,6 +33,6 @@
     "baseIdentity": "72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6",
     "ownerMethod": "https://github.com/repeat98/modwerk/pull/1274#issuecomment-6705531953",
     "waiver": "NOT_GRANTED",
-    "hardware": "TIMING_AND_STRESS_NOT_RUN; exact-package functional hardware checks recorded separately in release/hardware-20261110.md"
+    "hardware": "TIMING_NOT_QUALIFIED_AND_STRESS_NOT_RUN; partial probe observations in release/review-20261112.md; exact-package functional hardware checks recorded separately in release/hardware-20261110.md"
   }
 }

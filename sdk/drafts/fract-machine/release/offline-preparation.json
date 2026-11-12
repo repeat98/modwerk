@@ -57,7 +57,6 @@
     "Untested stock flows, companions and active replacement; retain prior unresolved reload incident.",
     "First-release approval, final promoted-source/USB catalogue integration and final exact-artifact verification."
   ],
-  "notApplicable": "Separate card/native parity and card-pair table: this is a USB-only C runtime. The actual source-recipe wrapper/check fixture and exact original-OS reproduction cover its build route.",
   "deviceOpenedDuringOfflinePreparation": false,
   "publicPackageActivated": false
 }

@@ -16,7 +16,8 @@ install/integrity, Keep/readback, exact Undo, removal/reinstall, saved Part and
 project reload, absent-module project fallback to FLEX, audio/POS/SIZE and a
 physical reboot with independent exact-set restoration readback. See the
 [10 November hardware report](release/hardware-20261110.md) for source/package/base
-identities, attributed observations, refused attempts and limits. Full-emulator,
+identities, attributed observations, refused attempts and limits. Exact-package
+full-emulator START, three-head playback and retrigger passed separately;
 timing/stress, companion and complete stock-flow qualification remain pending.
 The historical PROJECT RELOAD stall remains unresolved; a controlled repeat on
 this candidate passed without assigning the old cause.
@@ -25,6 +26,8 @@ The owner accepted a ColdFire audio-path performance record on 7 November:
 worst own render/block against budget, matched native-FLEX longest-frame/idle,
 and audio stress instead of MIDI flood. `evidence/performance.json` uses nulls
 with reasons for unmeasured fields. No timing pass or owner waiver is claimed.
+The [12 November review plan](release/review-20261112.md) records the required base sequence, guard capture and neighbouring-machine
+Part reload; final relinking and timing wait for #1418 and then #1165.
 
 ```sh
 python3.12 -B -m unittest discover -s sdk/tests -p 'test_source_runtime_package.py'
@@ -108,7 +111,7 @@ base/boot behavior, not the complete public-release lifecycle.
 
 ### Pre-merge base check — 5 November 2026
 
-On the owner's physical Octatrack running OS 1.40C, USB installed the
+On the author's physical Octatrack running OS 1.40C, USB installed the
 `tracks-main-cue` base built from #926 source revision
 `1e227430fbfaf3db6f95f19e1be2703d7e58fc42`:
 
@@ -116,11 +119,11 @@ On the owner's physical Octatrack running OS 1.40C, USB installed the
 - Private FRACT package SHA-256: `a5a35eaaeb22d2361b6e8d73c9acc96df640eb4f1306dae719b2c6bb17bbae9b`.
 - Installed set ID: `59cad7f1cc080efb79ecb09624fd1a22173ea392d4887c11a9474f2dee21a05f`; inventory contained one FRACT.
 
-The owner reported successful completion of the requested short checklist:
+The author reported successful completion of the requested short checklist:
 ordinary machines and FRACT played, a Part containing FRACT was saved, the unit
 was powered off/on, and the track returned as FRACT and played. The exact
 project/Part name, ordinary-machine names and elapsed test time were not
-supplied; these listening and panel observations are owner-reported.
+supplied; these listening and panel observations are reported by the author.
 
 Independent USB readback after that power cycle confirmed the exact base and
 set IDs above, one FRACT in inventory, normal/known-active operation and a new
@@ -176,7 +179,7 @@ neither the granular algorithm nor controls.
 This is a different package from the 5 November private build: it has the
 canonical runtime module ID and a seven-base guard. Its install/Keep/Undo,
 replacement/removal, missing-module behavior, Part/project reload, physical
-power-cycle, companion and stress results are PENDING. The owner will connect
+power-cycle, companion and stress results are PENDING. The author will connect
 the Octatrack later. Earlier hardware results are not promoted to a pass for
 this candidate. Worst-case cycle measurements and the corresponding
 qualification/performance records remain pending. No approval or waiver is
@@ -205,7 +208,7 @@ nesting. `release/resources.json` records these limits. See
 
 ### Physical USB functional check — 6 November 2026
 
-The owner connected the Octatrack, confirmed stopped playback and a disposable
+The author connected the Octatrack, confirmed stopped playback and a disposable
 test project, and selected stock FLEX to release the old private FRACT track.
 The exact candidate above was installed on physical base `9b3ba417` through the
 standard whole-set transaction. The previous private module was removed in the
@@ -221,13 +224,13 @@ previous slot 0 generation 6; no fallback). No base/NOR write occurred.
 Native SELF TEST reported passed, zero failures, one intact module and zero
 DSP-effect modules. Its DSP exercise count and CPU peaks were zero; this is
 integrity/lifecycle evidence, not an audio/stress/performance qualification.
-The owner then reported “Всё работает, воспроизведение остановлено” in
+The author then reported “Всё работает, воспроизведение остановлено” in
 response to selecting the new FRACT on T1, assigning a FLEX-pool sample,
 listening, moving POS/SIZE and checking for hangs/crackle. These are attributed
-owner observations; sample name, duration and model were not supplied. The completed checks and remaining limits are recorded below. No project or Part was saved by the agent.
+observations by the author; sample name, duration and model were not supplied. The completed checks and remaining limits are recorded below. No project or Part was saved by the agent.
 
 An initial attempt was safely refused as `RUNTIME_IN_USE` while a track named
-old FRACT; the owner then selected FLEX. Two private test-driver issues were
+old FRACT; the author then selected FLEX. Two private test-driver issues were
 also corrected: the base intentionally withholds its cached set digest during
 a retained trial, and a two-row set Undo requires acknowledged continuation
 through its intermediate recovery state. Each stopped attempt was followed by
@@ -236,13 +239,13 @@ These outcomes remain separate from the final successful explicit Undo/Keep;
 no failed/unfinished attempt is counted as a hardware pass.
 
 The canonical package was subsequently removed and kept: USB confirmed an empty
-inventory and saved/read-back count zero. The owner reported that the instrument
+inventory and saved/read-back count zero. The author reported that the instrument
 remained responsive, but was unsure whether RELOAD Part had actually been done
 while FRACT was absent. That missing-module reload is **unconfirmed**, not a pass.
 The identical candidate was reinstalled, passed the same integrity check and was
 kept/read back as the original candidate set above.
 
-After saving the test Part/project, the owner physically switched the unit off
+After saving the test Part/project, the author physically switched the unit off
 and on and reported: “Да, перезапустил: FRACT остался и звучит”. Independent USB
 readback at 13:06:44 UTC confirmed the same base, one canonical FRACT and the same
 candidate set digest. The boot session changed from
@@ -252,8 +255,8 @@ Saved-set restore reported one restored/live module; both confirmed NOR slots
 remained unchanged, with no fallback. The first read met a stale libusb handle;
 a read-only reconnect succeeded. No SELF TEST was started after reboot.
 
-Finally, with FRACT installed, the owner changed POS without saving and used
-FUNC+CUE to reload the saved Part. The owner confirmed: “Да, значение вернулось,
+Finally, with FRACT installed, the author changed POS without saving and used
+FUNC+CUE to reload the saved Part. The author confirmed: “Да, значение вернулось,
 FRACT работает”. This is an installed-Part reload functional pass, separate from
 the unconfirmed missing-module case. Project-file reload is recorded separately below. Distinct
 parameter comparisons across tracks, other controls, companions and long load,
@@ -265,8 +268,8 @@ changes no native candidate input or package byte.
 
 ### Project RELOAD incident and stopped-state repeat — 6 November 2026
 
-During the later resource-accounting session the owner explicitly used
-PROJECT > RELOAD. FRACT remained on T1, but the owner reported no sound and no
+During the later resource-accounting session the author explicitly used
+PROJECT > RELOAD. FRACT remained on T1, but the author reported no sound and no
 sequencer movement after PLAY. Exiting menus and STOP twice followed by PLAY
 did not recover it. The precise transport state at the initial RELOAD was not
 recorded. This is a failed observation, not a project-reload pass or an isolated
@@ -281,15 +284,15 @@ was captured privately before recovery. Cached CPU/DSP load was stale/null;
 these readings are not a performance measurement. No upload, Keep, base write,
 SELF TEST start or project/Part save was performed by the agent.
 
-The owner then physically powered off/on without a new save and reported that
+The author then physically powered off/on without a new save and reported that
 PLAY advanced and FRACT sounded again. USB confirmed a new session,
 `e5281fc4cfcb92785615d01aa37964e2575a447b664df3d6c8e7a0b356f3911d`,
 with the same base, canonical inventory and kept set. Frames advanced from
 150,744 to 156,257 over approximately two seconds; both confirmed NOR slots
 were unchanged. No package or base was replaced to obtain recovery.
 
-For a controlled repeat, the owner pressed STOP twice, used PROJECT > RELOAD,
-waited for it to finish, then pressed PLAY. The owner reported that steps ran
+For a controlled repeat, the author pressed STOP twice, used PROJECT > RELOAD,
+waited for it to finish, then pressed PLAY. The author reported that steps ran
 and FRACT sounded. USB at 14:35:28–14:35:30 UTC confirmed the same new session
 and set, with frames advancing from 434,639 to 440,152. This is one successful
 stopped-state project-reload repeat. It does not explain or erase the first
