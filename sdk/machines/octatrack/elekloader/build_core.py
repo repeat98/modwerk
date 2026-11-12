@@ -160,9 +160,12 @@ BOOT_GATE = (0x40000412, '2e7c48000000')
 # The startup (boot_anim.s) replaces the logo loop's first instructions, `pea -1; clr.l -(%sp)`.
 BOOT_LOGO = (0x400559c6, '4878ffff42a7')
 # The frame guard (machine_registry.c): the frame interrupt's register save at its entry and its restore with rte
-# at its exit, which machine_registry.s replays around the guard's clock. Address, bytes, their SHA-256, shim.
+# at its exit, which machine_registry.s replays around the guard's clock, and the frame builder's two renderer calls,
+# where a renderer a module put into a track's slots itself meets the guard. Address, bytes, their SHA-256, shim.
 FRAME_SITES = ((0x4000aad0, 8, '5f02b18d204af6e4a0177ad6e41c779a698018b6f25b5d83850926c8a9d44fa2', 'mw_frame_entry'),
-               (0x4000d9a6, 10, '60acbd38c2859ac73a63948d6c58796591fdbddd654799e50e88b0940be9a37a', 'mw_frame_leave'))
+               (0x4000d9a6, 10, '60acbd38c2859ac73a63948d6c58796591fdbddd654799e50e88b0940be9a37a', 'mw_frame_leave'),
+               (0x4000d43e, 6, '0f69edd47eb472176050ed5c14a75d055e0de101cd2d3a8d7c79f7dc6526246b', 'mw_render_first'),
+               (0x4000d52c, 6, '5bb0079066abd317109cc9ae7a5f58f0a0d1596bb04da603669ed66ec8172243', 'mw_render_second'))
 OS_FIRST, OS_VEROFF, BOOT_IMAGE_BYTES = 0x4fefffe4, 0xde648, 0x140000  # boot.s, boot.h
 BOOT_RESERVE = (0x40a955e0, 0x41495de0)  # boot.s RESERVE_LO/HI: the gate scans only there
 # REMIX SWITCH's DSP park (dsp_park.asm, assembled by Octabam's dsp_asm), by
