@@ -30,8 +30,10 @@
       "Runs on the BD, SD and BT voices, through their stock filter, AMP and OVR."
     ],
     "usage": [
-      "Choose BD ANALOG for the BD track (FUNC + SRC), then shape it with TUN, DEC and the stock AMP page.",
-      "Tap encoder B to hear the 909, and play the pads soft and hard for the accent."
+      "Select the BD track, press FUNC + SRC, scroll to BD ANALOG (the last of the BD section) and press YES.",
+      "Play the pad soft and hard: velocity is the accent, harder hits are snappier.",
+      "Turn TUN for the pitch and DEC for the length; SWP sets how far the pitch sweeps down.",
+      "Tap encoder B: the label changes from TON to SWT and the bar from 808 to 909. Play it again, and tap again for the 808."
     ]
   },
   "access": {
