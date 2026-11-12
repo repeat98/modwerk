@@ -109,6 +109,9 @@ const REFUSED: Partial<Record<UploadResultName, string>> = {
  * loader's refusals (sdk/runtime/loader-refusals.json). A code without one shows the plain text above. */
 const REJECTED: Partial<Record<number, string>> = Object.fromEntries(
   loaderRefusals.refusals.flatMap(refusal => 'musician' in refusal && refusal.musician ? [[refusal.code, refusal.musician]] : []))
+/** The unit is claimed by another page: in the data (11 Nov 2026) that was Modwerk in another tab or browser, which
+ * reads the unit every second while connected, not an Elektron app (they use the MIDI and audio interfaces). */
+export const LINK_BUSY = 'Modwerk is open in another tab or browser and is using your Octatrack. Close it, and this page connects by itself.'
 const UNPLUG = 'Unplug the USB cable to undo anything unfinished, then plug it back in.'
 /** The boot stub started the previous base after the new one failed to start three times (BaseSlots.fellBack). */
 const FELL_BACK = 'The last base update didn’t start, so your Octatrack went back to its previous base. Nothing was lost. Try the update again, and if it happens again, report it with Report a problem on the Your Octatrack page.'
@@ -561,7 +564,7 @@ export class OctatrackLink {
     return this.serial(async () => {
       this.live(connection)
       if (!this.transport || this.state.status !== 'ready') throw new Error('The Octatrack isn’t idle (' + this.state.status + ').')
-      if (!await this.claim()) throw new Error('Another browser window or app is using the Octatrack.')
+      if (!await this.claim()) throw new Error(LINK_BUSY)
       try {
         const session = await this.connectSession(this.transport, base, { timeoutMs })
         this.live(connection)

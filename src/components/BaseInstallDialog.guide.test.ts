@@ -3,7 +3,7 @@ import { act, createElement } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeSession, fakeUnit } from '../dev/octatrack-link-fake'
-import { OctatrackLink } from '../engine/elekloader/octatrack-link'
+import { LINK_BUSY, OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { UploadUnconfirmedError } from '../engine/elekloader/upload-session'
 import { pendingBaseInstall, waitForBaseInstall } from '../config/octatrack-progress'
 import { BaseInstallDialog } from './BaseInstallDialog'
@@ -109,6 +109,16 @@ describe('the guided first install, for a member on the original OS', () => {
     click(buttonNamed('Continue')!)
     expect(guide.onReady).toHaveBeenCalledOnce()
     expect(pendingBaseInstall()).toBeUndefined()
+  })
+  it('says at the last step when Modwerk in another tab or browser holds the unit, and finishes once it lets go', async () => {
+    const { unit, link } = await connected('stock')
+    waitForBaseInstall('ab'.repeat(32), expected)
+    const guide = open({ link }); await guide.render()
+    unit.base = expected; unit.taken = true; unit.unplug(); unit.plug('base')
+    await vi.waitFor(() => expect(link.getState().status).toBe('busy'))
+    expect(container.querySelector('.base-install-note')?.textContent).toBe(LINK_BUSY)
+    unit.taken = false; await act(() => link.retry())
+    await vi.waitFor(() => expect(guide.onReady).toHaveBeenCalledOnce())
   })
   it('without a diagnostics step, finishes as soon as the unit connects on the new base', async () => {
     const { unit, link } = await connected('stock')
