@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-only
 // Improved AMP: the words its amp record entries and its OVR reader use every block for every
 // voice, kept together so an idle block touches few 16-byte cache lines of the module's data:
-// line 0 for the two entries, line 1 for voice 0's scan, lines 6 and 7 for the OVR reader.
+// line 0 for the two entries, line 1 for voice 0's scan, lines 6 and 7 for the OVR reader (lines
+// 2 to 5 and 8 to 9 are read only for a voice that sounds).
 // amp-write.s, pre-fade.s and ovr.s name the same offsets (HOT_*): keep them in step.
 #ifndef IMPROVED_AMP_HOT_H
 #define IMPROVED_AMP_HOT_H

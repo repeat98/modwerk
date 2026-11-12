@@ -37,6 +37,9 @@ typedef uint32_t word_t;
 // ---- stock OS 1.74 ----
 // (The stock tables of AMP HLD 0x401ee81c, AMP DEC 0x401ee61c and FILTER DEC/REL 0x401ef030 are
 // replaced by improved_amp_hold, improved_amp_amp_dec and improved_amp_flt_dec below, through ptr sites.)
+// amp_env_commands' states: 0 a trig (sends the attack, moves to 1 or 2), 1 gate (holds while the
+// note is on, then 3), 2 timed hold, 3 decay, 4 choke, -1 idle. The block that leaves 1 or 2 still
+// sends the hold's record.
 #define AMP_DECAY improved_amp_amp_dec
 #define FLT_DECAY improved_amp_flt_dec
 #define REC(id) (0x419a4888 + 84 * (id))            // a parameter's RAM record
@@ -149,30 +152,16 @@ const uint32_t improved_amp_flt_dec[128] __attribute__((aligned(4))) = {
     0xef8f5, 0xf1349, 0xf3087, 0xf4a27, 0xf609f, 0xf744f, 0xf8591, 0xf94b1,
 };
 
-// AMP HLD knob -> hold in ticks of 2 samples, whole blocks of 16, read by stock through the lea
-// at 0x40109bc2, whose end of the hold improved_amp_voice overrides. 0 is no hold and 127 AUTO (not read).
-const int32_t improved_amp_hold[128] __attribute__((aligned(4))) = {
-    0, 16, 32, 48, 64, 80, 96, 112,
-    128, 144, 160, 176, 192, 208, 224, 240,
-    272, 304, 336, 368, 400, 432, 512, 592,
-    672, 752, 832, 912, 992, 1072, 1152, 1232,
-    1392, 1552, 1712, 1872, 2032, 2192, 2352, 2512,
-    2672, 2832, 2992, 3152, 3312, 3472, 3632, 3952,
-    4272, 4592, 4912, 5232, 5552, 5872, 6192, 6512,
-    6832, 7152, 7568, 8016, 8496, 8992, 9520, 10080,
-    10672, 11312, 11968, 12688, 13424, 14224, 15056, 15952,
-    16880, 17872, 18928, 20048, 21232, 22480, 23808, 25216,
-    26704, 28272, 29936, 31696, 33568, 35552, 37648, 39856,
-    42208, 44704, 47328, 50128, 53072, 56208, 59520, 63024,
-    66736, 70672, 74848, 79248, 83920, 88864, 94112, 99664,
-    105536, 111744, 118336, 125312, 132704, 140512, 148800, 157568,
-    166864, 176688, 187104, 198128, 209808, 222176, 235280, 249136,
-    263824, 279376, 295840, 313280, 331744, 351296, 372000, 372000,
-};
+// Stock's own hold compare (0x40109bc2: the hold counter in ticks against the entry of the knob's
+// live value, every block of state 2) reads this in place of its table and must never end a hold:
+// the hold is counted in steps by improved_amp_voice. Every entry is out of the counter's reach,
+// 127 too: stock reads it when HLD is turned to AUTO in a hold.
+const int32_t improved_amp_hold[128] __attribute__((aligned(4))) = { [0 ... 127] = 0x7fffffff };
 
 // AMP HLD knob -> hold in steps of the voice's track, x 225,000 (a quarter of the musical clock's
 // units in a step at one pulse a step; tools/dec_table.py). At 120 BPM and 1x a value holds as
-// long as improved_amp_hold's, but for 13 values set on the step grid, where FUNC + turn stops:
+// long as the time table this module had before, but for 13 values set on the step grid, where
+// FUNC + turn stops:
 // 0.125, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 8, 16, 32 and 64 steps. 0 is no hold and 127 AUTO (not read).
 const int32_t improved_amp_hold_steps[128] __attribute__((aligned(4))) = {
     0, 1200, 2400, 3600, 4800, 6000, 7200, 8400,
@@ -333,8 +322,8 @@ uint32_t improved_amp_voice(int32_t v, volatile int32_t *st, const volatile int8
         st[0] = h == HLD_AUTO ? 1 : 2;
         HOLD_ACC(v & 7) = HOLD_FIRST;
     } else if (lw == LEVEL_HOLD || (uint32_t)(st[0] - 1) < 2u) {
-        // Every block of the gate and hold states counts, as stock's own counter does: the ones
-        // whose record the pre-fade has taken for its fade too.
+        // Every block of the gate and hold states counts: the ones whose record the pre-fade
+        // has taken for its fade too (such a voice is not left to the writer's skip, below).
         uint32_t acc = HOLD_ACC(v & 7), moved = SCAN_DELTA >> 2;
 
         if (acc == HOLD_FIRST)
@@ -347,7 +336,9 @@ uint32_t improved_amp_voice(int32_t v, volatile int32_t *st, const volatile int8
         if (lw == LEVEL_HOLD && h == HLD_AUTO && st[0] == 2) {
             st[0] = 1;          // turned to AUTO while held: the gate (set at the trig) ends it
         } else if (lw == LEVEL_HOLD && h != HLD_AUTO && (uint32_t)(st[0] - 1) < 3u) {
-            // States 1 and 2 send the continued attack; 3 here is 2 that stock just ended. The
+            // States 1 and 2 send the continued attack; 3 here is a gate that ended in this
+            // block, on a voice whose HLD was turned from AUTO to a value: it holds its steps
+            // from the trig too. (With HLD at AUTO a 3 is the note's end and is left alone.) The
             // track's speed is read only once the count has reached the hold at the fastest one.
             uint32_t steps = h > 0 ? (uint32_t)HOLD_STEPS[h] : 0;
 
@@ -357,8 +348,10 @@ uint32_t improved_amp_voice(int32_t v, volatile int32_t *st, const volatile int8
     follow(a, rate, lw);
     // A record that is neither attack word and left the follower as it was does the same next
     // time: until the record changes, the writer skips this call (amp-write.s). Idle voices and
-    // a decay that has reached its end get the same record every block.
-    if (lw != LEVEL_ATTACK && lw != LEVEL_HOLD && a->level == was.level && a->target == was.target &&
+    // a decay that has reached its end get the same record every block. A voice in its gate or
+    // hold whose record the pre-fade has taken is not skipped: its hold goes on counting.
+    if (lw != LEVEL_ATTACK && lw != LEVEL_HOLD && (uint32_t)(st[0] - 1) >= 2u &&
+        a->level == was.level && a->target == was.target &&
         a->step == was.step && a->one_pole == was.one_pole && a->frozen == was.frozen) {
         GATE_RATE(v & 7) = rate;
         GATE_LW(v & 7) = lw;
@@ -460,7 +453,7 @@ __attribute__((noinline)) static void put_time(char *p, uint32_t ticks)
     put_text(put_uint(p, (ticks + 12000) / 24000), "s");
 }
 
-// A hold in steps from HOLD_STEPS, three digits: "0", "0.005", "0.080", "1.53", "15.8", "21.0",
+// A hold in steps from HOLD_STEPS, three digits: "0", "0.005", "0.080", "1.64", "14.9", "21.0",
 // "124". A hold of whole eighths of a step below 100, which the grid's 13 are and no other value
 // is, drops the zeros at its end: "0.125", "0.5", "1", "1.5", "64".
 __attribute__((noinline)) static void put_steps(char *p, uint32_t cq)
