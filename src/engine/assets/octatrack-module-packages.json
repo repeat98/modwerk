@@ -344,7 +344,7 @@
       "path": "octatrack-modules/sidechain-compressor/0.2.1-experimental.mwrm",
       "lagsBehind": "0.2.2-experimental",
       "lagReason": "0.2.2 changes only the card build's placement: its ColdFire units join the DRAM runtime when another module in the set carries one (#1175). The USB package and its controller are 0.2.1's, so 0.2.1 stays the USB package.",
-      "requiredBase": "5ef4d447b5564daa4990b764811555fa8beb4f9b7025e03cb4006e606a62f130"
+      "requiredBase": "de01247b9dbff1fa577d18f0a5f2be5191a3ce72124959c0b448b261b6882373"
     },
     {
       "id": "output-matrix",
@@ -360,7 +360,7 @@
       "bytes": 3740,
       "sha256": "d905f7e04554d9f49c6e8761feffa9e9b6f6187cb8bd2c263cc209e932de2252",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "5ef4d447b5564daa4990b764811555fa8beb4f9b7025e03cb4006e606a62f130"
+      "requiredBase": "de01247b9dbff1fa577d18f0a5f2be5191a3ce72124959c0b448b261b6882373"
     },
     {
       "id": "cc-map",
@@ -376,7 +376,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "5ef4d447b5564daa4990b764811555fa8beb4f9b7025e03cb4006e606a62f130"
+      "requiredBase": "de01247b9dbff1fa577d18f0a5f2be5191a3ce72124959c0b448b261b6882373"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -454,7 +454,7 @@
       "bytes": 1818,
       "sha256": "39d675efd554e099d525f41e8baf02c071c1c29d38f1f331fb74db2cee3ef870",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "5ef4d447b5564daa4990b764811555fa8beb4f9b7025e03cb4006e606a62f130"
+      "requiredBase": "de01247b9dbff1fa577d18f0a5f2be5191a3ce72124959c0b448b261b6882373"
     },
     {
       "id": "analog-bassdrum",
@@ -468,9 +468,9 @@
       "name": "Analog BD",
       "module": "abdb1445",
       "bytes": 26172,
-      "sha256": "9a7eb8144ad3a92e3c1908911176d9ebbcdf64304c1c2e49b0b10cd8ac226d40",
+      "sha256": "8f1bb88c67d1903c6189fe558947d909934df39a9839fe3d2921561bca1dceff",
       "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
-      "requiredBase": "5ef4d447b5564daa4990b764811555fa8beb4f9b7025e03cb4006e606a62f130",
+      "requiredBase": "de01247b9dbff1fa577d18f0a5f2be5191a3ce72124959c0b448b261b6882373",
       "requires": 0,
       "claims": 1,
       "entries": 1

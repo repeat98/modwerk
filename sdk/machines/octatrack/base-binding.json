@@ -1,26 +1,26 @@
 {
  "schema": 1,
- "identity": "5ef4d447b5564daa4990b764811555fa8beb4f9b7025e03cb4006e606a62f130",
+ "identity": "de01247b9dbff1fa577d18f0a5f2be5191a3ce72124959c0b448b261b6882373",
  "arena": 1089514976,
- "pool": 1087552080,
+ "pool": 1087552592,
  "symbols": {
   "modwerk_controller_write_begin": 1084872428,
   "modwerk_controller_write_end": 1084872456,
-  "modwerk_cue_cfg_clamp": 1085080556,
-  "modwerk_raise_ev_mute_keep": 1085082910
+  "modwerk_cue_cfg_clamp": 1085080808,
+  "modwerk_raise_ev_mute_keep": 1085083162
  },
  "controllers": {
   "sidechain-compressor": "3441f20d807a096bc8d7d7e8a25e927352c329a87e808e906f85495f516cb2f2",
   "output-matrix": "27504642198ef9e3721cdb6274cad1742c823f08158fec0332986176b68be589",
-  "analog-bassdrum": "ca6ad1ab4924a7fa6797f66cefb5f112e6727016f87f68ba9e3d4aca6396d14f"
+  "analog-bassdrum": "d6771f33694c5906bc0ce8a745342927ad8f36746a2d656249ff397f896287ea"
  },
  "variants": {
-  "tracks-main-cue": "5ef4d447b5564daa4990b764811555fa8beb4f9b7025e03cb4006e606a62f130",
-  "tracks": "d59460a575c4afd0c2c0659101019ae7c061fa94ec5388b7a865edb19d030084",
-  "tracks-post": "9b08c7a94cebe512b6eddab8c7218a4681d58eb9ac6ff48b2eecc9811a7c6787",
-  "main-cue": "8d588b05a4a17e23f478b184c3ca532648e70af999180af5b79a681798abd9cc",
-  "main": "797001766a46000af20608b013da4f9fda9bbd4ea67fce49962a42cdb539cf9c",
-  "master": "af8bb136aadc935d384159738e411263744587e7f87f02fcc5a8f0f467491baf",
-  "off": "0c4859c4a73aa521af3f2b79622b7466a2f9af1d58f5a4cb601e7a419b16e921"
+  "tracks-main-cue": "de01247b9dbff1fa577d18f0a5f2be5191a3ce72124959c0b448b261b6882373",
+  "tracks": "8ee73e563efd5b33ddb3cdf851b927677bc1cf54dd245631d75a26f7511b4039",
+  "tracks-post": "2c9d17494610f0d2f5d6be10bbce73c5b324320267c8354096d9190cd3c90087",
+  "main-cue": "ad2c52aa0ce90015c07fae0ca9ca35d378a961f62f8641c52208220db9b67259",
+  "main": "f5f10db815abeffe3db63a758cb49eeb96cae5c67cf0a2ee38a7a2fdf0adbf3e",
+  "master": "85c20cbebeb34dcbd311232a84ffcc1a633bbad6752a06e30af4e878c148636c",
+  "off": "938422ac32e13f371bf8b9bcbd7f8faba9463cf25ef498f698ba217bdf4240d3"
  }
 }

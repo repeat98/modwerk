@@ -230,6 +230,12 @@ which it retries, so check what needs the words when the package is built.
   then the same on both cores.
 - **Relocations** of an engine may also name a word holding a fixed P address (`index | 0x8000`: value − base), as the
   base's own engines (`resident_dsp.engine_unit`).
+- **Price** of an engine: the header's `cycles` (bytes 44-45) and `kind` (byte 46) are its price per voice, as an
+  effect's per instance: worst case per sample, charged once per track that plays it (a fixed per-core cost folded in,
+  or the module's own `source_engine`). Never 0, and executed (`RUNTIME_EXECUTED`, 1) or hardware (`RUNTIME_HARDWARE`, 3) evidence only,
+  never modeled: the loader and `abi9.engine` refuse anything else, as an older base refuses any price on an engine. It
+  lies outside the controller digest (below), so a new price ships in the package and never changes a base's trust row.
+  `init` (bytes 40-41) stays 0: an entry offset means nothing on an engine.
 - **Claims** of an engine may name both cores (core 2) and carry initial words (access bit 4): the words follow the DSP
   relocations, each claim's in claim order, 4 bytes a 24-bit word, at most `RUNTIME_DSP_INIT_WORDS` (4,096) in all. The
   base writes them before it enables the engine's hooks.
