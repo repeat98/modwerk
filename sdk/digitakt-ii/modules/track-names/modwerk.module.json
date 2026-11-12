@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 3,
+  "id": "track-names",
+  "name": "Track Names",
+  "version": "0.1.0-experimental",
+  "machine": "digitakt-ii",
+  "category": "system",
+  "exclusive": false,
+  "author": {
+    "github": "crisp909",
+    "credits": [
+      "crisp909"
+    ]
+  },
+  "maintainers": [
+    "crisp909"
+  ],
+  "presentation": {
+    "label": "TRACK NAMES",
+    "family": "Display",
+    "summary": "The Internal Mixer shows each track's name instead of TRK1..TRK16, with the track number above each fader.",
+    "overview": "Track Names draws each track's name from SETUP > RENAME (its first 5 characters) in place of the mixer's TRK labels, and the track number in an inverted box at the top left of each fader. The names live in the pattern's kit, so each pattern has its own. The mod only draws; it saves nothing.",
+    "highlights": [
+      "Names on the Internal Mixer, first 5 characters",
+      "Track number above every fader",
+      "Per pattern, from the stock names"
+    ],
+    "usage": [
+      "Name tracks short in SETUP > RENAME (KICK, SNARE, BASS), then open FUNC + MOD, pages 2/5 and 3/5."
+    ]
+  },
+  "access": {
+    "location": "FUNC + MOD, Internal Mixer pages 2/5 and 3/5",
+    "steps": [
+      "Name a track: FUNC + FLTR (SETUP), RENAME at the end of the TRACK section, YES.",
+      "Open FUNC + MOD and press it again until Internal Mixer (2/5) or (3/5)."
+    ],
+    "screenshots": []
+  },
+  "controls": [],
+  "compatibility": {
+    "releases": [
+      "1.17"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Only the Internal Mixer pages show names.",
+      "The mixer shows at most 5 characters of a name."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "1.0",
+    "build": "build.json",
+    "events": [
+      "ev_draw"
+    ],
+    "claims": [
+      "ui:Internal Mixer track labels"
+    ]
+  },
+  "resources": {
+    "memoryBytes": null,
+    "fastBytes": null,
+    "load": {
+      "display": "Not measured yet",
+      "method": "unmeasured",
+      "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+    }
+  },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": null,
+    "reports": [],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Not tested yet."
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by the author. Replace if you choose another GPL-compatible licence."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Track Names thumbnail",
+      "alt": "Placeholder thumbnail for Track Names",
+      "credit": "crisp909",
+      "license": "GPL-3.0-or-later",
+      "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+    }
+  ]
+}

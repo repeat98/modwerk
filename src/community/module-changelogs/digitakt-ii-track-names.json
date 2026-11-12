@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-13",
+    "changes": [
+      "First release: the Internal Mixer shows each track's name from SETUP > RENAME in place of TRK1..TRK16.",
+      "The mixer shows the first 5 characters; a track still named PRESET n keeps its stock label.",
+      "Each fader has its track number in an inverted box at its top left.",
+      "Names follow the pattern's kit, so every pattern has its own. The mod only draws: it saves nothing."
+    ]
+  }
+]
