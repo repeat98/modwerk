@@ -47,7 +47,7 @@ export function InstrumentItem({ device, set, href, link, zoom, current, invento
   const last = connection === 'off' || status === 'unsupported' ? lastInventory() : undefined
   const unit = status === 'updating' ? 'Updating the base · don’t unplug' : status === 'connecting' ? 'Connecting…' : connection === 'busy' ? 'Syncing…'
     : status === 'connected' ? inventory ? inventory.moduleIds.length ? modules(inventory.moduleIds.length) + ' on it' : 'No modules on it' : 'Connected'
-    : status === 'stock' ? 'Original OS: install the base' : status === 'busy' ? 'In use by another window or app' : 'Not connected'
+    : status === 'stock' ? 'Original OS: install the base' : status === 'busy' ? 'In use by another Modwerk tab' : 'Not connected'
   if (!link) return <a className="sidebar-device instrument-item" href={href} aria-current={current ? 'page' : undefined} aria-label={device.name + ', ' + (set ? set.name : 'No module set yet')}>
     <span className="instrument-picture"><DeviceImage device={device} eager /></span>
     <span><strong>{device.name}</strong><small>{set ? set.name : 'No module set yet'}</small></span>

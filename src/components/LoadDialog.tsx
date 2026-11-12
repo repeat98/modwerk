@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { loadStep, type Inventory, type InventoryTarget } from '../config/inventory'
 import { recordSync, rememberSuccessfulSync } from '../config/octatrack-progress'
-import { LinkBusyError, type OctatrackLink } from '../engine/elekloader/octatrack-link'
+import { LINK_BUSY, LinkBusyError, type OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { BaseLayoutRequired, BaseUpdateRequired, baseOutdated, ModuleSetError, moduleSetReview, setLayout, SetLimitError, USB_MODULE_IDS } from '../engine/elekloader/module-set'
 import { baseLayout, layoutName, type BaseLayout } from '../engine/elekloader/base-variants'
 import { USB_AUDIO_MODULE } from '../config/usb-audio'
@@ -152,7 +152,7 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
       </div>}
       {problem && !(problem instanceof SetLimitError) && <p className="file-error" role="alert">{problem.message}</p>}
       {error && <p className="file-error" role="alert">{error}</p>}
-    </> : step === 'done' ? <><p className={'base-install-intro ' + (error || notice?.tone === 'error' ? 'file-error' : 'success-note')} role={error || notice?.tone === 'error' ? 'alert' : 'status'}>{error || notice?.text || (status === 'busy' ? 'Another browser window or app is using your Octatrack, so nothing was sent.' : 'Done.')}</p>{followNotice && <p className="link-hint" role="status">{followNotice}</p>}</>
+    </> : step === 'done' ? <><p className={'base-install-intro ' + (error || notice?.tone === 'error' ? 'file-error' : 'success-note')} role={error || notice?.tone === 'error' ? 'alert' : 'status'}>{error || notice?.text || (status === 'busy' ? LINK_BUSY + ' Nothing was sent.' : 'Done.')}</p>{followNotice && <p className="link-hint" role="status">{followNotice}</p>}</>
     : <>
       {step === 'loading' && !preparing && <progress className="load-progress" max={1} value={progress} aria-label="Syncing" />}
       <p className="base-install-intro" role="status">{step === 'loading' ? (preparing ? 'Preparing your modules…' : progress < 1 ? `Syncing… ${Math.round(progress * 100)}%` : 'Starting…')

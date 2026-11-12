@@ -10,7 +10,7 @@ import { USB_AUDIO_MODULE } from '../config/usb-audio'
 import type { Configuration } from '../config/workspace'
 import { DeviceImage } from '../devices/DeviceImage'
 import { DEVICES_BY_ID } from '../devices/registry'
-import type { OctatrackLink } from '../engine/elekloader/octatrack-link'
+import { LINK_BUSY, type OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { useOctatrackHealth } from '../hooks/useOctatrackHealth'
 import { DSP_STOPPED, useOctatrackLoad } from '../hooks/useOctatrackLoad'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
@@ -126,7 +126,7 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
     : connected && stopped ? [DSP_STOPPED, null]
     : connected ? [<>Connected · {inventory ? modules(inventory.moduleIds.length) + ' on it' : 'reading what’s on it…'}{onUnit && <> · same as <b>{onUnit.name}</b></>}</>, null]
     : status === 'connecting' ? ['Looking for your Octatrack…', null]
-    : status === 'busy' ? ['Another browser window or app is using your Octatrack. This page connects by itself once it’s free.', <button key="retry" className="button button-quiet" onClick={() => void link?.retry()}>Try again</button>]
+    : status === 'busy' ? [LINK_BUSY, <button key="retry" className="button button-quiet" onClick={() => void link?.retry()}>Try again</button>]
     : status === 'stock' || status === 'ready' ? [status === 'stock' ? 'Connected · original OS' : 'Connected · a Modwerk base this site can’t talk to', <button key="install" className="button button-primary" onClick={() => onInstall()}>Install the base</button>]
     : state.notice?.tone === 'error' ? [state.notice.text, <button key="connect" className="button button-quiet" onClick={() => void link?.connect()}>Connect</button>]
     : [<>Not connected{last ? <> · Last seen: {lastName ? <b>{lastName}</b> : modules(last.moduleIds.length)} · {when(last.at)}</> : null}</>, <button key="connect" className="button button-quiet" onClick={() => void link?.connect()}>Connect</button>]

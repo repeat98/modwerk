@@ -3,7 +3,7 @@ import { BaseDialogFrame, BaseIntro, StagePlan, StageProgress, type BasePromise 
 import { saveFirmware } from '../config/firmware-filename'
 import { BASE_INSTALL_NEEDS, BASE_RECOVERY_NOTICE, MODULE_SKIP_HINT, REPORT_PROBLEMS } from '../firmware-notices'
 import { finishBaseInstall, pendingBaseInstall, waitForBaseInstall } from '../config/octatrack-progress'
-import { explainLinkError, type BaseUpdateStep, type OctatrackLink } from '../engine/elekloader/octatrack-link'
+import { explainLinkError, LINK_BUSY, type BaseUpdateStep, type OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { UploadDeviceError, UploadUnconfirmedError } from '../engine/elekloader/upload-session'
 import { siteUpdated, unitForPrompt } from '../hooks/useBaseInstallPrompt'
 import { baseLayout, isPublishedBase, layoutName, MEMBER_LAYOUT, runningLayout, type BaseLayout } from '../engine/elekloader/base-variants'
@@ -300,7 +300,7 @@ export function BaseInstallDialog({ link, launch = false, layout, set, firmwareR
         <ol className="card-set-steps"><li>Add modules to your module set from the library.</li><li>In <strong>Setup</strong>, under <strong>Load from the card</strong>, download the module file.</li><li>Copy it to the top folder of the card, then switch the Octatrack off and on. It starts with your modules.</li></ol>
         <p>To sync over USB instead, without the card and without a restart, open Modwerk in <strong>Chrome or Edge on a computer</strong>.</p></> : <>
         <p>Keep the USB cable connected. Choose your Octatrack in the browser’s device list.</p>
-        <p className="base-install-note" role="status">{found ? 'The downloaded base is confirmed. Opening your module set…' : state.status === 'connecting' ? 'Connecting to your Octatrack…' : state.status === 'stock' || state.status === 'ready' ? 'The downloaded base hasn’t been confirmed yet. Finish the installation, then connect again.' : 'Once the installed base is recognised, your module set opens automatically.'}</p>
+        <p className="base-install-note" role="status">{found ? 'The downloaded base is confirmed. Opening your module set…' : state.status === 'connecting' ? 'Connecting to your Octatrack…' : state.status === 'busy' ? LINK_BUSY : state.status === 'stock' || state.status === 'ready' ? 'The downloaded base hasn’t been confirmed yet. Finish the installation, then connect again.' : 'Once the installed base is recognised, your module set opens automatically.'}</p>
         {state.notice && <p className="file-error" role="status">{state.notice.text}</p>}
       </>}
     </>}
