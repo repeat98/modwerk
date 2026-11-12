@@ -62,6 +62,7 @@ class DeviceTest(unittest.TestCase):
         self.assertEqual(seen['kw'], dict(selftest=True, inventory=True))
         self.assertEqual(finish.call_args.kwargs['command'], 'device:test')
 
+    @unittest.skipIf(sys.platform == 'win32', 'the trial is ended with SIGINT, which a Windows child process cannot be sent')
     def test_the_trial_is_rolled_back_and_checked(self):
         trial = octatest.Trial([sys.executable, '-c', FAKE_TRIAL, 'rolled back'])
         trial.wait_started(10)
