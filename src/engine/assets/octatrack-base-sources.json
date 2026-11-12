@@ -74,7 +74,7 @@
   "sdk/machines/octatrack/elekloader/selftest.h": "a1b96f2e38935ce78f4c157643a7b6d28f7874b24bee74460bb2bd955eebc946",
   "sdk/machines/octatrack/elekloader/slots.c": "f177b407d274b7e51035e6fd655a014810149e61f3f08686d28168de93711f2d",
   "sdk/machines/octatrack/elekloader/slots.h": "66acbc424a221cf3a74d60d51e912e887df318bc438ba038724efbb0e0aa3acb",
-  "sdk/machines/octatrack/elekloader/status.c": "2e48d4839b2c01fb9ea9f30e84c429351f20a8e4030114e86c715d01c33e11e3",
+  "sdk/machines/octatrack/elekloader/status.c": "1d47914c5181a342ddaa3b523af712612287bbfaa57d4a291f27c621d3011c90",
   "sdk/machines/octatrack/elekloader/status.h": "2a1ad4ae2140bce80815a334fdfcc8e41cd088518f0f2107a5d99ea7eb8e1774",
   "sdk/machines/octatrack/elekloader/status.s": "9385d6a425e37c948a22c9a947d02d7a737fad6d6f89656011f0a7ae7d12b6ae",
   "sdk/machines/octatrack/elekloader/stock_dsp_worst.py": "3705e5b086a896fe48f30661eb52053b34ff4c51bf9e5bfc26a4d1bad6df3500",

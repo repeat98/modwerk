@@ -714,7 +714,10 @@ static void saving_box(unsigned char *frame)
 }
 static void status_draw(unsigned char *frame);
 /* No jump table: it is data in .text, and the build's MCF54455 check reads its bytes as instructions. */
-__attribute__((optimize("no-jump-tables"))) void modwerk_status_draw(unsigned char *frame)
+#ifndef MODWERK_HOST
+__attribute__((optimize("no-jump-tables")))
+#endif
+void modwerk_status_draw(unsigned char *frame)
 {
     MW_STAMP(22); status_draw(frame); MW_STAMP(13);
 }
