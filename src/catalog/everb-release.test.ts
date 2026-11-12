@@ -12,8 +12,6 @@ import { requireModuleResourceImpact } from './resource-impact'
 import { moduleNativeSourceSha256, parseQualificationBaseline, requireFolderQualification } from '../../scripts/module-qualification.mjs'
 import { requireCompleteReadme, requireMonochromePng } from '../../scripts/module-documentation.mjs'
 import { MODULES, resolveSelection } from './modules'
-import { defaultChoosers } from '../engine/choosers'
-import chooserMetadata from '../engine/assets/chooser-metadata.json'
 
 const folder = resolve('sdk/octabam/modules/everb')
 
@@ -27,9 +25,6 @@ describe('E-Verb experimental release', () => {
     await expect(requireFolderQualification(folder, document, parseQualificationBaseline(baseline))).resolves.toBe('owner-approved-update')
     expect(MODULES.some(module => module.id === document.id && module.version === document.version)).toBe(true)
     expect(() => resolveSelection([document.id])).not.toThrow()
-    const menus = defaultChoosers([document.id])
-    expect(menus.fx1).toEqual(chooserMetadata.stockFx1)
-    expect(menus.fx2).toEqual([...chooserMetadata.stockFx2.filter(key => !['SPRING REV', 'DARK REV'].includes(key)), 'EVERB'])
   })
 
   it('gives every 0..127 knob the three-stop FUNC editor in the shipped descriptor recipe (#438)', () => {

@@ -235,7 +235,8 @@ export async function createFrontendTools(options, injected, dependencies = {}) 
     const selected = ids(args.moduleIds), machine = args.machine ?? 'octatrack'
     if (machine !== 'octatrack') { if (!frontend.isDigiDevice(machine)) throw new Error('This machine has no supported builder.'); frontend.resolveDigiSelection(machine, selected); return frontend.estimateCombination(machine, selected) }
     frontend.resolveSelection(selected)
-    if (!args.usb) return { availability: frontend.moduleAvailabilityError(selected, !!args.beta), card: frontend.cardBuildError(selected, !!args.beta), conflicts: frontend.selectionConflicts(selected, frontend.DSP_LOADER && (args.keepStockFx2 ?? false)) }
+    // Without `usb` only the catalogue is asked; whether a set fits is the unit's own admission when it is synced.
+    if (!args.usb) return { availability: frontend.moduleAvailabilityError(selected, !!args.beta) }
     const target = { name: 'MCP test set', moduleIds: selected, removedStockFx: [] }, current = args.current ?? { moduleIds: [], removedStockFx: [] }
     ids(current.moduleIds); ids(current.removedStockFx)
     preparedModules?.requireBase([...selected, ...current.moduleIds], args.base)

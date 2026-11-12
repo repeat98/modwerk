@@ -68,7 +68,7 @@ jobs:
       # Qualification records, complete docs/tutorials and monochrome screenshots are mandatory.
       # First release: owner reviews actual evidence. Later releases: registered author
       # verifies it and explicitly requests automatic publication within the trusted scope.
-      # npm run check runs no firmware gates, but it executes submitted manifest.py files: modules:compat, modules:pairs
+      # npm run check runs no firmware gates, but it executes submitted manifest.py files: modules:compat
       # and sdk:check load every module's manifest as Python.
   # The two long suites of npm run check, each on a runner of its own beside module-contract: the SDK suite and Vitest in
   # two shards. A documentation-only change runs neither, as in the whole check.

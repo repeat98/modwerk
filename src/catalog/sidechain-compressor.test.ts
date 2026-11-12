@@ -3,9 +3,6 @@ import composition from '../engine/assets/sidechain-composition-proofs.json'
 import visibleProofs from '../engine/assets/sidechain-visible-proofs.json'
 import analogProofs from '../engine/assets/sidechain-analog-bd-proofs.json'
 import { CATALOG_SOURCE } from './modules'
-import { checkSelection } from './compatibility'
-import { selectionConflicts } from './selection-conflicts'
-import { defaultChoosers } from '../engine/choosers'
 import { parseModuleDocument, requireModuleQualificationForPublication } from './module-contract'
 import manifest from '../../sdk/octabam/modules/sidechain-compressor/octamod.module.json'
 
@@ -41,11 +38,6 @@ describe('Sidechain Compressor native evidence on the shared builder', () => {
       }
     }
   })
-  it('builds the same menus as the native profiles for every selection', () => {
-    for (const { data } of suites.filter(suite => suite.data !== analogProofs)) for (const proof of data.proofs) {
-      expect(defaultChoosers(proof.moduleIds, proof.keepStockFx2), key(proof.moduleIds, proof.keepStockFx2)).toEqual({ fx1: proof.menu.fx1, fx2: proof.menu.fx2 })
-    }
-  })
   it('records which selections native builds and why it refuses the others', () => {
     for (const { name, data, expected, built } of suites) {
       const proofs = data.proofs
@@ -76,19 +68,6 @@ describe('Sidechain Compressor native evidence on the shared builder', () => {
     const alone = (keep: boolean) => composition.proofs.find(proof => key(proof.moduleIds, proof.keepStockFx2) === key(['sidechain-compressor'], keep))!
     expect(alone(true)).toMatchObject({ bytes: 1112560, sha256: 'fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc' })
     expect(alone(false)).toMatchObject({ bytes: 1112560, sha256: '655183ae46e8aa9eafa08bd3e1a63497feb2f22897f3ea23e27a96a10bb76f06' })
-  })
-  it('retains the historical Analog BD refusals without treating them as current limits', () => {
-    expect(analogProofs.proofs.every(proof => 'error' in proof)).toBe(true)
-    expect(selectionConflicts(['sidechain-compressor', 'analog-bassdrum'])).toEqual([])
-    expect(selectionConflicts(['sidechain-compressor'], true)).toEqual([])
-  })
-  it('keeps MIDI Scenes standalone and records a declaration check for every other selection', () => {
-    expect(checkSelection(['sidechain-compressor', 'midi-scenes']).issues.join(' ')).toContain('standalone')
-    const others = ['analog-bassdrum', ...visible]
-    for (let mask = 0; mask < 2 ** others.length; mask++) {
-      const result = checkSelection([...others.filter((_, bit) => mask >> bit & 1), 'sidechain-compressor'])
-      expect(result.notes).toEqual([])
-    }
   })
   it('carries its own reported hardware evidence and cannot reuse the 0.1.1 waiver', () => {
     const current = () => parseModuleDocument(JSON.parse(JSON.stringify(manifest)))

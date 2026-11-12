@@ -119,9 +119,8 @@ if (!buildOnly && !suiteOnly && passed) {
   // Report release-note problems with the catalogue's, from the committed catalogue, rather than one push later.
   if (!passed) await changelogs()
 }
-// Every active Octatrack module must still install beside every other (declarations only, no firmware), and the card
-// builder's native pair checks must be current, proved and flagged.
-if (!buildOnly && !suiteOnly && !documentationOnly && passed) passed = await all(() => run('elekloader:check'), () => run('modules:compat'), () => run('modules:pairs'))
+// Every active Octatrack module must still install beside every other (declarations only, no firmware).
+if (!buildOnly && !suiteOnly && !documentationOnly && passed) passed = await all(() => run('elekloader:check'), () => run('modules:compat'))
 // Finish generated notice/catalog/media writes before lint, tests, typecheck or bundling read them.
 if (passed && !documentationOnly) passed = await run('licenses:generate') && await run('machines:generate') && await run('modules:generate')
 // Every path, including documentation-only checks and release builds, requires current-version notes and documents within their size.

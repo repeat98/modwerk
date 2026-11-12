@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { MODULES } from './modules'
 import { USB_AUDIO_MODULE } from '../config/usb-audio'
-import { addBlock, refusesAdd } from './add-blocks'
+import { refusesAdd, type AddBlock } from './add-blocks'
 import { isModuleAvailable } from './availability'
-import { cardBuildError, moduleUsbOnly } from './usb-only'
+import { moduleUsbOnly } from './usb-only'
 import { addAllMessage, atLimit, canAdd, limitApplies, limitBlock, limitedCount, LIMIT_REACHED, overLimit, overLimitMessage, SET_MODULE_LIMIT, withSetLimit } from './set-limit'
 
 // Modules a card build takes (no base needed), so the limit is the only reason left to refuse a long set.
@@ -56,7 +56,7 @@ describe('the module limit of an Octatrack set', () => {
 
   it('marks every other module in the library unavailable once the set is full, over any conflict note', () => {
     const below = first(SET_MODULE_LIMIT - 1), full = first(SET_MODULE_LIMIT), next = cardIds[SET_MODULE_LIMIT]
-    const conflict = { conflicts: [], blocks: { [next]: addBlock(['analog-bassdrum'], 'spectrum')! } }
+    const conflict = { conflicts: [], blocks: { [next]: { kind: 'conflict', withIds: ['analog-bassdrum'], reason: 'Conflicts with Analog BD', detail: 'A conflict note from before the set was full.', key: 'spectrum:analog-bassdrum' } satisfies AddBlock } }
     expect(withSetLimit(conflict, below)).toBe(conflict)
     const { blocks } = withSetLimit(conflict, full)
     expect(blocks[next]).toEqual(limitBlock(next))
@@ -68,8 +68,4 @@ describe('the module limit of an Octatrack set', () => {
 })
 
 describe('the card build of a set over the limit', () => {
-  it('is refused with the count, and builds again once trimmed', () => {
-    expect(cardBuildError(first(over))).toBe(`This set has ${over} modules; ${SET_MODULE_LIMIT} is the limit for now. Remove 3 to build.`)
-    expect(cardBuildError(first(SET_MODULE_LIMIT))).toBe('')
-  })
 })

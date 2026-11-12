@@ -3,7 +3,7 @@ import { INDEPENDENCE_NOTICE, FLASHING_RISKS, BASE_RECOVERY_NOTICE, BETA_REPORTI
 import { isValidElement, useState } from 'react'
 import type { ReactNode } from 'react'
 import { BASE_FIRMWARE } from '../engine/base'
-import { DOWNLOADS_ENABLED, DSP_LOADER } from '../engine/protocol'
+import { DSP_LOADER } from '../engine/protocol'
 import { Icon } from './Icon'
 
 const OFFICIAL_OS = 'https://www.elektron.se/wp-content/uploads/2025/03/OCTATRACK_OS1.40C_dist.zip'
@@ -40,7 +40,7 @@ const SECTIONS: FaqSection[] = [
         title: 'Which machines and OS versions can I use?',
         keywords: 'compatibility supported model hardware device octatrack mki mkii digitakt mk1 digitone keys analog rytm mkii digitakt ii 1.40c 1.53 1.54 1.43 1.44 1.74 1.17 preview research syntakt zoom lxr',
         answer: <>
-          <p><strong>Octatrack MKI and MKII:</strong> the original OS {BASE_FIRMWARE.version} .bin. {DOWNLOADS_ENABLED ? 'Builds and downloads are available.' : 'Downloads are paused.'} Review each module’s test records for your model.</p>
+          <p><strong>Octatrack MKI and MKII:</strong> the original OS {BASE_FIRMWARE.version} .bin, for the one install of the Modwerk base. Review each module’s test records for your model.</p>
           <p><strong>Digitakt mk1:</strong> OS 1.53 or 1.54 .syx. <strong>Digitone mk1 and Digitone Keys:</strong> OS 1.43 or 1.44 .syx. These machines are in preview: builds and .syx downloads are available, and their module libraries are still growing. This does not include Digitakt II or Digitone II.</p>
           <p><strong>Analog Rytm MKII:</strong> OS 1.74 .syx, in preview: builds and .syx downloads are available, and its module library is still growing. Recovery needs a MIDI DIN interface, because the startup menu never appears over USB.</p>
           <p><strong>Digitakt II:</strong> OS 1.17, in research. Its page offers a core build in the browser for local checks; there are no Modwerk downloads yet.</p>
@@ -74,7 +74,6 @@ const SECTIONS: FaqSection[] = [
           <p>New Octatrack modules and updates need a hardware report from a real unit that states its model, how long it ran, the workload and the limitations. There is no fixed minimum duration.</p>
           <p>Emulator results cannot replace hardware testing. Existing modules retain their recorded evidence; read each module’s test conditions and limitations rather than assuming every configuration has been tested.</p>
           <p><strong>Always test your own configuration before relying on it.</strong> Start with a fresh Octatrack project after installing a new build, then rehearse your actual track count, module combinations, modulation, recording, streaming and transitions for a sustained run. Repeat after changing modules or versions, and keep a tested fallback for performances or important recordings.</p>
-          {!DOWNLOADS_ENABLED && <p>Octatrack firmware downloads remain paused. Wait for the updated build to complete verification before installing a custom build from Modwerk.</p>}
         </>,
       },
       {
@@ -82,12 +81,13 @@ const SECTIONS: FaqSection[] = [
         title: 'How do I prepare a configuration and build firmware?',
         keywords: 'select add modules configuration choose file build download json',
         answer: <>
+          <p><strong>Octatrack:</strong> no firmware is built with modules in it. You install the Modwerk base once, then add modules from the library to a module set and sync it over USB, or load it from the card: see <a href="#faq/usb-base">modules over USB</a>. The steps below are for Digitakt, Digitone and Analog Rytm MKII.</p>
           <ol>
             <li>Open your machine’s <a href="#library">module library</a>, read the module pages and add the modules you want. Modules belong to one machine and cannot be combined across devices.</li>
-            <li>Open that machine’s Configuration page and choose the original OS file it requests. For Octatrack, use <code>{BASE_FIRMWARE.filename}</code>.</li>
+            <li>Open that machine’s Configuration page and choose the original OS file it requests.</li>
             <li>Review compatibility messages and use the suggested fixes to resolve any errors before building.</li>
             <li>Read the flashing risks, tick the acknowledgement and choose <strong>Build firmware</strong>. You can sign in or choose <strong>Skip for now</strong> to build as a guest. Keep the tab open until it finishes.</li>
-            <li>Confirm that you know how to get back to the original OS, then download the file: <strong>{DOWNLOADS_ENABLED ? 'Download .bin' : 'downloads are paused'}</strong> for Octatrack, <strong>Download .syx</strong> for Digitakt, Digitone and Analog Rytm MKII.</li>
+            <li>Confirm that you know how to get back to the original OS, then choose <strong>Download .syx</strong>.</li>
           </ol>
           <p>Digitakt II builds run in your browser for checks only. Modwerk offers its firmware files once a release is approved.</p>
           <p><strong>Export configuration</strong> saves a JSON backup of your choices. It is not a firmware file and cannot be flashed.</p>
@@ -114,7 +114,6 @@ const SECTIONS: FaqSection[] = [
         title: 'How do I flash an Octatrack .bin from the CompactFlash card?',
         keywords: 'install update upgrade usb disk mode cf root eject system yes',
         answer: <>
-          {!DOWNLOADS_ENABLED && <p><strong>Octatrack downloads are paused.</strong> These steps also apply to installing the official Elektron .bin. Wait for Octatrack downloads to resume before installing a custom build from this site.</p>}
           <ol>
             <li>Connect the Octatrack to your computer by USB. Open <strong>PROJECT → SYSTEM → USB DISK MODE</strong> and press <strong>YES</strong> (ENTER/YES on MKI).</li>
             <li>Copy the firmware .bin to the card’s root: the top level, outside every folder.</li>
@@ -226,8 +225,8 @@ const SECTIONS: FaqSection[] = [
         title: 'Why is there no firmware download button?',
         keywords: 'paused disabled missing ready built hardware audio effects load failed preview digitakt digitone analog rytm recovery',
         answer: <>
-          <p>{DOWNLOADS_ENABLED ? 'The download button appears only after a successful build. Choose the original base firmware, add supported modules, resolve configuration errors and acknowledge the flashing risks first. Once the build finishes, confirm that you know how to get back to the original OS.' : 'Firmware downloads are paused. The built-in logger is undergoing verification. Downloads will resume after the updated builds have passed review.'}</p>
-          <p>Digitakt, Digitone and Analog Rytm MKII builds offer <strong>Download .syx</strong> the same way. Digitakt II builds run for checks only, and Modwerk offers its files once a release is approved.</p>
+          <p>The download button appears only after a successful build. Choose the original OS file, add supported modules, resolve configuration errors and acknowledge the flashing risks first. Once the build finishes, confirm that you know how to get back to the original OS. The Octatrack has no firmware download with modules in it: its base .bin comes from the install guide on Your Octatrack.</p>
+          <p>Digitakt, Digitone and Analog Rytm MKII builds offer <strong>Download .syx</strong>. Digitakt II builds run for checks only, and Modwerk offers its files once a release is approved.</p>
           <p>A build that fits and passes local file checks is not proof that it will work on hardware. You can still export your configuration as JSON.</p>
         </>,
       },
@@ -346,7 +345,6 @@ export function FaqPage({ previewGuide = false, open }: { previewGuide?: boolean
 
   return <div className="faq-page"><BackLink href={previewGuide ? '#all' : '#library'}>Module library</BackLink>
     <div className="page-heading"><div><p className="page-kicker">MODWERK / HELP</p><h1>{previewGuide ? 'Add an audio preview' : 'Frequently asked questions'}</h1><p>{previewGuide ? 'Share a short recording so others can hear what a module does.' : 'Choose the right firmware for your machine, see what each machine supports today and find its flashing and recovery steps.'}</p></div></div>
-    {!previewGuide && !DOWNLOADS_ENABLED && <aside className="risk-note" role="note"><strong>Octatrack firmware downloads are paused</strong><p>The built-in logger is undergoing verification. You can explore modules and check supported configurations while the updated builds await review. The official Elektron OS remains available from Elektron.</p></aside>}
     <div className="faq-tools">
       {previewGuide ? <><a className="button button-primary" href="#all">Browse modules <Icon name="arrow" size={15}/></a><a className="button button-quiet" href="#faq">All FAQs</a></> : <>
       <label className="faq-search"><Icon name="search" size={17} /><input type="search" aria-label="Search FAQ" placeholder="Search machines, firmware, flashing…" value={query} onChange={event => setQuery(event.target.value)} /></label>

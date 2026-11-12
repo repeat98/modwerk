@@ -16,11 +16,9 @@ import { fileURLToPath } from 'node:url'
 import { availableModules, PAUSED_MODULE_IDS, isBetaModule } from '../src/catalog/availability.ts'
 import { LIBRARY_CATEGORIES } from '../src/catalog/modules.ts'
 import { parseModuleDocument } from '../src/catalog/module-contract.ts'
-import { COMPARED_BEFORE_RECORDS, NOT_COMPOSED } from './module-coverage.mjs'
 import { moduleSourceFingerprint } from './module-source.mjs'
 import { ANALOG_BD_DSP_COMPANIONS } from '../src/engine/analog-bd-layout.ts'
 import { moduleNativeSourceSha256 } from './module-qualification.mjs'
-import { USB_CARD_ONLY_PATH, parseUsbCardOnly } from './retained-evidence.mjs'
 import { judgeRecord, ownerWaivedPerformanceRow } from './perf-audit-analysis.mjs'
 import { LINK_DEVICES } from '../src/engine/elektron/elemod.ts'
 import { stageDraft } from './draft-stage.mjs'
@@ -35,19 +33,14 @@ const UI_CLAIMS_REQUIRED_FROM = '2026-10-14'
 // Octatrack modules first listed on or after this day, and every draft judged as a release, build a machine page's controls with modwerk_page_control()
 // (sdk/machines/octatrack/include/modwerk_page.h), which gives a control stock's widget for its number of values.
 const PAGE_CONTROLS_REQUIRED_FROM = '2026-11-11'
-// Octatrack modules first listed on or after this day ship a USB package beside the card build (docs/ADD_A_MODULE.md, "Octatrack base and
-// USB lifecycle"); the card-only ones listed before it need a reviewed migration before USB rollout. CI's package --check sees a stale package, not a missing one.
-const USB_PACKAGE_REQUIRED_FROM = '2026-10-02'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const args = process.argv.slice(2), all = args.includes('--all'), draft = args.includes('--draft'), release = args.includes('--release'), ids = args.filter(arg => !arg.startsWith('--'))
 if ((all && ids.length) || (!all && ids.length !== 1) || (all && draft) || (release && !draft)) throw new Error('Usage: npm run module:doctor -- <module-id>   or   npm run module:doctor -- --draft <id> [--release]   or   npm run module:doctor -- --all')
 const json = path => JSON.parse(readFileSync(resolve(root, path), 'utf8'))
 const exists = path => existsSync(resolve(root, path))
 // A draft is checked where every gate looks: its folder is copied under sdk/octabam/modules/ for this run and removed when the run ends,
-// so nobody copies it by hand and forgets the copy. The listing lines (catalog entry, packages, native comparison, pair table) stay red for a draft.
+// so nobody copies it by hand and forgets the copy. The listing lines (catalog entry, packages) stay red for a draft.
 if (draft) stageDraft(root, ids[0])
-// The owner's card-only OKs, each for one exact version of a module that would otherwise need a USB package.
-const cardOnly = exists(USB_CARD_ONLY_PATH) ? parseUsbCardOnly(json(USB_CARD_ONLY_PATH)) : []
 const catalog = json('sdk/catalog.json'), machineModules = ['digitakt', 'digitone', 'analog-rytm-mkii', 'analog-four-mkii'].flatMap(machine => exists('sdk/' + machine + '/modules') ? readdirSync(resolve(root, 'sdk', machine, 'modules'), { withFileTypes: true }).filter(entry => entry.isDirectory() && !entry.name.startsWith('_')).map(entry => ({ id: entry.name, machine, folder: 'sdk/' + machine + '/modules/' + entry.name })) : [])
 // Zoom effects (zdl) share one folder for the pedal family; each names the pedal it is developed on.
 if (exists('sdk/zoom/modules')) for (const entry of readdirSync(resolve(root, 'sdk/zoom/modules'), { withFileTypes: true })) if (entry.isDirectory() && !entry.name.startsWith('_')) {
@@ -159,24 +152,22 @@ function octatrack(id) {
   else ok('module rules', 'versions, documentation, tutorial, screenshots, qualification, resource gauges (npm run modules:check)')
 
   const build = json('src/engine/assets/module-build.json'), buildable = document.build?.status !== 'pending'
-  // A C runtime module (its USB package row has "sources") or one marked "usbOnly" has no card form: only its USB package
-  // is built. The same rule as the card build's and the native comparison test's (src/catalog/usb-only.ts).
+  // A C runtime module (its USB package row has "sources") or one marked "usbOnly" is not in the source compile: only its
+  // USB package is built (src/catalog/usb-only.ts).
   const usbRow = json('src/engine/assets/octatrack-module-packages.json').packages.find(row => row.id === id), cOnly = moduleCardless(id)
-  if (cOnly && usbRow.version === document.version) ok('packages', 'USB package at ' + document.version + ' (' + (usbRow.sources ? 'a C runtime' : 'a USB-only') + ' module, no card form)')
+  if (cOnly && usbRow.version === document.version) ok('packages', 'USB package at ' + document.version + ' (' + (usbRow.sources ? 'a C runtime' : 'a USB-only') + ' module)')
   else if (cOnly) fail('packages', 'the USB package is ' + usbRow.version + ', not ' + document.version, 'npm run octatrack:module-packages, then -- --check')
   else if (!buildable) info('packages', 'build status is pending, so the packages do not include it yet')
   else if (build.moduleVersions?.[id] !== document.version) fail('packages', 'the committed packages lack ' + id + '@' + document.version, 'rebuild and import the packages (docs/ADD_A_MODULE.md, step 4)')
   else ok('packages', 'compiled into the committed packages at ' + document.version)
-  // The USB package beside the card build: required of every module listed from USB_PACKAGE_REQUIRED_FROM (Track Mutes and Play Start were sent back for it, #931, #947).
+  // The package for the Modwerk base is how a module reaches a unit, over USB or in the card file: every module needs one at
+  // its version (Track Mutes and Play Start were sent back for it, #931, #947). A paused module waits without one.
   if (!cOnly) {
-    const usbRequired = !entry || (entry.addedAt ?? '').slice(0, 10) >= USB_PACKAGE_REQUIRED_FROM
-    const cardOnlyOk = cardOnly.find(item => item.module === id && item.version === document.version)
     if (usbRow?.version === document.version) ok('usb package', 'at ' + document.version + ' (npm run octatrack:module-packages -- --check)')
     else if (usbRow?.lagsBehind === document.version) info('usb package', 'kept at ' + usbRow.version + ' by a declared lag: ' + usbRow.lagReason)
     else if (usbRow) fail('usb package', 'the USB package is ' + usbRow.version + ', not ' + document.version, 'npm run octatrack:module-packages, then -- --check')
-    else if (usbRequired && cardOnlyOk) info('usb package', 'none: card-only at ' + document.version + ' by the owner\'s record in ' + USB_CARD_ONLY_PATH + ' until ' + cardOnlyOk.until + ': ' + cardOnlyOk.reason)
-    else if (usbRequired) fail('usb package', 'none. A new Octatrack module ships its USB package beside the card build: install, Keep/Undo and removal, tested on a unit', 'build it as docs/ADD_A_MODULE.md#octatrack-base-and-usb-lifecycle describes, then npm run octatrack:module-packages')
-    else info('usb package', 'none: card-only, listed before ' + USB_PACKAGE_REQUIRED_FROM + '; a reviewed migration comes before USB rollout')
+    else if (paused) info('usb package', 'none: paused until it has one')
+    else fail('usb package', 'none. An Octatrack module ships as a package for the Modwerk base: install, Keep/Undo and removal, tested on a unit', 'build it as docs/ADD_A_MODULE.md#octatrack-base-and-usb-lifecycle describes, then npm run octatrack:module-packages')
   }
 
   // The hardware record against the package that ships. A base relink rebuilds a package without new source, so a mismatch is a line
@@ -186,28 +177,6 @@ function octatrack(id) {
     if (hardware.imageSha256 === usbRow.sha256) ok('tested package', 'the hardware record names the shipped USB package (' + usbRow.sha256.slice(0, 8) + ')')
     else info('tested package', 'the hardware record names ' + hardware.imageSha256.slice(0, 8) + ', the shipped USB package is ' + usbRow.sha256.slice(0, 8) + ': run the shipped one (npm run device:qualify), or say in TESTING.md why the earlier run covers it')
   }
-
-  if (cOnly) info('native comparison', 'no card form to compare; npm run octatrack:module-packages -- --check rebuilds its USB package')
-  else if (paused) info('native comparison', 'skipped while paused')
-  else if (NOT_COMPOSED.includes(id)) info('native comparison', 'builds only on its own; standalone parity is recorded in docs/VERIFICATION.md')
-  else {
-    const record = exists('sdk/native-comparisons/' + id + '.json') ? json('sdk/native-comparisons/' + id + '.json') : null
-    const code = nativeHashes.get(id)
-    if (record) {
-      if (record.moduleSourceSha256 === code && record.summary.mismatches === 0) ok('native comparison', record.summary.selections + ' selections match native octabam (' + record.summary.built + ' built, ' + record.summary.refused + ' refused' + (record.summary.browserPlatformRefused ? ', ' + record.summary.browserPlatformRefused + ' additional browser platform limits' : '') + ')')
-      else fail('native comparison', 'the record was made for different code or has mismatches', 'npm run module:verify -- ' + id + ' --os <your OCTATRACK_OS1.40C.bin>')
-    } else if (COMPARED_BEFORE_RECORDS[id] === code) ok('native comparison', 'compared by the earlier exhaustive suites at this exact code')
-    else fail('native comparison', 'no current comparison with native octabam', 'npm run module:verify -- ' + id + ' --os <your OCTATRACK_OS1.40C.bin>')
-  }
-
-  // The card builder's native pair checks (npm run modules:pairs): what the ledger refuses beside this module, in any context.
-  const pairTable = json('src/catalog/compatibility-pairs.json')
-  const collisions = [...new Set(Object.entries(pairTable.clashes).flatMap(([context, found]) => Object.keys(found).filter(key => key.split('+').includes(id))
-    .map(key => (key.split('+').find(other => other !== id) ?? 'alone') + (context ? ' (with ' + context + ')' : ''))))]
-  if (cOnly) info('declaration checks', 'no card form, so it has no card pairs')
-  else if (NOT_COMPOSED.includes(id)) info('declaration checks', 'builds only on its own, so it has no pairs')
-  else if (!pairTable.modules.includes(id)) fail('declaration checks', 'the native pair table lacks it, so a build of it is refused', 'npm run modules:pairs -- --write')
-  else ok('declaration checks', 'checked beside ' + (pairTable.modules.length - 1) + ' modules' + (collisions.length ? '; the ledger refuses it beside ' + collisions.join(', ') + ' (each flagged in compatibility.conflicts: npm run modules:pairs)' : '; no collisions'))
 
   const clashes = compatProblems?.filter(problem => problem.modules.includes(id)) ?? []
   const compared = withId.length > 0 || (entry && !paused)
