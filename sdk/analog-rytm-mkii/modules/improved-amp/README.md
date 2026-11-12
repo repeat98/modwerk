@@ -62,14 +62,14 @@ let a long sound restart cleanly on every step.
   2 (timed); in the timed state it ends the hold when the hold's steps have passed and the level is at the
   top. A one-pole decay is followed slightly fast, so the attack is never thought done early.
 - HLD in steps: once a block the scan reads the musical clock (0x8000fe54: stock moves it by twice
-  the tempo word a block on its own clock, by a master's ticks on an external one, and keeps it
-  running while the sequencer is stopped) and leaves what it moved. `improved_amp_voice` adds that to
-  each holding voice and ends the hold at `improved_amp_hold_steps[HLD]` steps of the voice's track: a
-  step is the pulses of the track's speed (the pattern's, or the track's own in ADVANCED scale; stock's
-  table at 0x401db6f8), 900,000 clock units each. No hold time is worked out from the tempo, so a
-  change of tempo or speed reaches a running hold in the block it happens. A clock that stands for
-  more than 12 blocks (8 ms: a master that stopped) is counted on at the tempo word's rate, and a
-  tempo word that is no tempo as 120 BPM, so a hold always ends.
+  the tempo word a block and keeps it running while the sequencer is stopped; on an external clock
+  the tempo word follows the master, as seen on the unit) and leaves what it moved.
+  `improved_amp_voice` adds that to each holding voice and ends the hold at
+  `improved_amp_hold_steps[HLD]` steps of the voice's track: a step is the pulses of the track's speed
+  (the pattern's, or the track's own in ADVANCED scale; stock's table at 0x401db6f8), 900,000 clock
+  units each. No hold time is worked out from the tempo, so a change of tempo or speed reaches a
+  running hold in the block it happens. A clock that stands for more than 12 blocks (8 ms) is counted
+  on at the tempo word's rate, and a tempo word that is no tempo as 120 BPM, so a hold always ends.
 - ATK's rates come from `atk_rate` (`tools/atk_table.py`, 16-bit packed): `improved_amp_voice` writes
   them into the attack's records (the trig's and each held block's) as they are sent.
 - FILTER ATK's rates come from `improved_amp_flt_atk` (same script, 32-bit words): a `ptr` site in
@@ -140,9 +140,11 @@ the configurator offers one or the other.
   block (0.67 ms) of the series' end can be judged wrong either way there: faded for and not played,
   or played without a fade.
 - HLD counts straight steps on the clock: swing and micro timing do not move a hold's end, and a pad's
-  or MIDI note's hold is counted from that hit. On an external clock a hold follows the master's ticks;
-  when the master stops, the hold runs on, after 8 ms, at the rate of the Rytm's tempo word (read in
-  the code, not run on a unit).
+  or MIDI note's hold is counted from that hit. On an external clock a hold follows the master's tempo
+  (on the unit, sequencer stopped: one step held 165.5 ms at 90 BPM and 101.5 ms at 150 BPM). When the
+  master stopped, the Rytm kept its last tempo and the hold with it. Should the clock itself stand
+  (read in the code for a sequencer waiting on a master's tick), the hold runs on after 8 ms at the
+  tempo word's rate; that was not seen on a unit.
 - A hold ends on a block: a hold shorter than a block (0.67 ms; the lowest values above 120 BPM, or
   at a speed above 1x) lasts one.
 - AMP ATK and DEC times are calibrated to one Rytm MKII (EV06, 6 Nov 2026): its VCA ran attacks at
@@ -176,8 +178,9 @@ AUTO, OVR's level curve, the FILTER times, and ENV RESET AMP's fade before seque
 swung, micro-timed and sound-locked trigs, with none for MIDI notes, muted trigs, lock trigs and trigs
 whose condition fails. The package's own image (IA14, the plain base, no link) ran from RAM with MIDI
 notes and CCs only: 0.125, 0.5, 1, 2 and 4 steps held 16.5, 63.5, 126.0, 250.5 and 500.5 ms at 120 BPM.
-Not run on a unit: an external MIDI clock (the unit did not take the clock it was sent), a tempo change
-during a hold, NORMAL scale mode, a boot of the package's image from flash, pads, a power cycle, a
+On an external MIDI clock (sequencer stopped) one step held 165.5 ms at 90 BPM and 101.5 ms at 150 BPM.
+Not run on a unit: the sequencer running on an external clock, a tempo change during a hold, NORMAL
+scale mode, a boot of the package's image from flash, pads, a power cycle, a
 pattern change inside a fade. The comparison with stock ran on the earlier source, 10 November.
 Memory: 9,676 bytes of the shared mod area (the plain base alone leaves 119,004, with this module 109,328).
 Load, on the author's unit with the sequencer stopped (TESTING.md): the audio block was 67.4 to 67.5 %

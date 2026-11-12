@@ -54,6 +54,16 @@ clock moved each block).
   100 and a 500 ms note; 101.5 at DEC 89; attack 15.5 at ATK 45; OVR's peak +1.25, +6.57 and +9.10 dB at
   8, 64 and 127 (through the filter fully open, not as the kit has it). Keys, screens, the sequencer and
   a boot from flash were not part of it.
+- **External MIDI clock.** IL05 again, later that evening, with CLOCK RECEIVE on and the sequencer
+  stopped. MIDI clock was sent over USB without START at 90 BPM, then at 150 BPM, then stopped, and a
+  BD hit at HLD 42 was recorded in each phase. On its own clock the tempo word read 120.0 BPM and one
+  step held 125.5 ms. With the 90 BPM clock the tempo word read 90.0 and the musical clock ran at 90.2
+  BPM's rate (two reads 6 s apart): the step held 165.5 ms (166.7). With 150 BPM it read 150.0 and 150.2:
+  101.5 ms (100.0). After the clock stopped the Rytm kept 150.0 BPM and its clock ran on at that rate:
+  100.0 ms, 1.5 s and again 12 s after the last tick. In all five phases the clock moved every block
+  by twice the tempo word (40 reads a phase of what the module counted, within 2 units of it): with
+  the sequencer stopped an external clock sets the tempo and the clock never stood, so the fallback
+  for a standing clock was not reached.
 - **Idle load.** IM05 (sha256 `80ce9b6d…13df`): the development base, the meter of the next section and
   this source. Sequencer stopped, 120 BPM, the kit with four tracks on ENV RESET AMP+FILT, six windows of
   20 s: the audio block 67.40 to 67.51 % busy, 1.09 to 1.14 % of it in the amp record hook. The source
@@ -76,10 +86,10 @@ at, and added the read of the clock).
 
 Runs that told nothing, and why:
 
-- External sync. MIDI clock was sent to the unit over USB at 90 and at 150 BPM, without START, and
-  then stopped. The unit's clock and tempo word stayed at 120 BPM throughout (CLOCK RECEIVE off, or the
-  clock not taken), and HLD 42 held 124.5 to 125.0 ms in every phase. No setting was changed to make it
-  follow, so the hold on an external clock, and a master that stops, are not tested.
+- External sync, first try. MIDI clock was sent to the unit over USB at 90 and at 150 BPM, without
+  START, and then stopped. The unit's clock and tempo word stayed at 120 BPM throughout and HLD 42 held
+  124.5 to 125.0 ms in every phase: CLOCK RECEIVE was off. The run above was made after the user
+  switched it on.
 - The first run on IA14 recorded the BD 30 dB down and short. The unit boots with the working kit it
   kept, not the saved one, and that one had the BD's filter closed from a filter case; the flashed
   build played it the same until the saved kit was reloaded. The run above set the FILTER page by CC.
@@ -89,7 +99,8 @@ Runs that told nothing, and why:
 
 Not run on a unit in this version:
 
-- An external MIDI clock and a master that stops (above; read in the code and run in the host model).
+- An external MIDI clock with the sequencer running on it (START sent), and a clock that stands: the
+  fallback is read in the code and run in the host model only.
 - A tempo or speed change during a hold; NORMAL scale mode (the pattern's one scale); speeds other
   than 3/2x by sound and 3/4x by screen; holds over 4 steps by sound; the hold of a sequenced trig; a
   hold shorter than a block.
