@@ -109,9 +109,15 @@ const REFUSED: Partial<Record<UploadResultName, string>> = {
  * loader's refusals (sdk/runtime/loader-refusals.json). A code without one shows the plain text above. */
 const REJECTED: Partial<Record<number, string>> = Object.fromEntries(
   loaderRefusals.refusals.flatMap(refusal => 'musician' in refusal && refusal.musician ? [[refusal.code, refusal.musician]] : []))
-/** The unit is claimed by another page: in the data (11 Nov 2026) that was Modwerk in another tab or browser, which
- * reads the unit every second while connected, not an Elektron app (they use the MIDI and audio interfaces). */
-export const LINK_BUSY = 'Modwerk is open in another tab or browser and is using your Octatrack. Close it, and this page connects by itself.'
+/** The browser couldn't claim the unit. In the data (11 Nov 2026) that was mostly Modwerk in another tab or browser, which
+ * reads the unit every second while connected, not an Elektron app (they use the MIDI and audio interfaces). On Windows it
+ * can also be the computer: an interface it set up without the base's interface GUID never claims (the same NetworkError),
+ * and only a base with a new USB revision makes Windows set it up again (usb_base.py device()), so that one comes from the card. */
+export function linkBusy(agent = typeof navigator === 'undefined' ? '' : navigator.userAgent) {
+  return 'Modwerk is open in another tab or browser, or another app is using your Octatrack. Close it, and this page connects by itself.' +
+    (/Windows/.test(agent) ? ' If nothing else is open, install the latest base from the card once, and this computer connects from then on.' : '')
+}
+export const LINK_BUSY = linkBusy()
 const UNPLUG = 'Unplug the USB cable to undo anything unfinished, then plug it back in.'
 /** The boot stub started the previous base after the new one failed to start three times (BaseSlots.fellBack). */
 const FELL_BACK = 'The last base update didn’t start, so your Octatrack went back to its previous base. Nothing was lost. Try the update again, and if it happens again, report it with Report a problem on the Your Octatrack page.'
