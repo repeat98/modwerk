@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-11-12",
+  "source": "Direct author statements in the development conversation",
+  "reporter": "draadpiraat",
+  "status": "hardware-tested-author-reported",
+  "model": "Digitakt I",
+  "release": "1.54",
+  "moduleVersion": "0.1.0-experimental",
+  "builds": [
+    {
+      "name": "Core 2.1 + crossfader 0.1.0-experimental (CF01)",
+      "syxSha256": "3419f57266d48b8d28416a99dd766654b31b9cd9a1f7673ba488f3d899076c1c",
+      "statement": "checked crossfader, everything checked out. power cycle resets the crossfader position to A, which would better if it went to center. which makes me think, there is no middle indent for the crossfader, should there be? ... add an option in the settings for a middle position snap. also i've noticed the crossfader line not being centered exactly. it goes over the line on the A side but stops before it swallows the line on the B side, if that makes sense. other than that, i think crossfader is ready to go.",
+      "steps": {
+        "1 SETTINGS > CROSSFADER groups; LEVEL on the Internal Mixer fades A to B; FUNC + LEVEL jumps to the middle": "checked out",
+        "2 the delay and reverb follow the fade": "checked out",
+        "3 FADER ON: LEVEL is the fader on that track's pages, LEVEL push does nothing there and is stock elsewhere": "checked out",
+        "4 the fader CC on FX CONTROL CH": "checked out",
+        "5 groups and FADER ON back after a power cycle": "checked out; the fader position starts at A after power-on (documented: the position is not saved)",
+        "6 a longer session": "checked out"
+      }
+    },
+    {
+      "name": "Core 2.1 + Machine Pages 1.2 + loop-fade 0.1.0-experimental (LF03, the Crossfader and the looper before the split)",
+      "syxSha256": "fb56201eb76f68493e3a0e8ee836966bec0182084cf5d7418c3040907d6ff46c",
+      "statement": "7. yes. 8. yes. 9. yes. 10. yes. 11. yes. (crossfader steps of the LF03 checklist, two hours or more)",
+      "durationMinutes": 120
+    }
+  ],
+  "observations": [
+    "The fader starts at A after power-on; the author would prefer the middle (planned for the next version).",
+    "The author asked for an optional snap at the middle of the fader (planned for the next version).",
+    "The box's position line is not drawn symmetrically: at the A end it goes past the edge line, at the B end it stops short of it (planned for the next version)."
+  ],
+  "limitations": [
+    "CF01's run time was not stated; the two-hour session is LF03's, the same crossfader code linked together with the looper.",
+    "Firmware was not read back from the device; the builds are identified by their SysEx hashes."
+  ]
+}
