@@ -3,6 +3,7 @@
  "revision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
  "modules": [
   "airwindows-chorus",
+  "amiga",
   "analog-bassdrum",
   "apply-scene",
   "arp-key-locks",
