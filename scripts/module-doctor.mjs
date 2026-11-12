@@ -167,6 +167,7 @@ function octatrack(id) {
     else if (usbRow?.lagsBehind === document.version) info('usb package', 'kept at ' + usbRow.version + ' by a declared lag: ' + usbRow.lagReason)
     else if (usbRow) fail('usb package', 'the USB package is ' + usbRow.version + ', not ' + document.version, 'npm run octatrack:module-packages, then -- --check')
     else if (paused) info('usb package', 'none: paused until it has one')
+    else if (id === 'usb-audio-out-tracks-main-cue') info('usb package', 'none: USB Audio comes with the base, as one of its layouts (src/engine/elekloader/base-variants.ts)')
     else fail('usb package', 'none. An Octatrack module ships as a package for the Modwerk base: install, Keep/Undo and removal, tested on a unit', 'build it as docs/ADD_A_MODULE.md#octatrack-base-and-usb-lifecycle describes, then npm run octatrack:module-packages')
   }
 
