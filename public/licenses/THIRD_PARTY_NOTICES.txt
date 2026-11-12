@@ -880,68 +880,9 @@ Retain applicable component notices and full terms with source and binary distri
 Source patch licences apply to those patches; fetched toolchains are not bundled in the app.
 Pinned revisions identify the files used to verify the notices, not the module source revisions; module source provenance remains in sdk/UPSTREAM.json and each module manifest.
 
-Hera Chorus
-SPDX: ISC
-Used in: modules/modulation: JUNO
-Notice source: https://raw.githubusercontent.com/jpcima/rc-effect-playground/3375323d8616cbfc73c9701a3765f738d574c460/LICENSE
-
-Hera Chorus audio effect based on DISTRHO Plugin Framework (DPF)
-Copyright (C) 2019-2020 J.P. Cimalando <https://jpcima.sdf1.org/>
-
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted, provided that the above
-copyright notice and this permission notice appear in all copies.
-
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
-FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-PERFORMANCE OF THIS SOFTWARE.
-
-========================================================================
-
-ChowPhaser
-SPDX: BSD-3-Clause
-Used in: modules/modulation: PHSR
-Notice source: https://raw.githubusercontent.com/jatinchowdhury18/ChowPhaser/31eac4df747e9a778a6efe53d461f526343cb61d/LICENSE
-
-BSD 3-Clause License
-
-Copyright (c) 2020, jatinchowdhury18
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-3. Neither the name of the copyright holder nor the names of its
-   contributors may be used to endorse or promote products derived from
-   this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-========================================================================
-
 JSFXClones (TapeHead, DaTube, OInflator, AC1)
 SPDX: MIT
-Used in: modules/character: SAT, COMP, GLUE; modules/tapehead: TapeHead
+Used in: modules/tapehead: TapeHead
 Notice source: https://raw.githubusercontent.com/JClones/JSFXClones/88a1503d668c378ced4c166e772378272f3b72ea/LICENSE
 
 MIT License
@@ -968,84 +909,9 @@ SOFTWARE.
 
 ========================================================================
 
-audiojs/filter (moogLadder and oberheim)
+Airwindows Chorus
 SPDX: MIT
-Used in: modules/spectrum: filters
-Notice source: https://raw.githubusercontent.com/audiojs/filter/0a851e9907101899ffc0708f5abf864e1e873cb9/LICENSE
-
-Kṛṣnized
-
-This is a reminder that, in the absolute sense, all results of work belong to the Supreme.
-
-While software and intellectual property (IP) require a formal license to define authorship,
-responsibilities, or distribution limitations, these are temporary material designations.
-The origin and destination of all ideas, as well as the ultimate owner of all results,
-is the Supreme. The most meaningful action is to dedicate these results to the Supreme.
-This process is known as Karma-Yoga and is described in BG 3.9, BG 12.10 and BG 18.46.
-
-"Work done as a sacrifice for the Supreme must be performed;
-otherwise, work binds one to the material world."
-
-This license does not override or alter the terms specified by the material-level license below.
-
-ॐ
-
----
-
-MIT License
-
-Copyright (c) Dmitry Iv
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-========================================================================
-
-Mutable Instruments Rings (string.h / string.cc)
-SPDX: MIT
-Used in: modules/modulation: COMB
-Notice source: https://raw.githubusercontent.com/pichenettes/eurorack/08460a69a7e1f7a81c5a2abcc7189c9a6b7208d4/rings/dsp/string.h
-
-Copyright 2015 Emilie Gillet.
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-
-========================================================================
-
-Airwindows Chorus, Capacitor2 (and historical Pockey transcription)
-SPDX: MIT
-Used in: modules/spectrum: capacitor2_ref.py; modules/character: retired Pockey attribution; modules/airwindows-chorus: Chorus
-Notice source: https://raw.githubusercontent.com/airwindows/airwindows/d22a25b7f7c0c8c05e9f3ae480e7f1da9769f49d/LICENSE
+Used in: modules/airwindows-chorus: Chorus
 Notice source: https://raw.githubusercontent.com/airwindows/airwindows/e718c9bcfcdd736deeddb08bffe6bce2aa8e0eea/LICENSE
 
 MIT License

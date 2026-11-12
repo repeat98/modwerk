@@ -137,24 +137,6 @@ const ART: Readonly<Record<string, () => ReactElement>> = {
 </g>
 <g fill="#b5a0ff" fontFamily="monospace" fontSize="9" letterSpacing=".6"><text x="27" y="28" opacity=".7">T1 / KEY</text><text x="168" y="119">COMP</text><text x="25" y="177" opacity=".65">T5 / INPUT</text><text x="207" y="177" opacity=".65">DUCKED OUTPUT</text></g>
 </g>,
-  spectrum: () => <g>
-    <path className="signal-ghost" d="M25 136C84 136 109 135 130 116S146 57 164 63 181 137 206 144 262 147 296 147" />
-    <path className="signal-secondary" d="M25 116H117C147 116 160 39 177 43S189 120 209 132 263 138 296 138" />
-    <path className="signal-main" d="M25 88H149C172 88 180 35 192 36S199 84 211 105 235 128 296 128" />
-    <circle className="signal-dot" cx="192" cy="36" r="4" />
-    <text x="25" y="177">20 Hz</text><text x="258" y="177">20 kHz</text>
-  </g>,
-  modulation: () => <g>
-    <path className="signal-secondary" d={sine(1.4, 31)} /><path className="signal-main" d={sine(0, 31)} />
-    <path className="signal-ghost" d={sine(0.7, 43)} />
-    <text x="25" y="177">L</text><text x="280" y="177">R</text>
-  </g>,
-  character: () => <g>
-    <path className="signal-ghost" d={sine(0, 49, 2.5)} />
-    <path className="signal-main" d="M28 97 40 74 49 60 58 74 69 61 80 84 88 120 99 137 108 121 118 134 130 109 140 73 151 60 160 74 170 61 180 86 192 123 202 137 211 121 221 134 234 108 246 73 257 60 267 74 276 61 289 89" />
-    <path className="signal-secondary" d="M25 60H295M25 137H295" strokeDasharray="3 6" />
-    <text x="25" y="177">INPUT → FOLD → DRIVE</text>
-  </g>,
   miniverb: () => <g>
     {Array.from({ length: 50 }, (_, i) => {
       const height = Math.exp(-i / 18) * (24 + Math.abs(Math.sin(i * 2.7)) * 42)
@@ -201,15 +183,6 @@ const ART: Readonly<Record<string, () => ReactElement>> = {
       return (i?'L':'M')+x.toFixed(1)+' '+y.toFixed(1)
     }).join(' ')} />
     <text x="25" y="177">808</text><text x="261" y="177">909</text>
-  </g>,
-  'midi-scenes': () => <g>
-    {[0,1,2,3,4].map(row=><g key={row}>
-      <path className="signal-ghost" d={'M48 '+(47+row*22)+'H272'} />
-      <circle className="signal-secondary" cx="48" cy={47+row*22} r="4" />
-      <circle className="signal-secondary" cx="272" cy={47+row*22} r="4" />
-      <path className="signal-main" d={'M48 '+(47+row*22)+'L272 '+(135-row*22)} />
-    </g>)}
-    <text x="25" y="177">SCENE A</text><text x="243" y="177">SCENE B</text>
   </g>,
   'usb-audio-out-tracks-main-cue': () => <g>
     {Array.from({length:10},(_,i)=><g key={i}>

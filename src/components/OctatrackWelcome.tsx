@@ -3,6 +3,7 @@ import { BaseDialogFrame, BaseIntro, StagePlan, type BasePromise } from './BaseD
 import { LinkHero } from './LinkHero'
 import { Icon } from './Icon'
 import { BASE_RECOVERY_NOTICE } from '../firmware-notices'
+import { CARD_SET_FILE } from '../engine/elekloader/card-set'
 import type { OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
 
@@ -13,23 +14,19 @@ const NEW: BasePromise[] = [
   ['download', 'Base updates over USB', ' after the first install'],
   ['check', 'Kept after a restart', ''],
 ]
+// Two ways to load a module set once the base is on: a USB sync (LoadDialog) or the set as one file on the card
+// (UnitPanel.tsx CardSetButton). Both stay in the steps; a browser without WebUSB is told so by `missing`.
 const JOURNEY = [
   ['Install the base once', 'From the card, with your original OS file.'],
-  ['Connect over USB', 'In Chrome or Edge on a computer.'],
-  ['Pick modules and sync', 'From the library to your Octatrack.'],
-] as const
-// Without WebUSB: the same base, and the module set as one file on the card (UnitPanel.tsx CardSetButton).
-const CARD_JOURNEY = [
-  JOURNEY[0],
   ['Pick modules', 'From the library, into your module set.'],
-  ['Load them from the card', 'Download one file, copy it to the card, restart.'],
+  ['Sync over USB or the card', `Send them over USB from Chrome or Edge, or copy ${CARD_SET_FILE} to the card and restart.`],
 ] as const
 
 /**
- * The welcome to modules over USB (useOctatrackWelcome decides when): what is new, the way there in three steps, what
- * it needs, and the first step. Set up opens the base install guide on Your Octatrack. A browser without WebUSB
- * (`usbBrowser` false, or the link says unsupported) gets the card way: the base, then the module set as a file. `savedSets`: this browser has
- * configurations from before.
+ * The welcome to modules over USB (useOctatrackWelcome decides when): what is new, the way there in three steps (both
+ * ways to load modules: USB or a file on the card), what it needs, and the first step. Set up opens the base install
+ * guide on Your Octatrack. A browser without WebUSB (`usbBrowser` false, or the link says unsupported) is told the
+ * card is its way. `savedSets`: this browser has configurations from before.
  */
 export function OctatrackWelcome({ link, usbBrowser, savedSets = false, onSetUp, onLater }: {
   link: OctatrackLink | null; usbBrowser: boolean; savedSets?: boolean; onSetUp: () => void; onLater: () => void
@@ -47,8 +44,7 @@ export function OctatrackWelcome({ link, usbBrowser, savedSets = false, onSetUp,
       missing={usb ? undefined : 'This browser can’t use USB, so modules go onto the card as a file. For USB sync, use Chrome or Edge on a computer.'} />
     <section className="base-install-stage" aria-labelledby="welcome-steps-title">
       <h3 id="welcome-steps-title">How it works</h3>
-      <StagePlan stages={usb ? JOURNEY : CARD_JOURNEY} progressLabel="How it works" />
-      {usb && <p className="link-hint">No USB at hand? Your modules also go onto the card as a file, from Setup.</p>}
+      <StagePlan stages={JOURNEY} progressLabel="How it works" />
       {savedSets && <p className="link-hint">Your saved configurations are here as module sets.</p>}
       <details className="base-install-recovery"><summary>Before you install</summary><p>{BASE_RECOVERY_NOTICE}</p></details>
       <p className="link-hint">No Octatrack? Close this and it won’t come back.</p>

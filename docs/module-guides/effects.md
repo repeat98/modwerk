@@ -4,11 +4,11 @@ Read [the module guides index](README.md) first. If your effect does anything in
 
 **Applies to** modules whose manifest has an `effectId` and a `compatibility.location` of `FX1`, `FX2` or `FX1 / FX2`. An effect processes the audio its slot receives, on the DSP. A module that makes or replaces its track's sound is a machine, whichever slot switches it on ([choose the category](README.md#choose-the-category)).
 
-**Already follow it:** [Mini Verb](../../sdk/octatrack/modules/miniverb/README.md), [Tape Echo](../../sdk/octatrack/modules/tapeecho/README.md), [Euclid](../../sdk/octatrack/modules/euclid/README.md), [TapeHead](../../sdk/octatrack/modules/tapehead/README.md), [Sidechain Compressor](../../sdk/octatrack/modules/sidechain-compressor/README.md), Spectrum, Modulation, Character. Copy the shape of the one closest to yours.
+**Already follow it:** [Mini Verb](../../sdk/octatrack/modules/miniverb/README.md), [Tape Echo](../../sdk/octatrack/modules/tapeecho/README.md), [Euclid](../../sdk/octatrack/modules/euclid/README.md), [TapeHead](../../sdk/octatrack/modules/tapehead/README.md), [Sidechain Compressor](../../sdk/octatrack/modules/sidechain-compressor/README.md). Copy the shape of the one closest to yours.
 
 ## One effect per module
 
-On every machine, a module is one effect. A MODE select may switch between ways of doing the same job, as Modulation's JUNO, DIM, FLNG, COMB and PHSR and Spectrum's filter models do. A set of different effects in one module, picked with a type select (a send rack with a chorus, a filter bank, a drive and two delays, say), is sent back: split it into one module per effect.
+On every machine, a module is one effect. A MODE select may switch between ways of doing the same job, as Euclid's TYPE switches between low-pass, band-pass, high-pass, notch and amplitude modulation. A set of different effects in one module, picked with a type select (a send rack with a chorus, a filter bank, a drive and two delays, say), is sent back: split it into one module per effect.
 
 The base shares the effect slots so that effects from different authors sit side by side: on the Octatrack it gives each installed effect module its own effect id in the FX lists. One effect per module lets a musician choose, combine, update and remove exactly the effects they want, lets the gates judge each effect's cost and conflicts on its own, and keeps a fix to one effect from shipping as an update to all. Where the effects need the same stock site, such as a send return the machine's core has no hook for yet, that site becomes a shared hook first, in its own owner-reviewed pull request ([propose a hook](README.md#propose-a-hook); [on the elemod machines](README.md#propose-a-hook-on-the-digitakt-digitone-or-digitakt-ii)), and each effect subscribes to it.
 
@@ -28,7 +28,7 @@ Before release, verify accepted and refused native/browser compositions, stock h
 
 Octabam names three (`sdk/octabam/docs/remixer/MODULES.md`, "Decide first"). Choose an **insert** unless you need the shared bus.
 
-- **Insert:** processes its own track in place, runs on any track and several at once, placed in both DSP payloads. Almost every hazard in the trap list does not apply. Character is the worked example.
+- **Insert:** processes its own track in place, runs on any track and several at once, placed in both DSP payloads. Almost every hazard in the trap list does not apply. TapeHead is the worked example.
 - **Server** (owns a bus accumulator, bound to one core) and **bus client** (taps its track into the bus): only when the effect is genuinely shared across tracks. There are two servers; `sdk/octabam/docs/effects/XBUS.md` explains why.
 - A module that replaces a stock effect in place (Sidechain Compressor replaces COMPRESSOR and keeps its dispatch) has its own rules: `MODULES.md`, "Replacing a stock effect", and the module's TESTING.md.
 
@@ -48,7 +48,7 @@ Octabam names three (`sdk/octabam/docs/remixer/MODULES.md`, "Decide first"). Cho
 
 ## Behave like the instrument
 
-- [ ] **Safe defaults.** Say what the effect does with every knob at its default. An insert that should be transparent is a bit-exact passthrough at defaults (Spectrum checks exactly that).
+- [ ] **Safe defaults.** Say what the effect does with every knob at its default. An insert that should be transparent is a bit-exact passthrough at defaults (Euclid's MIX 0 is exact dry passthrough).
 - [ ] **No zipper noise.** A knob the DSP applies once per 16-frame block steps at the block rate while it moves. Ramp per sample. `verify_knob_clicks.py` moves every continuous knob mid-render and flags steps above -70 dBFS.
 - [ ] **Parameter locks.** Each of your knobs can be parameter-locked per step and returns to its set value on the next unlocked step. Lock bytes live per parameter slot: FX1 slots 18–23, FX2 slots 24–29 (`0xff` = none), and a lock overrides the knob on its trig. Author the test with `ot_spec.py` (locks on `fx1`/`fx2` by knob name, with `clear`). **Verify** every knob, at both ends of its range and on adjacent steps.
 - [ ] **Stale locks.** Changing a slot's count or moving a knob leaves old locks pointing at whatever now sits there. After a layout change, run `ot_bank.py strip --pages fx1,fx2` and `ot_project.py stamp-defaults <project> <remix>` on every test project (a saved Part feeds a new layout its old bytes).

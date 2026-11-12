@@ -39,7 +39,7 @@ Qualification is enforced even without `--base`, during generation and release v
 
 ## Temporary frontend availability
 
-As of 1 October 2026, Spectrum, Modulation and Character are temporarily hidden because of reported audio crackling. `src/catalog/availability.ts` controls this suspension. The original seven modules, source provenance and saved configuration pins remain intact. Suspended modules cannot be added or validated for a build through the frontend; older configurations remain readable and identify the modules that must be removed. Reinstatement requires a verified fix and owner approval.
+`src/catalog/availability.ts` controls temporary suspensions (`PAUSED_MODULE_IDS`). A suspended module keeps its source provenance and saved configuration pins. Suspended modules cannot be added or validated for a build through the frontend; older configurations remain readable and identify the modules that must be removed. Reinstatement requires a verified fix and owner approval.
 
 ## Publication
 

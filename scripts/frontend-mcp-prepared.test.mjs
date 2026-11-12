@@ -79,7 +79,7 @@ describe('startup-only private prepared modules', () => {
   it('refuses changed/omitted public entries, held admission, stale versions and unreviewed modules', async () => {
     for (const mutate of [r => { r.packages[0].sha256 = 'f'.repeat(64) }, r => { r.packages.shift() },
       r => { r.held[0].admission = true }, r => { r.packages.at(-1).version = '0.0.0' },
-      r => { r.packages.at(-1).id = 'midi-scenes' }, r => { r.packages.at(-1).requiredBase = 'b'.repeat(64) },
+      r => { r.packages.at(-1).id = 'not-a-module' }, r => { r.packages.at(-1).requiredBase = 'b'.repeat(64) },
       r => { r.packages.at(-1).bytes = 512 * 1024 }, r => { r.packages.at(-1).path = '../../escape' }]) {
       const { folder, receipt, save } = await fixture(); mutate(receipt); await save()
       await expect(loadPreparedModules(folder, manifest, frontend)).rejects.toThrow()

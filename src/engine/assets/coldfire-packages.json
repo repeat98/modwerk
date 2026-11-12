@@ -246,11 +246,8 @@
       "sha256": "d4b22d2975297e76f90654f25ca6eee4d28a288f727f4b3482fe73616b051378"
     }
   ],
-  "sourceCommit": "fd880df025cbb2f30fa5201892785d7955d011e1",
+  "sourceCommit": "5bf06aa737c4c407c2c01b67f977aa1805f802fb",
   "moduleVersions": {
-    "spectrum": "0.1.1-experimental",
-    "modulation": "0.1.1-experimental",
-    "character": "0.1.1-experimental",
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.6-experimental",
     "euclid": "0.1.4-experimental",
@@ -262,7 +259,6 @@
     "lofi2": "0.1.1-experimental",
     "ring-sc": "0.2.1-experimental",
     "analog-bassdrum": "0.1.7-experimental",
-    "midi-scenes": "0.2.5-experimental",
     "usb-audio-out-tracks-main-cue": "0.2.0-experimental",
     "quantizer": "0.1.4-experimental",
     "synth": "0.1.2-experimental",
@@ -280,7 +276,7 @@
     "direct-jump-kyoti": "0.1.2-experimental",
     "dejavu": "0.1.0-experimental",
     "arp-key-locks": "0.1.0-experimental",
-    "temp-save": "0.1.1-experimental",
+    "temp-save": "0.1.0-experimental",
     "tuner": "0.1.0-experimental",
     "slow-lfo": "0.1.0-experimental",
     "bar-led": "0.1.0-experimental",
