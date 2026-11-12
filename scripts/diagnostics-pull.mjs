@@ -142,7 +142,7 @@ export function members(events) {
         kept.set(log.epoch + '/' + r.seq, { ...r, epoch: log.epoch, upload: data.base })
       }
     }
-    if (data.log?.crash) member.crash = data.log.crash, member.crashBase = data.base // the base that sent it: a crash restarts on the same one
+    if (data.log?.crash) Object.assign(member, { crash: data.log.crash, crashBase: data.base }) // the base that sent it: a crash restarts on the same one
     if (data.log?.stall) member.stall = data.log.stall
     if (data.event === 'selftest' && data.reading?.state >= 2) {
       member.selftest = data.reading
