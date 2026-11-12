@@ -111,6 +111,8 @@ A verified, unsuspended member whose `users.is_admin` is `1` sees the Admin work
 
 The Statistics and Accounts tabs of the Admin workspace show aggregate account numbers from `GET /api/admin/accounts?days=7|30|90` (default 30): members, unverified and unfinished social sign-ups, suspended and deleted accounts, administrators, news opt-ins, sign-ins by method and daily sign-ups for the chosen UTC period. They are computed from the account tables on request, so they need no opt-in and cover every sign-up since launch. Removed accounts drop out of the history. No email address, provider profile or per-member row is returned.
 
+The Octatrack tab counts base installs, sharers, their bases, failures and syncs from `GET /api/admin/octatrack`, naming nobody.
+
 The Members section also reads sign-ups against the rest of the site, using the same completed-day rules as the usage dashboard (today is excluded; the previous period is the equally long window just before):
 
 - **Sign-up rate** divides the period's sign-ups by the estimated daily visitors of the same days from `usage_daily`, shown as sign-ups per 100 daily visitors. Days before usage collection began, and the partial first collection day, are left out of both numerator and denominator; the previous period's rate needs its whole window collected and retained. Daily visitors are rotating identifiers and exclude objecting or Do Not Track browsers, so this approximates sign-ups per visit, not per person.
