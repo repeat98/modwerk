@@ -170,7 +170,7 @@ const SECTIONS: FaqSection[] = [
         answer: <>
           <p>Yes, with the Modwerk base. Install it once, then send module sets from this site to the Octatrack over USB without reflashing. You need an Octatrack MKI or MKII, your original OS {BASE_FIRMWARE.version} file, a USB cable and Chrome or Edge on a computer.</p>
           <p>The first install always goes through the card: the original OS has no USB link for Modwerk. Open <strong>Your Octatrack</strong> and follow the guide. You download the base .bin, copy it to the card over the cable in <strong>USB DISK MODE</strong> or with a card reader, then install it with <strong>PROJECT → SYSTEM → OS UPGRADE</strong>. Every later base update goes over USB, with the card as the fallback.</p>
-          <p>In a browser without USB (Firefox, Safari, iPad, phones), and for modules that have no USB version yet, build card firmware instead: one firmware file for the card, without the base. {BASE_RECOVERY_NOTICE} {REPORT_PROBLEMS}</p>
+          <p>In a browser without USB (Firefox, Safari, iPad, phones), an Octatrack that already runs the base can take your module set from the card instead: Your Octatrack → Setup → Load from the card writes it as one file. {BASE_RECOVERY_NOTICE} {REPORT_PROBLEMS}</p>
           <p>Beta testers try new modules before everyone else. When a round is open, the site shows <strong>Join the beta</strong>. {BETA_REPORTING_NOTICE}</p>
         </>,
       },

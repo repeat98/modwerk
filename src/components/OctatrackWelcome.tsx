@@ -3,7 +3,6 @@ import { BaseDialogFrame, BaseIntro, StagePlan, type BasePromise } from './BaseD
 import { LinkHero } from './LinkHero'
 import { Icon } from './Icon'
 import { BASE_INSTALL_NEEDS, BASE_RECOVERY_NOTICE } from '../firmware-notices'
-import { cardInsteadReason } from '../catalog/library-compatibility'
 import type { OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { useOctatrackLink } from '../hooks/useOctatrackLink'
 
@@ -22,33 +21,29 @@ const JOURNEY = [
 
 /**
  * The welcome to modules over USB (useOctatrackWelcome decides when): what is new, the way there in three steps, what
- * it needs, and the first step. Set up opens the base install guide on Your Octatrack; the card route stays one click
- * away, and is the main one in a browser without WebUSB (`usbBrowser` false, or the link says unsupported). `phone`: the
- * card build needs a computer, so there is no card button. `savedSets`: this browser has configurations from before.
+ * it needs, and the first step. Set up opens the base install guide on Your Octatrack. A browser without WebUSB
+ * (`usbBrowser` false, or the link says unsupported) is told where USB works. `savedSets`: this browser has
+ * configurations from before.
  */
-export function OctatrackWelcome({ link, usbBrowser, phone = false, savedSets = false, onSetUp, onCard, onLater }: {
-  link: OctatrackLink | null; usbBrowser: boolean; phone?: boolean; savedSets?: boolean; onSetUp: () => void; onCard: () => void; onLater: () => void
+export function OctatrackWelcome({ link, usbBrowser, savedSets = false, onSetUp, onLater }: {
+  link: OctatrackLink | null; usbBrowser: boolean; savedSets?: boolean; onSetUp: () => void; onLater: () => void
 }) {
   const finished = useRef(false), { status } = useOctatrackLink(link), usb = usbBrowser && (!link || status !== 'unsupported')
-  const card = !phone && <button type="button" className={'button ' + (usb ? 'button-quiet' : 'button-primary')} onClick={() => { finished.current = true; onCard() }}>{usb ? 'Build card firmware instead' : 'Build card firmware'}</button>
   return <BaseDialogFrame intro canClose busy={false} focus="welcome" finishedRef={finished} onClose={onLater} footer={<>
     <div className="base-install-actions">
       <button type="button" className="button button-quiet" onClick={() => { finished.current = true; onLater() }}>Later</button>
-      {card}
       {usb && <button type="button" className="button button-primary" onClick={() => { finished.current = true; onSetUp() }}>Set up my Octatrack<Icon name="arrow" size={16} /></button>}
     </div>
   </>}>
     <BaseIntro hero={<LinkHero label="USB" />} title="Modules now load over USB, for everyone" promises={NEW} beta={false} needs={BASE_INSTALL_NEEDS}
       intro="Send modules to your Octatrack straight from this page. It takes one install of the Modwerk base."
-      missing={usb ? undefined : phone ? 'This browser can’t use USB. Open Modwerk in Chrome or Edge on a computer to install the base and sync modules over USB.'
-        : 'This browser can’t use USB. Open Modwerk in Chrome or Edge on a computer to install the base and sync modules over USB, or build card firmware here instead.'} />
+      missing={usb ? undefined : 'This browser can’t use USB. Open Modwerk in Chrome or Edge on a computer to install the base and sync modules over USB.'} />
     <section className="base-install-stage" aria-labelledby="welcome-steps-title">
       <h3 id="welcome-steps-title">How it works</h3>
       <StagePlan stages={JOURNEY} progressLabel="How it works" />
       <p className="link-hint">Later base updates go over USB.</p>
-      {savedSets && <p className="base-install-note">Your saved configurations are here as module sets, and card firmware is still there as the fallback.</p>}
+      {savedSets && <p className="base-install-note">Your saved configurations are here as module sets.</p>}
       <details className="base-install-recovery"><summary>Before you install</summary><p>{BASE_RECOVERY_NOTICE}</p></details>
-      {usb && !phone && <p className="link-hint">{cardInsteadReason()}</p>}
       <p className="link-hint">No Octatrack? Close this and it won’t come back.</p>
     </section>
   </BaseDialogFrame>

@@ -41,7 +41,7 @@ beforeEach(async () => {
 afterEach(async () => { await act(() => root.unmount()); container.remove(); stop(); vi.restoreAllMocks(); vi.unstubAllGlobals(); pausedForTest.clear() })
 async function load(prepareUpdate = vi.fn(async () => ({ name: set.name, changes: [] }))) {
   const install = vi.fn()
-  await act(() => root.render(createElement(LoadDialog, { link, set, inventory, prepareUpdate, onInstallBase: install, onClose() {}, onEdit() {}, onCard() {}, onReport() {} })))
+  await act(() => root.render(createElement(LoadDialog, { link, set, inventory, prepareUpdate, onInstallBase: install, onClose() {}, onEdit() {}, onReport() {} })))
   return { prepareUpdate, install }
 }
 describe('runtime package upgrade review', () => {
@@ -64,7 +64,7 @@ describe('runtime package upgrade review', () => {
     const keep = vi.spyOn(real, 'keep'), undo = vi.spyOn(real, 'undo'), selftest = vi.spyOn(real, 'selftest')
     // A runtime install package as the builder makes it (sdk/runtime/loader/README.md).
     const data = new Uint8Array(36), view = new DataView(data.buffer); data.set([0x4d, 0x57, 0x52, 0x4d, 0, 4]); view.setUint32(8, 4); view.setUint32(28, 0xb)
-    await act(() => root.render(createElement(LoadDialog, { link: real, set, inventory, prepareUpdate: async () => ({ name: set.name, changes: [{ module: set.name, data }] }), onInstallBase() {}, onClose() {}, onEdit() {}, onCard() {}, onReport() {} })))
+    await act(() => root.render(createElement(LoadDialog, { link: real, set, inventory, prepareUpdate: async () => ({ name: set.name, changes: [{ module: set.name, data }] }), onInstallBase() {}, onClose() {}, onEdit() {}, onReport() {} })))
     expect(container.textContent).not.toMatch(/undo|self-test/i)
     await act(async () => button('Sync to Octatrack').click())
     await vi.waitFor(() => expect(container.textContent).toContain('Synced. Studio stays on your Octatrack, also after a restart.'))
@@ -135,7 +135,7 @@ describe('runtime package upgrade review', () => {
     await load(prepareUpdate)
     await act(() => button('Sync to Octatrack').click())
     const changed = { ...set, moduleIds: ['everb', 'tapehead'] }
-    await act(() => root.render(createElement(LoadDialog, {link,set:changed,inventory,prepareUpdate,onInstallBase(){},onClose(){},onEdit(){},onCard(){},onReport(){}})))
+    await act(() => root.render(createElement(LoadDialog, {link,set:changed,inventory,prepareUpdate,onInstallBase(){},onClose(){},onEdit(){},onReport(){}})))
     await act(async () => finish({ name: set.name, changes: [] }))
     expect(container.querySelector('[role=alert]')?.textContent).toContain('Review the sync again; nothing was sent')
     expect(link.update).not.toHaveBeenCalled()
