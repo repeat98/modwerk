@@ -2,84 +2,6 @@
   "schemaVersion": 1,
   "modules": [
     {
-      "id": "spectrum",
-      "version": "0.1.1-experimental",
-      "folderSha256": "bbca0843440aaf15bf142117f66899ae565e30b54a5f3950aac9742c4b8883e2",
-      "impact": {
-        "conditions": "Audio modules are rated for an active instance, including expensive modes and changing controls; MIDI/USB features are rated while enabled. More tracks or instances increase demand. Shared runtime reservations and reused stock buffers are not added again per module. These rough source-backed tiers do not establish hardware headroom or qualification.",
-        "cpu": {
-          "level": "minimal",
-          "basis": "source-estimate",
-          "rationale": "The audio processing runs on the DSP. The documented ColdFire addition is a small SHPE display formatter; this is a source estimate of added CPU work.",
-          "source": "README.md"
-        },
-        "dsp": {
-          "level": "moderate",
-          "basis": "source-estimate",
-          "rationale": "The documented filter modes price roughly 139 to 262 instruction words per sample. This places the active filter in the middle of these audio modules; it is not a hardware utilization measurement.",
-          "source": "README.md"
-        },
-        "memory": {
-          "level": "low",
-          "basis": "source-estimate",
-          "rationale": "The recorded program is 1,337 DSP words plus filter state and tables, with no long delay ring in the described signal path. This is a rough footprint tier, not a complete allocation measurement.",
-          "source": "README.md"
-        }
-      }
-    },
-    {
-      "id": "modulation",
-      "version": "0.1.1-experimental",
-      "folderSha256": "6cbe46bd70d4203bb60473770e806dd6fc799c145c631630a0e4c3d8ddb8da01",
-      "impact": {
-        "conditions": "Audio modules are rated for an active instance, including expensive modes and changing controls; MIDI/USB features are rated while enabled. More tracks or instances increase demand. Shared runtime reservations and reused stock buffers are not added again per module. These rough source-backed tiers do not establish hardware headroom or qualification.",
-        "cpu": {
-          "level": "minimal",
-          "basis": "source-estimate",
-          "rationale": "Audio loops and modulation run on the DSP. CPU additions handle mode labels and controls rather than a continuous CPU audio engine; extra CPU demand is estimated as minimal.",
-          "source": "README.md"
-        },
-        "dsp": {
-          "level": "high",
-          "basis": "source-estimate",
-          "rationale": "The expensive modes price 298 to 354 instruction words per sample. The README also records earlier four-instance pressure beside reverb, so the relative DSP tier is conservatively high; actual headroom remains unmeasured.",
-          "source": "README.md"
-        },
-        "memory": {
-          "level": "moderate",
-          "basis": "source-estimate",
-          "rationale": "Each active instance uses two 1,024-word delay lines plus DSP code, state and coefficient tables. This is more working storage than a scalar filter but less delay storage than Mini Verb.",
-          "source": "README.md"
-        }
-      }
-    },
-    {
-      "id": "character",
-      "version": "0.1.1-experimental",
-      "folderSha256": "42722324ee66b4938cd0b94e80030b073a5f52fe620474c98325ab99f9383856",
-      "impact": {
-        "conditions": "Audio modules are rated for an active instance, including expensive modes and changing controls; MIDI/USB features are rated while enabled. More tracks or instances increase demand. Shared runtime reservations and reused stock buffers are not added again per module. These rough source-backed tiers do not establish hardware headroom or qualification.",
-        "cpu": {
-          "level": "minimal",
-          "basis": "source-estimate",
-          "rationale": "The compressor and drive processing run on the DSP; the described CPU contribution is control and label support. Minimal is an estimate of incremental CPU demand, not zero CPU use.",
-          "source": "README.md"
-        },
-        "dsp": {
-          "level": "moderate",
-          "basis": "source-estimate",
-          "rationale": "The current documented static pricer result is 244 cycles per sample with KEY. The compressor/drive modes are rated in the middle of this audio catalog; static pricing does not establish hardware headroom.",
-          "source": "README.md"
-        },
-        "memory": {
-          "level": "low",
-          "basis": "source-estimate",
-          "rationale": "The record lists 938 DSP program words with per-instance compressor/drive state. The described signal path has no long delay lines, so its relative footprint is estimated low; total memory is not newly measured.",
-          "source": "README.md"
-        }
-      }
-    },
-    {
       "id": "miniverb",
       "version": "0.1.2-experimental",
       "folderSha256": "1c1cd67a3f7fc6abc81794c3ed8cac8e04b5d192234277d29fad5acbdc116e0c",
@@ -206,32 +128,6 @@
           "basis": "source-estimate",
           "rationale": "The record lists 1,000 DSP program words plus a locally recovered shared helper. The synth uses oscillator/envelope state rather than long delay lines. Low is a rough added footprint tier, not a complete linked-code/state inventory.",
           "source": "CPU.md"
-        }
-      }
-    },
-    {
-      "id": "midi-scenes",
-      "version": "0.2.1-experimental",
-      "folderSha256": "497606567f87551826870d55207cf996cd295311d8c3be474b0e739981b02f25",
-      "impact": {
-        "conditions": "Audio modules are rated for an active instance, including expensive modes and changing controls; MIDI/USB features are rated while enabled. More tracks or instances increase demand. Shared runtime reservations and reused stock buffers are not added again per module. These rough source-backed tiers do not establish hardware headroom or qualification.",
-        "cpu": {
-          "level": "low",
-          "basis": "source-estimate",
-          "rationale": "Scene locks and crossfader/MIDI dispatch run on ColdFire. This is control/event processing rather than a continuous CPU audio engine; low is a source estimate and heavy MIDI automation can increase work.",
-          "source": "README.md"
-        },
-        "dsp": {
-          "level": "minimal",
-          "basis": "source-estimate",
-          "rationale": "The upstream README explicitly declares no DSP code for MIDI Scenes. Minimal refers to added module DSP processing; existing audio tracks retain their normal DSP costs.",
-          "source": "README.md"
-        },
-        "memory": {
-          "level": "low",
-          "basis": "source-estimate",
-          "rationale": "The record describes a 4 KB scene-lock table plus save/reload windows and linked code. These bounded control tables support a low rough footprint tier; no complete memory total is claimed.",
-          "source": "README.md"
         }
       }
     },

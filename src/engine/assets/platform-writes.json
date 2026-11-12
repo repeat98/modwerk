@@ -490,40 +490,6 @@
       "writes": 48,
       "bytes": 1112560,
       "sha256": "8a5b26c7f7c97f1e945c2274fb2632e05fc94e7babb941e8b7c80f7e0f24bf61"
-    },
-    {
-      "moduleIds": [
-        "spectrum",
-        "modulation",
-        "miniverb",
-        "euclid"
-      ],
-      "writes": 46,
-      "bytes": 1112560,
-      "sha256": "09effec7437266b693e358d43f0ba0f3de2b0b35fe4d81e7b76ba90cf388bde8"
-    },
-    {
-      "moduleIds": [
-        "spectrum",
-        "modulation",
-        "character",
-        "miniverb",
-        "tapeecho",
-        "euclid",
-        "repitch"
-      ],
-      "writes": 48,
-      "bytes": 1112560,
-      "sha256": "8a5b26c7f7c97f1e945c2274fb2632e05fc94e7babb941e8b7c80f7e0f24bf61"
-    },
-    {
-      "moduleIds": [
-        "euclid",
-        "spectrum"
-      ],
-      "writes": 46,
-      "bytes": 1112560,
-      "sha256": "09effec7437266b693e358d43f0ba0f3de2b0b35fe4d81e7b76ba90cf388bde8"
     }
   ],
   "sourceCommit": "ceda08fd3ffc2485e01b02b9c000e3a2ffa99768",
