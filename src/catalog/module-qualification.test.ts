@@ -84,7 +84,7 @@ describe('module qualification hard gates',()=>{
   for (const module of catalog.modules.filter(m => !['cc-map', 'previewvol'].includes(m.id))) {
     it(`preserves ${module.id} qualification and honest evidence without inventing measurements`, async () => {
       const frozen = parseQualificationBaseline(baseline)
-      const folder = resolve('sdk/octabam/modules', module.id), record = frozen.get(module.id)
+      const folder = resolve('sdk/octatrack/modules', module.id), record = frozen.get(module.id)
       const unchanged = record?.version === module.version && record.folderSha256 === await moduleFolderSha256(folder)
       // Generated web documents include display-only baseline resource estimates.
       // Qualify the source manifest, as publication validation does.
@@ -97,7 +97,7 @@ describe('module qualification hard gates',()=>{
     try {
       mkdirSync(resolve(root,'sdk','approvals'),{recursive:true}); mkdirSync(folder)
       writeFileSync(resolve(folder,'manifest.py'),'raise AssertionError("never execute module source")\n')
-      const document=parseModuleDocument(JSON.parse(readFileSync('sdk/octabam/modules/usb-audio-out-tracks-main-cue/octamod.module.json','utf8')))
+      const document=parseModuleDocument(JSON.parse(readFileSync('sdk/octatrack/modules/usb-audio-out-tracks-main-cue/octamod.module.json','utf8')))
       const approval={kind:'owner-approved-update',id:document.id,version:document.version,sourceSha256:await moduleNativeSourceSha256(folder,document),approvedBy:'repeat98',approvedOn:'2026-10-07',waived:['current-build-hardware','chip-worst-case-cycles','complete-memory-bounds','release-documentation'],ownerStatement:'Approved.',reason:'Test.'}
       const write=(value:object)=>writeFileSync(resolve(root,'sdk','approvals',document.id+'-build-approval.json'),JSON.stringify(value))
       const check=(doc=document)=>requireFolderQualification(folder,doc,new Map(),new Map(),{root})
@@ -116,7 +116,7 @@ describe('module qualification hard gates',()=>{
     try {
       mkdirSync(resolve(root,'sdk','approvals'),{recursive:true});mkdirSync(folder)
       writeFileSync(resolve(folder,'manifest.py'),'SOURCE = 1\n')
-      const document=parseModuleDocument(JSON.parse(readFileSync('sdk/octabam/modules/euclid/octamod.module.json','utf8')))
+      const document=parseModuleDocument(JSON.parse(readFileSync('sdk/octatrack/modules/euclid/octamod.module.json','utf8')))
       const approval={kind:'owner-approved-update',id:document.id,version:document.version,sourceSha256:await moduleNativeSourceSha256(folder,document),approvedBy:'repeat98',approvedOn:'2026-10-07',waived:['current-build-hardware','chip-worst-case-cycles','complete-memory-bounds','release-documentation'],ownerStatement:'Approved.',reason:'Test.',retainedUiVersion:'0.1.3-experimental'}
       const write=(value:object)=>writeFileSync(resolve(root,'sdk','approvals',document.id+'-build-approval.json'),JSON.stringify(value))
       const check=()=>requireFolderQualification(folder,document,new Map(),new Map(),{root})

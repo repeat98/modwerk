@@ -37,9 +37,9 @@ describe('release package scope and reviewed source inventory', () => {
   it('refuses stale and duplicate catalog pins for requested imports', async () => {
     const temporary = await mkdtemp(resolve(tmpdir(), 'octamod-scope-test.'))
     try {
-      const id = requested[0], folder = resolve(temporary, 'sdk/octabam/modules', id)
+      const id = requested[0], folder = resolve(temporary, 'sdk/octatrack/modules', id)
       await mkdir(folder, { recursive: true })
-      await writeFile(resolve(folder, 'octamod.module.json'), await readFile(resolve(root, 'sdk/octabam/modules', id, 'octamod.module.json')))
+      await writeFile(resolve(folder, 'octamod.module.json'), await readFile(resolve(root, 'sdk/octatrack/modules', id, 'octamod.module.json')))
       const entry = catalog.modules.find(module => module.id === id)
       await expect(compiledModuleVersions(temporary, { modules: [{ ...entry, version: '0.1.0-experimental' }] })).rejects.toThrow('Stale catalog module version')
       await expect(compiledModuleVersions(temporary, { modules: [entry, entry] })).rejects.toThrow('Invalid catalog module id')

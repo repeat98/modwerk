@@ -48,7 +48,7 @@ export const MODULES: readonly FirmwareModule[] = MODULE_DOCUMENTS.map(document=
   description:document.presentation.summary,detail:document.compatibility.location,
   author:document.author.github,authorName:displayName(document.author.github,document.author.name),authorUrl:'https://github.com/'+document.author.github,
   contributors:document.author.contributors,
-  sourcePath:'sdk/octabam/modules/'+document.id+'/manifest.py',version:document.version,addedAt:MODULE_ADDED_AT[document.id],updatedAt:moduleReleasedAt(document.id,document.version),fxId:document.compatibility.effectId??undefined,
+  sourcePath:'sdk/octatrack/modules/'+document.id+'/manifest.py',version:document.version,addedAt:MODULE_ADDED_AT[document.id],updatedAt:moduleReleasedAt(document.id,document.version),fxId:document.compatibility.effectId??undefined,
 }))
 
 // DSP code that stock code reaches through hooks, with no effect ID or chooser row.

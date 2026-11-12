@@ -136,7 +136,7 @@ export async function claim(item, options = {}) {
 
 const git = (root, ...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trimEnd()
 const show = (root, ref, path) => { try { return git(root, 'show', ref + ':' + path) } catch { return null } }
-// Any SDK folder that holds modules (sdk/octabam is the Octatrack's), so a newly unlocked machine needs no edit here.
+// Any SDK folder that holds modules (the Octatrack's is sdk/octatrack), so a newly unlocked machine needs no edit here.
 const MODULE_FOLDERS = /^sdk\/((?!drafts\/)[a-z0-9]+(?:-[a-z0-9]+)*)\/modules\/(?:_submissions\/)?([a-z0-9]+(?:-[a-z0-9]+)*)\/|^sdk\/(drafts)\/([a-z0-9]+(?:-[a-z0-9]+)*)\//
 const INTERFACES = /^sdk\/([a-z0-9-]+)\/(?:core|core-profile)\/interface\.json$/
 
@@ -163,8 +163,9 @@ export function neededClaims({ root, base, head = 'HEAD' }) {
     const match = path.match(MODULE_FOLDERS)
     if (match) {
       // A machine's modules sit in modules/<id> or, until catalogued, modules/_submissions/<id>; a move between them is not new.
-      const folders = match[1] ? ['', '_submissions/'].map(sub => 'sdk/' + match[1] + '/modules/' + sub + match[2]) : ['sdk/drafts/' + match[4]]
-      const machine = match[1] === 'octabam' || match[3] === 'drafts' ? 'octatrack' : match[1], id = match[2] ?? match[4]
+      // An Octatrack module that sat in sdk/octabam/modules/ before the folders moved (12 November 2026) is not new either.
+      const folders = match[1] ? [...['', '_submissions/'].map(sub => 'sdk/' + match[1] + '/modules/' + sub + match[2]), ...(match[1] === 'octatrack' ? ['sdk/octabam/modules/' + match[2]] : [])] : ['sdk/drafts/' + match[4]]
+      const machine = match[3] === 'drafts' ? 'octatrack' : match[1], id = match[2] ?? match[4]
       if (!needed.has('module ' + machine + '/' + id) && folders.every(folder => !existed.has(folder))) {
         const manifest = show(root, head, match[0] + 'modwerk.module.json') ?? show(root, head, match[0] + 'octamod.module.json')
         add('module', machine + '/' + id, 'new module folder ' + match[0].slice(0, -1), { note: summaryNote(manifest) })

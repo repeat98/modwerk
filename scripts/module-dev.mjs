@@ -6,7 +6,7 @@
 //   npm run module:dev -- <id> --build-only    # only the package; prints where it is
 //   npm run module:dev -- <id> --emulator --socket SOCK   # ot_emu's USB bench instead of the unit
 //
-// A draft (sdk/drafts/<id>) is staged under sdk/octabam/modules/ while this runs, as module:doctor --draft does. The package is
+// A draft (sdk/drafts/<id>) is staged under sdk/octatrack/modules/ while this runs, as module:doctor --draft does. The package is
 // built by scripts/module-dev-package.py with the same builder as the site's packages, written outside the checkout, and loaded
 // by `npm run device -- try`: a trial in RAM that is rolled back unless you keep it with `npm run device -- try FILE --accept`.
 // Needs: the unit on a Modwerk base and the USB bridge (docs/OCTATRACK_DRIVING.md), m68k-elf binutils for ColdFire code and
@@ -36,9 +36,9 @@ if (!id || extra.length || !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(id)) {
   process.exit(2)
 }
 const hasDraft = existsSync(draftFolder(root, id)), hasListed = existsSync(listedFolder(root, id))
-if (!hasDraft && !hasListed) { console.error('No module named ' + id + ' under sdk/drafts or sdk/octabam/modules. Start one with npm run module:new.'); process.exit(2) }
+if (!hasDraft && !hasListed) { console.error('No module named ' + id + ' under sdk/drafts or sdk/octatrack/modules. Start one with npm run module:new.'); process.exit(2) }
 // A draft of a listed module's next version cannot be staged over the listed folder; build the listed one with --listed.
-if (hasDraft && hasListed && !values.listed) { console.error('Both sdk/drafts/' + id + ' and sdk/octabam/modules/' + id + ' exist. Give --listed to build the listed one; the draft of its next version is built once it replaces the listed folder on your branch.'); process.exit(2) }
+if (hasDraft && hasListed && !values.listed) { console.error('Both sdk/drafts/' + id + ' and sdk/octatrack/modules/' + id + ' exist. Give --listed to build the listed one; the draft of its next version is built once it replaces the listed folder on your branch.'); process.exit(2) }
 const draft = hasDraft && !values.listed
 const refresh = draft ? stageDraft(root, id) : () => {}
 const source = draft ? draftFolder(root, id) : listedFolder(root, id)

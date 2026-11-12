@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { resolve } from 'node:path'
 import { readFile } from 'node:fs/promises'
 import { createHash } from 'node:crypto'
-import release from '../../sdk/octabam/modules/everb/octamod.module.json'
-import capture from '../../sdk/octabam/modules/everb/media/capture.json'
-import performance from '../../sdk/octabam/modules/everb/evidence/performance.json'
+import release from '../../sdk/octatrack/modules/everb/octamod.module.json'
+import capture from '../../sdk/octatrack/modules/everb/media/capture.json'
+import performance from '../../sdk/octatrack/modules/everb/evidence/performance.json'
 import baseline from '../../sdk/approvals/module-qualification-baseline.json'
 import recipes from '../engine/assets/descriptor-recipes.json'
 import { parseModuleDocument, requireModuleUiForPublication } from './module-contract'
@@ -13,7 +13,7 @@ import { moduleNativeSourceSha256, parseQualificationBaseline, requireFolderQual
 import { requireCompleteReadme, requireMonochromePng } from '../../scripts/module-documentation.mjs'
 import { MODULES, resolveSelection } from './modules'
 
-const folder = resolve('sdk/octabam/modules/everb')
+const folder = resolve('sdk/octatrack/modules/everb')
 
 describe('E-Verb experimental release', () => {
   it('publishes 0.1.2 as an owner-approved update through the shared catalog, with 0.1.0 hardware evidence only', async () => {

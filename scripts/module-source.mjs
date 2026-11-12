@@ -47,7 +47,7 @@ export async function compiledModuleVersions(root, catalog) {
   for (const module of catalog.modules) {
     if (!/^[a-z][a-z0-9-]*$/.test(module.id) || seen.has(module.id)) throw new Error('Invalid catalog module id: ' + module.id)
     seen.add(module.id)
-    const document = parseModuleDocument(JSON.parse(await readFile(resolve(root, 'sdk/octabam/modules', module.id, 'octamod.module.json'), 'utf8')))
+    const document = parseModuleDocument(JSON.parse(await readFile(resolve(root, 'sdk/octatrack/modules', module.id, 'octamod.module.json'), 'utf8')))
     if (document.id !== module.id || document.version !== module.version) throw new Error('Stale catalog module version: ' + module.id)
     if (document.build?.status !== 'pending') versions[module.id] = module.version
   }

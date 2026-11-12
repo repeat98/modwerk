@@ -129,8 +129,9 @@ export async function requireRetainedEvidence(root, folder, document, baseline, 
   // approved base, or origin/main for local generation and release validation.
   try { git(root, 'merge-base', '--is-ancestor', record.commit, approvedRef) }
   catch { throw new Error(label + ': evidence commit must belong to the approved main history; fetch origin/main or pass the exact PR base') }
-  const prefix = 'sdk/octabam/modules/' + document.id + '/'
-  const files = tree(root, record.commit, prefix)
+  // The module's folder at the evidence commit: where it is now, or sdk/octabam/modules/ before the folders moved (12 November 2026).
+  let prefix = 'sdk/octatrack/modules/' + document.id + '/', files = tree(root, record.commit, prefix)
+  if (!files.size) { prefix = 'sdk/octabam/modules/' + document.id + '/'; files = tree(root, record.commit, prefix) }
   const previous = parseModuleDocument(JSON.parse(files.get(prefix + 'octamod.module.json')?.toString('utf8') ?? 'null'))
   if (previous.id !== document.id || previous.version !== record.moduleVersion) throw new Error(label + ': prior module/version does not match the approved commit')
   if (previous.tests.retainedEvidence) throw new Error(label + ': reference the original reviewed evidence commit, not another retained-evidence update')

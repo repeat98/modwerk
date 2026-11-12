@@ -34,7 +34,7 @@ if (!development) {
 const versions = await compiledModuleVersions(root, catalog)
 if (JSON.stringify(Object.keys(report.moduleVersions).sort()) !== JSON.stringify(Object.keys(versions).sort())) throw new Error('Compiled module scope differs from the catalog')
 for (const [id,version] of Object.entries(versions)) {
-  const doc = parseModuleDocument(await json(resolve(root,'sdk/octabam/modules',id,'octamod.module.json')))
+  const doc = parseModuleDocument(await json(resolve(root,'sdk/octatrack/modules',id,'octamod.module.json')))
   if (doc.version !== version || report.moduleVersions[id] !== version) throw new Error('Stale compiled module version: ' + id)
 }
 if (JSON.stringify(Object.keys(report.files).sort()) !== JSON.stringify([...expected].sort()) || !report.sources || typeof report.sources !== 'object' || !Object.keys(report.sources).length) throw new Error('Invalid compiled artifact inventory')
