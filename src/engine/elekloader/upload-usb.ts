@@ -24,7 +24,7 @@ export const MISSING_PAGE = 13 // entries a MISSING reply holds; wValue is the f
 export const VENDOR_INVENTORY = 27 // the modules installed on the unit, in MISSING's form (sdk/runtime/loader/loader.c)
 export const VENDOR_CAPABILITIES = 29 // loader capabilities; older bases stall this read-only request
 export const CAPABILITIES_BYTES = 12
-export const RuntimeFeature = { sites: 1, stockCopies: 2, fills: 4, tables: 8, machineGroups: 16, sidechain: 32, siteEvents: 128, baseUpdate: 256, moduleSets: 512 } as const
+export const RuntimeFeature = { sites: 1, stockCopies: 2, fills: 4, tables: 8, machineGroups: 16, sidechain: 32, siteEvents: 128, baseUpdate: 256, moduleSets: 512, uiRoots: 1024 } as const
 export interface RuntimeCapabilities { abi: number; features: number; maxSites: number; maxCopies: number }
 /** MWCP v1. Unknown feature bits are retained: they do not imply features this client requires. */
 export function parseRuntimeCapabilities(view: DataView): RuntimeCapabilities {

@@ -1532,6 +1532,9 @@ def main():
                              'not the uncached one (sdk/runtime/loader/README.md, "Cached modules"). Off by default.')
     parser.add_argument('--module-sets', action='store_true',
                         help='Private whole-set transaction candidate. Retains every predecessor through Keep/Undo; needs exact hardware qualification.')
+    parser.add_argument('--module-ui-roots', action='store_true',
+                        help='Refuse to retire any module whose window, page or key layer is still open (RUNTIME_UI_OPEN, '
+                             'loader capability 1024; machine_admission_runtime.c). Part of the beta base.')
     parser.add_argument('--fx-ids', type=int, choices=(32, 128), default=128,
                         help='with --dsp-loader: the base\'s effect ids (fxids.h, the dispatch and chooser tables; '
                              'docs/OCTATRACK_MORE_EFFECT_IDS.md). 32, the old width, only to bisect a fault.')
@@ -1946,6 +1949,8 @@ def main():
                          **({'cachedModules': 'prototype-1'} if args.cached_modules else {}))
     if args.module_sets:
         configuration['usb']['moduleSets'] = 'mwms-1'
+    if args.module_ui_roots:
+        configuration['usb']['uiRoots'] = 'mwur-1'
     if args.dsp_loader:
         configuration.update(dsp=dict(loader='dsp-dynload-3', stock='on-demand', rows='runtime',
                                       allowance=DSP_ALLOWANCE, reserve=DSP_RESERVE, probe=args.dsp_probe, burn=args.dsp_burn, **({'burnWindow': args.dsp_burn_window} if args.dsp_burn_window else {}), hook=args.dsp_hook, arena=[dsp_layout[t]['tableWords'] - loader_dsp.SAVED for t in 'AB']))
@@ -2071,6 +2076,8 @@ modwerk_retained_end:
         recipe['cflags'].append('-DMODWERK_CACHED_MODULES')
     if args.module_sets:
         recipe['cflags'].append('-DMODWERK_RUNTIME_SETS')
+    if args.module_ui_roots:  # loader.c's capability 1024, machine_admission_runtime.c
+        recipe['cflags'].append('-DMODWERK_RUNTIME_UI_ROOTS')
     if args.saved_set_export:
         recipe['cflags'].append('-DMODWERK_SAVED_SET_EXPORT')
     if args.resident_stock_hooks:

@@ -44,6 +44,7 @@ const { values: args } = parseArgs({ options: {
   controllers: { type: 'boolean', default: false }, 'usb-audio-variants': { type: 'boolean', default: false },
   'cached-modules': { type: 'boolean', default: false },
   'module-sets': { type: 'boolean', default: false }, 'sample-editor': { type: 'boolean', default: false },
+  'module-ui-roots': { type: 'boolean', default: false },
   beta: { type: 'boolean', default: false },
 } })
 if (!args.stock) throw new Error('Usage: npm run octatrack:base -- --stock OCTATRACK_OS1.40C.bin [--beta] [--upstream ELEKLOADER] [--write] [--out NEW-DIR]')
@@ -51,7 +52,7 @@ if (!args.stock) throw new Error('Usage: npm run octatrack:base -- --stock OCTAT
 // and every base after it ran module code uncached: so --write takes only these, through --beta.
 const BETA = { 'usb-midi': true, 'usb-audio': 'USB AUDIO OUT TRACKS MAIN CUE', 'site-events': true, 'table-owners': true,
   'resident-stock-hooks': true, 'resident-on-demand': true, controllers: true, 'module-sets': true, 'usb-audio-variants': true,
-  'cached-modules': true, 'sample-editor': true }
+  'cached-modules': true, 'sample-editor': true, 'module-ui-roots': true }
 if (args.beta) {
   const own = Object.keys(args).filter(flag => !['stock', 'upstream', 'write', 'out', 'beta'].includes(flag) && process.argv.some(arg => arg === '--' + flag || arg.startsWith('--' + flag + '=')))
   if (own.length) throw new Error('--beta is every flag of the beta base; leave out ' + own.map(flag => '--' + flag).join(', ') + '.')
@@ -81,7 +82,7 @@ const buildLayout = (layout, output, ...rest) => python('build_core.py', '--stoc
   ...(args['table-owners'] ? ['--table-owners', join(adapters, 'table-owners.json')] : []),
   ...(args['resident-stock-hooks'] ? ['--resident-stock-hooks'] : []), ...(args['resident-on-demand'] ? ['--resident-on-demand'] : []),
   ...(args['saved-set-export'] ? ['--saved-set-export'] : []), ...(args['module-sets'] ? ['--module-sets'] : []),
-  ...(args['sample-editor'] ? ['--sample-editor'] : []), ...rest)
+  ...(args['sample-editor'] ? ['--sample-editor'] : []), ...(args['module-ui-roots'] ? ['--module-ui-roots'] : []), ...rest)
 const build = (output, ...rest) => buildLayout(args['usb-audio'], output, ...rest)
 const defaultLayout = USB_AUDIO_LAYOUTS.find(layout => layout.key === args['usb-audio'])?.id
 if (args['usb-audio-variants'] && (!args['usb-midi'] || !defaultLayout)) throw new Error('--usb-audio-variants needs --usb-midi and a --usb-audio layout, the default variant.')

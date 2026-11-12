@@ -28,6 +28,9 @@ export interface RuntimePackage {
   entries?: number
   /** Exact IDENTIFY digest when authored code depends on this base's addresses. */
   requiredBase?: string
+  /** Loader capability bits (MWCP) the package needs beyond what its records imply, such as RuntimeFeature.uiRoots for a
+   * module with a window of its own: only a base that refuses to retire it while the window is open may take it. */
+  requiresCapabilities?: number
 }
 export interface MachineVariant extends RuntimePackage {
   layout: number; current: boolean; members: { id: string; version: string }[]
@@ -121,7 +124,7 @@ function requirements(entry: RuntimePackage, group = false) {
   const requires = entry.requires ?? 0, claims = entry.claims ?? 0, entries = entry.entries ?? 0
   // An engine (ABI 10 hook entries) runs only for a controller its base trusts, so only a base-bound package has one.
   if (![6, 7, 8, 9, 10].includes(abi) || !bounded(sites, 128) || !bounded(copies, 128) || !bounded(fills, 64) ||
-      !bounded(entry.features ?? 0, 65535) || (abi < 8 && fills) || (abi < 7 && copies) ||
+      !bounded(entry.features ?? 0, 65535) || !bounded(entry.requiresCapabilities ?? 0, 65535) || (abi < 8 && fills) || (abi < 7 && copies) ||
       !bounded(requires, 65535) || !bounded(claims, DSP_CLAIMS) || (abi < 9 && (requires || claims)) || (requires & ~BASE_DSP_FEATURES) ||
       !bounded(entries, HOOK_ENTRIES) || (entries && (abi < 10 || entry.requiredBase === undefined)) ||
       (group && abi !== 8) || (entry.requiredBase !== undefined && (typeof entry.requiredBase !== 'string' || !/^[0-9a-f]{64}$/.test(entry.requiredBase))) ||
@@ -130,7 +133,7 @@ function requirements(entry: RuntimePackage, group = false) {
     throw invalidPackage()
   // Required features follow the actual record types even if a manifest accidentally omits a bit.
   const features = (entry.features ?? 0) | (sites ? RuntimeFeature.sites : 0) | (copies ? RuntimeFeature.stockCopies : 0) |
-    (fills ? RuntimeFeature.fills : 0) | (group ? RuntimeFeature.machineGroups : 0)
+    (fills ? RuntimeFeature.fills : 0) | (group ? RuntimeFeature.machineGroups : 0) | (entry.requiresCapabilities ?? 0)
   return { abi, sites, copies, fills, features, requires, claims, entries }
 }
 /** Two ABI 9 claims meet as the loader says (loader.c claims_meet): the same core (an ABI 10 claim on both cores, core 2,

@@ -1,0 +1,1 @@
+The Octatrack base no longer removes, replaces or undoes a module while its window or key layer is still open: the sync stops with “still has its window open”, and goes through once the window is closed. Modules with a window of their own, such as Tuner, can now come over USB.

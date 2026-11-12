@@ -5,6 +5,7 @@ import manifest from '../assets/octatrack-module-packages.json' with { type: 'js
 import siteEvents from '../../../sdk/machines/octatrack/site-events.json' with { type: 'json' }
 import baseBinding from '../../../sdk/machines/octatrack/base-binding.json' with { type: 'json' }
 import { removal } from '../../dev/octatrack-usb-lifecycle'
+import { RuntimeFeature } from './upload-usb'
 import { BASE_DSP_FEATURES, BaseUpdateRequired, createRuntimeCatalogue, KEY_BUS_BASES, KeyBusBaseRequired, type MachineVariant, fetchPackage, inventoryFrom, ModuleSetError, prepareModuleSet, removalPackage, runtimeId, SITE_EVENTS, USB_MODULE_IDS } from './module-set'
 
 const file = (path: string) => new Uint8Array(readFileSync(new URL('../../../public/' + path, import.meta.url)))
@@ -64,6 +65,17 @@ describe('preparing a module set', () => {
     expect(changes[0]).toEqual({ module: 'E-Verb', data: removalPackage('everb'), undo: file(manifest.packages[0].path) })
     expect(changes[1]).toEqual({ module: '0000002a', data: removalPackage('0000002a'), undo: undefined }) // nothing to put back
     expect(changes[2]).toEqual({ module: 'TapeHead', data: file(manifest.packages[2].path), undo: removalPackage('tapehead') })
+  })
+  it('offers a package that needs a capability (a window of its own: uiRoots) only to a base that reports it', () => {
+    expect(RuntimeFeature.uiRoots).toBe(1024)
+    expect(readFileSync(new URL('../../../sdk/runtime/loader/loader.c', import.meta.url), 'utf8')).toContain('#define UI_ROOTS_CAPABILITY 1024u')
+    const entry = manifest.packages.find(item => item.id === 'tapehead')!
+    const catalogue = createRuntimeCatalogue({ packages: [{ ...entry, requiresCapabilities: RuntimeFeature.uiRoots }] })
+    const target = { name: 'Window', moduleIds: ['tapehead'] }, base = { abi: 10, features: 7 | 128 | 512, maxSites: 128, maxCopies: 128 }
+    expect(catalogue.review(target, empty, base).problem).toBeInstanceOf(BaseUpdateRequired)
+    expect(catalogue.review(target, empty, { ...base, features: base.features | RuntimeFeature.uiRoots }).problem).toBeUndefined()
+    expect(createRuntimeCatalogue({ packages: [entry] }).review(target, empty, base).problem).toBeUndefined()
+    expect(() => createRuntimeCatalogue({ packages: [{ ...entry, requiresCapabilities: 65536 }] }).review(target, empty, base)).toThrow(ModuleSetError)
   })
   it('refuses what the base cannot do yet, before anything is sent', async () => {
     await expect(prepareModuleSet({ name: 'Set', moduleIds: ['everb', 'tapeecho'] }, empty, load)).rejects.toThrow(ModuleSetError)

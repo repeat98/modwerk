@@ -87,6 +87,7 @@ Never write into bytes another module saves, even one listed in your `compatibil
 
 - **An effect** has twelve knobs on two pages: slots 0-5 and 6-11. Each `Param` gives a short label, a default, a value count and a formatter. Put a MODE switch on an even slot. The page comes from the manifest. A draft's page is derived from it by `module:dev`, which shows stepped knobs as numbers until the module is listed.
 - **ColdFire code** draws with `module_draw`, reads keys and encoders with `module_key` and `module_enc`, or contributes to a table. For example, a row in `ot_sequencer_rows` is a `struct modwerk_sequencer_row` with `label`, `get` and `set`. Each module's controls sit where a musician would look for them ([choose how a module hooks in](module-guides/README.md#choose-how-a-module-hooks-in)).
+- **A window or key layer of its own** (the stock window manager, an input layer pushed onto stock's): the base will not remove, replace or undo the module while stock still names any of its memory, or while a task is paused in its code. The sync is refused with `RUNTIME_UI_OPEN` until the musician closes it. So close everything you open, on every path out (NO, another page, the stock window that evicts yours). A package that opens one names `requiresCapabilities: 1024` in `src/engine/assets/octatrack-module-packages.json`, so only a base with this check (loader capability 1024) is offered it.
 
 ## What stays stable
 
