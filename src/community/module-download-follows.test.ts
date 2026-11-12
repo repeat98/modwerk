@@ -3,7 +3,8 @@ import type { DatabaseSync } from 'node:sqlite'
 import { testServer } from './test-server'
 import { digest } from '../../server/security'
 import { recordModuleReleases } from '../../server/module-updates'
-import { communityModule } from './modules'
+import { COMMUNITY_MODULES, communityModule } from './modules'
+import { PAUSED_MODULE_IDS, isBetaModule } from '../catalog/availability'
 import { notificationLines } from './notification-text'
 
 const databases: DatabaseSync[] = []
@@ -37,13 +38,22 @@ describe('automatic download update follows', () => {
   it('requires a verified member and refuses unknown/unavailable modules and download data', async () => {
     const { call, token, db, user } = await fixture()
     expect((await call('/modules/miniverb/download', 'POST', {})).status).toBe(401)
-    expect((await call('/modules/spectrum/download', 'POST', {}, token)).status).toBe(400)
+    expect((await call('/modules/' + PAUSED_MODULE_IDS.find(id => !isBetaModule(id)) + '/download', 'POST', {}, token)).status).toBe(400)
     expect((await call('/modules/unknown/download', 'POST', {}, token)).status).toBe(404)
     expect((await call('/modules/miniverb/download', 'POST', { firmware: 'bytes' }, token)).status).toBe(400)
     db.prepare('UPDATE users SET email_verified=0 WHERE id=?').run(user)
     expect((await call('/modules/miniverb/download', 'POST', {}, token)).status).toBe(403)
   })
 
+  it('checks an unchanged inventory in a fixed number of queries, not some per module', async () => {
+    const { env } = await fixture()
+    const releases = COMMUNITY_MODULES.slice(0, 20).map(module => ({ id: module.id, name: module.name, href: module.href, version: '1.0.0', notes: { version: '1.0.0', date: '2026-10-08', changes: ['Correct the playback behavior for this version.'] } }))
+    await recordModuleReleases(env.DB!, releases)
+    let queries = 0
+    const counted = { prepare: (sql: string) => { queries++; return env.DB!.prepare(sql) }, batch: (statements: Parameters<NonNullable<typeof env.DB>['batch']>[0]) => env.DB!.batch(statements) }
+    expect(await recordModuleReleases(counted, releases)).toEqual({ checked: 20, notified: 0 })
+    expect(queries).toBeLessThanOrEqual(4)
+  })
   it('uses published version history, notifies once, and stops future releases and pending email on opt-out', async () => {
     const { call, db, env, token, user } = await fixture()
     const module = communityModule('miniverb')!

@@ -12,6 +12,7 @@
 //   npm run device -- remove [MODULE.mwrm] [--accept]   # that file's module, else module 0
 //   npm run device -- set A.mwrm,B.mwrm,-C.mwrm [--accept]  # one whole-set offer, as the site's Sync sends it: files to install, -FILE
 //       to remove that file's module, +refuse for two test modules of which the base refuses the second (so the set rolls back)
+//   npm run device -- recover                       # a trial or staged set another run left behind: roll it back, leave upload mode
 //   npm run device -- lifecycle
 //   npm run device -- boot BUILD_DIR [--chunk 4096]  # RAM boot: build_core.py's output, no flashing; serve: 'boot DIR 4096'
 //   npm run device -- flash BUILD_DIR               # after `boot BUILD_DIR`: that base writes itself to NOR (two slots: it runs on)
@@ -65,10 +66,10 @@ const { values, positionals: [command, file] } = parseArgs({ allowPositionals: t
   chunk: { type: 'string' }, // boot: bytes a frame (4096 for the flashed usbtest9 on macOS; docs/OCTATRACK_HARDWARE_TRAPS.md)
 } })
 let seconds = Number(values.seconds)
-if (!['serve', 'status', 'stats', 'try', 'set', 'remove', 'lifecycle', 'boot', 'flash', 'key', 'screen', 'state', 'enc', 'fader', 'loader', 'report', 'probe', 'meter', 'missing', 'ui', 'do', 'mem'].includes(command) || (['try', 'set', 'boot', 'flash', 'key', 'enc', 'fader', 'probe', 'meter', 'do', 'mem'].includes(command) && !file) ||
-  (['serve', 'status', 'stats', 'lifecycle', 'screen', 'state', 'loader', 'report', 'missing', 'ui'].includes(command) && file) ||
+if (!['serve', 'status', 'stats', 'try', 'set', 'recover', 'remove', 'lifecycle', 'boot', 'flash', 'key', 'screen', 'state', 'enc', 'fader', 'loader', 'report', 'probe', 'meter', 'missing', 'ui', 'do', 'mem'].includes(command) || (['try', 'set', 'boot', 'flash', 'key', 'enc', 'fader', 'probe', 'meter', 'do', 'mem'].includes(command) && !file) ||
+  (['serve', 'status', 'stats', 'recover', 'lifecycle', 'screen', 'state', 'loader', 'report', 'missing', 'ui'].includes(command) && file) ||
   !Number.isInteger(seconds) || seconds < 1 || seconds > 3600 || (values.chunk && !(Number(values.chunk) >= 1 && Number(values.chunk) <= 4096 && Number.isInteger(Number(values.chunk))))) {
-  console.error('Usage: device.mjs status | stats | try MODULE.mwrm [--seconds 1-3600] [--accept] | set FILE,-FILE,… [--accept] | remove [MODULE.mwrm] [--accept] | lifecycle | boot BUILD_DIR [--chunk 1-4096] | flash BUILD_DIR | key NAME[+NAME] | screen | state | loader | report | probe 0|1 | meter 0|1 | missing | ui | do SEQUENCE | mem ADDR LENGTH | enc A+3 | fader 0-255 [--socket PATH] [--emulator]')
+  console.error('Usage: device.mjs status | stats | try MODULE.mwrm [--seconds 1-3600] [--accept] | set FILE,-FILE,… [--accept] | recover | remove [MODULE.mwrm] [--accept] | lifecycle | boot BUILD_DIR [--chunk 1-4096] | flash BUILD_DIR | key NAME[+NAME] | screen | state | loader | report | probe 0|1 | meter 0|1 | missing | ui | do SEQUENCE | mem ADDR LENGTH | enc A+3 | fader 0-255 [--socket PATH] [--emulator]')
   process.exit(2)
 }
 
@@ -653,6 +654,13 @@ if (command === 'serve') {
     // shortcut: runtime module files do not name their base yet, so any file is offered to the connected base,
     // whose loader validates it; bind the base once the hook ABI defines module files.
     console.log(state(await retried(() => trial(session, { base: identity.base, data, sha256: sha(data) }))))
+  }
+  if (command === 'recover') {
+    const phase = session.status.phase
+    if (phase === 'receiving' || phase === 'verified') { session.adopt(); await session.cancel() }
+    else if (['pending', 'trial', 'recovery', 'publishing'].includes(phase)) { session.adopt(); if (phase === 'trial') await stopping(() => session.holdTrial()); await stopping(() => session.rollback()) }
+    if (phase !== 'normal') await session.leaveUploadMode()
+    console.log(phase === 'normal' ? 'nothing to recover' : 'recovered from ' + phase, '\n' + state(session.status))
   }
   if (command === 'set') {
     const id = data => { const view = new DataView(data.buffer); if (data.length < 32 || view.getUint32(0) !== 0x4d57524d || view.getUint16(4) < 4) throw new Error('Not an ABI 4+ runtime module.'); return view.getUint32(28) }

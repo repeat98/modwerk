@@ -18,7 +18,6 @@ export const LIBRARY_CATEGORY_LABELS: Record<ModuleCategory, string> = { effects
 export const STANDALONE_NOTE = 'Complete custom firmware that replaces the whole OS. Use one at a time: it never combines with other mods.'
 // Library grouping can change without rewriting approved module metadata or qualification pins.
 const LIBRARY_CATEGORY_OVERRIDES: Readonly<Partial<Record<string, ModuleCategory>>> = {
-  'midi-scenes': 'midi-usb',
   previewvol: 'system',
   quantizer: 'system',
   repitch: 'system',
@@ -60,6 +59,11 @@ export function getModuleSource(module: FirmwareModule): string {
   const source = MODULE_DOCUMENTS.find(document => document.id === module.id)?.source
   return source ? source.repository + '/tree/' + source.revision + '/' + source.path : CATALOG_SOURCE.repository + '/tree/' + CATALOG_SOURCE.revision + '/modules/' + module.id
 }
+
+// Removed from the library for good (owner, 12 November 2026). A saved configuration, version pin or backup that still
+// names one loses it quietly when it is read, instead of becoming unreadable.
+export const REMOVED_MODULE_IDS: readonly string[] = ['spectrum', 'modulation', 'character', 'midi-scenes']
+export function withoutRemovedModules(ids: readonly string[]): string[] { return ids.filter(id => !REMOVED_MODULE_IDS.includes(id)) }
 
 export function resolveSelection(ids: readonly string[]): FirmwareModule[] {
   const unknown = ids.filter((id) => !MODULES.some((module) => module.id === id))

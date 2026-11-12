@@ -175,54 +175,6 @@ export const MODULE_MEDIA_GUIDES: Readonly<Record<string, ScreenshotGuide>> = {
       },
     ],
   },
-  'midi-scenes': {
-    version: '0.2.5-experimental',
-    screenshots: [
-      {
-        path: 'media/ot-channel.png',
-        caption: 'Press MIDI and select a MIDI track. Hold FUNC and press SRC, then set CHAN with encoder A to your synth’s receive channel and press YES. This capture has CHAN OFF; choose a channel to send MIDI to your synth.',
-        alt: 'MIDI NOTE SETUP with CHAN, BANK, PROG and SEND all OFF.',
-      },
-      {
-        path: 'media/ot-setup.png',
-        caption: 'Hold FUNC and press FX1 for MIDI CTRL 1 SETUP. Turn encoder C to assign CC1 to the controller you want to morph, then press YES. The example uses CC 74; check what that controller changes on your synth.',
-        alt: 'MIDI CTRL 1 SETUP with CC1 assigned to 74 and SCNCTRL5 visible.',
-      },
-      {
-        path: 'media/ot-location.png',
-        caption: 'Press FX1 to return to CONTROL 1. Hold FUNC and press encoder C to enable CC1 if it reads OFF, then turn C to set its normal value. Here CC1 is enabled at 0; this is the starting value for the scene example.',
-        alt: 'MIDI CONTROL 1 with CC1 enabled at 0 and the other visible controls OFF.',
-      },
-      {
-        path: 'media/ot-scene-lock.png',
-        caption: 'Hold SCENE A and press a TRIG key to assign a scene to that side. Keep SCENE A held and turn encoder C to 64: you are setting the scene’s CC1 value while the normal value stays at 0. Repeat with SCENE B for a second endpoint if desired.',
-        alt: 'MIDI CONTROL 1 while Scene A is held, showing a CC1 scene value of 64.',
-      },
-      {
-        path: 'media/ot-released.png',
-        caption: 'Release the scene key: the page shows the normal CC1 value, 0, again. Move the crossfader toward Scene A to morph toward its value of 64, and away to return toward the other side’s value. Listen to the assigned control change on your connected synth.',
-        alt: 'MIDI CONTROL 1 after releasing Scene A, with CC1 displaying the base value 0.',
-      },
-      {
-        path: 'media/ot-arp.png',
-        caption: 'Press AMP in MIDI mode for the arpeggiator. MODE is OFF in this capture; choose an arpeggiator mode to use it. Hold a scene key while editing an enabled parameter to make a scene lock, using the same hold-and-edit workflow as CC1.',
-        alt: 'MIDI ARPEGGIATOR with TRAN, LEG, MODE, SPD, RNGE and NLEN; MODE is OFF.',
-        additional: true,
-      },
-      {
-        path: 'media/ot-lfo.png',
-        caption: 'Press LFO in MIDI mode. SPD1–3 set the three LFO speeds and DEP1–3 their depths; FUNC + LFO opens destination and waveform setup. Hold a scene key while changing a parameter to store its scene value.',
-        alt: 'MIDI LFO page with SPD1, SPD2, SPD3, DEP1, DEP2 and DEP3.',
-        additional: true,
-      },
-      {
-        path: 'media/ot-control2.png',
-        caption: 'Press FX2 in MIDI mode for CC5–10. Assign controller numbers in FUNC + FX2 SETUP, then enable the controls before editing scene values. They are all OFF here, so this image shows the page location rather than an active scene lock.',
-        alt: 'MIDI CONTROL 2 with CC5 through CC10 all OFF.',
-        additional: true,
-      },
-    ],
-  },
   quantizer: {
     version: '0.1.2-experimental',
     screenshots: [
