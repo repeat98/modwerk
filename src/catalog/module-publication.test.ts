@@ -11,7 +11,7 @@ import { resourceImpactFixture } from './test-fixtures/resource-impact'
 
 it('checks real PR publication changes without executing module source', async () => {
   const root=mkdtempSync(resolve(tmpdir(),'octamod-publication-test.'))
-  const folder=resolve(root,'sdk/octabam/modules',example.id)
+  const folder=resolve(root,'sdk/octatrack/modules',example.id)
   const document={...structuredClone(example),access:{...example.access,screenshots:[] as string[]}}
   const catalog={schemaVersion:1,sourceRevision:'a'.repeat(40),modules:[{id:document.id,version:document.version,addedAt:'2026-10-05T12:00:00Z'}]}
   const put=(path:string,value:string)=>{mkdirSync(dirname(path),{recursive:true});writeFileSync(path,value)}

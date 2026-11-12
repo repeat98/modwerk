@@ -3,8 +3,8 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { verifyImportedFile } from '../../scripts/sdk-imports.mjs'
-import manifest from '../../sdk/octabam/modules/tapehead/octamod.module.json'
-import capture from '../../sdk/octabam/modules/tapehead/media/capture.json'
+import manifest from '../../sdk/octatrack/modules/tapehead/octamod.module.json'
+import capture from '../../sdk/octatrack/modules/tapehead/media/capture.json'
 import provenance from '../../sdk/imports/tapehead-f890330.json'
 import baseline from '../../sdk/approvals/module-qualification-baseline.json'
 import { moduleNativeSourceSha256, parseQualificationBaseline, requireFolderQualification } from '../../scripts/module-qualification.mjs'
@@ -14,7 +14,7 @@ import { moduleBuildPending } from './build-support'
 import requestedProofs from '../engine/assets/tapehead-composition-proofs.json'
 import utilityProofs from '../engine/assets/tapehead-utility-proofs.json'
 
-const folder = resolve('sdk/octabam/modules/tapehead')
+const folder = resolve('sdk/octatrack/modules/tapehead')
 const sha = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex')
 
 describe('published TapeHead evidence', () => {

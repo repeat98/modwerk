@@ -2,7 +2,7 @@
 
 Read [the module guides index](README.md) first. A module that sends or reacts to MIDI clock or notes in time also follows [sequencing.md](sequencing.md).
 
-**Applies to** modules with manifest `category: midi-usb`, including MIDI generators and MIDI effects (below). [CC Map](../../sdk/octabam/modules/cc-map/README.md) maps MIDI CC 68–73 to FX1 SETUP controls. [USB Audio](../../sdk/octabam/modules/usb-audio-out-tracks-main-cue/README.md) sends eight stereo tracks, MAIN and CUE over USB.
+**Applies to** modules with manifest `category: midi-usb`, including MIDI generators and MIDI effects (below). [CC Map](../../sdk/octatrack/modules/cc-map/README.md) maps MIDI CC 68–73 to FX1 SETUP controls. [USB Audio](../../sdk/octatrack/modules/usb-audio-out-tracks-main-cue/README.md) sends eight stereo tracks, MAIN and CUE over USB.
 
 ## Behave like the instrument
 

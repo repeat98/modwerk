@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import { escapesModuleFolder, resolveModuleFile } from './module-folder'
 
 describe.each([
-  { name: 'POSIX', paths: posix, folder: '/repo/sdk/octabam/modules/midi-scenes' },
+  { name: 'POSIX', paths: posix, folder: '/repo/sdk/octatrack/modules/midi-scenes' },
   { name: 'Windows', paths: win32, folder: 'C:\\repo\\sdk\\octabam\\modules\\midi-scenes' },
 ])('$name module folder containment', ({ paths, folder }) => {
   it('accepts nested files and names beginning with two dots', () => {

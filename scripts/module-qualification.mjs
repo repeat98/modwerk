@@ -150,12 +150,12 @@ export async function requireFolderQualification(folder, document, baseline, wai
 export function evidenceOnBaseProblem({ root, base }) {
   const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 32 * 1024 * 1024 })
   const succeeds = (...args) => { try { git(...args); return true } catch { return false } }
-  const specs = [':(glob)sdk/drafts/*/octamod.module.json', ':(glob)sdk/octabam/modules/*/octamod.module.json']
+  const specs = [':(glob)sdk/drafts/*/octamod.module.json', ':(glob)sdk/octatrack/modules/*/octamod.module.json']
   const changed = (git('diff', '--name-only', '--diff-filter=AM', base, '--', ...specs) + git('ls-files', '--others', '--exclude-standard', '--', ...specs)).split('\n').filter(Boolean)
   for (const path of new Set(changed)) {
     const id = path.split('/').at(-2), rev = JSON.parse(readFileSync(resolve(root, path), 'utf8')).tests?.evidenceRevision
     if (!/^[a-f0-9]{40}$/.test(rev ?? '')) continue
-    const listedOnBase = ['sdk/drafts/' + id, 'sdk/octabam/modules/' + id].some(folder => succeeds('cat-file', '-e', base + ':' + folder + '/octamod.module.json'))
+    const listedOnBase = ['sdk/drafts/' + id, 'sdk/octatrack/modules/' + id, 'sdk/octabam/modules/' + id].some(folder => succeeds('cat-file', '-e', base + ':' + folder + '/octamod.module.json'))
     if (!listedOnBase && succeeds('merge-base', '--is-ancestor', rev, base)) return path + ': tests.evidenceRevision names ' + rev.slice(0, 8) + ', a commit already on main, which has no ' + id + '. Name the commit your tests ran on: one of this branch\'s, or your own repository\'s (docs/MODULE_QUALIFICATION.md).'
   }
   return null
@@ -165,12 +165,13 @@ export function evidenceOnBaseProblem({ root, base }) {
  * name their current version there, and a report left at the old one reads as evidence for the new. Every machine's manifests and drafts. */
 export function testingVersionProblem({ root, base }) {
   const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 32 * 1024 * 1024 })
-  const specs = [':(glob)sdk/drafts/*/octamod.module.json', ':(glob)sdk/octabam/modules/*/octamod.module.json', ':(glob)sdk/*/modules/*/modwerk.module.json']
+  const specs = [':(glob)sdk/drafts/*/octamod.module.json', ':(glob)sdk/octatrack/modules/*/octamod.module.json', ':(glob)sdk/*/modules/*/modwerk.module.json']
   const changed = (git('diff', '--name-only', '--diff-filter=AM', base, '--', ...specs) + git('ls-files', '--others', '--exclude-standard', '--', ...specs)).split('\n').filter(Boolean)
   for (const path of new Set(changed)) {
     const version = JSON.parse(readFileSync(resolve(root, path), 'utf8')).version
     let before = null
-    try { before = JSON.parse(git('show', base + ':' + path)).version } catch { /* new here */ }
+    // An Octatrack module's manifest sat under sdk/octabam/modules/ before the folders moved (12 November 2026).
+    for (const at of [path, path.replace(/^sdk\/octatrack\/modules\//, 'sdk/octabam/modules/')]) { try { before = JSON.parse(git('show', base + ':' + at)).version; break } catch { /* new here */ } }
     if (version === before || typeof version !== 'string') continue
     const folder = path.slice(0, path.lastIndexOf('/')), report = resolve(root, folder, 'TESTING.md')
     const text = (() => { try { return readFileSync(report, 'utf8') } catch { return '' } })(), short = version.replace(/-experimental$/, '')

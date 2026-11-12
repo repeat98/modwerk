@@ -185,7 +185,7 @@ function fixture() {
   for (const name of readdirSync(join(ROOT, 'sdk/imports')).filter(name => /^elekloader-.*\.json$/.test(name))) copy('sdk/imports/' + name)
   const manifest = JSON.parse(readFileSync(join(root, 'sdk/octabam/licenses/manifest.json'), 'utf8')) as { moduleComponents: Record<string, string[]> }
   for (const id of Object.keys(manifest.moduleComponents)) {
-    const folder = `sdk/octabam/modules/${id}`
+    const folder = `sdk/octatrack/modules/${id}`
     copy(folder + '/octamod.module.json')
     const document = JSON.parse(readFileSync(join(root, folder, 'octamod.module.json'), 'utf8')) as { license: { file: string } }
     copy(folder + '/' + document.license.file)

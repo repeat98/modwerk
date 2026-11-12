@@ -2,7 +2,7 @@
 
 Read [the module guides index](README.md) first.
 
-**Applies to** modules with manifest `category: scenes`: anything that recalls, locks or morphs state per scene or with the crossfader. [MIDI Scenes](../../sdk/octabam/modules/midi-scenes/README.md) adds scene locks to MIDI tracks.
+**Applies to** modules with manifest `category: scenes`: anything that recalls, locks or morphs state per scene or with the crossfader. [MIDI Scenes](../../sdk/octatrack/modules/midi-scenes/README.md) adds scene locks to MIDI tracks.
 
 **Use the existing scene system.** MIDI Scenes works "through the existing MIDI parameter pages rather than a new effect chooser row" and through the stock scene operations: hold SCENE A or B and press a TRIG key to assign it, hold the scene key while turning the encoder, sweep the crossfader, and use the stock scene clear, copy and paste, Part Save and Reload, and project save and load. Do not build a second scene engine or a new screen where the stock page can carry the control.
 

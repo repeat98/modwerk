@@ -2,7 +2,7 @@
 
 Read [the module guides index](README.md) first. Anything that follows tempo also follows [sequencing.md](sequencing.md).
 
-**Applies to** modules with manifest `category: playback`: behaviour of sample playback that uses no effect slot. [Repitch](../../sdk/octabam/modules/repitch/README.md) follows project tempo by changing playback speed. [Preview Vol](../../sdk/octabam/modules/previewvol/README.md) previews samples at the default AMP volume.
+**Applies to** modules with manifest `category: playback`: behaviour of sample playback that uses no effect slot. [Repitch](../../sdk/octatrack/modules/repitch/README.md) follows project tempo by changing playback speed. [Preview Vol](../../sdk/octatrack/modules/previewvol/README.md) previews samples at the default AMP volume.
 
 ## Behave like the instrument
 

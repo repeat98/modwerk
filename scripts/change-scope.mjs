@@ -5,8 +5,8 @@ import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { manifestBuildFields } from './module-source.mjs'
 
-const moduleFolder = /^sdk\/(octabam|digitakt|digitone|analog-rytm-mkii|analog-four-mkii)\/modules\/[^/]+\//
-const manifest = /^sdk\/(octabam|digitakt|digitone|analog-rytm-mkii|analog-four-mkii)\/modules\/[^/]+\/(octamod|modwerk)\.module\.json$/
+const moduleFolder = /^sdk\/(octatrack|digitakt|digitone|analog-rytm-mkii|analog-four-mkii)\/modules\/[^/]+\//
+const manifest = /^sdk\/(octatrack|digitakt|digitone|analog-rytm-mkii|analog-four-mkii)\/modules\/[^/]+\/(octamod|modwerk)\.module\.json$/
 const digiManifest = /^sdk\/(digitakt|digitone|analog-rytm-mkii|analog-four-mkii)\/modules\/[^/_][^/]*\/modwerk\.module\.json$/
 const catalogs = new Set(['src/catalog/module-documents.json'])
 const json = text => text === null ? null : JSON.parse(text)
@@ -69,7 +69,7 @@ function nativeChange(change, machine) {
   if (isDocumentationPath(path)) return false
   const match = path.match(manifest)
   if (match) {
-    if ((machine === 'octatrack') !== (match[1] === 'octabam')) return false
+    if ((machine === 'octatrack') !== (match[1] === 'octatrack')) return false
     if (before === null || after === null) return true
     return machine === 'octatrack' ? manifestBuildFields(before) !== manifestBuildFields(after)
       : canonical(digiFirmwareFields(before)) !== canonical(digiFirmwareFields(after))
@@ -79,7 +79,7 @@ function nativeChange(change, machine) {
     return canonical(identity(before)) !== canonical(identity(after))
   }
   const common = /^sdk\/(build|runtime)\//.test(path)
-  if (machine === 'octatrack') return common || /^sdk\/octabam\/(modules|platform|tools|dsp|licenses)\//.test(path)
+  if (machine === 'octatrack') return common || /^sdk\/octatrack\/modules\//.test(path) || /^sdk\/octabam\/(platform|tools|dsp|licenses)\//.test(path)
     || path === 'sdk/catalog.json' || /^src\/engine\/assets\/(?!elemod\/)/.test(path)
     || /^scripts\/(build-module-packages\.py|build-utility-packages\.py|build-usb-audio-packages\.py|build-modules-isolated\.sh|import-module-build\.mjs|module-source\.mjs)$/.test(path)
   return common || /^sdk\/(digitakt|digitone|analog-rytm-mkii|analog-four-mkii|elemod|machines)\//.test(path) || /^vendor\/elekloader\/(catalog\/|elekloader\.lock\.json$|upstream-catalog\.json$)/.test(path) || /^sdk\/imports\/elekloader-[^/]+\.json$/.test(path)
