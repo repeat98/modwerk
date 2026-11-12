@@ -118,10 +118,10 @@
   },
   "synth": {
    "schema": 1,
-   "imageSha256": "11afe489011aa243c5bc579a824635f7d1334b17f0a21d554d897ceec3d3fb1a",
+   "imageSha256": "92591f2f321187a0a30a3c76bdb632ea0f655e0d782ee48b56267237d5934e53",
    "sources": {
     "sdk/machines/octatrack/module-adapters/fm_runtime.py": "ecf39c395bd8231d1dda340e1c6bc26e8473ba548cfa422f9a4ae4ff2bd6807e",
-    "sdk/machines/octatrack/module-adapters/machine-ports.json": "eefb1c8b6586d6b43d204235d376ee7a2b9902601254a2447257e96f38cad725",
+    "sdk/machines/octatrack/module-adapters/machine-ports.json": "e480e1243fdcc65685b6318b4ba20709fc922608bbeef5bb9fdb428e783003e0",
     "sdk/machines/octatrack/module-adapters/machine_ports.py": "bbb91f0c54c27043b54a9156cad01053531f2ef78fb13cc73e2b45f7fc7e8d6f",
     "sdk/octabam/modules/synth/machine.s": "de9d849bf0b6e5d5ad747df32ae5806e7f9516674a14ac74b1c15d73d30d280a",
     "sdk/octabam/modules/synth/manifest.py": "7854330aca001d2841de2fb384f0ca8adb7497db49dacc56da2815c1f444c0e6",
@@ -133,271 +133,271 @@
     "sdk/octabam/modules/synth/upstream/quantizer/scale.s": "82242c407847ac61a6f60fe15bdc5b0b4fc852bac82c39745b5c838ec9389c64",
     "sdk/octabam/modules/synth/upstream/synth/manifest.py": "58c7acd5684fe0b59c42501f7fdbfd1b288b3bfb71938dcadf43bc1774b3e5e8",
     "sdk/octabam/modules/synth/upstream/synth/page.s": "25e2a0624fcc30ee3a8db5966954113119fb5942855042f765e664a2f8544a70",
-    "sdk/octabam/modules/synth/upstream/synth/poly.s": "ce21f5f7cddcd7268d27e25c500f1403cc59a9dff28044b1832cf2b45592d34c",
+    "sdk/octabam/modules/synth/upstream/synth/poly.s": "e7246a55797081b95782f903b3527a6e9b049720d37a938e562326e010588b53",
     "sdk/runtime/loader/build.py": "5131901224dcd037c07f0233cadabd67eec2a952878bef5a92274dd3d6236c7d"
    },
    "copies": [
     {
-     "offset": 782,
+     "offset": 886,
      "length": 12,
      "address": 1074060574,
      "sha256": "90c9629c67fce3e7f53f55ad64f7e5a3306a04a3c7dab1c2a21e2f5d6a4d5c53",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 794,
+     "offset": 898,
      "length": 16,
      "address": 1074099596,
      "sha256": "0443a9b7913a4441a26b9b47b9b668df5664dcf3d30780e4e9487f7125168303",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 1936,
+     "offset": 2070,
      "length": 12,
      "address": 1074060574,
      "sha256": "90c9629c67fce3e7f53f55ad64f7e5a3306a04a3c7dab1c2a21e2f5d6a4d5c53",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 5046,
+     "offset": 5180,
      "length": 12,
      "address": 1074060574,
      "sha256": "90c9629c67fce3e7f53f55ad64f7e5a3306a04a3c7dab1c2a21e2f5d6a4d5c53",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 6284,
+     "offset": 6418,
      "length": 16,
      "address": 1073984446,
      "sha256": "2208dade979a9235783eacb36cdde6fac1f68a1c1e97629678e6ef71eaa7643b",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 6300,
+     "offset": 6434,
      "length": 12,
      "address": 1074060574,
      "sha256": "90c9629c67fce3e7f53f55ad64f7e5a3306a04a3c7dab1c2a21e2f5d6a4d5c53",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 6312,
+     "offset": 6446,
      "length": 16,
      "address": 1074099596,
      "sha256": "0443a9b7913a4441a26b9b47b9b668df5664dcf3d30780e4e9487f7125168303",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 6548,
+     "offset": 6682,
      "length": 14,
      "address": 1073821426,
      "sha256": "3a5e9e60ca4af797b19adcd76b00ec6d52d11d32b1baa2438b1df68d23b7dfeb",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 7742,
+     "offset": 7878,
      "length": 12,
      "address": 1074060574,
      "sha256": "90c9629c67fce3e7f53f55ad64f7e5a3306a04a3c7dab1c2a21e2f5d6a4d5c53",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 7754,
+     "offset": 7890,
      "length": 16,
      "address": 1074099596,
      "sha256": "0443a9b7913a4441a26b9b47b9b668df5664dcf3d30780e4e9487f7125168303",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 8638,
+     "offset": 8774,
      "length": 12,
      "address": 1074060574,
      "sha256": "90c9629c67fce3e7f53f55ad64f7e5a3306a04a3c7dab1c2a21e2f5d6a4d5c53",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 8896,
+     "offset": 9032,
      "length": 12,
      "address": 1074060574,
      "sha256": "90c9629c67fce3e7f53f55ad64f7e5a3306a04a3c7dab1c2a21e2f5d6a4d5c53",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 8908,
+     "offset": 9044,
      "length": 16,
      "address": 1074099596,
      "sha256": "0443a9b7913a4441a26b9b47b9b668df5664dcf3d30780e4e9487f7125168303",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 10622,
+     "offset": 10758,
      "length": 22,
      "address": 1073953624,
      "sha256": "74b17511c768556db73d1d32f95ccb70b832d032a452bb9e0313d49e7d0c6c43",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 10704,
+     "offset": 10840,
      "length": 18,
      "address": 1073976912,
      "sha256": "3a343ffe9a3e59955db4a0ef6eaea2fb74f9ebb4d8bcaa560e4aa4c8e89d2e89",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 10722,
+     "offset": 10858,
      "length": 13,
      "address": 1073979022,
      "sha256": "5fd9c4504844e014c18f9b4ab8f2e3796f86a4d1a9fe88e3e602122481cfdae0",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 10748,
+     "offset": 10884,
      "length": 16,
      "address": 1074071684,
      "sha256": "c182891edb39df5d2ead4c1b0ec8da864d26c1fdb22774ef01e52f0de768f1b6",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 10790,
+     "offset": 10926,
      "length": 14,
      "address": 1074065618,
      "sha256": "e4e12e84065f4974ace18b805405cb4b7a64a4c23edc7f13bbdb6bfe2b34c1c5",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 10804,
+     "offset": 10940,
      "length": 12,
      "address": 1074132974,
      "sha256": "22b5709ed8f18cc283beb233798b9bfb276bd424b56cca22e0b142cf4975736f",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 10858,
+     "offset": 10994,
      "length": 12,
      "address": 1074060574,
      "sha256": "90c9629c67fce3e7f53f55ad64f7e5a3306a04a3c7dab1c2a21e2f5d6a4d5c53",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 11272,
+     "offset": 11408,
      "length": 12,
      "address": 1073983040,
      "sha256": "3e401f14e70d67d18fcec37faf084580fd6bfa25426424788fe2828eb89f5c53",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 11636,
+     "offset": 11772,
      "length": 12,
      "address": 1074060574,
      "sha256": "90c9629c67fce3e7f53f55ad64f7e5a3306a04a3c7dab1c2a21e2f5d6a4d5c53",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 11792,
+     "offset": 11928,
      "length": 12,
      "address": 1074060574,
      "sha256": "90c9629c67fce3e7f53f55ad64f7e5a3306a04a3c7dab1c2a21e2f5d6a4d5c53",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 18632,
+     "offset": 18768,
      "length": 12,
      "address": 1074060574,
      "sha256": "90c9629c67fce3e7f53f55ad64f7e5a3306a04a3c7dab1c2a21e2f5d6a4d5c53",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 18644,
+     "offset": 18780,
      "length": 16,
      "address": 1074099596,
      "sha256": "0443a9b7913a4441a26b9b47b9b668df5664dcf3d30780e4e9487f7125168303",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 19124,
+     "offset": 19480,
      "length": 12,
      "address": 1074060574,
      "sha256": "90c9629c67fce3e7f53f55ad64f7e5a3306a04a3c7dab1c2a21e2f5d6a4d5c53",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 19136,
+     "offset": 19492,
      "length": 16,
      "address": 1074099596,
      "sha256": "0443a9b7913a4441a26b9b47b9b668df5664dcf3d30780e4e9487f7125168303",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 19200,
+     "offset": 19556,
      "length": 12,
      "address": 1074060574,
      "sha256": "90c9629c67fce3e7f53f55ad64f7e5a3306a04a3c7dab1c2a21e2f5d6a4d5c53",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 19519,
+     "offset": 19875,
      "length": 12,
      "address": 1074274063,
      "sha256": "d46710227eb16ca7f895bc1fcc43aac26472d6aa09684a2ec2e999d35729445b",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 21697,
+     "offset": 22053,
      "length": 21,
      "address": 1074301031,
      "sha256": "dc5b5a7b1180e5d35d1338363d2f5c3e4a1e61799f9f3e23027dc17f67996483",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 23076,
+     "offset": 23432,
      "length": 16,
      "address": 1073984446,
      "sha256": "2208dade979a9235783eacb36cdde6fac1f68a1c1e97629678e6ef71eaa7643b",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 23234,
+     "offset": 23590,
      "length": 14,
      "address": 1073984070,
      "sha256": "77fcee373ae8ddb75137053122a312995198e8adddcf8c4c022c87b885b43d35",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 24096,
+     "offset": 24452,
      "length": 32,
      "address": 1074570798,
      "sha256": "4caf830aa333fd8660437b0f320a5e96432a6baa11cefc84b0d99ec099d22731",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 24128,
+     "offset": 24484,
      "length": 32,
      "address": 1074570830,
      "sha256": "4caf830aa333fd8660437b0f320a5e96432a6baa11cefc84b0d99ec099d22731",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 24160,
+     "offset": 24516,
      "length": 32,
      "address": 1074570862,
      "sha256": "e51c8879a1ea0e358e3ab1ed093eb5447cd1187003b8717a70bbb3bff13b4ff6",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 24784,
+     "offset": 25140,
      "length": 20,
      "address": 1074428104,
      "sha256": "96966986164a24f9ca5be84cca807a016a828da2bcc3167b831be52acad2a9a7",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 24834,
+     "offset": 25190,
      "length": 14,
      "address": 1074059128,
      "sha256": "607e18a72c4d065fa82645a12718abdb61e3a4333b631c6832024549a96d66e9",
      "purpose": "synth: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 24932,
+     "offset": 25288,
      "length": 12,
      "address": 1073884530,
      "sha256": "20a84e151dffa9280a9d434c41366eb046609e3eb16c32f7b4c778fe18d1a2de",
