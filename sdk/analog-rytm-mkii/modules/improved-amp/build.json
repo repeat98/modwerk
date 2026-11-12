@@ -62,9 +62,6 @@
     "1.74": {
       "defsym": {},
       "cflags": [
-        "-DPROJECT_AT=0x4017fa0a",
-        "-DTRACK_INDEX_OF_AT=0x400b693e",
-        "-DTEMPO_WORD_AT=0x40287ffc",
         "-DSEQ_PATTERN_AT=0x405c8d04",
         "-DPATTERNS_AT=0x407dd8e3",
         "-DSPEED_PULSES_AT=0x401db6f8"

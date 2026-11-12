@@ -3,8 +3,9 @@
 // steps, and times on the envelope knobs (HLD in steps), for the Analog Rytm MKII OS 1.74. The
 // pre-fade (pre-fade.c, pre-fade.s) and OVR's curve (ovr.s) are beside it.
 //
-// HOLD (AMP page, id 57) keeps its stored byte, read as: 0 no hold, 1..126 the new hold
-// times (counted from the trig), 127 AUTO (hold while the note is on, stock's 0). The decay
+// HOLD (AMP page, id 57) keeps its stored byte, read as: 0 no hold, 1..126 a hold in steps of
+// the voice's track (counted from the trig on the musical clock, so it follows the tempo and
+// the track's speed), 127 AUTO (hold while the note is on, stock's 0). The decay
 // never starts before the attack reaches the top, so every value but AUTO is at least a
 // plain attack-decay. Stock's state machine (amp_env_commands 0x40109940) still runs; at
 // its record write, improved_amp_voice sets the state it moves to: 1 (gate) or 2 (timed)
@@ -25,9 +26,7 @@
 // attack record and the state counter alike) at it.
 //
 // The AMP ATK and DEC and FILTER ATK, DEC and REL knobs show times: an attack's full ramp, a
-// decay's or release's time to -60 dB. AMP HLD shows its length in steps of the selected track,
-// at the current tempo and the track's speed (the pattern's, or the track's own in ADVANCED
-// scale); the stored value and the hold's timing are the same ms as ever, only the text follows.
+// decay's or release's time to -60 dB. AMP HLD shows its length in steps.
 
 #include <stdint.h>
 #include "hot.h"
@@ -38,7 +37,6 @@ typedef uint32_t word_t;
 // ---- stock OS 1.74 ----
 // (The stock tables of AMP HLD 0x401ee81c, AMP DEC 0x401ee61c and FILTER DEC/REL 0x401ef030 are
 // replaced by improved_amp_hold, improved_amp_amp_dec and improved_amp_flt_dec below, through ptr sites.)
-#define HOLD_TICKS improved_amp_hold
 #define AMP_DECAY improved_amp_amp_dec
 #define FLT_DECAY improved_amp_flt_dec
 #define REC(id) (0x419a4888 + 84 * (id))            // a parameter's RAM record
@@ -152,7 +150,7 @@ const uint32_t improved_amp_flt_dec[128] __attribute__((aligned(4))) = {
 };
 
 // AMP HLD knob -> hold in ticks of 2 samples, whole blocks of 16, read by stock through the lea
-// at 0x40109bc2 and by improved_amp_voice. 0 is no hold and 127 AUTO (not read).
+// at 0x40109bc2, whose end of the hold improved_amp_voice overrides. 0 is no hold and 127 AUTO (not read).
 const int32_t improved_amp_hold[128] __attribute__((aligned(4))) = {
     0, 16, 32, 48, 64, 80, 96, 112,
     128, 144, 160, 176, 192, 208, 224, 240,
@@ -170,6 +168,29 @@ const int32_t improved_amp_hold[128] __attribute__((aligned(4))) = {
     105536, 111744, 118336, 125312, 132704, 140512, 148800, 157568,
     166864, 176688, 187104, 198128, 209808, 222176, 235280, 249136,
     263824, 279376, 295840, 313280, 331744, 351296, 372000, 372000,
+};
+
+// AMP HLD knob -> hold in steps of the voice's track, x 225,000 (a quarter of the musical clock's
+// units in a step at one pulse a step; tools/dec_table.py). At 120 BPM and 1x a value holds as
+// long as improved_amp_hold's, but for 13 values set on the step grid, where FUNC + turn stops:
+// 0.125, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 4, 8, 16, 32 and 64 steps. 0 is no hold and 127 AUTO (not read).
+const int32_t improved_amp_hold_steps[128] __attribute__((aligned(4))) = {
+    0, 1200, 2400, 3600, 4800, 6000, 7200, 8400,
+    9600, 10800, 12000, 13200, 14400, 15600, 16800, 18000,
+    20400, 22800, 25200, 28125, 30000, 32400, 38400, 44400,
+    50400, 56250, 62400, 68400, 74400, 80400, 86400, 92400,
+    104400, 112500, 128400, 140400, 152400, 168750, 176400, 188400,
+    200400, 212400, 225000, 236400, 248400, 260400, 272400, 296400,
+    320400, 337500, 368400, 392400, 416400, 450000, 464400, 488400,
+    512400, 536400, 567600, 601200, 637200, 675000, 714000, 756000,
+    800400, 848400, 900000, 951600, 1006800, 1066800, 1129200, 1196400,
+    1266000, 1340400, 1419600, 1503600, 1592400, 1686000, 1800000, 1891200,
+    2002800, 2120400, 2245200, 2377200, 2517600, 2666400, 2823600, 2989200,
+    3165600, 3352800, 3600000, 3759600, 3980400, 4215600, 4464000, 4726800,
+    5005200, 5300400, 5613600, 5943600, 6294000, 6664800, 7200000, 7474800,
+    7915200, 8380800, 8875200, 9398400, 9952800, 10538400, 11160000, 11817600,
+    12514800, 13251600, 14400000, 14859600, 15735600, 16663200, 17646000, 18685200,
+    19786800, 20953200, 22188000, 23496000, 24880800, 26347200, 27900000, 27900000,
 };
 
 // ---- the voice's amp level, followed from the records ----
@@ -256,14 +277,47 @@ __attribute__((noinline)) static void follow(struct amp *a, uint32_t rate, uint3
     a->level = d < 0 ? a->target + (int32_t)ad : a->target - (int32_t)ad;
 }
 
+// ---- HLD in steps ----
+// The hold is counted on the musical clock: a step of a track is SPEED_PULSES[speed] pulses of
+// 900,000 clock units (5,400,000 a step at 1x), whatever the tempo and whether the clock is the
+// Rytm's own or a master's. pre-fade.c reads the clock once a block and leaves what it moved
+// in SCAN_DELTA; a quarter of that is added to a holding voice's HOLD_ACC.
+#define SEQ_PATTERN (*(volatile int8_t *)SEQ_PATTERN_AT)
+#define PATTERN(p) ((const volatile int8_t *)PATTERNS_AT + 85760 * (p))
+#define SPEED_PULSES ((const int32_t *)SPEED_PULSES_AT)    // 3, 4, 6, 8, 12, 24, 48 pulses a step
+#define PAT_SCALE 85689                                    // 1: ADVANCED, each track its own speed
+#define PAT_SPEED 85690                                    // 0..6, as SPEED_PULSES
+#define TRACK_BYTES 917
+#define TRK_SPEED 711
+#define VOICE_TRACK ((const volatile uint8_t *)0x40291138) // [voice] the track it plays
+#define HOLD_STEPS improved_amp_hold_steps
+#define HOLD_FIRST 0xffffffffu                             // HOLD_ACC: the trig's block, nothing counted yet
+
+// The pulses in a step of the track voice v plays: the pattern's speed, or the track's own in
+// ADVANCED scale.
+static uint32_t voice_pulses(int v)
+{
+    int track = VOICE_TRACK[v & 7], p = SEQ_PATTERN, speed = 2;
+
+    if (p >= 0 && p < 128) {
+        const volatile int8_t *pattern = PATTERN(p);
+        speed = pattern[PAT_SCALE] == 1 && (unsigned)track < 12 ? pattern[TRACK_BYTES * track + TRK_SPEED]
+                                                                 : pattern[PAT_SPEED];
+    }
+    if (speed < 0 || speed > 6)
+        speed = 2;
+    return (uint32_t)SPEED_PULSES[speed];
+}
+
 // The writer's skip state (amp-write.s reads it for every voice every block) is in hot.h:
 // GATE_STILL the voices whose last record left the level follower unchanged, GATE_RATE and GATE_LW
 // that record's two words, GATE_ZERO the voices among them whose record was 0/0.
 
 // Called by improved_amp_write (amp-write.s) for every voice every block, after stock's state
 // machine and before the record is stored; returns the rate word to store. st[0] is the
-// voice's state, st[1] its hold counter (cleared at the trig, +16 a block in state 2, already
-// added this block); snd[0] is the track's ATK, snd[2] its HLD.
+// voice's state (st[1], stock's own hold counter in ticks, is not used); snd[0] is the track's
+// ATK, snd[2] its HLD. HOLD_ACC(v) is what the musical clock has moved since the block after
+// the trig, in quarters: as stock's counter it reads 0 in the first block that holds.
 uint32_t improved_amp_voice(int32_t v, volatile int32_t *st, const volatile int8_t *snd, uint32_t rate,
                      uint32_t lw)
 {
@@ -277,12 +331,28 @@ uint32_t improved_amp_voice(int32_t v, volatile int32_t *st, const volatile int8
 
     if (lw == LEVEL_ATTACK) {
         st[0] = h == HLD_AUTO ? 1 : 2;
-    } else if (lw == LEVEL_HOLD && h == HLD_AUTO && st[0] == 2) {
-        st[0] = 1;              // turned to AUTO while held: the gate (set at the trig) ends it
-    } else if (lw == LEVEL_HOLD && h != HLD_AUTO && (uint32_t)(st[0] - 1) < 3u) {
-        // States 1 and 2 send the continued attack; 3 here is 2 that stock just ended.
-        int32_t hold = h > 0 ? HOLD_TICKS[h] : 0;
-        st[0] = st[1] - 16 >= hold && a->level >= TOP ? 3 : 2;
+        HOLD_ACC(v & 7) = HOLD_FIRST;
+    } else if (lw == LEVEL_HOLD || (uint32_t)(st[0] - 1) < 2u) {
+        // Every block of the gate and hold states counts, as stock's own counter does: the ones
+        // whose record the pre-fade has taken for its fade too.
+        uint32_t acc = HOLD_ACC(v & 7), moved = SCAN_DELTA >> 2;
+
+        if (acc == HOLD_FIRST)
+            acc = 0;
+        else if (acc + moved < acc || acc + moved == HOLD_FIRST)
+            acc = HOLD_FIRST - 1;       // as long as it can count
+        else
+            acc += moved;
+        HOLD_ACC(v & 7) = acc;
+        if (lw == LEVEL_HOLD && h == HLD_AUTO && st[0] == 2) {
+            st[0] = 1;          // turned to AUTO while held: the gate (set at the trig) ends it
+        } else if (lw == LEVEL_HOLD && h != HLD_AUTO && (uint32_t)(st[0] - 1) < 3u) {
+            // States 1 and 2 send the continued attack; 3 here is 2 that stock just ended. The
+            // track's speed is read only once the count has reached the hold at the fastest one.
+            uint32_t steps = h > 0 ? (uint32_t)HOLD_STEPS[h] : 0;
+
+            st[0] = a->level >= TOP && acc >= steps * 3u && acc >= steps * voice_pulses(v) ? 3 : 2;
+        }
     }
     follow(a, rate, lw);
     // A record that is neither attack word and left the follower as it was does the same next
@@ -305,20 +375,20 @@ uint32_t improved_amp_voice(int32_t v, volatile int32_t *st, const volatile int8
     return rate;
 }
 
-// ---- FUNC + turn on HOLD: 0, 125 ms (a 16th at 120 BPM), AUTO ----
+// ---- FUNC + turn on HOLD: 0, the step grid (0.125 .. 64 steps), AUTO ----
 static int32_t hold_jump(const void *fn, int32_t value, int32_t delta, int32_t min, int32_t max,
                          int32_t def)
 {
-    static const int8_t pos[] = { 0, 42, HLD_AUTO };
+    static const int8_t pos[] = { 0, 19, 25, 33, 37, 42, 49, 53, 61, 66, 78, 90, 102, 114, HLD_AUTO };  // HOLD_STEPS' grid
     int v = value >> 8, i;
 
     (void)fn, (void)min, (void)max, (void)def;
     if (delta > 0) {
-        for (i = 0; i < 3; i++)
+        for (i = 0; i < (int)sizeof pos; i++)
             if (pos[i] > v)
                 return pos[i] << 8;
     } else {
-        for (i = 2; i >= 0; i--)
+        for (i = (int)sizeof pos - 1; i >= 0; i--)
             if (pos[i] < v)
                 return pos[i] << 8;
     }
@@ -390,77 +460,49 @@ __attribute__((noinline)) static void put_time(char *p, uint32_t ticks)
     put_text(put_uint(p, (ticks + 12000) / 24000), "s");
 }
 
-// ---- HLD in steps ----
-typedef uint32_t (*get0_t)(void);
-typedef int (*index_t)(uint32_t);
-#define PROJECT ((get0_t)PROJECT_AT)
-#define TRACK_INDEX_OF ((index_t)TRACK_INDEX_OF_AT)
-#define TEMPO_WORD (*(volatile int32_t *)TEMPO_WORD_AT)     // BPM x 120
-#define SEQ_PATTERN (*(volatile int8_t *)SEQ_PATTERN_AT)
-#define PATTERN(p) ((const volatile int8_t *)PATTERNS_AT + 85760 * (p))
-#define SPEED_PULSES ((const int32_t *)SPEED_PULSES_AT)    // 3, 4, 6, 8, 12, 24, 48 pulses a step
-#define PROJECT_TRACKSEL 48                                // the project's track selection
-#define PAT_SCALE 85689                                    // 1: ADVANCED, each track its own speed
-#define PAT_SPEED 85690                                    // 0..6, as SPEED_PULSES
-#define TRACK_BYTES 917
-#define TRK_SPEED 711
-
-// The selected track's step in ticks of 2 samples, x 4: pulses x 60000 / BPM ms, 24 ticks a ms.
-static uint32_t step_ticks4(void)
+// A hold in steps from HOLD_STEPS, three digits: "0", "0.005", "0.080", "1.53", "15.8", "21.0",
+// "124". A hold of whole eighths of a step, which the grid's 13 are and no other value is, drops
+// the zeros at its end: "0.125", "0.5", "1", "1.5", "64".
+__attribute__((noinline)) static void put_steps(char *p, uint32_t cq)
 {
-    int track = TRACK_INDEX_OF(PROJECT() + PROJECT_TRACKSEL), p = SEQ_PATTERN, speed = 2;
-    int32_t tempo = TEMPO_WORD;
+    uint32_t q, d;
+    char *end;
 
-    if (p >= 0 && p < 128) {
-        const volatile int8_t *pattern = PATTERN(p);
-        speed = pattern[PAT_SCALE] == 1 && (unsigned)track < 12 ? pattern[TRACK_BYTES * track + TRK_SPEED]
-                                                                 : pattern[PAT_SPEED];
-    }
-    if (speed < 0 || speed > 6)
-        speed = 2;
-    if (tempo < 30 * 120 || tempo > 300 * 120)
-        tempo = 120 * 120;
-    return (uint32_t)SPEED_PULSES[speed] * 28800000u / (uint32_t)tempo;
-}
-
-// A hold in steps, three digits: "0", "0.005", "0.10", "2.40", "31.2", "124".
-__attribute__((noinline)) static void put_steps(char *p, uint32_t ticks)
-{
-    uint32_t step4 = step_ticks4(), q, d;
-
-    if (!ticks) {
+    if (!cq) {
         put_text(p, "0");
         return;
     }
-    q = (ticks * 4000 + step4 / 2) / step4;     // thousandths of a step
+    // Each unit rounds from the table's value, not from the unit below it.
+    q = (cq + 112) / 225;                       // thousandths of a step
     if (!q)
         q = 1;                                  // a hold there is never reads as none
-    if (q < 100) {
+    if (q < 1000) {
         *p++ = '0';
         *p++ = '.';
-        *p++ = '0';
-        *p++ = (char)('0' + q / 10);
+        *p++ = (char)('0' + q / 100);
+        *p++ = (char)('0' + q / 10 % 10);
         *p++ = (char)('0' + q % 10);
-        *p = 0;
-        return;
-    }
-    // Each unit rounds from the ticks, not from the unit below it.
-    if ((d = (ticks * 400 + step4 / 2) / step4) < 1000) {      // hundredths, below 10
+    } else if ((d = (cq + 1125) / 2250) < 1000) {       // hundredths, below 10
         p = put_uint(p, d / 100);
         *p++ = '.';
         *p++ = (char)('0' + d / 10 % 10);
         *p++ = (char)('0' + d % 10);
-        *p = 0;
-        return;
-    }
-    if ((d = (ticks * 40 + step4 / 2) / step4) < 1000) {       // tenths, below 100
+    } else if ((d = (cq + 11250) / 22500) < 1000) {     // tenths, below 100
         p = put_uint(p, d / 10);
         *p++ = '.';
         *p++ = (char)('0' + d % 10);
-        *p = 0;
+    } else {
+        put_uint(p, (cq + 112500) / 225000)[0] = 0;
         return;
     }
-    put_uint(p, (ticks * 4 + step4 / 2) / step4)[0] = 0;
+    end = p;
+    if (cq % 28125 == 0) {                      // on the grid: every form above has a point before its last digits
+        while (end[-1] == '0')
+            end--;
+        if (end[-1] == '.')
+            end--;
+    }
+    *end = 0;
 }
 
 // log2(y) x 65536, y > 0.
@@ -535,7 +577,7 @@ static int improved_amp_text(struct core_text *t)
         if (v == HLD_AUTO)
             put_text(t->buf, "AUTO");
         else
-            put_steps(t->buf, v ? (uint32_t)HOLD_TICKS[v] : 0);
+            put_steps(t->buf, v ? (uint32_t)HOLD_STEPS[v] : 0);
         break;
     case ID_A_DEC:
         if (v == 127)

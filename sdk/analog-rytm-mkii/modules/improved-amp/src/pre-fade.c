@@ -119,6 +119,7 @@
 #define LIVE_MUTES (*(volatile uint16_t *)0x8000fc90)
 #define ENV_RESET ((volatile uint8_t *)0x8000ea30)  // [track] bit 0 amp
 #define ENV_RESET_WORDS ((volatile uint32_t *)0x8000ea30)   // the 12 bytes as three words
+#define IN_TIME(tempo) ((tempo) > 0 ? 2u * (uint32_t)(tempo) : 2u * 14400u)   // a block of the clock at the tempo
 #define TRACK_VOICE ((const uint8_t *)0x4025a3a0)   // [track] physical voice
 #define TICK 90000                      // clock units in a 240 PPQN tick
 #define RT_TRIG(t) (*(volatile int32_t *)(0x42ac6b48 + 56 * (t)))    // nonzero: a series runs
@@ -129,7 +130,7 @@
 #define RT_DEADLINE ((volatile int32_t *)0x8000fdec)    // [track] its next tick's time
 #define RT_FIRES ((const volatile uint16_t *)0x402909b8)  // [count] bit RATE-1: fires
 
-volatile uint32_t improved_amp_hot[32] __attribute__((aligned(16)));    // hot.h
+volatile uint32_t improved_amp_hot[40] __attribute__((aligned(16)));    // hot.h
 
 // The block (this one 0) track t's next retrig fires in, as stock counts it, or -1
 // when none fires within the fade. A series that fires again sooner than twice the
@@ -284,14 +285,24 @@ void amp_prefade_scan(void)
     const volatile int32_t *time;
     int t;
 
+    // SCAN_DELTA is what the clock moved this block, for the hold (improved-amp.c): 2 x tempo on
+    // the Rytm's own clock, whatever a master's ticks gave on an external one. A clock that has
+    // stood longer than a fade is a master that stopped: the hold then runs on time, at the tempo
+    // word's rate. A jump no clock makes in a block (the first block, a clock set anew) counts as
+    // the tempo's too, and a tempo word that is no tempo as 120 BPM, so a hold always ends.
     if ((uint32_t)clock != SCAN_CLOCK) {
+        uint32_t moved = (uint32_t)clock - SCAN_CLOCK;
+
+        SCAN_DELTA = tempo > 0 && moved <= 16u * (uint32_t)tempo ? moved : IN_TIME(tempo);
         SCAN_CLOCK = (uint32_t)clock;
         SCAN_STOOD = 0;
     } else if (SCAN_STOOD > FADE_BLOCKS + 1) {  // the clock has stopped: let every voice go
+        SCAN_DELTA = IN_TIME(tempo);
         amp_prefade_mask = 0;
         amp_prefade_started = 0;
         return;
     } else {
+        SCAN_DELTA = 0;
         SCAN_STOOD = SCAN_STOOD + 1;
     }
     block = 2 * tempo;

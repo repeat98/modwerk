@@ -22,12 +22,18 @@ as the OS counts the hold:
     1..15      1 block, 0.67 .. 10 ms
     16..21     2 blocks, 11.3 .. 18 ms
     22..31     5 blocks, 21.3 .. 51.3 ms
-    32..42     10 blocks, 58 .. 124.7 ms (42 is the FUNC jump's 16th at 120 BPM)
+    32..42     10 blocks, 58 .. 124.7 ms
     43..46     10 blocks, 131 .. 151 ms
     47..57     20 blocks, 164 .. 298 ms
     58..126    x r a step, to 15.5 s
 
-Prints the C tables for src/envelopes.c; --check prints each value back from the table.
+The hold itself is counted in steps of the voice's track on the musical clock (src/improved-amp.c):
+the second HLD table is each value's steps x 225,000, the ticks above x 75 (3000 ticks are a step at
+120 BPM and 1x), with 13 values set on the step grid for FUNC + turn: 0.125, 0.25, 0.5, 0.75, 1, 1.5, 2,
+3, 4, 8, 16, 32 and 64 steps.
+
+Prints the C tables for src/improved-amp.c (there named improved_amp_*); --check prints each value
+back from the table, HLD in ms from the ticks.
 """
 import math
 import sys
@@ -83,6 +89,17 @@ def encode(ms, hw):
     return (n << 16) | m
 
 
+GRID = {19: 0.125, 25: 0.25, 33: 0.5, 37: 0.75, 42: 1, 49: 1.5, 53: 2, 61: 3, 66: 4, 78: 8, 90: 16, 102: 32, 114: 64}
+
+
+def hld_steps(hold):
+    cq = [t * 75 for t in hold]
+    for k, steps in GRID.items():
+        cq[k] = round(steps * 225000)
+    assert all(cq[k] < cq[k + 1] for k in range(126))
+    return cq
+
+
 def t60_ms(c, hw):
     e, m = (c >> 16) & 15, c & 0xFFFF
     s = ((0x7FFFFFFF - (m << 14)) >> e) - 32768
@@ -121,7 +138,11 @@ def main():
          '// stock through the leas at 0x4010d342, 0x4010d3b2 and 0x4010d3da.', lambda w: f'0x{w:05x}')
     emit('envelopes_hold', hold, 'const int32_t',
          '// AMP HLD knob -> hold in ticks of 2 samples, whole blocks of 16, read by stock through the lea\n'
-         '// at 0x40109bc2 and by envelopes_voice. 0 is no hold and 127 AUTO (not read).', lambda w: f'{w}')
+         '// at 0x40109bc2, whose end of the hold the module overrides. 0 is no hold and 127 AUTO (not read).',
+         lambda w: f'{w}')
+    emit('improved_amp_hold_steps', hld_steps(hold), 'const int32_t',
+         '// AMP HLD knob -> hold in steps of the voice\'s track, x 225,000; 13 values on the step grid.',
+         lambda w: f'{w}')
 
 
 if __name__ == '__main__':
