@@ -76,9 +76,9 @@ describe('module qualification hard gates',()=>{
     hardware.sourceRevision=example.tests.evidenceRevision;hardware.limitations=[]
     expect(reported).toThrow('limits of the reported hardware test')
   })
-  it('retains exactly the existing eleven frozen versions', () => {
-    expect(baseline.modules).toHaveLength(11)
-    expect(parseQualificationBaseline(baseline).size).toBe(11)
+  it('retains exactly the existing seven frozen versions', () => {
+    expect(baseline.modules).toHaveLength(7)
+    expect(parseQualificationBaseline(baseline).size).toBe(7)
   })
   // Give each complete qualification check its own unchanged per-test deadline.
   for (const module of catalog.modules.filter(m => !['cc-map', 'previewvol'].includes(m.id))) {
@@ -89,7 +89,7 @@ describe('module qualification hard gates',()=>{
       // Generated web documents include display-only baseline resource estimates.
       // Qualify the source manifest, as publication validation does.
       const source = parseModuleDocument(JSON.parse(readFileSync(resolve(folder, 'octamod.module.json'), 'utf8')))
-      expect(await requireFolderQualification(folder, source, frozen)).toBe(unchanged ? 'retained' : source.tests.retainedEvidence ? 'retained-evidence' : ['midi-scenes', 'miniverb', 'synth', 'usb-audio-out-tracks-main-cue', 'euclid', 'recorder-loop-fix', 'analog-bassdrum', 'airwindows-chorus', 'poly8', 'quantizer', 'everb', 'repitch', 'playmodes', 'tapeecho', 'amiga'].includes(module.id) ? 'owner-approved-update' : 'qualified')
+      expect(await requireFolderQualification(folder, source, frozen)).toBe(unchanged ? 'retained' : source.tests.retainedEvidence ? 'retained-evidence' : ['miniverb', 'synth', 'usb-audio-out-tracks-main-cue', 'euclid', 'recorder-loop-fix', 'analog-bassdrum', 'airwindows-chorus', 'poly8', 'quantizer', 'everb', 'repitch', 'playmodes', 'tapeecho', 'amiga'].includes(module.id) ? 'owner-approved-update' : 'qualified')
     })
   }
   it('binds an owner-approved update to its exact version and native source, never to verified hardware',async()=>{

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { moduleHasUpdate, moduleIsNew, moduleViewsToRemember } from './module-updates'
 
-const current = { id: 'midi-scenes', version: '0.2.0-experimental' }
+const current = { id: 'tapehead', version: '0.2.0-experimental' }
 const other = { id: 'repitch', version: '0.1.1-experimental' }
 const baseline = [current.id, other.id]
 

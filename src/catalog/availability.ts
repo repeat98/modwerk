@@ -9,7 +9,7 @@ export const isBetaModule = (id: string) => BETA_MODULE_IDS.includes(id)
 // Temporary frontend suspension. Keep the full source catalog and saved pins intact.
 // Tuner, Stem Rec and Temp Save have no USB package yet: paused on 12 November 2026, when the card builder was retired
 // (owner), until each has one.
-export const PAUSED_MODULE_IDS: readonly string[] = ['spectrum', 'modulation', 'character', 'airwindows-chorus', 'midi-scenes', 'tuner', 'stem-rec', 'temp-save']
+export const PAUSED_MODULE_IDS: readonly string[] = ['airwindows-chorus', 'tuner', 'stem-rec', 'temp-save']
 export function isModulePaused(id: string) { return PAUSED_MODULE_IDS.includes(id) }
 // Every module in sdk/catalog.json is offered unless it is paused; build support separately gates firmware.
 export const AVAILABLE_MODULES = MODULES.filter(module => !isModulePaused(module.id))

@@ -47,7 +47,7 @@ describe('owner-approved utility releases',()=>{
     }
   })
   it('never expands the frozen baseline or waiver scope',()=>{
-    expect(baseline.modules).toHaveLength(11)
+    expect(baseline.modules).toHaveLength(7)
     expect(baseline.modules.some(m=>['cc-map','previewvol'].includes(m.id))).toBe(false)
     expect(()=>parseReleaseWaivers({...waiverRecord,modules:[...waiverRecord.modules,{...waiverRecord.modules[0],id:'octakit'}]})).toThrow()
     expect(()=>parseReleaseWaivers({...waiverRecord,modules:waiverRecord.modules.map(m=>({...m,version:'0.1.3-experimental'}))})).toThrow()

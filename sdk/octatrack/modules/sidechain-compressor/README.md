@@ -62,8 +62,6 @@ It takes COMPRESSOR's row on FX1 and in the FX2 chooser, keeps stock COMPRESSOR'
 - **Every other module.** It builds beside each other module on its own, in both menu modes.
 - **Larger selections.** 618 of the 1,024 selections of the nine visible modules other than Analog BD that contain it build (786 with 0.1.2). 0.2.0's two ColdFire units (1,314 B, 0.1.2's was 338 B) leave less effect-menu and cave space, so 168 more selections are refused; the smallest is Euclid with Scale Quantizer. The selection checker tells you which applies; removing one module resolves it.
 - **Analog BD.** 146 of the 212 Analog BD selections build (162 with 0.1.2): its larger DSP section (677 words a core) no longer fits core A in 16 of them, the smallest Analog BD with Airwindows Chorus.
-- **MIDI Scenes** is standalone firmware and combines with nothing.
-- **The paused modules.** Spectrum, Modulation and Character are not offered; with them the module needs more of core A's DSP code space than is left in many selections.
 - **Stock FX2.** With Keep stock FX2 effects on, SPRING REV gives up its code space for this module; PLATE and DARK REV stay. With it off, every stock FX2 effect leaves the FX2 chooser and the stock FX1 effects stay.
 
 Every download carries Modwerk's core logger; the module's pages are identical with and without it.
