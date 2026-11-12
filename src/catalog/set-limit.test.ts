@@ -66,6 +66,3 @@ describe('the module limit of an Octatrack set', () => {
     expect(blocks[USB_AUDIO_MODULE]).toBeUndefined()
   })
 })
-
-describe('the card build of a set over the limit', () => {
-})

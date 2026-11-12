@@ -39,7 +39,7 @@ interpreting edit timing; trig masks and advancing DSP frames do not prove audio
 
 - [ ] `sdk/catalog.json` entry, thumbnail, `resources.impact`, README sections, tutorial and screenshots of the menu path, with exact button sequences.
 - [ ] If the library should group it under System while its manifest says otherwise, that is a one-line override in `src/catalog/modules.ts`, not a reason to change the manifest category.
-- [ ] `npm run module:verify -- <id> --os <your 1.40C>` and `npm run module:doctor -- <id>` are green.
+- [ ] `npm run module:doctor -- <id>` is green.
 
 Compile portable C with the pinned freestanding ColdFire toolchain early and
 inspect unresolved symbols (`m68k-elf-nm -u`) before claiming native readiness.

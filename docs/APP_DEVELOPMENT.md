@@ -182,7 +182,7 @@ Only this fingerprint is distributed. No stock firmware is included.
 
 The catalog follows repeat98/octamad commit b8deefc88b2c3e5f3c6158e364eb741df1924e1d. Module links point to upstream sambanks/octabam; measurement links remain pinned to the fork revision.
 
-Control descriptions and starting values are extracted from the pinned module manifests. compatibility-pairs.json records the native ledger's declaration results for every catalogue module alone and in every pair, including native platform dependencies; `npm run modules:pairs` proves with the full ledger that pairs decide every larger selection. Configuration does not run native stress tests, emulator gates or the octabam test suite.
+Control descriptions and starting values are extracted from the pinned module manifests.
 
 These declaration checks do not prove final memory placement or hardware safety. The complete catalog is not hardware-qualified. Historical hardware records and emulator evidence are labelled separately. Tape Echo's pinned record specifically reports six instances working and a seventh freezing the unit.
 

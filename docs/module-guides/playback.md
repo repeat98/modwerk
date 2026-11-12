@@ -19,7 +19,7 @@ Read [the module guides index](README.md) first. Anything that follows tempo als
 
 - [ ] `sdk/catalog.json` entry, thumbnail, `resources.impact`, README sections, tutorial and screenshots; the screenshots show the SRC SETUP or attribute page where the option is chosen.
 - [ ] `compatibility.location` is `Flex / Static` (or what is true) and `limitations` lists what you did not measure.
-- [ ] `npm run module:verify -- <id> --os <your 1.40C>` and `npm run module:doctor -- <id>` are green.
+- [ ] `npm run module:doctor -- <id>` is green.
 
 ## Test
 
