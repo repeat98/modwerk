@@ -36,7 +36,7 @@ The machine was not run in the emulator: the virtual panel started this base wit
 
 ## On the unit
 
-Seen on trials of package `e9730e24…`. The published package is `18cef8b2…`: the same source except that the page's controls are now filled by `modwerk_page_control()` (`modwerk_page.h`) instead of by hand, with the same values. The engine is identical, sample for sample (`reference/compare_engine.py`, 400 notes, 5,234,566 frames). The published package itself has not run on a unit.
+Seen on trials of package `e9730e24…`. The published package is `18cef8b2…`: the same source except that the page's controls are now filled by `modwerk_page_control()` (`modwerk_page.h`) instead of by hand, with the same values. The engine is identical, sample for sample (`reference/compare_engine.py`, 400 notes, 5,234,566 frames). The published package ran on the unit once, on 12 November 2026 (below).
 
 - The machine list shows AMIGA; YES assigns it; SRC reads PTCH, STRT, LEN, RATE, SPD, GRN and SRC SETUP reads LOOP, SLIC, LED (a switch), SRR, STR (a three-position switch reading OFF, ON, PCH) and BITS. RATE reads -64 to +63 with stock's own words. The page's status line reads `8 BIT▸AMIGA`.
 - Backwards with the stretch (RATE -64, PTCH +12, SPD 64, read from stock's voice record five times a second): the reader restarts every cycle at the frame asked for and runs down from it; the place moves through the sample at 43,000 to 47,000 frames a second, where an unstretched reader at that pitch runs at 88,000. So the note keeps its length backwards an octave up.
@@ -92,6 +92,16 @@ One reading each; readings of the same state on the day differed by about half a
 With a USB recording running as well, one Amiga track at PTCH +12 with SRR and LED on beside seven FLEX tracks froze the unit (it left USB until a power cycle; no crash or stall record). The same setting without the recording read 94 % CPU and played. The recording costs CPU on the unit itself, and the base's guard holds the frame interrupt, not the whole CPU.
 
 Memory: 10,652 bytes of code and data and 67,308 of bss in the package, most of it the eight voices' frame memories (8 KB each). The loader allows a module 128 KiB.
+
+### The published package on the unit
+
+On the owner's MKII, 12 November 2026, a development twin (`513be133`, RAM-booted, with the 20-channel USB Audio) of the current base `4854b76c`, package SHA-256 `18cef8b2d5d9152fd12d85d8ca607821776587b6f5b87868f7984eec02373ff3` as published, in a trial that was not kept:
+
+- T1 on Amiga, T2 to T8 muted. SRC read PTCH, STRT, LEN, RATE, SPD, GRN; SRC SETUP read LOOP, SLIC and LED as switches, SRR as a knob, STR as a switch and BITS as a knob, as on the earlier package (the unit's LCD, read over USB).
+- The owner played it by hand for about four minutes, listening to the main out over USB Audio, and reported that it works.
+- All eight tracks went back to FLEX, the trial rolled back, the inventory was empty and the unit's state normal.
+
+Not measured in this run: frame interrupt and CPU. Not tried: Keep, removal and the items listed as not tested below.
 
 ### Keep, Undo, removal, reload
 
