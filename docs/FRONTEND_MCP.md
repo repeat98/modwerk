@@ -49,7 +49,7 @@ regressions when adding host-side firmware or USB helpers.
 `site_features` reports tools and evidence limits. `site_catalogue` searches and
 filters the actual machine/module catalogue; `site_module` exposes controls,
 usage, attribution, licences and evidence. `site_selection` calls the frontend's
-card compatibility or USB package validation. USB preparation verifies both
+catalogue check or USB package validation. USB preparation verifies both
 forward and Undo package hashes and header/capability requirements without
 writing to the device. A beta catalogue inspection grants no live membership.
 

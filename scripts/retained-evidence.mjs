@@ -113,21 +113,6 @@ export function parseUsbPackageWaivers(value) {
   }
   return value.waivers
 }
-// The owner's card-only OKs (sdk/approvals/usb-card-only.json): one exact Octatrack module version listed without the USB package
-// module-doctor requires, each with its reason and the issue or pull request that ends it. It waives no evidence.
-export const USB_CARD_ONLY_PATH = 'sdk/approvals/usb-card-only.json'
-export function parseUsbCardOnly(value) {
-  if (!value || value.schemaVersion !== 1 || typeof value.about !== 'string' || !Array.isArray(value.modules) || Object.keys(value).sort().join() !== 'about,modules,schemaVersion')
-    throw new Error(USB_CARD_ONLY_PATH + ' is malformed')
-  const seen = new Set()
-  for (const item of value.modules) {
-    if (!item || Object.keys(item).sort().join() !== 'approval,module,reason,until,version' || ['module', 'version', 'reason'].some(key => typeof item[key] !== 'string' || !item[key].trim()) ||
-        typeof item.approval !== 'string' || !/^repeat98, \d{1,2} [A-Z][a-z]{2} \d{4}: \S/.test(item.approval) || !/^#\d+$/.test(item.until) || seen.has(item.module + '@' + item.version))
-      throw new Error(USB_CARD_ONLY_PATH + ' has a malformed or duplicate record')
-    seen.add(item.module + '@' + item.version)
-  }
-  return value.modules
-}
 // The USB manifest without exactly the waived row of this module version; a waiver its row does not match refuses.
 function withoutWaivedRow(bytes, document, waiver, label) {
   const value = JSON.parse(bytes.toString('utf8')), rows = value.packages ?? []

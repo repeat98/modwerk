@@ -3,7 +3,6 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 import { AVAILABLE_MODULES } from '../catalog/availability'
-import { selectionConflicts } from '../catalog/selection-conflicts'
 import { LibraryTools } from '../components/LibraryTools'
 import { ModuleComparison } from '../components/ModuleComparison'
 import { MODULE_COMPARE_ENABLED } from '../components/module-compare'
@@ -99,19 +98,6 @@ describe('All machines library parity', () => {
     else expect(tools).not.toContain('Compare')
   })
 
-  it('shows saved Octatrack and Digitakt collisions even when filters hide their modules', () => {
-    const html = renderToStaticMarkup(createElement(AllMachinesLibrary, {...props,
-      query: 'no matching modules', octatrackModules: [],
-      octatrackConflicts: selectionConflicts(['midi-scenes', 'analog-bassdrum']),
-      digiSelected: {digitakt: ['digislicer', 'digisophie'], 'digitakt-ii': [], digitone: [], 'analog-rytm-mkii': []},
-    }))
-    expect(html).toContain('Octatrack: your selection needs a change')
-    expect(html).toContain('Digitakt: your selection needs a change')
-    expect(html).toContain('href="#digitakt/configuration"')
-    expect(html).not.toContain('Digitone: your selection needs a change')
-    expect(html).toContain('No modules found')
-    expect(html).toContain('aria-label="Build firmware for Octatrack"')
-  })
 
   it('keeps unavailable counts distinct from zero and offers a build link for each machine', () => {
     const html = renderToStaticMarkup(createElement(AllMachinesLibrary, {...props, statistics: null}))

@@ -1,5 +1,4 @@
 import { moduleBuildError } from './build-support'
-import { checkSelection } from './compatibility'
 import { describe, expect, it } from 'vitest'
 import { AVAILABLE_MODULES, availableModules, BETA_MODULE_IDS, PAUSED_MODULE_IDS, isModuleAvailable, moduleAvailabilityError } from './availability'
 import { MODULES, resolveSelection } from './modules'
@@ -9,7 +8,6 @@ describe('temporary module availability', () => {
   it('keeps every visible module buildable as an individual selection', () => {
     for (const module of AVAILABLE_MODULES) {
       expect(moduleBuildError([module.id])).toBe('')
-      expect(checkSelection([module.id], false).checked).toBe(true)
     }
   })
   it('offers every catalog module that is not paused and retains their GitHub identity', () => {
@@ -47,7 +45,6 @@ describe('temporary module availability', () => {
     expect(moduleAvailabilityError(['airwindows-chorus'], true)).toBe('')
     expect(moduleAvailabilityError(['spectrum', 'airwindows-chorus'], true)).toContain('Spectrum')
     expect(moduleBuildError(['airwindows-chorus'])).toBe('')
-    expect(checkSelection(['airwindows-chorus'], false).checked).toBe(true)
   })
   it('allows available selections and still rejects unknown catalog identities', () => {
     expect(moduleAvailabilityError(AVAILABLE_MODULES.map(module => module.id))).toBe('')
