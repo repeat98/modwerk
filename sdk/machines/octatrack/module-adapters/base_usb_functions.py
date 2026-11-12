@@ -251,8 +251,20 @@ def audio_storage_source(text):
     return text.replace(dma, '    .bss\n' + dma)
 
 
-def assembly(base, descriptors, audio=None):
+SLOT = 512  # a configuration with room for the function a module adds behind it (elekloader/usb_function.c)
+
+
+def header(base, descriptors, audio=None):
+    """What usb_function.c knows of the base's own configuration: its bytes and its interfaces."""
+    blob = configuration(base, descriptors, True, False, audio)
+    return ('#define MODWERK_USB_CFG_BYTES %du\n#define MODWERK_USB_CFG_INTERFACES %du\n' % (len(blob), blob[4]))
+
+
+def assembly(base, descriptors, audio=None, slots=False):
     """One ISR chain and page-contained tables, including a 259-byte config.
+
+    With `slots`, each configuration sits at the start of a 512-byte slot and the two clamps read the live
+    length from modwerk_cfg_len: usb_function.c rewrites both when a module's USB function comes or goes.
 
     Audio -> bounded MIDI receive -> MIDI transmit -> vendor EP0 poll -> stock.
     Without audio the same chain starts at MIDI receive. Each configuration
@@ -277,7 +289,22 @@ def assembly(base, descriptors, audio=None):
     else:
         tails.update(reset_tail='jmp     usbmidi_rx_reset_shim',
                      session_end_tail='jmp     usbmidi_rx_sessend_shim')
-    text = base.ASSEMBLY.format(length=lengths.pop(), **tails)
+    length = lengths.pop()
+    text = base.ASSEMBLY.format(length=length, **tails)
+    if slots:
+        if length > SLOT:
+            raise ValueError('A USB configuration outgrows its slot.')
+        for constant, live in (('    .set modwerk_cfg_len, %d\n' % length, ''),
+                               ('    cmpil   #modwerk_cfg_len,%d1', '    cmpl    modwerk_cfg_len,%d1'),
+                               ('    movel   #modwerk_cfg_len,%d1', '    movel   modwerk_cfg_len,%d1')):
+            if text.count(constant) != (2 if live else 1):
+                raise ValueError('The base USB clamp template changed.')
+            text = text.replace(constant, live)
+        text += '    .balign 4\n    .global modwerk_cfg_len\nmodwerk_cfg_len:\n    .long %d\n' % length
+        for name, blob in blobs.items():
+            text += '    .balign %d\n    .global %s\n%s:\n    .byte %s\n    .space %d\n' % (
+                SLOT, name, name, ', '.join('0x%02x' % byte for byte in blob), SLOT - len(blob))
+        blobs = {}
     blobs.update(modwerk_device=base.device(True), modwerk_bos=base.bos(), modwerk_msos20=base.msos20())
     for name, blob in blobs.items():
         alignment = max(64, 1 << (len(blob) - 1).bit_length())

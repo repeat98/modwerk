@@ -1708,6 +1708,11 @@ def main():
              'midi_generators.s', 'sample_memory.c') if args.site_events else ()) + (
             ('part_menu.c', 'part_menu.s') if args.part_menu else ()):
         shutil.copyfile(HERE / name, source / name)
+    # A module may add one USB function to the base's configuration (events.json ot_usb_functions, usb_function.c).
+    usb_function_slots = bool(usb_functions) and not usb_profiles and args.site_events
+    if usb_function_slots:
+        for name in ('usb_function.c', 'usb_function.h'):
+            shutil.copyfile(HERE / name, source / name)
     # The boot stub's sector, which flash.c writes when it converts a unit to two slots (build_stub.py: stub_body.c).
     sys.path.insert(0, str(HERE))
     import build_stub
@@ -1874,9 +1879,10 @@ def main():
                 raise ValueError('The Part validator\'s clamp at %#x is not moveq #31.' % at)
             chooser_sites.append(dict(addr=hex(at), stock=word.hex(), op='bytes', new=bytes((word[0], FX_IDS - 1)).hex()))
         dsp_sites += chooser_sites
-    (source/'usb_base.h').write_text(usb.header())
+    (source/'usb_base.h').write_text(usb.header() + (
+        usb_functions.header(usb, usb_descriptors, args.usb_audio) if usb_function_slots else ''))
     (source/'usb_base.s').write_text(usb_profiles.assembly(usb, usb_functions, usb_descriptors, args.usb_audio) if usb_profiles else
-                                   usb_functions.assembly(usb, usb_descriptors, args.usb_audio)
+                                   usb_functions.assembly(usb, usb_descriptors, args.usb_audio, slots=usb_function_slots)
                                    if usb_functions else usb.assembly(args.dev))
     if usb_functions:
         (source/'usbmidi.s').write_text(usb_functions.midi_source((usb.OCTABAM / 'platform/usb-midi/usbmidi.s').read_text()))
@@ -2127,6 +2133,8 @@ modwerk_retained_end:
         recipe['cflags'].append('-DMODWERK_RUNTIME_SETS')
     if args.module_ui_roots:  # loader.c's capability 1024, machine_admission_runtime.c
         recipe['cflags'].append('-DMODWERK_RUNTIME_UI_ROOTS')
+    if usb_function_slots:  # a base with USB Audio linked in (a development twin) has the table and refuses every function
+        recipe['cflags'] += ['-DMODWERK_USB_FUNCTIONS'] + (['-DMODWERK_USB_AUDIO_LINKED'] if args.usb_audio else [])
     if args.saved_set_export:
         recipe['cflags'].append('-DMODWERK_SAVED_SET_EXPORT')
     if args.resident_stock_hooks:
