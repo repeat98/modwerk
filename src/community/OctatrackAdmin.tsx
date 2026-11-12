@@ -28,14 +28,13 @@ export function baseName(identity: string) {
 export function OctatrackAdmin() {
   const [data, setData] = useState<AdminOctatrack>(), [error, setError] = useState(''), [loading, setLoading] = useState(true)
   const [metric, setMetric] = useState<Metric>('installs'), [selectedDay, setSelectedDay] = useState('')
-  const load = useCallback((signal?: AbortSignal) => {
-    setLoading(true)
-    return api<AdminOctatrack>('/admin/octatrack', { signal }).then(value => { if (!signal?.aborted) { setData(value); setError('') } })
-      .catch(error => { if (!signal?.aborted) setError(error instanceof Error ? error.message : 'Octatrack statistics are unavailable.') })
-      .finally(() => { if (!signal?.aborted) setLoading(false) })
-  }, [])
+  // `loading` starts true for the first read; Refresh sets it before reading again.
+  const load = useCallback((signal?: AbortSignal) => api<AdminOctatrack>('/admin/octatrack', { signal })
+    .then(value => { if (!signal?.aborted) { setData(value); setError('') } })
+    .catch(error => { if (!signal?.aborted) setError(error instanceof Error ? error.message : 'Octatrack statistics are unavailable.') })
+    .finally(() => { if (!signal?.aborted) setLoading(false) }), [])
   useEffect(() => { const controller = new AbortController(); void load(controller.signal); return () => controller.abort() }, [load])
-  const refresh = <button className="button button-quiet" disabled={loading} onClick={() => void load()}>Refresh</button>
+  const refresh = <button className="button button-quiet" disabled={loading} onClick={() => { setLoading(true); void load() }}>Refresh</button>
   if (!data) return <section className="configuration-section"><div className="section-title"><h2>Octatrack</h2>{refresh}</div>
     {error ? <p className="file-error" role="alert">{error}</p> : <p role="status">Loading Octatrack statistics…</p>}</section>
   return <OctatrackAdminReport data={data} loading={loading} error={error} refresh={refresh} metric={metric} onMetric={setMetric} selectedDay={selectedDay} onSelectDay={setSelectedDay}/>
