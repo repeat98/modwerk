@@ -308,7 +308,7 @@ const SECTIONS: FaqSection[] = [
           <ol>
             <li>Find the module in <a href="#all">the module library</a> and open its page.</li>
             <li>Choose <strong>Add preview</strong> beside the main player or in the <strong>Previews</strong> tab. Sign in when prompted. You need a verified account; if you are new, create an account and verify your email first.</li>
-            <li>Choose a <strong>WAV, MP3 or Ogg</strong> recording, up to <strong>90 seconds</strong> and <strong>12 MB</strong>. Listen to the preview before sharing.</li>
+            <li>Choose a <strong>WAV, MP3 or Ogg</strong> recording of up to <strong>12 MB</strong>. Listen to the preview before sharing.</li>
             <li>Add a <strong>credit</strong> and, optionally, a <strong>caption</strong> describing what the recording demonstrates. Confirm that you have permission to share the recording, including any samples.</li>
             <li>Press <strong>Add preview</strong> to upload. Your recording appears on the module page and in its Previews tab with your username, credit and caption.</li>
           </ol>
