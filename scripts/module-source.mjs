@@ -28,7 +28,7 @@ async function cardlessModules(root) {
   try { text=await readFile(resolve(root,'src/engine/assets/octatrack-module-packages.json'),'utf8') } catch(error) { if(error.code==='ENOENT') return new Set(); throw error } // a source tree without the USB package list
   return new Set(JSON.parse(text).packages.filter(row=>row.sources||row.usbOnly===true).map(row=>row.id))
 }
-export async function moduleSourcePaths(root) { const native=resolve(root,'sdk/octabam'),cardless=await cardlessModules(root),files=[];for(const group of SOURCE_GROUPS)files.push(...await inventory(resolve(native,group),group));return files.filter(path=>!isDocumentationPath(path)&&!(path.startsWith('modules/')&&cardless.has(path.split('/')[1]))).sort() }
+export async function moduleSourcePaths(root) { const native=resolve(root,'sdk/octabam'),cardless=await cardlessModules(root),files=[];for(const group of SOURCE_GROUPS)files.push(...await inventory(group==='modules'?resolve(root,'sdk/octatrack/modules'):resolve(native,group),group));return files.filter(path=>!isDocumentationPath(path)&&!(path.startsWith('modules/')&&cardless.has(path.split('/')[1]))).sort() }
 /** The SHA-256 the compiler records for one source path: the file's bytes, or for a module manifest its build fields. */
 export async function sourceEntryHash(root, path) {
   const bytes = await readFile(resolve(root,path.startsWith('modules/')?'sdk/octatrack':'sdk/octabam',path))
