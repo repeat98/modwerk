@@ -31,7 +31,7 @@ async function cardlessModules(root) {
 export async function moduleSourcePaths(root) { const native=resolve(root,'sdk/octabam'),cardless=await cardlessModules(root),files=[];for(const group of SOURCE_GROUPS)files.push(...await inventory(resolve(native,group),group));return files.filter(path=>!isDocumentationPath(path)&&!(path.startsWith('modules/')&&cardless.has(path.split('/')[1]))).sort() }
 /** The SHA-256 the compiler records for one source path: the file's bytes, or for a module manifest its build fields. */
 export async function sourceEntryHash(root, path) {
-  const bytes = await readFile(resolve(root,'sdk/octabam',path))
+  const bytes = await readFile(resolve(root,path.startsWith('modules/')?'sdk/octatrack':'sdk/octabam',path))
   return /^modules\/[^/]+\/octamod\.module\.json$/.test(path) ? sha(manifestBuildFields(bytes.toString('utf8'))) : sha(bytes)
 }
 /** The same SHA-256 tree fingerprint the compiler records as sourceTreeSha256. */
