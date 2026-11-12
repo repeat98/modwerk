@@ -65,7 +65,7 @@ Requires Core 2.1. Built for OS 1.54 only.
 
 ## Tests and measurements
 
-See [TESTING.md](TESTING.md) for the exact evidence and the checks still open. The author tested it on a Digitakt I with an Allen & Heath Xone:1D, alone, with FX Track and with CC Assignment Names. The emulator results add the message map and the load figures; nothing here proves behaviour beside every other module on hardware.
+See [TESTING.md](TESTING.md) for the exact evidence and the checks still open. The author tested it on a Digitakt I with an Allen & Heath Xone:1D, alone, with FX Track and with CC Assignment Names, and the final build (with the page copy fix) alone and with CC Recall. The emulator results add the message map and the load figures; nothing here proves behaviour beside every other module on hardware.
 
 ## Authorship and licences
 

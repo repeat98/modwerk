@@ -95,7 +95,7 @@ Builds: module alone `1818236a…822a7c` (`cc-remap-0.1.0-fix1-os1.54.syx`), wit
 3. On CC SELECT, hold AMP and press RECORD, then STOP on another pattern: stock page copy and paste.
 4. With CC Recall, CC RECALL ticked: open CC Receive on a MIDI track and reload the pattern (or change to another pattern and back) while it is on screen. CC Recall's sends go out with the CC SELECT numbers, and the table and SEL1–8 are unchanged.
 
-Not run yet.
+**Result (12 November 2026, author's Digitakt I):** “CC Remap checks out”, for both builds, as one statement for the whole section rather than step by step. The author has also played the module for some time in their private live build. Recorded in [evidence/hardware-testing.json](evidence/hardware-testing.json).
 
 ## Stock flows compared
 
@@ -106,8 +106,8 @@ Not run yet.
 | Other parameter pages, audio tracks | Stock |
 | Saved data | Unchanged; the table is not saved |
 | Power cycle | 70–77 again (author’s unit, each time) |
-| Page copy, paste, clear on CC Receive | Do nothing (emulator, fixed build) |
-| Page copy, paste, clear on CC SELECT | Stock (emulator, fixed build) |
+| Page copy, paste, clear on CC Receive | Do nothing (emulator and author’s unit, fixed build) |
+| Page copy, paste, clear on CC SELECT | Stock (emulator and author’s unit, fixed build) |
 | Copying a MIDI track | Copies the track’s data; the CC Receive table stays with the track slot (author’s unit) |
 
 ## Still to test

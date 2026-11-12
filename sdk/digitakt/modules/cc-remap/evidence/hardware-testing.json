@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "reportedOn": "2026-10-29",
+  "reportedOn": "2026-11-12",
   "source": "Direct author statements in the development conversation",
   "reporter": "draadpiraat",
   "status": "hardware-tested-author-reported",
@@ -9,6 +9,26 @@
   "controller": "Allen & Heath Xone:1D",
   "moduleVersion": "0.1.0-experimental",
   "builds": [
+    {
+      "name": "Core 2.1 + cc-remap 0.1.0-experimental (fix1, page copy fix)",
+      "syxSha256": "1818236aaaea4c2340fd6579095015db986db79053d93da0b1cd1e8e38822a7c",
+      "reportedOn": "2026-11-12",
+      "statement": "CC Remap checks out. also noting ive been playing with these modules, albeit with the private live-rig, for a while now.",
+      "steps": {
+        "7.1 section 5 steps 1-3 and 8 again": "checks out",
+        "7.2 hold AMP + RECORD, PLAY, STOP on CC Receive do nothing": "checks out",
+        "7.3 page copy and paste on CC SELECT are stock": "checks out"
+      }
+    },
+    {
+      "name": "Core 2.1 + cc-remap 0.1.0-experimental (fix1) + cc-recall",
+      "syxSha256": "c7fbb2c40fbd2253fd69a88f67fbc4e73fee16d53c2b842d70149bdf1b420b0d",
+      "reportedOn": "2026-11-12",
+      "statement": "CC Remap checks out. also noting ive been playing with these modules, albeit with the private live-rig, for a while now.",
+      "steps": {
+        "7.4 CC Recall sends go out with the CC SELECT numbers while CC Receive is on screen; table and SEL1-8 unchanged": "checks out"
+      }
+    },
     {
       "name": "Core 2.1 + cc-remap 0.1.0-experimental",
       "syxSha256": "eaa72c8cc9dfdfd52271b1bdff76aba15d836c591af7f309e39e0a7995c85079",
@@ -41,6 +61,7 @@
   ],
   "packageSha256": "81d9fd8d105214ee0bb1daf95da8fb004900ae0b109be07ca2c26a459f2f81f1",
   "limitations": [
+    "The fixed build's results (TESTING section 7) are one statement for the whole section, not answered step by step.",
     "Which build was used for steps 1-5 and 8 was not stated; the steps were asked for the module-alone build.",
     "The auto channel, USB MIDI input and a CC flood were not tested.",
     "Firmware was not read back from the device; the builds are identified by their SysEx hashes."

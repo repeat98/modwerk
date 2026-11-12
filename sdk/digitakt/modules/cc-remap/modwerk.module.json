@@ -98,7 +98,7 @@
     }
   },
   "evidence": {
-    "tier": "emulator",
+    "tier": "author-hardware",
     "moduleVersion": "0.1.0-experimental",
     "sourceSha256": "790f3dca8e390ae479b932498c96e8909c71d7c08d7bb8f0ba2e22ed92edf2d6",
     "reports": [
