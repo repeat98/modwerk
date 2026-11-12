@@ -17,7 +17,7 @@ beforeEach(() => {
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); vi.restoreAllMocks(); vi.unstubAllGlobals() })
 it('keeps selection local, previews only after explicit selection and revokes audio URLs on clear', async () => {
   await act(async () => root.render(createElement(OctatrackSamples)))
-  expect(container.textContent).toContain('Beta · work in progress')
+  expect(container.textContent).toContain('Work in progress')
   expect(container.textContent).toContain('No USB connection is needed')
   const input = container.querySelector('input')!
   Object.defineProperty(input, 'files', { value: [new File(['audio'], 'kick.wav', { type: 'audio/wav' }), new File(['text'], 'notes.txt')], configurable: true })

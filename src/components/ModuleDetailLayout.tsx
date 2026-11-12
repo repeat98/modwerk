@@ -16,7 +16,7 @@ import { catalogNeighbors, type CatalogBrowse } from '../catalog/catalog-browse'
 import { CatalogNavigation } from './CatalogNavigation'
 import { ModuleAuthors } from './ModuleAuthors'
 import type { ModuleContributor } from '../catalog/module-authors'
-import type { AddBlock } from '../catalog/add-blocks'
+import { refusesAdd, type AddBlock } from '../catalog/add-blocks'
 import { AddBlockChip, AddBlockPrompt } from './AddBlockPrompt'
 import { useAddBlockPrompt } from './use-add-block-prompt'
 import { useSetWords } from '../community/beta-ui'
@@ -85,12 +85,12 @@ export function ModuleDetailLayout({ id, title, family, detail, author, authorUr
         <p className="detail-description">{description}</p>
         {notice && <div className="detail-notice">{notice}</div>}
         <div className="module-add-region">
-          {pending?.kind === 'usb-only'
+          {refusesAdd(pending)
             ? <button className="button button-quiet module-configure-action is-blocked" disabled title={pending.detail}><Icon name="lock" size={16} /><span className="add-block-label">{pending.reason}</span></button>
             : prompt.conflict
             ? <button ref={addTrigger} className="button button-quiet module-configure-action is-conflict" onClick={prompt.toggle} aria-expanded={prompt.open} aria-controls={prompt.id}><Icon name="swap" size={16} /><span className="add-block-label">{prompt.conflict.reason}</span></button>
             : <button className={'button module-configure-action ' + (selected ? 'button-added' : 'button-primary')} onClick={configureTarget && !selected ? showConfiguration : onToggle} aria-pressed={selected}><Icon name={selected ? 'check' : configureTarget ? 'sliders' : 'plus'} size={16} />{selected ? 'Added to ' + w.set : configureTarget ? 'Configure ' + title : 'Add to ' + w.set}</button>}
-          {pending?.kind === 'usb-only' ? <p className="add-block-detail">{pending.detail}</p> : pending && !prompt.conflict && <AddBlockChip block={pending} />}
+          {refusesAdd(pending) ? <p className="add-block-detail">{pending.detail}</p> : pending && !prompt.conflict && <AddBlockChip block={pending} />}
           {prompt.conflict && prompt.open && <AddBlockPrompt id={prompt.id} name={title} block={prompt.conflict} onCancel={prompt.close}
             onSwap={() => { onSwap?.(prompt.conflict?.swapRemoveIds ?? []); prompt.close() }} onAddAnyway={() => { onToggle(); prompt.close() }} />}
         </div>

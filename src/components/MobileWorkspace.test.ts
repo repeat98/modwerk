@@ -21,7 +21,7 @@ const media = vi.hoisted(() => {
   return state
 })
 vi.mock('../hooks/firmware-client', async original => ({ ...await original<typeof import('../hooks/firmware-client')>(), createObservedDigiFirmwareClient: () => { throw new Error('Mobile must not initialize the firmware worker') } }))
-vi.mock('../community/beta-access', async original => ({ ...await original<typeof import('../community/beta-access')>(), hasBetaUi: () => false }))
+vi.mock('../community/beta-access', async original => ({ ...await original<typeof import('../community/beta-access')>(), hasBetaUi: () => false, hasOctatrackBase: () => false }))
 const noop = () => {}
 let root: Root, container: HTMLDivElement
 beforeEach(() => {

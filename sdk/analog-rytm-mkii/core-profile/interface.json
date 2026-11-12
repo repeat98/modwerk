@@ -104,6 +104,16 @@
       "purpose": "Write a mod storage field; interrupts are masked while it writes."
     },
     {
+      "name": "core_key",
+      "prototype": "int core_key(void *brain, void *event)",
+      "purpose": "Play a key event as the panel's: every ev_key handler in order, then stock's Brain::key unless one took it. For a mod that holds a key back and plays it later; guard its own ev_key handler against the replay (core.s; machine README, Replaying a key)."
+    },
+    {
+      "name": "core_enc",
+      "prototype": "int core_enc(void *brain, void *event)",
+      "purpose": "Play an encoder event as the panel's: every ev_enc handler in order, then stock's encoder dispatch unless one took it (core.s)."
+    },
+    {
       "name": "core_audio_load",
       "prototype": "extern volatile uint32_t core_audio_load",
       "purpose": "The audio block's load, 0-255 of a block, as core measures it (analog-rytm-mk2/load.h, 0.4)."

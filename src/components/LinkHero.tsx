@@ -21,11 +21,12 @@ const KEYS: [number, number, number?, number?][] = [
 /** A sine squiggle like the module cards' art, `w` wide around (x, y). */
 const squiggle = (x: number, y: number, w: number, a: number) => Array.from({ length: 13 }, (_, i) => (i ? 'L' : 'M') + (x + i * w / 12).toFixed(1) + ' ' + (y + Math.sin(i / 12 * Math.PI * 3) * a).toFixed(1)).join(' ')
 
-/** This page (the module library, one card on its way) and an Octatrack MKII on a USB cable, drawn like the module previews. */
-export function LinkHero() {
+/** This page (the module library, one card on its way) and an Octatrack MKII on a USB cable, drawn like the module
+ * previews, under a corner label: BETA for the beta's own prompts, USB for the base install guide. */
+export function LinkHero({ label = 'BETA' }: { label?: string }) {
   const [sx, sy] = at(473, 425), screenW = 269 * OT.scale, screenH = 205 * OT.scale, [fx, fy] = at(940, 745)
   return <div className="module-preview link-hero" aria-hidden="true">
-    <div className="preview-label"><span>BETA</span><span className="preview-led" /></div>
+    <div className="preview-label"><span>{label}</span><span className="preview-led" /></div>
     <svg viewBox="0 0 640 220" className="signal-art link-hero-art" fill="none">
       <g className="signal-grid">{[60, 110, 160].map(y => <path key={y} d={'M12 ' + y + 'H628'} />)}{[128, 256, 384, 512].map(x => <path key={x} d={'M' + x + ' 12V204'} />)}</g>
       {/* This page: sidebar, search, a grid of module cards; the highlighted one is being sent. */}

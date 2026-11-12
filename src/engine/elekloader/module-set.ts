@@ -12,7 +12,10 @@ import { inventoryChanges, type Inventory, type InventoryTarget } from '../../co
 import type { OctatrackLink, SetChange } from './octatrack-link.ts'
 import { RuntimeFeature, type MissingModule, type RuntimeCapabilities } from './upload-usb.ts'
 import { USB_AUDIO_MODULE } from '../../config/usb-audio.ts'
-import { baseLayout, isPublishedBase, layoutIdentity, layoutName, type BaseLayout } from './base-variants.ts'
+import { baseLayout, isPublishedBase, layoutIdentity, layoutName, MEMBER_LAYOUT, type BaseLayout } from './base-variants.ts'
+import { cardSetGeneration, encodeCardSet } from './card-set.ts'
+import { SET_MAX_ABI } from './set-package.ts'
+import { overLimitMessage } from '../../catalog/set-limit.ts'
 
 /** Why a set cannot be loaded over USB, in the user's words. */
 export class ModuleSetError extends Error {}
@@ -49,6 +52,9 @@ export class BaseLayoutRequired extends BaseUpdateRequired {
     this.layout = layout
   }
 }
+/** A set over the site's module limit (src/catalog/set-limit.ts): it still loads and shows, but is not synced until
+ * trimmed. Only the site's review and sync apply it; the catalogue itself, which the developer MCP uses, stays unlimited. */
+export class SetLimitError extends ModuleSetError {}
 /** The base the site publishes (sdk/machines/octatrack/base-binding.json), in each USB Audio layout. While USB sync is a
  * beta every tester runs it (owner, 15 October 2026): the site syncs nothing to an older base and guides the update instead. */
 export const CURRENT_BASE: string = baseBinding.identity
@@ -390,8 +396,24 @@ const catalogue = createRuntimeCatalogue(manifest)
 export const USB_MODULE_IDS = catalogue.ids
 export const inventoryFrom = catalogue.inventory
 export const moduleSetProblem = catalogue.problem
-export const moduleSetReview = catalogue.review
+/** The site's review of a sync: the catalogue's, and a set over the module limit that needs a sync cannot have one. */
+export function moduleSetReview(target: InventoryTarget, current: Inventory, capabilities?: RuntimeCapabilities, base?: string) {
+  const review = catalogue.review(target, current, capabilities, base), limit = overLimitMessage(target.moduleIds, 'sync')
+  return limit && review.needsSync && !review.problem ? { ...review, problem: new SetLimitError(limit) as ModuleSetError } : review
+}
 export const prepareModuleSet = catalogue.prepare
+/** The module set as the file the base restores from the card at power-on (card-set.ts): the packages a sync onto an
+ * empty unit would install, for the published base in the layout the set asks for (USB MIDI alone without USB Audio).
+ * `base` is the identity that base reports; a unit on another base ignores the file. The site's checks run as for a
+ * sync onto the published base, whose loader takes every package the site publishes, and that loader checks each
+ * package again when it restores the file. */
+export async function prepareCardSet(target: InventoryTarget, load = fetchPackage, now = Date.now()) {
+  const layout = setLayout(target) ?? MEMBER_LAYOUT, base = layoutIdentity(layout)
+  if (!base) throw new ModuleSetError(`${layoutName(layout)} has no published Modwerk base yet.`)
+  const published: RuntimeCapabilities = { abi: SET_MAX_ABI, features: 0xffff, maxSites: 0xffff, maxCopies: 0xffff }
+  const { changes } = await catalogue.prepare(target, { moduleIds: [], removedStockFx: [] }, load, published, base)
+  return { base, layout, modules: changes.map(change => change.module), file: encodeCardSet(base, changes.map(change => change.data), cardSetGeneration(now)) }
+}
 
 /** The link's builder and inventory for the site's checkout card. */
 export function moduleSetKit(link: OctatrackLink) {
@@ -402,6 +424,8 @@ export function moduleSetKit(link: OctatrackLink) {
     return inventoryFrom(modules)
   }
   return { readInventory, prepareUpdate: async (target: InventoryTarget) => {
+    const limit = overLimitMessage(target.moduleIds, 'sync')
+    if (limit) throw new SetLimitError(limit)
     const inventory = await readInventory(), identity = link.getState().identity
     return prepareModuleSet(target, inventory, fetchPackage, identity?.capabilities, identity?.base)
   } }

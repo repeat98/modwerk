@@ -176,7 +176,7 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
 .module-beta-badge { color: var(--accent); background: var(--surface-hover); border-radius: 4px; padding: 1px 6px; font-size: 11px; font-weight: 600; line-height: 1.5; }
 .card-version { color: #b8b4c7; font: 11px/1.5 var(--mono); }
 .module-update-badge { border: 1px solid #68647e; border-radius: 4px; padding: 1px 5px; color: #c5c1e8; background: #929bff0b; font-size: 10px; font-weight: 500; line-height: 1.5; white-space: nowrap; }
-.add-button { display: inline-grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; margin-top: -2px; padding: 0; border: 1px solid var(--control-border); background: var(--surface-hover); border-radius: 50%; color: var(--text); }
+.add-button { display: inline-grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; margin-top: -2px; padding: 0; border: 1px solid var(--control-border); background: var(--surface-hover); border-radius: 16px; color: var(--text); }
 .add-button span { display: none; }
 .add-button svg { stroke-width: 2.2; }
 .add-button:hover { background: #44444d; }
@@ -189,6 +189,11 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
 /* A module this member cannot load (USB only, in the beta): the add is disabled, the reason is on the chip. */
 .add-button.is-blocked, .module-configure-action.is-blocked { color: var(--muted); cursor: not-allowed; opacity: .7; }
 .add-button.is-blocked:hover { background: var(--surface-hover); }
+/* A lock alone explains nothing: the blocked button says why (Full, USB only), and a full set says so above the grid. */
+.add-button.is-blocked { display: inline-flex; gap: 5px; width: auto; padding: 0 9px; font-size: 12px; opacity: 1; }
+.add-button.is-blocked span { display: inline; }
+.library-limit-note { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 16px; padding: 12px 14px; border: 1px solid var(--control-border); border-radius: 8px; background: var(--surface-raised); color: var(--text-secondary); font-size: 13px; line-height: 1.6; }
+.library-limit-note svg { flex: none; margin-top: 2px; color: var(--muted); }
 .add-block-detail { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
 .module-card { position: relative; }
 /* The note replaces the type line on a card and the prompt floats over it, so a conflict never changes a card's height. */

@@ -225,6 +225,9 @@ describe('sending a module', () => {
     unit.refusal = 10 // RUNTIME_FEATURE: the key bus cannot come up this boot
     await link.update('PREVIEW VOL', one)
     expect(link.getState().notice?.text).toMatch(/can’t start the key bus this module needs until it restarts/)
+    unit.refusal = 8 // RUNTIME_STOCK: a site's stock bytes are not the ones the package names
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice?.text).toMatch(/doesn’t match what is running on your Octatrack, so nothing changed/)
     unit.refusal = 1 // malformed: the plain text
     await link.update('PREVIEW VOL', one)
     expect(link.getState().notice?.text).toBe('The Octatrack can’t run this module file.')

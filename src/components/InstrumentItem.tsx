@@ -21,7 +21,7 @@ function zoomUnit(state?: ZoomLinkState) {
 }
 
 /**
- * The machine you work on, in the sidebar. With a USB link (the Octatrack, beta) it is one card leading to the hub:
+ * The machine you work on, in the sidebar. With a USB link (the Octatrack on the base path) it is one card leading to the hub:
  * the unit (what is on it, or what this browser read when it was last connected) and the set you are editing, with
  * the Octatrack's own LED language: lit green is on the unit, outlined is waiting to load.
  * Without one (other machines, phones) it shows the module set you are editing and leads to its page. A Zoom pedal
