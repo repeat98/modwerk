@@ -194,7 +194,7 @@ addresses only; no Elektron firmware is included.
 
 ## Screens and audio
 
-Screenshots are rytm-emu captures of build IA12, this package linked alone on the Modwerk base
+Screenshots are rytm-emu captures of build IA14, this package linked alone on the Modwerk base
 ([media/capture.json](media/capture.json)). No audio preview.
 
 ![AMP DEC reading a time](media/decay-time.png) ![AMP HLD reading steps](media/hold-steps.png) ![ENV RESET at AMP](media/env-reset-amp.png)

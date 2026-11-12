@@ -219,15 +219,15 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "e28ebdd4e7746874c4be8f96aa2be074a9b49cb8de3be4a362fa13e25912ed3f",
-        "setup": "Headless rytm-emu (dtboot) running IA12: the Modwerk base for core-ar2 0.7 (plain variant) and this folder's Improved AMP 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit and pattern A01 at the emulator's 127.0 BPM. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "c64b04771876129256a87b0dac62d9f90406e38574e5e9b925977977393ccffe",
+        "setup": "Headless rytm-emu (dtboot) running IA14: the Modwerk base for core-ar2 0.7 (plain variant) and this folder's Improved AMP 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit and pattern A01 at the emulator's 127.0 BPM. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
       "path": "media/hold-steps.png",
       "kind": "screenshot",
-      "caption": "AMP page, HLD at 42: HOLD TIME, 1.06 steps at 127 BPM.",
-      "alt": "AMP page titled HOLD TIME with the HLD knob reading 1.06, its length in steps.",
+      "caption": "AMP page, HLD at 42: HOLD TIME, one step.",
+      "alt": "AMP page titled HOLD TIME with the HLD knob reading 1, its length in steps.",
       "credit": "Nathaniel Pavel documentation capture; Elektron interface",
       "license": "LicenseRef-Rytm-UI-Documentation",
       "source": "original",
@@ -235,8 +235,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "e28ebdd4e7746874c4be8f96aa2be074a9b49cb8de3be4a362fa13e25912ed3f",
-        "setup": "Headless rytm-emu (dtboot) running IA12: the Modwerk base for core-ar2 0.7 (plain variant) and this folder's Improved AMP 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit and pattern A01 at the emulator's 127.0 BPM. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "c64b04771876129256a87b0dac62d9f90406e38574e5e9b925977977393ccffe",
+        "setup": "Headless rytm-emu (dtboot) running IA14: the Modwerk base for core-ar2 0.7 (plain variant) and this folder's Improved AMP 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit and pattern A01 at the emulator's 127.0 BPM. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -251,8 +251,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "e28ebdd4e7746874c4be8f96aa2be074a9b49cb8de3be4a362fa13e25912ed3f",
-        "setup": "Headless rytm-emu (dtboot) running IA12: the Modwerk base for core-ar2 0.7 (plain variant) and this folder's Improved AMP 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit and pattern A01 at the emulator's 127.0 BPM. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "c64b04771876129256a87b0dac62d9f90406e38574e5e9b925977977393ccffe",
+        "setup": "Headless rytm-emu (dtboot) running IA14: the Modwerk base for core-ar2 0.7 (plain variant) and this folder's Improved AMP 0.1.0-experimental, linked by Modwerk's linker on stock OS 1.74, the default kit and pattern A01 at the emulator's 127.0 BPM. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]

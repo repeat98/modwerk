@@ -461,8 +461,8 @@ __attribute__((noinline)) static void put_time(char *p, uint32_t ticks)
 }
 
 // A hold in steps from HOLD_STEPS, three digits: "0", "0.005", "0.080", "1.53", "15.8", "21.0",
-// "124". A hold of whole eighths of a step, which the grid's 13 are and no other value is, drops
-// the zeros at its end: "0.125", "0.5", "1", "1.5", "64".
+// "124". A hold of whole eighths of a step below 100, which the grid's 13 are and no other value
+// is, drops the zeros at its end: "0.125", "0.5", "1", "1.5", "64".
 __attribute__((noinline)) static void put_steps(char *p, uint32_t cq)
 {
     uint32_t q, d;
