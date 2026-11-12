@@ -114,11 +114,11 @@
     "recorded": "2026-11-11",
     "storage": {
       "label": "Module image and memory",
-      "display": "10,604 bytes code and data; 67,308 bss",
+      "display": "10,652 bytes code and data; 67,308 bss",
       "value": 77912,
       "unit": "bytes",
       "method": "static",
-      "conditions": "The USB package of this source (SHA-256 e9730e24b83cf6f8865d30c8917b7a541e7f3c5155dbe6011e53757607cc5294, built by npm run module:dev -- amiga --build-only): 10,604 bytes of code and data and 67,308 of bss, most of it the eight voices' frame memories (8 KB each). The loader's own record for the module and the stack the render uses are not counted. The loader allows a module 128 KiB.",
+      "conditions": "The USB package of this source (SHA-256 18cef8b2d5d9152fd12d85d8ca607821776587b6f5b87868f7984eec02373ff3, built by npm run module:dev -- amiga --build-only): 10,652 bytes of code and data and 67,308 of bss, most of it the eight voices' frame memories (8 KB each). The loader's own record for the module and the stack the render uses are not counted. The loader allows a module 128 KiB.",
       "source": "TESTING.md"
     },
     "processing": {
@@ -147,7 +147,7 @@
       "memory": {
         "level": "moderate",
         "basis": "source-estimate",
-        "rationale": "10,604 bytes of code and data and 67,308 of bss in the package, about 76 KiB of the 128 KiB the loader allows a module. Most is eight frame memories of 8 KB, one a track, reserved once at install whether or not a track uses Amiga. No sample RAM is taken and no stock buffer is reused.",
+        "rationale": "10,652 bytes of code and data and 67,308 of bss in the package, about 76 KiB of the 128 KiB the loader allows a module. Most is eight frame memories of 8 KB, one a track, reserved once at install whether or not a track uses Amiga. No sample RAM is taken and no stock buffer is reused.",
         "source": "TESTING.md"
       }
     }
