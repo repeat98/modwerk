@@ -158,7 +158,14 @@ static unsigned cpu_bill(const Machine *const *m, unsigned n, const Part *part, 
     }
     return sum;
 }
+volatile uint32_t mw_cpu_refusals, mw_cpu_refusal_tracks; /* for diagnostics, as the guard's skips */
+static void cpu_refuse(unsigned track, const Machine *who, unsigned booked);
 static uint32_t cpu_mille(unsigned percent) { return mw_cpu_allowance ? percent * 1000u / mw_cpu_allowance : 1000u; }
+static void cpu_refuse(unsigned track, const Machine *who, unsigned booked)
+{
+    mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << track;
+    modwerk_status_cpu_refused(track, who->label, cpu_mille(booked), cpu_mille(cpu_price(who)));
+}
 /* The PROTECT machines this base knows by signature (module-adapters/machine-ports.json; sdk/tests checks the list).
  * Their tracks keep their 12 bytes from stock's validator while the machine is absent too: the boot's battery
  * restore (0x40025770) validates the battery-backed Part copies seconds before the saved set reinstalls the machines
@@ -370,7 +377,7 @@ static void charge(const Machine *const *m, unsigned n)
     uint8_t over; unsigned booked = cpu_bill(m, n, part, 8, &over);
     for (unsigned t = 0; t < 8; ++t)
         if (over & ~cpu_warned & 1u << t && owner(m, n, part, t, &who)) { /* the first new one: the box shows one at a time */
-            modwerk_status_cpu_refused(t, who->label, cpu_mille(booked), cpu_mille(cpu_price(who)));
+            cpu_refuse(t, who, booked);
             break;
         }
     mw_cpu_refused = cpu_warned = over, mw_cpu_booked = booked;
@@ -404,7 +411,7 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
         if (old != next && cpu_price(next)) { /* before the DSP claim: nothing to give back */
             uint8_t over; unsigned booked = cpu_bill(m, n, part, track, &over);
             if (booked + cpu_price(next) > mw_cpu_allowance) {
-                modwerk_status_cpu_refused(track, next->label, cpu_mille(booked), cpu_mille(cpu_price(next)));
+                cpu_refuse(track, next, booked);
                 return (unsigned)-1;
             }
         }

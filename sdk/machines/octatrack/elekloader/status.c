@@ -657,7 +657,7 @@ static void refused_box(unsigned char *frame)
     unsigned slot = refused[1], c = refused_core;
     char where[8] = {'T', (char)('1' + (slot & 7u)), ' ', 'F', 'X', (char)(slot < 8u ? '1' : '2'), 0};
     if (refused_machine) where[3] = 'S', where[4] = 'R', where[5] = 'C'; /* a machine's voice, not an effect slot */
-    const char *title = refused[0] == 3u ? "NO ROOM" : refused[0] == 4u ? "CPU FULL" : refused_reason == 3u ? "DSP FULL" : "DSP MEMORY FULL";
+    const char *title = refused[0] == 3u ? "NO ROOM" : refused_reason == 4u ? "CPU FULL" : refused_reason == 3u ? "DSP FULL" : "DSP MEMORY FULL";
     if (TEXT_WIDTH(FONT, -1, title) + TEXT_WIDTH(FONT, -1, where) + 6 > 82) title += 4; /* "MEMORY FULL": clear of the slot */
     label(23u, 15u, title), label((unsigned)(105 - TEXT_WIDTH(FONT, -1, where)), 15u, where);
     fill(frame, 18u, 22u, 109u, 22u, 1);
@@ -679,7 +679,7 @@ static void refused_box(unsigned char *frame)
      * MEM: the core's code words, and the effect's when its code is not on the core yet. Past 100 % is why. Only the
      * bar that refused it carries the effect: the core keeps other Parts' code loaded until it needs the room, so its
      * words plus the effect's can pass 100 % on a DSP FULL that memory never refused (owner's MKII, 20 October 2026). */
-    if (refused[0] == 4u) { /* the CPU budget: one bar, and what makes room */
+    if (refused_reason == 4u) { /* the CPU budget: one bar, and what makes room */
         const char *t = " NEEDS ";
         while (*t) *e++ = *t++;
         *e++ = '+', e = number(e, (refused[4] + 5u) / 10u), *e++ = '%', *e = 0;
@@ -713,7 +713,8 @@ static void saving_box(unsigned char *frame)
     percent(X0 + 86u, Y0 + 37u, done);
 }
 static void status_draw(unsigned char *frame);
-void modwerk_status_draw(unsigned char *frame)
+/* No jump table: it is data in .text, and the build's MCF54455 check reads its bytes as instructions. */
+__attribute__((optimize("no-jump-tables"))) void modwerk_status_draw(unsigned char *frame)
 {
     MW_STAMP(22); status_draw(frame); MW_STAMP(13);
 }
