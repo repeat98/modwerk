@@ -76,7 +76,9 @@
 // a block of the series' end can then be judged wrong either way.
 //
 // Not read to the end: on a pattern change stock clears queued events from the change on
-// (0x4009bc60, 0x4009b6e0). One cleared inside the fade leaves a dip of at most the fade.
+// (0x4009bc60, 0x4009b6e0). One cleared inside the fade leaves a dip of at most the fade, from which
+// the voice comes back at its ATK rate: a voice still in its hold (improved-amp.c) to the top, and
+// then decays if its hold has run out meanwhile.
 //
 // The clock stands still when an external master stops sending ticks. A trig queued inside the
 // window would keep its voice faded for as long, so the fades end once the clock has stood for

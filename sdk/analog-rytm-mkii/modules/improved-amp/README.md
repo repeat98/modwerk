@@ -75,11 +75,12 @@ let a long sound restart cleanly on every step.
 - FILTER ATK's rates come from `improved_amp_flt_atk` (same script, 32-bit words): a `ptr` site in
   `build.json` points stock's lea at 0x4010d2a8 (the filter attack table, read for the attack record
   and the state counter alike) at it.
-- DEC, REL and HLD: `tools/dec_table.py` builds three tables (`improved_amp_amp_dec`,
-  `improved_amp_flt_dec`, `improved_amp_hold`, 128 words each) and `ptr` sites point stock's leas at
-  them: the amp decay record (0x40109bee), the filter decay and release records (0x4010d342,
-  0x4010d3b2, 0x4010d3da) and the hold compare (0x40109bc2), whose end of the hold `improved_amp_voice`
-  overrides. Stock's tables stay where they are, unread by the OS. The AMP table is built for the VCA's
+- DEC, REL and HLD: `tools/dec_table.py` builds `improved_amp_amp_dec` and `improved_amp_flt_dec`
+  (128 words each), and `ptr` sites point stock's leas at them: the amp decay record (0x40109bee) and
+  the filter decay and release records (0x4010d342, 0x4010d3b2, 0x4010d3da). A third `ptr` site points
+  stock's hold compare (0x40109bc2) at `improved_amp_hold`, 128 words out of its counter's reach, so
+  stock never ends a timed hold: only `improved_amp_voice` does. Stock's tables stay where they are,
+  unread by the OS. The AMP table is built for the VCA's
   0.918x decay speed, the filter's for 1.00x. The same script builds `improved_amp_hold_steps`, the
   hold in steps x 225,000 (a quarter of the clock's units in a step at one pulse a step). The hold is
   counted once a block (0.67 ms), so every hold is a whole number of blocks.
@@ -159,6 +160,10 @@ the configurator offers one or the other.
   ear yet (TESTING.md).
 - A module that times a note by AMP DEC's table must read the table address the OS code holds at
   0x40109bf0, not stock's 0x401ee61c: with this module that address points at the new table.
+- A timed hold ends when the voice gets the hold's own record (a full-level ramp) and has reached the
+  top. Another module that rewrote that record's level for a holding voice, beyond a fade, would keep
+  the hold from ending; none does today, and the base's amp record hook allows it, so such a module
+  would list this one in its conflicts.
 - On stock firmware a sound saved here plays the stock way: HLD 0 = AUTO, the old curves, and ENV
   RESET's amp bit ignored.
 - Unit results: TESTING.md.

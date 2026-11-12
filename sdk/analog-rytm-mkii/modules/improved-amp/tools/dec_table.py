@@ -17,8 +17,8 @@ A word is a 20-bit coefficient (e = c[19:16], m = c[15:0]) of a one-pole segment
 >> e) - 32768, as stock's tables (0x401ee61c, 0x401ef030). The AMP table is built for the unit's
 VCA, which decays at 0.918x the OS model (EV06); the filter runs at the model's speed (EV13).
 
-HLD (AMP hold, 0 = no hold, 127 = AUTO): ticks of 2 samples, whole blocks of 16 ticks (0.667 ms),
-as the OS counts the hold:
+HLD (AMP hold, 0 = no hold, 127 = AUTO): the curve below, in ticks of 2 samples, whole blocks of 16
+ticks (0.667 ms), is the hold at 120 BPM and 1x; improved_amp_hold_steps is that in steps:
     1..15      1 block, 0.67 .. 10 ms
     16..21     2 blocks, 11.3 .. 18 ms
     22..31     5 blocks, 21.3 .. 51.3 ms

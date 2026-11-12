@@ -6,12 +6,47 @@ Improved Envelopes (symbols `envelopes_*`, now `improved_amp_*`; HLD then read i
 pre-fade" records the pre-fade's builds from before it moved into this module. The test builds' `.syx`
 files stayed on the tester's computer.
 
-## This version on a unit: IL05, IA14 and the idle load, 11 Nov 2026 (HLD in steps)
+## This version on a unit: IL06 and IA15, 12 Nov 2026 (the hold ended by the module alone)
+
+After an independent review of the source below, two changes, both in how a timed hold ends: stock's
+own hold compare (0x40109bc2), which this module points at its own table, now reads entries out of
+its counter's reach, so only the module's count of steps ends a hold; and a voice in its gate or
+hold whose record the pre-fade has taken is no longer left to the writer's skip, so its count goes
+on under a fade. Before, stock's compare, still reading a time table, ended a hold early when HLD was
+turned to AUTO late in a long hold at a slow tempo, and could end one during a fade. Fingerprint
+(as below): `{FP}`, `evidence.sourceSha256`.
+
+- **Before the unit.** A host model of stock's envelope states (read from `amp_env_commands`, OS 1.74),
+  the pre-fade's record and the writer's skip, with the source before and after: 400 random scenarios
+  (HLD, ATK, tempo, speed, note-off, HLD changes, tempo changes, chokes) end the same; the two cases
+  above now differ as intended (HLD 114 at 30 BPM turned to AUTO in the hold with the note held: the
+  decay at the note-off, not at the turn; a 10-block fade inside a 4-step hold: the hold still ends on
+  its step). rytm-emu: IA15 (this package's image, sha256 `0d7be506…3105`) against IA14, the 89 AMP
+  page frames and 23 ENV RESET frames the same bytes, the fade words the same in all 19,400 readings.
+  An independent review of the change read stock's state machine and found no path where a hold
+  never ends.
+- **On the unit.** IL06 (sha256 `8f1f4df1…f90f`, the module alone on the development base with the
+  USB test link, loaded to RAM), the cases this change can reach: the hold's lengths (`len20` 10.0,
+  20.0, 61.5, 135.0, 135.0 with a 400 ms note, 308.0, 176.5 at 90 BPM; AUTO 109.0 and 509.5), the hold
+  against track speed (135.0, 93.5 at 3/2x, 135.0), and the pre-fade before sequenced trigs (18 dips at
+  AMP and at AMP+FILT, none at OFF, FILTER or for MIDI notes): all pass. The hold-length case first
+  failed on the SCALE SETUP screen it opens: the popup's edges had not finished drawing in its
+  reference; it now compares the popup's content, and passed. Then HLD turned by CC during a note,
+  measured on the BD: a 4-step hold with no turn 500.5 ms; turned to AUTO 200 ms into a held 800 ms
+  note, 800.5 ms (the gate took over); AUTO turned to 1 step 60 ms into a 400 ms note, 138.5 ms; a
+  4-step hold turned to AUTO 250 ms after a 100 ms note, 482.0 ms. Stock moves the live HLD byte to a
+  CC's value over 100 to 230 ms (read over the link: 66 to 127 passed 112, 125 and 126 and arrived at
+  234 ms; 127 to 42 passed 51 and arrived at 99 ms), and the hold follows the byte as it moves: the
+  last two are as long as that, not as long as the turn's moment would say.
+- **Not run on the unit for this change:** the other 22 cases (the screens are the same bytes in
+  rytm-emu, the rest untouched by it), the package's own image, the idle meter.
+
+## The source before: IL05, IA14 and the idle load, 11 Nov 2026 (HLD in steps)
 
 The author's Analog Rytm MKII, OS 1.74, run hands off by the author's automated test rig, as its reports
-have it, in the evening of 11 November 2026. This source (0.1.0-experimental; fingerprint, the `sha256`
+have it, in the evening of 11 November 2026. That source (0.1.0-experimental; fingerprint, the `sha256`
 of `sha256sum build.json src/amp-write.s src/hot.h src/improved-amp.c src/ovr.s src/pre-fade.c
-src/pre-fade.s`: `bceb210f…3e33`, `evidence.sourceSha256`) differs from the one of the next section in
+src/pre-fade.s`: `bceb210f…3e33`) differs from the one of the next section in
 the hold. HLD was a fixed time, shown as steps of the tempo it was drawn at. It is now counted in steps
 of the voice's track on the musical clock, so it follows the tempo and the track's speed; 13 knob
 values sit exactly on the step grid, where FUNC + turn stops; and the knob's text is the same at every
