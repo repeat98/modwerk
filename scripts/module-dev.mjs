@@ -18,6 +18,7 @@ import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { parseArgs } from 'node:util'
 import { draftFolder, listedFolder, stageDraft } from './draft-stage.mjs'
+import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const { values, positionals: [id, ...extra] } = parseArgs({ allowPositionals: true, options: {
@@ -41,6 +42,8 @@ if (!hasDraft && !hasListed) { console.error('No module named ' + id + ' under s
 if (hasDraft && hasListed && !values.listed) { console.error('Both sdk/drafts/' + id + ' and sdk/octatrack/modules/' + id + ' exist. Give --listed to build the listed one; the draft of its next version is built once it replaces the listed folder on your branch.'); process.exit(2) }
 const draft = hasDraft && !values.listed
 const refresh = draft ? stageDraft(root, id) : () => {}
+// octabam's tools read the untracked mirror of sdk/octatrack/modules; make it current first.
+if (!draft) mirrorOctatrackModules(root)
 const source = draft ? draftFolder(root, id) : listedFolder(root, id)
 // Built packages never go in the checkout (AGENTS.md): they live beside the system's temporary files.
 const out = resolve(values.out ?? join(tmpdir(), 'modwerk-dev', id + '.mwrm'))

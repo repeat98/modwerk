@@ -43,7 +43,7 @@ const actual=await moduleSourcePaths(root)
 if(JSON.stringify(actual.sort())!==JSON.stringify(Object.keys(report.sources).sort()))throw new Error('Compiled source inventory is incomplete or stale.')
 for (const [path, fingerprint] of Object.entries(report.sources)) {
   if (!/^(modules|platform|tools|dsp|licenses)\/[A-Za-z0-9._/-]+$/.test(path) || path.split('/').some(part => part === '..' || part === '.') || !hash(fingerprint) || /\.(bin|syx|exe|dll|dylib|zip)$/i.test(path)) throw new Error('Invalid source inventory path: ' + path)
-  // octabam's modules/ is sdk/octatrack/modules here; sdk/octabam/modules is only a link to it (link-octatrack-modules.mjs).
+  // octabam's modules/ is sdk/octatrack/modules here; sdk/octabam/modules is only its untracked mirror (mirror-octatrack-modules.mjs).
   const home = path.startsWith('modules/') ? resolve(root,'sdk/octatrack') : native, source = resolve(home,path); await regular(source,home)
   if (await sourceEntryHash(root,path) !== fingerprint) throw new Error('Compiled source is stale: ' + path)
 }

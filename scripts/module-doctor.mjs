@@ -25,6 +25,7 @@ import { stageDraft } from './draft-stage.mjs'
 import { requireZdlBinary, zdlPath } from './zdl-binaries.mjs'
 import { moduleCardless } from '../src/catalog/usb-only.ts'
 import { controlProblems } from './module-controls.mjs'
+import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
 
 // Modules first listed on or after this day carry a measured performance record (docs/MODULE_PERFORMANCE.md); earlier ones keep their qualification evidence.
 const PERFORMANCE_REQUIRED_FROM = '2026-10-07'
@@ -41,6 +42,8 @@ const exists = path => existsSync(resolve(root, path))
 // A draft is checked where every gate looks: its folder is copied under sdk/octatrack/modules/ for this run and removed when the run ends,
 // so nobody copies it by hand and forgets the copy. The listing lines (catalog entry, packages) stay red for a draft.
 if (draft) stageDraft(root, ids[0])
+// octabam's tools read the untracked mirror of sdk/octatrack/modules; make it current first.
+else mirrorOctatrackModules(root)
 const catalog = json('sdk/catalog.json'), machineModules = ['digitakt', 'digitone', 'analog-rytm-mkii', 'analog-four-mkii'].flatMap(machine => exists('sdk/' + machine + '/modules') ? readdirSync(resolve(root, 'sdk', machine, 'modules'), { withFileTypes: true }).filter(entry => entry.isDirectory() && !entry.name.startsWith('_')).map(entry => ({ id: entry.name, machine, folder: 'sdk/' + machine + '/modules/' + entry.name })) : [])
 // Zoom effects (zdl) share one folder for the pedal family; each names the pedal it is developed on.
 if (exists('sdk/zoom/modules')) for (const entry of readdirSync(resolve(root, 'sdk/zoom/modules'), { withFileTypes: true })) if (entry.isDirectory() && !entry.name.startsWith('_')) {
