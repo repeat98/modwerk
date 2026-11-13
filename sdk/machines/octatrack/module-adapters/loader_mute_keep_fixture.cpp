@@ -6,7 +6,8 @@
 // Sidechain's KEY scan (mute_keep_provider_fixture.s). Hook 1 (0x40004dc6 -> pre -> 0x40004dcc)
 // and the fresh-voice bind run for every MUTE MODE, mute/solo state and KEY layout: the subscriber
 // form must do what the plain build does with no provider, and what the SC_KEY build does with one,
-// in either install order. Synthetic, never qualification: the register/stack state at the sites,
+// in either install order. On the events base ev_trig_muted (#777) must name exactly the tracks
+// whose per-track reset Mute Modes dropped in that frame. Synthetic, never qualification: the register/stack state at the sites,
 // the mute/solo/mode words, the per-track DSP records, the battery shadow and a stub that records
 // note-offs in place of stock's 0x40008f84. Local stock MAIN required; nothing is written back.
 #include <cassert>
@@ -98,7 +99,7 @@ int main(int argc, char **argv)
     auto stock = load(argv[1]);
     auto ev_code = load(argv[2]); auto ev_sym = names(argv[3]); auto old_code = load(argv[4]); auto old_sym = names(argv[5]);
     Pkt mmNew{load(argv[6]), names(argv[7])}, mmPlain{load(argv[8]), names(argv[9])}, mmKey{load(argv[10]), names(argv[11])}, keep{load(argv[12])};
-    unsigned scenarios = 0;
+    unsigned scenarios = 0, asked = 0, answered = 0; uint32_t last_trig = 0;
 
     // The frame: hook 1 from its site to its return, then every track's fresh-voice bind (and the all-tracks call).
     auto frame = [&](Probe& p, const Pkt *mm, const Frame& f) {
@@ -129,6 +130,16 @@ int main(int argc, char **argv)
             for (unsigned t = 0; t < 8; t++) ran |= (p.reset_count(t) - before[t]) << (t + 8 * (track == 8));
         }
         out.push_back(ran);
+        if (p.sym.count("modwerk_raise_ev_trig_muted")) { // the events base: ev_trig_muted's answer is the resets just dropped
+            auto t = p.run(p.sym.at("modwerk_raise_ev_trig_muted"), {}, stop, {{2, 0x22222222}, {3, 0x33333333}, {4, 0x44444444},
+                {5, 0x55555555}, {6, 0x66666666}, {7, 0x77777777}, {10, 0xaaaaaaaa}, {11, 0xbbbbbbbb}, {12, 0xcccccccc},
+                {13, 0xdddddddd}, {14, 0xeeeeeeee}});
+            CHECK(t[0] == (~ran & 0xffu));
+            CHECK(t[2] == 0x22222222 && t[3] == 0x33333333 && t[4] == 0x44444444 && t[5] == 0x55555555 && t[6] == 0x66666666);
+            CHECK(t[7] == 0x77777777 && t[10] == 0xaaaaaaaa && t[11] == 0xbbbbbbbb && t[12] == 0xcccccccc && t[13] == 0xdddddddd);
+            CHECK(t[14] == 0xeeeeeeee && t[15] == sp0 + 4);
+            last_trig = t[0]; ++asked; answered += t[0] != 0;
+        }
         ++scenarios; return out;
     };
     // KEY layouts: none; T1's FX1 and T5's FX2 COMPRESSORs keyed by T4 and T6; stock COMPRESSORs (KEY 127 and OFF);
@@ -168,9 +179,14 @@ int main(int argc, char **argv)
         auto none = frame(q, &mmNew, f);
         CHECK((with.back() & 0x28) == 0x28 && (none.back() & 0x28) == 0);
         CHECK((with[0] >> 8 & 0x28) == 0x28 && (none[0] >> 8 & 0x28) == 0); // stock's own mute bit back for the keys
+        frame(p, &mmNew, f); CHECK(last_trig == 0); frame(q, &mmNew, f); CHECK(last_trig == 0x28); // and ev_trig_muted agrees
     }
     // The raise with nothing subscribed answers 0.
     { Probe p(stock, ev_code, ev_sym, true); CHECK(p.call("modwerk_raise_ev_mute_keep") == 0); ++scenarios; }
+    // So does ev_trig_muted, with nothing or only the ev_mute_keep provider installed.
+    { Probe p(stock, ev_code, ev_sym, true); CHECK(p.call("modwerk_raise_ev_trig_muted") == 0);
+      CHECK(p.install(keep.b) == 1 && p.call("modwerk_raise_ev_trig_muted") == 0); ++scenarios; }
+    CHECK(asked > 0 && answered > 0 && answered < asked); // both answers occur: the check is not vacuous
     // GATE after an install: boot's restore ran before the module came (stock length), so the first UI tick takes
     // GATE from its battery shadow once; set_mutemode's own writes are never undone by a later tick.
     uint32_t restored[3] = {};
@@ -190,9 +206,9 @@ int main(int argc, char **argv)
     // The raw forms are refused on the events base; the subscriber form and the provider on the base without events.
     { Probe p(stock, ev_code, ev_sym, true); CHECK(p.install(mmPlain.b) == -9 && p.install(mmKey.b) == -9); }
     { Probe p(stock, old_code, old_sym, false); CHECK(p.install(mmNew.b) < 0 && p.install(keep.b) < 0); }
-    std::printf("{\"scenarios\":%u,\"checks\":%u,\"failures\":%u,\"gateRestore\":[%u,%u,%u],\"rawOnEventBase\":\"RUNTIME_EVENT\","
+    std::printf("{\"scenarios\":%u,\"checks\":%u,\"failures\":%u,\"trigMuted\":[%u,%u],\"gateRestore\":[%u,%u,%u],\"rawOnEventBase\":\"RUNTIME_EVENT\","
                 "\"synthetic\":[\"site registers and stack\",\"mute/solo/mode words\",\"per-track DSP records\",\"battery shadow\","
                 "\"note-off stub at 0x40008f84\",\"provider is the proposed Sidechain handler, not a Sidechain package\"],"
-                "\"emulator\":true,\"hardware\":false}\n", scenarios, checks, failures, restored[0], restored[1], restored[2]);
+                "\"emulator\":true,\"hardware\":false}\n", scenarios, checks, failures, asked, answered, restored[0], restored[1], restored[2]);
     return failures ? 1 : 0;
 }

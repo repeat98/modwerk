@@ -4,7 +4,7 @@
 
 Choose a stock cut, FX tails, trig suppression or amp-envelope completion for muted and soloed-out audio tracks.
 
-Version `0.2.2-experimental`. Select it in the Modwerk configurator. The author ran this version's card image on his MKI (TESTING.md); credited historical reports remain available there.
+Version `0.2.3-experimental`. In OTFX-T and DT-T it also tells machines that start their own notes, such as FM Synth, which trigs it drops (`ev_trig_muted`). The author ran 0.2.2's card image on an MKI (TESTING.md); credited historical reports remain available there.
 
 ## Controls
 

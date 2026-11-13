@@ -116,6 +116,7 @@ next base build, which renames them; the base loads them by those paths.
 | `ot_sequencer_rows` | synth | `mw_sequencer_rows` | 40 | SCALE, ROOT, GLIDE rows of FM's bundled quantizer | sdk/octabam/modules/synth/upstream/quantizer/quantizer.s (FM's bundled copy, fm_ units) qz_lbl_*, qz_get*, qz_set* |
 | `ot_sequencer_rows` | quantizer | `mw_sequencer_rows` | 50 | SCALE, ROOT, GLIDE rows | sdk/octabam/modules/quantizer/upstream/quantizer/quantizer.s qz_lbl_*, qz_get*, qz_set* |
 | `ev_tail_kill` | bbd | `bbd_tail_kill` | 50 | while the kill holds a track whose FX2 is BBD (id 0x0e), zeroes its slot 11 (+53): BBD plays the input exactly and clears its line until the track's next trig | sdk/octabam/modules/bbd/stopkill.s bbd_kill_hook (the card build's detour at the same site); on the owner's MKII 15 Oct 2026 (dev twin e429b787): slot 11 0 while held, 127 after T1's next trig, the tail cut to -132 dBFS |
+| `ev_trig_muted` | mute-modes | `mm_trig_muted` | 50 | in OTFX-T and DT-T, the muted or soloed-out tracks whose reset its ev_voice_bind handler drops now (a SIDE-CHAIN key track keeps its trigs); 0 in OT and OTFX | sdk/octabam/modules/mute-modes/patch_softmute.s mm_trig_muted, which asks mm_voice_bind for each track; sdk/tests/test_mute_modes_runtime.py checks the answer against the resets dropped in every frame |
 
 ## Reviewed raisers
 
@@ -158,7 +159,7 @@ A raised hook has no stock site: these modules call the base's entry and act on 
 - `ev_midi_note_key`: No module subscribes yet. Upstream octabam's MIDI Scales (radiohagen, MIT) patches this site for its extra modes; a Modwerk port, or a module that locks KEY per step, takes it here instead.
 - `ev_arp_setup_knob`: No module subscribes yet. A module that locks KEY per step claims only encoder 5 while a trig is held, and leaves every other turn to stock. Upstream octabam's MIDI Scales patches KEY's branch here (0x4007a3e2) for its extra modes; a port would take this event instead.
 - `ev_arp_setup_text`: No module subscribes yet. A module that shows a held trig's KEY lock claims slot 5 only while a trig is held, and leaves every other draw to stock. Upstream octabam's MIDI Scales replaces KEY's text function (0x400d40c6) for its extra modes; a port would take this event instead.
-- `ev_trig_muted`: The answer is an OR: no handler can let another's dropped trigs through. No module answers or asks it yet (issue #777): Mute Modes' answer is the test its ev_voice_bind handler makes for each track (fresh_bind, with KEYMASK), and FM Synth, which starts its note in its renderer before stock reaches ev_voice_bind, is the first machine to ask.
+- `ev_trig_muted`: The answer is an OR: no handler can let another's dropped trigs through. Mute Modes (0.2.3) answers with its own ev_voice_bind handler, asked for each track, so the two cannot disagree (issue #777); FM Synth, which starts its note in its renderer before stock reaches ev_voice_bind, is the first machine to ask.
 - `ot_sample_editor_actions`: The beta base carries the service (--sample-editor). No released module contributes yet; Beat Slicer's CREATE BEAT GRID is the first.
 - `ot_machine_starts`: Separate versioned extension preserves the machine ABI; disjoint handler selection retains the legacy pointer and leaves Mute Modes in control of trig dispatch.
 
