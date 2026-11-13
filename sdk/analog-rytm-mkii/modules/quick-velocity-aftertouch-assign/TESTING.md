@@ -1,4 +1,4 @@
-# Quick Velocity+Aftertouch Assign testing
+# Quick Mod Assign testing
 
 The rytm-emu runs below were observed on the named build; the emulator is not hardware evidence. The unit results are the author's reports, labelled as reported.
 
@@ -63,6 +63,19 @@ Fixed velocity read from stock's flag every 100M instructions; screens compared 
 | FILTER page, FIX held, FX track selected, FDB turned | FDB does not move | FDB edits as without FIX |
 | Faults | 0 | 0 |
 
+## rytm-emu (0.2.0, LFO assign; QL02 to QL05 and QM20)
+
+| Check | Result |
+| --- | --- |
+| FLTR, LFO held, FRQ turned | FRQ boxed at 0 (DST FRQ, DEP 0); further turns move the box; the page stays on release |
+| DEP through the hold against stock's DEP knob, same raw turns | equal: +1.96 and -1.96 |
+| Fast turns, another knob, the destination's knob pressed | +127; DST moves to the new knob at 0; DEP back to 0 |
+| LFO held on the LFO page, WAV turned three steps | NOT AN LFO TARGET, WAV unmoved (until QL13; from QL14 the LFO page's key is stock's: the hold shows the values and WAV moves, as on stock, on a sound's and on the FX track's LFO page, QL16) |
+| Plain LFO tap with Loop Sync: SMPL, LFO tap, FUNC + knob A | stock's SPD step (before the replay through `core_key`: Loop Sync's box) |
+| Plain LFO taps with LFO RND | the second tap reaches LFO RND's page, the third returns |
+| FX track, LFO held, TIM turned | TIM becomes the FX LFO's destination |
+| FIX + FRQ, FUNC + LFO, FLTR then LFO tap then a turn | as 0.1 / as stock |
+
 ## Hardware
 
 **RC17 (QM06 inside), reported by the author, 3 Nov 2026:**
@@ -88,7 +101,26 @@ Fixed velocity read from stock's flag every 100M instructions; screens compared 
 - FILTER page, FIX held, FX track selected: FDB edits, no boxes shown.
 - FILTER page FIX links, AMP page SAMPLER links and the recorder tap, the FIX key and FUNC + FIX, VELOCITY MODS FULL, kit save and power cycle, as before.
 
-The source-only package itself has not run on a unit. Steps for a unit run of it, alone or in a combined image:
+**0.2.0 LFO assign, run by the test rig on the author's unit (not by a person), 10 Nov 2026.** Build QL02: this branch's 0.2.0 code with Loop Sync 0.3.2, RAM-booted over the flashed OS, scratch project. Six screen cases, each also run on QS02 (the same set without this mod):
+
+| Case | QL02 (with the mod) | QS02 (stock) |
+| --- | --- | --- |
+| LFO held, FRQ turned on the FILTER page: FRQ boxed at 0, the page stays, LFO page shows DST FRQ | pass | fails, as it should |
+| Further turns set DEP as the same turns of stock's DEP knob: +1.96 and -1.96 both ways | pass | fails, as it should |
+| Fast turn to +127, another knob takes the LFO at 0, a knob press sets DEP to 0; FRQ and RES themselves unmoved | pass | fails, as it should |
+| LFO held on the LFO page, WAV turned: NOT AN LFO TARGET, WAV unmoved (replaced from QL14 by qma-lfo-on-lfo-page: the hold is stock's, WAV moves, the same screens as on QS02) | pass | fails (WAV moves) |
+| FIX held, FRQ turned: velocity link +21, FRQ unmoved; a knob press sets it to 0 | pass | fails, as it should |
+| Plain LFO taps (FILTER, LFO, SAMPLE pages), then FUNC + knob A steps SPD (Loop Sync saw the replayed tap) | pass | pass (same screens) |
+
+Not covered by the rig: how the LFO sounds, pads, the FX track's LFO, kit save and reload, a power cycle. Seen in the run: during the hold the box rounds DEP down (+1.93 shows +1, -1.93 shows -2).
+
+**0.2.0 on the author's unit, by hand, reported by the author, 10 Nov 2026 (QL05 from RAM, before the depth box showed hundredths and before the DEST wording):** pass: the LFO moves the filter after LFO + FRQ and the LFO page shows DST FRQ and the depth; LFO + TUN and LFO + DEC take the LFO at depth 0, more turns set the depth, a knob press sets it to 0; on the FX track LFO + a delay or reverb knob takes the FX LFO; an LFO tap opens the LFO page on the release and FUNC + LFO is stock's. Not tried yet: pads with velocity and aftertouch links, PERF and SCNE pad locks during an LFO hold. Asked for: the depth in the box at the LFO page's resolution (it showed whole numbers), DEST rather than TARGET in the popups (both in 5fd99549d).
+
+**0.2.0 final (depth box and DEST), the test rig on the author's unit (not by a person), 11 Nov 2026.** QL10 (the depth box at the LFO page's resolution on label knobs, DEST popups, the review fixes) and QL13 (this source: the box also on widget knobs, one width, (0) at depth 0), each with Loop Sync 0.3.2, RAM-booted over the flashed OS, scratch project. The same six cases as above: on each build run 1 differed only on the screens changed on purpose (the depth boxes, the DEST popup; on QL10 also the SAMPLE page's TUN dial, turned by another session, so that case now checks the page by its labels), `--record` 6 pass, plain 6 pass. QL10 came back armed from a project saved under another storage layout: the development base's arm at boot.
+
+**0.2.0 final, by hand, reported by the author, 11 Nov 2026:** on QL10, FIX and SAMPLER links and aftertouch work as before; PERF mode with LFO held and a knob turned assigns the LFO; while a scene or performance lock is being set (its pad held) the LFO key is stock's and a tap opens the LFO page, as intended. The depth box missed knobs drawn as widgets (OVR, DEL, REV, PAN, VOL: whole numbers), fixed in QL12, which looked good apart from the box widening with the digits, fixed in QL13. On QL13: the one-width box is good; with LFO held, a PERF pad held makes performance locks (stock's), and LFO assigns again once the pad is let go.
+
+**0.2.0 package on the author's unit, by hand, reported by the author, 11 Nov 2026 (asked for in review).** The package's own image on the plain base 1c14b6b0 beside LFO RND 1.2.0, both from their pinned packages, flashed (not RAM-booted). QP01 (`d32502dc…`, the package before the LFO page was left to stock): FIX on FILTER shows FRQ and RES at 0, a turn counts FRQ's box up while FRQ's stored value stays; SAMPLER + DEC, pad pressure changes the decay; LFO + FRQ shows the depth in hundredths, (0) at 0, the page stays on FILTER; LFO taps go LFO page, LFO RND's page, LFO page; FIX key as before; kit saved and power cycled, the velocity, aftertouch and LFO links kept. All pass. Asked for: the LFO key stock's on the LFO page, so holding it shows the page's values. QP02 (`dd4a9e66…`, this package, `26c6dce9…`): holding LFO on the LFO page shows the values; two taps from there go to LFO RND's page and back; LFO + FRQ on FILTER, depth in hundredths, the page stays; FIX and SAMPLER assign as before; power cycle, the destinations kept. All pass. (LFO RND's DS1 and DS2 showed an error on the scratch project: LFO RND's own page, not this mod.) QP03 (`07e4454d…`, this package after the review fixes, `301a4618…`): on the FX track's LFO page holding LFO shows the values and LFO + a knob on the FX track's pages assigns the FX LFO; on a sound's LFO page with PERF opened over it, LFO held is the module's (NOT AN LFO DEST on the LFO page's knobs), and LFO assigns while a performance is being edited; LFO + FRQ on FILTER assigns; two taps reach LFO RND's page. All pass. Steps for a unit run of it, alone or in a combined image:
 
 1. FILTER page, hold FIX: FRQ and RES shown as `0` boxes, nothing in the corner. Turn FRQ: its box counts up, FRQ itself does not move. Soft and hard pad hits differ. SOUND SETTINGS, VELOCITY MOD shows FILT FRQ.
 2. AMP page, hold SAMPLER, turn DEC: pad pressure changes the decay. Tap SAMPLER alone: the recorder opens; hold it with a turn: it does not.

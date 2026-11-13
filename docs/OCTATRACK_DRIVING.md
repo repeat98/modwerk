@@ -4,8 +4,14 @@ How to work a real Octatrack MKII running a Modwerk development base (`build_cor
 USB: start the link, send steps, read the unit, change things without harming the owner's project, and keep
 runs short. The flashed beta base refuses these steps; a twin of it is `build_core.py` with the flags that
 `scripts/octatrack-base.mjs` passes for `--beta`, without the controller rows, plus `--dev` and an `--output` outside Git,
-then `npm run device -- boot` that folder. The rows are left out because Analog BD's reviewed recipe refuses a twin's
-layout, so test the base-bound modules (Analog BD, Sidechain, Output Matrix) on the tester image instead. Everything here was done on the owner's MKII on 11 October 2026. Why things fail is in
+then `npm run device -- boot` that folder. Without the controller rows the twin trusts no base-bound module (Analog BD,
+Sidechain, Output Matrix). To test one on a twin, build it as `octatrack-base.mjs` does, plus `--dev`: the empty-row pass,
+`base_bound.py rows` against its `symbols.json`, then the build with `--controller-policies` and `--controller-layout`.
+Analog BD's reviewed recipe refuses the twin's layout, so capture a twin-only one (`build.py --octabam-machine
+analog-bassdrum --base-symbols … --capture-stock-recipe`), swap it into `machine-recipes.json` for those two steps and put
+the committed file back (13 November 2026, MKII, twin `80f62ad6`). Boot with the one-shot `npm run device -- boot DIR
+--chunk 4096`: the same day a boot sent through `serve` left the unit running but gone from USB until a power cycle, and
+the same image booted one-shot came back. Everything else here was done on the owner's MKII on 11 October 2026. Why things fail is in
 [OCTATRACK_HARDWARE_TRAPS.md](OCTATRACK_HARDWARE_TRAPS.md).
 
 ## The rules
@@ -137,17 +143,19 @@ error and moves on. macOS `nc -U` hangs up before the reply, so use the script.
 | (any sequence) | answers within 20 s beyond its own `w` waits, else an error, and the next request runs |
 | `png:/path.png` | a screenshot, 256 x 128: cheaper to read than the text rendering |
 | `screen` | the screen as block characters (thousands of tokens; avoid) |
-| `crash` | the last crash record (vector, PC, registers); `crashtest` makes one |
+| `crash` | the last crash record (vector, PC, registers); `crashtest` makes one. The PC and the stack read as names (`mw_frame_exit+0x2c`) when the running base was built with `octatrack:base -- --out` or started with `boot DIR` on this computer; your own names for stock addresses go in `~/.cache/modwerk-local/octatrack/addresses.json` (`{"0x…": "name"}`), never in Git. `diaglog` and `diagnostics:pull` name them the same way |
 | `selftest` | PROJ > MODWERK > SELF TEST over USB: start it (transport stopped), wait, print the verdict, the modules that ran and the CPU and core peaks |
+| `saved` | the card set's result code, modules saved and live, read without a test: 1 restored at this start, 7 saved since. Not its generation, which no request reports. To try a set from the card, `node scripts/octatrack-card-set.mjs --out DIR ID…` writes `MODWERK0.SET` for the published base; the owner copies it and power-cycles (restored so on the MKII, released base `d891acb3`, 11 November 2026) |
 | `dspmap`, `dspmap:watch:N` | each core's DSP code arena drawn as 64 cells, a letter per placed block and `.` per free words, then each block's name, start, words and the slots running it (else `preloaded`: code another Part of the bank names). `watch:N` redraws it for N seconds (at most 15) whenever a block comes, goes or moves, so compaction shows: on 24 October 2026 removing a Mini Verb between SPRING REV and DARK REV left a 538-word hole and DARK REV moved down into it 2.1 s later |
 | `profile`, `profile:N` | the base's tick profile (`modwerk_cost`, diag.h): each UI tick hook's µs a tick over N seconds (3, at most 15) and the frame transfer's µs a frame. It reads the address from the build `boot DIR` last started (`~/.cache/modwerk-octatrack/last-boot`) and refuses when another base runs. On 24 October 2026 it showed the controller tick at 814 µs with 26 modules installed, 212 µs after the fix in #880 |
 | `selftest:trace` | the same, printing each half second's phase, progress, the CPU the test recorded and the meter's latest window beside it: what a CPU or core peak came from |
-| `stall` | the last DSP stall record: why, the loader's whole report, each core's last packet header, the live FX ids, as they stood when the stall was seen (it survives the power cycle); `stalltest` writes one now |
+| `stall` | the last DSP stall record: why, the loader's whole report, each core's last packet header, the live FX ids, as they stood when the stall was seen (it survives the power cycle), then the 128 frames before it (46 ms): each frame's gap to the one before (363 µs on time) and how long the frame interrupt before it ran. A long gap after a long run is the frame interrupt's own work, after a short one something else held it off; `stalltest` writes one now |
 | `guard`, `guard:MILLE` | the frame guard since the last read: the frame interrupt's longest frame, latest start and share of the CPU, the machine renders it skipped and on which tracks, and its share; `guard:MILLE` sets the share (per mille of a frame, `guard:65535` turns it off) |
-| `try FILE`, `remove FILE` | install or remove a module package, accepted and kept at once: each one writes the card's set, so on a twin they replace the owner's kept modules (25 October 2026). For a trial that rolls back by itself, use `npm run device -- try FILE --seconds N --socket /tmp/modwerk-share.sock` |
+| `try FILE`, `remove FILE` | install or remove a module package, accepted and kept at once: each one writes the card's set, so on a twin they replace the owner's kept modules (25 October 2026). For a trial that rolls back by itself, use `npm run device -- try FILE --seconds N --socket /tmp/modwerk-share.sock`; `npm run device:test` drives a package through such a trial ([the same run without a Keep](ADD_A_MODULE.md#octatrack-base-and-usb-lifecycle)). The `value` it prints each second is shared by every installed module's tick ([API](OCTATRACK_API.md#core-entry-points)) |
+| `cpu`, `cpu:PERCENT` | the CPU budget: its allowance, what the Part's machines book and the tracks refused; then each machine track's longest render since the last read, both passes of a frame, in percent of a frame: what a machine's CPU price is set from. `cpu:PERCENT` sets the allowance |
 | one-shot `npm run device -- lifecycle` | not a read-out: the single-slot loader test. It stages and accepts test modules, and on a base with module sets it stops at "removal empties the slot" and leaves an unnamed module 0 kept on the card, which a power cycle keeps (26 October 2026, MKII, flashed `92a13ff0`). `npm run device -- remove --seconds 3 --accept` takes it out. For the module list: `npm run device -- do inventory` |
 | `flash DIR` | after `boot DIR`: that base writes its own container (`DIR/NOT_FLASH_CANDIDATE.bin` deciphered) to NOR with stock's routines, verifies it and restarts on it; refuses any other base's. Not yet run on a unit; the owner's call ([traps](OCTATRACK_HARDWARE_TRAPS.md#writing-nor-over-usb)) |
-| `boot DIR`, `boot DIR 4096` | RAM boot a `build_core.py` output; the session restarts on the new base. From the flashed `usbtest9` on macOS add 4096 (bytes a frame): it times out on the default 4,095-byte frames ([traps](OCTATRACK_HARDWARE_TRAPS.md#usb-and-ep0)) |
+| `boot DIR`, `boot DIR 4096` | RAM boot a `build_core.py` output; the session restarts on the new base. `node scripts/octatrack-bootsoak.mjs DIR --socket PATH` repeats it in batches of 15 (about four minutes), logs each boot and stops at the first that does not come back: how often a restart loses USB is known from 20 boots only, which still allows one in seven. From the flashed `usbtest9` on macOS add 4096 (bytes a frame): it times out on the default 4,095-byte frames ([traps](OCTATRACK_HARDWARE_TRAPS.md#usb-and-ep0)) |
 
 STATE's `recording` bit reports sampler recorders. Check live-sequencer recording
 separately when qualifying an edit's recording refusal; that bit alone does not
@@ -207,7 +215,7 @@ and stock modifier release, and stop on a mismatch.
 | effect ids and chooser rows | FX1_IDS `0x400d5f58`, FX2_IDS `0x400d5fdc` (id -> descriptor, name at +9), FX1_ID2POS `0x400d60d0`, ID2POS `0x400d6150` (id -> row) |
 | chooser cursor | FX1 `0x460d5c94`, FX2 `0x460d5ca8` |
 | input layers (menus, windows) | list at `0x460d165c`: two entries with no menu open |
-| crash record, stall record | `0x100ff800`, `0x100ff900` (battery RAM) |
+| crash record, stall record, the frames before the stall | `0x100ff800`, `0x100ff900`, `0x100ffb30` (battery RAM) |
 
 To compare a Part's working and saved copies: `mem:` both addresses with length 6322 and compare the output.
 
@@ -222,7 +230,7 @@ To compare a Part's working and saved copies: `mem:` both addresses with length 
   inventory` lists what is installed (a contributor's MKII, beta bases `38a0bde1…` and `99336d35…`, 15 October 2026).
 - Before a test: `ui`, the bank and Part bytes, the Part's working-equals-saved check. After: restore and
   read them again.
-- Long runs (`npm run device:qualify`, benchmarks) in the background with a progress log; look at the
+- Long runs (`npm run device:test`, `npm run device:qualify`, benchmarks) in the background with a progress log; look at the
   log instead of waiting.
 - If the screen does not change for a minute, the run is stuck: kill it, restart the session, read `ui`.
 - Audio: `~/.cache/modwerk-octatrack/tools/rec SECONDS OUT.wav Octatrack` records MAIN and CUE over USB

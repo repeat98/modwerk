@@ -4,18 +4,18 @@ import { readFile } from 'node:fs/promises'
 import { cpSync, mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { createHash } from 'node:crypto'
-import source from '../../sdk/octabam/modules/synth/octamod.module.json'
-import template from '../../sdk/octabam/modules/synth/qualification.example.json'
-import capture from '../../sdk/octabam/modules/synth/media/capture.json'
+import source from '../../sdk/octatrack/modules/synth/octamod.module.json'
+import template from '../../sdk/octatrack/modules/synth/qualification.example.json'
+import capture from '../../sdk/octatrack/modules/synth/media/capture.json'
 import baseline from '../../sdk/approvals/module-qualification-baseline.json'
 import approval from '../../sdk/approvals/synth-build-approval.json'
-import regressions from '../../sdk/octabam/modules/synth/evidence/regressions.json'
+import regressions from '../../sdk/octatrack/modules/synth/evidence/regressions.json'
 import { parseModuleDocument, requireModuleUiForPublication, requireModuleQualificationForPublication } from './module-contract'
 import { moduleNativeSourceSha256, parseQualificationBaseline, requireFolderQualification } from '../../scripts/module-qualification.mjs'
 import { requireCompleteReadme, requireMonochromePng } from '../../scripts/module-documentation.mjs'
 import { MODULES, resolveSelection } from './modules'
 
-const folder = resolve('sdk/octabam/modules/synth')
+const folder = resolve('sdk/octatrack/modules/synth')
 
 describe('FM Synth exact experimental release', () => {
   it('publishes only the exact owner-approved experimental release and keeps unknown measurements visible', async () => {

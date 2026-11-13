@@ -4,7 +4,7 @@ Applies to every module that does something in time: rhythms, gates, envelopes, 
 
 **The rule.** Never build a second clock. Follow the Octatrack's transport, tempo, track speed, track scale and length, swing and trig masks, read from the sequencer's own records. A module that keeps its own timing drifts against the pattern, ignores the swing the musician set and breaks when the tempo or a track speed changes.
 
-[Euclid](../../sdk/octabam/modules/euclid/README.md) is the worked example. It "follows the Octatrack transport, track speed and swing grid".
+[Euclid](../../sdk/octatrack/modules/euclid/README.md) is the worked example. It "follows the Octatrack transport, track speed and swing grid".
 
 ## What to follow
 

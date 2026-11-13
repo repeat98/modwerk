@@ -7,6 +7,8 @@ import { OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { UploadUnconfirmedError } from '../engine/elekloader/upload-session'
 import { BaseInstallDialog } from './BaseInstallDialog'
 import { layoutIdentity } from '../engine/elekloader/base-variants'
+import { USB_AUDIO_MODULE } from '../config/usb-audio'
+import type { InventoryTarget } from '../config/inventory'
 
 let root: Root, container: HTMLDivElement
 beforeEach(() => {
@@ -23,15 +25,15 @@ const buttonNamed = (text: string) => [...container.querySelectorAll('button')].
 const settle = () => act(() => new Promise(resolve => setTimeout(resolve, 0)))
 
 describe('the base dialog for a unit on an older base', () => {
-  async function older(updatesBase: boolean, slots?: Uint8Array) {
+  async function older(updatesBase: boolean, slots?: Uint8Array, extra: { base?: string; set?: InventoryTarget } = {}) {
     const unit = fakeUnit(), link = new OctatrackLink(unit.usb, fakeSession(unit), 300)
-    unit.base = 'cc'.repeat(32); unit.updatesBase = updatesBase; unit.slots = slots
+    unit.base = extra.base ?? 'cc'.repeat(32); unit.updatesBase = updatesBase; unit.slots = slots
     link.start(); await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
     const expected = 'ab'.repeat(32), bin = new Uint8Array([1, 2, 3, 4])
     const update = vi.spyOn(link, 'updateBase').mockImplementation(async (_bin, _base, report) => { report?.('staging', 0.5); report?.('done') })
     const onReady = vi.fn(), buildBase = vi.fn(async () => ({ buffer: bin.buffer, sha256: 'x', base: expected }))
-    await act(() => root.render(createElement(BaseInstallDialog, { link, firmwareReady: true, onChooseFirmware: () => {}, buildBase, onClose: () => {}, onReady })))
-    return { unit, link, update, onReady, expected, bin }
+    await act(() => root.render(createElement(BaseInstallDialog, { link, set: extra.set, firmwareReady: true, onChooseFirmware: () => {}, buildBase, onClose: () => {}, onReady })))
+    return { unit, link, update, onReady, expected, bin, buildBase }
   }
   it('updates over USB when the base can write itself: build, then the link’s trial and write, then the set', async () => {
     const { update, onReady, expected, bin } = await older(true)
@@ -44,7 +46,7 @@ describe('the base dialog for a unit on an older base', () => {
     click(button); await settle(); await settle()
     expect(update).toHaveBeenCalledTimes(1)
     expect(update.mock.calls[0][0]).toEqual(bin); expect(update.mock.calls[0][1]).toBe(expected)
-    expect(container.textContent).toContain('Done. Your Octatrack runs the new base.')
+    expect(container.textContent).toContain('Done. The new base is saved')
     expect(onReady).not.toHaveBeenCalled()
     click(buttonNamed('Continue')!)
     expect(onReady).toHaveBeenCalledTimes(1)
@@ -66,22 +68,33 @@ describe('the base dialog for a unit on an older base', () => {
       report?.('done')
     })
     click(container.querySelector('.risk-accept input')!); click(buttonNamed('Update over USB')!)
-    await vi.waitFor(() => expect(container.textContent).toContain('Saving the new base'))
+    await vi.waitFor(() => expect(container.textContent).toContain('Sending the base once more'))
     expect(container.querySelector('h2')!.textContent).toContain('Update the Modwerk base')
-    expect(container.querySelector('.base-install-intro code')!.textContent).toBe('cc'.repeat(4))
     expect(container.querySelector('.base-update-plan .is-active strong')!.textContent).toBe('Save')
     expect(container.querySelectorAll('.base-update-plan .is-complete')).toHaveLength(2)
     expect(container.querySelector('[role="status"]')).toBe(status)
-    expect(status.className).toBe('base-install-warning')
-    expect(status.textContent).not.toContain('%') // the progress bar carries the value; the status changes only with the step
-    expect(container.querySelector('.base-update-plan progress')).not.toBeNull()
-    expect([...container.querySelectorAll('.base-update-plan .is-complete .sr-only')].map(item => item.textContent)).toEqual([' (done)', ' (done)'])
+    expect(status.textContent).toContain('Nothing is saved yet')
+    expect(status.textContent).not.toContain('%') // the bar carries the value; the status changes only with the step
+    // Hands off, for as long as it runs: after its restart the unit looks ready while nothing is saved.
+    const handsOff = container.querySelector('.base-update-hands-off')!
+    expect(handsOff.getAttribute('role')).toBe('alert')
+    expect(handsOff.textContent).toContain('Hands off your Octatrack')
+    expect(handsOff.textContent).toContain('can look ready before the base is saved')
+    // One bar for the whole update, always there while it runs: halfway through the second send is two thirds.
+    const bar = container.querySelector('.base-update-overall [role="progressbar"]')!
+    expect(bar.getAttribute('aria-valuenow')).toBe('67')
+    expect(bar.className).toContain('is-busy')
+    expect(container.querySelector('.base-update-overall .progress-value')!.textContent).toBe('67%')
+    expect(container.querySelector('progress')).toBeNull() // the browser's own bar was too faint to see
+    expect([...container.querySelectorAll('.base-update-plan .is-complete strong .sr-only')].map(item => item.textContent)).toEqual([' (done)', ' (done)'])
     expect(container.querySelector('.base-install-recovery')).toBeNull() // the before-start notes give way to the progress
     expect(container.querySelector('.base-install-close')).toBeNull()
     expect(buttonNamed('Continue')).toBeUndefined()
     await act(async () => resume()); await settle()
-    expect(container.textContent).toContain('Done. Your Octatrack runs the new base.')
+    expect(container.textContent).toContain('Done. The new base is saved')
     expect(container.querySelectorAll('.base-update-plan .is-complete')).toHaveLength(3)
+    expect(container.querySelector('.base-update-overall [role="progressbar"]')!.getAttribute('aria-valuenow')).toBe('100')
+    expect(container.querySelector('.base-update-hands-off')).toBeNull()
     expect(buttonNamed('Continue')).toBeDefined()
   })
   // A base writing another base's container quiesces stock, and a stall then hung units (30 October 2026): on two slots
@@ -121,6 +134,35 @@ describe('the base dialog for a unit on an older base', () => {
       expect(buttonNamed('Update over USB')).toBeUndefined(); expect(buttonNamed('Reload page')).toBeDefined()
       expect(update).not.toHaveBeenCalled()
     } finally { script.remove() }
+  })
+  // The previous base's default (500cdb6f…) ran USB Audio in tracks-main-cue; its `off` variant ran none.
+  const previousDefault = '500cdb6fd81bfc9c2b18737e7487f3ec2264c1c00c5ebef833e7f751e325d1b7', previousOff = '05b7f09031bc3892626e7c2576810386faeb01bd3a3101353a56c56c96d82a4a'
+  const audioOff = 'USB Audio is off in this base by default. To keep using it, add the USB Audio module to your module set first; the update then installs your layout.'
+  const runUpdate = async () => { click(container.querySelector('.risk-accept input')!); click(buttonNamed('Update over USB')!); await settle(); await settle() }
+  it('keeps the USB Audio layout the set asks for, in one update, and says nothing about USB Audio going off', async () => {
+    const set = { name: 'Live', moduleIds: ['everb', USB_AUDIO_MODULE], usbAudio: { layout: 'main' as const } }
+    const { buildBase, update } = await older(true, undefined, { base: previousDefault, set })
+    expect(container.textContent).toContain('with USB Audio · Main')
+    expect(container.textContent).not.toContain(audioOff)
+    await runUpdate()
+    expect(buildBase.mock.calls).toEqual([['main']]); expect(update).toHaveBeenCalledTimes(1)
+  })
+  it('installs USB Audio off for a set without the USB Audio module, and says so first when the old base had USB Audio', async () => {
+    const { buildBase } = await older(true, undefined, { base: previousDefault, set: { name: 'Live', moduleIds: ['everb'] } })
+    expect(container.querySelector('.base-update-checklist li:last-child')?.textContent).toBe(audioOff) // one line of the short list before the start
+    await runUpdate()
+    expect(buildBase.mock.calls).toEqual([[undefined]]) // session.ts builds MEMBER_LAYOUT: USB Audio off
+  })
+  it('says the same from an older base the site can’t tell', async () => {
+    await older(true)
+    expect(container.textContent).toContain(audioOff)
+  })
+  it('says nothing about USB Audio from the previous base’s USB-Audio-off variant', async () => {
+    const { buildBase } = await older(true, undefined, { base: previousOff })
+    expect(container.textContent).toContain('A new Modwerk base is out')
+    expect(container.textContent).not.toContain(audioOff)
+    await runUpdate()
+    expect(buildBase.mock.calls).toEqual([[undefined]])
   })
 })
 

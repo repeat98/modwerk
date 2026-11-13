@@ -1,0 +1,75 @@
+{
+  "schemaVersion": 1,
+  "module": "digitakt/live-looper",
+  "moduleVersion": "0.1.0-experimental",
+  "sourceSha256": "069d58363aa64d5b7bd7dfab8d37252948847d84d6b7619c7b0b22f4ebd4dc6d",
+  "date": "2026-11-12",
+  "tester": "draadpiraat (run by Claude Code)",
+  "emulator": {
+    "name": "digiemu",
+    "revision": "c1b5735835923e328f8b4950d6ba927875e5b669",
+    "unicornLibrarySha256": "ec37f2a15f263c085eec8a2016d60f8006d77a3bd53dd28998f1145635050c47",
+    "hle": false
+  },
+  "build": {
+    "release": "1.54",
+    "modules": [
+      "core 2.1",
+      "machine-pages 1.2",
+      "live-looper 0.1.0-experimental"
+    ],
+    "linker": "Modwerk engine linkMods (scripts/link-image.mjs), no other mods",
+    "imageSha256": "8eb45a154c0e355813e1db5b657700d798e9d6a07b0f7b653a8b043ad5fadc6b",
+    "note": "LL02 (LL01 39a045c7… with the fixes from the LL01 hardware run)"
+  },
+  "checks": [
+    {
+      "name": "machine list",
+      "result": "passed",
+      "detail": "LOOPER appears after SLICE in FUNC + SRC; YES twice puts machine 122 on track 2 (core_track_machine reads 0x7a)."
+    },
+    {
+      "name": "page 2",
+      "result": "passed",
+      "detail": "SRC on the looper's SRC page goes to page 2 through the stock page switch (page kind 4 to 5) and back; held 0.7 s it doesn't switch and every page 2 value replaces its name; knobs turn through the stock knob routines; turning LEN shows 'Loop Length=32' in the header and 32 under the knob for about 4 s."
+    },
+    {
+      "name": "ONCE capture",
+      "result": "passed",
+      "detail": "LL01: Audio on, demo pattern playing: UP on the SRC page arms (stage 1), the next loop records (stage 2) and is handed over and locked after 64 steps (ram_locked 1, 470,208 samples)."
+    },
+    {
+      "name": "audio-block load",
+      "result": "measured",
+      "detail": "3,000 blocks, instruction-timing model at 250 MHz: core and Machine Pages alone 60.3% mean / 62.0% worst; with Live Looper idle 61.2% / 62.9%; CAPT + PICK loop, GLOB ALL 64.1% / 65.6%; CAPT + WARP 65.6% / 67.2% (LL02)."
+    },
+    {
+      "name": "shared memory",
+      "result": "measured",
+      "detail": "14,632 bytes of the 128 KiB shared mod area (ramSpare 125,076 without the module, 110,444 with it)."
+    },
+    {
+      "name": "arm while stopped",
+      "result": "passed",
+      "detail": "ONCE + PICK, LEN PT.LEN with the pattern's M.LEN set to 16: UP arms while stopped (stage 1); STOP pressed while stopped calls it off (stage 0); armed again, PLAY starts the take at once (stage 2), kept and locked at the end of the first loop (116,448 samples, the grid ending it 1,103 samples short of the 117,551 counted, as the sequencer's first step came before the first audio block that saw PLAY); later loops 117,536 samples."
+    },
+    {
+      "name": "PT.LEN",
+      "result": "passed",
+      "detail": "The pattern's M.LEN word read from the current pattern: 1 (INF) gives N/A, 16 gives 16 steps; the box on page 2 reads PT.LEN."
+    },
+    {
+      "name": "GLOB ALL across patterns",
+      "result": "passed",
+      "detail": "LOOPER on track 2 in A01 and A02; FREQ (parameter 26) written in A01, after the change to A02 the A02 track has the same FREQ."
+    },
+    {
+      "name": "trig key in PICK",
+      "result": "not reproduced",
+      "detail": "CAPT + PICK, LEN 4 steps, a loop playing: TRK + 2 and the trig key 2 alone gave no start of the loop voice other than the grid's (voice record writes traced). On the author's unit the key does not restart the loop either; it retriggers the amp envelope (ll02-hardware.json)."
+    }
+  ],
+  "notTested": [
+    "Audio content: the emulator's recording path is not checked for level, the seam between loops or noise."
+  ]
+}

@@ -35,11 +35,13 @@ NOT_COVERED = ('listening to the sound', 'the power cycle and what survives it',
                'modules beside other installed modules')
 
 
-def testing_entry(result, day):
+def testing_entry(result, day, title='Qualification run', command='device:qualify', notes=(), left=None):
     """The run as a TESTING.md entry: only what it measured, and what it leaves to the developer."""
-    lines = ['### Qualification run, %s' % day, '',
-             'Command: `npm run device:qualify -- %s`' % ' '.join(result['args']), '']
+    lines = ['### %s, %s' % (title, day), '',
+             'Command: `npm run %s -- %s`' % (command, ' '.join(result['args'])), '']
     lines += ['- Package `%s`, %s, SHA-256 `%s`' % (p['file'], p['name'], p['sha256']) for p in result['packages']]
+    lines += ['- ' + note for note in notes]
+    if result.get('selftest'): lines.append('- Self-test with the package installed: ' + result['selftest'])
     for m in result['modules']:
         alone = ', '.join('%s %s' % (track, 'refused' if r == 'refused' else 'peak %d per mille of a frame, admitted in %d ms' % (
             r['core1_peak'] if track == 'T1' else r['core0_peak'], r['admit_ms'])) for track, r in m.items() if track in ('T1', 'T5'))
@@ -50,8 +52,10 @@ def testing_entry(result, day):
     if result.get('parts'): lines.append('- Part switches: %d of %d ran their own effects within 3 s' % (sum(n > 0 for n in result['parts']), len(result['parts'])))
     if result.get('soak'): lines.append('- Soak: %d s, highest core peak %d per mille' % (10 * len(result['soak']), max(max(m['core0_peak'], m['core1_peak']) for m in result['soak'])))
     lines.append('- Crash test: %s' % ('run, the unit came back' if result.get('crash') and not any('crash' in f for f in result['failures']) else 'run' if result.get('crash') else 'not run'))
+    if result.get('inventory'): lines.append('- Inventory at the end: ' + ('the same as before the run' if result['inventory'] == 'unchanged' else 'different from before the run'))
     lines.append('- Result: ' + ('passed' if not result['failures'] else 'failed: ' + '; '.join(result['failures'])))
-    lines += ['', 'Not covered by this run: ' + ', '.join(NOT_COVERED) + '.', '']
+    if left: lines += ['', 'Left for the developer at the unit: ' + ', '.join(left) + '.', '']
+    else: lines += ['', 'Not covered by this run: ' + ', '.join(NOT_COVERED) + '.', '']
     return '\n'.join(lines)
 
 
@@ -136,33 +140,36 @@ def _alive():
     except (RuntimeError, OSError): return False
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument('--seconds', type=int, default=30)
-    ap.add_argument('--soak', type=int, default=0, help='seconds of soak with everything placed, playing')
-    ap.add_argument('--crash', action='store_true', help='end with a deliberate crash and check the restart')
-    ap.add_argument('--keeps-ok', action='store_true', help='each install and removal Keeps: noted the flashed set, and a RAM-booted base may replace it')
-    ap.add_argument('--testing-entry', metavar='FILE', help='also write what the run saw as a TESTING.md entry to FILE')
-    ap.add_argument('packages', nargs='+')
-    args = ap.parse_args()
-    if not args.keeps_ok:
-        raise SystemExit('Each install and removal in this run is a Keep, which rewrites the card\'s kept set; on a RAM-booted base the flashed base '
-                         'then starts with no modules after a power cycle. Note the flashed set first (the session\'s inventory step, '
-                         'docs/OCTATRACK_DRIVING.md), then run again with --keeps-ok.')
-    pkgs = [package(p) for p in args.packages]
+def selftest_reading(failures):
+    """The session's `selftest` step (transport stopped): its verdict line. A failed verdict is a failure; a step the
+    session does not answer is recorded as such, since a self-test during a trial is not yet observed on a unit."""
+    try:
+        reply = send('selftest')
+    except RuntimeError as e:
+        return 'not answered (%s)' % e
+    line = next((l.strip() for l in reply.splitlines() if l.startswith('selftest ')), reply.strip() or 'no reply')
+    if line.startswith('selftest failed'): failures.append(line)
+    return line
+
+
+def run(args, pkgs, install, uninstall, selftest=False, inventory=False):
+    """The run on the unit between `install(pkgs)` and `uninstall(pkgs, failures)`: device:qualify Keeps both, device:test
+    holds a trial and rolls it back (scripts/octatrack-test.py). Returns the result with its failures."""
     failures, result = [], dict(base=None, modules=[], together=None, crash=args.crash, args=sys.argv[1:],
                                 packages=[dict(file=os.path.basename(p['path']), name=p['name'], sha256=p['sha256']) for p in pkgs])
     if 'stopped' not in send('state'): raise SystemExit('Stop the transport first.')
     if not part_saved_equal(): raise SystemExit('The current Part differs from its saved copy: run on one that does not.')
     saved_start = part_copy(mem(PART, 1)[0], saved=True)  # what the reload at the end must bring back, in both copies
     before = counters()
+    inventory_start = send('inventory').strip() if inventory else None
     start_part, (start_bank, start_pattern) = mem(PART, 1)[0], mem(0x800065bd, 2)
     live = mem(0x80000ec4, 16)  # what each track runs now: FX1 T1-8, then FX2
     names = [line[4:16].strip() for line in send('ui').splitlines()[:8]], [line[17:].strip() for line in send('ui').splitlines()[:8]]
     try:
-        for p in pkgs: send('try ' + p['path'])
+        install(pkgs)
         listed = {1: chooser_names(1), 2: chooser_names(2)}
         for p in pkgs: p['name'] = chooser_name(listed[2 if p['slots'] & 2 else 1], p['name'])
+        if selftest: result['selftest'] = selftest_reading(failures)
         for p in pkgs:
             if not p['dsp']: continue
             slot = 2 if p['slots'] & 2 else 1
@@ -234,11 +241,12 @@ def main():
         if mem(0x800065bd, 2) != bytes([start_bank, start_pattern]):
             send('BANK w150 TRIG%d w150 TRIG%d w500' % (start_bank + 1, start_pattern + 1))
             if mem(0x800065bd, 2) != bytes([start_bank, start_pattern]): failures.append('not back on the bank and pattern it started on')
-        for p in pkgs:
-            try: send('remove ' + p['path'])
-            except RuntimeError as e: failures.append(str(e))
+        uninstall(pkgs, failures)
         changed = [i for i, v in enumerate(mem(0x80000ec4, 16)) if v != live[i]]
         if changed: failures.append('tracks not back as before (FX index %s); restore them' % changed)
+    if inventory:
+        result['inventory'] = 'unchanged' if send('inventory').strip() == inventory_start else 'changed'
+        if result['inventory'] == 'changed': failures.append('the inventory at the end differs from the one before the run')
     time.sleep(1)  # the DSP watchdog records a stall after half a second of still frames (dsp.c STALL_TICKS)
     after = counters()
     for key in ('rejected', 'errors'):
@@ -253,11 +261,42 @@ def main():
     if after['crashes'] != before['crashes'] + args.crash: failures.append('%d crash(es) recorded, %d expected' % (after['crashes'] - before['crashes'], args.crash))
     if after['stalls'] != before['stalls']: failures.append('a DSP stall was recorded (the session\'s stall step shows it)')
     result['failures'] = failures
+    return result
+
+
+def finish(result, args, **entry):
+    """Print the result, write the TESTING.md entry when asked, and exit 1 on a failure."""
     print(json.dumps(result, indent=1))
     if args.testing_entry:
-        with open(args.testing_entry, 'w') as f: f.write(testing_entry(result, datetime.date.today().isoformat()))
+        with open(args.testing_entry, 'w') as f: f.write(testing_entry(result, datetime.date.today().isoformat(), **entry))
         log('TESTING.md entry written to ' + args.testing_entry)
-    sys.exit(1 if failures else 0)
+    sys.exit(1 if result['failures'] else 0)
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--seconds', type=int, default=30)
+    ap.add_argument('--soak', type=int, default=0, help='seconds of soak with everything placed, playing')
+    ap.add_argument('--crash', action='store_true', help='end with a deliberate crash and check the restart')
+    ap.add_argument('--keeps-ok', action='store_true', help='each install and removal Keeps: noted the flashed set, and a RAM-booted base may replace it')
+    ap.add_argument('--testing-entry', metavar='FILE', help='also write what the run saw as a TESTING.md entry to FILE')
+    ap.add_argument('packages', nargs='+')
+    args = ap.parse_args()
+    if not args.keeps_ok:
+        raise SystemExit('Each install and removal in this run is a Keep, which rewrites the card\'s kept set; on a RAM-booted base the flashed base '
+                         'then starts with no modules after a power cycle. Note the flashed set first (the session\'s inventory step, '
+                         'docs/OCTATRACK_DRIVING.md), then run again with --keeps-ok. For a run that keeps nothing: npm run device:test.')
+    pkgs = [package(p) for p in args.packages]
+
+    def install(pkgs):
+        for p in pkgs: send('try ' + p['path'])  # the session's try accepts at once: a Keep
+
+    def uninstall(pkgs, failures):
+        for p in pkgs:
+            try: send('remove ' + p['path'])
+            except RuntimeError as e: failures.append(str(e))
+
+    finish(run(args, pkgs, install, uninstall), args)
 
 
 if __name__ == '__main__':

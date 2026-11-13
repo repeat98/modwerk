@@ -1,5 +1,44 @@
 [
   {
+    "version": "0.5.0-experimental",
+    "date": "2026-11-12",
+    "changes": [
+      "The SMPL page shows values, not names: TUN, RATE, BR, LOOP (OFF, ON or PIPO) and LEV in one row.",
+      "The waveform is taller.",
+      "STA and END show as their lines; turn D for the sample list.",
+      "The header names a knob while it turns."
+    ]
+  },
+  {
+    "version": "0.4.0-experimental",
+    "date": "2026-11-11",
+    "changes": [
+      "Renamed Improved SMPL.",
+      "The SMPL key always opens the waveform view; the knob-only view is gone.",
+      "The knobs still work there, each value showing while it turns."
+    ]
+  },
+  {
+    "version": "0.3.0-experimental",
+    "date": "2026-11-11",
+    "changes": [
+      "FIN's knob is now RATE on every sound, and is called RATE everywhere, LFO destinations too.",
+      "No more SMP RATE row or knob tap: fine tuning lives on TUN.",
+      "RATE starts at +63 (normal speed) on a new or cleared sound.",
+      "Sounds saved with FIN at +0 now load stopped: turn RATE up to +63."
+    ]
+  },
+  {
+    "version": "0.2.0-experimental",
+    "date": "2026-11-11",
+    "changes": [
+      "Renamed Fine Tune + Sample Rate.",
+      "TUN now turns 1 cent a step; press and turn for whole semitones. Reads like +3.07.",
+      "Fine tuning saves in the sound and plays the same on stock OS.",
+      "Tapping the knob between FIN and RATE no longer dips the speed or slides the pitch."
+    ]
+  },
+  {
     "version": "0.1.1-experimental",
     "date": "2026-11-06",
     "changes": [

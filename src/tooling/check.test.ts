@@ -7,7 +7,7 @@ import { expect, it } from 'vitest'
 
 const runner = fileURLToPath(new URL('../../scripts/check.mjs', import.meta.url))
 
-function check(failure = '', buildOnly = false) {
+function check(failure = '', buildOnly = false, args: string[] = []) {
   const folder = mkdtempSync(join(tmpdir(), 'octamod-check-test.'))
   const log = join(folder, 'scripts.log')
   const npm = join(folder, 'npm.mjs')
@@ -18,7 +18,7 @@ function check(failure = '', buildOnly = false) {
     process.exitCode = process.env.CHECK_TEST_FAIL === name ? 1 : 0
   `)
   try {
-    const result = spawnSync(process.execPath, [runner, ...(buildOnly ? ['--build'] : [])], {
+    const result = spawnSync(process.execPath, [runner, ...(buildOnly ? ['--build'] : []), ...args], {
       encoding: 'utf8',
       env: { ...process.env, npm_execpath: npm, CHECK_TEST_LOG: log, CHECK_TEST_FAIL: failure, MODWERK_SLOTS: '0' },
     })
@@ -45,24 +45,29 @@ it('rejects a stale catalog before generation or any dependent check can run', (
 it('refuses a cross-compatibility clash before generation or any dependent check can run', () => {
   const result = check('modules:compat')
   expect(result.status).toBe(1)
-  expect(result.scripts).toEqual(['prepare', 'licenses:check', 'machines:check', 'modules:check', 'elekloader:check', 'modules:compat', 'modules:pairs'])
+  expect(result.scripts).toEqual(['prepare', 'licenses:check', 'machines:check', 'modules:check', 'elekloader:check', 'modules:compat'])
 })
 
 it.each(['sdk:check', 'lint', 'test', 'build:bundle', ''])('keeps every independent check mandatory and waits for all results (failure: %s)', failure => {
   const result = check(failure)
   expect(result.status).toBe(failure ? 1 : 0)
-  expect(result.scripts.slice(0, 10)).toEqual(['prepare', 'licenses:check', 'machines:check', 'modules:check', 'elekloader:check', 'modules:compat', 'modules:pairs', 'licenses:generate', 'machines:generate', 'modules:generate'])
-  expect(result.scripts.slice(10, -1).sort()).toEqual(['build:bundle', 'lint', 'sdk:check', 'test', 'typecheck'])
+  expect(result.scripts.slice(0, 9)).toEqual(['prepare', 'licenses:check', 'machines:check', 'modules:check', 'elekloader:check', 'modules:compat', 'licenses:generate', 'machines:generate', 'modules:generate'])
+  expect(result.scripts.slice(9, -1).sort()).toEqual(['build:bundle', 'lint', 'sdk:check', 'test', 'typecheck'])
   expect(result.scripts.indexOf('build:bundle')).toBeGreaterThan(result.scripts.indexOf('typecheck'))
   expect(result.scripts.indexOf('sdk:check')).toBeGreaterThan(result.scripts.indexOf('test'))
-  // The module doctor's draft test copies a draft under sdk/octabam/modules/, so it runs alone once the parallel stage is done.
+  // The module doctor's draft test copies a draft under sdk/octatrack/modules/, so it runs alone once the parallel stage is done.
   expect(result.scripts.at(-1)).toBe('test')
 })
 
-it('refuses stale or unflagged native pairs before generation or any dependent check can run', () => {
-  const result = check('modules:pairs')
-  expect(result.status).toBe(1)
-  expect(result.scripts).toEqual(['prepare', 'licenses:check', 'machines:check', 'modules:check', 'elekloader:check', 'modules:compat', 'modules:pairs'])
+it('runs as CI\'s parallel parts, which together start every script of the whole check once', () => {
+  const whole = check().scripts, generate = ['prepare', 'licenses:generate', 'machines:generate', 'modules:generate']
+  const contract = check('', false, ['--part', 'contract']).scripts, sdk = check('', false, ['--part', 'sdk']).scripts, shard = check('', false, ['--part', 'test:1/2']).scripts
+  expect(sdk).toEqual([...generate, 'sdk:check'])
+  expect(shard).toEqual([...generate, 'test'])
+  // The contract part keeps the draft doctor's own test run, last; the shards carry the other.
+  expect(contract.filter(name => name === 'test')).toEqual(['test'])
+  expect(contract.at(-1)).toBe('test')
+  expect([...contract, 'sdk:check', 'test'].sort()).toEqual([...whole].sort())
 })
 
 it('prevents bundling on a type error while finishing the other checks', () => {

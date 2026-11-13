@@ -15,8 +15,8 @@ exactly.
 
 - **Never merge PR #464** (`codex/octatrack-elekloader-migration` → main). The owner merges. Merging main *into*
   the branch is allowed (c9146e66, 3dfdf6a2 did it), but one is on hold (see Open decisions).
-- **Beta-only.** Every user-visible change sits behind `hasBetaUi` (`src/community/beta-ui.ts`: beta testers,
-  verified admins, dev builds). After any UI change, rerun the public comparison (visitor and member against main:
+- **Beta-only.** Every user-visible change sits behind `hasOctatrackBase` (`src/community/beta-access.ts`: beta
+  testers, verified admins, dev builds, everyone once released). After any UI change, rerun the public comparison (visitor and member against main:
   visible text, screenshots, API traffic). Tools: `~/.cache/modwerk-octatrack/frontend-tools/`.
 - **The tester image stays the qualified one.** Testers' browser-built base must equal the image the owner
   flashed and tested (`dc1d7a39…`, from c9146e66). Any change to a base input (anything `build_core.py` hashes)

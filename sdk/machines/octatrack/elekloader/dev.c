@@ -213,6 +213,18 @@ uint32_t modwerk_dev_request(const uint8_t *s, const uint8_t **reply, uint8_t *o
         *reply = out;
         return 28;
     }
+    if (s[1] == 30 && want == 76u) { /* CPU: the CPU budget (machine_registry.c); wValue its allowance in percent of a frame
+                                        * (0 keeps it): the allowance, what the Part books, the tracks refused; then since
+                                        * the last read each guarded render's longest time (track's first pass, then second) */
+        extern volatile uint32_t mw_cpu_allowance, mw_cpu_booked, mw_frame_cost_max[16];
+        extern volatile uint8_t mw_cpu_refused;
+        if (s[2]) mw_cpu_allowance = s[2];
+        uint32_t v[19] = {mw_cpu_allowance, mw_cpu_booked, mw_cpu_refused};
+        for (unsigned k = 0; k < 16u; ++k) v[3u + k] = mw_frame_cost_max[k], mw_frame_cost_max[k] = 0;
+        for (unsigned i = 0; i < 76u; ++i) out[i] = (uint8_t)(v[i / 4u] >> (24 - 8 * (i % 4u)));
+        *reply = out;
+        return 76;
+    }
     if (s[1] == 23 && want == 4 && !s[2] && !s[3]) { /* GAP: the longest time between two frames since the last read, DTCN3 counts */
         extern volatile uint32_t dl_frame_gap;
         uint32_t gap = dl_frame_gap;

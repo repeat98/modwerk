@@ -1,0 +1,148 @@
+# Sidechain Compressor author-reported hardware operation
+
+## 0.2.2-experimental
+
+Tester: **Zac Kyoti** (the module's author), 3 November 2026, on an
+**Octatrack MKI**. Images: composed by Modwerk's builder from this source with
+the stock FX2 effects kept, the module's ColdFire units in the DRAM runtime,
+flashed from `.bin` card updates:
+
+- with Direct Jump, MAIN OS
+  `e77ec14bd2f8f4d1586a3d2366207835485521cc6ce3ee941dc353a66963548a`
+  (version field `MWSCDJ`, `.bin` SHA-256
+  `abd1c2c95377e45071048780d44caf2c8cc2b2001dbf65fa1b75fd9c8548353a`);
+- with the six modules of #1175 (FM Synth, Play Modes, Mute Modes, Apply
+  Scene, Direct Jump and this module), MAIN OS
+  `ebaf5116177e57028b16f177094fdc28849ca9ed977ed75eba417062aadfd2df`
+  (`MW1175`, `.bin` SHA-256
+  `b4eaa7700f76989f1b7c5c543b3aa0cc9b7099479446b561e0ae923cfe64fded`).
+
+Reported: all tests pass. Checklist: the FX2 chooser lists every stock FX2
+effect; COMPRESSOR on FX1 and FX2 draws page 2 (MON, KEY, KGN, KBAS, KWID); a
+same-core and a cross-core key duck; MON's switch, KEY's pressed turn, KBAS
+and KWID; a direct jump; project reload and a power cycle keep the settings.
+In the #1175 image: the FX2 chooser and a keyed compressor.
+
+The released packages compose these two sets as MAIN OS `c025c706…` and
+`f82e5ada…`: beside Direct Jump the same OS writes and runtime units, with only
+the core logger's identity text changed (version label, build hashes); in
+the #1175 set also Mute Modes' own unit, which is 0.2.2 on `main` now
+(TESTING.md).
+The module alone builds 0.2.1's image (below) byte for byte.
+
+## 0.2.1-experimental
+
+Tester: **Zac Kyoti** (the module's author), 30 October 2026, on an
+**Octatrack MKI**. Images: Modwerk's native builds of this source with the
+stock FX2 effects kept, flashed from `.bin` card updates wrapped from each
+MAIN OS:
+
+- the module alone, MAIN OS
+  `fb7c5e31ce9535f86b3bcc86830df75eba409bb4c5570f48cd9da3bd6545d2cc`
+  (version field `MW_SC021`, the same name as the 26 October image below,
+  a different build; `.bin` SHA-256
+  `cb7a7ecacac6da034633b0f6243275e863bb572411ad613e523b4cdbee087926`);
+- the module with BBD Delay, MAIN OS
+  `c234d13ce64efdf96a8843065feaf1c400f4d9ada081a680d557d639d112019f`
+  (`MW_BBDSC`, `.bin` SHA-256
+  `c9bb0cfa673ba53c3b5adc53c402030b9c6a0cb245f4363ef11f212ea5ba4300`).
+
+Reported: "working as expected" on both, for this checklist:
+
+1. A same-core key (COMPRESSOR on T2 FX1, KEY T1) and cross-core keys (T6
+   keyed from T1, T2 keyed from T5) duck.
+2. MON ON plays the filtered key, OFF returns to the track; KBAS and KWID
+   are audible on MON.
+3. Stock reverbs and delays on T1 and T5 FX2 beside a keyed compressor carry
+   no other track.
+4. Project reload and a power cycle keep the settings.
+5. With BBD Delay: BBD on T1, T5 and T3 FX2 beside a keyed compressor, at
+   maximum TIME, STGS 4096 and FRZ, sounds clean and the compressor still
+   ducks.
+
+Not run: the Modwerk download with the core logger, the USB beta base and
+Sidechain Ringmod.
+
+## 0.2.0-experimental
+
+Tester: **Zac Kyoti** (the module's author), 26 October 2026, on an
+**Octatrack MKI**. Image: Modwerk's native build of this source, the module
+alone with the stock FX2 effects kept (`sidechain-compressor:true` in the
+coverage set), MAIN OS SHA-256
+`131142e1839bf1a62b48929dee396cc23b1f2f27f33595a9e6f39bf57f7be22e`, flashed
+from a `.bin` card update wrapped from that MAIN OS (version field
+`MW_SC021`, `.bin` SHA-256
+`6a02a0672a7888390667af1bab0b4920652b5ca26cd820a6b9cbc9e450468aa4`; the
+wrapper changes no MAIN OS byte). Author pin: Zac-Kyoti/octatrack-kyoti-fw
+`b0d49bf32d3fcc2e3ce7e9cec67f4fbb2619e511`.
+
+The author was given this checklist with the image:
+
+1. KBAS and KWID across their whole range, with MON on and off.
+2. MON shows OFF on the left and ON on the right; a project saved with an
+   earlier version comes up with MON OFF.
+3. KEY turned with the encoder pressed moves one position per detent.
+4. Switching MON, and changing KEY with MON on, fades without a click.
+5. A project saved with MON ON comes back ON after a power cycle and reload.
+
+and reported: "MW_SC021, OCTABAM33, and KYOTI v1.6 all flashed, working
+fine. All good."
+
+The first 0.2.0 image (`MW_SC020`, 24 October 2026) ducked correctly but
+broke KBAS and KWID (silence, level jumps and squeals): the key-filter
+table's address came from a register the gain store had already moved. That
+image is superseded; this source loads the table by its own literal.
+
+### Limits
+
+- A functional report: duration, project, material and tempo were not
+  reported, and the checklist items were confirmed together, not one by one.
+- No measured chip timing, memory canary, recording, recovery or stress test;
+  cross-core key latency was not measured.
+- The flashed image is the module alone; the Modwerk download (with the core
+  logger), the USB beta base and selections with other modules were not
+  flashed.
+
+## 0.1.2-experimental
+
+Tester: **Zac-Kyoti** (the module's author), 10 October 2026, on an
+**Octatrack MKI**. Image: Modwerk's native build of this source, the module
+alone with the stock FX2 effects kept (`sidechain-compressor:true` in the
+coverage set), MAIN OS SHA-256
+`2816f0bce5aaabfadac6dba9e778dc184b8af3e4a611990d6e6b3e36095bc5eb`, flashed
+from a `.bin` card update wrapped from that MAIN OS (version field
+`140C_SC012`; the wrapper changes no MAIN OS byte). Source: octabam
+`922878234b22221a1c298b3c7e0b3bdeffb468a9`, author pin
+Zac-Kyoti/octatrack-kyoti-fw `329b801cf90f32cbca97c6699a908908968e4df6`.
+
+The author was given this checklist and reported "Flashed. All tests pass":
+
+1. A project saved before the module was installed (stock firmware or 0.1.1),
+   holding a COMPRESSOR, opens with page 2 at KEY OFF, KFLT and KGN centred,
+   MON OFF.
+2. Two instances with different settings on different tracks, FX slots and
+   DSP cores: COMPRESSOR on T1 FX1 keyed from T5, and COMPRESSOR on T5 FX2
+   keyed from T1. Both duck; editing one leaves the other unchanged.
+3. MON ON plays the key; MON OFF restores the track.
+4. Part save, edit, Part reload; project save and reload; a power cycle.
+   After each, both compressors return with the settings the author made,
+   not reset to OFF.
+5. No crash, click or wrong screen observed.
+
+## Limits
+
+- A functional report. Duration, project, sample material and tempo were not
+  reported.
+- Two instances, not the sixteen-slot maximum the cycle and memory models
+  price. No overload was reported; none was measured.
+- No measured chip timing, memory canary, recording, recovery or stress test.
+  Cross-core key latency and rate locking were heard, not measured.
+- The flashed image is the module alone. The Modwerk download composes the
+  same module-owned bytes with the platform writes (core logger); that image
+  and selections with other modules were not flashed.
+
+## 0.1.1-experimental
+
+Fresh hardware evidence for 0.1.1 was waived by the owner on 5 October 2026
+(`sdk/sidechain-compressor-build-approval.json`); see TESTING.md for the
+historical upstream report it retained.

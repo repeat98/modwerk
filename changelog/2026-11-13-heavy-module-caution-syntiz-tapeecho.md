@@ -1,0 +1,1 @@
+SYNTIZ and Tape Echo now carry a Heavy CPU badge in the library and a warning on their module pages, like POLY8 and FM Synth: both can be very CPU-intensive and may still be unstable. Try them in a backed-up project first, and report any freeze.

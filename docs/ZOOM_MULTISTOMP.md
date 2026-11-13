@@ -1,9 +1,10 @@
 # Zoom MultiStomp pedals (ZDL effects)
 
-Status: **the MS-70CDR is in preview, with Loop as the first effect in the
-library.** The four pedals have profiles in `sdk/machines/zoom-*/` (family
-`zoom`; the MS-50G, MS-60B and G1on series still in research) and machine
-pages on the site. What is left is in the [Plan](#plan).
+Status: **the MS-70CDR is in preview, with Loop, Scope, Spectrum, Scorch,
+Stasis and Mangle in the library.** The four pedals have profiles in `sdk/machines/zoom-*/`
+(family `zoom`; the MS-50G, MS-60B and G1on series still in research) and
+machine pages on the site. What is left is in the [Plan](#plan); the other
+pedals come up by [Another ZDL pedal](#another-zdl-pedal).
 
 Telling Zoom, as the [modding guidelines](../MODDING_GUIDELINES.md#talking-with-makers)
 ask before a new maker's first public download: the owner emailed Zoom on 9
@@ -65,7 +66,9 @@ Matturro, MIT) is custom firmware for these pedals, installed with a modified
 Zoom updater: the one place Modwerk's OS-image steps could apply. Its v2.0
 (2 November 2026) raises the patch DSP limit from 225 to 300 and adds parallel
 routing, a perform mode, a tempo-synced looper and MIDI clock sync; every pedal
-it runs on reports as an MS-70CDR over USB. The G1on series is not covered.
+it runs on reports as an MS-70CDR over USB, since it is built from the
+MS-70CDR's OS (on the other two, see [the base](#another-zdl-pedal)). The G1on
+series is not covered.
 Luca's [ZDL effects pack](https://github.com/matujuice/zoom-ms-zdl-effects-pack)
 (MIT, 17 effects) came with it.
 
@@ -109,6 +112,9 @@ a fake pedal (`src/dev/zoom-pedal-fake.ts`) in the pedal's reply formats. On an 
 project's Patch Editor backup, the effect list apart (changed on the pedal in between). Installing and
 removing the project's RingT test effect worked on the same pedal (27 October): it appeared in its category
 after a power cycle and was gone after removal, with everything else unchanged.
+
+An agent drives the same link from Node: `npm run zoom -- status | list | backup | install | remove` and the
+developer MCP's `zoom_*` tools ([A Zoom pedal over MIDI](FRONTEND_MCP.md#a-zoom-pedal-over-midi)).
 
 ## Contract changes
 
@@ -284,6 +290,56 @@ messages and `ZoomLink.flashBase` sends them. Recovery: update mode and Zoom's
   all 166 files took 2 min 55 s. Not tried on a pedal: a failed write's
   rollback and write-back, and two tabs.
 
+## Another ZDL pedal
+
+The MS-50G, MS-60B and G1on series get what the MS-70CDR has, by the road it
+took. Other developers bring them up (owner, 10 November 2026), one pedal and
+one step per pull request, each with evidence from that pedal and firmware:
+Ziddle and another pedal's runs are not. Make the MS-70CDR's pieces take the
+pedal rather than copying them; `git grep -n "zoom-ms-70cdr\|0x61" src scripts`
+finds where they are tied to it.
+
+1. **Read.** The pedal's identity in `ZOOM_MODELS` and `ZOOM_DEVICE_IDS`
+   (`zoom-protocol.ts`; the G1on series has none yet) and the fake pedal
+   answering as it. On the unit, its beta pedal page names the pedal and
+   firmware, lists the files and backs them all up, byte-identical to another
+   tool's backup.
+2. **Write.** Installs and removals stay refused on a pedal and firmware they
+   have not run on. Record Effect Manager or the project's editor installing an
+   effect there (MIDI Monitor, as for the flash) and compare it with the link's
+   messages; then install and remove one effect from the page, power-cycle, and
+   check it appeared in its category, went again and left the rest unchanged.
+   Only then add the pedal and firmware to `canWriteFiles`.
+3. **Listing.** The profile gets an `sdk` section like the MS-70CDR's, with its
+   own guide (`sdk/machines/<id>/README.md`, from the MS-70CDR's) and budgets
+   measured on that pedal (the MS-60B chains four effects, not six); then
+   `npm run machines:generate`. That opens its pedal page to everyone with
+   module sets and sync (`isZoomSetDevice`). The library and the pedal page
+   list an effect only on its `machine` (`resolveZoomSelection`, `ZoomHub`'s
+   `listed`), so the first pedal after the MS-70CDR makes them list the effects
+   confirmed on it.
+4. **Effects.** A listed effect comes to the pedal through its
+   `platform.pedals` entry, `confirmed` with a report of a run there (install,
+   every knob, on/off, a patch saved and recalled through a power cycle), in
+   that effect's own pull request with its author's OK. An effect that reads
+   fixed MS-70CDR addresses (the transport block, the screen) stays that
+   pedal's. The first confirmed effect sets `mods` to done and the pedal to
+   `preview`, as Loop did for the MS-70CDR (#1396).
+5. **Base.** MIDISTOMP is the base here too (owner, 10 November 2026). Its
+   releases are built from the MS-70CDR's 2.10 for all three pedals and answer
+   as an MS-70CDR; on an MS-50G or MS-60B that runs one model's firmware on
+   another, which the [modding guidelines](../MODDING_GUIDELINES.md) refuse, so
+   the page never flashes that build onto another pedal. Their base is
+   MIDISTOMP's patches on the pedal's own OS from its own updater (MIDISTOMP's
+   `models/ms50g.yaml` and `ms60b.yaml` name them): a build per pedal agreed
+   with Luca, imported like `ms70cdr-2.10` (`BUILD` in
+   `scripts/midistomp-import.ts`, `zoom-base.ts`), its flash recorded from that
+   pedal's updater (the addresses may differ), and `isUpdateMode`, `ZoomHub`'s
+   `canBase` and `onBase` and `ZoomBaseDialog`'s firmware store taking the
+   pedal. The G1on series has no MIDISTOMP; its effects run on the stock OS.
+6. **Text.** The profile's `flash` and `recovery` name the pedal page, as the
+   MS-70CDR's do, and [Devices](#devices) says what ran on which firmware.
+
 ## Plan
 
 In order, with who (27 October 2026). Effect Manager stays the fallback
@@ -311,10 +367,10 @@ install throughout.
    runtime (`own_runtime`, [settled](ZDL_MODULE_CONTRACT.md#settled-first));
    Loop built so ran on the owner's MS-70CDR (9 November 2026). The `zdl`
    module contract is in force on the MS-70CDR, and Loop is its first module,
-   which puts the pedal in preview. Next: Scope, Spectrum and Scorch as
-   modules after their pedal runs, `divf` from TI's RTS source, the effect-ID
-   ledger and the DSP limit of 300 under MIDISTOMP 2.
-8. Later: the Windows `.exe` as input (a port of `zoomms/parts.py`), the
-   MS-50G and MS-60B (their stock updaters resolve and check the patches),
-   loading effects without a reboot, in-browser NAM and cab builds, and the
-   patch editor as a device page.
+   which puts the pedal in preview; Scope, Spectrum, Scorch, Stasis
+   and Mangle followed (10 November 2026). Next: `divf` from TI's RTS source, the
+   effect-ID ledger and the DSP limit of 300 under MIDISTOMP 2.
+8. The other pedals: [Another ZDL pedal](#another-zdl-pedal).
+9. Later: the Windows `.exe` as input (a port of `zoomms/parts.py`), loading
+   effects without a reboot, in-browser NAM and cab builds, and the patch
+   editor as a device page.

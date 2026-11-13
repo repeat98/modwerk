@@ -49,7 +49,8 @@ it.each(['./', '/octamod/'])('builds crawlable content and a sitemap matching th
   expect(sitemap).toContain(`<loc>${appUrl.href}module/fm-synth/</loc>`)
   expect(sitemap).toContain(`<loc>${appUrl.href}submit/</loc>`)
   expect(sitemap).not.toContain('module/synth/')
-  for (const id of PAUSED_MODULE_IDS) expect(sitemap).not.toContain('module/' + id + '/')
+  // The Octatrack's own page of a paused module; another machine may list a module with the same id (the Rytm's Temp Save).
+  for (const id of PAUSED_MODULE_IDS) expect(sitemap).not.toContain(`<loc>${appUrl.href}module/${id}/</loc>`)
   expect(sitemap).not.toMatch(/404|profile\/|#|index\.html/)
   expect(emitted.find(asset => asset.fileName === 'robots.txt').source).toBe(`User-agent: *\nAllow: /\nSitemap: ${appUrl.href}sitemap.xml\n`)
 })

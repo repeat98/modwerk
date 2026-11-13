@@ -340,9 +340,11 @@
       "name": "SIDECHAIN COMP",
       "module": "95cff696",
       "bytes": 2636,
-      "sha256": "fd275bf2f8eb1340228d12224b3b84560584038c6637e6ed9775e50c60914f09",
+      "sha256": "3024353dc44e1266e3754386d9530c81e96b6fd90768ceab1977b43bea8bfa5b",
       "path": "octatrack-modules/sidechain-compressor/0.2.1-experimental.mwrm",
-      "requiredBase": "500cdb6fd81bfc9c2b18737e7487f3ec2264c1c00c5ebef833e7f751e325d1b7"
+      "lagsBehind": "0.2.2-experimental",
+      "lagReason": "0.2.2 changes only the card build's placement: its ColdFire units join the DRAM runtime when another module in the set carries one (#1175). The USB package and its controller are 0.2.1's, so 0.2.1 stays the USB package.",
+      "requiredBase": "4e9a87ea6d84077ed4d5e592211a2206a665b0c72ae577e38be6bb133b33104d"
     },
     {
       "id": "output-matrix",
@@ -356,9 +358,9 @@
       "name": "OUTPUT MATRIX",
       "module": "caf158b5",
       "bytes": 3740,
-      "sha256": "d905f7e04554d9f49c6e8761feffa9e9b6f6187cb8bd2c263cc209e932de2252",
+      "sha256": "9c7380301f48bb01d7a7bc2cc6ed310f5a15272b0e870e5042a1932735495302",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "500cdb6fd81bfc9c2b18737e7487f3ec2264c1c00c5ebef833e7f751e325d1b7"
+      "requiredBase": "4e9a87ea6d84077ed4d5e592211a2206a665b0c72ae577e38be6bb133b33104d"
     },
     {
       "id": "cc-map",
@@ -374,7 +376,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "500cdb6fd81bfc9c2b18737e7487f3ec2264c1c00c5ebef833e7f751e325d1b7"
+      "requiredBase": "4e9a87ea6d84077ed4d5e592211a2206a665b0c72ae577e38be6bb133b33104d"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -450,9 +452,9 @@
       "name": "Recorder Loop",
       "module": "823e0f45",
       "bytes": 1818,
-      "sha256": "39d675efd554e099d525f41e8baf02c071c1c29d38f1f331fb74db2cee3ef870",
+      "sha256": "b39bfa9f124f33f4de887dc830694c7072747f7a19b5568a47adc8d0cd73a353",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "500cdb6fd81bfc9c2b18737e7487f3ec2264c1c00c5ebef833e7f751e325d1b7"
+      "requiredBase": "4e9a87ea6d84077ed4d5e592211a2206a665b0c72ae577e38be6bb133b33104d"
     },
     {
       "id": "analog-bassdrum",
@@ -462,13 +464,13 @@
       "sites": 0,
       "copies": 6,
       "fills": 0,
-      "version": "0.1.6-experimental",
+      "version": "0.1.7-experimental",
       "name": "Analog BD",
       "module": "abdb1445",
-      "bytes": 26190,
-      "sha256": "e74048e6127d89d3d193cdf2d8ab8e9c367a0310f2d7ff6d319a9f1f01347829",
-      "path": "octatrack-modules/analog-bassdrum/0.1.6-experimental.mwrm",
-      "requiredBase": "500cdb6fd81bfc9c2b18737e7487f3ec2264c1c00c5ebef833e7f751e325d1b7",
+      "bytes": 26172,
+      "sha256": "e683804756e9c898a658f7d4a97df5f8832cfa4f9c2e1d409a32df1a26ee392b",
+      "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
+      "requiredBase": "4e9a87ea6d84077ed4d5e592211a2206a665b0c72ae577e38be6bb133b33104d",
       "requires": 0,
       "claims": 1,
       "entries": 1
@@ -543,6 +545,41 @@
       "sha256": "0b54a734258945acbf74551b8920ee4bfa760d390964bd04d2877e4382e990b9"
     },
     {
+      "id": "syntiz",
+      "sources": [
+        "sdk/octabam/modules/syntiz/engine.c",
+        "sdk/octabam/modules/syntiz/machine_map.c",
+        "sdk/octabam/modules/syntiz/machine.c"
+      ],
+      "subscribe": [
+        "ot_machines:wave_machine:50"
+      ],
+      "raise": [
+        "ev_trig_muted"
+      ],
+      "partSignature": {
+        "sig": "WV",
+        "lo": 1,
+        "hi": 15,
+        "flags": [
+          "PROTECT",
+          "POOL",
+          "SETUP_ALL"
+        ]
+      },
+      "version": "0.1.0-experimental",
+      "path": "octatrack-modules/syntiz/0.1.0-experimental.mwrm",
+      "abi": 8,
+      "features": 128,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "name": "syntiz",
+      "module": "970f03ad",
+      "bytes": 54416,
+      "sha256": "f501a6a4ea3c8361427b85302fc77274906b9de2e3dfd6f3c81bc1759767c5e8"
+    },
+    {
       "id": "track-solo",
       "octabam": true,
       "unitName": "Track Solo",
@@ -557,6 +594,40 @@
       "module": "f92f5dae",
       "bytes": 2156,
       "sha256": "50f64eb63cfe62b534988bda28baa4c575eb9d9a6dbc7a81035e7d95cd01cf89",
+      "usbOnly": true
+    },
+    {
+      "id": "pattern-sample-locks",
+      "octabam": true,
+      "reconstruction": true,
+      "usbOnly": true,
+      "version": "0.1.8-experimental",
+      "path": "octatrack-modules/pattern-sample-locks/0.1.8-experimental.mwrm",
+      "name": "SAMPLE LOCKS",
+      "unitName": "SAMPLE LOCKS",
+      "abi": 8,
+      "features": 3,
+      "sites": 3,
+      "copies": 9,
+      "fills": 0,
+      "module": "4bdbfbf9",
+      "bytes": 10048,
+      "sha256": "3e13c46fb0054d05f228b045746453e0c50dbbe52fb53b3c229d598ddd7fed79"
+    },
+    {
+      "id": "amiga",
+      "octabam": true,
+      "abi": 8,
+      "features": 128,
+      "sites": 0,
+      "copies": 0,
+      "fills": 0,
+      "version": "0.1.0-experimental",
+      "name": "Amiga",
+      "module": "d0711972",
+      "bytes": 11316,
+      "sha256": "18cef8b2d5d9152fd12d85d8ca607821776587b6f5b87868f7984eec02373ff3",
+      "path": "octatrack-modules/amiga/0.1.0-experimental.mwrm",
       "usbOnly": true
     }
   ]

@@ -11,9 +11,10 @@ import { findVendorInterface, RuntimeFeature, UsbVendorTransport, type BaseSlots
 import * as formats from '../../../vendor/elekloader/kit/src/formats.ts'
 import type { ElekFile } from '../../../vendor/elekloader/kit/src/elek.ts'
 import { OCTATRACK } from '../../../vendor/elekloader/kit/src/devices.ts'
-import type { OctatrackDiagnostic, DiagnosticReading } from '../../community/octatrack-diagnostics-contract'
+import type { OctatrackDiagnostic, DiagnosticReading, DiagnosticSyncStep } from '../../community/octatrack-diagnostics-contract'
 import { encodeModuleSet } from './set-package.ts'
 import { diagnosticErrorKind } from '../../community/site-diagnostic-events'
+import loaderRefusals from '../../../sdk/runtime/loader-refusals.json' with { type: 'json' }
 
 export type LinkDiagnostic = Omit<OctatrackDiagnostic, 'id' | 'modules'>
 /** Numeric status fields only; exclude the device's free-text culprit name. */
@@ -40,6 +41,7 @@ const setBudget = (rows: number) => Math.max(10000, 500 * rows)
 /** How often a unit another window or app holds is tried again, so it connects once they let go. */
 const BUSY_RETRY_MS = 3000
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+const errorName = (error: unknown) => error instanceof Error || error instanceof DOMException ? error.name : ''
 
 // lib.dom has no WebUSB types; only what the link calls.
 export interface LinkDevice extends ControlDevice {
@@ -61,7 +63,7 @@ export type LinkSession = Pick<UploadSession, 'status' | 'connectionTrusted' | '
 type Connect = (transport: UsbVendorTransport, base: string, options?: { timeoutMs?: number }) => Promise<LinkSession>
 /** A base update over USB, step by step: the new base staged and started from RAM (the trial), then, running, writing its own
  * container to NOR and restarting on it. */
-export type BaseUpdateStep = 'staging' | 'starting' | 'started' | 'writing' | 'reconnecting' | 'restarting' | 'done'
+export type BaseUpdateStep = 'staging' | 'starting' | 'started' | 'writing' | 'saving' | 'reconnecting' | 'restarting' | 'done'
 /** A base write ended without a verdict this many times: the user is told to keep the unit on and try again. */
 const BASE_WRITE_ATTEMPTS = 4
 /** How long a unit may take to come back after a write step failed (a slow NOR erase, then the restart). */
@@ -103,20 +105,22 @@ const REFUSED: Partial<Record<UploadResultName, string>> = {
   hash: 'The module arrived damaged. Nothing changed; send it again.',
   rejected: 'The Octatrack can’t run this module file.',
 }
-/** Why the loader rejected a module (sdk/runtime/loader/loader.h runtime_refusal), read from the base after a "rejected". */
-const REJECTED: Partial<Record<number, string>> = {
-  2: 'There isn’t enough module memory left on the Octatrack. Remove a module, then try again.',
-  3: 'This module changes the same part of the Octatrack as one that’s already installed.',
-  4: 'The Octatrack has no room for another module. Remove one, then try again.',
-  5: 'The Octatrack is still loading module code. Try again in a moment.',
-  6: 'This module needs more DSP time than an effect slot has.',
-  7: 'A track is playing this module’s effect, so the Octatrack can’t change it now. Pick another effect on that track, then try again.',
-  9: 'This version of the module changes a part of the Octatrack that the base now shares between modules. Install its newer version.',
-  10: 'The Octatrack can’t start the key bus this module needs until it restarts. Turn it off and on, then sync again.',
+/** Why the loader rejected a module, read from the base after a "rejected": the musician's text for each of the
+ * loader's refusals (sdk/runtime/loader-refusals.json). A code without one shows the plain text above. */
+const REJECTED: Partial<Record<number, string>> = Object.fromEntries(
+  loaderRefusals.refusals.flatMap(refusal => 'musician' in refusal && refusal.musician ? [[refusal.code, refusal.musician]] : []))
+/** The browser couldn't claim the unit. In the data (11 Nov 2026) that was mostly Modwerk in another tab or browser, which
+ * reads the unit every second while connected, not an Elektron app (they use the MIDI and audio interfaces). On Windows it
+ * can also be the computer: an interface it set up without the base's interface GUID never claims (the same NetworkError),
+ * and only a base with a new USB revision makes Windows set it up again (usb_base.py device()), so that one comes from the card. */
+export function linkBusy(agent = typeof navigator === 'undefined' ? '' : navigator.userAgent) {
+  return 'Modwerk is open in another tab or browser, or another app is using your Octatrack. Close it, and this page connects by itself.' +
+    (/Windows/.test(agent) ? ' If nothing else is open, install the latest base from the card once, and this computer connects from then on.' : '')
 }
+export const LINK_BUSY = linkBusy()
 const UNPLUG = 'Unplug the USB cable to undo anything unfinished, then plug it back in.'
 /** The boot stub started the previous base after the new one failed to start three times (BaseSlots.fellBack). */
-const FELL_BACK = 'The last base update didn’t start, so your Octatrack went back to its previous base. Nothing was lost. Try the update again, and report it in #beta-testers on Discord.'
+const FELL_BACK = 'The last base update didn’t start, so your Octatrack went back to its previous base. Nothing was lost. Try the update again, and if it happens again, report it with Report a problem on the Your Octatrack page.'
 const RECOVERED = 'The Octatrack missed a reply, so nothing changed. Try again.'
 
 /** The unit changed between planning a load and sending it (another tab loaded first). */
@@ -171,6 +175,8 @@ export class OctatrackLink {
   private index?: number
   private transport?: UsbVendorTransport
   private session?: LinkSession
+  /** Where the load in progress stands, for a failure's diagnostic (DIAGNOSTIC_SYNC_STEPS); undefined outside one. */
+  private step?: DiagnosticSyncStep
   /** Changes in the last load: how long its publication or restore may take (setBudget). */
   private rows = 1
   private abort?: AbortController
@@ -227,13 +233,19 @@ export class OctatrackLink {
     if (this.usb) this.set({ status: 'idle' })
     void this.serial(() => this.release(true))
   }
-  /** Chrome's device picker; call from a click. */
+  /** Chrome's device picker; call from a click. A picker closed without an Octatrack is a pre-link diagnostic
+   * (`no-device`), as is a browser without WebUSB (`no-webusb`). */
   async connect() {
     const connection = this.connection
+    if (!this.usb) return this.noWebUsb()
     let device: LinkDevice
-    try { device = await this.usb!.requestDevice({ filters: [{ vendorId: ELEKTRON_VENDOR_ID }] }) } catch { return } // picker closed
+    try { device = await this.usb.requestDevice({ filters: [{ vendorId: ELEKTRON_VENDOR_ID }] }) }
+    catch (error) { if (errorName(error) === 'NotFoundError') this.diagnostic('link_failed', { failure: 'no-device' }); return } // picker closed
     if (connection === this.connection) await this.open(device)
   }
+  /** The member asked for something that needs USB (connecting, the base install guide) in a browser without WebUSB:
+   * reported as a pre-link diagnostic, nothing else happens. */
+  noWebUsb() { if (!this.usb) this.diagnostic('link_failed', { failure: 'no-webusb' }) }
   /** After another tab or app let go of the unit. */
   retry() { const device = this.device; return device ? this.open(device) : this.connect() }
   // An Octatrack restarting after its OS upgrade comes back here, so the install guide's last step completes by itself.
@@ -261,7 +273,8 @@ export class OctatrackLink {
     const connection = this.connection
     await this.release(true)
     if (connection !== this.connection) return
-    this.setFor(connection, { status: 'connecting' })
+    // A retry while another page holds the unit stays 'busy' until it connects, or the card flickers every 3 s.
+    if (this.state.status !== 'busy') this.setFor(connection, { status: 'connecting' })
     this.device = device
     try {
       if (!device.opened) await device.open()
@@ -303,6 +316,8 @@ export class OctatrackLink {
       if (connection !== this.connection) { if (device.opened) await device.close().catch(() => {}); return }
       console.error(error)
       this.device = undefined
+      // Refused by the browser or the system: that reason, standing in for the open failure the state shows next.
+      if (['SecurityError', 'NotAllowedError'].includes(errorName(error))) this.diagnostic('link_failed', { failure: 'permission-denied' })
       this.set({ status: 'idle', notice: { tone: 'error', text: openFailure() } })
     }
   }
@@ -350,6 +365,7 @@ export class OctatrackLink {
     this.set({ status: 'sending', identity: this.state.identity, active: this.state.active, module, progress: 0 })
     this.diagnostic('sync_started', {packages: changes.map(change => ({sha256:sha(change.data),bytes:change.data.length}))})
     let session: LinkSession | undefined
+    this.step = 'session'
     try {
       const wholeSet = !!(this.state.identity?.capabilities?.features && this.state.identity.capabilities.features & RuntimeFeature.moduleSets)
       if (changes.length > 1 && !wholeSet) throw new WholeSetBaseRequired()
@@ -358,31 +374,38 @@ export class OctatrackLink {
       // Another tab loaded while this one waited for the unit: these changes were planned for what was on it before.
       if (planned && session.status.active && session.status.active !== planned) throw new StaleLoadError()
       if (wholeSet) {
+        this.step = 'baseline'
         const baseline = await this.transport!.setIdentity(abort.signal)
         this.live(connection)
+        this.step = 'encode'
         const data = encodeModuleSet(base, baseline, changes.map(change => change.data))
         await this.install(session, data, abort.signal, received => this.set({ ...this.state, progress: received / data.length }), changes.length)
       } else {
         await this.install(session, changes[0].data, abort.signal, received => this.set({ ...this.state, progress: received / total }))
       }
+      this.step = 'trial'
       await session.startTrial()
       this.live(connection)
+      this.step = undefined
       this.startKeepalive()
       this.set({ status: 'trial', identity: this.state.identity, active: session.status.active, module })
     } catch (error) {
       if (connection === this.connection) await this.failed(error, session)
+      this.step = undefined
     }
   }
   /** Stage and publish one package. shortcut: module files do not name their base yet (as in scripts/device.mjs), so
    * the connected base's loader validates the file; bind the package to its base once module files carry one. */
   private async install(session: LinkSession, data: Uint8Array, signal?: AbortSignal, progress?: (received: number) => void, rows = 1) {
     const connection = this.connection
+    this.step = 'stage'
     if (data.length > session.status.capacity) throw new UploadDeviceError({ ...session.status, result: 'limit' })
     // A publication the loader refused as busy (a resident controller quiescing before it can leave) drops the staged
     // package: stage it again. One refused as playing keeps it: publish it again.
     await this.whenStopped(async () => {
       if (!['verified', 'publishing'].includes(session.status.phase)) await session.stage({ base: session.status.base, data, sha256: sha(data) }, { signal, progress })
       signal?.throwIfAborted() // cancelled, unplugged or left while the last chunk's reply was on its way
+      this.step = 'activate'
       await session.activate(setBudget(rows))
     })
     this.live(connection); signal?.throwIfAborted()
@@ -495,6 +518,7 @@ export class OctatrackLink {
         await this.sendBase(writer, container, 180000, fraction => report('writing', fraction), signal, async session => {
           const earlier = wrote
           wrote = true
+          report('saving') // the container is on the unit: from here it writes, with no figure to report until it answers
           await session.activate().catch(async error => {
             const why = await this.writeRefused(error)
             if (why instanceof NothingWritten) wrote = earlier
@@ -558,7 +582,7 @@ export class OctatrackLink {
     return this.serial(async () => {
       this.live(connection)
       if (!this.transport || this.state.status !== 'ready') throw new Error('The Octatrack isn’t idle (' + this.state.status + ').')
-      if (!await this.claim()) throw new Error('Another browser window or app is using the Octatrack.')
+      if (!await this.claim()) throw new Error(LINK_BUSY)
       try {
         const session = await this.connectSession(this.transport, base, { timeoutMs })
         this.live(connection)
@@ -598,13 +622,15 @@ export class OctatrackLink {
       await this.whenStopped(() => session.holdTrial())
       if (keep) await session.accept()
       else await this.whenStopped(() => session.rollback(), Math.max(this.stopWaitMs, setBudget(this.rows)))
-      const unsaved = keep && this.transport && !await waitUntilSaved(this.transport).catch(() => false)
+      const saved = !keep || !this.transport || await waitUntilSaved(this.transport).catch(() => false), unsaved = saved === false
       this.live(connection)
       await session.leaveUploadMode()
       this.live(connection)
       await this.release()
       this.live(connection) // a reply that arrived after the unit went away confirms nothing
       this.ready(unsaved ? { tone: 'error', text: `Kept, but the Octatrack couldn’t save ${module} to the card. It runs until you switch off; load it again to save it.` }
+        // Not saved yet is not a failed save: the base saves by itself once the unit is idle, and Status shows it.
+        : saved === 'pending' ? { tone: 'success', text: `Synced. The Octatrack is still busy and saves ${module} to the card once it is stopped and idle. Leave it switched on until Status shows “Saved and checked”.` }
         : { tone: 'success', text: keep ? `Synced. ${module} stays on your Octatrack, also after a restart.` : 'Undone. Your Octatrack is back to how it was.' },
         session.status.active)
       this.diagnostic(keep && !unsaved ? 'kept' : !keep ? 'undone' : 'sync_failed', unsaved ? {error:'save'} : {})
@@ -639,7 +665,8 @@ export class OctatrackLink {
     if (connection !== this.connection) return
     const label = error instanceof UploadDeviceError ? 'device' : error instanceof UploadUnconfirmedError ? 'transport' : error instanceof StaleLoadError ? 'stale' : error instanceof DOMException && error.name === 'AbortError' ? 'cancelled' : 'unknown'
     // An unclassified failure names its error type (never the message), so the diagnostics can tell a bug from a refusal.
-    this.diagnostic('sync_failed', {error: label, ...(label === 'unknown' ? {kind: diagnosticErrorKind(error)} : {}), ...(error instanceof UploadDeviceError && error.status.result !== 'progress' ? {result:error.status.result} : {}), ...(why !== undefined ? {refusal:why} : {})})
+    const step = this.step
+    this.diagnostic('sync_failed', {error: label, ...(step ? {step} : {}), ...(label === 'unknown' ? {kind: diagnosticErrorKind(error)} : {}), ...(error instanceof UploadDeviceError && error.status.result !== 'progress' ? {result:error.status.result} : {}), ...(why !== undefined ? {refusal:why} : {})})
     this.session = undefined
     await this.release()
     // An untrusted connection that could not be read again leaves the running set unknown.
