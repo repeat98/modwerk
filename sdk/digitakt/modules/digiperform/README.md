@@ -71,7 +71,7 @@ Digi Perform needs core 2.1 and is built for OS 1.53 and 1.54.
 - After the stock chord, metronome, scale, microtiming or retrig screens, press TRIG twice to open the Perform page again.
 - The Perform page opens from the audio tracks’ TRIG page; on a MIDI track TRIG keeps its stock job. SETTINGS > PERFORM EDIT works from any track.
 - The assignments are kept in bytes of each sound record that the firmware saves and loads but does not use itself. Each change is also written into the Digitakt’s working copy of the project, which it saves at power-off and starts from, so they are kept through a power cycle without saving; SAVE PROJECT keeps them in the project. 0.1.3-experimental and earlier lost them at power-on until the project was loaded again.
-- MIDI CC knobs use the track’s own channel and CC number; Perform sets neither, and sends nothing while the track’s CHAN is off. A CC value recorded on a trig on that MIDI track always wins over the knob: the trig sends its value whatever the knob is set to.
+- MIDI CC knobs use the track’s own channel and CC number; Perform sets neither, and sends nothing while the track’s CHAN is off. A CC value recorded on a trig on that MIDI track always wins over the knob, as with the stock CC VALUE knob: the trig sends its value whatever the knob is set to.
 - Turning a CC slot off on its page (FUNC and its knob’s push) unassigns the Perform knob on it; turning the slot on again does not bring the knob back. A CC knob pasted (TRIG + STOP) into a pattern whose MIDI track does not have that slot turned on is left empty, since each pattern’s kit has its own CC setup.
 - Versions before 0.1.4-experimental show a CC knob as empty; its assignment comes back with this version.
 
