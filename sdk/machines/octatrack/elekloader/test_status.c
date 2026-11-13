@@ -191,6 +191,16 @@ int main(void)
     CHECK(!strcmp(refused_name, "POLY8"));
     for (unsigned i = 0; i < 180u; ++i) memory_tick();
     CHECK(open == CLOSED);
+    /* A busy unit's refusal: the meter's mean over its last eight readings, the same box with the measured CPU. */
+    uint32_t modwerk_status_cpu_recent(void); void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu);
+    for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 800u + 20u * i;
+    CHECK(modwerk_status_cpu_recent() == 870u);
+    modwerk_status_cpu_hot(5, "Amiga", 870);
+    CHECK(open == REFUSED && refused_machine && refused_reason == 4 && refused[0] == 5 && refused[1] == 5 && refused_booked == 870 && refused[4] == 0);
+    CHECK(!strcmp(refused_name, "AMIGA"));
+    for (unsigned i = 0; i < 180u; ++i) memory_tick();
+    CHECK(open == CLOSED);
+    for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 0;
     modwerk_load_menu(0); modwerk_status_cpu_refused(2, "Poly8", 800, 266);
     CHECK(open == SHOWN);
     modwerk_status_key(NO, 1); modwerk_status_key(NO, 0);

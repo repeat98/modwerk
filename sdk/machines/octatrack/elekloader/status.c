@@ -648,6 +648,19 @@ void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t book
     for (unsigned i = 0; label && i < 16u && label[i]; ++i) refused_name[i] = label[i] >= 'a' && label[i] <= 'z' ? (char)(label[i] - 32) : label[i];
     open = REFUSED, refused_left = 180u;
 }
+/* machine_registry.c: the unit is already busy (the meter's last four seconds), whatever this machine would add. The
+ * same box: the measured CPU in the bar, no price. */
+uint32_t modwerk_status_cpu_recent(void)
+{
+    uint32_t sum = 0;
+    for (unsigned i = 0; i < 8u; ++i) sum += cpu_recent[i];
+    return sum / 8u;
+}
+void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu)
+{
+    modwerk_status_cpu_refused(track, label, cpu, 0);
+    if (open == REFUSED && refused_reason == 4u && refused[1] == track) refused[0] = 5u;
+}
 static void refused_box(unsigned char *frame)
 {
     for (unsigned i = 0; i < 7u; ++i) surface[i] = ((const volatile uint32_t *)SURFACE)[i];
@@ -679,6 +692,12 @@ static void refused_box(unsigned char *frame)
      * MEM: the core's code words, and the effect's when its code is not on the core yet. Past 100 % is why. Only the
      * bar that refused it carries the effect: the core keeps other Parts' code loaded until it needs the room, so its
      * words plus the effect's can pass 100 % on a DSP FULL that memory never refused (owner's MKII, 20 October 2026). */
+    if (refused[0] == 5u) { /* a busy unit: the meter itself, and what makes room */
+        *e = 0, label(23u, 26u, need);
+        label(23u, 34u, "CPU"), share_bar(frame, 45u, 34u, 40, 6, refused_booked, 0), percent(89u, 34u, refused_booked);
+        label(23u, 42u, "UNIT IS BUSY");
+        return;
+    }
     if (refused_reason == 4u) { /* the CPU budget: one bar, and what makes room */
         const char *t = " NEEDS ";
         while (*t) *e++ = *t++;
