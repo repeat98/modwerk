@@ -1,3 +1,19 @@
+# FM Synth 0.1.3: render path cost
+
+0.1.3 changes `upstream/synth/poly.s` only, and no function: the render path reads the Part, GLIDE and each track's FM test once a frame (`fm_fr_sync`, `fm_fr_native`), and at `sy_render` a track that is not FM, holds no synth voice, has GLIDE off and starts no voice in this call goes to stock's renderer. The 0.1.2 report follows unchanged below.
+
+**Measured on hardware** (the owner's MKII, 13 November 2026, a development twin `55ab6215` of the base at `main` `bd9b5b0df`, one busy project at 126 BPM, fourteen other modules installed, FM Synth on no track; `npm run device -- guard`, `stats` and `profile`, three 5 s windows playing and two stopped):
+
+| Build | Frame interrupt, playing | CPU meter, playing | Frame interrupt, stopped after playing | UI tick chain | Longest frame | Renders skipped in 10 s |
+| --- | --- | --- | --- | --- | --- | --- |
+| No FM Synth | 63.1 % | 73-76 % | 31.8 % | 574 us | 98 % | 0 |
+| 0.1.2 | 76.6 % | 84-88 % | 43.6 % | 1,083 us | 110 % | about 12,200 |
+| 0.1.3 | 73.9 % | 81-85 % | 40.2 % | 942 us | 111 % | about 230 |
+
+The 0.1.3 package was the build `e9ae3e5e…` of this source; it is byte-identical before and after merging `main`. The frame guard's figure is its guarded window; the CPU meter is what the panel feels (docs/MODULE_PERFORMANCE.md).
+
+**Not tested yet on hardware:** FM tracks by ear (notes, chords, glide with LEG), GLIDE on a FLEX and a STATIC sample track, a legacy FMSYNTH sample, a track changed from FM back to FLEX, Part and project save and reload, a restart. The emulator gates of 0.1.2 were not rerun for 0.1.3. Known limit: installed on no track, FM Synth still costs about 11 points of frame interrupt on this project, in its hooks on every sample track and in the base's guard around them.
+
 # FM Synth 0.1.2 regression testing
 
 This is the experimental 0.1.2 update for [#264](https://github.com/repeat98/modwerk/issues/264) and [#273](https://github.com/repeat98/modwerk/issues/273), tested on 8 October 2026. It is included in the catalog. Current hardware, chip worst-case timing and complete stack/memory bounds remain unknown. The owner explicitly authorized this new release and issue closure without current hardware validation: “please release them and close. I green light no hardware validation for now”. This is a new exact-source update approval; the 0.1.1 approval is historical.
