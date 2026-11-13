@@ -40,5 +40,11 @@ The emulator is not hardware evidence: no sound, no exact timing.
   then saw the same lines with the stock OS, without the mod: the OLED's row crosstalk, not the mod. Two attempts
   against them (0.1.3, 0.1.4, never kept) were withdrawn; 0.1.2-experimental is the version kept.
 
-Still to check on the unit: names per pattern (A01 and A02 named differently), page 3/5 (tracks 9-16), names after
-SAVE PROJECT and a reload, and the other pages unchanged.
+2026-11-13, reported by the author (crisp909) on 0.1.2-experimental (working build, elekloader.github.io, core 1.0):
+
+- Names per pattern with PERFORM KIT off: each pattern shows its own names.
+- Internal Mixer 2/5 (tracks 1-8) and 3/5 (tracks 9-16) correct.
+- SAVE PROJECT and a reload: the names come back and show on the mixer.
+- Other pages unchanged.
+
+Still to do: the same on a package built with the pinned toolchain (GCC 16.2.0, Docker).
