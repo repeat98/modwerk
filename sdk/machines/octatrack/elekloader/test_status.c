@@ -57,6 +57,7 @@ volatile uint32_t dl_selection_completed, modwerk_boot_accepted;
 const fx_set modwerk_fx_modules = {{1u << 27 | 1u << 29}};
 int modwerk_dsp_budget(unsigned slot, struct modwerk_dsp_budget *out) { (void)slot, (void)out; return 0; } /* draws only */
 uint32_t modwerk_dsp_booked(unsigned core) { return core; } /* draws only */
+unsigned modwerk_dsp_reads_buffer(unsigned id) { return id == 27u; } /* E-Verb reads one; Tape Echo (15) none */
 /* dsp.c's MODULE LOAD list: `installed` modules. */
 static unsigned installed;
 unsigned modwerk_dsp_module_loads(struct modwerk_module_load *out)
@@ -160,6 +161,10 @@ int main(void)
     CHECK(!modwerk_status_key(0, 1) && open == CLOSED);                 /* a press closes it and goes on to stock */
     dl_refusal[0] = 3, dl_refusal[6] = 3, dl_refusal[7] = 3;
     CHECK(modwerk_status_refused(2) && open == REFUSED && refused[0] == 3); /* a buffer: DSP MEMORY FULL */
+    CHECK(!refused_elsewhere);                                          /* E-Verb reads a buffer: its tracks are full */
+    modwerk_status_key(0, 1); dl_refusal[2] = 15;
+    CHECK(modwerk_status_refused(2) && refused_elsewhere);              /* Tape Echo reads none: another slot's is in the way */
+    dl_refusal[2] = 27;
     for (unsigned i = 0; i < 180u; ++i) memory_tick();
     CHECK(open == CLOSED);                                             /* gone after three seconds */
     dl_refusal[1] = 16; CHECK(!modwerk_status_refused(2));             /* no slot known: the bare popup */
