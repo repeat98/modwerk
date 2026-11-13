@@ -222,11 +222,11 @@
       "Exact-version owner exception; physical reboot/audio unverified",
       "0.3.2: packed settings pass stock's Part check without VECTOR (host test; ot_emu call of the check)"
     ],
-    "evidenceRevision": "645d73da3872ce9111f3e3172114fb33a3660b9f",
+    "evidenceRevision": "3d903dcf6e368010e20215440842e4783d262f46",
     "qualification": {
       "moduleVersion": "0.3.2-experimental",
       "sourceSha256": "871a2b4d1d6ab0829a9a1d8457a75a1d790efe89e785bed6cfd3cebc5c36609c",
-      "imageSha256": "a753ddf67b0fe64e3742b4c89ecf141071eb30757b170173215e92b1b4794d24",
+      "imageSha256": "428d970ac5723ed5f3b26ef45a88deee9e92cf6be398b6ea93c7ee13115dfb23",
       "cycles": [
         {
           "processor": "coldfire",
