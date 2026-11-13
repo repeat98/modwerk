@@ -1,12 +1,12 @@
 # Digi Perform
 
-Modwerk metadata version: `0.1.3-experimental`.
+Modwerk metadata version: `0.1.4-experimental`.
 
 ## Overview
 
-Digi Perform adds a Perform page to the original Digitakt, modelled on the Analog Four’s performance macros. It is the second page of the TRIG page: press TRIG again. Knobs A–H each move one parameter of one track, or the same parameter of all eight audio tracks, as an offset added on top of the sound. The knobs feel like the stock parameter knobs: the same acceleration, push and turn for larger steps, and FUNC and turn to jump between the parameter’s own snap values. A knob picks up the parameter’s current value when the page opens, so nothing jumps.
+Digi Perform adds a Perform page to the original Digitakt, modelled on the Analog Four’s performance macros. It is the second page of the TRIG page: press TRIG again. Knobs A–H each move one parameter of one track, the same parameter of all eight audio tracks, or a MIDI track’s CC value, as an offset added on top of what is stored. The knobs feel like the stock parameter knobs: the same acceleration, push and turn for larger steps, and FUNC and turn to jump between the parameter’s own snap values. A knob picks up the parameter’s current value when the page opens, so nothing jumps.
 
-The eight assignments live in the pattern, so each pattern has its own and they are saved with the project (save the project to keep them; see Saved projects). After a power cycle, load the project again to get them back (see Known problem below). They are made on the page itself with Perform Quick Assign (FUNC and a knob’s push), or in SETTINGS > PERFORM EDIT (Perform Edit).
+The eight assignments live in the pattern, so each pattern has its own. They are saved with the project and kept through a power cycle. They are made on the page itself with Perform Quick Assign (FUNC and a knob’s push), or in SETTINGS > PERFORM EDIT (Perform Edit).
 
 The change is added after the engine has smoothed and modulated the parameter. It is never a parameter lock and never changes the stored value: leaving the page, opening Perform Edit or reloading the pattern puts every parameter back to what the sound stores. With the sequencer playing, selecting another pattern leaves the offsets in place until that pattern starts; then they let go and the knobs show the new pattern’s values.
 
@@ -17,10 +17,10 @@ The change is added after the engine has smoothed and modulated the parameter. I
 | TRIG, pressed again on the TRIG page | Opens the Perform page when you tap it; holding TRIG there is still the stock page’s (its values, copy, paste and clear). Tap TRIG again, or press SRC, FLTR, AMP, LFO or a menu key, to leave. The trig keys and the transport keep working under it. |
 | Knobs A–H | Move the knob’s parameter over its range with the stock encoder acceleration; push and turn for larger steps. The value shows under the knob for a second after it moves. |
 | FUNC + turn a knob | Snaps the parameter to its own stock snap values, with the stock lock after each snap. |
-| FUNC + a knob’s push (Perform Quick Assign) | On an empty knob: turn to choose the track (1–8 or ALL) and push, then turn to choose the parameter and push. NO cancels. On an assigned knob: removes the assignment. |
+| FUNC + a knob’s push (Perform Quick Assign) | On an empty knob: turn to choose the track (1–8, ALL, then the MIDI tracks 9–16 that have a CC VAL slot turned on) and push, then turn to choose the parameter (on a MIDI track, its CC VAL slots that are turned on) and push. NO cancels. On an assigned knob: removes the assignment. |
 | FUNC + NO | Reloads the pattern as stock does; the offsets go and the knobs pick up the reloaded values again. |
 | Hold TRIG + REC / STOP / PLAY | Copy the page (all eight assignments), paste it over the page, or clear every assignment. The same key again undoes a paste or clear. Holding TRIG shows the values instead of the labels after a moment, as on the stock pages, and letting go with no other key brings the labels back and keeps the page. Plain REC, STOP and PLAY work as usual. |
-| NO | Puts any moved knob back to its stored value and stays on the page. TRIG or another page key leaves. |
+| NO | Puts any moved knob back to its stored value (a CC knob sends the stored value) and stays on the page. TRIG or another page key leaves. |
 | FUNC + TRK, FUNC + PTN, FUNC + PAGE, a held step with LEFT/RIGHT or UP/DOWN | Leave the Perform page and open the stock chord setup, metronome, scale, microtiming or retrig screens, which behave exactly as stock. Press TRIG twice to come back. |
 
 Perform Edit (SETTINGS > PERFORM EDIT) lists all eight knobs.
@@ -29,8 +29,8 @@ Perform Edit (SETTINGS > PERFORM EDIT) lists all eight knobs.
 | --- | --- |
 | UP / DOWN or LEVEL | Choose a row; the one under the cursor is shown inverted. |
 | YES, or a knob’s second push | Make an assignment (track 1, SRC.TUNE, +) when the row is empty, or remove it. A first push on a knob only selects its row. |
-| Knob A | The track whose parameter moves, 1–8, then ALL: the same offset on every audio track. |
-| Knob B | The parameter: L1.\* and L2.\*, SRC.\*, FLT.\* or AMP.\* of that track (or of every track). |
+| Knob A | The track whose parameter moves, 1–8, then ALL (the same offset on every audio track), then the MIDI tracks 9–16 that have a CC VAL slot turned on. |
+| Knob B | The parameter: L1.\* and L2.\*, SRC.\*, FLT.\* or AMP.\* of that track (or of every track); on a MIDI track, CC.VAL1–8 for its slots that are turned on. |
 | Knob C | Direction: right for + (the knob raises the parameter), left for − (it lowers it). |
 | NO | Back to the Perform page, or to the SETTINGS list when Perform Edit was opened from there; a second NO leaves SETTINGS. |
 
@@ -42,7 +42,7 @@ Use the access steps below after installing a compatible build. The tutorial giv
 
 TRIG page, press TRIG again; Perform Edit in SETTINGS > PERFORM EDIT
 
-1. On the TRIG page press TRIG again to open the Perform page. Hold FUNC and push an empty knob (Perform Quick Assign): turn to choose the track (1–8 or ALL) and push, then turn to choose the parameter and push. NO cancels.
+1. On the TRIG page press TRIG again to open the Perform page. Hold FUNC and push an empty knob (Perform Quick Assign): turn to choose the track (1–8, ALL, or a MIDI track 9–16) and push, then turn to choose the parameter and push. NO cancels.
 2. Turn a knob to move its parameter; hold FUNC while turning to snap. FUNC and a push on an assigned knob removes it.
 3. SETTINGS > PERFORM EDIT lists all eight knobs and sets each one’s direction.
 4. A tap of TRIG leaves the page, as does any other page key.
@@ -54,19 +54,26 @@ TRIG page, press TRIG again; Perform Edit in SETTINGS > PERFORM EDIT
 3. Play the pattern and turn knob A: track 1’s pitch moves and the value shows under the knob. Hold FUNC while turning to jump between the parameter’s own snap values.
 4. Tap TRIG to leave: the pitch goes back to what the sound stores. The assignment stays in the pattern and is saved with the project, and SETTINGS > PERFORM EDIT lists it.
 
+### MIDI CC knobs
+
+A knob can move a MIDI track’s CC value, the way the knobs on its CC VALUE page (FLTR) do. Set the CC up there first: give the track a channel (SRC, CHAN) and a CC number (SRC, CC SELECT), and turn the slot on with FUNC and its knob’s push. Then, on the Perform page, Quick Assign the knob to that track (9–16, as on the trig keys) and its slot. The knob shows the track’s number and the slot’s name under it: VAL1 to VAL8 as stock, or the name CC Names gives it. Turning sends the stored value plus the knob’s offset on the track’s channel; leaving the page, NO, a pattern change or reassigning the knob sends the stored value again. The stored CC VAL never changes.
+
 ## Compatibility and limitations
 
 Digi Perform needs core 2.1 and is built for OS 1.53 and 1.54.
 
 - It cannot be installed with Digi Matrix: both patch the render site after the LFOs (0x40077eb2), so the configurator never offers them together.
-- Parameters are the sound’s slots 1–45. A knob on an SRC slot uses the track’s machine’s own parameter, as the SRC page shows it: its short name under the knob, its long name and value text in the header, its range and step size, in Perform Quick Assign and Perform Edit too. This covers ONESHOT, WERP, REPITCH, SLICE and module machines (Digi Mono, SOPHIE, NEIGHBOR, POLY, STRING, DIGISLICER, RAM). The module asks the stock SRC page’s own routines for the knob’s track, so a mod that renames a machine’s knobs there is named here too; it patches none of those routines. A knob on an SRC slot the machine does not have is unassigned. ALL-tracks knobs move each track’s parameter by the knob’s position, each within its own range, and skip tracks with nothing in that slot. The other pages’ parameters keep the stock names and the firmware’s own ranges. FLT.DEL to FLT.ROUT are the filter’s second page.
+- Parameters are the sound’s slots 1–45 and a MIDI track’s CC VAL 1–8. A knob on an SRC slot uses the track’s machine’s own parameter, as the SRC page shows it: its short name under the knob, its long name and value text in the header, its range and step size, in Perform Quick Assign and Perform Edit too. This covers ONESHOT, WERP, REPITCH, SLICE and module machines (Digi Mono, SOPHIE, NEIGHBOR, POLY, STRING, DIGISLICER, RAM). The module asks the stock SRC page’s own routines for the knob’s track, so a mod that renames a machine’s knobs there is named here too, and CC Names’ names show on CC knobs; it patches none of those routines. A knob on an SRC slot the machine does not have is unassigned. ALL-tracks knobs move each track’s parameter by the knob’s position, each within its own range, and skip tracks with nothing in that slot. The other pages’ parameters keep the stock names and the firmware’s own ranges. FLT.DEL to FLT.ROUT are the filter’s second page.
 - The header shows Trk1–8 or All, then name=value. When the long name does not fit beside the value, the knob’s short name is used.
 - CPU: heavy Digi Mono machines (ENS, VO, POLY SIN) with Overbridge connected load the Digitakt close to its limit, on stock pages too. The author’s readings there (digihealth’s SYSTEM INFO, FAST AUDIO off): stock page 96%, Perform page while turning a knob 97%, no delay. digihealth’s FAST AUDIO gives more headroom (TESTING.md).
 - One assignment for each knob A–H, and a track’s parameter can belong to one knob only. The assignments are kept in bits of tracks 5 to 8’s spare sound bytes that no other mod here uses.
 - Selecting another pattern while the sequencer is stopped reloads the offsets at once; while it plays, the new pattern’s knobs take over when it starts. This is detected from the audio engine’s own pattern bytes; the author has seen it work on a unit.
 - After the stock chord, metronome, scale, microtiming or retrig screens, press TRIG twice to open the Perform page again.
 - The Perform page opens from the audio tracks’ TRIG page; on a MIDI track TRIG keeps its stock job. SETTINGS > PERFORM EDIT works from any track.
-- The assignments are kept in bytes of each sound record that the firmware saves and loads but does not use itself. They are kept only when you save the project. Known problem: the assignments are written into the saved project, but the Digitakt does not bring them back when it starts. After a power cycle they are missing until you load the project again (SETTINGS > PROJECT > LOAD PROJECT), which restores them. The author found this on a unit; 0.1.2-experimental behaves the same, and a fix is being worked on.
+- The assignments are kept in bytes of each sound record that the firmware saves and loads but does not use itself. Each change is also written into the Digitakt’s working copy of the project, which it saves at power-off and starts from, so they are kept through a power cycle without saving; SAVE PROJECT keeps them in the project. 0.1.3-experimental and earlier lost them at power-on until the project was loaded again.
+- MIDI CC knobs use the track’s own channel and CC number; Perform sets neither, and sends nothing while the track’s CHAN is off. A CC value recorded on a trig on that MIDI track always wins over the knob: the trig sends its value whatever the knob is set to.
+- Turning a CC slot off on its page (FUNC and its knob’s push) unassigns the Perform knob on it; turning the slot on again does not bring the knob back. A CC knob pasted (TRIG + STOP) into a pattern whose MIDI track does not have that slot turned on is left empty, since each pattern’s kit has its own CC setup.
+- Versions before 0.1.4-experimental show a CC knob as empty; its assignment comes back with this version.
 
 ### Changes to stock behaviour
 
@@ -75,8 +82,9 @@ With Digi Perform installed every stock flow works as before, except for these l
 - **A tap of TRIG on the TRIG page** (stock: nothing happens; holding it keeps its stock job, the values and copy, paste and clear) opens the Perform page. This is needed because the page replaces no stock screen; a new key or an own top-level page would have taken a key the Digitakt already uses. TRIG again, or any other page key, leaves it. It is hooked on the TRIG page of the audio tracks only; on a MIDI track TRIG keeps its stock job.
 - **The TRIG page’s body is not drawn while the Perform page is open over it**, which the Perform page covers anyway. This saves the drawing time; the TRIG page draws again as soon as the Perform page is left, with another mod’s TRIG page (Digi Poly’s) too.
 - **A PERFORM EDIT row in SETTINGS**, after the stock rows. YES opens Perform Edit; NO goes back to the SETTINGS list.
+- **MIDI CC knobs send MIDI** on a MIDI track’s channel, through the stock CC send path, only while a CC knob is turned and when it lets go. Stock sends the same message when the CC VALUE page’s knob turns; nothing is sent while no CC knob is assigned.
 - **Inside the Perform page** the knobs A–H, FUNC and a knob’s push, and hold TRIG + REC / STOP / PLAY work as described above. FUNC + TRK, FUNC + PTN, FUNC + PAGE and a held step with an arrow leave the page, so the stock chord setup, metronome, scale, microtiming and retrig screens are the stock ones, unchanged.
-- **Saved projects:** save the project to keep your assignments. They are stored with the pattern's sounds. At power-on they are not restored: load the project again after starting (the known problem above). The assignments are kept in spare bits of the sounds on tracks 5 to 8 (byte 3 bits 0–6, bytes 4 and 5), which the firmware saves and loads but does not use itself. These bytes travel with the sound: a sound saved from track 5–8 to the pool, or copied onto another track, carries the bits along. Loading a sound onto tracks 5–8 puts the pattern’s assignments back, and the module checks its own marker before it trusts the bits; on tracks 1–4 Digi EQ and Digi Poly guard their own bytes the same way. A project saved with assignments and loaded on a build without Digi Perform should ignore them. Neither the copy case nor the build change is tested yet.
+- **Saved projects and power-on:** the assignments are stored with the pattern's sounds and saved with the project, and each change is also written into the working copy of the project the Digitakt starts from, so a power cycle keeps them. The assignments are kept in spare bits of the sounds on tracks 5 to 8 (byte 3 bits 0–6, bytes 4 and 5), which the firmware saves and loads but does not use itself. These bytes travel with the sound: a sound saved from track 5–8 to the pool, or copied onto another track, carries the bits along. Loading a sound onto tracks 5–8 puts the pattern’s assignments back, and the module checks its own marker before it trusts the bits; on tracks 1–4 Digi EQ and Digi Poly guard their own bytes the same way. A project saved with assignments and loaded on a build without Digi Perform should ignore them. Neither the copy case nor the build change is tested yet.
 
 The effect on a parameter is never stored: removing the module or leaving the page puts every parameter back to what the sound stores.
 
@@ -93,7 +101,7 @@ The module is under GPL-3.0-or-later ([LICENSE](LICENSE)). Capture rights are de
 
 ## Screens and audio
 
-Real firmware-rendered emulator captures on OS 1.54. The [capture record](media/capture.json) includes source and build identities, panel inputs, timestamps and PNG hashes. [Capture rights](media/LICENSE.md) preserve the underlying interface rights. The [thumbnail](media/thumbnail.svg) is an illustration. No audio demonstration is claimed. The capture runs without the audio engine, so the knobs show their assignment but not live values.
+Real firmware-rendered emulator captures on OS 1.54, 0.1.4-experimental. The [capture record](media/capture.json) includes source and build identities, panel inputs, timestamps and PNG hashes. [Capture rights](media/LICENSE.md) preserve the underlying interface rights. The [thumbnail](media/thumbnail.svg) is an illustration. No audio demonstration is claimed. The capture runs without the audio engine, so the knobs show their assignment but not live values.
 
 ![The Perform page with eight empty knobs](media/perform-page.png)
 
@@ -103,14 +111,14 @@ The Perform page: TRIG pressed again on the TRIG page.
 
 Perform Quick Assign: FUNC and a knob’s push, then turn to choose the track.
 
-![Knobs A, C and D for all tracks (TUNE, LOOP, F.TYP), B and E to G for tracks 8, 3, 2 and 2, H empty](media/assigned.png)
+![Knobs A and C for all tracks (TUNE, LEN), B for MIDI track 9’s CC (VAL3), D to G for tracks 8, 3, 2 and 2, H empty](media/assigned.png)
 
-Seven knobs assigned: A, C and D move a parameter of all tracks, B and E to G one track’s.
+Seven knobs assigned: A and C move a parameter of all tracks, B a MIDI track’s CC, D to G one track’s.
 
 ![The SETTINGS list with the PERFORM EDIT row selected](media/settings.png)
 
 SETTINGS > PERFORM EDIT is the last row of the SETTINGS list.
 
-![Perform Mode Edit with rows A, C and D set to ALL, row B to T8 SRC.SAMP, row E to T3 SRC.PLAY and row F to T2 SRC.PLAY](media/perform-edit.png)
+![Perform Mode Edit with rows A and C set to ALL, row B to T9 CC.VAL3, row D to T8 FLT.TYPE, row E to T3 SRC.PLAY and row F to T2 SRC.PLAY](media/perform-edit.png)
 
-Perform Edit lists the knobs: A, C and D move one parameter of all tracks, B, E and F of tracks 8, 3 and 2, all direction +.
+Perform Edit lists the knobs: A and C move one parameter of all tracks, B a CC of MIDI track 9, D to F a parameter of tracks 8, 3 and 2, all direction +.

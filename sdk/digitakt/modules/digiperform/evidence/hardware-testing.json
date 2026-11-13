@@ -9,12 +9,15 @@
   "release": "1.53 and 1.54",
   "durationMinutes": null,
   "packages": {
-    "note": "The 5.0f images were linked from packages built from the same source as the released 0.1.4-experimental packages; they differ in the version text (the tested ones read 0.1.3-experimental) and two added claim names. Released hashes are listed below once built.",
+    "note": "The 5.0f images were linked from packages built from this source whose code, sites and relocations are the same as the released 0.1.4-experimental packages; they differ only in the version text (the tested ones read 0.1.3-experimental), the description and two added claim names (compared on both releases).",
     "tested": {
       "1.53": "f57672cdd7865c2852f60e1abdf1fc9e3460a45bbcfa509305934ec84b65a8ea",
       "1.54": "81c09838624637a6a53ceb07133e8248d778794e0a8fab53a19ce70c579cbf3c"
     },
-    "released": {}
+    "released": {
+      "1.53": "f3700850477ecf52dd821e0a601a9425bf1ea21a8daf5c7827077ea12c4e0cc6",
+      "1.54": "1a6a5fe353b2d35e16e5a7370457564b2f21724b26b28f8bba9384a197164062"
+    }
   },
   "builds": [
     {

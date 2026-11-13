@@ -267,7 +267,7 @@
         "type": "emulator",
         "release": "1.54",
         "moduleVersion": "0.1.4-experimental",
-        "imageSha256": "76cd3b079851bd6f57e8d2d94424cae8a9ef96cec6b7040ee3c1f84d36da0d00",
+        "imageSha256": "98e36f97d692363b6d34a161578591f2ed1645fbcfb25c1e0482136a82afdfaa",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     },
@@ -283,15 +283,15 @@
         "type": "emulator",
         "release": "1.54",
         "moduleVersion": "0.1.4-experimental",
-        "imageSha256": "76cd3b079851bd6f57e8d2d94424cae8a9ef96cec6b7040ee3c1f84d36da0d00",
+        "imageSha256": "98e36f97d692363b6d34a161578591f2ed1645fbcfb25c1e0482136a82afdfaa",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     },
     {
       "path": "media/assigned.png",
       "kind": "screenshot",
-      "caption": "Seven knobs assigned: A, C and D move a parameter of all tracks, B and E to G one track’s",
-      "alt": "Knobs A, C and D show the letter A for all tracks, with TUNE, LOOP and F.TYP under them; B, E, F and G show the track numbers 8, 3, 2 and 2 with SAMP, PLAY, PLAY and SAMP; knob H is empty, on the Digitakt monochrome LCD",
+      "caption": "Seven knobs assigned: A and C move a parameter of all tracks, B a MIDI track’s CC, D to G one track’s",
+      "alt": "Knobs A and C show the letter A for all tracks, with TUNE and LEN under them; B shows 9 with VAL3, a MIDI track’s CC; D, E, F and G show the track numbers 8, 3, 2 and 2 with F.TYP, PLAY, PLAY and STRT; knob H is empty, on the Digitakt monochrome LCD",
       "credit": "Modwerk documentation capture; Elektron interface; ROMsets module",
       "license": "LicenseRef-Digi-UI-Documentation",
       "source": "original",
@@ -299,7 +299,7 @@
         "type": "emulator",
         "release": "1.54",
         "moduleVersion": "0.1.4-experimental",
-        "imageSha256": "76cd3b079851bd6f57e8d2d94424cae8a9ef96cec6b7040ee3c1f84d36da0d00",
+        "imageSha256": "98e36f97d692363b6d34a161578591f2ed1645fbcfb25c1e0482136a82afdfaa",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     },
@@ -315,15 +315,15 @@
         "type": "emulator",
         "release": "1.54",
         "moduleVersion": "0.1.4-experimental",
-        "imageSha256": "76cd3b079851bd6f57e8d2d94424cae8a9ef96cec6b7040ee3c1f84d36da0d00",
+        "imageSha256": "98e36f97d692363b6d34a161578591f2ed1645fbcfb25c1e0482136a82afdfaa",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     },
     {
       "path": "media/perform-edit.png",
       "kind": "screenshot",
-      "caption": "Perform Edit lists the knobs: A, C and D move one parameter of all tracks, B, E and F of tracks 8, 3 and 2, all direction +",
-      "alt": "Perform Mode Edit with rows A, C and D set to ALL with SRC.TUNE, SRC.LOOP and FLT.TYPE, row B to T8 SRC.SAMP, row E to T3 SRC.PLAY and row F to T2 SRC.PLAY, all with +, on the Digitakt monochrome LCD",
+      "caption": "Perform Edit lists the knobs: A and C move one parameter of all tracks, B a CC of MIDI track 9, D to F a parameter of tracks 8, 3 and 2, all direction +",
+      "alt": "Perform Mode Edit with rows A and C set to ALL with SRC.TUNE and SRC.LEN, row B to T9 CC.VAL3, row D to T8 FLT.TYPE, row E to T3 SRC.PLAY and row F to T2 SRC.PLAY, all with +, on the Digitakt monochrome LCD",
       "credit": "Modwerk documentation capture; Elektron interface; ROMsets module",
       "license": "LicenseRef-Digi-UI-Documentation",
       "source": "original",
@@ -331,7 +331,7 @@
         "type": "emulator",
         "release": "1.54",
         "moduleVersion": "0.1.4-experimental",
-        "imageSha256": "76cd3b079851bd6f57e8d2d94424cae8a9ef96cec6b7040ee3c1f84d36da0d00",
+        "imageSha256": "98e36f97d692363b6d34a161578591f2ed1645fbcfb25c1e0482136a82afdfaa",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
     }
