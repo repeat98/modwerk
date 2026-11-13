@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "track-names",
   "name": "Track Names",
-  "version": "0.1.2-experimental",
+  "version": "0.1.3-experimental",
   "machine": "digitakt-ii",
   "category": "system",
   "exclusive": false,
@@ -71,7 +71,7 @@
   },
   "evidence": {
     "tier": "none",
-    "moduleVersion": "0.1.2-experimental",
+    "moduleVersion": "0.1.3-experimental",
     "sourceSha256": null,
     "reports": [],
     "hardware": null,

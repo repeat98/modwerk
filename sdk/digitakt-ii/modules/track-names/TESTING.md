@@ -34,7 +34,11 @@ The emulator is not hardware evidence: no sound, no exact timing.
   Reported by the author on 0.1.1: with the bank pop-up open, track 4 (half under it) showed TRK4 instead of
   its name. Fixed in 0.1.2-experimental: the pop-up's frame is found (its long top and bottom edges, plus the one
   pixel the OS clears around it) and names and badges are clipped to it. Emulator: both PTN pop-ups, the name
-  half under the pop-up is cut at its edge, and after closing all names are back. Not yet re-tested on the unit.
+  half under the pop-up is cut at its edge, and after closing all names are back.
+  Reported by the author on 0.1.2: a faint 1-pixel line right of the pop-up's frame. Emulator: the right column of
+  track 8's (or 4's) lit badge box stood out beside the frame. Fixed in 0.1.3-experimental: a badge the pop-up
+  touches is not drawn. Emulator: both PTN pop-ups, only stock ticks and the clipped name beside the frame. Not yet
+  re-tested on the unit.
 
 Still to check on the unit: names per pattern (A01 and A02 named differently), page 3/5 (tracks 9-16), names after
 SAVE PROJECT and a reload, and the other pages unchanged.

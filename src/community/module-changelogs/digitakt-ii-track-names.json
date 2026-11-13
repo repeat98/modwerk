@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.1.3-experimental",
+    "date": "2026-11-13",
+    "changes": [
+      "Fix: no thin line beside a pop-up: a track number the pop-up partly covers is not drawn at all."
+    ]
+  },
+  {
     "version": "0.1.2-experimental",
     "date": "2026-11-13",
     "changes": [

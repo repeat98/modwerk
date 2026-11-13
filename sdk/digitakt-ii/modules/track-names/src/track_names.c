@@ -258,9 +258,26 @@ static void short_name(const char *s, char *out)
     out[n] = 0;
 }
 
+#define BADGE_X2 28                            // the badge's right column in the first cell
+static int badge_x1(int track) { return BADGE_X2 - (track >= 10 ? 7 : 3) - 1; }
+
+// Does the pop-up cover any of this badge? A badge is drawn whole or not at all: a sliver of its lit
+// box beside a pop-up would look like a second frame.
+static int badge_touches_box(const box_t *b, int k, int row, int track)
+{
+    int y0 = row ? 39 : 12;
+    if (!b->on)
+        return 0;
+    for (int x = badge_x1(track) + COL_X(k); x <= BADGE_X2 + COL_X(k); x++)
+        for (int r = 0; r < 7; r++)
+            if (in_box(b, x, y0 + r))
+                return 1;
+    return 0;
+}
+
 static void badge(void *bmp, int k, int row, int track)
 {
-    int x2 = 28 + COL_X(k), w = track >= 10 ? 7 : 3, x1 = x2 - w - 1, top = BADGE_TOP(row);
+    int x2 = BADGE_X2 + COL_X(k), x1 = badge_x1(track) + COL_X(k), top = BADGE_TOP(row);
     tn_fillrect(bmp, x1, top - 6, x2, top, 0);
     tn_textf(bmp, tn_font_narrow, x1 + 1, top - 5, 0, "%d", track);
     tn_fillrect(bmp, x1, top - 6, x2, top, -1);   // invert: dark digits on a lit box
@@ -312,14 +329,10 @@ void tn_draw(void *bmp, void *ctrl)
     for (int c = 0; c < CELLS; c++) {
         int track = (page - 1) * CELLS + c, k = c & 3, row = c >> 2;
         int lx0 = LABEL_X0 + COL_X(k), lx1 = lx0 + LABEL_W - 1, ly0 = row ? 59 : 32;
-        int bx0 = 20 + COL_X(k), bx1 = 29 + COL_X(k), by0 = row ? 39 : 12;
         const char *name = (const char *)(TN_KITS + (uint32_t)kit * TN_KIT_SIZE + TN_NAME + (uint32_t)track * TN_TRACK_STRIDE);
         char shown[SHOWN + 1];
-        if (badge_place_is_stock(d, &box, k, row)) {
-            save_region(d, bx0, bx1, by0, 7);
+        if (!badge_touches_box(&box, k, row, track + 1) && badge_place_is_stock(d, &box, k, row))
             badge(bmp, k, row, track + 1);
-            restore_under_box(d, &box, bx0, bx1, by0, 7);
-        }
         if (!name[0] || is_default(name) || !label_is_stock(d, &box, track, k, row))
             continue;
         short_name(name, shown);
