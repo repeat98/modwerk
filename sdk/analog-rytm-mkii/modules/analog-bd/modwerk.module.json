@@ -82,11 +82,25 @@
     }
   },
   "evidence": {
-    "tier": "none",
+    "tier": "author-hardware",
     "moduleVersion": "0.2.0-experimental",
-    "sourceSha256": null,
-    "reports": [],
-    "hardware": null,
+    "sourceSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-12",
+      "tester": "npp1993",
+      "durationMinutes": null,
+      "summary": "0.2.0 on npp1993's Analog Rytm MKII, OS 1.74, in a scratch project. By hand (VB01, 12 Nov 2026, the published base 3ece243b with this module, flashed with Transfer): chosen from the BD section of BD's machine list and offered on SD and BT only; B reads TON and the bar 808, a tap gives SWT and 909 and back; a kit saved as 909 reloads as 909; a 909 sound lock on an 808 track plays the 909 on that step and the label follows; project save and power cycle keep the type, the lock and the sound. By the author's automated rig on a development base (BL01, 11 Nov 2026, RAM boot): MIDI notes and sequencer trigs play; 808 and 909 knob sweeps follow the host model (909 TUN within 0.0 % over 36-61 Hz); stress with the 909 on N tracks hit together: three voices clean, four overran.",
+      "limitations": [
+        "The rig's knob sweeps and stress ran on a development base with a USB test link, not the published base; the by-hand run on the published base did not repeat them.",
+        "Not run on a unit: pads and pressure, the +Drive, an external clock, how it sounds beyond the measures; the 909's DEC and velocity-to-click were not judged by the rig.",
+        "The measured load is the 0.1.0 808 on a telemetry base; the 0.2.0 909's cost on a unit is known only as 'three voices fit, four overran'."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {

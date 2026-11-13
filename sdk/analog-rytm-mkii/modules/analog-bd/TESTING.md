@@ -19,6 +19,10 @@ The bases named below are development builds of the Modwerk base with the digita
 - AB02 (sha256 cebd12bf…): core-ar2 0.7 + analog-bd 0.1.0-experimental, -O2, solo. Its mod-storage layout is its own: don't save over projects you keep while it is on the unit.
 - AB01 (c0e6a87e): withdrawn before any unit test. A guard lost in the debug clean-up let any key's press and release flip 808/909.
 
+## Source fingerprint, 0.2.0
+
+`evidence.sourceSha256` is the sha256 of `sha256sum build.json src/machine.c src/ab_dsp.c src/ab_desk.s src/ab_body.s src/ab_body808.s src/ab_noise.s src/ab_click.s src/ab_tone808.s src/ab_trig808.s src/ab_dsp.h src/tables.h` (in that order): `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`.
+
 ## Memory, 0.2.0 (12 November 2026)
 
 22,484 bytes of the 128 KiB shared mod area (code, the 909's and 808's tables and the voice states of eight voices): `ramSpare` from `scripts/link-image.mjs` on the published base 3ece243b, 93,732 bytes with no module and 71,248 with this one.
