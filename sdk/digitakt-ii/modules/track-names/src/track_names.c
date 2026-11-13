@@ -107,32 +107,121 @@ static int pixel(const uint8_t *d, int x, int top_row)     // top_row counts fro
     return (d[8 * x + (yb >> 3)] >> (7 - (yb & 7))) & 1;
 }
 
-// Is this cell's label still the stock TRKn, untouched by a pop-up the OS drew over the page?
-static int label_is_stock(const uint8_t *d, int track, int k, int row)
+// A pop-up the OS drew over the page (pattern select, for example) is a framed box: its top and bottom
+// edges are the only long horizontal lines below the mixer's header. Found here as a rectangle in
+// screen rows (counted from the top); names and badges are clipped to stay outside it.
+typedef struct {
+    int x0, y0, x1, y1, on;
+} box_t;
+
+#define POPUP_MARGIN 2
+#define EDGE_MIN 20                            // the mixer itself has no lit run this long below row 10
+
+static void find_popup(const uint8_t *d, box_t *b)
 {
-    int y0 = row ? 59 : 32;
-    for (int i = 0; i < LABEL_W; i++) {
-        int x = LABEL_X0 + COL_X(k) + i, v = 0;
-        for (int r = 0; r < 5; r++)
-            v = v << 1 | pixel(d, x, y0 + r);
-        if (v != stock_label[track][i])
-            return 0;
+    b->on = 0;
+    for (int y = 10; y < 64; y++) {
+        int x = 0;
+        while (x < 128) {
+            int s;
+            if (!pixel(d, x, y)) {
+                x++;
+                continue;
+            }
+            for (s = x; x < 128 && pixel(d, x, y); x++)
+                ;
+            if (x - s < EDGE_MIN)
+                continue;
+            if (!b->on)
+                b->on = 1, b->x0 = s, b->x1 = x - 1, b->y0 = b->y1 = y;
+            else {
+                if (s < b->x0)
+                    b->x0 = s;
+                if (x - 1 > b->x1)
+                    b->x1 = x - 1;
+                b->y1 = y;
+            }
+        }
     }
-    return 1;
+    if (b->on && b->y1 == b->y0)
+        b->y1 = 63;                            // only its top edge is on the screen
+    if (b->on)                                 // the OS clears a pixel around the frame: keep 2 clear
+        b->x0 -= POPUP_MARGIN, b->x1 += POPUP_MARGIN, b->y0 -= POPUP_MARGIN, b->y1 += POPUP_MARGIN;
 }
 
-// Is the badge's place (columns 20..29, rows 12..18 or 39..45) as stock draws it: blank but for the
-// fader scale's two left ticks at columns 26 and 27, rows 13 and 17 (40 and 44)?
-static int badge_place_is_stock(const uint8_t *d, int k, int row)
+static int in_box(const box_t *b, int x, int y)
 {
-    int y0 = row ? 39 : 12;
+    return b->on && x >= b->x0 && x <= b->x1 && y >= b->y0 && y <= b->y1;
+}
+
+static void set_pixel(uint8_t *d, int x, int top_row, int v)
+{
+    int yb = 63 - top_row;
+    uint8_t m = (uint8_t)(0x80 >> (yb & 7));
+    if (v)
+        d[8 * x + (yb >> 3)] |= m;
+    else
+        d[8 * x + (yb >> 3)] &= (uint8_t)~m;
+}
+
+// Region x0..x1, rows y0..y0+h-1: saved before drawing, and put back where the pop-up is.
+#define SAVE_MAX (LABEL_W * 7)
+static uint8_t saved[SAVE_MAX];
+
+static void save_region(const uint8_t *d, int x0, int x1, int y0, int h)
+{
+    int n = 0;
+    for (int x = x0; x <= x1; x++)
+        for (int r = 0; r < h && n < SAVE_MAX; r++)
+            saved[n++] = (uint8_t)pixel(d, x, y0 + r);
+}
+
+static void restore_under_box(uint8_t *d, const box_t *b, int x0, int x1, int y0, int h)
+{
+    int n = 0;
+    if (!b->on)
+        return;
+    for (int x = x0; x <= x1; x++)
+        for (int r = 0; r < h && n < SAVE_MAX; r++, n++)
+            if (in_box(b, x, y0 + r))
+                set_pixel(d, x, y0 + r, saved[n]);
+}
+
+// Is this cell's label the stock TRKn wherever the pop-up does not cover it, and is any of it in view?
+static int label_is_stock(const uint8_t *d, const box_t *b, int track, int k, int row)
+{
+    int y0 = row ? 59 : 32, seen = 0;
+    for (int i = 0; i < LABEL_W; i++) {
+        int x = LABEL_X0 + COL_X(k) + i, v = 0, covered = 0;
+        for (int r = 0; r < 5; r++) {
+            covered |= in_box(b, x, y0 + r);
+            v = v << 1 | pixel(d, x, y0 + r);
+        }
+        if (covered)
+            continue;
+        if (v != stock_label[track][i])
+            return 0;
+        seen = 1;
+    }
+    return seen;
+}
+
+// Is the badge's place (columns 20..29, rows 12..18 or 39..45) as stock draws it wherever the pop-up does
+// not cover it: blank but for the fader scale's two left ticks at columns 26 and 27, rows 13 and 17
+// (40 and 44)? And is any of it in view?
+static int badge_place_is_stock(const uint8_t *d, const box_t *b, int k, int row)
+{
+    int y0 = row ? 39 : 12, seen = 0;
     for (int x = 20; x <= 29; x++)
         for (int r = 0; r < 7; r++) {
             int tick = (x == 26 || x == 27) && (r == 1 || r == 5);
+            if (in_box(b, x + COL_X(k), y0 + r))
+                continue;
             if (pixel(d, x + COL_X(k), y0 + r) != tick)
                 return 0;
+            seen = 1;
         }
-    return 1;
+    return seen;
 }
 
 static int kit_on(void)
@@ -208,27 +297,37 @@ static void debug_line(void *bmp, int page)
 void tn_draw(void *bmp, void *ctrl)
 {
     int page, kit;
+    uint8_t *d;
+    box_t box;
     (void)ctrl;
 
     page = on_mixer(bmp);
 #ifdef TN_DEBUG
     debug_line(bmp, page);
 #endif
-    const uint8_t *d = frame_data(bmp);
+    d = (uint8_t *)frame_data(bmp);
     if (!page || !d || (kit = kit_on()) < 0)
         return;
+    find_popup(d, &box);
     for (int c = 0; c < CELLS; c++) {
         int track = (page - 1) * CELLS + c, k = c & 3, row = c >> 2;
+        int lx0 = LABEL_X0 + COL_X(k), lx1 = lx0 + LABEL_W - 1, ly0 = row ? 59 : 32;
+        int bx0 = 20 + COL_X(k), bx1 = 29 + COL_X(k), by0 = row ? 39 : 12;
         const char *name = (const char *)(TN_KITS + (uint32_t)kit * TN_KIT_SIZE + TN_NAME + (uint32_t)track * TN_TRACK_STRIDE);
         char shown[SHOWN + 1];
-        if (badge_place_is_stock(d, k, row))
+        if (badge_place_is_stock(d, &box, k, row)) {
+            save_region(d, bx0, bx1, by0, 7);
             badge(bmp, k, row, track + 1);
-        if (!name[0] || is_default(name) || !label_is_stock(d, track, k, row))
+            restore_under_box(d, &box, bx0, bx1, by0, 7);
+        }
+        if (!name[0] || is_default(name) || !label_is_stock(d, &box, track, k, row))
             continue;
         short_name(name, shown);
         if (!shown[0])
             continue;
-        tn_fillrect(bmp, 21 + COL_X(k), LABEL_Y(row), 46 + COL_X(k), LABEL_Y(row) + 4, 0);
+        save_region(d, lx0, lx1, ly0, 5);
+        tn_fillrect(bmp, lx0, LABEL_Y(row), lx1, LABEL_Y(row) + 4, 0);
         tn_textf(bmp, tn_font, FADER_MID + COL_X(k), LABEL_Y(row), 2, "%s", shown);
+        restore_under_box(d, &box, lx0, lx1, ly0, 5);
     }
 }

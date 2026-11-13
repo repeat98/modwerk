@@ -1,5 +1,12 @@
 [
   {
+    "version": "0.1.2-experimental",
+    "date": "2026-11-13",
+    "changes": [
+      "Fix: a name half under a pop-up no longer turns back into TRKn; it is cut at the pop-up's edge, as stock labels are."
+    ]
+  },
+  {
     "version": "0.1.1-experimental",
     "date": "2026-11-13",
     "changes": [
