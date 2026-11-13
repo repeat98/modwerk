@@ -197,7 +197,8 @@ and stock modifier release, and stop on a mismatch.
 - **Samples.** FUNC+SRC opens SRC SETUP on the machine list; RIGHT enters the slot list; YES on a slot
   assigns it; YES on an empty slot opens the card browser (LIVE/AUDIO). Parts store each track's slot.
 - **Modwerk's pages.** PROJ's fifth category, MODWERK (from S55, 12 October 2026), lists LOAD (the status dialog,
-  also CUE+PROJ from anywhere), MODULE LOAD, MISSING and SELF TEST; NO closes each. The list keeps its cursor from
+  also CUE+PROJ from anywhere), MODULE LOAD, MISSING, SELF TEST and USB AUDIO (UP and DOWN choose what the unit
+  sends, YES takes it); NO closes each. The list keeps its cursor from
   last time, like stock's, so go UP to its top before counting rows down. On older bases these were SYSTEM >
   MODWERK and MODWERK TEST.
 

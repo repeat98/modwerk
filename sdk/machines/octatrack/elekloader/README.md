@@ -352,6 +352,20 @@ recognize an expanded encoding. This does not add runtime settings or
 admit the USB Audio catalogue module to USB sync. POST still needs its own
 signal/ramp/scene, EMAC preservation, timing and physical qualification.
 
+PROJ > MODWERK > USB AUDIO (`status.c`, issue 1512) lets a player choose on the
+unit what the installed layout sends while a host has the stream open: ALL
+CHANNELS, MAIN + CUE ONLY (the twenty-channel layout at high speed: the
+sixteen track words of a frame are cleared, not copied) or OFF (the frame hook
+takes its no-host path and EP3 goes down; the host's alt 1 request is kept, so
+another choice resumes the stream). `audio_switch` in `base_usb_functions.py`
+inserts the reads at four guarded seams of the imported producer, which also
+writes the choices its layout offers; a base without USB Audio offers none.
+The descriptors and packet sizes never change, so a host keeps the channel
+count the base was built with and nothing re-enumerates. The choice is kept in
+battery RAM (`battery-ram.json`). Host tests cover the page and that every
+layout assembles; the producer's behaviour and the CPU it frees are not yet
+measured on a unit.
+
 For offline development, raw `build_core.py --usb-audio-profiles` source-links
 all six outputs plus audio-off in one base. It requires `--dsp-loader`,
 `--usb-midi` and an explicit `--usb-audio` initial layout, and refuses development

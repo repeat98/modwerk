@@ -155,6 +155,53 @@ def packet_readiness(text):
     return macro + packet + seam + cushion
 
 
+def audio_switch(text, key):
+    """The player's choice on the unit (status.c, PROJ > MODWERK > USB AUDIO), read by the producer every frame.
+
+    OFF: the frame hook takes its no-host path and the endpoint follows a request of alt 0, while the host's own
+    request stays as it was, so the stream comes back when the player chooses again. MAIN + CUE ONLY (the
+    twenty-channel layout, at high speed: full speed sends the tracks' sum): each frame's sixteen track words
+    are cleared instead of copied. The hook also writes which choices its layout offers (bit 0 all, 1 MAIN + CUE
+    only, 2 off). The descriptors, the packet sizes and the import stay as they are.
+    """
+    if key not in AUDIO_LAYOUTS or 'modwerk_usb_audio' in text or '.Lmw_' in text:
+        raise ValueError('Choose an explicit supported USB output layout for an unswitched producer.')
+    wanted = ('    tstb    usbaudio_alt\n    bnes    .Lproduce\n'
+              "    tstb    aud_force               | the harness's switch (usb_align): produce\n"
+              '    bnes    .Lproduce               | with no host and EP3 left alone\n')
+    endpoint = '.Lep3:\n    mvzb    usbaudio_alt,%d0\n'
+    tracks = '    moveq   #RB_TRACKS-1,%d7\n2:  movel   %a0@,%d2                | track L\n'
+    after = ('    lea     %a0@(128),%a0           | next track, same frame\n    subql   #1,%d7\n    bpl     2b\n'
+             '.if USB_LAYOUT == LAYOUT_TRACKS_MAIN_CUE\n')
+    if any(text.count(seam) != 1 for seam in (wanted, endpoint, tracks, after)):
+        raise ValueError('The authored audio producer changed; review the on-device switch.')
+    caps = 7 if AUDIO_LAYOUTS[key] == 0 else 5
+    text = text.replace(wanted, """    moveq   #%d,%%d0                | what this layout offers (status.c)
+    moveb   %%d0,modwerk_usb_audio_caps
+    tstb    modwerk_usb_audio_off   | the player's OFF: as with no host
+    bnes    .Lmw_idle
+""" % caps + wanted + '.Lmw_idle:\n')
+    text = text.replace(endpoint, endpoint + """    tstb    modwerk_usb_audio_off   | OFF: the endpoint goes down, the request stays
+    beqs    .Lmw_wanted
+    moveq   #0,%d0
+.Lmw_wanted:
+""")
+    text = text.replace(tracks, """.if USB_LAYOUT == LAYOUT_TRACKS_MAIN_CUE
+    tstb    modwerk_usb_audio_mix   | MAIN + CUE ONLY: silent track channels
+    beqs    .Lmw_tracks
+    movel   %a1,%d0
+    beqs    .Lmw_tracks             | full speed sends the tracks' sum: copy them
+    .rept 16
+    clrl    %a3@+
+    .endr
+    bra     .Lmw_tracks_done
+.Lmw_tracks:
+.endif
+""" + tracks)
+    return text.replace(after, after.replace('.if USB_LAYOUT', '.Lmw_tracks_done:\n.endif\n.if USB_LAYOUT', 1).replace(
+        '    bpl     2b\n', '    bpl     2b\n.if USB_LAYOUT == LAYOUT_TRACKS_MAIN_CUE\n', 1))
+
+
 def midi_source(text):
     """The MIDI ISR delegates its stock tail to the base's vendor poll owner."""
     before = '    jmp     0x4001e60c'

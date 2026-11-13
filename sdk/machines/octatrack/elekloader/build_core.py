@@ -1871,6 +1871,8 @@ def main():
             audio_text = usb_functions.audio_source(audio_path.read_text())
             if args.usb_audio != usb_post.LAYOUT:
                 audio_text = usb_functions.packet_readiness(audio_text)
+            if args.dsp_loader:  # PROJ > MODWERK > USB AUDIO (status.c holds the choice)
+                audio_text = usb_functions.audio_switch(audio_text, args.usb_audio)
             (source/'usbaudio.s').write_text(usb_functions.audio_storage_source(audio_text))
             audio_inc = usb_functions.audio_include(args.usb_audio)
             if args.usb_audio == usb_post.LAYOUT:
@@ -2018,7 +2020,7 @@ def main():
             raise ValueError('PROJ\'s root menu is not the four stock rows; review the MODWERK category.')
         stock_rows = image[ROOT_ROWS - device.main_load:][:4 * 24]
         columns = [sum(1 << r for r in range(8) if ICON[r][c] == '#') << 24 for c in range(19)]
-        leaves = (('load', 'load'), ('modules', 'modules'), ('missing', 'missing'), ('test', 'test'))
+        leaves = (('load', 'load'), ('modules', 'modules'), ('missing', 'missing'), ('test', 'test'), ('usb', 'usb'))
         definitions += ('struct menu_row { const void *label, *window, *action, *value, *child; uint32_t page; };\n'
                         'extern char modwerk_menu_label[], %s;\nvoid %s;\n' % (
                             ', '.join('modwerk_%s_label[]' % label for label, _ in leaves),

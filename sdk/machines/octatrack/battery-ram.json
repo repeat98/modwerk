@@ -10,6 +10,7 @@
   {"from": "0x100ff800", "to": "0x100ff900", "owner": "base", "what": "crash.c's record"},
   {"from": "0x100ff900", "to": "0x100ffb00", "owner": "base", "what": "dsp.c's stall record"},
   {"from": "0x100ffb00", "to": "0x100ffb30", "owner": "base", "what": "modset.c's boot guard"},
-  {"from": "0x100ffb30", "to": "0x100ffd38", "owner": "base", "what": "diag.c's trace of the frames before a stall"}
+  {"from": "0x100ffb30", "to": "0x100ffd38", "owner": "base", "what": "diag.c's trace of the frames before a stall"},
+  {"from": "0x100ffd38", "to": "0x100ffd40", "owner": "base", "what": "status.c's USB AUDIO choice"}
  ]
 }

@@ -93,9 +93,11 @@ void modwerk_status_tick(void)
     MW_STAMP(5); status_tick(); MW_STAMP(6);
 }
 static void transfer_tick(void);
+static void usb_tick(void);
 static void status_tick(void)
 {
     modwerk_status_close_menu();
+    usb_tick();
     transfer_tick();
     memory_tick();
     modwerk_fxpage_missing(); /* the first tick builds it; after that it returns at once */
@@ -133,8 +135,9 @@ static void status_tick(void)
 
 /* The dialogs: while one shows it takes every key and encoder, so nothing changes under it; NO closes it and the
  * screen it covered is back as it was. CUE + PROJ toggles the status from anywhere; PROJ's MODWERK category (the
- * fifth root row build_core.py adds, owner 12 October 2026) opens each page: LOAD, MODULE LOAD, MISSING, SELF TEST. */
-enum { CLOSED, SHOWN, TEST, MISSING, MEMORY, MODULE_LOAD, REFUSED };
+ * fifth root row build_core.py adds, owner 12 October 2026) opens each page: LOAD, MODULE LOAD, MISSING, SELF TEST,
+ * USB AUDIO. */
+enum { CLOSED, SHOWN, TEST, MISSING, MEMORY, MODULE_LOAD, REFUSED, USB_AUDIO };
 static int open, taken = -1; /* which shows; a key press the handler took, whose release it takes too (-1: none; TRIG 1 is 0) */
 /* What a host is doing to the unit, on its own screen (owner, 13 November 2026: a sync shows a dialog with a progress
  * bar, and a base update takes the whole screen and the panel until it is saved). The step is worked out each tick
@@ -254,6 +257,54 @@ void modwerk_test_menu(int unused)
 #define DOWN 0x20
 #define ROWS 4u
 #define MISSING_ROWS 2u /* the missing page: two lines a module, its name and where the project names it */
+/* USB AUDIO (issue 1512, 13 November 2026: a player asked to change what the unit sends without a new base, to
+ * free the CPU while nothing is recorded). What the installed layout's producer does while a host has the stream
+ * open: ALL as built; MAIN + CUE ONLY leaves the eight tracks' channels silent (the twenty-channel layout at high
+ * speed, where copying them is most of the producer's work); OFF produces nothing and takes the endpoint down, the
+ * host's request kept, so another choice brings the stream back by itself. The channels a host sees never change: the
+ * layout comes with the base. usbaudio.s reads the two bytes every frame and writes what its layout offers, a bit a
+ * choice (base_usb_functions.py's audio_switch); a base without USB Audio writes nothing, and the page says so. The
+ * choice is kept in battery RAM. */
+enum { USB_ALL, USB_MIX, USB_OFF, USB_MODES };
+volatile uint8_t modwerk_usb_audio_off, modwerk_usb_audio_mix, modwerk_usb_audio_caps;
+struct usb_choice { uint32_t magic, mode; };
+#define USB_MAGIC 0x4d575541u /* "MWUA" */
+#ifdef MODWERK_HOST
+struct usb_choice modwerk_test_usb_choice;
+#define USB_CHOICE (&modwerk_test_usb_choice)
+#else
+#define USB_CHOICE ((volatile struct usb_choice *)0x100ffd38u) /* battery RAM after diag.c's trace (battery-ram.json) */
+#endif
+static unsigned usb_mode, usb_cursor;
+static int usb_restored;
+static void usb_apply(unsigned mode) { usb_mode = mode, modwerk_usb_audio_mix = mode == USB_MIX, modwerk_usb_audio_off = mode == USB_OFF; }
+/* Each tick: the kept choice once, and a choice this base's layout does not offer (kept under another layout's
+ * base) is ALL until the player chooses again. */
+static void usb_tick(void)
+{
+    if (!usb_restored) {
+        usb_restored = 1;
+        if (USB_CHOICE->magic == USB_MAGIC && USB_CHOICE->mode < USB_MODES) usb_apply(USB_CHOICE->mode);
+    }
+    unsigned caps = modwerk_usb_audio_caps;
+    if (caps && !(caps >> usb_mode & 1u)) usb_apply(USB_ALL);
+}
+char modwerk_usb_label[] = "USB AUDIO";
+void modwerk_usb_menu(int unused) { (void)unused; if (menu_open()) open = USB_AUDIO, usb_cursor = usb_mode, close_menu = 1; }
+/* UP and DOWN move to the next choice the layout offers; YES takes it, keeps it and closes the page. */
+static void usb_key(int code)
+{
+    unsigned caps = modwerk_usb_audio_caps;
+    if (code == YES) {
+        if (caps >> usb_cursor & 1u) usb_apply(usb_cursor), USB_CHOICE->magic = USB_MAGIC, USB_CHOICE->mode = usb_cursor;
+        open = CLOSED;
+        return;
+    }
+    for (unsigned next = usb_cursor; code == UP ? next > 0 : next + 1u < USB_MODES; ) {
+        next = code == UP ? next - 1u : next + 1u;
+        if (caps >> next & 1u) { usb_cursor = next; return; }
+    }
+}
 int modwerk_fxmap_where(unsigned id, unsigned *bank, unsigned *part, unsigned *track); /* fxmap.c */
 /* Where the project names a missing module, as `at` holds it (fxmap.c's first find: kind, bank, Part, track):
  * "BANK A PART 1 T2", with SAVED before PART when only a Part's saved copy names it (a RELOAD brings it back).
@@ -382,6 +433,11 @@ int modwerk_status_key(int code, int pressed)
         taken = code;
         return 1;
     }
+    if (open == USB_AUDIO && (code == UP || code == DOWN || code == YES)) {
+        usb_key(code);
+        taken = code;
+        return 1;
+    }
     int list = open == MISSING || open == MODULE_LOAD;
     if (list && (code == UP || code == DOWN)) {
         unsigned *top = open == MISSING ? &missing_top : &modules_top, n = open == MISSING ? missing[3] : modules_count();
@@ -475,8 +531,12 @@ static uint32_t share(uint32_t part, uint32_t whole) { return whole ? (part > wh
 /* A frame and its title over the screen, stock's dialog style. */
 static void dialog(unsigned char *frame, const char *title)
 {
+#ifdef MODWERK_HOST
+    host_frame = frame; /* the host has no stock surface: its own text calls, so a page can be drawn and checked there */
+#else
     for (unsigned i = 0; i < 7u; ++i) surface[i] = ((const volatile uint32_t *)SURFACE)[i];
     surface[3] = (uint32_t)(uintptr_t)frame;
+#endif
     fill(frame, X0, Y0, X1, Y1, 0);
     outline(frame, X0, Y0, X1, Y1);
     label((unsigned)(64 - TEXT_WIDTH(FONT, -1, title) / 2), Y0 + 3u, title);
@@ -923,6 +983,25 @@ void modwerk_status_draw(unsigned char *frame)
 {
     MW_STAMP(22); status_draw(frame); MW_STAMP(13);
 }
+/* USB AUDIO: the choices the layout offers, the cursor's row inverted, a square before the one in force. */
+static void usb_page(unsigned char *frame)
+{
+    static const char *const names[USB_MODES] = {"ALL CHANNELS", "MAIN + CUE ONLY", "OFF"};
+    unsigned caps = modwerk_usb_audio_caps, row = 0;
+    dialog(frame, "USB AUDIO");
+    if (!caps) {
+        label(X0 + 6u, Y0 + 17u, "THIS BASE SENDS NO");
+        label(X0 + 6u, Y0 + 25u, "AUDIO OVER USB.");
+    }
+    for (unsigned mode = 0; mode < USB_MODES; ++mode) {
+        if (!(caps >> mode & 1u)) continue;
+        unsigned top = Y0 + 15u + 10u * row++;
+        if (mode == usb_mode) fill(frame, X0 + 5u, top + 1u, X0 + 7u, top + 3u, 1);
+        label(X0 + 12u, top, names[mode]);
+        if (mode == usb_cursor) invert(frame, X0 + 2u, top - 2u, X1 - 2u, top + 6u);
+    }
+    button(frame, X1 - 26u, Y1 - 10u, "YES");
+}
 static void status_draw(unsigned char *frame)
 {
     if (transfer == T_SYNC || transfer == T_SYNC_START) { sync_box(frame); return; }
@@ -932,6 +1011,7 @@ static void status_draw(unsigned char *frame)
     if (open == MISSING) { missing_page(frame); return; }
     if (open == TEST) { test_page(frame); return; }
     if (open == MODULE_LOAD) { modules_page(frame); return; }
+    if (open == USB_AUDIO) { usb_page(frame); return; }
     if (open != SHOWN) return;
     dialog(frame, "MODWERK STATUS");
     uint32_t cpu_peak = 0;

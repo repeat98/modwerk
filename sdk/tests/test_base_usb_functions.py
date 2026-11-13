@@ -284,6 +284,38 @@ class BaseUsbFunctions(unittest.TestCase):
                         self.assertLessEqual((address & 4095) + len(blob), 4096)
                         self.assertEqual(image[symbols[name]:symbols[name] + len(blob)], blob)
 
+    def test_on_device_switch_assembles_for_every_layout_and_refuses_drift(self):
+        # PROJ > MODWERK > USB AUDIO (status.c): the producer reads the player's choice, the import stays exact.
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for audio in functions.AUDIO_LAYOUTS:
+                with self.subTest(audio=audio):
+                    (root / 'remix.inc').write_text(include(audio))
+                    source = functions.audio_source(base.audio_paths(audio)[0].read_text())
+                    if audio != base.POST_LAYOUT:
+                        source = functions.packet_readiness(source)
+                    switched = functions.audio_switch(source, audio)
+                    twenty = functions.AUDIO_LAYOUTS[audio] == 0
+                    self.assertIn('    moveq   #%d,%%d0 ' % (7 if twenty else 5), switched)
+                    # Only insertions: every authored line is still there, in order.
+                    kept = iter(switched.splitlines())
+                    self.assertTrue(all(line in kept for line in source.splitlines()))
+                    path, output = root / 'audio.s', root / 'audio.o'
+                    path.write_text(functions.audio_storage_source(switched))
+                    subprocess.run(['m68k-elf-as', '-mcpu=54455', '-I', str(root), '-o', str(output), str(path)], check=True)
+                    undefined = {line.split()[-1] for line in
+                                 subprocess.check_output(['m68k-elf-nm', '-u', str(output)], text=True).splitlines()}
+                    choice = {name for name in undefined if name.startswith('modwerk_usb_audio')}
+                    self.assertEqual(choice, {'modwerk_usb_audio_caps', 'modwerk_usb_audio_off'} |
+                                     ({'modwerk_usb_audio_mix'} if twenty else set()))
+                    for broken in (switched, source.replace('.Lep3:', '.Lep4:'),
+                                   source.replace('    bnes    .Lproduce\n', '    bne     .Lproduce\n', 1),
+                                   source.replace('2:  movel   %a0@,%d2', '3:  movel   %a0@,%d2')):
+                        with self.assertRaises(ValueError):
+                            functions.audio_switch(broken, audio)
+            with self.assertRaises(ValueError):
+                functions.audio_switch(source, 'USB AUDIO OUT EVERYTHING')
+
     def test_zero_ring_move_refuses_changed_or_nonzero_allocations(self):
         original = base.AUDIO_SOURCE.read_text()
         transformed = functions.audio_storage_source(original)
