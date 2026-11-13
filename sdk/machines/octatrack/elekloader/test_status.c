@@ -55,6 +55,8 @@ volatile uint32_t modwerk_modset_result;
 uint8_t modwerk_test_live_fx[16];
 volatile uint32_t dl_selection_completed, modwerk_boot_accepted;
 const fx_set modwerk_fx_modules = {{1u << 27 | 1u << 29}};
+volatile uint32_t mw_cpu_hot = 850u, mw_cpu_refusals, mw_cpu_refusal_tracks; /* machine_registry.c's */
+void modwerk_fxmap_name(unsigned id, char *out) { for (unsigned i = 0; i < 16u; ++i) out[i] = 0; out[0] = 'F', out[1] = 'X', out[2] = (char)('0' + id % 10u); }
 int modwerk_dsp_budget(unsigned slot, struct modwerk_dsp_budget *out) { (void)slot, (void)out; return 0; } /* draws only */
 uint32_t modwerk_dsp_booked(unsigned core) { return core; } /* draws only */
 unsigned modwerk_dsp_reads_buffer(unsigned id) { return id == 27u; } /* E-Verb reads one; Tape Echo (15) none */
@@ -205,6 +207,17 @@ int main(void)
     CHECK(!strcmp(refused_name, "AMIGA"));
     for (unsigned i = 0; i < 180u; ++i) memory_tick();
     CHECK(open == CLOSED);
+    /* An effect pick on a busy unit: a module's effect is refused with the box on its slot ("T4 FX2"), counted; a
+     * stock effect and NONE pass, and so does everything under the line. */
+    int modwerk_status_effect_busy(unsigned slot, unsigned id);
+    { uint32_t before = mw_cpu_refusals;
+      CHECK(modwerk_status_effect_busy(11, 27) == 1 && open == REFUSED && refused[0] == 5 && refused[1] == 11 && !refused_machine && refused_booked == 870);
+      CHECK(mw_cpu_refusals == before + 1 && mw_cpu_refusal_tracks & 1u << 3);
+      for (unsigned i = 0; i < 180u; ++i) memory_tick();
+      CHECK(open == CLOSED);
+      CHECK(!modwerk_status_effect_busy(11, 8) && !modwerk_status_effect_busy(11, 0) && !modwerk_status_effect_busy(16, 27) && open == CLOSED && mw_cpu_refusals == before + 1);
+      cpu_recent[0] = 0;                                                 /* mean 770: under the line */
+      CHECK(modwerk_status_cpu_recent() < mw_cpu_hot && !modwerk_status_effect_busy(11, 27) && open == CLOSED); }
     for (unsigned i = 0; i < 8u; ++i) cpu_recent[i] = 0;
     modwerk_load_menu(0); modwerk_status_cpu_refused(2, "Poly8", 800, 266);
     CHECK(open == SHOWN);
