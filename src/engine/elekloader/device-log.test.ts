@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { DEVICE_LOG_BYTES, DEVICE_LOG_PAGE, DEVICE_LOG_PAGES, parseDeviceLog } from './device-log'
+import { describeStallFrames } from '../../community/octatrack-diagnostics-contract'
 import { validateDiagnostic } from '../../../server/octatrack-diagnostics'
 
 /** A log as diag.h lays it out, big-endian: header, freeze slot, 96 loads, 32 incidents. */
@@ -75,6 +76,23 @@ describe('the unit’s diagnostics log, version 2', () => {
     expect(upload({ loads: parsed.loads, incidents: [] })).not.toThrow()
     expect(upload({ loads: [], incidents: parsed.incidents })).not.toThrow()
     expect(upload({ loads: [], incidents: [], crash: parsed.crash, stall: parsed.stall })).not.toThrow()
+    expect(parsed.stall!.frames).toBeUndefined() // a base before the trace: zeros after the stall record
+  })
+  it('reads the frames kept with the stall record, in µs, and no other stall’s', () => {
+    const traced = (count: number) => {
+      const data = new Uint8Array(DEVICE_LOG_PAGES * DEVICE_LOG_PAGE)
+      data.set(log2(view => { view.setUint32(V2_END + 180, 0x4d575354); view.setUint32(V2_END + 184, 2) }))
+      const view = new DataView(data.buffer), at = V2_END + 180 + 456
+      view.setUint32(at, 0x4d574654); view.setUint32(at + 4, count)
+      ;[749, 206, 2063, 1650].forEach((v, i) => view.setUint16(at + 8 + 2 * (252 + i), v)) // the last two frames: on time, then 1 ms late after an 800 µs run
+      return parseDeviceLog(data)!.stall!
+    }
+    expect(traced(2).frames).toEqual([363, 100, 1000, 800])
+    expect(describeStallFrames(traced(2).frames)).toBe('2 frames before it: last gaps 363 1000 us (363 is on time); longest 1000 us, 0 frames before the last, after a frame interrupt of 800 us (the longest ran 800 us)')
+    expect(traced(1).frames).toBeUndefined()
+    expect(describeStallFrames(undefined)).toBe('')
+    expect(() => validateDiagnostic({ id: crypto.randomUUID(), event: 'device_log', phase: 'ready', log: { loads: [], incidents: [], stall: traced(2) } })).not.toThrow()
+    expect(() => validateDiagnostic({ id: crypto.randomUUID(), event: 'device_log', phase: 'ready', log: { loads: [], incidents: [], stall: { ...traced(2), frames: [1] } } })).toThrow()
   })
   it('leaves the records out when their magic is missing', () => {
     const parsed = parseDeviceLog(log2(() => {}))!

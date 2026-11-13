@@ -12,7 +12,7 @@ import { chmodSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { DSP_REPORT_NAMES } from '../src/community/octatrack-diagnostics-contract.ts'
+import { DSP_REPORT_NAMES, describeStallFrames } from '../src/community/octatrack-diagnostics-contract.ts'
 import { crashNames, namesFor, withName } from '../src/dev/address-names.ts'
 
 const ROOT = new URL('..', import.meta.url)
@@ -200,7 +200,8 @@ export function summary({ events, counts }, { base = '', layouts = {}, reports =
       ...member.crash ? [`  crash record ${member.crash.count}: vector ${member.crash.vector} pc 0x${member.crash.pc.toString(16)} code ${member.crash.code.map(w => w.toString(16).padStart(8, '0')).join(' ')} uncached ${member.crash.memory.map(w => w.toString(16).padStart(8, '0')).join(' ')}`,
         ...[crashNames(names(member.crashBase), member.crash.pc, member.crash.stack ?? [])].filter(Boolean).map(line => '    ' + line)] : [],
       ...member.stall ? [`  stall record ${member.stall.count}: reason ${member.stall.reason} (1 frames stopped, 2 eDMA refused) at tick ${member.stall.ticks}`,
-        ...member.stall.report?.length ? ['    report: ' + stallWords(member.stall.report)] : []] : [],
+        ...member.stall.report?.length ? ['    report: ' + stallWords(member.stall.report)] : [],
+        ...member.stall.frames?.length ? ['    ' + describeStallFrames(member.stall.frames)] : []] : [],
       ...unitLines([...member.incidents?.values() ?? []], names),
       '  ' + Object.entries(member.kinds).map(([kind, n]) => kind + ' ' + n).join(', '),
     ]),
