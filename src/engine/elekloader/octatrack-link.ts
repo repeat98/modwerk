@@ -63,7 +63,7 @@ export type LinkSession = Pick<UploadSession, 'status' | 'connectionTrusted' | '
 type Connect = (transport: UsbVendorTransport, base: string, options?: { timeoutMs?: number }) => Promise<LinkSession>
 /** A base update over USB, step by step: the new base staged and started from RAM (the trial), then, running, writing its own
  * container to NOR and restarting on it. */
-export type BaseUpdateStep = 'staging' | 'starting' | 'started' | 'writing' | 'reconnecting' | 'restarting' | 'done'
+export type BaseUpdateStep = 'staging' | 'starting' | 'started' | 'writing' | 'saving' | 'reconnecting' | 'restarting' | 'done'
 /** A base write ended without a verdict this many times: the user is told to keep the unit on and try again. */
 const BASE_WRITE_ATTEMPTS = 4
 /** How long a unit may take to come back after a write step failed (a slow NOR erase, then the restart). */
@@ -512,6 +512,7 @@ export class OctatrackLink {
         await this.sendBase(writer, container, 180000, fraction => report('writing', fraction), signal, async session => {
           const earlier = wrote
           wrote = true
+          report('saving') // the container is on the unit: from here it writes, with no figure to report until it answers
           await session.activate().catch(async error => {
             const why = await this.writeRefused(error)
             if (why instanceof NothingWritten) wrote = earlier

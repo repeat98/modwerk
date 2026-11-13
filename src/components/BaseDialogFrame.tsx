@@ -71,7 +71,20 @@ export function StagePlan({ stages, run, progressLabel }: { stages: readonly (re
       <span className="base-update-mark" aria-hidden="true">{state === 'is-complete' ? <Icon name="check" size={13} /> : state === 'is-failed' ? '!' : index + 1}</span>
       <strong>{title}{state === 'is-complete' && <span className="sr-only"> (done)</span>}</strong>
       <p>{text}</p>
-      {active && run.fraction !== undefined && run.fraction < 1 && <progress max={1} value={run.fraction} aria-label={title} />}
+      {active && run.fraction !== undefined && run.fraction < 1 && <ProgressBar value={run.fraction} label={title} />}
     </li>
   })}</ol>
+}
+
+/** A progress bar that reads at a glance (owner, 13 November 2026: the browser's own was too faint to see): blue on a
+ * framed track, with its percentage beside it when `percent`. Without a `value` its length isn't known and it runs
+ * along; `busy` keeps a sheen moving over a bar that stands still, so a long step never looks hung. */
+export function ProgressBar({ value, label, busy = false, percent = false }: { value?: number; label: string; busy?: boolean; percent?: boolean }) {
+  const part = value === undefined ? undefined : Math.round(100 * Math.min(1, Math.max(0, value)))
+  return <div className="progress-row">
+    <div className={'progress-bar' + (part === undefined ? ' is-indeterminate' : busy ? ' is-busy' : '')} role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={part}>
+      <span style={part === undefined ? undefined : { width: part + '%' }} />
+    </div>
+    {percent && part !== undefined && <span className="progress-value" aria-hidden="true">{part}%</span>}
+  </div>
 }

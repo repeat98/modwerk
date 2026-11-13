@@ -46,7 +46,7 @@ describe('the base dialog for a unit on an older base', () => {
     click(button); await settle(); await settle()
     expect(update).toHaveBeenCalledTimes(1)
     expect(update.mock.calls[0][0]).toEqual(bin); expect(update.mock.calls[0][1]).toBe(expected)
-    expect(container.textContent).toContain('Done. Your Octatrack runs the new base.')
+    expect(container.textContent).toContain('Done. The new base is saved')
     expect(onReady).not.toHaveBeenCalled()
     click(buttonNamed('Continue')!)
     expect(onReady).toHaveBeenCalledTimes(1)
@@ -68,22 +68,34 @@ describe('the base dialog for a unit on an older base', () => {
       report?.('done')
     })
     click(container.querySelector('.risk-accept input')!); click(buttonNamed('Update over USB')!)
-    await vi.waitFor(() => expect(container.textContent).toContain('Saving the new base'))
+    await vi.waitFor(() => expect(container.textContent).toContain('Sending the base once more'))
     expect(container.querySelector('h2')!.textContent).toContain('Update the Modwerk base')
     expect(container.querySelector('.base-install-intro code')!.textContent).toBe('cc'.repeat(4))
     expect(container.querySelector('.base-update-plan .is-active strong')!.textContent).toBe('Save')
     expect(container.querySelectorAll('.base-update-plan .is-complete')).toHaveLength(2)
     expect(container.querySelector('[role="status"]')).toBe(status)
-    expect(status.className).toBe('base-install-warning')
-    expect(status.textContent).not.toContain('%') // the progress bar carries the value; the status changes only with the step
-    expect(container.querySelector('.base-update-plan progress')).not.toBeNull()
+    expect(status.textContent).toContain('Nothing is saved yet')
+    expect(status.textContent).not.toContain('%') // the bar carries the value; the status changes only with the step
+    // Hands off, for as long as it runs: after its restart the unit looks ready while nothing is saved.
+    const handsOff = container.querySelector('.base-update-hands-off')!
+    expect(handsOff.getAttribute('role')).toBe('alert')
+    expect(handsOff.textContent).toContain('Hands off your Octatrack')
+    expect(handsOff.textContent).toContain('can look ready before the base is saved')
+    // One bar for the whole update, always there while it runs: halfway through the second send is two thirds.
+    const bar = container.querySelector('.base-update-overall [role="progressbar"]')!
+    expect(bar.getAttribute('aria-valuenow')).toBe('67')
+    expect(bar.className).toContain('is-busy')
+    expect(container.querySelector('.base-update-overall .progress-value')!.textContent).toBe('67%')
+    expect(container.querySelector('progress')).toBeNull() // the browser's own bar was too faint to see
     expect([...container.querySelectorAll('.base-update-plan .is-complete .sr-only')].map(item => item.textContent)).toEqual([' (done)', ' (done)'])
     expect(container.querySelector('.base-install-recovery')).toBeNull() // the before-start notes give way to the progress
     expect(container.querySelector('.base-install-close')).toBeNull()
     expect(buttonNamed('Continue')).toBeUndefined()
     await act(async () => resume()); await settle()
-    expect(container.textContent).toContain('Done. Your Octatrack runs the new base.')
+    expect(container.textContent).toContain('Done. The new base is saved')
     expect(container.querySelectorAll('.base-update-plan .is-complete')).toHaveLength(3)
+    expect(container.querySelector('.base-update-overall [role="progressbar"]')!.getAttribute('aria-valuenow')).toBe('100')
+    expect(container.querySelector('.base-update-hands-off')).toBeNull()
     expect(buttonNamed('Continue')).toBeDefined()
   })
   // A base writing another base's container quiesces stock, and a stall then hung units (30 October 2026): on two slots

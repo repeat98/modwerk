@@ -18,6 +18,7 @@ import { installedOnOctatrack } from '../community/installed-follow-up'
 import { StateChip } from './ModuleGrid'
 import { ModulePreview } from './ModulePreview'
 import { Icon } from './Icon'
+import { ProgressBar } from './BaseDialogFrame'
 import type { PrepareUpdate } from './OctatrackUpdate'
 import './link-hero.css'
 import './octatrack-link.css'
@@ -154,8 +155,8 @@ export function LoadDialog({ link, set, putBack = false, inventory, prepareUpdat
       {error && <p className="file-error" role="alert">{error}</p>}
     </> : step === 'done' ? <><p className={'base-install-intro ' + (error || notice?.tone === 'error' ? 'file-error' : 'success-note')} role={error || notice?.tone === 'error' ? 'alert' : 'status'}>{error || notice?.text || (status === 'busy' ? LINK_BUSY + ' Nothing was sent.' : 'Done.')}</p>{followNotice && <p className="link-hint" role="status">{followNotice}</p>}</>
     : <>
-      {step === 'loading' && !preparing && <progress className="load-progress" max={1} value={progress} aria-label="Syncing" />}
-      <p className="base-install-intro" role="status">{step === 'loading' ? (preparing ? 'Preparing your modules…' : progress < 1 ? `Syncing… ${Math.round(progress * 100)}%` : 'Starting…')
+      {(step === 'loading' || step === 'trial') && <ProgressBar value={step === 'loading' && !preparing && progress < 1 ? progress : undefined} label="Syncing" percent />}
+      <p className="base-install-intro" role="status">{step === 'loading' ? (preparing ? 'Preparing your modules…' : progress < 1 ? 'Sending your modules to the Octatrack…' : 'Starting them on the Octatrack…')
         : 'Saving on your Octatrack…'}</p>
       {/* Keeping waits for playback to stop; started meanwhile, the link says so and the set runs until it is kept. */}
       {step === 'trial' && notice?.tone === 'error' && <p className="file-error" role="alert">{notice.text}</p>}
