@@ -1,5 +1,20 @@
 # Track Names testing
 
+## 0.1.3-experimental
+
+The recognition no longer carries any picture of the stock screen (0.1.2 had a 16 x 24 pixel copy of the MIX box
+and the sixteen TRKn labels, taken from screenshots): CONTRIBUTING forbids extracted tables. 0.1.3 checks the scroll
+bar's page marker and the MIX box's outline as geometry, and draws each TRKn itself with the OS's text routine and
+font into a scratch frame to compare. The MIX label uses a 6-row font the base does not offer, so it is only
+required to be present; a stock TRKn label in view confirms the page.
+
+Emulator, 2026-11-13 (digikit, working build, image `71e7a9e1…5887`): the scratch-rendered TRK1 matched the stock
+label pixel for pixel; names and badges on Internal Mixer 2/5 and 3/5; Compressor 1/5, FX Mixer 4/5, External Mixer
+5/5 and SRC unchanged; both PTN pop-ups stay on top with names cut at their edge; all back after closing. Captures
+redone on this version (`media/capture.json`).
+
+Hardware: to be repeated on the pinned-toolchain 0.1.3 package (the results below are 0.1.2's).
+
 ## Emulator (digikit, logic only)
 
 2026-11-13, digikit `5e62a52` (`digi-emud`, ColdFire only, no audio), stock Digitakt II OS 1.17

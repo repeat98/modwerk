@@ -2,18 +2,18 @@
   "schemaVersion": 1,
   "machine": "digitakt-ii",
   "moduleId": "track-names",
-  "moduleVersion": "0.1.2-experimental",
+  "moduleVersion": "0.1.3-experimental",
   "capturedAt": "2026-11-13",
   "firmware": "1.17",
-  "imageSha256": "d9ae08c09e50ce99a9e6e89421960d37cfe853b05590d2505ca8106dd0400827",
+  "imageSha256": "71e7a9e18e361ab1e82625e33271245b85b7f7a52a4d5a8946d43c9a83155887",
   "stockSha256": "26c22f6652625ac2cfd47f7ee970d388ed8b6427dae3563c0a6a2f2d334350d5",
   "coreElemodSha256": "95303655a9358f581b485acb68b884b394a577f5d0b373f0a3e5957c8d0ca72c",
-  "moduleElemodSha256": "a7ca6c17e05bc65eab97cc7f9977034c533eb1d78144b2e7d3bd2d3a0c543161",
+  "moduleElemodSha256": "2e9c5053a0e679fad81055c70f88039d4da73a0887516b863c59175be8d5a088",
   "moduleSource": {
     "repository": "https://github.com/repeat98/modwerk",
-    "revision": "bc32ae2113c315f5cd4f48bc2028ef92892fa6d8",
     "path": "sdk/digitakt-ii/modules/track-names",
-    "note": "Built from a later commit whose module source is byte-identical to bc32ae2 (the author's hardware-tested source; native source sha256 dc6899be\u2026481dc). Working build with GCC 13.2 m68k-linux-gnu, linked with the vendored core-1.0.elemod by elekloader's patch.py."
+    "revision": "track-names branch, Track Names 0.1.3-experimental source (native source sha256 in the manifest's evidence)",
+    "note": "Working build with GCC 13.2 m68k-linux-gnu, linked with the vendored core-1.0.elemod by elekloader's patch.py."
   },
   "emulator": {
     "name": "digikit",

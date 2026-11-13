@@ -1,6 +1,6 @@
 # Track Names
 
-A Digitakt II mod by @crisp909. Version 0.1.2-experimental. OS 1.17, core 1.0.
+A Digitakt II mod by @crisp909. Version 0.1.3-experimental. OS 1.17, core 1.0.
 
 ![Internal Mixer 2/5 with track names](media/mixer-tracks-1-8.png)
 
@@ -46,12 +46,15 @@ is cut after 5 characters on the mixer and stays whole in SETUP. A track whose n
 
 ## Tests and measurements
 
-- Hardware, reported by the author on 2026-11-13: the package built with the pinned toolchain in Docker (sha256
+- Hardware, reported by the author on 2026-11-13, on 0.1.2 (the same behaviour; 0.1.3 only rebuilds the recognition): the package built with the pinned toolchain in Docker (sha256
   `cc908de8…a03a8f`) on a Digitakt II, OS 1.17, core 1.0. Names on mixer pages 2/5 and 3/5, each pattern its own
   names with PERFORM KIT off, names back after SAVE PROJECT and a reload, other pages unchanged.
+- How it finds the mixer, without any copy of the stock screen: the scroll bar's page marker, the MIX box's outline,
+  and at least one stock TRKn label, which it draws itself with the OS's own text routine and font into a scratch
+  frame and compares. A label or number is drawn only where the stock one is in view.
 - Emulator (digikit): names entered through SETUP > RENAME on a fresh project show on both mixer pages; tracks named
   PRESET n keep TRKn; pattern select pop-ups stay on top. Details in [TESTING.md](TESTING.md).
-- Memory: 2,782 bytes of code and 184 bytes of data (the GCC 16.2 package). Load: UI task only, at most about 150,000 instructions per
+- Memory: about 2.9 KB of code and 1.3 KB of data (a 1 KiB scratch frame for the comparison below). Load: UI task only, at most about 150,000 instructions per
   frame on the mixer pages (static count), a few dozen elsewhere; no audio-path code.
 
 ## Authorship and licences

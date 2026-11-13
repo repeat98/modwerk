@@ -27,25 +27,30 @@ extern const char tn_font[], tn_font_narrow[];
 // The page the main view shows: main view + TN_VIEW_UI -> + TN_UI_PAGES (the page set, vtable
 // TN_VT_PAGES) -> + TN_PAGE_CURRENT. 0 when any link is missing or not what OS 1.17 has there.
 // The Internal Mixer is recognised by what the stock OS has just drawn, which is the same on the unit
-// and in the emulator: the MIX box at the left (columns 0..15, screen rows 13..36) and the page
-// marker on the scroll bar (column 125, rows 10..61). The frame is 128 x 64, 1 bit per pixel, stored
-// by column: 8 bytes per column, bottom row first, the lowest row of each byte in its top bit.
-// Each column is compared as two 32-bit words: bottom rows 0..31, then 32..63.
-static const uint32_t mix_box[16][2] = {
-    {0x0000000f, 0xffffc000}, {0x00000010, 0x00002000}, {0x00000010, 0x0fc02000}, {0x00000010, 0x00802000},
-    {0x00000010, 0x0fc02000}, {0x00000010, 0x00002000}, {0x00000010, 0x08402000}, {0x00000010, 0x0fc02000},
-    {0x00000010, 0x08402000}, {0x00000010, 0x00002000}, {0x00000010, 0x0cc02000}, {0x00000010, 0x03002000},
-    {0x00000010, 0x0cc02000}, {0x00000010, 0x00002000}, {0x0000000f, 0xffffc000}, {0x00000000, 0x00000000},
-};
-#define MIX_MASK_HI 0x0000001fu
-#define MIX_MASK_LO 0xffffe000u
+// and in the emulator. The module keeps no picture of the stock screen: it draws what it expects into
+// a scratch frame with the OS's own text routine and font (from the user's OS) and compares.
+// The frame is 128 x 64, 1 bit per pixel, stored by column: 8 bytes per column, bottom row first,
+// the lowest row of each byte in its top bit.
+#define FRAME_BYTES 1024
+#define BMP_HEAD 64                           // the bitmap object: +4 width, +8 height, +0x10 its pixels
+static uint8_t scratch_px[FRAME_BYTES];
+static uint32_t scratch_obj[BMP_HEAD / 4];
+
+// The MIX box: a frame with rounded corners at columns 0..14, screen rows 13..36, its label in rows 22..27
+// and nothing else inside. (The label's 6-row font is not one the base offers, so the label is only
+// required to be there; a stock TRKn label, drawn with the OS's own font, confirms the page.)
+#define MIXBOX_X0 0
+#define MIXBOX_X1 14
+#define MIXBOX_Y0 13
+#define MIXBOX_Y1 36
+#define MIXTEXT_Y0 22
+#define MIXTEXT_Y1 27
+// The scroll bar's page marker in column 125 (rows 10..61): a 3-row block at rows 29..31 on page 2/5,
+// 36..38 on page 3/5, dark elsewhere.
 #define BAR_X 125
-#define BAR_MASK_HI 0x3fffffffu
-#define BAR_MASK_LO 0xfffffc00u
-static const uint32_t bar[2][2] = {
-    {0x00000000, 0xe0000000},                 // Internal Mixer 2/5: tracks 1-8
-    {0x00000070, 0x00000000},                 // Internal Mixer 3/5: tracks 9-16
-};
+#define BAR_Y0 10
+#define BAR_Y1 61
+static const uint8_t bar_block[2] = {29, 36};
 
 static const uint8_t *frame_data(void *bmp)
 {
@@ -55,51 +60,67 @@ static const uint8_t *frame_data(void *bmp)
     return *(const uint8_t *const *)(b + 0x10);
 }
 
+#ifdef TN_DEBUG
 static uint32_t word(const uint8_t *col)
 {
     return (uint32_t)col[0] << 24 | (uint32_t)col[1] << 16 | (uint32_t)col[2] << 8 | col[3];
 }
+#endif
 
-// 1: Internal Mixer tracks 1-8, 2: tracks 9-16, 0: anything else.
+static int pixel(const uint8_t *d, int x, int top_row);
+static void set_pixel(uint8_t *d, int x, int top_row, int v);
+
+// A scratch bitmap object like the frame's, drawing into scratch_px: the OS's text routine and font
+// render what the stock page would show, from the user's own OS.
+static void *scratch(void *bmp)
+{
+    const uint32_t *head = (const uint32_t *)bmp;
+    for (int i = 0; i < BMP_HEAD / 4; i++)
+        scratch_obj[i] = head[i];
+    scratch_obj[0x10 / 4] = (uint32_t)(uintptr_t)scratch_px;
+    return scratch_obj;
+}
+
+static void scratch_clear(int x0, int x1, int y0, int y1)   // screen rows, from the top
+{
+    for (int x = x0; x <= x1; x++)
+        for (int y = y0; y <= y1; y++)
+            set_pixel(scratch_px, x, y, 0);
+}
+
+
+// 1: Internal Mixer tracks 1-8, 2: tracks 9-16, 0: anything else. tn_draw confirms it with a stock label.
 static int on_mixer(void *bmp)
 {
     const uint8_t *d = frame_data(bmp);
-    uint32_t hi, lo;
+    int page = 0, label = 0;
     if (!d)
         return 0;
-    for (int x = 0; x < 16; x++)
-        if ((word(d + 8 * x) & MIX_MASK_HI) != mix_box[x][0] || (word(d + 8 * x + 4) & MIX_MASK_LO) != mix_box[x][1])
-            return 0;
-    hi = word(d + 8 * BAR_X) & BAR_MASK_HI;
-    lo = word(d + 8 * BAR_X + 4) & BAR_MASK_LO;
-    for (int p = 0; p < 2; p++)
-        if (hi == bar[p][0] && lo == bar[p][1])
-            return p + 1;
-    return 0;
+    // The bar first: it is cheap and rules out most pages.
+    for (int p = 0; p < 2 && !page; p++) {
+        int ok = 1;
+        for (int y = BAR_Y0; y <= BAR_Y1 && ok; y++)
+            ok = pixel(d, BAR_X, y) == (y >= bar_block[p] && y < bar_block[p] + 3);
+        if (ok)
+            page = p + 1;
+    }
+    if (!page)
+        return 0;
+    for (int x = MIXBOX_X0; x <= MIXBOX_X1 + 1; x++)
+        for (int y = MIXBOX_Y0; y <= MIXBOX_Y1; y++) {
+            int edge_x = x == MIXBOX_X0 || x == MIXBOX_X1, edge_y = y == MIXBOX_Y0 || y == MIXBOX_Y1;
+            int text = x > MIXBOX_X0 + 1 && x < MIXBOX_X1 - 1 && y >= MIXTEXT_Y0 && y <= MIXTEXT_Y1;
+            int want = x <= MIXBOX_X1 && (edge_x != edge_y);   // the frame, corners left out
+            if (text)
+                label |= pixel(d, x, y);
+            else if (pixel(d, x, y) != want)
+                return 0;
+        }
+    return label ? page : 0;
 }
 
 #define LABEL_X0 21                           // a cell's label columns: 21..46 (+ 26 per cell)
 #define LABEL_W 26
-// Stock TRK1..TRK16 as the Internal Mixer draws them: per track, columns 21..46 of its cell, a byte per
-// column with the label's top row in bit 4 and its bottom row in bit 0 (measured in the emulator).
-static const uint8_t stock_label[16][LABEL_W] = {
-    {0x00, 0x00, 0x00, 0x00, 0x10, 0x1f, 0x10, 0x00, 0x1f, 0x14, 0x14, 0x0b, 0x00, 0x1f, 0x04, 0x04, 0x1b, 0x00, 0x09, 0x1f, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00},
-    {0x00, 0x00, 0x00, 0x10, 0x1f, 0x10, 0x00, 0x1f, 0x14, 0x14, 0x0b, 0x00, 0x1f, 0x04, 0x04, 0x1b, 0x00, 0x13, 0x15, 0x15, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00},
-    {0x00, 0x00, 0x00, 0x10, 0x1f, 0x10, 0x00, 0x1f, 0x14, 0x14, 0x0b, 0x00, 0x1f, 0x04, 0x04, 0x1b, 0x00, 0x11, 0x15, 0x15, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00},
-    {0x00, 0x00, 0x00, 0x10, 0x1f, 0x10, 0x00, 0x1f, 0x14, 0x14, 0x0b, 0x00, 0x1f, 0x04, 0x04, 0x1b, 0x00, 0x1c, 0x04, 0x04, 0x1f, 0x00, 0x00, 0x00, 0x00, 0x00},
-    {0x00, 0x00, 0x00, 0x10, 0x1f, 0x10, 0x00, 0x1f, 0x14, 0x14, 0x0b, 0x00, 0x1f, 0x04, 0x04, 0x1b, 0x00, 0x1d, 0x15, 0x15, 0x12, 0x00, 0x00, 0x00, 0x00, 0x00},
-    {0x00, 0x00, 0x00, 0x10, 0x1f, 0x10, 0x00, 0x1f, 0x14, 0x14, 0x0b, 0x00, 0x1f, 0x04, 0x04, 0x1b, 0x00, 0x0e, 0x15, 0x15, 0x12, 0x00, 0x00, 0x00, 0x00, 0x00},
-    {0x00, 0x00, 0x00, 0x10, 0x1f, 0x10, 0x00, 0x1f, 0x14, 0x14, 0x0b, 0x00, 0x1f, 0x04, 0x04, 0x1b, 0x00, 0x10, 0x13, 0x14, 0x18, 0x00, 0x00, 0x00, 0x00, 0x00},
-    {0x00, 0x00, 0x00, 0x10, 0x1f, 0x10, 0x00, 0x1f, 0x14, 0x14, 0x0b, 0x00, 0x1f, 0x04, 0x04, 0x1b, 0x00, 0x0a, 0x15, 0x15, 0x0a, 0x00, 0x00, 0x00, 0x00, 0x00},
-    {0x00, 0x00, 0x00, 0x10, 0x1f, 0x10, 0x00, 0x1f, 0x14, 0x14, 0x0b, 0x00, 0x1f, 0x04, 0x04, 0x1b, 0x00, 0x08, 0x15, 0x15, 0x0e, 0x00, 0x00, 0x00, 0x00, 0x00},
-    {0x00, 0x10, 0x1f, 0x10, 0x00, 0x1f, 0x14, 0x14, 0x0b, 0x00, 0x1f, 0x04, 0x04, 0x1b, 0x00, 0x09, 0x1f, 0x01, 0x00, 0x0e, 0x11, 0x11, 0x0e, 0x00, 0x00, 0x00},
-    {0x00, 0x00, 0x10, 0x1f, 0x10, 0x00, 0x1f, 0x14, 0x14, 0x0b, 0x00, 0x1f, 0x04, 0x04, 0x1b, 0x00, 0x09, 0x1f, 0x01, 0x00, 0x09, 0x1f, 0x01, 0x00, 0x00, 0x00},
-    {0x00, 0x10, 0x1f, 0x10, 0x00, 0x1f, 0x14, 0x14, 0x0b, 0x00, 0x1f, 0x04, 0x04, 0x1b, 0x00, 0x09, 0x1f, 0x01, 0x00, 0x13, 0x15, 0x15, 0x09, 0x00, 0x00, 0x00},
-    {0x00, 0x10, 0x1f, 0x10, 0x00, 0x1f, 0x14, 0x14, 0x0b, 0x00, 0x1f, 0x04, 0x04, 0x1b, 0x00, 0x09, 0x1f, 0x01, 0x00, 0x11, 0x15, 0x15, 0x0a, 0x00, 0x00, 0x00},
-    {0x00, 0x10, 0x1f, 0x10, 0x00, 0x1f, 0x14, 0x14, 0x0b, 0x00, 0x1f, 0x04, 0x04, 0x1b, 0x00, 0x09, 0x1f, 0x01, 0x00, 0x1c, 0x04, 0x04, 0x1f, 0x00, 0x00, 0x00},
-    {0x00, 0x10, 0x1f, 0x10, 0x00, 0x1f, 0x14, 0x14, 0x0b, 0x00, 0x1f, 0x04, 0x04, 0x1b, 0x00, 0x09, 0x1f, 0x01, 0x00, 0x1d, 0x15, 0x15, 0x12, 0x00, 0x00, 0x00},
-    {0x00, 0x10, 0x1f, 0x10, 0x00, 0x1f, 0x14, 0x14, 0x0b, 0x00, 0x1f, 0x04, 0x04, 0x1b, 0x00, 0x09, 0x1f, 0x01, 0x00, 0x0e, 0x15, 0x15, 0x12, 0x00, 0x00, 0x00},
-};
 
 static int pixel(const uint8_t *d, int x, int top_row)     // top_row counts from the top, 0..63
 {
@@ -187,19 +208,22 @@ static void restore_under_box(uint8_t *d, const box_t *b, int x0, int x1, int y0
                 set_pixel(d, x, y0 + r, saved[n]);
 }
 
-// Is this cell's label the stock TRKn wherever the pop-up does not cover it, and is any of it in view?
-static int label_is_stock(const uint8_t *d, const box_t *b, int track, int k, int row)
+// Is this cell's label the stock TRKn (the OS's own font, centred under the fader) wherever the pop-up
+// does not cover it, and is any of it in view?
+static int label_is_stock(void *bmp, const uint8_t *d, const box_t *b, int track, int k, int row)
 {
-    int y0 = row ? 59 : 32, seen = 0;
-    for (int i = 0; i < LABEL_W; i++) {
-        int x = LABEL_X0 + COL_X(k) + i, v = 0, covered = 0;
+    int y0 = row ? 59 : 32, x0 = LABEL_X0 + COL_X(k), seen = 0;
+    scratch_clear(x0, x0 + LABEL_W - 1, y0, y0 + 4);
+    tn_textf(scratch(bmp), tn_font, FADER_MID + COL_X(k), LABEL_Y(row), 2, "TRK%d", track + 1);
+    for (int x = x0; x < x0 + LABEL_W; x++) {
+        int covered = 0, differs = 0;
         for (int r = 0; r < 5; r++) {
             covered |= in_box(b, x, y0 + r);
-            v = v << 1 | pixel(d, x, y0 + r);
+            differs |= pixel(d, x, y0 + r) != pixel(scratch_px, x, y0 + r);
         }
         if (covered)
             continue;
-        if (v != stock_label[track][i])
+        if (differs)
             return 0;
         seen = 1;
     }
@@ -309,6 +333,13 @@ void tn_draw(void *bmp, void *ctrl)
     if (!page || !d || (kit = kit_on()) < 0)
         return;
     find_popup(d, &box);
+    {
+        int confirmed = 0;
+        for (int c = 0; c < CELLS && !confirmed; c++)
+            confirmed = label_is_stock(bmp, d, &box, (page - 1) * CELLS + c, c & 3, c >> 2);
+        if (!confirmed)
+            return;                            // no stock TRKn in view: not the mixer, or all covered
+    }
     for (int c = 0; c < CELLS; c++) {
         int track = (page - 1) * CELLS + c, k = c & 3, row = c >> 2;
         int lx0 = LABEL_X0 + COL_X(k), lx1 = lx0 + LABEL_W - 1, ly0 = row ? 59 : 32;
@@ -320,7 +351,7 @@ void tn_draw(void *bmp, void *ctrl)
             badge(bmp, k, row, track + 1);
             restore_under_box(d, &box, bx0, bx1, by0, 7);
         }
-        if (!name[0] || is_default(name) || !label_is_stock(d, &box, track, k, row))
+        if (!name[0] || is_default(name) || !label_is_stock(bmp, d, &box, track, k, row))
             continue;
         short_name(name, shown);
         if (!shown[0])
