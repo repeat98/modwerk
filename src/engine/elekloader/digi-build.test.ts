@@ -4,7 +4,7 @@ import MACHINES from '../../devices/machines.generated.json'
 import { BUILDER_CATALOG, BUILDER_SOURCE, buildLogText, buildStep, builderReleases, planBuild, prepareBuild, type Builder } from './digi-build'
 import type { Catalog } from '../../../vendor/elekloader/kit/src/kit/catalog'
 import { DIGI_DOWNLOADS_ENABLED, digiDownloadsEnabled } from './protocol'
-import { baseVariant } from './machine-build'
+import { baseVariant, rytmVariant } from './machine-build'
 import RYTM_BASE from '../../../sdk/machines/analog-rytm-mkii/base-binding.json'
 
 const PLAIN = 'modwerk-base-analog-rytm-mkii-' + RYTM_BASE.variants.plain.slice(0, 8) + '.elemod'
@@ -78,6 +78,12 @@ describe('the vendored elekloader catalog', () => {
       missing: [],
     })
   })
+  it('builds a set with a digital voice machine on the send-bus base, where the voices are', () => {
+    expect(rytmVariant(['filter-hz', 'my-voice'], ['chorus'], ['my-voice'])).toBe('send-bus')
+    expect(rytmVariant(['filter-hz', 'chorus'], ['chorus'], ['my-voice'])).toBe('send-bus')
+    expect(rytmVariant(['filter-hz'], ['chorus'], ['my-voice'])).toBe('plain')
+  })
+
   it('plans a set with a send effect on the send-bus base, and only then', () => {
     expect(planBuild('analog-rytm-mkii', '1.74', ['loop-sync', 'chorus'])).toMatchObject({
       core: { file: SEND_BUS, sha256: RYTM_BASE.variants['send-bus'], version: '0.7' },
