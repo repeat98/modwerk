@@ -101,6 +101,23 @@ the container, nothing is written (the site's repeat after a lost reply).
 - **Report**: SLOTS (vendor request 39, `flash.h`) gives the layout, the running slot, whether it is confirmed
   and whether the stub went back; the site tells the user when it did. `npm run device -- status` prints it.
 
+## A base too big for the unit's stage
+
+A base stages the next base's image in RAM for the update's trial and takes only what its own stage holds: 1.25 MiB
+on every base before 13 November 2026, 1.5 MiB from that one on (`boot.h` `BOOT_IMAGE_BYTES`). A unit reports it as
+its upload capacity, and the link refuses a larger image before it sends anything (`BaseTooBigError`). The site then
+runs two updates in a row (`BaseInstallDialog.tsx` `updateOverUsb`): the step base, which every base takes, then the
+current one. The step base is the 13 November base, kept as three assets that are never regenerated
+(`src/engine/elekloader/base-step.ts`, pinned by `base-step.test.ts`). The second update starts while the step base
+still runs from RAM, so its first arming restarts the unit on the same base from flash and the link arms once more.
+If even the step base does not fit, the dialog sends the user to the card.
+
+- A base that raises the stage again becomes the next step base: copy its package, fills and variants over the three
+  assets and update the pins, in the pull request that first publishes a base too big for the old stage.
+- The packed container is the next limit, and it is the flash's: 851,712 bytes on two slots (`flash.h`).
+- Not tested on a unit: two updates back to back on two slots (by the rule above the second overwrites the step
+  base's unconfirmed slot and the old base stays the fallback), and Windows keeping its USB driver through them.
+
 ## Showing it on the Octatrack
 
 A base update takes the whole screen and the panel (owner, 13 November 2026); a module sync shows a box with a bar

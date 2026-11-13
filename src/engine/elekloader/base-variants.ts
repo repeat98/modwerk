@@ -63,10 +63,10 @@ export function applyVariantPatch(text: string, patch: VariantPatch, sha256: str
 }
 
 /** The variant's package text and fills from the default package, or undefined for the default layout itself. */
-export function variantPackage(defaultText: string, variants: BaseVariants, layout: BaseLayout): { text: string; fills: BaseFill[] } | undefined {
-  if (layout === DEFAULT_LAYOUT) return undefined
+export function variantPackage(defaultText: string, variants: BaseVariants, layout: BaseLayout, base: { defaultLayout: BaseLayout; identity: (layout: BaseLayout) => string | undefined } = { defaultLayout: DEFAULT_LAYOUT, identity: layoutIdentity }): { text: string; fills: BaseFill[] } | undefined {
+  if (layout === base.defaultLayout) return undefined
   const variant = variants.variants.find(item => item.layout === layout)
-  if (variants.schema !== 1 || !variant || variant.identity !== layoutIdentity(layout)) throw new Error('This Modwerk base layout isn’t published.')
+  if (variants.schema !== 1 || !variant || variant.identity !== base.identity(layout)) throw new Error('This Modwerk base layout isn’t published.')
   if (textSha(defaultText) !== variants.packageSha256) throw new Error('The base package and its layouts don’t match. Reload the page.')
   return { text: applyVariantPatch(defaultText, variant.patch, variant.packageSha256), fills: variant.fills }
 }
