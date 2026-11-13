@@ -64,12 +64,12 @@ back after 10 s of USB quiet. The `serve` session's request every 4 s keeps
 the base from ever seeing that quiet.
 
 **Windows binds WinUSB only to a USB 2.10 device that answers BOS and the
-Microsoft OS 2.0 set.** Both requests reach the base through stock's
-unknown-request STALL tail; the device descriptor needs a copy (stock's sits
-in the protected bootloader range). macOS and USB disk mode are unaffected.
-`usbtest8`. On Windows 11 the vendor interface came up as a WinUSB device with
-no driver install, next to the card's mass storage (flashed base `19d37e25`
-and `ee76c36f` (S54), 12 October 2026), and libusb drives it.
+Microsoft OS 2.0 set**, both through stock's unknown-request STALL tail; the
+device descriptor needs a copy. No driver install (Windows 11, 12 October 2026).
+It keeps an interface's first setup: `DeviceInterfaceGUIDs` is written once,
+and without it nothing opens the interface. A changed `bcdDevice` makes Windows
+write it again (`BASE_REVISION` 0x0101,
+[record](verification/2026-11-13-windows-usb-revision.md)).
 
 **WinUSB refuses a control transfer longer than 4,096 bytes** ("Invalid
 parameter", before anything reaches the wire); macOS and Linux take the
