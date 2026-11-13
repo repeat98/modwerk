@@ -70,11 +70,25 @@
     }
   },
   "evidence": {
-    "tier": "none",
+    "tier": "author-hardware",
     "moduleVersion": "0.1.2-experimental",
-    "sourceSha256": null,
-    "reports": [],
-    "hardware": null,
+    "sourceSha256": "dc6899be0d14f14b8f741186590af51fb047891732ad05c4f8bb1a8b500481dc",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Digitakt II",
+      "release": "1.17",
+      "testedOn": "2026-11-13",
+      "tester": "crisp909",
+      "durationMinutes": null,
+      "summary": "crisp909 (the author) built the package with the pinned toolchain in Docker (source commit bc32ae2, package sha256 cc908de8), built the image on elekloader.github.io with core 1.0 and ran it on a Digitakt II, OS 1.17. Reported: the Internal Mixer pages 2/5 and 3/5 show the track names (first 5 characters) and the numbered badges; each pattern shows its own names with PERFORM KIT off; the names come back after SAVE PROJECT and a reload; the other pages are unchanged; pop-ups such as pattern select stay on top, names clipped at their edge.",
+      "limitations": [
+        "PERFORM KIT on was not tested.",
+        "Duration not recorded.",
+        "Faint row lines beside pop-ups are the OLED's own crosstalk, seen with the stock OS too."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {

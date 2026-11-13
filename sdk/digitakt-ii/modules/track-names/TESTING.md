@@ -47,4 +47,15 @@ The emulator is not hardware evidence: no sound, no exact timing.
 - SAVE PROJECT and a reload: the names come back and show on the mixer.
 - Other pages unchanged.
 
-Still to do: the same on a package built with the pinned toolchain (GCC 16.2.0, Docker).
+2026-11-13, reported by the author (crisp909) on a package built with the pinned toolchain:
+
+- Source commit `bc32ae2113c315f5cd4f48bc2028ef92892fa6d8` (native source sha256 `dc6899be…481dc`), built with
+  `scripts/build-elemod-isolated.sh` in Docker image `sha256:c8a80381f0b67a059f76fe2a54f8686003dc45159359457b22ca9e3985a025f9`
+  (GCC 16.2.0), packaged with `scripts/package-elemod-recipe.mjs`.
+- Package `track-names-0.1.2-experimental-os1.17.elemod`, sha256
+  `cc908de8c9036a03b2678c0bf9b93d9e9e28b96d5967c18c27abf933f4a03a8f`, image built on elekloader.github.io with core 1.0,
+  Digitakt II OS 1.17.
+- Repeated all four checks above: names per pattern (PERFORM KIT off), mixer pages 2/5 and 3/5, names after SAVE PROJECT
+  and a reload, other pages unchanged. All as expected.
+
+Not tested: PERFORM KIT on; how long it ran.
