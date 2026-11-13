@@ -183,7 +183,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 26776,
+    "memoryBytes": 30220,
     "fastBytes": 0,
     "load": {
       "display": "Perform page within about a point of a stock page (DSP 97% vs 96% under heavy load)",
@@ -193,8 +193,8 @@
   },
   "evidence": {
     "tier": "author-hardware",
-    "moduleVersion": "0.1.3-experimental",
-    "sourceSha256": "51b6554169d24c3877510b9aa03bdc68711bc6c5b33975c6f95eb49ec43935fd",
+    "moduleVersion": "0.1.4-experimental",
+    "sourceSha256": "6ae2e74d798cb3b360cbb75099260db5c8290bd85782f79e6e0401605306ed16",
     "reports": [
       "evidence/hardware-testing.json",
       "evidence/source-identity.json",
@@ -203,22 +203,23 @@
     "hardware": {
       "model": "Digitakt 1",
       "release": "1.53 and 1.54",
-      "testedOn": "2026-11-11",
+      "testedOn": "2026-11-13",
       "tester": "ROMsets",
-      "durationMinutes": 120,
-      "summary": "ROMsets flashed build 4.3h (core 2.1 and this source, alone and beside DigiChain, Digi Mono, digihealth, Digi Neighbor, Digi Poly, Machine Pages, RAM Machines, DIGISLICER, Digi Sophie and STRING) on OS 1.53 and 1.54, about 2 hours: SRC knobs take each machine's names, values and ranges; ALL and negative knobs, FUNC and push reset, pattern changes, assigning and clearing while playing, fast turns, machine-menu scrolling and leaving the page every way work, and the stock pages draw in full after it. With Overbridge, a MONO ENS note and FAST AUDIO off, digihealth read 96% on a stock page and 97% on the Perform page while turning, with no delay.",
+      "durationMinutes": null,
+      "summary": "ROMsets flashed build 5.0f (core 2.1 and this source, alone and beside CC Names) on OS 1.53 and 1.54: assignments kept through a power cycle without saving and through SAVE PROJECT and LOAD PROJECT; MIDI CC knobs send to an external synth and let go; CC Names names show and the ERR label is gone; a CC value recorded on a trig wins over the knob. The 0.1.4 checklist ran on OS 1.53, a smoke test on 1.54.",
       "limitations": [
-        "Reported as a whole after a checklist; the steps were not itemised.",
-        "The tested packages differ from the released ones only in the version text.",
-        "DSP readings with digihealth in the same image; digihealth is not part of this module. Readings vary by a few points.",
-        "Assignments saved with SAVE PROJECT are missing after a power cycle; loading another project and then this one brings them back. The same on 0.1.2-experimental. Not fixed in this version."
+        "Reported as a whole after a checklist; the steps were not itemised, and which image each check ran on was not said.",
+        "The full checklist ran on OS 1.53; OS 1.54 had a smoke test.",
+        "The tested packages differ from the released ones in the version text and two claim names.",
+        "Test time was not recorded.",
+        "A CC value recorded on a trig on the MIDI track wins over the knob (documented as a limitation)."
       ]
     },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Hardware (author, OS 1.53 and 1.54, about 2 hours, alone and beside nine module sets): SRC names, values and ranges per machine, knob behaviour, pattern changes and leaving the page work; with Overbridge and a MONO ENS note the Perform page read 97% DSP against 96% on a stock page, no delay. Source-only packages compiled in the pinned toolchain; emulator captures on OS 1.54. Persistence (author, on a unit): the saved project holds the assignments (loading another project and then this one brings them back), but they are not restored at power-on; 0.1.2-experimental behaves the same.",
+    "summary": "Hardware (author, build 5.0f, OS 1.53 full checklist and OS 1.54 smoke test, alone and beside CC Names): assignments kept through a power cycle without saving and through SAVE and LOAD PROJECT; MIDI CC knobs send to a synth, let go, and show CC Names names; no ERR labels. Emulator (never hardware evidence): CC sends and let-go, Quick Assign and Perform Edit track lists, hidden MIDI tracks, unassign on a slot turned off, and the simulated power-off on OS 1.53 and 1.54.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial: move a track’s pitch from the Perform page",
@@ -265,7 +266,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "0.1.3-experimental",
+        "moduleVersion": "0.1.4-experimental",
         "imageSha256": "76cd3b079851bd6f57e8d2d94424cae8a9ef96cec6b7040ee3c1f84d36da0d00",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
@@ -281,7 +282,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "0.1.3-experimental",
+        "moduleVersion": "0.1.4-experimental",
         "imageSha256": "76cd3b079851bd6f57e8d2d94424cae8a9ef96cec6b7040ee3c1f84d36da0d00",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
@@ -297,7 +298,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "0.1.3-experimental",
+        "moduleVersion": "0.1.4-experimental",
         "imageSha256": "76cd3b079851bd6f57e8d2d94424cae8a9ef96cec6b7040ee3c1f84d36da0d00",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
@@ -313,7 +314,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "0.1.3-experimental",
+        "moduleVersion": "0.1.4-experimental",
         "imageSha256": "76cd3b079851bd6f57e8d2d94424cae8a9ef96cec6b7040ee3c1f84d36da0d00",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
@@ -329,7 +330,7 @@
       "capture": {
         "type": "emulator",
         "release": "1.54",
-        "moduleVersion": "0.1.3-experimental",
+        "moduleVersion": "0.1.4-experimental",
         "imageSha256": "76cd3b079851bd6f57e8d2d94424cae8a9ef96cec6b7040ee3c1f84d36da0d00",
         "setup": "Pinned digiemu, firmware-native drawing, disposable first-boot project. No audio or cycle-timing qualification."
       }
