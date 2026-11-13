@@ -213,7 +213,7 @@ uint32_t modwerk_dev_request(const uint8_t *s, const uint8_t **reply, uint8_t *o
         *reply = out;
         return 28;
     }
-    if (s[1] == 41 && want == 20u && s[2] <= 2u && !s[3]) { /* LATE: the late-entry wait (machine_registry.c); wValue 1 turns it
+    if (s[1] == 42 && want == 20u && s[2] <= 2u && !s[3]) { /* LATE: the late-entry wait (machine_registry.c); wValue 1 turns it
                                                               * off, 2 on (0 keeps it): since the last read the latest entry,
                                                               * the entries in the window, the waits, the longest; whether on */
         extern volatile uint32_t mw_late_max, mw_late_hits, mw_late_waits, mw_late_wait_max, mw_late_wait_on;

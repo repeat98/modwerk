@@ -393,8 +393,8 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
       const [max, late, busy, frames, skips, tracks, share] = [0, 4, 8, 12, 16, 20, 24].map(at => b.readUInt32BE(at))
       console.log(`frame max ${pc(max)}, latest start ${pc(late)}, in the frame interrupt ${frames ? pc(busy * 256 / frames) : '-'} over ${frames} frames, skipped ${skips} on ${[...Array(8).keys()].filter(t => tracks >> t & 1).map(t => 'T' + (t + 1)).join(' ') || '-'}, share ${pc(share)}`)
     }
-    else if ((m = /^late(?::(on|off))?$/.exec(step))) { // LATE (dev request 41): the late-entry wait's counts since the last read; late:off / late:on switch it
-      const b = Buffer.from(await devIn(41, m[1] === 'off' ? 1 : m[1] === 'on' ? 2 : 0, 20)), us = n => `${(n / 132).toFixed(1)} us`
+    else if ((m = /^late(?::(on|off))?$/.exec(step))) { // LATE (dev request 42): the late-entry wait's counts since the last read; late:off / late:on switch it
+      const b = Buffer.from(await devIn(42, m[1] === 'off' ? 1 : m[1] === 'on' ? 2 : 0, 20)), us = n => `${(n / 132).toFixed(1)} us`
       const [latest, hits, waits, longest, on] = [0, 4, 8, 12, 16].map(at => b.readUInt32BE(at))
       console.log(`late-entry wait ${on ? 'on' : 'off'}: latest entry ${us(latest)} late, ${hits} in the window (110-190 us), ${waits} waited, longest wait ${us(longest)}`)
     }
