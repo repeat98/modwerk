@@ -1,26 +1,26 @@
 {
  "schema": 1,
- "identity": "009c4bc766993d0c44c0f558b7644cb17c1efca5b7f3cf39d74a3c692f7d62bd",
- "arena": 1089514976,
- "pool": 1087552592,
+ "identity": "4e9a87ea6d84077ed4d5e592211a2206a665b0c72ae577e38be6bb133b33104d",
+ "arena": 1089785312,
+ "pool": 1087820896,
  "symbols": {
-  "modwerk_controller_write_begin": 1084872412,
-  "modwerk_controller_write_end": 1084872440,
-  "modwerk_cue_cfg_clamp": 1085080756,
-  "modwerk_raise_ev_mute_keep": 1085083110
+  "modwerk_controller_write_begin": 1084872444,
+  "modwerk_controller_write_end": 1084872472,
+  "modwerk_cue_cfg_clamp": 1085086424,
+  "modwerk_raise_ev_mute_keep": 1085088778
  },
  "controllers": {
-  "sidechain-compressor": "804acb48559841026d0548c334e0d153794f642c9a111a078fa0bf3cee2a99d2",
-  "output-matrix": "b0cb5c077fff12ed777aa078de22eb09d4a1e2065c3fa33b6821dcc44f313a2c",
-  "analog-bassdrum": "2f877dd20d15c550bfb1bbd9fc237b0ba0f5cb6869dbb9f0f7b8166b1495be0e"
+  "sidechain-compressor": "202939c0b9ff641e79c6c898572f264cc07573ad84d7fa3ff4e06d2068fe7072",
+  "output-matrix": "e1a3d1bfdd3bd116514473a152b6091df2dbe1df8cf7606a2ce9749c106418b4",
+  "analog-bassdrum": "806e00832e3bd6418c19febe51615f0cc5745e427e681a8060582f883ac95e98"
  },
  "variants": {
-  "tracks-main-cue": "009c4bc766993d0c44c0f558b7644cb17c1efca5b7f3cf39d74a3c692f7d62bd",
-  "tracks": "0f3bc383b3068e5a006b82bbdc2eae3b15f204e32ed5f4cddc988758ae3d91e9",
-  "tracks-post": "f7445af73d4e9248719c8f35e83a2e7c1ea7658af958326e4de3fb9c7c4ba6df",
-  "main-cue": "f41ea9ad3a7be815bfe0e1e4e40b18e75c818aca0b6697d330594a21790da5f9",
-  "main": "fb0ab965ecc39c52f49806bcf48f3b9ad76f2251592056194d8ed91a3923d070",
-  "master": "1d84a4be9d19fbdf98f751aebaea7cb5fa78aee72f97cf53a9ad50bef7e45503",
-  "off": "360fd2f369e337c5235c2b938b5e59c035148fcab00808d259c497112f5d6edd"
+  "tracks-main-cue": "4e9a87ea6d84077ed4d5e592211a2206a665b0c72ae577e38be6bb133b33104d",
+  "tracks": "44078eb9c5e26df2728edc20fdb4c73e2cb9f6b7a6b57df68ccbb30e1f30123c",
+  "tracks-post": "73c2da347f659b2fd38755de830cb78433117bf2792de3db23e57a23d5d1eff4",
+  "main-cue": "e290dd3697bb75906617a65a7d828c86858cfb2c51b3ce77103b9556dbb51e35",
+  "main": "74164d5280044dca299aeec7cdebd318109f7f0ebcb80f4ec3da702b0412156c",
+  "master": "41d73ef255cb3759a94b53d657e9ca84544a5297e556abf82d4e4fea7846c559",
+  "off": "c1f21351db3ec855bde25c177a986a209eb3d95d2f0f1778579ae373108d8716"
  }
 }

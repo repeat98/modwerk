@@ -839,9 +839,10 @@
     }
    },
    "price": {
-    "voice": 411,
-    "engine": 3,
+    "voice": 0,
+    "engine": 0,
     "kind": "executed",
+    "inEngine": true,
     "source": "sdk/machines/octatrack/module-adapters/analog_bd_dsp_price.json"
    },
    "controller": "analog_bd_write_lease",

@@ -40,7 +40,8 @@ function deviceCrash(v: unknown) {
     && words(v.d, 8) && words(v.a, 7) && words(v.stack, 8) && words(v.code, 8) && words(v.memory, 8)
 }
 function deviceStall(v: unknown) {
-  return object(v) && exactly(v, 'count,reason,report,ticks') && uint(v.count) && uint(v.reason) && uint(v.ticks) && Array.isArray(v.report) && v.report.length <= 96 && v.report.every(uint)
+  return object(v) && (exactly(v, 'count,reason,report,ticks') || exactly(v, 'count,frames,reason,report,ticks')) && uint(v.count) && uint(v.reason) && uint(v.ticks) && Array.isArray(v.report) && v.report.length <= 96 && v.report.every(uint)
+    && (!('frames' in v) || Array.isArray(v.frames) && v.frames.length <= 256 && v.frames.length % 2 === 0 && v.frames.every(us => upTo(us, 0xffff))) // diag.h's trace: 128 frames, two times each
 }
 function deviceLog(v: unknown) {
   return object(v) && fields(v, ['loads','incidents','crash','stall']) && Array.isArray(v.loads) && Array.isArray(v.incidents)
@@ -84,7 +85,7 @@ export function validateDiagnostic(value: unknown): OctatrackDiagnostic {
       ? keys === 'buildKind,error,event,id,phase' && DIAGNOSTIC_BUILD_KINDS.some(kind => kind === value.buildKind)
         && DIAGNOSTIC_BUILD_PHASES.some(phase => phase === value.phase) && DIAGNOSTIC_BUILD_ERRORS.some(error => error === value.error)
       : !('buildKind' in value) && !('area' in value) && DIAGNOSTIC_USB_PHASES.some(phase => phase === value.phase)
-        && (!('kind' in value) || value.event === 'sync_failed' && value.error === 'unknown' && DIAGNOSTIC_ERROR_KINDS.some(kind => kind === value.kind))
+        && (!('kind' in value) || value.event === 'sync_failed' && (value.error === 'unknown' || value.error === 'transport') && DIAGNOSTIC_ERROR_KINDS.some(kind => kind === value.kind))
         && (!('step' in value) || value.event === 'sync_failed' && DIAGNOSTIC_SYNC_STEPS.some(step => step === value.step))
         && (!('error' in value) || DIAGNOSTIC_USB_ERRORS.some(error => error === value.error))
         && ['live','reason','log'].every(key => !(key in value) || extras!.allowed.includes(key)) && extras!.required.every(key => key in value)

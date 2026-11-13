@@ -85,6 +85,21 @@ sample_rate_add_gate:
         movem.l %d2-%d7/%a2-%a3,(%sp)           | displaced
         jmp     sample_rate_add_resume
 
+| SMPL WAVEFORM's knob loop (the SAMPLE view's draw, 0x400d2004), at its call of
+| one knob's text: the view in a2 is not yet pushed, the routine in a5, the
+| other nine arguments on the stack. d0-d1/a0-a1 are free. rate.c places the
+| text; the lea drops what stock's lea dropped.
+        .globl  sample_rate_label_gate
+        .extern sample_rate_label, sample_rate_label_resume
+
+sample_rate_label_gate:
+        move.l  %a2,-(%sp)                      | displaced: the view
+        move.l  %a5,-(%sp)                      | stock's routine for this knob
+        jsr     sample_rate_label
+        addq.l  #4,%sp
+        lea     48(%sp),%sp                     | displaced
+        jmp     sample_rate_label_resume
+
         .bss
         .align  4
 sample_rate_fin:

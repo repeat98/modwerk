@@ -10,6 +10,8 @@
 static unsigned failures;
 #define CHECK(x) do { if (!(x)) { failures++; fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, #x); } } while (0)
 volatile struct diag_log modwerk_test_log;
+volatile struct diag_trace modwerk_test_trace;
+volatile uint32_t mw_frame_last; /* machine_registry.c */
 volatile uint32_t modwerk_test_crash[DIAG_CRASH_BYTES / 4u], modwerk_test_stall[DIAG_STALL_BYTES / 4u], modwerk_test_playing, modwerk_test_tempo24,
     modwerk_test_screen, modwerk_test_timer;
 uint32_t modwerk_test_modules[16];
@@ -158,7 +160,21 @@ int main(void)
     CHECK(modwerk_diag_read(page, end / DIAG_PAGE) == DIAG_PAGE && page[end % DIAG_PAGE] == 0 && page[DIAG_PAGE - 1u] == 0);
     CHECK(DIAG_PAGE % 64u != 0u);
 
+    /* The frames before a stall: the last DIAG_TRACE_FRAMES, oldest first, the newest last; a gap and a run past the
+     * field's range stay at its top; LOG pages them after the stall record. */
+    for (unsigned f = 0; f < DIAG_TRACE_FRAMES + 5u; ++f) { modwerk_test_timer += 47936u + 64u * f; mw_frame_last = 6400u; modwerk_diag_frame(); }
+    modwerk_test_timer += 0x1000000u, mw_frame_last = 0x800000u, modwerk_diag_frame();
+    TRACE->magic = 0, tick();
+    CHECK(TRACE->magic == 0); /* no new stall record: nothing kept */
+    modwerk_test_stall[1] = 4, tick(); /* dsp.c's record, found at the next tick */
+    CHECK(TRACE->magic == DIAG_TRACE_MAGIC && TRACE->count == 4u);
+    CHECK(TRACE->frame[0][0] == 749u + 6u && TRACE->frame[0][1] == 100u && TRACE->frame[1][0] == 749u + 7u);
+    CHECK(TRACE->frame[DIAG_TRACE_FRAMES - 2u][0] == 749u + DIAG_TRACE_FRAMES + 4u && TRACE->frame[DIAG_TRACE_FRAMES - 1u][0] == 65535u && TRACE->frame[DIAG_TRACE_FRAMES - 1u][1] == 65535u);
+    unsigned trace_at = stall_at + DIAG_STALL_BYTES;
+    const volatile uint8_t *tb = (const volatile uint8_t *)TRACE;
+    CHECK(end == trace_at + DIAG_TRACE_BYTES && modwerk_diag_read(page, trace_at / DIAG_PAGE) == DIAG_PAGE && page[trace_at % DIAG_PAGE] == tb[0] && page[trace_at % DIAG_PAGE + 3u] == tb[3]);
+
     if (failures) fprintf(stderr, "%u failure(s)\n", failures);
-    else puts("diag: start, crash and stall, load, HOT, freeze, restart and LOG pages passed");
+    else puts("diag: start, crash and stall, load, HOT, freeze, restart, LOG pages and the frames before a stall passed");
     return failures != 0;
 }

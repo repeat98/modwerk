@@ -1506,3 +1506,6 @@ unsigned modwerk_dsp_report(uint32_t *out)
  * the slot dry until then. Port publication.c with the Part routes. */
 void dl_publication_finish(void) {}
 void dl_publication_tick(void) {}
+/* status.c's NO ROOM box: whether the effect reads a Y buffer at all. One that reads none was refused for another
+ * slot's buffer, since every pick plans all sixteen (owner's MKII, 12 November 2026). */
+unsigned modwerk_dsp_reads_buffer(unsigned id) { return id < MODWERK_FX_IDS ? dl_catalog[id].buffer : 0u; }

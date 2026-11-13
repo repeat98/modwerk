@@ -65,6 +65,8 @@ ARENA = WORDS - 64
 SIZES = {('A', 1): 300, ('A', 2): 773, ('A', 8): 88, ('B', 1): 300, ('B', 8): 88}  # Analog BD's: its package's
 
 
+PRICE = dict(cycles=414, kind='executed')  # Analog BD's price per voice in its engine header (411 + 3 folded)
+
 def unit(tag, feature, n):
     """A made-up engine: words at base 0 with address and displacement relocations, as engine_unit shapes them."""
     seed = (feature * 0x9e3779b1 + (tag == 'B') * 0x7f4a7c15) & 0xffffffff
@@ -1510,6 +1512,8 @@ int main(int argc, char **argv)
         assert(refused(pkg_ab_untrusted, sizeof pkg_ab_untrusted) == RUNTIME_CONFLICT);
         assert(refused(pkg_ab_badclaim, sizeof pkg_ab_badclaim) == RUNTIME_MALFORMED);
         assert(refused(pkg_ab_noexit, sizeof pkg_ab_noexit) == RUNTIME_MALFORMED);
+        assert(refused(pkg_ab_unpriced, sizeof pkg_ab_unpriced) == RUNTIME_MALFORMED);
+        assert(refused(pkg_ab_modeled, sizeof pkg_ab_modeled) == RUNTIME_MALFORMED);
         run(100);
         assert(!mw_engines_jobs && !trails[0] && !trails[1] && !dl_engine_reserved(0) && !(modwerk_controller_held() & 4u));
         assert(install(pkg_ab, sizeof pkg_ab) == MU_APPLIED); /* the good one still installs */
@@ -1886,10 +1890,16 @@ def generated(work, units):
     bare = board.package(0xabdb1445, image)
     words, relocations, exit = board.ab_engine(0)
     claim = [('x', 2, 0x2840, board.ab_words(0))]
-    text += array('pkg_ab_badclaim', abi9.engine(bare, words, relocations, board.AB_SITE, 3, exit, [('x', 2, 0x2841, board.ab_words(0))]))
-    text += array('pkg_ab_noexit', abi9.engine(bare, words, relocations, board.AB_SITE, 3, 0, claim))
+    text += array('pkg_ab_badclaim', abi9.engine(bare, words, relocations, board.AB_SITE, 3, exit, [('x', 2, 0x2841, board.ab_words(0))], **PRICE))
+    text += array('pkg_ab_noexit', abi9.engine(bare, words, relocations, board.AB_SITE, 3, 0, claim, **PRICE))
     text += array('pkg_ab_untrusted', abi9.engine(board.package(0xabdb1445, bytes(reversed(image))), words, relocations,
-                                                  board.AB_SITE, 3, exit, claim))
+                                                  board.AB_SITE, 3, exit, claim, **PRICE))
+    # An engine is priced per voice in its header (cycles, kind): unpriced or modeled, the builder refuses it, so these
+    # are made priced and then emptied, as a hand-made package would come.
+    priced = bytearray(abi9.engine(bare, words, relocations, board.AB_SITE, 3, exit, claim, **PRICE))
+    unpriced, modeled = bytearray(priced), bytearray(priced)
+    unpriced[44:46] = bytes(2); modeled[46] = 2
+    text += array('pkg_ab_unpriced', bytes(unpriced)) + array('pkg_ab_modeled', bytes(modeled))
     (work / 'packages.h').write_text(text)
     preamble = board.FIXTURE.split('/* Modelled receiver')[0]
     (work / 'fixture.c').write_text(preamble + 'unsigned modwerk_dsp_arena_now(unsigned);\n'

@@ -24,12 +24,13 @@ with tempfile.TemporaryDirectory() as tmp:
         for _ in range(n):lib.ts_tick(ct.byref(api))
     def fresh(on=True):
         lib.ts_test_reset()
-        if on:lib.ts_set(1,0)
+        if not on:lib.ts_set(-1,0)
         tick()
     def arm(t):
         assert track(t)==0;tick(29);assert group.value==0
         tick();assert group.value==1<<t
         assert lib.ts_stock_key(0x10+t)==0 and rows[2]&(1<<t)
+    lib.ts_label.restype=ct.c_char_p;lib.ts_test_reset();assert lib.ts_label()==b'HOLD'  # HOLD on install
     fresh(False);track(0);tick(140);assert group.value==0
     for anchor in range(8):
         for selection in range(256):

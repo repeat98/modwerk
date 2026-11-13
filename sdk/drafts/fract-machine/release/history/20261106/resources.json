@@ -1,0 +1,27 @@
+{
+  "status": "OWN_MEMORY_AND_CALLBACK_STACK_ACCOUNTED; TIMING_NOT_QUALIFIED",
+  "codeAndInitializedDataBytes": 30596,
+  "zeroInitializedStateBytes": 640,
+  "imagePlusBssBytes": 31236,
+  "runtimeHeaderBytes": 528,
+  "alignmentBytes": 12,
+  "residentPoolExtentBytes": 31776,
+  "sameCandidateReplacementPeakPoolBytes": 63552,
+  "packageBytes": 32120,
+  "relocations": 225,
+  "stockCopies": 9,
+  "stack": {
+    "maxOwnCallbackBytes": 712,
+    "method": "Conservative compiler-frame/call-graph bound, including own JSR return PCs and assembly leaves.",
+    "scope": "One callback activation; stock/base frames and interrupt/task nesting excluded.",
+    "report": "resource-audit.json"
+  },
+  "worstCaseColdFireCycles": "NOT_MEASURED",
+  "nativeStockRoutineCost": "NOT_MEASURED_OUTSIDE_MODULE_CODE",
+  "dspCodeWordsAdded": 0,
+  "dspStateWordsAdded": 0,
+  "hardware": "FUNCTIONAL_CHECK_RECORDED; TIMING_MEASUREMENTS_PENDING",
+  "compilerStackSingleFunctionMaxBytes": 380,
+  "compilerStackNote": "Per-function maximum; the separate conservative own-call-chain bound is 712 bytes. Neither includes instrument-owned stock/interrupt stack.",
+  "details": "resources.md"
+}

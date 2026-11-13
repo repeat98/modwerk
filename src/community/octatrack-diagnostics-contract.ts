@@ -41,9 +41,10 @@ export type PreLinkFailure = typeof PRE_LINK_FAILURES[number]
 export const DIAGNOSTIC_USB_EVENTS = ['connected', 'disconnected', 'sync_started', 'sync_failed', 'selftest', 'health', 'kept', 'undone', 'load', 'unresponsive', 'device_log'] as const
 /** The part of the site a browser error happened on, from the page's route: a fixed name, never the address. */
 export const DIAGNOSTIC_SITE_AREAS = ['library', 'configuration', 'octatrack', 'module', 'forum', 'account', 'admin', 'other'] as const
-/** A browser error's type, by its standard name; anything else is OtherError. Never its message. */
+/** An error's type, by its standard name, or one of the USB link's own two (a reply that timed out, a submission the
+ * unit dropped or refused); anything else is OtherError. Never its message. */
 export const DIAGNOSTIC_ERROR_KINDS = ['TypeError', 'RangeError', 'ReferenceError', 'SyntaxError', 'AbortError', 'NetworkError', 'NotFoundError',
-  'NotAllowedError', 'InvalidStateError', 'QuotaExceededError', 'SecurityError', 'DataError', 'OtherError'] as const
+  'NotAllowedError', 'InvalidStateError', 'QuotaExceededError', 'SecurityError', 'DataError', 'TimeoutError', 'VendorTransportError', 'OtherError'] as const
 export type DiagnosticSiteArea = typeof DIAGNOSTIC_SITE_AREAS[number]
 export type DiagnosticErrorKind = typeof DIAGNOSTIC_ERROR_KINDS[number]
 /** `load` and `unresponsive`: the connected unit's meters over the last minutes, per mille, as [mean, peak]; a meter
@@ -57,8 +58,35 @@ export const DEVICE_INCIDENTS = ['start', 'hot', 'freeze', 'crash', 'stall', 'se
 export interface DeviceLoad { seq: number; boot: number; minute: number; cpu: [number, number]; dsp1to4: [number, number]; dsp5to8: [number, number]; samples: number; playing: number; frameGap?: number; tickGap?: number }
 /** crash.c's record: the last error exception, with the eight longs at its PC read cached and uncached (log version 2). */
 export interface DeviceCrash { count: number; vector: number; pc: number; sr: number; sp: number; d: number[]; a: number[]; stack: number[]; code: number[]; memory: number[] }
-/** dsp.c's record of the last DSP stall: why (1 frames stopped, 2 eDMA refused, 0 a test), the tick, the loader's report words. */
-export interface DeviceStall { count: number; reason: number; ticks: number; report: number[] }
+/** dsp.c's record of the last DSP stall: why (1 frames stopped, 2 eDMA refused, 0 a test), the tick, the loader's report words.
+ * `frames`: the frames before it, oldest first, two numbers each in µs (diag.h's trace): the time since the frame before
+ * began (363 on time) and how long the frame interrupt before it ran. Bases without the trace send none. */
+export interface DeviceStall { count: number; reason: number; ticks: number; report: number[]; frames?: number[] }
+const FRAME_US = 363, LATE_WINDOW = [110, 190] as const, LATE_TAIL = 6
+/** How late each of a stall's frames began against the DSP's frame grid, in µs: the lateness before it plus its gap
+ * less one frame, never under 0. Past a whole frame (or within 20 µs of one) the DSP has skipped that frame, and a gap
+ * of four frames or more starts again on time. The trace stamps a frame at dl_frame, not at the interrupt's entry, and
+ * the upload rounds to 1 µs, so read these to about 5 µs. */
+export function stallLateness(frames: number[]): number[] {
+  let late = 0
+  return frames.filter((_, i) => i % 2 === 0).map((gap, i) => {
+    late = i === 0 || gap >= 4 * FRAME_US ? 0 : Math.max(0, late + gap - FRAME_US)
+    while (late >= FRAME_US - 20) late = Math.max(0, late - FRAME_US)
+    return late
+  })
+}
+/** A stall's frames in a line: the last gaps, the longest with the run before it, and whether one of the last frames
+ * began in the late entry's window (docs/MODULE_PERFORMANCE.md: about 150 µs late after a long frame). '' without a trace. */
+export function describeStallFrames(frames: number[] | undefined): string {
+  if (!frames?.length) return ''
+  const gaps = frames.filter((_, i) => i % 2 === 0), runs = frames.filter((_, i) => i % 2 === 1), longest = gaps.indexOf(Math.max(...gaps))
+  const late = stallLateness(frames), from = Math.max(0, late.length - LATE_TAIL)
+  const hit = late.reduce((found, us, i) => i >= from && us >= LATE_WINDOW[0] && us <= LATE_WINDOW[1] ? i : found, -1)
+  return `${gaps.length} frames before it: last gaps ${gaps.slice(-8).join(' ')} us (363 is on time); longest ${gaps[longest]} us, ${gaps.length - 1 - longest} frames before the last, ` +
+    `after a frame interrupt of ${runs[longest]} us (the longest ran ${Math.max(...runs)} us); the last began ${late.slice(-LATE_TAIL).join(' ')} us late: ` +
+    (hit < 0 ? `none ${LATE_WINDOW[0]} to ${LATE_WINDOW[1]} us late, so not the late entry`
+      : `one ${late[hit]} us late, ${late.length - 1 - hit} before the last, after a frame interrupt of ${runs[hit]} us: fits the late entry (${LATE_WINDOW[0]} to ${LATE_WINDOW[1]} us)`)
+}
 /** The loader's report words, as the stall record and the development report (scripts/device.mjs) carry them
  * (dsp.c modwerk_dsp_report, version 11; version 12 adds the effect masks' further words and a pad at the end). */
 export const DSP_REPORT_NAMES = ['version', 'frames', 'phase', 'job0', 'job1', 'hostFlags', 'accepted0', 'accepted1', 'rejected0', 'rejected1',
@@ -118,7 +146,9 @@ export interface OctatrackDiagnostic {
   modules?: { id: string; catalogVersion: string }[]
   packages?: { sha256: string; bytes: number }[]
   area?: DiagnosticSiteArea
-  /** A browser error's type, or an unclassified (`unknown`) sync failure's; never a message. */
+  /** A browser error's type, an unclassified (`unknown`) sync failure's, or what stopped a `transport` one: the
+   * browser's USB error, TimeoutError (no reply in time), VendorTransportError (the unit dropped or refused the
+   * submission), OtherError (a reply that did not confirm the step). Never a message. */
   kind?: DiagnosticErrorKind
   step?: DiagnosticSyncStep
   live?: DiagnosticLive

@@ -1,0 +1,1 @@
+Docs: the performance guide records the late frame entry that can stop the Octatrack's DSPs after START or a program change (octabam's measurement, 12 and 13 November 2026), and the hardware traps no longer say that one long frame never does. A stall that comes or goes with a module is not evidence about that module until the frames before it are read.
