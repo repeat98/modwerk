@@ -187,8 +187,13 @@ int main(void)
     /* Saved: said for three seconds or until a key, which goes on to stock; then nothing is waited for. */
     modwerk_flash_progress = 0, modwerk_flash_outcome = 3, upload_view = 0; transfer_tick();
     CHECK(transfer == T_SAVED && strstr(shows(), "BASE SAVED|YOU CAN PLAY AGAIN") && !modwerk_status_enc(0, 1));
-    CHECK(!modwerk_status_key(0, 1) && transfer == T_NONE && !modwerk_status_key(0, 0));
-    transfer_tick(); CHECK(transfer == T_NONE);
+    /* The progress still up for a moment after the outcome (another task takes it down): it stays SAVED, three
+     * seconds, and never goes back to waiting with the panel held. */
+    modwerk_flash_progress = 1001u; transfer_tick(); transfer_tick();
+    CHECK(transfer == T_SAVED && !modwerk_status_key(PLAY, 1) && !modwerk_status_key(PLAY, 0));
+    transfer = T_SAVED; modwerk_flash_progress = 0;
+    for (unsigned k = 0; k < T_TOLD_TICKS + T_QUIET_TICKS; ++k) { transfer_tick(); if (T_LOCKS(transfer)) break; }
+    CHECK(transfer == T_NONE && !modwerk_status_key(0, 1) && !modwerk_status_key(0, 0));
     /* A write that failed says so and frees the panel: the page sends it again. */
     modwerk_flash_outcome = 4; transfer_tick();
     CHECK(transfer == T_FAILED && strstr(shows(), "NOT SAVED|KEEP THE POWER ON|TRY AGAIN IN MODWERK"));
@@ -196,7 +201,7 @@ int main(void)
     CHECK(transfer == T_NONE);
     /* Started from RAM while NOR starts another base (two slots): the screen is there before any host is, and gives
      * up 25 s after the start, as a development RAM boot has no write to wait for. */
-    transfer_seen = 0, transfer_ticks = 60, transfer_wait = T_WAIT_TICKS, modwerk_flash_trial = 1; transfer_tick();
+    transfer_seen = transfer_over = 0, transfer_ticks = 60, transfer_wait = T_WAIT_TICKS, modwerk_flash_trial = 1; transfer_tick(); /* as after a start */
     CHECK(transfer == T_WAIT && modwerk_status_key(0, 1) && modwerk_status_key(0, 0));
     listed = 3; missing_check(); missing_check(); CHECK(open == CLOSED); /* the missing page waits for it */
     listed = 0; missing_check();

@@ -452,7 +452,7 @@ int modwerk_flash_tick(void)
     if (ticks == SLOTS_LOOK_TICKS) return due_look = 1;
     if (ticks == SLOTS_NOTE_TICKS && slots_note)
         popup(slots_note == 1 ? "BASE UPDATED" : "UPDATE UNDONE");
-    if (note && !busy) { popup(note); note = 0; modwerk_flash_progress = 0; }
+    if (note && !busy) { popup(note); note = 0; }
     if (!asked && ticks >= SLOTS_CONFIRM_TICKS && (modwerk_flash_host || newest_named)) return asked = due_confirm = 1;
     return 0;
 }
@@ -490,8 +490,8 @@ static enum mu_publication f_publish(void *u)
     int ok = two ? update(base == 2) : convert(old);
     slots_refresh(); busy = 0;
     /* A write that failed left its box over everything until the next start: nothing took it down. */
-    if (!restart) modwerk_flash_outcome = (modwerk_flash_outcome & ~1u) + 2u + (ok ? 1u : 0u);
-    if (!ok) { modwerk_flash_progress = 0; modwerk_flash_refusal = FLASH_WRITE; return MU_UNCERTAIN; }
+    if (!restart) modwerk_flash_progress = 0, modwerk_flash_outcome = (modwerk_flash_outcome & ~1u) + 2u + (ok ? 1u : 0u);
+    if (!ok) { modwerk_flash_refusal = FLASH_WRITE; return MU_UNCERTAIN; }
     f_flashed = restart;
     if (!restart) note = "BASE SAVED";
     return MU_APPLIED;

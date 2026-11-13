@@ -157,7 +157,7 @@ enum { T_NONE, T_SYNC, T_SYNC_START, T_SAVED, T_FAILED, T_WAIT, T_RECEIVE, T_SAV
 #define T_WAIT_TICKS 1500u         /* 25 s after the start */
 #define T_QUIET_TICKS 1200u        /* 20 s after a base's container was last seen */
 #define T_TOLD_TICKS 180u          /* SAVED and NOT SAVED: three seconds, or a key */
-static unsigned transfer, transfer_kind, transfer_told, transfer_seen;
+static unsigned transfer, transfer_kind, transfer_told, transfer_seen, transfer_over;
 static uint32_t transfer_permille, transfer_wait = T_WAIT_TICKS, transfer_outcome, transfer_ticks;
 static uint8_t held_back[8]; /* the keys whose press a base update held back, a bit each: their releases stay here too */
 static void transfer_tick(void)
@@ -167,19 +167,27 @@ static void transfer_tick(void)
     ++transfer_ticks;
     if (what && !started) transfer_kind = what; /* told while it arrives: flash.c unpacks a container over its own first bytes */
     if (!what) transfer_kind = 0;
-    if (transfer_kind >= 2u || modwerk_flash_progress) transfer_seen = 1, transfer_wait = transfer_ticks + T_QUIET_TICKS;
-    if (outcome != transfer_outcome) { /* a write ended: say so, and wait for nothing more once it is saved */
+    /* A write that ended is over until another base starts to arrive: flash.c takes its progress down a moment after
+     * it reports the outcome, from another task, and on the unit that moment put WAITING back for 20 s after BASE
+     * SAVED, the panel held (owner's MKII, 13 November 2026). */
+    if (what >= 2u && !started) transfer_over = 0;
+    if (outcome != transfer_outcome) { /* a write ended: say so, and wait for nothing more */
         transfer_outcome = outcome, transfer = outcome & 1u ? T_SAVED : T_FAILED, transfer_told = T_TOLD_TICKS;
-        transfer_wait = 0; /* saved, or the page's to send again: the panel is free meanwhile */
+        transfer_over = 1, transfer_wait = 0; /* saved, or the page's to send again: the panel is free meanwhile */
         return;
     }
+    if (transfer_over) { /* the notice for its three seconds, then nothing */
+        if ((transfer == T_SAVED || transfer == T_FAILED) && transfer_told && --transfer_told) return;
+        transfer = T_NONE;
+        return;
+    }
+    if (transfer_kind >= 2u || modwerk_flash_progress) transfer_seen = 1, transfer_wait = transfer_ticks + T_QUIET_TICKS;
     if (modwerk_flash_progress) {
         transfer = T_SAVE, transfer_permille = modwerk_flash_progress > 1000u ? 1000u : modwerk_flash_progress - 1u;
     } else if (modwerk_boot_pending() || (transfer_kind == 3u && started)) transfer = T_RESTART;
     else if (transfer_kind == 2u && started) transfer = T_SAVE, transfer_permille = 0;
     else if (transfer_kind >= 2u) transfer = T_RECEIVE, transfer_permille = permille;
     else if (transfer_kind == 1u) transfer = started ? T_SYNC_START : T_SYNC, transfer_permille = permille;
-    else if ((transfer == T_SAVED || transfer == T_FAILED) && transfer_told && --transfer_told) return;
     else if ((modwerk_flash_trial || transfer_seen) && transfer_ticks < transfer_wait) transfer = T_WAIT;
     else transfer = T_NONE;
 }

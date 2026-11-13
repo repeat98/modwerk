@@ -197,7 +197,7 @@ int main(void)
     CHECK(modwerk_flash_slots[4] == 1);
     /* Written by this base itself, from RAM after its trial (the update's one restart): not quiesced, so the base's
      * own box showed it, not stock's screen; it runs on, says BASE SAVED, and starts from A next time. */
-    CHECK(modwerk_test_screens == 0 && modwerk_flash_progress == 1001u && !modwerk_flash_quiesced);
+    CHECK(modwerk_test_screens == 0 && !modwerk_flash_progress && !modwerk_flash_quiesced); /* down with the outcome, not a tick later */
     CHECK(modwerk_flash_outcome == 3u); /* status.c's screen: one write ended, saved */
     CHECK(b->retire(0) == 1 && restarted() == 0);
     modwerk_test_popup = 0; modwerk_flash_tick();
