@@ -639,7 +639,7 @@ amiga_shift.part.0:
 	add.l %d0,%d0
 	cmp.l %d0,%d1
 	jhi .L137
-	lea semitone.2+1,%a0
+	lea semitone.3+1,%a0
 .L132:
 	move.b (%a0),%d1
 	move.l %a0,%a1
@@ -647,9 +647,9 @@ amiga_shift.part.0:
 	mvz.b %d1,%d1
 	cmp.l %d1,%d0
 	jcc .L132
-	sub.l #semitone.2+1,%a1
+	sub.l #semitone.3+1,%a1
 	move.w %a1,%d2
-	lea (semitone.2),%a0
+	lea (semitone.3),%a0
 	mulu.w #1280,%d2
 	move.l %d2,4(%sp)
 	mvz.b (%a0,%a1.l),%d2
@@ -677,11 +677,11 @@ amiga_shift.part.0:
 	rts
 .L137:
 	moveq #100,%d0
-	lea semitone.2+1,%a0
+	lea semitone.3+1,%a0
 	jra .L132
 .L138:
 	move.l %d2,%d0
-	lea semitone.2+1,%a0
+	lea semitone.3+1,%a0
 	jra .L132
 	.size	amiga_shift.part.0, .-amiga_shift.part.0
 	.align	2
@@ -861,9 +861,13 @@ amiga_page:
 	cmp.l %d4,%d0
 	jcs .L166
 .L181:
-	lea CSWTCH.69,%a0
+	lea (step.0),%a0
 	moveq #24,%d0
-	move.l (%a0,%d4.l*4),%d2
+	mvz.w (%a0,%d4.l*2),%d2
+	lea page+306,%a2
+	move.l %d1,%a0
+	add.l #page+354,%a0
+	add.l #1074031284,%d2
 	move.l %d2,%d3
 	move.l %d2,%d5
 	clr.w %d3
@@ -871,10 +875,7 @@ amiga_page:
 	lsr.l %d0,%d5
 	move.l %d2,%d4
 	lsr.l #8,%d4
-	lea page+306,%a2
 	clr.l %d0
-	move.l %d1,%a0
-	add.l #page+354,%a0
 	move.b %d5,(%a2,%d1.l)
 	lea page+308,%a2
 	move.b %d4,(%a2,%d1.l)
@@ -3590,19 +3591,18 @@ amiga_frame:
 	add.l %d1,%d0
 	rts
 	.size	amiga_frame, .-amiga_frame
-	.section	.rodata.cst16,"aM",@progbits,16
-	.align	2
-	.type	CSWTCH.69, @object
-	.size	CSWTCH.69, 16
-CSWTCH.69:
-	.long	1074032400
-	.long	1074031656
-	.long	1074031656
-	.long	1074031284
 	.section	.rodata
-	.type	semitone.2, @object
-	.size	semitone.2, 13
-semitone.2:
+	.align	2
+	.type	step.0, @object
+	.size	step.0, 8
+step.0:
+	.word	1116
+	.word	372
+	.word	372
+	.word	0
+	.type	semitone.3, @object
+	.size	semitone.3, 13
+semitone.3:
 	.base64	"ZGpwd36FjZafqLK9yA=="
 	.globl	amiga_machine_start
 	.align	2
