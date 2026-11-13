@@ -3,6 +3,7 @@
 #include "stock_hook_resources.h"
 #include "fxids.h"
 #include "loader.h"
+#include "controller_write_lease.h"
 #include <assert.h>
 int modwerk_stock_hook_export_idle(void);
 int modwerk_stock_hook_begin(unsigned,uint32_t,uint32_t,int);
@@ -19,7 +20,20 @@ int dl_publication_idle(void) { return 1; }
 static struct runtime_dsp_claim live_claim={0x1c00u,1u,2u,0u,RUNTIME_CLAIM_READ,0};
 static struct runtime_module claimant;
 static int with_claimant, claims_idle=1;
-const struct runtime_module *modwerk_runtime_module(unsigned i) { return with_claimant && i==3u ? &claimant : 0; }
+/* A live controller package (module 7, Sidechain's feature) that no board slot holds yet, and the owners' epoch. */
+static struct runtime_module controller;
+static int with_controller, unsure;
+static uint32_t epoch=2;
+const struct mw_controller_write_policy modwerk_controller_write_policies[1]={{.identity={.package_sha256={0xaa},.module=7,.feature=1},.image_bytes=64}};
+const unsigned modwerk_controller_write_policy_count=1;
+uint32_t modwerk_runtime_owner_epoch(void) { return epoch; }
+int modwerk_runtime_owner_snapshot(const uint8_t *image,struct runtime_owner *o) {
+    if(unsure) return 0;
+    *o=(struct runtime_owner){0};
+    if(image==controller.dsp.image && with_controller) { o->module=7; o->image_bytes=64; o->controller_sha256[0]=0xaa; }
+    return 1;
+}
+const struct runtime_module *modwerk_runtime_module(unsigned i) { return with_claimant && i==3u ? &claimant : with_controller && i==5u ? &controller : 0; }
 int dl_hook_claims_idle(const struct mw_hook_span *spans,unsigned n) { (void)spans;(void)n;return claims_idle; }
 int modwerk_machine_dsp_claims_admit(unsigned requires,const struct runtime_dsp_claim *claims,unsigned n);
 int modwerk_stock_hook_buffer_policy(unsigned core,unsigned id,struct mw_hook_buffer_claim *out) {
@@ -68,5 +82,15 @@ int main(void) {
     claims_idle=-1; assert(modwerk_machine_dsp_claims_admit(0,&mine,1)==RUNTIME_BUSY);
     claims_idle=1; saved=1; assert(modwerk_machine_dsp_claims_admit(0,&mine,1)==RUNTIME_BUSY); saved=0;
     assert(modwerk_stock_hook_export_idle());
+    /* A controller installed but not bound to a slot yet (a restore, a sync) already keeps buffers off its ranges: a
+     * module's whole FX2 block 0 would cover Sidechain's key window at its end; block 1 and stock's own extent do not. */
+    static const uint8_t image[4]; controller.dsp.image=image;
+    claims_idle=1; with_controller=1; epoch+=2;
+    assert(!modwerk_dsp_buffer_permitted(0,1,0,32) && !modwerk_dsp_buffer_permitted(1,1,0,32));
+    assert(modwerk_dsp_buffer_permitted(0,1,1,32) && modwerk_dsp_buffer_permitted(0,1,0,13) && modwerk_dsp_buffer_permitted(0,0,0,32));
+    unsure=1; epoch+=2; assert(modwerk_dsp_buffer_permitted(0,1,0,32)); /* an owner not readable now: asked again ... */
+    unsure=0; assert(!modwerk_dsp_buffer_permitted(0,1,0,32));          /* ... without waiting for the next epoch */
+    with_controller=0; assert(!modwerk_dsp_buffer_permitted(0,1,0,32)); /* the owners did not change: not read again */
+    epoch+=2; assert(modwerk_dsp_buffer_permitted(0,1,0,32));
     return 0;
 }

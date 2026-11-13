@@ -30,7 +30,7 @@ class StockHookControllers(unittest.TestCase):
                 path.write_bytes((text + '\n').encode())
                 with self.assertRaisesRegex(ValueError, 'source changed'):
                     controllers.sources(name, sdk)
-        for name in ('analog-bassdrum', 'character', '../output-matrix'):
+        for name in ('analog-bassdrum', 'tapehead', '../output-matrix'):
             with self.assertRaisesRegex(ValueError, 'No reviewed'):
                 controllers.sources(name, SDK)
 

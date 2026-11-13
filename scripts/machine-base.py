@@ -40,6 +40,8 @@ import tempfile
 APP = Path(__file__).resolve().parents[1]
 sys.path.append(str(APP / 'sdk'))
 import firmware_codec  # noqa: E402
+sys.path.append(str(APP / 'sdk/runtime'))
+import m68k_codegen  # noqa: E402
 
 DEFAULT_UPSTREAM = Path.home() / '.cache/modwerk-upstream/elekloader'
 
@@ -260,6 +262,11 @@ def build(machine, stock, upstream, out):
                 sdk.build(str(core), str(stock), str(root / 'out'))
             except sdk.BuildError as error:
                 raise ValueError('The SDK did not build the base (%s): %s' % (name, error))
+            objects = sorted((root / 'out').rglob('*.c.o'))
+            try:
+                m68k_codegen.check(objects, config['toolchain']['cross'] + 'objdump')
+            except ValueError as error:
+                raise ValueError('The base (%s): %s' % (name, error))
             packages = sorted((root / 'out').glob('*.elemod'))
             if len(packages) != 1:
                 raise ValueError('The SDK wrote %d packages, not one.' % len(packages))

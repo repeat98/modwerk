@@ -29,7 +29,7 @@ export async function diagnostics(device: ControlDevice, index: number): Promise
 const u32 = (n: number) => [n >>> 24, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff]
 /** "MWRM" (sdk/runtime/loader/README.md) without bss or relocations: a tick hook at 0, or nothing for empty code.
  *  ABI 3 is module 0; ABI 4 names the module `id`. Sites are [address, stock bytes] that keep their stock bytes. */
-function runtimePackage(base: string, code: number[], id?: number, sites: [number, number[]][] = []): UploadPackage {
+export function runtimePackage(base: string, code: number[], id?: number, sites: [number, number[]][] = []): UploadPackage {
   const hooks = code.length ? [0, 0xffffffff, 0xffffffff, 0xffffffff] : []
   const data = Uint8Array.from([0x4d, 0x57, 0x52, 0x4d, 0, id === undefined ? 3 : 4, 0, 0, ...u32(code.length), ...u32(0), ...u32(0),
     ...u32(hooks.length), ...u32(sites.length), ...(id === undefined ? [] : u32(id)), ...hooks.flatMap(u32), ...code,
@@ -43,7 +43,7 @@ export function testModule(base: string, value: number, padding = 0): UploadPack
 const tick = (value: number) => [0x20, 0x6f, 0x00, 0x04, 0x20, 0xbc, 0, 0, 0, value & 0xff, 0x4e, 0x75]
 /** The OS entry, `lea (-28,%sp),%sp` at 0x40000400 in every base (build_core.py's OS_FIRST), runs once at boot:
  *  a site there that keeps its bytes changes nothing but claims them. */
-const ENTRY: [number, number[]] = [0x40000400, [0x4f, 0xef, 0xff, 0xe4]]
+export const ENTRY: [number, number[]] = [0x40000400, [0x4f, 0xef, 0xff, 0xe4]]
 /** Removes module `id` (module 0 when omitted); the other live modules stay. */
 export const removal = (base: string, id?: number) => runtimePackage(base, [], id)
 

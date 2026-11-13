@@ -119,6 +119,13 @@ describe('diagnostics pull', () => {
     expect(lines.filter(l => l.includes('stall'))).toEqual([
       '  unit: #3 start 2 +0m0s stall reason 1 (an OS upgrade: this start runs another base; not a hang)', '  unit: #5 start 3 +0m0s stall reason 1'])
   })
+  it('names a crash incident’s program counter from the symbols kept for its base, and from no other base’s', () => {
+    const at = (seq, kind, a) => ({ seq, boot: 1, second: 0, kind, a, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0),
+      fx: Array(16).fill(0), keys: Array(16).fill(255), screen: 0, tempo24: 0, playing: false })
+    const names = base => base === 'b5fae2ae' ? address => address === 0x40a00004 ? 'tick+0x4' : '' : undefined
+    expect(unitLines([at(1, 'base', 0xb5fae2ae), at(2, 'crash', 0x40a00004)], names).at(-1)).toBe('  unit: #2 start 1 +0m0s crash pc 0x40a00004 (tick+0x4)')
+    expect(unitLines([at(1, 'base', 0x049efc39), at(2, 'crash', 0x40a00004)], names).at(-1)).toBe('  unit: #2 start 1 +0m0s crash pc 0x40a00004')
+  })
   it('keeps an earlier log apart from the one a new base restarts at start 1', () => {
     const at = (seq, boot, kind, a = 0, more = {}) => ({ seq, boot, second: 60 * seq, kind, a, cpu: 0, dsp1to4: 0, dsp5to8: 0, machines: Array(24).fill(0),
       fx: Array(16).fill(0), keys: Array(16).fill(255), screen: 0, tempo24: 2880, playing: false, ...more })

@@ -35,7 +35,7 @@ export async function siteUpdated() {
  *   that reports a base records it, so the guide never comes back on its own for a member whose unit has the base.
  * - The update prompt opens wherever the connected unit runs an older base, so every base update reaches everyone
  *   without a migration.
- * Neither opens in a browser without WebUSB: the card build is the way there. Closing either or Later hides it for this
+ * Neither opens in a browser without WebUSB: Setup's own button opens the guide there. Closing either or Later hides it for this
  * visit. A failed read keeps the guide quiet; a failed record lets it show again next visit.
  */
 export function useBaseInstallPrompt(memberId: string | null, enabled: boolean, link: OctatrackLink | null = null, installHere = true) {

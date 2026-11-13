@@ -1,0 +1,1 @@
+Your Octatrack: when the unit is in use, the site now says what usually holds it, Modwerk open in another tab or browser, instead of "another browser window or app". The base install guide's last step now says so too, where it used to keep waiting without a word.

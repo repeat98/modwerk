@@ -1,0 +1,2 @@
+Octatrack base: FM Synth's voices now count. Its tracks pass the CPU budget and the frame guard like every other machine, so a Part with too many of them drops a voice instead of freezing the instrument.
+ Seen on a development build on the owner's MKII: three FM Synth tracks beside a busy eight-track pattern froze the unit before and played after. A busy project can now drop FM Synth notes where it played them before. The release base itself was not run on a unit.

@@ -1,0 +1,14 @@
+{
+  "kind": "owner-approved-update",
+  "id": "syntiz",
+  "version": "0.1.0-experimental",
+  "approvedBy": "repeat98",
+  "approvedOn": "2026-11-11",
+  "waived": [
+    "current-build-hardware",
+    "chip-worst-case-cycles"
+  ],
+  "sourceSha256": "6fb4883386f10e512da989a97b4d748e69d2ade1bffdfd10bcac30ab1b5bc163",
+  "ownerStatement": "Waiver offered by repeat98 on #1304 on 8 November 2026 (\"I'll waive the rows you asked about for 0.1.0-experimental, as I did for POLY8: chip-worst-case-cycles and current-build-hardware, for this exact source\"); release approved by repeat98 on 11 November 2026 (\"ok no let's release it\"), after the release session's run on his MKII found that a note held with AMP HOLD/REL at INF never ends and that Undo while tracks use SYNTIZ stays in recovery until a power cycle (TESTING.md, README limitations).",
+  "reason": "SYNTIZ renders its tracks' audio on the ColdFire in the frame interrupt, so its cost is a share of every frame, not a per-event cost the audit can bound: a render is about 15 % of a frame, up to 37 % after stock's trig work, and a fourth SYNTIZ track in a Part is refused. The base's frame guard drops a render rather than overrun. The author measured it on his MKII with his own bases and package f501a6a4 (evidence/performance.json, TESTING.md); no static cycle bound and no MIDI flood exist, and those numbers stay null. Waived for this exact source: chip worst-case cycles and the audit's current-build hardware rows (stock benchmark, stress)."
+}

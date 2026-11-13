@@ -12,7 +12,9 @@ import { inventoryChanges, type Inventory, type InventoryTarget } from '../../co
 import type { OctatrackLink, SetChange } from './octatrack-link.ts'
 import { RuntimeFeature, type MissingModule, type RuntimeCapabilities } from './upload-usb.ts'
 import { USB_AUDIO_MODULE } from '../../config/usb-audio.ts'
-import { baseLayout, isPublishedBase, layoutIdentity, layoutName, type BaseLayout } from './base-variants.ts'
+import { baseLayout, isPublishedBase, layoutIdentity, layoutName, MEMBER_LAYOUT, type BaseLayout } from './base-variants.ts'
+import { cardSetGeneration, encodeCardSet } from './card-set.ts'
+import { SET_MAX_ABI } from './set-package.ts'
 import { overLimitMessage } from '../../catalog/set-limit.ts'
 
 /** Why a set cannot be loaded over USB, in the user's words. */
@@ -35,11 +37,11 @@ export interface RuntimePackageManifest {
   groups?: { id: string; name: string; variants: MachineVariant[] }[]
 }
 export class BaseUpdateRequired extends ModuleSetError {
-  constructor(message = 'Install the latest Modwerk base from the card to sync this module set. Your selected modules will stay here.') { super(message) }
+  constructor(message = 'Update to the latest Modwerk base to sync this module set. Your selected modules will stay here.') { super(message) }
 }
 /** A key bus reader on a base that may not have the key bus: the same guided update, saying why. */
 export class KeyBusBaseRequired extends BaseUpdateRequired {
-  constructor(module: string) { super(`${module} needs a Modwerk base with the key bus. Install the latest Modwerk base from the card, then sync again. Your selected modules will stay here.`) }
+  constructor(module: string) { super(`${module} needs a Modwerk base with the key bus. Update to the latest Modwerk base, then sync again. Your selected modules will stay here.`) }
 }
 /** USB Audio is part of the base: its layout sets the USB descriptors, so another layout is another base, sent over
  * USB like any base update (base-variants.ts). The set's modules stay; nothing is synced until it runs. */
@@ -290,7 +292,7 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
     if (changes.stockOff.length || changes.stockOn.length)
       throw new ModuleSetError('The Octatrack can’t take stock effects out of its menus over USB yet. Keep every stock effect in this module set to sync it.')
     const unpublished = changes.add.filter(id => !ids.includes(id))
-    if (unpublished.length) throw new ModuleSetError(`${list(unpublished.map(name))} can’t be loaded over USB yet. Download the .bin for the card instead.`)
+    if (unpublished.length) throw new ModuleSetError(`${list(unpublished.map(name))} can’t be loaded onto the base yet. Take ${unpublished.length === 1 ? 'it' : 'them'} out of the set.`)
     const steps: Step[] = [], updates: string[] = []
     for (const group of groups) {
       const groupMembers = new Set(group.variants.flatMap(variant => variant.members.map(member => member.id)))
@@ -354,7 +356,7 @@ export function createRuntimeCatalogue(document: RuntimePackageManifest) {
   function requireLayout(target: InventoryTarget, base?: string) {
     const layout = setLayout(target)
     if (layout === undefined || base === undefined || baseLayout(base) === layout) return
-    throw layoutIdentity(layout) ? new BaseLayoutRequired(layout) : new ModuleSetError(`${layoutName(layout)} can’t be installed over USB yet. Download the .bin for the card instead.`)
+    throw layoutIdentity(layout) ? new BaseLayoutRequired(layout) : new ModuleSetError(`${layoutName(layout)} can’t be installed over USB yet.`)
   }
   function review(full: InventoryTarget, current: Inventory, capabilities?: RuntimeCapabilities, base?: string) {
     const target = packagedTarget(full), changes = inventoryChanges(current, target)
@@ -400,6 +402,19 @@ export function moduleSetReview(target: InventoryTarget, current: Inventory, cap
   return limit && review.needsSync && !review.problem ? { ...review, problem: new SetLimitError(limit) as ModuleSetError } : review
 }
 export const prepareModuleSet = catalogue.prepare
+/** The module set as the file the base restores from the card at power-on (card-set.ts): the packages a sync onto an
+ * empty unit would install, for the published base in the layout the set asks for (USB MIDI alone without USB Audio).
+ * `base` is the identity that base reports; a unit on another base ignores the file. The site's checks run as for a
+ * sync onto the published base, whose loader takes every package the site publishes, and that loader checks each
+ * package again when it restores the file. */
+export async function prepareCardSet(target: InventoryTarget, load = fetchPackage, now = Date.now()) {
+  const layout = setLayout(target) ?? MEMBER_LAYOUT, base = layoutIdentity(layout), limit = overLimitMessage(target.moduleIds, 'build')
+  if (limit) throw new SetLimitError(limit)
+  if (!base) throw new ModuleSetError(`${layoutName(layout)} has no published Modwerk base yet.`)
+  const published: RuntimeCapabilities = { abi: SET_MAX_ABI, features: 0xffff, maxSites: 0xffff, maxCopies: 0xffff }
+  const { changes } = await catalogue.prepare(target, { moduleIds: [], removedStockFx: [] }, load, published, base)
+  return { base, layout, modules: changes.map(change => change.module), file: encodeCardSet(base, changes.map(change => change.data), cardSetGeneration(now)) }
+}
 
 /** The link's builder and inventory for the site's checkout card. */
 export function moduleSetKit(link: OctatrackLink) {
