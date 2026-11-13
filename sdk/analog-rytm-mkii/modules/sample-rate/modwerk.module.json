@@ -115,18 +115,31 @@
     }
   },
   "evidence": {
-    "tier": "emulator",
+    "tier": "author-hardware",
     "moduleVersion": "0.5.0-experimental",
     "sourceSha256": "fc3aa5187ddc37ba6b0c37c3054e5346ad0a2a4e3506eb2fd7570f15c9febfc4",
     "reports": [
       "TESTING.md"
     ],
-    "hardware": null,
+    "hardware": {
+      "model": "Analog Rytm MKII",
+      "release": "1.74",
+      "testedOn": "2026-11-12",
+      "tester": "npp1993",
+      "durationMinutes": null,
+      "summary": "0.5.0 ran on npp1993's Analog Rytm MKII, OS 1.74, in the author's private combo images flashed by hand, as the author reports. RC38 (first 0.5.0 build): the value row, every knob, LOOP and PIPO, the playhead and the sound looked and sounded right; locking TUN and RATE on a held trig left a 2-pixel black bar between their boxes. RC39: the lock boxes looked good. RC40 (this source, combo 5d5241e0): booting into the SMPL page with a sample on BD, the waveform appeared by itself a few seconds after boot, once stock had loaded the sample, three boots in a row.",
+      "limitations": [
+        "Reported by the author from playing; no automated rig run for 0.5.0.",
+        "The value row and lock boxes were seen on RC38 and RC39, whose module source differs from this one only in the box drawing and the boot follow; RC40 itself was checked for the waveform after boot.",
+        "Not run on a unit: scene and performance modes on the SMPL page, a full-screen menu over it, SMP OFF with a held trig's SMP lock.",
+        "The images hold the author's private combo of modules and base; the library build uses the published base, not run on the unit."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu on OS 1.74 (0.5.0, SV02): one value row (TUN, RATE, BR, LOP, LEV) over a 37-pixel waveform; every knob's turn, the sample list, no sample, a held trig's locks, BD's playhead and Ping Pong Loop's PIPO and S/E marks. Unit: 0.4.0 on the author's automated rig, 7 cases pass twice; 0.5.0 not yet on a unit. Earlier: TESTING.md.",
+    "summary": "Unit (0.5.0, the author playing, combo RC38 to RC40): the value row, every knob, LOOP and PIPO, the playhead and the sound; lock boxes on RC39; the waveform after boot on RC40. rytm-emu (SV02 to SV05): every knob's turn, the sample list, no sample, held-trig locks, Ping Pong Loop's marks, the slot follow. Earlier versions: TESTING.md.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",

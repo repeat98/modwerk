@@ -76,7 +76,7 @@ RATE replaces FIN in the sample's pitch. TUN, the trig's note on a chromatic tra
 
 ## Tests and measurements
 
-rytm-emu on OS 1.74, on a 23,777-frame ramp: the step word is exact at every RATE tried, a trig below 0 starts from END, and with Pipo Loop no case clicks. Details, builds and what was not run are in [TESTING.md](TESTING.md). The author ran it on a unit as test builds SP03 to SP13 (0.1.x) and with an automated rig (0.2.0, 0.3.0; [TESTING.md](TESTING.md)). Load: the block handler returns at once while no track's RATE is below 0; with one below 0, as 0.1.0 with RATE on (not measured for 0.3.0).
+rytm-emu on OS 1.74, on a 23,777-frame ramp: the step word is exact at every RATE tried, a trig below 0 starts from END, and with Pipo Loop no case clicks. Details, builds and what was not run are in [TESTING.md](TESTING.md). The author ran it on a unit as test builds SP03 to SP13 (0.1.x), with an automated rig (0.2.0 to 0.4.0) and by hand in combo images (0.5.0); see [TESTING.md](TESTING.md). Load: the block handler returns at once while no track's RATE is below 0; with one below 0, as 0.1.0 with RATE on (not measured for 0.3.0).
 
 ## Authorship and licences
 
