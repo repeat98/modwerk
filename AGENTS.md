@@ -17,7 +17,7 @@ When these pull apart, the unit's safety and the guidelines come first. Then wor
 
 ## Commands
 
-Skills load on clone: Claude Code reads `.claude/skills/`, Codex the identical `.agents/skills/`, and any other agent follows `<name>/SKILL.md` when asked. Open a developer's first session with `/modwerk-start`. Then `/modwerk-new-module`, `/modwerk-update-module`, `/modwerk-fix-issue <link>`, `/modwerk-test-on-unit`, `/modwerk-pr-ready`, `/modwerk-review-prs`, `/modwerk-triage-issues`, `/modwerk-discord`, and the owner's `/modwerk-maintain` ([docs/MAINTENANCE.md](docs/MAINTENANCE.md)).
+Skills load on clone: Claude Code reads `.claude/skills/`, Codex the identical `.agents/skills/`, and any other agent follows `<name>/SKILL.md` when asked. Open a developer's first session with `/modwerk-start`. Then `/modwerk-new-module`, `/modwerk-update-module`, `/modwerk-fix-issue <link>`, `/modwerk-test-on-unit`, `/modwerk-pr-ready`, `/modwerk-review-prs`, `/modwerk-triage-issues`, `/modwerk-discord`, and the owner's `/modwerk-maintain` ([docs/MAINTENANCE.md](docs/MAINTENANCE.md)) and `/modwerk-diagnostics`.
 
 ## Setup and checks
 
