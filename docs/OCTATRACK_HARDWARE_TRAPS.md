@@ -71,6 +71,12 @@ in the protected bootloader range). macOS and USB disk mode are unaffected.
 no driver install, next to the card's mass storage (flashed base `19d37e25`
 and `ee76c36f` (S54), 12 October 2026), and libusb drives it.
 
+**Windows keeps an interface's first setup.** It writes the vendor interface's `DeviceInterfaceGUIDs` when it sets the
+interface up and not again on a replug; without that value neither WebUSB nor libusb can open it, and the site only
+sees a claim that fails. A changed `bcdDevice` makes Windows write it again by itself, which is why the base reports
+0x0101 (`usb_base.py` `BASE_REVISION`); a later repair of the same kind needs the next revision
+([record](verification/2026-11-13-windows-usb-revision.md)).
+
 **WinUSB refuses a control transfer longer than 4,096 bytes** ("Invalid
 parameter", before anything reaches the wire); macOS and Linux take the
 protocol's 4,148-byte frames. Every frame must fit 4 KiB: the client sends
