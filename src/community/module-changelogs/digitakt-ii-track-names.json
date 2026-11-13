@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.1.1-experimental",
+    "date": "2026-11-13",
+    "changes": [
+      "Fix: names and numbers no longer cover pop-ups such as pattern select (PTN).",
+      "A cell is drawn only where the stock TRK label and fader ticks are still in view."
+    ]
+  },
+  {
     "version": "0.1.0-experimental",
     "date": "2026-11-13",
     "changes": [

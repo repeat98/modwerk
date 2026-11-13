@@ -29,5 +29,10 @@ The emulator is not hardware evidence: no sound, no exact timing.
 - Third build (frame recognition, working build with GCC 13.2 m68k-linux-gnu, the same source as commit `10a0617`):
   works on the unit: the Internal Mixer shows the track names and the numbered badges.
 
+- Reported by the author: names and badges were drawn over pop-ups, e.g. pattern select. Fixed in
+  0.1.1-experimental: each cell is drawn only where the stock label and the fader's ticks are still in view.
+  Emulator: with the PTN pop-up open, covered cells keep the stock look and uncovered ones show names. Not yet
+  re-tested on the unit.
+
 Still to check on the unit: names per pattern (A01 and A02 named differently), page 3/5 (tracks 9-16), names after
 SAVE PROJECT and a reload, and the other pages unchanged.
