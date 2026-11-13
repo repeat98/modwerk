@@ -2,20 +2,20 @@
 
 ## In Modwerk
 
-Evidence tier: `author-hardware` for 0.1.3-experimental: the author's report is [evidence/hardware-testing.json](evidence/hardware-testing.json), bound to the source by [evidence/source-identity.json](evidence/source-identity.json). The author's observations on a unit are listed below as they were reported.
+Evidence tier: `author-hardware` for 0.1.4-experimental: the author's report is [evidence/hardware-testing.json](evidence/hardware-testing.json), bound to the source by [evidence/source-identity.json](evidence/source-identity.json). The author's observations on a unit are listed below as they were reported.
 
-Source: `sdk/digitakt/modules/digiperform/src` at commit `97edcfc34c04eb114b273768ea6e8bf96df491a3`. Modwerk's pinned toolchain compiled the source twice and produced the source-only packages in `sdk/imports/packages/digiperform/` (no stock bytes: addresses, lengths and SHA-256 guards only). The vendored elekloader builder (kit 0.6.0) then linked core 2.1 and Digi Perform into a local image on each release, with the owner's stock OS files, which stay on the author's computer:
+Source: `sdk/digitakt/modules/digiperform/src` at commit `d9c785fea1de7934ab3ad75a3a9e7cf085e67c4b`. Modwerk's pinned toolchain compiled the source twice and produced the source-only packages in `sdk/imports/packages/digiperform/` (no stock bytes: addresses, lengths and SHA-256 guards only). The vendored elekloader builder (kit 0.7.0) then linked core 2.1 and Digi Perform into a local image on each release, with the owner's stock OS files, which stay on the author's computer:
 
-- OS 1.54: core 2.1 and Digi Perform 0.1.3-experimental, built and verified; Digi Perform package SHA-256 `6ac7c2301d97131145d3f8734d5d7e7146cb850922dbddc41ff82be334139e93`.
-- OS 1.53: core 2.1 and Digi Perform 0.1.3-experimental, built and verified; Digi Perform package SHA-256 `d9774e0e8a6d3d3476b65043ae96d22751e503837449707e33d71650ac57058d`.
+- OS 1.54: core 2.1 and Digi Perform 0.1.4-experimental, built and verified; Digi Perform package SHA-256 `1a6a5fe353b2d35e16e5a7370457564b2f21724b26b28f8bba9384a197164062`.
+- OS 1.53: core 2.1 and Digi Perform 0.1.4-experimental, built and verified; Digi Perform package SHA-256 `f3700850477ecf52dd821e0a601a9425bf1ea21a8daf5c7827077ea12c4e0cc6`.
 
-The images the author tested on a unit (build `4.3h`, with the module sets listed under "SRC names and Overbridge load (0.1.3)") were linked from packages that are byte for byte the same as these apart from the version text (compared on both releases).
+The images the author tested on a unit (build `5.0f`, alone and beside CC Names) were linked from packages whose code, sites and relocations are the same as these; they differ only in the version text, the description and two added claim names (compared on both releases).
 
 Both are build checks; the author's hardware observations are listed below.
 
 ## Resources
 
-- Memory: 26,776 B per release: 22,306 B in `.run`, 4,450 B in `.bss` and 20 B of table contributions (five core events). No FAST AUDIO bytes. This is the object's size, from the package; it excludes the shared core and linker alignment.
+- Memory: 30,220 B per release: 24,934 B in `.run`, 5,266 B in `.bss` and 20 B of table contributions (five core events); 26,776 B in 0.1.3-experimental. The MIDI CC knobs add about 3 KB, of it a 512 B cache of CC slot names. No FAST AUDIO bytes. This is the object's size, from the package; it excludes the shared core and linker alignment.
 - Load, reported by the author on a unit (OS 1.54, build `4.3h` with DigiChain 1.6, Digi Mono 0.13.3 and digihealth 1.0; digihealth's SYSTEM INFO DSP reading, FAST AUDIO unticked after boot, samples loaded, Overbridge connected, a MONO ENS note playing): stock page 96%, Perform page while turning an assigned knob 97%, no delay. Readings vary by a few points; they are read off the screen, not timed. The audio hook returns at once while no knob is moved; with one moved it adds and clamps a list of parameter words the UI prepares. Emulator per-block cost (never hardware evidence) is under "SRC names and Overbridge load (0.1.3)".
 
 ## Combinations
@@ -85,7 +85,7 @@ Reported by the author (ROMsets) on a unit, OS 1.53 and 1.54, about 2 hours in a
 
 Emulator (pinned digiemu, OS 1.54, audio engine on; never hardware evidence): per audio block, normalised to the render's own call count, an idle Perform page cost the same as the SRC page, and a turning knob added 0.0285 against 0.0348 for a turn on the stock SRC page. The engine's parameter word for a turned knob followed the turns and returned to its stored value on leaving. After leaving the Perform page by the emulator plan's routes, the stock pages drew in full in the mono and poly sets.
 
-## Saved project and power cycle (0.1.3)
+## Saved project and power cycle (0.1.3, fixed in 0.1.4)
 
 Reported by the author (ROMsets) on a unit, 11 November 2026, build 4.3h (this source) and the published 0.1.2-experimental package (image label 012a, core 2.1 only):
 
@@ -95,7 +95,39 @@ Reported by the author (ROMsets) on a unit, 11 November 2026, build 4.3h (this s
 - SAVE PROJECT, load a different project, load this one back: the assignments come back.
 - 0.1.2-experimental: "the save behaviour is the same in 0.1.2".
 
-So the saved project holds the assignments, and only the state the unit starts from at power-on lacks them. The storage is unchanged since 0.1.2-experimental. Emulator (never hardware evidence): after SAVE PROJECT a cold boot from the same card came back with all the sound records' spare bytes cleared, a stock parameter written directly into the kit lost too, while LOAD PROJECT right after the save kept them. Not fixed in this version; the README states it as a known problem.
+So the saved project holds the assignments, and only the state the unit starts from at power-on lacks them. The storage is unchanged since 0.1.2-experimental. Emulator (never hardware evidence): after SAVE PROJECT a cold boot from the same card came back with all the sound records' spare bytes cleared, a stock parameter written directly into the kit lost too, while LOAD PROJECT right after the save kept them. Not fixed in 0.1.3; fixed in 0.1.4 (see "Power cycle (0.1.4)").
+
+## Power cycle (0.1.4)
+
+What changed: each change of the assignment pool is also copied into the working image, the serialized copy of the project in RAM that the Digitakt writes to the +Drive at power-off and starts from (OS 1.54 `0x406490e8`, OS 1.53 `0x406480e8`; only the pool's own bits of tracks 5–8's spare bytes). No new patch site, and no stock call.
+
+Reported by the author (ROMsets) on a unit:
+- Build 014b (this fix alone, Digi Mono set): "Smoke test is all good", with assignments made without saving and kept through a power cycle.
+- Build 5.0f, OS 1.53, part of the 0.1.4 checklist: assignments kept through a power cycle without saving, and SAVE PROJECT then LOAD PROJECT brought the saved ones back. Reported as a whole ("Everything seems good", "I have performed all those tests on 1.53").
+
+Emulator (pinned digiemu, OS 1.54 and 1.53; never hardware evidence): with the working image written to the +Drive's power-off sector and a cold boot from that card, this build kept all twelve pool bytes and 0.1.2-experimental lost them.
+
+## MIDI CC knobs (0.1.4)
+
+What changed: parameters 46–53 are a MIDI track's CC VAL 1–8 (no storage change; older versions read them as empty). Quick Assign and Perform Edit list 1–8, ALL, then the MIDI tracks 9–16 that have a CC VAL slot turned on, and on those only the slots turned on. A CC knob reads the stored CC VAL, sends stored value plus offset through the stock CC send queue (OS 1.54 `0x400e0b94`, OS 1.53 `0x400e096c`, called from the UI task only) and sends the stored value again when it lets go. Its label comes from the stock short-label call, asked with the MIDI track's view, so CC Names' names show.
+
+Reported by the author (ROMsets) on a unit, build 5.0f:
+- "the midi cc knobs send fine to my synth" (with CC Names in the image).
+- On OS 1.53, as part of the checklist: the stored value comes back when the knob lets go (leaving the page, NO, pattern change), an LFO on a CC VAL, and Overbridge; reported as a whole. Sequencer trigs on the MIDI track: "a recorded CC trig value always superceeds the perform mode value" (documented as a limitation).
+- A paste failure was reported and then withdrawn: the CC slots had not been turned on in that pattern ("My mistake the midi CCs werent assigned on the midi page"). The README says a pasted CC knob stays only where its slot is on.
+- OS 1.54: smoke test ("I have already smoke tested 1.54"); the steps were not itemised.
+
+Emulator (pinned digiemu with its MIDI output recorded; never hardware evidence), OS 1.54 and 1.53, alone and with CC Names: a CC knob on MIDI track 16 VAL1 (stored 3) sent `b0 00 05`/`06` while turned and `b0 00 03` on leaving; a CC Names name showed under the knob and in the header; Perform Edit stepped T1 .. ALL .. T9–T16 and their slots; a MIDI track with every VAL off was skipped in both lists; turning VAL1 off on its page left the knob empty when Perform was opened again; the assignment survived the simulated power cycle and still sent.
+
+Not tested: a CC knob beside other MIDI mods (MIDI Retrig, cc-recall, FX Track), and the ALL target (it never includes MIDI tracks).
+
+## Labels beside CC Names (0.1.4)
+
+Reported by the author on a unit (5.0e, CC Names set): an SRC knob's label read ERR; the CC knobs' labels were right. Cause: CC Names' hook at the short-label call (0x40030daa) reads the parameter id from register d2, and Digi Perform called that site for SRC labels as plain C, so d2 held what was left there. 0.1.3-experimental has the same fault beside CC Names. Fix: the SRC labels are asked with d2 and a4 set as at the stock call. Emulator: 5.0e shows ERR and 5.0f shows TUNE, on OS 1.54 and 1.53. Author on a unit, 5.0f: "ERR is gone, names show correctly now". The other modules patching the sites Digi Perform calls (Digi Mono, DigiChain, DIGISLICER, Digi Sophie 1.1.13, Machine Pages) read the stack or a0/a2, which Digi Perform sets.
+
+## Beside Crossfader and Live Looper (emulator, 0.1.4)
+
+OS 1.54, core 2.1, Machine Pages 1.2, Crossfader 0.1.0-experimental and Live Looper 0.1.0-experimental with this source, linked without overlap (never hardware evidence): SETTINGS lists PERFORM EDIT and CROSSFADER; with Crossfader's FADER ON on track 1, LEVEL on the Perform page moves the fader, while LEVEL in Quick Assign and in Perform Edit (its row cursor) leaves it alone; a LOOPER track's SRC parameters list by name in Quick Assign. Audio was not run.
 
 ## Author's hardware observations
 
@@ -116,17 +148,17 @@ Not tested on a unit, or not reported step by step: the current storage layout's
 - Put the setting where it belongs: PERFORM EDIT is a row in SETTINGS; the page is the second page of TRIG. Done.
 - A way to turn it off that restores stock: leaving the page puts every parameter back; not installing the module restores stock. Compared on the emulator for the screens above only.
 - Defaults are stock behaviour: no assignment exists in a new project, so nothing moves until one is made. Emulator only.
-- Persistence: stored in the sound records' spare bytes. Pattern and kit copy carry it in the emulator; SAVE PROJECT and LOAD PROJECT keep it on a unit, but a power cycle does not restore it (see "Saved project and power cycle").
+- Persistence: stored in the sound records' spare bytes and mirrored into the working image. Pattern and kit copy carry it in the emulator; SAVE PROJECT, LOAD PROJECT and a power cycle keep it on a unit (0.1.4, see "Power cycle (0.1.4)"; 0.1.3 lost it at power-on).
 - A project with assignments loaded without the module: not tested.
 - Affected: the original Digitakt on OS 1.53 and 1.54, audio tracks 1–8; existing projects are unchanged until an assignment is made.
 
-## Documentation capture — 11 November 2026
+## Documentation capture — 13 November 2026
 
-Documentation version: `0.1.3-experimental`. Source revision: `97edcfc34c04eb114b273768ea6e8bf96df491a3` (`sdk/digitakt/modules/digiperform`). An OS 1.54 image with core 2.1 and this version's package (build label `3.1a`, image SHA-256 `76cd3b079851bd6f57e8d2d94424cae8a9ef96cec6b7040ee3c1f84d36da0d00`) was captured through real panel inputs in the pinned digiemu with firmware-native drawing (`hle=False`) and a disposable first-boot project. The capture script runs without the audio engine, so the knobs show their assignment but not live values. Only complete, unmodified LCD frames were kept at 6× integer scale, and every image was opened for review. The record is [capture.json](media/capture.json); the plan is [capture-plan.txt](media/capture-plan.txt). The plan sets knobs A to G through Perform Quick Assign with bursts of turns, whose steps are chosen by the emulator's turn handling, so the plan is only reproducible as written; this run landed on other choices than the 0.1.2 run.
+Documentation version: `0.1.4-experimental`. Source revision: `d9c785fea1de7934ab3ad75a3a9e7cf085e67c4b` (`sdk/digitakt/modules/digiperform`). An OS 1.54 image with core 2.1 and this version's package (build label `3.1b`, image SHA-256 `98e36f97d692363b6d34a161578591f2ed1645fbcfb25c1e0482136a82afdfaa`) was captured through real panel inputs in the pinned digiemu with firmware-native drawing (`hle=False`) and a disposable first-boot project. The capture script runs without the audio engine, so the knobs show their assignment but not live values. Only complete, unmodified LCD frames were kept at 6× integer scale, and every image was opened for review. The record is [capture.json](media/capture.json); the plan is [capture-plan.txt](media/capture-plan.txt). The plan sets knobs A to G through Perform Quick Assign with bursts of turns, whose steps are chosen by the emulator's turn handling, so the plan is only reproducible as written; this run landed on other choices than the 0.1.3 run, knob B on a MIDI track's CC since the track list now runs on past ALL.
 
 - The Perform page with eight empty knobs.
 - Perform Quick Assign: choosing the track for knob A.
-- Seven knobs assigned: A, C and D for all tracks (TUNE, LOOP, F.TYP), B for track 8 (SAMP), E to G for tracks 3, 2 and 2 (PLAY, PLAY, SAMP), H empty.
+- Seven knobs assigned: A and C for all tracks (TUNE, LEN), B for MIDI track 9's CC VAL3, D to G for tracks 8, 3, 2 and 2 (F.TYP, PLAY, PLAY, STRT), H empty.
 - SETTINGS > PERFORM EDIT.
 - Perform Edit with rows A to F set.
 
