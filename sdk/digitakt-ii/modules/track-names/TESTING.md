@@ -25,4 +25,9 @@ The emulator is not hardware evidence: no sound, no exact timing.
   pointer at controller + 0x9c was 0 on the unit (non-zero in the emulator), so the mixer was never recognised.
 - Second diagnostic (main view + 0x58 -> + 0xac -> + 0x74): the same, page set not found on the unit.
 - Since then the mixer is recognised from the drawn frame (the MIX box and the scroll bar's page marker), which
-  is the same on the unit and in the emulator. Not yet tested on the unit.
+  is the same on the unit and in the emulator.
+- Third build (frame recognition, working build with GCC 13.2 m68k-linux-gnu, the same source as commit `10a0617`):
+  works on the unit: the Internal Mixer shows the track names and the numbered badges.
+
+Still to check on the unit: names per pattern (A01 and A02 named differently), page 3/5 (tracks 9-16), names after
+SAVE PROJECT and a reload, and the other pages unchanged.
