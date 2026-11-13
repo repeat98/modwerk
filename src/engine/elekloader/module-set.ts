@@ -37,11 +37,11 @@ export interface RuntimePackageManifest {
   groups?: { id: string; name: string; variants: MachineVariant[] }[]
 }
 export class BaseUpdateRequired extends ModuleSetError {
-  constructor(message = 'Install the latest Modwerk base from the card to sync this module set. Your selected modules will stay here.') { super(message) }
+  constructor(message = 'Update to the latest Modwerk base to sync this module set. Your selected modules will stay here.') { super(message) }
 }
 /** A key bus reader on a base that may not have the key bus: the same guided update, saying why. */
 export class KeyBusBaseRequired extends BaseUpdateRequired {
-  constructor(module: string) { super(`${module} needs a Modwerk base with the key bus. Install the latest Modwerk base from the card, then sync again. Your selected modules will stay here.`) }
+  constructor(module: string) { super(`${module} needs a Modwerk base with the key bus. Update to the latest Modwerk base, then sync again. Your selected modules will stay here.`) }
 }
 /** USB Audio is part of the base: its layout sets the USB descriptors, so another layout is another base, sent over
  * USB like any base update (base-variants.ts). The set's modules stay; nothing is synced until it runs. */
@@ -237,7 +237,9 @@ function checkPackage(entry: RuntimePackage, data: Uint8Array, id: string, varia
     if (access & 4) initWords += claim.words
     claims.push(claim); end += 12
   }
-  // ABI 10 hook entries, 8 bytes each: site, cores (1-3), exit (0, or a word of the engine), entry (a word of it).
+  // ABI 10 hook entries, 8 bytes each: site, cores (1-3), exit (0, or a word of the engine), entry (a word of it). An
+  // engine's header carries its price per voice in cycles (44-45, never 0) and kind (46: executed 1 or hardware 3, never
+  // modeled), as loader.c checks; every other DSP descriptor byte is 0.
   const exits: number[] = [], seen = new Set<number>()
   for (let i = 0; i < want.entries; i++) {
     if (end + 8 > data.length) fail()
@@ -246,7 +248,7 @@ function checkPackage(entry: RuntimePackage, data: Uint8Array, id: string, varia
     seen.add(site); if (exit) exits.push(exit); end += 8
   }
   if (initWords > INIT_WORDS || end + 4 * dspWords + 2 * dspRelocations + 4 * initWords !== data.length || (!dspWords && dspRelocations) ||
-      (engine && (!want.entries || [38, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49].some(at => data[at]))) ||
+      (engine && (!want.entries || [38, 40, 41, 42, 43, 47, 48, 49].some(at => data[at]) || !view.getUint16(44) || (data[46] !== 1 && data[46] !== 3))) ||
       (dspWords && !engine && (view.getUint16(40) >= dspWords || view.getUint16(42) >= dspWords || !data[39] || data[39] > 3))) fail()
   for (let i = 0; i < dspWords; i++) if (view.getUint32(end + 4 * i) > 0xffffff) fail()
   for (let i = 0; i < initWords; i++) if (view.getUint32(end + 4 * dspWords + 2 * dspRelocations + 4 * i) > 0xffffff) fail()

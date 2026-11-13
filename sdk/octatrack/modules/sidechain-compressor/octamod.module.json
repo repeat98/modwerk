@@ -160,7 +160,6 @@
     "effectId": 24,
     "location": "FX1 / FX2",
     "conflicts": [
-      "midi-scenes",
       "analog-bassdrum"
     ],
     "limitations": [
@@ -168,7 +167,6 @@
       "With Keep stock FX2 effects on, SPRING REV gives up its code space for this module; reassign any old SPRING REV slots. With it off, every stock FX2 effect leaves the FX2 chooser and the stock FX1 effects stay.",
       "It builds beside every other visible module alone. Among the nine visible modules other than Analog BD, 648 of the 1,024 selections that contain it build (786 with 0.1.2): 0.2.0's two ColdFire units (1,216 B) leave less effect-menu and cave space, so 138 more selections are refused, the smallest Euclid with Scale Quantizer. The selection checker says which applies.",
       "Beside Analog BD, 146 of the 212 Analog BD selections build (162 with 0.1.2); its larger DSP section (677 words a core) no longer fits core A in 16, the smallest Analog BD with Airwindows Chorus.",
-      "It cannot be combined with MIDI Scenes, which is standalone firmware.",
       "Its core-private keybus and cross-core window overlap BusDelay and BusVerb, which Modwerk does not carry; the native resource ledger refuses them beside it.",
       "A 0.1.x COMPRESSOR keeps its KEY; KGN takes the old KFLT, KBAS the old KGN, KWID the old MON, and MON comes up OFF.",
       "Cross-core keys use a buffered shared window, two blocks late on the beta base whatever the cores' enable order; no exact hardware latency is claimed.",

@@ -138,7 +138,9 @@ parsing newer upstream syntax and stale shared catalogue pins in Tape Echo and
 Euclid. A local Python3.12 command shim fixes the environment without changing
 repository checks. The two failing infrastructure suites then pass (24 and
 14 tests). The catalogue diff since the last pin is only the upstream source
-folder rename; this PR refreshes just that hash in each of the two recipes.
+folder rename; that 12 November attempt refreshed just that hash in each recipe.
+The [13 November refresh](refresh-20261113.md) instead takes main’s complete
+recipe file as requested; no standalone-recipe change remains in this PR’s diff.
 Their image hashes, stock-copy declarations, authored module inputs and public
 packages stay unchanged. Both packages rebuilt through the normal standalone
 CLI with the original1.40C, passed its stock guards and both strict scanners,

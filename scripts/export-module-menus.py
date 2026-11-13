@@ -19,7 +19,7 @@ def main():
     import toolpath,label_fmt,mode_names,wide_dial,dsp_modmap as dm
     from remix import registry
     from remix.schema import Remix
-    known=registry.modules();order=['spectrum','modulation','character','miniverb','tapeecho','euclid','repitch'];byid={m.name:m for m in known.values()}
+    known=registry.modules();order=['miniverb','tapeecho','euclid','repitch'];byid={m.name:m for m in known.values()}
     packages=[];recipes=[];patches=[];guards=[]
     def guard(address,length):
         data=stock[address-dm.BASE:address-dm.BASE+length]
@@ -27,7 +27,7 @@ def main():
         return {'address':address,'guardLength':length,'guardSha256':sha(data)}
     with tempfile.TemporaryDirectory(prefix='octamod-own-menu.') as tmp:
         work=pathlib.Path(tmp)
-        specifications=[('repitch','repitch',byid['repitch'].linked[0].source,byid['repitch'].linked[0].cpu),('tape-time','tapeecho',byid['tapeecho'].cf_patches[0].source,byid['tapeecho'].cf_patches[0].cpu),('wide-dial',None,'tools/build/wide_dial.py','5475'),('spectrum-shape','spectrum',byid['spectrum'].cf_patches[0].source,byid['spectrum'].cf_patches[0].cpu)]
+        specifications=[('repitch','repitch',byid['repitch'].linked[0].source,byid['repitch'].linked[0].cpu),('tape-time','tapeecho',byid['tapeecho'].cf_patches[0].source,byid['tapeecho'].cf_patches[0].cpu),('wide-dial',None,'tools/build/wide_dial.py','5475')]
         for label,moduleId,source,cpu in specifications:
             original=(root/source).read_text();text=wide_dial.source([]) if label=='wide-dial' else original
             if re.search(r'^\s*\.?(?:include|incbin)\b',text,re.M|re.I):raise ValueError('Transcluded source requires review.')
@@ -35,7 +35,7 @@ def main():
             run(['m68k-elf-as','-mcpu='+cpu,'-o',obj,asm]);data=obj.read_bytes();proofs=[]
             for base in [0x1000,0x400d24d0,0x400d7500,0x400d7700]:
                 elf=work/(label+'.elf');binary=work/(label+'.bin')
-                externals={'CLONE_SPECTRUM':0x400d6b20+(128 if base==0x400d7700 else 0)} if label=='spectrum-shape' else {}
+                externals={}
                 run(['m68k-elf-ld',f'-Ttext=0x{base:x}',*[f'--defsym={k}=0x{v:x}' for k,v in externals.items()],'-o',elf,obj]);run(['m68k-elf-objcopy','-O','binary','-j','.text',elf,binary]);raw=binary.read_bytes()
                 if label=='tape-time' and raw!=byid['tapeecho'].cf_patches[0].pinned:raise ValueError('Tape TIME source drift.')
                 proofs.append({'base':base,'bytes':len(raw),'sha256':sha(raw),'exports':nm(elf),'externals':externals})
@@ -75,7 +75,7 @@ def main():
             asm=work/'wide-rows.s';obj=work/'wide-rows.o';elf=work/'wide-rows.elf';binary=work/'wide-rows.bin';asm.write_text(wide_dial.source(rows))
             run(['m68k-elf-as','-mcpu=5475','-o',obj,asm]);run(['m68k-elf-ld',f'-Ttext=0x{base:x}','-o',elf,obj]);run(['m68k-elf-objcopy','-O','binary',elf,binary]);raw=binary.read_bytes()
             wideProofs.append({'rows':rows,'base':base,'bytes':len(raw),'sha256':sha(raw)})
-    selections=[[],['repitch'],['tapeecho','euclid'],['spectrum','modulation','character','miniverb','tapeecho','euclid','repitch']]
+    selections=[[],['repitch'],['tapeecho','euclid']]
     originalRemix=registry.remix;proofs=[]
     try:
         for ids in selections:
@@ -98,7 +98,7 @@ def main():
                             # Native replaces the floating immutable recipe when placed.
                             registration=cave.registers_formatter
                             if registration:
-                                descriptor=loc['clone_addr'][registration.module];address=int.from_bytes(img[descriptor-dm.BASE+0xca+registration.slot*4:descriptor-dm.BASE+0xce+registration.slot*4],'big');count=next(x['proofs'][0]['bytes'] for x in packages if x['label']=='spectrum-shape') if registration.module=='SPECTRUM' else len(data);region(address,count,cave.label)
+                                descriptor=loc['clone_addr'][registration.module];address=int.from_bytes(img[descriptor-dm.BASE+0xca+registration.slot*4:descriptor-dm.BASE+0xce+registration.slot*4],'big');count=len(data);region(address,count,cave.label)
                         for key,slot,name,address,count,labels,renames in loc['_lbl']:region(address,count,key+' '+name)
                         if loc['_wide']:region(loc['_at'],len(loc['_wb']),'wide dial')
                         for g in patches if 'repitch' in ids else []:region(g['address'],g.get('bytes',g['guardLength']),g['note'])

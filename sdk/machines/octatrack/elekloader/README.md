@@ -504,7 +504,8 @@ command waits until IDENTIFY reports that build's `configurationHash`. A
 power cycle boots the flashed base again. Stop playback and recording first;
 the restart is a reboot.
 
-The base accepts only an OS image (entry word, at most 1.25 MiB) carrying
+The base accepts only an OS image (entry word, at most 1.5 MiB; 1.25 MiB on
+bases before 13 November 2026, which a released base must still fit) carrying
 NOR's own bootstrap version, because an image with another version would
 reprogram the bootstrap at its entry. It stages the image in its own
 reserve, arms a one-shot mailbox, and half a second later quiesces as OS
@@ -539,8 +540,8 @@ NOR when a host asks, with stock's OS UPGRADE routines (the sector erase and
    Then the write, into one of **two slots** (below), and the reply. **At most
    one restart per update:** this base writes itself while it runs on (no
    quiesce: stock's routines mask only their command writes and the OS runs
-   from RAM), with its own box on the unit (BASE UPDATE, a bar) and BASE SAVED
-   after; the next start is from the new slot.
+   from RAM), with its own screen on the unit (BASE UPDATE, a bar, the panel held
+   until it is saved: `status.c`'s transfer screens) and BASE SAVED after; the next start is from the new slot.
 3. On a unit already on two slots there is no trial: the running base takes the
    new base's container for its spare slot (only the checks that keep the
    bootloader safe: entry, bootstrap version, stock's bootloader copy), writes it

@@ -21,6 +21,13 @@
     "load": "done",
     "mods": "done"
   },
+  "stack": {
+    "base": "started",
+    "link": "started",
+    "flash": "done",
+    "status": "done",
+    "tools": "started"
+  },
   "sdk": {
     "platform": "zdl",
     "modules": "sdk/zoom/modules",

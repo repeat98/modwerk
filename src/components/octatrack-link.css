@@ -166,6 +166,9 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .instrument-item[aria-current="page"] + .instrument-action { border-color: var(--accent-line); }
 .instrument-action:hover { background: var(--surface-hover); }
 .instrument-action:disabled { color: var(--muted); cursor: wait; }
+/* A base the site no longer syncs to: the one next step that blocks everything else, so it is filled. */
+.instrument-action.is-update { border-color: var(--accent); background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+.instrument-action.is-update:hover { background: var(--accent-hover); }
 /* The Octatrack page: the unit's hero on top, then a list of its pages and your module sets beside the one open. */
 .octatrack-hub { container: hub / inline-size; }
 /* The page fits the window (--hub-height, measured by OctatrackHub): the hero and list stay put, a long page scrolls in its pane. */
@@ -413,7 +416,7 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .load-blocked p { margin: 0; }
 .load-blocked p + p { display: flex; gap: 16px; margin-top: 6px; }
 .load-blocked .text-button { color: #f4c978; font-size: 13px; }
-.load-progress { display: block; width: 100%; height: 6px; margin: 0 0 4px; accent-color: var(--accent); }
+.load-dialog .progress-row { margin: 16px 0 12px; }
 .load-dialog .link-hint { margin: 0 0 12px; }
 .load-dialog .base-install-footer { flex-wrap: wrap; }
 .load-check { display: flex; align-items: center; gap: 8px; color: var(--text-secondary); font-size: 14px; cursor: pointer; }
@@ -466,10 +469,11 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .base-update-plan li { display: flex; flex-direction: column; gap: 6px; padding: 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-raised); font-size: 13px; line-height: 1.5; color: var(--muted); }
 .base-update-plan strong { color: var(--text); font-size: 15px; }
 .base-update-plan p { margin: 0; }
-.base-update-plan progress { width: 100%; height: 4px; margin-top: 4px; accent-color: var(--accent); }
+.base-update-plan .progress-row { margin-top: 4px; }
+.base-update-plan .progress-bar { height: 6px; }
 .base-update-mark { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border: 1px solid var(--control-border); border-radius: 50%; font-size: 12px; color: var(--text-secondary); }
-.base-update-plan .is-active { border-color: var(--accent); }
-.base-update-plan .is-active .base-update-mark { color: var(--field); background: var(--accent); border-color: var(--accent); }
+.base-update-plan .is-active { border-color: var(--progress); }
+.base-update-plan .is-active .base-update-mark { color: #fff; background: var(--progress); border-color: var(--progress); }
 .base-update-plan .is-complete .base-update-mark { color: #7fd39b; border-color: #456354; }
 .base-update-plan .is-failed { border-color: #6a4348; }
 .base-update-plan .is-failed .base-update-mark { color: #e4b0b4; border-color: #6a4348; }
@@ -478,6 +482,51 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 @media (max-width: 600px) {
   .base-update-plan { grid-template-columns: 1fr; gap: 8px; }
   .base-update-plan li { display: grid; grid-template-columns: 24px 1fr; column-gap: 12px; row-gap: 2px; align-items: center; padding: 12px; }
-  .base-update-plan li p, .base-update-plan li progress { grid-column: 2; }
+  .base-update-plan li p, .base-update-plan li .progress-row { grid-column: 2; }
 }
 .base-install-warning .status-dot.is-updating { width: 8px; height: 8px; margin-top: 8px; }
+/* Progress anyone can see (ProgressBar): blue on a framed track, in every dialog that sends to an instrument. */
+.progress-row { display: flex; align-items: center; gap: 12px; }
+.progress-bar { flex: 1; height: 10px; border-radius: 999px; background: var(--field); box-shadow: inset 0 0 0 1px var(--control-border); overflow: hidden; }
+.progress-bar > span { display: block; height: 100%; min-width: 10px; border-radius: inherit; background-color: var(--progress); transition: width .35s ease; }
+.progress-bar.is-busy > span { background-image: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, .4) 50%, transparent 70%); background-size: 220% 100%; animation: progress-sheen 1.5s linear infinite; }
+.progress-bar.is-indeterminate > span { width: 38%; animation: progress-run 1.4s ease-in-out infinite; }
+.progress-value { flex: 0 0 3.2em; color: var(--text); font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+@keyframes progress-sheen { from { background-position: 120% 0; } to { background-position: -100% 0; } }
+@keyframes progress-run { from { transform: translateX(-100%); } to { transform: translateX(265%); } }
+@media (prefers-reduced-motion: reduce) { .progress-bar > span { transition: none; } .progress-bar.is-busy > span { animation: none; background-image: none; } .progress-bar.is-indeterminate > span { animation: none; width: 100%; opacity: .45; } }
+/* While a base update runs: the one thing to know, above everything else in the window. */
+.base-update-hands-off { display: flex; gap: 14px; margin: 16px 0 4px; padding: 16px 18px; border: 1px solid #a8763b; border-radius: 10px; background: #3d2f1f; color: #f6d3a2; }
+.base-update-hands-off svg { flex-shrink: 0; margin-top: 2px; color: #ffc46b; }
+.base-update-hands-off strong { display: block; color: #fff0d9; font-size: 17px; line-height: 1.35; }
+.base-install-stage .base-update-hands-off p { margin: 4px 0 0; font-size: 14px; line-height: 1.6; }
+.base-update-overall { margin: 4px 0 0; }
+.base-update-overall .progress-bar { height: 12px; }
+.base-install-stage .base-update-step { display: flex; align-items: baseline; gap: 10px; margin: 12px 0 0; color: var(--text); font-size: 15px; }
+.base-install-stage .base-update-step.is-done { color: #bcd7c5; }
+.base-update-step .status-dot.is-updating { flex-shrink: 0; width: 8px; height: 8px; background: var(--progress); }
+/* A note above the stages (USB Audio off in this base): framed as the notes inside them are. */
+.base-install-dialog > .base-install-note { margin: 0 0 22px; padding: 14px 16px; border-left: 2px solid var(--accent); background: var(--surface-raised); color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
+/* The update's three steps as one slim row (StagePlan compact): numbered marks joined by a line. */
+.base-update-plan.is-compact { display: flex; gap: 0; margin: 22px 0 18px; }
+.base-update-plan.is-compact li { flex: 1 1 0; flex-direction: row; align-items: center; gap: 10px; padding: 0; border: 0; background: none; font-size: 14px; }
+.base-update-plan.is-compact li:last-child { flex: 0 0 auto; }
+.base-update-plan.is-compact li:not(:last-child)::after { content: ""; flex: 1; height: 2px; margin: 0 14px 0 4px; border-radius: 2px; background: var(--line); }
+.base-update-plan.is-compact li.is-complete:not(:last-child)::after { background: #456354; }
+.base-update-plan.is-compact strong { color: var(--text-secondary); font-size: 15px; font-weight: 500; white-space: nowrap; }
+.base-update-plan.is-compact .is-active strong, .base-update-plan.is-compact .is-complete strong { color: var(--text); font-weight: 600; }
+.base-update-plan.is-compact .base-update-mark { flex-shrink: 0; }
+@media (max-width: 600px) {
+  .base-update-plan.is-compact { display: flex; }
+  .base-update-plan.is-compact li { display: flex; padding: 0; gap: 7px; }
+  .base-update-plan.is-compact li:not(:last-child)::after { margin: 0 8px 0 2px; }
+  .base-update-plan.is-compact strong { font-size: 14px; }
+}
+/* Before it starts: what to do, a line each. */
+.base-update-checklist { display: flex; flex-direction: column; gap: 10px; margin: 0 0 4px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-raised); list-style: none; }
+.base-update-checklist li { display: flex; align-items: flex-start; gap: 12px; color: var(--text-secondary); font-size: 14px; line-height: 1.5; }
+.base-update-checklist svg { flex-shrink: 0; margin-top: 2px; color: #ffc46b; }
+.base-update-checklist .is-ready svg { color: #7fd39b; }
+.base-update-checklist strong { color: var(--text); font-weight: 600; }
+.base-install-stage .base-update-checklist + .risk-acceptance { margin-top: 18px; padding-bottom: 0; border-bottom: 0; }
+.base-install-stage .base-update-checklist ~ .base-install-recovery { margin-top: 6px; }

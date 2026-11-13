@@ -1,5 +1,6 @@
 import { useRef, useState, type ReactNode, type Ref } from 'react'
 import { isBetaModule } from '../catalog/availability'
+import { moduleCaution } from '../catalog/module-cautions'
 import type { AddBlock } from '../catalog/add-blocks'
 import { DETAILS } from '../catalog/details'
 import { moduleBuildPending } from '../catalog/build-support'
@@ -79,6 +80,12 @@ export function CardProof({ stability, statistics, name, compared, canCompare, o
   </div>
 }
 
+// A flagged module (module-cautions.ts) carries a warning badge; the reason is in its title and read out to screen readers.
+export function CautionBadge({ id }: { id: string }) {
+  const caution = moduleCaution(id)
+  return caution ? <span className="module-caution-badge" title={caution.title + '. ' + caution.detail}><Icon name="warn" size={11} />{caution.badge}<span className="sr-only">: {caution.title}. {caution.detail}</span></span> : null
+}
+
 export function ModuleCard({ module, selected, statistics, viewedVersion, baseline, compared, canCompare, onToggle, onCompare, onBrowse, block, onSwap }: ModuleCardProps) {
   const { clips } = useModuleAudioPreviews(module.id)
   const [audioReady, setAudioReady] = useState(false)
@@ -92,7 +99,7 @@ export function ModuleCard({ module, selected, statistics, viewedVersion, baseli
     </a>}
     <div className="module-card-body" inert={prompt.open}>
       <div className="module-card-title">
-        <div className="module-card-heading"><a href={moduleHref(module.id)} onClick={onBrowse} onAuxClick={onBrowse}>{module.name}</a>{isBetaModule(module.id) && <span className="module-beta-badge">Beta</span>}<ModuleRelease module={module} viewedVersion={viewedVersion} baseline={baseline} /></div>
+        <div className="module-card-heading"><a href={moduleHref(module.id)} onClick={onBrowse} onAuxClick={onBrowse}>{module.name}</a>{isBetaModule(module.id) && <span className="module-beta-badge">Beta</span>}<CautionBadge id={module.id} /><ModuleRelease module={module} viewedVersion={viewedVersion} baseline={baseline} /></div>
         <AddButton ref={trigger} name={module.name} selected={selected} onToggle={onToggle} configure={module.id === USB_AUDIO_MODULE} conflict={prompt.conflict && { block: prompt.conflict, open: prompt.open, controls: prompt.id, onAsk: prompt.toggle }} blocked={pending?.kind === 'usb-only' || pending?.kind === 'limit' ? pending : undefined} />
       </div>
       {module.id === USB_AUDIO_MODULE && <span className="module-compatibility-badge module-card-compatibility"><Icon name="wave" size={12} />Outbox 8 compatible</span>}

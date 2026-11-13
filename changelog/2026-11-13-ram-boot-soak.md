@@ -1,0 +1,1 @@
+Development: `scripts/octatrack-bootsoak.mjs` RAM-boots a development base on an Octatrack over and over, logs each restart and stops at the first that does not come back on USB, so the restart's failure rate can be counted past the 20 boots it was checked with.
