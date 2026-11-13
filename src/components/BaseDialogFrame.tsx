@@ -62,15 +62,16 @@ export function StageProgress({ labels, at }: { labels: readonly string[]; at: n
 }
 
 /** One operation's steps, the same row before, during and after, so the window never changes its layout: what will
- * happen, then where it is (with its progress while `fraction` is below 1), then where it stopped. No `run` before it starts. */
-export function StagePlan({ stages, run, progressLabel }: { stages: readonly (readonly [string, string])[]; run?: { at: number; done?: boolean; failed?: boolean; fraction?: number }; progressLabel: string }) {
-  return <ol className="base-update-plan" aria-label={run ? progressLabel : 'What happens'}>{stages.map(([title, text], index) => {
+ * happen, then where it is (with its progress while `fraction` is below 1), then where it stopped. No `run` before it starts.
+ * `compact`: one slim row of numbered steps joined by a line, their explanations for screen readers only. */
+export function StagePlan({ stages, run, progressLabel, compact = false }: { stages: readonly (readonly [string, string])[]; run?: { at: number; done?: boolean; failed?: boolean; fraction?: number }; progressLabel: string; compact?: boolean }) {
+  return <ol className={'base-update-plan' + (compact ? ' is-compact' : '')} aria-label={run ? progressLabel : 'What happens'}>{stages.map(([title, text], index) => {
     const state = !run ? undefined : index < run.at || run.done ? 'is-complete' : index === run.at ? (run.failed ? 'is-failed' : 'is-active') : undefined
     const active = !!run && index === run.at && !run.done && !run.failed
     return <li key={title} className={state} aria-current={active ? 'step' : undefined}>
       <span className="base-update-mark" aria-hidden="true">{state === 'is-complete' ? <Icon name="check" size={13} /> : state === 'is-failed' ? '!' : index + 1}</span>
       <strong>{title}{state === 'is-complete' && <span className="sr-only"> (done)</span>}</strong>
-      <p>{text}</p>
+      {compact ? <span className="sr-only">. {text}</span> : <p>{text}</p>}
       {active && run.fraction !== undefined && run.fraction < 1 && <ProgressBar value={run.fraction} label={title} />}
     </li>
   })}</ol>
