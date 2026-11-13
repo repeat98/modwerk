@@ -4,6 +4,7 @@ import { Icon } from './Icon'
 import { usbAudioCpuLoad } from '../config/usb-audio-load'
 import './usb-audio.css'
 import { useSetWords } from '../community/beta-ui'
+import { assetUrl } from '../hosting'
 
 const audioChoices: Record<UsbAudioLayout, { label: string; description: string }> = {
   'main-cue': { label: 'Main + Cue mixes', description: 'Your final stereo Main mix plus a separate stereo Cue mix.' },
@@ -12,6 +13,16 @@ const audioChoices: Record<UsbAudioLayout, { label: string; description: string 
   tracks: { label: '8 tracks · before track levels', description: 'Separate stereo tracks taken before LEVEL, so you can mix them independently.' },
   'tracks-main-cue': { label: '8 tracks + Main + Cue', description: 'Eight separate stereo tracks before LEVEL, plus your final Main and Cue mixes.' },
   master: { label: 'Track 8 / Master', description: 'Track 8 after its effects, before LEVEL. Enable MASTER TRACK on the Octatrack to use this as a master mix.' },
+}
+// The Octatrack's own screens (owner's MKII, 13 November 2026): where the page is, and how a choice is taken.
+function onUnitSteps(twenty: boolean): { image: string; alt: string; caption: string }[] {
+  return [
+    { image: 'on-unit-menu.png', alt: 'The PROJECT menu with MODWERK selected at the left and USB AUDIO selected in its list', caption: 'Press PROJ, go down to MODWERK, right into its list and down to USB AUDIO. Press YES.' },
+    { image: 'on-unit-page.png', alt: 'The USB AUDIO page listing ALL CHANNELS, MAIN + CUE ONLY and OFF, with ALL CHANNELS marked and selected', caption: twenty ? 'UP and DOWN move through the choices. This feed offers all three; the others offer ALL CHANNELS and OFF.' : 'UP and DOWN move through the choices. This feed offers ALL CHANNELS and OFF; 8 tracks + Main + Cue also offers MAIN + CUE ONLY.' },
+    twenty
+      ? { image: 'on-unit-main-cue.png', alt: 'The USB AUDIO page with MAIN + CUE ONLY marked by a square and selected', caption: 'YES takes the choice, NO leaves it as it was. The square marks what the Octatrack sends now.' }
+      : { image: 'on-unit-off.png', alt: 'The USB AUDIO page listing ALL CHANNELS and OFF, with OFF marked by a square and selected', caption: 'YES takes the choice, NO leaves it as it was. The square marks what the Octatrack sends now.' },
+  ]
 }
 const audioGroups: { label: string; layouts: UsbAudioLayout[] }[] = [
   { label: 'Main & Cue mixes', layouts: ['main-cue', 'main'] },
@@ -88,6 +99,10 @@ export function UsbAudioConfigurator({ draft, onDraftChange, configuration, sele
       <p>{cpu.rationale} {cpu.measured ? 'The cost applies only while a computer or Outbox has the stream open.' : 'This is an estimate from instruction counts, not measured on an Octatrack, and it is not the Octatrack’s total CPU percentage. On the 20-channel feed the measured cost was far higher than its count suggested.'} <a href={cpu.source} target="_blank" rel="noreferrer">Load source ↗</a></p>
     </details>
     <p className="usb-setup-on-unit">On the Octatrack, PROJ › MODWERK › USB AUDIO switches this feed to {draft.layout === 'tracks-main-cue' ? 'MAIN + CUE ONLY or OFF' : 'OFF'} and back without a new sync, to free the processor while you are not recording. The channels your computer sees stay as chosen here.</p>
+    <details className="usb-setup-details usb-setup-on-unit-steps"><summary>Where to find it on the Octatrack</summary>
+      <ol>{onUnitSteps(draft.layout === 'tracks-main-cue').map(step => <li key={step.image}><img className="ot-ui-capture" src={assetUrl('usb-audio/' + step.image)} width={256} height={128} alt={step.alt} loading="lazy"/><span>{step.caption}</span></li>)}</ol>
+      <p>With OFF your computer records silence, and with MAIN + CUE ONLY the track channels are silent. The sound comes back by itself when you choose again, and the choice survives a restart.</p>
+    </details>
     {outbox ? <div className="usb-setup-outbox">
       <div className="usb-setup-routing-heading"><div><h3>Outbox outputs</h3><p>Four stereo pairs · 8 physical outputs</p></div>
         <button className="text-button" onClick={() => { updateDraft({ ...draft, outboxPairs: suggestedUsbAudioPairs(draft.layout) }); setRoutingNotice('Available signals assigned in order. Remaining outputs are off.') }}>Assign in order</button>

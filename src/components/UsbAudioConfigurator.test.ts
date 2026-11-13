@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs'
 import { createElement, type ReactNode } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
@@ -71,6 +72,13 @@ describe('USB Audio setup before adding', () => {
     expect(main).toContain('Estimated CPU load')
     expect(main).toContain('not the Octatrack’s total CPU percentage')
     expect(main).toContain('switches this feed to OFF and back')
+    // Where the page is and how to choose, with the unit's own screens: three for the 20-channel feed's three choices.
+    expect(html).toContain('Where to find it on the Octatrack')
+    for (const image of ['on-unit-menu.png', 'on-unit-page.png', 'on-unit-main-cue.png']) expect(html).toContain('usb-audio/' + image)
+    expect(html).not.toContain('on-unit-off.png')
+    expect(main).toContain('usb-audio/on-unit-off.png')
+    expect(main).not.toContain('on-unit-main-cue.png')
+    for (const image of ['on-unit-menu.png', 'on-unit-page.png', 'on-unit-main-cue.png', 'on-unit-off.png']) expect(existsSync(new URL('../../public/usb-audio/' + image, import.meta.url))).toBe(true)
   })
   it('distinguishes unsaved changes from the saved setup and offers a reset', () => {
     const configuration = usbAudioPreset('outbox')
