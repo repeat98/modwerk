@@ -344,7 +344,7 @@
       "path": "octatrack-modules/sidechain-compressor/0.2.1-experimental.mwrm",
       "lagsBehind": "0.2.2-experimental",
       "lagReason": "0.2.2 changes only the card build's placement: its ColdFire units join the DRAM runtime when another module in the set carries one (#1175). The USB package and its controller are 0.2.1's, so 0.2.1 stays the USB package.",
-      "requiredBase": "4e9a87ea6d84077ed4d5e592211a2206a665b0c72ae577e38be6bb133b33104d"
+      "requiredBase": "432edaff3d5dc78ea19b9f383badef19edb99eea4eb96bc74370bf8ee10500e3"
     },
     {
       "id": "output-matrix",
@@ -360,7 +360,7 @@
       "bytes": 3740,
       "sha256": "9c7380301f48bb01d7a7bc2cc6ed310f5a15272b0e870e5042a1932735495302",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "4e9a87ea6d84077ed4d5e592211a2206a665b0c72ae577e38be6bb133b33104d"
+      "requiredBase": "432edaff3d5dc78ea19b9f383badef19edb99eea4eb96bc74370bf8ee10500e3"
     },
     {
       "id": "cc-map",
@@ -376,7 +376,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "4e9a87ea6d84077ed4d5e592211a2206a665b0c72ae577e38be6bb133b33104d"
+      "requiredBase": "432edaff3d5dc78ea19b9f383badef19edb99eea4eb96bc74370bf8ee10500e3"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -454,7 +454,7 @@
       "bytes": 1818,
       "sha256": "b39bfa9f124f33f4de887dc830694c7072747f7a19b5568a47adc8d0cd73a353",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "4e9a87ea6d84077ed4d5e592211a2206a665b0c72ae577e38be6bb133b33104d"
+      "requiredBase": "432edaff3d5dc78ea19b9f383badef19edb99eea4eb96bc74370bf8ee10500e3"
     },
     {
       "id": "analog-bassdrum",
@@ -470,7 +470,7 @@
       "bytes": 26172,
       "sha256": "e683804756e9c898a658f7d4a97df5f8832cfa4f9c2e1d409a32df1a26ee392b",
       "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
-      "requiredBase": "4e9a87ea6d84077ed4d5e592211a2206a665b0c72ae577e38be6bb133b33104d",
+      "requiredBase": "432edaff3d5dc78ea19b9f383badef19edb99eea4eb96bc74370bf8ee10500e3",
       "requires": 0,
       "claims": 1,
       "entries": 1
