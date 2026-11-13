@@ -221,6 +221,9 @@ def run(args):
                     'midiModeWord':read32(0x80000012)}
         def enabled(on): invoke(base+own['ts_set'],int(on)*2-1,0);advance(50)
         assert overlay()==0
+        assert read32(symbols['modwerk_runtime_api']) & 0x10000, 'TRACK SOLO did not start at HOLD'
+        checks.append('TRACK SOLO starts at HOLD')
+        enabled(False)
         key(0x11);advance(2200);assert overlay()==0;key(0x11,False)
         checks.append('OFF preserves an actual long TRACK press')
         if args.persistence:

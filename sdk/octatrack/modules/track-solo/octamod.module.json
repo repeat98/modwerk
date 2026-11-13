@@ -3,7 +3,7 @@
   "id": "track-solo",
   "key": "TRACK SOLO",
   "name": "Track Solo",
-  "version": "0.2.4-experimental",
+  "version": "0.2.5-experimental",
   "category": "system",
   "author": {
     "github": "twwwy",
@@ -23,7 +23,7 @@
       "Release the anchor to return to the underlying mute and solo state."
     ],
     "usage": [
-      "Open PROJECT > CONTROL > SEQUENCER and set TRACK SOLO to HOLD.",
+      "TRACK SOLO starts at HOLD; turn it OFF under PROJECT > CONTROL > SEQUENCER for the session.",
       "Hold T2 alone for 0.5 seconds, then press T3 to add or remove it.",
       "Release T2 to end the temporary solo."
     ]
@@ -40,7 +40,7 @@
     "limitations": [
       "USB only: needs the Modwerk base for its key, tick and encoder events and its SEQUENCER row, so card firmware cannot include it.",
       "Functional hardware report on package 50f64eb6 on beta base 72defb09, mostly alone and once beside Play Modes. Not tested on hardware: other modules, MKI, all eight anchors, external MIDI, arranger rows, Pickup recording, K09 modifier orderings, self-test. See TESTING.md.",
-      "TRACK SOLO is OFF on startup and after package replacement; its enable setting and solo groups are not saved.",
+      "TRACK SOLO is HOLD on startup and after package replacement; set it to OFF for the session to restore stock long TRACK presses. The setting and solo groups are not saved.",
       "MIDI mode is excluded. When T8 is master, include it with the source tracks in the temporary group; T8 alone has no source audio.",
       "Mute Modes is optional. Paired emulator audio passed for OT, OTFX, OTFX-T and DT-T on the 0.2.2 package; physical Mute Modes behavior is untested.",
       "USB settings use the existing shared row table; native card settings integration is pending.",
@@ -197,7 +197,7 @@
         "tutorial": {
           "title": "Quick tutorial: audition tracks while editing",
           "steps": [
-            "Install Track Solo over USB. Open PROJECT > CONTROL > SEQUENCER, set TRACK SOLO to HOLD, close the menu, and let any stock notification clear.",
+            "Install Track Solo over USB. TRACK SOLO starts at HOLD, so the gesture is ready; PROJECT > CONTROL > SEQUENCER > TRACK SOLO turns it OFF for the session.",
             "Hold T2 alone for 0.5 seconds. While continuing to hold T2, press and release T3: T2 and T3 are now in the temporary group. Press T3 again to remove it.",
             "Release T2. The underlying mute and solo state applies again. Select OFF to disable the gesture completely."
           ]
@@ -255,7 +255,7 @@
     "location": "PROJECT > CONTROL > SEQUENCER > TRACK SOLO",
     "steps": [
       "Install Track Solo over USB.",
-      "Open PROJECT > CONTROL > SEQUENCER and choose HOLD for TRACK SOLO.",
+      "TRACK SOLO starts at HOLD; PROJECT > CONTROL > SEQUENCER turns it OFF for the session.",
       "Close the menu, hold one TRACK button alone for 30 instrument UI ticks (about 0.5 seconds), then tap others to toggle their solo.",
       "Release the original TRACK button to end solo; choose OFF to disable the gesture."
     ],
