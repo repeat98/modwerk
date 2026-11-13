@@ -24,7 +24,7 @@
  * 23 bits, 92 in all, read as one stream from track 5 on:
  *
  *      bits 0..87 eight entries of 11 bits, the top bit first: all tracks, track (3), param (6, 0 = empty), negative.
- *                 Params 46..53 are CC slots (0.1.5 on); earlier versions skip any param above 45 as empty
+ *                 Params 46..53 are CC slots (0.1.4 on); earlier versions skip any param above 45 as empty
  *      bits 88..89 version, 1 = this layout, 0 = nothing stored (anything else is read as empty)
  *      bits 90..91 reserved, left as they are
  *
