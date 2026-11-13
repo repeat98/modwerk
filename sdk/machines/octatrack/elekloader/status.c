@@ -247,7 +247,7 @@ static unsigned memory_left; /* ticks the box still shows */
  * refused effect's core, its DSP time and code memory as admission counts them with what the effect would add, or its
  * buffer blocks. A snapshot at the refusal (manager.c's dl_refusal, build_core.py), for three seconds; a key closes it. */
 extern volatile uint32_t dl_refusal[8];
-static unsigned refused_left, refused_reason, refused_core, refused_machine;
+static unsigned refused_left, refused_reason, refused_core, refused_machine, refused_elsewhere;
 void modwerk_dsp_source_refusal(unsigned *core, uint32_t *add); /* dsp.c: the last machine voice refused for cycles */
 static uint32_t refused[8], refused_booked, refused_words, refused_arena;
 static char refused_name[17];
@@ -602,6 +602,8 @@ int modwerk_status_refused(unsigned reason)
     for (unsigned i = 0; i < 8u; ++i) refused[i] = dl_refusal[i];
     unsigned slot = refused[1], id = refused[2], c = (slot & 7u) < 4u ? 1u : 0u;
     refused_machine = 0;
+    /* No delay memory for an effect that reads none: the plan stopped at another slot (every pick plans all sixteen). */
+    refused_elsewhere = refused[0] == 3u && !modwerk_dsp_reads_buffer(id);
     refused_reason = reason, refused_core = c, refused_booked = modwerk_dsp_booked(c), refused_words = dl_residency_words[c];
     refused_arena = c ? modwerk_status[ARENA] >> 16 : modwerk_status[ARENA] & 0xffffu; /* the arena as the page reads it */
     for (unsigned i = 0; i < sizeof refused_name; ++i) refused_name[i] = 0; /* a shorter name after a longer one */
@@ -677,6 +679,12 @@ static void refused_box(unsigned char *frame)
     char need[32], *e = need;
     for (const char *t = refused_name[0] ? refused_name : "THIS EFFECT"; *t && e < need + 16; ) *e++ = *t++;
     const uint32_t allowance = c ? MODWERK_DSP_ALLOWANCE1 : MODWERK_DSP_ALLOWANCE0;
+    if (refused[0] == 3u && refused_elsewhere) { /* not this effect's doing, and no track of these four need be at fault */
+        label(23u, 26u, "A MODULE EFFECT");
+        label(23u, 34u, "IS IN THE WAY:");
+        label(23u, 42u, "REMOVE + RE-ADD");
+        return;
+    }
     if (refused[0] == 3u) { /* a Y buffer: the slot kind's blocks on the core that this effect may take, all taken */
         /* In the player's words: the other FX on these four tracks hold the delay memory (refused[6] of refused[7]
          * blocks; fewer than all when this effect may not take the free one: Air Chorus and BBD stay off block 3). */
