@@ -80,8 +80,8 @@ October 2026); the base still offers the other:
   from RAM (the trial, the update's one restart), then writes itself and runs on. A base takes another base's
   container here only on two slots (refusal 106 otherwise). Stock's routines need no quiesce: they mask
   interrupts only around their command writes, the OS runs from RAM, and the upload engine has stopped the
-  transport. So the base writes while the OS runs on, with its own box (BASE UPDATE, SAVING THE NEW BASE, KEEP
-  THE POWER ON, a bar) and a BASE SAVED popup; the next start is from the new slot. Conversion comes first:
+  transport. So the base writes while the OS runs on, with its own screen (BASE UPDATE, SAVING NEW BASE,
+  a bar, below) and BASE SAVED; the next start is from the new slot. Conversion comes first:
   the base the unit started from NOR is copied to slot B, confirmed (above any old container, so it stays whole
   meanwhile), then the stub's sector, then this base into slot A. The stub's sector is the only moment a power cut
   can still cost a startup-menu recovery: its erase and the pages up to the end of the stub's code, under a
@@ -103,10 +103,24 @@ the container, nothing is written (the site's repeat after a lost reply).
 
 ## Showing it on the Octatrack
 
-- Writing: stock's own upgrade screen when quiesced (another base, two slots), the base's box otherwise.
-- After it: BASE SAVED (it ran on), or, at the start from the new slot, BASE UPDATED; UPDATE UNDONE when the stub
-  went back to the previous base.
-- Not built: anything on the unit while the base is sent and while the new base starts from RAM.
+A base update takes the whole screen and the panel (owner, 13 November 2026); a module sync shows a box with a bar
+and holds no key. `status.c` works the step out each tick from the upload (`ep0.c`), an armed RAM boot (`boot.c`)
+and the write (`flash.c`):
+
+- On the base being replaced: BASE UPDATE, RECEIVING NEW BASE with a bar, then RESTARTING. Only from the first base
+  that carries this screen on; older bases show nothing while the new one is sent.
+- On the new base, started from RAM: WAITING FOR MODWERK, on two slots only (the slot NOR starts next names another
+  base, which one copy cannot tell); then RECEIVING NEW BASE as its container arrives, SAVING NEW BASE with the
+  write's progress, and BASE SAVED or NOT SAVED for three seconds or until a key.
+- From the first packet of a base until the write is over, every key and knob is held back, PLAY and STOP too: after
+  its restart the unit loads the project and looks ready while nothing is saved. A release reaches stock only if its
+  press did. WAITING gives up 25 s after the start (a development RAM boot has no write to wait for) and 20 s after
+  the last sign of a container; a failed write frees the panel at once, and the page sends it again.
+- The missing-modules page and the restore's notice wait until the screen is gone.
+- Another base's write, quiesced (two slots): stock's own upgrade screen, as before.
+- After a start from the new slot: BASE UPDATED; UPDATE UNDONE when the stub went back to the previous base.
+- Not built: saving before the project loads. The container reaches the new base over USB, which is up only once
+  stock has started, so the save follows the restart by the time the page needs to reconnect and send it.
 - A restart hangs at the logo when a DSP stalled before it in that run (the soft reset cannot park a hung core);
   a power cycle starts the newest whole slot.
 
@@ -131,3 +145,6 @@ the container, nothing is written (the site's repeat after a lost reply).
    off and on (BASE UPDATED, the confirm), then update A to B and back on two slots (stock's screen, one restart).
 3. Pull the power during the slot write, several times at different points; pull the USB cable during the write.
 4. Install a base that fails to start: after two power cycles the stub must start the previous one.
+5. The update screen (not yet run on a unit): keys and knobs held back from the first packet to BASE SAVED, a key held
+   down across the start of the lock releasing cleanly, the 25 s give-up after a development RAM boot, the screen over
+   the startup animation and the project load, and a module sync's box while playback is stopped.

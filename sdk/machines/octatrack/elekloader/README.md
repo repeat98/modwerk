@@ -539,8 +539,8 @@ NOR when a host asks, with stock's OS UPGRADE routines (the sector erase and
    Then the write, into one of **two slots** (below), and the reply. **At most
    one restart per update:** this base writes itself while it runs on (no
    quiesce: stock's routines mask only their command writes and the OS runs
-   from RAM), with its own box on the unit (BASE UPDATE, a bar) and BASE SAVED
-   after; the next start is from the new slot.
+   from RAM), with its own screen on the unit (BASE UPDATE, a bar, the panel held
+   until it is saved: `status.c`'s transfer screens) and BASE SAVED after; the next start is from the new slot.
 3. On a unit already on two slots there is no trial: the running base takes the
    new base's container for its spare slot (only the checks that keep the
    bootloader safe: entry, bootstrap version, stock's bootloader copy), writes it

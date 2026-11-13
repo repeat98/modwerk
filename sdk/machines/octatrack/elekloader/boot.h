@@ -13,6 +13,7 @@ extern const struct mu_backend modwerk_boot_backend;
 uint8_t *modwerk_boot_staging(void); /* uncached */
 int modwerk_boot_tick(void);         /* sys task: nonzero when an armed boot is due; wake the engine */
 void modwerk_boot_service(void);
+int modwerk_boot_pending(void);      /* status.c: a RAM boot is armed */
 void modwerk_boot_restart(void);     /* flash.c: a plain restart on NOR, delayed as a RAM boot is */
 /* A key press or release as the panel reports it (codes 0..63, PANEL.md). */
 void modwerk_post_key(unsigned code, int pressed);

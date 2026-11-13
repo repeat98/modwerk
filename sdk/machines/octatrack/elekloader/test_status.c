@@ -19,7 +19,25 @@ uint32_t dl_buffers_in_use(void) { return 0; }
 unsigned modwerk_runtime_active(void) { return 0; }
 volatile struct selftest modwerk_selftest;
 volatile uint32_t modwerk_selftest_key;
-volatile uint32_t modwerk_flash_progress; /* flash.c: no write in progress */
+volatile uint32_t modwerk_flash_progress, modwerk_flash_outcome, modwerk_flash_trial; /* flash.c */
+/* ep0.c's upload and boot.c's armed RAM boot, as the transfer screens read them. */
+static unsigned upload_view; static uint32_t upload_permille; static int boot_pending;
+unsigned modwerk_upload_view(uint32_t *permille) { *permille = upload_permille; return upload_view; }
+int modwerk_boot_pending(void) { return boot_pending; }
+/* The host's text: each call is kept, so a test can ask what a screen says. */
+static char said[512];
+static struct { int x, top; char text[32]; } drawn[16]; /* and where, for whoever renders the frame with a font of its own */
+static unsigned drawn_count;
+void host_draw_text(unsigned char *frame, int x, int top, const char *t)
+{
+    (void)frame;
+    strcat(strcat(said, t), "|");
+    if (drawn_count < 16u) drawn[drawn_count].x = x, drawn[drawn_count].top = top, strncpy(drawn[drawn_count++].text, t, 31);
+}
+int host_text_width(const char *t) { return 5 * (int)strlen(t); }
+static unsigned char lcd[128 * 8];
+static const char *shows(void) { said[0] = 0; drawn_count = 0; memset(drawn, 0, sizeof drawn); memset(lcd, 0, sizeof lcd); modwerk_status_draw(lcd); return said; }
+static int lit(unsigned x, unsigned y) { unsigned bit = 63u - y; return lcd[x * 8u + (bit >> 3)] >> (7u - (bit & 7u)) & 1; }
 static int selftest_starts, selftest_aborts, menu_closes;
 void modwerk_test_close_menu(void) { ++menu_closes; }
 int modwerk_selftest_start(void) { ++selftest_starts; return 1; }
@@ -132,6 +150,56 @@ int main(void)
     CHECK(modwerk_status_key(NO, 1) && open == CLOSED && modwerk_status_key(NO, 0));
     missing_check(); missing_check(); CHECK(open == CLOSED);           /* so NO closes it for good (12 October 2026) */
     listed = 0; missing_check(); CHECK(open == CLOSED);                /* all installed: it closes */
+    /* A module sync shows its box and bar while the modules arrive and start, and holds no key. */
+    upload_view = 1, upload_permille = 500; transfer_tick();
+    CHECK(transfer == T_SYNC && strstr(shows(), "MODWERK SYNC|RECEIVING MODULES|50%"));
+    CHECK(lit(22, 40) && lit(50, 40) && !lit(56, 40));                 /* the bar: half of it filled */
+    CHECK(modwerk_status_dialog() && !modwerk_status_key(0, 1) && !modwerk_status_key(0, 0));
+    upload_view = 1 | 1 << 4; transfer_tick();
+    CHECK(transfer == T_SYNC_START && strstr(shows(), "STARTING MODULES") && !strstr(said, "%"));
+    upload_view = 0; transfer_tick();
+    CHECK(transfer == T_NONE && !modwerk_status_dialog() && !shows()[0]);
+    /* A base update takes the screen and the panel from the first packet of a base. On the base being replaced:
+     * the new base arrives (a whole image, for the RAM boot), then the restart. */
+    upload_view = 3, upload_permille = 250; transfer_tick();
+    CHECK(transfer == T_RECEIVE && strstr(shows(), "BASE UPDATE|RECEIVING NEW BASE|25%|DO NOT TOUCH|KEEP THE POWER ON"));
+    CHECK(lit(0, 0) && lit(127, 8) && !lit(0, 9));                     /* the title's band, over the whole width */
+    CHECK(modwerk_status_key(PLAY, 1) && modwerk_status_key(PLAY, 0)); /* every key held back, PLAY too */
+    CHECK(modwerk_status_key(0, 1) && modwerk_status_enc(0, 1));
+    upload_view = 3 | 1 << 4; transfer_tick();
+    CHECK(transfer == T_RESTART && strstr(shows(), "RESTARTING") && !strstr(said, "%"));
+    upload_view = 0; boot_pending = 1; transfer_tick(); CHECK(transfer == T_RESTART);
+    boot_pending = 0;
+    /* The host gave up: the screen stays for the page's next try, then frees the panel by itself. A key pressed
+     * under the lock stays held back until it is let go, so stock never sees a release without its press. */
+    transfer_tick(); CHECK(transfer == T_WAIT && strstr(shows(), "WAITING FOR MODWERK"));
+    for (unsigned k = 0; k < T_QUIET_TICKS; ++k) transfer_tick();
+    CHECK(transfer == T_NONE && !modwerk_status_key(PLAY, 1) && !modwerk_status_key(PLAY, 0));
+    CHECK(modwerk_status_key(0, 0) && !modwerk_status_key(0, 0));       /* TRIG 1's release: its press was held back */
+    /* On the new base: its container arrives, flash.c unpacks it over its own first bytes and writes it. */
+    upload_view = 2, upload_permille = 900; transfer_tick(); CHECK(transfer == T_RECEIVE);
+    upload_view = 3 | 1 << 4; transfer_tick();                         /* unpacked: still the container that arrived */
+    CHECK(transfer == T_SAVE && strstr(shows(), "SAVING NEW BASE") && !strstr(said, "%"));
+    modwerk_flash_progress = 1u + 640u; transfer_tick();
+    CHECK(transfer == T_SAVE && strstr(shows(), "SAVING NEW BASE|64%") && modwerk_status_key(YES, 1) && modwerk_status_key(YES, 0));
+    /* Saved: said for three seconds or until a key, which goes on to stock; then nothing is waited for. */
+    modwerk_flash_progress = 0, modwerk_flash_outcome = 3, upload_view = 0; transfer_tick();
+    CHECK(transfer == T_SAVED && strstr(shows(), "BASE SAVED|YOU CAN PLAY AGAIN") && !modwerk_status_enc(0, 1));
+    CHECK(!modwerk_status_key(0, 1) && transfer == T_NONE && !modwerk_status_key(0, 0));
+    transfer_tick(); CHECK(transfer == T_NONE);
+    /* A write that failed says so and frees the panel: the page sends it again. */
+    modwerk_flash_outcome = 4; transfer_tick();
+    CHECK(transfer == T_FAILED && strstr(shows(), "NOT SAVED|KEEP THE POWER ON|TRY AGAIN IN MODWERK"));
+    for (unsigned k = 0; k < T_TOLD_TICKS; ++k) transfer_tick();
+    CHECK(transfer == T_NONE);
+    /* Started from RAM while NOR starts another base (two slots): the screen is there before any host is, and gives
+     * up 25 s after the start, as a development RAM boot has no write to wait for. */
+    transfer_seen = 0, transfer_ticks = 60, transfer_wait = T_WAIT_TICKS, modwerk_flash_trial = 1; transfer_tick();
+    CHECK(transfer == T_WAIT && modwerk_status_key(0, 1) && modwerk_status_key(0, 0));
+    listed = 3; missing_check(); missing_check(); CHECK(open == CLOSED); /* the missing page waits for it */
+    listed = 0; missing_check();
+    transfer_ticks = T_WAIT_TICKS; transfer_tick(); CHECK(transfer == T_NONE);
+    modwerk_flash_trial = 0;
     /* The memory box: after a pick that puts a module on one slot, or an accept; not after a Part change. */
     dl_residency_words[1] = 441; memory_tick();
     CHECK(words_before[1] == 441);                                     /* closed: it follows the core */

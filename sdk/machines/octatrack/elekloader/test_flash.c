@@ -198,6 +198,7 @@ int main(void)
     /* Written by this base itself, from RAM after its trial (the update's one restart): not quiesced, so the base's
      * own box showed it, not stock's screen; it runs on, says BASE SAVED, and starts from A next time. */
     CHECK(modwerk_test_screens == 0 && modwerk_flash_progress == 1001u && !modwerk_flash_quiesced);
+    CHECK(modwerk_flash_outcome == 3u); /* status.c's screen: one write ended, saved */
     CHECK(b->retire(0) == 1 && restarted() == 0);
     modwerk_test_popup = 0; modwerk_flash_tick();
     CHECK(modwerk_test_popup && !strcmp(modwerk_test_popup, "BASE SAVED") && !modwerk_flash_progress);
@@ -214,6 +215,7 @@ int main(void)
     CHECK(modwerk_test_popup && !strcmp(modwerk_test_popup, "BASE UPDATED"));
     slot_read(SLOT_A, s); CHECK(s[0].confirmed && s[0].tries == 1u);
     CHECK(modwerk_flash_slots[5] == 0 && modwerk_flash_slots[6] == 2u);
+    CHECK(!modwerk_flash_trial); /* started from its own slot: no update is under way */
     CHECK(power_on() == SLOT_A + SLOT_RECORD); /* confirmed: no more tries used */
     slot_read(SLOT_A, s); CHECK(s[0].tries == 1u);
 
@@ -310,6 +312,7 @@ int main(void)
     CHECK(started_is(power_on(), old));
     modwerk_test_drop = 1;
     CHECK(offered() == 1 && b->publish(0) == MU_UNCERTAIN && modwerk_flash_refusal == FLASH_WRITE);
+    CHECK(!modwerk_flash_progress && !(modwerk_flash_outcome & 1u)); /* its screen comes down and says NOT SAVED */
     CHECK(b->restore(0) == 1 && restarted() == 0);
     CHECK(started_is(power_on(), old)); /* switched off now: A still starts */
     modwerk_test_drop = 0;
