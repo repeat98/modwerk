@@ -1,3 +1,17 @@
+# Scale Quantizer 0.1.5: the two panel sites left out
+
+0.1.5 changes what the package hooks, not what the module does. The author's 2.21 panel publication transaction runs
+only beside FM Synth, in FM Synth's own copy of the quantizer; without it the detours at `0x4004fc84` (16 bytes) and
+`0x40005162` (8 bytes) only replayed the stock instructions they displaced. The wrapper leaves both out
+(`_without_panel`), and the runtime port leaves out the include's second pass, whose replays only those two reached, so
+the package carries no stock copy of `0x4004fc84` either. The upstream source is the author's 2.23 line; its only
+quantizer change is FM Synth's project comment line, assembled only beside FM Synth (HAVE_SYNTH 0 here).
+
+Built on 13 November 2026 from main `208f05a6`: 7 stock-code sites (was 9), 5 stock copies (was 6), 5,852 bytes of
+code and data, 0 of bss, 105 relocations, 19 hooks; package 7,038 bytes, sha256 `092a8a13b999d14c...`, built three
+times byte-identical; the strict stock-free scan's longest shared run 11 non-zero bytes (fails at 12). Emulator and
+unit runs of this package: see the emulator section below when present; the 0.1.4 report follows unchanged.
+
 # Scale Quantizer 0.1.4 testing
 
 Version: `0.1.4-experimental`. Author source: timhastie/octatrick-modules
