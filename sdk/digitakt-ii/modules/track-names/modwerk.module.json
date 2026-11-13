@@ -71,12 +71,12 @@
     ]
   },
   "resources": {
-    "memoryBytes": 3210,
+    "memoryBytes": 2966,
     "fastBytes": 0,
     "load": {
       "display": "UI task only, on the mixer pages: under about 2% of the CPU; elsewhere a few dozen instructions a frame",
       "method": "static",
-      "conditions": "Static count from the -O2 ColdFire code: a frame on Internal Mixer 2/5 or 3/5 reads up to 6,912 pixels to find a pop-up (12 instructions each) plus about 2,600 for the label and badge checks, and draws 8 badges and up to 8 names with stock routines: at most about 150,000 instructions, at most 30 frames a second, in the UI task. On every other page it stops after the first column of the MIX box check. No audio-path code. Not measured on a unit."
+      "conditions": "Static count from the -O2 ColdFire code (2,782 bytes of code and 184 of data in the GCC 16.2 package): a frame on Internal Mixer 2/5 or 3/5 reads up to 6,912 pixels to find a pop-up (12 instructions each) plus about 2,600 for the label and badge checks, and draws 8 badges and up to 8 names with stock routines: at most about 150,000 instructions, at most 30 frames a second, in the UI task. On every other page it stops after the first column of the MIX box check. No audio-path code. Not measured on a unit."
     }
   },
   "evidence": {

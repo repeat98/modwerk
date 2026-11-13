@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "module": "digitakt-ii/track-names",
+  "version": "0.1.2-experimental",
+  "date": "2026-11-13",
+  "upstream": {
+    "repository": "https://github.com/crisp909/modwerk",
+    "revision": "bc32ae2113c315f5cd4f48bc2028ef92892fa6d8",
+    "path": "sdk/digitakt-ii/modules/track-names",
+    "license": "GPL-3.0-or-later"
+  },
+  "changes": [
+    "First Modwerk release for Digitakt II OS 1.17, on core 1.0: the Internal Mixer shows the track names from SETUP > RENAME in place of TRK1..TRK16, with each track's number above its fader.",
+    "Source-only export compiled by the author in the pinned GCC 16.2 Docker toolchain (scripts/build-elemod-isolated.sh, image sha256:c8a80381…a025f9) from bc32ae2; the author ran this exact package on a Digitakt II."
+  ],
+  "runtimeSourceSha256": "f02671e75e8dd2d085576ba1d9bbc7259c554f061dff6061dcee3a2f21df8ad7",
+  "packages": [
+    {
+      "os": "1.17",
+      "path": "sdk/imports/packages/track-names/track-names-0.1.2-experimental-os1.17.elemod",
+      "sha256": "cc908de8c9036a03b2678c0bf9b93d9e9e28b96d5967c18c27abf933f4a03a8f"
+    }
+  ],
+  "stockPolicy": "No firmware or stock-derived code/tables are present. Addresses, lengths and SHA-256 guards are metadata; exported instructions and sections are authored module code. Local materialized recipes and firmware are never committed.",
+  "evidence": "sdk/digitakt-ii/modules/track-names/TESTING.md",
+  "requires": []
+}

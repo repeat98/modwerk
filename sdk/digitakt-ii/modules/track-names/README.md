@@ -51,7 +51,7 @@ is cut after 5 characters on the mixer and stays whole in SETUP. A track whose n
   names with PERFORM KIT off, names back after SAVE PROJECT and a reload, other pages unchanged.
 - Emulator (digikit): names entered through SETUP > RENAME on a fresh project show on both mixer pages; tracks named
   PRESET n keep TRKn; pattern select pop-ups stay on top. Details in [TESTING.md](TESTING.md).
-- Memory: 3,026 bytes of code and 184 bytes of data. Load: UI task only, at most about 150,000 instructions per
+- Memory: 2,782 bytes of code and 184 bytes of data (the GCC 16.2 package). Load: UI task only, at most about 150,000 instructions per
   frame on the mixer pages (static count), a few dozen elsewhere; no audio-path code.
 
 ## Authorship and licences
