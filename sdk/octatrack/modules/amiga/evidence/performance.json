@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "module": "amiga",
-  "version": "0.1.0-experimental",
+  "version": "0.1.1-experimental",
   "kind": "coldfire",
   "cycles": {
     "unit": "cycles/event",

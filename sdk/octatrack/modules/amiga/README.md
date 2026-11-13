@@ -1,6 +1,6 @@
 # Amiga
 
-Version 0.1.0-experimental · by Jannik Aßfalg (@repeat98) · experimental: played and measured on one MKII on a development base; the list of what was not tried is in [TESTING.md](TESTING.md).
+Version 0.1.1-experimental · by Jannik Aßfalg (@repeat98) · experimental: played and measured on one MKII on a development base; the list of what was not tried is in [TESTING.md](TESTING.md).
 
 ## Overview
 
