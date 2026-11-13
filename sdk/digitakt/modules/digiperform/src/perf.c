@@ -5,8 +5,9 @@
  * driven the way the Analog Four drives its macros, by a knob (Analog Four manual 9.3). An entry is
  *
  *      KNOB:  the macro it belongs to, A-H: the entry's index
- *      TRACK: the track whose parameter it moves, 1-8
- *      PARAM: one of the sound's parameter slots 1..45 (LFO, SRC, FLTR, AMP pages)
+ *      TRACK: the track whose parameter it moves, 1-8 (a MIDI track 1-8 for a CC slot)
+ *      PARAM: one of the sound's parameter slots 1..45 (LFO, SRC, FLTR, AMP pages), or 46..53: a MIDI track's
+ *             CC VAL 1..8, sent as MIDI (see IS_CC)
  *      DIR:   + (the knob raises the parameter) or - (it lowers it)
  *
  * There is no depth: a knob spans the parameter's whole range, 0..127 as on its page. When the page
@@ -22,7 +23,8 @@
  * tracks 5..8's sounds that nothing else claims (kitstore.h): per track, byte 3 bits 0..6, byte 4 and byte 5,
  * 23 bits, 92 in all, read as one stream from track 5 on:
  *
- *      bits 0..87 eight entries of 11 bits, the top bit first: all tracks, track (3), param (6, 0 = empty), negative
+ *      bits 0..87 eight entries of 11 bits, the top bit first: all tracks, track (3), param (6, 0 = empty), negative.
+ *                 Params 46..53 are CC slots (0.1.5 on); earlier versions skip any param above 45 as empty
  *      bits 88..89 version, 1 = this layout, 0 = nothing stored (anything else is read as empty)
  *      bits 90..91 reserved, left as they are
  *
@@ -57,6 +59,9 @@
 #define F_ENC_ACC  0x400c06ae
 #define F_ENC_DECAY 0x400c05f4
 #define F_APP      0x421fac10
+#define F_WIMAGE   0x406490e8
+#define F_KIT0     0x4191f018
+#define F_CC_SEND  0x400e0b94
 #else
 #define F_400c19a6 0x400c19a6
 #define F_400c257c 0x400c257c
@@ -74,6 +79,9 @@
 #define F_ENC_ACC  0x400c0486
 #define F_ENC_DECAY 0x400c03cc
 #define F_APP      0x421f9c10
+#define F_WIMAGE   0x406480e8
+#define F_KIT0     0x4191e018
+#define F_CC_SEND  0x400e096c
 #endif
 
 typedef unsigned int u32;
@@ -142,6 +150,23 @@ static int slot_id(int s)
         return s == 33 ? 40 : s == 34 ? 41 : 39;   /* the second page's slots run base, width, delay (not the ids' order delay, base, width) */
     return s + 6;                            /* the rest of the filter, then AMP */
 }
+/* A knob can also move one of a MIDI track's eight CC values (FLTR page, VAL1..VAL8): parameters 46..53, the entry's track then
+ * the MIDI track 0..7. Only a slot the track has turned on (FUNC + push on its knob) can be chosen; its CC number and channel are the
+ * track's own. The knob never changes the stored value: it sends the stored value moved by the knob, and the stored one again when
+ * it lets go. A MIDI track's record is 56 words at kit + 0x59a + 0x70 t: CC VAL n at word 24 + n (8.8, 0..127), and word 55 bit
+ * 7 + n set while VAL n is on (measured on OS 1.54 in the emulator). The firmware's ids of VAL1..VAL8 are 148..155. */
+#define CC_FIRST   46
+#define CC_LAST    53
+#define IS_CC(p)   ((p) >= CC_FIRST && (p) <= CC_LAST)
+#define CC_SLOT(p) ((p) - CC_FIRST)
+#define dest_ok(p) ((p) && ((p) <= DEST_LAST || IS_CC(p)))   /* a parameter this build moves */
+#define CC_ID(s)   (148 + (s))
+#define CC_REC(kit, t) ((volatile short *)((kit) + 0x59a + 0x70 * (t)))
+#define CC_WORD(s) (25 + (s))
+#define CC_ON(kit, t, s) (((u16)CC_REC(kit, t)[55] >> (8 + (s))) & 1)
+/* the stock CC page's send: (value 8.8, MIDI track 0..7, word index). It queues one message per track and slot with interrupts
+ * off (a newer value replaces one not sent yet); the MIDI track's channel and CC SELECT number go with it as for a stock turn */
+#define CC_SEND    ((void (*)(int, int, int))F_CC_SEND)
 /* The SRC knobs are the machine's own: each machine's SRC layout names its eight ids (SLICE's SLICE knob is not ONESHOT's START). lids[t]
  * holds track t's, read from the layout in the UI while the track's machine stays (lmach[t]); 0 is a knob the machine leaves empty, and it
  * keeps the stock id. The engine reads only these bytes. */
@@ -155,14 +180,16 @@ static int pid(int t, int p)
     int i;
     if (p >= 17 && p <= 24 && t >= 0 && t < 8 && (i = lids[t][p - 17]) != 0)
         return i;
+    if (IS_CC(p))
+        return CC_ID(CC_SLOT(p));
     return slot_id(p);
 }
 #define KTRK(e)    (E_ALL(e) ? 0 : E_TRK(e))   /* the track a knob reads: an ALL knob takes track 1's value, so its range and text too */
 static int srcknob(int t, int p) { return p >= 17 && p <= 24 && t >= 0 && t < 8 && lids[t][p - 17]; }
 /* an SRC knob the track's machine leaves empty: the SRC page draws an empty box there, so nothing to name, show or move */
 static int srcempty(int t, int p) { return p >= 17 && p <= 24 && t >= 0 && t < 8 && lhas[t] && !lids[t][p - 17]; }
-static int pminw(int t, int p) { return srcknob(t, p) ? lmin[t][p - 17] : PTABLE[pid(t, p) * 13 + 2]; }   /* the same in the parameter's own 8.8 words */
-static int pmaxw(int t, int p) { return srcknob(t, p) ? lmax[t][p - 17] : PTABLE[pid(t, p) * 13 + 3]; }
+static int pminw(int t, int p) { return IS_CC(p) ? 0 : srcknob(t, p) ? lmin[t][p - 17] : PTABLE[pid(t, p) * 13 + 2]; }   /* the same in the parameter's own 8.8 words */
+static int pmaxw(int t, int p) { return IS_CC(p) ? 0x7f00 : srcknob(t, p) ? lmax[t][p - 17] : PTABLE[pid(t, p) * 13 + 3]; }
 static int pmin(int t, int p) { return pminw(t, p) >> 8; }
 static int pmax(int t, int p) { return pmaxw(t, p) >> 8; }
 static int prange(int t, int p) { return pmax(t, p) > pmin(t, p) ? pmax(t, p) - pmin(t, p) : 1; }
@@ -238,7 +265,9 @@ static int sel_steps(int sel, int delta)
 #define E_PAR(e)   (((e) >> 4) & 63)
 #define E_NEG(e)   (((e) >> 3) & 1)
 #define E_ALL(e)   (((e) >> 13) & 1)         /* the parameter of every audio track, the offset the same for each */
-#define TGT(e)     (E_ALL(e) ? 8 : E_TRK(e)) /* the entry's target: a track 0..7, or 8 for all */
+#define TGT(e)     (E_ALL(e) ? 8 : IS_CC(E_PAR(e)) ? 9 + E_TRK(e) : E_TRK(e)) /* the entry's target: a track 0..7, 8 for all, 9..16 a MIDI track */
+#define T_MIDI     9                         /* the first MIDI track's target */
+#define T_LAST     16
 #define ENTRY(t, p, neg) \
     ((u16)(((t) << 10) | ((p) << 4) | ((neg) ? 8 : 0)))
 
@@ -348,12 +377,39 @@ static volatile unsigned char pending;
 
 static void moving_update(void);
 
+/* The Digitakt starts from its working image, not from the saved project: a serialized copy of the project in RAM
+ * (F_WIMAGE, 0x372b14 bytes) that every stock edit writes at once and that the firmware writes to the +Drive at
+ * power-off; LOAD PROJECT fills it from the project. SAVE PROJECT does not touch it, so the pool bytes, which are
+ * only written to the kit, were lost at the next power cycle. So each change of them is copied into the image too.
+ * There pattern p's kit starts at +0x310334 + 0xa00 p, track t's sound 0xa0 bytes apart, its spare bytes 8 bytes in
+ * (measured: a save writes them to the +Drive at these places, and a cold boot from that image puts them back). Only
+ * the bits the pool owns are copied; bit 7 of byte 3 stays the image's own. */
+#define KIT_STRIDE 0x91e
+static void img_sync(unsigned char *kit)
+{
+    int d = (int)(kit - (unsigned char *)F_KIT0), t;
+    volatile unsigned char *img;
+    if (d < 0 || d % KIT_STRIDE || d / KIT_STRIDE >= 128)
+        return;                              /* not one of the 128 pattern kits: nothing to mirror */
+    img = (volatile unsigned char *)F_WIMAGE + 0x310334 + 0xa00 * (d / KIT_STRIDE);
+    for (t = 4; t < 8; t++) {
+        volatile unsigned char *r = img + 0xa0 * t + 8;
+        r[3] = (unsigned char)((r[3] & 0x80) | (XB(kit, 6 * t + 3) & 0x7f));
+        r[0x14] = XB(kit, 6 * t + 4);
+        r[0x15] = XB(kit, 6 * t + 5);
+    }
+}
+
 /* the bytes change with interrupts off, so the engine never reads half of an old entry. A pool with no
  * version of ours is cleared first, and the version set; the reserved bits are never written. */
+static void cc_letgo(int k);
 static void put_entry(unsigned char *kit, int i, u16 e)
 {
     int b, v = ((e >> 13 & 1) << 10) | ((e >> 10 & 7) << 7) | ((e >> 4 & 63) << 1) | (e >> 3 & 1);
-    u32 sr = lock();
+    u32 sr;
+    if (i >= 0 && i < NENT && e != entry(kit, i))
+        cc_letgo(i);                         /* a CC knob reassigned or removed: its synth gets the stored value back */
+    sr = lock();
     if (pver(kit) != VER_NOW) {
         for (b = 0; b < VER_BIT; b++)
             pput(kit, b, 0);
@@ -364,6 +420,7 @@ static void put_entry(unsigned char *kit, int i, u16 e)
         pput(kit, i * ENT_BITS + b, v >> (ENT_BITS - 1 - b));
     if (!pending && i >= 0 && i < NENT)
         shadow[i] = e;                       /* the engine's copy has the edit at once */
+    img_sync(kit);                           /* and the working image, so a power cycle keeps it */
     unlock(sr);
     moving_update();                         /* and so has the list of moved parameters */
 }
@@ -566,11 +623,57 @@ static int dstage;                          /* 0: its track is being chosen, 1: 
 static int dtrk;                            /* the track so far: 0..7, 8 all; it starts on track 1 */
 static int dpar;                            /* the parameter so far */
 
+/* ---- the CC knobs: sent from the UI, never through the audio block ---------------------------------------------------- */
+
+static unsigned char *cc_kit[NKNOB];        /* where a CC knob's stored value is: the kit, MIDI track and slot it picked up from */
+static unsigned char cc_t[NKNOB], cc_s[NKNOB], cc_neg[NKNOB];
+static unsigned char cc_sent[NKNOB];        /* it sent a moved value: letting go sends the stored one again */
+
+static void cc_letgo(int k)                 /* the synth gets the stored value back */
+{
+    if (cc_sent[k] && cc_kit[k]) {
+        int w = CC_REC(cc_kit[k], cc_t[k])[CC_WORD(cc_s[k])];
+        CC_SEND(w < 0 ? 0 : w > 0x7f00 ? 0x7f00 : w & ~0xff, cc_t[k], CC_WORD(cc_s[k]));
+    }
+    cc_sent[k] = 0;
+}
+
+static void cc_take(unsigned char *kit, int k, u16 e)   /* the knob picks up the stored CC value */
+{
+    int s = CC_SLOT(E_PAR(e)), t = E_TRK(e), v;
+    cc_letgo(k);
+    restw[k] = CC_REC(kit, t)[CC_WORD(s)];
+    v = restw[k] >> 8;
+    v = v < 0 ? 0 : v > 127 ? 127 : v;
+    rest[k] = macro[k] = (unsigned char)(E_NEG(e) ? 127 - v : v);
+    fine[k] = 0;
+    cc_kit[k] = kit;
+    cc_t[k] = (unsigned char)t;
+    cc_s[k] = (unsigned char)s;
+    cc_neg[k] = (unsigned char)E_NEG(e);
+    live[k] = 1;
+}
+
+static void cc_out(int k)                   /* the knob's value goes out, as the stock CC page sends a turn */
+{
+    int x = ((int)macro[k] - (int)rest[k]) * 256 + fine[k], w;
+    if (!cc_kit[k] || !live[k])
+        return;
+    if (cc_neg[k])
+        x = -x;
+    w = restw[k] + x;
+    w = w < 0 ? 0 : w > 0x7f00 ? 0x7f00 : w;
+    CC_SEND(w & ~0xff, cc_t[k], CC_WORD(cc_s[k]));
+    cc_sent[k] = 1;
+}
+
 static void release(void)                   /* every parameter goes back to what the sound stores */
 {
     int k;
-    for (k = 0; k < NKNOB; k++)
+    for (k = 0; k < NKNOB; k++) {
+        cc_letgo(k);
         live[k] = 0;
+    }
     moving_update();                         /* the block lets go at once */
 }
 
@@ -816,6 +919,16 @@ static void cpy(char *d, const char *a, int n)
     }
     d[len] = 0;
 }
+/* the label call as the CC page makes it: (view, id) on the stack, and the view in a4 and the id in d2 as they are at the call
+ * (a mod there may read the registers rather than the stack) */
+static const char *label_call(void *view, int id)
+{
+    namefn f = site_fn(SITE_SHORT, 0x4000fe8a);
+    register const char *r __asm__("d0");
+    __asm__ volatile("move.l %2,%%d2\n\tmovea.l %1,%%a4\n\tmove.l %2,-(%%sp)\n\tmove.l %1,-(%%sp)\n\tjsr (%3)\n\taddq.l #8,%%sp"
+                     : "=r"(r) : "a"(view), "d"(id), "a"(f) : "d1", "d2", "a0", "a1", "a4", "memory", "cc");
+    return r;
+}
 /* the name of parameter p on track t, short (the label) or long (the header): the SRC page's, read for all the track's knobs at once
  * when its machine changes (the stock calls run with interrupts off, so not every frame); 0 when the machine has no knob there */
 static const char *src_name(unsigned char *kit, int t, int p, int lng)
@@ -833,7 +946,7 @@ static const char *src_name(unsigned char *kit, int t, int p, int lng)
         for (i = 0; i < 8; i++) {
             int id = lids[t][i];
             void *o = id ? widget(id) : 0;
-            cpy(lsn[t][i], id ? site_fn(SITE_SHORT, 0x4000fe8a)(o, id) : 0, 7);
+            cpy(lsn[t][i], id ? label_call(o, id) : 0, 7);   /* a mod at the site may read the id from d2 (CC Names does) */
             cpy(lln[t][i], id ? site_fn(SITE_LONG, 0x4000feac)(o, id) : 0, 19);
         }
         lnv[t] = 1;
@@ -842,14 +955,56 @@ static const char *src_name(unsigned char *kit, int t, int p, int lng)
     }
     return lng ? lln[t][p - 17] : lsn[t][p - 17];
 }
-/* an SRC knob's label as the SRC page has it, centred under the knob like the module's own labels; 0 when there is none */
-static int src_label(void *bmp, unsigned char *kit, int x, int ly, u16 e)
+/* A CC slot's label as the MIDI track's CC page has it: the page's label call (0x40030daa) asked for VAL n with a copy of the TRIG
+ * page's view whose selected track (+0x74) is the MIDI track. Stock answers "VAL1".."VAL8"; a mod that names CC slots answers its
+ * name. The copy's track object is ours: its method at +0x28 returns a record whose word at +8 is the track, 8..15 for MIDI. */
+static u32 ccf_rec[4];
+static u32 ccf_get(void *o) { (void)o; return (u32)ccf_rec; }
+static void *ccf_vt[16];
+static void *ccf_obj[1];
+static u32 ccf_view[0x80 / 4];
+static char ccn[8][8][8];                   /* the labels, read once a tick at most (ccn_tick) */
+static unsigned char ccn_ok[8];
+static const char *cc_name(int t, int s)
 {
-    const char *n = src_name(kit, KTRK(e), E_PAR(e), 0);
-    if (!n || !*n)
-        return 0;
-    TEXT(bmp, LABEL_FONT, x + 9 - tw(n) / 2, ly, -1, "%s", n);
-    return 1;
+    if (t < 0 || t > 7 || s < 0 || s > 7)
+        return "";
+    if (!(ccn_ok[t] >> s & 1)) {
+        void *v = trig_view ? trig_view : tap_view;
+        const char *a;
+        if (v) {
+            int i;
+            for (i = 0; i < 0x80 / 4; i++)
+                ccf_view[i] = ((u32 *)v)[i];
+            ccf_vt[0x28 / 4] = (void *)ccf_get;
+            ccf_obj[0] = ccf_vt;
+            ccf_rec[2] = (u32)(8 + t);
+            ccf_view[0x74 / 4] = (u32)ccf_obj;
+            a = label_call(ccf_view, CC_ID(s));
+        } else {
+            a = ((const char *(*)(void *, int))0x4000fe8a)(0, CC_ID(s));
+        }
+        cpy(ccn[t][s], a, 7);
+        ccn_ok[t] |= (unsigned char)(1 << s);
+    }
+    return ccn[t][s];
+}
+static void ccn_tick(void)                  /* a renamed slot shows its new name within a tick */
+{
+    int t;
+    for (t = 0; t < 8; t++)
+        ccn_ok[t] = 0;
+}
+/* the label under a knob (the module's names, the SRC page's, the CC page's) */
+static const char *plabel(unsigned char *kit, int t, int p)
+{
+    const char *n;
+    if (IS_CC(p))
+        return cc_name(t, CC_SLOT(p));
+    if (p < 1 || p > DEST_LAST)
+        return "";
+    n = src_name(kit, t, p, 0);
+    return n && *n ? n : names4[p];
 }
 
 /* the parameter's word as the knob has it: where it picked up, moved by the knob, inside the parameter's range */
@@ -923,7 +1078,7 @@ static int adv(const void *font, const char *s, int n)
 /* the widest the parameter's value gets in the header, over its whole range: the name is fitted to that once, so it does not change as the knob turns */
 static int worst_value(unsigned char *kit, int t, int p)
 {
-    static unsigned char wide[DEST_LAST + 1];
+    static unsigned char wide[64];          /* by parameter: the module's and the CC slots */
     unsigned char *w = p >= 17 && p <= 24 && kit ? &wides[t][p - 17] : &wide[p];
     char b[12];
     int v;
@@ -968,6 +1123,23 @@ static int tw(const char *s)
 static const signed char ring_lo[9] = { 8, 8, 8, 7, 7, 6, 5, 3, 0 };
 static const signed char ring_hi[9] = { 8, 8, 8, 7, 7, 6, 5, 4, 2 };
 
+/* the track's number as the trig keys label it: audio 1..8, MIDI 9..16 */
+static int trk_num(int tgt) { return tgt >= T_MIDI ? tgt - T_MIDI + 9 : tgt + 1; }
+/* the target's mark in the middle of a knob: the track's number (two digits, 7 px, for MIDI 10..16), A for all audio tracks */
+static void track_mark(void *bmp, int x, int ky, int tgt)
+{
+    if (tgt == 8)
+        TEXT(bmp, FONT5, x + 8, ky + 6, -1, "A");
+    else
+        TEXT(bmp, FONT5, trk_num(tgt) > 9 ? x + 6 : x + 8, ky + 6, -1, "%d", trk_num(tgt));
+}
+/* the mark's highlight while its track is chosen: a pixel round the number */
+static void mark_box(void *bmp, int x, int ky, int tgt)
+{
+    int w = tgt != 8 && trk_num(tgt) > 9;
+    FILLRECT(bmp, w ? x + 5 : x + 7, ky + 5, w ? x + 13 : x + 11, ky + 11, -1);
+}
+
 /* the knob being assigned (Perform Quick Assign): first its track (the knob empty, the track's mark highlighted), then its parameter (the knob empty, the label highlighted) */
 static void draw_draft(void *bmp, unsigned char *kit, int x, int ky, int ly, int k)
 {
@@ -977,27 +1149,18 @@ static void draw_draft(void *bmp, unsigned char *kit, int x, int ky, int ly, int
         FILLRECT(bmp, x + 9 - ring_hi[a], ky + 8 + d, x + 9 - ring_lo[a], ky + 8 + d, 1);
         FILLRECT(bmp, x + 9 + ring_lo[a], ky + 8 + d, x + 9 + ring_hi[a], ky + 8 + d, 1);
     }
-    if (dtrk == 8)
-        TEXT(bmp, FONT5, x + 8, ky + 6, -1, "A");
-    else
-        TEXT(bmp, FONT5, x + 8, ky + 6, -1, "%d", dtrk + 1);
+    track_mark(bmp, x, ky, dtrk);
     if (dstage == 0) {
-        FILLRECT(bmp, x + 7, ky + 5, x + 11, ky + 11, -1);   /* the mark, highlighted until the track is chosen */
+        mark_box(bmp, x, ky, dtrk);          /* the mark, highlighted until the track is chosen */
         TEXT(bmp, LABEL_FONT, x + 8, ly, -1, "%s", knobname[k]);
         return;
     }
     {
-        const char *n = src_name(kit, dtrk == 8 ? 0 : dtrk, dpar, 0);   /* the SRC page's name for the track's machine */
-        if (!n || !*n)
-            n = names4[dpar];
+        const char *n = plabel(kit, dtrk >= T_MIDI ? dtrk - T_MIDI : dtrk == 8 ? 0 : dtrk, dpar);   /* the SRC or CC page's name */
         tx = x + 9 - tw(n) / 2;
         TEXT(bmp, LABEL_FONT, tx, ly, -1, "%s", n);
         FILLRECT(bmp, tx - 1, ly - 1, tx + tw(n), ly + 5, -1);   /* the label, highlighted: a pixel clear on each side */
-        return;
     }
-    tx = x + 9 - tw(names4[dpar]) / 2;
-    TEXT(bmp, LABEL_FONT, tx, ly, -1, "%s", names4[dpar]);
-    FILLRECT(bmp, tx - 1, ly - 1, tx + tw(names4[dpar]), ly + 5, -1);   /* the label, highlighted: a pixel clear on each side */
 }
 
 /* the MIDI CC page's cell for an unassigned knob, 17 x 17 as the stock draws it: a dotted box with a cross */
@@ -1025,8 +1188,8 @@ static int knob_pos(int t, int p, int m)
     return x < 0 ? 0 : x > 127 ? 127 : x;
 }
 
-/* A knob on an SRC parameter the track's machine does not have (its machine changed since) is unassigned, the way a knob the
- * musician frees is: nothing to name or move. Run where the assignments are shown; the engine skips such a knob meanwhile. */
+/* A knob on an SRC parameter the track's machine does not have (its machine changed since), or on a CC slot turned off since,
+ * is unassigned, the way a knob the musician frees is: nothing to name or move. Run where the assignments are shown; the engine skips such a knob meanwhile. */
 static void drop_empty(unsigned char *kit)
 {
     int k;
@@ -1035,8 +1198,8 @@ static void drop_empty(unsigned char *kit)
     lid_refresh(kit);
     for (k = 0; k < NKNOB; k++) {
         u16 e = entry(kit, k);
-        if (dk == k + 1 || !E_PAR(e) || !srcempty(KTRK(e), E_PAR(e)))
-            continue;
+        if (dk == k + 1 || !E_PAR(e) || (!srcempty(KTRK(e), E_PAR(e)) && !(IS_CC(E_PAR(e)) && !CC_ON(kit, E_TRK(e), CC_SLOT(E_PAR(e))))))
+            continue;                        /* kept: not an SRC knob the machine lacks, nor a CC slot turned off */
         put_entry(kit, k, 0);
         live[k] = 0;
         show[k] = 0;
@@ -1062,34 +1225,22 @@ static void draw_play(void *bmp, unsigned char *kit)
             draw_draft(bmp, kit, x, ky, ly, k);
             continue;
         }
-        if (E_PAR(e) && E_PAR(e) <= DEST_LAST)
+        if (dest_ok(E_PAR(e)))
             KNOB_GFX(0, KNOB_ID, live[k] ? knob_pos(KTRK(e), E_PAR(e), macro[k]) << 8 : 0, 0, 0, bmp, x, ky);
         else {
             draw_off(bmp, x, ky);
         }
-        if (E_PAR(e) && E_PAR(e) <= DEST_LAST) {
-            char b[8], d[2];
-            int len = 0, tx, lab = 0;
-            if ((show[k] || (trig_down && trig_rep)) && live[k]) {   /* just turned, or TRIG held a moment: the value, as the MIDI CC page shows it */
-                len = value_text(b, 5, kit, KTRK(e), E_PAR(e), shown_word(kit, k));
-            } else {
-                const char *a = names4[E_PAR(e)];
-                lab = 1;
-                while (a[len] && len < 6) {
-                    b[len] = a[len];
-                    len++;
-                }
-                b[len] = 0;
-            }
-            d[0] = E_ALL(e) ? 'A' : (char)('1' + E_TRK(e));
-            d[1] = 0;
-            FILLRECT(bmp, x + 6, ky + 5, x + 12, ky + 11, 0);   /* room round the digit: the needle starts clear of it */
-            TEXT(bmp, FONT5, x + 8, ky + 6, -1, "%s", d);       /* the parameter's track, in the middle of the knob (its glyph is 3 px wide) */
-            tx = x + 9 - tw(b) / 2;                              /* centred on the knob by the font's own widths */
-            if (lab && src_label(bmp, kit, x, ly, e))   /* the machine's own name for the knob */
-                ;
+        if (dest_ok(E_PAR(e))) {
+            char b[8];
+            int tx;
+            if ((show[k] || (trig_down && trig_rep)) && live[k])   /* just turned, or TRIG held a moment: the value, as the MIDI CC page shows it */
+                value_text(b, 5, kit, KTRK(e), E_PAR(e), shown_word(kit, k));
             else
-                TEXT(bmp, LABEL_FONT, tx, ly, -1, "%s", b);
+                cpy(b, plabel(kit, KTRK(e), E_PAR(e)), 7);     /* the module's name, or the SRC or CC page's */
+            FILLRECT(bmp, trk_num(TGT(e)) > 9 && !E_ALL(e) ? x + 5 : x + 6, ky + 5, trk_num(TGT(e)) > 9 && !E_ALL(e) ? x + 13 : x + 12, ky + 11, 0);   /* room round the number: the needle starts clear of it */
+            track_mark(bmp, x, ky, TGT(e));                      /* the parameter's track, in the middle of the knob (its glyph is 3 px wide) */
+            tx = x + 9 - tw(b) / 2;                              /* centred on the knob by the font's own widths */
+            TEXT(bmp, LABEL_FONT, tx, ly, -1, "%s", b);
         } else {                                    /* no parameter: the MIDI CC page's unassigned knob, named by its letter */
             TEXT(bmp, LABEL_FONT, x + 8, ly, -1, "%s", knobname[k]);
         }
@@ -1132,8 +1283,10 @@ static void draw_edit(void *bmp, unsigned char *kit)
             if (E_ALL(e))
                 TEXT(bmp, FONT5, 14, y, -1, "ALL");
             else
-                TEXT(bmp, FONT5, 14, y, -1, "T%d", E_TRK(e) + 1);
-            {
+                TEXT(bmp, FONT5, 14, y, -1, "T%d", trk_num(TGT(e)));   /* MIDI tracks 9..16, as the trig keys label them */
+            if (IS_CC(p))
+                TEXT(bmp, FONT5, 34, y, -1, "CC.%s", cc_name(E_TRK(e), CC_SLOT(p)));   /* the CC page's name for the slot */
+            else {
                 char nb[12];
                 int nl;
                 lid_refresh(kit);
@@ -1143,7 +1296,7 @@ static void draw_edit(void *bmp, unsigned char *kit)
                     cpy(nb + 4, sn, 7);
                     nl = sn ? slen(nb + 4) : 0;
                 }
-                if (nl && !same(nb + 4, names4[p]))   /* the machine names it its own way */
+                if (nl && p <= DEST_LAST && !same(nb + 4, names4[p]))   /* the machine names it its own way */
                     TEXT(bmp, FONT5, 34, y, -1, "%s", nb);
                 else
                     TEXT(bmp, FONT5, 34, y, -1, "%s", p <= DEST_LAST ? dnames[p] : "--");
@@ -1211,7 +1364,11 @@ void digiperform_tick(void *ctrl)           /* the page's state each UI tick, an
         left_frame = 0;
         *((volatile char *)ctrl + 0x20) = 1;
     }
-    kstore_tick(&store, UI_KIT, KS_SLOT_PERF, KS_TRACKS, pmask);   /* a sound load keeps the pool */
+    if (kstore_tick(&store, UI_KIT, KS_SLOT_PERF, KS_TRACKS, pmask) == KS_RESTORED) {   /* a sound load keeps the pool */
+        u32 sr = lock();
+        img_sync(UI_KIT);
+        unlock(sr);
+    }
     if ((trig_pend || trig_down) && hold_t < 255)
         hold_t++;
     if (digiperform_open) {
@@ -1255,6 +1412,15 @@ void digiperform_tick(void *ctrl)           /* the page's state each UI tick, an
                     shadow[j] = entry(kp, j);
             }
         }
+        ccn_tick();                          /* the CC labels are read again this tick */
+        if (!editing) {                      /* a CC knob not picked up yet takes the stored value (the audio block leaves them alone) */
+            unsigned char *kc = UI_KIT;
+            for (k = 0; kc && k < NKNOB; k++) {
+                u16 e = entry(kc, k);
+                if (IS_CC(E_PAR(e)) && !live[k] && CC_ON(kc, E_TRK(e), CC_SLOT(E_PAR(e))))
+                    cc_take(kc, k, e);
+            }
+        }
         if (!encinit)
             enc_reset();
         if (++encdiv >= 3) {                 /* the firmware decays an accelerator ten times a second */
@@ -1288,7 +1454,11 @@ static int taken(unsigned char *kit, int k, int t, int p)
 {
     int j;
     lid_refresh(kit);
-    if (srcempty(t == 8 ? 0 : t, p))
+    if (IS_CC(p) != (t >= T_MIDI))
+        return 1;                            /* a CC slot only on a MIDI track, a sound's parameter only on an audio one */
+    if (IS_CC(p) && !CC_ON(kit, t - T_MIDI, CC_SLOT(p)))
+        return 1;                            /* a CC slot the MIDI track has not turned on */
+    if (!IS_CC(p) && srcempty(t == 8 ? 0 : t, p))
         return 1;                            /* a knob the track's machine does not have (all tracks: track 1's, as they follow it) */
     for (j = 0; j < NENT; j++) {
         u16 e = entry(kit, j);
@@ -1296,6 +1466,65 @@ static int taken(unsigned char *kit, int k, int t, int p)
             return 1;
     }
     return 0;
+}
+
+/* the first parameter target tgt has free for knob k, in the lists' order (SRC.TUNE on, or VAL1 on); 0: none */
+static int first_free(unsigned char *kit, int k, int tgt)
+{
+    int q, p;
+    if (tgt >= T_MIDI) {
+        for (q = 0; q < 8; q++)
+            if (!taken(kit, k, tgt, CC_FIRST + q))
+                return CC_FIRST + q;
+        return 0;
+    }
+    for (q = 0; q < DEST_LAST; q++) {
+        p = OPAR((OPOS(DEFAULT_PARAM) + q) % DEST_LAST);
+        if (!taken(kit, k, tgt, p))
+            return p;
+    }
+    return 0;
+}
+/* the entry for target tgt (0..7, 8 all, 9..16 a MIDI track) and parameter p */
+static u16 tgt_entry(int tgt, int p, int neg)
+{
+    return tgt == 8 ? (u16)(0x2000 | ENTRY(0, p, neg)) : ENTRY(tgt >= T_MIDI ? tgt - T_MIDI : tgt, p, neg);
+}
+/* n steps from parameter p through the ones target tgt has free for knob k: the sound's in the lists' order, or the CC slots */
+static int step_param(unsigned char *kit, int k, int tgt, int p, int n)
+{
+    int cc = tgt >= T_MIDI, len = cc ? 8 : DEST_LAST;
+    int v = cc ? CC_SLOT(p) : OPOS(p);
+    for (; n; n += n > 0 ? -1 : 1) {
+        int w = v + (n > 0 ? 1 : -1);
+        while (w >= 0 && w < len && taken(kit, k, tgt, cc ? CC_FIRST + w : OPAR(w)))
+            w += n > 0 ? 1 : -1;
+        if (w < 0 || w >= len)
+            break;
+        v = w;
+    }
+    return cc ? CC_FIRST + v : OPAR(v);
+}
+/* n steps from target v through the targets (1..8, ALL, M1..M8) that have parameter p free for knob k, or for a target of the
+ * other kind (audio or MIDI) any free parameter; *pp becomes the parameter the new target takes */
+static int step_target(unsigned char *kit, int k, int v, int *pp, int n)
+{
+    int p = *pp;
+    for (; n; n += n > 0 ? -1 : 1) {
+        int w = v + (n > 0 ? 1 : -1), q = 0;
+        while (w >= 0 && w <= T_LAST) {
+            q = IS_CC(p) == (w >= T_MIDI) && !taken(kit, k, w, p) ? p : first_free(kit, k, w);
+            if (q)
+                break;
+            w += n > 0 ? 1 : -1;
+        }
+        if (w < 0 || w > T_LAST)
+            break;
+        v = w;
+        p = q;
+    }
+    *pp = p;
+    return v;
 }
 
 /* the row's assignment made: the first parameter nobody has, from SRC.TUNE on track 1 */
@@ -1315,45 +1544,39 @@ static void make_entry(unsigned char *kit, int k)
 /* a click in the draft: the track is set, then the parameter, and the assignment is made */
 static void draft_click(unsigned char *kit)
 {
-    int k = dk - 1, q, p;
+    int k = dk - 1;
     if (dstage == 0) {
+        dpar = first_free(kit, k, dtrk);     /* the first parameter this track has free, from SRC.TUNE on, or its first CC slot turned on */
+        if (!dpar)
+            return;                          /* nothing free here: the track stays to be chosen */
         dstage = 1;
-        dpar = DEFAULT_PARAM;
-        for (q = 0; q < DEST_LAST; q++) {    /* the first parameter this track has free, from SRC.TUNE on */
-            p = OPAR((OPOS(DEFAULT_PARAM) + q) % DEST_LAST);
-            if (!taken(kit, k, dtrk, p)) {
-                dpar = p;
-                break;
-            }
-        }
         selacc[1] = 0;
     } else {
-        put_entry(kit, k, dtrk == 8 ? (u16)(0x2000 | ENTRY(0, dpar, 0)) : ENTRY(dtrk, dpar, 0));
-        capmask |= (unsigned char)(1 << k);  /* the knob takes the parameter's value */
+        put_entry(kit, k, tgt_entry(dtrk, dpar, 0));
+        capmask |= (unsigned char)(1 << k);  /* the knob takes the parameter's value (a CC knob: the tick picks it up) */
         show[k] = 0;
         dk = 0;
     }
 }
 
-/* a turn of the draft's knob: n steps through the tracks (1..8, all) or through the free parameters */
+/* a turn of the draft's knob: n steps through the tracks (1..8, all, then the MIDI tracks with a CC slot free) or through the free parameters */
 static void draft_turn(unsigned char *kit, int n)
 {
-    int k = dk - 1, v;
+    int k = dk - 1;
     if (dstage == 0) {
-        v = dtrk + n;
-        dtrk = v < 0 ? 0 : v > 8 ? 8 : v;
+        int v = dtrk;
+        for (; n; n += n > 0 ? -1 : 1) {
+            int w = v + (n > 0 ? 1 : -1);
+            while (w >= T_MIDI && w <= T_LAST && !first_free(kit, k, w))
+                w += n > 0 ? 1 : -1;         /* a MIDI track with no CC slot turned on, or all of them on knobs already */
+            if (w < 0 || w > T_LAST)
+                break;
+            v = w;
+        }
+        dtrk = v;
         return;
     }
-    v = OPOS(dpar);
-    for (; n; n += n > 0 ? -1 : 1) {
-        int w = v + (n > 0 ? 1 : -1);
-        while (w >= 0 && w < DEST_LAST && taken(kit, k, dtrk, OPAR(w)))
-            w += n > 0 ? 1 : -1;
-        if (w < 0 || w >= DEST_LAST)
-            break;
-        v = w;
-    }
-    dpar = OPAR(v);
+    dpar = step_param(kit, k, dtrk, dpar, n);
 }
 
 /* a tap of TRIG on the TRIG page: the Perform page opens over it */
@@ -1513,8 +1736,9 @@ int digiperform_key(void *brain, void *ev)
                     macro[k] = rest[k];
                     fine[k] = 0;
                     show[k] = 0;
+                    cc_letgo(k);             /* a CC knob sends the stored value again */
                 }
-                moving_update();
+            moving_update();
         } else if (editing && from_trig) {
             editing = 0;
             capture = 1;                     /* back to PLAY: the knobs pick up again */
@@ -1641,6 +1865,8 @@ int digiperform_enc(void *brain, void *ev)
                     macro[sel] = (unsigned char)v;
                     fine[sel] = (short)(x - (v - rest[sel]) * 256);
                     moving_update();         /* the block plays the turn at once */
+                    if (IS_CC(p))
+                        cc_out(sel);         /* a CC knob: the moved value goes out now */
                 }
                 if (!swallowed)
                     show[sel] = 36;          /* the value shows for about a second (the tick is 30 Hz) */
@@ -1652,15 +1878,23 @@ int digiperform_enc(void *brain, void *ev)
                     u16 se = entry(kit, sel);
                     if (src_name(kit, t, p, 1) && *src_name(kit, t, p, 1))
                         nm = src_name(kit, t, p, 1);   /* the SRC page's own long name for the track's machine */
+                    if (IS_CC(p) && !same(cc_name(t, CC_SLOT(p)), (const char *)((u32 (*)(int, int))0x4000fe8a)(0, sid)))
+                        nm = cc_name(t, CC_SLOT(p));   /* a slot named on the CC page: its name rather than "CC1 Value" */
                     value_text(vb, 11, kit, t, p, shown_word(kit, sel));
                     if (E_ALL(se)) {
                         hb[q++] = 'A'; hb[q++] = 'l'; hb[q++] = 'l';
+                    } else if (IS_CC(p)) {
+                        int tn = 9 + E_TRK(se);   /* Trk9..Trk16, as the trig keys label the MIDI tracks */
+                        hb[q++] = 'T'; hb[q++] = 'r'; hb[q++] = 'k';
+                        if (tn > 9)
+                            hb[q++] = '1';
+                        hb[q++] = (char)('0' + tn % 10);
                     } else {
                         hb[q++] = 'T'; hb[q++] = 'r'; hb[q++] = 'k'; hb[q++] = (char)('1' + E_TRK(se));
                     }
                     hb[q++] = ' ';
                     {                        /* a shared name gets its page's prefix; if the message would be wider than the header's bar the prefix goes, and then the name gives way to the label under the knob */
-                        const char *lb = src_name(kit, t, p, 0) && *src_name(kit, t, p, 0) ? src_name(kit, t, p, 0) : names4[p];
+                        const char *lb = plabel(kit, t, p);
                         int pl = 0, rw;
                         while (lb[pl] && lb[pl] != '.')
                             pl++;
@@ -1699,31 +1933,17 @@ int digiperform_enc(void *brain, void *ev)
     if (!E_PAR(e))
         return 1;                            /* an empty row: YES makes it first */
     switch (id) {
-    case 1:                                  /* track: the ones that have this parameter free */
-        n = sel_steps(0, delta);
-        v = TGT(e);
-        for (; n; n += n > 0 ? -1 : 1) {
-            int w = v + (n > 0 ? 1 : -1);
-            while (w >= 0 && w <= 8 && taken(kit, cursor, w, E_PAR(e)))
-                w += n > 0 ? 1 : -1;
-            if (w < 0 || w > 8)
-                break;
-            v = w;
+    case 1:                                  /* track: the ones that have this parameter free, 1..8, ALL, then M1..M8 (a CC slot) */
+        {
+            int p = E_PAR(e);
+            n = sel_steps(0, delta);
+            v = step_target(kit, cursor, TGT(e), &p, n);
+            e = tgt_entry(v, p, E_NEG(e));
         }
-        e = (u16)((e & ~0x3c00) | (v == 8 ? 0x2000 : v << 10));   /* the tracks 1..8, then ALL */
         break;
-    case 2:                                  /* parameter: the ones this track has free */
+    case 2:                                  /* parameter: the ones this track has free (a MIDI track: its CC slots turned on) */
         n = sel_steps(1, delta);
-        v = OPOS(E_PAR(e));
-        for (; n; n += n > 0 ? -1 : 1) {
-            int w = v + (n > 0 ? 1 : -1);
-            while (w >= 0 && w < DEST_LAST && taken(kit, cursor, TGT(e), OPAR(w)))
-                w += n > 0 ? 1 : -1;
-            if (w < 0 || w >= DEST_LAST)
-                break;
-            v = w;
-        }
-        e = (u16)((e & ~0x3f0) | (OPAR(v) << 4));
+        e = tgt_entry(TGT(e), step_param(kit, cursor, TGT(e), E_PAR(e), n), E_NEG(e));
         break;
     case 3:                                  /* direction: right +, left - */
         e = (u16)((e & ~8) | (delta < 0 ? 8 : 0));
