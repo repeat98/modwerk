@@ -29,6 +29,19 @@ Everything below was observed in rytm-emu on the named build. Nothing has run on
 - A core-only image, same stock and core, for comparison.
 - Emulator: rytm-emu `c5732f0`, headless `dtboot`, JIT on. One generated sample, RAMP, 23,777 frames (odd, so STA and END fall on no round multiple), on BD with LOP ON. Audio is dtboot's `--wav`. Voice words are read with `DTBOOT_PEEK`: step at rec + 12, position at rec + 4, effective FIN at 0x8000f7cc. A click means a sample-to-sample step over 40, or six times the median, on a ramp whose normal step is below 2; each run also flags the trig's own attack, which is not counted.
 
+## 0.5.0: one row of values over a taller waveform (2026-11-12)
+
+rytm-emu (`c5732f0`, RAMP on BD, LOP ON, RATE +63 by CC 25); emulator results are not hardware evidence. Nothing of 0.5.0 has run on a unit yet.
+
+- Source (0.5.0-experimental): fingerprint `88eb9a55…46f6` (`evidence.sourceSha256`). Build SV02 (vendored core-ar2 0.7 + this source): `.syx` `c2c24d116312b5b6e4dc795f3a41025d1a9f025c40935770075377f16ea15685`. Build SV1P (SV01's source, the same layout code with a saved return slot, + Ping Pong Loop as on main; test image only): `.syx` `f29b7f04…8783`.
+- Idle: one row reads (0), +63, 0, ON, 100 (TUN, RATE, BR, LOP, LEV) above a waveform 37 pixels tall (rows 10..46 from the bottom; stock 16..47); no STA, END or SMP text.
+- Turning each knob: the header names it (TUNE, RATE, START, LOOP) and the row shows the new value in its place: TUN +0.01 a cent a step, RATE +45 and +29, LOP ON to OFF. START moved its line. D opened stock's sample list over the right half; OFF + YES gave a flat line under the same row.
+- BD playing with LOP ON, 16 frames 70 M apart: in rows 9..11 from the bottom and above the waveform, the only lit pixel was the playhead's own, at its current column; no trail.
+- Grid record, T1 held: TUN locked to +0.24 and RATE to +61, each boxed in the row with the module's text (the cents show); neighbouring boxes overlap by 2 columns, which XOR to a 2-pixel gap between them. A STA turn with T1 held showed START in the header and no box (no STA place in the row, as designed). 0.4.0 (SR43) compared with the same presses: the same boxes on its eight places.
+- With Ping Pong Loop (SV1P, sample loaded by replaying the setup's presses): LOP turned up reads PIPO in the row; its S and E marks sit at the bottom and top of the taller waveform.
+- Independent code review: stack and argument layout of the gate against stock's knob loop, registers, mapping, clipping (text clamped, the 27-wide lock box inside 0..127 at the row's ends) and the widget's area checked against stock 1.74; nothing serious. Applied: the gate returns with a jmp to 0x400d20f6 instead of a saved return. Noted: two neighbouring lock boxes overlap (above); in stock's bare lock-editor routine a knob's value text is stock's own, not a module's (not seen in the captures above).
+- Not run: a unit, a KIT menu or other full-screen menu over the page, scene and performance modes on the SMPL page, a sound with a module's page added behind SMPL (the layout then still applies to the waveform page).
+
 ## 0.4.0: the SMPL key shows the waveform only (2026-11-11)
 
 rytm-emu (`c5732f0`) unless it says unit; emulator results are not hardware evidence.

@@ -40,7 +40,8 @@
   "claims": [
     "param:FIN (id 40) is RATE: its names read RATE and its default is +63",
     "param:TUN (id 39) turn and value text: fine in cents",
-    "screen:SAMPLE knob page (the SMPL key shows SMPL WAVEFORM only)"
+    "screen:SAMPLE knob page (the SMPL key shows SMPL WAVEFORM only)",
+    "screen:SMPL WAVEFORM layout: one value row and a taller waveform"
   ],
   "requires": [],
   "derive": null,
@@ -49,6 +50,7 @@
       "defsym": {
         "sample_rate_stock_frames": "0x4011bf44",
         "sample_rate_add_resume": "0x400a88f2",
+        "sample_rate_label_resume": "0x400d20f6",
         "sample_rate_vt_sample": "0x401e3420"
       },
       "cflags": [
@@ -87,6 +89,13 @@
           "stockSha256": "2562fc04b5ba15cc5bf8909a85a59aa833d1e7e54127597742c740853b77bbc4",
           "op": "jmp",
           "target": "sample_rate_add_gate"
+        },
+        {
+          "addr": "0x400d20ee",
+          "len": 8,
+          "stockSha256": "23a165255925d4083c60ac1e20698da6cc67d4ef53254968ee15680ac74f63bd",
+          "op": "jmp",
+          "target": "sample_rate_label_gate"
         },
         {
           "addr": "0x401c03c8",

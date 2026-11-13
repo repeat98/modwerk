@@ -225,12 +225,9 @@ static char *sample_view(void)          // the SAMPLE view in the view stack, or
     return 0;
 }
 
-static void waveform_page(void)
+static void waveform_page(char *view)
 {
-    char *view = sample_view();
     int *pages;
-    if (!view)
-        return;
     pages = *(int **)(view + VIEW_PAGES);
     if (*(int **)(view + VIEW_PAGES + 4) != pages + 2 || pages[0] != PAGE_KNOBS || pages[1] != PAGE_WAVE)
         return;
@@ -239,9 +236,72 @@ static void waveform_page(void)
     VIEW_INVALIDATE(view);
 }
 
+// SMPL WAVEFORM's layout: one row of values over a taller waveform. Stock draws
+// the eight knobs' names in two rows, above and below a 32-pixel waveform, and
+// a knob's value in place of its name while it turns. Here the row holds TUN,
+// RATE, BR, LOP and LEV, always as values (LOP's text is OFF, ON, or PIPO with
+// Ping Pong Loop), with stock's own routine, so the font, centring, a held
+// trig's lock box and every module's value text stay stock's. STA and END show
+// as their lines, SMP as its list on a turn of D: no text. The header names a
+// knob while it turns, as stock.
+//
+// The waveform widget (view + 400) keeps its area as x0 +28, y0 +32, width +36
+// and height +40, read at every draw (y from the bottom of the screen); stock
+// sets 2, 16, 123, 32. Rows 10..46 from the bottom, under the row and above
+// the status bar, give it 37.
+#define VIEW_WAVE 400
+#define WAVE_Y0 32
+#define WAVE_H 40
+#define STOCK_Y0 16
+#define STOCK_H 32
+#define TALL_Y0 10
+#define TALL_H 37
+#define ROW_Y 61            // stock's top row: the text's bottom 13 below
+#define KNOB_X0 16          // stock's knob centres: 16 + 32 a column, rows 61 and 24
+#define KNOB_DX 32
+#define LOWER_Y 40          // below this, the lower row
+
+typedef void (*knob_text_t)(char *view, void *bmp, int x, int y, int id, int value,
+                            void *entry, int lock, int turning, int bare);
+
+// Knob A..H to its place in the row, or -1 for none (SMP, STA, END)
+static const signed char row_slot[8] = {0, 1, 2, -1, -1, -1, 3, 4};
+// The row's centres, 25.25 apart: a lock box (27 wide) at either end stays on
+// the screen, as stock's do
+static const unsigned char row_x[5] = {13, 38, 64, 89, 114};
+
+// From the gate in audio.s, once a knob a draw: stock's routine (draw) and its
+// arguments. turning set shows the value; with a trig held stock sets lock.
+void sample_rate_label(knob_text_t draw, char *view, void *bmp, int x, int y, int id, int value,
+                       void *entry, int lock, int turning, int bare)
+{
+    int col = (x - KNOB_X0) / KNOB_DX, slot;
+    if (x < KNOB_X0 || col > 3 || x != KNOB_X0 + col * KNOB_DX) {
+        draw(view, bmp, x, y, id, value, entry, lock, turning, bare);   // not stock's grid: as stock
+        return;
+    }
+    slot = row_slot[col + (y < LOWER_Y ? 4 : 0)];
+    if (slot < 0)
+        return;
+    draw(view, bmp, row_x[slot], ROW_Y, id, value, entry, lock, 1, bare);
+}
+
+// The taller waveform, once: only from stock's own area, so a module that moves
+// it keeps its own
+static void tall_waveform(char *view)
+{
+    int *y0 = (int *)(view + VIEW_WAVE + WAVE_Y0), *h = (int *)(view + VIEW_WAVE + WAVE_H);
+    if (*y0 != STOCK_Y0 || *h != STOCK_H)
+        return;
+    *y0 = TALL_Y0;
+    *h = TALL_H;
+    VIEW_INVALIDATE(view);
+}
+
 void sample_rate_tick(void *ctrl)
 {
     volatile uint32_t *rec = (volatile uint32_t *)(REC_TUN + REC_STEP);
+    char *view;
     (void)ctrl;
     fine_turn = 0;
     // A plain step is 1 unit (a cent, at the add), a pressed one a whole semitone.
@@ -250,5 +310,9 @@ void sample_rate_tick(void *ctrl)
     rec[1] = 1;
     rec[2] = 0;
     rec[3] = (uint32_t)&fine_profile;
-    waveform_page();
+    view = sample_view();
+    if (view) {
+        waveform_page(view);
+        tall_waveform(view);
+    }
 }
