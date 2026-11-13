@@ -297,9 +297,11 @@ class BaseUsbFunctions(unittest.TestCase):
                     switched = functions.audio_switch(source, audio)
                     twenty = functions.AUDIO_LAYOUTS[audio] == 0
                     self.assertIn('    moveq   #%d,%%d0 ' % (7 if twenty else 5), switched)
-                    # Only insertions: every authored line is still there, in order.
+                    # Only insertions, and the three calls of the packet copy: every other authored line is there, in order.
                     kept = iter(switched.splitlines())
-                    self.assertTrue(all(line in kept for line in source.splitlines()))
+                    self.assertEqual(source.count('    bsr     audio_copy80'), 3)
+                    self.assertTrue(all(line in kept for line in
+                                        source.replace('    bsr     audio_copy80', '    bsr     mw_copy80').splitlines()))
                     path, output = root / 'audio.s', root / 'audio.o'
                     path.write_text(functions.audio_storage_source(switched))
                     subprocess.run(['m68k-elf-as', '-mcpu=54455', '-I', str(root), '-o', str(output), str(path)], check=True)
@@ -308,7 +310,7 @@ class BaseUsbFunctions(unittest.TestCase):
                     choice = {name for name in undefined if name.startswith('modwerk_usb_audio')}
                     self.assertEqual(choice, {'modwerk_usb_audio_caps', 'modwerk_usb_audio_off'} |
                                      ({'modwerk_usb_audio_mix'} if twenty else set()))
-                    for broken in (switched, source.replace('.Lep3:', '.Lep4:'),
+                    for broken in (switched, source.replace('\n.Lcopied:\n', '\n.Lcopies:\n'),
                                    source.replace('    bnes    .Lproduce\n', '    bne     .Lproduce\n', 1),
                                    source.replace('2:  movel   %a0@,%d2', '3:  movel   %a0@,%d2')):
                         with self.assertRaises(ValueError):

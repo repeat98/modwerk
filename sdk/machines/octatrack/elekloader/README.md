@@ -353,18 +353,58 @@ admit the USB Audio catalogue module to USB sync. POST still needs its own
 signal/ramp/scene, EMAC preservation, timing and physical qualification.
 
 PROJ > MODWERK > USB AUDIO (`status.c`, issue 1512) lets a player choose on the
-unit what the installed layout sends while a host has the stream open: ALL
-CHANNELS, MAIN + CUE ONLY (the twenty-channel layout at high speed: the
-sixteen track words of a frame are cleared, not copied) or OFF (the frame hook
-takes its no-host path and EP3 goes down; the host's alt 1 request is kept, so
-another choice resumes the stream). `audio_switch` in `base_usb_functions.py`
-inserts the reads at four guarded seams of the imported producer, which also
-writes the choices its layout offers; a base without USB Audio offers none.
-The descriptors and packet sizes never change, so a host keeps the channel
-count the base was built with and nothing re-enumerates. The choice is kept in
-battery RAM (`battery-ram.json`). Host tests cover the page and that every
-layout assembles; the producer's behaviour and the CPU it frees are not yet
-measured on a unit.
+unit what the installed layout sends while a host has the stream open:
+
+- ALL CHANNELS, as built.
+- MAIN + CUE ONLY (the twenty-channel layout at high speed): a frame's sixteen
+  track words are neither written to the ring nor copied into the packets, only
+  MAIN and CUE are. The track bytes of each packet buffer are zeroed once. When
+  the choice ends the builder keeps the short copy for 96 more packets, by
+  which time the producer has rewritten the whole ring.
+- OFF: silence. The frame hook takes its no-host path and only counts the
+  frames, so the packet clock and its servo run on; the builder sends packets
+  from zeroed buffers without a copy. A host sees an ordinary silent stream,
+  whenever it opens it, and another choice brings the sound back.
+
+`audio_switch` in `base_usb_functions.py` inserts this at guarded seams of the
+imported producer, which also writes the choices its layout offers; a base
+without USB Audio offers none. The descriptors and packet sizes never change,
+so a host keeps the channel count the base was built with and nothing
+re-enumerates. The choice is kept in battery RAM (`battery-ram.json`).
+
+Measured on the owner's MKII (13 November 2026, dev twins of this branch, a
+pattern on eight tracks, Windows 11 recording all twenty channels over WASAPI;
+means of five 4 s windows, steady to 0.2):
+
+| | Frame interrupt, playing | CPU meter, playing | Frame interrupt, stopped | CPU meter, stopped |
+| --- | ---: | ---: | ---: | ---: |
+| No host stream | 38.6 % | 66 % | 25.5 % | 44 % |
+| ALL CHANNELS | 65.2 % | 79 % | 38.9 % | 57 % |
+| MAIN + CUE ONLY | 52.3 % | 73 % | 29.8 % | 50 % |
+| OFF | 43.6 % | 67 % | 27.4 % | 47 % |
+
+What a stream costs is its memory traffic, through the 80 KB ring and the
+controller's uncached packet buffers, not the producer's instructions: clearing
+the track words in the ring instead of copying them saved under a point,
+leaving them out of the packet copy as well 4, and not writing them at all 13.
+With a stream open and a pattern playing, the frame interrupt's longest frame
+is a whole frame (101 %) with ALL CHANNELS.
+
+Two other forms of OFF were tried on the unit and dropped. Taking the endpoint
+down under an open stream: Windows never collected a packet again after it
+came back, until the stream was reopened. Queuing nothing, so the host gets
+empty packets (2 points cheaper than silence while stopped, 5 while
+playing): Windows shortened the gap in the recording, and skipped 42 to 71
+frames within 20 ms of about half of the resumes, while the unit's own counters
+showed an unbroken stream. With silence, 16 resumes in two recordings matched
+the following bar from their first frame and the recordings kept their length.
+
+Also seen on the unit: the page and its keys, the kept choice restored after a
+restart, a base of another layout offering ALL CHANNELS and OFF only, a stream
+opened while OFF (silence at once), 60 changes in 87 s while recording (no
+stall, crash, overrun or underrun; no fragment or splice in the recording).
+Not tested: macOS and Linux hosts, full speed, the five other layouts with a
+stream open (Windows could not open the unit after a layout change), POST.
 
 For offline development, raw `build_core.py --usb-audio-profiles` source-links
 all six outputs plus audio-off in one base. It requires `--dsp-loader`,

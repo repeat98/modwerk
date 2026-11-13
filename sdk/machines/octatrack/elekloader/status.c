@@ -259,12 +259,14 @@ void modwerk_test_menu(int unused)
 #define MISSING_ROWS 2u /* the missing page: two lines a module, its name and where the project names it */
 /* USB AUDIO (issue 1512, 13 November 2026: a player asked to change what the unit sends without a new base, to
  * free the CPU while nothing is recorded). What the installed layout's producer does while a host has the stream
- * open: ALL as built; MAIN + CUE ONLY leaves the eight tracks' channels silent (the twenty-channel layout at high
- * speed, where copying them is most of the producer's work); OFF produces nothing and takes the endpoint down, the
- * host's request kept, so another choice brings the stream back by itself. The channels a host sees never change: the
- * layout comes with the base. usbaudio.s reads the two bytes every frame and writes what its layout offers, a bit a
- * choice (base_usb_functions.py's audio_switch); a base without USB Audio writes nothing, and the page says so. The
- * choice is kept in battery RAM. */
+ * open: ALL as built; MAIN + CUE ONLY leaves the eight tracks' channels silent and out of the ring and the packets
+ * (the twenty-channel layout at high speed); OFF sends silence, nothing produced or copied, in packets of zeros, so
+ * a host sees an ordinary stream and another choice brings the sound back by itself. The channels a host sees never
+ * change: the layout comes with the base. What a stream costs is its memory traffic: on the owner's MKII with a
+ * pattern playing and Windows recording, the frame interrupt took 65 % of the CPU with ALL, 52 % with MAIN + CUE
+ * ONLY, 44 % with OFF and 39 % with no stream (README.md). usbaudio.s reads the two bytes every frame and writes
+ * what its layout offers, a bit a choice (base_usb_functions.py's audio_switch); a base without USB Audio writes
+ * nothing, and the page says so. The choice is kept in battery RAM. */
 enum { USB_ALL, USB_MIX, USB_OFF, USB_MODES };
 volatile uint8_t modwerk_usb_audio_off, modwerk_usb_audio_mix, modwerk_usb_audio_caps;
 struct usb_choice { uint32_t magic, mode; };

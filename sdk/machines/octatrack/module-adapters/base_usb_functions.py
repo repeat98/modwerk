@@ -158,10 +158,24 @@ def packet_readiness(text):
 def audio_switch(text, key):
     """The player's choice on the unit (status.c, PROJ > MODWERK > USB AUDIO), read by the producer every frame.
 
-    OFF: the frame hook takes its no-host path and the endpoint follows a request of alt 0, while the host's own
-    request stays as it was, so the stream comes back when the player chooses again. MAIN + CUE ONLY (the
-    twenty-channel layout, at high speed: full speed sends the tracks' sum): each frame's sixteen track words
-    are cleared instead of copied. The hook also writes which choices its layout offers (bit 0 all, 1 MAIN + CUE
+    OFF: silence. The frame hook takes its no-host path, writes nothing to the ring and only counts the block's
+    sixteen frames, so the packet clock and its servo run on; the builder copies nothing and sends each packet
+    from a buffer zeroed once (the first packet each of the NSLOT buffers carries after the choice). A host sees
+    an ordinary stream of silence, whenever it opens it. When the player chooses again the first produced block
+    zeroes the cushion the reader is in, as at any start, so nothing from before OFF is sent. Two other ways
+    were tried on the owner's MKII with Windows 11 (13 November 2026): with the endpoint taken down under an
+    open stream no packet was collected again after it came back, and with empty packets the recording skipped
+    42 to 71 frames shortly after about half of the resumes, the unit's own counters unbroken. MAIN + CUE ONLY (the
+    twenty-channel layout, at high speed: full speed sends the tracks' sum): the producer leaves each frame's
+    sixteen track words in the ring as they were, and the packet builder copies only the frame's last sixteen
+    bytes (MAIN and CUE) into the packet. What a stream costs is its memory traffic, through the 80 KB ring and
+    the controller's uncached buffers (owner's MKII, 13 November 2026, the frame interrupt's share while
+    playing: all channels 65.4 %, track words cleared in the ring and copied 64.1 %, cleared and not copied
+    61.5 %, neither 55.6 %, no stream 38.6 %). The track bytes of a packet buffer are zeroed once, in the first
+    packet each of the NSLOT buffers carries after the choice. When the choice ends the builder keeps its short
+    copy for MW_MIX_HOLD more packets, over a thousand frames: by then the producer has rewritten every ring
+    slot, so no track word from before or during the choice is ever sent. A packet copied whole, or a
+    full-speed one, starts both counts again. The hook also writes which choices its layout offers (bit 0 all, 1 MAIN + CUE
     only, 2 off). The descriptors, the packet sizes and the import stay as they are.
     """
     if key not in AUDIO_LAYOUTS or 'modwerk_usb_audio' in text or '.Lmw_' in text:
@@ -169,37 +183,128 @@ def audio_switch(text, key):
     wanted = ('    tstb    usbaudio_alt\n    bnes    .Lproduce\n'
               "    tstb    aud_force               | the harness's switch (usb_align): produce\n"
               '    bnes    .Lproduce               | with no host and EP3 left alone\n')
-    endpoint = '.Lep3:\n    mvzb    usbaudio_alt,%d0\n'
     tracks = '    moveq   #RB_TRACKS-1,%d7\n2:  movel   %a0@,%d2                | track L\n'
     after = ('    lea     %a0@(128),%a0           | next track, same frame\n    subql   #1,%d7\n    bpl     2b\n'
              '.if USB_LAYOUT == LAYOUT_TRACKS_MAIN_CUE\n')
-    if any(text.count(seam) != 1 for seam in (wanted, endpoint, tracks, after)):
+    buffer = '    moveal  #(aud_bufs+UNCACHED),%a3\n    addal   %d0,%a3\n    moveal  %a3,%a1\n'
+    copy, helpers = '    bsr     audio_copy80', '| Copy d0 (>= 1) 8-byte stereo-sum frames from %a2 to %a1, both advanced.\naudio_copy8:\n'
+    if any(text.count(seam) != 1 for seam in (wanted, tracks, after, buffer, helpers)) or text.count(copy) != 3 or \
+            text.count('\n.Lcopied:\n') != 1 or text.count('    movel   %d4,usbaudio_lastn\n') != 1 or \
+            text.index('    movel   %d4,usbaudio_lastn\n') > text.index(buffer):
         raise ValueError('The authored audio producer changed; review the on-device switch.')
     caps = 7 if AUDIO_LAYOUTS[key] == 0 else 5
     text = text.replace(wanted, """    moveq   #%d,%%d0                | what this layout offers (status.c)
     moveb   %%d0,modwerk_usb_audio_caps
-    tstb    modwerk_usb_audio_off   | the player's OFF: as with no host
-    bnes    .Lmw_idle
+    tstb    modwerk_usb_audio_off   | the player's OFF: as with no host, the
+    beqs    .Lmw_on                 | block's frames counted for the packet clock
+    addql   #8,aud_produced
+    addql   #8,aud_produced
+    bras    .Lmw_idle
+.Lmw_on:
 """ % caps + wanted + '.Lmw_idle:\n')
-    text = text.replace(endpoint, endpoint + """    tstb    modwerk_usb_audio_off   | OFF: the endpoint goes down, the request stays
-    beqs    .Lmw_wanted
-    moveq   #0,%d0
-.Lmw_wanted:
-""")
     text = text.replace(tracks, """.if USB_LAYOUT == LAYOUT_TRACKS_MAIN_CUE
     tstb    modwerk_usb_audio_mix   | MAIN + CUE ONLY: silent track channels
     beqs    .Lmw_tracks
     movel   %a1,%d0
     beqs    .Lmw_tracks             | full speed sends the tracks' sum: copy them
-    .rept 16
-    clrl    %a3@+
-    .endr
+    lea     %a3@(64),%a3            | the track words stay as they were: the builder does not send them
     bra     .Lmw_tracks_done
 .Lmw_tracks:
 .endif
 """ + tracks)
-    return text.replace(after, after.replace('.if USB_LAYOUT', '.Lmw_tracks_done:\n.endif\n.if USB_LAYOUT', 1).replace(
+    text = text.replace(after, after.replace('.if USB_LAYOUT', '.Lmw_tracks_done:\n.endif\n.if USB_LAYOUT', 1).replace(
         '    bpl     2b\n', '    bpl     2b\n.if USB_LAYOUT == LAYOUT_TRACKS_MAIN_CUE\n', 1))
+    text = text.replace(buffer, buffer + """    tstb    modwerk_usb_audio_off   | OFF: a packet of silence, nothing copied
+    beqs    .Lmw_send
+    bsr     mw_off_packet
+    bra     .Lcopied
+.Lmw_send:
+    clrl    mw_off_clean
+.if USB_LAYOUT == LAYOUT_TRACKS_MAIN_CUE
+    bsr     mw_mix_packet           | MAIN + CUE ONLY: this buffer's track bytes are zero
+.endif
+""")
+    text = text.replace(copy, '    bsr     mw_copy80')
+    return text.replace(helpers, """| OFF (Modwerk, base_usb_functions.py). Before a packet's copy, %a3 its buffer: zero the whole buffer of the first
+| packet each of the NSLOT buffers carries after the choice; the builder then skips the copy. Any packet that is
+| copied starts the count again. Uses d0-d1/a2, which the builder loads after this or no longer needs.
+mw_off_packet:
+    movel   mw_off_clean,%d0
+    moveq   #NSLOT,%d1
+    cmpl    %d1,%d0
+    bccs    9f                      | every buffer is zero
+    addql   #1,%d0
+    movel   %d0,mw_off_clean
+    moveal  %a3,%a2
+    movel   #PKT_BUF/4-1,%d1
+7:  clrl    %a2@+
+    subql   #1,%d1
+    bpls    7b
+9:  rts
+    .bss
+    .balign 4
+mw_off_clean: .space 4              | packets since OFF whose buffer was zeroed
+    .text
+.if USB_LAYOUT == LAYOUT_TRACKS_MAIN_CUE
+| MAIN + CUE ONLY (Modwerk, base_usb_functions.py). Before a packet is copied, %a3 its buffer: count the packets
+| since the choice, and zero the track bytes of the first each of the NSLOT buffers carries (every frame a packet
+| can hold). Any other packet starts the count again. Uses d0-d1/a2, which the builder loads after this.
+mw_mix_packet:
+    tstb    aud_hs
+    beqs    8f                      | full speed: the sum's packets, copied whole
+    tstb    modwerk_usb_audio_mix
+    beqs    5f
+    moveq   #MW_MIX_HOLD,%d0        | chosen: the short copy, and for this many packets after
+    movel   %d0,mw_mix_hold
+    bras    6f
+5:  movel   mw_mix_hold,%d0
+    beqs    8f                      | not chosen, and the ring is the producer's again
+    subql   #1,%d0
+    movel   %d0,mw_mix_hold
+6:  moveq   #1,%d0
+    moveb   %d0,mw_mix_short
+    movel   mw_mix_clean,%d0
+    moveq   #NSLOT,%d1
+    cmpl    %d1,%d0
+    bccs    9f                      | every buffer's track bytes are zero
+    addql   #1,%d0
+    movel   %d0,mw_mix_clean
+    moveal  %a3,%a2
+    moveq   #PKT_MAX_HS/80-1,%d1
+7:  .rept 16
+    clrl    %a2@+
+    .endr
+    lea     %a2@(16),%a2
+    subql   #1,%d1
+    bpls    7b
+9:  rts
+8:  clrl    mw_mix_clean
+    clrl    mw_mix_hold
+    clrb    mw_mix_short
+    rts
+| audio_copy80's call: a short packet (mw_mix_packet) takes d0 (>= 1) frames' last sixteen bytes from %a2 to %a1,
+| both advanced by the whole 80-byte slot. Clobbers d1-d4.
+mw_copy80:
+    tstb    mw_mix_short
+    beq     audio_copy80
+1:  moveml  %a2@(64),%d1-%d4
+    moveml  %d1-%d4,%a1@(64)
+    lea     %a2@(80),%a2
+    lea     %a1@(80),%a1
+    subql   #1,%d0
+    bnes    1b
+    rts
+    .bss
+    .balign 4
+mw_mix_clean: .space 4              | packets since MAIN + CUE ONLY whose buffer's track bytes were zeroed
+mw_mix_hold:  .space 4              | packets the short copy still holds after the choice ended
+mw_mix_short: .space 1              | this packet is copied short
+    .text
+.set MW_MIX_HOLD, 96                | x 11 frames a packet: more than the ring's AUD_FRAMES
+.else
+.set mw_copy80, audio_copy80
+.endif
+""" + helpers)
 
 
 def midi_source(text):
