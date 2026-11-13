@@ -297,6 +297,34 @@ void sample_rate_label(knob_text_t draw, char *view, void *bmp, int x, int y, in
         FILLRECT(bmp, box_l[slot], ROW_Y - 14, box_r[slot], ROW_Y - 8, INVERT);
 }
 
+// The widget draws the sample in its slot (+0), which stock's page callback
+// (0x400d253a: SMP, STA and END into the widget) sets when a parameter or the
+// track changes. It sets slot 0, no sample (the widget's centre line only),
+// while SMP's slot has no sample name yet (0x400b8192). At boot on a unit the
+// callback runs before the samples are loaded, and nothing runs it again until a
+// knob turns: stock's SAMPLE page opens on its knobs at boot and is no wiser, but
+// this one shows the waveform from boot. So while the slot reads 0 the callback
+// runs again, every 8 ticks (0.4 s); with SMP OFF that is all it does.
+#define WAVE_SLOT 0         // the widget's sample slot
+#define FOLLOW_TICKS 8
+typedef void (*page_update_t)(char *view);
+#define PAGE_UPDATE ((page_update_t)PAGE_UPDATE_AT)
+
+static void follow_sample(char *view)
+{
+    static unsigned char wait;
+    if (*(int *)(view + VIEW_WAVE + WAVE_SLOT)) {
+        wait = 0;
+        return;
+    }
+    if (wait) {
+        wait--;
+        return;
+    }
+    wait = FOLLOW_TICKS - 1;
+    PAGE_UPDATE(view);
+}
+
 // The taller waveform, once: only from stock's own area, so a module that moves
 // it keeps its own
 static void tall_waveform(char *view)
@@ -325,5 +353,6 @@ void sample_rate_tick(void *ctrl)
     if (view) {
         waveform_page(view);
         tall_waveform(view);
+        follow_sample(view);
     }
 }
