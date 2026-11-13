@@ -7,10 +7,9 @@ Say what the module is, what it changes, what is measured and what is
 open. Delete every comment below once answered.
 
 docs/remixer/MODULES.md is the guide; tools/remix/schema.py the field list.
-This is the skeleton of a DSP effect. modules/character/ is a finished one
-(an in-place insert with its own render gate). A module that changes what
-the firmware does starts from modules/_template_cf/ (then modules/repitch/,
-modules/midi-scenes/).
+This is the skeleton of a DSP effect. modules/miniverb/ is a finished one
+(an in-place insert with its own verify gate). A module that changes what
+the firmware does starts from modules/_template_cf/ (then modules/repitch/).
 """
 
 from remix.schema import (Category, Proof, BusRole, DspSection, Formatter, Gate, Harness, Kind,
@@ -78,7 +77,7 @@ MODULE = Module(
     harness=Harness(layout_char=None, is_server=False),
 
     # The checks `make check` runs when a remix carries this module: your
-    # render gates (modules/character has verify_character.py). stage="image" for one that reads the built image.
+    # render gates (modules/miniverb has verify.py). stage="image" for one that reads the built image.
     gates=(Gate("modules/_template/verify.py", remix_arg=False),),
     # Every knob at its DEAREST setting, by name: the mode the pricer calls
     # the worst loop, work-gating knobs at maximum. The pressure render and

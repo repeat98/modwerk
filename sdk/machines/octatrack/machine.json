@@ -31,6 +31,15 @@
     "core": "done",
     "mods": "done"
   },
+  "stack": {
+    "base": "done",
+    "link": "done",
+    "flash": "done",
+    "loader": "done",
+    "status": "done",
+    "diagnostics": "done",
+    "tools": "done"
+  },
   "sdk": {
     "platform": "octabam",
     "modules": "sdk/octatrack/modules",

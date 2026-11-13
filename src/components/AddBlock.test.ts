@@ -7,7 +7,7 @@ import { DETAILS } from '../catalog/details'
 import { MODULES } from '../catalog/modules'
 import { ModuleCard } from './ModuleCard'
 
-const spectrum = MODULES.find(module => module.id === 'spectrum')!
+const tapehead = MODULES.find(module => module.id === 'tapehead')!
 let root: Root, container: HTMLDivElement
 beforeEach(() => {
   vi.stubGlobal('IS_REACT_ACT_ENVIRONMENT', true)
@@ -18,12 +18,12 @@ afterEach(async () => { await act(() => root.unmount()); container.remove(); vi.
 function card(props: Partial<Parameters<typeof ModuleCard>[0]> = {}) {
   const calls = { toggle: vi.fn(), swap: vi.fn() }
   const render = (extra: Partial<Parameters<typeof ModuleCard>[0]> = {}) => act(() => root.render(createElement(ModuleCard, {
-    module: spectrum, selected: false, baseline: null, compared: false, canCompare: true, onToggle: calls.toggle, onCompare: () => {}, onSwap: calls.swap, ...props, ...extra,
+    module: tapehead, selected: false, baseline: null, compared: false, canCompare: true, onToggle: calls.toggle, onCompare: () => {}, onSwap: calls.swap, ...props, ...extra,
   })))
   return { calls, render }
 }
 // A note as a selection check writes it: what the module clashes with, why, and what to take out to add it.
-const conflict: AddBlock = { kind: 'conflict', withIds: ['analog-bassdrum'], reason: 'Conflicts with Analog BD', detail: 'Analog BD cannot run alongside Spectrum.', swapRemoveIds: ['analog-bassdrum'], key: 'spectrum:analog-bassdrum' }
+const conflict: AddBlock = { kind: 'conflict', withIds: ['analog-bassdrum'], reason: 'Conflicts with Analog BD', detail: 'Analog BD cannot run alongside TapeHead.', swapRemoveIds: ['analog-bassdrum'], key: 'tapehead:analog-bassdrum' }
 const addButton = () => container.querySelector<HTMLButtonElement>('.add-button')!
 const prompt = () => container.querySelector('.add-block-prompt')
 const click = (element: Element) => act(() => { element.dispatchEvent(new MouseEvent('click', { bubbles: true })) })
@@ -33,7 +33,7 @@ describe('a conflicting add in the library', () => {
   it('shows the conflict before any click and keeps the card readable', async () => {
     await card({ block: conflict }).render()
     expect(container.querySelector('.add-block-chip.is-conflict')?.textContent).toBe('Conflicts with Analog BD')
-    expect(container.querySelector('.module-card-heading a')?.textContent).toBe('Spectrum')
+    expect(container.querySelector('.module-card-heading a')?.textContent).toBe('TapeHead')
     expect(addButton().classList.contains('is-conflict')).toBe(true)
     expect(addButton().disabled).toBe(false)
     expect(addButton().getAttribute('aria-expanded')).toBe('false')
@@ -45,7 +45,7 @@ describe('a conflicting add in the library', () => {
     await render()
     const bottom = container.querySelector('.card-bottom')!
     expect(bottom.firstElementChild?.classList.contains('add-block-chip')).toBe(true)
-    expect(bottom.textContent).not.toContain(DETAILS.spectrum.family)
+    expect(bottom.textContent).not.toContain(DETAILS.tapehead.family)
     await click(addButton())
     const article = container.querySelector('article')!
     expect(prompt()?.parentElement).toBe(article)
@@ -70,14 +70,14 @@ describe('a conflicting add in the library', () => {
     expect(calls.toggle).not.toHaveBeenCalled()
     expect(addButton().getAttribute('aria-expanded')).toBe('true')
     expect(addButton().getAttribute('aria-controls')).toBe(prompt()?.id)
-    expect(prompt()?.textContent).toContain('cannot run alongside Spectrum')
-    expect(buttonNamed('Remove Analog BD and add Spectrum')).toBeTruthy()
+    expect(prompt()?.textContent).toContain('cannot run alongside TapeHead')
+    expect(buttonNamed('Remove Analog BD and add TapeHead')).toBeTruthy()
   })
   it('swaps by handing the modules to remove to the library', async () => {
     const { calls, render } = card({ block: conflict })
     await render()
     await click(addButton())
-    await click(buttonNamed('Remove Analog BD and add Spectrum'))
+    await click(buttonNamed('Remove Analog BD and add TapeHead'))
     expect(calls.swap).toHaveBeenCalledWith(['analog-bassdrum'])
     expect(calls.toggle).not.toHaveBeenCalled()
     expect(prompt()).toBeNull()
@@ -112,13 +112,13 @@ describe('a conflicting add in the library', () => {
     const { render } = card({ block: { kind: 'stock-fx2', withIds: [], reason: 'Needs stock FX2 off', detail: 'These modules need space used by the original FX2 effects.', key: 'stock-fx2-space' } })
     await render()
     expect(addButton().classList.contains('is-conflict')).toBe(false)
-    expect(addButton().getAttribute('aria-label')).toBe('Add Spectrum to configuration')
+    expect(addButton().getAttribute('aria-label')).toBe('Add TapeHead to configuration')
     expect(container.querySelector('.add-block-chip')?.textContent).toBe('Needs stock FX2 off')
     await render({ block: undefined })
     expect(container.querySelector('.add-block-chip')).toBeNull()
-    expect(container.querySelector('.card-bottom')?.textContent).toContain(DETAILS.spectrum.family)
+    expect(container.querySelector('.card-bottom')?.textContent).toContain(DETAILS.tapehead.family)
     await render({ block: conflict, selected: true })
     expect(container.querySelector('.add-block-chip')).toBeNull()
-    expect(addButton().getAttribute('aria-label')).toBe('Remove Spectrum from configuration')
+    expect(addButton().getAttribute('aria-label')).toBe('Remove TapeHead from configuration')
   })
 })

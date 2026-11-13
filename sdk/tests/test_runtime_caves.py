@@ -57,7 +57,7 @@ class CavePortTests(unittest.TestCase):
             with self.subTest(resource=resource), self.assertRaisesRegex(ValueError, 'Unported'):
                 cave.validate_manifest(module)
         with self.assertRaisesRegex(ValueError, 'Unported'):
-            cave.validate_manifest(SimpleNamespace(name='midi-scenes', cf_patches=[]))
+            cave.validate_manifest(SimpleNamespace(name='not-ported', cf_patches=[]))
 
     def test_private_base_arena_binding_cannot_be_guessed(self):
         symbols = dict(arena_base=0x40db05e0, pool=0x40c1df80, __bss_start=0x40abba58, __bss_end=0x40daee00)

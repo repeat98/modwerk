@@ -267,7 +267,8 @@ export class OctatrackLink {
     const connection = this.connection
     await this.release(true)
     if (connection !== this.connection) return
-    this.setFor(connection, { status: 'connecting' })
+    // A retry while another page holds the unit stays 'busy' until it connects, or the card flickers every 3 s.
+    if (this.state.status !== 'busy') this.setFor(connection, { status: 'connecting' })
     this.device = device
     try {
       if (!device.opened) await device.open()

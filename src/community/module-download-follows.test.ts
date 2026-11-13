@@ -4,6 +4,7 @@ import { testServer } from './test-server'
 import { digest } from '../../server/security'
 import { recordModuleReleases } from '../../server/module-updates'
 import { COMMUNITY_MODULES, communityModule } from './modules'
+import { PAUSED_MODULE_IDS, isBetaModule } from '../catalog/availability'
 import { notificationLines } from './notification-text'
 
 const databases: DatabaseSync[] = []
@@ -37,7 +38,7 @@ describe('automatic download update follows', () => {
   it('requires a verified member and refuses unknown/unavailable modules and download data', async () => {
     const { call, token, db, user } = await fixture()
     expect((await call('/modules/miniverb/download', 'POST', {})).status).toBe(401)
-    expect((await call('/modules/spectrum/download', 'POST', {}, token)).status).toBe(400)
+    expect((await call('/modules/' + PAUSED_MODULE_IDS.find(id => !isBetaModule(id)) + '/download', 'POST', {}, token)).status).toBe(400)
     expect((await call('/modules/unknown/download', 'POST', {}, token)).status).toBe(404)
     expect((await call('/modules/miniverb/download', 'POST', { firmware: 'bytes' }, token)).status).toBe(400)
     db.prepare('UPDATE users SET email_verified=0 WHERE id=?').run(user)

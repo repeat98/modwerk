@@ -174,6 +174,8 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
 .module-card-heading > a { font-size: 16px; font-weight: 600; letter-spacing: -.15px; line-height: 1.35; }
 .module-card-heading .card-release { display: contents; }
 .module-beta-badge { color: var(--accent); background: var(--surface-hover); border-radius: 4px; padding: 1px 6px; font-size: 11px; font-weight: 600; line-height: 1.5; }
+.module-caution-badge { display: inline-flex; align-items: center; gap: 4px; align-self: center; border: 1px solid color-mix(in srgb, var(--issue-confirmed) 40%, transparent); border-radius: 4px; padding: 0 6px; color: var(--issue-confirmed); background: color-mix(in srgb, var(--issue-confirmed) 12%, transparent); font-size: 11px; font-weight: 600; line-height: 1.5; white-space: nowrap; }
+.module-caution-badge svg { flex-shrink: 0; }
 .card-version { color: #b8b4c7; font: 11px/1.5 var(--mono); }
 .module-update-badge { border: 1px solid #68647e; border-radius: 4px; padding: 1px 5px; color: #c5c1e8; background: #929bff0b; font-size: 10px; font-weight: 500; line-height: 1.5; white-space: nowrap; }
 .add-button { display: inline-grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; margin-top: -2px; padding: 0; border: 1px solid var(--control-border); background: var(--surface-hover); border-radius: 16px; color: var(--text); }
@@ -263,14 +265,11 @@ h2 { font-size: 16px; letter-spacing: -.15px; font-weight: 600; }
   .hover-info strong { gap: 5px; padding: 5px 9px; border: 1px solid #ffffff1f; border-radius: 6px; background: #18181dcc; color: var(--text-secondary); font-size: 12px; }
 }
 .module-preview { --signal: #b5a0ff; --signal-rgb: 181,160,255; height: 168px; display: flex; flex-direction: column; background: radial-gradient(ellipse at 60% 100%, rgba(var(--signal-rgb), .09), transparent 75%), var(--preview); position: relative; }
-.module-preview[data-module="modulation"] { --signal: #79b5f8; --signal-rgb: 121,181,248; }
-.module-preview[data-module="character"] { --signal: #e9ab83; --signal-rgb: 233,171,131; }
 .module-preview[data-module="miniverb"] { --signal: #83c7bc; --signal-rgb: 131,199,188; }
 .module-preview[data-module="tapeecho"] { --signal: #d5bd96; --signal-rgb: 213,189,150; }
 .module-preview[data-module="euclid"] { --signal: #c09be9; --signal-rgb: 192,155,233; }
 .module-preview[data-module="repitch"] { --signal: #9eb4ed; --signal-rgb: 158,180,237; }
 .module-preview[data-module="analog-bassdrum"] { --signal: #e9ab83; --signal-rgb: 233,171,131; }
-.module-preview[data-module="midi-scenes"] { --signal: #83c7bc; --signal-rgb: 131,199,188; }
 .module-preview[data-module="usb-audio-out-tracks-main-cue"] { --signal: #79b5f8; --signal-rgb: 121,181,248; }
 .module-preview[data-module="quantizer"] { --signal: #c09be9; --signal-rgb: 192,155,233; }
 .preview-label { color: var(--signal); font: 8px var(--mono); letter-spacing: 1px; display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 0; height: 24px; flex-shrink: 0; }
@@ -2060,6 +2059,10 @@ button.signal-tile[aria-pressed="true"] > svg { fill: currentColor; }
 .detail-hero-with-resources .detail-description { grid-area: description; max-width: 65ch; margin: 16px 0 18px; }
 .detail-notice { grid-area: notice; margin-bottom: 14px; }
 .detail-notice > p { margin: 0; }
+.detail-notice > p + p { margin-top: 10px; }
+.module-caution { display: flex; gap: 10px; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--issue-confirmed) 40%, transparent); border-radius: 8px; background: color-mix(in srgb, var(--issue-confirmed) 10%, transparent); color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
+.module-caution svg { flex-shrink: 0; margin-top: 3px; color: var(--issue-confirmed); }
+.module-caution strong { color: var(--issue-confirmed); }
 .detail-works-summary { grid-area: works; display: flex; align-items: center; gap: 10px; width: fit-content; max-width: 100%; min-height: 44px; padding: 0; border: 0; background: none; text-align: left; color: #91d5bd; }
 .detail-works-summary > span { min-width: 0; }
 .detail-works-summary strong { display: block; font-size: 12px; font-weight: 500; font-variant-numeric: tabular-nums; }

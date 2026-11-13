@@ -38,6 +38,7 @@
     "octatrack:elekloader:verify": "node scripts/verify-octatrack-elemods.mjs",
     "octatrack:base": "node scripts/octatrack-base.mjs",
     "machine:base": "python3 -B scripts/machine-base.py",
+    "machine:new": "node scripts/scaffold-machine.mjs",
     "octatrack:module-packages": "node scripts/mirror-octatrack-modules.mjs && python3 -B scripts/octatrack-module-packages.py",
     "upload:verify": "sh sdk/runtime/upload/tests/run_host.sh",
     "upstream:tools": "python3 -B scripts/upstream-tools.py",

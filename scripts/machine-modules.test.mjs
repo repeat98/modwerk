@@ -43,9 +43,9 @@ it('refuses a thumbnail copied from another module, and lets one module share it
   expect(copiedThumbnail([card('sdk/analog-rytm-mkii/modules/env-reset-amp/media/thumbnail.svg'), card('sdk/analog-rytm-mkii/modules/envelopes/media/thumbnail.svg')]))
     .toMatch(/^sdk\/analog-rytm-mkii\/modules\/envelopes\/media\/thumbnail\.svg is the same file as .*env-reset-amp/)
   expect(copiedThumbnail([card('sdk/octatrack/modules/euclid/presentation/thumbnail.svg'), card('sdk/drafts/syntiz/presentation/thumbnail.svg')])).toMatch(/syntiz/)
-  // Digi Health on two machines, and MIDI Scenes' draft beside its listed folder.
+  // Digi Health on two machines, and a module's draft beside its listed folder.
   expect(copiedThumbnail([card('sdk/digitakt/modules/digihealth/media/thumbnail.svg'), card('sdk/digitone/modules/digihealth/media/thumbnail.svg'),
-    card('sdk/drafts/midi-scenes/presentation/thumbnail.svg', 'b'.repeat(64)), card('sdk/octatrack/modules/midi-scenes/presentation/thumbnail.svg', 'b'.repeat(64))])).toBe(null)
+    card('sdk/drafts/recorder-loop-fix/presentation/thumbnail.svg', 'b'.repeat(64)), card('sdk/octatrack/modules/recorder-loop-fix/presentation/thumbnail.svg', 'b'.repeat(64))])).toBe(null)
   expect(copiedThumbnail([card('sdk/octatrack/modules/a/presentation/thumbnail.svg'), card('sdk/octatrack/modules/b/presentation/thumbnail.svg', 'c'.repeat(64))])).toBe(null)
 })
 

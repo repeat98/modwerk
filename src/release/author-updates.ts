@@ -46,13 +46,12 @@ function ownership(document: Record<string, unknown>) { return { id: document.id
 function packageProjection(value: unknown, ids: Set<string>, changedPackages: Set<string>, name: string, depth = 0): unknown {
   if (Array.isArray(value)) return value.filter(item => {
     const row = object(item)
-    return !ids.has(String(row.moduleId ?? row.id)) && !(Array.isArray(row.moduleIds) && row.moduleIds.some(id => ids.has(String(id)))) && !(name === 'resident-dsp' && ids.has('character') && row.hasCharacter === true)
+    return !ids.has(String(row.moduleId ?? row.id)) && !(Array.isArray(row.moduleIds) && row.moduleIds.some(id => ids.has(String(id))))
   }).map(item => packageProjection(item, ids, changedPackages, name, depth + 1))
   if (!value || typeof value !== 'object') return value
   return Object.fromEntries(Object.entries(value).filter(([key]) => {
     if (depth === 0 && key === 'sourceCommit') return false
     if (depth === 0 && name === 'module-build' && key === 'sourceTreeSha256') return false
-    if (depth === 0 && name === 'resident-dsp' && key === 'character' && ids.has('character')) return false
     if (depth === 0 && name === 'requested-packages' && key === 'analog' && ids.has('analog-bassdrum')) return false
     return true
   }).map(([key, item]) => {

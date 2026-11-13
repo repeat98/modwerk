@@ -109,6 +109,9 @@ int modwerk_dsp_source_claim(unsigned track, uint32_t module, uint32_t voice, ui
 }
 static unsigned box_calls, box_track = 99; static const char *box_label;
 void modwerk_status_machine_refused(unsigned track, const char *label) { ++box_calls, box_track = track, box_label = label; }
+static unsigned cpu_boxes, cpu_box_track = 99; static uint32_t cpu_box_booked, cpu_box_add;
+void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add)
+{ (void)label; ++cpu_boxes, cpu_box_track = track, cpu_box_booked = booked, cpu_box_add = add; }
 void modwerk_dsp_source_release(unsigned track) { voices &= (uint8_t)~(1u << track); voice_of[track] = 0; ++releases; }
 void modwerk_dsp_source_engine_off(uint32_t module)
 {
@@ -384,6 +387,44 @@ static void check_native_flex_voice(void)
     start_row[0] = 0; rows(0, 0, 0, 0);
 }
 
+/* The CPU budget: a Part carries mw_cpu_allowance percent of a frame in machine renders. An unpriced machine costs
+ * CPU_DEFAULT a track, a priced one its reserved[0]; a DSP voice that names none costs nothing. */
+static const struct modwerk_machine P = {MODWERK_MACHINE_ABI, {'P', 'C'}, 1, 1, "DEAR", MODWERK_MACHINE_PROTECT, 0, a_defaults,
+                                         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, render_a, 0, 0, 0, 0, {30}};
+static void check_cpu_budget(void)
+{
+    const void *both[] = {&A, &P};
+    rows(both, 2, 0, 0);
+    for (unsigned t = 0; t < 8; ++t) { part0()[0x22 + t] = 1; for (unsigned k = 0; k < 3; ++k) part0()[60 + 30 * t + k] = 0; }
+    fresh(); a_admit = 1; mw_cpu_allowance = 45; mw_ui_tick();
+    CHECK(!mw_cpu_refused && !mw_cpu_booked);
+    unsigned boxes = cpu_boxes;
+    CHECK(mw_assign(part0(), 0, 5) == 1 && mw_assign(part0(), 1, 5) == 1 && mw_assign(part0(), 2, 5) == 1 && cpu_boxes == boxes);
+    CHECK(mw_assign(part0(), 3, 5) == (unsigned)-1 && part0()[60 + 90] == 0);  /* a fourth at 12: 48 of 45, nothing written */
+    CHECK(cpu_boxes == boxes + 1 && cpu_box_track == 3 && cpu_box_booked == 800 && cpu_box_add == 266);
+    CHECK(mw_assign(part0(), 3, 6) == (unsigned)-1);                           /* nor the dear one */
+    CHECK(mw_assign(part0(), 2, 5) == 1 && cpu_boxes == boxes + 2);            /* the same machine again asks nothing */
+    CHECK(mw_assign(part0(), 2, 6) == (unsigned)-1);                           /* its own 12 back, 30 more: 54 */
+    CHECK(mw_assign(part0(), 1, 1) == 1 && mw_assign(part0(), 2, 6) == 1);     /* a track freed: 12 + 30 */
+    mw_ui_tick();
+    CHECK(mw_cpu_booked == 42 && !mw_cpu_refused);
+    /* Tracks that became machines without a pick (a load, a Part change, a paste): past the allowance they render
+     * stock's silent source, and the box says so once; they play when room is made. */
+    part0()[60 + 150] = part0()[60 + 180] = 'A', part0()[61 + 150] = part0()[61 + 180] = 'B', part0()[62 + 150] = part0()[62 + 180] = 1;
+    boxes = cpu_boxes; mw_ui_tick(); mw_ui_tick();
+    CHECK(mw_cpu_refused == (1u << 5 | 1u << 6) && mw_cpu_booked == 42 && cpu_boxes == boxes + 1 && cpu_box_track == 5);
+    int silent = silent_renders, played = a_renders;
+    CHECK(later(5) == -9 && silent_renders == silent + 1 && later(0) == played + 1);
+    CHECK(mw_assign(part0(), 2, 1) == 1);
+    mw_ui_tick();
+    CHECK(!mw_cpu_refused && mw_cpu_booked == 36 && cpu_boxes == boxes + 1 && later(5) == played + 2);
+    mw_cpu_allowance = 10; mw_ui_tick();                                        /* a development base's smaller allowance */
+    CHECK(mw_cpu_refused == (1u << 0 | 1u << 5 | 1u << 6) && !mw_cpu_booked);
+    mw_cpu_allowance = 45;
+    for (unsigned t = 0; t < 8; ++t) for (unsigned k = 0; k < 3; ++k) part0()[60 + 30 * t + k] = 0;
+    mw_ui_tick(); rows(0, 0, 0, 0);
+    CHECK(!mw_cpu_refused);
+}
 int main(void)
 {
     put_u32(0x46c82456u, 0x46000000u);
@@ -742,6 +783,17 @@ int main(void)
     for (unsigned i = 0; i < 3u; ++i) CHECK(frame(6, 20000, 5000) == -7);
     CHECK(mw_frame_sheds == unowned_sheds + 3u && mw_frame_shed_tracks & 1u << 6);
     CHECK(silent_renders == unowned_silent && stock_renders == unowned_flex + 3);
+    /* A renderer a module put into the slots itself (mw_foreign_render): its machine's track is guarded with the
+     * silent source and refused past the CPU budget; a track nobody owns falls back to stock's render. */
+    mw_foreign_fn = render_f;
+    for (unsigned t = 3; t <= 6u; t += 3u) {
+        fresh(); f_cost = 70000;
+        mw_frame_t0 = host_timer; CHECK(mw_foreign_render(t, 0, 0, 1) > 100); mw_frame_exit();
+        mw_frame_t0 = host_timer; CHECK(mw_foreign_render(t, 0, 0, 1) == (t == 3u ? -9 : -7)); mw_frame_exit();
+    }
+    fresh(); f_cost = 1000;
+    mw_cpu_refused = 1u << 3; CHECK(mw_foreign_render(3, 0, 0, 1) == -9 && mw_foreign_render(6, 0, 0, 1) > 100);
+    mw_cpu_refused = 0; CHECK(mw_foreign_render(3, 0, 0, 1) > 100);
     f_cost = 1000;
     /* A track only stock renders always renders, however late the frame. */
     const void *v_only2[] = {&V};
@@ -830,9 +882,10 @@ int main(void)
     CHECK(counts_now() == (5u << 24 | 5u << 16 | 4u << 8 | 3u) && !masked && clamp_now() == 5);
     check_source_starts();
     check_native_flex_voice();
+    check_cpu_budget();
     if (failures) { fprintf(stderr, "%u registry checks failed\n", failures); return 1; }
     puts("Machine registry: rows by table order, admission before mutation, signatures and defaults in both copies, absent "
          "machines as stock, the validator's protection and wrapper chain, render routing, keyed SEQUENCER rows, chooser "
-         "counts and cursor clamps, SETUP_PAGE machines' own SRC SETUP and the frame guard passed.");
+         "counts and cursor clamps, SETUP_PAGE machines' own SRC SETUP, the frame guard and the CPU budget passed.");
     return 0;
 }
