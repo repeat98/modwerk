@@ -48,6 +48,21 @@ longest wait between redraws on each page.
 The SRC page redraws 41 of 45 detents even stopped. Every row from 87 % was reached by picks made while stopped, or by
 an install, with nothing refused.
 
+## The guard judging a stopped unit by its last play
+
+The same day, on a development twin (`c6e655c7…`) of the branch that adds this, started from the flashed base, with
+Air Chorus, Tape Echo, Euclid, Mini Verb, POLY8 and FM Synth 0.1.2 installed:
+
+- Before the unit had played, stopped at 54 %: Mini Verb on T1 FX2 went through.
+- It then played at 93 % for twelve seconds and was stopped. At 66 to 68 %: Mini Verb on T1 FX2, Euclid on T1 FX1 and
+  POLY8 on T2 SRC were each refused with CPU FULL / CPU 93% / WAS BUSY PLAYING; FILTER and NONE on T2 FX1 went through.
+- FM Synth was removed without playing: Mini Verb was still refused, on the old figure. After twelve seconds playing
+  at 81 % and a stop, at 57 %, it went through.
+
+A first start of that twin from the other twin, not from the flashed base, never arrived: the screen stayed on BASE
+UPDATE / RESTARTING and the unit was gone from USB until a power cycle. Started from the flashed base the same image
+came up, so the change is not the cause; what is, is open.
+
 ## Not shown
 
 - Nobody judged the panel by hand at these loads; the owner said it felt sluggish moving parameters once, at a moment
