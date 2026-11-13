@@ -4,7 +4,7 @@ import { FAKE_BASE, fakeBaseOf, fakeSession, fakeUnit } from '../../dev/octatrac
 import { packSection } from '../elektron/codec/pack.ts'
 import { encodeBin } from '../../../vendor/elekloader/kit/src/elek.ts'
 import { removalPackage } from './module-set'
-import { LinkBusyError, OctatrackLink, StaleLoadError, openFailure, tabLocks } from './octatrack-link'
+import { LinkBusyError, OctatrackLink, StaleLoadError, linkBusy, openFailure, tabLocks } from './octatrack-link'
 import { UploadUnconfirmedError } from './upload-session'
 import { UsbVendorTransport, parseBaseSlots } from './upload-usb'
 
@@ -55,6 +55,10 @@ describe('finding the unit', () => {
     expect(openFailure('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/141.0')).toContain('install the base from the card first')
     expect(openFailure('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/141.0')).toBe('Chrome couldn’t open the Octatrack. Unplug it, plug it back in and try again.')
     expect(openFailure('Mozilla/5.0 (Linux; Android 15) Chrome/141.0')).toContain('Unplug it')
+  })
+  it('names the computer, not only another tab, when Windows can’t claim the unit', () => {
+    expect(linkBusy('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/141.0')).toContain('install the latest base from the card once')
+    expect(linkBusy('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/141.0')).not.toContain('card')
   })
   it('reports a browser without WebUSB instead of offering a dead button', () => {
     expect(new OctatrackLink(undefined).getState().status).toBe('unsupported')
