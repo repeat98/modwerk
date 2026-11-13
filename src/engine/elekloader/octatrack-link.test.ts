@@ -4,7 +4,7 @@ import { FAKE_BASE, fakeBaseOf, fakeSession, fakeUnit } from '../../dev/octatrac
 import { packSection } from '../elektron/codec/pack.ts'
 import { encodeBin } from '../../../vendor/elekloader/kit/src/elek.ts'
 import { removalPackage } from './module-set'
-import { LinkBusyError, OctatrackLink, StaleLoadError, openFailure, tabLocks } from './octatrack-link'
+import { LinkBusyError, OctatrackLink, StaleLoadError, linkBusy, openFailure, tabLocks } from './octatrack-link'
 import { UploadUnconfirmedError } from './upload-session'
 import { UsbVendorTransport, parseBaseSlots } from './upload-usb'
 
@@ -55,6 +55,10 @@ describe('finding the unit', () => {
     expect(openFailure('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/141.0')).toContain('install the base from the card first')
     expect(openFailure('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/141.0')).toBe('Chrome couldn’t open the Octatrack. Unplug it, plug it back in and try again.')
     expect(openFailure('Mozilla/5.0 (Linux; Android 15) Chrome/141.0')).toContain('Unplug it')
+  })
+  it('names the computer, not only another tab, when Windows can’t claim the unit', () => {
+    expect(linkBusy('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/141.0')).toContain('install the latest base from the card once')
+    expect(linkBusy('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Chrome/141.0')).not.toContain('card')
   })
   it('reports a browser without WebUSB instead of offering a dead button', () => {
     expect(new OctatrackLink(undefined).getState().status).toBe('unsupported')
@@ -620,7 +624,7 @@ describe('updating the base over USB', () => {
     const { unit, link } = await linked(), { bin, expected } = fakeBin(), steps: string[] = [], shown = new Set<string>()
     link.subscribe(() => { const { status, baseUpdate } = link.getState(); shown.add(status + ':' + baseUpdate) })
     await link.updateBase(bin, expected, step => steps.push(step))
-    expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'restarting', 'done'])
+    expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'saving', 'restarting', 'done'])
     expect(unit.flashed).toBe(expected)
     expect(link.getState()).toMatchObject({ status: 'ready', identity: { base: expected }, active: expected, baseUpdate: undefined })
     // Every view shows the update, also while the unit restarts and the link is idle in between.
@@ -632,14 +636,14 @@ describe('updating the base over USB', () => {
     link.start(); await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
     const { bin, expected } = fakeBin(), steps: string[] = []
     await link.updateBase(bin, expected, step => steps.push(step))
-    expect(dedupe(steps)).toEqual(['staging', 'starting', 'staging', 'starting', 'started', 'writing', 'restarting', 'done'])
+    expect(dedupe(steps)).toEqual(['staging', 'starting', 'staging', 'starting', 'started', 'writing', 'saving', 'restarting', 'done'])
     expect(unit.flashed).toBe(expected)
   })
   it('skips the trial when the new base already runs, and refuses after the trial when the new base cannot write itself', async () => {
     const { unit, link } = await linked(), { bin, expected } = fakeBin(), steps: string[] = []
     unit.base = expected; unit.unplug(); unit.plug('base'); await vi.waitFor(() => expect(link.getState().identity?.base).toBe(expected))
     await link.updateBase(bin, expected, step => steps.push(step))
-    expect(dedupe(steps)).toEqual(['started', 'writing', 'restarting', 'done'])
+    expect(dedupe(steps)).toEqual(['started', 'writing', 'saving', 'restarting', 'done'])
     const older = fakeUnit(); older.updatesBase = false
     const old = new OctatrackLink(older.usb, fakeSession(older), 300)
     old.start(); await vi.waitFor(() => expect(old.getState().status).toBe('ready'))
@@ -653,7 +657,7 @@ describe('updating the base over USB', () => {
     unit.writeRefusal = 5 // flash.h FLASH_PROTECTED: every write was refused this way before the boot snapshot
     await expect(link.updateBase(bin, expected, step => steps.push(step))).rejects.toThrow(
       'The new base refused to write itself (reason 105), so nothing was written. A power cycle returns the Octatrack to its current base and modules.')
-    expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing'])
+    expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'saving'])
     expect(unit.flashed).toBe(FAKE_BASE); expect(unit.base).toBe(expected)
     await vi.waitFor(() => expect(link.getState().status).toBe('ready'))
     expect(link.getState().baseUpdate).toBeUndefined()
@@ -670,7 +674,7 @@ describe('updating the base over USB', () => {
     unit.writeDropouts = 1
     vi.useFakeTimers({ toFake: ['setTimeout'] })
     await run(link.updateBase(bin, expected, step => steps.push(step)))
-    expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'reconnecting', 'writing', 'restarting', 'done'])
+    expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'saving', 'reconnecting', 'writing', 'saving', 'restarting', 'done'])
     expect(unit.flashed).toBe(expected)
     expect(link.getState()).toMatchObject({ status: 'ready', identity: { base: expected }, baseUpdate: undefined })
   })
@@ -679,7 +683,7 @@ describe('updating the base over USB', () => {
     unit.writeFails = 1
     vi.useFakeTimers({ toFake: ['setTimeout'] })
     await run(link.updateBase(bin, expected, step => steps.push(step)))
-    expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'reconnecting', 'writing', 'restarting', 'done'])
+    expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'saving', 'reconnecting', 'writing', 'saving', 'restarting', 'done'])
     expect(unit.flashed).toBe(expected)
   })
   it('asks to keep the unit on when the save is never confirmed', async () => {
@@ -706,7 +710,7 @@ describe('updating the base over USB', () => {
     const unit = fakeUnit(), { link, restarts } = await counting(unit, 1), { bin, expected } = fakeBin(), steps: string[] = []
     expect(link.getState().slots).toMatchObject({ layout: 'two' })
     await link.updateBase(bin, expected, step => steps.push(step))
-    expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'done'])
+    expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'saving', 'done'])
     expect(unit.flashed).toBe(expected); expect(unit.base).toBe(expected); expect(restarts()).toBe(1)
   })
   // A tester's unit saved the new base, then hung at the logo on the restart: the site said "reconnecting", wrote again
@@ -716,13 +720,13 @@ describe('updating the base over USB', () => {
     unit.restartHangs = true
     vi.useFakeTimers({ toFake: ['setTimeout'] })
     await expect(run(link.updateBase(bin, expected, step => steps.push(step)))).rejects.toThrow('Keep it switched on')
-    expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'restarting'])
+    expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'saving', 'restarting'])
     expect(unit.flashed).toBe(expected)
   })
   it('converts a unit with one copy with one restart: the trial, then the new base saves itself and runs on', async () => {
     const unit = fakeUnit(), { link, restarts } = await counting(unit, 0), { bin, expected } = fakeBin(), steps: string[] = []
     await link.updateBase(bin, expected, step => steps.push(step))
-    expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'done'])
+    expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'saving', 'done'])
     expect(unit.flashed).toBe(expected); expect(unit.base).toBe(expected); expect(restarts()).toBe(1)
     expect(link.getState()).toMatchObject({ status: 'ready', baseUpdate: undefined, slots: { layout: 'two' } })
   })

@@ -40,7 +40,8 @@ function deviceCrash(v: unknown) {
     && words(v.d, 8) && words(v.a, 7) && words(v.stack, 8) && words(v.code, 8) && words(v.memory, 8)
 }
 function deviceStall(v: unknown) {
-  return object(v) && exactly(v, 'count,reason,report,ticks') && uint(v.count) && uint(v.reason) && uint(v.ticks) && Array.isArray(v.report) && v.report.length <= 96 && v.report.every(uint)
+  return object(v) && (exactly(v, 'count,reason,report,ticks') || exactly(v, 'count,frames,reason,report,ticks')) && uint(v.count) && uint(v.reason) && uint(v.ticks) && Array.isArray(v.report) && v.report.length <= 96 && v.report.every(uint)
+    && (!('frames' in v) || Array.isArray(v.frames) && v.frames.length <= 256 && v.frames.length % 2 === 0 && v.frames.every(us => upTo(us, 0xffff))) // diag.h's trace: 128 frames, two times each
 }
 function deviceLog(v: unknown) {
   return object(v) && fields(v, ['loads','incidents','crash','stall']) && Array.isArray(v.loads) && Array.isArray(v.incidents)

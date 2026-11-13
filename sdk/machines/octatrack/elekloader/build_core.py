@@ -166,7 +166,11 @@ FRAME_SITES = ((0x4000aad0, 8, '5f02b18d204af6e4a0177ad6e41c779a698018b6f25b5d83
                (0x4000d9a6, 10, '60acbd38c2859ac73a63948d6c58796591fdbddd654799e50e88b0940be9a37a', 'mw_frame_leave'),
                (0x4000d43e, 6, '0f69edd47eb472176050ed5c14a75d055e0de101cd2d3a8d7c79f7dc6526246b', 'mw_render_first'),
                (0x4000d52c, 6, '5bb0079066abd317109cc9ae7a5f58f0a0d1596bb04da603669ed66ec8172243', 'mw_render_second'))
-OS_FIRST, OS_VEROFF, BOOT_IMAGE_BYTES = 0x4fefffe4, 0xde648, 0x140000  # boot.s, boot.h
+OS_FIRST, OS_VEROFF, BOOT_IMAGE_BYTES = 0x4fefffe4, 0xde648, 0x180000  # boot.s, boot.h
+# What the bases on units take for a RAM boot, and so for a USB update's trial: 1.25 MiB until the base of 13 November
+# 2026, which stages BOOT_IMAGE_BYTES. A released base must fit it for as long as units run the older bases; a
+# development build only has to fit the base it is booted from (--dev: this one or later).
+USB_UPDATE_BYTES = 0x140000
 BOOT_RESERVE = (0x40a955e0, 0x41495de0)  # boot.s RESERVE_LO/HI: the gate scans only there
 # REMIX SWITCH's DSP park (dsp_park.asm, assembled by Octabam's dsp_asm), by
 # P address, written into both payloads over dead `jmp *` vectors.
@@ -1092,6 +1096,15 @@ REFUSAL_EDITS = {
          '            report(r==DL_ALLOC_MEMORY || r==DL_ALLOC_TRANSITION ? DL_SELECT_MEMORY :'),
         ('                dl_allocator_cancel(&allocator,current);\n                report(DL_SELECT_MEMORY); phase=0; return;',
          '                dl_allocator_cancel(&allocator,current);\n                refusal_note(3u); report(DL_SELECT_MEMORY); phase=0; return;')),
+    # A busy unit takes no further module effect (status.c, mw_cpu_hot): refused in the guard, before stock writes the
+    # pick, with status.c's own box and no modal. selection.c links after the write-lease entries.
+    'selection.c': (
+        ('    if(++serial==0) ++serial;\n    token=serial;',
+         '    if(slot<2) {\n'
+         '        extern int modwerk_status_effect_busy(unsigned slot,unsigned id); /* status.c: 1, and its CPU FULL box */\n'
+         '        if(modwerk_status_effect_busy(slot*8+request.track,request.target[slot*8+request.track])) { ++dl_selection_refused; return 0; }\n'
+         '    }\n'
+         '    if(++serial==0) ++serial;\n    token=serial;'),),
     'transfer.c': (
         ('extern void dl_residency_tick(void);\nvoid dl_ui(void) {',
          'extern void dl_residency_tick(void);\nint modwerk_status_refused(unsigned reason); /* status.c: its box, or 0 */\nvoid dl_ui(void) {'),
@@ -2321,6 +2334,10 @@ modwerk_retained_end:
     if (int.from_bytes(main_out[:4], 'big') != OS_FIRST or len(main_out) > BOOT_IMAGE_BYTES or
             main_out[OS_VEROFF:OS_VEROFF+2] != image[OS_VEROFF:OS_VEROFF+2]):
         raise ValueError('The built MAIN image cannot be booted from RAM.')
+    if not args.dev and len(main_out) > USB_UPDATE_BYTES:
+        raise ValueError('The MAIN image is %d bytes: %d more than the bases on units take for a USB update (%d).'
+                         % (len(main_out), len(main_out) - USB_UPDATE_BYTES, USB_UPDATE_BYTES))
+    print('MAIN image: %d bytes, %d under what the bases on units take over USB' % (len(main_out), USB_UPDATE_BYTES - len(main_out)))
     (out/'MAIN.raw').write_bytes(main_out)
     report = dict(schema=1, kind='modwerk-elekloader-base-prototype', coreVersion=VERSION,
                   upstream=pin, sources=inputs, configuration=configuration, configurationHash=identity,

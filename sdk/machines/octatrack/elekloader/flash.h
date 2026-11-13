@@ -32,4 +32,5 @@ extern volatile int modwerk_flash_host;
 void modwerk_flash_service(void);
 /* A write while the OS runs on (this base's own, no restart after): 1 + per mille done, 0 none (status.c's box). */
 extern volatile uint32_t modwerk_flash_progress;
+extern volatile uint32_t modwerk_flash_outcome, modwerk_flash_trial; /* status.c's update screen (flash.c) */
 #endif

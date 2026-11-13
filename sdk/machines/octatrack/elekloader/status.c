@@ -92,9 +92,11 @@ void modwerk_status_tick(void)
 {
     MW_STAMP(5); status_tick(); MW_STAMP(6);
 }
+static void transfer_tick(void);
 static void status_tick(void)
 {
     modwerk_status_close_menu();
+    transfer_tick();
     memory_tick();
     modwerk_fxpage_missing(); /* the first tick builds it; after that it returns at once */
     if (++ticks % 30u) return; /* twice a second */
@@ -134,6 +136,72 @@ static void status_tick(void)
  * fifth root row build_core.py adds, owner 12 October 2026) opens each page: LOAD, MODULE LOAD, MISSING, SELF TEST. */
 enum { CLOSED, SHOWN, TEST, MISSING, MEMORY, MODULE_LOAD, REFUSED };
 static int open, taken = -1; /* which shows; a key press the handler took, whose release it takes too (-1: none; TRIG 1 is 0) */
+/* What a host is doing to the unit, on its own screen (owner, 13 November 2026: a sync shows a dialog with a progress
+ * bar, and a base update takes the whole screen and the panel until it is saved). The step is worked out each tick
+ * from what the rest of the base reports, so nothing here can outlive what it shows:
+ * - a module sync (ep0.c's upload): a box with its bar while the modules arrive and start. It holds no key.
+ * - a base update: the whole screen, from the first packet of a base until the write is over. On the base that is
+ *   being replaced that is the new base arriving, then the restart. On the new one, started from RAM: WAITING (two
+ *   slots only, where flash.c can tell that NOR starts another base), its container arriving, the write (flash.c's
+ *   progress), then SAVED or NOT SAVED for three seconds. Until then every key and knob is held back: after its
+ *   restart the unit loads the project and looks ready while nothing is saved, and a player who went on working lost
+ *   that work to nothing but was one power-off from an undone update. A release goes to stock only if its press did,
+ *   so no key is left held there. WAITING gives up 25 s after the start (a development RAM boot is a trial without a
+ *   write), and 20 s after the last sign of a base's container otherwise. */
+extern volatile uint32_t modwerk_flash_progress; /* flash.c: 1 + per mille of a write while the OS runs on, 0 none */
+extern volatile uint32_t modwerk_flash_outcome, modwerk_flash_trial;
+unsigned modwerk_upload_view(uint32_t *permille); /* ep0.c */
+int modwerk_boot_pending(void);                   /* boot.c */
+enum { T_NONE, T_SYNC, T_SYNC_START, T_SAVED, T_FAILED, T_WAIT, T_RECEIVE, T_SAVE, T_RESTART };
+#define T_LOCKS(t) ((t) >= T_WAIT) /* the steps of a base update that hold the panel */
+#define T_WAIT_TICKS 1500u         /* 25 s after the start */
+#define T_QUIET_TICKS 1200u        /* 20 s after a base's container was last seen */
+#define T_TOLD_TICKS 180u          /* SAVED and NOT SAVED: three seconds, or a key */
+static unsigned transfer, transfer_kind, transfer_told, transfer_seen, transfer_over;
+static uint32_t transfer_permille, transfer_wait = T_WAIT_TICKS, transfer_outcome, transfer_ticks;
+static uint8_t held_back[8]; /* the keys whose press a base update held back, a bit each: their releases stay here too */
+static void transfer_tick(void)
+{
+    uint32_t permille = 0, outcome = modwerk_flash_outcome;
+    unsigned view = modwerk_upload_view(&permille), what = view & 15u, started = view >> 4;
+    ++transfer_ticks;
+    if (what && !started) transfer_kind = what; /* told while it arrives: flash.c unpacks a container over its own first bytes */
+    if (!what) transfer_kind = 0;
+    /* A write that ended is over until another base starts to arrive: flash.c takes its progress down a moment after
+     * it reports the outcome, from another task, and on the unit that moment put WAITING back for 20 s after BASE
+     * SAVED, the panel held (owner's MKII, 13 November 2026). */
+    if (what >= 2u && !started) transfer_over = 0;
+    if (outcome != transfer_outcome) { /* a write ended: say so, and wait for nothing more */
+        transfer_outcome = outcome, transfer = outcome & 1u ? T_SAVED : T_FAILED, transfer_told = T_TOLD_TICKS;
+        transfer_over = 1, transfer_wait = 0; /* saved, or the page's to send again: the panel is free meanwhile */
+        return;
+    }
+    if (transfer_over) { /* the notice for its three seconds, then nothing */
+        if ((transfer == T_SAVED || transfer == T_FAILED) && transfer_told && --transfer_told) return;
+        transfer = T_NONE;
+        return;
+    }
+    if (transfer_kind >= 2u || modwerk_flash_progress) transfer_seen = 1, transfer_wait = transfer_ticks + T_QUIET_TICKS;
+    if (modwerk_flash_progress) {
+        transfer = T_SAVE, transfer_permille = modwerk_flash_progress > 1000u ? 1000u : modwerk_flash_progress - 1u;
+    } else if (modwerk_boot_pending() || (transfer_kind == 3u && started)) transfer = T_RESTART;
+    else if (transfer_kind == 2u && started) transfer = T_SAVE, transfer_permille = 0;
+    else if (transfer_kind >= 2u) transfer = T_RECEIVE, transfer_permille = permille;
+    else if (transfer_kind == 1u) transfer = started ? T_SYNC_START : T_SYNC, transfer_permille = permille;
+    else if ((modwerk_flash_trial || transfer_seen) && transfer_ticks < transfer_wait) transfer = T_WAIT;
+    else transfer = T_NONE;
+}
+/* 1 when a base update holds this key back. */
+static int transfer_key(int code, int pressed)
+{
+    if ((unsigned)code > 63u) return 0;
+    uint8_t *row = &held_back[code >> 3], bit = (uint8_t)(1u << (code & 7));
+    if (!pressed) { int held = *row & bit; *row &= (uint8_t)~bit; return held != 0; }
+    if (transfer == T_SAVED || transfer == T_FAILED) transfer = T_NONE; /* read: the key goes on to stock */
+    if (!T_LOCKS(transfer)) return 0;
+    *row |= bit;
+    return 1;
+}
 #define YES 0x31
 /* Our rows close PROJ's menu on the next tick, as its NO does (stock's FUN_40064bc0, Octabam's MAINMENU.md; not from
  * the row's own dispatch): a menu left open under the dialog kept its input layer, and YES in an FX chooser then
@@ -224,7 +292,7 @@ static void missing_check(void)
     for (unsigned i = 0; i < n; ++i) handles = fx_with(handles, missing[4 + 24 * i]);
     if (open == MISSING && !n && !missing_asked) open = CLOSED;
     if (missing_top + MISSING_ROWS > n) missing_top = n > MISSING_ROWS ? n - MISSING_ROWS : 0;
-    if (fx_any(fx_less(handles, missing_told)) && fx_same(handles, missing_last) && open == CLOSED && modwerk_modset_restored() &&
+    if (fx_any(fx_less(handles, missing_told)) && fx_same(handles, missing_last) && open == CLOSED && transfer == T_NONE && modwerk_modset_restored() &&
         modwerk_modset_result)
         open = MISSING, missing_top = 0, missing_asked = 0, missing_told = handles;
     /* What the open page shows is told; one that comes back and goes missing again is told again. (Told only at the
@@ -291,11 +359,12 @@ volatile uint32_t modwerk_status_key_at; /* modwerk_runtime_ticks at the last ke
 /* modset.c: the restore's notice waits while one of these shows, since it would show beneath it (owner's MKII, 30 October
  * 2026: MISSING hid MINI VERB LEFT OUT until it timed out). */
 int modwerk_status_dialog(void);
-int modwerk_status_dialog(void) { return open != CLOSED; }
+int modwerk_status_dialog(void) { return open != CLOSED || transfer != T_NONE; }
 int modwerk_status_key(int code, int pressed)
 {
     static int cue;
     if (pressed) modwerk_status_key_at = modwerk_runtime_ticks;
+    if (transfer_key(code, pressed)) return 1; /* a base update holds the panel */
     if (modwerk_selftest_key && (unsigned)code + 1u == modwerk_selftest_key) { /* the test's own PLAY or STOP */
         if (!pressed) modwerk_selftest_key = 0;
         return 0;
@@ -331,6 +400,7 @@ int modwerk_status_enc(int encoder, int delta)
 {
     (void)encoder, (void)delta;
     modwerk_status_key_at = modwerk_runtime_ticks; /* turning a knob counts as activity too (dsp.c's compaction) */
+    if (T_LOCKS(transfer)) return 1; /* a base update holds the panel */
     if (open == TEST) return 1;
     open = CLOSED; /* a knob closes the page and goes on to stock */
     return 0;
@@ -373,8 +443,16 @@ static char *number(char *s, uint32_t v)
 #define SURFACE 0x400bf10au  /* the UI's surface descriptor: copied, with the frame as its picture */
 #define DRAW_TEXT ((void (*)(uint32_t, void *, int, int, int, const char *))0x40012bd8u)
 static uint32_t surface[7];
+#ifdef MODWERK_HOST
+/* The host has no stock font: its own text calls, so the transfer screens can be drawn and checked there. */
+void host_draw_text(unsigned char *frame, int x, int top, const char *t);
+int host_text_width(const char *t);
+static unsigned char *host_frame;
+static void label(unsigned x, unsigned top, const char *t) { host_draw_text(host_frame, (int)x, (int)top, t); }
+#else
 /* Text whose capitals' top row is `top` (the text call counts y up from the bottom). */
 static void label(unsigned x, unsigned top, const char *t) { DRAW_TEXT(FONT, surface, (int)x, 59 - (int)top, -1, t); }
+#endif
 static void percent(unsigned x, unsigned top, uint32_t permille)
 {
     char t[8], *s = number(t, (permille + 5u) / 10u);
@@ -382,7 +460,11 @@ static void percent(unsigned x, unsigned top, uint32_t permille)
     label(x, top, t);
 }
 static uint32_t share(uint32_t part, uint32_t whole) { return whole ? (part > whole ? 1000u : part * 1000u / whole) : 0; }
+#ifdef MODWERK_HOST
+#define TEXT_WIDTH(font, limit, t) host_text_width(t)
+#else
 #define TEXT_WIDTH ((int (*)(uint32_t, int, const char *))0x40012f30u) /* (font, limit, str): its width in px */
+#endif
 /* The page, a dialog as stock draws them (a frame over the screen, its title and a rule): three load bars
  * (the ColdFire, then each DSP core by its tracks) with their peaks, then the memory: each core's code arena
  * and the module pool. Bars to read from a distance, numbers to check. */
@@ -650,6 +732,36 @@ void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t book
     for (unsigned i = 0; label && i < 16u && label[i]; ++i) refused_name[i] = label[i] >= 'a' && label[i] <= 'z' ? (char)(label[i] - 32) : label[i];
     open = REFUSED, refused_left = 180u;
 }
+/* machine_registry.c: the unit is already busy (the meter's last four seconds), whatever this machine would add. The
+ * same box: the measured CPU in the bar, no price. */
+uint32_t modwerk_status_cpu_recent(void)
+{
+    uint32_t sum = 0;
+    for (unsigned i = 0; i < 8u; ++i) sum += cpu_recent[i];
+    return sum / 8u;
+}
+void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu)
+{
+    modwerk_status_cpu_refused(track, label, cpu, 0);
+    if (open == REFUSED && refused_reason == 4u && refused[1] == track) refused[0] = 5u;
+}
+/* selection.c's guard (build_core.py's edit), before stock writes an FX pick: 1 when the pick asks for a module's
+ * effect (`id`, on slot 0-15: FX1 T1-T8, then FX2) while the unit is busy, and the pick is then not made. A module
+ * effect's control code, hooks and frame work are ColdFire time no price covers. Stock's effects and NONE always pass,
+ * so a busy unit can always be made lighter. The box names the slot as an effect's ("Tn FXn"). */
+extern volatile uint32_t mw_cpu_hot, mw_cpu_refusals, mw_cpu_refusal_tracks; /* machine_registry.c */
+void modwerk_fxmap_name(unsigned id, char *out); /* fxmap.c: 16 bytes */
+int modwerk_status_effect_busy(unsigned slot, unsigned id)
+{
+    uint32_t cpu = modwerk_status_cpu_recent();
+    if (slot > 15u || !fx_in(modwerk_fx_modules, id) || cpu < mw_cpu_hot) return 0;
+    char name[16];
+    modwerk_fxmap_name(id, name);
+    mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << (slot & 7u);
+    modwerk_status_cpu_refused(slot & 7u, name, cpu, 0);
+    if (open == REFUSED && refused_reason == 4u && refused[0] == 4u) refused[0] = 5u, refused[1] = slot, refused_machine = 0;
+    return 1;
+}
 static void refused_box(unsigned char *frame)
 {
     for (unsigned i = 0; i < 7u; ++i) surface[i] = ((const volatile uint32_t *)SURFACE)[i];
@@ -687,6 +799,12 @@ static void refused_box(unsigned char *frame)
      * MEM: the core's code words, and the effect's when its code is not on the core yet. Past 100 % is why. Only the
      * bar that refused it carries the effect: the core keeps other Parts' code loaded until it needs the room, so its
      * words plus the effect's can pass 100 % on a DSP FULL that memory never refused (owner's MKII, 20 October 2026). */
+    if (refused[0] == 5u) { /* a busy unit: the meter itself, and what makes room */
+        *e = 0, label(23u, 26u, need);
+        label(23u, 34u, "CPU"), share_bar(frame, 45u, 34u, 40, 6, refused_booked, 0), percent(89u, 34u, refused_booked);
+        label(23u, 42u, "UNIT IS BUSY");
+        return;
+    }
     if (refused_reason == 4u) { /* the CPU budget: one bar, and what makes room */
         const char *t = " NEEDS ";
         while (*t) *e++ = *t++;
@@ -707,18 +825,94 @@ static void refused_box(unsigned char *frame)
     label(23u, 34u, "DSP"), share_bar(frame, 45u, 34u, 40, 6, dsp, dsp_add), percent(89u, 34u, dsp);
     label(23u, 42u, "MEM"), share_bar(frame, 45u, 42u, 40, 6, mem, mem_add), percent(89u, 42u, mem);
 }
-extern volatile uint32_t modwerk_flash_progress; /* flash.c: 1 + per mille of a write while the OS runs on, 0 none */
-/* A base update saving itself while the OS runs on (flash.c: its own write, no restart after), over everything until
- * it is saved; while quiesced for another base's write, stock's own upgrade screen shows instead. */
-static void saving_box(unsigned char *frame)
+static void canvas(unsigned char *frame)
 {
-    uint32_t done = modwerk_flash_progress - 1u;
-    if (done > 1000u) done = 1000u;
-    dialog(frame, "BASE UPDATE");
-    label(X0 + 6u, Y0 + 17u, "SAVING THE NEW BASE.");
-    label(X0 + 6u, Y0 + 25u, "KEEP THE POWER ON.");
-    bar(frame, X0 + 6u, Y0 + 38u, 76, 5, done, 0);
-    percent(X0 + 86u, Y0 + 37u, done);
+#ifdef MODWERK_HOST
+    host_frame = frame;
+#else
+    for (unsigned i = 0; i < 7u; ++i) surface[i] = ((const volatile uint32_t *)SURFACE)[i];
+    surface[3] = (uint32_t)(uintptr_t)frame;
+#endif
+}
+static void centred(unsigned top, const char *t) { label((unsigned)(64 - TEXT_WIDTH(FONT, -1, t) / 2), top, t); }
+static void invert(unsigned char *frame, unsigned x0, unsigned y0, unsigned x1, unsigned y1)
+{
+    for (unsigned x = x0; x <= x1 && x < 128u; ++x)
+        for (unsigned y = y0; y <= y1 && y < 64u; ++y) {
+            unsigned bit = 63u - y;
+            frame[x * 8u + (bit >> 3)] ^= (unsigned char)(0x80u >> (bit & 7u));
+        }
+}
+/* A bar to read from across the room: a frame, a pixel of air, then the fill. `running`: no figure to show yet, so
+ * stripes that move, and the bar never looks hung. */
+static void wide_bar(unsigned char *frame, unsigned x, unsigned y, unsigned w, unsigned h, uint32_t permille, int running)
+{
+    outline(frame, x, y, x + w - 1u, y + h - 1u);
+    unsigned x0 = x + 2u, x1 = x + w - 3u, y0 = y + 2u, y1 = y + h - 3u;
+    if (running) {
+        for (unsigned px = x0; px <= x1; ++px)
+            for (unsigned py = y0; py <= y1; ++py) if (((px + py - (transfer_ticks >> 2)) & 7u) < 4u) fill(frame, px, py, px, py, 1);
+        return;
+    }
+    uint32_t n = (x1 - x0 + 1u) * (permille < 1000u ? permille : 1000u) / 1000u;
+    if (n) fill(frame, x0, y0, x0 + n - 1u, y1, 1);
+}
+/* A warning sign, 13 x 11 at (x, y). */
+static void warning(unsigned char *frame, unsigned x, unsigned y)
+{
+    for (unsigned r = 0; r < 11u; ++r) {
+        unsigned half = (r + 1u) / 2u + (r == 10u);
+        fill(frame, x + 6u - half, y + r, x + 6u + half, y + r, 1);
+    }
+    fill(frame, x + 6u, y + 3u, x + 6u, y + 6u, 0), fill(frame, x + 6u, y + 8u, x + 6u, y + 8u, 0);
+}
+/* A tick, 11 x 8 at (x, y), two pixels thick. */
+static void tick_mark(unsigned char *frame, unsigned x, unsigned y)
+{
+    for (unsigned i = 0; i < 4u; ++i) fill(frame, x + i, y + 4u + i, x + i, y + 5u + i > y + 8u ? y + 8u : y + 5u + i, 1);
+    for (unsigned i = 0; i < 8u; ++i) fill(frame, x + 3u + i, y + 7u - i, x + 3u + i, y + 8u - i, 1);
+}
+/* The base update: the whole screen, its title in a black band, the step and its bar, and what to leave alone. */
+static void update_screen(unsigned char *frame)
+{
+    static const char *const step[] = {"WAITING FOR MODWERK", "RECEIVING NEW BASE", "SAVING NEW BASE", "RESTARTING"};
+    canvas(frame);
+    fill(frame, 0, 0, 127u, 63u, 0);
+    centred(2u, "BASE UPDATE");
+    invert(frame, 0, 0, 127u, 8u);
+    if (transfer == T_SAVED || transfer == T_FAILED) {
+        int saved = transfer == T_SAVED;
+        if (saved) tick_mark(frame, 58u, 15u); else warning(frame, 57u, 13u);
+        centred(29u, saved ? "BASE SAVED" : "NOT SAVED");
+        fill(frame, 10u, 39u, 117u, 39u, 1);
+        centred(45u, saved ? "YOU CAN PLAY AGAIN" : "KEEP THE POWER ON");
+        if (!saved) centred(53u, "TRY AGAIN IN MODWERK");
+        return;
+    }
+    int running = transfer == T_WAIT || transfer == T_RESTART || (transfer == T_SAVE && !transfer_permille);
+    centred(13u, step[transfer - T_WAIT]);
+    wide_bar(frame, 10u, 21u, 108u, 11u, transfer_permille, running);
+    if (!running) {
+        char t[8], *e = number(t, (transfer_permille + 5u) / 10u);
+        *e++ = '%', *e = 0;
+        centred(35u, t);
+    }
+    fill(frame, 0, 43u, 127u, 43u, 1);
+    warning(frame, 12u, 48u);
+    label(34u, 47u, "DO NOT TOUCH");
+    label(34u, 55u, "KEEP THE POWER ON");
+}
+/* A module sync: a box as stock's dialogs, over the page, with what arrives and how far. */
+static void sync_box(unsigned char *frame)
+{
+    canvas(frame);
+    fill(frame, 14u, 12u, 113u, 51u, 0);
+    outline(frame, 14u, 12u, 113u, 51u);
+    centred(15u, "MODWERK SYNC");
+    fill(frame, 14u, 22u, 113u, 22u, 1);
+    centred(27u, transfer == T_SYNC ? "RECEIVING MODULES" : "STARTING MODULES");
+    wide_bar(frame, 20u, 36u, transfer == T_SYNC ? 66u : 88u, 9u, transfer_permille, transfer != T_SYNC);
+    if (transfer == T_SYNC) percent(91u, 38u, transfer_permille);
 }
 static void status_draw(unsigned char *frame);
 /* No jump table: it is data in .text, and the build's MCF54455 check reads its bytes as instructions. */
@@ -731,7 +925,8 @@ void modwerk_status_draw(unsigned char *frame)
 }
 static void status_draw(unsigned char *frame)
 {
-    if (modwerk_flash_progress) { saving_box(frame); return; }
+    if (transfer == T_SYNC || transfer == T_SYNC_START) { sync_box(frame); return; }
+    if (transfer != T_NONE) { update_screen(frame); return; }
     if (open == REFUSED) { refused_box(frame); return; }
     if (open == MEMORY) { memory_box(frame); return; }
     if (open == MISSING) { missing_page(frame); return; }
