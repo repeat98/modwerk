@@ -311,8 +311,8 @@ int main(void)
     /* PROJ > MODWERK > USB AUDIO (issue 1512): what the installed layout sends, chosen on the unit. */
     modwerk_usb_menu(0); CHECK(open == CLOSED);                        /* only from the open menu */
     modwerk_test_menu_open = 1; modwerk_usb_menu(0);
-    CHECK(open == USB_AUDIO && strstr(shows(), "THIS BASE SENDS NO")); /* a base without USB Audio offers nothing */
-    CHECK(modwerk_status_key(YES, 1) && modwerk_status_key(YES, 0) && open == CLOSED && !modwerk_test_usb_choice.magic);
+    CHECK(open == USB_AUDIO && !strcmp(shows(), "USB AUDIO|YES|"));       /* a base without USB Audio: no choices */
+    CHECK(modwerk_status_key(YES, 1) && modwerk_status_key(YES, 0) && open == CLOSED && !modwerk_test_usb_choice);
     modwerk_usb_audio_caps = 7; modwerk_usb_menu(0);                   /* the twenty-channel layout: all three */
     CHECK(strstr(shows(), "ALL CHANNELS|MAIN + CUE ONLY|OFF|"));
     CHECK(modwerk_status_key(UP, 1) && modwerk_status_key(UP, 0) && usb_cursor == USB_ALL); /* no further up */
@@ -320,15 +320,15 @@ int main(void)
     CHECK(usb_cursor == USB_MIX && !modwerk_usb_audio_mix);            /* the cursor alone changes nothing */
     CHECK(modwerk_status_key(YES, 1) && modwerk_status_key(YES, 0) && open == CLOSED); /* YES takes it and closes */
     CHECK(modwerk_usb_audio_mix && !modwerk_usb_audio_off);
-    CHECK(modwerk_test_usb_choice.magic == USB_MAGIC && modwerk_test_usb_choice.mode == USB_MIX); /* kept */
+    CHECK(modwerk_test_usb_choice == (USB_KEPT | USB_MIX)); /* kept */
     modwerk_usb_menu(0); CHECK(usb_cursor == USB_MIX);                 /* it opens on the choice in force */
     for (unsigned i = 0; i < 3u; ++i) modwerk_status_key(DOWN, 1), modwerk_status_key(DOWN, 0);
     CHECK(usb_cursor == USB_OFF);                                      /* no further down */
     CHECK(modwerk_status_key(NO, 1) && modwerk_status_key(NO, 0) && open == CLOSED);
-    CHECK(modwerk_usb_audio_mix && !modwerk_usb_audio_off && modwerk_test_usb_choice.mode == USB_MIX); /* NO changes nothing */
+    CHECK(modwerk_usb_audio_mix && !modwerk_usb_audio_off && modwerk_test_usb_choice == (USB_KEPT | USB_MIX)); /* NO changes nothing */
     modwerk_usb_menu(0); modwerk_status_key(DOWN, 1); modwerk_status_key(DOWN, 0);
     modwerk_status_key(YES, 1); modwerk_status_key(YES, 0);
-    CHECK(modwerk_usb_audio_off && !modwerk_usb_audio_mix && modwerk_test_usb_choice.mode == USB_OFF);
+    CHECK(modwerk_usb_audio_off && !modwerk_usb_audio_mix && modwerk_test_usb_choice == (USB_KEPT | USB_OFF));
     usb_restored = 0; usb_apply(USB_ALL); usb_tick();                  /* a restart: the kept choice is back */
     CHECK(modwerk_usb_audio_off && usb_mode == USB_OFF);
     modwerk_usb_audio_caps = 5; modwerk_usb_menu(0);                   /* a layout without the tracks beside a mix */
@@ -336,9 +336,9 @@ int main(void)
     CHECK(modwerk_status_key(UP, 1) && modwerk_status_key(UP, 0) && usb_cursor == USB_ALL); /* past the one not offered */
     CHECK(!modwerk_status_key(REC, 1) && !modwerk_status_key(REC, 0) && open == USB_AUDIO); /* REC reaches stock, it stays */
     CHECK(!modwerk_status_enc(0, 1) && open == CLOSED && modwerk_usb_audio_off); /* a knob closes it, nothing taken */
-    modwerk_test_usb_choice.mode = USB_MIX; usb_restored = 0; usb_tick(); /* kept under another layout's base: ALL */
+    modwerk_test_usb_choice = USB_KEPT | USB_MIX; usb_restored = 0; usb_tick(); /* kept under another layout's base: ALL */
     CHECK(usb_mode == USB_ALL && !modwerk_usb_audio_mix && !modwerk_usb_audio_off);
-    modwerk_test_usb_choice.mode = 9; usb_apply(USB_OFF); usb_restored = 0; usb_tick(); /* not a choice: left alone */
+    modwerk_test_usb_choice = USB_KEPT | 3u; usb_apply(USB_OFF); usb_restored = 0; usb_tick(); /* not a choice: left alone */
     CHECK(usb_mode == USB_OFF);
     usb_apply(USB_ALL); modwerk_test_menu_open = 0;
     if (failures) return 1;

@@ -266,16 +266,16 @@ void modwerk_test_menu(int unused)
  * pattern playing and Windows recording, the frame interrupt took 65 % of the CPU with ALL, 52 % with MAIN + CUE
  * ONLY, 44 % with OFF and 39 % with no stream (README.md). usbaudio.s reads the two bytes every frame and writes
  * what its layout offers, a bit a choice (base_usb_functions.py's audio_switch); a base without USB Audio writes
- * nothing, and the page says so. The choice is kept in battery RAM. */
+ * nothing, and the page lists no choice (a line saying so put the tracks-post base 16 bytes over what a unit takes
+ * over USB). The choice is kept in battery RAM. */
 enum { USB_ALL, USB_MIX, USB_OFF, USB_MODES };
 volatile uint8_t modwerk_usb_audio_off, modwerk_usb_audio_mix, modwerk_usb_audio_caps;
-struct usb_choice { uint32_t magic, mode; };
-#define USB_MAGIC 0x4d575541u /* "MWUA" */
+#define USB_KEPT 0x4d575500u /* the kept word: "MWU", then the choice */
 #ifdef MODWERK_HOST
-struct usb_choice modwerk_test_usb_choice;
+uint32_t modwerk_test_usb_choice;
 #define USB_CHOICE (&modwerk_test_usb_choice)
 #else
-#define USB_CHOICE ((volatile struct usb_choice *)0x100ffd38u) /* battery RAM after diag.c's trace (battery-ram.json) */
+#define USB_CHOICE ((volatile uint32_t *)0x100ffd38u) /* battery RAM after diag.c's trace (battery-ram.json) */
 #endif
 static unsigned usb_mode, usb_cursor;
 static int usb_restored;
@@ -286,7 +286,8 @@ static void usb_tick(void)
 {
     if (!usb_restored) {
         usb_restored = 1;
-        if (USB_CHOICE->magic == USB_MAGIC && USB_CHOICE->mode < USB_MODES) usb_apply(USB_CHOICE->mode);
+        uint32_t kept = *USB_CHOICE ^ USB_KEPT; /* under USB_MODES only when the word is ours and names a choice */
+        if (kept < USB_MODES) usb_apply(kept);
     }
     unsigned caps = modwerk_usb_audio_caps;
     if (caps && !(caps >> usb_mode & 1u)) usb_apply(USB_ALL);
@@ -298,7 +299,7 @@ static void usb_key(int code)
 {
     unsigned caps = modwerk_usb_audio_caps;
     if (code == YES) {
-        if (caps >> usb_cursor & 1u) usb_apply(usb_cursor), USB_CHOICE->magic = USB_MAGIC, USB_CHOICE->mode = usb_cursor;
+        if (caps >> usb_cursor & 1u) usb_apply(usb_cursor), *USB_CHOICE = USB_KEPT | usb_cursor;
         open = CLOSED;
         return;
     }
@@ -990,11 +991,7 @@ static void usb_page(unsigned char *frame)
 {
     static const char *const names[USB_MODES] = {"ALL CHANNELS", "MAIN + CUE ONLY", "OFF"};
     unsigned caps = modwerk_usb_audio_caps, row = 0;
-    dialog(frame, "USB AUDIO");
-    if (!caps) {
-        label(X0 + 6u, Y0 + 17u, "THIS BASE SENDS NO");
-        label(X0 + 6u, Y0 + 25u, "AUDIO OVER USB.");
-    }
+    dialog(frame, modwerk_usb_label);
     for (unsigned mode = 0; mode < USB_MODES; ++mode) {
         if (!(caps >> mode & 1u)) continue;
         unsigned top = Y0 + 15u + 10u * row++;
