@@ -59,7 +59,8 @@
         "-DVOICE_OWNER_AT=0x40291138",
         "-DTRIG_NEXT_AT=0x8000586c",
         "-DBRAIN_AT=0x419f28f8",
-        "-DVIEW_INVALIDATE_AT=0x40078580"
+        "-DVIEW_INVALIDATE_AT=0x40078580",
+        "-DFILLRECT_AT=0x40070726"
       ],
       "sites": [
         {

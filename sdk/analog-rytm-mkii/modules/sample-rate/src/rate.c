@@ -240,8 +240,9 @@ static void waveform_page(char *view)
 // the eight knobs' names in two rows, above and below a 32-pixel waveform, and
 // a knob's value in place of its name while it turns. Here the row holds TUN,
 // RATE, BR, LOP and LEV, always as values (LOP's text is OFF, ON, or PIPO with
-// Ping Pong Loop), with stock's own routine, so the font, centring, a held
-// trig's lock box and every module's value text stay stock's. STA and END show
+// Ping Pong Loop), with stock's own routine, so the font, centring and every
+// module's value text stay stock's; a held trig's lock box is the module's
+// (below), as wide as the row allows. STA and END show
 // as their lines, SMP as its list on a turn of D: no text. The header names a
 // knob while it turns, as stock.
 //
@@ -266,12 +267,20 @@ typedef void (*knob_text_t)(char *view, void *bmp, int x, int y, int id, int val
 
 // Knob A..H to its place in the row, or -1 for none (SMP, STA, END)
 static const signed char row_slot[8] = {0, 1, 2, -1, -1, -1, 3, 4};
-// The row's centres, 25.25 apart: a lock box (27 wide) at either end stays on
-// the screen, as stock's do
-static const unsigned char row_x[5] = {13, 38, 64, 89, 114};
+// A locked value's box, inverted over its text as stock's (rows y - 14..y - 8):
+// stock's is 27 wide, and five of those overlap on 128 columns, which XOR to a
+// black bar between two locks. These tile the row with one column between them,
+// TUN's the widest for a value such as -12.34; the text is centred in its box.
+static const unsigned char box_l[5] = {0, 27, 53, 78, 103};
+static const unsigned char box_r[5] = {25, 51, 76, 101, 127};
+static const unsigned char row_x[5] = {13, 39, 65, 90, 115};
+typedef void (*fillrect_t)(void *bmp, int x0, int y0, int x1, int y1, int colour);
+#define FILLRECT ((fillrect_t)FILLRECT_AT)
+#define INVERT (-1)
 
 // From the gate in audio.s, once a knob a draw: stock's routine (draw) and its
-// arguments. turning set shows the value; with a trig held stock sets lock.
+// arguments. turning set shows the value; with a trig held stock sets lock on a
+// locked knob, and both of stock's routines then only add the 27-wide box.
 void sample_rate_label(knob_text_t draw, char *view, void *bmp, int x, int y, int id, int value,
                        void *entry, int lock, int turning, int bare)
 {
@@ -283,7 +292,9 @@ void sample_rate_label(knob_text_t draw, char *view, void *bmp, int x, int y, in
     slot = row_slot[col + (y < LOWER_Y ? 4 : 0)];
     if (slot < 0)
         return;
-    draw(view, bmp, row_x[slot], ROW_Y, id, value, entry, lock, 1, bare);
+    draw(view, bmp, row_x[slot], ROW_Y, id, value, entry, 0, 1, bare);
+    if (lock)
+        FILLRECT(bmp, box_l[slot], ROW_Y - 14, box_r[slot], ROW_Y - 8, INVERT);
 }
 
 // The taller waveform, once: only from stock's own area, so a module that moves
