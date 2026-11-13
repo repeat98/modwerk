@@ -59,5 +59,7 @@ describe('module doctor', () => {
     const result = doctor('no-such-module')
     expect(result.status).toBe(2)
     expect(result.stderr).toContain('No module named no-such-module')
+    // Every elemod machine's folder is searched, the Digitakt II's too (it was missing until 13 November 2026).
+    for (const folder of ['sdk/digitakt/modules', 'sdk/digitakt-ii/modules', 'sdk/analog-four-mkii/modules']) expect(result.stderr).toContain(folder)
   }, catalogCheckTimeout + 5000)
 })

@@ -44,13 +44,15 @@ const exists = path => existsSync(resolve(root, path))
 if (draft) stageDraft(root, ids[0])
 // octabam's tools read the untracked mirror of sdk/octatrack/modules; make it current first.
 else mirrorOctatrackModules(root)
-const catalog = json('sdk/catalog.json'), machineModules = ['digitakt', 'digitone', 'analog-rytm-mkii', 'analog-four-mkii'].flatMap(machine => exists('sdk/' + machine + '/modules') ? readdirSync(resolve(root, 'sdk', machine, 'modules'), { withFileTypes: true }).filter(entry => entry.isDirectory() && !entry.name.startsWith('_')).map(entry => ({ id: entry.name, machine, folder: 'sdk/' + machine + '/modules/' + entry.name })) : [])
+// Every elemod machine's module folder, from the machine profiles, so a machine added there (the Digitakt II on 13 November 2026) is found.
+const ELEMOD_MACHINES = json('src/devices/machines.generated.json').filter(profile => profile.sdk?.platform === 'elemod').map(profile => ({ machine: profile.id, modules: profile.sdk.modules }))
+const catalog = json('sdk/catalog.json'), machineModules = ELEMOD_MACHINES.flatMap(({ machine, modules }) => exists(modules) ? readdirSync(resolve(root, modules), { withFileTypes: true }).filter(entry => entry.isDirectory() && !entry.name.startsWith('_')).map(entry => ({ id: entry.name, machine, folder: modules + '/' + entry.name })) : [])
 // Zoom effects (zdl) share one folder for the pedal family; each names the pedal it is developed on.
 if (exists('sdk/zoom/modules')) for (const entry of readdirSync(resolve(root, 'sdk/zoom/modules'), { withFileTypes: true })) if (entry.isDirectory() && !entry.name.startsWith('_')) {
   const folder = 'sdk/zoom/modules/' + entry.name
   machineModules.push({ id: entry.name, machine: exists(folder + '/modwerk.module.json') ? json(folder + '/modwerk.module.json').machine : 'zoom-ms-70cdr', folder, zdl: true })
 }
-const MODULE_FOLDERS = 'sdk/octatrack/modules, sdk/digitakt/modules, sdk/digitone/modules, sdk/analog-rytm-mkii/modules, sdk/analog-four-mkii/modules or sdk/zoom/modules'
+const MODULE_FOLDERS = ['sdk/octatrack/modules', ...ELEMOD_MACHINES.map(item => item.modules)].join(', ') + ' or sdk/zoom/modules'
 
 // An unknown id is answered before any check runs: the rules below take seconds on a large catalogue.
 if (!all && !exists('sdk/octatrack/modules/' + ids[0]) && !machineModules.some(item => item.id === ids[0])) { console.error('No module named ' + ids[0] + ' under ' + MODULE_FOLDERS + '.'); process.exit(2) }
@@ -221,9 +223,10 @@ function machineModule({ id, machine, folder, zdl = false }) {
     return lines
   }
   // The browser builds only from the files elekloader's catalog pins (vendor/elekloader/catalog/catalog.json); a mod's id is its catalog id.
-  // elekloader names the Rytm's and the Four's devices analog-rytm-mk2 and analog-four-mk2, which their machine ids do not start with.
+  // elekloader names the Rytm's and the Four's devices analog-rytm-mk2 and analog-four-mk2, which their machine ids do not start with,
+  // and the Digitakt II's digitakt-mk2, which the Digitakt's id does: match the link device's key where there is one.
   const device = LINK_DEVICES.find(item => item.machine === machine)?.key
-  const pins = json('vendor/elekloader/catalog/catalog.json').mods.filter(mod => mod.id === id && (mod.device === device || mod.device.startsWith(machine)))
+  const pins = json('vendor/elekloader/catalog/catalog.json').mods.filter(mod => mod.id === id && (device ? mod.device === device : mod.device.startsWith(machine)))
   if (pins.length) lines.push({ state: 'ok', name: 'browser builder', detail: 'pinned in the elekloader catalog for OS ' + pins.map(mod => mod.os).join(', ') })
   else lines.push({ state: 'fail', name: 'browser builder', detail: 'no pinned .elemod file for ' + machine + ', so the browser cannot build it', fix: 'npm run elekloader:update -- ... (vendor/elekloader/README.md, Updating; docs/ADD_A_MODULE.md, Digitakt and Digitone)' })
   if (rulesProblem) lines.push({ state: 'fail', name: 'module rules', detail: 'npm run modules:check fails: ' + rulesProblem.slice(0, 220), fix: 'fix what it names' })
