@@ -95,11 +95,31 @@ static void release(unsigned track)
 }
 /* Charge `who`'s voice on the track, replacing what was charged there; 0 when its core cannot carry it (nothing
  * changes). The machine the track was charged to keeps its engine only while another track still is. */
+/* Its price per voice: its module's engine's when its package carries one (ABI 10: the header's cycles and kind,
+ * outside the controller digest, so a new price ships in the package and never changes the base's trust row), else
+ * its record's. A record priced in its engine keeps 0 there, and a per-core cost of its own (source_engine) is of the
+ * engine's kind. 0 with no per-core cost: unpriced, never admitted. */
+static int price(const Machine *who, uint32_t *voice, uint8_t *kind)
+{
+    struct runtime_owner o;
+    *voice = who->source_voice, *kind = who->source_kind;
+    if (modwerk_runtime_owner_at((uintptr_t)who, &o) == 1)
+        for (unsigned i = 0; i < RUNTIME_MODULES; ++i) {
+            const struct runtime_module *m = modwerk_runtime_module(i);
+            if (!m || m->dsp.module != o.module || !m->dsp.engine_count) continue;
+            if (who->source_voice || (who->source_engine && m->dsp.kind != who->source_kind)) return 0;
+            *voice = m->dsp.cycles, *kind = m->dsp.kind;
+            break;
+        }
+    return *voice || who->source_engine;
+}
 static int claim(unsigned track, const Machine *who)
 {
     const Machine *old = charged[track];
     if (old == who) return 1;
-    int refused = modwerk_dsp_source_claim(track, key(who), who->source_voice, who->source_engine, who->source_kind);
+    uint32_t voice; uint8_t kind;
+    int refused = price(who, &voice, &kind) ? modwerk_dsp_source_claim(track, key(who), voice, who->source_engine, kind)
+                                            : RUNTIME_MALFORMED;
     if (refused) {
         if (refused == RUNTIME_CYCLES && !(warned & 1u << track)) warned |= (uint8_t)(1u << track), modwerk_status_machine_refused(track, who->label);
         return 0;

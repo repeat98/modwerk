@@ -67,6 +67,10 @@ volatile uint32_t modwerk_machine_assigned; /* controller_board.c's, not linked 
 /* The loader's owner of an address: here the module id is the machine's first letter. */
 int modwerk_runtime_owner_at(uintptr_t address, struct runtime_owner *o)
 { const struct modwerk_machine *m = (const void *)address; memset(o, 0, sizeof *o); o->module = m->sig[0]; return 1; }
+/* The loader's live modules: none, unless a check installs one whose package carries an engine (ABI 10). */
+static struct runtime_module engine_module; static int engine_installed;
+const struct runtime_module *modwerk_runtime_module(unsigned position)
+{ return engine_installed && position == 3u ? &engine_module : 0; }
 static uintptr_t volatile machine_row[10], sequencer_row[9], start_row[10];
 static int masked;
 uint32_t modwerk_machine_mask(void) { CHECK(!masked); masked = 1; return 7; }
@@ -100,9 +104,10 @@ static volatile uint32_t host_timer; /* the frame timer (DTCN3): the synthetic r
 /* The DSP budget's source stage (dsp.c, synthetic): a core carries `room` voices; a claim replaces the track's voice,
  * and an engine off frees its machine's engine and every voice it held. */
 static unsigned room = 1, claims_made, releases, engine_offs; static uint8_t voices; static uint32_t voice_of[8], last_off;
+static uint32_t want_voice = 411, want_engine = 3; static uint8_t want_kind = 1; /* the price a claim must carry */
 int modwerk_dsp_source_claim(unsigned track, uint32_t module, uint32_t voice, uint32_t engine, uint8_t kind)
 {
-    CHECK(module && voice == 411 && engine == 3 && kind == 1 && track < 8); ++claims_made;
+    CHECK(module && voice == want_voice && engine == want_engine && kind == want_kind && track < 8); ++claims_made;
     unsigned used = 0; for (unsigned t = 0; t < 8; ++t) used += t != track && voices & 1u << t;
     if (used >= room) return 6; /* RUNTIME_CYCLES */
     voices |= (uint8_t)(1u << track); voice_of[track] = module; return 0;
@@ -440,6 +445,32 @@ static void check_cpu_budget(void)
     for (unsigned t = 0; t < 8; ++t) for (unsigned k = 0; k < 3; ++k) part0()[60 + 30 * t + k] = 0;
     mw_ui_tick(); rows(0, 0, 0, 0);
     CHECK(!mw_cpu_refused);
+}
+/* ABI 10: a machine whose package carries an engine is charged at the engine header's price per voice (cycles and
+ * kind, outside the controller digest), not its record's; its record keeps 0 there. A record still priced beside such
+ * an engine, a per-core cost of another kind, or no price at all is refused, never admitted free. */
+static void check_engine_price(void)
+{
+    struct modwerk_machine ab = A;
+    ab.source_voice = 0, ab.source_engine = 0, ab.source_kind = 1;
+    engine_module.dsp.module = ab.sig[0], engine_module.dsp.engine_count = 1, engine_module.dsp.cycles = 414,
+    engine_module.dsp.kind = 1;
+    fresh(); room = 1; voices = 0;
+    unsigned made = claims_made;
+    CHECK(!claim(0, &ab) && claims_made == made);                  /* no engine installed: unpriced, refused */
+    engine_installed = 1; want_voice = 414, want_engine = 0, want_kind = 1;
+    CHECK(claim(0, &ab) && claims_made == made + 1); release(0);   /* the engine's price */
+    engine_module.dsp.cycles = 191; want_voice = 191;
+    CHECK(claim(0, &ab) && claims_made == made + 2); release(0);   /* a new package's price, the same record */
+    engine_module.dsp.kind = 3; want_kind = 3;
+    CHECK(claim(0, &ab)); release(0);                              /* hardware evidence */
+    ab.source_engine = 2;                                          /* a per-core cost of another kind */
+    made = claims_made; CHECK(!claim(0, &ab) && claims_made == made);
+    ab.source_kind = 3; want_engine = 2;
+    CHECK(claim(0, &ab)); release(0);                              /* of the engine's kind */
+    ab.source_engine = 0; ab.source_voice = 411;                   /* still priced in its record too */
+    made = claims_made; CHECK(!claim(0, &ab) && claims_made == made);
+    engine_installed = 0; want_voice = 411, want_engine = 3, want_kind = 1;
 }
 int main(void)
 {
@@ -899,6 +930,7 @@ int main(void)
     check_source_starts();
     check_native_flex_voice();
     check_cpu_budget();
+    check_engine_price();
     if (failures) { fprintf(stderr, "%u registry checks failed\n", failures); return 1; }
     puts("Machine registry: rows by table order, admission before mutation, signatures and defaults in both copies, absent "
          "machines as stock, the validator's protection and wrapper chain, render routing, keyed SEQUENCER rows, chooser "

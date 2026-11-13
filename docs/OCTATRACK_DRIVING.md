@@ -4,8 +4,14 @@ How to work a real Octatrack MKII running a Modwerk development base (`build_cor
 USB: start the link, send steps, read the unit, change things without harming the owner's project, and keep
 runs short. The flashed beta base refuses these steps; a twin of it is `build_core.py` with the flags that
 `scripts/octatrack-base.mjs` passes for `--beta`, without the controller rows, plus `--dev` and an `--output` outside Git,
-then `npm run device -- boot` that folder. The rows are left out because Analog BD's reviewed recipe refuses a twin's
-layout, so test the base-bound modules (Analog BD, Sidechain, Output Matrix) on the tester image instead. Everything here was done on the owner's MKII on 11 October 2026. Why things fail is in
+then `npm run device -- boot` that folder. Without the controller rows the twin trusts no base-bound module (Analog BD,
+Sidechain, Output Matrix). To test one on a twin, build it as `octatrack-base.mjs` does, plus `--dev`: the empty-row pass,
+`base_bound.py rows` against its `symbols.json`, then the build with `--controller-policies` and `--controller-layout`.
+Analog BD's reviewed recipe refuses the twin's layout, so capture a twin-only one (`build.py --octabam-machine
+analog-bassdrum --base-symbols … --capture-stock-recipe`), swap it into `machine-recipes.json` for those two steps and put
+the committed file back (13 November 2026, MKII, twin `80f62ad6`). Boot with the one-shot `npm run device -- boot DIR
+--chunk 4096`: the same day a boot sent through `serve` left the unit running but gone from USB until a power cycle, and
+the same image booted one-shot came back. Everything else here was done on the owner's MKII on 11 October 2026. Why things fail is in
 [OCTATRACK_HARDWARE_TRAPS.md](OCTATRACK_HARDWARE_TRAPS.md).
 
 ## The rules
