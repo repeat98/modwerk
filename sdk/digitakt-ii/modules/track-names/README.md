@@ -1,6 +1,6 @@
 # Track Names
 
-A Digitakt II mod by @crisp909. Version 0.1.4-experimental. OS 1.17, core 1.0.
+A Digitakt II mod by @crisp909. Version 0.1.2-experimental. OS 1.17, core 1.0.
 
 The Internal Mixer labels its faders TRK1 to TRK16. With Track Names it shows the track's own name instead, and each
 fader gets its track number in an inverted box at its top left, so you still know which track it is.
@@ -29,4 +29,4 @@ and copying a pattern copies its names. Track Names reads them and saves nothing
 - Only the Internal Mixer pages (2/5 and 3/5). Other pages are unchanged.
 - In PERFORM KIT mode the mixer shows the names of the pattern you are on, even when the sound comes from the kept kit.
 - The mod draws over the stock labels; it does not change them or any project data. Where a pop-up (pattern
-  select, for example) covers a label or a fader's top, names stay under it, cut at its edge, as the stock labels are; a track number it partly covers is hidden.
+  select, for example) covers a label or a fader's top, names and numbers stay under it, cut at its edge, as the stock labels are.
