@@ -32,6 +32,18 @@ export function parseRuntimeCapabilities(view: DataView): RuntimeCapabilities {
     throw new VendorTransportError('The Octatrack’s loader capabilities could not be read.')
   return { abi: view.getUint8(5), features: view.getUint16(6), maxSites: view.getUint16(8), maxCopies: view.getUint16(10) }
 }
+export const VENDOR_REFUSED = 41 // what the loader's last refusal met (sdk/runtime/loader/loader.h, MWRF); older bases stall it
+export const REFUSED_BYTES = 16
+/** What the loader's last refusal met (loader.h runtime_met): `kind` 1 a base event (`what` its hook index), 2 base
+ * feature bits the base lacks, 3 a site (`what` its address) another module patches, 4 a DSP word (`what`: the space in
+ * the top byte, 1 X, 2 Y, then the address) another module claims; `module` that module's runtime id, 0 none. It carries
+ * its `refusal`, so a reader can tell it belongs to the code it has. */
+export interface RefusalSubject { refusal: number; kind: number; what: number; module: number }
+/** MWRF v1. Undefined for a record this client does not read; a kind it does not know is kept as it is. */
+export function parseRefusalSubject(view: DataView): RefusalSubject | undefined {
+  if (view.byteLength !== REFUSED_BYTES || view.getUint32(0) !== 0x4d575246 || view.getUint8(4) !== 1) return undefined
+  return { refusal: view.getUint8(5), kind: view.getUint16(6), what: view.getUint32(8), module: view.getUint32(12) }
+}
 export const VENDOR_SLOTS = 39 // the base's two-slot layout (sdk/machines/octatrack/elekloader/flash.h); older bases stall it
 export const SLOTS_BYTES = 24
 /** Where the base lives in the unit's flash (docs/OCTATRACK_TWO_SLOT_BASE.md). `fellBack`: the newest slot's base did
@@ -193,6 +205,18 @@ export class UsbVendorTransport implements UploadTransport {
     if (reply.status === 'stall') return undefined
     if (reply.status !== 'ok' || !reply.data) throw new VendorTransportError('The Octatrack did not answer the loader capabilities request.')
     return parseRuntimeCapabilities(reply.data)
+  }
+  /** What the loader's last refusal met, read-only, from the interrupt: undefined from a base before the record (it
+   * stalls), and for a refusal that named nothing. Read it after the self-test record's refusal, and use it only when
+   * the two name the same refusal. */
+  async refused(signal?: AbortSignal): Promise<RefusalSubject | undefined> {
+    signal?.throwIfAborted()
+    const reply = await this.device.controlTransferIn(this.setup(VENDOR_REFUSED, 0), REFUSED_BYTES)
+    signal?.throwIfAborted()
+    if (reply.status === 'stall') return undefined
+    if (reply.status !== 'ok' || !reply.data) throw new VendorTransportError('The Octatrack did not answer the refusal request.')
+    const subject = parseRefusalSubject(reply.data)
+    return subject?.kind ? subject : undefined
   }
   /** Read-only, from the interrupt: undefined from a base before the two slots (it stalls), null before its first look. */
   async slots(signal?: AbortSignal): Promise<BaseSlots | null | undefined> {

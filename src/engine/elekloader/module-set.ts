@@ -420,6 +420,7 @@ export async function prepareCardSet(target: InventoryTarget, load = fetchPackag
 
 /** The link's builder and inventory for the site's checkout card. */
 export function moduleSetKit(link: OctatrackLink) {
+  link.moduleNames = new Map(MODULES.map(module => [Number.parseInt(runtimeId(module.id), 16), module.name]))
   const readInventory = async () => {
     const modules = await link.inventory()
     // Only a base that doesn't know INVENTORY lands here; couldn't-ask-now rejects with LinkBusyError, which callers retry.

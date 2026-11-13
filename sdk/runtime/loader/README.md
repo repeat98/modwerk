@@ -174,6 +174,28 @@ set, so they come back exactly and install order never matters. A site or stock 
 hook's bytes is refused as `RUNTIME_EVENT`; `modwerk_runtime_refused_event()` gives the hook's
 index. MWCP feature 128 says the base has site hooks.
 
+### What a refusal names
+
+A refusal code can have several causes: `RUNTIME_CONFLICT` is a base feature the base lacks, a site another
+module patches, or a DSP claim another module holds. The check that fails records what it met, and the
+refusal keeps it: `modwerk_runtime_refused_subject(out)` writes MWRF v1, 16 bytes: `MWRF`, version 1, the
+refusal u8, the kind u16 (`enum runtime_met`), `what` u32 and `module` u32.
+
+| Kind | `what` | `module` |
+| --- | --- | --- |
+| 1 event (`RUNTIME_EVENT`, or `RUNTIME_FULL` for a full row) | the hook index | 0 |
+| 2 feature | the required feature bits the base lacks | 0 |
+| 3 site | the address of the package's site that shares a byte with another module's | that module's id |
+| 4 claim | the first DSP word both claim, the package's claim's space (1 X, 2 Y) in the top byte | that module's id |
+
+Kind 0 is a refusal that named nothing: every other cause, an ABI 9 hook entry, and a machine's own
+admission (`modwerk_machine_dsp_claims_admit` and the others), which cannot name its subject yet. The owner
+may be a module pending in the same journal or set, not yet live. The record carries its refusal, so a
+reader that has the code from elsewhere (the Octatrack's self-test record) uses the subject only when the
+two agree. The Octatrack serves it as vendor request 41 (`elekloader/ep0.c`); a base before it stalls the
+request, and the host keeps the code's own text. New kinds append; a reader keeps the code's text for a kind
+it does not know. `sdk/runtime/loader-refusals.json` holds the words for each kind.
+
 For Octatrack `ot_machine_starts`, the linked C/assembly builder also verifies the
 record's callback while ELF metadata is still available. Its pointer word must
 relocate to the entry of a sized `STT_FUNC` wholly inside `.text`, before merged

@@ -50,6 +50,9 @@ export interface FakeUnit {
   status?: boolean
   /** The loader refuses the next load with this reason (loader.h runtime_refusal), as the base's record reports it. */
   refusal?: number
+  /** What that refusal met (loader.h runtime_met), as REFUSED (request 41) reports it; absent, the base stalls the
+   * request as one built before it. */
+  refusalSubject?: { kind: number; what: number; module: number }
   /** The loader refuses the next publications with this reason, after staging (a resident controller quiescing: 5);
    * the base then drops the staged package. */
   publishRefusal?: number
@@ -128,6 +131,11 @@ export function fakeUnit(kind: 'base' | 'stock' | 'none' = 'base'): FakeUnit {
           ;[16, 20, 24].forEach(offset => load.setUint32(offset, ticks))
           ;[380 + wave(0), 520 + wave(2), 640, 260 + wave(4), 410].forEach((value, i) => load.setUint32(28 + 4 * i, value))
           return { status: 'ok', data: load }
+        }
+        if (setup.request === 41 && unit.refusalSubject) { // REFUSED, MWRF v1: the loader's refusal and what it met
+          const met = new DataView(new ArrayBuffer(16)), { kind, what, module } = unit.refusalSubject
+          met.setUint32(0, 0x4d575246); met.setUint8(4, 1); met.setUint8(5, unit.refusal ?? unit.publishRefusal ?? 0); met.setUint16(6, kind); met.setUint32(8, what); met.setUint32(12, module)
+          return { status: 'ok', data: met }
         }
         const refusal = unit.refusal ?? unit.publishRefusal ?? (unit.writeRefusal ? 100 + unit.writeRefusal : unit.flashed === '' ? 107 : undefined)
         if (setup.request === 21 && unit.status && refusal === undefined) { // passed, peaks, saved on the card and read back

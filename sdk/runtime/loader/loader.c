@@ -105,7 +105,12 @@ unsigned modwerk_runtime_active(void)
     return n;
 }
 enum runtime_refusal modwerk_runtime_refusal(void) { return refusal; }
-void modwerk_runtime_refused(enum runtime_refusal why) { refusal = why; }
+/* What the refusal met (loader.h): a check names it as it fails, and the refusal that follows keeps it. */
+static struct { uint32_t kind, what, module; } met;
+static uint8_t named;
+static int meets(enum runtime_met kind, uint32_t what, uint32_t module) { met.kind = kind, met.what = what, met.module = module; named = 1; return 1; }
+static void unnamed(void) { if (!named) met.kind = RUNTIME_MET_NOTHING, met.what = met.module = 0; named = 0; }
+void modwerk_runtime_refused(enum runtime_refusal why) { unnamed(); refusal = why; }
 uint32_t modwerk_runtime_value(void) { return modwerk_runtime_api.value; }
 uint32_t modwerk_runtime_calls(void) { return modwerk_runtime_ticks; }
 
@@ -124,7 +129,14 @@ unsigned modwerk_runtime_capabilities(uint8_t *out)
     out[10] = (uint8_t)(RUNTIME_COPIES >> 8); out[11] = (uint8_t)RUNTIME_COPIES;
     return 12u;
 }
-static int refuse(enum runtime_refusal why) { refusal = why; return 0; }
+unsigned modwerk_runtime_refused_subject(uint8_t *out)
+{
+    out[0] = 'M'; out[1] = 'W'; out[2] = 'R'; out[3] = 'F';
+    out[4] = 1; out[5] = (uint8_t)refusal; out[6] = 0; out[7] = (uint8_t)met.kind;
+    put32(out + 8, met.what); put32(out + 12, met.module);
+    return RUNTIME_SUBJECT_BYTES;
+}
+static int refuse(enum runtime_refusal why) { unnamed(); refusal = why; return 0; }
 /* ABI 9: the base features a package may require (loader.h). None unless the machine says so. */
 #ifndef MODWERK_RUNTIME_FEATURES_EXTERNAL
 __attribute__((weak)) unsigned modwerk_machine_dsp_features(void) { return 0; }
@@ -152,7 +164,9 @@ static int claims_taken(unsigned position, const struct runtime_dsp_claim *c, un
             journal.row[k - RUNTIME_MODULES].after : 0;
         for (unsigned i = 0; m && i < m->dsp.claim_count; ++i)
             for (unsigned j = 0; j < n; ++j)
-                if (((m->dsp.claims[i].access | c[j].access) & RUNTIME_CLAIM_WRITE) && claims_meet(&m->dsp.claims[i], &c[j])) return 1;
+                if (((m->dsp.claims[i].access | c[j].access) & RUNTIME_CLAIM_WRITE) && claims_meet(&m->dsp.claims[i], &c[j]))
+                    return meets(RUNTIME_MET_CLAIM, (uint32_t)c[j].space << 24 |
+                                 (c[j].address > m->dsp.claims[i].address ? c[j].address : m->dsp.claims[i].address), m->id);
     }
     return 0;
 }
@@ -179,10 +193,10 @@ static const struct runtime_module *by_order[RUNTIME_MODULES];
 static int evented(uint32_t address, uint32_t n)
 {
     for (unsigned e = 0; e < RUNTIME_SITE_EVENTS; ++e)
-        if (address < event_span[e][0] + event_span[e][1] && event_span[e][0] < address + n) { refused_event = RUNTIME_EVENTS + e; return 1; }
+        if (address < event_span[e][0] + event_span[e][1] && event_span[e][0] < address + n) { refused_event = RUNTIME_EVENTS + e; return meets(RUNTIME_MET_EVENT, refused_event, 0); }
 #if RUNTIME_OWNED_SITES
     for (unsigned k = 0; k < RUNTIME_OWNED_SITES; ++k)
-        if (address < owned_span[k][0] + owned_span[k][1] && owned_span[k][0] < address + n) { refused_event = RUNTIME_EVENTS + owned_span[k][2]; return 1; }
+        if (address < owned_span[k][0] + owned_span[k][1] && owned_span[k][0] < address + n) { refused_event = RUNTIME_EVENTS + owned_span[k][2]; return meets(RUNTIME_MET_EVENT, refused_event, 0); }
 #endif
     return 0;
 }
@@ -202,7 +216,7 @@ static int roomless(unsigned position, const uint32_t *hook)
             n += r->position!=position && r->after && r->after->hook[e] && (!live[r->position] || !live[r->position]->hook[e]);
         }
 #endif
-        if (n > event_room[e - RUNTIME_EVENTS]) { refused_event = e; return 1; }
+        if (n > event_room[e - RUNTIME_EVENTS]) { refused_event = e; return meets(RUNTIME_MET_EVENT, e, 0); }
     }
     return 0;
 }
@@ -675,17 +689,18 @@ static int claimed(unsigned position, uint32_t address, uint32_t n)
 {
     for (unsigned k = 0; k < RUNTIME_MODULES; ++k)
         for (uint32_t i = 0; k != position && live[k] && i < live[k]->sites; ++i)
-            if (address < live[k]->site[i].address + live[k]->site[i].length && live[k]->site[i].address < address + n) return 1;
+            if (address < live[k]->site[i].address + live[k]->site[i].length && live[k]->site[i].address < address + n)
+                return meets(RUNTIME_MET_SITE, address, live[k]->id);
     for(unsigned k=0;k<journal.progress.records;k++) {
         const struct runtime_module *m=journal.row[k].after;
         for(uint32_t i=0;m && journal.row[k].position!=position && i<m->sites;i++)
-            if(address<m->site[i].address+m->site[i].length && m->site[i].address<address+n) return 1;
+            if(address<m->site[i].address+m->site[i].length && m->site[i].address<address+n) return meets(RUNTIME_MET_SITE,address,m->id);
     }
 #ifdef MODWERK_RUNTIME_SETS
     for(unsigned k=0;k<change_set.count;k++) {
         const struct runtime_module *m=change_set.row[k].after;
         for(uint32_t i=0;m && change_set.row[k].position!=position && i<m->sites;i++)
-            if(address<m->site[i].address+m->site[i].length && m->site[i].address<address+n) return 1;
+            if(address<m->site[i].address+m->site[i].length && m->site[i].address<address+n) return meets(RUNTIME_MET_SITE,address,m->id);
     }
 #endif
     return 0;
@@ -726,7 +741,7 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
 #ifdef MODWERK_RUNTIME_SETS
     if(change_set.count && !change_set.preparing) return refuse(RUNTIME_BUSY);
 #endif
-    candidate = 0; prepared = 0; refusal = RUNTIME_OK;
+    candidate = 0; prepared = 0; named = 0; unnamed(); refusal = RUNTIME_OK;
     if (length < 28u || data[0] != 'M' || data[1] != 'W' || data[2] != 'R' || data[3] != 'M' || be16(data + 4) < 3u ||
         be16(data + 4) > RUNTIME_ABI || be16(data + 6) & ~(be16(data + 4) >= 8u ? 7u : be16(data + 4) >= 6u ? 3u : 0u)) return refuse(RUNTIME_MALFORMED);
     uint32_t abi = be16(data + 4), header = abi >= 9 ? RUNTIME_HEADER_BYTES : abi == 8 ? 76u : abi == 7 ? 72u : abi == 6 ? 68u : abi == 5 ? 50u : abi == 4 ? 32u : 28u;
@@ -896,7 +911,8 @@ static int __attribute__((used)) prepare_context(void *u, const uint8_t *data, u
     dsp.present = (uint8_t)!!(image || sites || dsp.count || engine);
     mu_sha256(data, length, dsp.package_sha256);
     /* ABI 9: a stock-DSP hook needs a hook slot no ABI 9 base has; a feature this base lacks. */
-    if ((entries && !engine) || (dsp.requires & ~modwerk_machine_dsp_features())) return refuse(RUNTIME_CONFLICT);
+    uint32_t lacks = dsp.requires & ~modwerk_machine_dsp_features();
+    if ((entries && !engine) || (lacks && meets(RUNTIME_MET_FEATURE, lacks, 0))) return refuse(RUNTIME_CONFLICT);
     /* Admission: a position, bytes no other live module owns, an effect id and what the machine's DSPs take, memory. */
     slot = position_of(id);
     if (slot == RUNTIME_MODULES || roomless(slot, hook)) return refuse(RUNTIME_FULL);

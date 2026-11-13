@@ -7,7 +7,7 @@ import { runSelftest, waitUntilSaved } from './selftest.ts'
 import { sha } from '../../../vendor/elekloader/kit/src/bytes.ts'
 import { UploadDeviceError, UploadSession, UploadUnconfirmedError } from './upload-session.ts'
 import type { UploadResultName } from './upload-wire.ts'
-import { findVendorInterface, RuntimeFeature, UsbVendorTransport, type BaseSlots, type ControlDevice, type MissingModule, type SelftestRecord, type VendorIdentity } from './upload-usb.ts'
+import { findVendorInterface, RuntimeFeature, UsbVendorTransport, type BaseSlots, type ControlDevice, type MissingModule, type RefusalSubject, type SelftestRecord, type VendorIdentity } from './upload-usb.ts'
 import * as formats from '../../../vendor/elekloader/kit/src/formats.ts'
 import type { ElekFile } from '../../../vendor/elekloader/kit/src/elek.ts'
 import { OCTATRACK } from '../../../vendor/elekloader/kit/src/devices.ts'
@@ -109,6 +109,12 @@ const REFUSED: Partial<Record<UploadResultName, string>> = {
  * loader's refusals (sdk/runtime/loader-refusals.json). A code without one shows the plain text above. */
 const REJECTED: Partial<Record<number, string>> = Object.fromEntries(
   loaderRefusals.refusals.flatMap(refusal => 'musician' in refusal && refusal.musician ? [[refusal.code, refusal.musician]] : []))
+/** What the refusal met, when the base says (its REFUSED record, of the same refusal): that subject's text, naming the
+ * module it met as the unit's own list does (`names`, by runtime id); undefined keeps the refusal's own text. */
+export function rejectedBy(why: number | undefined, subject: RefusalSubject | undefined, names: ReadonlyMap<number, string> = new Map()) {
+  const text = subject && subject.refusal === why ? loaderRefusals.subjects[subject.kind]?.musician : undefined
+  return text?.replace('{module}', names.get(subject!.module) ?? 'a module that’s already on it')
+}
 /** The browser couldn't claim the unit. In the data (11 Nov 2026) that was mostly Modwerk in another tab or browser, which
  * reads the unit every second while connected, not an Elektron app (they use the MIDI and audio interfaces). On Windows it
  * can also be the computer: an interface it set up without the base's interface GUID never claims (the same NetworkError),
@@ -185,6 +191,8 @@ export class OctatrackLink {
   /** SLOTS as the unit answered it at connect (undefined from a base before the two slots). */
   private slotsRead?: BaseSlots | null
   private users = 0
+  /** Module names by runtime id, so a refusal can name the module it met (rejectedBy); the site's kit fills it. */
+  moduleNames: ReadonlyMap<number, string> = new Map()
   /** Bumped when the unit goes away or the last view leaves: a reply or queued job from before must not change the link. */
   private connection = 0
   /** USB jobs run one at a time across every tab of the site: a read releasing the interface would cut off a load that
@@ -660,6 +668,7 @@ export class OctatrackLink {
     if (connection !== this.connection) return
     const why = error instanceof UploadDeviceError && ['rejected', 'backend'].includes(error.status.result) ?
       (await this.transport?.selftest(false).catch(() => undefined))?.refusal : undefined
+    const met = why ? await this.transport?.refused().catch(() => undefined) : undefined
     if (connection !== this.connection) return
     const label = error instanceof UploadDeviceError ? 'device' : error instanceof UploadUnconfirmedError ? 'transport' : error instanceof StaleLoadError ? 'stale' : error instanceof DOMException && error.name === 'AbortError' ? 'cancelled' : 'unknown'
     // An unclassified failure names its error type (never the message), so the diagnostics can tell a bug from a refusal.
@@ -668,7 +677,7 @@ export class OctatrackLink {
     this.session = undefined
     await this.release()
     // An untrusted connection that could not be read again leaves the running set unknown.
-    const text = recovered && clean ? RECOVERED : (REJECTED[why ?? 0] ?? explainLinkError(error)) + (clean ? '' : ' ' + UNPLUG)
+    const text = recovered && clean ? RECOVERED : (rejectedBy(why, met, this.moduleNames) ?? REJECTED[why ?? 0] ?? explainLinkError(error)) + (clean ? '' : ' ' + UNPLUG)
     if (this.device && connection === this.connection) this.ready({ tone: 'error', text }, session ? settled?.status.active : this.state.active)
   }
   /** Cancel, roll back or leave upload mode from whatever phase `session` reports; true once back to normal. */

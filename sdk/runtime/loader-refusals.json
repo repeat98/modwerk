@@ -1,5 +1,12 @@
 {
-  "$comment": "The loader's refusals in one place: loader.h's enum runtime_refusal in order (scripts/loader-refusals.test.mjs holds the two together), a short label for logs, what a developer does next, and what the site tells a musician. A code without its own musician text shows the site's plain 'can't run this module file'.",
+  "$comment": "The loader's refusals in one place: loader.h's enum runtime_refusal in order (scripts/loader-refusals.test.mjs holds the two together), a short label for logs, what a developer does next, and what the site tells a musician. A code without its own musician text shows the site's plain 'can't run this module file'. `subjects`: what a refusal met, loader.h's enum runtime_met in order, which the base reports beside the code (vendor request 41); {what} and {module} are filled from the record, and a subject's musician text replaces its refusal's.",
+  "subjects": [
+    { "kind": 0, "name": "RUNTIME_MET_NOTHING", "developer": null, "musician": null },
+    { "kind": 1, "name": "RUNTIME_MET_EVENT", "developer": "it met the base's event at hook index {what}", "musician": null },
+    { "kind": 2, "name": "RUNTIME_MET_FEATURE", "developer": "it needs base feature bits {what} that this base lacks", "musician": "This module needs a part of the Modwerk base that the base on your Octatrack doesn’t have. Update the base, then sync again." },
+    { "kind": 3, "name": "RUNTIME_MET_SITE", "developer": "its site at {what} patches the same stock code as {module}", "musician": "This module changes the same part of the Octatrack as {module}. Remove one of the two, then sync again." },
+    { "kind": 4, "name": "RUNTIME_MET_CLAIM", "developer": "it claims the DSP word {what} that {module} already holds", "musician": "This module uses the same DSP memory as {module}. Remove one of the two, then sync again." }
+  ],
   "refusals": [
     { "code": 0, "name": "RUNTIME_OK", "label": "no refusal", "developer": "The loader refused nothing: the step failed before or after it." },
     { "code": 1, "name": "RUNTIME_MALFORMED", "label": "malformed", "developer": "The package is not one this base reads (ABI, header, counts or bounds). Rebuild it for the running base.", "musician": null },

@@ -495,6 +495,10 @@ async function stopping(step) {
   }
 }
 
+/** A module's name by its runtime id (hex), from the published packages; undefined for one they do not list. */
+function moduleName(id) {
+  try { return JSON.parse(readFileSync(new URL('../src/engine/assets/octatrack-module-packages.json', import.meta.url), 'utf8')).packages.find(entry => entry.module === id)?.name } catch { return undefined }
+}
 /** Stage, publish and run `pkg` in a trial for `seconds`, then accept or roll back. */
 /** A step the loader refused as busy (refusal 5: DSP code moving, a resident controller quiescing before it leaves) is
  * tried again for 5 s, as the site does; any other refusal is named with its next step (loader-refusals.mjs). */
@@ -503,7 +507,7 @@ async function retried(step) {
     try { return await step() } catch (error) {
       const refusal = /rejected|backend/.test(error.message) ? (await transport.selftest(false).catch(() => undefined))?.refusal : undefined
       if (refusal === 5 && Date.now() - start < 5000) continue
-      if (refusal !== undefined) error.message += ` (loader refusal ${describeRefusal(refusal)})`
+      if (refusal !== undefined) error.message += ` (loader refusal ${describeRefusal(refusal, await transport.refused().catch(() => undefined), moduleName)})`
       throw error
     }
   }

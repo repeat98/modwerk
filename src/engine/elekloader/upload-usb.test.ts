@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  findVendorInterface, parseInventory, parseMissing, parseRuntimeCapabilities, parseVendorIdentity, parseVendorResult, UsbVendorTransport, VendorTransportError, type ControlDevice,
+  findVendorInterface, parseInventory, parseMissing, parseRefusalSubject, parseRuntimeCapabilities, parseVendorIdentity, parseVendorResult, UsbVendorTransport, VendorTransportError, type ControlDevice,
   VENDOR_CLASS, VENDOR_PROTOCOL, VENDOR_RESULT_BYTES, VENDOR_SUBCLASS,
 } from './upload-usb'
 
@@ -40,6 +40,19 @@ describe('runtime capabilities', () => {
     await expect(transport.capabilities()).rejects.toThrow(VendorTransportError)
     reply = { status: 'ok', data: new DataView(bytes().buffer) }
     expect((await transport.capabilities())?.abi).toBe(8)
+  })
+})
+
+describe('what a refusal met', () => {
+  const record = (bytes: number[]) => new DataView(Uint8Array.from(bytes).buffer)
+  it('reads MWRF v1', () => {
+    expect(parseRefusalSubject(record([0x4d, 0x57, 0x52, 0x46, 1, 3, 0, 4, 2, 0, 7, 0x0f, 0x3c, 0xbe, 0xdc, 0x9c])))
+      .toEqual({ refusal: 3, kind: 4, what: 0x0200070f, module: 0x3cbedc9c })
+  })
+  it('reads nothing from another record, version or length', () => {
+    expect(parseRefusalSubject(record([0x4d, 0x57, 0x43, 0x50, 1, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0]))).toBeUndefined()
+    expect(parseRefusalSubject(record([0x4d, 0x57, 0x52, 0x46, 2, 3, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0]))).toBeUndefined()
+    expect(parseRefusalSubject(record([0x4d, 0x57, 0x52, 0x46, 1, 3, 0, 4]))).toBeUndefined()
   })
 })
 

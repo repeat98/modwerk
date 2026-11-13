@@ -142,6 +142,13 @@ enum runtime_refusal { RUNTIME_OK, RUNTIME_MALFORMED, RUNTIME_MEMORY, RUNTIME_CO
 /* ABI 9 refusals use the codes above: a feature the base does not have, a claim another live module's claim meets
  * (either writing), and (ABI 9) any hook entry are RUNTIME_CONFLICT. ABI 10: an engine the machine does not admit
  * (modwerk_machine_dsp_engine_admit) answers the machine's refusal. */
+/* What the last refusal met, recorded where its check failed, so three causes that share a code can be told apart
+ * (README.md, "What a refusal names"). `what`: EVENT the hook index (a site or copy on its bytes, or its room full);
+ * FEATURE the required feature bits the base lacks; SITE the address of the package's site that shares a byte with
+ * another module's; CLAIM the first DSP word both claim, the package's claim's space in the top byte. `module`: the id
+ * of the live (or pending) module that owns the site or claim, 0 for the others. Later kinds append. */
+enum runtime_met { RUNTIME_MET_NOTHING, RUNTIME_MET_EVENT, RUNTIME_MET_FEATURE, RUNTIME_MET_SITE, RUNTIME_MET_CLAIM };
+#define RUNTIME_SUBJECT_BYTES 16u
 /* ABI 7's site record (a 32-byte hash for the stock bytes) is never longer than ABI 6's (the stock bytes). */
 #define RUNTIME_PACKAGE_BYTES (RUNTIME_HEADER_BYTES + 4u * RUNTIME_HOOKS + RUNTIME_IMAGE_BYTES + 4u * RUNTIME_RELOCATIONS + \
                                RUNTIME_SITES * (8u + 2u * RUNTIME_SITE_BYTES + 2u * RUNTIME_SITE_RELOCATIONS) + \
@@ -174,6 +181,9 @@ unsigned modwerk_runtime_list(uint8_t *out, unsigned first, unsigned most); /* I
 enum runtime_refusal modwerk_runtime_refusal(void);
 void modwerk_runtime_refused(enum runtime_refusal why); /* a machine check that refuses before the loader (Octatrack modset.c) */
 unsigned modwerk_runtime_refused_event(void);         /* after RUNTIME_EVENT: that event's hook index */
+/* MWRF v1, RUNTIME_SUBJECT_BYTES, read-only: "MWRF", 1, the refusal u8, its runtime_met u16, `what` u32, `module` u32.
+ * The refusal travels with its subject, so a reader pairs the two with the code it already has. */
+unsigned modwerk_runtime_refused_subject(uint8_t *out);
 #if RUNTIME_SITE_EVENTS
 /* Each site event's handlers in (order, module id) order, then 0: the base's dispatch (runtime_events.s,
  * modwerk_events_code up to modwerk_events_code_end) walks them. Rewritten masked, only while no paused

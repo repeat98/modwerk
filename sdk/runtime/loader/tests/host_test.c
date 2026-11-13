@@ -277,6 +277,13 @@ static void site7(uint32_t address, uint32_t length, uint32_t keep, uint32_t che
 }
 static int bytes_at(uint32_t address, const uint8_t *bytes, uint32_t length) { return !memcmp(stock + (address - STOCK), bytes, length); }
 static uint32_t word(uint32_t address) { return be32(stock + (address - STOCK)); }
+/* The last refusal and what it met, as a host reads them (MWRF v1). */
+static int met_is(unsigned why, unsigned kind, uint32_t what, uint32_t module)
+{
+    uint8_t s[RUNTIME_SUBJECT_BYTES];
+    return modwerk_runtime_refused_subject(s) == RUNTIME_SUBJECT_BYTES && !memcmp(s, "MWRF\1", 5) && s[5] == why &&
+           be16(s + 6) == kind && be32(s + 8) == what && be32(s + 12) == module;
+}
 
 #ifdef MODWERK_RUNTIME_SETS
 #include "set_test.h"
@@ -429,6 +436,7 @@ int main(void)
     id = 3; begin(8, 0, 0, 0, 0, 1, 0xd3); site(STOCK + 34, 6);
     free = modwerk_runtime_free(0);
     CHECK(!b->prepare(0, p, n) && modwerk_runtime_refusal() == RUNTIME_CONFLICT && modwerk_runtime_free(0) == free);
+    CHECK(met_is(RUNTIME_CONFLICT, RUNTIME_MET_SITE, STOCK + 34, 1)); /* the refusal names its site and that site's owner */
     CHECK(modwerk_runtime_module(0) == one && modwerk_runtime_module(1) == two && !modwerk_runtime_module(2) && stock[32] == 0x4e);
     /* Module 1 may move its own site; module 2 is untouched. */
     id = 1; begin(8, 0, 0, 0, 0, 1, 0xd4); site(STOCK + 34, 6);
@@ -688,7 +696,13 @@ int main(void)
     free = modwerk_runtime_free(0);
     id = 90; begin9(8, 8); claim9(2, 0, RUNTIME_CLAIM_WRITE, 0x700, 16); dsp_words9(8);
     CHECK(!b->prepare(0, p, n) && modwerk_runtime_refusal() == RUNTIME_CONFLICT && modwerk_runtime_free(0) == free);
+    CHECK(met_is(RUNTIME_CONFLICT, RUNTIME_MET_FEATURE, 8, 0)); /* the feature bits the base lacks */
+    id = 90; begin9(8, 8 | 2); claim9(2, 0, RUNTIME_CLAIM_WRITE, 0x700, 16); dsp_words9(8);
     base_features = 8;
+    CHECK(!b->prepare(0, p, n) && met_is(RUNTIME_CONFLICT, RUNTIME_MET_FEATURE, 2, 0)); /* only those */
+    id = 90; begin9(8, 8); claim9(2, 0, RUNTIME_CLAIM_WRITE, 0x700, 16); dsp_words9(8);
+    CHECK(b->prepare(0, p, n) && met_is(RUNTIME_OK, RUNTIME_MET_NOTHING, 0, 0)); /* an admitted package names nothing */
+    CHECK(b->discard(0));
     CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0));
     const struct runtime_module *reader = modwerk_runtime_module(0);
     CHECK(reader && reader->dsp.requires == 8 && reader->dsp.claim_count == 1 && reader->dsp.count == 8 && dsp_to.requires == 8);
@@ -717,8 +731,10 @@ int main(void)
     }
     id = 91; begin9(4, 0); entry9(0, 3, 2); dsp_words9(4);                /* whole, but no hook slots */
     CHECK(!b->prepare(0, p, n) && modwerk_runtime_refusal() == RUNTIME_CONFLICT && modwerk_runtime_free(0) == free);
+    CHECK(met_is(RUNTIME_CONFLICT, RUNTIME_MET_NOTHING, 0, 0));           /* and no subject of an earlier refusal */
     id = 91; begin9(4, 0); claim9(2, 0, RUNTIME_CLAIM_READ, 0x70f, 1); dsp_words9(4); /* reads a word 90 writes */
     CHECK(!b->prepare(0, p, n) && modwerk_runtime_refusal() == RUNTIME_CONFLICT && modwerk_runtime_free(0) == free);
+    CHECK(met_is(RUNTIME_CONFLICT, RUNTIME_MET_CLAIM, 2u << 24 | 0x70f, 90)); /* the word in Y, and who holds it */
     id = 91; begin9(4, 0); claim9(2, 1, RUNTIME_CLAIM_WRITE, 0x700, 16); claim9(1, 0, RUNTIME_CLAIM_WRITE, 0x700, 16);
     claim9(2, 0, RUNTIME_CLAIM_READ, 0x33e00, 0x20); dsp_words9(4);       /* the other core, X, a read in the window */
     CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0));
@@ -727,6 +743,7 @@ int main(void)
     free = modwerk_runtime_free(0);
     id = 93; begin9(4, 0); claim9(2, 1, RUNTIME_CLAIM_WRITE, 0x33e1f, 1); dsp_words9(4); /* a write where 91 reads */
     CHECK(!b->prepare(0, p, n) && modwerk_runtime_refusal() == RUNTIME_CONFLICT && modwerk_runtime_free(0) == free);
+    CHECK(met_is(RUNTIME_CONFLICT, RUNTIME_MET_CLAIM, 2u << 24 | 0x33e1f, 91));
     /* A replacement of 90 may keep its own claim; removing 90 frees it for others. */
     id = 90; begin9(8, 8); claim9(2, 0, RUNTIME_CLAIM_WRITE, 0x708, 16); dsp_words9(8);
     CHECK(b->prepare(0, p, n) && b->publish(0) == MU_APPLIED && b->retire(0));

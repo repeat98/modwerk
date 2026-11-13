@@ -353,6 +353,14 @@ uint32_t modwerk_ep0_dispatch(void)
         out[6] |= 1u; /* feature bit 8: this base writes its own container to NOR over USB (flash.c) */
         return n;
     }
+    /* REFUSED (0xC1, bRequest 41, wValue 0, wLength 16): MWRF v1, the loader's last refusal and what it met (loader.h:
+     * the feature bits the base lacks, the site and its owner, the claimed word and its holder), so a host can say more
+     * than the code in the self-test record. Read-only; older bases stall. */
+    if (r.action == MV_STALL && SETUP[0] == MV_RESULT_TYPE && SETUP[1] == 41 && !SETUP[2] && !SETUP[3] &&
+        SETUP[4] == MODWERK_VENDOR_INTERFACE && !SETUP[5] && SETUP[6] == RUNTIME_SUBJECT_BYTES && !SETUP[7]) {
+        modwerk_ep0_reply = out;
+        return modwerk_runtime_refused_subject(out);
+    }
     /* SLOTS (0xC1, bRequest 39, wValue 0, wLength 24): the two-slot layout as the engine last read it (flash.h),
      * zeros before its first look. Read-only; bases before the two slots stall it. */
     if (r.action == MV_STALL && SETUP[0] == MV_RESULT_TYPE && SETUP[1] == 39 && !SETUP[2] && !SETUP[3] &&

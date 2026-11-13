@@ -4,7 +4,7 @@ import { FAKE_BASE, fakeBaseOf, fakeSession, fakeUnit } from '../../dev/octatrac
 import { packSection } from '../elektron/codec/pack.ts'
 import { encodeBin } from '../../../vendor/elekloader/kit/src/elek.ts'
 import { removalPackage } from './module-set'
-import { LinkBusyError, OctatrackLink, StaleLoadError, linkBusy, openFailure, tabLocks } from './octatrack-link'
+import { LinkBusyError, OctatrackLink, StaleLoadError, linkBusy, openFailure, rejectedBy, tabLocks } from './octatrack-link'
 import { UploadUnconfirmedError } from './upload-session'
 import { UsbVendorTransport, parseBaseSlots } from './upload-usb'
 
@@ -253,6 +253,27 @@ describe('sending a module', () => {
     unit.refusal = 1 // malformed: the plain text
     await link.update('PREVIEW VOL', one)
     expect(link.getState().notice?.text).toBe('The Octatrack can’t run this module file.')
+  })
+  it('says what a refusal met when the base names it, and keeps the refusal’s text when it does not', async () => {
+    const { unit, link } = await linked()
+    link.moduleNames = new Map([[0x3cbedc9c, 'Mini Verb']])
+    unit.refusal = 3 // RUNTIME_CONFLICT, three causes under one code
+    unit.refusalSubject = { kind: 3, what: 0x4012e39c, module: 0x3cbedc9c } // a site another module patches
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice?.text).toBe('This module changes the same part of the Octatrack as Mini Verb. Remove one of the two, then sync again.')
+    unit.refusalSubject = { kind: 4, what: 0x0200070f, module: 0x11223344 } // a claim a module the catalogue does not know holds
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice?.text).toBe('This module uses the same DSP memory as a module that’s already on it. Remove one of the two, then sync again.')
+    unit.refusalSubject = { kind: 2, what: 8, module: 0 } // a base feature this base lacks
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice?.text).toMatch(/needs a part of the Modwerk base that the base on your Octatrack doesn’t have/)
+    unit.refusalSubject = { kind: 9, what: 1, module: 0 } // a kind this site does not know: the refusal's own text
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice?.text).toMatch(/changes the same part of the Octatrack as one that’s already installed/)
+    unit.refusalSubject = undefined // a base before the record stalls the request
+    await link.update('PREVIEW VOL', one)
+    expect(link.getState().notice?.text).toMatch(/changes the same part of the Octatrack as one that’s already installed/)
+    expect(rejectedBy(7, { refusal: 3, kind: 3, what: 0, module: 1 })).toBeUndefined() // the subject of another refusal
   })
   it('stages again when the loader was busy for a moment', async () => {
     const { unit, link } = await linked()

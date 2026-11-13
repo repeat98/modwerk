@@ -146,6 +146,9 @@ int main(void)
     CHECK(!b->prepare(0, p, n) && modwerk_runtime_refusal() == RUNTIME_EVENT && modwerk_runtime_refused_event() == RUNTIME_EVENTS);
     pkg(40, none, RUNTIME_HOOKS, 1, 0); site8(0x109cu, 6, 6);        /* its jmp reaches the bind site */
     CHECK(!b->prepare(0, p, n) && modwerk_runtime_refusal() == RUNTIME_EVENT && modwerk_runtime_refused_event() == RUNTIME_EVENTS + 1u);
+    { uint8_t s[RUNTIME_SUBJECT_BYTES]; /* the same event as the refusal's subject (MWRF v1) */
+      CHECK(modwerk_runtime_refused_subject(s) == RUNTIME_SUBJECT_BYTES && s[5] == RUNTIME_EVENT && be16(s + 6) == RUNTIME_MET_EVENT &&
+            be32(s + 8) == RUNTIME_EVENTS + 1u && !be32(s + 12)); }
     pkg(40, none, RUNTIME_HOOKS, 1, 0); site8(0x1078u, 6, 10);       /* only its guard reaches it */
     CHECK(!b->prepare(0, p, n) && modwerk_runtime_refusal() == RUNTIME_EVENT);
     pkg(40, none, RUNTIME_HOOKS, 0, 0); copy8(0x1084u, 4);            /* a stock copy of its bytes */
