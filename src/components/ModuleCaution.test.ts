@@ -6,8 +6,8 @@ import { MODULE_CAUTIONS } from '../catalog/module-cautions'
 import { CautionBadge } from './ModuleCard'
 
 describe('heavy module caution', () => {
-  it('flags POLY8 and FM Synth, and only modules in the catalog', () => {
-    expect(Object.keys(MODULE_CAUTIONS).sort()).toEqual(['poly8', 'synth'])
+  it('flags POLY8, FM Synth, SYNTIZ and Tape Echo, and only modules in the catalog', () => {
+    expect(Object.keys(MODULE_CAUTIONS).sort()).toEqual(['poly8', 'synth', 'syntiz', 'tapeecho'])
     for (const id of Object.keys(MODULE_CAUTIONS)) expect(MODULES.some(module => module.id === id)).toBe(true)
   })
 
