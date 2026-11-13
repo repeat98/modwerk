@@ -1,6 +1,6 @@
 # Track Names
 
-A Digitakt II mod by @crisp909. Version 0.1.3-experimental. OS 1.17, core 1.0.
+A Digitakt II mod by @crisp909. Version 0.1.4-experimental. OS 1.17, core 1.0.
 
 The Internal Mixer labels its faders TRK1 to TRK16. With Track Names it shows the track's own name instead, and each
 fader gets its track number in an inverted box at its top left, so you still know which track it is.

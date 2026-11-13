@@ -37,8 +37,11 @@ The emulator is not hardware evidence: no sound, no exact timing.
   half under the pop-up is cut at its edge, and after closing all names are back.
   Reported by the author on 0.1.2: a faint 1-pixel line right of the pop-up's frame. Emulator: the right column of
   track 8's (or 4's) lit badge box stood out beside the frame. Fixed in 0.1.3-experimental: a badge the pop-up
-  touches is not drawn. Emulator: both PTN pop-ups, only stock ticks and the clipped name beside the frame. Not yet
-  re-tested on the unit.
+  touches is not drawn. Emulator: both PTN pop-ups, only stock ticks and the clipped name beside the frame.
+  Reported by the author on 0.1.3 (photo): still a faint line right of the pop-up, beside tracks 4 and 8. Not seen in
+  the emulator; likely a badge drawn before the pop-up opened that the unit does not redraw while the pop-up is up
+  (two screen buffers, so it shows half the time). Fixed in 0.1.4-experimental: such a badge's place is painted
+  back to the stock look outside the pop-up. Emulator: unchanged look. Not yet re-tested on the unit.
 
 Still to check on the unit: names per pattern (A01 and A02 named differently), page 3/5 (tracks 9-16), names after
 SAVE PROJECT and a reload, and the other pages unchanged.

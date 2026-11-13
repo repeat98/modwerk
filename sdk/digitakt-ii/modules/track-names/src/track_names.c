@@ -275,6 +275,18 @@ static int badge_touches_box(const box_t *b, int k, int row, int track)
     return 0;
 }
 
+// Paint the stock look (blank but for the scale's two left ticks) over a badge the pop-up partly
+// covers, outside the pop-up: the OS may not redraw there while the pop-up is up, and a badge
+// drawn before it opened would otherwise linger in one of the two screen buffers.
+static void unbadge(uint8_t *d, const box_t *b, int k, int row, int track)
+{
+    int y0 = row ? 39 : 12;
+    for (int x = badge_x1(track); x <= BADGE_X2; x++)
+        for (int r = 0; r < 7; r++)
+            if (!in_box(b, x + COL_X(k), y0 + r))
+                set_pixel(d, x + COL_X(k), y0 + r, (x == 26 || x == 27) && (r == 1 || r == 5));
+}
+
 static void badge(void *bmp, int k, int row, int track)
 {
     int x2 = BADGE_X2 + COL_X(k), x1 = badge_x1(track) + COL_X(k), top = BADGE_TOP(row);
@@ -331,7 +343,9 @@ void tn_draw(void *bmp, void *ctrl)
         int lx0 = LABEL_X0 + COL_X(k), lx1 = lx0 + LABEL_W - 1, ly0 = row ? 59 : 32;
         const char *name = (const char *)(TN_KITS + (uint32_t)kit * TN_KIT_SIZE + TN_NAME + (uint32_t)track * TN_TRACK_STRIDE);
         char shown[SHOWN + 1];
-        if (!badge_touches_box(&box, k, row, track + 1) && badge_place_is_stock(d, &box, k, row))
+        if (badge_touches_box(&box, k, row, track + 1))
+            unbadge(d, &box, k, row, track + 1);
+        else if (badge_place_is_stock(d, &box, k, row))
             badge(bmp, k, row, track + 1);
         if (!name[0] || is_default(name) || !label_is_stock(d, &box, track, k, row))
             continue;

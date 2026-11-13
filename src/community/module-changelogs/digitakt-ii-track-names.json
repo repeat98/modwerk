@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.1.4-experimental",
+    "date": "2026-11-13",
+    "changes": [
+      "Fix: no faint leftover of a track number beside a pop-up on the unit: a number the pop-up partly covers is",
+      "painted back to the stock look (blank and the scale's ticks) instead of only not being drawn."
+    ]
+  },
+  {
     "version": "0.1.3-experimental",
     "date": "2026-11-13",
     "changes": [
