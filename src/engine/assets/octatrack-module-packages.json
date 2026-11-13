@@ -191,16 +191,14 @@
       "abi": 8,
       "features": 131,
       "sites": 2,
-      "copies": 8,
+      "copies": 9,
       "fills": 0,
-      "version": "0.2.5-experimental",
+      "version": "0.3.2-experimental",
       "name": "VECTOR",
       "module": "b0d51c58",
-      "bytes": 18354,
-      "sha256": "45c962ca3a202ac697e3d33d97e4b3b94052706a390189e5baf923fa829de577",
-      "path": "octatrack-modules/vector/0.2.5-experimental.mwrm",
-      "lagsBehind": "0.3.1-experimental",
-      "lagReason": "0.3.1 is 0.2.6's code, rolling back 0.3.0 (the MIDI generator becomes its own module): it changes only the card build, whose st_setup_page no longer tests for row 5, which VECTOR's USB adapter already dropped (#972, #1119); the package's control unit source is byte-identical to 0.2.5's"
+      "bytes": 18334,
+      "sha256": "428d970ac5723ed5f3b26ef45a88deee9e92cf6be398b6ea93c7ee13115dfb23",
+      "path": "octatrack-modules/vector/0.3.2-experimental.mwrm"
     },
     {
       "id": "synth",
