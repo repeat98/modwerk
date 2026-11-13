@@ -13,6 +13,7 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { DSP_REPORT_NAMES } from '../src/community/octatrack-diagnostics-contract.ts'
+import { crashNames, namesFor, withName } from '../src/dev/address-names.ts'
 
 const ROOT = new URL('..', import.meta.url)
 const SERVICE = 'modwerk-diagnostics-read'
@@ -82,7 +83,7 @@ const stallWords = report => STALL_WORDS.map(name => [name, report[DSP_REPORT_NA
  * the loader may have a job open; beta finding 55), not a hang: said so. One after a session that ended stopped at
  * 95 % CPU or more after PROJ … RIGHT YES (PROJ may have left the 16 keys the unit keeps), with the log's last set record
  * showing none installed, is likely one too, or USB disk mode (beta finding 72): only a hint, since the base stayed the same. */
-export function unitLines(incidents) {
+export function unitLines(incidents, names = namesFor) {
   const all = [...incidents].map(r => ({ epoch: 0, ...r })).sort((a, b) => a.epoch - b.epoch || a.seq - b.seq)
   const at = (r, boot = r.boot) => r.epoch + '/' + boot
   const base = new Map(all.filter(r => r.kind === 'base').map(r => [at(r), r.a]))
@@ -95,7 +96,7 @@ export function unitLines(incidents) {
     return last?.cpu >= 950 && !last.playing && rightYes(walk) && set?.a === 0
   }
   const latest = Math.max(...all.map(r => r.epoch)), on = r => base.has(at(r)) ? base.get(at(r)).toString(16).padStart(8, '0') : logBase(all, r.epoch)
-  return all.filter(r => r.kind !== 'start').slice(-12).map(r => '  unit: ' + incident(r) +
+  return all.filter(r => r.kind !== 'start').slice(-12).map(r => '  unit: ' + incident(r) + (r.kind === 'crash' ? withName(names(on(r)), r.a) : '') +
     (upgrade(r) ? ' (an OS upgrade: this start runs another base; not a hang)' : system(r) ? ' (likely an OS upgrade or USB disk mode, beta finding 72: the session before ended stopped at 95 %+ CPU after PROJ … RIGHT YES, no module installed)' : '') +
     (r.epoch < latest ? ` (an earlier log, base ${on(r)})` : ''))
 }
@@ -141,7 +142,7 @@ export function members(events) {
         kept.set(log.epoch + '/' + r.seq, { ...r, epoch: log.epoch, upload: data.base })
       }
     }
-    if (data.log?.crash) member.crash = data.log.crash
+    if (data.log?.crash) Object.assign(member, { crash: data.log.crash, crashBase: data.base }) // the base that sent it: a crash restarts on the same one
     if (data.log?.stall) member.stall = data.log.stall
     if (data.event === 'selftest' && data.reading?.state >= 2) {
       member.selftest = data.reading
@@ -173,7 +174,7 @@ function restarts(member) {
   })
 }
 
-export function summary({ events, counts }, { base = '', layouts = {}, reports = new Map() } = {}) {
+export function summary({ events, counts }, { base = '', layouts = {}, reports = new Map(), names = namesFor } = {}) {
   const found = members(events)
   // The configuration page checks the card build on every module change: a refused selection is not a failure.
   const selection = ({ data }) => data.event === 'build_failed' && data.error === 'selection'
@@ -196,10 +197,11 @@ export function summary({ events, counts }, { base = '', layouts = {}, reports =
       ...member.live ? [`  live load ${when(member.live.at)}: CPU ${member.live.cpu?.map(percent).join(' mean, ') ?? '-'} peak, T1-4 ${member.live.dsp1to4?.map(percent).join('/') ?? '-'}, T5-8 ${member.live.dsp5to8?.map(percent).join('/') ?? '-'} (${member.live.samples} readings)`] : [],
       ...member.loads?.size ? [`  unit's load log: ${member.loads.size} five-minute records, CPU peak ${percent(Math.max(...[...member.loads.values()].map(r => r.cpu[1])))}, mean ${percent([...member.loads.values()].reduce((a, r) => a + r.cpu[0], 0) / member.loads.size)}`] : [],
       ...(member.loads && [...member.loads.values()].some(r => r.frameGap !== undefined) ? [`  longest frame gap ${Math.max(...[...member.loads.values()].map(r => r.frameGap ?? 0))} us (frames are 363, DSPs starve past about 515), longest UI-tick gap ${Math.max(...[...member.loads.values()].map(r => r.tickGap ?? 0))} frames (freeze at 13,781)`] : []),
-      ...member.crash ? [`  crash record ${member.crash.count}: vector ${member.crash.vector} pc 0x${member.crash.pc.toString(16)} code ${member.crash.code.map(w => w.toString(16).padStart(8, '0')).join(' ')} uncached ${member.crash.memory.map(w => w.toString(16).padStart(8, '0')).join(' ')}`] : [],
+      ...member.crash ? [`  crash record ${member.crash.count}: vector ${member.crash.vector} pc 0x${member.crash.pc.toString(16)} code ${member.crash.code.map(w => w.toString(16).padStart(8, '0')).join(' ')} uncached ${member.crash.memory.map(w => w.toString(16).padStart(8, '0')).join(' ')}`,
+        ...[crashNames(names(member.crashBase), member.crash.pc, member.crash.stack ?? [])].filter(Boolean).map(line => '    ' + line)] : [],
       ...member.stall ? [`  stall record ${member.stall.count}: reason ${member.stall.reason} (1 frames stopped, 2 eDMA refused) at tick ${member.stall.ticks}`,
         ...member.stall.report?.length ? ['    report: ' + stallWords(member.stall.report)] : []] : [],
-      ...unitLines([...member.incidents?.values() ?? []]),
+      ...unitLines([...member.incidents?.values() ?? []], names),
       '  ' + Object.entries(member.kinds).map(([kind, n]) => kind + ' ' + n).join(', '),
     ]),
     '', 'Self-test peaks are measured only while DSP modules run. Live load comes from the site while connected; the unit\'s log covers the time without it. Screen codes are stock input layers, keys stock key codes.',
