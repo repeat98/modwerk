@@ -70,7 +70,6 @@ describe('the base dialog for a unit on an older base', () => {
     click(container.querySelector('.risk-accept input')!); click(buttonNamed('Update over USB')!)
     await vi.waitFor(() => expect(container.textContent).toContain('Sending the base once more'))
     expect(container.querySelector('h2')!.textContent).toContain('Update the Modwerk base')
-    expect(container.querySelector('.base-install-intro code')!.textContent).toBe('cc'.repeat(4))
     expect(container.querySelector('.base-update-plan .is-active strong')!.textContent).toBe('Save')
     expect(container.querySelectorAll('.base-update-plan .is-complete')).toHaveLength(2)
     expect(container.querySelector('[role="status"]')).toBe(status)
@@ -87,7 +86,7 @@ describe('the base dialog for a unit on an older base', () => {
     expect(bar.className).toContain('is-busy')
     expect(container.querySelector('.base-update-overall .progress-value')!.textContent).toBe('67%')
     expect(container.querySelector('progress')).toBeNull() // the browser's own bar was too faint to see
-    expect([...container.querySelectorAll('.base-update-plan .is-complete .sr-only')].map(item => item.textContent)).toEqual([' (done)', ' (done)'])
+    expect([...container.querySelectorAll('.base-update-plan .is-complete strong .sr-only')].map(item => item.textContent)).toEqual([' (done)', ' (done)'])
     expect(container.querySelector('.base-install-recovery')).toBeNull() // the before-start notes give way to the progress
     expect(container.querySelector('.base-install-close')).toBeNull()
     expect(buttonNamed('Continue')).toBeUndefined()
@@ -150,7 +149,7 @@ describe('the base dialog for a unit on an older base', () => {
   })
   it('installs USB Audio off for a set without the USB Audio module, and says so first when the old base had USB Audio', async () => {
     const { buildBase } = await older(true, undefined, { base: previousDefault, set: { name: 'Live', moduleIds: ['everb'] } })
-    expect(container.querySelector('.base-install-note[role="note"]')?.textContent).toBe(audioOff)
+    expect(container.querySelector('.base-update-checklist li:last-child')?.textContent).toBe(audioOff) // one line of the short list before the start
     await runUpdate()
     expect(buildBase.mock.calls).toEqual([[undefined]]) // session.ts builds MEMBER_LAYOUT: USB Audio off
   })

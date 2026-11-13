@@ -507,3 +507,26 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .base-update-step .status-dot.is-updating { flex-shrink: 0; width: 8px; height: 8px; background: var(--progress); }
 /* A note above the stages (USB Audio off in this base): framed as the notes inside them are. */
 .base-install-dialog > .base-install-note { margin: 0 0 22px; padding: 14px 16px; border-left: 2px solid var(--accent); background: var(--surface-raised); color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
+/* The update's three steps as one slim row (StagePlan compact): numbered marks joined by a line. */
+.base-update-plan.is-compact { display: flex; gap: 0; margin: 22px 0 18px; }
+.base-update-plan.is-compact li { flex: 1 1 0; flex-direction: row; align-items: center; gap: 10px; padding: 0; border: 0; background: none; font-size: 14px; }
+.base-update-plan.is-compact li:last-child { flex: 0 0 auto; }
+.base-update-plan.is-compact li:not(:last-child)::after { content: ""; flex: 1; height: 2px; margin: 0 14px 0 4px; border-radius: 2px; background: var(--line); }
+.base-update-plan.is-compact li.is-complete:not(:last-child)::after { background: #456354; }
+.base-update-plan.is-compact strong { color: var(--text-secondary); font-size: 15px; font-weight: 500; white-space: nowrap; }
+.base-update-plan.is-compact .is-active strong, .base-update-plan.is-compact .is-complete strong { color: var(--text); font-weight: 600; }
+.base-update-plan.is-compact .base-update-mark { flex-shrink: 0; }
+@media (max-width: 600px) {
+  .base-update-plan.is-compact { display: flex; }
+  .base-update-plan.is-compact li { display: flex; padding: 0; gap: 7px; }
+  .base-update-plan.is-compact li:not(:last-child)::after { margin: 0 8px 0 2px; }
+  .base-update-plan.is-compact strong { font-size: 14px; }
+}
+/* Before it starts: what to do, a line each. */
+.base-update-checklist { display: flex; flex-direction: column; gap: 10px; margin: 0 0 4px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-raised); list-style: none; }
+.base-update-checklist li { display: flex; align-items: flex-start; gap: 12px; color: var(--text-secondary); font-size: 14px; line-height: 1.5; }
+.base-update-checklist svg { flex-shrink: 0; margin-top: 2px; color: #ffc46b; }
+.base-update-checklist .is-ready svg { color: #7fd39b; }
+.base-update-checklist strong { color: var(--text); font-weight: 600; }
+.base-install-stage .base-update-checklist + .risk-acceptance { margin-top: 18px; padding-bottom: 0; border-bottom: 0; }
+.base-install-stage .base-update-checklist ~ .base-install-recovery { margin-top: 6px; }
