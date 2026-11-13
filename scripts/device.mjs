@@ -322,6 +322,7 @@ async function missing() {
  * hold:N (development bases: host frames wait N seconds, as after a boot), missing (modules the project names, not installed),
  * inventory (the installed modules, INVENTORY),
  * reload (the current Part from its saved copy, through the Part menu), gap (the longest time between frames since the last gap),
+ * late, late:off, late:on (development bases: the late-entry wait's counts since the last read; switch it),
  * memory (development bases: each memory's use, holes and largest free run), compact (pack each core's code now, timed),
  * dspmap (development bases: each core's code arena drawn, every block named with its slots), dspmap:watch:N (redrawn on change)
  * profile, profile:N (development bases: each UI tick hook's µs over N seconds, from the symbols of the build `boot` started)
@@ -391,6 +392,11 @@ async function run(sequence, until = Infinity) { // serve: past its time limit a
       const b = Buffer.from(await devIn(29, Number(step.slice(6)) || 0, 28)), pc = n => `${(n / 478.91).toFixed(1)} %`
       const [max, late, busy, frames, skips, tracks, share] = [0, 4, 8, 12, 16, 20, 24].map(at => b.readUInt32BE(at))
       console.log(`frame max ${pc(max)}, latest start ${pc(late)}, in the frame interrupt ${frames ? pc(busy * 256 / frames) : '-'} over ${frames} frames, skipped ${skips} on ${[...Array(8).keys()].filter(t => tracks >> t & 1).map(t => 'T' + (t + 1)).join(' ') || '-'}, share ${pc(share)}`)
+    }
+    else if ((m = /^late(?::(on|off))?$/.exec(step))) { // LATE (dev request 41): the late-entry wait's counts since the last read; late:off / late:on switch it
+      const b = Buffer.from(await devIn(41, m[1] === 'off' ? 1 : m[1] === 'on' ? 2 : 0, 20)), us = n => `${(n / 132).toFixed(1)} us`
+      const [latest, hits, waits, longest, on] = [0, 4, 8, 12, 16].map(at => b.readUInt32BE(at))
+      console.log(`late-entry wait ${on ? 'on' : 'off'}: latest entry ${us(latest)} late, ${hits} in the window (110-190 us), ${waits} waited, longest wait ${us(longest)}`)
     }
     else if (step === 'cpu' || step.startsWith('cpu:')) { // CPU (dev request 30): cpu:PERCENT sets the CPU budget's allowance
       const b = Buffer.from(await devIn(30, Number(step.slice(4)) || 0, 76)), pc = n => (n / 478.91).toFixed(1)

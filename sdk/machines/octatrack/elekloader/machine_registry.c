@@ -655,8 +655,8 @@ unsigned mw_setup_knob(unsigned row, unsigned index, int delta)
  * every task wait: kept near a whole frame it froze the panel and dropped USB with POLY8, FM Synth and seven busy stock
  * tracks while USB recorded (owner's MKII, 24 October 2026), and kept past a frame the DSP's audio stops for good
  * (OCTATRACK_HARDWARE_TRAPS.md, work inside the frame interrupt). So it has a budget: each frame earns mw_frame_share,
- * short frames save up to BURST of it, long ones spend it. Its entry stamps mw_frame_t0 and its exit calls
- * mw_frame_exit (machine_registry.s). Each render of a machine's track is timed, and so is the work after it up to the
+ * short frames save up to BURST of it, long ones spend it. Its entry calls mw_frame_enter, which stamps mw_frame_t0,
+ * and its exit calls mw_frame_exit (machine_registry.s). Each render of a machine's track is timed, and so is the work after it up to the
  * exit; before the next frame's same render the guard predicts the frame's length from those. When it would overdraw,
  * the track renders stock's silent source this time instead: a dropout on that track, never a frozen unit. Tracks only
  * stock renders, and priced machines' (their voice is the DSP's), always render. A FLEX track no machine owns that
@@ -751,6 +751,52 @@ static uint32_t late, cost[16], after[16], end_at[16], timed; /* [track], then a
 static uint16_t skipped[16];
 static uint32_t before;            /* the renders the last frame made (bit k), skipped or not */
 static uint8_t place[16], next[16], made; /* a render's place in the last frame's order, and in this frame's so far */
+/* The late-entry wait. The budget bounds how long a frame interrupt runs; this is about when the next one enters. A
+ * long frame interrupt makes the next enter late against the DSP's frame grid, and octabam measured (Sam Banks, an
+ * MKII, 12 and 13 November 2026; octabam d16d0520, corrected by 1752f3d4) that the two entries 149 and 155 µs late
+ * were followed by a frame exchange that stopped for good, while entries less late ran on and later ones made the
+ * DSP skip one frame and run on. So an entry more than LATE_LO and less than LATE_HI late waits here until it is
+ * LATE_HI late: at most 80 µs, with the interrupt held, before mw_frame_t0 is stamped, so the budget does not charge
+ * the wait to the frame. An entry's lateness is the last entry's plus the time between the two less GRID (a frame and
+ * 0.5 µs, so that an error decays), never below 0; within NEAR of a whole frame or past it, it is less that frame
+ * (the DSP skipped one: left at a frame less 0.5 µs it would decay into the window 0.1 s later and every entry
+ * would wait); IDLE or more after the last entry it is 0. The timer wraps every 32.5 s: only differences are used.
+ * Not measured on a Modwerk base (docs/MODULE_PERFORMANCE.md). mw_late_wait_on 0 counts and does not wait (dev.c
+ * LATE); every base runs this same code. */
+#define GRID (FRAME + 66u)
+#define NEAR 2640u     /* 20 µs */
+#define LATE_LO 14520u /* 110 µs */
+#define LATE_HI 25080u /* 190 µs */
+#define IDLE (4u * GRID)
+volatile uint32_t mw_late_wait_on = 1;
+/* For diagnostics, since the last read: the latest entry, the entries in the window, the waits and the longest. */
+volatile uint32_t mw_late_max, mw_late_hits, mw_late_waits, mw_late_wait_max;
+static uint32_t entry_at, entry_late;
+/* From the frame interrupt's entry, after stock's register save (machine_registry.s): level 5, stock's stack. */
+void mw_frame_enter(void)
+{
+    uint32_t now = DTCN3, gap = now - entry_at, l = 0;
+    entry_at = now;
+    if (gap < IDLE) {
+        l = entry_late + gap;
+        do l = l > GRID ? l - GRID : 0; while (l >= GRID - NEAR);
+    }
+    entry_late = l;
+    if (l) {
+        if (l > mw_late_max) mw_late_max = l;
+        if (l > LATE_LO && l < LATE_HI) {
+            mw_late_hits = mw_late_hits + 1u;
+            if (mw_late_wait_on) {
+                uint32_t need = LATE_HI - l, waited;
+                do waited = DTCN3 - now; while (waited < need);
+                mw_late_waits = mw_late_waits + 1u;
+                if (waited > mw_late_wait_max) mw_late_wait_max = waited;
+                now += waited;
+            }
+        }
+    }
+    mw_frame_t0 = now;
+}
 void mw_frame_exit(void)
 {
     uint32_t now = DTCN3, d = now - mw_frame_t0, due = d + late;

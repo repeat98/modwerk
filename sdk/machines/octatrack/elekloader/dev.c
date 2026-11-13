@@ -213,6 +213,17 @@ uint32_t modwerk_dev_request(const uint8_t *s, const uint8_t **reply, uint8_t *o
         *reply = out;
         return 28;
     }
+    if (s[1] == 41 && want == 20u && s[2] <= 2u && !s[3]) { /* LATE: the late-entry wait (machine_registry.c); wValue 1 turns it
+                                                              * off, 2 on (0 keeps it): since the last read the latest entry,
+                                                              * the entries in the window, the waits, the longest; whether on */
+        extern volatile uint32_t mw_late_max, mw_late_hits, mw_late_waits, mw_late_wait_max, mw_late_wait_on;
+        if (s[2]) mw_late_wait_on = s[2] - 1u;
+        uint32_t v[5] = {mw_late_max, mw_late_hits, mw_late_waits, mw_late_wait_max, mw_late_wait_on};
+        mw_late_max = mw_late_hits = mw_late_waits = mw_late_wait_max = 0;
+        for (unsigned i = 0; i < 20u; ++i) out[i] = (uint8_t)(v[i / 4u] >> (24 - 8 * (i % 4u)));
+        *reply = out;
+        return 20;
+    }
     if (s[1] == 30 && want == 76u) { /* CPU: the CPU budget (machine_registry.c); wValue its allowance in percent of a frame
                                         * (0 keeps it): the allowance, what the Part books, the tracks refused; then since
                                         * the last read each guarded render's longest time (track's first pass, then second) */

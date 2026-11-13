@@ -364,15 +364,15 @@ mw_render_call:
         move.l %a0,mw_foreign_fn
         jmp mw_foreign_render
 1:      jmp (%a0)
-| The frame guard's clock (machine_registry.c): the frame interrupt's entry stamps DTCN3 after stock's register save,
-| and its exit times the frame before stock's restore and rte.
+| The frame guard's clock (machine_registry.c): after stock's register save the frame interrupt's entry waits out a
+| late entry and stamps DTCN3 (mw_frame_enter: the save holds every data and address register, so C's d0-d1/a0-a1
+| are free, as at mw_frame_exit), and its exit times the frame before stock's restore and rte.
         .global mw_frame_entry, mw_frame_leave
 mw_frame_entry:
         .globl modwerk_stock_4000aad0_8
 modwerk_stock_4000aad0_8:
         .space 8
-        move.l 0xfc07c00c,%d0
-        move.l %d0,mw_frame_t0
+        jsr mw_frame_enter
         jmp 0x4000aad8
 mw_frame_leave:
         jsr mw_frame_exit

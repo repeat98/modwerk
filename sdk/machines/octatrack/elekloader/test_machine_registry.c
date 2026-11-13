@@ -97,7 +97,9 @@ static uintptr_t volatile *const host_rows[RUNTIME_SITE_EVENTS] = {
     [MODWERK_OT_MACHINES - RUNTIME_EVENTS] = machine_row, [MODWERK_OT_SEQUENCER_ROWS - RUNTIME_EVENTS] = sequencer_row,
     [MODWERK_OT_MACHINE_STARTS - RUNTIME_EVENTS] = start_row};
 static volatile uint32_t host_timer; /* the frame timer (DTCN3): the synthetic renders advance it */
-#define DTCN3 host_timer
+static uint32_t host_tick;           /* and each read of it by this much: a wait on it ends (check_late_entry) */
+static uint32_t host_dtcn3(void) { uint32_t now = host_timer; host_timer = now + host_tick; return now; }
+#define DTCN3 host_dtcn3()
 #include "machine_registry.c"
 #undef modwerk_runtime_event_row
 
@@ -471,6 +473,110 @@ static void check_engine_price(void)
     ab.source_engine = 0; ab.source_voice = 411;                   /* still priced in its record too */
     made = claims_made; CHECK(!claim(0, &ab) && claims_made == made);
     engine_installed = 0; want_voice = 411, want_engine = 3, want_kind = 1;
+}
+/* The late-entry wait (machine_registry.c) against a model of the timer: a read costs TICK counts, so a wait ends
+ * within one TICK of its time. It shows the decision and the wait's length; that an entry in the window stops the
+ * DSP's frame exchange, and that one LATE_HI late makes the DSP skip a frame, are octabam's measurements on a unit.
+ * The cases are those of octabam's tools/verify/verify_frame_guard.py (MIT, Sam Banks). */
+#define US 132u
+#define TICK 12u
+static uint32_t entered;
+static void late_fresh(uint32_t at)
+{
+    entry_at = entry_late = 0, entered = at, host_tick = TICK;
+    mw_late_max = mw_late_hits = mw_late_waits = mw_late_wait_max = 0, mw_late_wait_on = 1;
+}
+/* The frame interrupt enters `interval` counts after its last entry: whether it waited. An entry that did leaves
+ * LATE_HI late; one that did not leaves at once; either way the frame's stamp is taken as it leaves. */
+static unsigned entry(uint32_t interval)
+{
+    uint32_t waits = mw_late_waits, longest = mw_late_wait_max;
+    host_timer = entered += interval;
+    mw_frame_enter();
+    uint32_t kept = mw_frame_t0 - entered;
+    CHECK(mw_frame_t0 == host_timer - TICK && entry_at == entered && mw_late_waits - waits <= 1u);
+    if (mw_late_waits == waits) { CHECK(!kept && mw_late_wait_max == longest); return 0; }
+    CHECK(entry_late + kept >= LATE_HI && entry_late + kept < LATE_HI + TICK && kept <= LATE_HI - LATE_LO);
+    CHECK(mw_late_wait_max == (kept > longest ? kept : longest));
+    return 1;
+}
+/* A quiet start, an entry on the grid, then one `us` µs late: whether that one waited. */
+static unsigned late_by(uint32_t us)
+{
+    late_fresh(5000000u);
+    CHECK(!entry(FRAME) && !entry(FRAME) && !entry_late);
+    return entry(FRAME + us * US);
+}
+static void check_late_entry(void)
+{
+    /* On the grid nothing waits and nothing counts as late; the first entry after the start is on time. */
+    late_fresh(5000000u);
+    for (unsigned i = 0; i < 6u; ++i) CHECK(!entry(FRAME));
+    CHECK(!mw_late_max && !mw_late_hits && !mw_late_waits && !mw_late_wait_max);
+    /* Below the window (100, 105 and 110 µs) and past it (190, 195, 200 and 250 µs) an entry goes straight on. The
+     * lateness is 0.5 µs under the interval's excess: GRID. */
+    static const uint16_t outside[] = {1, 60, 100, 105, 110, 191, 195, 200, 250, 340};
+    for (unsigned i = 0; i < sizeof outside / sizeof *outside; ++i) {
+        CHECK(!late_by(outside[i]) && entry_late == outside[i] * US - 66u && mw_late_max == entry_late);
+        CHECK(!mw_late_hits && !mw_late_waits);
+    }
+    CHECK(!late_by(105) && !entry(FRAME - 105u * US) && !entry_late && !entry(FRAME));
+    /* In it (111 µs, the two logged stalls' 149 and 155 µs, 189 µs) it waits until it is 190 µs late: 80 µs at most. */
+    static const uint16_t inside[] = {111, 120, 149, 155, 189, 190};
+    for (unsigned i = 0; i < sizeof inside / sizeof *inside; ++i) {
+        CHECK(late_by(inside[i]) && entry_late == inside[i] * US - 66u && mw_late_max == entry_late);
+        CHECK(mw_late_hits == 1u && mw_late_waits == 1u && mw_late_wait_max >= LATE_HI - entry_late);
+    }
+    /* The DSP skips the frame after a waited entry: the next comes two frames less the lateness later, on the grid. */
+    CHECK(late_by(149) && !entry(2u * FRAME - 149u * US) && !entry_late && !entry(FRAME) && mw_late_waits == 1u);
+    /* Lateness carries from one entry to the next: 60 µs twice is 120 µs. A frame that came early takes it back. */
+    late_fresh(5000000u);
+    CHECK(!entry(FRAME) && !entry(FRAME + 60u * US) && entry(FRAME + 60u * US) && entry_late == 120u * US - 132u);
+    late_fresh(5000000u);
+    CHECK(!entry(FRAME) && !entry(FRAME + 60u * US) && !entry(FRAME - 60u * US) && !entry(FRAME + 60u * US));
+    /* It is taken modulo a frame (three frames and 150 µs: the DSP skipped two), and four frames or more without an
+     * entry start it again at 0, whatever it was. */
+    late_fresh(5000000u);
+    CHECK(!entry(FRAME) && entry(3u * FRAME + 150u * US) && entry_late == 150u * US + 2u * FRAME - 2u * GRID - 66u);
+    late_fresh(5000000u);
+    CHECK(!entry(FRAME) && !entry(5u * FRAME + 150u * US) && !entry_late && !entry(FRAME));
+    late_fresh(5000000u);
+    CHECK(!entry(FRAME) && !entry(FRAME + 100u * US) && entry_late && !entry(IDLE) && !entry_late && !mw_late_hits);
+    /* After a skipped frame the sum is a frame less 0.5 µs: it counts as that frame. Left standing it decays 0.5 µs a
+     * frame into the window, and about 150 entries on the grid wait (octabam's first version, corrected by 1752f3d4):
+     * 800 entries after a waited entry and its skipped frame, and after one 250 µs late and its skipped frame. */
+    late_fresh(5000000u);
+    CHECK(!entry(FRAME) && entry(FRAME + 149u * US) && !entry(2u * FRAME - 149u * US) && !entry_late);
+    for (unsigned i = 0; i < 800u; ++i) CHECK(!entry(FRAME));
+    CHECK(mw_late_waits == 1u && mw_late_hits == 1u && mw_late_max == 149u * US - 66u);
+    late_fresh(5000000u);
+    CHECK(!entry(FRAME) && !entry(FRAME + 250u * US) && !entry(2u * FRAME - 250u * US) && !entry_late);
+    for (unsigned i = 0; i < 800u; ++i) CHECK(!entry(FRAME));
+    CHECK(!mw_late_waits && !mw_late_hits && mw_late_max == 250u * US - 66u);
+    /* The same with the unit's frame a little off the nominal one, either way: no entry on its grid waits. */
+    for (uint32_t off = 0; off < 3u; ++off) {
+        late_fresh(5000000u);
+        CHECK(!entry(FRAME) && entry(FRAME + 149u * US) && !entry(2u * (FRAME + off - 1u) - 149u * US));
+        for (unsigned i = 0; i < 800u; ++i) CHECK(!entry(FRAME + off - 1u));
+        CHECK(mw_late_waits == 1u);
+    }
+    /* The 32-bit timer wraps every 32.5 s: across it the intervals, the decision and a wait that spans it hold. */
+    late_fresh(0u - 3u * FRAME);
+    CHECK(!entry(FRAME) && !entry(FRAME) && entered == 0u - FRAME && !entry(FRAME + 100u * US) && entered < FRAME);
+    CHECK(!entry(FRAME - 100u * US) && !entry_late && !mw_late_hits);
+    late_fresh(0u - 2u * FRAME - 149u * US - 40u * US);
+    CHECK(!entry(FRAME) && entry(FRAME + 149u * US) && entered == 0u - 40u * US && mw_frame_t0 < 2u * US);
+    CHECK(!entry(2u * FRAME - 149u * US) && !entry(FRAME) && mw_late_waits == 1u);
+    /* Switched off (development bases) it counts the entry and does not wait; the lateness is kept the same way. */
+    CHECK(late_by(149) && mw_late_hits == 1u);
+    late_fresh(5000000u); mw_late_wait_on = 0;
+    CHECK(!entry(FRAME) && !entry(FRAME + 149u * US) && entry_late == 149u * US - 66u && mw_late_max == entry_late);
+    CHECK(mw_late_hits == 1u && !mw_late_waits && !mw_late_wait_max && !entry(2u * FRAME - 149u * US) && !entry_late);
+    /* The budget times the frame from the wait's end: a waited frame is charged what it ran, not the wait. */
+    fresh(); CHECK(late_by(149));
+    host_timer += 30000u; mw_frame_exit();
+    CHECK(mw_frame_last == 30000u + TICK && mw_frame_max == mw_frame_last && !mw_frame_late_max);
+    fresh(); late_fresh(0); host_tick = 0;
 }
 int main(void)
 {
@@ -931,9 +1037,11 @@ int main(void)
     check_native_flex_voice();
     check_cpu_budget();
     check_engine_price();
+    check_late_entry();
     if (failures) { fprintf(stderr, "%u registry checks failed\n", failures); return 1; }
     puts("Machine registry: rows by table order, admission before mutation, signatures and defaults in both copies, absent "
          "machines as stock, the validator's protection and wrapper chain, render routing, keyed SEQUENCER rows, chooser "
-         "counts and cursor clamps, SETUP_PAGE machines' own SRC SETUP, the frame guard and the CPU budget passed.");
+         "counts and cursor clamps, SETUP_PAGE machines' own SRC SETUP, the frame guard, the late-entry wait and the CPU budget "
+         "passed.");
     return 0;
 }
