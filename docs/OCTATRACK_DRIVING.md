@@ -171,16 +171,15 @@ After a navigation timeout, stop sending test gestures and inspect held-key rows
 was observed with FUNC absent from those rows; row readback alone does not
 establish that stock's modifier state is clear.
 
-The development input helper currently splices remote packets into the physical
-panel's byte stream. A no-module emulator on base `20ed7910…` reproduced held
-TRIG5–7 and a lost FUNC release when a USB KEY arrived between a fader report's
-two bytes ([base issue #1110](https://github.com/repeat98/modwerk/issues/1110)).
-Serialize input at complete physical-report boundaries before using
-concurrent physical movement and remote injection for qualification; a still
-slider does not clear a fault left by an earlier attempt. A later fresh-RAM-boot,
-empty-inventory hardware probe also misdelivered FUNC. Initial released rows and
-a fresh boot do not establish input delivery: verify each held-row transition
-and stock modifier release, and stop on a mismatch.
+Remote keys wait for a whole physical report. The panel sends two-byte reports, and a USB KEY rung between a
+fader report's two bytes once left TRIG5-7 held or lost a FUNC release
+([base issue #1110](https://github.com/repeat98/modwerk/issues/1110)). Since November 2026 the base queues remote
+keys and encoder steps (and the self-test's PLAY and STOP) and rings them from its tick only when the panel's parser
+expects a report's first byte, so a key arrives up to a tick (16 ms) after its request. Sixteen wait at most; the
+KEY reply is 0 for one more. The host test covers both orderings on a model of the parser's state, and keys, chords,
+Part and bank switches and picks ran through the queue on an MKII twin (13 November 2026); the interleaving itself
+was not replayed against the real parser. An earlier fresh-RAM-boot hardware probe also misdelivered FUNC, cause
+not isolated: verify each held-row transition and stock modifier release, and stop on a mismatch.
 
 - **Effects.** FUNC+FX1/FX2 opens the chooser (the left list; its right side are the effect's setup knobs).
   Moving the cursor does not pick; YES does. NO closes. LEVEL scrolls. `pick:` does all of it.
