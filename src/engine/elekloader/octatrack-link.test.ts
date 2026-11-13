@@ -239,6 +239,27 @@ describe('sending a module', () => {
     await link.update('PREVIEW VOL', one)
     expect(failures).toEqual([{ error: 'device', step: 'stage', refusal: 7 }])
   })
+  it('reports what stopped a sync whose transfer was never confirmed', async () => {
+    const causes = [new DOMException('private text', 'NetworkError'), Object.assign(new Error('private text'), { name: 'TimeoutError' }), undefined], failures: unknown[] = []
+    for (const cause of causes) {
+      const unit = fakeUnit(), base = fakeSession(unit)
+      let calls = 0
+      const connect: typeof base = async (...args) => {
+        const session = await base(...args)
+        if (++calls !== 2) return session
+        let trusted = true // the update's session: a chunk's reply goes missing mid-transfer
+        return Object.create(session, {
+          connectionTrusted: { get: () => trusted },
+          stage: { value: async () => { trusted = false; unit.staged = true; throw new UploadUnconfirmedError('chunk was not confirmed', session.status, cause) } },
+        })
+      }
+      const link = new OctatrackLink(unit.usb, connect, 300)
+      link.subscribeDiagnostics(event => { if (event.event === 'sync_failed') failures.push({ error: event.error, kind: event.kind }) })
+      link.start(); await settle(); await settle()
+      await link.update('PREVIEW VOL', one)
+    }
+    expect(failures).toEqual(['NetworkError', 'TimeoutError', 'OtherError'].map(kind => ({ error: 'transport', kind })))
+  })
   it('says why the Octatrack rejected a module, from the base’s record', async () => {
     const { unit, link } = await linked()
     unit.refusal = 7 // a track plays the effect it would replace

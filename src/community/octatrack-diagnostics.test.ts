@@ -273,6 +273,7 @@ describe('private consented Octatrack diagnostics',()=>{
       {id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'unknown',step:'private step'},{id:crypto.randomUUID(),event:'kept',phase:'ready',step:'stage'}]
     for(const value of cases)expect((await send(value,token)).status).toBe(400)
     expect((await send({id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'unknown',kind:'TypeError'},token)).status).toBe(200)
+    expect((await send({id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'transport',step:'stage',kind:'VendorTransportError'},token)).status).toBe(200)
     expect((await send({id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'device',result:'rejected',refusal:7,step:'activate'},token)).status).toBe(200)
   })
   it('keeps the 1000 event cap for regular-member collections',async()=>{
