@@ -67,7 +67,7 @@ describe('the base self-test as the update stress test', () => {
   it('after Keep, waits for the set saved on the card and read back', async () => {
     expect(await waitUntilSaved(unit([record(0, 0, 0, 0, 7, 1), record(0, 0, 0, 0, 7, 2)]), { pollMs: 0 })).toBe(true) /* both modules */
     expect(await waitUntilSaved(unit([record(0, 0, 0, 0, 8, 0)]), { pollMs: 0 })).toBe(false)  /* the save failed */
-    expect(await waitUntilSaved(unit([record(0, 0, 0, 0, 1, 1)]), { pollMs: 1, timeoutMs: 5 })).toBe(false) /* never saved */
+    expect(await waitUntilSaved(unit([record(0, 0, 0, 0, 1, 1)]), { pollMs: 1, timeoutMs: 5 })).toBe('pending') /* not saved yet: the base has not tried */
     expect(await waitUntilSaved(unit([undefined]), { pollMs: 0 })).toBe(true) /* an old base */
   })
 })

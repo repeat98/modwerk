@@ -622,13 +622,15 @@ export class OctatrackLink {
       await this.whenStopped(() => session.holdTrial())
       if (keep) await session.accept()
       else await this.whenStopped(() => session.rollback(), Math.max(this.stopWaitMs, setBudget(this.rows)))
-      const unsaved = keep && this.transport && !await waitUntilSaved(this.transport).catch(() => false)
+      const saved = !keep || !this.transport || await waitUntilSaved(this.transport).catch(() => false), unsaved = saved === false
       this.live(connection)
       await session.leaveUploadMode()
       this.live(connection)
       await this.release()
       this.live(connection) // a reply that arrived after the unit went away confirms nothing
       this.ready(unsaved ? { tone: 'error', text: `Kept, but the Octatrack couldn’t save ${module} to the card. It runs until you switch off; load it again to save it.` }
+        // Not saved yet is not a failed save: the base saves by itself once the unit is idle, and Status shows it.
+        : saved === 'pending' ? { tone: 'success', text: `Synced. The Octatrack is still busy and saves ${module} to the card once it is stopped and idle. Leave it switched on until Status shows “Saved and checked”.` }
         : { tone: 'success', text: keep ? `Synced. ${module} stays on your Octatrack, also after a restart.` : 'Undone. Your Octatrack is back to how it was.' },
         session.status.active)
       this.diagnostic(keep && !unsaved ? 'kept' : !keep ? 'undone' : 'sync_failed', unsaved ? {error:'save'} : {})

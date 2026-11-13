@@ -472,6 +472,21 @@ describe('loading a module set', () => {
     expect(link.getState().notice).toMatchObject({ tone: 'success', text: 'Synced. Live stays on your Octatrack, also after a restart.' })
     expect((await link.inventory())!.map(item => item.module)).toEqual(['0000000b', '0000000c'])
   })
+  it('says a kept set is still to be saved when the unit has not saved it in time, and that a save failed only when it did', async () => {
+    const reading = (saved: number) => ({ state: 0, failed: 0, modules: 0, dsp: 0, intact: 0, ran: 0, peaks: { cpu: 0, tracks1to4: 0, tracks5to8: 0 }, done: 0, total: 0, frameGap: 0, saved, savedCount: 0, live: 2, culprit: 0, culpritName: '', refusal: 0 })
+    for (const [saved, tone, text, event] of [[2, 'success', /^Synced\. The Octatrack is still busy and saves Live to the card once/, 'kept'], [8, 'error', /^Kept, but the Octatrack couldn’t save Live/, 'sync_failed']] as const) {
+      const { link } = await loaded(), events: string[] = []
+      link.subscribeDiagnostics(diagnostic => events.push(diagnostic.event))
+      vi.spyOn(UsbVendorTransport.prototype, 'selftest').mockResolvedValue(reading(saved))
+      vi.useFakeTimers({ toFake: ['setTimeout', 'Date'] })
+      const keeping = link.keep()
+      await vi.advanceTimersByTimeAsync(21000)
+      vi.useRealTimers(); await keeping
+      expect(link.getState().notice).toMatchObject({ tone, text: expect.stringMatching(text) })
+      expect(events.filter(name => name === 'kept' || name === 'sync_failed')).toEqual([event])
+      vi.restoreAllMocks()
+    }
+  })
   it('undoes the whole set on the device without sending inverse packages', async () => {
     const { unit, link } = await loaded()
     await link.undo()
