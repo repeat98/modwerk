@@ -18,7 +18,20 @@ Report #1533 (USB, 0.3.1 with the 0.2.5 package): after saving and a power cycle
 
 **The USB package, emulator only** (same day and emulator, an 8 November development base `9b3ba417`, package `428d970a…`, 18,334 bytes, installed with `npm run device -- try … --emulator`). Before the install, 0.3.1's default bytes were poked into Part 1 T1 (FLEX) and Part 2 T5 (STATIC), bank copy and battery copy: the check returned 1. After the install both tracks read `S2`/2 with the top bit moved (`…0b c0` became `…4b 40`) in the bank and the battery copy, in the open Part and in the other one, and the check returned 0 on both Parts. SRC SETUP on T1 showed VECTOR's second page; the emulator's DSP notice covered the SPAN value, so the value shown was not read.
 
-**Not tested:** a unit; a power cycle; the boot's battery restore itself (only the check it calls); the recovery of a project that already came back reset; the card build on its own; saved Parts, which keep the old byte until the Part is saved again; the release base (the emulator base was an older development build).
+**On a unit** (13 November 2026, the owner's Octatrack MKII, driven over USB by the coordinating session; a RAM-booted development twin `2d97f42d…`, not the release base; packages run as timed trials that roll back, no Keep; a scratch project, Part 1, pattern A01; Part and pattern bytes read over USB). A "restart" is a RAM boot of the twin, which runs the battery restore with no module installed, as a power-on does.
+
+| step | read afterwards |
+| --- | --- |
+| Published 0.2.5 package: VECTOR on T1 (Flex pool), SPAN 12, a 12-trig phrase; three trigs on T2 | T1's settings `53 32 02 1b 0c c0` |
+| T1 back to FLEX, trial rolled back | marker gone, settings left: `00 00 00 1b 0c c0` (#596) |
+| Restart | the reported failure: all eight tracks STATIC, no trigs on T1 or T2, every FX slot at stock's defaults |
+| Second restart, nothing saved | the bank is back: T1 FLEX, both tracks' trigs; the byte reads `00` (stock's repair) |
+| 0.3.2 package (`428d970a…`): VECTOR on T1 | second page shows SPAN 12; settings `53 32 02 1b 4b 40` |
+| T1 back to FLEX, trial rolled back, restart | bank intact at the first restart: T1 FLEX, both tracks' trigs, settings unchanged `00 00 00 1b 4b 40` |
+
+Twice before that, the owner power-cycled onto the flashed base (`4e9a87ea…`, 0.2.5 kept) with T1 still a VECTOR track at SPAN 12, and the next RAM boot read the byte as `00` with the bank intact: the same repair, one restart later. The reset state itself was not looked at on those two runs.
+
+**Not tested:** a restart with the track still set to VECTOR under 0.3.2 (a trial cannot roll back while a track names it; stock's check does not read the marker); 0.3.2 as a kept module on the flashed base and a power cycle with it; the rewrite of 0.3.1's bytes by the running module on a unit (emulator only); PROJECT > RELOAD as the recovery; the card build on its own; saved Parts, which keep the old byte until the Part is saved again; listening.
 
 ## 0.3.1: VECTOR again, sample tracks only (0.2.6's code)
 

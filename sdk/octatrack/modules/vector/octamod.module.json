@@ -209,7 +209,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Firmware-free generator/writer and all 256 VECTOR-instance masks pass ASan/UBSan; authored assembly reproduces. Exact-image ColdFire emulator tests reproduce the previous reset/stuck transport and pass two-instance Part/project save-reload, saved-card fresh load and battery-only restart. Twelve SRC controls, ordinary stock validation, both pool menus and advancing transport are checked. Physical reboot/audio remain untested under the exact-version owner exception. 0.3.2 (#1533): no packed settings byte reaches 0x80, so stock's Part check passes without VECTOR too; seen in ot_emu on a base with no VECTOR installed, not on a unit.",
+    "summary": "Firmware-free generator/writer and all 256 VECTOR-instance masks pass ASan/UBSan; authored assembly reproduces. Exact-image ColdFire emulator tests reproduce the previous reset/stuck transport and pass two-instance Part/project save-reload, saved-card fresh load and battery-only restart. Twelve SRC controls, ordinary stock validation, both pool menus and advancing transport are checked. Physical reboot/audio remain untested under the exact-version owner exception. 0.3.2 (#1533): no packed settings byte reaches 0x80, so stock's Part check passes without VECTOR too; seen in ot_emu and on the owner's MKII (a development twin, RAM boots).",
     "hardwareStatus": "reported",
     "gates": [
       "Firmware-free sanitizer generator, writer and packed-settings checks",
@@ -316,17 +316,16 @@
         "kind": "functional",
         "status": "reported",
         "model": "MKII",
-        "testedOn": "2026-10-27",
+        "testedOn": "2026-11-13",
         "tester": "repeat98 (owner's unit, driven over USB by the coordinating session)",
-        "sourceRevision": "645d73da3872ce9111f3e3172114fb33a3660b9f",
-        "imageSha256": "a753ddf67b0fe64e3742b4c89ecf141071eb30757b170173215e92b1b4794d24",
-        "summary": "Over USB on an Octatrack MKII: a RAM-booted development twin of the release base (identity e6e75d75..., MAIN a753ddf6...; the b1b2ca58 build plus --dev) with POLY8 0.3.1, Analog BD 0.1.5 (rebuilt for the twin) and this VECTOR 0.2.5 package (45c962ca...), all accepted. On a STATIC track SRC SETUP's list scrolls to POLY8, ANALOG BD and VECTOR; with the cursor on VECTOR before YES the stock STATIC setup shows, and on ANALOG BD Analog BD's page. YES on VECTOR opens its STATIC/FLEX choice and the main SRC page shows SRC>VECTOR. SRC SETUP then shows VECTOR's page 2 (SEED 1, SPAN 12, OFST 0, ROT 0, RPT OFF, DIR FWD); encoders A-F change SEED, OFST, ROT, RPT and DIR (SPAN already at its maximum) and back, and SPAN moves within its range. Another STATIC track keeps the stock setup.",
+        "sourceRevision": "3d903dcf6e368010e20215440842e4783d262f46",
+        "imageSha256": "428d970ac5723ed5f3b26ef45a88deee9e92cf6be398b6ea93c7ee13115dfb23",
+        "summary": "Over USB on an Octatrack MKII (13 November 2026): a RAM-booted development twin (identity 2d97f42d...), this 0.3.2 USB package (428d970a..., 18,334 bytes) as a timed trial, a scratch project. VECTOR chosen on T1 from the machine list and the Flex pool; its second page showed SPAN 12 and the Part held 53 32 02 1b 4b 40, no byte at 0x80 or above. With those settings left on the track, a RAM boot (the battery restore with no module installed) kept the bank: machines, both tracks' trigs and the settings bytes unchanged. The same steps with the published 0.2.5 package (settings ... 0c c0) reset the bank at the restart: all tracks STATIC, no trigs (#1533); a second restart without saving brought it back.",
         "limitations": [
-          "The base was the development twin of the release base, not the b1b2ca58 build itself, nor the base this release commits.",
-          "Not tested: the FLEX, THRU and PICKUP setups; a POLY8 or Analog BD track's SRC SETUP; VECTOR 0.2.4 on the new base; whether the SRC main page regenerates the phrase.",
-          "Not tested: saving and reloading, a power cycle with VECTOR kept, and listening; no chip timing or stress.",
-          "One MKII; no MKI. The card build was not run on a unit: 0.2.4's card source, and 0.3.1's (0.2.6's code: st_setup_page without its row-5 test, for POLY8 sets, #1119) only in ot_emu. 0.3.1 keeps publishing this 0.2.5 USB package; its control unit source is byte-identical.",
-          "0.3.2 changes how SPAN is stored (#1533) and rewrites settings saved by older versions in the open bank. Its USB package has not run on a unit; the run above used the 0.2.5 package."
+          "The base was a development twin of another branch, not the release base; the package ran as a trial, never as a kept module.",
+          "The restart was a RAM boot with the track switched back to FLEX and the settings bytes left in place; a restart with the track still set to VECTOR under 0.3.2, and a power cycle with 0.3.2 kept on the flashed base, were not run.",
+          "Not tested on a unit: the rewrite of settings saved by older versions (emulator only), PROJECT > RELOAD as the recovery, the card build, saved Parts, listening; no chip timing or stress.",
+          "One MKII; no MKI. The earlier 27 October run of the 0.2.5 package (SRC SETUP page 2 over USB) is in TESTING.md."
         ],
         "report": "TESTING.md"
       },

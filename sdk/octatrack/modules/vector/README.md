@@ -124,11 +124,11 @@ Packed VECTOR settings no longer trigger stock Part repair and whole-bank reset 
 From `0.3.2-experimental` every settings byte VECTOR stores is one the stock check accepts, so a saved project loads with or without VECTOR, on the stock OS too. SPAN's top bit moved to a free bit of the neighbouring byte; nothing else changed, and 0.3.2 reads settings saved by every earlier version with the same values.
 
 - **Updating.** Install 0.3.2 with your project open. VECTOR rewrites the old byte in the four Parts of the open bank, and again whenever you open another bank or reload a Part. Then save the project. A bank you have not opened with 0.3.2 still holds the old byte.
-- **A project that already came back reset.** Do not save it. The save on the card still holds the old settings; reload the project from the card with VECTOR installed. This recovery is read from the source and not yet tried on a unit.
+- **A project that already came back reset.** Do not save it. Switch the Octatrack off and on once more: the bank comes back, with SPAN on that track changed to a lower value (seen on a unit, 13 November 2026). Reloading the project from the card should do the same; that was not tried.
 - **Going back to 0.3.1 or older.** An older version reads SPAN 8 to 12 saved by 0.3.2 as 0 to 4. Set SPAN again.
 - **Not covered.** A track that was switched from VECTOR back to STATIC or FLEX with 0.3.1 or older and SPAN 8 or higher keeps the old byte, because VECTOR no longer knows the track. Choose VECTOR on it once, or back up the project before you power off.
 
-Seen in the emulator only (see [TESTING.md](TESTING.md)); a power cycle on a unit is not yet tested.
+Seen in the emulator and on one MKII with restarts from RAM (see [TESTING.md](TESTING.md)); a power cycle with 0.3.2 kept is not yet tested.
 
 ## SRC SETUP page 2 over USB (0.2.5)
 
