@@ -92,7 +92,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Author functional report on real hardware, 10 November 2026: this package on beta base 72defb09, try and Undo, Keep with a minute of playing, power cycle, Play Modes beside it, removal, all read back from the device. Emulator control (18/18) and audio suites passed; measured worst event 1,687 cycles. Stock benchmark and stress waived by the owner for this version (no MIDI path). See TESTING.md.",
+    "summary": "0.2.5 starts at HOLD (one data byte). Author functional report on real hardware, 13 November 2026: this package on beta base c1f21351 beside 15 kept modules, a trial with HOLD from the start, the row at HOLD and OFF behaving as stock, then Keep, power cycle and HOLD working again with no menu visit, read back from the device. Emulator control and routine suites passed; measured worst event 1,687 cycles, as 0.2.4. Stock benchmark and stress were waived by the owner for 0.2.4 (no MIDI path); renewal for 0.2.5 pending. See TESTING.md.",
     "hardwareStatus": "reported",
     "gates": [
       "python3 -B verify.py",
@@ -103,11 +103,11 @@
       "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-paired-save> --audio --paired --save",
       "python3 -B cycle_count.py --inputs <private-inputs> --output <new-private-output>"
     ],
-    "evidenceRevision": "4faa4023b2cf29012abedfad2aed7b02e59519d5",
+    "evidenceRevision": "c329f7d23b57e80aa46844652c1181aeced1798e",
     "qualification": {
-      "moduleVersion": "0.2.4-experimental",
-      "sourceSha256": "f37562d53f0f901e09cca4d42d1a73730dfc92caa2563298dc960f45eb37f2cc",
-      "imageSha256": "50f64eb63cfe62b534988bda28baa4c575eb9d9a6dbc7a81035e7d95cd01cf89",
+      "moduleVersion": "0.2.5-experimental",
+      "sourceSha256": "4d3fdbf04d04cf1db20bcd96953a6907a0c4281667f0bc61a1c75a635137607d",
+      "imageSha256": "5ac64b5ef96567b701a603197c737d5cccd6317da7242d15ca1855ab37da7c1c",
       "cycles": [
         {
           "processor": "coldfire",
@@ -181,15 +181,15 @@
         "kind": "functional",
         "status": "reported",
         "model": "MKII",
-        "testedOn": "2026-11-10",
+        "testedOn": "2026-11-13",
         "tester": "twwwy",
-        "sourceRevision": "4faa4023b2cf29012abedfad2aed7b02e59519d5",
-        "imageSha256": "50f64eb63cfe62b534988bda28baa4c575eb9d9a6dbc7a81035e7d95cd01cf89",
-        "summary": "The author updated the unit to Modwerk beta base 72defb09 from the site, then ran this exact package over USB, OS 1.40C, disposable project: a 90-second trial and Undo; a trial and Keep, then about a minute of playing; a power cycle; a 300-second trial of Play Modes 0.1.1 beside it; then removal. They reported the TRACK SOLO row and HOLD working, solo, join and leave, audio, lamps and release behaving, the row back at OFF after the power cycle, and with Play Modes the first gesture wins: TRACK plus UP or DOWN within half a second changes the Play Modes mode, a longer hold starts Track Solo instead. Read back from the device: empty after Undo, Track Solo installed after Keep and after the power cycle, only Track Solo after Play Modes rolled back, empty after removal, set identity back to the start.",
+        "sourceRevision": "c329f7d23b57e80aa46844652c1181aeced1798e",
+        "imageSha256": "5ac64b5ef96567b701a603197c737d5cccd6317da7242d15ca1855ab37da7c1c",
+        "summary": "On the flashed Modwerk beta base c1f21351, OS 1.40C, with 15 other modules kept (among them Mute Modes, SAMPLE LOCKS and Beat Slicer): the agent ran a 20-second trial and rolled it back, then loaded a 300-second trial in which the author reported, without opening the menu, holding T2 solos it and T3 joins, the TRACK SOLO row reading HOLD, and OFF giving stock behaviour. The agent then kept this package at the author's request; after the author's power cycle they reported the row at HOLD, the gesture working with no menu visit and the other modules up. Read back from the device: rolled back after the first trial, accepted with this package active, and after the power cycle the same base and the same 16 kept modules.",
         "limitations": [
           "Author-reported panel observations with no audio measurement or timing.",
-          "About ten minutes on one unit. The USB identity does not state the model; MKII comes from earlier records of this unit.",
-          "Not tested: other modules alongside except the Play Modes trial, all eight anchors, external MIDI, arranger rows, Pickup recording, the K09 orderings, self-test, MKI, the card build (Track Solo is USB-only)."
+          "The flashed base answers no screen or memory reads, so the agent's own stage shows loading, running and rollback only.",
+          "Not tested on 0.2.5: all eight anchors, external MIDI, arranger rows, Pickup recording, the K09 orderings, self-test, MKI, removal."
         ],
         "report": "TESTING.md"
       },
@@ -203,8 +203,8 @@
           ]
         },
         "screenshots": [
-          "media/track-solo-off.png",
-          "media/track-solo-hold.png"
+          "media/track-solo-hold.png",
+          "media/track-solo-off.png"
         ],
         "screenshotStyle": "black-and-white"
       }
@@ -219,7 +219,7 @@
     {
       "path": "media/track-solo-off.png",
       "captureType": "emulator",
-      "caption": "Find TRACK SOLO under PROJECT > CONTROL > SEQUENCER. OFF preserves stock track-button behavior.",
+      "caption": "Press YES on TRACK SOLO to choose OFF for this session: stock track-button behavior until the next restart.",
       "alt": "Octatrack SEQUENCER menu with TRACK SOLO set to OFF.",
       "credit": "twwwy; underlying Octatrack UI by Elektron",
       "license": "LicenseRef-OT-UI-Documentation",
@@ -228,15 +228,15 @@
         "page": "PROJECT / CONTROL / SEQUENCER",
         "shows": "location",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.4-experimental",
+        "moduleVersion": "0.2.5-experimental",
         "imageSha256": "124548dc353b2f9cd41ba0a27113ae441e82b68a16d10a1b9509920c61839587",
-        "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.4 package installed through the real runtime backend; panel_test.py --menu; empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo."
+        "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.5 package installed through the real runtime backend; panel_test.py --menu (the row opens at HOLD, YES chooses OFF); empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo."
       }
     },
     {
       "path": "media/track-solo-hold.png",
       "captureType": "emulator",
-      "caption": "Press YES to choose HOLD. Close the menu and wait for stock notifications to clear before holding a track for 0.5 seconds.",
+      "caption": "TRACK SOLO under PROJECT > CONTROL > SEQUENCER starts at HOLD. Close the menu and wait for stock notifications to clear before holding a track for 0.5 seconds.",
       "alt": "Octatrack SEQUENCER menu with TRACK SOLO set to HOLD.",
       "credit": "twwwy; underlying Octatrack UI by Elektron",
       "license": "LicenseRef-OT-UI-Documentation",
@@ -245,9 +245,9 @@
         "page": "PROJECT / CONTROL / SEQUENCER",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.4-experimental",
+        "moduleVersion": "0.2.5-experimental",
         "imageSha256": "124548dc353b2f9cd41ba0a27113ae441e82b68a16d10a1b9509920c61839587",
-        "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.4 package installed through the real runtime backend; panel_test.py --menu; empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo."
+        "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.5 package installed through the real runtime backend; panel_test.py --menu (the row opens at HOLD, YES chooses OFF); empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo."
       }
     }
   ],
@@ -260,8 +260,8 @@
       "Release the original TRACK button to end solo; choose OFF to disable the gesture."
     ],
     "screenshots": [
-      "media/track-solo-off.png",
-      "media/track-solo-hold.png"
+      "media/track-solo-hold.png",
+      "media/track-solo-off.png"
     ]
   }
 }

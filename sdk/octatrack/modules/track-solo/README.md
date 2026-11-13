@@ -145,11 +145,11 @@ preserved, and they are not presented as 0.2.2 captures or behavior evidence.
 They do not establish hardware or audio qualification. A user-facing audio
 example is pending.
 
-![TRACK SOLO defaults to OFF in the stock SEQUENCER menu.](media/track-solo-off.png)
+![TRACK SOLO starts at HOLD in the stock SEQUENCER menu.](media/track-solo-hold.png)
 
-Choose HOLD with YES, then close the menu before using the hold gesture.
+Choose OFF with YES to keep stock track-button behavior until the next restart.
 
-![TRACK SOLO set to HOLD in the stock SEQUENCER menu.](media/track-solo-hold.png)
+![TRACK SOLO set to OFF in the stock SEQUENCER menu.](media/track-solo-off.png)
 
 The thumbnail is a conceptual diagram, not an instrument screenshot or measurement.
 
