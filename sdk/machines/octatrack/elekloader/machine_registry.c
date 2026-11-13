@@ -61,6 +61,8 @@ void modwerk_dsp_source_release(unsigned track);
 void modwerk_status_machine_refused(unsigned track, const char *label); /* status.c: the DSP FULL box for a machine */
 void modwerk_dsp_source_engine_off(uint32_t module);
 void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add); /* status.c: the CPU FULL box, per mille of the allowance */
+uint32_t modwerk_status_cpu_recent(void); /* status.c: the CPU meter's mean over its last four seconds, per mille */
+void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu); /* status.c: the CPU FULL box for a unit already busy */
 #ifndef MW_HOST
 __attribute__((weak)) int modwerk_dsp_source_claim(unsigned track, uint32_t module, uint32_t voice, uint32_t engine, uint8_t kind)
 { (void)track; (void)module; (void)voice; (void)engine; (void)kind; return RUNTIME_CYCLES; }
@@ -69,6 +71,8 @@ __attribute__((weak)) void modwerk_status_machine_refused(unsigned track, const 
 __attribute__((weak)) void modwerk_dsp_source_engine_off(uint32_t module) { (void)module; }
 __attribute__((weak)) void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t booked, uint32_t add)
 { (void)track; (void)label; (void)booked; (void)add; }
+__attribute__((weak)) uint32_t modwerk_status_cpu_recent(void) { return 0; }
+__attribute__((weak)) void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu) { (void)track; (void)label; (void)cpu; }
 #endif
 /* Each track of the current Part: the priced machine its voice is charged to, or 0. A word each, so the render
  * reads it whole without a mask. */
@@ -143,6 +147,13 @@ static unsigned owner(const Machine *const *m, unsigned n, const Part *part, uns
  * shortcut: CPU_DEFAULT and the allowance are estimates from the 24 October 2026 MKII runs (rest 23 %, POLY8 at its
  * cap about 45 %), to be set from `npm run device -- cpu` on a unit before a release. */
 #define CPU_DEFAULT 12u
+/* The prices cover a machine's renders. They do not cover what else an installed set costs the ColdFire: modules'
+ * hooks, effects' control code, a DSP voice's glue, a USB recording. So a pick is also refused while the unit is
+ * measured busy: the CPU meter (status.c: all the time main's idle loop did not get) at mw_cpu_hot or more over its
+ * last four seconds. That is where the panel starts to lag: on 32 units' logs (30 October to 13 November 2026) a
+ * five-minute window at 85 % or more had a UI gap past 100 ms more often than not, and under 65 % one in twenty did.
+ * It reads the moment of the pick: a pick made stopped can still leave a Part that runs hot once it plays. */
+volatile uint32_t mw_cpu_hot = 850u; /* per mille; development bases may change it */
 volatile uint32_t mw_cpu_allowance = 45u, mw_cpu_booked; /* percent of a frame; development bases may change the allowance */
 volatile uint8_t mw_cpu_refused;    /* the current Part's tracks past the allowance: the frame interrupt reads it whole */
 static uint8_t cpu_warned;          /* ... whose box already showed, as `warned` */
@@ -408,6 +419,14 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
     if (next) {
         if (next->admit_track && !next->admit_track(part, track)) return (unsigned)-1;
         warned &= (uint8_t)~(1u << track); /* a pick is a new ask: say so again if it is refused again */
+        if (old != next) { /* a busy unit takes no further machine, priced or not */
+            uint32_t cpu = modwerk_status_cpu_recent();
+            if (cpu >= mw_cpu_hot) {
+                mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << track;
+                modwerk_status_cpu_hot(track, next->label, cpu);
+                return (unsigned)-1;
+            }
+        }
         if (old != next && cpu_price(next)) { /* before the DSP claim: nothing to give back */
             uint8_t over; unsigned booked = cpu_bill(m, n, part, track, &over);
             if (booked + cpu_price(next) > mw_cpu_allowance) {
