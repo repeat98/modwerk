@@ -9,7 +9,6 @@
 extern void tn_fillrect(void *bmp, int x0, int y0, int x1, int y1, int colour);
 extern int tn_textf(void *bmp, const void *font, int x, int y, unsigned flags, const char *fmt, ...);
 extern const char tn_font[], tn_font_narrow[];
-extern uintptr_t tn_brain(void);                // the Brain, in d0
 
 // OS-specific RAM layout and view identities: build.json's per-release cflags.
 #define U32(a) (*(volatile const uint32_t *)(uintptr_t)(a))
@@ -25,19 +24,58 @@ extern uintptr_t tn_brain(void);                // the Brain, in d0
 #define LABEL_Y(row) ((row) ? 0 : 27)         // labels' bottom row: screen rows 59..63 and 32..36
 #define BADGE_TOP(r) ((r) ? 24 : 51)          // the badge's top row, beside the fader's first tick
 
-static int on_mixer(void)
+// The page the main view shows: main view + TN_VIEW_UI -> + TN_UI_PAGES (the page set, vtable
+// TN_VT_PAGES) -> + TN_PAGE_CURRENT. 0 when any link is missing or not what OS 1.17 has there.
+// The Internal Mixer is recognised by what the stock OS has just drawn, which is the same on the unit
+// and in the emulator: the MIX box at the left (columns 0..15, screen rows 13..36) and the page
+// marker on the scroll bar (column 125, rows 10..61). The frame is 128 x 64, 1 bit per pixel, stored
+// by column: 8 bytes per column, bottom row first, the lowest row of each byte in its top bit.
+// Each column is compared as two 32-bit words: bottom rows 0..31, then 32..63.
+static const uint32_t mix_box[16][2] = {
+    {0x0000000f, 0xffffc000}, {0x00000010, 0x00002000}, {0x00000010, 0x0fc02000}, {0x00000010, 0x00802000},
+    {0x00000010, 0x0fc02000}, {0x00000010, 0x00002000}, {0x00000010, 0x08402000}, {0x00000010, 0x0fc02000},
+    {0x00000010, 0x08402000}, {0x00000010, 0x00002000}, {0x00000010, 0x0cc02000}, {0x00000010, 0x03002000},
+    {0x00000010, 0x0cc02000}, {0x00000010, 0x00002000}, {0x0000000f, 0xffffc000}, {0x00000000, 0x00000000},
+};
+#define MIX_MASK_HI 0x0000001fu
+#define MIX_MASK_LO 0xffffe000u
+#define BAR_X 125
+#define BAR_MASK_HI 0x3fffffffu
+#define BAR_MASK_LO 0xfffffc00u
+static const uint32_t bar[2][2] = {
+    {0x00000000, 0xe0000000},                 // Internal Mixer 2/5: tracks 1-8
+    {0x00000070, 0x00000000},                 // Internal Mixer 3/5: tracks 9-16
+};
+
+static const uint8_t *frame_data(void *bmp)
 {
-    char *ctrl = (char *)tn_brain() + 0x40;   // the view controller: its stack's top view
-    char *node = *(char **)(ctrl + 0x18), *page;
-    uint32_t pages = U32(ctrl - 0x40 + TN_BRAIN_PAGES);
-    if (node == ctrl + 0x14 || **(uint32_t **)(node + 8) != TN_VT_MAIN)
-        return 0;                             // a menu or pop-up is on top
-    if (!pages)
-        return 0;                             // the pages are not built yet (start-up)
-    page = *(char **)(pages + TN_PAGE_CURRENT);
-    if (!page || U32(page) != TN_VT_FUNC_MOD)
+    const char *b = (const char *)bmp;
+    if (U32(b + 4) != 128 || U32(b + 8) != 64)
         return 0;
-    return U8(page + TN_SUBPAGE) == 1 ? 1 : U8(page + TN_SUBPAGE) == 2 ? 2 : 0;
+    return *(const uint8_t *const *)(b + 0x10);
+}
+
+static uint32_t word(const uint8_t *col)
+{
+    return (uint32_t)col[0] << 24 | (uint32_t)col[1] << 16 | (uint32_t)col[2] << 8 | col[3];
+}
+
+// 1: Internal Mixer tracks 1-8, 2: tracks 9-16, 0: anything else.
+static int on_mixer(void *bmp)
+{
+    const uint8_t *d = frame_data(bmp);
+    uint32_t hi, lo;
+    if (!d)
+        return 0;
+    for (int x = 0; x < 16; x++)
+        if ((word(d + 8 * x) & MIX_MASK_HI) != mix_box[x][0] || (word(d + 8 * x + 4) & MIX_MASK_LO) != mix_box[x][1])
+            return 0;
+    hi = word(d + 8 * BAR_X) & BAR_MASK_HI;
+    lo = word(d + 8 * BAR_X + 4) & BAR_MASK_LO;
+    for (int p = 0; p < 2; p++)
+        if (hi == bar[p][0] && lo == bar[p][1])
+            return p + 1;
+    return 0;
 }
 
 static int kit_on(void)
@@ -82,10 +120,43 @@ static void badge(void *bmp, int k, int row, int track)
     tn_fillrect(bmp, x1, top - 6, x2, top, -1);   // invert: dark digits on a lit box
 }
 
+#ifdef TN_DEBUG
+static char *hx(char *o, uint32_t v, int n)
+{
+    static const char d[] = "0123456789ABCDEF";
+    for (int s = (n - 1) * 4; s >= 0; s -= 4)
+        *o++ = d[(v >> s) & 15];
+    return o;
+}
+
+// Diagnostics on every screen, over the header: TN3, the mixer page found (0, 1, 2), the kit on,
+// and column 0's and the scroll bar's bottom words as drawn.
+static void debug_line(void *bmp, int page)
+{
+    char t[40], *o = t;
+    const uint8_t *d = frame_data(bmp);
+    *o++ = 'T', *o++ = 'N', *o++ = '3', *o++ = ' ', *o++ = (char)('0' + page), *o++ = ' ';
+    o = hx(o, (uint32_t)kit_on() & 0xff, 2);
+    *o++ = ' ';
+    o = hx(o, d ? word(d + 4) : 0, 8);
+    *o++ = ' ';
+    o = hx(o, d ? word(d + 8 * BAR_X + 4) : 0, 8);
+    *o = 0;
+    tn_fillrect(bmp, 0, 55, 127, 63, 0);
+    tn_textf(bmp, tn_font_narrow, 1, 57, 0, "%s", t);
+}
+#endif
+
+
 void tn_draw(void *bmp, void *ctrl)
 {
-    int page = on_mixer(), kit;
+    int page, kit;
     (void)ctrl;
+
+    page = on_mixer(bmp);
+#ifdef TN_DEBUG
+    debug_line(bmp, page);
+#endif
     if (!page || (kit = kit_on()) < 0)
         return;
     for (int c = 0; c < CELLS; c++) {

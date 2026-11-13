@@ -9,4 +9,3 @@
         FW      tn_textf, FW_TEXTF
         FW      tn_font, FW_FONT
         FW      tn_font_narrow, FW_FONT_NARROW
-        FW      tn_brain, FW_BRAIN
