@@ -31,7 +31,7 @@ typedef char diag_trace_layout[sizeof(struct diag_trace) == DIAG_TRACE_BYTES ? 1
 /* Five minutes of the meters (status.c, per mille), sampled twice a second: `samples` of them, `playing` with the
  * sequencer running. `minute` counts from the start (`boot`). `frame_gap`: the longest time between two audio frames
  * in the window, in µs (a frame is 363 µs; past about 515 µs the DSPs starve), `tick_gap` the longest run of frames
- * without a UI tick (a tick is every 2.7 frames; 13,781 is the freeze threshold): what a dropout or a hang looks
+ * without a UI tick (60 ticks a second on the unit, one every 46 frames; 13,781 is the freeze threshold): what a dropout or a hang looks
  * like, where the meters' peaks only show a self-test or an install. */
 struct diag_load {
     uint32_t seq, boot, minute;
