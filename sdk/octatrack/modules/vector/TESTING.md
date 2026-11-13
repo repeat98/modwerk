@@ -1,5 +1,23 @@
 # VECTOR tests and measurements
 
+## 0.3.2: settings bytes the stock Part check accepts (#1533, #596)
+
+Report #1533 (USB, 0.3.1 with the 0.2.5 package): after saving and a power cycle every track read STATIC and the trigs were gone. Cause: `vector_pack` put SPAN in the top four bits of one byte, so SPAN 8 to 12 (default 12) stored 0x80 or more. Stock's Part check counts that as a value to repair, and a count above zero makes the boot's battery restore drop the bank. VECTOR's wrapper around the check (0.2.4) hides the bytes only while VECTOR is registered; the base restores the battery copies before the kept set is back.
+
+**Reproduced, emulator only** (13 November 2026, `ot_emu`, MKII mode, a Modwerk base with no VECTOR installed, the Template project; the base's validator hook and stock's check called on the live Part at `0x40002318`, T1 a FLEX track carrying VECTOR's marker and settings):
+
+| T1's twelve bytes | result |
+| --- | --- |
+| none | 0 |
+| 0.3.1 packing, default settings (SPAN 12) | 1, and stock zeroed the byte |
+| 0.3.1 packing, SPAN 4 | 0 |
+| 0.3.2 packing, default settings (SPAN 12) | 0 |
+| 0.3.2 packing, every control at its maximum | 0 |
+
+**Host tests** (`test_engine.c`, sanitizers): no packed byte reaches 0x80 for every SPAN, ROOT, DENS and DIR with the other controls at their maximum; every such setting round-trips; the 0.3.1 form of the same settings unpacks to the same values. The test fails on 0.3.1's `engine.c`.
+
+**Not tested:** a unit; a power cycle; the boot's battery restore itself (only the check it calls); the rewrite of old bytes in the open bank by the running module (`st_ui_tick`); the recovery of a project that already came back reset; the card build; saved Parts, which keep the old byte until the Part is saved again.
+
 ## 0.3.1: VECTOR again, sample tracks only (0.2.6's code)
 
 On 8 November 2026 the owner decided that the MIDI generator 0.3.0 added to VECTOR is its own module, VECTOR MIDI. 0.3.1 rolls VECTOR back to the code prepared as 0.2.6 (#1141): 0.2.5 plus the card fix below, with the name VECTOR and no MIDI generator. Over USB it keeps publishing the 0.2.5 package, the one the MKII run below used. 0.3.0's MIDI-track results are in this file as of 0.3.0 (#1339) and move to VECTOR MIDI.

@@ -147,6 +147,22 @@ static void secondary_controls(void) {
         assert(!memcmp(&unpacked,&p,sizeof p) && read_seed==seed);
         assert(guard[0]==0xa5 && guard[10]==0xa5);
     }
+    /* #1533: no packed byte may read negative to stock's Part validator, and
+     * settings saved up to 0.3.1 (SPAN's top bit in byte 2 bit 7) read as before. */
+    p=vector_defaults; p.type=15; p.scale=4; p.gate=126; p.accent=127; p.offset=24; p.rotation=63; p.repeat=64;
+    for(unsigned span=0;span<=12;++span) for(unsigned root=0;root<12;++root)
+    for(unsigned density=0;density<=16;++density) for(unsigned direction=0;direction<2;++direction) {
+        uint8_t packed[9], old[9]; uint32_t read_seed;
+        p.span=(uint8_t)span; p.root=(uint8_t)root; p.density=(uint8_t)density; p.direction=(uint8_t)direction;
+        vector_pack(packed,&p,127);
+        for(unsigned k=0;k<9;++k) assert(packed[k]<0x80);
+        vector_unpack(&unpacked,&read_seed,packed);
+        assert(!memcmp(&unpacked,&p,sizeof p) && read_seed==127);
+        memcpy(old,packed,sizeof old);
+        old[1]=(uint8_t)(density|direction<<5); old[2]=(uint8_t)(root|span<<4);
+        vector_unpack(&unpacked,&read_seed,old);
+        assert(!memcmp(&unpacked,&p,sizeof p));
+    }
     p=vector_defaults;
     assert(vector_generate(&base,&p,64,100,7));
     p.gate=126; p.accent=127;
