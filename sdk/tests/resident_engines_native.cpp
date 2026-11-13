@@ -17,6 +17,7 @@
 //                         `limit` instructions: prints "S steps how pc", how 1 returned, 2 left for stock, 0 the limit
 //   HASH x|y lo hi        prints "H space lo hi fnv1a" of the words in [lo, hi)
 //   REGS                  prints "G a b x y" (data ALU, raw) and "AR r0..r7 n0..n7 m0..m7"
+//   SP                    prints "SP sp" (the system stack pointer: a balanced call leaves it as it found it)
 //   CORE 0|1              later steps act on that core (each core its own P/X/Y and registers; core 0 at start)
 //   SHARE x|y lo hi       [lo, hi) is one memory both cores see: after each GO, PKT or RUN on a core it is
 //                         copied to the other (a two-core run interleaves whole calls, never instructions)
@@ -134,6 +135,8 @@ int main(int argc, char **argv) {
             for(const auto &v:r.n) std::cout<<" "<<v.var;
             for(const auto &v:r.m) std::cout<<" "<<v.var;
             std::cout<<"\n";
+        } else if(op=="SP") {
+            std::cout<<"SP "<<dsp.regs().sp.var<<"\n";
         } else if(op=="CORE") {
             unsigned core; script>>core;
             if(core>1) throw std::runtime_error("core index");

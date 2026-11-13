@@ -46,17 +46,18 @@ static const struct mw_dsp_region mw_dsp_regions[] = {
 };
 #define MW_DSP_REGIONS (sizeof mw_dsp_regions / sizeof mw_dsp_regions[0])
 
-/* The sites, by index (a package's hook entry names one): its feature, and per core its stock P continuation
+/* The sites, by index (a package's hook entry names one): the features its stub serves (one, or a chain's:
+ * the base's stub calls each enabled one's engine in turn, chain 1), and per core its stock P continuation
  * after the hooked code when it has an exit (0: none, or no such payload). */
-struct mw_dsp_site { uint8_t feature, pad; uint16_t exit[2]; };
+struct mw_dsp_site { uint8_t feature, chain; uint16_t exit[2]; };
 static const struct mw_dsp_site mw_dsp_sites[] = {
-    {8u, 0, {0x0u, 0x0u}}, /* 0 dsp_fx1_dispatch */
-    {1u, 0, {0x0u, 0x0u}}, /* 1 dsp_compressor_proc */
-    {1u, 0, {0x0u, 0x0u}}, /* 2 dsp_track_commit */
-    {2u, 0, {0x0u, 0x0u}}, /* 3 dsp_core0_mixdown */
-    {2u, 0, {0x0u, 0x0u}}, /* 4 dsp_core0_phones */
-    {4u, 0, {0x426u, 0x221u}}, /* 5 dsp_track_source */
-    {1u, 0, {0x0u, 0x0u}}, /* 6 dsp_compressor_init */
+    {8u, 0u, {0x0u, 0x0u}}, /* 0 dsp_fx1_dispatch */
+    {1u, 0u, {0x0u, 0x0u}}, /* 1 dsp_compressor_proc */
+    {1u, 0u, {0x0u, 0x0u}}, /* 2 dsp_track_commit */
+    {2u, 0u, {0x0u, 0x0u}}, /* 3 dsp_core0_mixdown */
+    {2u, 0u, {0x0u, 0x0u}}, /* 4 dsp_core0_phones */
+    {4u, 1u, {0x426u, 0x221u}}, /* 5 dsp_track_source */
+    {1u, 0u, {0x0u, 0x0u}}, /* 6 dsp_compressor_init */
 };
 #define MW_DSP_SITES (sizeof mw_dsp_sites / sizeof mw_dsp_sites[0])
 

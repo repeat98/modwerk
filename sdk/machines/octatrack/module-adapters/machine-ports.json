@@ -846,6 +846,7 @@
     "source": "sdk/machines/octatrack/module-adapters/analog_bd_dsp_price.json"
    },
    "controller": "analog_bd_write_lease",
+   "lease": {"feature": 4, "functions": ["ab_render", "ab_lease_end"], "why": "its packaged feature (dsp-sites.json) and the functions holding its one Begin and one End call (machine_lease_policy.py)"},
    "imports": [
     "modwerk_controller_write_begin",
     "modwerk_controller_write_end"

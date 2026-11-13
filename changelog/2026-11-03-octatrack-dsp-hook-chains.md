@@ -1,0 +1,1 @@
+Octatrack base: more than one DSP track machine can now share the per-track sound source. For every track the base offers the sound to each installed DSP machine in turn, and the first one that owns the track plays it, so a second DSP machine can install beside Analog BD over USB. Analog BD's package and sound don't change. It takes effect with the next base build.

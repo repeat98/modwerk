@@ -82,7 +82,10 @@ STOCK_COPIES = {'output-matrix': (
 # board applies in place while the controller is ACTIVE (controller_board.c).
 PAGE_RECIPES = {'sidechain-compressor': 'src/engine/assets/descriptor-recipes.json'}
 PAGE_BYTES = 0x192
-REQUIRED_CORES = {1: 3, 2: 1, 4: 3}  # stock_hooks.c: Matrix is core A only; Analog BD's row is base_bound.py's
+# stock_hooks.c: Matrix is core A only. A packaged machine (Analog BD; its row is base_bound.py's) runs on its ledger cores.
+REQUIRED_CORES = {1: 3, 2: 1, **{f['bit']: sum(1 << 'AB'.index(tag) for tag in f['cores'])
+                              for f in json.loads((Path(__file__).resolve().parents[1] / 'dsp-sites.json').read_text())['features']
+                              if f.get('packaged')}}
 TITLES = {'sidechain-compressor': 'SIDECHAIN COMP', 'output-matrix': 'OUTPUT MATRIX'}
 REVISIONS = (1, 1, 1)  # policy, state, parameter: the scoped derivative's first reviewed contract
 POLICY_CAPACITY = 24  # controller_write_lease.h MW_CONTROLLER_WRITE_POLICY_CAPACITY

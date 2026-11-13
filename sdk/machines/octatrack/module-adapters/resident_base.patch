@@ -388,21 +388,13 @@
          btst    #1,y:<<$ffffd3
          brkcs
  c1over:
-@@ -578,6 +593,18 @@
+@@ -578,6 +593,10 @@
          nop
  missactual:
          nop
 +hookstate:                             ; private resident owner mask, initialized dormant by the upload
 +        nop
 +hookready:                             ; a complete observed reset is required before any activation
-+        nop
-+hookpos1:
-+        nop
-+hookpos2:
-+        nop
-+hookpos4:
-+        nop
-+hookpos8:                              ; the key bus's reset cursor
 +        nop
  idlewin:                                  ; never executed: the load meter (see frame): frames left,
          nop                             ; least, most, sum and missed of this window
