@@ -91,7 +91,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu on OS 1.74: chosen with nothing played, keys leave its label, a tap of B switches 808/909 and plays; every hand-written assembly pass matches its C (tools/asm_check.py, 0 differences); the host engine against repeat98's float models within -41 to -68 dB. Unit: the author by hand on 0.1.0 (AB04), and 0.2.0 on the author's automated rig (BL01, 11 Nov 2026): 808 and 909 knob sweeps follow the host model (909 TUN within 0.0 % over 36-61 Hz), stress as in the limits. On the published base (3ece243b, rytm-emu BA21 and by hand on the unit, VB01): chosen, 808/909 tap, kit reload, sound lock changing the type, power cycle.",
+    "summary": "rytm-emu on OS 1.74: select, keys, 808/909 tap, meter; assembly passes match their C (asm_check, 0 differences); host engine within -41 to -68 dB of repeat98's models. Unit: by hand (0.1.0, AB04; 0.2.0 on the published base, VB01: choice, tap, kit reload, sound lock, power cycle) and the author's rig (BL01: sweeps follow the model, stress as limited).",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
