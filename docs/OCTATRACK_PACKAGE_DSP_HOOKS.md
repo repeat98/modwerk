@@ -71,14 +71,8 @@ stay base data (Phase 3).
 - **Trust.** A row pins the **controller digest** (`loader.h`: the header with its DSP fields zeroed and everything up
   to the claims), not the package's SHA-256; the loader keeps it in the owner record, and the board, the owner checks and
   the write lease compare it. A package that changes only its DSP part (0.1.6) keeps its row, so the base is not rebuilt.
-  The source policy in a row hashes only the controller's inputs (`build.py machine_inputs`).
-- **Price.** The engine header's `cycles` (bytes 44-45) and `kind` (byte 46) carry the price per voice, charged once
-  per track that plays it, with any fixed per-core cost folded in (Analog BD: 414, 411 a voice and 3 a core,
-  `executed`). Both are DSP fields, outside the controller digest, so a new price is a new package under the same row and
-  never a base rebuild. The machine record (`machine-ports.json`) prices Analog BD 0/0 and keeps only its kind and
-  source. The loader, `abi9.engine()` and the site refuse an engine with `cycles` 0 or a kind other than executed or
-  hardware; `machine_registry.c` refuses a record priced beside such an engine (`sdk/runtime/loader/README.md`,
-  "Price").
+  The source policy in a row hashes only the controller's inputs (`build.py machine_inputs`). The price per voice is
+  the engine header's `cycles` and `kind`, outside the digest (`sdk/runtime/loader/README.md`, "Price").
 - **Admission.** The loader asks `modwerk_machine_dsp_engine_admit` (the board) for an engine: a trusted controller of a
   packaged feature, one entry at the feature's one site on its cores, entered at word 0, an exit exactly where the site
   has one, claims exactly the feature's regions with initial words, at most 2,048 words. A trusted controller of a
