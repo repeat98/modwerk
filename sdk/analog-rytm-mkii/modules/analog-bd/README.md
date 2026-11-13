@@ -61,4 +61,4 @@ Original 808/909 models, fits and coefficients: Jannik Aßfalg (repeat98), MIT, 
 
 ## Screens and audio
 
-Screenshots are rytm-emu captures of build BA20 (0.2.0 on the base of repeat98/modwerk#1447) ([media/capture.json](media/capture.json)). No audio preview yet.
+Screenshots are rytm-emu captures of build BA21 (0.2.0 on the base of the digital voices, repeat98/modwerk#1447) ([media/capture.json](media/capture.json)). No audio preview yet.

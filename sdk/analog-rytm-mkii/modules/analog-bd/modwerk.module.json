@@ -91,7 +91,7 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "rytm-emu on OS 1.74: chosen with nothing played, keys leave its label, a tap of B switches 808/909 and plays; every hand-written assembly pass matches its C (tools/asm_check.py, 0 differences); the host engine against repeat98's float models within -41 to -68 dB. Unit: the author by hand on 0.1.0 (AB04), and 0.2.0 on the author's automated rig (BL01, 11 Nov 2026): 808 and 909 knob sweeps follow the host model (909 TUN within 0.0 % over 36-61 Hz), stress as in the limits. Not run on a unit on the base of #1447.",
+    "summary": "rytm-emu on OS 1.74: chosen with nothing played, keys leave its label, a tap of B switches 808/909 and plays; every hand-written assembly pass matches its C (tools/asm_check.py, 0 differences); the host engine against repeat98's float models within -41 to -68 dB. Unit: the author by hand on 0.1.0 (AB04), and 0.2.0 on the author's automated rig (BL01, 11 Nov 2026): 808 and 909 knob sweeps follow the host model (909 TUN within 0.0 % over 36-61 Hz), stress as in the limits. On the published base (3ece243b, rytm-emu BA21 and by hand on the unit, VB01): chosen, 808/909 tap, kit reload, sound lock changing the type, power cycle.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -137,8 +137,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "122f2c87d41f469a848e05e80ac38d0dfd7a0d649ce47122e88b15660639a4ac",
-        "setup": "Headless rytm-emu (dtboot, 2ac0f1f) running BA20: the Modwerk base's send-bus variant with digital voices (f824d778, repeat98/modwerk#1447) and this folder's BD ANALOG 0.2.0-experimental, linked by Modwerk on stock OS 1.74, on a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "692962ffc94f269497e9f2973ff8e5c5e49b3ef7b9c0a0e40d11d6c873df1b39",
+        "setup": "Headless rytm-emu (dtboot, 2ac0f1f) running BA21: the Modwerk base's send-bus variant with digital voices (3ece243b, merged in repeat98/modwerk#1447) and this folder's BD ANALOG 0.2.0-experimental, linked by Modwerk on stock OS 1.74, on a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -153,8 +153,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "122f2c87d41f469a848e05e80ac38d0dfd7a0d649ce47122e88b15660639a4ac",
-        "setup": "Headless rytm-emu (dtboot, 2ac0f1f) running BA20: the Modwerk base's send-bus variant with digital voices (f824d778, repeat98/modwerk#1447) and this folder's BD ANALOG 0.2.0-experimental, linked by Modwerk on stock OS 1.74, on a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "692962ffc94f269497e9f2973ff8e5c5e49b3ef7b9c0a0e40d11d6c873df1b39",
+        "setup": "Headless rytm-emu (dtboot, 2ac0f1f) running BA21: the Modwerk base's send-bus variant with digital voices (3ece243b, merged in repeat98/modwerk#1447) and this folder's BD ANALOG 0.2.0-experimental, linked by Modwerk on stock OS 1.74, on a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -169,8 +169,8 @@
         "type": "emulator",
         "release": "1.74",
         "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "122f2c87d41f469a848e05e80ac38d0dfd7a0d649ce47122e88b15660639a4ac",
-        "setup": "Headless rytm-emu (dtboot, 2ac0f1f) running BA20: the Modwerk base's send-bus variant with digital voices (f824d778, repeat98/modwerk#1447) and this folder's BD ANALOG 0.2.0-experimental, linked by Modwerk on stock OS 1.74, on a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "imageSha256": "692962ffc94f269497e9f2973ff8e5c5e49b3ef7b9c0a0e40d11d6c873df1b39",
+        "setup": "Headless rytm-emu (dtboot, 2ac0f1f) running BA21: the Modwerk base's send-bus variant with digital voices (3ece243b, merged in repeat98/modwerk#1447) and this folder's BD ANALOG 0.2.0-experimental, linked by Modwerk on stock OS 1.74, on a fresh card. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]

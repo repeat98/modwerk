@@ -5,8 +5,8 @@
   "moduleVersion": "0.2.0-experimental",
   "firmware": "1.74",
   "capturedAt": "2026-11-11T23:30:00Z",
-  "imageSha256": "122f2c87d41f469a848e05e80ac38d0dfd7a0d649ce47122e88b15660639a4ac",
-  "build": "Modwerk's linker: the Modwerk base's send-bus variant f824d778 (repeat98/modwerk#1447) + this folder's BD ANALOG 0.2.0-experimental, materialised against stock OS 1.74, --version BA20",
+  "imageSha256": "692962ffc94f269497e9f2973ff8e5c5e49b3ef7b9c0a0e40d11d6c873df1b39",
+  "build": "Modwerk's linker: the Modwerk base's send-bus variant 3ece243b (repeat98/modwerk#1447, merged) + this folder's BD ANALOG 0.2.0-experimental, materialised against stock OS 1.74, --version BA21",
   "emulator": {
     "name": "rytm-emu",
     "repository": "https://github.com/trigcondition/rytm-emu",
