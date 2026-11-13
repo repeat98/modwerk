@@ -85,7 +85,7 @@ export function validateDiagnostic(value: unknown): OctatrackDiagnostic {
       ? keys === 'buildKind,error,event,id,phase' && DIAGNOSTIC_BUILD_KINDS.some(kind => kind === value.buildKind)
         && DIAGNOSTIC_BUILD_PHASES.some(phase => phase === value.phase) && DIAGNOSTIC_BUILD_ERRORS.some(error => error === value.error)
       : !('buildKind' in value) && !('area' in value) && DIAGNOSTIC_USB_PHASES.some(phase => phase === value.phase)
-        && (!('kind' in value) || value.event === 'sync_failed' && value.error === 'unknown' && DIAGNOSTIC_ERROR_KINDS.some(kind => kind === value.kind))
+        && (!('kind' in value) || value.event === 'sync_failed' && (value.error === 'unknown' || value.error === 'transport') && DIAGNOSTIC_ERROR_KINDS.some(kind => kind === value.kind))
         && (!('step' in value) || value.event === 'sync_failed' && DIAGNOSTIC_SYNC_STEPS.some(step => step === value.step))
         && (!('error' in value) || DIAGNOSTIC_USB_ERRORS.some(error => error === value.error))
         && ['live','reason','log'].every(key => !(key in value) || extras!.allowed.includes(key)) && extras!.required.every(key => key in value)
