@@ -341,32 +341,6 @@
         .long   po_pgdesc                | -4: the PLAYBACK descriptor clone (page.s)
 | ---- sy_render(track, ping, start, end) ------------------------------------
 sy_render:
-        | Modwerk 0.1.3: a track that is not FM, with no FM voice of ours on it, GLIDE off and no voice starting this
-        | call, is stock's alone: the engine below would change nothing for it, so stock renders it directly (its
-        | arguments are already in place). Installed on no track, the engine cost 8 points of a frame on eight sample
-        | tracks before this (an MKII, 10 November 2026). d0, d1, a0, a1 are the caller's scratch.
-        move.l  4(%sp),%d0               | track
-        bsr     fm_fr_native             | a0 := the frame's reads
-        bne     sy_full
-        tst.b   FR_GLIDE(%a0)
-        bne     sy_full                  | GLIDE on: a sample's pitch slides (sy_sample)
-        move.l  4(%sp),%d0
-        move.l  %d0,%d1
-        lsl.l   #7,%d1
-        lea     sy_state(%pc),%a1
-        tst.b   S_ON(%a1,%d1.l)
-        bne     sy_full                  | a synth voice of ours is still on this track
-        moveq   #16,%d1
-        cmp.l   16(%sp),%d1              | the frame's second call?
-        bne     sy_fast
-        lea     NIBBLE,%a1
-        lea     (%a1,%d0.l),%a1
-        btst    #4,(%a1)                 | a voice starts: sy_no frees what the track held
-        bne     sy_full
-sy_fast:
-        bset    %d0,FR_STALE(%a0)        | S_CUR no longer follows this track's pitch (sy_sample snaps it)
-        jmp     STOCK_RENDER
-sy_full:
         lea     -48(%sp),%sp
         movem.l %d2-%d7/%a2-%a6,(%sp)    | 44(sp) the stock return; args 52 track, 56 ping, 60 start, 64 end
         move.l  CURSOR,%a2               | the header this call writes
@@ -565,18 +539,10 @@ sy_neutral:
 | and snaps.
 sy_sample:
         mvz.w   (%a4),%d6                | the target: the record's PTCH word
-        lea     fm_fr(%pc),%a0           | frames stock rendered alone (sy_fast) left S_CUR behind: the slide starts
-        btst    %d2,FR_STALE(%a0)        | from the pitch now, as it does after GLIDE 0
-        beq     1f
-        bclr    %d2,FR_STALE(%a0)
-        move.l  %d6,%d1
-        lsl.l   #8,%d1
-        lsl.l   #4,%d1
-        move.l  %d1,S_CUR(%a3)
-1:      bsr     sy_slew                  | d6 := the word slewed toward it (clobbers d0, d1, d3, d7, a0)
+        bsr     sy_slew                  | d6 := the word slewed toward it (clobbers d0, d1, d3, d7, a0)
         move.w  %d6,(%a4)                | the stock rate arithmetic reads the slewed word
 sy_call:
-        bsr     fm_native_fr
+        bsr     fm_is_native
         beq     fm_stock_call
         move.l  64(%sp),%d0
         sub.l   60(%sp),%d0
@@ -799,7 +765,7 @@ sy_check:
         move.l  52(%sp),%d2              | track (the rate block used d2)
         move.l  #VOICE_STRIDE,%d3
         muls.l  %d2,%d3
-        bsr     fm_native_fr
+        bsr     fm_is_native
         bne     sy_alive
         lea     VOICE_BASE,%a0
         tst.b   (%a0,%d3.l)              | the CF voice ended: leave stock's silence ...
@@ -1073,21 +1039,8 @@ po_rf_out:
         rts
 
 | ---- sy_glide: d0 := the track's GLIDE value, 0 = off, 1..127 -----------------
-sy_glide:                                | (Modwerk 0.1.3: read once a frame, fm_fr_sync; clobbers d1, a0 too, as sy_slew does)
-        bsr     fm_fr_sync
-        mvz.b   FR_GLIDE(%a0),%d0
-        rts
-
-| ---- fm_fr_legbyte: po_legbyte for the render path, from the frame's Part (sy_slew, right after sy_glide) ----
-fm_fr_legbyte:
-        lea     fm_fr(%pc),%a0
-        movea.l FR_PART(%a0),%a0
-        move.l  %d2,%d3
-        lsl.l   #5,%d3
-        sub.l   %d2,%d3
-        sub.l   %d2,%d3                  | track * 30
-        adda.l  #AMP_P2_OFF,%a0
-        mvz.b   LEG_SLOT2(%a0,%d3.l),%d0
+sy_glide:
+        mvz.b   GLIDE_AT,%d0
         rts
 
 | ---- po_legbyte: d2 = track -> d0 = the Part's LEG byte (0 OFF, 1 MONO, 2.. POLY) --
@@ -1126,7 +1079,7 @@ sy_slew:
         tst.l   %d1
         beq     sy_sl_snap
         move.l  %d0,%d7                  | (the target, kept across the byte read)
-        bsr     fm_fr_legbyte            | the track's LEG (clobbers d0, d3, a0)
+        bsr     po_legbyte               | the track's LEG (clobbers d0, d3, a0)
         move.l  %d0,%d3
         move.l  %d7,%d0
         tst.l   %d3
@@ -5482,89 +5435,6 @@ fm_is_native:
         tst.l %d0
         rts
 
-| ---- the frame's reads (Modwerk 0.1.3) ------------------------------------------
-| The Part index and GLIDE are in battery RAM, about half a microsecond a read, and the bank's bytes are uncached
-| (docs/MODULE_PERFORMANCE.md). The render path asked "is this track FM" two or three times a track and read GLIDE
-| once, every frame, on every sample track. Nothing below the frame interrupt runs inside it, so within a frame they
-| cannot change: they are read at the frame's first use and each track is checked once. A frame is known by the frame
-| builder's ping (PING_AT, the record set being built); should it ever stand still, the reads are still refreshed
-| every FR_USES uses. Only the render path uses these: the panel, key and MIDI hooks run outside the interrupt and
-| keep reading the Part itself (fm_is_native, po_is_synth, po_legbyte).
-        .set    FR_KEY, 0                | the ping the reads belong to
-        .set    FR_LEFT, 4               | uses left before they are read again whatever the ping says
-        .set    FR_PART, 8               | the current Part
-        .set    FR_SEEN, 12              | bit t: track t was checked this frame
-        .set    FR_NAT, 13               | bit t: track t is an FM/1 signed FLEX track
-        .set    FR_GLIDE, 14             | the GLIDE byte
-        .set    FR_STALE, 15             | bit t: stock rendered track t alone since S_CUR was last set (sy_fast)
-        .set    FR_USES, 128
-        .align  4
-fm_fr:
-        .long   0, 1, 0                  | FR_LEFT 1: the first use reads
-        .byte   0, 0, 0, 0
-
-| a0 := fm_fr, current for this frame. Clobbers d0, d1.
-fm_fr_sync:
-        lea     fm_fr(%pc),%a0
-        move.l  PING_AT,%d1
-        cmp.l   FR_KEY(%a0),%d1
-        bne     1f
-        subq.l  #1,FR_LEFT(%a0)
-        bne     2f
-1:      move.l  %d1,FR_KEY(%a0)
-        move.l  #FR_USES,%d1
-        move.l  %d1,FR_LEFT(%a0)
-        clr.b   FR_SEEN(%a0)
-        mvz.b   GLIDE_AT,%d1
-        move.b  %d1,FR_GLIDE(%a0)
-        mvz.b   PART_IDX,%d1
-        move.l  #6322,%d0
-        mulu.l  %d0,%d1
-        add.l   PART_PTR,%d1
-        move.l  %d1,FR_PART(%a0)
-2:      rts
-
-| d0 = a track -> d0 := 1 for an FM/1 signed FLEX track (fm_is_native's test), tst.l done; a0 := fm_fr.
-| Clobbers d1, a1.
-fm_fr_native:
-        movea.l %d0,%a1
-        bsr     fm_fr_sync
-        move.l  %a1,%d0
-        btst    %d0,FR_SEEN(%a0)
-        bne     3f
-        bset    %d0,FR_SEEN(%a0)
-        bclr    %d0,FR_NAT(%a0)
-        movea.l FR_PART(%a0),%a1
-        adda.l  #MACH_OFF,%a1
-        mvz.b   (%a1,%d0.l),%d1
-        cmpi.b  #1,%d1
-        bne     3f
-        move.l  %d0,%d1
-        mulu.w  #30,%d1
-        adda.l  %d1,%a1
-        adda.l  #0x8edbc-MACH_OFF,%a1
-        mvz.w   (%a1),%d1
-        cmpi.w  #0x464d,%d1
-        bne     3f
-        mvz.b   2(%a1),%d1
-        cmpi.b  #1,%d1
-        bne     3f
-        bset    %d0,FR_NAT(%a0)
-3:      btst    %d0,FR_NAT(%a0)
-        sne     %d0
-        andi.l  #1,%d0
-        rts
-
-| fm_is_native for the render path: track d2 -> d0, every other register kept, tst.l done.
-fm_native_fr:
-        lea     -12(%sp),%sp
-        movem.l %d1/%a0-%a1,(%sp)
-        move.l  %d2,%d0
-        bsr     fm_fr_native
-        movem.l (%sp),%d1/%a0-%a1
-        lea     12(%sp),%sp
-        tst.l   %d0
-        rts
 
 | Source supplier dispatch, frame builder's second call (track in d3).
 | An empty FLEX voice keeps stock's silent supplier in its per-track cache.
@@ -5575,7 +5445,7 @@ fm_source_dispatch:
         lea     -8(%sp),%sp
         movem.l %d0/%d2,(%sp)
         move.l  %d3,%d2
-        bsr     fm_native_fr
+        bsr     fm_is_native
         beq     1f
         lea     sy_render,%a0
 1:      movem.l (%sp),%d0/%d2

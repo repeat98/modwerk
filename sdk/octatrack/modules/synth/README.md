@@ -1,12 +1,10 @@
-# FM Synth — 0.1.3 experimental
+# FM Synth — 0.1.2 experimental
 
 ## Overview
 
 FM SYNTH is a dedicated track machine beside FLEX, STATIC, THRU, NEIGHBOR and PICKUP. It uses Tim Hastie’s octatrick v2.9 two-operator FM engine: a sine carrier with a sine modulator, feedback and an index-decay envelope. One to four paraphonic voices feed the track’s existing AMP, filter and effects.
 
-Version 0.1.3 changes no function: it makes FM Synth cheaper on the CPU. The render path reads the Part, GLIDE and each track's FM test once a frame, and stock renders a track the engine would not change. Installed on no track it still costs CPU on every sample track (TESTING.md has the figures).
-
-Version 0.1.2 fixed the MIDI chromatic selector stack imbalance and added 18.06 dB of source headroom before voice summing and stock AMP gain. It keeps the existing voices/envelopes and their relative levels; sounds play quieter at identical mixer settings. Increase track LEVEL or mixer gain as needed while checking the full mix. Effects, resonant filtering and the sum of multiple tracks can still clip.
+This update fixes the MIDI chromatic selector stack imbalance and adds 18.06 dB of source headroom before voice summing and stock AMP gain. It keeps the existing voices/envelopes and their relative levels; sounds play quieter at identical mixer settings. Increase track LEVEL or mixer gain as needed while checking the full mix. Effects, resonant filtering and the sum of multiple tracks can still clip.
 
 The dedicated machine plays without a sample. This experimental version has emulator playback and shared native/browser composition evidence. The owner explicitly authorized releasing 0.1.2 without current hardware validation on 8 October. Hardware is untested. Worst-case chip timing and complete stack/lifetime bounds remain unmeasured. Version-matched release notes are published in the community changelog. These measurements remain unknown; see TESTING.md for the release limits.
 
