@@ -131,9 +131,7 @@ export class UploadSession {
     return this.exclusive(async () => {
       const digest = pkg.sha256, length = pkg.data.length
       digestBytes(digest)
-      if (pkg.base === this.base && length > Math.min(UPLOAD_MAX_BYTES, this.status.capacity))
-        throw new Error('This is too big for the base on the Octatrack to take over USB.')
-      if (pkg.base !== this.base || !length)
+      if (pkg.base !== this.base || !length || length > Math.min(UPLOAD_MAX_BYTES, this.status.capacity))
         throw new Error('Runtime module package does not match its base, size or private build pin.')
       const data = pkg.data.slice(0, length)
       if (data.length !== length || sha(data) !== digest)
