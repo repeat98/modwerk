@@ -761,14 +761,16 @@ static uint8_t place[16], next[16], made; /* a render's place in the last frame'
  * 0.5 µs, so that an error decays), never below 0; within NEAR of a whole frame or past it, it is less that frame
  * (the DSP skipped one: left at a frame less 0.5 µs it would decay into the window 0.1 s later and every entry
  * would wait); IDLE or more after the last entry it is 0. The timer wraps every 32.5 s: only differences are used.
- * Not measured on a Modwerk base (docs/MODULE_PERFORMANCE.md). mw_late_wait_on 0 counts and does not wait (dev.c
- * LATE); every base runs this same code. */
+ * Not measured on a Modwerk base (docs/MODULE_PERFORMANCE.md), so it is off: mw_late_wait_on 0 counts and does not
+ * wait, and a development base switches it (dev.c LATE). Waiting makes the DSP skip a frame for entries that run on
+ * unaided today, and puts 553 µs between two frames, past the self-test's limit: turn it on by default only once a
+ * unit has shown both the stall without it and the audio across the skip with it. */
 #define GRID (FRAME + 66u)
 #define NEAR 2640u     /* 20 µs */
 #define LATE_LO 14520u /* 110 µs */
 #define LATE_HI 25080u /* 190 µs */
 #define IDLE (4u * GRID)
-volatile uint32_t mw_late_wait_on = 1;
+volatile uint32_t mw_late_wait_on;
 /* For diagnostics, since the last read: the latest entry, the entries in the window, the waits and the longest. */
 volatile uint32_t mw_late_max, mw_late_hits, mw_late_waits, mw_late_wait_max;
 static uint32_t entry_at, entry_late;
