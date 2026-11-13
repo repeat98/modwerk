@@ -504,7 +504,8 @@ command waits until IDENTIFY reports that build's `configurationHash`. A
 power cycle boots the flashed base again. Stop playback and recording first;
 the restart is a reboot.
 
-The base accepts only an OS image (entry word, at most 1.25 MiB) carrying
+The base accepts only an OS image (entry word, at most 1.5 MiB; 1.25 MiB on
+bases before 13 November 2026, which a released base must still fit) carrying
 NOR's own bootstrap version, because an image with another version would
 reprogram the bootstrap at its entry. It stages the image in its own
 reserve, arms a one-shot mailbox, and half a second later quiesces as OS
