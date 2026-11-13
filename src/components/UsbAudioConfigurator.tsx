@@ -84,9 +84,10 @@ export function UsbAudioConfigurator({ draft, onDraftChange, configuration, sele
       </div>
     </div>
     <p id="usb-audio-description" className="usb-setup-description">{audioChoices[draft.layout].description}</p>
-    <details className="usb-setup-cpu"><summary>Estimated CPU load <strong>{cpu.level}</strong><Icon name="help" size={13}/></summary>
-      <p>{cpu.rationale} These estimates compare USB configurations; they are not the Octatrack’s total CPU percentage. <a href={cpu.source} target="_blank" rel="noreferrer">Load source ↗</a></p>
+    <details className="usb-setup-cpu"><summary>{cpu.measured ? 'CPU load' : 'Estimated CPU load'} <strong>{cpu.level}</strong><Icon name="help" size={13}/></summary>
+      <p>{cpu.rationale} {cpu.measured ? 'The cost applies only while a computer or Outbox has the stream open.' : 'This is an estimate from instruction counts, not measured on an Octatrack, and it is not the Octatrack’s total CPU percentage. On the 20-channel feed the measured cost was far higher than its count suggested.'} <a href={cpu.source} target="_blank" rel="noreferrer">Load source ↗</a></p>
     </details>
+    <p className="usb-setup-on-unit">On the Octatrack, PROJ › MODWERK › USB AUDIO switches this feed to {draft.layout === 'tracks-main-cue' ? 'MAIN + CUE ONLY or OFF' : 'OFF'} and back without a new sync, to free the processor while you are not recording. The channels your computer sees stay as chosen here.</p>
     {outbox ? <div className="usb-setup-outbox">
       <div className="usb-setup-routing-heading"><div><h3>Outbox outputs</h3><p>Four stereo pairs · 8 physical outputs</p></div>
         <button className="text-button" onClick={() => { updateDraft({ ...draft, outboxPairs: suggestedUsbAudioPairs(draft.layout) }); setRoutingNotice('Available signals assigned in order. Remaining outputs are off.') }}>Assign in order</button>

@@ -15,7 +15,7 @@
 .usb-setup-feed { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .usb-setup select { font-family: inherit; font-size: 13px; color: #e2e2eb; min-width: 0; width: 100%; min-height: 44px; border: 1px solid var(--control-border); background-color: var(--field); border-radius: 6px; padding: 9px 42px 9px 12px; }
 .usb-setup select:focus-visible, .usb-setup summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-.usb-setup-description { color: #b9b9c7; font-size: 12px; line-height: 1.65; margin-top: 12px; }
+.usb-setup-description, .usb-setup-on-unit { color: #b9b9c7; font-size: 12px; line-height: 1.65; margin-top: 12px; }
 .usb-setup-cpu { margin-top: 10px; color: var(--muted); font-size: 11px; line-height: 1.65; }
 .usb-setup-cpu summary { display: flex; align-items: center; gap: 8px; min-height: 28px; width: fit-content; cursor: pointer; list-style: none; }
 .usb-setup-cpu summary::-webkit-details-marker { display: none; }

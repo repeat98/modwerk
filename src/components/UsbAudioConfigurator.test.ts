@@ -63,9 +63,14 @@ describe('USB Audio setup before adding', () => {
     expect(html).toContain('USB inputs in your DAW')
     expect(html).toContain('USB 19/20')
     expect(html).not.toContain('id="usb-outbox-0"')
-    expect(html).toContain('Estimated CPU load')
-    expect(html).toContain('3,438')
-    expect(html).toContain('not the Octatrack’s total CPU percentage')
+    expect(html).toContain('CPU load <strong>High</strong>')
+    expect(html).not.toContain('Estimated CPU load')                   // the 20-channel feed is measured on a unit
+    expect(html).toContain('65 % of the processor')
+    expect(html).toContain('PROJ › MODWERK › USB AUDIO switches this feed to MAIN + CUE ONLY or OFF')
+    const main = render(createElement(UsbAudioConfigurator, { draft: { ...usbAudioPreset('computer'), layout: 'main' }, selected: false, onConfigure: noop, onDraftChange: noop }))
+    expect(main).toContain('Estimated CPU load')
+    expect(main).toContain('not the Octatrack’s total CPU percentage')
+    expect(main).toContain('switches this feed to OFF and back')
   })
   it('distinguishes unsaved changes from the saved setup and offers a reset', () => {
     const configuration = usbAudioPreset('outbox')

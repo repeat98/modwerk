@@ -8,7 +8,7 @@ import { usbAudioCpuLoad } from '../config/usb-audio-load'
 export function ModuleResourceIndicators({ id, usbLayout }: { id: string; usbLayout?: UsbAudioLayout }) {
   const document = MODULE_DOCUMENTS_BY_ID[id]
   const cpu = id === USB_AUDIO_MODULE && usbLayout ? usbAudioCpuLoad(usbLayout) : undefined
-  const indicators = moduleResourceIndicators(document).map(indicator => cpu && indicator.id === 'cpu' ? { ...indicator, value: cpu.level, score: cpu.score, fill: cpu.score / 4 * 100, description: cpu.rationale, status: 'Estimated', source: cpu.source } : indicator)
+  const indicators = moduleResourceIndicators(document).map(indicator => cpu && indicator.id === 'cpu' ? { ...indicator, value: cpu.level, score: cpu.score, fill: cpu.score / 4 * 100, description: cpu.rationale, status: cpu.measured ? 'Measured' : 'Estimated', source: cpu.source } : indicator)
   return <ModuleResourceSummary indicators={indicators} evidence={<>
     <h3>Relative load estimates</h3>
     <p className="resource-evidence-date">{cpu ? 'DSP / memory: ' : ''}v{document.version} · {document.resources.recorded}</p>
