@@ -16,7 +16,9 @@ Report #1533 (USB, 0.3.1 with the 0.2.5 package): after saving and a power cycle
 
 **Host tests** (`test_engine.c`, sanitizers): no packed byte reaches 0x80 for every SPAN, ROOT, DENS and DIR with the other controls at their maximum; every such setting round-trips; the 0.3.1 form of the same settings unpacks to the same values. The test fails on 0.3.1's `engine.c`.
 
-**Not tested:** a unit; a power cycle; the boot's battery restore itself (only the check it calls); the rewrite of old bytes in the open bank by the running module (`st_ui_tick`); the recovery of a project that already came back reset; the card build; saved Parts, which keep the old byte until the Part is saved again.
+**The USB package, emulator only** (same day and emulator, an 8 November development base `9b3ba417`, package `428d970a…`, 18,334 bytes, installed with `npm run device -- try … --emulator`). Before the install, 0.3.1's default bytes were poked into Part 1 T1 (FLEX) and Part 2 T5 (STATIC), bank copy and battery copy: the check returned 1. After the install both tracks read `S2`/2 with the top bit moved (`…0b c0` became `…4b 40`) in the bank and the battery copy, in the open Part and in the other one, and the check returned 0 on both Parts. SRC SETUP on T1 showed VECTOR's second page; the emulator's DSP notice covered the SPAN value, so the value shown was not read.
+
+**Not tested:** a unit; a power cycle; the boot's battery restore itself (only the check it calls); the recovery of a project that already came back reset; the card build on its own; saved Parts, which keep the old byte until the Part is saved again; the release base (the emulator base was an older development build).
 
 ## 0.3.1: VECTOR again, sample tracks only (0.2.6's code)
 
