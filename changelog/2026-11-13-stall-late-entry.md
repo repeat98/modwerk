@@ -1,0 +1,1 @@
+Development: a stall's frames, as the owner's diagnostics pull and the device tool's `stall` step print them, now say how late the last frames began and whether one fell 110 to 190 µs late after a long frame interrupt, the late entry that can stop the Octatrack's DSPs after START or a program change.

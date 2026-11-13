@@ -140,7 +140,7 @@ describe('the Octatrack base path for a member who is not a beta tester', () => 
     await store.saveConfiguration(live); await store.setActiveConfiguration(live.id); database.close()
     await open('library')
     await vi.waitFor(() => expect(guide()?.querySelector('h2')?.textContent).toBe('Update the Modwerk base'), { timeout: 5000 })
-    expect(guide()!.textContent).toContain('It takes a minute or two, with USB Audio · Main.')
+    expect(guide()!.textContent).toContain('Updating takes a minute or two over USB, with USB Audio · Main.')
     expect(guide()!.textContent).not.toContain('USB Audio is off in this base')
   }, 15000)
   it('leads a signed-out visitor on Your Octatrack to sign in', async () => {

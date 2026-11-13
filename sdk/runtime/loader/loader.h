@@ -91,7 +91,8 @@ struct runtime_dsp {
     const struct runtime_dsp_claim *claims;
     /* ABI 10: an engine instead of an effect (the package's slots 0): DSP words for the base's hook sites, at base 0,
      * each relocation an index (| 0x8000: the word holds a fixed P address, value - base; else an offset, value +
-     * base); count 0 here, so nothing takes it for an effect. Kept in its pool extent, as the claims are. */
+     * base); count 0 here, so nothing takes it for an effect. Kept in its pool extent, as the claims are. Its `cycles`
+     * and `kind` are its price per voice (never 0, executed or hardware), outside the controller digest. */
     uint32_t engine_count, init_count;  /* init_count: every init claim's words, in claim order (`initial`) */
     uint16_t engine_relocation_count;
     uint8_t entry_count, pad;
