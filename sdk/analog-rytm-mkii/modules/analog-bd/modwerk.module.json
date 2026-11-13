@@ -73,8 +73,8 @@
     ]
   },
   "resources": {
-    "memoryBytes": null,
-    "fastBytes": null,
+    "memoryBytes": 22484,
+    "fastBytes": 0,
     "load": {
       "display": "About 7 % of the audio block a sounding 808 voice (render about 5 %), measured on a unit; the 909 not measured on a unit",
       "method": "hardware",

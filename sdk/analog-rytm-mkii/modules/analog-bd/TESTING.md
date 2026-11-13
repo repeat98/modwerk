@@ -19,6 +19,10 @@ The bases named below are development builds of the Modwerk base with the digita
 - AB02 (sha256 cebd12bf…): core-ar2 0.7 + analog-bd 0.1.0-experimental, -O2, solo. Its mod-storage layout is its own: don't save over projects you keep while it is on the unit.
 - AB01 (c0e6a87e): withdrawn before any unit test. A guard lost in the debug clean-up let any key's press and release flip 808/909.
 
+## Memory, 0.2.0 (12 November 2026)
+
+22,484 bytes of the 128 KiB shared mod area (code, the 909's and 808's tables and the voice states of eight voices): `ramSpare` from `scripts/link-image.mjs` on the published base 3ece243b, 93,732 bytes with no module and 71,248 with this one.
+
 ## Unit rig, 0.2.0 (11 November 2026)
 
 Run by an automated rig on the author's MKII, not by a person: development image BL01 (sha256 25f0415b…, RAM crc f2089275: a development base 6ae06939 with a USB control link, the same digital voices, + this module; a machine list without sections), booted from RAM, scratch project, Kit 1, 120 BPM. Notes on the auto channel (14), MAIN OUT over Overbridge, sweeps judged against src/ab_dsp.c on the host (voice_rig.py).
