@@ -13,7 +13,18 @@ label pixel for pixel; names and badges on Internal Mixer 2/5 and 3/5; Compresso
 5/5 and SRC unchanged; both PTN pop-ups stay on top with names cut at their edge; all back after closing. Captures
 redone on this version (`media/capture.json`).
 
-Hardware: to be repeated on the pinned-toolchain 0.1.3 package (the results below are 0.1.2's).
+Hardware, reported by the author (crisp909), 2026-11-13: source commit `c22d81debc9ed63e7d9734a0c78811c4e57e7239`,
+built with `scripts/build-elemod-isolated.sh` in image `sha256:c8a80381…a025f9` (GCC 16.2.0), packaged with
+`scripts/package-elemod-recipe.mjs`: `track-names-0.1.3-experimental-os1.17.elemod`, sha256
+`51053686785d7f5b6a433ea0a43c6261f9e9044a2601c8a1692d926234c2226d` (2,834 bytes of code, 1,272 of data), image built on
+elekloader.github.io with core 1.0, Digitakt II OS 1.17. All passed: names and badges on mixer pages 2/5 and 3/5;
+A01 and A02 named differently show their own names (PERFORM KIT off); names back after SAVE PROJECT and a reload;
+other pages unchanged; the pattern select pop-up stays on top. About 2 hours of testing in all, 0.1.2 and 0.1.3.
+The author compared names in the narrow font (6 characters) on the unit and kept the standard font (5 characters).
+
+Not tested: PERFORM KIT on.
+
+The results below are 0.1.2's.
 
 ## Emulator (digikit, logic only)
 

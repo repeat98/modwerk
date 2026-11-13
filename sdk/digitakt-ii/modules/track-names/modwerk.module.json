@@ -71,7 +71,7 @@
     ]
   },
   "resources": {
-    "memoryBytes": 4134,
+    "memoryBytes": 4106,
     "fastBytes": 0,
     "load": {
       "display": "UI task only, on the mixer pages: under about 2% of the CPU; elsewhere a few dozen instructions a frame",
@@ -80,18 +80,29 @@
     }
   },
   "evidence": {
-    "tier": "emulator",
+    "tier": "author-hardware",
     "moduleVersion": "0.1.3-experimental",
-    "sourceSha256": "0edc0aa59e71bc9ad27325363c253a433428046da0cb1b257ffd96cc93293c7b",
+    "sourceSha256": "0ee5a7ad509bbdee2ff7a3a9219e1d6507ae82394d6700166d8d7de7bfb17f2b",
     "reports": [
       "TESTING.md"
     ],
-    "hardware": null,
+    "hardware": {
+      "model": "Digitakt II",
+      "release": "1.17",
+      "testedOn": "2026-11-13",
+      "tester": "crisp909",
+      "durationMinutes": 120,
+      "summary": "crisp909 (the author) built 0.1.3 with the pinned toolchain in Docker (source commit c22d81d, package sha256 51053686), built the image on elekloader.github.io with core 1.0 and ran it on a Digitakt II, OS 1.17. Reported: names and numbered badges on Internal Mixer 2/5 and 3/5; each pattern its own names with PERFORM KIT off; names back after SAVE PROJECT and a reload; other pages unchanged; the pattern select pop-up stays on top. About 2 hours of testing in all (0.1.2 and 0.1.3).",
+      "limitations": [
+        "PERFORM KIT on was not tested.",
+        "Faint row lines beside pop-ups are the OLED's own crosstalk, seen with the stock OS too."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Track Names 0.1.3: emulator checks and documentation captures in TESTING.md and media/capture.json; hardware results so far are for 0.1.2 (same behaviour, recognition rebuilt without stock pixel tables) and are repeated on 0.1.3 before review.",
+    "summary": "crisp909 (the author) ran the pinned-toolchain 0.1.3 package (sha256 51053686\u2026) on a Digitakt II, OS 1.17, core 1.0, about 2 hours in all: names on mixer pages 2/5 and 3/5, per pattern with PERFORM KIT off, kept after SAVE PROJECT and a reload, other pages unchanged, pop-ups on top. Emulator checks and screenshots in TESTING.md and media/capture.json.",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
