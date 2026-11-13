@@ -11,9 +11,9 @@
   },
   "changes": [
     "First Modwerk release for Digitakt II OS 1.17, on core 1.0: the Internal Mixer shows the track names from SETUP > RENAME in place of TRK1..TRK16, with each track's number above its fader.",
-    "Source-only export compiled by the author in the pinned GCC 16.2 Docker toolchain (scripts/build-elemod-isolated.sh, image sha256:c8a80381…a025f9) from bc32ae2; the author ran this exact package on a Digitakt II."
+    "Source-only export compiled by the author in the pinned GCC 16.2 Docker toolchain (scripts/build-elemod-isolated.sh, image sha256:c8a80381\u2026a025f9) from bc32ae2; the author ran this exact package on a Digitakt II."
   ],
-  "runtimeSourceSha256": "f02671e75e8dd2d085576ba1d9bbc7259c554f061dff6061dcee3a2f21df8ad7",
+  "runtimeSourceSha256": "82f306026a1f4d94bcfa2437baa278709cf7f7701289585e08763f026ed9539f",
   "packages": [
     {
       "os": "1.17",

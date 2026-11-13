@@ -64,4 +64,7 @@ wrote no memory): every name read back from the pattern's kit as typed. Mixer 2/
 - Repeated all four checks above: names per pattern (PERFORM KIT off), mixer pages 2/5 and 3/5, names after SAVE PROJECT
   and a reload, other pages unchanged. All as expected.
 
+- Reproduced by the author after the merge of main `208f05a6`: `scripts/build-elemod-isolated.sh` in the same image,
+  then `scripts/package-elemod-recipe.mjs … --check` against the committed package: it reproduces.
+
 Not tested: PERFORM KIT on; how long it ran.
