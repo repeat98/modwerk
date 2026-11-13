@@ -16,6 +16,12 @@
 
 The emulator is not hardware evidence: no sound, no exact timing.
 
+Documentation captures, 2026-11-13: digikit `5e62a52`, built image sha256 `d9ae08c0…0400827` (OS 1.17,
+core 1.0, Track Names 0.1.2 from source identical to `bc32ae2`), cold boot, fresh project. Eleven names entered
+through SETUP > RENAME with panel input only (the harness read the editor's buffer to check each character and
+wrote no memory): every name read back from the pattern's kit as typed. Mixer 2/5 and 3/5 show them, tracks 11 and
+13-16 keep TRKn, the PTN pop-up stays on top. Plan and PNG hashes in `media/capture.json`.
+
 ## Hardware
 
 2026-11-13, reported by the author (crisp909), Digitakt II OS 1.17, core 1.0, built on elekloader.github.io:

@@ -3,25 +3,10 @@
     "version": "0.1.2-experimental",
     "date": "2026-11-13",
     "changes": [
-      "Fix: a name half under a pop-up no longer turns back into TRKn; it is cut at the pop-up's edge, as stock labels are."
-    ]
-  },
-  {
-    "version": "0.1.1-experimental",
-    "date": "2026-11-13",
-    "changes": [
-      "Fix: names and numbers no longer cover pop-ups such as pattern select (PTN).",
-      "A cell is drawn only where the stock TRK label and fader ticks are still in view."
-    ]
-  },
-  {
-    "version": "0.1.0-experimental",
-    "date": "2026-11-13",
-    "changes": [
-      "First release: the Internal Mixer shows each track's name from SETUP > RENAME in place of TRK1..TRK16.",
+      "First release: the Internal Mixer shows your track names (SETUP > RENAME) in place of TRK1..TRK16.",
       "The mixer shows the first 5 characters; a track still named PRESET n keeps its stock label.",
       "Each fader has its track number in an inverted box at its top left.",
-      "Names follow the pattern's kit, so every pattern has its own. The mod only draws: it saves nothing."
+      "Names follow each pattern's kit and are saved with the project; pop-ups stay on top."
     ]
   }
 ]
