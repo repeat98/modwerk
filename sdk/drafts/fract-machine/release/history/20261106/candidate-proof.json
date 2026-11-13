@@ -1,0 +1,28 @@
+{
+  "schema": 1,
+  "id": "fract-machine",
+  "bytes": 32120,
+  "imageBytes": 30596,
+  "bssBytes": 640,
+  "relocations": 225,
+  "eventWords": 38,
+  "sha256": "54ca8f6b1a30e2f4811129e082ce18881148654b00c97c026508460a6cf7272e",
+  "authoredImageSha256": "4ad64eda75610e2a5de44f9255aff5a2b0e51d50244e77dc0e15175201b4a790",
+  "baseIdentity": "9b3ba41715140d5fae07868a8b2adc6d89c3ec0272d8ab34c332461cf990a14c",
+  "baseVariants": [
+    "19b38199cb83e72c518cab74f8ee021ec0c2d82cd8675cb0a66e8273fc5d16cc",
+    "23c62390d969045fcc248cb75c98c335abc51fec488d6b53d39d71cb64e4491c",
+    "810c7051a4049e8df8a9c9b9e86258ab2eae083a71afd3a29b75ec9295d6bef8",
+    "9b3ba41715140d5fae07868a8b2adc6d89c3ec0272d8ab34c332461cf990a14c",
+    "9edadde680c9212d37e7db6ed9944a9b48e867beded71f94c8e1a94d8500edd3",
+    "cdbbde238cdd77e1ba92bc8728a8450fa63364c0305654c4cdf1448f25496f2d",
+    "fe9de90eb189e553c7a4ef6be13e8c40a60bbe805a7078adf947a62e73e6a4b8"
+  ],
+  "stockCopies": 9,
+  "stockFills": 0,
+  "stockVerification": "PASS",
+  "hardware": "FUNCTIONAL_OWNER_REPORT_AND_USB_READBACK",
+  "hardwareReport": "../TESTING.md",
+  "qualification": "PENDING_RESOURCE_AND_RELEASE_INTEGRATION",
+  "projectReload": "ONE_STOPPED_REPEAT_PASSED; EARLIER_AUDIO_STALL_UNRESOLVED"
+}
