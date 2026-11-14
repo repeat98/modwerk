@@ -94,7 +94,7 @@ class KeyFlags:
 BOOT = {0: 'the flashed OS, no RAM boot asked', 1: 'booted from RAM', 2: 'RAM boot refused: not a software reset',
         3: 'RAM boot refused: mailbox check word', 4: 'RAM boot refused: lengths out of bounds',
         5: 'RAM boot refused: the upload did not survive the reset (CRC)', 6: 'RAM boot refused: no MAIN OS section',
-        7: 'RAM boot refused: SRAM does not hold the 1.74 bootstrap depacker (early gates only)',
+        7: 'RAM boot refused: SRAM does not hold the 1.74 bootstrap depacker (early gates only; no longer given)',
         8: 'RAM boot failed after the unpack; this is the flashed OS'}
 OS_BASE, IMAGE_MAX, CONTAINER_MAX, MAIN_OS = 0x40000400, 0x3c8700, 0x400000, 3
 

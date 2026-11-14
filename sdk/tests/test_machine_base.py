@@ -210,14 +210,25 @@ class MachineBases(unittest.TestCase):
                         (self.assertIn if dev else self.assertNotIn)(source, mod["sources"], (name, dev))
                         self.assertTrue((APP / "sdk/machines" / machine / "elekloader/base" / pathlib.Path(source).name).is_file())
 
-    def test_dev_sites_take_no_bytes_a_release_site_takes(self):
+    def test_dev_sites_take_no_bytes_a_release_site_or_the_core_takes(self):
         for machine, config in bases():
             spans = lambda part: [(int(s["addr"], 16), int(s["addr"], 16) + s["len"], s["addr"])
                                   for s in config.get(part, {}).get("sites", [])]
-            release = spans("common") + spans("add") + spans("recipe")
+            core = json.loads(imported_recipe(machine, config).read_text()).get("sites", [])
+            release = spans("common") + spans("add") + spans("recipe") + [
+                (int(s["addr"], 16), int(s["addr"], 16) + len(s["stock"]) // 2, s["addr"]) for s in core]
             for start, end, addr in spans("dev"):
                 for other_start, other_end, other in release:
                     self.assertFalse(start < other_end and other_start < end, (machine, addr, other))
+
+    def test_dev_cflags_that_repeat_a_release_define_give_it_the_same_value(self):
+        for machine, config in bases():
+            defined = lambda part: dict(f[2:].split("=", 1) for f in config.get(part, {}).get("cflags", [])
+                                        if f.startswith("-D") and "=" in f)
+            release = dict(defined("common"), **defined("add"))
+            for name, value in defined("dev").items():
+                if name in release:
+                    self.assertEqual(value, release[name], (machine, name))
 
     def test_keeps_wants_every_item_of_the_release_and_allows_additions(self):
         reference = {"id": "core", "sites": [1, 2], "build": {"sources": {"x": "1"}}}

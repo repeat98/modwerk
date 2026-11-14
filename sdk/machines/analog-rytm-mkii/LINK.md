@@ -32,8 +32,11 @@ The link adds one project storage bit (`mw_link_carry`), so a development image 
 storage layout than the release base: link it with `--lock-in` of the image the unit runs, use a
 scratch project, and do not go back from a link image to one without it on a project the link
 image saved (that project's module data would read as zeros). Cost on the send-bus base: about
-4.6 KB of `.run` and 1.8 KB of RAM in the shared mod area. Leave `ramSpare` of 68 B or more in a
-set: the RAM boot's diagnostics use the top of the mod area, and nothing checks it.
+4.6 KB of `.run` and 1.8 KB of RAM in the shared mod area. The RAM boot's diagnostics use the top
+68 bytes of the mod area, and nothing checks that they are free: a set without a send effect must
+leave `ramSpare` of 68 B or more, or the gate writes them into a module's `.bss` at every boot. A
+send effect's work area runs to the top of the mod area, so with one in the set `diag` may read the
+effect's samples, and a RAM boot request writes 8 bytes into its work area just before the reset.
 
 ## Arm
 
@@ -67,7 +70,7 @@ range, 5 a person is at the unit.
 
 | Request | cmd | Arm | What comes back |
 | --- | --- | --- | --- |
-| `ident` | 0x01 | no | link version, armed, person-at-unit flag, counters (posted, refused, drops, person), reset status, playing, the image label (`link-image.mjs --version`), the OS build; the RAM boot's status, the CRC32 of 356 SRAM bytes as the gate found them, and the CRC32 of an image entered from RAM |
+| `ident` | 0x01 | no | link version, armed, person-at-unit flag, counters (person, posted, refused, drops, received), the link's tick count, reset status, playing, the image label (`link-image.mjs --version`), the OS build; the RAM boot's status, the CRC32 of 356 SRAM bytes as the gate found them, and the CRC32 of an image entered from RAM |
 | `disarm` | 0x02 | no | turns the arm off and clears every key the link held |
 | `key ID FLAGS` | 0x10 | yes | a panel key message on the UI queue with the flags as given; a held key reads as held to `is_key_held` |
 | `enc N DELTA` | 0x11 | yes | an encoder message (0-7 A-H, 8 LEVEL) of one raw count, as the panel task posts it |
@@ -190,7 +193,7 @@ Boot status in `ident`: 0 the flashed OS, no RAM boot asked; 1 booted from RAM; 
 a software reset; 3 check word; 4 lengths; 5 container CRC; 6 no MAIN OS section; 8 failed after
 the unpack. `rytm_link.py diag [IMAGE]` reads and names what the gate found at the last boot (the
 mailbox, the staged buffer's first words, the running image's marks on its way to the reset, RSR)
-from the top 60 bytes of the mod area. Stock shows the flashed image's label whatever runs (the
+from the 60 bytes of the mod area below its top 8, which hold the marks. Stock shows the flashed image's label whatever runs (the
 label lives in the container header), so `ident`'s label stays the flashed one after a RAM boot;
 its image CRC tells which image runs, and the tool compares it with the file's.
 
