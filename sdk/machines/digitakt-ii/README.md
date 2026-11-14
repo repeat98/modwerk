@@ -41,6 +41,8 @@ By the core's documentation (emulator-tested, not hardware-tested), both data ar
 
 The Digitakt II core does not start DTIM0 and exposes no audio-render hook. Audio is rendered by the separate SHARC DSP; these hooks are not sample-accurate.
 
+Find a screen from the frame the OS has just drawn, not from UI object pointers: digikit fills some that stay 0 on the unit (the view controller's page set at `+0x9c` on OS 1.17), so a mod that follows them works in the emulator and never on hardware. [Track Names](../../digitakt-ii/modules/track-names/) recognises the mixer this way.
+
 ### SHARC code rules
 
 No Modwerk build writes SHARC code yet. The first base or module that does follows these rules from Analog Devices' public *SHARC+ Core Programming Reference* and brings a build check for them:
