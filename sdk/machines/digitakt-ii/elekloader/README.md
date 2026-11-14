@@ -57,6 +57,7 @@ swung Chord Arp fixture reached the scheduler commit routine 16 times.
   The phrase scheduler hardware check remains pending.
 
   On the private KTR1 diagnostic image (`487b078c533106ce5d2a52fb90569ddcc44ad040e4f2b01a53adb3d3d04e76b7`),
-  Claptom-music reported zero load and copy readings after loading a kit on hardware, with both bounds
-  still at AUTO. The save reading was not supplied. An emulator replay of the same image recorded
-  one load and one copy with matching nonzero kit data.
+  Claptom-music reported a zero save reading after saving and zero load and copy readings after
+  loading, with both bounds still at AUTO. The diagnostic counts save and load only after their
+  kit-data registration check, and counts copies only when they target a project kit. An emulator
+  replay of the same image recorded one load and one copy with matching nonzero kit data.
