@@ -74,13 +74,13 @@ if (import.meta.filename === process.argv[1]) {
     }
     if (!result.refused) {
       await wait(2000)
-      result.atRest = await measure(), result.atRestAdds = added(before, result.atRest)
+      result.atRest = await measure(); result.atRestAdds = added(before, result.atRest)
       const fx = { fx1: '1', fx2: '2', both: '2' }[row.slots]
       if (fx) try { // an effect: on the slot, measured, and the slot's own effect picked back
         const was = (await slotNames())[Number(fx)]
         if (!was) throw new Error('could not read what ' + args.slot + ' FX' + fx + ' runs, so nothing was picked')
         await send(`pick:${args.slot}:FX${fx}:${row.name.replaceAll(' ', '_')}`)
-        result.inUse = await measure(), result.inUseAdds = added(before, result.inUse)
+        result.inUse = await measure(); result.inUseAdds = added(before, result.inUse)
         const back = await send(`pick:${args.slot}:FX${fx}:${was.replaceAll(' ', '_')}`)
         if (/error|refus|timed out/i.test(back)) result.restore = 'picking ' + was + ' back: ' + back.trim().slice(0, 120)
       } catch (error) { result.inUseError = error.message.slice(0, 200) }
