@@ -506,6 +506,15 @@ void modwerk_modset_service(void)
         else if (TICKS >= retry_at) restore_pass();
         return;
     }
+#if defined MODWERK_RUNTIME_EVENTS && !defined MODWERK_HOST
+    { /* ev_modules_ready (events.json): the live set changed and the gate above holds, so the card is free and nothing
+       * plays. A module installed into a running project reads its own file now; no project load will tell it. */
+        extern uint32_t modwerk_runtime_owner_epoch(void);
+        static uint32_t ready;
+        uint32_t now = modwerk_runtime_owner_epoch();
+        if (now != ready) { ready = now; (void)((unsigned (*)(void))(uintptr_t)modwerk_raise_ev_modules_ready)(); } /* runtime_events.h */
+    }
+#endif
     if (!pending || TICKS < retry_at) return;
     slot ^= 1u;
     if (store(slot)) pending = 0, modwerk_modset_result = SAVED, modwerk_diag_set(); /* the set as the card holds it, in the unit's log */

@@ -14,6 +14,10 @@ its dispatch; a runtime package subscribes (loader.h's hook words past
 RUNTIME_ENC, build.py) and never patches the site. A hook with
 no site ("site": null) is raised by a module instead: it calls the base's
 modwerk_raise_<hook>(), which runs every handler and returns their answers OR'd.
+A raised hook with "after": a base-owned site at a stock routine's entry is raised
+by the base instead, when that routine returns: the site's tail keeps the caller's
+return address in modwerk_return_<site> and puts modwerk_after_<site> in its place,
+so the routine must not run twice at once.
 Its package asks for the entry by the hook's index (runtime.json "raise"): the
 loader writes the address into a zero word of its image at install, so no package is
 bound to one base build.
@@ -78,7 +82,10 @@ def load(path=REGISTRY):
             if e.get('length') or e['args'] or e['results'] != 'or' or not re.fullmatch('ev_[a-z0-9_]+', name) or room is not None:
                 raise ValueError('events.json: raised event %s needs the next hook index, no length, room or arguments, '
                                  'and results "or"' % name)
-            events.append(dict(e, kind=kind, site=None, length=0, room=None))
+            after = e.get('after')
+            if after is not None and (int(after, 16) not in sites or any(x.get('after') == int(after, 16) for x in events)):
+                raise ValueError('events.json: %s is raised after a declared site no other event is raised after' % name)
+            events.append(dict(e, kind=kind, site=None, length=0, room=None, after=after and int(after, 16)))
             continue
         if kind == 'table':
             if (e.get('site') is not None or not re.fullmatch('ot_[a-z0-9_]+', name) or type(e.get('record')) is not int
@@ -243,16 +250,34 @@ def asm(reg):
             if s[action]:
                 out.append('.L%s_%s:\n        movem.l (%%sp),%%d0-%%d1/%%a0-%%a2\n        lea     %d(%%sp),%%sp\n' % (name, action, frame))
                 out += [_line(at, line) for line in s[action]]
-    for e in (e for e in reg['events'] if e['kind'] == 'call' and e['site'] is None):
-        k, loop, end = e['index'] - FIRST, '.Lraise_%s' % e['event'], '.Lraise_%s_end' % e['event']
-        out.append('\n| ---- raised by a module: %s: %s; every handler runs, the answers OR\'d\n'
+    raised = [e for e in reg['events'] if e['kind'] == 'call' and e['site'] is None]
+    for e in raised:  # one short entry each; the loop is shared, so a hook costs the base ten bytes
+        out.append('\n| ---- raised (by a module, or by the base): %s: %s; every handler runs, the answers OR\'d\n'
                    '        .globl  modwerk_raise_%s\nmodwerk_raise_%s:\n'
-                   '        lea     -8(%%sp),%%sp\n        movem.l %%d2/%%a2,(%%sp)\n        moveq   #0,%%d2\n'
-                   '        movea.l modwerk_runtime_event_row+%d,%%a2\n%s:\n        move.l  (%%a2)+,%%d0\n        beq     %s\n'
-                   '        movea.l %%d0,%%a0\n        jsr     (%%a0)\n        or.l    %%d0,%%d2\n        bra     %s\n'
-                   '%s:\n        move.l  %%d2,%%d0\n        movem.l (%%sp),%%d2/%%a2\n        lea     8(%%sp),%%sp\n        rts\n'
-                   % (e['event'], e['prototype'], e['event'], e['event'], 4 * k, loop, end, loop, end))
+                   '        lea     modwerk_runtime_event_row+%d,%%a0\n        bra.w   modwerk_raise_row\n'
+                   % (e['event'], e['prototype'], e['event'], e['event'], 4 * (e['index'] - FIRST)))
+    if raised:
+        out.append('\n| a0: the hook\'s row pointer. C convention: d0 the answers OR\'d, d2-d7/a2-a6 kept.\n'
+                   'modwerk_raise_row:\n        lea     -8(%sp),%sp\n        movem.l %d2/%a2,(%sp)\n        moveq   #0,%d2\n'
+                   '        movea.l (%a0),%a2\n.Lraise_next:\n        move.l  (%a2)+,%d0\n        beq     .Lraise_end\n'
+                   '        movea.l %d0,%a0\n        jsr     (%a0)\n        or.l    %d0,%d2\n        bra     .Lraise_next\n'
+                   '.Lraise_end:\n        move.l  %d2,%d0\n        movem.l (%sp),%d2/%a2\n        lea     8(%sp),%sp\n        rts\n')
+    after = [e for e in reg['events'] if e.get('after')]
+    for e in after:
+        at = '%08x' % e['after']
+        out.append('\n| ---- raised by the base when the routine at %#010x returns: %s\n'
+                   '        .globl  modwerk_after_%s\nmodwerk_after_%s:\n        move.l  modwerk_return_%s,-(%%sp)\n'
+                   '        pea     modwerk_runtime_event_row+%d\n        bra.w   modwerk_after_row\n'
+                   % (e['after'], e['event'], at, at, at, 4 * (e['index'] - FIRST)))
+    if after:
+        out.append('\n| (sp): the hook\'s row pointer, 4(sp): the routine\'s caller. d0-d1/a0-a1 reach it as the routine left them.\n'
+                   'modwerk_after_row:\n        lea     -16(%sp),%sp\n        movem.l %d0-%d1/%a0-%a1,(%sp)\n'
+                   '        movea.l 16(%sp),%a0\n        bsr.w   modwerk_raise_row\n'
+                   '        movem.l (%sp),%d0-%d1/%a0-%a1\n        lea     20(%sp),%sp\n        rts\n')
     out.append('modwerk_events_code_end:\n')
+    slots = ['modwerk_return_%08x' % e['after'] for e in reg['events'] if e.get('after')]
+    if slots:  # the callers' return addresses, one per wrapped routine
+        out.append('        .data\n        .balign 4\n' + ''.join('        .globl  %s\n%s: .long 0\n' % (x, x) for x in slots))
     return ''.join(out)
 
 
@@ -316,13 +341,13 @@ def sdk(reg):
                 e['event'], e['event'], e['when'], e['context'][0].upper() + e['context'][1:], e['contract'],
                 e['event'].upper(), e['index'], e['declaration']))
             continue
-        where = ('raised by a module' if e['site'] is None else
+        where = ('raised by the base' if e['site'] is None and (e.get('after') or e.get('raisedByBase')) else 'raised by a module' if e['site'] is None else
                  '%#010x' % e['site'] + (', take: subscribe a struct modwerk_take' if e['kind'] == 'take' else ''))
         out.append('\n/* %s (%s): %s. %s. %s */\n#define MODWERK_%s %d\n' % (
             e['event'], where, e['when'], e['context'][0].upper() + e['context'][1:], e['contract'], e['event'].upper(), e['index']))
         if e['kind'] == 'call':
             out.append('typedef %s;\n' % re.sub(r'^(\w+(?: \*)?)\s*f\(', r'\1 modwerk_%s(' % e['event'], e['prototype']))
-        if e['kind'] == 'call' and e['site'] is None:  # runtime.json "raise": the loader points this zero word of the image at the base's entry
+        if e['kind'] == 'call' and e['site'] is None and not e.get('after') and not e.get('raisedByBase'):  # runtime.json "raise": the loader points this zero word of the image at the base's entry
             out.append('/* Raise it: define `modwerk_%s *raise_%s` as a zero word in your image (initialized data, '
                        'not bss), list "%s" under "raise" in runtime.json and call through it; every handler\'s answer, OR\'d. */\n'
                        % (e['event'], e['event'], e['event']))
@@ -351,7 +376,9 @@ def markdown(reg):
            'next base build, which renames them; the base loads them by those paths.\n\n'
            '| hook | kind | site | when | prototype or record | result | order | context |\n|---|---|---|---|---|---|---|---|\n']
     for e in reg['events']:
-        site = ('none' if e['kind'] != 'call' else 'none: a module calls the base\'s `modwerk_raise_%s` through a word the loader fills' % e['event']) if e['site'] is None else '%#010x' % e['site']
+        site = ('none' if e['kind'] != 'call' else 'none: the base raises it when the routine at %#010x returns' % e['after'] if e.get('after') else
+                'none: the base raises it' if e.get('raisedByBase') else
+                'none: a module calls the base\'s `modwerk_raise_%s` through a word the loader fills' % e['event']) if e['site'] is None else '%#010x' % e['site']
         proto = e['prototype'] if e['kind'] == 'call' else ('struct modwerk_take, %s entry, claims(%s)' % (e['entry'], e.get('arg') or 'nothing')
                                                             if e['kind'] == 'take' else '%d-byte record' % e['record'])
         out.append('| `%s` | %s | %s | %s | `%s` | %s | %s | %s |\n' % (

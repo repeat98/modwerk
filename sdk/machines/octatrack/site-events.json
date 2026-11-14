@@ -203,6 +203,76 @@
    "kind": "table",
    "room": 8,
    "record": 16
+  },
+  {
+   "index": 38,
+   "event": "ev_banks_load",
+   "kind": "call"
+  },
+  {
+   "index": 39,
+   "event": "ev_banks_loaded",
+   "kind": "raise"
+  },
+  {
+   "index": 40,
+   "event": "ev_bank_load",
+   "kind": "call"
+  },
+  {
+   "index": 41,
+   "event": "ev_bank_loaded",
+   "kind": "raise"
+  },
+  {
+   "index": 42,
+   "event": "ev_project_new",
+   "kind": "call"
+  },
+  {
+   "index": 43,
+   "event": "ev_bank_write",
+   "kind": "call"
+  },
+  {
+   "index": 44,
+   "event": "ev_bank_written",
+   "kind": "raise"
+  },
+  {
+   "index": 45,
+   "event": "ev_project_store",
+   "kind": "call"
+  },
+  {
+   "index": 46,
+   "event": "ev_project_stored",
+   "kind": "raise"
+  },
+  {
+   "index": 47,
+   "event": "ev_project_reload",
+   "kind": "call"
+  },
+  {
+   "index": 48,
+   "event": "ev_project_reloaded",
+   "kind": "raise"
+  },
+  {
+   "index": 49,
+   "event": "ev_part_saved",
+   "kind": "call"
+  },
+  {
+   "index": 50,
+   "event": "ev_part_clear",
+   "kind": "call"
+  },
+  {
+   "index": 51,
+   "event": "ev_modules_ready",
+   "kind": "raise"
   }
  ]
 }
