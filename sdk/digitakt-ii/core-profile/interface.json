@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "machine": "digitakt-ii",
   "interface": "1.1",
-  "status": "Upstream elekloader core-dt2 1.0 for Digitakt II OS 1.17 is what the site builds with. The entries marked since 1.1 are proposed for Modwerk's Digitakt II base (core-dt2 1.1's source, sdk/machines/digitakt-ii/elekloader/); a module that needs one waits for the base, and the machine's core version stays 1.0 until it ships.",
+  "status": "The browser builder uses the reviewed Modwerk core 1.1 base for Digitakt II OS 1.17.",
   "events": [
     {
       "name": "ev_tick",

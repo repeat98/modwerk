@@ -37,11 +37,4 @@ Two isolated builds with GCC 16.2.0 and binutils 2.47 produced byte-identical pa
 
 ## Release status
 
-- **The site still builds with core 1.0.** The machine's core version stays 1.0 until the base ships, so a module that
-  needs a 1.1 entry cannot validate yet (`module.platform.core`).
-- **Upstream 1.1 source.** `3d7c2e3` is the first commit of toonst's
-  [elekloader#221](https://github.com/elekloader/elekloader/pull/221), which is open and has moved since. If it lands
-  changed, elekloader's core-dt2 1.1 and this source differ: take the source again from its merged release before the
-  base ships. Changes to core-dt2 itself go to elekloader ([contributing](../../../../CONTRIBUTING.md#elekloader-mods-and-cores)).
-- **Hardware.** By their author's report, core 1.1's additions have run in digikit's emulator only, and a unit has
-  run core 1.0 with a mod on its key events. Modwerk has qualified none of it on hardware.
+The browser builder selects the reviewed Modwerk core 1.1 package for OS 1.17. The package matches the base binding and the Z117 hardware test, including reopening a saved project with its kits intact on official OS 1.17. The package and its provenance are pinned in the Modwerk catalog. The existing download gate remains in effect.

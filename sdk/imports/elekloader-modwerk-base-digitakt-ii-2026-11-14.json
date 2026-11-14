@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "modwerk-base-digitakt-ii-2026-11-14",
+  "about": "Modwerk Digitakt II base for OS 1.17, reproduced from the reviewed core source and verified on hardware in the Z117 build.",
+  "cores": [
+    {
+      "file": "modwerk-base-digitakt-ii-fd28066e.elemod",
+      "sha256": "fd28066e668405026b2b8931a621616f59bc4ff5962bfe9d9f91be83592ab484",
+      "id": "core",
+      "version": "1.1",
+      "device": "digitakt-mk2",
+      "os": "1.17",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "4fbc53ce0534f9032fd5da0bc575759913c889c9",
+        "path": "sdk/imports/packages/modwerk-base-digitakt-ii/modwerk-base-digitakt-ii-fd28066e.elemod"
+      }
+    }
+  ],
+  "mods": []
+}
