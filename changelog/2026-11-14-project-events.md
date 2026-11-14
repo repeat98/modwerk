@@ -1,0 +1,1 @@
+Improvement: the Octatrack base tells modules when stock loads, saves or clears a project, a bank or a Part, and when the installed modules are ready and the card is free, so a module can keep its own file beside the project. The base may now grow to 1.5 MiB: an Octatrack on a base older than 13 November 2026 takes it as two updates over USB.

@@ -114,7 +114,8 @@ If even the step base does not fit, the dialog sends the user to the card.
 
 - A base that raises the stage again becomes the next step base: copy its package, fills and variants over the three
   assets and update the pins, in the pull request that first publishes a base too big for the old stage.
-- The packed container is the next limit, and it is the flash's: 851,712 bytes on two slots (`flash.h`).
+- The packed container is the next limit, and it is the flash's: 851,712 bytes on two slots (`flash.h`). The base
+  build refuses a larger one (`build_core.py` `FLASH_SLOT_BYTES`), as it refuses an image over the step base's stage.
 - On the owner's MKII (14 November 2026, a test base padded past the old stage): the two updates from a card-installed
   base on one slot (the site's dialog) and from two slots (the link from the command line). The second overwrites the
   step base's unconfirmed slot and the old base stays the fallback. With the host gone during the send or the save
