@@ -15,7 +15,7 @@ struct ts_state {
     uint32_t led_group;
     uint8_t led_original[16];
 };
-static struct ts_state ts = { .anchor = NO_ANCHOR };
+static struct ts_state ts = { .enabled = 1, .anchor = NO_ANCHOR };
 static struct ts_state *volatile ts_at = &ts;
 volatile uint32_t ts_overlay __attribute__((aligned(4))) = 0;
 #ifdef TS_HOST
@@ -26,7 +26,7 @@ static int audio_context(void) { return ts_host_context != 0; }
 static int can_arm(void) { return ts_host_context == 1; }
 static void led_update(void) {}
 void ts_test_reset(void) {
-    struct ts_state fresh = { .anchor = NO_ANCHOR };
+    struct ts_state fresh = { .enabled = 1, .anchor = NO_ANCHOR };
     ts=fresh; ts_overlay=0; ts_host_context=1;
     for (unsigned i=0; i<8; ++i) ts_host_rows[i]=0;
 }

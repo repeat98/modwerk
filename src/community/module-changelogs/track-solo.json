@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.2.5-experimental",
+    "date": "2026-11-13",
+    "changes": [
+      "TRACK SOLO now starts at HOLD, so the hold gesture works right after a restart without opening the menu.",
+      "Turning it OFF still lasts only until the next restart; the setting is not saved yet."
+    ]
+  },
+  {
     "version": "0.2.4-experimental",
     "date": "2026-11-10",
     "changes": [

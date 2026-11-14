@@ -85,7 +85,7 @@ export function validateDiagnostic(value: unknown): OctatrackDiagnostic {
       ? keys === 'buildKind,error,event,id,phase' && DIAGNOSTIC_BUILD_KINDS.some(kind => kind === value.buildKind)
         && DIAGNOSTIC_BUILD_PHASES.some(phase => phase === value.phase) && DIAGNOSTIC_BUILD_ERRORS.some(error => error === value.error)
       : !('buildKind' in value) && !('area' in value) && DIAGNOSTIC_USB_PHASES.some(phase => phase === value.phase)
-        && (!('kind' in value) || value.event === 'sync_failed' && value.error === 'unknown' && DIAGNOSTIC_ERROR_KINDS.some(kind => kind === value.kind))
+        && (!('kind' in value) || value.event === 'sync_failed' && (value.error === 'unknown' || value.error === 'transport') && DIAGNOSTIC_ERROR_KINDS.some(kind => kind === value.kind))
         && (!('step' in value) || value.event === 'sync_failed' && DIAGNOSTIC_SYNC_STEPS.some(step => step === value.step))
         && (!('error' in value) || DIAGNOSTIC_USB_ERRORS.some(error => error === value.error))
         && ['live','reason','log'].every(key => !(key in value) || extras!.allowed.includes(key)) && extras!.required.every(key => key in value)
@@ -96,7 +96,7 @@ export function validateDiagnostic(value: unknown): OctatrackDiagnostic {
 async function consent(db: Database, userId: string, now = new Date(), guest = false): Promise<DiagnosticConsent> {
   const row = await db.prepare(guest ? 'SELECT enabled,version,changed_at FROM octatrack_guest_diagnostic_consent WHERE guest_id=?' : 'SELECT enabled,version,changed_at FROM octatrack_diagnostic_consent WHERE user_id=?').bind(userId).first<{ enabled: number; version: string; changed_at: string }>()
   const expiresAt = row ? new Date(Date.parse(row.changed_at) + DIAGNOSTIC_CONSENT_DAYS * 86400000).toISOString() : null
-  return { accountId:guest ? DIAGNOSTICS_GUEST : userId, enabled: !!row?.enabled && row.version === OCTATRACK_DIAGNOSTICS_VERSION && row.changed_at <= now.toISOString() && expiresAt! > now.toISOString(), version: row?.version ?? OCTATRACK_DIAGNOSTICS_VERSION, changedAt: row?.changed_at ?? null, expiresAt }
+  return { accountId:guest ? DIAGNOSTICS_GUEST : userId, enabled: !!row?.enabled && row.changed_at <= now.toISOString() && expiresAt! > now.toISOString(), version: row?.version ?? OCTATRACK_DIAGNOSTICS_VERSION, changedAt: row?.changed_at ?? null, expiresAt }
 }
 /** Hourly cleanup also removes data with expired consent or accounts that are no longer verified members. Reads enforce the same cutoff.
  * Reports sent under an earlier consent text stay until withdrawal or expiry; only new reports need the current text. */
@@ -140,7 +140,7 @@ async function guestRoutes(request: Request, db: Database, token: string, path: 
   await throttle(db,'octatrack-diagnostics-ip:'+ip,600,3600)
   const results = await db.batch([
     // Recheck in the insert so a concurrent withdrawal cannot be followed by a late queued upload.
-    db.prepare('INSERT INTO octatrack_guest_diagnostic_events(guest_id,event_id,consent_version,data_json,created_at) SELECT ?,?,?,?,? WHERE EXISTS(SELECT 1 FROM octatrack_guest_diagnostic_consent c WHERE c.guest_id=? AND c.enabled=1 AND c.version=? AND c.changed_at>? AND c.changed_at<=?) ON CONFLICT(guest_id,event_id) DO NOTHING').bind(id,data.id,OCTATRACK_DIAGNOSTICS_VERSION,JSON.stringify(data),now.toISOString(),id,OCTATRACK_DIAGNOSTICS_VERSION,since(now,DIAGNOSTIC_CONSENT_DAYS),now.toISOString()),
+    db.prepare('INSERT INTO octatrack_guest_diagnostic_events(guest_id,event_id,consent_version,data_json,created_at) SELECT ?,?,c.version,?,? FROM octatrack_guest_diagnostic_consent c WHERE c.guest_id=? AND c.enabled=1 AND c.changed_at>? AND c.changed_at<=? ON CONFLICT(guest_id,event_id) DO NOTHING').bind(id,data.id,JSON.stringify(data),now.toISOString(),id,since(now,DIAGNOSTIC_CONSENT_DAYS),now.toISOString()),
     db.prepare('DELETE FROM octatrack_guest_diagnostic_events WHERE guest_id=? AND event_id NOT IN(SELECT event_id FROM octatrack_guest_diagnostic_events WHERE guest_id=? ORDER BY created_at DESC,rowid DESC LIMIT 1000)').bind(id,id),
   ])
   return response({ok:true,stored:!!(results[0] as {meta?:{changes?:number}}).meta?.changes})
@@ -190,7 +190,7 @@ export async function octatrackDiagnosticRoutes(request: Request, db: Database, 
   await throttle(db,'octatrack-diagnostics:'+member.id,120,3600)
   const results = await db.batch([
     // Recheck in the insert so a concurrent withdrawal cannot be followed by a late queued upload.
-    db.prepare('INSERT INTO octatrack_diagnostic_events(user_id,event_id,consent_version,data_json,created_at) SELECT ?,?,?,?,? WHERE EXISTS(SELECT 1 FROM octatrack_diagnostic_consent c JOIN users u ON u.id=c.user_id WHERE c.user_id=? AND c.enabled=1 AND c.version=? AND c.changed_at>? AND c.changed_at<=? AND u.suspended=0 AND u.email_verified=1) ON CONFLICT(user_id,event_id) DO NOTHING').bind(member.id,data.id,OCTATRACK_DIAGNOSTICS_VERSION,JSON.stringify(data),now.toISOString(),member.id,OCTATRACK_DIAGNOSTICS_VERSION,since(now,DIAGNOSTIC_CONSENT_DAYS),now.toISOString()),
+    db.prepare('INSERT INTO octatrack_diagnostic_events(user_id,event_id,consent_version,data_json,created_at) SELECT ?,?,c.version,?,? FROM octatrack_diagnostic_consent c JOIN users u ON u.id=c.user_id WHERE c.user_id=? AND c.enabled=1 AND c.changed_at>? AND c.changed_at<=? AND u.suspended=0 AND u.email_verified=1 ON CONFLICT(user_id,event_id) DO NOTHING').bind(member.id,data.id,JSON.stringify(data),now.toISOString(),member.id,since(now,DIAGNOSTIC_CONSENT_DAYS),now.toISOString()),
     db.prepare('DELETE FROM octatrack_diagnostic_events WHERE user_id=? AND event_id NOT IN(SELECT event_id FROM octatrack_diagnostic_events WHERE user_id=? ORDER BY created_at DESC,rowid DESC LIMIT 1000)').bind(member.id,member.id),
   ])
   return response({ok:true,stored:!!(results[0] as {meta?:{changes?:number}}).meta?.changes})
