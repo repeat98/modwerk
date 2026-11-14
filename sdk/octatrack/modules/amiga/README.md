@@ -6,8 +6,6 @@ Version 0.2.0-experimental · by Jannik Aßfalg (@repeat98) · experimental: 0.1
 
 Amiga is a track machine modelled on how a home computer's 8-bit sound chip and its tracker software played samples. It plays the track's Flex sample, reduces its word length and its storage rate before the Octatrack repitches it, and stretches it in cycles, as the samplers of that time did: every few milliseconds the sample restarts a little further on, while the last grain goes on under it and fades out over half a cycle, as Amigo's grains overlap. PTCH then changes the pitch and SPD the length, each without the other, with that metallic flutter. A sliced note stretches inside its slice.
 
-The 8-bit crunch is a setting, not the stretch: at BITS 16, SRR 0 and LED off the sample keeps its own word and the stretch is clean.
-
 RATE is stock's own: it plays the sample forwards, backwards and slower, and the stretch follows it both ways. The track's filter, AMP, LFOs and effects follow as for any sample.
 
 ## Controls
@@ -27,7 +25,7 @@ On SRC SETUP. LOOP and SLIC (knobs A and B) are stock FLEX's. With SLIC on, STRT
 | C | LED | OFF, ON | OFF | A fixed lowpass (two poles, about 3.3 kHz at PTCH 0) on the stored sample. It moves with PTCH. |
 | D | SRR | 0–127 | 0 | Storage rate: the sample is stored at 16/(16+SRR) of its rate, each stored sample the average of those it replaces, then held. 0 keeps every sample, 16 is half the rate, 127 about a ninth. |
 | E | STR | OFF, ON, PCH | ON | The stretch. OFF plays as FLEX does: pitch changes the length, and SPD and GRN do nothing. PCH turns it into a pitch shift: the length stays and SPD moves the pitch instead, 32 an octave up, 127 an octave down, no further, and never past PTCH's own range. |
-| F | BITS | 4–16 | 8 | Word length. 16 leaves the sample untouched: with SRR 0 and LED off, a clean, hi-fi stretch. It moves one step every few detents. |
+| F | BITS | 4–16 | 8 | Word length. 16 leaves the sample untouched. It moves one step every few detents. |
 
 RATE, SPD and GRN take parameter locks, LFOs and scenes, as SRC knobs do. SPD and GRN act from the next cycle.
 
@@ -47,7 +45,6 @@ With STR on, SPD 64, PTCH 0 and RATE +63 nothing is restarted. With SRR 0, BITS 
 4. Turn RATE below 0: the loop runs backwards, still stretched.
 5. On SRC SETUP, turn SRR up to about 20 for a grainy, folded top end, and switch LED on to take the edge off it.
 6. Put a sliced loop on the track, switch SLIC on in SRC SETUP and trig slices with STRT locks: turn PTCH and each slice keeps its length, SPD and GRN stretch inside it.
-7. For a clean stretch, turn BITS on SRC SETUP all the way to 16, with SRR at 0 and LED off.
 
 ## Compatibility and limitations
 

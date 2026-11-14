@@ -2,7 +2,7 @@
 
 Record what you ran, on which build and which unit, and what you saw. "Not tested" is a valid answer; never write a result you did not observe, and keep emulator runs apart from hardware ones.
 
-Version 0.2.0-experimental, package SHA-256 `6bb8e598b76e359bda78fb420abaa96926ff8e8f3265b78932ef4599755c9b67` (`npm run module:dev -- amiga --build-only`). **Not run on a unit yet.** Its changes against 0.1.0: every restart of the stretch crossfades out of the sample itself (the 2,048-frame memory per voice is gone), a sliced note is stretched inside its slice, and BITS 16 is described as the hi-fi setting it already was. The unit results further down are 0.1.0's.
+Version 0.2.0-experimental, package SHA-256 `6bb8e598b76e359bda78fb420abaa96926ff8e8f3265b78932ef4599755c9b67` (`npm run module:dev -- amiga --build-only`). On a unit only briefly so far, and that run ended with the unit off USB (below). Its changes against 0.1.0: every restart of the stretch crossfades out of the sample itself (the 2,048-frame memory per voice is gone), and a sliced note is stretched inside its slice. The unit results further down are 0.1.0's.
 
 ## Host
 
@@ -48,9 +48,22 @@ A host model on the same day (the scratch scripts of this session, not committed
 
 The last row is from a run of that case alone. In the run of all eight, one `amiga_crunch` call of 18 frames in that case counted 313,232 instructions (mean 6,695, worst 316,767); `amiga_crunch` is unchanged from 0.1.0 and the case alone never came near it, so it is read as something else the emulator ran inside the call, not the engine. The bench's first call of each function runs it twice to find its return, which is why SPD 32's worst frame holds a crossfade counted twice.
 
+## On the unit (0.2.0-experimental)
+
+The owner's MKII, 13 November 2026, a RAM-booted development twin `2d97f42d…` of the release base `4e9a87ea…` (the twin also carries the remote-key fix of #1110), driven over USB by the session; package `6bb8e598…` as a timed trial with no Keep; project LIVE/Dev17, bank B, pattern B01, Part 1 (its working copy equal to its saved one before the run); no other module installed in the trial.
+
+- The machine list showed AMIGA below PICKUP; with the cursor on it, the SETUP knobs read LOOP, SLIC, LED, SRR, STR and BITS; YES assigned it to T1 (a STATIC track before).
+- A double tap on T1 opened the Flex list (one with 60 ms between the taps did not); YES on the empty slot 1 opened the card browser, a bass loop (16-bit stereo, 367,649 frames) loaded into slot 1, and YES assigned it. The list stayed open until a second NO.
+- SRC read PTCH, STRT, LEN, RATE, SPD, GRN, and the status line `8 BIT▸AMIGA`.
+- One trig on T1 step 1, playing at the defaults: stock's voice record read sounding, slot 1's state and settings records at +4 and +8, the note from frame 0 to 367,649 at +40 and +44, the reader at +68. The frame guard read a longest frame of 73.8 % and 23.7 % of the CPU in the frame interrupt, none skipped (one reading).
+- Four seconds of the main out recorded over USB Audio at the defaults: level steady throughout, no run of zeros, no repeated block.
+- **At the end of that recording the unit left USB** (the trial's connection: "the unit is away", 231 s into the trial) and did not come back within 30 s and more. Not yet power-cycled; crash and stall records not yet read. 0.1.0 once did the same with a USB recording running (below). Whether the module, the recording or the twin causes it is not known.
+
+Not yet tried with 0.2.0: the stretch with restarts (PTCH -5, SPD 100, PTCH +12), slices, a recorder buffer, RATE below 0, the load with eight tracks.
+
 ## On the unit (0.1.0-experimental)
 
-Not run with 0.2.0-experimental yet. What follows was seen with 0.1.0.
+What follows was seen with 0.1.0.
 
 
 Seen on trials of package `e9730e24…`. The published package is `18cef8b2…`: the same source except that the page's controls are now filled by `modwerk_page_control()` (`modwerk_page.h`) instead of by hand, with the same values. The engine is identical, sample for sample (`reference/compare_engine.py`, 400 notes, 5,234,566 frames). The published package ran on the unit once, on 12 November 2026 (below).

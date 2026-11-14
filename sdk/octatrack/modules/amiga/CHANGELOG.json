@@ -4,8 +4,7 @@
     "date": "2026-11-13",
     "changes": [
       "Sliced tracks stretch now: SLIC on, STRT picks the slice, and SPD and GRN stretch inside it, so a sliced loop keeps its slices at any pitch.",
-      "Every restart of the stretch crossfades, as Amigo's grains do: no more ticks when PTCH goes down or SPD speeds up.",
-      "For a clean, hi-fi stretch turn BITS to 16 with SRR at 0 and LED off: the sample's own word, no 8-bit crunch.",
+      "A cleaner stretch: every restart now crossfades over half a cycle, as Amigo's grains do, so no more ticks when PTCH goes down or SPD speeds up.",
       "Lighter: about 64 KB less memory, and nothing is copied while a note plays at its own speed and pitch."
     ]
   },

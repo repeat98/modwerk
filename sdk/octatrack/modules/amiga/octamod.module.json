@@ -15,15 +15,15 @@
   "presentation": {
     "label": "8-bit sampler",
     "family": "Sample track machine",
-    "summary": "Plays a Flex sample like an 8-bit tracker: gritty, held samples and a cyclic stretch that pulls pitch and time apart, on whole samples or slices, or clean at 16 bits.",
-    "overview": "Amiga is a track machine modelled on how a home computer's 8-bit sound chip and its tracker software played samples. It plays the track's Flex sample through the stock reader, reduces its word length and storage rate before the Octatrack repitches it, and can restart the sample every few milliseconds a little further on, so PTCH changes the pitch and SPD the length. Each restart crossfades out of the sample itself over half a cycle, as Amigo's grains do, and a sliced note stretches inside its slice. At 16 bits it is a clean stretch. RATE is stock's own, forwards and backwards. The track's filter, AMP, LFOs and effects follow as for any sample.",
+    "summary": "Plays a Flex sample like an 8-bit tracker: gritty, held samples and a cyclic stretch that pulls pitch and time apart, on whole samples or slices.",
+    "overview": "Amiga is a track machine modelled on how a home computer's 8-bit sound chip and its tracker software played samples. It plays the track's Flex sample through the stock reader, reduces its word length and storage rate before the Octatrack repitches it, and can restart the sample every few milliseconds a little further on, so PTCH changes the pitch and SPD the length. Each restart crossfades out of the sample itself over half a cycle, as Amigo's grains do, and a sliced note stretches inside its slice. RATE is stock's own, forwards and backwards. The track's filter, AMP, LFOs and effects follow as for any sample.",
     "highlights": [
       "SPD sets how fast the note moves through the sample and GRN the cycle, 96 to 4128 samples: half speed, about twice as fast or a held sound, at any pitch.",
       "Slices stretch too: SLIC on, STRT picks the slice, and the stretch stays inside it.",
       "Every restart crossfades over half a cycle, whichever way the note is going.",
       "STR can turn the stretch into a pitch shift of up to an octave either way.",
       "RATE is stock's own: forwards, backwards and slower, with the stretch following it both ways.",
-      "SRR lowers the storage rate, BITS sets the word from 4 to 16 bits (8 by default; 16 is hi-fi), LED adds a fixed lowpass.",
+      "SRR lowers the storage rate, BITS sets the word from 4 to 16 bits (8 by default), LED adds a fixed lowpass.",
       "RATE, SPD and GRN take parameter locks, LFOs and scenes, as SRC knobs do."
     ],
     "usage": [
@@ -86,7 +86,7 @@
       "name": "BITS",
       "default": 4,
       "count": 13,
-      "doc": "Word length from 4 to 16 bits; the saved value is bits minus 4. 16 leaves the sample as it is: with SRR 0 and LED off, a clean stretch. SRC SETUP knob F.",
+      "doc": "Word length from 4 to 16 bits; the saved value is bits minus 4. 16 leaves the sample's own word. SRC SETUP knob F.",
       "labels": null
     }
   ],
@@ -175,8 +175,7 @@
           "Turn SPD down to 32 for half speed at the same pitch, or all the way to 0 to hold the sound where it is.",
           "Turn RATE below 0: the loop runs backwards, still stretched.",
           "On SRC SETUP, turn SRR up to about 20 for a grainy, folded top end, and switch LED on to take the edge off it.",
-          "Put a sliced loop on the track, switch SLIC on in SRC SETUP and trig slices with STRT locks: turn PTCH and each slice keeps its length, SPD and GRN stretch inside it.",
-          "For a clean stretch, turn BITS on SRC SETUP all the way to 16, with SRR at 0 and LED off."
+          "Put a sliced loop on the track, switch SLIC on in SRC SETUP and trig slices with STRT locks: turn PTCH and each slice keeps its length, SPD and GRN stretch inside it."
         ]
       },
       "screenshots": [
