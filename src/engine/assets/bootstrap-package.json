@@ -16,7 +16,7 @@
   "reserveBytes": 10487808,
   "uncachedAlias": 134217728,
   "stageAlignment": 4096,
-  "sourceCommit": "c57b65c65ce4896bc4943c866f4eb98a152204f9",
+  "sourceCommit": "6c3950b77780f33a1707e5f350e396f200b84454",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.6-experimental",
