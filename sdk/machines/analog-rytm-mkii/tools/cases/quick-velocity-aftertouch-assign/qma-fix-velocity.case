@@ -1,0 +1,38 @@
+# Quick Mod Assign (0.1 behaviour, unchanged in 0.2.0): FIX held shows the velocity links as boxes; turning FRQ
+# changes its link's amount, FRQ itself does not move; pressing FRQ's knob sets the amount to 0. After the
+# release the page shows FRQ as before.
+# Needs a free or 0 velocity slot for FRQ (a new kit links FRQ and RES at 0). Sets FRQ to 64 by CC, so a turn
+# that reached FRQ would show. Changes the BD sound's FRQ velocity link in the active kit: it ends at 0.
+name: qma-fix-velocity
+state: changes
+ignore: 0 0 128 9, 0 55 128 9
+
+hold TRK
+key BD
+release TRK
+cc 74 64
+key FLTR
+wait 3500
+screen fltr
+expect fltr == ref
+hold FIX
+wait 750
+screen held
+expect held == ref                  # the kit's velocity links, boxed
+nudge E +16
+wait 750
+screen up
+expect up == ref
+expect up != held
+expect up == held region 32 46 32 9   # RES's box as it was
+expect up == held region 64 9 64 46   # no MODS FULL popup (FRQ's curve follows the amount, so left out)
+key PUSH_E
+wait 750
+screen zero
+expect zero == ref                  # FRQ's link at 0
+expect zero == held region 32 46 32 9
+expect zero == held region 64 9 64 46
+release FIX
+wait 3500
+screen after
+expect after == fltr                # FRQ did not move; no box

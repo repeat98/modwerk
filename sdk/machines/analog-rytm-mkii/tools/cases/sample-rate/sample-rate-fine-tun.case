@@ -1,0 +1,45 @@
+# Improved SMPL (0.2.0-experimental, then named Fine Tune + Sample Rate): a plain turn of TUN (knob A, SAMPLE page) moves
+# 1 cent a step, as many steps as stock's semitones: the same nudges moved 0.1.1 (emulator,
+# 10 Nov 2026) +4 then -6 semitones (`nudge +3` takes 4 steps here, acceleration); here they move
+# +4 cents (word 0x400a, reads +0.04) then -6 (0x3ffa, -0.02); the TUN word is BD's target,
+# 0x8000e5d2. Back on a whole semitone it reads (0), as LFO depth does at zero. CC 24 64 then clears
+# cents from +0.04 (word 0x4000).
+# Changes BD's TUN by CC 24 and puts it back to +0 (CC 24 64).
+# SMPL is pressed from AMP, never on its own page (that toggles the knob and waveform views), so
+# the SAMPLE page keeps the view it had: the unit references are its waveform view.
+name: sample-rate-fine-tun
+state: changes
+
+hold TRK
+key BD
+release TRK
+key AMP
+wait 300
+key SMPL
+wait 3500
+cc 24 64
+wait 300
+nudge A +3
+wait 750
+screen plus4
+expect plus4 == ref region 0 9 34 9
+mem t4 0x8000e5d2 2
+expect t4 == 400a
+nudge A -5
+wait 750
+screen minus2
+expect minus2 == ref region 0 9 34 9
+mem tm2 0x8000e5d2 2
+expect tm2 == 3ffa
+nudge A +2
+wait 750
+screen whole
+expect whole == ref region 0 9 34 9
+mem t0 0x8000e5d2 2
+expect t0 == 4000
+nudge A +3
+wait 750
+cc 24 64
+wait 300
+mem tcc 0x8000e5d2 2
+expect tcc == 4000

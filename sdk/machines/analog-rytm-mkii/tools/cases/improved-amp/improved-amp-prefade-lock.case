@@ -1,0 +1,231 @@
+# Improved AMP: a sound-locked trig is faded for by its own sound's ENV RESET, not the kit's. The BD track
+# holds trigs on steps 1, 3 and 5 (250 ms apart at 120 BPM) and HLD 57 holds each hit into the next.
+# Kit sound at ENV RESET AMP: 2 dips (before steps 3 and 5); with step 3 locked to a pool sound at OFF: 1
+# (before step 5). Kit sound at OFF: 0 dips; with step 3 locked to a pool sound at AMP: 1 (before step 3).
+# Which trig a dip came before: each take's first 520 ms (NAME_3) end between steps 3 and 5, PLAY being
+# sent 100 ms in and taken 20 to 70 ms later.
+# Needs, in the project's Sound pool: slot 1 the BD track's sound stored with HLD 57 and ENV RESET OFF,
+# slot 2 the same sound with ENV RESET AMP (YES + MUTE, LEFT, YES on VIEW POOL, the slot, YES three times:
+# the name screen reads A:001 for pool slot 1 too). The case does not store them.
+# The sound lock: in GRID RECORDING hold the trig and turn LEVEL; the list opens on TRACK SOUND and moves
+# one sound for 9 turns of 4 when they come 400 ms or more apart (measured on the unit, 10 Nov 2026: at
+# 200 ms the list moves faster), so 13 turns stop in the middle of sound 1's and 22 in the middle of
+# sound 2's; the list is compared before release.
+# Changes the tempo, the BD track's AMP page and its ENV RESET in the active kit, and the BD track of the
+# active pattern, which it clears; ends at 120 BPM, ENV RESET OFF, HLD 0, the track empty.
+name: improved-amp-prefade-lock
+state: changes
+transport: any
+target: unit
+
+hold TRK
+key BD
+release TRK
+# Tempo to 120.0: down to the bottom (30.0), then 90 BPM up, a step of the tempo screen's LEVEL being 1 BPM.
+key TEMPO
+enc LEVEL -127 x64
+nudge LEVEL +21 per 6 x4
+nudge LEVEL +6 per 6
+wait 500
+screen tempo
+expect tempo == ref region 40 15 88 33
+key NO
+key AMP
+cc 78 0
+cc 79 57
+cc 80 55
+cc 81 0
+cc 82 0
+cc 83 0
+cc 10 64
+cc 7 100
+hold FUNC
+wait 300
+key MUTE
+release FUNC
+key UP x4
+key DOWN x4
+key YES
+key UP x8
+key DOWN x2
+key LEFT x3
+key RIGHT
+wait 500
+screen er1
+expect er1 == ref region 39 26 82 11
+key NO x3
+key RECORD
+wait 300
+key T1
+key FUNC+PLAY
+wait 800
+key T1
+key T3
+key T5
+wait 300
+key RECORD
+wait 300
+wait 300
+audio kitamp BD 1700
+audio kitamp_3 BD 520
+wait 100
+key PLAY
+wait 780
+key STOP
+wait 900
+key RECORD
+wait 300
+hold T3
+wait 300
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+screen lock1
+expect lock1 == ref region 0 13 64 22
+release T3
+wait 300
+key RECORD
+wait 300
+wait 300
+audio lockoff BD 1700
+audio lockoff_3 BD 520
+wait 100
+key PLAY
+wait 780
+key STOP
+wait 900
+hold FUNC
+wait 300
+key MUTE
+release FUNC
+key UP x4
+key DOWN x4
+key YES
+key UP x8
+key DOWN x2
+key LEFT x3
+wait 500
+screen er0
+expect er0 == ref region 39 26 82 11
+key NO x3
+key RECORD
+wait 300
+key T1
+key FUNC+PLAY
+wait 800
+key T1
+key T3
+key T5
+wait 300
+key RECORD
+wait 300
+wait 300
+audio kitoff BD 1700
+audio kitoff_3 BD 520
+wait 100
+key PLAY
+wait 780
+key STOP
+wait 900
+key RECORD
+wait 300
+hold T3
+wait 300
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+enc LEVEL +4
+wait 600
+screen lock2
+expect lock2 == ref region 0 13 64 22
+release T3
+wait 300
+key RECORD
+wait 300
+wait 300
+audio lockamp BD 1700
+audio lockamp_3 BD 520
+wait 100
+key PLAY
+wait 780
+key STOP
+wait 900
+key RECORD
+wait 300
+key T1
+key FUNC+PLAY
+wait 800
+key RECORD
+cc 79 0
+
+expect kitamp.hits == 1
+expect kitamp.dips == 2
+expect lockoff.dips == 1
+expect kitoff.dips == 0
+expect lockamp.dips == 1
+expect kitamp_3.dips == 1
+expect lockoff_3.dips == 0
+expect kitoff_3.dips == 0
+expect lockamp_3.dips == 1

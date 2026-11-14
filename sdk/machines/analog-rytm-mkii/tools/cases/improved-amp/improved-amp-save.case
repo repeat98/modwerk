@@ -1,0 +1,112 @@
+# Improved AMP: its settings are the kit's. HLD 42 and ENV RESET AMP are saved with the kit (YES +
+# PLAY MODE), changed to HLD 10 and OFF, and are back after the kit is reloaded (NO + PLAY MODE).
+# Screens only. The two popups are kept for a look and not compared.
+# Not covered: a power cycle, a project save and load, a sound stored to the Sound pool or the +Drive.
+# Changes the tempo (to 120.0) and the BD track's sound in the active kit, and saves the active kit twice,
+# with everything else unsaved in it: the second time with HLD 0 and ENV RESET OFF.
+name: improved-amp-save
+state: changes
+ignore: 0 0 128 9, 0 55 128 9
+
+hold TRK
+key BD
+release TRK
+key AMP
+# Tempo to 120.0: down to the bottom (30.0), then 90 BPM up, a step of the tempo screen's LEVEL being 1 BPM.
+key TEMPO
+enc LEVEL -127 x64
+nudge LEVEL +21 per 6 x4
+nudge LEVEL +6 per 6
+wait 500
+screen tempo
+expect tempo == ref region 40 15 88 33
+key NO
+cc 78 0
+cc 79 41
+cc 80 55
+cc 81 0
+cc 82 0
+cc 83 0
+cc 10 64
+cc 7 100
+hold FUNC
+wait 300
+key MUTE
+release FUNC
+key UP x4
+key DOWN x4
+key YES
+key UP x8
+key DOWN x2
+key LEFT x3
+key RIGHT
+wait 500
+screen er1
+expect er1 == ref region 39 26 82 11
+key NO x3
+nudge B +1 per 3
+wait 750
+screen h42
+expect h42 == ref
+wait 2700
+hold YES
+key PLAYMODE
+release YES
+wait 600
+screen saved
+wait 1500
+cc 79 9
+hold FUNC
+wait 300
+key MUTE
+release FUNC
+key UP x4
+key DOWN x4
+key YES
+key UP x8
+key DOWN x2
+key LEFT x3
+wait 500
+screen er0
+expect er0 == ref region 39 26 82 11
+key NO x3
+nudge B +1 per 3
+wait 750
+screen h10
+expect h10 == ref
+expect h10 != h42
+wait 2700
+hold NO
+key PLAYMODE
+release NO
+wait 600
+screen reloaded
+wait 1500
+nudge B +1 per 3
+nudge B -1 per 3
+wait 750
+screen back
+expect back == h42
+hold FUNC
+wait 300
+key MUTE
+release FUNC
+key UP x4
+key DOWN x4
+key YES
+key UP x8
+key DOWN x2
+wait 500
+screen erback
+expect erback == er1 region 39 26 82 11
+key LEFT x3
+wait 500
+screen erend
+expect erend == er0 region 39 26 82 11
+key NO x3
+cc 79 0
+wait 300
+hold YES
+key PLAYMODE
+release YES
+wait 2000

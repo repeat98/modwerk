@@ -1,0 +1,23 @@
+# Improved SMPL (0.4.0-experimental): the SMPL key always shows SMPL WAVEFORM. From AMP, SMPL opens
+# the waveform view; a second and a third press of SMPL stay on it (stock toggles to the knob view).
+# Compares the body (y 9 to 55) with a reference of the waveform view. Changes nothing saved.
+name: sample-rate-smpl-waveform
+state: safe
+
+hold TRK
+key BD
+release TRK
+key AMP
+wait 300
+key SMPL
+wait 3500
+screen first
+expect first == ref region 0 9 128 46
+key SMPL
+wait 3500
+screen second
+expect second == first region 0 9 128 46
+key SMPL
+wait 3500
+screen third
+expect third == first region 0 9 128 46

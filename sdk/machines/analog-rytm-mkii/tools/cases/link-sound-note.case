@@ -1,0 +1,24 @@
+# A MIDI note on the auto channel plays the BD, and its sound is in the USB audio: on the BD's own
+# channels and in the main mix, not on the SD's. The note is sent 50 ms into the windows.
+# For the emulator, where the kit is the snapshot's: on a unit the BD is whatever the kit has, and a BD
+# with an endless decay would ring on. A unit's sound cases set the envelope themselves.
+name: link-sound-note
+state: safe
+target: emu
+
+audio bd BD 600
+audio main MAIN 600
+audio sd SD 600
+wait 50
+note BD
+wait 700
+audio late BD 300
+wait 300
+
+expect bd.hits == 1
+expect bd.peak > -30
+expect bd.onset == 52 within 3
+expect bd.onset == main.onset within 3
+expect main.peak < bd.peak
+expect sd.peak < bd.peak - 40
+expect late.peak < bd.peak - 40

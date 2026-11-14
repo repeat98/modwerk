@@ -1,0 +1,46 @@
+# Quick Mod Assign 0.2.0 (LFO assign): hold LFO and turn a knob on another page: that parameter becomes the
+# LFO's destination (DST) at depth 0, shown as a 0 box while LFO is held; after the release the page stays,
+# and the LFO page then shows DST on it.
+# The case sets the BD track's LFO to DST none, DEP 0 by CC first and leaves it so at the end.
+# Changes the BD sound's LFO DST and DEP in the active kit.
+name: qma-lfo-grab
+state: changes
+ignore: 0 0 128 9, 0 55 128 9
+
+hold TRK
+key BD
+release TRK
+cc 105 0
+cc 109 64
+key LFO
+wait 3500
+screen lfo0
+expect lfo0 == ref region 96 9 32 46     # DST none, DEP centre (the rest is the kit's)
+key FLTR
+wait 3500
+screen fltr
+expect fltr == ref
+hold LFO
+wait 750
+screen held
+expect held == fltr                 # no destination yet: no box
+nudge E +1
+wait 750
+screen grab
+expect grab == ref                  # FRQ boxed, (0) as the LFO page writes DEP 0
+expect grab != fltr
+release LFO
+wait 3500
+screen after
+expect after == fltr                # the FILTER page stays, the box goes
+key LFO
+wait 3500
+screen lfo1
+expect lfo1 == ref region 96 9 32 46   # DST FRQ, DEP at its centre
+expect lfo1 != lfo0
+expect lfo1 == lfo0 region 0 9 96 46   # SPD, MUL, FAD, WAV, SPH, MOD as before
+cc 105 0
+cc 109 64
+wait 500
+screen lfoend
+expect lfoend == lfo0                # CC 105 0 does give DST none

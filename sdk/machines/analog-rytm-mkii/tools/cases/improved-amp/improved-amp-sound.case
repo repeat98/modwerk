@@ -1,0 +1,69 @@
+# Improved AMP (0.1.0-experimental): the AMP envelope is heard. BD hits by MIDI note, on the BD's own
+# output, the AMP page set by CC: ATK 0, HLD 0, DEC 55 (25ms on the page) is a short hit; DEC 89 (300ms)
+# rings longer; ATK 45 (15.0ms) reaches its top later and as high (the decay waits for the attack);
+# DEC 127 (INF) rings for as long as the BD's own sound does.
+# The BD's other settings are the kit's, so the checks compare hits with each other: the track needs a
+# sound that rings for 3 s or more with the AMP envelope open (a sample, or a long synth decay).
+# Measured on the unit, from RAM, 10 Nov 2026 (five runs): len20 short 9.5 to 10.0, long 102.5,
+# slow 24.5 to 25.0, inf 2941.0 to 2942.5 (one run 2858.0; the window ends at 3000); attack short 1.0, slow 15.5; peak -12.4 to -12.3 dBFS in all four.
+# Changes the BD track's AMP page in the active kit and does not put it back. It ends on the short decay,
+# so the track is silent when the case is over.
+# For the unit: rytm-emu's analog voice follows these settings only roughly (measured: len20 1,
+# 7 and 22 ms where the unit has 10, 103 and 135), so its sound is no reference.
+name: improved-amp-sound
+state: changes
+target: unit
+
+hold TRK
+key BD
+release TRK
+key AMP
+cc 78 0
+cc 79 0
+cc 80 55
+cc 81 0
+cc 82 0
+cc 83 0
+cc 10 64
+cc 7 100
+wait 300
+audio short BD 1200
+wait 50
+note BD
+wait 1300
+cc 80 89
+wait 300
+audio long BD 1200
+wait 50
+note BD
+wait 1300
+cc 80 55
+cc 78 45
+wait 300
+audio slow BD 1200
+wait 50
+note BD
+wait 1300
+cc 78 0
+cc 80 127
+wait 300
+audio inf BD 3000
+wait 50
+note BD
+wait 3100
+cc 80 55
+wait 300
+note BD
+wait 500
+audio rest BD 300
+wait 400
+
+expect short.hits == 1
+expect long.hits == 1
+expect slow.hits == 1
+expect short.onset == 55 within 10
+expect long.len20 > short.len20 + 50
+expect slow.attack == short.attack + 14.5 within 3
+expect slow.peak == short.peak within 1
+expect inf.len20 > 2900
+expect rest.peak < short.peak - 40

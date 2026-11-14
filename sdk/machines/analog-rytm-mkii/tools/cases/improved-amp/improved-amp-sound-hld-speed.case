@@ -1,0 +1,70 @@
+# Improved AMP: HLD's time follows the track's speed. A BD hit by MIDI note at HLD 42 (one step) holds
+# 125 ms at 120 BPM and 1x and two thirds of that, 83.3 ms, at 3/2x: 41.7 ms shorter. The two SCALE SETUP
+# screens are compared, so the speed did change.
+# The BD track needs a sound that rings for 200 ms or more with the AMP envelope open.
+# Changes the tempo, the BD track's AMP page in the active kit and, for a while, the BD track's scale in the
+# active pattern (ADVANCED mode), which must be at 1x; ends at 120 BPM, 1x, HLD 0.
+name: improved-amp-sound-hld-speed
+state: changes
+target: unit
+
+hold TRK
+key BD
+release TRK
+# Tempo to 120.0: down to the bottom (30.0), then 90 BPM up, a step of the tempo screen's LEVEL being 1 BPM.
+key TEMPO
+enc LEVEL -127 x64
+nudge LEVEL +21 per 6 x4
+nudge LEVEL +6 per 6
+wait 500
+screen tempo
+expect tempo == ref region 40 15 88 33
+key NO
+key AMP
+cc 78 0
+cc 79 42
+cc 80 55
+cc 81 0
+cc 82 0
+cc 83 0
+cc 10 64
+cc 7 100
+wait 300
+audio h42 BD 1200
+wait 50
+note BD
+wait 1300
+key FUNC+PAGE
+wait 400
+key RIGHT x2
+key UP
+wait 300
+screen scalefast
+key NO
+wait 300
+wait 300
+audio h42fast BD 1200
+wait 50
+note BD
+wait 1300
+key FUNC+PAGE
+wait 400
+key RIGHT x2
+key DOWN
+wait 300
+screen scaleback
+key NO
+wait 300
+wait 300
+audio h42back BD 1200
+wait 50
+note BD
+wait 1300
+cc 79 0
+
+expect h42.hits == 1
+expect h42fast.len20 == h42.len20 - 41.7 within 3
+expect h42back.len20 == h42.len20 within 2
+expect scalefast == ref region 0 13 128 36
+expect scaleback == ref region 0 13 128 36
+expect scalefast != scaleback
