@@ -4,7 +4,11 @@ Status: experimental release preparation, **not hardware-qualified**.
 
 ## 0.3.3: less cost on tracks without POLY8 (14 November 2026)
 
-**Report** (owner's MKII, development twin `0277c5c5` of main): four FLEX tracks sounding one loop, T5-T8 silent, 126 BPM, transport playing. The frame interrupt takes 41-42 % without modules; with only POLY8 installed and on no track it took 12.2 points more (0.3.1).
+**Unit result** (the owner's MKII, development twin `0277c5c5` of main, 14 November 2026). The scene was the owner's project with four FLEX tracks sounding one loop at 126 BPM and T5-T8 silent, transport playing, POLY8 installed on no track, one module installed at a time. Each reading is a timed trial (`octatrack-price.mjs`) in RAM, rolled back by itself. Without modules the frame interrupt takes 41-42 %; with POLY8:
+- 0.3.1 took +12.2 points of the frame interrupt;
+- this 0.3.3 (USB package `1d9e9eca…`) took **+4.9**, on the CPU meter +2.0 against +4.2-5.6 for 0.3.1.
+
+A POLY8 track was not heard on this build: no POLY8 track, voice, chord, MIDI note or recording was played with it on a unit.
 
 **Measurements** (`node scripts/octatrack-price.mjs` from the `price-sweep` worktree, same twin and scene, each package tried in RAM and rolled back by itself, its own reading without modules just before it; points of the frame interrupt at rest, CPU meter in brackets). Bisect variants are measurement builds of 0.3.3's first source with one part removed, never published; "drop" removes the site from the package.
 
@@ -43,7 +47,7 @@ Status: experimental release preparation, **not hardware-qualified**.
 
 1,880,004 checks, 0 failures. Not probed: the render's fast path and the voice-reset subscriber's skip, which call stock's renderer and the C pool (reviewed only).
 
-**Build checks:** `verify-addressing.py` passes (61 PC-relative operands resolve, the cached render names POLY8 data only absolutely); `npm run coldfire:isa` passes. The USB package is rebuilt at 0.3.3 through the site's builder (`1d9e9eca…`, 59,808 bytes, 23 sites, 5 stock copies) and is stock-free (longest run shared with the OS 11 bytes, `check_stock_free.py` none). Its recipe was recaptured (the same five stock runs, at new offsets) and the machine port's pin moved, so the lag note is gone. `npm run octatrack:module-packages -- --check --stock …`: every rebuilt package identical, VECTOR, FM Synth, Scale Quantizer and Analog BD included after their recipes' pin of `machine-ports.json` moved. The run exits 1 on SYNTIZ's and Amiga's shared stock runs, packages this change does not touch.
+**Build checks:** `verify-addressing.py` passes (61 PC-relative operands resolve, the cached render names POLY8 data only absolutely); `npm run coldfire:isa` passes. The USB package is rebuilt at 0.3.3 through the site's builder (`1d9e9eca…`, 59,808 bytes, 23 sites, 5 stock copies) and is stock-free (longest run shared with the OS 11 bytes, `check_stock_free.py` none). Its recipe was recaptured (the same five stock runs, at new offsets) and the machine port's pin moved, so the lag note is gone. `npm run octatrack:module-packages -- --check --stock …`: every rebuilt package identical, VECTOR, FM Synth, Scale Quantizer and Analog BD included after their recipes' pin of `machine-ports.json` moved. The run exits 1 on SYNTIZ's and Amiga's shared stock runs, packages this change does not touch. The card packages were compiled in the isolated toolchain (`scripts/build-modules-isolated.sh`, image `sha256:28323550…`) from commit `46995e4b` and imported (`modules:import --development`). Tape Echo's and Euclid's standalone recipes were re-pinned to the four asset files that moved (dsp, descriptor, menu and ROM packages), after which every USB package still checks identical.
 
 **What remains** (+4.9 at rest): the render's short path (it was 2.9 through the routine, not measured separately inline), the AMP-builder and command-consumer passes (about 1.7, still through `poly_frame_track`), the increment subscriber's inline test. Only a dispatch that never enters POLY8's code for a stock track removes it all: a render the base's machine registry calls for POLY tracks alone, a redesign that is not part of this version.
 
