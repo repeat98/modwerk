@@ -1,9 +1,11 @@
 {
   "version": "0.1.3-experimental",
-  "date": "2026-11-13",
+  "date": "2026-11-14",
   "changes": [
-    "read the Part, GLIDE and each track's FM test once a frame in the render path instead of at every render (battery RAM is slow to read in the frame interrupt).",
-    "let stock render a track the engine would not change: not FM, no synth voice held, GLIDE off and no voice starting in this call. GLIDE on sample tracks and legacy FMSYNTH samples run the original path.",
-    "No function changes. Measured on an MKII on a development twin of the base; listening checks are recorded in TESTING.md."
+    "declare no RENDER_FLEX: the base renders a FLEX track nobody owns as stock, and FM Synth never sees it.",
+    "work out once a frame (fm_frame, from the LFO pass) which tracks the engine must render: FM tracks that have started, sample tracks while GLIDE is on, a legacy FMSYNTH* sample with a voice of ours on it, and a sample track a voice starts on; the Part is read only for those.",
+    "the slot copy and the LFO depth site test one bit of that line inline; the LFO site is a jsr whose LFO 1 and 2 return within one line.",
+    "fix: track 1's LFO 3 wrote into FM Synth's clock instead of its destination (the clock ran before the displaced lea); it modulates again.",
+    "Measured on an MKII on a development twin of main: installed on no track, four FLEX tracks playing, 3.2 points of the frame interrupt (0.1.2: 19.0). Listening checks are open; TESTING.md has the readings."
   ]
 }

@@ -343,18 +343,15 @@
 sy_render:
         | Modwerk 0.1.3: a track that is not FM, with no FM voice of ours on it, GLIDE off and no voice starting this
         | call, is stock's alone: the engine below would change nothing for it, so stock renders it directly (its
-        | arguments are already in place). Installed on no track, the engine cost 8 points of a frame on eight sample
-        | tracks before this (an MKII, 10 November 2026). d0, d1, a0, a1 are the caller's scratch.
+        | arguments are already in place). Since the frame's masks (fm_frame) send only the tracks that need the
+        | engine here, this is mostly the next frame's first call of such a track. d0, d1, a0, a1 are the caller's scratch.
         move.l  4(%sp),%d0               | track
         bsr     fm_fr_native             | a0 := the frame's reads
         bne     sy_full
         tst.b   FR_GLIDE(%a0)
         bne     sy_full                  | GLIDE on: a sample's pitch slides (sy_sample)
         move.l  4(%sp),%d0
-        move.l  %d0,%d1
-        lsl.l   #7,%d1
-        lea     sy_state(%pc),%a1
-        tst.b   S_ON(%a1,%d1.l)
+        btst    %d0,FR_ON(%a0)
         bne     sy_full                  | a synth voice of ours is still on this track
         moveq   #16,%d1
         cmp.l   16(%sp),%d1              | the frame's second call?
@@ -505,6 +502,11 @@ sy_no:
         moveq   #0,%d3
 sy_set:
         move.b  %d3,S_ON(%a3)
+        lea     fm_fr(%pc),%a0           | FR_ON mirrors S_ON != 0 (its only other writer is po_kill)
+        bclr    %d2,FR_ON(%a0)
+        tst.b   %d3
+        beq     sy_ison
+        bset    %d2,FR_ON(%a0)
 sy_ison:
         tst.b   S_ON(%a3)
         beq     sy_sample
@@ -2622,16 +2624,32 @@ po_fi_satp:
 po_lfo3:
         bsr     po_lfo3_depth
         jmp     0x40003cac
+| po_lfo3b is the frame builder's copy, the one that runs: 24 calls a frame (eight tracks, three LFOs), whatever
+| the tracks play. Modwerk 0.1.3: a jsr site (it returns to the nop the 8-byte site leaves), and LFO 1 and 2 return
+| within this one line; LFO 3 tests one bit of the frame's line (FR_ON, S_ON's mirror) instead of the track's
+| record. Every line of the module a stock track's frame touches costs a cache miss (owner's MKII, 14 November 2026:
+| this site cost 2.8 points of the frame interrupt with FM Synth on no track).
+        .balign 16
 po_lfo3b:
+        mvs.w   0x12(%a2,%d2.l*2),%d0    | displaced: the depth
+        lea     (%a0,%d4.l*2),%a1        | displaced
+        moveq   #2,%d1
+        cmp.l   %d1,%d2
+        beq.s   po_l3b_three
+        rts
+po_l3b_three:
         move.l  %a4,%d1
-        subi.l  #LFO_STATE,%d1
-        bne     po_l3b_depth
-        cmpi.l  #2,%d2
-        bne     po_l3b_depth
-        bsr     po_tick                  | track 0, LFO 3: the clock, once a frame
+        subi.l  #LFO_STATE,%d1           | 8 * track
+        bne.s   po_l3b_depth
+        bsr     po_tick                  | track 0, LFO 3: the clock, once a frame (clobbers d1, d3, a0)
+        bsr     fm_frame                 | ... and the frame's masks (clobbers d1, d3, a0)
+        moveq   #0,%d1                   | track 0
 po_l3b_depth:
-        bsr     po_lfo3_depth
-        jmp     0x4000d046
+        lsr.l   #3,%d1
+        btst    %d1,(fm_fr+FR_ON).l      | its playing voice is a synth (po_lfo3_depth's test)?
+        beq.s   1f
+        moveq   #0,%d0                   | muted
+1:      rts
 po_lfo3_depth:
         mvs.w   0x12(%a2,%d2.l*2),%d0    | displaced: the depth
         lea     (%a0,%d4.l*2),%a1        | displaced
@@ -4371,6 +4389,8 @@ po_kill_v:
         lea     V_STRIDE(%a0),%a0
         subq.l  #1,%d0
         bne     po_kill_v
+        lea     fm_fr(%pc),%a0
+        bclr    %d2,FR_ON(%a0)           | S_ON is 0: its mirror too
         movem.l (%sp),%d2/%a1
         lea     8(%sp),%sp
         jmp     KILL_RET
@@ -5482,107 +5502,214 @@ fm_is_native:
         tst.l %d0
         rts
 
-| ---- the frame's reads (Modwerk 0.1.3) ------------------------------------------
-| The Part index and GLIDE are in battery RAM, about half a microsecond a read, and the bank's bytes are uncached
-| (docs/MODULE_PERFORMANCE.md). The render path asked "is this track FM" two or three times a track and read GLIDE
-| once, every frame, on every sample track. Nothing below the frame interrupt runs inside it, so within a frame they
-| cannot change: they are read at the frame's first use and each track is checked once. A frame is known by the frame
-| builder's ping (PING_AT, the record set being built); should it ever stand still, the reads are still refreshed
-| every FR_USES uses. Only the render path uses these: the panel, key and MIDI hooks run outside the interrupt and
-| keep reading the Part itself (fm_is_native, po_is_synth, po_legbyte).
-        .set    FR_KEY, 0                | the ping the reads belong to
-        .set    FR_LEFT, 4               | uses left before they are read again whatever the ping says
-        .set    FR_PART, 8               | the current Part
-        .set    FR_SEEN, 12              | bit t: track t was checked this frame
-        .set    FR_NAT, 13               | bit t: track t is an FM/1 signed FLEX track
-        .set    FR_GLIDE, 14             | the GLIDE byte
-        .set    FR_STALE, 15             | bit t: stock rendered track t alone since S_CUR was last set (sy_fast)
-        .set    FR_USES, 128
-        .align  4
+| ---- the frame's masks (Modwerk 0.1.3) ----------------------------------------
+| Installed on no track, FM Synth cost a stock track's frame wherever its code or data was on that track's path: each
+| line of it a render, the slot copy or the LFO pass touched missed the cache, since the renders between evict it
+| (owner's MKII, 14 November 2026: four FLEX tracks playing, FM Synth on none, 0.1.2 +19.0 points of the frame
+| interrupt, the first 0.1.3 +15.6; of that, the base's FLEX route to a RENDER_FLEX machine 6.5, the LFO depth site
+| 2.8, sy_render's fast path 2.3, the slot copy 2.2). So FM Synth declares no RENDER_FLEX, and fm_frame works out once
+| a frame, for all eight tracks, which of them the engine must render; the slot copy (fm_source_dispatch) and the LFO
+| depth site (po_lfo3b) test one bit of this one line inline, and every other track's frame never enters FM Synth.
+| fm_frame runs from the LFO pass's track 0, LFO 3, every frame before the packer (nothing jumps into 0x4000cf40 ..
+| 0x4000d3fc from outside it: the pass always precedes the slot copies and renders). The Part index and GLIDE are in
+| battery RAM, about half a microsecond a read, and the bank's bytes are uncached (docs/MODULE_PERFORMANCE.md):
+| they are read here once a frame. Nothing below the frame interrupt runs inside it, so they hold for the frame. The
+| panel, key and MIDI hooks run outside the interrupt and keep reading the Part themselves (fm_is_native,
+| po_is_synth, po_legbyte).
+        .set    FR_PART, 0               | the current Part (bank + Part index * 6322, as 0.1.3 read it)
+        .set    FR_ROUTE, 4              | bit t: the slot copy gives track t's render to sy_render this frame
+        .set    FR_NAT, 5                | bit t: track t is an FM/1-signed FLEX track that has started (fm_frame)
+        .set    FR_GLIDE, 6              | the GLIDE byte
+        .set    FR_STALE, 7              | bit t: stock rendered track t alone since S_CUR was last set
+        .set    FR_ON, 8                 | bit t: S_ON of track t is nonzero (written where S_ON is: sy_set, po_kill)
+        .set    FR_SAMPLE, 9             | bit t: a sample track the engine may play or slide (see fm_frame)
+        .balign 16
 fm_fr:
-        .long   0, 1, 0                  | FR_LEFT 1: the first use reads
-        .byte   0, 0, 0, 0
+        .long   0
+        .byte   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 
-| a0 := fm_fr, current for this frame. Clobbers d0, d1.
-fm_fr_sync:
+| fm_frame: the frame's masks. Track t goes to the engine this frame (FR_ROUTE) when it is an FM track (FR_NAT), or a
+| sample track (FR_SAMPLE) while GLIDE is on (its pitch may slide: sy_sample), while a voice of ours still plays on it
+| (FR_ON: a legacy FMSYNTH* sample playing as FM) or when a voice starts on it this frame (sy_render resolves a
+| legacy marker and frees what the track held, as at every START before). A sample track is STATIC, or FLEX without
+| another machine's signature: such a track's render is that machine's (the base's registry), so it never comes here.
+| The module cannot see the base's rows; a signature is two capitals or a capital and a digit, then 1..15 (PL/1,
+| S2/1-2, AB/1, WV/1-15, FR/1). A FLEX track whose NEIGHBOR bytes only look like one renders as stock with GLIDE
+| (no slide) and plays a legacy marker as its sample.
+| Only the tracks that may need the engine are read: those an FM voice or a voice of ours was on last frame (FR_NAT,
+| FR_ON), those a voice starts on (the packer's event bytes, bit 4, which only the frame builder's track loop sets,
+| before this pass: 0x4000c642), and every track while GLIDE is on. A track that becomes an FM track is read at its
+| first START; until then it sounds nothing, as before (the base renders it, its stock voice stopped). With none of
+| these, nothing of the Part is read: GLIDE and the event bytes are the frame's only reads (owner's MKII, 14 November
+| 2026: reading the eight tracks' bytes every frame cost 2.5 points of the frame interrupt).
+| The tracks stock renders alone this frame are marked stale (sy_sample snaps S_CUR to the pitch then, as 0.1.3's
+| sy_fast did). Clobbers d1, d3, a0; d0, d2, d4, a1 kept.
+        .balign 16
+fm_frame:
+        lea     -24(%sp),%sp
+        movem.l %d0/%d2/%d4/%a1,8(%sp)   | 0(sp): eight bytes of scratch
         lea     fm_fr(%pc),%a0
-        move.l  PING_AT,%d1
-        cmp.l   FR_KEY(%a0),%d1
-        bne     1f
-        subq.l  #1,FR_LEFT(%a0)
-        bne     2f
-1:      move.l  %d1,FR_KEY(%a0)
-        move.l  #FR_USES,%d1
-        move.l  %d1,FR_LEFT(%a0)
-        clr.b   FR_SEEN(%a0)
         mvz.b   GLIDE_AT,%d1
         move.b  %d1,FR_GLIDE(%a0)
+        move.l  NIBBLE,%d0               | the packer's event bytes
+        move.l  %d0,(%sp)
+        move.l  NIBBLE+4,%d0
+        move.l  %d0,4(%sp)
+        moveq   #0,%d3                   | the tracks a voice starts on
+        moveq   #7,%d4
+.ff_start:
+        mvz.b   (%sp,%d4.l),%d0
+        btst    #4,%d0
+        beq     .ff_nostart
+        bset    %d4,%d3
+.ff_nostart:
+        subq.l  #1,%d4
+        bpl     .ff_start
+        mvz.b   FR_NAT(%a0),%d0          | the tracks read: FM last frame, a voice of ours on, a start, GLIDE: all
+        or.l    %d3,%d0
+        mvz.b   FR_ON(%a0),%d1
+        or.l    %d1,%d0
+        tst.b   FR_GLIDE(%a0)
+        beq     .ff_need
+        moveq   #-1,%d0
+.ff_need:
+        move.b  %d3,(%sp)                | 0(sp): the starts; 1(sp): the tracks read
+        move.b  %d0,1(%sp)
+        moveq   #0,%d2                   | FM tracks
+        moveq   #0,%d3                   | sample tracks
+        tst.b   %d0
+        beq     .ff_done                 | at rest: nothing of the Part is read
+        movea.l PART_PTR,%a1
         mvz.b   PART_IDX,%d1
         move.l  #6322,%d0
         mulu.l  %d0,%d1
-        add.l   PART_PTR,%d1
-        move.l  %d1,FR_PART(%a0)
-2:      rts
+        add.l   %a1,%d1
+        move.l  %d1,FR_PART(%a0)         | (fm_fr_legbyte's, for the tracks routed below)
+        cmpa.l  #0x40000000,%a1          | no bank (power-on): no track is read
+        bcs     .ff_done
+        cmpa.l  #0x47f00000,%a1
+        bcc     .ff_done
+        movea.l %d1,%a1
+        adda.l  #MACH_OFF,%a1            | the eight machine bytes; the signatures at +26 + 30 t
+        moveq   #7,%d4
+.ff_track:
+        mvz.b   1(%sp),%d0
+        btst    %d4,%d0
+        beq     .ff_next
+        mvz.b   (%a1,%d4.l),%d0
+        beq     .ff_sample               | STATIC
+        subq.l  #1,%d0
+        bne     .ff_next                 | THRU, NEIGHBOR, PICKUP: never the engine's
+        move.l  %d4,%d0
+        mulu.w  #30,%d0
+        mvz.w   26(%a1,%d0.l),%d1        | the signature's two letters (0x8edbc - MACH_OFF = 26)
+        mvz.b   28(%a1,%d0.l),%d0        | ... and its version
+        cmpi.l  #0x464d,%d1              | FM/1: an FM track (fm_is_native's test)
+        bne     .ff_sig
+        cmpi.l  #1,%d0
+        bne     .ff_sig
+        bset    %d4,%d2
+        bra     .ff_next
+.ff_sig:
+        subq.l  #1,%d0                   | another machine's signature?
+        cmpi.l  #14,%d0
+        bhi     .ff_sample
+        move.l  %d1,%d0
+        lsr.l   #8,%d0
+        subi.l  #'A',%d0
+        cmpi.l  #25,%d0
+        bhi     .ff_sample
+        mvz.b   %d1,%d0
+        subi.l  #'0',%d0
+        cmpi.l  #9,%d0
+        bls     .ff_next                 | a capital and a digit
+        subi.l  #'A'-'0',%d0
+        cmpi.l  #25,%d0
+        bls     .ff_next                 | two capitals
+.ff_sample:
+        bset    %d4,%d3
+.ff_next:
+        subq.l  #1,%d4
+        bpl     .ff_track
+.ff_done:
+        move.b  %d2,FR_NAT(%a0)
+        move.b  %d3,FR_SAMPLE(%a0)
+        moveq   #-1,%d1                  | GLIDE on: every sample track
+        tst.b   FR_GLIDE(%a0)
+        bne     .ff_route
+        mvz.b   FR_ON(%a0),%d1           | else those with a voice of ours on them, and those a voice starts on
+        mvz.b   (%sp),%d0
+        or.l    %d0,%d1
+.ff_route:
+        and.l   %d3,%d1
+        or.l    %d2,%d1
+        move.b  %d1,FR_ROUTE(%a0)
+        not.l   %d1
+        mvz.b   FR_STALE(%a0),%d0
+        or.l    %d1,%d0
+        move.b  %d0,FR_STALE(%a0)
+        movem.l 8(%sp),%d0/%d2/%d4/%a1
+        lea     24(%sp),%sp
+        rts
 
-| d0 = a track -> d0 := 1 for an FM/1 signed FLEX track (fm_is_native's test), tst.l done; a0 := fm_fr.
-| Clobbers d1, a1.
+| a0 := fm_fr, current for this frame (fm_frame ran before the packer). The render path only.
+fm_fr_sync:
+        lea     fm_fr(%pc),%a0
+        rts
+
+| d0 = a track -> d0 := 1 for an FM/1 signed FLEX track (fm_is_native's test, from fm_frame), tst.l done;
+| a0 := fm_fr. The render path only.
 fm_fr_native:
-        movea.l %d0,%a1
-        bsr     fm_fr_sync
-        move.l  %a1,%d0
-        btst    %d0,FR_SEEN(%a0)
-        bne     3f
-        bset    %d0,FR_SEEN(%a0)
-        bclr    %d0,FR_NAT(%a0)
-        movea.l FR_PART(%a0),%a1
-        adda.l  #MACH_OFF,%a1
-        mvz.b   (%a1,%d0.l),%d1
-        cmpi.b  #1,%d1
-        bne     3f
-        move.l  %d0,%d1
-        mulu.w  #30,%d1
-        adda.l  %d1,%a1
-        adda.l  #0x8edbc-MACH_OFF,%a1
-        mvz.w   (%a1),%d1
-        cmpi.w  #0x464d,%d1
-        bne     3f
-        mvz.b   2(%a1),%d1
-        cmpi.b  #1,%d1
-        bne     3f
-        bset    %d0,FR_NAT(%a0)
-3:      btst    %d0,FR_NAT(%a0)
+        lea     fm_fr(%pc),%a0
+        btst    %d0,FR_NAT(%a0)
         sne     %d0
         andi.l  #1,%d0
         rts
 
 | fm_is_native for the render path: track d2 -> d0, every other register kept, tst.l done.
 fm_native_fr:
-        lea     -12(%sp),%sp
-        movem.l %d1/%a0-%a1,(%sp)
+        move.l  %a0,-(%sp)
         move.l  %d2,%d0
         bsr     fm_fr_native
-        movem.l (%sp),%d1/%a0-%a1
-        lea     12(%sp),%sp
+        movea.l (%sp)+,%a0
         tst.l   %d0
         rts
 
-| Source supplier dispatch, frame builder's second call (track in d3).
-| An empty FLEX voice keeps stock's silent supplier in its per-track cache.
-| A signed FM track supplies its own audio without a sample initialization.
+| ---- fm_source_dispatch: 0x4000d514, the packer's renderer slot copy (8 bytes displaced: `movea.l (a4)+,a0;
+| move.l a0,(a3)+; pea 16.w`), every track every frame; d3 = the track, a0 its next renderer, which goes into its
+| slot for the next frame's first call and takes this frame's second. A track fm_frame routes gets sy_render: an FM
+| track whatever the slot holds (an empty FLEX voice keeps stock's silent supplier there; the FM track supplies its
+| own audio), a sample track only for a sample renderer (the base's FLEX renderer, stock's, or sy_render from the
+| STATIC entry). Every other track keeps its renderer, and one bound under the STATIC entry gets stock's back: the
+| STATIC entry stays sy_render only so that the base, when FM Synth leaves, retargets every slot that holds sy_render
+| (runtime.c, modwerk_machine_types_restored). The not-routed path is two lines and reads one bit of fm_fr.
         .global fm_source_dispatch
+        .balign 16
 fm_source_dispatch:
-        movea.l (%a4)+,%a0              | displaced supplier load
-        lea     -8(%sp),%sp
-        movem.l %d0/%d2,(%sp)
-        move.l  %d3,%d2
-        bsr     fm_native_fr
-        beq     1f
-        lea     sy_render,%a0
-1:      movem.l (%sp),%d0/%d2
-        lea     8(%sp),%sp
-        move.l  %a0,(%a3)+              | displaced: cache for the next first call
-        pea     16.w                    | displaced second-call end argument
+        movea.l (%a4)+,%a0               | displaced: the next renderer
+        btst    %d3,(fm_fr+FR_ROUTE).l
+        bne.s   .fsd_route
+        cmpa.l  #sy_render,%a0
+        beq.s   .fsd_stock
+.fsd_out:
+        move.l  %a0,(%a3)+               | displaced: the slot the next frame's first call takes
+        pea     16.w                     | displaced: the second call's end
         jmp     0x4000d51c
+.fsd_stock:
+        lea     STOCK_RENDER,%a0
+        bra.s   .fsd_out
+.fsd_route:
+        btst    %d3,(fm_fr+FR_NAT).l
+        bne.s   .fsd_engine
+        cmpa.l  #sy_render,%a0
+        beq.s   .fsd_out
+        cmpa.l  #STOCK_RENDER,%a0
+        beq.s   .fsd_engine
+        cmpa.l  (0x400d6438).l,%a0       | the FLEX renderer (the base's)
+        bne.s   .fsd_out                 | the silent supplier or another renderer: as it is
+.fsd_engine:
+        lea     sy_render,%a0
+        bra.s   .fsd_out
 
 | Dedicated FM START callback. No resource or sample settings are consulted.
 | The native supplier owns its samples; 0x100 requests the DSP's cold start.

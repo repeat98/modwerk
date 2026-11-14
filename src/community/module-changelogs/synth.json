@@ -1,11 +1,12 @@
 [
   {
     "version": "0.1.3-experimental",
-    "date": "2026-11-13",
+    "date": "2026-11-14",
     "changes": [
-      "FM Synth takes less of the unit's CPU, also while it is installed and on no track. Its sound and controls are unchanged.",
-      "On one busy project on an MKII it took about 3 points less of the CPU while playing, and playback skipped far fewer renders.",
-      "Known issue: installed on no track it still costs CPU on every sample track; a full set of modules can run the unit close to its limit."
+      "FM Synth takes far less of the unit's CPU while it is installed and on no track. Its sound and controls are unchanged.",
+      "On an MKII with four sample tracks playing it took about 3 points of the frame interrupt on no track, down from 19.",
+      "Fixes track 1's LFO 3, which did nothing while FM Synth was installed.",
+      "Known issue: not yet checked by ear on hardware."
     ]
   },
   {
