@@ -66,5 +66,6 @@ swung Chord Arp fixture reached the scheduler commit routine 16 times.
   Claptom-music again reported zero save, load and copy readings for the standalone kit
   round trip, with LO and HI at AUTO. KTR2 counts at entry to the storage handlers.
   Digikit recorded two save entries and, after resetting the trace, one load and one copy
-  with matching nonzero data. A project-save control on the unit is still needed to
-  confirm that the trace counts the known project persistence path there.
+  with matching nonzero data. The hardware project-save control reported `S258:5`.
+  That confirms the save counter works on the unit and observed at least one matching
+  nonzero record. The standalone kit operations left all three counters at zero.
