@@ -23,6 +23,7 @@
       "../modwerk/seq-phrase.c",
       "../modwerk/seq-phrase-entry.s",
       "../modwerk/project-generation.s",
+      "../modwerk/startup-kitdata.s",
       "../modwerk/project-kitdata.c",
       "../modwerk/fw-bindings.s"
     ],
@@ -43,6 +44,13 @@
       "FW_PATTERN_SIZE": "0x1db8c"
     },
     "sites": [
+      {
+        "addr": "0x40041b52",
+        "len": 6,
+        "stockSha256": "68e887a69b3099a79e0defe6aa56f93a434d5d01ab0f05f1074caea323945d12",
+        "op": "jsr",
+        "target": "core_startup_serialize"
+      },
       {
         "addr": "0x400d82f8",
         "len": 6,

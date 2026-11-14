@@ -254,6 +254,20 @@ void core_kitdata_save(uint8_t *record, const uint8_t *kit)
         zero(area, KIT_ROOM);       /* a kit core knows nothing of */
 }
 
+/* Keep the active startup container current on stock partial saves. */
+void core_startup_kitdata_refresh(uint8_t *file, const void *project)
+{
+    if ((uint32_t)file != 0x4099d698u || (uint32_t)project != 0x41776c9cu
+        || !core_kitdata[0] || get32(file) != 0xbeefbaceu || get32(file + 4) != 5)
+        return;
+
+    for (int kit = 0; kit < CORE_KITS; ++kit) {
+        uint8_t *record = file + 0xae0200u + (uint32_t)kit * 0x5800u;
+        if (get32(record + KIT_PAD - 4) == 0xbacef00cu)
+            core_kitdata_save(record, (const uint8_t *)(KITS + (uint32_t)kit * KIT_STRIDE));
+    }
+}
+
 void core_kitdata_load(const uint8_t *kit, const uint8_t *record)
 {
     const uint8_t *area = record + KIT_PAD;

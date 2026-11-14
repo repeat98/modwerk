@@ -75,3 +75,54 @@ swung Chord Arp fixture reached the scheduler commit routine 16 times.
   serializer call from the active-pattern update. After selecting the saved slot in
   KIT LOAD, the standalone load caller entered the shared deserializer, then the
   kit copy handler ran. This confirms the menu route and hook order in Digikit.
+
+  On the unit, KTR4 still reported zero standalone kit save and load call-site
+  counters. The Save Project control reported `S258:4`, indicating matching
+  kit-data headers and zero payloads in the observed records. SCF and both
+  octave bounds survived Reload Project and a subsequent cold-boot test.
+  On KTR5 the reroll counter read `R1` after Save Project and `R0` after power-on,
+  and playback did not reproduce the saved melody. Cold-boot reroll persistence
+  and standalone kit recall remain open.
+  Explicitly loading the same named project after boot restored `R1` on the same
+  pattern and track. The named project retains the reroll counter. Automatic
+  startup restore still needs investigation.
+
+  On KTR6, Save Project left `R2 T88`, cold boot restored `R1 T88`, and
+  reloading the named project restored `R2 T92`. The startup callbacks saw
+  matching kit data containing a nonzero reroll. The trace did not see that
+  reroll cleared to zero during startup. The named project holds the new
+  value, while automatic startup restore yields an earlier value.
+
+  A KTR6 Digikit replay traced the confirmed Save Project operation through
+  258 kit serializations and two project finalizations. Both finalizations
+  targeted buffers outside the startup project container at `0x4099d698`.
+  The stock power-loss path writes the existing startup arena, which is read
+  from the alternating eMMC boot records on power-up. This accounts for how
+  startup can read an older reroll while an explicit project load reads the
+  latest one. The hardware power-loss write was not replayed in this test.
+
+  A second KTR6 replay read the first kit's data directly. Its startup record
+  at `0x41482fd6` retained the previous zero state before and after Save
+  Project. The two records produced by the save both contained `0x80000001`
+  (SCF on, reroll 1). The stock serializer indexes the startup kit table
+  from container offset `0xae0200` with a record stride of `0x5800`.
+
+  The pinned KTR7 candidate
+  (`a66518c68bbe56272fe6d57d6e8cd262a0d9f323e0649e3d936a1b8c2c91faa7`)
+  refreshes the active startup project's kit data through the stock save
+  path. Digikit confirmed that Save Project copied the latest reroll into
+  the startup kit record. On the unit, Claptom-music recorded `R3` after
+  Save Project and `R3` after a cold boot, with the same melody. Standalone
+  kit recall was subsequently verified on the pinned KT10 diagnostic.
+
+  On KT10 (`7b0b78f78d73f689f3869732bd8f1439475745c4a2b4dbb74099b545426cff93`),
+  panel photos confirmed that the sound-pool trace came from PRESET → SAVE
+  and the ENTER PRESET NAME dialog. Repeating the test through the right-hand
+  KIT → SAVE and KIT → LOAD restored LO, HI and the saved RNN melody on the
+  unit after they were changed.
+
+  The clean pinned E117 build
+  (`2c0ff691ab0c589a680ba6170535079fb7fafb3b60e4c162c874c2a96dd5ba26`)
+  passed both hardware checks reported by Claptom-music. Save Project and
+  power cycling preserved SCF, LO, HI and the melody. Standalone KIT → SAVE
+  and KIT → LOAD restored the saved bounds and reroll after they were changed.
