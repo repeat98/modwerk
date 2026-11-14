@@ -2,7 +2,7 @@
   "schemaVersion": 3,
   "id": "filter-hz",
   "name": "Filter Hz",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "machine": "analog-rytm-mkii",
   "category": "system",
   "exclusive": false,
@@ -26,12 +26,13 @@
     "label": "FILTER HZ",
     "family": "Display",
     "summary": "The FILTER page's FRQ popup shows the cutoff in hertz, from 13.8Hz to 21.1kHz, instead of 0 to 127.",
-    "overview": "Filter Hz changes what the FRQ value popup on the FILTER page says. Instead of the stock 0 to 127 it shows the cutoff frequency to three significant figures: 13.8Hz at 0, 440Hz at 60, 1.11kHz at 76 and 21.1kHz at 127, one semitone a step. The scale comes from MrScruff's measurement of the self-oscillating filter. Only the text changes: the filter, its range, saved kits and every other parameter are untouched. It is an elemod port of MrScruff's rytm-mods 0008-filter-hz, with his code unchanged.",
+    "overview": "Filter Hz changes what the FRQ value popup on the FILTER page says. Instead of the stock 0 to 127 it shows the cutoff frequency to three significant figures: 13.8Hz at 0, 440Hz at 60, 1.11kHz at 76 and 21.1kHz at 127, one semitone a step. The scale comes from MrScruff's measurement of the self-oscillating filter. Only the display changes: the filter, its range, saved kits and every other parameter are untouched. When FRQ is locked on a trig, the white box behind the value is wider than stock's, 33 pixels, so kHz values fit inside it. It is an elemod port of MrScruff's rytm-mods 0008-filter-hz, with his code unchanged; Modwerk 1.2.1 adds the wider box.",
     "highlights": [
       "The FRQ popup reads in Hz and kHz to three significant figures.",
       "One semitone a step, with 440Hz at the stock value 60.",
+      "A locked FRQ's white box is wide enough for kHz values, the same size for every value.",
       "Display only: the filter, its range and saved kits are unchanged.",
-      "MrScruff's rytm-mods code, unchanged, linked by the elemod core."
+      "MrScruff's rytm-mods code, unchanged, linked by the elemod core; Modwerk adds the wider box."
     ],
     "usage": [
       "Use a build containing Filter Hz. Select a track and press FILTER to open its FILTER page.",
@@ -47,7 +48,8 @@
     ],
     "screenshots": [
       "media/filter-page.png",
-      "media/frq-440hz.png"
+      "media/frq-440hz.png",
+      "media/frq-locked.png"
     ]
   },
   "controls": [
@@ -68,7 +70,8 @@
       "Built for OS 1.74 only, with core-ar2 0.3. Version 1.2.0 drops the OS 1.73 release (core-ar2 0.1), which Modwerk no longer supports.",
       "The scale was measured on the self-oscillating LP2 filter; the other filter types are assumed to share it.",
       "The popup shows the knob's value: envelope depth, LFO modulation and parameter locks applied elsewhere are not included.",
-      "The 0 to 127 number is no longer shown for FRQ."
+      "The 0 to 127 number is no longer shown for FRQ.",
+      "Two stock sites: param_value_text (0x400a86b4) and the lock box in stock's knob value drawing (0x40037bea). Another module patching either cannot be combined with it."
     ]
   },
   "platform": {
@@ -77,44 +80,48 @@
     "build": "build.json",
     "events": [],
     "claims": [
-      "ui:FILTER page FRQ value text"
+      "ui:FILTER page FRQ value text",
+      "ui:FILTER page FRQ lock box"
     ]
   },
   "resources": {
-    "memoryBytes": 256,
+    "memoryBytes": 302,
     "fastBytes": 0,
     "load": {
-      "display": "None in the audio path: runs only when the FRQ popup's text is drawn",
+      "display": "None in the audio path: runs only when the FRQ value text or a lock box is drawn",
       "method": "static",
-      "conditions": "Static: the one site is in param_value_text, the routine that formats a parameter's value text for the screen; nothing is added to the audio, sequencer or tick paths. Not a measurement."
+      "conditions": "Static: one site is in param_value_text, the routine that formats a parameter's value text for the screen, the other in stock's knob value drawing where a locked value's box is drawn; nothing is added to the audio, sequencer or tick paths. Not a measurement."
     }
   },
   "evidence": {
     "tier": "author-hardware",
-    "moduleVersion": "1.2.0",
-    "sourceSha256": "456b3752807d5ccbcbcc3ad9f51fe7d99d82b154def1a99385703b063723439b",
+    "moduleVersion": "1.2.1",
+    "sourceSha256": "c4ec14ab22c985a0c848ce68782ba675f1eb9d8fce42eb353faaa8c82b1b6e59",
     "reports": [
+      "evidence/hardware-testing-1.2.1.json",
+      "evidence/emulator-1.2.1.json",
       "evidence/hardware-testing.json",
       "evidence/source-parity.json"
     ],
     "hardware": {
       "model": "Analog Rytm MKII",
       "release": "1.74",
-      "testedOn": "2026-10-22",
-      "tester": "Iced-Cream",
+      "testedOn": "2026-11-14",
+      "tester": "npp1993 (Nathaniel Pavel)",
       "durationMinutes": null,
-      "summary": "Iced-Cream reports that on an Analog Rytm MKII with OS 1.74 the FILTER page's FRQ popup shows the cutoff in Hz, in FZ74, the released core-ar2 0.3 with Filter Hz alone (2026-10-22), and beside all ten other rytm2_mods ports (C3A4, 2026-10-20). Modwerk's 1.2.0 build links to FZ74's main OS byte for byte.",
+      "summary": "npp1993 reports that on an Analog Rytm MKII with OS 1.74, FZ78 (the released core-ar2 0.3 with Filter Hz 1.2.1 alone, booted from RAM over USB, 2026-11-14) kept FRQ's white lock box the same width and covering the whole value at 440Hz, 1.11kHz, 2.22kHz and 21.1kHz; a locked RES looked as before; unlocked FRQ read 13.8Hz and 21.1kHz at the ends; and about a minute of playback while turning FRQ had no freezes or dropouts.",
       "limitations": [
-        "Only FZ74's one-minute playback was timed; other durations were not recorded.",
-        "FZ74: .syx 62c256261d643752c9e8ffb357aada048af75a9b03c1f1aae649287e4bae7745. Firmware was not read back from the device.",
-        "FZ74's playback check was heard over Overbridge, with samples and delay and reverb sends on all tracks."
+        "Tested by a maintainer, not by the module's author.",
+        "Booted from RAM; the flash was not written.",
+        "FZ78: .syx 3554efa8d84a384bc18c8f0cf5336d493ca2b26137091432d3ebc610a946a93f. Firmware was not read back from the device.",
+        "Playback not timed exactly; other filter types, other pages' locks and other modules beside it not tried."
       ]
     },
     "verifiedBy": null
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Hardware: the FRQ popup shows Hz on an Analog Rytm MKII, OS 1.74, with the released core-ar2 0.3 and Filter Hz alone (FZ74, 2026-10-22). Modwerk's source build gives a main OS byte-identical to FZ74. rytm-emu shows Hz where stock shows numbers, every other pixel the same.",
+    "summary": "1.2.1: in rytm-emu a locked FRQ's box is 33 pixels for every value, one pixel wider than the widest text each side; unlocked FRQ and other parameters' lock boxes are pixel-identical to 1.2.0. On an Analog Rytm MKII (FZ78, RAM boot, 2026-11-14) the box covered every value tried and RES looked as before. 1.2.0: the FRQ popup shows Hz on an Analog Rytm MKII, OS 1.74, with the released core-ar2 0.3 and Filter Hz alone (FZ74, 2026-10-22).",
     "documentation": {
       "tutorial": {
         "title": "Quick tutorial",
@@ -127,7 +134,8 @@
       "screenshots": [
         "media/filter-page.png",
         "media/frq-440hz.png",
-        "media/frq-open.png"
+        "media/frq-open.png",
+        "media/frq-locked.png"
       ],
       "captureRecord": "media/capture.json"
     }
@@ -158,9 +166,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "1.2.0",
-        "imageSha256": "62c256261d643752c9e8ffb357aada048af75a9b03c1f1aae649287e4bae7745",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running FZ74, the released core-ar2 0.3 and Filter Hz built from the owner's stock OS 1.74; Modwerk's 1.2.0 build of this folder links to the same main OS. The frames were first captured in rytm-emu 3c4c42c on an OS 1.73 build and are byte-identical to FZ74's. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "1.2.1",
+        "imageSha256": "3554efa8d84a384bc18c8f0cf5336d493ca2b26137091432d3ebc610a946a93f",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running FZ78, the released core-ar2 0.3 and Filter Hz 1.2.1 built from this folder on stock OS 1.74 (media/capture.json). The same frames as 1.2.0's: 1.2.1 changes nothing unlocked. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -174,9 +182,9 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "1.2.0",
-        "imageSha256": "62c256261d643752c9e8ffb357aada048af75a9b03c1f1aae649287e4bae7745",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running FZ74, the released core-ar2 0.3 and Filter Hz built from the owner's stock OS 1.74; Modwerk's 1.2.0 build of this folder links to the same main OS. The frames were first captured in rytm-emu 3c4c42c on an OS 1.73 build and are byte-identical to FZ74's. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "1.2.1",
+        "imageSha256": "3554efa8d84a384bc18c8f0cf5336d493ca2b26137091432d3ebc610a946a93f",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running FZ78, the released core-ar2 0.3 and Filter Hz 1.2.1 built from this folder on stock OS 1.74 (media/capture.json). The same frames as 1.2.0's: 1.2.1 changes nothing unlocked. Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     },
     {
@@ -190,9 +198,25 @@
       "capture": {
         "type": "emulator",
         "release": "1.74",
-        "moduleVersion": "1.2.0",
-        "imageSha256": "62c256261d643752c9e8ffb357aada048af75a9b03c1f1aae649287e4bae7745",
-        "setup": "Headless rytm-emu c5732f0 (dtboot) running FZ74, the released core-ar2 0.3 and Filter Hz built from the owner's stock OS 1.74; Modwerk's 1.2.0 build of this folder links to the same main OS. The frames were first captured in rytm-emu 3c4c42c on an OS 1.73 build and are byte-identical to FZ74's. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+        "moduleVersion": "1.2.1",
+        "imageSha256": "3554efa8d84a384bc18c8f0cf5336d493ca2b26137091432d3ebc610a946a93f",
+        "setup": "Headless rytm-emu c5732f0 (dtboot) running FZ78, the released core-ar2 0.3 and Filter Hz 1.2.1 built from this folder on stock OS 1.74 (media/capture.json). The same frames as 1.2.0's: 1.2.1 changes nothing unlocked. Firmware-rendered 128x64 screen at 3x. UI documentation only."
+      }
+    },
+    {
+      "path": "media/frq-locked.png",
+      "kind": "screenshot",
+      "caption": "Lock FRQ on a trig (hold the trig, turn FRQ): the white box behind the value is wide enough for kHz values.",
+      "alt": "FREQUENCY screen with a locked FRQ reading 21.1kHz in a white inverted box under the filter curve.",
+      "credit": "Modwerk documentation capture; Elektron interface",
+      "license": "LicenseRef-Rytm-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.74",
+        "moduleVersion": "1.2.1",
+        "imageSha256": "3554efa8d84a384bc18c8f0cf5336d493ca2b26137091432d3ebc610a946a93f",
+        "setup": "Headless rytm-emu 2ac0f1f (dtboot) running FZ78, the released core-ar2 0.3 and Filter Hz 1.2.1 on stock OS 1.74: GRID RECORDING, trig 1 held, FRQ locked at 127 (media/capture.json). Firmware-rendered 128x64 screen at 3x. UI documentation only."
       }
     }
   ]
