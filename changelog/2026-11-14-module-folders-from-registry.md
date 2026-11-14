@@ -1,0 +1,1 @@
+Checks: which folders hold modules now comes from the machine registry, so a machine that gets modules is checked like the others without editing the checks. A Zoom module's new name, summary or version now reaches the site's server.
