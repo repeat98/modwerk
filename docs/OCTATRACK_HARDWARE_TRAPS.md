@@ -566,17 +566,23 @@ such a leftover call at once instead of on a later install.
 RAM boot stock restores the current bank from its battery-backed Part copies
 (`0x40025770`) and runs the Part validator on each first; the saved module set
 reinstalls modules only about 3 s later. One value the validator has to fix
-refuses the whole restore: the bank is never copied in or applied, every Part
-reads STATIC with stock defaults, no track is ever bound (renderer slots stay
-`0x400047f0`) and the unit is silent. A module whose Part bytes stock would reject must be kept
+refuses the whole restore: the bank is never applied, every Part reads STATIC
+with stock defaults and the unit is silent. A module whose Part bytes stock would reject must be kept
 from the validator by the base itself, before the module is installed (beta
 finding 24: Analog BD). That includes a module that gives a stock effect's slots new
 meanings: Sidechain Compressor's KEY, KFLT and KGN in COMPRESSOR's page-2 slots
-8-11 wiped testers' current banks at every power-on (finding 47). The restore also runs a
-pattern validator (`0x4009a670`, not hooked) on all 16 patterns, so pattern
-bytes a module writes need the same care. To test a module for this, set it up
-in a scratch project's current bank and RAM-boot: the restore and both
-validators run as at power-up. A refused restore has already written its fixes
+8-11 wiped testers' current banks at every power-on (finding 47). It caps stock fields too
+(a recorder's LOOP at 1, `0x40002cd2`; SRC3 at 10, `0x40002cb2`) and holds every
+track's XVOL (Part `+0x125 + 0x18t`) at 127 (`beq.s` at `0x40002d24`). The bank
+file read (`0x4008cea0`) runs it silently on every load, so a new value comes
+back as stock's, and a power-up on a bank holding one shows BANK UNAVAILABLE
+for that bank. Raise the cap, or turn that `beq.s` into `bra.s`, in the module
+that gives the field a new value. To find which check refused a bank, boot
+`ot_emu` with that run's CS1 (`--cs1-in FILE --no-post`) and `--watch-pc` on
+every `addql #1,%d2` in `0x40002318..0x40002df0`: `hits` names the PC and the Part.
+The restore also checks all 16 patterns (`0x4009a670`), so pattern bytes need the
+same care. To test, set the module up in a scratch project's bank and
+RAM-boot. A refused restore has already written its fixes
 into the battery copy, so the next boot restores the bank with those values
 changed (Sidechain's KFLT 64 became 1). To recover a bank lost this way, do not
 save or edit: power-cycle once more, or PROJECT > RELOAD the last save from the
@@ -726,6 +732,8 @@ Octabam's register is vendored unchanged: [sdk/octabam/AGENTS.md](../sdk/octabam
 - **Window code costs 2x and is zeroed at boot** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-window-zero), [record](OCTATRACK_DSP_WINDOW.md)): the base copies the receiver's packet operations to `P:0x37e00`/`0x3fe00` at the first frame; FX2 block 3 takes no buffer past `0x3e00`.
 - **A host write at the frame interrupt's entry is lost every other frame** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-host-mask); under the port, open on a unit): payload B rewrites the host handlers' masks each frame. Stream to core B on ping-0 frames, or check every word arrived.
 - **`dsp_asm` does not assemble a backward `bra`, or a `jmp` to a window address** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-bra-back)): put a trampoline before the code it enters, or `jmp (rN)`; dispatch entries keep `init < proc <= init + 256`.
+- **`dsp_asm` gets some `mac` and `mpy` operand orders wrong** (8 Nov 2026): `mac x0,y0`, `mac -x0,y0` and `mpy y1,y1` came out wrong; `mac y0,x0`, `mac x1,y0` and `mpy y0,y0` are right, and the round-trip check stops the build on the others.
+- **`dsp_host` can crash on the code's layout alone** (8 Nov 2026): a segfault in `op_ResolveCache` on one case of an effect whose other cases matched its model went away with one added `nop`. Shift the code by a word before hunting a bug, and comment the padding.
 - **A module's id is the remix's, not the manifest's** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-module-id)): a tool reading the preferred `fx2_id`, a literal id or `0x400d5fdc` is right only for the stock layout, which [more than 32 effect ids](OCTATRACK_MORE_EFFECT_IDS.md) change.
 - **Payload B's frame routine writes `x:$3f7f..$3fbf` every frame** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-stock-x-scratch)): state there is overwritten; read what stock writes before keeping state in X.
 - **A stock effect as the fallback stalls the sequencer** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-stock-fallback)): id 0 is also FX1 NONE, so it runs on every empty FX1 slot. Every Modwerk build passes `fallback='NONE'`.
