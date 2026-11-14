@@ -204,14 +204,14 @@
       "abi": 8,
       "features": 131,
       "sites": 24,
-      "copies": 38,
+      "copies": 39,
       "fills": 0,
-      "version": "0.1.2-experimental",
+      "version": "0.1.3-experimental",
       "name": "FM Synth",
       "module": "e8c3e4fa",
-      "bytes": 29810,
-      "sha256": "6e5716540d78b652b272c364ddf398f688eb9dff7e2b926b2895e250341aaca7",
-      "path": "octatrack-modules/synth/0.1.2-experimental.mwrm"
+      "bytes": 30498,
+      "sha256": "19e7e08c864de3ef4007aff3f6d6b33965844fe95df153e7bce3d67206295efd",
+      "path": "octatrack-modules/synth/0.1.3-experimental.mwrm"
     },
     {
       "id": "quantizer",
