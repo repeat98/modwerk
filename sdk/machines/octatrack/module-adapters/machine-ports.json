@@ -5,7 +5,7 @@
   "poly8": {
    "sources": {
     "sdk/octabam/modules/poly8/manifest.py": "f8759dbcbb246b247c195e61f0c0464fd0cdc0dd40b68dd8f74c03b46c584afc",
-    "sdk/octabam/modules/poly8/polyphony.s": "c86a3a783c46ecdbb3b44341098f0c094c65b9a8d11716835c2d28c2d2d6ecee",
+    "sdk/octabam/modules/poly8/polyphony.s": "ffc66cf1f16f7b078595e4df34d647a6e6ab561ec112cfd525f7e8796158777a",
     "sdk/octabam/modules/poly8/registration.s": "9bd549a03c7008d45e5ffcd647375ed5ea7507845857f68c407bb247edd942ae",
     "sdk/octabam/modules/poly8/shared-machine.s": "3148a219ca0a1cdf5b1a20c64ff4da564b1078f599a2ceb08b15f6c10e908923"
    },
@@ -151,7 +151,7 @@
   },
   "vector": {
    "sources": {
-    "sdk/octabam/modules/vector/control.s": "1939a627870464126d138522173d0465d1abc790cdb4ad4bc29a15501484faf5",
+    "sdk/octabam/modules/vector/control.s": "4ea4778c545453ce37b2a106438b7a24460705295bef8ff7f9ab500787068bc0",
     "sdk/octabam/modules/vector/manifest.py": "4d921f24256038797a99671534885b0bb9a27eaa79261b11136cf0a95a75af21"
    },
    "contribute": [

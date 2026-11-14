@@ -1,12 +1,12 @@
 {
   "kind": "owner-approved-update",
   "id": "track-solo",
-  "version": "0.2.4-experimental",
+  "version": "0.2.5-experimental",
   "approvedBy": "repeat98",
-  "approvedOn": "2026-11-10",
-  "ownerStatement": "I'll add the approval record for the waived benchmark and stress rows once the points below are in, since it pins the source hash. (https://github.com/repeat98/modwerk/pull/1383#issuecomment-6763276021)",
-  "reason": "First release, USB only. No MIDI path, so no cfmeter benchmark or flood was run. Cycles were counted in the Octatrack emulator and labelled as such: worst event 677 of the module's instructions, about 1,687 of 9,577 cycles. The author's MKII ran this exact package (50f64eb6) on beta base 72defb09: try and Undo, Keep with a minute of play, power cycle, removal. Hardware timing is not claimed verified. Limits are in TESTING.md and compatibility.limitations.",
-  "sourceSha256": "f37562d53f0f901e09cca4d42d1a73730dfc92caa2563298dc960f45eb37f2cc",
+  "approvedOn": "2026-11-13",
+  "ownerStatement": "Approved in the 13 November 2026 review of https://github.com/repeat98/modwerk/pull/1523: the 0.2.4 waiver of the benchmark and stress rows is renewed for 0.2.5.",
+  "reason": "0.2.5 changes one initial data byte (TRACK SOLO starts at HOLD) and no instruction. No MIDI path, so no cfmeter benchmark or flood was run. Cycles were counted in the Octatrack emulator and labelled as such: worst event 677 of the module's instructions, about 1,687 of 9,577 cycles, identical to 0.2.4. The author's MKII ran this exact package (5ac64b5e) on flashed beta base c1f21351 beside 15 kept modules: a trial, Keep and a power cycle. Hardware timing is not claimed verified. Limits are in TESTING.md and compatibility.limitations.",
+  "sourceSha256": "4d3fdbf04d04cf1db20bcd96953a6907a0c4281667f0bc61a1c75a635137607d",
   "waived": [
     "current-build-hardware"
   ]

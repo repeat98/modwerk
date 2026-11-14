@@ -534,6 +534,7 @@ ts_at:
 	.type	ts, @object
 	.size	ts, 28
 ts:
-	.zero	3
+	.zero	2
+	.byte	1
 	.byte	8
 	.zero	24

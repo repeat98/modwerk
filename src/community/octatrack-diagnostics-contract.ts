@@ -2,7 +2,9 @@
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 
 // Closed, versioned diagnostics: no arbitrary text, project data, USB serials, firmware or memory dumps.
-/** 2026-11-11.1 adds each report's browser and OS family (`client`) and why a connection failed before it existed (`link_failed`). */
+/** 2026-11-11.1 adds each report's browser and OS family (`client`) and why a connection failed before it existed (`link_failed`).
+ * A consent given under an earlier version keeps sharing (owner, 14 Nov 2026): a new version is what new choices record,
+ * never a reason to ask members again. */
 export const OCTATRACK_DIAGNOSTICS_VERSION = '2026-11-11.1'
 export const DIAGNOSTIC_RETENTION_DAYS = 30
 export const DIAGNOSTIC_CONSENT_DAYS = 90
@@ -41,9 +43,10 @@ export type PreLinkFailure = typeof PRE_LINK_FAILURES[number]
 export const DIAGNOSTIC_USB_EVENTS = ['connected', 'disconnected', 'sync_started', 'sync_failed', 'selftest', 'health', 'kept', 'undone', 'load', 'unresponsive', 'device_log'] as const
 /** The part of the site a browser error happened on, from the page's route: a fixed name, never the address. */
 export const DIAGNOSTIC_SITE_AREAS = ['library', 'configuration', 'octatrack', 'module', 'forum', 'account', 'admin', 'other'] as const
-/** A browser error's type, by its standard name; anything else is OtherError. Never its message. */
+/** An error's type, by its standard name, or one of the USB link's own two (a reply that timed out, a submission the
+ * unit dropped or refused); anything else is OtherError. Never its message. */
 export const DIAGNOSTIC_ERROR_KINDS = ['TypeError', 'RangeError', 'ReferenceError', 'SyntaxError', 'AbortError', 'NetworkError', 'NotFoundError',
-  'NotAllowedError', 'InvalidStateError', 'QuotaExceededError', 'SecurityError', 'DataError', 'OtherError'] as const
+  'NotAllowedError', 'InvalidStateError', 'QuotaExceededError', 'SecurityError', 'DataError', 'TimeoutError', 'VendorTransportError', 'OtherError'] as const
 export type DiagnosticSiteArea = typeof DIAGNOSTIC_SITE_AREAS[number]
 export type DiagnosticErrorKind = typeof DIAGNOSTIC_ERROR_KINDS[number]
 /** `load` and `unresponsive`: the connected unit's meters over the last minutes, per mille, as [mean, peak]; a meter
@@ -145,7 +148,9 @@ export interface OctatrackDiagnostic {
   modules?: { id: string; catalogVersion: string }[]
   packages?: { sha256: string; bytes: number }[]
   area?: DiagnosticSiteArea
-  /** A browser error's type, or an unclassified (`unknown`) sync failure's; never a message. */
+  /** A browser error's type, an unclassified (`unknown`) sync failure's, or what stopped a `transport` one: the
+   * browser's USB error, TimeoutError (no reply in time), VendorTransportError (the unit dropped or refused the
+   * submission), OtherError (a reply that did not confirm the step). Never a message. */
   kind?: DiagnosticErrorKind
   step?: DiagnosticSyncStep
   live?: DiagnosticLive

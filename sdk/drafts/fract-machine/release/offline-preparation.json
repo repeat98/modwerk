@@ -1,0 +1,62 @@
+{
+  "schema": 1,
+  "date": "2026-11-11",
+  "state": "OFFLINE_PREPARATION; HARDWARE_TIMING_NOT_RUN",
+  "normalPackageSha256": "6ff37fdcdbfead903a4857482d0f7bd50905175b55c877e62ad7c51422ef5874",
+  "baseIdentity": "72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6",
+  "probePackageSha256": "6020e04633f670e34123e221b44c38ad7ed3ea873081e35ff9994fb0d0a58cbe",
+  "probeBytes": 32972,
+  "probeStockVerification": "PASS",
+  "originalCompilationUnitsWithIdenticalExecutableSections": 11,
+  "isolatedToolchainImage": "sha256:3b40aa253afa03508735107cdaefac0d4116824da50059a6a2ba61e5d11ef56d",
+  "probeSourceSha256": "f527655c9349dae67e11a6c50be790b5e89f46991040c21500aa184f7be230e7",
+  "probeEmulator": {
+    "state": "SIX_COMPLETE_PROTOCOL_V3_WINDOWS; NOT_HARDWARE_QUALIFICATION",
+    "hardware": false,
+    "timing": "Emulator frame/timer cadence is not physical. Nominal microseconds excluded from performance.json.",
+    "firstAttempt": "Raw emulator USB socket was held by uploader; second client timed out before data. Retained privately; corrected by closing uploader before collection."
+  },
+  "projects": {
+    "count": 8,
+    "banksReadBack": 128,
+    "currentAndSavedPartsMatch": true,
+    "midiTrigMasksCleared": true,
+    "pairedSampleBytesMatch": true,
+    "cases": {
+      "A01": "T1, one trig per 64 steps, neutral pitch",
+      "A02": "T1, same, minimum pitch lock",
+      "A03": "T1, same, maximum pitch lock",
+      "A04": "T1, trig every step, neutral pitch",
+      "A05": "T1-T8 stock FLEX activity; FRACT substitutes T1 only",
+      "A06": "FRACT only: Part 2, dense trigs, POS/SIZE/REVS/SPRD/SHPE locks and three LFOs; not a matched native case"
+    },
+    "emulator": "FR16M loaded through UART PROJECT RELOAD and played: BENCH sample, POS18/SIZE86/PTCH0.0, native voice and three advancing heads, no loader/render errors or sheds. Other seven projects have file validation only.",
+    "stressAttempt": "PTN+TRIG6 was sent in the emulator but effective A06/Part/modulation was not independently read back: UNCONFIRMED, not a stress pass.",
+    "hardware": "NOT_RUN",
+    "sampleSha256": {
+      "FX16M": "8a322d0dc378856be6408543e2c2199591bcf2d87a8b96fe3ca45dfdccdebeda",
+      "FR16M": "8a322d0dc378856be6408543e2c2199591bcf2d87a8b96fe3ca45dfdccdebeda",
+      "FX16S": "54741a39d746a0d11c0e4c9e7a4b80ab8b99b6512adf0ef9b97c1705a72b0ed4",
+      "FR16S": "54741a39d746a0d11c0e4c9e7a4b80ab8b99b6512adf0ef9b97c1705a72b0ed4",
+      "FX24M": "c0201d6504cba1dbaef17d7360ee0bd28f48853737f781b1e73f7f94cf9763aa",
+      "FR24M": "c0201d6504cba1dbaef17d7360ee0bd28f48853737f781b1e73f7f94cf9763aa",
+      "FX24S": "3f0a9a9c0d49029e07d4941744ff3f767a1e2a9358b504bcace2b4f047d3ad46",
+      "FR24S": "3f0a9a9c0d49029e07d4941744ff3f767a1e2a9358b504bcace2b4f047d3ad46"
+    }
+  },
+  "hostTests": {
+    "fractTestsRun": 49,
+    "fractSkippedHistorical": 4,
+    "probeDecoderAndCollectorTestsPassed": 7
+  },
+  "uiCaptureRecord": "../media/capture.json",
+  "hardwareFunctionalReport": "hardware-20261110.md",
+  "remaining": [
+    "Hardware timing and audio stress on named probe with exact upload/restoration receipts.",
+    "Since-boot base-frame peak limitation and any exact-version performance exception need owner review.",
+    "Untested stock flows, companions and active replacement; retain prior unresolved reload incident.",
+    "First-release approval, final promoted-source/USB catalogue integration and final exact-artifact verification."
+  ],
+  "deviceOpenedDuringOfflinePreparation": false,
+  "publicPackageActivated": false
+}

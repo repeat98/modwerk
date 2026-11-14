@@ -221,6 +221,9 @@ def run(args):
                     'midiModeWord':read32(0x80000012)}
         def enabled(on): invoke(base+own['ts_set'],int(on)*2-1,0);advance(50)
         assert overlay()==0
+        assert read32(symbols['modwerk_runtime_api']) & 0x10000, 'TRACK SOLO did not start at HOLD'
+        checks.append('TRACK SOLO starts at HOLD')
+        enabled(False)
         key(0x11);advance(2200);assert overlay()==0;key(0x11,False)
         checks.append('OFF preserves an actual long TRACK press')
         if args.persistence:
@@ -230,15 +233,18 @@ def run(args):
             (out/'baseline-card.private.img').write_bytes(card_path.read_bytes())
             checks.append('actual stock SAVE PROJECT establishes a saved baseline')
         if args.menu:
+            enabled(True)  # back to the start state: the row opens at HOLD
             # PROJECT > CONTROL > SEQUENCER, then its fourth row.
             for code in (0x1c,0x20,0x20,0x21,0x20,0x20,0x31,0x20,0x20,0x20): tap(code)
-            screenshot('track-solo-off')
-            tap(0x31)
             screenshot('track-solo-hold')
-            assert read32(symbols['modwerk_runtime_api']) & 0x10000, 'stock menu did not enable HOLD'
+            tap(0x31)
+            screenshot('track-solo-off')
+            assert not read32(symbols['modwerk_runtime_api']) & 0x10000, 'stock menu did not choose OFF'
+            tap(0x31)
+            assert read32(symbols['modwerk_runtime_api']) & 0x10000, 'stock menu did not choose HOLD again'
             for _ in range(2): tap(0x32)
             wait_clear_screen()
-            checks.append('stock SEQUENCER row renders OFF/HOLD and enables through its actual YES handler')
+            checks.append('stock SEQUENCER row opens at HOLD and switches OFF and HOLD through its actual YES handler')
         else: enabled(True)
         if args.audio:
             key(0x28);key(0x28,False);advance(300)
