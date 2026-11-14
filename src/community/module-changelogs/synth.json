@@ -6,7 +6,7 @@
       "FM Synth takes far less of the unit's CPU while it is installed and on no track. Its sound and controls are unchanged.",
       "On an MKII with four sample tracks playing it took about 3 points of the frame interrupt on no track, down from 19.",
       "Fixes track 1's LFO 3, which did nothing while FM Synth was installed.",
-      "Known issue: not yet checked by ear on hardware."
+      "Checked on an MKII by recording one FM Synth track against 0.1.2. Known issue: chords, glide and MIDI are not yet checked on hardware."
     ]
   },
   {
