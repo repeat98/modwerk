@@ -3,7 +3,7 @@ import { act, createElement, lazy } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { isChunkLoadError } from './chunk-load-error'
+import { isChunkLoadError, reloadForNewRelease } from './chunk-load-error'
 import { LazyPanel, PageError } from './PageError'
 import { RenderBoundary } from './RenderBoundary'
 
@@ -42,6 +42,19 @@ describe('failed lazy-loaded parts', () => {
     expect(app).toContain('Reload page')
     expect(app).not.toContain('href="#library"')
     expect(renderToStaticMarkup(createElement(PageError, { error: 'not an Error' }))).not.toContain('Technical details')
+  })
+
+  it('reloads once for a new release, never again within a minute and never offline', () => {
+    sessionStorage.clear()
+    const reload = vi.fn()
+    expect(reloadForNewRelease(reload, 1_000_000)).toBe(true)
+    expect(reloadForNewRelease(reload, 1_030_000)).toBe(false)
+    expect(reload).toHaveBeenCalledTimes(1)
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false)
+    expect(reloadForNewRelease(reload, 2_000_000)).toBe(false)
+    vi.restoreAllMocks()
+    expect(reloadForNewRelease(reload, 2_000_000)).toBe(true)
+    expect(reload).toHaveBeenCalledTimes(2)
   })
 
   it('keeps the page and its other parts when the compatibility panel’s file does not arrive', async () => {
