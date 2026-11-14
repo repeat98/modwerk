@@ -57,7 +57,7 @@ Hold FIX or SAMPLER on any sound page and turn the knob you want to move with ve
 - OS 1.74 only, with core-ar2 0.7. No other module is needed.
 - The LFO's DST and DEP are the sound's own (the FX track's on the FX track), written through stock's own writers, so they save with the kit and play on a unit without the mod. A tap's replay goes through the core's `core_key`, so every key mod sees it.
 - After a knob press in an LFO hold, the other knobs do nothing until LFO is let go.
-- A turn that reaches the LFO hold through stock's locker interface without a Rytm encoder event (MIDI through a module that uses stock's locker, for one) sets the depth by its value's change, the destination's move in whole values; from 0.2.1. Earlier, only the Rytm's encoder set the depth there.
+- A turn that reaches the LFO hold through stock's locker interface without a Rytm encoder event (MIDI through a module that uses stock's locker, for one) sets the depth by the change in the value it passes (one value step moves DEP by 1.00); from 0.2.1. Earlier, only the Rytm's encoder set the depth there.
 - It patches no stock site. It sets its own locker in stock's parameter UI while a key is held, as QPER Live Rec does with QPER, and adds a `core_params` entry for every parameter id with only a turn function (order 5) for a turn that reaches stock's parameter edit. It subscribes to `ev_key`, `ev_enc`, `ev_tick` and `ev_draw` (the LFO depth's box, in stock's label font). No storage.
 - A performance or scene pad, or a trig, that holds stock's locker when FIX or SAMPLER goes down or during the hold keeps it; the mod shows its amounts again within a tick of it letting go.
 - Stock's LFO DST knob opens its list rather than turning, so FIX + DST does nothing.

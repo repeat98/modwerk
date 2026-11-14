@@ -88,6 +88,10 @@ Live Rec on the plain base, BD FILTER page, LFO held 8000M-8400M:
   the same screen, pixel for pixel (the encoder path is unchanged).
 - FIX and QPER holds with the sweep: same screens on both.
 
+After a review, IQ03 (the encoder flag cleared at the top of every locker set and on every key
+event, and set only for knobs A-H): the same screens as IQ02 for the MIDI depth (-85.00) and as
+0.2.0 for the encoder-only run, FIX and QPER.
+
 Not tested on a unit.
 
 ## Hardware

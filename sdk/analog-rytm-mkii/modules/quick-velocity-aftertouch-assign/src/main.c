@@ -384,9 +384,11 @@ static int lfo_shown(int track)
 static int dep_pending;
 static int pending_knob = -1;           // the knob dep_pending counts, -1 none
 static int dest_knob = -1;              // the knob of the LFO's destination, -1 unknown
-// Set by an encoder event during an LFO hold, cleared by the next locker set and every tick: a
-// set with it clear came through stock's locker interface from something other than a Rytm
-// knob (MIDI through a module that uses stock's locker, say), whose value is all it has.
+// Set by a knob's encoder event during an LFO hold, cleared by the next locker set, every key
+// event and every tick: a set with it clear came through stock's locker interface from
+// something other than a Rytm knob (MIDI through a module that uses stock's locker, say), whose
+// value is all it has. A knob event that reaches no set (a knob that cannot be locked) leaves
+// it until then, so a non-encoder set in between is taken as the knob's (its step is lost).
 static int encoder_turn;
 static int last_knob = -1;              // the knob of the latest encoder event
 
@@ -566,9 +568,10 @@ static int locker_get(void *self, int track, int param)
 // the turn, or 0 to make the lock when has said no.
 static void locker_set(void *self, int track, int param, int value)
 {
-    int kind = shown_on(track), logical, slot;
+    int kind = shown_on(track), logical, slot, from_encoder = encoder_turn;
     word_t set;
     (void)self;
+    encoder_turn = 0;                   // one encoder event, one set at most, whatever happens
     if (kind == NONE || !IS_KEY_HELD(holds[kind].key))
         return;                         // a lost release: the tick takes the locker away
     holds[kind].turned = 1;
@@ -583,8 +586,6 @@ static void locker_set(void *self, int track, int param, int value)
         return;
     }
     if (kind == LFO) {
-        int from_encoder = encoder_turn;
-        encoder_turn = 0;
         if (!from_encoder && lfo_dest(track) == param) {
             // Not a Rytm knob: the turn is the value's change from what get showed. The box
             // shows the depth at twice its stored units (lfo_shown).
@@ -736,6 +737,7 @@ static void replay_lfo(void *brain, unsigned release_flags)
 
 int quick_velocity_aftertouch_assign_key(void *brain, void *event)
 {
+    encoder_turn = 0;
     int key = *(int *)((char *)event + EV_KEY);
     unsigned flags = *(unsigned *)((char *)event + EV_FLAGS);
     int down = flags & PRESSED, k;
@@ -828,7 +830,8 @@ int quick_velocity_aftertouch_assign_enc(void *brain, void *event)
     int k;
     (void)brain;
     if (holds[LFO].held) {
-        encoder_turn = 1;
+        int knob = *(int *)((char *)event + ENC_KNOB);
+        encoder_turn = knob >= 0 && knob < KNOBS;   // LEVEL never reaches a locker set
         dep_turn(event);
     }
     for (k = VEL; k < KINDS; k++)

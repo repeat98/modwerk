@@ -3,7 +3,7 @@
     "version": "0.2.1-experimental",
     "date": "2026-11-14",
     "changes": [
-      "With LFO held, a MIDI controller's turn now sets the LFO's depth too, through any module that uses stock's locker, not only the Rytm's knobs.",
+      "With LFO held, a MIDI turn passed to stock's locker by a module now sets the LFO's depth too, not only the Rytm's knobs.",
       "Knob turns on the Rytm work as before."
     ]
   },
