@@ -74,13 +74,20 @@ start arrived.
 - Twin `9576709b…`, line at 50 %: at 41.7 to 44.5 % Amiga on T8 was refused with CPU FULL / T8 SRC / AMIGA / CPU 42% /
   UNIT IS BUSY, the meter 8 points under the line. The working Part read equal to before.
 
-The base as committed (line at 85 %) was not run, nor a pick after playing.
+Later the same day the line as committed, 85 %, on a development twin of the branch (`48fbb746…`), in a scene of
+four FLEX tracks playing one loop at 126 BPM, each set a timed trial:
+
+- Amiga 0.2.0 alone installed: played at 63 %, stopped. Amiga on T8 went through (63 + 12 is under the line).
+- Amiga, FM Synth 0.1.2, POLY8 0.3.1 and Repitch 0.2.0 installed, none on a track: played at 77 %, stopped at 58 %.
+  Amiga on T8 was refused with CPU FULL / T8 SRC / AMIGA / CPU 77% / WAS BUSY PLAYING; the track kept its machine.
+  Without the price the pick would have passed (77 is under the line). FLEX on T8 then went through.
+- The working Part read equal to before after each pick was put back, and the pattern at the end.
 
 ## Not shown
 
 - Nobody judged the panel by hand at these loads; the owner said it felt sluggish moving parameters once, at a moment
   that was not tied to one of the rows.
 - The five base-bound modules were not installed. Ring SC was refused for memory (loader refusal 2), not CPU.
-- A stock machine at high load and the box over other pages were not tried.
+- A pick made while playing, an effect pick at the line and the box over other pages were not tried.
 - The log held one `cpu` entry after four refusals; whether that is intended was not looked at.
 - Frames ran past their time in every playing row with POLY8 (109 to 115 %); what that costs was not looked at.
