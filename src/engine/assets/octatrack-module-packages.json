@@ -633,12 +633,12 @@
       "sites": 0,
       "copies": 0,
       "fills": 0,
-      "version": "0.2.1-experimental",
+      "version": "0.3.0-experimental",
       "name": "Amiga",
       "module": "d0711972",
-      "bytes": 12540,
-      "sha256": "b19184db0dbd37ce0411c27fa0bff132d087da70b0f78971324f485c520f3473",
-      "path": "octatrack-modules/amiga/0.2.1-experimental.mwrm",
+      "bytes": 13248,
+      "sha256": "acae3fef97f85a941c3215e1065353c94967ff44bb9528c22135c611a8edc32e",
+      "path": "octatrack-modules/amiga/0.3.0-experimental.mwrm",
       "usbOnly": true
     }
   ]
