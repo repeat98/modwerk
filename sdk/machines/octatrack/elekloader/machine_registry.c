@@ -173,7 +173,10 @@ static unsigned owner(const Machine *const *m, unsigned n, const Part *part, uns
  * last four seconds. That is where the panel starts to lag: on 32 units' logs (30 October to 13 November 2026) a
  * five-minute window at 85 % or more had a UI gap past 100 ms more often than not, and under 65 % one in twenty did.
  * Stopped, it goes by what the meter read while the unit last played (status.c, modwerk_status_cpu_load): a Part
- * put together stopped is judged as it will play. A unit that has not played since its start is judged as it is. */
+ * put together stopped is judged as it will play. A unit that has not played since its start is judged as it is.
+ * A machine is judged with its price on top (a percent of a frame is a percent of the meter): one admitted just
+ * under the line played over it, and the frame guard then dropped its renders (shared diagnostics, 11 to 14
+ * November 2026: 166 skip records on 24 units beside 5 refusals). */
 volatile uint32_t mw_cpu_hot = 850u; /* per mille; development bases may change it */
 volatile uint32_t mw_cpu_allowance = 45u, mw_cpu_booked; /* percent of a frame; development bases may change the allowance */
 volatile uint8_t mw_cpu_refused;    /* the current Part's tracks past the allowance: the frame interrupt reads it whole */
@@ -440,9 +443,9 @@ unsigned mw_assign(Part *part, unsigned track, unsigned row)
     if (next) {
         if (next->admit_track && !next->admit_track(part, track)) return (unsigned)-1;
         warned &= (uint8_t)~(1u << track); /* a pick is a new ask: say so again if it is refused again */
-        if (old != next) { /* a busy unit takes no further machine, priced or not */
+        if (old != next) { /* a unit this machine's renders would make busy does not take it */
             uint32_t cpu = modwerk_status_cpu_load();
-            if (cpu >= mw_cpu_hot) {
+            if (cpu + 10u * cpu_price(next) >= mw_cpu_hot) {
                 mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << track;
                 modwerk_status_cpu_hot(track, next->label, cpu);
                 return (unsigned)-1;

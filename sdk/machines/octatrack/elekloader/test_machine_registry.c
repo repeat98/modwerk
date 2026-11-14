@@ -413,11 +413,15 @@ static void check_cpu_budget(void)
       cpu_now = mw_cpu_hot;
       CHECK(mw_assign(part0(), 7, 5) == (unsigned)-1 && hot_boxes == 1 && hot_box_track == 7 && hot_box_cpu == mw_cpu_hot);
       CHECK(mw_cpu_refusals == refusals + 1 && cpu_boxes == was && !mw_cpu_booked);
-      cpu_now = mw_cpu_hot - 1u;
-      CHECK(mw_assign(part0(), 7, 5) == 1 && hot_boxes == 1);
+      cpu_now = mw_cpu_hot - 120u; /* its price (12 % of a frame, unpriced) would take the meter to the line */
+      CHECK(mw_assign(part0(), 7, 5) == (unsigned)-1 && hot_boxes == 2 && hot_box_cpu == mw_cpu_hot - 120u);
+      CHECK(mw_assign(part0(), 7, 6) == (unsigned)-1 && hot_boxes == 3);         /* nor the dear one (30) */
+      cpu_now = mw_cpu_hot - 121u;
+      CHECK(mw_assign(part0(), 7, 6) == (unsigned)-1 && hot_boxes == 4);
+      CHECK(mw_assign(part0(), 7, 5) == 1 && hot_boxes == 4);
       cpu_now = 1000u;
-      CHECK(mw_assign(part0(), 7, 5) == 1 && hot_boxes == 1);                    /* already this machine's track */
-      CHECK(mw_assign(part0(), 7, 1) == 1 && hot_boxes == 1);                    /* back to stock: never refused */
+      CHECK(mw_assign(part0(), 7, 5) == 1 && hot_boxes == 4);                    /* already this machine's track */
+      CHECK(mw_assign(part0(), 7, 1) == 1 && hot_boxes == 4);                    /* back to stock: never refused */
       cpu_now = 0; mw_ui_tick(); }
     unsigned boxes = cpu_boxes;
     CHECK(mw_assign(part0(), 0, 5) == 1 && mw_assign(part0(), 1, 5) == 1 && mw_assign(part0(), 2, 5) == 1 && cpu_boxes == boxes);
