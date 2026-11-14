@@ -292,7 +292,11 @@ button.octatrack-status { width: 100%; border: 0; border-top: 1px solid var(--li
 .hub-fill p { margin: 0; color: var(--text-secondary); font-size: 13px; }
 .hub-fill .button { min-height: 40px; }
 .hub-view-set .module-tiles { margin-bottom: 4px; }
-.hub-empty-set p { color: var(--muted); }
+.hub-empty-set { display: flex; flex-direction: column; align-items: center; gap: 6px; max-width: 520px; margin: 32px auto 0; padding: 40px 24px; border: 1px dashed var(--line); border-radius: 12px; background: var(--surface); text-align: center; }
+.hub-empty-set > svg { box-sizing: content-box; margin-bottom: 8px; padding: 14px; border-radius: 50%; background: var(--surface-raised); color: var(--accent); }
+.hub-empty-set .hub-view-title { font-size: 18px; }
+.hub-empty-set p { margin: 0 0 14px; color: var(--muted); font-size: 14px; line-height: 1.55; }
+.hub-empty-set .button { min-height: 44px; }
 /* Setup: the base and the module file for the card. */
 .card-set-steps { margin: 10px 0; padding-left: 20px; color: var(--text-secondary); font-size: 13px; line-height: 1.7; }
 .card-set-dialog { width: min(440px, calc(100vw - 32px)); }

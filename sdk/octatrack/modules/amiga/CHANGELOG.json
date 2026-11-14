@@ -1,5 +1,15 @@
 [
   {
+    "version": "0.3.0-experimental",
+    "date": "2026-11-14",
+    "changes": [
+      "New: STR has SYNC, the default for new tracks. The loop follows the project's tempo at any pitch, by its ORIGINAL TEMPO (audio editor, ATTR), as on FLEX. SPD works on top: 32 is half time.",
+      "Fixed: with LOOP on AUTO, a sample not set to loop restarted at its end, a flam before the next trig. It now ends there, as on FLEX.",
+      "Your existing tracks keep their STR setting. A track set to SYNC reads as PCH on 0.2.1 and older.",
+      "Known issue: after choosing AMIGA in the machine list, AED shows the track's recorder until you select the track again or pick a sample."
+    ]
+  },
+  {
     "version": "0.2.1-experimental",
     "date": "2026-11-14",
     "changes": [
