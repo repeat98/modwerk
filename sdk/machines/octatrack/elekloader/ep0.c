@@ -147,6 +147,24 @@ int modwerk_machine_journal_begin_safe(void)
 }
 #endif
 /* A host session is open (an install, a trial, its self-test): dsp.c moves no code meanwhile. */
+/* status.c's transfer screens: what a host is sending now. 0 nothing; else what (1 modules, 2 a base's container for
+ * flash.c, 3 a whole base for a RAM boot: told by the first staged bytes) and, shifted up by four, how far (0 arriving,
+ * with `permille` of it here; 1 all here and being started). Read from the UI task: single words of the engine's state,
+ * and a figure a frame late is no harm. */
+unsigned modwerk_upload_view(uint32_t *permille);
+unsigned modwerk_upload_view(uint32_t *permille)
+{
+    *permille = 0;
+    if (!controller_started) return 0;
+    unsigned phase = controller.phase, step = phase == MU_VERIFIED || phase == MU_PUBLISHING;
+    uint32_t got = controller.received, all = controller.offer.length;
+    if ((phase != MU_RECEIVING && !step) || !all) return 0;
+    const uint8_t *d = controller.staging;
+    unsigned what = got < 4u ? 0 : d[0] == 'E' && d[1] == 'L' && d[2] == 'E' && d[3] == 'K' ? 2u :
+                    d[0] == 0x4fu && d[1] == 0xefu && d[2] == 0xffu && d[3] == 0xe4u ? 3u : 1u; /* boot.c's OS_FIRST */
+    *permille = step || got >= all ? 1000u : got / (all / 1000u + 1u);
+    return what ? what | step << 4 : 0;
+}
 int modwerk_upload_busy(void);
 int modwerk_upload_busy(void) {
 #ifdef MODWERK_RUNTIME_VOLATILE_JOURNAL

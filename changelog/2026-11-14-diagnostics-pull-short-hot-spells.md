@@ -1,0 +1,1 @@
+Diagnostics: the owner's summary of shared diagnostics no longer lists every second or two a stopped Octatrack spent at 90 % CPU. A key press or a project load does that on any unit, with or without modules, and those lines hid the long and playing spells that matter. The summary now counts them in one line.

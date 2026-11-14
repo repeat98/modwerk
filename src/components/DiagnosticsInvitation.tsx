@@ -23,7 +23,7 @@ export function DiagnosticDetails() {
 }
 
 /** Counts each answer once, by placement, through the identifier-free path; previews count nothing. */
-function useInvitationCounts(placement: DiagnosticInvitationPlacement | undefined, visible: boolean) {
+export function useInvitationCounts(placement: DiagnosticInvitationPlacement | undefined, visible: boolean) {
   const counted = useRef(new Set<DiagnosticInvitationOutcome>())
   const count = (outcome: DiagnosticInvitationOutcome) => { if (placement && !counted.current.has(outcome)) { counted.current.add(outcome); countDiagnosticsInvitation(outcome, placement) } }
   useEffect(() => { if (visible) count('shown') }) // every render; the set counts it once

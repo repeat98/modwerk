@@ -14,8 +14,13 @@ static uint32_t mix(uint32_t x) {
 uint32_t vector_next_seed(uint32_t seed) { return (seed + 1u) & 127u; }
 void vector_pack(uint8_t out[9], const VectorParams *p, uint32_t seed) {
     out[0]=(uint8_t)(limit(p->type,15) | limit(p->scale,4)<<4);
-    out[1]=(uint8_t)(limit(p->density,16) | limit(p->direction,1)<<5);
-    out[2]=(uint8_t)(limit(p->root,11) | limit(p->span,12)<<4);
+    /* Every byte stays below 0x80: stock's Part validator refuses the whole
+     * bank at the first negative one, and it runs with VECTOR absent too (the
+     * boot's battery restore, a unit without VECTOR; #1533). SPAN's top bit
+     * therefore lives in out[1] bit 6, not out[2] bit 7. */
+    unsigned span=limit(p->span,12);
+    out[1]=(uint8_t)(limit(p->density,16) | limit(p->direction,1)<<5 | (span&8u)<<3);
+    out[2]=(uint8_t)(limit(p->root,11) | (span&7u)<<4);
     out[3]=(uint8_t)limit(p->gate,126); out[4]=(uint8_t)limit(p->accent,127);
     out[5]=(uint8_t)limit(p->offset,24); out[6]=(uint8_t)limit(p->rotation,63);
     out[7]=(uint8_t)limit(p->repeat,64); out[8]=(uint8_t)(seed&127u);
@@ -23,7 +28,9 @@ void vector_pack(uint8_t out[9], const VectorParams *p, uint32_t seed) {
 void vector_unpack(VectorParams *p, uint32_t *seed, const uint8_t in[9]) {
     p->type=(uint8_t)(in[0]&15u); p->scale=(uint8_t)limit(in[0]>>4,4);
     p->density=(uint8_t)limit(in[1]&31u,16); p->direction=(uint8_t)((in[1]>>5)&1u);
-    p->root=(uint8_t)limit(in[2]&15u,11); p->span=(uint8_t)limit(in[2]>>4,12);
+    p->root=(uint8_t)limit(in[2]&15u,11);
+    /* Up to 0.3.1 SPAN's top bit was in[2] bit 7; both forms read the same. */
+    p->span=(uint8_t)limit(in[2]>>4 | (in[1]>>3&8u),12);
     p->gate=(uint8_t)limit(in[3],126); p->accent=(uint8_t)limit(in[4],127);
     p->offset=(uint8_t)limit(in[5],24); p->rotation=(uint8_t)limit(in[6],63);
     p->repeat=(uint8_t)limit(in[7],64); *seed=in[8]&127u;

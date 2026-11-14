@@ -43,7 +43,7 @@ const QUICK_TESTS: Record<string, { version: string; steps: Step[] }> = {
     { title: 'Enlarge the signal.', text: 'Press YES for fullscreen. Change a track’s level on its usual page and compare the plot.' },
     { title: 'Close the view.', text: 'Press NO and stop playback. Outside the utility, a short SONG press opens the normal popup.' },
   ] },
-  vector: { version: '0.3.1-experimental', steps: [
+  vector: { version: '0.3.2-experimental', steps: [
     { title: 'Choose VECTOR.', text: 'Select an audio track, double-tap SRC, choose VECTOR and press YES.' },
     { title: 'Assign a sample.', text: 'Choose STATIC or FLEX with UP/DOWN or LEVEL, then press RIGHT. Select a loaded, tuned sample and press YES to assign it.' },
     { title: 'Shape a phrase.', text: 'Press SRC. Change TYPE, DENS or ROOT to generate a phrase; each edit commits immediately, even during playback.' },
@@ -69,7 +69,7 @@ const QUICK_TESTS: Record<string, { version: string; steps: Step[] }> = {
     { title: 'Shape the clang.', text: 'Add trigs and press PLAY. Adjust TUNE, then raise METAL and turn COLOR. Add FBK gradually.' },
     { title: 'Finish the test.', text: 'Press STOP and let the AMP release finish. Remove example locks and return SWEEP and FOLD to 0.' },
   ] },
-  synth: { version: '0.1.2-experimental', steps: [
+  synth: { version: '0.1.3-experimental', steps: [
     { title: 'Choose FM SYNTH.', text: 'In a fresh project, select an audio track. Hold FUNC + SRC, choose FM SYNTH with UP/DOWN and press YES. No sample is needed.' },
     { title: 'Add harmonics.', text: 'Press SRC, set RATO to 1 and raise INDX from 0. The sine tone gains FM harmonics; PTCH changes pitch.' },
     { title: 'Play a pattern.', text: 'Place a trig and press PLAY. Use AMP ATK, HOLD and REL to shape note length. The full instructions cover voices, chords and glide.' },

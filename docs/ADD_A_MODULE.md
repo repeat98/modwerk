@@ -47,6 +47,13 @@ the project after a fresh boot proves project loading, not power-cycle survival.
 Bind results to the exact source/image and record physical reboot evidence
 separately; failures or unavailable paths remain explicit qualification gaps.
 
+Every byte an Octatrack module stores in a Part must be one stock's Part check
+accepts on its own: 0 to 127 in an unused slot, or inside the stock range of the
+slot it reuses. The check runs when the module is not there: at power-on, before
+the base has the kept modules back, and on a unit without the module. One refused
+byte drops the whole bank (every track STATIC, no trigs; VECTOR, #1533). A wrapper
+around the check does not help then.
+
 ## Setup
 
 - Node 24 (see `.nvmrc`), then `npm ci`. This is all you need for documentation, metadata and the website.
@@ -237,7 +244,8 @@ unit. It is the agent's own test before a developer gets a build
 time.
 
 **A private USB package of a draft.** `npm run module:dev -- <id> --build-only`
-builds it ([the fast loop](#the-fast-loop)). Its `Gate` must be
+builds it ([the fast loop](#the-fast-loop)); it refuses a machine module, whose
+package the site's builder makes (`octatrack:module-packages`). Its `Gate` must be
 `modules/<id>/verify.py`: the schema takes only `tools/` or `modules/` paths.
 
 **Growing a stock table over USB.** A runtime package carries no `TableGrow`

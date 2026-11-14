@@ -1,6 +1,6 @@
 # Track Solo
 
-Version `0.2.4-experimental` · author `twwwy`.
+Version `0.2.5-experimental` · author `twwwy`.
 
 **Evidence:** 0.2.2 and 0.2.3 were tested by the author on a real Octatrack over
 USB on 6 November 2026: the setting, the hold, join and leave, audio, lamps and
@@ -22,7 +22,7 @@ slot, DSP engine, MIDI generator, parameter lock or scene parameter of its own.
 
 | Control | Behavior |
 | --- | --- |
-| PROJECT > CONTROL > SEQUENCER > TRACK SOLO | OFF / HOLD; OFF by default. This setting is session-only. |
+| PROJECT > CONTROL > SEQUENCER > TRACK SOLO | OFF / HOLD; HOLD on every start. This setting is session-only: OFF lasts until the next restart. |
 | A TRACK button held alone | The original press passes to stock; temporary solo after 30 instrument UI ticks, approximately 0.5 seconds. |
 | Another TRACK button pressed during solo | Toggle that track once. Its release does not toggle it. |
 | Original TRACK button released | End solo, including every joined track; reveal the latest underlying mute/solo state. |
@@ -44,7 +44,7 @@ The proposed shared PERSONALIZE table is not a dependency.
 
 ### Quick tutorial: audition tracks while editing
 
-1. Install Track Solo over USB. Open PROJECT > CONTROL > SEQUENCER, set TRACK SOLO to HOLD, close the menu, and let any stock notification clear.
+1. Install Track Solo over USB. TRACK SOLO starts at HOLD, so the gesture is ready; PROJECT > CONTROL > SEQUENCER > TRACK SOLO turns it OFF for the session.
 2. Hold T2 alone for 0.5 seconds. While continuing to hold T2, press and release T3: T2 and T3 are now in the temporary group. Press T3 again to remove it.
 3. Release T2. The underlying mute and solo state applies again. Select OFF to disable the gesture completely.
 
@@ -54,8 +54,10 @@ The proposed shared PERSONALIZE table is not a dependency.
 - USB only. Track Solo runs only on the Modwerk base, loaded over USB, on an Octatrack with OS 1.40C. Its key, tick and encoder events and its SEQUENCER row all come from the base, and card firmware has no base, so card firmware cannot include it: take it out of a set before building card firmware.
 - OS 1.40C. Functional hardware report on one unit recorded as MKII; MKI is
   untested. MIDI mode is excluded.
-- OFF is the initial state on boot, installation and package replacement. The
-  enable setting and temporary group are never saved in a Part or project.
+- HOLD is the initial state on boot, installation and package replacement
+  (0.2.4 and earlier started at OFF, #1505). The enable setting and temporary
+  group are never saved in a Part or project, so an OFF chosen in one session
+  is back at HOLD after a restart: the base has no module settings store yet.
 - During each normal audio-frame interrupt, the live mute/solo word shows
   the temporary group. It is restored before the interrupt returns to tasks.
   The temporary word preserves cue bits; this code does not edit Part, pattern
@@ -143,11 +145,11 @@ preserved, and they are not presented as 0.2.2 captures or behavior evidence.
 They do not establish hardware or audio qualification. A user-facing audio
 example is pending.
 
-![TRACK SOLO defaults to OFF in the stock SEQUENCER menu.](media/track-solo-off.png)
+![TRACK SOLO starts at HOLD in the stock SEQUENCER menu.](media/track-solo-hold.png)
 
-Choose HOLD with YES, then close the menu before using the hold gesture.
+Choose OFF with YES to keep stock track-button behavior until the next restart.
 
-![TRACK SOLO set to HOLD in the stock SEQUENCER menu.](media/track-solo-hold.png)
+![TRACK SOLO set to OFF in the stock SEQUENCER menu.](media/track-solo-off.png)
 
 The thumbnail is a conceptual diagram, not an instrument screenshot or measurement.
 

@@ -75,7 +75,7 @@ it('keeps the quick start and its caution in view, and leads to the full steps',
   await render()
   const quick = container.querySelector('.faq-quick')!
   expect([...quick.querySelectorAll('li strong')].map(item => item.textContent)).toEqual(['Install the base once', 'Pick your modules', 'Sync over USB'])
-  expect(quick.querySelector('.faq-quick-caution')?.textContent).toContain('CompactFlash card reader')
+  expect(quick.querySelector('.faq-quick-caution')?.textContent).toContain('CompactFlash card reader or a MIDI interface')
   expect(quick.querySelector('.faq-quick-caution a')?.getAttribute('href')).toBe('#faq/usb-base')
   expect(quick.querySelector('a.button-primary')?.getAttribute('href')).toBe('#octatrack/setup')
 })
