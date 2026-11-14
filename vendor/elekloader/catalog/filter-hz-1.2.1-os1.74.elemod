@@ -1,7 +1,7 @@
 {
  "elemod": 2,
  "id": "filter-hz",
- "version": "1.2.0",
+ "version": "1.2.1",
  "title": "Filter Hz",
  "description": "The FILTER page's FRQ popup shows the cutoff in hertz, from 13.8Hz to 21.1kHz, instead of 0 to 127.",
  "category": "system",
@@ -18,11 +18,11 @@
  "sections": {
   ".run": {
    "align": 4,
-   "len": 256,
+   "len": 304,
    "parts": [
     [
      "hex",
-     "702fb084670e41ea00142f4300204ef9400a86bc22432002e0806a027000727fb0816f02200180fc000c2200484173c1d28141fa008473f01800c2fc055f71c0740f94807001e5a8e288d280e4a941fa0080b290650641e8000c60f6202800042400e28ad2824c40100175a8000882fc006471c16130484173c182fc000a71c16124484171c1611e4a280009670412fc006b12fc004812fc007a42114cd70c1c4fef00144e7506800000003012c05382660412fc002e4e758000879c8fad9838a145aadcb505bfc9cb30d745e412f1a2000027100000000a02000000000186a00000006400000000000f4240000003e801010000ffffffff0000271002010000"
+     "702fb084670e41ea00142f4300204ef9400a86bc22432002e0806a027000727fb0816f02200180fc000c2200484173c1d28141fa008473f01800c2fc055f71c0740f94807001e5a8e288d280e4a941fa0080b290650641e8000c60f6202800042400e28ad2824c40100175a8000882fc006471c16130484173c182fc000a71c16124484171c1611e4a280009670412fc006b12fc004812fc007a42114cd70c1c4fef00144e7506800000003012c05382660412fc002e4e758000879c8fad9838a145aadcb505bfc9cb30d745e412f1a2000027100000000a02000000000186a00000006400000000000f4240000003e801010000ffffffff0000271002010000720d226f0058b3fc0000002f66027210200ad0814481d28a4878ffff486bfff82f00486bfff22f014ef940037bfe0000"
     ]
    ]
   }
@@ -1144,6 +1144,14 @@
    "abs",
    47
   ],
+  "knob_box_resume": [
+   "abs",
+   1073970174
+  ],
+  "KNOB_PARAM_ARG": [
+   "abs",
+   88
+  ],
   "semitones": [
    ".run",
    184
@@ -1163,9 +1171,14 @@
   "filter_hz_gate": [
    ".run",
    0
+  ],
+  "filter_hz_box": [
+   ".run",
+   256
   ]
  },
  "exports": [
+  "filter_hz_box",
   "filter_hz_gate"
  ],
  "imports": [],
@@ -1186,6 +1199,21 @@
      0
     ]
    ]
+  },
+  {
+   "addr": "0x40037bea",
+   "len": 20,
+   "stock_sha256": "49f6a4527387e36b9ce46d41fd5916835cc000c650b024e660695e41c3e85c78",
+   "new": "4ef9000000004e714e714e714e714e714e714e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:filter_hz_box",
+     0
+    ]
+   ]
   }
  ],
  "collections": {},
@@ -1194,7 +1222,8 @@
  "resources": {
   "regions": [],
   "names": [
-   "ui:FILTER page FRQ value text"
+   "ui:FILTER page FRQ value text",
+   "ui:FILTER page FRQ lock box"
   ],
   "core": "0.1"
  },

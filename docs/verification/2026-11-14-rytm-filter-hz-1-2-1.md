@@ -1,0 +1,8 @@
+# Analog Rytm MKII: Filter Hz 1.2.1 — 14 November 2026
+
+Filter Hz (id `filter-hz`, MrScruff's rytm-mods 0008-filter-hz as ported by Iced-Cream), 1.2.1: a locked FRQ's white box is 33 pixels instead of stock's 27, the same for every value, so kHz values (28 to 31 pixels) fit inside it. The value text and the gate code are unchanged. Its source-only OS 1.74 package is pinned in `sdk/imports/elekloader-filter-hz-2026-11-14.json` (commit `2da119eb3`), replacing 1.2.0's pin.
+
+- **Build:** `scripts/build-elemod-isolated.sh` in `modwerk-source-tools` (image `3d0d46b0…`) from a clean checkout of `9eb416750`, the source the package commit carries. Exported with `package-elemod-recipe.mjs`; `verify-elemod-release-exports.mjs` reproduced all 65 current exports from that build, this one included.
+- **Package:** `filter-hz-1.2.1-os1.74.elemod` `ce174e49…fea6`. Earlier source-only packages stay in `sdk/imports`.
+- **Emulator:** FH04 (Modwerk base + this source) against FH00 (the same with 1.2.0) in rytm-emu `2ac0f1f`: every FRQ value 0 to 127 locked on a held trig fits the box with a pixel to spare; unlocked FRQ and the RES, TYP, ENV, ATK and DEC lock boxes are pixel-identical to 1.2.0. The capture plan reproduces 1.2.0's three screenshots byte for byte on FZ78 (core-ar2 0.3 + this source) in `c5732f0`; `frq-locked.png` is new.
+- **On a unit:** an Analog Rytm MKII, OS 1.74, FZ78 booted from RAM over USB, 2026-11-14, as npp1993 reports: locked FRQ at 440Hz, 1.11kHz, 2.22kHz and 21.1kHz kept a same-width box covering the value; a locked RES looked as before; the ends read 13.8Hz and 21.1kHz; a minute of playback while turning FRQ had no freezes or dropouts. Details in the module's TESTING.md.
