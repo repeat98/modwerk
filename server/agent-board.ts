@@ -14,7 +14,8 @@ const NAME = '[a-z0-9]+(?:-[a-z0-9]+)*'
 /** What a key looks like for each kind: the machine first, except for D1 migrations, which are one sequence. */
 export const CLAIM_KEYS: Record<ClaimKind, RegExp> = {
   module: new RegExp(`^${NAME}/${NAME}$`),
-  hook: new RegExp(`^${NAME}/(?:(?:events|tables)/)?\\d{1,4}$`),
+  // One index, or a run of them a base change adds at once (octatrack/38-51), held as one claim.
+  hook: new RegExp(`^${NAME}/(?:(?:events|tables)/)?\\d{1,4}(?:-\\d{1,4})?$`),
   migration: /^\d{4}$/,
   'dsp-region': new RegExp(`^${NAME}/[a-z0-9_-]{1,64}$`),
   // A machine id a module's manifest takes (machine:<id> in platform.claims): kits store it, so it is never renumbered.
@@ -58,8 +59,13 @@ function claimKind(value: unknown): ClaimKind {
   if (!CLAIM_KINDS.includes(value as ClaimKind)) throw new HttpError(400, 'Choose a kind: ' + CLAIM_KINDS.join(', ') + '.')
   return value as ClaimKind
 }
+/** A hook key's list (the machine, or its events or tables) and the indices it holds. */
+export function hookSpan(key: string) {
+  const [, list, first, last] = /^(.+)\/(\d+)(?:-(\d+))?$/.exec(key)!
+  return { list, first: Number(first), last: Number(last ?? first) }
+}
 function claimKey(kind: ClaimKind, value: unknown): string {
-  if (typeof value !== 'string' || value.length > 120 || !CLAIM_KEYS[kind].test(value)) throw new HttpError(400, `That is not a ${kind} key (for example ${{ module: 'octatrack/tape-echo', hook: 'octatrack/39', migration: '0085', 'dsp-region': 'octatrack/fx2-delay-line', 'machine-id': 'digitakt/10' }[kind]}).`)
+  if (typeof value !== 'string' || value.length > 120 || !CLAIM_KEYS[kind].test(value) || (kind === 'hook' && /-\d+$/.test(value) && hookSpan(value).last <= hookSpan(value).first)) throw new HttpError(400, `That is not a ${kind} key (for example ${{ module: 'octatrack/tape-echo', hook: 'octatrack/39', migration: '0085', 'dsp-region': 'octatrack/fx2-delay-line', 'machine-id': 'digitakt/10' }[kind]}).`)
   return value
 }
 function topicOf(kind: unknown, key: unknown): { kind: TopicKind; key: string } {
@@ -284,6 +290,15 @@ export async function agentBoardRoutes(request: Request, env: Env, db: Database,
     await expireKey(db, kind, key, now)
     const current = await db.prepare(SELECT + ' WHERE c.kind=? AND c.claim_key=? AND c.released_at IS NULL').bind(kind, key).first<ClaimRow>()
     if (current && current.user_id !== user.id) throw new HttpError(409, held(current))
+    if (kind === 'hook' && !current) {
+      // Hook claims overlap by index: someone else's in the run refuses it, and the holder's own inside it give way to it.
+      const span = hookSpan(key), active = await db.prepare(SELECT + " WHERE c.kind='hook' AND c.claim_key LIKE ? AND c.released_at IS NULL AND (c.expires_at IS NULL OR c.expires_at>?)").bind(span.list + '/%', now).all<ClaimRow>()
+      const near = active.results.filter(row => { const other = hookSpan(row.claim_key); return other.list === span.list && other.first <= span.last && span.first <= other.last })
+      const theirs = near.find(row => row.user_id !== user.id), partly = near.find(row => { const other = hookSpan(row.claim_key); return other.first < span.first || other.last > span.last })
+      if (theirs) throw new HttpError(409, held(theirs))
+      if (partly) throw new HttpError(409, `You hold hook ${partly.claim_key}, which reaches past ${key}. Release it first (npm run board -- release ${partly.id}).`)
+      for (const row of near) await db.prepare("UPDATE agent_claims SET released_at=?,released_reason='holder' WHERE id=? AND released_at IS NULL").bind(now, row.id).run()
+    }
     if (current) {
       // Claiming what you already hold renews it, so pr:ready can claim on every run.
       await db.prepare('UPDATE agent_claims SET renewed_at=?,branch=COALESCE(?,branch),pull_request=COALESCE(?,pull_request),note=CASE WHEN ?=1 THEN ? ELSE note END,expires_at=CASE WHEN COALESCE(?,pull_request) IS NULL THEN ? ELSE NULL END WHERE id=?').bind(now, branch, pr, body.note === undefined ? 0 : 1, note, pr, expiry(nowMs, false), current.id).run()

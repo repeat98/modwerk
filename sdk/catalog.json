@@ -3,21 +3,6 @@
   "sourceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
   "modules": [
     {
-      "id": "spectrum",
-      "version": "0.1.1-experimental",
-      "addedAt": "2026-10-01T06:53:41Z"
-    },
-    {
-      "id": "modulation",
-      "version": "0.1.1-experimental",
-      "addedAt": "2026-10-01T06:53:41Z"
-    },
-    {
-      "id": "character",
-      "version": "0.1.1-experimental",
-      "addedAt": "2026-10-01T06:53:41Z"
-    },
-    {
       "id": "miniverb",
       "version": "0.2.3-experimental",
       "addedAt": "2026-10-01T06:53:41Z"
@@ -73,11 +58,6 @@
       "addedAt": "2026-10-01T09:19:37Z"
     },
     {
-      "id": "midi-scenes",
-      "version": "0.2.5-experimental",
-      "addedAt": "2026-10-01T09:19:37Z"
-    },
-    {
       "id": "usb-audio-out-tracks-main-cue",
       "version": "0.2.0-experimental",
       "addedAt": "2026-10-01T09:19:37Z"
@@ -89,7 +69,7 @@
     },
     {
       "id": "synth",
-      "version": "0.1.2-experimental",
+      "version": "0.1.3-experimental",
       "addedAt": "2026-10-06T08:00:28Z"
     },
     {
@@ -109,7 +89,7 @@
     },
     {
       "id": "vector",
-      "version": "0.3.1-experimental",
+      "version": "0.3.2-experimental",
       "addedAt": "2026-10-06T08:02:00Z"
     },
     {
@@ -129,7 +109,7 @@
     },
     {
       "id": "poly8",
-      "version": "0.3.2-experimental",
+      "version": "0.3.3-experimental",
       "addedAt": "2026-10-08T12:00:00Z"
     },
     {
@@ -164,7 +144,7 @@
     },
     {
       "id": "temp-save",
-      "version": "0.1.0-experimental",
+      "version": "0.1.1-experimental",
       "addedAt": "2026-10-28T12:00:00Z"
     },
     {
@@ -204,13 +184,18 @@
     },
     {
       "id": "track-solo",
-      "version": "0.2.4-experimental",
+      "version": "0.2.5-experimental",
       "addedAt": "2026-11-04T17:16:39Z"
     },
     {
       "id": "pattern-sample-locks",
       "version": "0.1.8-experimental",
       "addedAt": "2026-11-10T12:00:00Z"
+    },
+    {
+      "id": "amiga",
+      "version": "0.2.1-experimental",
+      "addedAt": "2026-11-11T10:50:00Z"
     }
   ]
 }

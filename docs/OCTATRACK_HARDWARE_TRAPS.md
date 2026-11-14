@@ -64,12 +64,12 @@ back after 10 s of USB quiet. The `serve` session's request every 4 s keeps
 the base from ever seeing that quiet.
 
 **Windows binds WinUSB only to a USB 2.10 device that answers BOS and the
-Microsoft OS 2.0 set.** Both requests reach the base through stock's
-unknown-request STALL tail; the device descriptor needs a copy (stock's sits
-in the protected bootloader range). macOS and USB disk mode are unaffected.
-`usbtest8`. On Windows 11 the vendor interface came up as a WinUSB device with
-no driver install, next to the card's mass storage (flashed base `19d37e25`
-and `ee76c36f` (S54), 12 October 2026), and libusb drives it.
+Microsoft OS 2.0 set**, both through stock's unknown-request STALL tail; the
+device descriptor needs a copy. No driver install (Windows 11, 12 October 2026).
+It keeps an interface's first setup: `DeviceInterfaceGUIDs` is written once,
+and without it nothing opens the interface. A changed `bcdDevice` makes Windows
+write it again (`BASE_REVISION` 0x0101,
+[record](verification/2026-11-13-windows-usb-revision.md)).
 
 **WinUSB refuses a control transfer longer than 4,096 bytes** ("Invalid
 parameter", before anything reaches the wire); macOS and Linux take the
@@ -264,21 +264,21 @@ voice limit switched off took about 34,000 DTIM3 counts (257 µs) of POLY work i
 frames stopped for good (stall record "frames stopped"). Bound what a module does per frame in the interrupt and
 measure it with DTCN3 (`0xfc07c00c`, 132 MHz, about 47,900 counts a frame); POLY8 0.3.1 sheds voices above 26,000.
 
-**One long frame does not stop the DSP; a frame interrupt that keeps the CPU does.** Measured on the owner's MKII
+**The long frames measured did not stop the DSP; a frame interrupt that keeps the CPU did.** Measured on the owner's MKII
 (24 October 2026, development twins of the frame guard's branch, timing the interrupt from its entry `0x4000aad0` to
 its exit `0x4000d9a6`), in a bank of eight tracks trigged on every step:
 - **Each track renders twice in most frames.**
-- **Long frames pass.** Stock tracks alone ran frames up to 96 % of a frame; with POLY8 0.3.1 up to 107 %; with FM Synth
-  and USB recording up to 148 %, starting up to 69 % of a frame late. None of these stopped anything by itself.
-- **The share stops it.** POLY8 0.3.1 on T1, FM Synth 0.1.2 on T2 and six busy stock tracks kept the interrupt at 86.5 %
-  of the CPU (meter 94 %). Starting USB recording took it to 89.5 %, and the frames stopped within about 1,000 frames
-  (stall record "frames stopped", sequencer stuck on its first step). With the interrupt kept near a whole frame every
+- **These long frames passed.** Stock tracks alone ran frames up to 96 % of a frame; with POLY8 0.3.1 up to 107 %; with
+  FM Synth and USB recording up to 148 %, starting up to 250 µs late. For an entry about 150 µs late see
+  [MODULE_PERFORMANCE.md](MODULE_PERFORMANCE.md).
+- **A high share stopped it.** POLY8 0.3.1 on T1, FM Synth 0.1.2 on T2 and six busy stock tracks kept the interrupt at
+  86.5 % (meter 94 %). USB recording took it to 89.5 %, and the frames stopped within about 1,000 (sequencer
+  stuck on its first step): the late entry looks the same, and no entry times were kept. Kept near a whole frame every
   frame, the panel froze and USB disconnected too.
 - **The guard.** The base gives the interrupt 80 % of each frame, saving up to half a frame from short ones, and
   renders stock's silent source for a machine track whose render would overdraw it (`machine_registry.c`). The same
   load and recording then ran with the interrupt at 79.7 % and a clean recording, with POLY8 skipped on about half its
-  renders; POLY8 alone, sparse or on every step, was never skipped (66 % and 70 %). Card builds' logger has
-  the same guard. On a development base `npm run device -- guard` reads the interrupt's share, its longest frame and the
+  renders; POLY8 alone, sparse or on every step, was never skipped (66 % and 70 %). On a development base `npm run device -- guard` reads the interrupt's share, its longest frame and the
   skips, and `guard:MILLE` sets the share.
 
 **Walk the module list once, not once per question.** A lookup that reads module headers from the pool (uncached) inside a loop over every module is quadratic in what is installed. The controller tick did that once per held controller and check, and with 26 modules it cost 0.8 ms of every UI tick (owner's MKII, 24 October 2026). Find an owner by its record in base RAM, read the pool only for that one, and keep results while `modwerk_runtime_owner_epoch()` stands even and unchanged (`loader.h`), checking the header with `modwerk_runtime_owner_held`. `npm run device -- do 'mem:ADDR:112'` on `modwerk_cost` (development bases) shows each tick hook's µs, and the frame guard's `guard` step shows what the frame interrupt takes.
@@ -380,7 +380,7 @@ a word:
   saved", "set not mounted", until a power cycle.
 
 A per-sample `rep #21` did this on both cores, and the same loop as DO fixed it.
-In this repository Spectrum (4), Character (5) and Modulation (1) still use
+Spectrum (4), Character (5) and Modulation (1), now removed, used
 `rep`; the report also names busdelay, character-txtr, testgen and vocoder (at
 init only). The base and the modules in today's runs (E-Verb, Mini Verb,
 TapeHead, Euclid, Air Chorus, Tape Echo) have none. Not checked against "Junk on
@@ -532,8 +532,8 @@ catalogue module patches or keeps (`catalogue_overlaps`).
 at that exact instruction. MCF54455 rejects scale-eight and word-sized indexes with address
 errors ([reference manual, 3.3.4.2](https://www.nxp.com/docs/en/reference-manual/MCF54455RM.pdf)).
 The emulator accepted it. Keep the SDK's target flags; `npm run coldfire:isa` holds
-hand-written assembly to that CPU. Probe history is
-in [Beat Slicer's testing record](../sdk/octabam/modules/beat-slicer/TESTING.md).
+hand-written assembly to that CPU. Probes are
+in [Beat Slicer's testing record](../sdk/octatrack/modules/beat-slicer/TESTING.md).
 
 **GCC 16.2 at -O2 can store one byte late.** Its late-combine pass turned
 the controller board's byte copy into `move.b (%a0)+,(0,%a0,%d0.l)`. The
@@ -733,7 +733,7 @@ Octabam's register is vendored unchanged: [sdk/octabam/AGENTS.md](../sdk/octabam
 - **A floating cave rounded past the clone window** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-cave-round)): test where a cave ends, as `floating_cave_at` does.
 - **Audio and MIDI keep separate playing-Part latches** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-part-engine-context)): a MIDI-side module reads the MIDI engine's; test with the engines on different Parts.
 - **A byte zero in every project can still be the OS's** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-unused-bytes)): before keeping state there, write a marker, save, reload and diff.
-- **The stock DELAY reads its table across the whole run `0x400d24d0..0x400d2ce0`** (FAILURE_MODES.md, "A cave at 0x400d24d0 changes the stock DELAY"): default settings read its first word, boot its last; code there changes the sound. Card builds still put overflow code there.
+- **The stock DELAY reads its table across the whole run `0x400d24d0..0x400d2ce0`** (FAILURE_MODES.md, "A cave at 0x400d24d0 changes the stock DELAY"): default settings read its first word, boot its last; code there changes the sound. `modules:compat` refuses any write there.
 - **The page plane `0x46c7e0ea` is not the screen** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-page-plane)): it lacks windows and popups. UI captures add them (`lcd_view.py`); a bare `peek` does not.
 - **A file open through the stock layer owns your buffer** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-file-buffer)) until it is closed.
 - **A `jsr` into stock returns with a0, a1, d0 and d1 changed** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-stock-scratch-regs)); **a held scene key takes every encoder** from the open page ([scenes guide](module-guides/scenes.md#test)); **in the icon blit, bit 31 is the bottom row** ([TRAPS.md](../sdk/octabam/docs/TRAPS.md#trap-icon-bit31)).

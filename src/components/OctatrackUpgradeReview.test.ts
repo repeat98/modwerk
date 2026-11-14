@@ -10,6 +10,10 @@ import { LoadDialog } from './LoadDialog'
 import { OctatrackHub } from './OctatrackHub'
 
 vi.mock('../engine/elekloader/module-set', async original => ({ ...await original<typeof import('../engine/elekloader/module-set')>(), moduleSetReview: vi.fn() }))
+const counted = vi.hoisted(() => vi.fn())
+const followed = vi.hoisted(() => vi.fn())
+vi.mock('../community/useDownloadFollows', () => ({ useDownloadFollows: () => ({ followDownloads: followed, followNotice: '' }) }))
+vi.mock('../community/usage', async original => ({ ...await original<typeof import('../community/usage')>(), trackModuleDownloads: counted }))
 // No module that has a USB package is paused today: a test pauses one itself.
 const pausedForTest = vi.hoisted(() => new Set<string>())
 vi.mock('../catalog/availability', async original => {
@@ -41,7 +45,7 @@ beforeEach(async () => {
 afterEach(async () => { await act(() => root.unmount()); container.remove(); stop(); vi.restoreAllMocks(); vi.unstubAllGlobals(); pausedForTest.clear() })
 async function load(prepareUpdate = vi.fn(async () => ({ name: set.name, changes: [] }))) {
   const install = vi.fn()
-  await act(() => root.render(createElement(LoadDialog, { link, set, inventory, prepareUpdate, onInstallBase: install, onClose() {}, onEdit() {}, onCard() {}, onReport() {} })))
+  await act(() => root.render(createElement(LoadDialog, { link, set, inventory, prepareUpdate, onInstallBase: install, onClose() {}, onEdit() {}, onReport() {} })))
   return { prepareUpdate, install }
 }
 describe('runtime package upgrade review', () => {
@@ -59,16 +63,20 @@ describe('runtime package upgrade review', () => {
     expect(link.update).toHaveBeenCalledTimes(1)
   })
   it('keeps a synced set at once: no self-test, no Undo', async () => {
+    counted.mockClear(); followed.mockClear()
     const unit = fakeUnit(), real = new OctatrackLink(unit.usb, fakeSession(unit)), release = real.start()
     await vi.waitFor(() => expect(real.getState().status).toBe('ready'))
     const keep = vi.spyOn(real, 'keep'), undo = vi.spyOn(real, 'undo'), selftest = vi.spyOn(real, 'selftest')
     // A runtime install package as the builder makes it (sdk/runtime/loader/README.md).
     const data = new Uint8Array(36), view = new DataView(data.buffer); data.set([0x4d, 0x57, 0x52, 0x4d, 0, 4]); view.setUint32(8, 4); view.setUint32(28, 0xb)
-    await act(() => root.render(createElement(LoadDialog, { link: real, set, inventory, prepareUpdate: async () => ({ name: set.name, changes: [{ module: set.name, data }] }), onInstallBase() {}, onClose() {}, onEdit() {}, onCard() {}, onReport() {} })))
+    await act(() => root.render(createElement(LoadDialog, { link: real, set, inventory, prepareUpdate: async () => ({ name: set.name, changes: [{ module: set.name, data }] }), onInstallBase() {}, onClose() {}, onEdit() {}, onReport() {} })))
     expect(container.textContent).not.toMatch(/undo|self-test/i)
     await act(async () => button('Sync to Octatrack').click())
     await vi.waitFor(() => expect(container.textContent).toContain('Synced. Studio stays on your Octatrack, also after a restart.'))
     expect(unit.kept).toEqual(['+0000000b'])
+    // The module the sync updated counts as one download, once it is kept.
+    await vi.waitFor(() => expect(counted).toHaveBeenCalledTimes(1)); expect(counted).toHaveBeenCalledWith(['everb'])
+    expect(followed).toHaveBeenCalledTimes(1); expect(followed).toHaveBeenCalledWith(['everb'], { machine: 'Octatrack', os: '1.40C', modules: [expect.objectContaining({ id: 'everb' })] })
     expect(keep).toHaveBeenCalledTimes(1); expect(undo).not.toHaveBeenCalled(); expect(selftest).not.toHaveBeenCalled()
     release()
   })
@@ -135,7 +143,7 @@ describe('runtime package upgrade review', () => {
     await load(prepareUpdate)
     await act(() => button('Sync to Octatrack').click())
     const changed = { ...set, moduleIds: ['everb', 'tapehead'] }
-    await act(() => root.render(createElement(LoadDialog, {link,set:changed,inventory,prepareUpdate,onInstallBase(){},onClose(){},onEdit(){},onCard(){},onReport(){}})))
+    await act(() => root.render(createElement(LoadDialog, {link,set:changed,inventory,prepareUpdate,onInstallBase(){},onClose(){},onEdit(){},onReport(){}})))
     await act(async () => finish({ name: set.name, changes: [] }))
     expect(container.querySelector('[role=alert]')?.textContent).toContain('Review the sync again; nothing was sent')
     expect(link.update).not.toHaveBeenCalled()

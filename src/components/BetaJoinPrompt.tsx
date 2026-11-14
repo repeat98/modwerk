@@ -16,7 +16,7 @@ const ASKS: [IconName, string, string][] = [
   ['wave', 'Try new modules first', 'Beta modules go to testers before everyone else, over USB like any other module.'],
   ['message', 'Report bugs on Discord', 'In #beta-testers, under the same name as here.'],
   ['shield', 'Share diagnostics if you like', 'They show where a build or sync went wrong. It’s optional; you’re asked after joining.'],
-  ['warn', 'Have a way back', 'A CompactFlash card reader, and ideally a MIDI interface, to restore the original OS if USB stops working.'],
+  ['warn', 'Have a way back', 'A CompactFlash card reader or a MIDI interface, to restore the original OS if USB stops working.'],
 ]
 
 function betaJoinDismissed() {

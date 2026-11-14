@@ -118,6 +118,9 @@ struct modwerk_machine {
     int (*validate)(uint8_t *part, int (*next)(uint8_t *part));
     uint16_t source_voice, source_engine; /* a DSP voice that replaces its track's stock source: its price per voice */
     uint8_t source_kind, reserved[3];   /* and per core while one runs, of this kind (loader.h runtime_cycles); 0 none */
+    /* reserved[0] is the machine's CPU price (the base's CPU budget): its worst render on one track, both passes of a
+     * frame, in percent of a frame, measured on a unit. 0: the base's default, or nothing for a DSP voice. It stays
+     * in reserved[] so that every descriptor written `{0}` there still compiles: a priced one ends `{PERCENT}`. */
 };
 #define MODWERK_MACHINE_ABI 1u
 #define MODWERK_MACHINE_PROTECT 1u      /* stock's validator never sees its tracks' 12 FLEX bytes */
@@ -191,5 +194,61 @@ struct modwerk_machine_start {
     int (*start)(unsigned track, unsigned sample, unsigned flags);
 };
 #define MODWERK_MACHINE_START_ABI 1u
+
+/* ev_banks_load (0x40090504): a project load is about to read every bank from the card. The task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task). A notification before stock's load: what a module keeps per project is about to be replaced, so it marks its own copy stale here and reads its file at ev_banks_loaded. d2-d7/a2-a6 must be kept, as C keeps them. */
+#define MODWERK_EV_BANKS_LOAD 38
+typedef void modwerk_ev_banks_load(void);
+
+/* ev_banks_loaded (raised by the base): stock has read every bank of the project; no stock site: the base raises it when the routine at 0x40090504 returns. The task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task). The project's banks are in memory: a module reads its own file from the project directory now. The result is ignored: return 0. The routine's own result and registers reach its caller unchanged. d2-d7/a2-a6 must be kept, as C keeps them. */
+#define MODWERK_EV_BANKS_LOADED 39
+typedef unsigned modwerk_ev_banks_loaded(void);
+
+/* ev_bank_load (0x400905d4): stock is about to load the banks in a mask (LOAD PROJECT, the power-up, a reload). The task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task). A notification before stock's load. mask's low 16 bits name the banks; caller is the return address of stock's call, which tells the loads apart. A module that needs either at ev_bank_loaded keeps them here. d2-d7/a2-a6 must be kept, as C keeps them. */
+#define MODWERK_EV_BANK_LOAD 40
+typedef void modwerk_ev_bank_load(unsigned mask, uint32_t caller);
+
+/* ev_bank_loaded (raised by the base): stock has loaded the banks ev_bank_load named; no stock site: the base raises it when the routine at 0x400905d4 returns. The task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task). The banks named at ev_bank_load are in memory: a module brings what it keeps for them up to date. The result is ignored: return 0. The routine's own result and registers reach its caller unchanged. d2-d7/a2-a6 must be kept, as C keeps them. */
+#define MODWERK_EV_BANK_LOADED 41
+typedef unsigned modwerk_ev_bank_loaded(void);
+
+/* ev_project_new (0x400909d8): stock makes a new, empty project, before it initialises it. The task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task). A notification: a module empties what it keeps per project, so nothing of the last project reaches the new one. d2-d7/a2-a6 must be kept, as C keeps them. */
+#define MODWERK_EV_PROJECT_NEW 42
+typedef void modwerk_ev_project_new(void);
+
+/* ev_bank_write (0x400917c8): stock's bank writer is about to write the changed banks to the card (background save, save as, new project). The task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task). A notification before stock's write. d2-d7/a2-a6 must be kept, as C keeps them. */
+#define MODWERK_EV_BANK_WRITE 43
+typedef void modwerk_ev_bank_write(void);
+
+/* ev_bank_written (raised by the base): stock's bank writer has written the changed banks; no stock site: the base raises it when the routine at 0x400917c8 returns. The task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task). A module writes its own changed file beside the bank files now, so both are from the same moment. The result is ignored: return 0. The routine's own result and registers reach its caller unchanged. d2-d7/a2-a6 must be kept, as C keeps them. */
+#define MODWERK_EV_BANK_WRITTEN 44
+typedef unsigned modwerk_ev_bank_written(void);
+
+/* ev_project_store (0x4008ee74): SAVE PROJECT is about to copy the project's .work files to .strd. The task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task). A notification before stock's copies: a module writes what it has not written yet to its .work file. d2-d7/a2-a6 must be kept, as C keeps them. */
+#define MODWERK_EV_PROJECT_STORE 45
+typedef void modwerk_ev_project_store(void);
+
+/* ev_project_stored (raised by the base): SAVE PROJECT has copied the project's .work files to .strd; no stock site: the base raises it when the routine at 0x4008ee74 returns. The task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task). A module copies its own .work file to its .strd file, as stock did for the banks. The result is ignored: return 0. The routine's own result and registers reach its caller unchanged. d2-d7/a2-a6 must be kept, as C keeps them. */
+#define MODWERK_EV_PROJECT_STORED 46
+typedef unsigned modwerk_ev_project_stored(void);
+
+/* ev_project_reload (0x4008f180): RELOAD PROJECT is about to copy the project's .strd files back to .work. The task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task). A notification before stock's copies. d2-d7/a2-a6 must be kept, as C keeps them. */
+#define MODWERK_EV_PROJECT_RELOAD 47
+typedef void modwerk_ev_project_reload(void);
+
+/* ev_project_reloaded (raised by the base): RELOAD PROJECT has copied the project's .strd files back to .work; no stock site: the base raises it when the routine at 0x4008f180 returns. The task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task). A module copies its own .strd file back to its .work file; stock's bank loads follow (ev_bank_load). The result is ignored: return 0. The routine's own result and registers reach its caller unchanged. d2-d7/a2-a6 must be kept, as C keeps them. */
+#define MODWERK_EV_PROJECT_RELOADED 48
+typedef unsigned modwerk_ev_project_reloaded(void);
+
+/* ev_part_saved (0x4004a9c4): Part Save has copied a working Part to its saved copy (Part Save, SAVE ALL, and the end of Part Clear), before it returns. The task that saves the Part (a panel action), not measured on this base: short, no file call. A notification: part is 0-3 in the current bank. A module that keeps state beside a Part saves its copy for that Part. d2-d7/a2-a6 must be kept, as C keeps them. */
+#define MODWERK_EV_PART_SAVED 49
+typedef void modwerk_ev_part_saved(unsigned part);
+
+/* ev_part_clear (0x4004a9d0): Part Clear is about to initialise a Part; it ends in Part Save, so ev_part_saved follows. The task that clears the Part (a panel action), not measured on this base: short, no file call. A notification: part is 0-3 in the current bank. A module clears what it keeps beside that Part. d2-d7/a2-a6 must be kept, as C keeps them. */
+#define MODWERK_EV_PART_CLEAR 50
+typedef void modwerk_ev_part_clear(unsigned part);
+
+/* ev_modules_ready (raised by the base): the installed modules changed (the restore after a power-up, a set installed, kept or undone over USB) and the unit can use the card: nothing plays or records; no stock site: the base raises it from its engine-task service. The engine task, with the card free: a handler may call stock's file routines, and must not draw or open a window. Every installed module's handler runs each time, so a handler first checks whether it has loaded its state already. A module installed into a running project reads its file from the project directory here, since no project load will tell it. The result is ignored: return 0. d2-d7/a2-a6 must be kept, as C keeps them. */
+#define MODWERK_EV_MODULES_READY 51
+typedef unsigned modwerk_ev_modules_ready(void);
 
 #endif

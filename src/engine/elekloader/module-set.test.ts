@@ -13,7 +13,7 @@ const empty = { moduleIds: [], removedStockFx: [] }
 
 describe('the site’s runtime packages', () => {
   it('publishes each listed module with its checked runtime identity, ABI and record counts', () => {
-    expect(USB_MODULE_IDS).toEqual(['everb', 'miniverb', 'tapehead', 'airwindows-chorus', 'lofi2', 'ring-sc', 'previewvol', 'apply-scene', 'repitch', 'poly8', 'vector', 'synth', 'quantizer', 'tapeecho', 'euclid', 'bbd', 'playmodes', 'mute-modes', 'sidechain-compressor', 'output-matrix', 'cc-map', 'quantize-live-rec-toggle', 'direct-jump-kyoti', 'dejavu', 'arp-key-locks', 'recorder-loop-fix', 'analog-bassdrum', 'beat-slicer', 'slow-lfo', 'bar-led', 'tiempos', 'syntiz', 'track-solo', 'pattern-sample-locks', 'usb-audio-out-tracks-main-cue'])
+    expect(USB_MODULE_IDS).toEqual(['everb', 'miniverb', 'tapehead', 'airwindows-chorus', 'lofi2', 'ring-sc', 'previewvol', 'apply-scene', 'repitch', 'poly8', 'vector', 'synth', 'quantizer', 'tapeecho', 'euclid', 'bbd', 'playmodes', 'mute-modes', 'sidechain-compressor', 'output-matrix', 'cc-map', 'quantize-live-rec-toggle', 'direct-jump-kyoti', 'dejavu', 'arp-key-locks', 'recorder-loop-fix', 'analog-bassdrum', 'beat-slicer', 'temp-save', 'slow-lfo', 'bar-led', 'tiempos', 'syntiz', 'track-solo', 'pattern-sample-locks', 'amiga', 'usb-audio-out-tracks-main-cue'])
     for (const entry of manifest.packages) {
       const data = file(entry.path), view = new DataView(data.buffer), abi = view.getUint16(4)
       expect(entry.path).toBe(`octatrack-modules/${entry.id}/${entry.version}.mwrm`)
@@ -234,13 +234,15 @@ describe('ABI 9 packages: base features and DSP claims', () => {
 })
 
 /** An ABI 10 engine package from an ABI 8 controller package, as sdk/runtime/loader/abi9.py `engine` writes one: the
- * 80-byte header with DSP words and no slot, then after the fills its claims (here each written with its initial words),
- * one hook entry (site, cores, exit, entry 0), the words, relocations and the initial words. Synthetic words. */
+ * 80-byte header with DSP words and no slot and its price per voice (cycles 414, executed), then after the fills its
+ * claims (here each written with its initial words), one hook entry (site, cores, exit, entry 0), the words, relocations
+ * and the initial words. Synthetic words. */
 type EngineClaim = [space: number, core: number, address: number, init: number[]]
 function abi10(data: Uint8Array, words: number[], relocations: number[], exit: number, claims: EngineClaim[], site = 5, cores = 3) {
   const body = data.subarray(76), init = claims.flatMap(claim => claim[3])
   const out = new Uint8Array(80 + body.length + 12 * claims.length + 8 + 4 * words.length + 2 * relocations.length + 4 * init.length), o = new DataView(out.buffer)
   out.set(data.subarray(0, 76)); o.setUint16(4, 10); o.setUint32(32, words.length); o.setUint16(36, relocations.length)
+  o.setUint16(44, 414); out[46] = 1
   out[78] = claims.length; out[79] = 1; out.set(body, 80)
   let at = 80 + body.length
   for (const [space, core, address, values] of claims) { out.set([space, core, 7, 0], at); o.setUint32(at + 4, address); o.setUint32(at + 8, values.length); at += 12 }
@@ -285,7 +287,15 @@ describe('ABI 10 packages: an engine for the base\'s hook sites', () => {
     await refused(abi10(published, words, [3, 9 | 0x8000], 31, [[1, 3, 0x2840, [1]]])) // no such core
     const short = abi10(published, words, [3, 9 | 0x8000], 31, [region]); await refused(short.subarray(0, short.length - 4)) // an initial word short
     const big = abi10(published, words, [3, 9 | 0x8000], 31, [[1, 2, 0x2840, [0x1000000]]]); await refused(big) // not 24 bits
-    const slot = abi10(published, words, [3, 9 | 0x8000], 31, [region]); slot[45] = 1; await refused(slot) // a price in an engine's descriptor
+    // Its price per voice: never 0, executed (1) or hardware (3) but never modeled (2) or of no kind; init stays 0.
+    const priced = (patch: (data: Uint8Array) => void) => { const data = abi10(published, words, [3, 9 | 0x8000], 31, [region]); patch(data); return data }
+    await refused(priced(data => { data[44] = data[45] = 0 })) // no price
+    await refused(priced(data => { data[46] = 2 })) // a price on a model
+    await refused(priced(data => { data[46] = 0 })) // a price of no kind
+    await refused(priced(data => { data[41] = 1 })) // an entry offset on an engine
+    const hardware = priced(data => { data[44] = 0; data[45] = 191; data[46] = 3 }), fetched = vi.fn(async () => hardware)
+    const { changes } = await engine(hardware).catalogue.prepare(target, empty, fetched, base, at)
+    expect(changes).toEqual([{ module: 'Analog BD', data: hardware, undo: removalPackage('analog-bassdrum') }]) // any price the loader takes
   })
 })
 

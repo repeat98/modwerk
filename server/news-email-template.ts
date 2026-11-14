@@ -7,7 +7,7 @@ import { forumLink } from '../src/community/forum-links'
 import { betaInvitationRoute, BETA_INVITATION_PLACEHOLDER } from '../src/config/beta-invitation'
 
 /** Bump when the layout changes; a campaign keeps the version it was written with. */
-export const NEWS_EMAIL_VERSION = 'modwerk-news-002'
+export const NEWS_EMAIL_VERSION = 'modwerk-news-003'
 export const BETA_NEWS_EMAIL_VERSION = 'modwerk-news-beta-001'
 
 type Node = { type: string; value?: string; url?: string; alt?: string | null; depth?: number; ordered?: boolean; start?: number | null; children?: Node[] }
@@ -47,10 +47,13 @@ function inlineText(node: Node): string {
 function block(node: Node, last: boolean, cta?: string, app?: string): string {
   const gap = last ? '0' : '18px'
   if (app && node.type === 'list' && !node.ordered && node.children?.length && node.children.every(item => item.children?.[0]?.type === 'paragraph' && sitePicture(item.children[0].children?.[0]))) return cards(node, gap, app)
-  if (cta && node.type === 'paragraph' && node.children?.length === 1 && node.children[0].type === 'link' && node.children[0].url === cta) {
-    return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 24px;"><tr><td bgcolor="#5f6ac7" style="border-radius:7px;"><a href="${escape(cta)}" style="display:inline-block;padding:15px 22px;border:1px solid #727dde;border-radius:7px;color:#ffffff;font-size:15px;font-weight:bold;line-height:20px;text-decoration:none;">Join the beta</a></td></tr></table>`
-  }
+  if (cta && node.type === 'paragraph' && node.children?.length === 1 && node.children[0].type === 'link' && node.children[0].url === cta) return button(cta, 'Join the beta', '24px')
   if (cta && node.type === 'list' && !node.ordered) return features(node, gap)
+  // News takes the beta invitation's look by its markdown: a link alone in its paragraph is the action button, and a
+  // list whose every item opens with a bold lead and a line break is the feature panel. The beta template stays as it was.
+  const action = !cta && node.type === 'paragraph' && node.children?.length === 1 && node.children[0].type === 'link' && plain(node.children[0]).trim() ? forumLink(node.children[0].url ?? '') : undefined
+  if (action) return button(action, (node.children![0].children ?? []).map(inline).join(''), gap === '0' ? '0' : '24px')
+  if (!cta && node.type === 'list' && !node.ordered && node.children?.length && node.children.every(leadItem)) return features(node, gap)
   // One picture from the site's own files, the same URL for every recipient: no third-party or per-recipient loads.
   const image = node.type === 'paragraph' && node.children?.length === 1 ? sitePicture(node.children[0]) : undefined
   if (app && image) return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 ${gap === '0' ? '0' : '24px'};"><tr><td><img src="${escape(new URL(image.url!, app).href)}" alt="${escape(image.alt ?? '')}" width="502" style="display:block;width:100%;max-width:502px;height:auto;border:1px solid #36363e;border-radius:8px;"></td></tr></table>`
@@ -69,12 +72,15 @@ function block(node: Node, last: boolean, cta?: string, app?: string): string {
     default: return node.children ? blocks(node.children, last) : ''
   }
 }
+const button = (href: string, label: string, bottom: string) => `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 ${bottom};"><tr><td bgcolor="#5f6ac7" style="border-radius:7px;"><a href="${escape(href)}" style="display:inline-block;padding:15px 22px;border:1px solid #727dde;border-radius:7px;color:#ffffff;font-size:15px;font-weight:bold;line-height:20px;text-decoration:none;">${label}</a></td></tr></table>`
+const leadItem = (item: Node) => item.children?.length === 1 && item.children[0].type === 'paragraph' && item.children[0].children?.[0]?.type === 'strong'
+  && (item.children[0].children[1]?.type === 'break' || item.children[0].children[1]?.type === 'text' && /^\s*\n/.test(item.children[0].children[1].value ?? ''))
 /** The beta mail's bullets become a feature panel: the Modwerk mark, a bold lead on its own line, the rest below it. */
 function features(node: Node, gap: string): string {
   const rows = (node.children ?? []).map((item, index) => {
     const [first, ...more] = item.children ?? [], parts = first?.type === 'paragraph' ? first.children ?? [] : []
     const lead = parts[0]?.type === 'strong' ? (parts[0].children ?? []).map(inline).join('') : ''
-    const rest = lead ? parts.slice(1).map(inline).join('').trim() + (more.length ? blocks(more) : '') : blocks(item.children ?? [], true)
+    const rest = lead ? parts.slice(parts[1]?.type === 'break' ? 2 : 1).map(inline).join('').trim() + (more.length ? blocks(more) : '') : blocks(item.children ?? [], true)
     return `<tr><td style="padding:14px 18px;${index ? 'border-top:1px solid #36363e;' : ''}"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td valign="top" style="width:22px;color:#c7a16c;font-size:15px;line-height:24px;">▪</td><td style="color:#a8a8b8;font-size:14px;line-height:22px;">${lead ? `<span style="display:block;margin:0 0 2px;color:#f4f4f8;font-size:16px;line-height:24px;font-weight:bold;">${lead}</span>` : ''}${rest}</td></tr></table></td></tr>`
   })
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#1c1c1f" style="margin:4px 0 ${gap === '0' ? '0' : '24px'};border:1px solid #36363e;border-radius:10px;">${rows.join('')}</table>`

@@ -59,7 +59,7 @@ step_stock:
         move.l  %d7,-(%sp)
         jsr     0x400d6982
         tst.l   %d0
-        beq.s   step_done
+        beq.s   step_empty
         lea     -16(%sp),%sp
         movem.l %d0-%d1/%a0-%a1,(%sp)
         move.l  28(%sp),-(%sp)          /* step */
@@ -68,6 +68,17 @@ step_stock:
         move.l  %d0,-(%sp)             /* event */
         jsr     core_seq_note_bridge
         lea     16(%sp),%sp
+        movem.l (%sp),%d0-%d1/%a0-%a1
+        lea     16(%sp),%sp
+        bra.s   step_done
+step_empty:
+        tst.l   ev_seq_audio_phrase
+        beq.s   step_done
+        lea     -16(%sp),%sp
+        movem.l %d0-%d1/%a0-%a1,(%sp)
+        move.l  %d7,-(%sp)
+        jsr     core_seq_phrase_empty
+        addq.l  #4,%sp
         movem.l (%sp),%d0-%d1/%a0-%a1
         lea     16(%sp),%sp
 step_done:

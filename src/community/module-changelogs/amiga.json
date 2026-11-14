@@ -1,0 +1,30 @@
+[
+  {
+    "version": "0.2.1-experimental",
+    "date": "2026-11-14",
+    "changes": [
+      "Fixes the package repeating a short stretch of the stock OS's data (#1471).",
+      "Nothing changes in how Amiga sounds or works, and projects are not affected."
+    ]
+  },
+  {
+    "version": "0.2.0-experimental",
+    "date": "2026-11-13",
+    "changes": [
+      "Sliced tracks stretch now: SLIC on, STRT picks the slice, and SPD and GRN stretch inside it, so a sliced loop keeps its slices at any pitch.",
+      "A cleaner stretch: every restart now crossfades over half a cycle, as Amigo's grains do, so no more ticks when PTCH goes down or SPD speeds up.",
+      "Lighter: about 64 KB less memory, and nothing is copied while a note plays at its own speed and pitch."
+    ]
+  },
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-11",
+    "changes": [
+      "First release: a track machine that plays a Flex sample like an 8-bit home computer and its tracker software.",
+      "SPD sets how fast the note moves through the sample and GRN the cycle, so PTCH changes the pitch and SPD the length. STR can make it a pitch shift.",
+      "RATE is stock's own: forwards, backwards and slower, with the stretch following both ways.",
+      "On SRC SETUP: SRR lowers the storage rate, BITS the word from 16 to 4 bits, and LED adds a fixed lowpass.",
+      "Known issue: USB only, no card build. No RTRG or RTIM on an Amiga track, a sliced track is not stretched, and eight Amiga tracks at once overrun the unit (count on a few)."
+    ]
+  }
+]

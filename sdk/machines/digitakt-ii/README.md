@@ -1,6 +1,6 @@
 # Digitakt II SDK
 
-Modwerk's Digitakt II path is experimental and targets stock OS 1.17 only. It uses elekloader kit 0.5.0 and the `core-dt2` 1.0 hook bus. The machine remains in research: builds can be checked locally, but downloads stay disabled until the exact Modwerk packages are qualified and reviewed.
+Modwerk's Digitakt II path is experimental and targets stock OS 1.17 only. It uses elekloader kit 0.5.0 and the `core-dt2` 1.0 hook bus. Track Names is the first library module, so the machine is in preview: the browser builds core 1.0 with library modules locally, and downloads stay disabled until the exact Modwerk packages are qualified and reviewed.
 
 ## Modwerk stack
 
@@ -35,9 +35,13 @@ These are in [core-profile/interface.json](../../digitakt-ii/core-profile/interf
 | `core_kitdata` | a mod's block per kit (128), after each kit record's end mark; saved with the project and SAVE KIT and carried through pattern copy and paste, PASTE KIT and undo | table of `core_kitdata_t {tag[4], size, data, changed}`, four entries; claim `kitdata:<tag>` |
 | `core_addvalue`, `core_notice`, `core_view_top`, `fw_*` | a value row for PERSONALIZE or SETTINGS drawn like LED INTENSITY, a header message, the view on top, and firmware routines by address | `mk2/core.h` |
 
+One of those routines is not available to a module: `fw_card_write`, the raw block write to the +Drive, writes under the mounted file system, where one wrong block costs a musician projects and samples, so the [preflight](#build-and-recovery) refuses a build whose mod file refers to it by name or names its address, and a module keeps its data in the project and its kits (`core_projdata`, `core_kitdata`).
+
 By the core's documentation (emulator-tested, not hardware-tested), both data areas hold bytes the stock OS writes as zeros and never reads, so a project saved with mods loads on the stock OS, which keeps them when it saves a project it loaded. Core writes them only over zeros or its own data and counts anything else in `core_store_conflicts`. **Open: kit data that changes alone.** Core writes a kit's mod data when the OS writes that kit's record. If OS 1.17 writes only the kits the musician changed, a change to a mod's own block alone (a module setting, no stock parameter touched) would not be saved, and an earlier saved value would come back after a reload. No hardware test has isolated this yet. To check on a unit: change only a kit-data module's setting on A01, SAVE PROJECT, load another project and this one again; then repeat with a stock parameter on A01 nudged and set back, and once more with only the module setting changed after a saved value. Record the image's SHA-256 and each result. Until then, tell musicians to save after any stock change, and do not rely on kit data that changes on its own. **A kit record has room for 191 bytes of kit data in all** (`core_kitdata_room()`), shared by every mod's block. One mod with a 191-byte block takes all of it and leaves any other kit-data mod out, so per-kit state that several modules will want belongs to the base, as one record per module in a table the base owns ([recipe](../../../docs/MACHINE_RECIPE.md#rules)), not to the first module that asks for the room.
 
-The Digitakt II core does not start DTIM0 and exposes no audio-render hook. Audio is rendered by the separate SHARC DSP; these hooks are not sample-accurate.
+The Digitakt II core does not start DTIM0 and exposes no audio-render hook yet ([proposal and emulator measurements](../../../docs/verification/2026-11-10-digitakt-ii-pre-send-render.md)). Audio is rendered by the separate SHARC DSP; these hooks are not sample-accurate.
+
+Find a screen from the frame the OS has just drawn, not from UI object pointers: digikit fills some that stay 0 on the unit (the view controller's page set at `+0x9c` on OS 1.17), so a mod that follows them works in the emulator and never on hardware. [Track Names](../../digitakt-ii/modules/track-names/) recognises the mixer this way.
 
 ### SHARC code rules
 
@@ -59,8 +63,8 @@ No Modwerk build writes SHARC code yet. The first base or module that does follo
 
 Use the exact owner-supplied `Digitakt_II_OS1.17.syx`; the builder recognizes firmware by hash and keeps the bootstrap and updater sections unchanged. The source toolchain is m68k-elf GCC/binutils. From an elekloader checkout, build packages with `ELEKLOADER_CROSS=m68k-elf- python3 -m elekloader.sdk.build <module-folder> --stock <stock.syx>` and link them with `python3 -m elekloader.patch`.
 
-A normal OS update uses Elektron Transfer. For recovery, hold FUNC while powering on, choose TRIG 4 (OS UPGRADE), then send the owner's stock `.syx` over MIDI DIN; this recovery mode does not use USB. Before the page offers a build, it checks it again with Modwerk's own reader (`src/engine/elekloader/digi-preflight.ts`): every section but the main OS is byte for byte the owner's stock, the container fits the flash, every changed byte of the main OS lies inside a site that one of the linked mod files declares and guards, and nothing more is appended than the core's boot code, the run area and the storage lockfile. A refusal is a failed build; the build's details list what passed and both SHA-256 identities. Local parsing and emulator checks do not guarantee hardware safety. Do not flash an unqualified build.
+A normal OS update uses Elektron Transfer. For recovery, hold FUNC while powering on, choose TRIG 4 (OS UPGRADE), then send the owner's stock `.syx` over MIDI DIN; this recovery mode does not use USB. Before the page offers a build, it checks it again with Modwerk's own reader (`src/engine/elekloader/digi-preflight.ts`): every section but the main OS is byte for byte the owner's stock, the container fits the flash, every changed byte of the main OS lies inside a site that one of the linked mod files declares and guards, nothing more is appended than the core's boot code, the run area and the storage lockfile, and no mod file refers to the raw block write to the +Drive. A refusal is a failed build; the build's details list what passed and both SHA-256 identities. Local parsing and emulator checks do not guarantee hardware safety. Do not flash an unqualified build.
 
 ## Status
 
-The upstream core and author packages have been parsed, linted, and built against OS 1.17. Modwerk's browser engine and user-facing modules are still under integration. No module in this SDK is approved or qualified for publication yet.
+The upstream core and author packages have been parsed, linted, and built against OS 1.17. Library modules live in [`sdk/digitakt-ii/modules/`](../../digitakt-ii/modules/); [Track Names](../../digitakt-ii/modules/track-names/) is the first.

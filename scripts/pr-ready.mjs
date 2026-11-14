@@ -9,13 +9,14 @@
 // (scripts/author-update-git.mjs).
 import { execFileSync, spawnSync } from 'node:child_process'
 import { fileURLToPath, pathToFileURL } from 'node:url'
+import { alternation, moduleFolders } from './machine-folders.mjs'
 
-const GENERATORS = [['licenses:generate'], ['machines:generate'], ['modules:generate'], ['modules:pairs', '--', '--write']]
+const GENERATORS = [['licenses:generate'], ['machines:generate'], ['modules:generate']]
 
 // The checks that judge a module. A module pull request never edits them: a red check names the fix, and a wrong check is its own
 // Fix: pull request (AGENTS.md, "Setup and checks"). A module release still carries its builder list, assets, comparisons and test lists.
-const MODULE_FOLDER = /^sdk\/(?:octabam|digitakt|digitone|analog-rytm-mkii|analog-four-mkii)\/modules\/[^/]+\/|^sdk\/drafts\/[^/]+\//
-const GATE = /^(?:\.github\/workflows\/|sdk\/machines\/octatrack\/compatibility\.json$|sdk\/tests\/test_(?:module_compat|module_pairs|dsp_source_gates)\.py$|scripts\/(?:modules|module-doctor|module-qualification|module-changelogs|perf-audit(?:-analysis)?|check|pr-ready|change-scope|author-update-git|pr-triage)\.mjs$|scripts\/(?:module-compat|module-pairs|dsp-source-gates)\.py$)/
+const MODULE_FOLDER = new RegExp(`^sdk\\/(?:${alternation(moduleFolders())})\\/modules\\/[^/]+\\/|^sdk\\/drafts\\/[^/]+\\/`)
+const GATE = /^(?:\.github\/workflows\/|sdk\/machines\/octatrack\/compatibility\.json$|sdk\/tests\/test_(?:module_compat|module_pairs|dsp_source_gates)\.py$|scripts\/(?:modules|module-doctor|module-qualification|module-changelogs|perf-audit(?:-analysis)?|check|pr-ready|change-scope|machine-folders|author-update-git|pr-triage)\.mjs$|scripts\/(?:module-compat|module-pairs|dsp-source-gates)\.py$)/
 /** The gate files a change edits while it also adds or changes a module; [] when it changes no module. */
 export function gateEdits(files) {
   return files.some(file => MODULE_FOLDER.test(file)) ? files.filter(file => GATE.test(file)) : []
@@ -44,7 +45,7 @@ const gateProblem = files => 'This pull request changes a module and also ' + fi
 const baseProblem = files => 'This pull request changes a module and also the base: ' + files.join(', ') + '. A base change is its own owner-reviewed pull request, merged before the module uses it (docs/module-guides/README.md#propose-a-hook). Move these files to a pull request of their own, then base the module on main once it has merged.'
 
 /** Why the checks cannot run on this Python, or null. npm run check runs the module gates in Python 3.10+: an older python3
- * (macOS's own is 3.9) crashes inside scripts/module-pairs.py while it loads the Octatrack manifests, with no word on why. */
+ * (macOS's own is 3.9) crashes inside scripts/module-compat.py while it loads the Octatrack manifests, with no word on why. */
 export function pythonProblem({ command = 'python3', version = null, error = null } = {}) {
   const [major, minor] = (version ?? '').split('.').map(Number)
   if (!error && (major > 3 || (major === 3 && minor >= 10))) return null
@@ -73,7 +74,7 @@ export function readiness({ python = null, dirty = [], behind = false, remote = 
   notes.push('What did the guides lack or get wrong while you did this? ' + (guideEdits.length
     ? 'Guide edits on this branch: ' + guideEdits.join(', ') + '. Say in the PR what they fix. If a developer working now could hit it before this merges, post it on the agent board yourself: npm run board -- finding <topic> <key> "…" --pr <n>.'
     : 'No guide edit is on this branch: fix it where a reader would look (docs/, AGENTS.md, the machine guide; for a module release, a separate Docs: PR), or write "nothing" in the PR.'))
-  notes.push('Then push, open or update the PR with a description in the template\'s shape (CI checks it says what changed and answers the guides question), and watch it: gh pr checks <number> --watch. If main moves before the merge, run this again and push.')
+  notes.push('Then push, open or update the PR with a description in the template\'s shape (CI checks it says what changed and answers the guides question; `node scripts/pr-body.mjs FILE.md` checks a description in a file the same way before you open the PR), and watch it: gh pr checks <number> --watch. If main moves before the merge, run this again and push.')
   return { ok: problems.length === 0, problems, notes }
 }
 

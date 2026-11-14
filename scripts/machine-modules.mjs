@@ -116,6 +116,12 @@ for(const machine of machineProfiles.filter(profile=>profile.sdk?.platform==='el
    const said=(await Promise.all(build.sources.map(async path=>readFile(await file(folder,path),'utf8')))).join('\n').match(/MW_FX_ABI,\s*\d+/g)?.map(text=>Number(text.split(',')[1]))??[]
    if(ids.length!==1||!(ids[0]>=1&&ids[0]<=63)||said.length!==1||said[0]!==ids[0])throw new Error(label+': a send effect takes one id, 1 to 63, from sdk/machines/'+machine.id+'/fx-ids.json, and its record (MW_FX_ABI, id, ...) carries it')
   }
+  // A digital voice machine on the Rytm base (mw_voices, ev_sound_applied: send-bus only) is listed in voice-modules.json,
+  // so the site builds its sets on send-bus.
+  if(build?.contribute.some(entry=>entry.to==='mw_voices')||build?.subscribe.some(entry=>entry.event==='ev_sound_applied')){
+   const listed=(await json(resolve(root,'sdk/machines',machine.id,'voice-modules.json'))).ids
+   if(!listed.includes(document.id))throw new Error(label+': a digital voice machine (mw_voices, ev_sound_applied) is listed in sdk/machines/'+machine.id+'/voice-modules.json, so the site builds it on the send-bus base')
+  }
   // A machine's section in the Rytm base's machine list (mw_machine_sections): four bytes with no relocation, from the module
   // that adds the machine, naming its slot and a section stock files machines under; no two modules name one slot.
   for(const entry of build?.contribute.filter(entry=>entry.to==='mw_machine_sections')??[]){

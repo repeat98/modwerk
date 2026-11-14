@@ -14,6 +14,15 @@
       "core": "done",
       "mods": "done"
     },
+    "stack": {
+      "base": "done",
+      "link": "done",
+      "flash": "done",
+      "loader": "done",
+      "status": "done",
+      "diagnostics": "done",
+      "tools": "done"
+    },
     "art": {
       "body": "wide",
       "encoders": 6,
@@ -41,7 +50,7 @@
     },
     "sdk": {
       "platform": "octabam",
-      "modules": "sdk/octabam/modules",
+      "modules": "sdk/octatrack/modules",
       "catalog": "sdk/catalog.json",
       "guide": "sdk/machines/octatrack/README.md",
       "core": {
@@ -73,6 +82,15 @@
       "boot": "done",
       "core": "done",
       "mods": "done"
+    },
+    "stack": {
+      "base": "open",
+      "link": "open",
+      "flash": "open",
+      "loader": "open",
+      "status": "open",
+      "diagnostics": "open",
+      "tools": "open"
     },
     "art": {
       "body": "compact",
@@ -165,6 +183,15 @@
       "core": "done",
       "mods": "done"
     },
+    "stack": {
+      "base": "open",
+      "link": "open",
+      "flash": "open",
+      "loader": "open",
+      "status": "open",
+      "diagnostics": "open",
+      "tools": "open"
+    },
     "art": {
       "body": "compact",
       "encoders": 8,
@@ -243,14 +270,23 @@
     "order": 40,
     "name": "Digitakt II",
     "family": "elektron",
-    "status": "research",
-    "summary": "Experimental OS 1.17 support exists in elekloader, with a core and released perform mods. Modwerk integration and qualification are not complete.",
+    "status": "preview",
+    "summary": "Experimental OS 1.17 support exists in elekloader, with a core and released perform mods. Track Names is the first library module; downloads stay off until the owner turns them on.",
     "steps": {
       "format": "done",
       "rebuild": "done",
-      "boot": "started",
+      "boot": "done",
       "core": "done",
-      "mods": "open"
+      "mods": "done"
+    },
+    "stack": {
+      "base": "started",
+      "link": "open",
+      "flash": "open",
+      "loader": "open",
+      "status": "open",
+      "diagnostics": "open",
+      "tools": "open"
     },
     "art": {
       "body": "compact",
@@ -342,6 +378,15 @@
       "core": "started",
       "mods": "open"
     },
+    "stack": {
+      "base": "open",
+      "link": "open",
+      "flash": "open",
+      "loader": "open",
+      "status": "open",
+      "diagnostics": "open",
+      "tools": "open"
+    },
     "art": {
       "body": "compact",
       "encoders": 8,
@@ -394,6 +439,15 @@
       "boot": "done",
       "core": "started",
       "mods": "open"
+    },
+    "stack": {
+      "base": "open",
+      "link": "open",
+      "flash": "open",
+      "loader": "open",
+      "status": "open",
+      "diagnostics": "open",
+      "tools": "open"
     },
     "art": {
       "body": "wide",
@@ -477,6 +531,15 @@
       "core": "open",
       "mods": "open"
     },
+    "stack": {
+      "base": "open",
+      "link": "open",
+      "flash": "open",
+      "loader": "open",
+      "status": "open",
+      "diagnostics": "open",
+      "tools": "open"
+    },
     "art": {
       "body": "wide",
       "encoders": 8,
@@ -519,6 +582,15 @@
       "boot": "done",
       "core": "done",
       "mods": "done"
+    },
+    "stack": {
+      "base": "started",
+      "link": "open",
+      "flash": "open",
+      "loader": "open",
+      "status": "open",
+      "diagnostics": "open",
+      "tools": "open"
     },
     "art": {
       "body": "wide",
@@ -612,8 +684,8 @@
         {
           "name": "Core image with the send bus",
           "unit": "bytes",
-          "value": 31574,
-          "note": "The base's send-bus variant (73f3668c), for a set with a send effect: 28,866 bytes .run plus 2,708 bytes .bss. It reserves no work area: the effect that runs works in the shared area the modules leave free (CHORUS and FLANGER ask for 16 KB, PHASER none)."
+          "value": 37178,
+          "note": "The base's send-bus variant (3ece243b), for a set with a send effect or a digital voice machine: 33,006 bytes .run plus 4,172 bytes .bss. It reserves no work area: the effect that runs works in the shared area the modules leave free (CHORUS and FLANGER ask for 16 KB, PHASER none)."
         }
       ]
     }
@@ -632,6 +704,15 @@
       "boot": "done",
       "core": "started",
       "mods": "open"
+    },
+    "stack": {
+      "base": "started",
+      "link": "open",
+      "flash": "open",
+      "loader": "open",
+      "status": "open",
+      "diagnostics": "open",
+      "tools": "open"
     },
     "art": {
       "body": "wide",
@@ -684,6 +765,15 @@
       "boot": "done",
       "core": "done",
       "mods": "open"
+    },
+    "stack": {
+      "base": "open",
+      "link": "open",
+      "flash": "open",
+      "loader": "open",
+      "status": "open",
+      "diagnostics": "open",
+      "tools": "open"
     },
     "art": {
       "body": "wide",
@@ -771,6 +861,15 @@
       "core": "open",
       "mods": "open"
     },
+    "stack": {
+      "base": "open",
+      "link": "open",
+      "flash": "open",
+      "loader": "open",
+      "status": "open",
+      "diagnostics": "open",
+      "tools": "open"
+    },
     "art": {
       "body": "wide",
       "encoders": 10,
@@ -794,6 +893,15 @@
       "boot": "done",
       "core": "open",
       "mods": "open"
+    },
+    "stack": {
+      "base": "open",
+      "link": "open",
+      "flash": "open",
+      "loader": "open",
+      "status": "open",
+      "diagnostics": "open",
+      "tools": "open"
     },
     "art": {
       "body": "keys",
@@ -848,6 +956,15 @@
       "core": "open",
       "mods": "open"
     },
+    "stack": {
+      "base": "open",
+      "link": "open",
+      "flash": "open",
+      "loader": "open",
+      "status": "open",
+      "diagnostics": "open",
+      "tools": "open"
+    },
     "art": {
       "body": "box",
       "encoders": 0,
@@ -875,6 +992,15 @@
       "core": "open",
       "mods": "open"
     },
+    "stack": {
+      "base": "open",
+      "link": "open",
+      "flash": "open",
+      "loader": "open",
+      "status": "open",
+      "diagnostics": "open",
+      "tools": "open"
+    },
     "art": {
       "body": "model",
       "encoders": 0,
@@ -897,6 +1023,15 @@
       "boot": "done",
       "core": "open",
       "mods": "open"
+    },
+    "stack": {
+      "base": "open",
+      "link": "open",
+      "flash": "open",
+      "loader": "open",
+      "status": "open",
+      "diagnostics": "open",
+      "tools": "open"
     },
     "art": {
       "body": "model",
@@ -943,6 +1078,15 @@
       "core": "open",
       "mods": "open"
     },
+    "stack": {
+      "base": "open",
+      "link": "open",
+      "flash": "open",
+      "loader": "open",
+      "status": "open",
+      "diagnostics": "open",
+      "tools": "open"
+    },
     "art": {
       "body": "wide",
       "encoders": 8,
@@ -964,6 +1108,15 @@
       "core": "open",
       "mods": "open"
     },
+    "stack": {
+      "base": "open",
+      "link": "open",
+      "flash": "open",
+      "loader": "open",
+      "status": "open",
+      "diagnostics": "open",
+      "tools": "open"
+    },
     "art": {
       "body": "wide",
       "encoders": 8,
@@ -982,6 +1135,15 @@
       "format": "done",
       "load": "done",
       "mods": "done"
+    },
+    "stack": {
+      "base": "started",
+      "link": "started",
+      "flash": "done",
+      "loader": "open",
+      "status": "done",
+      "diagnostics": "open",
+      "tools": "started"
     },
     "art": {
       "body": "pedal",
@@ -1069,6 +1231,15 @@
       "load": "done",
       "mods": "open"
     },
+    "stack": {
+      "base": "open",
+      "link": "open",
+      "flash": "open",
+      "loader": "open",
+      "status": "open",
+      "diagnostics": "open",
+      "tools": "open"
+    },
     "art": {
       "body": "pedal",
       "encoders": 0,
@@ -1126,6 +1297,15 @@
       "load": "open",
       "mods": "open"
     },
+    "stack": {
+      "base": "open",
+      "link": "open",
+      "flash": "open",
+      "loader": "open",
+      "status": "open",
+      "diagnostics": "open",
+      "tools": "open"
+    },
     "art": {
       "body": "pedal",
       "encoders": 0,
@@ -1167,6 +1347,15 @@
       "format": "done",
       "load": "started",
       "mods": "open"
+    },
+    "stack": {
+      "base": "open",
+      "link": "open",
+      "flash": "open",
+      "loader": "open",
+      "status": "open",
+      "diagnostics": "open",
+      "tools": "open"
     },
     "art": {
       "body": "floor",
@@ -1221,6 +1410,15 @@
       "load": "done",
       "mods": "open"
     },
+    "stack": {
+      "base": "open",
+      "link": "open",
+      "flash": "open",
+      "loader": "open",
+      "status": "open",
+      "diagnostics": "open",
+      "tools": "open"
+    },
     "art": {
       "body": "floor",
       "encoders": 0,
@@ -1267,6 +1465,15 @@
       "boot": "open",
       "core": "open",
       "mods": "open"
+    },
+    "stack": {
+      "base": "open",
+      "link": "open",
+      "flash": "open",
+      "loader": "open",
+      "status": "open",
+      "diagnostics": "open",
+      "tools": "open"
     },
     "art": {
       "body": "compact",

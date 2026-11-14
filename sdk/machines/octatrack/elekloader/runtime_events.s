@@ -350,6 +350,53 @@ modwerk_stock_40045918_8:
         .space  8 | the site's own stock bytes
         jmp 0x40045920
 
+| ---- 0x4004a9c4: ev_part_saved
+        .globl  modwerk_site_4004a9c4
+modwerk_site_4004a9c4:
+        lea     -20(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_part_saved: void f(unsigned part)
+        movea.l modwerk_runtime_event_row+180,%a2
+.L4004a9c4_ev_part_saved:
+        move.l  (%a2)+,%d0
+        beq     .L4004a9c4_ev_part_saved_end
+        move.l  %d4,-(%sp)
+        movea.l %d0,%a0
+        jsr     (%a0)
+        lea     4(%sp),%sp
+        bra     .L4004a9c4_ev_part_saved
+.L4004a9c4_ev_part_saved_end:
+.L4004a9c4_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     20(%sp),%sp
+        .globl  modwerk_stock_4004a9c4_10
+modwerk_stock_4004a9c4_10:
+        .space  10 | the site's own stock bytes
+
+| ---- 0x4004a9d0: ev_part_clear
+        .globl  modwerk_site_4004a9d0
+modwerk_site_4004a9d0:
+        lea     -20(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_part_clear: void f(unsigned part)
+        movea.l modwerk_runtime_event_row+184,%a2
+.L4004a9d0_ev_part_clear:
+        move.l  (%a2)+,%d0
+        beq     .L4004a9d0_ev_part_clear_end
+        move.l  24(%sp),-(%sp)
+        movea.l %d0,%a0
+        jsr     (%a0)
+        lea     4(%sp),%sp
+        bra     .L4004a9d0_ev_part_clear
+.L4004a9d0_ev_part_clear_end:
+.L4004a9d0_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     20(%sp),%sp
+        .globl  modwerk_stock_4004a9d0_8
+modwerk_stock_4004a9d0_8:
+        .space  8 | the site's own stock bytes
+        jmp 0x4004a9d8
+
 | ---- 0x4004fbde: ev_chromatic_release
         .globl  modwerk_site_4004fbde
 modwerk_site_4004fbde:
@@ -861,6 +908,176 @@ modwerk_stock_400888aa_8:
         .space  8 | the site's own stock bytes
         jmp 0x400888b2
 
+| ---- 0x4008ee74: ev_project_store
+        .globl  modwerk_site_4008ee74
+modwerk_site_4008ee74:
+        lea     -20(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_project_store: void f(void)
+        movea.l modwerk_runtime_event_row+164,%a2
+.L4008ee74_ev_project_store:
+        move.l  (%a2)+,%d0
+        beq     .L4008ee74_ev_project_store_end
+        movea.l %d0,%a0
+        jsr     (%a0)
+        lea     0(%sp),%sp
+        bra     .L4008ee74_ev_project_store
+.L4008ee74_ev_project_store_end:
+.L4008ee74_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     20(%sp),%sp
+        .globl  modwerk_stock_4008ee74_8
+modwerk_stock_4008ee74_8:
+        .space  8 | the site's own stock bytes
+        move.l %a0,-(%sp)
+        movea.l 4(%a6),%a0
+        move.l %a0,modwerk_return_4008ee74
+        lea modwerk_after_4008ee74,%a0
+        move.l %a0,4(%a6)
+        movea.l (%sp)+,%a0
+        jmp 0x4008ee7c
+
+| ---- 0x4008f180: ev_project_reload
+        .globl  modwerk_site_4008f180
+modwerk_site_4008f180:
+        lea     -20(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_project_reload: void f(void)
+        movea.l modwerk_runtime_event_row+172,%a2
+.L4008f180_ev_project_reload:
+        move.l  (%a2)+,%d0
+        beq     .L4008f180_ev_project_reload_end
+        movea.l %d0,%a0
+        jsr     (%a0)
+        lea     0(%sp),%sp
+        bra     .L4008f180_ev_project_reload
+.L4008f180_ev_project_reload_end:
+.L4008f180_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     20(%sp),%sp
+        .globl  modwerk_stock_4008f180_8
+modwerk_stock_4008f180_8:
+        .space  8 | the site's own stock bytes
+        move.l %a0,-(%sp)
+        movea.l 4(%a6),%a0
+        move.l %a0,modwerk_return_4008f180
+        lea modwerk_after_4008f180,%a0
+        move.l %a0,4(%a6)
+        movea.l (%sp)+,%a0
+        jmp 0x4008f188
+
+| ---- 0x40090504: ev_banks_load
+        .globl  modwerk_site_40090504
+modwerk_site_40090504:
+        lea     -20(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_banks_load: void f(void)
+        movea.l modwerk_runtime_event_row+136,%a2
+.L40090504_ev_banks_load:
+        move.l  (%a2)+,%d0
+        beq     .L40090504_ev_banks_load_end
+        movea.l %d0,%a0
+        jsr     (%a0)
+        lea     0(%sp),%sp
+        bra     .L40090504_ev_banks_load
+.L40090504_ev_banks_load_end:
+.L40090504_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     20(%sp),%sp
+        .globl  modwerk_stock_40090504_8
+modwerk_stock_40090504_8:
+        .space  8 | the site's own stock bytes
+        move.l %a0,-(%sp)
+        movea.l 332(%sp),%a0
+        move.l %a0,modwerk_return_40090504
+        lea modwerk_after_40090504,%a0
+        move.l %a0,332(%sp)
+        movea.l (%sp)+,%a0
+        jmp 0x4009050c
+
+| ---- 0x400905d4: ev_bank_load
+        .globl  modwerk_site_400905d4
+modwerk_site_400905d4:
+        lea     -20(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_bank_load: void f(unsigned mask, uint32_t caller)
+        movea.l modwerk_runtime_event_row+144,%a2
+.L400905d4_ev_bank_load:
+        move.l  (%a2)+,%d0
+        beq     .L400905d4_ev_bank_load_end
+        move.l  20(%sp),-(%sp)
+        move.l  32(%sp),-(%sp)
+        movea.l %d0,%a0
+        jsr     (%a0)
+        lea     8(%sp),%sp
+        bra     .L400905d4_ev_bank_load
+.L400905d4_ev_bank_load_end:
+.L400905d4_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     20(%sp),%sp
+        .globl  modwerk_stock_400905d4_8
+modwerk_stock_400905d4_8:
+        .space  8 | the site's own stock bytes
+        move.l %a0,-(%sp)
+        movea.l 332(%sp),%a0
+        move.l %a0,modwerk_return_400905d4
+        lea modwerk_after_400905d4,%a0
+        move.l %a0,332(%sp)
+        movea.l (%sp)+,%a0
+        jmp 0x400905dc
+
+| ---- 0x400909d8: ev_project_new
+        .globl  modwerk_site_400909d8
+modwerk_site_400909d8:
+        lea     -20(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_project_new: void f(void)
+        movea.l modwerk_runtime_event_row+152,%a2
+.L400909d8_ev_project_new:
+        move.l  (%a2)+,%d0
+        beq     .L400909d8_ev_project_new_end
+        movea.l %d0,%a0
+        jsr     (%a0)
+        lea     0(%sp),%sp
+        bra     .L400909d8_ev_project_new
+.L400909d8_ev_project_new_end:
+.L400909d8_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     20(%sp),%sp
+        .globl  modwerk_stock_400909d8_10
+modwerk_stock_400909d8_10:
+        .space  10 | the site's own stock bytes
+        jmp 0x400909e2
+
+| ---- 0x400917c8: ev_bank_write
+        .globl  modwerk_site_400917c8
+modwerk_site_400917c8:
+        lea     -20(%sp),%sp
+        movem.l %d0-%d1/%a0-%a2,(%sp)
+| ev_bank_write: void f(void)
+        movea.l modwerk_runtime_event_row+156,%a2
+.L400917c8_ev_bank_write:
+        move.l  (%a2)+,%d0
+        beq     .L400917c8_ev_bank_write_end
+        movea.l %d0,%a0
+        jsr     (%a0)
+        lea     0(%sp),%sp
+        bra     .L400917c8_ev_bank_write
+.L400917c8_ev_bank_write_end:
+.L400917c8_tail:
+        movem.l (%sp),%d0-%d1/%a0-%a2
+        lea     20(%sp),%sp
+        .globl  modwerk_stock_400917c8_8
+modwerk_stock_400917c8_8:
+        .space  8 | the site's own stock bytes
+        move.l %a0,-(%sp)
+        movea.l 4(%a6),%a0
+        move.l %a0,modwerk_return_400917c8
+        lea modwerk_after_400917c8,%a0
+        move.l %a0,4(%a6)
+        movea.l (%sp)+,%a0
+        jmp 0x400917d0
+
 | ---- 0x4009fb58: ev_midi_note_key
         .globl  modwerk_site_4009fb58
 modwerk_site_4009fb58:
@@ -896,43 +1113,127 @@ modwerk_site_4009fb58:
         jmp 0x4009fb80
         1: jmp 0x4009fb5e
 
-| ---- raised by a module: ev_mute_keep: unsigned f(void); every handler runs, the answers OR'd
+| ---- raised (by a module, or by the base): ev_mute_keep: unsigned f(void); every handler runs, the answers OR'd
         .globl  modwerk_raise_ev_mute_keep
 modwerk_raise_ev_mute_keep:
+        lea     modwerk_runtime_event_row+12,%a0
+        bra.w   modwerk_raise_row
+
+| ---- raised (by a module, or by the base): ev_trig_muted: unsigned f(void); every handler runs, the answers OR'd
+        .globl  modwerk_raise_ev_trig_muted
+modwerk_raise_ev_trig_muted:
+        lea     modwerk_runtime_event_row+124,%a0
+        bra.w   modwerk_raise_row
+
+| ---- raised (by a module, or by the base): ev_banks_loaded: unsigned f(void); every handler runs, the answers OR'd
+        .globl  modwerk_raise_ev_banks_loaded
+modwerk_raise_ev_banks_loaded:
+        lea     modwerk_runtime_event_row+140,%a0
+        bra.w   modwerk_raise_row
+
+| ---- raised (by a module, or by the base): ev_bank_loaded: unsigned f(void); every handler runs, the answers OR'd
+        .globl  modwerk_raise_ev_bank_loaded
+modwerk_raise_ev_bank_loaded:
+        lea     modwerk_runtime_event_row+148,%a0
+        bra.w   modwerk_raise_row
+
+| ---- raised (by a module, or by the base): ev_bank_written: unsigned f(void); every handler runs, the answers OR'd
+        .globl  modwerk_raise_ev_bank_written
+modwerk_raise_ev_bank_written:
+        lea     modwerk_runtime_event_row+160,%a0
+        bra.w   modwerk_raise_row
+
+| ---- raised (by a module, or by the base): ev_project_stored: unsigned f(void); every handler runs, the answers OR'd
+        .globl  modwerk_raise_ev_project_stored
+modwerk_raise_ev_project_stored:
+        lea     modwerk_runtime_event_row+168,%a0
+        bra.w   modwerk_raise_row
+
+| ---- raised (by a module, or by the base): ev_project_reloaded: unsigned f(void); every handler runs, the answers OR'd
+        .globl  modwerk_raise_ev_project_reloaded
+modwerk_raise_ev_project_reloaded:
+        lea     modwerk_runtime_event_row+176,%a0
+        bra.w   modwerk_raise_row
+
+| ---- raised (by a module, or by the base): ev_modules_ready: unsigned f(void); every handler runs, the answers OR'd
+        .globl  modwerk_raise_ev_modules_ready
+modwerk_raise_ev_modules_ready:
+        lea     modwerk_runtime_event_row+188,%a0
+        bra.w   modwerk_raise_row
+
+| a0: the hook's row pointer. C convention: d0 the answers OR'd, d2-d7/a2-a6 kept.
+modwerk_raise_row:
         lea     -8(%sp),%sp
         movem.l %d2/%a2,(%sp)
         moveq   #0,%d2
-        movea.l modwerk_runtime_event_row+12,%a2
-.Lraise_ev_mute_keep:
+        movea.l (%a0),%a2
+.Lraise_next:
         move.l  (%a2)+,%d0
-        beq     .Lraise_ev_mute_keep_end
+        beq     .Lraise_end
         movea.l %d0,%a0
         jsr     (%a0)
         or.l    %d0,%d2
-        bra     .Lraise_ev_mute_keep
-.Lraise_ev_mute_keep_end:
+        bra     .Lraise_next
+.Lraise_end:
         move.l  %d2,%d0
         movem.l (%sp),%d2/%a2
         lea     8(%sp),%sp
         rts
 
-| ---- raised by a module: ev_trig_muted: unsigned f(void); every handler runs, the answers OR'd
-        .globl  modwerk_raise_ev_trig_muted
-modwerk_raise_ev_trig_muted:
-        lea     -8(%sp),%sp
-        movem.l %d2/%a2,(%sp)
-        moveq   #0,%d2
-        movea.l modwerk_runtime_event_row+124,%a2
-.Lraise_ev_trig_muted:
-        move.l  (%a2)+,%d0
-        beq     .Lraise_ev_trig_muted_end
-        movea.l %d0,%a0
-        jsr     (%a0)
-        or.l    %d0,%d2
-        bra     .Lraise_ev_trig_muted
-.Lraise_ev_trig_muted_end:
-        move.l  %d2,%d0
-        movem.l (%sp),%d2/%a2
-        lea     8(%sp),%sp
+| ---- raised by the base when the routine at 0x40090504 returns: ev_banks_loaded
+        .globl  modwerk_after_40090504
+modwerk_after_40090504:
+        move.l  modwerk_return_40090504,-(%sp)
+        pea     modwerk_runtime_event_row+140
+        bra.w   modwerk_after_row
+
+| ---- raised by the base when the routine at 0x400905d4 returns: ev_bank_loaded
+        .globl  modwerk_after_400905d4
+modwerk_after_400905d4:
+        move.l  modwerk_return_400905d4,-(%sp)
+        pea     modwerk_runtime_event_row+148
+        bra.w   modwerk_after_row
+
+| ---- raised by the base when the routine at 0x400917c8 returns: ev_bank_written
+        .globl  modwerk_after_400917c8
+modwerk_after_400917c8:
+        move.l  modwerk_return_400917c8,-(%sp)
+        pea     modwerk_runtime_event_row+160
+        bra.w   modwerk_after_row
+
+| ---- raised by the base when the routine at 0x4008ee74 returns: ev_project_stored
+        .globl  modwerk_after_4008ee74
+modwerk_after_4008ee74:
+        move.l  modwerk_return_4008ee74,-(%sp)
+        pea     modwerk_runtime_event_row+168
+        bra.w   modwerk_after_row
+
+| ---- raised by the base when the routine at 0x4008f180 returns: ev_project_reloaded
+        .globl  modwerk_after_4008f180
+modwerk_after_4008f180:
+        move.l  modwerk_return_4008f180,-(%sp)
+        pea     modwerk_runtime_event_row+176
+        bra.w   modwerk_after_row
+
+| (sp): the hook's row pointer, 4(sp): the routine's caller. d0-d1/a0-a1 reach it as the routine left them.
+modwerk_after_row:
+        lea     -16(%sp),%sp
+        movem.l %d0-%d1/%a0-%a1,(%sp)
+        movea.l 16(%sp),%a0
+        bsr.w   modwerk_raise_row
+        movem.l (%sp),%d0-%d1/%a0-%a1
+        lea     20(%sp),%sp
         rts
 modwerk_events_code_end:
+        .data
+        .balign 4
+        .globl  modwerk_return_40090504
+modwerk_return_40090504: .long 0
+        .globl  modwerk_return_400905d4
+modwerk_return_400905d4: .long 0
+        .globl  modwerk_return_400917c8
+modwerk_return_400917c8: .long 0
+        .globl  modwerk_return_4008ee74
+modwerk_return_4008ee74: .long 0
+        .globl  modwerk_return_4008f180
+modwerk_return_4008f180: .long 0

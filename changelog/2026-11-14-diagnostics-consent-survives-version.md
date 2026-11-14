@@ -1,0 +1,1 @@
+Site: members who agreed to share Octatrack diagnostics keep sharing when the consent text changes. Since 11 November most of them had stopped sending without knowing it; each report keeps the version of the text its member agreed to.

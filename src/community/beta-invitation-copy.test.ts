@@ -29,7 +29,8 @@ it('preserves the prepared email shell, feature invitation, 50-person limit, CTA
   expect(message.html.match(/<img [^>]*>/g)).toEqual([expect.stringContaining('src="https://modwerk.app/news/beta-status.png"')])
   expect(renderBetaNewsEmail({ id: '0'.repeat(32), subject: 'x', body: '![x](https://elsewhere.example/p.png)\n\n![y](//elsewhere.example/p.png)' }, urls).html).not.toContain('<img')
   const generic = renderNewsEmail({ subject: 'Normal news', body: '[Join the beta](https://modwerk.app/#beta/join/public)\n\n- **Lead** rest\n\n![x](/news/beta-status.png)' }, urls)
-  expect(generic.html).not.toContain('bgcolor="#5f6ac7"')
+  // Since modwerk-news-003 a link alone in its paragraph is a button in any news, but with its own words and link.
+  expect(generic.html).toMatch(/<a href="https:\/\/modwerk.app\/#beta\/join\/public" style="display:inline-block;[^>]+>Join the beta<\/a>/)
   expect(generic.html).toContain('<ul'); expect(generic.html).not.toContain('bgcolor="#1c1c1f"')
   expect(generic.html.match(/<img [^>]*>/g)).toEqual([expect.stringContaining('src="https://modwerk.app/news/beta-status.png"')])
   expect(announcementLink(announcement.url)).toBe('#beta/join/public')

@@ -114,21 +114,21 @@ describe('private consented Octatrack diagnostics',()=>{
     expect(db.prepare('SELECT count(*) AS n FROM octatrack_diagnostic_events').get()).toEqual({n:0})
     expect(db.prepare('SELECT count(*) AS n FROM octatrack_diagnostic_consent').get()).toEqual({n:0})
   })
-  it('requires fresh consent for new reports and keeps those sent under the earlier text',async()=>{
+  it('keeps sharing under a consent given to an earlier text and records that text with each report',async()=>{
     vi.useFakeTimers({toFake:['Date']})
     const acceptedAt=new Date('2026-10-13T12:00:00.000Z')
     vi.setSystemTime(acceptedAt)
     const {call,db,env,consent,send}=await fixture(), token='c'.repeat(64)
-    await consent(true,token);await send(undefined,token)
+    await consent(true,token)
     db.prepare("UPDATE octatrack_diagnostic_consent SET version='2026-10-12' WHERE user_id='member'").run()
-    // The stored version tells the site to ask again; a new consent text alone doesn't delete earlier reports.
-    expect(await(await call('/octatrack/diagnostics/consent','GET',undefined,token)).json()).toMatchObject({accountId:'member',enabled:false,version:'2026-10-12'})
-    expect((await send(undefined,token)).status).toBe(403)
+    // A new consent text never stops a member who already agreed (owner, 14 Nov 2026).
+    expect(await(await call('/octatrack/diagnostics/consent','GET',undefined,token)).json()).toMatchObject({accountId:'member',enabled:true,version:'2026-10-12'})
+    expect((await send(undefined,token)).status).toBe(200)
+    expect(db.prepare('SELECT consent_version FROM octatrack_diagnostic_events').all()).toEqual([{consent_version:'2026-10-12'}])
     await cleanupOctatrackDiagnostics(env.DB!)
     expect(db.prepare('SELECT count(*) AS n FROM octatrack_diagnostic_events').get()).toEqual({n:1})
-    // Equal timestamps cannot supersede the prior consent decision.
-    expect(await(await consent(true,token)).json()).toMatchObject({enabled:false})
-    expect((await send(undefined,token)).status).toBe(403)
+    // Equal timestamps cannot supersede the prior consent decision; a later choice records the current text.
+    expect(await(await consent(true,token)).json()).toMatchObject({enabled:true,version:'2026-10-12'})
     vi.setSystemTime(acceptedAt.getTime()+1)
     expect(await(await consent(true,token)).json()).toMatchObject({enabled:true,version})
     expect((await send(undefined,token)).status).toBe(200)
@@ -269,9 +269,12 @@ describe('private consented Octatrack diagnostics',()=>{
       {...build,phase:undefined},{...build,buildKind:undefined},{...build,error:undefined},{id:crypto.randomUUID(),event:'sync_failed',phase:'browser'},
       {id:crypto.randomUUID(),event:'sync_failed',phase:'sending',buildKind:'elekloader'},{id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'input'},
       {id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'unknown',kind:'private message'},{id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'device',kind:'TypeError'},
-      {id:crypto.randomUUID(),event:'kept',phase:'ready',kind:'TypeError'}]
+      {id:crypto.randomUUID(),event:'kept',phase:'ready',kind:'TypeError'},
+      {id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'unknown',step:'private step'},{id:crypto.randomUUID(),event:'kept',phase:'ready',step:'stage'}]
     for(const value of cases)expect((await send(value,token)).status).toBe(400)
     expect((await send({id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'unknown',kind:'TypeError'},token)).status).toBe(200)
+    expect((await send({id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'transport',step:'stage',kind:'VendorTransportError'},token)).status).toBe(200)
+    expect((await send({id:crypto.randomUUID(),event:'sync_failed',phase:'sending',error:'device',result:'rejected',refusal:7,step:'activate'},token)).status).toBe(200)
   })
   it('keeps the 1000 event cap for regular-member collections',async()=>{
     const {db,consent,send,data}=await fixture(), token='c'.repeat(64);await consent(true,token)

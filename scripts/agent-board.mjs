@@ -19,7 +19,7 @@
 //   npm run board -- inbox                       # questions waiting for you, replies to what you wrote
 //   npm run board -- activity                    # how many developers use the board
 //
-// Kinds: module (machine/id), hook (octatrack/39, digitakt/events/7), migration (0085), dsp-region (machine/name),
+// Kinds: module (machine/id), hook (octatrack/39, digitakt/events/7, a run octatrack/38-51), migration (0085), dsp-region (machine/name),
 // machine-id (digitakt/10: a manifest's machine:<id>, which kits store).
 // Topics: the kinds, machine (octatrack) for what holds across a whole machine, and site (forum, worker, configurator)
 // for an area of the site and Worker.
@@ -136,7 +136,7 @@ export async function claim(item, options = {}) {
 
 const git = (root, ...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trimEnd()
 const show = (root, ref, path) => { try { return git(root, 'show', ref + ':' + path) } catch { return null } }
-// Any SDK folder that holds modules (sdk/octabam is the Octatrack's), so a newly unlocked machine needs no edit here.
+// Any SDK folder that holds modules (the Octatrack's is sdk/octatrack), so a newly unlocked machine needs no edit here.
 const MODULE_FOLDERS = /^sdk\/((?!drafts\/)[a-z0-9]+(?:-[a-z0-9]+)*)\/modules\/(?:_submissions\/)?([a-z0-9]+(?:-[a-z0-9]+)*)\/|^sdk\/(drafts)\/([a-z0-9]+(?:-[a-z0-9]+)*)\//
 const INTERFACES = /^sdk\/([a-z0-9-]+)\/(?:core|core-profile)\/interface\.json$/
 
@@ -163,8 +163,9 @@ export function neededClaims({ root, base, head = 'HEAD' }) {
     const match = path.match(MODULE_FOLDERS)
     if (match) {
       // A machine's modules sit in modules/<id> or, until catalogued, modules/_submissions/<id>; a move between them is not new.
-      const folders = match[1] ? ['', '_submissions/'].map(sub => 'sdk/' + match[1] + '/modules/' + sub + match[2]) : ['sdk/drafts/' + match[4]]
-      const machine = match[1] === 'octabam' || match[3] === 'drafts' ? 'octatrack' : match[1], id = match[2] ?? match[4]
+      // An Octatrack module that sat in sdk/octabam/modules/ before the folders moved (12 November 2026) is not new either.
+      const folders = match[1] ? [...['', '_submissions/'].map(sub => 'sdk/' + match[1] + '/modules/' + sub + match[2]), ...(match[1] === 'octatrack' ? ['sdk/octabam/modules/' + match[2]] : [])] : ['sdk/drafts/' + match[4]]
+      const machine = match[3] === 'drafts' ? 'octatrack' : match[1], id = match[2] ?? match[4]
       if (!needed.has('module ' + machine + '/' + id) && folders.every(folder => !existed.has(folder))) {
         const manifest = show(root, head, match[0] + 'modwerk.module.json') ?? show(root, head, match[0] + 'octamod.module.json')
         add('module', machine + '/' + id, 'new module folder ' + match[0].slice(0, -1), { note: summaryNote(manifest) })
@@ -192,7 +193,24 @@ export function neededClaims({ root, base, head = 'HEAD' }) {
     const before = read(mergeBase), after = read(head)
     for (const list of ['events', 'tables']) for (let index = (before[list] ?? []).length; index < (after[list] ?? []).length; index++) add('hook', match[1] + '/' + list + '/' + index, 'new ' + list.slice(0, -1) + ' in ' + path)
   }
-  return [...needed.values()]
+  return hookRuns([...needed.values()])
+}
+
+const hookSpan = key => { const [, list, first, last] = /^(.+)\/(\d+)(?:-(\d+))?$/.exec(key); return { list, first: Number(first), last: Number(last ?? first) } }
+const overlaps = (a, b) => { const x = hookSpan(a), y = hookSpan(b); return x.list === y.list && x.first <= y.last && y.first <= x.last }
+/** Consecutive new hook indices of one list become one claim (octatrack/38-51): a base change may add more hooks than
+ * one person may hold claims. */
+function hookRuns(items) {
+  const lists = new Map(), out = items.filter(item => item.kind !== 'hook')
+  for (const item of items.filter(item => item.kind === 'hook')) { const { list, first } = hookSpan(item.key); lists.set(list, [...(lists.get(list) ?? []), [first, item]]) }
+  for (const [list, found] of lists) {
+    found.sort((a, b) => a[0] - b[0])
+    for (let i = 0, j = 0; i < found.length; i = ++j) {
+      while (j + 1 < found.length && found[j + 1][0] === found[j][0] + 1) j++
+      out.push(i === j ? found[i][1] : { ...found[i][1], key: list + '/' + found[i][0] + '-' + found[j][0] })
+    }
+  }
+  return out
 }
 
 /** Compare what a branch needs with the board. Without a login it can name holders but not tell whether they are you. */
@@ -201,11 +219,14 @@ export async function compareClaims(needed, login, options = {}) {
   const claims = await listClaims({}, options), byKey = new Map(claims.map(item => [item.kind + ' ' + item.key, item]))
   const result = { mine: [], others: [], free: [], unknown: [] }
   for (const item of needed) {
-    const holder = byKey.get(item.kind + ' ' + item.key)
-    if (!holder) result.free.push(item)
-    else if (!login) result.unknown.push({ ...item, claim: holder })
-    else if (holder.holder === login.toLowerCase()) result.mine.push({ ...item, claim: holder })
-    else result.others.push({ ...item, claim: holder })
+    // Hook claims overlap by index; the holder's own inside a run give way to it when the run is claimed.
+    const near = item.kind === 'hook' ? claims.filter(claim => claim.kind === 'hook' && overlaps(claim.key, item.key)) : [byKey.get(item.kind + ' ' + item.key)].filter(Boolean)
+    const theirs = login && near.find(claim => claim.holder !== login.toLowerCase()), exact = near.find(claim => claim.key === item.key)
+    if (!near.length) result.free.push(item)
+    else if (!login) result.unknown.push({ ...item, claim: near[0] })
+    else if (theirs) result.others.push({ ...item, claim: theirs })
+    else if (exact) result.mine.push({ ...item, claim: exact })
+    else result.free.push(item)
   }
   return result
 }
@@ -221,7 +242,9 @@ export function moduleClaimLine({ root, machine, id, folder, claims, login, unav
   if (held && login && held.holder === login.toLowerCase()) return { state: 'ok', name, detail: 'module ' + key + ' is yours' + (held.expiresAt ? ' until ' + held.expiresAt.slice(0, 10) : '') }
   if (held && !login) return { state: 'fail', name, detail: 'module ' + key + ' is claimed by ' + describeClaim(held), fix: 'if that is you, npm run board -- login; if not, ask them yourself before you go on: npm run board -- ask module ' + key + ' "…" (docs/AGENT_BOARD.md)' }
   if (held) return { state: 'fail', name, detail: 'module ' + key + ' is claimed by ' + describeClaim(held), fix: 'ask them yourself before you go on, or pick another module: npm run board -- ask module ' + key + ' "…" (docs/AGENT_BOARD.md)' }
-  const onMain = ['origin/main', 'upstream/main'].some(ref => { try { git(root, 'cat-file', '-e', ref + ':' + folder); return true } catch { return false } })
+  // A main from before the Octatrack's folders moved (12 November 2026) holds the module under sdk/octabam/modules/.
+  const folders = [folder, folder.replace(/^sdk\/octatrack\/modules\//, 'sdk/octabam/modules/')]
+  const onMain = ['origin/main', 'upstream/main'].some(ref => folders.some(at => { try { git(root, 'cat-file', '-e', ref + ':' + at); return true } catch { return false } }))
   if (!onMain) return { state: 'fail', name, detail: 'nobody has claimed this new module, so another developer could start the same one', fix: login ? fix : 'npm run board -- login, then ' + fix }
   return { state: 'ok', name, detail: 'nobody else is working on module ' + key }
 }

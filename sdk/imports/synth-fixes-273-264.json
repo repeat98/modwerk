@@ -1,15 +1,12 @@
 {
   "schemaVersion": 1,
   "id": "synth",
-  "version": "0.1.2-experimental",
+  "version": "0.1.3-experimental",
   "status": "released",
-  "basedOn": "3238863f2635f8db840b4d42ab9f0d3bea48c006",
+  "basedOn": "b51f553a7b19e888f0143395e0a8e93b9221c516",
   "originalImport": "synth-949f3be.json",
   "folder": "sdk/octabam/modules/synth",
-  "issues": [
-    273,
-    264
-  ],
+  "issues": [],
   "files": [
     {
       "path": "manifest.py",
@@ -24,7 +21,7 @@
     {
       "path": "upstream/synth/poly.s",
       "previousSha256": "5f6e39e55c813cd351538d00e0b02eb56cc253f803f95ca9450e140442064d60",
-      "draftSha256": "ce21f5f7cddcd7268d27e25c500f1403cc59a9dff28044b1832cf2b45592d34c"
+      "draftSha256": "bdc2a328672a68b144da4f35ea84cc8b876b63a39abf118dad443d47d15a9ba9"
     },
     {
       "path": "upstream/quantizer/manifest.py",
@@ -35,11 +32,16 @@
       "path": "upstream/quantizer/quantizer.s",
       "previousSha256": "8dd8f8c59b480dbf63e7c37b7ac11a5c2f03b3e7afbbbb3ca2f84e3a01fc114a",
       "draftSha256": "d1737168a1750f540b3dfbefdd2a64b11084013b9f7b71b31aa4f189d33a24c5"
+    },
+    {
+      "path": "upstream/synth/manifest.py",
+      "previousSha256": "58c7acd5684fe0b59c42501f7fdbfd1b288b3bfb71938dcadf43bc1774b3e5e8",
+      "draftSha256": "786154c440d71f372abb49f527d345d5d6d74e96959a4af2f3ce248683753314"
     }
   ],
   "changes": [
-    "18.06 dB source headroom before mono output and every paraphonic sum contribution.",
-    "Move the private quantizer octave drawer detour to the common MIDI/audio argument push and preserve stock MIDI octave formatting."
+    "No RENDER_FLEX; the tracks the engine must render are worked out once a frame; the slot copy and the LFO depth site test one bit inline.",
+    "Track 1's LFO 3 no longer writes into FM Synth's clock."
   ],
-  "publication": "Owner explicitly authorized release and issue closure on 8 October 2026: please release them and close. I green light no hardware validation for now. Current hardware remains untested; previously disclosed timing/memory bounds remain unknown."
+  "publication": "0.1.3-experimental: frame-interrupt cost at rest (no RENDER_FLEX, per-frame routing, inline tests) and track 1's LFO 3; changes by Modwerk with the author's verbal OK to the owner, 13 and 14 November 2026"
 }

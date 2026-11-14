@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "crossfader-2026-11-10",
+  "about": "Modwerk source-only crossfader package for Digitakt I OS 1.54, compiled from sdk/digitakt/modules/crossfader.",
+  "cores": [],
+  "mods": [
+    {
+      "file": "crossfader-0.1.0-experimental-os1.54.elemod",
+      "sha256": "ee5249a93c8374e255583c7af670239942265f8ea01a19dda2f17ab472efbb72",
+      "id": "crossfader",
+      "version": "0.1.0-experimental",
+      "device": "digitakt-mk1",
+      "os": "1.54",
+      "license": "GPL-3.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "182341749a0378b8fcce9f5db36f98a581f01199",
+        "path": "sdk/imports/packages/crossfader/crossfader-0.1.0-experimental-os1.54.elemod"
+      },
+      "title": "Crossfader",
+      "requires": [
+        "core"
+      ],
+      "conflicts": [],
+      "summary": "A crossfader between two groups of tracks and inputs, on LEVEL on the Internal Mixer, on the tracks you choose, or a CC.",
+      "description": "A crossfader between two groups of tracks and inputs, on LEVEL on the Internal Mixer, on the tracks you choose, or a CC.",
+      "category": "Performance",
+      "author": "draadpiraat",
+      "needs_core": "2.1",
+      "on_unit": "Emulator-checked; the author's hardware run of this build is pending (the combined LF03 build passed on a Digitakt I, OS 1.54, 2026-11-10)."
+    }
+  ]
+}

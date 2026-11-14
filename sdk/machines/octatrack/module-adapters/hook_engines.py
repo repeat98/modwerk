@@ -149,11 +149,23 @@ def analog_engine(sdk, work, assemble):
     return unit
 
 
+def analog_price():
+    """Analog BD's price per voice for its engine header (analog_bd_dsp_price.json): the voice's, with the fixed
+    per-core cost folded in (owner, 13 November 2026: it over-reserves at most three voices' share on a core and never
+    under-charges), and the evidence's kind. Read here, not from machine-ports.json, so it is no controller source."""
+    price = json.loads((Path(__file__).with_name('analog_bd_dsp_price.json')).read_text())
+    kind = price['kind'].removesuffix('-instructions')  # machine_ports.py's spelling: <kind>-instructions
+    if kind not in abi9.ENGINE_KINDS:
+        raise ValueError('Analog BD\'s price must be executed or hardware evidence, not %r.' % price['kind'])
+    return price['perVoice'] + price['perCoreWhileEnabled'], kind
+
+
 def analog_package(data, sdk, work, assemble):
-    """The Analog BD controller package (build.py's, no DSP) as ABI 10, carrying its engine and initial words."""
+    """The Analog BD controller package (build.py's, no DSP) as ABI 10, carrying its engine, initial words and price."""
     unit = analog_engine(sdk, work, assemble)
+    cycles, kind = analog_price()
     return abi9.engine(data, unit['words'], unit['relocations'], unit['site'], 3, unit['exit'],
-                       [('x', abi9.BOTH_CORES, unit['address'], unit['init'])])
+                       [('x', abi9.BOTH_CORES, unit['address'], unit['init'])], cycles=cycles, kind=kind)
 
 
 PACKAGES = {'analog-bassdrum': analog_package}  # base-bound modules whose packages carry an engine

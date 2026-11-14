@@ -4,513 +4,6 @@
   "modules": [
     {
       "schemaVersion": 2,
-      "id": "spectrum",
-      "key": "SPECTRUM",
-      "name": "Spectrum",
-      "version": "0.1.1-experimental",
-      "category": "effects",
-      "author": {
-        "github": "sambanks",
-        "credits": [
-          "sambanks",
-          "octabam: Sam Banks; additional source attribution in SDK THIRD_PARTY.md",
-          "audiojs/filter: Dmitry Iv (MIT)",
-          "Airwindows Capacitor2: Chris Johnson (MIT)"
-        ]
-      },
-      "nativeManifest": "manifest.py",
-      "presentation": {
-        "label": "FILTER BANK",
-        "family": "Filter",
-        "summary": "Ladder, SEM, isolator and vowel filters.",
-        "overview": "Four filter voices in one FX1 slot. Move between a ladder filter, a SEM-style state-variable filter, an isolator and a vowel filter, with envelope and LFO modulation.",
-        "highlights": [
-          "Ladder, SEM, isolator and vowel modes",
-          "Envelope and LFO modulation",
-          "Stereo width and filter shape"
-        ],
-        "usage": [
-          "Choose SPECTRUM in FX1. MODE selects ladder, SEM, isolator or vowel filtering.",
-          "In SEM mode, SHPE moves between low-pass, band-pass and high-pass. FREQ controls cutoff; RES controls resonance.",
-          "Use ENV for envelope response and LDP / LSP for LFO modulation. Start with low resonance, then raise it while monitoring the output."
-        ]
-      },
-      "controls": [
-        {
-          "name": "FREQ",
-          "default": 127,
-          "count": 128,
-          "doc": "the cutoff, 60 Hz..15 kHz exponential; in VOWL the vowel A-E-I-O-U; ENV and LFO move it",
-          "labels": null
-        },
-        {
-          "name": "RES",
-          "default": 0,
-          "count": 128,
-          "doc": "the flavour: resonance in SEM/LADR, sharpness in VOWL, the dielectric colour in ISO",
-          "labels": null
-        },
-        {
-          "name": "ENV",
-          "default": 64,
-          "count": 128,
-          "doc": "the envelope follower onto the cutoff, drawn -64..+63; 0 = none",
-          "labels": null
-        },
-        {
-          "name": "LDP",
-          "default": 0,
-          "count": 128,
-          "doc": "LFO depth onto the cutoff, 0 = none (a negative depth would only flip the phase)",
-          "labels": null
-        },
-        {
-          "name": "LSP",
-          "default": 64,
-          "count": 128,
-          "doc": "LFO speed ~0.08..9 Hz, and the envelope release (0 slow .. 127 fast)",
-          "labels": null
-        },
-        {
-          "name": "WDTH",
-          "default": 64,
-          "count": 128,
-          "doc": "stereo width of the output, drawn -64..+63: 0 untouched, -64 mono, +63 double sides",
-          "labels": null
-        },
-        {
-          "name": "MODE",
-          "default": 0,
-          "count": 4,
-          "doc": "LADR the Moog (first); SEM the SVF (SHPE: LP -> BP -> HP); ISO (Capacitor2); VOWL",
-          "labels": [
-            "LADR",
-            "SEM",
-            "ISO",
-            "VOWL"
-          ]
-        },
-        {
-          "name": "SHPE",
-          "default": 0,
-          "count": 128,
-          "doc": "SEM only: 0 lowpass, 64 bandpass, 127 highpass, crossfaded; --- in the other modes",
-          "labels": null
-        }
-      ],
-      "compatibility": {
-        "firmware": "1.40C",
-        "effectId": 10,
-        "location": "FX1",
-        "conflicts": [],
-        "limitations": [
-          "The source records filter-response, dirty-state, menu and label checks, plus 13-setting identity comparisons. Earlier versions ran on MKII hardware. The current dynamic-loader catalog is not hardware-qualified."
-        ]
-      },
-      "resources": {
-        "recorded": "27 Sep 2026",
-        "storage": {
-          "label": "DSP program",
-          "display": "1,337 words",
-          "value": null,
-          "unit": "see display",
-          "method": "static",
-          "conditions": "Reported assembled program size. This is not the final firmware download size.",
-          "source": "README.md"
-        },
-        "processing": {
-          "label": "DSP estimate",
-          "display": "139 / 262",
-          "value": null,
-          "unit": "see display",
-          "method": "static",
-          "conditions": "Priced instruction words per sample for SEM / ISO in the reported build. Hardware utilization has not been measured.",
-          "source": "README.md"
-        },
-        "impact": {
-          "conditions": "Audio modules are rated for an active instance, including expensive modes and changing controls; MIDI/USB features are rated while enabled. More tracks or instances increase demand. Shared runtime reservations and reused stock buffers are not added again per module. These rough source-backed tiers do not establish hardware headroom or qualification.",
-          "cpu": {
-            "level": "minimal",
-            "basis": "source-estimate",
-            "rationale": "The audio processing runs on the DSP. The documented ColdFire addition is a small SHPE display formatter; this is a source estimate of added CPU work.",
-            "source": "README.md"
-          },
-          "dsp": {
-            "level": "moderate",
-            "basis": "source-estimate",
-            "rationale": "The documented filter modes price roughly 139 to 262 instruction words per sample. This places the active filter in the middle of these audio modules; it is not a hardware utilization measurement.",
-            "source": "README.md"
-          },
-          "memory": {
-            "level": "low",
-            "basis": "source-estimate",
-            "rationale": "The recorded program is 1,337 DSP words plus filter state and tables, with no long delay ring in the described signal path. This is a rough footprint tier, not a complete allocation measurement.",
-            "source": "README.md"
-          }
-        }
-      },
-      "tests": {
-        "report": "TESTING.md",
-        "summary": "The source records filter-response, dirty-state, menu and label checks, plus 13-setting identity comparisons. Earlier versions ran on MKII hardware. The current dynamic-loader catalog is not hardware-qualified.",
-        "hardwareStatus": "historical",
-        "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-        "gates": [
-          "tools/verify/verify_spectrum.py"
-        ]
-      },
-      "license": {
-        "spdx": "MIT",
-        "file": "LICENSE",
-        "declaration": "Project code is MIT; adapted components retain their own copyright notices and full terms in LICENSE and ../../licenses/THIRD_PARTY_NOTICES.txt. The SPDX expression covers the applicable component licences. No rights to Elektron firmware or new hardware qualification are asserted."
-      },
-      "media": []
-    },
-    {
-      "schemaVersion": 2,
-      "id": "modulation",
-      "key": "MODULATION",
-      "name": "Modulation",
-      "version": "0.1.1-experimental",
-      "category": "effects",
-      "author": {
-        "github": "sambanks",
-        "credits": [
-          "sambanks",
-          "octabam: Sam Banks; additional source attribution in SDK THIRD_PARTY.md",
-          "Hera: J.P. Cimalando (ISC)",
-          "ChowPhaser: jatinchowdhury18 / Jatin Chowdhury (BSD-3-Clause)",
-          "Mutable Instruments Rings: Emilie Gillet (MIT)"
-        ]
-      },
-      "nativeManifest": "manifest.py",
-      "presentation": {
-        "label": "STEREO MOTION",
-        "family": "Modulation",
-        "summary": "Chorus, dimension, flanger, phaser and comb.",
-        "overview": "A collection of chorus, dimension, flanger, comb and phaser voices. Shape movement with rate and depth, then dial in feedback, tone and stereo width.",
-        "highlights": [
-          "Five modulation voices",
-          "Bipolar feedback",
-          "Dry/wet blend and stereo width"
-        ],
-        "usage": [
-          "Choose MODULATION in FX1, then select JUNO, DIM, FLNG, COMB or PHSR on the setup page.",
-          "RATE and DPTH control movement in the modulation modes. COMB uses DLY for pitch; RATE has no LFO role there.",
-          "FDBK is bipolar. MIX blends the effect, while TONE and WDTH shape brightness and stereo spread."
-        ]
-      },
-      "controls": [
-        {
-          "name": "RATE",
-          "default": 26,
-          "count": 128,
-          "doc": "LFO speed, 0.08 .. 10 Hz on a squared taper (26 = the Juno's 0.5 Hz)",
-          "labels": null
-        },
-        {
-          "name": "DPTH",
-          "default": 21,
-          "count": 128,
-          "doc": "the sweep, 0 .. 480 samples either side of DLY; in PHSR the LFO's reach",
-          "labels": null
-        },
-        {
-          "name": "DLY",
-          "default": 18,
-          "count": 128,
-          "doc": "the sweep's centre, 0.2 .. 23 ms; COMB's pitch; PHSR's stage count (2/4/6/8 by quarters)",
-          "labels": null
-        },
-        {
-          "name": "FDBK",
-          "default": 64,
-          "count": 128,
-          "doc": "bipolar, 64 = none: feedback from the swept tap; PHSR regen; COMB decay time and polarity",
-          "labels": null
-        },
-        {
-          "name": "LOFI",
-          "default": 0,
-          "count": 128,
-          "doc": "the line clocked coarse and quantised: hold 1 + 64 (k/128)^2 samples, 24 bits then 16..5",
-          "labels": null
-        },
-        {
-          "name": "MIX",
-          "default": 0,
-          "count": 128,
-          "doc": "dry/wet; 0 = exact passthrough, 127 = the wet alone",
-          "labels": null
-        },
-        {
-          "name": "MODE",
-          "default": 0,
-          "count": 5,
-          "doc": "which pedal",
-          "labels": [
-            "JUNO",
-            "DIM",
-            "FLNG",
-            "COMB",
-            "PHSR"
-          ]
-        },
-        {
-          "name": "TONE",
-          "default": 80,
-          "count": 128,
-          "doc": "the BBD filters in and out of the line: 0 dark (2 kHz), 127 open; COMB brightness; no PHSR",
-          "labels": null
-        },
-        {
-          "name": "WDTH",
-          "default": 127,
-          "count": 128,
-          "doc": "the right channel LFO lag: 0 mono, 64 quadrature, 127 antiphase (Juno, DIM); not COMB",
-          "labels": null
-        }
-      ],
-      "compatibility": {
-        "firmware": "1.40C",
-        "effectId": 11,
-        "location": "FX1",
-        "conflicts": [],
-        "limitations": [
-          "The source records 29 reference gates and 13-setting identity comparisons. Image 88 overran with four Modulation instances beside reverb; the following cycle optimization has not been retested on hardware."
-        ]
-      },
-      "resources": {
-        "recorded": "26–27 Sep 2026",
-        "storage": {
-          "label": "DSP buffer",
-          "display": "2 × 1,024 words",
-          "value": null,
-          "unit": "see display",
-          "method": "static",
-          "conditions": "Per-instance delay lines in the FX1 allocator buffer. The README records an earlier 1,480-word program before the next optimization pass; current program size is not published.",
-          "source": "README.md"
-        },
-        "processing": {
-          "label": "DSP estimate",
-          "display": "298–354",
-          "value": null,
-          "unit": "see display",
-          "method": "static",
-          "conditions": "Priced words per sample: PHSR 298, COMB 329, LINE 354. These are estimates, not a percentage of DSP capacity.",
-          "source": "README.md"
-        },
-        "impact": {
-          "conditions": "Audio modules are rated for an active instance, including expensive modes and changing controls; MIDI/USB features are rated while enabled. More tracks or instances increase demand. Shared runtime reservations and reused stock buffers are not added again per module. These rough source-backed tiers do not establish hardware headroom or qualification.",
-          "cpu": {
-            "level": "minimal",
-            "basis": "source-estimate",
-            "rationale": "Audio loops and modulation run on the DSP. CPU additions handle mode labels and controls rather than a continuous CPU audio engine; extra CPU demand is estimated as minimal.",
-            "source": "README.md"
-          },
-          "dsp": {
-            "level": "high",
-            "basis": "source-estimate",
-            "rationale": "The expensive modes price 298 to 354 instruction words per sample. The README also records earlier four-instance pressure beside reverb, so the relative DSP tier is conservatively high; actual headroom remains unmeasured.",
-            "source": "README.md"
-          },
-          "memory": {
-            "level": "moderate",
-            "basis": "source-estimate",
-            "rationale": "Each active instance uses two 1,024-word delay lines plus DSP code, state and coefficient tables. This is more working storage than a scalar filter but less delay storage than Mini Verb.",
-            "source": "README.md"
-          }
-        }
-      },
-      "tests": {
-        "report": "TESTING.md",
-        "summary": "The source records 29 reference gates and 13-setting identity comparisons. Image 88 overran with four Modulation instances beside reverb; the following cycle optimization has not been retested on hardware.",
-        "hardwareStatus": "historical",
-        "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-        "gates": [
-          "tools/verify/verify_modulation.py"
-        ]
-      },
-      "license": {
-        "spdx": "MIT AND ISC AND BSD-3-Clause",
-        "file": "LICENSE",
-        "declaration": "Project code is MIT; adapted components retain their own copyright notices and full terms in LICENSE and ../../licenses/THIRD_PARTY_NOTICES.txt. The SPDX expression covers the applicable component licences. No rights to Elektron firmware or new hardware qualification are asserted."
-      },
-      "media": []
-    },
-    {
-      "schemaVersion": 2,
-      "id": "character",
-      "key": "CHARACTER",
-      "name": "Character",
-      "version": "0.1.1-experimental",
-      "category": "effects",
-      "author": {
-        "github": "sambanks",
-        "credits": [
-          "sambanks",
-          "octabam: Sam Banks; additional source attribution in SDK THIRD_PARTY.md",
-          "JSFXClones: JClones (MIT)"
-        ]
-      },
-      "nativeManifest": "manifest.py",
-      "presentation": {
-        "label": "WAVE SHAPING",
-        "family": "Saturation",
-        "summary": "Fold, saturation, tone, compression and width.",
-        "overview": "A chain for adding weight, grit and control: wavefolding, saturation, tone, compression and stereo width. Tape, tube and inflator saturation give the drive stage three different characters.",
-        "highlights": [
-          "Tape, tube and inflator saturation",
-          "Wavefolding before the drive stage",
-          "Compression, tone and stereo width"
-        ],
-        "usage": [
-          "Choose CHARACTER in FX1. Its fixed chain is fold → saturate → tone → compress → width → mix.",
-          "SAT selects tape, tube or inflator character; DRV sets the drive amount. FOLD adds wavefolding before saturation.",
-          "KEY selects the compressor source. WDTH at 64 keeps the original width, 0 is mono. Start with MIX low when exploring stronger drive or fold."
-        ]
-      },
-      "controls": [
-        {
-          "name": "DRV",
-          "default": 0,
-          "count": 128,
-          "doc": "drive into the curve, +12 dB at 127 (TUBE/INFL output-compensated); 0 skips",
-          "labels": null
-        },
-        {
-          "name": "FOLD",
-          "default": 0,
-          "count": 128,
-          "doc": "wavefolder drive, 1x..48x into the fold at a held level; 0 = no folding",
-          "labels": null
-        },
-        {
-          "name": "WDTH",
-          "default": 64,
-          "count": 128,
-          "doc": "mid/side width, drawn -64..+63: 0 = untouched, -64 = mono, +63 = double the sides",
-          "labels": null
-        },
-        {
-          "name": "COMP",
-          "default": 0,
-          "count": 128,
-          "doc": "compression amount; 0 = no gain reduction at any level",
-          "labels": null
-        },
-        {
-          "name": "TONE",
-          "default": 64,
-          "count": 128,
-          "doc": "a tilt after the saturator in every mode: 64 flat, 127 bright, 0 dark",
-          "labels": null
-        },
-        {
-          "name": "MIX",
-          "default": 127,
-          "count": 128,
-          "doc": "dry/wet across the whole chain; 0 = exact passthrough",
-          "labels": null
-        },
-        {
-          "name": "SAT",
-          "default": 0,
-          "count": 3,
-          "doc": "character: TAPE (TapeHead), TUBE (DaTube, asymmetric), INFL (OInflator). JClones, MIT",
-          "labels": [
-            "TAPE",
-            "TUBE",
-            "INFL"
-          ]
-        },
-        {
-          "name": "KEY",
-          "default": 0,
-          "count": 2,
-          "doc": "the compressor's key: SELF = this track's input, T1 = T1's level (ignored on the master)",
-          "labels": [
-            "SELF",
-            "T1"
-          ]
-        },
-        {
-          "name": "KLVL",
-          "default": 64,
-          "count": 128,
-          "doc": "how hard T1 drives the compressor with KEY = T1: 64 = unity, 127 = x2",
-          "labels": null
-        }
-      ],
-      "compatibility": {
-        "firmware": "1.40C",
-        "effectId": 26,
-        "location": "FX1",
-        "conflicts": [],
-        "limitations": [
-          "Recorded checks cover dry identity, saturation, folding, compression, width and both-core compressor-key tests. Prior versions ran on hardware; this catalog revision still needs full qualification."
-        ]
-      },
-      "resources": {
-        "recorded": "29 Sep 2026",
-        "storage": {
-          "label": "DSP program",
-          "display": "938 words",
-          "value": null,
-          "unit": "see display",
-          "method": "static",
-          "conditions": "Reported program words on each payload, including the compressor key input.",
-          "source": "README.md"
-        },
-        "processing": {
-          "label": "DSP estimate",
-          "display": "244 cycles/sample",
-          "value": null,
-          "unit": "see display",
-          "method": "static",
-          "conditions": "Static pricer result. It is not a measured hardware load percentage.",
-          "source": "README.md"
-        },
-        "impact": {
-          "conditions": "Audio modules are rated for an active instance, including expensive modes and changing controls; MIDI/USB features are rated while enabled. More tracks or instances increase demand. Shared runtime reservations and reused stock buffers are not added again per module. These rough source-backed tiers do not establish hardware headroom or qualification.",
-          "cpu": {
-            "level": "minimal",
-            "basis": "source-estimate",
-            "rationale": "The compressor and drive processing run on the DSP; the described CPU contribution is control and label support. Minimal is an estimate of incremental CPU demand, not zero CPU use.",
-            "source": "README.md"
-          },
-          "dsp": {
-            "level": "moderate",
-            "basis": "source-estimate",
-            "rationale": "The current documented static pricer result is 244 cycles per sample with KEY. The compressor/drive modes are rated in the middle of this audio catalog; static pricing does not establish hardware headroom.",
-            "source": "README.md"
-          },
-          "memory": {
-            "level": "low",
-            "basis": "source-estimate",
-            "rationale": "The record lists 938 DSP program words with per-instance compressor/drive state. The described signal path has no long delay lines, so its relative footprint is estimated low; total memory is not newly measured.",
-            "source": "README.md"
-          }
-        }
-      },
-      "tests": {
-        "report": "TESTING.md",
-        "summary": "Recorded checks cover dry identity, saturation, folding, compression, width and both-core compressor-key tests. Prior versions ran on hardware; this catalog revision still needs full qualification.",
-        "hardwareStatus": "historical",
-        "evidenceRevision": "b8deefc88b2c3e5f3c6158e364eb741df1924e1d",
-        "gates": [
-          "tools/verify/verify_character.py",
-          "tools/verify/verify_charkey.py"
-        ]
-      },
-      "license": {
-        "spdx": "MIT",
-        "file": "LICENSE",
-        "declaration": "Project code is MIT; adapted components retain their own copyright notices and full terms in LICENSE and ../../licenses/THIRD_PARTY_NOTICES.txt. The SPDX expression covers the applicable component licences. No rights to Elektron firmware or new hardware qualification are asserted."
-      },
-      "media": []
-    },
-    {
-      "schemaVersion": 2,
       "id": "miniverb",
       "key": "MINIVERB",
       "name": "Mini Verb",
@@ -3970,310 +3463,6 @@
     },
     {
       "schemaVersion": 2,
-      "id": "midi-scenes",
-      "key": "MIDI SCENES",
-      "name": "MIDI Scenes",
-      "version": "0.2.5-experimental",
-      "category": "scenes",
-      "source": {
-        "repository": "https://github.com/bkkbrls-del/midisc",
-        "revision": "4f9a89453fdcdd39a3cd57f010ffa489cac721cd",
-        "path": "tools/midisc"
-      },
-      "access": {
-        "location": "MIDI track parameter pages: hold SCENE A or SCENE B and edit an enabled parameter; the example uses MIDI CTRL 1.",
-        "steps": [
-          "Press MIDI to enter MIDI mode and select a track with its TRACK key.",
-          "For an external receiver, open MIDI NOTE SETUP with FUNC + SRC, choose CHAN with encoder A and press YES to confirm. The capture fixture has no connected receiver and leaves CHAN off.",
-          "For the illustrated CC example, hold FUNC and press FX1 to open MIDI CTRL 1 SETUP. Assign controller 74 to CC1 with encoder C and press YES to confirm.",
-          "Press FX1 to return to MIDI CTRL 1. Hold FUNC and press encoder C to enable CC1; its default OFF state cannot be edited as a normal active control.",
-          "Hold SCENE A or SCENE B and press a TRIG key to assign a scene to that side. Keep the scene key held and turn encoder C to set its CC1 scene lock. The pictured example locks CC1 to 64 while the base value is 0.",
-          "Release the scene key. Move the crossfader to morph the assigned scenes. Other supported MIDI parameter pages use the same hold-and-edit pattern."
-        ],
-        "screenshots": [
-          "media/ot-channel.png",
-          "media/ot-setup.png",
-          "media/ot-location.png",
-          "media/ot-scene-lock.png",
-          "media/ot-released.png",
-          "media/ot-arp.png",
-          "media/ot-lfo.png",
-          "media/ot-control2.png"
-        ]
-      },
-      "author": {
-        "github": "bkkbrls-del",
-        "credits": [
-          "bkkbrls-del: MIDISC2.0 standalone release implementation",
-          "Sam Banks: earlier 8.2 relocatable octabam port (separate from this 2.0 candidate)",
-          "Octamod contributors: stock-free recipe adapter, browser reconstruction and LCD capture"
-        ]
-      },
-      "nativeManifest": "manifest.py",
-      "presentation": {
-        "label": "SCENE MORPH",
-        "family": "Scenes",
-        "summary": "Lock MIDI track parameters to scenes and morph them with the crossfader.",
-        "overview": "MIDISC2.0 adds MIDI scene locks and crossfader morphing, with pre-trig operation, pattern/Part boundary timing, active-lock preservation, CC-before-note ordering and sequencer ACT Part sync. The owner-approved standalone release reconstructs the actual author image, with full update parity verified.",
-        "highlights": [
-          "Scene A/B locks on MIDI tracks",
-          "Crossfader morphing with step parameter locks",
-          "Part and project save/reload support",
-          "Standalone MIDISC2.0: pre-trig scenes and pattern/Part sync"
-        ],
-        "usage": [
-          "Hold Scene A or B while editing an enabled MIDI parameter to create a scene lock.",
-          "Release the scene key and sweep the crossfader between assigned scenes.",
-          "The tutorial uses CC1 assigned to controller 74, base 0 and scene-held value 64."
-        ]
-      },
-      "controls": [],
-      "compatibility": {
-        "firmware": "1.40C",
-        "effectId": null,
-        "location": "MIDI tracks",
-        "conflicts": [
-          "spectrum",
-          "modulation",
-          "character",
-          "miniverb",
-          "tapeecho",
-          "euclid",
-          "repitch",
-          "tapehead",
-          "analog-bassdrum",
-          "usb-audio-out-tracks-main-cue",
-          "quantizer",
-          "previewvol",
-          "cc-map"
-        ],
-        "limitations": [
-          "MIDI Scenes must be selected on its own; combining it with other modules is unsupported.",
-          "Hardware worst-case timing and complete memory bounds are not established; the owner explicitly approved building this exact version with those limitations.",
-          "SCNCTRL5 and the full control/persistence branch matrix remain incompletely tested; see TESTING.md."
-        ]
-      },
-      "resources": {
-        "recorded": "3 Oct 2026: emulator observations, exact scratch reservation; bounds pending",
-        "storage": {
-          "label": "Additional scratch reservation",
-          "display": "73,728 bytes reserved",
-          "value": 73728,
-          "unit": "bytes",
-          "method": "static",
-          "conditions": "Two exact 2.0 scratch boundary operands reserve 73,728 additional bytes. This excludes reused stock storage and an unproven stack bound; it is not complete module memory accounting.",
-          "source": "evidence/emulator.md"
-        },
-        "processing": {
-          "label": "Focused crossfader observation",
-          "display": "47,642 modeled cycles/event",
-          "value": 47642,
-          "unit": "modeled cycles/event",
-          "method": "emulator",
-          "conditions": "Largest of 60 direct helper fixtures; 31,863 instructions and 156 observed stack bytes. MCF5206E/68020 hybrid model, no V4e chip/cache/DMA timing or proven complete control bound. Inclusive RTOS intervals are separate.",
-          "source": "evidence/emulator.md"
-        },
-        "impact": {
-          "conditions": "Measured standalone author image and emulator workload; relative estimates are not chip-capacity percentages. Hardware timing and complete memory bounds remain unestablished.",
-          "cpu": {
-            "level": "high",
-            "basis": "measured-comparison",
-            "rationale": "Crossfader intervals increase from 47,642 modeled cycles in focused fixtures to 465,454 inclusive cycles with sounding playback; stock/interrupt work is included.",
-            "source": "evidence/emulator.md"
-          },
-          "dsp": {
-            "level": "minimal",
-            "basis": "source-estimate",
-            "rationale": "Author patch leaves both DSP payloads unchanged.",
-            "source": "TESTING.md"
-          },
-          "memory": {
-            "level": "moderate",
-            "basis": "source-estimate",
-            "rationale": "Reserves exactly 73,728 additional scratch bytes, including scene checkpoints; complete reused-memory/stack bounds remain unknown.",
-            "source": "evidence/emulator.md"
-          }
-        }
-      },
-      "tests": {
-        "report": "TESTING.md",
-        "summary": "Author MIDISC2.0 MAIN and full ELEK/ELUP update reconstructed byte for byte against native oracles. The shared production browser worker passes standalone validate/build, rejects all thirteen mixed selections, changed/truncated inputs and stale base state. Eight actual monochrome LCD captures and 360 focused emulator measurements are retained. Hardware operation is contributor-reported; the owner explicitly approves building with hardware timing and complete memory bounds still unknown. The exact additional scratch reservation is 73,728 bytes; modeled cycles are observations, not hardware bounds.",
-        "hardwareStatus": "reported",
-        "evidenceRevision": "4f9a89453fdcdd39a3cd57f010ffa489cac721cd",
-        "gates": [
-          "scripts/verify-midi-scenes-native.mjs",
-          "scripts/verify-midi-scenes-packaging.mjs",
-          "scripts/midi-scenes-emulator/run.py",
-          "scripts/verify-midi-scenes-worker.html"
-        ],
-        "documentation": {
-          "tutorial": {
-            "title": "Quick tutorial: morph a MIDI filter CC",
-            "steps": [
-              "Press MIDI and select a MIDI track. Set and confirm its output channel in FUNC + SRC. In FUNC + FX1, assign CC1 to controller 74 with encoder C and confirm with YES; the receiver must use that controller for its filter.",
-              "Return to FX1. Hold FUNC and press encoder C to enable CC1, then set its base to 0. Hold SCENE A, assign a scene with a TRIG key, and turn C to 64; the scene-held value should read 64.",
-              "Release SCENE A: the base value should read 0. Sweep the crossfader between your assigned scenes to hear the receiver change; clear the scene lock or disable CC1 to stop this example. The retained captures verify the values and release behavior without a connected receiver."
-            ]
-          },
-          "screenshots": [
-            "media/ot-channel.png",
-            "media/ot-setup.png",
-            "media/ot-location.png",
-            "media/ot-scene-lock.png",
-            "media/ot-released.png",
-            "media/ot-arp.png",
-            "media/ot-lfo.png",
-            "media/ot-control2.png"
-          ],
-          "screenshotStyle": "black-and-white"
-        }
-      },
-      "license": {
-        "spdx": "MIT",
-        "file": "LICENSE",
-        "declaration": "Original/MIT-licensed MIDISC2.0 author changes are retained with exact source provenance and full licence. Stock-derived spans are represented by offsets, lengths and hashes and recovered only from verified local original 1.40C. Original adapter/thumbnail and actual LCD exports have attributed rights; underlying Elektron rights remain reserved. Contributor declarations require owner/reviewer verification and are not automatic legal clearance."
-      },
-      "media": [
-        {
-          "path": "media/ot-channel.png",
-          "captureType": "emulator",
-          "caption": "MIDI NOTE SETUP: CHAN OFF in a fixture with no external receiver.",
-          "alt": "MIDI NOTE SETUP: CHAN OFF in a fixture with no external receiver.",
-          "credit": "Octamod contributors (headless capture)",
-          "license": "LicenseRef-OT-UI-Documentation",
-          "source": "original",
-          "otUi": {
-            "page": "MIDI NOTE SETUP",
-            "shows": "location",
-            "firmware": "1.40C",
-            "moduleVersion": "0.2.5-experimental",
-            "imageSha256": "ed7ccf4f9a383caaf3210f526b69fded2384a272670da0a17d0ff87441b622b3",
-            "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card; no external MIDI receiver; channel OFF."
-          }
-        },
-        {
-          "path": "media/ot-setup.png",
-          "captureType": "emulator",
-          "caption": "MIDISC2.0 MIDI CTRL 1 SETUP: CC1 assigned to 74; SCNCTRL5 visible.",
-          "alt": "MIDISC2.0 MIDI CTRL 1 SETUP: CC1 assigned to 74; SCNCTRL5 visible.",
-          "credit": "Octamod contributors (headless capture)",
-          "license": "LicenseRef-OT-UI-Documentation",
-          "source": "original",
-          "otUi": {
-            "page": "MIDI CTRL 1 SETUP",
-            "shows": "location",
-            "firmware": "1.40C",
-            "moduleVersion": "0.2.5-experimental",
-            "imageSha256": "ed7ccf4f9a383caaf3210f526b69fded2384a272670da0a17d0ff87441b622b3",
-            "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card; no external MIDI receiver; channel OFF."
-          }
-        },
-        {
-          "path": "media/ot-location.png",
-          "captureType": "emulator",
-          "caption": "MIDI CONTROL 1: enabled CC1 at base value 0.",
-          "alt": "MIDI CONTROL 1: enabled CC1 at base value 0.",
-          "credit": "Octamod contributors (headless capture)",
-          "license": "LicenseRef-OT-UI-Documentation",
-          "source": "original",
-          "otUi": {
-            "page": "MIDI CONTROL 1",
-            "shows": "location-and-controls",
-            "firmware": "1.40C",
-            "moduleVersion": "0.2.5-experimental",
-            "imageSha256": "ed7ccf4f9a383caaf3210f526b69fded2384a272670da0a17d0ff87441b622b3",
-            "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card; no external MIDI receiver; channel OFF."
-          }
-        },
-        {
-          "path": "media/ot-scene-lock.png",
-          "captureType": "emulator",
-          "caption": "Scene A held before playback: CC1 scene-lock value 64.",
-          "alt": "Scene A held before playback: CC1 scene-lock value 64.",
-          "credit": "Octamod contributors (headless capture)",
-          "license": "LicenseRef-OT-UI-Documentation",
-          "source": "original",
-          "otUi": {
-            "page": "MIDI CONTROL 1, Scene A held",
-            "shows": "controls",
-            "firmware": "1.40C",
-            "moduleVersion": "0.2.5-experimental",
-            "imageSha256": "ed7ccf4f9a383caaf3210f526b69fded2384a272670da0a17d0ff87441b622b3",
-            "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card; no external MIDI receiver; channel OFF."
-          }
-        },
-        {
-          "path": "media/ot-released.png",
-          "captureType": "emulator",
-          "caption": "Scene A released: CC1 returns to base value 0.",
-          "alt": "Scene A released: CC1 returns to base value 0.",
-          "credit": "Octamod contributors (headless capture)",
-          "license": "LicenseRef-OT-UI-Documentation",
-          "source": "original",
-          "otUi": {
-            "page": "MIDI CONTROL 1, Scene A released",
-            "shows": "controls",
-            "firmware": "1.40C",
-            "moduleVersion": "0.2.5-experimental",
-            "imageSha256": "ed7ccf4f9a383caaf3210f526b69fded2384a272670da0a17d0ff87441b622b3",
-            "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card; no external MIDI receiver; channel OFF."
-          }
-        },
-        {
-          "path": "media/ot-arp.png",
-          "captureType": "emulator",
-          "caption": "MIDI ARPEGGIATOR: TRAN, LEG, MODE, SPD, RNGE and NLEN; MODE OFF in the fixture.",
-          "alt": "MIDI ARPEGGIATOR: TRAN, LEG, MODE, SPD, RNGE and NLEN; MODE OFF in the fixture.",
-          "credit": "Octamod contributors (headless capture)",
-          "license": "LicenseRef-OT-UI-Documentation",
-          "source": "original",
-          "otUi": {
-            "page": "MIDI ARPEGGIATOR",
-            "shows": "controls",
-            "firmware": "1.40C",
-            "moduleVersion": "0.2.5-experimental",
-            "imageSha256": "ed7ccf4f9a383caaf3210f526b69fded2384a272670da0a17d0ff87441b622b3",
-            "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card; no external MIDI receiver; channel OFF."
-          }
-        },
-        {
-          "path": "media/ot-lfo.png",
-          "captureType": "emulator",
-          "caption": "MIDI LFO: SPD1–3 and DEP1–3.",
-          "alt": "MIDI LFO: SPD1–3 and DEP1–3.",
-          "credit": "Octamod contributors (headless capture)",
-          "license": "LicenseRef-OT-UI-Documentation",
-          "source": "original",
-          "otUi": {
-            "page": "MIDI LFO",
-            "shows": "controls",
-            "firmware": "1.40C",
-            "moduleVersion": "0.2.5-experimental",
-            "imageSha256": "ed7ccf4f9a383caaf3210f526b69fded2384a272670da0a17d0ff87441b622b3",
-            "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card; no external MIDI receiver; channel OFF."
-          }
-        },
-        {
-          "path": "media/ot-control2.png",
-          "captureType": "emulator",
-          "caption": "MIDI CONTROL 2: CC5–10 inactive at OFF.",
-          "alt": "MIDI CONTROL 2: CC5–10 inactive at OFF.",
-          "credit": "Octamod contributors (headless capture)",
-          "license": "LicenseRef-OT-UI-Documentation",
-          "source": "original",
-          "otUi": {
-            "page": "MIDI CONTROL 2",
-            "shows": "controls",
-            "firmware": "1.40C",
-            "moduleVersion": "0.2.5-experimental",
-            "imageSha256": "ed7ccf4f9a383caaf3210f526b69fded2384a272670da0a17d0ff87441b622b3",
-            "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6. Empty scratch card; no external MIDI receiver; channel OFF."
-          }
-        }
-      ]
-    },
-    {
-      "schemaVersion": 2,
       "id": "usb-audio-out-tracks-main-cue",
       "key": "USB AUDIO OUT TRACKS MAIN CUE",
       "name": "USB Audio",
@@ -4765,7 +3954,7 @@
       "id": "synth",
       "key": "SYNTH MACHINE",
       "name": "FM Synth",
-      "version": "0.1.2-experimental",
+      "version": "0.1.3-experimental",
       "category": "machines",
       "source": {
         "repository": "https://github.com/sambanks/octabam",
@@ -4805,7 +3994,7 @@
         "label": "Two-operator FM",
         "family": "Synth machines",
         "summary": "Two-operator FM with a dedicated track machine, one to four voices, chords and glide.",
-        "overview": "FM SYNTH provides one to four paraphonic FM voices through the stock AMP and effects. Version 0.1.2 preserves the MIDI chromatic drawer stack and adds 18.06 dB source headroom. Software regression and native/browser composition checks pass. The owner approved release without current hardware validation; chip timing and complete memory bounds remain unknown. The original static symptom remains unconfirmed on hardware.",
+        "overview": "FM SYNTH provides one to four paraphonic FM voices through the stock AMP and effects. Version 0.1.3 makes the render path cheaper on the CPU with no change of function; 0.1.2 preserved the MIDI chromatic drawer stack and added 18.06 dB source headroom. Software regression and native/browser composition checks pass. The owner approved release without current hardware validation; chip timing and complete memory bounds remain unknown. The original static symptom remains unconfirmed on hardware.",
         "highlights": [
           "Dedicated machine chooser entry; no sample required.",
           "Pitch, ratio, index, fine tuning, feedback and index decay on SRC.",
@@ -5012,7 +4201,7 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "Owner-approved experimental 0.1.2: MIDI selector regression passes; mono and four-voice output have 18.06 dB more headroom. Current hardware remains untested; chip timing and complete memory bounds remain unmeasured. See TESTING.md and evidence/regressions.json.",
+        "summary": "0.1.3 changes only the render path's cost (measured on an MKII, TESTING.md). Owner-approved experimental 0.1.2: MIDI selector regression passes; mono and four-voice output have 18.06 dB more headroom. Current hardware remains untested; chip timing and complete memory bounds remain unmeasured. See TESTING.md and evidence/regressions.json.",
         "hardwareStatus": "untested",
         "evidenceRevision": "73490ef77f36bf523bc28f2b385d62e331ec7c5c",
         "gates": [
@@ -5877,7 +5066,6 @@
         "effectId": 24,
         "location": "FX1 / FX2",
         "conflicts": [
-          "midi-scenes",
           "analog-bassdrum"
         ],
         "limitations": [
@@ -5885,7 +5073,6 @@
           "With Keep stock FX2 effects on, SPRING REV gives up its code space for this module; reassign any old SPRING REV slots. With it off, every stock FX2 effect leaves the FX2 chooser and the stock FX1 effects stay.",
           "It builds beside every other visible module alone. Among the nine visible modules other than Analog BD, 648 of the 1,024 selections that contain it build (786 with 0.1.2): 0.2.0's two ColdFire units (1,216 B) leave less effect-menu and cave space, so 138 more selections are refused, the smallest Euclid with Scale Quantizer. The selection checker says which applies.",
           "Beside Analog BD, 146 of the 212 Analog BD selections build (162 with 0.1.2); its larger DSP section (677 words a core) no longer fits core A in 16, the smallest Analog BD with Airwindows Chorus.",
-          "It cannot be combined with MIDI Scenes, which is standalone firmware.",
           "Its core-private keybus and cross-core window overlap BusDelay and BusVerb, which Modwerk does not carry; the native resource ledger refuses them beside it.",
           "A 0.1.x COMPRESSOR keeps its KEY; KGN takes the old KFLT, KBAS the old KGN, KWID the old MON, and MON comes up OFF.",
           "Cross-core keys use a buffered shared window, two blocks late on the beta base whatever the cores' enable order; no exact hardware latency is claimed.",
@@ -6204,7 +5391,7 @@
       "id": "vector",
       "key": "VECTOR",
       "name": "VECTOR",
-      "version": "0.3.1-experimental",
+      "version": "0.3.2-experimental",
       "category": "machines",
       "source": {
         "repository": "https://github.com/repeat98/modwerk",
@@ -6436,9 +5623,9 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "Firmware-free generator/writer and all 256 VECTOR-instance masks pass ASan/UBSan; authored assembly reproduces. Exact-image ColdFire emulator tests reproduce the previous reset/stuck transport and pass two-instance Part/project save-reload, saved-card fresh load and battery-only restart. Twelve SRC controls, ordinary stock validation, both pool menus and advancing transport are checked. Physical reboot/audio remain untested under the exact-version owner exception.",
+        "summary": "Firmware-free generator/writer and all 256 VECTOR-instance masks pass ASan/UBSan; authored assembly reproduces. Exact-image ColdFire emulator tests reproduce the previous reset/stuck transport and pass two-instance Part/project save-reload, saved-card fresh load and battery-only restart. Twelve SRC controls, ordinary stock validation, both pool menus and advancing transport are checked. Physical reboot/audio remain untested under the exact-version owner exception. 0.3.2 (#1533): no packed settings byte reaches 0x80, so stock's Part check passes without VECTOR too; seen in ot_emu and on the owner's MKII (a development twin, RAM boots).",
         "hardwareStatus": "reported",
-        "evidenceRevision": "645d73da3872ce9111f3e3172114fb33a3660b9f",
+        "evidenceRevision": "3d903dcf6e368010e20215440842e4783d262f46",
         "gates": [
           "Firmware-free sanitizer generator, writer and packed-settings checks",
           "Authored C/hooks to assembly reproducibility without firmware",
@@ -6447,7 +5634,8 @@
           "Browser/native build parity and matching composition rejection",
           "Signed Part validator preservation for all 256 track masks",
           "Two-instance native Part/project save-reload, saved-card fresh load and battery-RAM-only restart",
-          "Exact-version owner exception; physical reboot/audio unverified"
+          "Exact-version owner exception; physical reboot/audio unverified",
+          "0.3.2: packed settings pass stock's Part check without VECTOR (host test; ot_emu call of the check)"
         ],
         "qualification": {
           "documentation": {
@@ -6474,9 +5662,9 @@
             ],
             "screenshotStyle": "black-and-white"
           },
-          "moduleVersion": "0.3.1-experimental",
-          "sourceSha256": "27eca33a8d42bc0b5c56010864915454684d8d61df1a074403a66dda1e3d9a42",
-          "imageSha256": "a753ddf67b0fe64e3742b4c89ecf141071eb30757b170173215e92b1b4794d24",
+          "moduleVersion": "0.3.2-experimental",
+          "sourceSha256": "871a2b4d1d6ab0829a9a1d8457a75a1d790efe89e785bed6cfd3cebc5c36609c",
+          "imageSha256": "428d970ac5723ed5f3b26ef45a88deee9e92cf6be398b6ea93c7ee13115dfb23",
           "cycles": [
             {
               "processor": "coldfire",
@@ -6566,16 +5754,16 @@
             "kind": "functional",
             "status": "reported",
             "model": "MKII",
-            "testedOn": "2026-10-27",
+            "testedOn": "2026-11-13",
             "tester": "repeat98 (owner's unit, driven over USB by the coordinating session)",
-            "sourceRevision": "645d73da3872ce9111f3e3172114fb33a3660b9f",
-            "imageSha256": "a753ddf67b0fe64e3742b4c89ecf141071eb30757b170173215e92b1b4794d24",
-            "summary": "Over USB on an Octatrack MKII: a RAM-booted development twin of the release base (identity e6e75d75..., MAIN a753ddf6...; the b1b2ca58 build plus --dev) with POLY8 0.3.1, Analog BD 0.1.5 (rebuilt for the twin) and this VECTOR 0.2.5 package (45c962ca...), all accepted. On a STATIC track SRC SETUP's list scrolls to POLY8, ANALOG BD and VECTOR; with the cursor on VECTOR before YES the stock STATIC setup shows, and on ANALOG BD Analog BD's page. YES on VECTOR opens its STATIC/FLEX choice and the main SRC page shows SRC>VECTOR. SRC SETUP then shows VECTOR's page 2 (SEED 1, SPAN 12, OFST 0, ROT 0, RPT OFF, DIR FWD); encoders A-F change SEED, OFST, ROT, RPT and DIR (SPAN already at its maximum) and back, and SPAN moves within its range. Another STATIC track keeps the stock setup.",
+            "sourceRevision": "3d903dcf6e368010e20215440842e4783d262f46",
+            "imageSha256": "428d970ac5723ed5f3b26ef45a88deee9e92cf6be398b6ea93c7ee13115dfb23",
+            "summary": "Over USB on an Octatrack MKII (13 November 2026): a RAM-booted development twin (identity 2d97f42d...), this 0.3.2 USB package (428d970a..., 18,334 bytes) as a timed trial, a scratch project. VECTOR chosen on T1 from the machine list and the Flex pool; its second page showed SPAN 12 and the Part held 53 32 02 1b 4b 40, no byte at 0x80 or above. With those settings left on the track, a RAM boot (the battery restore with no module installed) kept the bank: machines, both tracks' trigs and the settings bytes unchanged. The same steps with the published 0.2.5 package (settings ... 0c c0) reset the bank at the restart: all tracks STATIC, no trigs (#1533); a second restart without saving brought it back.",
             "limitations": [
-              "The base was the development twin of the release base, not the b1b2ca58 build itself, nor the base this release commits.",
-              "Not tested: the FLEX, THRU and PICKUP setups; a POLY8 or Analog BD track's SRC SETUP; VECTOR 0.2.4 on the new base; whether the SRC main page regenerates the phrase.",
-              "Not tested: saving and reloading, a power cycle with VECTOR kept, and listening; no chip timing or stress.",
-              "One MKII; no MKI. The card build was not run on a unit: 0.2.4's card source, and 0.3.1's (0.2.6's code: st_setup_page without its row-5 test, for POLY8 sets, #1119) only in ot_emu. 0.3.1 keeps publishing this 0.2.5 USB package; its control unit source is byte-identical."
+              "The base was a development twin of another branch, not the release base; the package ran as a trial, never as a kept module.",
+              "The restart was a RAM boot with the track switched back to FLEX and the settings bytes left in place; a restart with the track still set to VECTOR under 0.3.2, and a power cycle with 0.3.2 kept on the flashed base, were not run.",
+              "Not tested on a unit: the rewrite of settings saved by older versions (emulator only), PROJECT > RELOAD as the recovery, the card build, saved Parts, listening; no chip timing or stress.",
+              "One MKII; no MKI. The earlier 27 October run of the 0.2.5 package (SRC SETUP page 2 over USB) is in TESTING.md."
             ],
             "report": "TESTING.md"
           }
@@ -6599,7 +5787,7 @@
             "page": "SRC SETUP machine chooser",
             "shows": "location",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.1-experimental",
+            "moduleVersion": "0.3.2-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6616,7 +5804,7 @@
             "page": "SRC generator",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.1-experimental",
+            "moduleVersion": "0.3.2-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6633,7 +5821,7 @@
             "page": "SRC after Generate",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.1-experimental",
+            "moduleVersion": "0.3.2-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6650,7 +5838,7 @@
             "page": "SRC sample editor",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.1-experimental",
+            "moduleVersion": "0.3.2-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6667,7 +5855,7 @@
             "page": "SRC SETUP",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.1-experimental",
+            "moduleVersion": "0.3.2-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6684,7 +5872,7 @@
             "page": "Backing-pool choice",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.1-experimental",
+            "moduleVersion": "0.3.2-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6701,7 +5889,7 @@
             "page": "Static sample pool",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.1-experimental",
+            "moduleVersion": "0.3.2-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -6718,7 +5906,7 @@
             "page": "Flex sample pool",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.1-experimental",
+            "moduleVersion": "0.3.2-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -7479,7 +6667,7 @@
       "id": "poly8",
       "key": "POLY8",
       "name": "POLY8",
-      "version": "0.3.2-experimental",
+      "version": "0.3.3-experimental",
       "category": "machines",
       "source": {
         "repository": "https://github.com/repeat98/octamad",
@@ -7563,9 +6751,7 @@
         "firmware": "1.40C",
         "effectId": null,
         "location": "Track machine",
-        "conflicts": [
-          "octakit"
-        ],
+        "conflicts": [],
         "limitations": [
           "Experimental release: physical CPU deadlines, recording, reboot persistence and broader stock workflows remain unqualified.",
           "Voices are limited by CPU time: POLY8 plays fewer voices when its rendering would take more than 40 % of the CPU on average, about 197 us of one audio frame, or starve the panel. On the current beta base (module code uncached) that is about three voices with one POLY8 track; on a base with cached module code seven to eight.",
@@ -7625,7 +6811,7 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "0.3.2 fixes the card build's double-tap TRACK machine list beside VECTOR, FM Synth or Analog BD (names and mark by the list's row, cursor clamps at the last row); checked in ot_emu only, see TESTING.md. 0.3.1 adds a self-timed voice limit and runs the render through cached memory. On the owner's MKII (RAM-booted development twins of the current beta base, cached and uncached module code): eight held keys, chords over the playing sequencer and 40 rapid presses never froze the panel or stopped the frames; the published 0.3.0 froze the same unit at three to four voices and, with the limit off, six voices stopped the frames. Recordings from PLAY match 0.3.0 to the recorder floor on both bases. Host tests cover the limit (pool-test.c); verify-addressing.py proves the cached render reads POLY8 data only through the uncached alias. Not run: the card build on a unit, Part/project reload and power cycles with this version, MKI; chip worst-case cycles and complete memory bounds stay waived for this exact version.",
+        "summary": "0.3.3 makes POLY8 on no track cheaper: a stock track's render goes straight to stock after one inline test, and the frame's answers are worked out once a frame. On the owner's MKII (development twin of main, four FLEX tracks playing) at rest 4.9 points of the frame interrupt against 12.2 for 0.3.1; an emulator probe matches poly_is_track on every case tried. A one-voice POLY8 track on T1 recorded over USB is sample-identical to 0.3.1 for a bar; chords, MIDI, several voices and power cycles not tested with this source. 0.3.2 fixes the card build's double-tap TRACK machine list beside VECTOR, FM Synth or Analog BD (names and mark by the list's row, cursor clamps at the last row); checked in ot_emu only, see TESTING.md. 0.3.1 adds a self-timed voice limit and runs the render through cached memory. On the owner's MKII (RAM-booted development twins of the current beta base, cached and uncached module code): eight held keys, chords over the playing sequencer and 40 rapid presses never froze the panel or stopped the frames; the published 0.3.0 froze the same unit at three to four voices and, with the limit off, six voices stopped the frames. Recordings from PLAY match 0.3.0 to the recorder floor on both bases. Host tests cover the limit (pool-test.c); verify-addressing.py proves the cached render reads POLY8 data only through the uncached alias. Not run: the card build on a unit, Part/project reload and power cycles with this version, MKI; chip worst-case cycles and complete memory bounds stay waived for this exact version.",
         "hardwareStatus": "untested",
         "evidenceRevision": "9e853271be169d242bdf00b79147707e86ee12cb",
         "gates": [
@@ -9846,7 +9032,7 @@
       "id": "temp-save",
       "key": "TEMP SAVE",
       "name": "Temp Save",
-      "version": "0.1.0-experimental",
+      "version": "0.1.1-experimental",
       "category": "system",
       "access": {
         "location": "The pattern screen and every page or menu window (SETUP pages, MIXER, PART, PROJECT, ARRANGER and more); not sample lists, an audio track's SRC SETUP, AED, dialogs or editors.",
@@ -9955,93 +9141,7 @@
         "summary": "On one MKII over USB (28 Oct 2026), by hand on the flashed base: save and reload on the pattern screen and in eleven page and menu windows, stock FUNC + YES/NO kept in SRC SETUP, both sample lists, AED, a yes/no dialog and RENAME; earlier sources also covered machine and Part changes, quick double presses, menus, YES/NO alone and FUNC + CUE. Under ot_emu (verify.py, 54 checks MKII, 45 MKI): the pattern and Part restored byte for byte in RAM and their battery copies, every page and menu window, each stock-only case, Part switch, bank without saved Parts, MIDI mode, power cycle; beside Apply Scene, Preview Vol and Direct Jump.",
         "hardwareStatus": "reported",
         "evidenceRevision": "d88d7207f15df9277f8d8e74e88034b0f2b8b008",
-        "gates": [],
-        "qualification": {
-          "documentation": {
-            "tutorial": {
-              "title": "Quick tutorial",
-              "steps": [
-                "On the pattern screen, with no menu open, place a few trigs and press FUNC + YES: TEMP SAVED.",
-                "Change the pattern and the Part: clear some trigs, turn knobs on two pages, try another machine.",
-                "Press FUNC + NO: RELOADED. The trigs, knobs and machine are back as they were at step 1.",
-                "To keep the result, save the Part (FUNC + PART, SAVE) and the project."
-              ]
-            },
-            "screenshots": [
-              "media/ot-temp-saved.png",
-              "media/ot-reloaded.png",
-              "media/ot-no-temp-save.png",
-              "media/ot-temp-saved-amp-setup.png"
-            ],
-            "screenshotStyle": "black-and-white"
-          },
-          "moduleVersion": "0.1.0-experimental",
-          "sourceSha256": "4a001efefd61e0c0351a3e69bc4f899da6d61c863337ab73f520b006dd6538da",
-          "imageSha256": "00b8d5ab9bedca2e0d1d02add7540af43ce98cbfc0d8b3c06e40c9b18fe68c4a",
-          "cycles": [
-            {
-              "processor": "coldfire",
-              "worstCase": 640923,
-              "maxConfiguration": 640923,
-              "maxInstances": 1,
-              "budget": 26600000,
-              "unit": "cycles/event",
-              "method": "emulator",
-              "conditions": {
-                "parameterExtremes": "The dearest event is a reload while playing: 640,923 executed instructions from the FUNC + NO hook to the end of the screen refresh (verify.py); under a 1,000 message/s MIDI flood 16 reloads took 605,222 to 635,604. A save took 16,287 (39,151 at most under the flood).",
-                "parameterModulation": "Not applicable: one save or reload per press, outside the audio frame. The restored values are pattern and Part bytes that the sequencer, scenes and LFOs read as usual.",
-                "modeSwitching": "Save, reload, a repeated quick press, a reload after a machine change, after a Part change and on a bank whose Parts were never saved, stopped and playing, MIDI mode.",
-                "maxLoad": "Executed ColdFire instructions under ot_emu, interrupts included; one instance. Budget: 100 ms of ColdFire time at 266 MHz, a key-press responsiveness target, not a measured limit. No static bound: the reload's cost is stock's pattern writer 0x4002b9b0, Part Reload 0x4004aab4 and screen refresh, which nothing in this repository bounds.",
-                "inputConditions": "Independent of audio and MIDI; runs in the UI task once per press. Executed instructions, not cycles: cache and wait states are not modelled, and time on the unit is not measured."
-              },
-              "report": "TESTING.md"
-            }
-          ],
-          "memory": {
-            "regions": [
-              {
-                "name": "ColdFire code and state (one linked unit)",
-                "space": "sdram",
-                "words": 892,
-                "wordBits": 8,
-                "bytes": 892,
-                "scope": "shared"
-              },
-              {
-                "name": "The temporary copy: one pattern (36,568 bytes) and one Part (6,322 bytes)",
-                "space": "sdram",
-                "words": 42892,
-                "wordBits": 8,
-                "bytes": 42892,
-                "scope": "shared"
-              }
-            ],
-            "perInstanceBytes": 0,
-            "sharedBytes": 43784,
-            "maxInstances": 1,
-            "totalBytes": 43784,
-            "conditions": "The unit as the USB package carries it (892 bytes of code and data, 42,892 bytes of bss). No DSP memory, no saved data.",
-            "report": "TESTING.md"
-          },
-          "hardware": {
-            "kind": "functional",
-            "status": "reported",
-            "model": "MKII",
-            "testedOn": "2026-10-28",
-            "tester": "npp1993",
-            "sourceRevision": "d88d7207f15df9277f8d8e74e88034b0f2b8b008",
-            "imageSha256": "00b8d5ab9bedca2e0d1d02add7540af43ce98cbfc0d8b3c06e40c9b18fe68c4a",
-            "summary": "On the contributor's Octatrack MKII (OS 1.40C) the published USB package of this source (SHA-256 above) ran as a timed trial on the flashed base 890d41e2 beside 14 kept modules. By hand: FUNC + YES saved and FUNC + NO reloaded in AMP, LFO and FX SETUP, MIXER, PATTERN SETTINGS, TRACK TRIG EDIT, the PART window, the FUNC + PART menu, PROJECT and its INPUT page, ARRANGER and RECORDING SETUP; both stayed stock in SRC SETUP (machine list and slot list), the sample list reached by double-tapping a TRACK key (FUNC + YES previewed), AED, the RELOAD PROJECT dialog and the RENAME editor; save and reload on the pattern screen, stopped and playing, still worked. On 31 Oct the same package was kept through the developer MCP; after a power cycle FUNC + NO showed NO TEMP SAVE, the modules were still there and Undo restored the earlier set. On 29 Oct the same package, loaded through the developer MCP on base faa07d4f beside E-Verb, Mini Verb and FM Synth, restored E-Verb on T1 FX2 after a swap to Mini Verb or Spring Reverb and FM Synth after a change to THRU, stopped and playing, with no DSP STOPPED. Earlier runs of this version's previous sources (evidence/hardware.md) covered parameters on several tracks, a machine change, a pattern moved to another Part, quick double presses, NO TEMP SAVE on another pattern, YES and NO alone, FUNC + CUE and Apply Scene.",
-            "limitations": [
-              "One unit, tested by the contributor, not an independent reviewer; the MKI was not tested.",
-              "USB only: the card build was not flashed.",
-              "Nothing timed; reloads while playing were judged by ear only.",
-              "Review, trial, Keep, a power cycle with the module kept and Undo ran through the developer MCP (runs 5 and 6); the site itself was not used.",
-              "SCALE and the MIDI-track SETUP pages, MIDI mode, other banks and a project save after a reload ran under the emulator only."
-            ],
-            "report": "evidence/hardware.md"
-          }
-        }
+        "gates": []
       },
       "license": {
         "spdx": "MIT",
@@ -12676,19 +11776,19 @@
       "id": "track-solo",
       "key": "TRACK SOLO",
       "name": "Track Solo",
-      "version": "0.2.4-experimental",
+      "version": "0.2.5-experimental",
       "category": "system",
       "access": {
         "location": "PROJECT > CONTROL > SEQUENCER > TRACK SOLO",
         "steps": [
           "Install Track Solo over USB.",
-          "Open PROJECT > CONTROL > SEQUENCER and choose HOLD for TRACK SOLO.",
+          "TRACK SOLO starts at HOLD; PROJECT > CONTROL > SEQUENCER turns it OFF for the session.",
           "Close the menu, hold one TRACK button alone for 30 instrument UI ticks (about 0.5 seconds), then tap others to toggle their solo.",
           "Release the original TRACK button to end solo; choose OFF to disable the gesture."
         ],
         "screenshots": [
-          "media/track-solo-off.png",
-          "media/track-solo-hold.png"
+          "media/track-solo-hold.png",
+          "media/track-solo-off.png"
         ]
       },
       "author": {
@@ -12709,7 +11809,7 @@
           "Release the anchor to return to the underlying mute and solo state."
         ],
         "usage": [
-          "Open PROJECT > CONTROL > SEQUENCER and set TRACK SOLO to HOLD.",
+          "TRACK SOLO starts at HOLD; turn it OFF under PROJECT > CONTROL > SEQUENCER for the session.",
           "Hold T2 alone for 0.5 seconds, then press T3 to add or remove it.",
           "Release T2 to end the temporary solo."
         ]
@@ -12727,7 +11827,7 @@
         "limitations": [
           "USB only: needs the Modwerk base for its key, tick and encoder events and its SEQUENCER row, so card firmware cannot include it.",
           "Functional hardware report on package 50f64eb6 on beta base 72defb09, mostly alone and once beside Play Modes. Not tested on hardware: other modules, MKI, all eight anchors, external MIDI, arranger rows, Pickup recording, K09 modifier orderings, self-test. See TESTING.md.",
-          "TRACK SOLO is OFF on startup and after package replacement; its enable setting and solo groups are not saved.",
+          "TRACK SOLO is HOLD on startup and after package replacement; set it to OFF for the session to restore stock long TRACK presses. The setting and solo groups are not saved.",
           "MIDI mode is excluded. When T8 is master, include it with the source tracks in the temporary group; T8 alone has no source audio.",
           "Mute Modes is optional. Paired emulator audio passed for OT, OTFX, OTFX-T and DT-T on the 0.2.2 package; physical Mute Modes behavior is untested.",
           "USB settings use the existing shared row table; native card settings integration is pending.",
@@ -12778,9 +11878,9 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "Author functional report on real hardware, 10 November 2026: this package on beta base 72defb09, try and Undo, Keep with a minute of playing, power cycle, Play Modes beside it, removal, all read back from the device. Emulator control (18/18) and audio suites passed; measured worst event 1,687 cycles. Stock benchmark and stress waived by the owner for this version (no MIDI path). See TESTING.md.",
+        "summary": "0.2.5 starts at HOLD (one data byte). Author functional report on real hardware, 13 November 2026: this package on beta base c1f21351 beside 15 kept modules, a trial with HOLD from the start, the row at HOLD and OFF behaving as stock, then Keep, power cycle and HOLD working again with no menu visit, read back from the device. Emulator control and routine suites passed; measured worst event 1,687 cycles, as 0.2.4. Stock benchmark and stress were waived by the owner for 0.2.4 (no MIDI path); renewal for 0.2.5 pending. See TESTING.md.",
         "hardwareStatus": "reported",
-        "evidenceRevision": "4faa4023b2cf29012abedfad2aed7b02e59519d5",
+        "evidenceRevision": "c329f7d23b57e80aa46844652c1181aeced1798e",
         "gates": [
           "python3 -B verify.py",
           "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-control>",
@@ -12795,20 +11895,20 @@
             "tutorial": {
               "title": "Quick tutorial: audition tracks while editing",
               "steps": [
-                "Install Track Solo over USB. Open PROJECT > CONTROL > SEQUENCER, set TRACK SOLO to HOLD, close the menu, and let any stock notification clear.",
+                "Install Track Solo over USB. TRACK SOLO starts at HOLD, so the gesture is ready; PROJECT > CONTROL > SEQUENCER > TRACK SOLO turns it OFF for the session.",
                 "Hold T2 alone for 0.5 seconds. While continuing to hold T2, press and release T3: T2 and T3 are now in the temporary group. Press T3 again to remove it.",
                 "Release T2. The underlying mute and solo state applies again. Select OFF to disable the gesture completely."
               ]
             },
             "screenshots": [
-              "media/track-solo-off.png",
-              "media/track-solo-hold.png"
+              "media/track-solo-hold.png",
+              "media/track-solo-off.png"
             ],
             "screenshotStyle": "black-and-white"
           },
-          "moduleVersion": "0.2.4-experimental",
-          "sourceSha256": "f37562d53f0f901e09cca4d42d1a73730dfc92caa2563298dc960f45eb37f2cc",
-          "imageSha256": "50f64eb63cfe62b534988bda28baa4c575eb9d9a6dbc7a81035e7d95cd01cf89",
+          "moduleVersion": "0.2.5-experimental",
+          "sourceSha256": "4d3fdbf04d04cf1db20bcd96953a6907a0c4281667f0bc61a1c75a635137607d",
+          "imageSha256": "5ac64b5ef96567b701a603197c737d5cccd6317da7242d15ca1855ab37da7c1c",
           "cycles": [
             {
               "processor": "coldfire",
@@ -12882,15 +11982,15 @@
             "kind": "functional",
             "status": "reported",
             "model": "MKII",
-            "testedOn": "2026-11-10",
+            "testedOn": "2026-11-13",
             "tester": "twwwy",
-            "sourceRevision": "4faa4023b2cf29012abedfad2aed7b02e59519d5",
-            "imageSha256": "50f64eb63cfe62b534988bda28baa4c575eb9d9a6dbc7a81035e7d95cd01cf89",
-            "summary": "The author updated the unit to Modwerk beta base 72defb09 from the site, then ran this exact package over USB, OS 1.40C, disposable project: a 90-second trial and Undo; a trial and Keep, then about a minute of playing; a power cycle; a 300-second trial of Play Modes 0.1.1 beside it; then removal. They reported the TRACK SOLO row and HOLD working, solo, join and leave, audio, lamps and release behaving, the row back at OFF after the power cycle, and with Play Modes the first gesture wins: TRACK plus UP or DOWN within half a second changes the Play Modes mode, a longer hold starts Track Solo instead. Read back from the device: empty after Undo, Track Solo installed after Keep and after the power cycle, only Track Solo after Play Modes rolled back, empty after removal, set identity back to the start.",
+            "sourceRevision": "c329f7d23b57e80aa46844652c1181aeced1798e",
+            "imageSha256": "5ac64b5ef96567b701a603197c737d5cccd6317da7242d15ca1855ab37da7c1c",
+            "summary": "On the flashed Modwerk beta base c1f21351, OS 1.40C, with 15 other modules kept (among them Mute Modes, SAMPLE LOCKS and Beat Slicer): the agent ran a 20-second trial and rolled it back, then loaded a 300-second trial in which the author reported, without opening the menu, holding T2 solos it and T3 joins, the TRACK SOLO row reading HOLD, and OFF giving stock behaviour. The agent then kept this package at the author's request; after the author's power cycle they reported the row at HOLD, the gesture working with no menu visit and the other modules up. Read back from the device: rolled back after the first trial, accepted with this package active, and after the power cycle the same base and the same 16 kept modules.",
             "limitations": [
               "Author-reported panel observations with no audio measurement or timing.",
-              "About ten minutes on one unit. The USB identity does not state the model; MKII comes from earlier records of this unit.",
-              "Not tested: other modules alongside except the Play Modes trial, all eight anchors, external MIDI, arranger rows, Pickup recording, the K09 orderings, self-test, MKI, the card build (Track Solo is USB-only)."
+              "The flashed base answers no screen or memory reads, so the agent's own stage shows loading, running and rollback only.",
+              "Not tested on 0.2.5: all eight anchors, external MIDI, arranger rows, Pickup recording, the K09 orderings, self-test, MKI, removal."
             ],
             "report": "TESTING.md"
           }
@@ -12905,7 +12005,7 @@
         {
           "path": "media/track-solo-off.png",
           "captureType": "emulator",
-          "caption": "Find TRACK SOLO under PROJECT > CONTROL > SEQUENCER. OFF preserves stock track-button behavior.",
+          "caption": "Press YES on TRACK SOLO to choose OFF for this session: stock track-button behavior until the next restart.",
           "alt": "Octatrack SEQUENCER menu with TRACK SOLO set to OFF.",
           "credit": "twwwy; underlying Octatrack UI by Elektron",
           "license": "LicenseRef-OT-UI-Documentation",
@@ -12914,15 +12014,15 @@
             "page": "PROJECT / CONTROL / SEQUENCER",
             "shows": "location",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.4-experimental",
+            "moduleVersion": "0.2.5-experimental",
             "imageSha256": "124548dc353b2f9cd41ba0a27113ae441e82b68a16d10a1b9509920c61839587",
-            "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.4 package installed through the real runtime backend; panel_test.py --menu; empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo."
+            "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.5 package installed through the real runtime backend; panel_test.py --menu (the row opens at HOLD, YES chooses OFF); empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo."
           }
         },
         {
           "path": "media/track-solo-hold.png",
           "captureType": "emulator",
-          "caption": "Press YES to choose HOLD. Close the menu and wait for stock notifications to clear before holding a track for 0.5 seconds.",
+          "caption": "TRACK SOLO under PROJECT > CONTROL > SEQUENCER starts at HOLD. Close the menu and wait for stock notifications to clear before holding a track for 0.5 seconds.",
           "alt": "Octatrack SEQUENCER menu with TRACK SOLO set to HOLD.",
           "credit": "twwwy; underlying Octatrack UI by Elektron",
           "license": "LicenseRef-OT-UI-Documentation",
@@ -12931,9 +12031,9 @@
             "page": "PROJECT / CONTROL / SEQUENCER",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.4-experimental",
+            "moduleVersion": "0.2.5-experimental",
             "imageSha256": "124548dc353b2f9cd41ba0a27113ae441e82b68a16d10a1b9509920c61839587",
-            "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.4 package installed through the real runtime backend; panel_test.py --menu; empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo."
+            "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.5 package installed through the real runtime backend; panel_test.py --menu (the row opens at HOLD, YES chooses OFF); empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo."
           }
         }
       ]
@@ -13299,6 +12399,266 @@
             "moduleVersion": "0.1.8-experimental",
             "imageSha256": "32e2480b5658c5b559884358b9925e8dbba92581b27a581745f232cb9b57ab43",
             "setup": "Actual DSP-enabled MKII emulator on base 4ed92776; receipt media/emulator-0.1.8.json. Emulator evidence does not qualify hardware or audio. Exact package 28766a017005e664d00620d3831fc81af7449c95e1896a17121ca8fc2d306d8d."
+          }
+        }
+      ]
+    },
+    {
+      "schemaVersion": 2,
+      "id": "amiga",
+      "key": "AMIGA",
+      "name": "Amiga",
+      "version": "0.2.1-experimental",
+      "category": "machines",
+      "access": {
+        "location": "The track's machine list (double-tap TRACK, or SRC SETUP)",
+        "steps": [
+          "Double-tap a track key, choose AMIGA in the machine list and press YES, then double-tap again and pick a Flex sample.",
+          "On SRC, turn PTCH: the pitch moves and the length stays. Turn SPD (knob E) for the length and GRN (knob F) for the flutter; RATE (knob D) is stock's, backwards below 0.",
+          "On SRC SETUP, raise SRR for a lower sample rate. LED, STR and BITS are beside it."
+        ],
+        "screenshots": [
+          "media/amiga-machine-list.png",
+          "media/amiga-src.png",
+          "media/amiga-src-setup.png"
+        ]
+      },
+      "author": {
+        "github": "repeat98",
+        "credits": [
+          "Jannik Aßfalg: design, ColdFire code and host tests (MIT)."
+        ]
+      },
+      "nativeManifest": "manifest.py",
+      "presentation": {
+        "label": "8-bit sampler",
+        "family": "Sample track machine",
+        "summary": "Plays a Flex sample like an 8-bit tracker: gritty, held samples and a cyclic stretch that pulls pitch and time apart, on whole samples or slices.",
+        "overview": "Amiga is a track machine modelled on how a home computer's 8-bit sound chip and its tracker software played samples. It plays the track's Flex sample through the stock reader, reduces its word length and storage rate before the Octatrack repitches it, and can restart the sample every few milliseconds a little further on, so PTCH changes the pitch and SPD the length. Each restart crossfades out of the sample itself over half a cycle, as Amigo's grains do, and a sliced note stretches inside its slice. RATE is stock's own, forwards and backwards. The track's filter, AMP, LFOs and effects follow as for any sample.",
+        "highlights": [
+          "SPD sets how fast the note moves through the sample and GRN the cycle, 96 to 4128 samples: half speed, about twice as fast or a held sound, at any pitch.",
+          "Slices stretch too: SLIC on, STRT picks the slice, and the stretch stays inside it.",
+          "Every restart crossfades over half a cycle, whichever way the note is going.",
+          "STR can turn the stretch into a pitch shift of up to an octave either way.",
+          "RATE is stock's own: forwards, backwards and slower, with the stretch following it both ways.",
+          "SRR lowers the storage rate, BITS sets the word from 4 to 16 bits (8 by default), LED adds a fixed lowpass.",
+          "RATE, SPD and GRN take parameter locks, LFOs and scenes, as SRC knobs do."
+        ],
+        "usage": [
+          "Double-tap a track key (or open SRC SETUP), move to AMIGA in the machine list and press YES.",
+          "Double-tap the track key again and pick a sample from the Flex list, as for a Flex track.",
+          "Open SRC: knob D is RATE, E is SPD, F is GRN."
+        ]
+      },
+      "controls": [
+        {
+          "name": "RATE",
+          "default": 127,
+          "count": 128,
+          "doc": "Stock's RATE, -64 to +63: speed and pitch together, backwards below 0. The stretch follows it both ways. SRC knob D.",
+          "labels": null
+        },
+        {
+          "name": "SPD",
+          "default": 64,
+          "count": 128,
+          "doc": "How fast the note moves through the sample, whatever the pitch: 64 is its own speed, 32 half, 0 holds. SRC knob E.",
+          "labels": null
+        },
+        {
+          "name": "GRN",
+          "default": 64,
+          "count": 128,
+          "doc": "The stretch's cycle, 96 to 4128 samples; 1120 by default. Each restart crossfades over half of it. SRC knob F.",
+          "labels": null
+        },
+        {
+          "name": "LED",
+          "default": 0,
+          "count": 2,
+          "doc": "A fixed two-pole lowpass on the stored sample. SRC SETUP knob C.",
+          "labels": [
+            "OFF",
+            "ON"
+          ]
+        },
+        {
+          "name": "SRR",
+          "default": 0,
+          "count": 128,
+          "doc": "Storage rate: 16/(16+SRR) of the sample's own, each stored sample an average, then held. SRC SETUP knob D.",
+          "labels": null
+        },
+        {
+          "name": "STR",
+          "default": 1,
+          "count": 3,
+          "doc": "The stretch: OFF plays as FLEX, ON stretches, PCH shifts the pitch by SPD at the note's own length. SRC SETUP knob E.",
+          "labels": [
+            "OFF",
+            "ON",
+            "PCH"
+          ]
+        },
+        {
+          "name": "BITS",
+          "default": 4,
+          "count": 13,
+          "doc": "Word length from 4 to 16 bits; the saved value is bits minus 4. 16 leaves the sample's own word. SRC SETUP knob F.",
+          "labels": null
+        }
+      ],
+      "compatibility": {
+        "firmware": "1.40C",
+        "effectId": null,
+        "location": "Track machine",
+        "conflicts": [],
+        "uiClaims": [],
+        "limitations": [
+          "USB only: it loads on the Modwerk base over USB (it needs the base's machine list and START dispatch) and has no card build.",
+          "Experimental: played and measured on one MKII on a development base; TESTING.md lists what was not tried.",
+          "Measured on an MKII: one Amiga track beside seven FLEX tracks added 5.5 points to the frame interrupt at the defaults and up to 13.8 with PTCH +12, SRR and LED (0.1.0); this version is 2 to 3 points dearer. The base's CPU budget takes three Amiga tracks a Part and refuses a fourth with CPU FULL; three at the defaults beside four busy tracks already ran the frame late. Other installed modules leave less room: beside fifteen of them and three sounding FLEX tracks, one Amiga track took 12.6 to 16 points.",
+          "With a USB recording running as well, one Amiga track (0.1.0-experimental) at PTCH +12 with SRR and LED on beside seven FLEX tracks froze the unit until a power cycle.",
+          "No stock RTRG or RTIM on an Amiga track: SPD and GRN take their knobs.",
+          "Stock's own time-stretch (TSTR) is off on an Amiga track, and SETUP's LEN switch is LED: the track always uses stock's default length setting, LEN OFF.",
+          "SRR, LED, STR and BITS are SETUP values: one for the Part, without locks or LFOs.",
+          "A sliced note is stretched when it is one slice, as stock plays it with SETUP's LEN off; SRR, BITS and LED work either way.",
+          "The cycle length is in samples, not tied to the tempo.",
+          "The crossfade reads the sample itself. A recorder buffer that is recording, or a sample the module cannot read, restarts with a short fade-out of the step instead.",
+          "A stretched note that is not looped ends when SPD has carried it to the end of the sample, even if LEN would stop a FLEX note sooner by time.",
+          "A project opened without the module plays Amiga tracks as FLEX and reads SPD and GRN as stock's RTRG and RTIM, and LED, SRR, STR and BITS as SETUP's LEN, RATE, TSTR and TSNS.",
+          "Leaving Amiga for another machine puts the track's SRC settings back to FLEX defaults.",
+          "Before a trial of the module ends or the module is removed, put its tracks on another machine: the base refuses to take a machine away from a track that names it."
+        ]
+      },
+      "resources": {
+        "recorded": "2026-11-14",
+        "storage": {
+          "label": "Module image and memory",
+          "display": "11,792 bytes code and data; 2,092 bss",
+          "value": 13884,
+          "unit": "bytes",
+          "method": "static",
+          "conditions": "The USB package of this source (SHA-256 6bb8e598b76e359bda78fb420abaa96926ff8e8f3265b78932ef4599755c9b67, built by npm run module:dev -- amiga --build-only): 11,792 bytes of code and data and 2,092 of bss, the eight voices' state and the sample descriptions for the crossfade. The loader's own record for the module and the stack the render uses are not counted. The loader allows a module 128 KiB.",
+          "source": "TESTING.md"
+        },
+        "processing": {
+          "label": "ColdFire, in the frame interrupt",
+          "display": "Not measured in cycles; on the unit 6 to 28 points of a frame a track",
+          "value": null,
+          "unit": "cycles/block",
+          "method": "unmeasured",
+          "conditions": "No worst case in cycles exists. On the owner's MKII with this version (development twin 2d97f42d of release base 4e9a87ea, 14 November 2026; eight seconds of a 126 BPM pattern with track 1 alone sounding a drum loop, one reading each) the frame interrupt read 29.5 % with track 1 on FLEX, 35.5 % on Amiga at the defaults, 40.6 % at PTCH +12 and 57.3 % at PTCH +12 with GRN 0, SRR 30 and LED; 0.1.0 read 33.3 % and 37.4 % on the same twin. Three Amiga tracks at the defaults beside four STATIC tracks read 64.3 % with the longest frame at 113.2 %. These are means, not a longest frame. ot_emu counts 124 to 4,762 instructions of the engine's own code per audio frame of one track (worst frame 6,488); the unit's time did not follow such counts.",
+          "source": "TESTING.md"
+        },
+        "impact": {
+          "conditions": "CPU from frame-interrupt readings of this version on an MKII (one Amiga track playing a loop, from the defaults to PTCH +12 with GRN 0, SRR and LED, and three Amiga tracks beside four STATIC tracks; means, one reading each). Memory from this package's sizes, all eight voices included whether used or not.",
+          "cpu": {
+            "level": "high",
+            "basis": "measured-comparison",
+            "rationale": "The ColdFire reworks the track's source frames in the frame interrupt: the word and rate reduction, the lowpass and the cyclic restarts with their crossfades, which read the sample itself. On the unit one Amiga track added 6 points of the frame at the defaults, 11 at PTCH +12 and 28 at the dearest settings against a FLEX track, 2 to 3 more than 0.1.0; beside other sounding tracks and installed modules it cost 12.6 to 16 (0.1.0). The base's CPU budget admits three Amiga tracks a Part. Worst-case cycles are not measured.",
+            "source": "TESTING.md"
+          },
+          "dsp": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "No DSP program, effect slot or DSP state is added. The reworked frames go to the DSP through the stock FLEX path, which repitches and filters them as it does a FLEX track's.",
+            "source": "manifest.py"
+          },
+          "memory": {
+            "level": "minimal",
+            "basis": "source-estimate",
+            "rationale": "11,792 bytes of code and data and 2,092 of bss in the package, about 14 KiB of the 128 KiB the loader allows a module. No sample RAM is taken and no stock buffer is reused: the crossfade reads the track's own sample where stock keeps it.",
+            "source": "TESTING.md"
+          }
+        }
+      },
+      "tests": {
+        "report": "TESTING.md",
+        "summary": "Host gate on the engine (verify.py, 72 checks: the crunch, the stretch's timing and its crossfades out of the sample, pages, words and directions), a comparison of the crossfades with Amigo's (reference/amigo_check.py, the owner's installed plug-in), an emulator count of its instructions (bench.py), and RAM trials of this version's release package on the owner's MKII on a development base, 13 and 14 November 2026: restart ticks counted per track over USB Audio against 0.1.0, load with one and three tracks, a recorder buffer. TESTING.md lists what was not tried.",
+        "hardwareStatus": "reported",
+        "evidenceRevision": "a679875b1611d27cf1afe86741b6c646ec7fa9d0",
+        "gates": [
+          "python3 -B verify.py",
+          "python3 -B generate.py --check",
+          "python3 -B reference/amigo_check.py <a folder with the Amigo host and its default state> (macOS with Amigo installed)",
+          "python3 -B bench.py --emulator <ot_emu> --main <a MAIN image the emulator boots> --output <new private folder>"
+        ],
+        "documentation": {
+          "tutorial": {
+            "title": "Quick tutorial",
+            "steps": [
+              "Put a drum loop on an Amiga track and play it. At the defaults it is the loop at 8 bits.",
+              "Turn PTCH up a few semitones: the loop keeps its length and starts to flutter. Turn GRN for the size of the flutter.",
+              "Turn SPD down to 32 for half speed at the same pitch, or all the way to 0 to hold the sound where it is.",
+              "Turn RATE below 0: the loop runs backwards, still stretched.",
+              "On SRC SETUP, turn SRR up to about 20 for a grainy, folded top end, and switch LED on to take the edge off it.",
+              "Put a sliced loop on the track, switch SLIC on in SRC SETUP and trig slices with STRT locks: turn PTCH and each slice keeps its length, SPD and GRN stretch inside it."
+            ]
+          },
+          "screenshots": [
+            "media/amiga-machine-list.png",
+            "media/amiga-src.png",
+            "media/amiga-src-setup.png"
+          ],
+          "screenshotStyle": "black-and-white"
+        }
+      },
+      "license": {
+        "spdx": "MIT",
+        "file": "LICENSE",
+        "declaration": "Original code by Jannik Aßfalg under MIT. No firmware, extracted stock routines or tables, samples or third-party code. Amiga names the discontinued home computer whose sound this models; the module is not affiliated with or endorsed by the owners of that name."
+      },
+      "media": [
+        {
+          "path": "media/amiga-machine-list.png",
+          "captureType": "hardware",
+          "caption": "Double-tap a track key, or open SRC SETUP, to reach the machine list. Move down to AMIGA and press YES to put the machine on the track.",
+          "alt": "Octatrack machine list, SELECT MACHINE TYPE: STATIC, FLEX, THRU, NEIGHBOR, PICKUP and AMIGA, with FLEX marked and the cursor on AMIGA.",
+          "credit": "repeat98; underlying Octatrack UI by Elektron",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "Machine list (SELECT MACHINE TYPE)",
+            "shows": "location",
+            "firmware": "1.40C",
+            "moduleVersion": "0.2.0-experimental",
+            "imageSha256": "213b5bfd306f580cdab6aeb12aa0da356e8ffbaa6ab6f82ba2255ea58217ba1d",
+            "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 2d97f42d of the Modwerk release base 4e9a87ea, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package 6bb8e598. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on FLEX, the cursor moved to AMIGA."
+          }
+        },
+        {
+          "path": "media/amiga-src.png",
+          "captureType": "hardware",
+          "caption": "Press SRC. PTCH, STRT, LEN and RATE are stock's; knob E is SPD and knob F is GRN. Turn PTCH up and the loop keeps its length; turn SPD down to 32 for half speed at the same pitch.",
+          "alt": "Octatrack SRC page of an Amiga track: knobs PTCH, STRT, LEN, RATE, SPD and GRN, tempo 126.0, and the status line 8 BIT AMIGA.",
+          "credit": "repeat98; underlying Octatrack UI by Elektron",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "SRC",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.2.0-experimental",
+            "imageSha256": "213b5bfd306f580cdab6aeb12aa0da356e8ffbaa6ab6f82ba2255ea58217ba1d",
+            "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 2d97f42d of the Modwerk release base 4e9a87ea, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package 6bb8e598. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on Amiga with a Flex sample, at the defaults."
+          }
+        },
+        {
+          "path": "media/amiga-src-setup.png",
+          "captureType": "hardware",
+          "caption": "Hold FUNC and press SRC for SRC SETUP. Knob C switches LED, the lowpass; D is SRR, the storage rate; E is STR (OFF, ON or PCH) and F is BITS. Try SRR at about 20 with LED on.",
+          "alt": "Octatrack SRC SETUP page of an Amiga track: AMIGA marked in the machine list; LOOP AUTO, SLIC OFF, LED OFF, SRR 0, STR ON and the BITS knob.",
+          "credit": "repeat98; underlying Octatrack UI by Elektron",
+          "license": "LicenseRef-OT-UI-Documentation",
+          "source": "original",
+          "otUi": {
+            "page": "SRC SETUP",
+            "shows": "controls",
+            "firmware": "1.40C",
+            "moduleVersion": "0.2.0-experimental",
+            "imageSha256": "213b5bfd306f580cdab6aeb12aa0da356e8ffbaa6ab6f82ba2255ea58217ba1d",
+            "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 2d97f42d of the Modwerk release base 4e9a87ea, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package 6bb8e598. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on Amiga with a Flex sample, at the defaults: SRC SETUP."
           }
         }
       ]

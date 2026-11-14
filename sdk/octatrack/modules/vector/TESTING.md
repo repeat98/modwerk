@@ -1,0 +1,111 @@
+# VECTOR tests and measurements
+
+## 0.3.2: settings bytes the stock Part check accepts (#1533, #596)
+
+Report #1533 (USB, 0.3.1 with the 0.2.5 package): after saving and a power cycle every track read STATIC and the trigs were gone. Cause: `vector_pack` put SPAN in the top four bits of one byte, so SPAN 8 to 12 (default 12) stored 0x80 or more. Stock's Part check counts that as a value to repair, and a count above zero makes the boot's battery restore drop the bank. VECTOR's wrapper around the check (0.2.4) hides the bytes only while VECTOR is registered; the base restores the battery copies before the kept set is back.
+
+**Reproduced, emulator only** (13 November 2026, `ot_emu`, MKII mode, a Modwerk base with no VECTOR installed, the Template project; the base's validator hook and stock's check called on the live Part at `0x40002318`, T1 a FLEX track carrying VECTOR's marker and settings):
+
+| T1's twelve bytes | result |
+| --- | --- |
+| none | 0 |
+| 0.3.1 packing, default settings (SPAN 12) | 1, and stock zeroed the byte |
+| 0.3.1 packing, SPAN 4 | 0 |
+| 0.3.2 packing, default settings (SPAN 12) | 0 |
+| 0.3.2 packing, every control at its maximum | 0 |
+
+**Host tests** (`test_engine.c`, sanitizers): no packed byte reaches 0x80 for every SPAN, ROOT, DENS and DIR with the other controls at their maximum; every such setting round-trips; the 0.3.1 form of the same settings unpacks to the same values. The test fails on 0.3.1's `engine.c`.
+
+**The USB package, emulator only** (same day and emulator, an 8 November development base `9b3ba417`, package `428d970a…`, 18,334 bytes, installed with `npm run device -- try … --emulator`). Before the install, 0.3.1's default bytes were poked into Part 1 T1 (FLEX) and Part 2 T5 (STATIC), bank copy and battery copy: the check returned 1. After the install both tracks read `S2`/2 with the top bit moved (`…0b c0` became `…4b 40`) in the bank and the battery copy, in the open Part and in the other one, and the check returned 0 on both Parts. SRC SETUP on T1 showed VECTOR's second page; the emulator's DSP notice covered the SPAN value, so the value shown was not read.
+
+**On a unit** (13 November 2026, the owner's Octatrack MKII, driven over USB by the coordinating session; a RAM-booted development twin `2d97f42d…`, not the release base; packages run as timed trials that roll back, no Keep; a scratch project, Part 1, pattern A01; Part and pattern bytes read over USB). A "restart" is a RAM boot of the twin, which runs the battery restore with no module installed, as a power-on does.
+
+| step | read afterwards |
+| --- | --- |
+| Published 0.2.5 package: VECTOR on T1 (Flex pool), SPAN 12, a 12-trig phrase; three trigs on T2 | T1's settings `53 32 02 1b 0c c0` |
+| T1 back to FLEX, trial rolled back | marker gone, settings left: `00 00 00 1b 0c c0` (#596) |
+| Restart | the reported failure: all eight tracks STATIC, no trigs on T1 or T2, every FX slot at stock's defaults |
+| Second restart, nothing saved | the bank is back: T1 FLEX, both tracks' trigs; the byte reads `00` (stock's repair) |
+| 0.3.2 package (`428d970a…`): VECTOR on T1 | second page shows SPAN 12; settings `53 32 02 1b 4b 40` |
+| T1 back to FLEX, trial rolled back, restart | bank intact at the first restart: T1 FLEX, both tracks' trigs, settings unchanged `00 00 00 1b 4b 40` |
+
+Twice before that, the owner power-cycled onto the flashed base (`4e9a87ea…`, 0.2.5 kept) with T1 still a VECTOR track at SPAN 12, and the next RAM boot read the byte as `00` with the bank intact: the same repair, one restart later. The reset state itself was not looked at on those two runs.
+
+**Not tested:** a restart with the track still set to VECTOR under 0.3.2 (a trial cannot roll back while a track names it; stock's check does not read the marker); 0.3.2 as a kept module on the flashed base and a power cycle with it; the rewrite of 0.3.1's bytes by the running module on a unit (emulator only); PROJECT > RELOAD as the recovery; the card build on its own; saved Parts, which keep the old byte until the Part is saved again; listening.
+
+## 0.3.1: VECTOR again, sample tracks only (0.2.6's code)
+
+On 8 November 2026 the owner decided that the MIDI generator 0.3.0 added to VECTOR is its own module, VECTOR MIDI. 0.3.1 rolls VECTOR back to the code prepared as 0.2.6 (#1141): 0.2.5 plus the card fix below, with the name VECTOR and no MIDI generator. Over USB it keeps publishing the 0.2.5 package, the one the MKII run below used. 0.3.0's MIDI-track results are in this file as of 0.3.0 (#1339) and move to VECTOR MIDI.
+
+### SRC SETUP page 2 on VECTOR's own row (card builds, #1119; prepared as 0.2.6)
+
+Report #1119 (also #842/#843): on a card build with POLY8, a double tap on SRC on a VECTOR track showed the stock Flex/Static setup (TSTR AUTO) instead of SEED/SPAN. Beside POLY8, VECTOR is machine row 6 or 7; POLY8's shared SRC SETUP hooks replace VECTOR's and never asked VECTOR, and `st_setup_page` itself also wanted SRC SETUP's cursor (0x460d5c30) on row 5. 0.2.6 drops that test: its callers already ask on VECTOR's row (row 5 in `hooks.s` alone, the base's row over USB, POLY8's row with POLY8 0.3.3). The USB adapter dropped the same test since 0.2.5, so `vector_runtime.py` no longer rewrites it; the package's control unit source is byte-identical to 0.2.5's and the 0.2.5 USB package stays published (`lagsBehind`). The 0.2.5 hardware report above that run covers those bytes.
+
+Emulator, 1 November 2026 (`ot_emu` built from upstream octabam, MKII panel, DSP on, empty scratch card; card images composed by the site's builder from packages built in the isolated toolchain; `scripts/capture-module-ui.py` with 50 ms keys: FUNC+SRC, DOWN to VECTOR, YES, YES on STATIC, NO, SRC, FUNC+SRC, encoder A +3, encoder E +2):
+
+| Image | Result |
+| --- | --- |
+| main (VECTOR 0.2.5, POLY8 0.3.2) + FM Synth | reproduces the report: SRC shows SRC▸VECTOR with TYPE…ACNT, SRC SETUP shows LOOP SLIC LEN RATE TSTR(AUTO) TSNS |
+| VECTOR 0.2.6 + POLY8 0.3.3 + FM Synth | SRC SETUP shows SEED 1, SPAN 12, OFST 0, ROT 0, RPT OFF, DIR FWD; encoder A gives SEED 4, encoder E RPT 2; cursor on POLY8 shows the stock setup |
+| VECTOR 0.2.6 + POLY8 0.3.2 + FM Synth | not run; POLY8 0.3.2's shared hooks never call `st_setup_page`, so the stock setup stays as on main (code read) |
+| VECTOR alone, 0.2.5 and 0.2.6 | all eight screens of the plan pixel-identical; page 2 on row 5, encoders A and E as above |
+
+`verify_native.py` passes in the pinned toolchain (sanitizer tests, `control.s` reproduces). Not tested: a unit, MKI, saving and reloading, a power cycle, listening.
+
+## 0.2.5 over USB on a MKII (SRC SETUP page 2, #972)
+
+Version `0.2.5-experimental` changes only the USB package: its `ot_machines` record is a `struct modwerk_machine_setup` (SETUP_PAGE) naming the card build's own `st_setup_page` and `st_setup_knob`, and the package's source variant drops `st_setup_page`'s test for SRC SETUP's cursor on row 5. The card source and every result in the sections below are 0.2.4's.
+
+Hardware, observed on the owner's Octatrack MKII by the coordinating session over USB with `device.mjs`, 27 October 2026:
+
+- Base: a development twin of the release base, identity `e6e75d75546d10396cfbe5c01fc9c731d76463414dd02c3833d6f50181e7b4f4` (MAIN SHA-256 `a753ddf67b0fe64e3742b4c89ecf141071eb30757b170173215e92b1b4794d24`): the `b1b2ca58` beta-base build plus `--dev`, RAM-booted. It was the development twin of the release base, not `b1b2ca58` itself, and not the base this pull request commits.
+- Packages: POLY8 0.3.1, Analog BD 0.1.5 rebuilt for the twin, and VECTOR 0.2.5 (package SHA-256 `45c962ca3a202ac697e3d33d97e4b3b94052706a390189e5baf923fa829de577`), all accepted. Inventory: POLY8, Analog BD, VECTOR.
+- T1 (STATIC): FUNC+SRC opens SRC SETUP. The list scrolls to POLY8, ANALOG BD and VECTOR.
+- Cursor on VECTOR without YES, the track still STATIC: the stock STATIC setup (LOOP SLIC LEN RATE TSTR TSNS) shows. Cursor on ANALOG BD shows Analog BD's page (ACCNT LPF LOW HIGH).
+- YES on VECTOR opens MACHINE:VECTOR with 001 STATIC / 002 FLEX. YES on STATIC, then the slot list, then NO. The main SRC page shows SRC▸VECTOR with TYPE DENS ROOT SCAL GATE ACNT.
+- FUNC+SRC again: VECTOR's page shows SEED 1, SPAN 12, OFST 0, ROT 0, RPT OFF, DIR FWD.
+- Encoders A+3, B+2, C+1, D+1, E+2, F+1 give SEED 4, SPAN 12 (already at its maximum), OFST 1, ROT 1, RPT 2, DIR REV. Turning them back gives SEED 1, SPAN 10, OFST 0, ROT 0, RPT OFF, DIR FWD; B+2 then gives SPAN 12.
+- T2 (STATIC): SRC SETUP shows the stock STATIC setup. T1 was set back to STATIC afterwards.
+- Not tested: the FLEX, THRU and PICKUP setups; a POLY8 track's or an Analog BD track's SRC SETUP; VECTOR 0.2.4 on the new base; whether the SRC main page regenerates the phrase; saving and reloading; a power cycle with VECTOR kept; the non-dev base `b1b2ca58` itself; listening.
+
+Emulator (ot_emu, MKII panel, the modules installed over emulated USB): on the release base, VECTOR 0.2.4 still shows the stock STATIC setup there and 0.2.5 shows its page 2; encoder A moves SEED and encoder E moves RPT. Emulator results only.
+
+Version: `0.2.4-experimental`, 9 October 2026. Source SHA-256 `1255e99133cbd8d6d2587c95f93462ea80fccbd169462a2acb02aedbd346cbd3`; tested MAIN SHA-256 `cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026`. Native build base is `d1e38bcde2d37ac62d45e60655c0e7137750bf97` plus the authored fix identified by that source fingerprint. Firmware and raw derived data stay private.
+
+## Regression and persistence
+
+[The sanitized report](../../../../docs/vector-reboot-2026-10-09.json) records the reproduced 0.2.3 whole-bank reset and stopped step counters, isolated packed-SPAN control and fixed exact-image result. Native Part validation interprets packed high-bit settings in unused NEIGHBOR slots as negative stock parameters. The adapter temporarily clears only those twelve bytes on valid S2/1 or S2/2 Flex/Static tracks, calls the actual stock validator, restores them and retains its return value and unrelated corrections.
+
+The firmware-free ASan/UBSan regression covers all 256 marked-track masks, both formats/backing kinds, unsupported formats/machines, stock corrections/return values, selected-machine rejection and canaries. Run `python3 -B modules/vector/verify_native.py` inside the pinned isolated GCC 16.2.0 toolchain. The generator's 244,800 primary and 29,772 secondary cases and writer checks also pass; authored C/hooks reproduce control.s with only zero stock-replay placeholders. No firmware is a compiler input.
+
+With T1/T5 at distinct TYPE/SEED settings, native Part save/reload and panel-driven MKII project SAVE/RELOAD restore saved settings after later edits. The saved card and 26 working/stored file pairs match. There were zero card-write errors over 43,556 written sectors. A fresh saved-card project load passes separately from an MKI battery-RAM-only restart that performs no explicit project load. Both instances and other tracks survive; PLAY advances steps 3/6/9. The same original failing battery state also passes with VECTOR alone. These are control-state emulator results with a stand-in DSP; physical reboot and audible playback remain unverified. Distinct sample audio and instance reset/replacement were not exercised.
+
+## Current UI checks
+
+`media/control-walk.txt` records the fresh native MKII panel walk. `media/capture.json` binds the emulator, source, image and actual LCD captures. All twelve SRC controls were edited; the other seven VECTOR records were preserved. YES generates, LEVEL accesses stock sample editing, double-tap SRC shows secondary controls and double-tap TRACK opens pool choice. Both stock pool lists were browsed without changing saved VECTOR settings, and transport advances. Each of the eight fresh monochrome captures was visually inspected. Older JSONL/core/pool records remain historical 0.2.3 evidence; stock file loading/sample confirmation was not rerun in this narrower walk.
+
+## Instruction and conditional cycle model
+
+The same synthetic ColdFire probe was rebound to this image's generated symbols in a private harness and rerun over 3,840 generator/writer cases (128 seeds, TYPE endpoints, five scales and lengths 1/16/64). Maxima: generator 65,099 executed instructions / 968 stack bytes; writer 25,380 / 40; eight native commits peak at 472,500 / 1,048. All 256 Part-validation masks return and restore their settings; the maximum is 64,241 executed instructions including the real stock validator and 252 observed stack bytes. These are instruction counts, not chip timing or audio load measurements.
+
+The retained generation envelope charges 100,000 instructions for generation (64 steps, 25 pitches, at most 2,016 shifts), 40,000 for writing (64 x 32 locks), 50,000 for staging/publication scans, 10,000 for adapters, 371,000 for stock global lock-index rebuilding, 100,000 for native publication and 10,000 for dirty/event bookkeeping: 681,000 rounded to 700,000 per commit. At the conditional 32 cycles/instruction allowance this is 22,400,000 cycles/event; eight commits plus 6,000,000 stock UI/scheduling reserve are 185,200,000 against 264,000,000 cycles for one full burst per second. This is not measured silicon timing, a sustained knob-rate guarantee or audio headroom.
+
+The new validator adds two bounded 8-track x 12-byte loops, signature tests and one stock call. An 8,192-instruction adapter allowance bounds this added work (262,144 modeled cycles/Part at the same assumed price). Even eight complete validation calls at the observed all-track maximum are below the declared generation-burst envelope. Validation adds no per-sample DSP work. Memory stalls, interrupts and native/audio contention still require hardware measurement; chip wall-clock cycles remain null.
+
+## Memory accounting
+
+For the tested five-module profile, the complete shared arena is 10,586,112 bytes: 10,487,808 module arena plus 98,304 mandatory logger reserve. Its 90,780-byte linked runtime and packed staging fit within that arena and are counted once. VECTOR's authored allocated sections are 13,000 text + 398 rodata + 3,368 data = 16,766 bytes, no BSS or heap. The full tested-profile flash append is 18,153 bytes. Placement gaps and all companion/logger state lie inside the counted arena.
+
+Maximum observed native commit stack is 1,048 bytes; validation is 252. The 1,216-byte added UI stack ceiling includes the existing 168-byte outer-call allowance and covers the smaller new adapter (96 saved bytes plus compiler/callee frames). There is no recursion. Borrowed native UI capacity is 2,132 bytes (56-byte window, 20-byte descriptor, two 1,024-byte rasters and 8-byte callback state), plus 128 lock-index bytes. Per track, sixteen 2,330-byte pattern records in live bank/SRAM are 74,560 bytes; twelve settings bytes across four Parts/two mirrors are 96: 74,656 per track, eight maximum. Exact total capacity accounting is 11,204,989 bytes, including the complete shared reserve and borrowed stock capacities. It is not incremental VECTOR RAM use. Hardware canaries remain unmeasured.
+
+## Browser/native parity and packaging
+
+The current 110-profile VECTOR coverage matrix has 46 matching module-owned builds outside existing platform/logger writes and 64 matching refusals, zero mismatches. The changed original OS is refused. The source-only package build and complete importer inventory pass; `sdk/native-comparisons/vector.json` binds the current native source. Private VECT349A01 ELUP packaging round-trips to the exact tested MAIN; update SHA-256 `a2bc9e1892c5bda40083c61abe19c73c9ff64fd73ff9b88d975a2c0f5b456130`. The standard common worker and deployed download are verified separately during release completion.
+
+## Owner exception and remaining limits
+
+On 9 October 2026 the owner stated: "Approve release and closure with hardware reboot/audio unverified" after receiving the exact 0.2.4 private image and source patch. `sdk/vector-build-approval.json` binds this separate current-build-hardware exception to the source/image above. `hardwareStatus` stays `untested`; no physical reboot, audible playback, chip timing, maximum audio stress or hardware canary pass is claimed. The 0.2.3 approval remains historical and is not reused. Already reset projects need a known-good backup. The issue closure must name these limits and explain how to reopen.
+
+After main advanced to `32e27effdb32d5aaa49ee350daef95bc4c803003` (Analog BD 0.1.4), all non-VECTOR package payloads/recipes remain identical to that base. VECTOR native source is unchanged. The rebuilt reported-profile MAIN is `fc8c24c97ffd5ae7b613c8fcff10caf2f9ce62d03ca4014c2a9c14262f628125`; its common-worker saved update is 466764 bytes, SHA-256 `3e98ee1f5a1a71b674b682bef496b6fbe73e6df8a67d4b049ce07abfb3b7177a`. Both reported/solo images preserve the original failing battery state with advancing PLAY; the reported profile also restores the saved battery state. Global inventory/logger provenance changes the image identity, so this result is recorded separately from the qualified VECT349A01 private image.
+
+Source and evidence links now name fix commit `16c04ae4d713376bd6bb119951899c33fa2e0ae9`. All eleven authored package payloads, including VECTOR, remain byte-identical after that metadata pin. The source-pinned worker saves 466756 bytes, SHA-256 `198f9a4a8b2529e43b60ba9f16fbc4ba9b84afcfc7ae53487c2009c2c234b88e`, MAIN `e2fa4176afe4d7f8b1cf0f5eed456d338d47acb212973e99d7bcc476c75f9ce3`. Global logger identity changes are kept separate from native qualification.

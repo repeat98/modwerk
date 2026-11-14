@@ -71,9 +71,8 @@ stay base data (Phase 3).
 - **Trust.** A row pins the **controller digest** (`loader.h`: the header with its DSP fields zeroed and everything up
   to the claims), not the package's SHA-256; the loader keeps it in the owner record, and the board, the owner checks and
   the write lease compare it. A package that changes only its DSP part (0.1.6) keeps its row, so the base is not rebuilt.
-  The source policy in a row hashes only the controller's inputs (`build.py machine_inputs`), and the price (411 a
-  voice, 3 a core) stays in the machine record (`machine-ports.json`): a price change is a controller change until
-  Phase 2.
+  The source policy in a row hashes only the controller's inputs (`build.py machine_inputs`). The price per voice is
+  the engine header's `cycles` and `kind`, outside the digest (`sdk/runtime/loader/README.md`, "Price").
 - **Admission.** The loader asks `modwerk_machine_dsp_engine_admit` (the board) for an engine: a trusted controller of a
   packaged feature, one entry at the feature's one site on its cores, entered at word 0, an exit exactly where the site
   has one, claims exactly the feature's regions with initial words, at most 2,048 words. A trusted controller of a
@@ -297,7 +296,7 @@ slot on each core.
 
 The point is to ship a hook module's DSP change as a new package, with no base rebuild. So admission can't be by an exact
 package hash pinned in the base, as controller trust rows are. The proposal: a hook package is admitted like an effect
-package, by the catalogue and qualification path (review, `module:verify`, hardware evidence), with the base enforcing
+package, by the catalogue and qualification path (review, hardware evidence), with the base enforcing
 only the structural rules above (sites, guards, claims, cost, P room). That is a policy change for the owner: a hook
 runs on every track of a core, so a bad package can silence or stall a core. It is the same class of risk as an effect
 package, larger in reach.

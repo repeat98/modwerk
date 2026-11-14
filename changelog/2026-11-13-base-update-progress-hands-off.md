@@ -1,0 +1,1 @@
+Site: the base update over USB now shows one blue progress bar for the whole update and a "Hands off your Octatrack" warning for as long as it runs, since the Octatrack can look ready after its restart before the base is saved. Syncing modules shows the same bar.

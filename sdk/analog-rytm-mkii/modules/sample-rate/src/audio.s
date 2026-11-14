@@ -1,5 +1,5 @@
 | SPDX-License-Identifier: GPL-3.0-or-later
-| Sample Rate: the sites in stock's sample engine and the menus. See rate.c.
+| Fine Tune + Sample Rate: the sites in stock's sample engine and parameter code. See rate.c.
 
         .text
 
@@ -13,26 +13,18 @@ sample_rate_block_gate:
 
 | The prefetch's step loop, once a voice: a1 is one past the voice's byte in
 | stock's voice to track list; d0 the track's offset, a2 the effective array.
-| The first gate reads TUN and FIN as stock does and, for a voice with RATE,
-| gives the pitch a FIN at rest and keeps the real one for the second gate,
-| which scales the finished step by |FIN - 64| / 64. d6 is free at both.
+| The first gate reads TUN and FIN as stock does, gives the pitch a FIN at rest
+| and keeps the real one for the second gate, which scales the finished step by
+| |FIN - 64| / 64. d6 is free at both.
 
         .equ    IDLE, 0x7f00                    | what the second gate skips: 1x
         .globl  sample_rate_fin_gate, sample_rate_scale_gate
-        .extern sample_rate_voices
 
 sample_rate_fin_gate:
         mvs.w   2(%a2,%d0.l),%d1                | displaced
         mvs.w   4(%a2,%d0.l),%d0                | displaced
-        move.l  %a1,%d6
-        subi.l  #0x40291139,%d6
-        btst    %d6,sample_rate_voices
-        beq.s   1f
         move.l  %d0,sample_rate_fin
         move.l  #0x4000,%d0
-        rts
-1:      move.l  #IDLE,%d6
-        move.l  %d6,sample_rate_fin
         rts
 
 | In the prefetch's EMAC mode, fractional: the multiply by the amount << 17
@@ -53,19 +45,6 @@ sample_rate_scale_gate:
         mac.l   %d0,%d1,%acc0
         movclr.l %acc0,%d0
 9:      rts
-
-| Stock's routine that applies a sound to a track, past its checks, before it
-| copies the settings: a2 the sound, d2 the track. d0-d1/a0-a1 are free.
-        .globl  sample_rate_apply_gate
-        .extern sample_rate_applied
-
-sample_rate_apply_gate:
-        move.l  %d2,-(%sp)
-        move.l  %a2,-(%sp)
-        jsr     sample_rate_applied
-        addq.l  #8,%sp
-        lea     0x8000ea00,%a0                  | displaced
-        rts
 
 | Stock's frames for STA and END, frames(sta, end, count) -> d0 and d1, under
 | the MACSR the prefetch sets for it: this runs before the prefetch sets it.
@@ -88,70 +67,6 @@ sample_rate_frames:
         move.l  %d1,4(%a0)
         rts
 
-| param_short_name and param_long_name(obj, id): FIN's names read RATE while
-| it is. d0-d1/a0-a1 are free at their entries, so the check can call out.
-        .globl  sample_rate_label_gate, sample_rate_long_gate
-        .extern sample_rate_selected
-
-sample_rate_label_gate:
-        bsr.s   rate_name
-        beq.s   1f
-        rts
-1:      move.l  8(%sp),%d1                      | displaced
-        cmpi.l  #469,%d1                        | displaced
-        jmp     sample_rate_label_resume
-
-sample_rate_long_gate:
-        bsr.s   rate_name
-        beq.s   1f
-        rts
-1:      move.l  8(%sp),%d1                      | displaced
-        cmpi.l  #469,%d1                        | displaced
-        jmp     sample_rate_long_resume
-
-| -> d0 the name and Z clear for FIN while it is RATE, else Z set
-rate_name:
-        moveq   #40,%d0                         | FIN's id
-        cmp.l   12(%sp),%d0
-        bne.s   1f
-        jsr     sample_rate_selected
-        tst.l   %d0
-        beq.s   1f
-        move.l  #sample_rate_label,%d0
-        rts
-1:      clr.l   %d0
-        rts
-
-| SoundSetupMenuView's constructor after the SMP: row is added: a4 is the view,
-| the menu its rows go to, and the site is what ends that row's call.
-        .globl  sample_rate_menu_gate
-        .extern sample_rate_add_row
-
-sample_rate_menu_gate:
-        move.l  %a4,-(%sp)
-        jsr     sample_rate_add_row
-        addq.l  #4,%sp
-        move.l  %d2,-(%sp)                      | displaced
-        jsr     (%a2)                           | displaced
-        move.l  %d3,-(%sp)                      | displaced
-        jmp     sample_rate_menu_resume
-
-| Stock's sound page key handler, on a knob's press or release: d2 the event,
-| d4 the knob's parameter id, a2 the view. d1/a0-a1 are free, and d0 is stored
-| first. The tst sets the flags for the branch that follows the site.
-        .globl  sample_rate_knob_gate
-        .extern sample_rate_knob
-
-sample_rate_knob_gate:
-        move.l  %d0,-20(%fp)                    | displaced
-        move.l  %d2,-(%sp)
-        move.l  %d4,-(%sp)
-        move.l  %a2,-(%sp)
-        jsr     sample_rate_knob
-        lea     12(%sp),%sp
-        tst.l   %d4                             | displaced
-        rts
-
 | Stock's add of a turn to a value, (obj, id, cur, delta) on the stack, d0-d1/a0-a1
 | free: for TUN the delta becomes cents (rate.c). The site's lea and moveml follow.
         .globl  sample_rate_add_gate
@@ -170,23 +85,20 @@ sample_rate_add_gate:
         movem.l %d2-%d7/%a2-%a3,(%sp)           | displaced
         jmp     sample_rate_add_resume
 
-| The row's label, a std::function returning a std::string: the string to
-| build is at a0, and d0 returns a0.
-        .globl  sample_rate_row_label
+| SMPL WAVEFORM's knob loop (the SAMPLE view's draw, 0x400d2004), at its call of
+| one knob's text: the view in a2 is not yet pushed, the routine in a5, the
+| other nine arguments on the stack. d0-d1/a0-a1 are free. rate.c places the
+| text; the lea drops what stock's lea dropped.
+        .globl  sample_rate_label_gate
+        .extern sample_rate_label, sample_rate_label_resume
 
-sample_rate_row_label:
-        link    %a6,#-4
-        move.l  %d2,-(%sp)
-        move.l  %a0,%d2
-        pea     -1(%a6)
-        pea     sample_rate_row_text
-        move.l  %d2,-(%sp)
-        jsr     sample_rate_string
-        lea     12(%sp),%sp
-        move.l  %d2,%d0
-        move.l  -8(%a6),%d2
-        unlk    %a6
-        rts
+sample_rate_label_gate:
+        move.l  %a2,-(%sp)                      | displaced: the view
+        move.l  %a5,-(%sp)                      | stock's routine for this knob
+        jsr     sample_rate_label
+        addq.l  #4,%sp
+        lea     48(%sp),%sp                     | displaced
+        jmp     sample_rate_label_resume
 
         .bss
         .align  4
@@ -194,7 +106,10 @@ sample_rate_fin:
         .space  4
 
         .section .rodata
-sample_rate_label:
+| FIN's names in its parameter row, which every screen reads: knob, header, LFO
+| destinations, locks.
+        .globl  sample_rate_short_text, sample_rate_long_text
+sample_rate_short_text:
         .asciz  "RATE"
-sample_rate_row_text:
-        .asciz  "SMP RATE"
+sample_rate_long_text:
+        .asciz  "Rate"

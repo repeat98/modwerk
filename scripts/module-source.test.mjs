@@ -5,11 +5,11 @@ import { tmpdir } from 'node:os'
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { execFileSync } from 'node:child_process'
+import { mirrorOctatrackModules } from './mirror-octatrack-modules.mjs'
 import { compiledModuleVersions, moduleSourcePaths, moduleSourceFingerprint, sourceEntryHash, isDocumentationPath } from './module-source.mjs'
 const root = fileURLToPath(new URL('../', import.meta.url))
 const catalog = JSON.parse(await readFile(resolve(root, 'sdk/catalog.json'), 'utf8'))
-const requested = ['analog-bassdrum', 'midi-scenes', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector']
-const verifiedRequested = requested.filter(id => id !== 'midi-scenes')
+const requested = ['analog-bassdrum', 'usb-audio-out-tracks-main-cue', 'quantizer', 'synth', 'vector']
 describe('release package scope and reviewed source inventory', () => {
   it('keeps the committed release identity bound to the complete SDK source and compiler', async () => {
     const record = JSON.parse(await readFile(resolve(root, 'src/engine/assets/module-build.json'), 'utf8'))
@@ -17,29 +17,26 @@ describe('release package scope and reviewed source inventory', () => {
     expect(record.compilerSha256).toBe(createHash('sha256').update(await readFile(resolve(root, 'scripts/build-module-packages.py'))).digest('hex'))
     expect(record.moduleVersions).toEqual(await compiledModuleVersions(root, catalog))
   })
-  it('binds approved standalone MIDI Scenes without compiling its archived 8.2 port', async () => {
+  it('binds every listed module to the compiled scope', async () => {
     const versions = await compiledModuleVersions(root, catalog), paths = await moduleSourcePaths(root)
-    expect(Object.keys(versions)).toEqual(['spectrum', 'modulation', 'character', 'miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'airwindows-chorus', 'everb', 'bbd', 'lofi2', 'ring-sc', ...requested.filter(id => id !== 'vector'),'previewvol','cc-map','sidechain-compressor','vector','playmodes','mute-modes','recorder-loop-fix','poly8','output-matrix','quantize-live-rec-toggle','apply-scene','direct-jump-kyoti','dejavu', 'arp-key-locks', 'temp-save', 'tuner', 'slow-lfo', 'bar-led', 'stem-rec'])
+    expect(Object.keys(versions)).toEqual(['miniverb', 'tapeecho', 'euclid', 'repitch', 'tapehead', 'airwindows-chorus', 'everb', 'bbd', 'lofi2', 'ring-sc', ...requested.filter(id => id !== 'vector'),'previewvol','cc-map','sidechain-compressor','vector','playmodes','mute-modes','recorder-loop-fix','poly8','output-matrix','quantize-live-rec-toggle','apply-scene','direct-jump-kyoti','dejavu', 'arp-key-locks', 'temp-save', 'tuner', 'slow-lfo', 'bar-led', 'stem-rec'])
     for (const id of ['playmodes', 'mute-modes', 'recorder-loop-fix', 'output-matrix', 'quantize-live-rec-toggle','apply-scene','direct-jump-kyoti','dejavu', 'arp-key-locks', 'temp-save', 'tuner', 'slow-lfo', 'bar-led', 'stem-rec']) {
-      expect(versions[id]).toBe(id === 'playmodes' ? '0.2.0-experimental' : id === 'mute-modes' ? '0.2.2-experimental' : id === 'output-matrix' ? '0.1.1-experimental' : id === 'apply-scene' ? '0.2.0-experimental' : id === 'quantize-live-rec-toggle' ? '0.1.1-experimental' : id === 'direct-jump-kyoti' ? '0.1.2-experimental' : '0.1.0-experimental')
+      expect(versions[id]).toBe(id === 'playmodes' ? '0.2.0-experimental' : id === 'mute-modes' ? '0.2.2-experimental' : id === 'output-matrix' ? '0.1.1-experimental' : id === 'apply-scene' ? '0.2.0-experimental' : id === 'quantize-live-rec-toggle' ? '0.1.1-experimental' : id === 'direct-jump-kyoti' ? '0.1.2-experimental' : id === 'temp-save' ? '0.1.1-experimental' : '0.1.0-experimental')
       expect(paths).toContain('modules/' + id + '/manifest.py')
     }
-    expect(versions['midi-scenes']).toBe('0.2.5-experimental')
     expect(versions.miniverb).toBe('0.2.3-experimental')
-    for (const id of verifiedRequested) {
-      expect(versions[id]).toBe(id === 'analog-bassdrum' ? '0.1.7-experimental' : id === 'vector' ? '0.3.1-experimental' : id === 'quantizer' ? '0.1.4-experimental' : id === 'synth' ? '0.1.2-experimental' : id === 'usb-audio-out-tracks-main-cue' ? '0.2.0-experimental' : '0.1.2-experimental')
+    for (const id of requested) {
+      expect(versions[id]).toBe(id === 'analog-bassdrum' ? '0.1.7-experimental' : id === 'vector' ? '0.3.2-experimental' : id === 'quantizer' ? '0.1.4-experimental' : id === 'synth' ? '0.1.3-experimental' : id === 'usb-audio-out-tracks-main-cue' ? '0.2.0-experimental' : '0.1.2-experimental')
       expect(paths).toContain('modules/' + id + '/manifest.py')
     }
-    expect(paths).toContain('modules/midi-scenes/recipe.json')
-    expect(paths.some(path=>path.startsWith('modules/midi-scenes/upstream/'))).toBe(false)
     expect(paths).toContain('platform/usb-midi/manifest.py')
   })
   it('refuses stale and duplicate catalog pins for requested imports', async () => {
     const temporary = await mkdtemp(resolve(tmpdir(), 'octamod-scope-test.'))
     try {
-      const id = requested[0], folder = resolve(temporary, 'sdk/octabam/modules', id)
+      const id = requested[0], folder = resolve(temporary, 'sdk/octatrack/modules', id)
       await mkdir(folder, { recursive: true })
-      await writeFile(resolve(folder, 'octamod.module.json'), await readFile(resolve(root, 'sdk/octabam/modules', id, 'octamod.module.json')))
+      await writeFile(resolve(folder, 'octamod.module.json'), await readFile(resolve(root, 'sdk/octatrack/modules', id, 'octamod.module.json')))
       const entry = catalog.modules.find(module => module.id === id)
       await expect(compiledModuleVersions(temporary, { modules: [{ ...entry, version: '0.1.0-experimental' }] })).rejects.toThrow('Stale catalog module version')
       await expect(compiledModuleVersions(temporary, { modules: [entry, entry] })).rejects.toThrow('Invalid catalog module id')
@@ -53,7 +50,9 @@ describe('the code fingerprint', () => {
   const files = (overrides = {}) => ({ 'modules/demo/manifest.py': 'NAME = "demo"\n', 'modules/demo/demo.asm': ' nop\n', 'modules/demo/octamod.module.json': JSON.stringify(manifest), 'modules/demo/README.md': 'Words.\n', 'modules/demo/TESTING.md': 'Results.\n', 'modules/demo/LICENSE': 'MIT\n', 'modules/demo/media/a.png': 'png', 'modules/demo/presentation/thumbnail.svg': '<svg/>', 'modules/demo/evidence/report.json': '{}', 'modules/demo/upstream/NOTES.md': 'notes', 'platform/p.s': ' nop\n', 'tools/t.py': 'x=1\n', 'dsp/d.asm': ' nop\n', 'licenses/l.txt': 'MIT\n', ...overrides })
   async function tree(overrides) {
     const dir = await mkdtemp(resolve(tmpdir(), 'octamod-fingerprint-'))
-    for (const [path, text] of Object.entries(files(overrides))) { const target = resolve(dir, 'sdk/octabam', path); await mkdir(resolve(target, '..'), { recursive: true }); await writeFile(target, text) }
+    // As in a checkout: the modules in sdk/octatrack/modules, and the mirror octabam's compiler reads.
+    for (const [path, text] of Object.entries(files(overrides))) { const target = resolve(dir, path.startsWith('modules/') ? 'sdk/octatrack' : 'sdk/octabam', path); await mkdir(resolve(target, '..'), { recursive: true }); await writeFile(target, text) }
+    await mkdir(resolve(dir, 'sdk/octabam'), { recursive: true }); mirrorOctatrackModules(dir)
     return dir
   }
   const edit = (change) => JSON.stringify({ ...manifest, ...change })

@@ -63,7 +63,7 @@ export const CREDIT_SECTIONS: readonly CreditSection[] = [
       },
       {
         name: 'octabam', author: 'Sam Banks (@sambanks) and contributors',
-        description: 'The Octatrack SDK, firmware composition, module infrastructure and native harness on which Modwerk’s Octatrack work is built. Sam also authored Spectrum, Modulation, Character, CC Map and Recorder Loop Fix.',
+        description: 'The Octatrack SDK, firmware composition, module infrastructure and native harness on which Modwerk’s Octatrack work is built. Sam also authored CC Map and Recorder Loop Fix.',
         links: [repo('sambanks/octabam')],
       },
       {
@@ -93,11 +93,6 @@ export const CREDIT_SECTIONS: readonly CreditSection[] = [
     title: 'Module authors & contributors',
     description: 'The people who turn that foundation into new ways to make music.',
     projects: [
-      {
-        name: 'MIDI Scenes', author: 'bkkbrls-del',
-        description: 'The original MIDISC firmware work and MIDISC2.0 release behind MIDI Scenes. Sam Banks contributed the earlier relocatable octabam port.',
-        links: [repo('bkkbrls-del/midisc')],
-      },
       {
         name: 'Em’s Octakit', author: 'June Kiff (@emuyia)',
         description: 'Octakit and its DRAM loader. The loader in the Octatrack composition tools is derived from June’s implementation.',
@@ -177,33 +172,13 @@ export const CREDIT_SECTIONS: readonly CreditSection[] = [
     description: 'Open audio code and published research behind the effects, with their original attribution retained.',
     projects: [
       {
-        name: 'Hera Chorus', author: 'J.P. Cimalando (@jpcima)',
-        description: 'The Hera chorus implementation in rc-effect-playground, transcribed into Modulation’s JUNO mode.',
-        links: [repo('jpcima/rc-effect-playground')],
-      },
-      {
-        name: 'ChowPhaser', author: 'Jatin Chowdhury (@jatinchowdhury18)',
-        description: 'The Schulte Compact Phasing A model behind Modulation’s PHSR mode.',
-        links: [repo('jatinchowdhury18/ChowPhaser')],
-      },
-      {
-        name: 'Mutable Instruments Rings', author: 'Emilie Gillet (@pichenettes)',
-        description: 'Rings’ string model, used in Modulation’s COMB mode.',
-        links: [repo('pichenettes/eurorack')],
-      },
-      {
         name: 'JSFXClones', author: 'JClones',
-        description: 'TapeHead, DaTube, OInflator and AC1 algorithms behind Character’s saturation, compression and glue modes, and the TapeHead port.',
+        description: 'The TapeHead algorithm behind the TapeHead port.',
         links: [repo('JClones/JSFXClones')],
       },
       {
-        name: 'audiojs/filter', author: 'Dmitry Iv',
-        description: 'The Moog ladder and Oberheim filter implementations behind Spectrum’s filters, using Vadim Zavalishin’s zero-delay forms.',
-        links: [repo('audiojs/filter')],
-      },
-      {
         name: 'Airwindows', author: 'Chris Johnson',
-        description: 'Capacitor2 informs Spectrum’s ISO mode. The SDK also retains attribution for the historical Pockey transcription, which was removed from Character.',
+        description: 'The Chorus algorithm behind Air Chorus.',
         links: [repo('airwindows/airwindows')],
       },
     ],

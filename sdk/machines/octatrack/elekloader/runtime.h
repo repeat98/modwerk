@@ -13,6 +13,10 @@ int modwerk_runtime_enc(int encoder, int delta);
  * words and a pad follow the 78 (dsp.c modwerk_dsp_report, version 12). */
 #define DSP_REPORT_WORDS (78u + (MODWERK_FX_WORDS > 1u ? 2u * (MODWERK_FX_WORDS - 1u) + 1u : 0u))
 int modwerk_dsp_pick(unsigned slot, unsigned track, unsigned row);
+/* A key or a panel report from USB or the self-test, rung at the next tick once no physical report is half sent
+ * (#1110); 0 when 16 already wait. Safe from an interrupt. */
+int modwerk_remote_key(unsigned code, int pressed);
+int modwerk_remote_bytes(uint8_t first, uint8_t second);
 int modwerk_dsp_probe(unsigned core); /* one PROBE packet: 1 sent, 0 busy */
 unsigned modwerk_dsp_report(uint32_t *out);
 /* runtime.c: the per-track renderer slots follow a renderer-table site that went back to stock (finding 30). */

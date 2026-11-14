@@ -20,6 +20,20 @@
    "done": null
   },
   {
+   "site": "0x40004d0c",
+   "length": 10,
+   "guard": "3b007d2a1b16afbbff30a9df6d28c030691b4f5b3c32626a87be0a7b712408eb",
+   "routine": "the frame's track-record builder 0x40004bd4 (frame interrupt): for each track d4 (0-7) whose bit is set in STOP's tail-kill mask (0x8000184b, at 50(sp)), a2 the track's 64-byte record (0x80000110 + 512 x buffer + 64 x track), it tests the record's FX2 id (+56) against the three stock reverbs (0x14-0x16) and clears +24, +34 and +53 (FX2 SETUP slot 11) for them",
+   "head": [],
+   "tail": [
+    {
+     "stock": 10
+    },
+    "jmp 0x40004d16"
+   ],
+   "done": null
+  },
+  {
    "site": "0x40006820",
    "length": 8,
    "guard": "87faf47c9893d1a9506259f68551bf06eb1ce723ac12cfae49a5b10b8b169fb6",
@@ -34,20 +48,6 @@
    "done": [
     "rts | the call returns as stock's does when it has nothing to do"
    ]
-  },
-  {
-   "site": "0x4000e746",
-   "length": 6,
-   "guard": "c1891b97a86df058cd89d4808e381ecdcf3303e96b08c5e0fd525ea46ffe4d69",
-   "routine": "MIDI IN chromatic note-on (the STANDARD map's chromatic block), once per listening track d2, a3 the message's note",
-   "head": [],
-   "tail": [
-    {
-     "stock": 6
-    },
-    "jmp 0x4000e74c"
-   ],
-   "done": null
   },
   {
    "site": "0x4000dfd4",
@@ -66,30 +66,16 @@
    "done": null
   },
   {
-   "site": "0x40045918",
-   "length": 8,
-   "guard": "112b7d2434bae65950506429fa2e8d01b20316d7ab6d1848ba91f10c451e11ac",
-   "routine": "FUNC + LEFT/RIGHT in CHROMATIC mode: stock toggles its octave word 0x460d16fc (d2 the key)",
+   "site": "0x4000e746",
+   "length": 6,
+   "guard": "c1891b97a86df058cd89d4808e381ecdcf3303e96b08c5e0fd525ea46ffe4d69",
+   "routine": "MIDI IN chromatic note-on (the STANDARD map's chromatic block), once per listening track d2, a3 the message's note",
    "head": [],
    "tail": [
     {
-     "stock": 8
+     "stock": 6
     },
-    "jmp 0x40045920"
-   ],
-   "done": null
-  },
-  {
-   "site": "0x400449be",
-   "length": 8,
-   "guard": "494435e3f72313a14453f642bdba5b064022c657c63c015752fe23092eabd19f",
-   "routine": "the CHROMATIC drawer's common octave push (audio and MIDI reach it with the octave in d0)",
-   "head": [],
-   "tail": [
-    {
-     "stock": 8
-    },
-    "jmp 0x400449c6"
+    "jmp 0x4000e74c"
    ],
    "done": null
   },
@@ -132,6 +118,61 @@
      "stock": 8
     },
     "jmp 0x40044970 | its flags are the continuation's"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x400449be",
+   "length": 8,
+   "guard": "494435e3f72313a14453f642bdba5b064022c657c63c015752fe23092eabd19f",
+   "routine": "the CHROMATIC drawer's common octave push (audio and MIDI reach it with the octave in d0)",
+   "head": [],
+   "tail": [
+    {
+     "stock": 8
+    },
+    "jmp 0x400449c6"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x40045918",
+   "length": 8,
+   "guard": "112b7d2434bae65950506429fa2e8d01b20316d7ab6d1848ba91f10c451e11ac",
+   "routine": "FUNC + LEFT/RIGHT in CHROMATIC mode: stock toggles its octave word 0x460d16fc (d2 the key)",
+   "head": [],
+   "tail": [
+    {
+     "stock": 8
+    },
+    "jmp 0x40045920"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x4004a9c4",
+   "length": 10,
+   "guard": "5165c8a4c5960b92a80860a07d25caa9523d60c46719d50c0f020b542ecef023",
+   "routine": "the tail of Part Save 0x4004a908 (working Part to saved Part): d4 the Part, 0-3; the ten bytes restore its registers and return. Part Clear ends in Part Save, so it comes here too. Site and behaviour read from upstream octabam's STORE notes (sambanks/octabam fe8d6a25, MIT) and checked against the stock bytes; not yet measured on this base.",
+   "head": [],
+   "tail": [
+    {
+     "stock": 10
+    }
+   ],
+   "done": null
+  },
+  {
+   "site": "0x4004a9d0",
+   "length": 8,
+   "guard": "9b78b6778f56449ca9429e734d2140df96316ae0e9eea0b9d6eea089f82ddbd0",
+   "routine": "Part Clear, at its entry: 4(sp) the Part, 0-3. Site and behaviour read from upstream octabam's STORE notes (sambanks/octabam fe8d6a25, MIT) and checked against the stock bytes; not yet measured on this base.",
+   "head": [],
+   "tail": [
+    {
+     "stock": 8
+    },
+    "jmp 0x4004a9d8"
    ],
    "done": null
   },
@@ -284,6 +325,34 @@
    "done": null
   },
   {
+   "site": "0x4007a1ec",
+   "length": 6,
+   "guard": "5a5d9a451cef368d61badb2d5212624df56beca30e3fcaa6483f0c42a35a92ee",
+   "routine": "MIDI ARP SETUP's drawer 0x40079d48, its loop over the setup slots, about to draw a value (LEN or KEY): d3 the slot (2 LEN, 5 KEY), d4 the track's byte, a3 the slot's descriptor (a3@ its text function f(buffer, value), a3@(48) its drawer or 0 for 0x400479b4), a2 + 53 and d2 + 29 the place, d6 the surface; stock calls drawer(a2 + 53, d2 + 29, d3, d4, 0, a3@, d6) at 0x4007a1fa and goes on at 0x4007a216",
+   "head": [],
+   "tail": [
+    {
+     "stock": 6
+    },
+    "jmp 0x4007a1f2"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x4007a2ec",
+   "length": 8,
+   "guard": "9d8b5c6fa44fca2b22f8cb24de82782737e5615dff673baad1c7423135d0d27f",
+   "routine": "MIDI ARP SETUP's encoder handler 0x4007a2ec(encoder, delta), reached through its window's records: 4(%sp) the encoder (2 LEN, 5 KEY, 6 the arp note editor), 8(%sp) the delta; KEY (0x4007a3e2) stores the track's setup byte +0x11 (0..24) in the Part, its battery-backed copy and the live copy. A held trig does not change it: the turn still edits the track's KEY",
+   "head": [],
+   "tail": [
+    {
+     "stock": 8
+    },
+    "jmp 0x4007a2f4"
+   ],
+   "done": null
+  },
+  {
    "site": "0x400866cc",
    "length": 8,
    "guard": "de4845a149f0373201be2e55cd61ae41f52a03afd7c4cb717b70d9c6bd64c5ad",
@@ -326,16 +395,116 @@
    "done": null
   },
   {
-   "site": "0x40004d0c",
+   "site": "0x4008ee74",
+   "length": 8,
+   "guard": "7d5c431d467d3f7e6d9e050e69120eb7faae9c6eede0a0b6c5a8e01f12a224cc",
+   "routine": "the project store (.work to .strd), at its entry: a link frame, the caller's return address at 4(a6) after its first two instructions. Site and behaviour read from upstream octabam's STORE notes (sambanks/octabam fe8d6a25, MIT) and checked against the stock bytes; not yet measured on this base.",
+   "head": [],
+   "tail": [
+    {
+     "stock": 8
+    },
+    "move.l %a0,-(%sp)",
+    "movea.l 4(%a6),%a0",
+    "move.l %a0,modwerk_return_4008ee74",
+    "lea modwerk_after_4008ee74,%a0",
+    "move.l %a0,4(%a6)",
+    "movea.l (%sp)+,%a0",
+    "jmp 0x4008ee7c"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x4008f180",
+   "length": 8,
+   "guard": "7d5c431d467d3f7e6d9e050e69120eb7faae9c6eede0a0b6c5a8e01f12a224cc",
+   "routine": "the project reload (.strd to .work), at its entry: a link frame, the caller's return address at 4(a6) after its first two instructions. Site and behaviour read from upstream octabam's STORE notes (sambanks/octabam fe8d6a25, MIT) and checked against the stock bytes; not yet measured on this base.",
+   "head": [],
+   "tail": [
+    {
+     "stock": 8
+    },
+    "move.l %a0,-(%sp)",
+    "movea.l 4(%a6),%a0",
+    "move.l %a0,modwerk_return_4008f180",
+    "lea modwerk_after_4008f180,%a0",
+    "move.l %a0,4(%a6)",
+    "movea.l (%sp)+,%a0",
+    "jmp 0x4008f188"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x40090504",
+   "length": 8,
+   "guard": "604756f90fe2564cd1c75b712a1c239b10ef2db438579e307632b3382bacd165",
+   "routine": "the load of every bank of a project, at its entry (stack arguments untouched); its first two instructions make a 328-byte frame and save d2-d7/a2-a6, so the caller's return address is at 328(sp) after them. Site and behaviour read from upstream octabam's STORE notes (sambanks/octabam fe8d6a25, MIT) and checked against the stock bytes; not yet measured on this base.",
+   "head": [],
+   "tail": [
+    {
+     "stock": 8
+    },
+    "move.l %a0,-(%sp)",
+    "movea.l 332(%sp),%a0",
+    "move.l %a0,modwerk_return_40090504",
+    "lea modwerk_after_40090504,%a0",
+    "move.l %a0,332(%sp)",
+    "movea.l (%sp)+,%a0",
+    "jmp 0x4009050c"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x400905d4",
+   "length": 8,
+   "guard": "604756f90fe2564cd1c75b712a1c239b10ef2db438579e307632b3382bacd165",
+   "routine": "the masked bank load (LOAD PROJECT, the power-up, reloads), at its entry: 0(sp) the caller's return address, the low word of 8(sp) the mask of banks; the same prologue as 0x40090504. Site and behaviour read from upstream octabam's STORE notes (sambanks/octabam fe8d6a25, MIT) and checked against the stock bytes; not yet measured on this base.",
+   "head": [],
+   "tail": [
+    {
+     "stock": 8
+    },
+    "move.l %a0,-(%sp)",
+    "movea.l 332(%sp),%a0",
+    "move.l %a0,modwerk_return_400905d4",
+    "lea modwerk_after_400905d4,%a0",
+    "move.l %a0,332(%sp)",
+    "movea.l (%sp)+,%a0",
+    "jmp 0x400905dc"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x400909d8",
    "length": 10,
-   "guard": "3b007d2a1b16afbbff30a9df6d28c030691b4f5b3c32626a87be0a7b712408eb",
-   "routine": "the frame's track-record builder 0x40004bd4 (frame interrupt): for each track d4 (0-7) whose bit is set in STOP's tail-kill mask (0x8000184b, at 50(sp)), a2 the track's 64-byte record (0x80000110 + 512 x buffer + 64 x track), it tests the record's FX2 id (+56) against the three stock reverbs (0x14-0x16) and clears +24, +34 and +53 (FX2 SETUP slot 11) for them",
+   "guard": "04b9d7a74c6bd182603087f929a77f363eac1667a5135d86b8fda1c6d35d9b82",
+   "routine": "the new, empty project: three instructions that end in a call, before stock goes on at 0x400909e2. Site and behaviour read from upstream octabam's STORE notes (sambanks/octabam fe8d6a25, MIT) and checked against the stock bytes; not yet measured on this base.",
    "head": [],
    "tail": [
     {
      "stock": 10
     },
-    "jmp 0x40004d16"
+    "jmp 0x400909e2"
+   ],
+   "done": null
+  },
+  {
+   "site": "0x400917c8",
+   "length": 8,
+   "guard": "b692e058a2f3049810c18b0571d61c085c3daba589a09b531fed42f528b96012",
+   "routine": "the bank writer (background save, save as, new project), at its entry: a link frame, so the caller's return address is at 4(a6) after its first two instructions. Site and behaviour read from upstream octabam's STORE notes (sambanks/octabam fe8d6a25, MIT) and checked against the stock bytes; not yet measured on this base.",
+   "head": [],
+   "tail": [
+    {
+     "stock": 8
+    },
+    "move.l %a0,-(%sp)",
+    "movea.l 4(%a6),%a0",
+    "move.l %a0,modwerk_return_400917c8",
+    "lea modwerk_after_400917c8,%a0",
+    "move.l %a0,4(%a6)",
+    "movea.l (%sp)+,%a0",
+    "jmp 0x400917d0"
    ],
    "done": null
   },
@@ -350,34 +519,6 @@
     "bgt.s 1f",
     "jmp 0x4009fb80",
     "1: jmp 0x4009fb5e"
-   ],
-   "done": null
-  },
-  {
-   "site": "0x4007a2ec",
-   "length": 8,
-   "guard": "9d8b5c6fa44fca2b22f8cb24de82782737e5615dff673baad1c7423135d0d27f",
-   "routine": "MIDI ARP SETUP's encoder handler 0x4007a2ec(encoder, delta), reached through its window's records: 4(%sp) the encoder (2 LEN, 5 KEY, 6 the arp note editor), 8(%sp) the delta; KEY (0x4007a3e2) stores the track's setup byte +0x11 (0..24) in the Part, its battery-backed copy and the live copy. A held trig does not change it: the turn still edits the track's KEY",
-   "head": [],
-   "tail": [
-    {
-     "stock": 8
-    },
-    "jmp 0x4007a2f4"
-   ],
-   "done": null
-  },
-  {
-   "site": "0x4007a1ec",
-   "length": 6,
-   "guard": "5a5d9a451cef368d61badb2d5212624df56beca30e3fcaa6483f0c42a35a92ee",
-   "routine": "MIDI ARP SETUP's drawer 0x40079d48, its loop over the setup slots, about to draw a value (LEN or KEY): d3 the slot (2 LEN, 5 KEY), d4 the track's byte, a3 the slot's descriptor (a3@ its text function f(buffer, value), a3@(48) its drawer or 0 for 0x400479b4), a2 + 53 and d2 + 29 the place, d6 the surface; stock calls drawer(a2 + 53, d2 + 29, d3, d4, 0, a3@, d6) at 0x4007a1fa and goes on at 0x4007a216",
-   "head": [],
-   "tail": [
-    {
-     "stock": 6
-    },
-    "jmp 0x4007a1f2"
    ],
    "done": null
   }
@@ -1145,7 +1286,7 @@
    "record": 80,
    "key": null,
    "room": 8,
-   "declaration": "struct modwerk_machine {\n    uint32_t abi;                       /* MODWERK_MACHINE_ABI */\n    uint8_t sig[2], sig_lo, sig_hi;     /* the Part signature at 60 + 30 * track: two letters and a version range */\n    const char *label;                  /* its chooser and SRC SETUP name */\n    uint32_t flags;                     /* MODWERK_MACHINE_* */\n    uint32_t page;                      /* its parameter page without track_page; 0: stock's FLEX page */\n    const uint8_t *defaults;            /* without assign: the 12 FLEX bytes a track takes when it becomes this machine */\n    unsigned (*assign)(volatile uint8_t *part, unsigned track, unsigned on); /* it signs and unsigns its tracks itself */\n    unsigned (*admit_track)(const volatile uint8_t *part, unsigned track);  /* 0 refuses the track */\n    unsigned (*chooser_type)(unsigned type, const volatile uint8_t *slot);  /* 5: its row is the track's */\n    uint32_t (*track_page)(const volatile uint8_t *slot);\n    void (*ui_tick)(void);\n    void (*leave)(unsigned track);      /* the track becomes another machine */\n    void (*pool_open)(void);            /* RIGHT or double-tap TRACK on its row; 0: stock's sample pool */\n    void (*pool_left)(unsigned key, unsigned edge);\n    void (*choice_left)(unsigned key, unsigned edge);\n    const void *list_draw;              /* its pool list drawer, entered as stock's 0x4006d784 */\n    int (*render)(unsigned track, unsigned ping, unsigned start, unsigned end);\n    int (*validate)(uint8_t *part, int (*next)(uint8_t *part));\n    uint16_t source_voice, source_engine; /* a DSP voice that replaces its track's stock source: its price per voice */\n    uint8_t source_kind, reserved[3];   /* and per core while one runs, of this kind (loader.h runtime_cycles); 0 none */\n};\n#define MODWERK_MACHINE_ABI 1u\n#define MODWERK_MACHINE_PROTECT 1u      /* stock's validator never sees its tracks' 12 FLEX bytes */\n#define MODWERK_MACHINE_POOL 2u         /* its row has a pool or engine list (the title's chevron) */\n#define MODWERK_MACHINE_RENDER_FLEX 4u  /* its render is also offered FLEX tracks no machine owns */\n#define MODWERK_MACHINE_BACKING 8u      /* its page is STATIC's when its track's backing pool is STATIC */\n#define MODWERK_MACHINE_SETUP_ALL 16u   /* all six SRC SETUP encoders edit its slots; without it encoder E (slot 10) stays read-only, POLY8's hidden slot */\n#define MODWERK_MACHINE_LIST 32u       /* its track window (TRACK double tap) opens on the machine list, as PICKUP's; for a machine without a pool */\n#define MODWERK_MACHINE_SETUP_PAGE 64u  /* it draws and edits its own SRC SETUP rows: its record is a struct modwerk_machine_setup */\n/* A SETUP_PAGE machine contributes this 88-byte record: SRC SETUP on its row, on a track it owns (0: stock's, the backing\n * pool's setup). A base without the flag reads its first 80 bytes, the machine. */\nstruct modwerk_machine_setup {\n    struct modwerk_machine machine;     /* its flags have MODWERK_MACHINE_SETUP_PAGE */\n    uint32_t (*page)(uint32_t stock);   /* the page the drawer shows instead of stock's */\n    unsigned (*knob)(unsigned index, int delta); /* encoder A-F (0-5) turned: nonzero takes it, 0 lets stock edit the pool's slot */\n};\n#define MODWERK_MACHINE_START 256u       /* requires its separate versioned START record */\n#define MODWERK_MACHINE_NATIVE_FLEX 512u /* render consumes the native FLEX voice; requires START and its own translating render */",
+   "declaration": "struct modwerk_machine {\n    uint32_t abi;                       /* MODWERK_MACHINE_ABI */\n    uint8_t sig[2], sig_lo, sig_hi;     /* the Part signature at 60 + 30 * track: two letters and a version range */\n    const char *label;                  /* its chooser and SRC SETUP name */\n    uint32_t flags;                     /* MODWERK_MACHINE_* */\n    uint32_t page;                      /* its parameter page without track_page; 0: stock's FLEX page */\n    const uint8_t *defaults;            /* without assign: the 12 FLEX bytes a track takes when it becomes this machine */\n    unsigned (*assign)(volatile uint8_t *part, unsigned track, unsigned on); /* it signs and unsigns its tracks itself */\n    unsigned (*admit_track)(const volatile uint8_t *part, unsigned track);  /* 0 refuses the track */\n    unsigned (*chooser_type)(unsigned type, const volatile uint8_t *slot);  /* 5: its row is the track's */\n    uint32_t (*track_page)(const volatile uint8_t *slot);\n    void (*ui_tick)(void);\n    void (*leave)(unsigned track);      /* the track becomes another machine */\n    void (*pool_open)(void);            /* RIGHT or double-tap TRACK on its row; 0: stock's sample pool */\n    void (*pool_left)(unsigned key, unsigned edge);\n    void (*choice_left)(unsigned key, unsigned edge);\n    const void *list_draw;              /* its pool list drawer, entered as stock's 0x4006d784 */\n    int (*render)(unsigned track, unsigned ping, unsigned start, unsigned end);\n    int (*validate)(uint8_t *part, int (*next)(uint8_t *part));\n    uint16_t source_voice, source_engine; /* a DSP voice that replaces its track's stock source: its price per voice */\n    uint8_t source_kind, reserved[3];   /* and per core while one runs, of this kind (loader.h runtime_cycles); 0 none */\n    /* reserved[0] is the machine's CPU price (the base's CPU budget): its worst render on one track, both passes of a\n     * frame, in percent of a frame, measured on a unit. 0: the base's default, or nothing for a DSP voice. It stays\n     * in reserved[] so that every descriptor written `{0}` there still compiles: a priced one ends `{PERCENT}`. */\n};\n#define MODWERK_MACHINE_ABI 1u\n#define MODWERK_MACHINE_PROTECT 1u      /* stock's validator never sees its tracks' 12 FLEX bytes */\n#define MODWERK_MACHINE_POOL 2u         /* its row has a pool or engine list (the title's chevron) */\n#define MODWERK_MACHINE_RENDER_FLEX 4u  /* its render is also offered FLEX tracks no machine owns */\n#define MODWERK_MACHINE_BACKING 8u      /* its page is STATIC's when its track's backing pool is STATIC */\n#define MODWERK_MACHINE_SETUP_ALL 16u   /* all six SRC SETUP encoders edit its slots; without it encoder E (slot 10) stays read-only, POLY8's hidden slot */\n#define MODWERK_MACHINE_LIST 32u       /* its track window (TRACK double tap) opens on the machine list, as PICKUP's; for a machine without a pool */\n#define MODWERK_MACHINE_SETUP_PAGE 64u  /* it draws and edits its own SRC SETUP rows: its record is a struct modwerk_machine_setup */\n/* A SETUP_PAGE machine contributes this 88-byte record: SRC SETUP on its row, on a track it owns (0: stock's, the backing\n * pool's setup). A base without the flag reads its first 80 bytes, the machine. */\nstruct modwerk_machine_setup {\n    struct modwerk_machine machine;     /* its flags have MODWERK_MACHINE_SETUP_PAGE */\n    uint32_t (*page)(uint32_t stock);   /* the page the drawer shows instead of stock's */\n    unsigned (*knob)(unsigned index, int delta); /* encoder A-F (0-5) turned: nonzero takes it, 0 lets stock edit the pool's slot */\n};\n#define MODWERK_MACHINE_START 256u       /* requires its separate versioned START record */\n#define MODWERK_MACHINE_NATIVE_FLEX 512u /* render consumes the native FLEX voice; requires START and its own translating render */",
    "when": "the machine chooser, SRC SETUP, the page resolver, the Part validator, the UI tick, pool navigation and the FLEX renderer ask the contributed machines, in row order: chooser rows 5 on",
    "context": "the UI task and the audio render (render only): short, no firmware call that can block",
    "contract": "Contribute one struct modwerk_machine (every field but abi, sig and label optional, 0). A Part keeps its signature when the machine is absent and reads as stock. Leaving a PROTECT machine that has no assign of its own puts stock's FLEX defaults back in both Part copies before the signature goes. A priced machine (source_kind) is charged on its track's core before the track becomes it, and every owned track at each UI tick; a track the core cannot carry renders stock's silent source. Removal is refused while a Part, a UI root or a paused task still holds the machine. A SETUP_PAGE machine contributes a struct modwerk_machine_setup (88 bytes): while SRC SETUP's cursor is on its row and the current track is its own, the drawer shows the page its page function returns and encoders A-F go to its knob function before stock edits the backing pool's setup; a base without the flag ignores it and reads 80 bytes, so the machine keeps stock's setup there. A NATIVE_FLEX machine must contribute START and its own render callback. It keeps its native FLEX voice active while the base clears its retrig count; refused STARTs, unpaid owners and missing machines still stop it. Translate and restore custom controls around native START and render calls. Use a matching base: older bases ignore this flag and stop the voice.",
@@ -1866,6 +2007,229 @@
      "what": "source START selection: load the selected fallback, choose a standard-call custom dispatcher when required, replay the null test and resume at 0x4000d484; leave Mute Modes at 0x4000d498 unchanged"
     }
    ]
+  },
+  {
+   "event": "ev_banks_load",
+   "index": 38,
+   "site": "0x40090504",
+   "length": 8,
+   "prototype": "void f(void)",
+   "args": [],
+   "results": "notify",
+   "when": "a project load is about to read every bank from the card",
+   "context": "the task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task)",
+   "contract": "A notification before stock's load: what a module keeps per project is about to be replaced, so it marks its own copy stale here and reads its file at ev_banks_loaded. d2-d7/a2-a6 must be kept, as C keeps them.",
+   "order": "lower first, then module id; every handler runs. 10-90.",
+   "subscribers": [],
+   "orderEvidence": "No subscriber yet: MIDI Scenes and Kits are the first planned ones, and each keeps its own file, so neither depends on the other's order."
+  },
+  {
+   "event": "ev_banks_loaded",
+   "index": 39,
+   "site": null,
+   "prototype": "unsigned f(void)",
+   "args": [],
+   "results": "or",
+   "when": "stock has read every bank of the project; no stock site: the base raises it when the routine at 0x40090504 returns",
+   "context": "the task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task)",
+   "contract": "The project's banks are in memory: a module reads its own file from the project directory now. The result is ignored: return 0. The routine's own result and registers reach its caller unchanged. d2-d7/a2-a6 must be kept, as C keeps them.",
+   "order": "lower first, then module id; every handler runs. 10-90.",
+   "subscribers": [],
+   "raisers": [],
+   "after": "0x40090504",
+   "orderEvidence": "No subscriber yet: MIDI Scenes and Kits are the first planned ones, and each keeps its own file, so neither depends on the other's order."
+  },
+  {
+   "event": "ev_bank_load",
+   "index": 40,
+   "site": "0x400905d4",
+   "length": 8,
+   "prototype": "void f(unsigned mask, uint32_t caller)",
+   "args": [
+    "site+8",
+    "site+0"
+   ],
+   "results": "notify",
+   "when": "stock is about to load the banks in a mask (LOAD PROJECT, the power-up, a reload)",
+   "context": "the task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task)",
+   "contract": "A notification before stock's load. mask's low 16 bits name the banks; caller is the return address of stock's call, which tells the loads apart. A module that needs either at ev_bank_loaded keeps them here. d2-d7/a2-a6 must be kept, as C keeps them.",
+   "order": "lower first, then module id; every handler runs. 10-90.",
+   "subscribers": [],
+   "orderEvidence": "No subscriber yet: MIDI Scenes and Kits are the first planned ones, and each keeps its own file, so neither depends on the other's order."
+  },
+  {
+   "event": "ev_bank_loaded",
+   "index": 41,
+   "site": null,
+   "prototype": "unsigned f(void)",
+   "args": [],
+   "results": "or",
+   "when": "stock has loaded the banks ev_bank_load named; no stock site: the base raises it when the routine at 0x400905d4 returns",
+   "context": "the task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task)",
+   "contract": "The banks named at ev_bank_load are in memory: a module brings what it keeps for them up to date. The result is ignored: return 0. The routine's own result and registers reach its caller unchanged. d2-d7/a2-a6 must be kept, as C keeps them.",
+   "order": "lower first, then module id; every handler runs. 10-90.",
+   "subscribers": [],
+   "raisers": [],
+   "after": "0x400905d4",
+   "orderEvidence": "No subscriber yet: MIDI Scenes and Kits are the first planned ones, and each keeps its own file, so neither depends on the other's order."
+  },
+  {
+   "event": "ev_project_new",
+   "index": 42,
+   "site": "0x400909d8",
+   "length": 10,
+   "prototype": "void f(void)",
+   "args": [],
+   "results": "notify",
+   "when": "stock makes a new, empty project, before it initialises it",
+   "context": "the task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task)",
+   "contract": "A notification: a module empties what it keeps per project, so nothing of the last project reaches the new one. d2-d7/a2-a6 must be kept, as C keeps them.",
+   "order": "lower first, then module id; every handler runs. 10-90.",
+   "subscribers": [],
+   "orderEvidence": "No subscriber yet: MIDI Scenes and Kits are the first planned ones, and each keeps its own file, so neither depends on the other's order."
+  },
+  {
+   "event": "ev_bank_write",
+   "index": 43,
+   "site": "0x400917c8",
+   "length": 8,
+   "prototype": "void f(void)",
+   "args": [],
+   "results": "notify",
+   "when": "stock's bank writer is about to write the changed banks to the card (background save, save as, new project)",
+   "context": "the task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task)",
+   "contract": "A notification before stock's write. d2-d7/a2-a6 must be kept, as C keeps them.",
+   "order": "lower first, then module id; every handler runs. 10-90.",
+   "subscribers": [],
+   "orderEvidence": "No subscriber yet: MIDI Scenes and Kits are the first planned ones, and each keeps its own file, so neither depends on the other's order."
+  },
+  {
+   "event": "ev_bank_written",
+   "index": 44,
+   "site": null,
+   "prototype": "unsigned f(void)",
+   "args": [],
+   "results": "or",
+   "when": "stock's bank writer has written the changed banks; no stock site: the base raises it when the routine at 0x400917c8 returns",
+   "context": "the task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task)",
+   "contract": "A module writes its own changed file beside the bank files now, so both are from the same moment. The result is ignored: return 0. The routine's own result and registers reach its caller unchanged. d2-d7/a2-a6 must be kept, as C keeps them.",
+   "order": "lower first, then module id; every handler runs. 10-90.",
+   "subscribers": [],
+   "raisers": [],
+   "after": "0x400917c8",
+   "orderEvidence": "No subscriber yet: MIDI Scenes and Kits are the first planned ones, and each keeps its own file, so neither depends on the other's order."
+  },
+  {
+   "event": "ev_project_store",
+   "index": 45,
+   "site": "0x4008ee74",
+   "length": 8,
+   "prototype": "void f(void)",
+   "args": [],
+   "results": "notify",
+   "when": "SAVE PROJECT is about to copy the project's .work files to .strd",
+   "context": "the task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task)",
+   "contract": "A notification before stock's copies: a module writes what it has not written yet to its .work file. d2-d7/a2-a6 must be kept, as C keeps them.",
+   "order": "lower first, then module id; every handler runs. 10-90.",
+   "subscribers": [],
+   "orderEvidence": "No subscriber yet: MIDI Scenes and Kits are the first planned ones, and each keeps its own file, so neither depends on the other's order."
+  },
+  {
+   "event": "ev_project_stored",
+   "index": 46,
+   "site": null,
+   "prototype": "unsigned f(void)",
+   "args": [],
+   "results": "or",
+   "when": "SAVE PROJECT has copied the project's .work files to .strd; no stock site: the base raises it when the routine at 0x4008ee74 returns",
+   "context": "the task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task)",
+   "contract": "A module copies its own .work file to its .strd file, as stock did for the banks. The result is ignored: return 0. The routine's own result and registers reach its caller unchanged. d2-d7/a2-a6 must be kept, as C keeps them.",
+   "order": "lower first, then module id; every handler runs. 10-90.",
+   "subscribers": [],
+   "raisers": [],
+   "after": "0x4008ee74",
+   "orderEvidence": "No subscriber yet: MIDI Scenes and Kits are the first planned ones, and each keeps its own file, so neither depends on the other's order."
+  },
+  {
+   "event": "ev_project_reload",
+   "index": 47,
+   "site": "0x4008f180",
+   "length": 8,
+   "prototype": "void f(void)",
+   "args": [],
+   "results": "notify",
+   "when": "RELOAD PROJECT is about to copy the project's .strd files back to .work",
+   "context": "the task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task)",
+   "contract": "A notification before stock's copies. d2-d7/a2-a6 must be kept, as C keeps them.",
+   "order": "lower first, then module id; every handler runs. 10-90.",
+   "subscribers": [],
+   "orderEvidence": "No subscriber yet: MIDI Scenes and Kits are the first planned ones, and each keeps its own file, so neither depends on the other's order."
+  },
+  {
+   "event": "ev_project_reloaded",
+   "index": 48,
+   "site": null,
+   "prototype": "unsigned f(void)",
+   "args": [],
+   "results": "or",
+   "when": "RELOAD PROJECT has copied the project's .strd files back to .work; no stock site: the base raises it when the routine at 0x4008f180 returns",
+   "context": "the task stock loads and saves projects in, where it uses the card: a handler may call stock's file routines, and must not draw or open a window (those belong to the UI task)",
+   "contract": "A module copies its own .strd file back to its .work file; stock's bank loads follow (ev_bank_load). The result is ignored: return 0. The routine's own result and registers reach its caller unchanged. d2-d7/a2-a6 must be kept, as C keeps them.",
+   "order": "lower first, then module id; every handler runs. 10-90.",
+   "subscribers": [],
+   "raisers": [],
+   "after": "0x4008f180",
+   "orderEvidence": "No subscriber yet: MIDI Scenes and Kits are the first planned ones, and each keeps its own file, so neither depends on the other's order."
+  },
+  {
+   "event": "ev_part_saved",
+   "index": 49,
+   "site": "0x4004a9c4",
+   "length": 10,
+   "prototype": "void f(unsigned part)",
+   "args": [
+    "d4"
+   ],
+   "results": "notify",
+   "when": "Part Save has copied a working Part to its saved copy (Part Save, SAVE ALL, and the end of Part Clear), before it returns",
+   "context": "the task that saves the Part (a panel action), not measured on this base: short, no file call",
+   "contract": "A notification: part is 0-3 in the current bank. A module that keeps state beside a Part saves its copy for that Part. d2-d7/a2-a6 must be kept, as C keeps them.",
+   "order": "lower first, then module id; every handler runs. 10-90.",
+   "subscribers": [],
+   "orderEvidence": "No subscriber yet: MIDI Scenes and Kits are the first planned ones, and each keeps its own file, so neither depends on the other's order."
+  },
+  {
+   "event": "ev_part_clear",
+   "index": 50,
+   "site": "0x4004a9d0",
+   "length": 8,
+   "prototype": "void f(unsigned part)",
+   "args": [
+    "site+4"
+   ],
+   "results": "notify",
+   "when": "Part Clear is about to initialise a Part; it ends in Part Save, so ev_part_saved follows",
+   "context": "the task that clears the Part (a panel action), not measured on this base: short, no file call",
+   "contract": "A notification: part is 0-3 in the current bank. A module clears what it keeps beside that Part. d2-d7/a2-a6 must be kept, as C keeps them.",
+   "order": "lower first, then module id; every handler runs. 10-90.",
+   "subscribers": [],
+   "orderEvidence": "No subscriber yet: MIDI Scenes and Kits are the first planned ones, and each keeps its own file, so neither depends on the other's order."
+  },
+  {
+   "event": "ev_modules_ready",
+   "index": 51,
+   "site": null,
+   "prototype": "unsigned f(void)",
+   "args": [],
+   "results": "or",
+   "when": "the installed modules changed (the restore after a power-up, a set installed, kept or undone over USB) and the unit can use the card: nothing plays or records; no stock site: the base raises it from its engine-task service",
+   "context": "the engine task, with the card free: a handler may call stock's file routines, and must not draw or open a window",
+   "contract": "Every installed module's handler runs each time, so a handler first checks whether it has loaded its state already. A module installed into a running project reads its file from the project directory here, since no project load will tell it. The result is ignored: return 0. d2-d7/a2-a6 must be kept, as C keeps them.",
+   "order": "lower first, then module id; every handler runs. 10-90.",
+   "subscribers": [],
+   "raisers": [],
+   "raisedByBase": true,
+   "orderEvidence": "No subscriber yet: MIDI Scenes and Kits are the first planned ones, and each keeps its own file, so neither depends on the other's order."
   }
  ]
 }
