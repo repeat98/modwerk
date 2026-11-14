@@ -25,4 +25,9 @@ describe('the step base', () => {
     }
     expect(text).toContain(STEP_IDENTITIES[STEP_DEFAULT_LAYOUT])
   })
+  // Found on a unit: the app dropped the flag, the dialog built the current base twice and sent its user to the card.
+  // TypeScript takes a callback with fewer parameters, so only the source shows it.
+  it('is asked for by the app with the dialog\'s step flag', () => {
+    expect(readFileSync(new URL('../../App.tsx', import.meta.url), 'utf8')).toContain('buildBase={(layout, step) => workspace.firmwareClient.current?.buildBase(layout, step)')
+  })
 })

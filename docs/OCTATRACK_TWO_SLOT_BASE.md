@@ -115,8 +115,12 @@ If even the step base does not fit, the dialog sends the user to the card.
 - A base that raises the stage again becomes the next step base: copy its package, fills and variants over the three
   assets and update the pins, in the pull request that first publishes a base too big for the old stage.
 - The packed container is the next limit, and it is the flash's: 851,712 bytes on two slots (`flash.h`).
-- Not tested on a unit: two updates back to back on two slots (by the rule above the second overwrites the step
-  base's unconfirmed slot and the old base stays the fallback), and Windows keeping its USB driver through them.
+- On the owner's MKII (14 November 2026, a test base padded past the old stage): the two updates from a card-installed
+  base on one slot (the site's dialog) and from two slots (the link from the command line). The second overwrites the
+  step base's unconfirmed slot and the old base stays the fallback. With the host gone during the send or the save
+  of either update, the unit finished a write it had begun and the next update finished the job. Two power cuts
+  during a slot write left that slot unwhole and the confirmed base starting.
+- Not tested: a pulled cable (the host was only silenced), Windows keeping its USB driver through the two updates.
 
 ## Showing it on the Octatrack
 
