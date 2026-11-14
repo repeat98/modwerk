@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later OR Elastic-2.0
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 // How many modules one Octatrack module set may hold for now (owner, 11 November 2026: units showed DSP stalls and
-// failed self-tests with 14 to 20 modules). Every add, the USB sync, the card build and the Worker's build check read
-// it from here. A set that already holds more still loads and shows; it only cannot be synced or built until trimmed.
+// failed self-tests with 14 to 20 modules; raised to 24 on 14 November 2026, since the largest sets seen held 23).
+// Every add, the USB sync, the card build and the Worker's build check read it from here. A set that already holds
+// more still loads and shows; it only cannot be synced or built until trimmed.
 import { MODULES } from './modules.ts'
 import { USB_AUDIO_MODULE } from '../config/usb-audio.ts'
 import type { AddBlock } from './add-blocks.ts'
 
-export const SET_MODULE_LIMIT = 20
+export const SET_MODULE_LIMIT = 24
 
 /** Only the Octatrack's sets are limited; other machines keep their own rules. */
 export const limitApplies = (device = 'octatrack') => device === 'octatrack'
