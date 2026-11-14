@@ -1,0 +1,30 @@
+wait 1000
+press TRK
+tap 9
+release TRK
+tap AMP
+snap cc-select
+tap AMP
+snap cc-receive
+turn A -1 40
+turn A -1 40
+turn A -1 40
+turn A -1 40
+turn A -1 40
+turn A -1 40
+turn A -1 40
+turn A -1 40
+turn A -1 40
+turn A -1 40
+turn A -1 40
+turn A -1 40
+turn A -1 40
+turn A -1 40
+turn A -1 40
+turn A -1 40
+turn A -1 40
+turn A -1 40
+turn A -1 40
+turn A -1 40
+wait 400
+snap cc-receive-set
