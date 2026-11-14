@@ -98,7 +98,7 @@
     "limitations": [
       "USB only: it loads on the Modwerk base over USB (it needs the base's machine list and START dispatch) and has no card build.",
       "Experimental: played and measured on one MKII on a development base; TESTING.md lists what was not tried.",
-      "Measured on 0.1.0-experimental, an MKII: one Amiga track beside seven FLEX tracks added 5.5 points to the frame interrupt at the defaults and up to 13.8 with PTCH +12, SRR and LED; eight Amiga tracks reached the base's frame guard, which skipped 17 % of their renders (dropouts). This version has not been measured on a unit; count on a few Amiga tracks, not eight. Other installed modules leave less room: beside fifteen of them and three sounding FLEX tracks, one Amiga track took 12.6 to 16 points.",
+      "Measured on an MKII: one Amiga track beside seven FLEX tracks added 5.5 points to the frame interrupt at the defaults and up to 13.8 with PTCH +12, SRR and LED (0.1.0); this version is 2 to 3 points dearer. The base's CPU budget takes three Amiga tracks a Part and refuses a fourth with CPU FULL; three at the defaults beside four busy tracks already ran the frame late. Other installed modules leave less room: beside fifteen of them and three sounding FLEX tracks, one Amiga track took 12.6 to 16 points.",
       "With a USB recording running as well, one Amiga track (0.1.0-experimental) at PTCH +12 with SRR and LED on beside seven FLEX tracks froze the unit until a power cycle.",
       "No stock RTRG or RTIM on an Amiga track: SPD and GRN take their knobs.",
       "Stock's own time-stretch (TSTR) is off on an Amiga track, and SETUP's LEN switch is LED: the track always uses stock's default length setting, LEN OFF.",
@@ -114,7 +114,7 @@
     "effectId": null
   },
   "resources": {
-    "recorded": "2026-11-13",
+    "recorded": "2026-11-14",
     "storage": {
       "label": "Module image and memory",
       "display": "11,792 bytes code and data; 2,092 bss",
@@ -126,19 +126,19 @@
     },
     "processing": {
       "label": "ColdFire, in the frame interrupt",
-      "display": "Not measured in cycles; 0.1.0 measured 5.5 to 13.8 points of a frame a track",
+      "display": "Not measured in cycles; on the unit 6 to 28 points of a frame a track",
       "value": null,
       "unit": "cycles/block",
       "method": "unmeasured",
-      "conditions": "No worst case in cycles exists, and this version has not been measured on a unit. On the owner's MKII with 0.1.0-experimental (development twin d8fae687 of the base, 11 November 2026; five seconds of a 131 BPM pattern, eight tracks playing loops, one reading each) the frame interrupt read 63.7 % with eight FLEX tracks, 69.2 % with track 1 on Amiga at the defaults and 77.5 % with PTCH +12, SRR and LED; eight Amiga tracks at the defaults read 79.2 % with 16.9 % of their renders skipped by the base's frame guard. These are means over five seconds, not a longest frame. For this version ot_emu counts 124 to 4,762 instructions of the engine's own code per audio frame of one track (worst frame 6,488), where 0.1.0 counted 300 to 5,355 (worst 6,501); the unit's time did not follow such counts.",
+      "conditions": "No worst case in cycles exists. On the owner's MKII with this version (development twin 2d97f42d of release base 4e9a87ea, 14 November 2026; eight seconds of a 126 BPM pattern with track 1 alone sounding a drum loop, one reading each) the frame interrupt read 29.5 % with track 1 on FLEX, 35.5 % on Amiga at the defaults, 40.6 % at PTCH +12 and 57.3 % at PTCH +12 with GRN 0, SRR 30 and LED; 0.1.0 read 33.3 % and 37.4 % on the same twin. Three Amiga tracks at the defaults beside four STATIC tracks read 64.3 % with the longest frame at 113.2 %. These are means, not a longest frame. ot_emu counts 124 to 4,762 instructions of the engine's own code per audio frame of one track (worst frame 6,488); the unit's time did not follow such counts.",
       "source": "TESTING.md"
     },
     "impact": {
-      "conditions": "CPU from frame-interrupt readings of 0.1.0-experimental on an MKII (one Amiga track playing a loop beside seven FLEX tracks, from the defaults to PTCH +12 with SRR and LED on, and eight Amiga tracks at the defaults; means, one reading each); this version not yet measured on a unit. Memory from this package's sizes, all eight voices included whether used or not.",
+      "conditions": "CPU from frame-interrupt readings of this version on an MKII (one Amiga track playing a loop, from the defaults to PTCH +12 with GRN 0, SRR and LED, and three Amiga tracks beside four STATIC tracks; means, one reading each). Memory from this package's sizes, all eight voices included whether used or not.",
       "cpu": {
         "level": "high",
         "basis": "measured-comparison",
-        "rationale": "The ColdFire reworks the track's source frames in the frame interrupt: the word and rate reduction, the lowpass and the cyclic restarts with their crossfades, which read the sample itself. With 0.1.0 one Amiga track added 5.5 points of the frame at the defaults and 13.8 with PTCH +12, SRR and LED against a FLEX track on the same unit; eight at the defaults reached the base's 80 % frame guard, which skipped 16.9 % of their renders. This version no longer copies every frame into a memory, which the emulator counts as cheaper; it has not been measured on a unit. Worst-case cycles are not measured.",
+        "rationale": "The ColdFire reworks the track's source frames in the frame interrupt: the word and rate reduction, the lowpass and the cyclic restarts with their crossfades, which read the sample itself. On the unit one Amiga track added 6 points of the frame at the defaults, 11 at PTCH +12 and 28 at the dearest settings against a FLEX track, 2 to 3 more than 0.1.0; beside other sounding tracks and installed modules it cost 12.6 to 16 (0.1.0). The base's CPU budget admits three Amiga tracks a Part. Worst-case cycles are not measured.",
         "source": "TESTING.md"
       },
       "dsp": {
@@ -157,9 +157,9 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host gate on the engine (verify.py, 72 checks: the crunch, the stretch's timing and its crossfades out of the sample, pages, words and directions), a comparison of the crossfades with Amigo's (reference/amigo_check.py, the owner's installed plug-in), an emulator count of its instructions (bench.py), and RAM trials of 0.1.0-experimental on the owner's MKII on a development base, 11 November 2026. This version has not run on a unit yet. TESTING.md lists what was not tried.",
+    "summary": "Host gate on the engine (verify.py, 72 checks: the crunch, the stretch's timing and its crossfades out of the sample, pages, words and directions), a comparison of the crossfades with Amigo's (reference/amigo_check.py, the owner's installed plug-in), an emulator count of its instructions (bench.py), and RAM trials of this version's release package on the owner's MKII on a development base, 13 and 14 November 2026: restart ticks counted per track over USB Audio against 0.1.0, load with one and three tracks, a recorder buffer. TESTING.md lists what was not tried.",
     "hardwareStatus": "reported",
-    "evidenceRevision": "66663bdb1fb5e309c7ab25827925c681be57ca09",
+    "evidenceRevision": "a679875b1611d27cf1afe86741b6c646ec7fa9d0",
     "gates": [
       "python3 -B verify.py",
       "python3 -B generate.py --check",

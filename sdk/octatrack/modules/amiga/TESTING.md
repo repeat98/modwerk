@@ -57,9 +57,26 @@ The owner's MKII, 13 November 2026, a RAM-booted development twin `2d97f42d…` 
 - SRC read PTCH, STRT, LEN, RATE, SPD, GRN, and the status line `8 BIT▸AMIGA`.
 - One trig on T1 step 1, playing at the defaults: stock's voice record read sounding, slot 1's state and settings records at +4 and +8, the note from frame 0 to 367,649 at +40 and +44, the reader at +68. The frame guard read a longest frame of 73.8 % and 23.7 % of the CPU in the frame interrupt, none skipped (one reading).
 - Four seconds of the main out recorded over USB Audio at the defaults: level steady throughout, no run of zeros, no repeated block.
-- **At the end of that recording the unit left USB** (the trial's connection: "the unit is away", 231 s into the trial) and did not come back within 30 s and more. Not yet power-cycled; crash and stall records not yet read. 0.1.0 once did the same with a USB recording running (below). Whether the module, the recording or the twin causes it is not known.
+- **At the end of that recording the unit left USB** (the trial's connection: "the unit is away", 231 s into the trial) and did not come back within 30 s and more. It wrote no crash or stall record: read on 14 November, the crash record (number 12, an illegal instruction at a module-pool address) was on the unit by 10 November, before this version existed, and the last stall record came from a 29-module set. 0.1.0 once did the same with a USB recording running (below). Whether the module, the recording or the twin causes it is not known; 14 November's six recordings with 0.2.0 and 0.1.0 (below) all ended normally.
 
-Not yet tried with 0.2.0: the stretch with restarts (PTCH -5, SPD 100, PTCH +12), slices, a recorder buffer, RATE below 0, the load with eight tracks.
+The same unit and twin, 14 November 2026, the release package `6bb8e598…` (built by `npm run octatrack:module-packages`, byte-identical to the 13 November one), timed trials with no Keep, Amiga the only module installed, bank B pattern B01 at 126 BPM with Flex slot 1 (a 115 BPM drum loop). Trigs were added on other tracks for the run and taken out again; the pattern's bytes and Part 1's saved copy compared equal afterwards.
+
+- **Restarts.** T1's own channel pair over USB Audio (the twin's 20 channels, one pair a track), three seconds each, BITS 16 so the word length adds no steps. Counted: isolated jumps in the second difference above eight times their 256-sample neighbourhood, the shape a restart tick leaves. The same twin and settings with 0.1.0's package for comparison, and T1 on FLEX as the reference.
+
+  | T1 | 0.1.0 | 0.2.0 |
+  | --- | --- | --- |
+  | Restarts ahead of the reader (PTCH -5.2, SPD 100) | 40 to 43 a channel (13 to 14 a second), worst 13.9 times | 2 to 3 (about one a second), worst 14.6 times |
+  | Restarts behind it (PTCH +12) | 0 to 3, worst 9.5 times | none, worst 7.5 times |
+  | FLEX, no restarts (reference) | none, worst 7.1 times | |
+
+  0.2.0's few left over sit at the same place in each bar, about 33 ms after a drum hit (the note's first restart at that pitch), in a quiet passage: small changes of slope, not steps. Whether they are the crossfade's or the sample's was not separated.
+- **Load**, T1 alone sounding, `guard` and `stats` over eight seconds, one reading each, against 0.1.0 on the same twin that morning: at the defaults 35.5 % of the frame in the frame interrupt (0.1.0 33.3 %, FLEX 29.5 %), at PTCH +12 40.6 % (37.4 %), at PTCH +12 with GRN 0, SRR 30 and LED 57.3 %, CPU 64 %, nothing skipped. T1's longest render, both passes of a frame: 13.5 %, 31.2 % and 36.6 %. On the unit this version is 2 to 3 points dearer than 0.1.0, where the emulator counted it cheaper: the crossfade reads the sample at every restart.
+- **Three Amiga tracks** at the defaults (T1 to T3) beside four trigged STATIC tracks: 64.3 % in the frame interrupt, longest frame 113.2 %, the latest start 13.2 % of a frame late, CPU 72 to 73 %. **A fourth is refused** by the base's CPU budget: Amiga declares no price, so each track books the default 12 % of the 45 % allowance, and the fourth showed CPU FULL, "AMIGA NEEDS +27%", "CPU 107%", "CHANGE ONE FIRST". So eight Amiga tracks cannot be measured on this base.
+- **Recorder buffer.** T1 on recorder buffer R1 (idle, holding silence) at PTCH +12: the output stayed silent, with no noise burst, while T1's render ran 44.6 % of a frame at its longest. That the crossfade reads a buffer holding sound correctly is not shown.
+- **Other tracks.** With 0.1.0 at PTCH +12 the same morning, T2 to T4 were sample-identical with T1 on Amiga and on FLEX (Performance, below); 0.2.0 changes only how T1's own restarts read.
+- Every trial ended with its tracks back on FLEX and rolled back cleanly.
+
+Not yet tried with 0.2.0: slices (with RATE below 0), RATE below 0 with the stretch, a recorder buffer holding sound, locks and LFOs on SPD and GRN.
 
 ## On the unit (0.1.0-experimental)
 
@@ -97,10 +114,7 @@ Not tested beyond the above: with the module installed and no track on Amiga, ei
 
 ## Screens
 
-The pages did not change in 0.2.0; the pictures are 0.1.0's.
-
-
-`media/amiga-machine-list.png`, `media/amiga-src.png` and `media/amiga-src-setup.png` are the unit's own LCD, read over USB with the development session's `png` step on 11 November 2026 during a trial of package `e9730e24…` on twin `d8fae687` (MAIN image SHA-256 `2d628536…`): 128×64 at scale 2, not edited. The keys that led to each screen were not recorded as a plan. Hashes are in `media/capture.json`.
+`media/amiga-machine-list.png`, `media/amiga-src.png` and `media/amiga-src-setup.png` are the unit's own LCD, read over USB with the development session's `png` step on 14 November 2026 during a trial of the release package `6bb8e598…` on twin `2d97f42d` (MAIN image SHA-256 `213b5bfd…`): 128×64 at scale 2, not edited. The session sent the keys: a double tap on T1, LEFT, DOWN to AMIGA for the list; YES, NO and SRC for SRC; FUNC+SRC for SRC SETUP. Hashes are in `media/capture.json`.
 
 ## Performance (0.1.0-experimental)
 
