@@ -3324,7 +3324,7 @@
       ]
     }
   ],
-  "sourceCommit": "3d903dcf6e368010e20215440842e4783d262f46",
+  "sourceCommit": "ad69351582bc4943e376af99873696c5bba46616",
   "moduleVersions": {
     "miniverb": "0.2.3-experimental",
     "tapeecho": "0.1.6-experimental",
@@ -3339,7 +3339,7 @@
     "analog-bassdrum": "0.1.7-experimental",
     "usb-audio-out-tracks-main-cue": "0.2.0-experimental",
     "quantizer": "0.1.4-experimental",
-    "synth": "0.1.2-experimental",
+    "synth": "0.1.3-experimental",
     "previewvol": "0.1.2-experimental",
     "cc-map": "0.1.2-experimental",
     "sidechain-compressor": "0.2.2-experimental",
