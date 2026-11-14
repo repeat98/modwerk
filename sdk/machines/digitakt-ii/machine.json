@@ -4,7 +4,7 @@
   "order": 40,
   "name": "Digitakt II",
   "status": "preview",
-  "summary": "Experimental OS 1.17 support exists in elekloader, with a core and released perform mods. Track Names is the first library module; downloads stay off until the owner turns them on.",
+  "summary": "Experimental OS 1.17 support on the Modwerk Digitakt II base. Track Names is the first library module. Downloads stay disabled.",
   "firmware": {
     "releases": [
       {
@@ -42,9 +42,9 @@
       "note": "Released core, perform-direct and perform-levels packages for OS 1.17. The author reports individual hardware results, including an earlier perform-direct version; the combined build is not hardware-tested. Modwerk listings remain to be added."
     },
     {
-      "label": "core-dt2 1.1 source (toonst's elekloader fork)",
-      "url": "https://github.com/toonst/elekloader/tree/3d7c2e3c955a73ad8c8cc9ad6daf83c1a5993f08/mods/core-dt2",
-      "note": "Adds frame values, key LEDs and project and kit data to core 1.0's events; its author reports emulator runs only. Copied unchanged into sdk/machines/digitakt-ii/elekloader/ as the base's start; the site builds core 1.0 until the base ships."
+      "label": "core-dt2 1.1 source (Elekloader PR #221)",
+      "url": "https://github.com/elekloader/elekloader/tree/0df84098c8e29472208c9629e70d24012fe82555/mods/core-dt2",
+      "note": "Adds frame values, key LEDs and project and kit data to core 1.0's events. Modwerk's base uses this reviewed source and adds its own sequencer and project hooks."
     }
   ],
   "sdk": {
@@ -53,10 +53,10 @@
     "catalog": null,
     "guide": "sdk/machines/digitakt-ii/README.md",
     "core": {
-      "version": "1.0",
+      "version": "1.1",
       "path": "sdk/digitakt-ii/core-profile"
     },
-    "toolchain": "m68k-elf GCC and binutils, Modwerk's elemod packager, and the vendored elekloader kit 0.5.0; firmware builds start from the owner's exact OS 1.17 .syx.",
+    "toolchain": "m68k-elf GCC and binutils and the pinned Elekloader kit; firmware builds start from the owner's exact OS 1.17 .syx.",
     "budgets": [
       {
         "name": "Shared mod memory",
@@ -67,8 +67,8 @@
       {
         "name": "Core image",
         "unit": "bytes",
-        "value": 500,
-        "note": "Core 1.0 build: 480 bytes .run plus 20 bytes .bss; package link check measures each selected module set."
+        "value": 9400,
+        "note": "Pinned Modwerk base: 7,140 bytes .run plus 2,260 bytes .bss. The linker measures each selected set."
       },
       {
         "name": "Fast SRAM for code",
@@ -80,7 +80,7 @@
         "name": "Per-event subscriptions",
         "unit": "slots",
         "value": 4,
-        "note": "Core 1.0 allocates four hook entries per shared event collection."
+        "note": "The Modwerk base allocates four hook entries per shared event collection."
       }
     ]
   },

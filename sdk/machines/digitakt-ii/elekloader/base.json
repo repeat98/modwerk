@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "about": "Modwerk's Digitakt II OS 1.17 base candidate. The Modwerk sources add audio sequencer pitch, grid and phrase collections and active project generation to the unchanged core-dt2 1.1 bus.",
+  "about": "Modwerk's Digitakt II OS 1.17 base candidate. Modwerk adds audio sequencer pitch, grid and phrase collections, active project generation and the firmware bindings used by those hooks and module pages to the core-dt2 sources from Elekloader PR #221.",
   "core": "core-dt2",
   "include": "sdk/machines/digitakt-ii/include",
   "os": "1.17",
@@ -23,10 +23,36 @@
       "../modwerk/seq-phrase.c",
       "../modwerk/seq-phrase-entry.s",
       "../modwerk/project-generation.s",
+      "../modwerk/startup-kitdata.s",
+      "../modwerk/startup-kitdata-refresh.c",
       "../modwerk/project-archive.c",
-      "../modwerk/project-kitdata.c"
+      "../modwerk/project-kitdata.c",
+      "../modwerk/fw-bindings.s"
     ],
+    "defsym": {
+      "FW_FILLRECT": "0x401131ae",
+      "FW_TEXTF": "0x40113dc8",
+      "FW_FONT": "0x44d2e70c",
+      "FW_FONT_NARROW": "0x44d2e6f4",
+      "FW_KEY_DOWN": "0x4011e150",
+      "FW_ENC_INIT": "0x40111b68",
+      "FW_ENC_LIST": "0x40111e42",
+      "FW_ENC_PARAM": "0x44d2e654",
+      "FW_UI_STATES": "0x401998c0",
+      "FW_BRAIN": "0x40198c24",
+      "FW_VT_MAIN": "0x40216f14",
+      "FW_VT_FUNC": "0x401f9208",
+      "FW_PATTERNS": "0x41776cb8",
+      "FW_PATTERN_SIZE": "0x1db8c"
+    },
     "sites": [
+      {
+        "addr": "0x40041b52",
+        "len": 6,
+        "stockSha256": "68e887a69b3099a79e0defe6aa56f93a434d5d01ab0f05f1074caea323945d12",
+        "op": "jsr",
+        "target": "core_startup_serialize"
+      },
       {
         "addr": "0x400df938",
         "len": 6,

@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "kind": "elekloader-catalog",
+  "revision": "modwerk-base-digitakt-ii-2026-11-14",
+  "cores": [
+    {
+      "file": "modwerk-base-digitakt-ii-510fae56.elemod",
+      "sha256": "510fae56f99e8029784e45e14a8beaf6977afe6e2177d253bb79c458b95046ee",
+      "id": "core",
+      "version": "1.1",
+      "device": "digitakt-mk2",
+      "os": "1.17",
+      "license": "GPL-2.0-or-later",
+      "source": {
+        "repo": "repeat98/modwerk",
+        "commit": "453493e5bb775f5f90232035ed6ae5024b7b0909",
+        "path": "sdk/imports/packages/modwerk-base-digitakt-ii/modwerk-base-digitakt-ii-510fae56.elemod"
+      }
+    }
+  ],
+  "mods": []
+}
