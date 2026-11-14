@@ -48,6 +48,8 @@ swung Chord Arp fixture reached the scheduler commit routine 16 times.
   `5672391278216ee65c312a6eb1183d36acb2ac41f488b18527aab7fa47fdacd3`.
   On the same image, Claptom-music reported that **SAVE KIT → LOAD KIT** failed to restore Euclidean
   Scale settings. After loading the saved kit, SCF was off and both bounds showed AUTO.
+  A second hardware trial changed stock AMP DEC before saving and changed it again before loading.
+  Loading the saved kit restored AMP DEC, while SCF and the octave bounds stayed at their defaults.
   The failure has not yet been isolated to kit export, import or the copy into the active pattern.
   Digikit replayed the standalone kit save and load on the same image using an initialized +Drive
   fixture. The trace reached the kit serializer, loader and copy hook. After clearing the live
