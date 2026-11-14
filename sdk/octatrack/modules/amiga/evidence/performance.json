@@ -1,14 +1,14 @@
 {
   "schema": 1,
   "module": "amiga",
-  "version": "0.2.0-experimental",
+  "version": "0.2.1-experimental",
   "kind": "coldfire",
   "cycles": {
     "unit": "cycles/event",
     "static": null,
     "measured": null,
     "budget": null,
-    "method": "Not measured in cycles, and this version not on a unit. No static bound was counted, and no event was timed on the chip. What exists: (1) Emulator, not hardware: bench.py in ot_emu counts the instructions the engine's own functions execute per audio frame of one track playing stereo noise, without stock's reader and START: for this version mean 124 (plain) to 4,762 (an octave up, SPD 32, GRN 0, SRR 6, LED), worst frame 6,488, where 0.1.0 counted 300 to 5,355, worst 6,501. On the unit the time did not follow such counts (a division and a multiply-accumulate cost far more than a move there), so they are not turned into cycles here. (2) The owner's MKII with 0.1.0-experimental, development twin d8fae687 of the base, package e9730e24, 11 November 2026: the session's guard and stats over five seconds of a 131 BPM pattern, eight tracks playing loops, one reading each. Frame interrupt 63.7 % with eight FLEX tracks; 69.2 % with track 1 on Amiga at the defaults, 72.8 % with PTCH +12, 74.8 % with SRR raised, 77.5 % with LED on; 79.2 % with Amiga on all eight tracks at the defaults, where the base's frame guard skipped 16.9 % of their renders. These are means of the whole interrupt over five seconds, stock work included, not the longest event of the module's code. Tables in TESTING.md."
+    "method": "Not measured in cycles, and this version not on a unit. No static bound was counted, and no event was timed on the chip. What exists: (1) Emulator, not hardware: bench.py in ot_emu counts the instructions the engine's own functions execute per audio frame of one track playing stereo noise, without stock's reader and START: for 0.2.0, whose engine 0.2.1 keeps unchanged (it changes only how the page picks a control widget), mean 124 (plain) to 4,762 (an octave up, SPD 32, GRN 0, SRR 6, LED), worst frame 6,488, where 0.1.0 counted 300 to 5,355, worst 6,501. On the unit the time did not follow such counts (a division and a multiply-accumulate cost far more than a move there), so they are not turned into cycles here. (2) The owner's MKII with 0.1.0-experimental, development twin d8fae687 of the base, package e9730e24, 11 November 2026: the session's guard and stats over five seconds of a 131 BPM pattern, eight tracks playing loops, one reading each. Frame interrupt 63.7 % with eight FLEX tracks; 69.2 % with track 1 on Amiga at the defaults, 72.8 % with PTCH +12, 74.8 % with SRR raised, 77.5 % with LED on; 79.2 % with Amiga on all eight tracks at the defaults, where the base's frame guard skipped 16.9 % of their renders. These are means of the whole interrupt over five seconds, stock work included, not the longest event of the module's code. Tables in TESTING.md."
   },
   "load": {
     "frameUs": 362.8,

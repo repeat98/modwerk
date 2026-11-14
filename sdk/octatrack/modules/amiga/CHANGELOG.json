@@ -1,5 +1,13 @@
 [
   {
+    "version": "0.2.1-experimental",
+    "date": "2026-11-14",
+    "changes": [
+      "Fixes the package repeating a short stretch of the stock OS's data (#1471).",
+      "Nothing changes in how Amiga sounds or works, and projects are not affected."
+    ]
+  },
+  {
     "version": "0.2.0-experimental",
     "date": "2026-11-13",
     "changes": [
