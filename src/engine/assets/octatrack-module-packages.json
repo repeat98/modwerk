@@ -191,16 +191,14 @@
       "abi": 8,
       "features": 131,
       "sites": 2,
-      "copies": 8,
+      "copies": 9,
       "fills": 0,
-      "version": "0.2.5-experimental",
+      "version": "0.3.2-experimental",
       "name": "VECTOR",
       "module": "b0d51c58",
-      "bytes": 18354,
-      "sha256": "45c962ca3a202ac697e3d33d97e4b3b94052706a390189e5baf923fa829de577",
-      "path": "octatrack-modules/vector/0.2.5-experimental.mwrm",
-      "lagsBehind": "0.3.1-experimental",
-      "lagReason": "0.3.1 is 0.2.6's code, rolling back 0.3.0 (the MIDI generator becomes its own module): it changes only the card build, whose st_setup_page no longer tests for row 5, which VECTOR's USB adapter already dropped (#972, #1119); the package's control unit source is byte-identical to 0.2.5's"
+      "bytes": 18334,
+      "sha256": "428d970ac5723ed5f3b26ef45a88deee9e92cf6be398b6ea93c7ee13115dfb23",
+      "path": "octatrack-modules/vector/0.3.2-experimental.mwrm"
     },
     {
       "id": "synth",
@@ -344,7 +342,7 @@
       "path": "octatrack-modules/sidechain-compressor/0.2.1-experimental.mwrm",
       "lagsBehind": "0.2.2-experimental",
       "lagReason": "0.2.2 changes only the card build's placement: its ColdFire units join the DRAM runtime when another module in the set carries one (#1175). The USB package and its controller are 0.2.1's, so 0.2.1 stays the USB package.",
-      "requiredBase": "4e9a87ea6d84077ed4d5e592211a2206a665b0c72ae577e38be6bb133b33104d"
+      "requiredBase": "432edaff3d5dc78ea19b9f383badef19edb99eea4eb96bc74370bf8ee10500e3"
     },
     {
       "id": "output-matrix",
@@ -360,7 +358,7 @@
       "bytes": 3740,
       "sha256": "9c7380301f48bb01d7a7bc2cc6ed310f5a15272b0e870e5042a1932735495302",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "4e9a87ea6d84077ed4d5e592211a2206a665b0c72ae577e38be6bb133b33104d"
+      "requiredBase": "432edaff3d5dc78ea19b9f383badef19edb99eea4eb96bc74370bf8ee10500e3"
     },
     {
       "id": "cc-map",
@@ -376,7 +374,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "4e9a87ea6d84077ed4d5e592211a2206a665b0c72ae577e38be6bb133b33104d"
+      "requiredBase": "432edaff3d5dc78ea19b9f383badef19edb99eea4eb96bc74370bf8ee10500e3"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -454,7 +452,7 @@
       "bytes": 1818,
       "sha256": "b39bfa9f124f33f4de887dc830694c7072747f7a19b5568a47adc8d0cd73a353",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "4e9a87ea6d84077ed4d5e592211a2206a665b0c72ae577e38be6bb133b33104d"
+      "requiredBase": "432edaff3d5dc78ea19b9f383badef19edb99eea4eb96bc74370bf8ee10500e3"
     },
     {
       "id": "analog-bassdrum",
@@ -470,7 +468,7 @@
       "bytes": 26172,
       "sha256": "e683804756e9c898a658f7d4a97df5f8832cfa4f9c2e1d409a32df1a26ee392b",
       "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
-      "requiredBase": "4e9a87ea6d84077ed4d5e592211a2206a665b0c72ae577e38be6bb133b33104d",
+      "requiredBase": "432edaff3d5dc78ea19b9f383badef19edb99eea4eb96bc74370bf8ee10500e3",
       "requires": 0,
       "claims": 1,
       "entries": 1
@@ -583,8 +581,8 @@
       "id": "track-solo",
       "octabam": true,
       "unitName": "Track Solo",
-      "version": "0.2.4-experimental",
-      "path": "octatrack-modules/track-solo/0.2.4-experimental.mwrm",
+      "version": "0.2.5-experimental",
+      "path": "octatrack-modules/track-solo/0.2.5-experimental.mwrm",
       "abi": 8,
       "features": 129,
       "sites": 7,
@@ -593,7 +591,7 @@
       "name": "Track Solo",
       "module": "f92f5dae",
       "bytes": 2156,
-      "sha256": "50f64eb63cfe62b534988bda28baa4c575eb9d9a6dbc7a81035e7d95cd01cf89",
+      "sha256": "5ac64b5ef96567b701a603197c737d5cccd6317da7242d15ca1855ab37da7c1c",
       "usbOnly": true
     },
     {
@@ -622,12 +620,12 @@
       "sites": 0,
       "copies": 0,
       "fills": 0,
-      "version": "0.1.0-experimental",
+      "version": "0.2.0-experimental",
       "name": "Amiga",
       "module": "d0711972",
-      "bytes": 11316,
-      "sha256": "18cef8b2d5d9152fd12d85d8ca607821776587b6f5b87868f7984eec02373ff3",
-      "path": "octatrack-modules/amiga/0.1.0-experimental.mwrm",
+      "bytes": 12540,
+      "sha256": "6bb8e598b76e359bda78fb420abaa96926ff8e8f3265b78932ef4599755c9b67",
+      "path": "octatrack-modules/amiga/0.2.0-experimental.mwrm",
       "usbOnly": true
     }
   ]

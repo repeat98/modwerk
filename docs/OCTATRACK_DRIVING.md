@@ -151,11 +151,11 @@ error and moves on. macOS `nc -U` hangs up before the reply, so use the script.
 | `selftest:trace` | the same, printing each half second's phase, progress, the CPU the test recorded and the meter's latest window beside it: what a CPU or core peak came from |
 | `stall` | the last DSP stall record: why, the loader's whole report, each core's last packet header, the live FX ids, as they stood when the stall was seen (it survives the power cycle), then the 128 frames before it (46 ms): each frame's gap to the one before (363 µs on time) and how long the frame interrupt before it ran. A long gap after a long run is the frame interrupt's own work, after a short one something else held it off; `stalltest` writes one now |
 | `guard`, `guard:MILLE` | the frame guard since the last read: the frame interrupt's longest frame, latest start and share of the CPU, the machine renders it skipped and on which tracks, and its share; `guard:MILLE` sets the share (per mille of a frame, `guard:65535` turns it off) |
-| `try FILE`, `remove FILE` | install or remove a module package, accepted and kept at once: each one writes the card's set, so on a twin they replace the owner's kept modules (25 October 2026). For a trial that rolls back by itself, use `npm run device -- try FILE --seconds N --socket /tmp/modwerk-share.sock`; `npm run device:test` drives a package through such a trial ([the same run without a Keep](ADD_A_MODULE.md#octatrack-base-and-usb-lifecycle)) |
+| `try FILE`, `remove FILE` | install or remove a module package, accepted and kept at once: each one writes the card's set, so on a twin they replace the owner's kept modules (25 October 2026). For a trial that rolls back by itself, use `npm run device -- try FILE --seconds N --socket /tmp/modwerk-share.sock`; `npm run device:test` drives a package through such a trial ([the same run without a Keep](ADD_A_MODULE.md#octatrack-base-and-usb-lifecycle)). The `value` it prints each second is shared by every installed module's tick ([API](OCTATRACK_API.md#core-entry-points)) |
 | `cpu`, `cpu:PERCENT` | the CPU budget: its allowance, what the Part's machines book and the tracks refused; then each machine track's longest render since the last read, both passes of a frame, in percent of a frame: what a machine's CPU price is set from. `cpu:PERCENT` sets the allowance |
 | one-shot `npm run device -- lifecycle` | not a read-out: the single-slot loader test. It stages and accepts test modules, and on a base with module sets it stops at "removal empties the slot" and leaves an unnamed module 0 kept on the card, which a power cycle keeps (26 October 2026, MKII, flashed `92a13ff0`). `npm run device -- remove --seconds 3 --accept` takes it out. For the module list: `npm run device -- do inventory` |
 | `flash DIR` | after `boot DIR`: that base writes its own container (`DIR/NOT_FLASH_CANDIDATE.bin` deciphered) to NOR with stock's routines, verifies it and restarts on it; refuses any other base's. Not yet run on a unit; the owner's call ([traps](OCTATRACK_HARDWARE_TRAPS.md#writing-nor-over-usb)) |
-| `boot DIR`, `boot DIR 4096` | RAM boot a `build_core.py` output; the session restarts on the new base. From the flashed `usbtest9` on macOS add 4096 (bytes a frame): it times out on the default 4,095-byte frames ([traps](OCTATRACK_HARDWARE_TRAPS.md#usb-and-ep0)) |
+| `boot DIR`, `boot DIR 4096` | RAM boot a `build_core.py` output; the session restarts on the new base. `node scripts/octatrack-bootsoak.mjs DIR --socket PATH` repeats it in batches of 15 (about four minutes), logs each boot and stops at the first that does not come back: how often a restart loses USB is known from 20 boots only, which still allows one in seven. From the flashed `usbtest9` on macOS add 4096 (bytes a frame): it times out on the default 4,095-byte frames ([traps](OCTATRACK_HARDWARE_TRAPS.md#usb-and-ep0)) |
 
 STATE's `recording` bit reports sampler recorders. Check live-sequencer recording
 separately when qualifying an edit's recording refusal; that bit alone does not
@@ -171,16 +171,15 @@ After a navigation timeout, stop sending test gestures and inspect held-key rows
 was observed with FUNC absent from those rows; row readback alone does not
 establish that stock's modifier state is clear.
 
-The development input helper currently splices remote packets into the physical
-panel's byte stream. A no-module emulator on base `20ed7910…` reproduced held
-TRIG5–7 and a lost FUNC release when a USB KEY arrived between a fader report's
-two bytes ([base issue #1110](https://github.com/repeat98/modwerk/issues/1110)).
-Serialize input at complete physical-report boundaries before using
-concurrent physical movement and remote injection for qualification; a still
-slider does not clear a fault left by an earlier attempt. A later fresh-RAM-boot,
-empty-inventory hardware probe also misdelivered FUNC. Initial released rows and
-a fresh boot do not establish input delivery: verify each held-row transition
-and stock modifier release, and stop on a mismatch.
+Remote keys wait for a whole physical report. The panel sends two-byte reports, and a USB KEY rung between a
+fader report's two bytes once left TRIG5-7 held or lost a FUNC release
+([base issue #1110](https://github.com/repeat98/modwerk/issues/1110)). Since November 2026 the base queues remote
+keys and encoder steps (and the self-test's PLAY and STOP) and rings them from its tick only when the panel's parser
+expects a report's first byte, so a key arrives up to a tick (16 ms) after its request. Sixteen wait at most; the
+KEY reply is 0 for one more. The host test covers both orderings on a model of the parser's state, and keys, chords,
+Part and bank switches and picks ran through the queue on an MKII twin (13 November 2026); the interleaving itself
+was not replayed against the real parser. An earlier fresh-RAM-boot hardware probe also misdelivered FUNC, cause
+not isolated: verify each held-row transition and stock modifier release, and stop on a mismatch.
 
 - **Effects.** FUNC+FX1/FX2 opens the chooser (the left list; its right side are the effect's setup knobs).
   Moving the cursor does not pick; YES does. NO closes. LEVEL scrolls. `pick:` does all of it.

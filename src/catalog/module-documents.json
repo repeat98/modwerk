@@ -5391,7 +5391,7 @@
       "id": "vector",
       "key": "VECTOR",
       "name": "VECTOR",
-      "version": "0.3.1-experimental",
+      "version": "0.3.2-experimental",
       "category": "machines",
       "source": {
         "repository": "https://github.com/repeat98/modwerk",
@@ -5623,9 +5623,9 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "Firmware-free generator/writer and all 256 VECTOR-instance masks pass ASan/UBSan; authored assembly reproduces. Exact-image ColdFire emulator tests reproduce the previous reset/stuck transport and pass two-instance Part/project save-reload, saved-card fresh load and battery-only restart. Twelve SRC controls, ordinary stock validation, both pool menus and advancing transport are checked. Physical reboot/audio remain untested under the exact-version owner exception.",
+        "summary": "Firmware-free generator/writer and all 256 VECTOR-instance masks pass ASan/UBSan; authored assembly reproduces. Exact-image ColdFire emulator tests reproduce the previous reset/stuck transport and pass two-instance Part/project save-reload, saved-card fresh load and battery-only restart. Twelve SRC controls, ordinary stock validation, both pool menus and advancing transport are checked. Physical reboot/audio remain untested under the exact-version owner exception. 0.3.2 (#1533): no packed settings byte reaches 0x80, so stock's Part check passes without VECTOR too; seen in ot_emu and on the owner's MKII (a development twin, RAM boots).",
         "hardwareStatus": "reported",
-        "evidenceRevision": "645d73da3872ce9111f3e3172114fb33a3660b9f",
+        "evidenceRevision": "3d903dcf6e368010e20215440842e4783d262f46",
         "gates": [
           "Firmware-free sanitizer generator, writer and packed-settings checks",
           "Authored C/hooks to assembly reproducibility without firmware",
@@ -5634,7 +5634,8 @@
           "Browser/native build parity and matching composition rejection",
           "Signed Part validator preservation for all 256 track masks",
           "Two-instance native Part/project save-reload, saved-card fresh load and battery-RAM-only restart",
-          "Exact-version owner exception; physical reboot/audio unverified"
+          "Exact-version owner exception; physical reboot/audio unverified",
+          "0.3.2: packed settings pass stock's Part check without VECTOR (host test; ot_emu call of the check)"
         ],
         "qualification": {
           "documentation": {
@@ -5661,9 +5662,9 @@
             ],
             "screenshotStyle": "black-and-white"
           },
-          "moduleVersion": "0.3.1-experimental",
-          "sourceSha256": "27eca33a8d42bc0b5c56010864915454684d8d61df1a074403a66dda1e3d9a42",
-          "imageSha256": "a753ddf67b0fe64e3742b4c89ecf141071eb30757b170173215e92b1b4794d24",
+          "moduleVersion": "0.3.2-experimental",
+          "sourceSha256": "871a2b4d1d6ab0829a9a1d8457a75a1d790efe89e785bed6cfd3cebc5c36609c",
+          "imageSha256": "428d970ac5723ed5f3b26ef45a88deee9e92cf6be398b6ea93c7ee13115dfb23",
           "cycles": [
             {
               "processor": "coldfire",
@@ -5753,16 +5754,16 @@
             "kind": "functional",
             "status": "reported",
             "model": "MKII",
-            "testedOn": "2026-10-27",
+            "testedOn": "2026-11-13",
             "tester": "repeat98 (owner's unit, driven over USB by the coordinating session)",
-            "sourceRevision": "645d73da3872ce9111f3e3172114fb33a3660b9f",
-            "imageSha256": "a753ddf67b0fe64e3742b4c89ecf141071eb30757b170173215e92b1b4794d24",
-            "summary": "Over USB on an Octatrack MKII: a RAM-booted development twin of the release base (identity e6e75d75..., MAIN a753ddf6...; the b1b2ca58 build plus --dev) with POLY8 0.3.1, Analog BD 0.1.5 (rebuilt for the twin) and this VECTOR 0.2.5 package (45c962ca...), all accepted. On a STATIC track SRC SETUP's list scrolls to POLY8, ANALOG BD and VECTOR; with the cursor on VECTOR before YES the stock STATIC setup shows, and on ANALOG BD Analog BD's page. YES on VECTOR opens its STATIC/FLEX choice and the main SRC page shows SRC>VECTOR. SRC SETUP then shows VECTOR's page 2 (SEED 1, SPAN 12, OFST 0, ROT 0, RPT OFF, DIR FWD); encoders A-F change SEED, OFST, ROT, RPT and DIR (SPAN already at its maximum) and back, and SPAN moves within its range. Another STATIC track keeps the stock setup.",
+            "sourceRevision": "3d903dcf6e368010e20215440842e4783d262f46",
+            "imageSha256": "428d970ac5723ed5f3b26ef45a88deee9e92cf6be398b6ea93c7ee13115dfb23",
+            "summary": "Over USB on an Octatrack MKII (13 November 2026): a RAM-booted development twin (identity 2d97f42d...), this 0.3.2 USB package (428d970a..., 18,334 bytes) as a timed trial, a scratch project. VECTOR chosen on T1 from the machine list and the Flex pool; its second page showed SPAN 12 and the Part held 53 32 02 1b 4b 40, no byte at 0x80 or above. With those settings left on the track, a RAM boot (the battery restore with no module installed) kept the bank: machines, both tracks' trigs and the settings bytes unchanged. The same steps with the published 0.2.5 package (settings ... 0c c0) reset the bank at the restart: all tracks STATIC, no trigs (#1533); a second restart without saving brought it back.",
             "limitations": [
-              "The base was the development twin of the release base, not the b1b2ca58 build itself, nor the base this release commits.",
-              "Not tested: the FLEX, THRU and PICKUP setups; a POLY8 or Analog BD track's SRC SETUP; VECTOR 0.2.4 on the new base; whether the SRC main page regenerates the phrase.",
-              "Not tested: saving and reloading, a power cycle with VECTOR kept, and listening; no chip timing or stress.",
-              "One MKII; no MKI. The card build was not run on a unit: 0.2.4's card source, and 0.3.1's (0.2.6's code: st_setup_page without its row-5 test, for POLY8 sets, #1119) only in ot_emu. 0.3.1 keeps publishing this 0.2.5 USB package; its control unit source is byte-identical."
+              "The base was a development twin of another branch, not the release base; the package ran as a trial, never as a kept module.",
+              "The restart was a RAM boot with the track switched back to FLEX and the settings bytes left in place; a restart with the track still set to VECTOR under 0.3.2, and a power cycle with 0.3.2 kept on the flashed base, were not run.",
+              "Not tested on a unit: the rewrite of settings saved by older versions (emulator only), PROJECT > RELOAD as the recovery, the card build, saved Parts, listening; no chip timing or stress.",
+              "One MKII; no MKI. The earlier 27 October run of the 0.2.5 package (SRC SETUP page 2 over USB) is in TESTING.md."
             ],
             "report": "TESTING.md"
           }
@@ -5786,7 +5787,7 @@
             "page": "SRC SETUP machine chooser",
             "shows": "location",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.1-experimental",
+            "moduleVersion": "0.3.2-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -5803,7 +5804,7 @@
             "page": "SRC generator",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.1-experimental",
+            "moduleVersion": "0.3.2-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -5820,7 +5821,7 @@
             "page": "SRC after Generate",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.1-experimental",
+            "moduleVersion": "0.3.2-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -5837,7 +5838,7 @@
             "page": "SRC sample editor",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.1-experimental",
+            "moduleVersion": "0.3.2-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -5854,7 +5855,7 @@
             "page": "SRC SETUP",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.1-experimental",
+            "moduleVersion": "0.3.2-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -5871,7 +5872,7 @@
             "page": "Backing-pool choice",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.1-experimental",
+            "moduleVersion": "0.3.2-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -5888,7 +5889,7 @@
             "page": "Static sample pool",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.1-experimental",
+            "moduleVersion": "0.3.2-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -5905,7 +5906,7 @@
             "page": "Flex sample pool",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.3.1-experimental",
+            "moduleVersion": "0.3.2-experimental",
             "imageSha256": "cabcc2967a23a0ef719a38de444aec1b68662c12bb9057093d475b89424d0026",
             "setup": "Native ColdFire port, MKII panel mapping; original 1.40C, reported five-module composition, disposable RIG card, T1/T5 Flex with distinct VECTOR settings, Part ONE, A01, 120 BPM. Actual LCD plane plus visible stock windows rendered at 6x nearest-neighbor in monochrome. Stand-in DSP; no physical hardware or audio qualification."
           }
@@ -11863,19 +11864,19 @@
       "id": "track-solo",
       "key": "TRACK SOLO",
       "name": "Track Solo",
-      "version": "0.2.4-experimental",
+      "version": "0.2.5-experimental",
       "category": "system",
       "access": {
         "location": "PROJECT > CONTROL > SEQUENCER > TRACK SOLO",
         "steps": [
           "Install Track Solo over USB.",
-          "Open PROJECT > CONTROL > SEQUENCER and choose HOLD for TRACK SOLO.",
+          "TRACK SOLO starts at HOLD; PROJECT > CONTROL > SEQUENCER turns it OFF for the session.",
           "Close the menu, hold one TRACK button alone for 30 instrument UI ticks (about 0.5 seconds), then tap others to toggle their solo.",
           "Release the original TRACK button to end solo; choose OFF to disable the gesture."
         ],
         "screenshots": [
-          "media/track-solo-off.png",
-          "media/track-solo-hold.png"
+          "media/track-solo-hold.png",
+          "media/track-solo-off.png"
         ]
       },
       "author": {
@@ -11896,7 +11897,7 @@
           "Release the anchor to return to the underlying mute and solo state."
         ],
         "usage": [
-          "Open PROJECT > CONTROL > SEQUENCER and set TRACK SOLO to HOLD.",
+          "TRACK SOLO starts at HOLD; turn it OFF under PROJECT > CONTROL > SEQUENCER for the session.",
           "Hold T2 alone for 0.5 seconds, then press T3 to add or remove it.",
           "Release T2 to end the temporary solo."
         ]
@@ -11914,7 +11915,7 @@
         "limitations": [
           "USB only: needs the Modwerk base for its key, tick and encoder events and its SEQUENCER row, so card firmware cannot include it.",
           "Functional hardware report on package 50f64eb6 on beta base 72defb09, mostly alone and once beside Play Modes. Not tested on hardware: other modules, MKI, all eight anchors, external MIDI, arranger rows, Pickup recording, K09 modifier orderings, self-test. See TESTING.md.",
-          "TRACK SOLO is OFF on startup and after package replacement; its enable setting and solo groups are not saved.",
+          "TRACK SOLO is HOLD on startup and after package replacement; set it to OFF for the session to restore stock long TRACK presses. The setting and solo groups are not saved.",
           "MIDI mode is excluded. When T8 is master, include it with the source tracks in the temporary group; T8 alone has no source audio.",
           "Mute Modes is optional. Paired emulator audio passed for OT, OTFX, OTFX-T and DT-T on the 0.2.2 package; physical Mute Modes behavior is untested.",
           "USB settings use the existing shared row table; native card settings integration is pending.",
@@ -11965,9 +11966,9 @@
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "Author functional report on real hardware, 10 November 2026: this package on beta base 72defb09, try and Undo, Keep with a minute of playing, power cycle, Play Modes beside it, removal, all read back from the device. Emulator control (18/18) and audio suites passed; measured worst event 1,687 cycles. Stock benchmark and stress waived by the owner for this version (no MIDI path). See TESTING.md.",
+        "summary": "0.2.5 starts at HOLD (one data byte). Author functional report on real hardware, 13 November 2026: this package on beta base c1f21351 beside 15 kept modules, a trial with HOLD from the start, the row at HOLD and OFF behaving as stock, then Keep, power cycle and HOLD working again with no menu visit, read back from the device. Emulator control and routine suites passed; measured worst event 1,687 cycles, as 0.2.4. Stock benchmark and stress were waived by the owner for 0.2.4 (no MIDI path); renewal for 0.2.5 pending. See TESTING.md.",
         "hardwareStatus": "reported",
-        "evidenceRevision": "4faa4023b2cf29012abedfad2aed7b02e59519d5",
+        "evidenceRevision": "c329f7d23b57e80aa46844652c1181aeced1798e",
         "gates": [
           "python3 -B verify.py",
           "python3 -B ux_test.py --inputs <private-inputs> --output <new-private-control>",
@@ -11982,20 +11983,20 @@
             "tutorial": {
               "title": "Quick tutorial: audition tracks while editing",
               "steps": [
-                "Install Track Solo over USB. Open PROJECT > CONTROL > SEQUENCER, set TRACK SOLO to HOLD, close the menu, and let any stock notification clear.",
+                "Install Track Solo over USB. TRACK SOLO starts at HOLD, so the gesture is ready; PROJECT > CONTROL > SEQUENCER > TRACK SOLO turns it OFF for the session.",
                 "Hold T2 alone for 0.5 seconds. While continuing to hold T2, press and release T3: T2 and T3 are now in the temporary group. Press T3 again to remove it.",
                 "Release T2. The underlying mute and solo state applies again. Select OFF to disable the gesture completely."
               ]
             },
             "screenshots": [
-              "media/track-solo-off.png",
-              "media/track-solo-hold.png"
+              "media/track-solo-hold.png",
+              "media/track-solo-off.png"
             ],
             "screenshotStyle": "black-and-white"
           },
-          "moduleVersion": "0.2.4-experimental",
-          "sourceSha256": "f37562d53f0f901e09cca4d42d1a73730dfc92caa2563298dc960f45eb37f2cc",
-          "imageSha256": "50f64eb63cfe62b534988bda28baa4c575eb9d9a6dbc7a81035e7d95cd01cf89",
+          "moduleVersion": "0.2.5-experimental",
+          "sourceSha256": "4d3fdbf04d04cf1db20bcd96953a6907a0c4281667f0bc61a1c75a635137607d",
+          "imageSha256": "5ac64b5ef96567b701a603197c737d5cccd6317da7242d15ca1855ab37da7c1c",
           "cycles": [
             {
               "processor": "coldfire",
@@ -12069,15 +12070,15 @@
             "kind": "functional",
             "status": "reported",
             "model": "MKII",
-            "testedOn": "2026-11-10",
+            "testedOn": "2026-11-13",
             "tester": "twwwy",
-            "sourceRevision": "4faa4023b2cf29012abedfad2aed7b02e59519d5",
-            "imageSha256": "50f64eb63cfe62b534988bda28baa4c575eb9d9a6dbc7a81035e7d95cd01cf89",
-            "summary": "The author updated the unit to Modwerk beta base 72defb09 from the site, then ran this exact package over USB, OS 1.40C, disposable project: a 90-second trial and Undo; a trial and Keep, then about a minute of playing; a power cycle; a 300-second trial of Play Modes 0.1.1 beside it; then removal. They reported the TRACK SOLO row and HOLD working, solo, join and leave, audio, lamps and release behaving, the row back at OFF after the power cycle, and with Play Modes the first gesture wins: TRACK plus UP or DOWN within half a second changes the Play Modes mode, a longer hold starts Track Solo instead. Read back from the device: empty after Undo, Track Solo installed after Keep and after the power cycle, only Track Solo after Play Modes rolled back, empty after removal, set identity back to the start.",
+            "sourceRevision": "c329f7d23b57e80aa46844652c1181aeced1798e",
+            "imageSha256": "5ac64b5ef96567b701a603197c737d5cccd6317da7242d15ca1855ab37da7c1c",
+            "summary": "On the flashed Modwerk beta base c1f21351, OS 1.40C, with 15 other modules kept (among them Mute Modes, SAMPLE LOCKS and Beat Slicer): the agent ran a 20-second trial and rolled it back, then loaded a 300-second trial in which the author reported, without opening the menu, holding T2 solos it and T3 joins, the TRACK SOLO row reading HOLD, and OFF giving stock behaviour. The agent then kept this package at the author's request; after the author's power cycle they reported the row at HOLD, the gesture working with no menu visit and the other modules up. Read back from the device: rolled back after the first trial, accepted with this package active, and after the power cycle the same base and the same 16 kept modules.",
             "limitations": [
               "Author-reported panel observations with no audio measurement or timing.",
-              "About ten minutes on one unit. The USB identity does not state the model; MKII comes from earlier records of this unit.",
-              "Not tested: other modules alongside except the Play Modes trial, all eight anchors, external MIDI, arranger rows, Pickup recording, the K09 orderings, self-test, MKI, the card build (Track Solo is USB-only)."
+              "The flashed base answers no screen or memory reads, so the agent's own stage shows loading, running and rollback only.",
+              "Not tested on 0.2.5: all eight anchors, external MIDI, arranger rows, Pickup recording, the K09 orderings, self-test, MKI, removal."
             ],
             "report": "TESTING.md"
           }
@@ -12092,7 +12093,7 @@
         {
           "path": "media/track-solo-off.png",
           "captureType": "emulator",
-          "caption": "Find TRACK SOLO under PROJECT > CONTROL > SEQUENCER. OFF preserves stock track-button behavior.",
+          "caption": "Press YES on TRACK SOLO to choose OFF for this session: stock track-button behavior until the next restart.",
           "alt": "Octatrack SEQUENCER menu with TRACK SOLO set to OFF.",
           "credit": "twwwy; underlying Octatrack UI by Elektron",
           "license": "LicenseRef-OT-UI-Documentation",
@@ -12101,15 +12102,15 @@
             "page": "PROJECT / CONTROL / SEQUENCER",
             "shows": "location",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.4-experimental",
+            "moduleVersion": "0.2.5-experimental",
             "imageSha256": "124548dc353b2f9cd41ba0a27113ae441e82b68a16d10a1b9509920c61839587",
-            "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.4 package installed through the real runtime backend; panel_test.py --menu; empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo."
+            "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.5 package installed through the real runtime backend; panel_test.py --menu (the row opens at HOLD, YES chooses OFF); empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo."
           }
         },
         {
           "path": "media/track-solo-hold.png",
           "captureType": "emulator",
-          "caption": "Press YES to choose HOLD. Close the menu and wait for stock notifications to clear before holding a track for 0.5 seconds.",
+          "caption": "TRACK SOLO under PROJECT > CONTROL > SEQUENCER starts at HOLD. Close the menu and wait for stock notifications to clear before holding a track for 0.5 seconds.",
           "alt": "Octatrack SEQUENCER menu with TRACK SOLO set to HOLD.",
           "credit": "twwwy; underlying Octatrack UI by Elektron",
           "license": "LicenseRef-OT-UI-Documentation",
@@ -12118,9 +12119,9 @@
             "page": "PROJECT / CONTROL / SEQUENCER",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.2.4-experimental",
+            "moduleVersion": "0.2.5-experimental",
             "imageSha256": "124548dc353b2f9cd41ba0a27113ae441e82b68a16d10a1b9509920c61839587",
-            "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.4 package installed through the real runtime backend; panel_test.py --menu; empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo."
+            "setup": "MKII ot_emu; base MAIN plus the exact Track Solo 0.2.5 package installed through the real runtime backend; panel_test.py --menu (the row opens at HOLD, YES chooses OFF); empty scratch card, no project loaded; stopped transport; 128x64 UART LCD at integer scale 4; monochrome. Emulator capture, not a hardware photo."
           }
         }
       ]
@@ -12495,7 +12496,7 @@
       "id": "amiga",
       "key": "AMIGA",
       "name": "Amiga",
-      "version": "0.1.0-experimental",
+      "version": "0.2.0-experimental",
       "category": "machines",
       "access": {
         "location": "The track's machine list (double-tap TRACK, or SRC SETUP)",
@@ -12520,13 +12521,15 @@
       "presentation": {
         "label": "8-bit sampler",
         "family": "Sample track machine",
-        "summary": "Plays a Flex sample like an 8-bit tracker: gritty, held samples and a cyclic stretch that pulls pitch and time apart.",
-        "overview": "Amiga is a track machine modelled on how a home computer's 8-bit sound chip and its tracker software played samples. It plays the track's Flex sample through the stock reader, reduces its word length and storage rate before the Octatrack repitches it, and can restart the sample every few milliseconds a little further on, so PTCH changes the pitch and SPD the length. RATE is stock's own, forwards and backwards. The track's filter, AMP, LFOs and effects follow as for any sample.",
+        "summary": "Plays a Flex sample like an 8-bit tracker: gritty, held samples and a cyclic stretch that pulls pitch and time apart, on whole samples or slices.",
+        "overview": "Amiga is a track machine modelled on how a home computer's 8-bit sound chip and its tracker software played samples. It plays the track's Flex sample through the stock reader, reduces its word length and storage rate before the Octatrack repitches it, and can restart the sample every few milliseconds a little further on, so PTCH changes the pitch and SPD the length. Each restart crossfades out of the sample itself over half a cycle, as Amigo's grains do, and a sliced note stretches inside its slice. RATE is stock's own, forwards and backwards. The track's filter, AMP, LFOs and effects follow as for any sample.",
         "highlights": [
           "SPD sets how fast the note moves through the sample and GRN the cycle, 96 to 4128 samples: half speed, about twice as fast or a held sound, at any pitch.",
+          "Slices stretch too: SLIC on, STRT picks the slice, and the stretch stays inside it.",
+          "Every restart crossfades over half a cycle, whichever way the note is going.",
           "STR can turn the stretch into a pitch shift of up to an octave either way.",
           "RATE is stock's own: forwards, backwards and slower, with the stretch following it both ways.",
-          "SRR lowers the storage rate, BITS sets the word from 16 to 4 bits (8 by default), LED adds a fixed lowpass.",
+          "SRR lowers the storage rate, BITS sets the word from 4 to 16 bits (8 by default), LED adds a fixed lowpass.",
           "RATE, SPD and GRN take parameter locks, LFOs and scenes, as SRC knobs do."
         ],
         "usage": [
@@ -12554,7 +12557,7 @@
           "name": "GRN",
           "default": 64,
           "count": 128,
-          "doc": "The stretch's cycle, 96 to 4128 samples; 1120 by default. SRC knob F.",
+          "doc": "The stretch's cycle, 96 to 4128 samples; 1120 by default. Each restart crossfades over half of it. SRC knob F.",
           "labels": null
         },
         {
@@ -12589,7 +12592,7 @@
           "name": "BITS",
           "default": 4,
           "count": 13,
-          "doc": "Word length from 4 to 16 bits; the saved value is bits minus 4. SRC SETUP knob F.",
+          "doc": "Word length from 4 to 16 bits; the saved value is bits minus 4. 16 leaves the sample's own word. SRC SETUP knob F.",
           "labels": null
         }
       ],
@@ -12602,13 +12605,14 @@
         "limitations": [
           "USB only: it loads on the Modwerk base over USB (it needs the base's machine list and START dispatch) and has no card build.",
           "Experimental: played and measured on one MKII on a development base; TESTING.md lists what was not tried.",
-          "On an MKII one Amiga track beside seven FLEX tracks added 5.5 points to the frame interrupt at the defaults and up to 13.8 with PTCH +12, SRR and LED; eight Amiga tracks reached the base's frame guard, which skipped 17 % of their renders (dropouts). Count on a few Amiga tracks, not eight.",
-          "With a USB recording running as well, one Amiga track at PTCH +12 with SRR and LED on beside seven FLEX tracks froze the unit until a power cycle.",
+          "Measured on an MKII: one Amiga track beside seven FLEX tracks added 5.5 points to the frame interrupt at the defaults and up to 13.8 with PTCH +12, SRR and LED (0.1.0); this version is 2 to 3 points dearer. The base's CPU budget takes three Amiga tracks a Part and refuses a fourth with CPU FULL; three at the defaults beside four busy tracks already ran the frame late. Other installed modules leave less room: beside fifteen of them and three sounding FLEX tracks, one Amiga track took 12.6 to 16 points.",
+          "With a USB recording running as well, one Amiga track (0.1.0-experimental) at PTCH +12 with SRR and LED on beside seven FLEX tracks froze the unit until a power cycle.",
           "No stock RTRG or RTIM on an Amiga track: SPD and GRN take their knobs.",
-          "Stock's own time-stretch (TSTR) is off on an Amiga track, and SETUP's LEN switch is LED: the track always uses stock's default length setting.",
+          "Stock's own time-stretch (TSTR) is off on an Amiga track, and SETUP's LEN switch is LED: the track always uses stock's default length setting, LEN OFF.",
           "SRR, LED, STR and BITS are SETUP values: one for the Part, without locks or LFOs.",
-          "A sliced track (SLIC on) is not stretched; SRR, BITS and LED still work.",
+          "A sliced note is stretched when it is one slice, as stock plays it with SETUP's LEN off; SRR, BITS and LED work either way.",
           "The cycle length is in samples, not tied to the tempo.",
+          "The crossfade reads the sample itself. A recorder buffer that is recording, or a sample the module cannot read, restarts with a short fade-out of the step instead.",
           "A stretched note that is not looped ends when SPD has carried it to the end of the sample, even if LEN would stop a FLEX note sooner by time.",
           "A project opened without the module plays Amiga tracks as FLEX and reads SPD and GRN as stock's RTRG and RTIM, and LED, SRR, STR and BITS as SETUP's LEN, RATE, TSTR and TSNS.",
           "Leaving Amiga for another machine puts the track's SRC settings back to FLEX defaults.",
@@ -12616,31 +12620,31 @@
         ]
       },
       "resources": {
-        "recorded": "2026-11-11",
+        "recorded": "2026-11-14",
         "storage": {
           "label": "Module image and memory",
-          "display": "10,652 bytes code and data; 67,308 bss",
-          "value": 77912,
+          "display": "11,792 bytes code and data; 2,092 bss",
+          "value": 13884,
           "unit": "bytes",
           "method": "static",
-          "conditions": "The USB package of this source (SHA-256 18cef8b2d5d9152fd12d85d8ca607821776587b6f5b87868f7984eec02373ff3, built by npm run module:dev -- amiga --build-only): 10,652 bytes of code and data and 67,308 of bss, most of it the eight voices' frame memories (8 KB each). The loader's own record for the module and the stack the render uses are not counted. The loader allows a module 128 KiB.",
+          "conditions": "The USB package of this source (SHA-256 6bb8e598b76e359bda78fb420abaa96926ff8e8f3265b78932ef4599755c9b67, built by npm run module:dev -- amiga --build-only): 11,792 bytes of code and data and 2,092 of bss, the eight voices' state and the sample descriptions for the crossfade. The loader's own record for the module and the stack the render uses are not counted. The loader allows a module 128 KiB.",
           "source": "TESTING.md"
         },
         "processing": {
           "label": "ColdFire, in the frame interrupt",
-          "display": "Not measured in cycles; 5.5 to 13.8 points of a frame a track",
+          "display": "Not measured in cycles; on the unit 6 to 28 points of a frame a track",
           "value": null,
           "unit": "cycles/block",
           "method": "unmeasured",
-          "conditions": "No worst case in cycles exists. On the owner's MKII (development twin d8fae687 of the base, 11 November 2026; five seconds of a 131 BPM pattern, eight tracks playing loops, one reading each) the frame interrupt read 63.7 % with eight FLEX tracks, 69.2 % with track 1 on Amiga at the defaults and 77.5 % with PTCH +12, SRR and LED; eight Amiga tracks at the defaults read 79.2 % with 16.9 % of their renders skipped by the base's frame guard. These are means over five seconds, not a longest frame. ot_emu counts 300 to 5,355 instructions of the engine's own code per audio frame of one track (worst frame 6,501), which the unit's time did not follow.",
+          "conditions": "No worst case in cycles exists. On the owner's MKII with this version (development twin 2d97f42d of release base 4e9a87ea, 14 November 2026; eight seconds of a 126 BPM pattern with track 1 alone sounding a drum loop, one reading each) the frame interrupt read 29.5 % with track 1 on FLEX, 35.5 % on Amiga at the defaults, 40.6 % at PTCH +12 and 57.3 % at PTCH +12 with GRN 0, SRR 30 and LED; 0.1.0 read 33.3 % and 37.4 % on the same twin. Three Amiga tracks at the defaults beside four STATIC tracks read 64.3 % with the longest frame at 113.2 %. These are means, not a longest frame. ot_emu counts 124 to 4,762 instructions of the engine's own code per audio frame of one track (worst frame 6,488); the unit's time did not follow such counts.",
           "source": "TESTING.md"
         },
         "impact": {
-          "conditions": "One Amiga track playing a loop beside seven FLEX tracks on an MKII, from the defaults to PTCH +12 with SRR and LED on, and eight Amiga tracks at the defaults. CPU from frame-interrupt readings on the unit (means, one reading each); memory from the package's sizes, all eight voices included whether used or not.",
+          "conditions": "CPU from frame-interrupt readings of this version on an MKII (one Amiga track playing a loop, from the defaults to PTCH +12 with GRN 0, SRR and LED, and three Amiga tracks beside four STATIC tracks; means, one reading each). Memory from this package's sizes, all eight voices included whether used or not.",
           "cpu": {
             "level": "high",
             "basis": "measured-comparison",
-            "rationale": "The ColdFire reworks the track's source frames in the frame interrupt: the word and rate reduction, the lowpass and the cyclic restarts with their fades. Against a FLEX track on the same unit one Amiga track added 5.5 points of the frame at the defaults and 13.8 with PTCH +12, SRR and LED; eight at the defaults reached the base's 80 % frame guard, which skipped 16.9 % of their renders. Worst-case cycles are not measured.",
+            "rationale": "The ColdFire reworks the track's source frames in the frame interrupt: the word and rate reduction, the lowpass and the cyclic restarts with their crossfades, which read the sample itself. On the unit one Amiga track added 6 points of the frame at the defaults, 11 at PTCH +12 and 28 at the dearest settings against a FLEX track, 2 to 3 more than 0.1.0; beside other sounding tracks and installed modules it cost 12.6 to 16 (0.1.0). The base's CPU budget admits three Amiga tracks a Part. Worst-case cycles are not measured.",
             "source": "TESTING.md"
           },
           "dsp": {
@@ -12650,22 +12654,22 @@
             "source": "manifest.py"
           },
           "memory": {
-            "level": "moderate",
+            "level": "minimal",
             "basis": "source-estimate",
-            "rationale": "10,652 bytes of code and data and 67,308 of bss in the package, about 76 KiB of the 128 KiB the loader allows a module. Most is eight frame memories of 8 KB, one a track, reserved once at install whether or not a track uses Amiga. No sample RAM is taken and no stock buffer is reused.",
+            "rationale": "11,792 bytes of code and data and 2,092 of bss in the package, about 14 KiB of the 128 KiB the loader allows a module. No sample RAM is taken and no stock buffer is reused: the crossfade reads the track's own sample where stock keeps it.",
             "source": "TESTING.md"
           }
         }
       },
       "tests": {
         "report": "TESTING.md",
-        "summary": "Host gate on the engine (verify.py, 56 checks), sample-for-sample comparison with the first build played on a unit, an emulator count of its instructions (bench.py), and RAM trials on the owner's MKII on a development base, 11 November 2026: pages, the stretch both ways, cost beside seven FLEX tracks. Worst-case cycles are not measured; no stock benchmark under a MIDI flood and no flood ran. TESTING.md lists what was not tried.",
+        "summary": "Host gate on the engine (verify.py, 72 checks: the crunch, the stretch's timing and its crossfades out of the sample, pages, words and directions), a comparison of the crossfades with Amigo's (reference/amigo_check.py, the owner's installed plug-in), an emulator count of its instructions (bench.py), and RAM trials of this version's release package on the owner's MKII on a development base, 13 and 14 November 2026: restart ticks counted per track over USB Audio against 0.1.0, load with one and three tracks, a recorder buffer. TESTING.md lists what was not tried.",
         "hardwareStatus": "reported",
-        "evidenceRevision": "66663bdb1fb5e309c7ab25827925c681be57ca09",
+        "evidenceRevision": "a679875b1611d27cf1afe86741b6c646ec7fa9d0",
         "gates": [
           "python3 -B verify.py",
           "python3 -B generate.py --check",
-          "python3 -B reference/compare_engine.py <amiga.c of commit c5543f12>",
+          "python3 -B reference/amigo_check.py <a folder with the Amigo host and its default state> (macOS with Amigo installed)",
           "python3 -B bench.py --emulator <ot_emu> --main <a MAIN image the emulator boots> --output <new private folder>"
         ],
         "documentation": {
@@ -12676,7 +12680,8 @@
               "Turn PTCH up a few semitones: the loop keeps its length and starts to flutter. Turn GRN for the size of the flutter.",
               "Turn SPD down to 32 for half speed at the same pitch, or all the way to 0 to hold the sound where it is.",
               "Turn RATE below 0: the loop runs backwards, still stretched.",
-              "On SRC SETUP, turn SRR up to about 20 for a grainy, folded top end, and switch LED on to take the edge off it."
+              "On SRC SETUP, turn SRR up to about 20 for a grainy, folded top end, and switch LED on to take the edge off it.",
+              "Put a sliced loop on the track, switch SLIC on in SRC SETUP and trig slices with STRT locks: turn PTCH and each slice keeps its length, SPD and GRN stretch inside it."
             ]
           },
           "screenshots": [
@@ -12697,24 +12702,24 @@
           "path": "media/amiga-machine-list.png",
           "captureType": "hardware",
           "caption": "Double-tap a track key, or open SRC SETUP, to reach the machine list. Move down to AMIGA and press YES to put the machine on the track.",
-          "alt": "Octatrack SRC SETUP page: the machine list reads FLEX, THRU, NEIGHBOR, PICKUP and AMIGA with FLEX marked and the cursor on AMIGA; beside it LOOP, SLIC, LED, SRR, STR and BITS.",
+          "alt": "Octatrack machine list, SELECT MACHINE TYPE: STATIC, FLEX, THRU, NEIGHBOR, PICKUP and AMIGA, with FLEX marked and the cursor on AMIGA.",
           "credit": "repeat98; underlying Octatrack UI by Elektron",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
           "otUi": {
-            "page": "SRC SETUP",
+            "page": "Machine list (SELECT MACHINE TYPE)",
             "shows": "location",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "2d6285369ae25b43c2dd93628eb72c35a9ddf9947d4dd78f12624af677450ca6",
-            "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin d8fae687 of the Modwerk base, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 11 November 2026, during a RAM trial of package e9730e24 of this source. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on FLEX, the cursor moved to AMIGA."
+            "moduleVersion": "0.2.0-experimental",
+            "imageSha256": "213b5bfd306f580cdab6aeb12aa0da356e8ffbaa6ab6f82ba2255ea58217ba1d",
+            "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 2d97f42d of the Modwerk release base 4e9a87ea, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package 6bb8e598. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on FLEX, the cursor moved to AMIGA."
           }
         },
         {
           "path": "media/amiga-src.png",
           "captureType": "hardware",
           "caption": "Press SRC. PTCH, STRT, LEN and RATE are stock's; knob E is SPD and knob F is GRN. Turn PTCH up and the loop keeps its length; turn SPD down to 32 for half speed at the same pitch.",
-          "alt": "Octatrack SRC page of an Amiga track: knobs PTCH, STRT, LEN, RATE, SPD and GRN, tempo 131.0, and the status line 8 BIT AMIGA.",
+          "alt": "Octatrack SRC page of an Amiga track: knobs PTCH, STRT, LEN, RATE, SPD and GRN, tempo 126.0, and the status line 8 BIT AMIGA.",
           "credit": "repeat98; underlying Octatrack UI by Elektron",
           "license": "LicenseRef-OT-UI-Documentation",
           "source": "original",
@@ -12722,9 +12727,9 @@
             "page": "SRC",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "2d6285369ae25b43c2dd93628eb72c35a9ddf9947d4dd78f12624af677450ca6",
-            "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin d8fae687 of the Modwerk base, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 11 November 2026, during a RAM trial of package e9730e24 of this source. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on Amiga with a Flex sample, at the defaults."
+            "moduleVersion": "0.2.0-experimental",
+            "imageSha256": "213b5bfd306f580cdab6aeb12aa0da356e8ffbaa6ab6f82ba2255ea58217ba1d",
+            "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 2d97f42d of the Modwerk release base 4e9a87ea, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package 6bb8e598. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on Amiga with a Flex sample, at the defaults."
           }
         },
         {
@@ -12739,9 +12744,9 @@
             "page": "SRC SETUP",
             "shows": "controls",
             "firmware": "1.40C",
-            "moduleVersion": "0.1.0-experimental",
-            "imageSha256": "2d6285369ae25b43c2dd93628eb72c35a9ddf9947d4dd78f12624af677450ca6",
-            "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin d8fae687 of the Modwerk base, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 11 November 2026, during a RAM trial of package e9730e24 of this source. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on Amiga, at the defaults."
+            "moduleVersion": "0.2.0-experimental",
+            "imageSha256": "213b5bfd306f580cdab6aeb12aa0da356e8ffbaa6ab6f82ba2255ea58217ba1d",
+            "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 2d97f42d of the Modwerk release base 4e9a87ea, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package 6bb8e598. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on Amiga with a Flex sample, at the defaults: SRC SETUP."
           }
         }
       ]

@@ -1,0 +1,1 @@
+The loader's host fixture clears its synthetic paused snapshot between stock-switch and allocator scenarios, preventing an ASLR-dependent false retention and cascading SDK-test failures. Runtime code and assertions are unchanged.

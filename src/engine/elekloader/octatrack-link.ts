@@ -622,13 +622,15 @@ export class OctatrackLink {
       await this.whenStopped(() => session.holdTrial())
       if (keep) await session.accept()
       else await this.whenStopped(() => session.rollback(), Math.max(this.stopWaitMs, setBudget(this.rows)))
-      const unsaved = keep && this.transport && !await waitUntilSaved(this.transport).catch(() => false)
+      const saved = !keep || !this.transport || await waitUntilSaved(this.transport).catch(() => false), unsaved = saved === false
       this.live(connection)
       await session.leaveUploadMode()
       this.live(connection)
       await this.release()
       this.live(connection) // a reply that arrived after the unit went away confirms nothing
       this.ready(unsaved ? { tone: 'error', text: `Kept, but the Octatrack couldn’t save ${module} to the card. It runs until you switch off; load it again to save it.` }
+        // Not saved yet is not a failed save: the base saves by itself once the unit is idle, and Status shows it.
+        : saved === 'pending' ? { tone: 'success', text: `Synced. The Octatrack is still busy and saves ${module} to the card once it is stopped and idle. Leave it switched on until Status shows “Saved and checked”.` }
         : { tone: 'success', text: keep ? `Synced. ${module} stays on your Octatrack, also after a restart.` : 'Undone. Your Octatrack is back to how it was.' },
         session.status.active)
       this.diagnostic(keep && !unsaved ? 'kept' : !keep ? 'undone' : 'sync_failed', unsaved ? {error:'save'} : {})
@@ -662,9 +664,11 @@ export class OctatrackLink {
       (await this.transport?.selftest(false).catch(() => undefined))?.refusal : undefined
     if (connection !== this.connection) return
     const label = error instanceof UploadDeviceError ? 'device' : error instanceof UploadUnconfirmedError ? 'transport' : error instanceof StaleLoadError ? 'stale' : error instanceof DOMException && error.name === 'AbortError' ? 'cancelled' : 'unknown'
-    // An unclassified failure names its error type (never the message), so the diagnostics can tell a bug from a refusal.
+    // An unclassified failure names its error type (never the message), so the diagnostics can tell a bug from a refusal;
+    // a transport failure names what stopped it (the browser's USB error, a timeout, a dropped submission, else a reply
+    // that did not confirm the step): in November 2026 four units failed every sync at `stage` and the record could not say why.
     const step = this.step
-    this.diagnostic('sync_failed', {error: label, ...(step ? {step} : {}), ...(label === 'unknown' ? {kind: diagnosticErrorKind(error)} : {}), ...(error instanceof UploadDeviceError && error.status.result !== 'progress' ? {result:error.status.result} : {}), ...(why !== undefined ? {refusal:why} : {})})
+    this.diagnostic('sync_failed', {error: label, ...(step ? {step} : {}), ...(label === 'unknown' ? {kind: diagnosticErrorKind(error)} : label === 'transport' ? {kind: diagnosticErrorKind((error as Error).cause)} : {}), ...(error instanceof UploadDeviceError && error.status.result !== 'progress' ? {result:error.status.result} : {}), ...(why !== undefined ? {refusal:why} : {})})
     this.session = undefined
     await this.release()
     // An untrusted connection that could not be read again leaves the running set unknown.

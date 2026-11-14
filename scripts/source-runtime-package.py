@@ -70,7 +70,8 @@ def declaration(root, filename):
     root = Path(root).resolve()
     filename = Path(filename).resolve()
     folder = filename.parent
-    if folder.parent not in (root / 'sdk/drafts', root / 'sdk/octabam/modules'):
+    if folder.parent not in (root / 'sdk/drafts', root / 'sdk/octatrack/modules',
+                             root / 'sdk/octabam/modules'):
         raise ValueError('A runtime build recipe must be in its own module folder')
     doc = json.loads(filename.read_text())
     required = {'schema', 'id', 'title', 'layout', 'sources', 'includes', 'defines',

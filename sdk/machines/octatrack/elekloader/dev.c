@@ -70,8 +70,12 @@ uint32_t modwerk_dev_request(const uint8_t *s, const uint8_t **reply, uint8_t *o
     uint32_t want = s[6] | (uint32_t)s[7] << 8;
     if (s[0] != 0xc1 || s[4] != MODWERK_VENDOR_INTERFACE || s[5]) return 0;
     if (s[1] == 5 && want == 1 && s[2] < 64u && s[3] <= 1u) {
+#ifdef MODWERK_DSP_LOADER
+        out[0] = (uint8_t)modwerk_remote_key(s[2], s[3]); /* rung at a tick, between two physical reports (dsp.c, #1110) */
+#else
         modwerk_post_key(s[2], s[3]);
         out[0] = 1;
+#endif
         *reply = out;
         return 1;
     }
@@ -145,8 +149,12 @@ uint32_t modwerk_dev_request(const uint8_t *s, const uint8_t **reply, uint8_t *o
         return 2;
     }
     if (s[1] == 8 && want == 1 && ((s[2] >= 0x30u && s[2] <= 0x36u && s[3]) || s[2] == 0x40u)) {
+#ifdef MODWERK_DSP_LOADER
+        out[0] = (uint8_t)modwerk_remote_bytes(s[2], s[3]);
+#else
         modwerk_panel_bytes(s[2], s[3]);
         out[0] = 1;
+#endif
         *reply = out;
         return 1;
     }

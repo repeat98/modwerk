@@ -1,0 +1,1 @@
+Development: `npm run module:doctor` now finds Digitakt II modules. It takes every elemod machine's module folder from the machine profiles instead of a list that lacked the Digitakt II, and its browser builder line matches a module's pinned file on the machine's own device, so a Digitakt II file no longer counts for a Digitakt module of the same id.

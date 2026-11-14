@@ -1,4 +1,4 @@
-/* Private exact-base binding, not a production SDK capability. */
+/* Adapter readiness hook; package metadata admits the linked base. */
 #ifndef OG_MACHINE_BASE_BINDING_H
 #define OG_MACHINE_BASE_BINDING_H
 #ifdef OG_MACHINE_BASE_BOUND

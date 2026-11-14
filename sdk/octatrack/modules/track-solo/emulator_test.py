@@ -122,6 +122,8 @@ def run(args):
             emu.write(0x46100b1a,bytes([held]))
             return call('ts_key',0x10+t,down)
         emu.u32(0x80000012,0);emu.u32(0x460d175c,0)
+        label=call('ts_get');assert emu.read(label,5)==b'HOLD\0'  # HOLD on install
+        call('ts_set',-1,0);tick()
         key(1);tick(150);assert overlay()==0;key(1,0);tick()
         call('ts_set',1,0);tick()
         for anchor in range(8):

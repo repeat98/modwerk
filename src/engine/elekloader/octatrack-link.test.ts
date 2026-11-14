@@ -239,6 +239,27 @@ describe('sending a module', () => {
     await link.update('PREVIEW VOL', one)
     expect(failures).toEqual([{ error: 'device', step: 'stage', refusal: 7 }])
   })
+  it('reports what stopped a sync whose transfer was never confirmed', async () => {
+    const causes = [new DOMException('private text', 'NetworkError'), Object.assign(new Error('private text'), { name: 'TimeoutError' }), undefined], failures: unknown[] = []
+    for (const cause of causes) {
+      const unit = fakeUnit(), base = fakeSession(unit)
+      let calls = 0
+      const connect: typeof base = async (...args) => {
+        const session = await base(...args)
+        if (++calls !== 2) return session
+        let trusted = true // the update's session: a chunk's reply goes missing mid-transfer
+        return Object.create(session, {
+          connectionTrusted: { get: () => trusted },
+          stage: { value: async () => { trusted = false; unit.staged = true; throw new UploadUnconfirmedError('chunk was not confirmed', session.status, cause) } },
+        })
+      }
+      const link = new OctatrackLink(unit.usb, connect, 300)
+      link.subscribeDiagnostics(event => { if (event.event === 'sync_failed') failures.push({ error: event.error, kind: event.kind }) })
+      link.start(); await settle(); await settle()
+      await link.update('PREVIEW VOL', one)
+    }
+    expect(failures).toEqual(['NetworkError', 'TimeoutError', 'OtherError'].map(kind => ({ error: 'transport', kind })))
+  })
   it('says why the Octatrack rejected a module, from the base’s record', async () => {
     const { unit, link } = await linked()
     unit.refusal = 7 // a track plays the effect it would replace
@@ -471,6 +492,21 @@ describe('loading a module set', () => {
     expect(unit.kept).toEqual(['-0000000a', '+0000000b', '+0000000c'])
     expect(link.getState().notice).toMatchObject({ tone: 'success', text: 'Synced. Live stays on your Octatrack, also after a restart.' })
     expect((await link.inventory())!.map(item => item.module)).toEqual(['0000000b', '0000000c'])
+  })
+  it('says a kept set is still to be saved when the unit has not saved it in time, and that a save failed only when it did', async () => {
+    const reading = (saved: number) => ({ state: 0, failed: 0, modules: 0, dsp: 0, intact: 0, ran: 0, peaks: { cpu: 0, tracks1to4: 0, tracks5to8: 0 }, done: 0, total: 0, frameGap: 0, saved, savedCount: 0, live: 2, culprit: 0, culpritName: '', refusal: 0 })
+    for (const [saved, tone, text, event] of [[2, 'success', /^Synced\. The Octatrack is still busy and saves Live to the card once/, 'kept'], [8, 'error', /^Kept, but the Octatrack couldn’t save Live/, 'sync_failed']] as const) {
+      const { link } = await loaded(), events: string[] = []
+      link.subscribeDiagnostics(diagnostic => events.push(diagnostic.event))
+      vi.spyOn(UsbVendorTransport.prototype, 'selftest').mockResolvedValue(reading(saved))
+      vi.useFakeTimers({ toFake: ['setTimeout', 'Date'] })
+      const keeping = link.keep()
+      await vi.advanceTimersByTimeAsync(21000)
+      vi.useRealTimers(); await keeping
+      expect(link.getState().notice).toMatchObject({ tone, text: expect.stringMatching(text) })
+      expect(events.filter(name => name === 'kept' || name === 'sync_failed')).toEqual([event])
+      vi.restoreAllMocks()
+    }
   })
   it('undoes the whole set on the device without sending inverse packages', async () => {
     const { unit, link } = await loaded()
