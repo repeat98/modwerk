@@ -31,7 +31,7 @@ const modules = (n: number) => n + (n === 1 ? ' module' : ' modules')
 const BUSY = ['sending', 'testing', 'trial', 'finishing']
 const when = (at: string) => new Date(at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
 
-export type HubView = 'status' | 'backups' | 'samples' | 'setup' | 'set'
+export type HubView = 'status' | 'backups' | 'samples' | 'setup' | 'diagnostics' | 'set'
 export type { SetAction }
 /** The Octatrack's own pages, in the list above the module sets; `#configuration` is the set you edit. */
 const UNIT_VIEWS: { view: Exclude<HubView, 'set'>; title: string; href: string; icon: IconName }[] = [
@@ -39,13 +39,14 @@ const UNIT_VIEWS: { view: Exclude<HubView, 'set'>; title: string; href: string; 
   { view: 'backups', title: 'Backups', href: '#octatrack/backups', icon: 'download' },
   { view: 'samples', title: 'Samples', href: '#octatrack/samples', icon: 'wave' },
   { view: 'setup', title: 'Setup', href: '#octatrack/setup', icon: 'sliders' },
+  { view: 'diagnostics', title: 'Diagnostics', href: '#octatrack/diagnostics', icon: 'shield' },
 ]
 // Samples is unfinished: its panel stays (and keeps its tests), but nothing leads to it until it is ready.
 const NAV_VIEWS = UNIT_VIEWS.filter(item => item.view !== 'samples')
 
 /**
  * Your Octatrack: the Octatrack's configuration page on the base path (hasOctatrackBase). A list on the leading side holds the Octatrack's own pages
- * (Status, Backups, Samples, Setup) and your module sets; the selected item fills the trailing side. Opening a set
+ * (Status, Backups, Samples, Setup, Diagnostics) and your module sets; the selected item fills the trailing side. Opening a set
  * makes it the set you edit (the library adds to it, Sync sends it). The page's header (`header`), the set's modules
  * (`grid`) and the module file for the card (`card`) are App's own parts. Every page stays mounted, so
  * local samples and the load history survive moving around. Nothing goes onto the unit without the guided sync.
@@ -200,8 +201,8 @@ function DesktopOctatrackHub({ view, link, inventory, sets, selectedId, needs, u
             <p><strong>In use by another window or app:</strong> Modwerk open in another browser, another Chrome profile or a private window holds the Octatrack, and so can another app that talks to it. Close it, and this page connects by itself. If it stays in use, quit the browser completely and open it again, or unplug the Octatrack and plug it back in.</p>
           </section>}
           {card}
-          <OctatrackDiagnosticsSettings username={username} />
         </>)}
+        {panel('diagnostics', <><h2 className="hub-view-title">Diagnostics</h2><OctatrackDiagnosticsSettings username={username} /></>)}
         {panel('set', selected ? <>
           <HubSetHead set={selected} kicker={'Module set · ' + modules(selected.moduleIds.length)} onSetAction={onSetAction} />
           {/* Without USB the hero's Load from the card is the one way to send this set. */}
