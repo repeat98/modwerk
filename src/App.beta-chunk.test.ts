@@ -31,7 +31,8 @@ describe('a beta chunk that does not arrive', () => {
     await act(async () => root.render(createElement(RenderBoundary, { fallback: (error: unknown) => createElement(PageError, { error, scope: 'app' }), children: createElement(App) })))
     await vi.waitFor(() => expect(container.querySelector('[role=alert] h1')?.textContent).toBe('This page could not be loaded'))
     expect(container.querySelector('[role=alert] button')?.textContent).toBe('Reload page')
-    expect(sessionStorage.getItem('modwerk-reloaded-for-release')).not.toBeNull()
+    // PageError sets the flag in an effect, which can run after the heading is already on screen.
+    await vi.waitFor(() => expect(sessionStorage.getItem('modwerk-reloaded-for-release')).not.toBeNull())
   })
   // The USB kit and the Zoom link import the chunk outside React.lazy: unhandled, the failure reaches the site diagnostics as an unhandled rejection.
   it('handles the chunk requests made outside React.lazy', () => {
