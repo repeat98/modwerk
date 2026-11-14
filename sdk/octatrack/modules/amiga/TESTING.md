@@ -136,12 +136,17 @@ A tester reported crackle and a sluggish unit with Amiga alone on T1 as soon as 
 | The set installed, all FLEX | 64.5 % | 112.2 % | 12.2 % | 2 (T1, T3) | 75 % |
 | The set, T1 Amiga at the defaults | 70.7 % | 119.2 % | 19.2 % | 10 (T1 to T3) | 80 % |
 | The set, T1 Amiga at PTCH +12 | 73.4 % | 118.1 % | 18.1 % | 22 (T1 to T3) | 84 % |
+| The set less FM Synth, all FLEX | 50.1 % | 89.2 % | 0 | 4 (T1) | 68 % |
+| The set less FM Synth, T1 Amiga at the defaults | 62.7 % | 99.7 % | 0 | 4 (T1) | 73 % |
+| The set less FM Synth, T1 Amiga at PTCH +12 | 66.1 % | 99.1 % | 0 | 4 (T1) | 77 % |
 
-The set alone takes a busy project past the frame: frames overrun and start late before any Amiga track plays, and every plain FLEX track then renders through a module's wrapper (each 25 to 38 % of a frame at its longest, against none guarded without the set). An Amiga track adds 6 to 9 points on top. This matches the report without showing the tester's own unit. Which installed module costs the plain tracks this was not separated: the run without FM Synth did not happen (below).
+The set alone takes a busy project past the frame: frames overrun and start late before any Amiga track plays. FM Synth (0.1.2, on no track) is most of it: with it installed every plain FLEX track renders through its wrapper (each 25 to 38 % of a frame at its longest, against none guarded without it), 14.4 of the set's 23.4 points. Beside three sounding FLEX tracks an Amiga track costs 12.6 points at the defaults and 16 at PTCH +12 (less with FM Synth installed, 6 to 9, only because T1's FLEX already paid FM Synth's wrapper). This matches the report without showing the tester's own unit.
+
+Amiga's restarts leave the other tracks alone. Over USB Audio (the twin's 20 channels, one pair a track), three seconds of T2 to T4 with T1 muted, T1 on FLEX and then on Amiga at PTCH +12 (Amiga alone installed; the recording itself took the frame interrupt to 71.5 % and skipped 4 of T1's renders): T2, T3 and T4 were identical to each other within one 24-bit step in both, and the Amiga take matched the FLEX one within 2.4e-7 once aligned, with the same largest second difference and no run of zeros.
 
 With only T1 sounding (T2 to T4 trigless), the same day: T1 FLEX 29.5 % (no module) and 36.8 % (the set); Amiga at the defaults 33.3 % and 41.4 %, at PTCH +12 37.4 % and 50.6 %, and at PTCH +12, GRN 0, SRR 30 and LED with the set 63.1 % (CPU 70 %), nothing skipped. T1's longest render, both passes of a frame: 13.9 % at the defaults and 31.5 % at PTCH +12 without the set, 28.3 %, 34.0 % and 45.3 % with it. So the set makes Amiga's own track dearer too (+7.9 points at PTCH +12 alone, +13.8 with the set).
 
-Not shown: whether Amiga's restarts disturb the other tracks' audio. The owner heard B01 clean with T1 on Amiga at PTCH +12, but T2 to T4 had no trigs then. The second set trial's rollback, after T1 had gone back to FLEX, was refused as needs-recovery, and `recover` was refused the same way; the unit needed a power cycle. No track in Part 1 named a module machine then; bank A's Part 1 names Tape Echo and Euclid on T4. The first set trial of the day rolled back cleanly.
+The rollback of the set with FM Synth, after T2 to T4 had played FLEX through its wrapper and T1 had gone back to FLEX, was refused as needs-recovery, and `recover` was refused the same way; the unit needed a power cycle. No track in Part 1 named a module machine then. The same set rolled back cleanly earlier while T2 to T4 had no trigs, and the set without FM Synth rolled back cleanly after the same playing: one case each, not a cause.
 
 ### The published package on the unit
 

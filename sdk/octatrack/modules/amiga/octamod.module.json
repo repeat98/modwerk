@@ -98,7 +98,7 @@
     "limitations": [
       "USB only: it loads on the Modwerk base over USB (it needs the base's machine list and START dispatch) and has no card build.",
       "Experimental: played and measured on one MKII on a development base; TESTING.md lists what was not tried.",
-      "Measured on 0.1.0-experimental, an MKII: one Amiga track beside seven FLEX tracks added 5.5 points to the frame interrupt at the defaults and up to 13.8 with PTCH +12, SRR and LED; eight Amiga tracks reached the base's frame guard, which skipped 17 % of their renders (dropouts). This version has not been measured on a unit; count on a few Amiga tracks, not eight.",
+      "Measured on 0.1.0-experimental, an MKII: one Amiga track beside seven FLEX tracks added 5.5 points to the frame interrupt at the defaults and up to 13.8 with PTCH +12, SRR and LED; eight Amiga tracks reached the base's frame guard, which skipped 17 % of their renders (dropouts). This version has not been measured on a unit; count on a few Amiga tracks, not eight. Other installed modules leave less room: beside fifteen of them and three sounding FLEX tracks, one Amiga track took 12.6 to 16 points.",
       "With a USB recording running as well, one Amiga track (0.1.0-experimental) at PTCH +12 with SRR and LED on beside seven FLEX tracks froze the unit until a power cycle.",
       "No stock RTRG or RTIM on an Amiga track: SPD and GRN take their knobs.",
       "Stock's own time-stretch (TSTR) is off on an Amiga track, and SETUP's LEN switch is LED: the track always uses stock's default length setting, LEN OFF.",
