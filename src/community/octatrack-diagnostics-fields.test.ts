@@ -53,19 +53,18 @@ describe('browser family and pre-link failures in opted-in reports', () => {
     await cleanupOctatrackDiagnostics(env.DB!)
     expect(db.prepare('SELECT count(*) AS n FROM octatrack_diagnostic_events').get()).toEqual({ n: 0 })
   })
-  it('does not widen an earlier consent: it reads as no choice, sends nothing and keeps the earlier reports', async () => {
+  it('keeps an earlier consent sharing, the newer fields included, and records its text with each report', async () => {
     expect(version).toBe('2026-11-11.1')
     const { db, call, token, consent, send } = await fixture(), earlier = '2026-10-15.1', changedAt = new Date(Date.now() - 86400000).toISOString()
     db.prepare('INSERT INTO octatrack_diagnostic_consent(user_id,enabled,version,changed_at) VALUES(?,?,?,?)').run('member', 1, earlier, changedAt)
     db.prepare('INSERT INTO octatrack_diagnostic_events(user_id,event_id,consent_version,data_json,created_at) VALUES(?,?,?,?,?)').run('member', 'old', earlier, JSON.stringify({ id: 'old', event: 'connected', phase: 'ready' }), changedAt)
-    expect(await (await call('/octatrack/diagnostics/consent', 'GET', undefined, token)).json()).toMatchObject({ enabled: false, version: earlier, changedAt })
-    expect((await send({ id: id(), event: 'connected', phase: 'ready', client })).status).toBe(403)
-    expect((await send({ id: id(), event: 'connected', phase: 'ready' }, earlier)).status).toBe(403)
-    expect((await consent(true, earlier)).status).toBe(400)
-    expect((await call('/octatrack/diagnostics', 'GET', undefined, token)).status).toBe(200)
-    expect((await (await call('/octatrack/diagnostics', 'GET', undefined, token)).json()).events).toHaveLength(1)
-    expect((await consent()).status).toBe(200)
+    // Members who agreed once keep sharing through a new consent text (owner, 14 Nov 2026).
+    expect(await (await call('/octatrack/diagnostics/consent', 'GET', undefined, token)).json()).toMatchObject({ enabled: true, version: earlier, changedAt })
     expect((await send({ id: id(), event: 'connected', phase: 'ready', client })).status).toBe(200)
+    expect(db.prepare("SELECT consent_version FROM octatrack_diagnostic_events WHERE event_id!='old'").all()).toEqual([{ consent_version: earlier }])
+    expect((await send({ id: id(), event: 'connected', phase: 'ready' }, earlier)).status).toBe(400) // a page from before the new text
+    expect((await consent(true, earlier)).status).toBe(400) // a new choice records the current text
+    expect((await (await call('/octatrack/diagnostics', 'GET', undefined, token)).json()).events).toHaveLength(2)
   })
 })
 
