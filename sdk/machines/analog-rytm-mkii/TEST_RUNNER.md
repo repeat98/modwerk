@@ -83,6 +83,10 @@ ident i                  # capture the link's ident
 note BD                  # a MIDI note for a track: velocity 100, held 100 ms
 note SD 64 250           # velocity 1 to 127, held 10 to 10000 ms
 cc 79 42                 # a controller (0 to 119) on the auto channel: the active track's
+nrpn 1:20 64 0           # an NRPN on the auto channel as a controller sends it: CC 99, 98, 6 (and 38)
+midi fb begin            # what the Rytm sends on MIDI from here (a link answer marks the place)
+midi fb end              # to here: its non-SysEx, non-real-time messages, over USB on both targets
+emu key GLOBAL           # key, cc, nrpn, note or wait for the emulator alone; the unit keeps the time
 audio hit BD 1200        # record 1200 ms (20 to 30000) from here: a track, MAIN or IN
 expect up != rest                    # two captures of one kind
 expect up == ref                     # a screen's recorded reference (never `!=`, never mem)
@@ -94,6 +98,9 @@ expect hit.len20 > 50                # a measure of a sound: == != < >
 expect long.len20 > short.len20 + 50 # or another sound's measure, + or - a number
 expect a.onset == b.onset within 3   # == and != take a tolerance
 expect hit == ref                    # every measure against the recorded ones
+expect fb has nrpn 1:20 100          # a parameter the Rytm sent: nrpn MSB:LSB or cc N, with or without the
+expect fb lacks cc 74                # value (an NRPN's data entry, 0 to 127)
+expect fb.count == 0                 # how many parameter messages: == != < >
 ```
 
 Every case starts with `release` and ends with the up of every key still held, then `release`. References are kept
@@ -119,6 +126,18 @@ passes when every request was answered, marked `(no checks)`.
   take could not reach, a header claiming a path the case never exercised.
 - On the unit, run plain first: new screens come back as "no reference". Look at the PNGs, run with `--record`, then
   plain again to see it pass.
+
+## MIDI out
+
+A `midi` window holds what the Rytm sent between the link's answers to its two markers: on the emulator cut from
+dtboot's USB stream, on the unit from what the link's port received (`rytm_link.py` keeps every non-SysEx message
+in `heard`, from the start of each case). The Rytm sends a parameter only as GLOBAL > MIDI CONFIG > PORT CONFIG says.
+rytm-emu's defaults are PARAM OUTPUT CC and ENCODER DEST INT, and a turn sent nothing until ENCODER DEST was
+INT+EXT: set them with `emu key` steps (`link-midi-out.case`; GLOBAL opens on the row it was left on, REMOTE CTRL
+after the boot recipe, so press UP first, or YES turns the link off). On a unit, OUTPUT TO must include USB; leave the
+owner's settings alone. The auto channel's track sent on channel 14 on the emulator and on the track's own channel
+on the unit, so check a parameter without its channel. An NRPN number is MSB:LSB as stock's MIDI implementation
+lists it (FRQ 1:20).
 
 ## Timing the runner keeps
 

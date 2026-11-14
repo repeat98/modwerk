@@ -105,9 +105,11 @@ class Op:
 
     def __init__(self, t, name, values, line, slot=None):
         self.t, self.name, self.values, self.line, self.slot = t, name, tuple(values), line, slot
+        self.only = None                                    # 'emu': an `emu` step's, the unit leaves it out
 
     def text(self):
-        return '%7d ms  %-7s %s' % (self.t, self.name, ' '.join(v if isinstance(v, str) else '%#x' % v for v in self.values))
+        return '%7d ms  %-7s %s%s' % (self.t, self.name, ' '.join(v if isinstance(v, str) else '%#x' % v for v in self.values),
+                                      '  (emulator only)' if self.only else '')
 
 
 class Case:
@@ -120,6 +122,7 @@ class Case:
         self.ignore = []                                    # parts of the screen no compare looks at
         self.t = 0
         self.audio_end = 0                                  # when the last `audio` window closes
+        self.listening = set()                              # `midi NAME begin` without its end yet
         self.after_input = False
         self.turned = {}                                    # encoder: time of its last turn
         self.keyed = -KEY_SETTLE_MS                         # time of the last key change
@@ -238,6 +241,8 @@ class Case:
             self.step(n, line.split())
         if not body:
             self.fail(1, 'no steps')
+        if self.listening:
+            self.fail(1, 'midi %s begins and never ends' % ' '.join(sorted(self.listening)))
         self.t = max(self.t, self.audio_end)
         self.release_all(0)
         self.duration = self.t
@@ -245,7 +250,18 @@ class Case:
     def step(self, n, w):
         verb, args = w[0], w[1:]
         try:
-            if verb == 'key':
+            if verb == 'emu':
+                # A step for the emulator alone, such as a setting the unit's owner keeps as they want it
+                # (GLOBAL > MIDI CONFIG). The unit's timeline keeps its time, idle.
+                # Only steps that leave no key held and no turn state behind: the unit compiles the
+                # same timeline, so a held key or a FUNC turn here would change its later steps.
+                if not args or args[0] not in ('key', 'cc', 'nrpn', 'note', 'wait'):
+                    self.fail(n, '`emu` takes key, cc, nrpn, note or wait: emu key GLOBAL')
+                first = len(self.ops)
+                self.step(n, args)
+                for op in self.ops[first:]:
+                    op.only = 'emu'
+            elif verb == 'key':
                 count = 1
                 if len(args) == 2 and re.fullmatch(r'x\d+', args[1]):
                     count = int(args.pop()[1:])
@@ -344,6 +360,34 @@ class Case:
                 self.after_turn()
                 self.req(n, 'cc', int(number), int(value))
                 self.after_input = True
+            elif verb == 'nrpn':
+                # As a controller sends it, on the auto channel: NRPN MSB (CC 99), LSB (98), the value
+                # (data entry, CC 6), and its fine part (CC 38) when given.
+                number, value = args[0], args[1:]
+                m = re.fullmatch(r'(\d+):(\d+)', number)
+                if not m or not 1 <= len(value) <= 2 or not all(v.isdigit() and int(v) <= 127 for v in value) \
+                        or int(m.group(1)) > 127 or int(m.group(2)) > 127:
+                    self.fail(n, 'nrpn takes MSB:LSB (0 to 127 each), a value 0 to 127 and a fine part, as: nrpn 1:20 64 0')
+                self.after_turn()
+                for cc, v in [(99, int(m.group(1))), (98, int(m.group(2))), (6, int(value[0]))] + \
+                        ([(38, int(value[1]))] if len(value) == 2 else []):
+                    self.req(n, 'cc', cc, v)
+                self.after_input = True
+            elif verb == 'midi':
+                # What the Rytm sends on MIDI between two link answers (USB MIDI on both targets).
+                name, edge = args
+                if edge == 'begin':
+                    self.capture(n, name, 'midi')
+                    self.listening.add(name)
+                    self.req(n, 'ident', slot=(name, 0))
+                elif edge == 'end' and name in self.listening:
+                    self.listening.discard(name)
+                    if self.after_input:
+                        self.t += int(self.head['settle'])
+                    self.after_input = False
+                    self.req(n, 'ident', slot=(name, 1))
+                else:
+                    self.fail(n, 'midi takes a name and begin, then the same name and end')
             elif verb == 'audio':
                 name, source, ms = args
                 if source not in SOURCES or not ms.isdigit() or not 20 <= int(ms) <= AUDIO_MAX_MS:
@@ -370,6 +414,10 @@ class Case:
             x, y, w, h = region                             # ValueError unless four numbers
             if not (0 <= x < 128 and 0 <= y < 64 and 1 <= w <= 128 - x and 1 <= h <= 64 - y):
                 self.fail(n, 'a region is X Y W H inside 128 x 64')
+        if self.captures.get(a[0].partition('.')[0]) == 'midi' if a else False:
+            if region:
+                self.fail(n, 'a region is for screens')
+            return self.expect_midi(n, a, text)
         if len(a) < 3 or a[1] not in ('==', '!=', '<', '>'):
             self.fail(n, 'expect is: NAME ==|!= OTHER|ref|BYTES, or NAME.FIELD ==|!=|<|> VALUE|OTHER.FIELD [+|- N] [within N]')
         left, op, right = a[0], a[1], a[2:]
@@ -417,6 +465,29 @@ class Case:
             self.fail(n, 'expect names %s, which is not captured before it' % ' '.join(right))
         self.expects.append({'line': n, 'text': text, 'name': name, 'field': field, 'op': op, 'want': want,
                              'region': region, 'within': within})
+
+    def expect_midi(self, n, a, text):
+        """fb has|lacks nrpn 1:20 [VALUE] | cc 74 [VALUE], or fb.count ==|!=|<|> N."""
+        name, _, field = a[0].partition('.')
+        if field == 'count' and len(a) == 3 and a[1] in ('==', '!=', '<', '>') and a[2].isdigit():
+            want = ('count', int(a[2]))
+        elif not field and len(a) in (4, 5) and a[1] in ('has', 'lacks') and a[2] in ('nrpn', 'cc'):
+            if a[2] == 'nrpn':
+                m = re.fullmatch(r'(\d+):(\d+)', a[3])
+                if not m:
+                    self.fail(n, 'an NRPN is MSB:LSB, as 1:20')
+                number = (int(m.group(1)), int(m.group(2)))
+            else:
+                number = int(a[3])                          # ValueError unless a number
+            value = int(a[4]) if len(a) == 5 else None
+            if value is not None and not 0 <= value <= 127 or a[2] == 'cc' and not 0 <= number <= 127:
+                self.fail(n, 'a controller and a value are 0 to 127')
+            want = (a[1], (a[2], number, value))
+        else:
+            self.fail(n, 'a MIDI capture is checked as: NAME has|lacks nrpn 1:20 [VALUE], NAME has|lacks cc 74 [VALUE], '
+                         'or NAME.count ==|!=|<|> N')
+        self.expects.append({'line': n, 'text': text, 'name': name, 'field': field, 'op': a[1], 'want': want,
+                             'region': None, 'within': None})
 
     def expect_audio(self, n, name, field, op, right):
         """A sound's check: (('ref', None) | ('value', number) | ('field', (other, its field, offset)), within)."""
@@ -503,10 +574,79 @@ def screen_diff(a, b, region, ignore=()):
 
 # ---- checking a case's replies --------------------------------------------------------------
 
+def midi_events(data):
+    """The parameter messages in MIDI bytes: [('nrpn', channel, (msb, lsb), value, fine), ('cc', channel, number,
+    value)], channels 1 to 16. SysEx (the link's answers) and real-time bytes are left out; an NRPN is one
+    event at its data entry (CC 6), its fine part (CC 38) added when it follows. A data entry or fine part with
+    no NRPN selected (none yet, or an RPN since) is a plain `cc`."""
+    clean, i = bytearray(), 0
+    while i < len(data):                                    # SysEx out first, then real-time bytes
+        if data[i] == 0xF0:
+            e = data.find(b'\xF7', i)
+            i = len(data) if e < 0 else e + 1
+            clean.append(0xF7)                              # ends running status, as SysEx does
+            continue
+        if data[i] < 0xF8:
+            clean.append(data[i])
+        i += 1
+    events, status, i, nrpn = [], None, 0, {}
+    lengths = {0x8: 2, 0x9: 2, 0xa: 2, 0xb: 2, 0xc: 1, 0xd: 1, 0xe: 2}
+    while i < len(clean):
+        b = clean[i]
+        if b >= 0x80:
+            status, i = (b if b < 0xF0 else None), i + 1
+            continue
+        if status is None:
+            i += 1
+            continue
+        size = lengths[status >> 4]
+        body = clean[i:i + size]
+        if len(body) < size or any(x >= 0x80 for x in body):
+            i += 1                                          # cut short: the next status byte starts again
+            continue
+        i += size
+        if status >> 4 != 0xb:
+            continue
+        ch, (num, val) = (status & 15) + 1, body
+        sel = nrpn.setdefault(ch, [None, None])
+        if num == 99:
+            sel[0] = val
+        elif num == 98:
+            sel[1] = val
+        elif num in (101, 100):                             # an RPN: no NRPN is selected
+            sel[0] = sel[1] = None
+            events.append(['cc', ch, num, val])
+        elif num == 6 and None not in sel:
+            events.append(['nrpn', ch, tuple(sel), val, None])
+        elif num == 38 and None not in sel and events and events[-1][0] == 'nrpn' and events[-1][1] == ch \
+                and events[-1][4] is None:
+            events[-1][4] = val
+        else:
+            events.append(['cc', ch, num, val])
+    return [tuple(e) for e in events]
+
+
+def midi_text(ev):
+    return ('nrpn %d:%d %d' % (ev[2] + (ev[3],)) if ev[0] == 'nrpn' else 'cc %d %d' % (ev[2], ev[3])) + ' ch%d' % ev[1]
+
+
+def check_midi(e, got):
+    how, what = e['want']
+    seen = ', '.join(map(midi_text, got)) or 'nothing'
+    if how == 'count':
+        have = len(got)
+        return {'==': have == what, '!=': have != what, '<': have < what, '>': have > what}[e['op']], \
+            '%d messages: %s' % (have, seen)
+    kind, number, value = what
+    hit = any(ev[0] == kind and ev[2] == number and (value is None or ev[3] == value) for ev in got)
+    return hit == (how == 'has'), 'heard: %s' % seen
+
 def decode(kind, ops, got):
     """A capture from its requests and their replies' payloads; ValueError names a reply that is not whole."""
     if kind == 'audio':
         return audio().measure(got[0])
+    if kind == 'midi':
+        return midi_events(got[1])
     data = []
     for op, p in zip(ops, got):
         if kind == 'ident':
@@ -565,7 +705,8 @@ def judge(case, replies, out, refs, record, problems=()):
     return {'name': case.name, 'file': str(case.path), 'status': status, 'problems': problems, 'checks': checks,
             'mem': {k: v.hex(' ') for k, v in caps.items() if case.captures[k] == 'mem'},
             'ident': {k: v for k, v in caps.items() if case.captures[k] == 'ident'},
-            'audio': {k: v for k, v in caps.items() if case.captures[k] == 'audio'}}
+            'audio': {k: v for k, v in caps.items() if case.captures[k] == 'audio'},
+            'midi': {k: list(map(midi_text, v)) for k, v in caps.items() if case.captures[k] == 'midi'}}
 
 
 def check(case, e, caps, out, refs, record, clean):
@@ -587,6 +728,8 @@ def check(case, e, caps, out, refs, record, clean):
         return ok, '%s is %s' % (e['field'], have)
     if kind == 'audio':
         return check_audio(e, caps, refs, record, clean)
+    if kind == 'midi':
+        return check_midi(e, got)
     how, other = e['want']
     if how == 'ref':
         path = refs / ('%s.pbm' % name)
@@ -698,13 +841,14 @@ def link_replies(data):
             break
         r = rl.parse(data[s:e + 1])
         if r:
-            out.append(r)
+            out.append(tuple(r) + (s, e + 1))              # and where it is in the stream
         i = e + 1
     return out
 
 
-def match_replies(sent, replies):
-    """For each (seq, command) sent, its reply's (status, payload) or None; replies come in order."""
+def match_replies(sent, replies, where=False):
+    """For each (seq, command) sent, its reply's (status, payload) or None; replies come in order. With where,
+    each found reply also carries its place in the stream (start, end)."""
     out, j = [], 0
     for seq, cmd in sent:
         k = next((k for k in range(j, min(len(replies), j + MATCH_WINDOW))
@@ -712,7 +856,7 @@ def match_replies(sent, replies):
         if k is None:
             out.append(None)
         else:
-            out.append((replies[k][2], replies[k][3]))
+            out.append((replies[k][2], replies[k][3]) + ((replies[k][4], replies[k][5]) if where else ()))
             j = k + 1
     return out
 
@@ -814,7 +958,7 @@ class Emu:
             wav.unlink(missing_ok=True)                     # each window is kept as its own file
         if self.stopped:
             problems.insert(0, self.stopped)
-        got, replies = iter(match_replies(sent, link_replies(usb))), []
+        got, replies, begun = iter(match_replies(sent, link_replies(usb), where=True)), [], {}
         for op in case.ops:
             if op.name in ('note', 'cc'):
                 replies.append((0, b''))
@@ -827,7 +971,14 @@ class Emu:
                     except ValueError as e:
                         problems.append('line %d: %s' % (op.line, e))
             else:
-                replies.append(next(got))
+                r = next(got)
+                if r and op.slot and case.captures.get(op.slot[0]) == 'midi':
+                    if op.slot[1] == 0:
+                        begun[op.slot[0]] = r[3]            # the window opens where the begin's answer ends
+                        r = (r[0], b'')
+                    elif op.slot[0] in begun:
+                        r = (r[0], usb[begun[op.slot[0]]:r[2]])
+                replies.append(r[:2] if r else r)
         return replies, problems
 
 
@@ -851,9 +1002,13 @@ def unit_play(link, case, rec, note_channel):
 
 
 def unit_play_ops(link, case, rec, note_channel):
-    replies, t0, late, not_ok, sounding, windows, problems = [], time.time(), 0.0, 0, {}, [], []
+    replies, t0, late, not_ok, sounding, windows, problems, begun = [], time.time(), 0.0, 0, {}, [], [], {}
+    link.heard.clear()                                      # a case's `midi` windows index from here
     try:
         for op in case.ops:
+            if op.only == 'emu':
+                replies.append((0, b''))
+                continue
             wait = t0 + op.t / 1000 - time.time()
             if wait > 0:
                 time.sleep(max(0, wait - 0.02))             # sleep wakes up to 10 ms late (measured, macOS):
@@ -884,6 +1039,12 @@ def unit_play_ops(link, case, rec, note_channel):
                 if status != 3 or op.name not in ('key', 'enc'):
                     break
                 time.sleep(0.05)                            # busy: the UI loop is behind
+            if op.slot and case.captures.get(op.slot[0]) == 'midi':
+                if op.slot[1] == 0:
+                    begun[op.slot[0]] = len(link.heard)     # what the link heard since its answer
+                    payload = b''
+                else:
+                    payload = b''.join(link.heard[begun.get(op.slot[0], len(link.heard)):])
             replies.append((status, payload))
             if status == 5:
                 raise Abort('a person is at the unit: stopped at %s' % (('line %d' % op.line) if op.line else 'the start'))

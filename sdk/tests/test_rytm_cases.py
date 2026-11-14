@@ -41,6 +41,34 @@ class RytmCases(unittest.TestCase):
             refs = "/refs"
         self.assertEqual(rytm_test.refs_dir(Args, case, "unit"), pathlib.Path("/refs/cases/link-global-menu/unit"))
 
+    def test_midi_events_reads_nrpn_and_cc(self):
+        data = bytes.fromhex("b06301 b06214 b00640 b02611 b007f864 f00102f7 0630 b06505 b06400 b00610")
+        self.assertEqual(rytm_test.midi_events(data), [
+            ("nrpn", 1, (1, 20), 64, 17),           # with its fine part
+            ("cc", 1, 7, 100),                      # a clock byte inside a message is skipped
+            ("cc", 1, 101, 5), ("cc", 1, 100, 0),   # SysEx ended running status; an RPN ends the NRPN
+            ("cc", 1, 6, 16)])                      # so its data entry is a plain CC
+
+    def test_nrpn_step_and_emu_steps(self):
+        case = rytm_test.find_cases([TOOLS / "cases/link-midi-out.case"])[0]
+        ccs = [op.values for op in case.ops if op.name == "cc"]
+        self.assertIn((99, 1), ccs)
+        self.assertIn((98, 20), ccs)
+        self.assertIn((6, 64), ccs)
+        self.assertTrue(any(op.only == "emu" for op in case.ops))
+        self.assertFalse(any(op.only == "emu" and op.slot for op in case.ops))
+        self.assertEqual(case.captures, {"turn": "midi", "quiet": "midi"})
+
+    def test_emu_takes_steps_that_leave_nothing_held(self):
+        path = pathlib.Path(self.id().replace(".", "_") + ".case")
+        try:
+            for bad in ("emu hold FUNC", "emu release all", "emu nudge A +1", "emu screen s"):
+                path.write_text(bad + "\n")
+                with self.assertRaises(rytm_test.CaseError, msg=bad):
+                    rytm_test.Case(path)
+        finally:
+            path.unlink(missing_ok=True)
+
 
 if __name__ == "__main__":
     unittest.main()

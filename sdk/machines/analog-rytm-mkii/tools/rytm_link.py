@@ -200,6 +200,7 @@ class Link:
         self.out = mido.open_output(outs[0])
         self.inp = mido.open_input(ins[0])
         self.seq = 0
+        self.heard = getattr(self, 'heard', [])     # every other MIDI message the unit sent, in order
 
     def reopen(self):
         # Keep the old ports, unclosed: closing an input while messages arrive can hang
@@ -213,7 +214,7 @@ class Link:
             self.keys.clear()
         req = request(self.seq, name, *values)
         for m in self.inp.iter_pending():
-            pass                                    # drop stale input (telemetry, old replies)
+            self.hear(m)                            # stale replies and telemetry are dropped
         self.out.send(self.mido.Message('sysex', data=req[1:-1]))
         end = time.time() + timeout
         while time.time() < end:
@@ -222,11 +223,16 @@ class Link:
                 time.sleep(0.002)
                 continue
             if m.type != 'sysex':
+                self.hear(m)
                 continue
             r = parse(bytes([0xF0]) + bytes(m.data) + b'\xF7')
             if r and r[0] == self.seq and r[1] == CMD[name]:
                 return r[2], r[3]
         raise TimeoutError('no reply to %s (is the unit on a link base, in USB MIDI or Overbridge mode?)' % name)
+
+    def hear(self, m):
+        if m.type != 'sysex' and not m.is_realtime:
+            self.heard.append(bytes(m.bytes()))     # a test runner's `midi` window reads these (by index)
 
     def ok(self, name, *values, **kw):
         status, payload = self.call(name, *values, **kw)
