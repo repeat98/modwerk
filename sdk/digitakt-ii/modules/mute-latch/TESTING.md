@@ -1,0 +1,99 @@
+# Mute Latch testing
+
+**Unit:** the submitted package (pinned toolchain, sha256 aa9dd675...) is reported working by the author, see [Submitted package on a unit](#submitted-package-on-a-unit-reported-by-the-author-crisp909). The author also reports the previous build (PERFORM, MUTES ARMED and lit TRIG LEDs, applied on the wrap; image sha256 d736aaec71748cd763a5516700b287cff4863fca44f796a2a5211189f3a395fa) working as intended on a Digitakt II, OS 1.17, see [Hardware](#hardware-reported-by-the-author-crisp909). That is a report, not measured here. The current build (applies on the last step, no LEDs) has **not** been run on a unit yet. Everything else below is emulator evidence: digikit's headless ColdFire-only `panel_drive` (no DSP) with the SSI clock at 96 kHz, a one-sample card made with digikit's `plusdrive`, and a 128-step pattern. It approximates the instrument; the emulator is not Modwerk's.
+
+## Build under test
+
+- Stock: `Digitakt_II_OS1.17.syx`, SHA-256 `26c22f6652625ac2cfd47f7ee970d388ed8b6427dae3563c0a6a2f2d334350d5`.
+- Image: elekloader's `python -m elekloader.patch` with `core-1.0.elemod` (SHA-256 `95303655a9358f581b485acb68b884b394a577f5d0b373f0a3e5957c8d0ca72c`) and this module's `.elemod` built from `src/main.c` with GCC 13.3 `m68k-linux-gnu` (not the project's pinned GCC 16 `m68k-elf`), version string `2.0b`; image SHA-256 `e50d7a00bdc6e0896ee6695a651a96c6604da3287fa8a329a646b84aab938cb4`. The linker reported no overlaps.
+- Count of executions comes from `panel_drive --count` on the stock routines `0x40068b96` (a track's mute toggles) and `0x4006de70` (applies a PREP MUTES choice).
+
+## Observed (stock OS 1.17, emulator)
+
+- Mute Mode is entered with FUNC+TRK. In it, holding FUNC and pressing TRIG keys shows "PREP MUTES" with the chosen tracks; letting go of FUNC applies the choice at once (2 toggles for 2 tracks). There is no setting to turn on.
+- With FUNC held, TEMPO is the stock **Tap tempo**: it opens a "Tap tempo 1/4" view over PREP MUTES. FUNC+PERFORM opens a different stock view (header "Perform Kit=ON"). A first version of the module polled TEMPO and never saw its view on top, so it did nothing; the module now takes the key event instead (TEMPO in the earlier emulator runs, PERFORM from the PERFORM build on).
+- Step position `0x43164fe0` + track rises by 1 per step (about 16.5 M instructions) and wraps to 0 after the last step; playing flag `0x43164f94` is 1 while playing; pattern pointer `0x4316501c`.
+- The view on top of the stack is read as the module assumes: Brain `0x44f5de40`, last node `0x450d0b00`, object `0x450b0750` with vtable `0x401f8a18`; its choice mask at +`0x88` (5 for tracks 1 and 3) and session flag at +`0x8d` (1 while FUNC is held).
+
+## Observed with the module linked in (emulator, earlier build that took TEMPO and applied on the wrap)
+
+- Both tick handlers run (477 calls in a 300 M instruction run); the image boots, plays and shows its normal screens.
+- Playing, Mute Mode, FUNC held, TRIG 1 and 3, then TEMPO: the screen stays "PREP MUTES" (no Tap tempo), the choice mask reads 0, and after letting go of FUNC and TEMPO there were 0 toggles after 100 M instructions.
+- Mutes switch at the wrap: with the master position at 98, 119 and 124, still 0 toggles; at the next sample (position 1) 2 toggles and 1 apply.
+- TEMPO again with nothing chosen cancels: 0 toggles after a full pass (2.3 G instructions).
+- Playing, no TEMPO: 2 toggles at the release of FUNC, as the stock OS.
+- Stopped, with TEMPO: Tap tempo opens as in stock and 2 toggles at the release of FUNC.
+- TEMPO alone with the pattern playing: normal screen, no toggles.
+
+## Not tested
+
+- On a unit: this build (last-step apply, no LEDs), with a kick on step 1; audio, reboot and a power cycle.
+- The project's pinned toolchain build, memory and load.
+- Scale per track, a pattern change while tracks are parked, a second PREP MUTES session started while tracks are still parked, and holding TRIG keys after PERFORM.
+- Whether the "PREP MUTES" screen should keep showing the parked tracks: after PERFORM the squares show no choice, because the stock mask is cleared.
+- The stock flows with and without the module beyond those listed above; DSP-coupled emulation.
+
+## Earlier PERFORM build with MUTES ARMED and LEDs (emulator only; the LEDs are removed in the current build)
+
+Run on the Digitakt II emulator (ColdFire only, SSI clock), image linked from core 1.0 and this module with Elekloader:
+- Playing, Mute Mode, FUNC held, TRIG 1 and 3, PERFORM: header "MUTES ARMED", stays after releasing FUNC; 0 toggles at release.
+- LED arrays after release: TRIG 1 and 3 hold 0x11 on layer 2, the same value PREP MUTES gives chosen tracks; other TRIG LEDs 0x21.
+- After the pattern wrap: 2 toggles, 1 apply, LEDs back to normal.
+- Not tested: whether the LEDs blink exactly like stock on a unit, PERFORM's stock sub-function behaviour, anything on hardware.
+
+## Hardware (reported by the author, crisp909)
+
+Digitakt II, OS 1.17, image linked with Elekloader from core 1.0 and the PERFORM build (this version, 0.1.0-experimental). Reported by the author as working as intended: single short PERFORM press arms at once, "MUTES ARMED" shows, parked TRIG LEDs keep their orange blinking until the switch, and the mutes switch at the pattern start. Reported, not measured by the assistant; no per-PAGE or other-pattern-length tests were recorded.
+
+## Source and build
+
+Source: branch `module/mute-latch-dt2` of crisp909/modwerk, this folder. Build: Modwerk elemod builder, m68k-linux-gnu-gcc 13, linked with Elekloader (`--version 2.0b`) on core 1.0 and the stock OS 1.17 image. Test image sha256 d736aaec71748cd763a5516700b287cff4863fca44f796a2a5211189f3a395fa (emulator). Screenshots: `media/capture.json`.
+
+## Flows compared with and without the module (emulator)
+
+- PREP MUTES with FUNC released without PERFORM while playing: 2 toggles, as stock.
+- PERFORM with FUNC held, nothing chosen, nothing armed: stock behaviour (not re-run on this build beyond the earlier TEMPO equivalent).
+- Stopped sequencer: stock behaviour (earlier build, not re-run).
+- Not tested: save/reload of a project (module keeps no saved state), other patterns, Part change, power cycle on a unit.
+
+
+## Submitted package on a unit (reported by the author, crisp909)
+
+Package `mute-latch-0.1.0-experimental-os1.17.elemod`, sha256 `aa9dd675077e55759fe1b5ad97e234795119939bb6cd452ce28e5f59b6cda9bc`, built by the author in the pinned toolchain image (GCC 16.2.0) from commit 446dbf76, linked with core 1.0 by the Elekloader builder for OS 1.17. Tested on a Digitakt II on 2026-11-14 and reported as working, in these words: "tested what you asked and it works". The test asked for: a 128-step pattern, a short kick on the muted track at steps 126 to 128 and 1, several tempos and repetitions, 2 and 3 PERFORM presses (the passes counted down and the switch came after that many), and choosing the same tracks again to cancel. This is a report: the number of repetitions and the tempos were not recorded, and CPU load was not read. Not tested: a pattern change while armed, shorter patterns, Scale per track, a power cycle with something armed.
+
+## Switch moment on a unit (reported by the author, crisp909)
+
+Digitakt II, OS 1.17, 128-step pattern (all tracks the same length, per pattern, pattern change off), short kick sample on the muted track, kicks on steps 126 to 128 and 1 to 2, 140 BPM, no swing. Reported by the author, not measured here. Builds from this repository's source compiled with GCC 13 (private test builds, not the pinned toolchain):
+
+| Build (where the switch is made, by the step counter) | What the author heard |
+| --- | --- |
+| Last step (counter at 128) | Steps 127 and 128 already audible. |
+| First step (counter at 1) | Step 128 still audible. |
+| Second step (counter at 2) | Step 1 not audible. |
+| Second tick of the first step (`ml-t2`) | Steps 126 to 128 stay as they were, step 1 plays switched. Checked at several tempos. |
+
+The step counter runs a step ahead of the sound, and the mute is judged shortly after the counter moves on, so the window for a switch between the last and the first step is about one step wide. The submitted source makes the switch on the second tick of the first step, or on the first tick of the second step if the steps are shorter. The pinned-toolchain package built from this source was run on a unit afterwards, see the section above.
+
+## Earlier build: apply on the last step, no LEDs (emulator; superseded by the section above)
+
+Image sha256 afba203f35a293ffeb47a060d08d9a519bf17a2b02b4ffef66f3affd94c87437 (core 1.0 + this module, no patched stock site). 128-step pattern, TRIG 1 and 3 armed with PERFORM, run stopped at chosen times (the step position is read from the sequencer):
+- Position 126 (0x7e): 0 toggles, 0 applies.
+- Position 127 (0x7f, the last step): 2 toggles, 1 apply.
+- After the wrap (positions 0, 1, 4): still 2 toggles, 1 apply, so the wrap fallback did not apply a second time.
+- Header "MUTES ARMED" and PREP MUTES screens are unchanged (screenshots recaptured on this image, byte-identical).
+- Not tested on a unit: that a track comes in exactly on a kick at step 1, and whether muting on the last step cuts or lets ring that step's note. The author is asked to check both.
+
+## Loop build, view check (emulator)
+
+Image sha256 f9c5077602350efc836800ad3eef8357fcf1247ea96c049ed93ebb9ef255f248 (core 1.0 + this folder built with Debian-style m68k-linux-gnu-gcc 13, not the pinned toolchain; no patched stock site). 128-step pattern, TRIG 1 and 3 chosen, run stopped at chosen times:
+- One press: 2 toggles, 1 apply at the last step. Two presses: 0 toggles after the first pass, 2 toggles and 1 apply after the second.
+- Header: MUTES ARMED with the loop icon and 1, 2, 3, 4 for one to four presses and 1 again for the fifth (see `media/`); the message stays past the stock time-out and goes when the mutes switch.
+- The PREP MUTES view object: the same address (0x450b0750) in four FUNC sessions and after leaving and re-entering Mute Mode; the view-stack node is freed on leaving Mute Mode. Armed, then FUNC+TRK to leave Mute Mode, then a whole pass: 0 toggles, 0 applies (the choice is dropped). Armed, left and re-entered, armed again: 2 toggles, 1 apply.
+- Not tested: pattern change while armed, a missed last-step tick (the wrap fallback) on a long pattern at high tempo, SETTINGS and other views opened while armed.
+
+## Hardware (reported by the author, crisp909), later builds
+
+Digitakt II, OS 1.17, images linked with Elekloader from core 1.0, built with Debian-style m68k-linux-gnu-gcc 13 (not the pinned toolchain), reported by the author as working as intended and not measured here:
+- `mute-latch-0.1.0-loop-pr-os1.17.elemod` (sha256 8d8a71e24c7a3896f1193c221435a057be559bd764fd9b3c811fb65e41f80db5): one to four PERFORM presses, MUTES ARMED with the loop icon and the countdown, no LEDs.
+- A personal variant of the same build with armed tracks' TRIG LEDs (sha256 4b79a25b4de4e45eade574d27b56fd3f8f9aecb68508f7b6b6a435a58191dfb0), which patches the key-LED frame and is not part of this module.
+- The submitted build adds the view-stack check; it has not been run on a unit. The pinned-toolchain build with a kick on step 1 is still to be recorded here.

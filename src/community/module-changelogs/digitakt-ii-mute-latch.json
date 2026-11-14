@@ -1,0 +1,11 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-11",
+    "changes": [
+      "First release for Digitakt II OS 1.17: in Mute Mode, hold FUNC, choose TRIG tracks and press PERFORM to arm the choice; the mutes switch at the pattern's first step.",
+      "Each further PERFORM press waits one more pass of the pattern, up to four; the header shows MUTES ARMED, a loop icon and the passes left.",
+      "STOP or leaving Mute Mode drops what is armed."
+    ]
+  }
+]

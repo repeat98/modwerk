@@ -1,0 +1,198 @@
+{
+  "schemaVersion": 3,
+  "id": "mute-latch",
+  "name": "Mute Latch",
+  "version": "0.1.0-experimental",
+  "machine": "digitakt-ii",
+  "category": "system",
+  "exclusive": false,
+  "author": {
+    "github": "crisp909",
+    "credits": [
+      "crisp909"
+    ]
+  },
+  "maintainers": [
+    "crisp909"
+  ],
+  "presentation": {
+    "label": "MUTE LATCH",
+    "family": "Performance workflow",
+    "summary": "Press PERFORM while choosing tracks in PREP MUTES and the mutes wait for the end of the pattern, for up to four passes.",
+    "overview": "PREP MUTES normally mutes the chosen tracks the moment FUNC is let go. With Mute Latch, pressing PERFORM once while FUNC is held and tracks are chosen arms the choice (MUTES ARMED) instead: let go of FUNC and every other key and the mutes switch at the pattern's next first step, so both hands are free for a synth or effects in the meantime. Each further PERFORM press waits one more pass, up to four, and the header shows a loop icon and the passes left. Without a choice or without the pattern playing, PERFORM keeps its stock behaviour, and PREP MUTES works exactly as before.",
+    "highlights": [
+      "Arms the PREP MUTES choice until the pattern comes round again, for one to four passes",
+      "Header message MUTES ARMED with a loop icon and the passes left",
+      "Takes only the PERFORM key press inside an open PREP MUTES session while the pattern plays",
+      "Takes no sequencer hook: it follows the instrument's own step position"
+    ],
+    "usage": [
+      "Install a build that contains Mute Latch for the Digitakt II on OS 1.17.",
+      "Start the sequencer with PLAY and enter Mute Mode with FUNC+TRK.",
+      "Hold FUNC and press the TRIG keys of the tracks to switch, then press PERFORM once.",
+      "Let go of everything. The tracks switch when the pattern comes round to its first step.",
+      "To wait longer, press PERFORM again with FUNC held: each press adds a pass, up to four."
+    ]
+  },
+  "access": {
+    "location": "Mute Mode, PREP MUTES (FUNC held)",
+    "steps": [
+      "Start the sequencer with PLAY and enter Mute Mode (FUNC+TRK).",
+      "Hold FUNC to open PREP MUTES and press the TRIG keys of the tracks to switch; press a key again to take the track back out.",
+      "Press PERFORM once while still holding FUNC. The choice is armed (header MUTES ARMED) and the stock PERFORM sub-function does not open.",
+      "Let go of every key. The tracks switch when the pattern comes round to its first step.",
+      "To wait longer, press PERFORM again with FUNC held: each press adds a pass, up to four; the header counts the passes left.",
+      "To cancel, hold FUNC, choose the same tracks again and press PERFORM (ARM CANCELED); STOP also drops what is armed."
+    ],
+    "screenshots": [
+      "media/prep-mutes.png",
+      "media/mutes-armed.png",
+      "media/mutes-armed-3.png"
+    ]
+  },
+  "controls": [],
+  "compatibility": {
+    "releases": [
+      "1.17"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Hardware: the author reports the submitted package (pinned toolchain) working on a Digitakt II, OS 1.17, 2026-11-14, as an informal report. See TESTING.md.",
+      "Works while the sequencer plays; when it is stopped PREP MUTES keeps its stock behaviour.",
+      "With Scale per track the longest track's last step ends the pattern.",
+      "Switches on the second UI tick (about 30 Hz) of the first step after the last counted pass, because the step counter runs ahead of the sound; not sample-accurate.",
+      "Armed tracks are shown only by the MUTES ARMED header message, not by their TRIG LEDs.",
+      "FUNC+PERFORM opens a stock view over PREP MUTES: while PREP MUTES is open, tracks are chosen or something is armed, and the pattern plays, the module takes that key press, so that stock sub-function is not available then."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "1.0",
+    "build": "build.json",
+    "events": [
+      "ev_draw",
+      "ev_key",
+      "ev_tick"
+    ],
+    "claims": [
+      "ui:PREP MUTES:PERFORM pressed"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 1342,
+    "fastBytes": null,
+    "load": {
+      "display": "No audio-path code; bounded UI work",
+      "method": "static",
+      "conditions": "Read from the code, not measured on a unit. Nothing runs per audio sample or in the sequencer: the module works in the 30 Hz UI tick (a scan of 16 track lengths and at most 32 view-stack nodes) and, only while a choice is armed, in the screen draw (about 40 stock rectangle calls). To measure on a unit: the Digitakt II's CPU reading with a choice armed, every track playing."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": "e5fe039a418d3c3cccbff559291feafdf51b6296e0216149d49c912b72caab3d",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Digitakt II",
+      "release": "1.17",
+      "testedOn": "2026-11-14",
+      "tester": "crisp909",
+      "durationMinutes": null,
+      "summary": "Package mute-latch-0.1.0-experimental-os1.17.elemod (sha256 aa9dd675..., pinned toolchain, GCC 16.2.0) with core 1.0, from the author's report that it works: with kicks on the last steps and step 1 of a 128-step pattern at several tempos the switch landed between the last step and step 1; 2 and 3 PERFORM presses waited that many passes; choosing the same tracks again cancelled.",
+      "limitations": [
+        "Informal report: no count of repetitions, tempos or CPU load was given.",
+        "Not tested: a pattern change while armed, shorter patterns, Scale per track, a power cycle with something armed."
+      ]
+    },
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Two earlier builds reported working on a Digitakt II by the author; the submitted build is tested in the emulator only until it runs on a unit. See TESTING.md.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial",
+        "steps": [
+          "Install a build that contains Mute Latch for the Digitakt II on OS 1.17.",
+          "Start the sequencer with PLAY and enter Mute Mode with FUNC+TRK.",
+          "Hold FUNC and press the TRIG keys of the tracks to switch, then press PERFORM once.",
+          "Let go of everything. The tracks switch when the pattern comes round to its first step.",
+          "To wait longer, press PERFORM again with FUNC held: each press adds a pass, up to four."
+        ]
+      },
+      "screenshots": [
+        "media/prep-mutes.png",
+        "media/mutes-armed.png",
+        "media/mutes-armed-3.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by the author. Replace if you choose another GPL-compatible licence."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Mute Latch thumbnail",
+      "alt": "Sixteen steps with two armed trigs lit and an arrow back to the first step",
+      "credit": "crisp909",
+      "license": "GPL-3.0-or-later",
+      "source": "Original artwork for this module."
+    },
+    {
+      "path": "media/prep-mutes.png",
+      "kind": "screenshot",
+      "caption": "PREP MUTES with TRIG 1 and 3 chosen (emulator capture)",
+      "alt": "Digitakt II screen showing the PREP MUTES header",
+      "credit": "crisp909",
+      "license": "GPL-3.0-or-later",
+      "source": "Captured from the digikit emulator with this module; no firmware content other than the screen.",
+      "capture": {
+        "type": "emulator",
+        "release": "1.17",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "f9c5077602350efc836800ad3eef8357fcf1247ea96c049ed93ebb9ef255f248",
+        "setup": "digikit panel_drive, ColdFire only; core 1.0 + this module, Mute Mode with TRIG 1 and 3 chosen while playing. UI documentation only."
+      }
+    },
+    {
+      "path": "media/mutes-armed.png",
+      "kind": "screenshot",
+      "caption": "The header after one PERFORM press: MUTES ARMED, the loop icon and the passes left (emulator capture)",
+      "alt": "Digitakt II screen showing MUTES ARMED, a loop icon and the number 1 in the header",
+      "credit": "crisp909",
+      "license": "GPL-3.0-or-later",
+      "source": "Captured from the digikit emulator with this module; no firmware content other than the screen.",
+      "capture": {
+        "type": "emulator",
+        "release": "1.17",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "f9c5077602350efc836800ad3eef8357fcf1247ea96c049ed93ebb9ef255f248",
+        "setup": "digikit panel_drive, ColdFire only; core 1.0 + this module, Mute Mode with TRIG 1 and 3 chosen while playing. UI documentation only."
+      }
+    },
+    {
+      "path": "media/mutes-armed-3.png",
+      "kind": "screenshot",
+      "caption": "After three PERFORM presses the header counts three passes (emulator capture)",
+      "alt": "Digitakt II screen showing MUTES ARMED, a loop icon and the number 3 in the header",
+      "credit": "crisp909",
+      "license": "GPL-3.0-or-later",
+      "source": "Captured from the digikit emulator with this module; no firmware content other than the screen.",
+      "capture": {
+        "type": "emulator",
+        "release": "1.17",
+        "moduleVersion": "0.1.0-experimental",
+        "imageSha256": "f9c5077602350efc836800ad3eef8357fcf1247ea96c049ed93ebb9ef255f248",
+        "setup": "digikit panel_drive, ColdFire only; core 1.0 + this module, Mute Mode with TRIG 1 and 3 chosen while playing. UI documentation only."
+      }
+    }
+  ]
+}
