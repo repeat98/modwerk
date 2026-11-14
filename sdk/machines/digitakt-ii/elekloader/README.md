@@ -69,3 +69,9 @@ swung Chord Arp fixture reached the scheduler commit routine 16 times.
   with matching nonzero data. The hardware project-save control reported `S258:5`.
   That confirms the save counter works on the unit and observed at least one matching
   nonzero record. The standalone kit operations left all three counters at zero.
+  A second Digikit replay captured the KIT column with SAVE selected, the ENTER KIT NAME
+  screen, and the KIT column with LOAD selected. After the final naming confirmation,
+  the standalone save caller entered the shared serializer, followed by a second
+  serializer call from the active-pattern update. After selecting the saved slot in
+  KIT LOAD, the standalone load caller entered the shared deserializer, then the
+  kit copy handler ran. This confirms the menu route and hook order in Digikit.
