@@ -8,7 +8,7 @@ export type {
 export type BuilderMachine = 'digitakt' | 'digitakt-ii' | 'digitone' | 'analog-rytm-mkii'
 
 // Digitakt/Digitone mk1 downloads retain their owner-approved parity gate; Analog Rytm MKII (OS 1.74) downloads are owner-approved too.
-// Digitakt II (OS 1.17) is a research preview: its builder is wired for local checks, but downloads remain disabled pending qualification/review.
+// Digitakt II (OS 1.17) builds locally with its library modules, but downloads remain disabled pending qualification/review.
 export const DIGI_DOWNLOADS_ENABLED: Readonly<Record<BuilderMachine, boolean>> = {
   digitakt: true,
   'digitakt-ii': false,
@@ -22,5 +22,5 @@ export function digiDownloadsEnabled(machine: string): boolean {
 
 // Research machines whose page offers a local core build before any module is published. Build outcomes count
 // by machine; download availability remains governed independently above.
-export const CORE_BUILD_PREVIEWS: readonly BuilderMachine[] = ['digitakt-ii']
+export const CORE_BUILD_PREVIEWS: readonly BuilderMachine[] = []
 export function isCoreBuildPreview(machine: string): boolean { return (CORE_BUILD_PREVIEWS as readonly string[]).includes(machine) }
