@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 3,
+  "id": "chord-arp",
+  "name": "Chord Arp",
+  "version": "0.1.0-experimental",
+  "machine": "digitakt-ii",
+  "category": "midi-usb",
+  "exclusive": false,
+  "author": {
+    "github": "Claptom-music",
+    "credits": [
+      "Claptom-music"
+    ]
+  },
+  "maintainers": [
+    "Claptom-music"
+  ],
+  "presentation": {
+    "label": "CHORD ARP",
+    "family": "Sequencer note generator",
+    "summary": "Turn a Digitakt II audio trig into a chord played one note at a time.",
+    "overview": "Start with a single note trig and choose a chord shape and note order. The trig's NOTE value can set the root, or you can choose a fixed pitch. Shape the phrase with octave limits, rhythm and groove, then use SPAN or LATCH to play through empty steps.",
+    "highlights": [
+      "Chord extensions from the 7th to the 13th",
+      "Thirteen note orders and independent octave limits",
+      "Per-trig chord, root and rhythm locks"
+    ],
+    "usage": [
+      "Place a C5 note trig on step 1 of an audio track. Open SETTINGS, then CHORD ARP.",
+      "On Chord, choose MAJ and leave ROOT on TRIG. On Arp, choose UP and 1/16, then turn ARP on.",
+      "On Groove, turn SPAN on and press PLAY to hear C, E and G across the empty steps."
+    ]
+  },
+  "access": {
+    "location": "SETTINGS > CHORD ARP",
+    "steps": [
+      "Choose CHORD ARP in SETTINGS to open the preview.",
+      "Use LEFT and RIGHT to switch pages. Press NO to return."
+    ],
+    "screenshots": []
+  },
+  "controls": [],
+  "compatibility": {
+    "releases": [
+      "1.17"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": []
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "1.1",
+    "build": "build.json",
+    "events": [
+      "ev_draw",
+      "ev_settings",
+      "ev_tick",
+      "ev_key",
+      "ev_enc",
+      "ev_seq_audio_phrase"
+    ],
+    "claims": [
+      "screen:CHORD-ARP",
+      "key:LEFT@CHORD-ARP",
+      "key:RIGHT@CHORD-ARP",
+      "key:NO@CHORD-ARP"
+    ]
+  },
+  "resources": {
+    "memoryBytes": null,
+    "fastBytes": null,
+    "load": {
+      "display": "Not measured yet",
+      "method": "unmeasured",
+      "conditions": "Measure with every track playing, parameters modulated and the mod at its heaviest setting."
+    }
+  },
+  "evidence": {
+    "tier": "none",
+    "moduleVersion": "0.1.0-experimental",
+    "sourceSha256": null,
+    "reports": [],
+    "hardware": null,
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "See TESTING.md for hardware results and emulator checks."
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by the author. Replace if you choose another GPL-compatible licence."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "Chord Arp thumbnail",
+      "alt": "Placeholder thumbnail for Chord Arp",
+      "credit": "Claptom-music",
+      "license": "GPL-3.0-or-later",
+      "source": "Original placeholder from the Modwerk SDK template; replace with your own artwork."
+    }
+  ]
+}
