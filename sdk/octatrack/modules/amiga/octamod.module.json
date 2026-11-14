@@ -175,7 +175,7 @@
       "tutorial": {
         "title": "Quick tutorial",
         "steps": [
-          "Put a drum loop on an Amiga track and play it. At the defaults it is the loop at 8 bits.",
+          "Put a drum loop on an Amiga track and play it. At the defaults it is the loop at 8 bits, in time with the project: STR is on SYNC. If it runs at double or half length, set its ORIGINAL TEMPO in the audio editor (ATTR).",
           "Turn PTCH up a few semitones: the loop keeps its length and starts to flutter. Turn GRN for the size of the flutter.",
           "Turn SPD down to 32 for half speed at the same pitch, or all the way to 0 to hold the sound where it is.",
           "Turn RATE below 0: the loop runs backwards, still stretched.",
