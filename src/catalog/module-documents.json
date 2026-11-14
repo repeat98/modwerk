@@ -12408,7 +12408,7 @@
       "id": "amiga",
       "key": "AMIGA",
       "name": "Amiga",
-      "version": "0.2.0-experimental",
+      "version": "0.2.1-experimental",
       "category": "machines",
       "access": {
         "location": "The track's machine list (double-tap TRACK, or SRC SETUP)",
