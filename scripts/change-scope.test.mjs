@@ -25,7 +25,7 @@ describe('documentation and firmware scheduling', () => {
   it.each(['scripts/prepare-runtime-spans.py', 'scripts/runtime_private_paths.py', 'sdk/tests/test_runtime_spans.py'])('runs native Windows privacy checks for %s without firmware compilation', path => {
     expect(scope(change(path))).toMatchObject({ documentation: false, windows: true, modules: false, elemod: false })
   })
-  it.each(['octatrack', 'digitakt', 'digitone', 'analog-rytm-mkii'])('skips firmware and app checks for %s prose, screenshots and evidence', machine => {
+  it.each(['octatrack', 'digitakt', 'digitakt-ii', 'digitone', 'analog-rytm-mkii'])('skips firmware and app checks for %s prose, screenshots and evidence', machine => {
     const actual = scope(...['README.md', 'media/control.png', 'media/capture.json', 'presentation/thumbnail.svg', 'evidence/report.json'].map(path => change(`sdk/${machine}/modules/demo/${path}`)))
     expect(actual).toEqual({ documentation: true, modules: false, elemod: false, windows: false, worker: false, logger: false })
   })
@@ -59,8 +59,8 @@ describe('documentation and firmware scheduling', () => {
     expect(actual.modules).toBe(false)
     expect(actual.documentation).toBe(false)
   })
-  it.each(['src/demo.s', 'build.json', 'include/demo.inc'])('compiles Analog Rytm MKII firmware input %s', path => {
-    const actual = scope(change('sdk/analog-rytm-mkii/modules/demo/' + path))
+  it.each(['analog-rytm-mkii', 'digitakt-ii'].flatMap(machine => ['src/demo.s', 'build.json', 'include/demo.inc'].map(path => [machine, path])))('compiles %s firmware input %s', (machine, path) => {
+    const actual = scope(change(`sdk/${machine}/modules/demo/` + path))
     expect(actual.elemod).toBe(true)
     expect(actual.modules).toBe(false)
     expect(actual.documentation).toBe(false)
