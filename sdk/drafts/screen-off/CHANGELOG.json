@@ -1,0 +1,11 @@
+[
+  {
+    "version": "0.1.0-experimental",
+    "date": "2026-11-06",
+    "changes": [
+      "Hold UP and tap NO to blank the screen. The same chord brings it back.",
+      "Other keys and knobs keep working while the screen stays black.",
+      "Known issue: reported on a MKII that the chord blanks the screen and brings it back. An MKI, the stock saver, and a power cycle are not tried."
+    ]
+  }
+]

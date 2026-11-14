@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "module": "screen-off",
+  "version": "0.1.0-experimental",
+  "kind": "coldfire",
+  "trigger": "key",
+  "cycles": {
+    "unit": "cycles/event",
+    "static": null,
+    "measured": null,
+    "budget": 26600000,
+    "method": "Not measured. The chord and the frame clear have not been counted in ot_emu or timed on a unit."
+  },
+  "stress": {
+    "events": null,
+    "playing": null,
+    "hangs": null,
+    "method": "Not run. The chord has not been repeated on a playing unit, or under ot_emu, with a STOP and a Part change between presses."
+  }
+}
