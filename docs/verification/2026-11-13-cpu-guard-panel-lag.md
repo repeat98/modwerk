@@ -83,6 +83,10 @@ four FLEX tracks playing one loop at 126 BPM, each set a timed trial:
   Without the price the pick would have passed (77 is under the line). FLEX on T8 then went through.
 - The working Part read equal to before after each pick was put back, and the pattern at the end.
 
+The base as released (`10ec7118…`, not a development build) was then started from RAM on the same unit: it came up,
+and Mini Verb, Sidechain and Analog BD (the last two bound to this base) each ran as a six-second trial and rolled back.
+No pick was made on it: a released base takes no remote keys.
+
 ## Not shown
 
 - Nobody judged the panel by hand at these loads; the owner said it felt sluggish moving parameters once, at a moment
