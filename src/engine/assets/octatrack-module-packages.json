@@ -494,6 +494,21 @@
       "sha256": "6650ef77a837a61a570a300c3bd0b2d4dfd4c9bed6e52bb355034d39bf5ff90d"
     },
     {
+      "id": "temp-save",
+      "octabam": true,
+      "version": "0.1.1-experimental",
+      "path": "octatrack-modules/temp-save/0.1.1-experimental.mwrm",
+      "abi": 7,
+      "features": 1,
+      "sites": 2,
+      "copies": 0,
+      "fills": 0,
+      "name": "Temp Save",
+      "module": "84a2f52f",
+      "bytes": 1088,
+      "sha256": "a389aa93c6408ba99f4049247934dc371c2fcad6cee72e039876a8d3df451ea9"
+    },
+    {
       "id": "slow-lfo",
       "octabam": true,
       "version": "0.1.0-experimental",
@@ -618,12 +633,12 @@
       "sites": 0,
       "copies": 0,
       "fills": 0,
-      "version": "0.2.0-experimental",
+      "version": "0.2.1-experimental",
       "name": "Amiga",
       "module": "d0711972",
       "bytes": 12540,
-      "sha256": "6bb8e598b76e359bda78fb420abaa96926ff8e8f3265b78932ef4599755c9b67",
-      "path": "octatrack-modules/amiga/0.2.0-experimental.mwrm",
+      "sha256": "b19184db0dbd37ce0411c27fa0bff132d087da70b0f78971324f485c520f3473",
+      "path": "octatrack-modules/amiga/0.2.1-experimental.mwrm",
       "usbOnly": true
     }
   ]
