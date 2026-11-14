@@ -3,7 +3,7 @@
   "id": "repitch",
   "key": "REPITCH",
   "name": "Repitch",
-  "version": "0.2.0-experimental",
+  "version": "0.2.1-experimental",
   "category": "playback",
   "author": {
     "github": "repeat98",
