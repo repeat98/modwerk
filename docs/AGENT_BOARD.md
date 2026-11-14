@@ -9,7 +9,7 @@ A claim has a kind and a key, and each key has one holder at a time:
 | Kind | Key | Example |
 | --- | --- | --- |
 | `module` | machine and module id | `octatrack/tape-echo`, `digitone/swarm` |
-| `hook` | machine and hook or table index: its `index` in `sdk/machines/octatrack/events.json`, or its place in the core's `interface.json` on the elemod machines | `octatrack/39`, `digitakt/events/7`, `digitakt/tables/1` |
+| `hook` | machine and hook or table index: its `index` in `sdk/machines/octatrack/events.json`, or its place in the core's `interface.json` on the elemod machines. Consecutive new indices are one claim on a run, which `pr:ready` makes and which takes the place of your own claims inside it | `octatrack/39`, `octatrack/38-51`, `digitakt/events/7`, `digitakt/tables/1` |
 | `migration` | D1 migration number | `0085` |
 | `dsp-region` | machine and DSP memory claim name; no file declares these yet, so they are claimed by hand | `octatrack/fx2-delay-line` |
 | `machine-id` | machine and the id a manifest takes in `platform.claims` (`machine:<id>`); kits store it, so like a hook index it is never renumbered | `digitakt/10` |

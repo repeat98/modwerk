@@ -19,7 +19,7 @@
 //   npm run board -- inbox                       # questions waiting for you, replies to what you wrote
 //   npm run board -- activity                    # how many developers use the board
 //
-// Kinds: module (machine/id), hook (octatrack/39, digitakt/events/7), migration (0085), dsp-region (machine/name),
+// Kinds: module (machine/id), hook (octatrack/39, digitakt/events/7, a run octatrack/38-51), migration (0085), dsp-region (machine/name),
 // machine-id (digitakt/10: a manifest's machine:<id>, which kits store).
 // Topics: the kinds, machine (octatrack) for what holds across a whole machine, and site (forum, worker, configurator)
 // for an area of the site and Worker.
@@ -193,7 +193,24 @@ export function neededClaims({ root, base, head = 'HEAD' }) {
     const before = read(mergeBase), after = read(head)
     for (const list of ['events', 'tables']) for (let index = (before[list] ?? []).length; index < (after[list] ?? []).length; index++) add('hook', match[1] + '/' + list + '/' + index, 'new ' + list.slice(0, -1) + ' in ' + path)
   }
-  return [...needed.values()]
+  return hookRuns([...needed.values()])
+}
+
+const hookSpan = key => { const [, list, first, last] = /^(.+)\/(\d+)(?:-(\d+))?$/.exec(key); return { list, first: Number(first), last: Number(last ?? first) } }
+const overlaps = (a, b) => { const x = hookSpan(a), y = hookSpan(b); return x.list === y.list && x.first <= y.last && y.first <= x.last }
+/** Consecutive new hook indices of one list become one claim (octatrack/38-51): a base change may add more hooks than
+ * one person may hold claims. */
+function hookRuns(items) {
+  const lists = new Map(), out = items.filter(item => item.kind !== 'hook')
+  for (const item of items.filter(item => item.kind === 'hook')) { const { list, first } = hookSpan(item.key); lists.set(list, [...(lists.get(list) ?? []), [first, item]]) }
+  for (const [list, found] of lists) {
+    found.sort((a, b) => a[0] - b[0])
+    for (let i = 0, j = 0; i < found.length; i = ++j) {
+      while (j + 1 < found.length && found[j + 1][0] === found[j][0] + 1) j++
+      out.push(i === j ? found[i][1] : { ...found[i][1], key: list + '/' + found[i][0] + '-' + found[j][0] })
+    }
+  }
+  return out
 }
 
 /** Compare what a branch needs with the board. Without a login it can name holders but not tell whether they are you. */
@@ -202,11 +219,14 @@ export async function compareClaims(needed, login, options = {}) {
   const claims = await listClaims({}, options), byKey = new Map(claims.map(item => [item.kind + ' ' + item.key, item]))
   const result = { mine: [], others: [], free: [], unknown: [] }
   for (const item of needed) {
-    const holder = byKey.get(item.kind + ' ' + item.key)
-    if (!holder) result.free.push(item)
-    else if (!login) result.unknown.push({ ...item, claim: holder })
-    else if (holder.holder === login.toLowerCase()) result.mine.push({ ...item, claim: holder })
-    else result.others.push({ ...item, claim: holder })
+    // Hook claims overlap by index; the holder's own inside a run give way to it when the run is claimed.
+    const near = item.kind === 'hook' ? claims.filter(claim => claim.kind === 'hook' && overlaps(claim.key, item.key)) : [byKey.get(item.kind + ' ' + item.key)].filter(Boolean)
+    const theirs = login && near.find(claim => claim.holder !== login.toLowerCase()), exact = near.find(claim => claim.key === item.key)
+    if (!near.length) result.free.push(item)
+    else if (!login) result.unknown.push({ ...item, claim: near[0] })
+    else if (theirs) result.others.push({ ...item, claim: theirs })
+    else if (exact) result.mine.push({ ...item, claim: exact })
+    else result.free.push(item)
   }
   return result
 }
