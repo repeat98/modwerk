@@ -141,7 +141,12 @@ def index(name, registry=None):
 
 def raised(registry=None):
     """The events modules raise themselves: {event name: the base's entry symbol}."""
-    return {e['event']: 'modwerk_raise_' + e['event'] for e in (registry or load())['events'] if e['kind'] == 'call' and e['site'] is None}
+    return {e['event']: 'modwerk_raise_' + e['event'] for e in (registry or load())['events'] if by_modules(e)}
+
+
+def by_modules(e):
+    """A raised hook a module may raise: not one the base raises itself (after a stock routine returns, or on its own)."""
+    return e['kind'] == 'call' and e['site'] is None and not e.get('after') and not e.get('raisedByBase')
 
 
 def base_sites(registry=None):
@@ -283,7 +288,7 @@ def asm(reg):
 
 def loader(reg):
     spans = ', '.join('{%#010xu, %du}' % (e['site'] or 0, e['length']) for e in reg['events'])  # raised and tables: no span
-    raised = [e for e in reg['events'] if e['kind'] == 'call' and e['site'] is None]
+    raised = [e for e in reg['events'] if by_modules(e)]
     raises = ', '.join('(uintptr_t)modwerk_raise_%s' % e['event'] if e in raised else '0' for e in reg['events'])
     names = ', '.join('%d %s' % (e['index'], e['event']) for e in reg['events'])
     rows, calls, words = [], 0, 0  # one flat row store: a call event a word per module, others their room
@@ -347,7 +352,7 @@ def sdk(reg):
             e['event'], where, e['when'], e['context'][0].upper() + e['context'][1:], e['contract'], e['event'].upper(), e['index']))
         if e['kind'] == 'call':
             out.append('typedef %s;\n' % re.sub(r'^(\w+(?: \*)?)\s*f\(', r'\1 modwerk_%s(' % e['event'], e['prototype']))
-        if e['kind'] == 'call' and e['site'] is None and not e.get('after') and not e.get('raisedByBase'):  # runtime.json "raise": the loader points this zero word of the image at the base's entry
+        if by_modules(e):  # runtime.json "raise": the loader points this zero word of the image at the base's entry
             out.append('/* Raise it: define `modwerk_%s *raise_%s` as a zero word in your image (initialized data, '
                        'not bss), list "%s" under "raise" in runtime.json and call through it; every handler\'s answer, OR\'d. */\n'
                        % (e['event'], e['event'], e['event']))
