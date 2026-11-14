@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-11-14",
+  "reporter": "npp1993",
+  "status": "emulator",
+  "scope": "filter-hz 1.3.0: DELAY HPF/LPF and REVERB FRQ/HPF/LPF show their frequency, with the 33-pixel lock box.",
+  "finding": "Read in OS 1.74's delay (0x4010da24) and reverb (0x4010d434), 48 kHz: HPF and LPF are one-pole filters whose coefficients come from one Q31 table (0x4028ab18), the high-pass's at HPF >> 6 and the low-pass's at (HPF + LPF) >> 6; REVERB FRQ selects a first-order high shelf's coefficient (0x4028a318, whole values), GAI its treble level. Addresses only; no table is copied.",
+  "change": "filter_hz_gate sends ids 76..87 to filter_hz_fx_text (src/fx-hz.c), which reads the coefficient the DSP uses from the running OS and works out the -3 dB frequency (HPF, LPF) or the shelf's corner (FRQ) with a 32-bit CORDIC atan2. LPF reads HPF through stock's page value getter (0x400398a4) on the FX page view, so a held trig's HPF lock counts; no -3 dB point below Nyquist reads OPEN. filter_hz_box gives ids 76, 77, 84, 86 and 87 the 33-pixel box.",
+  "emulator": {
+    "name": "rytm-emu",
+    "revision": "2ac0f1f",
+    "binary": "dtboot"
+  },
+  "builds": [
+    {
+      "label": "FH04",
+      "content": "Modwerk base package 1c14b6b0 + Filter Hz 1.2.1 on stock OS 1.74",
+      "syxSha256": "5b5fd85c69da89d5cae18596644be721b9c11b6a70626ff905c6902a1bf11146"
+    },
+    {
+      "label": "FX02",
+      "content": "the same with Filter Hz 1.3.0",
+      "syxSha256": "a755575b6a638826505b049ac5a1199fe5163f5bc3aaefef5ff8e7bdf346c8d7"
+    },
+    {
+      "label": "FZ79",
+      "content": "core-ar2 0.3 + Filter Hz 1.3.0 (documentation captures)",
+      "syxSha256": "96cec08b68dfeedec7ef8ea31b6fe888eebd115d94e5d18c69e6928bb1a321bf"
+    }
+  ],
+  "method": "Cold boot, NO four times, FX, then SRC (DELAY) or SMPL (REVERB), snapshot. Each knob set by its CC on channel 13 (LPF with its HPF at 0 by CC first), then either one nudge of the knob (the value shows while it turns) or GRID RECORDING, trig 1 held and one nudge, which locks the value. Every value 0..127 of DELAY HPF and LPF and REVERB FRQ, HPF and LPF, unlocked and locked, on FH04 and FX01: 2,560 frames. The value text was read back from the frames by glyph and compared with the expected text worked out offline from the same equations.",
+  "results": [
+    "FX02: all 1,280 frames show the expected text (5.00Hz..12.0kHz for HPF, LPF with HPF 0 from 5.00Hz to OPEN from 113 up, FRQ 974Hz..14.0kHz).",
+    "FX02 locked: the box is 33 pixels (x-16..x+16) for every value and knob, with at least one pixel of box either side of the text and no text pixel outside it. Adjacent HPF and LPF boxes meet at one column, which shows as a dark one-pixel divider.",
+    "FH04 (1.2.1): all 1,280 frames show stock's numbers in stock's 27-pixel boxes.",
+    "Lock-aware LPF: track HPF 0, trig 1 held, HPF locked at 39 (79.0Hz) and LPF locked at 40: LPF reads 1.34kHz, the corner for HPF 39 + LPF 40, not 84.8Hz (HPF 0).",
+    "LPF redraws when HPF moves: trig 1 held, LPF locked at 40 first (84.8Hz with HPF 0), then HPF locked up to 39: LPF's box reads 1.34kHz on the next frame.",
+    "FILTER page: the 1.2.1 capture plans on FZ79 give media/filter-page.png, frq-440hz.png, frq-open.png and frq-locked.png byte for byte."
+  ],
+  "limitations": [
+    "Emulator only: not hardware evidence.",
+    "The frequencies follow from the filter equations read in the code; no audio was measured.",
+    "PERF and SCENE screens, and the stock value text outside the FX pages, were not looked at."
+  ]
+}

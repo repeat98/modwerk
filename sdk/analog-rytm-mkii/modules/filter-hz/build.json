@@ -1,7 +1,8 @@
 {
   "schemaVersion": 1,
   "sources": [
-    "src/filter-hz.s"
+    "src/filter-hz.s",
+    "src/fx-hz.c"
   ],
   "defsym": {},
   "cflags": [],
@@ -13,7 +14,9 @@
   "regions": [],
   "claims": [
     "ui:FILTER page FRQ value text",
-    "ui:FILTER page FRQ lock box"
+    "ui:FILTER page FRQ lock box",
+    "ui:FX track DELAY HPF and LPF value text and lock box",
+    "ui:FX track REVERB FRQ, HPF and LPF value text and lock box"
   ],
   "requires": [],
   "derive": null,

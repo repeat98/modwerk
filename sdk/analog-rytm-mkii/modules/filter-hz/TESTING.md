@@ -1,5 +1,38 @@
 # Filter Hz — test report
 
+## 1.3.0 (the FX track's DELAY and REVERB frequencies)
+
+Read in stock OS 1.74's delay (`0x4010da24`) and reverb (`0x4010d434`), which run at 48 kHz in
+32-frame blocks: HPF and LPF are one-pole filters with coefficients from one Q31 table
+(`0x4028ab18`), the high-pass's at HPF >> 6 and the low-pass's at (HPF + LPF) >> 6; REVERB FRQ
+picks a first-order high shelf's coefficient (`0x4028a318`, whole values) and GAI its treble
+level. `src/fx-hz.c` reads the coefficient the DSP uses and works out the −3 dB frequency (HPF,
+LPF) or the shelf's corner (FRQ) with a 32-bit CORDIC; no table is copied. The 48 kHz rate is
+the audio interrupt's 1,500 blocks a second of 32 frames (rytm-emu) and the Overbridge clock
+measured on hardware, 48000.4 Hz (rytm-emu's OVERBRIDGE.md).
+
+- Independent code review (asm gate, fixed-point bounds, table indexes, view walk, no libgcc
+  calls): no defects; one comment corrected.
+- Host check: `fx-hz.c` compiled on the host against the two tables gives the same text as a
+  floating-point reference of the same equations at every index 0..1016 (HPF, LPF) and every FRQ
+  value 0..127.
+- Emulator, rytm-emu 2ac0f1f, FH04 (Modwerk base 1c14b6b0 + 1.2.1, `5b5fd85c…1146`) against FX02
+  (the same with 1.3.0, `a755575b…c8d7`): DELAY HPF and LPF and REVERB FRQ, HPF and LPF set by CC on
+  channel 13 (LPF with its HPF at 0), each value 0 to 127, turned (one nudge) and locked (GRID
+  RECORDING, trig 1 held, one nudge): 2,560 frames. The text read back from every 1.3.0 frame is
+  the expected one (HPF 5.00Hz..12.0kHz, LPF 5.00Hz..OPEN from 113, FRQ 974Hz..14.0kHz); every
+  locked value is in a 33-pixel box (x−16..x+16) with at least a pixel of box either side and
+  nothing outside it. 1.2.1's frames show stock's numbers in stock's 27-pixel boxes. Locked HPF
+  and LPF boxes meet at one column, which shows as a one-pixel divider ([report](evidence/emulator-1.3.0.json)).
+- LPF follows a lock: track HPF 0, trig 1 held, HPF locked at 39 (79.0Hz) and LPF at 40: LPF reads
+  1.34kHz, the corner for 39 + 40, not 84.8Hz (`media/delay-locked.png`). Locked the other way round
+  (LPF first, then HPF moved), LPF's box follows HPF on the next frame.
+- FILTER page: 1.2.1's four capture plans on FZ79 (core-ar2 0.3 + 1.3.0, `96cec08b…21bf`) give
+  `filter-page.png`, `frq-440hz.png`, `frq-open.png` and `frq-locked.png` byte for byte.
+- Memory: 1,673 bytes (`.run`; 302 in 1.2.1).
+- Not tested: PERF and SCENE screens showing FX values, stock flows beyond the FX and FILTER
+  pages, audio (the frequencies are from the equations, not measured), hardware.
+
 ## 1.2.1 (a wider lock box for FRQ)
 
 Stock OS 1.74 draws the inverted box behind a locked value itself: its knob value routine

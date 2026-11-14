@@ -14,10 +14,15 @@
         | Modwerk 1.2.1 adds filter_hz_box: stock inverts a fixed 27-pixel box
         | behind a locked value, and a kHz value is up to 31 pixels wide, so for
         | FRQ the box is 33 pixels, the same for every value.
+        |
+        | Modwerk 1.3.0 sends the FX track's DELAY HPF/LPF and REVERB FRQ/HPF/LPF
+        | (ids 76..87) to filter_hz_fx_text (fx-hz.c) and gives them the same box.
 
         .include "../include/ar2-1.74.inc"
 
         .equ    PARAM_ID_FRQ,   47
+        .equ    PARAM_ID_FX_LO, 76                | DELAY HPF; fx-hz.c picks its ids
+        .equ    PARAM_ID_FX_HI, 87                | REVERB LPF
 
         | Stock's knob value routine (0x40037a56), where it pushes the lock box's
         | rectangle for a value in the label row: x-13..x+13, y-14..y-8.
@@ -44,7 +49,20 @@ filter_hz_gate:
         moveq   #PARAM_ID_FRQ,%d0
         cmp.l   %d4,%d0
         beq.s   1f
-        lea     %a2@(20),%a0                      | displaced
+        moveq   #PARAM_ID_FX_LO,%d0               | 1.3.0: the FX filters
+        cmp.l   %d0,%d4
+        blt.s   0f
+        moveq   #PARAM_ID_FX_HI,%d0
+        cmp.l   %d0,%d4
+        bgt.s   0f
+        move.l  %d3,-(%sp)                        | buf
+        move.l  %d2,-(%sp)                        | value, 8.8
+        move.l  %d4,-(%sp)                        | id
+        jsr     filter_hz_fx_text                 | keeps d2-d7/a2-a6
+        lea     12(%sp),%sp
+        tst.l   %d0
+        bne.w   7f                                | written
+0:      lea     %a2@(20),%a0                      | displaced
         move.l  %d3,%sp@(32)                      | displaced
         jmp     param_value_text_invoke_resume
 
@@ -103,7 +121,7 @@ filter_hz_gate:
 6:      move.b  #'H',(%a1)+
         move.b  #'z',(%a1)+
         clr.b   (%a1)
-        movem.l (%sp),%d2-%d4/%a2-%a3             | param_value_text's epilogue
+7:      movem.l (%sp),%d2-%d4/%a2-%a3             | param_value_text's epilogue
         lea     20(%sp),%sp
         rts
 
@@ -144,16 +162,24 @@ ranges:
         | Stock's box is x-13..x+13, 27 pixels. FRQ text is up to 31 pixels wide
         | ("2.22kHz"), centred on x, so for FRQ the box is always x-16..x+16,
         | 33 pixels: one pixel either side of the widest value, the same size
-        | for every value. Every other parameter gets stock's box.
+        | for every value. 1.3.0: the same for the FX filters (76, 77, 84, 86,
+        | 87), whose texts are as wide at most ("12.0kHz", "14.0kHz"). Every
+        | other parameter gets stock's box.
         | ------------------------------------------------------------------
         .globl  filter_hz_box
         .align  2
 filter_hz_box:
-        moveq   #13,%d1                           | stock's half width
-        movea.l KNOB_PARAM_ARG(%sp),%a1
-        cmpa.l  #PARAM_ID_FRQ,%a1
-        bne.s   1f
-        moveq   #16,%d1                           | FRQ's half width
+        move.l  KNOB_PARAM_ARG(%sp),%d0
+        cmp.l   #255,%d0                          | ids above a byte: stock's box
+        bhi.s   3f
+        lea     wide_ids,%a1
+2:      move.b  (%a1)+,%d1                        | the ids with Hz text, 0 ends
+        beq.s   3f
+        cmp.b   %d1,%d0
+        bne.s   2b
+        moveq   #16,%d1                           | their half width
+        bra.s   1f
+3:      moveq   #13,%d1                           | stock's half width
 1:      move.l  %a2,%d0
         add.l   %d1,%d0                           | right: x + half
         neg.l   %d1
@@ -164,3 +190,8 @@ filter_hz_box:
         pea     -14(%a3)                          | top
         move.l  %d1,-(%sp)                        | left
         jmp     knob_box_resume
+
+        | The ids whose locked value gets the 33-pixel box.
+wide_ids:
+        .byte   PARAM_ID_FRQ, 76, 77, 84, 86, 87, 0
+        .balign 2
