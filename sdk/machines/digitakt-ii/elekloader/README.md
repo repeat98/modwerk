@@ -49,4 +49,7 @@ swung Chord Arp fixture reached the scheduler commit routine 16 times.
   On the same image, Claptom-music reported that **SAVE KIT → LOAD KIT** failed to restore Euclidean
   Scale settings. After loading the saved kit, SCF was off and both bounds showed AUTO.
   The failure has not yet been isolated to kit export, import or the copy into the active pattern.
+  Digikit replayed the standalone kit save and load on the same image using an initialized +Drive
+  fixture. The trace reached the kit serializer, loader and copy hook. After clearing the live
+  settings, loading the saved slot restored SCF, both bounds and the reroll generation in the emulator.
   The phrase scheduler hardware check remains pending.
