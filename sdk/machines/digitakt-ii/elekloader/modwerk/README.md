@@ -4,7 +4,7 @@
 
 `ev_seq_grid` observes the audio constructor before stock tests for a trig. It uses the existing playback detour and returns immediately when the collection is empty. The callback receives the originating pattern, track and step plus four adjacent deadlines in stock musical time. The base derives these from the stock tick, lookahead, speed table and per-step swing flags. The callback is read-only.
 
-The prototype covers ordinary audio tracks during playback. On initial PLAY, the existing queue bridge publishes step zero when stock created an audio source event. It skips mapped and Euclidean tracks, non-pattern sources, and pending pattern switches. The four read-only callbacks run in subscription order in the sequencer context. The collection uses an Elekloader symbol.
+The prototype covers ordinary audio tracks during playback. On initial PLAY, the existing queue bridge publishes step zero when stock created an audio source event. It skips mapped and Euclidean tracks and non-pattern sources. The stock constructor chooses which pattern supplies a step during a pattern switch. The four read-only callbacks run in subscription order in the sequencer context. The collection uses an Elekloader symbol.
 
 Digikit `d6de4d0` reported 50 windows at swung 2× and 26 at straight 1×, including the PLAY source and rests. All 40 captured playback notes matched their grid onset. The empty, observer and renderer builds preserved the stock relative queue deadlines in the swung 2× fixture. The renderer used the Chord Arp engine at 1/32 and generated 174 checked note requests. It submitted no events. The renderer image SHA-256 was `570640af06a9fa642badb5c7515bb911df98da467720e25a326d6f0fe1010190`.
 
@@ -20,7 +20,7 @@ uint32_t phrase(const struct dt2_seq_grid_window *window, uint32_t pitch,
 
 The base calls up to four phrase subscribers in subscription order. Zero passes the source through to the next subscriber. A return of `DT2_SEQ_PHRASE_REST` consumes the source trig. A valid count from one to eight requests replacement with bounded note-on and release pairs. The first valid request owns the source. Invalid requests pass through and an allocation refusal preserves stock. The base reserves queue space and event records before committing. The module never sees a stock queue pointer or takes ownership of an event record.
 
-Ordinary trigs use the stock pitch and velocity fields, including explicit per-trig values. Initial PLAY can replace a source whose startup payload is empty. The base allocates its own payload for those generated notes. Pending switches, microtimed trigs, MIDI, and playback through source rests fall back to stock. The empty collection takes the stock submission path.
+Ordinary trigs use the stock pitch and velocity fields, including explicit per-trig values. Initial PLAY can replace a source whose startup payload is empty. The base allocates its own payload for those generated notes. Microtimed trigs, MIDI, and playback through source rests fall back to stock. The empty collection takes the stock submission path.
 
 Digikit fixtures exercised PLAY and subsequent loops, two concurrent tracks, 2× swing, stock tempo nudging, STOP, mute and pattern changes. At simultaneous pressure on all 16 tracks, six received complete eight-hit phrases at each tested window and ten retained their stock trigs. Hardware qualification of this proposal remains open.
 
@@ -65,6 +65,12 @@ The pinned base repeated the stock comparisons above in digikit `d6de4d0`: all 5
 Two guarded OS 1.17 sites cover loading a saved project and initializing a new project. Both check that stock is operating on the active project and replay the displaced stock operations. The generation lives in RAM and adds no data to the project format.
 
 The project-replacement entry points also clear each contributed kit-data block and notify its `changed(kit, 0)` callback. A saved load fills the blocks from its kit records. A new project starts with empty blocks even if it is saved before the UI ticks. `core_project_kitdata_generation` exposes the same generation on bases that provide this guarantee.
+
+## Phrase continuation and project archives
+
+Phrase subscribers can OR `DT2_SEQ_PHRASE_CARRY` into a note count to opt into callbacks on later empty steps. Those callbacks carry `DT2_SEQ_GRID_EMPTY` and use the source trig's pitch and velocity. An empty-step callback may return a plain count or OR in CARRY again. A zero return ends continuation. The base discards the retained event when the pattern or transport generation changes. It uses the actual stock deadline for supported microtimed trigs and bounds each phrase before the next step, including an early next trig.
+
+`core_project_archive` accepts pointers to `dt2_project_archive_t` descriptors. Each descriptor provides a unique tag, a fixed four-byte-aligned block size, and save and load callbacks. The base stores the archive across the last 48 bytes of serialized kit records, outside the existing kit-data area. It skips blocks that do not fit, counts each skipped block as a conflict, checks the destination before writing, and validates the checksum before loading. Load callbacks receive a null pointer for a new project or when their block is absent. The archive follows the full active-project save and load paths. Claptom-music reported that official OS 1.17 reopened a project saved on Z117 on their Digitakt II and played both test patterns with their original samples and trigs.
 
 Two isolated pinned builds produced base SHA-256 `c4992eba731456afa6254e28a3f51e681e98ce97bae2a6d919e0053cf4f49583`. The base retains the previous 18 sites and exports and links with both Perform modules separately and together. In digikit, Euclidean Scale restored its kit data on saved-project reload and cleared it on Create New. The combined image reached ColdFire and SHARC ready with zero missing blocks and no halt.
 
