@@ -196,24 +196,24 @@
       "path": "media/amiga-machine-list.png",
       "captureType": "hardware",
       "caption": "Double-tap a track key, or open SRC SETUP, to reach the machine list. Move down to AMIGA and press YES to put the machine on the track.",
-      "alt": "Octatrack SRC SETUP page: the machine list reads FLEX, THRU, NEIGHBOR, PICKUP and AMIGA with FLEX marked and the cursor on AMIGA; beside it LOOP, SLIC, LED, SRR, STR and BITS.",
+      "alt": "Octatrack machine list, SELECT MACHINE TYPE: STATIC, FLEX, THRU, NEIGHBOR, PICKUP and AMIGA, with FLEX marked and the cursor on AMIGA.",
       "credit": "repeat98; underlying Octatrack UI by Elektron",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
       "otUi": {
-        "page": "SRC SETUP",
+        "page": "Machine list (SELECT MACHINE TYPE)",
         "shows": "location",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "2d6285369ae25b43c2dd93628eb72c35a9ddf9947d4dd78f12624af677450ca6",
-        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin d8fae687 of the Modwerk base, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 11 November 2026, during a RAM trial of package e9730e24 of this source. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on FLEX, the cursor moved to AMIGA."
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "213b5bfd306f580cdab6aeb12aa0da356e8ffbaa6ab6f82ba2255ea58217ba1d",
+        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 2d97f42d of the Modwerk release base 4e9a87ea, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package 6bb8e598. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on FLEX, the cursor moved to AMIGA."
       }
     },
     {
       "path": "media/amiga-src.png",
       "captureType": "hardware",
       "caption": "Press SRC. PTCH, STRT, LEN and RATE are stock's; knob E is SPD and knob F is GRN. Turn PTCH up and the loop keeps its length; turn SPD down to 32 for half speed at the same pitch.",
-      "alt": "Octatrack SRC page of an Amiga track: knobs PTCH, STRT, LEN, RATE, SPD and GRN, tempo 131.0, and the status line 8 BIT AMIGA.",
+      "alt": "Octatrack SRC page of an Amiga track: knobs PTCH, STRT, LEN, RATE, SPD and GRN, tempo 126.0, and the status line 8 BIT AMIGA.",
       "credit": "repeat98; underlying Octatrack UI by Elektron",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
@@ -221,9 +221,9 @@
         "page": "SRC",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "2d6285369ae25b43c2dd93628eb72c35a9ddf9947d4dd78f12624af677450ca6",
-        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin d8fae687 of the Modwerk base, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 11 November 2026, during a RAM trial of package e9730e24 of this source. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on Amiga with a Flex sample, at the defaults."
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "213b5bfd306f580cdab6aeb12aa0da356e8ffbaa6ab6f82ba2255ea58217ba1d",
+        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 2d97f42d of the Modwerk release base 4e9a87ea, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package 6bb8e598. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on Amiga with a Flex sample, at the defaults."
       }
     },
     {
@@ -238,9 +238,9 @@
         "page": "SRC SETUP",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.1.0-experimental",
-        "imageSha256": "2d6285369ae25b43c2dd93628eb72c35a9ddf9947d4dd78f12624af677450ca6",
-        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin d8fae687 of the Modwerk base, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 11 November 2026, during a RAM trial of package e9730e24 of this source. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on Amiga, at the defaults."
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "213b5bfd306f580cdab6aeb12aa0da356e8ffbaa6ab6f82ba2255ea58217ba1d",
+        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 2d97f42d of the Modwerk release base 4e9a87ea, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package 6bb8e598. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on Amiga with a Flex sample, at the defaults: SRC SETUP."
       }
     }
   ],
