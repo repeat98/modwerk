@@ -56,7 +56,21 @@ Source: branch `module/mute-latch-dt2` of crisp909/modwerk, this folder. Build: 
 - Stopped sequencer: stock behaviour (earlier build, not re-run).
 - Not tested: save/reload of a project (module keeps no saved state), other patterns, Part change, power cycle on a unit.
 
-## Current build: apply on the last step, no LEDs (emulator)
+
+## Switch moment on a unit (reported by the author, crisp909)
+
+Digitakt II, OS 1.17, 128-step pattern (all tracks the same length, per pattern, pattern change off), short kick sample on the muted track, kicks on steps 126 to 128 and 1 to 2, 140 BPM, no swing. Reported by the author, not measured here. Builds from this repository's source compiled with GCC 13 (private test builds, not the pinned toolchain):
+
+| Build (where the switch is made, by the step counter) | What the author heard |
+| --- | --- |
+| Last step (counter at 128) | Steps 127 and 128 already audible. |
+| First step (counter at 1) | Step 128 still audible. |
+| Second step (counter at 2) | Step 1 not audible. |
+| Second tick of the first step (`ml-t2`) | Steps 126 to 128 stay as they were, step 1 plays switched. Checked at several tempos. |
+
+The step counter runs a step ahead of the sound, and the mute is judged shortly after the counter moves on, so the window for a switch between the last and the first step is about one step wide. The submitted source makes the switch on the second tick of the first step, or on the first tick of the second step if the steps are shorter. The pinned-toolchain package built from this source has not been run on a unit yet.
+
+## Earlier build: apply on the last step, no LEDs (emulator; superseded by the section above)
 
 Image sha256 afba203f35a293ffeb47a060d08d9a519bf17a2b02b4ffef66f3affd94c87437 (core 1.0 + this module, no patched stock site). 128-step pattern, TRIG 1 and 3 armed with PERFORM, run stopped at chosen times (the step position is read from the sequencer):
 - Position 126 (0x7e): 0 toggles, 0 applies.

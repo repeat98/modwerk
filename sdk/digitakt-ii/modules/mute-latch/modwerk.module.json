@@ -53,10 +53,10 @@
     "requires": [],
     "conflicts": [],
     "limitations": [
-      "Hardware: the author reports two earlier builds working on a Digitakt II, OS 1.17: the loop build (1 to 4 PERFORM presses, loop icon) and a personal variant with TRIG LEDs. The build submitted here adds the view check and was built in the pinned toolchain; it is not yet tested on a unit. See TESTING.md.",
+      "Hardware: the author reports earlier builds, and the switch timing of the submitted source (built with a different compiler), working on a Digitakt II, OS 1.17. The pinned-toolchain package itself is not yet tested on a unit. See TESTING.md.",
       "Works while the sequencer plays; when it is stopped PREP MUTES keeps its stock behaviour.",
       "With Scale per track the longest track's last step ends the pattern.",
-      "Switches on the first UI tick (about 30 Hz) that sees the last step of the last counted pass, not sample-accurately; the wrap is the fallback.",
+      "Switches on the second UI tick (about 30 Hz) of the first step after the last counted pass, because the step counter runs ahead of the sound; not sample-accurate.",
       "Armed tracks are shown only by the MUTES ARMED header message, not by their TRIG LEDs.",
       "FUNC+PERFORM opens a stock view over PREP MUTES: while PREP MUTES is open, tracks are chosen or something is armed, and the pattern plays, the module takes that key press, so that stock sub-function is not available then."
     ]

@@ -2,18 +2,19 @@
 //
 // PREP MUTES (FUNC held, TRIG keys choose tracks) normally mutes the chosen tracks the moment FUNC is let
 // go. With PERFORM pressed in that session the choice is armed instead (header: MUTES ARMED) and applied at
-// the pattern's first step, so every key can be released in between.
+// the pattern's end, so every key can be released in between.
 //
 // FUNC + PERFORM opens a stock view over PREP MUTES, so the module takes that one key event (core ev_key)
 // while a PREP MUTES session is open, tracks are chosen and the sequencer plays; every other key, and
 // PERFORM anywhere else, goes on to the stock OS untouched. It follows the master track's step position on
-// ev_tick (the UI task, about 30 Hz) and applies the choice on the tick that sees the last step; if that
-// tick is missed, on the tick that sees the wrap. It patches no stock site: it reads a few words of the
+// ev_tick (the UI task, about 30 Hz) and applies the choice on the second tick of the pattern's first step
+// (the step word runs ahead of the sound). It patches no stock site: it reads a few words of the
 // sequencer's state and the top view's object, calls the stock routine that applies a PREP MUTES choice and
 // shows the stock header message. Those stock locations are named once, per release, in build.json.
 
 #include <stdint.h>
 
+#define APPLY_TICK 2          // the tick of the first step on which the switch is made
 #define PERFORM_KEY 7
 #define TRACKS 16
 
@@ -46,6 +47,7 @@ static int seen_last;          // the master track's last step was already count
 static void *view;             // the PREP MUTES view, once seen on top
 static int last_pos = -1;      // the master track's position at the previous tick
 static int was_playing;
+static int span_ticks;         // ticks the master position has stayed on the same step
 static int taken;              // a PERFORM press was taken, so its release is taken too
 static const char note[] = "MUTES ARMED";   // the header message while armed
 
@@ -192,18 +194,21 @@ void mod_tick(void *ctrl)
     // Follow the master track's step position on every tick, armed or not, so a pass is counted once.
     int master = master_track(pat);
     int pos = mlk_seq_pos[master];
-    int on_last = pos == track_len(pat, master) - 1;
-    int wrapped = was_playing && last_pos >= 0 && pos < last_pos;
+    span_ticks = (pos == last_pos) ? span_ticks + 1 : 0;
+    // The step word runs ahead of the sound: a step's mute is judged a moment after the word moves on to
+    // the next one. Measured on a unit, the switch lands between the last step and the first on the second
+    // tick of the first step (or on the first tick of the second step when the steps are short), so the
+    // last step stays muted and the first one plays.
+    int on_last = (pos == 0 && span_ticks >= APPLY_TICK - 1) || pos == 1;
     last_pos = pos;
     was_playing = 1;
 
-    // A pass ends on the tick that sees the last step; the wrap counts it if that tick was missed.
+    // The pass ends when that moment comes round once per pass; seen_last keeps it to once.
     int passed = 0;
     if (on_last) {
         passed = !seen_last;
         seen_last = 1;
-    } else {
-        passed = wrapped && !seen_last;
+    } else if (pos >= 2) {
         seen_last = 0;
     }
 
