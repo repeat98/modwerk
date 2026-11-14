@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-11-14",
+  "source": "Direct author statement in the development conversation",
+  "reporter": "ZOGV",
+  "status": "hardware-tested-author-reported",
+  "model": "Digitone",
+  "release": "1.44",
+  "moduleVersion": "0.2.0-experimental",
+  "builds": [
+    {
+      "name": "Core dn1 2.0a + kitbank 0.2.0-experimental (XX07)",
+      "syxSha256": "30e54a811681c0bcc57f8b1dd026473d346afcaf86e83c4332b6331c4a97eaf0",
+      "statement": "C'est bon, j'ai essayé, ça a marché (\"it's fine, I tried it, it worked\")",
+      "steps": {
+        "flashed the module-alone build and tried it, with a nine-step list covering the switch, bank kits while playing, edits, PTN+YES, project save and power cycle, paste and song mode": "works, reported as one statement"
+      }
+    }
+  ],
+  "limitations": [
+    "The result was reported as one statement, not step by step: which of the nine listed steps were tried is not recorded.",
+    "The duration was not reported.",
+    "The same redirections ran earlier on the author's unit as an always-on build outside Modwerk; that build is not part of this evidence."
+  ]
+}

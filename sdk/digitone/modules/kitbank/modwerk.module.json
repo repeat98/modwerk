@@ -1,0 +1,213 @@
+{
+  "schemaVersion": 3,
+  "id": "kitbank",
+  "name": "kitbank",
+  "version": "0.2.0-experimental",
+  "machine": "digitone",
+  "category": "playback",
+  "exclusive": false,
+  "author": {
+    "github": "ZOGV",
+    "credits": [
+      "ZOGV — kitbank design and code",
+      "irpina — digihealth SETTINGS row pattern, elekloader core"
+    ]
+  },
+  "maintainers": [
+    "ZOGV"
+  ],
+  "presentation": {
+    "label": "KIT PER BANK",
+    "family": "Sequencing",
+    "summary": "One kit per bank, like the Octatrack's parts, with per-pattern locks: the 16 patterns of a bank share one sound, and [PTN]+[YES] gives a pattern its own.",
+    "overview": "With KIT PER BANK ticked in SETTINGS, the 16 patterns of a bank share one kit, the kit of the bank's first pattern: A01 to A16 play A01's kit, B01 to B16 play B01's kit, and so on. Change pattern inside a bank and the sound stays; a sound edit on any pattern of the bank is heard on all of them. Hold PTN and press YES to LOCK the active pattern: it takes a copy of the bank's sound and keeps its own from then on; PTN+YES again shares the bank's kit again. A pasted pattern whose sound differs from its bank's becomes locked with that sound, so a paste never overwrites the bank. The switch and the locks are saved with the project; a project without them, and every existing project, opens with the switch off and plays as on the stock OS.",
+    "highlights": [
+      "Octatrack-style shared kits: change pattern inside a bank, keep the sound.",
+      "PTN+YES locks a pattern to its own copy of the sound; PTN+YES again shares the bank's kit.",
+      "Saved per project; existing projects open unchanged with KIT PER BANK off.",
+      "Nothing is rewritten: unticked, every pattern plays its own kit again, and the project still opens on the stock OS."
+    ],
+    "usage": [
+      "Open SETTINGS, scroll to the bottom and tick KIT PER BANK, then select A01 again.",
+      "Set up a bass sound on A01, then go to A02 and program different notes: same sound. Turn the filter on A02; A01 changes too.",
+      "Go to A03, hold PTN and press YES: KIT LOCKED. Change the sound of A03; A01 and A02 keep theirs.",
+      "Save the project: KIT PER BANK and the lock are saved with it. Hold PTN and press YES on A03 again to share the bank's kit."
+    ]
+  },
+  "access": {
+    "location": "SETTINGS, last row: KIT PER BANK; lock: hold PTN, press YES",
+    "steps": [
+      "Press SETTINGS and scroll to the last row, KIT PER BANK; press YES to tick it (YES again unticks it).",
+      "Change pattern, or select the current pattern again: the setting applies from that pattern change.",
+      "To give the active pattern its own sound, hold PTN and press YES: KIT LOCKED. Hold PTN and press YES again: KIT SHARED."
+    ],
+    "screenshots": [
+      "media/settings-off.png",
+      "media/settings-on.png",
+      "media/kit-locked.png"
+    ]
+  },
+  "controls": [
+    {
+      "name": "KIT PER BANK",
+      "default": 0,
+      "doc": "SETTINGS, last row. Ticked: the patterns of each bank share the kit of the bank's first pattern, except locked patterns. Unticked: every pattern plays its own kit, as on the stock OS. Saved with the project (off for a project saved without it); a change applies from the next pattern change.",
+      "labels": [
+        "off",
+        "on"
+      ]
+    },
+    {
+      "name": "PTN+YES",
+      "default": null,
+      "doc": "While KIT PER BANK is ticked: locks the active pattern (it takes a copy of the bank's kit and keeps its own sound; message KIT LOCKED) or shares it again (KIT SHARED). On a bank's first pattern it only shows BANK KIT. Locks are saved with the project. Unticked, PTN+YES does what the stock OS does (nothing).",
+      "labels": null
+    }
+  ],
+  "compatibility": {
+    "releases": [
+      "1.44"
+    ],
+    "requires": [],
+    "conflicts": [],
+    "limitations": [
+      "Built for Digitone OS 1.44 with the vendored core-dn1 2.0a (os1.44); not ported to OS 1.43. The Digitone Keys runs the same OS file but has not been tried.",
+      "The switch and the locks are kept in the project header (an elekloader-format ELKP block tagged KBLK, bytes 0x1c..0x200 the stock OS keeps as they are), written by kitbank's own project save hook because core-dn1 2.0a for 1.44 has no project data. The block is not written when that area already holds another tool's data; it can move to core_projdata when a 1.44 core provides it.",
+      "It patches ten stock OS sites itself (kit selection, queued pattern change, kit save/reload/sound reload, project save/load/new); a mod patching the same bytes cannot be combined. If other mods need kit selection or project data, these sites should become core hooks.",
+      "A pattern pasted into a bank's first pattern replaces the bank's kit, as the stock OS replaces that pattern's kit. Pasted elsewhere, it never overwrites the bank: it is locked with the pasted sound when that sound differs.",
+      "For under a second after PTN+YES, a knob turn can be ignored while the OS reloads the kit into the tracks (measured in the emulator; the stock OS reselecting a pattern by hand does not do this).",
+      "Undo of a paste was not tried."
+    ]
+  },
+  "platform": {
+    "kind": "elemod",
+    "core": "2.0a",
+    "build": "build.json",
+    "events": [
+      "ev_key",
+      "ev_settings"
+    ],
+    "claims": [
+      "settings:KIT PER BANK",
+      "projdata:KBLK"
+    ]
+  },
+  "resources": {
+    "memoryBytes": 1528,
+    "fastBytes": 0,
+    "load": {
+      "display": "None while playing",
+      "method": "static",
+      "conditions": "No audio-rate code: the redirections run on pattern changes, screen and edit kit lookups, the pattern menus' kit save and reload, project save and load, pastes and the PTN+YES key."
+    }
+  },
+  "evidence": {
+    "tier": "author-hardware",
+    "moduleVersion": "0.2.0-experimental",
+    "sourceSha256": "4ce013124db4dc95970e302d7ee016bd1f6cb1fb97448a33d5cc2298d1dc00a3",
+    "reports": [
+      "evidence/hardware-testing.json",
+      "evidence/source-identity.json",
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Digitone",
+      "release": "1.44",
+      "testedOn": "2026-11-14",
+      "tester": "ZOGV",
+      "durationMinutes": null,
+      "summary": "The author flashed the module-alone build (core dn1 2.0a + kitbank 0.2.0-experimental, XX07, SHA-256 30e54a81…) on their Digitone, OS 1.44, with a list of nine steps: the KIT PER BANK switch, bank kits while playing, an edit shared by the bank, PTN+YES lock and share, project save and power cycle, paste and song mode. The author reported that it worked.",
+      "limitations": [
+        "The result was reported as one statement, not step by step: which of the nine listed steps were tried is not recorded.",
+        "The duration was not reported.",
+        "The same redirections ran earlier on the author's unit as an always-on build outside Modwerk; that build is not part of this evidence."
+      ]
+    },
+    "verifiedBy": null
+  },
+  "tests": {
+    "report": "TESTING.md",
+    "summary": "Emulator only (digiemu, OS 1.44): unticked behaves like the stock OS; ticked, bank kits for immediate and queued changes, song mode, edits, kit save/reload, PTN+YES locks, pastes, and the switch and locks through a project save and load; see TESTING.md. Not tried on hardware in this Modwerk build.",
+    "documentation": {
+      "tutorial": {
+        "title": "Quick tutorial: one kit for a whole bank, one pattern apart",
+        "steps": [
+          "Open SETTINGS, scroll to the bottom and tick KIT PER BANK, then select A01 again.",
+          "Set up a bass sound on A01, then go to A02 and program different notes: same sound. Turn the filter on A02; A01 changes too.",
+          "Go to A03, hold PTN and press YES: KIT LOCKED. Change the sound of A03; A01 and A02 keep theirs.",
+          "Save the project: KIT PER BANK and the lock are saved with it. Hold PTN and press YES on A03 again to share the bank's kit."
+        ]
+      },
+      "screenshots": [
+        "media/settings-off.png",
+        "media/settings-on.png",
+        "media/kit-locked.png"
+      ],
+      "captureRecord": "media/capture.json"
+    }
+  },
+  "license": {
+    "spdx": "GPL-3.0-or-later",
+    "file": "LICENSE",
+    "declaration": "Original work by ZOGV. The SETTINGS row follows digihealth's SYSTEM INFO row by irpina (GPL-2.0-or-later), with OS 1.44 addresses."
+  },
+  "media": [
+    {
+      "path": "media/thumbnail.svg",
+      "kind": "thumbnail",
+      "caption": "kitbank thumbnail",
+      "alt": "Two kit boxes, each feeding a row of sixteen pattern steps.",
+      "credit": "ZOGV",
+      "license": "GPL-3.0-or-later",
+      "source": "Original illustration"
+    },
+    {
+      "path": "media/settings-off.png",
+      "kind": "screenshot",
+      "caption": "SETTINGS: KIT PER BANK unticked",
+      "alt": "SETTINGS menu on the Digitone LCD with the KIT PER BANK row unticked",
+      "credit": "Emulator documentation capture by ZOGV; Elektron interface; kitbank module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.44",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "7d14c8272d861704983903f36a5018edef5647f708ad3658a8899e8a86e798be",
+        "setup": "Disposable first-boot project, network-denied sandbox; see media/capture.json."
+      }
+    },
+    {
+      "path": "media/settings-on.png",
+      "kind": "screenshot",
+      "caption": "SETTINGS: KIT PER BANK ticked",
+      "alt": "SETTINGS menu on the Digitone LCD with the KIT PER BANK row ticked",
+      "credit": "Emulator documentation capture by ZOGV; Elektron interface; kitbank module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.44",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "7d14c8272d861704983903f36a5018edef5647f708ad3658a8899e8a86e798be",
+        "setup": "Disposable first-boot project, network-denied sandbox; see media/capture.json."
+      }
+    },
+    {
+      "path": "media/kit-locked.png",
+      "kind": "screenshot",
+      "caption": "PTN+YES on A03: KIT LOCKED",
+      "alt": "The Digitone main screen with the KIT LOCKED message in the top bar",
+      "credit": "Emulator documentation capture by ZOGV; Elektron interface; kitbank module",
+      "license": "LicenseRef-Digi-UI-Documentation",
+      "source": "original",
+      "capture": {
+        "type": "emulator",
+        "release": "1.44",
+        "moduleVersion": "0.2.0-experimental",
+        "imageSha256": "7d14c8272d861704983903f36a5018edef5647f708ad3658a8899e8a86e798be",
+        "setup": "Disposable first-boot project, network-denied sandbox; see media/capture.json."
+      }
+    }
+  ]
+}

@@ -1,0 +1,248 @@
+{
+  "schemaVersion": 1,
+  "machine": "digitone",
+  "moduleId": "kitbank",
+  "moduleVersion": "0.2.0-experimental",
+  "capturedAt": "2026-11-12",
+  "firmware": "1.44",
+  "imageSha256": "7d14c8272d861704983903f36a5018edef5647f708ad3658a8899e8a86e798be",
+  "stockSha256": "d4f200d04484333d82822db7744e6484d0def8f2db8ddf55ee2b780cc13c9659",
+  "build": {
+    "tool": "node scripts/link-image.mjs --version XX06",
+    "modules": [
+      {
+        "id": "core",
+        "version": "2.0a",
+        "sha256": "5707a38e98047854eb12e5870430fb323126224f25b2a10b725badb93b97a41a"
+      },
+      {
+        "id": "kitbank",
+        "version": "0.2.0-experimental",
+        "source": "sdk/digitone/modules/kitbank (this folder)"
+      }
+    ],
+    "outputVersion": "XX06"
+  },
+  "emulator": {
+    "repository": "https://github.com/irpina/digiemu",
+    "revision": "f57c2f237e84b8ff91bc3adb2a2931bccf9928e9",
+    "note": "Not the reviewed revision c1b5735835923e328f8b4950d6ba927875e5b669, which was not reachable from the public repository; the checkout also carries an uncommitted change to emu/gui.py (the desktop window, unused headless). scripts/capture-digi-module-ui.py was run unchanged except for its two revision checks. Re-capture with the reviewed revision before release.",
+    "python": "3.12.13",
+    "platform": "macOS arm64",
+    "hle": false,
+    "audioRecording": false,
+    "cycleTiming": false,
+    "framebuffer": "firmware front LCD buffer at panel_diff flush",
+    "scale": 6,
+    "frameSelection": "Most populated actual LCD frame within the final 250 ms after the latest panel action; 6x integer scaling."
+  },
+  "setup": {
+    "project": "Disposable first-boot A01, stock initial state; no owner projects or samples.",
+    "fixture": "None.",
+    "sandbox": "No network (sandbox-exec deny network*); private temporary output only."
+  },
+  "inputs": [
+    [
+      1000.029,
+      "press 7"
+    ],
+    [
+      1100.032,
+      "release 7"
+    ],
+    [
+      1400.041,
+      "press 16"
+    ],
+    [
+      1500.044,
+      "release 16"
+    ],
+    [
+      1800.052,
+      "press 16"
+    ],
+    [
+      1900.056,
+      "release 16"
+    ],
+    [
+      2200.064,
+      "press 16"
+    ],
+    [
+      2300.067,
+      "release 16"
+    ],
+    [
+      2600.076,
+      "press 16"
+    ],
+    [
+      2700.079,
+      "release 16"
+    ],
+    [
+      3000.088,
+      "press 16"
+    ],
+    [
+      3100.09,
+      "release 16"
+    ],
+    [
+      3400.099,
+      "press 16"
+    ],
+    [
+      3500.102,
+      "release 16"
+    ],
+    [
+      3800.11,
+      "press 16"
+    ],
+    [
+      3900.114,
+      "release 16"
+    ],
+    [
+      4200.122,
+      "press 16"
+    ],
+    [
+      4300.125,
+      "release 16"
+    ],
+    [
+      4600.134,
+      "press 16"
+    ],
+    [
+      4700.137,
+      "release 16"
+    ],
+    [
+      5000.146,
+      "press 16"
+    ],
+    [
+      5100.148,
+      "release 16"
+    ],
+    [
+      5400.157,
+      "press 16"
+    ],
+    [
+      5500.16,
+      "release 16"
+    ],
+    [
+      5800.169,
+      "press 16"
+    ],
+    [
+      5900.172,
+      "release 16"
+    ],
+    [
+      6200.181,
+      "press 13"
+    ],
+    [
+      6300.183,
+      "release 13"
+    ],
+    [
+      6600.193,
+      "press 14"
+    ],
+    [
+      6700.195,
+      "release 14"
+    ],
+    [
+      7000.204,
+      "press 14"
+    ],
+    [
+      7100.206,
+      "release 14"
+    ],
+    [
+      7400.215,
+      "press 4"
+    ],
+    [
+      7500.218,
+      "press 26"
+    ],
+    [
+      7600.222,
+      "release 26"
+    ],
+    [
+      7900.23,
+      "release 4"
+    ],
+    [
+      8700.253,
+      "press 4"
+    ],
+    [
+      8800.256,
+      "press 28"
+    ],
+    [
+      8900.259,
+      "release 28"
+    ],
+    [
+      9200.268,
+      "release 4"
+    ],
+    [
+      10000.291,
+      "press 4"
+    ],
+    [
+      10100.294,
+      "press 13"
+    ],
+    [
+      10180.768,
+      "release 13"
+    ],
+    [
+      10380.768,
+      "release 4"
+    ]
+  ],
+  "captures": [
+    {
+      "path": "media/settings-off.png",
+      "sha256": "546fd24aafd699b3d5ac20b25bd47477ca99b7688ca79917bcd2894b452c8444",
+      "plan": "wait 1000\ntap GLOBAL\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings-off\ntap YES\nsnap settings-on\ntap NO\ntap NO\npress PTN\ntap 1\nrelease PTN\nwait 700\npress PTN\ntap 3\nrelease PTN\nwait 700\npress PTN\ntap YES 80 200\nrelease PTN\nwait 300\nsnap kit-locked\n",
+      "atMs": 6200.180769230769,
+      "requestedAtMs": 6200.180769230769
+    },
+    {
+      "path": "media/settings-on.png",
+      "sha256": "cece0825ac5c705eaba1c122acf9f2ab2bfd379f89ab4554c1440fe1de53475b",
+      "plan": "wait 1000\ntap GLOBAL\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings-off\ntap YES\nsnap settings-on\ntap NO\ntap NO\npress PTN\ntap 1\nrelease PTN\nwait 700\npress PTN\ntap 3\nrelease PTN\nwait 700\npress PTN\ntap YES 80 200\nrelease PTN\nwait 300\nsnap kit-locked\n",
+      "atMs": 6600.192521367521,
+      "requestedAtMs": 6600.192521367521
+    },
+    {
+      "path": "media/kit-locked.png",
+      "sha256": "5f581de32bc59874ae6462dd212d5de28dbc682b6b6943d7e20b859cae0a363c",
+      "plan": "wait 1000\ntap GLOBAL\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\ntap DOWN\nsnap settings-off\ntap YES\nsnap settings-on\ntap NO\ntap NO\npress PTN\ntap 1\nrelease PTN\nwait 700\npress PTN\ntap 3\nrelease PTN\nwait 700\npress PTN\ntap YES 80 200\nrelease PTN\nwait 300\nsnap kit-locked\n",
+      "atMs": 10783.647435897436,
+      "requestedAtMs": 10783.647435897436
+    }
+  ],
+  "limitations": [
+    "UI documentation of the SETTINGS row and of the KIT LOCKED message after PTN+YES; the kit behaviour is covered by the emulator tests in TESTING.md."
+  ]
+}
