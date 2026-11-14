@@ -4,8 +4,8 @@
   "order": 200,
   "name": "MS-70CDR",
   "family": "zoom",
-  "status": "research",
-  "summary": "Main target of ZoomMultistompZDL: about 30 custom effects, NAM and cab loaders and a patch editor, tested on firmware 2.10. Modwerk does not list ZDL effects yet.",
+  "status": "preview",
+  "summary": "Main target of ZoomMultistompZDL: about 30 custom effects, NAM and cab loaders and a patch editor, tested on firmware 2.10. Modwerk lists its effects built with no Zoom code, starting with Loop.",
   "firmware": {
     "releases": [
       {
@@ -13,13 +13,54 @@
         "files": []
       }
     ],
-    "flash": "Effects are installed with Zoom Effect Manager 2.3.3 or later over USB; the OS is not modified.",
+    "flash": "Effects install over USB from the pedal page, or with Zoom Effect Manager 2.3.3 or later; the OS is not modified.",
     "recovery": "Remove the effect in Effect Manager. If a bad effect freezes the pedal at boot, run All Initialize (hold the leftmost knob while powering on), then remove the effect."
   },
   "steps": {
     "format": "done",
     "load": "done",
-    "mods": "open"
+    "mods": "done"
+  },
+  "stack": {
+    "base": "started",
+    "link": "started",
+    "flash": "done",
+    "status": "done",
+    "tools": "started"
+  },
+  "sdk": {
+    "platform": "zdl",
+    "modules": "sdk/zoom/modules",
+    "catalog": null,
+    "guide": "sdk/machines/zoom-ms-70cdr/README.md",
+    "core": null,
+    "toolchain": "TI's C6000 compiler 8.5.0.LTS and ZoomMultistompZDL's linker with Leemuzhko's runtime (own_runtime), so a built effect carries no code from Zoom's effects.",
+    "budgets": [
+      {
+        "name": "Patch DSP",
+        "unit": "percent",
+        "value": 225,
+        "note": "The DSP cost the pedal adds up per patch: Zoom's 2.10 refuses an effect between 224.4 and 228.4 (measured); MIDISTOMP 2.0 raises the limit to 300."
+      },
+      {
+        "name": "Effect slots",
+        "unit": "slots",
+        "value": 6,
+        "note": "Effects in one patch."
+      },
+      {
+        "name": "Effect file",
+        "unit": "bytes",
+        "value": 32126,
+        "note": "The largest effect file proven to load on the MS-70CDR 2.10."
+      },
+      {
+        "name": "Code and constants",
+        "unit": "bytes",
+        "value": 30032,
+        "note": "An effect's .text and .const together: the measured load boundary (Leemuzhko's findings)."
+      }
+    ]
   },
   "research": [
     {
@@ -35,7 +76,7 @@
     {
       "label": "MIDISTOMP",
       "url": "https://github.com/matujuice/zoom-ms-midistomp",
-      "note": "MIT, by Luca Matturro, and Modwerk's planned base. Custom firmware built from Zoom's MS-70CDR 2.10 for the MS-70CDR, MS-50G and MS-60B; v2.0 (November 2026) raises the patch DSP limit from 225 to 300 and adds parallel routing, a perform mode, a looper and MIDI clock sync."
+      "note": "MIT, by Luca Matturro, and Modwerk's base. Custom firmware built from Zoom's MS-70CDR 2.10; v2.0 (November 2026) raises the patch DSP limit from 225 to 300 and adds parallel routing, a perform mode, a looper and MIDI clock sync."
     },
     {
       "label": "Matujuice ZDL effects pack",

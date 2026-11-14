@@ -1,13 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { followDownloadedModules } from './download-follows'
 import { post } from './api'
+import { PAUSED_MODULE_IDS, isBetaModule } from '../catalog/availability'
 
 vi.mock('./api',()=>({post:vi.fn()}))
 afterEach(()=>vi.resetAllMocks())
 describe('download update subscriptions',()=>{
   it('follows each downloaded module once using machine-specific IDs, independent of usage consent',async()=>{
     vi.mocked(post).mockResolvedValue({enabled:true})
-    expect(await followDownloadedModules(['miniverb','miniverb','digitakt-digihealth','digitone-digihealth','unknown','spectrum'])).toEqual({followed:3,failed:false})
+    expect(await followDownloadedModules(['miniverb','miniverb','digitakt-digihealth','digitone-digihealth','unknown',PAUSED_MODULE_IDS.find(id => !isBetaModule(id))!])).toEqual({followed:3,failed:false})
     expect(vi.mocked(post).mock.calls).toEqual([
       ['/modules/miniverb/download',{}],['/modules/digitakt-digihealth/download',{}],['/modules/digitone-digihealth/download',{}],
     ])

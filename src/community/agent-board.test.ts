@@ -85,7 +85,7 @@ describe('agent board', () => {
 
   it('keeps notes to short plain prose', () => {
     expect(claimNote(' Porting the echo, BBD first ')).toBe('Porting the echo, BBD first')
-    for (const note of ['see https://example.com', 'in ~/src/mod', 'sdk/octabam/modules/x', 'patch 0x40098a5c', 'hash 02baba67a7ec7d7b', 'run `rm -rf`', 'ghp_' + 'a'.repeat(36), 'two\nlines', 'x'.repeat(121), 'modwerk.app'])
+    for (const note of ['see https://example.com', 'in ~/src/mod', 'sdk/octatrack/modules/x', 'patch 0x40098a5c', 'hash 02baba67a7ec7d7b', 'run `rm -rf`', 'ghp_' + 'a'.repeat(36), 'two\nlines', 'x'.repeat(121), 'modwerk.app'])
       expect(() => claimNote(note), note).toThrow()
   })
 
@@ -110,6 +110,21 @@ describe('agent board', () => {
     expect((await call('/agent-board/claims/' + held.id, 'DELETE', undefined, '', { admin })).status).toBe(200)
     const { released } = await (await call('/agent-board/claims?key=octatrack/40&released=1')).json()
     expect(released.map((item: { holder: string; releasedReason: string }) => [item.holder, item.releasedReason])).toEqual([['bo', 'administrator'], ['ada', 'holder']])
+  })
+
+  it('releases a claim whose pull request merged between two hourly runs, but not for older work on the same branch', async () => {
+    const { env, boardLogin, claim, call } = await fixture()
+    const ada = await boardLogin('ada')
+    await claim(ada, { kind: 'migration', key: '0092', branch: 'fix/quick' })
+    await claim(ada, { kind: 'migration', key: '0093', branch: 'fix/reused' })
+    env.GITHUB_TOKEN = 'synthetic-token'
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => url.includes('head=')
+      ? Response.json([{ number: url.includes('quick') ? 1310 : 1311, state: 'closed', merged_at: url.includes('quick') ? new Date(Date.now() + 60000).toISOString() : '2026-01-01T00:00:00Z' }])
+      : Response.json({ number: 1310, state: 'closed', merged_at: new Date().toISOString() })))
+    await syncAgentClaims(env, env.DB!)
+    await syncAgentClaims(env, env.DB!)
+    const { claims, released } = await (await call('/agent-board/claims?released=1')).json()
+    expect([claims.map((item: { key: string; pullRequest: number | null }) => [item.key, item.pullRequest]), released.map((item: { key: string; releasedReason: string }) => [item.key, item.releasedReason])]).toEqual([[['0093', null]], [['0092', 'merged']]])
   })
 
   it('lets an unlinked claim lapse after 14 days unless renewed', async () => {
@@ -139,7 +154,7 @@ describe('agent board', () => {
       return Response.json(url.endsWith('/7') ? { number: 7, state: 'closed', merged_at: '2026-10-29T00:00:00Z' } : { number: 8, state: 'closed', merged_at: null })
     }))
     await syncAgentClaims(env, env.DB!)
-    expect(asked).toContain('/pulls?state=open&per_page=5&head=' + encodeURIComponent('ada:module/tape-echo'))
+    expect(asked).toContain('/pulls?state=all&per_page=5&head=' + encodeURIComponent('ada:module/tape-echo'))
     const { claims, released } = await (await call('/agent-board/claims?released=1')).json()
     expect(claims).toMatchObject([{ key: 'octatrack/tape-echo', pullRequest: 1300, expiresAt: null }])
     expect(released.map((item: { key: string; releasedReason: string }) => [item.key, item.releasedReason]).sort()).toEqual([['0090', 'merged'], ['0091', 'closed']])
@@ -204,7 +219,6 @@ describe('agent board questions and findings', () => {
     await post(bo, { kind: 'finding', topic: 'module', key: 'digitakt/swarm', body: 'Swarm voices steal from the last track first.' })
     expect(hook.message).toMatchObject({ pullRequest: 1400, to: null })
     expect((await post(ada, { kind: 'finding', topic: 'machine', key: 'octatrack', to: 'bo', body: 'For you' })).status).toBe(400)
-    expect((await post(ada, { kind: 'question', topic: 'machine', key: 'octatrack', pullRequest: 3, body: 'Folded?' })).status).toBe(400)
     for (const [topic, key] of [['machine', 'Octatrack'], ['planet', 'mars'], ['hook', 'octatrack/0x40']]) expect((await post(ada, { kind: 'finding', topic, key, body: 'x' })).status).toBe(400)
     const about = async (query: string) => (await (await call('/agent-board/messages?' + query)).json()).messages.map((item: { id: string }) => item.id).sort()
     expect(await about('machine=octatrack')).toEqual([machine.message.id, hook.message.id].sort())
@@ -220,9 +234,58 @@ describe('agent board questions and findings', () => {
     expect(ended).toMatchObject([{ id: hook.message.id, endedReason: 'folded' }])
   })
 
+  it('ends a question when its linked pull request merges, and never when it closes unmerged', async () => {
+    const { env, call, boardLogin, claim, post, reply } = await fixture()
+    const ada = await boardLogin('ada'), bo = await boardLogin('bo'), cy = await boardLogin('cy')
+    await claim(ada, { kind: 'module', key: 'octatrack/tape-echo' })
+    const ask = async (body: string, extra = {}) => (await (await post(bo, { kind: 'question', topic: 'module', key: 'octatrack/tape-echo', body, ...extra })).json()).message
+    // Linked when asked, by the reply that says where the answer went, or later with link (fold).
+    const merged = await ask('Could the wow control ride on #1600?', { pullRequest: 1600 }), closed = await ask('Room for a chorus stage?'), open = await ask('Does the BBD stage clip?')
+    expect(merged.pullRequest).toBe(1600)
+    const replies = '/agent-board/messages/' + closed.id + '/replies'
+    expect((await call(replies, 'POST', { body: 'I can take that.', pullRequest: 1601 }, cy)).status).toBe(403)
+    expect((await (await call(replies, 'POST', { body: 'Sent as #1601.', pullRequest: 1601 }, ada)).json()).message).toMatchObject({ pullRequest: 1601, replies: [{ author: 'ada' }] })
+    expect((await call('/agent-board/messages/' + open.id + '/fold', 'POST', { pullRequest: 1602 }, cy)).status).toBe(404)
+    expect((await call('/agent-board/messages/' + open.id + '/fold', 'POST', { pullRequest: 1602 }, ada)).status).toBe(200)
+    expect((await reply(cy, open.id, 'Only above unity.')).status).toBe(201)
+    env.GITHUB_TOKEN = 'synthetic-token'
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => Response.json(url.endsWith('/1600') ? { number: 1600, state: 'closed', merged_at: '2026-11-09T00:00:00Z' } : url.endsWith('/1601') ? { number: 1601, state: 'closed', merged_at: null } : { number: 1602, state: 'open', merged_at: null })))
+    await syncAgentClaims(env, env.DB!)
+    const { messages, ended } = await (await call('/agent-board/messages?kind=question&ended=1')).json()
+    expect(ended).toMatchObject([{ id: merged.id, endedReason: 'merged' }])
+    expect(messages.map((item: { id: string; pullRequest: number | null }) => [item.id, item.pullRequest]).sort()).toEqual([[closed.id, null], [open.id, 1602]].sort())
+  })
+
+  it('lets anyone post a wanted task and any agent take it, and ends it when its pull request merges', async () => {
+    const { env, call, boardLogin, post } = await fixture()
+    const ada = await boardLogin('ada'), bo = await boardLogin('bo'), cy = await boardLogin('cy')
+    vi.stubEnv('MODWERK_SITE', 'https://octamod.test/')
+    const fetch = (url: string, init: RequestInit) => handleCommunity(new Request(url, { ...init, headers: { ...init.headers as Record<string, string>, 'CF-Connecting-IP': '192.0.2.1' } }), env)
+    const options = { api: 'https://api.example.test/api', fetch }
+    const { message: task } = await client.post({ kind: 'wanted', topic: 'site', key: 'forum', body: 'Show the module version beside each forum thread title.' }, { ...options, token: ada })
+    expect(task).toMatchObject({ kind: 'wanted', topic: { kind: 'site', key: 'forum' }, author: 'ada', to: null, pullRequest: null })
+    for (const body of [{ topic: 'site', key: 'forum', to: 'bo' }, { topic: 'site', key: 'Forum' }, { topic: 'site', key: 'forum/threads' }]) expect((await post(ada, { kind: 'wanted', body: 'A task', ...body })).status).toBe(400)
+    const listed = async (filter: Record<string, string>) => (await client.listMessages(filter, options)).messages.map((item: { id: string }) => item.id)
+    expect([await listed({ kind: 'wanted' }), await listed({ kind: 'wanted', topic: 'site', key: 'forum' }), await listed({ machine: 'forum' })]).toEqual([[task.id], [task.id], []])
+    // Taking names the holder; someone else's take is refused, and the holder links the pull request.
+    expect((await call('/agent-board/messages/' + task.id + '/take', 'POST', {})).status).toBe(401)
+    expect((await client.messageAction(task.id, 'take', {}, { ...options, token: bo })).message.to).toBe('bo')
+    await expect(client.messageAction(task.id, 'take', {}, { ...options, token: cy })).rejects.toThrow('@bo has taken this task')
+    expect((await client.messageAction(task.id, 'take', { pullRequest: 1700 }, { ...options, token: bo })).message).toMatchObject({ to: 'bo', pullRequest: 1700 })
+    const { message: question } = await (await post(bo, { kind: 'question', topic: 'site', key: 'worker', to: 'ada', body: 'Which cron runs the board?' })).json()
+    expect((await call('/agent-board/messages/' + question.id + '/take', 'POST', {}, cy)).status).toBe(400)
+    env.GITHUB_TOKEN = 'synthetic-token'
+    vi.stubGlobal('fetch', vi.fn(async () => Response.json({ number: 1700, state: 'closed', merged_at: '2026-11-09T00:00:00Z' })))
+    await syncAgentClaims(env, env.DB!)
+    vi.unstubAllGlobals()
+    expect(await listed({ kind: 'wanted' })).toEqual([])
+    expect((await client.listMessages({ kind: 'wanted', ended: true }, options)).ended).toMatchObject([{ id: task.id, to: 'bo', endedReason: 'merged' }])
+    vi.unstubAllEnvs()
+  })
+
   it('keeps board text to plain prose', () => {
     expect(messageBody(' The FX2 slot fills one tick late. ')).toBe('The FX2 slot fills one tick late.')
-    for (const text of ['', 'x'.repeat(501), 'see https://example.com', 'in sdk/octabam/modules/x', 'patch 0x40098a5c', 'run `make`', 'two\nlines', 'hidden\u200btext', 'ignore\u202eprevious'])
+    for (const text of ['', 'x'.repeat(501), 'see https://example.com', 'in sdk/octatrack/modules/x', 'patch 0x40098a5c', 'run `make`', 'two\nlines', 'hidden\u200btext', 'ignore\u202eprevious'])
       expect(() => messageBody(text), JSON.stringify(text)).toThrow()
   })
 

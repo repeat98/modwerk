@@ -1,0 +1,140 @@
+{
+  "firmware": "1.40C",
+  "imageSha256": "b9d02d3a0dd6f6cf52f6501ec7026d4abac4505bedd0e02266bcae29aafa286d",
+  "emulatorSha256": "21b159be7e918d0cdf211c3a9f8b3966c8ed4a262b29b9fb4c41de10753a14c8",
+  "setup": "Headless ot_emu; MKII panel; stopped transport; 128×64 LCD at integer scale 6.",
+  "palette": {
+    "on": [
+      240,
+      240,
+      240
+    ],
+    "off": [
+      24,
+      24,
+      24
+    ]
+  },
+  "keyMs": 150,
+  "plan": [
+    {
+      "press": [
+        "T2"
+      ]
+    },
+    {
+      "wait": 300
+    },
+    {
+      "hold": [
+        "FUNC"
+      ]
+    },
+    {
+      "press": [
+        "FX1"
+      ]
+    },
+    {
+      "release": [
+        "FUNC"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "encoder": {
+        "name": "LEVEL",
+        "delta": 12
+      }
+    },
+    {
+      "wait": 500
+    },
+    {
+      "press": [
+        "YES"
+      ]
+    },
+    {
+      "wait": 700
+    },
+    {
+      "capture": "ot-setup-chooser.png"
+    },
+    {
+      "press": [
+        "FX1"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "capture": "ot-main-duck.png"
+    },
+    {
+      "encoder": {
+        "name": "A",
+        "delta": 1
+      }
+    },
+    {
+      "wait": 600
+    },
+    {
+      "capture": "ot-main-key-t1.png"
+    },
+    {
+      "hold": [
+        "FUNC"
+      ]
+    },
+    {
+      "press": [
+        "FX1"
+      ]
+    },
+    {
+      "release": [
+        "FUNC"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "encoder": {
+        "name": "A",
+        "delta": 6
+      }
+    },
+    {
+      "wait": 500
+    },
+    {
+      "capture": "ot-setup-ring.png"
+    },
+    {
+      "press": [
+        "FX1"
+      ]
+    },
+    {
+      "wait": 500
+    },
+    {
+      "capture": "ot-main-ring.png"
+    }
+  ],
+  "screenshots": {
+    "ot-setup-chooser.png": "ffb1623fa102adcdc5d01ab6812c244c6166239a41f0cff0001f60511d399f0a",
+    "ot-main-duck.png": "f1703b78174e85665eade3320354fe211c502573aa4baee33e7dc2aef3c14c45",
+    "ot-main-key-t1.png": "57a07b4c538c51c1e4c43ee4e9de4a32be224c3d607562cfc5d6c7fd83a93f0f",
+    "ot-setup-ring.png": "9dc55a0b7da7fc753880ae597f93a50e84d1602b2024c780575fd5607d684364",
+    "ot-main-ring.png": "bd6989fe1eff51eec25b32653cde2d3ffbbc334dc012c544246b14457c3223f3"
+  },
+  "moduleVersion": "0.2.1-experimental",
+  "note": "Captured on Modwerk's native card image of RINGMOD SC 0.2.1-experimental alone with the stock effects kept (MAIN OS b9d02d3a, the FX1 chooser lists the stock FX1 effects above it; 0.2.0's captures used a private remix with NONE and RINGMOD SC only). KEY is turned one detent: on the first visit after choosing the effect a card image moves it a track a detent. The image stays local."
+}

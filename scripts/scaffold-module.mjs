@@ -17,23 +17,32 @@ async function claimModule(){
   try{const result=await board.claim({kind:'module',key:boardKey,branch:board.currentBranch(root)});console.log('Board: '+(result.renewed?'renewed your claim on':'claimed')+' module '+boardKey+' for @'+login+'.')}catch(error){console.log('Board: could not claim module '+boardKey+': '+error.message)}
 }
 if(machine!=='octatrack'){
-  // Machines on contract v3 (elemod) scaffold from sdk/templates/elemod with the machine profile's releases and core.
+  // Machines on contract v3 scaffold from sdk/templates/<platform> with the machine profile's releases and core: elemod
+  // (source and build.json here), or zdl (a Zoom effect file built and released in its author's repository).
   const {parseMachineProfile}=await import('../src/devices/machine-contract.ts'),{parseModwerkModule,parseElemodBuild}=await import('../src/catalog/module-contract-v3.ts')
   if(!id||!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(id)||!author)throw new Error('Usage: npm run module:new -- my-mod --machine '+machine+' --author github-login')
   const profile=parseMachineProfile(JSON.parse(await readFile(resolve(root,'sdk/machines',machine,'machine.json'),'utf8')))
-  if(profile.sdk?.platform!=='elemod')throw new Error(profile.name+' has no elemod SDK yet; see docs/ADD_A_MACHINE.md')
+  const platform=profile.sdk?.platform
+  if(platform!=='elemod'&&platform!=='zdl')throw new Error(profile.name+' has no module SDK yet; see docs/ADD_A_MACHINE.md')
   const name=id.split('-').map(word=>word[0]?.toUpperCase()+word.slice(1)).join(' '),release=profile.firmware.releases.at(-1).version
-  const fill=text=>text.replaceAll('__ID__',id).replaceAll('__NAME__',name).replaceAll('__KEY__',id.toUpperCase().replaceAll('-',' ')).replaceAll('__MACHINE_NAME__',profile.name).replaceAll('__MACHINE__',machine).replaceAll('__AUTHOR__',author).replaceAll('__RELEASE__',release).replaceAll('__CORE__',profile.sdk.core?.version??'1.0')
-  const destination=output?resolve(output,id):resolve(root,profile.sdk.modules,id),template=resolve(root,'sdk/templates/elemod')
+  // A Zoom effect's name on the pedal: at most 8 letters or digits, then .ZDL.
+  const effectFile=name.replace(/[^A-Za-z0-9]/g,'').slice(0,8)+'.ZDL'
+  const fill=text=>text.replaceAll('__ID__',id).replaceAll('__NAME__',name).replaceAll('__KEY__',id.toUpperCase().replaceAll('-',' ')).replaceAll('__MACHINE_NAME__',profile.name).replaceAll('__MACHINE__',machine).replaceAll('__AUTHOR__',author).replaceAll('__RELEASE__',release).replaceAll('__CORE__',profile.sdk.core?.version??'1.0').replaceAll('__FILE__',effectFile).replaceAll('__YEAR__',String(new Date().getFullYear()))
+  const destination=output?resolve(output,id):resolve(root,profile.sdk.modules,id),template=resolve(root,'sdk/templates',platform)
   try{await access(destination);throw new Error('Destination exists; refusing to replace a module: '+destination)}catch(error){if(error.code!=='ENOENT')throw error}
   const document=parseModwerkModule(JSON.parse(fill(await readFile(resolve(template,'modwerk.module.json'),'utf8'))),[profile])
-  parseElemodBuild(JSON.parse(fill(await readFile(resolve(template,'build.json'),'utf8'))),document)
-  await mkdir(resolve(destination,'src'),{recursive:true});await mkdir(resolve(destination,'media'))
-  for(const file of ['modwerk.module.json','build.json','src/main.c','media/thumbnail.svg'])await writeFile(resolve(destination,file),fill(await readFile(resolve(template,file),'utf8')))
-  await copyFile(resolve(root,'LICENSES/GPL-3.0-or-later.txt'),resolve(destination,'LICENSE'))
-  await writeFile(resolve(destination,'README.md'),`# ${name}\n\nA ${profile.name} mod by @${author}. Version ${document.version}.\n\nDescribe what it does, every control, how to reach it on the unit, and a short tutorial. Follow docs/ADD_A_MODULE.md, the guide for this mod's category in docs/module-guides/ (and sequencing.md if it acts in time), docs/SDK.md and the ${profile.name} guide (${profile.sdk.guide}).\n`)
+  if(platform==='elemod')parseElemodBuild(JSON.parse(fill(await readFile(resolve(template,'build.json'),'utf8'))),document)
+  await mkdir(resolve(destination,'media'),{recursive:true})
+  if(platform==='elemod')await mkdir(resolve(destination,'src'))
+  for(const file of platform==='elemod'?['modwerk.module.json','build.json','src/main.c','media/thumbnail.svg']:['modwerk.module.json','media/thumbnail.svg','LICENSE'])await writeFile(resolve(destination,file),fill(await readFile(resolve(template,file),'utf8')))
+  if(platform==='elemod')await copyFile(resolve(root,'LICENSES/GPL-3.0-or-later.txt'),resolve(destination,'LICENSE'))
+  await writeFile(resolve(destination,'README.md'),platform==='zdl'
+    ?`# ${name}\n\nA ${profile.name} effect by @${author}. Version ${document.version}.\n\nDescribe what it does, every control, where it goes in a patch, and a short tutorial. Build and release it as "Create an effect" in ${profile.sdk.guide} says, then fill in platform.binary from the release. Follow docs/ADD_A_MODULE.md, docs/module-guides/effects.md, docs/SDK.md and docs/ZDL_MODULE_CONTRACT.md.\n`
+    :`# ${name}\n\nA ${profile.name} mod by @${author}. Version ${document.version}.\n\nDescribe what it does, every control, how to reach it on the unit, and a short tutorial. Follow docs/ADD_A_MODULE.md, the guide for this mod's category in docs/module-guides/ (and sequencing.md if it acts in time), docs/SDK.md and the ${profile.name} guide (${profile.sdk.guide}).\n`)
   await writeFile(resolve(destination,'TESTING.md'),`# ${name} testing\n\nNo checks have been run. For each tier in docs/SDK.md, record the source commit, the exact build, the OS release, the machine model and every result. Keep firmware, dumps and build outputs out of this folder.\n`)
-  console.log('Created '+destination+'\nRead the guide for the mod\'s category in docs/module-guides/ first (and sequencing.md if it acts in time). Implement src/, measure memory and load, add real screenshots, then raise evidence.tier with actual reports (docs/SDK.md). Run npm run module:doctor -- '+id+' until it is green.')
+  console.log('Created '+destination+'\n'+(platform==='zdl'
+    ?'Build and release the effect as "Create an effect" in '+profile.sdk.guide+' says, fill in platform (file, effect ID, version, DSP cost, the release), then npm run zdl:vendor -- '+id+'. Add screenshots of its screen and raise evidence.tier with actual reports (docs/SDK.md). Run npm run module:doctor -- '+id+' until it is green.'
+    :'Read the guide for the mod\'s category in docs/module-guides/ first (and sequencing.md if it acts in time). Implement src/, measure memory and load, add real screenshots, then raise evidence.tier with actual reports (docs/SDK.md). Run npm run module:doctor -- '+id+' until it is green.'))
   await claimModule()
   process.exit(0)
 }
@@ -42,10 +51,10 @@ const document=JSON.parse(await readFile(resolve(root,'public/module-repository.
 document.id=id;document.key=id.toUpperCase().replaceAll('-',' ');document.name=id.split('-').map(word=>word[0]?.toUpperCase()+word.slice(1)).join(' ');document.author={github:author,credits:[author]}
 if(kind==='coldfire'){document.category='playback';document.compatibility.location='Flex / Static';document.compatibility.effectId=null;document.controls=[]}
 parseModuleDocument(document)
-// A new Octatrack module starts as a draft: sdk/octabam/modules/ holds listed modules, and a draft there would block catalogue generation
+// A new Octatrack module starts as a draft: sdk/octatrack/modules/ holds listed modules, and a draft there would block catalogue generation
 // for everyone. module:dev and module:doctor --draft stage it where the builders look while they run.
 const destination=output?resolve(output,id):resolve(root,'sdk/drafts',id)
-if(!output)try{await access(resolve(root,'sdk/octabam/modules',id));throw new Error('A listed module is already called '+id+': update it (docs/MODULE_AUTHOR_UPDATES.md) or pick another id.')}catch(error){if(error.code!=='ENOENT')throw error}
+if(!output)try{await access(resolve(root,'sdk/octatrack/modules',id));throw new Error('A listed module is already called '+id+': update it (docs/MODULE_AUTHOR_UPDATES.md) or pick another id.')}catch(error){if(error.code!=='ENOENT')throw error}
 try{await access(destination);throw new Error('Destination exists; refusing to replace a module: '+destination)}catch(error){if(error.code!=='ENOENT')throw error}
 await mkdir(destination,{recursive:true});await mkdir(resolve(destination,'media'))
 const template=resolve(root,'sdk/templates',kind),placeholder=kind==='dsp'?'_template':'_template_cf'

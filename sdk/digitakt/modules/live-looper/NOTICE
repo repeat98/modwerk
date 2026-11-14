@@ -1,0 +1,20 @@
+Live Looper (Digitakt I, OS 1.54)
+
+The looper's live features are by draadpiraat, GPL-3.0-or-later (LICENSE).
+
+The looper (src/loop.c, src/loop.s and the headers beside them) is based on
+sumedho's RAM Machines, GPL-2.0-or-later (LICENSE.GPL-2.0):
+  RAM Machines 1.3.1 in repeat98/modwerk at ac085312a2354f45d343b0fc0cea2844c977026b
+  (sdk/digitakt/modules/ram-machines), from https://github.com/sumedho/digirequests
+  at 8eba613dc3e0b1698797609256fd4081923b4ef2 (modules/ram-machines).
+  sumedho invited others to build on it:
+  https://github.com/repeat98/modwerk/issues/1053#issuecomment-6712894195
+Those files keep their GPL-2.0-or-later headers; this module as a whole is
+distributed under GPL-3.0-or-later, which their "or later" permits.
+
+Core 3.0 header (src/digitakt-mk1/core3.h) and Core 2.1: irpina / Elekloader,
+GPL-2.0-or-later. Machine Pages: irpina, adapted to Core 2.1 by sumedho.
+src/digitakt-mk1/stock_knob.h: draadpiraat, GPL-3.0-or-later.
+
+No Elektron firmware is included. Stock code is referenced by address, length
+and SHA-256 only.

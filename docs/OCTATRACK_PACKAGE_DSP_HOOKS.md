@@ -71,9 +71,8 @@ stay base data (Phase 3).
 - **Trust.** A row pins the **controller digest** (`loader.h`: the header with its DSP fields zeroed and everything up
   to the claims), not the package's SHA-256; the loader keeps it in the owner record, and the board, the owner checks and
   the write lease compare it. A package that changes only its DSP part (0.1.6) keeps its row, so the base is not rebuilt.
-  The source policy in a row hashes only the controller's inputs (`build.py machine_inputs`), and the price (411 a
-  voice, 3 a core) stays in the machine record (`machine-ports.json`): a price change is a controller change until
-  Phase 2.
+  The source policy in a row hashes only the controller's inputs (`build.py machine_inputs`). The price per voice is
+  the engine header's `cycles` and `kind`, outside the digest (`sdk/runtime/loader/README.md`, "Price").
 - **Admission.** The loader asks `modwerk_machine_dsp_engine_admit` (the board) for an engine: a trusted controller of a
   packaged feature, one entry at the feature's one site on its cores, entered at word 0, an exit exactly where the site
   has one, claims exactly the feature's regions with initial words, at most 2,048 words. A trusted controller of a
@@ -297,7 +296,7 @@ slot on each core.
 
 The point is to ship a hook module's DSP change as a new package, with no base rebuild. So admission can't be by an exact
 package hash pinned in the base, as controller trust rows are. The proposal: a hook package is admitted like an effect
-package, by the catalogue and qualification path (review, `module:verify`, hardware evidence), with the base enforcing
+package, by the catalogue and qualification path (review, hardware evidence), with the base enforcing
 only the structural rules above (sites, guards, claims, cost, P room). That is a policy change for the owner: a hook
 runs on every track of a core, so a bad package can silence or stall a core. It is the same class of risk as an effect
 package, larger in reach.
@@ -375,10 +374,10 @@ stays byte-identical; only its feature split moves (KEYBUS, bit 8, out of SIDECH
   carries the tap and no instance. "Installed, on no track" measures nothing on an on-demand base (above). Core 1's
   meter is not calibrated.
 
-**Resets.** KEYBUS resets the window ($33dfe / $3bdfe, $202 words) and then the bus (Y $800, $200 words), 1,026 words
-per core, when it is placed: the window first, so the first chunk zeroes the seed mark and counter. Once it is let go
+**Resets.** KEYBUS resets the window ($33dfe / $3bdfe, $202 words) and then the bus (Y $7e00, $200 words), 1,026 words
+per core, when it is placed: the window first, so the first chunk zeroes the seed and counter. Once let go
 after a run, the board sends that one chunk again (the scrub) while it still holds the window, so a stale mark never
-outlives the bus. Sidechain keeps its exact reset (1,042 words: Y $7f0+$210 and the window), so its contract and
+outlives the bus. Sidechain keeps its exact reset (1,042 words: Y $ff0+$10, the window, Y $7e00+$200), so its contract and
 DSP stay byte-identical; a held Sidechain holds KEYBUS, which the base places, resets and enables first. Side effect:
 installing or reinstalling Sidechain while a reader is live re-zeroes the bus and the window once, so that reader hears
 up to about a block of silent key while the tap re-adopts its counter by #640's rule.

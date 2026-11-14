@@ -25,12 +25,18 @@ export function slotCount({ memory = totalmem(), cores = availableParallelism(),
   return Math.max(1, Math.min(Math.floor(memory / (6 * GB)), Math.floor(cores / 4)))
 }
 
-/** Memory the system can still give a new process, in bytes: Linux's MemAvailable (free memory counts no page cache). */
-export function availableMemory(meminfo = readMeminfo()) {
+/** Memory the system can still give a new process, in bytes: Linux's MemAvailable, and on macOS the pages vm_stat
+ * counts as free, inactive, speculative or purgeable. os.freemem() counts no cache: a 16 GB Mac at rest reports about
+ * 150 MB, which sized every check to one worker. */
+export function availableMemory(meminfo = readMeminfo(), vmStat = meminfo ? null : readVmStat()) {
   const kb = meminfo?.match(/^MemAvailable:\s+(\d+) kB/m)?.[1]
-  return kb ? Number(kb) * 1024 : freemem()
+  if (kb) return Number(kb) * 1024
+  const page = Number(vmStat?.match(/page size of (\d+) bytes/)?.[1])
+  const pages = ['free', 'inactive', 'speculative', 'purgeable'].map(kind => Number(vmStat?.match(new RegExp('^Pages ' + kind + ':\\s+(\\d+)', 'm'))?.[1]))
+  return page && pages.every(Number.isFinite) ? page * pages.reduce((sum, n) => sum + n, 0) : freemem()
 }
 function readMeminfo() { try { return readFileSync('/proc/meminfo', 'utf8') } catch { return null } }
+function readVmStat() { try { return execFileSync('vm_stat', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }) } catch { return null } }
 
 /** Workers for a parallel stage that needs about `each` bytes per worker beside `keep` bytes for the rest, from 1 to `most`. */
 export function workersFor({ most, each, keep = GB, available = availableMemory(), cores = availableParallelism() }) {

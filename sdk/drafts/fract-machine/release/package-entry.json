@@ -1,0 +1,31 @@
+{
+  "id": "fract-machine",
+  "version": "0.1.2-experimental",
+  "sources": [
+    "sdk/octatrack/modules/fract-machine/machine.c",
+    "sdk/octatrack/modules/fract-machine/render.c",
+    "sdk/octatrack/modules/fract-machine/start.c",
+    "sdk/octatrack/modules/fract-machine/registration.c",
+    "sdk/octatrack/modules/fract-machine/base_binding.c",
+    "sdk/octatrack/modules/fract-machine/engine/grain.c",
+    "sdk/octatrack/modules/fract-machine/engine/pitch.c",
+    "sdk/octatrack/modules/fract-machine/support/control.c",
+    "sdk/octatrack/modules/fract-machine/engine/source.c",
+    "sdk/runtime/logging/freestanding.c",
+    "sdk/octatrack/modules/fract-machine/engine/kernel.s"
+  ],
+  "sourceRecipe": "sdk/octatrack/modules/fract-machine/runtime-build.json",
+  "usbOnly": true,
+  "requiredBase": "72defb09b9d463fe62ab876f350f442d10e32ec23e55918a22b9b756c5cb3da6",
+  "path": "octatrack-modules/fract-machine/0.1.2-experimental.mwrm",
+  "name": "FRACT",
+  "module": "5efef0cd",
+  "bytes": 31772,
+  "sha256": "6ff37fdcdbfead903a4857482d0f7bd50905175b55c877e62ad7c51422ef5874",
+  "abi": 8,
+  "features": 130,
+  "sites": 0,
+  "copies": 9,
+  "fills": 0,
+  "base": true
+}

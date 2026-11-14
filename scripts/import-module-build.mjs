@@ -34,7 +34,7 @@ if (!development) {
 const versions = await compiledModuleVersions(root, catalog)
 if (JSON.stringify(Object.keys(report.moduleVersions).sort()) !== JSON.stringify(Object.keys(versions).sort())) throw new Error('Compiled module scope differs from the catalog')
 for (const [id,version] of Object.entries(versions)) {
-  const doc = parseModuleDocument(await json(resolve(root,'sdk/octabam/modules',id,'octamod.module.json')))
+  const doc = parseModuleDocument(await json(resolve(root,'sdk/octatrack/modules',id,'octamod.module.json')))
   if (doc.version !== version || report.moduleVersions[id] !== version) throw new Error('Stale compiled module version: ' + id)
 }
 if (JSON.stringify(Object.keys(report.files).sort()) !== JSON.stringify([...expected].sort()) || !report.sources || typeof report.sources !== 'object' || !Object.keys(report.sources).length) throw new Error('Invalid compiled artifact inventory')
@@ -43,7 +43,8 @@ const actual=await moduleSourcePaths(root)
 if(JSON.stringify(actual.sort())!==JSON.stringify(Object.keys(report.sources).sort()))throw new Error('Compiled source inventory is incomplete or stale.')
 for (const [path, fingerprint] of Object.entries(report.sources)) {
   if (!/^(modules|platform|tools|dsp|licenses)\/[A-Za-z0-9._/-]+$/.test(path) || path.split('/').some(part => part === '..' || part === '.') || !hash(fingerprint) || /\.(bin|syx|exe|dll|dylib|zip)$/i.test(path)) throw new Error('Invalid source inventory path: ' + path)
-  const source = resolve(native,path); await regular(source,native)
+  // octabam's modules/ is sdk/octatrack/modules here; sdk/octabam/modules is only its untracked mirror (mirror-octatrack-modules.mjs).
+  const home = path.startsWith('modules/') ? resolve(root,'sdk/octatrack') : native, source = resolve(home,path); await regular(source,home)
   if (await sourceEntryHash(root,path) !== fingerprint) throw new Error('Compiled source is stale: ' + path)
 }
 if (sha(JSON.stringify(Object.fromEntries(Object.entries(report.sources).sort(([a],[b]) => a < b ? -1 : a > b ? 1 : 0)))) !== report.sourceTreeSha256) throw new Error('Source tree fingerprint differs')

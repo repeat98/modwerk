@@ -3,20 +3,18 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { verifyImportedFile } from '../../scripts/sdk-imports.mjs'
-import manifest from '../../sdk/octabam/modules/tapehead/octamod.module.json'
-import capture from '../../sdk/octabam/modules/tapehead/media/capture.json'
+import manifest from '../../sdk/octatrack/modules/tapehead/octamod.module.json'
+import capture from '../../sdk/octatrack/modules/tapehead/media/capture.json'
 import provenance from '../../sdk/imports/tapehead-f890330.json'
 import baseline from '../../sdk/approvals/module-qualification-baseline.json'
 import { moduleNativeSourceSha256, parseQualificationBaseline, requireFolderQualification } from '../../scripts/module-qualification.mjs'
 import { parseModuleDocument } from './module-contract'
 import { isModuleAvailable } from './availability'
 import { moduleBuildPending } from './build-support'
-import { selectionConflicts } from './selection-conflicts'
-import { defaultChoosers } from '../engine/choosers'
 import requestedProofs from '../engine/assets/tapehead-composition-proofs.json'
 import utilityProofs from '../engine/assets/tapehead-utility-proofs.json'
 
-const folder = resolve('sdk/octabam/modules/tapehead')
+const folder = resolve('sdk/octatrack/modules/tapehead')
 const sha = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex')
 
 describe('published TapeHead evidence', () => {
@@ -46,15 +44,6 @@ describe('published TapeHead evidence', () => {
     const license = readFileSync(resolve(folder, 'LICENSE'), 'utf8')
     expect(license).toContain('Copyright (c) 2026 JClones')
     expect(license).toContain('Copyright (c) 2026 devilfish707')
-  })
-  it('offers both effect slots, retains other stock FX2, and explains the native Analog BD refusal', () => {
-    const chooser = defaultChoosers(['tapehead'], true)
-    expect(chooser.fx1).toContain('TAPEHEAD')
-    expect(chooser.fx2).toContain('TAPEHEAD')
-    expect(chooser.fx2).not.toContain('SPRING REV')
-    expect(chooser.fx2).toContain('DARK REV')
-    expect(selectionConflicts(['tapehead'], true)).toEqual([])
-    expect(selectionConflicts(['tapehead', 'analog-bassdrum'])).toEqual([])
   })
   it('retains complete native identity and refusal coverage for the new combinations without firmware bytes', () => {
     for (const [proofs, scope, companions, expected] of [

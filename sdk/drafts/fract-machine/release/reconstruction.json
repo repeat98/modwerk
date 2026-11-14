@@ -1,0 +1,109 @@
+{
+  "schema": 1,
+  "imageSha256": "eeb99e384900b6683fb853557d956161e5d03a467dbe77207624e9914adb6bef",
+  "sources": {
+    "module/base_binding.c": "217dc052fbdffd80733c852550596fa6f1207d7921647a25f89077a23f5bbf7e",
+    "module/base_binding.h": "ba584ceb7b5616a819db330303fc89228f75254aa9cd2158a77fd550a4a05e61",
+    "module/control_layout.h": "4085f97129fbaf36fe808fba8081bdfbe5b5d175dd47f857d08bc2e98d2e708f",
+    "module/cpu_profile.h": "4fc9ced2fa683f30d3f3c59516a769b41b5dab85ff2f3dacb9126d9aa113ee20",
+    "module/engine/grain.c": "2d5233909b681098810c4a0f3b6f85ddcf3cfbc5179749d6f0ac5452822081d1",
+    "module/engine/kernel.h": "ffd5a9cd274145db26cc988afacce5e007d35c79a36ce8a44914e281ae861d17",
+    "module/engine/kernel.s": "643e34e4c1b75557e365f07030788d2a274fb7b5aa0f30acc5efb699fae6ad1a",
+    "module/engine/page_coordinates.h": "59720b052ab4e43b00ef48a9a292baea3f862bda9c818470e64b929b5a1f5b54",
+    "module/engine/pitch.c": "b49882cccb3a74a5c039b29a1b07e6f4ca8ed7d937fd02b7ccb3d643b9e9ec1c",
+    "module/engine/source.c": "df2abb3a8b6201cff01ee8b380d61c2535390d7f1c04204ebe3b22157bc0a0d6",
+    "module/fract_ui.h": "c70699b713c4ae0a1f3720e4b34bce546de40ac43feaebfb141c93e43659bb3a",
+    "module/machine.c": "4877588007cd5f7cda73bcf4d925f03b70379f07b19f3405aca27d6564eff36f",
+    "module/machine.h": "5d77969beb3aa41b359facfa9d4e267d3d986f2d306c9264a65b1d2cc98cb854",
+    "module/native_source.h": "071d9aee84067d5c165606e555d007c737a8c7aef99811ed3fce926e1ee9f8ab",
+    "module/registration.c": "3f9ffc31540e5a47da3fad1128ec17c28bb9816d930dd6d2062a97f7b558b34f",
+    "module/render.c": "fa4cff0f3b0aa8df3db966bbb9d777b874e39052c12679a814b11d3968f134ce",
+    "module/render.h": "2c81a00122910d8ec71d44917246e5b69fd6ca68e53772700f3c6672d3ffa773",
+    "module/runtime-build.json": "28458553c69014d31c67cfae3dfff72d96cd16392db749ad03e80e0e5c6c3b97",
+    "module/runtime.json": "10e2234c9a3fcceda4407f51a546bf29b206d298cd7ea0c50e846b0cc046a204",
+    "module/sample_pool.h": "157769f26f7ff4f8b0fb5f1cf42701a95e31616312c9ab234e958080e864b5e9",
+    "module/selection.h": "f2869ec9179878a3ba7020472725219602c0de3c1b331c8069dec68d6272b0ba",
+    "module/start.c": "e1e7e805090a2022f1bea33fe4f98f4b4698d91edb3388df7e2701e2547990c3",
+    "module/support/control.c": "f4035fa092840db61b7cbb7141e1af8cefebd91875748e9c4b05ad9c6fae62e4",
+    "module/support/grain.h": "accd83129e5d243abcfe6ddb27d3bee9440b3d1c25e2c98aff4e56c87c2f22d3",
+    "module/support/pan.h": "e1a05cf6d36716e5c0b0aaca19c19a86d7fa9669956ce97b2cfa2461420128eb",
+    "module/support/shapes.h": "fec26545e613ea7fa60a0d27f1aa906e864ea439ff5d82b7c1dbf3b00496e77a",
+    "module/support/sizes.h": "0e82d939929976de7aa3f0c17e014c34a45bbdc4ea68e92a30c58d40b17081bb",
+    "module/support/source.h": "75bbfd34bc9da1bf315650516eb3118c6472d6a845a56f471d3b39cd70d54771",
+    "module/support/window.h": "963478023953646d95e089110dae034de29aeb4c6c964d8e45ff39f3e9aeb34a",
+    "sdk/runtime/logging/freestanding.c": "698d66b43a956e789c8b3057375a195db12e9a88968d2fbb3c7ce09a8021b575"
+  },
+  "copies": [
+    {
+      "offset": 6488,
+      "length": 13,
+      "address": 1073973354,
+      "sha256": "2393ebbe40716982dc0fc11a30e3e53f13d60755b68dc8f156a4cf02ec77c2f2",
+      "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 10498,
+      "length": 18,
+      "address": 1073759904,
+      "sha256": "21fa9b2f73fd45425816040111feafeef4bc4894e08875d45b73907959f9b968",
+      "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 10654,
+      "length": 12,
+      "address": 1073851016,
+      "sha256": "bf5430043c8a12a1b41ec5885c35df271f94f8fcb710a4631e301dd2358ca193",
+      "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 11216,
+      "length": 12,
+      "address": 1073851016,
+      "sha256": "bf5430043c8a12a1b41ec5885c35df271f94f8fcb710a4631e301dd2358ca193",
+      "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 14674,
+      "length": 12,
+      "address": 1074093666,
+      "sha256": "cd309c74b16baa09c3d70ddd23ce1bd3fec58f9facb94cd9ca93eaeabcab993b",
+      "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 14686,
+      "length": 13,
+      "address": 1073821810,
+      "sha256": "a517b1ff860128401ddcb25f632699d7ba2288ca974b6dbfa3999254aff49af6",
+      "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 16508,
+      "length": 14,
+      "address": 1074362300,
+      "sha256": "9e3dd6327de2534128db7663c70f00d765756b788a6ef05047e2857e5963ef78",
+      "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 18526,
+      "length": 12,
+      "address": 1074632928,
+      "sha256": "46b13fd6f448673e784e0a160137853a497770078ee9f9796b6d893b0d5594bb",
+      "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    },
+    {
+      "offset": 18538,
+      "length": 1,
+      "address": 1073742859,
+      "sha256": "36a9e7f1c95b82ffb99743e0c5c4ce95d83c9a430aac59f84ef3cbfab6145068",
+      "purpose": "fract-machine: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
+    }
+  ],
+  "fills": [],
+  "baseImports": [
+    {
+      "offset": 14660,
+      "name": "mw_stock_pool_open",
+      "addend": 0
+    }
+  ]
+}

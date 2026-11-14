@@ -1,13 +1,14 @@
-// The beta interface's own views and the USB link (hasBetaUi). App imports this module on demand, so visitors
-// without beta access never download it.
+// The Octatrack base path's views and the USB link (hasOctatrackBase), and the Zoom pedal pages (hasBetaUi). App
+// imports this module on demand, so visitors without that access never download it.
 import { OctatrackLink } from '../engine/elekloader/octatrack-link'
 import { moduleSetKit } from '../engine/elekloader/module-set'
 import { ZoomLink } from '../engine/zoom/zoom-link'
 export { OctatrackHub } from './OctatrackHub'
-export { ZoomHub } from './ZoomHub'
+export { ZoomHub, ZoomSidebarStatus } from './ZoomHub'
+export { ZoomBaseDialog } from './ZoomBaseDialog'
 export { LoadDialog } from './LoadDialog'
 export { InstrumentItem } from './InstrumentItem'
-export { CardInstall } from './UnitPanel'
+export { CardSetDownload } from './UnitPanel'
 export { ModuleGrid, StateChip } from './ModuleGrid'
 export { ModuleDialog } from './ModuleDialog'
 export { OctatrackActivity, OctatrackStatus, OctatrackSidebarStatus } from './OctatrackStatus'

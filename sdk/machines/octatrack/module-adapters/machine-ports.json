@@ -151,7 +151,7 @@
   },
   "vector": {
    "sources": {
-    "sdk/octabam/modules/vector/control.s": "1939a627870464126d138522173d0465d1abc790cdb4ad4bc29a15501484faf5",
+    "sdk/octabam/modules/vector/control.s": "4ea4778c545453ce37b2a106438b7a24460705295bef8ff7f9ab500787068bc0",
     "sdk/octabam/modules/vector/manifest.py": "4d921f24256038797a99671534885b0bb9a27eaa79261b11136cf0a95a75af21"
    },
    "contribute": [
@@ -839,9 +839,10 @@
     }
    },
    "price": {
-    "voice": 411,
-    "engine": 3,
+    "voice": 0,
+    "engine": 0,
     "kind": "executed",
+    "inEngine": true,
     "source": "sdk/machines/octatrack/module-adapters/analog_bd_dsp_price.json"
    },
    "controller": "analog_bd_write_lease",

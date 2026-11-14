@@ -76,7 +76,7 @@ on the exact eventual release build before qualifying or publishing it.
 
 ## Capture, compare and recovery
 
-Before device access, follow `/modwerk-try-on-unit`: obtain fresh readiness and
+Before device access, follow `/modwerk-test-on-unit`: obtain fresh readiness and
 exclusive ownership of the unit, stopped on a disposable project. Start only
 one bridge from a stable checkout, sharing EP0 as described in
 `docs/OCTATRACK_DRIVING.md`. The tools here reuse that session; they do not start

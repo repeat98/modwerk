@@ -1,5 +1,5 @@
 import type { Database, Env } from './platform'
-import { OCTATRACK_COUNTS } from '../src/community/octatrack-diagnostics-contract'
+import { OCTATRACK_COUNTS, OCTATRACK_STEP_COUNTS, type OctatrackStepCount } from '../src/community/octatrack-diagnostics-contract'
 import { USAGE_CONSENT_VERSION } from '../src/legal/policy'
 import { boundedBody, HttpError, response } from './security'
 import { throttle } from './auth'
@@ -38,6 +38,8 @@ async function privateHash(key: string, purpose: string) {
   const secret = await crypto.subtle.importKey('raw',new TextEncoder().encode(key),{name:'HMAC',hash:'SHA-256'},false,['sign'])
   return Array.from(new Uint8Array(await crypto.subtle.sign('HMAC',secret,new TextEncoder().encode('octamod-usage-v1:' + purpose))),b=>b.toString(16).padStart(2,'0')).join('')
 }
+/** A keyed IP digest, shared by every count route, limits abuse in rate_limits and expires within the hour. */
+const throttleAddress = async (request: Request, db: Database, secret: string, today: string) => throttle(db,'usage-count:' + await privateHash(secret,today + ':count-rate:' + (request.headers.get('CF-Connecting-IP') ?? 'local')),300,3600)
 /** No guest account, IP, user agent, referrer, module list or firmware enters these tables. */
 export async function recordUsage(request: Request, env: Env, db: Database) {
   if (request.headers.get('DNT') === '1' || request.headers.get('Sec-GPC') === '1') return new Response(null,{status:204})
@@ -54,6 +56,7 @@ export async function recordUsage(request: Request, env: Env, db: Database) {
   // Purpose separation: backend-only key material never becomes a browser identifier or API response.
   const visitor = await privateHash(secret,today + ':visitor:' + body.visitor), identity = await privateHash(secret,today + ':event:' + body.visitor + ':' + body.eventId)
   await throttle(db,'usage:' + visitor,200,3600)
+  await throttleAddress(request,db,secret,today) // visitor IDs are chosen by the caller
   const metric = columns[event] // Selected only from the closed enum above, never from arbitrary SQL input.
   await db.batch([
     db.prepare('INSERT INTO usage_events(day,event_hash) VALUES(?,?) ON CONFLICT DO NOTHING').bind(today,identity),
@@ -95,16 +98,22 @@ export async function recordAnonymousCount(request: Request, env: Env, db: Datab
   catch(error) { if(error instanceof HttpError)throw error; throw new HttpError(400,'Invalid usage count.') }
   const keys = Object.keys(body).sort().join(',')
   const octatrackCount = keys === 'event' && OCTATRACK_COUNTS.some(event => event === body.event)
+  const stepCount = octatrackStep(body, keys)
   const moduleCount = keys === 'event,moduleId' && body.event === 'module_download' && typeof body.moduleId === 'string' && canTrackModuleDownload(body.moduleId)
   const announcementCount = keys === 'announcementId,event' && typeof body.event === 'string' && Object.hasOwn(ANNOUNCEMENT_COUNTS,body.event) && typeof body.announcementId === 'string' && /^announcement-[a-f0-9]{32}$/.test(body.announcementId)
-  if (!octatrackCount && !moduleCount && !announcementCount && (!['event','device,event','event,page'].includes(keys) || typeof body.event !== 'string' || !USAGE_EVENTS.includes(body.event as UsageEvent))) throw new HttpError(400,'Invalid usage count.')
-  const device = moduleCount || announcementCount ? null : deviceOf(body,body.event as UsageEvent), page = pageOf(body)
+  if (stepCount === undefined) throw new HttpError(400,'Invalid usage count.')
+  if (!octatrackCount && !stepCount && !moduleCount && !announcementCount && (!['event','device,event','event,page'].includes(keys) || typeof body.event !== 'string' || !USAGE_EVENTS.includes(body.event as UsageEvent))) throw new HttpError(400,'Invalid usage count.')
+  const device = moduleCount || announcementCount || stepCount ? null : deviceOf(body,body.event as UsageEvent), page = pageOf(body)
   if (device === undefined || page === undefined) throw new HttpError(400,'Invalid usage count.')
   const now = new Date(), today = day(now)
-  await throttle(db,'usage-count:' + await privateHash(secret,today + ':count-rate:' + (request.headers.get('CF-Connecting-IP') ?? 'local')),300,3600)
+  await throttleAddress(request,db,secret,today)
   if (octatrackCount) {
     await db.prepare('INSERT INTO octatrack_beta_daily(day,event,count) VALUES(?,?,1) ON CONFLICT(day,event) DO UPDATE SET count=count+1').bind(today,body.event).run()
     return response({ok:true}) // No visitor/session/module/device identity, including no unique-visitor digest.
+  }
+  if (stepCount) {
+    await db.prepare('INSERT INTO octatrack_count_daily(day,event,detail,count) VALUES(?,?,?,1) ON CONFLICT(day,event,detail) DO UPDATE SET count=count+1').bind(today,stepCount.event,stepCount.detail).run()
+    return response({ok:true}) // As above: an event name and at most one fixed category, nothing about who.
   }
   if (announcementCount) {
     const column = ANNOUNCEMENT_COUNTS[body.event as AnnouncementCountEvent], id = (body.announcementId as string).slice('announcement-'.length) // Column from the closed map above.
@@ -135,6 +144,16 @@ export async function recordAnonymousCount(request: Request, env: Env, db: Datab
     db.prepare("INSERT INTO usage_meta(key,value) VALUES('hourly_started',?) ON CONFLICT DO NOTHING").bind(now.toISOString()),
   ])
   return response({ok:true})
+}
+/** An Octatrack install-guide or invitation count: null when the body is something else, undefined when it is one but
+ * malformed. A failure's unknown reason becomes `other`; a placement must be one of the fixed ones. */
+function octatrackStep(body: Record<string, unknown>, keys: string): { event: OctatrackStepCount; detail: string } | null | undefined {
+  if (typeof body.event !== 'string' || !Object.hasOwn(OCTATRACK_STEP_COUNTS, body.event)) return null
+  const event = body.event as OctatrackStepCount, details: readonly string[] = OCTATRACK_STEP_COUNTS[event]
+  if (!details.length) return keys === 'event' ? { event, detail: '' } : undefined
+  if (keys !== 'detail,event' || typeof body.detail !== 'string' || body.detail.length > 32) return undefined
+  if (details.includes(body.detail)) return { event, detail: body.detail }
+  return event === 'base_install_failed' ? { event, detail: 'other' } : undefined
 }
 /** Called hourly by the Worker and available to other backend adapters. */
 export async function cleanupUsage(db: Database, now = new Date()) {
@@ -191,6 +210,7 @@ export async function recordModuleDownload(request: Request, env: Env, db: Datab
   // Rate-limit digests are separate from deduplication. Neither table links a module to a visitor.
   const visitor = await privateHash(secret,today + ':module-rate:' + body.visitor), identity = await privateHash(secret,today + ':module-event:' + body.eventId)
   await throttle(db,'module-download:' + visitor,200,3600)
+  await throttleAddress(request,db,secret,today) // visitor IDs are chosen by the caller
   await db.batch([
     db.prepare('INSERT INTO module_download_events(day,event_hash) VALUES(?,?) ON CONFLICT DO NOTHING').bind(today,identity),
     db.prepare('INSERT INTO module_downloads(module_id,downloads,first_download_at) SELECT ?,1,? WHERE EXISTS(SELECT 1 FROM module_download_events WHERE day=? AND event_hash=? AND counted=0) ON CONFLICT(module_id) DO UPDATE SET downloads=downloads+1').bind(body.moduleId,now.toISOString(),today,identity),

@@ -42,6 +42,32 @@ function polyVoice(voice: number) {
   }).join(' ')
 }
 
+// The Amiga computer seen from the front right: u runs across the case, v from back to front, z up; the top slopes down to the front.
+function amigaPoint(u: number, v: number, z = 26 - 16 * v / 92) {
+  return (75 + .94 * u - .4 * v).toFixed(1) + ' ' + (70 + .11 * u + .4 * v - z).toFixed(1)
+}
+const amigaPath = (points: [number, number, number?][], close = true) => 'M' + points.map(([u, v, z]) => amigaPoint(u, v, z)).join('L') + (close ? 'Z' : '')
+const amigaQuad = ([u0, v0, u1, v1]: number[], gap = 1.6) => amigaPath([[u0, v0], [u1 - gap, v0], [u1 - gap, v1 - gap], [u0, v1 - gap]])
+
+function amigaKeys() {
+  const k = 9, h = 8.2, top = 33, right = 141, cursor = 146, pad = 178, keys = [[6, 24, 15, 30]]
+  for (let i = 0; i < 10; i++) keys.push([22 + (i > 4 ? 64 : 0) + (i % 5) * 12.4, 24, 34.4 + (i > 4 ? 64 : 0) + (i % 5) * 12.4, 30])
+  ;[k, 1.5 * k, 1.75 * k, 2.25 * k].forEach((lead, row) => {
+    const v = top + row * h
+    let u = 6 + lead
+    keys.push([6, v, u, v + h])
+    for (; u + k <= right - (row ? k / 2 : 0) + .01; u += k) keys.push([u, v, u + k, v + h])
+    if (right - u > 2) keys.push([u, v, right, v + h])
+  })
+  for (const [a, b] of [[0, 1.5], [1.5, 2.5], [2.5, 12.5], [12.5, 13.5], [13.5, 15]]) keys.push([6 + a * k, top + 4 * h, 6 + b * k, top + 5 * h])
+  keys.push([cursor, top, cursor + 1.5 * k, top + h], [cursor + 1.5 * k, top, cursor + 3 * k, top + h], [cursor + k, top + 3 * h, cursor + 2 * k, top + 4 * h])
+  for (let i = 0; i < 3; i++) keys.push([cursor + i * k, top + 4 * h, cursor + (i + 1) * k, top + 5 * h])
+  for (let row = 0; row < 4; row++) for (let c = 0; c < 3; c++) keys.push([pad + c * k, top + row * h, pad + (c + 1) * k, top + (row + 1) * h])
+  keys.push([pad, top + 4 * h, pad + 2 * k, top + 5 * h], [pad + 2 * k, top + 4 * h, pad + 3 * k, top + 5 * h])
+  keys.push([pad + 3 * k, top, pad + 4 * k, top + h], [pad + 3 * k, top + h, pad + 4 * k, top + 3 * h], [pad + 3 * k, top + 3 * h, pad + 4 * k, top + 5 * h])
+  return keys.map(key => amigaQuad(key)).join('')
+}
+
 // Hand-drawn art for the catalog modules. A module without an entry shows its presentation/thumbnail.svg.
 const ART: Readonly<Record<string, () => ReactElement>> = {
   poly8: () => <g>
@@ -111,24 +137,6 @@ const ART: Readonly<Record<string, () => ReactElement>> = {
 </g>
 <g fill="#b5a0ff" fontFamily="monospace" fontSize="9" letterSpacing=".6"><text x="27" y="28" opacity=".7">T1 / KEY</text><text x="168" y="119">COMP</text><text x="25" y="177" opacity=".65">T5 / INPUT</text><text x="207" y="177" opacity=".65">DUCKED OUTPUT</text></g>
 </g>,
-  spectrum: () => <g>
-    <path className="signal-ghost" d="M25 136C84 136 109 135 130 116S146 57 164 63 181 137 206 144 262 147 296 147" />
-    <path className="signal-secondary" d="M25 116H117C147 116 160 39 177 43S189 120 209 132 263 138 296 138" />
-    <path className="signal-main" d="M25 88H149C172 88 180 35 192 36S199 84 211 105 235 128 296 128" />
-    <circle className="signal-dot" cx="192" cy="36" r="4" />
-    <text x="25" y="177">20 Hz</text><text x="258" y="177">20 kHz</text>
-  </g>,
-  modulation: () => <g>
-    <path className="signal-secondary" d={sine(1.4, 31)} /><path className="signal-main" d={sine(0, 31)} />
-    <path className="signal-ghost" d={sine(0.7, 43)} />
-    <text x="25" y="177">L</text><text x="280" y="177">R</text>
-  </g>,
-  character: () => <g>
-    <path className="signal-ghost" d={sine(0, 49, 2.5)} />
-    <path className="signal-main" d="M28 97 40 74 49 60 58 74 69 61 80 84 88 120 99 137 108 121 118 134 130 109 140 73 151 60 160 74 170 61 180 86 192 123 202 137 211 121 221 134 234 108 246 73 257 60 267 74 276 61 289 89" />
-    <path className="signal-secondary" d="M25 60H295M25 137H295" strokeDasharray="3 6" />
-    <text x="25" y="177">INPUT → FOLD → DRIVE</text>
-  </g>,
   miniverb: () => <g>
     {Array.from({ length: 50 }, (_, i) => {
       const height = Math.exp(-i / 18) * (24 + Math.abs(Math.sin(i * 2.7)) * 42)
@@ -176,15 +184,6 @@ const ART: Readonly<Record<string, () => ReactElement>> = {
     }).join(' ')} />
     <text x="25" y="177">808</text><text x="261" y="177">909</text>
   </g>,
-  'midi-scenes': () => <g>
-    {[0,1,2,3,4].map(row=><g key={row}>
-      <path className="signal-ghost" d={'M48 '+(47+row*22)+'H272'} />
-      <circle className="signal-secondary" cx="48" cy={47+row*22} r="4" />
-      <circle className="signal-secondary" cx="272" cy={47+row*22} r="4" />
-      <path className="signal-main" d={'M48 '+(47+row*22)+'L272 '+(135-row*22)} />
-    </g>)}
-    <text x="25" y="177">SCENE A</text><text x="243" y="177">SCENE B</text>
-  </g>,
   'usb-audio-out-tracks-main-cue': () => <g>
     {Array.from({length:10},(_,i)=><g key={i}>
       <path className={i<8?'signal-secondary':'signal-main'} d={'M'+(42+i*25)+' 136V'+(54+Math.abs(Math.sin(i*1.3))*42)} />
@@ -222,6 +221,21 @@ const ART: Readonly<Record<string, () => ReactElement>> = {
     <path className="signal-main" d={sine(0, 36, 3)} />
     <path className="signal-secondary" d="M29 52H291M29 142H291" strokeDasharray="3 6" />
     <text x="25" y="177">TRACK VOL ↓</text><text x="186" y="177">PREVIEW VOL 0</text>
+  </g>,
+  // The computer itself; presentation/thumbnail.svg stays as it is because the build approval's source hash covers it.
+  amiga: () => <g>
+    <path className="signal-dot" opacity=".04" d={amigaPath([[0, 0], [220, 0], [220, 92], [0, 92]])} />
+    <path className="signal-dot" opacity=".08" d={amigaPath([[0, 92], [220, 92], [220, 92, 0], [0, 92, 0]])} />
+    <path className="signal-dot" opacity=".13" d={amigaPath([[220, 0], [220, 0, 0], [220, 92, 0], [220, 92]])} />
+    <path className="signal-secondary" d={amigaPath([[0, 18], [220, 18]], false)} />
+    <path className="signal-secondary" style={{ strokeWidth: 1 }} d={Array.from({ length: 14 }, (_, i) => amigaPath([[100 + i * 8, 4], [100 + i * 8, 13]], false)).join('')} />
+    <path className="signal-secondary" style={{ strokeWidth: .8 }} d={amigaKeys()} />
+    <path className="signal-dot" opacity=".9" d={amigaQuad([196, 80.5, 202, 83], 0)} />
+    <path className="signal-dot" opacity=".45" d={amigaQuad([205, 80.5, 211, 83], 0)} />
+    <path className="signal-main" style={{ strokeWidth: 1.3 }} d={amigaPath([[220, 26, 15], [220, 62, 15], [220, 62, 11.5], [220, 26, 11.5]])} />
+    <path className="signal-dot" opacity=".6" d={amigaPath([[220, 66, 14], [220, 72, 14], [220, 72, 11], [220, 66, 11]])} />
+    <path className="signal-main" d={amigaPath([[0, 0], [220, 0], [220, 0, 0], [220, 92, 0], [0, 92, 0], [0, 92]]) + amigaPath([[0, 92], [220, 92], [220, 0]], false) + amigaPath([[220, 92], [220, 92, 0]], false)} />
+    <text x="25" y="177">8 BIT</text><text x="235" y="177">SPD 1/2</text>
   </g>,
 }
 

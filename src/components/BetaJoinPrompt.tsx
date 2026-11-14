@@ -10,12 +10,13 @@ import { FLASHING_RISKS, INDEPENDENCE_NOTICE } from '../firmware-notices'
 // shortcut: one key per public round, so "Not now" lasts for this round only; a later round needs a new key.
 const KEY = 'modwerk.beta-join:2026-10-24'
 const ROUTE = betaInvitationRoute('public')
-// What a tester signs up for. Diagnostics and Discord are then asked for by the beta note (OwnerNote.tsx), and the USB install guide follows it.
+// What a tester signs up for now that loading over USB is for everyone (OCTATRACK_BASE_RELEASED): new modules first and
+// the beta-only pages. Discord is then asked for by the beta note (OwnerNote.tsx); diagnostics are offered, never required.
 const ASKS: [IconName, string, string][] = [
-  ['arrow', 'Load modules over USB', 'Install the Modwerk base once from the card, then send modules from this page over USB, not as card firmware. That’s what the beta tests.'],
-  ['shield', 'Turn on diagnostics', 'The beta needs them: they show where a build or sync went wrong. You’re asked right after joining.'],
+  ['wave', 'Try new modules first', 'Beta modules go to testers before everyone else, over USB like any other module.'],
   ['message', 'Report bugs on Discord', 'In #beta-testers, under the same name as here.'],
-  ['warn', 'Have a way back', 'A CompactFlash card reader, and ideally a MIDI interface, to restore the original OS if USB stops working.'],
+  ['shield', 'Share diagnostics if you like', 'They show where a build or sync went wrong. It’s optional; you’re asked after joining.'],
+  ['warn', 'Have a way back', 'A CompactFlash card reader or a MIDI interface, to restore the original OS if USB stops working.'],
 ]
 
 function betaJoinDismissed() {
@@ -69,15 +70,15 @@ export function BetaJoinPrompt() {
     <button type="button" className="icon-button base-install-close" aria-label="Close" onClick={later}><Icon name="close" size={18} /></button>
     <LinkHero />
     <h2 id="beta-join-title" className="link-title" tabIndex={-1}>The beta is open for new testers <span className="module-beta-badge">Beta</span></h2>
-    <p id="beta-join-intro" className="base-install-intro">Beta testers send modules from this page to their Octatrack over USB and try new modules first. It’s open to new testers for a short time, while places last.</p>
+    <p id="beta-join-intro" className="base-install-intro">Beta testers try new modules before everyone else and tell us what breaks. It’s open to new testers for a short time, while places last.</p>
     <ul className="link-promises">{ASKS.map(([icon, lead, rest]) => <li key={lead}><span className="link-feature-icon" aria-hidden="true"><Icon name={icon} size={18} /></span><span><strong>{lead}</strong> {rest}</span></li>)}</ul>
     <p className={'link-needs' + (usb ? '' : ' is-missing')}>You need an Octatrack (MKI or MKII), your OS 1.40C file, a USB cable and Chrome or Edge on a computer.</p>
-    {!usb ? <p className="file-error" role="alert">The beta runs over USB, which this browser can’t do. Open Modwerk in Chrome or Edge on a computer to join.</p>
+    {!usb ? <p className="file-error" role="alert">Beta modules load over USB, which this browser can’t do. Open Modwerk in Chrome or Edge on a computer to join.</p>
       : !user ? <p className="base-install-note">Sign in or create an account to join.</p>
       : !verified ? <p className="base-install-note">Verify your email and choose a username in your account first.</p>
       : <>
         <p className="link-needs">Beta features are experimental: expect bugs. {FLASHING_RISKS} Back up your projects and samples first. {INDEPENDENCE_NOTICE}</p>
-        <label className="risk-accept"><input type="checkbox" checked={accepted} disabled={busy} onChange={event => setAccepted(event.target.checked)} /><span>I’ll load modules over USB, turn on diagnostics and report bugs in #beta-testers. I understand the risks.</span></label>
+        <label className="risk-accept"><input type="checkbox" checked={accepted} disabled={busy} onChange={event => setAccepted(event.target.checked)} /><span>I’ll try beta modules and report bugs in #beta-testers. I understand the risks.</span></label>
       </>}
     {error && <p className="file-error" role="alert">{error}</p>}
     <footer className="base-install-footer">

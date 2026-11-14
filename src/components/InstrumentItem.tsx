@@ -4,28 +4,50 @@ import type { Configuration } from '../config/workspace'
 import { DeviceImage } from '../devices/DeviceImage'
 import type { DeviceProfile } from '../devices/registry'
 import type { LinkState, OctatrackLink } from '../engine/elekloader/octatrack-link'
+import type { ZoomLink, ZoomLinkState } from '../engine/zoom/zoom-link'
+import { ZOOM_BASE, isUpdateMode } from '../engine/zoom/zoom-protocol'
 import { Icon } from './Icon'
 
 const noSubscription = () => () => {}
 const LIVE: LinkState['status'][] = ['connecting', 'sending', 'testing', 'trial', 'finishing']
 const modules = (n: number) => n + (n === 1 ? ' module' : ' modules')
+/** A Zoom pedal's dot and line, as 'dot|line': the base by name, Zoom's firmware, update mode, a flash under way. */
+function zoomUnit(state?: ZoomLinkState) {
+  if (!state || state.status === 'unsupported') return '|Not connected'
+  if (state.status === 'writing' && state.progress?.label === 'Flashing') return 'updating|Flashing the base · don’t unplug'
+  if (state.status !== 'ready' || !state.identity) return state.status === 'idle' ? 'off|Not connected' : 'busy|' + (state.status === 'connecting' ? 'Connecting…' : 'Working…')
+  const { identity } = state
+  return identity.firmware === ZOOM_BASE.tag ? 'connected|' + ZOOM_BASE.name : isUpdateMode(identity) ? 'stock|Update mode' : 'stock|Zoom firmware ' + identity.firmware + (identity.deviceId === 0x61 ? ': install the base' : '')
+}
 
 /**
- * The machine you work on, in the sidebar. With a USB link (the Octatrack, beta) it is one card leading to the hub:
+ * The machine you work on, in the sidebar. With a USB link (the Octatrack on the base path) it is one card leading to the hub:
  * the unit (what is on it, or what this browser read when it was last connected) and the set you are editing, with
  * the Octatrack's own LED language: lit green is on the unit, outlined is waiting to load.
- * Without one (other machines, phones) it shows the module set you are editing and leads to its page.
+ * Without one (other machines, phones) it shows the module set you are editing and leads to its page. A Zoom pedal
+ * (`zoom`, its Web MIDI link, null until it loads) shows what it runs, leading to its page.
  */
-export function InstrumentItem({ device, set, href, link, current, inventory }: { device: DeviceProfile; set?: Configuration; href: string; link?: OctatrackLink | null; current: boolean; inventory?: Inventory }) {
+export function InstrumentItem({ device, set, href, link, zoom, current, inventory }: { device: DeviceProfile; set?: Configuration; href: string; link?: OctatrackLink | null; zoom?: ZoomLink | null; current: boolean; inventory?: Inventory }) {
   const status = useSyncExternalStore(link?.subscribe ?? noSubscription, () => {
     const state = link?.getState()
     return !state ? '' : state.baseUpdate ? 'updating' : state.identity?.canSubmit && state.status === 'ready' ? 'connected' : state.status
   }, () => '')
+  const pedal = useSyncExternalStore(zoom?.subscribe ?? noSubscription, () => zoomUnit(zoom?.getState()), () => '')
+  if (zoom !== undefined) {
+    const [dot, line] = pedal.split('|')
+    return <a className="sidebar-device instrument-item is-unit" href={href} aria-current={current ? 'page' : undefined} aria-label={device.name + ', ' + line}>
+      <span className="instrument-head">
+        <span className="instrument-picture"><DeviceImage device={device} eager />{dot && <span className={'instrument-dot is-' + dot} />}</span>
+        <span><strong>{device.name}</strong><small>{line}</small></span>
+        <Icon name="arrow" size={14} />
+      </span>
+    </a>
+  }
   const connection = !status || status === 'unsupported' ? '' : LIVE.includes(status as LinkState['status']) ? 'busy' : status === 'connected' || status === 'stock' || status === 'updating' ? status : 'off'
   const last = connection === 'off' || status === 'unsupported' ? lastInventory() : undefined
   const unit = status === 'updating' ? 'Updating the base · don’t unplug' : status === 'connecting' ? 'Connecting…' : connection === 'busy' ? 'Syncing…'
     : status === 'connected' ? inventory ? inventory.moduleIds.length ? modules(inventory.moduleIds.length) + ' on it' : 'No modules on it' : 'Connected'
-    : status === 'stock' ? 'Original OS: install the base' : status === 'busy' ? 'In use by another window or app' : 'Not connected'
+    : status === 'stock' ? 'Original OS: install the base' : status === 'busy' ? 'In use by another Modwerk tab' : 'Not connected'
   if (!link) return <a className="sidebar-device instrument-item" href={href} aria-current={current ? 'page' : undefined} aria-label={device.name + ', ' + (set ? set.name : 'No module set yet')}>
     <span className="instrument-picture"><DeviceImage device={device} eager /></span>
     <span><strong>{device.name}</strong><small>{set ? set.name : 'No module set yet'}</small></span>

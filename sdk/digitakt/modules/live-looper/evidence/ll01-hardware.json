@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-11-12",
+  "source": "Direct author statements in the development conversation",
+  "reporter": "draadpiraat",
+  "status": "hardware-tested-author-reported",
+  "model": "Digitakt I",
+  "release": "1.54",
+  "moduleVersion": "0.1.0-experimental",
+  "note": "LL01 is an earlier build of this version; the fixes below make the current source differ from it, so this run is not the release's evidence.",
+  "builds": [
+    {
+      "name": "Core 2.1 + Machine Pages 1.2 + live-looper 0.1.0-experimental (LL01)",
+      "syxSha256": "39a045c7ffa10671223cb46b909a7d4a9db546e9fa57044949119f0cb5813fcb",
+      "steps": {
+        "1 CAPT + PICK: the capture button, CAPTURE then CAPTURED, it plays": "yes; the FILL capture is a press of PAGE (holding it does nothing more), the checklist said hold",
+        "2 the loop keeps playing through patterns with LOOPER on that track": "yes",
+        "3 ONCE with UP: armed, recording, recorded; it plays": "yes; the banner says ARMED, RECORDING, then TAKEN, and TAKEN could read better (now RECORDED)",
+        "4 PTCH and WARP follow a tempo change": "yes",
+        "5 GLOB SND: DEL and REV stay across patterns": "yes; on a pattern without LOOPER the track's own values apply",
+        "6 push D: the trim editor opens with the loop": "yes",
+        "7 page 2's settings after a power cycle": "yes",
+        "8 a longer session": "findings below"
+      }
+    }
+  ],
+  "findings": [
+    "With GLOB on ALL the filter went back to each pattern's own values on a pattern change (fixed: GLOB's filter set missed TYPE, FREQ, RESO, ENV and ATK).",
+    "An arm could only be called off by turning MODE to OFF and back; stock clears with STOP pressed twice (fixed: STOP while stopped calls it off).",
+    "Armed while stopped, ONCE and CAPT recorded only after the first loop had passed (fixed for ONCE: an arm made while stopped records the first loop from PLAY).",
+    "Holding SRC switched pages at once; stock shows the knob values while SRC is held (fixed: SRC is left to the stock page switch).",
+    "Turning a page 2 knob showed no header message as the stock pages do (added).",
+    "MAX was to be renamed and a value added that follows the pattern's M.LEN, N/A for INF or over 128 steps (now LEN with PT.LEN).",
+    "In PICK, PTCH and WARP the loop restarts when the looper track's trig key is pressed (not yet reproduced in the emulator).",
+    "A click at the end of each recording (already listed; loops are now cut to the exact length with a short fade at each end)."
+  ],
+  "limitations": [
+    "The run time was not stated.",
+    "Firmware was not read back from the device; the build is identified by its SysEx hash."
+  ]
+}

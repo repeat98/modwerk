@@ -2,11 +2,11 @@
 
 Every catalog module must have populated **CPU, DSP core and memory** gauges before a release. The gauges show rough relative demand using four tiers: **Minimal, Low, Moderate, High**. The arc steps are ordinal, not percentages of chip utilization or remaining headroom. A full High arc means the highest relative tier, not an overloaded processor. No exact CPU or DSP capacity denominator is needed for these gauges.
 
-Ratings are estimates backed by source inspection or a documented comparison. Consider expensive modes, modulation/control changes, active voices and buffers. Audio effects/voices are rated per active instance; project-wide features such as MIDI Scenes and USB Audio are rated while enabled. State a different workload explicitly. Minimal is useful for a small or absent added processing path; it is not a claim that the whole device consumes zero resources. Scores must not be summed across modules, processors or memory spaces.
+Ratings are estimates backed by source inspection or a documented comparison. Consider expensive modes, modulation/control changes, active voices and buffers. Audio effects/voices are rated per active instance; project-wide features such as USB Audio are rated while enabled. State a different workload explicitly. Minimal is useful for a small or absent added processing path; it is not a claim that the whole device consumes zero resources. Scores must not be summed across modules, processors or memory spaces.
 
 ## New modules and updates
 
-Declare `resources.impact` in `sdk/octabam/modules/<id>/octamod.module.json`. Start with [the incomplete template](../public/module-resource-impact.example.json); its null levels intentionally fail validation until assessed. Include:
+Declare `resources.impact` in `sdk/octatrack/modules/<id>/octamod.module.json`. Start with [the incomplete template](../public/module-resource-impact.example.json); its null levels intentionally fail validation until assessed. Include:
 
 - `conditions`: the workload, mode/modulation assumptions, active instance count and treatment of shared allocations.
 - `cpu`, `dsp`, `memory`: each requires a `level` (`minimal`, `low`, `moderate`, `high`), `basis` (`source-estimate` or `measured-comparison`), nonempty `rationale`, and a module-local text `source`.

@@ -102,7 +102,9 @@ entry) also needs this regeneration.
 USB Audio is part of the base: its output layout sets the USB descriptors, so each layout is its own base, sent over
 USB like any base update when a module set asks for another layout (`src/engine/elekloader/base-variants.ts`). The
 command above builds the twenty-channel default and, with `--usb-audio-variants`, the five other layouts and USB MIDI
-alone (`off`). `build_core.py` links the USB sources last and pads them to a fixed reserve (`USB_RESERVE`: 8 KiB of
+alone (`off`). The committed package stays the twenty-channel layout, which every other layout is a patch against, but the
+site installs `off` when no module set asks for a layout (`MEMBER_LAYOUT`, owner, 11 November 2026): `off` patches four
+stock audio sites fewer, so as the package it would fail the rule below. `build_core.py` links the USB sources last and pads them to a fixed reserve (`USB_RESERVE`: 8 KiB of
 code, 2.5 KiB of data, 96 KiB of bss), so every layout links everything else at the same addresses and one set of
 base-bound packages fits each. For every variant the script proves it: the controller packages encode byte for byte
 as on the default, `base_bound.py bind` gives the same binding but for the identity, the variant patches no stock site
@@ -502,7 +504,8 @@ command waits until IDENTIFY reports that build's `configurationHash`. A
 power cycle boots the flashed base again. Stop playback and recording first;
 the restart is a reboot.
 
-The base accepts only an OS image (entry word, at most 1.25 MiB) carrying
+The base accepts only an OS image (entry word, at most 1.5 MiB; 1.25 MiB on
+bases before 13 November 2026, which a released base must still fit) carrying
 NOR's own bootstrap version, because an image with another version would
 reprogram the bootstrap at its entry. It stages the image in its own
 reserve, arms a one-shot mailbox, and half a second later quiesces as OS
@@ -537,8 +540,8 @@ NOR when a host asks, with stock's OS UPGRADE routines (the sector erase and
    Then the write, into one of **two slots** (below), and the reply. **At most
    one restart per update:** this base writes itself while it runs on (no
    quiesce: stock's routines mask only their command writes and the OS runs
-   from RAM), with its own box on the unit (BASE UPDATE, a bar) and BASE SAVED
-   after; the next start is from the new slot.
+   from RAM), with its own screen on the unit (BASE UPDATE, a bar, the panel held
+   until it is saved: `status.c`'s transfer screens) and BASE SAVED after; the next start is from the new slot.
 3. On a unit already on two slots there is no trial: the running base takes the
    new base's container for its spare slot (only the checks that keep the
    bootloader safe: entry, bootstrap version, stock's bootloader copy), writes it

@@ -173,7 +173,7 @@
       "name": "fw_*",
       "since": "1.1",
       "prototype": "mk2/core.h: fw_fillrect, fw_textf, fw_led_set, fw_key_down, fw_toast and the other firmware routines and data",
-      "purpose": "Firmware locations as exports, by address and without stock bytes, so a mod calls the OS's drawing, keys, LEDs, card and strings without its own copy of each address."
+      "purpose": "Firmware locations as exports, by address and without stock bytes, so a mod calls the OS's drawing, keys, LEDs, card and strings without its own copy of each address. The raw block write fw_card_write is not for mods: the build preflight refuses a mod file that refers to it."
     }
   ],
   "claims": [],

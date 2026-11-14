@@ -1,5 +1,6 @@
 import type { CatalogBrowse } from '../catalog/catalog-browse'
 import { isBetaModule } from '../catalog/availability'
+import { moduleCaution } from '../catalog/module-cautions'
 import { usbLagNote } from '../catalog/usb-only'
 import { assetUrl } from '../hosting'
 import { useState } from 'react'
@@ -27,13 +28,14 @@ export function ModuleDetail({ module, selected, onToggle, addBlock, onSwap, bro
   const draft = usbDraft.key === previewKey ? usbDraft.value : usbAudio ?? usbAudioPreset('outbox')
   const details = DETAILS[module.id]
   const moduleDocument = MODULE_DOCUMENTS_BY_ID[module.id]
+  const caution = moduleCaution(module.id)
   return <ModuleDetailLayout modal={modal} browse={browse} onBackToResults={onBackToResults} id={module.id} title={module.name} family={details.family} detail={module.detail}
     titleBadge={isBetaModule(module.id) ? 'Beta' : module.id === USB_AUDIO_MODULE ? 'Outbox 8 compatible' : undefined}
     configureTarget={module.id === USB_AUDIO_MODULE && onConfigureUsbAudio ? 'usb-setup' : undefined}
     author={module.authorName} authorUrl={module.authorUrl} contributors={module.contributors} description={module.description}
     selected={selected} onToggle={onToggle} addBlock={addBlock} onSwap={onSwap} backHref="#library" backLabel="All modules"
     preview={<ModuleAudioDetailPreview id={module.id} name={module.name}/>} resources={<ModuleResourceIndicators id={module.id} usbLayout={module.id === USB_AUDIO_MODULE && onConfigureUsbAudio ? draft.layout : undefined} />}
-    notice={moduleDocument.build && <p className="service-note" role="status">{moduleDocument.build.reason}</p>}
+    notice={(caution || moduleDocument.build) && <>{caution && <p className="module-caution"><Icon name="warn" size={18} /><span><strong>{caution.title}.</strong> {caution.detail}</span></p>}{moduleDocument.build && <p className="service-note" role="status">{moduleDocument.build.reason}</p>}</>}
     overviewIntro={module.id === USB_AUDIO_MODULE && onConfigureUsbAudio && <UsbAudioConfigurator key={previewKey} draft={draft} onDraftChange={value => setUsbDraft({ key: previewKey, value })} configuration={usbAudio} selected={selected} configurationName={configurationName} onConfigure={onConfigureUsbAudio} />}
     guide={<>
       <details className="module-disclosure">

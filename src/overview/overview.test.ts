@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { AVAILABLE_MODULES } from '../catalog/availability'
-import { DEVICES, deviceSteps } from '../devices/registry'
+import { DEVICES, deviceHref, deviceSteps } from '../devices/registry'
 import { DIGI_MODS } from '../devices/digi-mods'
+import { ZOOM_EFFECTS } from '../devices/zoom-effects'
 import { developHighlight, DEVELOP_HIGHLIGHT_UNTIL, machineOverview } from './overview'
 import { OverviewPage } from './OverviewPage'
 
@@ -11,7 +12,7 @@ const overview = machineOverview(AVAILABLE_MODULES)
 
 describe('machine overview', () => {
   it('counts the same modules as the library, once per machine', () => {
-    expect(overview.modules).toBe(AVAILABLE_MODULES.length + DIGI_MODS.length)
+    expect(overview.modules).toBe(AVAILABLE_MODULES.length + DIGI_MODS.length + ZOOM_EFFECTS.length)
     expect(overview.machines.map(machine => machine.device.id).sort()).toEqual(DEVICES.map(device => device.id).sort())
     for (const machine of overview.machines) expect(machine.categories.reduce((sum, item) => sum + item.count, 0)).toBe(machine.count)
     expect(overview.categories.reduce((sum, item) => sum + item.count, 0)).toBe(overview.modules)
@@ -19,8 +20,15 @@ describe('machine overview', () => {
     expect(overview.withMods + overview.withoutMods).toBe(DEVICES.length)
   })
 
+  it('opens a Zoom pedal with listed effects on its library, like any machine with mods', () => {
+    const effect = { id: 'loop', name: 'Loop', machine: 'zoom-ms-70cdr', category: 'effects', author: { github: 'themanro', name: 'Manro' }, version: '0.3.0' } as (typeof ZOOM_EFFECTS)[number]
+    const pedal = machineOverview(AVAILABLE_MODULES, DIGI_MODS, [effect]).machines.find(machine => machine.device.id === 'zoom-ms-70cdr')!
+    expect(pedal).toMatchObject({ kind: 'mods', count: 1, href: deviceHref('zoom-ms-70cdr') })
+    expect(renderToStaticMarkup(createElement(OverviewPage, { overview: machineOverview(AVAILABLE_MODULES, DIGI_MODS, [effect]) }))).toContain('href="' + deviceHref('zoom-ms-70cdr') + '"')
+  })
+
   it('counts each creator once, across machines', () => {
-    const logins = new Set([...AVAILABLE_MODULES.map(module => module.author.toLowerCase()), ...DIGI_MODS.map(mod => (mod.authorLogin ?? mod.author).toLowerCase())])
+    const logins = new Set([...AVAILABLE_MODULES.map(module => module.author.toLowerCase()), ...DIGI_MODS.map(mod => (mod.authorLogin ?? mod.author).toLowerCase()), ...ZOOM_EFFECTS.map(effect => effect.author.github.toLowerCase())])
     expect(overview.creators).toBe(logins.size)
   })
 
