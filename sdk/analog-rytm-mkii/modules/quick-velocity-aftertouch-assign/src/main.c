@@ -384,6 +384,10 @@ static int lfo_shown(int track)
 static int dep_pending;
 static int pending_knob = -1;           // the knob dep_pending counts, -1 none
 static int dest_knob = -1;              // the knob of the LFO's destination, -1 unknown
+// Set by an encoder event during an LFO hold, cleared by the next locker set and every tick: a
+// set with it clear came through stock's locker interface from something other than a Rytm
+// knob (MIDI through a module that uses stock's locker, say), whose value is all it has.
+static int encoder_turn;
 static int last_knob = -1;              // the knob of the latest encoder event
 
 // The LFO page's knob accumulator, 0 when the page holder is not found.
@@ -579,6 +583,16 @@ static void locker_set(void *self, int track, int param, int value)
         return;
     }
     if (kind == LFO) {
+        int from_encoder = encoder_turn;
+        encoder_turn = 0;
+        if (!from_encoder && lfo_dest(track) == param) {
+            // Not a Rytm knob: the turn is the value's change from what get showed. The box
+            // shows the depth at twice its stored units (lfo_shown).
+            dest_knob = -1;
+            dep_drop();
+            dep_add(track, (value - lfo_shown(track)) / 2);
+            return;
+        }
         lfo_turn(track, param);
         return;
     }
@@ -813,8 +827,10 @@ int quick_velocity_aftertouch_assign_enc(void *brain, void *event)
 {
     int k;
     (void)brain;
-    if (holds[LFO].held)
+    if (holds[LFO].held) {
+        encoder_turn = 1;
         dep_turn(event);
+    }
     for (k = VEL; k < KINDS; k++)
         if (holds[k].held)
             holds[k].turned = 1;
@@ -983,6 +999,7 @@ void quick_velocity_aftertouch_assign_draw(void *bmp, void *ctrl)
 // one, not dozens.
 void quick_velocity_aftertouch_assign_tick(void *ctrl)
 {
+    encoder_turn = 0;
     word_t string;
     char allocator;
     struct { void *object; void *counts; } shared;

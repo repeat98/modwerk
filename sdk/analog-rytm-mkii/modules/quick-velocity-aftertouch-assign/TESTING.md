@@ -76,6 +76,20 @@ Fixed velocity read from stock's flag every 100M instructions; screens compared 
 | FX track, LFO held, TIM turned | TIM becomes the FX LFO's destination |
 | FIX + FRQ, FUNC + LFO, FLTR then LFO tap then a turn | as 0.1 / as stock |
 
+## rytm-emu (0.2.1, LFO depth from a locker set without an encoder event)
+
+IQ01 (0.2.0) and IQ02 (0.2.1), each with a private MIDI-to-locker test module (the author's), Filter Hz and QPER
+Live Rec on the plain base, BD FILTER page, LFO held 8000M-8400M:
+- An NRPN FRQ sweep from 127 to 42 (NRPN 1:20 through that module, which calls stock's locker
+  interface): 0.2.0 makes FRQ the destination at depth (0) and the depth never moves; 0.2.1
+  makes it the destination and sets the depth to -85.00, kept when LFO is held again, the sound's
+  FRQ unchanged after the release.
+- Knob E turned ten times (+12 counts, 6.67M apart) with LFO held and no MIDI: 0.2.0 and 0.2.1 give
+  the same screen, pixel for pixel (the encoder path is unchanged).
+- FIX and QPER holds with the sweep: same screens on both.
+
+Not tested on a unit.
+
 ## Hardware
 
 **RC17 (QM06 inside), reported by the author, 3 Nov 2026:**
