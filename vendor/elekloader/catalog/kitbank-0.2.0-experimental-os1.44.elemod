@@ -1,0 +1,707 @@
+{
+ "elemod": 2,
+ "id": "kitbank",
+ "version": "0.2.0-experimental",
+ "title": "kitbank",
+ "description": "One kit per bank, like the Octatrack's parts, with per-pattern locks: the 16 patterns of a bank share one sound, and [PTN]+[YES] gives a pattern its own.",
+ "category": "playback",
+ "author": "ZOGV",
+ "license": "GPL-3.0-or-later",
+ "target": {
+  "device": "digitone-mk1",
+  "product": "Digitone mk1",
+  "os": "1.44",
+  "syx_sha256": "d4f200d04484333d82822db7744e6484d0def8f2db8ddf55ee2b780cc13c9659",
+  "section3_sha256": "fce648a97c6c5d93b961732e8f8db6b02e0820c6d344c7e2131fa05a4b3168e4",
+  "section3_len": 2736304
+ },
+ "sections": {
+  ".run": {
+   "align": 4,
+   "len": 1432,
+   "parts": [
+    [
+     "hex",
+     "487a05582f2f00084eb900000000508f4e754e56fffc2f02486effff487a054c24082f084eb94018afc84fef000c2002242efff84e5e4e75206f0004205070004a390000000057c002800000000113c00000000041e800382f4800044ef9400e539e206f00042050202f000c671c5ec002800000000113c00000000041e800382f4800044ef9400e539e4e7570004a39000000006702701cd0b9419ee988222f000c2f4100042f400008222f00102f41000c222f00142f41001042af00144ef9400de4c00480407fd41465220c8000b08e80641a223c0001611d4c410000610001d4c0fc09880680413062944e7570004e7510390000000013c0000000006710202f00046100ffbe4a8067042f4000084fefffe848d71c1c4ef940094f1c4a3900000000671e202f00080c8000000080641222170c81400281466714610001762f4000082f02206f00084ef94014df6c6100000460ee220002810000000f6700009a4feffff048d70c0c2600246efff0d5fc00016121028000000070c0fc09880680413062942640223c00000262201ab09b6608538166f67200600272012003e68845f900000000d5c020030280000000077400141201824a81670201c2148220394138f2140480407fd4146522223c0001611d4c410000b0836614610000d6c0fc098806804130629423c04138f22020034cd70c0c4fef00104e754feffff848d7000310390000000013c000000000671020394138f2146100feaa4a8067022c804cd700034fef00084e756100ffce23d64138f2204ef940095f0e6100ffbe23d64138f2204ef94009623c4a39000000006728202f00040c8040027a00651c0c804002a2006414202f00100c800000008064086100003e2f4000104e756100ffcc4e56ffe448d70c3c4ef9400278f86100ffba4e56ffe048d70c7c4ef940027d426100ffa84e56ffc448d73cfc4ef940029ae22f082200e68941f90000000012301800205f2f000280000000070101660a201f0280000000704e75201f4e75206f00082228000c202800107204b2a8000c660e02800000000113c0000000006030720db2a8000c66284a390000000067204a3900000000671808000000670e080000036608610000aa6100000a70014e7570004e7520394138f2140480407fd4146576223c0001611d4c41000002800000000f06800000001a2f00206f001043f900000000721022d853810c81000000086604206f00104a8166ec201f41f9000000002140000c2140002c70012140001042a800304879000000002f2f000c4eb940016fc0508f4879000000002f2f000c4eb940016fc0508f2f39000000004eb94014a0602f004eb9400ae25c508f4e754feffff048d70c0c24394138f2140482407fd414650000c20c8200b08e80640000b8223c0001611d4c412002200202800000000f6608487a0183600000962602e68b45f900000000d5c32602028300000007700010120700670a07801480487a0150603a2f002002028000000070c0fc098806804130629420402002c0fc09880680413062942240223c0000026222d8538166fa201f07c01480487a010920026100fe402600c0fc098806804130629423c04138f22042a7487800012f032079419f0de0486802504eb94001da464fef001023df000000004cd70c0c4fef00104e75206f000441e8001c201067080c80454c4b50662020fc454c4b5020fc4b424c4b701420c043f900000000720520d9538166fa42904fefffd448d77cfc4ef94000eb186152206f00082008672c41e8001c20180c80454c4b50661e20180c804b424c4b66147014b098660e43f900000000720522d8538166fa4fefffdc48d77c3c4ef94000e7fc610e4fefffec48d70c1c4ef94001571641f90000000070054298538066fa4e75000000000000000000000000000000004b4954205045522042414e4b004b4954204c4f434b4544004b4954205348415245440042414e4b204b4954000000"
+    ]
+   ]
+  },
+  ".bss": {
+   "align": 4,
+   "size": 96
+  }
+ },
+ "symbols": {
+  "PATS": [
+   "abs",
+   1082119188
+  ],
+  "PSTRIDE": [
+   "abs",
+   90397
+  ],
+  "KITS": [
+   "abs",
+   1093690004
+  ],
+  "KSTRIDE": [
+   "abs",
+   2440
+  ],
+  "PAT_ACT": [
+   "abs",
+   1094251028
+  ],
+  "KIT_ACT": [
+   "abs",
+   1094251040
+  ],
+  "MENU_LO": [
+   "abs",
+   1073904128
+  ],
+  "MENU_HI": [
+   "abs",
+   1073914368
+  ],
+  "STR_CTOR": [
+   "abs",
+   1075359688
+  ],
+  "INVALIDATE": [
+   "abs",
+   1074680734
+  ],
+  "BLIT": [
+   "abs",
+   1074652352
+  ],
+  "CHECKBOXES": [
+   "abs",
+   1100933512
+  ],
+  "GET_UI": [
+   "abs",
+   1075093600
+  ],
+  "SHOW_MSG": [
+   "abs",
+   1074455132
+  ],
+  "KA_LOAD": [
+   "abs",
+   1073863238
+  ],
+  "PROJ_PTR": [
+   "abs",
+   1100942816
+  ],
+  "KEY_PTN": [
+   "abs",
+   4
+  ],
+  "PASTE_WRITE": [
+   "abs",
+   1073905990
+  ],
+  "PASTE_KIT": [
+   "abs",
+   90401
+  ],
+  "KEY_YES": [
+   "abs",
+   13
+  ],
+  "KEY_STEP1": [
+   "abs",
+   26
+  ],
+  "BRAIN_KEY": [
+   "abs",
+   1073835968
+  ],
+  "GAP": [
+   "abs",
+   28
+  ],
+  "ELKP": [
+   "abs",
+   1162627920
+  ],
+  "KBLK": [
+   "abs",
+   1262636107
+  ],
+  "BLK_SIZE": [
+   "abs",
+   20
+  ],
+  "kb_row": [
+   ".run",
+   1370
+  ],
+  "kb_label": [
+   ".run",
+   18
+  ],
+  "kb_str": [
+   ".run",
+   1386
+  ],
+  "kb_select": [
+   ".run",
+   56
+  ],
+  "kb_on": [
+   ".bss",
+   0
+  ],
+  "kb_change": [
+   ".run",
+   98
+  ],
+  "kb_draw": [
+   ".run",
+   140
+  ],
+  "bankkit": [
+   ".run",
+   196
+  ],
+  "resolve": [
+   ".run",
+   692
+  ],
+  "kb_live": [
+   ".bss",
+   20
+  ],
+  "pastefix": [
+   ".run",
+   342
+  ],
+  "kb_locks": [
+   ".bss",
+   4
+  ],
+  "qfix": [
+   ".run",
+   508
+  ],
+  "fixk": [
+   ".run",
+   588
+  ],
+  "kb_ptn": [
+   ".bss",
+   24
+  ],
+  "toggle": [
+   ".run",
+   978
+  ],
+  "reselect": [
+   ".run",
+   822
+  ],
+  "kb_ev": [
+   ".bss",
+   32
+  ],
+  "kb_msg": [
+   ".bss",
+   28
+  ],
+  "msg_first": [
+   ".run",
+   1421
+  ],
+  "msg_shared": [
+   ".run",
+   1410
+  ],
+  "msg_locked": [
+   ".run",
+   1399
+  ],
+  "clear": [
+   ".run",
+   1354
+  ],
+  "kb_settings": [
+   ".run",
+   0
+  ],
+  "kb_key": [
+   ".run",
+   736
+  ],
+  "kb_setpat": [
+   ".run",
+   242
+  ],
+  "kb_projload": [
+   ".run",
+   1270
+  ],
+  "kb_qact1": [
+   ".run",
+   556
+  ],
+  "kb_projsave": [
+   ".run",
+   1204
+  ],
+  "kb_save": [
+   ".run",
+   638
+  ],
+  "kb_projnew": [
+   ".run",
+   1338
+  ],
+  "kb_reload": [
+   ".run",
+   656
+  ],
+  "kb_qact2": [
+   ".run",
+   572
+  ],
+  "kb_getkit": [
+   ".run",
+   286
+  ],
+  "kb_sndreload": [
+   ".run",
+   674
+  ]
+ },
+ "exports": [
+  "kb_getkit",
+  "kb_key",
+  "kb_projload",
+  "kb_projnew",
+  "kb_projsave",
+  "kb_qact1",
+  "kb_qact2",
+  "kb_reload",
+  "kb_save",
+  "kb_setpat",
+  "kb_settings",
+  "kb_sndreload"
+ ],
+ "imports": [
+  "core_additem"
+ ],
+ "weak": [],
+ "relocs": [
+  [
+   ".run",
+   10,
+   "abs32",
+   "sym:core_additem",
+   0
+  ],
+  [
+   ".run",
+   66,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   80,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   120,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   144,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   244,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   250,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   288,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   420,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   518,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   524,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   590,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   700,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   764,
+   "abs32",
+   "sec:.bss",
+   24
+  ],
+  [
+   ".run",
+   780,
+   "abs32",
+   "sec:.bss",
+   24
+  ],
+  [
+   ".run",
+   788,
+   "abs32",
+   "sec:.bss",
+   20
+  ],
+  [
+   ".run",
+   866,
+   "abs32",
+   "sec:.bss",
+   32
+  ],
+  [
+   ".run",
+   896,
+   "abs32",
+   "sec:.bss",
+   32
+  ],
+  [
+   ".run",
+   920,
+   "abs32",
+   "sec:.bss",
+   32
+  ],
+  [
+   ".run",
+   938,
+   "abs32",
+   "sec:.bss",
+   64
+  ],
+  [
+   ".run",
+   956,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   1046,
+   "abs32",
+   "sec:.bss",
+   4
+  ],
+  [
+   ".run",
+   1190,
+   "abs32",
+   "sec:.bss",
+   28
+  ],
+  [
+   ".run",
+   1242,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   1312,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   1356,
+   "abs32",
+   "sec:.bss",
+   0
+  ],
+  [
+   ".run",
+   1370,
+   "abs32",
+   "sec:.run",
+   18
+  ],
+  [
+   ".run",
+   1374,
+   "abs32",
+   "sec:.run",
+   56
+  ],
+  [
+   ".run",
+   1378,
+   "abs32",
+   "sec:.run",
+   140
+  ],
+  [
+   ".run",
+   1382,
+   "abs32",
+   "sec:.run",
+   98
+  ]
+ ],
+ "sites": [
+  {
+   "addr": "0x40094f14",
+   "len": 8,
+   "stock_sha256": "4997842f477c42235c625d7ba815c13fc3a07a0c57335d4361007e1288ff0795",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:kb_setpat",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4014df66",
+   "len": 6,
+   "stock_sha256": "25f6cf58764096a92fba2355b3a003ad25d064d44e1e91102deb6abcadbed9d7",
+   "new": "4ef900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:kb_getkit",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40095f08",
+   "len": 6,
+   "stock_sha256": "e546d4a005b1ba895fcdb1eff85edbca6c362d0359e3ce5ed454b6320228bc21",
+   "new": "4ef900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:kb_qact1",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40096236",
+   "len": 6,
+   "stock_sha256": "e546d4a005b1ba895fcdb1eff85edbca6c362d0359e3ce5ed454b6320228bc21",
+   "new": "4ef900000000",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:kb_qact2",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x400278f0",
+   "len": 8,
+   "stock_sha256": "da84c1f842d053771b08911c8ed517551ad95f3019433555c6327cd2698f25d7",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:kb_save",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40027d3a",
+   "len": 8,
+   "stock_sha256": "e60937176ed83d52936ca7977d2a4082ed1ac3017ff960831e4d5f7ebb5b9250",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:kb_reload",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x40029ada",
+   "len": 8,
+   "stock_sha256": "f7fddeefeac300af619b7028a954dc595076d9d098da7090973c1cbc1f649ec0",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:kb_sndreload",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4000eb10",
+   "len": 8,
+   "stock_sha256": "52dccc03e103dca3839c839017cffce1d4a1e675d8dfb2804764141e86c63841",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:kb_projsave",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4000e7f4",
+   "len": 8,
+   "stock_sha256": "3e47fdc2a5af6492a822beaa4ccd4bb53d5f5b2111c689c9f6f1cca2a3df15e2",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:kb_projload",
+     0
+    ]
+   ]
+  },
+  {
+   "addr": "0x4001570e",
+   "len": 8,
+   "stock_sha256": "a04973fb79ed0896aa768e97902a85f61a10ad9d106955b3fe7a112c76d0e51f",
+   "new": "4ef9000000004e71",
+   "kind": "code",
+   "relocs": [
+    [
+     2,
+     "abs32",
+     "sym:kb_projnew",
+     0
+    ]
+   ]
+  }
+ ],
+ "collections": {},
+ "contribute": [
+  {
+   "to": "ev_settings",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:kb_settings",
+     0
+    ]
+   ],
+   "claims": []
+  },
+  {
+   "to": "ev_key",
+   "order": 50,
+   "data": "00000000",
+   "relocs": [
+    [
+     0,
+     "abs32",
+     "sym:kb_key",
+     0
+    ]
+   ],
+   "claims": []
+  }
+ ],
+ "copied": [],
+ "resources": {
+  "regions": [],
+  "names": [
+   "settings:KIT PER BANK",
+   "projdata:KBLK"
+  ],
+  "core": "2.0a"
+ },
+ "requires": [
+  "core"
+ ],
+ "conflicts": [],
+ "signature": null
+}
