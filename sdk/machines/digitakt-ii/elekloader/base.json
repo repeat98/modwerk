@@ -24,6 +24,7 @@
       "../modwerk/seq-phrase-entry.s",
       "../modwerk/project-generation.s",
       "../modwerk/startup-kitdata.s",
+      "../modwerk/startup-kitdata-refresh.c",
       "../modwerk/project-archive.c",
       "../modwerk/project-kitdata.c",
       "../modwerk/fw-bindings.s"
