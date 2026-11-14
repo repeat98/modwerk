@@ -17,7 +17,7 @@
       "lo": "0x47fe0000",
       "hi": "0x48000000",
       "verdict": "not proven",
-      "note": "Needs the stackTop patch and a hardware stress run with every sample slot loaded."
+      "note": "The 1.42 core lowers the stack to this start and copies itself here. Not proven until a Syntakt run with every sample slot loaded. The heap block stays unused."
     },
     "heap-block": {
       "verdict": "not proven",
@@ -87,8 +87,8 @@
       "sysexRegistry": "0x402d5350",
       "inplaceDepackMargin": 96357,
       "containerBytes": 2029392,
-      "probeInplaceMargin": 16679,
-      "probeContainerBytes": 1949760
+      "probeInplaceMargin": 16673,
+      "probeContainerBytes": 1949808
     }
   },
   "protected": [
@@ -118,5 +118,5 @@
       "the vector-table filler and the VBR setter"
     ]
   ],
-  "tailBudgetNote": "Below the in-place depack margin the repository packer leaves on the probe build of every supported release (probeInplaceMargin); the container verifier still checks the exact margin of each build."
+  "tailBudgetNote": "Below the in-place depack margin the repository packer leaves on the current build of every supported release (probeInplaceMargin): the 1.40 boot probe and the 1.42 stack-gap core. The container verifier still checks the exact margin of each build."
 }

@@ -47,6 +47,14 @@ describe('stock-write checker', () => {
     await expect(checkStockWrites(stock, build([[0x40000100, JMP + NOP], [0x40000880, NOP]]), map, [site(0x40000100, 8), site(0x40000880, 2)])).rejects.toThrow('inside 0x40000800-0x40000900, a protected table')
   })
 
+  it('accepts a data word beside the hook and refuses a tail that declares only that word', async () => {
+    const built = build([[0x40000100, JMP + NOP], [0x40000300, '47fe0000']], 8)
+    const report = await checkStockWrites(stock, built, map, [site(0x40000100, 8), site(0x40000300, 4, 'data')])
+    expect(report).toMatchObject({ tail: 8, sites: 2 })
+    const wordOnly = build([[0x40000300, '47fe0000']], 8)
+    await expect(checkStockWrites(stock, wordOnly, map, [site(0x40000300, 4, 'data')])).rejects.toThrow('declares no hook at 0x40000100')
+  })
+
   it('refuses a tail over the budget or without the hook that relocates it', async () => {
     await expect(checkStockWrites(stock, build([[0x40000100, JMP + NOP]], 65), map, [site(0x40000100, 8)])).rejects.toThrow('65 bytes, over the 64 allowed')
     await expect(checkStockWrites(stock, build([[0x40000200, JMP + NOP]], 8), map, [site(0x40000200, 8)])).rejects.toThrow('declares no hook at 0x40000100')

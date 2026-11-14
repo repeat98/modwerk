@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "machine": "syntakt",
   "interface": "0.1",
-  "status": "Boot-probe stage. The core reserves on-chip SRAM only, exposes no events and offers no SDRAM to mods; the research report names the two SDRAM candidates the owner must decide on after hardware qualification.",
+  "status": "The 1.42 core copies itself into the stack gap and still writes the mark in on-chip SRAM. It exposes no events. The linker offers no SDRAM to mods, and the gap is not proven under a full sample load. The heap block stays unused.",
   "events": [],
   "tables": [],
   "exports": [],
