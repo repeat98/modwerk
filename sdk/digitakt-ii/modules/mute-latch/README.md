@@ -1,6 +1,6 @@
 # Mute Latch — Digitakt II
 
-A Digitakt II mod by @crisp909. Version 0.1.0-experimental, for OS 1.17 with Elekloader core 1.0. The author reported working builds on a Digitakt II (see [TESTING.md](TESTING.md) for which build each result belongs to). Screenshots are emulator captures.
+A Digitakt II mod by @crisp909. Version 0.1.0-experimental, for OS 1.17 with Elekloader core 1.0. The author reported the submitted package and earlier builds working on a Digitakt II (see [TESTING.md](TESTING.md) for which build each result belongs to). Screenshots are emulator captures.
 
 ## Overview
 
@@ -70,7 +70,7 @@ These locations were read from the OS 1.17 image with a static disassembler and 
 
 ## Tests and measurements
 
-The Modwerk evidence tier is `none`: no qualification record has been made. [TESTING.md](TESTING.md) lists what was and was not checked. Memory and load are not measured.
+The Modwerk evidence tier is `author-hardware`: the author reports the submitted package working on a Digitakt II (an informal report, no owner verification). [TESTING.md](TESTING.md) lists what was and was not checked. Memory is not measured; the load is read from the code, not measured.
 
 ## Authorship and licences
 

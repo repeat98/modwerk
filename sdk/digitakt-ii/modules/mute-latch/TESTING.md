@@ -1,6 +1,6 @@
 # Mute Latch testing
 
-**Unit:** the author reports the previous build (PERFORM, MUTES ARMED and lit TRIG LEDs, applied on the wrap; image sha256 d736aaec71748cd763a5516700b287cff4863fca44f796a2a5211189f3a395fa) working as intended on a Digitakt II, OS 1.17, see [Hardware](#hardware-reported-by-the-author-crisp909). That is a report, not measured here. The current build (applies on the last step, no LEDs) has **not** been run on a unit yet. Everything else below is emulator evidence: digikit's headless ColdFire-only `panel_drive` (no DSP) with the SSI clock at 96 kHz, a one-sample card made with digikit's `plusdrive`, and a 128-step pattern. It approximates the instrument; the emulator is not Modwerk's.
+**Unit:** the submitted package (pinned toolchain, sha256 aa9dd675...) is reported working by the author, see [Submitted package on a unit](#submitted-package-on-a-unit-reported-by-the-author-crisp909). The author also reports the previous build (PERFORM, MUTES ARMED and lit TRIG LEDs, applied on the wrap; image sha256 d736aaec71748cd763a5516700b287cff4863fca44f796a2a5211189f3a395fa) working as intended on a Digitakt II, OS 1.17, see [Hardware](#hardware-reported-by-the-author-crisp909). That is a report, not measured here. The current build (applies on the last step, no LEDs) has **not** been run on a unit yet. Everything else below is emulator evidence: digikit's headless ColdFire-only `panel_drive` (no DSP) with the SSI clock at 96 kHz, a one-sample card made with digikit's `plusdrive`, and a 128-step pattern. It approximates the instrument; the emulator is not Modwerk's.
 
 ## Build under test
 
@@ -57,6 +57,10 @@ Source: branch `module/mute-latch-dt2` of crisp909/modwerk, this folder. Build: 
 - Not tested: save/reload of a project (module keeps no saved state), other patterns, Part change, power cycle on a unit.
 
 
+## Submitted package on a unit (reported by the author, crisp909)
+
+Package `mute-latch-0.1.0-experimental-os1.17.elemod`, sha256 `aa9dd675077e55759fe1b5ad97e234795119939bb6cd452ce28e5f59b6cda9bc`, built by the author in the pinned toolchain image (GCC 16.2.0) from commit 446dbf76, linked with core 1.0 by the Elekloader builder for OS 1.17. Tested on a Digitakt II on 2026-11-14 and reported as working, in these words: "tested what you asked and it works". The test asked for: a 128-step pattern, a short kick on the muted track at steps 126 to 128 and 1, several tempos and repetitions, 2 and 3 PERFORM presses (the passes counted down and the switch came after that many), and choosing the same tracks again to cancel. This is a report: the number of repetitions and the tempos were not recorded, and CPU load was not read. Not tested: a pattern change while armed, shorter patterns, Scale per track, a power cycle with something armed.
+
 ## Switch moment on a unit (reported by the author, crisp909)
 
 Digitakt II, OS 1.17, 128-step pattern (all tracks the same length, per pattern, pattern change off), short kick sample on the muted track, kicks on steps 126 to 128 and 1 to 2, 140 BPM, no swing. Reported by the author, not measured here. Builds from this repository's source compiled with GCC 13 (private test builds, not the pinned toolchain):
@@ -68,7 +72,7 @@ Digitakt II, OS 1.17, 128-step pattern (all tracks the same length, per pattern,
 | Second step (counter at 2) | Step 1 not audible. |
 | Second tick of the first step (`ml-t2`) | Steps 126 to 128 stay as they were, step 1 plays switched. Checked at several tempos. |
 
-The step counter runs a step ahead of the sound, and the mute is judged shortly after the counter moves on, so the window for a switch between the last and the first step is about one step wide. The submitted source makes the switch on the second tick of the first step, or on the first tick of the second step if the steps are shorter. The pinned-toolchain package built from this source has not been run on a unit yet.
+The step counter runs a step ahead of the sound, and the mute is judged shortly after the counter moves on, so the window for a switch between the last and the first step is about one step wide. The submitted source makes the switch on the second tick of the first step, or on the first tick of the second step if the steps are shorter. The pinned-toolchain package built from this source was run on a unit afterwards, see the section above.
 
 ## Earlier build: apply on the last step, no LEDs (emulator; superseded by the section above)
 

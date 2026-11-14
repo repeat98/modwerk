@@ -53,7 +53,7 @@
     "requires": [],
     "conflicts": [],
     "limitations": [
-      "Hardware: the author reports earlier builds, and the switch timing of the submitted source (built with a different compiler), working on a Digitakt II, OS 1.17. The pinned-toolchain package itself is not yet tested on a unit. See TESTING.md.",
+      "Hardware: the author reports the submitted package (pinned toolchain) working on a Digitakt II, OS 1.17, 2026-11-14, as an informal report. See TESTING.md.",
       "Works while the sequencer plays; when it is stopped PREP MUTES keeps its stock behaviour.",
       "With Scale per track the longest track's last step ends the pattern.",
       "Switches on the second UI tick (about 30 Hz) of the first step after the last counted pass, because the step counter runs ahead of the sound; not sample-accurate.",
@@ -84,11 +84,24 @@
     }
   },
   "evidence": {
-    "tier": "none",
+    "tier": "author-hardware",
     "moduleVersion": "0.1.0-experimental",
-    "sourceSha256": null,
-    "reports": [],
-    "hardware": null,
+    "sourceSha256": "e5fe039a418d3c3cccbff559291feafdf51b6296e0216149d49c912b72caab3d",
+    "reports": [
+      "TESTING.md"
+    ],
+    "hardware": {
+      "model": "Digitakt II",
+      "release": "1.17",
+      "testedOn": "2026-11-14",
+      "tester": "crisp909",
+      "durationMinutes": null,
+      "summary": "Package mute-latch-0.1.0-experimental-os1.17.elemod (sha256 aa9dd675..., pinned toolchain, GCC 16.2.0) with core 1.0, from the author's report that it works: with kicks on the last steps and step 1 of a 128-step pattern at several tempos the switch landed between the last step and step 1; 2 and 3 PERFORM presses waited that many passes; choosing the same tracks again cancelled.",
+      "limitations": [
+        "Informal report: no count of repetitions, tempos or CPU load was given.",
+        "Not tested: a pattern change while armed, shorter patterns, Scale per track, a power cycle with something armed."
+      ]
+    },
     "verifiedBy": null
   },
   "tests": {

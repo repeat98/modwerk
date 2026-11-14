@@ -28,7 +28,7 @@
       "category": "System",
       "author": "crisp909",
       "needs_core": "1.0",
-      "on_unit": "The author reported the switch timing of this source working on a Digitakt II on OS 1.17 with a build from a different compiler (GCC 13); this exact package, built with GCC 16.2.0, has not yet run on a unit."
+      "on_unit": "The author reported this package (built with GCC 16.2.0, core 1.0) working on a Digitakt II on OS 1.17 on 2026-11-14; an informal report, see TESTING.md."
     }
   ]
 }
