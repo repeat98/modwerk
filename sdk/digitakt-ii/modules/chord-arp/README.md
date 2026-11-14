@@ -1,6 +1,6 @@
 # Chord Arp
 
-A Digitakt II OS 1.17 development draft by @Claptom-music. Chord Arp turns a note trig into a chord played one note at a time on its audio track. Each trig can supply its own root, chord type, note order, and other settings.
+An experimental module for Digitakt II OS 1.17 by @Claptom-music. Chord Arp turns a note trig into a chord played one note at a time on its audio track. Each trig can supply its own root, chord type, note order, and other settings.
 
 ## Hear your first arp
 
@@ -54,3 +54,7 @@ High–Low and Low–High alternate between the ends of the note list and move i
 Random chooses on each pulse. Shuffle repeats a seeded permutation until a new phrase is prepared. Input Order preserves the order in which the pitches were supplied.
 
 The rhythm engine derives straight, dotted and triplet divisions from stock track steps. Length, pulses, rotation and repeats determine the emitted note position without maintaining a clock. Gate windows subdivide adjacent stock deadlines without overlapping. Straight, Push, Laid Back and Offbeat presets use timing offsets and velocity accents around the stock grid.
+
+## Compatibility and limitations
+
+Chord Arp requires the Modwerk Digitakt II base with phrase and project archive support from PR #1548. The public Modwerk builder currently uses core 1.0. The module runs on audio tracks and can use the stock Euclidean sequencer.
