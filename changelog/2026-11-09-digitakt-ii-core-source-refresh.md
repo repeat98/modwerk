@@ -1,1 +1,1 @@
-Refreshes the Digitakt II Modwerk base source to the reviewed Elekloader revision and preserves the firmware bindings its sequencer and Scale page use.
+Digitakt II preview builds use the pinned Modwerk 1.1 base. Modules can use its shared sequencer and project hooks. Downloads stay disabled.
