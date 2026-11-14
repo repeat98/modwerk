@@ -1,0 +1,132 @@
+# Improved AMP: a muted track's trigs are not faded for. The BD track holds a trig on every second step
+# (250 ms apart at 120 BPM), HLD 57 holds each hit into the next and ENV RESET is at AMP. The track is muted
+# by MIDI (CC 94 on the auto channel: 127 mutes the active track, 0 unmutes it) between the trigs at 1000
+# and 1250 ms and unmuted between those at 2500 and 2750 ms; STOP comes after the trig at 3750 ms.
+# 5 trigs play, the track is silent, 5 more play: 2 hits, 8 dips (4 and 4), and the last hit before the
+# mute keeps its tail: it is as long as in `mref`, where STOP comes in the mute's place. At ENV RESET OFF
+# the same take has 2 hits and no dip, and its first hit is as long too (to 30 ms): if that one fails as
+# well, it is stock's mute that cuts a ringing voice, not the module.
+# A tap takes 120 ms of the runner's time, so `key PLAY`, `wait 1030` puts the next step 1150 ms after
+# PLAY went down; the unit takes PLAY and STOP 20 to 70 ms after they are sent (measured, 20 takes).
+# Expected from the module's README and code and from stock's manual; not yet run on the unit.
+# The BD track needs a sound that rings with the AMP envelope open.
+# Changes the tempo, the BD track's AMP page and its ENV RESET in the active kit, and the BD track of the
+# active pattern, which it clears; ends unmuted, at 120 BPM, ENV RESET OFF, HLD 0, the track empty.
+name: improved-amp-prefade-mute
+state: changes
+transport: any
+target: unit
+
+hold TRK
+key BD
+release TRK
+# Tempo to 120.0: down to the bottom (30.0), then 90 BPM up, a step of the tempo screen's LEVEL being 1 BPM.
+key TEMPO
+enc LEVEL -127 x64
+nudge LEVEL +21 per 6 x4
+nudge LEVEL +6 per 6
+wait 500
+screen tempo
+expect tempo == ref region 40 15 88 33
+key NO
+key AMP
+cc 78 0
+cc 79 57
+cc 80 55
+cc 81 0
+cc 82 0
+cc 83 0
+cc 10 64
+cc 7 100
+hold FUNC
+wait 300
+key MUTE
+release FUNC
+key UP x4
+key DOWN x4
+key YES
+key UP x8
+key DOWN x2
+key LEFT x3
+key RIGHT
+wait 500
+screen er1
+expect er1 == ref region 39 26 82 11
+key NO x3
+key RECORD
+wait 300
+key T1
+key FUNC+PLAY
+wait 800
+key T1
+key T3
+key T5
+key T7
+key T9
+key T11
+key T13
+key T15
+wait 300
+key RECORD
+wait 300
+cc 94 0
+wait 300
+audio mref BD 2400
+wait 100
+key PLAY
+wait 1030
+key STOP
+wait 900
+wait 300
+audio mamp BD 5000
+wait 100
+key PLAY
+wait 1030
+cc 94 127
+wait 1480
+cc 94 0
+wait 1190
+key STOP
+wait 900
+hold FUNC
+wait 300
+key MUTE
+release FUNC
+key UP x4
+key DOWN x4
+key YES
+key UP x8
+key DOWN x2
+key LEFT x3
+wait 500
+screen er0
+expect er0 == ref region 39 26 82 11
+key NO x3
+wait 300
+audio moff BD 5000
+wait 100
+key PLAY
+wait 1030
+cc 94 127
+wait 1480
+cc 94 0
+wait 1190
+key STOP
+wait 900
+cc 94 0
+key RECORD
+wait 300
+key T1
+key FUNC+PLAY
+wait 800
+key RECORD
+cc 79 0
+
+expect mref.hits == 1
+expect mref.dips == 4
+expect mamp.hits == 2
+expect mamp.dips == 8
+expect mamp.len20 == mref.len20 within 10
+expect moff.hits == 2
+expect moff.dips == 0
+expect moff.len20 == mref.len20 within 30

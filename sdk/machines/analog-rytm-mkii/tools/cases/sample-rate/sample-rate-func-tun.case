@@ -1,0 +1,35 @@
+# Fine Tune + Sample Rate (0.2.0-experimental): FUNC + turn on TUN keeps stock's jump between
+# -24, 0 and +24: from +0.04, three FUNC nudges up end on +24 (word 0x5800), the top stop, whichever
+# of them stock drops. Unit only: in rytm-emu 0.2.0 and 0.1.1 alike stayed on 0x4000.
+# SMPL is pressed from AMP, never on its own page (that toggles the knob and waveform views).
+# Changes BD's TUN and puts it back to +0 (CC 24 64).
+name: sample-rate-func-tun
+state: changes
+target: unit
+
+hold TRK
+key BD
+release TRK
+key AMP
+wait 300
+key SMPL
+wait 3500
+cc 24 64
+wait 300
+nudge A +3
+wait 750
+hold FUNC
+wait 300
+nudge A +1
+wait 750
+nudge A +1
+wait 750
+nudge A +1
+release FUNC
+wait 750
+mem tmax 0x8000e5d2 2
+expect tmax == 5800
+cc 24 64
+wait 300
+mem tcc 0x8000e5d2 2
+expect tcc == 4000

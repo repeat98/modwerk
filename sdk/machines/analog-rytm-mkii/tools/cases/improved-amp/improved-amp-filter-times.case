@@ -1,0 +1,64 @@
+# Improved AMP (0.1.0-experimental): FILTER ATK, DEC and REL read as times on the same curves: 5.0ms at
+# 25, DEC and REL 45.0s at 127.
+# Screens only: what the envelopes, the overdrive and the pre-fade sound like is in the sound cases.
+# The case sets what its references show: the BD track, every value of the page by CC on the auto channel
+# and, where a number depends on it, the tempo. The title bar (kit name, tempo, record state) and the status
+# line (track level, pattern) are left out of every comparison (`ignore`).
+# A value shows as text in place of its label for a while after a knob turn (not after a CC), so every
+# screen is taken after a turn of the knob it is about. The AMP and FILTER pages take 3 counts a step.
+# Changes the BD track's sound in the active kit and does not put it back.
+name: improved-amp-filter-times
+state: changes
+ignore: 0 0 128 9, 0 55 128 9
+
+hold TRK
+key BD
+release TRK
+key FLTR
+cc 70 0
+cc 71 0
+cc 72 64
+cc 73 1
+cc 74 100
+cc 75 0
+cc 76 0
+cc 77 64
+nudge D -1 per 3
+wait 750
+screen zero
+expect zero == ref
+# The value text of the knob turned before is gone after 2.5 s (measured, emulator): wait it out.
+wait 3000
+nudge A +25 per 3
+wait 750
+screen atk25
+expect atk25 == ref
+wait 3000
+nudge B +25 per 3
+wait 750
+screen dec25
+expect dec25 == ref
+wait 3000
+nudge D +25 per 3
+wait 750
+screen rel25
+expect rel25 == ref
+wait 3000
+nudge B +42 per 3 x2
+nudge B +18 per 3
+wait 750
+screen dec127
+expect dec127 == ref
+nudge B +1 per 3
+wait 750
+screen decover
+expect decover == dec127
+wait 3000
+nudge D +42 per 3 x2
+nudge D +18 per 3
+wait 750
+screen rel127
+expect rel127 == ref
+# Back to short times.
+cc 71 40
+cc 73 40

@@ -1,0 +1,29 @@
+# Quick Mod Assign 0.2.0 (LFO assign): on the LFO page itself the LFO key is stock's (holding it shows the
+# page's values, as any page key does), so LFO held and WAV turned edits WAV as on stock. The same case with
+# the same references must pass on the stock comparison image.
+# Sets and leaves the BD track's LFO at DST none, DEP 0, WAV by CC 106 0.
+name: qma-lfo-on-lfo-page
+state: changes
+ignore: 0 0 128 9, 0 55 128 9
+
+hold TRK
+key BD
+release TRK
+cc 105 0
+cc 109 64
+cc 106 0
+key LFO
+wait 3500
+screen lfo0
+hold LFO
+wait 750
+screen held
+expect held == lfo0 region 0 9 128 46   # no lock boxes, no popup: stock's hold
+nudge E +3 per 8
+wait 750
+screen turned
+expect turned == ref region 0 9 128 46  # WAV moved, as on stock
+release LFO
+cc 106 0
+cc 105 0
+cc 109 64

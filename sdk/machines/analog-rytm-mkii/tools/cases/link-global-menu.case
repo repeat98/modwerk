@@ -1,0 +1,18 @@
+# The link's keys reach the UI and the screen reads back: GLOBAL opens its menu, NO leaves it.
+name: link-global-menu
+state: safe
+
+# The case before may have turned a knob: stock's title bar and knob label show that parameter
+# for a few seconds, and `back` would then differ from `home` (seen on the unit after the sound case).
+wait 3500
+screen home
+ident before
+key GLOBAL
+screen menu
+expect menu != home
+key NO
+screen back
+expect back == home
+ident after
+expect before.armed == 1
+expect after.refused == before.refused

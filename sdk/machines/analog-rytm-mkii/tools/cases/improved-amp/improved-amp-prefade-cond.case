@@ -1,0 +1,146 @@
+# Improved AMP: a trig whose condition fails is not faded for. The BD track holds trigs on steps 1, 2 and 3
+# (125 ms apart at 120 BPM), HLD 57 holds each hit into the next and ENV RESET is at AMP. Each take plays
+# the pattern three times (trigs from 0, 2000 and 4000 ms; the sound ends in between: 3 hits).
+# No condition: 6 dips (before steps 2 and 3 of each time). Step 2 on FILL, FILL mode off: it never plays,
+# 3 dips, and the voice is not silenced before step 2 (that would end the hit: 6 hits). Step 2 on 2:2: it
+# plays the second time only, 4 dips.
+# The condition: in GRID RECORDING on the TRIG page, hold the trig and turn D (PRB, TRC while a trig is
+# held). The list runs 1 % to 100 %, FILL, !FILL, PRE, !PRE, NEI, !NEI, 1ST, !1ST, 1:2, 2:2 ... 8:8. With
+# the trig held, `nudge D +1 per 6` shows the unlocked value, a second one locks 100 %, and from there a
+# nudge of N steps of 6 counts moves N places (seen on rytm-emu, 10 Nov 2026: FILL after
+# +1, 2:2 after +10; a re-hold shows 100 % whatever is locked, so the value is compared before release).
+# Taking the trig off and placing it again clears its condition. FILL mode has to be off (the case does
+# not set it): with FILL latched, `cfill` has 6 dips.
+# Expected from the module's README and code and from stock's manual; not yet run on the unit.
+# The BD track needs a sound that rings with the AMP envelope open.
+# Changes the tempo, the BD track's AMP page and its ENV RESET in the active kit, and the BD track of the
+# active pattern, which it clears; ends at 120 BPM, ENV RESET OFF, HLD 0, the track empty.
+name: improved-amp-prefade-cond
+state: changes
+transport: any
+target: unit
+
+hold TRK
+key BD
+release TRK
+# Tempo to 120.0: down to the bottom (30.0), then 90 BPM up, a step of the tempo screen's LEVEL being 1 BPM.
+key TEMPO
+enc LEVEL -127 x64
+nudge LEVEL +21 per 6 x4
+nudge LEVEL +6 per 6
+wait 500
+screen tempo
+expect tempo == ref region 40 15 88 33
+key NO
+key AMP
+cc 78 0
+cc 79 57
+cc 80 55
+cc 81 0
+cc 82 0
+cc 83 0
+cc 10 64
+cc 7 100
+hold FUNC
+wait 300
+key MUTE
+release FUNC
+key UP x4
+key DOWN x4
+key YES
+key UP x8
+key DOWN x2
+key LEFT x3
+key RIGHT
+wait 500
+screen er1
+expect er1 == ref region 39 26 82 11
+key NO x3
+key TRIG
+key RECORD
+wait 300
+key T1
+key FUNC+PLAY
+wait 800
+key T1
+key T2
+key T3
+wait 300
+key RECORD
+wait 300
+audio call BD 5400
+wait 100
+key PLAY
+wait 4480
+key STOP
+wait 900
+key RECORD
+wait 300
+hold T2
+wait 400
+nudge D +1 per 6 x3
+wait 400
+screen fill
+expect fill == ref region 95 9 33 19
+release T2
+wait 300
+key RECORD
+wait 300
+audio cfill BD 5400
+wait 100
+key PLAY
+wait 4480
+key STOP
+wait 900
+key RECORD
+wait 300
+key T2
+wait 300
+key T2
+wait 300
+hold T2
+wait 400
+nudge D +1 per 6 x2
+nudge D +10 per 6
+wait 400
+screen c22
+expect c22 == ref region 95 9 33 19
+expect c22 != fill region 95 9 33 19
+release T2
+wait 300
+key RECORD
+wait 300
+audio ctwo BD 5400
+wait 100
+key PLAY
+wait 4480
+key STOP
+wait 900
+hold FUNC
+wait 300
+key MUTE
+release FUNC
+key UP x4
+key DOWN x4
+key YES
+key UP x8
+key DOWN x2
+key LEFT x3
+wait 500
+screen er0
+expect er0 == ref region 39 26 82 11
+key NO x3
+key RECORD
+wait 300
+key T1
+key FUNC+PLAY
+wait 800
+key RECORD
+cc 79 0
+
+expect call.hits == 3
+expect call.dips == 6
+expect cfill.hits == 3
+expect cfill.dips == 3
+expect ctwo.hits == 3
+expect ctwo.dips == 4

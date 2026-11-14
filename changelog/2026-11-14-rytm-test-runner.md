@@ -1,0 +1,1 @@
+Analog Rytm MKII SDK: `tools/rytm_test.py` runs test cases on rytm-emu or on a unit over the development link, comparing screens, memory and USB audio measures, with the link's own cases and worked examples for Improved AMP, Quick Mod Assign and Improved SMPL. Reference captures stay on the developer's computer. The test-on-unit guide now covers the Rytm.

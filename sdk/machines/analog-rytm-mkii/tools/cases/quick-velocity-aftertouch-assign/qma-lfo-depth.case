@@ -1,0 +1,66 @@
+# Quick Mod Assign 0.2.0 (LFO assign): with LFO held, further turns of the destination's knob set DEP as the
+# same turns of stock's own DEP knob (LFO page, knob H) set it. Each path starts from DEP 0 by CC and gets the
+# same nudges (each: 16 counts back, then the steps as one turn); then one more step of DEP's own knob shows
+# the value, and the two values must be equal. Up first, then down. One 124-count turn each: stock's
+# acceleration over several fast turns is not compared here.
+# Sets and leaves the BD track's LFO at DST none, DEP 0 (by CC). Changes the BD sound's LFO in the active kit.
+name: qma-lfo-depth
+state: changes
+ignore: 0 0 128 9, 0 55 128 9
+
+hold TRK
+key BD
+release TRK
+cc 105 0
+cc 109 64
+key FLTR
+wait 3500
+hold LFO
+nudge E +1                          # takes FRQ at 0: sets no depth
+nudge E +31
+nudge E +31
+wait 750
+screen boxup
+expect boxup == ref                 # FRQ box +1.93 across the column (DEP as the LFO page writes it)
+release LFO
+wait 500
+key LFO
+wait 3500
+nudge H +1
+wait 750
+screen qmaup
+expect qmaup == ref region 96 9 32 46
+cc 109 64
+nudge H +31
+nudge H +31
+nudge H +1
+wait 750
+screen stockup
+expect qmaup == stockup region 96 30 32 25
+
+cc 109 64
+key FLTR
+wait 3500
+hold LFO
+nudge E -31
+nudge E -31
+wait 750
+screen boxdown
+expect boxdown == ref               # FRQ box -1.93
+release LFO
+wait 500
+key LFO
+wait 3500
+nudge H -1
+wait 750
+screen qmadown
+expect qmadown == ref region 96 9 32 46
+cc 109 64
+nudge H -31
+nudge H -31
+nudge H -1
+wait 750
+screen stockdown
+expect qmadown == stockdown region 96 30 32 25
+cc 105 0
+cc 109 64

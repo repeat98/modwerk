@@ -1,0 +1,120 @@
+# Improved AMP: OVR is heard across its range, and lands where the README says it does against stock's.
+# BD hits by MIDI note, held (HLD 42) so the level is steady. The level rises with every value tried, 0 to
+# 127, and the hit's length stays.
+# Against stock, measured on the unit on 10 Nov 2026 with this case's sound and settings, peak against the
+# hit at OVR 0. Stock AMP (an image with the same core and link, no module): +1.29 dB at 1, +2.50 at 2,
+# +6.47 at 12, +8.64 at 127. The module: +0.14 at 1, +1.25 at 8, +2.50 at 16, +4.63 at 32, +5.77 at
+# 48, +6.48 at 64, +7.51 at 96, +8.00 at 112, +8.56 at 126, +8.64 at 127. So the ends are stock's, 1 is a
+# ninth of stock's first step, 8 is stock's 1, 16 stock's 2 and 64 stock's 12: the expects hold the module
+# to stock's numbers, and stock's own OVR fails them (its 1 is +1.29, its 8 +5.86, its 64 +8.17).
+# The BD track needs a sound that rings for 200 ms or more with the AMP envelope open.
+# Changes the BD track's AMP page in the active kit; ends at OVR 0, HLD 0.
+name: improved-amp-sound-ovr
+state: changes
+target: unit
+
+hold TRK
+key BD
+release TRK
+key AMP
+cc 78 0
+cc 79 42
+cc 80 55
+cc 81 0
+cc 82 0
+cc 83 0
+cc 10 64
+cc 7 100
+cc 81 0
+wait 300
+audio o0 BD 1200
+wait 50
+note BD
+wait 1300
+cc 81 1
+wait 300
+audio o1 BD 1200
+wait 50
+note BD
+wait 1300
+cc 81 8
+wait 300
+audio o8 BD 1200
+wait 50
+note BD
+wait 1300
+cc 81 16
+wait 300
+audio o16 BD 1200
+wait 50
+note BD
+wait 1300
+cc 81 32
+wait 300
+audio o32 BD 1200
+wait 50
+note BD
+wait 1300
+cc 81 48
+wait 300
+audio o48 BD 1200
+wait 50
+note BD
+wait 1300
+cc 81 64
+wait 300
+audio o64 BD 1200
+wait 50
+note BD
+wait 1300
+cc 81 80
+wait 300
+audio o80 BD 1200
+wait 50
+note BD
+wait 1300
+cc 81 96
+wait 300
+audio o96 BD 1200
+wait 50
+note BD
+wait 1300
+cc 81 112
+wait 300
+audio o112 BD 1200
+wait 50
+note BD
+wait 1300
+cc 81 126
+wait 300
+audio o126 BD 1200
+wait 50
+note BD
+wait 1300
+cc 81 127
+wait 300
+audio o127 BD 1200
+wait 50
+note BD
+wait 1300
+cc 81 0
+cc 79 0
+
+expect o0.hits == 1
+expect o1.peak > o0.peak
+expect o8.peak > o1.peak
+expect o16.peak > o8.peak
+expect o32.peak > o16.peak
+expect o48.peak > o32.peak
+expect o64.peak > o48.peak
+expect o80.peak > o64.peak
+expect o96.peak > o80.peak
+expect o112.peak > o96.peak
+expect o126.peak > o112.peak
+expect o127.peak > o126.peak
+expect o1.peak < o0.peak + 0.4
+expect o8.peak == o0.peak + 1.29 within 0.3
+expect o16.peak == o0.peak + 2.50 within 0.3
+expect o64.peak == o0.peak + 6.47 within 0.3
+expect o127.peak == o0.peak + 8.64 within 0.3
+expect o127.len20 == o0.len20 within 2

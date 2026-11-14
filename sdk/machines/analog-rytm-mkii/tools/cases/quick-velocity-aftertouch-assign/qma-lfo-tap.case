@@ -1,0 +1,45 @@
+# Quick Mod Assign 0.2.0: a plain LFO tap (no turn) is played to stock and to every key mod as a panel tap:
+# FILTER -> LFO page, LFO again stays there, SAMPLE -> LFO page, and then FUNC + knob A steps stock's SPD,
+# which shows Loop Sync saw the page change (before 0.2.0's replay it took that turn on the LFO page).
+# The same case with the same references must pass on a stock comparison image (Loop Sync only, no QMA).
+# Sets DST none, DEP 0 and SPD (102 = 96) by CC, before and after; MUL, FAD, WAV, SPH and MOD are the kit's.
+# "LFO again stays there" holds on an image with no module page behind LFO (no LFO RND). Leaves the LFO page shown.
+name: qma-lfo-tap
+state: changes
+ignore: 0 0 128 9, 0 55 128 9
+
+hold TRK
+key BD
+release TRK
+cc 105 0
+cc 109 64
+cc 102 96
+key FLTR
+wait 3500
+screen fltr
+expect fltr == ref
+key LFO
+wait 3500
+screen lfo
+expect lfo == ref region 0 9 128 23   # the LFO page, SPD MUL FAD DST (WAV and SPH are the kit's: on stock an
+                                       # earlier case's turns may have moved them)
+key LFO
+wait 3500
+screen lfo2
+expect lfo2 == lfo
+key SMPL
+wait 3500
+screen smpl
+expect smpl == ref region 0 20 128 8   # the SAMPLE page by its labels (its knobs are the kit's)
+key LFO
+wait 3500
+screen lfo3
+expect lfo3 == lfo
+hold FUNC
+nudge A +1
+release FUNC
+wait 750
+screen spd
+expect spd == ref region 0 9 128 23  # stock's coarse SPD step on the LFO page
+expect spd != lfo
+cc 102 96

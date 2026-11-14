@@ -1,0 +1,32 @@
+# Fine Tune + Sample Rate (0.3.0-experimental): RATE's default is +63. From RATE +0 (CC 25 64),
+# clearing the SAMPLE page (SMPL held, PLAY) sets BD's FIN target (0x8000e5d4) to 0x7f00; stock and
+# 0.1.x/0.2.0 set 0x4000. CC 25 127 then leaves RATE at +63.
+# Clears BD's SAMPLE page of the scratch project's active kit (TUN, RATE, BR, sample slot, STA, END,
+# LOP, LEV to their defaults) and does not put it back: stock's undo (SMPL + PLAY again) did not
+# undo it in rytm-emu.
+name: sample-rate-rate-default
+state: changes
+
+hold TRK
+key BD
+release TRK
+key AMP
+wait 300
+key SMPL
+wait 3500
+cc 25 64
+wait 300
+mem t0 0x8000e5d4 2
+expect t0 == 4000
+hold SMPL
+wait 300
+key PLAY
+wait 300
+release SMPL
+wait 750
+mem t1 0x8000e5d4 2
+expect t1 == 7f00
+cc 25 127
+wait 300
+mem t3 0x8000e5d4 2
+expect t3 == 7f00

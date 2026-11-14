@@ -1,0 +1,95 @@
+# Improved AMP (0.1.0-experimental): AMP HLD runs 0 (no hold), 1..126 (a hold in steps), 127 (AUTO) and
+# reads in steps, three digits (the 13 grid values drop the zeros at their end): HLD 42 is one step and reads 1 at any
+# tempo (here 120.0 and 90.0 BPM).
+# Screens only: what the envelopes, the overdrive and the pre-fade sound like is in the sound cases.
+# The case sets what its references show: the BD track, every value of the page by CC on the auto channel
+# and, where a number depends on it, the tempo. The title bar (kit name, tempo, record state) and the status
+# line (track level, pattern) are left out of every comparison (`ignore`).
+# A value shows as text in place of its label for a while after a knob turn (not after a CC), so every
+# screen is taken after a turn of the knob it is about. The AMP and FILTER pages take 3 counts a step.
+# Changes the tempo (to 120.0) and the BD track's sound in the active kit and does not put them back.
+name: improved-amp-hld
+state: changes
+ignore: 0 0 128 9, 0 55 128 9
+
+hold TRK
+key BD
+release TRK
+key AMP
+key TEMPO
+enc LEVEL -127 x64
+nudge LEVEL +21 per 6 x4
+nudge LEVEL +6 per 6
+wait 500
+screen tempo
+expect tempo == ref region 40 15 88 33
+key NO
+cc 78 0
+cc 79 0
+cc 80 55
+cc 81 0
+cc 82 0
+cc 83 0
+cc 10 64
+cc 7 100
+cc 79 1
+nudge B -1 per 3
+wait 750
+screen h0
+expect h0 == ref
+nudge B -1 per 3
+wait 750
+screen under
+expect under == h0
+nudge B +1 per 3
+wait 750
+screen h1
+expect h1 == ref
+nudge B +5 per 3
+wait 750
+screen h6
+expect h6 == ref
+nudge B +9 per 3
+wait 750
+screen h15
+expect h15 == ref
+nudge B +27 per 3
+wait 750
+screen h42
+expect h42 == ref
+nudge B +42 per 3 x2
+wait 750
+screen h126
+expect h126 == ref
+nudge B +1 per 3
+wait 750
+screen auto
+expect auto == ref
+nudge B +1 per 3
+wait 750
+screen over
+expect over == auto
+nudge B -1 per 3
+wait 750
+screen back
+expect back == h126
+
+# The same value at another tempo reads the same: the hold follows the tempo.
+cc 79 41
+key TEMPO
+nudge LEVEL -15 per 6 x2
+wait 500
+screen tempo90
+expect tempo90 == ref region 40 15 88 33
+key NO
+nudge B +1 per 3
+wait 750
+screen h42at90
+expect h42at90 == h42
+key TEMPO
+nudge LEVEL +15 per 6 x2
+wait 500
+screen tempoback
+expect tempoback == tempo region 40 15 88 33
+key NO
+cc 79 0

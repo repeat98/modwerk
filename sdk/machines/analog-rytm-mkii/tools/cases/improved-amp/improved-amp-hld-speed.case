@@ -1,0 +1,83 @@
+# Improved AMP: HLD's number is a count of the track's own steps, so it reads the same at every speed:
+# HLD 42 reads 1 at 1x, at 3/2x and at 3/4x (the BD track's own scale, SCALE SETUP in ADVANCED mode, which
+# the scratch pattern is in). The SCALE SETUP screens are compared, so the speed did change and is back.
+# Not covered: NORMAL mode (the pattern's one scale).
+# Screens only: that the hold's time follows the speed is in improved-amp-sound-hld-speed.
+# SCALE SETUP opens with its cursor on the steps; two to the right is the scale, UP is faster.
+# Changes the tempo (to 120.0), the BD track's AMP page in the active kit and, for a while, the scale of
+# the active pattern, which must be at 1x; ends at 120 BPM, 1x, HLD 0.
+name: improved-amp-hld-speed
+state: changes
+ignore: 0 0 128 9, 0 55 128 9
+
+hold TRK
+key BD
+release TRK
+key AMP
+# Tempo to 120.0: down to the bottom (30.0), then 90 BPM up, a step of the tempo screen's LEVEL being 1 BPM.
+key TEMPO
+enc LEVEL -127 x64
+nudge LEVEL +21 per 6 x4
+nudge LEVEL +6 per 6
+wait 500
+screen tempo
+expect tempo == ref region 40 15 88 33
+key NO
+cc 78 0
+cc 79 41
+cc 80 55
+cc 81 0
+cc 82 0
+cc 83 0
+cc 10 64
+cc 7 100
+nudge B +1 per 3
+wait 750
+screen h42
+expect h42 == ref
+key FUNC+PAGE
+wait 400
+key RIGHT x2
+key UP
+wait 300
+screen scalefast
+key NO
+wait 300
+nudge B +1 per 3
+nudge B -1 per 3
+wait 750
+screen h42fast
+expect h42fast == h42
+key FUNC+PAGE
+wait 400
+key RIGHT x2
+key DOWN x2
+wait 300
+screen scaleslow
+key NO
+wait 300
+nudge B +1 per 3
+nudge B -1 per 3
+wait 750
+screen h42slow
+expect h42slow == h42
+key FUNC+PAGE
+wait 400
+key RIGHT x2
+key UP
+wait 300
+screen scaleback
+key NO
+wait 300
+nudge B +1 per 3
+nudge B -1 per 3
+wait 750
+screen h42back
+expect h42back == h42
+expect scalefast == ref region 0 13 128 36
+expect scaleslow == ref region 0 13 128 36
+expect scaleback == ref region 0 13 128 36
+expect scalefast != scaleback
+expect scaleslow != scaleback
+expect scalefast != scaleslow
+cc 79 0

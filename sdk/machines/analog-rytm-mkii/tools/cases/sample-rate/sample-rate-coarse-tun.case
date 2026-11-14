@@ -1,0 +1,41 @@
+# Fine Tune + Sample Rate (0.2.0-experimental): press and turn TUN moves whole semitones and keeps
+# the cents: +0.04 (`nudge +3` takes 4 steps, see sample-rate-fine-tun), then two pressed steps,
+# +2.04 (word 0x420a), one back, +1.04. 0.1.1 moved 8 semitones a pressed step here.
+# FUNC + turn: sample-rate-func-tun (unit only).
+# Changes BD's TUN and puts it back to +0 (CC 24 64).
+# SMPL is pressed from AMP, never on its own page (that toggles the knob and waveform views), so
+# the SAMPLE page keeps the view it had: the unit references are its waveform view.
+name: sample-rate-coarse-tun
+state: changes
+
+hold TRK
+key BD
+release TRK
+key AMP
+wait 300
+key SMPL
+wait 3500
+cc 24 64
+wait 300
+nudge A +3
+wait 750
+mem t3 0x8000e5d2 2
+expect t3 == 400a
+hold PUSH_A
+wait 300
+nudge A +2
+wait 750
+screen plus204
+mem t204 0x8000e5d2 2
+expect t204 == 420a
+nudge A -1
+wait 750
+mem t104 0x8000e5d2 2
+expect t104 == 410a
+release PUSH_A
+wait 750
+expect plus204 == ref region 0 9 34 9
+cc 24 64
+wait 300
+mem tcc 0x8000e5d2 2
+expect tcc == 4000

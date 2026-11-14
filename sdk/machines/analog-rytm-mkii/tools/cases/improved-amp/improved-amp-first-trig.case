@@ -1,0 +1,110 @@
+# Improved AMP: the first trig after PLAY plays as stock, with ENV RESET at AMP too. A BD hit by MIDI
+# note rings (HLD 57), PLAY is pressed while it does and the track's trig on step 1 strikes the sounding
+# voice: no fade before it. The trig on step 3, 250 ms later, gets the fade (one dip).
+# `first` stops before step 3, `second` after it and before step 5. The unit takes PLAY and STOP 20 to
+# 70 ms after they are sent (measured, 20 takes), so each STOP is sent 130 ms or more before the next trig.
+# The BD track needs a sound that rings with the AMP envelope open.
+# Changes the tempo, the BD track's AMP page and its ENV RESET in the active kit, and the BD track of the
+# active pattern, which it clears; ends at 120 BPM, ENV RESET OFF, HLD 0, the track empty.
+name: improved-amp-first-trig
+state: changes
+transport: any
+target: unit
+
+hold TRK
+key BD
+release TRK
+# Tempo to 120.0: down to the bottom (30.0), then 90 BPM up, a step of the tempo screen's LEVEL being 1 BPM.
+key TEMPO
+enc LEVEL -127 x64
+nudge LEVEL +21 per 6 x4
+nudge LEVEL +6 per 6
+wait 500
+screen tempo
+expect tempo == ref region 40 15 88 33
+key NO
+key AMP
+cc 78 0
+cc 79 57
+cc 80 55
+cc 81 0
+cc 82 0
+cc 83 0
+cc 10 64
+cc 7 100
+hold FUNC
+wait 300
+key MUTE
+release FUNC
+key UP x4
+key DOWN x4
+key YES
+key UP x8
+key DOWN x2
+key LEFT x3
+key RIGHT
+wait 500
+screen er1
+expect er1 == ref region 39 26 82 11
+key NO x3
+key RECORD
+wait 300
+key T1
+key FUNC+PLAY
+wait 800
+key T1
+key T3
+wait 300
+key RECORD
+wait 300
+wait 300
+audio alone BD 1200
+wait 50
+note BD 100 50
+wait 1300
+wait 300
+audio first BD 1500
+wait 50
+note BD 100 50
+wait 100
+key PLAY
+wait 20
+key STOP
+wait 1400
+wait 300
+audio second BD 1700
+wait 50
+note BD 100 50
+wait 100
+key PLAY
+wait 280
+key STOP
+wait 1400
+hold FUNC
+wait 300
+key MUTE
+release FUNC
+key UP x4
+key DOWN x4
+key YES
+key UP x8
+key DOWN x2
+key LEFT x3
+wait 500
+screen er0
+expect er0 == ref region 39 26 82 11
+key NO x3
+key RECORD
+wait 300
+key T1
+key FUNC+PLAY
+wait 800
+key RECORD
+cc 79 0
+
+expect alone.hits == 1
+expect alone.dips == 0
+expect first.hits == 1
+expect first.dips == 0
+expect first.len20 > alone.len20
+expect second.dips == 1

@@ -1,0 +1,39 @@
+# Fine Tune + Sample Rate (0.2.0-experimental): in GRID RECORDING a held trig's TUN lock takes
+# cents too: trig on step 1 of BD, held; the first nudge only shows the value (the held trig's
+# knob swallows it, emulator), the second, +4, reads +0.05 on the inverted, locked knob (one
+# step of acceleration, as in sample-rate-fine-tun).
+# Places a trig on BD step 1 of the active pattern and takes it off again; leaves GRID RECORDING.
+# Run stopped. BD's TUN at +0 (CC 24 64). Needs BD step 1 of the active pattern empty (a trig there
+# would be taken off and put back without its locks). If the run stops inside this case, GRID
+# RECORDING is on and a trig sits on BD step 1: press RECORD, then T1.
+# SMPL is pressed from AMP, never on its own page (that toggles the knob and waveform views), so
+# the SAMPLE page keeps the view it had: the unit references are its waveform view.
+name: sample-rate-fine-lock
+state: changes
+
+hold TRK
+key BD
+release TRK
+key AMP
+wait 300
+key SMPL
+wait 3500
+cc 24 64
+key RECORD
+wait 300
+key T1
+wait 300
+hold T1
+wait 300
+nudge A +4
+wait 750
+screen lockA
+nudge A +4
+wait 750
+screen lockB
+expect lockB == ref region 0 9 34 9
+release T1
+wait 300
+key T1
+wait 300
+key RECORD

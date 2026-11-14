@@ -1,0 +1,29 @@
+# `nudge` moves a sound parameter by exact steps and brings it back: NOT on the TRIG page, two
+# steps up and down, then five up and back in two turns. Each screen is taken 3.5 s after the last
+# turn, when stock's value overlay (title = the parameter's name) is gone. Ends as it began, but
+# a turned parameter marks the kit as changed, so: state changes.
+name: link-nudge-and-back
+state: changes
+
+# TRIG pressed on its own page shows its second page, and the unit keeps that choice: come from another.
+key AMP
+key TRIG
+wait 3500                       # the page's name leaves the title bar
+screen rest
+nudge A +2
+wait 750                        # stock draws a turn up to half a second late
+screen turned                   # value overlay up
+expect turned != rest
+wait 3500
+screen up
+expect up != rest
+nudge A -2
+wait 3500
+screen down
+expect down == rest
+nudge A +5
+nudge A -3
+nudge A -2
+wait 3500
+screen again
+expect again == rest
