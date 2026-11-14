@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "about": "Modwerk's Analog Rytm MKII base, built by npm run machine:base -- analog-rytm-mkii: core-ar2 0.7's source unchanged (sdk/imports/core-ar2-source-fb58292.json), with Modwerk's own sources in base/ added on top: in every variant (common) the machine list's sections (mw_machine_sections) and the FX track's edit save of words 38 to 41, which stock writes over the delay's TIME (base/fxguard.s), and in send-bus (add) the FX track's lock words, the send bus with its return, its pages and the FX list (mw_fx) send effects contribute to, and digital voices (mw_voices) with the hook ev_sound_applied. A site names the stock bytes it replaces by length and SHA-256; the build fills them from the user's OS. It comes in two variants: send-bus (the default, with add) and plain (core-ar2 0.7's source with common alone, for a build with no send effect, which then pays none of add's cost).",
+  "about": "Modwerk's Analog Rytm MKII base, built by npm run machine:base -- analog-rytm-mkii: core-ar2 0.7's source unchanged (sdk/imports/core-ar2-source-fb58292.json), with Modwerk's own sources in base/ added on top: in every variant (common) the machine list's sections (mw_machine_sections) and the FX track's edit save of words 38 to 41, which stock writes over the delay's TIME (base/fxguard.s), and in send-bus (add) the FX track's lock words, the send bus with its return, its pages and the FX list (mw_fx) send effects contribute to, and digital voices (mw_voices) with the hook ev_sound_applied. A site names the stock bytes it replaces by length and SHA-256; the build fills them from the user's OS. It comes in two variants: send-bus (the default, with add) and plain (core-ar2 0.7's source with common alone, for a build with no send effect, which then pays none of add's cost). npm run machine:base -- analog-rytm-mkii --dev also builds each variant with dev on top: the development link over USB MIDI (base/link.c), for test images only, never a release.",
   "core": "core-ar2",
   "include": "sdk/machines/analog-rytm-mkii/include",
   "os": "1.74",
@@ -381,6 +381,100 @@
         "sym": "mw_voice_type",
         "scope": "sound",
         "bits": 3
+      }
+    ]
+  },
+  "dev": {
+    "about": "The development link (base/link.c, link.s): identity, screen and memory reads over USB MIDI SysEx, and while GLOBAL > REMOTE CTRL is on (at every boot) panel keys, encoder turns, the remote YES of stock's OS upgrade and a RAM boot of another image. Any USB host can drive it with no hand on the unit: development bases only.",
+    "sources": [
+      "../base/link.c",
+      "../base/link.s"
+    ],
+    "sites": [
+      {
+        "addr": "0x40083dd8",
+        "len": 8,
+        "stockSha256": "9b78b6778f56449ca9429e734d2140df96316ae0e9eea0b9d6eea089f82ddbd0",
+        "op": "jmp",
+        "target": "mw_link_router"
+      },
+      {
+        "addr": "0x40081c28",
+        "len": 6,
+        "stockSha256": "9eab14ed9d527816054c9f68837b2e021fba5470d105516b94b63ffb8ed1f45d",
+        "op": "jmp",
+        "target": "mw_link_held"
+      },
+      {
+        "addr": "0x4004dc14",
+        "len": 6,
+        "stockSha256": "9f8a100ff33cc7cd854b0b01e86de843b19d6b517737e658d8a00b6a43e242d0",
+        "op": "jsr",
+        "target": "mw_link_program"
+      },
+      {
+        "addr": "0x400008c6",
+        "len": 8,
+        "stockSha256": "dbd7ee3ac848bc629a889c3a534a8b23d8bb88fb05c5dd9f8f825696a3c6b633",
+        "op": "jsr",
+        "target": "mw_boot_site"
+      }
+    ],
+    "cflags": [
+      "-fno-late-combine-instructions",
+      "-DFILLRECT_AT=0x40070726",
+      "-DSEQ_PLAYING_AT=0x405c8cf8",
+      "-DSYSEX_SEND_AT=0x40085a18",
+      "-DUSB_SYSEX_STATE_AT=0x413db244",
+      "-DUI_QUEUE_AT=0x4011fb56",
+      "-DQUEUE_POST_AT=0x400013b2",
+      "-DVIEW_INVALIDATE_AT=0x40078580",
+      "-DFB_FRONT_AT=0x40287b6c"
+    ],
+    "defsym": {
+      "mw_link_router_resume": "0x40083de0",
+      "mw_link_string": "0x401bcff0",
+      "mw_link_flash": "0x4009f404",
+      "mw_boot_data": "0x400007e4",
+      "mw_boot_bss": "0x4000083a"
+    },
+    "subscribe": [
+      {
+        "event": "ev_key",
+        "fn": "mw_link_key",
+        "order": 1
+      },
+      {
+        "event": "ev_enc",
+        "fn": "mw_link_enc",
+        "order": 1
+      },
+      {
+        "event": "ev_tick",
+        "fn": "mw_link_tick",
+        "order": 240
+      },
+      {
+        "event": "ev_draw",
+        "fn": "mw_link_draw",
+        "order": 250
+      },
+      {
+        "event": "ev_project",
+        "fn": "mw_link_project",
+        "order": 1
+      },
+      {
+        "event": "ev_settings",
+        "fn": "mw_link_settings",
+        "order": 50
+      }
+    ],
+    "storage": [
+      {
+        "sym": "mw_link_carry",
+        "scope": "project",
+        "bits": 1
       }
     ]
   }

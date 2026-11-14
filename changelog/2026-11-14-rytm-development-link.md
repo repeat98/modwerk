@@ -1,0 +1,1 @@
+Analog Rytm MKII SDK: development bases (`npm run machine:base -- analog-rytm-mkii --dev`) carry a USB link over SysEx, and `tools/rytm_link.py` drives it: read the screen and memory, press keys, turn knobs, and flash or RAM-boot a test image with no hand on the unit, armed from GLOBAL > REMOTE CTRL. Release bases and the site's builds do not change.

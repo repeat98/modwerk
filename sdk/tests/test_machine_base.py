@@ -140,7 +140,7 @@ class MachineBases(unittest.TestCase):
 
     def test_every_added_site_is_guarded_by_a_hash_not_stock_bytes(self):
         for machine, config in bases():
-            sites = config.get("common", {}).get("sites", []) + config.get("add", {}).get("sites", [])
+            sites = [site for part in ("common", "add", "dev") for site in config.get(part, {}).get("sites", [])]
             for site in sites + config.get("recipe", {}).get("sites", []):
                 self.assertNotIn("stock", site, site["addr"])
                 self.assertRegex(site["stockSha256"], r"^[0-9a-f]{64}$")
@@ -187,6 +187,37 @@ class MachineBases(unittest.TestCase):
         self.assertEqual(machine_base.parts({"add": {"sources": ["a.c"]}}, add=False), {})
         with self.assertRaises(ValueError):
             machine_base.parts({"common": {"collections": {"t": 4}}, "add": {"collections": {"t": 4}}})
+
+    def test_parts_put_dev_last_and_only_for_a_development_base(self):
+        config = {"common": {"sources": ["c.c"]}, "add": {"sources": ["a.c"]},
+                  "dev": {"about": "text", "sources": ["d.c"], "defsym": {"D": "1"}}}
+        self.assertEqual(machine_base.parts(config), {"sources": ["c.c", "a.c"]})
+        self.assertEqual(machine_base.parts(config, dev=True), {"sources": ["c.c", "a.c", "d.c"], "defsym": {"D": "1"}})
+        self.assertEqual(machine_base.parts(config, add=False, dev=True), {"sources": ["c.c", "d.c"], "defsym": {"D": "1"}})
+        with self.assertRaises(ValueError):
+            machine_base.parts({"add": {"defsym": {"D": "1"}}, "dev": {"defsym": {"D": "1"}}}, dev=True)
+
+    def test_development_bases_stage_dev_on_every_variant_and_releases_never_carry_it(self):
+        for machine, config in bases():
+            if "dev" not in config:
+                continue
+            for name, add in machine_base.variants(config):
+                for dev in (False, True):
+                    with tempfile.TemporaryDirectory() as work:
+                        core = machine_base.stage(machine, config, pathlib.Path(work), add=add, dev=dev)
+                        mod = json.loads((core / "mod.json").read_text())
+                    for source in config["dev"]["sources"]:
+                        (self.assertIn if dev else self.assertNotIn)(source, mod["sources"], (name, dev))
+                        self.assertTrue((APP / "sdk/machines" / machine / "elekloader/base" / pathlib.Path(source).name).is_file())
+
+    def test_dev_sites_take_no_bytes_a_release_site_takes(self):
+        for machine, config in bases():
+            spans = lambda part: [(int(s["addr"], 16), int(s["addr"], 16) + s["len"], s["addr"])
+                                  for s in config.get(part, {}).get("sites", [])]
+            release = spans("common") + spans("add") + spans("recipe")
+            for start, end, addr in spans("dev"):
+                for other_start, other_end, other in release:
+                    self.assertFalse(start < other_end and other_start < end, (machine, addr, other))
 
     def test_keeps_wants_every_item_of_the_release_and_allows_additions(self):
         reference = {"id": "core", "sites": [1, 2], "build": {"sources": {"x": "1"}}}
