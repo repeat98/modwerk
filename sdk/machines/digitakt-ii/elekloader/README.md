@@ -126,3 +126,8 @@ swung Chord Arp fixture reached the scheduler commit routine 16 times.
   passed both hardware checks reported by Claptom-music. Save Project and
   power cycling preserved SCF, LO, HI and the melody. Standalone KIT → SAVE
   and KIT → LOAD restored the saved bounds and reroll after they were changed.
+
+  Claptom-music repeated both checks on the pinned E118 image after integrating
+  upstream's project archive and sequencer changes. Both passed on hardware.
+  The image SHA-256 was
+  `e555a7788c464019d35047b5e72e6f6caffc4569d2579f8253304a21ab48c014`.
