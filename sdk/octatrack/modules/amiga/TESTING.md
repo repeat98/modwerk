@@ -2,13 +2,15 @@
 
 Record what you ran, on which build and which unit, and what you saw. "Not tested" is a valid answer; never write a result you did not observe, and keep emulator runs apart from hardware ones.
 
+Version 0.3.0-experimental, package SHA-256 `acae3fef97f85a941c3215e1065353c94967ff44bb9528c22135c611a8edc32e` (`npm run octatrack:module-packages` at `ee4d3ba69`). It adds STR's SYNC, makes it the default, and takes "is this note looped" from stock's voice instead of SETUP's LOOP byte. Its unit run is under "On the unit (0.3.0-experimental)".
+
 Version 0.2.1-experimental, package SHA-256 `b19184db0dbd37ce0411c27fa0bff132d087da70b0f78971324f485c520f3473` (12,540 bytes). It changes only how the page picks a control's widget (`modwerk_page_widget` in `sdk/machines/octatrack/include/modwerk_page.h`): the widget is reached as a 16-bit step from the lowest of the three addresses, so the package no longer carries a list of four stock widget addresses, which repeated 14 bytes of the stock OS (#1471). The engine is unchanged. Checked on the host on 14 November 2026: `verify.py` (72 checks pass), `generate.py --check`, `modules:compat -- amiga` (0 problems) and the stock scan (`octatrack:module-packages -- --stock`, OS 1.40C): the longest run shared with the stock OS is 11 bytes (it fails at 12; 0.2.0 had 14). On the owner's MKII on 14 November 2026 (flashed release base `a6b457a1…`, a published USB Audio layout of `10ec7118`, no other module installed), this exact package ran a 20-second RAM trial over USB (`device -- try`): it was admitted, ran to the end and rolled back clean, and the unit was left with no module and the same base. Nothing was played or listened to in that trial; 0.2.0's results below stand for the engine. Everything below is 0.2.0's and 0.1.0's.
 
 Version 0.2.0-experimental, package SHA-256 `6bb8e598b76e359bda78fb420abaa96926ff8e8f3265b78932ef4599755c9b67` (`npm run module:dev -- amiga --build-only`). On a unit only briefly so far, and that run ended with the unit off USB (below). Its changes against 0.1.0: every restart of the stretch crossfades out of the sample itself (the 2,048-frame memory per voice is gone), and a sliced note is stretched inside its slice. The unit results further down are 0.1.0's.
 
 ## Host
 
-`python3 -B verify.py`: 72 checks pass. They cover the engine only:
+`python3 -B verify.py`: 75 checks pass. They cover the engine only:
 
 - `amiga_crunch`: bypass at SRR 0 / BITS 16 / LED off, the word mask and rounding, full scale, the averaged hold at SRR 16 and 127, the same output when a buffer is split across calls, a garbage state, clamped controls, and the lowpass (flat at 800 Hz, about -3 dB at 3.3 kHz, about -12 dB at 6.6 kHz, stereo, full scale, silence). Unchanged from 0.1.0.
 - `amiga_stretch`, `amiga_cross`, `amiga_seek` and `amiga_declick`, against a model reader: no restart and an untouched sample at speed 64 and pitch 0, a restart every cycle an octave up with the note keeping its length, half speed doubling it, speed 0 holding the first grain, looped notes wrapping, stock's own loop left alone, a long cycle two octaves up; no step in the frames handed on where the restarts were, whether the next grain lies behind the reader (slower, pitched up) or ahead of it (faster, a fourth down at its own length); and with a sample it cannot read, the step faded out instead.
@@ -49,6 +51,20 @@ A host model on the same day (the scratch scripts of this session, not committed
 | An octave up, SPD 32, GRN 0, SRR 6, LED | 4,762 | 6,488 | 5,355 | 6,501 |
 
 The last row is from a run of that case alone. In the run of all eight, one `amiga_crunch` call of 18 frames in that case counted 313,232 instructions (mean 6,695, worst 316,767); `amiga_crunch` is unchanged from 0.1.0 and the case alone never came near it, so it is read as something else the emulator ran inside the call, not the engine. The bench's first call of each function runs it twice to find its return, which is why SPD 32's worst frame holds a crossfade counted twice.
+
+## On the unit (0.3.0-experimental)
+
+The owner's MKII, 14 November 2026, a RAM-booted development twin `1e66b504…` of the release base `27c9d36f…`, driven over USB by the session and played by the owner; the release package `acae3fef…` as a RAM trial, and two builds of the same source before it. Track 1 of the owner's pattern, a drum break in Flex slot 2.
+
+- **SYNC against FLEX.** A break with ORIGINAL TEMPO 135.75 at 141 BPM: stock's voice record on FLEX (TSTR AUTO, the sample's TIMESTRETCH on BEAT) held the ratio project tempo x RATE over the sample's tempo x 16384 (+128/+132 over +136/+140), the same ratio SYNC uses. The owner compared the two by ear at the loop point and called SYNC "really good". Not measured: the loop's length in samples, or drift over minutes.
+- **LOOP on AUTO.** SETUP's LOOP byte reads 1 on AUTO; with a sample not set to loop, stock's voice read 0 at +23 (it does not loop) and 0xff at +32. A build that took the byte for "looped" restarted the note at its end, which the owner heard as a loop that "wasn't looping perfectly" against FLEX; with the voice's own answer he no longer did.
+- **The default.** A track put on AMIGA read STR 3 (SYNC) in its SETUP bytes and SYNC on the page (the capture).
+- **Load.** `guard` and `stats` over nine seconds of the owner's pattern at 121 BPM, a break with ORIGINAL TEMPO 81 on track 1, one reading each: on FLEX with TSTR AUTO 29.1 % in the frame interrupt, longest frame 59.7 %, CPU 48.6 %; on Amiga at the defaults (SYNC, 8 bits, GRN 64) 36.5 %, longest frame 74.4 % and 75.1 % (two runs), CPU 55.4 %. No render skipped. What else sounded in the pattern was not noted.
+- **The audio editor.** After AMIGA is chosen in the machine list, AED showed RECORDING 1 with three tabs: the list's cursor passes PICKUP, whose row gives the editor the track's recorder, and AMIGA's row sets nothing. Selecting the track again or picking a sample gave FLEX 002 and five tabs. 0.2.1 has the same code there. It is the base's track window, not the module.
+- **A crash.** One trial of an earlier build of this source ended in a restart about 90 seconds in, on a twin that also carried a base change under test: an illegal instruction at the first instruction of the module's sample-list function, the code present cached and zeros through the uncached alias (crash record 12). The same package, on the twin without that change, opened the list, picked a sample and opened AED without a crash. Cause not found.
+- Every trial the session ended had its tracks back on FLEX first and rolled back cleanly.
+
+Not tried with 0.3.0: SYNC with slices, with RATE below 0 or slowed, with tempo changes by MIDI clock, more than one Amiga track, a sample without a tempo, locks and LFOs, a Keep and a power cycle.
 
 ## On the unit (0.2.0-experimental)
 
