@@ -1,6 +1,6 @@
 # Digitakt II SDK
 
-Modwerk's Digitakt II path is experimental and targets stock OS 1.17 only. It uses elekloader kit 0.5.0 and the `core-dt2` 1.0 hook bus. The machine remains in research: builds can be checked locally, but downloads stay disabled until the exact Modwerk packages are qualified and reviewed.
+Modwerk's Digitakt II path is experimental and targets stock OS 1.17 only. It uses elekloader kit 0.5.0 and the `core-dt2` 1.0 hook bus. Track Names is the first library module, so the machine is in preview: the browser builds core 1.0 with library modules locally, and downloads stay disabled until the exact Modwerk packages are qualified and reviewed.
 
 ## Modwerk stack
 
@@ -65,4 +65,4 @@ A normal OS update uses Elektron Transfer. For recovery, hold FUNC while powerin
 
 ## Status
 
-The upstream core and author packages have been parsed, linted, and built against OS 1.17. Modwerk's browser engine and user-facing modules are still under integration. No module in this SDK is approved or qualified for publication yet.
+The upstream core and author packages have been parsed, linted, and built against OS 1.17. Library modules live in [`sdk/digitakt-ii/modules/`](../../digitakt-ii/modules/); [Track Names](../../digitakt-ii/modules/track-names/) is the first.
