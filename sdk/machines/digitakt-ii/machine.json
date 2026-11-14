@@ -4,7 +4,7 @@
   "order": 40,
   "name": "Digitakt II",
   "status": "research",
-  "summary": "Experimental OS 1.17 support exists in elekloader, with a core and released perform mods. Modwerk integration and qualification are not complete.",
+  "summary": "Experimental OS 1.17 support on Modwerk's Digitakt II base, including the shared sequencer and project hooks. Downloads remain disabled during research.",
   "firmware": {
     "releases": [
       {
@@ -50,10 +50,10 @@
     "catalog": null,
     "guide": "sdk/machines/digitakt-ii/README.md",
     "core": {
-      "version": "1.0",
+      "version": "1.1",
       "path": "sdk/digitakt-ii/core-profile"
     },
-    "toolchain": "m68k-elf GCC and binutils, Modwerk's elemod packager, and the vendored elekloader kit 0.5.0; firmware builds start from the owner's exact OS 1.17 .syx.",
+    "toolchain": "m68k-elf GCC and binutils and the pinned Elekloader kit; firmware builds start from the owner's exact OS 1.17 .syx.",
     "budgets": [
       {
         "name": "Shared mod memory",
@@ -77,7 +77,7 @@
         "name": "Per-event subscriptions",
         "unit": "slots",
         "value": 4,
-        "note": "Core 1.0 allocates four hook entries per shared event collection."
+        "note": "The Modwerk base allocates four hook entries per shared event collection."
       }
     ]
   },
