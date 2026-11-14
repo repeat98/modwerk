@@ -3,7 +3,7 @@
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 // What a module costs an Octatrack, measured on a unit: the frame interrupt's share, the CPU meter and both DSPs,
 // before the module, with it installed but used nowhere (at rest), and for an effect on one slot (in use).
-//   npm run device:price -- [--out FILE.json] [--base ID --scene TEXT] [--seconds 8] [--slot T1] ID…     (no ID: every USB package)
+//   npm run device:price -- [--out FILE.json] [--base ID --scene TEXT] [--seconds 8] [--slot T1] ID|FILE.mwrm…   (none: every USB package)
 // It needs a development twin of the base (the guard request) behind `npm run device -- serve --share
 // /tmp/modwerk-share.sock`, and the scene is the caller's: select the pattern, leave the transport stopped, and say in
 // the record which (--scene). The unit takes a module only while stopped, so each reading is PLAY, the reading, STOP.
@@ -13,8 +13,8 @@
 // with `cpu` on the track; add it when the machine chooser has a step like pick:.
 import { spawn } from 'node:child_process'
 import { connect } from 'node:net'
-import { readFileSync, writeFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { basename, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 
 const mean = values => values.reduce((sum, value) => sum + value, 0) / values.length, tenth = value => Math.round(value * 10) / 10
@@ -34,8 +34,11 @@ if (import.meta.filename === process.argv[1]) {
     slot: { type: 'string', default: 'T1' }, base: { type: 'string' }, scene: { type: 'string' }, socket: { type: 'string', default: '/tmp/modwerk-dev.sock' }, share: { type: 'string', default: '/tmp/modwerk-share.sock' } } })
   const root = resolve(import.meta.dirname, '..'), seconds = Number(args.seconds)
   const catalogue = JSON.parse(readFileSync(resolve(root, 'src/engine/assets/octatrack-module-packages.json'), 'utf8')).packages
-  const chosen = catalogue.filter(row => positionals.length ? positionals.includes(row.id) : !row.requiredBase)
-  const unknown = positionals.filter(id => !catalogue.some(row => row.id === id))
+  // An ID is a catalogue row; a path to a .mwrm is that file, for a build that is not published yet. In the order given.
+  const files = positionals.filter(name => name.endsWith('.mwrm')), ids = positionals.filter(name => !name.endsWith('.mwrm'))
+  const chosen = positionals.length ? positionals.map(name => name.endsWith('.mwrm') ? { id: basename(name, '.mwrm'), version: 'file', file: resolve(name) } : catalogue.find(row => row.id === name)).filter(Boolean)
+    : catalogue.filter(row => !row.requiredBase)
+  const unknown = ids.filter(id => !catalogue.some(row => row.id === id)).concat(files.filter(file => !existsSync(file)))
   if (unknown.length) throw new Error('No USB package for ' + unknown.join(', '))
   const wait = ms => new Promise(done => setTimeout(done, ms))
   const send = line => new Promise((done, fail) => { // one line to the session, its whole reply
@@ -55,7 +58,7 @@ if (import.meta.filename === process.argv[1]) {
   const results = []
   for (const row of chosen) {
     const before = await measure(), result = { id: row.id, version: row.version, before }
-    const trial = spawn(process.execPath, [resolve(root, 'scripts/device.mjs'), 'try', resolve(root, 'public', row.path), '--seconds', '600', '--socket', args.share])
+    const trial = spawn(process.execPath, [resolve(root, 'scripts/device.mjs'), 'try', row.file ?? resolve(root, 'public', row.path), '--seconds', '600', '--socket', args.share])
     let log = ''; trial.stdout.on('data', chunk => { log += chunk }); trial.stderr.on('data', chunk => { log += chunk })
     const ended = new Promise(done => trial.on('exit', done))
     // A large package uploads for a minute: wait for the trial or the try's own end, never cut an upload short
