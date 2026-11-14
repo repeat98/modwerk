@@ -1,9 +1,9 @@
 {
   "kind": "owner-approved-update",
   "id": "poly8",
-  "version": "0.3.2-experimental",
+  "version": "0.3.3-experimental",
   "approvedBy": "repeat98",
-  "approvedOn": "2026-10-27",
+  "approvedOn": "2026-11-14",
   "waived": [
     "current-build-hardware",
     "chip-worst-case-cycles",
@@ -11,7 +11,7 @@
     "release-documentation"
   ],
   "retainedUiVersion": "0.2.7-experimental",
-  "sourceSha256": "8f357e753e2679112e2c0b6f3355cfdec4f3ac6fe8a9478cc99d76229337f861",
-  "ownerStatement": "Approved by repeat98 on 27 Oct 2026 in the issue-fix session (\"approved\"): release POLY8 0.3.2-experimental so its machine list scrolls on card builds (#842, #941, #942). Re-approved by repeat98 on 28 Oct 2026 (in the session that combined fix/base-oct28 into one pull request) for the later source of commit f1a25004: the chooser's cursor-clamp bytes in both manifest forms, the USB package unchanged.",
-  "reason": "0.3.2 changes only POLY8's card-build machine chooser: with POLY8 beside VECTOR, FM Synth or Analog BD the double-tap TRACK list has seven to nine rows, but stock drew the six visible rows from the top of the list whatever its scroll offset and its UP/DOWN handlers clamp the cursor to row 5, so the seventh machine never showed and could not be picked. Names (a pointer at 0x4007865e to mr_chooser_name) and the track's mark (mr_chooser_row) now read top + screen row, as the USB base's registry does since #922, and the five cursor clamps are composition count sites (card only; POLY8 alone writes stock's value). The render, the voice limit and the pages are 0.3.1's, so the 0.2.7 captures are retained; the USB package rebuilds byte-identical and stays at 0.3.1 (lagsBehind). Checked in ot_emu with card builds of POLY8 + VECTOR + FM Synth (+ Analog BD), POLY8 alone and VECTOR alone. Waived for this exact source: the card build on a unit, Part/project reload and power cycles, chip worst-case cycles and complete memory bounds."
+  "sourceSha256": "3a5f23201ae9854a06cfbfa005ea1e4c07679be2b31138fba86f67d9a2048c1c",
+  "ownerStatement": "Approved by repeat98 on 14 Nov 2026 in the session that measured the modules' cost at rest (\"prepare\" for releasing 0.3.3 as measured, then \"write the approval for me\", after reading what the approval waives): release POLY8 0.3.3-experimental.",
+  "reason": "0.3.3 changes only how POLY8's frame-interrupt hooks treat tracks that are not POLY8's: a stock track's render goes straight to stock's call after one inline test, whether each track is POLY8's is worked out once a frame for all eight tracks, and a dirty mark keeps a track that leaves POLY8 dropping its voices and keys. On the owner's MKII (development twin 0277c5c5 of main, 14 Nov 2026, four FLEX tracks playing at 126 BPM, POLY8 on no track) it costs +4.9 points of the frame interrupt at rest against +12.2 for 0.3.1; a one-voice POLY8 track on T1 recorded over USB is sample-identical to 0.3.1 for a bar. The UI and pages are 0.2.7's, so its captures are retained; an emulator probe matches poly_is_track on every case tried. Waived for this exact source: chords, several voices, several POLY8 tracks, MIDI, recorded chords, listening by ear, Part/project reload and power cycles on a unit, the card build on a unit, chip worst-case cycles and complete memory bounds."
 }

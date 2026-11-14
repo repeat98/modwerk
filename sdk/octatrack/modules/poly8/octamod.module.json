@@ -87,9 +87,7 @@
     "firmware": "1.40C",
     "effectId": null,
     "location": "Track machine",
-    "conflicts": [
-      "octakit"
-    ],
+    "conflicts": [],
     "limitations": [
       "Experimental release: physical CPU deadlines, recording, reboot persistence and broader stock workflows remain unqualified.",
       "Voices are limited by CPU time: POLY8 plays fewer voices when its rendering would take more than 40 % of the CPU on average, about 197 us of one audio frame, or starve the panel. On the current beta base (module code uncached) that is about three voices with one POLY8 track; on a base with cached module code seven to eight.",
