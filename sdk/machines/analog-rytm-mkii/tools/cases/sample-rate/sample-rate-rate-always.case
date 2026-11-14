@@ -1,4 +1,4 @@
-# Fine Tune + Sample Rate (0.3.0-experimental): FIN's knob is RATE on every sound, with no switch.
+# Improved SMPL (0.3.0-experimental, then named Fine Tune + Sample Rate): FIN's knob is RATE on every sound, with no switch.
 # Knob B reads RATE at rest; CC 25 sets it (127 -> word 0x7f00, 64 -> 0x4000) in BD's target
 # (0x8000e5d4); a tap of encoder B, 0.2.0's switch, changes nothing (still 0x7f00, label RATE).
 # SMPL is pressed from AMP, never on its own page (that toggles the knob and waveform views).

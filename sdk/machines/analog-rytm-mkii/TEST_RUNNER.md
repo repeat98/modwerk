@@ -29,7 +29,7 @@ this file is the reference.
 ```
 rytm_test.py check CASE...                          # parse, print each timeline; touches nothing
 rytm_test.py emu IMAGE.syx CASE... --emu DTBOOT     # emulator; --jobs 4
-rytm_test.py unit CASE... --label XX01 --image IMAGE.syx --allow-state-change   # the unit
+rytm_test.py unit CASE... --label FLSH --image IMAGE.syx --allow-state-change   # the unit; FLSH: the flashed label
 ```
 
 A CASE is a `.case` file or a folder of them. Options: `--out DIR` (report folder), `--cache DIR` (snapshots and runs,
@@ -40,7 +40,8 @@ it out to test what is flashed); `--allow-state-change` lets cases not marked `s
 first case starts no sooner than S seconds after the boot, default 6: the first note right after a boot can be silent,
 on stock too); `--audio` (audio device name part, default `Analog Rytm`); `--port`.
 
-Exit 0 when every case passes, 1 otherwise, 2 for a case that cannot be read or a run that had to stop. The report
+Exit 0 when every case passes, 1 otherwise (a run that stopped part way reports the rest as skipped), 2 for a case
+that cannot be read or a run refused before its first case. Ctrl-C leaves without a report. The report
 folder gets `report.txt`, `report.json`, and per case every screen as a PNG and a `diff-*.png` for each screen
 compare that found a difference.
 
@@ -49,9 +50,10 @@ so cases do not see each other and run in parallel. A `FAULT vector` or `BREAK` 
 Check every new image answers there before the unit sees it.
 
 The unit run reads `ident` before each case and refuses a wrong label, a disarmed unit, a person at the unit or a
-playing sequencer; stops at the first `person at the unit` or `not armed` and skips the rest; sends `release` when it
-leaves, also on Ctrl-C, SIGTERM and SIGHUP (not on SIGKILL or a pulled cable: a held key then stays held until a person
-presses one); marks a case an error when the link's person or drop counters moved while it ran. A request that cannot
+playing sequencer; stops at the first refusal (`person at the unit`, `not armed`, a wrong label, a playing unit) or a
+timeout and skips the rest; sends `release` when it leaves, also on Ctrl-C, SIGTERM and SIGHUP (not on SIGKILL or a
+pulled cable: a held key then stays held until a person presses one). It sends no STOP: a run stopped inside a case
+that pressed PLAY leaves the sequencer playing the pattern the case changed; marks a case an error when the link's person or drop counters moved while it ran. A request that cannot
 go at its time goes late and moves the rest of the case by as much (`late_ms` in the report). It never flashes or
 resets. Cases run one after another on the state the last one left. A run that stops on `no reply` is run again.
 
@@ -182,7 +184,8 @@ stores sounds: a pool sound it needs is stored by hand to the project's pool, an
 - A scratch project: an image with other modules than the flashed one has another storage layout, and stamps the
   project and every sound and kit it edits; the flashed OS then reads those module settings as zeros. Load no other
   project and never write to the +Drive.
-- `a person is at the unit` or `not armed` stops the run. Do not retry: tell the developer and wait.
+- `a person is at the unit` or `not armed` stops the run. Do not retry: tell the developer and wait. If it stopped
+  inside a case that plays, the sequencer is still running: the case's header says what to put back.
 
 ## What a pass does not show
 

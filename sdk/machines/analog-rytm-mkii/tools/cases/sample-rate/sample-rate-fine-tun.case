@@ -1,4 +1,4 @@
-# Fine Tune + Sample Rate (0.2.0-experimental): a plain turn of TUN (knob A, SAMPLE page) moves
+# Improved SMPL (0.2.0-experimental, then named Fine Tune + Sample Rate): a plain turn of TUN (knob A, SAMPLE page) moves
 # 1 cent a step, as many steps as stock's semitones: the same nudges moved 0.1.1 (emulator,
 # 10 Nov 2026) +4 then -6 semitones (`nudge +3` takes 4 steps here, acceleration); here they move
 # +4 cents (word 0x400a, reads +0.04) then -6 (0x3ffa, -0.02); the TUN word is BD's target,

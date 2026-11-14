@@ -1,4 +1,4 @@
-# Fine Tune + Sample Rate (0.2.0-experimental): in GRID RECORDING a held trig's TUN lock takes
+# Improved SMPL (0.2.0-experimental, then named Fine Tune + Sample Rate): in GRID RECORDING a held trig's TUN lock takes
 # cents too: trig on step 1 of BD, held; the first nudge only shows the value (the held trig's
 # knob swallows it, emulator), the second, +4, reads +0.05 on the inverted, locked knob (one
 # step of acceleration, as in sample-rate-fine-tun).

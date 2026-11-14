@@ -16,7 +16,8 @@ spec.loader.exec_module(rytm_test)
 class RytmCases(unittest.TestCase):
     def test_every_case_parses_and_has_a_timeline(self):
         cases = rytm_test.find_cases([TOOLS / "cases"])
-        self.assertGreaterEqual(len(cases), 40)
+        for folder in [TOOLS / "cases"] + [p for p in (TOOLS / "cases").iterdir() if p.is_dir()]:
+            self.assertTrue(any(case.path.parent == folder for case in cases), folder)
         for case in cases:
             self.assertTrue(case.ops, case.path)
             self.assertGreater(case.duration, 0, case.path)
@@ -29,7 +30,8 @@ class RytmCases(unittest.TestCase):
             self.assertIn(folder.name, modules, folder)
 
     def test_no_reference_captures_in_the_repository(self):
-        kept = [p for p in (TOOLS / "cases").rglob("*") if p.suffix in (".pbm", ".png", ".wav") or p.name == "refs"]
+        kept = [p for p in (TOOLS / "cases").rglob("*") if p.suffix in (".pbm", ".png", ".wav", ".snap")
+                or p.name.endswith(".audio.json") or p.name == "refs"]
         self.assertEqual(kept, [])
 
     def test_references_live_under_the_refs_folder_by_case_folder(self):

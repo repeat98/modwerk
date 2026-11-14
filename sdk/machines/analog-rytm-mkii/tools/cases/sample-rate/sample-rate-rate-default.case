@@ -1,4 +1,4 @@
-# Fine Tune + Sample Rate (0.3.0-experimental): RATE's default is +63. From RATE +0 (CC 25 64),
+# Improved SMPL (0.3.0-experimental, then named Fine Tune + Sample Rate): RATE's default is +63. From RATE +0 (CC 25 64),
 # clearing the SAMPLE page (SMPL held, PLAY) sets BD's FIN target (0x8000e5d4) to 0x7f00; stock and
 # 0.1.x/0.2.0 set 0x4000. CC 25 127 then leaves RATE at +63.
 # Clears BD's SAMPLE page of the scratch project's active kit (TUN, RATE, BR, sample slot, STA, END,

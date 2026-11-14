@@ -9,7 +9,7 @@ code checks them. A case can also play MIDI notes and measure windows of the Ryt
 
   rytm_test.py check CASE...                       parse the cases and print their timelines
   rytm_test.py emu IMAGE CASE... --emu DTBOOT      run on the emulator (or set RYTM_EMU)
-  rytm_test.py unit CASE... --label XX01           run on the unit: it must be armed and at rest
+  rytm_test.py unit CASE... --label FLSH           run on the unit (FLSH: the flashed label); armed, at rest
 
 A CASE is a .case file or a folder of them. The unit run touches hardware: only with the OK of the
 person whose unit it is.
@@ -1092,7 +1092,7 @@ def main():
             s.add_argument('--jobs', type=int, default=4)
             s.add_argument('--rebuild-snapshot', action='store_true')
         else:
-            s.add_argument('--label', required=True, help='the 4-character build the unit must run')
+            s.add_argument('--label', required=True, help="the flashed image's 4-character label (also while another image runs from RAM)")
             s.add_argument('--image', help="the RAM-booted image the unit must run, by its CRC (leave out to test the flashed OS)")
             s.add_argument('--port', help='MIDI port name part (default: Analog Rytm)')
             s.add_argument('--allow-state-change', action='store_true')

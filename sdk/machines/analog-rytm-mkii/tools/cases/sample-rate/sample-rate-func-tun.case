@@ -1,4 +1,4 @@
-# Fine Tune + Sample Rate (0.2.0-experimental): FUNC + turn on TUN keeps stock's jump between
+# Improved SMPL (0.2.0-experimental, then named Fine Tune + Sample Rate): FUNC + turn on TUN keeps stock's jump between
 # -24, 0 and +24: from +0.04, three FUNC nudges up end on +24 (word 0x5800), the top stop, whichever
 # of them stock drops. Unit only: in rytm-emu 0.2.0 and 0.1.1 alike stayed on 0x4000.
 # SMPL is pressed from AMP, never on its own page (that toggles the knob and waveform views).

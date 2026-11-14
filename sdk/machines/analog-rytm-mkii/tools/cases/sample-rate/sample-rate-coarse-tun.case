@@ -1,4 +1,4 @@
-# Fine Tune + Sample Rate (0.2.0-experimental): press and turn TUN moves whole semitones and keeps
+# Improved SMPL (0.2.0-experimental, then named Fine Tune + Sample Rate): press and turn TUN moves whole semitones and keeps
 # the cents: +0.04 (`nudge +3` takes 4 steps, see sample-rate-fine-tun), then two pressed steps,
 # +2.04 (word 0x420a), one back, +1.04. 0.1.1 moved 8 semitones a pressed step here.
 # FUNC + turn: sample-rate-func-tun (unit only).
