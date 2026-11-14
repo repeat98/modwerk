@@ -52,7 +52,7 @@ static void observe_grid(const uint8_t *pattern, uint32_t track, uint32_t step,
      * The pending slot can still name the outgoing pattern after the switch. */
     const uint8_t *track_data = pattern + track * TRACK_STRIDE;
     const uint8_t track_mode = pattern[0x1db79];
-    if (track_mode > 1 || track_data[0x498] || track_data[0x5a4]) {
+    if (track_mode > 1 || track_data[0x498] > 1 || track_data[0x5a4]) {
         return;
     }
 
@@ -170,6 +170,7 @@ void core_seq_note_bridge(uint8_t *event, const uint8_t *pattern, uint32_t track
 int core_seq_note_start_bridge(uint8_t *event, const uint8_t *pattern, uint32_t track,
                               uint32_t deadline)
 {
+    core_seq_note_bridge(event, pattern, track, 0);
     if ((ev_seq_grid[0] || ev_seq_audio_phrase[0]) && stock_event_valid(event) &&
         event[0] == 0 && event[1] == 0 && event[2] == 0 && event[3] <= 1 &&
         event[7] == 1 && event[13] == 1 && *(const uint32_t *)(event + 16) == track) {
@@ -178,6 +179,5 @@ int core_seq_note_start_bridge(uint8_t *event, const uint8_t *pattern, uint32_t 
             return 1;
         }
     }
-    core_seq_note_bridge(event, pattern, track, 0);
     return 0;
 }
