@@ -990,8 +990,70 @@ static unsigned st_queued, st_deferred, st_used, st_try, st_slot, st_back, st_ba
 static uint32_t st_counted, st_frames, st_failures, st_reads;
 volatile uint32_t modwerk_selftest_key;
 void modwerk_post_key(unsigned code, int pressed); /* boot.c: through the panel's byte ringer */
+void modwerk_panel_bytes(uint8_t first, uint8_t second);
+/* Remote keys (the self-test's, a development base's USB keys) wait for a whole physical report (#1110). The panel
+ * sends two-byte reports through the same ringer, and its parser takes the byte after a header as that report's
+ * value: a remote report rung between a fader's header and its value gave the fader the remote header and read the
+ * fader's value as key rows (TRIG5-7 held, a FUNC release lost). So one is rung only when the ringer holds nothing
+ * and the parser expects a header, and only from the tick, a task: an interrupt above the parser's could see that
+ * state in the middle of its run. */
+#ifdef MODWERK_HOST
+uint32_t modwerk_test_panel_count;
+uint8_t modwerk_test_panel_header = 1;
+#define PANEL_COUNT modwerk_test_panel_count
+#define PANEL_HEADER modwerk_test_panel_header
+#else
+#define PANEL_COUNT (*(volatile uint32_t *)0x460ffda0u) /* bytes rung that the parser has not taken */
+#define PANEL_HEADER (*(volatile uint8_t *)0x400d16b8u) /* nonzero: its next byte starts a report */
+#endif
 static uint8_t st_lanes[8][72];
-static void press(unsigned code) { modwerk_selftest_key = code + 1u; modwerk_post_key(code, 1); modwerk_post_key(code, 0); }
+/* A key pressed and let go; 0 while the panel is in the middle of a report: the self-test asks again next tick. */
+static int press(unsigned code)
+{
+    uint32_t sr = modwerk_machine_mask();
+    int whole = !PANEL_COUNT && PANEL_HEADER;
+    if (whole) modwerk_selftest_key = code + 1u, modwerk_post_key(code, 1), modwerk_post_key(code, 0);
+    modwerk_machine_unmask(sr);
+    return whole;
+}
+#if defined(MODWERK_DEV) || defined(MODWERK_HOST)
+/* A development base's USB keys come from the USB interrupt, so they queue for the tick. A key whose row another key
+ * of this pass already changed waits a tick: the rows it is built from (boot.c) change once the parser has run. */
+#define REMOTE_KEYS 16u
+static volatile uint8_t remote[REMOTE_KEYS][3]; /* 1, code, pressed; or 0 and a report's two bytes */
+static volatile uint32_t remote_in, remote_out;
+static int remote_put(unsigned key, unsigned a, unsigned b)
+{
+    uint32_t sr = modwerk_machine_mask();
+    int room = remote_in - remote_out < REMOTE_KEYS;
+    if (room) {
+        volatile uint8_t *e = remote[remote_in % REMOTE_KEYS];
+        e[0] = (uint8_t)key, e[1] = (uint8_t)a, e[2] = (uint8_t)b;
+        remote_in = remote_in + 1;
+    }
+    modwerk_machine_unmask(sr);
+    return room;
+}
+int modwerk_remote_key(unsigned code, int pressed) { return code < 64u && remote_put(1, code, pressed != 0); }
+int modwerk_remote_bytes(uint8_t first, uint8_t second) { return remote_put(0, first, second); }
+static void remote_tick(void)
+{
+    uint8_t changed[8] = {0}; /* per key row: 1 + the key this pass changed there */
+    uint32_t sr = modwerk_machine_mask();
+    if (!PANEL_COUNT && PANEL_HEADER)
+        for (unsigned n = 0; n < 8u && remote_out != remote_in; ++n) { /* 16 of the ringer's 32 bytes at most */
+            volatile uint8_t *e = remote[remote_out % REMOTE_KEYS];
+            if (e[0]) {
+                unsigned row = e[1] >> 3;
+                if (changed[row] && changed[row] != e[1] + 1u) break;
+                changed[row] = (uint8_t)(e[1] + 1u);
+                modwerk_post_key(e[1], e[2]);
+            } else modwerk_panel_bytes(e[1], e[2]);
+            remote_out = remote_out + 1;
+        }
+    modwerk_machine_unmask(sr);
+}
+#endif
 /* The FX lane bytes of track t: page 1 FX1 18-23, FX2 24-29; page 2 FX1 0x32-0x37, FX2 0x38-0x3d. */
 static int fx_lane_byte(unsigned b) { return (b >= 18u && b < 30u) || (b >= 0x32u && b < 0x3eu); }
 static unsigned triangle(unsigned x) { x &= 255u; return x < 128u ? x : 255u - x; }
@@ -1234,7 +1296,7 @@ static void selftest_tick(void)
     if (t->state != SELFTEST_RUNNING) return;
     ++st_ticks;
     if (t->phase == SELFTEST_CONFIGURATION) { /* PLAY, and the checks once it plays */
-        if (!st_step) { press(0x28u), st_played = 1, st_step = 1, st_ticks = 0; return; }
+        if (!st_step) { if (press(0x28u)) st_played = 1, st_step = 1, st_ticks = 0; return; }
         if (PLAYING && st_ticks > 6u) { started(t); return; }
         if (st_ticks > 120u) t->failed |= SELFTEST_ABORTED, t->phase = SELFTEST_RESTORE, st_ticks = 0; /* it would not play */
         return;
@@ -1267,7 +1329,7 @@ static void selftest_tick(void)
     }
     set_live(st_live);
     if (!taken(st_live) && st_ticks <= 300u) return;
-    if (st_played && PLAYING) { if (st_step != 9) press(0x27u), st_step = 9, st_ticks = 0; if (st_ticks < 60u) return; }
+    if (st_played && PLAYING) { if (st_step != 9) { if (!press(0x27u)) return; st_step = 9, st_ticks = 0; } if (st_ticks < 60u) return; }
     finish();
 }
 #endif
@@ -1443,6 +1505,9 @@ void modwerk_dsp_tick(void)
         ((void (*)(const char *, unsigned))0x4005a2b8u)(text, 0xa0);
         modwerk_dsp_missing = modwerk_dsp_missing + 1;
     }
+#ifdef MODWERK_DEV
+    remote_tick();
+#endif
     if (nudge) { nudge = 0; dl_residency_nudge(); }
     if (picks_in == picks_out) return;
     uint32_t p = picks[picks_out % 4u];
