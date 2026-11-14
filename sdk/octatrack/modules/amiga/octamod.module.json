@@ -162,9 +162,9 @@
   },
   "tests": {
     "report": "TESTING.md",
-    "summary": "Host gate on the engine (verify.py, 72 checks: the crunch, the stretch's timing and its crossfades out of the sample, pages, words and directions), a comparison of the crossfades with Amigo's (reference/amigo_check.py, the owner's installed plug-in), an emulator count of its instructions (bench.py), and RAM trials of this version's release package on the owner's MKII on a development base, 13 and 14 November 2026: restart ticks counted per track over USB Audio against 0.1.0, load with one and three tracks, a recorder buffer. TESTING.md lists what was not tried.",
+    "summary": "Host gate on the engine (verify.py, 75 checks: the crunch, the stretch's timing, also at the project's tempo over the sample's, and its crossfades out of the sample, pages, words and directions), a comparison of the crossfades with Amigo's (reference/amigo_check.py, the owner's installed plug-in), an emulator count of 0.2.0's instructions (bench.py), and RAM trials on the owner's MKII on a development base: 0.2.0's on 13 and 14 November 2026 (restart ticks, load with one and three tracks, a recorder buffer), and this version's release package on 14 November 2026 (SYNC against FLEX's time-stretch on one loop by ear and by load, the default, LOOP on AUTO). TESTING.md lists what was not tried.",
     "hardwareStatus": "reported",
-    "evidenceRevision": "a679875b1611d27cf1afe86741b6c646ec7fa9d0",
+    "evidenceRevision": "ee4d3ba69f1343f8e4eb043864a209adc4f634f1",
     "gates": [
       "python3 -B verify.py",
       "python3 -B generate.py --check",
@@ -209,16 +209,16 @@
         "page": "Machine list (SELECT MACHINE TYPE)",
         "shows": "location",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "213b5bfd306f580cdab6aeb12aa0da356e8ffbaa6ab6f82ba2255ea58217ba1d",
-        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 2d97f42d of the Modwerk release base 4e9a87ea, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package 6bb8e598. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on FLEX, the cursor moved to AMIGA."
+        "moduleVersion": "0.3.0-experimental",
+        "imageSha256": "78202bad987758f29039ce444665e08b3ddc2298d707c5f6fc18e5c114762e2f",
+        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 1e66b504 of the Modwerk release base 27c9d36f, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package acae3fef. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on FLEX, the cursor moved to AMIGA."
       }
     },
     {
       "path": "media/amiga-src.png",
       "captureType": "hardware",
       "caption": "Press SRC. PTCH, STRT, LEN and RATE are stock's; knob E is SPD and knob F is GRN. Turn PTCH up and the loop keeps its length; turn SPD down to 32 for half speed at the same pitch.",
-      "alt": "Octatrack SRC page of an Amiga track: knobs PTCH, STRT, LEN, RATE, SPD and GRN, tempo 126.0, and the status line 8 BIT AMIGA.",
+      "alt": "Octatrack SRC page of an Amiga track: knobs PTCH, STRT, LEN, RATE, SPD and GRN, tempo 121.0, and the status line 8 BIT AMIGA.",
       "credit": "repeat98; underlying Octatrack UI by Elektron",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
@@ -226,9 +226,9 @@
         "page": "SRC",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "213b5bfd306f580cdab6aeb12aa0da356e8ffbaa6ab6f82ba2255ea58217ba1d",
-        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 2d97f42d of the Modwerk release base 4e9a87ea, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package 6bb8e598. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on Amiga with a Flex sample, at the defaults."
+        "moduleVersion": "0.3.0-experimental",
+        "imageSha256": "78202bad987758f29039ce444665e08b3ddc2298d707c5f6fc18e5c114762e2f",
+        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 1e66b504 of the Modwerk release base 27c9d36f, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package acae3fef. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on Amiga with a Flex sample, at the defaults."
       }
     },
     {
@@ -243,9 +243,9 @@
         "page": "SRC SETUP",
         "shows": "controls",
         "firmware": "1.40C",
-        "moduleVersion": "0.2.0-experimental",
-        "imageSha256": "213b5bfd306f580cdab6aeb12aa0da356e8ffbaa6ab6f82ba2255ea58217ba1d",
-        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 2d97f42d of the Modwerk release base 4e9a87ea, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package 6bb8e598. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on Amiga with a Flex sample, at the defaults: SRC SETUP."
+        "moduleVersion": "0.3.0-experimental",
+        "imageSha256": "78202bad987758f29039ce444665e08b3ddc2298d707c5f6fc18e5c114762e2f",
+        "setup": "Captured over USB from the LCD of the owner's Octatrack MKII (OS 1.40C, development twin 1e66b504 of the Modwerk release base 27c9d36f, RAM-booted; imageSha256 is that twin's MAIN image) with the development session's png step on 14 November 2026, during a RAM trial of this version's release package acae3fef. 256x128, the 128x64 LCD at integer scale 2, two grey levels, not edited. Track 1 on Amiga with a Flex sample, at the defaults: SRC SETUP."
       }
     }
   ],
