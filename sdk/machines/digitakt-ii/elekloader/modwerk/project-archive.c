@@ -50,7 +50,7 @@ void core_project_archive_save(uint8_t *file, uint32_t flags, uintptr_t project)
         if (!block->tag || (block->size & 3u) || used > ARCHIVE_BYTES - 8 ||
             block->size > ARCHIVE_BYTES - used - 8) {
             ++core_store_conflicts;
-            return;
+            continue;
         }
         uint32_t *const header = (uint32_t *)(bytes + used);
         header[0] = block->tag;

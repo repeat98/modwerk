@@ -199,10 +199,14 @@ void core_seq_phrase_empty(unsigned int track)
     if ((int32_t)(window.next - window.onset) <= 0) {
         return;
     }
-    const uint32_t count = carry->handler(&window, row[2], row[3], notes);
-    if (!count) {
+    const uint32_t result = carry->handler(&window, row[2], row[3], notes);
+    if (result == DT2_SEQ_PHRASE_REST) {
+        return;
+    }
+    const uint32_t count = result & ~DT2_SEQ_PHRASE_CARRY;
+    if (!result) {
         carry->handler = 0;
-    } else if (notes_fit(&window, notes, count)) {
+    } else if (count && notes_fit(&window, notes, count)) {
         uint32_t source[EVENT_STRIDE / sizeof(uint32_t)];
         fw_memcpy(source, carry->event, EVENT_STRIDE);
         core_seq_phrase_atomic((uint8_t *)source, notes, count);
