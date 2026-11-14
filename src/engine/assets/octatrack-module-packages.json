@@ -356,7 +356,7 @@
       "bytes": 3740,
       "sha256": "9c7380301f48bb01d7a7bc2cc6ed310f5a15272b0e870e5042a1932735495302",
       "path": "octatrack-modules/output-matrix/0.1.1-experimental.mwrm",
-      "requiredBase": "10ec7118d6d73b7169a2c509b320504bb46476dba2449c9ea2d52ff6fd828c4f"
+      "requiredBase": "663df12255abd2edfb6a2af60248381616bca752bba6aa71475b5ae1561edb66"
     },
     {
       "id": "cc-map",
@@ -372,7 +372,7 @@
       "bytes": 966,
       "sha256": "c7cd39a5f645d69279d3a288c40b8366e6638acdc042cf0fe68dfb9964a68ea2",
       "path": "octatrack-modules/cc-map/0.1.2-experimental.mwrm",
-      "requiredBase": "10ec7118d6d73b7169a2c509b320504bb46476dba2449c9ea2d52ff6fd828c4f"
+      "requiredBase": "663df12255abd2edfb6a2af60248381616bca752bba6aa71475b5ae1561edb66"
     },
     {
       "id": "quantize-live-rec-toggle",
@@ -448,9 +448,9 @@
       "name": "Recorder Loop",
       "module": "823e0f45",
       "bytes": 1818,
-      "sha256": "b39bfa9f124f33f4de887dc830694c7072747f7a19b5568a47adc8d0cd73a353",
+      "sha256": "1c68607ec4822058ece9213d757f01d15e3c8a496fe8b46794a7809e2fe40e51",
       "path": "octatrack-modules/recorder-loop-fix/0.1.0-experimental.mwrm",
-      "requiredBase": "10ec7118d6d73b7169a2c509b320504bb46476dba2449c9ea2d52ff6fd828c4f"
+      "requiredBase": "663df12255abd2edfb6a2af60248381616bca752bba6aa71475b5ae1561edb66"
     },
     {
       "id": "analog-bassdrum",
@@ -466,7 +466,7 @@
       "bytes": 26172,
       "sha256": "e683804756e9c898a658f7d4a97df5f8832cfa4f9c2e1d409a32df1a26ee392b",
       "path": "octatrack-modules/analog-bassdrum/0.1.7-experimental.mwrm",
-      "requiredBase": "10ec7118d6d73b7169a2c509b320504bb46476dba2449c9ea2d52ff6fd828c4f",
+      "requiredBase": "663df12255abd2edfb6a2af60248381616bca752bba6aa71475b5ae1561edb66",
       "requires": 0,
       "claims": 1,
       "entries": 1
