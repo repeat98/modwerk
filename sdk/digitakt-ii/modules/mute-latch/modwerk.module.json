@@ -39,11 +39,16 @@
     "steps": [
       "Start the sequencer with PLAY and enter Mute Mode (FUNC+TRK).",
       "Hold FUNC to open PREP MUTES and press the TRIG keys of the tracks to switch; press a key again to take the track back out.",
-      "Press PERFORM while still holding FUNC. The choice is parked and the stock PERFORM sub-function does not open.",
-      "Let go of every key. The tracks switch when the pattern next reaches its first step.",
-      "Press PERFORM again with nothing chosen to cancel what is parked; STOP also drops it."
+      "Press PERFORM once while still holding FUNC. The choice is armed (header MUTES ARMED) and the stock PERFORM sub-function does not open.",
+      "Let go of every key. The tracks switch when the pattern comes round to its first step.",
+      "To wait longer, press PERFORM again with FUNC held: each press adds a pass, up to four; the header counts the passes left.",
+      "To cancel, hold FUNC, choose the same tracks again and press PERFORM (ARM CANCELED); STOP also drops what is armed."
     ],
-    "screenshots": []
+    "screenshots": [
+      "media/prep-mutes.png",
+      "media/mutes-armed.png",
+      "media/mutes-armed-3.png"
+    ]
   },
   "controls": [],
   "compatibility": {
