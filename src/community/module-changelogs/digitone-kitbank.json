@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.2.0-experimental",
+    "date": "2026-11-14",
+    "changes": [
+      "First release: KIT PER BANK in SETTINGS gives the 16 patterns of a bank the kit of its first pattern (A01 for A01 to A16), like the Octatrack's parts. Off at power-on.",
+      "Hold PTN and press YES to lock the active pattern to its own copy of the sound; again to share the bank's kit. The switch and the locks are saved with the project.",
+      "Pasting a pattern never overwrites its bank's sound. Old projects open with the switch off and play as on the stock OS.",
+      "Known issue: for under a second after PTN+YES, a knob turn can be ignored while the kit reloads."
+    ]
+  }
+]
