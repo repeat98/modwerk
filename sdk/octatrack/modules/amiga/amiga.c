@@ -306,13 +306,13 @@ int32_t amiga_stretch(AmigaVoice *v, unsigned out, unsigned src, unsigned spd, u
     return at;
 }
 /* The same while RATE runs the reader at rate/full of its speed, either way: the place moves that much slower too, so
- * RATE changes speed and pitch together as on a FLEX track and SPD stretches on top. `level`: SPD is 64 and the pitch
+ * RATE changes speed and pitch together as on a FLEX track and SPD stretches on top. STR's SYNC puts the project's
+ * tempo over the sample's into the same fraction, which may then be above one. `level`: SPD is 64 and the pitch
  * is the sample's own, so the place is simply where the reader is, whatever stock's exact rate. */
 int32_t amiga_stretch_rate(AmigaVoice *v, unsigned out, unsigned src, unsigned spd, unsigned grn, unsigned loop, uint32_t rate, uint32_t full, int level)
 {
     if (spd > 127) spd = 127;
     if (!full) full = 1;
-    if (rate > full) rate = full;
     uint32_t advance = (uint32_t)src << 6;
     if (!level) {
         uint32_t sum = v->rem + spd * out * rate;
@@ -376,6 +376,7 @@ uint32_t amiga_frame(uint32_t strt, uint32_t length) { return (length >> 15) * s
 #define FLEX_START ((int (*)(unsigned, unsigned, unsigned))(uintptr_t)0x4000f450u)
 #define FP_PTR 0x800062a8u     /* the track's live parameter lane this frame */
 #define CURSOR 0x80001c80u     /* the frame packer's write position */
+#define TEMPO24 0x8000181cu   /* the project's tempo, BPM x 24, as stock publishes it every frame */
 #define VOICE 0x800049d8u      /* stock's voice records, 168 bytes a track: +0 sounding, +4 its slot's state, +8 its sample's record, +40/+44 the note's first and last frame, +68 the reader */
 #define STOCK_RTRG 0x00004000u /* SRC words 4 and 5: RTRG 0, RTIM centre */
 
@@ -437,7 +438,7 @@ static void view_open(uintptr_t fp, View *w)
 {
     w->ptch = U16(fp); w->strt = U16(fp + 2u); w->rate = U16(fp + 6u); w->tail = U32(fp + 8u);
     w->led = U8(fp + 26u); w->srr = U8(fp + 27u); w->str = U8(fp + 28u); w->bits = U8(fp + 29u);
-    if (w->str >= 2u) { /* PCH: stock reads the pitch with the stretch's shift on it, inside the knob's range */
+    if (w->str == 2u) { /* PCH: stock reads the pitch with the stretch's shift on it, inside the knob's range */
         unsigned spd = w->tail >> 24;
         int ptch = (int)w->ptch + amiga_shift(spd ? 6400u / spd : 0u);
         U16(fp) = (uint16_t)(ptch < 0x0400 ? 0x0400 : ptch > 0x7c00 ? 0x7c00 : ptch);
@@ -512,9 +513,17 @@ int amiga_render(unsigned track, unsigned ping, unsigned start, unsigned end)
     if (U8(voice)) { /* a voice is sounding */
         int32_t *pcm = 0;
         unsigned sources = packet(track, fp, before, &pcm), out = end - start;
-        unsigned spd = w.str >= 2u ? 64u : w.tail >> 24, grn = w.tail >> 8 & 255u; /* PCH keeps the note's own length: the shifted pitch is all it undoes */
-        unsigned rate = w.rate, loop = U8(fp + 24u) == 1; /* RATE: 0x4000 stands still, 0x7f00 is full forward, 0 full backward */
-        int stretch = w.str != 0, full = rate >= 0x7f00u, back = rate < 0x4000u;
+        unsigned spd = w.str == 2u ? 64u : w.tail >> 24, grn = w.tail >> 8 & 255u; /* PCH keeps the note's own length: the shifted pitch is all it undoes */
+        unsigned rate = w.rate; /* RATE: 0x4000 stands still, 0x7f00 is full forward, 0 full backward */
+        /* Whether stock loops this note: its own answer, as its renderer reads it (0 ends, 1 loops, 2 back and forth).
+         * SETUP's LOOP alone does not say: on AUTO the sample's own loop setting decides (MKII, 14 November 2026: a
+         * sample not set to loop, LOOP on AUTO, was restarted at its end as if looped, a flam before the next trig). */
+        unsigned loop = U8(voice + 23u) == 1;
+        int stretch = w.str != 0, back = rate < 0x4000u;
+        /* SYNC: the note moves through the sample at the project's tempo over the sample's (BPM x 24, its ORIGINAL TEMPO
+         * in the audio editor), each 30 to 300 BPM as stock keeps them; a sample without one plays as STR ON. */
+        uint32_t record = U32(voice + 8u), tempo = U32(TEMPO24), bpm = w.str == 3u && record >> 20 == 0x100u ? U32(record + 0x114u) : 0;
+        int sync = bpm - 720u <= 6480u && tempo - 720u <= 6480u && bpm != tempo, full = rate >= 0x7f00u && !sync;
         /* A reader that turns round runs back over the note's own start, which a restart had moved up to itself. */
         if (stretch && amiga_face(v, back, loop) && back) U32(voice + 40u) = U32(voice + 48u) = v->origin;
         int rest = !stretch ? 0 : full ? amiga_rest(v, out, sources, spd) : v->rest == 2u ? 2 : 0;
@@ -525,9 +534,11 @@ int amiga_render(unsigned track, unsigned ping, unsigned start, unsigned end)
         }
         if (rest == 1) amiga_pass(v, out, grn);
         else if (stretch && !rest) {
+            uint32_t whole = back ? 0x4000u : 0x3f00u, part = back ? 0x4000u - rate : rate - 0x4000u;
+            if (part > whole) part = whole;
+            if (sync) part = (part >> 6) * tempo, whole = (whole >> 6) * bpm; /* 127 * 16 * 256 * 7200 fits a long */
             int32_t at = full ? amiga_stretch(v, out, sources, spd, grn, loop) :
-                amiga_stretch_rate(v, out, sources, spd, grn, loop, back ? 0x4000u - rate : rate - 0x4000u, back ? 0x4000u : 0x3f00u,
-                                   spd == 64u && U16(fp) == 0x4000u);
+                amiga_stretch_rate(v, out, sources, spd, grn, loop, part, whole, !sync && spd == 64u && U16(fp) == 0x4000u);
             if (at == OVER) U8(voice) = 0; /* stock's fetch writes silence until the next trig */
             else if (at >= 0) { /* as stock's retrig restarts a note, from our place */
                 uint32_t window = v->window, rel = back ? window - (uint32_t)at : (uint32_t)at, place = v->origin + rel;
@@ -578,12 +589,12 @@ static void number(char *out, unsigned n)
     *out = 0;
 }
 static void word(char *out, const char *text) { while ((*out++ = *text++)) {} }
-static void str_text(char *out, int value) { word(out, value <= 0 ? "OFF" : value == 1 ? "ON" : "PCH"); }
+static void str_text(char *out, int value) { word(out, value <= 0 ? "OFF" : value == 1 ? "ON" : value == 2 ? "PCH" : "SYNC"); }
 static void bits_text(char *out, int value) { number(out, 4u + (unsigned)(value < 0 ? 0 : value > 12 ? 12 : value)); }
 #define KNOBS 6u
 static const struct { uint8_t slot, start, count; char name[6]; void (*text)(char *, int); } knobs[KNOBS] = {
     {4, 64, 128, "SPD", 0}, {5, 64, 128, "GRN", 0},
-    {8, 0, 2, "LED", 0}, {9, 0, 128, "SRR", 0}, {10, 1, 3, "STR", str_text}, {11, 4, 13, "BITS", bits_text}};
+    {8, 0, 2, "LED", 0}, {9, 0, 128, "SRR", 0}, {10, 3, 4, "STR", str_text}, {11, 4, 13, "BITS", bits_text}};
 static uint8_t defaults[12];
 static uint8_t page[0x1ca] __attribute__((aligned(4)));
 static uint32_t page_built;

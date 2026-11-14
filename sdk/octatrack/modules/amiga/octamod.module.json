@@ -3,7 +3,7 @@
   "id": "amiga",
   "key": "AMIGA",
   "name": "Amiga",
-  "version": "0.2.1-experimental",
+  "version": "0.3.0-experimental",
   "category": "machines",
   "author": {
     "github": "repeat98",
@@ -21,6 +21,7 @@
       "SPD sets how fast the note moves through the sample and GRN the cycle, 96 to 4128 samples: half speed, about twice as fast or a held sound, at any pitch.",
       "Slices stretch too: SLIC on, STRT picks the slice, and the stretch stays inside it.",
       "Every restart crossfades over half a cycle, whichever way the note is going.",
+      "STR on SYNC, the default, keeps the note in time with the project's tempo by the sample's ORIGINAL TEMPO, at any pitch.",
       "STR can turn the stretch into a pitch shift of up to an octave either way.",
       "RATE is stock's own: forwards, backwards and slower, with the stretch following it both ways.",
       "SRR lowers the storage rate, BITS sets the word from 4 to 16 bits (8 by default), LED adds a fixed lowpass.",
@@ -73,13 +74,14 @@
     },
     {
       "name": "STR",
-      "default": 1,
-      "count": 3,
-      "doc": "The stretch: OFF plays as FLEX, ON stretches, PCH shifts the pitch by SPD at the note's own length. SRC SETUP knob E.",
+      "default": 3,
+      "count": 4,
+      "doc": "The stretch: OFF plays as FLEX, ON stretches, PCH shifts the pitch by SPD at the note's own length, SYNC stretches at the project's tempo over the sample's ORIGINAL TEMPO. SRC SETUP knob E.",
       "labels": [
         "OFF",
         "ON",
-        "PCH"
+        "PCH",
+        "SYNC"
       ]
     },
     {
@@ -103,6 +105,9 @@
       "No stock RTRG or RTIM on an Amiga track: SPD and GRN take their knobs.",
       "Stock's own time-stretch (TSTR) is off on an Amiga track, and SETUP's LEN switch is LED: the track always uses stock's default length setting, LEN OFF.",
       "SRR, LED, STR and BITS are SETUP values: one for the Part, without locks or LFOs.",
+      "SYNC goes by the sample's ORIGINAL TEMPO (audio editor, ATTR): a wrong tempo there gives a wrong length. PCH and SYNC cannot be combined.",
+      "After you choose AMIGA in the machine list, AED shows the track's recorder until you select the track again or pick a sample.",
+      "A track set to SYNC reads as PCH on 0.2.1 and older.",
       "A sliced note is stretched when it is one slice, as stock plays it with SETUP's LEN off; SRR, BITS and LED work either way.",
       "The cycle length is in samples, not tied to the tempo.",
       "The crossfade reads the sample itself. A recorder buffer that is recording, or a sample the module cannot read, restarts with a short fade-out of the step instead.",
@@ -229,8 +234,8 @@
     {
       "path": "media/amiga-src-setup.png",
       "captureType": "hardware",
-      "caption": "Hold FUNC and press SRC for SRC SETUP. Knob C switches LED, the lowpass; D is SRR, the storage rate; E is STR (OFF, ON or PCH) and F is BITS. Try SRR at about 20 with LED on.",
-      "alt": "Octatrack SRC SETUP page of an Amiga track: AMIGA marked in the machine list; LOOP AUTO, SLIC OFF, LED OFF, SRR 0, STR ON and the BITS knob.",
+      "caption": "Hold FUNC and press SRC for SRC SETUP. Knob C switches LED, the lowpass; D is SRR, the storage rate; E is STR (OFF, ON, PCH or SYNC) and F is BITS. Try SRR at about 20 with LED on.",
+      "alt": "Octatrack SRC SETUP page of an Amiga track: AMIGA marked in the machine list; LOOP AUTO, SLIC OFF, LED OFF, SRR 0, STR SYNC and the BITS knob.",
       "credit": "repeat98; underlying Octatrack UI by Elektron",
       "license": "LicenseRef-OT-UI-Documentation",
       "source": "original",
