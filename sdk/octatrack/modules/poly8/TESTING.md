@@ -2,6 +2,63 @@
 
 Status: experimental release preparation, **not hardware-qualified**.
 
+## 0.3.3: less cost on tracks without POLY8 (14 November 2026)
+
+**Unit result** (the owner's MKII, development twin `0277c5c5` of main, 14 November 2026). The scene was the owner's project with four FLEX tracks sounding one loop at 126 BPM and T5-T8 silent, transport playing, POLY8 installed on no track, one module installed at a time. Each reading is a timed trial (`octatrack-price.mjs`) in RAM, rolled back by itself. Without modules the frame interrupt takes 41-42 %; with POLY8:
+- 0.3.1 took +12.2 points of the frame interrupt;
+- this 0.3.3 (USB package `1d9e9eca…`) took **+4.9**, on the CPU meter +2.0 against +4.2-5.6 for 0.3.1.
+
+**A POLY8 track** (the owner's MKII, the same twin, 14 November 2026, package `1d9e9eca…`, POLY8 the only module, timed trials, no Keep; measured by the owner):
+- **Scene:** POLY8 picked on T1 in the owner's project, pattern B01 at 126 BPM, T1 alone trigged, one voice a trig, no chords. Eight seconds were recorded over USB from the track's own outputs while playing, once with the published 0.3.1 package and once with 0.3.3, same steps.
+- **Audio:** after aligning the two recordings by the pattern's position, one bar (84,000 samples) is sample-identical on the left channel (difference 0, correlation 1.00000), levels 0.0463/0.0765 RMS for both. A second 0.3.3 recording matched both.
+- **Load while it played:** frame interrupt 54.2 % (0.3.1) and 54.7 % (0.3.3), longest frame 99.5 % and 99.0 %, nothing skipped.
+- **Seen with both versions (unchanged behaviour, not a regression):** leaving POLY8 for STATIC left the same three SRC SETUP bytes changed (TSTR in both setup blocks and LOOP in one read 0 where they read 1 before); the owner put them back by hand.
+- **An earlier first recording** of 0.3.1, made after a MISSING MODULES notice had eaten key presses, was quieter (0.0143/0.0183 RMS) and did not repeat; its cause was not looked at.
+- **Not done on the unit:** chords, more than one voice, more than one POLY8 track, MIDI, recorded chords, a power cycle; nobody listened by ear.
+
+**Measurements** (`node scripts/octatrack-price.mjs` from the `price-sweep` worktree, same twin and scene, each package tried in RAM and rolled back by itself, its own reading without modules just before it; points of the frame interrupt at rest, CPU meter in brackets). Bisect variants are measurement builds of 0.3.3's first source with one part removed, never published; "drop" removes the site from the package.
+
+| Package | Frame | |
+| --- | --- | --- |
+| 0.3.1 (published) | +12.2 (+5.6), +12.2 (+4.2) | reference |
+| 0.3.3, first source: `poly_frame_track` with three words of state | +11.6 (+4.6), +11.6 (+4.3), +11.6 (+4.4) | the Part read once a frame saves 0.6 |
+| ...every frame-interrupt site dropped (no render, AMP, consumer, bind, config, trigger, sequence sites, no event subscribers) | +0.0 (-0.6) | the rest of POLY8 (panel, MIDI, chooser) costs nothing at rest |
+| ...render site dropped | +7.6 (+4.0) | |
+| ...render site jumps straight to stock's call | +6.3 (+3.0) | the render wrapper about 5 |
+| ...renderer voice-pointer site dropped | +11.5 (+4.0) | about 0 |
+| ...AMP-builder and command-consumer sites dropped | +10.3 (+3.7) | about 1.3 |
+| ...event subscribers dropped (increment, voice reset) | +8.0 (+4.0) | about 3.6 |
+| ...bind, configuration, trigger and sequence sites dropped | +11.3 (+4.4) | about 0.3 |
+| intermediate: stock tracks skip the wrapper through `poly_frame_track`, one word of state | +6.4 (+2.3), +6.5 (+2.6), +6.5 (+2.2), +6.4 (+2.2) | |
+| ...and the increment subscriber dropped | +4.6 (+1.7) | increment about 1.9 |
+| ...and the voice-reset subscribers dropped | +6.4 (+2.3) | about 0 |
+| ...and the AMP-builder and consumer sites dropped | +4.8 (+2.3) | about 1.7 |
+| ...only the render site left | +2.9 (+0.7) | its short path about 2.9 |
+| **0.3.3 as committed**: the render's and the increment's test inline and line-aligned | **+4.9 (+2.0)** | |
+
+**Cause.** Not the count of instructions and only partly the battery-RAM Part read: what costs is each line of POLY8's code or data that a stock track's render, increment, AMP pass or command touches, once per track per frame. The renders between evict them, so every such line is a cache miss. A three-instruction jump at the render site cost nothing measurable, the same test through a separate routine (`poly_frame_track`, about seven lines) about 2.9 points, and the 0.3.1 wrapper (`poly_cached_call`, two counters, ten saved registers, `pm_clear_extensions`, a copy of six arguments) about 5. Stock calls the increment builder `0x40004100` on every frame's second render call of each track (its last argument is 16, bit 4 of the flags byte it tests), so the base's `ev_play_increment` called POLY8's subscriber about once per track per frame. This is reasoned from the readings above; no cache counters were read.
+
+**Fix** (`polyphony.s`; no new site, no base change):
+- A render of a track that is not POLY this frame and holds no POLY8 voices or keys goes straight to stock's call after an inline, line-aligned test of one data line (`poly_fr`, the frame step; `poly_fr_mask`, bit t POLY this frame, bit 8 + t POLY8 may hold something on track t). A track that left POLY8 still runs `pm_clear_extensions` first, as before.
+- `poly_frame_track` tests all eight tracks at a frame's first use (by `poly_is_track`'s test, keyed by stock's frame step `0x46104d00`, which the handler advances before any POLY8 site runs) and keeps the answers in `poly_fr_mask`. The render, the increment subscriber (inline as well), the AMP builder and the command consumer read it. The panel, key, MIDI, trigger and configuration hooks keep `poly_is_track`.
+- The dirty mark is set before every `pm_reserve` (its only caller, the voice trigger) and cleared only after `pm_clear_extensions`, so it is always a superset of `pool.c`'s own `dirty`. The voice-reset subscriber skips the masked clear when the mark is clear, and tests `poly_rendering` before the selector (the selector is non-zero only while rendering).
+- The diagnostic counters of renders, AMP passes and commands now count POLY tracks only (DIAGNOSTICS.md). The selector is no longer cleared around a stock track's render: it is non-zero only inside a POLY track's voice loop.
+
+**Can it differ in use?** Only if stock changed the Part, a machine byte or a signature inside one frame interrupt (the guide says nothing below the interrupt runs inside it; not verified here): the change would then count from the next frame, 16 samples later.
+
+**Emulator equivalence probe** (scratch, not committed: the octabam ColdFire emulator with the local stock MAIN for memory, `polyphony.s` assembled with `MODWERK_EVENTS`). It ran 4,000 frames of random bank pointers (valid and out of range), Part bytes 0-255, machine bytes 0-6 and 0x81, signatures (none, `PL`/1, `PL`/2, `PX`/1) and dirty marks on eight tracks, asking every track 0-9 three times a frame in random order:
+- `poly_frame_track` returned `poly_is_track`'s answer in all 120,000 calls;
+- it kept every dirty mark and left every register but d0, d1 and a0 unchanged;
+- `poly_voice_bind` returned 0, 2 and 1 for the reachable rendering/selector states.
+
+1,880,004 checks, 0 failures. Not probed: the render's fast path and the voice-reset subscriber's skip, which call stock's renderer and the C pool (reviewed only).
+
+**Build checks:** `verify-addressing.py` passes (61 PC-relative operands resolve, the cached render names POLY8 data only absolutely); `npm run coldfire:isa` passes. The USB package is rebuilt at 0.3.3 through the site's builder (`1d9e9eca…`, 59,808 bytes, 23 sites, 5 stock copies) and is stock-free (longest run shared with the OS 11 bytes, `check_stock_free.py` none). Its recipe was recaptured (the same five stock runs, at new offsets) and the machine port's pin moved, so the lag note is gone. `npm run octatrack:module-packages -- --check --stock …`: every rebuilt package identical, VECTOR, FM Synth, Scale Quantizer and Analog BD included after their recipes' pin of `machine-ports.json` moved. The run exits 1 on SYNTIZ's and Amiga's shared stock runs, packages this change does not touch. The card packages were compiled in the isolated toolchain (`scripts/build-modules-isolated.sh`, image `sha256:28323550…`) from commit `46995e4b` and imported (`modules:import --development`). Tape Echo's and Euclid's standalone recipes were re-pinned to the four asset files that moved (dsp, descriptor, menu and ROM packages), after which every USB package still checks identical.
+
+**What remains** (+4.9 at rest): the render's short path (it was 2.9 through the routine, not measured separately inline), the AMP-builder and command-consumer passes (about 1.7, still through `poly_frame_track`), the increment subscriber's inline test. Only a dispatch that never enters POLY8's code for a stock track removes it all: a render the base's machine registry calls for POLY tracks alone, a redesign that is not part of this version.
+
+Not tested: chords, several voices or several POLY8 tracks, MIDI notes and recorded chords with this source on a unit, listening by ear, Part/project reload and power cycles, the card build, MKI, and a base without cached module code.
+
 ## 0.3.2: the card build's machine list scrolls (27 October 2026)
 
 Reports #842 (VECTOR), #941 and #942 (FM Synth): on card builds with POLY8 and another signed machine, the double-tap TRACK machine list ended at POLY8, DOWN past it put the highlight on PICKUP while the header still said POLY8, and the other machine was reachable only through FUNC+SRC.

@@ -23,9 +23,24 @@
       "../modwerk/seq-phrase.c",
       "../modwerk/seq-phrase-entry.s",
       "../modwerk/project-generation.s",
+      "../modwerk/project-archive.c",
       "../modwerk/project-kitdata.c"
     ],
     "sites": [
+      {
+        "addr": "0x400df938",
+        "len": 6,
+        "stockSha256": "1a4f590b6150643d45e52f347f5e32771feeeb47a764c2337fc4d6faefdfeb8f",
+        "op": "jsr",
+        "target": "core_project_archive_save_entry"
+      },
+      {
+        "addr": "0x400d633a",
+        "len": 6,
+        "stockSha256": "63d46be24be33e65936ad35cb9ac775aeb3ee91df521112af7c09eba3abd278c",
+        "op": "jsr",
+        "target": "core_seq_phrase_start"
+      },
       {
         "addr": "0x400d82f8",
         "len": 6,
@@ -65,7 +80,8 @@
     "collections": {
       "ev_seq_note": 4,
       "ev_seq_grid": 4,
-      "ev_seq_audio_phrase": 4
+      "ev_seq_audio_phrase": 4,
+      "core_project_archive": 4
     }
   }
 }

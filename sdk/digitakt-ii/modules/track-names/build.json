@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    "src/track_names.c",
+    "src/fw.s"
+  ],
+  "defsym": {},
+  "cflags": [],
+  "weak": [],
+  "subscribe": [
+    {
+      "event": "ev_draw",
+      "fn": "tn_draw",
+      "order": 50
+    }
+  ],
+  "contribute": [],
+  "collections": {},
+  "copied": [],
+  "regions": [],
+  "claims": [
+    "ui:Internal Mixer track labels"
+  ],
+  "requires": [],
+  "derive": null,
+  "releases": {
+    "1.17": {
+      "defsym": {
+        "FW_FILLRECT": "0x401131ae",
+        "FW_TEXTF": "0x40113dc8",
+        "FW_FONT": "0x44d2e70c",
+        "FW_FONT_NARROW": "0x44d2e6f4"
+      },
+      "cflags": [
+        "-DTN_PATTERN_OBJ=0x44f370a0u",
+        "-DTN_KITS=0x426532b8u",
+        "-DTN_KIT_SIZE=0x5574u",
+        "-DTN_NAME=0x38",
+        "-DTN_TRACK_STRIDE=0x450"
+      ],
+      "sites": []
+    }
+  }
+}

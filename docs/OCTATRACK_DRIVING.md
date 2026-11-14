@@ -153,6 +153,7 @@ error and moves on. macOS `nc -U` hangs up before the reply, so use the script.
 | `guard`, `guard:MILLE` | the frame guard since the last read: the frame interrupt's longest frame, latest start and share of the CPU, the machine renders it skipped and on which tracks, and its share; `guard:MILLE` sets the share (per mille of a frame, `guard:65535` turns it off) |
 | `try FILE`, `remove FILE` | install or remove a module package, accepted and kept at once: each one writes the card's set, so on a twin they replace the owner's kept modules (25 October 2026). For a trial that rolls back by itself, use `npm run device -- try FILE --seconds N --socket /tmp/modwerk-share.sock`; `npm run device:test` drives a package through such a trial ([the same run without a Keep](ADD_A_MODULE.md#octatrack-base-and-usb-lifecycle)). The `value` it prints each second is shared by every installed module's tick ([API](OCTATRACK_API.md#core-entry-points)) |
 | `cpu`, `cpu:PERCENT` | the CPU budget: its allowance, what the Part's machines book and the tracks refused; then each machine track's longest render since the last read, both passes of a frame, in percent of a frame: what a machine's CPU price is set from. `cpu:PERCENT` sets the allowance |
+| one-shot `npm run device:price -- [--out FILE.json] [ID or FILE.mwrm …]` | what a module costs, measured beside the running session (`serve --share /tmp/modwerk-share.sock`, a development twin): for each USB package, or each `.mwrm` file of an unpublished build, a timed trial, then the frame interrupt's share, the CPU meter and both DSPs while the selected pattern plays, before it, with it installed and used nowhere, and for an effect on one slot of `--slot` (T1) at its defaults; the trial is rolled back and the slot's effect picked back. It presses PLAY and STOP itself, so set the scene up first and leave the transport stopped. A machine in use and other settings are not measured. It waits for an upload however long it takes: cutting one short left MODWERK SYNC / RECEIVING MODULES at 57 % on the unit until `npm run device -- recover --socket /tmp/modwerk-share.sock` (14 November 2026). On that day, with four FLEX tracks sounding on an MKII, FM Synth 0.1.2 cost 19.1 points of the frame installed on no track, POLY8 0.3.1 13.5, Repitch 0.2.0 7.9, Euclid 3.0 and every other module under 1 |
 | one-shot `npm run device -- lifecycle` | not a read-out: the single-slot loader test. It stages and accepts test modules, and on a base with module sets it stops at "removal empties the slot" and leaves an unnamed module 0 kept on the card, which a power cycle keeps (26 October 2026, MKII, flashed `92a13ff0`). `npm run device -- remove --seconds 3 --accept` takes it out. For the module list: `npm run device -- do inventory` |
 | `flash DIR` | after `boot DIR`: that base writes its own container (`DIR/NOT_FLASH_CANDIDATE.bin` deciphered) to NOR with stock's routines, verifies it and restarts on it; refuses any other base's. Not yet run on a unit; the owner's call ([traps](OCTATRACK_HARDWARE_TRAPS.md#writing-nor-over-usb)) |
 | `boot DIR`, `boot DIR 4096` | RAM boot a `build_core.py` output; the session restarts on the new base. `node scripts/octatrack-bootsoak.mjs DIR --socket PATH` repeats it in batches of 15 (about four minutes), logs each boot and stops at the first that does not come back: how often a restart loses USB is known from 20 boots only, which still allows one in seven. From the flashed `usbtest9` on macOS add 4096 (bytes a frame): it times out on the default 4,095-byte frames ([traps](OCTATRACK_HARDWARE_TRAPS.md#usb-and-ep0)) |
@@ -171,17 +172,26 @@ After a navigation timeout, stop sending test gestures and inspect held-key rows
 was observed with FUNC absent from those rows; row readback alone does not
 establish that stock's modifier state is clear.
 
-The development input helper currently splices remote packets into the physical
-panel's byte stream. A no-module emulator on base `20ed7910…` reproduced held
-TRIG5–7 and a lost FUNC release when a USB KEY arrived between a fader report's
-two bytes ([base issue #1110](https://github.com/repeat98/modwerk/issues/1110)).
-Serialize input at complete physical-report boundaries before using
-concurrent physical movement and remote injection for qualification; a still
-slider does not clear a fault left by an earlier attempt. A later fresh-RAM-boot,
-empty-inventory hardware probe also misdelivered FUNC. Initial released rows and
-a fresh boot do not establish input delivery: verify each held-row transition
-and stock modifier release, and stop on a mismatch.
+Remote keys wait for a whole physical report. The panel sends two-byte reports, and a USB KEY rung between a
+fader report's two bytes once left TRIG5-7 held or lost a FUNC release
+([base issue #1110](https://github.com/repeat98/modwerk/issues/1110)). Since November 2026 the base queues remote
+keys and encoder steps (and the self-test's PLAY and STOP) and rings them from its tick only when the panel's parser
+expects a report's first byte, so a key arrives up to a tick (16 ms) after its request. Sixteen wait at most; the
+KEY reply is 0 for one more. The host test covers both orderings on a model of the parser's state, and keys, chords,
+Part and bank switches and picks ran through the queue on an MKII twin (13 November 2026); the interleaving itself
+was not replayed against the real parser. An earlier fresh-RAM-boot hardware probe also misdelivered FUNC, cause
+not isolated: verify each held-row transition and stock modifier release, and stop on a mismatch.
 
+- **After a RAM boot.** The base shows BASE UPDATE / WAITING FOR MODWERK for 25 s and holds the panel, then MISSING
+  MODULES when the bank names modules the twin lacks (YES closes it); keys sent before that are lost, so read
+  `mem:0x80000000:1` after selecting a track before going on (14 November 2026).
+- **Machines.** Double-tap the track key, then LEFT, opens the machine list on the track's own row: STATIC, FLEX, THRU,
+  NEIGHBOR, PICKUP, then the installed module machines, so the first of them is five DOWN from STATIC. YES picks, and
+  NO closes a CPU FULL box together with the list. Check the pick by the Part's bytes (type at Part `+0x22 + track`,
+  signature at `+0x3c + 30 * track`). POLY8 turns TSTR and LOOP off in SRC SETUP and leaving it does not turn them
+  back on (0.3.1 and 0.3.3); FM Synth and Amiga left no Part byte changed.
+- **Grid recording.** REC toggles, and a remote REC can be lost: press one trig and read the track's mask in the
+  pattern (`+0x6 + 0x91a * track` from the pattern's start, two bytes for steps 1 to 16) before placing the rest.
 - **Effects.** FUNC+FX1/FX2 opens the chooser (the left list; its right side are the effect's setup knobs).
   Moving the cursor does not pick; YES does. NO closes. LEVEL scrolls. `pick:` does all of it.
 - **Parts.** Holding PART shows the selector: UP Part 1, RIGHT 2, DOWN 3, LEFT 4. A switch also assigns that Part to the

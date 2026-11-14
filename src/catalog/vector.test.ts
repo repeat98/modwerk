@@ -21,14 +21,15 @@ const CARD_EVIDENCE = '0.2.4-experimental'
 // The owner accepted 0.2.4's card evidence for 0.2.6, released as 0.3.1 (6 and 8 Nov 2026): it only drops st_setup_page's row-5 test (#1119), in
 // control.s and native.c, so the captures stay bound to 0.2.4's native source by name.
 const CARD_EVIDENCE_SOURCE = '1255e99133cbd8d6d2587c95f93462ea80fccbd169462a2acb02aedbd346cbd3'
-const CHANGED_SINCE_CARD_EVIDENCE = ['native.c', 'control.s']
+// 0.3.2 moves SPAN's top bit in the packed settings (engine.c) and rewrites old settings in the open bank (native.c), #1533; no screen changes.
+const CHANGED_SINCE_CARD_EVIDENCE = ['engine.c', 'native.c', 'control.s']
 const sha = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex')
 
 describe('VECTOR release', () => {
-  it('publishes a reported functional hardware result for 0.2.5', async () => {
+  it('publishes a reported functional hardware result for 0.3.2', async () => {
     const document = parseModuleDocument(draft)
     expect(document.tests.hardwareStatus).toBe('reported')
-    expect(document.tests.qualification!.hardware).toMatchObject({ kind: 'functional', status: 'reported', model: 'MKII', testedOn: '2026-10-27' })
+    expect(document.tests.qualification!.hardware).toMatchObject({ kind: 'functional', status: 'reported', model: 'MKII', testedOn: '2026-11-13' })
     expect(() => requireModuleUiForPublication(document)).not.toThrow()
     expect(() => requireModuleQualificationForPublication(document)).not.toThrow()
     await expect(requireFolderQualification(folder, document, parseQualificationBaseline(baseline))).resolves.toBe('qualified')
@@ -91,7 +92,8 @@ describe('VECTOR release', () => {
   })
 
   it('binds the recorded firmware-free tests without running native code in application checks', async () => {
-    expect(coreTests.moduleVersion).toBe(CARD_EVIDENCE)
+    expect(coreTests.moduleVersion).toBe(draft.version)
+    expect(coreTests.sourceSha256).toBe(draft.tests.qualification.sourceSha256)
     for (const [path, hash] of Object.entries(coreTests.sources)) {
       expect(sha(await readFile(resolve(folder, path)))).toBe(hash)
     }

@@ -1,15 +1,17 @@
 {
   "kind": "owner-approved-update",
   "id": "amiga",
-  "version": "0.1.0-experimental",
+  "version": "0.2.1-experimental",
   "approvedBy": "repeat98",
-  "approvedOn": "2026-11-12",
-  "ownerStatement": "I approve Amiga 0.1.0-experimental for release with worst-case cycles, current-build hardware evidence and complete memory bounds waived.",
-  "reason": "First release of a new experimental USB-only track machine, approved by the owner as experimental. Worst-case cycles on the chip, hardware evidence on this exact build and complete memory bounds are waived for this source and version. What exists: the module's 56 host checks pass; the engine is identical, sample for sample, to the reference engine over 400 notes and 5,234,566 frames; on the owner's MKII on 11 November 2026 an earlier package of this version (e9730e24, the same engine, the page descriptor still filled by hand) was installed, kept, self-tested, played, refused for removal while a track used it and removed, with frame-interrupt and CPU readings in TESTING.md. On 12 November 2026 the published package (18cef8b2, which differs from e9730e24 only in filling the page descriptor through modwerk_page_control()) ran in one trial on the same unit: both pages read as before, the owner played it for about four minutes, and it rolled back clean. Not done: Keep and removal of this exact package, load measurements on it, a kept set through a power cycle, a project saved and reloaded with Amiga tracks, RATE crossing zero under modulation, loops played backwards, locks, LFOs and scenes on its controls, slices, an MKI, and a bound on the worst case. Hardware is not claimed verified.",
-  "sourceSha256": "cc480f6f6f0e27093e11da1b2698c2a9ccb615c892a2ed777a7194d28223a652",
+  "approvedOn": "2026-11-14",
+  "ownerStatement": "I approve Amiga 0.2.1-experimental for release with worst-case cycles, current-build hardware qualification and complete memory bounds waived, and with 0.2.0's UI captures kept.",
+  "reason": "Fix of an experimental USB-only track machine: the 0.2.0 package repeated 14 bytes of the stock OS (#1471), a table of four stock widget addresses the compiler built from modwerk_page_widget() in sdk/machines/octatrack/include/modwerk_page.h. 0.2.1 reaches the widget as a 16-bit step from the lowest address, so no such table is emitted; the engine is unchanged. Written by Claude at the owner's request in the session of 14 November 2026. Worst-case cycles on the chip, a full hardware qualification of this exact build and complete memory bounds are waived for this source and version, as for 0.2.0. What exists: the module's 72 host checks pass, generate.py --check passes, modules:compat finds no problem, and the stock scan of package b19184db against OS 1.40C finds no run of 12 or more bytes (longest 11). 0.2.0's unit results stand for the engine. The owner's MKII ran this package in a 20-second RAM trial on 14 November 2026 (release base a6b457a1): admitted, rolled back clean; nothing was listened to. 0.2.0's UI captures are kept (owner's word, 14 November 2026): the page draws the same widgets, now reached by a step instead of a table. Hardware is not claimed verified.",
+  "sourceSha256": "e1dbe98b5f5dbdb08af0efc7cbacf2dc24f20acaeaa89f89392555b0fb96a4ba",
   "waived": [
     "chip-worst-case-cycles",
     "current-build-hardware",
-    "complete-memory-bounds"
-  ]
+    "complete-memory-bounds",
+    "release-documentation"
+  ],
+  "retainedUiVersion": "0.2.0-experimental"
 }

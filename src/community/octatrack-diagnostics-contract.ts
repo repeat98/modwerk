@@ -2,7 +2,9 @@
 // Copyright (c) 2026 Jannik Aßfalg (repeat98)
 
 // Closed, versioned diagnostics: no arbitrary text, project data, USB serials, firmware or memory dumps.
-/** 2026-11-11.1 adds each report's browser and OS family (`client`) and why a connection failed before it existed (`link_failed`). */
+/** 2026-11-11.1 adds each report's browser and OS family (`client`) and why a connection failed before it existed (`link_failed`).
+ * A consent given under an earlier version keeps sharing (owner, 14 Nov 2026): a new version is what new choices record,
+ * never a reason to ask members again. */
 export const OCTATRACK_DIAGNOSTICS_VERSION = '2026-11-11.1'
 export const DIAGNOSTIC_RETENTION_DAYS = 30
 export const DIAGNOSTIC_CONSENT_DAYS = 90

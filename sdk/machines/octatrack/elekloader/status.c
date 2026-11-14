@@ -84,6 +84,22 @@ static int reading = -1, read_last = 1; /* the core whose window (least, most, s
 static unsigned read_words = 3u;        /* how many of them */
 static unsigned waited;
 static uint32_t cpu_recent[8];
+static uint32_t cpu_played, play_readings; /* the mean below as it last stood playing; readings in a row taken playing */
+static unsigned refused_played;            /* the busy box shows that figure, not the meter's now */
+int modwerk_machine_stopped(void);         /* runtime.c */
+static uint32_t recent_mean(void)
+{
+    uint32_t sum = 0;
+    for (unsigned i = 0; i < 8u; ++i) sum += cpu_recent[i];
+    return sum / 8u;
+}
+/* Each reading: what the guard below goes by once the unit is stopped, the mean of the last four seconds it played,
+ * kept until it plays four seconds again. Eight readings in a row playing, so none of them is a stopped one. */
+static void cpu_note_played(void)
+{
+    if (modwerk_machine_stopped()) play_readings = 0;
+    else if (++play_readings >= 8u) cpu_played = recent_mean();
+}
 static void missing_check(void);
 static void memory_tick(void);
 static void status_tick(void);
@@ -109,6 +125,7 @@ static void status_tick(void)
     modwerk_status[CPU] = per && ticks > 30u && di / per < 1000u ? 1000u - di / per : 0;
     if (per && ticks > 30u && df) { load_flags |= 1u; load_at[0] = modwerk_runtime_ticks; }
     cpu_recent[(ticks / 30u) % 8u] = modwerk_status[CPU]; /* the page's CPU peak: the last four seconds */
+    cpu_note_played();
     if (reading >= 0) { /* least, most and sum of 1,024 frames, read 24 bits a tick */
         if (modwerk_dsp_meter_core == reading && modwerk_dsp_meter_bits >= (read_words == 1u ? 24u : 72u)) {
             if (read_words == 3u) {
@@ -734,16 +751,21 @@ void modwerk_status_cpu_refused(unsigned track, const char *label, uint32_t book
 }
 /* machine_registry.c: the unit is already busy (the meter's last four seconds), whatever this machine would add. The
  * same box: the measured CPU in the bar, no price. */
-uint32_t modwerk_status_cpu_recent(void)
+uint32_t modwerk_status_cpu_recent(void) { return recent_mean(); }
+/* The load a pick is judged by. A stopped unit is not busy, but the Part put together on it will play: stopped, the
+ * larger of the meter now and what it read while the unit last played (cpu_played). On an MKII (13 November 2026)
+ * picks made stopped at 62 to 74 % left a Part that played at 87 to 97 %, where a knob turn waits 0.1 to 0.2 s for
+ * its redraw. The kept figure goes stale when the unit is made lighter while stopped (a stock pick, another
+ * project): four seconds of playing replace it. */
+uint32_t modwerk_status_cpu_load(void)
 {
-    uint32_t sum = 0;
-    for (unsigned i = 0; i < 8u; ++i) sum += cpu_recent[i];
-    return sum / 8u;
+    uint32_t now = recent_mean();
+    return modwerk_machine_stopped() && cpu_played > now ? cpu_played : now;
 }
 void modwerk_status_cpu_hot(unsigned track, const char *label, uint32_t cpu)
 {
     modwerk_status_cpu_refused(track, label, cpu, 0);
-    if (open == REFUSED && refused_reason == 4u && refused[1] == track) refused[0] = 5u;
+    if (open == REFUSED && refused_reason == 4u && refused[1] == track) refused[0] = 5u, refused_played = cpu > recent_mean();
 }
 /* selection.c's guard (build_core.py's edit), before stock writes an FX pick: 1 when the pick asks for a module's
  * effect (`id`, on slot 0-15: FX1 T1-T8, then FX2) while the unit is busy, and the pick is then not made. A module
@@ -753,13 +775,14 @@ extern volatile uint32_t mw_cpu_hot, mw_cpu_refusals, mw_cpu_refusal_tracks; /* 
 void modwerk_fxmap_name(unsigned id, char *out); /* fxmap.c: 16 bytes */
 int modwerk_status_effect_busy(unsigned slot, unsigned id)
 {
-    uint32_t cpu = modwerk_status_cpu_recent();
+    uint32_t cpu = modwerk_status_cpu_load();
     if (slot > 15u || !fx_in(modwerk_fx_modules, id) || cpu < mw_cpu_hot) return 0;
     char name[16];
     modwerk_fxmap_name(id, name);
     mw_cpu_refusals = mw_cpu_refusals + 1u, mw_cpu_refusal_tracks |= 1u << (slot & 7u);
     modwerk_status_cpu_refused(slot & 7u, name, cpu, 0);
-    if (open == REFUSED && refused_reason == 4u && refused[0] == 4u) refused[0] = 5u, refused[1] = slot, refused_machine = 0;
+    if (open == REFUSED && refused_reason == 4u && refused[0] == 4u)
+        refused[0] = 5u, refused[1] = slot, refused_machine = 0, refused_played = cpu > recent_mean();
     return 1;
 }
 static void refused_box(unsigned char *frame)
@@ -802,7 +825,7 @@ static void refused_box(unsigned char *frame)
     if (refused[0] == 5u) { /* a busy unit: the meter itself, and what makes room */
         *e = 0, label(23u, 26u, need);
         label(23u, 34u, "CPU"), share_bar(frame, 45u, 34u, 40, 6, refused_booked, 0), percent(89u, 34u, refused_booked);
-        label(23u, 42u, "UNIT IS BUSY");
+        label(23u, 42u, refused_played ? "WAS BUSY PLAYING" : "UNIT IS BUSY"); /* the figure is the last play's */
         return;
     }
     if (refused_reason == 4u) { /* the CPU budget: one bar, and what makes room */

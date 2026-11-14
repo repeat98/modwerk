@@ -408,6 +408,19 @@ void st_ui_tick(void) {
         for(unsigned t=0;t<8;++t) if(signed_track(current_part(),t) && current_part()[SIGNATURE+30u*t+2]==1) {
             VectorParams p=settings(t); save_settings(t,&p,get_seed(t)); dirty_part(U8(PART_IDX)&3u);
         }
+        /* Settings saved up to 0.3.1 with SPAN 8-12 hold a byte stock's validator refuses
+         * (engine.c, #1533): move its top bit in the bank's four working Parts and their
+         * battery copies, so the next boot keeps the bank with or without VECTOR. */
+        for(unsigned q=0;q<4;++q) for(unsigned t=0;t<8;++t) {
+            volatile uint8_t *part=(volatile uint8_t *)(uintptr_t)(U32(BANK_PTR)+PART_OFF+q*PART_STRIDE);
+            unsigned at=SIGNATURE+30u*t;
+            if(signed_track(part,t) && part[at+2]==2 && part[at+5]&0x80u) {
+                volatile uint8_t *mirror=(volatile uint8_t *)(uintptr_t)(SRAM_PART+q*PART_STRIDE);
+                mirror[at+4]=part[at+4]=(uint8_t)(part[at+4]|0x40u);
+                mirror[at+5]=part[at+5]=(uint8_t)(part[at+5]&0x7fu);
+                dirty_part(q);
+            }
+        }
         unsigned t=U8(TRACK_IDX), pool=t<8?current_part()[0x22+t]:1;
         U32(0x400d5f4cu)=pool==0?0x400d301cu:0x400d31aeu;
     }

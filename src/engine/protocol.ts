@@ -4,7 +4,7 @@ export type BuildProgress = 'composing' | 'packing' | 'verifying'
 export type EngineRequest =
   | { id: number; type: 'inspect'; buffer: ArrayBuffer; name: string }
   | { id: number; type: 'clear' }
-  | { id: number; type: 'base'; layout?: BaseLayout }
+  | { id: number; type: 'base'; layout?: BaseLayout; step?: boolean }
 export type EngineResponse =
   | { id: number; type: 'inspection'; inspection: FirmwareInspection }
   | { id: number; type: 'cleared' }

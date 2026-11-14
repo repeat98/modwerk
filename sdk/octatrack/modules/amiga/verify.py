@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""AMIGA's gate: the engine in amiga.c (crunch, stretch, blend, declick) compiled for the host.
+"""AMIGA's gate: the engine in amiga.c (crunch, stretch, crossfade, declick) compiled for the host.
 
     python3 -B verify.py            # needs cc; m68k-elf-gcc for the generated-unit check
 
@@ -24,13 +24,46 @@ def check(name, ok, detail=''):
         failed.append(name)
 
 
+U32 = ctypes.c_uint32
+
+
 class Voice(ctypes.Structure):
-    _fields_ = [(name, ctypes.c_uint32) for name in ('rest', 'left', 'rem', 'back')] + [('l', ctypes.c_int32), ('r', ctypes.c_int32), ('phase', ctypes.c_uint32), ('al', ctypes.c_int32), ('ar', ctypes.c_int32),
-                ('count', ctypes.c_uint32), ('ic', ctypes.c_int32 * 4)] + [(name, ctypes.c_uint32) for name in (
+    _fields_ = [(name, U32) for name in ('rest', 'left', 'rem', 'back')] + [('l', ctypes.c_int32), ('r', ctypes.c_int32), ('phase', U32), ('al', ctypes.c_int32), ('ar', ctypes.c_int32),
+                ('count', U32), ('ic', ctypes.c_int32 * 4)] + [(name, U32) for name in (
                     'pos', 'window', 'grain', 'played', 'since', 'got', 'first', 'length', 'sample', 'flags', 'origin', 'end')] + [
-                ('last', ctypes.c_int32 * 2), ('off', ctypes.c_int32 * 2)] + [(name, ctypes.c_uint32) for name in (
-                    'fade', 'jump', 'hi', 'floor', 'mix_from', 'mix_len', 'mix_wait', 'mix_k', 'mix_step', 'planned')] + [
-                ('hist', ctypes.c_int16 * 4096)]
+                ('last', ctypes.c_int32 * 2), ('off', ctypes.c_int32 * 2)] + [(name, U32) for name in (
+                    'fade', 'jump', 'tail', 'down', 'xk', 'xlen', 'xstep', 'xnext')] + [
+                ('page', ctypes.c_void_p), ('pfirst', U32), ('pcount', U32), ('slice', U32), ('strt', U32)]
+
+
+LOCATE = ctypes.CFUNCTYPE(ctypes.c_size_t, ctypes.c_void_p, U32, ctypes.POINTER(U32), ctypes.POINTER(U32))
+
+
+class Sample(ctypes.Structure):
+    _fields_ = [('locate', LOCATE), ('ctx', ctypes.c_void_p), ('frames', U32), ('bytes', U32), ('channels', U32)]
+
+
+def big_endian(frames, nbytes=2, channels=2):
+    """frames ([(l, r)] of 16-bit values) as the instrument's sample pages hold them: big-endian words, the low byte 0x5a for 24 bits."""
+    out = bytearray()
+    for f in frames:
+        for c in range(channels):
+            out += (f[c] & 0xffff).to_bytes(2, 'big') + (b'\x5a' if nbytes == 3 else b'')
+    return ctypes.create_string_buffer(bytes(out), len(out))
+
+
+def sample(buf, frames, nbytes=2, channels=2, page=0):
+    """The sample in one run, or (page > 0) in pages of that many frames, each found through `locate`."""
+    s = Sample(LOCATE(), ctypes.cast(buf, ctypes.c_void_p), frames, nbytes, channels)
+    if page:
+        base = ctypes.addressof(buf)
+
+        def locate(ctx, frame, first, count):
+            first[0], count[0] = frame - frame % page, page
+            return base + (frame - frame % page) * nbytes * channels
+        s.locate = LOCATE(locate)
+        s.keep = s.locate  # the callback must outlive the calls
+    return s
 
 
 with tempfile.TemporaryDirectory() as tmp:
@@ -90,13 +123,15 @@ with tempfile.TemporaryDirectory() as tmp:
     silence = crunch([0] * 8192, 0, 12, 1)
     check('silence stays silent through the filter', max(map(abs, silence)) == 0, str(max(map(abs, silence))))
 
-    KEEP, OVER = -1, -2
+    KEEP, OVER, NONE = -1, -2, 0xffffffff
     W = 44100
-    wave_ = [int(0.5 * 0x7fffffff * math.sin(2 * math.pi * 110 * i / 44100)) for i in range(W)]
+    wave_ = [int(0.5 * 0x7fffffff * math.sin(2 * math.pi * 110 * i / 44100)) >> 16 << 16 for i in range(W)]
+    pages = big_endian([(x >> 16, x >> 16) for x in wave_])
+    whole = sample(pages, W)
 
-    def play(window, spd, grn, pitch=1.0, loop=0, calls=20000, smooth=True):
-        """Render calls of 16 output samples from a model reader that reads `pitch` frames a sample.
-        Returns (restarts, calls until OVER, the frames handed to the DSP)."""
+    def play(window, spd, grn, pitch=1.0, loop=0, calls=20000, smooth=True, readable=True):
+        """Render calls of 16 output samples from a model reader that reads `pitch` frames a sample, as amiga_render
+        drives the engine. Returns (restarts, calls until OVER, the frames handed to the DSP)."""
         v = Voice()
         lib.amiga_note(ctypes.byref(v), window)
         restarts, read, reader, stream = [], 0.0, 0, []
@@ -106,9 +141,9 @@ with tempfile.TemporaryDirectory() as tmp:
             read += 16 * pitch
             a = (ctypes.c_int32 * (2 * src))(*[wave_[(reader + i // 2) % W] for i in range(2 * src)])
             reader += src
-            rest = lib.amiga_rest(ctypes.byref(v), 16, src, spd)  # as amiga_render: a note at rest only remembers and counts
-            if smooth and rest != 2:
-                lib.amiga_blend(ctypes.byref(v), a, src)
+            rest = lib.amiga_rest(ctypes.byref(v), 16, src, spd)
+            if smooth and v.xlen:
+                lib.amiga_cross(ctypes.byref(v), a, src, ctypes.byref(whole))
             if smooth and not rest:
                 lib.amiga_declick(ctypes.byref(v), a, src)
             stream.extend(a[0::2])
@@ -122,8 +157,8 @@ with tempfile.TemporaryDirectory() as tmp:
                 return restarts, n + 1, stream
             if at != KEEP:
                 restarts.append((16 * (n + 1), at))
+                lib.amiga_seek(ctypes.byref(v), at, reader % W if readable else NONE, 0)
                 reader = at
-                lib.amiga_seek(ctypes.byref(v), at)
         return restarts, None, stream
 
     step = lambda x: max(abs(b - a) for a, b in zip(x, x[1:]))
@@ -137,20 +172,65 @@ with tempfile.TemporaryDirectory() as tmp:
     check('each restart is where the sample would be at pitch 0', all(abs(at - t) <= 48 for t, at in restarts), str(restarts[:3]))
     check('so the note lasts as long as at pitch 0', over is not None and abs(over * 16 - W) <= 2400, str(over))
     raw = play(W, 64, 64, pitch=2.0, smooth=False)[2]
-    check('the fades leave no step where the restarts were', step(stream) < 1.5 * step(wave_) < step(raw) / 4, f'{step(stream)} {step(wave_)} {step(raw)}')
+    check('the crossfades leave no step where the restarts were', step(stream) < 1.5 * step(wave_) < step(raw) / 4, f'{step(stream)} {step(wave_)} {step(raw)}')
     restarts, over, stream = play(W, 32, 30)
     check('speed 1/2 makes the note twice as long', over is not None and abs(over * 16 - 2 * W) <= 2400, str(over))
     check('without a step', step(stream) < 1.5 * step(wave_), f'{step(stream)} {step(wave_)}')
     restarts, over, stream = play(W, 0, 0, calls=2000)
     check('speed 0 holds the first grain and never ends', over is None and len(restarts) > 100 and all(at < 200 for _, at in restarts))
     restarts, over, stream = play(W, 127, 64)
-    check('faster than the pitch reads, it skips ahead with the step faded out', len(restarts) > 5 and step(stream) < 3 * step(wave_), f'{step(stream)} {step(wave_)}')
+    check('faster than the pitch reads, it skips ahead without a step', len(restarts) > 5 and step(stream) < 1.5 * step(wave_), f'{step(stream)} {step(wave_)}')
+    restarts, over, stream = play(W, 64, 64, pitch=0.75)
+    check('a fourth down at its own length, it skips ahead without a step', len(restarts) > 5 and step(stream) < 1.5 * step(wave_), f'{step(stream)} {step(wave_)}')
+    stream = play(W, 64, 64, pitch=0.75, readable=False)[2]
+    check('a sample it cannot read fades the step out instead', step(stream) < 3 * step(wave_), f'{step(stream)} {step(wave_)}')
     restarts, over, stream = play(W, 127, 64, loop=1)
     check('a looped note wraps and never ends', over is None and restarts and all(0 <= at < W for _, at in restarts))
     restarts, over, stream = play(W, 64, 64, loop=1)
     check('a looped note at speed 1 and pitch 0 is left to stock\'s own loop', over is None and restarts == [], str(restarts[:3]))
     check('a note that was not measured is left alone', play(0, 0, 0, pitch=2.0, calls=500)[:2] == ([], None))
     check('and rests whatever its pitch', play.rested >= 498, str(play.rested))
+
+    # The crossfade itself: the last grain from the sample, fading out under the new one.
+    def crossed(tail, down=0, n=600, xnext=400, s=whole, new=0x10000):
+        v = Voice(xnext=xnext)
+        lib.amiga_seek(ctypes.byref(v), 0, tail, down)
+        a = (ctypes.c_int32 * (2 * n))(*([new] * (2 * n)))
+        for at in range(0, n, 7):  # in render calls of 7 frames
+            if v.xlen:
+                lib.amiga_cross(ctypes.byref(v), ctypes.byref(a, 8 * at), min(7, n - at), ctypes.byref(s))
+        return v, [x >> 16 for x in a[0::2]], [x >> 16 for x in a[1::2]]
+    v, l, r = crossed(1000)
+    old = [x >> 16 for x in wave_[1000:1400]]
+    check('after a restart the first frame is the last grain\'s next one', l[0] == old[0] and r[0] == old[0], f'{l[0]} {old[0]}')
+    check('the last grain fades out in a straight line over half the cycle\'s frames',
+          all(abs(l[k] - (old[k] + (1 - old[k]) * k / 400)) <= 2 for k in range(400)), str([(l[k], old[k]) for k in (0, 200, 399)]))
+    check('then the new grain plays alone, untouched', l[400:] == [1] * 200 and v.xlen == 0)
+    v, l, r = crossed(1000, down=1)
+    check('a backward reader\'s last grain is read downwards', all(abs(l[k] - ((wave_[1000 - k] >> 16) * (400 - k) + k) / 400) <= 2 for k in range(400)), str(l[:3]))
+    paged = sample(pages, W, page=7)
+    check('read through pages of 7 frames it is the same, either way',
+          crossed(1000, s=paged)[1] == crossed(1000)[1] and crossed(1000, down=1, s=paged)[1] == crossed(1000, down=1)[1])
+    check('past the sample\'s end the last grain is silence', crossed(W - 10)[1][10:20] == [round(k / 400) for k in range(10, 20)])
+    st = [(i * 37 % 65536 - 32768, -(i * 91 % 65536 - 32768) // 2) for i in range(500)]
+    for nbytes in (2, 3):
+        for ch in (1, 2):
+            buf = big_endian(st, nbytes, ch)
+            v, l, r = crossed(100, s=sample(buf, 500, nbytes, ch), xnext=1000, n=50)
+            want_r = [f[1] if ch == 2 else f[0] for f in st[100:150]]
+            check(f'{8 * nbytes}-bit {"stereo" if ch == 2 else "mono"} pages read as their top 16 bits',
+                  l[0] == st[100][0] and r[0] == want_r[0] and all(abs(l[k] - st[100 + k][0]) <= 1 + abs(st[100 + k][0]) * k // 1000 + 64 for k in range(50))
+                  and all(abs(r[k] - want_r[k]) <= 1 + abs(want_r[k]) * k // 1000 + 64 for k in range(50)))
+    v = Voice(xnext=4)
+    lib.amiga_seek(ctypes.byref(v), 0, 1000, 0)
+    check('a crossfade lasts at least 16 frames', v.xlen == 16)
+    v = Voice(xnext=400)
+    lib.amiga_seek(ctypes.byref(v), 0, NONE, 0)
+    check('without the sample there is no crossfade, and the step fades out', v.xlen == 0 and v.jump == 1)
+    v = Voice(xnext=400)
+    lib.amiga_seek(ctypes.byref(v), 0, 1000, 0)
+    lib.amiga_seek(ctypes.byref(v), 0, 2000, 0)
+    check('a restart that cuts a crossfade short fades the step out too, and crosses from the newer grain', v.jump == 1 and v.xlen == 400 and v.tail == 2000)
 
     # A note at rest: speed 64 at the sample's own pitch, the reader where the note should be.
     restarts, over, stream = play(W, 64, 64)
@@ -175,7 +255,7 @@ with tempfile.TemporaryDirectory() as tmp:
                 return restarts, n + 1
             if at != KEEP:
                 restarts.append(at)
-                lib.amiga_seek(ctypes.byref(v), at)
+                lib.amiga_seek(ctypes.byref(v), at, NONE, back)
         return restarts, None
     restarts, over = rated(64, 0x1f80, 0x3f00, 0.5, 1)
     check('at half RATE the note lasts twice as long and nothing restarts', restarts == [] and over is not None and abs(over * 16 - 2 * W) <= 2400, f'{len(restarts)} {over}')
@@ -189,13 +269,14 @@ with tempfile.TemporaryDirectory() as tmp:
         lib.amiga_stretch(ctypes.byref(v), 16, 16, 64, 64, 0)
     turned = lib.amiga_face(ctypes.byref(v), 1, 0)
     check('a reader that turns round goes on from where it is, counted from the other end',
-          turned == 1 and v.back == 1 and v.grain == W - 1600 and v.played == 0 and v.pos == (W - 1600) << 6 and v.hi == v.floor == v.grain,
+          turned == 1 and v.back == 1 and v.grain == W - 1600 and v.played == 0 and v.pos == (W - 1600) << 6 and v.xlen == 0,
           f'{turned} {v.grain} {v.pos >> 6}')
     check('and one that does not turn changes nothing', lib.amiga_face(ctypes.byref(v), 1, 0) == 0 and v.grain == W - 1600)
     check('PCH shifts a semitone for each twelfth root of two of length', all(abs(lib.amiga_shift(round(100 * 2 ** (k / 12))) - 1280 * k) <= 130 for k in range(13)))
     check('PCH: half the length is an octave down, and never further than an octave', lib.amiga_shift(50) == -15360 and lib.amiga_shift(25) == -15360 and lib.amiga_shift(400) == 15360 and lib.amiga_shift(100) == 0 and lib.amiga_shift(0) == 0)
     restarts, over, stream = play(W, 64, 127, pitch=4.0)
-    check('a long cycle two octaves up, beyond the memory, still restarts on time', len(restarts) > 5 and over is not None and abs(over * 16 - W) <= 5000, str(over))
+    check('a long cycle two octaves up still restarts on time', len(restarts) > 5 and over is not None and abs(over * 16 - W) <= 5000, str(over))
+    check('and crosses without a step', step(stream) < 1.5 * step(wave_) * 4, f'{step(stream)} {step(wave_)}')
 
     v = Voice(jump=1); v.last[0], v.last[1] = 0x40000000, -0x40000000
     a = (ctypes.c_int32 * 128)(*([0] * 128))
