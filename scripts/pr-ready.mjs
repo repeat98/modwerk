@@ -73,7 +73,7 @@ export function readiness({ python = null, dirty = [], behind = false, remote = 
   notes.push('What did the guides lack or get wrong while you did this? ' + (guideEdits.length
     ? 'Guide edits on this branch: ' + guideEdits.join(', ') + '. Say in the PR what they fix. If a developer working now could hit it before this merges, post it on the agent board yourself: npm run board -- finding <topic> <key> "…" --pr <n>.'
     : 'No guide edit is on this branch: fix it where a reader would look (docs/, AGENTS.md, the machine guide; for a module release, a separate Docs: PR), or write "nothing" in the PR.'))
-  notes.push('Then push, open or update the PR with a description in the template\'s shape (CI checks it says what changed and answers the guides question), and watch it: gh pr checks <number> --watch. If main moves before the merge, run this again and push.')
+  notes.push('Then push, open or update the PR with a description in the template\'s shape (CI checks it says what changed and answers the guides question; `node scripts/pr-body.mjs FILE.md` checks a description in a file the same way before you open the PR), and watch it: gh pr checks <number> --watch. If main moves before the merge, run this again and push.')
   return { ok: problems.length === 0, problems, notes }
 }
 
