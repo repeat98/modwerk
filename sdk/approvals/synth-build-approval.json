@@ -1,15 +1,17 @@
 {
   "kind": "owner-approved-update",
   "id": "synth",
-  "version": "0.1.2-experimental",
-  "sourceSha256": "8fa263bfcd30dca9aff4f83dbcb001d4ccf06286e31839c8e0afd61100a9315c",
+  "version": "0.1.3-experimental",
+  "sourceSha256": "ef20673449356633d7bb5268805c25f25f910980fece218e26a4d72b77185937",
   "approvedBy": "repeat98",
-  "approvedOn": "2026-10-08",
+  "approvedOn": "2026-11-14",
   "waived": [
     "current-build-hardware",
     "chip-worst-case-cycles",
-    "complete-memory-bounds"
+    "complete-memory-bounds",
+    "release-documentation"
   ],
-  "ownerStatement": "please release them and close. I green light no hardware validation for now",
-  "reason": "The owner authorized release of the experimental 0.1.2 fixes after being told that current hardware, chip timing and complete memory qualification remain missing. Software MIDI and mono/four-voice regressions and native/browser parity are retained; all unknown quantities stay unmeasured. This exception covers only the exact current source."
+  "ownerStatement": "Approved by repeat98 on 14 Nov 2026 in the session that measured the modules' cost at rest: \"yes\" to approving FM Synth 0.1.3-experimental after reading its measured cost, the unit recording and what stays untested. The author, Tim Hastie, gave the owner his OK for optimizations verbally (owner's word, 13 and 14 Nov 2026).",
+  "reason": "0.1.3 changes only how FM Synth's frame-interrupt hooks treat tracks that need no engine: no RENDER_FLEX, the tracks the engine must render worked out once a frame, the slot copy and the LFO depth site testing one bit inline; it also fixes track 1's LFO 3, which wrote into FM Synth's clock. On the owner's MKII (development twin 0277c5c5 of main, 14 Nov 2026, four FLEX tracks playing at 126 BPM, FM Synth on no track) it costs +3.2 points of the frame interrupt at rest against +19.0 for 0.1.2 and +15.6 for the first 0.1.3 source. One FM Synth track alone on T1, recorded over USB, matches 0.1.2 as closely as two takes of 0.1.2 match each other (correlation 0.9999); a FLEX track beside it is sample-identical. The UI and pages are 0.1.2's, so its captures are retained; an emulator probe matches fm_is_native, po_lfo3_depth and the dispatch rules. Waived for this exact source: chords, glide, MIDI, legacy FMSYNTH samples, GLIDE on sample tracks and track 1's LFO 3 on a unit, listening by ear, Part/project reload and power cycles, the card build on a unit, chip worst-case cycles and complete memory bounds.",
+  "retainedUiVersion": "0.1.2-experimental"
 }
