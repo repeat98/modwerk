@@ -1,0 +1,1 @@
+Octatrack SDK: `modwerk_page_widget()` reaches a control's widget as a step from the lowest of stock's widget addresses, so the compiler no longer turns it into a table of four stock addresses, which repeated a stretch of the stock OS's own page descriptors in any package that used it (#1471). Amiga, the only module using it, picks the fix up in its next version.
