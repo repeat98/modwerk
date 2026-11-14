@@ -126,6 +126,23 @@ With a USB recording running as well, one Amiga track at PTCH +12 with SRR and L
 
 Memory: 10,652 bytes of code and data and 67,308 of bss in the package, most of it the eight voices' frame memories (8 KB each). The loader allows a module 128 KiB.
 
+### Beside a member's module set (14 November 2026)
+
+A tester reported crackle and a sluggish unit with Amiga alone on T1 as soon as T2 to T4 played Flex samples, with a large set installed. Rebuilt on the owner's MKII: development twin `2d97f42d…` of the flashed release base `4e9a87ea…` (RAM-booted), the published package `18cef8b2…`, timed trials with no Keep, project LIVE/Dev17 bank B pattern B01 at 126 BPM, Part 1. B01 trigs only T1, so four trigs each (steps 1, 5, 9, 13) were put on T2 to T4 for the run and taken out again (the pattern's bytes compared equal afterwards). T1 to T4 on FLEX with the same 115 BPM drum loop, T5 to T8 silent. The set was the tester's last shared one less the base-bound packages a twin refuses (Analog BD, Sidechain, Recorder Loop Fix) and Temp Save (no USB package): Mini Verb, Tape Echo, Repitch, TapeHead, BBD, LOFI2, Scale Quantizer, FM Synth, Preview Vol, Play Modes, Quant Live Rec, Deja Vu, VECTOR, Euclid, Amiga and SYNTIZ, with no module effect on a track and SYNTIZ on none. `guard`, `cpu` and five `stats` over eight seconds each, one reading per state.
+
+| T1 to T4 sounding | Frame interrupt | Longest frame | Latest start | Renders skipped | CPU |
+| --- | --- | --- | --- | --- | --- |
+| No module installed, all FLEX | 41.1 % | 84.9 % | 0 | none | 64 % |
+| The set installed, all FLEX | 64.5 % | 112.2 % | 12.2 % | 2 (T1, T3) | 75 % |
+| The set, T1 Amiga at the defaults | 70.7 % | 119.2 % | 19.2 % | 10 (T1 to T3) | 80 % |
+| The set, T1 Amiga at PTCH +12 | 73.4 % | 118.1 % | 18.1 % | 22 (T1 to T3) | 84 % |
+
+The set alone takes a busy project past the frame: frames overrun and start late before any Amiga track plays, and every plain FLEX track then renders through a module's wrapper (each 25 to 38 % of a frame at its longest, against none guarded without the set). An Amiga track adds 6 to 9 points on top. This matches the report without showing the tester's own unit. Which installed module costs the plain tracks this was not separated: the run without FM Synth did not happen (below).
+
+With only T1 sounding (T2 to T4 trigless), the same day: T1 FLEX 29.5 % (no module) and 36.8 % (the set); Amiga at the defaults 33.3 % and 41.4 %, at PTCH +12 37.4 % and 50.6 %, and at PTCH +12, GRN 0, SRR 30 and LED with the set 63.1 % (CPU 70 %), nothing skipped. T1's longest render, both passes of a frame: 13.9 % at the defaults and 31.5 % at PTCH +12 without the set, 28.3 %, 34.0 % and 45.3 % with it. So the set makes Amiga's own track dearer too (+7.9 points at PTCH +12 alone, +13.8 with the set).
+
+Not shown: whether Amiga's restarts disturb the other tracks' audio. The owner heard B01 clean with T1 on Amiga at PTCH +12, but T2 to T4 had no trigs then. The second set trial's rollback, after T1 had gone back to FLEX, was refused as needs-recovery, and `recover` was refused the same way; the unit needed a power cycle. No track in Part 1 named a module machine then; bank A's Part 1 names Tape Echo and Euclid on T4. The first set trial of the day rolled back cleanly.
+
 ### The published package on the unit
 
 On the owner's MKII, 12 November 2026, a development twin (`513be133`, RAM-booted, with the 20-channel USB Audio) of the current base `4854b76c`, package SHA-256 `18cef8b2d5d9152fd12d85d8ca607821776587b6f5b87868f7984eec02373ff3` as published, in a trial that was not kept:
