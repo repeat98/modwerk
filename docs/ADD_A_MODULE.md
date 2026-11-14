@@ -244,7 +244,8 @@ unit. It is the agent's own test before a developer gets a build
 time.
 
 **A private USB package of a draft.** `npm run module:dev -- <id> --build-only`
-builds it ([the fast loop](#the-fast-loop)). Its `Gate` must be
+builds it ([the fast loop](#the-fast-loop)); it refuses a machine module, whose
+package the site's builder makes (`octatrack:module-packages`). Its `Gate` must be
 `modules/<id>/verify.py`: the schema takes only `tools/` or `modules/` paths.
 
 **Growing a stock table over USB.** A runtime package carries no `TableGrow`
