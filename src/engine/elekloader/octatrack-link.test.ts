@@ -737,6 +737,23 @@ describe('updating the base over USB', () => {
     expect(unit.flashed).toBe(expected)
     expect(link.getState()).toMatchObject({ status: 'ready', identity: { base: expected }, baseUpdate: undefined })
   })
+  // "The Octatrack stopped answering" at Save: a reply lost while the container was still being sent ended the update,
+  // though nothing was written (14 November 2026).
+  it('sends the container again when a reply is lost before the write began', async () => {
+    const { unit, link } = await linked(), { bin, expected } = fakeBin(), steps: string[] = []
+    unit.stageLosses = 2
+    vi.useFakeTimers({ toFake: ['setTimeout'] })
+    await run(link.updateBase(bin, expected, step => steps.push(step)))
+    expect(dedupe(steps)).toEqual(['staging', 'starting', 'started', 'writing', 'started', 'writing', 'started', 'writing', 'saving', 'restarting', 'done'])
+    expect(unit.flashed).toBe(expected)
+  })
+  it('ends with the lost reply once the container could not be sent in four tries, nothing written', async () => {
+    const { unit, link } = await linked(), { bin, expected } = fakeBin()
+    unit.stageLosses = 9
+    vi.useFakeTimers({ toFake: ['setTimeout'] })
+    await expect(run(link.updateBase(bin, expected))).rejects.toThrow(UploadUnconfirmedError)
+    expect(unit.flashed).toBe(FAKE_BASE)
+  })
   it('writes again after a failed verify, the unit staying up from RAM', async () => {
     const { unit, link } = await linked(), { bin, expected } = fakeBin(), steps: string[] = []
     unit.writeFails = 1

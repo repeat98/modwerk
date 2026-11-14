@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "reportedOn": "2026-11-14",
+  "reporter": "npp1993",
+  "status": "emulator",
+  "scope": "filter-hz 1.2.1: a locked FRQ's box is 33 pixels, wide enough for kHz values.",
+  "finding": "Stock OS 1.74 draws a locked value's inverted box itself, at a fixed width: the knob value routine (0x40037a56) centres the value text on the knob and, in the label row, inverts x-13..x+13, 27 pixels, whatever the text. Filter Hz 1.2.0 writes values of 1 kHz or more as 28 to 31 pixels ('1.05kHz' .. '21.1kHz'), so the text stuck out of the box; values under 1 kHz are at most 25 pixels and fit. Read in the firmware code; addresses only.",
+  "change": "filter_hz_box replaces the routine's five pushes of the rectangle (0x40037bea, 20 bytes). For FRQ (parameter 47, read from the routine's argument) it pushes x-16..x+16, 33 pixels, for every value: FRQ text is at most 31 pixels and centred on x. For every other parameter it pushes stock's x-13..x+13.",
+  "emulator": {
+    "name": "rytm-emu",
+    "revision": "2ac0f1f",
+    "binary": "dtboot"
+  },
+  "builds": [
+    {
+      "label": "FH00",
+      "content": "Modwerk base package 1c14b6b0 + Filter Hz 1.2.0 on stock OS 1.74",
+      "syxSha256": "1cae85e265d1ebe4db76a8b3b8001f05f29116b2dabfbfdf05c9796adf072184"
+    },
+    {
+      "label": "FH04",
+      "content": "the same with Filter Hz 1.2.1",
+      "syxSha256": "5b5fd85c69da89d5cae18596644be721b9c11b6a70626ff905c6902a1bf11146"
+    }
+  ],
+  "method": "Cold boot, NO four times, FLTR on track BD, snapshot. Then the parameter set by its CC on channel 1; GRID RECORDING, hold trig 1 and nudge the knob once, which locks the shown value; frame taken with the trig held. Unlocked: one nudge with no trig held.",
+  "results": [
+    "FRQ locked at every value 0 to 127: the box is x 0..32 every time; the text has at least one pixel of box on each side and no pixel outside it. 1.2.0 at 75, 76, 88, 100, 116, 126 and 127: 2 to 11 text pixels outside stock's box.",
+    "FRQ locked at Hz values (0 to 74): the same 33-pixel box, so these frames differ from 1.2.0's, whose box was 27 pixels.",
+    "Unlocked FRQ at 0, 60, 75 and 127, and locked RES (0, 64, 127), TYP (3), ENV (0, 64, 127), ATK (64) and DEC (64): identical to 1.2.0."
+  ],
+  "limitations": [
+    "Emulator only: not hardware evidence.",
+    "Other pages' locked values were not compared; the changed code returns stock's rectangle for any parameter but FRQ."
+  ]
+}

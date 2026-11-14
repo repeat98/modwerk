@@ -553,11 +553,12 @@ export class OctatrackLink {
         return report('done')
       } catch (error) {
         // Saved and checked, then not back from the restart (a base before the two slots restarts on NOR): nothing is
-        // left to write.
-        if (!wrote || saved || signal?.aborted) throw error
+        // left to write. A reply lost before the write began wrote nothing: the trial base holds or refuses frames
+        // for its first seconds (ep0.c settled), so it is sent again, as after a lost write.
+        if (saved || signal?.aborted || !wrote && !(error instanceof UploadUnconfirmedError)) throw error
         console.warn('Base write not confirmed, attempt ' + attempt, error)
-        if (attempt >= BASE_WRITE_ATTEMPTS) throw new Error(late, { cause: error })
-        report('reconnecting')
+        if (attempt >= BASE_WRITE_ATTEMPTS) throw wrote ? new Error(late, { cause: error }) : error
+        report(wrote ? 'reconnecting' : 'started')
         const back = await this.steady(connection, late, signal)
         // After the trial, back on another base means the unit booted NOR, which still holds that base whole: the
         // write never landed.
