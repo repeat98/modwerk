@@ -3,9 +3,9 @@
     "version": "0.3.3-experimental",
     "date": "2026-11-14",
     "changes": [
-      "Installed but used on no track, POLY8 now costs the Octatrack far less CPU while other sample tracks play.",
+      "Installed but used on no track, POLY8 now costs the Octatrack less than half the CPU it did while other sample tracks play.",
       "POLY8 tracks sound and behave as before.",
-      "Known issue: checked in the emulator only, not yet on a unit."
+      "Known issue: measured on a unit with POLY8 on no track; a POLY8 track itself is checked in the emulator only."
     ]
   },
   {

@@ -211,7 +211,7 @@ poly_increment_shift:
         lea     -12(%sp),%sp
         movem.l %d0-%d1/%a0,(%sp)
         move.l  64(%sp),%d0
-        bsr.w   poly_is_track
+        bsr.w   poly_frame_track
         tst.l   %d0
         beq.s   .pis_done
         move.l  64(%sp),%d1
@@ -377,6 +377,11 @@ poly_voice_trigger:
         tst.l   %d0
         beq.w   .pvt_done
 
+        move.l  %d2,%d0                   | pm_reserve marks the track dirty: its next stock
+        addq.l  #8,%d0                    | render or reset drops what POLY8 held (poly_fr)
+        move.l  poly_fr_mask:l,%d1
+        bset    %d0,%d1
+        move.l  %d1,poly_fr_mask:l
         move.l  %d2,-(%sp)
         jsr     pm_reserve
         addq.l  #4,%sp
@@ -509,7 +514,49 @@ poly_voice_trigger:
 | is mixed at that gain (.mix); voices whose release has ended stop
 | (.env_reap).  The DSP's one envelope per track is held open meanwhile
 | (poly_amp_hook).
+|
+| A track that is not POLY this frame goes straight to stock's call, its six
+| arguments where the caller put them.  Every line of POLY8's code or data a
+| stock track's render touches costs a cache miss, since the renders between
+| evict them: the full wrapper took about five points of the frame interrupt
+| with stock tracks playing, a short one through poly_frame_track three
+| (owner's MKII, 14 November 2026).  So the test is inline, line-aligned and
+| reads one line of data (poly_fr, poly_fr_mask).  A track that left POLY8 with
+| voices or keys drops them first, as .reset_mono.
+        .balign 16
 polyphony_call:
+        move.l  8(%sp),%d0                | the track
+        moveq   #7,%d1
+        cmp.l   %d1,%d0
+        bhi.s   .pc_full                  | as .pc_body: past track 7, .mono
+        move.l  (FRAME_STEP).l,%d1
+        cmp.l   poly_fr:l,%d1
+        bne.s   .pc_frame                 | the frame's first use: poly_frame_track
+        move.l  poly_fr_mask:l,%d1
+        lsr.l   %d0,%d1
+        andi.l  #0x101,%d1                | POLY this frame, or POLY8 may hold voices or keys on it
+        bne.s   .pc_frame
+.pc_stock:
+        jsr     (RENDER).l
+        lea     24(%sp),%sp               | displaced caller cleanup
+        jmp     (CONTINUE_CALLER).l
+.pc_frame:
+        bsr.w   poly_frame_track          | d1 = poly_fr_mask
+        bne.s   .pc_full
+        move.l  8(%sp),%d0
+        addq.l  #8,%d0
+        btst    %d0,%d1
+        beq.s   .pc_stock
+        move.l  8(%sp),-(%sp)
+        jsr     pm_clear_extensions
+        addq.l  #4,%sp
+        move.l  8(%sp),%d0
+        addq.l  #8,%d0
+        move.l  poly_fr_mask:l,%d1
+        bclr    %d0,%d1
+        move.l  %d1,poly_fr_mask:l
+        bra.s   .pc_stock
+.pc_full:
         lea     .pc_body:l,%a1            | the render runs from the cached alias
         jmp     poly_cached_call:l        | (a1 is dead here: the renderer call clobbers it)
 .pc_body:
@@ -1298,83 +1345,86 @@ polyphony_call:
         rts
 
 | poly_is_track for the sites inside stock's frame interrupt (0x4000aad0): the
-| command consumer, the AMP builder and each render call asked it about every
-| sample track, two to four times a frame, and each answer read the Part index
-| in battery RAM (about half a microsecond) and one or two bank bytes.  On no
-| track, POLY8 so took 13.5 points of the frame interrupt with four FLEX tracks
-| playing (owner's MKII, 14 November 2026).  Nothing below the interrupt runs
-| inside it, so the bytes cannot change within a frame (docs/MODULE_PERFORMANCE.md):
-| the Part is read at a frame's first use, each track tested once a frame by
-| poly_is_track's test.  A frame is known by stock's frame step (FRAME_STEP,
-| which the handler advances, mod 8, before any POLY8 site runs); the AMP
-| builder calls poly_amp_hook for all eight tracks every frame, so an answer
+| command consumer, the AMP builder, the render and its increment asked it
+| about every sample track, several times a frame, and each answer read the
+| Part index in battery RAM (about half a microsecond) and bank bytes.  Over USB
+| a module's data is uncached too, so the answer must cost few reads of
+| POLY8's memory: with four FLEX tracks playing and POLY8 on none, 0.3.2 took
+| 12.2 points of the frame interrupt and a per-track cache of three words 11.6
+| (owner's MKII, 14 November 2026).  Nothing below the interrupt runs inside
+| it, so the bytes cannot change within a frame (docs/MODULE_PERFORMANCE.md):
+| the frame's first use tests all eight tracks, by poly_is_track's test, and
+| keeps the answers in poly_fr_mask.  A frame is known by stock's frame
+| step (FRAME_STEP, which the handler advances, mod 8, before any POLY8 site
+| runs); the AMP builder asks about all eight tracks every frame, so an answer
 | never outlives its frame.  Panel, key and MIDI hooks keep poly_is_track.
-| d0 = track -> d0 = 1 for a POLY track, else 0.  d1/a0 scratch, as poly_is_track.
+| poly_fr: the frame step poly_fr_mask's bits 0-7 belong to; there bit t: track
+| t is POLY this frame.  Bit 8 + t: pm_reserve may have marked track t dirty
+| (set before it, cleared only after pm_clear_extensions: always a superset).
+| d0 = track -> d0 = 1 for a POLY track, else 0, flags set; d1 = poly_fr_mask
+| for a track 0-7.  a0 scratch, as poly_is_track.
         .equ    FRAME_STEP, 0x46104d00
-        .equ    FR_KEY, 0                 | the frame step the answers belong to
-        .equ    FR_PART, 4                | the current Part's machine block, 0 without a bank
-        .equ    FR_SEEN, 8                | bit t: track t tested this frame
-        .equ    FR_POLY, 9                | bit t: track t is POLY
 poly_frame_track:
         cmpi.l  #7,%d0
         bhi.w   .pft_no
-        lea     poly_fr:l,%a0
         move.l  (FRAME_STEP).l,%d1
-        cmp.l   FR_KEY(%a0),%d1
-        beq.s   .pft_frame
-        move.l  %d1,FR_KEY(%a0)           | a new frame: its Part, read once
-        clr.w   FR_SEEN(%a0)              | FR_SEEN and FR_POLY
+        cmp.l   poly_fr:l,%d1
+        bne.s   .pft_new
+        move.l  poly_fr_mask:l,%d1
+.pft_answer:
+        btst    %d0,%d1
+        beq.s   .pft_no
+        moveq   #1,%d0
+        rts
+.pft_no:
+        moveq   #0,%d0
+        rts
+.pft_new:                                 | the frame's first use: its Part, read once
+        lea     -16(%sp),%sp
+        movem.l %d2-%d4/%a1,(%sp)
+        move.l  %d1,poly_fr:l             | this frame's step
+        move.l  poly_fr_mask:l,%d4
+        andi.l  #0xff00,%d4               | the dirty marks stay
         movea.l (BANK_PTR).l,%a0
         cmpa.l  #0x40000000,%a0           | a bank, as poly_is_track
-        bcs.s   1f
+        bcs.s   .pft_store
         cmpa.l  #0x47f00000,%a0
-        bcs.s   2f
-1:      suba.l  %a0,%a0
-        bra.s   3f
-2:      mvz.b   (PART_INDEX).l,%d1
+        bcc.s   .pft_store
+        mvz.b   (PART_INDEX).l,%d1
         andi.l  #3,%d1
         mulu.w  #PART_STRIDE,%d1
         adda.l  %d1,%a0
         adda.l  #0x8ed80,%a0
-3:      move.l  %a0,%d1
-        lea     poly_fr:l,%a0
-        move.l  %d1,FR_PART(%a0)
-.pft_frame:
-        btst    %d0,FR_SEEN(%a0)
-        bne.s   .pft_known
-        bset    %d0,FR_SEEN(%a0)
-        move.l  FR_PART(%a0),%d1
-        beq.s   .pft_no
-        movea.l %d1,%a0
-        mvz.b   0x22(%a0,%d0.l),%d1
+        moveq   #7,%d2
+.pft_track:
+        mvz.b   0x22(%a0,%d2.l),%d1
         cmpi.l  #POLY_TYPE,%d1
         beq.s   .pft_poly
         cmpi.l  #1,%d1
-        bne.s   .pft_no
-        move.l  %d0,%d1
+        bne.s   .pft_next
+        move.l  %d2,%d1
         mulu.w  #30,%d1
-        adda.l  %d1,%a0
-        mvz.b   0x3c(%a0),%d1
+        lea     (%a0,%d1.l),%a1
+        mvz.b   0x3c(%a1),%d1
         cmpi.l  #80,%d1
-        bne.s   .pft_no
-        mvz.b   0x3d(%a0),%d1
+        bne.s   .pft_next
+        mvz.b   0x3d(%a1),%d1
         cmpi.l  #76,%d1
-        bne.s   .pft_no
-        mvz.b   0x3e(%a0),%d1
+        bne.s   .pft_next
+        mvz.b   0x3e(%a1),%d1
         cmpi.l  #1,%d1
-        bne.s   .pft_no
+        bne.s   .pft_next
 .pft_poly:
-        lea     poly_fr:l,%a0
-        bset    %d0,FR_POLY(%a0)
-.pft_yes:
-        moveq   #1,%d0
-        rts
-.pft_known:
-        btst    %d0,FR_POLY(%a0)
-        bne.s   .pft_yes
-.pft_no:
-        moveq   #0,%d0
-        rts
+        bset    %d2,%d4
+.pft_next:
+        subq.l  #1,%d2
+        bpl.s   .pft_track
+.pft_store:
+        move.l  %d4,poly_fr_mask:l
+        move.l  %d4,%d1
+        movem.l (%sp),%d2-%d4/%a1
+        lea     16(%sp),%sp
+        bra.w   .pft_answer
 
 | Detour at 0x40004d66, the end of the per-track pass of the DSP record's
 | command-word builder (0x40004bd4: d4 = track, a2 = the track's record, a1
@@ -1389,7 +1439,6 @@ poly_frame_track:
 | retriggers only on a note that starts from silence.  The real values are
 | kept for .env_track first.
 poly_amp_hook:
-        addq.l  #1,poly_diag_amp_calls
         movea.w 54(%sp),%a0               | displaced
         move.w  %a0,62(%a2)               | displaced
         lea     -12(%sp),%sp
@@ -1398,6 +1447,7 @@ poly_amp_hook:
         bsr.w   poly_frame_track          | d1/a0 scratch
         tst.l   %d0
         beq.s   .pah_done
+        addq.l  #1,poly_diag_amp_calls    | POLY tracks only (0.3.3): an uncached count costs every track
         move.l  %d4,%d0
         lsl.l   #2,%d0
         lea     poly_amp(%pc),%a0
@@ -2213,7 +2263,6 @@ poly_release_note:
 | pitch under the wrong key and octave, and the chord's last voice owned no
 | key and never released (octemu, 22 Sep 2026).  d4 = track (stock's).
 poly_chord_dequeue:
-        addq.l  #1,poly_diag_command_calls
         lea     -24(%sp),%sp
         movem.l %d0-%d3/%a0-%a1,(%sp)
         move.l  (%a0,%d4.l*4),%d3         | the command being consumed
@@ -2222,6 +2271,7 @@ poly_chord_dequeue:
         bsr.w   poly_frame_track
         tst.l   %d0
         beq.w   .pcd_done
+        addq.l  #1,poly_diag_command_calls | POLY tracks only (0.3.3)
         tst.l   %d3
         beq.s   .pcd_promoted
         lea     poly_armed_key(%pc),%a0
@@ -2415,10 +2465,21 @@ poly_diag_amp_calls:
         .text
         .global poly_play_increment
 poly_play_increment:
-        move.l  8(%sp),%d0
-        jsr     poly_is_track             | d1/a0 scratch
-        tst.l   %d0
+        move.l  8(%sp),%d0                | (the frame interrupt only: the render's increment)
+        moveq   #7,%d1
+        cmp.l   %d1,%d0
+        bhi.s   2f
+        move.l  (FRAME_STEP).l,%d1
+        cmp.l   poly_fr:l,%d1
+        bne.s   3f
+        move.l  poly_fr_mask:l,%d1        | this frame's answer, inline: one line, as polyphony_call
+        btst    %d0,%d1
+        bne.s   4f
+2:      moveq   #0,%d0
+        rts
+3:      jsr     poly_frame_track          | d1/a0 scratch
         beq.s   1f
+4:
         movea.l 4(%sp),%a1
         move.l  8(%sp),%d1
         lea     poly_track_inc,%a0
@@ -2432,32 +2493,47 @@ poly_play_increment:
 | (poly_stop_voice's first path returns): 1, nothing else runs. Rendering a
 | primary voice, stock's reset runs at once, no later handler: 2. Otherwise 0.
         .global poly_voice_bind
+| The selector is set only while poly_rendering is: test that first, one read.
 poly_voice_bind:
+        moveq   #0,%d0
+        tst.l   poly_rendering
+        beq.s   2f
         tst.l   poly_voice_selector
         beq.s   1f
         jsr     poly_stop_voice
         moveq   #1,%d0
         rts
-1:      moveq   #0,%d0
-        tst.l   poly_rendering
-        beq.s   2f
-        moveq   #2,%d0
+1:      moveq   #2,%d0
 2:      rts
 
 | ev_voice_bind_run, order 50: void f(unsigned track). Stock's reset runs next (no
 | handler dropped it): discard the track's extension voices and keys, interrupts
 | masked, as poly_stop_voice's .psv_stock.
+| A track POLY8 holds nothing on (poly_fr_mask's dirty mark clear: pm_clear_extensions
+| would return at once) skips it, with one read.
         .global poly_voice_bind_run
 poly_voice_bind_run:
+        move.l  4(%sp),%d0
+        cmpi.l  #7,%d0
+        bhi.s   9f
+        addq.l  #8,%d0
+        move.l  poly_fr_mask:l,%d1
+        btst    %d0,%d1
+        beq.s   9f
         move.l  %d2,-(%sp)
         move.w  %sr,%d2
         move.w  #0x2700,%sr
         move.l  8(%sp),-(%sp)
         jsr     pm_clear_extensions
         addq.l  #4,%sp
+        move.l  8(%sp),%d0
+        addq.l  #8,%d0
+        move.l  poly_fr_mask:l,%d1
+        bclr    %d0,%d1
+        move.l  %d1,poly_fr_mask:l
         move.w  %d2,%sr
         move.l  (%sp)+,%d2
-        rts
+9:      rts
         .endif
 
 | ---------------------------------------------------------------------------
@@ -2485,9 +2561,11 @@ poly_mask_at:
         .global poly_mask_max
 poly_mask_max:
         .long   0                         | its longest masked span, counts (diagnostics)
-poly_fr:                                  | poly_frame_track's answers, absolute only
-        .long   -1, 0                     | FR_KEY -1: no frame step matches, the first use reads
-        .byte   0, 0, 0, 0                | FR_SEEN, FR_POLY
+        .balign 16                        | one line, read by every stock track's render
+poly_fr:                                  | poly_frame_track's frame step, absolute only
+        .long   -1                        | no frame step matches: the first use reads
+poly_fr_mask:                             | its answers and the dirty marks
+        .long   0
 
 | The key handlers' masked span, for diagnostics: the frames stop for good when
 | the frame interrupt waits about 300 us (docs/OCTATRACK_HARDWARE_TRAPS.md).

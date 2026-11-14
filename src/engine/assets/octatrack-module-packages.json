@@ -179,8 +179,8 @@
       "version": "0.3.3-experimental",
       "name": "POLY8",
       "module": "9fa85eef",
-      "bytes": 59528,
-      "sha256": "cd2cd2bfdf9d0a098c4b55284b33fcc3aa591735afc71d600547f161c1e76f90",
+      "bytes": 59808,
+      "sha256": "1d9e9ecae22a60b592e5cfc8750adcdf0060faad36c826b6e6abb5393bb86c21",
       "path": "octatrack-modules/poly8/0.3.3-experimental.mwrm"
     },
     {

@@ -2,9 +2,9 @@
   "version": "0.3.3-experimental",
   "date": "2026-11-14",
   "changes": [
-    "POLY8 installed on no track no longer costs every sounding sample track CPU time. Its hooks in stock's frame interrupt (the command consumer, the AMP builder and the render) asked whether a track is POLY about every track two to four times a frame, and each answer read the Part index from battery RAM and one or two bank bytes. With four FLEX tracks playing and POLY8 on none, that was 13.5 points of the frame interrupt on the owner's MKII (14 November 2026).",
-    "Those three hooks now take the answer from poly_frame_track: the Part is read at the frame's first use and each track is tested once a frame, by the same test, keyed by stock's frame step. Panel, key and MIDI hooks keep reading the Part themselves.",
-    "No function changes: an emulator probe gives the same answer as poly_is_track for every track, bank, Part, machine byte and signature it tried. Not yet measured or heard on a unit."
+    "POLY8 installed on no track costs much less CPU time. With four FLEX tracks playing and POLY8 on none it took 12.2 points of the frame interrupt (0.3.1), now 4.9 (owner's MKII, development twin of main, 14 November 2026). Each line of POLY8's code or data that a stock track's render, increment, AMP pass or command touched cost a cache miss, every track and frame: the render wrapper about 5 points, the increment subscriber about 2, the AMP and command hooks about 1.5, besides the battery-RAM Part read.",
+    "A stock track's render now goes straight to stock's call after one inline, line-aligned test. Whether each track is POLY is worked out once a frame for all eight tracks, by the same test, keyed by stock's frame step. A dirty mark set before pm_reserve keeps a track that leaves POLY8 dropping its voices and keys as before. Panel, key, MIDI, trigger and configuration hooks keep reading the Part themselves; the diagnostic counters now count POLY tracks only.",
+    "No function changes: an emulator probe matches poly_is_track on every case it tried. Not yet heard on a POLY8 track."
   ],
   "history": [
     {
