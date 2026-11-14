@@ -66,6 +66,12 @@ Two guarded OS 1.17 sites cover loading a saved project and initializing a new p
 
 The project-replacement entry points also clear each contributed kit-data block and notify its `changed(kit, 0)` callback. A saved load fills the blocks from its kit records. A new project starts with empty blocks even if it is saved before the UI ticks. `core_project_kitdata_generation` exposes the same generation on bases that provide this guarantee.
 
+## Phrase continuation and project archives
+
+Phrase subscribers can OR `DT2_SEQ_PHRASE_CARRY` into a note count to opt into callbacks on later empty steps. Those callbacks carry `DT2_SEQ_GRID_EMPTY` and use the source trig's pitch and velocity. A zero return ends continuation. The base discards the retained event when the pattern or transport generation changes. It uses the actual stock deadline for supported microtimed trigs and bounds each phrase before the next step, including an early next trig.
+
+`core_project_archive` accepts pointers to `dt2_project_archive_t` descriptors. Each descriptor provides a unique tag, a fixed four-byte-aligned block size, and save and load callbacks. The base stores the archive across the last 48 bytes of serialized kit records, outside the existing kit-data area. It checks the destination before writing and validates the checksum before loading. Load callbacks receive a null pointer for a new project or when their block is absent. The archive follows the full active-project save and load paths.
+
 Two isolated pinned builds produced base SHA-256 `c4992eba731456afa6254e28a3f51e681e98ce97bae2a6d919e0053cf4f49583`. The base retains the previous 18 sites and exports and links with both Perform modules separately and together. In digikit, Euclidean Scale restored its kit data on saved-project reload and cleared it on Create New. The combined image reached ColdFire and SHARC ready with zero missing blocks and no halt.
 
 On 2026-11-08, Claptom-music reported that the combined K117 image `185fc6dbb84bb99f5477d22cead24ff7fc3e7f2e60c703168b83a207bf24bcf3` booted on their Digitakt II and restored the saved SCF switch and reroll melody after a scratch-project reload. Create New was verified in digikit.
