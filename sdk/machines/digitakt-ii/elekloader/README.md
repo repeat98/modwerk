@@ -61,3 +61,10 @@ swung Chord Arp fixture reached the scheduler commit routine 16 times.
   loading, with both bounds still at AUTO. The diagnostic counts save and load only after their
   kit-data registration check, and counts copies only when they target a project kit. An emulator
   replay of the same image recorded one load and one copy with matching nonzero kit data.
+
+  On KTR2 (`e9ddd0b4945e88c7faa35915557139ff9a5e5d886107ac3b0be2c769155be7bf`),
+  Claptom-music again reported zero save, load and copy readings for the standalone kit
+  round trip, with LO and HI at AUTO. KTR2 counts at entry to the storage handlers.
+  Digikit recorded two save entries and, after resetting the trace, one load and one copy
+  with matching nonzero data. A project-save control on the unit is still needed to
+  confirm that the trace counts the known project persistence path there.
