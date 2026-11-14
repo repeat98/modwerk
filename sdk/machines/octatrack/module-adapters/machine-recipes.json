@@ -4,12 +4,12 @@
  "ports": {
   "poly8": {
    "schema": 1,
-   "imageSha256": "642d27796f5ee0100eed8477266a7aff77d8614b40da50b554218170a19d49c5",
+   "imageSha256": "918cb0067c0bd30e7d1baf51cb392b2f92fd7c48ac61f6eef25998ad3b8f50e6",
    "sources": {
-    "sdk/machines/octatrack/module-adapters/machine-ports.json": "3734b487d948197f59c6d43bc072d06324751c0e73f4f2af1ee40d5b97fb2c37",
+    "sdk/machines/octatrack/module-adapters/machine-ports.json": "58a62354123e323b6eeb686029098deb650ab1147e7e534d874a4a04ebc0997c",
     "sdk/machines/octatrack/module-adapters/machine_ports.py": "48cbe4a5f3cf12588bb1c1afc9c78598797572ec972c436c21a33bfb414976dd",
     "sdk/octabam/modules/poly8/manifest.py": "f8759dbcbb246b247c195e61f0c0464fd0cdc0dd40b68dd8f74c03b46c584afc",
-    "sdk/octabam/modules/poly8/polyphony.s": "c86a3a783c46ecdbb3b44341098f0c094c65b9a8d11716835c2d28c2d2d6ecee",
+    "sdk/octabam/modules/poly8/polyphony.s": "bd47a61446cb42c99138d22892afeac86c2528085f5e6cb4340fc1a7be988339",
     "sdk/octabam/modules/poly8/registration.s": "9bd549a03c7008d45e5ffcd647375ed5ea7507845857f68c407bb247edd942ae",
     "sdk/octabam/modules/poly8/shared-machine.s": "3148a219ca0a1cdf5b1a20c64ff4da564b1078f599a2ceb08b15f6c10e908923",
     "sdk/runtime/loader/build.py": "5131901224dcd037c07f0233cadabd67eec2a952878bef5a92274dd3d6236c7d"
@@ -23,28 +23,28 @@
      "purpose": "poly8: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 4108,
+     "offset": 4308,
      "length": 18,
      "address": 1073799142,
      "sha256": "3167c7fdac0bdf54487c1d5faa4e775f7dca4fa9fd0ba54e5a3914d1b952bbe0",
      "purpose": "poly8: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 54532,
+     "offset": 54740,
      "length": 20,
      "address": 1073802002,
      "sha256": "4c14741dff5ce18a933b30875f7e3a0ac8d633db0096af8f7a7a31a88e1313b0",
      "purpose": "poly8: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 54630,
+     "offset": 54838,
      "length": 20,
      "address": 1074428104,
      "sha256": "96966986164a24f9ca5be84cca807a016a828da2bcc3167b831be52acad2a9a7",
      "purpose": "poly8: authored bytes coinciding with stock (strict scan), reconstructed from the identical bytes of the user's OS; review"
     },
     {
-     "offset": 55048,
+     "offset": 55256,
      "length": 12,
      "address": 1074100132,
      "sha256": "fa4871f504c0f71c15f06b76536f127ec74d257852ce50a1b9f16b3d14e8688c",
@@ -57,7 +57,7 @@
    "schema": 1,
    "imageSha256": "13047ca2595493c2389ad2265f39f8c04287f5c9021991197a5fded08faf75d0",
    "sources": {
-    "sdk/machines/octatrack/module-adapters/machine-ports.json": "3734b487d948197f59c6d43bc072d06324751c0e73f4f2af1ee40d5b97fb2c37",
+    "sdk/machines/octatrack/module-adapters/machine-ports.json": "58a62354123e323b6eeb686029098deb650ab1147e7e534d874a4a04ebc0997c",
     "sdk/machines/octatrack/module-adapters/machine_ports.py": "48cbe4a5f3cf12588bb1c1afc9c78598797572ec972c436c21a33bfb414976dd",
     "sdk/machines/octatrack/module-adapters/quantizer_runtime.py": "61425221199f37adf4be1e8b9c5bb1346067c8f56540a9a15047b400ed84a1aa",
     "sdk/octabam/modules/quantizer/manifest.py": "e0841437a471b000b448ce8417c8fd25cba1cf155aec488d08d2888f4c249394",
@@ -121,7 +121,7 @@
    "imageSha256": "11afe489011aa243c5bc579a824635f7d1334b17f0a21d554d897ceec3d3fb1a",
    "sources": {
     "sdk/machines/octatrack/module-adapters/fm_runtime.py": "ecf39c395bd8231d1dda340e1c6bc26e8473ba548cfa422f9a4ae4ff2bd6807e",
-    "sdk/machines/octatrack/module-adapters/machine-ports.json": "3734b487d948197f59c6d43bc072d06324751c0e73f4f2af1ee40d5b97fb2c37",
+    "sdk/machines/octatrack/module-adapters/machine-ports.json": "58a62354123e323b6eeb686029098deb650ab1147e7e534d874a4a04ebc0997c",
     "sdk/machines/octatrack/module-adapters/machine_ports.py": "48cbe4a5f3cf12588bb1c1afc9c78598797572ec972c436c21a33bfb414976dd",
     "sdk/octabam/modules/synth/machine.s": "de9d849bf0b6e5d5ad747df32ae5806e7f9516674a14ac74b1c15d73d30d280a",
     "sdk/octabam/modules/synth/manifest.py": "7854330aca001d2841de2fb384f0ca8adb7497db49dacc56da2815c1f444c0e6",
@@ -410,7 +410,7 @@
    "schema": 1,
    "imageSha256": "d6e2ae5323020dd735ea5de6a25a86e4951e4bbb10b6a33ccdef092d2fcc3253",
    "sources": {
-    "sdk/machines/octatrack/module-adapters/machine-ports.json": "3734b487d948197f59c6d43bc072d06324751c0e73f4f2af1ee40d5b97fb2c37",
+    "sdk/machines/octatrack/module-adapters/machine-ports.json": "58a62354123e323b6eeb686029098deb650ab1147e7e534d874a4a04ebc0997c",
     "sdk/machines/octatrack/module-adapters/machine_ports.py": "48cbe4a5f3cf12588bb1c1afc9c78598797572ec972c436c21a33bfb414976dd",
     "sdk/machines/octatrack/module-adapters/vector_runtime.py": "9762e82e0c9f06dc8989139fa7cd91f07a40e59aadc1c823cd9e4f68953934a7",
     "sdk/octabam/modules/vector/control.s": "4ea4778c545453ce37b2a106438b7a24460705295bef8ff7f9ab500787068bc0",
@@ -490,7 +490,7 @@
    "sources": {
     "sdk/machines/octatrack/module-adapters/analog_bd_runtime.py": "b9c0e0f96632a0d0ab5283387edaae1b604e4e82e27e26b3fdc1666867d31daf",
     "sdk/machines/octatrack/module-adapters/analog_bd_write_lease.py": "3e6a3766f32176e9be69627ef2b71272970f2d02a2088e77673946b640d365c7",
-    "sdk/machines/octatrack/module-adapters/machine-ports.json": "3734b487d948197f59c6d43bc072d06324751c0e73f4f2af1ee40d5b97fb2c37",
+    "sdk/machines/octatrack/module-adapters/machine-ports.json": "58a62354123e323b6eeb686029098deb650ab1147e7e534d874a4a04ebc0997c",
     "sdk/machines/octatrack/module-adapters/machine_ports.py": "48cbe4a5f3cf12588bb1c1afc9c78598797572ec972c436c21a33bfb414976dd",
     "sdk/machines/octatrack/module-adapters/stock_hook_write_lease.h": "ab14679a5faae84ef47d1ca37e46b3171da45252d12310e0b4458228be8334be",
     "sdk/octabam/modules/analog-bassdrum/control.s": "463dacf528e4996c7f21e97533391583329a2e3aabda95c87b7cd020dee7adb6",

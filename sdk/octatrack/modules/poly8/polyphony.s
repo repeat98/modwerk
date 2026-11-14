@@ -521,7 +521,7 @@ polyphony_call:
         cmpi.l  #7,%d2
         bhi.w   .mono
         move.l  %d2,%d0
-        bsr.w   poly_is_track
+        bsr.w   poly_frame_track
         tst.l   %d0
         beq.w   .reset_mono
 
@@ -1297,6 +1297,85 @@ polyphony_call:
         bne.s   .er_loop
         rts
 
+| poly_is_track for the sites inside stock's frame interrupt (0x4000aad0): the
+| command consumer, the AMP builder and each render call asked it about every
+| sample track, two to four times a frame, and each answer read the Part index
+| in battery RAM (about half a microsecond) and one or two bank bytes.  On no
+| track, POLY8 so took 13.5 points of the frame interrupt with four FLEX tracks
+| playing (owner's MKII, 14 November 2026).  Nothing below the interrupt runs
+| inside it, so the bytes cannot change within a frame (docs/MODULE_PERFORMANCE.md):
+| the Part is read at a frame's first use, each track tested once a frame by
+| poly_is_track's test.  A frame is known by stock's frame step (FRAME_STEP,
+| which the handler advances, mod 8, before any POLY8 site runs); the AMP
+| builder calls poly_amp_hook for all eight tracks every frame, so an answer
+| never outlives its frame.  Panel, key and MIDI hooks keep poly_is_track.
+| d0 = track -> d0 = 1 for a POLY track, else 0.  d1/a0 scratch, as poly_is_track.
+        .equ    FRAME_STEP, 0x46104d00
+        .equ    FR_KEY, 0                 | the frame step the answers belong to
+        .equ    FR_PART, 4                | the current Part's machine block, 0 without a bank
+        .equ    FR_SEEN, 8                | bit t: track t tested this frame
+        .equ    FR_POLY, 9                | bit t: track t is POLY
+poly_frame_track:
+        cmpi.l  #7,%d0
+        bhi.w   .pft_no
+        lea     poly_fr:l,%a0
+        move.l  (FRAME_STEP).l,%d1
+        cmp.l   FR_KEY(%a0),%d1
+        beq.s   .pft_frame
+        move.l  %d1,FR_KEY(%a0)           | a new frame: its Part, read once
+        clr.w   FR_SEEN(%a0)              | FR_SEEN and FR_POLY
+        movea.l (BANK_PTR).l,%a0
+        cmpa.l  #0x40000000,%a0           | a bank, as poly_is_track
+        bcs.s   1f
+        cmpa.l  #0x47f00000,%a0
+        bcs.s   2f
+1:      suba.l  %a0,%a0
+        bra.s   3f
+2:      mvz.b   (PART_INDEX).l,%d1
+        andi.l  #3,%d1
+        mulu.w  #PART_STRIDE,%d1
+        adda.l  %d1,%a0
+        adda.l  #0x8ed80,%a0
+3:      move.l  %a0,%d1
+        lea     poly_fr:l,%a0
+        move.l  %d1,FR_PART(%a0)
+.pft_frame:
+        btst    %d0,FR_SEEN(%a0)
+        bne.s   .pft_known
+        bset    %d0,FR_SEEN(%a0)
+        move.l  FR_PART(%a0),%d1
+        beq.s   .pft_no
+        movea.l %d1,%a0
+        mvz.b   0x22(%a0,%d0.l),%d1
+        cmpi.l  #POLY_TYPE,%d1
+        beq.s   .pft_poly
+        cmpi.l  #1,%d1
+        bne.s   .pft_no
+        move.l  %d0,%d1
+        mulu.w  #30,%d1
+        adda.l  %d1,%a0
+        mvz.b   0x3c(%a0),%d1
+        cmpi.l  #80,%d1
+        bne.s   .pft_no
+        mvz.b   0x3d(%a0),%d1
+        cmpi.l  #76,%d1
+        bne.s   .pft_no
+        mvz.b   0x3e(%a0),%d1
+        cmpi.l  #1,%d1
+        bne.s   .pft_no
+.pft_poly:
+        lea     poly_fr:l,%a0
+        bset    %d0,FR_POLY(%a0)
+.pft_yes:
+        moveq   #1,%d0
+        rts
+.pft_known:
+        btst    %d0,FR_POLY(%a0)
+        bne.s   .pft_yes
+.pft_no:
+        moveq   #0,%d0
+        rts
+
 | Detour at 0x40004d66, the end of the per-track pass of the DSP record's
 | command-word builder (0x40004bd4: d4 = track, a2 = the track's record, a1
 | = its command word).  A POLY track's amp envelopes run per voice
@@ -1316,7 +1395,7 @@ poly_amp_hook:
         lea     -12(%sp),%sp
         movem.l %d0-%d1/%a0,(%sp)
         move.l  %d4,%d0
-        bsr.w   poly_is_track             | d1/a0 scratch
+        bsr.w   poly_frame_track          | d1/a0 scratch
         tst.l   %d0
         beq.s   .pah_done
         move.l  %d4,%d0
@@ -2140,7 +2219,7 @@ poly_chord_dequeue:
         move.l  (%a0,%d4.l*4),%d3         | the command being consumed
         clr.l   (%a0,%d4.l*4)             | displaced pending-command clear
         move.l  %d4,%d0
-        bsr.w   poly_is_track
+        bsr.w   poly_frame_track
         tst.l   %d0
         beq.w   .pcd_done
         tst.l   %d3
@@ -2406,6 +2485,9 @@ poly_mask_at:
         .global poly_mask_max
 poly_mask_max:
         .long   0                         | its longest masked span, counts (diagnostics)
+poly_fr:                                  | poly_frame_track's answers, absolute only
+        .long   -1, 0                     | FR_KEY -1: no frame step matches, the first use reads
+        .byte   0, 0, 0, 0                | FR_SEEN, FR_POLY
 
 | The key handlers' masked span, for diagnostics: the frames stop for good when
 | the frame interrupt waits about 300 us (docs/OCTATRACK_HARDWARE_TRAPS.md).

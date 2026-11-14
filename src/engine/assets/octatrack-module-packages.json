@@ -176,14 +176,12 @@
       "sites": 23,
       "copies": 5,
       "fills": 0,
-      "version": "0.3.1-experimental",
+      "version": "0.3.3-experimental",
       "name": "POLY8",
       "module": "9fa85eef",
-      "bytes": 59308,
-      "sha256": "dc2ce372af73b93ef9e34a1c05c8ad18269631e0f20ed4f94e461310990466b9",
-      "path": "octatrack-modules/poly8/0.3.1-experimental.mwrm",
-      "lagsBehind": "0.3.2-experimental",
-      "lagReason": "0.3.2 changes only the card build's machine chooser (#842, #941, #942); over USB the base owns the chooser, and the package rebuilds byte-identical from 0.3.2's source"
+      "bytes": 59528,
+      "sha256": "cd2cd2bfdf9d0a098c4b55284b33fcc3aa591735afc71d600547f161c1e76f90",
+      "path": "octatrack-modules/poly8/0.3.3-experimental.mwrm"
     },
     {
       "id": "vector",
